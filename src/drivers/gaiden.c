@@ -22,12 +22,16 @@ read:
 see the input_ports definition below for details on the input bits
 
 write:
-07a104-07a105 text layer Y scroll
-07a10c-07a10d text layer X scroll
+07a104-07a105 text  layer Y scroll
+07a10c-07a10d text  layer X scroll
 07a204-07a205 front layer Y scroll
 07a20c-07a20d front layer X scroll
-07a304-07a305 back layer Y scroll
-07a30c-07a30d back layer Xscroll
+07a304-07a305 back  layer Y scroll
+07a30c-07a30d back  layer X scroll
+
+todo:
+
+- finish raiga (need to trojanize the mcu).
 
 ***************************************************************************/
 
@@ -68,13 +72,13 @@ static WRITE16_HANDLER( gaiden_sound_command_w )
 
 
 
-/* Tecmo Knight has a simple protection. It writes codes to 0x07a804, and reads */
-/* the answer from 0x07a007. The returned values contain the address of a */
-/* function to jump to. */
+/* Wild Fang / Tecmo Knight has a simple protection. It writes codes to 0x07a804, */
+/* and reads the answer from 0x07a007. The returned values contain the address of */
+/* a function to jump to. */
 
 static int prot;
 
-static WRITE16_HANDLER( tknight_protection_w )
+static WRITE16_HANDLER( wildfang_protection_w )
 {
 	if (ACCESSING_MSB)
 	{
@@ -88,7 +92,7 @@ static WRITE16_HANDLER( tknight_protection_w )
 
 		data >>= 8;
 
-//logerror("PC %06x: prot = %02x\n",activecpu_get_pc(),data);
+//		logerror("PC %06x: prot = %02x\n",activecpu_get_pc(),data);
 
 		switch (data & 0xf0)
 		{
@@ -101,9 +105,9 @@ static WRITE16_HANDLER( tknight_protection_w )
 				break;
 			case 0x20:	/* low 4 bits of jump code */
 				jumpcode |= data & 0x0f;
-				if (jumpcode > 16)
+				if (jumpcode >= sizeof(jumppoints)/sizeof(jumppoints[0]))
 				{
-logerror("unknown jumpcode %02x\n",jumpcode);
+					logerror("unknown jumpcode %02x\n",jumpcode);
 					jumpcode = 0;
 				}
 				prot = 0x20;
@@ -124,16 +128,80 @@ logerror("unknown jumpcode %02x\n",jumpcode);
 	}
 }
 
-static READ16_HANDLER( tknight_protection_r )
+static READ16_HANDLER( wildfang_protection_r )
 {
-//logerror("PC %06x: read prot %02x\n",activecpu_get_pc(),prot);
+//	logerror("PC %06x: read prot %02x\n",activecpu_get_pc(),prot);
 	return prot;
 }
 
 
 
+/* raiga, incomplete. MCU read routine is at D9CE */
+/* some of the values returned are 16-bit sign-extended displacements from 58e96,
+   therefore fall in the range 50e96-60e95. But there's nothing there! Maybe
+   it's a mirror of main ROM?
+   Other values are jumped to directly; others don't look like jumps at all.
+  */
+
+static WRITE16_HANDLER( raiga_protection_w )
+{
+	if (ACCESSING_MSB)
+	{
+		static int jumpcode;
+		static int jumppoints[] =
+		{
+			0x8008,	/* point to a harmless RTS */
+		};
+
+		data >>= 8;
+
+//		logerror("PC %06x: prot = %02x\n",activecpu_get_pc(),data);
+
+		switch (data & 0xf0)
+		{
+			case 0x00:	/* init */
+				prot = 0x00;
+				break;
+			case 0x10:	/* high 4 bits of jump code */
+				jumpcode = (data & 0x0f) << 4;
+				prot = 0x10;
+				break;
+			case 0x20:	/* low 4 bits of jump code */
+				jumpcode |= data & 0x0f;
+				logerror("requested protection jumpcode %02x\n",jumpcode);
+				jumpcode = 0;
+				if (jumpcode >= sizeof(jumppoints)/sizeof(jumppoints[0]))
+				{
+					logerror("unknown jumpcode %02x\n",jumpcode);
+					jumpcode = 0;
+				}
+				prot = 0x20;
+				break;
+			case 0x30:	/* ask for bits 12-15 of function address */
+				prot = 0x40 | ((jumppoints[jumpcode] >> 12) & 0x0f);
+				break;
+			case 0x40:	/* ask for bits 8-11 of function address */
+				prot = 0x50 | ((jumppoints[jumpcode] >> 8) & 0x0f);
+				break;
+			case 0x50:	/* ask for bits 4-7 of function address */
+				prot = 0x60 | ((jumppoints[jumpcode] >> 4) & 0x0f);
+				break;
+			case 0x60:	/* ask for bits 0-3 of function address */
+				prot = 0x70 | ((jumppoints[jumpcode] >> 0) & 0x0f);
+				break;
+		}
+	}
+}
+
+static READ16_HANDLER( raiga_protection_r )
+{
+//	logerror("PC %06x: read prot %02x\n",activecpu_get_pc(),prot);
+	return prot;
+}
+
 static MEMORY_READ16_START( readmem )
 	{ 0x000000, 0x03ffff, MRA16_ROM },
+	{ 0x050000, 0x05ffff, MRA16_ROM },	/* raiga; mirror of main ROM? */
 	{ 0x060000, 0x063fff, MRA16_RAM },
 	{ 0x070000, 0x070fff, MRA16_RAM },
 	{ 0x072000, 0x073fff, gaiden_videoram2_r },
@@ -144,7 +212,6 @@ static MEMORY_READ16_START( readmem )
 	{ 0x07a000, 0x07a001, input_port_0_word_r },
 	{ 0x07a002, 0x07a003, input_port_1_word_r },
 	{ 0x07a004, 0x07a005, input_port_2_word_r },
-	{ 0x07a006, 0x07a007, tknight_protection_r },
 MEMORY_END
 
 static MEMORY_WRITE16_START( writemem )
@@ -162,9 +229,8 @@ static MEMORY_WRITE16_START( writemem )
 	{ 0x07a20c, 0x07a20d, gaiden_fgscrollx_w },
 	{ 0x07a304, 0x07a305, gaiden_bgscrolly_w },
 	{ 0x07a30c, 0x07a30d, gaiden_bgscrollx_w },
-	{ 0x07a800, 0x07a801, MWA16_NOP },
+	{ 0x07a800, 0x07a801, watchdog_reset16_w },
 	{ 0x07a802, 0x07a803, gaiden_sound_command_w },
-	{ 0x07a804, 0x07a805, tknight_protection_w },
 	{ 0x07a806, 0x07a807, MWA16_NOP },
 	{ 0x07a808, 0x07a809, gaiden_flip_w },
 MEMORY_END
@@ -191,7 +257,7 @@ MEMORY_END
 
 
 INPUT_PORTS_START( gaiden )
-	PORT_START	/* IN0 */
+	PORT_START	/* System Inputs */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -201,40 +267,27 @@ INPUT_PORTS_START( gaiden )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
-	PORT_START      /* PLAYER */
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER1 | IPF_8WAY )
+	PORT_START	/* Players Inputs */
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 | IPF_8WAY )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 | IPF_8WAY )
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER1 | IPF_8WAY )
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER1 | IPF_8WAY )
-	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 | IPF_8WAY )
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 | IPF_8WAY )
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2 | IPF_8WAY )
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2 | IPF_8WAY )
-	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
+	/* Dip Switches order fits the first screen */
+
 	PORT_START	/* DSW */
-	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0001, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x001c, 0x001c, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( 5C_1C ) )
-	PORT_DIPSETTING(      0x0010, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(      0x0008, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(      0x0004, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(      0x001c, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(      0x000c, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(      0x0014, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(      0x0018, DEF_STR( 1C_4C ) )
 	PORT_DIPNAME( 0x00e0, 0x00e0, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( 5C_1C ) )
 	PORT_DIPSETTING(      0x0080, DEF_STR( 4C_1C ) )
@@ -244,32 +297,47 @@ INPUT_PORTS_START( gaiden )
 	PORT_DIPSETTING(      0x0060, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(      0x00a0, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(      0x00c0, DEF_STR( 1C_4C ) )
-	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
+	PORT_DIPNAME( 0x001c, 0x001c, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x001c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x000c, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0014, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0018, DEF_STR( 1C_4C ) )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x3000, 0x3000, "Energy" )
-	PORT_DIPSETTING(      0x0000, "2" )
-	PORT_DIPSETTING(      0x3000, "3" )
-	PORT_DIPSETTING(      0x1000, "4" )
-	PORT_DIPSETTING(      0x2000, "5" )
+	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( On ) )
 	PORT_DIPNAME( 0xc000, 0xc000, DEF_STR( Lives ) )
 	PORT_DIPSETTING(      0x0000, "1" )
 	PORT_DIPSETTING(      0xc000, "2" )
 	PORT_DIPSETTING(      0x4000, "3" )
 	PORT_DIPSETTING(      0x8000, "4" )
+	PORT_DIPNAME( 0x3000, 0x3000, "Energy" )
+	PORT_DIPSETTING(      0x0000, "2" )
+	PORT_DIPSETTING(      0x3000, "3" )
+	PORT_DIPSETTING(      0x1000, "4" )
+	PORT_DIPSETTING(      0x2000, "5" )
+	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( tknight )
-	PORT_START	/* IN0 */
+INPUT_PORTS_START( wildfang )
+	PORT_START	/* System Inputs */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -279,40 +347,27 @@ INPUT_PORTS_START( tknight )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
-	PORT_START      /* PLAYER */
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER1 | IPF_8WAY )
+	PORT_START	/* Players Inputs */
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 | IPF_8WAY )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 | IPF_8WAY )
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER1 | IPF_8WAY )
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 | IPF_8WAY )
 	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
 	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 | IPF_8WAY )
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 | IPF_8WAY )
-	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2 | IPF_8WAY )
-	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER2 | IPF_8WAY )
 	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
+	/* Dip Switches order fits the first screen */
+
 	PORT_START	/* DSW */
-	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0001, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x001c, 0x001c, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( 5C_1C ) )
-	PORT_DIPSETTING(      0x0010, DEF_STR( 4C_1C ) )
-	PORT_DIPSETTING(      0x0008, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(      0x0004, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(      0x001c, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(      0x000c, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(      0x0014, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(      0x0018, DEF_STR( 1C_4C ) )
 	PORT_DIPNAME( 0x00e0, 0x00e0, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( 5C_1C ) )
 	PORT_DIPSETTING(      0x0080, DEF_STR( 4C_1C ) )
@@ -322,29 +377,213 @@ INPUT_PORTS_START( tknight )
 	PORT_DIPSETTING(      0x0060, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(      0x00a0, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(      0x00c0, DEF_STR( 1C_4C ) )
-	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
+	PORT_DIPNAME( 0x001c, 0x001c, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x001c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x000c, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0014, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0018, DEF_STR( 1C_4C ) )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
-	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
-	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( On ) )
 	PORT_DIPNAME( 0xc000, 0xc000, DEF_STR( Lives ) )
 	PORT_DIPSETTING(      0x8000, "1" )
 	PORT_DIPSETTING(      0xc000, "2" )
 	PORT_DIPSETTING(      0x4000, "3" )
 /*	PORT_DIPSETTING(      0x0000, "2" ) */
+	/* When bit 0 is On,  use bits 4 and 5 for difficulty */
+	PORT_DIPNAME( 0x3000, 0x3000, "Difficulty (Tecmo Knight)" )
+	PORT_DIPSETTING(      0x3000, "Easy" )
+	PORT_DIPSETTING(      0x1000, "Normal" )
+	PORT_DIPSETTING(      0x2000, "Hard" )
+	PORT_DIPSETTING(      0x0000, "Hardest" )
+	/* When bit 0 is 0ff, use bits 2 and 3 for difficulty */
+	PORT_DIPNAME( 0x0c00, 0x0c00, "Difficulty (Wild Fang)" )
+	PORT_DIPSETTING(      0x0c00, "Easy" )
+	PORT_DIPSETTING(      0x0400, "Normal" )
+	PORT_DIPSETTING(      0x0800, "Hard" )
+	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0100, 0x0100, "Title" )	// also affects Difficulty Table (see above)
+	PORT_DIPSETTING(      0x0100, "Wild Fang" )
+	PORT_DIPSETTING(      0x0000, "Tecmo Knight" )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( tknight )
+	PORT_START	/* System Inputs */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+
+	PORT_START	/* Players Inputs */
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	/* Dip Switches order fits the first screen */
+
+	PORT_START	/* DSW */
+	PORT_DIPNAME( 0x00e0, 0x00e0, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x00e0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0060, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x00a0, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x00c0, DEF_STR( 1C_4C ) )
+	PORT_DIPNAME( 0x001c, 0x001c, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x001c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x000c, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0014, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0018, DEF_STR( 1C_4C ) )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( On ) )
+	PORT_DIPNAME( 0xc000, 0xc000, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x8000, "1" )
+	PORT_DIPSETTING(      0xc000, "2" )
+	PORT_DIPSETTING(      0x4000, "3" )
+/*	PORT_DIPSETTING(      0x0000, "2" ) */
+	PORT_DIPNAME( 0x2000, 0x2000, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x2000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x1000, 0x1000, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x1000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0c00, 0x0c00, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x0c00, "Easy" )
+	PORT_DIPSETTING(      0x0400, "Normal" )
+	PORT_DIPSETTING(      0x0800, "Hard" )
+	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( raiga )
+	PORT_START	/* System Inputs */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+
+	PORT_START	/* Players Inputs */
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	/* Dip Switches order fits the first screen */
+
+	PORT_START	/* DSW */
+	PORT_DIPNAME( 0x00f0, 0x00f0, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x00a0, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(      0x00f0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x00c0, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(      0x00e0, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(      0x0070, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0060, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(      0x00b0, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0030, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x00d0, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(      0x0050, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(      0x0090, DEF_STR( 1C_7C ) )
+	PORT_DIPNAME( 0x000f, 0x000f, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x000a, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(      0x000f, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x000c, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(      0x000e, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(      0x0007, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0006, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(      0x000b, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0003, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(      0x000d, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(      0x0005, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(      0x0009, DEF_STR( 1C_7C ) )
+	PORT_DIPNAME( 0x8000, 0x8000, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x8000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x4000, 0x4000, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x4000, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x3000, 0x3000, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x3000, "Easy" )
+	PORT_DIPSETTING(      0x1000, "Normal" )
+	PORT_DIPSETTING(      0x2000, "Hard" )
+	PORT_DIPSETTING(      0x0000, "Hardest" )
+	PORT_DIPNAME( 0x0c00, 0x0c00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x0000, "2" )
+	PORT_DIPSETTING(      0x0c00, "3" )
+	PORT_DIPSETTING(      0x0400, "4" )
+	PORT_DIPSETTING(      0x0800, "5" )
+	PORT_DIPNAME( 0x0300, 0x0300, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(      0x0300, "50k 200k" )
+	PORT_DIPSETTING(      0x0100, "100k 300k" )
+	PORT_DIPSETTING(      0x0200, "50k only" )
+	PORT_DIPSETTING(      0x0000, "None" )
 INPUT_PORTS_END
 
 
@@ -500,6 +739,45 @@ ROM_END
 
 ROM_START( shadoww )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )	/* 2*128k for 68000 code */
+	ROM_LOAD16_BYTE( "shadowa.1",     0x00000, 0x20000, 0x8290d567 )
+	ROM_LOAD16_BYTE( "shadowa.2",     0x00001, 0x20000, 0xf3f08921 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
+	ROM_LOAD( "gaiden.3",     0x0000, 0x10000, 0x75fd3e6a )   /* Audio CPU is a Z80  */
+
+	ROM_REGION( 0x010000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "gaiden.5",     0x000000, 0x10000, 0x8d4035f7 )	/* 8x8 tiles */
+
+	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "14.bin",       0x000000, 0x20000, 0x1ecfddaa )
+	ROM_LOAD( "15.bin",       0x020000, 0x20000, 0x1291a696 )
+	ROM_LOAD( "16.bin",       0x040000, 0x20000, 0x140b47ca )
+	ROM_LOAD( "17.bin",       0x060000, 0x20000, 0x7638cccb )
+
+	ROM_REGION( 0x080000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "18.bin",       0x000000, 0x20000, 0x3fadafd6 )
+	ROM_LOAD( "19.bin",       0x020000, 0x20000, 0xddae9d5b )
+	ROM_LOAD( "20.bin",       0x040000, 0x20000, 0x08cf7a93 )
+	ROM_LOAD( "21.bin",       0x060000, 0x20000, 0x1ac892f5 )
+
+	ROM_REGION( 0x100000, REGION_GFX4, ROMREGION_DISPOSE )
+	ROM_LOAD( "gaiden.6",     0x000000, 0x20000, 0xe7ccdf9f )	/* sprites A1 */
+	ROM_LOAD( "gaiden.8",     0x020000, 0x20000, 0x7ef7f880 )	/* sprites B1 */
+	ROM_LOAD( "gaiden.10",    0x040000, 0x20000, 0xa6451dec )	/* sprites C1 */
+	ROM_LOAD( "shadoww.12a",  0x060000, 0x10000, 0x9bb07731 )	/* sprites D1 */
+	ROM_LOAD( "shadoww.12b",  0x070000, 0x10000, 0xa4a950a2 )	/* sprites D1 */
+	ROM_LOAD( "gaiden.7",     0x080000, 0x20000, 0x016bec95 )	/* sprites A2 */
+	ROM_LOAD( "gaiden.9",     0x0a0000, 0x20000, 0x6e9b7fd3 )	/* sprites B2 */
+	ROM_LOAD( "gaiden.11",    0x0c0000, 0x20000, 0x7fbfdf5e )	/* sprites C2 */
+	ROM_LOAD( "shadoww.13a",  0x0e0000, 0x10000, 0x996d2fa5 )	/* sprites D2 */
+	ROM_LOAD( "shadoww.13b",  0x0f0000, 0x10000, 0xb8df8a34 )	/* sprites D2 */
+
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 )	/* 128k for ADPCM samples - sound chip is OKIM6295 */
+	ROM_LOAD( "gaiden.4",     0x0000, 0x20000, 0xb0e0faf9 ) /* samples */
+ROM_END
+
+ROM_START( shadowwa )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )	/* 2*128k for 68000 code */
 	ROM_LOAD16_BYTE( "shadoww.1",    0x00000, 0x20000, 0xfefba387 )
 	ROM_LOAD16_BYTE( "shadoww.2",    0x00001, 0x20000, 0x9b9d6b18 )
 
@@ -630,10 +908,55 @@ ROM_START( wildfang )
 	ROM_LOAD( "tkni4.bin",    0x0000, 0x20000, 0xa7a1dbcf ) /* samples */
 ROM_END
 
+ROM_START( raiga )
+	ROM_REGION( 0x60000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "a-3s.1",      0x00000, 0x20000, 0x303c2a6c  )
+	ROM_LOAD16_BYTE( "a-4s.2",      0x00001, 0x20000, 0x5f31fecb  )
+	ROM_COPY( REGION_CPU1,          0x00000, 0x40000, 0x20000 ) /* ???? */
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
+	ROM_LOAD( "a-4b.3",           0x00000, 0x10000, 0x18655c95 )
+
+	ROM_REGION( 0x1000, REGION_CPU3, 0 )	/* protection NEC D8749 */
+	ROM_LOAD( "a-6v.mcu",         0x00000, 0x1000, 0x00000000 )
+
+	ROM_REGION( 0x10000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "b-7a.5",           0x00000, 0x10000, 0x6d2e4bf1 )
+
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "b-1b",  0x00000, 0x80000, 0x781d1bd2 )
+
+	ROM_REGION( 0x80000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "b-4b",  0x00000, 0x80000, 0x89468b84 )
+
+	ROM_REGION( 0x100000, REGION_GFX4, ROMREGION_DISPOSE )
+	ROM_LOAD( "b-2m",  0x00000, 0x80000, 0x5794ec32 )
+	ROM_LOAD( "b-1m",  0x80000, 0x80000, 0xb0de0ded )
+
+	ROM_REGION( 0x20000, REGION_SOUND1, 0 )
+	ROM_LOAD( "a-4a.4", 0x00000, 0x20000, 0xef9acdcf )
+ROM_END
 
 
-GAME( 1988, gaiden,   0,       gaiden, gaiden,  0, ROT0, "Tecmo", "Ninja Gaiden (World)" )
-GAME( 1988, shadoww,  gaiden,  gaiden, gaiden,  0, ROT0, "Tecmo", "Shadow Warriors (US)" )
-GAME( 1989, ryukendn, gaiden,  gaiden, gaiden,  0, ROT0, "Tecmo", "Ninja Ryukenden (Japan)" )
-GAME( 1989, tknight,  0,       gaiden, tknight, 0, ROT0, "Tecmo", "Tecmo Knight" )
-GAME( 1989, wildfang, tknight, gaiden, tknight, 0, ROT0, "Tecmo", "Wild Fang" )
+
+static DRIVER_INIT( wildfang )
+{
+	install_mem_read16_handler (0, 0x07a006, 0x07a007, wildfang_protection_r);
+	install_mem_write16_handler(0, 0x07a804, 0x07a805, wildfang_protection_w);
+}
+
+static DRIVER_INIT( raiga )
+{
+	install_mem_read16_handler (0, 0x07a006, 0x07a007, raiga_protection_r);
+	install_mem_write16_handler(0, 0x07a804, 0x07a805, raiga_protection_w);
+}
+
+
+
+GAME( 1988, gaiden,   0,        gaiden, gaiden,   0,        ROT0, "Tecmo", "Ninja Gaiden (World)" )
+GAME( 1988, shadoww,  gaiden,   gaiden, gaiden,   0,        ROT0, "Tecmo", "Shadow Warriors (US set 1)" )
+GAME( 1988, shadowwa, gaiden,   gaiden, gaiden,   0,        ROT0, "Tecmo", "Shadow Warriors (US set 2)" )
+GAME( 1989, ryukendn, gaiden,   gaiden, gaiden,   0,        ROT0, "Tecmo", "Ninja Ryukenden (Japan)" )
+GAME( 1989, wildfang, 0,        gaiden, wildfang, wildfang, ROT0, "Tecmo", "Wild Fang / Tecmo Knight" )
+GAME( 1989, tknight,  wildfang, gaiden, tknight,  wildfang, ROT0, "Tecmo", "Tecmo Knight" )
+GAMEX(1991, raiga,    0,        gaiden, raiga,    raiga,    ROT0, "Tecmo", "Raiga - Strato Fighter (Japan)", GAME_UNEMULATED_PROTECTION )

@@ -17,13 +17,14 @@ extern "C" {
 
 // unfortunatly memory configuration differs with internal rom size
 typedef enum {
-    TYPE_7810,
-    TYPE_7810_GAMEMASTER // a few modifications until internal rom dumped
-//    TYPE_78C10, // stop instruction added
-//    TYPE_78IV,
-//    TYPE_78K0,
-//    TYPE_78K0S
-// millions of subtypes
+	TYPE_7810,
+	TYPE_7810_GAMEMASTER, // a few modifications until internal rom dumped
+	TYPE_7807
+//	TYPE_78C10, // stop instruction added
+//	TYPE_78IV,
+//	TYPE_78K0,
+//	TYPE_78K0S
+//	millions of subtypes
 } UPD7810_TYPE;
 
 /* Supply an instance of this function in your driver code:
@@ -54,7 +55,12 @@ enum {
 
 /* port numbers for PA,PB,PC,PD and PF */
 enum {
-	UPD7810_PORTA, UPD7810_PORTB, UPD7810_PORTC, UPD7810_PORTD, UPD7810_PORTF
+	UPD7810_PORTA, UPD7810_PORTB, UPD7810_PORTC, UPD7810_PORTD, UPD7810_PORTF,
+};
+
+enum {
+	UPD7807_PORTA, UPD7807_PORTB, UPD7807_PORTC, UPD7807_PORTD, UPD7807_PORTF,
+	UPD7807_PORTT
 };
 
 /* IRQ lines */
@@ -78,7 +84,7 @@ const char *upd7810_info(void *context, int regnum);
 unsigned upd7810_dasm(char *buffer, unsigned pc);
 
 #define upd7807_init upd7810_init
-#define upd7807_reset upd7810_reset
+void upd7807_reset (void *param);
 #define upd7807_exit upd7810_exit
 #define upd7807_execute upd7810_execute
 #define upd7807_get_context upd7810_get_context
@@ -87,7 +93,7 @@ unsigned upd7810_dasm(char *buffer, unsigned pc);
 #define upd7807_set_reg upd7810_set_reg
 #define upd7807_set_irq_line upd7810_set_irq_line
 #define upd7807_set_irq_callback upd7810_set_irq_callback
-#define upd7807_info upd7810_info
+const char *upd7807_info(void *context, int regnum);
 unsigned upd7807_dasm(char *buffer, unsigned pc);
 
 typedef struct {
@@ -166,6 +172,9 @@ typedef struct {
 	INT32	ovcf;	/* overflow counter for fixed clock div 3 mode */
 	INT32	ovcs;	/* overflow counter for serial I/O */
 	UINT8	edges;	/* rising/falling edge flag for serial I/O */
+	const struct opcode_s *opXX;	/* opcode table */
+	const struct opcode_s *op48;
+	const struct opcode_s *op4C;
 	UPD7810_CONFIG config;
 	int (*irq_callback)(int irqline);
 }	UPD7810;

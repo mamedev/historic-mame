@@ -913,6 +913,12 @@ static void MOV_A_TMM(void)
 	A = TMM;
 }
 
+/* 4c ce: 0100 1100 1110 0000 (7807 only) */
+static void MOV_A_PT(void)
+{
+	A = RP( UPD7807_PORTT );
+}
+
 /* 4c d9: 0100 1100 1101 1001 */
 static void MOV_A_RXB(void)
 {
@@ -7964,6 +7970,17 @@ static void EXX(void)
 	tmp = HL; HL = HL2; HL2 = tmp;
 }
 
+/* 48 AD (7807 only) */
+static void EXR(void)
+{
+	UINT16 tmp;
+	tmp = BC; BC = BC2; BC2 = tmp;
+	tmp = DE; DE = DE2; DE2 = tmp;
+	tmp = HL; HL = HL2; HL2 = tmp;
+	tmp = EA; EA = EA2; EA2 = tmp;
+	tmp = VA; VA = VA2; VA2 = tmp;
+}
+
 /* 12: 0001 0010 */
 static void INX_BC(void)
 {
@@ -8055,12 +8072,11 @@ static void MOV_L_A(void)
 static void INRW_wa(void)
 {
 	PAIR ea = upd7810.va;
-	UINT8 tmp, m, imm;
+	UINT8 tmp, m;
 
 	RDOPARG( ea.b.l );
-	RDOPARG( imm );
 	m = RM( ea.d );
-	tmp = m + imm;
+	tmp = m + 1;
 	ZHC_ADD( tmp, m, 0 );
 	WM( ea.d, tmp );
 	SKIP_CY;
@@ -8478,7 +8494,7 @@ static void OFFIW_wa_xx(void)
 /* 57: 0101 0111 xxxx xxxx */
 /* OFFI_A_xx already defined (long form) */
 
-/* 58: 0101 1000 oooo oooo */
+/* 58: 0101 1000 oooo oooo (7810 only) */
 static void BIT_0_wa(void)
 {
 	PAIR ea = upd7810.va;
@@ -8489,7 +8505,7 @@ static void BIT_0_wa(void)
 		PSW |= SK;
 }
 
-/* 59: 0101 1001 oooo oooo */
+/* 59: 0101 1001 oooo oooo (7810 only) */
 static void BIT_1_wa(void)
 {
 	PAIR ea = upd7810.va;
@@ -8500,7 +8516,7 @@ static void BIT_1_wa(void)
 		PSW |= SK;
 }
 
-/* 5a: 0101 1010 oooo oooo */
+/* 5a: 0101 1010 oooo oooo (7810 only) */
 static void BIT_2_wa(void)
 {
 	PAIR ea = upd7810.va;
@@ -8511,7 +8527,7 @@ static void BIT_2_wa(void)
 		PSW |= SK;
 }
 
-/* 5b: 0101 1011 oooo oooo */
+/* 5b: 0101 1011 oooo oooo (7810 only) */
 static void BIT_3_wa(void)
 {
 	PAIR ea = upd7810.va;
@@ -8522,7 +8538,7 @@ static void BIT_3_wa(void)
 		PSW |= SK;
 }
 
-/* 5c: 0101 1100 oooo oooo */
+/* 5c: 0101 1100 oooo oooo (7810 only) */
 static void BIT_4_wa(void)
 {
 	PAIR ea = upd7810.va;
@@ -8533,7 +8549,7 @@ static void BIT_4_wa(void)
 		PSW |= SK;
 }
 
-/* 5d: 0101 1101 oooo oooo */
+/* 5d: 0101 1101 oooo oooo (7810 only) */
 static void BIT_5_wa(void)
 {
 	PAIR ea = upd7810.va;
@@ -8544,7 +8560,7 @@ static void BIT_5_wa(void)
 		PSW |= SK;
 }
 
-/* 5e: 0101 1110 oooo oooo */
+/* 5e: 0101 1110 oooo oooo (7810 only) */
 static void BIT_6_wa(void)
 {
 	PAIR ea = upd7810.va;
@@ -8555,7 +8571,7 @@ static void BIT_6_wa(void)
 		PSW |= SK;
 }
 
-/* 5f: 0101 1111 oooo oooo */
+/* 5f: 0101 1111 oooo oooo (7810 only) */
 static void BIT_7_wa(void)
 {
 	PAIR ea = upd7810.va;
@@ -8563,6 +8579,212 @@ static void BIT_7_wa(void)
 	RDOPARG( ea.b.l );
 
 	if (RM( ea.d ) & 0x80)
+		PSW |= SK;
+}
+
+/* 5d: 0101 1111 bbbb bbbb (7807 only) */
+static void SKN_bit(void)
+{
+	UINT8 imm;
+	int val;
+
+	RDOPARG( imm );
+
+	switch( imm & 0x1f )
+	{
+		case 0x10:	/* PA */
+			val = RP( UPD7810_PORTA );
+			break;
+		case 0x11:	/* PB */
+			val = RP( UPD7810_PORTB );
+			break;
+		case 0x12:	/* PC */
+			val = RP( UPD7810_PORTC );
+			break;
+		case 0x13:	/* PD */
+			val = RP( UPD7810_PORTD );
+			break;
+		case 0x15:	/* PF */
+			val = RP( UPD7810_PORTF );
+			break;
+		case 0x16:	/* MKH */
+			val = MKH;
+			break;
+		case 0x17:	/* MKL */
+			val = MKL;
+			break;
+		case 0x19:	/* SMH */
+			val = SMH;
+			break;
+		case 0x1b:	/* EOM */
+			val = EOM;
+			break;
+		case 0x1d:	/* TMM */
+			val = TMM;
+			break;
+		case 0x1e:	/* PT */
+			val = RP( UPD7807_PORTT );
+			break;
+		default:
+			logerror("uPD7810 #%d: illegal opcode %02x %02x at PC:%04x\n", cpu_getactivecpu(), OP, imm, PC);
+			val = 0;
+			break;
+	}
+
+	if (~val & (1 << (imm >> 5)))
+		PSW |= SK;
+}
+
+/* 58: 0101 1000 bbbb bbbb (7807 only) */
+static void SETB(void)
+{
+	UINT8 imm;
+	int bit;
+
+	RDOPARG( imm );
+	bit = imm >> 5;
+
+	switch( imm & 0x1f )
+	{
+		case 0x10:	/* PA */
+			WP( UPD7810_PORTA, RP( UPD7810_PORTA ) | (1 << bit));
+			break;
+		case 0x11:	/* PB */
+			WP( UPD7810_PORTB, RP( UPD7810_PORTB ) | (1 << bit));
+			break;
+		case 0x12:	/* PC */
+			WP( UPD7810_PORTC, RP( UPD7810_PORTC ) | (1 << bit));
+			break;
+		case 0x13:	/* PD */
+			WP( UPD7810_PORTD, RP( UPD7810_PORTD ) | (1 << bit));
+			break;
+		case 0x15:	/* PF */
+			WP( UPD7810_PORTF, RP( UPD7810_PORTF ) | (1 << bit));
+			break;
+		case 0x16:	/* MKH */
+			MKH |= (1 << bit);
+			break;
+		case 0x17:	/* MKL */
+			MKL |= (1 << bit);
+			break;
+		case 0x19:	/* SMH */
+			SMH |= (1 << bit);
+			break;
+		case 0x1b:	/* EOM */
+			EOM |= (1 << bit);
+			break;
+		case 0x1d:	/* TMM */
+			TMM |= (1 << bit);
+			break;
+//		case 0x1e:	/* PT */
+//			PT is input only
+//			break;
+		default:
+			logerror("uPD7810 #%d: illegal opcode %02x %02x at PC:%04x\n", cpu_getactivecpu(), OP, imm, PC);
+			break;
+	}
+}
+
+/* 5b: 0101 1011 bbbb bbbb (7807 only) */
+static void CLR(void)
+{
+	UINT8 imm;
+	int bit;
+
+	RDOPARG( imm );
+	bit = imm >> 5;
+
+	switch( imm & 0x1f )
+	{
+		case 0x10:	/* PA */
+			WP( UPD7810_PORTA, RP( UPD7810_PORTA ) & ~(1 << bit));
+			break;
+		case 0x11:	/* PB */
+			WP( UPD7810_PORTB, RP( UPD7810_PORTB ) & ~(1 << bit));
+			break;
+		case 0x12:	/* PC */
+			WP( UPD7810_PORTC, RP( UPD7810_PORTC ) & ~(1 << bit));
+			break;
+		case 0x13:	/* PD */
+			WP( UPD7810_PORTD, RP( UPD7810_PORTD ) & ~(1 << bit));
+			break;
+		case 0x15:	/* PF */
+			WP( UPD7810_PORTF, RP( UPD7810_PORTF ) & ~(1 << bit));
+			break;
+		case 0x16:	/* MKH */
+			MKH &= ~(1 << bit);
+			break;
+		case 0x17:	/* MKL */
+			MKL &= ~(1 << bit);
+			break;
+		case 0x19:	/* SMH */
+			SMH &= ~(1 << bit);
+			break;
+		case 0x1b:	/* EOM */
+			EOM &= ~(1 << bit);
+			break;
+		case 0x1d:	/* TMM */
+			TMM &= ~(1 << bit);
+			break;
+//		case 0x1e:	/* PT */
+//			PT is input only
+//			break;
+		default:
+			logerror("uPD7810 #%d: illegal opcode %02x %02x at PC:%04x\n", cpu_getactivecpu(), OP, imm, PC);
+			break;
+	}
+}
+
+/* 5d: 0101 1111 bbbb bbbb (7807 only) */
+static void SK_bit(void)
+{
+	UINT8 imm;
+	int val;
+
+	RDOPARG( imm );
+
+	switch( imm & 0x1f )
+	{
+		case 0x10:	/* PA */
+			val = RP( UPD7810_PORTA );
+			break;
+		case 0x11:	/* PB */
+			val = RP( UPD7810_PORTB );
+			break;
+		case 0x12:	/* PC */
+			val = RP( UPD7810_PORTC );
+			break;
+		case 0x13:	/* PD */
+			val = RP( UPD7810_PORTD );
+			break;
+		case 0x15:	/* PF */
+			val = RP( UPD7810_PORTF );
+			break;
+		case 0x16:	/* MKH */
+			val = MKH;
+			break;
+		case 0x17:	/* MKL */
+			val = MKL;
+			break;
+		case 0x19:	/* SMH */
+			val = SMH;
+			break;
+		case 0x1b:	/* EOM */
+			val = EOM;
+			break;
+		case 0x1d:	/* TMM */
+			val = TMM;
+			break;
+		case 0x1e:	/* PT */
+			val = RP( UPD7807_PORTT );
+			break;
+		default:
+			logerror("uPD7810 #%d: illegal opcode %02x %02x at PC:%04x\n", cpu_getactivecpu(), OP, imm, PC);
+			val = 0;
+			break;
+	}
+
+	if (val & (1 << (imm >> 5)))
 		PSW |= SK;
 }
 

@@ -407,6 +407,9 @@ static int dvg_generate_vector_list(void)
 				a = firstwd & 0x0fff;
 				VGLOG(("%4x", a));
 				pc = a;
+
+				if (!pc)
+					done=1;
 				break;
 
 			/* DJSRL: jump to a new program location as subroutine */

@@ -240,7 +240,7 @@ static MACHINE_DRIVER_START( pastelgl )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-	
+
 	MDRV_NVRAM_HANDLER(nb1413m3)
 
 	/* video hardware */
@@ -283,4 +283,4 @@ ROM_START( pastelgl )
 ROM_END
 
 
-GAME( 1985, pastelgl, 0, pastelgl, pastelgl, pastelgl, ROT0, "Nichibutsu", "Pastel Gal (Japan)" )
+GAME( 1985, pastelgl, 0, pastelgl, pastelgl, pastelgl, ROT0, "Nichibutsu", "Pastel Gal (Japan 851224)" )

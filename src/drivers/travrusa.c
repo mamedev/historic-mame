@@ -1,17 +1,49 @@
 /****************************************************************************
-Traverse USA Driver
 
+Traverse USA / Zippy Race  (c) 1983 Irem
+Shot Rider                 (c) 1984 Seibu Kaihatsu / Sigma
+
+driver by
 Lee Taylor
 John Clegg
+Tomasz Slanina  dox@space.pl
 
-Loosely based on the our previous 10 Yard Fight driver.
-
-
+Notes:
 - I haven't understood how char/sprite priority works. This is used for
   tunnels. I hacked it just by making the two needed colors opaque. They
   don't seem to be used anywhere else. Even if it looks like a hack, it might
   really be how the hardware works - see also notes regarding Kung Fu Master
   at the beginning of m62.c.
+- shtrider has some weird colors (pink cars, green "Seibu" truck, 'no'
+  on hiscore table) but there's no reason to think there's something wrong
+  with the driver.
+
+TODO:
+- shtrider dip switches
+
+****************************************************************************
+
+Shot Rider
+PCB layout:
+
+--------------------CCCCCCCCCCC------------------
+
+  P P              OKI                       2764
+ * 2764 2764 2764      AY  AY  x 2764  2764  2764
+
+ E           D  D                            P P
+
+                      2764 2764 2764
+--------------------------------------------------
+  C  - conector
+  P  - proms
+  E  - connector for  big black epoxy block
+  D  - dips
+  *  - empty rom socket
+  x  - 40 pin chip, surface scratched (6803)
+
+Epoxy block contains main cpu (Z80)
+and 2764 eprom (swapped D3/D4 and D5/D6 data lines)
 
 ****************************************************************************/
 
@@ -22,12 +54,15 @@ Loosely based on the our previous 10 Yard Fight driver.
 extern unsigned char *travrusa_videoram;
 
 PALETTE_INIT( travrusa );
+PALETTE_INIT( shtrider );
 VIDEO_START( travrusa );
+VIDEO_START( shtrider );
 WRITE_HANDLER( travrusa_videoram_w );
 WRITE_HANDLER( travrusa_scroll_x_low_w );
 WRITE_HANDLER( travrusa_scroll_x_high_w );
 WRITE_HANDLER( travrusa_flipscreen_w );
 VIDEO_UPDATE( travrusa );
+VIDEO_UPDATE( shtrider );
 
 
 
@@ -49,7 +84,7 @@ static MEMORY_WRITE_START( writemem )
 	{ 0xa000, 0xa000, travrusa_scroll_x_high_w },
 	{ 0xc800, 0xc9ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xd000, 0xd000, irem_sound_cmd_w },
-	{ 0xd001, 0xd001, travrusa_flipscreen_w },	/* + coin counters */
+	{ 0xd001, 0xd001, travrusa_flipscreen_w },	/* + coin counters - not written by shtrider */
 	{ 0xe000, 0xefff, MWA_RAM },
 MEMORY_END
 
@@ -230,35 +265,141 @@ INPUT_PORTS_START( motorace )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( shtrider )
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT_IMPULSE( 0x04, IP_ACTIVE_LOW, IPT_COIN2, 4 )
+	PORT_BIT_IMPULSE( 0x08, IP_ACTIVE_LOW, IPT_COIN1, 4 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 )
+
+	PORT_START	/* IN 2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+
+	PORT_START	/* DSW A */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START      /* DSW B */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "Speed Type" )
+	PORT_DIPSETTING(    0x02, "Km/h" )
+	PORT_DIPSETTING(    0x00, "Ml/h" )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
 
 
 static struct GfxLayout charlayout =
 {
-	8,8,	/* 8*8 characters */
-	1024,	/* 1024 characters */
-	3,	/* 3 bits per pixel */
-	{ 2*1024*8*8, 1024*8*8, 0 },
+	8,8,
+	RGN_FRAC(1,3),
+	3,
+	{ RGN_FRAC(2,3), RGN_FRAC(1,3), RGN_FRAC(0,3) },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 8*0, 8*1, 8*2, 8*3, 8*4, 8*5, 8*6, 8*7 },
-	8*8	/* every char takes 8 consecutive bytes */
-};
-static struct GfxLayout spritelayout =
-{
-	16,16,	/* 16*16 sprites */
-	256,	/* 256 sprites */
-	3,	/* 3 bits per pixel */
-	{ 2*256*16*16, 256*16*16, 0 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7, 16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, 8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
-	32*8	/* every sprite takes 32 consecutive bytes */
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8
 };
 
+static struct GfxLayout spritelayout =
+{
+	16,16,
+	RGN_FRAC(1,3),
+	3,
+	{ RGN_FRAC(2,3), RGN_FRAC(1,3), RGN_FRAC(0,3) },
+	{ 0, 1, 2, 3, 4, 5, 6, 7,
+			16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6, 16*8+7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
+	32*8
+};
+
+static struct GfxLayout sht_spritelayout =
+{
+	16,16,
+	RGN_FRAC(1,3),
+	3,
+	{ RGN_FRAC(2,3), RGN_FRAC(1,3), RGN_FRAC(0,3) },
+	{ 0, 1, 2, 3, 4, 5, 6, 7,
+			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8 },
+	32*8
+};
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &charlayout,      0, 16 },
 	{ REGION_GFX2, 0, &spritelayout, 16*8, 16 },
 	{ -1 } /* end of array */
+};
+
+static struct GfxDecodeInfo sht_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &charlayout,          0, 16 },
+	{ REGION_GFX2, 0, &sht_spritelayout, 16*8, 16 },
+	{ -1 }
 };
 
 
@@ -270,7 +411,7 @@ static MACHINE_DRIVER_START( travrusa )
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-	MDRV_FRAMES_PER_SECOND(57)
+	MDRV_FRAMES_PER_SECOND(56.75)
 	MDRV_VBLANK_DURATION(1790)	/* accurate frequency, measured on a Moon Patrol board, is 56.75Hz. */
 				/* the Lode Runner manual (similar but different hardware) */
 				/* talks about 55Hz and 1790ms vblank duration. */
@@ -280,7 +421,8 @@ static MACHINE_DRIVER_START( travrusa )
 	MDRV_SCREEN_SIZE(32*8, 32*8)
 	MDRV_VISIBLE_AREA(1*8, 31*8-1, 0*8, 32*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(128+32)
+
+	MDRV_PALETTE_LENGTH(128+16)
 	MDRV_COLORTABLE_LENGTH(16*8+16*8)
 
 	MDRV_PALETTE_INIT(travrusa)
@@ -290,6 +432,17 @@ static MACHINE_DRIVER_START( travrusa )
 	/* sound hardware */
 	MDRV_IMPORT_FROM(irem_audio)
 MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( shtrider )
+
+	MDRV_IMPORT_FROM(travrusa)
+
+	/* video hardware */
+	MDRV_GFXDECODE(sht_gfxdecodeinfo)
+
+	MDRV_PALETTE_INIT(shtrider)
+MACHINE_DRIVER_END
+
 
 
 /***************************************************************************
@@ -351,6 +504,33 @@ ROM_START( motorace )
 	ROM_LOAD( "tbp24s10.3",   0x0120, 0x0100, 0x76062638 ) /* sprite lookup table */
 ROM_END
 
+ROM_START( shtrider )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_LOAD( "1.bin",   0x0000, 0x2000, 0xeb51315c ) /* was inside epoxy block with cpu, encrypted */
+	ROM_LOAD( "2.bin",   0x2000, 0x2000, 0x97675d19 )
+	ROM_LOAD( "3.bin",   0x4000, 0x2000, 0x78d051cd )
+	ROM_LOAD( "4.bin",   0x6000, 0x2000, 0x02b96eaa )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
+	ROM_LOAD( "11.bin",   0xe000, 0x2000, 0xa8396b76 )
+
+	ROM_REGION( 0x06000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "5.bin",   0x0000, 0x2000, 0x34449f79 )
+	ROM_LOAD( "6.bin",   0x2000, 0x2000, 0xde43653d )
+	ROM_LOAD( "7.bin",   0x4000, 0x2000, 0x3445b81c )
+
+	ROM_REGION( 0x06000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "8.bin",   0x0000, 0x2000, 0x4072b096 )
+	ROM_LOAD( "9.bin",   0x2000, 0x2000, 0xfd4cc7e6 )
+	ROM_LOAD( "10.bin",  0x4000, 0x2000, 0x0a117925 )
+
+	ROM_REGION( 0x0420,  REGION_PROMS, 0 )
+	ROM_LOAD( "1.bpr",   0x0000, 0x0100, 0xe9e258e5 )
+	ROM_LOAD( "2.bpr",   0x0100, 0x0100, 0x6cf4591c )
+	ROM_LOAD( "4.bpr",   0x0200, 0x0020, 0xee97c581 )
+	ROM_LOAD( "3.bpr",   0x0220, 0x0100, 0x5db47092 )
+ROM_END
+
 
 
 DRIVER_INIT( motorace )
@@ -374,7 +554,18 @@ DRIVER_INIT( motorace )
 	}
 }
 
+static DRIVER_INIT( shtrider )
+{
+	int A;
+	unsigned char *rom = memory_region(REGION_CPU1);
+
+	/* D3/D4  and  D5/D6 swapped */
+	for (A = 0; A < 0x2000; A++)
+		rom[A] = BITSWAP8(rom[A],7,5,6,3,4,2,1,0);
+}
+
 
 
 GAME( 1983, travrusa, 0,        travrusa, travrusa, 0,        ROT270, "Irem", "Traverse USA / Zippy Race" )
 GAME( 1983, motorace, travrusa, travrusa, motorace, motorace, ROT270, "Irem (Williams license)", "MotoRace USA" )
+GAMEX(1984, shtrider, 0,        shtrider, shtrider, shtrider, ROT270|ORIENTATION_FLIP_X, "Seibu Kaihatsu (Sigma license)", "Shot Rider", GAME_NO_COCKTAIL )

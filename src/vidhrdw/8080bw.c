@@ -26,13 +26,10 @@ static WRITE_HANDLER( bw_videoram_w );
 static WRITE_HANDLER( schaser_videoram_w );
 static WRITE_HANDLER( lupin3_videoram_w );
 static WRITE_HANDLER( polaris_videoram_w );
-static WRITE_HANDLER( invadpt2_videoram_w );
-static WRITE_HANDLER( astinvad_videoram_w );
-static WRITE_HANDLER( spcking2_videoram_w );
 static WRITE_HANDLER( sstrngr2_videoram_w );
-static WRITE_HANDLER( spaceint_videoram_w );
 static WRITE_HANDLER( helifire_videoram_w );
 static WRITE_HANDLER( phantom2_videoram_w );
+static WRITE_HANDLER( invadpt2_videoram_w );
 
 static VIDEO_UPDATE( 8080bw_common );
 static VIDEO_UPDATE( seawolf );
@@ -222,26 +219,6 @@ DRIVER_INIT( bowler )
 {
 	init_8080bw();
 	video_update_p = video_update_bowler;
-}
-
-DRIVER_INIT( astinvad )
-{
-	init_8080bw();
-	videoram_w_p = astinvad_videoram_w;
-	screen_red_enabled = 1;
-}
-
-DRIVER_INIT( spcking2 )
-{
-	init_8080bw();
-	videoram_w_p = spcking2_videoram_w;
-	screen_red_enabled = 1;
-}
-
-DRIVER_INIT( spaceint )
-{
-	init_8080bw();
-	videoram_w_p = spaceint_videoram_w;
 }
 
 DRIVER_INIT( phantom2 )
@@ -833,79 +810,4 @@ static WRITE_HANDLER( sstrngr2_videoram_w )
 	}
 
 	plot_byte(x, y, data, col, 0);
-}
-
-static WRITE_HANDLER( astinvad_videoram_w )
-{
-	UINT8 x,y,col;
-
-	videoram[offset] = data;
-
-	y = offset / 32;
-	x = 8 * (offset % 32);
-
-	if (!screen_red)
-	{
-		if (flip_screen)
-			col = (memory_region(REGION_PROMS)[(y >> 3 << 5) | (x >> 3)] >> 4) & 0x07;
-		else
-			col = (memory_region(REGION_PROMS)[(((((UINT8)~y >> 3) + 4) & 0x1f) << 5) | ((UINT8)~x >> 3)]) & 0x07;
-	}
-	else
-		col = 1; /* red */
-
-	plot_byte(x, y, data, col, 0);
-}
-
-static WRITE_HANDLER( spcking2_videoram_w )
-{
-	UINT8 x,y,col;
-
-	videoram[offset] = data;
-
-	y = offset / 32;
-	x = 8 * (offset % 32);
-
-	if (!screen_red)
-	{
-		if (flip_screen)
-			col = (memory_region(REGION_PROMS)[(y >> 3 << 5) | (x >> 3)] >> 4) & 0x07;
-		else
-			col = (memory_region(REGION_PROMS)[((UINT8)~y >> 3 << 5) | ((UINT8)~x >> 3)]) & 0x07;
-	}
-	else
-		col = 1; /* red */
-
-	plot_byte(x, y, data, col, 0);
-}
-
-
-static data8_t spaceint_color;
-
-WRITE_HANDLER( spaceint_color_w )
-{
-	spaceint_color = data ^ 0x0f;
-
-	if (spaceint_color == 0x08)
-		spaceint_color = 0x07;
-}
-
-
-static WRITE_HANDLER( spaceint_videoram_w )
-{
-	UINT8 x,y;
-	int i;
-
-	videoram[offset] = data;
-
-	y = 8 * (offset / 256);
-	x = offset % 256;
-
-	for (i = 0; i < 8; i++)
-	{
-		plot_pixel_8080(x, y, (data & 0x01) ? spaceint_color : 0);
-
-		y++;
-		data >>= 1;
-	}
 }

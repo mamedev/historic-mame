@@ -6613,7 +6613,7 @@ GAME (1994, toryumon, 0,        toryumon, toryumon, toryumon, ROT0,   "Sega",   
 GAMEX(1989, tturf,    0,        tturf,    tturf,    tturf,    ROT0,   "Sega / Sunsoft", "Tough Turf (Japan)", GAME_NO_SOUND )
 GAMEX(1989, tturfu,   tturf,    tturfu,   tturf,    tturf,    ROT0,   "Sega / Sunsoft", "Tough Turf (US)", GAME_NO_SOUND )
 GAMEX(1989, tturfbl,  tturf,    tturfbl,  tturf,    tturfbl,  ROT0,   "bootleg", "Tough Turf (bootleg)", GAME_IMPERFECT_SOUND)
-GAME( 1988, wb3,      0,        wb3,      wb3,      wb3,      ROT0,   "Sega / Westone", "Wonder Boy III - Monster Lair (set 1)" )
+GAMEX(1988, wb3,      0,        wb3,      wb3,      wb3,      ROT0,   "Sega / Westone", "Wonder Boy III - Monster Lair (set 1)", GAME_NO_SOUND )
 GAMEX(1988, wb3a,     wb3,      wb3,      wb3,      wb3,      ROT0,   "Sega / Westone", "Wonder Boy III - Monster Lair (set 2)", GAME_NOT_WORKING )
 GAME( 1988, wb3bl,    wb3,      wb3bl,    wb3,      wb3bl,    ROT0,   "bootleg", "Wonder Boy III - Monster Lair (bootleg)" )
 GAME( 1989, wrestwar, 0,        wrestwar, wrestwar, wrestwar, ROT270, "Sega",    "Wrestle War" )

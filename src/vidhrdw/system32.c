@@ -19,10 +19,16 @@ data16_t *system32_mixerregs;		// mixer registers
 data16_t *sys32_videoram;
 data8_t sys32_ramtile_dirty[0x1000];
 extern data16_t *sys32_displayenable;
+extern data16_t *sys32_tilebank_external;
 
 extern int system32_palMask;
 extern int system32_mixerShift;
 int system32_draw_bgs;
+int system32_screen_mode;
+int system32_screen_old_mode;
+int system32_allow_high_resolution;
+static int sys32_old_brightness[3];
+int sys32_brightness[3];
 
 /* these are the various attributes a sprite can have, will decide which need to be global later, maybe put them in a struct */
 
@@ -105,7 +111,7 @@ void system32_draw_sprite ( struct mame_bitmap *bitmap, const struct rectangle *
 		}
 
 		if ((drawypos >= cliprect->min_y) && (drawypos <= cliprect->max_y)) {
-			UINT16 *destline = (UINT16 *)(bitmap->line[drawypos]);
+			UINT16 *destline = (bitmap->line[drawypos]);
 
 			while ( xsrc < (sys32sprite_rom_width<<16) ) {
 
@@ -141,7 +147,7 @@ void system32_draw_sprite ( struct mame_bitmap *bitmap, const struct rectangle *
 						}
 						else
 						{
-							if (gfxdata) destline[drawxpos] =  sys32sprite_table[gfxdata] & 0x1fff;;
+							if (gfxdata) destline[drawxpos] =  sys32sprite_table[gfxdata] & 0x1fff;
 						}
 
 					} else { // 8bpp
@@ -212,8 +218,7 @@ drawing functions
 		xxxx---- -------- (0xf000) :  Bits 0-3 of Sprite ROM Bank (TRUSTED)
 		----x--- -------- (0x0800) :  unknown
 		-----x-- -------- (0x0400) :  unknown
-		------x- -------- (0x0200) :  colour 0 = solid?  doesn't seem to hold true in ga2? (it seems to be 0x200 of the screen height, check sonicp when you start the game
-		-------x xxxxxxxx (0x01ff) :  Height to draw on screen (TRUSTED)
+		------xx xxxxxxxx (0x01ff) :  Height to draw on screen (TRUSTED)
 
 	w = width to draw on SCREEN + extra attributes *note the extra attributes are different on Multi-System 32, normal are listed*
 		x------- -------- (0x8000) :  unknown
@@ -263,7 +268,6 @@ void system32_get_sprite_info ( struct mame_bitmap *bitmap, const struct rectang
 	sys32sprite_rom_bank_low			= (spritedata_source[2]&0xf000) >> 12;
 	sys32sprite_unknown_1				= (spritedata_source[2]&0x0800) >> 11;
 	sys32sprite_unknown_2				= (spritedata_source[2]&0x0400) >> 10;
-//	sys32sprite_solid					= (spritedata_source[2]&0x0200) >> 9;
 	sys32sprite_screen_height			= (spritedata_source[2]&0x03ff) >> 0;
 
 	sys32sprite_unknown_3				= (spritedata_source[3]&0x8000) >> 15;
@@ -503,8 +507,13 @@ void system32_process_spritelist ( struct mame_bitmap *bitmap, const struct rect
 /* 0x31ff00 - 0x31ffff are video registers */
 
 /*
-	00 |
-	02 |
+
+tile banking is controlled by a register in here as well as a register external to the tilemap chip
+which is mapped at 0xc0000e
+*/
+/*
+	00 | rR-- -b--  ---- ----    |  b = tile bank low bit ( | 0x2000 ), not multi-32  r = screen resolution R also resolution?
+	02 | ---- ----  ---- dddd    |  d = tilemap disable registers
 	04 |
 	06 |
 	08 |
@@ -560,6 +569,60 @@ void system32_process_spritelist ( struct mame_bitmap *bitmap, const struct rect
 */
 
 
+/* mixer regs
+
+00
+02
+04
+06
+08
+0a
+0c
+0e
+10
+12
+14
+16
+18
+1a
+1c
+1e
+20 ---- ---- ---- pppp  p = priority text?
+22 ---- ssss bbbb pppp  (Tilemap Palette Base + Shifting, b = bank, s = shift p = priority 0)
+24 ---- ssss bbbb pppp  p = priority 1
+26 ---- ssss bbbb pppp  p = priority 2
+28 ---- ssss bbbb pppp  p = priority 3
+2a
+2c
+2e
+30
+32 ---e ---- ---e ----  e = alpha enable 0
+34 ---e ---- ---e ----  e = alpha enable 1
+36 ---e ---- ---e ----  e = alpha enable 2
+38 ---e ---- ---e ----  e = alpha enable 3
+3a
+3c
+3e
+40 bbbb bbbb bbbb bbbb  b = brightness (layer?) text?  or r ?
+42 bbbb bbbb bbbb bbbb  b = brightness (layer?) 0?     or g ?
+44 bbbb bbbb bbbb bbbb  b = brightness (layer?) 1?     or b ?
+46 bbbb bbbb bbbb bbbb  b = brightness? (layer?) 2?     or r ? (jpark)
+48 bbbb bbbb bbbb bbbb  b = brightness? (layer?) 3?     or g ? (jpark)
+4a bbbb bbbb bbbb bbbb  b = brightness? (layer?)        or b ? (jpark)
+4c
+4e bbbb bbbb ---- ----   b = alpha blend amount?
+50
+52
+54
+56
+58
+5a
+5c
+5e
+
+....
+*/
+
 /* background layers will be handled with tilemaps later, this is just a temporary measure for getting a rough idea of what will need to be implemented */
 
 /* yes i know its ugly and sub-optimal ;-) */
@@ -574,6 +637,26 @@ void system32_draw_bg_layer ( struct mame_bitmap *bitmap, const struct rectangle
 	int scrollx, scrolly;
 	int drawx, drawy;
 	int yflip, xflip;
+	int sys32_tilebank_internal = sys32_videoram[0x01FF00/2] & 0x0400;
+	int s32palette;
+
+	int paletteshift = (system32_mixerregs[(0x22+layer*2)/2] & 0x0f00)>>8;
+	int palettebank = ((system32_mixerregs[(0x22+layer*2)/2] & 0x00f0)>>4)*0x40;
+	                                                // u--?
+
+//	int alphaenable[4] = {0,0,0,0};
+//	int alphaamount;
+//usrintf_showmessage	("pb %04x",sys32_videoram[0x1FF02/2]);
+
+
+	int trans;
+
+//	if ((system32_mixerregs[0x32/2] & 0x1010) == 0x1010) alphaenable[0] = 1;
+//	if ((system32_mixerregs[0x34/2] & 0x1010) == 0x1010) alphaenable[1] = 1;
+//	if ((system32_mixerregs[0x36/2] & 0x1010) == 0x1010) alphaenable[2] = 1;
+//	if ((system32_mixerregs[0x38/2] & 0x1010) == 0x1010) alphaenable[3] = 1;
+
+//	alphaamount = (((system32_mixerregs[0x4e/2])>>8) & 7) <<5; //umm maybe
 
 	base[1] = (sys32_videoram[(0x01FF40+4*layer)/2] & 0x7f00)>>8;
 	base[0] = (sys32_videoram[(0x01FF40+4*layer)/2] & 0x007f);
@@ -581,9 +664,9 @@ void system32_draw_bg_layer ( struct mame_bitmap *bitmap, const struct rectangle
 	base[2] = (sys32_videoram[(0x01FF42+4*layer)/2] & 0x007f);
 
 	scrollx = (sys32_videoram[(0x01FF12+8*layer)/2]) & 0x3ff;
-	scrolly = (sys32_videoram[(0x01FF16+8*layer)/2]) & 0x3ff;
+	scrolly = (sys32_videoram[(0x01FF16+8*layer)/2]) & 0x1ff;
 
-	for (y = 0; y < 64 ; y++)
+	for (y = 0; y < 32 ; y++)
 	{
 		drawy = y*16-scrolly;
 
@@ -593,31 +676,53 @@ void system32_draw_bg_layer ( struct mame_bitmap *bitmap, const struct rectangle
 			drawx = x*16-scrollx;
 			basetouse = 0;
 			if (x > 31) basetouse++;
-			if (y > 31) basetouse+=2;
+			if (y > 15) basetouse+=2;
 
-			tileno = sys32_videoram[(base[basetouse]*0x200) +   (x & 31) + (y & 31) * 32]; /* mask is .. ? */
+			tileno = sys32_videoram[(base[basetouse]*0x200) +   (x & 31) + (y & 15) * 32];
+
 			yflip = tileno & 0x8000;
 			xflip = tileno & 0x4000;
-			tileno &= 0x3fff;
+
+			trans = TRANSPARENCY_PEN;
+
+			/* guess based on rad rally course select, not trusted seems to break rad mobile on corners, arf backgrounds etc. so its probably wrong or selectable */
+	//		if (tileno & 0x2000) trans = TRANSPARENCY_NONE;
+
+
+		//	if (alphaenable[layer])
+		//	{
+		//		trans = TRANSPARENCY_ALPHA;
+		//		alpha_set_level(alphaamount);
+		//	}
+
+			s32palette = (tileno & 0x1ff0) >> (paletteshift+4);
+			tileno &= 0x1fff;
+
+
+			if (sys32_tilebank_internal) tileno |= 0x2000;
+			if (sys32_tilebank_external[0]&1) tileno |= 0x4000;
 
 			if ((drawy+16 > 0) && (drawy < 224))
 			{
 				if ((drawx+16 > 0) && (drawx < 448))
-					drawgfx(bitmap,Machine->gfx[0],tileno,0x100,xflip,yflip,drawx,drawy,cliprect,TRANSPARENCY_PEN,0);
+					drawgfx(bitmap,Machine->gfx[0],tileno,palettebank+s32palette,xflip,yflip,drawx,drawy,cliprect,trans,0);
 
 				if ((drawx+16+0x400 > 0) && (drawx+0x400 < 448))
-					drawgfx(bitmap,Machine->gfx[0],tileno,0x100,xflip,yflip,drawx+0x400,drawy,cliprect,TRANSPARENCY_PEN,0);
+					drawgfx(bitmap,Machine->gfx[0],tileno,palettebank+s32palette,xflip,yflip,drawx+0x400,drawy,cliprect,trans,0);
 			}
 
-			if ((drawy+16+0x400 > 0) && (drawy+0x400 < 224))
+			if ((drawy+16+0x200 > 0) && (drawy+0x200 < 224))
 			{
 
 			if ((drawx+16 > 0) && (drawx < 448))
-				drawgfx(bitmap,Machine->gfx[0],tileno,0x100,xflip,yflip,drawx,drawy+0x400,cliprect,TRANSPARENCY_PEN,0);
+				drawgfx(bitmap,Machine->gfx[0],tileno,palettebank+s32palette,xflip,yflip,drawx,drawy+0x200,cliprect,trans,0);
 
 			if ((drawx+16+0x400 > 0) && (drawx+0x400 < 448))
-				drawgfx(bitmap,Machine->gfx[0],tileno,0x100,xflip,yflip,drawx+0x400,drawy+0x400,cliprect,TRANSPARENCY_PEN,0);
+				drawgfx(bitmap,Machine->gfx[0],tileno,palettebank+s32palette,xflip,yflip,drawx+0x400,drawy+0x200,cliprect,trans,0);
 			}
+
+
+
 		}
 
 	}
@@ -629,7 +734,6 @@ void system32_draw_text_layer ( struct mame_bitmap *bitmap, const struct rectang
 	unsigned char *mixer_regs8 = (unsigned char *)system32_mixerregs;
 	int textbank = sys32_videoram[0x01ff5c/2] & 0x0007;
 	int tmaddress = (sys32_videoram[0x01ff5c/2] & 0x00f0) >> 4;
-
 	/* this register is like this
 
 	 ---- ----  tttt -bbb
@@ -717,25 +821,85 @@ VIDEO_START( system32 )
 {
 	sys32_spriteram8 = auto_malloc ( 0x20000 ); // for ram sprites
 	sys32_videoram = auto_malloc ( 0x20000 );
+	sys32_old_brightness[0] = 0; sys32_old_brightness[1]=0; sys32_old_brightness[2] = 0;
+	sys32_brightness[0] = 0xff;	sys32_brightness[1] = 0xff;
+	sys32_brightness[2] = 0xff;
 
 //	system32_draw_bgs = 0; /* disable for now until they work, just for development atm */
 
 	return 0;
 }
 
+void system32_set_colour (int offset);
+
+static void system32_recalc_palette( void )
+{
+	int i;
+	for (i = 0; i < 0x4000; i++)
+		system32_set_colour (i);
+}
+
+
 
 VIDEO_UPDATE( system32 )
 {
+	int sys32_tmap_disabled = sys32_videoram[0x1FF02/2] & 0x000f;
+
+
+	int priority0 = (system32_mixerregs[0x22/2] & 0x000f);
+	int priority1 = (system32_mixerregs[0x24/2] & 0x000f);
+	int priority2 = (system32_mixerregs[0x26/2] & 0x000f);
+	int priority3 = (system32_mixerregs[0x28/2] & 0x000f);
+	int priloop;
+	int sys32_palette_dirty = 0;
+
+	sys32_brightness[0] = (system32_mixerregs[0x40/2]);
+	sys32_brightness[1] = (system32_mixerregs[0x42/2]);
+	sys32_brightness[2] = (system32_mixerregs[0x44/2]);
+
+	if (sys32_brightness[0] != sys32_old_brightness[0]) { sys32_old_brightness[0] = sys32_brightness[0]; sys32_palette_dirty = 1; }
+	if (sys32_brightness[1] != sys32_old_brightness[1]) { sys32_old_brightness[1] = sys32_brightness[1]; sys32_palette_dirty = 1; }
+	if (sys32_brightness[2] != sys32_old_brightness[2]) { sys32_old_brightness[2] = sys32_brightness[2]; sys32_palette_dirty = 1; }
+
+	if (sys32_palette_dirty)
+	{
+		sys32_palette_dirty = 0;
+		system32_recalc_palette();
+	}
+
+	system32_screen_mode = sys32_videoram[0x01FF00/2] & 0xc000;  // this should be 0x8000 according to modeler but then brival is broken?  this way alien3 and arabfgt try to change when they shouldn't .. wrong register?
+
+//  usrintf_showmessage ( "sys32_videoram[0x01FF00/2] %04x",sys32_videoram[0x01FF00/2]);
+
+	if (system32_screen_mode!=system32_screen_old_mode)
+	{
+		system32_screen_old_mode = system32_screen_mode;
+		if (system32_screen_mode)
+		{
+			if (system32_allow_high_resolution) set_visible_area(0*8, 52*8-1, 0*8, 28*8-1);
+		//	else usrintf_showmessage ("attempted to switch to hi-resolution mode!");
+		}
+		else
+		{
+			set_visible_area(0*8, 40*8-1, 0*8, 28*8-1);
+		}
+	}
+
+
 	fillbitmap(bitmap, 0, 0);
 
 	if (sys32_displayenable[0] & 0x0002) {
 
 		if (system32_draw_bgs)
 		{
-			system32_draw_bg_layer ( bitmap,cliprect, 3 );
-			system32_draw_bg_layer ( bitmap,cliprect, 2 );
-			system32_draw_bg_layer ( bitmap,cliprect, 1 );
-			system32_draw_bg_layer ( bitmap,cliprect, 0 );
+			for (priloop = 0; priloop < 0x10; priloop++)
+			{
+				if (priloop == priority0) {if (!(sys32_tmap_disabled & 0x1)) system32_draw_bg_layer ( bitmap,cliprect, 0 );}
+				if (priloop == priority1) {if (!(sys32_tmap_disabled & 0x2)) system32_draw_bg_layer ( bitmap,cliprect, 1 );}
+				if (priloop == priority2) {if (!(sys32_tmap_disabled & 0x4)) system32_draw_bg_layer ( bitmap,cliprect, 2 );}
+				if (priloop == priority3) {if (!(sys32_tmap_disabled & 0x8)) system32_draw_bg_layer ( bitmap,cliprect, 3 );}
+
+			}
 		}
 
 		system32_process_spritelist (bitmap, cliprect);

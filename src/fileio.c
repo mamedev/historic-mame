@@ -6,7 +6,6 @@
 
 #include "driver.h"
 #include "unzip.h"
-#include "rc.h"
 
 #ifdef MESS
 #include "image.h"

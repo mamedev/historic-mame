@@ -40,6 +40,7 @@ TODO:
 #include "cpu/tms34010/tms34010.h"
 #include "cpu/tms34010/34010ops.h"
 #include "cpu/tms32025/tms32025.h"
+#include "vidhrdw/tlc34076.h"
 
 
 static data16_t *code_rom;
@@ -71,40 +72,6 @@ READ16_HANDLER( coolpool_gfxrom_r )
 	data8_t *rom = memory_region(REGION_GFX1);
 
 	return rom[2*offset] | (rom[2*offset+1] << 8);
-}
-
-WRITE16_HANDLER( coolpool_palette_w )
-{
-	static int entry;
-	static data8_t pal[256*3];
-
-	switch (offset)
-	{
-		case 0:
-			entry = 3*(data & 0xff);
-			break;
-
-		case 1:
-		{
-			int r,g,b,c;
-
-			pal[entry] = data & 0x3f;
-			c = 3*(entry/3);
-			r = pal[c+0] << 2;
-			r |= (r >> 6);
-			g = pal[c+1] << 2;
-			g |= (g >> 6);
-			b = pal[c+2] << 2;
-			b |= (b >> 6);
-			palette_set_color(entry/3,r,g,b);
-			entry = (entry+1) % (256*3);
-			break;
-		}
-
-		case 2:
-			/* pixel read mask, game keeps it at 0xff so we don't have to emulate it */
-			break;
-	}
 }
 
 WRITE16_HANDLER( coolpool_34010_io_register_w )
@@ -188,6 +155,13 @@ VIDEO_UPDATE( coolpool )
 
 	/* compute the offset */
 	offset = (dpyadr << 4) + dpytap;
+/*
+{
+	static int temp;
+	if (keyboard_pressed(KEYCODE_J) && temp > 0) temp -= 2;
+	else if (keyboard_pressed(KEYCODE_K)) temp += 2;
+	offset = temp;
+}*/
 	
 	/* adjust for when DPYADR was written */
 	if (cliprect->min_y > dpyadrscan)
@@ -214,6 +188,11 @@ VIDEO_UPDATE( coolpool )
 
 
 static data16_t input_data;
+
+MACHINE_INIT( coolpool )
+{
+	tlc34076_reset(6);
+}
 
 WRITE16_HANDLER( amerdart_input_w )
 {
@@ -368,6 +347,7 @@ MEMORY_END
 
 static MEMORY_READ16_START( coolpool_readmem )
 	{ TOBYTE(0x00000000), TOBYTE(0x001fffff), MRA16_RAM },
+	{ TOBYTE(0x01000000), TOBYTE(0x010000ff), tlc34076_lsb_r },	// IMSG176P-40
 	{ TOBYTE(0x02000000), TOBYTE(0x0200000f), coolpool_iop_r },	// "IOP"
 //	{ TOBYTE(0x02000010), TOBYTE(0x0200001f), 				// "IOP"
 	{ TOBYTE(0x03000000), TOBYTE(0x03ffffff), coolpool_gfxrom_r },
@@ -378,7 +358,7 @@ MEMORY_END
 
 static MEMORY_WRITE16_START( coolpool_writemem )
 	{ TOBYTE(0x00000000), TOBYTE(0x001fffff), MWA16_RAM, &ram_base },	// video + work ram
-	{ TOBYTE(0x01000000), TOBYTE(0x0100002f), coolpool_palette_w },	// IMSG176P-40
+	{ TOBYTE(0x01000000), TOBYTE(0x010000ff), tlc34076_lsb_w },	// IMSG176P-40
 	{ TOBYTE(0x02000000), TOBYTE(0x0200000f), coolpool_iop_w },	// "IOP"
 	{ TOBYTE(0x03000000), TOBYTE(0x0300000f), coolpool_misc_w },	// IOP reset + other stuff
 	{ TOBYTE(0x06000000), TOBYTE(0x06007fff), MWA16_RAM },	// NVRAM
@@ -390,6 +370,7 @@ static MEMORY_READ16_START( nballsht_readmem )
 	{ TOBYTE(0x00000000), TOBYTE(0x001fffff), MRA16_RAM },
 	{ TOBYTE(0x02000000), TOBYTE(0x0200000f), coolpool_iop_r },	// "IOP"
 //	{ TOBYTE(0x02000010), TOBYTE(0x0200001f), 				// "IOP"
+	{ TOBYTE(0x04000000), TOBYTE(0x040000ff), tlc34076_lsb_r },	// IMSG176P-40
 	{ TOBYTE(0x06000000), TOBYTE(0x0601ffff), MRA16_RAM },	// more NVRAM?
 	{ TOBYTE(0x06020000), TOBYTE(0x0603ffff), MRA16_RAM },	// NVRAM
 	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), tms34010_io_register_r },
@@ -401,7 +382,7 @@ static MEMORY_WRITE16_START( nballsht_writemem )
 	{ TOBYTE(0x00000000), TOBYTE(0x001fffff), MWA16_RAM, &ram_base },	// video + work ram
 	{ TOBYTE(0x02000000), TOBYTE(0x0200000f), coolpool_iop_w },	// "IOP"
 	{ TOBYTE(0x03000000), TOBYTE(0x0300000f), coolpool_misc_w },	// IOP reset + other stuff
-	{ TOBYTE(0x04000000), TOBYTE(0x0400002f), coolpool_palette_w },
+	{ TOBYTE(0x04000000), TOBYTE(0x040000ff), tlc34076_lsb_w },
 	{ TOBYTE(0x06000000), TOBYTE(0x0601ffff), MWA16_RAM },	// more NVRAM?
 	{ TOBYTE(0x06020000), TOBYTE(0x0603ffff), MWA16_RAM },	// NVRAM
 	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), coolpool_34010_io_register_w },
@@ -647,6 +628,7 @@ static MACHINE_DRIVER_START( coolpool )
 	MDRV_CPU_MEMORY(DSP_readmem,DSP_writemem)
 	MDRV_CPU_PORTS(DSP_readport,DSP_writeport)
 
+	MDRV_MACHINE_INIT(coolpool)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(1000000 * (261 - 240) / (261 * 60))
 	MDRV_INTERLEAVE(20)
@@ -677,6 +659,7 @@ static MACHINE_DRIVER_START( 9ballsht )
 	MDRV_CPU_MEMORY(DSP_readmem,DSP_writemem)
 	MDRV_CPU_PORTS(DSP_readport,DSP_writeport)
 
+	MDRV_MACHINE_INIT(coolpool)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(1000000 * (261 - 240) / (261 * 60))
 	MDRV_INTERLEAVE(20)

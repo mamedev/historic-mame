@@ -949,7 +949,7 @@ INPUT_PORTS_START( dw )
 	PORT_DIPSETTING(    0x30, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x28, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( 1C_4C ) )
-	/* According to the manual, ALL bits 0 to 5 must be ON to have
+	/* According to the manual, ALL bits 0 to 5 must be ON to have 
 	   "2 Coins/1 Credit (1 to continue)" for both coin slots */
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
@@ -1060,7 +1060,7 @@ INPUT_PORTS_START( willow )
 	PORT_DIPSETTING(    0x30, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x28, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( 1C_4C ) )
-	/* According to the manual, ALL bits 0 to 5 must be ON to have
+	/* According to the manual, ALL bits 0 to 5 must be ON to have 
 	   "2 Coins/1 Credit (1 to continue)" for both coin slots */
 	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0xc0, "Upright 1 Player" )
@@ -1177,7 +1177,7 @@ INPUT_PORTS_START( unsquad )
 	PORT_DIPSETTING(    0x30, DEF_STR( 1C_2C ) )
 	PORT_DIPSETTING(    0x28, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( 1C_4C ) )
-	/* According to the manual, ALL bits 0 to 5 must be ON to have
+	/* According to the manual, ALL bits 0 to 5 must be ON to have 
 	   "2 Coins/1 Credit (1 to continue)" for both coin slots */
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
@@ -4394,7 +4394,7 @@ ROM_END
 ROM_START( willow )
 	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )      /* 68000 code */
 	ROM_LOAD16_BYTE( "wlu_30.rom",   0x00000, 0x20000, 0xd604dbb1 )
-	ROM_LOAD16_BYTE( "wlu_35.rom",   0x00001, 0x20000, 0xdaee72fe )
+	ROM_LOAD16_BYTE( "willow-u.35",  0x00001, 0x20000, 0x7a791e77 )
 	ROM_LOAD16_BYTE( "wlu_31.rom",   0x40000, 0x20000, 0x0eb48a83 )
 	ROM_LOAD16_BYTE( "wlu_36.rom",   0x40001, 0x20000, 0x36100209 )
 	ROM_LOAD16_WORD_SWAP( "wl_32.rom",    0x80000, 0x80000, 0xdfd9f643 )
@@ -4431,6 +4431,40 @@ ROM_START( willowj )
 	ROM_LOAD16_BYTE( "wl42.bin",     0x00001, 0x20000, 0x1ac39615 )
 	ROM_LOAD16_BYTE( "wl37.bin",     0x40000, 0x20000, 0x30a717fa )
 	ROM_LOAD16_BYTE( "wl43.bin",     0x40001, 0x20000, 0xd0dddc9e )
+	ROM_LOAD16_WORD_SWAP( "wl_32.rom",    0x80000, 0x80000, 0xdfd9f643 )
+
+	ROM_REGION( 0x400000, REGION_GFX1, 0 )
+	ROMX_LOAD( "wl_gfx5.rom",  0x000000, 0x80000, 0xafa74b73, ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "wl_gfx7.rom",  0x000002, 0x80000, 0x12a0dc0b, ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "wl_gfx1.rom",  0x000004, 0x80000, 0xc6f2abce, ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "wl_gfx3.rom",  0x000006, 0x80000, 0x4aa4c6d3, ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "wl_24.rom",    0x200000, 0x20000, 0x6f0adee5, ROM_SKIP(7) )
+	ROMX_LOAD( "wl_14.rom",    0x200001, 0x20000, 0x9cf3027d, ROM_SKIP(7) )
+	ROMX_LOAD( "wl_26.rom",    0x200002, 0x20000, 0xf09c8ecf, ROM_SKIP(7) )
+	ROMX_LOAD( "wl_16.rom",    0x200003, 0x20000, 0xe35407aa, ROM_SKIP(7) )
+	ROMX_LOAD( "wl_20.rom",    0x200004, 0x20000, 0x84992350, ROM_SKIP(7) )
+	ROMX_LOAD( "wl_10.rom",    0x200005, 0x20000, 0xb87b5a36, ROM_SKIP(7) )
+	ROMX_LOAD( "wl_22.rom",    0x200006, 0x20000, 0xfd3f89f0, ROM_SKIP(7) )
+	ROMX_LOAD( "wl_12.rom",    0x200007, 0x20000, 0x7da49d69, ROM_SKIP(7) )
+
+	ROM_REGION( 0x8000, REGION_GFX2, 0 )
+	ROM_COPY( REGION_GFX1, 0x000000, 0x000000, 0x8000 )	/* stars */
+
+	ROM_REGION( 0x18000, REGION_CPU2, 0 ) /* 64k for the audio CPU (+banks) */
+	ROM_LOAD( "wl_09.rom",     0x00000, 0x08000, 0xf6b3d060 )
+	ROM_CONTINUE(              0x10000, 0x08000 )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 )	/* Samples */
+	ROM_LOAD( "wl_18.rom",    0x00000, 0x20000, 0xbde23d4d )
+	ROM_LOAD( "wl_19.rom",    0x20000, 0x20000, 0x683898f5 )
+ROM_END
+
+ROM_START( willowje )
+	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )      /* 68000 code */
+	ROM_LOAD16_BYTE( "wlu_30.rom",   0x00000, 0x20000, 0xd604dbb1 )
+	ROM_LOAD16_BYTE( "wlu_35.rom",   0x00001, 0x20000, 0xdaee72fe )
+	ROM_LOAD16_BYTE( "wlu_31.rom",   0x40000, 0x20000, 0x0eb48a83 )
+	ROM_LOAD16_BYTE( "wlu_36.rom",   0x40001, 0x20000, 0x36100209 )
 	ROM_LOAD16_WORD_SWAP( "wl_32.rom",    0x80000, 0x80000, 0xdfd9f643 )
 
 	ROM_REGION( 0x400000, REGION_GFX1, 0 )
@@ -4938,6 +4972,32 @@ ROM_START( cawing )
 	ROM_LOAD( "ca_19.rom",    0x20000, 0x20000, 0x74584493 )
 ROM_END
 
+ROM_START( cawingu )
+	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )      /* 68000 code */
+	ROM_LOAD16_BYTE( "cae_30a.rom",  0x00000, 0x20000, 0x91fceacd )
+	ROM_LOAD16_BYTE( "cau_35a.rom",  0x00001, 0x20000, 0xf090d9b2 )
+	ROM_LOAD16_BYTE( "cae_31a.rom",  0x40000, 0x20000, 0xe5b75caf )
+	ROM_LOAD16_BYTE( "cae_36a.rom",  0x40001, 0x20000, 0xc73fd713 )
+	ROM_LOAD16_WORD_SWAP( "ca_32.rom", 0x80000, 0x80000, 0x0c4837d4 )
+
+	ROM_REGION( 0x200000, REGION_GFX1, 0 )
+	ROMX_LOAD( "ca_gfx5.rom",  0x000000, 0x80000, 0x66d4cc37, ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "ca_gfx7.rom",  0x000002, 0x80000, 0xb6f896f2, ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "ca_gfx1.rom",  0x000004, 0x80000, 0x4d0620fd, ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "ca_gfx3.rom",  0x000006, 0x80000, 0x0b0341c3, ROM_GROUPWORD | ROM_SKIP(6) )
+
+	ROM_REGION( 0x8000, REGION_GFX2, 0 )
+	ROM_COPY( REGION_GFX1, 0x000000, 0x000000, 0x8000 )	/* stars */
+
+	ROM_REGION( 0x18000, REGION_CPU2, 0 ) /* 64k for the audio CPU (+banks) */
+	ROM_LOAD( "ca_9.rom",      0x00000, 0x08000, 0x96fe7485 )
+	ROM_CONTINUE(              0x10000, 0x08000 )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 )	/* Samples */
+	ROM_LOAD( "ca_18.rom",    0x00000, 0x20000, 0x4a613a2c )
+	ROM_LOAD( "ca_19.rom",    0x20000, 0x20000, 0x74584493 )
+ROM_END
+
 ROM_START( cawingj )
 	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )      /* 68000 code */
 	ROM_LOAD16_BYTE( "cae_30a.rom",  0x00000, 0x20000, 0x91fceacd )
@@ -5068,6 +5128,43 @@ ROM_START( sf2 )
 	ROM_LOAD( "sf2_19.bin",       0x20000, 0x20000, 0xbeade53f )
 ROM_END
 
+ROM_START( sf2eg )
+	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )      /* 68000 code */
+	ROM_LOAD16_BYTE( "sf2e.30g",      0x00000, 0x20000, 0xfe39ee33 )	// matches sf2u.30i
+	ROM_LOAD16_BYTE( "sf2e.37g",      0x00001, 0x20000, 0xfb92cd74 )
+	ROM_LOAD16_BYTE( "sf2e.31g",      0x40000, 0x20000, 0x69a0a301 )	// matches sf2u.31i
+	ROM_LOAD16_BYTE( "sf2e.38g",      0x40001, 0x20000, 0x5e22db70 )
+	ROM_LOAD16_BYTE( "sf2e.28g",      0x80000, 0x20000, 0x8bf9f1e5 )
+	ROM_LOAD16_BYTE( "sf2e.35g",      0x80001, 0x20000, 0x626ef934 )
+	ROM_LOAD16_BYTE( "sf2_29a.bin",   0xc0000, 0x20000, 0xbb4af315 )
+	ROM_LOAD16_BYTE( "sf2_36a.bin",   0xc0001, 0x20000, 0xc02a13eb )
+
+	ROM_REGION( 0x600000, REGION_GFX1, 0 )
+	ROMX_LOAD( "sf2_06.bin", 0x000000, 0x80000, 0x22c9cc8e, ROM_GROUPWORD | ROM_SKIP(6) ) /* sf2gfx02.rom */
+	ROMX_LOAD( "sf2_08.bin", 0x000002, 0x80000, 0x57213be8, ROM_GROUPWORD | ROM_SKIP(6) ) /* sf2gfx04.rom */
+	ROMX_LOAD( "sf2_05.bin", 0x000004, 0x80000, 0xba529b4f, ROM_GROUPWORD | ROM_SKIP(6) ) /* sf2gfx01.rom */
+	ROMX_LOAD( "sf2_07.bin", 0x000006, 0x80000, 0x4b1b33a8, ROM_GROUPWORD | ROM_SKIP(6) ) /* sf2gfx03.rom */
+	ROMX_LOAD( "sf2_15.bin", 0x200000, 0x80000, 0x2c7e2229, ROM_GROUPWORD | ROM_SKIP(6) ) /* sf2gfx11.rom */
+	ROMX_LOAD( "sf2_17.bin", 0x200002, 0x80000, 0xb5548f17, ROM_GROUPWORD | ROM_SKIP(6) ) /* sf2gfx13.rom */
+	ROMX_LOAD( "sf2_14.bin", 0x200004, 0x80000, 0x14b84312, ROM_GROUPWORD | ROM_SKIP(6) ) /* sf2gfx10.rom */
+	ROMX_LOAD( "sf2_16.bin", 0x200006, 0x80000, 0x5e9cd89a, ROM_GROUPWORD | ROM_SKIP(6) ) /* sf2gfx12.rom */
+	ROMX_LOAD( "sf2_25.bin", 0x400000, 0x80000, 0x994bfa58, ROM_GROUPWORD | ROM_SKIP(6) ) /* sf2gfx21.rom */
+	ROMX_LOAD( "sf2_27.bin", 0x400002, 0x80000, 0x3e66ad9d, ROM_GROUPWORD | ROM_SKIP(6) ) /* sf2gfx23.rom */
+	ROMX_LOAD( "sf2_24.bin", 0x400004, 0x80000, 0xc1befaa8, ROM_GROUPWORD | ROM_SKIP(6) ) /* sf2gfx20.rom */
+	ROMX_LOAD( "sf2_26.bin", 0x400006, 0x80000, 0x0627c831, ROM_GROUPWORD | ROM_SKIP(6) ) /* sf2gfx22.rom */
+
+	ROM_REGION( 0x8000, REGION_GFX2, 0 )
+	ROM_COPY( REGION_GFX1, 0x000000, 0x000000, 0x8000 )	/* stars */
+
+	ROM_REGION( 0x18000, REGION_CPU2, 0 ) /* 64k for the audio CPU (+banks) */
+	ROM_LOAD( "sf2_09.bin",    0x00000, 0x08000, 0xa4823a1b )
+	ROM_CONTINUE(              0x10000, 0x08000 )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 )	/* Samples */
+	ROM_LOAD( "sf2_18.bin",       0x00000, 0x20000, 0x7f162009 )
+	ROM_LOAD( "sf2_19.bin",       0x20000, 0x20000, 0xbeade53f )
+ROM_END
+
 ROM_START( sf2ua )
 	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )      /* 68000 code */
 	ROM_LOAD16_BYTE( "sf2u.30a",      0x00000, 0x20000, 0x08beb861 )
@@ -5113,6 +5210,43 @@ ROM_START( sf2ub )
 	ROM_LOAD16_BYTE( "sf2_38a.bin",   0x40001, 0x20000, 0x4c2ccef7 )
 	ROM_LOAD16_BYTE( "sf2_28a.bin",   0x80000, 0x20000, 0x4009955e )
 	ROM_LOAD16_BYTE( "sf2_35a.bin",   0x80001, 0x20000, 0x8c1f3994 )
+	ROM_LOAD16_BYTE( "sf2_29a.bin",   0xc0000, 0x20000, 0xbb4af315 )
+	ROM_LOAD16_BYTE( "sf2_36a.bin",   0xc0001, 0x20000, 0xc02a13eb )
+
+	ROM_REGION( 0x600000, REGION_GFX1, 0 )
+	ROMX_LOAD( "sf2_06.bin", 0x000000, 0x80000, 0x22c9cc8e, ROM_GROUPWORD | ROM_SKIP(6) ) /* sf2gfx02.rom */
+	ROMX_LOAD( "sf2_08.bin", 0x000002, 0x80000, 0x57213be8, ROM_GROUPWORD | ROM_SKIP(6) ) /* sf2gfx04.rom */
+	ROMX_LOAD( "sf2_05.bin", 0x000004, 0x80000, 0xba529b4f, ROM_GROUPWORD | ROM_SKIP(6) ) /* sf2gfx01.rom */
+	ROMX_LOAD( "sf2_07.bin", 0x000006, 0x80000, 0x4b1b33a8, ROM_GROUPWORD | ROM_SKIP(6) ) /* sf2gfx03.rom */
+	ROMX_LOAD( "sf2_15.bin", 0x200000, 0x80000, 0x2c7e2229, ROM_GROUPWORD | ROM_SKIP(6) ) /* sf2gfx11.rom */
+	ROMX_LOAD( "sf2_17.bin", 0x200002, 0x80000, 0xb5548f17, ROM_GROUPWORD | ROM_SKIP(6) ) /* sf2gfx13.rom */
+	ROMX_LOAD( "sf2_14.bin", 0x200004, 0x80000, 0x14b84312, ROM_GROUPWORD | ROM_SKIP(6) ) /* sf2gfx10.rom */
+	ROMX_LOAD( "sf2_16.bin", 0x200006, 0x80000, 0x5e9cd89a, ROM_GROUPWORD | ROM_SKIP(6) ) /* sf2gfx12.rom */
+	ROMX_LOAD( "sf2_25.bin", 0x400000, 0x80000, 0x994bfa58, ROM_GROUPWORD | ROM_SKIP(6) ) /* sf2gfx21.rom */
+	ROMX_LOAD( "sf2_27.bin", 0x400002, 0x80000, 0x3e66ad9d, ROM_GROUPWORD | ROM_SKIP(6) ) /* sf2gfx23.rom */
+	ROMX_LOAD( "sf2_24.bin", 0x400004, 0x80000, 0xc1befaa8, ROM_GROUPWORD | ROM_SKIP(6) ) /* sf2gfx20.rom */
+	ROMX_LOAD( "sf2_26.bin", 0x400006, 0x80000, 0x0627c831, ROM_GROUPWORD | ROM_SKIP(6) ) /* sf2gfx22.rom */
+
+	ROM_REGION( 0x8000, REGION_GFX2, 0 )
+	ROM_COPY( REGION_GFX1, 0x000000, 0x000000, 0x8000 )	/* stars */
+
+	ROM_REGION( 0x18000, REGION_CPU2, 0 ) /* 64k for the audio CPU (+banks) */
+	ROM_LOAD( "sf2_09.bin",    0x00000, 0x08000, 0xa4823a1b )
+	ROM_CONTINUE(              0x10000, 0x08000 )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 )	/* Samples */
+	ROM_LOAD( "sf2_18.bin",       0x00000, 0x20000, 0x7f162009 )
+	ROM_LOAD( "sf2_19.bin",       0x20000, 0x20000, 0xbeade53f )
+ROM_END
+
+ROM_START( sf2ud )
+	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )      /* 68000 code */
+	ROM_LOAD16_BYTE( "sf2u.30d",      0x00000, 0x20000, 0x4bb2657c )
+	ROM_LOAD16_BYTE( "sf2u.37d",      0x00001, 0x20000, 0xb33b42f2 )
+	ROM_LOAD16_BYTE( "sf2u.31d",      0x40000, 0x20000, 0xd57b67d7 )
+	ROM_LOAD16_BYTE( "sf2u.38d",      0x40001, 0x20000, 0x9c8916ef )
+	ROM_LOAD16_BYTE( "sf2u.28d",      0x80000, 0x20000, 0x175819d1 )
+	ROM_LOAD16_BYTE( "sf2u.35d",      0x80001, 0x20000, 0x82060da4 )
 	ROM_LOAD16_BYTE( "sf2_29a.bin",   0xc0000, 0x20000, 0xbb4af315 )
 	ROM_LOAD16_BYTE( "sf2_36a.bin",   0xc0001, 0x20000, 0xc02a13eb )
 
@@ -5826,6 +5960,38 @@ ROM_START( sf2ceub )
 	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )      /* 68000 code */
 	ROM_LOAD16_WORD_SWAP( "s92-23b",      0x000000, 0x80000, 0x996a3015 )
 	ROM_LOAD16_WORD_SWAP( "s92-22b",      0x080000, 0x80000, 0x2bbe15ed )
+	ROM_LOAD16_WORD_SWAP( "s92-21b",      0x100000, 0x80000, 0xb383cb1c )
+
+	ROM_REGION( 0x600000, REGION_GFX1, 0 )
+	ROMX_LOAD( "s92_01.bin",   0x000000, 0x80000, 0x03b0d852, ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "s92_02.bin",   0x000002, 0x80000, 0x840289ec, ROM_GROUPWORD | ROM_SKIP(6) ) /* sf2.03 */
+	ROMX_LOAD( "s92_03.bin",   0x000004, 0x80000, 0xcdb5f027, ROM_GROUPWORD | ROM_SKIP(6) ) /* sf2.02 */
+	ROMX_LOAD( "s92_04.bin",   0x000006, 0x80000, 0xe2799472, ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "s92_05.bin",   0x200000, 0x80000, 0xba8a2761, ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "s92_06.bin",   0x200002, 0x80000, 0xe584bfb5, ROM_GROUPWORD | ROM_SKIP(6) ) /* sf2.07 */
+	ROMX_LOAD( "s92_07.bin",   0x200004, 0x80000, 0x21e3f87d, ROM_GROUPWORD | ROM_SKIP(6) ) /* sf2.06 */
+	ROMX_LOAD( "s92_08.bin",   0x200006, 0x80000, 0xbefc47df, ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "s92_10.bin",   0x400000, 0x80000, 0x960687d5, ROM_GROUPWORD | ROM_SKIP(6) )
+	ROMX_LOAD( "s92_11.bin",   0x400002, 0x80000, 0x978ecd18, ROM_GROUPWORD | ROM_SKIP(6) ) /* sf2.11 */
+	ROMX_LOAD( "s92_12.bin",   0x400004, 0x80000, 0xd6ec9a0a, ROM_GROUPWORD | ROM_SKIP(6) ) /* sf2.12 */
+	ROMX_LOAD( "s92_13.bin",   0x400006, 0x80000, 0xed2c67f6, ROM_GROUPWORD | ROM_SKIP(6) )
+
+	ROM_REGION( 0x8000, REGION_GFX2, 0 )
+	ROM_COPY( REGION_GFX1, 0x000000, 0x000000, 0x8000 )	/* stars */
+
+	ROM_REGION( 0x18000, REGION_CPU2, 0 ) /* 64k for the audio CPU (+banks) */
+	ROM_LOAD( "s92_09.bin",    0x00000, 0x08000, 0x08f6b60e )
+	ROM_CONTINUE(              0x10000, 0x08000 )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 )	/* Samples */
+	ROM_LOAD( "s92_18.bin",    0x00000, 0x20000, 0x7f162009 )
+	ROM_LOAD( "s92_19.bin",    0x20000, 0x20000, 0xbeade53f )
+ROM_END
+
+ROM_START( sf2ceuc )
+	ROM_REGION( CODE_SIZE, REGION_CPU1, 0 )      /* 68000 code */
+	ROM_LOAD16_WORD_SWAP( "s92-23c",      0x000000, 0x80000, 0x0a8b6aa2 )
+	ROM_LOAD16_WORD_SWAP( "s92-22c",      0x080000, 0x80000, 0x5fd8630b )
 	ROM_LOAD16_WORD_SWAP( "s92-21b",      0x100000, 0x80000, 0xb383cb1c )
 
 	ROM_REGION( 0x600000, REGION_GFX1, 0 )
@@ -7073,8 +7239,9 @@ GAME( 1989, striderj, strider,  cps1,     strider,  cps1,     ROT0,   "Capcom", 
 GAME( 1989, stridrja, strider,  cps1,     strider,  cps1,     ROT0,   "Capcom", "Strider Hiryu (Japan set 2)" )
 GAME( 1989, dw,       0,        cps1,     dw,       cps1,     ROT0,   "Capcom", "Dynasty Wars (World)" )						// (c) Capcom U.S.A.
 GAME( 1989, dwj,      dw,       cps1,     dw,       cps1,     ROT0,   "Capcom", "Tenchi wo Kurau (Japan)" )
-GAME( 1989, willow,   0,        cps1,     willow,   cps1,     ROT0,   "Capcom", "Willow (Japan, English)" )						// (c) Capcom U.S.A. but Japan "warning"
+GAME( 1989, willow,   0,        cps1,     willow,   cps1,     ROT0,   "Capcom", "Willow (US)" )
 GAME( 1989, willowj,  willow,   cps1,     willow,   cps1,     ROT0,   "Capcom", "Willow (Japan, Japanese)" )					// Japan "warning"
+GAME( 1989, willowje, willow,   cps1,     willow,   cps1,     ROT0,   "Capcom", "Willow (Japan, English)" )						// (c) Capcom U.S.A. but Japan "warning"
 GAME( 1989, unsquad,  0,        cps1,     unsquad,  cps1,     ROT0,   "Capcom", "U.N. Squadron (US)" )
 GAME( 1989, area88,   unsquad,  cps1,     unsquad,  cps1,     ROT0,   "Capcom", "Area 88 (Japan)" )
 GAME( 1989, ffight,   0,        cps1,     ffight,   cps1,     ROT0,   "Capcom", "Final Fight (World)" )
@@ -7092,12 +7259,15 @@ GAME( 1990, mswordr1, msword,   cps1,     msword,   cps1,     ROT0,   "Capcom", 
 GAME( 1990, mswordu,  msword,   cps1,     msword,   cps1,     ROT0,   "Capcom", "Magic Sword - Heroic Fantasy (US 900725)" )			// 25.07.1990  "U.S.A."
 GAME( 1990, mswordj,  msword,   cps1,     msword,   cps1,     ROT0,   "Capcom", "Magic Sword (Japan 900623)" )					// 23.06.1990  "Japan"
 GAME( 1990, cawing,   0,        cps1,     cawing,   cps1,     ROT0,   "Capcom", "Carrier Air Wing (World 901012)" )				// "ETC"
+GAME( 1990, cawingu,  cawing,   cps1,     cawing,   cps1,     ROT0,   "Capcom", "Carrier Air Wing (US 901012)" )				
 GAME( 1990, cawingj,  cawing,   cps1,     cawing,   cps1,     ROT0,   "Capcom", "U.S. Navy (Japan 901012)" )
 GAME( 1990, nemo,     0,        cps1,     nemo,     cps1,     ROT0,   "Capcom", "Nemo (World 901130)" )						// "ETC"
 GAME( 1990, nemoj,    nemo,     cps1,     nemo,     cps1,     ROT0,   "Capcom", "Nemo (Japan 901120)" )
 GAME( 1991, sf2,      0,        sf2,      sf2,      cps1,     ROT0,   "Capcom", "Street Fighter II - The World Warrior (World 910214)" )	// "ETC"
+GAME( 1991, sf2eg,    sf2,      sf2,      sf2,      cps1,     ROT0,   "Capcom", "Street Fighter II - The World Warrior (World 910522)" )	// "ETC"
 GAME( 1991, sf2ua,    sf2,      sf2,      sf2,      cps1,     ROT0,   "Capcom", "Street Fighter II - The World Warrior (US 910206)" )
 GAME( 1991, sf2ub,    sf2,      sf2,      sf2,      cps1,     ROT0,   "Capcom", "Street Fighter II - The World Warrior (US 910214)" )
+GAME( 1991, sf2ud,    sf2,      sf2,      sf2,      cps1,     ROT0,   "Capcom", "Street Fighter II - The World Warrior (US 910318)" )
 GAME( 1991, sf2ue,    sf2,      sf2,      sf2,      cps1,     ROT0,   "Capcom", "Street Fighter II - The World Warrior (US 910228)" )
 GAME( 1991, sf2uf,    sf2,      sf2,      sf2,      cps1,     ROT0,   "Capcom", "Street Fighter II - The World Warrior (US 910411)" )
 GAME( 1991, sf2ui,    sf2,      sf2,      sf2,      cps1,     ROT0,   "Capcom", "Street Fighter II - The World Warrior (US 910522)" )
@@ -7120,6 +7290,7 @@ GAME( 1991, knightsj, knights,  cps1,     knights,  cps1,     ROT0,   "Capcom", 
 GAME( 1992, sf2ce,    0,        sf2,      sf2,      cps1,     ROT0,   "Capcom", "Street Fighter II' - Champion Edition (World 920313)" )	// "ETC"
 GAME( 1992, sf2ceua,  sf2ce,    sf2,      sf2,      cps1,     ROT0,   "Capcom", "Street Fighter II' - Champion Edition (US 920313)" )
 GAME( 1992, sf2ceub,  sf2ce,    sf2,      sf2,      cps1,     ROT0,   "Capcom", "Street Fighter II' - Champion Edition (US 920513)" )
+GAME( 1992, sf2ceuc,  sf2ce,    sf2,      sf2,      cps1,     ROT0,   "Capcom", "Street Fighter II' - Champion Edition (US 920803)" )
 GAME( 1992, sf2cej,   sf2ce,    sf2,      sf2j,     cps1,     ROT0,   "Capcom", "Street Fighter II' - Champion Edition (Japan 920513)" )
 GAME( 1992, sf2rb,    sf2ce,    sf2,      sf2,      cps1,     ROT0,   "hack",  "Street Fighter II' - Champion Edition (Rainbow set 1)" )	// 920322 - based on World version
 GAME( 1992, sf2rb2,   sf2ce,    sf2,      sf2,      cps1,     ROT0,   "hack",  "Street Fighter II' - Champion Edition (Rainbow set 2)" )	// 920322 - based on World version

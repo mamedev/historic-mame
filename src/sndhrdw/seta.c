@@ -42,7 +42,7 @@ Registers:
 	offset 0x0000 - 0x0fff	Wave form data
 	offset 0x1000 - 0x1fff	Envelope data
 
-	*1 : when 0 is specified, hardware interruput is caused(allways return soon)
+	*1 : when 0 is specified, hardware interrupt is caused(allways return soon)
 
 Hardcoded Values:
 
@@ -60,7 +60,6 @@ Hardcoded Values:
 #define SETA_NUM_CHANNELS 16
 
 
-#if	__X1_010_V2
 #define	LOG_REGISTER_WRITE	0
 #define	LOG_REGISTER_READ	0
 
@@ -88,10 +87,6 @@ static UINT8	x1_010_reg[0x2000];				// X1-010 Register & wave form area
 static UINT8	HI_WORD_BUF[0x2000];			// X1-010 16bit access ram check avoidance work
 static UINT32	smp_offset[SETA_NUM_CHANNELS];
 static UINT32	env_offset[SETA_NUM_CHANNELS];
-#else
-static int firstchannel;
-static int seta_reg[SETA_NUM_CHANNELS][8];
-#endif	// __X1_010_V2
 
 static UINT32 base_clock;
 
@@ -102,7 +97,6 @@ int	seta_samples_bank;
 
 
 
-#if	__X1_010_V2
 /*--------------------------------------------------------------
  generate sound to the mix buffer
 --------------------------------------------------------------*/
@@ -188,11 +182,9 @@ void seta_sh_update( int param, INT16 *buffer, int length )
 		}
 	}
 }
-#endif	// __X1_010_V2
 
 
 
-#if	__X1_010_V2
 int seta_sh_start( const struct MachineSound *msound, UINT32 clock, int adr )
 {
 	int i;
@@ -215,37 +207,12 @@ int seta_sh_start( const struct MachineSound *msound, UINT32 clock, int adr )
 
 	return 0;
 }
-#else
-int seta_sh_start(const struct MachineSound *msound, UINT32 clock)
-{
-	int i;
-	int mix_lev[SETA_NUM_CHANNELS];
-
-	for (i = 0; i < SETA_NUM_CHANNELS; i++)	mix_lev[i] = (100 * 2) / SETA_NUM_CHANNELS + 1;
-	firstchannel = mixer_allocate_channels(SETA_NUM_CHANNELS,mix_lev);
-
-	for (i = 0; i < SETA_NUM_CHANNELS; i++)
-	{
-		char buf[40];
-		sprintf(buf,"X1-010 Channel #%d",i);
-		mixer_set_name(firstchannel + i,buf);
-	}
-
-	base_clock = clock;
-
-	return 0;
-}
-#endif	// __X1_010_V2
 
 
 
 void seta_sound_enable_w(int data)
 {
-#if	__X1_010_V2
 	sound_enable = data;
-#else
-	mixer_sound_enable_global_w(data);
-#endif	// __X1_010_V2
 }
 
 
@@ -255,30 +222,8 @@ void seta_sound_enable_w(int data)
 
 READ_HANDLER( seta_sound_r )
 {
-#if	__X1_010_V2
 	offset ^= address;
 	return x1_010_reg[offset];
-#else
-	int channel	=	offset / 8;
-	int reg		=	offset % 8;
-
-	if (channel < SETA_NUM_CHANNELS)
-	{
-		switch (reg)
-		{
-			case 0:
-				return	(seta_reg[channel][0] & ~1) |
-						(mixer_is_sample_playing(firstchannel + channel) ? 1 : 0 );
-			default:
-#if LOG_SOUND
-logerror("PC: %06X - X1-010 channel %X, register %X read!\n",activecpu_get_pc(),channel,reg);
-#endif
-				return seta_reg[channel][reg];
-		}
-	}
-
-	return 0;
-#endif	// __X1_010_V2
 }
 
 
@@ -287,7 +232,6 @@ logerror("PC: %06X - X1-010 channel %X, register %X read!\n",activecpu_get_pc(),
 WRITE_HANDLER( seta_sound_w )
 {
 	int channel, reg;
-#if	__X1_010_V2
 	offset ^= address;
 
 	channel	= offset/sizeof(X1_010_CHANNEL);
@@ -302,98 +246,6 @@ WRITE_HANDLER( seta_sound_w )
 	logerror("PC: %06X : offset %6X : data %2X\n", activecpu_get_pc(), offset, data );
 #endif
 	x1_010_reg[offset] = data;
-#else
-	channel	=	offset / 8;
-	reg		=	offset % 8;
-
-	if (channel >= SETA_NUM_CHANNELS)	return;
-
-	seta_reg[channel][reg] = data & 0xff;
-
-	if (Machine->sample_rate == 0)		return;
-
-	switch (reg)
-	{
-
-		case 0:
-
-#if LOG_SOUND
-logerror("X1-010 REGS: ch %X] %02X %02X %02X %02X - %02X %02X %02X %02X\n",
-		channel,	seta_reg[channel][0],seta_reg[channel][1],
-					seta_reg[channel][2],seta_reg[channel][3],
-					seta_reg[channel][4],seta_reg[channel][5],
-					seta_reg[channel][6],seta_reg[channel][7]	);
-#endif
-
-			/*
-			   Twineagl continuosly writes 1 to reg 0 of the channel, so
-			   the sample is restarted every time and never plays to the
-			   end. It looks like the previous sample must be explicitly
-			   stopped before a new one can be played
-			*/
-			if ( (data & 1) && !(seta_sound_r(0) & 1) )	// key on (0->1 only)
-			{
-				if (data & 2)
-				{
-				}
-				else
-				{
-					int volumeL, volumeR;
-					UINT32 frequency;
-
-					int volume	=	seta_reg[channel][1];
-
-					int start	=	seta_reg[channel][4]           * 0x1000;
-					int end		=	(0x100 - seta_reg[channel][5]) * 0x1000; // from the end of the rom
-
-					int len		=	end - start;
-					int maxlen	=	memory_region_length(REGION_SOUND1);
-
-					if (!( (start < end) && (end <= maxlen) ))
-					{
-						logerror("PC: %06X - X1-010 OUT OF RANGE SAMPLE: %06X - %06X, channel %X\n",activecpu_get_pc(),start,end,channel);
-						return;
-					}
-
-#if LOG_SOUND
-/* Print some more debug info */
-logerror("PC: %06X - Play 8 bit sample %06X - %06X, channel %X\n",activecpu_get_pc(),start, end, channel);
-#endif
-
-					/* Left and right speaker's volume can be set indipendently.
-					   Some games (the mono ones, I guess) only set one of the two
-					   to a non-zero value.
-					   So we use the highest of the two volumes for now */
-
-					volumeL = (volume >> 4) & 0xf;
-					volumeR = (volume >> 0) & 0xf;
-					volume = (volumeL > volumeR) ? volumeL : volumeR;
-					mixer_set_volume(firstchannel + channel, (volume * 100) / 0xf );
-
-					/* *Preliminary* pitch selection */
-
-					frequency = seta_reg[channel][2];
-
-					/* Meta Fox does not write the frequency register. Ever */
-					if (frequency == 0)	frequency = 4;
-
-					frequency	*=	(((float)base_clock)/16000000) * 2000;
-
-					mixer_play_sample(
-						firstchannel + channel,							// channel
-						(INT8 *)(memory_region(REGION_SOUND1) + start),	// start
-						len,											// len
-						frequency,										// frequency
-						0);												// loop
-				}
-			}
-			else
-				mixer_stop_sample(channel + firstchannel);
-
-			break;
-
-	}
-#endif	// __X1_010_V2
 }
 
 
@@ -403,7 +255,6 @@ logerror("PC: %06X - Play 8 bit sample %06X - %06X, channel %X\n",activecpu_get_
 
 READ16_HANDLER( seta_sound_word_r )
 {
-#if	__X1_010_V2
 	UINT16	ret;
 
 	ret = HI_WORD_BUF[offset]<<8;
@@ -412,21 +263,13 @@ READ16_HANDLER( seta_sound_word_r )
 	logerror( "Read X1-010 PC:%06X Offset:%04X Data:%04X\n", activecpu_get_pc(), offset, ret );
 #endif
 	return ret;
-#else
-	return seta_sound_r(offset) & 0xff;
-#endif	// __X1_010_V2
 }
 
 WRITE16_HANDLER( seta_sound_word_w )
 {
-#if	__X1_010_V2
 	HI_WORD_BUF[offset] = (data>>8)&0xff;
 	seta_sound_w( offset, data&0xff );
 #if	LOG_REGISTER_WRITE
 	logerror( "Write X1-010 PC:%06X Offset:%04X Data:%04X\n", activecpu_get_pc(), offset, data );
 #endif
-#else
-	if (ACCESSING_LSB)
-		seta_sound_w(offset, data & 0xff);
-#endif	// __X1_010_V2
 }

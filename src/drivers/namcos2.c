@@ -4,6 +4,13 @@ Namco System II driver by K.Wilkins  (Jun1998, Oct1999)
 Email: kwns2@dysfunction.demon.co.uk
 
 
+Notes:
+- How to calibrate the guns:
+  - hold 9, press f2
+  - shoot at the targets it shows using the crosshair
+  - after you've shot the target press 9 again to move onto the next one
+  - once you get back to the start again press f2 to exit.
+
 TODO:
 	General:
 	- I don't think the implementation of shadows is 100% correct

@@ -190,7 +190,7 @@ WRITE16_HANDLER( gaiden_videoram_w )
  *    5,6,7|                  | unused
  */
 
-#define NUM_SPRITES 128
+#define NUM_SPRITES 256
 
 static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 {

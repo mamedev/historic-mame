@@ -23,6 +23,7 @@ WRITE16_HANDLER( btoads_scroll0_w );
 WRITE16_HANDLER( btoads_scroll1_w );
 
 WRITE16_HANDLER( btoads_paletteram_w );
+READ16_HANDLER( btoads_paletteram_r );
 
 WRITE16_HANDLER( btoads_vram_bg0_w );
 WRITE16_HANDLER( btoads_vram_bg1_w );

@@ -8,7 +8,7 @@ data8_t *homedata_vreg;	/* pointer to RAM associated with 0x7ffx */
 
 int homedata_visible_page;
 
-static int homedata_cocktail;
+static int homedata_flipscreen;
 
 static data8_t	reikaids_gfx_bank[2];
 static data8_t	pteacher_gfx_bank;
@@ -426,7 +426,7 @@ INLINE void mrokumei_info0( int tile_index, int page, int gfxbank )
 	int code  = videoram[addr + 1] + ((attr & 0x03) << 8) + (gfxbank << 10);
 	int color = (attr >> 2) + (gfxbank << 6);
 
-	SET_TILE_INFO( 0, code, color, homedata_cocktail );
+	SET_TILE_INFO( 0, code, color, homedata_flipscreen );
 }
 INLINE void mrokumei_info1( int tile_index, int page, int gfxbank )
 {
@@ -435,7 +435,7 @@ INLINE void mrokumei_info1( int tile_index, int page, int gfxbank )
 	int code  = videoram[addr + 1] + ((attr & 0x07) << 8) + (gfxbank << 11);
 	int color = (attr >> 3) + ((gfxbank & 3) << 6);
 
-	SET_TILE_INFO( 1, code, color, homedata_cocktail );
+	SET_TILE_INFO( 1, code, color, homedata_flipscreen );
 }
 
 static void mrokumei_get_info0_0(int tile_index) { mrokumei_info0( tile_index, 0,  blitter_bank & 0x03 ); }
@@ -450,7 +450,7 @@ INLINE void reikaids_info( int tile_index, int page, int layer, int gfxbank )
 	int attr  = videoram[addr];
 	int code  = videoram[addr + 0x1000] + ((attr & 0x03) << 8) + (gfxbank << 10);
 	int color = (attr & 0x7c) >> 2;
-	int flags = homedata_cocktail;
+	int flags = homedata_flipscreen;
 
 	if (attr & 0x80) flags ^= TILE_FLIPX;
 
@@ -482,7 +482,7 @@ INLINE void pteacher_info( int tile_index, int page, int layer, int gfxbank )
 	int code  = videoram[addr + 1] + ((attr & 0x07) << 8) + (gfxbank << 11);
 	int color = (attr >> 3) + ((gfxbank & 1) << 5);
 
-	SET_TILE_INFO( layer, code, color, homedata_cocktail );
+	SET_TILE_INFO( layer, code, color, homedata_flipscreen );
 }
 
 static void pteacher_get_info0_0(int tile_index) { pteacher_info( tile_index, 0, 0, pteacher_gfx_bank & 0x0f ); }
@@ -498,7 +498,7 @@ INLINE void lemnangl_info( int tile_index, int page, int layer, int gfxset, int 
 	int code  = videoram[addr + 1] + ((attr & 0x07) << 8) + (gfxbank << 11);
 	int color = 16 * (attr >> 3) + gfxbank;
 
-	SET_TILE_INFO( 2*layer + gfxset, code, color, homedata_cocktail );
+	SET_TILE_INFO( 2*layer + gfxset, code, color, homedata_flipscreen );
 }
 
 static void lemnangl_get_info0_0(int tile_index) { lemnangl_info( tile_index, 0, 0,  blitter_bank & 1,       pteacher_gfx_bank & 0x0f ); }
@@ -707,7 +707,7 @@ WRITE_HANDLER( reikaids_blitter_start_w )
 
 WRITE_HANDLER( pteacher_blitter_start_w )
 {
-	pteacher_handleblit((blitter_bank >> 5) * 0x10000);
+	pteacher_handleblit((blitter_bank >> 5) * 0x10000 & (memory_region_length(REGION_USER1) - 1));
 }
 
 
@@ -730,9 +730,9 @@ VIDEO_UPDATE( mrokumei )
 	}
 
 	flags = (homedata_vreg[1] & 0x80) ? (TILE_FLIPX | TILE_FLIPY) : 0;
-	if (flags != homedata_cocktail)
+	if (flags != homedata_flipscreen)
 	{
-		homedata_cocktail = flags;
+		homedata_flipscreen = flags;
 		tilemap_mark_all_tiles_dirty( ALL_TILEMAPS );
 	}
 
@@ -778,9 +778,9 @@ VIDEO_UPDATE( reikaids )
 
 
 	flags = (homedata_vreg[1] & 0x80) ? (TILE_FLIPX | TILE_FLIPY) : 0;
-	if (flags != homedata_cocktail)
+	if (flags != homedata_flipscreen)
 	{
-		homedata_cocktail = flags;
+		homedata_flipscreen = flags;
 		tilemap_mark_all_tiles_dirty( ALL_TILEMAPS );
 	}
 
@@ -796,6 +796,7 @@ VIDEO_UPDATE( pteacher )
 {
 	int flags,scroll_low,scroll_high;
 
+
 	/* blank screen */
 	if (homedata_vreg[0x3] == 0xc1 && homedata_vreg[0x4] == 0xc0 && homedata_vreg[0x5] == 0xff)
 	{
@@ -804,14 +805,14 @@ VIDEO_UPDATE( pteacher )
 	}
 
 	flags = (homedata_vreg[1] & 0x80) ? (TILE_FLIPX | TILE_FLIPY) : 0;
-	if (flags != homedata_cocktail)
+	if (flags != homedata_flipscreen)
 	{
-		homedata_cocktail = flags;
+		homedata_flipscreen = flags;
 		tilemap_mark_all_tiles_dirty( ALL_TILEMAPS );
 	}
 
 	/* bit 2 of blitter_bank stretches characters horizontally by 3/2,
-	  so they look as if they were 12x8 instead of 8x8.
+	   so they look as if they were 12x8 instead of 8x8.
 
 	   However, the visible area can be further reduced by fudging with the video
 	   registers, but I haven't figured out how they work exactly.
@@ -819,7 +820,9 @@ VIDEO_UPDATE( pteacher )
 	   scrolling):
 
 	   width      3  4  5  6
+	   33*8    = a6 00 ef db (mjikaga)
 	   35*8    = bc 0b ef f0
+	   51*8    = a6 07 ef db (mjikaga)
 	   54*8    = bc 07 ef e8
 
        but in mjkinjas it's
@@ -842,13 +845,19 @@ VIDEO_UPDATE( pteacher )
 		}
 		else
 		{
-			set_visible_area(0*8, 35*8-1, 2*8, 30*8-1);
+			if (homedata_vreg[0x3] == 0xa6)
+				set_visible_area(0*8, 33*8-1, 2*8, 30*8-1);
+			else
+				set_visible_area(0*8, 35*8-1, 2*8, 30*8-1);
 			scroll_low = (11 - (homedata_vreg[0x4] & 0x0f)) * 8 / 12;
 		}
 	}
 	else
 	{
-		set_visible_area(0*8, 54*8-1, 2*8, 30*8-1);
+		if (homedata_vreg[0x3] == 0xa6)
+			set_visible_area(0*8, 51*8-1, 2*8, 30*8-1);
+		else
+			set_visible_area(0*8, 54*8-1, 2*8, 30*8-1);
 		scroll_low = 7 - (homedata_vreg[0x4] & 0x0f);
 	}
 	scroll_high = homedata_vreg[0xb] >> 2;

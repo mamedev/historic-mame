@@ -20,7 +20,7 @@ consists of three steps:
 
 Luckily, only two different encryption tables have been found so far.
 
-Table 1 (custom chip 56)
+Table 1 (custom chip 56/141)
 ------------------------
 Mutant Fighter			1991
 Rohga Armour Attack		1991

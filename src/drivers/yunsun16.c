@@ -22,11 +22,11 @@ Year + Game         Board#
   (sprites, but the charset they used is in the tiles ROMs!).
   In magicbub they used color 0 for tiles (all blacks, so you can't see
   most of it!). Again, color 0 for sprites would be ok. Some kind
-  of sprites-tiles swapping, or unfinished leftovers ?
+  of sprites-tiles swapping, or unfinished leftovers?
 
 - Screen flipping: not used!?
 
-- Are priorities correct ?
+- Are priorities correct?
 
 ***************************************************************************/
 

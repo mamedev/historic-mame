@@ -152,6 +152,8 @@ data16_t *seta_vram_0, *seta_vram_1, *seta_vctrl_0;
 data16_t *seta_vram_2, *seta_vram_3, *seta_vctrl_2;
 data16_t *seta_vregs;
 
+data16_t *seta_workram; // Used for zombraid crosshair hack
+
 extern int seta_tiles_offset;
 
 
@@ -179,13 +181,12 @@ WRITE16_HANDLER( seta_vregs_w )
 		case 2/2:
 			if (ACCESSING_LSB)
 			{
-				unsigned char *RAM = memory_region(REGION_SOUND1);
 				int new_bank;
 
 				/* Partly handled in vh_screenrefresh:
 
 						fedc ba98 76-- ----
-						---- ---- --54 3---		Samples Bank (in blandia, eightfrc)
+						---- ---- --54 3---		Samples Bank (in blandia, eightfrc, zombraid)
 						---- ---- ---- -2--
 						---- ---- ---- --1-		Sprites Above Frontmost Layer
 						---- ---- ---- ---0		Layer 0 Above Layer 1
@@ -195,19 +196,31 @@ WRITE16_HANDLER( seta_vregs_w )
 
 				if (new_bank != seta_samples_bank)
 				{
-					int samples_len, addr;
+					unsigned char *rom = memory_region(REGION_SOUND1);
+					int samples_len = memory_region_length(REGION_SOUND1);
+					int addr;
 
 					seta_samples_bank = new_bank;
 
-					samples_len = memory_region_length(REGION_SOUND1);
+					if (samples_len == 0x240000)	/* blandia, eightfrc */
+					{
+						addr = 0x40000 * new_bank;
+						if (new_bank >= 3)	addr += 0x40000;
 
-					addr = 0x40000 * new_bank;
-					if (new_bank >= 3)	addr += 0x40000;
+						if ( (samples_len > 0x100000) && ((addr+0x40000) <= samples_len) )
+							memcpy(&rom[0xc0000],&rom[addr],0x40000);
+						else
+							logerror("PC %06X - Invalid samples bank %02X !\n", activecpu_get_pc(), new_bank);
+					}
+					else if (samples_len == 0x480000)	/* zombraid */
+					{
+						/* bank 1 is never explicitly selected, 0 is used in its place */
+						if (new_bank == 0) new_bank = 1;
+						addr = 0x80000 * new_bank;
+						if (new_bank > 0) addr += 0x80000;
 
-					if ( (samples_len > 0x100000) && ((addr+0x40000) <= samples_len) )
-						memcpy(&RAM[0xc0000],&RAM[addr],0x40000);
-					else
-						logerror("PC %06X - Invalid samples bank %02X !\n", activecpu_get_pc(), new_bank);
+						memcpy(&rom[0x80000],&rom[addr],0x80000);
+					}
 				}
 
 			}
@@ -717,13 +730,24 @@ static void seta_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle 
 
 ***************************************************************************/
 
+static void zombraid_drawcrosshairs( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+{
+	int p1_x = seta_workram[0xC4AA/2] + 0x10;
+	int p1_y = 0xff - seta_workram[0xC4AC/2];
+	int p2_x = seta_workram[0xC4AE/2] + 0x10;
+	int p2_y = 0xff - seta_workram[0xC4B0/2];
+
+	draw_crosshair(bitmap,p1_x,p1_y,cliprect);
+	draw_crosshair(bitmap,p2_x,p2_y,cliprect);
+}
+
+
 /* For games without tilemaps */
 VIDEO_UPDATE( seta_no_layers )
 {
 	fillbitmap(bitmap,Machine->pens[0],cliprect);
 	seta_draw_sprites(bitmap,cliprect);
 }
-
 
 
 /* For games with 1 or 2 tilemaps */
@@ -852,4 +876,8 @@ if (keyboard_pressed(KEYCODE_Z))
 		}
 	}
 
+	if (!(strcmp(Machine->gamedrv->name,"zombraid")))
+	{
+		zombraid_drawcrosshairs(bitmap,cliprect);
+	}
 }

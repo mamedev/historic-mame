@@ -12,7 +12,6 @@ static void illegal2(void);
 
 static void ACI_ANM_xx(void);
 static void ACI_A_xx(void);
-static void ACI_A_xx(void);
 static void ACI_B_xx(void);
 static void ACI_C_xx(void);
 static void ACI_D_xx(void);
@@ -201,6 +200,7 @@ static void CALF(void);
 static void CALL_w(void);
 static void CALT(void);
 static void CLC(void);
+static void CLR(void);
 static void DAA(void);
 static void DADC_EA_BC(void);
 static void DADC_EA_DE(void);
@@ -329,6 +329,7 @@ static void ESUB_EA_C(void);
 static void EXA(void);
 static void EXH(void);
 static void EXX(void);
+static void EXR(void);
 static void GTAW_wa(void);
 static void GTAX_B(void);
 static void GTAX_D(void);
@@ -490,6 +491,7 @@ static void MOV_A_PF(void);
 static void MOV_A_RXB(void);
 static void MOV_A_SMH(void);
 static void MOV_A_TMM(void);
+static void MOV_A_PT(void);
 static void MOV_A_w(void);
 static void MOV_B_A(void);
 static void MOV_B_w(void);
@@ -802,7 +804,10 @@ static void SBI_SMH_xx(void);
 static void SBI_TMM_xx(void);
 static void SBI_V_xx(void);
 static void SDED_w(void);
+static void SETB(void);
 static void SHLD_w(void);
+static void SK_bit(void);
+static void SKN_bit(void);
 static void SKIT_AN4(void);
 static void SKIT_AN5(void);
 static void SKIT_AN6(void);
@@ -1203,11 +1208,14 @@ static struct opcode_s op48[256] =
 	{illegal2,		2, 8, 8,L0|L1}, /* a9: 0100 1000 1010 1001						*/
 	{illegal2,		2, 8, 8,L0|L1}, /* aa: 0100 1000 1010 1010						*/
 	{illegal2,		2, 8, 8,L0|L1}, /* ab: 0100 1000 1010 1011						*/
-	{illegal2,		2, 8, 8,L0|L1}, /* ac: 0100 1000 1010 1100						*/
-	{illegal2,		2, 8, 8,L0|L1}, /* ad: 0100 1000 1010 1101						*/
-	{illegal2,		2, 8, 8,L0|L1}, /* ae: 0100 1000 1010 1110						*/
-	{illegal2,		2, 8, 8,L0|L1}, /* af: 0100 1000 1010 1111						*/
-
+//	{illegal2,		2, 8, 8,L0|L1}, /* ac: 0100 1000 1010 1100						*/
+//	{illegal2,		2, 8, 8,L0|L1}, /* ad: 0100 1000 1010 1101						*/
+//	{illegal2,		2, 8, 8,L0|L1}, /* ae: 0100 1000 1010 1110						*/
+//	{illegal2,		2, 8, 8,L0|L1}, /* af: 0100 1000 1010 1111						*/
+	{EXA,			2, 8, 8,L0|L1}, /* ac: 0100 1000 1010 1100						*/	/* 7807 */
+	{EXR,			2, 8, 8,L0|L1}, /* ad: 0100 1000 1010 1101						*/	/* 7807 */
+	{EXH,			2, 8, 8,L0|L1}, /* ae: 0100 1000 1010 1110						*/	/* 7807 */
+	{EXX,			2, 8, 8,L0|L1}, /* af: 0100 1000 1010 1111						*/	/* 7807 */
 	{DRLR_EA,		2, 8, 8,L0|L1}, /* b0: 0100 1000 1011 0000						*/
 	{illegal2,		2, 8, 8,L0|L1}, /* b1: 0100 1000 1011 0001						*/
 	{illegal2,		2, 8, 8,L0|L1}, /* b2: 0100 1000 1011 0010						*/
@@ -1515,7 +1523,8 @@ static struct opcode_s op4C[256] =
 	{MOV_A_EOM, 	2,10,10,L0|L1}, /* cb: 0100 1100 1100 1011						*/
 	{illegal2,		2,10,10,L0|L1}, /* cc: 0100 1100 1100 1100						*/
 	{MOV_A_TMM, 	2,10,10,L0|L1}, /* cd: 0100 1100 1100 1101						*/
-	{illegal2,		2,10,10,L0|L1}, /* ce: 0100 1100 1100 1110						*/
+//	{illegal2,		2,10,10,L0|L1}, /* ce: 0100 1100 1100 1110						*/
+	{MOV_A_PT, 		2,10,10,L0|L1}, /* ce: 0100 1100 1100 1110						*/	/* 7807 */
 	{illegal2,		2,10,10,L0|L1}, /* cf: 0100 1100 1100 1111						*/
 
 	{illegal2,		2,10,10,L0|L1}, /* d0: 0100 1100 1101 0000						*/
@@ -2952,7 +2961,7 @@ static struct opcode_s op74[256] =
 };
 
 /* main opcodes */
-static struct opcode_s opXX[256] =
+static struct opcode_s opXX_7810[256] =
 {
 	{NOP,			1, 4, 4,L0|L1}, /* 00: 0000 0000								*/
 	{LDAW_wa,		2,10,10,L0|L1}, /* 01: 0000 0001 oooo oooo						*/
@@ -3006,7 +3015,7 @@ static struct opcode_s opXX[256] =
 	{LDAX_Hm,		2, 7, 7,L0|L1}, /* 2f: 0010 1111 dddd dddd						*/
 
 	{DCRW_wa,		2,16,16,L0|L1}, /* 30: 0011 0000 oooo oooo						*/
-	{BLOCK, 		1,13,13,L0|L1}, /* 31: 0011 0001								*/
+	{BLOCK, 		1,13,13,L0|L1}, /* 31: 0011 0001								*/	/* 7810 */
 	{INX_HL,		1, 7, 7,L0|L1}, /* 32: 0011 0010								*/
 	{DCX_HL,		1, 7, 7,L0|L1}, /* 33: 0011 0011								*/
 	{LXI_H_w,		3,10,10,   L1}, /* 34: 0011 0100 llll llll hhhh hhhh			*/
@@ -3039,7 +3048,7 @@ static struct opcode_s opXX[256] =
 	{JRE,			2,10,10,L0|L1}, /* 4e: 0100 111d dddd dddd						*/
 	{JRE,			2,10,10,L0|L1}, /* 4f: 0100 111d dddd dddd						*/
 
-	{EXH,			1, 4, 4,L0|L1}, /* 50: 0101 0000								*/
+	{EXH,			1, 4, 4,L0|L1}, /* 50: 0101 0000								*/	/* 7810 */
 	{DCR_A, 		1, 4, 4,L0|L1}, /* 51: 0101 0001								*/
 	{DCR_B, 		1, 4, 4,L0|L1}, /* 52: 0101 0010								*/
 	{DCR_C, 		1, 4, 4,L0|L1}, /* 53: 0101 0011								*/
@@ -3047,14 +3056,289 @@ static struct opcode_s opXX[256] =
 	{OFFIW_wa_xx,	3,19,19,L0|L1}, /* 55: 0101 0101 oooo oooo xxxx xxxx			*/
 	{ACI_A_xx,		2, 7, 7,L0|L1}, /* 56: 0101 0110 xxxx xxxx						*/
 	{OFFI_A_xx, 	2, 7, 7,L0|L1}, /* 57: 0101 0111 xxxx xxxx						*/
-	{BIT_0_wa,		2,10,10,L0|L1}, /* 58: 0101 1000 oooo oooo						*/
-	{BIT_1_wa,		2,10,10,L0|L1}, /* 59: 0101 1001 oooo oooo						*/
-	{BIT_2_wa,		2,10,10,L0|L1}, /* 5a: 0101 1010 oooo oooo						*/
-	{BIT_3_wa,		2,10,10,L0|L1}, /* 5b: 0101 1011 oooo oooo						*/
-	{BIT_4_wa,		2,10,10,L0|L1}, /* 5c: 0101 1100 oooo oooo						*/
-	{BIT_5_wa,		2,10,10,L0|L1}, /* 5d: 0101 1101 oooo oooo						*/
-	{BIT_6_wa,		2,10,10,L0|L1}, /* 5e: 0101 1110 oooo oooo						*/
-	{BIT_7_wa,		2,10,10,L0|L1}, /* 5f: 0101 1111 oooo oooo						*/
+	{BIT_0_wa,		2,10,10,L0|L1}, /* 58: 0101 1000 oooo oooo						*/	/* 7810 */
+	{BIT_1_wa,		2,10,10,L0|L1}, /* 59: 0101 1001 oooo oooo						*/	/* 7810 */
+	{BIT_2_wa,		2,10,10,L0|L1}, /* 5a: 0101 1010 oooo oooo						*/	/* 7810 */
+	{BIT_3_wa,		2,10,10,L0|L1}, /* 5b: 0101 1011 oooo oooo						*/	/* 7810 */
+	{BIT_4_wa,		2,10,10,L0|L1}, /* 5c: 0101 1100 oooo oooo						*/	/* 7810 */
+	{BIT_5_wa,		2,10,10,L0|L1}, /* 5d: 0101 1101 oooo oooo						*/	/* 7810 */
+	{BIT_6_wa,		2,10,10,L0|L1}, /* 5e: 0101 1110 oooo oooo						*/	/* 7810 */
+	{BIT_7_wa,		2,10,10,L0|L1}, /* 5f: 0101 1111 oooo oooo						*/	/* 7810 */
+
+	{PRE_60,		1, 0, 0,L0|L1}, /* 60:											*/
+	{DAA,			1, 4, 4,L0|L1}, /* 61: 0110 0001								*/
+	{RETI,			1,13,13,L0|L1}, /* 62: 0110 0010								*/
+	{STAW_wa,		2,10,10,L0|L1}, /* 63: 0110 0011 oooo oooo						*/
+	{PRE_64,		1, 0, 0,L0|L1}, /* 64:											*/
+	{NEIW_wa_xx,	3,19,19,L0|L1}, /* 65: 0110 0101 oooo oooo xxxx xxxx			*/
+	{SUI_A_xx,		2, 7, 7,L0|L1}, /* 66: 0110 0110 xxxx xxxx						*/
+	{NEI_A_xx,		2, 7, 7,L0|L1}, /* 67: 0110 0111 xxxx xxxx						*/
+	{MVI_V_xx,		2, 7, 7,L0|L1}, /* 68: 0110 1000 xxxx xxxx						*/
+	{MVI_A_xx,		2, 7, 7,L0	 }, /* 69: 0110 1001 xxxx xxxx						*/
+	{MVI_B_xx,		2, 7, 7,L0|L1}, /* 6a: 0110 1010 xxxx xxxx						*/
+	{MVI_C_xx,		2, 7, 7,L0|L1}, /* 6b: 0110 1011 xxxx xxxx						*/
+	{MVI_D_xx,		2, 7, 7,L0|L1}, /* 6c: 0110 1100 xxxx xxxx						*/
+	{MVI_E_xx,		2, 7, 7,L0|L1}, /* 6d: 0110 1101 xxxx xxxx						*/
+	{MVI_H_xx,		2, 7, 7,L0|L1}, /* 6e: 0110 1110 xxxx xxxx						*/
+	{MVI_L_xx,		2, 7, 7,   L1}, /* 6f: 0110 1111 xxxx xxxx						*/
+
+	{PRE_70,		1, 0, 0,L0|L1}, /* 70:											*/
+	{MVIW_wa_xx,	3,13,13,L0|L1}, /* 71: 0111 0001 oooo oooo xxxx xxxx			*/
+	{SOFTI, 		1,16,16,L0|L1}, /* 72: 0111 0010								*/
+	{illegal,		1, 0, 0,L0|L1}, /* 73:											*/
+	{PRE_74,		1, 0, 0,L0|L1}, /* 74: prefix									*/
+	{EQIW_wa_xx,	3,19,19,L0|L1}, /* 75: 0111 0101 oooo oooo xxxx xxxx			*/
+	{SBI_A_xx,		2, 7, 7,L0|L1}, /* 76: 0111 0110 xxxx xxxx						*/
+	{EQI_A_xx,		2, 7, 7,L0|L1}, /* 77: 0111 0111 xxxx xxxx						*/
+	{CALF,			2,13,13,L0|L1}, /* 78: 0111 1xxx xxxx xxxx						*/
+	{CALF,			2,13,13,L0|L1}, /* 79: 0111 1xxx xxxx xxxx						*/
+	{CALF,			2,13,13,L0|L1}, /* 7a: 0111 1xxx xxxx xxxx						*/
+	{CALF,			2,13,13,L0|L1}, /* 7b: 0111 1xxx xxxx xxxx						*/
+	{CALF,			2,13,13,L0|L1}, /* 7c: 0111 1xxx xxxx xxxx						*/
+	{CALF,			2,13,13,L0|L1}, /* 7d: 0111 1xxx xxxx xxxx						*/
+	{CALF,			2,13,13,L0|L1}, /* 7e: 0111 1xxx xxxx xxxx						*/
+	{CALF,			2,13,13,L0|L1}, /* 7f: 0111 1xxx xxxx xxxx						*/
+
+	{CALT,			1,16,16,L0|L1}, /* 80: 100x xxxx								*/
+	{CALT,			1,16,16,L0|L1}, /* 81: 100x xxxx								*/
+	{CALT,			1,16,16,L0|L1}, /* 82: 100x xxxx								*/
+	{CALT,			1,16,16,L0|L1}, /* 83: 100x xxxx								*/
+	{CALT,			1,16,16,L0|L1}, /* 84: 100x xxxx								*/
+	{CALT,			1,16,16,L0|L1}, /* 85: 100x xxxx								*/
+	{CALT,			1,16,16,L0|L1}, /* 86: 100x xxxx								*/
+	{CALT,			1,16,16,L0|L1}, /* 87: 100x xxxx								*/
+	{CALT,			1,16,16,L0|L1}, /* 88: 100x xxxx								*/
+	{CALT,			1,16,16,L0|L1}, /* 89: 100x xxxx								*/
+	{CALT,			1,16,16,L0|L1}, /* 8a: 100x xxxx								*/
+	{CALT,			1,16,16,L0|L1}, /* 8b: 100x xxxx								*/
+	{CALT,			1,16,16,L0|L1}, /* 8c: 100x xxxx								*/
+	{CALT,			1,16,16,L0|L1}, /* 8d: 100x xxxx								*/
+	{CALT,			1,16,16,L0|L1}, /* 8e: 100x xxxx								*/
+	{CALT,			1,16,16,L0|L1}, /* 8f: 100x xxxx								*/
+
+	{CALT,			1,16,16,L0|L1}, /* 90: 100x xxxx								*/
+	{CALT,			1,16,16,L0|L1}, /* 91: 100x xxxx								*/
+	{CALT,			1,16,16,L0|L1}, /* 92: 100x xxxx								*/
+	{CALT,			1,16,16,L0|L1}, /* 93: 100x xxxx								*/
+	{CALT,			1,16,16,L0|L1}, /* 94: 100x xxxx								*/
+	{CALT,			1,16,16,L0|L1}, /* 95: 100x xxxx								*/
+	{CALT,			1,16,16,L0|L1}, /* 96: 100x xxxx								*/
+	{CALT,			1,16,16,L0|L1}, /* 97: 100x xxxx								*/
+	{CALT,			1,16,16,L0|L1}, /* 98: 100x xxxx								*/
+	{CALT,			1,16,16,L0|L1}, /* 99: 100x xxxx								*/
+	{CALT,			1,16,16,L0|L1}, /* 9a: 100x xxxx								*/
+	{CALT,			1,16,16,L0|L1}, /* 9b: 100x xxxx								*/
+	{CALT,			1,16,16,L0|L1}, /* 9c: 100x xxxx								*/
+	{CALT,			1,16,16,L0|L1}, /* 9d: 100x xxxx								*/
+	{CALT,			1,16,16,L0|L1}, /* 9e: 100x xxxx								*/
+	{CALT,			1,16,16,L0|L1}, /* 9f: 100x xxxx								*/
+
+	{POP_VA,		1,10,10,L0|L1}, /* a0: 1010 0000								*/
+	{POP_BC,		1,10,10,L0|L1}, /* a1: 1010 0001								*/
+	{POP_DE,		1,10,10,L0|L1}, /* a2: 1010 0010								*/
+	{POP_HL,		1,10,10,L0|L1}, /* a3: 1010 0011								*/
+	{POP_EA,		1,10,10,L0|L1}, /* a4: 1010 0100								*/
+	{DMOV_EA_BC,	1, 4, 4,L0|L1}, /* a5: 1010 0101								*/
+	{DMOV_EA_DE,	1, 4, 4,L0|L1}, /* a6: 1010 0110								*/
+	{DMOV_EA_HL,	1, 4, 4,L0|L1}, /* a7: 1010 0111								*/
+	{INX_EA,		1, 7, 7,L0|L1}, /* a8: 1010 1000								*/
+	{DCX_EA,		1, 7, 7,L0|L1}, /* a9: 1010 1001								*/
+	{EI,			1, 4, 4,L0|L1}, /* aa: 1010 1010								*/
+	{LDAX_D_xx, 	2, 7, 7,L0|L1}, /* ab: 1010 1011 dddd dddd						*/
+	{LDAX_H_A,		1, 7, 7,L0|L1}, /* ac: 1010 1100								*/
+	{LDAX_H_B,		1, 7, 7,L0|L1}, /* ad: 1010 1101								*/
+	{LDAX_H_EA, 	1, 7, 7,L0|L1}, /* ae: 1010 1110								*/
+	{LDAX_H_xx, 	2, 7, 7,L0|L1}, /* af: 1010 1111 dddd dddd						*/
+
+	{PUSH_VA,		1,13,13,L0|L1}, /* b0: 1011 0000								*/
+	{PUSH_BC,		1,13,13,L0|L1}, /* b1: 1011 0001								*/
+	{PUSH_DE,		1,13,13,L0|L1}, /* b2: 1011 0010								*/
+	{PUSH_HL,		1,13,13,L0|L1}, /* b3: 1011 0011								*/
+	{PUSH_EA,		1,13,13,L0|L1}, /* b4: 1011 0100								*/
+	{DMOV_BC_EA,	1, 4, 4,L0|L1}, /* b5: 1011 0101								*/
+	{DMOV_DE_EA,	1, 4, 4,L0|L1}, /* b6: 1011 0110								*/
+	{DMOV_HL_EA,	1, 4, 4,L0|L1}, /* b7: 1011 0111								*/
+	{RET,			1,10,10,L0|L1}, /* b8: 1011 1000								*/
+	{RETS,			1,10,10,L0|L1}, /* b9: 1011 1001								*/
+	{DI,			1, 4, 4,L0|L1}, /* ba: 1011 1010								*/
+	{STAX_D_xx, 	2, 7, 7,L0|L1}, /* bb: 1011 1011 dddd dddd						*/
+	{STAX_H_A,		1, 7, 7,L0|L1}, /* bc: 1011 1100								*/
+	{STAX_H_B,		1, 7, 7,L0|L1}, /* bd: 1011 1101								*/
+	{STAX_H_EA, 	1, 7, 7,L0|L1}, /* be: 1011 1110								*/
+	{STAX_H_xx, 	2, 7, 7,L0|L1}, /* bf: 1011 1111 dddd dddd						*/
+
+	{JR,			1,10,10,L0|L1}, /* c0: 1100 0000								*/
+	{JR,			1,10,10,L0|L1}, /* c1: 1100 0001								*/
+	{JR,			1,10,10,L0|L1}, /* c2: 1100 0010								*/
+	{JR,			1,10,10,L0|L1}, /* c3: 1100 0011								*/
+	{JR,			1,10,10,L0|L1}, /* c4: 1100 0100								*/
+	{JR,			1,10,10,L0|L1}, /* c5: 1100 0101								*/
+	{JR,			1,10,10,L0|L1}, /* c6: 1100 0110								*/
+	{JR,			1,10,10,L0|L1}, /* c7: 1100 0111								*/
+	{JR,			1,10,10,L0|L1}, /* c8: 1100 1000								*/
+	{JR,			1,10,10,L0|L1}, /* c9: 1100 1001								*/
+	{JR,			1,10,10,L0|L1}, /* ca: 1100 1010								*/
+	{JR,			1,10,10,L0|L1}, /* cb: 1100 1011								*/
+	{JR,			1,10,10,L0|L1}, /* cc: 1100 1100								*/
+	{JR,			1,10,10,L0|L1}, /* cd: 1100 1101								*/
+	{JR,			1,10,10,L0|L1}, /* ce: 1100 1110								*/
+	{JR,			1,10,10,L0|L1}, /* cf: 1100 1111								*/
+
+	{JR,			1,10,10,L0|L1}, /* d0: 1101 0000								*/
+	{JR,			1,10,10,L0|L1}, /* d1: 1101 0001								*/
+	{JR,			1,10,10,L0|L1}, /* d2: 1101 0010								*/
+	{JR,			1,10,10,L0|L1}, /* d3: 1101 0011								*/
+	{JR,			1,10,10,L0|L1}, /* d4: 1101 0100								*/
+	{JR,			1,10,10,L0|L1}, /* d5: 1101 0101								*/
+	{JR,			1,10,10,L0|L1}, /* d6: 1101 0110								*/
+	{JR,			1,10,10,L0|L1}, /* d7: 1101 0111								*/
+	{JR,			1,10,10,L0|L1}, /* d8: 1101 1000								*/
+	{JR,			1,10,10,L0|L1}, /* d9: 1101 1001								*/
+	{JR,			1,10,10,L0|L1}, /* da: 1101 1010								*/
+	{JR,			1,10,10,L0|L1}, /* db: 1101 1011								*/
+	{JR,			1,10,10,L0|L1}, /* dc: 1101 1100								*/
+	{JR,			1,10,10,L0|L1}, /* dd: 1101 1101								*/
+	{JR,			1,10,10,L0|L1}, /* de: 1101 1110								*/
+	{JR,			1,10,10,L0|L1}, /* df: 1101 1111								*/
+
+	{JR,			1,10,10,L0|L1}, /* e0: 1110 0000								*/
+	{JR,			1,10,10,L0|L1}, /* e1: 1110 0001								*/
+	{JR,			1,10,10,L0|L1}, /* e2: 1110 0010								*/
+	{JR,			1,10,10,L0|L1}, /* e3: 1110 0011								*/
+	{JR,			1,10,10,L0|L1}, /* e4: 1110 0100								*/
+	{JR,			1,10,10,L0|L1}, /* e5: 1110 0101								*/
+	{JR,			1,10,10,L0|L1}, /* e6: 1110 0110								*/
+	{JR,			1,10,10,L0|L1}, /* e7: 1110 0111								*/
+	{JR,			1,10,10,L0|L1}, /* e8: 1110 1000								*/
+	{JR,			1,10,10,L0|L1}, /* e9: 1110 1001								*/
+	{JR,			1,10,10,L0|L1}, /* ea: 1110 1010								*/
+	{JR,			1,10,10,L0|L1}, /* eb: 1110 1011								*/
+	{JR,			1,10,10,L0|L1}, /* ec: 1110 1100								*/
+	{JR,			1,10,10,L0|L1}, /* ed: 1110 1101								*/
+	{JR,			1,10,10,L0|L1}, /* ee: 1110 1110								*/
+	{JR,			1,10,10,L0|L1}, /* ef: 1110 1111								*/
+
+	{JR,			1,10,10,L0|L1}, /* f0: 1111 0000								*/
+	{JR,			1,10,10,L0|L1}, /* f1: 1111 0001								*/
+	{JR,			1,10,10,L0|L1}, /* f2: 1111 0010								*/
+	{JR,			1,10,10,L0|L1}, /* f3: 1111 0011								*/
+	{JR,			1,10,10,L0|L1}, /* f4: 1111 0100								*/
+	{JR,			1,10,10,L0|L1}, /* f5: 1111 0101								*/
+	{JR,			1,10,10,L0|L1}, /* f6: 1111 0110								*/
+	{JR,			1,10,10,L0|L1}, /* f7: 1111 0111								*/
+	{JR,			1,10,10,L0|L1}, /* f8: 1111 1000								*/
+	{JR,			1,10,10,L0|L1}, /* f9: 1111 1001								*/
+	{JR,			1,10,10,L0|L1}, /* fa: 1111 1010								*/
+	{JR,			1,10,10,L0|L1}, /* fb: 1111 1011								*/
+	{JR,			1,10,10,L0|L1}, /* fc: 1111 1100								*/
+	{JR,			1,10,10,L0|L1}, /* fd: 1111 1101								*/
+	{JR,			1,10,10,L0|L1}, /* fe: 1111 1110								*/
+	{JR,			1,10,10,L0|L1}	/* ff: 1111 1111								*/
+};
+
+static struct opcode_s opXX_7807[256] =
+{
+	{NOP,			1, 4, 4,L0|L1}, /* 00: 0000 0000								*/
+	{LDAW_wa,		2,10,10,L0|L1}, /* 01: 0000 0001 oooo oooo						*/
+	{INX_SP,		1, 7, 7,L0|L1}, /* 02: 0000 0010								*/
+	{DCX_SP,		1, 7, 7,L0|L1}, /* 03: 0000 0011								*/
+	{LXI_S_w,		3,10,10,L0|L1}, /* 04: 0000 0100 llll llll hhhh hhhh			*/
+	{ANIW_wa_xx,	3,19,19,L0|L1}, /* 05: 0000 0101 oooo oooo xxxx xxxx			*/
+	{illegal,		1, 4, 4,L0|L1}, /* 06:											*/
+	{ANI_A_xx,		2, 7, 7,L0|L1}, /* 07: 0000 0111 xxxx xxxx						*/
+	{MOV_A_EAH, 	1, 4, 4,L0|L1}, /* 08: 0000 1000								*/
+	{MOV_A_EAL, 	1, 4, 4,L0|L1}, /* 09: 0000 1001								*/
+	{MOV_A_B,		1, 4, 4,L0|L1}, /* 0a: 0000 1010								*/
+	{MOV_A_C,		1, 4, 4,L0|L1}, /* 0b: 0000 1011								*/
+	{MOV_A_D,		1, 4, 4,L0|L1}, /* 0c: 0000 1100								*/
+	{MOV_A_E,		1, 4, 4,L0|L1}, /* 0d: 0000 1101								*/
+	{MOV_A_H,		1, 4, 4,L0|L1}, /* 0e: 0000 1110								*/
+	{MOV_A_L,		1, 4, 4,L0|L1}, /* 0f: 0000 1111								*/
+
+	{illegal,		1,13, 4,L0|L1}, /* 10: 0001 0000								*/	/* 7807 */
+	{illegal,		1,13, 4,L0|L1}, /* 11: 0001 0001								*/	/* 7807 */
+	{INX_BC,		1, 7, 7,L0|L1}, /* 12: 0001 0010								*/
+	{DCX_BC,		1, 7, 7,L0|L1}, /* 13: 0001 0011								*/
+	{LXI_B_w,		3,10,10,L0|L1}, /* 14: 0001 0100 llll llll hhhh hhhh			*/
+	{ORIW_wa_xx,	3,19,19,L0|L1}, /* 15: 0001 0101 oooo oooo xxxx xxxx			*/
+	{XRI_A_xx,		2, 7, 7,L0|L1}, /* 16: 0001 0110 xxxx xxxx						*/
+	{ORI_A_xx,		2, 7, 7,L0|L1}, /* 17: 0001 0111 xxxx xxxx						*/
+	{MOV_EAH_A, 	1, 4, 4,L0|L1}, /* 18: 0001 1000								*/
+	{MOV_EAL_A, 	1, 4, 4,L0|L1}, /* 19: 0001 1001								*/
+	{MOV_B_A,		1, 4, 4,L0|L1}, /* 1a: 0001 1010								*/
+	{MOV_C_A,		1, 4, 4,L0|L1}, /* 1b: 0001 1011								*/
+	{MOV_D_A,		1, 4, 4,L0|L1}, /* 1c: 0001 1100								*/
+	{MOV_E_A,		1, 4, 4,L0|L1}, /* 1d: 0001 1101								*/
+	{MOV_H_A,		1, 4, 4,L0|L1}, /* 1e: 0001 1110								*/
+	{MOV_L_A,		1, 4, 4,L0|L1}, /* 1f: 0001 1111								*/
+
+	{INRW_wa,		2,16,16,L0|L1}, /* 20: 0010 0000 oooo oooo						*/
+	{JB,			1, 4, 4,L0|L1}, /* 21: 0010 0001								*/
+	{INX_DE,		1, 7, 7,L0|L1}, /* 22: 0010 0010								*/
+	{DCX_DE,		1, 7, 7,L0|L1}, /* 23: 0010 0011								*/
+	{LXI_D_w,		3,10,10,L0|L1}, /* 24: 0010 0100 llll llll hhhh hhhh			*/
+	{GTIW_wa_xx,	3,19,19,L0|L1}, /* 25: 0010 0101 oooo oooo xxxx xxxx			*/
+	{ADINC_A_xx,	2, 7, 7,L0|L1}, /* 26: 0010 0110 xxxx xxxx						*/
+	{GTI_A_xx,		2, 7, 7,L0|L1}, /* 27: 0010 0111 xxxx xxxx						*/
+	{illegal,		1, 4, 4,L0|L1}, /* 28:											*/
+	{LDAX_B,		2, 7, 7,L0|L1}, /* 29: 0010 1001 dddd dddd						*/
+	{LDAX_D,		2, 7, 7,L0|L1}, /* 2a: 0010 1010 dddd dddd						*/
+	{LDAX_H,		2, 7, 7,L0|L1}, /* 2b: 0010 1011 dddd dddd						*/
+	{LDAX_Dp,		2, 7, 7,L0|L1}, /* 2c: 0010 1100 dddd dddd						*/
+	{LDAX_Hp,		2, 7, 7,L0|L1}, /* 2d: 0010 1101 dddd dddd						*/
+	{LDAX_Dm,		2, 7, 7,L0|L1}, /* 2e: 0010 1110 dddd dddd						*/
+	{LDAX_Hm,		2, 7, 7,L0|L1}, /* 2f: 0010 1111 dddd dddd						*/
+
+	{DCRW_wa,		2,16,16,L0|L1}, /* 30: 0011 0000 oooo oooo						*/
+	{illegal,		2, 8, 8,L0|L1}, /* 31: 0011 0001 bbbb bbbb						*/	/* 7807 */
+	{INX_HL,		1, 7, 7,L0|L1}, /* 32: 0011 0010								*/
+	{DCX_HL,		1, 7, 7,L0|L1}, /* 33: 0011 0011								*/
+	{LXI_H_w,		3,10,10,   L1}, /* 34: 0011 0100 llll llll hhhh hhhh			*/
+	{LTIW_wa_xx,	3,19,19,L0|L1}, /* 35: 0011 0101 oooo oooo xxxx xxxx			*/
+	{SUINB_A_xx,	2, 7, 7,L0|L1}, /* 36: 0011 0110 xxxx xxxx						*/
+	{LTI_A_xx,		2, 7, 7,L0|L1}, /* 37: 0011 0111 xxxx xxxx						*/
+	{illegal,		1, 4, 4,L0|L1}, /* 38:											*/
+	{STAX_B,		2, 7, 7,L0|L1}, /* 39: 0011 1001 dddd dddd						*/
+	{STAX_D,		2, 7, 7,L0|L1}, /* 3a: 0011 1010 dddd dddd						*/
+	{STAX_H,		2, 7, 7,L0|L1}, /* 3b: 0011 1011 dddd dddd						*/
+	{STAX_Dp,		2, 7, 7,L0|L1}, /* 3c: 0011 1100 dddd dddd						*/
+	{STAX_Hp,		2, 7, 7,L0|L1}, /* 3d: 0011 1101 dddd dddd						*/
+	{STAX_Dm,		2, 7, 7,L0|L1}, /* 3e: 0011 1110 dddd dddd						*/
+	{STAX_Hm,		2, 7, 7,L0|L1}, /* 3f: 0011 1111 dddd dddd						*/
+
+	{CALL_w,		3,16,16,L0|L1}, /* 40: 0100 0000 llll llll hhhh hhhh			*/
+	{INR_A, 		1, 4, 4,L0|L1}, /* 41: 0100 0001								*/
+	{INR_B, 		1, 4, 4,L0|L1}, /* 42: 0100 0010								*/
+	{INR_C, 		1, 4, 4,L0|L1}, /* 43: 0100 0011								*/
+	{LXI_EA_s,		3,10,10,L0|L1}, /* 44: 0100 0100 llll llll hhhh hhhh			*/
+	{ONIW_wa_xx,	3,19,19,L0|L1}, /* 45: 0100 0101 oooo oooo xxxx xxxx			*/
+	{ADI_A_xx,		2, 7, 7,L0|L1}, /* 46: 0100 0110 xxxx xxxx						*/
+	{ONI_A_xx,		2, 7, 7,L0|L1}, /* 47: 0100 0111 xxxx xxxx						*/
+	{PRE_48,		1, 0, 0,L0|L1}, /* 48: prefix									*/
+	{MVIX_BC_xx,	2,10,10,L0|L1}, /* 49: 0100 1001 xxxx xxxx						*/
+	{MVIX_DE_xx,	2,10,10,L0|L1}, /* 4a: 0100 1010 xxxx xxxx						*/
+	{MVIX_HL_xx,	2,10,10,L0|L1}, /* 4b: 0100 1011 xxxx xxxx						*/
+	{PRE_4C,		1, 0, 0,L0|L1}, /* 4c: prefix									*/
+	{PRE_4D,		1, 4, 4,L0|L1}, /* 4d: prefix									*/
+	{JRE,			2,10,10,L0|L1}, /* 4e: 0100 111d dddd dddd						*/
+	{JRE,			2,10,10,L0|L1}, /* 4f: 0100 111d dddd dddd						*/
+
+	{SKN_bit,		2,13,13,L0|L1}, /* 50: 0101 0000 bbbb bbbb						*/	/* 7807 */
+	{DCR_A, 		1, 4, 4,L0|L1}, /* 51: 0101 0001								*/
+	{DCR_B, 		1, 4, 4,L0|L1}, /* 52: 0101 0010								*/
+	{DCR_C, 		1, 4, 4,L0|L1}, /* 53: 0101 0011								*/
+	{JMP_w, 		3,10,10,L0|L1}, /* 54: 0101 0100 llll llll hhhh hhhh			*/
+	{OFFIW_wa_xx,	3,19,19,L0|L1}, /* 55: 0101 0101 oooo oooo xxxx xxxx			*/
+	{ACI_A_xx,		2, 7, 7,L0|L1}, /* 56: 0101 0110 xxxx xxxx						*/
+	{OFFI_A_xx, 	2, 7, 7,L0|L1}, /* 57: 0101 0111 xxxx xxxx						*/
+	{SETB,			2,13,13,L0|L1}, /* 58: 0101 1000 bbbb bbbb						*/	/* 7807 */
+	{illegal,		2, 8, 8,L0|L1}, /* 59: 0101 1001 bbbb bbbb						*/	/* 7807 */
+	{illegal,		2, 8, 8,L0|L1}, /* 5a: 0101 1010 bbbb bbbb						*/	/* 7807 */
+	{CLR,			2,13,13,L0|L1}, /* 5b: 0101 1011 bbbb bbbb						*/	/* 7807 */
+	{illegal,		2, 8, 8,L0|L1}, /* 5c: 0101 1100 bbbb bbbb						*/	/* 7807 */
+	{SK_bit,		2,10,10,L0|L1}, /* 5d: 0101 1101 bbbb bbbb						*/	/* 7807 */
+	{illegal,		2, 8, 8,L0|L1}, /* 5e: 0101 1110 bbbb bbbb						*/	/* 7807 */
+	{illegal,		2, 8, 8,L0|L1}, /* 5f: 0101 1111 bbbb bbbb						*/	/* 7807 */
 
 	{PRE_60,		1, 0, 0,L0|L1}, /* 60:											*/
 	{DAA,			1, 4, 4,L0|L1}, /* 61: 0110 0001								*/

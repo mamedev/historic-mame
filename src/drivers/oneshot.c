@@ -351,7 +351,6 @@ ROM_START( oneshot )
 	ROM_LOAD( "1shot.u14", 0x080000, 0x080000, 0x222e33f8 )
 
 	ROM_REGION( 0x10000, REGION_USER1, 0 )
-	// BAD ADDRESS LINES (mask=00f000)
 	ROM_LOAD( "1shot.mb", 0x00000, 0x10000, 0x6b213183 ) // motherboard rom, zooming?
 ROM_END
 
@@ -378,7 +377,6 @@ ROM_START( maddonna )
 	ROM_LOAD( "maddonna.u14", 0x080000, 0x080000, 0 ) // not dumped
 
 	ROM_REGION( 0x10000, REGION_USER1, 0 )
-	// BAD ADDRESS LINES (mask=00f000)
 	ROM_LOAD( "x1", 0x00000, 0x10000, 0x6b213183 ) // motherboard rom, zooming?
 ROM_END
 

@@ -287,12 +287,7 @@ static MEMORY_READ16_START( mj4simai_readmem )
 	{ 0x600100, 0x600101, input_port_2_word_r		},	//
 	{ 0x600300, 0x600301, input_port_0_word_r		},	// DSW 1
 	{ 0x600302, 0x600303, input_port_1_word_r		},	// DSW 2
-#if	__X1_010_V2
 	{ 0xb00000, 0xb03fff, seta_sound_word_r 		},	// Sound
-#else
-	{ 0xb00000, 0xb000ff, seta_sound_word_r 		},	// Sound
-	{ 0xb00100, 0xb03fff, MRA16_RAM					},	//
-#endif	// __X1_010_V2
 	{ 0xc00000, 0xc3ffff, MRA16_RAM					},	// Sprites
 	{ 0xc40000, 0xc4ffff, MRA16_RAM					},	// Palette
 	{ 0xfffc00, 0xffffff, MRA16_RAM					},	// TMP68301 Registers
@@ -304,12 +299,7 @@ static MEMORY_WRITE16_START( mj4simai_writemem )
 	{ 0x600004, 0x600005, mj4simai_keyboard_w			},	// select keyboard row to read
 	{ 0x600200, 0x600201, MWA16_NOP						},	// Leds? Coins?
 	{ 0x600300, 0x60030f, seta2_sound_bank_w			},	// Samples Banks
-#if	__X1_010_V2
 	{ 0xb00000, 0xb03fff, seta_sound_word_w 			},	// Sound
-#else
-	{ 0xb00000, 0xb000ff, seta_sound_word_w 			},	// Sound
-	{ 0xb00100, 0xb03fff, MWA16_RAM						},	//
-#endif	// __X1_010_V2
 	{ 0xc00000, 0xc3ffff, MWA16_RAM, &spriteram16,  &spriteram_size	},	// Sprites
 	{ 0xc40000, 0xc4ffff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16	},	// Palette
 	{ 0xc60000, 0xc6003f, seta2_vregs_w, &seta2_vregs	},	// Video Registers
@@ -330,12 +320,7 @@ static MEMORY_READ16_START( myangel_readmem )
 	{ 0x700006, 0x700007, watchdog_reset16_r		},	// Watchdog
 	{ 0x700300, 0x700301, input_port_0_word_r		},	// DSW 1
 	{ 0x700302, 0x700303, input_port_1_word_r		},	// DSW 2
-#if	__X1_010_V2
 	{ 0xb00000, 0xb03fff, seta_sound_word_r 		},	// Sound
-#else
-	{ 0xb00000, 0xb000ff, seta_sound_word_r 		},	// Sound
-	{ 0xb00100, 0xb03fff, MRA16_RAM					},	//
-#endif	// __X1_010_V2
 	{ 0xc00000, 0xc3ffff, MRA16_RAM					},	// Sprites
 	{ 0xc40000, 0xc4ffff, MRA16_RAM					},	// Palette
 	{ 0xfffc00, 0xffffff, MRA16_RAM					},	// TMP68301 Registers
@@ -346,12 +331,7 @@ static MEMORY_WRITE16_START( myangel_writemem )
 	{ 0x200000, 0x20ffff, MWA16_RAM						},	// RAM
 	{ 0x700200, 0x700201, MWA16_NOP						},	// Leds? Coins?
 	{ 0x700310, 0x70031f, seta2_sound_bank_w			},	// Samples Banks
-#if	__X1_010_V2
 	{ 0xb00000, 0xb03fff, seta_sound_word_w 			},	// Sound
-#else
-	{ 0xb00000, 0xb000ff, seta_sound_word_w 			},	// Sound
-	{ 0xb00100, 0xb03fff, MWA16_RAM						},	//
-#endif	// __X1_010_V2
 	{ 0xc00000, 0xc3ffff, MWA16_RAM, &spriteram16,  &spriteram_size	},	// Sprites
 	{ 0xc40000, 0xc4ffff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16	},	// Palette
 	{ 0xc60000, 0xc6003f, seta2_vregs_w, &seta2_vregs	},	// Video Registers
@@ -372,12 +352,7 @@ static MEMORY_READ16_START( myangel2_readmem )
 	{ 0x600006, 0x600007, watchdog_reset16_r		},	// Watchdog
 	{ 0x600300, 0x600301, input_port_0_word_r		},	// DSW 1
 	{ 0x600302, 0x600303, input_port_1_word_r		},	// DSW 2
-#if	__X1_010_V2
 	{ 0xb00000, 0xb03fff, seta_sound_word_r 		},	// Sound
-#else
-	{ 0xb00000, 0xb000ff, seta_sound_word_r 		},	// Sound
-	{ 0xb00100, 0xb03fff, MRA16_RAM					},	//
-#endif	// __X1_010_V2
 	{ 0xd00000, 0xd3ffff, MRA16_RAM					},	// Sprites
 	{ 0xd40000, 0xd4ffff, MRA16_RAM					},	// Palette
 	{ 0xfffc00, 0xffffff, MRA16_RAM					},	// TMP68301 Registers
@@ -388,12 +363,7 @@ static MEMORY_WRITE16_START( myangel2_writemem )
 	{ 0x200000, 0x20ffff, MWA16_RAM						},	// RAM
 	{ 0x600200, 0x600201, MWA16_NOP						},	// Leds? Coins?
 	{ 0x600300, 0x60030f, seta2_sound_bank_w			},	// Samples Banks
-#if	__X1_010_V2
-	{ 0xb00000, 0xb000ff, seta_sound_word_w 			},	// Sound
-#else
-	{ 0xb00000, 0xb000ff, seta_sound_word_w 			},	// Sound
-	{ 0xb00100, 0xb03fff, MWA16_RAM						},	//
-#endif	// __X1_010_V2
+	{ 0xb00000, 0xb03fff, seta_sound_word_w 			},	// Sound
 	{ 0xd00000, 0xd3ffff, MWA16_RAM, &spriteram16,  &spriteram_size	},	// Sprites
 	{ 0xd40000, 0xd4ffff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16	},	// Palette
 	{ 0xd60000, 0xd6003f, seta2_vregs_w, &seta2_vregs	},	// Video Registers
@@ -422,6 +392,7 @@ WRITE16_HANDLER( pzlbowl_coin_counter_w )
 	if (ACCESSING_LSB)
 	{
 		coin_counter_w(0,data & 0x10);
+		coin_counter_w(1,data & 0x20);
 	}
 }
 
@@ -437,12 +408,7 @@ static MEMORY_READ16_START( pzlbowl_readmem )
 	{ 0x700000, 0x700001, pzlbowl_protection_r		},	// Protection
 	{ 0x800000, 0x83ffff, MRA16_RAM					},	// Sprites
 	{ 0x840000, 0x84ffff, MRA16_RAM					},	// Palette
-#if	__X1_010_V2
 	{ 0x900000, 0x903fff, seta_sound_word_r 		},	// Sound
-#else
-	{ 0x900000, 0x9000ff, seta_sound_word_r 		},	// Sound
-	{ 0x900100, 0x903fff, MRA16_RAM					},	//
-#endif	// __X1_010_V2
 	{ 0xfffc00, 0xffffff, MRA16_RAM					},	// TMP68301 Registers
 MEMORY_END
 
@@ -454,12 +420,7 @@ static MEMORY_WRITE16_START( pzlbowl_writemem )
 	{ 0x800000, 0x83ffff, MWA16_RAM, &spriteram16,  &spriteram_size	},	// Sprites
 	{ 0x840000, 0x84ffff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16	},	// Palette
 	{ 0x860000, 0x86003f, seta2_vregs_w, &seta2_vregs	},	// Video Registers
-#if	__X1_010_V2
 	{ 0x900000, 0x903fff, seta_sound_word_w 			},	// Sound
-#else
-	{ 0x900000, 0x9000ff, seta_sound_word_w 			},	// Sound
-	{ 0x900100, 0x903fff, MWA16_RAM						},	//
-#endif	// __X1_010_V2
 	{ 0xfffc00, 0xffffff, tmp68301_regs_w, &tmp68301_regs	},	// TMP68301 Registers
 MEMORY_END
 
@@ -482,12 +443,7 @@ static MEMORY_READ16_START( penbros_readmem )
 //	{ 0x700000, 0x700001, pzlbowl_protection_r		},	// Protection
 	{ 0xb00000, 0xb3ffff, MRA16_RAM					},	// Sprites
 	{ 0xb40000, 0xb4ffff, MRA16_RAM					},	// Palette
-#if	__X1_010_V2
 	{ 0xa00000, 0xa03fff, seta_sound_word_r 		},	// Sound
-#else
-	{ 0xa00000, 0xa000ff, seta_sound_word_r 		},	// Sound
-	{ 0xa00100, 0xa03fff, MRA16_RAM					},	//
-#endif	// __X1_010_V2
 	{ 0xfffc00, 0xffffff, MRA16_RAM					},	// TMP68301 Registers
 MEMORY_END
 
@@ -501,12 +457,7 @@ static MEMORY_WRITE16_START( penbros_writemem )
 	{ 0xb00000, 0xb3ffff, MWA16_RAM, &spriteram16,  &spriteram_size	},	// Sprites
 	{ 0xb40000, 0xb4ffff, paletteram16_xRRRRRGGGGGBBBBB_word_w, &paletteram16	},	// Palette
 	{ 0xb60000, 0xb6003f, seta2_vregs_w, &seta2_vregs	},	// Video Registers
-#if	__X1_010_V2
 	{ 0xa00000, 0xa03fff, seta_sound_word_w 			},	// Sound
-#else
-	{ 0xa00000, 0xa000ff, seta_sound_word_w 			},	// Sound
-	{ 0xa00100, 0xa03fff, MWA16_RAM						},	//
-#endif	// __X1_010_V2
 	{ 0xfffc00, 0xffffff, tmp68301_regs_w, &tmp68301_regs	},	// TMP68301 Registers
 MEMORY_END
 
@@ -1104,11 +1055,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static int seta_sh_start_16MHz(const struct MachineSound *msound)
 {
-#if	__X1_010_V2
 	return seta_sh_start( msound, 50000000/3, 0x0000 );
-#else
-	return seta_sh_start(msound, 16000000);
-#endif
 }
 
 static struct CustomSound_interface seta_sound_intf_16MHz =

@@ -6,6 +6,11 @@
 The "Kabuki" is a custom Z80 module which runs encrypted code. The encryption
 key is stored in some battery-backed RAM, therefore the chip has the annoying
 habit of stopping working every few years, when the battery dies.
+
+The suicide battery supplies power to pin 28. When you remove the battery, if
+you pull pin 28 low, the Kabuki will behave like a normal Z80.
+
+
 Check at the bottom of this text to see a list of all the known games which
 use this chip.
 

@@ -151,6 +151,7 @@
 #include "machine/ticket.h"
 #include "vidhrdw/generic.h"
 #include "vidhrdw/tms34061.h"
+#include "vidhrdw/tlc34076.h"
 #include "itech8.h"
 #include <math.h>
 
@@ -303,6 +304,9 @@ static MACHINE_INIT( itech8 )
 
 	/* reset the ticket dispenser */
 	ticket_dispenser_init(200, TICKET_MOTOR_ACTIVE_HIGH, TICKET_STATUS_ACTIVE_LOW);
+
+	/* reset the palette chip */
+	tlc34076_reset(6);
 }
 
 
@@ -573,17 +577,10 @@ static WRITE16_HANDLER( blitter16_w )
 }
 
 
-static WRITE16_HANDLER( palette_addr16_w )
+static WRITE16_HANDLER( palette16_w )
 {
 	if (ACCESSING_MSB)
-		itech8_palette_address_w(0, data >> 8);
-}
-
-
-static WRITE16_HANDLER( palette_data16_w )
-{
-	if (ACCESSING_MSB)
-		itech8_palette_data_w(0, data >> 8);
+		itech8_palette_w(offset / 8, data >> 8);
 }
 
 
@@ -649,8 +646,7 @@ static MEMORY_WRITE_START( tmslo_writemem )
 	{ 0x1180, 0x1180, tms34061_latch_w },
 	{ 0x11a0, 0x11a0, itech8_nmi_ack_w },
 	{ 0x11c0, 0x11df, blitter_w },
-	{ 0x11e0, 0x11e0, itech8_palette_address_w },
-	{ 0x11e2, 0x11e3, itech8_palette_data_w },
+	{ 0x11e0, 0x11ff, itech8_palette_w },
 	{ 0x2000, 0x3fff, MWA_RAM, &main_ram, &main_ram_size },
 	{ 0x4000, 0xffff, MWA_ROM },
 MEMORY_END
@@ -681,8 +677,7 @@ static MEMORY_WRITE_START( tmshi_writemem )
 	{ 0x0180, 0x0180, tms34061_latch_w },
 	{ 0x01a0, 0x01a0, itech8_nmi_ack_w },
 	{ 0x01c0, 0x01df, blitter_w },
-	{ 0x01e0, 0x01e0, itech8_palette_address_w },
-	{ 0x01e2, 0x01e3, itech8_palette_data_w },
+	{ 0x01e0, 0x01ff, itech8_palette_w },
 	{ 0x2000, 0x3fff, MWA_RAM, &main_ram, &main_ram_size },
 	{ 0x4000, 0xffff, MWA_ROM },
 MEMORY_END
@@ -712,8 +707,7 @@ static MEMORY_WRITE_START( gtg2_writemem )
 	{ 0x01e0, 0x01e0, tms34061_latch_w },
 	{ 0x0100, 0x0100, itech8_nmi_ack_w },
 	{ 0x0180, 0x019f, blitter_w },
-	{ 0x0140, 0x0140, itech8_palette_address_w },
-	{ 0x0142, 0x0143, itech8_palette_data_w },
+	{ 0x0140, 0x015f, itech8_palette_w },
 	{ 0x2000, 0x3fff, MWA_RAM, &main_ram, &main_ram_size },
 	{ 0x4000, 0xffff, MWA_ROM },
 MEMORY_END
@@ -741,8 +735,7 @@ static MEMORY_WRITE16_START( ninclown_writemem )
 	{ 0x100240, 0x100241, tms34061_latch16_w },
 	{ 0x100280, 0x100281, MWA16_NOP },
 	{ 0x100300, 0x10031f, blitter16_w },
-	{ 0x100380, 0x100381, palette_addr16_w },
-	{ 0x1003a0, 0x1003a1, palette_data16_w },
+	{ 0x100380, 0x1003ff, palette16_w },
 	{ 0x110000, 0x110fff, tms34061_16_w },
 MEMORY_END
 

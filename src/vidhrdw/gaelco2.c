@@ -460,12 +460,12 @@ static void gaelco2_draw_sprites(struct mame_bitmap *bitmap, const struct rectan
 
 								int gfx_px = xflip ? (gfx->width - 1 - px) : px;
 
-								if ((xpos < cliprect->min_x) || (xpos > cliprect->max_x)) continue;
-
 								/* get asociated pen for the current sprite pixel */
 								int gfx_pen = gfx_src[gfx->line_modulo*gfx_py + gfx_px];
 
 								if ((gfx_pen == 0) || (gfx_pen >= 16)) continue;
+
+								if ((xpos < cliprect->min_x) || (xpos > cliprect->max_x)) continue;
 
 								/* make background color darker or brighter */
 								*pixel = src_color + 4096*gfx_pen;

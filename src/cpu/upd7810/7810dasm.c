@@ -3,42 +3,7 @@
  *	 Portable uPD7810/11, 7810H/11H, 78C10/C11/C14 disassembler
  *	 Copyright (c) 2001 Juergen Buchmueller, all rights reserved.
  *
- *   NS20030112: added 7807. I haven't added complete disassembly of the
- *               following bit manipulation instructions, which would require
- *               special handling.
- *
- *   -----------------
- *   Skip instructions
- *   -----------------
- *   7807 doesn't have this
- *   ins.            1st byte 2nd byte 3rd 4th state func
- *   BIT bit, wa     01011bbb  wwwwwwww          10*  bit skip if (V.wa).bit = 1
- *
- *   Instead, 7807 has these bit manipulation instructions.
- *   ins.            1st byte 2nd byte 3rd 4th state func
- *   MOV    CY, bit  01011111  bbbbbbbb          10* CY <- (bit)
- *   MOV    bit, CY  01011010  bbbbbbbb          13* (bit) <- CY
- *   AND    CY, bit  01010001  bbbbbbbb          10* CY <- CY & (bit)
- *   OR     CY, bit  01011100  bbbbbbbb          10* CY <- CY | (bit)
- *   XOR    CY, bit  01011110  bbbbbbbb          10* CY <- CY ^ (bit)
- *   SETB   bit      01011000  bbbbbbbb          13* (bit) <- 1
- *   CLR    bit      01011011  bbbbbbbb          13* (bit) <- 0
- *   NOT    bit      01011001  bbbbbbbb          13* (bit) <- !(bit)
- *   SK     bit      01011101  bbbbbbbb          10*  (b) skip if (bit) = 1
- *   SKN    bit      01010000  bbbbbbbb          10* !(b) skip if (bit) = 0
- *
- *   reg bit7 bit6 bit5 bit4 bit3 bit2 bit1 bit0
- *   PA  087H 086H 085H 084H 083H 082H 081H 080H
- *   PB  08FH 08EH 08DH 08CH 08BH 08AH 089H 088H
- *   PC  097H 096H 095H 094H 093H 092H 091H 090H
- *   PD  09FH 09EH 09DH 09CH 09BH 09AH 099H 098H
- *   PF  0AFH 0AEH 0ADH 0ACH 0ABH 0AAH 0A9H 0A8H
- *   MKH 0B7H 0B6H 0B5H 0B4H 0B3H 0B2H 0B1H 0B0H
- *   MKL 0BFH 0BEH 0BDH 0BCH 0BBH 0BAH 0B9H 0B8H
- *   SMH 0CFH 0CEH 0CDH 0CCH 0CBH 0CAH 0C9H 0C8H
- *   EOM 0DFH 0DEH 0DDH 0DCH 0DBH 0DAH 0D9H 0D8H
- *   TMM 0EFH 0EEH 0EDH 0ECH 0EBH 0EAH 0E9H 0E8H
- *   PT  0F7H 0F6H 0F5H 0F4H 0F3H 0F2H 0F1H 0F0H
+ *   NS20030112: added 7807.
  *
  *****************************************************************************/
 
@@ -74,6 +39,7 @@ enum
 	ANA,
 	ANAW,
 	ANAX,
+	AND,
 	ANI,
 	ANIW,
 	BIT,
@@ -246,6 +212,7 @@ static const char* token[] =
 	"ANA",
 	"ANAW",
 	"ANAX",
+	"AND",
 	"ANI",
 	"ANIW",
 	"BIT",
@@ -1447,7 +1414,7 @@ static struct dasm_s  dasm4C_7807[256] =
 	{MOV,"A,EOM",    2,10}, /* cb: 0100 1100 1100 1011                      */
 	{illegal,0, 	 2,10}, /* cc: 0100 1100 1100 1100						*/
 	{MOV,"A,TMM",    2,10}, /* cd: 0100 1100 1100 1101                      */
-	{illegal,0, 	 2,10}, /* ce: 0100 1100 1100 1110						*/
+	{MOV,"A,PT", 	 2,10}, /* ce: 0100 1100 1100 1110						*/	/* 7807 */
 	{illegal,0, 	 2,10}, /* cf: 0100 1100 1100 1111						*/
 
 	{illegal,0, 	 2,10}, /* d0: 0100 1100 1101 0000						*/
@@ -2023,7 +1990,7 @@ static struct dasm_s  dasm4D_7807[256] =
 	{illegal,0, 	 2,10}, /* e2: 0100 1101 1110 0010						*/
 	{illegal,0, 	 2,10}, /* e3: 0100 1101 1110 0011						*/
 	{illegal,0, 	 2,10}, /* e4: 0100 1101 1110 0100						*/
-	{illegal,0, 	 2,10}, /* e5: 0100 1101 1110 0101						*/
+	{MOV,"MT,A", 	 2,10}, /* e5: 0100 1101 1110 0101						*/	/* 7807 */
 	{illegal,0, 	 2,10}, /* e6: 0100 1101 1110 0110						*/
 	{illegal,0, 	 2,10}, /* e7: 0100 1101 1110 0111						*/
 	{illegal,0, 	 2,10}, /* e8: 0100 1101 1110 1000                      */
@@ -3727,8 +3694,8 @@ static struct dasm_s  dasmXX_7807[256] =
 	{MOV,"A,H",      1, 4}, /* 0e: 0000 1110                                */
 	{MOV,"A,L",      1, 4}, /* 0f: 0000 1111                                */
 
-	{BLOCK,"D+",	 1,13}, /* 10: 0001 0000								*/
-	{BLOCK,"D-",	 1,13}, /* 11: 0001 0001								*/
+	{BLOCK,"D+",	 1,13}, /* 10: 0001 0000								*/	/* 7807 */
+	{BLOCK,"D-",	 1,13}, /* 11: 0001 0001								*/	/* 7807 */
 	{INX,"BC",       1, 7}, /* 12: 0001 0010                                */
 	{DCX,"BC",       1, 7}, /* 13: 0001 0011                                */
 	{LXI,"BC,%w",    3,10}, /* 14: 0001 0100 llll llll hhhh hhhh            */
@@ -3762,7 +3729,7 @@ static struct dasm_s  dasmXX_7807[256] =
 	{LDAX,"(HL-)",   1, 7}, /* 2f: 0010 1111                                */
 
 	{DCRW,"%a",      2,16}, /* 30: 0011 0000 oooo oooo                      */
-	{illegal,0,		 1, 4}, /* 31: 0011 0001								*/
+	{AND,"CY,%i",	 2,10}, /* 31: 0011 0001 bbbb bbbb						*/	/* 7807 */
 	{INX,"HL",       1, 7}, /* 32: 0011 0010                                */
 	{DCX,"HL",       1, 7}, /* 33: 0011 0011                                */
 	{LXI,"HL,%w",    3,10}, /* 34: 0011 0100 llll llll hhhh hhhh            */
@@ -3794,22 +3761,22 @@ static struct dasm_s  dasmXX_7807[256] =
 	{0,dasm4D_7807,	 0, 0}, /* 4d: prefix									*/
 	{JRE,"%d",       2,10}, /* 4e: 0100 111d dddd dddd                      */
 	{JRE,"%d",       2,10}, /* 4f: 0100 111d dddd dddd                      */
-	{illegal,0,		 1, 4}, /* 50: 0101 0000								*/	/* SKN, bit?*/
-	{DCR,"A",        1, 4}, /* 51: 0101 0001                                */	/* AND CY,bit? */
+	{SKN,"%i",		 2,10}, /* 50: 0101 0000 bbbb bbbb						*/	/* 7807 */
+	{DCR,"A",        1, 4}, /* 51: 0101 0001                                */
 	{DCR,"B",        1, 4}, /* 52: 0101 0010                                */
 	{DCR,"C",        1, 4}, /* 53: 0101 0011                                */
 	{JMP,"%w",       3,10}, /* 54: 0101 0100 llll llll hhhh hhhh            */
 	{OFFIW,"%a,%b",  3,19}, /* 55: 0101 0101 oooo oooo xxxx xxxx            */
 	{ACI,"A,%b",     2, 7}, /* 56: 0101 0110 xxxx xxxx                      */
 	{OFFI,"A,%b",    2, 7}, /* 57: 0101 0111 xxxx xxxx                      */
-	{SETB,"bit",     2,10}, /* 58: 0101 1000 oooo oooo                      */	/* 7807 */
-	{NOT,"bit",      2,10}, /* 59: 0101 1001 oooo oooo                      */	/* 7807 */
-	{MOV,"bit,CY",   2,10}, /* 5a: 0101 1010 oooo oooo                      */	/* 7807 */
-	{CLR,"bit",      2,10}, /* 5b: 0101 1011 oooo oooo                      */	/* 7807 */
-	{OR,"CY,bit",    2,10}, /* 5c: 0101 1100 oooo oooo                      */	/* 7807 */
-	{SK,"bit",       2,10}, /* 5d: 0101 1101 oooo oooo                      */	/* 7807 */
-	{XOR,"CY,bit",   2,10}, /* 5e: 0101 1110 oooo oooo                      */	/* 7807 */
-	{MOV,"CY,bit",   2,10}, /* 5f: 0101 1111 oooo oooo                      */	/* 7807 */
+	{SETB,"%i",      2,13}, /* 58: 0101 1000 bbbb bbbb                      */	/* 7807 */
+	{NOT,"%i",       2,13}, /* 59: 0101 1001 bbbb bbbb                      */	/* 7807 */
+	{MOV,"%i,CY",    2,13}, /* 5a: 0101 1010 bbbb bbbb                      */	/* 7807 */
+	{CLR,"%i",       2,13}, /* 5b: 0101 1011 bbbb bbbb                      */	/* 7807 */
+	{OR,"CY,%i",     2,10}, /* 5c: 0101 1100 bbbb bbbb                      */	/* 7807 */
+	{SK,"%i",        2,10}, /* 5d: 0101 1101 bbbb bbbb                      */	/* 7807 */
+	{XOR,"CY,%i",    2,10}, /* 5e: 0101 1110 bbbb bbbb                      */	/* 7807 */
+	{MOV,"CY,%i",    2,10}, /* 5f: 0101 1111 bbbb bbbb                      */	/* 7807 */
 
 	{0,dasm60,		 0, 0}, /* 60: prefix									*/
 	{DAA,0, 		 1, 4}, /* 61: 0110 0001								*/
@@ -3982,6 +3949,21 @@ static struct dasm_s  dasmXX_7807[256] =
 	{JR,"%o",        1,10}  /* ff: 11oo oooo                                */
 };
 
+
+/* register names for bit manipulation instructions */
+const char *regname[32] =
+{
+	"illegal", "illegal", "illegal", "illegal",
+	"illegal", "illegal", "illegal", "illegal",
+	"illegal", "illegal", "illegal", "illegal",
+	"illegal", "illegal", "illegal", "illegal",
+	"PA",      "PB",      "PC",      "PD",
+	"illegal", "PF",      "MKH",     "MKL",
+	"illegal", "SMH",     "illegal", "EOM",
+	"illegal", "TMM",     "PT",      "illegal"
+};
+
+
 unsigned Dasm( char *buffer, unsigned pc, struct dasm_s *dasmXX )
 {
 	UINT8 op = cpu_readop(pc++), op2, t;
@@ -4053,6 +4035,10 @@ unsigned Dasm( char *buffer, unsigned pc, struct dasm_s *dasmXX )
 				offset = (INT8)(op << 2) >> 2;
 				symbol = set_ea_info(0, pc - 2, offset + 1, EA_REL_PC);
 				buffer += sprintf(buffer, "%s", symbol);
+				break;
+			case 'i':   /* bit manipulation */
+				op2 = cpu_readop(pc++);
+				buffer += sprintf(buffer, "%s,%d", regname[op2 & 0x1f], op2 >> 5);
 				break;
 			default:
 				*buffer++ = *a;

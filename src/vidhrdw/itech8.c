@@ -8,6 +8,7 @@
 
 #include "driver.h"
 #include "vidhrdw/tms34061.h"
+#include "vidhrdw/tlc34076.h"
 #include "cpu/m6809/m6809.h"
 #include "itech8.h"
 
@@ -61,10 +62,6 @@ data8_t *itech8_grom_bank;
 data8_t *itech8_display_page;
 
 
-static UINT8 palette_addr;
-static UINT8 palette_index;
-static UINT8 palette_data[3];
-
 static UINT8 blitter_data[16];
 static UINT8 blit_in_progress;
 
@@ -116,8 +113,6 @@ VIDEO_START( itech8 )
 	tms34061_get_display_state(&tms_state);
 
 	/* reset statics */
-	palette_addr = 0;
-	palette_index = 0;
 	slikshot = 0;
 
 	/* fetch the GROM base */
@@ -142,23 +137,9 @@ VIDEO_START( slikshot )
  *
  *************************************/
 
-WRITE_HANDLER( itech8_palette_address_w )
+WRITE_HANDLER( itech8_palette_w )
 {
-	/* latch the address */
-	palette_addr = data;
-	palette_index = 0;
-}
-
-
-WRITE_HANDLER( itech8_palette_data_w )
-{
-	/* wait for 3 bytes to come in, then update the color */
-	palette_data[palette_index++] = data;
-	if (palette_index == 3)
-	{
-		palette_set_color(palette_addr++, palette_data[0] << 2, palette_data[1] << 2, palette_data[2] << 2);
-		palette_index = 0;
-	}
+	tlc34076_w(offset/2, data);
 }
 
 
@@ -785,7 +766,7 @@ VIDEO_UPDATE( itech8 )
 		int halfwidth = (Machine->visible_area.max_x + 2) / 2;
 		UINT8 *base = &tms_state.vram[(~*itech8_display_page & 0x80) << 10];
 		UINT8 *latch = &tms_state.latchram[(~*itech8_display_page & 0x80) << 10];
-		
+
 		base += (cliprect->min_y - Machine->visible_area.min_y) * 256;
 		latch += (cliprect->min_y - Machine->visible_area.min_y) * 256;
 

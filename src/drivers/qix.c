@@ -16,6 +16,9 @@
 	Known bugs:
 		* none at this time
 
+	Notes:
+		* the encrypted version of Kram doesn't have the protection MCU
+
 ****************************************************************************
 
 	Memory map
@@ -934,15 +937,12 @@ ROM_START( kram3 )
     ROM_LOAD( "kr-u5",  0xa000, 0x1000, 0x9e63c2bc )
     ROM_LOAD( "kr-u6",  0xb000, 0x1000, 0xa0ff1244 )
     ROM_LOAD( "kr-u7",  0xc000, 0x1000, 0x20a15024 )
-    ROM_LOAD( "kr-u8",  0xd000, 0x1000, 0x1127c4e4 )
-    ROM_LOAD( "kr-u9",  0xe000, 0x1000, 0xd3bc8b5e )
+    ROM_LOAD( "ks8",    0xd000, 0x1000, 0x1127c4e4 )
+    ROM_LOAD( "ks9",    0xe000, 0x1000, 0xd3bc8b5e )
     ROM_LOAD( "kr-u10", 0xf000, 0x1000, 0x0a8adbd8 )
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )
-    ROM_LOAD( "kr-u27", 0xf800, 0x0800, 0xc46530c8 )
-
-	ROM_REGION( 0x0800, REGION_CPU4, 0 )
-	ROM_LOAD( "ks101.dat", 0x0000, 0x0800, 0xe53d97b7 )
+    ROM_LOAD( "ks27",   0xf800, 0x0800, 0xc46530c8 )
 ROM_END
 
 
@@ -1122,7 +1122,7 @@ GAME( 1982, elecyoyo, 0,        mcu,     elecyoyo, 0,        ROT270, "Taito Amer
 GAME( 1982, elecyoy2, elecyoyo, mcu,     elecyoyo, 0,        ROT270, "Taito America Corporation", "The Electric Yo-Yo (set 2)" )
 GAME( 1982, kram,     0,        mcu,     kram,     kram,     ROT0,   "Taito America Corporation", "Kram (set 1)" )
 GAME( 1982, kram2,    kram,     mcu,     kram,     kram,     ROT0,   "Taito America Corporation", "Kram (set 2)" )
-GAMEX(1982, kram3,    kram,     mcu,     kram,     kram,     ROT0,   "Taito America Corporation", "Kram (set 3)", GAME_UNEMULATED_PROTECTION )
+GAMEX(1982, kram3,    kram,     qix,     kram,     kram,     ROT0,   "Taito America Corporation", "Kram (encrypted)", GAME_UNEMULATED_PROTECTION )
 GAME( 1982, zookeep,  0,        zookeep, zookeep,  zookeep,  ROT0,   "Taito America Corporation", "Zoo Keeper (set 1)" )
 GAME( 1982, zookeep2, zookeep,  zookeep, zookeep,  zookeep,  ROT0,   "Taito America Corporation", "Zoo Keeper (set 2)" )
 GAME( 1982, zookeep3, zookeep,  zookeep, zookeep,  zookeep,  ROT0,   "Taito America Corporation", "Zoo Keeper (set 3)" )

@@ -3,27 +3,52 @@
 These are some of the CPS-B chip numbers:
 
 NAME                                        CPS-B #                     C-board PAL's  B-board PAL's
-Forgotten Worlds / Lost Worlds              CPS-B-01  ?                 None           ? & LW10
+Forgotten Worlds / Lost Worlds              CPS-B-01  DL-0411-10001     None           LWCH1 & LW10
 Ghouls 'n Ghosts                            CPS-B-01  DL-0411-10001     None           DM620, LW10
-Strider                                     CPS-B-01  DL-0411-10001     None           ST24N1 & LW10
-Final Fight (World / Japan)                 CPS-B-04  DL-0411-10005     None           ?
-Final Fight (US)                            CPS-B-04* DL-0411-10001     None           S224B & LW10
-                                            *the original number was scratched out and "04" stamped over it
+Strider                                     CPS-B-01  DL-0411-10001     None           ST24N1 & LW10 or ST22B
+Dynasty Wars                                CPS-B-02  DL-0411-10002     ?              ?
+Willow                                      CPS-B-03  DL-0411-10003     None           WL24B & LW10
 UN Squadron / Area 88                       CPS-B-11  DL-0411-10004     None           AR24B & LW10
-Mercs (US)                                  CPS-B-12  DL-0411-10007     C628           0224B & 10B1
-Magic Sword (US)                            CPS-B-13  ?                 None           ?
-Carrier Air Wing                            CPS-B-16  DL-0411-10011     ?              ?
-Street Fighter II                           CPS-B-17  DL-0411-10012     C632           STF29 & 10B1
-Street Fighter II (US Revision I)           CPS-B-14  DL-0411-10029     C632           ?
-Street Fighter II' Champion Edition         CPS-B-21  DL-0921-10014     10C1 & C632    ?
-Street Fighter II Turbo Hyper Fighting      CPS-B-21  DL-0921-10014     10C1 & C632    S9263B, BPRG1 & 10B1
-Captain Commando*(US)                       CPS-B-21  DL-0921-10014     10C1 & C632    CC63B, CCPRG & 10B1
-King of Dragons*                            CPS-B-21  DL-0921-10014     10C1 & C632    KD29B & 10B1
-Knights of the Round*                       CPS-B-21  DL-0921-10014     10C1 & C632    KR63B, BPRG1 & 10B1
-Warriors of Fate*                           CPS-B-21  DL-0921-10014     10C1           TK263B, BPRG1 & 10B1
-Saturday Night Slam Masters*                CPS-B-21  DL-0921-10014     10C1           MB63B, BPRG1 & 10B1
+Street Fighter II (ETC Rev G)               CPS-B-11  DL-0411-10004     None           STF29 & IOB1
+Final Fight (World / Japan)                 CPS-B-04  DL-0411-10005     None           S224B & LW10
+Final Fight (US)                            CPS-B-04* DL-0411-10001     None           S224B & LW10
+                                            *actually CPS-B-01, the original number was scratched out and "04" stamped over it
+Varth                                       CPS-B-04  DL-0411-10005     None           VA24B & LW10
+1941                                        CPS-B-05  DL-0411-10006     ?              YI24B & ?
+Street Fighter II (US Rev D)                CPS-B-05  DL-0411-10006     C632           STF29 & IOB1
+Mercs (US)                                  CPS-B-12  DL-0411-10007     C628           0224B & IOB1
+Street Fighter II (Japan Rev C)             CPS-B-12  DL-0411-10007     C632           STF29 & IOB1
+Magic Sword (US)                            CPS-B-13  DL-0411-10008     None           MS24B & IOB1
+Street Fighter II (Japan)                   CPS-B-13  DL-0411-10008     C632           STF29 & IOB1
+Chiki Chiki Boys / Mega Twins               CPS-B-14  DL-0411-10009     ?              ?
+Street Fighter II (US Rev I)                CPS-B-14  DL-0411-10009     C632           STF29 & IOB1
+Nemo                                        CPS-B-15  DL-0411-10010     ?              NM24B & ?
+Carrier Air Wing                            CPS-B-16  DL-0411-10011     None           CA24B & IOB1
+Street Fighter II                           CPS-B-17  DL-0411-10012     C632           STF29 & IOB1
+Three Wonders*                              CPS-B-21  DL-0921-10014     IOC1 & C632    RT24B & IOB1
+King of Dragons*                            CPS-B-21  DL-0921-10014     IOC1 & C632    KD29B & IOB1
+Captain Commando* (US)                      CPS-B-21  DL-0921-10014     IOC1 & C632    CC63B, CCPRG & IOB1
+Knights of the Round*                       CPS-B-21  DL-0921-10014     IOC1 & C632    KR63B, BPRG1 & IOB1
+Street Fighter II' Champion Edition         CPS-B-21  DL-0921-10014     IOC1 & C632    S9263B, BPRG1 & IOB1
+Capcom World 2*                             CPS-B-21  DL-0921-10014     IOC1           Q522B & IOB1
+Quiz and Dragons*                           CPS-B-21  DL-0921-10014     IOC1           QD22B & IOB1
+Warriors of Fate*                           CPS-B-21  DL-0921-10014     IOC1           TK263B, BPRG1 & IOB1
+Street Fighter II Turbo Hyper Fighting      CPS-B-21  DL-0921-10014     IOC1 & C632    S9263B, BPRG1 & IOB1
+Cadillacs and Dinosaurs*                    CPS-B-21  DL-0921-10014     IOC1           CD63B, BPRG1 & IOB1
+Punisher*                                   CPS-B-21  DL-0921-10014     IOC1           PS63B, BPRG1 & IOB1
+Saturday Night Slam Masters*                CPS-B-21  DL-0921-10014     IOC1           MB63B, BPRG1 & IOB1
+Muscle Bomber Duo*                          CPS-B-21  DL-0921-10014     ?              ?
+Pnickies                                    CPS-B-21? DL-0921-10014?    ?              ?
+Pang 3                                      CPS-B-21  DL-0921-10014     IOC1 & C632    CP1B1F, CP1B8K & CP1B9KA
+Megaman the Power Battle                    CPS-B-21  DL-0921-10014     IOC1 & C632    RCM63B, BPRG1 & IOB1
+
+Street Fighter Zero changer system (Japan)  CPS-B-21  DL-0921-10014     ?              ?
 
 *denotes Suicide Battery
+
+You can set the suicide CPS-B-21 chips to their default layer register and priority bit values
+if you pull pins 45 and 46 high (floating the pins seems to work, too). The default is the same
+values as Street Fighter 2 CE/Turbo.
 
 
 
@@ -58,7 +83,7 @@ Some registers move from game to game.. following example strider
 			bits 1-5 enable the three tilemap layers and the two starfield
 				layers (the bit order changes from game to game).
 				Only Forgotten Worlds and Strider use the starfield.
-			bit 0 could be rowscroll related. It is set by bionic commando,
+			bit 0 could be rowscroll related. It is set by captain commando,
 				varth, mtwins, mssword, cawing while rowscroll is active. However
 				kodj and sf2 do NOT set this bit while they are using rowscroll.
 				Games known to use row scrolling:
@@ -67,7 +92,7 @@ Some registers move from game to game.. following example strider
 				Carrier Air Wing (hazy background at beginning of mission 8, put 07 at ff8501 to jump there)
 				Magic Sword (fire on floor 3; screen distort after continue)
 				Varth (title screen)
-				Bionic Commando (end game sequence)
+				Captain Commando (end game sequence)
 0x68-0x69	Priority mask \   Tiles in the layer just below sprites can have
 0x6a-0x6b	Priority mask |   four priority levels, each one associated with one
 0x6c-0x6d	Priority mask |   of these masks. The masks indicate pens in the tile
@@ -210,11 +235,11 @@ struct CPS1config *cps1_game_config;
 
 /*                 CPSB ID    multiply protection  ctrl     priority masks   unknwn     layer enable masks  */
 #define CPS_B_01 0x00,0x0000, 0,0,0,0, /* n/a */   0x66,{0x68,0x6a,0x6c,0x6e},0x70, {0x02,0x04,0x08,0x30,0x30}
-#define UNKNW_02 0x00,0x0000, 0,0,0,0, /* n/a */   0x6c,{0x6a,0x68,0x66,0x64},0x62, {0x02,0x04,0x08,0x00,0x00}
-#define UNKNW_03 0x00,0x0000, 0,0,0,0, /* n/a */   0x70,{0x6e,0x6c,0x6a,0x68},0x66, {0x20,0x10,0x08,0x00,0x00}
+#define CPS_B_02 0x00,0x0000, 0,0,0,0, /* n/a */   0x6c,{0x6a,0x68,0x66,0x64},0x62, {0x02,0x04,0x08,0x00,0x00}
+#define CPS_B_03 0x00,0x0000, 0,0,0,0, /* n/a */   0x70,{0x6e,0x6c,0x6a,0x68},0x66, {0x20,0x10,0x08,0x00,0x00}
 #define CPS_B_04 0x60,0x0004, 0,0,0,0, /* n/a */   0x6e,{0x66,0x70,0x68,0x72},0x6a, {0x02,0x0c,0x0c,0x00,0x00}
 #define CPS_B_05 0x60,0x0005, 0,0,0,0, /* n/a */   0x68,{0x6a,0x6c,0x6e,0x70},0x72, {0x02,0x08,0x20,0x14,0x14}
-#define CPS_B_11 0x00,0x0000, 0,0,0,0, /* n/a */   0x66,{0x68,0x6a,0x6c,0x6e},0x70, {0x20,0x10,0x08,0x00,0x00}
+#define CPS_B_11 0x72,0x0401, 0,0,0,0, /* n/a */   0x66,{0x68,0x6a,0x6c,0x6e},0x70, {0x20,0x10,0x08,0x00,0x00}
 #define CPS_B_12 0x60,0x0402, 0,0,0,0, /* n/a */   0x6c,{0x00,0x00,0x00,0x00},0x62, {0x02,0x04,0x08,0x00,0x00}
 #define CPS_B_13 0x6e,0x0403, 0,0,0,0, /* n/a */   0x62,{0x64,0x66,0x68,0x6a},0x6c, {0x20,0x04,0x02,0x00,0x00}
 #define CPS_B_14 0x5e,0x0404, 0,0,0,0, /* n/a */   0x52,{0x54,0x56,0x58,0x5a},0x5c, {0x08,0x30,0x30,0x00,0x00}
@@ -248,17 +273,18 @@ static struct CPS1config cps1_config_table[]=
 	{"strider", CPS_B_01, 1,0,1, 0x0000,0xffff,0x0000,0xffff },
 	{"striderj",CPS_B_01, 1,0,1, 0x0000,0xffff,0x0000,0xffff },
 	{"stridrja",CPS_B_01, 1,0,1, 0x0000,0xffff,0x0000,0xffff },
-	{"dw",      UNKNW_02, 0,1,1, 0x0000,0xffff,0x0000,0xffff },
-	{"dwj",     UNKNW_02, 0,1,1, 0x0000,0xffff,0x0000,0xffff },
-	{"willow",  UNKNW_03, 0,1,0, 0x0000,0xffff,0x0000,0xffff },
-	{"willowj", UNKNW_03, 0,1,0, 0x0000,0xffff,0x0000,0xffff },
+	{"dw",      CPS_B_02, 0,1,1, 0x0000,0xffff,0x0000,0xffff },
+	{"dwj",     CPS_B_02, 0,1,1, 0x0000,0xffff,0x0000,0xffff },
+	{"willow",  CPS_B_03, 0,1,0, 0x0000,0xffff,0x0000,0xffff },
+	{"willowj", CPS_B_03, 0,1,0, 0x0000,0xffff,0x0000,0xffff },
+	{"willowje",CPS_B_03, 0,1,0, 0x0000,0xffff,0x0000,0xffff },
 	{"ffight",  CPS_B_04, 0,0,0, 0x0001,0xffff,0x0001,0xffff },
 	{"ffightu", CPS_B_01, 0,0,0, 0x0001,0xffff,0x0001,0xffff },
 	{"ffightj", CPS_B_04, 0,0,0, 0x0001,0xffff,0x0001,0xffff },
 	{"1941",    CPS_B_05, 0,0,0, 0x0000,0xffff,0x0400,0x07ff },
 	{"1941j",   CPS_B_05, 0,0,0, 0x0000,0xffff,0x0400,0x07ff },
-	{"unsquad", CPS_B_11, 0,0,0, 0x0000,0xffff,0x0001,0xffff },
-	{"area88",  CPS_B_11, 0,0,0, 0x0000,0xffff,0x0001,0xffff },
+	{"unsquad", CPS_B_11, 0,0,0, 0x0000,0xffff,0x0001,0xffff },	/* CPSB ID not checked, but it's the same as sf2eg */
+	{"area88",  CPS_B_11, 0,0,0, 0x0000,0xffff,0x0001,0xffff },	/* CPSB ID not checked, but it's the same as sf2eg */
 	{"mercs",   CPS_B_12, 0,0,0, 0x0600,0x5bff,0x0700,0x17ff, 4 },	/* (uses port 74) */
 	{"mercsu",  CPS_B_12, 0,0,0, 0x0600,0x5bff,0x0700,0x17ff, 4 },	/* (uses port 74) */
 	{"mercsj",  CPS_B_12, 0,0,0, 0x0600,0x5bff,0x0700,0x17ff, 4 },	/* (uses port 74) */
@@ -271,10 +297,13 @@ static struct CPS1config cps1_config_table[]=
 	{"nemo",    CPS_B_15, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
 	{"nemoj",   CPS_B_15, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
 	{"cawing",  CPS_B_16, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
+	{"cawingu", CPS_B_16, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
 	{"cawingj", CPS_B_16, 0,0,0, 0x0000,0xffff,0x0000,0xffff },
 	{"sf2",     CPS_B_17, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
+	{"sf2eg",   CPS_B_11, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
 	{"sf2ua",   CPS_B_17, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
 	{"sf2ub",   CPS_B_17, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
+	{"sf2ud",   CPS_B_05, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
 	{"sf2ue",   CPS_B_18, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
 	{"sf2uf",   CPS_B_15, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
 	{"sf2ui",   CPS_B_14, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
@@ -298,6 +327,7 @@ static struct CPS1config cps1_config_table[]=
 	{"sf2ce",   NOBATTRY, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
 	{"sf2ceua", NOBATTRY, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
 	{"sf2ceub", NOBATTRY, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
+	{"sf2ceuc", NOBATTRY, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
 	{"sf2cej",  NOBATTRY, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
 	{"sf2rb",   NOBATTRY, 2,2,2, 0x0000,0xffff,0x0000,0xffff },
 	{"sf2rb2",  NOBATTRY, 2,2,2, 0x0000,0xffff,0x0000,0xffff },

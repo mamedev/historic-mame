@@ -20,7 +20,20 @@
  *	This work is based on the
  *	"NEC Electronics User's Manual, April 1987"
  *
- * TODO: add 7807, differences are listed below
+ * NS20030115:
+ * - fixed INRW_wa()
+ * - TODO: add 7807, differences are listed below.
+ *       I only added support for these opcodes needed by homedata.c (yes, I am
+ *       lazy):
+ *       4C CE (MOV A,PT)
+ *       48 AC (EXA)
+ *       48 AD (EXR)
+ *       48 AE (EXH)
+ *       48 AF (EXX)
+ *       50 xx (SKN bit)
+ *       58 xx (SETB)
+ *       5B xx (CLR)
+ *       5D xx (SK bit)
  *
  *****************************************************************************/
 /* PeT around 19 February 2002
@@ -39,6 +52,132 @@
 */
 
 /*
+
+7807 DESCRIPTION
+
+
+
+   PA0  1     64 Vcc
+   PA1  2     63 Vdd
+   PA2  3     62 PD7/AD7
+   PA3  4     61 PD6/AD6
+   PA4  5     60 PD5/AD5
+   PA5  6     59 PD4/AD4
+   PA6  7     58 PD3/AD3
+   PA7  8     57 PD2/AD2
+   PB0  9     56 PD1/AD1
+   PB1 10     55 PD0/AD0
+   PB2 11     54 PF7/AB15
+   PB3 12     53 PF6/AB14
+   PB4 13     52 PF5/AB13
+   PB5 14     51 PF4/AB12
+   PB6 15     50 PF3/AB11
+   PB7 16     49 PF2/AB10
+   PC0 17     48 PF1/AB9
+   PC1 18     47 PF0/AB8
+   PC2 19     46 ALE
+   PC3 20     45 WR*
+   PC4 21     44 RD*
+   PC5 22     43 HLDA
+   PC6 23     42 HOLD
+   PC7 24     41 PT7
+  NMI* 25     40 PT6
+  INT1 26     39 PT5
+ MODE1 27     38 PT4
+RESET* 28     37 PT3
+ MODE0 29     36 PT2
+    X2 30     35 PT1
+    X1 31     34 PT0
+   Vss 32     33 Vth
+
+PA, PB, PC, PD, and PF is bidirectional I/O port
+and PT is comparator input port in uPD7808.
+uPD7807 uses PD port as data I/O and bottom address output,
+and uses PF port as top address output.
+
+NMI* is non maskable interrupt input signal (negative edge trigger).
+
+INT1 is interrupt input (positive edge trigger). It can be used as
+AC zero-cross input or trigger source of 16bit timer counter.
+
+MODE0 and MODE1 is input terminal which decides total amount of
+external memory of uPD7807 (4KByte, 16KBYte, and 64KByte).
+It also decides number of PF ports used as top address output.
+ 4KByte mode: PF0~PF3=address output, PF4~PF7=data I/O port
+16KByte mode: PF0~PF5=address output, PF6~PF7=data I/O port
+64KByte mode: PF0~PF7=address output
+
+RESET* is system rest terminal.
+
+X1 and X2 does clock signal generation (connect OSC and condenser).
+
+Vth is used to determine threshold voltage for PT port.
+PT0~PT7 is connected to + input of each comparator,
+and Vth deterimnes voltage connected to - input of PT0~PT7.
+But the voltage of Vth is not directly connected to comapators.
+It is connected via 16-level programmable voltage separate circuit.
+
+HOLD and HLDA is terminal for DMA. RD*, WR*, and ALE is bus
+interface signal (they are same type of Intel 8085).
+Unlike 8085, I/O address space is not available, so IO /M* signal
+does not exist. Read/write of external memory can be done
+by RD*, WR*, and ALE only.
+
+Vcc and Vss is main power source. Vdd is backup power source
+for internal RWM (32 Byte).
+
+
+PA and PB is I/O port. They have control register MA and MB.
+If control register is set to 1, the port is input.
+If control register is set to 0, the port is output.
+They are set to 1 by reset.
+
+PT is input-only port. It is consisted of input terminal PT0~PT7
+and Vth (set threshold voltage). Each PT input has analog comparator
+and latch, and + input of analog comparator is connected to
+PT terminal. Every - input of analog comparator is connected
+to devided voltage of Vth. Voltage dividing level can be set by
+bottom 4bits of MT (mode T) register. The range is 1/16~16/16 of Vth.
+
+Other internal I/Os are
+8bit timer (x2): Upcounter. If the counter matches to specified value,
+the timer is reset and counts again from 0.
+You can also set it to generate interrupt, or invert output flip-flop
+when the counter matches to specified value.
+Furthermore, you can output that flip-flop output to PC4/TO output,
+connect it to clock input of timer/event counter or watchdog timer.
+Or you can use it as bitrate clock of serial interface.
+Note: There is only 1 output flip-flop for 2 timers.
+If you use it for timer output of 1 timer, another timer cannot be used
+for other than interrupt generator.
+Clock input for timer can be switched between internal clock (2 type)
+or PC3/TI input. You can set 1 timer's match-output as another timer's
+clock input, so that you can use them as 1 16bit timer.
+
+16bit timer/event counter (x1): It can be used as
+- Interval timer
+- External event counter
+- Frequency measurement
+- Pulse width measurement
+- Programmable rectangle wave output
+- One pulse output
+Related terminals are PC5/CI input, PC6/CO0 output, and PC7/CO1.
+You can measure CI input's H duration, or you can output timing signal
+(with phase difference) to CO0 and CO1.
+
+serial I/F (x1): has 3 modes.
+- Asynchronous mode
+- Synchronous mode
+- I/O interface mode
+In all 3 modes, bitrate can be internal fixed clock, or timer output,
+or external clock.
+In asynchronous mode, you can
+- switch 7bit/8bit data
+- set parity ON/OFF and EVEN/ODD
+- set 1/2 stop bit
+
+
+
 
 DIFFERENCES BETWEEN 7810 and 7807
 
@@ -116,6 +255,44 @@ S5-S4-S3-S2-S1-S0-sr -sr1-sr2-sr5-register function
  1  0  0  0  1  1 --- CR3 ---     A/D conversion result 3
  1  0  1  0  0  0 ZCM --- ---     zero cross mode
 
+Special register operand (includes registers for I/O ports) has
+6 groups - sr, sr1, sr2, sr3, sr4, and sr5. Among these groups,
+sr, sr1, sr2, and sr5 includes registers described in the table
+below, and expressed as bit pattern S5-S0.
+
+S5S4S3S2S1S0 sr  sr1 sr2 sr5 register function
+0 0 0 0 0 0  PA  PA  PA  PA  port A
+0 0 0 0 0 1  PB  PB  PB  PB  port B
+0 0 0 0 1 0  PC  PC  PC  PC  port C
+0 0 0 0 1 1  PD  PD  PD  PD  port D
+0 0 0 1 0 1  PF  PF  PF  PF  port F
+0 0 0 1 1 0  MKH MKH MKH MKH mask high
+0 0 0 1 1 1  MKL MKL MKL MKL mask low
+0 0 1 0 0 1  SMH SMH SMH SMH serial mode high
+0 0 1 0 1 0  SML --- --- --- serial mode low
+0 0 1 0 1 1  EOM EOM EOM EOM timer/event counter output mode
+0 0 1 1 0 0 ETMM --- --- --- timer/event counter mode
+0 0 1 1 0 1  TMM TMM TMM TMM timer mode
+0 0 1 1 1 0  --- PT  --- PT  port T
+0 1 0 0 0 0  MM  --- --- --- memory mapping
+0 1 0 0 0 1  MCC --- --- --- mode control C
+0 1 0 0 1 0  MA  --- --- --- mode A
+0 1 0 0 1 1  MB  --- --- --- mode B
+0 1 0 1 0 0  MC  --- --- --- mode C
+0 1 0 1 1 1  MF  --- --- --- mode F
+0 1 1 0 0 0  TXB --- --- --- Tx buffer
+0 1 1 0 0 1  --- RXB --- --- Rx buffer
+0 1 1 0 1 0  TM0 --- --- --- timer register 0
+0 1 1 0 1 1  TM1 --- --- --- timer register 1
+1 0 0 1 0 0  WDM WDM --- --- watchdog timer mode
+1 0 0 1 0 1  MT  --- --- --- mode T
+
+For sr and sr1, all 6bits (S5, S4, S3, S2, S1, and S0) are used.
+For sr2 and sr5, only 4bits (S3, S2, S1, AND S0) are used.
+They are expressed as 'ssssss' and 's sss' in operation code.
+Note that 's sss' (of sr2 and sr5) is located separately.
+S0 is rightmost bit (LSB).
+
 
 --------------------------------------------
 Operation instructions for working registers
@@ -166,7 +343,7 @@ Instead, 7807 has these bit manipulation instructions.
 ins.            1st byte 2nd byte 3rd 4th state func
 MOV    CY, bit  01011111  bbbbbbbb          10* CY <- (bit)
 MOV    bit, CY  01011010  bbbbbbbb          13* (bit) <- CY
-AND    CY, bit  01010001  bbbbbbbb          10* CY <- CY & (bit)
+AND    CY, bit  00110001  bbbbbbbb          10* CY <- CY & (bit)
 OR     CY, bit  01011100  bbbbbbbb          10* CY <- CY | (bit)
 XOR    CY, bit  01011110  bbbbbbbb          10* CY <- CY ^ (bit)
 SETB   bit      01011000  bbbbbbbb          13* (bit) <- 1
@@ -174,19 +351,6 @@ CLR    bit      01011011  bbbbbbbb          13* (bit) <- 0
 NOT    bit      01011001  bbbbbbbb          13* (bit) <- !(bit)
 SK     bit      01011101  bbbbbbbb          10*  (b) skip if (bit) = 1
 SKN    bit      01010000  bbbbbbbb          10* !(b) skip if (bit) = 0
-
-reg bit7 bit6 bit5 bit4 bit3 bit2 bit1 bit0
-PA  087H 086H 085H 084H 083H 082H 081H 080H
-PB  08FH 08EH 08DH 08CH 08BH 08AH 089H 088H
-PC  097H 096H 095H 094H 093H 092H 091H 090H
-PD  09FH 09EH 09DH 09CH 09BH 09AH 099H 098H
-PF  0AFH 0AEH 0ADH 0ACH 0ABH 0AAH 0A9H 0A8H
-MKH 0B7H 0B6H 0B5H 0B4H 0B3H 0B2H 0B1H 0B0H
-MKL 0BFH 0BEH 0BDH 0BCH 0BBH 0BAH 0B9H 0B8H
-SMH 0CFH 0CEH 0CDH 0CCH 0CBH 0CAH 0C9H 0C8H
-EOM 0DFH 0DEH 0DDH 0DCH 0DBH 0DAH 0D9H 0D8H
-TMM 0EFH 0EEH 0EDH 0ECH 0EBH 0EAH 0E9H 0E8H
-PT  0F7H 0F6H 0F5H 0F4H 0F3H 0F2H 0F1H 0F0H
 
 
 ------------------------
@@ -410,15 +574,18 @@ static data8_t RP(offs_t port)
 	switch (port)
 	{
 	case UPD7810_PORTA:
-		upd7810.pa_in = cpu_readport16(port);
+		if (upd7810.ma)	// NS20031301 no need to read if the port is set as output
+			upd7810.pa_in = cpu_readport16(port);
 		data = (upd7810.pa_in & upd7810.ma) | (upd7810.pa_out & ~upd7810.ma);
 		break;
 	case UPD7810_PORTB:
-		upd7810.pb_in = cpu_readport16(port);
+		if (upd7810.mb)	// NS20031301 no need to read if the port is set as output
+			upd7810.pb_in = cpu_readport16(port);
 		data = (upd7810.pb_in & upd7810.mb) | (upd7810.pb_out & ~upd7810.mb);
 		break;
 	case UPD7810_PORTC:
-		upd7810.pc_in = cpu_readport16(port);
+		if (upd7810.mc)	// NS20031301 no need to read if the port is set as output
+			upd7810.pc_in = cpu_readport16(port);
 		data = (upd7810.pc_in & upd7810.mc) | (upd7810.pc_out & ~upd7810.mc);
 		if (upd7810.mcc & 0x01) 	/* PC0 = TxD output */
 			data = (data & ~0x01) | (upd7810.txd & 1 ? 0x01 : 0x00);
@@ -472,6 +639,9 @@ static data8_t RP(offs_t port)
 			break;
 		}
 		break;
+	case UPD7807_PORTT:	// NS20031301 partial implementation
+		data = cpu_readport16(port);
+		break;
 	default:
 		logerror("uPD7810 internal error: RP() called with invalid port number\n");
 	}
@@ -484,17 +654,20 @@ static void WP(offs_t port, data8_t data)
 	{
 	case UPD7810_PORTA:
 		upd7810.pa_out = data;
-		data = (data & ~upd7810.ma) | (upd7810.pa_in & upd7810.ma);
+//		data = (data & ~upd7810.ma) | (upd7810.pa_in & upd7810.ma);
+		data = (data & ~upd7810.ma) | (upd7810.ma);	// NS20031401
 		cpu_writeport16(port, data);
 		break;
 	case UPD7810_PORTB:
 		upd7810.pb_out = data;
-		data = (data & ~upd7810.mb) | (upd7810.pb_in & upd7810.mb);
+//		data = (data & ~upd7810.mb) | (upd7810.pb_in & upd7810.mb);
+		data = (data & ~upd7810.mb) | (upd7810.mb);	// NS20031401
 		cpu_writeport16(port, data);
 		break;
 	case UPD7810_PORTC:
 		upd7810.pc_out = data;
-		data = (data & ~upd7810.mc) | (upd7810.pc_in & upd7810.mc);
+//		data = (data & ~upd7810.mc) | (upd7810.pc_in & upd7810.mc);
+		data = (data & ~upd7810.mc) | (upd7810.mc);	// NS20031401
 		if (upd7810.mcc & 0x01) 	/* PC0 = TxD output */
 			data = (data & ~0x01) | (upd7810.txd & 1 ? 0x01 : 0x00);
 		if (upd7810.mcc & 0x02) 	/* PC1 = RxD input */
@@ -564,12 +737,13 @@ static void upd7810_take_irq(void)
 	/* check the interrupts in priority sequence */
 	if ((IRR & INTFT0)	&& 0 == (MKL & 0x02))
 	{
-	    switch (upd7810.config.type) {
+	    switch (upd7810.config.type)
+		{
 			case TYPE_7810_GAMEMASTER:
-			vector = 0xff2a;
-			break;
+				vector = 0xff2a;
+				break;
 			default:
-			vector = 0x0008;
+				vector = 0x0008;
 		}
 	    if (!((IRR & INTFT1)	&& 0 == (MKL & 0x04)))
 		IRR&=~INTFT0;
@@ -577,12 +751,13 @@ static void upd7810_take_irq(void)
 	else
 	if ((IRR & INTFT1)	&& 0 == (MKL & 0x04))
 	{
-	    switch (upd7810.config.type) {
+	    switch (upd7810.config.type)
+		{
 			case TYPE_7810_GAMEMASTER:
-			vector = 0xff2a;
-			break;
+				vector = 0xff2a;
+				break;
 			default:
-			vector = 0x0008;
+				vector = 0x0008;
 		}
 	    IRR&=~INTFT1;
 	}
@@ -604,26 +779,28 @@ static void upd7810_take_irq(void)
 	else
 	if ((IRR & INTFE0)	&& 0 == (MKL & 0x20))
 	{
-	    switch (upd7810.config.type) {
-	    case TYPE_7810_GAMEMASTER:
-		vector = 0xff2d;
-		break;
-	    default:
-		vector = 0x0018;
-	}
+	    switch (upd7810.config.type)
+		{
+			case TYPE_7810_GAMEMASTER:
+				vector = 0xff2d;
+				break;
+			default:
+				vector = 0x0018;
+		}
 	    if (!((IRR & INTFE1)	&& 0 == (MKL & 0x40)))
 		IRR&=~INTFE0;
 	}
 	else
 	if ((IRR & INTFE1)	&& 0 == (MKL & 0x40))
 	{
-	    switch (upd7810.config.type) {
-	    case TYPE_7810_GAMEMASTER:
-		vector = 0xff2d;
-		break;
-	    default:
-		vector = 0x0018;
-	}
+	    switch (upd7810.config.type)
+		{
+		    case TYPE_7810_GAMEMASTER:
+				vector = 0xff2d;
+				break;
+		    default:
+				vector = 0x0018;
+		}
 	    IRR&=~INTFE1;
 	}
 	else
@@ -1395,25 +1572,33 @@ void upd7810_init(void)
 void upd7810_reset (void *param)
 {
 	memset(&upd7810, 0, sizeof(upd7810));
+	upd7810.opXX = opXX_7810;
 	upd7810.config = *(UPD7810_CONFIG*) param;
 	ETMM = 0xff;
 	TMM = 0xff;
 	MA = 0xff;
 	MB = 0xff;
-	switch (upd7810.config.type) {
-	case TYPE_7810_GAMEMASTER:
-	    // needed for lcd screen/ram selection; might be internal in cpu and therefor not needed; 0x10 written in some games
-	    MC = 0xff&~0x7;
-	    WP( UPD7810_PORTC, 1 ); //hyper space
-	    PCD=0x8000;
-	    break;
-	default:
-	MC = 0xff;
+	switch (upd7810.config.type)
+	{
+		case TYPE_7810_GAMEMASTER:
+		    // needed for lcd screen/ram selection; might be internal in cpu and therefor not needed; 0x10 written in some games
+			MC = 0xff&~0x7;
+			WP( UPD7810_PORTC, 1 ); //hyper space
+			PCD=0x8000;
+			break;
+		default:
+			MC = 0xff;
 	}
 	MF = 0xff;
 	// gamemaster falling block "and"s to enable interrupts
 	MKL = 0xff;
 	MKH = 0xff; //?
+}
+
+void upd7807_reset (void *param)
+{
+	upd7810_reset(param);
+	upd7810.opXX = opXX_7807;
 }
 
 void upd7810_exit (void)
@@ -1422,6 +1607,8 @@ void upd7810_exit (void)
 
 int upd7810_execute (int cycles)
 {
+	const struct opcode_s *opXX = upd7810.opXX;
+
 	upd7810_icount = cycles;
 
 	do
@@ -1594,6 +1781,8 @@ void upd7810_set_reg (int regnum, unsigned val)
 	case REG_SP:
 	case UPD7810_SP:	SP = val;	break;
 	case UPD7810_PSW:	PSW = val;	break;
+	case UPD7810_A:		A = val; break;
+	case UPD7810_V:		V = val; break;
 	case UPD7810_EA:	EA = val;	break;
 	case UPD7810_VA:	VA = val;	break;
 	case UPD7810_BC:	BC = val;	break;
@@ -1767,10 +1956,7 @@ const char *upd7810_info(void *context, int regnum)
 				r->psw & 0x04 ? "L0":"--",
 				r->psw & 0x01 ? "CY":"--");
 			break;
-		case CPU_INFO_NAME:
-		    switch (upd7810.config.type) {
-		    default: return "uPD7810";
-		    }
+		case CPU_INFO_NAME: return "uPD7810";
 		case CPU_INFO_FAMILY: return "NEC uPD7810";
 		case CPU_INFO_VERSION: return "0.3";
 		case CPU_INFO_FILE: return __FILE__;
@@ -1779,6 +1965,12 @@ const char *upd7810_info(void *context, int regnum)
 		case CPU_INFO_WIN_LAYOUT: return (const char*)upd7810_win_layout;
 	}
 	return buffer[which];
+}
+
+const char *upd7807_info(void *context, int regnum)
+{
+	if (regnum == CPU_INFO_NAME) return "uPD7807";
+	else return upd7810_info(context, regnum);
 }
 
 unsigned upd7810_dasm(char *buffer, unsigned pc)

@@ -2,7 +2,7 @@
 
 	Art & Magic hardware
 
-	driver by Aaron Giles
+	driver by Aaron Giles and Nicola Salmoria
 
 	Games supported:
 		* Cheese Chase
@@ -10,16 +10,32 @@
 		* Stone Ball
 
 	Known bugs:
-		* blitter data format not understood
-		* sound banking not working yet
-		* inputs not fully mapped
-		* protection on Ultimate Tennis/Stone Ball not figured out
+		* measured against a real PCB, the games run slightly too fast
+		  in spite of accurately measured VBLANK timings
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "cpu/tms34010/tms34010.h"
+#include "vidhrdw/tlc34076.h"
 #include "artmagic.h"
+
+
+static data16_t *control;
+static data16_t *ram_base;
+
+static UINT8 tms_irq, hack_irq;
+
+static UINT8 prot_input[16];
+static UINT8 prot_input_index;
+static UINT8 prot_output[16];
+static UINT8 prot_output_index;
+static UINT8 prot_output_bit;
+static UINT8 prot_bit_index;
+static UINT16 prot_save;
+
+static void (*protection_handler)(void);
+
 
 
 /*************************************
@@ -28,9 +44,41 @@
  *
  *************************************/
 
+static void update_irq_state(void)
+{
+	int irq_lines = 0;
+
+	if (tms_irq)
+		irq_lines |= 4;
+	if (hack_irq)
+		irq_lines |= 5;
+
+	if (irq_lines)
+		cpu_set_irq_line(0, irq_lines, ASSERT_LINE);
+	else
+		cpu_set_irq_line(0, 7, CLEAR_LINE);
+}
+
+
 static void m68k_gen_int(int state)
 {
-	cpu_set_irq_line(0, 4, state ? ASSERT_LINE : CLEAR_LINE);
+	tms_irq = state;
+	update_irq_state();
+}
+
+
+
+/*************************************
+ *
+ *	Machine init
+ *
+ *************************************/
+
+static MACHINE_INIT( artmagic )
+{
+	tms_irq = hack_irq = 0;
+	update_irq_state();
+	tlc34076_reset(6);
 }
 
 
@@ -56,15 +104,19 @@ static WRITE16_HANDLER( tms_host_w )
 
 /*************************************
  *
- *	Unknown memory accesses
+ *	Misc control memory accesses
  *
  *************************************/
 
-static data16_t *unknown;
-static WRITE16_HANDLER( unknown_w )
+static WRITE16_HANDLER( control_w )
 {
-	COMBINE_DATA(&unknown[offset]);
-	logerror("%06X:unknown_w(%d) = %04X\n", activecpu_get_pc(), offset, data);
+	COMBINE_DATA(&control[offset]);
+
+	/* OKI banking here */
+	if (offset == 0)
+		OKIM6295_set_bank_base(0, (((data >> 4) & 1) * 0x40000) % memory_region_length(REGION_SOUND1));
+
+	logerror("%06X:control_w(%d) = %04X\n", activecpu_get_pc(), offset, data);
 }
 
 
@@ -75,11 +127,16 @@ static WRITE16_HANDLER( unknown_w )
  *
  *************************************/
 
-static READ16_HANDLER( ultennis_protection_r )
+static READ16_HANDLER( ultennis_hack_r )
 {
 	/* IRQ5 points to: jsr (a5); rte */
-	if (activecpu_get_pc() == 0x18c2)	// hack for ultennis
-		cpu_set_irq_line(0, 5, PULSE_LINE);
+	if (activecpu_get_pc() == 0x18c2)
+	{
+		hack_irq = 1;
+		update_irq_state();
+		hack_irq = 0;
+		update_irq_state();
+	}
 	return readinputport(0);
 }
 
@@ -87,19 +144,9 @@ static READ16_HANDLER( ultennis_protection_r )
 
 /*************************************
  *
- *	Stone Ball protection workarounds
+ *	Game-specific protection
  *
  *************************************/
-
-static UINT8 prot_input[16];
-static UINT8 prot_input_index;
-static UINT8 prot_output[16];
-static UINT8 prot_output_index;
-static UINT8 prot_output_bit;
-static UINT8 prot_bit_index;
-
-static void (*protection_handler)(void);
-
 
 static void ultennis_protection(void)
 {
@@ -107,53 +154,23 @@ static void ultennis_protection(void)
 	switch (prot_input[0])
 	{
 		case 0x00:	/* reset */
-			logerror("protection command 00: reset\n");
 			prot_input_index = prot_output_index = 0;
+			prot_output[0] = rand();
 			break;
 
 		case 0x01:	/* 01 aaaa bbbb cccc dddd (xxxx) */
-			/* initial inputs...
-
-				Stone Ball:
-					0000 0000 00A0 69CE
-					FFEB FFFE 00A0 68E1
-					FFE5 FFFD 00A0 686C
-					FFE2 FFFB 00A0 6800
-					FFE0 FFF9 00A0 6795
-					FFDF FFF7 00A0 672B
-					FFDF FFF5 00A0 66C2
-					FFE0 FFF3 00A1 665A
-					FFE1 FFF1 00A1 65F2
-					FFE3 FFEF 00A1 658C
-					FFE4 FFED 00A1 6526
-					FFE6 FFEB 00A1 64C1
-					FFE9 FFEA 00A1 6464
-					FFEB FFE9 00A1 6401
-					FFED FFE7 00A1 639E
-
-				Ultimate Tennis:
-					7CA4 7B20 0D87 00C5
-					4443 34A0 0D87 FFD8
-					7CA4 7B2D 0D87 00C5
-					455B 34BE 0D87 FFD9
-					7CA4 7B39 0D87 00C5
-					4673 34D9 0D87 FFDB
-					7CA4 7B46 0D87 00C6
-					4793 34DE 0D87 FFDB
-					7CA4 7B52 0D87 00C6
-					48B3 34E0 0D87 FFDB
-					7CA4 7B5F 0D87 00C6
-					496B 34E0 0D87 FFDB
-			*/
 			if (prot_input_index == 9)
 			{
 				UINT16 a = prot_input[1] | (prot_input[2] << 8);
 				UINT16 b = prot_input[3] | (prot_input[4] << 8);
 				UINT16 c = prot_input[5] | (prot_input[6] << 8);
 				UINT16 d = prot_input[7] | (prot_input[8] << 8);
-				UINT16 x = 0xa5a5;
-//				usrintf_showmessage("01: %04X %04X %04X %04X", a, b, c, d);
-				logerror("protection command 01: %04X %04X %04X %04X -> %04X\n", a, b, c, d, x);
+				UINT16 x = a - b;
+				if ((INT16)x >= 0)
+					x = (x * c) >> 16;
+				else
+					x = -(((UINT16)-x * c) >> 16);
+				x += d;
 				prot_output[0] = x;
 				prot_output[1] = x >> 8;
 				prot_output_index = 0;
@@ -163,19 +180,25 @@ static void ultennis_protection(void)
 			break;
 
 		case 0x02:	/* 02 aaaa bbbb cccc (xxxxxxxx) */
-			/* initial inputs...
+			/*
+				Ultimate Tennis -- actual values from a board:
 
-				Ultimate Tennis:
-					0041 0084 00C8
+					hex								decimal
+					0041 0084 00c8 -> 00044142		 65 132 200 -> 278850 = 65*65*66
+					001e 0084 00fc -> 0000e808		 30 132 252 ->  59400 = 30*30*66
+					0030 007c 005f -> 00022e00		 48 124  95 -> 142848 = 48*48*62
+					0024 00dd 0061 -> 00022ce0		 36 221  97 -> 142560 = 36*36*110
+					0025 0096 005b -> 00019113		 37 150  91 -> 102675 = 37*37*75
+					0044 00c9 004c -> 00070e40		 68 201  76 -> 462400 = 68*68*100
+
+				question is: what is the 3rd value doing there?
 			*/
 			if (prot_input_index == 7)
 			{
-				UINT16 a = prot_input[1] | (prot_input[2] << 8);
-				UINT16 b = prot_input[3] | (prot_input[4] << 8);
-				UINT16 c = prot_input[5] | (prot_input[6] << 8);
-				UINT32 x = 0xa5a5a5a5;
-//				usrintf_showmessage("02: %04X %04X %04X", a, b, c);
-				logerror("protection command 02: %04X %04X %04X -> %08X\n", a, b, c, x);
+				UINT16 a = (INT16)(prot_input[1] | (prot_input[2] << 8));
+				UINT16 b = (INT16)(prot_input[3] | (prot_input[4] << 8));
+				/*UINT16 c = (INT16)(prot_input[5] | (prot_input[6] << 8));*/
+				UINT32 x = a * a * (b/2);
 				prot_output[0] = x;
 				prot_output[1] = x >> 8;
 				prot_output[2] = x >> 16;
@@ -189,8 +212,7 @@ static void ultennis_protection(void)
 		case 0x03:	/* 03 (xxxx) */
 			if (prot_input_index == 1)
 			{
-				UINT16 x = 0xa5a5;
-				logerror("protection command 03: -> %04X\n", x);
+				UINT16 x = prot_save;
 				prot_output[0] = x;
 				prot_output[1] = x >> 8;
 				prot_output_index = 0;
@@ -203,7 +225,67 @@ static void ultennis_protection(void)
 			if (prot_input_index == 3)
 			{
 				UINT16 a = prot_input[1] | (prot_input[2] << 8);
-				logerror("protection command 04: %04X\n", a);
+				prot_save = a;
+				prot_input_index = prot_output_index = 0;
+			}
+			break;
+
+		default:
+			logerror("protection command %02X: unknown\n", prot_input[0]);
+			prot_input_index = prot_output_index = 0;
+			break;
+	}
+}
+
+
+static void cheesech_protection(void)
+{
+	/* check the command byte */
+	switch (prot_input[0])
+	{
+		case 0x00:	/* reset */
+			prot_input_index = prot_output_index = 0;
+			prot_output[0] = rand();
+			break;
+
+		case 0x01:	/* 01 aaaa bbbb (xxxx) */
+			if (prot_input_index == 5)
+			{
+				UINT16 a = prot_input[1] | (prot_input[2] << 8);
+				UINT16 b = prot_input[3] | (prot_input[4] << 8);
+				UINT16 c = 0x4000;		/* seems to be hard-coded */
+				UINT16 d = 0x00a0;		/* seems to be hard-coded */
+				UINT16 x = a - b;
+				if ((INT16)x >= 0)
+					x = (x * c) >> 16;
+				else
+					x = -(((UINT16)-x * c) >> 16);
+				x += d;
+				prot_output[0] = x;
+				prot_output[1] = x >> 8;
+				prot_output_index = 0;
+			}
+			else if (prot_input_index >= 7)
+				prot_input_index = 0;
+			break;
+
+		case 0x03:	/* 03 (xxxx) */
+			if (prot_input_index == 1)
+			{
+				UINT16 x = prot_save;
+				prot_output[0] = x;
+				prot_output[1] = x >> 8;
+				prot_output_index = 0;
+			}
+			else if (prot_input_index >= 3)
+				prot_input_index = 0;
+			break;
+
+		case 0x04:	/* 04 aaaa */
+			if (prot_input_index == 3)
+			{
+				UINT16 a = prot_input[1] | (prot_input[2] << 8);
+				prot_save = a;
 				prot_input_index = prot_output_index = 0;
 			}
 			break;
@@ -221,12 +303,32 @@ static void stonebal_protection(void)
 	/* check the command byte */
 	switch (prot_input[0])
 	{
+		case 0x01:	/* 01 aaaa bbbb cccc dddd (xxxx) */
+			if (prot_input_index == 9)
+			{
+				UINT16 a = prot_input[1] | (prot_input[2] << 8);
+				UINT16 b = prot_input[3] | (prot_input[4] << 8);
+				UINT16 c = prot_input[5] | (prot_input[6] << 8);
+				UINT16 d = prot_input[7] | (prot_input[8] << 8);
+				UINT16 x = a - b;
+				if ((INT16)x >= 0)
+					x = (x * d) >> 16;
+				else
+					x = -(((UINT16)-x * d) >> 16);
+				x += c;
+				prot_output[0] = x;
+				prot_output[1] = x >> 8;
+				prot_output_index = 0;
+			}
+			else if (prot_input_index >= 11)
+				prot_input_index = 0;
+			break;
+
 		case 0x02:	/* 02 aaaa (xx) */
 			if (prot_input_index == 3)
 			{
-				UINT16 a = prot_input[1] | (prot_input[2] << 8);
+				/*UINT16 a = prot_input[1] | (prot_input[2] << 8);*/
 				UINT8 x = 0xa5;
-				logerror("protection command 02: %04X -> %02X\n", a, x);
 				prot_output[0] = x;
 				prot_output_index = 0;
 			}
@@ -234,24 +336,43 @@ static void stonebal_protection(void)
 				prot_input_index = 0;
 			break;
 
+		case 0x03:	/* 03 (xxxx) */
+			if (prot_input_index == 1)
+			{
+				UINT16 x = prot_save;
+				prot_output[0] = x;
+				prot_output[1] = x >> 8;
+				prot_output_index = 0;
+			}
+			else if (prot_input_index >= 3)
+				prot_input_index = 0;
+			break;
+
+		case 0x04:	/* 04 aaaa */
+			if (prot_input_index == 3)
+			{
+				UINT16 a = prot_input[1] | (prot_input[2] << 8);
+				prot_save = a;
+				prot_input_index = prot_output_index = 0;
+			}
+			break;
+
 		default:
-			ultennis_protection();
+			logerror("protection command %02X: unknown\n", prot_input[0]);
+			prot_input_index = prot_output_index = 0;
 			break;
 	}
 }
 
 
-static READ16_HANDLER( protection_r )
+static READ16_HANDLER( special_port5_r )
 {
-//	logerror("%06X:prot_protection_r(%d)\n", activecpu_get_pc(), offset);
-	return (readinputport(5) & ~0x0001) | prot_output_bit;
+	return readinputport(5) | prot_output_bit;
 }
 
 
-static WRITE16_HANDLER( protection_w )
+static WRITE16_HANDLER( protection_bit_w )
 {
-//	logerror("%06X:protection_w(%d,%04X)\n", activecpu_get_pc(), offset, data);
-
 	/* shift in the new bit based on the offset */
 	prot_input[prot_input_index] <<= 1;
 	prot_input[prot_input_index] |= offset;
@@ -290,7 +411,7 @@ static MEMORY_READ16_START( main_readmem )
 	{ 0x300004, 0x300005, input_port_2_word_r },
 	{ 0x300006, 0x300007, input_port_3_word_r },
 	{ 0x300008, 0x300009, input_port_4_word_r },
-	{ 0x30000a, 0x30000b, input_port_5_word_r },
+	{ 0x30000a, 0x30000b, special_port5_r },
 	{ 0x360000, 0x360001, OKIM6295_status_0_lsb_r },
 	{ 0x380000, 0x380007, tms_host_r },
 MEMORY_END
@@ -298,9 +419,10 @@ MEMORY_END
 
 static MEMORY_WRITE16_START( main_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM },
-	{ 0x220000, 0x23ffff, MWA16_RAM },
+	{ 0x220000, 0x23ffff, MWA16_RAM, &ram_base },
 	{ 0x240000, 0x240fff, MWA16_RAM, (data16_t **)&generic_nvram, &generic_nvram_size },
-	{ 0x300000, 0x30000f, unknown_w, &unknown },
+	{ 0x300000, 0x300003, control_w, &control },
+	{ 0x300004, 0x300007, protection_bit_w },
 	{ 0x360000, 0x360001, OKIM6295_data_0_lsb_w },
 	{ 0x380000, 0x380007, tms_host_w },
 MEMORY_END
@@ -315,7 +437,9 @@ static MEMORY_READ16_START( stonebal_readmem )
 	{ 0x300004, 0x300005, input_port_2_word_r },
 	{ 0x300006, 0x300007, input_port_3_word_r },
 	{ 0x300008, 0x300009, input_port_4_word_r },
-	{ 0x30000a, 0x30000b, protection_r },
+	{ 0x30000a, 0x30000b, special_port5_r },
+	{ 0x30000c, 0x30000d, input_port_6_word_r },
+	{ 0x30000e, 0x30000f, input_port_7_word_r },
 	{ 0x340000, 0x340001, OKIM6295_status_0_lsb_r },
 	{ 0x380000, 0x380007, tms_host_r },
 MEMORY_END
@@ -325,7 +449,8 @@ static MEMORY_WRITE16_START( stonebal_writemem )
 	{ 0x000000, 0x07ffff, MWA16_ROM },
 	{ 0x200000, 0x27ffff, MWA16_RAM },
 	{ 0x280000, 0x280fff, MWA16_RAM, (data16_t **)&generic_nvram, &generic_nvram_size },
-	{ 0x300000, 0x30000f, unknown_w, &unknown },
+	{ 0x300000, 0x300003, control_w, &control },
+	{ 0x300004, 0x300007, protection_bit_w },
 	{ 0x340000, 0x340001, OKIM6295_data_0_lsb_w },
 	{ 0x380000, 0x380007, tms_host_w },
 MEMORY_END
@@ -352,6 +477,7 @@ static MEMORY_READ16_START( tms_readmem )
 	{ TOBYTE(0x00000000), TOBYTE(0x001fffff), MRA16_RAM },
 	{ TOBYTE(0x00400000), TOBYTE(0x005fffff), MRA16_RAM },
 	{ TOBYTE(0x00800000), TOBYTE(0x0080000f), artmagic_blitter_r },
+	{ TOBYTE(0x00c00000), TOBYTE(0x00c000ff), tlc34076_lsb_r },
 	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), tms34010_io_register_r },
 	{ TOBYTE(0xffe00000), TOBYTE(0xffffffff), MRA16_RAM },
 MEMORY_END
@@ -361,7 +487,7 @@ static MEMORY_WRITE16_START( tms_writemem )
 	{ TOBYTE(0x00000000), TOBYTE(0x001fffff), MWA16_RAM, &artmagic_vram0 },
 	{ TOBYTE(0x00400000), TOBYTE(0x005fffff), MWA16_RAM, &artmagic_vram1 },
 	{ TOBYTE(0x00800000), TOBYTE(0x0080007f), artmagic_blitter_w },
-	{ TOBYTE(0x00c00000), TOBYTE(0x00c0001f), artmagic_paletteram_w },
+	{ TOBYTE(0x00c00000), TOBYTE(0x00c000ff), tlc34076_lsb_w },
 	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), tms34010_io_register_w },
 	{ TOBYTE(0xffe00000), TOBYTE(0xffffffff), MWA16_RAM },
 MEMORY_END
@@ -371,7 +497,7 @@ static MEMORY_READ16_START( stonebal_tms_readmem )
 	{ TOBYTE(0x00000000), TOBYTE(0x001fffff), MRA16_RAM },
 	{ TOBYTE(0x00400000), TOBYTE(0x005fffff), MRA16_RAM },
 	{ TOBYTE(0x00800000), TOBYTE(0x0080000f), artmagic_blitter_r },
-	{ TOBYTE(0x00c00000), TOBYTE(0x00c0003f), artmagic_paletteram_r },
+	{ TOBYTE(0x00c00000), TOBYTE(0x00c000ff), tlc34076_lsb_r },
 	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), tms34010_io_register_r },
 	{ TOBYTE(0xffc00000), TOBYTE(0xffffffff), MRA16_RAM },
 MEMORY_END
@@ -381,7 +507,7 @@ static MEMORY_WRITE16_START( stonebal_tms_writemem )
 	{ TOBYTE(0x00000000), TOBYTE(0x001fffff), MWA16_RAM, &artmagic_vram0 },
 	{ TOBYTE(0x00400000), TOBYTE(0x005fffff), MWA16_RAM, &artmagic_vram1 },
 	{ TOBYTE(0x00800000), TOBYTE(0x0080007f), artmagic_blitter_w },
-	{ TOBYTE(0x00c00000), TOBYTE(0x00c0003f), artmagic_paletteram_w },
+	{ TOBYTE(0x00c00000), TOBYTE(0x00c000ff), tlc34076_lsb_w },
 	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), tms34010_io_register_w },
 	{ TOBYTE(0xffc00000), TOBYTE(0xffffffff), MWA16_RAM },
 MEMORY_END
@@ -404,7 +530,7 @@ INPUT_PORTS_START( cheesech )
 	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0x0040, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER1 )
 	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_PLAYER1 )
-	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* 300002 */
 	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_PLAYER2 )
@@ -415,7 +541,7 @@ INPUT_PORTS_START( cheesech )
 	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x0040, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_PLAYER2 )
-	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* 300004 */
 	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Unknown ))
@@ -439,6 +565,7 @@ INPUT_PORTS_START( cheesech )
 	PORT_DIPSETTING(      0x0040, "Normal" )
 	PORT_DIPSETTING(      0x0080, "Hard" )
 	PORT_DIPSETTING(      0x0000, "Very Hard" )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* 300006 */
 	PORT_DIPNAME( 0x0007, 0x0007, "Right Coinage" )
@@ -463,6 +590,7 @@ INPUT_PORTS_START( cheesech )
 	PORT_DIPSETTING(      0x0040, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
 	PORT_SERVICE( 0x0080, IP_ACTIVE_LOW )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* 300008 */
 	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_COIN1 )
@@ -473,14 +601,9 @@ INPUT_PORTS_START( cheesech )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* 30000a */
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER3 )
-	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER3 )	// tight loop @013220
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER3 )
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER3 )
-	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3 )
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER3 )
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER3 )
+	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_SPECIAL )		/* protection data */
+	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_SPECIAL )		/* protection ready */
+	PORT_BIT( 0x00fc, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
@@ -495,7 +618,7 @@ INPUT_PORTS_START( ultennis )
 	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0x0040, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER1 )
 	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_PLAYER1 )
-	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* 300002 */
 	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_PLAYER2 )
@@ -506,10 +629,10 @@ INPUT_PORTS_START( ultennis )
 	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x0040, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_PLAYER2 )
-	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* 300004 */
-	PORT_DIPNAME( 0x0001, 0x0001, "Button Layout" )
+	PORT_DIPNAME( 0x0001, 0x0000, "Button Layout" )
 	PORT_DIPSETTING(      0x0001, "Triangular" )
 	PORT_DIPSETTING(      0x0000, "Linear" )
 	PORT_DIPNAME( 0x0002, 0x0002, "Start set at" )
@@ -531,6 +654,7 @@ INPUT_PORTS_START( ultennis )
 	PORT_DIPSETTING(      0x0040, "Normal" )
 	PORT_DIPSETTING(      0x0080, "Hard" )
 	PORT_DIPSETTING(      0x0000, "Very Hard" )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* 300006 */
 	PORT_DIPNAME( 0x0007, 0x0007, "Right Coinage" )
@@ -555,6 +679,7 @@ INPUT_PORTS_START( ultennis )
 	PORT_DIPSETTING(      0x0040, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
 	PORT_SERVICE( 0x0080, IP_ACTIVE_LOW )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* 300008 */
 	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_COIN1 )
@@ -565,14 +690,9 @@ INPUT_PORTS_START( ultennis )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* 30000a */
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER3 )
-	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER3 )	// tight loop @013220
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER3 )
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER3 )
-	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3 )
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER3 )
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER3 )
+	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_SPECIAL )		/* protection data */
+	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_SPECIAL )		/* protection ready */
+	PORT_BIT( 0x00fc, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
@@ -587,7 +707,7 @@ INPUT_PORTS_START( stonebal )
 	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0x0040, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER1 )
 	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_PLAYER1 )
-	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* 300002 */
 	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_PLAYER2 )
@@ -598,7 +718,7 @@ INPUT_PORTS_START( stonebal )
 	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x0040, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_PLAYER2 )
-	PORT_BIT( 0xff00, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* 300004 */
 	PORT_SERVICE( 0x0001, IP_ACTIVE_LOW )
@@ -623,6 +743,7 @@ INPUT_PORTS_START( stonebal )
 	PORT_DIPSETTING(      0x00e0, DEF_STR( 1C_1C ))
 	PORT_DIPSETTING(      0x0020, DEF_STR( 1C_2C ))
 	PORT_DIPSETTING(      0x0000, DEF_STR( 1C_4C ))
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* 300006 */
 	PORT_DIPNAME( 0x0003, 0x0002, DEF_STR( Difficulty ))
@@ -648,6 +769,7 @@ INPUT_PORTS_START( stonebal )
 	PORT_DIPNAME( 0x0080, 0x0080, "Game Mode" )
 	PORT_DIPSETTING(      0x0080, "4 Players" )
 	PORT_DIPSETTING(      0x0000, "2 Players" )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* 300008 */
 	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_COIN1 )
@@ -658,14 +780,31 @@ INPUT_PORTS_START( stonebal )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* 30000a */
-	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER3 )
-	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER3 )	// tight loop @013220
-	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER3 )
-	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER3 )
-	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3 )
-	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )
-	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER3 )
-	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER3 )
+	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_SPECIAL )		/* protection data */
+	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_SPECIAL )		/* protection ready */
+	PORT_BIT( 0x00fc, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* 30000c */
+	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_PLAYER3 )
+	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_PLAYER3 )
+	PORT_BIT( 0x0004, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_PLAYER3 )
+	PORT_BIT( 0x0008, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER3 )
+	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_START3 )
+	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER3 )
+	PORT_BIT( 0x0040, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER3 )
+	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_PLAYER3 )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* 30000e */
+	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_PLAYER4 )
+	PORT_BIT( 0x0002, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_PLAYER4 )
+	PORT_BIT( 0x0004, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_PLAYER4 )
+	PORT_BIT( 0x0008, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER4 )
+	PORT_BIT( 0x0010, IP_ACTIVE_HIGH, IPT_START4 )
+	PORT_BIT( 0x0020, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER4 )
+	PORT_BIT( 0x0040, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER4 )
+	PORT_BIT( 0x0080, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_PLAYER4 )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
@@ -680,7 +819,7 @@ INPUT_PORTS_END
 static struct OKIM6295interface okim6295_interface =
 {
 	1,
-	{ 10000000/10/132 },	/* ??? */
+	{ 40000000/3/10/165 },
 	{ REGION_SOUND1 },
 	{ 100 }
 };
@@ -693,19 +832,29 @@ static struct OKIM6295interface okim6295_interface =
  *
  *************************************/
 
+/*
+	video timing:
+		measured HSYNC frequency = 15.685kHz
+		measured VSYNC frequency = 50-51Hz
+		programmed total lines = 312
+		derived frame rate = 15685/312 = 50.27Hz
+*/
+
 MACHINE_DRIVER_START( artmagic )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD_TAG("main", M68000, 12000000)
+	MDRV_CPU_ADD_TAG("main", M68000, 25000000/2)
 	MDRV_CPU_MEMORY(main_readmem,main_writemem)
 
 	MDRV_CPU_ADD_TAG("tms", TMS34010, 40000000/TMS34010_CLOCK_DIVIDER)
 	MDRV_CPU_CONFIG(tms_config)
 	MDRV_CPU_MEMORY(tms_readmem,tms_writemem)
 
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION((1000000 * (312 - 256)) / (60 * 312))
+	MDRV_MACHINE_INIT(artmagic)
+	MDRV_FRAMES_PER_SECOND(50.27)
+	MDRV_VBLANK_DURATION((1000000 * (312 - 256)) / (50.27 * 312))
 	MDRV_INTERLEAVE(100)
+	MDRV_NVRAM_HANDLER(generic_1fill)
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
@@ -844,37 +993,27 @@ static void decrypt_cheesech(void)
 static DRIVER_INIT( ultennis )
 {
 	decrypt_ultennis();
-	artmagic_no_onelinedecrypt = 0;
-
-	install_mem_read16_handler(0, 0x300000, 0x300001, ultennis_protection_r);
-
-	/* set up protection */
-	install_mem_write16_handler(0, 0x300004, 0x300007, protection_w);
-	install_mem_read16_handler(0, 0x30000a, 0x30000b, protection_r);
-
+	artmagic_is_stoneball = 0;
 	protection_handler = ultennis_protection;
-}
 
-
-static DRIVER_INIT( stonebal )
-{
-	decrypt_ultennis();
-	artmagic_no_onelinedecrypt = 1;	/* blits 1 line high are NOT encrypted */
-
-	/* set up protection */
-	install_mem_write16_handler(0, 0x300004, 0x300007, protection_w);
-	install_mem_read16_handler(0, 0x30000a, 0x30000b, protection_r);
-
-	protection_handler = stonebal_protection;
+	/* additional (protection?) hack */
+	install_mem_read16_handler(0, 0x300000, 0x300001, ultennis_hack_r);
 }
 
 
 static DRIVER_INIT( cheesech )
 {
 	decrypt_cheesech();
-	artmagic_no_onelinedecrypt = 0;
+	artmagic_is_stoneball = 0;
+	protection_handler = cheesech_protection;
+}
 
-	install_mem_read16_handler(0, 0x300000, 0x300001, ultennis_protection_r);
+
+static DRIVER_INIT( stonebal )
+{
+	decrypt_ultennis();
+	artmagic_is_stoneball = 1;	/* blits 1 line high are NOT encrypted, also different first pixel decrypt */
+	protection_handler = stonebal_protection;
 }
 
 
@@ -885,7 +1024,7 @@ static DRIVER_INIT( cheesech )
  *
  *************************************/
 
-GAMEX( 1993, ultennis, 0,        artmagic, ultennis, ultennis, ROT0, "Art & Magic", "Ultimate Tennis", GAME_IMPERFECT_GRAPHICS | GAME_UNEMULATED_PROTECTION )
-GAMEX( 1994, cheesech, 0,        artmagic, cheesech, cheesech, ROT0, "Art & Magic", "Cheese Chase", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-GAMEX( 1994, stonebal, 0,        stonebal, stonebal, stonebal, ROT0, "Art & Magic", "Stone Ball (4 Players)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS | GAME_UNEMULATED_PROTECTION )
-GAMEX( 1994, stoneba2, stonebal, stonebal, stonebal, stonebal, ROT0, "Art & Magic", "Stone Ball (2 Players)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS | GAME_UNEMULATED_PROTECTION )
+GAME( 1993, ultennis, 0,        artmagic, ultennis, ultennis, ROT0, "Art & Magic", "Ultimate Tennis" )
+GAME( 1994, cheesech, 0,        artmagic, cheesech, cheesech, ROT0, "Art & Magic", "Cheese Chase" )
+GAME( 1994, stonebal, 0,        stonebal, stonebal, stonebal, ROT0, "Art & Magic", "Stone Ball (4 Players)" )
+GAME( 1994, stoneba2, stonebal, stonebal, stonebal, stonebal, ROT0, "Art & Magic", "Stone Ball (2 Players)" )

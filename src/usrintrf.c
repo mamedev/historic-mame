@@ -402,6 +402,24 @@ struct GfxElement *builduifont(void)
 	Machine->uifontwidth = layout.width;
 	Machine->uifontheight = layout.height;
 
+	/* pixel double horizontally */
+	if (uirotwidth >= 420)
+	{
+		memcpy(tempoffset, layout.xoffset, sizeof(tempoffset));
+		for (i = 0; i < layout.width; i++)
+			layout.xoffset[i*2+0] = layout.xoffset[i*2+1] = tempoffset[i];
+		layout.width *= 2;
+	}
+
+	/* pixel double vertically */
+	if (uirotheight >= 420)
+	{
+		memcpy(tempoffset, layout.yoffset, sizeof(tempoffset));
+		for (i = 0; i < layout.height; i++)
+			layout.yoffset[i*2+0] = layout.yoffset[i*2+1] = tempoffset[i];
+		layout.height *= 2;
+	}
+
 	/* apply swappage */
 	if (Machine->ui_orientation & ORIENTATION_SWAP_XY)
 	{
@@ -428,24 +446,6 @@ struct GfxElement *builduifont(void)
 		memcpy(tempoffset, layout.yoffset, sizeof(tempoffset));
 		for (i = 0; i < layout.height; i++)
 			layout.yoffset[i] = tempoffset[layout.height - 1 - i];
-	}
-
-	/* pixel double horizontally */
-	if (uirotwidth >= 420)
-	{
-		memcpy(tempoffset, layout.xoffset, sizeof(tempoffset));
-		for (i = 0; i < layout.width; i++)
-			layout.xoffset[i*2+0] = layout.xoffset[i*2+1] = tempoffset[i];
-		layout.width *= 2;
-	}
-
-	/* pixel double vertically */
-	if (uirotheight >= 420)
-	{
-		memcpy(tempoffset, layout.yoffset, sizeof(tempoffset));
-		for (i = 0; i < layout.height; i++)
-			layout.yoffset[i*2+0] = layout.yoffset[i*2+1] = tempoffset[i];
-		layout.height *= 2;
 	}
 
 	/* decode rotated font */

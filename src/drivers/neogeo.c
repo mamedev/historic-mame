@@ -4929,8 +4929,8 @@ ROM_START( mslug4 ) /* Original Version - Encrypted GFX */
 	NEO_BIOS_SOUND_64K( "263-m1d.bin", 0x69fedba1 )
 
 	ROM_REGION( 0x1000000, REGION_SOUND1, ROMREGION_SOUNDONLY )
-	ROM_LOAD( "263-v1.bin", 0x000000, 0x800000, 0xb1a08c67 )
-	ROM_LOAD( "263-v2.bin", 0x800000, 0x800000, 0x0040015b )
+	ROM_LOAD( "263-v1.bin", 0x000000, 0x800000, 0x01e9b9cd )
+	ROM_LOAD( "263-v2.bin", 0x800000, 0x800000, 0x4ab2bf81 )
 
 	NO_DELTAT_REGION
 
@@ -5453,7 +5453,7 @@ GAME( 1999, kof99e,   kof99,    raster, neogeo,  kof99,    ROT0, "SNK", "The Kin
 GAME( 1999, kof99n,   kof99,    raster, neogeo,  kof99n,   ROT0, "SNK", "The King of Fighters '99 - Millennium Battle (not encrypted)" )	/* Encrypted GFX */
 GAME( 1999, kof99p,   kof99,    raster, neogeo,  neogeo,   ROT0, "SNK", "The King of Fighters '99 - Millennium Battle (prototype)" )
 GAME( 1999, garou,    neogeo,   raster, neogeo,  garou,    ROT0, "SNK", "Garou - Mark of the Wolves (set 1)" ) /* Encrypted Code & GFX */
-GAME( 1999, garouo,   garou,    raster, neogeo,  garouo,   ROT0, "SNK", "Garou - Mark of the Wolves (set 2))" ) /* Encrypted Code & GFX */
+GAME( 1999, garouo,   garou,    raster, neogeo,  garouo,   ROT0, "SNK", "Garou - Mark of the Wolves (set 2)" ) /* Encrypted Code & GFX */
 GAME( 1999, garoup,   garou,    raster, neogeo,  neogeo,   ROT0, "SNK", "Garou - Mark of the Wolves (prototype)" )
 GAME( 2000, mslug3,   neogeo,   raster, neogeo,  mslug3,   ROT0, "SNK", "Metal Slug 3" ) /* Encrypted Code & GFX */
 GAME( 2000, mslug3n,  mslug3,   raster, neogeo,  mslug3n,  ROT0, "SNK", "Metal Slug 3 (not encrypted)" ) /* Encrypted GFX */

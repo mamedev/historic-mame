@@ -492,7 +492,8 @@ static void ymf278b_C_w(int num, UINT8 reg, UINT8 data)
 					slot->step = 0;
 
 					step = (slot->FN | 1024) << (oct + 7);
-					slot->step = (UINT32) (((UINT64)step)*(44100/4)) / Machine->sample_rate * chip->clock_ratio;
+					slot->step = (UINT32) ((((UINT64)step)*(44100/4)) / Machine->sample_rate * chip->clock_ratio);
+
 					ymf278b_envelope_next(slot, chip->clock_ratio);
 
 #ifdef VERBOSE

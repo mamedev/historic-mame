@@ -1075,6 +1075,25 @@ ROM_START( mgakuen )
 	ROM_LOAD( "mg-5.1c",      0x00000, 0x80000, 0x170332f1 )	/* banked */
 ROM_END
 
+ROM_START( 7toitsu )
+	ROM_REGION( 0x30000, REGION_CPU1, 0 )	/* 192k for code */
+	ROM_LOAD( "mc01.1j",      0x00000, 0x08000, 0x0bebe45f )
+	ROM_LOAD( "mc02.1l",      0x10000, 0x20000, 0x375378b0 )
+
+	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "mg-1.13h",     0x000000, 0x80000, 0xfd6a0805 )	/* chars */
+	ROM_LOAD( "mg-2.14h",     0x080000, 0x80000, 0xe26e871e )
+	ROM_LOAD( "mg-3.16h",     0x100000, 0x80000, 0xdd781d9a )
+	ROM_LOAD( "mg-4.17h",     0x180000, 0x80000, 0x97afcc79 )
+
+	ROM_REGION( 0x040000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "mc06.4l",      0x000000, 0x20000, 0x0ef83926 )	/* sprites */
+	ROM_LOAD( "mc07.6l",      0x020000, 0x20000, 0x59f9ffb1 )
+
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* OKIM */
+	ROM_LOAD( "mg-5.1c",      0x00000, 0x80000, 0x170332f1 )	/* banked */
+ROM_END
+
 ROM_START( mgakuen2 )
 	ROM_REGION( 2*0x50000, REGION_CPU1, 0 )	/* 320k for code + 320k for decrypted opcodes */
 	ROM_LOAD( "mg2-xf.1j",    0x00000, 0x08000, 0xc8165d2d )
@@ -1603,6 +1622,7 @@ static DRIVER_INIT( blockbl )
 
 
 GAME( 1988, mgakuen,  0,        mgakuen, mgakuen,  mgakuen,  ROT0,   "Yuga", "Mahjong Gakuen" )
+GAME( 1988, 7toitsu,  mgakuen,  mgakuen, mgakuen,  mgakuen,  ROT0,   "Yuga", "Chi-Toitsu" )
 GAME( 1989, mgakuen2, 0,        marukin, marukin,  mgakuen2, ROT0,   "Face", "Mahjong Gakuen 2 Gakuen-chou no Fukushuu" )
 GAME( 1989, pkladies, 0,        marukin, pkladies, mgakuen2, ROT0,   "Mitchell", "Poker Ladies" )
 GAME( 1989, pkladiel, pkladies, marukin, pkladies, mgakuen2, ROT0,   "Leprechaun", "Poker Ladies (Leprechaun)" )

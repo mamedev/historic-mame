@@ -2009,6 +2009,9 @@ READ16_HANDLER( tms34010_io_register_r )
 		case REG_DPYADR:
 			update_display_address(scanline_to_vcount(cpu_getscanline()));
 			break;
+
+		case REG_REFCNT:
+			return (activecpu_gettotalcycles() / 16) & 0xfffc;
 	}
 
 	return IOREG(offset);
@@ -2045,6 +2048,14 @@ READ16_HANDLER( tms34020_io_register_r )
 		case REG020_DPYADR:
 			update_display_address(scanline_to_vcount(cpu_getscanline()));
 			break;
+
+		case REG020_REFADR:
+		{
+			int refreshrate = (IOREG(REG020_CONFIG) >> 8) & 7;
+			if (refreshrate < 6)
+				return (activecpu_gettotalcycles() / refreshrate) & 0xffff;
+			break;
+		}
 	}
 
 	return IOREG(offset);

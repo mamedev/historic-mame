@@ -2036,7 +2036,7 @@ ROM_START( mjcamera )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* program */
 	ROM_LOAD( "mcam_01.bin", 0x00000, 0x10000, 0x73d4b9ff )
 
-	ROM_REGION( 0x20000, REGION_SOUND1, 0 ) /* voice */
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 ) /* voice */
 	ROM_LOAD( "mcam_02.bin", 0x00000, 0x10000, 0xfe8e975e )
 
 	ROM_REGION( 0x100000, REGION_GFX1, 0 ) /* gfx */
@@ -2345,21 +2345,21 @@ ROM_START( kaguya )
 ROM_END
 
 
-GAME( 1988, mjsikaku, 0,        mjsikaku, mjsikaku, mjsikaku, ROT0,   "Nichibutsu", "Mahjong Sikaku (Japan set 1)" )
-GAME( 1988, mjsikakb, mjsikaku, mjsikaku, mjsikaku, mjsikaku, ROT0,   "Nichibutsu", "Mahjong Sikaku (Japan set 2)" )
-GAME( 1988, otonano,  0,        otonano,  otonano,  otonano,  ROT0,   "Apple", "Otona no Mahjong (Japan)" )
-GAME( 1988, mjcamera, 0,        mjcamera, mjcamera, mjcamera, ROT0,   "MIKI SYOUJI", "Mahjong Camera Kozou (Japan)" )
-GAME( 1986, secolove, 0,        secolove, secolove, secolove, ROT0,   "Nichibutsu", "Second Love (Japan)" )
-GAME( 1986, citylove, 0,        citylove, citylove, citylove, ROT0,   "Nichibutsu", "City Love (Japan)" )
-GAME( 1987, seiha,    0,        seiha,    seiha,    seiha,    ROT0,   "Nichibutsu", "Seiha (Japan)" )
-GAME( 1987, seiham,   seiha,    seiham,   seiham,   seiham,   ROT0,   "Nichibutsu", "Seiha [BET] (Japan)" )
-GAME( 1987, iemoto,   0,        iemoto,   iemoto,   iemoto,   ROT0,   "Nichibutsu", "Iemoto (Japan)" )
-GAME( 1987, ojousan,  0,        ojousan,  ojousan,  ojousan,  ROT0,   "Nichibutsu", "Ojousan (Japan)" )
-GAME( 1987, bijokkoy, 0,        bijokkoy, bijokkoy, bijokkoy, ROT0,   "Nichibutsu", "Bijokko Yume Monogatari (Japan)" )
-GAME( 1988, bijokkog, 0,        bijokkog, bijokkog, bijokkog, ROT180, "Nichibutsu", "Bijokko Gakuen (Japan)" )
-GAMEX(1987, housemnq, 0,        housemnq, housemnq, housemnq, ROT0,   "Nichibutsu", "House Mannequin (Japan)", GAME_NOT_WORKING )
-GAMEX(1987, housemn2, 0,        housemn2, housemn2, housemn2, ROT0,   "Nichibutsu", "House Mannequin Roppongi Live hen (Japan)", GAME_NOT_WORKING )
-GAME( 1988, kaguya,   0,        kaguya,   kaguya,   kaguya,   ROT0,   "MIKI SYOUJI", "Mahjong Kaguyahime [BET] (Japan)" )
-GAMEX(1986, crystalg, 0,        crystalg, crystalg, crystalg, ROT0,   "Nichibutsu", "Crystal Gal (Japan)", GAME_NOT_WORKING )
-GAMEX(1986, crystal2, 0,        crystal2, crystal2, crystal2, ROT0,   "Nichibutsu", "Crystal Gal 2 (Japan)", GAME_NOT_WORKING )
-GAME( 1986, apparel,  0,        apparel,  apparel,  apparel,  ROT0,   "Central Denshi", "Apparel Night (Japan)" )
+GAMEX(1986, crystalg, 0,        crystalg, crystalg, crystalg, ROT0,   "Nichibutsu", "Crystal Gal (Japan 860512)", GAME_NOT_WORKING )
+GAMEX(1986, crystal2, 0,        crystal2, crystal2, crystal2, ROT0,   "Nichibutsu", "Crystal Gal 2 (Japan 860620)", GAME_NOT_WORKING )
+GAME( 1986, citylove, 0,        citylove, citylove, citylove, ROT0,   "Nichibutsu", "City Love (Japan 860908)" )
+GAME( 1986, apparel,  0,        apparel,  apparel,  apparel,  ROT0,   "Central Denshi", "Apparel Night (Japan 860929)" )
+GAME( 1986, secolove, 0,        secolove, secolove, secolove, ROT0,   "Nichibutsu", "Second Love (Japan 861201)" )
+GAMEX(1987, housemnq, 0,        housemnq, housemnq, housemnq, ROT0,   "Nichibutsu", "House Mannequin (Japan 870217)", GAME_NOT_WORKING )
+GAMEX(1987, housemn2, 0,        housemn2, housemn2, housemn2, ROT0,   "Nichibutsu", "House Mannequin Roppongi Live hen (Japan 870418)", GAME_NOT_WORKING )
+GAME( 1987, seiha,    0,        seiha,    seiha,    seiha,    ROT0,   "Nichibutsu", "Seiha (Japan 870725)" )
+GAME( 1987, seiham,   seiha,    seiham,   seiham,   seiham,   ROT0,   "Nichibutsu", "Seiha [BET] (Japan 870723)" )
+GAME( 1987, bijokkoy, 0,        bijokkoy, bijokkoy, bijokkoy, ROT0,   "Nichibutsu", "Bijokko Yume Monogatari (Japan 870925)" )
+GAME( 1987, iemoto,   0,        iemoto,   iemoto,   iemoto,   ROT0,   "Nichibutsu", "Iemoto (Japan 871020)" )
+GAME( 1987, ojousan,  0,        ojousan,  ojousan,  ojousan,  ROT0,   "Nichibutsu", "Ojousan (Japan 871204)" )
+GAME( 1988, bijokkog, 0,        bijokkog, bijokkog, bijokkog, ROT180, "Nichibutsu", "Bijokko Gakuen (Japan 880116)" )
+GAME( 1988, kaguya,   0,        kaguya,   kaguya,   kaguya,   ROT0,   "MIKI SYOUJI", "Mahjong Kaguyahime [BET] (Japan 880521)" )
+GAME( 1988, otonano,  0,        otonano,  otonano,  otonano,  ROT0,   "Apple", "Otona no Mahjong (Japan 880628)" )
+GAME( 1988, mjsikaku, 0,        mjsikaku, mjsikaku, mjsikaku, ROT0,   "Nichibutsu", "Mahjong Sikaku (Japan 880908)" )
+GAME( 1988, mjsikakb, mjsikaku, mjsikaku, mjsikaku, mjsikaku, ROT0,   "Nichibutsu", "Mahjong Sikaku (Japan 880722)" )
+GAME( 1988, mjcamera, 0,        mjcamera, mjcamera, mjcamera, ROT0,   "MIKI SYOUJI", "Mahjong Camera Kozou (Japan 881109)" )

@@ -7,8 +7,9 @@
 **************************************************************************/
 
 #include "driver.h"
-#include "btoads.h"
 #include "cpu/tms34010/tms34010.h"
+#include "vidhrdw/tlc34076.h"
+#include "btoads.h"
 
 
 
@@ -27,6 +28,19 @@ static UINT8 main_to_sound_ready;
 static UINT8 sound_to_main_data;
 static UINT8 sound_to_main_ready;
 static UINT8 sound_int_state;
+
+
+
+/*************************************
+ *
+ *	Machine init
+ *
+ *************************************/
+
+static MACHINE_INIT( btoads )
+{
+	tlc34076_reset(6);
+}
 
 
 
@@ -186,7 +200,7 @@ static MEMORY_READ16_START( main_readmem )
 	{ TOBYTE(0x20000180), TOBYTE(0x200001ff), input_port_3_word_r },
 	{ TOBYTE(0x20000200), TOBYTE(0x2000027f), special_port_4_r },
 	{ TOBYTE(0x20000280), TOBYTE(0x200002ff), input_port_5_word_r },
-	{ TOBYTE(0x20000300), TOBYTE(0x2000037f), input_port_6_word_r },
+	{ TOBYTE(0x20000300), TOBYTE(0x2000037f), btoads_paletteram_r },
 	{ TOBYTE(0x20000380), TOBYTE(0x200003ff), main_sound_r },
 	{ TOBYTE(0x60000000), TOBYTE(0x6003ffff), MRA16_RAM },
 	{ TOBYTE(0xa0000000), TOBYTE(0xa03fffff), btoads_vram_fg_display_r },
@@ -327,9 +341,6 @@ INPUT_PORTS_START( btoads )
 	PORT_DIPSETTING(      0x0080, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
-
-	PORT_START
-	PORT_BIT( 0xffff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
 
@@ -387,6 +398,7 @@ static MACHINE_DRIVER_START( btoads )
 	MDRV_CPU_PORTS(sound_readport,sound_writeport)
 	MDRV_CPU_PERIODIC_INT(sound_interrupt,183)
 
+	MDRV_MACHINE_INIT(btoads)
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION((1000000 * (256 - 224)) / (60 * 256))
 	MDRV_NVRAM_HANDLER(generic_1fill)

@@ -305,6 +305,8 @@ static void ymf278b_interrupt(int active)
 
 ***************************************************************************/
 
+// #define TEST_SOUND
+
 #ifdef TEST_SOUND
 static int metro_io_callback(int ioline, int state)
 {
@@ -312,13 +314,13 @@ static int metro_io_callback(int ioline, int state)
 
     switch ( ioline )
 	{
-	case UPD7810_RXD:	/* read the RxD line */
-		data = soundlatch_r(0);
-		state = data & 1;
-		soundlatch_w(0, data >> 1);
-		break;
-	default:
-		logerror("upd7810 ioline %d not handled\n", ioline);
+		case UPD7810_RXD:	/* read the RxD line */
+			data = soundlatch_r(0);
+			state = data & 1;
+			soundlatch_w(0, data >> 1);
+			break;
+		default:
+			logerror("upd7810 ioline %d not handled\n", ioline);
     }
 	return state;
 }
@@ -329,6 +331,7 @@ WRITE16_HANDLER( metro_soundlatch_w )
 	{
 		soundlatch_w(0,data & 0xff);
 		cpu_set_nmi_line( 1, PULSE_LINE );
+logerror("soundcmd %02x\n", data & 0xff);
 	}
 }
 
@@ -357,89 +360,123 @@ READ16_HANDLER( dharma_soundstatus_r )
 
 static WRITE_HANDLER( daitorid_sound_rombank_w )
 {
-	unsigned char *RAM = memory_region(REGION_CPU2);
+	unsigned char *rom = memory_region(REGION_CPU2);
 	int bank = (data >> 4) & 0x07;
 
 	if ( data & ~0x70 ) 	logerror("CPU #1 - PC %04X: unknown bank bits: %02X\n",activecpu_get_pc(),data);
 
-	if (bank < 2)	RAM = &RAM[0x4000 * bank];
-	else			RAM = &RAM[0x4000 * (bank-2) + 0x10000];
+	if (bank < 2)	rom = &rom[0x4000 * bank];
+	else			rom = &rom[0x4000 * (bank-2) + 0x10000];
 
-	cpu_setbank(1, RAM);
+	cpu_setbank(1, rom);
 }
 
-static data8_t chip_select;
+static int porta,portb;
 
-static READ_HANDLER( daitorid_sound_chip_data_r )
+static READ_HANDLER( daitorid_porta_r )
 {
-	/* fake status to get the 7810 out of the tight loop waiting for a chip */
-    static data8_t toggle_bit7;
-    switch( chip_select )
+	return porta;
+}
+
+static WRITE_HANDLER( daitorid_porta_w )
+{
+	porta = data;
+}
+
+static WRITE_HANDLER( daitorid_portb_w )
+{
+	/* port B layout:
+	   7 !clock latch for message to main CPU
+	   6 !clock YM2151 I/O
+	   5
+	   4 !clock MSM6295 I/O
+	   3 !enable read from YM2151/6295
+	   2 !enable write to YM2151/6295
+	   1 select YM2151 register or data port
+	   0
+	  */
+
+if (!BIT(data,0) || !BIT(data,5))
+	logerror("%04x: daitorid_port_b_w %02x\n",activecpu_get_pc(),data);
+
+	if (BIT(portb,7) && !BIT(data,7))	/* clock 1->0 */
 	{
-	case 0xb7: return YM2151_status_port_0_r(0);
-	case 0xe7: return OKIM6295_status_0_r(0);
-	default:
-		logerror("CPU #1 PC %04X : reading from unknown chip: %02X\n",activecpu_get_pc(),chip_select);
-		toggle_bit7 ^= 0x80;
-        return toggle_bit7;
+//		metro_soundstatus = porta;
+		metro_soundstatus = 0;	// ???
+logerror("%04x: to_cpu = %02x\n",activecpu_get_pc(),porta);
 	}
-}
 
-static WRITE_HANDLER( daitorid_sound_chip_data_w )
-{
-	soundlatch2_w(0,data);	// for debugging, the latch is internal
-}
-
-static READ_HANDLER( daitorid_sound_chip_select_r )
-{
-	return chip_select;
-}
-
-static WRITE_HANDLER( daitorid_sound_chip_select_w )
-{
-	chip_select = data;
-
-	if ((chip_select & 0xf0) == 0xf0)	return;
-
-	switch( chip_select )
+	if (BIT(portb,6) && !BIT(data,6))	/* clock 1->0 */
 	{
-	case 0x7f: metro_soundstatus = 0; break;
-	case 0xb9: YM2151_register_port_0_w(0,soundlatch2_r(0)); break;
-	case 0xbb: YM2151_data_port_0_w(0,soundlatch2_r(0)); break;
-	case 0xeb: OKIM6295_data_0_w(0,soundlatch2_r(0)); break;
-	default:
-		logerror("CPU #1 PC %04X : writing to unknown chip: %02X\n",activecpu_get_pc(),chip_select);
+		if (!BIT(data,2))
+		{
+			/* write */
+			if (BIT(data,1))
+			{
+				YM2151_data_port_0_w(0,porta);
+			}
+			else
+			{
+				YM2151_register_port_0_w(0,porta);
+			}
+		}
+		if (!BIT(data,3))
+		{
+			/* read */
+			if (BIT(data,1))
+			{
+				porta = YM2151_status_port_0_r(0);
+			}
+		}
 	}
+
+	if (BIT(portb,4) && !BIT(data,4))	/* clock 1->0 */
+	{
+		if (!BIT(data,2))
+		{
+			/* write */
+			OKIM6295_data_0_w(0,porta);
+logerror("OKIM6295_data_w %02x\n",porta);
+		}
+		if (!BIT(data,3))
+		{
+			/* read */
+			porta = OKIM6295_status_0_r(0);
+logerror("OKIM6295_status_r %02x\n",porta);
+		}
+	}
+
+	portb = data;
 }
+
 
 static MEMORY_READ_START( upd7810_readmem )
-    { 0x0000, 0x3fff, MRA_ROM               },  /* External ROM */
-    { 0x4000, 0x7fff, MRA_BANK1             },  /* External ROM (Banked) */
-    { 0x8000, 0x87ff, MRA_RAM               },  /* External RAM */
-    { 0xff00, 0xffff, MRA_RAM               },  /* Internal RAM */
+	{ 0x0000, 0x3fff, MRA_ROM },	/* External ROM */
+//	{ 0x4000, 0x7fff, MRA_BANK1 },	/* External ROM (Banked) */
+	{ 0x8000, 0x87ff, MRA_RAM },	/* External RAM */
+	{ 0xff00, 0xffff, MRA_RAM },	/* Internal RAM */
 MEMORY_END
 
 static MEMORY_WRITE_START( upd7810_writemem )
-    { 0x0000, 0x3fff, MWA_ROM               },  /* External ROM */
-    { 0x4000, 0x7fff, MWA_ROM               },  /* External ROM (Banked) */
-    { 0x8000, 0x87ff, MWA_RAM               },  /* External RAM */
-    { 0xff00, 0xffff, MWA_RAM               },  /* Internal RAM */
+	{ 0x0000, 0x3fff, MWA_ROM },	/* External ROM */
+	{ 0x4000, 0x7fff, MWA_ROM },	/* External ROM (Banked) */
+	{ 0x8000, 0x87ff, MWA_RAM },	/* External RAM */
+	{ 0xff00, 0xffff, MWA_RAM },	/* Internal RAM */
 MEMORY_END
 
 static PORT_READ_START( upd7810_readport )
-	{ UPD7810_PORTA, UPD7810_PORTA, daitorid_sound_chip_data_r		},
-	{ UPD7810_PORTB, UPD7810_PORTB, daitorid_sound_chip_select_r	},
+	{ UPD7810_PORTA, UPD7810_PORTA, daitorid_porta_r },
 PORT_END
 
 static PORT_WRITE_START( upd7810_writeport )
-	{ UPD7810_PORTA, UPD7810_PORTA, daitorid_sound_chip_data_w		},
-	{ UPD7810_PORTB, UPD7810_PORTB, daitorid_sound_chip_select_w	},
-	{ UPD7810_PORTC, UPD7810_PORTC, daitorid_sound_rombank_w		},
+	{ UPD7810_PORTA, UPD7810_PORTA, daitorid_porta_w },
+	{ UPD7810_PORTB, UPD7810_PORTB, daitorid_portb_w },
+//	{ UPD7810_PORTC, UPD7810_PORTC, daitorid_sound_rombank_w },
 PORT_END
 
 static void metro_sound_irq_handler(int state)
 {
-	cpu_set_irq_line(1, UPD7810_INTF2, HOLD_LINE);
+	cpu_set_irq_line(1, UPD7810_INTF2, state ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2151interface daitorid_ym2151_interface =
@@ -529,7 +566,7 @@ static struct OKIM6295interface okim6295_intf_12kHz =
 	1,
 	{ 12000 },
 	{ REGION_SOUND1 },
-	{ 100 }
+	{ 50 }
 };
 static struct OKIM6295interface okim6295_intf_16kHz =
 {

@@ -7,8 +7,9 @@
 **************************************************************************/
 
 #include "driver.h"
-#include "btoads.h"
 #include "cpu/tms34010/tms34010.h"
+#include "vidhrdw/tlc34076.h"
+#include "btoads.h"
 
 
 #define BT_DEBUG 0
@@ -31,10 +32,6 @@ static UINT8 *vram_fg_draw, *vram_fg_display;
 static int xscroll0, yscroll0;
 static int xscroll1, yscroll1;
 static int screen_control;
-
-static UINT8 palette_entry;
-static UINT8 palette_color;
-static UINT8 palette_data[3];
 
 static UINT16 sprite_source_offs;
 static UINT8 *sprite_dest_base;
@@ -142,33 +139,13 @@ WRITE16_HANDLER( btoads_scroll1_w )
 
 WRITE16_HANDLER( btoads_paletteram_w )
 {
-	switch (offset)
-	{
-		/* select which palette entry */
-		case 0:
-			palette_entry = data;
-			palette_color = 0;
-			break;
+	tlc34076_lsb_w(offset/2, data, mem_mask);
+}
 
-		/* 3 successive writes here completes a palette write */
-		case 2:
-			palette_data[palette_color++] = data;
-			if (palette_color == 3)
-			{
-				int r = (palette_data[0] << 2) | (palette_data[0] >> 4);
-				int g = (palette_data[1] << 2) | (palette_data[1] >> 4);
-				int b = (palette_data[2] << 2) | (palette_data[2] >> 4);
-				palette_set_color(palette_entry, r, g, b);
-				palette_entry++;
-				palette_color = 0;
-			}
-			break;
 
-		/* unknown behavior */
-		case 4:
-			logerror("btoads_paletteram_w(4) = %04X\n", data);
-			break;
-	}
+READ16_HANDLER( btoads_paletteram_r )
+{
+	return tlc34076_lsb_r(offset/2, mem_mask);
 }
 
 

@@ -1,8 +1,29 @@
 /***************************************************************************
 
-  Snow Brothers by ToaPlan
+  Snow Brothers (Toaplan) / SemiCom Hardware
+  uses Kaneko's Pandora sprite chip (also used in DJ Boy, Air Buster ..)
 
   driver by Mike Coates
+
+  Hyper Pacman addition by David Haywood
+   + some bits by Nicola Salmoria
+
+
+Stephh's notes (hyperpac):
+
+  - According to the "Language" Dip Switch, this game is a Korean game.
+     (although the Language Dipswitch doesn't affect language, but yes
+      I believe SemiCom to be a Korean Company)
+  - There is no "cocktail mode", nor way to flip the screen.
+
+todo:
+
+make the originals work.
+they're probably all this hardware or a varation on it, they don't work
+(most point the interrupt vectors directly at a small area of ram which I'd
+guess is shared with the Philips 87c52 mcu, more more plus doesn't point the
+vectors there but does have a jump there in the code). See hyperpac for an
+example, the protection data for that game was extracted from the bootleg.
 
 ***************************************************************************/
 
@@ -15,8 +36,9 @@
 WRITE16_HANDLER( snowbros_flipscreen_w );
 VIDEO_UPDATE( snowbros );
 VIDEO_UPDATE( wintbob );
+VIDEO_UPDATE( snowbro3 );
 
-
+static data16_t *hyperpac_ram;
 
 static INTERRUPT_GEN( snowbros_interrupt )
 {
@@ -54,7 +76,13 @@ static WRITE16_HANDLER( snowbros_68000_sound_w )
 	}
 }
 
+static WRITE16_HANDLER( semicom_soundcmd_w )
+{
+	if (ACCESSING_LSB) soundlatch_w(0,data & 0xff);
+}
 
+
+/* Snow Bros Memory Map */
 
 static MEMORY_READ16_START( readmem )
 	{ 0x000000, 0x03ffff, MRA16_ROM },
@@ -64,7 +92,7 @@ static MEMORY_READ16_START( readmem )
 	{ 0x500002, 0x500003, input_port_1_word_r },
 	{ 0x500004, 0x500005, input_port_2_word_r },
 	{ 0x600000, 0x6001ff, MRA16_RAM },
-	{ 0x700000, 0x701dff, MRA16_RAM },
+	{ 0x700000, 0x701fff, MRA16_RAM },
 MEMORY_END
 
 static MEMORY_WRITE16_START( writemem )
@@ -74,7 +102,7 @@ static MEMORY_WRITE16_START( writemem )
 	{ 0x300000, 0x300001, snowbros_68000_sound_w },
 	{ 0x400000, 0x400001, snowbros_flipscreen_w },
 	{ 0x600000, 0x6001ff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
-	{ 0x700000, 0x701dff, MWA16_RAM, &spriteram16, &spriteram_size },
+	{ 0x700000, 0x701fff, MWA16_RAM, &spriteram16, &spriteram_size },
 	{ 0x800000, 0x800001, MWA16_NOP },	/* IRQ 4 acknowledge? */
 	{ 0x900000, 0x900001, MWA16_NOP },	/* IRQ 3 acknowledge? */
 	{ 0xa00000, 0xa00001, MWA16_NOP },	/* IRQ 2 acknowledge? */
@@ -101,7 +129,82 @@ static PORT_WRITE_START( sound_writeport )
 	{ 0x04, 0x04, soundlatch_w },	/* goes back to the main CPU, checked during boot */
 PORT_END
 
+/* SemiCom Memory Map
 
+the SemiCom games have slightly more ram and are protected
+sound hardware is also different
+
+*/
+
+static MEMORY_READ16_START( hyperpac_readmem )
+	{ 0x000000, 0x07ffff, MRA16_ROM },
+	{ 0x100000, 0x10ffff, MRA16_RAM },
+
+	{ 0x500000, 0x500001, input_port_0_word_r },
+	{ 0x500002, 0x500003, input_port_1_word_r },
+	{ 0x500004, 0x500005, input_port_2_word_r },
+
+	{ 0x600000, 0x6001ff, MRA16_RAM },
+	{ 0x700000, 0x701fff, MRA16_RAM },
+MEMORY_END
+
+static MEMORY_WRITE16_START( hyperpac_writemem )
+	{ 0x000000, 0x07ffff, MWA16_ROM },
+	{ 0x100000, 0x10ffff, MWA16_RAM, &hyperpac_ram },
+	{ 0x300000, 0x300001, semicom_soundcmd_w },
+//	{ 0x400000, 0x400001,  }, ???
+	{ 0x600000, 0x6001ff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
+	{ 0x700000, 0x701fff, MWA16_RAM, &spriteram16, &spriteram_size },
+
+	{ 0x800000, 0x800001, MWA16_NOP },	/* IRQ 4 acknowledge? */
+	{ 0x900000, 0x900001, MWA16_NOP },	/* IRQ 3 acknowledge? */
+	{ 0xa00000, 0xa00001, MWA16_NOP },	/* IRQ 2 acknowledge? */
+MEMORY_END
+
+static MEMORY_READ_START( hyperpac_sound_readmem )
+	{ 0x0000, 0xcfff, MRA_ROM },
+	{ 0xd000, 0xd7ff, MRA_RAM },
+	{ 0xf001, 0xf001, YM2151_status_port_0_r },
+	{ 0xf008, 0xf008, soundlatch_r },
+MEMORY_END
+
+static MEMORY_WRITE_START( hyperpac_sound_writemem )
+	{ 0x0000, 0xcfff, MWA_ROM },
+	{ 0xd000, 0xd7ff, MWA_RAM },
+	{ 0xf000, 0xf000, YM2151_register_port_0_w },
+	{ 0xf001, 0xf001, YM2151_data_port_0_w },
+	{ 0xf002, 0xf002, OKIM6295_data_0_w },
+//	{ 0xf006, 0xf006,  }, ???
+MEMORY_END
+
+/* Snow Bros 3
+close to SemiCom
+
+*/
+
+static MEMORY_READ16_START( readmem3 )
+	{ 0x000000, 0x03ffff, MRA16_ROM },
+	{ 0x100000, 0x103fff, MRA16_RAM },
+//	{ 0x300000, 0x300001, OKIM6295_status_0_msb_r }, // ?
+	{ 0x500000, 0x500001, input_port_0_word_r },
+	{ 0x500002, 0x500003, input_port_1_word_r },
+	{ 0x500004, 0x500005, input_port_2_word_r },
+	{ 0x600000, 0x6003ff, MRA16_RAM },
+	{ 0x700000, 0x7021ff, MRA16_RAM },
+MEMORY_END
+
+static MEMORY_WRITE16_START( writemem3 )
+	{ 0x000000, 0x03ffff, MWA16_ROM },
+	{ 0x100000, 0x103fff, MWA16_RAM },
+	{ 0x200000, 0x200001, watchdog_reset16_w },
+//	{ 0x300000, 0x300001, OKIM6295_data_0_msb_w }, // ?
+	{ 0x400000, 0x400001, snowbros_flipscreen_w },
+	{ 0x600000, 0x6003ff, paletteram16_xBBBBBGGGGGRRRRR_word_w, &paletteram16 },
+	{ 0x700000, 0x7021ff, MWA16_RAM, &spriteram16, &spriteram_size },
+	{ 0x800000, 0x800001, MWA16_NOP },	/* IRQ 4 acknowledge? */
+	{ 0x900000, 0x900001, MWA16_NOP },	/* IRQ 3 acknowledge? */
+	{ 0xa00000, 0xa00001, MWA16_NOP },	/* IRQ 2 acknowledge? */
+MEMORY_END
 
 INPUT_PORTS_START( snowbros )
 	PORT_START	/* 500001 */
@@ -252,6 +355,85 @@ INPUT_PORTS_START( snowbroj )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( hyperpac )
+	PORT_START	/* 500000.w */
+	PORT_DIPNAME( 0x0001, 0x0000, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Lives ) )	// "Language" in the "test mode"
+	PORT_DIPSETTING(      0x0002, "3" )					// "Korean"
+	PORT_DIPSETTING(      0x0000, "5" )					// "English"
+	PORT_DIPNAME( 0x001c, 0x001c, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x000c, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x001c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0014, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(      0x0018, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( 1C_3C ) )
+	PORT_DIPNAME( 0x0060, 0x0060, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(      0x0000, "Easy" )
+	PORT_DIPSETTING(      0x0060, "Normal" )
+	PORT_DIPSETTING(      0x0040, "Hard" )
+	PORT_DIPSETTING(      0x0020, "Hardest" )			// "Very Hard"
+	PORT_SERVICE( 0x0080, IP_ACTIVE_LOW )
+	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0200, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0400, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x0800, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x1000, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )	// jump
+	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER1 )	// fire
+	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_PLAYER1 )	// test mode only?
+	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START	/* 500002.w */
+	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0004, 0x0004, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0008, 0x0008, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0010, 0x0010, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0020, 0x0020, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0040, 0x0040, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0080, 0x0080, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0200, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0400, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0800, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x1000, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )	// jump
+	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2 )	// fire
+	PORT_BIT( 0x4000, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_PLAYER2 )	// test mode only?
+	PORT_BIT( 0x8000, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START	/* 500004.w */
+	PORT_BIT( 0x0100, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x0200, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x0400, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x0800, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
+
+/* SnowBros */
+
 static struct GfxLayout tilelayout =
 {
 	16,16,
@@ -268,6 +450,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ REGION_GFX1, 0, &tilelayout,  0, 16 },
 	{ -1 } /* end of array */
 };
+
+/* Winter Bobble */
 
 static struct GfxLayout tilelayout_wb =
 {
@@ -286,11 +470,57 @@ static struct GfxDecodeInfo gfxdecodeinfo_wb[] =
 	{ -1 }
 };
 
-/* handler called by the 3812 emulator when the internal timers cause an IRQ */
-static void irqhandler(int linestate)
+/* SemiCom */
+
+static struct GfxLayout hyperpac_tilelayout =
 {
-	cpu_set_irq_line(1,0,linestate);
+	16,16,
+	RGN_FRAC(1,1),
+	4,
+	{ 0, 1, 2, 3 },
+	{ 4, 0, 8*32+4, 8*32+0, 20,16, 8*32+20, 8*32+16,
+	  12, 8, 8*32+12, 8*32+8, 28, 24, 8*32+28, 8*32+24 },
+	{ 0*32, 2*32, 1*32, 3*32, 16*32+0*32, 16*32+2*32, 16*32+1*32, 16*32+3*32,
+	  4*32, 6*32, 5*32, 7*32, 16*32+4*32, 16*32+6*32, 16*32+5*32, 16*32+7*32 },
+	32*32
+};
+
+static struct GfxDecodeInfo hyperpac_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &hyperpac_tilelayout,  0, 16 },
+	{ -1 } /* end of array */
+};
+
+/* snow bros 3 */
+
+static struct GfxLayout sb3_tilebglayout =
+{
+ 	16,16,
+ 	RGN_FRAC(1,1),
+ 	8,
+ 	{8, 9,10, 11, 0, 1, 2, 3  },
+ 	{ 0, 4, 16, 20, 32, 36, 48, 52,
+ 	512+0,512+4,512+16,512+20,512+32,512+36,512+48,512+52},
+ 	{ 0*64, 1*64, 2*64, 3*64, 4*64, 5*64, 6*64, 7*64,
+ 	1024+0*16,1024+1*64,1024+2*64,1024+3*64,1024+4*64,1024+5*64,1024+6*64,1024+7*64},
+ 	32*64
+};
+
+
+static struct GfxDecodeInfo sb3_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &tilelayout,  0, 16 },
+	{ REGION_GFX2, 0, &sb3_tilebglayout,  0, 2 },
+	{ -1 } /* end of array */
+};
+
+/* handler called by the 3812/2151 emulator when the internal timers cause an IRQ */
+static void irqhandler(int irq)
+{
+	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
+
+/* SnowBros Sound */
 
 static struct YM3812interface ym3812_interface =
 {
@@ -300,17 +530,34 @@ static struct YM3812interface ym3812_interface =
 	{ irqhandler },
 };
 
+/* SemiCom Sound */
+
+static struct YM2151interface ym2151_interface =
+{
+	1,
+	4000000,	/* 4 MHz??? */
+	{ YM3012_VOL(10,MIXER_PAN_LEFT,10,MIXER_PAN_RIGHT) },
+	{ irqhandler }
+};
+
+static struct OKIM6295interface okim6295_interface =
+{
+	1,			/* 1 chip */
+	{ 7575 },		/* 7575Hz playback? */
+	{ REGION_SOUND1 },
+	{ 100 }
+};
 
 
 static MACHINE_DRIVER_START( snowbros )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000, 8000000)	/* 8 MHz ????? */
+	MDRV_CPU_ADD_TAG("main", M68000, 8000000)
 	MDRV_CPU_MEMORY(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(snowbros_interrupt,3)
 
-	MDRV_CPU_ADD(Z80, 3600000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.6 MHz ??? */
+	MDRV_CPU_ADD_TAG("sound", Z80, 3600000) /* 3.6 MHz ??? */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
 	MDRV_CPU_PORTS(sound_readport,sound_writeport)
 
@@ -327,21 +574,46 @@ static MACHINE_DRIVER_START( snowbros )
 	MDRV_VIDEO_UPDATE(snowbros)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	MDRV_SOUND_ADD_TAG("3812", YM3812, ym3812_interface)
 MACHINE_DRIVER_END
 
 
 static MACHINE_DRIVER_START( wintbob )
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(snowbros)
+	MDRV_CPU_REPLACE("main", M68000, 10000000) /* faster cpu on bootleg? otherwise the gfx break up */
+
+	/* video hardware */
+	MDRV_GFXDECODE(gfxdecodeinfo_wb)
+	MDRV_VIDEO_UPDATE(wintbob)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( hyperpac )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M68000, 10000000)	/* 10MHz .. Needed to compensate for less capable gfx hardware? otherwise game runs too slow */
-	MDRV_CPU_MEMORY(readmem,writemem)
-	MDRV_CPU_VBLANK_INT(snowbros_interrupt,3)
+	MDRV_IMPORT_FROM(snowbros)
+	MDRV_CPU_REPLACE("main", M68000, 16000000) /* 16mhz or 12mhz ? */
+	MDRV_CPU_MEMORY(hyperpac_readmem,hyperpac_writemem)
 
-	MDRV_CPU_ADD(Z80, 3600000)
-	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)	/* 3.6 MHz ??? */
-	MDRV_CPU_MEMORY(sound_readmem,sound_writemem)
-	MDRV_CPU_PORTS(sound_readport,sound_writeport)
+	MDRV_CPU_REPLACE("sound", Z80, 4000000) /* 4.0 MHz ??? */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_MEMORY(hyperpac_sound_readmem,hyperpac_sound_writemem)
+
+	MDRV_GFXDECODE(hyperpac_gfxdecodeinfo)
+
+	/* sound hardware */
+	MDRV_SOUND_REPLACE("3812",YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( snowbro3 )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 16000000) /* 16mhz or 12mhz ? */
+	MDRV_CPU_MEMORY(readmem3,writemem3)
+	MDRV_CPU_VBLANK_INT(snowbros_interrupt,3)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -350,14 +622,16 @@ static MACHINE_DRIVER_START( wintbob )
 	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
 	MDRV_SCREEN_SIZE(32*8, 32*8)
 	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
-	MDRV_GFXDECODE(gfxdecodeinfo_wb)
-	MDRV_PALETTE_LENGTH(256)
+	MDRV_GFXDECODE(sb3_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(512)
 
-	MDRV_VIDEO_UPDATE(wintbob)
+	MDRV_VIDEO_UPDATE(snowbro3)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM3812, ym3812_interface)
+	/* oki for sound */
 MACHINE_DRIVER_END
+
+
 
 /***************************************************************************
 
@@ -448,9 +722,180 @@ ROM_START( wintbob )
 	ROM_LOAD16_BYTE( "wb09.bin",     0x60001, 0x10000, 0x9be718ca )
 ROM_END
 
+/* SemiCom Games */
+
+ROM_START( hyperpac )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_LOAD16_BYTE( "hyperpac.h12", 0x00001, 0x20000, 0x2cf0531a )
+	ROM_LOAD16_BYTE( "hyperpac.i12", 0x00000, 0x20000, 0x9c7d85b8 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 Code */
+	ROM_LOAD( "hyperpac.u1", 0x00000, 0x10000 , 0x03faf88e )
+
+	ROM_REGION( 0x040000, REGION_SOUND1, 0 ) /* Samples */
+	ROM_LOAD( "hyperpac.j15", 0x00000, 0x40000, 0xfb9f468d )
+
+	ROM_REGION( 0x0c0000, REGION_GFX1, 0 ) /* Sprites */
+	ROM_LOAD( "hyperpac.a4", 0x000000, 0x40000, 0xbd8673da )
+	ROM_LOAD( "hyperpac.a5", 0x040000, 0x40000, 0x5d90cd82 )
+	ROM_LOAD( "hyperpac.a6", 0x080000, 0x40000, 0x61d86e63 )
+ROM_END
+
+ROM_START( hyperpcb )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_LOAD16_BYTE( "hpacuh12.bin", 0x00001, 0x20000, 0x633ab2c6 )
+	ROM_LOAD16_BYTE( "hpacui12.bin", 0x00000, 0x20000, 0x23dc00d1 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 Code */
+	ROM_LOAD( "hyperpac.u1", 0x00000, 0x10000 , 0x03faf88e ) // was missing from this set, using the one from the original
+
+	ROM_REGION( 0x040000, REGION_SOUND1, 0 ) /* Samples */
+	ROM_LOAD( "hyperpac.j15", 0x00000, 0x40000, 0xfb9f468d )
+
+	ROM_REGION( 0x0c0000, REGION_GFX1, 0 ) /* Sprites */
+	ROM_LOAD( "hyperpac.a4", 0x000000, 0x40000, 0xbd8673da )
+	ROM_LOAD( "hyperpac.a5", 0x040000, 0x40000, 0x5d90cd82 )
+	ROM_LOAD( "hyperpac.a6", 0x080000, 0x40000, 0x61d86e63 )
+ROM_END
+
+ROM_START( moremorp )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_LOAD16_BYTE( "mmp_u52.bin",  0x00001, 0x40000, 0x66baf9b2 )
+	ROM_LOAD16_BYTE( "mmp_u74.bin",  0x00000, 0x40000, 0x7c6fede5 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 Code */
+	ROM_LOAD( "mmp_u35.bin", 0x00000, 0x10000 , 0x4d098cad )
+
+	ROM_REGION( 0x040000, REGION_SOUND1, 0 ) /* Samples */
+	ROM_LOAD( "mmp_u14.bin", 0x00000, 0x40000, 0x211a2566 )
+
+	ROM_REGION( 0x200000, REGION_GFX1, 0 ) /* Sprites */
+	ROM_LOAD( "mmp_u75.bin", 0x000000, 0x80000, 0xaf9e824e )
+	ROM_LOAD( "mmp_u76.bin", 0x080000, 0x80000, 0xc42af064 )
+	ROM_LOAD( "mmp_u77.bin", 0x100000, 0x80000, 0x1d7396e1 )
+	ROM_LOAD( "mmp_u78.bin", 0x180000, 0x80000, 0x5508d80b )
+ROM_END
+
+ROM_START( 3in1semi )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_LOAD16_BYTE( "u52",  0x00001, 0x40000, 0xb0e4a0f7 )
+	ROM_LOAD16_BYTE( "u74",  0x00000, 0x40000, 0x266862c4 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 Code */
+	ROM_LOAD( "u35", 0x00000, 0x10000 , 0xe40481da )
+
+	ROM_REGION( 0x040000, REGION_SOUND1, 0 ) /* Samples */
+	ROM_LOAD( "u14", 0x00000, 0x40000, 0xc83c11be )
+
+	ROM_REGION( 0x200000, REGION_GFX1, 0 ) /* Sprites */
+	ROM_LOAD( "u75", 0x000000, 0x80000, 0xb66a0db6 )
+	ROM_LOAD( "u76", 0x080000, 0x80000, 0x5f4b48ea )
+	ROM_LOAD( "u77", 0x100000, 0x80000, 0xd44211e3 )
+	ROM_LOAD( "u78", 0x180000, 0x80000, 0xaf596afc )
+ROM_END
+
+ROM_START( cookbib2 )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_LOAD16_BYTE( "cookbib2.01",  0x00000, 0x40000, 0x65aafde2 )
+	ROM_LOAD16_BYTE( "cookbib2.02",  0x00001, 0x40000, 0xb2909460 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 Code */
+	ROM_LOAD( "cookbib2.07", 0x00000, 0x10000 , 0xf59f1c9a )
+
+	ROM_REGION( 0x020000, REGION_SOUND1, 0 ) /* Samples */
+	ROM_LOAD( "cookbib2.06", 0x00000, 0x20000, 0x5e6f76b8 )
+
+	ROM_REGION( 0x140000, REGION_GFX1, 0 ) /* Sprites */
+	ROM_LOAD( "cookbib2.05", 0x000000, 0x80000, 0x89fb38ce )
+	ROM_LOAD( "cookbib2.04", 0x080000, 0x80000, 0xf240111f )
+	ROM_LOAD( "cookbib2.03", 0x100000, 0x40000, 0xe1604821 )
+ROM_END
+
+/* this one could be more different hw, gfx don't decode the same */
+ROM_START( htchctch )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_LOAD16_BYTE( "p03.b16",  0x00001, 0x20000, 0xeff14c40 )
+	ROM_LOAD16_BYTE( "p04.b17",  0x00000, 0x20000, 0x6991483a )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 Code */
+	ROM_LOAD( "p02.b5", 0x00000, 0x10000 , 0xc5a03186 )
+
+	ROM_REGION( 0x020000, REGION_SOUND1, 0 ) /* Samples */
+	ROM_LOAD( "p01.c1", 0x00000, 0x20000, 0x18c06829 )
+
+	ROM_REGION( 0x100000, REGION_GFX1, 0 ) /* Sprites */
+	ROM_LOAD( "p06srom5.bin", 0x00000, 0x40000, 0x3d2cbb0d )
+	ROM_LOAD( "p07srom6.bin", 0x40000, 0x40000, 0x0207949c )
+	ROM_LOAD( "p08uor1.bin",  0x80000, 0x20000, 0x6811e7b6 )
+	ROM_LOAD( "p09uor2.bin",  0xa0000, 0x20000, 0x1c6549cf )
+	ROM_LOAD( "p10uor3.bin",  0xc0000, 0x20000, 0x6462e6e0 )
+	ROM_LOAD( "p11uor4.bin",  0xe0000, 0x20000, 0x9c511d98 )
+ROM_END
+
+/* cool mini, only 3 roms? */
+/* bc story, encrypted?, dif. hardware? */
+
+ROM_START( snowbro3 )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )	/* 68000 code */
+	ROM_LOAD16_BYTE( "ur4",  0x00000, 0x20000, 0x19c13ffd )
+	ROM_LOAD16_BYTE( "ur3",  0x00001, 0x20000, 0x3f32fa15 )
+
+	/* is sound cpu code missing or is it driven by the main cpu? */
+
+	ROM_REGION( 0x80000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "ua5",		0x000000, 0x80000, 0x0604e385 )	/* 16x16 tiles */
+
+	ROM_REGION( 0x400000, REGION_GFX2, ROMREGION_DISPOSE ) /* 16x16 BG Tiles */
+	ROM_LOAD( "un7",		0x000000, 0x200000, 0x4a79da4c )
+	ROM_LOAD( "un8",		0x200000, 0x200000, 0x7a4561a4 )
+
+	ROM_REGION( 0x080000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
+	ROM_LOAD( "us5",     0x00000, 0x80000, 0x7c6368ef )
+ROM_END
+
+static DRIVER_INIT( hyperpac )
+{
+	/* simulate RAM initialization done by the protection MCU */
+	/* not verified on real hardware */
+	hyperpac_ram[0xe000/2] = 0x4ef9;
+	hyperpac_ram[0xe002/2] = 0x0000;
+	hyperpac_ram[0xe004/2] = 0x062c;
+
+	hyperpac_ram[0xe080/2] = 0xfedc;
+	hyperpac_ram[0xe082/2] = 0xba98;
+	hyperpac_ram[0xe084/2] = 0x7654;
+	hyperpac_ram[0xe086/2] = 0x3210;
+}
+
+ static DRIVER_INIT(snowbro3)
+ {
+ 	unsigned char *buffer;
+ 	data8_t *src = memory_region(REGION_CPU1);
+ 	int len = memory_region_length(REGION_CPU1);
+
+ 	/* strange order */
+ 	if ((buffer = malloc(len)))
+ 	{
+ 		int i;
+ 		for (i = 0;i < len; i++)
+ 			buffer[i] = src[BITSWAP24(i,23,22,21,20,19,18,17,16,15,14,13,12,11,10,9,8,7,6,5,3,4,1,2,0)];
+ 		memcpy(src,buffer,len);
+ 		free(buffer);
+ 	}
+}
 
 GAME( 1990, snowbros, 0,        snowbros, snowbros, 0, ROT0, "Toaplan", "Snow Bros. - Nick & Tom (set 1)" )
 GAME( 1990, snowbroa, snowbros, snowbros, snowbros, 0, ROT0, "Toaplan", "Snow Bros. - Nick & Tom (set 2)" )
 GAME( 1990, snowbrob, snowbros, snowbros, snowbros, 0, ROT0, "Toaplan", "Snow Bros. - Nick & Tom (set 3)" )
 GAME( 1990, snowbroj, snowbros, snowbros, snowbroj, 0, ROT0, "Toaplan", "Snow Bros. - Nick & Tom (Japan)" )
 GAME( 1990, wintbob,  snowbros, wintbob,  snowbros, 0, ROT0, "bootleg", "The Winter Bobble" )
+/* SemiCom Games */
+GAME( 1995, hyperpac, 0,        hyperpac, hyperpac, hyperpac, ROT0, "SemiCom", "Hyper Pacman" )
+GAME( 1995, hyperpcb, hyperpac, hyperpac, hyperpac, 0,        ROT0, "bootleg", "Hyper Pacman (bootleg)" )
+GAMEX(2002, snowbro3, 0,        snowbro3, snowbroj, snowbro3, ROT0, "Syrmex / hack?", "Snow Brothers 3 - Magical Adventure", GAME_NO_SOUND ) // its basically snowbros code?...
+/* the following don't work, they either point the interrupts at an area of ram probably shared by
+   some kind of mcu which puts 68k code there, or jump to the area in the interrupts */
+GAMEX(199?, moremorp, 0,        hyperpac, hyperpac, 0,        ROT0, "SemiCom", "More More +", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX(1997, 3in1semi, 0,        hyperpac, hyperpac, 0,        ROT0, "SemiCom", "3-in-1 (SemiCom)", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX(1996, cookbib2, 0,        hyperpac, hyperpac, 0,        ROT0, "SemiCom", "Cookie and Bibi 2", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX(1995, htchctch, 0,        hyperpac, hyperpac, 0,        ROT0, "SemiCom", "Hatch Catch", GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )

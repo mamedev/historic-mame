@@ -5,15 +5,6 @@
 					driver by	Luca Elia (l.elia@tin.it)
 
 
-Note:	if MAME_DEBUG is defined, pressing Z with:
-
-		Q		shows the background
-		W		shows the foreground
-		A		shows the sprites
-
-		Keys can be used together!
-
-
 	[ 2 Scrolling Layers ]
 
 	Tiles are 16 x 16 x 8. The layout of the tilemap is a bit weird:
@@ -186,6 +177,7 @@ static void yunsun16_draw_sprites(struct mame_bitmap *bitmap,const struct rectan
 		int flipx	=	attr & 0x20;
 		int flipy	=	attr & 0x40;
 
+
 		x	+=	sprites_scrolldx;
 		y	+=	sprites_scrolldy;
 
@@ -197,7 +189,7 @@ static void yunsun16_draw_sprites(struct mame_bitmap *bitmap,const struct rectan
 
 		pdrawgfx(	bitmap,Machine->gfx[1],
 					code,
-					attr,
+					attr & 0x1f,
 					flipx, flipy,
 					x,y,
 					cliprect,TRANSPARENCY_PEN,15,
@@ -217,43 +209,24 @@ static void yunsun16_draw_sprites(struct mame_bitmap *bitmap,const struct rectan
 
 VIDEO_UPDATE( yunsun16 )
 {
-	int layers_ctrl = -1;
-
 	tilemap_set_scrollx(tilemap_0, 0, yunsun16_scroll_0[ 0 ]);
 	tilemap_set_scrolly(tilemap_0, 0, yunsun16_scroll_0[ 1 ]);
 
 	tilemap_set_scrollx(tilemap_1, 0, yunsun16_scroll_1[ 0 ]);
 	tilemap_set_scrolly(tilemap_1, 0, yunsun16_scroll_1[ 1 ]);
 
-#ifdef MAME_DEBUG
-if (keyboard_pressed(KEYCODE_Z))
-{
-	int msk = 0;
-	if (keyboard_pressed(KEYCODE_Q))	msk |= 1;
-	if (keyboard_pressed(KEYCODE_W))	msk |= 2;
-//	if (keyboard_pressed(KEYCODE_E))	msk |= 4;
-	if (keyboard_pressed(KEYCODE_A))	msk |= 8;
-	if (msk != 0) layers_ctrl &= msk;
-
-#if 0
-{	char buf[10];
-	sprintf(buf,"%04X", *yunsun16_priority);
-	usrintf_showmessage(buf);	}
-#endif
-}
-#endif
+//	usrintf_showmessage("%04X", *yunsun16_priority);
 
 	fillbitmap(priority_bitmap,0,cliprect);
 
 	/* The color of the this layer's transparent pen goes below everything */
-	if (layers_ctrl & 1)	tilemap_draw(bitmap,cliprect,tilemap_0, TILEMAP_IGNORE_TRANSPARENCY, 0);
-	else					fillbitmap(bitmap,Machine->pens[0],cliprect);
+	tilemap_draw(bitmap,cliprect,tilemap_0, TILEMAP_IGNORE_TRANSPARENCY, 0);
 
-	if (layers_ctrl & 1)	tilemap_draw(bitmap,cliprect,tilemap_0, 0, 1);
+	tilemap_draw(bitmap,cliprect,tilemap_0, 0, 1);
 
-	if (layers_ctrl & 2)	tilemap_draw(bitmap,cliprect,tilemap_1, 0, 2);
+	tilemap_draw(bitmap,cliprect,tilemap_1, 0, 2);
 
-	if (layers_ctrl & 8)	yunsun16_draw_sprites(bitmap,cliprect);
+	yunsun16_draw_sprites(bitmap,cliprect);
 
 	/* tilemap.c only copes with screen widths which are a multiple of 8 pixels */
 	if ( (Machine->drv->screen_width-1-Machine->visible_area.max_x) & 7 )

@@ -2,356 +2,195 @@
 
    Caveman Ninja Video emulation - Bryan McPhail, mish@tendril.co.uk
 
-****************************************************************************
-
-Data East custom chip 55:  Generates two playfields, playfield 1 is underneath
-playfield 2.  Caveman Ninja uses two of these chips.
-
-	16 bytes of control registers per chip.
-
-	Word 0:
-		Mask 0x0080: Flip screen
-		Mask 0x007f: ?
-	Word 2:
-		Mask 0xffff: Playfield 2 X scroll (top playfield)
-	Word 4:
-		Mask 0xffff: Playfield 2 Y scroll (top playfield)
-	Word 6:
-		Mask 0xffff: Playfield 1 X scroll (bottom playfield)
-	Word 8:
-		Mask 0xffff: Playfield 1 Y scroll (bottom playfield)
-	Word 0xa:
-		Mask 0xc000: Playfield 1 shape??
-		Mask 0x3800: Playfield 1 rowscroll style
-		Mask 0x0700: Playfield 1 colscroll style
-
-		Mask 0x00c0: Playfield 2 shape??
-		Mask 0x0038: Playfield 2 rowscroll style
-		Mask 0x0007: Playfield 2 colscroll style
-	Word 0xc:
-		Mask 0x8000: Playfield 1 is 8*8 tiles else 16*16
-		Mask 0x4000: Playfield 1 rowscroll enabled
-		Mask 0x2000: Playfield 1 colscroll enabled
-		Mask 0x1f00: ?
-
-		Mask 0x0080: Playfield 2 is 8*8 tiles else 16*16
-		Mask 0x0040: Playfield 2 rowscroll enabled
-		Mask 0x0020: Playfield 2 colscroll enabled
-		Mask 0x001f: ?
-	Word 0xe:
-		??
-
-Colscroll style:
-	0	64 columns across bitmap
-	1	32 columns across bitmap
-
-Rowscroll style:
-	0	512 rows across bitmap
-
-
-Locations 0 & 0xe are mostly unknown:
-
-							 0		14
-Caveman Ninja (bottom):		0053	1100 (see below)
-Caveman Ninja (top):		0010	0081
-Two Crude (bottom):			0053	0000
-Two Crude (top):			0010	0041
-Dark Seal (bottom):			0010	0000
-Dark Seal (top):			0053	4101
-Tumblepop:					0010	0000
-Super Burger Time:			0010	0000
-
-Location 14 in Cninja (bottom):
- 1100 = pf2 uses graphics rom 1, pf3 uses graphics rom 2
- 0000 = pf2 uses graphics rom 2, pf3 uses graphics rom 2
- 1111 = pf2 uses graphics rom 1, pf3 uses graphics rom 1
-
-**************************************************************************
-
-Sprites - Data East custom chip 52
-
-	8 bytes per sprite, unknowns bits seem unused.
-
-	Word 0:
-		Mask 0x8000 - ?
-		Mask 0x4000 - Y flip
-		Mask 0x2000 - X flip
-		Mask 0x1000 - Sprite flash
-		Mask 0x0800 - ?
-		Mask 0x0600 - Sprite height (1x, 2x, 4x, 8x)
-		Mask 0x01ff - Y coordinate
-
-	Word 2:
-		Mask 0xffff - Sprite number
-
-	Word 4:
-		Mask 0x8000 - ?
-		Mask 0x4000 - Sprite is drawn beneath top 8 pens of playfield 4
-		Mask 0x3e00 - Colour (32 palettes, most games only use 16)
-		Mask 0x01ff - X coordinate
-
-	Word 6:
-		Always unused.
-
-***************************************************************************/
+****************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "deco16ic.h"
 
-data16_t *cninja_pf1_data,*cninja_pf2_data;
-data16_t *cninja_pf3_data,*cninja_pf4_data;
-data16_t *cninja_pf1_rowscroll,*cninja_pf2_rowscroll;
-data16_t *cninja_pf3_rowscroll,*cninja_pf4_rowscroll;
+/******************************************************************************/
 
-static struct tilemap *pf1_tilemap,*pf2_tilemap,*pf3_tilemap,*pf4_tilemap;
-
-static data16_t cninja_control_0[8];
-static data16_t cninja_control_1[8];
-
-static int cninja_pf2_bank,cninja_pf3_bank,cninja_pf4_bank;
-static int bootleg,flipscreen;
-static int robocop2_pri;
-static int pf23_gfx_bank;
-
-/* Function for all 16x16 1024x512 layers */
-static UINT32 back_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
+static int cninja_bank_callback(const int bank)
 {
-	/* logical (col,row) -> memory offset */
-	return (col & 0x1f) + ((row & 0x1f) << 5) + ((col & 0x20) << 5);
+	if ((bank>>4)&0xf) return 0x0000; /* Only 2 banks */
+	return 0x1000;
 }
 
-static void get_pf2_tile_info(int tile_index)
+static int edrandy_bank_callback(const int bank)
 {
-	int tile=cninja_pf2_data[tile_index];
-	int colour_mask=0xff;
-
-	if (pf23_gfx_bank==4) colour_mask=0; /* No palette banks when in 8bpp mode */
-	SET_TILE_INFO(pf23_gfx_bank,(tile&0xfff)|cninja_pf2_bank,((tile>>12)+48)&colour_mask,0)
+	if ((bank>>4)&0xf) return 0x0000; /* Only 2 banks */
+	return 0x1000;
 }
 
-static void get_pf3_tile_info(int tile_index)
+static int robocop2_bank_callback(const int bank)
 {
-	int tile=cninja_pf3_data[tile_index];
-	int colour_mask=0xff;
-
-	if (pf23_gfx_bank==4) colour_mask=0; /* No palette banks when in 8bpp mode */
-	SET_TILE_INFO(pf23_gfx_bank,(tile&0xfff)|cninja_pf3_bank,(tile>>12)&colour_mask,0)
+	return (bank&0x30)<<8;
 }
 
-static void get_pf4_tile_info(int tile_index)
+static int mutantf_1_bank_callback(const int bank)
 {
-	int tile=cninja_pf4_data[tile_index];
-
-	SET_TILE_INFO(2,(tile&0xfff)|cninja_pf4_bank,tile>>12,0)
+	return ((bank>>4)&0x3)<<12;
 }
 
-static void get_pf1_tile_info(int tile_index)
+static int mutantf_2_bank_callback(const int bank)
 {
-	int tile=cninja_pf1_data[tile_index];
-
-	SET_TILE_INFO(0,tile&0xfff,tile>>12,0)
+	return ((bank>>5)&0x1)<<14;
 }
 
 /******************************************************************************/
 
-#if 0
-static void print_debug_info()
-{
-	struct mame_bitmap *bitmap = Machine->scrbitmap;
-	int j,trueorientation;
-	char buf[64];
-
-	trueorientation = Machine->orientation;
-	Machine->orientation = ROT0;
-
-	sprintf(buf,"%04X %04X %04X %04X",cninja_control_0[0],cninja_control_0[1],cninja_control_0[2],cninja_control_0[3]);
-	for (j = 0;j< 16+3;j++)
-		drawgfx(bitmap,Machine->uifont,buf[j],0,0,0,60+6*j,40,0,TRANSPARENCY_NONE,0);
-	sprintf(buf,"%04X %04X %04X %04X",cninja_control_0[4],cninja_control_0[5],cninja_control_0[6],cninja_control_0[7]);
-	for (j = 0;j< 16+3;j++)
-		drawgfx(bitmap,Machine->uifont,buf[j],0,0,0,60+6*j,48,0,TRANSPARENCY_NONE,0);
-
-	sprintf(buf,"%04X %04X %04X %04X",cninja_control_1[0],cninja_control_1[1],cninja_control_1[2],cninja_control_1[3]);
-	for (j = 0;j< 16+3;j++)
-		drawgfx(bitmap,Machine->uifont,buf[j],0,0,0,60+6*j,60,0,TRANSPARENCY_NONE,0);
-	sprintf(buf,"%04X %04X %04X %04X",cninja_control_1[4],cninja_control_1[5],cninja_control_1[6],cninja_control_1[7]);
-	for (j = 0;j< 16+3;j++)
-		drawgfx(bitmap,Machine->uifont,buf[j],0,0,0,60+6*j,68,0,TRANSPARENCY_NONE,0);
-
-}
-#endif
-
-static VIDEO_START( common )
-{
-	pf2_tilemap = tilemap_create(get_pf2_tile_info,back_scan,TILEMAP_OPAQUE,16,16,64,32);
-	pf3_tilemap = tilemap_create(get_pf3_tile_info,back_scan,TILEMAP_TRANSPARENT,16,16,64,32);
-	pf4_tilemap = tilemap_create(get_pf4_tile_info,back_scan,TILEMAP_SPLIT,16,16,64,32);
-	pf1_tilemap = tilemap_create(get_pf1_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
-
-	if (!pf1_tilemap || !pf2_tilemap || !pf3_tilemap || !pf4_tilemap)
-		return 1;
-
-	tilemap_set_transparent_pen(pf1_tilemap,0);
-	tilemap_set_transparent_pen(pf3_tilemap,0);
-	tilemap_set_transparent_pen(pf4_tilemap,0);
-	tilemap_set_transmask(pf4_tilemap,0,0x00ff,0xff01);
-
-	pf23_gfx_bank=1;
-
-	return 0;
-}
-
 VIDEO_START( cninja )
 {
-	if (video_start_common()) return 1;
-	bootleg=0;
+	if (deco16_2_video_init(1))
+		return 1;
+
+	deco16_set_tilemap_bank_callback(2,cninja_bank_callback);
+	deco16_set_tilemap_bank_callback(3,cninja_bank_callback);
+	deco16_set_tilemap_colour_base(3,48);
+
 	return 0;
 }
 
 VIDEO_START( stoneage )
 {
-	if (video_start_common()) return 1;
-	bootleg=1; /* The bootleg has broken scroll registers */
+	if (deco16_2_video_init(1))
+		return 1;
+
+	deco16_set_tilemap_bank_callback(2,edrandy_bank_callback);
+	deco16_set_tilemap_bank_callback(3,edrandy_bank_callback);
+	deco16_set_tilemap_colour_base(3,48);
+
+	/* The bootleg has broken scroll registers */
+	tilemap_set_scrolldx(deco16_get_tilemap(3,0),-10,-10);
+	tilemap_set_scrolldx(deco16_get_tilemap(1,0),-10,-10);
+	tilemap_set_scrolldx(deco16_get_tilemap(0,1),2,2);
+
 	return 0;
 }
 
 VIDEO_START( edrandy )
 {
-	pf2_tilemap = tilemap_create(get_pf2_tile_info,back_scan,TILEMAP_OPAQUE,16,16,64,32);
-	pf3_tilemap = tilemap_create(get_pf3_tile_info,back_scan,TILEMAP_TRANSPARENT,16,16,64,32);
-	pf4_tilemap = tilemap_create(get_pf4_tile_info,back_scan,TILEMAP_TRANSPARENT,16,16,64,32);
-	pf1_tilemap = tilemap_create(get_pf1_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
-
-	if (!pf1_tilemap || !pf2_tilemap || !pf3_tilemap || !pf4_tilemap)
+	if (deco16_2_video_init(0))
 		return 1;
 
-	tilemap_set_transparent_pen(pf1_tilemap,0);
-	tilemap_set_transparent_pen(pf3_tilemap,0);
-	tilemap_set_transparent_pen(pf4_tilemap,0);
-	bootleg=0;
+	deco16_set_tilemap_bank_callback(2,edrandy_bank_callback);
+	deco16_set_tilemap_bank_callback(3,edrandy_bank_callback);
+	deco16_set_tilemap_colour_base(3,48);
 
 	return 0;
 }
 
 VIDEO_START( robocop2 )
 {
-	pf2_tilemap = tilemap_create(get_pf2_tile_info,back_scan,TILEMAP_OPAQUE,16,16,64,32);
-	pf3_tilemap = tilemap_create(get_pf3_tile_info,back_scan,TILEMAP_TRANSPARENT,16,16,64,32);
-	pf4_tilemap = tilemap_create(get_pf4_tile_info,back_scan,TILEMAP_TRANSPARENT,16,16,64,32);
-	pf1_tilemap = tilemap_create(get_pf1_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,64,32);
-
-	if (!pf1_tilemap || !pf2_tilemap || !pf3_tilemap || !pf4_tilemap)
+	if (deco16_2_video_init(0))
 		return 1;
 
-	tilemap_set_transparent_pen(pf1_tilemap,0);
-	tilemap_set_transparent_pen(pf3_tilemap,0);
-	tilemap_set_transparent_pen(pf4_tilemap,0);
-	bootleg=0;
+	deco16_set_tilemap_bank_callback(1,robocop2_bank_callback);
+	deco16_set_tilemap_bank_callback(2,robocop2_bank_callback);
+	deco16_set_tilemap_bank_callback(3,robocop2_bank_callback);
+	deco16_set_tilemap_colour_base(3,48);
+
+	return 0;
+}
+
+VIDEO_START( mutantf )
+{
+	if (deco16_2_video_init(0))
+		return 1;
+
+	deco16_set_tilemap_bank_callback(0,mutantf_1_bank_callback);
+	deco16_set_tilemap_bank_callback(1,mutantf_2_bank_callback);
+	deco16_set_tilemap_bank_callback(2,mutantf_1_bank_callback);
+	deco16_set_tilemap_bank_callback(3,mutantf_1_bank_callback);
+
+	deco16_set_tilemap_colour_base(1,0x30);
+	deco16_set_tilemap_colour_base(2,0x20);
+	deco16_set_tilemap_colour_base(3,0x40);
+
+	alpha_set_level(0x80);
 
 	return 0;
 }
 
 /******************************************************************************/
 
-WRITE16_HANDLER( robocop2_pri_w )
+VIDEO_EOF( cninja )
 {
-	robocop2_pri=data;
+	deco16_raster_display_position=0;
 }
 
-WRITE16_HANDLER( cninja_pf1_data_w )
+static void raster_pf3_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int flags, int pri)
 {
-	data16_t oldword=cninja_pf1_data[offset];
-	COMBINE_DATA(&cninja_pf1_data[offset]);
-	if (oldword!=cninja_pf1_data[offset])
-		tilemap_mark_tile_dirty(pf1_tilemap,offset);
-}
+	struct tilemap *tilemap=deco16_get_tilemap(2,0);
+	int ptr=0,start,end=0;
+	struct rectangle clip;
+	int overflow=deco16_raster_display_position;
 
-WRITE16_HANDLER( cninja_pf2_data_w )
-{
-	data16_t oldword=cninja_pf2_data[offset];
-	COMBINE_DATA(&cninja_pf2_data[offset]);
-	if (oldword!=cninja_pf2_data[offset])
-		tilemap_mark_tile_dirty(pf2_tilemap,offset);
-}
+	clip.min_x = cliprect->min_x;
+	clip.max_x = cliprect->max_x;
 
-WRITE16_HANDLER( cninja_pf3_data_w )
-{
-	data16_t oldword=cninja_pf3_data[offset];
-	COMBINE_DATA(&cninja_pf3_data[offset]);
-	if (oldword!=cninja_pf3_data[offset])
-		tilemap_mark_tile_dirty(pf3_tilemap,offset);
-}
 
-WRITE16_HANDLER( cninja_pf4_data_w )
-{
-	data16_t oldword=cninja_pf4_data[offset];
-	COMBINE_DATA(&cninja_pf4_data[offset]);
-	if (oldword!=cninja_pf4_data[offset])
-		tilemap_mark_tile_dirty(pf4_tilemap,offset);
-}
+	/* Finish list up to end of visible display */
+	deco16_raster_display_list[overflow++]=255;
+	deco16_raster_display_list[overflow++]=deco16_pf12_control[1];
+	deco16_raster_display_list[overflow++]=deco16_pf12_control[2];
+	deco16_raster_display_list[overflow++]=deco16_pf12_control[3];
+	deco16_raster_display_list[overflow++]=deco16_pf12_control[4];
+	deco16_raster_display_list[overflow++]=deco16_pf34_control[1];
+	deco16_raster_display_list[overflow++]=deco16_pf34_control[2];
+	deco16_raster_display_list[overflow++]=deco16_pf34_control[3];
+	deco16_raster_display_list[overflow++]=deco16_pf34_control[4];
 
-WRITE16_HANDLER( cninja_control_0_w )
-{
-//	if (bootleg && offset==6) {
-//		COMBINE_DATA(&cninja_control_0[offset],data+0xa);
-//		return;
-//	}
-	COMBINE_DATA(&cninja_control_0[offset]);
-}
+	while (ptr<overflow) {
+		start=end;
+		end=deco16_raster_display_list[ptr++];
 
-WRITE16_HANDLER( cninja_control_1_w )
-{
-//	if (bootleg) {
-//		switch (offset) {
-//			case 1:
-//				COMBINE_DATA(&cninja_control_1[offset],data-2);
-//				return;
-//			case 3:
-////				COMBINE_DATA(&cninja_control_1[offset],data+0xa);
-//				return;
-//		}
-//	}
-	COMBINE_DATA(&cninja_control_1[offset]);
+		/* Restore state of registers before IRQ */
+		deco16_pf12_control[1]=deco16_raster_display_list[ptr++];
+		deco16_pf12_control[2]=deco16_raster_display_list[ptr++];
+		deco16_pf12_control[3]=deco16_raster_display_list[ptr++];
+		deco16_pf12_control[4]=deco16_raster_display_list[ptr++];
+		deco16_pf34_control[1]=deco16_raster_display_list[ptr++];
+		deco16_pf34_control[2]=deco16_raster_display_list[ptr++];
+		deco16_pf34_control[3]=deco16_raster_display_list[ptr++];
+		deco16_pf34_control[4]=deco16_raster_display_list[ptr++];
+
+		clip.min_y = start;
+		clip.max_y = end;
+
+		/* Update tilemap for this register state, and draw */
+		deco16_pf34_update(deco16_pf3_rowscroll,deco16_pf4_rowscroll);
+		tilemap_draw(bitmap,&clip,tilemap,flags,pri);
+	}
 }
 
 /******************************************************************************/
 
-WRITE16_HANDLER( cninja_palette_24bit_w )
-{
-	int r,g,b;
-
-	COMBINE_DATA(&paletteram16[offset]);
-	if (offset&1) offset--;
-
-	b = (paletteram16[offset] >> 0) & 0xff;
-	g = (paletteram16[offset+1] >> 8) & 0xff;
-	r = (paletteram16[offset+1] >> 0) & 0xff;
-
-	palette_set_color(offset/2,r,g,b);
-}
-
-/******************************************************************************/
-
-static void cninja_drawsprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri)
+static void cninja_drawsprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	int offs;
 
-	for (offs = 0;offs < 0x400;offs += 4)
+	for (offs = 0x400-4;offs >=0 ;offs -= 4)
 	{
-		int x,y,sprite,colour,multi,fx,fy,inc,flash,mult;
+		int x,y,sprite,colour,multi,fx,fy,inc,flash,mult,pri=0;
+
 		sprite = buffered_spriteram16[offs+1];
 		if (!sprite) continue;
 
 		x = buffered_spriteram16[offs+2];
 
 		/* Sprite/playfield priority */
-		if ((x&0x4000) && pri==1) continue;
-		if (!(x&0x4000) && pri==0) continue;
+		switch (x&0xc000) {
+		case 0x0000: pri=0; break;
+		case 0x4000: pri=0xf0; break;
+		case 0x8000: pri=0xf0|0xcc; break;
+		case 0xc000: pri=0xf0|0xcc; break; /* Perhaps 0xf0|0xcc|0xaa (Sprite under bottom layer) */
+		}
 
 		y = buffered_spriteram16[offs];
 		flash=y&0x1000;
 		if (flash && (cpu_getcurrentframe() & 1)) continue;
-		colour = (x >> 9) &0xf;
+		colour = (x >> 9) &0x1f;
 
 		fx = y & 0x2000;
 		fy = y & 0x4000;
@@ -364,8 +203,6 @@ static void cninja_drawsprites(struct mame_bitmap *bitmap, const struct rectangl
 		x = 240 - x;
 		y = 240 - y;
 
-		if (x>256) continue; /* Speedup */
-
 		sprite &= ~multi;
 		if (fy)
 			inc = -1;
@@ -375,7 +212,7 @@ static void cninja_drawsprites(struct mame_bitmap *bitmap, const struct rectangl
 			inc = 1;
 		}
 
-		if (flipscreen) {
+		if (flip_screen) {
 			y=240-y;
 			x=240-x;
 			if (fx) fx=0; else fx=1;
@@ -386,32 +223,37 @@ static void cninja_drawsprites(struct mame_bitmap *bitmap, const struct rectangl
 
 		while (multi >= 0)
 		{
-			drawgfx(bitmap,Machine->gfx[3],
+			pdrawgfx(bitmap,Machine->gfx[3],
 					sprite - multi * inc,
 					colour,
 					fx,fy,
 					x,y + mult * multi,
-					cliprect,TRANSPARENCY_PEN,0);
+					cliprect,TRANSPARENCY_PEN,0,pri);
 
 			multi--;
 		}
 	}
 }
 
-static void robocop2_drawsprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int pri)
+static void robocop2_drawsprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	int offs;
 
-	for (offs = 0;offs < 0x400;offs += 4)
+	for (offs = 0x400-4;offs >=0 ;offs -= 4)
 	{
-		int x,y,sprite,colour,multi,fx,fy,inc,flash,mult;
+		int x,y,sprite,colour,multi,fx,fy,inc,flash,mult,pri=0;
 		sprite = buffered_spriteram16[offs+1];
 		if (!sprite) continue;
 
 		x = buffered_spriteram16[offs+2];
 
 		/* Sprite/playfield priority */
-		if ((x&0xc000)!=pri) continue;
+		switch (x&0xc000) {
+		case 0x0000: pri=0; break;
+		case 0x4000: pri=0xf0; break;
+		case 0x8000: pri=0xf0|0xcc; break;
+		case 0xc000: pri=0xf0|0xcc; break; /* Perhaps 0xf0|0xcc|0xaa (Sprite under bottom layer) */
+		}
 
 		y = buffered_spriteram16[offs];
 		flash=y&0x1000;
@@ -429,8 +271,6 @@ static void robocop2_drawsprites(struct mame_bitmap *bitmap, const struct rectan
 		x = 304 - x;
 		y = 240 - y;
 
-		if (x>320) continue; /* Speedup */
-
 		sprite &= ~multi;
 		if (fy)
 			inc = -1;
@@ -440,9 +280,9 @@ static void robocop2_drawsprites(struct mame_bitmap *bitmap, const struct rectan
 			inc = 1;
 		}
 
-		if (flipscreen) {
-			y=304-y;
-			x=240-x;
+		if (flip_screen) {
+			y=240-y;
+			x=304-x;
 			if (fx) fx=0; else fx=1;
 			if (fy) fy=0; else fy=1;
 			mult=16;
@@ -451,321 +291,245 @@ static void robocop2_drawsprites(struct mame_bitmap *bitmap, const struct rectan
 
 		while (multi >= 0)
 		{
-			drawgfx(bitmap,Machine->gfx[3],
+			pdrawgfx(bitmap,Machine->gfx[3],
 					sprite - multi * inc,
 					colour,
 					fx,fy,
 					x,y + mult * multi,
-					cliprect,TRANSPARENCY_PEN,0);
+					cliprect,TRANSPARENCY_PEN,0,pri);
 
 			multi--;
 		}
 	}
 }
 
-/******************************************************************************/
-
-static void setup_scrolling(void)
+void mutantf_drawsprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, const data16_t *spriteptr, int gfxbank)
 {
-	int pf23_control,pf14_control,offs;
+	int offs,end,inc;
 
-	/* Setup scrolling */
-	pf23_control=cninja_control_0[6];
-	pf14_control=cninja_control_1[6];
+	/*
+		Alternate format from most 16 bit games - same as Captain America
 
-	/* Background - Rowscroll enable */
-	if (pf23_control&0x4000) {
-		int scrollx=cninja_control_0[3],rows;
-		tilemap_set_scroll_cols(pf2_tilemap,1);
-		tilemap_set_scrolly( pf2_tilemap,0, cninja_control_0[4] );
+		Word 0:
+			0x8000:	Y flip
+			0x4000: X flip
+			0x2000:	Flash (Sprite toggles on/off every frame)
+			0x1fff:	Y value
+		Word 1:
+			0xffff: X value
+		Word 2:
+			0xf000:	Block height
+			0x0f00: Block width
+			0x00e0: Unused?
+			0x001f: Colour
+		Word 3:
+			0xffff:	Sprite value
+	*/
 
-		/* Several different rowscroll styles! */
-		switch ((cninja_control_0[5]>>11)&7) {
-			case 0: rows=512; break;/* Every line of 512 height bitmap */
-			case 1: rows=256; break;
-			case 2: rows=128; break;
-			case 3: rows=64; break;
-			case 4: rows=32; break;
-			case 5: rows=16; break;
-			case 6: rows=8; break;
-			case 7: rows=4; break;
-			default: rows=1; break;
+	/* This may look strange, but the alpha-blended sprite chip definitely draws end to
+		front, ie, reversed from normal pdrawgfx style. */
+	if (gfxbank==4) {
+		offs=0;
+		end=0x400;
+		inc=4;
+	} else {
+		offs=0x3fc;
+		end=-4;
+		inc=-4;
+	}
+
+	while (offs!=end)
+	{
+		int x,y,sprite,colour,fx,fy,w,h,sx,sy,x_mult,y_mult;
+		int trans=TRANSPARENCY_PEN;
+
+		sprite = spriteptr[offs+3];
+		if (!sprite) {
+			offs+=inc;
+			continue;
 		}
 
-		tilemap_set_scroll_rows(pf2_tilemap,rows);
-		for (offs = 0;offs < rows;offs++)
-			tilemap_set_scrollx( pf2_tilemap,offs, scrollx + cninja_pf2_rowscroll[offs] );
-	}
-	else {
-		tilemap_set_scroll_rows(pf2_tilemap,1);
-		tilemap_set_scroll_cols(pf2_tilemap,1);
-		tilemap_set_scrollx( pf2_tilemap,0, cninja_control_0[3] );
-		tilemap_set_scrolly( pf2_tilemap,0, cninja_control_0[4] );
-	}
+		sx = spriteptr[offs+1];
 
-	/* Playfield 3 */
-	if (pf23_control&0x40) { /* Rowscroll */
-		int scrollx=cninja_control_0[1],rows;
-		tilemap_set_scroll_cols(pf3_tilemap,1);
-		tilemap_set_scrolly( pf3_tilemap,0, cninja_control_0[2] );
+		h = (spriteptr[offs+2]&0xf000)>>12;
+		w = (spriteptr[offs+2]&0x0f00)>> 8;
 
-		/* Several different rowscroll styles! */
-		switch ((cninja_control_0[5]>>3)&7) {
-			case 0: rows=512; break;/* Every line of 512 height bitmap */
-			case 1: rows=256; break;
-			case 2: rows=128; break;
-			case 3: rows=64; break;
-			case 4: rows=32; break;
-			case 5: rows=16; break;
-			case 6: rows=8; break;
-			case 7: rows=4; break;
-			default: rows=1; break;
+		sy = spriteptr[offs];
+		if ((sy&0x2000) && (cpu_getcurrentframe() & 1)) continue;
+
+		colour = (spriteptr[offs+2] >>0) & 0x1f;
+
+		if (gfxbank==4) { /* Seems to be always alpha'd */
+			trans=TRANSPARENCY_ALPHA;
+			colour&=0xf;
 		}
 
-		tilemap_set_scroll_rows(pf3_tilemap,rows);
-		for (offs = 0;offs < rows;offs++)
-			tilemap_set_scrollx( pf3_tilemap,offs, scrollx + cninja_pf3_rowscroll[offs] );
-	}
-	else if (pf23_control&0x20) { /* Colscroll */
-		int scrolly=cninja_control_0[2];
-		tilemap_set_scroll_rows(pf3_tilemap,1);
-		tilemap_set_scroll_cols(pf3_tilemap,64);
-		tilemap_set_scrollx( pf3_tilemap,0, cninja_control_0[1] );
+		fx = (spriteptr[offs+0]&0x4000);
+		fy = (spriteptr[offs+0]&0x8000);
 
-		/* Used in lava level & Level 1 */
-		for (offs=0 ; offs < 32;offs++)
-			tilemap_set_scrolly( pf3_tilemap,offs+32, scrolly + cninja_pf3_rowscroll[offs+0x200] );
-	}
-	else {
-		tilemap_set_scroll_rows(pf3_tilemap,1);
-		tilemap_set_scroll_cols(pf3_tilemap,1);
-		tilemap_set_scrollx( pf3_tilemap,0, cninja_control_0[1] );
-		tilemap_set_scrolly( pf3_tilemap,0, cninja_control_0[2] );
-	}
+		if (flip_screen) {
+			if (fx) fx=0; else fx=1;
+			if (fy) fy=0; else fy=1;
 
-	/* Top foreground */
-	if (pf14_control&0x4000) {
-		int scrollx=cninja_control_1[3],rows;
-		tilemap_set_scroll_cols(pf4_tilemap,1);
-		tilemap_set_scrolly( pf4_tilemap,0, cninja_control_1[4] );
+			sx = sx & 0x01ff;
+			sy = sy & 0x01ff;
+			if (sx>0x180) sx=-(0x200 - sx);
+			if (sy>0x180) sy=-(0x200 - sy);
 
-		/* Several different rowscroll styles! */
-		switch ((cninja_control_1[5]>>11)&7) {
-			case 0: rows=512; break;/* Every line of 512 height bitmap */
-			case 1: rows=256; break;
-			case 2: rows=128; break;
-			case 3: rows=64; break;
-			case 4: rows=32; break;
-			case 5: rows=16; break;
-			case 6: rows=8; break;
-			case 7: rows=4; break;
-			default: rows=1; break;
-		}
-
-		tilemap_set_scroll_rows(pf4_tilemap,rows);
-		for (offs = 0;offs < rows;offs++)
-			tilemap_set_scrollx( pf4_tilemap,offs, scrollx + cninja_pf4_rowscroll[offs] );
-	}
-	else if (pf14_control&0x2000) { /* Colscroll */
-		if (((cninja_control_1[5]>>8)&7)==4) {
-			int scrolly=cninja_control_1[4];
-			tilemap_set_scroll_rows(pf4_tilemap,1);
-			tilemap_set_scroll_cols(pf4_tilemap,3);
-			tilemap_set_scrollx( pf4_tilemap,0, cninja_control_0[1] );
-
-			/* Used in Robocop 2 Japan intro */
-			for (offs=0 ; offs < 3;offs++)
-				tilemap_set_scrolly( pf4_tilemap,offs, scrolly + cninja_pf4_rowscroll[offs+0x200] );
+			if (fx) { x_mult=-16; sx+=16*w; } else { x_mult=16; sx-=16; }
+			if (fy) { y_mult=-16; sy+=16*h; } else { y_mult=16; sy-=16; }
 		} else {
-			int scrolly=cninja_control_1[4];
-			tilemap_set_scroll_rows(pf4_tilemap,1);
-			tilemap_set_scroll_cols(pf4_tilemap,64);
-			tilemap_set_scrollx( pf4_tilemap,0, cninja_control_0[1] );
-
-			/* Used in first lava level */
-			for (offs=0 ; offs < 64;offs++)
-				tilemap_set_scrolly( pf4_tilemap,offs, scrolly + cninja_pf4_rowscroll[offs+0x200] );
-		}
-	}
-	else {
-		tilemap_set_scroll_rows(pf4_tilemap,1);
-		tilemap_set_scroll_cols(pf4_tilemap,1);
-		tilemap_set_scrollx( pf4_tilemap,0, cninja_control_1[3] );
-		tilemap_set_scrolly( pf4_tilemap,0, cninja_control_1[4] );
-	}
-
-	/* Playfield 1 - 8 * 8 Text */
-	if (pf14_control&0x40) { /* Rowscroll */
-		int scrollx=cninja_control_1[1],rows;
-		tilemap_set_scroll_cols(pf1_tilemap,1);
-		tilemap_set_scrolly( pf1_tilemap,0, cninja_control_1[2] );
-
-		/* Several different rowscroll styles! */
-		switch ((cninja_control_1[5]>>3)&7) {
-			case 0: rows=256; break;
-			case 1: rows=128; break;
-			case 2: rows=64; break;
-			case 3: rows=32; break;
-			case 4: rows=16; break;
-			case 5: rows=8; break;
-			case 6: rows=4; break;
-			case 7: rows=2; break;
-			default: rows=1; break;
+			sx = sx & 0x01ff;
+			sy = sy & 0x01ff;
+			if (sx&0x100) sx=-(0x100 - (sx&0xff));
+			if (sy&0x100) sy=-(0x100 - (sy&0xff));
+			sx = 304 - sx;
+			sy = 240 - sy;
+			if (sx >= 432) sx -= 512;
+			if (sy >= 384) sy -= 512;
+			if (fx) { x_mult=-16; sx+=16; } else { x_mult=16; sx-=16*w; }
+			if (fy) { y_mult=-16; sy+=16; } else { y_mult=16; sy-=16*h; }
 		}
 
-		tilemap_set_scroll_rows(pf1_tilemap,rows);
-		for (offs = 0;offs < rows;offs++)
-			tilemap_set_scrollx( pf1_tilemap,offs, scrollx + cninja_pf1_rowscroll[offs] );
-	}
-	else {
-		tilemap_set_scroll_rows(pf1_tilemap,1);
-		tilemap_set_scroll_cols(pf1_tilemap,1);
-		tilemap_set_scrollx( pf1_tilemap,0, cninja_control_1[1] );
-		tilemap_set_scrolly( pf1_tilemap,0, cninja_control_1[2] );
+		for (x=0; x<w; x++) {
+			for (y=0; y<h; y++) {
+				pdrawgfx(bitmap,Machine->gfx[gfxbank],
+						sprite + y + h * x,
+						colour,
+						fx,fy,
+						sx + x_mult * (w-x),sy + y_mult * (h-y),
+						&Machine->visible_area,trans,0,0);
+			}
+		}
+
+		offs+=inc;
 	}
 }
 
+/******************************************************************************/
+
 VIDEO_UPDATE( cninja )
 {
-	static int last_pf2_bank, last_pf3_bank;
-	int pf23_control;
-
-	/* Update flipscreen */
-	flipscreen = cninja_control_1[0]&0x80;
-	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
-
-	/* Handle gfx rom switching */
-	pf23_control=cninja_control_0[7];
-	if ((pf23_control&0xff)==0x00)
-		cninja_pf3_bank=0x1000;
-	else
-		cninja_pf3_bank=0x0000;
-
-	if ((pf23_control&0xff00)==0x00)
-		cninja_pf2_bank=0x1000;
-	else
-		cninja_pf2_bank=0x0000;
-
-	if (last_pf2_bank!=cninja_pf2_bank) tilemap_mark_all_tiles_dirty(pf2_tilemap);
-	if (last_pf3_bank!=cninja_pf3_bank) tilemap_mark_all_tiles_dirty(pf3_tilemap);
-	last_pf2_bank=cninja_pf2_bank;
-	last_pf3_bank=cninja_pf3_bank;
-	cninja_pf4_bank=0;
-	setup_scrolling();
+	flip_screen_set( deco16_pf12_control[0]&0x80 );
+	deco16_pf12_update(deco16_pf1_rowscroll,deco16_pf2_rowscroll);
+	deco16_pf34_update(deco16_pf3_rowscroll,deco16_pf4_rowscroll);
 
 	/* Draw playfields */
-	tilemap_draw(bitmap,cliprect,pf2_tilemap,0,0);
-	tilemap_draw(bitmap,cliprect,pf3_tilemap,0,0);
-	tilemap_draw(bitmap,cliprect,pf4_tilemap,TILEMAP_BACK,0);
-	cninja_drawsprites(bitmap,cliprect,0);
-	tilemap_draw(bitmap,cliprect,pf4_tilemap,TILEMAP_FRONT,0);
-	cninja_drawsprites(bitmap,cliprect,1);
-	tilemap_draw(bitmap,cliprect,pf1_tilemap,0,0);
+	fillbitmap(priority_bitmap,0,cliprect);
+	fillbitmap(bitmap,Machine->pens[512],cliprect);
+	deco16_tilemap_4_draw(bitmap,cliprect,TILEMAP_IGNORE_TRANSPARENCY,1);
+	deco16_tilemap_3_draw(bitmap,cliprect,0,2);
+	deco16_tilemap_2_draw(bitmap,cliprect,TILEMAP_BACK,2);
+	deco16_tilemap_2_draw(bitmap,cliprect,TILEMAP_FRONT,4);
+	cninja_drawsprites(bitmap,cliprect);
+	deco16_tilemap_1_draw(bitmap,cliprect,0,0);
 }
 
 VIDEO_UPDATE( edrandy )
 {
-	int pf23_control;
+	flip_screen_set( deco16_pf12_control[0]&0x80 );
+	deco16_pf12_update(deco16_pf1_rowscroll,deco16_pf2_rowscroll);
+	deco16_pf34_update(deco16_pf3_rowscroll,deco16_pf4_rowscroll);
 
-	/* Update flipscreen */
-	flipscreen = cninja_control_1[0]&0x80;
-	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
-
-	/* Handle gfx rom switching */
-	pf23_control=cninja_control_0[7];
-	if ((pf23_control&0xff)==0x00)
-		cninja_pf3_bank=0x1000;
+	fillbitmap(priority_bitmap,0,cliprect);
+	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+	deco16_tilemap_4_draw(bitmap,cliprect,TILEMAP_IGNORE_TRANSPARENCY,1);
+	if (deco16_raster_display_position)
+		raster_pf3_draw(bitmap,cliprect,0,2);
 	else
-		cninja_pf3_bank=0x0000;
-
-	if ((pf23_control&0xff00)==0x00)
-		cninja_pf2_bank=0x1000;
-	else
-		cninja_pf2_bank=0x0000;
-
-	cninja_pf4_bank=0;
-	setup_scrolling();
-
-	/* Draw playfields */
-	tilemap_draw(bitmap,cliprect,pf2_tilemap,0,0);
-	tilemap_draw(bitmap,cliprect,pf3_tilemap,0,0);
-	tilemap_draw(bitmap,cliprect,pf4_tilemap,0,0);
-	cninja_drawsprites(bitmap,cliprect,0);
-	cninja_drawsprites(bitmap,cliprect,1);
-	tilemap_draw(bitmap,cliprect,pf1_tilemap,0,0);
+		deco16_tilemap_3_draw(bitmap,cliprect,0,2); 
+	deco16_tilemap_2_draw(bitmap,cliprect,0,4);
+	cninja_drawsprites(bitmap,cliprect);
+	deco16_tilemap_1_draw(bitmap,cliprect,0,0);
 }
 
 VIDEO_UPDATE( robocop2 )
 {
-	static int last_pf2_bank,last_pf3_bank,last_pf4_bank,last_gfx_bank;
-	int pf23_control,pf14_control;
-
-	/* Update flipscreen */
-	flipscreen = !(cninja_control_1[0]&0x80);
-	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
-
-	/* Handle gfx rom switching */
-	pf23_control=cninja_control_0[7];
-	pf14_control=cninja_control_1[7];
-	switch (pf23_control&0xff) {
-		case 0x00: cninja_pf3_bank=0x0000; break;
-		case 0x11: cninja_pf3_bank=0x1000; break;
-		case 0x29: cninja_pf3_bank=0x2000; break;
-		default:   cninja_pf3_bank=0x0000; break;
-	}
-	switch (pf23_control>>8) {
-		case 0x00: cninja_pf2_bank=0x0000; break;
-		case 0x11: cninja_pf2_bank=0x1000; break;
-		case 0x29: cninja_pf2_bank=0x2000; break;
-		default:   cninja_pf2_bank=0x0000; break;
-	}
-	if ((pf14_control&0xff00)==0x00)
-		cninja_pf4_bank=0;
-	else
-		cninja_pf4_bank=0x1000;
-
-	if (last_pf2_bank!=cninja_pf2_bank) tilemap_mark_all_tiles_dirty(pf2_tilemap);
-	if (last_pf3_bank!=cninja_pf3_bank) tilemap_mark_all_tiles_dirty(pf3_tilemap);
-	if (last_pf4_bank!=cninja_pf4_bank) tilemap_mark_all_tiles_dirty(pf4_tilemap);
-	last_pf2_bank=cninja_pf2_bank;
-	last_pf3_bank=cninja_pf3_bank;
-	last_pf4_bank=cninja_pf4_bank;
-
-	setup_scrolling();
-
 	/* One of the tilemap chips can switch between 2 tilemaps at 4bpp, or 1 at 8bpp */
-	if (robocop2_pri&4)
-		pf23_gfx_bank=4;
-	else
-		pf23_gfx_bank=1;
-
-	if (last_gfx_bank!=pf23_gfx_bank) {
-		tilemap_mark_all_tiles_dirty(pf2_tilemap);
-		tilemap_mark_all_tiles_dirty(pf3_tilemap);
+	if (deco16_priority&4) {
+		deco16_set_tilemap_colour_mask(2,0);
+		deco16_set_tilemap_colour_mask(3,0);
+		deco16_pf34_set_gfxbank(0,4);
+	} else {
+		deco16_set_tilemap_colour_mask(2,0xf);
+		deco16_set_tilemap_colour_mask(3,0xf);
+		deco16_pf34_set_gfxbank(0,2);
 	}
-	last_gfx_bank=pf23_gfx_bank;
+
+	/* Update playfields */
+	flip_screen_set( deco16_pf12_control[0]&0x80 );
+	deco16_pf12_update(deco16_pf1_rowscroll,deco16_pf2_rowscroll);
+	deco16_pf34_update(deco16_pf3_rowscroll,deco16_pf4_rowscroll);
 
 	/* Draw playfields */
-	tilemap_draw(bitmap,cliprect,pf2_tilemap,0,0);
+	fillbitmap(priority_bitmap,0,cliprect);
+	fillbitmap(bitmap,Machine->pens[0x200],cliprect);
+	if ((deco16_priority&4)==0)
+		deco16_tilemap_4_draw(bitmap,cliprect,TILEMAP_IGNORE_TRANSPARENCY,1);
 
 	/* Switchable priority */
-	switch (robocop2_pri&0x8) {
+	switch (deco16_priority&0x8) {
 		case 8:
-			robocop2_drawsprites(bitmap,cliprect,0x8000);
-			tilemap_draw(bitmap,cliprect,pf4_tilemap,0,0);
-			robocop2_drawsprites(bitmap,cliprect,0x4000);
-			tilemap_draw(bitmap,cliprect,pf3_tilemap,0,0);
+			deco16_tilemap_2_draw(bitmap,cliprect,0,2);
+			if (deco16_raster_display_position)
+				raster_pf3_draw(bitmap,cliprect,0,4);
+			else
+				deco16_tilemap_3_draw(bitmap,cliprect,0,4);
 			break;
 		default:
 		case 0:
-			robocop2_drawsprites(bitmap,cliprect,0x8000);
-			tilemap_draw(bitmap,cliprect,pf3_tilemap,0,0);
-			robocop2_drawsprites(bitmap,cliprect,0x4000);
-			tilemap_draw(bitmap,cliprect,pf4_tilemap,0,0);
+			if (deco16_raster_display_position)
+				raster_pf3_draw(bitmap,cliprect,0,2);
+			else
+				deco16_tilemap_3_draw(bitmap,cliprect,0,2);
+			deco16_tilemap_2_draw(bitmap,cliprect,0,4);
 			break;
 	}
-	robocop2_drawsprites(bitmap,cliprect,0);
-	tilemap_draw(bitmap,cliprect,pf1_tilemap,0,0);
 
-//	print_debug_info();
+	robocop2_drawsprites(bitmap,cliprect);
+	deco16_tilemap_1_draw(bitmap,cliprect,0,0);
+}
+
+VIDEO_UPDATE( mutantf )
+{
+	flip_screen_set( deco16_pf12_control[0]&0x80 );
+	deco16_pf12_update(deco16_pf1_rowscroll,deco16_pf2_rowscroll);
+	deco16_pf34_update(deco16_pf3_rowscroll,deco16_pf4_rowscroll);
+
+	/* Draw playfields */
+	fillbitmap(bitmap,Machine->pens[0x400],cliprect); /* Confirmed */
+
+	/* There is no priority prom on this board, but there is a 
+	priority control word, the only values used in game appear 
+	to be 2, 6 & 7 though:
+
+	Bit 0:	If set sprite chip 2 above sprite chip 1 else vice versa
+	Bit 1:  Always set?
+	Bit 2:  Almost always set  (Sometimes not set on screen transitions)
+
+	The other bits may control alpha blend on the 2nd sprite chip, or
+	layer order.
+	*/
+	deco16_tilemap_4_draw(bitmap,cliprect,TILEMAP_IGNORE_TRANSPARENCY,0);
+	deco16_tilemap_2_draw(bitmap,cliprect,0,0);
+	deco16_tilemap_3_draw(bitmap,cliprect,0,0);
+
+	/* We need to abuse the priority bitmap a little by clearing it before
+		drawing each sprite layer.  This is because there is no priority
+		orthogonality between sprite layers, but the alpha layer must obey 
+		priority between sprites in each layer.  Ie, if we didn't do this, 
+		then when two alpha blended shadows overlapped then they would be 25% 
+		transparent against the background, rather than 50% */
+	if (deco16_priority&1) {
+		fillbitmap(priority_bitmap,0,cliprect);
+		mutantf_drawsprites(bitmap,cliprect,buffered_spriteram16,3);
+		fillbitmap(priority_bitmap,0,cliprect);
+		mutantf_drawsprites(bitmap,cliprect,buffered_spriteram16_2,4);
+	} else {
+		fillbitmap(priority_bitmap,0,cliprect);
+		mutantf_drawsprites(bitmap,cliprect,buffered_spriteram16_2,4);
+		fillbitmap(priority_bitmap,0,cliprect);
+		mutantf_drawsprites(bitmap,cliprect,buffered_spriteram16,3);
+	}
+	deco16_tilemap_1_draw(bitmap,cliprect,0,0);
 }

@@ -45,6 +45,7 @@ static struct tilemap *bg_tilemap;
   bit 0 -- 1  kohm resistor  -- BLUE
 
 ***************************************************************************/
+
 PALETTE_INIT( travrusa )
 {
 	int i;
@@ -60,62 +61,125 @@ PALETTE_INIT( travrusa )
 
 		/* red component */
 		bit0 = 0;
-		bit1 = (*color_prom >> 6) & 0x01;
-		bit2 = (*color_prom >> 7) & 0x01;
+		bit1 = (color_prom[i] >> 6) & 0x01;
+		bit2 = (color_prom[i] >> 7) & 0x01;
 		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* green component */
-		bit0 = (*color_prom >> 3) & 0x01;
-		bit1 = (*color_prom >> 4) & 0x01;
-		bit2 = (*color_prom >> 5) & 0x01;
+		bit0 = (color_prom[i] >> 3) & 0x01;
+		bit1 = (color_prom[i] >> 4) & 0x01;
+		bit2 = (color_prom[i] >> 5) & 0x01;
 		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* blue component */
-		bit0 = (*color_prom >> 0) & 0x01;
-		bit1 = (*color_prom >> 1) & 0x01;
-		bit2 = (*color_prom >> 2) & 0x01;
+		bit0 = (color_prom[i] >> 0) & 0x01;
+		bit1 = (color_prom[i] >> 1) & 0x01;
+		bit2 = (color_prom[i] >> 2) & 0x01;
 		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
 		palette_set_color(i,r,g,b);
-		color_prom++;
 	}
 
-	/* skip bottom half - not used */
-	color_prom += 128;
+	color_prom += 256;
 
 	/* sprite palette */
-	for (i = 0;i < 32;i++)
+	for (i = 0;i < 16;i++)
 	{
 		int bit0,bit1,bit2,r,g,b;
 
 
 		/* red component */
 		bit0 = 0;
-		bit1 = (*color_prom >> 6) & 0x01;
-		bit2 = (*color_prom >> 7) & 0x01;
+		bit1 = (color_prom[i] >> 6) & 0x01;
+		bit2 = (color_prom[i] >> 7) & 0x01;
 		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* green component */
-		bit0 = (*color_prom >> 3) & 0x01;
-		bit1 = (*color_prom >> 4) & 0x01;
-		bit2 = (*color_prom >> 5) & 0x01;
+		bit0 = (color_prom[i] >> 3) & 0x01;
+		bit1 = (color_prom[i] >> 4) & 0x01;
+		bit2 = (color_prom[i] >> 5) & 0x01;
 		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 		/* blue component */
-		bit0 = (*color_prom >> 0) & 0x01;
-		bit1 = (*color_prom >> 1) & 0x01;
-		bit2 = (*color_prom >> 2) & 0x01;
+		bit0 = (color_prom[i] >> 0) & 0x01;
+		bit1 = (color_prom[i] >> 1) & 0x01;
+		bit2 = (color_prom[i] >> 2) & 0x01;
 		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
 		palette_set_color(i+128,r,g,b);
-		color_prom++;
 	}
+
+	color_prom += 32;
 
 	/* color_prom now points to the beginning of the lookup table */
 
-	/* character lookup table */
-	for (i = 0;i < TOTAL_COLORS(0);i++)
-		COLOR(0,i) = i;
+	/* sprite lookup table */
+	for (i = 0;i < TOTAL_COLORS(1);i++)
+		COLOR(1,i) = (color_prom[i] & 0x0f) + 128;
+}
+
+PALETTE_INIT( shtrider )
+{
+	int i;
+	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
+	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
+
+
+	/* character palette */
+	for (i = 0;i < 128;i++)
+	{
+		int bit0,bit1,bit2,r,g,b;
+
+
+		/* red component */
+		bit0 = 0;
+		bit1 = (color_prom[i] >> 2) & 0x01;
+		bit2 = (color_prom[i] >> 3) & 0x01;
+		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* green component */
+		bit0 = (color_prom[i+256] >> 3) & 0x01;
+		bit1 = (color_prom[i] >> 0) & 0x01;
+		bit2 = (color_prom[i] >> 1) & 0x01;
+		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* blue component */
+		bit0 = (color_prom[i+256] >> 0) & 0x01;
+		bit1 = (color_prom[i+256] >> 1) & 0x01;
+		bit2 = (color_prom[i+256] >> 2) & 0x01;
+		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+		palette_set_color(i,r,g,b);
+	}
+
+	color_prom += 512;
+
+	/* color_prom now points to the beginning of the sprite palette */
+
+	/* sprite palette */
+	for (i = 0;i < 16;i++)
+	{
+		int bit0,bit1,bit2,r,g,b;
+
+		/* red component */
+		bit0 = 0;
+		bit1 = (color_prom[i] >> 6) & 0x01;
+		bit2 = (color_prom[i] >> 7) & 0x01;
+		r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* green component */
+		bit0 = (color_prom[i] >> 3) & 0x01;
+		bit1 = (color_prom[i] >> 4) & 0x01;
+		bit2 = (color_prom[i] >> 5) & 0x01;
+		g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* blue component */
+		bit0 = (color_prom[i] >> 0) & 0x01;
+		bit1 = (color_prom[i] >> 1) & 0x01;
+		bit2 = (color_prom[i] >> 2) & 0x01;
+		b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+		palette_set_color(i+128,r,g,b);
+	}
+
+	color_prom += 32;
+	/* color_prom now points to the beginning of the sprite lookup table */
 
 	/* sprite lookup table */
 	for (i = 0;i < TOTAL_COLORS(1);i++)
-		COLOR(1,i) = *(color_prom++) + 128;
+		COLOR(1,i) = (color_prom[i] & 0x0f) + 128;
 }
 
 
@@ -155,7 +219,7 @@ VIDEO_START( travrusa )
 	tilemap_set_transmask(bg_tilemap,0,0xff,0x00); /* split type 0 is totally transparent in front half */
 	tilemap_set_transmask(bg_tilemap,1,0x3f,0xc0); /* split type 1 has pens 6 and 7 opaque - tunnels */
 
-	tilemap_set_scroll_rows(bg_tilemap,32);
+	tilemap_set_scroll_rows(bg_tilemap,4);
 
 	return 0;
 }
@@ -184,10 +248,9 @@ static void set_scroll(void)
 {
 	int i;
 
-	for (i = 0;i < 24;i++)
+	for (i = 0;i <= 2;i++)
 		tilemap_set_scrollx(bg_tilemap,i,scrollx[0] + 256 * scrollx[1]);
-	for (i = 24;i < 32;i++)
-		tilemap_set_scrollx(bg_tilemap,i,0);
+	tilemap_set_scrollx(bg_tilemap,3,0);
 }
 
 WRITE_HANDLER( travrusa_scroll_x_low_w )
@@ -244,13 +307,13 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 
 	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 	{
-		int sx,sy,flipx,flipy;
+		int sx = ((spriteram[offs + 3] + 8) & 0xff) - 8;
+		int sy = 240 - spriteram[offs];
+		int code = spriteram[offs + 2];
+		int attr = spriteram[offs + 1];
+		int flipx = attr & 0x40;
+		int flipy = attr & 0x80;
 
-
-		sx = ((spriteram[offs + 3] + 8) & 0xff) - 8;
-		sy = 240 - spriteram[offs];
-		flipx = spriteram[offs + 1] & 0x40;
-		flipy = spriteram[offs + 1] & 0x80;
 		if (flip_screen)
 		{
 			sx = 240 - sx;
@@ -260,13 +323,14 @@ static void draw_sprites(struct mame_bitmap *bitmap,const struct rectangle *clip
 		}
 
 		drawgfx(bitmap,Machine->gfx[1],
-				spriteram[offs + 2],
-				spriteram[offs + 1] & 0x0f,
+				code,
+				attr & 0x0f,
 				flipx,flipy,
 				sx,sy,
 				&clip,TRANSPARENCY_PEN,0);
 	}
 }
+
 
 VIDEO_UPDATE( travrusa )
 {

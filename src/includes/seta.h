@@ -15,6 +15,8 @@ extern data16_t *seta_vram_0, *seta_vram_1, *seta_vctrl_0;
 extern data16_t *seta_vram_2, *seta_vram_3, *seta_vctrl_2;
 extern data16_t *seta_vregs;
 
+extern data16_t *seta_workram; // Needed for zombraid Crosshair hack
+
 extern int seta_tiles_offset;
 
 WRITE16_HANDLER( seta_vram_0_w );
@@ -53,7 +55,6 @@ VIDEO_UPDATE( seta2 );
 
 /* Variables and functions defined in sndhrdw/seta.c */
 #define	__uPD71054_TIMER	1
-#define	__X1_010_V2			1
 
 extern int seta_samples_bank;
 
@@ -64,11 +65,7 @@ READ16_HANDLER ( seta_sound_word_r );
 WRITE16_HANDLER( seta_sound_word_w );
 
 void seta_sound_enable_w(int);
-#if	__X1_010_V2
 int seta_sh_start( const struct MachineSound *msound, UINT32 clock, int adr );
-#else
-int seta_sh_start(const struct MachineSound *msound, UINT32 clock);
-#endif
 extern struct CustomSound_interface seta_sound_interface;
 
 

@@ -363,14 +363,21 @@ static data16_t *sys32_protram;
 static int tocab, fromcab;
 static data16_t *system32_workram;
 extern int system32_draw_bgs;
+data16_t *sys32_tilebank_external;
 
 /* Video Hardware */
 int system32_temp_kludge;
 data16_t *sys32_spriteram16;
 data16_t *sys32_txtilemap_ram;
 data16_t *sys32_ramtile_ram;
+data16_t *scrambled_paletteram16;
+
 int system32_palMask;
 int system32_mixerShift;
+extern int system32_screen_mode;
+extern int system32_screen_old_mode;
+extern int system32_allow_high_resolution;
+
 WRITE16_HANDLER( sys32_videoram_w );
 WRITE16_HANDLER ( sys32_ramtile_w );
 WRITE16_HANDLER ( sys32_spriteram_w );
@@ -627,16 +634,17 @@ static READ16_HANDLER(sys32_read_random)
 	return s32_rand;
 }
 
-static WRITE16_HANDLER( paletteram16_xBGRBBBBGGGGRRRR_word_w )
+extern int sys32_brightness[3];
+
+void system32_set_colour (int offset)
 {
+	int data;
 	int r,g,b;
 	int r2,g2,b2;
+	UINT16 r_bright, g_bright, b_bright;
 
-	COMBINE_DATA(&paletteram16[offset]);
-
-	// some games use 8-bit writes to some palette regions
-	// (especially for the text layer palettes)
 	data = paletteram16[offset];
+
 
 	r = (data >> 0) & 0x0f;
 	g = (data >> 4) & 0x0f;
@@ -650,7 +658,59 @@ static WRITE16_HANDLER( paletteram16_xBGRBBBBGGGGRRRR_word_w )
 	g = (g << 4) | (g2 << 3);
 	b = (b << 4) | (b2 << 3);
 
+	/* there might be better ways of doing this ... but for now its functional ;-) */
+	r_bright = sys32_brightness[0]; r_bright &= 0x3f;
+	g_bright = sys32_brightness[1]; b_bright &= 0x3f;
+	b_bright = sys32_brightness[2]; b_bright &= 0x3f;
+
+	if ((r_bright & 0x20)) { r = (r * (r_bright&0x1f))>>5; } else { r = r+(((0xf8-r) * (r_bright&0x1f))>>5); }
+	if ((g_bright & 0x20)) { g = (g * (g_bright&0x1f))>>5; } else { g = g+(((0xf8-g) * (g_bright&0x1f))>>5); }
+	if ((b_bright & 0x20)) { b = (b * (b_bright&0x1f))>>5; } else { b = b+(((0xf8-b) * (b_bright&0x1f))>>5); }
+
 	palette_set_color(offset,r,g,b);
+}
+
+static READ16_HANDLER( system32_paletteram16_r )
+{
+	return paletteram16[offset];
+}
+
+static WRITE16_HANDLER( system32_paletteram16_xBBBBBGGGGGRRRRR_scrambled_word_w )
+{
+	int r,g,b;
+	int r2,g2,b2;
+
+	COMBINE_DATA(&scrambled_paletteram16[offset]); // it expects to read back the same values?
+
+	/* rearrange the data to normal format ... */
+	r = (data >>1) & 0xf;
+	g = (data >>6) & 0xf;
+	b = (data >>11) & 0xf;
+
+	r2 = (data >>0) & 0x1;
+	g2 = (data >>5) & 0x1;
+	b2 = (data >> 10) & 0x1;
+
+	data = (data & 0x8000) | r | g<<4 | b << 8 | r2 << 12 | g2 << 13 | b2 << 14;
+
+	COMBINE_DATA(&paletteram16[offset]);
+
+	system32_set_colour(offset);
+
+}
+
+
+
+
+static WRITE16_HANDLER( system32_paletteram16_xBGRBBBBGGGGRRRR_word_w )
+{
+
+	COMBINE_DATA(&paletteram16[offset]);
+
+	// some games use 8-bit writes to some palette regions
+	// (especially for the text layer palettes)
+
+	system32_set_colour(offset);
 }
 
 static READ16_HANDLER( jp_v60_read_cab )
@@ -677,6 +737,7 @@ static MEMORY_READ16_START( system32_readmem )
 
 	{ 0x600000, 0x607fff, MRA16_RAM },	// palette RAM
 	{ 0x608000, 0x60ffff, MRA16_RAM },	// palette RAM
+/**/{ 0x610000, 0x6100ff, MRA16_RAM }, // mixer chip registers
 	{ 0x700000, 0x701fff, MRA16_RAM },	// shared RAM
 	{ 0xc00000, 0xc00001, input_port_1_word_r },
 	{ 0xc00002, 0xc00003, input_port_2_word_r },
@@ -710,14 +771,14 @@ static MEMORY_WRITE16_START( system32_writemem )
 	*/
 
 	{ 0x400000, 0x41ffff, sys32_spriteram_w, &sys32_spriteram16 }, // Sprites
-	{ 0x600000, 0x607fff, paletteram16_xBBBBBGGGGGRRRRR_word_w },	// magic data-line-scrambled mirror of palette RAM * we need to shuffle data written then?
-	{ 0x608000, 0x60ffff, paletteram16_xBGRBBBBGGGGRRRR_word_w, &paletteram16 }, // Palettes
+	{ 0x600000, 0x607fff, system32_paletteram16_xBBBBBGGGGGRRRRR_scrambled_word_w, &scrambled_paletteram16 },	// magic data-line-scrambled mirror of palette RAM * we need to shuffle data written then?
+	{ 0x608000, 0x60ffff, system32_paletteram16_xBGRBBBBGGGGRRRR_word_w, &paletteram16 }, // Palettes
 	{ 0x610000, 0x6100ff, MWA16_RAM, &system32_mixerregs }, // mixer chip registers
 	{ 0x700000, 0x701fff, MWA16_RAM, &system32_shared_ram }, // Shared ram with the z80
 	{ 0xa00000, 0xa00fff, MWA16_RAM, &sys32_protram },	// protection RAM
 	{ 0xc00006, 0xc00007, system32_eeprom_w },
 //	{ 0xc0000c, 0xc0000d, jp_v60_write_cab },
-	{ 0xc0000e, 0xc0000f, MWA16_RAM },	// tile bank, I think?
+	{ 0xc0000e, 0xc0000f, MWA16_RAM, &sys32_tilebank_external }, // at least the lowest bit is tilebank
 	{ 0xc0001c, 0xc0001d, MWA16_RAM, &sys32_displayenable },
 	{ 0xd00006, 0xd00007, irq_ack_w },
 	{ 0xf00000, 0xffffff, MWA16_ROM },
@@ -835,7 +896,24 @@ static MACHINE_INIT( system32 )
 {
 	cpu_setbank(1, memory_region(REGION_CPU1));
 	irq_init();
+
+	/* force it to select lo-resolution on reset */
+	system32_allow_high_resolution = 0;
+	system32_screen_mode = 0;
+	system32_screen_old_mode = 1;
 }
+
+static MACHINE_INIT( s32hi )
+{
+	cpu_setbank(1, memory_region(REGION_CPU1));
+	irq_init();
+
+	/* force it to select lo-resolution on reset */
+	system32_allow_high_resolution = 1;
+	system32_screen_mode = 0;
+	system32_screen_old_mode = 1;
+}
+
 
 static INTERRUPT_GEN( system32_interrupt )
 {
@@ -1211,41 +1289,6 @@ INPUT_PORTS_START( spidey )
 	PORT_START	// 0xc00008 - port 3
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, "Test", KEYCODE_F2, IP_JOY_NONE )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	PORT_START	// 0xc00060 - port 4
-	SYSTEM32_PLAYER_INPUTS(3, BUTTON1, BUTTON2, UNKNOWN, UNKNOWN)
-
-	PORT_START	// 0xc00062 - port 5
-	SYSTEM32_PLAYER_INPUTS(4, BUTTON1, BUTTON2, UNKNOWN, UNKNOWN)
-
-	PORT_START	// 0xc00064 - port 6
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START3 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START4 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )
-INPUT_PORTS_END
-
-INPUT_PORTS_START( spideyj )
-	PORT_START	// 0xc0000a - port 0
-	PORT_BIT( 0x7f, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* EEPROM data */
-
-	PORT_START	// 0xc00000 - port 1
-	SYSTEM32_PLAYER_INPUTS(1, BUTTON1, BUTTON2, UNKNOWN, UNKNOWN)
-
-	PORT_START	// 0xc00002 - port 2
-	SYSTEM32_PLAYER_INPUTS(2, BUTTON1, BUTTON2, UNKNOWN, UNKNOWN)
-
-	PORT_START	// 0xc00008 - port 3
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, "Test", KEYCODE_F2, IP_JOY_NONE )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN4 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN3 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
@@ -1264,6 +1307,41 @@ INPUT_PORTS_START( spideyj )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START4 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( spideyj )
+	PORT_START	// 0xc0000a - port 0
+	PORT_BIT( 0x7f, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* EEPROM data */
+
+	PORT_START	// 0xc00000 - port 1
+	SYSTEM32_PLAYER_INPUTS(1, BUTTON1, BUTTON2, UNKNOWN, UNKNOWN)
+
+	PORT_START	// 0xc00002 - port 2
+	SYSTEM32_PLAYER_INPUTS(2, BUTTON1, BUTTON2, UNKNOWN, UNKNOWN)
+
+	PORT_START	// 0xc00008 - port 3
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, "Test", KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// 0xc00060 - port 4
+	SYSTEM32_PLAYER_INPUTS(3, BUTTON1, BUTTON2, UNKNOWN, UNKNOWN)
+
+	PORT_START	// 0xc00062 - port 5
+	SYSTEM32_PLAYER_INPUTS(4, BUTTON1, BUTTON2, UNKNOWN, UNKNOWN)
+
+	PORT_START	// 0xc00064 - port 6
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START3 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START4 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
@@ -1553,6 +1631,57 @@ INPUT_PORTS_START( sonic )
 	PORT_ANALOG( 0xff, 0, IPT_TRACKBALL_Y | IPF_PLAYER3, 100, 15, 0, 0 )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( jpark )
+	PORT_START	// 0xc0000a - port 0
+	PORT_BIT( 0x7f, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* EEPROM data */
+
+	PORT_START	// 0xc00000 - port 1
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// 0xc00002 - port 2
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// 0xc00008 - port 3
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, "Test", KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// 0xc00060 - port 4
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// 0xc00062 - port 5
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// 0xc00064 - port 6
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	// 0xc00050 - port 7  - player 1 lightgun X axis
+	PORT_ANALOG( 0xff, 0x80, IPT_LIGHTGUN_X | IPF_PLAYER1, 35, 15, 0x40, 0xc0 )
+
+	PORT_START	// 0xc00052 - port 8  - player 1 lightgun Y axis
+	PORT_ANALOG( 0xff, 0x80, IPT_LIGHTGUN_Y | IPF_PLAYER1, 35, 15, 0x39, 0xbf )
+
+	PORT_START	// 0xc00054 - port 9  - player 2 lightgun X axis
+	PORT_ANALOG( 0xff, 0x80, IPT_LIGHTGUN_X | IPF_PLAYER2, 35, 15, 0x40, 0xc0 )
+
+	PORT_START	// 0xc00056 - port 10 - player 2 lightgun Y axis
+	PORT_ANALOG( 0xff, 0x80, IPT_LIGHTGUN_Y | IPF_PLAYER2, 35, 15, 0x39, 0xbf )
+INPUT_PORTS_END
+
 static void irq_handler(int irq)
 {
 	cpu_set_irq_line( 1, 0 , irq ? ASSERT_LINE : CLEAR_LINE );
@@ -1626,7 +1755,7 @@ static MACHINE_DRIVER_START( system32 )
 	MDRV_NVRAM_HANDLER(system32)
 
 	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_UPDATE_AFTER_VBLANK | VIDEO_NEEDS_6BITS_PER_GUN)
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER | VIDEO_NEEDS_6BITS_PER_GUN | VIDEO_UPDATE_AFTER_VBLANK /* | VIDEO_RGB_DIRECT*/) // RGB_DIRECT will be needed for alpha
 	MDRV_SCREEN_SIZE(40*8, 28*8)
 	MDRV_VISIBLE_AREA(0*8, 40*8-1, 0*8, 28*8-1)
 	MDRV_GFXDECODE(gfxdecodeinfo)
@@ -1643,6 +1772,8 @@ MACHINE_DRIVER_END
 // system 32 hi-res mode is 416x224.  Yes that's TRUSTED.
 static MACHINE_DRIVER_START( sys32_hi )
 	MDRV_IMPORT_FROM( system32 )
+
+	MDRV_MACHINE_INIT(s32hi)
 
 	MDRV_SCREEN_SIZE(52*8, 28*8)
 	MDRV_VISIBLE_AREA(0*8, 52*8-1, 0*8, 28*8-1)
@@ -1865,6 +1996,44 @@ ROM_START( svf )
 	/* populated at runtime */
 ROM_END
 
+ROM_START( svs )
+	ROM_REGION( 0x200000, REGION_CPU1, 0 ) /* v60 code */
+	ROM_LOAD( "ep16883a.17", 0x000000, 0x020000, 0xe1c0c3ce )
+	ROM_RELOAD	   (			   0x020000, 0x20000 )
+	ROM_RELOAD	   (			   0x040000, 0x20000 )
+	ROM_RELOAD	   (			   0x060000, 0x20000 )
+	ROM_LOAD( "ep16882a.8", 0x080000, 0x020000, 0x1161bbbe )
+	ROM_RELOAD	   (			   0x0a0000, 0x20000 )
+	ROM_RELOAD	   (			   0x0c0000, 0x20000 )
+	ROM_RELOAD	   (			   0x0e0000, 0x20000 )
+	ROM_LOAD16_BYTE( "epr16865.18", 0x100000, 0x080000, 0x9198ca9f )
+	ROM_LOAD16_BYTE( "epr16864.9", 0x100001, 0x080000, 0x201a940e )
+
+	ROM_REGION( 0x480000, REGION_CPU2, 0 ) /* sound CPU */
+	ROM_LOAD( "epr16868.36", 0x00000, 0x40000, 0x47aa4ec7 ) /* same as jleague but with a different part number */
+	ROM_RELOAD(           0x100000, 0x20000             )
+	ROM_LOAD( "mpr16779.35", 0x180000, 0x100000, 0x7055e859 )
+	ROM_LOAD( "mpr16777.24", 0x280000, 0x100000, 0x14b5d5df )
+	ROM_LOAD( "mpr16778.34", 0x380000, 0x100000, 0xfeedaecf )
+
+	ROM_REGION( 0x200000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
+	ROM_LOAD16_BYTE( "mpr16784.14", 0x000000, 0x100000, 0x4608efe2 )
+	ROM_LOAD16_BYTE( "mpr16783.5", 0x000001, 0x100000, 0x042eabe7 )
+
+	ROM_REGION( 0x2000000, REGION_GFX2, 0 ) /* sprites */
+	ROMX_LOAD( "mpr16785.32", 0x000000, 0x200000, 0x51f775ce, ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr16787.30", 0x000002, 0x200000, 0xdee7a204, ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr16789.28", 0x000004, 0x200000, 0x6b6c8ad3, ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr16791.26", 0x000006, 0x200000, 0x4f7236da, ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr16860.31", 0x800000, 0x200000, 0x578a7325, ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr16861.29", 0x800002, 0x200000, 0xd79c3f73, ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr16862.27", 0x800004, 0x200000, 0x00793354, ROM_SKIP(6)|ROM_GROUPWORD )
+	ROMX_LOAD( "mpr16863.25", 0x800006, 0x200000, 0x42338226, ROM_SKIP(6)|ROM_GROUPWORD )
+
+	ROM_REGION( 0x20000, REGION_GFX3, 0 ) /* FG tiles */
+	/* populated at runtime */
+ROM_END
+
 ROM_START( jleague )
 	ROM_REGION( 0x200000, REGION_CPU1, 0 ) /* v60 code */
 	ROM_LOAD( "epr16782.17",0x000000, 0x020000, 0xf0278944 )
@@ -1905,11 +2074,11 @@ ROM_END
 
 ROM_START( spidey )
 	ROM_REGION( 0x140000, REGION_CPU1, 0 ) /* v60 code */
-	ROM_LOAD( "14307", 0x000000, 0x020000, 0xd900219c )
+	ROM_LOAD( "14303", 0x000000, 0x020000, 0x7f1bd28f )
 	ROM_RELOAD (       0x020000, 0x020000 )
 	ROM_RELOAD (       0x040000, 0x020000 )
 	ROM_RELOAD (       0x060000, 0x020000 )
-	ROM_LOAD( "14306", 0x080000, 0x020000, 0x64379dc6 )
+	ROM_LOAD( "14302", 0x080000, 0x020000, 0xd954c40a )
 	ROM_RELOAD (       0x0a0000, 0x020000 )
 	ROM_RELOAD (       0x0c0000, 0x020000 )
 	ROM_RELOAD (       0x0e0000, 0x020000 )
@@ -1945,11 +2114,11 @@ ROM_END
 
 ROM_START( spideyj )
 	ROM_REGION( 0x140000, REGION_CPU1, 0 ) /* v60 code */
-	ROM_LOAD( "14303", 0x000000, 0x020000, 0x7f1bd28f )
+	ROM_LOAD( "14307", 0x000000, 0x020000, 0xd900219c )
 	ROM_RELOAD (       0x020000, 0x020000 )
 	ROM_RELOAD (       0x040000, 0x020000 )
 	ROM_RELOAD (       0x060000, 0x020000 )
-	ROM_LOAD( "14302", 0x080000, 0x020000, 0xd954c40a )
+	ROM_LOAD( "14306", 0x080000, 0x020000, 0x64379dc6 )
 	ROM_RELOAD (       0x0a0000, 0x020000 )
 	ROM_RELOAD (       0x0c0000, 0x020000 )
 	ROM_RELOAD (       0x0e0000, 0x020000 )
@@ -2298,11 +2467,9 @@ ROM_START( f1en )
 ROM_END
 
 ROM_START( dbzvrvs )
-	ROM_REGION( 0x180000, REGION_CPU1, 0 ) /* v60 code */
-	ROM_LOAD16_WORD( "16542.a", 0x000000, 0x80000, 0x6449ab22 )
-	ROM_RELOAD     (            0x080000, 0x80000 )
-
-	ROM_LOAD16_WORD( "16543",   0x100000, 0x80000, 0x7b9bc6f5 )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 ) /* v60 code */
+	ROM_LOAD16_WORD( "16543",   0x000000, 0x80000, 0x7b9bc6f5 )
+	ROM_LOAD16_WORD( "16542.a", 0x080000, 0x80000, 0x6449ab22 )
 
 	ROM_REGION( 0x480000, REGION_CPU2, 0 ) /* sound CPU */
 	ROM_LOAD( "16541", 0x00000, 0x40000, 0x1d61d836 )
@@ -2404,7 +2571,7 @@ static DRIVER_INIT ( s32 )
 	system32_use_default_eeprom = EEPROM_SYS32_0;
 
 	system32_temp_kludge = 0;
-	system32_draw_bgs = 0;
+	system32_draw_bgs = 1;
 
 	system32_palMask = 0xff;
 	system32_mixerShift = 4;
@@ -2417,7 +2584,7 @@ static DRIVER_INIT ( alien3 )
 	system32_use_default_eeprom = EEPROM_ALIEN3;
 
 	system32_temp_kludge = 0;
-	system32_draw_bgs = 0;
+	system32_draw_bgs = 1;
 
 	system32_palMask = 0xff;
 	system32_mixerShift = 4;
@@ -2438,7 +2605,7 @@ static DRIVER_INIT ( brival )
 	system32_use_default_eeprom = EEPROM_SYS32_0;
 
 	system32_temp_kludge = 0;
-	system32_draw_bgs = 0;
+	system32_draw_bgs = 1;
 
 	system32_palMask = 0xff;
 	system32_mixerShift = 4;
@@ -2456,7 +2623,7 @@ static DRIVER_INIT ( ga2 )
 	install_mem_read16_handler (0, 0xa00100, 0xa0015f, ga2_wakeup_protection_r);
 
 	system32_temp_kludge = 0;
-	system32_draw_bgs = 0;
+	system32_draw_bgs = 1;
 	system32_palMask = 0x7f;
 	system32_mixerShift = 3;
 
@@ -2468,7 +2635,7 @@ static DRIVER_INIT ( spidey )
 
 	system32_palMask = 0x7f;
 	system32_mixerShift = 3;
-	system32_draw_bgs = 0;
+	system32_draw_bgs = 1;
 }
 
 static DRIVER_INIT ( f1sl )
@@ -2493,7 +2660,7 @@ static DRIVER_INIT ( arf )
 
 	system32_temp_kludge = 0;
 
-	system32_draw_bgs = 0;
+	system32_draw_bgs = 1;
 	/* Main Character Colours are also controlled by protection? */
 }
 
@@ -2506,7 +2673,7 @@ static DRIVER_INIT ( holo )
 
 	system32_palMask = 0xff;
 	system32_mixerShift = 4;
-	system32_draw_bgs = 0;
+	system32_draw_bgs = 0; // doesn't have backgrounds
 }
 
 static DRIVER_INIT ( sonic )
@@ -2515,7 +2682,7 @@ static DRIVER_INIT ( sonic )
 
 	system32_palMask = 0x1ff;
 	system32_mixerShift = 5;
-	system32_draw_bgs = 0;
+	system32_draw_bgs = 1;
 
 	install_mem_write16_handler(0, 0xc00040, 0xc00055, sonic_track_reset_w);
 	install_mem_read16_handler (0, 0xc00040, 0xc00055, sonic_track_r);
@@ -2557,32 +2724,55 @@ static DRIVER_INIT ( f1en )
 	init_driving();
 }
 
+static DRIVER_INIT ( jpark )
+{
+
+	/* Temp. Patch until we emulate the 'Drive Board', thanks to Malice */
+	data16_t *pROM = (data16_t *)memory_region(REGION_CPU1);
+	pROM[0xC15A8/2] = 0xCD70;
+	pROM[0xC15AA/2] = 0xD8CD;
+
+	system32_draw_bgs = 1;
+	system32_palMask = 0xff;
+	system32_mixerShift = 4;
+
+	install_mem_read16_handler(0, 0xc00050, 0xc00051, sys32_gun_p1_x_c00050_r);
+	install_mem_read16_handler(0, 0xc00052, 0xc00053, sys32_gun_p1_y_c00052_r);
+	install_mem_read16_handler(0, 0xc00054, 0xc00055, sys32_gun_p2_x_c00054_r);
+	install_mem_read16_handler (0, 0xc00056, 0xc00057, sys32_gun_p2_y_c00056_r);
+
+	install_mem_write16_handler(0, 0xc00050, 0xc00051, sys32_gun_p1_x_c00050_w);
+	install_mem_write16_handler(0, 0xc00052, 0xc00053, sys32_gun_p1_y_c00052_w);
+	install_mem_write16_handler(0, 0xc00054, 0xc00055, sys32_gun_p2_x_c00054_w);
+	install_mem_write16_handler(0, 0xc00056, 0xc00057, sys32_gun_p2_y_c00056_w);
+}
+
+
 /* this one is pretty much ok since it doesn't use backgrounds tilemaps */
 GAME( 1992, holo,     0,        system32, holo,     holo,     ROT0, "Sega", "Holosseum" ) /* fine */
 
-/* svf is playable, even if the pitch texture is missing (bg layer) but there are long pauses at times such as half time when i guess it attempts to draw huge invalid sprites? */
+/* these have a range of issues, mainly with the backgrounds */
 GAMEX(1994, svf,      0,        system32, svf,      s32,      ROT0, "Sega", "Super Visual Football", GAME_IMPERFECT_GRAPHICS ) /* boots, bg's missing, playable */
+GAMEX(1994, svs,	  svf,		system32, svf,		s32,	  ROT0, "Sega", "Super Visual Soccer (US?)", GAME_IMPERFECT_GRAPHICS ) /* boots, bg's missing, playable */
 GAMEX(1994, jleague,  svf,      system32, svf,      s32,      ROT0, "Sega", "The J.League 94 (Japan)", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION ) /* like svf but fails when you coin it up */
-GAMEX(1992, brival,   0,        sys32_hi, brival,   brival,   ROT0, "Sega", "Burning Rivals (Japan)", GAME_IMPERFECT_GRAPHICS ) /* boots, coins up, missing bg's, playable */
+GAMEX(1992, brival,   0,        sys32_hi, brival,   brival,   ROT0, "Sega", "Burning Rival (Japan)", GAME_IMPERFECT_GRAPHICS ) /* boots, coins up, missing bg's, playable */
 GAMEX(1990, radm,     0,        system32, radm,     radm,     ROT0, "Sega", "Rad Mobile", GAME_IMPERFECT_GRAPHICS ) /* boots, coins up, prelim bg, playable */
-GAMEX(1991, radr,     0,        system32, radr,     radr,     ROT0, "Sega", "Rad Rally", GAME_IMPERFECT_GRAPHICS ) /* boots, coins up, prelim bg, playable */
+GAMEX(1991, radr,     0,        sys32_hi, radr,     radr,     ROT0, "Sega", "Rad Rally", GAME_IMPERFECT_GRAPHICS ) /* boots, coins up, prelim bg, playable */
 GAMEX(199?, f1en,     0,        system32, f1en,     f1en,     ROT0, "Sega", "F1 Exhaust Note", GAME_IMPERFECT_GRAPHICS ) /* boots, coins up prelim bg, playable  */
 GAMEX(1993, alien3,   0,        system32, alien3,   alien3,   ROT0, "Sega", "Alien 3", GAME_IMPERFECT_GRAPHICS ) /* boots, coins up, missing bg layers also most gfx are done with sprites so present */
-GAMEX(1992, sonic,    0,        system32, sonic,    sonic,    ROT0, "Sega", "Sonic (Japan rev. C)", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION ) /* boots, coins up, bg's missing, no control, protection */
-GAMEX(1992, sonicp,   sonic,    system32, sonic,    sonic,    ROT0, "Sega", "Sonic (Japan prototype)", GAME_IMPERFECT_GRAPHICS ) /* boots, coins up, missing bg gfx, no controls */
-
-/* these boot are missing the bg tilemaps but you can see most of the sprites etc. */
+GAMEX(1992, sonic,    0,        sys32_hi, sonic,    sonic,    ROT0, "Sega", "Sonic (Japan rev. C)", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION ) /* boots, coins up, bg's missing, no control, protection */
+GAMEX(1992, sonicp,   sonic,    sys32_hi, sonic,    sonic,    ROT0, "Sega", "Sonic (Japan prototype)", GAME_IMPERFECT_GRAPHICS ) /* boots, coins up, missing bg gfx, no controls */
+GAMEX(1994, jpark,    0,        jpark,    jpark,    jpark,    ROT0, "Sega", "Jurassic Park", GAME_IMPERFECT_GRAPHICS )  /* drive board test patched, uses hi-res on a test screen */
 GAMEX(1992, ga2,      0,        system32, ga2,      ga2,      ROT0, "Sega", "Golden Axe - The Revenge of Death Adder (US)", GAME_IMPERFECT_GRAPHICS ) /* boots, bg's missing, sprite colour probs */
 GAMEX(1992, ga2j,     ga2,      system32, ga2j,     ga2,      ROT0, "Sega", "Golden Axe - The Revenge of Death Adder (Japan)", GAME_IMPERFECT_GRAPHICS ) /* boots, bg's missing, sprite colour probs  - can be set to 4 player but controls won't work as is, they conflict with the 2 player setup */
 GAMEX(1991, spidey,   0,        system32, spidey,   spidey,   ROT0, "Sega", "Spiderman (US)", GAME_IMPERFECT_GRAPHICS ) /* boots, bg's missing */
 GAMEX(1991, spideyj,  spidey,   system32, spideyj,  spidey,   ROT0, "Sega", "Spiderman (Japan)", GAME_IMPERFECT_GRAPHICS ) /* boots, bg's missing */
-GAMEX(1991, arabfgt,  0,        system32, spideyj,  arf,      ROT0, "Sega", "Arabian Fight", GAME_IMPERFECT_GRAPHICS ) /* boots, bg's missing */
+GAMEX(1991, arabfgt,  0,        system32, spidey,   arf,      ROT0, "Sega", "Arabian Fight", GAME_IMPERFECT_GRAPHICS ) /* boots, bg's missing */
 
 /* not really working */
 GAMEX(199?, f1lap,    0,        system32, system32, f1sl,     ROT0, "Sega", "F1 Super Lap", GAME_NOT_WORKING ) /* blank screen, also requires 2 linked sys32 boards to function */
-GAMEX(199?, dbzvrvs,  0,        system32, system32, s32,      ROT0, "Sega", "Dragon Ball Z VRVS", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION) /* does nothing useful, known to be heavily protected */
-GAMEX(1992, darkedge, 0,        system32, system32, s32,      ROT0, "Sega", "Dark Edge", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION ) /* locks up on some levels, sprites are submerged, protected */
-GAMEX(1994, jpark,    0,        jpark,    system32, s32,      ROT0, "Sega", "Jurassic Park", GAME_NOT_WORKING ) /* sets palette, nothing else? requires emulation of cabinet motor? */
+GAMEX(199?, dbzvrvs,  0,        sys32_hi, system32, s32,      ROT0, "Sega", "Dragon Ball Z VRVS", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION) /* does nothing useful, known to be heavily protected */
+GAMEX(1992, darkedge, 0,        sys32_hi, system32, s32,      ROT0, "Sega", "Dark Edge", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION ) /* locks up on some levels, sprites are submerged, protected */
 /* Air Rescue */
 /* Loony Toons (maybe) */
 

@@ -518,7 +518,7 @@ INPUT_PORTS_START( s1945ii )
 	UNUSED_PORT /* IN2 unused? */
 	PORT_COIN( 0 )
 
-	PORT_START /* IN4 fake region */
+	PORT_START /* IN4 jumper pads on the PCB */
 	PORT_DIPNAME( 0x01, 0x01, "Region" )
 	PORT_DIPSETTING(    0x00, "Japan" )
 	PORT_DIPSETTING(    0x01, "World" )
@@ -530,7 +530,7 @@ INPUT_PORTS_START( soldivid )
 	UNUSED_PORT /* IN2 unused? */
 	PORT_COIN( 0 )
 
-	PORT_START /* IN4 fake region */
+	PORT_START /* IN4 jumper pads on the PCB */
 	PORT_DIPNAME( 0x01, 0x01, "Region" )
 	PORT_DIPSETTING(    0x00, "Japan" )
 	PORT_DIPSETTING(    0x01, "World" )
@@ -552,7 +552,7 @@ INPUT_PORTS_START( daraku )
 
 	PORT_COIN( 0 )
 
-	PORT_START /* IN4 fake region */
+	PORT_START /* IN4 jumper pads on the PCB */
 	PORT_DIPNAME( 0x01, 0x01, "Region" )
 	PORT_DIPSETTING(    0x00, "Japan" )
 	PORT_DIPSETTING(    0x01, "World" ) /* Title screen is different, English is default now */
@@ -564,7 +564,7 @@ INPUT_PORTS_START( sbomberb )
 	UNUSED_PORT /* IN2 unused? */
 	PORT_COIN( 0 ) /* If HIGH then you can perform rom test, but EEPROM resets? */
 
-	PORT_START /* IN4 fake region */
+	PORT_START /* IN4 jumper pads on the PCB */
 	PORT_DIPNAME( 0x01, 0x01, "Region" )
 	PORT_DIPSETTING(    0x00, "Japan" )
 	PORT_DIPSETTING(    0x01, "World" )
@@ -576,7 +576,7 @@ INPUT_PORTS_START( gunbird2 ) /* Different Region */
 	UNUSED_PORT /* IN2 unused? */
 	PORT_COIN( 0 ) /* If HIGH then you can perform rom test, but EEPROM resets */
 
-	PORT_START /* IN4 fake region */
+	PORT_START /* IN4 jumper pads on the PCB */
 	PORT_DIPNAME( 0x03, 0x02, "Region" )
 	PORT_DIPSETTING(    0x00, "Japan" )
 	PORT_DIPSETTING(    0x01, "International Ver A." )
@@ -589,7 +589,7 @@ INPUT_PORTS_START( s1945iii ) /* Different Region again */
 	UNUSED_PORT /* IN2 unused? */
 	PORT_COIN( 0 ) /* If HIGH then you can perform rom test, EEPROM doesn't reset */
 
-	PORT_START /* IN4 fake region */
+	PORT_START /* IN4 jumper pads on the PCB */
 	PORT_DIPNAME( 0x03, 0x01, "Region" )
 	PORT_DIPSETTING(    0x00, "Japan" )
 	PORT_DIPSETTING(    0x02, "International Ver A." )
@@ -602,7 +602,7 @@ INPUT_PORTS_START( dragnblz ) /* Security requires bit high */
 	UNUSED_PORT /* IN2 unused? */
 	PORT_COIN( 1 ) /* Must be HIGH (Or Security Error), so can perform test */
 
-	PORT_START /* IN4 fake region */
+	PORT_START /* IN4 jumper pads on the PCB */
 	PORT_DIPNAME( 0x03, 0x01, "Region" )
 	PORT_DIPSETTING(    0x00, "Japan" )
 	PORT_DIPSETTING(    0x02, "International Ver A." )
@@ -615,7 +615,7 @@ INPUT_PORTS_START( gnbarich ) /* Same as S1945iii except only one button */
 	UNUSED_PORT /* IN2 unused? */
 	PORT_COIN( 0 ) /* If HIGH then you can perform rom test, but EEPROM resets? */
 
-	PORT_START /* IN4 fake region */
+	PORT_START /* IN4 jumper pads on the PCB */
 	PORT_DIPNAME( 0x03, 0x01, "Region" )
 	PORT_DIPSETTING(    0x00, "Japan" )
 	PORT_DIPSETTING(    0x02, "International Ver A." )

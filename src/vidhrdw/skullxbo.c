@@ -116,7 +116,7 @@ WRITE16_HANDLER( skullxbo_xscroll_w )
 	/* if something changed, force an update */
 	if (oldscroll != newscroll)
 		force_partial_update(cpu_getscanline());
-	
+
 	/* adjust the actual scrolls */
 	tilemap_set_scrollx(atarigen_playfield_tilemap, 0, 2 * (newscroll >> 7));
 	atarimo_set_xscroll(0, 2 * (newscroll >> 7));
@@ -138,12 +138,12 @@ WRITE16_HANDLER( skullxbo_yscroll_w )
 	/* if something changed, force an update */
 	if (oldscroll != newscroll)
 		force_partial_update(scanline);
-	
+
 	/* adjust the effective scroll for the current scanline */
 	if (scanline > Machine->visible_area.max_y)
 		scanline = 0;
 	effscroll = (newscroll >> 7) - scanline;
-	
+
 	/* adjust the actual scrolls */
 	tilemap_set_scrolly(atarigen_playfield_tilemap, 0, effscroll);
 	atarimo_set_yscroll(0, effscroll & 0x1ff);
@@ -195,7 +195,7 @@ void skullxbo_scanline_update(int scanline)
 	/* keep in range */
 	if (base >= &atarigen_alpha[0x7c0])
 		return;
-	
+
 	/* special case: scanline 0 should re-latch the previous raw scroll */
 	if (scanline == 0)
 	{
@@ -203,7 +203,7 @@ void skullxbo_scanline_update(int scanline)
 		tilemap_set_scrolly(atarigen_playfield_tilemap, 0, newscroll);
 		atarimo_set_yscroll(0, newscroll);
 	}
-	
+
 	/* update the current parameters */
 	for (x = 42; x < 64; x++)
 	{
@@ -215,14 +215,14 @@ void skullxbo_scanline_update(int scanline)
 		{
 			/* a new vscroll latches the offset into a counter; we must adjust for this */
 			int newscroll = ((data >> 7) - scanline) & 0x1ff;
-			
+
 			/* force a partial update with the previous scroll */
 			force_partial_update(scanline - 1);
-			
+
 			/* update the new scroll */
 			tilemap_set_scrolly(atarigen_playfield_tilemap, 0, newscroll);
 			atarimo_set_yscroll(0, newscroll);
-			
+
 			/* make sure we change this value so that writes to the scroll register */
 			/* know whether or not they are a different scroll */
 			*atarigen_yscroll = data;
@@ -240,13 +240,6 @@ void skullxbo_scanline_update(int scanline)
 
 VIDEO_UPDATE( skullxbo )
 {
-	static const UINT16 overrender_matrix[4] =
-	{
-		0xf000,
-		0xff00,
-		0x0ff0,
-		0x00f0
-	};
 	struct atarimo_rect_list rectlist;
 	struct mame_bitmap *mobitmap;
 	int x, y, r;
@@ -264,20 +257,52 @@ VIDEO_UPDATE( skullxbo )
 			for (x = rectlist.rect->min_x; x <= rectlist.rect->max_x; x++)
 				if (mo[x])
 				{
-					/* not verified: logic is all controlled in a PAL
-					
-						factors: LBPRI1-0, LBPIX3, ANPIX1-0, PFPAL3-2S, PFPIX3-2,
-						         (LBPIX4 | LBPIX3 | LBPIX2 | LBPIX1 | LBPIX0)
-					*/
+					/* verified from the GALs on the real PCB; equations follow
 
+						--- O17 is an intermediate value
+						O17=PFPIX3*PFPAL2S*PFPAL3S
+
+						--- CRAM.A10 controls the high bit of the palette select; used for shadows
+						CRAM.A10=BA11*CRAMD
+						    +!CRAMD*!LBPRI0*!LBPRI1*!O17*(LBPIX==1)*(ANPIX==0)
+						    +!CRAMD*LBPRI0*!LBPRI1*(LBPIX==1)*(ANPIX==0)*!PFPAL3S
+						    +!CRAMD*LBPRI1*(LBPIX==1)*(ANPIX==0)*!PFPAL2S*!PFPAL3S
+						    +!CRAMD*!PFPIX3*(LBPIX==1)*(ANPIX==0)
+
+						--- SA and SB are the mux select lines:
+						---		0 = motion objects
+						---		1 = playfield
+						---		2 = alpha
+						---		3 = color RAM access from CPU
+						!SA=!CRAMD*(ANPIX!=0)
+						    +!CRAMD*!LBPRI0*!LBPRI1*!O17*(LBPIX!=1)*(LBPIX!=0)
+						    +!CRAMD*LBPRI0*!LBPRI1*(LBPIX!=1)*(LBPIX!=0)*!PFPAL3S
+						    +!CRAMD*LBPRI1*(LBPIX!=1)*(LBPIX!=0)*!PFPAL2S*!PFPAL3S
+						    +!CRAMD*!PFPIX3*(LBPIX!=1)*(LBPIX!=0)
+
+						!SB=!CRAMD*(ANPIX==0)
+						    +!CRAMD*LBMISC*(LBPIX!=0)
+
+					*/
 					int mopriority = mo[x] >> ATARIMO_PRIORITY_SHIFT;
+					int mopix = mo[x] & 0x1f;
 					int pfcolor = (pf[x] >> 4) & 0x0f;
 					int pfpix = pf[x] & 0x0f;
-					
-					/* just a guess; seems to mostly work */
-					if (!(pfpix & 8) || !(overrender_matrix[mopriority] & (1 << pfcolor)))
+					int o17 = ((pf[x] & 0xc8) == 0xc8);
+
+					/* implement the equations */
+					if ((mopriority == 0 && !o17 && mopix >= 2) ||
+						(mopriority == 1 && mopix >= 2 && !(pfcolor & 0x08)) ||
+						((mopriority & 2) && mopix >= 2 && !(pfcolor & 0x0c)) ||
+						(!(pfpix & 8) && mopix >= 2))
 						pf[x] = mo[x] & ATARIMO_DATA_MASK;
-					
+
+					if ((mopriority == 0 && !o17 && mopix == 1) ||
+						(mopriority == 1 && mopix == 1 && !(pfcolor & 0x08)) ||
+						((mopriority & 2) && mopix == 1 && !(pfcolor & 0x0c)) ||
+						(!(pfpix & 8) && mopix == 1))
+						pf[x] |= 0x400;
+
 					/* erase behind ourselves */
 					mo[x] = 0;
 				}

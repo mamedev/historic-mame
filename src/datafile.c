@@ -12,7 +12,6 @@
 #include "driver.h"
 #include "datafile.h"
 
-
 /****************************************************************************
  *      token parsing constants
  ****************************************************************************/
@@ -42,7 +41,7 @@ enum
 /****************************************************************************
  *      datafile constants
  ****************************************************************************/
-#define MAX_DATAFILE_ENTRIES 3000
+#define MAX_DATAFILE_ENTRIES 5000
 #define DATAFILE_TAG '$'
 
 const char *DATAFILE_TAG_KEY = "$info";
@@ -60,6 +59,16 @@ static mame_file *fp;                                       /* Our file pointer 
 static long dwFilePos;                                          /* file position */
 static UINT8 bToken[MAX_TOKEN_LENGTH];          /* Our current token */
 
+/* an array of driver name/drivers array index sorted by driver name
+   for fast look up by name */
+typedef struct
+{
+    const char *name;
+    int index;
+} driver_data_type;
+static driver_data_type *sorted_drivers = NULL;
+static int num_games;
+
 
 /**************************************************************************
  **************************************************************************
@@ -68,6 +77,52 @@ static UINT8 bToken[MAX_TOKEN_LENGTH];          /* Our current token */
  *
  **************************************************************************
  **************************************************************************/
+
+/*
+ * DriverDataCompareFunc -- compare function for GetGameNameIndex
+ */
+static int DriverDataCompareFunc(const void *arg1,const void *arg2)
+{
+    return strcmp( ((driver_data_type *)arg1)->name, ((driver_data_type *)arg2)->name );
+}
+
+/*
+ * GetGameNameIndex -- given a driver name (in lowercase), return
+ * its index in the main drivers[] array, or -1 if it's not found.
+ */
+static int GetGameNameIndex(const char *name)
+{
+    driver_data_type *driver_index_info;
+	driver_data_type key;
+	key.name = name;
+
+	if (sorted_drivers == NULL)
+	{
+		/* initialize array of game names/indices */
+		int i;
+		num_games = 0;
+		while (drivers[num_games] != NULL)
+			num_games++;
+
+		sorted_drivers = (driver_data_type *)malloc(sizeof(driver_data_type) * num_games);
+		for (i=0;i<num_games;i++)
+		{
+			sorted_drivers[i].name = drivers[i]->name;
+			sorted_drivers[i].index = i;
+		}
+		qsort(sorted_drivers,num_games,sizeof(driver_data_type),DriverDataCompareFunc);
+	}
+
+	/* uses our sorted array of driver names to get the index in log time */
+	driver_index_info = bsearch(&key,sorted_drivers,num_games,sizeof(driver_data_type),
+								DriverDataCompareFunc);
+
+	if (driver_index_info == NULL)
+		return -1;
+
+	return driver_index_info->index;
+
+}
 
 /****************************************************************************
  *      GetNextToken - Pointer to the token string pointer
@@ -400,35 +455,31 @@ static int index_datafile (struct tDatafileIndex **_index)
                         if (TOKEN_EQUALS == token)
                         {
                                 int done = 0;
-                                int     i;
 
                                 token = GetNextToken ((UINT8 **)&s, &tell);
                                 while (!done && TOKEN_SYMBOL == token)
                                 {
-                                        /* search for matching driver name */
-                                        for (i = 0; drivers[i]; i++)
-                                        {
-                                                if (!ci_strcmp (s, drivers[i]->name))
-                                                {
-                                                        /* found correct driver -- fill in index entry */
-                                                        idx->driver = drivers[i];
-                                                        idx->offset = tell;
-                                                        idx++;
-                                                        count++;
-                                                        /* done = 1;  Not done, as we must process other clones in list */
-                                                        break;
-                                                }
-                                        }
+									int game_index;
+									strlwr(s);
+									game_index = GetGameNameIndex(s);
+									if (game_index >= 0)
+									{
+										idx->driver = drivers[game_index];
+										idx->offset = tell;
+										idx++;
+										count++;
+										/* done = 1;  Not done, as we must process other clones in list */
 
-                                        if (!done)
-                                        {
-                                                token = GetNextToken ((UINT8 **)&s, &tell);
+									}
+									if (!done)
+									{
+										token = GetNextToken ((UINT8 **)&s, &tell);
 
-                                                if (TOKEN_COMMA == token)
-                                                        token = GetNextToken ((UINT8 **)&s, &tell);
-                                                else
-                                                        done = 1; /* end of key field */
-                                        }
+										if (TOKEN_COMMA == token)
+											token = GetNextToken ((UINT8 **)&s, &tell);
+										else
+											done = 1; /* end of key field */
+									}
                                 }
                         }
                 }

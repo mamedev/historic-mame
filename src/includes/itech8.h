@@ -30,8 +30,7 @@ extern UINT8 *itech8_display_page;
 VIDEO_START( itech8 );
 VIDEO_START( slikshot );
 
-WRITE_HANDLER( itech8_palette_address_w );
-WRITE_HANDLER( itech8_palette_data_w );
+WRITE_HANDLER( itech8_palette_w );
 
 READ_HANDLER( itech8_blitter_r );
 WRITE_HANDLER( itech8_blitter_w );
