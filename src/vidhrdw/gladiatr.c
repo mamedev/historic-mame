@@ -88,7 +88,7 @@ int gladiatr_vh_start(void){
 
 	dirtybuffer = malloc(64*32);
 	if( dirtybuffer ){
-		tmpbitmap = osd_new_bitmap( 512,256, Machine->scrbitmap->depth );
+		tmpbitmap = bitmap_alloc(512,256);
 		if( tmpbitmap ){
 			memset(dirtybuffer,1,64*32);
 			return 0;
@@ -100,7 +100,7 @@ int gladiatr_vh_start(void){
 
 void gladiatr_vh_stop(void);
 void gladiatr_vh_stop(void){
-	osd_free_bitmap(tmpbitmap);
+	bitmap_free(tmpbitmap);
 	free(dirtybuffer);
 }
 
@@ -164,12 +164,12 @@ static void render_background( struct osd_bitmap *bitmap ){
 	copyscrollbitmap(bitmap,tmpbitmap,
 		1,&scrollx,
 		0,0,
-		&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		&Machine->visible_area,TRANSPARENCY_NONE,0);
 }
 
 static void render_text( struct osd_bitmap *bitmap );
 static void render_text( struct osd_bitmap *bitmap ){
-	const struct rectangle *clip = &Machine->drv->visible_area;
+	const struct rectangle *clip = &Machine->visible_area;
 	const struct GfxElement *gfx = Machine->gfx[0];
 
 	int tile_bank_offset = (video_attributes&3)*256;
@@ -204,7 +204,7 @@ static void render_text( struct osd_bitmap *bitmap ){
 
 static void draw_sprite( struct osd_bitmap *bitmap, int tile_number, int color, int sx, int sy, int xflip, int yflip, int big );
 static void draw_sprite( struct osd_bitmap *bitmap, int tile_number, int color, int sx, int sy, int xflip, int yflip, int big ){
-	const struct rectangle *clip = &Machine->drv->visible_area;
+	const struct rectangle *clip = &Machine->visible_area;
 
 	static int tile_offset[4][4] = {
 		{0x0,0x1,0x4,0x5},

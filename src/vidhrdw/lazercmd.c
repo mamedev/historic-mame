@@ -143,7 +143,7 @@ void lazercmd_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					videoram[i], video_inverted ? 1 : 0,
 					0,0,
 					sx,sy,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+					&Machine->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
 

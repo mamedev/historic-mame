@@ -166,7 +166,7 @@ void sbasketb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				scroll[i] = *sbasketb_scroll + 1;
 		}
 
-		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 	/* Draw the sprites */
@@ -197,7 +197,7 @@ void sbasketb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					code, color,
 					flipx, flipy,
 					sx, sy,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					&Machine->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}
 }

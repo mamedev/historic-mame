@@ -20,8 +20,7 @@ static int ball1_pic;
 static int ball2_pic;
 static int crow_pic;
 static int crow_flip;
-static int palette_bank;
-static int flipscreen;
+static data_t palette_bank;
 static int controller;
 static int hitclr=0;
 
@@ -139,11 +138,7 @@ WRITE_HANDLER( bking2_cont1_w )
 
 	coin_lockout_global_w(0, ~data & 0x01);
 
-	if (flipscreen != (data & 0x04))
-	{
-		flipscreen = data & 0x04;
-		memset(dirtybuffer, 1, videoram_size);
-	}
+	flip_screen_w(0, data & 0x04);
 
 	controller = data & 0x02;
 
@@ -171,25 +166,15 @@ WRITE_HANDLER( bking2_cont2_w )
 
 WRITE_HANDLER( bking2_cont3_w )
 {
-	static int sound_disabled = -1;
-
 	/* D0 = CROW INV (inverts Crow picture and coordinates) */
 	/* D1-D2 = COLOR 0 - COLOR 1 (switches 4 color palettes, global across all graphics) */
 	/* D3 = SOUND STOP */
 
 	crow_flip = ~data & 0x01;
 
-	if (palette_bank != ((data >> 1) & 0x03))
-	{
-		palette_bank = (data >> 1) & 0x03;
-		memset(dirtybuffer, 1, videoram_size);
-	}
+	set_vh_global_attribute(&palette_bank, (data >> 1) & 0x03);
 
-	if (sound_disabled != (data & 0x08))
-	{
-		sound_disabled = data & 0x08;
-		osd_set_mastervolume(sound_disabled ? -32 : 0);
-	}
+	mixer_sound_enable_global_w(~data & 0x08);
 }
 
 
@@ -256,6 +241,13 @@ void bking2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 
+
+	if (full_refresh)
+	{
+		memset(dirtybuffer,1,videoram_size);
+	}
+
+
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
 	for (offs = videoram_size - 2;offs >= 0;offs -= 2)
@@ -272,7 +264,7 @@ void bking2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			flipx = videoram[offs + 1] & 0x04;
 			flipy = videoram[offs + 1] & 0x08;
 
-			if (flipscreen)
+			if (flip_screen)
 			{
 				flipx = !flipx;
 				flipy = !flipy;
@@ -286,12 +278,12 @@ void bking2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					palette_bank,
 					flipx,flipy,
 					8*sx,8*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+					&Machine->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
 
 	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 	/* draw the balls */
 	drawgfx(bitmap,Machine->gfx[2],
@@ -299,14 +291,14 @@ void bking2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			palette_bank,
 			0,0,
 			xld1,yld1,
-			&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			&Machine->visible_area,TRANSPARENCY_PEN,0);
 
 	drawgfx(bitmap,Machine->gfx[3],
 			ball2_pic,
 			palette_bank,
 			0,0,
 			xld2,yld2,
-			&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			&Machine->visible_area,TRANSPARENCY_PEN,0);
 
 	/* draw the crow */
 	drawgfx(bitmap,Machine->gfx[1],
@@ -314,5 +306,5 @@ void bking2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			palette_bank,
 			crow_flip,crow_flip,
 			crow_flip ? xld3-16 : 256-xld3, crow_flip ? yld3-16 : 256-yld3,
-			&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			&Machine->visible_area,TRANSPARENCY_PEN,0);
 }

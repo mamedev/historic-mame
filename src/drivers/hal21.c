@@ -23,7 +23,7 @@ static int scrollx_base; /* this is the only difference in video hardware found 
 static int common_vh_start( void ){
 	dirtybuffer = malloc( 64*64 );
 	if( dirtybuffer ){
-		tmpbitmap = osd_new_bitmap( 512, 512, Machine->scrbitmap->depth );
+		tmpbitmap = bitmap_alloc( 512, 512 );
 		if( tmpbitmap ){
 			memset( dirtybuffer, 1, 64*64  );
 			return 0;
@@ -44,7 +44,7 @@ int hal21_vh_start( void ){
 }
 
 void aso_vh_stop( void ){
-	osd_free_bitmap( tmpbitmap );
+	bitmap_free( tmpbitmap );
 	free( dirtybuffer );
 }
 
@@ -88,7 +88,7 @@ static void aso_draw_background(
 		int bank, int color,
 		const struct GfxElement *gfx )
 {
-	const struct rectangle *clip = &Machine->drv->visible_area;
+	const struct rectangle *clip = &Machine->visible_area;
 	int offs;
 
 	static int old_bank, old_color;
@@ -130,7 +130,7 @@ void aso_draw_sprites(
 	const unsigned char *source = spriteram;
 	const unsigned char *finish = source+60*4;
 
-	struct rectangle clip = Machine->drv->visible_area;
+	struct rectangle clip = Machine->visible_area;
 
 	while( source<finish ){
 		int attributes = source[3]; /* YBBX.CCCC */
@@ -196,12 +196,12 @@ void aso_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh ){
 			drawgfx( bitmap, Machine->uifont,
 				"0123456789abcdef"[data>>4],0,0,0,
 				0,i*16,
-				&Machine->drv->visible_area,
+				&Machine->visible_area,
 				TRANSPARENCY_NONE,0 );
 			drawgfx( bitmap, Machine->uifont,
 				"0123456789abcdef"[data&0xf],0,0,0,
 				8,i*16,
-				&Machine->drv->visible_area,
+				&Machine->visible_area,
 				TRANSPARENCY_NONE,0 );
 		}
 	}
@@ -345,7 +345,7 @@ INPUT_PORTS_START( aso )
 	PORT_DIPSETTING(    0x00, "None" )
 
 	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, "Bonus Occurrance" )
+	PORT_DIPNAME( 0x01, 0x01, "Bonus Occurrence" )
 	PORT_DIPSETTING(    0x01, "1st & every 2nd" )
 	PORT_DIPSETTING(    0x00, "1st & 2nd only" )
 	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Difficulty ) )

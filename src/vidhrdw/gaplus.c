@@ -248,13 +248,6 @@ WRITE_HANDLER( gaplus_starfield_control_w ) {
 	gaplus_starfield_control[offset] = data;
 }
 
-static int flipscreen = 0;
-
-void gaplus_flipscreen_w( int data )
-{
-	flipscreen = data;
-}
-
 extern unsigned char *gaplus_sharedram;
 
 int gaplus_vh_start( void ) {
@@ -296,7 +289,7 @@ static void gaplus_draw_sprites(struct osd_bitmap *bitmap){
 
 			if (number >= 128*3) continue;
 
-			if (flipscreen)
+			if (flip_screen)
 			{
 				flipx = !flipx;
 				flipy = !flipy;
@@ -305,10 +298,10 @@ static void gaplus_draw_sprites(struct osd_bitmap *bitmap){
 			if ((spriteram_3[offs] & 0xa8) == 0xa0){ /* draw the sprite twice in a row */
                     drawgfx(bitmap,Machine->gfx[2+(number >> 7)],
 								number,color,flipx,flipy,sx,sy,
-								&Machine->drv->visible_area,TRANSPARENCY_COLOR,255);
+								&Machine->visible_area,TRANSPARENCY_COLOR,255);
 					drawgfx(bitmap,Machine->gfx[2+(number >> 7)],
 								number,color,flipx,flipy,sx,sy+16,
-								&Machine->drv->visible_area,TRANSPARENCY_COLOR,255);
+								&Machine->visible_area,TRANSPARENCY_COLOR,255);
 			}
 			else{
 				switch (spriteram_3[offs] & 0x28){
@@ -336,7 +329,7 @@ static void gaplus_draw_sprites(struct osd_bitmap *bitmap){
 								color,
 								flipx, flipy,
 								sx+x*16,sy+y*16,
-								&Machine->drv->visible_area,
+								&Machine->visible_area,
 								TRANSPARENCY_COLOR,255);
 						}
 					}
@@ -350,7 +343,7 @@ void gaplus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 
-	fillbitmap( bitmap, Machine->pens[0], &Machine->drv->visible_area );
+	fillbitmap( bitmap, Machine->pens[0], &Machine->visible_area );
 
 	starfield_render( bitmap );
 
@@ -391,7 +384,7 @@ void gaplus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			sy = my + 2;
 		}
 
-		if (flipscreen)
+		if (flip_screen)
 		{
 			sx = 27 - sx;
 			sy = 35 - sy;
@@ -404,8 +397,8 @@ void gaplus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
         drawgfx(bitmap,Machine->gfx[bank],
                 videoram[offs],
                 colorram[offs] & 0x3f,
-                flipscreen,flipscreen,8*sy,8*sx,
-                &Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+                flip_screen,flip_screen,8*sy,8*sx,
+                &Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 
 	gaplus_draw_sprites(bitmap);

@@ -217,7 +217,7 @@ void gottlieb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					0,
 					hflip,vflip,
 					8*sx,8*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+					&Machine->visible_area,TRANSPARENCY_NONE,0);
 		}
     }
 
@@ -225,7 +225,7 @@ void gottlieb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 
 	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 
 	/* Draw the sprites. Note that it is important to draw them exactly in this */
@@ -248,7 +248,7 @@ void gottlieb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					0,
 					hflip,vflip,
 					sx,sy,
-					&Machine->drv->visible_area,
+					&Machine->visible_area,
 					background_priority ? TRANSPARENCY_THROUGH : TRANSPARENCY_PEN,
 					background_priority ? Machine->pens[0]     : 0);
 	}

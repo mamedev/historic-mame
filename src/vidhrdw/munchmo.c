@@ -68,14 +68,14 @@ WRITE_HANDLER( mnchmobl_sprite_tile_w ){ mnchmobl_sprite_tile[offset] = data; }
 
 void mnchmobl_vh_stop( void )
 {
-	if( tmpbitmap ) osd_free_bitmap( tmpbitmap );
+	if( tmpbitmap ) bitmap_free( tmpbitmap );
 	free( dirtybuffer );
 }
 
 int mnchmobl_vh_start( void )
 {
 	dirtybuffer = malloc(0x100);
-	tmpbitmap = osd_create_bitmap(512,512);
+	tmpbitmap = bitmap_alloc(512,512);
 	if( dirtybuffer && tmpbitmap )
 	{
 		memset( dirtybuffer, 1, 0x100 );
@@ -102,7 +102,7 @@ WRITE_HANDLER( mnchmobl_videoram_w )
 
 static void draw_status( struct osd_bitmap *bitmap )
 {
-	struct rectangle clip = Machine->drv->visible_area;
+	struct rectangle clip = Machine->visible_area;
 	const struct GfxElement *gfx = Machine->gfx[0];
 	int row;
 
@@ -168,13 +168,13 @@ static void draw_background( struct osd_bitmap *bitmap )
 
 		copyscrollbitmap(bitmap,tmpbitmap,
 			1,&scrollx,1,&scrolly,
-			&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+			&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 }
 
 static void draw_sprites( struct osd_bitmap *bitmap )
 {
-	const struct rectangle *clip = &Machine->drv->visible_area;
+	const struct rectangle *clip = &Machine->visible_area;
 	int scroll = mnchmobl_vreg[6];
 	int flags = mnchmobl_vreg[7];					/*   XB?????? */
 	int xadjust = - 128-16 - ((flags&0x80)?1:0);

@@ -478,14 +478,14 @@ static void aerofgt_drawsprites(struct osd_bitmap *bitmap,int priority)
 								color,
 								flipx,flipy,
 								sx,sy,
-								&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
+								&Machine->visible_area,TRANSPARENCY_PEN,15);
 					else
 						drawgfxzoom(bitmap,Machine->gfx[sprite_gfx + (map_start >= 0x4000 ? 1 : 0)],
 								code,
 								color,
 								flipx,flipy,
 								sx,sy,
-								&Machine->drv->visible_area,TRANSPARENCY_PEN,15,
+								&Machine->visible_area,TRANSPARENCY_PEN,15,
 								0x1000 * zoomx,0x1000 * zoomy);
 					map_start += 2;
 				}
@@ -554,7 +554,7 @@ static void turbofrc_drawsprites(struct osd_bitmap *bitmap,int chip)
 							color,
 							flipx,flipy,
 							sx,sy,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,15,
+							&Machine->visible_area,TRANSPARENCY_PEN,15,
 							pri ? 0 : 0x2);
 				else
 					pdrawgfxzoom(bitmap,Machine->gfx[sprite_gfx + chip],
@@ -562,7 +562,7 @@ static void turbofrc_drawsprites(struct osd_bitmap *bitmap,int chip)
 							color,
 							flipx,flipy,
 							sx,sy,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,15,
+							&Machine->visible_area,TRANSPARENCY_PEN,15,
 							0x1000 * zoomx,0x1000 * zoomy,
 							pri ? 0 : 0x2);
 				map_start += 2;

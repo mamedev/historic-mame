@@ -121,7 +121,7 @@ void xmen_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	fillbitmap(priority_bitmap,0,NULL);
 	/* note the '+1' in the background color!!! */
-	fillbitmap(bitmap,Machine->pens[16 * bg_colorbase+1],&Machine->drv->visible_area);
+	fillbitmap(bitmap,Machine->pens[16 * bg_colorbase+1],&Machine->visible_area);
 	K052109_tilemap_draw(bitmap,layer[0],1<<16);
 	K052109_tilemap_draw(bitmap,layer[1],2<<16);
 	K052109_tilemap_draw(bitmap,layer[2],4<<16);

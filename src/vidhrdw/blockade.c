@@ -27,7 +27,7 @@ void blockade_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					0,
 					0,0,
 					8*sx,8*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+					&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 			if (!full_refresh)
 				drawgfx(bitmap,Machine->gfx[0],
@@ -35,12 +35,12 @@ void blockade_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					0,
 					0,0,
 					8*sx,8*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+					&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 		}
 	}
 
 	if (full_refresh)
 		/* copy the character mapped graphics */
-		copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 }

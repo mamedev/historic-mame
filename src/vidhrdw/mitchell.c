@@ -293,7 +293,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 				 color,
 				 flipscreen,flipscreen,
 				 sx,sy,
-				 &Machine->drv->visible_area,TRANSPARENCY_PEN,15);
+				 &Machine->visible_area,TRANSPARENCY_PEN,15);
 	}
 }
 

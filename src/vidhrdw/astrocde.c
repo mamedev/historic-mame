@@ -554,10 +554,10 @@ static void init_star_field(void)
 	{
 		for (x = -16;x < CLOCKS_PER_LINE-16;x++)	/* perfect values determined with screen shots */
 		{
-			if (x >= Machine->drv->visible_area.min_x &&
-				x <= Machine->drv->visible_area.max_x &&
-				y >= Machine->drv->visible_area.min_y &&
-				y <= Machine->drv->visible_area.max_y)
+			if (x >= Machine->visible_area.min_x &&
+				x <= Machine->visible_area.max_x &&
+				y >= Machine->visible_area.min_y &&
+				y <= Machine->visible_area.max_y)
 			{
 				if ((rng[count] & 0x1fe00) == 0x0fe00)
 					star[x+SCREEN_WIDTH*y] = 1;

@@ -422,7 +422,7 @@ static void draw_scores(struct osd_bitmap *bitmap)
 				0,
 				0, 0,
 				14*8, (2 + y) * 8,
-				&Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
+				&Machine->visible_area, TRANSPARENCY_NONE, 0);
 
 	/* high scores */
 	for (x = 0; x < 5; x++)
@@ -434,11 +434,11 @@ static void draw_scores(struct osd_bitmap *bitmap)
 					0,
 					0, 0,
 					(20 + 2 * x) * 8, (2 + y) * 8,
-					&Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
+					&Machine->visible_area, TRANSPARENCY_NONE, 0);
 	}
 
 	/* tachometer */
-	clip = Machine->drv->visible_area;
+	clip = Machine->visible_area;
 	clip.min_x = 5*8;
 	clip.max_x = clip.min_x + 1;
 	for (y = 0; y < 22; y++)
@@ -459,13 +459,13 @@ static void draw_scores(struct osd_bitmap *bitmap)
 	/* shifter status */
 	if (readinputport(0) & 0x04)
 	{
-		drawgfx(bitmap, Machine->gfx[2], 'H', 0, 0,0, 2*8,3*8, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
-		drawgfx(bitmap, Machine->gfx[2], 'I', 0, 0,0, 2*8,4*8, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
+		drawgfx(bitmap, Machine->gfx[2], 'H', 0, 0,0, 2*8,3*8, &Machine->visible_area, TRANSPARENCY_NONE, 0);
+		drawgfx(bitmap, Machine->gfx[2], 'I', 0, 0,0, 2*8,4*8, &Machine->visible_area, TRANSPARENCY_NONE, 0);
 	}
 	else
 	{
-		drawgfx(bitmap, Machine->gfx[2], 'L', 0, 0,0, 2*8,3*8, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
-		drawgfx(bitmap, Machine->gfx[2], 'O', 0, 0,0, 2*8,4*8, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
+		drawgfx(bitmap, Machine->gfx[2], 'L', 0, 0,0, 2*8,3*8, &Machine->visible_area, TRANSPARENCY_NONE, 0);
+		drawgfx(bitmap, Machine->gfx[2], 'O', 0, 0,0, 2*8,4*8, &Machine->visible_area, TRANSPARENCY_NONE, 0);
 	}
 }
 

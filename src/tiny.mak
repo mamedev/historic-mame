@@ -1,5 +1,5 @@
 # a tiny compile is without Neogeo games
-COREDEFS += -DNEOFREE=1 -DTINY_COMPILE=1 -DTINY_NAME=driver_flstory
+COREDEFS += -DTINY_COMPILE=1 -DTINY_NAME=driver_flstory
 
 # uses these CPUs
 CPUS += Z80@

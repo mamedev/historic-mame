@@ -142,7 +142,7 @@ int ddragon3_vh_start(void){
  */
 
 static void draw_sprites( struct osd_bitmap *bitmap ){
-	const struct rectangle *clip = &Machine->drv->visible_area;
+	const struct rectangle *clip = &Machine->visible_area;
 	const struct GfxElement *gfx = Machine->gfx[1];
 	UINT16 *source = (UINT16 *)spriteram;
 	UINT16 *finish = source+0x800;

@@ -171,7 +171,7 @@ void simpsons_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	sortlayers(layer,layerpri);
 
 	fillbitmap(priority_bitmap,0,NULL);
-	fillbitmap(bitmap,Machine->pens[16 * bg_colorbase],&Machine->drv->visible_area);
+	fillbitmap(bitmap,Machine->pens[16 * bg_colorbase],&Machine->visible_area);
 	K052109_tilemap_draw(bitmap,layer[0],1<<16);
 	K052109_tilemap_draw(bitmap,layer[1],2<<16);
 	K052109_tilemap_draw(bitmap,layer[2],4<<16);

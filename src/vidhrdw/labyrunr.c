@@ -91,7 +91,7 @@ int labyrunr_vh_start(void)
 
 	if (layer0 && layer1)
 	{
-		struct rectangle clip = Machine->drv->visible_area;
+		struct rectangle clip = Machine->visible_area;
 		clip.min_x += 40;
 		tilemap_set_clip(layer0,&clip);
 

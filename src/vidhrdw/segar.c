@@ -263,7 +263,7 @@ static void segar_common_screenrefresh(struct osd_bitmap *bitmap, int sprite_tra
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					charcode,charcode>>4,
 					sv.flip,sv.flip,sx,sy,
-					&Machine->drv->visible_area,sprite_transparency,0);
+					&Machine->visible_area,sprite_transparency,0);
 
 			dirtybuffer[offs] = 0;
 
@@ -275,7 +275,7 @@ static void segar_common_screenrefresh(struct osd_bitmap *bitmap, int sprite_tra
 			sv.dirtychar[offs]=0;
 
 	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,copy_transparency,Machine->pens[0]);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,copy_transparency,Machine->pens[0]);
 
 	sv.char_refresh=0;
 	sv.refresh=0;
@@ -313,15 +313,15 @@ int spaceod_vh_start(void)
 	if (segar_vh_start()!=0)
 		return 1;
 
-	if ((sv.horizbackbitmap = osd_create_bitmap(4*Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if ((sv.horizbackbitmap = bitmap_alloc(4*Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 	{
 		generic_vh_stop();
 		return 1;
 	}
 
-	if ((sv.vertbackbitmap = osd_create_bitmap(Machine->drv->screen_width,4*Machine->drv->screen_height)) == 0)
+	if ((sv.vertbackbitmap = bitmap_alloc(Machine->drv->screen_width,4*Machine->drv->screen_height)) == 0)
 	{
-		osd_free_bitmap(sv.horizbackbitmap);
+		bitmap_free(sv.horizbackbitmap);
 		generic_vh_stop();
 		return 1;
 	}
@@ -337,8 +337,8 @@ Get rid of the Space Odyssey background bitmaps.
 
 void spaceod_vh_stop(void)
 {
-	osd_free_bitmap(sv.horizbackbitmap);
-	osd_free_bitmap(sv.vertbackbitmap);
+	bitmap_free(sv.horizbackbitmap);
+	bitmap_free(sv.vertbackbitmap);
 	generic_vh_stop();
 }
 
@@ -507,7 +507,7 @@ void spaceod_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			else
 				scrolly = -sv.backshift;
 
-			copyscrollbitmap(bitmap,sv.vertbackbitmap,0,0,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+			copyscrollbitmap(bitmap,sv.vertbackbitmap,0,0,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 		}
 		else
 		{
@@ -518,13 +518,13 @@ void spaceod_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 			scrolly = -32;
 
-			copyscrollbitmap(bitmap,sv.horizbackbitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+			copyscrollbitmap(bitmap,sv.horizbackbitmap,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
 
 	if (sv.fill_background==1)
 	{
-		fillbitmap(bitmap,Machine->pens[sv.backfill],&Machine->drv->visible_area);
+		fillbitmap(bitmap,Machine->pens[sv.backfill],&Machine->visible_area);
 	}
 
 	/* Refresh the "standard" graphics */
@@ -629,7 +629,7 @@ void monsterb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				drawgfx(tmpbitmap,Machine->gfx[1 + sv.back_charset],
 					charcode,((charcode & 0xF0)>>4),
 					sv.flip,sv.flip,sx,sy,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+					&Machine->visible_area,TRANSPARENCY_NONE,0);
 			}
 		}
 		sprite_transparency=TRANSPARENCY_PEN;
@@ -810,7 +810,7 @@ void sindbadm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				drawgfx(tmpbitmap,Machine->gfx[1 + sv.back_charset],
 					charcode,((charcode & 0xF0)>>4),
 					sv.flip,sv.flip,sx,sy,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+					&Machine->visible_area,TRANSPARENCY_NONE,0);
 			}
 		}
 		sprite_transparency=TRANSPARENCY_PEN;

@@ -242,7 +242,7 @@ int offs;
 				attr >> 12,
 				flipx, flipy,
 				x,y,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
+				&Machine->visible_area,TRANSPARENCY_PEN,15);
 
 	}
 }
@@ -300,10 +300,10 @@ static int posx,posy;
 {
 int color, colmask[16];
 
-	int xmin = Machine->drv->visible_area.min_x - 16 - 1;
-	int xmax = Machine->drv->visible_area.max_x;
-	int ymin = Machine->drv->visible_area.min_y - 16 - 1;
-	int ymax = Machine->drv->visible_area.max_y;
+	int xmin = Machine->visible_area.min_x - 16 - 1;
+	int xmax = Machine->visible_area.max_x;
+	int ymin = Machine->visible_area.min_y - 16 - 1;
+	int ymax = Machine->visible_area.max_y;
 
 	int nmax				=	Machine->gfx[3]->total_elements;
 	unsigned int *pen_usage	=	Machine->gfx[3]->pen_usage;

@@ -32,12 +32,12 @@ int ninjakd2_vh_start(void)
 	{
 		return 1;
 	}
-	if ((bitmap_bg = osd_new_bitmap (Machine->drv->screen_width*2,Machine->drv->screen_height*2,Machine->scrbitmap->depth)) == 0)
+	if ((bitmap_bg = bitmap_alloc(Machine->drv->screen_width*2,Machine->drv->screen_height*2)) == 0)
 	{
 		free (bg_dirtybuffer);
 		return 1;
 	}
-	if ((bitmap_sp = osd_new_bitmap (Machine->drv->screen_width,Machine->drv->screen_height,Machine->scrbitmap->depth)) == 0)
+	if ((bitmap_sp = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 	{
 		free (bg_dirtybuffer);
 		free (bitmap_bg);
@@ -58,8 +58,8 @@ int ninjakd2_vh_start(void)
 
 void ninjakd2_vh_stop(void)
 {
-	osd_free_bitmap(bitmap_bg);
-	osd_free_bitmap(bitmap_sp);
+	bitmap_free(bitmap_bg);
+	bitmap_free(bitmap_sp);
 	free(bg_dirtybuffer);
 }
 
@@ -97,7 +97,7 @@ WRITE_HANDLER( ninjakd2_sprite_overdraw_w )
 	if (sp_overdraw!=data)
 	{
 		ninjakd2_spoverdraw_ram[offset] = data;
-		fillbitmap(bitmap_sp,15,&Machine->drv->visible_area);
+		fillbitmap(bitmap_sp,15,&Machine->visible_area);
 		sp_overdraw = data;
 	}
 }
@@ -129,7 +129,7 @@ void ninjakd2_draw_foreground(struct osd_bitmap *bitmap)
 						palette,
 						flipx,flipy,
 						sx,sy,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN, 15);
+						&Machine->visible_area,TRANSPARENCY_PEN, 15);
 		}
 
 	}
@@ -195,7 +195,7 @@ void ninjakd2_draw_sprites(struct osd_bitmap *bitmap)
 						palette,
 						flipx,flipy,
 						sx,sy,
-						&Machine->drv->visible_area,
+						&Machine->visible_area,
 						TRANSPARENCY_PEN, 15);
 		}
 	}
@@ -226,12 +226,12 @@ void ninjakd2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		ninjakd2_draw_sprites(bitmap_sp);
 		ninjakd2_draw_foreground(bitmap_sp);
-		copyscrollbitmap(bitmap,bitmap_bg,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-		copybitmap(bitmap,bitmap_sp,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_PEN, 15);
+		copyscrollbitmap(bitmap,bitmap_bg,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
+		copybitmap(bitmap,bitmap_sp,0,0,0,0,&Machine->visible_area,TRANSPARENCY_PEN, 15);
 	}
 	else 			/* normal sprite mode */
 	{
-		copyscrollbitmap(bitmap,bitmap_bg,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,bitmap_bg,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 		ninjakd2_draw_sprites(bitmap);
 		ninjakd2_draw_foreground(bitmap);
 	}

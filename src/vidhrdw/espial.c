@@ -124,7 +124,7 @@ void espial_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		for (offs = 0;offs < 32;offs++)
 			scroll[offs] = -espial_column_scroll[offs];
 
-		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 
@@ -149,13 +149,13 @@ void espial_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					color,
 					flipx,flipy,
 					sx,sy - 16,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					&Machine->visible_area,TRANSPARENCY_PEN,0);
 			drawgfx(bitmap,Machine->gfx[1],
 					code + 1,
 					color,
 					flipx,flipy,
 					sx,sy,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					&Machine->visible_area,TRANSPARENCY_PEN,0);
 		}
 		else
 			drawgfx(bitmap,Machine->gfx[1],
@@ -163,6 +163,6 @@ void espial_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					color,
 					flipx,flipy,
 					sx,sy,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

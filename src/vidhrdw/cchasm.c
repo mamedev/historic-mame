@@ -140,10 +140,10 @@ int cchasm_vh_start (void)
 {
     int xmin, xmax, ymin, ymax;
 
-	xmin=Machine->drv->visible_area.min_x;
-	ymin=Machine->drv->visible_area.min_y;
-	xmax=Machine->drv->visible_area.max_x;
-	ymax=Machine->drv->visible_area.max_y;
+	xmin=Machine->visible_area.min_x;
+	ymin=Machine->visible_area.min_y;
+	xmax=Machine->visible_area.max_x;
+	ymax=Machine->visible_area.max_y;
 
 	xcenter=((xmax+xmin)/2) << VEC_SHIFT;
 	ycenter=((ymax+ymin)/2) << VEC_SHIFT;

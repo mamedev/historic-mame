@@ -78,7 +78,7 @@ int mystston_vh_start(void)
 	memset(dirtybuffer,1,videoram_size);
 
 	/* Mysterious Stones has a virtual screen twice as large as the visible screen */
-	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,2*Machine->drv->screen_height)) == 0)
+	if ((tmpbitmap = bitmap_alloc(Machine->drv->screen_width,2*Machine->drv->screen_height)) == 0)
 	{
 		free(dirtybuffer);
 		return 1;
@@ -97,7 +97,7 @@ int mystston_vh_start(void)
 void mystston_vh_stop(void)
 {
 	free(dirtybuffer);
-	osd_free_bitmap(tmpbitmap);
+	bitmap_free(tmpbitmap);
 }
 
 
@@ -177,7 +177,7 @@ void mystston_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		scrolly = -*mystston_scroll;
 		if (flipscreen) scrolly = 256 - scrolly;
 
-		copyscrollbitmap(bitmap,tmpbitmap,0,0,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,0,0,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 
@@ -206,7 +206,7 @@ void mystston_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					(spriteram[offs] & 0x08) >> 3,
 					flipx,flipy,
 					sx,sy,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					&Machine->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}
 
@@ -230,6 +230,6 @@ void mystston_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				textcolor,
 				flipscreen,flipscreen,
 				8*sx,8*sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

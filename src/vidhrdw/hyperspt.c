@@ -90,7 +90,7 @@ int hyperspt_vh_start(void)
 	memset(dirtybuffer,1,videoram_size);
 
 	/* Hyper Sports has a virtual screen twice as large as the visible screen */
-	if ((tmpbitmap = osd_create_bitmap(2 * Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if ((tmpbitmap = bitmap_alloc(2 * Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 	{
 		free(dirtybuffer);
 		return 1;
@@ -109,7 +109,7 @@ int hyperspt_vh_start(void)
 void hyperspt_vh_stop(void)
 {
 	free(dirtybuffer);
-	osd_free_bitmap(tmpbitmap);
+	bitmap_free(tmpbitmap);
 }
 
 
@@ -186,7 +186,7 @@ void hyperspt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				scroll[offs] = -(hyperspt_scroll[2*offs] + 256 * (hyperspt_scroll[2*offs+1] & 1));
 		}
 
-		copyscrollbitmap(bitmap,tmpbitmap,32,scroll,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,32,scroll,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 	}
 
@@ -216,7 +216,7 @@ void hyperspt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				spriteram[offs] & 0x0f,
 				flipx,flipy,
 				sx,sy,
-				&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+				&Machine->visible_area,TRANSPARENCY_COLOR,0);
 
 		/* redraw with wraparound */
 		drawgfx(bitmap,Machine->gfx[1],
@@ -224,7 +224,7 @@ void hyperspt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				spriteram[offs] & 0x0f,
 				flipx,flipy,
 				sx-256,sy,
-				&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+				&Machine->visible_area,TRANSPARENCY_COLOR,0);
 	}
 }
 
@@ -286,7 +286,7 @@ void roadf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				scroll[offs] = -(hyperspt_scroll[2*offs] + 256 * (hyperspt_scroll[2*offs+1] & 1));
 		}
 
-		copyscrollbitmap(bitmap,tmpbitmap,32,scroll,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,32,scroll,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 	}
 
@@ -316,7 +316,7 @@ void roadf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				spriteram[offs] & 0x0f,
 				flipx,flipy,
 				sx,sy,
-				&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+				&Machine->visible_area,TRANSPARENCY_COLOR,0);
 
 		/* redraw with wraparound (actually not needed in Road Fighter) */
 		drawgfx(bitmap,Machine->gfx[1],
@@ -324,6 +324,6 @@ void roadf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				spriteram[offs] & 0x0f,
 				flipx,flipy,
 				sx-256,sy,
-				&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+				&Machine->visible_area,TRANSPARENCY_COLOR,0);
 	}
 }

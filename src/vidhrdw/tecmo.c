@@ -41,15 +41,15 @@ int tecmo_vh_start(void)
 	memset(dirtybuffer2,1,videoram_size);
 
 	/* the background area is twice as wide as the screen */
-	if ((tmpbitmap2 = osd_new_bitmap(2*Machine->drv->screen_width,Machine->drv->screen_height,Machine->scrbitmap->depth)) == 0)
+	if ((tmpbitmap2 = bitmap_alloc(2*Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 	{
 		free(dirtybuffer2);
 		generic_vh_stop();
 		return 1;
 	}
-	if ((tmpbitmap3 = osd_new_bitmap(2*Machine->drv->screen_width,Machine->drv->screen_height,Machine->scrbitmap->depth)) == 0)
+	if ((tmpbitmap3 = bitmap_alloc(2*Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 	{
-		osd_free_bitmap(tmpbitmap2);
+		bitmap_free(tmpbitmap2);
 		free(dirtybuffer2);
 		generic_vh_stop();
 		return 1;
@@ -87,8 +87,8 @@ int gemini_vh_start(void)
 
 ***************************************************************************/
 void tecmo_vh_stop(void){
-  osd_free_bitmap(tmpbitmap3);
-  osd_free_bitmap(tmpbitmap2);
+  bitmap_free(tmpbitmap3);
+  bitmap_free(tmpbitmap2);
   free(dirtybuffer2);
   generic_vh_stop();
 }
@@ -158,7 +158,7 @@ void tecmo_draw_sprites( struct osd_bitmap *bitmap, int priority )
 						spriteram[offs + 5] - ((flags & 0x10) << 4), /* sx */
 						spriteram[offs + 4] - ((flags & 0x20) << 3), /* sy */
 
-						&Machine->drv->visible_area,
+						&Machine->visible_area,
 						priority == 3 ? TRANSPARENCY_THROUGH : TRANSPARENCY_PEN,
 						priority == 3 ? palette_transparent_pen : 0);
 			}
@@ -380,7 +380,7 @@ if (palette_recalc())
 		scrolly = -tecmo_scroll[5];
 
 		copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,1,&scrolly,
-				&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+				&Machine->visible_area,TRANSPARENCY_NONE,0);
 		/* sprites will be drawn with TRANSPARENCY_THROUGH and appear behind the background */
 		tecmo_draw_sprites( bitmap,3 ); /* this should never draw anything, but just in case... */
 
@@ -390,7 +390,7 @@ if (palette_recalc())
 		scrollx = -tecmo_scroll[0] - 256 * (tecmo_scroll[1] & 1) - 48;
 		scrolly = -tecmo_scroll[2];
 		copyscrollbitmap(bitmap,tmpbitmap3,1,&scrollx,1,&scrolly,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+				&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 	}
 
 	tecmo_draw_sprites( bitmap,1 );
@@ -406,7 +406,7 @@ if (palette_recalc())
 				tecmo_colorram2[offs] >> 4,
 				0,0,
 				8*sx,8*sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 
 	tecmo_draw_sprites( bitmap,0 );

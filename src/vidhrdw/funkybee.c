@@ -104,7 +104,7 @@ static void draw_chars(struct osd_bitmap *_tmpbitmap, struct osd_bitmap *bitmap)
 		for (;offs < 32;offs++)
 			scroll[offs] = 0;
 
-		copyscrollbitmap(bitmap,_tmpbitmap,32,scroll,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,_tmpbitmap,32,scroll,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 }
 
@@ -136,7 +136,7 @@ void funkybee_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				col,
 				0,flipy,
 				sx,sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 
 

@@ -153,7 +153,7 @@ void circusc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			for (offs = 10;offs < 32;offs++)
 				scroll[offs] = -*circusc_scroll;
 		}
-		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 
@@ -188,7 +188,7 @@ void circusc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					sr[offs + 1] & 0x0f,
 					flipx,flipy,
 					sx,sy,
-					&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+					&Machine->visible_area,TRANSPARENCY_COLOR,0);
 		}
 	}
 }

@@ -75,7 +75,7 @@ static int common_vh_start(void)
 		return 1;
 	memset (dirtybuffer, 1, videoram_size);
 
-	if ((tmpbitmap = osd_create_bitmap (36*8,60*8)) == 0)
+	if ((tmpbitmap = bitmap_alloc (36*8,60*8)) == 0)
 	{
 		free (dirtybuffer);
 		return 1;
@@ -112,7 +112,7 @@ int todruaga_vh_start(void)
 void mappy_vh_stop(void)
 {
 	free(dirtybuffer);
-	osd_free_bitmap(tmpbitmap);
+	bitmap_free(tmpbitmap);
 }
 
 
@@ -149,7 +149,7 @@ void mappy_draw_sprite(struct osd_bitmap *dest,unsigned int code,unsigned int co
 {
 	if (special_display == 1) sy++;	/* Motos */
 
-	drawgfx(dest,Machine->gfx[1],code,color,flipx,flipy,sx,sy,&Machine->drv->visible_area,
+	drawgfx(dest,Machine->gfx[1],code,color,flipx,flipy,sx,sy,&Machine->visible_area,
 		TRANSPARENCY_COLOR,15);
 }
 
@@ -264,7 +264,7 @@ void mappy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				scroll[offs] = 224 - scroll[offs];
 		}
 
-		copyscrollbitmap(bitmap,tmpbitmap,0,0,36,scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,0,0,36,scroll,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 	/* Draw the sprites. */

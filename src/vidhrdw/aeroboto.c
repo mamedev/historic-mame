@@ -45,13 +45,13 @@ void aeroboto_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				0,
 				0,0,
 				8*sx - aeroboto_bgscroll[sy],8*sy,
-				&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+				&Machine->visible_area,TRANSPARENCY_NONE,0);
 		drawgfx(bitmap,Machine->gfx[0],
 				videoram[offs] + 256 * aeroboto_charbank,
 				0,
 				0,0,
 				8*sx - aeroboto_bgscroll[sy] + 256,8*sy,
-				&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+				&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 	for (offs = videoram_size - 1;offs >= 0;offs--)
@@ -66,13 +66,13 @@ void aeroboto_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				0,
 				0,0,
 				8*sx - aeroboto_fgscroll[sy],8*sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 		drawgfx(bitmap,Machine->gfx[0],
 				aeroboto_videoram[offs] + 256 * aeroboto_charbank,
 				0,
 				0,0,
 				8*sx - aeroboto_fgscroll[sy] + 256,8*sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 
 	for (offs = spriteram_size-4;offs >= 0;offs -= 4)
@@ -88,6 +88,6 @@ void aeroboto_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				spriteram[offs + 2] & 0x0f,
 				0,0,
 				sx,sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

@@ -1,6 +1,52 @@
 /***************************************************************************
+Bubble Bobble / Tokio
 
-Bobble Bobble memory map (preliminary)
+Main clock: XTAL = 24 MHz
+Horizontal video frequency: HSYNC = XTAL/4/384 = 15.625 kHz
+Video frequency: VSYNC = HSYNC/264 = 59.185606 Hz
+VBlank duration: 1/VSYNC * (40/264) = 2560 us
+
+***************************************************************************
+
+Bubble Bobble ROM info
+
+            Taito  Romstar  ?????   Romstar
+                          (missing) mode sel.
+CPU Board
+---------
+17  CU1     A78-01    ->      ->      ->         protection mcu
+49  PAL1    A78-02    ->      ->      ->         address decoder
+43  PAL2    A78-03    ->      ->      ->         address decoder
+12  PAL3    A78-04    ->      ->      ->         address decoder
+53  empty                                        main prg
+52  ROM1    A78-05  A78-21  A78-22  A78-24       main prg
+51  ROM2    A78-06    ->    A78-23  A78-25       main prg
+46  ROM4    A78-07    ->      ->      ->         sound prg
+37  ROM3    A78-08    ->      ->      ->         sub prg
+
+Video Board
+-----------
+12  ROM1    A78-09    ->      ->      ->         gfx
+13  ROM2	A78-10    ->      ->      ->         gfx
+14  ROM3	A78-11    ->      ->      ->         gfx
+15  ROM4	A78-12    ->      ->      ->         gfx
+16  ROM5	A78-13    ->      ->      ->         gfx
+17  ROM6	A78-14    ->      ->      ->         gfx
+18  empty                                        gfx
+19  empty                                        gfx
+30  ROM7	A78-15    ->      ->      ->         gfx
+31  ROM8	A78-16    ->      ->      ->         gfx
+32  ROM9	A78-17    ->      ->      ->         gfx
+33  ROM10	A78-18    ->      ->      ->         gfx
+34  ROM11	A78-19    ->      ->      ->         gfx
+35  ROM12	A78-20    ->      ->      ->         gfx
+36  empty                                        gfx
+37  empty                                        gfx
+41  ROM13	A71-25    ->      ->      ->         video timing
+
+
+
+Bobble Bobble memory map
 
 driver by Chris Moore
 
@@ -30,9 +76,7 @@ Service mode works only if the language switch is set to Japanese.
 - The protection feature which randomizes the EXTEND letters in the original
   version is not emulated properly.
 
-
-***************************************************************************/
-/***************************************************************************
+***************************************************************************
 
 Tokio memory map
 
@@ -63,11 +107,7 @@ CPU 3
   Here goes a list of known deficiencies of our drivers:
 
   - The bootleg romset is functional. The original one hangs at
-    the title screen. This is because Fredrik and I have worked
-    on the first one, and got mostly done. Later Victor added support
-    for the original set (mainly sound), which is still deficient.
-
-  - Score saving is still wrong, I think.
+    the title screen (protection).
 
   - Sound support is probably incomplete. There are a couple of unknown
     accesses done by the CPU, including to the YM2203 I/O ports. At the
@@ -119,7 +159,8 @@ WRITE_HANDLER( bublbobl_68705_portB_w );
 WRITE_HANDLER( bublbobl_68705_ddrB_w );
 WRITE_HANDLER( bublbobl_bankswitch_w );
 WRITE_HANDLER( tokio_bankswitch_w );
-WRITE_HANDLER( tokio_nmitrigger_w );
+WRITE_HANDLER( tokio_videoctrl_w );
+WRITE_HANDLER( bublbobl_nmitrigger_w );
 READ_HANDLER( tokio_fake_r );
 WRITE_HANDLER( bublbobl_sound_command_w );
 WRITE_HANDLER( bublbobl_sh_nmi_disable_w );
@@ -134,7 +175,7 @@ static struct MemoryReadAddress bublbobl_readmem[] =
 	{ 0xc000, 0xdfff, MRA_RAM },
     { 0xe000, 0xf7ff, bublbobl_sharedram1_r },
 	{ 0xf800, 0xf9ff, paletteram_r },
-    { 0xfc00, 0xfcff, bublbobl_sharedram2_r },
+    { 0xfc00, 0xffff, bublbobl_sharedram2_r },
     { -1 }  /* end of table */
 };
 
@@ -146,9 +187,11 @@ static struct MemoryWriteAddress bublbobl_writemem[] =
 	{ 0xe000, 0xf7ff, bublbobl_sharedram1_w, &bublbobl_sharedram1 },
 	{ 0xf800, 0xf9ff, paletteram_RRRRGGGGBBBBxxxx_swap_w, &paletteram },
 	{ 0xfa00, 0xfa00, bublbobl_sound_command_w },
-	{ 0xfa80, 0xfa80, watchdog_reset_w },	/* not sure - could go to the 68705 */
+//	{ 0xfa03, 0xfa03,  }, clocks reset to sound cpu
+	{ 0xfa80, 0xfa80, watchdog_reset_w },
+	{ 0xfb00, 0xfb00, bublbobl_nmitrigger_w },	/* not used by Bubble Bobble, only by Tokio */
 	{ 0xfb40, 0xfb40, bublbobl_bankswitch_w },
-	{ 0xfc00, 0xfcff, bublbobl_sharedram2_w, &bublbobl_sharedram2 },
+	{ 0xfc00, 0xffff, bublbobl_sharedram2_w, &bublbobl_sharedram2 },
 	{ -1 }  /* end of table */
 };
 
@@ -198,6 +241,7 @@ static struct MemoryWriteAddress boblbobl_writemem[] =
 	{ 0xf800, 0xf9ff, paletteram_RRRRGGGGBBBBxxxx_swap_w, &paletteram },
 	{ 0xfa00, 0xfa00, bublbobl_sound_command_w },
 	{ 0xfa80, 0xfa80, MWA_NOP },
+	{ 0xfb00, 0xfb00, bublbobl_nmitrigger_w },	/* not used by Bubble Bobble, only by Tokio */
 	{ 0xfb40, 0xfb40, bublbobl_bankswitch_w },
 	{ 0xfc00, 0xfcff, bublbobl_sharedram2_w, &bublbobl_sharedram2 },
 	{ -1 }  /* end of table */
@@ -272,8 +316,8 @@ static struct MemoryWriteAddress tokio_writemem[] =
 	{ 0xf800, 0xf9ff, paletteram_RRRRGGGGBBBBxxxx_swap_w, &paletteram },
 	{ 0xfa00, 0xfa00, MWA_NOP },
 	{ 0xfa80, 0xfa80, tokio_bankswitch_w },
-	{ 0xfb00, 0xfb00, MWA_NOP }, /* ??? */
-	{ 0xfb80, 0xfb80, tokio_nmitrigger_w },
+	{ 0xfb00, 0xfb00, tokio_videoctrl_w },
+	{ 0xfb80, 0xfb80, bublbobl_nmitrigger_w },
 	{ 0xfc00, 0xfc00, bublbobl_sound_command_w },
 	{ 0xfe00, 0xfe00, MWA_NOP }, /* ??? */
 	{ -1 }  /* end of table */
@@ -323,7 +367,7 @@ static struct MemoryWriteAddress tokio_sound_writemem[] =
 INPUT_PORTS_START( bublbobl )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_TILT )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -366,11 +410,12 @@ INPUT_PORTS_START( bublbobl )
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPSETTING(    0x30, "3" )
 	PORT_DIPSETTING(    0x20, "5" )
-	PORT_DIPNAME( 0xc0, 0xc0, "Spare" )
-	PORT_DIPSETTING(    0x00, "A" )
-	PORT_DIPSETTING(    0x40, "B" )
-	PORT_DIPSETTING(    0x80, "C" )
-	PORT_DIPSETTING(    0xc0, "D" )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY )
@@ -452,7 +497,7 @@ INPUT_PORTS_START( boblbobl )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_TILT ) /* ?????*/
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
@@ -518,7 +563,7 @@ INPUT_PORTS_START( sboblbob )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_TILT ) /* ?????*/
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
@@ -534,7 +579,7 @@ INPUT_PORTS_START( tokio )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x08, 0x08, "Demo Sounds?" )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) )
@@ -573,7 +618,7 @@ INPUT_PORTS_START( tokio )
 
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_TILT )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN3 ) /* service */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -624,6 +669,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
+#define MAIN_XTAL 24000000
+
 /* handler called by the 2203 emulator when the internal timers cause an IRQ */
 static void irqhandler(int irq)
 {
@@ -633,7 +680,7 @@ static void irqhandler(int irq)
 static struct YM2203interface ym2203_interface =
 {
 	1,			/* 1 chip */
-	3000000,	/* 3 MHz ??? (hand tuned) */
+	MAIN_XTAL/8,	/* 3 MHz */
 	{ YM2203_VOL(25,25) },
 	{ 0 },
 	{ 0 },
@@ -646,15 +693,15 @@ static struct YM2203interface ym2203_interface =
 static struct YM3526interface ym3526_interface =
 {
 	1,			/* 1 chip (no more supported) */
-	3000000,	/* 3 MHz ??? (hand tuned) */
-	{ 255 }		/* (not supported) */
+	MAIN_XTAL/8,	/* 3 MHz */
+	{ 25 }		/* volume */
 };
 
 
 static struct YM2203interface tokio_ym2203_interface =
 {
 	1,		/* 1 chip */
-	3000000,	/* 3 MHz ??? */
+	MAIN_XTAL/8,	/* 3 MHz */
 	{ YM2203_VOL(100,20) },
 	{ 0 },
 	{ 0 },
@@ -671,19 +718,19 @@ static struct MachineDriver machine_driver_bublbobl =
 	{
 		{
 			CPU_Z80,
-			6000000,		/* 6 Mhz??? */
+			MAIN_XTAL/4,	/* 6 MHz */
 			bublbobl_readmem,bublbobl_writemem,0,0,
 			ignore_interrupt,0	/* IRQs are triggered by the 68705 */
 		},
 		{
 			CPU_Z80,
-			6000000,		/* 6 Mhz??? */
+			MAIN_XTAL/4,	/* 6 MHz */
 			bublbobl_readmem2,bublbobl_writemem2,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* 4 Mhz ??? */
+			MAIN_XTAL/8,	/* 3 MHz */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0	/* NMIs are triggered by the main CPU */
 								/* IRQs are triggered by the YM2203 */
@@ -733,19 +780,19 @@ static struct MachineDriver machine_driver_boblbobl =
 	{
 		{
 			CPU_Z80,
-			6000000,		/* 6 Mhz??? */
+			MAIN_XTAL/4,	/* 6 MHz */
 			boblbobl_readmem,boblbobl_writemem,0,0,
 			interrupt,1	/* interrupt mode 1, unlike Bubble Bobble */
 		},
 		{
 			CPU_Z80,
-			6000000,		/* 6 Mhz??? */
+			MAIN_XTAL/4,	/* 6 MHz */
 			bublbobl_readmem2,bublbobl_writemem2,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	/* 4 Mhz ??? */
+			MAIN_XTAL/8,	/* 3 MHz */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0	/* NMIs are triggered by the main CPU */
 								/* IRQs are triggered by the YM2203 */
@@ -785,22 +832,22 @@ static struct MachineDriver machine_driver_boblbobl =
 static struct MachineDriver machine_driver_tokio =
 {
 	/* basic machine hardware */
-	{		/* MachineCPU */
-		{       /* Main CPU */
+	{
+		{
 			CPU_Z80,
-			4000000,		/* 4 Mhz??? */
+			MAIN_XTAL/4,	/* 6 MHz */
 			tokio_readmem,tokio_writemem,0,0,
 			interrupt,1
 		},
-		{       /* Video CPU */
+		{
 			CPU_Z80,
-			4000000,		/* 4 Mhz??? */
+			MAIN_XTAL/4,	/* 6 MHz */
 			tokio_readmem2,tokio_writemem2,0,0,
 			interrupt,1
 		},
-		{       /* Audio CPU */
+		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			4000000,	        /* 4 Mhz ??? */
+			MAIN_XTAL/8,	/* 3 MHz */
 			tokio_sound_readmem,tokio_sound_writemem,0,0,
 			ignore_interrupt,0
 						/* NMIs are triggered by the main CPU */
@@ -842,237 +889,270 @@ static struct MachineDriver machine_driver_tokio =
 ***************************************************************************/
 
 ROM_START( bublbobl )
-	ROM_REGION( 0x1c000, REGION_CPU1 )	/* 64k+64k for the first CPU */
-	ROM_LOAD( "a78_06.bin",   0x00000, 0x8000, 0x32c8305b )
-	ROM_LOAD( "a78_05.bin",   0x08000, 0x4000, 0x53f4bc6e )	/* banked at 8000-bfff. I must load */
-	ROM_CONTINUE(             0x10000, 0xc000 )				/* bank 0 at 8000 because the code falls into */
-															/* it from 7fff, so bank switching wouldn't work */
+	ROM_REGION( 0x30000, REGION_CPU1 )
+	ROM_LOAD( "a78-06.51",    0x00000, 0x08000, 0x32c8305b )
+    /* ROMs banked at 8000-bfff */
+	ROM_LOAD( "a78-05.52",    0x10000, 0x10000, 0x53f4bc6e )
+	/* 20000-2ffff empty */
+
 	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "a78_09.bin",   0x00000, 0x8000, 0x20358c22 )    /* 1st plane */
-	ROM_LOAD( "a78_10.bin",   0x08000, 0x8000, 0x930168a9 )
-	ROM_LOAD( "a78_11.bin",   0x10000, 0x8000, 0x9773e512 )
-	ROM_LOAD( "a78_12.bin",   0x18000, 0x8000, 0xd045549b )
-	ROM_LOAD( "a78_13.bin",   0x20000, 0x8000, 0xd0af35c5 )
-	ROM_LOAD( "a78_14.bin",   0x28000, 0x8000, 0x7b5369a8 )
+	ROM_LOAD( "a78-09.12",    0x00000, 0x8000, 0x20358c22 )    /* 1st plane */
+	ROM_LOAD( "a78-10.13",    0x08000, 0x8000, 0x930168a9 )
+	ROM_LOAD( "a78-11.14",    0x10000, 0x8000, 0x9773e512 )
+	ROM_LOAD( "a78-12.15",    0x18000, 0x8000, 0xd045549b )
+	ROM_LOAD( "a78-13.16",    0x20000, 0x8000, 0xd0af35c5 )
+	ROM_LOAD( "a78-14.17",    0x28000, 0x8000, 0x7b5369a8 )
 	/* 0x30000-0x3ffff empty */
-	ROM_LOAD( "a78_15.bin",   0x40000, 0x8000, 0x6b61a413 )    /* 2nd plane */
-	ROM_LOAD( "a78_16.bin",   0x48000, 0x8000, 0xb5492d97 )
-	ROM_LOAD( "a78_17.bin",   0x50000, 0x8000, 0xd69762d5 )
-	ROM_LOAD( "a78_18.bin",   0x58000, 0x8000, 0x9f243b68 )
-	ROM_LOAD( "a78_19.bin",   0x60000, 0x8000, 0x66e9438c )
-	ROM_LOAD( "a78_20.bin",   0x68000, 0x8000, 0x9ef863ad )
+	ROM_LOAD( "a78-15.30",    0x40000, 0x8000, 0x6b61a413 )    /* 2nd plane */
+	ROM_LOAD( "a78-16.31",    0x48000, 0x8000, 0xb5492d97 )
+	ROM_LOAD( "a78-17.32",    0x50000, 0x8000, 0xd69762d5 )
+	ROM_LOAD( "a78-18.33",    0x58000, 0x8000, 0x9f243b68 )
+	ROM_LOAD( "a78-19.34",    0x60000, 0x8000, 0x66e9438c )
+	ROM_LOAD( "a78-20.35",    0x68000, 0x8000, 0x9ef863ad )
 	/* 0x70000-0x7ffff empty */
 
 	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
-	ROM_LOAD( "a78_08.bin",   0x0000, 0x08000, 0xae11a07b )
+	ROM_LOAD( "a78-08.37",    0x0000, 0x08000, 0xae11a07b )
 
 	ROM_REGION( 0x10000, REGION_CPU3 )	/* 64k for the third CPU */
-	ROM_LOAD( "a78_07.bin",   0x0000, 0x08000, 0x4f9a26e8 )
+	ROM_LOAD( "a78-07.46",    0x0000, 0x08000, 0x4f9a26e8 )
 
 	ROM_REGION( 0x0800, REGION_CPU4 )	/* 2k for the microcontroller */
 	ROM_LOAD( "68705.bin",    0x0000, 0x0800, 0x78caa635 )	/* from a pirate board */
+
+	ROM_REGION( 0x0100, REGION_PROMS )
+	ROM_LOAD( "a71-25.41",    0x0000, 0x0100, 0x2d0f8545 )	/* video timing */
 ROM_END
 
 ROM_START( bublbobr )
-	ROM_REGION( 0x1c000, REGION_CPU1 )	/* 64k+64k for the first CPU */
-	ROM_LOAD( "25.cpu",       0x00000, 0x8000, 0x2d901c9d )
-	ROM_LOAD( "24.cpu",       0x08000, 0x4000, 0xb7afedc4 )	/* banked at 8000-bfff. I must load */
-	ROM_CONTINUE(             0x10000, 0xc000 )				/* bank 0 at 8000 because the code falls into */
-															/* it from 7fff, so bank switching wouldn't work */
+	ROM_REGION( 0x30000, REGION_CPU1 )
+	ROM_LOAD( "a78-25.51",    0x00000, 0x08000, 0x2d901c9d )
+    /* ROMs banked at 8000-bfff */
+	ROM_LOAD( "a78-24.52",    0x10000, 0x10000, 0xb7afedc4 )
+	/* 20000-2ffff empty */
+
 	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "a78_09.bin",   0x00000, 0x8000, 0x20358c22 )    /* 1st plane */
-	ROM_LOAD( "a78_10.bin",   0x08000, 0x8000, 0x930168a9 )
-	ROM_LOAD( "a78_11.bin",   0x10000, 0x8000, 0x9773e512 )
-	ROM_LOAD( "a78_12.bin",   0x18000, 0x8000, 0xd045549b )
-	ROM_LOAD( "a78_13.bin",   0x20000, 0x8000, 0xd0af35c5 )
-	ROM_LOAD( "a78_14.bin",   0x28000, 0x8000, 0x7b5369a8 )
+	ROM_LOAD( "a78-09.12",    0x00000, 0x8000, 0x20358c22 )    /* 1st plane */
+	ROM_LOAD( "a78-10.13",    0x08000, 0x8000, 0x930168a9 )
+	ROM_LOAD( "a78-11.14",    0x10000, 0x8000, 0x9773e512 )
+	ROM_LOAD( "a78-12.15",    0x18000, 0x8000, 0xd045549b )
+	ROM_LOAD( "a78-13.16",    0x20000, 0x8000, 0xd0af35c5 )
+	ROM_LOAD( "a78-14.17",    0x28000, 0x8000, 0x7b5369a8 )
 	/* 0x30000-0x3ffff empty */
-	ROM_LOAD( "a78_15.bin",   0x40000, 0x8000, 0x6b61a413 )    /* 2nd plane */
-	ROM_LOAD( "a78_16.bin",   0x48000, 0x8000, 0xb5492d97 )
-	ROM_LOAD( "a78_17.bin",   0x50000, 0x8000, 0xd69762d5 )
-	ROM_LOAD( "a78_18.bin",   0x58000, 0x8000, 0x9f243b68 )
-	ROM_LOAD( "a78_19.bin",   0x60000, 0x8000, 0x66e9438c )
-	ROM_LOAD( "a78_20.bin",   0x68000, 0x8000, 0x9ef863ad )
+	ROM_LOAD( "a78-15.30",    0x40000, 0x8000, 0x6b61a413 )    /* 2nd plane */
+	ROM_LOAD( "a78-16.31",    0x48000, 0x8000, 0xb5492d97 )
+	ROM_LOAD( "a78-17.32",    0x50000, 0x8000, 0xd69762d5 )
+	ROM_LOAD( "a78-18.33",    0x58000, 0x8000, 0x9f243b68 )
+	ROM_LOAD( "a78-19.34",    0x60000, 0x8000, 0x66e9438c )
+	ROM_LOAD( "a78-20.35",    0x68000, 0x8000, 0x9ef863ad )
 	/* 0x70000-0x7ffff empty */
 
 	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
-	ROM_LOAD( "a78_08.bin",   0x0000, 0x08000, 0xae11a07b )
+	ROM_LOAD( "a78-08.37",    0x0000, 0x08000, 0xae11a07b )
 
 	ROM_REGION( 0x10000, REGION_CPU3 )	/* 64k for the third CPU */
-	ROM_LOAD( "a78_07.bin",   0x0000, 0x08000, 0x4f9a26e8 )
+	ROM_LOAD( "a78-07.46",    0x0000, 0x08000, 0x4f9a26e8 )
 
 	ROM_REGION( 0x0800, REGION_CPU4 )	/* 2k for the microcontroller */
 	ROM_LOAD( "68705.bin",    0x0000, 0x0800, 0x78caa635 )	/* from a pirate board */
+
+	ROM_REGION( 0x0100, REGION_PROMS )
+	ROM_LOAD( "a71-25.41",    0x0000, 0x0100, 0x2d0f8545 )	/* video timing */
 ROM_END
 
 ROM_START( bubbobr1 )
-	ROM_REGION( 0x1c000, REGION_CPU1 )	/* 64k+64k for the first CPU */
-	ROM_LOAD( "a78_06.bin",   0x00000, 0x8000, 0x32c8305b )
-	ROM_LOAD( "a78_21.bin",   0x08000, 0x4000, 0x2844033d )	/* banked at 8000-bfff. I must load */
-	ROM_CONTINUE(             0x10000, 0xc000 )				/* bank 0 at 8000 because the code falls into */
-															/* it from 7fff, so bank switching wouldn't work */
+	ROM_REGION( 0x30000, REGION_CPU1 )
+	ROM_LOAD( "a78-06.51",    0x00000, 0x08000, 0x32c8305b )
+    /* ROMs banked at 8000-bfff */
+	ROM_LOAD( "a78-21.52",    0x10000, 0x10000, 0x2844033d )
+	/* 20000-2ffff empty */
+
 	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "a78_09.bin",   0x00000, 0x8000, 0x20358c22 )    /* 1st plane */
-	ROM_LOAD( "a78_10.bin",   0x08000, 0x8000, 0x930168a9 )
-	ROM_LOAD( "a78_11.bin",   0x10000, 0x8000, 0x9773e512 )
-	ROM_LOAD( "a78_12.bin",   0x18000, 0x8000, 0xd045549b )
-	ROM_LOAD( "a78_13.bin",   0x20000, 0x8000, 0xd0af35c5 )
-	ROM_LOAD( "a78_14.bin",   0x28000, 0x8000, 0x7b5369a8 )
+	ROM_LOAD( "a78-09.12",    0x00000, 0x8000, 0x20358c22 )    /* 1st plane */
+	ROM_LOAD( "a78-10.13",    0x08000, 0x8000, 0x930168a9 )
+	ROM_LOAD( "a78-11.14",    0x10000, 0x8000, 0x9773e512 )
+	ROM_LOAD( "a78-12.15",    0x18000, 0x8000, 0xd045549b )
+	ROM_LOAD( "a78-13.16",    0x20000, 0x8000, 0xd0af35c5 )
+	ROM_LOAD( "a78-14.17",    0x28000, 0x8000, 0x7b5369a8 )
 	/* 0x30000-0x3ffff empty */
-	ROM_LOAD( "a78_15.bin",   0x40000, 0x8000, 0x6b61a413 )    /* 2nd plane */
-	ROM_LOAD( "a78_16.bin",   0x48000, 0x8000, 0xb5492d97 )
-	ROM_LOAD( "a78_17.bin",   0x50000, 0x8000, 0xd69762d5 )
-	ROM_LOAD( "a78_18.bin",   0x58000, 0x8000, 0x9f243b68 )
-	ROM_LOAD( "a78_19.bin",   0x60000, 0x8000, 0x66e9438c )
-	ROM_LOAD( "a78_20.bin",   0x68000, 0x8000, 0x9ef863ad )
+	ROM_LOAD( "a78-15.30",    0x40000, 0x8000, 0x6b61a413 )    /* 2nd plane */
+	ROM_LOAD( "a78-16.31",    0x48000, 0x8000, 0xb5492d97 )
+	ROM_LOAD( "a78-17.32",    0x50000, 0x8000, 0xd69762d5 )
+	ROM_LOAD( "a78-18.33",    0x58000, 0x8000, 0x9f243b68 )
+	ROM_LOAD( "a78-19.34",    0x60000, 0x8000, 0x66e9438c )
+	ROM_LOAD( "a78-20.35",    0x68000, 0x8000, 0x9ef863ad )
 	/* 0x70000-0x7ffff empty */
 
 	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
-	ROM_LOAD( "a78_08.bin",   0x0000, 0x08000, 0xae11a07b )
+	ROM_LOAD( "a78-08.37",    0x0000, 0x08000, 0xae11a07b )
 
 	ROM_REGION( 0x10000, REGION_CPU3 )	/* 64k for the third CPU */
-	ROM_LOAD( "a78_07.bin",   0x0000, 0x08000, 0x4f9a26e8 )
+	ROM_LOAD( "a78-07.46",    0x0000, 0x08000, 0x4f9a26e8 )
 
 	ROM_REGION( 0x0800, REGION_CPU4 )	/* 2k for the microcontroller */
 	ROM_LOAD( "68705.bin",    0x0000, 0x0800, 0x78caa635 )	/* from a pirate board */
+
+	ROM_REGION( 0x0100, REGION_PROMS )
+	ROM_LOAD( "a71-25.41",    0x0000, 0x0100, 0x2d0f8545 )	/* video timing */
 ROM_END
 
 ROM_START( boblbobl )
-	ROM_REGION( 0x1c000, REGION_CPU1 )	/* 64k+64k for the first CPU */
-	ROM_LOAD( "bb3",          0x00000, 0x8000, 0x01f81936 )
-	ROM_LOAD( "bb5",          0x08000, 0x4000, 0x13118eb1 )	/* banked at 8000-bfff. I must load */
-	ROM_CONTINUE(             0x10000, 0x4000 )				/* bank 0 at 8000 because the code falls into */
-															/* it from 7fff, so bank switching wouldn't work */
-	ROM_LOAD( "bb4",          0x14000, 0x8000, 0xafda99d8 )	/* banked at 8000-bfff */
+	ROM_REGION( 0x30000, REGION_CPU1 )
+	ROM_LOAD( "bb3",          0x00000, 0x08000, 0x01f81936 )
+    /* ROMs banked at 8000-bfff */
+	ROM_LOAD( "bb5",          0x10000, 0x08000, 0x13118eb1 )
+	ROM_LOAD( "bb4",          0x18000, 0x08000, 0xafda99d8 )
+	/* 20000-2ffff empty */
 
 	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "a78_09.bin",   0x00000, 0x8000, 0x20358c22 )    /* 1st plane */
-	ROM_LOAD( "a78_10.bin",   0x08000, 0x8000, 0x930168a9 )
-	ROM_LOAD( "a78_11.bin",   0x10000, 0x8000, 0x9773e512 )
-	ROM_LOAD( "a78_12.bin",   0x18000, 0x8000, 0xd045549b )
-	ROM_LOAD( "a78_13.bin",   0x20000, 0x8000, 0xd0af35c5 )
-	ROM_LOAD( "a78_14.bin",   0x28000, 0x8000, 0x7b5369a8 )
+	ROM_LOAD( "a78-09.12",    0x00000, 0x8000, 0x20358c22 )    /* 1st plane */
+	ROM_LOAD( "a78-10.13",    0x08000, 0x8000, 0x930168a9 )
+	ROM_LOAD( "a78-11.14",    0x10000, 0x8000, 0x9773e512 )
+	ROM_LOAD( "a78-12.15",    0x18000, 0x8000, 0xd045549b )
+	ROM_LOAD( "a78-13.16",    0x20000, 0x8000, 0xd0af35c5 )
+	ROM_LOAD( "a78-14.17",    0x28000, 0x8000, 0x7b5369a8 )
 	/* 0x30000-0x3ffff empty */
-	ROM_LOAD( "a78_15.bin",   0x40000, 0x8000, 0x6b61a413 )    /* 2nd plane */
-	ROM_LOAD( "a78_16.bin",   0x48000, 0x8000, 0xb5492d97 )
-	ROM_LOAD( "a78_17.bin",   0x50000, 0x8000, 0xd69762d5 )
-	ROM_LOAD( "a78_18.bin",   0x58000, 0x8000, 0x9f243b68 )
-	ROM_LOAD( "a78_19.bin",   0x60000, 0x8000, 0x66e9438c )
-	ROM_LOAD( "a78_20.bin",   0x68000, 0x8000, 0x9ef863ad )
+	ROM_LOAD( "a78-15.30",    0x40000, 0x8000, 0x6b61a413 )    /* 2nd plane */
+	ROM_LOAD( "a78-16.31",    0x48000, 0x8000, 0xb5492d97 )
+	ROM_LOAD( "a78-17.32",    0x50000, 0x8000, 0xd69762d5 )
+	ROM_LOAD( "a78-18.33",    0x58000, 0x8000, 0x9f243b68 )
+	ROM_LOAD( "a78-19.34",    0x60000, 0x8000, 0x66e9438c )
+	ROM_LOAD( "a78-20.35",    0x68000, 0x8000, 0x9ef863ad )
 	/* 0x70000-0x7ffff empty */
 
 	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
-	ROM_LOAD( "a78_08.bin",   0x0000, 0x08000, 0xae11a07b )
+	ROM_LOAD( "a78-08.37",    0x0000, 0x08000, 0xae11a07b )
 
 	ROM_REGION( 0x10000, REGION_CPU3 )	/* 64k for the third CPU */
-	ROM_LOAD( "a78_07.bin",   0x0000, 0x08000, 0x4f9a26e8 )
+	ROM_LOAD( "a78-07.46",    0x0000, 0x08000, 0x4f9a26e8 )
+
+	ROM_REGION( 0x0100, REGION_PROMS )
+	ROM_LOAD( "a71-25.41",    0x0000, 0x0100, 0x2d0f8545 )	/* video timing */
 ROM_END
 
 ROM_START( sboblbob )
-	ROM_REGION( 0x1c000, REGION_CPU1 )	/* 64k+64k for the first CPU */
-	ROM_LOAD( "bbb-3.rom",    0x00000, 0x8000, 0xf304152a )
-	ROM_LOAD( "bb5",          0x08000, 0x4000, 0x13118eb1 )	/* banked at 8000-bfff. I must load */
-	ROM_CONTINUE(             0x10000, 0x4000 )				/* bank 0 at 8000 because the code falls into */
-															/* it from 7fff, so bank switching wouldn't work */
-	ROM_LOAD( "bbb-4.rom",    0x14000, 0x8000, 0x94c75591 )	/* banked at 8000-bfff */
+	ROM_REGION( 0x30000, REGION_CPU1 )
+	ROM_LOAD( "bbb-3.rom",    0x00000, 0x08000, 0xf304152a )
+    /* ROMs banked at 8000-bfff */
+	ROM_LOAD( "bb5",          0x10000, 0x08000, 0x13118eb1 )
+	ROM_LOAD( "bbb-4.rom",    0x18000, 0x08000, 0x94c75591 )
+	/* 20000-2ffff empty */
 
 	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "a78_09.bin",   0x00000, 0x8000, 0x20358c22 )    /* 1st plane */
-	ROM_LOAD( "a78_10.bin",   0x08000, 0x8000, 0x930168a9 )
-	ROM_LOAD( "a78_11.bin",   0x10000, 0x8000, 0x9773e512 )
-	ROM_LOAD( "a78_12.bin",   0x18000, 0x8000, 0xd045549b )
-	ROM_LOAD( "a78_13.bin",   0x20000, 0x8000, 0xd0af35c5 )
-	ROM_LOAD( "a78_14.bin",   0x28000, 0x8000, 0x7b5369a8 )
+	ROM_LOAD( "a78-09.12",    0x00000, 0x8000, 0x20358c22 )    /* 1st plane */
+	ROM_LOAD( "a78-10.13",    0x08000, 0x8000, 0x930168a9 )
+	ROM_LOAD( "a78-11.14",    0x10000, 0x8000, 0x9773e512 )
+	ROM_LOAD( "a78-12.15",    0x18000, 0x8000, 0xd045549b )
+	ROM_LOAD( "a78-13.16",    0x20000, 0x8000, 0xd0af35c5 )
+	ROM_LOAD( "a78-14.17",    0x28000, 0x8000, 0x7b5369a8 )
 	/* 0x30000-0x3ffff empty */
-	ROM_LOAD( "a78_15.bin",   0x40000, 0x8000, 0x6b61a413 )    /* 2nd plane */
-	ROM_LOAD( "a78_16.bin",   0x48000, 0x8000, 0xb5492d97 )
-	ROM_LOAD( "a78_17.bin",   0x50000, 0x8000, 0xd69762d5 )
-	ROM_LOAD( "a78_18.bin",   0x58000, 0x8000, 0x9f243b68 )
-	ROM_LOAD( "a78_19.bin",   0x60000, 0x8000, 0x66e9438c )
-	ROM_LOAD( "a78_20.bin",   0x68000, 0x8000, 0x9ef863ad )
+	ROM_LOAD( "a78-15.30",    0x40000, 0x8000, 0x6b61a413 )    /* 2nd plane */
+	ROM_LOAD( "a78-16.31",    0x48000, 0x8000, 0xb5492d97 )
+	ROM_LOAD( "a78-17.32",    0x50000, 0x8000, 0xd69762d5 )
+	ROM_LOAD( "a78-18.33",    0x58000, 0x8000, 0x9f243b68 )
+	ROM_LOAD( "a78-19.34",    0x60000, 0x8000, 0x66e9438c )
+	ROM_LOAD( "a78-20.35",    0x68000, 0x8000, 0x9ef863ad )
 	/* 0x70000-0x7ffff empty */
 
 	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for the second CPU */
-	ROM_LOAD( "a78_08.bin",   0x0000, 0x08000, 0xae11a07b )
+	ROM_LOAD( "a78-08.37",    0x0000, 0x08000, 0xae11a07b )
 
 	ROM_REGION( 0x10000, REGION_CPU3 )	/* 64k for the third CPU */
-	ROM_LOAD( "a78_07.bin",   0x0000, 0x08000, 0x4f9a26e8 )
+	ROM_LOAD( "a78-07.46",    0x0000, 0x08000, 0x4f9a26e8 )
+
+	ROM_REGION( 0x0100, REGION_PROMS )
+	ROM_LOAD( "a71-25.41",    0x0000, 0x0100, 0x2d0f8545 )	/* video timing */
 ROM_END
 
 ROM_START( tokio )
 	ROM_REGION( 0x30000, REGION_CPU1 )	/* main CPU */
-	ROM_LOAD( "a7127-1.256", 0x00000, 0x8000, 0x8c180896 )
+	ROM_LOAD( "a71-27-1.256", 0x00000, 0x8000, 0x8c180896 )
     /* ROMs banked at 8000-bfff */
-	ROM_LOAD( "a7128-1.256", 0x10000, 0x8000, 0x1b447527 )
-	ROM_LOAD( "a7104.256",   0x18000, 0x8000, 0xa0a4ce0e )
-	ROM_LOAD( "a7105.256",   0x20000, 0x8000, 0x6da0b945 )
-	ROM_LOAD( "a7106-1.256", 0x28000, 0x8000, 0x56927b3f )
+	ROM_LOAD( "a71-28-1.256", 0x10000, 0x8000, 0x1b447527 )
+	ROM_LOAD( "a71-04.256",   0x18000, 0x8000, 0xa0a4ce0e )
+	ROM_LOAD( "a71-05.256",   0x20000, 0x8000, 0x6da0b945 )
+	ROM_LOAD( "a71-06-1.256", 0x28000, 0x8000, 0x56927b3f )
 
 	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "a7108.256",   0x00000, 0x8000, 0x0439ab13 )    /* 1st plane */
-	ROM_LOAD( "a7109.256",   0x08000, 0x8000, 0xedb3d2ff )
-	ROM_LOAD( "a7110.256",   0x10000, 0x8000, 0x69f0888c )
-	ROM_LOAD( "a7111.256",   0x18000, 0x8000, 0x4ae07c31 )
-	ROM_LOAD( "a7112.256",   0x20000, 0x8000, 0x3f6bd706 )
-	ROM_LOAD( "a7113.256",   0x28000, 0x8000, 0xf2c92aaa )
-	ROM_LOAD( "a7114.256",   0x30000, 0x8000, 0xc574b7b2 )
-	ROM_LOAD( "a7115.256",   0x38000, 0x8000, 0x12d87e7f )
-	ROM_LOAD( "a7116.256",   0x40000, 0x8000, 0x0bce35b6 )    /* 2nd plane */
-	ROM_LOAD( "a7117.256",   0x48000, 0x8000, 0xdeda6387 )
-	ROM_LOAD( "a7118.256",   0x50000, 0x8000, 0x330cd9d7 )
-	ROM_LOAD( "a7119.256",   0x58000, 0x8000, 0xfc4b29e0 )
-	ROM_LOAD( "a7120.256",   0x60000, 0x8000, 0x65acb265 )
-	ROM_LOAD( "a7121.256",   0x68000, 0x8000, 0x33cde9b2 )
-	ROM_LOAD( "a7122.256",   0x70000, 0x8000, 0xfb98eac0 )
-	ROM_LOAD( "a7123.256",   0x78000, 0x8000, 0x30bd46ad )
+	ROM_LOAD( "a71-08.256",   0x00000, 0x8000, 0x0439ab13 )    /* 1st plane */
+	ROM_LOAD( "a71-09.256",   0x08000, 0x8000, 0xedb3d2ff )
+	ROM_LOAD( "a71-10.256",   0x10000, 0x8000, 0x69f0888c )
+	ROM_LOAD( "a71-11.256",   0x18000, 0x8000, 0x4ae07c31 )
+	ROM_LOAD( "a71-12.256",   0x20000, 0x8000, 0x3f6bd706 )
+	ROM_LOAD( "a71-13.256",   0x28000, 0x8000, 0xf2c92aaa )
+	ROM_LOAD( "a71-14.256",   0x30000, 0x8000, 0xc574b7b2 )
+	ROM_LOAD( "a71-15.256",   0x38000, 0x8000, 0x12d87e7f )
+	ROM_LOAD( "a71-16.256",   0x40000, 0x8000, 0x0bce35b6 )    /* 2nd plane */
+	ROM_LOAD( "a71-17.256",   0x48000, 0x8000, 0xdeda6387 )
+	ROM_LOAD( "a71-18.256",   0x50000, 0x8000, 0x330cd9d7 )
+	ROM_LOAD( "a71-19.256",   0x58000, 0x8000, 0xfc4b29e0 )
+	ROM_LOAD( "a71-20.256",   0x60000, 0x8000, 0x65acb265 )
+	ROM_LOAD( "a71-21.256",   0x68000, 0x8000, 0x33cde9b2 )
+	ROM_LOAD( "a71-22.256",   0x70000, 0x8000, 0xfb98eac0 )
+	ROM_LOAD( "a71-23.256",   0x78000, 0x8000, 0x30bd46ad )
 
 	ROM_REGION( 0x10000, REGION_CPU2 )	/* video CPU */
-	ROM_LOAD( "a7101.256",   0x00000, 0x8000, 0x0867c707 )
+	ROM_LOAD( "a71-01.256",   0x00000, 0x8000, 0x0867c707 )
 
 	ROM_REGION( 0x10000, REGION_CPU3 )	/* audio CPU */
-	ROM_LOAD( "a7107.256",   0x0000, 0x08000, 0xf298cc7b )
+	ROM_LOAD( "a71-07.256",   0x0000, 0x08000, 0xf298cc7b )
+
+	ROM_REGION( 0x0100, REGION_PROMS )
+	ROM_LOAD( "a71-25.bin",   0x0000, 0x0100, 0x2d0f8545 )	/* video timing */
 ROM_END
 
 ROM_START( tokiob )
 	ROM_REGION( 0x30000, REGION_CPU1 ) /* main CPU */
-	ROM_LOAD( "2",           0x00000, 0x8000, 0xf583b1ef )
+	ROM_LOAD( "2",            0x00000, 0x8000, 0xf583b1ef )
     /* ROMs banked at 8000-bfff */
-	ROM_LOAD( "3",           0x10000, 0x8000, 0x69dacf44 )
-	ROM_LOAD( "a7104.256",   0x18000, 0x8000, 0xa0a4ce0e )
-	ROM_LOAD( "a7105.256",   0x20000, 0x8000, 0x6da0b945 )
-	ROM_LOAD( "6",           0x28000, 0x8000, 0x1490e95b )
+	ROM_LOAD( "3",            0x10000, 0x8000, 0x69dacf44 )
+	ROM_LOAD( "a71-04.256",   0x18000, 0x8000, 0xa0a4ce0e )
+	ROM_LOAD( "a71-05.256",   0x20000, 0x8000, 0x6da0b945 )
+	ROM_LOAD( "6",            0x28000, 0x8000, 0x1490e95b )
 
 	ROM_REGION( 0x80000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "a7108.256",   0x00000, 0x8000, 0x0439ab13 )    /* 1st plane */
-	ROM_LOAD( "a7109.256",   0x08000, 0x8000, 0xedb3d2ff )
-	ROM_LOAD( "a7110.256",   0x10000, 0x8000, 0x69f0888c )
-	ROM_LOAD( "a7111.256",   0x18000, 0x8000, 0x4ae07c31 )
-	ROM_LOAD( "a7112.256",   0x20000, 0x8000, 0x3f6bd706 )
-	ROM_LOAD( "a7113.256",   0x28000, 0x8000, 0xf2c92aaa )
-	ROM_LOAD( "a7114.256",   0x30000, 0x8000, 0xc574b7b2 )
-	ROM_LOAD( "a7115.256",   0x38000, 0x8000, 0x12d87e7f )
-	ROM_LOAD( "a7116.256",   0x40000, 0x8000, 0x0bce35b6 )    /* 2nd plane */
-	ROM_LOAD( "a7117.256",   0x48000, 0x8000, 0xdeda6387 )
-	ROM_LOAD( "a7118.256",   0x50000, 0x8000, 0x330cd9d7 )
-	ROM_LOAD( "a7119.256",   0x58000, 0x8000, 0xfc4b29e0 )
-	ROM_LOAD( "a7120.256",   0x60000, 0x8000, 0x65acb265 )
-	ROM_LOAD( "a7121.256",   0x68000, 0x8000, 0x33cde9b2 )
-	ROM_LOAD( "a7122.256",   0x70000, 0x8000, 0xfb98eac0 )
-	ROM_LOAD( "a7123.256",   0x78000, 0x8000, 0x30bd46ad )
+	ROM_LOAD( "a71-08.256",   0x00000, 0x8000, 0x0439ab13 )    /* 1st plane */
+	ROM_LOAD( "a71-09.256",   0x08000, 0x8000, 0xedb3d2ff )
+	ROM_LOAD( "a71-10.256",   0x10000, 0x8000, 0x69f0888c )
+	ROM_LOAD( "a71-11.256",   0x18000, 0x8000, 0x4ae07c31 )
+	ROM_LOAD( "a71-12.256",   0x20000, 0x8000, 0x3f6bd706 )
+	ROM_LOAD( "a71-13.256",   0x28000, 0x8000, 0xf2c92aaa )
+	ROM_LOAD( "a71-14.256",   0x30000, 0x8000, 0xc574b7b2 )
+	ROM_LOAD( "a71-15.256",   0x38000, 0x8000, 0x12d87e7f )
+	ROM_LOAD( "a71-16.256",   0x40000, 0x8000, 0x0bce35b6 )    /* 2nd plane */
+	ROM_LOAD( "a71-17.256",   0x48000, 0x8000, 0xdeda6387 )
+	ROM_LOAD( "a71-18.256",   0x50000, 0x8000, 0x330cd9d7 )
+	ROM_LOAD( "a71-19.256",   0x58000, 0x8000, 0xfc4b29e0 )
+	ROM_LOAD( "a71-20.256",   0x60000, 0x8000, 0x65acb265 )
+	ROM_LOAD( "a71-21.256",   0x68000, 0x8000, 0x33cde9b2 )
+	ROM_LOAD( "a71-22.256",   0x70000, 0x8000, 0xfb98eac0 )
+	ROM_LOAD( "a71-23.256",   0x78000, 0x8000, 0x30bd46ad )
 
 	ROM_REGION( 0x10000, REGION_CPU2 )	/* video CPU */
-	ROM_LOAD( "a7101.256",   0x00000, 0x8000, 0x0867c707 )
+	ROM_LOAD( "a71-01.256",   0x00000, 0x8000, 0x0867c707 )
 
 	ROM_REGION( 0x10000, REGION_CPU3 )	/* audio CPU */
-	ROM_LOAD( "a7107.256",   0x0000, 0x08000, 0xf298cc7b )
+	ROM_LOAD( "a71-07.256",   0x0000, 0x08000, 0xf298cc7b )
+
+	ROM_REGION( 0x0100, REGION_PROMS )
+	ROM_LOAD( "a71-25.bin",   0x0000, 0x0100, 0x2d0f8545 )	/* video timing */
 ROM_END
 
 
 
-#define MOD_PAGE(page,addr,data) memory_region(REGION_CPU1)[page ? addr-0x8000+0x10000+0x4000*(page-1) : addr] = data;
-
-void init_boblbobl(void)
+static void init_bublbobl(void)
 {
+	unsigned char *ROM = memory_region(REGION_CPU1);
+
+	/* in Bubble Bobble, bank 0 has code falling from 7fff to 8000, */
+	/* so I have to copy it there because bank switching wouldn't catch it */
+	memcpy(ROM+0x08000,ROM+0x10000,0x4000);
+}
+
+
+static void init_boblbobl(void)
+{
+#define MOD_PAGE(page,addr,data) memory_region(REGION_CPU1)[addr-0x8000+0x10000+0x4000*page] = data;
     /* these shouldn't be necessary, surely - this is a bootleg ROM
      * with the protection removed - so what are all these JP's to
      * 0xa288 doing?  and why does the emulator fail the ROM checks?
@@ -1082,14 +1162,25 @@ void init_boblbobl(void)
 	MOD_PAGE(3,0xa4af,0x00); MOD_PAGE(3,0xa4b0,0x00); MOD_PAGE(3,0xa4b1,0x00);
 	MOD_PAGE(3,0xa55d,0x00); MOD_PAGE(3,0xa55e,0x00); MOD_PAGE(3,0xa55f,0x00);
 	MOD_PAGE(3,0xb561,0x00); MOD_PAGE(3,0xb562,0x00); MOD_PAGE(3,0xb563,0x00);
+
+	init_bublbobl();
 }
 
 
+static void init_tokio(void)
+{
+	extern int bublbobl_video_enable;
 
-GAMEX( 1986, bublbobl, 0,        bublbobl, bublbobl, 0,        ROT0,  "Taito Corporation", "Bubble Bobble", GAME_NO_COCKTAIL )
-GAMEX( 1986, bublbobr, bublbobl, bublbobl, bublbobl, 0,        ROT0,  "Taito America Corporation (Romstar license)", "Bubble Bobble (US set 1)", GAME_NO_COCKTAIL )
-GAMEX( 1986, bubbobr1, bublbobl, bublbobl, bublbobl, 0,        ROT0,  "Taito America Corporation (Romstar license)", "Bubble Bobble (US set 2)", GAME_NO_COCKTAIL )
-GAMEX( 1986, boblbobl, bublbobl, boblbobl, boblbobl, boblbobl, ROT0,  "bootleg", "Bobble Bobble", GAME_NO_COCKTAIL )
-GAMEX( 1986, sboblbob, bublbobl, boblbobl, sboblbob, 0,        ROT0,  "bootleg", "Super Bobble Bobble", GAME_NO_COCKTAIL )
-GAMEX( 1986, tokio,    0,        tokio,    tokio,    0,        ROT90, "Taito", "Tokio / Scramble Formation", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
-GAMEX( 1986, tokiob,   tokio,    tokio,    tokio,    0,        ROT90, "bootleg", "Tokio / Scramble Formation (bootleg)", GAME_NO_COCKTAIL )
+	/* preemptively enable video, the bit is not mapped for this game and */
+	/* I don't know if it even has it. */
+	bublbobl_video_enable = 1;
+}
+
+
+GAME( 1986, bublbobl, 0,        bublbobl, bublbobl, bublbobl, ROT0,  "Taito Corporation", "Bubble Bobble" )
+GAME( 1986, bublbobr, bublbobl, bublbobl, bublbobl, bublbobl, ROT0,  "Taito America Corporation (Romstar license)", "Bubble Bobble (US with mode select)" )
+GAME( 1986, bubbobr1, bublbobl, bublbobl, bublbobl, bublbobl, ROT0,  "Taito America Corporation (Romstar license)", "Bubble Bobble (US)" )
+GAME( 1986, boblbobl, bublbobl, boblbobl, boblbobl, boblbobl, ROT0,  "bootleg", "Bobble Bobble" )
+GAME( 1986, sboblbob, bublbobl, boblbobl, sboblbob, bublbobl, ROT0,  "bootleg", "Super Bobble Bobble" )
+GAMEX(1986, tokio,    0,        tokio,    tokio,    tokio,    ROT90, "Taito", "Tokio / Scramble Formation", GAME_NOT_WORKING )
+GAME( 1986, tokiob,   tokio,    tokio,    tokio,    tokio,    ROT90, "bootleg", "Tokio / Scramble Formation (bootleg)" )

@@ -1,133 +1,217 @@
 /***************************************************************************
-  Star Fire
 
-driver by Daniel Boris, Olivier Galibert
+	Star Fire/Fire One system
 
-Memory Map:
+    driver by Daniel Boris, Olivier Galibert, Aaron Giles
 
-Read:
-0000 - 5FFF: ROM
-8000 - 9FFF: Working RAM
-A000 - BFFF: Pallette RAM (best I can figure)
-C000 - DFFF: Video RAM
-E000 - FFFF: Video RAM
+****************************************************************************
 
-9400,9800  Dip switch
+	Memory map
 
-9401:   Bit 0: Coin
-        Bit 1: Start
-        Bit 2: Fire
-        Bit 3: Tie sound on
-        Bit 4: Laser sound on
-        Bit 5: Slam/Static
-        Bit 6,7: high
+****************************************************************************
 
-9805:   Velocity ADC
-9806:   Horizontal motion ADC
-9807:   Vertical motion ADC
-
-Write:
-8000 - 9FFF: Working RAM
-A000 - BFFF: Pallette RAM (best I can figure)
-C000 - DFFF: Video RAM
-
-9402:   Bit 0: Size (something to do with laser sound)
-        Bit 1: Explosion sound
-        Bit 2: Tie Weapon sound
-        Bit 3: Laser sound
-        Bit 4: Tacking Computer sound
-        Bit 5: Lock sound
-        Bit 6: Scanner sound
-        Bit 7: Overheat sound
-
-9400:   Video shift control
-        Right half of screen:
-        Bit 0: Mirror bits
-        Bit 1..3: Roll right x bits
-        Left half of screen:
-        Bit 4: Mirror bits
-        Bit 5..7: Roll right x bits
-
-9401:   Bit 0..3: Video write logic function (A = Data written, B = Data in mem)
-            0:   A
-            1:   A or B
-            7:   !A or B
-            C:   0
-            D:   !A and B
-        Bit 4: Roll (something to do with video)
-        Bit 5: PROT  (something to do with video)
-        Bit 6: TRANS (something to do with pallette RAM)
-        Bit 7: CDRM (something to do with pallette RAM)
+	========================================================================
+	MAIN CPU
+	========================================================================
+	0000-7FFF   R     xxxxxxxx   Program ROM
+	8000-9FFF   R/W   xxxxxxxx   Scratch RAM, actually mapped into low VRAM
+	9000          W   xxxxxxxx   VRAM write control register
+	              W   xxx-----      (VRAM shift amount 1)
+	              W   ---x----      (VRAM write mirror 1)
+	              W   ----xxx-      (VRAM shift amount 2)
+	              W   -------x      (VRAM write mirror 2)
+	9001          W   xxxxxxxx   Video control register
+	              W   x-------      (Color RAM source select)
+	              W   -x------      (Palette RAM write enable)
+	              W   --x-----      (Video RAM write enable)
+	              W   ---x----      (Right side mask select)
+	              W   ----xxxx      (Video RAM ALU operation)
+	9800-9807   R     xxxxxxxx   Input ports
+	A000-BFFF   R/W   xxxxxxxx   Color RAM
+	C000-DFFF   R/W   xxxxxxxx   Video RAM, using shift/mirror 1 and color
+	E000-FFFF   R/W   xxxxxxxx   Video RAM, using shift/mirror 2
+	========================================================================
+	Interrupts:
+	   NMI generated once/frame
+	========================================================================
 
 ***************************************************************************/
 
+
 #include "driver.h"
 #include "vidhrdw/generic.h"
+
 
 /* In vidhrdw/starfire.c */
 void starfire_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 extern int starfire_vh_start(void);
 extern void starfire_vh_stop(void);
+extern void starfire_video_update(int scanline, int count);
+
 WRITE_HANDLER( starfire_videoram_w );
 READ_HANDLER( starfire_videoram_r );
 WRITE_HANDLER( starfire_colorram_w );
 READ_HANDLER( starfire_colorram_r );
-
-/* In machine/starfire.c */
-extern int starfire_interrupt (void);
-WRITE_HANDLER( starfire_shadow_w );
-WRITE_HANDLER( starfire_output_w );
-WRITE_HANDLER( fireone_output_w );
-READ_HANDLER( starfire_shadow_r );
-READ_HANDLER( starfire_input_r );
-READ_HANDLER( fireone_input_r );
-WRITE_HANDLER( starfire_soundctrl_w );
+WRITE_HANDLER( starfire_vidctrl_w );
+WRITE_HANDLER( starfire_vidctrl1_w );
 
 
-unsigned char *starfire_ram;
 
-static struct MemoryReadAddress starfire_readmem[] =
+UINT8 *starfire_videoram;
+UINT8 *starfire_colorram;
+
+static UINT8 fireone_select;
+static mem_read_handler input_read;
+
+
+
+/*************************************
+ *
+ *	Video updates
+ *
+ *************************************/
+
+#define SCANLINE_UPDATE_CHUNK	8
+
+static void update_callback(int scanline)
 {
-	{ 0x0000, 0x57ff, MRA_ROM },
-	{ 0x8000, 0x83ff, MRA_RAM },
-	{ 0x8400, 0x97ff, starfire_shadow_r },
-	{ 0x9800, 0x9fff, starfire_input_r },
+	/* update the previous chunk of scanlines */
+	starfire_video_update(scanline, SCANLINE_UPDATE_CHUNK);
+	scanline += SCANLINE_UPDATE_CHUNK;
+	if (scanline >= Machine->drv->screen_height)
+		scanline = 32;
+	timer_set(cpu_getscanlinetime(scanline + SCANLINE_UPDATE_CHUNK - 1), scanline, update_callback);
+}
+
+
+static void init_machine(void)
+{
+	timer_set(cpu_getscanlinetime(32 + SCANLINE_UPDATE_CHUNK - 1), 32, update_callback);
+}
+
+
+
+/*************************************
+ *
+ *	Scratch RAM, mapped into video RAM
+ *
+ *************************************/
+
+static WRITE_HANDLER( starfire_scratch_w )
+{
+	/* A12 and A3 select video control registers */
+	if ((offset & 0x1008) == 0x1000)
+	{
+		switch (offset & 7)
+		{
+			case 0:	starfire_vidctrl_w(0, data); break;
+			case 1: starfire_vidctrl1_w(0, data); break;
+			case 2:
+				/* Sounds */
+				fireone_select = (data & 0x8) ? 0 : 1;
+				break;
+		}
+	}
+
+	/* convert to a videoram offset */
+	offset = (offset & 0x31f) | ((offset & 0xe0) << 5);
+    starfire_videoram[offset] = data;
+}
+
+
+static READ_HANDLER( starfire_scratch_r )
+{
+	/* A11 selects input ports */
+	if (offset & 0x800)
+		return (*input_read)(offset);
+
+	/* convert to a videoram offset */
+	offset = (offset & 0x31f) | ((offset & 0xe0) << 5);
+    return starfire_videoram[offset];
+}
+
+
+
+/*************************************
+ *
+ *	Game-specific input handlers
+ *
+ *************************************/
+
+static READ_HANDLER( starfire_input_r )
+{
+	switch (offset & 15)
+	{
+		case 0:	return input_port_0_r(0);
+		case 1:	return input_port_1_r(0);	/* Note: need to loopback sounds lengths on that one */
+		case 5: return input_port_4_r(0);
+		case 6:	return input_port_2_r(0);
+		case 7:	return input_port_3_r(0);
+		default: return 0xff;
+	}
+}
+
+
+static READ_HANDLER( fireone_input_r )
+{
+	static const UINT8 fireone_paddle_map[64] =
+	{
+		0x00,0x01,0x03,0x02,0x06,0x07,0x05,0x04,
+		0x0c,0x0d,0x0f,0x0e,0x0a,0x0b,0x09,0x08,
+		0x18,0x19,0x1b,0x1a,0x1e,0x1f,0x1d,0x1c,
+		0x14,0x15,0x17,0x16,0x12,0x13,0x11,0x10,
+		0x30,0x31,0x33,0x32,0x36,0x37,0x35,0x34,
+		0x3c,0x3d,0x3f,0x3e,0x3a,0x3b,0x39,0x38,
+		0x28,0x29,0x2b,0x2a,0x2e,0x2f,0x2d,0x2c,
+		0x24,0x25,0x27,0x26,0x22,0x23,0x21,0x20
+	};
+	int temp;
+
+	switch (offset & 15)
+	{
+		case 0:	return input_port_0_r(0);
+		case 1: return input_port_1_r(0);
+		case 2:
+			temp = fireone_select ? input_port_2_r(0) : input_port_3_r(0);
+			temp = (temp & 0xc0) | fireone_paddle_map[temp & 0x3f];
+			return temp;
+		default: return 0xff;
+	}
+}
+
+
+
+/*************************************
+ *
+ *	Main CPU memory handlers
+ *
+ *************************************/
+
+static struct MemoryReadAddress readmem[] =
+{
+	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0x8000, 0x9fff, starfire_scratch_r },
 	{ 0xa000, 0xbfff, starfire_colorram_r },
 	{ 0xc000, 0xffff, starfire_videoram_r },
 	{ -1 }  /* end of table */
 };
 
-static struct MemoryWriteAddress starfire_writemem[] =
+static struct MemoryWriteAddress writemem[] =
 {
-	{ 0x8000, 0x83ff, MWA_RAM, &starfire_ram },
-	{ 0x8400, 0x8fff, starfire_shadow_w },
-	{ 0x9000, 0x9fff, starfire_output_w },
-	{ 0xa000, 0xbfff, starfire_colorram_w },
-	{ 0xc000, 0xffff, starfire_videoram_w },
+	{ 0x0000, 0x7fff, MWA_ROM },
+	{ 0x8000, 0x9fff, starfire_scratch_w },
+	{ 0xa000, 0xbfff, starfire_colorram_w, &starfire_colorram },
+	{ 0xc000, 0xffff, starfire_videoram_w, &starfire_videoram },
 	{ -1 }	/* end of table */
 };
 
-static struct MemoryReadAddress fireone_readmem[] =
-{
-	{ 0x0000, 0x6fff, MRA_ROM },
-	{ 0x8000, 0x83ff, MRA_RAM },
-	{ 0x8400, 0x97ff, starfire_shadow_r },
-	{ 0x9800, 0x9fff, fireone_input_r },
-	{ 0xa000, 0xbfff, starfire_colorram_r },
-	{ 0xc000, 0xffff, starfire_videoram_r },
-	{ -1 }  /* end of table */
-};
 
-static struct MemoryWriteAddress fireone_writemem[] =
-{
-	{ 0x8000, 0x83ff, MWA_RAM, &starfire_ram },
-	{ 0x8400, 0x8fff, starfire_shadow_w },
-	{ 0x9000, 0x9fff, fireone_output_w },
-	{ 0xa000, 0xbfff, starfire_colorram_w },
-	{ 0xc000, 0xffff, starfire_videoram_w },
-	{ -1 }	/* end of table */
-};
 
+/*************************************
+ *
+ *	Port definitions
+ *
+ *************************************/
 
 INPUT_PORTS_START( starfire )
 	PORT_START      /* DSW0 */
@@ -153,14 +237,14 @@ INPUT_PORTS_START( starfire )
 	PORT_SERVICE( 0x80, IP_ACTIVE_HIGH )
 
 	PORT_START      /* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1)
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START1)
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON1)
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN)
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN)
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN)
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN)
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN)
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START  /* IN2 */
 	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_X, 100, 10, 0, 255 )
@@ -168,9 +252,10 @@ INPUT_PORTS_START( starfire )
 	PORT_START  /* IN3 */
 	PORT_ANALOG( 0xff, 0x80, IPT_AD_STICK_Y | IPF_REVERSE, 100, 10, 0, 255 )
 
-	PORT_START /* Throttle (IN4) */
-	PORT_BITX( 0xFF, 0x00, IP_ACTIVE_HIGH | IPF_TOGGLE, "Throttle", KEYCODE_Z, IP_JOY_NONE )
+	PORT_START /* Throttle (IN4) [not really player 2, but we need to separate it out] */
+	PORT_ANALOG( 0xff, 0x80, IPT_PADDLE_V | IPF_REVERSE | IPF_PLAYER2, 100, 10, 0, 255 )
 INPUT_PORTS_END
+
 
 INPUT_PORTS_START( fireone )
 	PORT_START      /* DSW0 */
@@ -195,25 +280,33 @@ INPUT_PORTS_START( fireone )
 	PORT_SERVICE( 0x80, IP_ACTIVE_HIGH )
 
 	PORT_START      /* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1)
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2)
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1)
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN2)
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN)
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN)
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN)
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN)
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT_IMPULSE( 0x04, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START  /* IN2 */
-	PORT_ANALOG( 0x3f, 0x20, IPT_AD_STICK_X, 100, 10, 0, 63 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON2)
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1)
+	PORT_ANALOG( 0x3f, 0x20, IPT_PADDLE | IPF_PLAYER1, 50, 1, 0, 63 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )
 
 	PORT_START  /* IN3 */
-	PORT_ANALOG( 0x3f, 0x20, IPT_AD_STICK_Y, 100, 10, 0, 63 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON4)
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON3)
+	PORT_ANALOG( 0x3f, 0x20, IPT_PADDLE | IPF_PLAYER2, 50, 1, 0, 63 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
 INPUT_PORTS_END
+
+
+
+/*************************************
+ *
+ *	Machine driver
+ *
+ *************************************/
 
 static struct MachineDriver machine_driver_starfire =
 {
@@ -221,51 +314,20 @@ static struct MachineDriver machine_driver_starfire =
 	{
 		{
 			CPU_Z80,
-            2500000,    /* 2.5 Mhz */
-			starfire_readmem, starfire_writemem,0,0,
-            starfire_interrupt,2
+            2500000,
+			readmem,writemem,0,0,
+            nmi_interrupt,1
 		}
 	},
-	57, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-    0,
+	57, DEFAULT_60HZ_VBLANK_DURATION,
+	1,
+    init_machine,
 
 	/* video hardware */
     256,256,
-    { 0, 256-1, 0, 256-1 },
+    { 0, 256-1, 32, 256-1 },
     0,
-    64, 64, 0,
-
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
-	0,
-    starfire_vh_start,
-    starfire_vh_stop,
-    starfire_vh_screenrefresh,
-
-	/* sound hardware */
-    0,0,0,0
-};
-
-static struct MachineDriver machine_driver_fireone =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-            2500000,    /* 2.5 Mhz */
-			fireone_readmem, fireone_writemem,0,0,
-            starfire_interrupt,2
-		}
-	},
-	57, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	1,	/* single CPU, no need for interleaving */
-    0,
-
-	/* video hardware */
-    256,256,
-    { 0, 256-1, 0, 256-1 },
-    0,
-    64, 64, 0,
+    64,64,0,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
@@ -278,11 +340,12 @@ static struct MachineDriver machine_driver_fireone =
 };
 
 
-/***************************************************************************
 
-  Game driver(s)
-
-***************************************************************************/
+/*************************************
+ *
+ *	ROM definitions
+ *
+ *************************************/
 
 ROM_START( starfire )
 	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
@@ -318,5 +381,30 @@ ROM_START( fireone )
 ROM_END
 
 
-GAMEX( 1979, starfire, 0, starfire, starfire, 0, ROT0, "Exidy", "Star Fire", GAME_NOT_WORKING | GAME_NO_SOUND )
-GAMEX( 1979, fireone,  0, fireone,  fireone,  0, ROT0, "Exidy", "Fire One", GAME_NOT_WORKING | GAME_NO_SOUND )
+
+/*************************************
+ *
+ *	Driver init
+ *
+ *************************************/
+
+static void init_starfire(void)
+{
+	input_read = starfire_input_r;
+}
+
+static void init_fireone(void)
+{
+	input_read = fireone_input_r;
+}
+
+
+
+/*************************************
+ *
+ *	Game drivers
+ *
+ *************************************/
+
+GAMEX( 1979, starfire, 0, starfire, starfire, starfire, ROT0, "Exidy", "Star Fire", GAME_NO_SOUND )
+GAMEX( 1979, fireone,  0, starfire, fireone,  fireone,  ROT0, "Exidy", "Fire One", GAME_NO_SOUND )

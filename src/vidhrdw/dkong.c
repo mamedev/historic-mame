@@ -256,13 +256,13 @@ static void draw_tiles(struct osd_bitmap *bitmap)
 					charcode,color,
 					flipscreen,flipscreen,
 					8*sx,8*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+					&Machine->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
 
 
 	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 }
 
 static void draw_sprites(struct osd_bitmap *bitmap)
@@ -295,7 +295,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 						(spriteram[offs + 2] & 0x0f) + 16 * palette_bank,
 						!(spriteram[offs + 2] & 0x80),!(spriteram[offs + 1] & 0x80),
 						x,y,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+						&Machine->visible_area,TRANSPARENCY_PEN,0);
 
 				/* draw with wrap around - this fixes the 'beheading' bug */
 				drawgfx(bitmap,Machine->gfx[1],
@@ -303,7 +303,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 						(spriteram[offs + 2] & 0x0f) + 16 * palette_bank,
 						(spriteram[offs + 2] & 0x80),(spriteram[offs + 1] & 0x80),
 						x-256,y,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+						&Machine->visible_area,TRANSPARENCY_PEN,0);
 			}
 			else
 			{
@@ -312,7 +312,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 						(spriteram[offs + 2] & 0x0f) + 16 * palette_bank,
 						(spriteram[offs + 2] & 0x80),(spriteram[offs + 1] & 0x80),
 						x,y,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+						&Machine->visible_area,TRANSPARENCY_PEN,0);
 
 				/* draw with wrap around - this fixes the 'beheading' bug */
 				drawgfx(bitmap,Machine->gfx[1],
@@ -320,7 +320,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 						(spriteram[offs + 2] & 0x0f) + 16 * palette_bank,
 						(spriteram[offs + 2] & 0x80),(spriteram[offs + 1] & 0x80),
 						x+256,y,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+						&Machine->visible_area,TRANSPARENCY_PEN,0);
 			}
 		}
 	}
@@ -333,13 +333,13 @@ static void draw_grid(struct osd_bitmap *bitmap)
 
 	counter = flipscreen ? 0x000 : 0x400;
 
-	x = Machine->drv->visible_area.min_x;
-	y = Machine->drv->visible_area.min_y;
-	while (y <= Machine->drv->visible_area.max_y)
+	x = Machine->visible_area.min_x;
+	y = Machine->visible_area.min_y;
+	while (y <= Machine->visible_area.max_y)
 	{
 		x = 4 * (table[counter] & 0x7f);
-		if (x >= Machine->drv->visible_area.min_x &&
-				x <= Machine->drv->visible_area.max_x)
+		if (x >= Machine->visible_area.min_x &&
+				x <= Machine->visible_area.max_x)
 		{
 			if (table[counter] & 0x80)	/* star */
 			{

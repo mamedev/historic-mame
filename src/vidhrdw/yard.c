@@ -19,7 +19,6 @@ unsigned char *yard_scroll_x_low;
 unsigned char *yard_scroll_x_high;
 unsigned char *yard_scroll_y_low;
 unsigned char *yard_score_panel_disabled;
-static int flipscreen;
 static struct osd_bitmap *scroll_panel_bitmap;
 
 #define SCROLL_PANEL_WIDTH  (14*4)
@@ -172,16 +171,16 @@ int yard_vh_start(void)
 		return 1;
 	memset(dirtybuffer,1,videoram_size);
 
-	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width*2,Machine->drv->screen_height)) == 0)
+	if ((tmpbitmap = bitmap_alloc(Machine->drv->screen_width*2,Machine->drv->screen_height)) == 0)
 	{
 		free(dirtybuffer);
 		return 1;
 	}
 
-	if ((scroll_panel_bitmap = osd_create_bitmap(SCROLL_PANEL_WIDTH,Machine->drv->screen_height)) == 0)
+	if ((scroll_panel_bitmap = bitmap_alloc(SCROLL_PANEL_WIDTH,Machine->drv->screen_height)) == 0)
 	{
 		free(dirtybuffer);
-		osd_free_bitmap(tmpbitmap);
+		bitmap_free(tmpbitmap);
 		return 1;
 	}
 
@@ -198,8 +197,8 @@ int yard_vh_start(void)
 void yard_vh_stop(void)
 {
 	free(dirtybuffer);
-	osd_free_bitmap(tmpbitmap);
-	osd_free_bitmap(scroll_panel_bitmap);
+	bitmap_free(tmpbitmap);
+	bitmap_free(scroll_panel_bitmap);
 }
 
 
@@ -209,11 +208,7 @@ WRITE_HANDLER( yard_flipscreen_w )
 	/* screen flip is handled both by software and hardware */
 	data ^= ~readinputport(4) & 1;
 
-	if (flipscreen != (data & 1))
-	{
-		flipscreen = data & 1;
-		memset(dirtybuffer,1,videoram_size);
-	}
+	flip_screen_w(offset, data & 1);
 
 	coin_counter_w(0,data & 0x02);
 	coin_counter_w(1,data & 0x20);
@@ -254,6 +249,13 @@ void yard_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 
+
+	if (full_refresh)
+	{
+		memset(dirtybuffer,1,videoram_size);
+	}
+
+
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
 	for (offs = videoram_size-2;offs >= 0;offs -= 2)
@@ -276,7 +278,7 @@ void yard_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				sx += 32;
 			}
 
-			if (flipscreen)
+			if (flip_screen)
 			{
 				sx = 63 - sx;
 				sy = 31 - sy;
@@ -286,7 +288,7 @@ void yard_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					videoram[offs] + ((videoram[offs+1] & 0xc0) << 2),
 					videoram[offs+1] & 0x1f,
-					flipx,flipscreen,
+					flipx,flip_screen,
 					8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);
 		}
@@ -298,7 +300,7 @@ void yard_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		scroll_x = (*yard_scroll_x_high * 0x100) + *yard_scroll_x_low;
 
-		if (flipscreen)
+		if (flip_screen)
 		{
 			scroll_x += 256;
 			scroll_y = *yard_scroll_y_low ;
@@ -309,7 +311,7 @@ void yard_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			scroll_y = -*yard_scroll_y_low ;
 		}
 
-		copyscrollbitmap(bitmap,tmpbitmap,1,&scroll_x,1,&scroll_y,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,1,&scroll_x,1,&scroll_y,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 
@@ -335,7 +337,7 @@ void yard_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			code2 = code1 + 0x40;
 		}
 
-		if (flipscreen)
+		if (flip_screen)
 		{
 			flipx = !flipx;
 			flipy = !flipy;
@@ -353,14 +355,14 @@ void yard_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				spriteram[offs + 1] & 0x1f,
 				flipx,flipy,
 				sx, sy1,
-				&Machine->drv->visible_area,TRANSPARENCY_COLOR,256);
+				&Machine->visible_area,TRANSPARENCY_COLOR,256);
 
 		drawgfx(bitmap,Machine->gfx[1],
 				code2 + 256 * bank,
 				spriteram[offs + 1] & 0x1f,
 				flipx,flipy,
 				sx, sy2,
-				&Machine->drv->visible_area,TRANSPARENCY_COLOR,256);
+				&Machine->visible_area,TRANSPARENCY_COLOR,256);
 	}
 
 
@@ -369,11 +371,11 @@ void yard_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		int xpos;
 
-		xpos = flipscreen ? Machine->drv->visible_area.min_x - 8 :
-		                    Machine->drv->visible_area.max_x + 1 - SCROLL_PANEL_WIDTH;
+		xpos = flip_screen ? Machine->visible_area.min_x - 8 :
+		                     Machine->visible_area.max_x + 1 - SCROLL_PANEL_WIDTH;
 
-		copybitmap(bitmap,scroll_panel_bitmap,flipscreen,flipscreen,
+		copybitmap(bitmap,scroll_panel_bitmap,flip_screen,flip_screen,
 		           xpos,0,
-				   flipscreen ? &panelvisibleareaflip : &panelvisiblearea,TRANSPARENCY_NONE,0);
+				   flip_screen ? &panelvisibleareaflip : &panelvisiblearea,TRANSPARENCY_NONE,0);
 	}
 }

@@ -106,7 +106,7 @@ void slapfight_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		scrollx = -(*slapfight_scrollx_lo + 256 * *slapfight_scrollx_hi);
 		scrolly = -*slapfight_scrolly+1;
-		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 
@@ -119,7 +119,7 @@ void slapfight_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			0,0,
 		/* Mysterious fudge factor sprite offset */
 			(spriteram[offs+1] + ((spriteram[offs+2] & 0x01) << 8)) - 13,spriteram[offs+3],
-			&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 
 
@@ -137,6 +137,6 @@ void slapfight_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			(slapfight_colorram[offs] & 0xfc) >> 2,
 			0,0,
 			8*sx,8*sy,
-			&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

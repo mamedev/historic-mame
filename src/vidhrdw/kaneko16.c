@@ -415,7 +415,7 @@ int berlwall_vh_start(void)
 
 	/* Render the hi-color static backgrounds held in the ROMs */
 
-	if ((kaneko16_bg15_bitmap = osd_new_bitmap(256 * 32, 256 * 1, 16)) == 0)
+	if ((kaneko16_bg15_bitmap = bitmap_alloc_depth(256 * 32, 256 * 1, 16)) == 0)
 		return 1;
 
 /*
@@ -443,7 +443,7 @@ int berlwall_vh_start(void)
 void berlwall_vh_stop(void)
 {
 	if (kaneko16_bg15_bitmap)
-		osd_free_bitmap(kaneko16_bg15_bitmap);
+		bitmap_free(kaneko16_bg15_bitmap);
 
 	kaneko16_bg15_bitmap = 0;	// multisession safety
 }
@@ -506,10 +506,10 @@ void kaneko16_mark_sprites_colors(void)
 {
 	int offs,inc;
 
-	int xmin = Machine->drv->visible_area.min_x - (16 - 1);
-	int xmax = Machine->drv->visible_area.max_x;
-	int ymin = Machine->drv->visible_area.min_y - (16 - 1);
-	int ymax = Machine->drv->visible_area.max_y;
+	int xmin = Machine->visible_area.min_x - (16 - 1);
+	int xmax = Machine->visible_area.max_x;
+	int ymin = Machine->visible_area.min_y - (16 - 1);
+	int ymax = Machine->visible_area.max_y;
 
 	int nmax				=	Machine->gfx[0]->total_elements;
 	int color_granularity	=	Machine->gfx[0]->color_granularity;
@@ -626,7 +626,7 @@ void kaneko16_draw_sprites(struct osd_bitmap *bitmap, int priority)
 				sattr,
 				sflipx, sflipy,
 				sx,sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 
 		/* let's get back to normal to support multi sprites */
 		if (flipsprites & 2) { sx = max_x - sx;		sflipx = !sflipx; }
@@ -725,7 +725,7 @@ int msk = 0;
 			bitmap, kaneko16_bg15_bitmap,
 			flip, flip,
 			-sx, -sy,
-			&Machine->drv->visible_area, TRANSPARENCY_NONE,0 );
+			&Machine->visible_area, TRANSPARENCY_NONE,0 );
 
 		flag = 0;
 	}

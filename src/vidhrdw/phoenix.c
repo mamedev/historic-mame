@@ -268,7 +268,7 @@ void phoenix_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		scroll = -bg_scroll;
 
-		copyscrollbitmap(bitmap,tmpbitmap,1,&scroll,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,1,&scroll,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 
@@ -289,13 +289,13 @@ void phoenix_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					(code >> 5) + 8 * palette_bank,
 					0,0,
 					8*sx,8*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					&Machine->visible_area,TRANSPARENCY_PEN,0);
 		else
 			drawgfx(bitmap,Machine->gfx[1],
 					code,
 					(code >> 5) + 8 * palette_bank,
 					0,0,
 					8*sx,8*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+					&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 }

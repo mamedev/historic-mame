@@ -214,7 +214,7 @@ int taitosj_vh_start(void)
 	}
 	memset(dirtybuffer3,1,videoram_size);
 
-	if ((sprite_plane_collbitmap1 = osd_create_bitmap(16,16)) == 0)
+	if ((sprite_plane_collbitmap1 = bitmap_alloc(16,16)) == 0)
 	{
 		generic_vh_stop();
 		return 1;
@@ -222,13 +222,13 @@ int taitosj_vh_start(void)
 
 	for (i = 0; i < 3; i++)
 	{
-		if ((taitosj_tmpbitmap[i] = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+		if ((taitosj_tmpbitmap[i] = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		{
 			generic_vh_stop();
 			return 1;
 		}
 
-		if ((sprite_plane_collbitmap2[i] = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+		if ((sprite_plane_collbitmap2[i] = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		{
 			generic_vh_stop();
 			return 1;
@@ -236,13 +236,13 @@ int taitosj_vh_start(void)
 
 	}
 
-	if ((sprite_sprite_collbitmap1 = osd_create_bitmap(32,32)) == 0)
+	if ((sprite_sprite_collbitmap1 = bitmap_alloc(32,32)) == 0)
 	{
 		generic_vh_stop();
 		return 1;
 	}
 
-	if ((sprite_sprite_collbitmap2 = osd_create_bitmap(32,32)) == 0)
+	if ((sprite_sprite_collbitmap2 = bitmap_alloc(32,32)) == 0)
 	{
 		generic_vh_stop();
 		return 1;
@@ -265,14 +265,14 @@ void taitosj_vh_stop(void)
 	int i;
 
 
-	if (sprite_sprite_collbitmap2) osd_free_bitmap(sprite_sprite_collbitmap2);
-	if (sprite_sprite_collbitmap1) osd_free_bitmap(sprite_sprite_collbitmap1);
-	if (sprite_plane_collbitmap1) osd_free_bitmap(sprite_plane_collbitmap1);
+	if (sprite_sprite_collbitmap2) bitmap_free(sprite_sprite_collbitmap2);
+	if (sprite_sprite_collbitmap1) bitmap_free(sprite_sprite_collbitmap1);
+	if (sprite_plane_collbitmap1) bitmap_free(sprite_plane_collbitmap1);
 
 	for (i = 0; i < 3; i++)
 	{
-		if (taitosj_tmpbitmap[i]) osd_free_bitmap(taitosj_tmpbitmap[i]);
-		if (sprite_plane_collbitmap2[i]) osd_free_bitmap(sprite_plane_collbitmap2[i]);
+		if (taitosj_tmpbitmap[i]) bitmap_free(taitosj_tmpbitmap[i]);
+		if (sprite_plane_collbitmap2[i]) bitmap_free(sprite_plane_collbitmap2[i]);
 	}
 
 	if (dirtybuffer3) free(dirtybuffer3);
@@ -687,7 +687,7 @@ static void drawsprites(struct osd_bitmap *bitmap)
 						2 * ((taitosj_colorbank[1] >> 4) & 0x03) + ((spriteram[offs + 2] >> 2) & 1),
 						flipx,flipy,
 						sx,sy,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+						&Machine->visible_area,TRANSPARENCY_PEN,0);
 
 				/* draw with wrap around. The horizontal games (eg. sfposeid) need this */
 				drawgfx(bitmap,Machine->gfx[(spriteram[offs + 3] & 0x40) ? 3 : 1],
@@ -695,7 +695,7 @@ static void drawsprites(struct osd_bitmap *bitmap)
 						2 * ((taitosj_colorbank[1] >> 4) & 0x03) + ((spriteram[offs + 2] >> 2) & 1),
 						flipx,flipy,
 						sx - 0x100,sy,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+						&Machine->visible_area,TRANSPARENCY_PEN,0);
 			}
 		}
 	}
@@ -729,7 +729,7 @@ static void drawplayfield(int n, struct osd_bitmap *bitmap)
 				scrolly[i]    = -taitosj_colscrolly[32*n+i] - taitosj_scroll[2*n+1];
 		}
 
-		copyscrollbitmap(bitmap,taitosj_tmpbitmap[n],1,&scrollx,32,scrolly,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+		copyscrollbitmap(bitmap,taitosj_tmpbitmap[n],1,&scrollx,32,scrolly,&Machine->visible_area,TRANSPARENCY_COLOR,0);
 
 		/* store parts covered with sprites for sprites/playfields collision detection */
 		for (i=0x00; i<0x20; i++)
@@ -872,7 +872,7 @@ void taitosj_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	/* first of all, fill the screen with the background color */
 	fillbitmap(bitmap,Machine->gfx[0]->colortable[8 * (taitosj_colorbank[1] & 0x07)],
-			&Machine->drv->visible_area);
+			&Machine->visible_area);
 
 	for (i = 0;i < 4;i++)
 		drawplane(draworder[*taitosj_video_priority & 0x1f][i],bitmap);

@@ -162,7 +162,7 @@ WRITE_HANDLER( baraduke_scroll1_w )
 
 static void draw_sprites(struct osd_bitmap *bitmap, int priority)
 {
-	const struct rectangle *clip = &Machine->drv->visible_area;
+	const struct rectangle *clip = &Machine->visible_area;
 
 	const unsigned char *source = &spriteram[0];
 	const unsigned char *finish = &spriteram[0x0800-16];/* the last is NOT a sprite */
@@ -349,7 +349,7 @@ void baraduke_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		drawgfx(bitmap,Machine->gfx[0],	baraduke_textram[offs],
 				(baraduke_textram[offs+0x400] << 2) & 0x1ff,
 				flipscreen,flipscreen,sx*8,sy*8,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,3);
+				&Machine->visible_area,TRANSPARENCY_PEN,3);
 	}
 }
 
@@ -400,6 +400,6 @@ void metrocrs_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		drawgfx(bitmap,Machine->gfx[0],	baraduke_textram[offs],
 				(baraduke_textram[offs+0x400] << 2) & 0x1ff,
 				flipscreen,flipscreen,sx*8,sy*8,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,3);
+				&Machine->visible_area,TRANSPARENCY_PEN,3);
 	}
 }

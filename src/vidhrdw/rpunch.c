@@ -222,7 +222,7 @@ WRITE_HANDLER(rpunch_crtc_data_w)
 			case 0x0b:
 				if (crtc_timer)
 					timer_remove(crtc_timer);
-				crtc_timer = timer_set(cpu_getscanlinetime(Machine->drv->visible_area.max_y + 1), (data == 0xc0) ? 2 : 1, crtc_interrupt_gen);
+				crtc_timer = timer_set(cpu_getscanlinetime(Machine->visible_area.max_y + 1), (data == 0xc0) ? 2 : 1, crtc_interrupt_gen);
 				break;
 
 			default:

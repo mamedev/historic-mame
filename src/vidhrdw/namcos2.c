@@ -807,7 +807,7 @@ static void draw_sprites_default( struct osd_bitmap *bitmap, int priority )
 
 		if((sizey-1) && sizex && (offset6&0x0007)==priority)
 		{
-			rect=Machine->drv->visible_area;
+			rect=Machine->visible_area;
 
 			sprn=(offset2>>2)&0x7ff;
 			spr_region=(offset2&0x2000)?GFX_OBJ2:GFX_OBJ1;
@@ -907,7 +907,7 @@ static void draw_sprites_finallap( struct osd_bitmap *bitmap, int priority )
 
 		if((sizey-1) && sizex && (offset6&0x000f)==priority)
 		{
-			rect=Machine->drv->visible_area;
+			rect=Machine->visible_area;
 
 			sprn=(offset2>>2)&0x7ff;
 			spr_region=(offset0&0x0200)?GFX_OBJ2:GFX_OBJ1;
@@ -1000,7 +1000,7 @@ void namcos2_vh_update_default(struct osd_bitmap *bitmap, int full_refresh)
 
 
 	/* Scrub the bitmap clean */
-	fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);
+	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
 	/* Render the screen */
 	for(priority=0;priority<=7;priority++)
@@ -1097,7 +1097,7 @@ void namcos2_vh_update_finallap(struct osd_bitmap *bitmap, int full_refresh)
 
 
 	/* Scrub the bitmap clean */
-	fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);
+	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
 	/* Render the screen */
 	for(priority=0;priority<=15;priority++)

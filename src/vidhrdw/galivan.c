@@ -380,7 +380,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 				color + 16 * (spritepalettebank[code >> 2] & 0x0f),
 				flipx,flipy,
 				sx,sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
+				&Machine->visible_area,TRANSPARENCY_PEN,15);
 	}
 }
 
@@ -394,7 +394,7 @@ void galivan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_render (ALL_TILEMAPS);
 
 	if (layers & 0x40)
-		fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);
+		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 	else
 		tilemap_draw(bitmap,bg_tilemap,0);
 
@@ -415,7 +415,7 @@ void ninjemak_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	tilemap_render(ALL_TILEMAPS);
 
 	if (ninjemak_dispdisable)
-		fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);
+		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 	else
 		tilemap_draw(bitmap,bg_tilemap,0);
 

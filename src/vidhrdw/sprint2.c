@@ -36,32 +36,32 @@ int sprint2_vh_start(void)
 	if (generic_vh_start()!=0)
 		return 1;
 
-	if ((back_vid = osd_create_bitmap(16,8)) == 0)
+	if ((back_vid = bitmap_alloc(16,8)) == 0)
 	{
 		generic_vh_stop();
 		return 1;
 	}
 
-	if ((grey_cars_vid = osd_create_bitmap(16,8)) == 0)
+	if ((grey_cars_vid = bitmap_alloc(16,8)) == 0)
 	{
-		osd_free_bitmap(back_vid);
+		bitmap_free(back_vid);
 		generic_vh_stop();
 		return 1;
 	}
 
-	if ((black_car_vid = osd_create_bitmap(16,8)) == 0)
+	if ((black_car_vid = bitmap_alloc(16,8)) == 0)
 	{
-		osd_free_bitmap(back_vid);
-		osd_free_bitmap(grey_cars_vid);
+		bitmap_free(back_vid);
+		bitmap_free(grey_cars_vid);
 		generic_vh_stop();
 		return 1;
 	}
 
-	if ((white_car_vid = osd_create_bitmap(16,8)) == 0)
+	if ((white_car_vid = bitmap_alloc(16,8)) == 0)
 	{
-		osd_free_bitmap(back_vid);
-		osd_free_bitmap(grey_cars_vid);
-		osd_free_bitmap(black_car_vid);
+		bitmap_free(back_vid);
+		bitmap_free(grey_cars_vid);
+		bitmap_free(black_car_vid);
 		generic_vh_stop();
 		return 1;
 	}
@@ -74,10 +74,10 @@ int sprint2_vh_start(void)
 
 void sprint2_vh_stop(void)
 {
-	osd_free_bitmap(back_vid);
-	osd_free_bitmap(grey_cars_vid);
-	osd_free_bitmap(black_car_vid);
-	osd_free_bitmap(white_car_vid);
+	bitmap_free(back_vid);
+	bitmap_free(grey_cars_vid);
+	bitmap_free(black_car_vid);
+	bitmap_free(white_car_vid);
 	generic_vh_stop();
 }
 
@@ -419,12 +419,12 @@ static void sprint_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					charcode, (videoram[offs] & 0x80)>>7,
 					0,0,sx,sy,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+					&Machine->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
 
 	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 	/* Draw each one of our four cars */
 	for (car=3;car>=0;car--)
@@ -437,7 +437,7 @@ static void sprint_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		drawgfx(bitmap,Machine->gfx[1],
 				(sprint2_vert_car_ram[car*2+1]>>3), car,
 				0,0,sx,sy,
-				&Machine->drv->visible_area,TRANSPARENCY_COLOR,1);
+				&Machine->visible_area,TRANSPARENCY_COLOR,1);
 	}
 
 	/* Refresh our collision detection buffers */
@@ -458,7 +458,7 @@ static void draw_gear_indicator(int gear, struct osd_bitmap *bitmap, int x, int 
 		drawgfx(bitmap,Machine->gfx[0],
 				gear_buf[offs],color,
 				0,0,(x+offs)*8,30*8,
-				&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+				&Machine->visible_area,TRANSPARENCY_NONE,0);
 }
 
 

@@ -136,7 +136,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 					 color,
 					 flipx,flipy,
 					 sx,flipscreen ? sy - 16*y : sy + 16*y,
-					 &Machine->drv->visible_area,TRANSPARENCY_PEN, 0 );
+					 &Machine->visible_area,TRANSPARENCY_PEN, 0 );
 		 }
 	}
 }
@@ -195,7 +195,7 @@ void kyugo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		}
 
 		/* copy the temporary bitmap to the screen */
-		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 	/* sprites */
@@ -221,6 +221,6 @@ void kyugo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				2*color_codes[code/8] + frontcolor,
 				flipscreen, flipscreen,
 				8*sx, 8*sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

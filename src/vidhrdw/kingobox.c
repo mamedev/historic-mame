@@ -191,7 +191,7 @@ void kingobox_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		int scrolly = kingobox_scroll_y[0];
 
-		copyscrollbitmap(bitmap,tmpbitmap,0,0,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,0,0,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 
@@ -235,7 +235,7 @@ void kingobox_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				(kingobox_colorram1[offs] & 0x38) >> 3,
 				0,0,
 				sx*8,sy*8,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 }
 
@@ -273,7 +273,7 @@ void ringking_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		int scrolly = kingobox_scroll_y[0];
 
-		copyscrollbitmap(bitmap,tmpbitmap,0,0,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,0,0,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 
@@ -316,6 +316,6 @@ void ringking_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				(kingobox_colorram1[offs] & 0x38) >> 3,
 				0,0,
 				sx*8,sy*8,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

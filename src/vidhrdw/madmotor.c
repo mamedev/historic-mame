@@ -289,7 +289,7 @@ static void dec0_drawsprites(struct osd_bitmap *bitmap,int pri_mask,int pri_val)
 					colour,
 					fx,fy,
 					x,y + mult * multi,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					&Machine->visible_area,TRANSPARENCY_PEN,0);
 
 			multi--;
 		}

@@ -185,7 +185,7 @@ static void draw_background( struct osd_bitmap *bitmap )
 			for (offs = 128;offs < 256;offs++) xscroll[offs] = -troangel_scroll[offs];
 		}
 
-		copyscrollbitmap(bitmap,tmpbitmap,256,xscroll,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,256,xscroll,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 }
 
@@ -223,7 +223,7 @@ static void draw_sprites( struct osd_bitmap *bitmap )
 			color,
 			flipx,flipy,
 			sx,sy,
-			&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 }
 

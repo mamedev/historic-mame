@@ -3,8 +3,7 @@
 #include "ticker.h"
 #include <time.h>
 
-#define USE_UCLOCK
-//#define USE_RDTSC
+
 
 static int use_rdtsc;
 TICKER ticks_per_sec;

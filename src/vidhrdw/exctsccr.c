@@ -143,7 +143,7 @@ static void exctsccr_drawsprites( struct osd_bitmap *bitmap ) {
 				color,
 				flipx, flipy,
 				sx,sy,
-				&Machine->drv->visible_area,
+				&Machine->visible_area,
 				TRANSPARENCY_PEN,0);
 	}
 
@@ -175,7 +175,7 @@ static void exctsccr_drawsprites( struct osd_bitmap *bitmap ) {
 				0x0e,
 				flipx, flipy,
 				sx,sy,
-				&Machine->drv->visible_area,
+				&Machine->visible_area,
 				TRANSPARENCY_PEN,0);
 
 			color += 6;
@@ -187,14 +187,14 @@ static void exctsccr_drawsprites( struct osd_bitmap *bitmap ) {
 				color,
 				flipx, flipy,
 				sx,sy,
-				&Machine->drv->visible_area,
+				&Machine->visible_area,
 				TRANSPARENCY_PEN,0);
 			drawgfx(bitmap,Machine->gfx[4],
 				code,
 				color,
 				flipx, flipy,
 				sx,sy,
-				&Machine->drv->visible_area,
+				&Machine->visible_area,
 				TRANSPARENCY_COLOR, 16);
 
 		} else
@@ -204,7 +204,7 @@ static void exctsccr_drawsprites( struct osd_bitmap *bitmap ) {
 				color,
 				flipx, flipy,
 				sx,sy,
-				&Machine->drv->visible_area,
+				&Machine->visible_area,
 				TRANSPARENCY_PEN,0);
 		}
 	}
@@ -238,13 +238,13 @@ void exctsccr_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh ) {
 					( colorram[offs] ) & 0x1f,
 					0, 0,
 					sx,sy,
-					&Machine->drv->visible_area,
+					&Machine->visible_area,
 					TRANSPARENCY_NONE,0);
 		}
 	}
 
 	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 	/* draw sprites */
 	exctsccr_drawsprites( bitmap );

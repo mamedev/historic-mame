@@ -144,7 +144,7 @@ static void draw_sprites(struct osd_bitmap *bitmap,int pri)
 				drawgfx(bitmap,Machine->gfx[4],
 				sprite++,
 				color,fx,fy,x+ax*16,y+ay*16,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
+				&Machine->visible_area,TRANSPARENCY_PEN,15);
 			}
 	}
 }
@@ -199,7 +199,7 @@ void dcon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	if ((dcon_enable&1)!=1)
 		tilemap_draw(bitmap,background_layer,0);
 	else
-		fillbitmap(bitmap,palette_transparent_pen,&Machine->drv->visible_area);
+		fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
 
 	draw_sprites(bitmap,2);
 	tilemap_draw(bitmap,midground_layer,0);

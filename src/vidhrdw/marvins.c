@@ -177,7 +177,7 @@ int marvins_vh_start( void )
 		return 1;
 
 	{
-		struct rectangle clip = Machine->drv->visible_area;
+		struct rectangle clip = Machine->visible_area;
 		clip.max_x-=16;
 		clip.min_x+=16;
 		tilemap_set_clip( fg_tilemap, &clip );
@@ -219,7 +219,7 @@ int marvins_vh_start( void )
 static void draw_status( struct osd_bitmap *bitmap )
 {
 	const unsigned char *base = videoram+0x2400;
-	struct rectangle clip = Machine->drv->visible_area;
+	struct rectangle clip = Machine->visible_area;
 	const struct GfxElement *gfx = Machine->gfx[0];
 	int row;
 	for( row=0; row<4; row++ )
@@ -252,7 +252,7 @@ static void draw_sprites( struct osd_bitmap *bitmap, int scrollx, int scrolly,
 		int priority, unsigned char sprite_partition )
 {
 	const struct GfxElement *gfx = Machine->gfx[3];
-	struct rectangle clip = Machine->drv->visible_area;
+	struct rectangle clip = Machine->visible_area;
 	const unsigned char *source, *finish;
 
 	if( sprite_partition>0x64 ) sprite_partition = 0x64;

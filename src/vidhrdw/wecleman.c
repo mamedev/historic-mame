@@ -438,8 +438,8 @@ int hotchase_vh_start(void)
 		return 1;
 	}
 
-	temp_bitmap  = osd_create_bitmap(512,512);
-	temp_bitmap2 = osd_create_bitmap(512,256);
+	temp_bitmap  = bitmap_alloc(512,512);
+	temp_bitmap2 = bitmap_alloc(512,256);
 
 	sprite_list = sprite_list_create( NUM_SPRITES, SPRITE_LIST_BACK_TO_FRONT | SPRITE_LIST_RAW_DATA );
 
@@ -460,8 +460,8 @@ int hotchase_vh_start(void)
 
 void hotchase_vh_stop(void)
 {
-	if (temp_bitmap)	osd_free_bitmap(temp_bitmap);
-	if (temp_bitmap2)	osd_free_bitmap(temp_bitmap2);
+	if (temp_bitmap)	bitmap_free(temp_bitmap);
+	if (temp_bitmap2)	bitmap_free(temp_bitmap2);
 	K051316_vh_stop_0();
 	K051316_vh_stop_1();
 }
@@ -487,8 +487,8 @@ void hotchase_vh_stop(void)
 
 void wecleman_mark_road_colors(void)
 {
-	int y					=	Machine->drv->visible_area.min_y;
-	int ymax				=	Machine->drv->visible_area.max_y;
+	int y					=	Machine->visible_area.min_y;
+	int ymax				=	Machine->visible_area.max_y;
 	int color_codes_start	=	Machine->drv->gfxdecodeinfo[1].color_codes_start;
 
 	for (; y <= ymax; y++)
@@ -521,7 +521,7 @@ void wecleman_mark_road_colors(void)
 
 void wecleman_draw_road(struct osd_bitmap *bitmap,int priority)
 {
-	struct rectangle rect = Machine->drv->visible_area;
+	struct rectangle rect = Machine->visible_area;
 	int curr_code, sx,sy;
 
 /* Referred to what's in the ROMs */
@@ -580,8 +580,8 @@ void wecleman_draw_road(struct osd_bitmap *bitmap,int priority)
 
 void hotchase_mark_road_colors(void)
 {
-	int y					=	Machine->drv->visible_area.min_y;
-	int ymax				=	Machine->drv->visible_area.max_y;
+	int y					=	Machine->visible_area.min_y;
+	int ymax				=	Machine->visible_area.max_y;
 	int color_codes_start	=	Machine->drv->gfxdecodeinfo[0].color_codes_start;
 
 	for (; y <= ymax; y++)
@@ -1063,7 +1063,7 @@ void hotchase_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	tilemap_render(ALL_TILEMAPS);
 
-	fillbitmap(bitmap,palette_transparent_pen,&Machine->drv->visible_area);
+	fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
 
 	/* Draw the background */
 	if (layers_ctrl & 1)
@@ -1080,7 +1080,7 @@ void hotchase_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		copybitmapzoom(	bitmap, temp_bitmap2,
 						0, 0,										// flip
 						-(64+32)*4+32, 0,							// pos
-						&Machine->drv->visible_area,				// clip
+						&Machine->visible_area,				// clip
 						TRANSPARENCY_PEN,palette_transparent_pen,	// transparency
 						(2<<16),(1<<16)								// scale: 16.16 fixed
 						);

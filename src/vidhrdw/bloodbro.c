@@ -46,16 +46,16 @@ WRITE_HANDLER( bloodbro_foreground_w ){
 /**************************************************************************/
 
 void bloodbro_vh_stop(void) {
-	if( tmpbitmap ) osd_free_bitmap( tmpbitmap );
-	if( tmpbitmap2 ) osd_free_bitmap( tmpbitmap2 );
+	if( tmpbitmap ) bitmap_free( tmpbitmap );
+	if( tmpbitmap2 ) bitmap_free( tmpbitmap2 );
 	free( dirtybuffer2 );
 	free( dirtybuffer );
 }
 
 int bloodbro_vh_start(void) {
-	tmpbitmap = osd_new_bitmap(512,256,Machine->scrbitmap->depth);
+	tmpbitmap = bitmap_alloc(512,256);
 	dirtybuffer = malloc(32*16);
-	tmpbitmap2 = osd_new_bitmap(512,256,Machine->scrbitmap->depth);
+	tmpbitmap2 = bitmap_alloc(512,256);
 	dirtybuffer2 = malloc(32*16);
 	sprite_list = sprite_list_create( NUM_SPRITES, SPRITE_LIST_FRONT_TO_BACK );
 
@@ -74,7 +74,7 @@ int bloodbro_vh_start(void) {
 /**************************************************************************/
 
 static void draw_text( struct osd_bitmap *bitmap ){
-	const struct rectangle *clip = &Machine->drv->visible_area;
+	const struct rectangle *clip = &Machine->visible_area;
 	const UINT16 *source = (const UINT16 *)textlayoutram;
 	int sx, sy;
 	for( sy=0; sy<32; sy++ ){
@@ -116,7 +116,7 @@ static void draw_background( struct osd_bitmap *bitmap ) {
 
 		copyscrollbitmap(bitmap,tmpbitmap,
 			1,&scrollx,1,&scrolly,
-			&Machine->drv->visible_area,
+			&Machine->visible_area,
               TRANSPARENCY_NONE,0);
 	}
 }
@@ -151,7 +151,7 @@ static void draw_foreground( struct osd_bitmap *bitmap ) {
 		int scrollx = -READ_WORD( &bloodbro_scroll[0x24] );
 		int scrolly = -READ_WORD( &bloodbro_scroll[0x26] );
 
-		copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,
+		copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,1,&scrolly,&Machine->visible_area,
                 TRANSPARENCY_PEN,0xf );
 	}
 }
@@ -314,7 +314,7 @@ static void weststry_draw_sprites( struct osd_bitmap *bitmap, int priority) {
 			drawgfx(bitmap,Machine->gfx[3],
 				tile_number, color, flipx,0,
 				sx,sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0xf);
+				&Machine->visible_area,TRANSPARENCY_PEN,0xf);
 		}
 	}
 }

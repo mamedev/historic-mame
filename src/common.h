@@ -165,6 +165,7 @@ WRITE_HANDLER( coin_counter_w );
 WRITE_HANDLER( coin_lockout_w );
 WRITE_HANDLER( coin_lockout_global_w );  /* Locks out all coin inputs */
 
+
 int readroms(void);
 void printromlist(const struct RomModule *romp,const char *name);
 
@@ -182,6 +183,27 @@ int memory_region_length(int num);
 int new_memory_region(int num, int length);
 void free_memory_region(int num);
 
-void save_screen_snapshot(void);
+data_t flip_screen_x, flip_screen_y;
+
+WRITE_HANDLER( flip_screen_w );
+WRITE_HANDLER( flip_screen_x_w );
+WRITE_HANDLER( flip_screen_y_w );
+#define flip_screen flip_screen_x
+
+/* sets a variable and schedules a full screen refresh if it changed */
+void set_vh_global_attribute( data_t *addr, data_t data );
+
+/* next time vh_screenrefresh is called, full_refresh will be true,
+   thus requesting a redraw of the entire screen */
+void schedule_full_refresh(void);
+
+void set_visible_area(int min_x,int max_x,int min_y,int max_y);
+
+struct osd_bitmap *bitmap_alloc(int width,int height);
+struct osd_bitmap *bitmap_alloc_depth(int width,int height,int depth);
+void bitmap_free(struct osd_bitmap *bitmap);
+
+void save_screen_snapshot_as(void *fp,struct osd_bitmap *bitmap);
+void save_screen_snapshot(struct osd_bitmap *bitmap);
 
 #endif

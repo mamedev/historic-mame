@@ -148,7 +148,7 @@ void shaolins_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			scroll[i] = 0;
 		for (i = 4;i < 32;i++)
 			scroll[i] = -*shaolins_scroll-1;
-		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 
@@ -161,7 +161,7 @@ void shaolins_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					(spriteram[offs+9] & 0x0f) + 16 * palettebank,
 					!(spriteram[offs+9] & 0x40),(spriteram[offs+9] & 0x80),
 					240-spriteram[offs+6],248-spriteram[offs+4],
-					&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+					&Machine->visible_area,TRANSPARENCY_COLOR,0);
 					/* transparency_color, otherwise sprites in test mode are not visible */
 		}
 	}

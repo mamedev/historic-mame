@@ -112,19 +112,19 @@ void c1943_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 
 int c1943_vh_start(void)
 {
-	if ((sc2bitmap = osd_create_bitmap(9*32,8*32)) == 0)
+	if ((sc2bitmap = bitmap_alloc(9*32,8*32)) == 0)
 		return 1;
 
-	if ((sc1bitmap = osd_create_bitmap(9*32,9*32)) == 0)
+	if ((sc1bitmap = bitmap_alloc(9*32,9*32)) == 0)
 	{
-		osd_free_bitmap(sc2bitmap);
+		bitmap_free(sc2bitmap);
 		return 1;
 	}
 
 	if (generic_vh_start() == 1)
 	{
-		osd_free_bitmap(sc2bitmap);
-		osd_free_bitmap(sc1bitmap);
+		bitmap_free(sc2bitmap);
+		bitmap_free(sc1bitmap);
 		return 1;
 	}
 
@@ -137,8 +137,8 @@ int c1943_vh_start(void)
 
 void c1943_vh_stop(void)
 {
-	osd_free_bitmap(sc2bitmap);
-	osd_free_bitmap(sc1bitmap);
+	bitmap_free(sc2bitmap);
+	bitmap_free(sc1bitmap);
 }
 
 
@@ -247,10 +247,10 @@ void c1943_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		copyscrollbitmap(bitmap,sc2bitmap,
 			1,&xscroll,
 			1,&yscroll,
-			&Machine->drv->visible_area,
+			&Machine->visible_area,
 			TRANSPARENCY_NONE,0);
 	}
-	else fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);
+	else fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
 
 	if (objon)
@@ -278,7 +278,7 @@ void c1943_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 						color,
 						flipscreen,flipscreen,
 						sx,sy,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+						&Machine->visible_area,TRANSPARENCY_PEN,0);
 			}
 		}
 	}
@@ -337,7 +337,7 @@ void c1943_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		copyscrollbitmap(bitmap,sc1bitmap,
 			1,&xscroll,
 			1,&yscroll,
-			&Machine->drv->visible_area,
+			&Machine->visible_area,
 			TRANSPARENCY_COLOR,0);
 	}
 
@@ -367,7 +367,7 @@ void c1943_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 						color,
 						flipscreen,flipscreen,
 						sx,sy,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+						&Machine->visible_area,TRANSPARENCY_PEN,0);
 			}
 		}
 	}
@@ -391,7 +391,7 @@ void c1943_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					colorram[offs] & 0x1f,
 					flipscreen,flipscreen,
 					8*sx,8*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_COLOR,79);
+					&Machine->visible_area,TRANSPARENCY_COLOR,79);
 		}
 	}
 }

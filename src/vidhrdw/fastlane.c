@@ -70,7 +70,7 @@ int fastlane_vh_start(void)
 		return 1;
 
 	{
-		struct rectangle clip = Machine->drv->visible_area;
+		struct rectangle clip = Machine->visible_area;
 		clip.min_x += 40;
 		tilemap_set_clip(layer0,&clip);
 

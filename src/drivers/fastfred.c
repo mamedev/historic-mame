@@ -69,8 +69,6 @@ void fastfred_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 WRITE_HANDLER( fastfred_character_bank_select_w );
 WRITE_HANDLER( fastfred_color_bank_select_w );
 WRITE_HANDLER( fastfred_background_color_w );
-WRITE_HANDLER( fastfred_flipx_w );
-WRITE_HANDLER( fastfred_flipy_w );
 void jumpcoas_init_machine(void);
 
 static READ_HANDLER( jumpcoas_custom_io_r )
@@ -150,10 +148,10 @@ static struct MemoryWriteAddress fastfred_writemem[] =
 	{ 0xf001, 0xf001, interrupt_enable_w },
 	{ 0xf002, 0xf003, fastfred_color_bank_select_w },
 	{ 0xf004, 0xf005, fastfred_character_bank_select_w },
-	{ 0xf006, 0xf006, fastfred_flipx_w },
-	{ 0xf007, 0xf007, fastfred_flipy_w },
-	{ 0xf116, 0xf116, fastfred_flipx_w },
-	{ 0xf117, 0xf117, fastfred_flipy_w },
+	{ 0xf006, 0xf006, flip_screen_x_w },
+	{ 0xf007, 0xf007, flip_screen_y_w },
+	{ 0xf116, 0xf116, flip_screen_x_w },
+	{ 0xf117, 0xf117, flip_screen_y_w },
 	{ 0xf800, 0xf800, soundlatch_w },
 	{ -1 }  /* end of table */
 };
@@ -189,10 +187,10 @@ static struct MemoryWriteAddress jumpcoas_writemem[] =
 	{ 0xf001, 0xf001, interrupt_enable_w },
 	{ 0xf002, 0xf003, fastfred_color_bank_select_w },
 	{ 0xf004, 0xf005, fastfred_character_bank_select_w },
-	{ 0xf006, 0xf006, fastfred_flipx_w },
-	{ 0xf007, 0xf007, fastfred_flipy_w },
-	{ 0xf116, 0xf116, fastfred_flipx_w },
-	{ 0xf117, 0xf117, fastfred_flipy_w },
+	{ 0xf006, 0xf006, flip_screen_x_w },
+	{ 0xf007, 0xf007, flip_screen_y_w },
+	{ 0xf116, 0xf116, flip_screen_x_w },
+	{ 0xf117, 0xf117, flip_screen_y_w },
 	{ 0xf800, 0xf800, AY8910_control_port_0_w },
 	{ 0xf801, 0xf801, AY8910_write_port_0_w },
 	{ -1 }  /* end of table */

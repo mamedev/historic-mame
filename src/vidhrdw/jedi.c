@@ -17,25 +17,9 @@ unsigned char *jedi_PIXIRAM;
 static unsigned int jedi_vscroll;
 static unsigned int jedi_hscroll;
 static unsigned int jedi_alpha_bank;
+static int video_off,smooth_table;
 static unsigned char *dirtybuffer2;
 static struct osd_bitmap *tmpbitmap2,*tmpbitmap3;
-
-WRITE_HANDLER( jedi_vscroll_w ) {
-    jedi_vscroll = data | (offset << 8);
-}
-
-WRITE_HANDLER( jedi_hscroll_w ) {
-    jedi_hscroll = data | (offset << 8);
-}
-
-WRITE_HANDLER( jedi_alpha_banksel_w )
-{
-	if (jedi_alpha_bank != 2*(data & 0x80))
-	{
-		jedi_alpha_bank = 2*(data & 0x80);
-		memset(dirtybuffer,1,videoram_size);
-	}
-}
 
 
 
@@ -91,7 +75,7 @@ int jedi_vh_start(void)
 	}
 	memset(dirtybuffer,1,videoram_size);
 
-	if ((tmpbitmap = osd_new_bitmap(Machine->drv->screen_width,Machine->drv->screen_height,8)) == 0)
+	if ((tmpbitmap = bitmap_alloc_depth(Machine->drv->screen_width,Machine->drv->screen_height,8)) == 0)
 	{
 		free(dirtybuffer);
 		return 1;
@@ -99,43 +83,41 @@ int jedi_vh_start(void)
 
 	if ((dirtybuffer2 = malloc(jedi_backgroundram_size)) == 0)
 	{
-		osd_free_bitmap(tmpbitmap);
+		bitmap_free(tmpbitmap);
 		free(dirtybuffer);
 		return 1;
 	}
 	memset(dirtybuffer2,1,jedi_backgroundram_size);
 
-	if ((tmpbitmap2 = osd_new_bitmap(Machine->drv->screen_width,Machine->drv->screen_height,8)) == 0)
+	if ((tmpbitmap2 = bitmap_alloc_depth(Machine->drv->screen_width,Machine->drv->screen_height,8)) == 0)
 	{
-		osd_free_bitmap(tmpbitmap);
+		bitmap_free(tmpbitmap);
 		free(dirtybuffer);
 		free(dirtybuffer2);
 		return 1;
 	}
 
-	/* the background area is 512x512 */
-	if ((tmpbitmap3 = osd_new_bitmap(512,512,8)) == 0)
+	/* the background area is 256x256, doubled by the hardware*/
+	if ((tmpbitmap3 = bitmap_alloc_depth(256,256,8)) == 0)
 	{
-		osd_free_bitmap(tmpbitmap);
-		osd_free_bitmap(tmpbitmap2);
+		bitmap_free(tmpbitmap);
+		bitmap_free(tmpbitmap2);
 		free(dirtybuffer);
 		free(dirtybuffer2);
 		return 1;
 	}
+
+	/* reserve color 1024 for black (disabled display) */
+	palette_change_color(1024,0,0,0);
 
 	return 0;
 }
 
-/***************************************************************************
-
-  Stop the video hardware emulation.
-
-***************************************************************************/
 void jedi_vh_stop(void)
 {
-	osd_free_bitmap(tmpbitmap);
-	osd_free_bitmap(tmpbitmap2);
-	osd_free_bitmap(tmpbitmap3);
+	bitmap_free(tmpbitmap);
+	bitmap_free(tmpbitmap2);
+	bitmap_free(tmpbitmap3);
 	free(dirtybuffer);
 	free(dirtybuffer2);
 }
@@ -150,6 +132,35 @@ WRITE_HANDLER( jedi_backgroundram_w )
 
 		jedi_backgroundram[offset] = data;
 	}
+}
+
+WRITE_HANDLER( jedi_vscroll_w )
+{
+    jedi_vscroll = data | (offset << 8);
+}
+
+WRITE_HANDLER( jedi_hscroll_w )
+{
+    jedi_hscroll = data | (offset << 8);
+}
+
+WRITE_HANDLER( jedi_alpha_banksel_w )
+{
+	if (jedi_alpha_bank != 2*(data & 0x80))
+	{
+		jedi_alpha_bank = 2*(data & 0x80);
+		memset(dirtybuffer,1,videoram_size);
+	}
+}
+
+WRITE_HANDLER( jedi_video_off_w )
+{
+	video_off = data;
+}
+
+WRITE_HANDLER( jedi_PIXIRAM_w )
+{
+	smooth_table = data & 0x03;
 }
 
 
@@ -170,6 +181,12 @@ void jedi_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		memset(dirtybuffer,1,videoram_size);
 		memset(dirtybuffer2,1,jedi_backgroundram_size);
+	}
+
+	if (video_off)
+	{
+		fillbitmap(bitmap,Machine->pens[1024],&Machine->visible_area);
+		return;
 	}
 
 
@@ -198,7 +215,7 @@ void jedi_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					0,
 					0,0,
 					8*sx,8*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE_RAW,0);
+					&Machine->visible_area,TRANSPARENCY_NONE_RAW,0);
 		}
     }
 
@@ -217,15 +234,15 @@ void jedi_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			sy = offs / 32;
 			c = (jedi_backgroundram[offs] & 0xFF);
 			b = (jedi_backgroundram[offs + 0x400] & 0x0F);
-			c = c | ((b & 0x01) << 8);
-			c = c | ((b & 0x08) << 6);
-			c = c | ((b & 0x02) << 9);
+			c |= (b & 0x01) << 8;
+			c |= (b & 0x08) << 6;
+			c |= (b & 0x02) << 9;
 
 			drawgfx(tmpbitmap3,Machine->gfx[1],
 					c,
 					0,
 					b & 0x04,0,
-					16*sx,16*sy,
+					8*sx,8*sy,
 					0,TRANSPARENCY_NONE_RAW,0);
 		}
 	}
@@ -233,10 +250,11 @@ void jedi_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	/* Draw the sprites. Note that it is important to draw them exactly in this */
 	/* order, to have the correct priorities. */
-	fillbitmap(tmpbitmap2,0,&Machine->drv->visible_area);
+	fillbitmap(tmpbitmap2,0,&Machine->visible_area);
 
     for (offs = 0;offs < 0x30;offs++)
 	{
+		int x,y,flipx,flipy;
 		int b,c;
 
 
@@ -247,48 +265,66 @@ void jedi_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		c = spriteram[offs] + (b * 256);
 		if (spriteram[offs+0x40] & 0x08) c |= 1;	/* double height */
 
-		b = spriteram[offs+0x40] & 0x01;
+		/* coordinates adjustments made to match screenshot */
+		x = spriteram[offs+0x100] + ((spriteram[offs+0x40] & 0x01) << 8) - 2;
+		y = 240-spriteram[offs+0x80] + 1;
+		flipx = spriteram[offs+0x40] & 0x10;
+		flipy = spriteram[offs+0x40] & 0x20;
 
 		drawgfx(tmpbitmap2,Machine->gfx[2],
 				c,
 				0,
-				(spriteram[offs+0x40] & 0x10),(spriteram[offs+0x40] & 0x20),
-				(spriteram[offs+0x100]) | (b << 8),240-spriteram[offs+0x80],
-				&Machine->drv->visible_area,TRANSPARENCY_PEN_RAW,0);
+				flipx,flipy,
+				x,y,
+				&Machine->visible_area,TRANSPARENCY_PEN_RAW,0);
 
 		if (spriteram[offs+0x40] & 0x08)	/* double height */
 			drawgfx(tmpbitmap2,Machine->gfx[2],
 					c-1,
 					0,
-					(spriteram[offs+0x40] & 0x10),(spriteram[offs+0x40] & 0x20),
-					(spriteram[offs+0x100]) | (b << 8),240-spriteram[offs+0x80]-16,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN_RAW,0);
+					flipx,flipy,
+					x,y-16,
+					&Machine->visible_area,TRANSPARENCY_PEN_RAW,0);
     }
 
 
 	/* compose the three layers */
 	{
 		int x,y;
-		UINT8 *s1,*s2,*s3;
+		UINT8 *s1,*s2,*s3,*s3b;
+		UINT8 *prom = memory_region(REGION_PROMS) + smooth_table * 0x100;
 
 
 		if (bitmap->depth == 16)
 		{
 			for (y = 0;y < bitmap->height;y++)
 			{
-				UINT16 *d;
+				UINT16 *d = (UINT16 *)bitmap->line[y];
 
-				d = (UINT16 *)bitmap->line[y];
 				s1 = tmpbitmap->line[y];
 				s2 = tmpbitmap2->line[y];
-				s3 = tmpbitmap3->line[(y + jedi_vscroll) & 0x1ff];
+				s3 = tmpbitmap3->line[((y + jedi_vscroll) & 0x1ff) / 2];
+				s3b = tmpbitmap3->line[((y + jedi_vscroll - 1) & 0x1ff) / 2];
 
 				for (x = 0;x < bitmap->width;x++)
 				{
-					*(d++) = Machine->pens[
-							(*(s1++) << 8) |
-							(*(s2++) << 4) |
-							s3[(x + jedi_hscroll) & 0x1ff]];
+					int tl,tr,bl,br,mixt,mixb,mix;
+
+					tr = s3b[((x + jedi_hscroll + 1) & 0x1ff) / 2];
+					br = s3 [((x + jedi_hscroll + 1) & 0x1ff) / 2];
+
+					if ((x + jedi_hscroll) & 1)
+					{
+						tl = s3b[((x + jedi_hscroll) & 0x1ff) / 2];
+						bl = s3 [((x + jedi_hscroll) & 0x1ff) / 2];
+						mixt = prom[16 * tl + tr];
+						mixb = prom[16 * bl + br];
+						mix = prom[0x400 + 16 * mixt + mixb];
+					}
+					else
+						mix = prom[0x400 + 16 * tr + br];
+
+					*(d++) = Machine->pens[(*(s1++) << 8) | (*(s2++) << 4) | mix ];
 				}
 			}
 		}
@@ -296,19 +332,32 @@ void jedi_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		{
 			for (y = 0;y < bitmap->height;y++)
 			{
-				UINT8 *d;
+				UINT8 *d = bitmap->line[y];
 
-				d = bitmap->line[y];
 				s1 = tmpbitmap->line[y];
 				s2 = tmpbitmap2->line[y];
-				s3 = tmpbitmap3->line[(y + jedi_vscroll) & 0x1ff];
+				s3 = tmpbitmap3->line[((y + jedi_vscroll) & 0x1ff) / 2];
+				s3b = tmpbitmap3->line[((y + jedi_vscroll - 1) & 0x1ff) / 2];
 
 				for (x = 0;x < bitmap->width;x++)
 				{
-					*(d++) = Machine->pens[
-							(*(s1++) << 8) |
-							(*(s2++) << 4) |
-							s3[(x + jedi_hscroll) & 0x1ff]];
+					int tl,tr,bl,br,mixt,mixb,mix;
+
+					tr = s3b[((x + jedi_hscroll + 1) & 0x1ff) / 2];
+					br = s3 [((x + jedi_hscroll + 1) & 0x1ff) / 2];
+
+					if ((x + jedi_hscroll) & 1)
+					{
+						tl = s3b[((x + jedi_hscroll) & 0x1ff) / 2];
+						bl = s3 [((x + jedi_hscroll) & 0x1ff) / 2];
+						mixt = prom[16 * tl + tr];
+						mixb = prom[16 * bl + br];
+						mix = prom[0x400 + 16 * mixt + mixb];
+					}
+					else
+						mix = prom[0x400 + 16 * tr + br];
+
+					*(d++) = Machine->pens[(*(s1++) << 8) | (*(s2++) << 4) | mix ];
 				}
 			}
 		}

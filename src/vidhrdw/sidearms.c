@@ -30,7 +30,7 @@ int sidearms_vh_start(void)
 		return 1;
 
 	/* create a temporary bitmap slightly larger than the screen for the background */
-	if ((tmpbitmap2 = osd_create_bitmap(48*8 + 32,Machine->drv->screen_height + 32)) == 0)
+	if ((tmpbitmap2 = bitmap_alloc(48*8 + 32,Machine->drv->screen_height + 32)) == 0)
 	{
 		generic_vh_stop();
 		return 1;
@@ -48,7 +48,7 @@ int sidearms_vh_start(void)
 ***************************************************************************/
 void sidearms_vh_stop(void)
 {
-	osd_free_bitmap(tmpbitmap2);
+	bitmap_free(tmpbitmap2);
 	generic_vh_stop();
 }
 
@@ -221,7 +221,7 @@ if (palette_recalc())
 	scrollx = -(*sidearms_bg2_scrollx & 0x3f);
 	scrolly = -(*sidearms_bg2_scrolly & 0x3f);
 
-	copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 #endif
 
 
@@ -267,12 +267,12 @@ if (palette_recalc())
 
 	scrollx += 64;
 #if IHAVETHEBACKGROUND
-	copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_COLOR,1);
+	copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_COLOR,1);
 #else
-	copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 #endif
 	}
-	else fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);
+	else fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
 	/* Draw the sprites. */
 	if (objon)
@@ -292,7 +292,7 @@ if (palette_recalc())
 					spriteram[offs + 1] & 0x0f,
 					flipscreen,flipscreen,
 					sx,sy,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
+					&Machine->visible_area,TRANSPARENCY_PEN,15);
 		}
 	}
 
@@ -314,6 +314,6 @@ if (palette_recalc())
 				colorram[offs] & 0x3f,
 				flipscreen,flipscreen,
 				8*sx,8*sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,3);
+				&Machine->visible_area,TRANSPARENCY_PEN,3);
 	}
 }

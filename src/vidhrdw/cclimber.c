@@ -282,7 +282,7 @@ int cclimber_vh_start(void)
 	}
 	memset(bsdirtybuffer,1,cclimber_bsvideoram_size);
 
-	if ((bsbitmap = osd_create_bitmap(BIGSPRITE_WIDTH,BIGSPRITE_HEIGHT)) == 0)
+	if ((bsbitmap = bitmap_alloc(BIGSPRITE_WIDTH,BIGSPRITE_HEIGHT)) == 0)
 	{
 		free(bsdirtybuffer);
 		generic_vh_stop();
@@ -301,7 +301,7 @@ int cclimber_vh_start(void)
 ***************************************************************************/
 void cclimber_vh_stop(void)
 {
-	osd_free_bitmap(bsbitmap);
+	bitmap_free(bsbitmap);
 	free(bsdirtybuffer);
 	generic_vh_stop();
 }
@@ -403,19 +403,19 @@ static void drawbigsprite(struct osd_bitmap *bitmap)
 	copybitmap(bitmap,bsbitmap,
 			flipx,flipy,
 			sx,sy,
-			&Machine->drv->visible_area,TRANSPARENCY_COLOR,bgpen);
+			&Machine->visible_area,TRANSPARENCY_COLOR,bgpen);
 	copybitmap(bitmap,bsbitmap,
 			flipx,flipy,
 			sx-256,sy,
-			&Machine->drv->visible_area,TRANSPARENCY_COLOR,bgpen);
+			&Machine->visible_area,TRANSPARENCY_COLOR,bgpen);
 	copybitmap(bitmap,bsbitmap,
 			flipx,flipy,
 			sx-256,sy-256,
-			&Machine->drv->visible_area,TRANSPARENCY_COLOR,bgpen);
+			&Machine->visible_area,TRANSPARENCY_COLOR,bgpen);
 	copybitmap(bitmap,bsbitmap,
 			flipx,flipy,
 			sx,sy-256,
-			&Machine->drv->visible_area,TRANSPARENCY_COLOR,bgpen);
+			&Machine->visible_area,TRANSPARENCY_COLOR,bgpen);
 }
 
 
@@ -485,7 +485,7 @@ void cclimber_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			}
 		}
 
-		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 
@@ -554,7 +554,7 @@ void cclimber_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				spriteram[offs + 1] & 0x0f,
 				flipx,flipy,
 				sx,sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 
 
@@ -637,7 +637,7 @@ void swimmer_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				scroll[offs] = -cclimber_column_scroll[offs];
 		}
 
-		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 
@@ -707,7 +707,7 @@ void swimmer_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				(spriteram[offs + 1] & 0x0f) + 0x10 * palettebank,
 				flipx,flipy,
 				sx,sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 
 

@@ -266,7 +266,7 @@ int popeye_vh_start(void)
 	}
 	memset(dirtybuffer2,1,popeye_videoram_size);
 
-	if ((tmpbitmap2 = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if ((tmpbitmap2 = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 	{
 		free(dirtybuffer2);
 		generic_vh_stop();
@@ -284,7 +284,7 @@ int popeye_vh_start(void)
 ***************************************************************************/
 void popeye_vh_stop(void)
 {
-	osd_free_bitmap(tmpbitmap2);
+	bitmap_free(tmpbitmap2);
 	free(dirtybuffer2);
 	generic_vh_stop();
 }
@@ -353,10 +353,10 @@ void popeye_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			sx = 8 * (offs % 64);
 			sy = 8 * (offs / 64) - 16;
 
-			if (sx   >= Machine->drv->visible_area.min_x &&
-				sx+7 <= Machine->drv->visible_area.max_x &&
-				sy   >= Machine->drv->visible_area.min_y &&
-				sy+7 <= Machine->drv->visible_area.max_y)
+			if (sx   >= Machine->visible_area.min_x &&
+				sx+7 <= Machine->visible_area.max_x &&
+				sy   >= Machine->visible_area.min_y &&
+				sy+7 <= Machine->visible_area.max_y)
 			{
 				/* this is slow, but the background doesn't change during game */
 
@@ -388,8 +388,8 @@ void popeye_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		    popeye_background_pos[1] != lastpos[1])
 		{
 			/* mark the whole screen dirty if we're scrolling */
-			osd_mark_dirty (Machine->drv->visible_area.min_x, Machine->drv->visible_area.min_y,
-				Machine->drv->visible_area.max_x, Machine->drv->visible_area.max_y, 0);
+			osd_mark_dirty (Machine->visible_area.min_x, Machine->visible_area.min_y,
+				Machine->visible_area.max_x, Machine->visible_area.max_y, 0);
 			lastpos[0] = popeye_background_pos[0];
 			lastpos[1] = popeye_background_pos[1];
 		}
@@ -411,13 +411,13 @@ void popeye_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				drawgfx(tmpbitmap,Machine->gfx[0],
 						videoram[offs],colorram[offs],
 						0,0,sx,sy,
-						&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+						&Machine->visible_area,TRANSPARENCY_NONE,0);
 			}
 		}
 
 
 		/* copy the frontmost playfield (should be in front of sprites, but never mind) */
-		copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 	else
 	{
@@ -429,7 +429,7 @@ void popeye_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		copybitmap(bitmap,tmpbitmap2,0,0,
 			x,
 			y,
-			&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+			&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 
@@ -463,7 +463,7 @@ void popeye_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		/* sprite placement IS correct - the squares on level 1 leave one pixel */
 		/* of the house background uncovered */
 					2*(spriteram[offs])-7,2*(256-spriteram[offs + 1]) - 16,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 
 
@@ -481,7 +481,7 @@ void popeye_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			drawgfx(bitmap,Machine->gfx[0],
 					videoram[offs],colorram[offs],
 					0,0,sx,sy,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					&Machine->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}
 }

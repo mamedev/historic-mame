@@ -174,7 +174,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 						at & 0xf,
 						at & 0x100, at & 0x200,
 						x, y,
-						&Machine->drv->visible_area, TRANSPARENCY_PEN, 15);
+						&Machine->visible_area, TRANSPARENCY_PEN, 15);
 			} else {
 				int c1, c2, c3, c4;
 				switch(at & 0x300) {
@@ -210,28 +210,28 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 						at & 0xf,
 						at & 0x100, at & 0x200,
 						x, y,
-						&Machine->drv->visible_area, TRANSPARENCY_PEN, 15);
+						&Machine->visible_area, TRANSPARENCY_PEN, 15);
 				drawgfx(bitmap,
 						Machine->gfx[2],
 						sf1_invert(c2),
 						at & 0xf,
 						at & 0x100, at & 0x200,
 						x+16, y,
-						&Machine->drv->visible_area, TRANSPARENCY_PEN, 15);
+						&Machine->visible_area, TRANSPARENCY_PEN, 15);
 				drawgfx(bitmap,
 						Machine->gfx[2],
 						sf1_invert(c3),
 						at & 0xf,
 						at & 0x100, at & 0x200,
 						x, y+16,
-						&Machine->drv->visible_area, TRANSPARENCY_PEN, 15);
+						&Machine->visible_area, TRANSPARENCY_PEN, 15);
 				drawgfx(bitmap,
 						Machine->gfx[2],
 						sf1_invert(c4),
 						at & 0xf,
 						at & 0x100, at & 0x200,
 						x+16, y+16,
-						&Machine->drv->visible_area, TRANSPARENCY_PEN, 15);
+						&Machine->visible_area, TRANSPARENCY_PEN, 15);
 			}
 		}
 		pt -= 0x40;
@@ -256,7 +256,7 @@ void sf1_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	tilemap_draw(bitmap, bgb_tilemap, 0);
 
 	if(!(sf1_active & 0x20))
-		fillbitmap(bitmap,palette_transparent_pen,&Machine->drv->visible_area);
+		fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
 
 	tilemap_draw(bitmap, bgm_tilemap, 0);
 

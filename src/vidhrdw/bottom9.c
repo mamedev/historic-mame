@@ -116,7 +116,7 @@ void bottom9_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_render(ALL_TILEMAPS);
 
 	/* note: FIX layer is not used */
-	fillbitmap(bitmap,Machine->pens[layer_colorbase[1]],&Machine->drv->visible_area);
+	fillbitmap(bitmap,Machine->pens[layer_colorbase[1]],&Machine->visible_area);
 //	if (bottom9_video_enable)
 	{
 		K051960_sprites_draw(bitmap,1,1);

@@ -12,7 +12,6 @@
 
 
 unsigned char *amidar_attributesram;
-static int flipscreen[2];
 
 
 static struct rectangle spritevisiblearea =
@@ -86,26 +85,6 @@ void amidar_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 
 
 
-WRITE_HANDLER( amidar_flipx_w )
-{
-	if (flipscreen[0] != (data & 1))
-	{
-		flipscreen[0] = data & 1;
-		memset(dirtybuffer,1,videoram_size);
-	}
-}
-
-WRITE_HANDLER( amidar_flipy_w )
-{
-	if (flipscreen[1] != (data & 1))
-	{
-		flipscreen[1] = data & 1;
-		memset(dirtybuffer,1,videoram_size);
-	}
-}
-
-
-
 WRITE_HANDLER( amidar_attributes_w )
 {
 	if ((offset & 1) && amidar_attributesram[offset] != data)
@@ -134,6 +113,12 @@ void amidar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int offs;
 
 
+	if (full_refresh)
+	{
+		memset(dirtybuffer, 1, videoram_size);
+	}
+
+
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
 	for (offs = videoram_size - 1;offs >= 0;offs--)
@@ -148,21 +133,21 @@ void amidar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			sx = offs % 32;
 			sy = offs / 32;
 
-			if (flipscreen[0]) sx = 31 - sx;
-			if (flipscreen[1]) sy = 31 - sy;
+			if (flip_screen_x) sx = 31 - sx;
+			if (flip_screen_y) sy = 31 - sy;
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					videoram[offs],
 					amidar_attributesram[2 * (offs % 32) + 1] & 0x07,
-					flipscreen[0],flipscreen[1],
+					flip_screen_x,flip_screen_y,
 					8*sx,8*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+					&Machine->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
 
 
 	/* copy the temporary bitmap to the screen */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 
 	/* Draw the sprites. Note that it is important to draw them exactly in this */
@@ -177,12 +162,12 @@ void amidar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		flipx = spriteram[offs + 1] & 0x40;
 		flipy = spriteram[offs + 1] & 0x80;
 
-		if (flipscreen[0])
+		if (flip_screen_x)
 		{
 			sx = 241 - sx;	/* note: 241, not 240 */
 			flipx = !flipx;
 		}
-		if (flipscreen[1])
+		if (flip_screen_y)
 		{
 			sy = 240 - sy;
 			flipy = !flipy;
@@ -200,6 +185,6 @@ void amidar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				spriteram[offs + 2] & 0x07,
 				flipx,flipy,
 				sx,sy,
-				flipscreen[0] ? &spritevisibleareaflipx : &spritevisiblearea,TRANSPARENCY_PEN,0);
+				flip_screen_x ? &spritevisibleareaflipx : &spritevisiblearea,TRANSPARENCY_PEN,0);
 	}
 }

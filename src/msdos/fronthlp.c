@@ -913,8 +913,8 @@ int frontend_help (int argc, char **argv)
 				if ((drivers[i]->drv->video_attributes & VIDEO_TYPE_VECTOR) == 0 &&
 						(drivers[i]->clone_of == 0
 								|| (drivers[i]->clone_of->flags & NOT_A_DRIVER)) &&
-						drivers[i]->drv->visible_area.max_x - drivers[i]->drv->visible_area.min_x + 1 <=
-						drivers[i]->drv->visible_area.max_y - drivers[i]->drv->visible_area.min_y + 1)
+						drivers[i]->drv->default_visible_area.max_x - drivers[i]->drv->default_visible_area.min_x + 1 <=
+						drivers[i]->drv->default_visible_area.max_y - drivers[i]->drv->default_visible_area.min_y + 1)
 				{
 					if (strcmp(drivers[i]->name,"crater") &&
 						strcmp(drivers[i]->name,"mpatrol") &&
@@ -967,8 +967,8 @@ int frontend_help (int argc, char **argv)
 						strcmp(drivers[i]->name,"tomahawk") &&
 						1)
 						printf("%s %dx%d\n",drivers[i]->name,
-								drivers[i]->drv->visible_area.max_x - drivers[i]->drv->visible_area.min_x + 1,
-								drivers[i]->drv->visible_area.max_y - drivers[i]->drv->visible_area.min_y + 1);
+								drivers[i]->drv->default_visible_area.max_x - drivers[i]->drv->default_visible_area.min_x + 1,
+								drivers[i]->drv->default_visible_area.max_y - drivers[i]->drv->default_visible_area.min_y + 1);
 				}
 				i++;
 			}
@@ -982,12 +982,12 @@ int frontend_help (int argc, char **argv)
 						(drivers[i]->clone_of == 0
 								|| (drivers[i]->clone_of->flags & NOT_A_DRIVER)) &&
 						drivers[i]->drv->frames_per_second > 57 &&
-						drivers[i]->drv->visible_area.max_y - drivers[i]->drv->visible_area.min_y + 1 > 244 &&
-						drivers[i]->drv->visible_area.max_y - drivers[i]->drv->visible_area.min_y + 1 <= 256)
+						drivers[i]->drv->default_visible_area.max_y - drivers[i]->drv->default_visible_area.min_y + 1 > 244 &&
+						drivers[i]->drv->default_visible_area.max_y - drivers[i]->drv->default_visible_area.min_y + 1 <= 256)
 				{
 					printf("%s %dx%d %fHz\n",drivers[i]->name,
-							drivers[i]->drv->visible_area.max_x - drivers[i]->drv->visible_area.min_x + 1,
-							drivers[i]->drv->visible_area.max_y - drivers[i]->drv->visible_area.min_y + 1,
+							drivers[i]->drv->default_visible_area.max_x - drivers[i]->drv->default_visible_area.min_x + 1,
+							drivers[i]->drv->default_visible_area.max_y - drivers[i]->drv->default_visible_area.min_y + 1,
 							drivers[i]->drv->frames_per_second);
 				}
 				i++;

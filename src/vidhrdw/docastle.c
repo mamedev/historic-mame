@@ -4,7 +4,7 @@
 
   Functions to emulate the video hardware of the machine.
 
-  (Cocktail mode flipscreen implemented by Chad Hendrickson Aug 1, 1999)
+  (Cocktail mode implemented by Chad Hendrickson Aug 1, 1999)
 
 ***************************************************************************/
 
@@ -15,7 +15,6 @@
 
 static struct osd_bitmap *tmpbitmap1;
 static char sprite_transparency[256];
-static int flipscreen = 0;
 
 
 /***************************************************************************
@@ -179,7 +178,7 @@ int docastle_vh_start(void)
 	if (generic_vh_start() != 0)
 		return 1;
 
-	if ((tmpbitmap1 = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if ((tmpbitmap1 = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 	{
 		generic_vh_stop();
 		return 1;
@@ -197,40 +196,31 @@ int docastle_vh_start(void)
 ***************************************************************************/
 void docastle_vh_stop(void)
 {
-	osd_free_bitmap(tmpbitmap1);
+	bitmap_free(tmpbitmap1);
 	generic_vh_stop();
 }
 
 
-static void setflip(int flip)
-{
-	if (flipscreen != flip)
-	{
-		flipscreen = flip;
-		memset(dirtybuffer,1,videoram_size);
-	}
-}
-
 READ_HANDLER( docastle_flipscreen_off_r )
 {
-	setflip(0);
+	flip_screen_w(offset, 0);
 	return 0;
 }
 
 READ_HANDLER( docastle_flipscreen_on_r )
 {
-	setflip(1);
+	flip_screen_w(offset, 1);
 	return 0;
 }
 
 WRITE_HANDLER( docastle_flipscreen_off_w )
 {
-	setflip(0);
+	flip_screen_w(offset, 0);
 }
 
 WRITE_HANDLER( docastle_flipscreen_on_w )
 {
-	setflip(1);
+	flip_screen_w(offset, 1);
 }
 
 
@@ -247,6 +237,12 @@ void docastle_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int offs;
 
 
+	if (full_refresh)
+	{
+		memset(dirtybuffer,1,videoram_size);
+	}
+
+
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
 	for (offs = videoram_size - 1;offs >= 0;offs--)
@@ -261,7 +257,7 @@ void docastle_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			sx = offs % 32;
 			sy = offs / 32;
 
-			if (flipscreen)
+			if (flip_screen)
 			{
 				sx = 31 - sx;
 				sy = 31 - sy;
@@ -270,24 +266,24 @@ void docastle_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					videoram[offs] + 8*(colorram[offs] & 0x20),
 					colorram[offs] & 0x1f,
-					flipscreen,flipscreen,
+					flip_screen,flip_screen,
 					8*sx,8*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+					&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 			/* also draw the part of the character which has priority over the */
 			/* sprites in another bitmap */
 			drawgfx(tmpbitmap1,Machine->gfx[0],
 					videoram[offs] + 8*(colorram[offs] & 0x20),
 					32 + (colorram[offs] & 0x1f),
-					flipscreen,flipscreen,
+					flip_screen,flip_screen,
 					8*sx,8*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+					&Machine->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
 
 
 	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 
 	/* Draw the sprites. Note that it is important to draw them exactly in this */
@@ -305,7 +301,7 @@ void docastle_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		flipy = spriteram[offs + 2] & 0x80;
 
 
-		if (flipscreen)
+		if (flip_screen)
 		{
 			sx = 240 - sx;
 			sy = 240 - sy;
@@ -318,7 +314,7 @@ void docastle_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				color,
 				flipx,flipy,
 				sx,sy,
-				&Machine->drv->visible_area,TRANSPARENCY_COLOR,256);
+				&Machine->visible_area,TRANSPARENCY_COLOR,256);
 
 
 		/* sprites use color 0 for background pen and 8 for the 'under tile' pen.
@@ -341,5 +337,5 @@ void docastle_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 
 	/* now redraw the portions of the background which have priority over sprites */
-	copybitmap(bitmap,tmpbitmap1,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_COLOR,256);
+	copybitmap(bitmap,tmpbitmap1,0,0,0,0,&Machine->visible_area,TRANSPARENCY_COLOR,256);
 }

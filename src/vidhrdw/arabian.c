@@ -115,12 +115,12 @@ int arabian_vh_start(void)
 	int p1,p2,p3,p4,v1,v2,offs;
 	int i;	/* JB 970727 */
 
-	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if ((tmpbitmap = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
 
-	if ((tmpbitmap2 = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if ((tmpbitmap2 = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 	{
-		osd_free_bitmap(tmpbitmap2);
+		bitmap_free(tmpbitmap2);
 		return 1;
 	}
 
@@ -176,8 +176,8 @@ after conversion :
 
 void arabian_vh_stop(void)
 {
-	osd_free_bitmap(tmpbitmap2);
-	osd_free_bitmap(tmpbitmap);
+	bitmap_free(tmpbitmap2);
+	bitmap_free(tmpbitmap);
 }
 
 
@@ -441,6 +441,6 @@ WRITE_HANDLER( arabian_videoram_w )
 
 void arabian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	copybitmap(bitmap,tmpbitmap2,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE, 0);
- 	copybitmap(bitmap,tmpbitmap ,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+	copybitmap(bitmap,tmpbitmap2,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE, 0);
+ 	copybitmap(bitmap,tmpbitmap ,0,0,0,0,&Machine->visible_area,TRANSPARENCY_COLOR,0);
 }

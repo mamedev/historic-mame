@@ -201,21 +201,21 @@ void exterm_from_shiftreg_slave(unsigned int address, unsigned short* shiftreg)
 
 int exterm_vh_start(void)
 {
-	if ((tmpbitmap = osd_new_bitmap(Machine->drv->screen_width,Machine->drv->screen_height,Machine->scrbitmap->depth)) == 0)
+	if ((tmpbitmap = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 	{
 		return 1;
 	}
 
-	if ((tmpbitmap1 = osd_new_bitmap(Machine->drv->screen_width,Machine->drv->screen_height,Machine->scrbitmap->depth)) == 0)
+	if ((tmpbitmap1 = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 	{
-		osd_free_bitmap(tmpbitmap);
+		bitmap_free(tmpbitmap);
 		return 1;
 	}
 
-	if ((tmpbitmap2 = osd_new_bitmap(Machine->drv->screen_width,Machine->drv->screen_height,Machine->scrbitmap->depth)) == 0)
+	if ((tmpbitmap2 = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 	{
-		osd_free_bitmap(tmpbitmap);
-		osd_free_bitmap(tmpbitmap1);
+		bitmap_free(tmpbitmap);
+		bitmap_free(tmpbitmap1);
 		return 1;
 	}
 
@@ -238,9 +238,9 @@ int exterm_vh_start(void)
 
 void exterm_vh_stop (void)
 {
-	osd_free_bitmap(tmpbitmap);
-	osd_free_bitmap(tmpbitmap1);
-	osd_free_bitmap(tmpbitmap2);
+	bitmap_free(tmpbitmap);
+	bitmap_free(tmpbitmap1);
+	bitmap_free(tmpbitmap2);
 }
 
 
@@ -282,7 +282,7 @@ void exterm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	if (TMS34010_io_display_blanked(0))
 	{
-		fillbitmap(bitmap,palette_transparent_pen,&Machine->drv->visible_area);
+		fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
 		return;
 	}
 
@@ -305,7 +305,7 @@ void exterm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 	else
 	{
-		copybitmap(bitmap,tmpbitmap, 0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copybitmap(bitmap,tmpbitmap, 0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
     if (TMS34010_get_DPYSTRT(1) & 0x800)

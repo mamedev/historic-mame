@@ -1312,7 +1312,7 @@ void wms_load_code_roms(void)
 
 #ifndef ALIGN_INTS
 #  define READ_U32(a)    (*(INT32 *)a)
-#  define WRITE_U32(a,x) (*(INT16 *)a = (x))
+#  define WRITE_U32(a,x) (*(INT32 *)a = (x))
 #else
 #  ifdef LSB_FIRST  /* unaligned read and write macros, cpg */
 #    define READ_U32(a) ((INT32)(*(UINT8 *)a | (*((UINT8 *)a+1) << 8) \

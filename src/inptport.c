@@ -168,7 +168,11 @@ struct ipd inputport_defaults[] =
 	{ IPT_SERVICE2, "Service 2",     SEQ_DEF_1(KEYCODE_0) },
 	{ IPT_SERVICE3, "Service 3",     SEQ_DEF_1(KEYCODE_MINUS) },
 	{ IPT_SERVICE4, "Service 4",     SEQ_DEF_1(KEYCODE_EQUALS) },
+#ifndef MESS
 	{ IPT_TILT,   "Tilt",            SEQ_DEF_1(KEYCODE_T) },
+#else
+	{ IPT_TILT,   "Tilt",            SEQ_DEF_0 },
+#endif
 
 	{ IPT_JOYSTICK_UP         | IPF_PLAYER1, "P1 Up",          SEQ_DEF_3(KEYCODE_UP, CODE_OR, JOYCODE_1_UP)    },
 	{ IPT_JOYSTICK_DOWN       | IPF_PLAYER1, "P1 Down",        SEQ_DEF_3(KEYCODE_DOWN, CODE_OR, JOYCODE_1_DOWN)  },
@@ -183,6 +187,7 @@ struct ipd inputport_defaults[] =
 	{ IPT_BUTTON7             | IPF_PLAYER1, "P1 Button 7",    SEQ_DEF_1(KEYCODE_C) },
 	{ IPT_BUTTON8             | IPF_PLAYER1, "P1 Button 8",    SEQ_DEF_1(KEYCODE_V) },
 	{ IPT_BUTTON9             | IPF_PLAYER1, "P1 Button 9",    SEQ_DEF_1(KEYCODE_B) },
+	{ IPT_BUTTON10            | IPF_PLAYER1, "P1 Button 10",   SEQ_DEF_1(KEYCODE_N) },
 	{ IPT_JOYSTICKRIGHT_UP    | IPF_PLAYER1, "P1 Right/Up",    SEQ_DEF_3(KEYCODE_I, CODE_OR, JOYCODE_1_BUTTON2) },
 	{ IPT_JOYSTICKRIGHT_DOWN  | IPF_PLAYER1, "P1 Right/Down",  SEQ_DEF_3(KEYCODE_K, CODE_OR, JOYCODE_1_BUTTON3) },
 	{ IPT_JOYSTICKRIGHT_LEFT  | IPF_PLAYER1, "P1 Right/Left",  SEQ_DEF_3(KEYCODE_J, CODE_OR, JOYCODE_1_BUTTON1) },
@@ -205,6 +210,7 @@ struct ipd inputport_defaults[] =
 	{ IPT_BUTTON7             | IPF_PLAYER2, "P2 Button 7",    SEQ_DEF_0 },
 	{ IPT_BUTTON8             | IPF_PLAYER2, "P2 Button 8",    SEQ_DEF_0 },
 	{ IPT_BUTTON9             | IPF_PLAYER2, "P2 Button 9",    SEQ_DEF_0 },
+	{ IPT_BUTTON10            | IPF_PLAYER2, "P2 Button 10",   SEQ_DEF_0 },
 	{ IPT_JOYSTICKRIGHT_UP    | IPF_PLAYER2, "P2 Right/Up",    SEQ_DEF_0 },
 	{ IPT_JOYSTICKRIGHT_DOWN  | IPF_PLAYER2, "P2 Right/Down",  SEQ_DEF_0 },
 	{ IPT_JOYSTICKRIGHT_LEFT  | IPF_PLAYER2, "P2 Right/Left",  SEQ_DEF_0 },
@@ -1668,6 +1674,11 @@ READ_HANDLER( input_port_12_r ) { return readinputport(12); }
 READ_HANDLER( input_port_13_r ) { return readinputport(13); }
 READ_HANDLER( input_port_14_r ) { return readinputport(14); }
 READ_HANDLER( input_port_15_r ) { return readinputport(15); }
+READ_HANDLER( input_port_16_r ) { return readinputport(16); }
+READ_HANDLER( input_port_17_r ) { return readinputport(17); }
+READ_HANDLER( input_port_18_r ) { return readinputport(18); }
+READ_HANDLER( input_port_19_r ) { return readinputport(19); }
+
 
 #ifdef MAME_NET
 void set_default_player_controls(int player)

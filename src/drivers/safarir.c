@@ -92,7 +92,7 @@ void safarir_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				code >> 7,
 				0,0,
 				(8*sx - safarir_scroll) & 0xff,8*sy,
-				&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+				&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 
@@ -117,7 +117,7 @@ void safarir_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				code >> 7,
 				0,0,
 				8*sx,8*sy,
-				&Machine->drv->visible_area,transparency,0);
+				&Machine->visible_area,transparency,0);
 	}
 }
 

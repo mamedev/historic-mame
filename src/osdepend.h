@@ -30,7 +30,7 @@ void osd_exit(void);
 struct osd_bitmap
 {
 	int width,height;       /* width and height of the bitmap */
-	int depth;		/* bits per pixel - ASG 980209 */
+	int depth;		/* bits per pixel */
 	void *_private; /* don't touch! - reserved for osdepend use */
 	unsigned char **line; /* pointers to the start of each line */
 };
@@ -38,49 +38,65 @@ struct osd_bitmap
 /* VERY IMPORTANT: the function must allocate also a "safety area" 16 pixels wide all */
 /* around the bitmap. This is required because, for performance reasons, some graphic */
 /* routines don't clip at boundaries of the bitmap. */
-struct osd_bitmap *osd_new_bitmap(int width,int height,int depth);	/* ASG 980209 */
-#define osd_create_bitmap(w,h) osd_new_bitmap((w),(h),Machine->scrbitmap->depth)		/* ASG 980209 */
+struct osd_bitmap *osd_alloc_bitmap(int width,int height,int depth);
 void osd_clearbitmap(struct osd_bitmap *bitmap);
 void osd_free_bitmap(struct osd_bitmap *bitmap);
-/* Create a display screen, or window, large enough to accomodate a bitmap */
-/* of the given dimensions. Attributes are the ones defined in driver.h. */
-/* Return a osd_bitmap pointer or 0 in case of error. */
-struct osd_bitmap *osd_create_display(int width,int height,int depth,int attributes);
-int osd_set_display(int width,int height,int attributes);
-void osd_close_display(void);
 
 /*
-osd_allocate_colors() is called after osd_create_display(), to create and initialize
-the palette.
-palette is an array of 'totalcolors' R,G,B triplets. The function returns
-in *pens the pen values corresponding to the requested colors.
-When modifiable is not 0, the palette will be modified later via calls to
-osd_modify_pen(). Otherwise, the code can assume that the palette will not change,
-and activate special optimizations (e.g. direct copy for a 16-bit display).
-The function must also initialize Machine->uifont->colortable[] to get proper
-white-on-black and black-on-white text.
-Return 0 for success.
+  Create a display screen, or window, of the given dimensions (or larger). It is
+  acceptable to create a smaller display if necessary, in that case the user must
+  have a way to move the visibility window around.
+  Attributes are the ones defined in driver.h, they can be used to perform
+  optimizations, e.g. dirty rectangle handling if the game supports it, or faster
+  blitting routines with fixed palette if the game doesn't change the palette at
+  run time. The VIDEO_PIXEL_ASPECT_RATIO flags should be honored to produce a
+  display of correct proportions.
+  Orientation is the screen orientation (as defined in driver.h) which will be done
+  by the core. This can be used to select thinner screen modes for vertical games,
+  or even to ask the user to rotate the monitor if it's a pivot model. Note that
+  the OS dependant code must NOT perform any rotation, this is done entirely in the
+  core.
+  Returns 0 on success.
+*/
+int osd_create_display(int width,int height,int depth,int fps,int attributes,int orientation);
+int osd_set_display(int width,int height,int depth,int attributes,int orientation);
+void osd_close_display(void);
+
+void osd_set_visible_area(int min_x,int max_x,int min_y,int max_y);
+
+/*
+  osd_allocate_colors() is called after osd_create_display(), to create and initialize
+  the palette.
+  palette is an array of 'totalcolors' R,G,B triplets. The function returns
+  in *pens the pen values corresponding to the requested colors.
+  When modifiable is not 0, the palette will be modified later via calls to
+  osd_modify_pen(). Otherwise, the code can assume that the palette will not change,
+  and activate special optimizations (e.g. direct copy for a 16-bit display).
+  The function must also initialize Machine->uifont->colortable[] to get proper
+  white-on-black and black-on-white text.
+  Return 0 for success.
 */
 int osd_allocate_colors(unsigned int totalcolors,const unsigned char *palette,unsigned short *pens,int modifiable);
 void osd_modify_pen(int pen,unsigned char red, unsigned char green, unsigned char blue);
 void osd_get_pen(int pen,unsigned char *red, unsigned char *green, unsigned char *blue);
 void osd_mark_dirty(int xmin, int ymin, int xmax, int ymax, int ui);    /* ASG 971011 */
+
 /*
-osd_skip_this_frame() must return 0 if the current frame will be displayed. This
-can be used by drivers to skip cpu intensive processing for skipped frames, so the
-function must return a consistent result throughout the current frame. The function
-MUST NOT check timers and dynamically determine whether to display the frame: such
-calculations must be done in osd_update_video_and_audio(), and they must affect the
-FOLLOWING frames, not the current one. At the end of osd_update_video_and_audio(),
-the code must already now exactly whether the next frame will be skipped or not.
+  osd_skip_this_frame() must return 0 if the current frame will be displayed. This
+  can be used by drivers to skip cpu intensive processing for skipped frames, so the
+  function must return a consistent result throughout the current frame. The function
+  MUST NOT check timers and dynamically determine whether to display the frame: such
+  calculations must be done in osd_update_video_and_audio(), and they must affect the
+  FOLLOWING frames, not the current one. At the end of osd_update_video_and_audio(),
+  the code must already know exactly whether the next frame will be skipped or not.
 */
 int osd_skip_this_frame(void);
-void osd_update_video_and_audio(void);
+void osd_update_video_and_audio(struct osd_bitmap *bitmap);
 void osd_set_gamma(float _gamma);
 float osd_get_gamma(void);
 void osd_set_brightness(int brightness);
 int osd_get_brightness(void);
-void osd_save_snapshot(void);
+void osd_save_snapshot(struct osd_bitmap *bitmap);
 
 
 /******************************************************************************
@@ -231,10 +247,11 @@ void osd_customize_inputport_defaults(struct ipd *defaults);
 ******************************************************************************/
 
 /* inp header */
-typedef struct {
-    char name[9];      /* 8 bytes for game->name + NULL */
-    char version[3];   /* byte[0] = 0, byte[1] = version byte[2] = beta_version */
-    char reserved[20]; /* for future use, possible store game options? */
+typedef struct
+{
+	char name[9];      /* 8 bytes for game->name + NULL */
+	char version[3];   /* byte[0] = 0, byte[1] = version byte[2] = beta_version */
+	char reserved[20]; /* for future use, possible store game options? */
 } INP_HEADER;
 
 

@@ -671,14 +671,14 @@ void m92_vh_raster_partial_refresh(struct osd_bitmap *bitmap,int start_line,int 
 {
 	struct rectangle clip;
 
-	clip.min_x = Machine->drv->visible_area.min_x;
-	clip.max_x = Machine->drv->visible_area.max_x;
+	clip.min_x = Machine->visible_area.min_x;
+	clip.max_x = Machine->visible_area.max_x;
 	clip.min_y = start_line+128;
 	clip.max_y = end_line+128;
-	if (clip.min_y < Machine->drv->visible_area.min_y)
-		clip.min_y = Machine->drv->visible_area.min_y;
-	if (clip.max_y > Machine->drv->visible_area.max_y)
-		clip.max_y = Machine->drv->visible_area.max_y;
+	if (clip.min_y < Machine->visible_area.min_y)
+		clip.min_y = Machine->visible_area.min_y;
+	if (clip.max_y > Machine->visible_area.max_y)
+		clip.max_y = Machine->visible_area.max_y;
 
 	if (clip.max_y > clip.min_y)
 	{

@@ -68,47 +68,47 @@ void dlair_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					0,
 					0,0,
 					8*sx,16*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+					&Machine->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
 
 
 	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 if (led0 & 128)
 {
 if ((led0 & 1) == 0) drawgfx(bitmap,Machine->uifont,'x',0,0,0,
-	8,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	8,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 if ((led0 & 2) == 0) drawgfx(bitmap,Machine->uifont,'x',0,0,0,
-	16,8,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	16,8,&Machine->visible_area,TRANSPARENCY_NONE,0);
 if ((led0 & 4) == 0) drawgfx(bitmap,Machine->uifont,'x',0,0,0,
-	16,24,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	16,24,&Machine->visible_area,TRANSPARENCY_NONE,0);
 if ((led0 & 8) == 0) drawgfx(bitmap,Machine->uifont,'x',0,0,0,
-	8,32,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	8,32,&Machine->visible_area,TRANSPARENCY_NONE,0);
 if ((led0 & 16) == 0) drawgfx(bitmap,Machine->uifont,'x',0,0,0,
-	0,24,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	0,24,&Machine->visible_area,TRANSPARENCY_NONE,0);
 if ((led0 & 32) == 0) drawgfx(bitmap,Machine->uifont,'x',0,0,0,
-	0,8,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	0,8,&Machine->visible_area,TRANSPARENCY_NONE,0);
 if ((led0 & 64) == 0) drawgfx(bitmap,Machine->uifont,'x',0,0,0,
-	8,16,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	8,16,&Machine->visible_area,TRANSPARENCY_NONE,0);
 }
 if (led1 & 128)
 {
 if ((led1 & 1) == 0) drawgfx(bitmap,Machine->uifont,'x',0,0,0,
-	32+8,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	32+8,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 if ((led1 & 2) == 0) drawgfx(bitmap,Machine->uifont,'x',0,0,0,
-	32+16,8,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	32+16,8,&Machine->visible_area,TRANSPARENCY_NONE,0);
 if ((led1 & 4) == 0) drawgfx(bitmap,Machine->uifont,'x',0,0,0,
-	32+16,24,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	32+16,24,&Machine->visible_area,TRANSPARENCY_NONE,0);
 if ((led1 & 8) == 0) drawgfx(bitmap,Machine->uifont,'x',0,0,0,
-	32+8,32,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	32+8,32,&Machine->visible_area,TRANSPARENCY_NONE,0);
 if ((led1 & 16) == 0) drawgfx(bitmap,Machine->uifont,'x',0,0,0,
-	32+0,24,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	32+0,24,&Machine->visible_area,TRANSPARENCY_NONE,0);
 if ((led1 & 32) == 0) drawgfx(bitmap,Machine->uifont,'x',0,0,0,
-	32+0,8,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	32+0,8,&Machine->visible_area,TRANSPARENCY_NONE,0);
 if ((led1 & 64) == 0) drawgfx(bitmap,Machine->uifont,'x',0,0,0,
-	32+8,16,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	32+8,16,&Machine->visible_area,TRANSPARENCY_NONE,0);
 }
 }
 

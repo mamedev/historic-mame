@@ -370,14 +370,14 @@ static void partial_refresh(struct osd_bitmap *bitmap,int current_line)
 {
 	struct rectangle clip;
 
-	clip.min_x = Machine->drv->visible_area.min_x;
-	clip.max_x = Machine->drv->visible_area.max_x;
+	clip.min_x = Machine->visible_area.min_x;
+	clip.max_x = Machine->visible_area.max_x;
 	clip.min_y = next_update_first_line;
 	clip.max_y = current_line;
-	if (clip.min_y < Machine->drv->visible_area.min_y)
-		clip.min_y = Machine->drv->visible_area.min_y;
-	if (clip.max_y > Machine->drv->visible_area.max_y)
-		clip.max_y = Machine->drv->visible_area.max_y;
+	if (clip.min_y < Machine->visible_area.min_y)
+		clip.min_y = Machine->visible_area.min_y;
+	if (clip.max_y > Machine->visible_area.max_y)
+		clip.max_y = Machine->visible_area.max_y;
 
 	if (clip.max_y >= clip.min_y)
 	{
@@ -391,14 +391,14 @@ void battlera_vh_raster_partial_refresh(struct osd_bitmap *bitmap,int start_line
 {
 	struct rectangle clip;
 
-	clip.min_x = Machine->drv->visible_area.min_x;
-	clip.max_x = Machine->drv->visible_area.max_x;
+	clip.min_x = Machine->visible_area.min_x;
+	clip.max_x = Machine->visible_area.max_x;
 	clip.min_y = start_line;
 	clip.max_y = end_line;
-	if (clip.min_y < Machine->drv->visible_area.min_y)
-		clip.min_y = Machine->drv->visible_area.min_y;
-	if (clip.max_y > Machine->drv->visible_area.max_y)
-		clip.max_y = Machine->drv->visible_area.max_y;
+	if (clip.min_y < Machine->visible_area.min_y)
+		clip.min_y = Machine->visible_area.min_y;
+	if (clip.max_y > Machine->visible_area.max_y)
+		clip.max_y = Machine->visible_area.max_y;
 
 	if (clip.max_y > clip.min_y)
 	{
@@ -459,8 +459,8 @@ void battlera_vh_stop (void)
 	free(sprite_dirty);
 	free(vram_dirty);
 
-	osd_free_bitmap (tile_bitmap);
-	osd_free_bitmap (front_bitmap);
+	bitmap_free (tile_bitmap);
+	bitmap_free (front_bitmap);
 }
 
 int battlera_vh_start (void)
@@ -475,8 +475,8 @@ int battlera_vh_start (void)
 	memset(sprite_dirty,1,0x400);
 	memset(vram_dirty,1,0x1000);
 
-	tile_bitmap=osd_create_bitmap(512,512);
-	front_bitmap=osd_create_bitmap(512,512);
+	tile_bitmap=bitmap_alloc(512,512);
+	front_bitmap=bitmap_alloc(512,512);
 
 	if (!tile_bitmap || !front_bitmap || !tile_dirty || !HuC6270_vram || !sprite_dirty || !vram_dirty)
 		return 1;

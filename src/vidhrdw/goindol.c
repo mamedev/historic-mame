@@ -93,15 +93,15 @@ int goindol_vh_start(void)
 		free(bg_dirtybuffer);
         	return 1;
 	}
-	if ((bitmap_fg = osd_new_bitmap (Machine->drv->screen_width,Machine->drv->screen_height,Machine->scrbitmap->depth)) == 0)
+	if ((bitmap_fg = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 	{
 		free(fg_dirtybuffer);
 		free(bg_dirtybuffer);
 		return 1;
 	}
-	if ((bitmap_bg = osd_new_bitmap (Machine->drv->screen_width,Machine->drv->screen_height,Machine->scrbitmap->depth)) == 0)
+	if ((bitmap_bg = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 	{
-		osd_free_bitmap(bitmap_fg);
+		bitmap_free(bitmap_fg);
 		free(fg_dirtybuffer);
 		free(bg_dirtybuffer);
 		return 1;
@@ -115,8 +115,8 @@ void goindol_vh_stop(void)
 {
 	free(fg_dirtybuffer);
 	free(bg_dirtybuffer);
-	osd_free_bitmap(bitmap_fg);
-	osd_free_bitmap(bitmap_bg);
+	bitmap_free(bitmap_fg);
+	bitmap_free(bitmap_bg);
 }
 
 void goindol_draw_background(struct osd_bitmap *bitmap)
@@ -207,14 +207,14 @@ void goindol_draw_sprites(struct osd_bitmap *bitmap, int gfxbank, unsigned char 
 						palette,
 						0,0,
 						sx,sy,
-						&Machine->drv->visible_area,
+						&Machine->visible_area,
 						TRANSPARENCY_PEN, 0);
 			drawgfx(bitmap,Machine->gfx[gfxbank],
 						tile+1,
 						palette,
 						0,0,
 						sx,sy+8,
-						&Machine->drv->visible_area,
+						&Machine->visible_area,
 						TRANSPARENCY_PEN, 0);
 		}
 	}
@@ -229,8 +229,8 @@ void goindol_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	goindol_draw_background(bitmap_bg);
 	goindol_draw_foreground(bitmap_fg);
-	copybitmap(bitmap,bitmap_bg,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-	copyscrollbitmap(bitmap,bitmap_fg,1,&fg_scrolly,1,&fg_scrollx,&Machine->drv->visible_area,TRANSPARENCY_COLOR, 0);
+	copybitmap(bitmap,bitmap_bg,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+	copyscrollbitmap(bitmap,bitmap_fg,1,&fg_scrolly,1,&fg_scrollx,&Machine->visible_area,TRANSPARENCY_COLOR, 0);
 	goindol_draw_sprites(bitmap,1,goindol_spriteram1);
 	goindol_draw_sprites(bitmap,0,goindol_spriteram2);
 }

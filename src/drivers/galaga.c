@@ -90,7 +90,6 @@ void galaga_init_machine(void);
 
 
 extern unsigned char *galaga_starcontrol;
-WRITE_HANDLER( galaga_flipscreen_w );
 int galaga_vh_start(void);
 void galaga_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void galaga_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
@@ -136,7 +135,7 @@ static struct MemoryWriteAddress writemem_cpu1[] =
 	{ 0x6820, 0x6820, galaga_interrupt_enable_1_w },
 	{ 0x6822, 0x6822, galaga_interrupt_enable_3_w },
 	{ 0x6823, 0x6823, galaga_halt_w },
-	{ 0xa007, 0xa007, galaga_flipscreen_w },
+	{ 0xa007, 0xa007, flip_screen_w },
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x8b80, 0x8bff, MWA_RAM, &spriteram, &spriteram_size },       /* these three are here just to initialize */
 	{ 0x9380, 0x93ff, MWA_RAM, &spriteram_2 },      /* the pointers. The actual writes are */

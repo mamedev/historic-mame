@@ -445,8 +445,8 @@ static void draw_background( struct osd_bitmap *bitmap, int layer )
 	int sx,sy;
 	int offs_x,offs_y;
 	int ox,xx;
-	int max_x = Machine->drv->visible_area.max_x;
-	int max_y = Machine->drv->visible_area.max_y;
+	int max_x = Machine->visible_area.max_x;
+	int max_y = Machine->visible_area.max_y;
 	int code;
 
 	scrollx -= scrolloffsX[layer];
@@ -498,7 +498,7 @@ static void draw_background( struct osd_bitmap *bitmap, int layer )
 						flipscreen, flipscreen,
 						flipscreen ? max_x -7 -xx : xx,
 						flipscreen ? max_y -7 -sy : sy,
-						&Machine->drv->visible_area,
+						&Machine->visible_area,
 						(char_state[code]==CHAR_FULL) ? TRANSPARENCY_NONE : TRANSPARENCY_PEN,
 						char_state[code]);
 			}
@@ -511,8 +511,8 @@ static void draw_foreground( struct osd_bitmap *bitmap, int layer )
 	int offs;
 	unsigned char *vid = playfields[layer].base;
 	int color = objects[layer].color;
-	int max_x = Machine->drv->visible_area.max_x;
-	int max_y = Machine->drv->visible_area.max_y;
+	int max_x = Machine->visible_area.max_x;
+	int max_y = Machine->visible_area.max_y;
 
 	for ( offs = 0; offs < 36*28*2; offs += 2 )
 	{
@@ -533,7 +533,7 @@ static void draw_foreground( struct osd_bitmap *bitmap, int layer )
 					code,color,
 					flipscreen, flipscreen,
 					sx,sy,
-					&Machine->drv->visible_area,
+					&Machine->visible_area,
 					(char_state[code]==CHAR_FULL) ? TRANSPARENCY_NONE : TRANSPARENCY_PEN,
 					char_state[code]);
 		}
@@ -949,7 +949,7 @@ void namcos1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 #endif
 	tilemap_render(ALL_TILEMAPS);
 	/* background color */
-	fillbitmap(bitmap,Machine->pens[BACKGROUNDCOLOR],&Machine->drv->visible_area);
+	fillbitmap(bitmap,Machine->pens[BACKGROUNDCOLOR],&Machine->visible_area);
 	/* draw objects (tilemaps and sprites) */
 	gfxobj_draw(objectlist);
 }

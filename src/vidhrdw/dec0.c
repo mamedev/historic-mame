@@ -340,7 +340,7 @@ static void dec0_drawsprites(struct osd_bitmap *bitmap,int pri_mask,int pri_val)
 					colour,
 					fx,fy,
 					x,y - 16 * multi,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					&Machine->visible_area,TRANSPARENCY_PEN,0);
 
 			multi--;
 		}
@@ -367,8 +367,8 @@ static void dec0_pf1_update(void)
 			offsety[3] = 0;
 			if (dec0_pf1_current_shape != 0)
 			{
-				osd_free_bitmap(dec0_pf1_bitmap);
-				dec0_pf1_bitmap = osd_create_bitmap(1024,256);
+				bitmap_free(dec0_pf1_bitmap);
+				dec0_pf1_bitmap = bitmap_alloc(1024,256);
 				dec0_pf1_current_shape = 0;
 				memset(dec0_pf1_dirty,1,TEXTRAM_SIZE);
 			}
@@ -384,8 +384,8 @@ static void dec0_pf1_update(void)
 			offsety[3] = 256;
 			if (dec0_pf1_current_shape != 1)
 			{
-				osd_free_bitmap(dec0_pf1_bitmap);
-				dec0_pf1_bitmap = osd_create_bitmap(512,512);
+				bitmap_free(dec0_pf1_bitmap);
+				dec0_pf1_bitmap = bitmap_alloc(512,512);
 				dec0_pf1_current_shape = 1;
 				memset(dec0_pf1_dirty,1,TEXTRAM_SIZE);
 			}
@@ -401,8 +401,8 @@ static void dec0_pf1_update(void)
 			offsety[3] = 768;
 			if (dec0_pf1_current_shape != 2)
 			{
-				osd_free_bitmap(dec0_pf1_bitmap);
-				dec0_pf1_bitmap = osd_create_bitmap(256,1024);
+				bitmap_free(dec0_pf1_bitmap);
+				dec0_pf1_bitmap = bitmap_alloc(256,1024);
 				dec0_pf1_current_shape = 2;
 				memset(dec0_pf1_dirty,1,TEXTRAM_SIZE);
 			}
@@ -468,10 +468,10 @@ static void dec0_pf2_update(int transparent, int special)
 			offsety[3] = 0;
 			if (dec0_pf2_current_shape != 0)
 			{
-				osd_free_bitmap(dec0_pf2_bitmap);
-				dec0_pf2_bitmap = osd_create_bitmap(1024,256);
-				osd_free_bitmap(dec0_tf2_bitmap);
-				dec0_tf2_bitmap = osd_create_bitmap(1024,256);
+				bitmap_free(dec0_pf2_bitmap);
+				dec0_pf2_bitmap = bitmap_alloc(1024,256);
+				bitmap_free(dec0_tf2_bitmap);
+				dec0_tf2_bitmap = bitmap_alloc(1024,256);
 				dec0_pf2_current_shape = 0;
 				memset(dec0_pf2_dirty,1,TILERAM_SIZE);
 			}
@@ -487,10 +487,10 @@ static void dec0_pf2_update(int transparent, int special)
 			offsety[3] = 256;
 			if (dec0_pf2_current_shape != 1)
 			{
-				osd_free_bitmap(dec0_pf2_bitmap);
-				dec0_pf2_bitmap = osd_create_bitmap(512,512);
-				osd_free_bitmap(dec0_tf2_bitmap);
-				dec0_tf2_bitmap = osd_create_bitmap(512,512);
+				bitmap_free(dec0_pf2_bitmap);
+				dec0_pf2_bitmap = bitmap_alloc(512,512);
+				bitmap_free(dec0_tf2_bitmap);
+				dec0_tf2_bitmap = bitmap_alloc(512,512);
 				dec0_pf2_current_shape = 1;
 				memset(dec0_pf2_dirty,1,TILERAM_SIZE);
 			}
@@ -506,10 +506,10 @@ static void dec0_pf2_update(int transparent, int special)
 			offsety[3] = 768;
 			if (dec0_pf2_current_shape != 2)
 			{
-				osd_free_bitmap(dec0_pf2_bitmap);
-				dec0_pf2_bitmap = osd_create_bitmap(256,1024);
-				osd_free_bitmap(dec0_tf2_bitmap);
-				dec0_tf2_bitmap = osd_create_bitmap(256,1024);
+				bitmap_free(dec0_pf2_bitmap);
+				dec0_pf2_bitmap = bitmap_alloc(256,1024);
+				bitmap_free(dec0_tf2_bitmap);
+				dec0_tf2_bitmap = bitmap_alloc(256,1024);
 				dec0_pf2_current_shape = 2;
 				memset(dec0_pf2_dirty,1,TILERAM_SIZE);
 			}
@@ -594,10 +594,10 @@ static void dec0_pf3_update(int transparent, int special)
 			offsety[3] = 0;
 			if (dec0_pf3_current_shape != 0)
 			{
-				osd_free_bitmap(dec0_pf3_bitmap);
-				dec0_pf3_bitmap = osd_create_bitmap(1024,256);
-				osd_free_bitmap(dec0_tf3_bitmap);
-				dec0_tf3_bitmap = osd_create_bitmap(1024,256);
+				bitmap_free(dec0_pf3_bitmap);
+				dec0_pf3_bitmap = bitmap_alloc(1024,256);
+				bitmap_free(dec0_tf3_bitmap);
+				dec0_tf3_bitmap = bitmap_alloc(1024,256);
 				dec0_pf3_current_shape = 0;
 				memset(dec0_pf3_dirty,1,TILERAM_SIZE);
 			}
@@ -613,10 +613,10 @@ static void dec0_pf3_update(int transparent, int special)
 			offsety[3] = 256;
 			if (dec0_pf3_current_shape != 1)
 			{
-				osd_free_bitmap(dec0_pf3_bitmap);
-				dec0_pf3_bitmap = osd_create_bitmap(512,512);
-				osd_free_bitmap(dec0_tf3_bitmap);
-				dec0_tf3_bitmap = osd_create_bitmap(512,512);
+				bitmap_free(dec0_pf3_bitmap);
+				dec0_pf3_bitmap = bitmap_alloc(512,512);
+				bitmap_free(dec0_tf3_bitmap);
+				dec0_tf3_bitmap = bitmap_alloc(512,512);
 				dec0_pf3_current_shape = 1;
 				memset(dec0_pf3_dirty,1,TILERAM_SIZE);
 			}
@@ -632,10 +632,10 @@ static void dec0_pf3_update(int transparent, int special)
 			offsety[3] = 768;
 			if (dec0_pf3_current_shape != 2)
 			{
-				osd_free_bitmap(dec0_pf3_bitmap);
-				dec0_pf3_bitmap = osd_create_bitmap(256,1024);
-				osd_free_bitmap(dec0_tf3_bitmap);
-				dec0_tf3_bitmap = osd_create_bitmap(256,1024);
+				bitmap_free(dec0_pf3_bitmap);
+				dec0_pf3_bitmap = bitmap_alloc(256,1024);
+				bitmap_free(dec0_tf3_bitmap);
+				dec0_tf3_bitmap = bitmap_alloc(256,1024);
 				dec0_pf3_current_shape = 2;
 				memset(dec0_pf3_dirty,1,TILERAM_SIZE);
 			}
@@ -713,7 +713,7 @@ void dec0_pf1_draw(struct osd_bitmap *bitmap)
 		for (offs = 0;offs < 32;offs++)
 		cscrolly[offs] = -READ_WORD(&dec0_pf1_control_1[2]) - READ_WORD(&dec0_pf1_colscroll[2*offs]);
 
-		copyscrollbitmap(bitmap,dec0_pf1_bitmap,1,&scrollx,32,cscrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+		copyscrollbitmap(bitmap,dec0_pf1_bitmap,1,&scrollx,32,cscrolly,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 	}
 
 	/* Row scroll enable bit (unsure if this enables/disables col scroll too) */
@@ -747,10 +747,10 @@ void dec0_pf1_draw(struct osd_bitmap *bitmap)
 
 		for (offs = 0; offs < lines*height; offs++)
 			rscrollx[offs] = scrollx - READ_WORD(&dec0_pf1_rowscroll[offs<<1]);
-		copyscrollbitmap(bitmap,dec0_pf1_bitmap,lines*height,rscrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+		copyscrollbitmap(bitmap,dec0_pf1_bitmap,lines*height,rscrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 	}
 	else /* Scroll registers not enabled */
-		copyscrollbitmap(bitmap,dec0_pf1_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+		copyscrollbitmap(bitmap,dec0_pf1_bitmap,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 }
 
 /* trans=0 - bottom playfield, trans=1 - top playfield, trans=2 - special foreground section */
@@ -794,11 +794,11 @@ void dec0_pf2_draw(struct osd_bitmap *bitmap, int trans)
 			rscrollx[offs] = scrollx - READ_WORD(&dec0_pf2_rowscroll[offs<<1]);
 
 		if (trans==2)
-			copyscrollbitmap(bitmap,dec0_tf2_bitmap,lines*height,rscrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+			copyscrollbitmap(bitmap,dec0_tf2_bitmap,lines*height,rscrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 		else if (trans==1)
-			copyscrollbitmap(bitmap,dec0_pf2_bitmap,lines*height,rscrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+			copyscrollbitmap(bitmap,dec0_pf2_bitmap,lines*height,rscrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 		else
-			copyscrollbitmap(bitmap,dec0_pf2_bitmap,lines*height,rscrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+			copyscrollbitmap(bitmap,dec0_pf2_bitmap,lines*height,rscrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 	else /* Column scroll enable bit */
 	if (READ_WORD(&dec0_pf2_control_0[0])&0x8)
@@ -833,19 +833,19 @@ void dec0_pf2_draw(struct osd_bitmap *bitmap, int trans)
 			rscrollx[offs] = scrolly - READ_WORD(&dec0_pf2_colscroll[offs<<1]);
 
 		if (trans==2)
-			copyscrollbitmap(bitmap,dec0_tf2_bitmap,1,&scrollx,lines,rscrollx,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+			copyscrollbitmap(bitmap,dec0_tf2_bitmap,1,&scrollx,lines,rscrollx,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 		else if (trans==1)
-			copyscrollbitmap(bitmap,dec0_pf2_bitmap,1,&scrollx,lines,rscrollx,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+			copyscrollbitmap(bitmap,dec0_pf2_bitmap,1,&scrollx,lines,rscrollx,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 		else
-			copyscrollbitmap(bitmap,dec0_pf2_bitmap,1,&scrollx,lines,rscrollx,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+			copyscrollbitmap(bitmap,dec0_pf2_bitmap,1,&scrollx,lines,rscrollx,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 	else { /* Scroll registers not enabled */
 		if (trans==2)
-			copyscrollbitmap(bitmap,dec0_tf2_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+			copyscrollbitmap(bitmap,dec0_tf2_bitmap,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 		else if (trans==1)
-			copyscrollbitmap(bitmap,dec0_pf2_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+			copyscrollbitmap(bitmap,dec0_pf2_bitmap,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 		else
-			copyscrollbitmap(bitmap,dec0_pf2_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+			copyscrollbitmap(bitmap,dec0_pf2_bitmap,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 }
 
@@ -891,19 +891,19 @@ void dec0_pf3_draw(struct osd_bitmap *bitmap, int trans)
 			rscrollx[offs] = scrollx - READ_WORD(&dec0_pf3_rowscroll[offs<<1]);
 
 		if (trans==2)
-			copyscrollbitmap(bitmap,dec0_tf3_bitmap,lines*height,rscrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+			copyscrollbitmap(bitmap,dec0_tf3_bitmap,lines*height,rscrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 		else if (trans==1)
-			copyscrollbitmap(bitmap,dec0_pf3_bitmap,lines*height,rscrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+			copyscrollbitmap(bitmap,dec0_pf3_bitmap,lines*height,rscrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 		else
-			copyscrollbitmap(bitmap,dec0_pf3_bitmap,lines*height,rscrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+			copyscrollbitmap(bitmap,dec0_pf3_bitmap,lines*height,rscrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 	else { /* Scroll registers not enabled */
 		if (trans==2)
-			copyscrollbitmap(bitmap,dec0_tf3_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+			copyscrollbitmap(bitmap,dec0_tf3_bitmap,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 		else if (trans==1)
-			copyscrollbitmap(bitmap,dec0_pf3_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+			copyscrollbitmap(bitmap,dec0_pf3_bitmap,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 		else
-			copyscrollbitmap(bitmap,dec0_pf3_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+			copyscrollbitmap(bitmap,dec0_pf3_bitmap,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 }
 
@@ -1328,11 +1328,11 @@ READ_HANDLER( dec0_pf3_data_8bit_r )
 
 void dec0_nodma_vh_stop (void)
 {
-	osd_free_bitmap(dec0_pf3_bitmap);
-	osd_free_bitmap(dec0_pf2_bitmap);
-	osd_free_bitmap(dec0_pf1_bitmap);
-	osd_free_bitmap(dec0_tf2_bitmap);
-	osd_free_bitmap(dec0_tf3_bitmap);
+	bitmap_free(dec0_pf3_bitmap);
+	bitmap_free(dec0_pf2_bitmap);
+	bitmap_free(dec0_pf1_bitmap);
+	bitmap_free(dec0_tf2_bitmap);
+	bitmap_free(dec0_tf3_bitmap);
 	free(dec0_pf3_dirty);
 	free(dec0_pf2_dirty);
 	free(dec0_pf1_dirty);
@@ -1347,30 +1347,30 @@ void dec0_vh_stop (void)
 int dec0_nodma_vh_start (void)
 {
 	/* Allocate bitmaps */
-	if ((dec0_pf1_bitmap = osd_create_bitmap(512,512)) == 0) {
+	if ((dec0_pf1_bitmap = bitmap_alloc(512,512)) == 0) {
 		dec0_vh_stop ();
 		return 1;
 	}
 	dec0_pf1_current_shape = 1;
 
-	if ((dec0_pf2_bitmap = osd_create_bitmap(512,512)) == 0) {
+	if ((dec0_pf2_bitmap = bitmap_alloc(512,512)) == 0) {
 		dec0_vh_stop ();
 		return 1;
 	}
 	dec0_pf2_current_shape = 1;
 
-	if ((dec0_pf3_bitmap = osd_create_bitmap(512,512)) == 0) {
+	if ((dec0_pf3_bitmap = bitmap_alloc(512,512)) == 0) {
 		dec0_vh_stop ();
 		return 1;
 	}
 	dec0_pf3_current_shape = 1;
 
-	if ((dec0_tf2_bitmap = osd_create_bitmap(512,512)) == 0) {
+	if ((dec0_tf2_bitmap = bitmap_alloc(512,512)) == 0) {
 		dec0_vh_stop ();
 		return 1;
 	}
 
-	if ((dec0_tf3_bitmap = osd_create_bitmap(512,512)) == 0) {
+	if ((dec0_tf3_bitmap = bitmap_alloc(512,512)) == 0) {
 		dec0_vh_stop ();
 		return 1;
 	}

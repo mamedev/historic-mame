@@ -117,7 +117,7 @@ void galpanic_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* copy the temporary bitmap to the screen */
 	/* it's raw RGB, so it doesn't have to be recalculated even if palette_recalc() */
 	/* returns true */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 	for (offs = 0;offs < galpanic_fgvideoram_size;offs+=2)
 	{
@@ -166,6 +166,6 @@ void galpanic_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				color,
 				flipx,flipy,
 				sx,sy - 16,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

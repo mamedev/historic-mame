@@ -75,7 +75,7 @@ int finalizr_vh_start(void)
 		return 1;
 	memset(dirtybuffer,1,videoram_size);
 
-	if ((tmpbitmap = osd_new_bitmap(256,256,Machine->scrbitmap->depth)) == 0)
+	if ((tmpbitmap = bitmap_alloc(256,256)) == 0)
 	{
 		free(dirtybuffer);
 		return 1;
@@ -87,7 +87,7 @@ int finalizr_vh_start(void)
 void finalizr_vh_stop(void)
 {
 	free(dirtybuffer);
-	osd_free_bitmap(tmpbitmap);
+	bitmap_free(tmpbitmap);
 
 	dirtybuffer = 0;
 	tmpbitmap = 0;
@@ -147,7 +147,7 @@ void finalizr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		scroll = -*finalizr_scroll + 16;
 
-		copyscrollbitmap(bitmap,tmpbitmap,1,&scroll,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,1,&scroll,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 
@@ -185,25 +185,25 @@ void finalizr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 							color,
 							flipx,flipy,
 							flipx?sx+16:sx,flipy?sy+16:sy,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+							&Machine->visible_area,TRANSPARENCY_PEN,0);
 					drawgfx(bitmap,Machine->gfx[1],
 							code + 1,
 							color,
 							flipx,flipy,
 							flipx?sx:sx+16,flipy?sy+16:sy,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+							&Machine->visible_area,TRANSPARENCY_PEN,0);
 					drawgfx(bitmap,Machine->gfx[1],
 							code + 2,
 							color,
 							flipx,flipy,
 							flipx?sx+16:sx,flipy?sy:sy+16,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+							&Machine->visible_area,TRANSPARENCY_PEN,0);
 					drawgfx(bitmap,Machine->gfx[1],
 							code + 3,
 							color,
 							flipx,flipy,
 							flipx?sx:sx+16,flipy?sy:sy+16,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+							&Machine->visible_area,TRANSPARENCY_PEN,0);
 					break;
 
 				case 0x00:	/* 16x16 */
@@ -212,7 +212,7 @@ void finalizr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 							color,
 							flipx,flipy,
 							sx,sy,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+							&Machine->visible_area,TRANSPARENCY_PEN,0);
 					break;
 
 				case 0x04:	/* 16x8 */
@@ -222,13 +222,13 @@ void finalizr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 							color,
 							flipx,flipy,
 							flipx?sx+8:sx,sy,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+							&Machine->visible_area,TRANSPARENCY_PEN,0);
 					drawgfx(bitmap,Machine->gfx[2],
 							code | 1,
 							color,
 							flipx,flipy,
 							flipx?sx:sx+8,sy,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+							&Machine->visible_area,TRANSPARENCY_PEN,0);
 					break;
 
 				case 0x08:	/* 8x16 */
@@ -238,13 +238,13 @@ void finalizr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 							color,
 							flipx,flipy,
 							sx,flipy?sy+8:sy,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+							&Machine->visible_area,TRANSPARENCY_PEN,0);
 					drawgfx(bitmap,Machine->gfx[2],
 							code | 2,
 							color,
 							flipx,flipy,
 							sx,flipy?sy:sy+8,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+							&Machine->visible_area,TRANSPARENCY_PEN,0);
 					break;
 
 				case 0x0c:	/* 8x8 */
@@ -254,7 +254,7 @@ void finalizr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 							color,
 							flipx,flipy,
 							sx,sy,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+							&Machine->visible_area,TRANSPARENCY_PEN,0);
 					break;
 			}
 		}
@@ -276,7 +276,7 @@ void finalizr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					(finalizr_colorram2[offs] & 0x0f),
 					finalizr_colorram2[offs] & 0x10,finalizr_colorram2[offs] & 0x20,
 					8*sx,8*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+					&Machine->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
 }

@@ -13,7 +13,6 @@ extern size_t spriteram_size;
 
 unsigned char *timeplt_videoram,*timeplt_colorram;
 static struct tilemap *bg_tilemap;
-static int flipscreen;
 static int sprite_multiplex_hack;
 
 
@@ -164,8 +163,7 @@ WRITE_HANDLER( timeplt_colorram_w )
 
 WRITE_HANDLER( timeplt_flipscreen_w )
 {
-	flipscreen = data & 1;
-	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
+	flip_screen_w(0,data & 1);
 }
 
 /* Return the current video scan line */
@@ -185,7 +183,7 @@ READ_HANDLER( timeplt_scanline_r )
 static void draw_sprites(struct osd_bitmap *bitmap)
 {
 	const struct GfxElement *gfx = Machine->gfx[1];
-	const struct rectangle *clip = &Machine->drv->visible_area;
+	const struct rectangle *clip = &Machine->visible_area;
 	int offs;
 
 

@@ -55,29 +55,29 @@ WRITE_HANDLER( starcrus_p2_y_w ) { p2_y = data^0xff; }
 
 int starcrus_vh_start(void)
 {
-	if ((ship1_vid = osd_create_bitmap(16,16)) == 0)
+	if ((ship1_vid = bitmap_alloc(16,16)) == 0)
 	{
 		return 1;
 	}
 
-	if ((ship2_vid = osd_create_bitmap(16,16)) == 0)
+	if ((ship2_vid = bitmap_alloc(16,16)) == 0)
 	{
-		osd_free_bitmap(ship1_vid);
+		bitmap_free(ship1_vid);
 		return 1;
 	}
 
-	if ((proj1_vid = osd_create_bitmap(16,16)) == 0)
+	if ((proj1_vid = bitmap_alloc(16,16)) == 0)
 	{
-		osd_free_bitmap(ship1_vid);
-		osd_free_bitmap(ship2_vid);
+		bitmap_free(ship1_vid);
+		bitmap_free(ship2_vid);
 		return 1;
 	}
 
-	if ((proj2_vid = osd_create_bitmap(16,16)) == 0)
+	if ((proj2_vid = bitmap_alloc(16,16)) == 0)
 	{
-		osd_free_bitmap(ship1_vid);
-		osd_free_bitmap(ship2_vid);
-		osd_free_bitmap(proj1_vid);
+		bitmap_free(ship1_vid);
+		bitmap_free(ship2_vid);
+		bitmap_free(proj1_vid);
 		return 1;
 	}
 
@@ -86,10 +86,10 @@ int starcrus_vh_start(void)
 
 void starcrus_vh_stop(void)
 {
-	osd_free_bitmap(ship1_vid);
-	osd_free_bitmap(ship2_vid);
-	osd_free_bitmap(proj1_vid);
-	osd_free_bitmap(proj2_vid);
+	bitmap_free(ship1_vid);
+	bitmap_free(ship2_vid);
+	bitmap_free(proj1_vid);
+	bitmap_free(proj2_vid);
 }
 
 WRITE_HANDLER( starcrus_ship_parm_1_w )
@@ -519,7 +519,7 @@ int starcrus_collision_check_s2p1p2(void)
 
 void starcrus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-    fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);
+    fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
 	/* Draw ship 1 */
     drawgfx(bitmap,
@@ -528,7 +528,7 @@ void starcrus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
             0,
             (s1_sprite&0x08)>>3,(s1_sprite&0x10)>>4,
             s1_x,s1_y,
-            &Machine->drv->visible_area,
+            &Machine->visible_area,
             TRANSPARENCY_PEN,
             0);
 
@@ -539,7 +539,7 @@ void starcrus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
             0,
             (s2_sprite&0x08)>>3,(s2_sprite&0x10)>>4,
             s2_x,s2_y,
-            &Machine->drv->visible_area,
+            &Machine->visible_area,
             TRANSPARENCY_PEN,
             0);
 
@@ -550,7 +550,7 @@ void starcrus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
             0,
             0,0,
             p1_x,p1_y,
-            &Machine->drv->visible_area,
+            &Machine->visible_area,
             TRANSPARENCY_PEN,
             0);
 
@@ -561,7 +561,7 @@ void starcrus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
             0,
             0,0,
             p2_x,p2_y,
-            &Machine->drv->visible_area,
+            &Machine->visible_area,
             TRANSPARENCY_PEN,
             0);
 

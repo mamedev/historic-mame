@@ -46,10 +46,10 @@ WRITE_HANDLER( minivadr_videoram_w )
 	x = (offset % 32) * 8;
 	y = (offset / 32);
 
-	if (x >= Machine->drv->visible_area.min_x &&
-			x <= Machine->drv->visible_area.max_x &&
-			y >= Machine->drv->visible_area.min_y &&
-			y <= Machine->drv->visible_area.max_y)
+	if (x >= Machine->visible_area.min_x &&
+			x <= Machine->visible_area.max_x &&
+			y >= Machine->visible_area.min_y &&
+			y <= Machine->visible_area.max_y)
 	{
 		for (i = 0; i < 8; i++)
 		{

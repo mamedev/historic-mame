@@ -91,14 +91,14 @@ void subs_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				drawgfx(tmpbitmap,Machine->gfx[0],
 						charcode, 1,
 						0,0,sx,sy,
-						&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+						&Machine->visible_area,TRANSPARENCY_NONE,0);
 			}
 			else
 			{
 				drawgfx(tmpbitmap,Machine->gfx[0],
 						0, 1,
 						0,0,sx,sy,
-						&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+						&Machine->visible_area,TRANSPARENCY_NONE,0);
 			}
 
 			/* Draw the right screen */
@@ -107,20 +107,20 @@ void subs_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				drawgfx(tmpbitmap,Machine->gfx[0],
 						charcode, 0,
 						0,0,sx+256,sy,
-						&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+						&Machine->visible_area,TRANSPARENCY_NONE,0);
 			}
 			else
 			{
 				drawgfx(tmpbitmap,Machine->gfx[0],
 						0, 0,
 						0,0,sx+256,sy,
-						&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+						&Machine->visible_area,TRANSPARENCY_NONE,0);
 			}
 		}
 	}
 
 	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 	/* draw the motion objects */
 	for (offs = 0; offs < 4; offs++)
@@ -145,7 +145,7 @@ void subs_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					charcode + 32 * prom_set,
 					0,
 					0,0,sx,sy,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					&Machine->visible_area,TRANSPARENCY_PEN,0);
 		}
 
 		/* Right screen - special check for drawing left screen's sub */
@@ -155,7 +155,7 @@ void subs_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					charcode + 32 * prom_set,
 					0,
 					0,0,sx + 256,sy,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					&Machine->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}
 }

@@ -576,6 +576,9 @@ void parse_cmdline (int argc, char **argv, int game_index)
 		tmp = strtok (0, "xX");
 		if (tmp)
 			gfx_height = atoi (tmp);
+
+		options.vector_width = gfx_width;
+		options.vector_height = gfx_height;
 	}
 
 	/* convert joystick name into an Allegro-compliant joystick signature */

@@ -685,7 +685,7 @@ if ( (debugsprites) && (((attr & 0x0f)/8) != (debugsprites-1)) ) continue;
 						color,
 						flipx, flipy,
 						sx, sy,
-						&Machine->drv->visible_area,
+						&Machine->visible_area,
 						TRANSPARENCY_PEN,15);
 
 			}	/* sprite */
@@ -730,7 +730,7 @@ if ( (debugsprites) && (((attr & 0x0f)/8) != (debugsprites-1)) ) continue;
 				color,
 				flipx, flipy,
 				sx, sy,
-				&Machine->drv->visible_area,
+				&Machine->visible_area,
 				TRANSPARENCY_PEN,15);
 		}	/* sprite */
 	}	/* Z hw */
@@ -751,10 +751,10 @@ int color_codes_start, color, penmask[16];
 int offs, sx, sy, code, attr, i;
 int color_mask;
 
-	int xmin = Machine->drv->visible_area.min_x - (16 - 1);
-	int xmax = Machine->drv->visible_area.max_x;
-	int ymin = Machine->drv->visible_area.min_y - (16 - 1);
-	int ymax = Machine->drv->visible_area.max_y;
+	int xmin = Machine->visible_area.min_x - (16 - 1);
+	int xmax = Machine->visible_area.max_x;
+	int ymin = Machine->visible_area.min_y - (16 - 1);
+	int ymax = Machine->visible_area.max_y;
 
 	for (color = 0 ; color < 16 ; color++) penmask[color] = 0;
 

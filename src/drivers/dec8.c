@@ -77,7 +77,6 @@ WRITE_HANDLER( lastmiss_scrollx_w );
 WRITE_HANDLER( lastmiss_scrolly_w );
 WRITE_HANDLER( dec8_bac06_0_w );
 WRITE_HANDLER( dec8_bac06_1_w );
-WRITE_HANDLER( dec8_flipscreen_w );
 WRITE_HANDLER( dec8_videoram_w );
 
 /******************************************************************************/
@@ -396,7 +395,7 @@ static WRITE_HANDLER( ghostb_bank_w )
 
 	if (data&1) int_enable=1; else int_enable=0;
 	if (data&2) nmi_enable=1; else nmi_enable=0;
-	if (data&8) dec8_flipscreen_w(0,1); else dec8_flipscreen_w(0,0);
+	flip_screen_w(0,data & 0x08);
 }
 
 WRITE_HANDLER( csilver_control_w )
@@ -605,7 +604,7 @@ static struct MemoryWriteAddress srdarwin_writemem[] =
 	{ 0x1804, 0x1804, buffer_spriteram_w }, /* DMA */
 	{ 0x1805, 0x1806, srdarwin_control_w }, /* Scroll & Bank */
 	{ 0x2000, 0x2000, dec8_sound_w },       /* Sound */
-	{ 0x2001, 0x2001, dec8_flipscreen_w },  /* Flipscreen */
+	{ 0x2001, 0x2001, flip_screen_w },  /* Flipscreen */
 	{ 0x2800, 0x288f, paletteram_xxxxBBBBGGGGRRRR_split1_w, &paletteram },
 	{ 0x3000, 0x308f, paletteram_xxxxBBBBGGGGRRRR_split2_w, &paletteram_2 },
 	{ 0x4000, 0xffff, MWA_ROM },
@@ -734,7 +733,7 @@ static struct MemoryWriteAddress lastmiss_writemem[] =
 	{ 0x1400, 0x17ff, paletteram_xxxxBBBBGGGGRRRR_split2_w, &paletteram_2 },
 	{ 0x1800, 0x1804, shackled_int_w },
 	{ 0x1805, 0x1805, buffer_spriteram_w }, /* DMA */
-	{ 0x1807, 0x1807, dec8_flipscreen_w },
+	{ 0x1807, 0x1807, flip_screen_w },
 	{ 0x1809, 0x1809, lastmiss_scrollx_w }, /* Scroll LSB */
 	{ 0x180b, 0x180b, lastmiss_scrolly_w }, /* Scroll LSB */
 	{ 0x180c, 0x180c, oscar_sound_w },
@@ -772,7 +771,7 @@ static struct MemoryWriteAddress lastmiss_sub_writemem[] =
 	{ 0x1400, 0x17ff, paletteram_xxxxBBBBGGGGRRRR_split2_w },
 	{ 0x1800, 0x1804, shackled_int_w },
 	{ 0x1805, 0x1805, buffer_spriteram_w }, /* DMA */
-	{ 0x1807, 0x1807, dec8_flipscreen_w },
+	{ 0x1807, 0x1807, flip_screen_w },
 	{ 0x180c, 0x180c, oscar_sound_w },
 	{ 0x2000, 0x27ff, dec8_videoram_w },
 	{ 0x2800, 0x2fff, shackled_sprite_w },
@@ -808,7 +807,7 @@ static struct MemoryWriteAddress shackled_writemem[] =
 	{ 0x1400, 0x17ff, paletteram_xxxxBBBBGGGGRRRR_split2_w, &paletteram_2 },
 	{ 0x1800, 0x1804, shackled_int_w },
 	{ 0x1805, 0x1805, buffer_spriteram_w }, /* DMA */
-	{ 0x1807, 0x1807, dec8_flipscreen_w },
+	{ 0x1807, 0x1807, flip_screen_w },
 	{ 0x1809, 0x1809, lastmiss_scrollx_w }, /* Scroll LSB */
 	{ 0x180b, 0x180b, lastmiss_scrolly_w }, /* Scroll LSB */
 	{ 0x180c, 0x180c, oscar_sound_w },
@@ -848,7 +847,7 @@ static struct MemoryWriteAddress shackled_sub_writemem[] =
 	{ 0x1400, 0x17ff, paletteram_xxxxBBBBGGGGRRRR_split2_w },
 	{ 0x1800, 0x1804, shackled_int_w },
 	{ 0x1805, 0x1805, buffer_spriteram_w }, /* DMA */
-	{ 0x1807, 0x1807, dec8_flipscreen_w },
+	{ 0x1807, 0x1807, flip_screen_w },
 	{ 0x1809, 0x1809, lastmiss_scrollx_w }, /* Scroll LSB */
 	{ 0x180b, 0x180b, lastmiss_scrolly_w }, /* Scroll LSB */
 	{ 0x180c, 0x180c, oscar_sound_w },
@@ -890,7 +889,7 @@ static struct MemoryWriteAddress csilver_writemem[] =
 	{ 0x1400, 0x17ff, paletteram_xxxxBBBBGGGGRRRR_split2_w, &paletteram_2 },
 	{ 0x1800, 0x1804, shackled_int_w },
 	{ 0x1805, 0x1805, buffer_spriteram_w }, /* DMA */
-	{ 0x1807, 0x1807, dec8_flipscreen_w },
+	{ 0x1807, 0x1807, flip_screen_w },
 	{ 0x1808, 0x180b, dec8_scroll2_w },
 	{ 0x180c, 0x180c, oscar_sound_w },
 	{ 0x180d, 0x180d, csilver_control_w },

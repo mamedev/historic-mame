@@ -170,7 +170,7 @@ void nova2001_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			scrolly = -nova2001_yscroll;
 		}
 
-	    copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	    copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 
@@ -199,7 +199,7 @@ void nova2001_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					spriteram[offs+3] & 0x0f,
 					flipx,flipy,
 					sx,sy,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					&Machine->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}
 
@@ -223,6 +223,6 @@ void nova2001_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				nova2001_colorram[offs] & 0x0f,
 				flipscreen,flipscreen,
 				8*sx,8*sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

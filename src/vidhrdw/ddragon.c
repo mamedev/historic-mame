@@ -24,10 +24,7 @@ int dd_vh_start( void )
 	{
 		memset(dirtybuffer,1, 0x400);
 
-		tmpbitmap = osd_new_bitmap(
-				Machine->drv->screen_width*2,
-				Machine->drv->screen_height*2,
-				Machine->scrbitmap->depth );
+		tmpbitmap = bitmap_alloc(Machine->drv->screen_width*2,Machine->drv->screen_height*2);
 
 		if( tmpbitmap ) return 0;
 
@@ -41,7 +38,7 @@ int dd_vh_start( void )
 
 void dd_vh_stop( void )
 {
-	osd_free_bitmap( tmpbitmap );
+	bitmap_free( tmpbitmap );
 	free( dirtybuffer );
 }
 
@@ -90,7 +87,7 @@ static void dd_draw_background( struct osd_bitmap *bitmap )
 
 	copyscrollbitmap(bitmap,tmpbitmap,
 			1,&scrollx,1,&scrolly,
-			&Machine->drv->visible_area,
+			&Machine->visible_area,
 			TRANSPARENCY_NONE,0);
 }
 
@@ -100,7 +97,7 @@ static void dd_draw_background( struct osd_bitmap *bitmap )
 
 static void dd_draw_sprites( struct osd_bitmap *bitmap )
 {
-	const struct rectangle *clip = &Machine->drv->visible_area;
+	const struct rectangle *clip = &Machine->visible_area;
 	const struct GfxElement *gfx = Machine->gfx[1];
 
 	unsigned char *src = &( dd_spriteram[0x800] );

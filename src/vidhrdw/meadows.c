@@ -90,7 +90,7 @@ static void meadows_draw_sprites(struct osd_bitmap *bitmap)
 		f = sprite_index[i] >> 5;			/* bit #5 flip vertical flag */
 		drawgfx(bitmap, Machine->gfx[p + 1],
 			n, 1, f, 0, x, y,
-			&Machine->drv->visible_area,
+			&Machine->visible_area,
 			TRANSPARENCY_PEN,0);
 	}
 }
@@ -137,7 +137,7 @@ void meadows_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 			drawgfx(bitmap, Machine->gfx[0],
 				videoram[i] & 0x7f, 1, 0,0, x, y,
-				&Machine->drv->visible_area,
+				&Machine->visible_area,
 				TRANSPARENCY_NONE,0);
 			meadows_char_dirty(x,y);
 		}

@@ -85,7 +85,7 @@ static void drawbg(struct osd_bitmap *bitmap,int priority)
 					(map2[offs+base] & 0x18) >> 3,
 					(map2[offs+base] & 0x04),0,
 					sx,sy,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+					&Machine->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
 }
@@ -147,6 +147,6 @@ void exprraid_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				(colorram[offs] & 0x10) >> 4,
 				0,0,
 				8*sx,8*sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

@@ -240,11 +240,11 @@ void pengo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					colorram[offs] & 0x1f,
 					flipscreen,flipscreen,
 					sx*8,sy*8,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+					&Machine->visible_area,TRANSPARENCY_NONE,0);
         }
 	}
 
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
     /* Draw the sprites. Note that it is important to draw them exactly in this */
 	/* order, to have the correct priorities. */

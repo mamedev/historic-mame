@@ -15,7 +15,6 @@ extern size_t spriteram_size;
 unsigned char *suprloco_videoram;
 
 static struct tilemap *bg_tilemap;
-static int flipscreen;
 static int control;
 
 #define SPR_Y_TOP		0
@@ -120,7 +119,7 @@ static int suprloco_scrollram[32];
 
 WRITE_HANDLER( suprloco_scrollram_w )
 {
-	int adj = flipscreen ? -8 : 8;
+	int adj = flip_screen ? -8 : 8;
 
 	suprloco_scrollram[offset] = data;
 	tilemap_set_scrollx(bg_tilemap,offset, data - adj);
@@ -156,9 +155,8 @@ WRITE_HANDLER( suprloco_control_w )
 	coin_counter_w(0, data & 0x01);
 	coin_counter_w(1, data & 0x02);
 
-	flipscreen = data & 0x80;
-	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
-	tilemap_set_scrolly(bg_tilemap,0,flipscreen ? -32 : 0);
+	flip_screen_w(0,data & 0x80);
+	tilemap_set_scrolly(bg_tilemap,0,flip_screen ? -32 : 0);
 
 	control = data;
 }
@@ -181,16 +179,16 @@ READ_HANDLER( suprloco_control_r )
 
 INLINE void draw_pixel(struct osd_bitmap *bitmap,int x,int y,int color)
 {
-	if (flipscreen)
+	if (flip_screen)
 	{
 		x = bitmap->width - x - 1;
 		y = bitmap->height - y - 1;
 	}
 
-	if (x < Machine->drv->visible_area.min_x ||
-		x > Machine->drv->visible_area.max_x ||
-		y < Machine->drv->visible_area.min_y ||
-		y > Machine->drv->visible_area.max_y)
+	if (x < Machine->visible_area.min_x ||
+		x > Machine->visible_area.max_x ||
+		y < Machine->visible_area.min_y ||
+		y > Machine->visible_area.max_y)
 		return;
 
 	plot_pixel(bitmap, x, y, color);
@@ -215,7 +213,7 @@ static void render_sprite(struct osd_bitmap *bitmap,int spr_number)
 	sx = spr_reg[SPR_X];
 	sy = spr_reg[SPR_Y_TOP] + 1;
 
-	if (!flipscreen)
+	if (!flip_screen)
 	{
 		adjy = sy;
 		dy = 1;

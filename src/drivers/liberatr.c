@@ -130,15 +130,9 @@ covering up the offending pixels.
 extern UINT8 *liberatr_base_ram;
 extern UINT8 *liberatr_planet_frame;
 extern UINT8 *liberatr_planet_select;
-extern UINT8 *liberatr_ctrld;
 extern UINT8 *liberatr_x;
 extern UINT8 *liberatr_y;
 
-
-/* in machine */
-READ_HANDLER( liberatr_input_port_0_r ) ;
-WRITE_HANDLER( liberatr_led_w );
-WRITE_HANDLER( liberatr_coin_counter_w );
 
 /* in vidhrdw */
 extern unsigned char *liberatr_bitmapram;
@@ -150,6 +144,48 @@ WRITE_HANDLER( liberatr_colorram_w ) ;
 WRITE_HANDLER( liberatr_bitmap_w );
 READ_HANDLER( liberatr_bitmap_xy_r );
 WRITE_HANDLER( liberatr_bitmap_xy_w );
+
+
+
+static UINT8 *liberatr_ctrld;
+
+
+static WRITE_HANDLER( liberatr_led_w )
+{
+	osd_led_w(offset, (data >> 4) & 0x01);
+}
+
+
+static WRITE_HANDLER( liberatr_coin_counter_w )
+{
+	coin_counter_w(offset ^ 0x01, data);
+}
+
+
+static READ_HANDLER( liberatr_input_port_0_r )
+{
+	int	res ;
+	int xdelta, ydelta;
+
+
+	/* CTRLD selects whether we're reading the stick or the coins,
+	   see memory map */
+
+	if(*liberatr_ctrld)
+	{
+		/* 	mouse support */
+		xdelta = input_port_4_r(0);
+		ydelta = input_port_5_r(0);
+		res = ( ((ydelta << 4) & 0xf0)  |  (xdelta & 0x0f) );
+	}
+	else
+	{
+		res = input_port_0_r(offset);
+	}
+
+	return res;
+}
+
 
 
 static struct MemoryReadAddress liberatr_readmem[] =

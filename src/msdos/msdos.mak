@@ -1,6 +1,6 @@
 # only MS-DOS specific output files and rules
 OSOBJS = $(OBJ)/msdos/msdos.o $(OBJ)/msdos/video.o $(OBJ)/msdos/blit.o $(OBJ)/msdos/asmblit.o \
-	$(OBJ)/msdos/vector.o $(OBJ)/msdos/gen15khz.o $(OBJ)/msdos/ati15khz.o \
+	$(OBJ)/msdos/gen15khz.o $(OBJ)/msdos/ati15khz.o \
 	$(OBJ)/msdos/sound.o $(OBJ)/msdos/input.o $(OBJ)/msdos/fileio.o \
 	$(OBJ)/msdos/ticker.o $(OBJ)/msdos/config.o $(OBJ)/msdos/fronthlp.o
 

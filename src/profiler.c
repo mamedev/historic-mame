@@ -8,7 +8,7 @@ static int use_profiler;
 
 struct profile_data
 {
-	unsigned int count[MEMORY][PROFILER_TOTAL];
+	UINT64 count[MEMORY][PROFILER_TOTAL];
 	unsigned int cpu_context_switches[MEMORY];
 };
 
@@ -85,8 +85,8 @@ logerror("Profiler error: FILO buffer underflow\n");
 void profiler_show(struct osd_bitmap *bitmap)
 {
 	int i,j;
-	unsigned int total,normalize;
-	unsigned int computed;
+	UINT64 total,normalize;
+	UINT64 computed;
 	int line;
 	char buf[30];
 	static char *names[PROFILER_TOTAL] =
@@ -151,21 +151,19 @@ void profiler_show(struct osd_bitmap *bitmap)
 		{
 			if (i < PROFILER_PROFILER)
 				sprintf(buf,"%s%3d%%%3d%%",names[i],
-						(computed * 100 + total/2) / total,
-						(computed * 100 + normalize/2) / normalize);
+						(int)((computed * 100 + total/2) / total),
+						(int)((computed * 100 + normalize/2) / normalize));
 			else
 				sprintf(buf,"%s%3d%%",names[i],
-						(computed * 100 + total/2) / total);
+						(int)((computed * 100 + total/2) / total));
 			ui_text(bitmap,buf,0,(line++)*Machine->uifontheight);
 		}
 	}
 
-	computed = 0;
-	{
-		for (j = 0;j < MEMORY;j++)
-			computed += profile.cpu_context_switches[j];
-	}
-	sprintf(buf,"CPU switches%4d",computed / MEMORY);
+	i = 0;
+	for (j = 0;j < MEMORY;j++)
+		i += profile.cpu_context_switches[j];
+	sprintf(buf,"CPU switches%4d",i / MEMORY);
 	ui_text(bitmap,buf,0,(line++)*Machine->uifontheight);
 
 	/* reset the counters */

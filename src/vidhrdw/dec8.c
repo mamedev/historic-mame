@@ -46,7 +46,7 @@ sprites.
 static int scroll1[4],scroll2[4];
 static struct tilemap *dec8_pf0_tilemap,*dec8_pf1_tilemap,*dec8_fix_tilemap;
 static int dec8_pf0_control[0x20],dec8_pf1_control[0x20];
-static int gfx_bank,gfx_mask,game_uses_priority,flipscreen;
+static int gfx_bank,gfx_mask,game_uses_priority;
 static unsigned char *gfx_base;
 unsigned char *dec8_pf0_data,*dec8_pf1_data,*dec8_row;
 
@@ -103,12 +103,6 @@ void ghostb_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 
 		color_prom++;
 	}
-}
-
-WRITE_HANDLER( dec8_flipscreen_w )
-{
-	flipscreen=data;
-	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 }
 
 WRITE_HANDLER( dec8_bac06_0_w )
@@ -263,7 +257,7 @@ static void draw_sprites1(struct osd_bitmap *bitmap, int priority)
 		y=(y+16)%0x200;
 		x=256 - x;
 		y=256 - y;
-		if (flipscreen) {
+		if (flip_screen) {
 			y=240-y;
 			x=240-x;
 			if (fx) fx=0; else fx=1;
@@ -335,7 +329,7 @@ static void draw_sprites2(struct osd_bitmap *bitmap, int priority)
 			inc = 1;
 		}
 
-		if (flipscreen) {
+		if (flip_screen) {
 			y=240-y;
 			x=240-x;
 			if (fx) fx=0; else fx=1;
@@ -351,7 +345,7 @@ static void draw_sprites2(struct osd_bitmap *bitmap, int priority)
 					colour,
 					fx,fy,
 					x,y + mult * multi,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					&Machine->visible_area,TRANSPARENCY_PEN,0);
 			multi--;
 		}
 	}
@@ -379,7 +373,7 @@ static void srdarwin_drawsprites(struct osd_bitmap *bitmap, int pri)
 		fx = buffered_spriteram[offs+1] & 0x04;
 		multi = buffered_spriteram[offs+1] & 0x10;
 
-		if (flipscreen) {
+		if (flip_screen) {
 			sy=240-sy;
 			sx=240-sx;
 			if (fx) fx=0; else fx=1;
@@ -390,16 +384,16 @@ static void srdarwin_drawsprites(struct osd_bitmap *bitmap, int pri)
     	drawgfx(bitmap,Machine->gfx[1],
         		code,
 				color,
-				fx,flipscreen,
+				fx,flip_screen,
 				sx,sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
         if (multi)
     		drawgfx(bitmap,Machine->gfx[1],
 				code+1,
 				color,
-				fx,flipscreen,
+				fx,flip_screen,
 				sx,sy2,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 }
 
@@ -419,7 +413,7 @@ static void draw_characters(struct osd_bitmap *bitmap, int mask, int shift)
 
 		drawgfx(bitmap,Machine->gfx[0],
 				tile,color,0,0,8*mx,8*my,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 }
 
@@ -431,7 +425,7 @@ void cobracom_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	tilemap_set_scrolly( dec8_pf0_tilemap,0, (dec8_pf0_control[0x12]<<8)+dec8_pf0_control[0x13] );
 	tilemap_set_scrollx( dec8_pf1_tilemap,0, (dec8_pf1_control[0x10]<<8)+dec8_pf1_control[0x11] );
 	tilemap_set_scrolly( dec8_pf1_tilemap,0, (dec8_pf1_control[0x12]<<8)+dec8_pf1_control[0x13] );
-	dec8_flipscreen_w(0,dec8_pf0_control[0]>>7);
+	flip_screen_w(0,dec8_pf0_control[0]>>7);
 
 	gfx_mask=3;
 	gfx_bank=3;
@@ -555,7 +549,7 @@ void oscar_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	tilemap_set_scrollx( dec8_pf0_tilemap,0, (dec8_pf0_control[0x10]<<8)+dec8_pf0_control[0x11] );
 	tilemap_set_scrolly( dec8_pf0_tilemap,0, (dec8_pf0_control[0x12]<<8)+dec8_pf0_control[0x13] );
-	dec8_flipscreen_w(0,dec8_pf0_control[1]>>7);
+	flip_screen_w(0,dec8_pf0_control[1]>>7);
 
 	tilemap_update(ALL_TILEMAPS);
 	if (palette_recalc())

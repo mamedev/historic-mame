@@ -83,10 +83,6 @@ interrupts:
 
 
 
-/* machine */
-READ_HANDLER( kangaroo_sec_chip_r );
-WRITE_HANDLER( kangaroo_sec_chip_w );
-
 /* vidhrdw */
 extern unsigned char *kangaroo_video_control;
 extern unsigned char *kangaroo_bank_select;
@@ -119,6 +115,27 @@ static void kangaroo_init_machine(void)
 	/* properly starts. */
 	cpu_cause_interrupt(0,Z80_NMI_INT);
 }
+
+
+static UINT8 kangaroo_clock=0;
+
+
+/* I have no idea what the security chip is nor whether it really does,
+   this just seems to do the trick -V-
+*/
+
+static READ_HANDLER( kangaroo_sec_chip_r )
+{
+/*  kangaroo_clock = (kangaroo_clock << 1) + 1; */
+  kangaroo_clock++;
+  return (kangaroo_clock & 0x0f);
+}
+
+static WRITE_HANDLER( kangaroo_sec_chip_w )
+{
+/*  kangaroo_clock = val & 0x0f; */
+}
+
 
 
 static WRITE_HANDLER( kangaroo_coin_counter_w )

@@ -222,10 +222,10 @@ static void object_update(struct gfx_object *object)
 		return;
 
 	/* check visible area */
-	min_x = Machine->drv->visible_area.min_x;
-	max_x = Machine->drv->visible_area.max_x;
-	min_y = Machine->drv->visible_area.min_y;
-	max_y = Machine->drv->visible_area.max_y;
+	min_x = Machine->visible_area.min_x;
+	max_x = Machine->visible_area.max_x;
+	min_y = Machine->visible_area.min_y;
+	max_y = Machine->visible_area.max_y;
 	if(
 		(object->width==0)  ||
 		(object->height==0) ||

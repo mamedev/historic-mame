@@ -125,22 +125,21 @@ void ajax_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
 
 	fillbitmap(priority_bitmap,0,NULL);
 
+	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
+	K052109_tilemap_draw(bitmap,2,1<<16);
 	if (ajax_priority)
 	{
 		/* basic layer order is B, zoom, A, F */
-		K052109_tilemap_draw(bitmap,2,TILEMAP_IGNORE_TRANSPARENCY|(1<<16));
 		K051316_zoom_draw_0(bitmap,4);
 		K052109_tilemap_draw(bitmap,1,2<<16);
-		K052109_tilemap_draw(bitmap,0,8<<16);
 	}
 	else
 	{
 		/* basic layer order is B, A, zoom, F */
-		K052109_tilemap_draw(bitmap,2,TILEMAP_IGNORE_TRANSPARENCY|(1<<16));
 		K052109_tilemap_draw(bitmap,1,2<<16);
 		K051316_zoom_draw_0(bitmap,4);
-		K052109_tilemap_draw(bitmap,0,8<<16);
 	}
+	K052109_tilemap_draw(bitmap,0,8<<16);
 
 	K051960_sprites_draw(bitmap,-1,-1);
 }

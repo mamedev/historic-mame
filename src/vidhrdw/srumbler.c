@@ -13,7 +13,6 @@ extern size_t spriteram_size;
 
 unsigned char *srumbler_backgroundram,*srumbler_foregroundram;
 static struct tilemap *bg_tilemap,*fg_tilemap;
-static int flipscreen;
 
 
 
@@ -92,8 +91,7 @@ WRITE_HANDLER( srumbler_background_w )
 WRITE_HANDLER( srumbler_4009_w )
 {
 	/* bit 0 flips screen */
-	flipscreen = data & 1;
-	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
+	flip_screen_w(0,data & 1);
 
 	/* bits 4-5 used during attract mode, unknown */
 
@@ -151,7 +149,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 		sx = spriteram[offs + 3] + 0x100 * ( attr & 0x01);
 		flipy = attr & 0x02;
 
-		if (flipscreen)
+		if (flip_screen)
 		{
 			sx = 496 - sx;
 			sy = 240 - sy;
@@ -161,9 +159,9 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 		drawgfx(bitmap,Machine->gfx[2],
 				code,
 				colour,
-				flipscreen,flipy,
+				flip_screen,flipy,
 				sx, sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
+				&Machine->visible_area,TRANSPARENCY_PEN,15);
 	}
 }
 

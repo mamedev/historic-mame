@@ -196,7 +196,7 @@ static void draw_background(struct osd_bitmap *bitmap, int bank, int colortype)
 			}
 		}
 
-		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 	}
 }
@@ -236,7 +236,7 @@ static void draw_foreground(struct osd_bitmap *bitmap, int colortype)
 			col + 8 * palette_bank,
 			flipx,flipy,
 			8*sx,scroll,
-			&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 }
 
@@ -303,6 +303,6 @@ void stinger_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	draw_background(bitmap, 2 + char_bank[0], 1);
 	draw_foreground(bitmap, 1);
-	draw_sprites(bitmap, spriteram_2, 4, &Machine->drv->visible_area);
-	draw_sprites(bitmap, spriteram  , 5, &Machine->drv->visible_area);
+	draw_sprites(bitmap, spriteram_2, 4, &Machine->visible_area);
+	draw_sprites(bitmap, spriteram  , 5, &Machine->visible_area);
 }

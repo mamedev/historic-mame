@@ -387,8 +387,8 @@ void cischeat_mark_road_colors(int road_num)
 	int color_codes_start		=	gfx.color_codes_start;
 	unsigned char *roadram		=	cischeat_roadram[road_num & 1];
 
-	int min_y = Machine->drv->visible_area. min_y;
-	int max_y = Machine->drv->visible_area. max_y;
+	int min_y = Machine->visible_area. min_y;
+	int max_y = Machine->visible_area. max_y;
 
 	for (color = 0 ; color < ROAD_COLOR_CODES ; color++) colmask[color] = 0;
 
@@ -424,7 +424,7 @@ void cischeat_draw_road(struct osd_bitmap *bitmap, int road_num, int priority1, 
 	int curr_code,sx,sy;
 	int min_priority, max_priority;
 
-	struct rectangle rect		=	Machine->drv->visible_area;
+	struct rectangle rect		=	Machine->visible_area;
 	unsigned char *roadram		=	cischeat_roadram[road_num & 1];
 	struct GfxElement *gfx		=	Machine->gfx[(road_num & 1)?4:3];
 
@@ -524,8 +524,8 @@ void f1gpstar_mark_road_colors(int road_num)
 	int color_codes_start		=	gfx.color_codes_start;
 	unsigned char *roadram		=	cischeat_roadram[road_num & 1];
 
-	int min_y = Machine->drv->visible_area.min_y;
-	int max_y = Machine->drv->visible_area.max_y;
+	int min_y = Machine->visible_area.min_y;
+	int max_y = Machine->visible_area.max_y;
 
 	for (color = 0 ; color < ROAD_COLOR_CODES ; color++) colmask[color] = 0;
 
@@ -561,7 +561,7 @@ void f1gpstar_draw_road(struct osd_bitmap *bitmap, int road_num, int priority1, 
 	int xstart;
 	int min_priority, max_priority;
 
-	struct rectangle rect		=	Machine->drv->visible_area;
+	struct rectangle rect		=	Machine->visible_area;
 	unsigned char *roadram		=	cischeat_roadram[road_num & 1];
 	struct GfxElement *gfx		=	Machine->gfx[(road_num & 1)?4:3];
 
@@ -653,10 +653,10 @@ static void cischeat_mark_sprite_colors(void)
 	int total_elements		=	Machine->gfx[5]->total_elements;
 	int color_codes_start	=	Machine->drv->gfxdecodeinfo[5].color_codes_start;
 
-	int xmin = Machine->drv->visible_area.min_x;
-	int xmax = Machine->drv->visible_area.max_x;
-	int ymin = Machine->drv->visible_area.min_y;
-	int ymax = Machine->drv->visible_area.max_y;
+	int xmin = Machine->visible_area.min_x;
+	int xmax = Machine->visible_area.max_x;
+	int ymin = Machine->visible_area.min_y;
+	int ymax = Machine->visible_area.max_y;
 
 	unsigned char		*source	= spriteram;
 	const unsigned char *finish	= source + 0x1000;
@@ -854,7 +854,7 @@ if ( (debugsprites) && ( ((attr & 0x0300)>>8) != (debugsprites-1) ) ) 	{ continu
 							color,
 							flipx,flipy,
 							(sx + x * xdim) / 0x10000, (sy + y * ydim) / 0x10000,
-							&Machine->drv->visible_area,
+							&Machine->visible_area,
 							TRANSPARENCY_PEN,15,
 							xscale, yscale );
 			}

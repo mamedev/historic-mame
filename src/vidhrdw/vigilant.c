@@ -48,7 +48,7 @@ int vigilant_vh_start(void)
 {
 	generic_vh_start();
 
-	if ((bg_bitmap = osd_create_bitmap(512*3,256)) == 0)
+	if ((bg_bitmap = bitmap_alloc(512*3,256)) == 0)
 	{
 		generic_vh_stop();
 		return 1;
@@ -59,7 +59,7 @@ int vigilant_vh_start(void)
 
 void vigilant_vh_stop(void)
 {
-	osd_free_bitmap(bg_bitmap);
+	bitmap_free(bg_bitmap);
 	generic_vh_stop();
 }
 
@@ -395,7 +395,7 @@ void kikcubic_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		}
 	}
 
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
-	draw_sprites(bitmap,&Machine->drv->visible_area);
+	draw_sprites(bitmap,&Machine->visible_area);
 }

@@ -78,7 +78,7 @@ void ikari_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 int snk_vh_start( void ){
 	dirtybuffer = malloc( MAX_VRAM_SIZE );
 	if( dirtybuffer ){
-		tmpbitmap = osd_new_bitmap( 512, 512, Machine->scrbitmap->depth );
+		tmpbitmap = bitmap_alloc( 512, 512 );
 		if( tmpbitmap ){
 			memset( dirtybuffer, 0xff, MAX_VRAM_SIZE  );
 			shadows_visible = 1;
@@ -90,7 +90,7 @@ int snk_vh_start( void ){
 }
 
 void snk_vh_stop( void ){
-	osd_free_bitmap( tmpbitmap );
+	bitmap_free( tmpbitmap );
 	tmpbitmap = 0;
 	free( dirtybuffer );
 	dirtybuffer = 0;
@@ -99,7 +99,7 @@ void snk_vh_stop( void ){
 /**************************************************************************************/
 
 static void tnk3_draw_background( struct osd_bitmap *bitmap, int scrollx, int scrolly ){
-	const struct rectangle *clip = &Machine->drv->visible_area;
+	const struct rectangle *clip = &Machine->visible_area;
 	const struct GfxElement *gfx = Machine->gfx[GFX_TILES];
 	int offs;
 	for( offs=0; offs<64*64*2; offs+=2 ){
@@ -150,7 +150,7 @@ void tnk3_draw_text( struct osd_bitmap *bitmap, int bank, unsigned char *source 
 }
 
 void tnk3_draw_status( struct osd_bitmap *bitmap, int bank, unsigned char *source ){
-	const struct rectangle *clip = &Machine->drv->visible_area;
+	const struct rectangle *clip = &Machine->visible_area;
 	const struct GfxElement *gfx = Machine->gfx[GFX_CHARS];
 	int offs;
 
@@ -184,7 +184,7 @@ void tnk3_draw_sprites( struct osd_bitmap *bitmap, int xscroll, int yscroll ){
 	static int n = 50;
 	const unsigned char *source = spriteram;
 	const unsigned char *finish = source+n*4;
-	struct rectangle clip = Machine->drv->visible_area;
+	struct rectangle clip = Machine->visible_area;
 /*
 if( keyboard_pressed( KEYCODE_J ) ){
 	while( keyboard_pressed( KEYCODE_J ) ){}
@@ -286,7 +286,7 @@ static void ikari_draw_background( struct osd_bitmap *bitmap, int xscroll, int y
 	}
 
 	{
-		struct rectangle clip = Machine->drv->visible_area;
+		struct rectangle clip = Machine->visible_area;
 		clip.min_x += 16;
 		clip.max_x -= 16;
 		copyscrollbitmap(bitmap,tmpbitmap,
@@ -297,7 +297,7 @@ static void ikari_draw_background( struct osd_bitmap *bitmap, int xscroll, int y
 }
 
 static void ikari_draw_text( struct osd_bitmap *bitmap ){
-	const struct rectangle *clip = &Machine->drv->visible_area;
+	const struct rectangle *clip = &Machine->visible_area;
 	const struct GfxElement *gfx = Machine->gfx[GFX_CHARS];
 	const unsigned char *source = &memory_region(REGION_CPU1)[0xf800];
 
@@ -319,7 +319,7 @@ static void ikari_draw_text( struct osd_bitmap *bitmap ){
 static void ikari_draw_status( struct osd_bitmap *bitmap ){
 	/*	this is drawn above and below the main display */
 
-	const struct rectangle *clip = &Machine->drv->visible_area;
+	const struct rectangle *clip = &Machine->visible_area;
 	const struct GfxElement *gfx = Machine->gfx[GFX_CHARS];
 	const unsigned char *source = &memory_region(REGION_CPU1)[0xfc00];
 
@@ -356,7 +356,7 @@ static void ikari_draw_sprites_16x16( struct osd_bitmap *bitmap, int start, int 
 	int which;
 	const unsigned char *source = &memory_region(REGION_CPU1)[0xe800];
 
-	struct rectangle clip = Machine->drv->visible_area;
+	struct rectangle clip = Machine->visible_area;
 	clip.min_x += 16;
 	clip.max_x -= 16;
 
@@ -384,7 +384,7 @@ static void ikari_draw_sprites_32x32( struct osd_bitmap *bitmap, int start, int 
 	int which;
 	const unsigned char *source = &memory_region(REGION_CPU1)[0xe000];
 
-	struct rectangle clip = Machine->drv->visible_area;
+	struct rectangle clip = Machine->visible_area;
 	clip.min_x += 16;
 	clip.max_x -= 16;
 
@@ -470,7 +470,7 @@ static void tdfever_draw_background( struct osd_bitmap *bitmap,
 	}
 
 	{
-		struct rectangle clip = Machine->drv->visible_area;
+		struct rectangle clip = Machine->visible_area;
 		copyscrollbitmap(bitmap,tmpbitmap,
 			1,&xscroll,1,&yscroll,
 			&clip,
@@ -487,7 +487,7 @@ static void tdfever_draw_sprites( struct osd_bitmap *bitmap, int xscroll, int ys
 
 	int which;
 
-	struct rectangle clip = Machine->drv->visible_area;
+	struct rectangle clip = Machine->visible_area;
 
 	for( which = 0; which < 32*4; which+=4 ){
 		int attributes = source[which+3];
@@ -514,7 +514,7 @@ static void tdfever_draw_text( struct osd_bitmap *bitmap, int attributes, int dx
 	int bank = attributes>>4;
 	int color = attributes&0xf;
 
-	const struct rectangle *clip = &Machine->drv->visible_area;
+	const struct rectangle *clip = &Machine->visible_area;
 	const struct GfxElement *gfx = Machine->gfx[GFX_CHARS];
 
 	const unsigned char *source = &memory_region(REGION_CPU1)[base];
@@ -590,7 +590,7 @@ static void gwar_draw_sprites_16x16( struct osd_bitmap *bitmap, int xscroll, int
 	const struct GfxElement *gfx = Machine->gfx[GFX_SPRITES];
 	const unsigned char *source = &memory_region(REGION_CPU1)[0xe800];
 
-	const struct rectangle *clip = &Machine->drv->visible_area;
+	const struct rectangle *clip = &Machine->visible_area;
 
 	int which;
 	for( which=0; which<(64)*4; which+=4 )
@@ -622,7 +622,7 @@ void gwar_draw_sprites_32x32( struct osd_bitmap *bitmap, int xscroll, int yscrol
 	const struct GfxElement *gfx = Machine->gfx[GFX_BIGSPRITES];
 	const unsigned char *source = &memory_region(REGION_CPU1)[0xe000];
 
-	const struct rectangle *clip = &Machine->drv->visible_area;
+	const struct rectangle *clip = &Machine->visible_area;
 
 	int which;
 	for( which=0; which<(32)*4; which+=4 )

@@ -110,12 +110,12 @@ void crbaloon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					colorram[offs] & 0x0f,
 					flipscreen,flipscreen,
 					8*sx,8*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+					&Machine->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
 
 	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 
     /* Check Collision - Draw balloon in background colour, if no */
@@ -129,7 +129,7 @@ void crbaloon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			15,
 			0,0,
 			bx,by,
-			&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			&Machine->visible_area,TRANSPARENCY_PEN,0);
 
     crbaloon_collision = 0;
 
@@ -137,10 +137,10 @@ void crbaloon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		for (y = by; y < by + Machine->gfx[1]->height; y++)
         {
-			if ((x < Machine->drv->visible_area.min_x) ||
-			    (x > Machine->drv->visible_area.max_x) ||
-			    (y < Machine->drv->visible_area.min_y) ||
-			    (y > Machine->drv->visible_area.max_y))
+			if ((x < Machine->visible_area.min_x) ||
+			    (x > Machine->visible_area.max_x) ||
+			    (y < Machine->visible_area.min_y) ||
+			    (y > Machine->visible_area.max_y))
 			{
 				continue;
 			}
@@ -161,5 +161,5 @@ void crbaloon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			(spritectrl[0] & 0xf0) >> 4,
 			0,0,
 			bx,by,
-			&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			&Machine->visible_area,TRANSPARENCY_PEN,0);
 }

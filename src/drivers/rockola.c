@@ -630,64 +630,57 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout swapcharlayout256 =
+static struct GfxLayout swapcharlayout =
 {
 	8,8,    /* 8*8 characters */
-	256,    /* 256 characters */
+	256,	/* 256 characters */
 	2,      /* 2 bits per pixel */
 	{ 256*8*8, 0 }, /* the two bitplanes are separated */
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8     /* every char takes 8 consecutive bytes */
 };
-static struct GfxLayout charlayout256 =
+static struct GfxLayout charlayout =
 {
 	8,8,    /* 8*8 characters */
-	256,    /* 256 characters */
+	RGN_FRAC(1,2),
+	2,      /* 2 bits per pixel */
+	{ 0, RGN_FRAC(1,2) }, /* the two bitplanes are separated */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8     /* every char takes 8 consecutive bytes */
+};
+static struct GfxLayout charlayout_memory =
+{
+	8,8,    /* 8*8 characters */
+	256,	/* 256 characters */
 	2,      /* 2 bits per pixel */
 	{ 0, 256*8*8 }, /* the two bitplanes are separated */
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8     /* every char takes 8 consecutive bytes */
 };
-static struct GfxLayout charlayout512 =
-{
-	8,8,	/* 8*8 characters */
-	512,	/* 512 characters */
-	2,	/* 2 bits per pixel */
-	{ 0, 512*8*8 },	/* the two bitplanes are separated */
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8	/* every char takes 8 consecutive bytes */
-};
 
 
 
 static struct GfxDecodeInfo sasuke_gfxdecodeinfo[] =
 {
-    { 0,           0x1000, &swapcharlayout256,   0, 4 },	/* the game dynamically modifies this */
-    { REGION_GFX1, 0x0000, &swapcharlayout256, 4*4, 4 },
+    { 0,           0x1000, &swapcharlayout,		0, 4 },	/* the game dynamically modifies this */
+    { REGION_GFX1, 0x0000, &swapcharlayout,	  4*4, 4 },
 	{ -1 }
 };
 
 static struct GfxDecodeInfo satansat_gfxdecodeinfo[] =
 {
-    { 0,           0x1000, &charlayout256,   0, 4 },	/* the game dynamically modifies this */
-    { REGION_GFX1, 0x0000, &charlayout256, 4*4, 4 },
+    { 0,           0x1000, &charlayout_memory,	0, 4 },	/* the game dynamically modifies this */
+    { REGION_GFX1, 0x0000, &charlayout,		  4*4, 4 },
 	{ -1 }
 };
 
 static struct GfxDecodeInfo vanguard_gfxdecodeinfo[] =
 {
-	{ 0,           0x1000, &charlayout256,   0, 8 },	/* the game dynamically modifies this */
-	{ REGION_GFX1, 0x0000, &charlayout256, 8*4, 8 },
-	{ -1 } /* end of array */
-};
-
-static struct GfxDecodeInfo fantasy_gfxdecodeinfo[] =
-{
-	{ 0,           0x1000, &charlayout256,   0, 8 },	/* the game dynamically modifies this */
-	{ REGION_GFX1, 0x0000, &charlayout512, 8*4, 8 },
+	{ 0,           0x1000, &charlayout_memory,	0, 8 },	/* the game dynamically modifies this */
+	{ REGION_GFX1, 0x0000, &charlayout,		  8*4, 8 },
 	{ -1 } /* end of array */
 };
 
@@ -824,7 +817,7 @@ static struct MachineDriver machine_driver_fantasy =
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 0*8, 28*8-1 },
-	fantasy_gfxdecodeinfo,
+	vanguard_gfxdecodeinfo,
 	64,16*4,
 	rockola_vh_convert_color_prom,
 
@@ -844,7 +837,7 @@ static struct MachineDriver machine_driver_fantasy =
 	}
 };
 
-/* note that in this driver the visible area is different!!! */
+/* note that in this driver the visible area is different! */
 static struct MachineDriver machine_driver_pballoon =
 {
 	/* basic machine hardware */
@@ -861,8 +854,8 @@ static struct MachineDriver machine_driver_pballoon =
 	0,
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },	/* different from the others! */
-	fantasy_gfxdecodeinfo,
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	vanguard_gfxdecodeinfo,
 	64,16*4,
 	rockola_vh_convert_color_prom,
 

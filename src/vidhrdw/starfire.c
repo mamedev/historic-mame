@@ -1,296 +1,312 @@
 /***************************************************************************
 
-  vidhrdw.c
-
-  Functions to emulate the video hardware of the machine.
+	Star Fire video system
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-unsigned char starfire_vidctrl;
-unsigned char starfire_vidctrl1;
-unsigned char *starfire_videoram;
-unsigned char *starfire_colorram;
-unsigned char starfire_color = 0;
 
-WRITE_HANDLER( starfire_vidctrl_w ) {
+/* from the main driver */
+extern UINT8 *starfire_videoram;
+extern UINT8 *starfire_colorram;
+
+/* local allocated storage */
+static UINT8 *scanline_dirty;
+
+static UINT8 starfire_vidctrl;
+static UINT8 starfire_vidctrl1;
+static UINT8 starfire_color;
+
+
+
+/*************************************
+ *
+ *	Initialize the video system
+ *
+ *************************************/
+
+int starfire_vh_start(void)
+{
+	/* make a temporary bitmap */
+	tmpbitmap = bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
+	if (!tmpbitmap)
+		return 1;
+
+	/* make a dirty array */
+	scanline_dirty = malloc(256);
+	if (!scanline_dirty)
+	{
+		bitmap_free(tmpbitmap);
+		return 1;
+	}
+
+	/* reset videoram */
+	memset(starfire_videoram, 0, 0x2000);
+	memset(starfire_colorram, 0, 0x2000);
+	memset(scanline_dirty, 1, 256);
+
+	return 0;
+}
+
+
+
+/*************************************
+ *
+ *	Tear down the video system
+ *
+ *************************************/
+
+void starfire_vh_stop(void)
+{
+	bitmap_free(tmpbitmap);
+	free(scanline_dirty);
+}
+
+
+
+/*************************************
+ *
+ *	Video control writes
+ *
+ *************************************/
+
+WRITE_HANDLER( starfire_vidctrl_w )
+{
     starfire_vidctrl = data;
 }
 
-WRITE_HANDLER( starfire_vidctrl1_w ) {
+WRITE_HANDLER( starfire_vidctrl1_w )
+{
     starfire_vidctrl1 = data;
 }
 
-WRITE_HANDLER( starfire_colorram_w ){
-    starfire_color = data & 0x1f;
 
-    if ((offset & 0xE0) == 0) {
-	int r,g,b;
-	int d1 = offset & 0x100;
 
-	starfire_colorram[offset & 0xfeff] = data;
+/*************************************
+ *
+ *	Color RAM read/writes
+ *
+ *************************************/
 
-	if (starfire_vidctrl1&0x40) {
-	int reg = offset & 0x1f;
-	    if (offset & 0x200)
-		reg |= 0x20;
+WRITE_HANDLER( starfire_colorram_w )
+{
+	/* handle writes to the pseudo-color RAM */
+	if ((offset & 0xe0) == 0)
+	{
+		int palette_index = (offset & 0x1f) | ((offset & 0x200) >> 4);
+		int r = ((data << 1) & 0x06) | ((offset >> 8) & 0x01);
+		int b = (data >> 2) & 0x07;
+		int g = (data >> 5) & 0x07;
 
-	    r = (data & 0x03)*0x49;
-	    if (d1)
-		r |= 0x24;
+		/* set RAM regardless */
+		starfire_colorram[offset & ~0x100] = data;
+		starfire_colorram[offset |  0x100] = data;
 
-	    b = ((data & 0x1c)*0x49) >> 3;
-	    g = ((data & 0xe0)*0x49) >> 6;
+		/* don't modify the palette unless the TRANS bit is set */
+		starfire_color = data & 0x1f;
+		if (!(starfire_vidctrl1 & 0x40))
+			return;
 
-	    palette_change_color(reg,r,g,b);
+		/* modify the pen */
+		r = (r << 5) | (r << 2) | (r >> 1);
+		b = (b << 5) | (b << 2) | (b >> 1);
+		g = (g << 5) | (g << 2) | (g >> 1);
+		palette_change_color(palette_index, r, g, b);
 	}
-    } else
-	if(!(starfire_vidctrl1 & 0x80))
-	    starfire_colorram[offset] = data & 0x1f;
+
+	/* handle writes to the rest of color RAM */
+	else
+	{
+		/* set RAM based on CDRM */
+		starfire_colorram[offset] = (starfire_vidctrl1 & 0x80) ? starfire_color : (data & 0x1f);
+		scanline_dirty[offset & 0xff] = 1;
+		starfire_color = data & 0x1f;
+	}
 }
 
-READ_HANDLER( starfire_colorram_r ) {
-    if ((offset & 0xE0) == 0)
-	return starfire_colorram[offset&0xfeff];
-    else
+READ_HANDLER( starfire_colorram_r )
+{
 	return starfire_colorram[offset];
 }
 
-WRITE_HANDLER( starfire_videoram_w ) {
 
-    int i, d0, d1, m0, m1, v0, v1;
-    unsigned char c,d,d2;
-    int offset2 = (offset+0x100)&0x1fff;
-    int source;
 
-    if ((!(offset & 0xE0)) && (!(starfire_vidctrl1 & 0x20)))
-        return;
+/*************************************
+ *
+ *	Video RAM read/writes
+ *
+ *************************************/
 
-    /* Handle selector 6A */
-    if (offset & 0x2000) {
-        c = starfire_vidctrl;
-	source = 1;
-    } else {
-        c = starfire_vidctrl >> 4;
-	source = 0;
-    }
+WRITE_HANDLER( starfire_videoram_w )
+{
+	int sh, lr, dm, ds, mask, d0, dalu;
+	int offset1 = offset & 0x1fff;
+	int offset2 = (offset + 0x100) & 0x1fff;
 
-    offset &= 0x1FFF;
+	/* PROT */
+	if (!(offset & 0xe0) && !(starfire_vidctrl1 & 0x20))
+		return;
 
-    /* Handle mirror bits in 5B-5E */
-    d2=0;
-    d = data & 0xFF;
-    if (c & 0x01) {
-	for (i=7; i>-1; i--) {
-	    d2 = d2 | ((d & 0x80) >> i);
-	    d = d << 1;
+	/* selector 6A */
+	if (offset & 0x2000)
+	{
+		sh = (starfire_vidctrl >> 1) & 0x07;
+		lr = starfire_vidctrl & 0x01;
 	}
-    }
-    else
-	{d2 = d;}
+	else
+	{
+		sh = (starfire_vidctrl >> 5) & 0x07;
+		lr = (starfire_vidctrl >> 4) & 0x01;
+	}
 
+	/* mirror bits 5B/5C/5D/5E */
+	dm = data;
+	if (lr)
+		dm = ((dm & 0x01) << 7) | ((dm & 0x02) << 5) | ((dm & 0x04) << 3) | ((dm & 0x08) << 1) |
+		     ((dm & 0x10) >> 1) | ((dm & 0x20) >> 3) | ((dm & 0x40) >> 5) | ((dm & 0x80) >> 7);
 
-    /* Handle shifters 6E,6D */
-    i = 8 - ((c & 0x0E) >> 1);
+	/* shifters 6D/6E */
+	ds = (dm << 8) >> sh;
+	mask = 0xff00 >> sh;
 
-    d1 = d2 << i;
-    d0 = d1 >> 8;
+	/* ROLL */
+	if ((offset & 0x1f00) == 0x1f00)
+	{
+		if (starfire_vidctrl1 & 0x10)
+			mask &= 0x00ff;
+		else
+			mask &= 0xff00;
+	}
 
-    m1 = 0xff << i;
-    m0 = m1 >> 8;
+	/* ALU 8B/8D */
+	d0 = (starfire_videoram[offset1] << 8) | starfire_videoram[offset2];
+	dalu = d0 & ~mask;
+	d0 &= mask;
+	ds &= mask;
+	switch (~starfire_vidctrl1 & 15)
+	{
+		case 0:		dalu |= ds ^ mask;				break;
+		case 1:		dalu |= (ds | d0) ^ mask;		break;
+		case 2:		dalu |= (ds ^ mask) & d0;		break;
+		case 3:		dalu |= 0;						break;
+		case 4:		dalu |= (ds & d0) ^ mask;		break;
+		case 5:		dalu |= d0 ^ mask;				break;
+		case 6:		dalu |= ds ^ d0;				break;
+		case 7:		dalu |= ds & (d0 ^ mask);		break;
+		case 8:		dalu |= (ds ^ mask) | d0;		break;
+		case 9:		dalu |= (ds ^ d0) ^ mask;		break;
+		case 10:	dalu |= d0;						break;
+		case 11:	dalu |= ds & d0;				break;
+		case 12:	dalu |= mask;					break;
+		case 13:	dalu |= ds | (d0 ^ mask);		break;
+		case 14:	dalu |= ds | d0;				break;
+		case 15:	dalu |= ds;						break;
+	}
 
-    /* Clip depending on roll when falling out of the right of the screen */
-    if ((offset & 0x1f00) == 0x1f00) {
-        if (starfire_vidctrl1 & 0x10)
-            m0 = 0;
-        else
-	    m1 = 0;
-    }
-    v0 = starfire_videoram[offset];
-    v1 = starfire_videoram[offset2];
+	/* final output */
+	starfire_videoram[offset1] = dalu >> 8;
+	starfire_videoram[offset2] = dalu;
+	scanline_dirty[offset1 & 0xff] = 1;
 
-    /* Handle ALU 8B,8D */
-    switch (starfire_vidctrl1 & 0x0F) {
-    case 0:
-	v0 = (v0 & ~m0) | (d0 & m0);
-	v1 = (v1 & ~m1) | (d1 & m1);
-	break;
-    case 1:
-	v0 = v0 | (d0 & m0);
-	v1 = v1 | (d1 & m1);
-	break;
-    case 2:
-	v0 = (v0 ^ m0) | (d0 & m0);
-	v1 = (v1 ^ m1) | (d1 & m1);
-	break;
-    case 3:
-	v0 = v0 | m0;
-	v1 = v1 | m1;
-	break;
-    case 4:
-	v0 = v0 & (d0 | ~m0);
-	v1 = v1 & (d1 | ~m1);
-	break;
-    case 5:
-	break;
-    case 6:
-	v0 = v0 ^ (d0 & m0) ^ m0;
-	v1 = v1 ^ (d1 & m1) ^ m1;
-	break;
-    case 7:
-	v0 = v0 | (~d0 & m0);
-	v1 = v1 | (~d1 & m1);
-	break;
-    case 8:
-	v0 = (v0 & ~m0) | (~v0 & d0 & m0);
-	v1 = (v1 & ~m1) | (~v1 & d1 & m1);
-	break;
-    case 9:
-	v0 = v0 ^ (d0 & m0);
-	v1 = v1 ^ (d1 & m1);
-	break;
-    case 10:
-	v0 = v0 ^ m0;
-	v1 = v1 ^ m1;
-	break;
-    case 11:
-	v0 = (v0 & ~m0) | (~(v0 & d0) & m0);
-	v1 = (v1 & ~m1) | (~(v1 & d1) & m1);
-	break;
-    case 12:
-	v0 = v0 & ~m0;
-	v1 = v1 & ~m1;
-	break;
-    case 13:
-	v0 = v0 & ~(d0 & m0);
-	v1 = v1 & ~(d1 & m1);
-	break;
-    case 14:
-	v0 = (v0 & ~m0) | (~(v0 | d0) & m0);
-	v1 = (v1 & ~m1) | (~(v1 | d1) & m1);
-	break;
-    case 15:
-	v0 = (v0 & ~m0) | (~d0 & m0);
-	v1 = (v1 & ~m1) | (~d1 & m1);
-	break;
-    }
-
-    starfire_videoram[offset] = v0;
-    starfire_videoram[offset2] = v1;
-
-    if (!source && !(starfire_vidctrl1 & 0x80)) {
-	if(m0)
-	    starfire_colorram[offset] = starfire_color;
-	if(m1)
-	    starfire_colorram[offset2] = starfire_color;
-    }
+	/* color output */
+	if (!(offset & 0x2000) && !(starfire_vidctrl1 & 0x80))
+	{
+		if (mask & 0xff00)
+			starfire_colorram[offset1] = starfire_color;
+		if (mask & 0x00ff)
+			starfire_colorram[offset2] = starfire_color;
+	}
 }
 
 READ_HANDLER( starfire_videoram_r )
 {
-    int i, m0, m1, d0;
-    unsigned char c;
-    int offset2 = (offset+0x100)&0x1fff;
+	int sh, mask, d0;
+	int offset1 = offset & 0x1fff;
+	int offset2 = (offset + 0x100) & 0x1fff;
 
-    /* Handle selector 6A */
-    if (offset & 0x2000)
-        c = starfire_vidctrl;
-    else
-        c = starfire_vidctrl >> 4;
+	/* selector 6A */
+	if (offset & 0x2000)
+		sh = (starfire_vidctrl >> 1) & 0x07;
+	else
+		sh = (starfire_vidctrl >> 5) & 0x07;
 
-    offset &= 0x1FFF;
+	/* shifters 6D/6E */
+	mask = 0xff00 >> sh;
 
-    /* Handle shifter mask 6E,6D */
-    i = 8 - ((c & 0x0E) >> 1);
+	/* ROLL */
+	if ((offset & 0x1f00) == 0x1f00)
+	{
+		if (starfire_vidctrl1 & 0x10)
+			mask &= 0x00ff;
+		else
+			mask &= 0xff00;
+	}
 
-    m1 = 0xff << i;
-    m0 = m1 >> 8;
-
-    /* Clip depending on roll when falling out of the right of the screen */
-    if ((offset & 0x1f00) == 0x1f00) {
-        if (starfire_vidctrl1 & 0x10)
-            m0 = 0;
-        else
-	    m1 = 0;
-    }
-    d0 = (starfire_videoram[offset] & m0 ) | (starfire_videoram[offset2] & m1);
-
-    d0 = ((d0 >> i) | (d0 << (8-i))) & 0xff;
-
-    return d0;
+	/* munge the results */
+	d0 = (starfire_videoram[offset1] & (mask >> 8)) | (starfire_videoram[offset2] & mask);
+	d0 = (d0 << sh) | (d0 >> (8 - sh));
+	return d0 & 0xff;
 }
 
 
-/***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
+/*************************************
+ *
+ *	Periodic screen refresh callback
+ *
+ *************************************/
 
-***************************************************************************/
+void starfire_video_update(int scanline, int count)
+{
+	UINT8 *pix = &starfire_videoram[scanline];
+	UINT8 *col = &starfire_colorram[scanline];
+	int x, y;
+
+	/* update any dirty scanlines in this range */
+	for (x = 0; x < 256; x += 8)
+	{
+		for (y = 0; y < count; y++)
+			if (scanline_dirty[scanline + y])
+			{
+				int data = pix[y];
+				int color = col[y];
+
+				plot_pixel(tmpbitmap, x + 0, scanline + y, color | ((data >> 2) & 0x20));
+				plot_pixel(tmpbitmap, x + 1, scanline + y, color | ((data >> 1) & 0x20));
+				plot_pixel(tmpbitmap, x + 2, scanline + y, color | ((data >> 0) & 0x20));
+				plot_pixel(tmpbitmap, x + 3, scanline + y, color | ((data << 1) & 0x20));
+				plot_pixel(tmpbitmap, x + 4, scanline + y, color | ((data << 2) & 0x20));
+				plot_pixel(tmpbitmap, x + 5, scanline + y, color | ((data << 3) & 0x20));
+				plot_pixel(tmpbitmap, x + 6, scanline + y, color | ((data << 4) & 0x20));
+				plot_pixel(tmpbitmap, x + 7, scanline + y, color | ((data << 5) & 0x20));
+			}
+
+		pix += 256;
+		col += 256;
+	}
+
+	/* mark them not dirty anymore */
+	for (y = 0; y < count; y++)
+		scanline_dirty[scanline + y] = 0;
+}
+
+
+
+/*************************************
+ *
+ *	Standard screen refresh callback
+ *
+ *************************************/
+
 void starfire_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-        int x,y,xx;
-        int j,col;
-        long pnt;
-        int d;
+	/* update the palette */
+	palette_recalc();
 
-		palette_recalc();
-
-        pnt = 0x0000;
-        xx=0;
-
-        for (x=0; x<32; x++) {
-            for (y=0; y<256; y++) {
-                d= starfire_videoram[pnt];
-                col = starfire_colorram[pnt++];
-                for (j=0; j<8; j++) {
-                    if (d & 0x80)
-                        tmpbitmap->line[y][xx+j] = Machine->pens[col+32];
-                    else
-                        tmpbitmap->line[y][xx+j] = Machine->pens[col];
-                    d = d << 1;
-                }
-            }
-            xx=xx+8;
-	    pnt+=0x00;
-       }
-       copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	/* copy the bitmap, remapping the colors */
+	copybitmap_remap(bitmap, tmpbitmap, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_NONE, 0);
 }
 
-int starfire_vh_start(void)
-{
-    int i;
-
-    if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-        return 1;
-
-    if ((starfire_videoram = malloc(0x2000)) == 0)
-	{
-		osd_free_bitmap(tmpbitmap);
-		return 1;
-	}
-    if ((starfire_colorram = malloc(0x2000)) == 0)
-	{
-		osd_free_bitmap(tmpbitmap);
-        free(starfire_videoram);
-		return 1;
-	}
-
-    for (i=0; i<0x2000; i++) {
-        starfire_videoram[i]=0;
-        starfire_colorram[i]=0;
-    }
-
-    return 0;
-}
-
-void starfire_vh_stop(void)
-{
-	osd_free_bitmap(tmpbitmap);
-    free(starfire_videoram);
-    free(starfire_colorram);
-}
 

@@ -63,8 +63,8 @@ int capbowl_vh_start(void)
 		return 1;
 	}
 
-	max_row = Machine->drv->visible_area.max_y;
-	max_col = Machine->drv->visible_area.max_x;
+	max_row = Machine->visible_area.max_y;
+	max_col = Machine->visible_area.max_x;
 	max_col_offset = (max_col + 1) / 2 + PAL_SIZE;
 
 	// Initialize color areas. The screen is blank
@@ -219,7 +219,7 @@ void capbowl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	if (TMS34061_display_blanked())
 	{
-		fillbitmap(bitmap,palette_transparent_pen,&Machine->drv->visible_area);
+		fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
 		return;
 	}
 

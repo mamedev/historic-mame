@@ -234,7 +234,7 @@ static void draw_sprites( struct osd_bitmap *bitmap )
 		{42,43,46,47,58,59,62,63}
 	};
 
-	const struct rectangle *clip = &Machine->drv->visible_area;
+	const struct rectangle *clip = &Machine->visible_area;
 	const struct GfxElement *gfx = Machine->gfx[3];
 	const UINT16 *source = (NUM_SPRITES-1)*8 + (UINT16 *)spriteram;
 	int count = NUM_SPRITES;
@@ -304,7 +304,7 @@ void gaiden_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_render(ALL_TILEMAPS);
 
 	fillbitmap(priority_bitmap,0,NULL);
-	fillbitmap(bitmap,Machine->pens[0x200],&Machine->drv->visible_area);
+	fillbitmap(bitmap,Machine->pens[0x200],&Machine->visible_area);
 	tilemap_draw(bitmap,background,1<<16);
 	tilemap_draw(bitmap,foreground,2<<16);
 	tilemap_draw(bitmap,text_layer,4<<16);

@@ -216,7 +216,7 @@ void actfancr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					colour,
 					fx,fy,
 					x,y + mult * multi,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					&Machine->visible_area,TRANSPARENCY_PEN,0);
 			multi--;
 		}
 	}
@@ -232,7 +232,7 @@ void actfancr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		if (flipscreen) {mx=31-mx; my=31-my;}
 		drawgfx(bitmap,Machine->gfx[0],
 			tile,color,flipscreen,flipscreen,8*mx,8*my,
-			&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 }
 
@@ -356,7 +356,7 @@ void triothep_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					colour,
 					fx,fy,
 					x,y + mult * multi,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					&Machine->visible_area,TRANSPARENCY_PEN,0);
 			multi--;
 		}
 	}
@@ -372,6 +372,6 @@ void triothep_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		if (flipscreen) {mx=31-mx; my=31-my;}
 		drawgfx(bitmap,Machine->gfx[0],
 			tile,color,flipscreen,flipscreen,8*mx,8*my,
-			&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

@@ -156,7 +156,7 @@ int system1_vh_start(void)
 		return 1;
 	}
 	memset(bg_ram,0,0x4000);
-	if ((bitmap1 = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if ((bitmap1 = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 	{
 		free(bg_ram);
 		free(bg_dirtybuffer);
@@ -164,9 +164,9 @@ int system1_vh_start(void)
 		free(SpritesCollisionTable);
 		return 1;
 	}
-	if ((bitmap2 = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if ((bitmap2 = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 	{
-		osd_free_bitmap(bitmap1);
+		bitmap_free(bitmap1);
 		free(bg_ram);
 		free(bg_dirtybuffer);
 		free(tx_dirtybuffer);
@@ -179,8 +179,8 @@ int system1_vh_start(void)
 
 void system1_vh_stop(void)
 {
-	osd_free_bitmap(bitmap2);
-	osd_free_bitmap(bitmap1);
+	bitmap_free(bitmap2);
+	bitmap_free(bitmap1);
 	free(bg_ram);
 	free(bg_dirtybuffer);
 	free(tx_dirtybuffer);
@@ -226,10 +226,10 @@ static void Pixel(struct osd_bitmap *bitmap,int x,int y,int spr_number,int color
 	int SprOnScreen;
 
 
-	if (x < Machine->drv->visible_area.min_x ||
-		x > Machine->drv->visible_area.max_x ||
-		y < Machine->drv->visible_area.min_y ||
-		y > Machine->drv->visible_area.max_y)
+	if (x < Machine->visible_area.min_x ||
+		x > Machine->visible_area.max_x ||
+		y < Machine->visible_area.min_y ||
+		y > Machine->visible_area.max_y)
 		return;
 
 	if (SpritesCollisionTable[256*y+x] == 255)
@@ -508,7 +508,7 @@ static int system1_draw_fg(struct osd_bitmap *bitmap,int priority)
 						color,
 						0,0,
 						8*sx,8*sy,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+						&Machine->visible_area,TRANSPARENCY_PEN,0);
 			}
 		}
 	}
@@ -557,7 +557,7 @@ static void system1_draw_bg(struct osd_bitmap *bitmap,int priority)
 		}
 
 		/* copy the temporary bitmap to the screen */
-		copyscrollbitmap(bitmap,bitmap1,1,&background_scrollx,1,&background_scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,bitmap1,1,&background_scrollx,1,&background_scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 	else
 	{
@@ -584,14 +584,14 @@ static void system1_draw_bg(struct osd_bitmap *bitmap,int priority)
 						color,
 						0,0,
 						sx,sy,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+						&Machine->visible_area,TRANSPARENCY_PEN,0);
 				if (sx > 248)
 					drawgfx(bitmap,Machine->gfx[0],
 							code,
 							color,
 							0,0,
 							sx-256,sy,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+							&Machine->visible_area,TRANSPARENCY_PEN,0);
 				if (sy > 248)
 				{
 					drawgfx(bitmap,Machine->gfx[0],
@@ -599,14 +599,14 @@ static void system1_draw_bg(struct osd_bitmap *bitmap,int priority)
 							color,
 							0,0,
 							sx,sy-256,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+							&Machine->visible_area,TRANSPARENCY_PEN,0);
 					if (sx > 248)
 						drawgfx(bitmap,Machine->gfx[0],
 								code,
 								color,
 								0,0,
 								sx-256,sy-256,
-								&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+								&Machine->visible_area,TRANSPARENCY_PEN,0);
 				}
 			}
 		}
@@ -630,7 +630,7 @@ void system1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	/* even if screen is off, sprites must still be drawn to update the collision table */
 	if (system1_video_mode & 0x10)  /* screen off */
-		fillbitmap(bitmap,palette_transparent_color,&Machine->drv->visible_area);
+		fillbitmap(bitmap,palette_transparent_color,&Machine->visible_area);
 }
 
 
@@ -688,9 +688,9 @@ void chplft_draw_bg(struct osd_bitmap *bitmap, int priority)
 
 		/* copy the temporary bitmap to the screen */
 		if (choplifter_scroll_x_on)
-			copyscrollbitmap(bitmap,bitmap1,32,scrollx_row,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+			copyscrollbitmap(bitmap,bitmap1,32,scrollx_row,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 		else
-			copybitmap(bitmap,bitmap1,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+			copybitmap(bitmap,bitmap1,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 	else
@@ -719,7 +719,7 @@ void chplft_draw_bg(struct osd_bitmap *bitmap, int priority)
 						color,
 						0,0,
 						sx,sy,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+						&Machine->visible_area,TRANSPARENCY_PEN,0);
 			}
 		}
 	}
@@ -742,7 +742,7 @@ void choplifter_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	/* even if screen is off, sprites must still be drawn to update the collision table */
 	if (system1_video_mode & 0x10)  /* screen off */
-		fillbitmap(bitmap,palette_transparent_color,&Machine->drv->visible_area);
+		fillbitmap(bitmap,palette_transparent_color,&Machine->visible_area);
 
 
 #ifdef MAME_DEBUG
@@ -815,14 +815,14 @@ void wbml_backgroundrefresh(struct osd_bitmap *bitmap, int trasp)
 								((code >> 5) & 0x3f) + 64,
 								0,0,
 								x,y,
-								&Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
+								&Machine->visible_area, TRANSPARENCY_NONE, 0);
 					else if (priority)
 						drawgfx(bitmap,Machine->gfx[0],
 								code,
 								((code >> 5) & 0x3f) + 64,
 								0,0,
 								x,y,
-								&Machine->drv->visible_area, TRANSPARENCY_PEN, 0);
+								&Machine->visible_area, TRANSPARENCY_PEN, 0);
 				}
 
 				source+=2;
@@ -851,7 +851,7 @@ void wbml_textrefresh(struct osd_bitmap *bitmap)
 				(code >> 5) & 0x3f,
 				0,0,
 				8*sx,8*sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 }
 
@@ -868,5 +868,5 @@ void wbml_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	/* even if screen is off, sprites must still be drawn to update the collision table */
 	if (system1_video_mode & 0x10)  /* screen off */
-		fillbitmap(bitmap,palette_transparent_color,&Machine->drv->visible_area);
+		fillbitmap(bitmap,palette_transparent_color,&Machine->visible_area);
 }

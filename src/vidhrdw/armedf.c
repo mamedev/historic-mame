@@ -208,7 +208,7 @@ void armedf_vh_stop(void)
 
 static void draw_sprites( struct osd_bitmap *bitmap, int priority )
 {
-	const struct rectangle *clip = &Machine->drv->visible_area;
+	const struct rectangle *clip = &Machine->visible_area;
 	const struct GfxElement *gfx = Machine->gfx[3];
 
 	UINT16 *source = (UINT16 *)spriteram;
@@ -319,7 +319,7 @@ void armedf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 static void cclimbr2_draw_sprites( struct osd_bitmap *bitmap, int priority )
 {
-	const struct rectangle *clip = &Machine->drv->visible_area;
+	const struct rectangle *clip = &Machine->visible_area;
 	const struct GfxElement *gfx = Machine->gfx[3];
 
 	UINT16 *source = (UINT16 *)spriteram;

@@ -12,11 +12,10 @@ Functions to emulate the video hardware of the machine.
 #include "vidhrdw/generic.h"
 
 
-static int flipscreen = -1;
 static int redraw_man = 0;
 static int man_scroll = -1;
 static int sprites[0x20];
-static int char_palette = 0;
+static data_t char_palette = 0;
 
 
 void cheekyms_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
@@ -87,7 +86,7 @@ WRITE_HANDLER( cheekyms_port_40_w )
 
 WRITE_HANDLER( cheekyms_port_80_w )
 {
-	int new_man_scroll, new_char_palette, new_flipscreen;
+	int new_man_scroll;
 
 	/* Bits 0-1 Sound enables, not sure which bit is which */
 
@@ -103,20 +102,10 @@ WRITE_HANDLER( cheekyms_port_80_w )
 	}
 
 	/* Bit 6 is palette select (Selects either 0 = PROM M8, 1 = PROM M9) */
-	new_char_palette = (data >> 2) & 0x10;
-	if (char_palette != new_char_palette)
-	{
-		char_palette = new_char_palette;
-		memset(dirtybuffer, 1, videoram_size);
-	}
+	set_vh_global_attribute(&char_palette, (data >> 2) & 0x10);
 
 	/* Bit 7 is screen flip */
-	new_flipscreen = (data >> 7) & 0x01;
-	if (flipscreen != new_flipscreen)
-	{
-		flipscreen = new_flipscreen;
-		memset(dirtybuffer, 1, videoram_size);
-	}
+	flip_screen_w(offset, data & 0x80);
 }
 
 
@@ -132,7 +121,14 @@ void cheekyms_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 
-	fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);
+
+	if (full_refresh)
+	{
+		memset(dirtybuffer, 1, videoram_size);
+	}
+
+
+	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
 	/* Draw the sprites first, because they're supposed to appear below
 	   the characters */
@@ -148,14 +144,19 @@ void cheekyms_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		if (!(sprites[offs + 3] & 0x08)) continue;
 
 		code = (~v1 << 1) & 0x1f;
+
 		if (v1 & 0x80)
 		{
+			if (!flip_screen)
+			{
+				code++;
+			}
+
 			drawgfx(bitmap,Machine->gfx[1],
-					code + (flipscreen ^ 1),
-					col,
+					code,col,
 					0,0,
 					sx,sy,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					&Machine->visible_area,TRANSPARENCY_PEN,0);
 		}
 		else
 		{
@@ -164,14 +165,14 @@ void cheekyms_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					col,
 					0,0,
 					sx,sy,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					&Machine->visible_area,TRANSPARENCY_PEN,0);
 
 			drawgfx(bitmap,Machine->gfx[1],
 					code + 0x21,
 					col,
 					0,0,
 					sx + 8*(v1 & 2),sy + 8*(~v1 & 2),
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					&Machine->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}
 
@@ -184,17 +185,21 @@ void cheekyms_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		sx = offs % 32;
 		sy = offs / 32;
 
-		man_area = ((sy >= (6  - flipscreen)) &&
-		            (sy <= (26 - flipscreen)) &&
-					(sx >=  8)                &&
-					(sx <= 12));
+		if (flip_screen)
+		{
+			man_area = ((sy >=  5) && (sy <= 25) && (sx >=  8) && (sx <= 12));
+		}
+		else
+		{
+			man_area = ((sy >=  6) && (sy <= 26) && (sx >=  8) && (sx <= 12));
+		}
 
 		if (dirtybuffer[offs] ||
 			(redraw_man && man_area))
 		{
 			dirtybuffer[offs] = 0;
 
-			if (flipscreen)
+			if (flip_screen)
 			{
 				sx = 31 - sx;
 				sy = 31 - sy;
@@ -203,14 +208,14 @@ void cheekyms_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					videoram[offs],
 					0 + char_palette,
-					flipscreen,flipscreen,
+					flip_screen,flip_screen,
 					8*sx, 8*sy - (man_area ? man_scroll : 0),
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+					&Machine->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
 
 	redraw_man = 0;
 
 	/* copy the temporary bitmap to the screen over the sprites */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_PEN,Machine->pens[4*char_palette]);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_PEN,Machine->pens[4*char_palette]);
 }

@@ -64,11 +64,11 @@ int tnzs_vh_start(void)
 	int column,x,y;
 	for (column=0;column<16;column++)
 	{
-		if ((tnzs_column[column] = osd_create_bitmap(32,256)) == 0)
+		if ((tnzs_column[column] = bitmap_alloc(32,256)) == 0)
 		{
 			/* Free all the columns */
 			for (column--;column;column--)
-				osd_free_bitmap(tnzs_column[column]);
+				bitmap_free(tnzs_column[column]);
 			return 1;
 		}
 	}
@@ -97,7 +97,7 @@ void tnzs_vh_stop(void)
 
 	/* Free all the columns */
 	for (column=0;column<16;column++)
-		osd_free_bitmap(tnzs_column[column]);
+		bitmap_free(tnzs_column[column]);
 }
 
 
@@ -198,9 +198,9 @@ void tnzs_vh_draw_background(struct osd_bitmap *bitmap,unsigned char *m)
 			scrolly = -tnzs_scrollram[column*16] + 1;
 
 		copybitmap(bitmap,tnzs_column[column^8],0,0,scrollx,scrolly,
-				   &Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+				   &Machine->visible_area,TRANSPARENCY_COLOR,0);
 		copybitmap(bitmap,tnzs_column[column^8],0,0,scrollx,scrolly+(16*16),
-				   &Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+				   &Machine->visible_area,TRANSPARENCY_COLOR,0);
 
 		upperbits >>= 1;
 	}
@@ -241,7 +241,7 @@ void tnzs_vh_draw_foreground(struct osd_bitmap *bitmap,
 				color,
 				flipx,flipy,
 				sx,sy+2,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 }
 
@@ -266,7 +266,7 @@ void arkanoi2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 
 	/* Blank the background */
-	fillbitmap(bitmap, Machine->pens[0], &Machine->drv->visible_area);
+	fillbitmap(bitmap, Machine->pens[0], &Machine->visible_area);
 
 	/* Redraw the background tiles (c400-c5ff) */
 	tnzs_vh_draw_background(bitmap, tnzs_objram + 0x400);

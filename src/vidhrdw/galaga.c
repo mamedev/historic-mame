@@ -16,7 +16,6 @@
 
 unsigned char *galaga_starcontrol;
 static unsigned int stars_scroll;
-static int flipscreen;
 
 struct star
 {
@@ -168,17 +167,6 @@ int galaga_vh_start(void)
 
 
 
-WRITE_HANDLER( galaga_flipscreen_w )
-{
-	if (flipscreen != (data & 1))
-	{
-		flipscreen = data & 1;
-		memset(dirtybuffer,1,videoram_size);
-	}
-}
-
-
-
 /***************************************************************************
 
   Draw the game screen in the given osd_bitmap.
@@ -189,6 +177,12 @@ WRITE_HANDLER( galaga_flipscreen_w )
 void galaga_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
+
+
+	if (full_refresh)
+	{
+		memset(dirtybuffer,1,videoram_size);
+	}
 
 
 	/* for every character in the Video RAM, check if it has been modified */
@@ -227,7 +221,7 @@ void galaga_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				sy = my - 2;
 			}
 
-			if (flipscreen)
+			if (flip_screen)
 			{
 				sx = 35 - sx;
 				sy = 27 - sy;
@@ -236,15 +230,15 @@ void galaga_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					videoram[offs],
 					colorram[offs],
-					flipscreen,flipscreen,
+					flip_screen,flip_screen,
 					8*sx,8*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+					&Machine->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
 
 
 	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 
 	/* Draw the sprites. */
@@ -269,7 +263,7 @@ void galaga_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			if (sy <= -16)
 				continue;
 
-			if (flipscreen)
+			if (flip_screen)
 			{
 				flipx = !flipx;
 				flipy = !flipy;
@@ -281,40 +275,40 @@ void galaga_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			{
 				drawgfx(bitmap,Machine->gfx[1],
 						code+2,color,flipx,flipy,sx+sfa,sy-sfa,
-						&Machine->drv->visible_area,TRANSPARENCY_THROUGH,Machine->pens[0]);
+						&Machine->visible_area,TRANSPARENCY_THROUGH,Machine->pens[0]);
 				drawgfx(bitmap,Machine->gfx[1],
 						code,color,flipx,flipy,sx+sfa,sy-sfb,
-						&Machine->drv->visible_area,TRANSPARENCY_THROUGH,Machine->pens[0]);
+						&Machine->visible_area,TRANSPARENCY_THROUGH,Machine->pens[0]);
 
 				drawgfx(bitmap,Machine->gfx[1],
 						code+3,color,flipx,flipy,sx+sfb,sy-sfa,
-						&Machine->drv->visible_area,TRANSPARENCY_THROUGH,Machine->pens[0]);
+						&Machine->visible_area,TRANSPARENCY_THROUGH,Machine->pens[0]);
 				drawgfx(bitmap,Machine->gfx[1],
 						code+1,color,flipx,flipy,sx+sfb,sy-sfb,
-						&Machine->drv->visible_area,TRANSPARENCY_THROUGH,Machine->pens[0]);
+						&Machine->visible_area,TRANSPARENCY_THROUGH,Machine->pens[0]);
 			}
 			else if (spriteram_3[offs] & 8)	/* double width */
 			{
 				drawgfx(bitmap,Machine->gfx[1],
 						code+2,color,flipx,flipy,sx,sy-sfa,
-						&Machine->drv->visible_area,TRANSPARENCY_THROUGH,Machine->pens[0]);
+						&Machine->visible_area,TRANSPARENCY_THROUGH,Machine->pens[0]);
 				drawgfx(bitmap,Machine->gfx[1],
 						code,color,flipx,flipy,sx,sy-sfb,
-						&Machine->drv->visible_area,TRANSPARENCY_THROUGH,Machine->pens[0]);
+						&Machine->visible_area,TRANSPARENCY_THROUGH,Machine->pens[0]);
 			}
 			else if (spriteram_3[offs] & 4)	/* double height */
 			{
 				drawgfx(bitmap,Machine->gfx[1],
 						code,color,flipx,flipy,sx+sfa,sy,
-						&Machine->drv->visible_area,TRANSPARENCY_THROUGH,Machine->pens[0]);
+						&Machine->visible_area,TRANSPARENCY_THROUGH,Machine->pens[0]);
 				drawgfx(bitmap,Machine->gfx[1],
 						code+1,color,flipx,flipy,sx+sfb,sy,
-						&Machine->drv->visible_area,TRANSPARENCY_THROUGH,Machine->pens[0]);
+						&Machine->visible_area,TRANSPARENCY_THROUGH,Machine->pens[0]);
 			}
 			else	/* normal */
 				drawgfx(bitmap,Machine->gfx[1],
 						code,color,flipx,flipy,sx,sy,
-						&Machine->drv->visible_area,TRANSPARENCY_THROUGH,Machine->pens[0]);
+						&Machine->visible_area,TRANSPARENCY_THROUGH,Machine->pens[0]);
 		}
 	}
 
@@ -339,8 +333,8 @@ void galaga_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				x = ((stars[offs].x + stars_scroll) % 512) / 2 + 16;
 				y = (stars[offs].y + (stars_scroll + stars[offs].x) / 512) % 256;
 
-				if (y >= Machine->drv->visible_area.min_y &&
-					y <= Machine->drv->visible_area.max_y)
+				if (y >= Machine->visible_area.min_y &&
+					y <= Machine->visible_area.max_y)
 				{
 					if (read_pixel(bitmap, x, y) == bpen)
 						plot_pixel(bitmap, x, y, stars[offs].col);

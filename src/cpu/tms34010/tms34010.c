@@ -1358,7 +1358,7 @@ static void set_raster_op(TMS34010_Regs *context)
 
 INLINE int scanline_to_vcount(TMS34010_Regs *context, int scanline)
 {
-	if (Machine->drv->visible_area.min_y == 0)
+	if (Machine->visible_area.min_y == 0)
 		scanline += CONTEXT_IOREG(context, REG_VEBLNK);
 	if (scanline > CONTEXT_IOREG(context, REG_VTOTAL))
 		scanline -= CONTEXT_IOREG(context, REG_VTOTAL);
@@ -1368,11 +1368,11 @@ INLINE int scanline_to_vcount(TMS34010_Regs *context, int scanline)
 
 INLINE int vcount_to_scanline(TMS34010_Regs *context, int vcount)
 {
-	if (Machine->drv->visible_area.min_y == 0)
+	if (Machine->visible_area.min_y == 0)
 		vcount -= CONTEXT_IOREG(context, REG_VEBLNK);
 	if (vcount < 0)
 		vcount += CONTEXT_IOREG(context, REG_VTOTAL);
-	if (vcount > Machine->drv->visible_area.max_y)
+	if (vcount > Machine->visible_area.max_y)
 		vcount = 0;
 	return vcount;
 }

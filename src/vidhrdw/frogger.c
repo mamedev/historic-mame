@@ -173,7 +173,7 @@ void frogger_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			}
 		}
 
-		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 
@@ -200,7 +200,7 @@ void frogger_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 						col,
 						!(spriteram[offs + 1] & 0x40),!(spriteram[offs + 1] & 0x80),
 						x,30*8 - y,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+						&Machine->visible_area,TRANSPARENCY_PEN,0);
 			}
 			else
 			{
@@ -209,7 +209,7 @@ void frogger_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 						col,
 						spriteram[offs + 1] & 0x40,spriteram[offs + 1] & 0x80,
 						x,30*8 - y,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+						&Machine->visible_area,TRANSPARENCY_PEN,0);
 			}
 		}
 	}
@@ -273,7 +273,7 @@ void frogger2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			scroll[i] = -frogger_attributesram[2 * i];
 		}
 
-		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 
@@ -299,7 +299,7 @@ void frogger2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 						col,
 						!(spriteram[offs + 1] & 0x40),!(spriteram[offs + 1] & 0x80),
 						x,30*8 - y,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+						&Machine->visible_area,TRANSPARENCY_PEN,0);
 			}
 			else
 			{
@@ -308,7 +308,7 @@ void frogger2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 						col,
 						spriteram[offs + 1] & 0x40,spriteram[offs + 1] & 0x80,
 						x,30*8 - y,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+						&Machine->visible_area,TRANSPARENCY_PEN,0);
 			}
 		}
 	}

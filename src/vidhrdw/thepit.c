@@ -11,8 +11,7 @@
 
 extern unsigned char *galaxian_attributesram;
 
-static int graphics_bank = 0;
-static int sound_enabled = 0;
+static data_t graphics_bank = 0;
 
 static struct rectangle spritevisiblearea =
 {
@@ -84,30 +83,7 @@ void thepit_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 
 WRITE_HANDLER( intrepid_graphics_bank_select_w )
 {
-	if (graphics_bank != (data << 1))
-	{
-		graphics_bank = data << 1;
-		memset(dirtybuffer,1,videoram_size);
-	}
-}
-
-
-WRITE_HANDLER( thepit_flipx_w )
-{
-	if (*flip_screen_x != (data & 1))
-	{
-		*flip_screen_x = data & 1;
-		memset(dirtybuffer,1,videoram_size);
-	}
-}
-
-WRITE_HANDLER( thepit_flipy_w )
-{
-	if (*flip_screen_y != (data & 1))
-	{
-		*flip_screen_y = data & 1;
-		memset(dirtybuffer,1,videoram_size);
-	}
+	set_vh_global_attribute(&graphics_bank, data << 1);
 }
 
 
@@ -115,7 +91,7 @@ READ_HANDLER( thepit_input_port_0_r )
 {
 	/* Read either the real or the fake input ports depending on the
 	   horizontal flip switch. (This is how the real PCB does it) */
-	if (*flip_screen_x)
+	if (flip_screen_x)
 	{
 		return input_port_3_r(offset);
 	}
@@ -128,40 +104,9 @@ READ_HANDLER( thepit_input_port_0_r )
 
 WRITE_HANDLER( thepit_sound_enable_w )
 {
-	if (sound_enabled && !data)
-	{
-		AY8910_reset(0);
-	}
-
-	sound_enabled = data;
+	mixer_sound_enable_global_w(data);
 }
 
-static void common_AY8910_w(int offset, int data,
-				            mem_write_handler write_port,
-				            mem_write_handler control_port)
-{
-	/* Get out if sound is off */
-	if (!sound_enabled) return;
-
-	if (offset & 1)
-	{
-		write_port(0, data);
-	}
-	else
-	{
-		control_port(0, data);
-	}
-}
-
-WRITE_HANDLER( thepit_AY8910_0_w )
-{
-	common_AY8910_w(offset, data, AY8910_write_port_0_w, AY8910_control_port_0_w);
-}
-
-WRITE_HANDLER( thepit_AY8910_1_w )
-{
-	common_AY8910_w(offset, data, AY8910_write_port_1_w, AY8910_control_port_1_w);
-}
 
 /***************************************************************************
 
@@ -215,8 +160,8 @@ static void drawtiles(struct osd_bitmap *bitmap,int priority)
 				sy = (sy - galaxian_attributesram[2 * sx]) & 0xff;
 			}
 
-			if (*flip_screen_x) sx = 31 - sx;
-			if (*flip_screen_y) sy = 248 - sy;
+			if (flip_screen_x) sx = 31 - sx;
+			if (flip_screen_y) sy = 248 - sy;
 
 			color = colorram[offs] & 0x07;
 
@@ -228,7 +173,7 @@ static void drawtiles(struct osd_bitmap *bitmap,int priority)
 			drawgfx(priority == 0 ? tmpbitmap : bitmap,Machine->gfx[bank],
 					code,
 					color,
-					*flip_screen_x,*flip_screen_y,
+					flip_screen_x,flip_screen_y,
 					8*sx,sy,
 					0,TRANSPARENCY_NONE,0);
 		}
@@ -240,12 +185,12 @@ static void drawtiles(struct osd_bitmap *bitmap,int priority)
 	{
 		int i, scroll[32];
 
-		if (*flip_screen_x)
+		if (flip_screen_x)
 		{
 			for (i = 0;i < 32;i++)
 			{
 				scroll[31-i] = -galaxian_attributesram[2 * i];
-				if (*flip_screen_y) scroll[31-i] = -scroll[31-i];
+				if (flip_screen_y) scroll[31-i] = -scroll[31-i];
 			}
 		}
 		else
@@ -253,11 +198,11 @@ static void drawtiles(struct osd_bitmap *bitmap,int priority)
 			for (i = 0;i < 32;i++)
 			{
 				scroll[i] = -galaxian_attributesram[2 * i];
-				if (*flip_screen_y) scroll[i] = -scroll[i];
+				if (flip_screen_y) scroll[i] = -scroll[i];
 			}
 		}
 
-		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 }
 
@@ -286,13 +231,13 @@ static void drawsprites(struct osd_bitmap *bitmap,int priority)
 			flipx = spriteram[offs + 1] & 0x40;
 			flipy = spriteram[offs + 1] & 0x80;
 
-			if (*flip_screen_x)
+			if (flip_screen_x)
 			{
 				sx = 242 - sx;
 				flipx = !flipx;
 			}
 
-			if (*flip_screen_y)
+			if (flip_screen_y)
 			{
 				sy = 240 - sy;
 				flipy = !flipy;
@@ -306,7 +251,7 @@ static void drawsprites(struct osd_bitmap *bitmap,int priority)
 					spriteram[offs + 2] & 0x07,
 					flipx,flipy,
 					sx,sy,
-					*flip_screen_x & 1 ? &spritevisibleareaflipx : &spritevisiblearea,TRANSPARENCY_PEN,0);
+					flip_screen_x & 1 ? &spritevisibleareaflipx : &spritevisiblearea,TRANSPARENCY_PEN,0);
 		}
 	}
 }
@@ -314,6 +259,12 @@ static void drawsprites(struct osd_bitmap *bitmap,int priority)
 
 void thepit_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
+	if (full_refresh)
+	{
+		memset(dirtybuffer, 1, videoram_size);
+	}
+
+
 	/* low priority tiles */
 	drawtiles(bitmap,0);
 

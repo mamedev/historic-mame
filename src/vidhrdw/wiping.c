@@ -123,10 +123,10 @@ void wiping_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					colorram[offs] & 0x3f,
 					flipscreen,flipscreen,
 					sx*8,sy*8,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+					&Machine->visible_area,TRANSPARENCY_NONE,0);
         	}
 	}
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 	/* Note, we're counting up on purpose ! */
 	/* This way the vacuum cleaner is always on top */
@@ -153,7 +153,7 @@ void wiping_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			spriteram[offs+1] & 0x3f,
 			flipx,flipy,
 			sx,sy,
-			&Machine->drv->visible_area,TRANSPARENCY_COLOR,0x1f);
+			&Machine->visible_area,TRANSPARENCY_COLOR,0x1f);
 	}
 
 	/* redraw high priority chars */
@@ -193,7 +193,7 @@ void wiping_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					colorram[offs] & 0x3f,
 					flipscreen,flipscreen,
 					sx*8,sy*8,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+					&Machine->visible_area,TRANSPARENCY_NONE,0);
         	}
 	}
 

@@ -145,7 +145,7 @@ void navalone_init_palette(unsigned char *sys_palette, unsigned short *sys_color
 
 INLINE void geebee_plot(struct osd_bitmap *bitmap, int x, int y)
 {
-	struct rectangle r = Machine->drv->visible_area;
+	struct rectangle r = Machine->visible_area;
 	if (x >= r.min_x && x <= r.max_x && y >= r.min_y && y <= r.max_y)
 		plot_pixel(bitmap,x,y,Machine->pens[1]);
 }
@@ -180,7 +180,7 @@ void geebee_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 #ifdef MAME_DEBUG
 	if( geebee_cnt > 0 )
 	{
-		ui_text(Machine->scrbitmap, geebee_msg, Machine->drv->visible_area.min_y, Machine->drv->visible_area.max_x - 8);
+		ui_text(Machine->scrbitmap, geebee_msg, Machine->visible_area.min_y, Machine->visible_area.max_x - 8);
 		if( --geebee_cnt == 0 )
 			full_refresh = 1;
     }
@@ -227,7 +227,7 @@ void geebee_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 			drawgfx(bitmap,Machine->gfx[0],
 					code,color,
 					geebee_inv,geebee_inv,sx,sy,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+					&Machine->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
 

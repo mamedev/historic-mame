@@ -175,7 +175,7 @@ void zaccaria_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		for (offs = 0;offs < 32;offs++)
 			scroll[offs] = -zaccaria_attributesram[2 * offs];
 
-		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 

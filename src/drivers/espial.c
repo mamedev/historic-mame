@@ -60,6 +60,7 @@ B ?
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "cpu/z80/z80.h"
 
 
 
@@ -69,10 +70,33 @@ WRITE_HANDLER( espial_attributeram_w );
 void espial_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void espial_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-void espial_init_machine(void);
-WRITE_HANDLER( zodiac_master_interrupt_enable_w );
-int  zodiac_master_interrupt(void);
-WRITE_HANDLER( zodiac_master_soundlatch_w );
+
+void espial_init_machine(void)
+{
+	/* we must start with NMI interrupts disabled */
+	//interrupt_enable = 0;
+	interrupt_enable_w(0, 0);
+}
+
+
+WRITE_HANDLER( zodiac_master_interrupt_enable_w )
+{
+	interrupt_enable_w(offset, data ^ 1);
+}
+
+
+int zodiac_master_interrupt(void)
+{
+	return (cpu_getiloops() == 0) ? nmi_interrupt() : interrupt();
+}
+
+
+WRITE_HANDLER( zodiac_master_soundlatch_w )
+{
+	soundlatch_w(offset, data);
+	cpu_cause_interrupt(1, Z80_IRQ_INT);
+}
+
 
 
 static struct MemoryReadAddress readmem[] =

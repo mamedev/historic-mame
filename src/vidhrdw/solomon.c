@@ -24,7 +24,7 @@ int solomon_vh_start(void)
 	if (generic_vh_start() != 0)
 		return 1;
 
-	if ((tmpbitmap2 = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if ((tmpbitmap2 = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 	{
 		generic_vh_stop();
 		return 1;
@@ -32,7 +32,7 @@ int solomon_vh_start(void)
 
 	if ((dirtybuffer2 = malloc(videoram_size)) == 0)
 	{
-		osd_free_bitmap(tmpbitmap2);
+		bitmap_free(tmpbitmap2);
 		generic_vh_stop();
 		return 1;
 	}
@@ -53,7 +53,7 @@ int solomon_vh_start(void)
 ***************************************************************************/
 void solomon_vh_stop(void)
 {
-	osd_free_bitmap(tmpbitmap2);
+	bitmap_free(tmpbitmap2);
 	free(dirtybuffer2);
 	generic_vh_stop();
 }
@@ -143,7 +143,7 @@ void solomon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 
 	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap2,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap2,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 	/* draw the frontmost playfield */
 	for (offs = videoram_size - 1;offs >= 0;offs--)
@@ -167,11 +167,11 @@ void solomon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					(colorram[offs] & 0x70) >> 4,
 					flipscreen,flipscreen,
 					8*sx,8*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+					&Machine->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
 
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 
 
 	/* draw sprites */
@@ -197,6 +197,6 @@ void solomon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				(spriteram[offs + 1] & 0x0e) >> 1,
 				flipx,flipy,
 				sx,sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

@@ -93,8 +93,6 @@ void ccastles_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 READ_HANDLER( ccastles_bitmode_r );
 WRITE_HANDLER( ccastles_bitmode_w );
 
-WRITE_HANDLER( ccastles_flipscreen_w );
-
 
 static unsigned char *nvram;
 static size_t nvram_size;
@@ -173,7 +171,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x9e87, 0x9e87, ccastles_bankswitch_w },
 	{ 0x9f00, 0x9f01, MWA_RAM, &ccastles_screen_inc_enable },
 	{ 0x9f02, 0x9f03, MWA_RAM, &ccastles_screen_inc },
-	{ 0x9f04, 0x9f04, ccastles_flipscreen_w },
+	{ 0x9f04, 0x9f04, flip_screen_w },
 	{ 0x9f05, 0x9f06, MWA_RAM },
 	{ 0x9f07, 0x9f07, MWA_RAM, &ccastles_sprite_bank },
 	{ 0x9f80, 0x9fbf, ccastles_paletteram_w },

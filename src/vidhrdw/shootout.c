@@ -120,7 +120,7 @@ static void get_sprite_info2( void ){
 }
 
 static void draw_background( struct osd_bitmap *bitmap ){
-	const struct rectangle *clip = &Machine->drv->visible_area;
+	const struct rectangle *clip = &Machine->visible_area;
 	int offs;
 	for( offs=0; offs<videoram_size; offs++ ){
 		if( dirtybuffer[offs] ){
@@ -140,11 +140,11 @@ static void draw_background( struct osd_bitmap *bitmap ){
 			dirtybuffer[offs] = 0;
 		}
 	}
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 }
 
 static void draw_foreground( struct osd_bitmap *bitmap ){
-	const struct rectangle *clip = &Machine->drv->visible_area;
+	const struct rectangle *clip = &Machine->visible_area;
 	const struct GfxElement *gfx = Machine->gfx[0];
 	int sx,sy;
 

@@ -302,7 +302,7 @@ int psychic5_vh_start(void)
 		free(ps5_foreground_videoram);
         	return 1;
 	}
-	if ((bitmap_bg = osd_new_bitmap (Machine->drv->screen_width*4,Machine->drv->screen_height*2,Machine->scrbitmap->depth)) == 0)
+	if ((bitmap_bg = bitmap_alloc(Machine->drv->screen_width*4,Machine->drv->screen_height*2)) == 0)
 	{
 		free(ps5_background_videoram);
 		free(ps5_dummy_bg_ram);
@@ -329,7 +329,7 @@ void psychic5_vh_stop(void)
 	free(ps5_palette_ram);
 	free(ps5_foreground_videoram);
 	free(bg_dirtybuffer);
-	osd_free_bitmap(bitmap_bg);
+	bitmap_free(bitmap_bg);
 }
 
 void psychic5_draw_background(struct osd_bitmap *bitmap)
@@ -398,7 +398,7 @@ void psychic5_draw_foreground(struct osd_bitmap *bitmap)
 							palette,
 							flipx,flipy,
 							sx,sy,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN, 15);
+							&Machine->visible_area,TRANSPARENCY_PEN, 15);
 			}
 		}
 	}
@@ -453,28 +453,28 @@ void psychic5_draw_sprites(struct osd_bitmap *bitmap)
 							palette,
 							flipy,flipx,
 							sx,sy,
-							&Machine->drv->visible_area,
+							&Machine->visible_area,
 							TRANSPARENCY_PEN, 15);
 				drawgfx(bitmap,Machine->gfx[0],
 							tile+tileofs1,
 							palette,
 							flipy,flipx,
 							sx,sy+16,
-							&Machine->drv->visible_area,
+							&Machine->visible_area,
 							TRANSPARENCY_PEN, 15);
 				drawgfx(bitmap,Machine->gfx[0],
 							tile+tileofs2,
 							palette,
 							flipy,flipx,
 							sx+16,sy,
-							&Machine->drv->visible_area,
+							&Machine->visible_area,
 							TRANSPARENCY_PEN, 15);
 				drawgfx(bitmap,Machine->gfx[0],
 							tile+tileofs3,
 							palette,
 							flipy,flipx,
 							sx+16,sy+16,
-							&Machine->drv->visible_area,
+							&Machine->visible_area,
 							TRANSPARENCY_PEN, 15);
 			}
 			else
@@ -484,7 +484,7 @@ void psychic5_draw_sprites(struct osd_bitmap *bitmap)
 							palette,
 							flipy,flipx,
 							sx,sy,
-							&Machine->drv->visible_area,
+							&Machine->visible_area,
 							TRANSPARENCY_PEN, 15);
 			}
 		}
@@ -523,28 +523,28 @@ void psychic5_draw_sprites2(struct osd_bitmap *bitmap)
 							palette,
 							flipy,flipx,
 							sx,sy,
-							&Machine->drv->visible_area,
+							&Machine->visible_area,
 							TRANSPARENCY_NONE, 0);
 				drawgfx(bitmap,Machine->gfx[0],
 							tile+tileofs1,
 							palette,
 							flipy,flipx,
 							sx,sy+16,
-							&Machine->drv->visible_area,
+							&Machine->visible_area,
 							TRANSPARENCY_NONE, 0);
 				drawgfx(bitmap,Machine->gfx[0],
 							tile+tileofs2,
 							palette,
 							flipy,flipx,
 							sx+16,sy,
-							&Machine->drv->visible_area,
+							&Machine->visible_area,
 							TRANSPARENCY_NONE, 0);
 				drawgfx(bitmap,Machine->gfx[0],
 							tile+tileofs3,
 							palette,
 							flipy,flipx,
 							sx+16,sy+16,
-							&Machine->drv->visible_area,
+							&Machine->visible_area,
 							TRANSPARENCY_NONE, 0);
 			}
 		}
@@ -682,10 +682,10 @@ void psychic5_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			tile = spriteram[14];
 			sy2 = spriteram[11+128];	/* sprite 8 */
 
-			clip.min_x = Machine->drv->visible_area.min_x;
-			clip.min_y = Machine->drv->visible_area.min_y;
-			clip.max_x = Machine->drv->visible_area.max_x;
-			clip.max_y = Machine->drv->visible_area.max_y;
+			clip.min_x = Machine->visible_area.min_x;
+			clip.min_y = Machine->visible_area.min_y;
+			clip.max_x = Machine->visible_area.max_x;
+			clip.max_y = Machine->visible_area.max_y;
 
 			if (bg_clip_mode >=0 && bg_clip_mode < 3 && sy1==240) bg_clip_mode = 0;
 			if (bg_clip_mode > 2 && bg_clip_mode < 5 && sy2==240) bg_clip_mode = -10;
@@ -745,16 +745,16 @@ void psychic5_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					clip.max_x = 0;
 					clip.max_y = 0;
 				}
-				fillbitmap(bitmap,palette_transparent_pen,&Machine->drv->visible_area);
+				fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
 				copyscrollbitmap(bitmap,bitmap_bg,1,&bg_scrollx,1,&bg_scrolly,&clip,TRANSPARENCY_NONE,0);
 			} else
-				copyscrollbitmap(bitmap,bitmap_bg,1,&bg_scrollx,1,&bg_scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+				copyscrollbitmap(bitmap,bitmap_bg,1,&bg_scrollx,1,&bg_scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 		} else
-			copyscrollbitmap(bitmap,bitmap_bg,1,&bg_scrollx,1,&bg_scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+			copyscrollbitmap(bitmap,bitmap_bg,1,&bg_scrollx,1,&bg_scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	} else
 	{
-		fillbitmap(bitmap,palette_transparent_pen,&Machine->drv->visible_area);
+		fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
 		memset(bg_dirtybuffer,1,64*32);
 	}
 

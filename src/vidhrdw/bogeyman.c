@@ -43,7 +43,7 @@ int bogeyman_vh_start(void)
 {
 	dirtybuffer = malloc(videoram_size);
 	memset(dirtybuffer,1,videoram_size);
-	tmpbitmap = osd_create_bitmap(256,256);
+	tmpbitmap = bitmap_alloc(256,256);
 
 	return 0;
 }
@@ -51,7 +51,7 @@ int bogeyman_vh_start(void)
 void bogeyman_vh_stop(void)
 {
 	free(dirtybuffer);
-	osd_free_bitmap(tmpbitmap);
+	bitmap_free(tmpbitmap);
 }
 
 /******************************************************************************/
@@ -99,7 +99,7 @@ void bogeyman_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 		}
 	}
 
-	copyscrollbitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copyscrollbitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 	/* Sprites */
 	for (offs = 0;offs < spriteram_size;offs += 4)
@@ -126,14 +126,14 @@ void bogeyman_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 					(spriteram[offs] & 0x08) >> 3,	// Modified by T.Nogi 1999/10/26
 					flipx,flipy,
 					sx,sy,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					&Machine->visible_area,TRANSPARENCY_PEN,0);
 			if (multi)
 				drawgfx(bitmap,Machine->gfx[2],
 					spriteram[offs+1]+ 1 + ((spriteram[offs] & 0x40) << 2),	// Modified by T.Nogi 1999/10/25
 					(spriteram[offs] & 0x08) >> 3,	// Modified by T.Nogi 1999/10/26
 					flipx,flipy,
 					sx,sy+16,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					&Machine->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}
 
@@ -165,6 +165,6 @@ void bogeyman_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 				color,
 				flipscreen,flipscreen,
 				8*mx,8*my,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

@@ -17,7 +17,6 @@ driver by Phil Stroffolino
 #include "vidhrdw/generic.h"
 
 WRITE_HANDLER( tsamurai_bgcolor_w );
-WRITE_HANDLER( tsamurai_flipscreen_w );
 WRITE_HANDLER( tsamurai_textbank_w );
 
 WRITE_HANDLER( tsamurai_scrolly_w );
@@ -134,7 +133,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xf802, 0xf802, tsamurai_scrolly_w },
 	{ 0xf803, 0xf803, tsamurai_scrollx_w },
 
-	{ 0xfc00, 0xfc00, tsamurai_flipscreen_w },
+	{ 0xfc00, 0xfc00, flip_screen_w },
 	{ 0xfc01, 0xfc01, nmi_enable_w },
 	{ 0xfc02, 0xfc02, tsamurai_textbank_w },
 	{ 0xfc03, 0xfc04, coin_counter_w },

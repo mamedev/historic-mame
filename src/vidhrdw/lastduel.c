@@ -231,7 +231,7 @@ void lastduel_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			color,
 			flipx,flipy,
 			sx,sy,
-			&Machine->drv->visible_area,
+			&Machine->visible_area,
 			TRANSPARENCY_PEN,15);
 	}
 
@@ -274,7 +274,7 @@ static void ledstorm_sprites(struct osd_bitmap *bitmap, int pri)
 			color,
 			flipx,flipy,
 			sx,sy,
-			&Machine->drv->visible_area,
+			&Machine->visible_area,
 			TRANSPARENCY_PEN,15);
 	}
 }

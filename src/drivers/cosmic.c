@@ -105,8 +105,6 @@ void cosmica_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void cosmicg_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void nomnlnd_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 WRITE_HANDLER( cosmica_videoram_w );
-WRITE_HANDLER( cosmica_flipscreen_w );
-WRITE_HANDLER( panic_flipscreen_w );
 WRITE_HANDLER( panic_color_register_w );
 WRITE_HANDLER( cosmicg_color_register_w );
 WRITE_HANDLER( nomnlnd_background_w );
@@ -436,7 +434,7 @@ static struct MemoryWriteAddress panic_writemem[] =
 	{ 0x6000, 0x601f, MWA_RAM, &spriteram, &spriteram_size },
     { 0x7000, 0x700b, panic_sound_output_w },
 	{ 0x700c, 0x700e, panic_color_register_w },
-	{ 0x700f, 0x700f, panic_flipscreen_w },
+	{ 0x700f, 0x700f, flip_screen_w },
     { 0x7800, 0x7801, panic_sound_output2_w },
 	{ -1 }	/* end of table */
 };
@@ -459,7 +457,7 @@ static struct MemoryWriteAddress cosmica_writemem[] =
 	{ 0x6000, 0x601f, MWA_RAM ,&spriteram, &spriteram_size },
 	{ 0x7000, 0x700b, MWA_RAM },   			/* Sound Triggers */
 	{ 0x700c, 0x700e, panic_color_register_w },
-	{ 0x700f, 0x700f, cosmica_flipscreen_w },
+	{ 0x700f, 0x700f, flip_screen_w },
 	{ -1 }	/* end of table */
 };
 
@@ -509,7 +507,7 @@ static struct MemoryWriteAddress magspot2_writemem[] =
 	{ 0x4000, 0x401f, MWA_RAM, &spriteram, &spriteram_size},
 	{ 0x4800, 0x4800, DAC_0_data_w },
 	{ 0x480c, 0x480e, panic_color_register_w },
-	{ 0x480f, 0x480f, cosmica_flipscreen_w },
+	{ 0x480f, 0x480f, flip_screen_w },
 	{ 0x6000, 0x7fff, cosmica_videoram_w, &videoram, &videoram_size},
 	{ -1 }	/* end of table */
 };
@@ -532,7 +530,7 @@ static struct MemoryWriteAddress nomnlnd_writemem[] =
 	{ 0x4807, 0x4807, nomnlnd_background_w },
 	{ 0x480a, 0x480a, DAC_0_data_w },
 	{ 0x480c, 0x480e, panic_color_register_w },
-	{ 0x480f, 0x480f, cosmica_flipscreen_w },
+	{ 0x480f, 0x480f, flip_screen_w },
 	{ 0x6000, 0x7fff, cosmica_videoram_w, &videoram, &videoram_size},
 	{ -1 }	/* end of table */
 };
@@ -1547,7 +1545,7 @@ ROM_END
 
 
 
-GAME( 1979, cosmicg,  0,       cosmicg,  cosmicg,  cosmicg, ROT270, "Universal", "Cosmic Guerilla" )
+GAMEX(1979, cosmicg,  0,       cosmicg,  cosmicg,  cosmicg, ROT270, "Universal", "Cosmic Guerilla", GAME_NO_COCKTAIL )
 GAMEX(1979, cosmica,  0,       cosmica,  cosmica,  0,       ROT270, "Universal", "Cosmic Alien", GAME_NO_SOUND )
 GAMEX(1979, cosmica2, cosmica, cosmica,  cosmica,  0,       ROT270, "Universal", "Cosmic Alien (older)", GAME_NO_SOUND )
 GAME( 1980, panic,    0,       panic,    panic,    0,       ROT270, "Universal", "Space Panic (set 1)" )

@@ -573,29 +573,16 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int _writ
 			strcpy (file, filename);
 
 			do
+            {
+			/* 29-05-00 Lee Ward: Reversed the search order. */
+            for (indx=rompathc-1; indx>=0; --indx)
 			{
-				for( indx = 0; indx < rompathc && !found; ++indx )
-				{
-					const char *dir_name = rompathv[indx];
+				const char *dir_name = rompathv[indx];
 
 					/* Exact path support */
-					if (!found)
-					{
-						sprintf(name, "%s", dir_name);
-						LOG(("Trying %s directory\n", name));
-						if( cache_stat(name,&stat_buffer) == 0 && (stat_buffer.st_mode & S_IFDIR) )
-						{
-							sprintf(name,"%s/%s", dir_name, file);
-							LOG(("Trying %s file\n", name));
-                            f->file = fopen(name, write_modes[_write]);
-							found = f->file != 0;
-							if( !found && _write == 3 )
-							{
-								f->file = fopen(name, write_modes[4]);
-								found = f->file != 0;
-                            }
-						}
-					}
+
+					/* 29-05-00 Lee Ward: Changed the search order to prevent new files
+					   being created in the application root as default */
 
 					if( !found )
 					{
@@ -605,14 +592,32 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int _writ
 						{
 							sprintf (name, "%s/%s/%s", dir_name, gamename, file);
 							LOG(("Trying %s file\n", name));
-                            f->file = fopen (name, write_modes[_write]);
+                                                        f->file = fopen (name, write_modes[_write]);
 							found = f->file != 0;
 							if( !found && _write == 3 )
 							{
 								f->file = fopen(name, write_modes[4]);
 								found = f->file != 0;
-                            }
-                        }
+                                                         }
+                                                 }
+					}
+
+					if (!found)
+					{
+						sprintf(name, "%s", dir_name);
+						LOG(("Trying %s directory\n", name));
+						if( cache_stat(name,&stat_buffer) == 0 && (stat_buffer.st_mode & S_IFDIR) )
+						{
+							sprintf(name,"%s/%s", dir_name, file);
+							LOG(("Trying %s file\n", name));
+                                                        f->file = fopen(name, write_modes[_write]);
+							found = f->file != 0;
+							if( !found && _write == 3 )
+							{
+								f->file = fopen(name, write_modes[4]);
+								found = f->file != 0;
+                                                         }
+						}
 					}
 
                     if( !found && !_write )

@@ -27,7 +27,7 @@ int tehkanwc_vh_start(void)
 	if (generic_vh_start())
 		return 1;
 
-	if ((tmpbitmap1 = osd_new_bitmap(2 * Machine->drv->screen_width, Machine->drv->screen_height,Machine->scrbitmap->depth)) == 0)
+	if ((tmpbitmap1 = bitmap_alloc(2 * Machine->drv->screen_width, Machine->drv->screen_height)) == 0)
 	{
 		generic_vh_stop();
 		return 1;
@@ -35,7 +35,7 @@ int tehkanwc_vh_start(void)
 
 	if ((dirtybuffer1 = malloc(tehkanwc_videoram1_size)) == 0)
 	{
-		osd_free_bitmap(tmpbitmap1);
+		bitmap_free(tmpbitmap1);
 		generic_vh_stop();
 		return 1;
 	}
@@ -47,7 +47,7 @@ int tehkanwc_vh_start(void)
 void tehkanwc_vh_stop(void)
 {
 	free(dirtybuffer1);
-	osd_free_bitmap(tmpbitmap1);
+	bitmap_free(tmpbitmap1);
 	generic_vh_stop();
 }
 
@@ -138,14 +138,14 @@ static void gridiron_drawled(struct osd_bitmap *bitmap,unsigned char led,int pla
 					0x0a,
 					0,0,
 					0,232,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+					&Machine->visible_area,TRANSPARENCY_NONE,0);
 		else
 			drawgfx(bitmap,Machine->gfx[0],
 					0xc0 + i,
 					0x03,
 					1,1,
 					0,16,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+					&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 else logerror("unknown LED %02x for player %d\n",led,player);
 }
@@ -264,7 +264,7 @@ palette_init_used_colors();
 	{
 		int scrolly = -scroll_y;
 		int scrollx = -(scroll_x[0] + 256 * scroll_x[1]);
-		copyscrollbitmap(bitmap,tmpbitmap1,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap1,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 
@@ -285,7 +285,7 @@ palette_init_used_colors();
 					colorram[offs] & 0x0f,
 					colorram[offs] & 0x40, colorram[offs] & 0x80,
 					sx*8,sy*8,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 
 
@@ -297,7 +297,7 @@ palette_init_used_colors();
 				spriteram[offs+1] & 0x07,
 				spriteram[offs+1] & 0x40,spriteram[offs+1] & 0x80,
 				spriteram[offs+2] + ((spriteram[offs+1] & 0x20) << 3) - 0x80,spriteram[offs+3],
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 
 
@@ -318,7 +318,7 @@ palette_init_used_colors();
 					colorram[offs] & 0x0f,
 					colorram[offs] & 0x40, colorram[offs] & 0x80,
 					sx*8,sy*8,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 
 	gridiron_drawled(bitmap,led0,0);

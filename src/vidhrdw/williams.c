@@ -219,16 +219,16 @@ void williams_vh_update(int counter)
 	if (counter == 0) counter = 256;
 
 	/* determine the clip rect */
-	clip.min_x = Machine->drv->visible_area.min_x;
-	clip.max_x = Machine->drv->visible_area.max_x;
+	clip.min_x = Machine->visible_area.min_x;
+	clip.max_x = Machine->visible_area.max_x;
 	clip.min_y = counter - 16;
 	clip.max_y = clip.min_y + 15;
 
 	/* combine the clip rect with the visible rect */
-	if (Machine->drv->visible_area.min_y > clip.min_y)
-		clip.min_y = Machine->drv->visible_area.min_y;
-	if (Machine->drv->visible_area.max_y < clip.max_y)
-		clip.max_y = Machine->drv->visible_area.max_y;
+	if (Machine->visible_area.min_y > clip.min_y)
+		clip.min_y = Machine->visible_area.min_y;
+	if (Machine->visible_area.max_y < clip.max_y)
+		clip.max_y = Machine->visible_area.max_y;
 
 	/* copy */
 	if (Machine->scrbitmap->depth == 8)
@@ -373,7 +373,7 @@ static void williams2_update_tiles(int y, const struct rectangle *clip)
 
 		drawgfx(Machine->scrbitmap, Machine->gfx[0], map & williams2_tilemap_mask,
 				color, map & williams2_M7_flip, 0, col * 24 - xpixeloffset, y,
-				&Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
+				&Machine->visible_area, TRANSPARENCY_NONE, 0);
 	}
 }
 
@@ -386,16 +386,16 @@ void williams2_vh_update(int counter)
 	if (counter == 0) counter = 256;
 
 	/* determine the clip rect */
-	clip.min_x = Machine->drv->visible_area.min_x;
-	clip.max_x = Machine->drv->visible_area.max_x;
+	clip.min_x = Machine->visible_area.min_x;
+	clip.max_x = Machine->visible_area.max_x;
 	clip.min_y = counter - 16;
 	clip.max_y = clip.min_y + 15;
 
 	/* combine the clip rect with the visible rect */
-	if (Machine->drv->visible_area.min_y > clip.min_y)
-		clip.min_y = Machine->drv->visible_area.min_y;
-	if (Machine->drv->visible_area.max_y < clip.max_y)
-		clip.max_y = Machine->drv->visible_area.max_y;
+	if (Machine->visible_area.min_y > clip.min_y)
+		clip.min_y = Machine->visible_area.min_y;
+	if (Machine->visible_area.max_y < clip.max_y)
+		clip.max_y = Machine->visible_area.max_y;
 
 	/* redraw the tiles */
 	williams2_update_tiles(counter - 16, &clip);
@@ -582,7 +582,7 @@ int blaster_vh_start(void)
 	for (i = 0; i < 256; i++)
 	{
 		/* mark as used only the colors used for the visible background lines */
-		if (i < Machine->drv->visible_area.min_y || i > Machine->drv->visible_area.max_y)
+		if (i < Machine->visible_area.min_y || i > Machine->visible_area.max_y)
 			palette_used_colors[16 + i] = PALETTE_COLOR_UNUSED;
 
 		/* TODO: this leaves us with a total of 255+1 colors used, which is just */
@@ -591,9 +591,9 @@ int blaster_vh_start(void)
 		/* To do it correctly, vh_screenrefresh() should group the background */
 		/* lines of the same color and mark the others as COLOR_UNUSED. */
 		/* The background is very redundant so this can be done easily. */
-		palette_used_colors[16 + 0 + Machine->drv->visible_area.min_y] = PALETTE_COLOR_TRANSPARENT;
-		palette_used_colors[16 + 1 + Machine->drv->visible_area.min_y] = PALETTE_COLOR_TRANSPARENT;
-		palette_used_colors[16 + 2 + Machine->drv->visible_area.min_y] = PALETTE_COLOR_TRANSPARENT;
+		palette_used_colors[16 + 0 + Machine->visible_area.min_y] = PALETTE_COLOR_TRANSPARENT;
+		palette_used_colors[16 + 1 + Machine->visible_area.min_y] = PALETTE_COLOR_TRANSPARENT;
+		palette_used_colors[16 + 2 + Machine->visible_area.min_y] = PALETTE_COLOR_TRANSPARENT;
 	}
 
 	return 0;

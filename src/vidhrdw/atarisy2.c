@@ -199,8 +199,8 @@ WRITE_HANDLER( atarisys2_hscroll_w )
 
 	/* mark the playfield dirty for those games that handle it */
 	if (oldword != newword && (Machine->drv->video_attributes & VIDEO_SUPPORTS_DIRTY))
-		osd_mark_dirty(Machine->drv->visible_area.min_x, Machine->drv->visible_area.min_y,
-		                Machine->drv->visible_area.max_x, Machine->drv->visible_area.max_y, 0);
+		osd_mark_dirty(Machine->visible_area.min_x, Machine->visible_area.min_y,
+		                Machine->visible_area.max_x, Machine->visible_area.max_y, 0);
 }
 
 
@@ -220,8 +220,8 @@ WRITE_HANDLER( atarisys2_vscroll_w )
 
 	/* mark the playfield dirty for those games that handle it */
 	if (oldword != newword && (Machine->drv->video_attributes & VIDEO_SUPPORTS_DIRTY))
-		osd_mark_dirty(Machine->drv->visible_area.min_x, Machine->drv->visible_area.min_y,
-		                Machine->drv->visible_area.max_x, Machine->drv->visible_area.max_y, 0);
+		osd_mark_dirty(Machine->visible_area.min_x, Machine->visible_area.min_y,
+		                Machine->visible_area.max_x, Machine->visible_area.max_y, 0);
 }
 
 
@@ -368,7 +368,7 @@ void atarisys2_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 		atarigen_overrender_colortable[i] = palette_transparent_pen;
 
 	/* render the playfield */
-	atarigen_pf_process(pf_render_callback, bitmap, &Machine->drv->visible_area);
+	atarigen_pf_process(pf_render_callback, bitmap, &Machine->visible_area);
 
 	/* render the motion objects */
 	modata.xhold = 0;

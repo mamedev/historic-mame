@@ -1729,7 +1729,7 @@ void sys16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 		if (freeze_counter)
 		{
 			if( sys16_clear_screen)
-				fillbitmap(bitmap,palette_transparent_color,&Machine->drv->visible_area);
+				fillbitmap(bitmap,palette_transparent_color,&Machine->visible_area);
 			freeze_counter--;
 			return;
 		}
@@ -1949,7 +1949,7 @@ void sys18_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 		if (freeze_counter)
 		{
 //			if( sys16_clear_screen)
-//				fillbitmap(bitmap,palette_transparent_color,&Machine->drv->visible_area);
+//				fillbitmap(bitmap,palette_transparent_color,&Machine->visible_area);
 			freeze_counter--;
 			return;
 		}
@@ -2056,7 +2056,7 @@ void sys18_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
 		if(sys18_bg2_active)
 			tilemap_draw( bitmap, background2, 0 );
 		else
-			fillbitmap(bitmap,palette_transparent_color,&Machine->drv->visible_area);
+			fillbitmap(bitmap,palette_transparent_color,&Machine->visible_area);
 
 		tilemap_draw( bitmap, background, TILEMAP_IGNORE_TRANSPARENCY );
 		tilemap_draw( bitmap, background, TILEMAP_IGNORE_TRANSPARENCY | 1 );	//??

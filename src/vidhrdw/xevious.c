@@ -17,10 +17,6 @@ extern size_t spriteram_size;
 
 static struct tilemap *fg_tilemap,*bg_tilemap;
 
-/* scroll position controller write (CUSTOM 13-1J on seet 7B) */
-static int flipscreen;
-
-
 
 
 /***************************************************************************
@@ -210,7 +206,7 @@ WRITE_HANDLER( xevious_vh_latch_w )
 	switch (reg)
 	{
 	case 0:
-		if (flipscreen)
+		if (flip_screen)
 			tilemap_set_scrollx(bg_tilemap,0,data-312);
 		else
 			tilemap_set_scrollx(bg_tilemap,0,data+20);
@@ -224,9 +220,8 @@ WRITE_HANDLER( xevious_vh_latch_w )
 	case 3:
 		tilemap_set_scrolly(fg_tilemap,0,data+18);
 		break;
-	case 7:	 /* DISPLAY XY FLIP ?? */
-		flipscreen = data & 1;
-		tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
+	case 7:
+		flip_screen_w(0,data & 1);
 		break;
    default:
 		   logerror("CRTC WRITE REG: %x  Data: %03x\n",reg, data);
@@ -318,7 +313,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 			color = spriteram[offs + 1] & 0x7f;
 			flipx = spriteram_3[offs] & 4;
 			flipy = spriteram_3[offs] & 8;
-			if (flipscreen)
+			if (flip_screen)
 			{
 				flipx = !flipx;
 				flipy = !flipy;
@@ -333,21 +328,21 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 					drawgfx(bitmap,Machine->gfx[bank],
 							code+3,color,flipx,flipy,
 							flipx ? sx : sx+16,flipy ? sy-16 : sy,
-							&Machine->drv->visible_area,TRANSPARENCY_COLOR,0x80);
+							&Machine->visible_area,TRANSPARENCY_COLOR,0x80);
 					drawgfx(bitmap,Machine->gfx[bank],
 							code+1,color,flipx,flipy,
 							flipx ? sx : sx+16,flipy ? sy : sy-16,
-							&Machine->drv->visible_area,TRANSPARENCY_COLOR,0x80);
+							&Machine->visible_area,TRANSPARENCY_COLOR,0x80);
 				}
 				code &= 0x7d;
 				drawgfx(bitmap,Machine->gfx[bank],
 						code+2,color,flipx,flipy,
 						flipx ? sx+16 : sx,flipy ? sy-16 : sy,
-						&Machine->drv->visible_area,TRANSPARENCY_COLOR,0x80);
+						&Machine->visible_area,TRANSPARENCY_COLOR,0x80);
 				drawgfx(bitmap,Machine->gfx[bank],
 						code,color,flipx,flipy,
 						flipx ? sx+16 : sx,flipy ? sy : sy-16,
-						&Machine->drv->visible_area,TRANSPARENCY_COLOR,0x80);
+						&Machine->visible_area,TRANSPARENCY_COLOR,0x80);
 			}
 			else if (spriteram_3[offs] & 1) /* double width */
 			{
@@ -355,17 +350,17 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 				drawgfx(bitmap,Machine->gfx[bank],
 						code,color,flipx,flipy,
 						flipx ? sx+16 : sx,flipy ? sy-16 : sy,
-						&Machine->drv->visible_area,TRANSPARENCY_COLOR,0x80);
+						&Machine->visible_area,TRANSPARENCY_COLOR,0x80);
 				drawgfx(bitmap,Machine->gfx[bank],
 						code+1,color,flipx,flipy,
 						flipx ? sx : sx+16,flipy ? sy-16 : sy,
-						&Machine->drv->visible_area,TRANSPARENCY_COLOR,0x80);
+						&Machine->visible_area,TRANSPARENCY_COLOR,0x80);
 			}
 			else	/* normal */
 			{
 				drawgfx(bitmap,Machine->gfx[bank],
 						code,color,flipx,flipy,sx,sy,
-						&Machine->drv->visible_area,TRANSPARENCY_COLOR,0x80);
+						&Machine->visible_area,TRANSPARENCY_COLOR,0x80);
 			}
 		}
 	}

@@ -148,7 +148,7 @@ static void draw_sprites(struct osd_bitmap *bitmap,int pri_mask)
 		drawgfx(bitmap,Machine->gfx[3],
 				sprite,
 				color,fx,fy,x,y,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
+				&Machine->visible_area,TRANSPARENCY_PEN,15);
 	}
 }
 

@@ -138,7 +138,7 @@ WRITE_HANDLER( gng_flipscreen_w )
 static void draw_sprites(struct osd_bitmap *bitmap)
 {
 	const struct GfxElement *gfx = Machine->gfx[2];
-	const struct rectangle *clip = &Machine->drv->visible_area;
+	const struct rectangle *clip = &Machine->visible_area;
 	int offs;
 	for (offs = spriteram_size - 4;offs >= 0;offs -= 4){
 		unsigned char attributes = spriteram[offs+1];

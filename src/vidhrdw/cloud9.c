@@ -284,7 +284,7 @@ void cloud9_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 
 
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 
 	/* draw the sprites */
@@ -308,6 +308,6 @@ void cloud9_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				1 + ((*cloud9_color_bank & 0x80) >> 6),
 				xflip,yflip,
 				x,y,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

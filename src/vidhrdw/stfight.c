@@ -15,7 +15,6 @@ unsigned char *stfight_vh_latch_ram;
 unsigned char *stfight_sprite_ram;
 
 static struct tilemap *fg_tilemap,*bg_tilemap,*tx_tilemap;
-static int flipscreen = 0;
 static int stfight_sprite_base = 0;
 
 /*
@@ -228,8 +227,7 @@ WRITE_HANDLER( stfight_vh_latch_w )
 			/* 0x40 = sprites */
 			tilemap_set_enable(bg_tilemap,data & 0x20);
 			tilemap_set_enable(fg_tilemap,data & 0x10);
-			flipscreen = data & 0x01;
-			tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
+			flip_screen_w(0,data & 0x01);
 			break;
 	}
 }
@@ -266,7 +264,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 				    sx -= 0x100;
 			}
 
-			if (flipscreen)
+			if (flip_screen)
 			{
 				sx = 240 - sx;
 				sy = 240 - sy;
@@ -278,9 +276,9 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 			pdrawgfx(bitmap,Machine->gfx[4],
 				     code,
 					 color,
-					 flipx,flipscreen,
+					 flipx,flip_screen,
 					 sx,sy,
-				     &Machine->drv->visible_area,TRANSPARENCY_PEN,0x0f,
+				     &Machine->visible_area,TRANSPARENCY_PEN,0x0f,
 					 pri ? 0x02 : 0);
 		}
 	}
@@ -302,7 +300,7 @@ void stfight_vh_screenrefresh( struct osd_bitmap *bitmap,int full_refresh )
 	if (bg_tilemap->enable)
 	    tilemap_draw(bitmap,bg_tilemap,0);
 	else
-		fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);
+		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
 	tilemap_draw(bitmap,fg_tilemap,1<<16);
 

@@ -104,6 +104,13 @@ DBGOBJS += $(OBJ)/cpu/m6502/6502dasm.o
 $(OBJ)/cpu/m6502/m6502.o: m6502.c m6502.h ops02.h t6502.c t65c02.c t65sc02.c t6510.c
 endif
 
+CPU=$(strip $(findstring M4510@,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_M4510=1
+CPUOBJS += $(OBJ)/cpu/m6502/m4510.o
+DBGOBJS += $(OBJ)/cpu/m6502/6502dasm.o
+endif
+
 CPU=$(strip $(findstring N2A03@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_N2A03=1
@@ -512,13 +519,21 @@ DBGOBJS += $(OBJ)/cpu/pdp1/pdp1dasm.o
 $(OBJ)/cpu/pdp1/pdp1.o: pdp1.c pdp1.h
 endif
 
-
 CPU=$(strip $(findstring MIPS@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_MIPS=1
 CPUOBJS += $(OBJ)/cpu/mips/mips.o
 DBGOBJS += $(OBJ)/cpu/mips/mipsdasm.o
 $(OBJ)/cpu/mips/mips.o: mips.c mips.h
+endif
+
+CPU=$(strip $(findstring SC61860@,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_SC61860=1
+CPUOBJS += $(OBJ)/cpu/sc61860/sc61860.o
+DBGOBJS += $(OBJ)/cpu/sc61860/disasm.o
+$(OBJ)/cpu/sc61860/sc61860.o: src/cpu/sc61860/sc61860.h \
+	src/cpu/sc61860/sc.h src/cpu/sc61860/ops.c src/cpu/sc61860/table.c
 endif
 
 

@@ -357,11 +357,11 @@ void exerion_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 				code &= ~0x10, code2 |= 0x10;
 
 			drawgfx(bitmap, gfx, code2, color, xflip, yflip, x, y + gfx->height,
-			        &Machine->drv->visible_area, TRANSPARENCY_COLOR, 16);
+			        &Machine->visible_area, TRANSPARENCY_COLOR, 16);
 		}
 
 		drawgfx(bitmap, gfx, code, color, xflip, yflip, x, y,
-		        &Machine->drv->visible_area, TRANSPARENCY_COLOR, 16);
+		        &Machine->visible_area, TRANSPARENCY_COLOR, 16);
 
 		if (doubled) i += 4;
 	}
@@ -378,7 +378,7 @@ void exerion_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 				videoram[offs] + 256 * char_bank,
 				((videoram[offs] & 0xf0) >> 4) + char_palette * 16,
 				exerion_cocktail_flip, exerion_cocktail_flip, x, y,
-				&Machine->drv->visible_area, TRANSPARENCY_PEN, 0);
+				&Machine->visible_area, TRANSPARENCY_PEN, 0);
 		}
 }
 

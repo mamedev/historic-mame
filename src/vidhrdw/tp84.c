@@ -148,7 +148,7 @@ int tp84_vh_start(void)
 	}
 	memset(dirtybuffer2,1,videoram_size);
 
-	if ((tmpbitmap2 = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if ((tmpbitmap2 = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 	{
 		free(dirtybuffer2);
 		generic_vh_stop();
@@ -168,7 +168,7 @@ int tp84_vh_start(void)
 void tp84_vh_stop(void)
 {
 	free(dirtybuffer2);
-	osd_free_bitmap(tmpbitmap2);
+	bitmap_free(tmpbitmap2);
 	generic_vh_stop();
 }
 
@@ -266,7 +266,7 @@ void tp84_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 						(tp84_colorram2[offs] & 0x0f) + coloffset,
 						tp84_colorram2[offs] & 0x40,tp84_colorram2[offs] & 0x80,
 						8*sx,8*sy,
-						&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+						&Machine->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
 
@@ -279,7 +279,7 @@ void tp84_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		scrollx = -*tp84_scrollx;
 		scrolly = -*tp84_scrolly;
 
-		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 	/* Draw the sprites. */
@@ -299,7 +299,7 @@ void tp84_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				(spriteram[offs + 2] & 0x0f) + coloffset,
 				flipx,flipy,
 				sx,sy,
-				&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+				&Machine->visible_area,TRANSPARENCY_COLOR,0);
 	}
 
 

@@ -294,13 +294,13 @@ void gyruss_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					colorram[offs] & 0x0f,
 					flipx,flipy,
 					8*sx,8*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+					&Machine->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
 
 
 	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 
 	/*
@@ -336,7 +336,7 @@ void gyruss_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 							sr[offs + 2] & 0x0f,
 							!(sr[offs + 2] & 0x40),sr[offs + 2] & 0x80,
 							sr[offs + 0],240-sr[offs + 3]+1,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+							&Machine->visible_area,TRANSPARENCY_PEN,0);
 			}
 			else	/* single height */
 			{
@@ -346,7 +346,7 @@ void gyruss_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 							sr[offs + 2] & 0x0f,
 							!(sr[offs + 2] & 0x40),sr[offs + 2] & 0x80,
 							sr[offs + 0],240-sr[offs + 3]+1,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+							&Machine->visible_area,TRANSPARENCY_PEN,0);
 
 				if (sr[offs + 4] != 0)
 					drawgfx(bitmap,Machine->gfx[1 + (sr[offs + 5] & 1)],
@@ -354,7 +354,7 @@ void gyruss_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 							sr[offs + 6] & 0x0f,
 							!(sr[offs + 6] & 0x40),sr[offs + 6] & 0x80,
 							sr[offs + 4],240-sr[offs + 7]+1,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+							&Machine->visible_area,TRANSPARENCY_PEN,0);
 			}
 		}
 	}
@@ -384,7 +384,7 @@ void gyruss_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					colorram[offs] & 0x0f,
 					flipx,flipy,
 					8*sx,8*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+					&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 }
 
@@ -421,13 +421,13 @@ void gyruss_6809_vh_screenrefresh(struct osd_bitmap *bitmap)
 					colorram[offs] & 0x0f,
 					flipx,flipy,
 					8*sx,8*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+					&Machine->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
 
 
 	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 
 	/* Draw the sprites. Note that it is important to draw them exactly in this */
@@ -440,7 +440,7 @@ void gyruss_6809_vh_screenrefresh(struct osd_bitmap *bitmap)
 					spriteram[offs + 2] & 0x0f,
 					!(spriteram[offs + 2] & 0x40),spriteram[offs + 2] & 0x80,
 					spriteram[offs],240-spriteram[offs + 3]+1,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					&Machine->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}
 
@@ -469,6 +469,6 @@ void gyruss_6809_vh_screenrefresh(struct osd_bitmap *bitmap)
 					colorram[offs] & 0x0f,
 					flipx,flipy,
 					8*sx,8*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+					&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 }

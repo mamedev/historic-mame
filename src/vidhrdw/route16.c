@@ -78,15 +78,15 @@ void init_stratvox(void)
 ***************************************************************************/
 int route16_vh_start(void)
 {
-	if ((tmpbitmap1 = osd_new_bitmap(Machine->drv->screen_width,Machine->drv->screen_height,Machine->scrbitmap->depth)) == 0)
+	if ((tmpbitmap1 = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 	{
 		return 1;
 	}
 
-	if ((tmpbitmap2 = osd_new_bitmap(Machine->drv->screen_width,Machine->drv->screen_height,Machine->scrbitmap->depth)) == 0)
+	if ((tmpbitmap2 = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 	{
 
-		osd_free_bitmap(tmpbitmap1);
+		bitmap_free(tmpbitmap1);
 		tmpbitmap1 = 0;
 		return 1;
 	}
@@ -109,8 +109,8 @@ int route16_vh_start(void)
 ***************************************************************************/
 void route16_vh_stop(void)
 {
-	osd_free_bitmap(tmpbitmap1);
-	osd_free_bitmap(tmpbitmap2);
+	bitmap_free(tmpbitmap1);
+	bitmap_free(tmpbitmap2);
 }
 
 
@@ -322,15 +322,15 @@ void route16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	if (!video_disable_2)
 	{
-		copybitmap(bitmap,tmpbitmap2,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copybitmap(bitmap,tmpbitmap2,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 	if (!video_disable_1)
 	{
 		if (video_disable_2)
-			copybitmap(bitmap,tmpbitmap1,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+			copybitmap(bitmap,tmpbitmap1,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 		else
-			copybitmap(bitmap,tmpbitmap1,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+			copybitmap(bitmap,tmpbitmap1,0,0,0,0,&Machine->visible_area,TRANSPARENCY_COLOR,0);
 	}
 }
 

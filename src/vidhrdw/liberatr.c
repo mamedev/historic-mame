@@ -463,9 +463,9 @@ void liberatr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		UINT8 liberatr_x_save = *liberatr_x;
 
 		/* redraw bitmap */
-		for (*liberatr_y = Machine->drv->visible_area.min_y; *liberatr_y < Machine->drv->visible_area.max_y; (*liberatr_y)++)
+		for (*liberatr_y = Machine->visible_area.min_y; *liberatr_y < Machine->visible_area.max_y; (*liberatr_y)++)
 		{
-			for (*liberatr_x = Machine->drv->visible_area.min_x; *liberatr_x < Machine->drv->visible_area.max_x; (*liberatr_x)++)
+			for (*liberatr_x = Machine->visible_area.min_x; *liberatr_x < Machine->visible_area.max_x; (*liberatr_x)++)
 			{
 				liberatr_bitmap_xy_w(0, liberatr_bitmap_xy_r(0));
 			}

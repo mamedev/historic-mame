@@ -94,7 +94,7 @@ void kchamp_vs_drawsprites( struct osd_bitmap *bitmap ) {
                                 color,
                                 0, flipx,
                                 sx,sy,
-                                &Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+                                &Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 }
 
@@ -127,7 +127,7 @@ void kchamp_1p_drawsprites( struct osd_bitmap *bitmap ) {
                                 color,
                                 0, flipx,
                                 sx,sy,
-                                &Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+                                &Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 }
 
@@ -162,12 +162,12 @@ void kchamp_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
                                         0, /* flip x */
                                         0, /* flip y */
 					sx*8,sy*8,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+					&Machine->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
 
 	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 	(*kchamp_drawsprites)( bitmap);
 }

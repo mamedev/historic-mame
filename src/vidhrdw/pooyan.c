@@ -128,13 +128,13 @@ void pooyan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					colorram[offs] & 0x0f,
 					flipx,flipy,
 					8*sx,8*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+					&Machine->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
 
 
 	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 
 	/* Draw the sprites. */
@@ -146,6 +146,6 @@ void pooyan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				spriteram_2[offs] & 0x0f,
 				spriteram_2[offs] & 0x40,~spriteram_2[offs] & 0x80,
 				240-spriteram[offs],spriteram_2[offs + 1],
-				&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+				&Machine->visible_area,TRANSPARENCY_COLOR,0);
 	}
 }

@@ -83,7 +83,7 @@ static void draw_chars(struct osd_bitmap *bitmap, int priority)
 
 		code = videoram[offs] | ((col & 0x60) << 3);
 
-		if (*flip_screen)
+		if (flip_screen)
 		{
 			sx = 31 - sx;
 			sy = 31 - sy;
@@ -93,9 +93,9 @@ static void draw_chars(struct osd_bitmap *bitmap, int priority)
 		drawgfx(bitmap,Machine->gfx[0],
 				code,
 				(col & 0x0f) | ((*ambush_colorbank & 0x03) << 4),
-				*flip_screen,*flip_screen,
+				flip_screen,flip_screen,
 				8*sx, (8*sy + scroll) & 0xff,
-				&Machine->drv->visible_area,transparency,0);
+				&Machine->visible_area,transparency,0);
 	}
 }
 
@@ -105,7 +105,7 @@ void ambush_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int offs;
 
 
-	fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);
+	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
 
 	/* Draw the background priority characters */
@@ -134,7 +134,7 @@ void ambush_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			/* 16x16 sprites */
 			gfx = 1;
 
-			if (!*flip_screen)
+			if (!flip_screen)
 			{
 				sy = 240 - sy;
 			}
@@ -149,7 +149,7 @@ void ambush_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			gfx = 0;
 			code <<= 2;
 
-			if (!*flip_screen)
+			if (!flip_screen)
 			{
 				sy = 248 - sy;
 			}
@@ -163,7 +163,7 @@ void ambush_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		flipx = spriteram[offs + 1] & 0x40;
 		flipy = spriteram[offs + 1] & 0x80;
 
-		if (*flip_screen)
+		if (flip_screen)
 		{
 			flipx = !flipx;
 			flipy = !flipy;
@@ -173,7 +173,7 @@ void ambush_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				code, col | ((*ambush_colorbank & 0x03) << 4),
 				flipx, flipy,
 				sx,sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 
 

@@ -119,7 +119,7 @@ void warpwarp_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					colorram[offs],
 					0,0,
 					8*sx,8*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+					&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 			dirtybuffer[offs] = 0;
 		}
@@ -127,7 +127,7 @@ void warpwarp_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 
 	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 
 	if (warpwarp_bulletsram[0] > 1)
@@ -137,8 +137,8 @@ void warpwarp_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		x = 260 - warpwarp_bulletsram[0];
 		y = 252 - warpwarp_bulletsram[1];
-		if (x >= Machine->drv->visible_area.min_x && x+3 <= Machine->drv->visible_area.max_x &&
-			y >= Machine->drv->visible_area.min_y && y+3 <= Machine->drv->visible_area.max_y)
+		if (x >= Machine->visible_area.min_x && x+3 <= Machine->visible_area.max_x &&
+			y >= Machine->visible_area.min_y && y+3 <= Machine->visible_area.max_y)
 		{
 			int colour;
 			int i,j;

@@ -10,11 +10,9 @@
 #include "vidhrdw/generic.h"
 
 
-static int refresh_tmpbitmap;
-static int flipscreen;
 static int (*map_color)(int x, int y);
 
-static int color_registers[3];
+static data_t color_registers[3];
 static int color_base = 0;
 static int nomnlnd_background_on=0;
 
@@ -38,27 +36,16 @@ WRITE_HANDLER( panic_color_register_w )
 	/* 7c0c & 7c0e = Rom Address Offset
  	   7c0d        = high / low nibble */
 
-	if (color_registers[offset] != (data & 0x80))
-    {
-    	color_registers[offset] = data & 0x80;
-    	color_base = (color_registers[0] << 2) + (color_registers[2] << 3);
-    	refresh_tmpbitmap = 1;
-    }
+	set_vh_global_attribute(&color_registers[offset], data & 0x80);
+
+   	color_base = (color_registers[0] << 2) + (color_registers[2] << 3);
 }
 
 WRITE_HANDLER( cosmicg_color_register_w )
 {
-	if (color_registers[offset] != data)
-    {
-    	color_registers[offset] = data;
+	set_vh_global_attribute(&color_registers[offset], data);
 
-        color_base = 0;
-
-        if (color_registers[0] == 1) color_base += 0x100;
-        if (color_registers[1] == 1) color_base += 0x200;
-
-		refresh_tmpbitmap = 1;
-    }
+   	color_base = (color_registers[0] << 8) + (color_registers[1] << 9);
 }
 
 
@@ -71,17 +58,6 @@ static int panic_map_color(int x, int y)
 		return byte >> 4;
 	else
 		return byte & 0x0f;
-}
-
-WRITE_HANDLER( panic_flipscreen_w )
-{
-	/* Only single bit seems to be used for this */
-
-	if (data != flipscreen)
-	{
-		flipscreen = data & 0x80;
-		refresh_tmpbitmap = 1;
-	}
 }
 
 static int cosmicg_map_color(int x, int y)
@@ -269,17 +245,6 @@ WRITE_HANDLER( nomnlnd_background_w )
 }
 
 
-WRITE_HANDLER( cosmica_flipscreen_w )
-{
-	if (data != flipscreen)
-	{
-		flipscreen = data;
-
-		refresh_tmpbitmap = 1;
-	}
-}
-
-
 WRITE_HANDLER( cosmica_videoram_w )
 {
     int i,x,y,col;
@@ -293,7 +258,7 @@ WRITE_HANDLER( cosmica_videoram_w )
 
     for (i = 0; i < 8; i++)
     {
-		if (flipscreen)
+		if (flip_screen)
 			plot_pixel(tmpbitmap, 255-x, 255-y, (data & 0x80) ? col : Machine->pens[0]);
 		else
 			plot_pixel(tmpbitmap,     x,     y, (data & 0x80) ? col : Machine->pens[0]);
@@ -306,7 +271,7 @@ WRITE_HANDLER( cosmica_videoram_w )
 
 void cosmicg_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	if (refresh_tmpbitmap)
+	if (full_refresh)
 	{
 		int offs;
 
@@ -314,11 +279,9 @@ void cosmicg_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		{
 			cosmica_videoram_w(offs, videoram[offs]);
 		}
-
-		refresh_tmpbitmap = 0;
 	}
 
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 }
 
 
@@ -351,7 +314,7 @@ void panic_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 			if(spriteram[offs+3] & 0x08) bank=1;
 
-			if (flipscreen)
+			if (flip_screen)
 			{
 				flipy = !flipy;
 			}
@@ -359,9 +322,9 @@ void panic_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			drawgfx(bitmap,Machine->gfx[bank],
 					code,
 					7 - (spriteram[offs+3] & 0x07),
-					flipscreen,flipy,
+					flip_screen,flipy,
 					256-spriteram[offs+2],spriteram[offs+1],
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					&Machine->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}
 }
@@ -395,7 +358,7 @@ void cosmica_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					    color,
 					    0,0,
 				    	256-spriteram[offs+2],spriteram[offs+1],
-				        &Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				        &Machine->visible_area,TRANSPARENCY_PEN,0);
             }
             else
             {
@@ -406,7 +369,7 @@ void cosmica_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					    color,
 					    0,0,
 				    	256-spriteram[offs+2],spriteram[offs+1],
-				        &Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				        &Machine->visible_area,TRANSPARENCY_PEN,0);
             }
         }
 	}
@@ -441,7 +404,7 @@ void magspot2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					    color,
 					    0,0,
 				    	256-spriteram[offs+2],spriteram[offs+1],
-				        &Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				        &Machine->visible_area,TRANSPARENCY_PEN,0);
             }
             else
             {
@@ -452,7 +415,7 @@ void magspot2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					    color,
 					    0,0,
 				    	256-spriteram[offs+2],spriteram[offs+1],
-				        &Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				        &Machine->visible_area,TRANSPARENCY_PEN,0);
             }
         }
 	}
@@ -482,7 +445,7 @@ void nomnlnd_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			x = nomnlnd_tree_positions[offs][0];
 			y = nomnlnd_tree_positions[offs][1];
 
-			if (flipscreen)
+			if (flip_screen)
 			{
 				x = 223 - x;
 				y = 223 - y;
@@ -498,7 +461,7 @@ void nomnlnd_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					8,
 					0,0,
 					x,y,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					&Machine->visible_area,TRANSPARENCY_PEN,0);
         }
 
 		// draw water
@@ -510,7 +473,7 @@ void nomnlnd_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			x = nomnlnd_water_positions[offs][0];
 			y = nomnlnd_water_positions[offs][1];
 
-			if (flipscreen)
+			if (flip_screen)
 			{
 				x = 239 - x;
 				y = 223 - y;
@@ -521,7 +484,7 @@ void nomnlnd_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					9,
 					0,0,
 					x,y,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+					&Machine->visible_area,TRANSPARENCY_NONE,0);
         }
     }
 }

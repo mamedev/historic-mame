@@ -54,14 +54,12 @@ UINT32 tilemap_scan_cols( UINT32 col, UINT32 row, UINT32 num_cols, UINT32 num_ro
 /*********************************************************************************/
 
 static struct osd_bitmap *create_tmpbitmap( int width, int height, int depth ){
-	if( Machine->orientation&ORIENTATION_SWAP_XY ) SWAP(width,height);
-	return osd_new_bitmap( width,height,depth );
+	return osd_alloc_bitmap( width,height,depth );
 }
 
 static struct osd_bitmap *create_bitmask( int width, int height ){
 	width = (width+7)/8; /* 8 bits per byte */
-	if( Machine->orientation&ORIENTATION_SWAP_XY ) SWAP(width,height);
-	return osd_new_bitmap( width,height, 8 );
+	return osd_alloc_bitmap( width,height, 8 );
 }
 
 /***********************************************************************************/
@@ -428,7 +426,7 @@ struct tilemap *tilemap_create(
 			}
 			install_draw_handlers( tilemap );
 			mappings_update( tilemap );
-			tilemap_set_clip( tilemap, &Machine->drv->visible_area );
+			tilemap_set_clip( tilemap, &Machine->visible_area );
 			memset( tilemap->dirty_vram, 1, num_tiles );
 			memset( tilemap->dirty_pixels, 1, num_tiles );
 			tilemap->pixmap_line_offset = tilemap->pixmap->line[1] - tilemap->pixmap->line[0];

@@ -208,7 +208,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 					spriteram[offs],spriteram[offs + 2] & 0x0f,
 					spriteram[offs + 2] & 0x10,spriteram[offs + 2] & 0x20,
 					spriteram[offs + 3],256 - spriteram[offs + 1],
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					&Machine->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}
 }
@@ -219,7 +219,7 @@ void mrdo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	tilemap_render(ALL_TILEMAPS);
 
-	fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);
+	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 	tilemap_draw(bitmap,bg_tilemap,TILEMAP_FRONT);
 	tilemap_draw(bitmap,fg_tilemap,TILEMAP_FRONT);
 	draw_sprites(bitmap);

@@ -176,7 +176,7 @@ static void draw_sprites(struct osd_bitmap *bitmap,int pri)
 		drawgfx(bitmap,Machine->gfx[3],
 				sprite,
 				color,fx,fy,x,y,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
+				&Machine->visible_area,TRANSPARENCY_PEN,15);
 	}
 }
 
@@ -224,7 +224,7 @@ void dynduke_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	if (back_enable)
 		tilemap_draw(bitmap,bg_layer,TILEMAP_BACK);
 	else
-		fillbitmap(bitmap,palette_transparent_pen,&Machine->drv->visible_area);
+		fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
 
 	draw_sprites(bitmap,0); /* Untested: does anything use it? Could be behind background */
 	draw_sprites(bitmap,1);

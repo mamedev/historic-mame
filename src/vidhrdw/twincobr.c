@@ -109,7 +109,7 @@ int twincobr_vh_start(void)
 	}
 	memset(dirtybuffer,1,twincobr_bgvideoram_size);
 
-	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,2*Machine->drv->screen_height)) == 0)
+	if ((tmpbitmap = bitmap_alloc(Machine->drv->screen_width,2*Machine->drv->screen_height)) == 0)
 	{
 		free(dirtybuffer);
 		free(twincobr_bgvideoram);
@@ -123,7 +123,7 @@ int twincobr_vh_start(void)
 
 void twincobr_vh_stop(void)
 {
-	osd_free_bitmap(tmpbitmap);
+	bitmap_free(tmpbitmap);
 	free(dirtybuffer);
 	free(twincobr_bgvideoram);
 	free(twincobr_fgvideoram);
@@ -339,7 +339,7 @@ static void twincobr_draw_sprites (struct osd_bitmap *bitmap, int priority)
 						color,
 						flipx,flipy,
 						sx-32,sy-16,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+						&Machine->visible_area,TRANSPARENCY_PEN,0);
 				}
 			}
 		}
@@ -366,7 +366,7 @@ static void twincobr_draw_sprites (struct osd_bitmap *bitmap, int priority)
 						color,
 						flipx,flipy,
 						sx-32,sy-16,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+						&Machine->visible_area,TRANSPARENCY_PEN,0);
 				}
 			}
 		}
@@ -566,7 +566,7 @@ void twincobr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			scroll_x = (0x1c9 - bgscrollx) & 0x1ff;
 			scroll_y = (- 0x1e - bgscrolly) & 0x1ff;
 		}
-		copyscrollbitmap(bitmap,tmpbitmap,1,&scroll_x,1,&scroll_y,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,1,&scroll_x,1,&scroll_y,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 
@@ -600,7 +600,7 @@ void twincobr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			color,
 			twincobr_flip_screen,twincobr_flip_screen,
 			xpos,ypos,
-			&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 
 /*********  Begin ugly sprite hack for Wardner when hero is in shop *********/
@@ -657,7 +657,7 @@ void twincobr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			color,
 			twincobr_flip_screen,twincobr_flip_screen,
 			xpos,ypos,
-			&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 
 	/* draw the sprites in high priority */

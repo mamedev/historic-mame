@@ -12,7 +12,6 @@
 unsigned char *xain_charram, *xain_bgram0, *xain_bgram1;
 
 static struct tilemap *char_tilemap, *bgram0_tilemap, *bgram1_tilemap;
-static int flipscreen;
 
 
 /***************************************************************************
@@ -139,8 +138,7 @@ WRITE_HANDLER( xain_scrollyP1_w )
 
 WRITE_HANDLER( xain_flipscreen_w )
 {
-	flipscreen = data & 1;
-	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
+	flip_screen_w(0,data & 1);
 }
 
 
@@ -166,7 +164,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 		sy = 240 - spriteram[offs];
 		if (sy <= -7) sy += 256;
 		flipx = attr & 0x40;
-		if (flipscreen)
+		if (flip_screen)
 		{
 			sx = 239 - sx;
 			sy = 240 - sy;
@@ -178,24 +176,24 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 			drawgfx(bitmap,Machine->gfx[3],
 					numtile,
 					color,
-					flipx,flipscreen,
-					sx-1,flipscreen?sy+16:sy-16,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					flipx,flip_screen,
+					sx-1,flip_screen?sy+16:sy-16,
+					&Machine->visible_area,TRANSPARENCY_PEN,0);
 			drawgfx(bitmap,Machine->gfx[3],
 					numtile+1,
 					color,
-					flipx,flipscreen,
+					flipx,flip_screen,
 					sx-1,sy,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					&Machine->visible_area,TRANSPARENCY_PEN,0);
 		}
 		else
 		{
 			drawgfx(bitmap,Machine->gfx[3],
 					numtile,
 					color,
-					flipx,flipscreen,
+					flipx,flip_screen,
 					sx,sy,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					&Machine->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}
 }

@@ -162,7 +162,7 @@ static void draw_sprites(struct osd_bitmap *bitmap, unsigned char* sr)
 			sr[offs + 3] & 0x0f,
 			!nflipx,!nflipy,
 			sx,sy,
-			&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+			&Machine->visible_area,TRANSPARENCY_COLOR,0);
 	}
 }
 

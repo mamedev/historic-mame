@@ -111,7 +111,7 @@ void higemaru_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 
 	/* copy the background graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 
 	/* Draw the sprites. */
@@ -139,7 +139,7 @@ void higemaru_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				col,
 				flipx,flipy,
 				sx,sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
+				&Machine->visible_area,TRANSPARENCY_PEN,15);
 
 		/* draw again with wraparound */
 		drawgfx(bitmap,Machine->gfx[1],
@@ -147,6 +147,6 @@ void higemaru_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				col,
 				flipx,flipy,
 				sx - 256,sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
+				&Machine->visible_area,TRANSPARENCY_PEN,15);
 	}
 }

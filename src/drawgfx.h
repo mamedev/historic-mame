@@ -99,11 +99,13 @@ enum
 
 typedef void (*plot_pixel_proc)(struct osd_bitmap *bitmap,int x,int y,int pen);
 typedef int  (*read_pixel_proc)(struct osd_bitmap *bitmap,int x,int y);
+typedef void (*plot_box_proc)(struct osd_bitmap *bitmap,int x,int y,int width,int height,int pen);
 
 /* pointers to pixel functions.  They're set based on orientation, depthness and weather
    dirty rectangle handling is enabled */
 extern plot_pixel_proc plot_pixel;
 extern read_pixel_proc read_pixel;
+extern plot_box_proc plot_box;
 
 
 void decodechar(struct GfxElement *gfx,int num,const unsigned char *src,const struct GfxLayout *gl);

@@ -340,6 +340,10 @@ int run_game(int game)
 		Machine->color_depth = 16;
 	else
 		Machine->color_depth = 8;
+
+	if (options.vector_width == 0) options.vector_width = 640;
+	if (options.vector_height == 0) options.vector_height = 480;
+
 	Machine->sample_rate = options.samplerate;
 
 	/* get orientation right */
@@ -567,6 +571,12 @@ static void vh_close(void)
 	freegfx(Machine->uifont);
 	Machine->uifont = 0;
 	osd_close_display();
+	if (Machine->scrbitmap)
+	{
+		bitmap_free(Machine->scrbitmap);
+		Machine->scrbitmap = NULL;
+	}
+
 	palette_stop();
 
 	if (drv->video_attributes & VIDEO_BUFFERS_SPRITERAM) {
@@ -579,9 +589,38 @@ static void vh_close(void)
 
 
 
+/* Scale the vector games to a given resolution */
+static void scale_vectorgames(int gfx_width,int gfx_height,int *width,int *height)
+{
+	double x_scale, y_scale, scale;
+
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
+	{
+		x_scale=(double)gfx_width/(double)(*height);
+		y_scale=(double)gfx_height/(double)(*width);
+	}
+	else
+	{
+		x_scale=(double)gfx_width/(double)(*width);
+		y_scale=(double)gfx_height/(double)(*height);
+	}
+	if (x_scale<y_scale)
+		scale=x_scale;
+	else
+		scale=y_scale;
+	*width=(int)((double)*width*scale);
+	*height=(int)((double)*height*scale);
+
+	/* Padding to an dword value */
+	*width-=*width % 4;
+	*height-=*height % 4;
+}
+
+
 static int vh_open(void)
 {
 	int i;
+	int width,height;
 
 
 	for (i = 0;i < MAX_GFX_ELEMENTS;i++) Machine->gfx[i] = 0;
@@ -650,15 +689,44 @@ static int vh_open(void)
 	}
 
 
-	/* create the display bitmap, and allocate the palette */
-	if ((Machine->scrbitmap = osd_create_display(
-			drv->screen_width,drv->screen_height,
-			Machine->color_depth,
-			drv->video_attributes)) == 0)
+	width = drv->screen_width;
+	height = drv->screen_height;
+
+	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
+		scale_vectorgames(options.vector_width,options.vector_height,&width,&height);
+
+	Machine->scrbitmap = bitmap_alloc_depth(width,height,Machine->color_depth);
+	if (!Machine->scrbitmap)
 	{
 		vh_close();
 		return 1;
 	}
+
+	if (!(Machine->drv->video_attributes & VIDEO_TYPE_VECTOR))
+	{
+		width = drv->default_visible_area.max_x - drv->default_visible_area.min_x + 1;
+		height = drv->default_visible_area.max_y - drv->default_visible_area.min_y + 1;
+	}
+
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
+	{
+		int temp;
+		temp = width; width = height; height = temp;
+	}
+
+	/* create the display bitmap, and allocate the palette */
+	if (osd_create_display(width,height,Machine->color_depth,
+			drv->frames_per_second,drv->video_attributes,Machine->orientation))
+	{
+		vh_close();
+		return 1;
+	}
+
+	set_visible_area(
+			drv->default_visible_area.min_x,
+			drv->default_visible_area.max_x,
+			drv->default_visible_area.min_y,
+			drv->default_visible_area.max_y);
 
 	/* create spriteram buffers if necessary */
 	if (drv->video_attributes & VIDEO_BUFFERS_SPRITERAM) {
@@ -765,12 +833,7 @@ void draw_screen(int _bitmap_dirty)
 ***************************************************************************/
 void update_video_and_audio(void)
 {
-	struct osd_bitmap *save = Machine->scrbitmap;
-	Machine->scrbitmap = real_scrbitmap;
-
-	osd_update_video_and_audio();
-
-	Machine->scrbitmap = save;
+	osd_update_video_and_audio(real_scrbitmap);
 }
 
 

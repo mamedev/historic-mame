@@ -120,7 +120,7 @@ void mermaid_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		}
 
 
-		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 
@@ -142,7 +142,7 @@ void mermaid_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				mermaid_foreground_colorram[offs] & 0x0f,
 				0,0,
 				8*sx,sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 
 

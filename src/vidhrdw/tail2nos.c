@@ -185,7 +185,7 @@ static void drawsprites(struct osd_bitmap *bitmap)
 				40 + color,
 				flipx,flipy,
 				sx+3,sy+1,	/* placement relative to zoom layer verified on the real thing */
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
+				&Machine->visible_area,TRANSPARENCY_PEN,15);
 	}
 }
 
@@ -244,5 +244,5 @@ void tail2nos_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		tilemap_draw(bitmap,bg_tilemap,0);
 	}
 	else
-		fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);
+		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 }

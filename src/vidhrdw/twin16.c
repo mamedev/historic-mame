@@ -66,7 +66,7 @@ WRITE_HANDLER( twin16_video_register_w ){
 /******************************************************************************************/
 
 static void draw_text( struct osd_bitmap *bitmap ){
-	const struct rectangle *clip = &Machine->drv->visible_area;
+	const struct rectangle *clip = &Machine->visible_area;
 	const UINT16 *source = (UINT16 *)twin16_fixram;
 	int i;
 

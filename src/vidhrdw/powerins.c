@@ -314,10 +314,10 @@ static void powerins_mark_sprite_colors(void)
 	unsigned char *source = spriteram + 0x8000;
 	unsigned char *finish = spriteram + 0x9000;
 
-	int xmin = Machine->drv->visible_area.min_x;
-	int xmax = Machine->drv->visible_area.max_x;
-	int ymin = Machine->drv->visible_area.min_y;
-	int ymax = Machine->drv->visible_area.max_y;
+	int xmin = Machine->visible_area.min_x;
+	int xmax = Machine->visible_area.max_x;
+	int ymin = Machine->visible_area.min_y;
+	int ymax = Machine->visible_area.max_y;
 
 	memset(colmask, 0, sizeof(colmask));
 
@@ -412,7 +412,7 @@ static void powerins_draw_sprites(struct osd_bitmap *bitmap)
 						flipx, flipy,
 						sx + x*16,
 						sy + y*16,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
+						&Machine->visible_area,TRANSPARENCY_PEN,15);
 
 				code += inc;
 			}

@@ -302,7 +302,7 @@ WRITE_HANDLER( rthunder_backcolor_w )
 static void draw_sprites( struct osd_bitmap *bitmap, int sprite_priority )
 {
 	/* note: sprites don't yet clip at the top of the screen properly */
-	const struct rectangle *clip = &Machine->drv->visible_area;
+	const struct rectangle *clip = &Machine->visible_area;
 
 	const unsigned char *source = &spriteram[0x1400];
 	const unsigned char *finish = &spriteram[0x1c00-16];	/* the last is NOT a sprite */
@@ -400,7 +400,7 @@ void namcos86_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	tilemap_render(ALL_TILEMAPS);
 
-	fillbitmap(bitmap,Machine->gfx[0]->colortable[8*backcolor+7],&Machine->drv->visible_area);
+	fillbitmap(bitmap,Machine->gfx[0]->colortable[8*backcolor+7],&Machine->visible_area);
 
 	for (layer = 0;layer < 8;layer++)
 	{

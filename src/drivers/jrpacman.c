@@ -93,9 +93,6 @@ OUT on port $0 sets the interrupt vector
 #include "vidhrdw/generic.h"
 
 
-void jrpacman_init_machine(void);
-int jrpacman_interrupt(void);
-
 extern unsigned char *jrpacman_scroll,*jrpacman_bgpriority;
 extern unsigned char *jrpacman_charbank,*jrpacman_spritebank;
 extern unsigned char *jrpacman_palettebank,*jrpacman_colortablebank;
@@ -112,6 +109,47 @@ void jrpacman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 extern unsigned char *pengo_soundregs;
 WRITE_HANDLER( pengo_sound_enable_w );
 WRITE_HANDLER( pengo_sound_w );
+
+
+
+static int speedcheat = 0;	/* a well known hack allows to make JrPac Man run at four times */
+				/* his usual speed. When we start the emulation, we check if the */
+				/* hack can be applied, and set this flag accordingly. */
+
+static void jrpacman_init_machine(void)
+{
+	unsigned char *RAM = memory_region(REGION_CPU1);
+
+
+	/* check if the loaded set of ROMs allows the Pac Man speed hack */
+	if (RAM[0x180b] == 0xbe || RAM[0x180b] == 0x01)
+		speedcheat = 1;
+	else speedcheat = 0;
+}
+
+
+static int jrpacman_interrupt(void)
+{
+	unsigned char *RAM = memory_region(REGION_CPU1);
+
+
+	/* speed up cheat */
+	if (speedcheat)
+	{
+		if (readinputport(3) & 1)	/* check status of the fake dip switch */
+		{
+			/* activate the cheat */
+			RAM[0x180b] = 0x01;
+		}
+		else
+		{
+			/* remove the cheat */
+			RAM[0x180b] = 0xbe;
+		}
+	}
+
+	return interrupt();
+}
 
 
 

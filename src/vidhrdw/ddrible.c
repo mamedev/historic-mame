@@ -220,7 +220,7 @@ static void ddribble_draw_sprites( struct osd_bitmap *bitmap, unsigned char* sou
 						color,
 						flipx, flipy,
 						sx+x*16,sy+y*16,
-						&Machine->drv->visible_area,
+						&Machine->visible_area,
 						TRANSPARENCY_PEN, 0);
 				}
 			}

@@ -12,7 +12,17 @@
   1) The 2413 has a bank of pre-defined instruments.
   2) The 2413 has extra volume registers for each voice.
   3) The frequency is supplied as an "F-Number" and "Block".
-	 The F-Number has a smaller range in the 2413
+
+                    18            b-1
+       F = (fmus * 2   / fsam) / 2
+
+       where
+             F    = F-number
+             b    = block number
+             fmus = frequency
+             fsam = sample frequency = clock / 72
+
+             clock= 3.6MHz
 
   There are 2 modes of operation:
   - Melody mode with 9 simultaneous voices
@@ -22,16 +32,19 @@
 
 #include "driver.h"
 
-
 #define ym2413_channels 9           /* 9 channels per chip */
 #define ym2413_parameter_count 12   /* Number of values per row in instrument table */
+
+const int ym2413_clock = 3600000;   /* 3.6 MHz */
 
 /* Status for each chip */
 typedef struct YM2413_state
 {
+    int fsam;
 	int rhythm_mode;                            /* Is this chip in rhythm mode */
 	int pending_register;                       /* Last address register value */
 	int user_instrument[ym2413_parameter_count];    /* User instrument values */
+    int fnumberlow[ym2413_channels];
 }YM2413_state;
 
 static struct YM2413_state ym2413_state[MAX_2413];
@@ -164,7 +177,11 @@ int YM2413_sh_start(const struct MachineSound *msound)
 		{
 			ym2413_state[i].user_instrument[j]=ym2413_instruments[0][j];
 		}
+        ym2413_state[i].fsam = ym2413_clock / 72;
+
 	}
+
+
 	return YM3812_sh_start(msound);
 }
 
@@ -194,7 +211,7 @@ WRITE_HANDLER( YM2413_register_port_0_w )
 WRITE_HANDLER( YM2413_data_port_0_w )
 {
 	int chip = offset;
-	int value, channel, instrument, i, block, volume;
+    int value, channel, instrument, i, block, volume, frq, fnumber, octave;
 	int pending=ym2413_state[chip].pending_register;
 
 	switch(pending)
@@ -238,7 +255,7 @@ WRITE_HANDLER( YM2413_data_port_0_w )
 		case 0x17:
 		case 0x18:
 				channel=pending-0x10;
-				OPL_WRITE(0xa0+channel, data);  /* Frequency LSB */
+                ym2413_state[chip].fnumberlow[channel]=data;
 				break;
 
 		case 0x20:  /* FNumber / note on / off */
@@ -251,12 +268,26 @@ WRITE_HANDLER( YM2413_data_port_0_w )
 		case 0x27:
 		case 0x28:
 				channel=pending-0x20;
-				block=(data>>1)&0x07;
-				value = ( data & 0x10) << 1;  /* Translate key on-off */
-				/* Sustain does not exist */
-				value |= data&0x01;           /* Add freq MSB */
-				value |= (block<<2);          /* Add in octave */
-				OPL_WRITE(0xb0+channel, value); /* Frequency MSB + Key on/off */
+                fnumber=ym2413_state[chip].fnumberlow[channel]|(data&0x01)<<8;
+                block  = (data >> 1) & 0x07;
+
+                /* Calculate frequency */
+                frq=fnumber * ( 2 << (block-1) ) *
+                              ym2413_state[chip].fsam / (2<<18);
+
+                /* Convert into frequency & octave (+raise octaves) */
+                octave = ((frq >> 10) & 0x0f) + 3;
+                frq    &= 0x3ff;
+
+                /* Build register */
+                value  = ( data & 0x10) << 1; /* Translate key on-off */
+                                              /* Sustain does not exist */
+                value |= (frq >> 8) & 0x03;   /* Add frequency high to control */
+                value |= octave << 2;         /* Add in the octave */
+
+                /* Write the OPL registers */
+                OPL_WRITE(0xa0+channel, frq & 0xff);  /* Frequency LSB */
+                OPL_WRITE(0xb0+channel, value); /* Frequency MSB + Key on/off */
 				break;
 
 		case 0x30: /* INSTRUMENT / VOLUME */

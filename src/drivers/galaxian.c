@@ -148,8 +148,6 @@ extern unsigned char *galaxian_attributesram;
 extern unsigned char *galaxian_bulletsram;
 extern size_t galaxian_bulletsram_size;
 void galaxian_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-WRITE_HANDLER( galaxian_flipx_w );
-WRITE_HANDLER( galaxian_flipy_w );
 WRITE_HANDLER( galaxian_attributes_w );
 WRITE_HANDLER( galaxian_stars_w );
 WRITE_HANDLER( scramble_background_w );
@@ -322,8 +320,8 @@ static struct MemoryWriteAddress galaxian_writemem[] =
 	{ 0x6806, 0x6807, galaxian_vol_w },
 	{ 0x7001, 0x7001, interrupt_enable_w },
 	{ 0x7004, 0x7004, galaxian_stars_w },
-	{ 0x7006, 0x7006, galaxian_flipx_w },
-	{ 0x7007, 0x7007, galaxian_flipy_w },
+	{ 0x7006, 0x7006, flip_screen_x_w },
+	{ 0x7007, 0x7007, flip_screen_y_w },
 	{ 0x7800, 0x7800, galaxian_pitch_w },
 	{ -1 }	/* end of table */
 };
@@ -361,8 +359,8 @@ static struct MemoryWriteAddress mooncrst_writemem[] =
 	{ 0xb000, 0xb000, interrupt_enable_w },	/* not Checkman */
 	{ 0xb001, 0xb001, interrupt_enable_w },	/* Checkman only */
 	{ 0xb004, 0xb004, galaxian_stars_w },
-	{ 0xb006, 0xb006, galaxian_flipx_w },
-	{ 0xb007, 0xb007, galaxian_flipy_w },
+	{ 0xb006, 0xb006, flip_screen_x_w },
+	{ 0xb007, 0xb007, flip_screen_y_w },
 	{ 0xb800, 0xb800, galaxian_pitch_w },
 	{ -1 }	/* end of table */
 };
@@ -401,8 +399,8 @@ static struct MemoryWriteAddress scramblb_writemem[] =
 	{ 0x7002, 0x7002, coin_counter_w },
 	{ 0x7003, 0x7003, scramble_background_w },
 	{ 0x7004, 0x7004, galaxian_stars_w },
-	{ 0x7006, 0x7006, galaxian_flipx_w },
-	{ 0x7007, 0x7007, galaxian_flipy_w },
+	{ 0x7006, 0x7006, flip_screen_x_w },
+	{ 0x7007, 0x7007, flip_screen_y_w },
 	{ 0x7800, 0x7800, galaxian_pitch_w },
 	{ -1 }	/* end of table */
 };
@@ -439,8 +437,8 @@ static struct MemoryWriteAddress jumpbug_writemem[] =
 	{ 0x7001, 0x7001, interrupt_enable_w },
 	{ 0x7002, 0x7002, coin_counter_w },
 	{ 0x7004, 0x7004, galaxian_stars_w },
-	{ 0x7006, 0x7006, galaxian_flipx_w },
-	{ 0x7007, 0x7007, galaxian_flipy_w },
+	{ 0x7006, 0x7006, flip_screen_x_w },
+	{ 0x7007, 0x7007, flip_screen_y_w },
 	{ 0x8000, 0xafff, MWA_ROM },
 	{ 0xfff0, 0xffff, MWA_RAM },
 	{ -1 }	/* end of table */
@@ -456,8 +454,8 @@ static struct MemoryWriteAddress checkmaj_writemem[] =
 	{ 0x5860, 0x587f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
 	{ 0x5880, 0x58ff, MWA_RAM },
 	{ 0x7001, 0x7001, interrupt_enable_w },
-	{ 0x7006, 0x7006, galaxian_flipx_w },
-	{ 0x7007, 0x7007, galaxian_flipy_w },
+	{ 0x7006, 0x7006, flip_screen_x_w },
+	{ 0x7007, 0x7007, flip_screen_y_w },
 	{ 0x7800, 0x7800, checkman_sound_command_w },
 	{ -1 }	/* end of table */
 };
@@ -534,8 +532,8 @@ static struct MemoryWriteAddress kingball_writemem[] =
 	{ 0xb002, 0xb002, kingball_sound2_w },
 	{ 0xb003, 0xb003, kingball_speech_dip_w },
 //	{ 0xb004, 0xb004, galaxian_stars_w },
-	{ 0xb006, 0xb006, galaxian_flipx_w },
-	{ 0xb007, 0xb007, galaxian_flipy_w },
+	{ 0xb006, 0xb006, flip_screen_x_w },
+	{ 0xb007, 0xb007, flip_screen_y_w },
 	{ 0xb800, 0xb800, galaxian_pitch_w },
 	{ -1 }	/* end of table */
 };
@@ -631,8 +629,8 @@ static struct MemoryWriteAddress zigzag_writemem[] =
 	{ 0x5840, 0x587f, MWA_RAM, &spriteram, &spriteram_size },	/* no bulletsram, all sprites */
 	{ 0x7001, 0x7001, interrupt_enable_w },
 	{ 0x7002, 0x7002, zigzag_sillyprotection_w },
-	{ 0x7006, 0x7006, galaxian_flipx_w },
-	{ 0x7007, 0x7007, galaxian_flipy_w },
+	{ 0x7006, 0x7006, flip_screen_x_w },
+	{ 0x7007, 0x7007, flip_screen_y_w },
 	{ -1 }	/* end of table */
 };
 
@@ -2420,6 +2418,25 @@ ROM_START( redufo )
 	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
+
+ROM_START( exodus )
+	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
+	ROM_LOAD( "exodus1.bin",  0x0000, 0x0800, 0x5dfe65e1 )
+	ROM_LOAD( "exodus2.bin",  0x0800, 0x0800, 0x6559222f )
+	ROM_LOAD( "exodus3.bin",  0x1000, 0x0800, 0xbf7030e8 )
+	ROM_LOAD( "exodus4.bin",  0x1800, 0x0800, 0x3607909e )
+	ROM_LOAD( "exodus9.bin",  0x2000, 0x0800, 0x994a90c4 )
+	ROM_LOAD( "exodus10.bin", 0x2800, 0x0800, 0xfbd11187 )
+	ROM_LOAD( "exodus11.bin", 0x3000, 0x0800, 0xfd07d811 )
+
+	ROM_REGION( 0x1000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "exodus5.bin",  0x0000, 0x0800, 0xb34c7cb4 )
+	ROM_LOAD( "exodus6.bin",  0x0800, 0x0800, 0x50a2d447 )
+
+	ROM_REGION( 0x0020, REGION_PROMS )
+	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
+ROM_END
+
 ROM_START( pacmanbl )
 	ROM_REGION( 0x10000, REGION_CPU1 )	/* 64k for code */
 	ROM_LOAD( "blpac1b",      0x0000, 0x0800, 0x6718df42 )
@@ -3141,7 +3158,8 @@ GAME( 1980, uniwars,  0,        pisces,   superg,   pisces,   ROT90,  "Irem", "U
 GAME( 1980, gteikoku, uniwars,  pisces,   superg,   pisces,   ROT90,  "Irem", "Gingateikoku No Gyakushu" )
 GAME( 1980, spacbatt, uniwars,  pisces,   superg,   pisces,   ROT90,  "bootleg", "Space Battle" )
 GAME( 1981, warofbug, 0,        warofbug, warofbug, 0,        ROT90,  "Armenia", "War of the Bugs" )
-GAME( ????, redufo,   0,        warofbug, redufo,   0,        ROT90,  "Hara Industries??", "Defend the Terra Attack on the Red UFO" )
+GAME( ????, redufo,   0,        warofbug, redufo,   0,        ROT90,  "bootleg", "Defend the Terra Attack on the Red UFO (bootleg)" )
+GAME( ????, exodus,   redufo,   warofbug, redufo,   0,        ROT90,  "Subelectro", "Exodus (bootleg?)" )
 GAME( 1981, pacmanbl, pacman,   pacmanbl, pacmanbl, 0,        ROT270, "bootleg", "Pac-Man (bootleg on Galaxian hardware)" )
 GAME( 1984, devilfsg, devilfsh, devilfsg, devilfsg, 0,        ROT270, "Vision / Artic", "Devil Fish (Galaxian hardware, bootleg?)" )
 GAME( 1982, zigzag,   0,        zigzag,   zigzag,   0,        ROT90,  "LAX", "Zig Zag (Galaxian hardware, set 1)" )

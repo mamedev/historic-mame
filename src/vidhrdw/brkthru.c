@@ -101,7 +101,7 @@ int brkthru_vh_start(void)
 	memset(dirtybuffer,1,videoram_size);
 
 	/* the background area is twice as wide as the screen */
-	if ((tmpbitmap = osd_create_bitmap(2*Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if ((tmpbitmap = bitmap_alloc(2*Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 	{
 		free(dirtybuffer);
 		return 1;
@@ -119,7 +119,7 @@ int brkthru_vh_start(void)
 ***************************************************************************/
 void brkthru_vh_stop(void)
 {
-	osd_free_bitmap(tmpbitmap);
+	bitmap_free(tmpbitmap);
 	free(dirtybuffer);
 }
 
@@ -209,7 +209,7 @@ void brkthru_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		if (flipscreen) scroll = 256 + bgscroll;
 		else scroll = -bgscroll;
-		copyscrollbitmap(bitmap,tmpbitmap,1,&scroll,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,1,&scroll,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 
@@ -242,13 +242,13 @@ void brkthru_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 						color,
 						flipscreen,flipscreen,
 						sx,flipscreen? sy + 16 : sy - 16,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+						&Machine->visible_area,TRANSPARENCY_PEN,0);
 				drawgfx(bitmap,Machine->gfx[9],
 						code | 1,
 						color,
 						flipscreen,flipscreen,
 						sx,sy,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+						&Machine->visible_area,TRANSPARENCY_PEN,0);
 
 				/* redraw with wraparound */
 				drawgfx(bitmap,Machine->gfx[9],
@@ -256,13 +256,13 @@ void brkthru_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 						color,
 						flipscreen,flipscreen,
 						sx,(flipscreen? sy + 16 : sy - 16) + 256,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+						&Machine->visible_area,TRANSPARENCY_PEN,0);
 				drawgfx(bitmap,Machine->gfx[9],
 						code | 1,
 						color,
 						flipscreen,flipscreen,
 						sx,sy + 256,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+						&Machine->visible_area,TRANSPARENCY_PEN,0);
 			}
 			else
 			{
@@ -271,7 +271,7 @@ void brkthru_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 						color,
 						flipscreen,flipscreen,
 						sx,sy,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+						&Machine->visible_area,TRANSPARENCY_PEN,0);
 
 				/* redraw with wraparound */
 				drawgfx(bitmap,Machine->gfx[9],
@@ -279,7 +279,7 @@ void brkthru_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 						color,
 						flipscreen,flipscreen,
 						sx,sy + 256,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+						&Machine->visible_area,TRANSPARENCY_PEN,0);
 			}
 		}
 	}
@@ -304,6 +304,6 @@ void brkthru_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				0,
 				flipscreen,flipscreen,
 				8*sx,8*sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

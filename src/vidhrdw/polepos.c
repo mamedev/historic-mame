@@ -155,7 +155,7 @@ void polepos_vh_convert_color_prom(UINT8 *palette, UINT16 *colortable, const UIN
 int polepos_vh_start(void)
 {
 	/* allocate view bitmap */
-	view_bitmap = osd_create_bitmap(64*8, 16*8);
+	view_bitmap = bitmap_alloc(64*8, 16*8);
 	if (!view_bitmap)
 		return 1;
 
@@ -163,7 +163,7 @@ int polepos_vh_start(void)
 	view_dirty = malloc(64*16);
 	if (!view_dirty)
 	{
-		osd_free_bitmap(view_bitmap);
+		bitmap_free(view_bitmap);
 		return 1;
 	}
 
@@ -172,7 +172,7 @@ int polepos_vh_start(void)
 
 void polepos_vh_stop(void)
 {
-	osd_free_bitmap(view_bitmap);
+	bitmap_free(view_bitmap);
 	free(view_dirty);
 }
 
@@ -313,7 +313,7 @@ WRITE_HANDLER( polepos_z80_alpha_w )
 
 static void draw_view(struct osd_bitmap *bitmap)
 {
-	struct rectangle clip = Machine->drv->visible_area;
+	struct rectangle clip = Machine->visible_area;
 	int x, y, offs;
 
 	/* look for dirty tiles */
@@ -390,7 +390,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 		if (vpos >= 128) color |= 0x40;
 		drawgfxzoom(bitmap, gfx,
 				 code, color, hflip, 0, hpos, vpos,
-				 &Machine->drv->visible_area, TRANSPARENCY_COLOR, 0, hsize << 11, vsize << 11);
+				 &Machine->visible_area, TRANSPARENCY_COLOR, 0, hsize << 11, vsize << 11);
 	}
 }
 
@@ -408,7 +408,7 @@ static void draw_alpha(struct osd_bitmap *bitmap)
 			if (y >= 16) color |= 0x40;
 			drawgfx(bitmap, Machine->gfx[0],
 					 code, color, 0, 0, 8*x, 8*y,
-					 &Machine->drv->visible_area, TRANSPARENCY_COLOR, 0);
+					 &Machine->visible_area, TRANSPARENCY_COLOR, 0);
 		}
 
 	/* Now draw the shift if selected on the fake dipswitch */
@@ -419,20 +419,20 @@ static void draw_alpha(struct osd_bitmap *bitmap)
 			/* L */
 			drawgfx(bitmap, Machine->gfx[0],
 					 0x15, 0, 0, 0, 30*8-1, 29*8,
-					 &Machine->drv->visible_area, TRANSPARENCY_PEN, 0);
+					 &Machine->visible_area, TRANSPARENCY_PEN, 0);
 			/* O */
 			drawgfx(bitmap, Machine->gfx[0],
 					 0x18, 0, 0, 0, 31*8-1, 29*8,
-					 &Machine->drv->visible_area, TRANSPARENCY_PEN, 0);
+					 &Machine->visible_area, TRANSPARENCY_PEN, 0);
 		} else {
 			/* H */
 			drawgfx(bitmap, Machine->gfx[0],
 					 0x11, 0, 0, 0, 30*8-1, 29*8,
-					 &Machine->drv->visible_area, TRANSPARENCY_PEN, 0);
+					 &Machine->visible_area, TRANSPARENCY_PEN, 0);
 			/* I */
 			drawgfx(bitmap, Machine->gfx[0],
 					 0x12, 0, 0, 0, 31*8-1, 29*8,
-					 &Machine->drv->visible_area, TRANSPARENCY_PEN, 0);
+					 &Machine->visible_area, TRANSPARENCY_PEN, 0);
 		}
 	}
 }

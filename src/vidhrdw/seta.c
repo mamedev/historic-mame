@@ -374,10 +374,10 @@ void seta_mark_sprite_color(void)
 	int color_codes_start	=	Machine->drv->gfxdecodeinfo[0].color_codes_start;
 	int total_color_codes	=	Machine->drv->gfxdecodeinfo[0].total_color_codes;
 
-	int xmin = Machine->drv->visible_area.min_x - (16 - 1);
-	int xmax = Machine->drv->visible_area.max_x;
-	int ymin = Machine->drv->visible_area.min_y - (16 - 1);
-	int ymax = Machine->drv->visible_area.max_y;
+	int xmin = Machine->visible_area.min_x - (16 - 1);
+	int xmax = Machine->visible_area.max_x;
+	int ymin = Machine->visible_area.min_y - (16 - 1);
+	int ymax = Machine->visible_area.max_y;
 
 	/* Floating tilemap made of sprites */
 
@@ -449,7 +449,7 @@ static void seta_draw_sprites_map(struct osd_bitmap *bitmap)
 					( READ_WORD(&spriteram[0x606]) & 0xFF ) * 256;
 
 //	int max_x	=	Machine->drv->screen_width  - 16;
-//	int max_y	=	Machine->drv->visible_area.max_y+1;	// see pic of metafox
+//	int max_y	=	Machine->visible_area.max_y+1;	// see pic of metafox
 
 	xoffs	=	flip ? 0x10 : 0x10;	// see wrofaero test mode: made of sprites map
 	yoffs	=	flip ? 0x09 : 0x07;
@@ -498,7 +498,7 @@ static void seta_draw_sprites_map(struct osd_bitmap *bitmap)
 					color, \
 					flipx, flipy, \
 					_x_,_y_, \
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					&Machine->visible_area,TRANSPARENCY_PEN,0);
 
 			DRAWTILE(sx - 0x000, sy + 0x000)
 			DRAWTILE(sx - 0x200, sy + 0x000)
@@ -528,7 +528,7 @@ static void seta_draw_sprites(struct osd_bitmap *bitmap)
 	unsigned char *spriteram1 = spriteram_2 + ((ctrl2 & 0x40) ? 0x2000 : 0);
 
 //	int max_x	=	Machine->drv->screen_width  - 16;
-	int max_y	=	Machine->drv->visible_area.max_y+1;	// see pic of metafox
+	int max_y	=	Machine->visible_area.max_y+1;	// see pic of metafox
 
 	seta_draw_sprites_map(bitmap);
 
@@ -562,7 +562,7 @@ static void seta_draw_sprites(struct osd_bitmap *bitmap)
 				flipx, flipy,
 				(x + xoffs) & 0x1ff,
 				max_y - ((y + yoffs) & 0x0ff),
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 
 }

@@ -188,7 +188,7 @@ void redalert_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 						color,
 						0,0,
 						8*sx,8*sy,
-						&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+						&Machine->visible_area,TRANSPARENCY_NONE,0);
 			}
 
 			/* Second layer - background */
@@ -198,7 +198,7 @@ void redalert_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					color,
 					0,0,
 					8*sx,8*sy,
-					&Machine->drv->visible_area,stat_transparent,0);
+					&Machine->visible_area,stat_transparent,0);
 
 			/* Third layer - alphanumerics & sprites */
 			if (charcode < 0x80)
@@ -209,7 +209,7 @@ void redalert_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 						color,
 						0,0,
 						8*sx,8*sy,
-						&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+						&Machine->visible_area,TRANSPARENCY_COLOR,0);
 			}
 			else if (charcode < 0xC0)
 			{
@@ -219,7 +219,7 @@ void redalert_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 						color,
 						0,0,
 						8*sx,8*sy,
-						&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+						&Machine->visible_area,TRANSPARENCY_COLOR,0);
 			}
 
 		}
@@ -238,7 +238,7 @@ void redalert_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 
 	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 }
 

@@ -10,14 +10,13 @@
 #include "vidhrdw/generic.h"
 
 
-
 unsigned char *rockola_videoram2;
 unsigned char *rockola_characterram;
 unsigned char *rockola_scrollx,*rockola_scrolly;
 static unsigned char dirtycharacter[256];
-static int flipscreen;
-static int charbank;
+static data_t charbank;
 static int backcolor;
+
 
 
 /***************************************************************************
@@ -141,33 +140,21 @@ WRITE_HANDLER( rockola_flipscreen_w )
 		for (i = 0;i < 32;i += 4)
 			Machine->gfx[1]->colortable[i] = Machine->pens[4 * backcolor + 0x20];
 
-		memset(dirtybuffer,1,videoram_size);
+		schedule_full_refresh();
 	}
 
 	/* bit 3 selects char bank */
-	if (charbank != ((~data & 0x08) >> 3))
-	{
-		charbank = (~data & 0x08) >> 3;
-		memset(dirtybuffer,1,videoram_size);
-	}
+	set_vh_global_attribute(&charbank,(~data & 0x08) >> 3);
 
 	/* bit 7 flips screen */
-	if (flipscreen != (data & 0x80))
-	{
-		flipscreen = data & 0x80;
-		memset(dirtybuffer,1,videoram_size);
-	}
+	flip_screen_w(0,data & 0x80);
 }
 
 
 WRITE_HANDLER( satansat_b002_w )
 {
 	/* bit 0 flips screen */
-	if (flipscreen != (data & 0x01))
-	{
-		flipscreen = data & 0x01;
-		memset(dirtybuffer,1,videoram_size);
-	}
+	flip_screen_w(0,data & 0x01);
 
 	/* bit 1 enables interrups */
 	/* it controls only IRQs, not NMIs. Here I am affecting both, which */
@@ -192,7 +179,7 @@ WRITE_HANDLER( satansat_backcolor_w )
 		for (i = 0;i < 16;i += 4)
 			Machine->gfx[1]->colortable[i] = Machine->pens[backcolor + 0x10];
 
-		memset(dirtybuffer,1,videoram_size);
+		schedule_full_refresh();
 	}
 }
 
@@ -210,6 +197,9 @@ void rockola_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int offs;
 
 
+	if (full_refresh)
+		memset(dirtybuffer,1,videoram_size);
+
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
 	for (offs = videoram_size - 1;offs >= 0;offs--)
@@ -223,20 +213,16 @@ void rockola_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 			sx = offs % 32;
 			sy = offs / 32;
-			if (flipscreen)
+			if (flip_screen)
 			{
 				sx = 31 - sx;
-				/* Pioner Balloon has a visible area different from all the others */
-				if (Machine->drv->visible_area.max_y == 28*8-1)
-					sy = 27 - sy;
-				else
-					sy = 31 - sy;
+				sy = 31 - sy;
 			}
 
 			drawgfx(tmpbitmap,Machine->gfx[1],
 					videoram[offs] + 256 * charbank,
 					(colorram[offs] & 0x38) >> 3,
-					flipscreen,flipscreen,
+					flip_screen,flip_screen,
 					8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);
 		}
@@ -250,16 +236,14 @@ void rockola_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		scrollx = -*rockola_scrolly;
 		scrolly = -*rockola_scrollx;
-		if (flipscreen)
+
+		if (flip_screen)
 		{
 			scrollx = -scrollx;
-			/* Pioner Balloon has a visible area different from all the others */
-			if (Machine->drv->visible_area.max_y == 28*8-1)
-				scrolly = -scrolly - 32;
-			else
-				scrolly = -scrolly;
+			scrolly = -scrolly;
 		}
-		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+
+		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 
@@ -276,28 +260,24 @@ void rockola_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		if (dirtycharacter[charcode] != 0)
 		{
 			decodechar(Machine->gfx[0],charcode,rockola_characterram,
-					Machine->drv->gfxdecodeinfo[0].gfxlayout);
+					   Machine->drv->gfxdecodeinfo[0].gfxlayout);
 			dirtycharacter[charcode] = 0;
 		}
 
 		sx = offs % 32;
 		sy = offs / 32;
-		if (flipscreen)
+		if (flip_screen)
 		{
 			sx = 31 - sx;
-			/* Pioner Balloon has a visible area different from all the others */
-			if (Machine->drv->visible_area.max_y == 28*8-1)
-				sy = 27 - sy;
-			else
-				sy = 31 - sy;
+			sy = 31 - sy;
 		}
 
 		drawgfx(bitmap,Machine->gfx[0],
 				charcode,
 				colorram[offs] & 0x07,
-				flipscreen,flipscreen,
+				flip_screen,flip_screen,
 				8*sx,8*sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 }
 
@@ -307,6 +287,9 @@ void satansat_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
 
+
+	if (full_refresh)
+		memset(dirtybuffer,1,videoram_size);
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
@@ -321,23 +304,23 @@ void satansat_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 			sx = offs % 32;
 			sy = offs / 32;
-			if (flipscreen)
+			if (flip_screen)
 			{
 				sx = 31 - sx;
-				sy = 27 - sy;
+				sy = 31 - sy;
 			}
 
 			drawgfx(tmpbitmap,Machine->gfx[1],
 					videoram[offs],
 					(colorram[offs] & 0x0c) >> 2,
-					flipscreen,flipscreen,
+					flip_screen,flip_screen,
 					8*sx,8*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+					&Machine->visible_area,TRANSPARENCY_NONE,0);
 		}
     }
 
 	/* copy the temporary bitmap to the screen */
-    copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+    copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 	/* draw the frontmost playfield. They are characters, but draw them as sprites */
 	for (offs = videoram_size - 1;offs >= 0;offs--)
@@ -352,24 +335,23 @@ void satansat_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		if (dirtycharacter[charcode] != 0)
 		{
 			decodechar(Machine->gfx[0],charcode,rockola_characterram,
-					Machine->drv->gfxdecodeinfo[0].gfxlayout);
+					   Machine->drv->gfxdecodeinfo[0].gfxlayout);
 			dirtycharacter[charcode] = 0;
 		}
 
 		sx = offs % 32;
 		sy = offs / 32;
-		if (flipscreen)
+		if (flip_screen)
 		{
 			sx = 31 - sx;
-			sy = 27 - sy;
+			sy = 31 - sy;
 		}
 
 		drawgfx(bitmap,Machine->gfx[0],
 				charcode,
 				colorram[offs] & 0x03,
-				flipscreen,flipscreen,
+				flip_screen,flip_screen,
 				8*sx,8*sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

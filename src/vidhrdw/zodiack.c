@@ -163,7 +163,7 @@ void zodiack_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				col,
 				flipscreen, flipscreen,
 				8*sx, 8*sy,
-				&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+				&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 
@@ -187,7 +187,7 @@ void zodiack_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			}
 		}
 
-		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->visible_area,TRANSPARENCY_COLOR,0);
 	}
 
 
@@ -210,7 +210,7 @@ void zodiack_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				0,
 				0,0,
 				x,y,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 
 
@@ -239,6 +239,6 @@ void zodiack_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				sx,sy,
 				//flipscreen[0] ? &spritevisibleareaflipx : &spritevisiblearea,TRANSPARENCY_PEN,0);
 				//&spritevisiblearea,TRANSPARENCY_PEN,0);
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

@@ -152,12 +152,12 @@ void wms_update_partial(int scanline)
 	int v, h, width;
 
 	/* don't draw if we're already past the bottom of the screen */
-	if (last_update_scanline >= Machine->drv->visible_area.max_y)
+	if (last_update_scanline >= Machine->visible_area.max_y)
 		return;
 
 	/* don't start before the top of the screen */
-	if (last_update_scanline < Machine->drv->visible_area.min_y)
-		last_update_scanline = Machine->drv->visible_area.min_y;
+	if (last_update_scanline < Machine->visible_area.min_y)
+		last_update_scanline = Machine->visible_area.min_y;
 
 	/* bail if there's nothing to do */
 	if (last_update_scanline > scanline)
@@ -165,11 +165,11 @@ void wms_update_partial(int scanline)
 
 	/* determine the base of the videoram */
 	offset = (~TMS34010_get_DPYSTRT(0) & 0x1ff0) << 5;
-	offset += 512 * (last_update_scanline - Machine->drv->visible_area.min_y);
+	offset += 512 * (last_update_scanline - Machine->visible_area.min_y);
 	offset &= 0x3ffff;
 
 	/* determine how many pixels to copy */
-	width = Machine->drv->visible_area.max_x;
+	width = Machine->visible_area.max_x;
 
 	/* 16-bit refresh case */
 	if (bitmap->depth == 16)
@@ -250,7 +250,7 @@ void wms_vh_eof(void)
 	/* update status == 1: we've been updating this frame; finish it off */
 	else
 	{
-		wms_update_partial(Machine->drv->visible_area.max_y);
+		wms_update_partial(Machine->visible_area.max_y);
 		last_update_scanline = 0;
 		if (update_status)
 			update_status--;
@@ -265,7 +265,7 @@ void wms_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	if (palette_recalc() || full_refresh)  last_update_scanline = 0;
 
-	wms_update_partial(Machine->drv->visible_area.max_y);
+	wms_update_partial(Machine->visible_area.max_y);
 	last_update_scanline = 0;
 	update_status = 2;
 

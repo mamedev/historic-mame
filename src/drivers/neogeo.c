@@ -13,6 +13,111 @@
 	TODO :
             - What does 0x3c0006-7 *REALLY* do?
 
+
+known problems, some might have already been fixed:
+
+ssideki2:
+locks up at random times
+
+gpilots:
+bad sound (clipping and such)
+
+popbounc:
+hangs after a few seconds of gameplay if sound is off. Fixed with a patch.
+
+neoturf:
+There appear to be some bad/inverted palette shifts on the scorecards that
+appear when you double/triple bogie.
+
+lastbld2:
+hangs during the intermission between level 1 and 2. If you skip the intermission
+before it hangs, it goes on playing.
+
+Se anche Sidekick 3 e 4 usano la stessa tecnica, allora e' evidente che il
+campo si vede male perche' gli emu Neo Geo attualmente usano un engine "tile
+by tile" e non "line by line", ed e' lo stesso motivo per cui ad esempio in
+Fighter's History i fondali che dovrebbero essere prospettici restano
+immobili (e credo sia anche lo stesso motivo per cui in Zed Blade i fondali
+sono ugualmente immobili).
+
+2020 Baseball = When the batter gets hit by the pitcher the game resets,
+only on  arcade mode, in console mode it works fine
+
+Ninja Combat = The music stops after the charge move is used ( the
+dragon)
+
+Ninja Commando = The music stops a little after the intro
+
+magdrop2
+In a two player game if P2 wins a game, then BOTH players are shown to lose, If P1 wins then P1 is correctly shown as the winner!!
+
+
+So far Ninja Combat, Ninja Commando, Alpha Mission 2, and Blues Journey, still have sound problems, and Burning Fight
+quits playing right after I choose my character. Am I the only one with these problems? Please let me know cause im trying to FIX
+
+Shock Trooper get stucked after killing the first final enemy
+
+blazstar,
+Although the sound is perfect, there is still a problem
+with parallax, in level 2.
+Actually, the speed of scrolling should be twice as
+fast as now.
+
+samsho4,
+I've just played Samurai Showdown 4, the level with the coast in the
+background, and the water animation seems much to fast. I've made this
+observation in at least another NeoGeo game (don't remember which
+one anymore).
+
+Shock Troopers - this has bad bugs. The game stops scrolling when you kill
+the mid-boss on any of the 3 starting levels. There are also some
+sprite/collision problems in the Jungle route. I'm told MAME32 works, so
+perhaps this can still be fixed for the DOS final.
+
+rbffspec
+at the beginning of Hong Kong level, sky abruptly disappears while it scrolls up.
+
+lastblad
+rom M1 could be bad (second half is mostly FF, missing music in some levels)
+
+in the game Super Spy, the white dialog box that appers when you are in a room
+and somebody is talking at you, is missing. the text is black, and it is hard
+to read because all the background is very dark. the dialog box missing has white colour.
+
+---2020 Super Baseball---
+Game resets when batter is hit by pitch.
+
+---Cyberlip---
+Crashes during the demo display (reported but I don't see it)
+
+
+
+doubledr,
+garbage sound during the movie in attract mode
+
+kof94,
+possible wrong scroll at the beginning of Japan match (abruptly clipped ground)
+
+tpgolf:
+clipped tiles at the sides of the screen during scrolling
+
+mahretsu:
+the song should stop while you are playing. You can hear the real sound
+  effects if you continue a lost game.
+
+
+
+
+ncombat,
+sound hangs when you use the power up
+
+ncommand,
+no music and reduced sound effects during gameplay
+
+savagere,
+BAD clipping during intro
+
+
 =============================================================================
 
 Points to note, known and proven information deleted from this map:

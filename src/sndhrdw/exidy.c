@@ -2,55 +2,72 @@
 #include "cpu/m6502/m6502.h"
 #include "machine/6821pia.h"
 #include "sound/hc55516.h"
+#include "sound/tms5220.h"
 
-static void *timer;
-#define BASE_TIME 1/.894886
-#define BASE_FREQ (1789773 * 2)
-#define SH6840_FREQ 894886
-#define CVSD_CLOCK_FREQ (1000000.0 / 34.0)
-#define VOLUME 60
 
-int exidy_sample_channels[6];
-unsigned int exidy_sh8253_count[3];     /* 8253 Counter */
-int exidy_sh8253_clstate[3];            /* which byte to load */
-int riot_divider;
-int riot_state;
+#define BASE_FREQ 			1789773
+#define BASE_TIME 			(1.0 / ((double)BASE_FREQ / 2000000.0))
+#define SH6840_FREQ 		(BASE_FREQ / 2)
+#define CVSD_CLOCK_FREQ 	(1000000.0 / 34.0)
 
 #define RIOT_IDLE 0
 #define RIOT_COUNTUP 1
 #define RIOT_COUNTDOWN 2
 
-int mtrap_voice;
-int mtrap_count;
-int mtrap_vocdata;
-
-static signed char exidy_waveform1[16] =
-{
-	/* square-wave */
-	0x00, 0x7F, 0x00, 0x7F, 0x00, 0x7F, 0x00, 0x7F,
-	0x00, 0x7F, 0x00, 0x7F, 0x00, 0x7F, 0x00, 0x7F
-};
-
-int exidy_shdata_latch = 0xFF;
-int exidy_mhdata_latch = 0xFF;
 
 /* 6532 variables */
-static int irq_flag = 0;   /* 6532 interrupt flag register */
-static int irq_enable = 0;
-static int PA7_irq = 0;  /* IRQ-on-write flag (sound CPU) */
+static void *riot_timer;
+static UINT8 riot_irq_flag;
+static UINT8 riot_irq_enable;
+static UINT8 riot_porta_data;
+static UINT8 riot_porta_ddr;
+static UINT8 riot_portb_data;
+static UINT8 riot_portb_ddr;
+static UINT32 riot_divider;
+static UINT8 riot_state;
 
 /* 6840 variables */
-static int sh6840_CR1,sh6840_CR2,sh6840_CR3;
-static int sh6840_MSB;
-static unsigned int sh6840_timer[3];
-static int exidy_sfxvol[3];
-static int exidy_sfxctrl;
+static UINT8 sh6840_CR[3];
+static UINT8 sh6840_MSB;
+static UINT16 sh6840_timer[3];
+static UINT8 exidy_sfxctrl;
+
+/* 8253 variables */
+static UINT16 sh8253_count[3];
+static int sh8253_clstate[3];
+
+/* 5220/CVSD variables */
+static UINT8 has_hc55516;
+static UINT8 has_tms5220;
+
+/* sound streaming variables */
+struct channel_data
+{
+	UINT8	enable;
+	UINT8	noisy;
+	INT16	volume;
+	UINT32	step;
+	UINT32	fraction;
+};
+static int exidy_stream;
+static double freq_to_step;
+static UINT8 noise_state;
+static UINT8 last_noise;
+static UINT32 noise_shift;
+static struct channel_data music_channel[3];
+static struct channel_data sfx_channel[3];
+
+
 
 /***************************************************************************
 	PIA Interface
 ***************************************************************************/
 
-static void exidy_irq (int state);
+static void exidy_irq(int state);
+
+WRITE_HANDLER(victory_sound_response_w);
+WRITE_HANDLER(victory_sound_irq_clear_w);
+WRITE_HANDLER(victory_main_ack_w);
 
 /* PIA 0 */
 static struct pia6821_interface pia_0_intf =
@@ -68,76 +85,240 @@ static struct pia6821_interface pia_1_intf =
 	/*irqs   : A/B             */ 0, exidy_irq
 };
 
+/* Victory PIA 0 */
+static struct pia6821_interface victory_pia_0_intf =
+{
+	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
+	/*outputs: A/B,CA/B2       */ 0, victory_sound_response_w, victory_sound_irq_clear_w, victory_main_ack_w,
+	/*irqs   : A/B             */ 0, exidy_irq
+};
+
+
 /**************************************************************************
     Start/Stop Sound
 ***************************************************************************/
 
-int exidy_sh_start(const struct MachineSound *msound)
+INLINE int next_random(void)
 {
-	/* Init 8253 */
-	exidy_sh8253_clstate[0]=0;
-	exidy_sh8253_clstate[1]=0;
-	exidy_sh8253_clstate[2]=0;
-	exidy_sh8253_count[0]=0;
-	exidy_sh8253_count[1]=0;
-	exidy_sh8253_count[2]=0;
+	/*
+		4 x 4-bit shift registers:
 
-	exidy_sample_channels[0] = mixer_allocate_channel(25);
-	exidy_sample_channels[1] = mixer_allocate_channel(25);
-	exidy_sample_channels[2] = mixer_allocate_channel(25);
-    mixer_set_volume(exidy_sample_channels[0],0);
-    mixer_play_sample(exidy_sample_channels[0],(signed char*)exidy_waveform1,16,1000,1);
-    mixer_set_volume(exidy_sample_channels[1],0);
-    mixer_play_sample(exidy_sample_channels[1],(signed char*)exidy_waveform1,16,1000,1);
-    mixer_set_volume(exidy_sample_channels[2],0);
-    mixer_play_sample(exidy_sample_channels[2],(signed char*)exidy_waveform1,16,1000,1);
+			sr1(in) = sr2(out)
+			sr2(in) = sr2(out) ^ sr4(out)
+			sr3(in) = sr1(out) ^ address line 0
+			sr4(in) = sr3(out)
+
+		Stored in one 32-bit long as sr1-sr2-sr3-sr4, each in 8-bits
+
+		Output is sr4(in) = sr3(out)
+	*/
+	UINT32 temp = (noise_shift << 1) & 0x1e1e1e1e;
+	temp |= (temp << 4) & 0x01000000;
+	temp |= ((temp >> 4) ^ (temp << 12)) & 0x00010000;
+	temp |= ((temp >> 20) ^ rand()) & 0x00000100;
+	temp |= (temp >> 12) & 0x00000001;
+	noise_shift = temp;
+	return temp & 1;
+}
+
+static void exidy_stream_update(int param, INT16 *buffer, int length)
+{
+	UINT8 noise_buffer[44100 / 60 * 2];
+	int chan, i;
+
+	/* reset */
+	memset(buffer, 0, length * sizeof(buffer[0]));
+
+	/* if any channels are noisy, generate the noise wave */
+	if (sfx_channel[0].noisy || sfx_channel[1].noisy || sfx_channel[2].noisy)
+	{
+		/* if noise is clocked by the E, just generate at max frequency */
+		if (!(exidy_sfxctrl & 1))
+		{
+			for (i = 0; i < length; i++)
+			{
+				int new_noise = next_random();
+				noise_buffer[i] = noise_state;
+				noise_state ^= (last_noise ^ new_noise) & new_noise;
+				last_noise = new_noise;
+			}
+		}
+
+		/* otherwise, generate noise clocked by channel 1 of the 6840 */
+		else if (sfx_channel[0].enable)
+		{
+			struct channel_data *c = &sfx_channel[0];
+			UINT32 last_frac, frac = c->fraction;
+			UINT32 step = c->step;
+
+			for (i = 0; i < length; i++)
+			{
+				noise_buffer[i] = noise_state;
+				last_frac = frac;
+				frac += step;
+				if ((frac ^ last_frac) & 0xff000000)
+				{
+					int new_noise = next_random();
+					noise_state ^= (last_noise ^ new_noise) & new_noise;
+					last_noise = new_noise;
+				}
+			}
+		}
+
+		/* if channel 1 isn't enabled, zap the buffer */
+		else
+			memset(noise_buffer, 0, length);
+	}
+
+	/* process sfx channels first */
+	for (chan = 0; chan < 3; chan++)
+	{
+		struct channel_data *c = &sfx_channel[chan];
+
+		/* only process enabled channels */
+		if (c->enable)
+		{
+			/* special case channel 0: sfxctl controls its output */
+			if (chan == 0 && (exidy_sfxctrl & 2))
+				c->fraction += length * c->step;
+
+			/* otherwise, generate normally: non-noisy case first */
+			else if (!c->noisy)
+			{
+				UINT32 frac = c->fraction, step = c->step;
+				INT16 vol = c->volume;
+				for (i = 0; i < length; i++)
+				{
+					if (frac & 0x800000)
+						buffer[i] += vol;
+					frac += step;
+				}
+				c->fraction = frac;
+			}
+
+			/* noisy case */
+			else
+			{
+				INT16 vol = c->volume;
+				for (i = 0; i < length; i++)
+					if (noise_buffer[i])
+						buffer[i] += vol;
+			}
+		}
+	}
+
+	/* process music channels second */
+	for (chan = 0; chan < 3; chan++)
+	{
+		struct channel_data *c = &music_channel[chan];
+
+		/* only process enabled channels */
+		if (c->enable)
+		{
+			UINT32 step = c->step;
+			UINT32 frac = c->fraction;
+
+			for (i = 0; i < length; i++)
+			{
+				if (frac & 0x800000)
+					buffer[i] += c->volume;
+				frac += step;
+			}
+			c->fraction = frac;
+		}
+	}
+}
+
+
+static int common_start(void)
+{
+	int i;
+
+	/* determine which sound hardware is installed */
+	has_hc55516 = 0;
+	has_tms5220 = 0;
+	for (i = 0; i < MAX_SOUND; i++)
+	{
+		if (Machine->drv->sound[i].sound_type == SOUND_TMS5220)
+			has_tms5220 = 1;
+		if (Machine->drv->sound[i].sound_type == SOUND_HC55516)
+			has_hc55516 = 1;
+	}
+
+	/* allocate the stream */
+	exidy_stream = stream_init("Exidy custom", 100, Machine->sample_rate, 0, exidy_stream_update);
+
+	/* compute the frequency-to-step conversion factor */
+	if (Machine->sample_rate != 0)
+		freq_to_step = (double)(1 << 24) / (double)Machine->sample_rate;
+	else
+		freq_to_step = 0.0;
+
+	/* initialize the sound channels */
+	memset(music_channel, 0, sizeof(music_channel));
+	memset(sfx_channel, 0, sizeof(sfx_channel));
+	music_channel[0].volume = music_channel[1].volume = music_channel[2].volume = 32767 / 6;
+	music_channel[0].step = music_channel[1].step = music_channel[2].step = 0;
+	sfx_channel[0].step = sfx_channel[1].step = sfx_channel[2].step = 0;
 
 	/* Init PIA */
-	pia_config(0, PIA_STANDARD_ORDERING, &pia_0_intf);
-	pia_config(1, PIA_STANDARD_ORDERING, &pia_1_intf);
 	pia_reset();
 
 	/* Init 6532 */
-    timer=0;
+    riot_timer = 0;
+    riot_irq_flag = 0;
+    riot_irq_enable = 0;
+	riot_porta_data = 0xff;
+	riot_portb_data = 0xff;
     riot_divider = 1;
     riot_state = RIOT_IDLE;
 
 	/* Init 6840 */
-	sh6840_CR1 = sh6840_CR2 = sh6840_CR3 = 0;
 	sh6840_MSB = 0;
+	sh6840_CR[0] = sh6840_CR[1] = sh6840_CR[2] = 0;
 	sh6840_timer[0] = sh6840_timer[1] = sh6840_timer[2] = 0;
-	exidy_sfxvol[0] = exidy_sfxvol[1] = exidy_sfxvol[2] = 0;
-    exidy_sample_channels[3] = mixer_allocate_channel(25);
-	exidy_sample_channels[4] = mixer_allocate_channel(25);
-	exidy_sample_channels[5] = mixer_allocate_channel(25);
-    mixer_set_volume(exidy_sample_channels[3],0);
-    mixer_play_sample(exidy_sample_channels[3],(signed char*)exidy_waveform1,16,1000,1);
-    mixer_set_volume(exidy_sample_channels[4],0);
-    mixer_play_sample(exidy_sample_channels[4],(signed char*)exidy_waveform1,16,1000,1);
-    mixer_set_volume(exidy_sample_channels[5],0);
-    mixer_play_sample(exidy_sample_channels[5],(signed char*)exidy_waveform1,16,1000,1);
+	exidy_sfxctrl = 0;
 
-    /* Setup Mousetrap Voice */
-	mtrap_voice = 0xff;
-    mtrap_count = 0;
+	/* Init 8253 */
+	sh8253_count[0]   = sh8253_count[1]   = sh8253_count[2]   = 0;
+	sh8253_clstate[0] = sh8253_clstate[1] = sh8253_clstate[2] = 0;
+
 	return 0;
 }
 
+
+int exidy_sh_start(const struct MachineSound *msound)
+{
+	/* Init PIA */
+	pia_config(0, PIA_STANDARD_ORDERING, &pia_0_intf);
+	pia_config(1, PIA_STANDARD_ORDERING, &pia_1_intf);
+	return common_start();
+}
+
+
+int victory_sh_start(const struct MachineSound *msound)
+{
+	/* Init PIA */
+	pia_config(0, PIA_STANDARD_ORDERING, &victory_pia_0_intf);
+	pia_0_cb1_w(0, 1);
+	return common_start();
+}
+
+
 void exidy_sh_stop(void)
 {
-	mixer_stop_sample(exidy_sample_channels[0]);
-	mixer_stop_sample(exidy_sample_channels[1]);
-	mixer_stop_sample(exidy_sample_channels[2]);
 }
+
 
 /*
  *  PIA callback to generate the interrupt to the main CPU
  */
 
-static void exidy_irq (int state)
+static void exidy_irq(int state)
 {
-    cpu_set_irq_line (1, 0, state ? ASSERT_LINE : CLEAR_LINE);
+    cpu_set_irq_line(1, 0, state ? ASSERT_LINE : CLEAR_LINE);
 }
+
 
 /**************************************************************************
     6532 RIOT
@@ -145,66 +326,102 @@ static void exidy_irq (int state)
 
 static void riot_interrupt(int parm)
 {
-    if (riot_state == RIOT_COUNTUP) {
-        irq_flag |= 0x80; /* set timer interrupt flag */
-        if (irq_enable) cpu_cause_interrupt (1, M6502_INT_IRQ);
-        riot_state = RIOT_COUNTDOWN;
-        timer = timer_set (TIME_IN_USEC((1*BASE_TIME)*0xFF), 0, riot_interrupt);
-    }
-    else {
-        timer=0;
-        riot_state = RIOT_IDLE;
-    }
+	if (riot_state == RIOT_COUNTUP)
+	{
+		riot_irq_flag |= 0x80; /* set timer interrupt flag */
+		if (riot_irq_enable) cpu_set_irq_line(1, M6502_INT_IRQ, ASSERT_LINE);
+		riot_state = RIOT_COUNTDOWN;
+		riot_timer = timer_set(TIME_IN_USEC(BASE_TIME * 0xFF), 0, riot_interrupt);
+	}
+	else
+	{
+		riot_timer = 0;
+		riot_state = RIOT_IDLE;
+	}
 }
 
 
 WRITE_HANDLER( exidy_shriot_w )
 {
-   offset &= 0x7F;
-   switch (offset)
-   {
-   case 0:
-        cpu_set_reset_line(2, (data & 0x10) ? CLEAR_LINE : ASSERT_LINE);
-		mtrap_voice = data;
-		return;
-   	case 7: /* 0x87 - Enable Interrupt on PA7 Transitions */
-		PA7_irq = data;
-		return;
-	case 0x14:
-	case 0x1c:
-        irq_enable=offset & 0x08;
-	    riot_divider = 1;
-        if (timer) timer_remove(timer);
-        timer = timer_set (TIME_IN_USEC((1*BASE_TIME)*data), 0, riot_interrupt);
-        riot_state = RIOT_COUNTUP;
-        return;
-	case 0x15:
-	case 0x1d:
-        irq_enable=offset & 0x08;
-	    riot_divider = 8;
-        if (timer) timer_remove(timer);
-        timer = timer_set (TIME_IN_USEC((8*BASE_TIME)*data), 0, riot_interrupt);
-        riot_state = RIOT_COUNTUP;
-        return;
-    case 0x16:
-    case 0x1e:
-        irq_enable=offset & 0x08;
-	    riot_divider = 64;
-        if (timer) timer_remove(timer);
-        timer = timer_set (TIME_IN_USEC((64*BASE_TIME)*data), 0, riot_interrupt);
-        riot_state = RIOT_COUNTUP;
-		return;
-	case 0x17:
-    case 0x1f:
-        irq_enable=offset & 0x08;
-	    riot_divider = 1024;
-        if (timer) timer_remove(timer);
-        timer = timer_set (TIME_IN_USEC((1024*BASE_TIME)*data), 0, riot_interrupt);
-        riot_state = RIOT_COUNTUP;
-		return;
-	default:
-	    logerror("Undeclared RIOT write: %x=%x\n",offset,data);
-	    return;
+	offset &= 0x7f;
+	switch (offset)
+	{
+		case 0:	/* port A */
+			if (has_hc55516) cpu_set_reset_line(2, (data & 0x10) ? CLEAR_LINE : ASSERT_LINE);
+			riot_porta_data = (riot_porta_data & ~riot_porta_ddr) | (data & riot_porta_ddr);
+			return;
+
+		case 1:	/* port A DDR */
+			riot_porta_ddr = data;
+			break;
+
+		case 2:	/* port B */
+			if (has_tms5220)
+			{
+				if (!(data & 0x01) && (riot_portb_data & 0x01))
+				{
+					riot_porta_data = tms5220_status_r(0);
+					logerror("(%f)%04X:TMS5220 status read = %02X\n", timer_get_time(), cpu_getpreviouspc(), riot_porta_data);
+				}
+				if ((data & 0x02) && !(riot_portb_data & 0x02))
+				{
+					logerror("(%f)%04X:TMS5220 data write = %02X\n", timer_get_time(), cpu_getpreviouspc(), riot_porta_data);
+					tms5220_data_w(0, riot_porta_data);
+				}
+			}
+			riot_portb_data = (riot_portb_data & ~riot_portb_ddr) | (data & riot_portb_ddr);
+			return;
+
+		case 3:	/* port B DDR */
+			riot_portb_ddr = data;
+			break;
+
+		case 7: /* 0x87 - Enable Interrupt on PA7 Transitions */
+			return;
+
+		case 0x14:
+		case 0x1c:
+			cpu_set_irq_line(1, M6502_INT_IRQ, CLEAR_LINE);
+			riot_irq_enable = offset & 0x08;
+			riot_divider = 1;
+			if (riot_timer) timer_remove(riot_timer);
+			riot_timer = timer_set(TIME_IN_USEC((riot_divider * BASE_TIME) * data), 0, riot_interrupt);
+			riot_state = RIOT_COUNTUP;
+			return;
+
+		case 0x15:
+		case 0x1d:
+			cpu_set_irq_line(1, M6502_INT_IRQ, CLEAR_LINE);
+			riot_irq_enable = offset & 0x08;
+			riot_divider = 8;
+			if (riot_timer) timer_remove(riot_timer);
+			riot_timer = timer_set(TIME_IN_USEC((riot_divider * BASE_TIME) * data), 0, riot_interrupt);
+			riot_state = RIOT_COUNTUP;
+			return;
+
+		case 0x16:
+		case 0x1e:
+			cpu_set_irq_line(1, M6502_INT_IRQ, CLEAR_LINE);
+			riot_irq_enable = offset & 0x08;
+			riot_divider = 64;
+			if (riot_timer) timer_remove(riot_timer);
+			riot_timer = timer_set(TIME_IN_USEC((riot_divider * BASE_TIME) * data), 0, riot_interrupt);
+			riot_state = RIOT_COUNTUP;
+			return;
+
+		case 0x17:
+		case 0x1f:
+			cpu_set_irq_line(1, M6502_INT_IRQ, CLEAR_LINE);
+			riot_irq_enable = offset & 0x08;
+			riot_divider = 1024;
+			if (riot_timer) timer_remove(riot_timer);
+			riot_timer = timer_set(TIME_IN_USEC((riot_divider * BASE_TIME) * data), 0, riot_interrupt);
+			riot_state = RIOT_COUNTUP;
+			return;
+
+		default:
+			logerror("Undeclared RIOT write: %x=%x\n",offset,data);
+			return;
 	}
 	return; /* will never execute this */
 }
@@ -214,31 +431,50 @@ READ_HANDLER( exidy_shriot_r )
 {
 	static int temp;
 
-	offset &= 0x07;
+	offset &= 7;
 	switch (offset)
 	{
-    case 0x02:
-          return (mtrap_voice & 0x80) >> 7;
-	case 0x05: /* 0x85 - Read Interrupt Flag Register */
-	case 0x07:
-		temp = irq_flag;
-		irq_flag = 0;   /* Clear int flags */
-		return temp;
-	case 0x04:
-	case 0x06:
-		irq_flag = 0;
-		if (riot_state == RIOT_COUNTUP) {
-	        return timer_timeelapsed(timer)/(TIME_IN_USEC((riot_divider*BASE_TIME)));
-		}
-		else {
-			return timer_timeleft(timer)/(TIME_IN_USEC((riot_divider*BASE_TIME)));
-		}
-	default:
-	    logerror("Undeclared RIOT read: %x  PC:%x\n",offset,cpu_get_pc());
-  	    return 0xff;
+		case 0x00:
+			return riot_porta_data;
+
+		case 0x01:	/* port A DDR */
+			return riot_porta_ddr;
+
+		case 0x02:
+			if (has_tms5220)
+			{
+				riot_portb_data &= ~0x0c;
+				if (!tms5220_ready_r()) riot_portb_data |= 0x04;
+				if (!tms5220_int_r()) riot_portb_data |= 0x08;
+			}
+			return riot_portb_data;
+
+		case 0x03:	/* port B DDR */
+			return riot_portb_ddr;
+
+		case 0x05: /* 0x85 - Read Interrupt Flag Register */
+		case 0x07:
+			temp = riot_irq_flag;
+			riot_irq_flag = 0;   /* Clear int flags */
+			cpu_set_irq_line(1, M6502_INT_IRQ, CLEAR_LINE);
+			return temp;
+
+		case 0x04:
+		case 0x06:
+			riot_irq_flag = 0;
+			cpu_set_irq_line(1, M6502_INT_IRQ, CLEAR_LINE);
+			if (riot_state == RIOT_COUNTUP)
+				return timer_timeelapsed(riot_timer) / TIME_IN_USEC(riot_divider * BASE_TIME);
+			else
+				return timer_timeleft(riot_timer) / TIME_IN_USEC(riot_divider * BASE_TIME);
+
+		default:
+			logerror("Undeclared RIOT read: %x  PC:%x\n",offset,cpu_get_pc());
+			return 0xff;
 	}
 	return 0;
 }
+
 
 /**************************************************************************
     8253 Timer
@@ -246,51 +482,40 @@ READ_HANDLER( exidy_shriot_r )
 
 WRITE_HANDLER( exidy_sh8253_w )
 {
-	int i,c;
-	long f;
+	int chan;
 
+	stream_update(exidy_stream, 0);
 
-	i = offset & 0x03;
-	if (i == 0x03) {
-		c = (data & 0xc0) >> 6;
-		if (exidy_sh8253_count[c])
-			f = BASE_FREQ / exidy_sh8253_count[c];
-		else
-            f = 1;
-
-		if ((data & 0x0E) == 0) {
-            mixer_set_sample_frequency(exidy_sample_channels[c],f);
-            mixer_set_volume(exidy_sample_channels[c],0);
-		}
-		else {
-            mixer_set_sample_frequency(exidy_sample_channels[c],f);
-            mixer_set_volume(exidy_sample_channels[c],VOLUME);
-		}
-	}
-
-	if (i < 0x03)
+	offset &= 3;
+	switch (offset)
 	{
-		if (!exidy_sh8253_clstate[i])
-		{
-			exidy_sh8253_clstate[i]=1;
-			exidy_sh8253_count[i] &= 0xFF00;
-			exidy_sh8253_count[i] |= (data & 0xFF);
-		}
-		else
-		{
-			exidy_sh8253_clstate[i]=0;
-			exidy_sh8253_count[i] &= 0x00FF;
-			exidy_sh8253_count[i] |= ((data & 0xFF) << 8);
-            if (!exidy_sh8253_count[i])
-                f = 1;
-            else
-                f = BASE_FREQ / exidy_sh8253_count[i];
-            mixer_set_sample_frequency(exidy_sample_channels[i],f);
-		}
+		case 0:
+		case 1:
+		case 2:
+			chan = offset;
+			if (!sh8253_clstate[chan])
+			{
+				sh8253_clstate[chan] = 1;
+				sh8253_count[chan] = (sh8253_count[chan] & 0xff00) | (data & 0x00ff);
+			}
+			else
+			{
+				sh8253_clstate[chan] = 0;
+				sh8253_count[chan] = (sh8253_count[chan] & 0x00ff) | ((data << 8) & 0xff00);
+				if (sh8253_count[chan])
+					music_channel[chan].step = freq_to_step * (double)BASE_FREQ / (double)sh8253_count[chan];
+				else
+					music_channel[chan].step = 0;
+			}
+			break;
+
+		case 3:
+			chan = (data & 0xc0) >> 6;
+			music_channel[chan].enable = ((data & 0x0e) != 0);
+			break;
 	}
-
-
 }
+
 
 READ_HANDLER( exidy_sh8253_r )
 {
@@ -298,119 +523,119 @@ READ_HANDLER( exidy_sh8253_r )
 	return 0;
 }
 
+
 /**************************************************************************
     6840 Timer
 ***************************************************************************/
 
-READ_HANDLER( exidy_sh6840_r ) {
+READ_HANDLER( exidy_sh6840_r )
+{
     logerror("6840R %x\n",offset);
     return 0;
 }
 
-WRITE_HANDLER( exidy_sh6840_w ) {
-    	offset &= 0x07;
-	switch (offset) {
+
+WRITE_HANDLER( exidy_sh6840_w )
+{
+	int ch;
+
+	stream_update(exidy_stream, 0);
+
+	offset &= 7;
+	switch (offset)
+	{
 		case 0:
-			if (sh6840_CR2 & 0x01) {
-				sh6840_CR1 = data;
-                if ((data & 0x38) == 0) mixer_set_volume(exidy_sample_channels[3],0);
-			}
-			else {
-				sh6840_CR3 = data;
-                if ((data & 0x38) == 0) mixer_set_volume(exidy_sample_channels[5],0);
-			}
+			if (sh6840_CR[1] & 0x01)
+				sh6840_CR[0] = data;
+			else
+				sh6840_CR[2] = data;
 			break;
 
 		case 1:
-			sh6840_CR2 = data;
-            if ((data & 0x38) == 0) mixer_set_volume(exidy_sample_channels[4],0);
+			sh6840_CR[1] = data;
 			break;
+
 		case 2:
 		case 4:
 		case 6:
 			sh6840_MSB = data;
 			break;
+
 		case 3:
-			sh6840_timer[0] = (sh6840_MSB << 8) | (data & 0xFF);
-            if (sh6840_timer[0] != 0 && !(exidy_sfxctrl & 0x02))
-            {
-                mixer_set_sample_frequency(exidy_sample_channels[3],SH6840_FREQ/sh6840_timer[0]);
-                mixer_set_volume(exidy_sample_channels[3],exidy_sfxvol[0]*VOLUME/7);
-            }
-            else
-                mixer_set_volume(exidy_sample_channels[3],0);
-			break;
 		case 5:
-			sh6840_timer[1] = (sh6840_MSB << 8) | (data & 0xFF);
-            if (sh6840_timer[1] != 0)
-            {
-                mixer_set_sample_frequency(exidy_sample_channels[4],SH6840_FREQ/sh6840_timer[1]);
-                mixer_set_volume(exidy_sample_channels[4],exidy_sfxvol[1]*VOLUME/7);
-            }
-            else
-                mixer_set_volume(exidy_sample_channels[4],0);
-			break;
 		case 7:
-			sh6840_timer[2] = (sh6840_MSB << 8) | (data & 0xFF);
-            if (sh6840_timer[2] != 0)
-            {
-                mixer_set_sample_frequency(exidy_sample_channels[5],SH6840_FREQ/sh6840_timer[2]);
-                mixer_set_volume(exidy_sample_channels[5],exidy_sfxvol[2]*VOLUME/7);
-            }
-            else
-                mixer_set_volume(exidy_sample_channels[5],0);
+			ch = (offset - 3) / 2;
+			sh6840_timer[ch] = (sh6840_MSB << 8) | (data & 0xff);
+			if (sh6840_timer[ch])
+				sfx_channel[ch].step = freq_to_step * (double)SH6840_FREQ / (double)sh6840_timer[ch];
+			else
+				sfx_channel[ch].step = 0;
 			break;
 	}
+
+	sfx_channel[0].enable = ((sh6840_CR[0] & 0x80) != 0 && sh6840_timer[0] != 0);
+	sfx_channel[1].enable = ((sh6840_CR[1] & 0x80) != 0 && sh6840_timer[1] != 0);
+	sfx_channel[2].enable = ((sh6840_CR[2] & 0x80) != 0 && sh6840_timer[2] != 0);
+
+	sfx_channel[0].noisy = ((sh6840_CR[0] & 0x02) == 0);
+	sfx_channel[1].noisy = ((sh6840_CR[1] & 0x02) == 0);
+	sfx_channel[2].noisy = ((sh6840_CR[2] & 0x02) == 0);
 }
+
 
 /**************************************************************************
     Special Sound FX Control
 ***************************************************************************/
 
-WRITE_HANDLER( exidy_sfxctrl_w ) {
-	switch (offset & 0x03) {
-	case 0:
-		exidy_sfxctrl = data;
-        if (!(data & 0x02)) mixer_set_volume(exidy_sample_channels[3],0);
-		break;
-	case 1:
-	case 2:
-	case 3:
-		exidy_sfxvol[offset - 1] = (data & 0x07);
-		break;
+WRITE_HANDLER( exidy_sfxctrl_w )
+{
+	stream_update(exidy_stream, 0);
+
+	offset &= 3;
+	switch (offset)
+	{
+		case 0:
+			exidy_sfxctrl = data;
+			break;
+
+		case 1:
+		case 2:
+		case 3:
+			sfx_channel[offset - 1].volume = ((data & 7) * (32767 / 6)) / 7;
+			break;
 	}
 }
+
 
 /**************************************************************************
     Mousetrap Digital Sound
 ***************************************************************************/
 
-
-WRITE_HANDLER( mtrap_voiceio_w ) {
-    if (!(offset & 0x10)) {
+WRITE_HANDLER( mtrap_voiceio_w )
+{
+    if (!(offset & 0x10))
+    {
     	hc55516_digit_clock_clear_w(0,data);
     	hc55516_clock_set_w(0,data);
 	}
-    if (!(offset & 0x20)) {
-		mtrap_voice &= 0x7F;
-		mtrap_voice |= ((data & 0x01) << 7);
-	}
+    if (!(offset & 0x20))
+		riot_portb_data = data & 1;
 }
 
-READ_HANDLER( mtrap_voiceio_r ) {
-	int data=0;
 
-	if (!(offset & 0x80)) {
-       data = (mtrap_voice & 0x06) >> 1;
-       data |= (mtrap_voice & 0x01) << 2;
-       data |= (mtrap_voice & 0x08);
+READ_HANDLER( mtrap_voiceio_r )
+{
+	if (!(offset & 0x80))
+	{
+       int data = (riot_porta_data & 0x06) >> 1;
+       data |= (riot_porta_data & 0x01) << 2;
+       data |= (riot_porta_data & 0x08);
        return data;
 	}
-    if (!(offset & 0x40)) {
+    if (!(offset & 0x40))
+    {
     	int clock_pulse = (int)(timer_get_time() * (2.0 * CVSD_CLOCK_FREQ));
     	return (clock_pulse & 1) << 7;
 	}
 	return 0;
 }
-
-

@@ -2453,10 +2453,7 @@ static struct MachineDriver machine_driver_balsente =
 	/* sound hardware */
 	0,0,0,0,
 	{
-		{
-			SOUND_CEM3394,
-			&cem_interface
-		}
+		{ SOUND_CEM3394, &cem_interface }
 	},
 
 	nvram_handler
@@ -3018,6 +3015,22 @@ ROM_START( rescraid )
 ROM_END
 
 
+ROM_START( rescrdsa )
+	ROM_REGION( 0x40000, REGION_CPU1 )     /* 64k for code for the first CPU, plus 128k of banked ROMs */
+	ROM_LOAD( "ab1-sa.a10",   0x10000, 0x8000, 0xaa0a9f48 )
+	ROM_LOAD( "ab12-sa.a12",  0x18000, 0x8000, 0x16d4da86 )
+	ROM_LOAD( "cd8-sa.a16",   0x20000, 0x8000, 0x9dfb50c2 )
+	ROM_LOAD( "cd12-sa.a18",  0x28000, 0x8000, 0x18c62613 )
+
+	ROM_REGION( 0x10000, REGION_CPU2 )		/* 64k for Z80 */
+	ROM_LOAD( "sentesnd",  0x00000, 0x2000, 0x4dd0a525 )
+
+	ROM_REGION( 0x10000, REGION_GFX1 )		/* up to 64k of sprites */
+	ROM_LOAD( "gr0.a5",    0x00000, 0x8000, 0xe0dfc133 )
+	ROM_LOAD( "gr4.a7",    0x08000, 0x8000, 0x952ade30 )
+ROM_END
+
+
 
 /*************************************
  *
@@ -3047,3 +3060,4 @@ GAME( 1986, nstocker, 0,        balsente, nstocker, nstocker, ROT0, "Bally/Sente
 GAME( 1986, sfootbal, 0,        balsente, sfootbal, sfootbal, ROT0, "Bally/Sente", "Street Football" )
 GAME( 1986, spiker,   0,        balsente, spiker,   spiker,   ROT0, "Bally/Sente", "Spiker" )
 GAME( 1987, rescraid, 0,        balsente, rescraid, rescraid, ROT0, "Bally/Sente", "Rescue Raider" )
+GAME( 1987, rescrdsa, rescraid, balsente, rescraid, rescraid, ROT0, "Bally/Sente", "Rescue Raider (Stand-Alone)" )

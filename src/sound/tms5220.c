@@ -22,50 +22,51 @@
 
 /* these contain data that describes the 128-bit data FIFO */
 #define FIFO_SIZE 16
-static unsigned char fifo[FIFO_SIZE];
-static int fifo_head;
-static int fifo_tail;
-static int fifo_count;
-static int bits_taken;
+static UINT8 fifo[FIFO_SIZE];
+static UINT8 fifo_head;
+static UINT8 fifo_tail;
+static UINT8 fifo_count;
+static UINT8 bits_taken;
 
 
 /* these contain global status bits */
-static int speak_external;
-static int talk_status;
-static int buffer_low;
-static int buffer_empty;
-static int irq_pin;
+static UINT8 speak_external;
+static UINT8 speak_delay_frames;
+static UINT8 talk_status;
+static UINT8 buffer_low;
+static UINT8 buffer_empty;
+static UINT8 irq_pin;
 
 static void (*irq_func)(int state);
 
 
 /* these contain data describing the current and previous voice frames */
-static unsigned short old_energy = 0;
-static unsigned short old_pitch = 0;
-static int old_k[10] = {0,0,0,0,0,0,0,0,0,0};
+static UINT16 old_energy;
+static UINT16 old_pitch;
+static int old_k[10];
 
-static unsigned short new_energy = 0;
-static unsigned short new_pitch = 0;
-static int new_k[10] = {0,0,0,0,0,0,0,0,0,0};
+static UINT16 new_energy;
+static UINT16 new_pitch;
+static int new_k[10];
 
 
 /* these are all used to contain the current state of the sound generation */
-static unsigned short current_energy = 0;
-static unsigned short current_pitch = 0;
-static int current_k[10] = {0,0,0,0,0,0,0,0,0,0};
+static UINT16 current_energy;
+static UINT16 current_pitch;
+static int current_k[10];
 
-static unsigned short target_energy = 0;
-static unsigned short target_pitch = 0;
-static int target_k[10] = {0,0,0,0,0,0,0,0,0,0};
+static UINT16 target_energy;
+static UINT16 target_pitch;
+static int target_k[10];
 
-static int interp_count = 0;       /* number of interp periods (0-7) */
-static int sample_count = 0;       /* sample number within interp (0-24) */
-static int pitch_count = 0;
+static UINT8 interp_count;       /* number of interp periods (0-7) */
+static UINT8 sample_count;       /* sample number within interp (0-24) */
+static int pitch_count;
 
-static int u[11] = {0,0,0,0,0,0,0,0,0,0,0};
-static int x[10] = {0,0,0,0,0,0,0,0,0,0};
+static int u[11];
+static int x[10];
 
-static int randbit = 0;
+static INT8 randbit;
 
 
 /* Static function prototypes */
@@ -76,10 +77,7 @@ static void check_buffer_low(void);
 static void set_interrupt_state(int state);
 
 
-/*#define DEBUG_5220*/
-#ifdef DEBUG_5220
-    static FILE *f;
-#endif
+#define DEBUG_5220	0
 
 
 /**********************************************************************************************
@@ -95,8 +93,8 @@ void tms5220_reset(void)
     fifo_head = fifo_tail = fifo_count = bits_taken = 0;
 
     /* initialize the chip state */
-    speak_external = talk_status = buffer_empty = irq_pin = 0;
-    buffer_low = 1;
+    speak_external = speak_delay_frames = talk_status = irq_pin = 0;
+	buffer_empty = buffer_low = 1;
 
     /* initialize the energy/pitch/k states */
     old_energy = new_energy = current_energy = target_energy = 0;
@@ -111,10 +109,6 @@ void tms5220_reset(void)
     randbit = 0;
     memset(u, 0, sizeof(u));
     memset(x, 0, sizeof(x));
-
-    #ifdef DEBUG_5220
-        f = fopen("tms.log", "w");
-    #endif
 }
 
 
@@ -146,15 +140,15 @@ void tms5220_data_write(int data)
         fifo_tail = (fifo_tail + 1) % FIFO_SIZE;
         fifo_count++;
 
-        #ifdef DEBUG_5220
-            if (f) fprintf(f, "Added byte to FIFO (size=%2d)\n", fifo_count);
-        #endif
+		/* if we were speaking, then we're no longer empty */
+		if (speak_external)
+			buffer_empty = 0;
+
+        if (DEBUG_5220) logerror("Added byte to FIFO (size=%2d)\n", fifo_count);
     }
     else
     {
-        #ifdef DEBUG_5220
-            if (f) fprintf(f, "Ran out of room in the FIFO!\n");
-        #endif
+        if (DEBUG_5220) logerror("Ran out of room in the FIFO!\n");
     }
 
     /* update the buffer low state */
@@ -190,9 +184,7 @@ int tms5220_status_read(void)
     /* clear the interrupt pin */
     set_interrupt_state(0);
 
-    #ifdef DEBUG_5220
-        if (f) fprintf(f, "Status read: TS=%d BL=%d BE=%d\n", talk_status, buffer_low, buffer_empty);
-    #endif
+    if (DEBUG_5220) logerror("Status read: TS=%d BL=%d BE=%d\n", talk_status, buffer_low, buffer_empty);
 
     return (talk_status << 7) | (buffer_low << 6) | (buffer_empty << 5);
 }
@@ -242,10 +234,6 @@ tryagain:
     while (!speak_external && fifo_count > 0)
         process_command();
 
-    /* if there's nothing to do, bail */
-    if (!size)
-        return;
-
     /* if we're empty and still not speaking, fill with nothingness */
     if (!speak_external)
         goto empty;
@@ -260,6 +248,21 @@ tryagain:
         parse_frame(0);
         talk_status = 1;
         buffer_empty = 0;
+    }
+
+    /* apply some delay before we actually consume data; Victory requires this */
+    if (speak_delay_frames)
+    {
+    	if (size <= speak_delay_frames)
+    	{
+    		speak_delay_frames -= size;
+    		size = 0;
+    	}
+    	else
+    	{
+    		size -= speak_delay_frames;
+    		speak_delay_frames = 0;
+    	}
     }
 
     /* loop until the buffer is full or we've stopped speaking */
@@ -456,6 +459,7 @@ static void process_command(void)
         if (cmd == 0x60)
         {
             speak_external = 1;
+            speak_delay_frames = 10;
 
             /* according to the datasheet, this will cause an interrupt due to a BE condition */
             if (!buffer_empty)
@@ -543,9 +547,7 @@ static int parse_frame(int removeit)
 	/* if the index is 0 or 15, we're done */
 	if (indx == 0 || indx == 15)
 	{
-		#ifdef DEBUG_5220
-			if (f) fprintf(f, "  (4-bit energy=%d frame)\n",new_energy);
-		#endif
+		if (DEBUG_5220) logerror("  (4-bit energy=%d frame)\n",new_energy);
 
 		/* clear fifo if stop frame encountered */
 		if (indx == 15)
@@ -575,9 +577,7 @@ static int parse_frame(int removeit)
         for (i = 0; i < 10; i++)
             new_k[i] = old_k[i];
 
-        #ifdef DEBUG_5220
-            if (f) fprintf(f, "  (11-bit energy=%d pitch=%d rep=%d frame)\n", new_energy, new_pitch, rep_flag);
-        #endif
+        if (DEBUG_5220) logerror("  (11-bit energy=%d pitch=%d rep=%d frame)\n", new_energy, new_pitch, rep_flag);
         goto done;
     }
 
@@ -593,9 +593,7 @@ static int parse_frame(int removeit)
         new_k[2] = k3table[extract_bits(4)];
         new_k[3] = k4table[extract_bits(4)];
 
-        #ifdef DEBUG_5220
-            if (f) fprintf(f, "  (29-bit energy=%d pitch=%d rep=%d 4K frame)\n", new_energy, new_pitch, rep_flag);
-        #endif
+        if (DEBUG_5220) logerror("  (29-bit energy=%d pitch=%d rep=%d 4K frame)\n", new_energy, new_pitch, rep_flag);
         goto done;
     }
 
@@ -614,15 +612,11 @@ static int parse_frame(int removeit)
     new_k[8] = k9table[extract_bits(3)];
     new_k[9] = k10table[extract_bits(3)];
 
-    #ifdef DEBUG_5220
-        if (f) fprintf(f, "  (50-bit energy=%d pitch=%d rep=%d 10K frame)\n", new_energy, new_pitch, rep_flag);
-    #endif
+    if (DEBUG_5220) logerror("  (50-bit energy=%d pitch=%d rep=%d 10K frame)\n", new_energy, new_pitch, rep_flag);
 
 done:
 
-    #ifdef DEBUG_5220
-        if (f) fprintf(f, "Parsed a frame successfully - %d bits remaining\n", bits);
-    #endif
+    if (DEBUG_5220) logerror("Parsed a frame successfully - %d bits remaining\n", bits);
 
     /* if we're not to remove this one, restore the FIFO */
     if (!removeit)
@@ -638,9 +632,7 @@ done:
 
 ranout:
 
-    #ifdef DEBUG_5220
-        if (f) fprintf(f, "Ran out of bits on a parse!\n");
-    #endif
+    if (DEBUG_5220) logerror("Ran out of bits on a parse!\n");
 
     /* this is an error condition; mark the buffer empty and turn off speaking */
     buffer_empty = 1;
@@ -663,16 +655,14 @@ ranout:
 static void check_buffer_low(void)
 {
     /* did we just become low? */
-    if (fifo_count < 8)
+    if (fifo_count <= 8)
     {
         /* generate an interrupt if necessary */
         if (!buffer_low)
             set_interrupt_state(1);
         buffer_low = 1;
 
-        #ifdef DEBUG_5220
-            if (f) fprintf(f, "Buffer low set\n");
-        #endif
+        if (DEBUG_5220) logerror("Buffer low set\n");
     }
 
     /* did we just become full? */
@@ -680,9 +670,7 @@ static void check_buffer_low(void)
     {
         buffer_low = 0;
 
-        #ifdef DEBUG_5220
-            if (f) fprintf(f, "Buffer low cleared\n");
-        #endif
+        if (DEBUG_5220) logerror("Buffer low cleared\n");
     }
 }
 

@@ -157,7 +157,7 @@ void ladybug_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				scroll[offs] = -videoram[32 * sx + sy];
 		}
 
-		copyscrollbitmap(bitmap,tmpbitmap,32,scroll,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,32,scroll,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 
@@ -196,7 +196,7 @@ void ladybug_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 							spriteram[offs + i] & 0x20,spriteram[offs + i] & 0x10,
 							spriteram[offs + i + 3],
 							offs / 4 - 8 + (spriteram[offs + i] & 0x0f),
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+							&Machine->visible_area,TRANSPARENCY_PEN,0);
 				else	/* 8x8 */
 					drawgfx(bitmap,Machine->gfx[2],
 							spriteram[offs + i + 1] + 4 * (spriteram[offs + i + 2] & 0x10),
@@ -204,7 +204,7 @@ void ladybug_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 							spriteram[offs + i] & 0x20,spriteram[offs + i] & 0x10,
 							spriteram[offs + i + 3],
 							offs / 4 + (spriteram[offs + i] & 0x0f),
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+							&Machine->visible_area,TRANSPARENCY_PEN,0);
 			}
 		}
 	}

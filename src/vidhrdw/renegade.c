@@ -89,7 +89,7 @@ int renegade_vh_start( void )
 
 static void draw_sprites( struct osd_bitmap *bitmap )
 {
-	const struct rectangle *clip = &Machine->drv->visible_area;
+	const struct rectangle *clip = &Machine->visible_area;
 
 	unsigned char *source = spriteram;
 	unsigned char *finish = source+96*4;

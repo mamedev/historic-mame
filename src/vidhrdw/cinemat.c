@@ -260,7 +260,7 @@ int cinemat_vh_start (void)
 		backdrop_refresh_tables (artwork_backdrop);
 	}
 
-	cinemat_screenh = Machine->drv->visible_area.max_y - Machine->drv->visible_area.min_y;
+	cinemat_screenh = Machine->visible_area.max_y - Machine->visible_area.min_y;
 	return vector_vh_start();
 }
 
@@ -269,7 +269,7 @@ int spacewar_vh_start (void)
 	vector_set_shift (VEC_SHIFT);
 	if (spacewar_panel) backdrop_refresh(spacewar_panel);
 	if (spacewar_pressed_panel) backdrop_refresh(spacewar_pressed_panel);
-	cinemat_screenh = Machine->drv->visible_area.max_y - Machine->drv->visible_area.min_y;
+	cinemat_screenh = Machine->visible_area.max_y - Machine->visible_area.min_y;
 	return vector_vh_start();
 }
 

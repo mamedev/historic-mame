@@ -15,6 +15,8 @@ unsigned int coins[COIN_COUNTERS];
 unsigned int lastcoin[COIN_COUNTERS];
 unsigned int coinlockedout[COIN_COUNTERS];
 
+data_t flip_screen_x, flip_screen_y;
+
 
 
 void showdisclaimer(void)   /* MAURY_BEGIN: dichiarazione */
@@ -766,10 +768,179 @@ WRITE_HANDLER( coin_lockout_global_w )
 }
 
 
+/* flipscreen handling functions */
+static void updateflip(void)
+{
+	int min_x,max_x,min_y,max_y;
+
+	tilemap_set_flip(ALL_TILEMAPS,(TILEMAP_FLIPX & flip_screen_x) | (TILEMAP_FLIPY & flip_screen_y));
+
+	min_x = Machine->drv->default_visible_area.min_x;
+	max_x = Machine->drv->default_visible_area.max_x;
+	min_y = Machine->drv->default_visible_area.min_y;
+	max_y = Machine->drv->default_visible_area.max_y;
+
+	if (flip_screen_x)
+	{
+		int temp;
+
+		temp = Machine->drv->screen_width - min_x - 1;
+		min_x = Machine->drv->screen_width - max_x - 1;
+		max_x = temp;
+	}
+	if (flip_screen_y)
+	{
+		int temp;
+
+		temp = Machine->drv->screen_height - min_y - 1;
+		min_y = Machine->drv->screen_height - max_y - 1;
+		max_y = temp;
+	}
+
+	set_visible_area(min_x,max_x,min_y,max_y);
+}
+
+WRITE_HANDLER( flip_screen_w )
+{
+	flip_screen_x_w(offset,data);
+	flip_screen_y_w(offset,data);
+}
+
+WRITE_HANDLER( flip_screen_x_w )
+{
+	if (data) data = ~0;
+	if (flip_screen_x != data)
+	{
+		set_vh_global_attribute(&flip_screen_x,data);
+		updateflip();
+	}
+}
+
+WRITE_HANDLER( flip_screen_y_w )
+{
+	if (data) data = ~0;
+	if (flip_screen_y != data)
+	{
+		set_vh_global_attribute(&flip_screen_y,data);
+		updateflip();
+	}
+}
+
+
+void set_vh_global_attribute( data_t *addr, data_t data )
+{
+	if (*addr != data)
+	{
+		schedule_full_refresh();
+		*addr = data;
+	}
+}
+
+
+void schedule_full_refresh(void)
+{
+	extern int bitmap_dirty;
+	bitmap_dirty = 1;
+}
+
+
+void set_visible_area(int min_x,int max_x,int min_y,int max_y)
+{
+	Machine->visible_area.min_x = min_x;
+	Machine->visible_area.max_x = max_x;
+	Machine->visible_area.min_y = min_y;
+	Machine->visible_area.max_y = max_y;
+
+	/* vector games always use the whole bitmap */
+	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
+	{
+		min_x = 0;
+		max_x = Machine->scrbitmap->width - 1;
+		min_y = 0;
+		max_y = Machine->scrbitmap->height - 1;
+	}
+	else
+	{
+		int temp;
+
+		if (Machine->orientation & ORIENTATION_SWAP_XY)
+		{
+			temp = min_x; min_x = min_y; min_y = temp;
+			temp = max_x; max_x = max_y; max_y = temp;
+		}
+		if (Machine->orientation & ORIENTATION_FLIP_X)
+		{
+			temp = Machine->scrbitmap->width - min_x - 1;
+			min_x = Machine->scrbitmap->width - max_x - 1;
+			max_x = temp;
+		}
+		if (Machine->orientation & ORIENTATION_FLIP_Y)
+		{
+			temp = Machine->scrbitmap->height - min_y - 1;
+			min_y = Machine->scrbitmap->height - max_y - 1;
+			max_y = temp;
+		}
+	}
+
+	osd_set_visible_area(min_x,max_x,min_y,max_y);
+}
+
+
+struct osd_bitmap *bitmap_alloc(int width,int height)
+{
+	return bitmap_alloc_depth(width,height,Machine->scrbitmap->depth);
+}
+
+struct osd_bitmap *bitmap_alloc_depth(int width,int height,int depth)
+{
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
+	{
+		int temp;
+
+		temp = width; width = height; height = temp;
+	}
+
+	return osd_alloc_bitmap(width,height,depth);
+}
+
+void bitmap_free(struct osd_bitmap *bitmap)
+{
+	osd_free_bitmap(bitmap);
+}
+
+
+void save_screen_snapshot_as(void *fp,struct osd_bitmap *bitmap)
+{
+	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
+		png_write_bitmap(fp,bitmap);
+	else
+	{
+		struct osd_bitmap *copy;
+		int sizex, sizey, scalex, scaley;
+
+		sizex = Machine->visible_area.max_x - Machine->visible_area.min_x + 1;
+		sizey = Machine->visible_area.max_y - Machine->visible_area.min_y + 1;
+
+		scalex = 1;
+		scaley = (Machine->drv->video_attributes & VIDEO_PIXEL_ASPECT_RATIO_1_2) ? 2 : 1;
+
+		copy = bitmap_alloc_depth(sizex * scalex,sizey * scaley,bitmap->depth);
+
+		if (copy)
+		{
+			copybitmapzoom(copy,bitmap,0,0,
+					-scalex * Machine->visible_area.min_x,-scaley * Machine->visible_area.min_y,
+					0,TRANSPARENCY_NONE,0,
+					scalex * 0x10000,scaley * 0x10000);
+			png_write_bitmap(fp,copy);
+			bitmap_free(copy);
+		}
+	}
+}
 
 int snapno;
 
-void save_screen_snapshot(void)
+void save_screen_snapshot(struct osd_bitmap *bitmap)
 {
 	void *fp;
 	char name[20];
@@ -789,26 +960,7 @@ void save_screen_snapshot(void)
 
 	if ((fp = osd_fopen(Machine->gamedrv->name, name, OSD_FILETYPE_SCREENSHOT, 1)) != NULL)
 	{
-		if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
-			png_write_bitmap(fp,Machine->scrbitmap);
-		else
-		{
-			struct osd_bitmap *bitmap;
-
-			bitmap = osd_new_bitmap(
-					Machine->drv->visible_area.max_x - Machine->drv->visible_area.min_x + 1,
-					Machine->drv->visible_area.max_y - Machine->drv->visible_area.min_y + 1,
-					Machine->scrbitmap->depth);
-
-			if (bitmap)
-			{
-				copybitmap(bitmap,Machine->scrbitmap,0,0,
-						-Machine->drv->visible_area.min_x,-Machine->drv->visible_area.min_y,0,TRANSPARENCY_NONE,0);
-				png_write_bitmap(fp,bitmap);
-				osd_free_bitmap(bitmap);
-			}
-		}
-
+		save_screen_snapshot_as(fp,bitmap);
 		osd_fclose(fp);
 	}
 }

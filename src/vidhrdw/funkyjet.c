@@ -163,7 +163,7 @@ static void funkyjet_drawsprites(struct osd_bitmap *bitmap)
 					colour,
 					fx,fy,
 					x,y - 16 * multi,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					&Machine->visible_area,TRANSPARENCY_PEN,0);
 
 			multi--;
 		}
@@ -249,7 +249,7 @@ void funkyjet_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* Background */
 	scrollx=-READ_WORD (&funkyjet_control_0[6]);
 	scrolly=-READ_WORD (&funkyjet_control_0[8]);
- 	copyscrollbitmap(bitmap,funkyjet_pf2_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+ 	copyscrollbitmap(bitmap,funkyjet_pf2_bitmap,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 	/* Sprites */
 //	funkyjet_drawsprites(bitmap);
@@ -261,7 +261,7 @@ void funkyjet_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* 'Fake' rowscroll, used only in the end game message */
 	if (READ_WORD (&funkyjet_control_0[0xc])==0xc0)
 		scrollx=-READ_WORD (&funkyjet_pf1_row[8]);
-	copyscrollbitmap(bitmap,funkyjet_pf1_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+	copyscrollbitmap(bitmap,funkyjet_pf1_bitmap,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 
 	funkyjet_drawsprites(bitmap);
 }
@@ -311,8 +311,8 @@ WRITE_HANDLER( funkyjet_control_0_w )
 
 void funkyjet_vh_stop (void)
 {
-	osd_free_bitmap(funkyjet_pf2_bitmap);
-	osd_free_bitmap(funkyjet_pf1_bitmap);
+	bitmap_free(funkyjet_pf2_bitmap);
+	bitmap_free(funkyjet_pf1_bitmap);
 	free(funkyjet_pf1_dirty);
 	free(funkyjet_pf2_dirty);
 }
@@ -320,12 +320,12 @@ void funkyjet_vh_stop (void)
 int funkyjet_vh_start(void)
 {
 	/* Allocate bitmaps */
-	if ((funkyjet_pf1_bitmap = osd_create_bitmap(512,512)) == 0) {
+	if ((funkyjet_pf1_bitmap = bitmap_alloc(512,512)) == 0) {
 		funkyjet_vh_stop ();
 		return 1;
 	}
 
-	if ((funkyjet_pf2_bitmap = osd_create_bitmap(1024,512)) == 0) {
+	if ((funkyjet_pf2_bitmap = bitmap_alloc(1024,512)) == 0) {
 		funkyjet_vh_stop ();
 		return 1;
 	}

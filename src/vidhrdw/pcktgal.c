@@ -39,12 +39,12 @@ void pcktgal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					videoram[offs] >> 4,
 					fx,fy,
 					8*sx,8*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+					&Machine->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
 
 	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 	/* Sprites */
 	for (offs = 0;offs < spriteram_size;offs += 4)
@@ -71,7 +71,7 @@ void pcktgal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					(spriteram[offs+1] & 0x70) >> 4,
 					flipx,flipy,
 					sx,sy,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					&Machine->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}
 }

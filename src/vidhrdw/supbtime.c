@@ -123,7 +123,7 @@ static void supbtime_drawsprites(struct osd_bitmap *bitmap)
 					colour,
 					fx,fy,
 					x,y + mult * multi,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					&Machine->visible_area,TRANSPARENCY_PEN,0);
 
 			multi--;
 		}
@@ -230,7 +230,7 @@ void supbtime_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* The filled bitmap is unusual for Data East, but without this the title screen
 	background colour is incorrect.  This also explains why the game initialises
 	the previously unused palette ram to zero */
-	fillbitmap(bitmap,Machine->pens[768],&Machine->drv->visible_area);
+	fillbitmap(bitmap,Machine->pens[768],&Machine->visible_area);
 	tilemap_draw(bitmap,pf2_tilemap,0);
 	supbtime_drawsprites(bitmap);
 	tilemap_draw(bitmap,pf1_tilemap,0);

@@ -94,7 +94,7 @@ int megazone_vh_start(void)
 		return 1;
 	memset(dirtybuffer,1,videoram_size);
 
-	if ((tmpbitmap = osd_new_bitmap(256,256,Machine->scrbitmap->depth)) == 0)
+	if ((tmpbitmap = bitmap_alloc(256,256)) == 0)
 	{
 		free(dirtybuffer);
 		return 1;
@@ -106,7 +106,7 @@ int megazone_vh_start(void)
 void megazone_vh_stop(void)
 {
 	free(dirtybuffer);
-	osd_free_bitmap(tmpbitmap);
+	bitmap_free(tmpbitmap);
 
 	dirtybuffer = 0;
 	tmpbitmap = 0;
@@ -161,7 +161,7 @@ void megazone_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		int scrollx = -*megazone_scrolly + 4*8;
 		int scrolly = -*megazone_scrollx;
 
-		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 	/* Draw the sprites. */
@@ -189,7 +189,7 @@ void megazone_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					spriteram[offs + 0] & 0x0f,
 					flipx,flipy,
 					sx,sy,
-					&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+					&Machine->visible_area,TRANSPARENCY_COLOR,0);
 		}
 	}
 

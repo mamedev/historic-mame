@@ -92,10 +92,8 @@ Playfield ROM: 136023.306,136023.305
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-extern unsigned char *enable_nvRAM;
-extern unsigned char *cloak_sharedram;
-READ_HANDLER( cloak_sharedram_r );
-WRITE_HANDLER( cloak_sharedram_w );
+static unsigned char *enable_nvRAM;
+static unsigned char *cloak_sharedram;
 WRITE_HANDLER( cloak_paletteram_w );
 READ_HANDLER( graph_processor_r );
 WRITE_HANDLER( graph_processor_w );
@@ -107,6 +105,18 @@ extern void cloak_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 static unsigned char *nvram;
 static size_t nvram_size;
+
+
+static READ_HANDLER( cloak_sharedram_r )
+{
+	return cloak_sharedram[offset];
+}
+
+static WRITE_HANDLER( cloak_sharedram_w )
+{
+	cloak_sharedram[offset] = data;
+}
+
 
 static void nvram_handler(void *file, int read_or_write)
 {

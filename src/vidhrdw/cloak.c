@@ -81,12 +81,12 @@ WRITE_HANDLER( cloak_clearbmp_w )
 	{
 		if (bmap)
 		{
-			fillbitmap(tmpbitmap, Machine->pens[16], &Machine->drv->visible_area);
+			fillbitmap(tmpbitmap, Machine->pens[16], &Machine->visible_area);
 			memset(tmpvideoram, 0, 256*256);
 		}
 		else
 		{
-			fillbitmap(tmpbitmap2, Machine->pens[16], &Machine->drv->visible_area);
+			fillbitmap(tmpbitmap2, Machine->pens[16], &Machine->visible_area);
 			memset(tmpvideoram2, 0, 256*256);
 		}
 	}
@@ -161,16 +161,16 @@ WRITE_HANDLER( graph_processor_w )
 ***************************************************************************/
 int cloak_vh_start(void)
 {
-	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if ((tmpbitmap = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
 
-	if ((charbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if ((charbitmap = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 	{
 		cloak_vh_stop();
 		return 1;
 	}
 
-	if ((tmpbitmap2 = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if ((tmpbitmap2 = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 	{
 		cloak_vh_stop();
 		return 1;
@@ -205,9 +205,9 @@ int cloak_vh_start(void)
 ***************************************************************************/
 void cloak_vh_stop(void)
 {
-	if (charbitmap)  osd_free_bitmap(charbitmap);
-	if (tmpbitmap2)  osd_free_bitmap(tmpbitmap2);
-	if (tmpbitmap)   osd_free_bitmap(tmpbitmap);
+	if (charbitmap)  bitmap_free(charbitmap);
+	if (tmpbitmap2)  bitmap_free(tmpbitmap2);
+	if (tmpbitmap)   bitmap_free(tmpbitmap);
 	if (dirtybuffer) free(dirtybuffer);
 	if (tmpvideoram) free(tmpvideoram);
 	if (tmpvideoram2) free(tmpvideoram2);
@@ -267,13 +267,13 @@ void cloak_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					videoram[offs],0,
 					0,0,
 					8*sx,8*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+					&Machine->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
 
 	/* copy the temporary bitmap to the screen */
-    copybitmap(bitmap,charbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-	copybitmap(bitmap, bmap ? tmpbitmap2 : tmpbitmap, 0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+    copybitmap(bitmap,charbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap, bmap ? tmpbitmap2 : tmpbitmap, 0,0,0,0,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 
 
 	/* Draw the sprites */
@@ -284,6 +284,6 @@ void cloak_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				0,
 				spriteram[offs+64] & 0x80,0,
 				spriteram[offs+192],240-spriteram[offs],
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

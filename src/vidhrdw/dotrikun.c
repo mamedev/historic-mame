@@ -50,10 +50,10 @@ WRITE_HANDLER( dotrikun_videoram_w )
 	x = 2 * (((offset % 16) * 8));
 	y = 2 * ((offset / 16));
 
-	if (x >= Machine->drv->visible_area.min_x &&
-			x <= Machine->drv->visible_area.max_x &&
-			y >= Machine->drv->visible_area.min_y &&
-			y <= Machine->drv->visible_area.max_y)
+	if (x >= Machine->visible_area.min_x &&
+			x <= Machine->visible_area.max_x &&
+			y >= Machine->visible_area.min_y &&
+			y <= Machine->visible_area.max_y)
 	{
 		for (i = 0; i < 8; i++)
 		{

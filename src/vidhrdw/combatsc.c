@@ -552,11 +552,11 @@ void combasc_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
 	{
 		struct rectangle clip;
 
-		clip = Machine->drv->visible_area;
+		clip = Machine->visible_area;
 		clip.max_x = clip.min_x + 7;
 		fillbitmap(bitmap,Machine->pens[0],&clip);
 
-		clip = Machine->drv->visible_area;
+		clip = Machine->visible_area;
 		clip.min_x = clip.max_x - 7;
 		fillbitmap(bitmap,Machine->pens[0],&clip);
 	}
@@ -593,7 +593,7 @@ byte #4:
 static void bootleg_draw_sprites( struct osd_bitmap *bitmap, const unsigned char *source, int circuit )
 {
 	const struct GfxElement *gfx = Machine->gfx[circuit+2];
-	const struct rectangle *clip = &Machine->drv->visible_area;
+	const struct rectangle *clip = &Machine->visible_area;
 
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	int limit = ( circuit) ? (RAM[0xc2]*256 + RAM[0xc3]) : (RAM[0xc0]*256 + RAM[0xc1]);

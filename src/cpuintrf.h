@@ -238,6 +238,9 @@ enum {
 #ifndef HAS_MIPS
 #define HAS_MIPS		0
 #endif
+#ifndef HAS_SC61860
+#define HAS_SC61860		0
+#endif
 
 /* ASG 971222 -- added this generic structure */
 struct cpu_interface

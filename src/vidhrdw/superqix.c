@@ -74,7 +74,7 @@ int superqix_vh_start(void)
 	}
 	memset(superqix_bitmapram2_dirty,1,0x7000);
 
-	if ((tmpbitmap2 = osd_create_bitmap(256, 256)) == 0)
+	if ((tmpbitmap2 = bitmap_alloc(256, 256)) == 0)
 	{
 		free(superqix_bitmapram2_dirty);
 		free(superqix_bitmapram_dirty);
@@ -104,7 +104,7 @@ void superqix_vh_stop(void)
 	free(superqix_bitmapram);
 	free(superqix_bitmapram_dirty);
 	free(superqix_bitmapram2_dirty);
-	osd_free_bitmap (tmpbitmap2);
+	bitmap_free (tmpbitmap2);
 	free(paletteram);
 	generic_vh_stop();
 }
@@ -231,13 +231,13 @@ void superqix_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					(colorram[offs] & 0xf0) >> 4,
 					0,0,
 					8*sx,8*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+					&Machine->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
 
 
 	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 	for(i=1;i<16;i++)
 		pens[i]=Machine->pens[i];
@@ -291,7 +291,7 @@ void superqix_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			}
 		}
 	}
-	copybitmap(bitmap,tmpbitmap2,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+	copybitmap(bitmap,tmpbitmap2,0,0,0,0,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 
 	/* Draw the sprites. Note that it is important to draw them exactly in this */
 	/* order, to have the correct priorities. */
@@ -302,7 +302,7 @@ void superqix_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				(spriteram[offs + 3] & 0xf0) >> 4,
 				spriteram[offs + 3] & 0x04,spriteram[offs + 3] & 0x08,
 				spriteram[offs + 1],spriteram[offs + 2],
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 
 
@@ -322,7 +322,7 @@ void superqix_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					(colorram[offs] & 0xf0) >> 4,
 					0,0,
 					8*sx,8*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					&Machine->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}
 

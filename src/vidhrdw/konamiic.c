@@ -859,7 +859,7 @@ void K007121_sprites_draw(int chip,struct osd_bitmap *bitmap,
 		UINT32 pri_mask)
 {
 	const struct GfxElement *gfx = Machine->gfx[chip];
-	int flip_screen = K007121_flipscreen[chip];
+	int flipscreen = K007121_flipscreen[chip];
 	int i,num,inc,offs[5],trans;
 	int is_flakatck = K007121_ctrlram[chip][0x06] & 0x04;	/* WRONG!!!! */
 
@@ -959,7 +959,7 @@ if (keyboard_pressed(KEYCODE_D))
 					ex = xflip ? (width-1-x) : x;
 					ey = yflip ? (height-1-y) : y;
 
-					if (flip_screen)
+					if (flipscreen)
 					{
 						if (pri_mask != -1)
 							pdrawgfx(bitmap,gfx,
@@ -967,7 +967,7 @@ if (keyboard_pressed(KEYCODE_D))
 								color,
 								!xflip,!yflip,
 								248-(sx+x*8),248-(sy+y*8),
-								&Machine->drv->visible_area,trans,0,
+								&Machine->visible_area,trans,0,
 								pri_mask);
 						else
 							drawgfx(bitmap,gfx,
@@ -975,7 +975,7 @@ if (keyboard_pressed(KEYCODE_D))
 								color,
 								!xflip,!yflip,
 								248-(sx+x*8),248-(sy+y*8),
-								&Machine->drv->visible_area,trans,0);
+								&Machine->visible_area,trans,0);
 					}
 					else
 					{
@@ -985,7 +985,7 @@ if (keyboard_pressed(KEYCODE_D))
 								color,
 								xflip,yflip,
 								global_x_offset+sx+x*8,sy+y*8,
-								&Machine->drv->visible_area,trans,0,
+								&Machine->visible_area,trans,0,
 								pri_mask);
 						else
 							drawgfx(bitmap,gfx,
@@ -993,7 +993,7 @@ if (keyboard_pressed(KEYCODE_D))
 								color,
 								xflip,yflip,
 								global_x_offset+sx+x*8,sy+y*8,
-								&Machine->drv->visible_area,trans,0);
+								&Machine->visible_area,trans,0);
 					}
 				}
 			}
@@ -1441,7 +1441,7 @@ void K007420_sprites_draw(struct osd_bitmap *bitmap)
 						color,
 						flipx,flipy,
 						sx,sy,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+						&Machine->visible_area,TRANSPARENCY_PEN,0);
 
 					if (K007342_regs[2] & 0x80)
 						drawgfx(bitmap,K007420_gfx,
@@ -1449,7 +1449,7 @@ void K007420_sprites_draw(struct osd_bitmap *bitmap)
 							color,
 							flipx,flipy,
 							sx,sy-256,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+							&Machine->visible_area,TRANSPARENCY_PEN,0);
 				}
 			}
 		}
@@ -1477,7 +1477,7 @@ void K007420_sprites_draw(struct osd_bitmap *bitmap)
 						color,
 						flipx,flipy,
 						sx,sy,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0,
+						&Machine->visible_area,TRANSPARENCY_PEN,0,
 						(zw << 16) / 8,(zh << 16) / 8);
 
 					if (K007342_regs[2] & 0x80)
@@ -1486,7 +1486,7 @@ void K007420_sprites_draw(struct osd_bitmap *bitmap)
 							color,
 							flipx,flipy,
 							sx,sy-256,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0,
+							&Machine->visible_area,TRANSPARENCY_PEN,0,
 							(zw << 16) / 8,(zh << 16) / 8);
 				}
 			}
@@ -2375,14 +2375,14 @@ void K051960_sprites_draw(struct osd_bitmap *bitmap,int min_priority,int max_pri
 									color,
 									flipx,flipy,
 									sx & 0x1ff,sy,
-									&Machine->drv->visible_area,TRANSPARENCY_PENS,(cpu_getcurrentframe() & 1) ? 0x8001 : 0x0001,pri);
+									&Machine->visible_area,TRANSPARENCY_PENS,(cpu_getcurrentframe() & 1) ? 0x8001 : 0x0001,pri);
 						else
 							drawgfx(bitmap,K051960_gfx,
 									c,
 									color,
 									flipx,flipy,
 									sx & 0x1ff,sy,
-									&Machine->drv->visible_area,TRANSPARENCY_PENS,(cpu_getcurrentframe() & 1) ? 0x8001 : 0x0001);
+									&Machine->visible_area,TRANSPARENCY_PENS,(cpu_getcurrentframe() & 1) ? 0x8001 : 0x0001);
 						K051960_gfx->colortable[16*color+15] = o;
 					}
 					else
@@ -2393,14 +2393,14 @@ void K051960_sprites_draw(struct osd_bitmap *bitmap,int min_priority,int max_pri
 									color,
 									flipx,flipy,
 									sx & 0x1ff,sy,
-									&Machine->drv->visible_area,TRANSPARENCY_PEN,0,pri);
+									&Machine->visible_area,TRANSPARENCY_PEN,0,pri);
 						else
 							drawgfx(bitmap,K051960_gfx,
 									c,
 									color,
 									flipx,flipy,
 									sx & 0x1ff,sy,
-									&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+									&Machine->visible_area,TRANSPARENCY_PEN,0);
 					}
 				}
 			}
@@ -2436,7 +2436,7 @@ void K051960_sprites_draw(struct osd_bitmap *bitmap,int min_priority,int max_pri
 									color,
 									flipx,flipy,
 									sx & 0x1ff,sy,
-									&Machine->drv->visible_area,TRANSPARENCY_PENS,(cpu_getcurrentframe() & 1) ? 0x8001 : 0x0001,
+									&Machine->visible_area,TRANSPARENCY_PENS,(cpu_getcurrentframe() & 1) ? 0x8001 : 0x0001,
 									(zw << 16) / 16,(zh << 16) / 16,pri);
 						else
 							drawgfxzoom(bitmap,K051960_gfx,
@@ -2444,7 +2444,7 @@ void K051960_sprites_draw(struct osd_bitmap *bitmap,int min_priority,int max_pri
 									color,
 									flipx,flipy,
 									sx & 0x1ff,sy,
-									&Machine->drv->visible_area,TRANSPARENCY_PENS,(cpu_getcurrentframe() & 1) ? 0x8001 : 0x0001,
+									&Machine->visible_area,TRANSPARENCY_PENS,(cpu_getcurrentframe() & 1) ? 0x8001 : 0x0001,
 									(zw << 16) / 16,(zh << 16) / 16);
 						K051960_gfx->colortable[16*color+15] = o;
 					}
@@ -2456,7 +2456,7 @@ void K051960_sprites_draw(struct osd_bitmap *bitmap,int min_priority,int max_pri
 									color,
 									flipx,flipy,
 									sx & 0x1ff,sy,
-									&Machine->drv->visible_area,TRANSPARENCY_PEN,0,
+									&Machine->visible_area,TRANSPARENCY_PEN,0,
 									(zw << 16) / 16,(zh << 16) / 16,pri);
 						else
 							drawgfxzoom(bitmap,K051960_gfx,
@@ -2464,7 +2464,7 @@ void K051960_sprites_draw(struct osd_bitmap *bitmap,int min_priority,int max_pri
 									color,
 									flipx,flipy,
 									sx & 0x1ff,sy,
-									&Machine->drv->visible_area,TRANSPARENCY_PEN,0,
+									&Machine->visible_area,TRANSPARENCY_PEN,0,
 									(zw << 16) / 16,(zh << 16) / 16);
 					}
 				}
@@ -2936,7 +2936,7 @@ else zoomx = zoomy; /* workaround for TMNT2 */
 								color,
 								fx,fy,
 								sx,sy,
-								&Machine->drv->visible_area,TRANSPARENCY_PENS,(cpu_getcurrentframe() & 1) ? 0x8001 : 0x0001,pri);
+								&Machine->visible_area,TRANSPARENCY_PENS,(cpu_getcurrentframe() & 1) ? 0x8001 : 0x0001,pri);
 						K053245_gfx->colortable[16*color+15] = o;
 					}
 					else
@@ -2946,7 +2946,7 @@ else zoomx = zoomy; /* workaround for TMNT2 */
 								color,
 								fx,fy,
 								sx,sy,
-								&Machine->drv->visible_area,TRANSPARENCY_PEN,0,pri);
+								&Machine->visible_area,TRANSPARENCY_PEN,0,pri);
 					}
 				}
 				else
@@ -2961,7 +2961,7 @@ else zoomx = zoomy; /* workaround for TMNT2 */
 								color,
 								fx,fy,
 								sx,sy,
-								&Machine->drv->visible_area,TRANSPARENCY_PENS,(cpu_getcurrentframe() & 1) ? 0x8001 : 0x0001,
+								&Machine->visible_area,TRANSPARENCY_PENS,(cpu_getcurrentframe() & 1) ? 0x8001 : 0x0001,
 								(zw << 16) / 16,(zh << 16) / 16,pri);
 						K053245_gfx->colortable[16*color+15] = o;
 					}
@@ -2972,7 +2972,7 @@ else zoomx = zoomy; /* workaround for TMNT2 */
 								color,
 								fx,fy,
 								sx,sy,
-								&Machine->drv->visible_area,TRANSPARENCY_PEN,0,
+								&Machine->visible_area,TRANSPARENCY_PEN,0,
 								(zw << 16) / 16,(zh << 16) / 16,pri);
 					}
 				}
@@ -3457,7 +3457,7 @@ switch (K053247_spriteoffsY)
 								color,
 								fx,fy,
 								sx,sy,
-								&Machine->drv->visible_area,TRANSPARENCY_PENS,(cpu_getcurrentframe() & 1) ? 0x8001 : 0x0001,pri);
+								&Machine->visible_area,TRANSPARENCY_PENS,(cpu_getcurrentframe() & 1) ? 0x8001 : 0x0001,pri);
 						K053247_gfx->colortable[16*color+15] = o;
 					}
 					else
@@ -3467,7 +3467,7 @@ switch (K053247_spriteoffsY)
 								color,
 								fx,fy,
 								sx,sy,
-								&Machine->drv->visible_area,TRANSPARENCY_PEN,0,pri);
+								&Machine->visible_area,TRANSPARENCY_PEN,0,pri);
 					}
 				}
 				else
@@ -3482,7 +3482,7 @@ switch (K053247_spriteoffsY)
 								color,
 								fx,fy,
 								sx,sy,
-								&Machine->drv->visible_area,TRANSPARENCY_PENS,(cpu_getcurrentframe() & 1) ? 0x8001 : 0x0001,
+								&Machine->visible_area,TRANSPARENCY_PENS,(cpu_getcurrentframe() & 1) ? 0x8001 : 0x0001,
 								(zw << 16) / 16,(zh << 16) / 16,pri);
 						K053247_gfx->colortable[16*color+15] = o;
 					}
@@ -3493,7 +3493,7 @@ switch (K053247_spriteoffsY)
 								color,
 								fx,fy,
 								sx,sy,
-								&Machine->drv->visible_area,TRANSPARENCY_PEN,0,
+								&Machine->visible_area,TRANSPARENCY_PEN,0,
 								(zw << 16) / 16,(zh << 16) / 16,pri);
 					}
 				}
@@ -3512,7 +3512,7 @@ switch (K053247_spriteoffsY)
 									color,
 									fx,!fy,
 									sx,sy,
-									&Machine->drv->visible_area,TRANSPARENCY_PENS,(cpu_getcurrentframe() & 1) ? 0x8001 : 0x0001,pri);
+									&Machine->visible_area,TRANSPARENCY_PENS,(cpu_getcurrentframe() & 1) ? 0x8001 : 0x0001,pri);
 							K053247_gfx->colortable[16*color+15] = o;
 						}
 						else
@@ -3522,7 +3522,7 @@ switch (K053247_spriteoffsY)
 									color,
 									fx,!fy,
 									sx,sy,
-									&Machine->drv->visible_area,TRANSPARENCY_PEN,0,pri);
+									&Machine->visible_area,TRANSPARENCY_PEN,0,pri);
 						}
 					}
 					else
@@ -3537,7 +3537,7 @@ switch (K053247_spriteoffsY)
 									color,
 									fx,!fy,
 									sx,sy,
-									&Machine->drv->visible_area,TRANSPARENCY_PENS,(cpu_getcurrentframe() & 1) ? 0x8001 : 0x0001,
+									&Machine->visible_area,TRANSPARENCY_PENS,(cpu_getcurrentframe() & 1) ? 0x8001 : 0x0001,
 									(zw << 16) / 16,(zh << 16) / 16,pri);
 							K053247_gfx->colortable[16*color+15] = o;
 						}
@@ -3548,7 +3548,7 @@ switch (K053247_spriteoffsY)
 									color,
 									fx,!fy,
 									sx,sy,
-									&Machine->drv->visible_area,TRANSPARENCY_PEN,0,
+									&Machine->visible_area,TRANSPARENCY_PEN,0,
 									(zw << 16) / 16,(zh << 16) / 16,pri);
 						}
 					}
@@ -3939,16 +3939,16 @@ void K051316_zoom_draw(int chip, struct osd_bitmap *bitmap,UINT32 priority)
 	incxy  =        (INT16)(256 * K051316_ctrlram[chip][0x08] + K051316_ctrlram[chip][0x09]);
 	incyy  =        (INT16)(256 * K051316_ctrlram[chip][0x0a] + K051316_ctrlram[chip][0x0b]);
 
-	startx += (Machine->drv->visible_area.min_y - (16 + K051316_offset[chip][1])) * incyx;
-	starty += (Machine->drv->visible_area.min_y - (16 + K051316_offset[chip][1])) * incyy;
+	startx += (Machine->visible_area.min_y - (16 + K051316_offset[chip][1])) * incyx;
+	starty += (Machine->visible_area.min_y - (16 + K051316_offset[chip][1])) * incyy;
 
-	startx += (Machine->drv->visible_area.min_x - (89 + K051316_offset[chip][0])) * incxx;
-	starty += (Machine->drv->visible_area.min_x - (89 + K051316_offset[chip][0])) * incxy;
+	startx += (Machine->visible_area.min_x - (89 + K051316_offset[chip][0])) * incxx;
+	starty += (Machine->visible_area.min_x - (89 + K051316_offset[chip][0])) * incxy;
 
-	sx = Machine->drv->visible_area.min_x;
-	sy = Machine->drv->visible_area.min_y;
-	ex = Machine->drv->visible_area.max_x;
-	ey = Machine->drv->visible_area.max_y;
+	sx = Machine->visible_area.min_x;
+	sy = Machine->visible_area.min_y;
+	ex = Machine->visible_area.max_x;
+	ey = Machine->visible_area.max_y;
 
 	if (Machine->orientation & ORIENTATION_SWAP_XY)
 	{

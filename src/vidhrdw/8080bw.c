@@ -11,11 +11,9 @@
 #include "artwork.h"
 
 static int use_tmpbitmap;
-static int flipscreen;
-static int screen_red;
+static data_t screen_red;
 static int screen_red_enabled;		/* 1 for games that can turn the screen red */
-static int redraw_screen;
-static int color_map_select;
+static data_t color_map_select;
 static int background_color;
 
 static int overlay_type;	/* 0=none, 1=geometric, 2=file */
@@ -94,10 +92,11 @@ void init_8080bw(void)
 	videoram_w_p = bw_videoram_w;
 	vh_screenrefresh_p = vh_screenrefresh;
 	use_tmpbitmap = 0;
+	screen_red = 0;
 	screen_red_enabled = 0;
 	overlay_type = 0;
 	color_map_select = 0;
-	flipscreen = 0;
+	flip_screen_w(0,0);
 }
 
 void init_invaders(void)
@@ -250,7 +249,7 @@ int invaders_vh_start(void)
 	}
 
 	/* make sure that the screen matches the videoram, this fixes invad2ct */
-	redraw_screen = 1;
+	//schedule_full_refresh();
 
 	return 0;
 }
@@ -262,47 +261,29 @@ void invaders_vh_stop(void)
 }
 
 
-void invaders_flipscreen_w(int data)
+void invaders_flip_screen_w(int data)
 {
-	if (data != color_map_select)
-	{
-		color_map_select = data;
-		redraw_screen = 1;
-	}
+	set_vh_global_attribute(&color_map_select, data);
 
 	if (input_port_3_r(0) & 0x01)
 	{
-		if (data != flipscreen)
-		{
-			flipscreen = data;
-			redraw_screen = 1;
-		}
-	}
-}
-
-void sheriff_flipscreen_w(int data)
-{
-	if (data != flipscreen)
-	{
-		flipscreen = data;
-		redraw_screen = 1;
+		flip_screen_w(0, data);
 	}
 }
 
 
 void invaders_screen_red_w(int data)
 {
-	if (screen_red_enabled && (data != screen_red))
+	if (screen_red_enabled)
 	{
-		screen_red = data;
-		redraw_screen = 1;
+		set_vh_global_attribute(&screen_red, data);
 	}
 }
 
 
 static void plot_pixel_8080 (int x, int y, int col)
 {
-	if (flipscreen)
+	if (flip_screen)
 	{
 		x = 255-x;
 		y = 223-y;
@@ -313,7 +294,7 @@ static void plot_pixel_8080 (int x, int y, int col)
 
 static void plot_pixel_8080_tmpbitmap (int x, int y, int col)
 {
-	if (flipscreen)
+	if (flip_screen)
 	{
 		x = 255-x;
 		y = 223-y;
@@ -467,19 +448,17 @@ void invaders_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 static void vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	if (palette_recalc() || redraw_screen || (full_refresh && !use_tmpbitmap))
+	if (palette_recalc() || full_refresh)
 	{
 		int offs;
 
 		for (offs = 0;offs < videoram_size;offs++)
 			videoram_w_p(offs, videoram[offs]);
-
-		redraw_screen = 0;
 	}
 
 
 	if (use_tmpbitmap)
-		copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 }
 
 
@@ -507,7 +486,7 @@ static void draw_sight(int x_center, int y_center)
 static void seawolf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	/* update the bitmap (and erase old cross) */
-	vh_screenrefresh(bitmap, 1);
+	vh_screenrefresh(bitmap, full_refresh);
 
     draw_sight(((input_port_0_r(0) & 0x1f) * 8) + 4, 31);
 }
@@ -515,7 +494,7 @@ static void seawolf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 static void blueshrk_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	/* update the bitmap (and erase old cross) */
-	vh_screenrefresh(bitmap, 1);
+	vh_screenrefresh(bitmap, full_refresh);
 
     draw_sight(((input_port_0_r(0) & 0x7f) * 2) - 12, 31);
 }
@@ -523,7 +502,7 @@ static void blueshrk_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh
 static void desertgu_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	/* update the bitmap (and erase old cross) */
-	vh_screenrefresh(bitmap, 1);
+	vh_screenrefresh(bitmap, full_refresh);
 
 	draw_sight(((input_port_0_r(0) & 0x7f) * 2) - 30,
 			   ((input_port_2_r(0) & 0x7f) * 2) - 30);
@@ -536,7 +515,7 @@ static void phantom2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh
 
 
 	/* update the bitmap */
-	vh_screenrefresh(bitmap, 1);
+	vh_screenrefresh(bitmap, full_refresh);
 
 
 	/* draw the clouds */
@@ -618,7 +597,7 @@ static WRITE_HANDLER( astinvad_videoram_w )
 
 	if (!screen_red)
 	{
-		if (flipscreen)
+		if (flip_screen)
 			col = memory_region(REGION_PROMS)[((y+32)/8)*32+(x/8)] >> 4;
 		else
 			col = memory_region(REGION_PROMS)[(31-y/8)*32+(31-x/8)] & 0x0f;

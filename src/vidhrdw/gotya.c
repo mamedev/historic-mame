@@ -5,7 +5,7 @@
 unsigned char *gotya_scroll;
 unsigned char *gotya_foregroundram;
 
-static int scroll_bit_8,flipscreen;
+static int scroll_bit_8;
 
 
 /***************************************************************************
@@ -58,21 +58,13 @@ void gotya_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 
 WRITE_HANDLER( gotya_video_control_w )
 {
-	static int last;
-
 	/* bit 0 - scroll bit 8
 	   bit 1 - flip screen
 	   bit 2 - sound disable ??? */
 
 	scroll_bit_8 = data & 0x01;
-	flipscreen   = data & 0x02;
 
-	if (flipscreen != (last & 0x02))
-	{
-		memset(dirtybuffer, 1, videoram_size);
-	}
-
-	last = data;
+	flip_screen_w(offset, data & 0x02);
 }
 
 
@@ -85,7 +77,7 @@ int gotya_vh_start(void)
 
 	/* the background area is twice as wide as the screen (actually twice as tall, */
 	/* because this is a vertical game) */
-	if ((tmpbitmap = osd_create_bitmap(2*256,Machine->drv->screen_height)) == 0)
+	if ((tmpbitmap = bitmap_alloc(2*256,Machine->drv->screen_height)) == 0)
 	{
 		free(dirtybuffer);
 		return 1;
@@ -99,7 +91,7 @@ static void draw_status_row(struct osd_bitmap *bitmap, int sx, int col)
 {
 	int row;
 
-	if (flipscreen)
+	if (flip_screen)
 	{
 		sx = 35 - sx;
 	}
@@ -108,7 +100,7 @@ static void draw_status_row(struct osd_bitmap *bitmap, int sx, int col)
 	{
 		int sy;
 
-		if (flipscreen)
+		if (flip_screen)
 		{
 			sy = row;
 		}
@@ -120,9 +112,9 @@ static void draw_status_row(struct osd_bitmap *bitmap, int sx, int col)
 		drawgfx(bitmap,Machine->gfx[0],
 				gotya_foregroundram[row * 32 + col],
 				gotya_foregroundram[row * 32 + col + 0x10] & 0x0f,
-				flipscreen, flipscreen,
+				flip_screen, flip_screen,
 				8*sx,8*sy,
-				&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+				&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 }
 
@@ -130,6 +122,12 @@ static void draw_status_row(struct osd_bitmap *bitmap, int sx, int col)
 void gotya_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs;
+
+
+	if (full_refresh)
+	{
+		memset(dirtybuffer,1,videoram_size);
+	}
 
 
 	/* for every character in the Video RAM, check if it has been modified */
@@ -146,7 +144,7 @@ void gotya_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			sx = 31 - (offs % 32);
 			sy = 31 - ((offs & 0x03ff) / 32);
 
-			if (flipscreen)
+			if (flip_screen)
 			{
 				sx = 31 - sx;
 				sy = 31 - sy;
@@ -160,7 +158,7 @@ void gotya_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					videoram[offs],
 					colorram[offs] & 0x0f,
-					flipscreen,flipscreen,
+					flip_screen,flip_screen,
 					8*sx, 8*sy,
 					0,TRANSPARENCY_NONE,0);
 		}
@@ -174,7 +172,7 @@ void gotya_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		scroll = *gotya_scroll + (scroll_bit_8 * 256) + 16;
 
-		copyscrollbitmap(bitmap,tmpbitmap,1,&scroll,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,1,&scroll,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 
@@ -189,16 +187,16 @@ void gotya_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		sx   = 256 - spriteram[offs + 0x10] + (spriteram[offs + 0x01] & 0x01) * 256;
 		sy   =       spriteram[offs + 0x00];
 
-		if (flipscreen)
+		if (flip_screen)
 		{
 			sy = 240 - sy;
 		}
 
 		drawgfx(bitmap,Machine->gfx[1],
 				code,col,
-				flipscreen,flipscreen,
+				flip_screen,flip_screen,
 				sx,sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 
 

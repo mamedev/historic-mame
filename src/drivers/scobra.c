@@ -92,8 +92,6 @@ int  calipso_vh_start (void);
 int  stratgyx_vh_start(void);
 
 void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-WRITE_HANDLER( galaxian_flipx_w );
-WRITE_HANDLER( galaxian_flipy_w );
 WRITE_HANDLER( galaxian_attributes_w );
 WRITE_HANDLER( galaxian_stars_w );
 int  scramble_vh_interrupt(void);
@@ -160,8 +158,8 @@ static struct MemoryWriteAddress type1_writemem[] =
 	{ 0xa802, 0xa802, coin_counter_w },
 	{ 0xa803, 0xa803, scramble_background_w },
 	{ 0xa804, 0xa804, galaxian_stars_w },
-	{ 0xa806, 0xa806, galaxian_flipx_w },
-	{ 0xa807, 0xa807, galaxian_flipy_w },
+	{ 0xa806, 0xa806, flip_screen_x_w },
+	{ 0xa807, 0xa807, flip_screen_y_w },
 	{ -1 }	/* end of table */
 };
 
@@ -192,8 +190,8 @@ static struct MemoryWriteAddress type2_writemem[] =
 	{ 0xb002, 0xb002, scramble_background_w },
 	{ 0xb004, 0xb004, interrupt_enable_w },
 	{ 0xb006, 0xb008, stratgyx_coin_counter_w },
-	{ 0xb00c, 0xb00c, galaxian_flipy_w },
-	{ 0xb00e, 0xb00e, galaxian_flipx_w },
+	{ 0xb00c, 0xb00c, flip_screen_y_w },
+	{ 0xb00e, 0xb00e, flip_screen_x_w },
 	{ -1 }	/* end of table */
 };
 
@@ -217,9 +215,9 @@ static struct MemoryWriteAddress hustler_writemem[] =
 	{ 0x9000, 0x903f, galaxian_attributes_w, &galaxian_attributesram },
 	{ 0x9040, 0x905f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x9060, 0x907f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
-	{ 0xa802, 0xa802, galaxian_flipx_w },
+	{ 0xa802, 0xa802, flip_screen_x_w },
 	{ 0xa804, 0xa804, interrupt_enable_w },
-	{ 0xa806, 0xa806, galaxian_flipy_w },
+	{ 0xa806, 0xa806, flip_screen_y_w },
 	{ 0xa80e, 0xa80e, MWA_NOP },	/* coin counters */
 	{ 0xe000, 0xe000, soundlatch_w },
 	{ 0xe008, 0xe008, scramble_sh_irqtrigger_w },
@@ -248,8 +246,8 @@ static struct MemoryWriteAddress hustlerb_writemem[] =
 	{ 0x9060, 0x907f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
 	{ 0xa801, 0xa801, interrupt_enable_w },
 	{ 0xa802, 0xa802, MWA_NOP },	/* coin counters */
-	{ 0xa806, 0xa806, galaxian_flipy_w },
-	{ 0xa807, 0xa807, galaxian_flipx_w },
+	{ 0xa806, 0xa806, flip_screen_y_w },
+	{ 0xa807, 0xa807, flip_screen_x_w },
 	{ 0xc200, 0xc200, soundlatch_w },
 	{ 0xc201, 0xc201, scramble_sh_irqtrigger_w },
 	{ -1 }	/* end of table */

@@ -50,14 +50,66 @@ driver by Ivan Mackintosh
 WRITE_HANDLER( milliped_paletteram_w );
 void milliped_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-READ_HANDLER( milliped_IN0_r );
-READ_HANDLER( milliped_IN1_r );
-WRITE_HANDLER( milliped_input_select_w );
+/*
+ * This wrapper routine is necessary because Millipede requires a direction bit
+ * to be set or cleared. The direction bit is held until the mouse is moved
+ * again. We still don't understand why the difference between
+ * two consecutive reads must not exceed 7. After all, the input is 4 bits
+ * wide, and we have a fifth bit for the sign...
+ *
+ * The other reason it is necessary is that Millipede uses the same address to
+ * read the dipswitches.
+ */
 
-WRITE_HANDLER( milliped_led_w )
+static UINT8 dsw_select;
+
+static WRITE_HANDLER( milliped_input_select_w )
+{
+	dsw_select = (data == 0);
+}
+
+static READ_HANDLER( milliped_IN0_r )
+{
+	static int oldpos,sign;
+	int newpos;
+
+	if (dsw_select)
+		return (readinputport(0) | sign);
+
+	newpos = readinputport(6);
+	if (newpos != oldpos)
+	{
+		sign = (newpos - oldpos) & 0x80;
+		oldpos = newpos;
+	}
+
+	return ((readinputport(0) & 0x70) | (oldpos & 0x0f) | sign );
+}
+
+static READ_HANDLER( milliped_IN1_r )
+{
+	static int oldpos,sign;
+	int newpos;
+
+	if (dsw_select)
+		return (readinputport(1) | sign);
+
+	newpos = readinputport(7);
+	if (newpos != oldpos)
+	{
+		sign = (newpos - oldpos) & 0x80;
+		oldpos = newpos;
+	}
+
+	return ((readinputport(1) & 0x70) | (oldpos & 0x0f) | sign );
+}
+
+static WRITE_HANDLER( milliped_led_w )
 {
 	osd_led_w (offset, ~(data >> 7));
 }
+
+
 
 static struct MemoryReadAddress readmem[] =
 {

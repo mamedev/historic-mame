@@ -1015,7 +1015,7 @@ static void mark_sprite_colors(int controller)
 static void draw_sprites( struct osd_bitmap *bitmap, int controller, int priority_to_display )
 {
 	const struct GfxElement *gfx = Machine->gfx[ ((controller*2)+1) ];
-	const struct rectangle *clip = &Machine->drv->visible_area;
+	const struct rectangle *clip = &Machine->visible_area;
 
 	UINT16 *source = (UINT16 *)(spriteram_now[controller]);
 
@@ -1126,7 +1126,7 @@ void toaplan2_0_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	tilemap_render(ALL_TILEMAPS);
 
-	fillbitmap(bitmap,palette_transparent_pen,&Machine->drv->visible_area);
+	fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
 
 	for (priority = 0; priority < 16; priority++)
 	{
@@ -1161,7 +1161,7 @@ void toaplan2_1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	tilemap_render(ALL_TILEMAPS);
 
-	fillbitmap(bitmap,palette_transparent_pen,&Machine->drv->visible_area);
+	fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
 
 	for (priority = 0; priority < 16; priority++)
 	{
@@ -1204,7 +1204,7 @@ void batsugun_1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	tilemap_render(ALL_TILEMAPS);
 
-	fillbitmap(bitmap,palette_transparent_pen,&Machine->drv->visible_area);
+	fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
 
 	for (priority = 0; priority < 16; priority++)
 	{

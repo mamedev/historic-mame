@@ -167,7 +167,7 @@ void alpha68k_II_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	palette_used_colors[2047] = PALETTE_COLOR_USED;
 	if (palette_recalc())
 		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-	fillbitmap(bitmap,palette_transparent_pen,&Machine->drv->visible_area);
+	fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
 
 	tilemap_render(ALL_TILEMAPS);
 	draw_sprites(bitmap,1,0x000);
@@ -337,7 +337,7 @@ void alpha68k_V_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	palette_used_colors[4095] = PALETTE_COLOR_USED;
 	if (palette_recalc())
 		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-	fillbitmap(bitmap,palette_transparent_pen,&Machine->drv->visible_area);
+	fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
 	tilemap_render(ALL_TILEMAPS);
 
 	/* This appears to be correct priority */
@@ -409,7 +409,7 @@ void alpha68k_V_sb_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	palette_transparent_color=4095;
 	palette_used_colors[4095] = PALETTE_COLOR_USED;
 	palette_recalc();
-	fillbitmap(bitmap,palette_transparent_pen,&Machine->drv->visible_area);
+	fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
 
 	/* This appears to be correct priority */
 	draw_sprites_V(bitmap,0,0x0f80,0x1000,0x4000,0x8000,0x3fff);
@@ -488,7 +488,7 @@ static void draw_sprites2(struct osd_bitmap *bitmap, int c,int d)
 
 void alpha68k_I_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);
+	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
 	/* This appears to be correct priority */
 draw_sprites2(bitmap,6,0x1800);
@@ -567,7 +567,7 @@ static void kyros_draw_sprites(struct osd_bitmap *bitmap, int c,int d)
 
 void kyros_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);
+	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
 	kyros_draw_sprites(bitmap,4,0x1000);
 	kyros_draw_sprites(bitmap,6,0x1800);
@@ -608,7 +608,7 @@ static void sstingry_draw_sprites(struct osd_bitmap *bitmap, int c,int d)
 
 void sstingry_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);
+	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
 	sstingry_draw_sprites(bitmap,4,0x1000);
 	sstingry_draw_sprites(bitmap,6,0x1800);
@@ -646,7 +646,7 @@ int kouyakyu_vh_start(void)
 
 void kouyakyu_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	fillbitmap(bitmap,1,&Machine->drv->visible_area);
+	fillbitmap(bitmap,1,&Machine->visible_area);
 
 sstingry_draw_sprites(bitmap,4,0x1000);
 sstingry_draw_sprites(bitmap,6,0x1800);

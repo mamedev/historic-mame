@@ -90,7 +90,7 @@ void spacefb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 
 	/* Clear the bitmap */
-	fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);
+	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
 	/* Draw the sprite/chars */
 	spriteno = (video_control & 0x20) ? 0x80 : 0x00;
@@ -131,7 +131,7 @@ void spacefb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 						col,
 						flipscreen,flipscreen,
 						sx,sy,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+						&Machine->visible_area,TRANSPARENCY_PEN,0);
 
 			}
 			else if (cnt & 0x40)
@@ -149,7 +149,7 @@ void spacefb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 						col,
 						flipscreen,flipscreen,
 						sx,sy,
-						&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+						&Machine->visible_area,TRANSPARENCY_NONE,0);
 			}
 		}
 	}

@@ -22,9 +22,6 @@ unsigned char *buffered_spriteram_2;	/* ... */
 size_t spriteram_size;	/* ... here just for convenience */
 size_t spriteram_2_size;	/* ... here just for convenience */
 size_t spriteram_3_size;	/* ... here just for convenience */
-unsigned char *flip_screen;	/* ... */
-unsigned char *flip_screen_x;	/* ... */
-unsigned char *flip_screen_y;	/* ... */
 unsigned char *dirtybuffer;
 struct osd_bitmap *tmpbitmap;
 
@@ -50,7 +47,7 @@ logerror("Error: generic_vh_start() called but videoram_size not initialized\n")
 		return 1;
 	memset(dirtybuffer,1,videoram_size);
 
-	if ((tmpbitmap = osd_new_bitmap(Machine->drv->screen_width,Machine->drv->screen_height,Machine->scrbitmap->depth)) == 0)
+	if ((tmpbitmap = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 	{
 		free(dirtybuffer);
 		return 1;
@@ -62,7 +59,7 @@ logerror("Error: generic_vh_start() called but videoram_size not initialized\n")
 
 int generic_bitmapped_vh_start(void)
 {
-	if ((tmpbitmap = osd_new_bitmap(Machine->drv->screen_width,Machine->drv->screen_height,Machine->scrbitmap->depth)) == 0)
+	if ((tmpbitmap = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 	{
 		return 1;
 	}
@@ -79,7 +76,7 @@ int generic_bitmapped_vh_start(void)
 void generic_vh_stop(void)
 {
 	free(dirtybuffer);
-	osd_free_bitmap(tmpbitmap);
+	bitmap_free(tmpbitmap);
 
 	dirtybuffer = 0;
 	tmpbitmap = 0;
@@ -87,7 +84,7 @@ void generic_vh_stop(void)
 
 void generic_bitmapped_vh_stop(void)
 {
-	osd_free_bitmap(tmpbitmap);
+	bitmap_free(tmpbitmap);
 
 	tmpbitmap = 0;
 }
@@ -102,7 +99,7 @@ void generic_bitmapped_vh_stop(void)
 void generic_bitmapped_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	if (full_refresh)
-		copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 }
 
 

@@ -62,19 +62,19 @@ void kangaroo_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 
 int kangaroo_vh_start(void)
 {
-	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if ((tmpbitmap = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
 
-	if ((tmpbitmap2 = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if ((tmpbitmap2 = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 	{
-		osd_free_bitmap(tmpbitmap);
+		bitmap_free(tmpbitmap);
 		return 1;
 	}
 
 	if ((videoram = malloc(Machine->drv->screen_width*Machine->drv->screen_height)) == 0)
 	{
-		osd_free_bitmap(tmpbitmap);
-		osd_free_bitmap(tmpbitmap2);
+		bitmap_free(tmpbitmap);
+		bitmap_free(tmpbitmap2);
 	}
 
 	return 0;
@@ -90,8 +90,8 @@ int kangaroo_vh_start(void)
 
 void kangaroo_vh_stop(void)
 {
-	osd_free_bitmap(tmpbitmap2);
-	osd_free_bitmap(tmpbitmap);
+	bitmap_free(tmpbitmap2);
+	bitmap_free(tmpbitmap);
 	free(videoram);
 }
 
@@ -337,13 +337,13 @@ void kangaroo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	if (*kangaroo_bank_select & 0x01)
 	{
 		/* Plane B is primary */
-		copybitmap(bitmap,tmpbitmap2,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_COLOR,8);
+		copybitmap(bitmap,tmpbitmap2,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_COLOR,8);
 	}
 	else
 	{
 		/* Plane A is primary */
-		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-		copybitmap(bitmap,tmpbitmap2,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_COLOR,16);
+		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
+		copybitmap(bitmap,tmpbitmap2,0,0,0,0,&Machine->visible_area,TRANSPARENCY_COLOR,16);
 	}
 }

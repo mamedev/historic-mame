@@ -121,7 +121,7 @@ int firetrap_vh_start(void)
 	memset(dirtybuffer,1,firetrap_bgvideoram_size);
 
 	/* the background area is twice as wide and twice as tall as the screen */
-	if ((tmpbitmap = osd_create_bitmap(2*Machine->drv->screen_width,2*Machine->drv->screen_height)) == 0)
+	if ((tmpbitmap = bitmap_alloc(2*Machine->drv->screen_width,2*Machine->drv->screen_height)) == 0)
 	{
 		free(dirtybuffer);
 		return 1;
@@ -129,16 +129,16 @@ int firetrap_vh_start(void)
 
 	if ((dirtybuffer2 = malloc(firetrap_bgvideoram_size)) == 0)
 	{
-		osd_free_bitmap(tmpbitmap);
+		bitmap_free(tmpbitmap);
 		free(dirtybuffer);
 		return 1;
 	}
 	memset(dirtybuffer2,1,firetrap_bgvideoram_size);
 
 	/* the background area is twice as wide and twice as tall as the screen */
-	if ((tmpbitmap2 = osd_create_bitmap(2*Machine->drv->screen_width,2*Machine->drv->screen_height)) == 0)
+	if ((tmpbitmap2 = bitmap_alloc(2*Machine->drv->screen_width,2*Machine->drv->screen_height)) == 0)
 	{
-		osd_free_bitmap(tmpbitmap);
+		bitmap_free(tmpbitmap);
 		free(dirtybuffer2);
 		free(dirtybuffer);
 		generic_vh_stop();
@@ -157,8 +157,8 @@ int firetrap_vh_start(void)
 ***************************************************************************/
 void firetrap_vh_stop(void)
 {
-	osd_free_bitmap(tmpbitmap);
-	osd_free_bitmap(tmpbitmap2);
+	bitmap_free(tmpbitmap);
+	bitmap_free(tmpbitmap2);
 	free(dirtybuffer);
 	free(dirtybuffer2);
 }
@@ -293,7 +293,7 @@ void firetrap_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			scrolly = 256 + (firetrap_scroll2x[0] + 256 * firetrap_scroll2x[1]);
 			scrollx = -(firetrap_scroll2y[0] + 256 * firetrap_scroll2y[1]);
 		}
-		copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 		if (flipscreen)
 		{
@@ -305,7 +305,7 @@ void firetrap_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			scrolly = 256 + (firetrap_scroll1x[0] + 256 * firetrap_scroll1x[1]);
 			scrollx = -(firetrap_scroll1y[0] + 256 * firetrap_scroll1y[1]);
 		}
-		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_COLOR,256);
+		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_COLOR,256);
 	}
 
 
@@ -342,13 +342,13 @@ void firetrap_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 						color,
 						flipx,flipy,
 						sx,flipy ? sy : sy + 16,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+						&Machine->visible_area,TRANSPARENCY_PEN,0);
 				drawgfx(bitmap,Machine->gfx[9],
 						code | 1,
 						color,
 						flipx,flipy,
 						sx,flipy ? sy + 16 : sy,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+						&Machine->visible_area,TRANSPARENCY_PEN,0);
 
 				/* redraw with wraparound */
 				drawgfx(bitmap,Machine->gfx[9],
@@ -356,13 +356,13 @@ void firetrap_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 						color,
 						flipx,flipy,
 						sx - 256,flipy ? sy : sy + 16,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+						&Machine->visible_area,TRANSPARENCY_PEN,0);
 				drawgfx(bitmap,Machine->gfx[9],
 						code | 1,
 						color,
 						flipx,flipy,
 						sx - 256,flipy ? sy + 16 : sy,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+						&Machine->visible_area,TRANSPARENCY_PEN,0);
 			}
 			else
 			{
@@ -371,7 +371,7 @@ void firetrap_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 						color,
 						flipx,flipy,
 						sx,sy,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+						&Machine->visible_area,TRANSPARENCY_PEN,0);
 
 				/* redraw with wraparound */
 				drawgfx(bitmap,Machine->gfx[9],
@@ -379,7 +379,7 @@ void firetrap_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 						color,
 						flipx,flipy,
 						sx - 256,sy,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+						&Machine->visible_area,TRANSPARENCY_PEN,0);
 			}
 		}
 	}
@@ -404,6 +404,6 @@ void firetrap_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				(firetrap_colorram[offs] & 0xf0) >> 4,
 				flipscreen,flipscreen,
 				8*sx,8*sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

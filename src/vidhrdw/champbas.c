@@ -120,13 +120,13 @@ void champbas_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					(colorram[offs] & 0x1f) + 32,
 					0,0,
 					sx,sy,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+					&Machine->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
 
 
 	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 
 	/* Draw the sprites. Note that it is important to draw them exactly in this */
@@ -138,6 +138,6 @@ void champbas_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				spriteram[offs + 1],
 				spriteram[offs] & 1,spriteram[offs] & 2,
 				((256+16 - spriteram_2[offs + 1]) & 0xff) - 16,spriteram_2[offs] - 16,
-				&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+				&Machine->visible_area,TRANSPARENCY_COLOR,0);
 	}
 }

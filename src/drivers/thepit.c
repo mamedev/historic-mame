@@ -64,12 +64,8 @@ WRITE_HANDLER( galaxian_attributes_w );
 
 void thepit_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void thepit_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-WRITE_HANDLER( thepit_flipx_w );
-WRITE_HANDLER( thepit_flipy_w );
 READ_HANDLER( thepit_input_port_0_r );
 WRITE_HANDLER( thepit_sound_enable_w );
-WRITE_HANDLER( thepit_AY8910_0_w );
-WRITE_HANDLER( thepit_AY8910_1_w );
 WRITE_HANDLER( intrepid_graphics_bank_select_w );
 
 
@@ -104,8 +100,8 @@ static struct MemoryWriteAddress thepit_writemem[] =
 	{ 0xb002, 0xb002, MWA_NOP }, // coin_lockout_w
 	{ 0xb003, 0xb003, thepit_sound_enable_w },
 	{ 0xb004, 0xb005, MWA_NOP }, // Unused, but initialized
-	{ 0xb006, 0xb006, thepit_flipx_w, &flip_screen_x },
-	{ 0xb007, 0xb007, thepit_flipy_w, &flip_screen_y },
+	{ 0xb006, 0xb006, flip_screen_x_w },
+	{ 0xb007, 0xb007, flip_screen_y_w },
 	{ 0xb800, 0xb800, soundlatch_w },
 	{ -1 }  /* end of table */
 };
@@ -138,8 +134,8 @@ static struct MemoryWriteAddress intrepid_writemem[] =
 	{ 0xb003, 0xb003, thepit_sound_enable_w },
 	{ 0xb004, 0xb004, MWA_NOP }, // Unused, but initialized
 	{ 0xb005, 0xb005, intrepid_graphics_bank_select_w },
-	{ 0xb006, 0xb006, thepit_flipx_w, &flip_screen_x },
-	{ 0xb007, 0xb007, thepit_flipy_w, &flip_screen_y },
+	{ 0xb006, 0xb006, flip_screen_x_w },
+	{ 0xb007, 0xb007, flip_screen_y_w },
 	{ 0xb800, 0xb800, soundlatch_w },
 	{ -1 }  /* end of table */
 };
@@ -167,8 +163,10 @@ static struct IOReadPort sound_readport[] =
 static struct IOWritePort sound_writeport[] =
 {
 	{ 0x00, 0x00, soundlatch_clear_w },
-	{ 0x8c, 0x8d, thepit_AY8910_1_w },
-	{ 0x8e, 0x8f, thepit_AY8910_0_w },
+	{ 0x8c, 0x8c, AY8910_control_port_1_w },
+	{ 0x8d, 0x8d, AY8910_write_port_1_w },
+	{ 0x8e, 0x8e, AY8910_control_port_0_w },
+	{ 0x8f, 0x8f, AY8910_write_port_0_w },
 	{ -1 }  /* end of table */
 };
 

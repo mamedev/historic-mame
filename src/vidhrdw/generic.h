@@ -12,9 +12,6 @@ extern unsigned char *spriteram_3;
 extern size_t spriteram_3_size;
 extern unsigned char *buffered_spriteram;
 extern unsigned char *buffered_spriteram_2;
-extern unsigned char *flip_screen;
-extern unsigned char *flip_screen_x;
-extern unsigned char *flip_screen_y;
 extern unsigned char *dirtybuffer;
 extern struct osd_bitmap *tmpbitmap;
 

@@ -13,6 +13,7 @@
 
 
 unsigned char *bublbobl_sharedram1,*bublbobl_sharedram2;
+extern int bublbobl_video_enable;
 
 
 READ_HANDLER( bublbobl_sharedram1_r )
@@ -36,21 +37,43 @@ WRITE_HANDLER( bublbobl_sharedram2_w )
 
 WRITE_HANDLER( bublbobl_bankswitch_w )
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	unsigned char *ROM = memory_region(REGION_CPU1);
 
+	/* bits 0-2 select ROM bank */
+	cpu_setbank(1,&ROM[0x10000 + 0x4000 * ((data ^ 4) & 7)]);
 
-	if ((data & 3) == 0) { cpu_setbank(1,&RAM[0x8000]); }
-	else { cpu_setbank(1,&RAM[0x10000 + 0x4000 * ((data & 3) - 1)]); }
+	/* bit 3 n.c. */
+
+	/* bit 4 resets second Z80 */
+
+	/* bit 5 resets mcu */
+
+	/* bit 6 enables display */
+	bublbobl_video_enable = data & 0x40;
+
+	/* bit 7 flips screen */
+	flip_screen_w(0,data & 0x80);
 }
 
 WRITE_HANDLER( tokio_bankswitch_w )
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
+	unsigned char *ROM = memory_region(REGION_CPU1);
 
-	cpu_setbank(1, &RAM[0x10000 + 0x4000 * (data & 7)]);
+	/* bits 0-2 select ROM bank */
+	cpu_setbank(1,&ROM[0x10000 + 0x4000 * (data & 7)]);
+
+	/* bits 3-7 unknown */
 }
 
-WRITE_HANDLER( tokio_nmitrigger_w )
+WRITE_HANDLER( tokio_videoctrl_w )
+{
+	/* bit 7 flips screen */
+	flip_screen_w(0,data & 0x80);
+
+	/* other bits unknown */
+}
+
+WRITE_HANDLER( bublbobl_nmitrigger_w )
 {
 	cpu_cause_interrupt(1,Z80_NMI_INT);
 }
@@ -84,7 +107,7 @@ WRITE_HANDLER( bublbobl_sh_nmi_disable_w )
 WRITE_HANDLER( bublbobl_sh_nmi_enable_w )
 {
 	sound_nmi_enable = 1;
-	if (pending_nmi)	/* probably wrong but commands go lost otherwise */
+	if (pending_nmi)
 	{
 		cpu_cause_interrupt(2,Z80_NMI_INT);
 		pending_nmi = 0;
@@ -144,9 +167,8 @@ WRITE_HANDLER( bublbobl_68705_ddrA_w )
  *               the main Z80 memory location to access
  *  2   W  loads the latch which holds the high 4 bits of the address of
  *               the main Z80 memory location to access
- *         00 = read input ports
- *         0c = access z80 memory at 0xfc00
- *         0f = ????
+ *         00-07 = read input ports
+ *         0c-0f = access z80 memory at 0xfc00
  *  3   W  selects Z80 memory access direction (0 = write 1 = read)
  *  4   W  clocks main Z80 memory access (goes to a PAL)
  *  5   W  clocks a flip-flop which causes IRQ on the main Z80
@@ -184,25 +206,25 @@ WRITE_HANDLER( bublbobl_68705_portB_w )
 	{
 		if (data & 0x08)	/* read */
 		{
-			if ((address & 0x0f00) == 0x0000)
+			if ((address & 0x0800) == 0x0000)
 			{
 //logerror("%04x: 68705 read input port %02x\n",cpu_get_pc(),address);
 				latch = readinputport((address & 3) + 1);
 			}
-			else if ((address & 0x0f00) == 0x0c00)
+			else if ((address & 0x0c00) == 0x0c00)
 			{
 //logerror("%04x: 68705 read %02x from address %04x\n",cpu_get_pc(),bublbobl_sharedram2[address],address);
-				latch = bublbobl_sharedram2[address & 0x00ff];
+				latch = bublbobl_sharedram2[address & 0x03ff];
 			}
 			else
 logerror("%04x: 68705 unknown read address %04x\n",cpu_get_pc(),address);
 		}
 		else	/* write */
 		{
-			if ((address & 0x0f00) == 0x0c00)
+			if ((address & 0x0c00) == 0x0c00)
 			{
 //logerror("%04x: 68705 write %02x to address %04x\n",cpu_get_pc(),portA_out,address);
-				bublbobl_sharedram2[address & 0x00ff] = portA_out;
+				bublbobl_sharedram2[address & 0x03ff] = portA_out;
 			}
 			else
 logerror("%04x: 68705 unknown write to address %04x\n",cpu_get_pc(),address);

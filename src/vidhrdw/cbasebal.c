@@ -216,7 +216,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 				color,
 				flipx,flipscreen,
 				sx,sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
+				&Machine->visible_area,TRANSPARENCY_PEN,15);
 	}
 }
 
@@ -232,7 +232,7 @@ void cbasebal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	if (bg_on)
 		tilemap_draw(bitmap,bg_tilemap,0);
 	else
-		fillbitmap(bitmap,Machine->pens[768],&Machine->drv->visible_area);
+		fillbitmap(bitmap,Machine->pens[768],&Machine->visible_area);
 
 	if (obj_on)
 		draw_sprites(bitmap);

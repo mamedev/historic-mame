@@ -167,15 +167,15 @@ void artwork_free(struct artwork **a)
 	if (*a)
 	{
 		if ((*a)->artwork)
-			osd_free_bitmap((*a)->artwork);
+			bitmap_free((*a)->artwork);
 		if ((*a)->artwork1)
-			osd_free_bitmap((*a)->artwork1);
+			bitmap_free((*a)->artwork1);
 		if ((*a)->alpha)
-			osd_free_bitmap((*a)->alpha);
+			bitmap_free((*a)->alpha);
 		if ((*a)->orig_artwork)
-			osd_free_bitmap((*a)->orig_artwork);
+			bitmap_free((*a)->orig_artwork);
 		if ((*a)->vector_bitmap)
-			osd_free_bitmap((*a)->vector_bitmap);
+			bitmap_free((*a)->vector_bitmap);
 		if ((*a)->orig_palette)
 			free ((*a)->orig_palette);
 		if ((*a)->transparency)
@@ -196,7 +196,7 @@ void overlay_free(void)
 {
 	if (artwork_overlay)
 	{
-		osd_free_bitmap(Machine->scrbitmap);
+		bitmap_free(Machine->scrbitmap);
 		Machine->scrbitmap = overlay_real_scrbitmap;
 
 		artwork_free(&artwork_overlay);
@@ -1167,7 +1167,7 @@ static void allocate_artwork_mem (int width, int height, struct artwork **a)
 	(*a)->brightness = NULL;
 	(*a)->vector_bitmap = NULL;
 
-	if (((*a)->orig_artwork = osd_create_bitmap(width, height)) == 0)
+	if (((*a)->orig_artwork = bitmap_alloc(width, height)) == 0)
 	{
 		logerror("Not enough memory for artwork!\n");
 		artwork_free(a);
@@ -1175,7 +1175,7 @@ static void allocate_artwork_mem (int width, int height, struct artwork **a)
 	}
 	fillbitmap((*a)->orig_artwork,0,0);
 
-	if (((*a)->alpha = osd_create_bitmap(width, height)) == 0)
+	if (((*a)->alpha = bitmap_alloc(width, height)) == 0)
 	{
 		logerror("Not enough memory for artwork!\n");
 		artwork_free(a);
@@ -1183,14 +1183,14 @@ static void allocate_artwork_mem (int width, int height, struct artwork **a)
 	}
 	fillbitmap((*a)->alpha,0,0);
 
-	if (((*a)->artwork = osd_create_bitmap(width,height)) == 0)
+	if (((*a)->artwork = bitmap_alloc(width,height)) == 0)
 	{
 		logerror("Not enough memory for artwork!\n");
 		artwork_free(a);
 		return;
 	}
 
-	if (((*a)->artwork1 = osd_create_bitmap(width,height)) == 0)
+	if (((*a)->artwork1 = bitmap_alloc(width,height)) == 0)
 	{
 		logerror("Not enough memory for artwork!\n");
 		artwork_free(a);
@@ -1222,7 +1222,7 @@ static void allocate_artwork_mem (int width, int height, struct artwork **a)
 	/* Create bitmap for the vector screen */
 	if (Machine->drv->video_attributes & VIDEO_TYPE_VECTOR)
 	{
-		if (((*a)->vector_bitmap = osd_create_bitmap(width,height)) == 0)
+		if (((*a)->vector_bitmap = bitmap_alloc(width,height)) == 0)
 		{
 			logerror("Not enough memory for artwork!\n");
 			artwork_free(a);
@@ -1313,7 +1313,7 @@ static int artwork_read_bitmap(const char *file_name, struct osd_bitmap **bitmap
 
 		png_delete_unused_colors (p);
 
-		if ((*bitmap = osd_create_bitmap(p->width,p->height)) == 0)
+		if ((*bitmap = bitmap_alloc(p->width,p->height)) == 0)
 		{
 			logerror("Unable to allocate memory for artwork\n");
 			return 0;
@@ -1332,7 +1332,7 @@ static int artwork_read_bitmap(const char *file_name, struct osd_bitmap **bitmap
 		{
 			/* convert to 15bit */
 			if (p->num_trans > 0)
-				if ((*alpha = osd_create_bitmap(p->width,p->height)) == 0)
+				if ((*alpha = bitmap_alloc(p->width,p->height)) == 0)
 				{
 					logerror("Unable to allocate memory for artwork\n");
 					return 0;
@@ -1367,14 +1367,14 @@ static int artwork_read_bitmap(const char *file_name, struct osd_bitmap **bitmap
 		break;
 
 	case 6:
-		if ((*alpha = osd_create_bitmap(p->width,p->height)) == 0)
+		if ((*alpha = bitmap_alloc(p->width,p->height)) == 0)
 		{
 			logerror("Unable to allocate memory for artwork\n");
 			return 0;
 		}
 
 	case 2:
-		if ((*bitmap = osd_create_bitmap(p->width,p->height)) == 0)
+		if ((*bitmap = bitmap_alloc(p->width,p->height)) == 0)
 		{
 			logerror("Unable to allocate memory for artwork\n");
 			return 0;
@@ -1465,7 +1465,7 @@ static void artwork_load_size_common(const char *filename, unsigned int start_pe
 		logerror("Colors found: %d  Max Allowed: %d\n",
 				      (*a)->num_pens_used,max_pens);
 		artwork_free(a);
-		osd_free_bitmap(picture);
+		bitmap_free(picture);
 		return;
 	}
 
@@ -1482,12 +1482,12 @@ static void artwork_load_size_common(const char *filename, unsigned int start_pe
 
 	copybitmapzoom((*a)->orig_artwork, picture, 0, 0, 0, 0, 0, TRANSPARENCY_NONE, 0, scalex, scaley);
 	/* We don't need the original any more */
-	osd_free_bitmap(picture);
+	bitmap_free(picture);
 
 	if (alpha)
 	{
 		copybitmapzoom((*a)->alpha, alpha, 0, 0, 0, 0, 0, TRANSPARENCY_NONE, 0, scalex, scaley);
-		osd_free_bitmap(alpha);
+		bitmap_free(alpha);
 	}
 
 	/* If the game uses dynamic colors, we assume that it's safe
@@ -1526,7 +1526,7 @@ void overlay_load(const char *filename, unsigned int start_pen, unsigned int max
 	{
 		overlay_real_scrbitmap = Machine->scrbitmap;
 
-		if ((Machine->scrbitmap = osd_create_bitmap(width, height)) == 0)
+		if ((Machine->scrbitmap = bitmap_alloc(width, height)) == 0)
 		{
 			overlay_free();
 			logerror("Not enough memory for artwork!\n");
@@ -1568,7 +1568,7 @@ static struct osd_bitmap *create_disk (int r, int fg, int bg)
 	int p = 1 - r;
 	int i;
 
-	if ((disk = osd_create_bitmap(twoy, twoy)) == 0)
+	if ((disk = bitmap_alloc(twoy, twoy)) == 0)
 	{
 		logerror("Not enough memory for artwork!\n");
 		return NULL;
@@ -1764,7 +1764,7 @@ void overlay_create(const struct artwork_element *ae, unsigned int start_pen, un
 
 	overlay_real_scrbitmap = Machine->scrbitmap;
 
-	if ((Machine->scrbitmap = osd_create_bitmap(width, height)) == 0)
+	if ((Machine->scrbitmap = bitmap_alloc(width, height)) == 0)
 	{
 		overlay_free();
 		logerror("Not enough memory for artwork!\n");
@@ -1843,8 +1843,8 @@ void overlay_create(const struct artwork_element *ae, unsigned int start_pen, un
 					return;
 				}
 				merge_cmy (artwork_overlay, disk, disk_alpha, ae->box.min_x - r, ae->box.min_y - r);
-				osd_free_bitmap(disk_alpha);
-				osd_free_bitmap(disk);
+				bitmap_free(disk_alpha);
+				bitmap_free(disk);
 				break;
 
 			case -2: /* punched disk */
@@ -1867,22 +1867,22 @@ void overlay_create(const struct artwork_element *ae, unsigned int start_pen, un
 						   ae->box.min_x - r,
 						   ae->box.min_y - r,
 						   0,TRANSPARENCY_PEN, transparent_pen);
-				osd_free_bitmap(disk_alpha);
-				osd_free_bitmap(disk);
+				bitmap_free(disk_alpha);
+				bitmap_free(disk);
 				break;
 
 			}
 		}
 		else
 		{
-			if ((box = osd_create_bitmap(ae->box.max_x - ae->box.min_x + 1,
+			if ((box = bitmap_alloc(ae->box.max_x - ae->box.min_x + 1,
 										 ae->box.max_y - ae->box.min_y + 1)) == 0)
 			{
 				logerror("Not enough memory for artwork!\n");
 				overlay_free();
 				return;
 			}
-			if ((box_alpha = osd_create_bitmap(ae->box.max_x - ae->box.min_x + 1,
+			if ((box_alpha = bitmap_alloc(ae->box.max_x - ae->box.min_x + 1,
 										 ae->box.max_y - ae->box.min_y + 1)) == 0)
 			{
 				logerror("Not enough memory for artwork!\n");
@@ -1892,8 +1892,8 @@ void overlay_create(const struct artwork_element *ae, unsigned int start_pen, un
 			fillbitmap (box, pen, 0);
 			fillbitmap (box_alpha, alpha, 0);
 			merge_cmy (artwork_overlay, box, box_alpha, ae->box.min_x, ae->box.min_y);
-			osd_free_bitmap(box);
-			osd_free_bitmap(box_alpha);
+			bitmap_free(box);
+			bitmap_free(box_alpha);
 		}
 		ae++;
 	}

@@ -126,7 +126,8 @@ const struct GameDriver *drivers[] =
 	DRIVER( gteikoku )	/* (c) Irem */
 	DRIVER( spacbatt )	/* bootleg */
 	DRIVER( warofbug )	/* (c) 1981 Armenia */
-	DRIVER( redufo )	/* ? */
+	DRIVER( redufo )	/* bootleg - original should be (c) Artic */
+	DRIVER( exodus )	/* Subelectro - bootleg? */
 	DRIVER( pacmanbl )	/* bootleg */
 	DRIVER( devilfsg )	/* (c) 1984 Vision / Artic (bootleg?) */
 	DRIVER( zigzag )	/* (c) 1982 LAX */
@@ -685,6 +686,7 @@ Six Flags (?)
 	DRIVER( sfootbal )	/* (c) 1986 */
 	DRIVER( spiker )	/* (c) 1986 */
 	DRIVER( rescraid )	/* (c) 1987 */
+	DRIVER( rescrdsa )	/* (c) 1987 */
 
 	/* Irem games */
 	/* trivia: IREM means "International Rental Electronics Machines" */
@@ -920,20 +922,35 @@ TESTDRIVER( plgirls2 )	/* (c) 1993 Hot-B. */
 	DRIVER( crimecj )	/* (c) 1989 Taito Corporation (Japan) */
 	DRIVER( tetrist )	/* (c) 1989 Sega Enterprises,Ltd. (Japan) */
 	DRIVER( ashura )	/* (c) 1990 Taito Corporation (Japan) */
+	DRIVER( ashurau )	/* (c) 1990 Taito America Corporation (US) */
+	DRIVER( hitice )	/* (c) 1990 Williams (US) */
+	DRIVER( rambo3 )	/* (c) 1989 Taito Europe Corporation (Europe) */
+	DRIVER( puzbobb )	/* (c) 1994 Taito Corporation (Japan) */
+	DRIVER( qzshowby )	/* (c) 1994 Taito Corporation (Japan) */
 
 	/* Taito F2 games */
+TESTDRIVER( dondokod )
 	DRIVER( ssi )		/* (c) 1990 Taito Corporation Japan (World) */
 	/* Majestic 12 (c) 1990 Taito America Corporation (US) */
 	DRIVER( majest12 )	/* (c) 1990 Taito Corporation (Japan) */
 TESTDRIVER( finalb )
 TESTDRIVER( megab )
+TESTDRIVER( gunfront )
+TESTDRIVER( cameltry )
+TESTDRIVER( cameltru )
+TESTDRIVER( ninjak )
 	DRIVER( liquidk )	/* (c) 1990 Taito Corporation Japan (World) */
 	DRIVER( liquidku )	/* (c) 1990 Taito America Corporation (US) */
 	DRIVER( mizubaku )	/* (c) 1990 Taito Corporation (Japan) */
 	DRIVER( growl )		/* (c) 1990 Taito Corporation Japan (World) */
 	DRIVER( growlu )	/* (c) 1990 Taito America Corporation (US) */
 	DRIVER( runark )	/* (c) 1990 Taito Corporation (Japan) */
+TESTDRIVER( driftout )
 TESTDRIVER( pulirula )	/* (c) 1991 Taito Corporation */
+TESTDRIVER( metalb )
+TESTDRIVER( deadconx )
+TESTDRIVER( qzchikyu )
+TESTDRIVER( dinorex )
 
 	/* Toaplan games */
 	DRIVER( tigerh )	/* GX-551 [not a Konami board!] */
@@ -1220,6 +1237,7 @@ TESTDRIVER( defcomnd )	/* bootleg */
 	DRIVER( varthj )	/*  7/14/1992 (c) 1992 (Japan) */
 	DRIVER( cworld2j )	/*  6/11/1992 (QUIZ 5) (c) 1992 (Japan) */
 	DRIVER( wof )		/* 10/ 2/1992 (c) 1992 (World) (CPS1 + QSound) */
+	DRIVER( wofa )		/* 10/ 5/1992 (c) 1992 (Asia)  (CPS1 + QSound) */
 	DRIVER( wofj )		/* 10/31/1992 (c) 1992 (Japan) (CPS1 + QSound) */
 	DRIVER( sf2t )		/* 12/ 9/1992 (c) 1992 (US)    */
 	DRIVER( sf2tj )		/* 12/ 9/1992 (c) 1992 (Japan) */
@@ -1236,7 +1254,8 @@ TESTDRIVER( defcomnd )	/* bootleg */
 	DRIVER( qad )		/*  7/ 1/1992 (c) 1992 (US)    */
 	DRIVER( qadj )		/*  9/21/1994 (c) 1994 (Japan) */
 	DRIVER( qtono2 )	/*  1/23/1995 (c) 1995 (Japan) */
-	DRIVER( pang3 )		/*  5/11/1995 (c) 1995 Mitchell (Japan) not listed on Capcom's site */
+	DRIVER( pang3 )		/*  5/11/1995 (c) 1995 Mitchell (Euro) not listed on Capcom's site */
+	DRIVER( pang3j )	/*  5/11/1995 (c) 1995 Mitchell (Japan) not listed on Capcom's site */
 	DRIVER( megaman )	/* 10/ 6/1995 (c) 1995 (Asia)  */
 	DRIVER( rockmanj )	/*  9/22/1995 (c) 1995 (Japan) */
 //	DRIVER( sfzch )		/* 10/20/1995 (c) 1995 (Japan) (CPS Changer) */
@@ -2055,6 +2074,8 @@ Konami System GX game list
 	DRIVER( ripcord )	/* Exidy [1977?] */
 	DRIVER( starfire )	/* Exidy [1979?] */
 	DRIVER( fireone )	/* (c) 1979 Exidy */
+	DRIVER( victory )	/* (c) 1982 */
+	DRIVER( victorba )	/* (c) 1982 */
 
 	/* Exidy 440 games */
 	DRIVER( crossbow )	/* (c) 1983 */
@@ -2657,6 +2678,7 @@ TESTDRIVER( shogwarr )
 	DRIVER( airbustr )	/* (c) 1990 Kaneko */
 
 	/* Seta games */
+	DRIVER( hanaawas )	/* (c) SetaKikaku */
 	DRIVER( tndrcade )	/* UA-0 */
 	DRIVER( twineagl )	/* UA-2 (c) 1988 + Taito license */
 	DRIVER( downtown )	/* UD-2 (c) 1989 + Romstar or Taito license (DSW) */
@@ -2728,8 +2750,6 @@ TESTDRIVER( dlair )
 
 
 #endif /* NEOMAME */
-
-#ifndef NEOFREE
 
 	/* Neo Geo games */
 	/* the four digits number is the game ID stored at address 0x0108 of the program ROM */
@@ -2891,8 +2911,6 @@ TESTDRIVER( kof99 )		/* 0251 (c) 1999 SNK */
 TESTDRIVER( garou )		/* 0253 (c) 1999 SNK */
 	/* Prehistoric Isle 2 */
 	/* Strikers 1945 */
-
-#endif	/* NEOFREE */
 
 #endif	/* DRIVER_RECURSIVE */
 

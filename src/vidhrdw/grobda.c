@@ -138,7 +138,7 @@ static void grobda_draw_sprites(struct osd_bitmap *bitmap)
 						color,
 						flipx, flipy,
 						sx+x*16,sy+y*16,
-						&Machine->drv->visible_area,
+						&Machine->visible_area,
 						TRANSPARENCY_PEN,0);
 				}
 			}
@@ -189,11 +189,11 @@ void grobda_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					colorram[offs] & 0x3f,
 					flipscreen,flipscreen,
 					sx*8,sy*8,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+					&Machine->visible_area,TRANSPARENCY_NONE,0);
         }
 	}
 
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 	grobda_draw_sprites(bitmap);
 }

@@ -106,10 +106,8 @@
 #include "driver.h"
 #include "ui_text.h"
 
-#ifndef NEOFREE
 #ifndef TINY_COMPILE
 extern struct GameDriver driver_neogeo;
-#endif
 #endif
 
 extern unsigned char *memory_find_base (int cpu, int offset);

@@ -139,7 +139,7 @@ void blueprnt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			}
 		}
 
-		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 
@@ -166,7 +166,7 @@ void blueprnt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				0,
 				flipx,flipy,
 				2+sx,sy-1,	/* sprites are slightly misplaced, regardless of the screen flip */
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 
 
@@ -191,7 +191,7 @@ void blueprnt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					colorram[offs] & 0x7f,
 					flipscreen,flipscreen,
 					8*sx,(8*sy+scroll[sx]) & 0xff,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					&Machine->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}
 }

@@ -47,9 +47,9 @@ void hcastle_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 
 int hcastle_vh_start(void)
 {
- 	if ((pf1_bitmap = osd_create_bitmap(64*8,32*8)) == 0)
+ 	if ((pf1_bitmap = bitmap_alloc(64*8,32*8)) == 0)
 		return 1;
-	if ((pf2_bitmap = osd_create_bitmap(64*8,32*8)) == 0)
+	if ((pf2_bitmap = bitmap_alloc(64*8,32*8)) == 0)
 		return 1;
 
 	dirty_pf1=malloc (0x1000);
@@ -62,8 +62,8 @@ int hcastle_vh_start(void)
 
 void hcastle_vh_stop(void)
 {
-	osd_free_bitmap(pf1_bitmap);
-	osd_free_bitmap(pf2_bitmap);
+	bitmap_free(pf1_bitmap);
+	bitmap_free(pf2_bitmap);
 	free(dirty_pf1);
 	free(dirty_pf2);
 }
@@ -232,24 +232,24 @@ void hcastle_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		scrolly = -K007121_ctrlram[1][2];
 		scrollx = -((K007121_ctrlram[1][1]<<8)+K007121_ctrlram[1][0]);
-		copyscrollbitmap(bitmap,pf2_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,pf2_bitmap,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 		draw_sprites( bitmap, buffered_spriteram, 0 );
 		draw_sprites( bitmap, buffered_spriteram_2, 1 );
 
 		scrolly = -K007121_ctrlram[0][2];
 		scrollx = -((K007121_ctrlram[0][1]<<8)+K007121_ctrlram[0][0]);
-		copyscrollbitmap(bitmap,pf1_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+		copyscrollbitmap(bitmap,pf1_bitmap,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 	}
 	else
 	{
 		scrolly = -K007121_ctrlram[1][2];
 		scrollx = -((K007121_ctrlram[1][1]<<8)+K007121_ctrlram[1][0]);
-		copyscrollbitmap(bitmap,pf2_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,pf2_bitmap,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 		scrolly = -K007121_ctrlram[0][2];
 		scrollx = -((K007121_ctrlram[0][1]<<8)+K007121_ctrlram[0][0]);
-		copyscrollbitmap(bitmap,pf1_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+		copyscrollbitmap(bitmap,pf1_bitmap,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 
 		draw_sprites( bitmap, buffered_spriteram, 0 );
 		draw_sprites( bitmap, buffered_spriteram_2, 1 );

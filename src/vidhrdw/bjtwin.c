@@ -15,11 +15,11 @@ static int flipscreen = 0;
 int bjtwin_vh_start(void)
 {
 	dirtybuffer = malloc(bjtwin_txvideoram_size/2);
-	tmpbitmap = osd_new_bitmap(Machine->drv->screen_width,Machine->drv->screen_height,Machine->scrbitmap->depth);
+	tmpbitmap = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height);
 
 	if (!dirtybuffer || !tmpbitmap)
 	{
-		if (tmpbitmap) osd_free_bitmap(tmpbitmap);
+		if (tmpbitmap) bitmap_free(tmpbitmap);
 		if (dirtybuffer) free(dirtybuffer);
 		return 1;
 	}
@@ -31,7 +31,7 @@ int bjtwin_vh_start(void)
 
 void bjtwin_vh_stop(void)
 {
-	osd_free_bitmap(tmpbitmap);
+	bitmap_free(tmpbitmap);
 	free(dirtybuffer);
 
 	dirtybuffer = 0;
@@ -142,7 +142,7 @@ void bjtwin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 
 	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 	for (offs = 0; offs < 256*16; offs += 16)
 	{
@@ -174,7 +174,7 @@ void bjtwin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 							READ_WORD(&bjtwin_spriteram[offs+14]),
 							flipscreen, flipscreen,
 							sx & 0x1ff,sy & 0x1ff,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
+							&Machine->visible_area,TRANSPARENCY_PEN,15);
 
 					tilecode++;
 					sx += delta;

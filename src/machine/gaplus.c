@@ -16,7 +16,6 @@ unsigned char *gaplus_customio_1,*gaplus_customio_2,*gaplus_customio_3;
 static int int_enable_2, int_enable_3;
 static int credits, coincounter1, coincounter2;
 
-extern void gaplus_flipscreen_w( int data );
 extern void gaplus_starfield_update( void );
 
 void gaplus_init_machine( void )
@@ -34,7 +33,7 @@ READ_HANDLER( gaplus_sharedram_r )
 WRITE_HANDLER( gaplus_sharedram_w )
 {
 	if (offset == 0x082c)	/* 0x102c */
-		gaplus_flipscreen_w( data );
+		flip_screen_w(0, data);
     gaplus_sharedram[offset] = data;
 }
 

@@ -31,14 +31,14 @@ int wc90_vh_start( void ) {
 
 	memset( dirtybuffer1, 1, wc90_tile_videoram_size );
 
-	if ( ( tmpbitmap1 = osd_new_bitmap(4*Machine->drv->screen_width,2*Machine->drv->screen_height,Machine->scrbitmap->depth ) ) == 0 ){
+	if ( ( tmpbitmap1 = bitmap_alloc(4*Machine->drv->screen_width,2*Machine->drv->screen_height) ) == 0 ){
 		free( dirtybuffer1 );
 		generic_vh_stop();
 		return 1;
 	}
 
 	if ( ( dirtybuffer2 = malloc( wc90_tile_videoram_size2 ) ) == 0 ) {
-		osd_free_bitmap(tmpbitmap1);
+		bitmap_free(tmpbitmap1);
 		free(dirtybuffer1);
 		generic_vh_stop();
 		return 1;
@@ -46,8 +46,8 @@ int wc90_vh_start( void ) {
 
 	memset( dirtybuffer2, 1, wc90_tile_videoram_size2 );
 
-	if ( ( tmpbitmap2 = osd_new_bitmap(4*Machine->drv->screen_width,2*Machine->drv->screen_height,Machine->scrbitmap->depth ) ) == 0 ){
-		osd_free_bitmap(tmpbitmap1);
+	if ( ( tmpbitmap2 = bitmap_alloc(4*Machine->drv->screen_width,2*Machine->drv->screen_height) ) == 0 ){
+		bitmap_free(tmpbitmap1);
 		free(dirtybuffer1);
 		free(dirtybuffer2);
 		generic_vh_stop();
@@ -57,9 +57,9 @@ int wc90_vh_start( void ) {
 	// Free the generic bitmap and allocate one twice as wide
 	free( tmpbitmap );
 
-	if ( ( tmpbitmap = osd_new_bitmap(2*Machine->drv->screen_width,Machine->drv->screen_height,Machine->scrbitmap->depth ) ) == 0 ){
-		osd_free_bitmap(tmpbitmap1);
-		osd_free_bitmap(tmpbitmap2);
+	if ( ( tmpbitmap = bitmap_alloc(2*Machine->drv->screen_width,Machine->drv->screen_height) ) == 0 ){
+		bitmap_free(tmpbitmap1);
+		bitmap_free(tmpbitmap2);
 		free(dirtybuffer);
 		free(dirtybuffer1);
 		free(dirtybuffer2);
@@ -73,8 +73,8 @@ int wc90_vh_start( void ) {
 void wc90_vh_stop( void ) {
 	free( dirtybuffer1 );
 	free( dirtybuffer2 );
-	osd_free_bitmap( tmpbitmap1 );
-	osd_free_bitmap( tmpbitmap2 );
+	bitmap_free( tmpbitmap1 );
+	bitmap_free( tmpbitmap2 );
 	generic_vh_stop();
 }
 
@@ -228,7 +228,7 @@ void wc90_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	scrollx = -wc90_scroll2xlo[0] - 256 * ( wc90_scroll2xhi[0] & 3 );
 	scrolly = -wc90_scroll2ylo[0] - 256 * ( wc90_scroll2yhi[0] & 1 );
 
-	copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 	wc90_draw_sprites( bitmap, 2 );
 
@@ -257,7 +257,7 @@ void wc90_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	scrollx = -wc90_scroll1xlo[0] - 256 * ( wc90_scroll1xhi[0] & 3 );
 	scrolly = -wc90_scroll1ylo[0] - 256 * ( wc90_scroll1yhi[0] & 1 );
 
-	copyscrollbitmap(bitmap,tmpbitmap1,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+	copyscrollbitmap(bitmap,tmpbitmap1,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 
 	wc90_draw_sprites( bitmap, 1 );
 
@@ -282,14 +282,14 @@ void wc90_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	scrollx = -wc90_scroll0xlo[0] - 256 * ( wc90_scroll0xhi[0] & 1 );
 	scrolly = -wc90_scroll0ylo[0] - 256 * ( wc90_scroll0yhi[0] & 1 );
 
-	copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+	copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 
 	wc90_draw_sprites( bitmap, 0 );
 }
 
 #define WC90_DRAW_SPRITE( code, sx, sy ) \
 					drawgfx( bitmap, Machine->gfx[3], code, flags >> 4, \
-					bank&1, bank&2, sx, sy, &Machine->drv->visible_area, TRANSPARENCY_PEN, 0 )
+					bank&1, bank&2, sx, sy, &Machine->visible_area, TRANSPARENCY_PEN, 0 )
 
 static char pos32x32[] = { 0, 1, 2, 3 };
 static char pos32x32x[] = { 1, 0, 3, 2 };

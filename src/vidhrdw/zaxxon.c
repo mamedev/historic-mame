@@ -167,7 +167,7 @@ int zaxxon_vh_start(void)
 		height = 256+4096+256, width = 256;
 
 	/* large bitmap for the precalculated background */
-	if ((backgroundbitmap1 = osd_create_bitmap(width,height)) == 0)
+	if ((backgroundbitmap1 = bitmap_alloc(width,height)) == 0)
 	{
 		zaxxon_vh_stop();
 		return 1;
@@ -175,7 +175,7 @@ int zaxxon_vh_start(void)
 
 	if (zaxxon_vid_type == ZAXXON_VID || zaxxon_vid_type == FUTSPY_VID)
 	{
-		if ((backgroundbitmap2 = osd_create_bitmap(width,height)) == 0)
+		if ((backgroundbitmap2 = bitmap_alloc(width,height)) == 0)
 		{
 			zaxxon_vh_stop();
 			return 1;
@@ -185,7 +185,7 @@ int zaxxon_vh_start(void)
 	if (Machine->orientation & ORIENTATION_SWAP_XY)
 	{
 		/* create a temporary bitmap to prepare the background before converting it */
-		if ((prebitmap = osd_create_bitmap(256,4096)) == 0)
+		if ((prebitmap = bitmap_alloc(256,4096)) == 0)
 		{
 			zaxxon_vh_stop();
 			return 1;
@@ -207,7 +207,7 @@ int zaxxon_vh_start(void)
 	}
 
 	if (Machine->orientation & ORIENTATION_SWAP_XY)
-		osd_free_bitmap(prebitmap);
+		bitmap_free(prebitmap);
 
 	return 0;
 }
@@ -221,13 +221,13 @@ int razmataz_vh_start(void)
 		return 1;
 
 	/* large bitmap for the precalculated background */
-	if ((backgroundbitmap1 = osd_create_bitmap(256,4096)) == 0)
+	if ((backgroundbitmap1 = bitmap_alloc(256,4096)) == 0)
 	{
 		zaxxon_vh_stop();
 		return 1;
 	}
 
-	if ((backgroundbitmap2 = osd_create_bitmap(256,4096)) == 0)
+	if ((backgroundbitmap2 = bitmap_alloc(256,4096)) == 0)
 	{
 		zaxxon_vh_stop();
 		return 1;
@@ -270,8 +270,8 @@ int razmataz_vh_start(void)
 ***************************************************************************/
 void zaxxon_vh_stop(void)
 {
-	if (backgroundbitmap1)  osd_free_bitmap(backgroundbitmap1);
-	if (backgroundbitmap2)  osd_free_bitmap(backgroundbitmap2);
+	if (backgroundbitmap1)  bitmap_free(backgroundbitmap1);
+	if (backgroundbitmap2)  bitmap_free(backgroundbitmap2);
 	generic_vh_stop();
 }
 
@@ -316,7 +316,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 						spriteram[offs+2+2],
 						spriteram[offs+2+2] & 0x80,spriteram[offs+2+1] & 0x80,
 						((spriteram[offs+2+3] + 16) & 0xff) - 31,255 - spriteram[offs+2] - 15,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+						&Machine->visible_area,TRANSPARENCY_PEN,0);
 			}
 		}
 	}
@@ -333,7 +333,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 						spriteram[offs+2] & 0x3f,
 						spriteram[offs+1] & 0x80,spriteram[offs+1] & 0x80,	/* ?? */
 						((spriteram[offs+3] + 16) & 0xff) - 32,255 - spriteram[offs] - 16,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+						&Machine->visible_area,TRANSPARENCY_PEN,0);
 			}
 		}
 	}
@@ -350,7 +350,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 						spriteram[offs+2] & 0x3f,
 						spriteram[offs+1] & 0x40,spriteram[offs+1] & 0x80,
 						((spriteram[offs+3] + 16) & 0xff) - 32,255 - spriteram[offs] - 16,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+						&Machine->visible_area,TRANSPARENCY_PEN,0);
 			}
 		}
 	}
@@ -380,12 +380,12 @@ void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			else
 				scroll = 2048+63 - (zaxxon_background_position[0] + 256*(zaxxon_background_position[1]&7));
 
-			skew = 128 - 512 + 2 * Machine->drv->visible_area.min_x;
+			skew = 128 - 512 + 2 * Machine->visible_area.min_x;
 
-			clip.min_y = Machine->drv->visible_area.min_y;
-			clip.max_y = Machine->drv->visible_area.max_y;
+			clip.min_y = Machine->visible_area.min_y;
+			clip.max_y = Machine->visible_area.max_y;
 
-			for (i = Machine->drv->visible_area.min_x;i <= Machine->drv->visible_area.max_x;i++)
+			for (i = Machine->visible_area.min_x;i <= Machine->visible_area.max_x;i++)
 			{
 				clip.min_x = i;
 				clip.max_x = i;
@@ -409,12 +409,12 @@ void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				scroll = 2*(zaxxon_background_position[0] + 256*(zaxxon_background_position[1]&7))
 					- backgroundbitmap1->height + 256;
 
-			skew = 72 - (255 - Machine->drv->visible_area.max_y);
+			skew = 72 - (255 - Machine->visible_area.max_y);
 
-			clip.min_x = Machine->drv->visible_area.min_x;
-			clip.max_x = Machine->drv->visible_area.max_x;
+			clip.min_x = Machine->visible_area.min_x;
+			clip.max_x = Machine->visible_area.max_x;
 
-			for (i = Machine->drv->visible_area.max_y;i >= Machine->drv->visible_area.min_y;i-=2)
+			for (i = Machine->visible_area.max_y;i >= Machine->visible_area.min_y;i-=2)
 			{
 				clip.min_y = i-1;
 				clip.max_y = i;
@@ -429,7 +429,7 @@ void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			}
 		}
 	}
-	else fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);
+	else fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
 
 	draw_sprites(bitmap);
@@ -456,7 +456,7 @@ void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				color,
 				0,0,
 				8*sx,8*sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 }
 
@@ -473,11 +473,11 @@ void razmataz_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		scroll = 2*(zaxxon_background_position[0] + 256*(zaxxon_background_position[1]&7));
 
 		if (*zaxxon_background_color_bank & 1)
-			copyscrollbitmap(bitmap,backgroundbitmap2,0,0,1,&scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+			copyscrollbitmap(bitmap,backgroundbitmap2,0,0,1,&scroll,&Machine->visible_area,TRANSPARENCY_NONE,0);
 		else
-			copyscrollbitmap(bitmap,backgroundbitmap1,0,0,1,&scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+			copyscrollbitmap(bitmap,backgroundbitmap1,0,0,1,&scroll,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
-	else fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);
+	else fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
 
 	draw_sprites(bitmap);
@@ -501,6 +501,6 @@ void razmataz_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				color,
 				0,0,
 				8*sx,8*sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

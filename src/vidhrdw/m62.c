@@ -232,7 +232,7 @@ static int irem_vh_start( int width, int height )
 		return 1;
 	memset(dirtybuffer,1,videoram_size);
 
-	if ((tmpbitmap = osd_create_bitmap(width,height)) == 0)
+	if ((tmpbitmap = bitmap_alloc(width,height)) == 0)
 	{
 		free(dirtybuffer);
 		return 1;
@@ -509,7 +509,7 @@ static void draw_priority_sprites(struct osd_bitmap *bitmap, int prioritylayer)
 						code + i * incr,col,
 						flipx,flipy,
 						sx,sy + 16 * i,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+						&Machine->visible_area,TRANSPARENCY_PEN,0);
 
 				i--;
 			} while (i >= 0);
@@ -576,7 +576,7 @@ void kungfum_draw_background(struct osd_bitmap *bitmap)
 				scrollx[i] = -irem_background_hscroll;
 		}
 
-		copyscrollbitmap(bitmap,tmpbitmap,32,scrollx,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,32,scrollx,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 }
 
@@ -630,11 +630,11 @@ static void battroad_draw_background(struct osd_bitmap *bitmap, int prioritylaye
 
 		if (prioritylayer)
 		{
-			copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,Machine->pens[0]);
+			copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_PEN,Machine->pens[0]);
 		}
 		else
 		{
-			copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+			copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
 }
@@ -687,11 +687,11 @@ void ldrun_draw_background(struct osd_bitmap *bitmap, int prioritylayer)
 
 		if (prioritylayer)
 		{
-			copyscrollbitmap(bitmap,tmpbitmap,0,0,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,Machine->pens[0]);
+			copyscrollbitmap(bitmap,tmpbitmap,0,0,1,&scrolly,&Machine->visible_area,TRANSPARENCY_PEN,Machine->pens[0]);
 		}
 		else
 		{
-			copyscrollbitmap(bitmap,tmpbitmap,0,0,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+			copyscrollbitmap(bitmap,tmpbitmap,0,0,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
 }
@@ -742,7 +742,7 @@ void ldrun4_draw_background(struct osd_bitmap *bitmap)
 		else
 			scrollx = -irem_background_hscroll + 2;
 
-		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 }
 
@@ -784,7 +784,7 @@ void lotlot_draw_background(struct osd_bitmap *bitmap)
 	}
 
 
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 
 	for (offs = irem_textram_size - 2;offs >= 0;offs -= 2)
@@ -806,7 +806,7 @@ void lotlot_draw_background(struct osd_bitmap *bitmap)
 				(irem_textram[offs + 1] & 0x1f),
 				flipscreen,flipscreen,
 				12*sx + 64,10*sy - 32,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN, 0);
+				&Machine->visible_area,TRANSPARENCY_PEN, 0);
 	}
 }
 
@@ -852,7 +852,7 @@ static void kidniki_draw_background(struct osd_bitmap *bitmap)
 		else
 			scrollx = -irem_background_hscroll + 2;
 
-		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 }
 
@@ -907,7 +907,7 @@ static void spelunkr_draw_background(struct osd_bitmap *bitmap)
 			scrolly = -irem_background_vscroll - 128;
 		}
 
-		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 }
 
@@ -959,7 +959,7 @@ static void spelunk2_draw_background(struct osd_bitmap *bitmap)
 			scrolly = -irem_background_vscroll - 128;
 		}
 
-		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 }
 
@@ -990,7 +990,7 @@ static void battroad_draw_text(struct osd_bitmap *bitmap)
 				(irem_textram[offs + 1] & 0x0f),
 				flipscreen,flipscreen,
 				8*sx+128,8*sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN, 0);
+				&Machine->visible_area,TRANSPARENCY_PEN, 0);
 	}
 }
 
@@ -1025,7 +1025,7 @@ static void kidniki_draw_text(struct osd_bitmap *bitmap)
 				(irem_textram[offs + 1] & 0x1f),
 				flipscreen,flipscreen,
 				12*sx + 64,8*sy + scrolly,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN, 0);
+				&Machine->visible_area,TRANSPARENCY_PEN, 0);
 	}
 }
 
@@ -1053,7 +1053,7 @@ static void spelunkr_draw_text(struct osd_bitmap *bitmap)
 				(irem_textram[offs + 1] & 0x0f) + (spelunk2_palbank << 4),
 				flipscreen,flipscreen,
 				12*sx + 64,8*sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN, 0);
+				&Machine->visible_area,TRANSPARENCY_PEN, 0);
 	}
 }
 
@@ -1085,32 +1085,32 @@ void ldrun_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 void ldrun4_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	ldrun4_draw_background(bitmap);
-	draw_sprites(bitmap, &Machine->drv->visible_area, &Machine->drv->visible_area);
+	draw_sprites(bitmap, &Machine->visible_area, &Machine->visible_area);
 }
 
 void lotlot_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	lotlot_draw_background(bitmap);
-	draw_sprites(bitmap, &Machine->drv->visible_area, &Machine->drv->visible_area);
+	draw_sprites(bitmap, &Machine->visible_area, &Machine->visible_area);
 }
 
 void kidniki_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	kidniki_draw_background(bitmap);
-	draw_sprites(bitmap, &Machine->drv->visible_area, &Machine->drv->visible_area);
+	draw_sprites(bitmap, &Machine->visible_area, &Machine->visible_area);
 	kidniki_draw_text(bitmap);
 }
 
 void spelunkr_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh )
 {
 	spelunkr_draw_background(bitmap);
-	draw_sprites(bitmap, &Machine->drv->visible_area, &Machine->drv->visible_area);
+	draw_sprites(bitmap, &Machine->visible_area, &Machine->visible_area);
 	spelunkr_draw_text(bitmap);
 }
 
 void spelunk2_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh )
 {
 	spelunk2_draw_background(bitmap);
-	draw_sprites(bitmap, &Machine->drv->visible_area, &Machine->drv->visible_area);
+	draw_sprites(bitmap, &Machine->visible_area, &Machine->visible_area);
 	spelunkr_draw_text(bitmap);
 }

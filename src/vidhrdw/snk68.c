@@ -15,7 +15,7 @@ Notes:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static int sprite_flip,flipscreen;
+static int sprite_flip;
 static struct tilemap *fix_tilemap;
 
 /***************************************************************************
@@ -110,7 +110,7 @@ int ikari3_vh_start(void)
 
 WRITE_HANDLER( pow_flipscreen_w )
 {
-	flipscreen=data&0x8;
+	flip_screen_w(0,data & 0x08);
 	sprite_flip=data&0x4;
 }
 
@@ -167,7 +167,7 @@ static void draw_sprites(struct osd_bitmap *bitmap, int j,int pos)
 		my=0x200 - my;
 		my-=0x200;
 
-		if (flipscreen) {
+		if (flip_screen) {
 			mx=240-mx;
 			my=240-my;
 		}
@@ -181,7 +181,7 @@ static void draw_sprites(struct osd_bitmap *bitmap, int j,int pos)
 				fx=tile&0x4000;
 				tile&=0x3fff;
 
-				if (flipscreen) {
+				if (flip_screen) {
 					if (fx) fx=0; else fx=1;
 					if (fy) fy=0; else fy=1;
 				}
@@ -194,7 +194,7 @@ static void draw_sprites(struct osd_bitmap *bitmap, int j,int pos)
 					0,TRANSPARENCY_PEN,0);
 			}
 
-			if (flipscreen) {
+			if (flip_screen) {
 				my-=16;
 				if (my < -0x100) my+=0x200;
 			}
@@ -211,8 +211,6 @@ void pow_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	int offs,color,i;
 	int colmask[0x80],code,pal_base;
-
-	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 
 	/* Update fix chars */
 	tilemap_update(fix_tilemap);
@@ -242,7 +240,7 @@ void pow_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	palette_used_colors[2047] = PALETTE_COLOR_USED;
 	if (palette_recalc())
 		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-	fillbitmap(bitmap,palette_transparent_pen,&Machine->drv->visible_area);
+	fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
 
 	tilemap_render(ALL_TILEMAPS);
 
@@ -278,7 +276,7 @@ static void draw_sprites2(struct osd_bitmap *bitmap, int j, int z, int pos)
 		my=0x200 - my;
 		my-=0x200;
 
-		if (flipscreen) {
+		if (flip_screen) {
 			mx=240-mx;
 			my=240-my;
 		}
@@ -295,7 +293,7 @@ static void draw_sprites2(struct osd_bitmap *bitmap, int j, int z, int pos)
 					fx=tile&0x8000;
 				}
 
-				if (flipscreen) {
+				if (flip_screen) {
 					if (fx) fx=0; else fx=1;
 					if (fy) fy=0; else fy=1;
 				}
@@ -310,7 +308,7 @@ static void draw_sprites2(struct osd_bitmap *bitmap, int j, int z, int pos)
 					mx,my,
 					0,TRANSPARENCY_PEN,0);
 			}
-			if (flipscreen) {
+			if (flip_screen) {
 				my-=16;
 				if (my < -0x100) my+=0x200;
 			}
@@ -327,8 +325,6 @@ void searchar_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	int offs,color,i;
 	int colmask[0x80],code,pal_base;
-
-	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 
 	/* Update fix chars */
 	tilemap_update(fix_tilemap);
@@ -361,7 +357,7 @@ void searchar_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	palette_used_colors[2047] = PALETTE_COLOR_USED;
 	if (palette_recalc())
 		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-	fillbitmap(bitmap,palette_transparent_pen,&Machine->drv->visible_area);
+	fillbitmap(bitmap,palette_transparent_pen,&Machine->visible_area);
 
 	tilemap_render(ALL_TILEMAPS);
 

@@ -240,7 +240,7 @@ int punchout_vh_start(void)
 	}
 	memset(dirtybuffer2,1,punchout_videoram2_size);
 
-	if ((tmpbitmap = osd_create_bitmap(512,480)) == 0)
+	if ((tmpbitmap = bitmap_alloc(512,480)) == 0)
 	{
 		free(dirtybuffer);
 		free(dirtybuffer2);
@@ -249,16 +249,16 @@ int punchout_vh_start(void)
 
 	if ((bs1dirtybuffer = malloc(punchout_bigsprite1ram_size)) == 0)
 	{
-		osd_free_bitmap(tmpbitmap);
+		bitmap_free(tmpbitmap);
 		free(dirtybuffer);
 		free(dirtybuffer2);
 		return 1;
 	}
 	memset(bs1dirtybuffer,1,punchout_bigsprite1ram_size);
 
-	if ((bs1tmpbitmap = osd_create_bitmap(BIGSPRITE_WIDTH,BIGSPRITE_HEIGHT)) == 0)
+	if ((bs1tmpbitmap = bitmap_alloc(BIGSPRITE_WIDTH,BIGSPRITE_HEIGHT)) == 0)
 	{
-		osd_free_bitmap(tmpbitmap);
+		bitmap_free(tmpbitmap);
 		free(dirtybuffer);
 		free(dirtybuffer2);
 		free(bs1dirtybuffer);
@@ -267,8 +267,8 @@ int punchout_vh_start(void)
 
 	if ((bs2dirtybuffer = malloc(punchout_bigsprite2ram_size)) == 0)
 	{
-		osd_free_bitmap(tmpbitmap);
-		osd_free_bitmap(bs1tmpbitmap);
+		bitmap_free(tmpbitmap);
+		bitmap_free(bs1tmpbitmap);
 		free(dirtybuffer);
 		free(dirtybuffer2);
 		free(bs1dirtybuffer);
@@ -276,10 +276,10 @@ int punchout_vh_start(void)
 	}
 	memset(bs2dirtybuffer,1,punchout_bigsprite2ram_size);
 
-	if ((bs2tmpbitmap = osd_create_bitmap(BIGSPRITE_WIDTH,BIGSPRITE_HEIGHT)) == 0)
+	if ((bs2tmpbitmap = bitmap_alloc(BIGSPRITE_WIDTH,BIGSPRITE_HEIGHT)) == 0)
 	{
-		osd_free_bitmap(tmpbitmap);
-		osd_free_bitmap(bs1tmpbitmap);
+		bitmap_free(tmpbitmap);
+		bitmap_free(bs1tmpbitmap);
 		free(dirtybuffer);
 		free(dirtybuffer2);
 		free(bs1dirtybuffer);
@@ -303,7 +303,7 @@ int armwrest_vh_start(void)
 	}
 	memset(dirtybuffer2,1,punchout_videoram2_size);
 
-	if ((tmpbitmap = osd_create_bitmap(512,480)) == 0)
+	if ((tmpbitmap = bitmap_alloc(512,480)) == 0)
 	{
 		free(dirtybuffer);
 		free(dirtybuffer2);
@@ -312,16 +312,16 @@ int armwrest_vh_start(void)
 
 	if ((bs1dirtybuffer = malloc(punchout_bigsprite1ram_size)) == 0)
 	{
-		osd_free_bitmap(tmpbitmap);
+		bitmap_free(tmpbitmap);
 		free(dirtybuffer);
 		free(dirtybuffer2);
 		return 1;
 	}
 	memset(bs1dirtybuffer,1,punchout_bigsprite1ram_size);
 
-	if ((bs1tmpbitmap = osd_create_bitmap(ARMWREST_BIGSPRITE_WIDTH,ARMWREST_BIGSPRITE_HEIGHT)) == 0)
+	if ((bs1tmpbitmap = bitmap_alloc(ARMWREST_BIGSPRITE_WIDTH,ARMWREST_BIGSPRITE_HEIGHT)) == 0)
 	{
-		osd_free_bitmap(tmpbitmap);
+		bitmap_free(tmpbitmap);
 		free(dirtybuffer);
 		free(dirtybuffer2);
 		free(bs1dirtybuffer);
@@ -330,8 +330,8 @@ int armwrest_vh_start(void)
 
 	if ((bs2dirtybuffer = malloc(punchout_bigsprite2ram_size)) == 0)
 	{
-		osd_free_bitmap(tmpbitmap);
-		osd_free_bitmap(bs1tmpbitmap);
+		bitmap_free(tmpbitmap);
+		bitmap_free(bs1tmpbitmap);
 		free(dirtybuffer);
 		free(dirtybuffer2);
 		free(bs1dirtybuffer);
@@ -339,10 +339,10 @@ int armwrest_vh_start(void)
 	}
 	memset(bs2dirtybuffer,1,punchout_bigsprite2ram_size);
 
-	if ((bs2tmpbitmap = osd_create_bitmap(BIGSPRITE_WIDTH,BIGSPRITE_HEIGHT)) == 0)
+	if ((bs2tmpbitmap = bitmap_alloc(BIGSPRITE_WIDTH,BIGSPRITE_HEIGHT)) == 0)
 	{
-		osd_free_bitmap(tmpbitmap);
-		osd_free_bitmap(bs1tmpbitmap);
+		bitmap_free(tmpbitmap);
+		bitmap_free(bs1tmpbitmap);
 		free(dirtybuffer);
 		free(dirtybuffer2);
 		free(bs1dirtybuffer);
@@ -366,9 +366,9 @@ void punchout_vh_stop(void)
 	free(dirtybuffer2);
 	free(bs1dirtybuffer);
 	free(bs2dirtybuffer);
-	osd_free_bitmap(tmpbitmap);
-	osd_free_bitmap(bs1tmpbitmap);
-	osd_free_bitmap(bs2tmpbitmap);
+	bitmap_free(tmpbitmap);
+	bitmap_free(bs1tmpbitmap);
+	bitmap_free(bs2tmpbitmap);
 }
 
 
@@ -540,7 +540,7 @@ void punchout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		for (offs = 0;offs < BOTTOM_MONITOR_ROWS;offs++)
 			scroll[TOP_MONITOR_ROWS + offs] = -(58 + punchout_scroll[2*offs] + 256 * (punchout_scroll[2*offs + 1] & 0x01));
 
-		copyscrollbitmap(bitmap,tmpbitmap,TOP_MONITOR_ROWS + BOTTOM_MONITOR_ROWS,scroll,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,TOP_MONITOR_ROWS + BOTTOM_MONITOR_ROWS,scroll,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 	/* copy the two big sprites */
@@ -703,7 +703,7 @@ void armwrest_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 
 	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 
 	/* copy the two big sprites */

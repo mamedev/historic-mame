@@ -153,7 +153,7 @@ void mario_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		/* I'm not positive the scroll direction is right */
 		scrolly = -*mario_scrolly - 17;
-		copyscrollbitmap(bitmap,tmpbitmap,0,0,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,0,0,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 	/* Draw the sprites. */
@@ -166,7 +166,7 @@ void mario_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					(spriteram[offs + 1] & 0x0f) + 16 * palette_bank,
 					spriteram[offs + 1] & 0x80,spriteram[offs + 1] & 0x40,
 					spriteram[offs + 3] - 8,240 - spriteram[offs] + 8,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					&Machine->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}
 }

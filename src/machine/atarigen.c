@@ -1282,7 +1282,7 @@ READ_HANDLER( atarigen_video_control_r )
 
 		if (result > 255)
 			result = 255;
-		if (result > Machine->drv->visible_area.max_y)
+		if (result > Machine->visible_area.max_y)
 			result |= 0x4000;
 
 		return result;
@@ -2696,13 +2696,11 @@ static int internal_pf_init(struct playfield_data *pf, const struct atarigen_pf_
 {
 	/* allocate the bitmap */
 	if (!source_desc->noscroll)
-		pf->bitmap = osd_new_bitmap(source_desc->tilewidth * source_desc->xtiles,
-									source_desc->tileheight * source_desc->ytiles,
-									Machine->scrbitmap->depth);
+		pf->bitmap = bitmap_alloc(source_desc->tilewidth * source_desc->xtiles,
+									source_desc->tileheight * source_desc->ytiles);
 	else
-		pf->bitmap = osd_new_bitmap(Machine->drv->screen_width,
-									Machine->drv->screen_height,
-									Machine->scrbitmap->depth);
+		pf->bitmap = bitmap_alloc(Machine->drv->screen_width,
+									Machine->drv->screen_height);
 	if (!pf->bitmap)
 		return 1;
 
@@ -2763,7 +2761,7 @@ int atarigen_pf_init(const struct atarigen_pf_desc *source_desc)
 	if (!result)
 	{
 		/* allocate the overrender bitmap */
-		atarigen_pf_overrender_bitmap = osd_new_bitmap(Machine->drv->screen_width, Machine->drv->screen_height, Machine->scrbitmap->depth);
+		atarigen_pf_overrender_bitmap = bitmap_alloc(Machine->drv->screen_width, Machine->drv->screen_height);
 		if (!atarigen_pf_overrender_bitmap)
 		{
 			internal_pf_free(&playfield);
@@ -2800,7 +2798,7 @@ int atarigen_pf2_init(const struct atarigen_pf_desc *source_desc)
 static void internal_pf_free(struct playfield_data *pf)
 {
 	if (pf->bitmap)
-		osd_free_bitmap(pf->bitmap);
+		bitmap_free(pf->bitmap);
 	pf->bitmap = NULL;
 
 	if (pf->dirty)
@@ -2826,7 +2824,7 @@ void atarigen_pf_free(void)
 
 	/* free the overrender bitmap */
 	if (atarigen_pf_overrender_bitmap)
-		osd_free_bitmap(atarigen_pf_overrender_bitmap);
+		bitmap_free(atarigen_pf_overrender_bitmap);
 	atarigen_pf_overrender_bitmap = NULL;
 }
 

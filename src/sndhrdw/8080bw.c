@@ -33,8 +33,7 @@
 #include "cpu/i8039/i8039.h"
 #include "machine/74123.h"
 
-void invaders_flipscreen_w(int data);
-void sheriff_flipscreen_w(int data);
+void invaders_flip_screen_w(int data);
 void invaders_screen_red_w(int data);
 
 static WRITE_HANDLER( invad2ct_sh_port1_w );
@@ -258,7 +257,7 @@ static void invaders_sh_2_w(int board, int data, unsigned char *last)
 	if (data & 0x10 && ~*last & 0x10)
 		sample_start (base_channel+3, base_sample+7, 0);	/* Saucer Hit */
 
-	invaders_flipscreen_w(data & 0x20);
+	invaders_flip_screen_w(data & 0x20);
 
 	*last = data;
 }
@@ -396,7 +395,7 @@ static WRITE_HANDLER( ballbomb_sh_port3_w )
 
 static WRITE_HANDLER( ballbomb_sh_port5_w )
 {
-	invaders_flipscreen_w(data & 0x20);
+	invaders_flip_screen_w(data & 0x20);
 }
 
 
@@ -415,7 +414,7 @@ static WRITE_HANDLER( polaris_sh_port6_w )
 {
 	coin_lockout_global_w(0, data & 0x04);
 
-	invaders_flipscreen_w(data & 0x20);
+	invaders_flip_screen_w(data & 0x20);
 }
 
 
@@ -547,7 +546,7 @@ static WRITE_HANDLER( sheriff_sh_port5_w )
 
 static WRITE_HANDLER( sheriff_sh_port6_w )
 {
-	sheriff_flipscreen_w(data & 0x20);
+	flip_screen_w(offset, data & 0x20);
 }
 
 
@@ -592,7 +591,7 @@ void init_machine_helifire(void)
 
 static WRITE_HANDLER( helifire_sh_port6_w )
 {
-	sheriff_flipscreen_w(data & 0x20);
+	flip_screen_w(offset, data & 0x20);
 }
 
 
@@ -752,7 +751,7 @@ static WRITE_HANDLER( schaser_sh_port5_w )
 
 	coin_lockout_global_w(0, data & 0x04);
 
-	invaders_flipscreen_w(data & 0x20);
+	invaders_flip_screen_w(data & 0x20);
 }
 
 static int schaser_sh_start(const struct MachineSound *msound)

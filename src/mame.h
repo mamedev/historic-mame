@@ -2,6 +2,7 @@
 #define MACHINE_H
 
 #include "osdepend.h"
+#include "drawgfx.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -22,6 +23,7 @@ struct RunningMachine
 	int memory_region_type[MAX_MEMORY_REGIONS];
 	struct GfxElement *gfx[MAX_GFX_ELEMENTS];	/* graphic sets (chars, sprites) */
 	struct osd_bitmap *scrbitmap;	/* bitmap to draw into */
+	struct rectangle visible_area;
 	unsigned short *pens;	/* remapped palette pen numbers. When you write */
 							/* directly to a bitmap, never use absolute values, */
 							/* use this array to get the pen number. For example, */
@@ -80,6 +82,8 @@ struct GameOptions {
 	int use_emulated_ym3812;
 
 	int color_depth;	/* 8 or 16, any other value means auto */
+	int vector_width;	/* requested width for vector games; 0 means default (640) */
+	int vector_height;	/* requested height for vector games; 0 means default (480) */
 	int norotate;
 	int ror;
 	int rol;

@@ -112,7 +112,7 @@ void polyplay_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 						0x0,
 						0,0,
 						8*sx,8*sy,
-						&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+						&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 			}
 			else {
@@ -134,7 +134,7 @@ void polyplay_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 						0x0,
 						0,0,
 						8*sx,8*sy,
-						&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+						&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 			}
 		}

@@ -102,7 +102,7 @@ void aliens_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_render(ALL_TILEMAPS);
 
 	fillbitmap(priority_bitmap,0,NULL);
-	fillbitmap(bitmap,Machine->pens[layer_colorbase[1] * 16],&Machine->drv->visible_area);
+	fillbitmap(bitmap,Machine->pens[layer_colorbase[1] * 16],&Machine->visible_area);
 	K052109_tilemap_draw(bitmap,1,1<<16);
 	K052109_tilemap_draw(bitmap,2,2<<16);
 	K052109_tilemap_draw(bitmap,0,4<<16);

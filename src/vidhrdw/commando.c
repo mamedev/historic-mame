@@ -16,7 +16,6 @@ size_t commando_bgvideoram_size;
 unsigned char *commando_scrollx,*commando_scrolly;
 static unsigned char *dirtybuffer2;
 static struct osd_bitmap *tmpbitmap2;
-static int flipscreen;
 
 
 
@@ -80,11 +79,8 @@ int commando_vh_start(void)
 	}
 	memset(dirtybuffer2,1,commando_bgvideoram_size);
 
-	if (generic_vh_start() != 0)
-		return 1;
-
 	/* the background area is twice as tall and twice as large as the screen */
-	if ((tmpbitmap2 = osd_create_bitmap(2*Machine->drv->screen_width,2*Machine->drv->screen_height)) == 0)
+	if ((tmpbitmap2 = bitmap_alloc(2*Machine->drv->screen_width,2*Machine->drv->screen_height)) == 0)
 	{
 		free(dirtybuffer2);
 		generic_vh_stop();
@@ -103,7 +99,7 @@ int commando_vh_start(void)
 ***************************************************************************/
 void commando_vh_stop(void)
 {
-	osd_free_bitmap(tmpbitmap2);
+	bitmap_free(tmpbitmap2);
 	free(dirtybuffer2);
 	generic_vh_stop();
 }
@@ -153,16 +149,14 @@ WRITE_HANDLER( commando_spriteram_w )
 
 WRITE_HANDLER( commando_c804_w )
 {
-	/* bits 0 and 1 are for coin counters - we ignore them */
+	/* bits 0 and 1 are coin counters */
+	coin_counter_w(0, data & 0x01);
+	coin_counter_w(1, data & 0x02);
 
 	/* bit 4 resets the sound CPU - we ignore it */
 
 	/* bit 7 flips screen */
-	if (flipscreen != (~data & 0x80))
-	{
-		flipscreen = ~data & 0x80;
-		memset(dirtybuffer2,1,commando_bgvideoram_size);
-	}
+	flip_screen_w(offset, ~data & 0x80);
 }
 
 
@@ -179,6 +173,12 @@ void commando_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int offs;
 
 
+	if (full_refresh)
+	{
+		memset(dirtybuffer2,1,commando_bgvideoram_size);
+	}
+
+
 	for (offs = commando_bgvideoram_size - 1;offs >= 0;offs--)
 	{
 		if (dirtybuffer2[offs])
@@ -192,7 +192,7 @@ void commando_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			sy = offs % 32;
 			flipx = commando_bgcolorram[offs] & 0x10;
 			flipy = commando_bgcolorram[offs] & 0x20;
-			if (flipscreen)
+			if (flip_screen)
 			{
 				sx = 31 - sx;
 				sy = 31 - sy;
@@ -217,13 +217,13 @@ void commando_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		scrollx = -(commando_scrolly[0] + 256 * commando_scrolly[1]);
 		scrolly = -(commando_scrollx[0] + 256 * commando_scrollx[1]);
-		if (flipscreen)
+		if (flip_screen)
 		{
 			scrollx = 256 - scrollx;
 			scrolly = 256 - scrolly;
 		}
 
-		copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 
@@ -242,7 +242,7 @@ void commando_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		flipy = spriteram[offs + 1] & 0x08;
 		bank = (spriteram[offs + 1] & 0xc0) >> 6;
 
-		if (flipscreen)
+		if (flip_screen)
 		{
 			sx = 240 - sx;
 			sy = 240 - sy;
@@ -256,7 +256,7 @@ void commando_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					(spriteram[offs + 1] & 0x30) >> 4,
 					flipx,flipy,
 					sx,sy,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
+					&Machine->visible_area,TRANSPARENCY_PEN,15);
 	}
 
 
@@ -271,7 +271,7 @@ void commando_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		flipx = colorram[offs] & 0x10;
 		flipy = colorram[offs] & 0x20;
 
-		if (flipscreen)
+		if (flip_screen)
 		{
 			sx = 31 - sx;
 			sy = 31 - sy;
@@ -284,6 +284,6 @@ void commando_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				colorram[offs] & 0x0f,
 				flipx,flipy,
 				8*sx,8*sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,3);
+				&Machine->visible_area,TRANSPARENCY_PEN,3);
 	}
 }

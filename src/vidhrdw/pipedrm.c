@@ -49,8 +49,8 @@ int pipedrm_vh_start(void)
 	local_videoram[1] = malloc(videoram_size);
 
 	/* allocate background bitmaps */
-	background[0] = osd_new_bitmap(64*8, 64*4, Machine->scrbitmap->depth);
-	background[1] = osd_new_bitmap(64*8, 64*4, Machine->scrbitmap->depth);
+	background[0] = bitmap_alloc(64*8, 64*4);
+	background[1] = bitmap_alloc(64*8, 64*4);
 
 	/* allocate dirty buffers */
 	background_dirty[0] = malloc(64*64);
@@ -90,11 +90,11 @@ void pipedrm_vh_stop(void)
 
 	/* free the background bitmaps */
 	if (background[1])
-		osd_free_bitmap(background[1]);
+		bitmap_free(background[1]);
 	background[1] = NULL;
 
 	if (background[0])
-		osd_free_bitmap(background[0]);
+		bitmap_free(background[0]);
 	background[0] = NULL;
 
 	/* free videoram */
@@ -294,8 +294,8 @@ static void draw_sprites(struct osd_bitmap *bitmap, int draw_priority)
 			yzoom = 16 - zoomtable[yzoom] / 8;
 
 			/* wrap around */
-			if (x > Machine->drv->visible_area.max_x) x -= 0x200;
-			if (y > Machine->drv->visible_area.max_y) y -= 0x200;
+			if (x > Machine->visible_area.max_x) x -= 0x200;
+			if (y > Machine->visible_area.max_y) y -= 0x200;
 
 			/* normal case */
 			if (!xflip && !yflip)
@@ -428,12 +428,12 @@ void pipedrm_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	/* draw the lower background */
 	x = 0;
 	y = -scroll_regs[1] - 7;
-	copyscrollbitmap(bitmap, background[0], 1, &x, 1, &y, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
+	copyscrollbitmap(bitmap, background[0], 1, &x, 1, &y, &Machine->visible_area, TRANSPARENCY_NONE, 0);
 
 	/* draw the upper background */
 	x = 0;
 	y = -scroll_regs[3] - 7;
-	copyscrollbitmap(bitmap, background[1], 1, &x, 1, &y, &Machine->drv->visible_area, TRANSPARENCY_PEN, palette_transparent_pen);
+	copyscrollbitmap(bitmap, background[1], 1, &x, 1, &y, &Machine->visible_area, TRANSPARENCY_PEN, palette_transparent_pen);
 
 	/* draw all the sprites (priority doesn't seem to matter) */
 	if (Machine->gfx[2])
@@ -453,10 +453,10 @@ void hatris_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	/* draw the lower background */
 	x = 0;
 	y = -scroll_regs[3] - 7;
-	copyscrollbitmap(bitmap, background[0], 1, &x, 1, &y, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
+	copyscrollbitmap(bitmap, background[0], 1, &x, 1, &y, &Machine->visible_area, TRANSPARENCY_NONE, 0);
 
 	/* draw the upper background */
 	x = 0;
 	y = -scroll_regs[1] - 7;
-	copyscrollbitmap(bitmap, background[1], 1, &x, 1, &y, &Machine->drv->visible_area, TRANSPARENCY_PEN, palette_transparent_pen);
+	copyscrollbitmap(bitmap, background[1], 1, &x, 1, &y, &Machine->visible_area, TRANSPARENCY_PEN, palette_transparent_pen);
 }

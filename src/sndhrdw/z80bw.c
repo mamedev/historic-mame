@@ -34,7 +34,7 @@
 #include "driver.h"
 
 
-void invaders_flipscreen_w(int data);
+void invaders_flip_screen_w(int data);
 void invaders_screen_red_w(int data);
 
 
@@ -168,7 +168,7 @@ WRITE_HANDLER( astinvad_sh_port_5_w )
 	if ( bitsGoneHigh & OUT_PORT_5_UFO2 )  PLAY( SND_UFO2, 0 );
 	if ( bitsGoneLow  & OUT_PORT_5_UFO2 )  STOP( SND_UFO2 );
 
-	if ( bitsChanged  & OUT_PORT_5_FLIP )  invaders_flipscreen_w(data & 0x20);
+	if ( bitsChanged  & OUT_PORT_5_FLIP )  invaders_flip_screen_w(data & 0x20);
 
 	if ( bitsChanged  & OUT_PORT_5_UNUSED ) logerror("Snd Port 5 = %02X\n", data & OUT_PORT_5_UNUSED);
 }

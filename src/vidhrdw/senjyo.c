@@ -105,13 +105,13 @@ static void get_bg3_tile_info(int tile_index)
 
 void senjyo_vh_stop(void)
 {
-	osd_free_bitmap(bgbitmap);
+	bitmap_free(bgbitmap);
 	bgbitmap = 0;
 }
 
 int senjyo_vh_start(void)
 {
-	bgbitmap = osd_create_bitmap(256,256);
+	bgbitmap = bitmap_alloc(256,256);
 	if (!bgbitmap)
 		return 1;
 
@@ -266,7 +266,7 @@ static void draw_bgbitmap(struct osd_bitmap *bitmap)
 		}
 	}
 
-	copybitmap(bitmap,bgbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,bgbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 }
 
 static void draw_radar(struct osd_bitmap *bitmap)
@@ -303,7 +303,7 @@ static void draw_radar(struct osd_bitmap *bitmap)
 
 static void draw_sprites(struct osd_bitmap *bitmap,int priority)
 {
-	const struct rectangle *clip = &Machine->drv->visible_area;
+	const struct rectangle *clip = &Machine->visible_area;
 	int offs;
 
 

@@ -122,11 +122,11 @@ void sauro_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	if (!flipscreen)
 	{
 		int scroll = -scroll1;
-		copyscrollbitmap(bitmap,tmpbitmap,1,&scroll ,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,1,&scroll ,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 	else
 	{
-		copyscrollbitmap(bitmap,tmpbitmap,1,&scroll1,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,1,&scroll1,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 
@@ -158,7 +158,7 @@ void sauro_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				color,
 				flipx,flipscreen,
 				sx,sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	};
 
 	/* Draw the sprites. The order is important for correct priorities */
@@ -202,6 +202,6 @@ void sauro_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				color,
 				flipx,flipscreen,
 				sx,sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

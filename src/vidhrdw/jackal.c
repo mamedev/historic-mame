@@ -48,7 +48,7 @@ int jackal_vh_start(void)
 		return 1;
 	}
 	memset(dirtybuffer,1,videoram_size);
-	if ((tmpbitmap = osd_new_bitmap(Machine->drv->screen_width,Machine->drv->screen_height,Machine->scrbitmap->depth)) == 0)
+	if ((tmpbitmap = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 	{
 		free(dirtybuffer);
 		return 1;
@@ -60,7 +60,7 @@ int jackal_vh_start(void)
 void jackal_vh_stop(void)
 {
 	free(dirtybuffer);
-	osd_free_bitmap(tmpbitmap);
+	bitmap_free(tmpbitmap);
 
 	dirtybuffer = 0;
 	tmpbitmap = 0;
@@ -159,9 +159,9 @@ void jackal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		}
 
 		if ((h_scroll_num == 0) && (v_scroll_num == 0))
-			copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+			copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 		else
-			copyscrollbitmap(bitmap,tmpbitmap,h_scroll_num,h_scroll,v_scroll_num,v_scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+			copyscrollbitmap(bitmap,tmpbitmap,h_scroll_num,h_scroll,v_scroll_num,v_scroll,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 	/* Draw the sprites. */
@@ -198,25 +198,25 @@ void jackal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 							color,
 							flipx,flipy,
 							flipx?sx+16:sx, flipy?sy+16:sy,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+							&Machine->visible_area,TRANSPARENCY_PEN,0);
 						drawgfx(bitmap,Machine->gfx[2],
 							spritenum+1,
 							color,
 							flipx,flipy,
 							flipx?sx:sx+16, flipy?sy+16:sy,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+							&Machine->visible_area,TRANSPARENCY_PEN,0);
 						drawgfx(bitmap,Machine->gfx[2],
 							spritenum+2,
 							color,
 							flipx,flipy,
 							flipx?sx+16:sx, flipy?sy:sy+16,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+							&Machine->visible_area,TRANSPARENCY_PEN,0);
 						drawgfx(bitmap,Machine->gfx[2],
 							spritenum+3,
 							color,
 							flipx,flipy,
 							flipx?sx:sx+16, flipy?sy:sy+16,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+							&Machine->visible_area,TRANSPARENCY_PEN,0);
 					}
 				}
 				else
@@ -228,7 +228,7 @@ void jackal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 							color,
 							flipx,flipy,
 							sx,sy,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+							&Machine->visible_area,TRANSPARENCY_PEN,0);
 					}
 				}
 			}
@@ -243,7 +243,7 @@ void jackal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 						color,
 						flipx,flipy,
 						sx,sy,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+						&Machine->visible_area,TRANSPARENCY_PEN,0);
 				}
 				if ((sp & 0x0C) == 0x08)
 				{
@@ -252,13 +252,13 @@ void jackal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 						color,
 						flipx,flipy,
 						sx,sy,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+						&Machine->visible_area,TRANSPARENCY_PEN,0);
 					drawgfx(bitmap,Machine->gfx[4],
 						spritenum - 2,
 						color,
 						flipx,flipy,
 						sx,sy+8,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+						&Machine->visible_area,TRANSPARENCY_PEN,0);
 				}
 				if ((sp & 0x0C) == 0x04)
 				{
@@ -267,13 +267,13 @@ void jackal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 						color,
 						flipx,flipy,
 						sx,sy,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+						&Machine->visible_area,TRANSPARENCY_PEN,0);
 					drawgfx(bitmap,Machine->gfx[4],
 						spritenum + 1,
 						color,
 						flipx,flipy,
 						sx+8,sy,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+						&Machine->visible_area,TRANSPARENCY_PEN,0);
 				}
 			}
 		}
@@ -309,7 +309,7 @@ void jackal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 							color,
 							flipx,flipy,
 							sx,sy,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+							&Machine->visible_area,TRANSPARENCY_PEN,0);
 					}
 					if ((sr5 & 0x0C) == 0x08)
 					{
@@ -318,13 +318,13 @@ void jackal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 							color,
 							flipx,flipy,
 							sx,sy,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+							&Machine->visible_area,TRANSPARENCY_PEN,0);
 						drawgfx(bitmap,Machine->gfx[3],
 							spritenum - 2,
 							color,
 							flipx,flipy,
 							sx,sy+8,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+							&Machine->visible_area,TRANSPARENCY_PEN,0);
 					}
 					if ((sr5 & 0x0C) == 0x04)
 					{
@@ -333,13 +333,13 @@ void jackal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 							color,
 							flipx,flipy,
 							sx,sy,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+							&Machine->visible_area,TRANSPARENCY_PEN,0);
 						drawgfx(bitmap,Machine->gfx[3],
 							spritenum + 1,
 							color,
 							flipx,flipy,
 							sx+8,sy,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+							&Machine->visible_area,TRANSPARENCY_PEN,0);
 					}
 
 				}
@@ -352,25 +352,25 @@ void jackal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 							color,
 							flipx,flipy,
 							flipx?sx+16:sx, flipy?sy+16:sy,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+							&Machine->visible_area,TRANSPARENCY_PEN,0);
 						drawgfx(bitmap,Machine->gfx[1],
 							spritenum+1,
 							color,
 							flipx,flipy,
 							flipx?sx:sx+16, flipy?sy+16:sy,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+							&Machine->visible_area,TRANSPARENCY_PEN,0);
 						drawgfx(bitmap,Machine->gfx[1],
 							spritenum+2,
 							color,
 							flipx,flipy,
 							flipx?sx+16:sx, flipy?sy:sy+16,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+							&Machine->visible_area,TRANSPARENCY_PEN,0);
 						drawgfx(bitmap,Machine->gfx[1],
 							spritenum+3,
 							color,
 							flipx,flipy,
 							flipx?sx:sx+16, flipy?sy:sy+16,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+							&Machine->visible_area,TRANSPARENCY_PEN,0);
 					}
 					else
 						drawgfx(bitmap,Machine->gfx[1],
@@ -378,7 +378,7 @@ void jackal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 							color,
 							flipx,flipy,
 							sx,sy,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+							&Machine->visible_area,TRANSPARENCY_PEN,0);
 				}
 			}
 		}
@@ -412,7 +412,7 @@ void jackal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 							color,
 							flipx,flipy,
 							sx,sy,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+							&Machine->visible_area,TRANSPARENCY_PEN,0);
 					}
 					if ((sr5 & 0x0C) == 0x08)
 					{
@@ -421,13 +421,13 @@ void jackal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 							color,
 							flipx,flipy,
 							sx,sy,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+							&Machine->visible_area,TRANSPARENCY_PEN,0);
 						drawgfx(bitmap,Machine->gfx[3],
 							spritenum - 2,
 							color,
 							flipx,flipy,
 							sx,sy+8,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+							&Machine->visible_area,TRANSPARENCY_PEN,0);
 					}
 					if ((sr5 & 0x0C) == 0x04)
 					{
@@ -436,13 +436,13 @@ void jackal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 							color,
 							flipx,flipy,
 							sx,sy,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+							&Machine->visible_area,TRANSPARENCY_PEN,0);
 						drawgfx(bitmap,Machine->gfx[3],
 							spritenum + 1,
 							color,
 							flipx,flipy,
 							sx+8,sy,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+							&Machine->visible_area,TRANSPARENCY_PEN,0);
 					}
 
 				}
@@ -457,25 +457,25 @@ void jackal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 							color,
 							flipx,flipy,
 							flipx?sx+16:sx, flipy?sy+16:sy,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+							&Machine->visible_area,TRANSPARENCY_PEN,0);
 						drawgfx(bitmap,Machine->gfx[1],
 							spritenum+1,
 							color,
 							flipx,flipy,
 							flipx?sx:sx+16, flipy?sy+16:sy,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+							&Machine->visible_area,TRANSPARENCY_PEN,0);
 						drawgfx(bitmap,Machine->gfx[1],
 							spritenum+2,
 							color,
 							flipx,flipy,
 							flipx?sx+16:sx, flipy?sy:sy+16,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+							&Machine->visible_area,TRANSPARENCY_PEN,0);
 						drawgfx(bitmap,Machine->gfx[1],
 							spritenum+3,
 							color,
 							flipx,flipy,
 							flipx?sx:sx+16, flipy?sy:sy+16,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+							&Machine->visible_area,TRANSPARENCY_PEN,0);
 					}
 					else
 						drawgfx(bitmap,Machine->gfx[1],
@@ -483,7 +483,7 @@ void jackal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 							color,
 							flipx,flipy,
 							sx,sy,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+							&Machine->visible_area,TRANSPARENCY_PEN,0);
 				}
 			}
 		}

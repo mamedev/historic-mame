@@ -101,23 +101,23 @@ int pacland_vh_start( void )
 		return 1;
 	memset (dirtybuffer, 1, videoram_size);
 
-	if ( ( tmpbitmap = osd_create_bitmap( 64*8, 32*8 ) ) == 0 )
+	if ( ( tmpbitmap = bitmap_alloc( 64*8, 32*8 ) ) == 0 )
 	{
 		free( dirtybuffer );
 		return 1;
 	}
 
-	if ( ( tmpbitmap2 = osd_create_bitmap( 64*8, 32*8 ) ) == 0 )
+	if ( ( tmpbitmap2 = bitmap_alloc( 64*8, 32*8 ) ) == 0 )
 	{
-		osd_free_bitmap(tmpbitmap);
+		bitmap_free(tmpbitmap);
 		free( dirtybuffer );
 		return 1;
 	}
 
-	if ( ( tmpbitmap3 = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height) ) == 0 )
+	if ( ( tmpbitmap3 = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height) ) == 0 )
 	{
-		osd_free_bitmap(tmpbitmap2);
-		osd_free_bitmap(tmpbitmap);
+		bitmap_free(tmpbitmap2);
+		bitmap_free(tmpbitmap);
 		free( dirtybuffer );
 		return 1;
 	}
@@ -129,9 +129,9 @@ int pacland_vh_start( void )
 
 void pacland_vh_stop(void)
 {
-	osd_free_bitmap(tmpbitmap3);
-	osd_free_bitmap(tmpbitmap2);
-	osd_free_bitmap(tmpbitmap);
+	bitmap_free(tmpbitmap3);
+	bitmap_free(tmpbitmap2);
+	bitmap_free(tmpbitmap);
 	free( dirtybuffer );
 }
 
@@ -329,7 +329,7 @@ void pacland_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				scroll[i] = -scroll1+2;
 		}
 
-		copyscrollbitmap( bitmap, tmpbitmap, 32, scroll, 0, 0, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0 );
+		copyscrollbitmap( bitmap, tmpbitmap, 32, scroll, 0, 0, &Machine->visible_area, TRANSPARENCY_NONE, 0 );
 	}
 
 	/* for every character in the Video RAM, check if it has been modified */
@@ -359,7 +359,7 @@ void pacland_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 
 	/* copy scrolled contents */
-	fillbitmap(tmpbitmap3,Machine->pens[0x7f],&Machine->drv->visible_area);
+	fillbitmap(tmpbitmap3,Machine->pens[0x7f],&Machine->visible_area);
 	{
 		int i,scroll[32];
 
@@ -371,15 +371,15 @@ void pacland_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				scroll[i] = -scroll0;
 		}
 
-		copyscrollbitmap( tmpbitmap3, tmpbitmap2, 32, scroll, 0, 0, &Machine->drv->visible_area, TRANSPARENCY_COLOR, 0xff );
+		copyscrollbitmap( tmpbitmap3, tmpbitmap2, 32, scroll, 0, 0, &Machine->visible_area, TRANSPARENCY_COLOR, 0xff );
 	}
 	pacland_draw_sprites(tmpbitmap3,2);
-	copybitmap(bitmap,tmpbitmap3,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0x7f);
+	copybitmap(bitmap,tmpbitmap3,0,0,0,0,&Machine->visible_area,TRANSPARENCY_COLOR,0x7f);
 
 	pacland_draw_sprites(bitmap,0);
 
 	/* redraw the tiles which have priority over the sprites */
-	fillbitmap(tmpbitmap3,Machine->pens[0x7f],&Machine->drv->visible_area);
+	fillbitmap(tmpbitmap3,Machine->pens[0x7f],&Machine->visible_area);
 	for ( offs = 0; offs < videoram_size / 2; offs += 2 )
 	{
 		if (videoram[offs+1] & 0x20)
@@ -408,11 +408,11 @@ void pacland_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					color,
 					flipx,flipy,
 					sx*8 + scroll,sy*8,
-					&Machine->drv->visible_area,TRANSPARENCY_COLOR,0xff);
+					&Machine->visible_area,TRANSPARENCY_COLOR,0xff);
 		}
 	}
 	pacland_draw_sprites(tmpbitmap3,2);
-	copybitmap(bitmap,tmpbitmap3,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0x7f);
+	copybitmap(bitmap,tmpbitmap3,0,0,0,0,&Machine->visible_area,TRANSPARENCY_COLOR,0x7f);
 
 	pacland_draw_sprites(bitmap,1);
 }

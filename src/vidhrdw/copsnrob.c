@@ -61,7 +61,7 @@ void copsnrob_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				videoram[offs] & 0x3f,0,
 				0,0,
 				8*sx,8*sy,
-				&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+				&Machine->visible_area,TRANSPARENCY_NONE,0);
     }
 
 
@@ -72,7 +72,7 @@ void copsnrob_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
                 copsnrob_carimage[0],0,
                 1,0,
                 0xe4,256-copsnrob_cary[0],
-                &Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+                &Machine->visible_area,TRANSPARENCY_PEN,0);
     }
 
     if (copsnrob_cary[1])
@@ -81,7 +81,7 @@ void copsnrob_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
                 copsnrob_carimage[1],0,
                 1,0,
                 0xc4,256-copsnrob_cary[1],
-                &Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+                &Machine->visible_area,TRANSPARENCY_PEN,0);
     }
 
     if (copsnrob_cary[2])
@@ -90,7 +90,7 @@ void copsnrob_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
                 copsnrob_carimage[2],0,
                 0,0,
                 0x24,256-copsnrob_cary[2],
-                &Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+                &Machine->visible_area,TRANSPARENCY_PEN,0);
     }
 
     if (copsnrob_cary[3])
@@ -99,7 +99,7 @@ void copsnrob_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
                 copsnrob_carimage[3],0,
                 0,0,
                 0x04,256-copsnrob_cary[3],
-                &Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+                &Machine->visible_area,TRANSPARENCY_PEN,0);
     }
 
 
@@ -115,7 +115,7 @@ void copsnrob_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
                 0,0,
                 0,0,
                 0x80,256-copsnrob_trucky[0],
-                &Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+                &Machine->visible_area,TRANSPARENCY_PEN,0);
     }
 
 
@@ -141,7 +141,7 @@ void copsnrob_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
         {
             if (val & mask1)
             {
-                for (y = 0; y <= Machine->drv->visible_area.max_y; y++)
+                for (y = 0; y <= Machine->visible_area.max_y; y++)
                 {
                     if (copsnrob_bulletsram[y] & mask2)
                     {

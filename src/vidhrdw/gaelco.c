@@ -113,7 +113,7 @@ int splash_vh_start(void)
 {
 	screen0 = tilemap_create(get_tile_info_screen0,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,32);
 	screen1 = tilemap_create(get_tile_info_screen1,tilemap_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
-	screen2 = osd_create_bitmap (512, 256);
+	screen2 = bitmap_alloc (512, 256);
 
 	if (!screen0 || !screen1 || !screen2)
 		return 1;
@@ -170,7 +170,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 			0x10 + (attr2 & 0x0f),
 			attr & 0x40, attr & 0x80,
 			sx-8,sy-16,
-			&Machine->drv->visible_area,
+			&Machine->visible_area,
 			TRANSPARENCY_PEN,0);
 	}
 }
@@ -188,7 +188,7 @@ void splash_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	tilemap_render(ALL_TILEMAPS);
 
-	copybitmap(bitmap,screen2,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,screen2,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 	tilemap_draw(bitmap,screen1,0);
 	draw_sprites(bitmap);

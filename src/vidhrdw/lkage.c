@@ -79,7 +79,7 @@ int lkage_vh_start(void)
 
 static void draw_sprites( struct osd_bitmap *bitmap, int priority )
 {
-	const struct rectangle *clip = &Machine->drv->visible_area;
+	const struct rectangle *clip = &Machine->visible_area;
 	const unsigned char *finish = spriteram;
 	const unsigned char *source = spriteram+0x60-4;
 	const struct GfxElement *gfx = Machine->gfx[3];

@@ -88,7 +88,7 @@ int jrpacman_vh_start(void)
 	memset(dirtybuffer,1,videoram_size);
 
 	/* Jr. Pac Man has a virtual screen twice as large as the visible screen */
-	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,2*Machine->drv->screen_height)) == 0)
+	if ((tmpbitmap = bitmap_alloc(Machine->drv->screen_width,2*Machine->drv->screen_height)) == 0)
 	{
 		free(dirtybuffer);
 		return 1;
@@ -107,7 +107,7 @@ int jrpacman_vh_start(void)
 void jrpacman_vh_stop(void)
 {
 	free(dirtybuffer);
-	osd_free_bitmap(tmpbitmap);
+	bitmap_free(tmpbitmap);
 }
 
 
@@ -291,7 +291,7 @@ void jrpacman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				scrolly[i] = 224 - scrolly[i];
 		}
 
-		copyscrollbitmap(bitmap,tmpbitmap,0,0,36,scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,0,0,36,scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 
@@ -305,7 +305,7 @@ void jrpacman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 						+ 0x40 * (*jrpacman_palettebank & 1),
 				spriteram[offs] & 1,spriteram[offs] & 2,
 				272 - spriteram_2[offs + 1],spriteram_2[offs]-31,
-				&Machine->drv->visible_area,
+				&Machine->visible_area,
 				(*jrpacman_bgpriority & 1) ? TRANSPARENCY_THROUGH : TRANSPARENCY_COLOR,
 				(*jrpacman_bgpriority & 1) ? Machine->pens[0]     : 0);
 	}
@@ -318,7 +318,7 @@ void jrpacman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 						+ 0x40 * (*jrpacman_palettebank & 1),
 				spriteram[offs] & 1,spriteram[offs] & 2,
 				272 - spriteram_2[offs + 1],spriteram_2[offs]-30,
-				&Machine->drv->visible_area,
+				&Machine->visible_area,
 				(*jrpacman_bgpriority & 1) ? TRANSPARENCY_THROUGH : TRANSPARENCY_COLOR,
 				(*jrpacman_bgpriority & 1) ? Machine->pens[0]     : 0);
 	}

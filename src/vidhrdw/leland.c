@@ -207,7 +207,7 @@ WRITE_HANDLER( leland_gfx_port_w )
 	struct scroll_position *scroll;
 
 	/* treat anything during the VBLANK as scanline 0 */
-	if (scanline > Machine->drv->visible_area.max_y)
+	if (scanline > Machine->visible_area.max_y)
 		scanline = 0;
 
 	/* adjust the proper scroll value */
@@ -623,7 +623,7 @@ void leland_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 		struct rectangle clip;
 
 		/* make a clipper */
-		clip = Machine->drv->visible_area;
+		clip = Machine->visible_area;
 		if (chunk != 0)
 			clip.min_y = scroll_pos[chunk].scanline;
 		if (chunk != scroll_index)
@@ -711,7 +711,7 @@ void ataxx_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		struct rectangle clip;
 
 		/* make a clipper */
-		clip = Machine->drv->visible_area;
+		clip = Machine->visible_area;
 		if (chunk != 0)
 			clip.min_y = scroll_pos[chunk].scanline;
 		if (chunk != scroll_index)
@@ -825,7 +825,7 @@ void DRAW_FUNC(struct osd_bitmap *bitmap)
 	int x, y;
 
 	/* draw any non-transparent scanlines from the VRAM directly */
-	for (y = Machine->drv->visible_area.min_y; y <= Machine->drv->visible_area.max_y; y++)
+	for (y = Machine->visible_area.min_y; y <= Machine->visible_area.max_y; y++)
 	{
 		UINT8 *srclo = &video_ram_copy[y * 128 + VRAM_LO];
 		UINT8 *srchi = &video_ram_copy[y * 128 + VRAM_HI];

@@ -19,7 +19,6 @@ extern size_t spriteram_size;
 unsigned char *travrusa_videoram;
 
 static struct tilemap *bg_tilemap;
-static int flipscreen;
 
 
 
@@ -205,8 +204,7 @@ WRITE_HANDLER( travrusa_flipscreen_w )
 	/* screen flip is handled both by software and hardware */
 	data ^= ~readinputport(4) & 1;
 
-	flipscreen = data & 1;
-	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
+	flip_screen_w(0,data & 1);
 
 	coin_counter_w(0,data & 0x02);
 	coin_counter_w(1,data & 0x20);
@@ -244,7 +242,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 		sy = 240 - spriteram[offs];
 		flipx = spriteram[offs + 1] & 0x40;
 		flipy = spriteram[offs + 1] & 0x80;
-		if (flipscreen)
+		if (flip_screen)
 		{
 			sx = 240 - sx;
 			sy = 240 - sy;
@@ -257,7 +255,7 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 				spriteram[offs + 1] & 0x0f,
 				flipx,flipy,
 				sx,sy,
-				flipscreen ? &spritevisibleareaflip : &spritevisiblearea,TRANSPARENCY_PEN,0);
+				flip_screen ? &spritevisibleareaflip : &spritevisiblearea,TRANSPARENCY_PEN,0);
 	}
 }
 

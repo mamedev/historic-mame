@@ -15,8 +15,6 @@
 unsigned char *astrof_color;
 unsigned char *tomahawk_protection;
 
-static int flipscreen = 0;
-static int force_refresh = 0;
 static int do_modify_palette = 0;
 static int palette_bank = -1, red_on = -1;
 static const unsigned char *prom;
@@ -122,7 +120,7 @@ static void common_videoram_w(int offset, int data, int color)
 	x = (offset >> 8) << 3;
 	y = 255 - (offset & 0xff);
 
-	if (flipscreen)
+	if (flip_screen)
 	{
 		x = 255 - x;
 		y = 255 - y;
@@ -164,11 +162,7 @@ WRITE_HANDLER( astrof_video_control1_w )
 
 	if (input_port_2_r(0) & 0x02) /* Cocktail mode */
 	{
-		if (flipscreen != (data & 0x01))
-		{
-			flipscreen = data & 0x01;
-			force_refresh = 1;
-		}
+		flip_screen_w(offset, data & 0x01);
 	}
 }
 
@@ -222,13 +216,13 @@ READ_HANDLER( tomahawk_protection_r )
 	/* flip the byte */
 
 	int res = ((*tomahawk_protection & 0x01) << 7) |
-			((*tomahawk_protection & 0x02) << 5) |
-			((*tomahawk_protection & 0x04) << 3) |
-			((*tomahawk_protection & 0x08) << 1) |
-			((*tomahawk_protection & 0x10) >> 1) |
-			((*tomahawk_protection & 0x20) >> 3) |
-			((*tomahawk_protection & 0x40) >> 5) |
-			((*tomahawk_protection & 0x80) >> 7);
+			  ((*tomahawk_protection & 0x02) << 5) |
+			  ((*tomahawk_protection & 0x04) << 3) |
+			  ((*tomahawk_protection & 0x08) << 1) |
+			  ((*tomahawk_protection & 0x10) >> 1) |
+			  ((*tomahawk_protection & 0x20) >> 3) |
+			  ((*tomahawk_protection & 0x40) >> 5) |
+			  ((*tomahawk_protection & 0x80) >> 7);
 
 	return res;
 }
@@ -248,7 +242,7 @@ void astrof_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		do_modify_palette = 0;
 	}
 
-	if (palette_recalc() || full_refresh || force_refresh)
+	if (palette_recalc() || full_refresh)
 	{
 		int offs;
 
@@ -258,6 +252,4 @@ void astrof_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			common_videoram_w(offs, videoram[offs], colorram[offs]);
 		}
 	}
-
-	force_refresh = 0;
 }

@@ -163,7 +163,7 @@ void ironhors_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		for (i = 0;i < 32;i++)
 			scroll[i] = -(ironhors_scroll[i]);
 
-		copyscrollbitmap(bitmap,tmpbitmap,32,scroll,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,32,scroll,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 
@@ -198,7 +198,7 @@ void ironhors_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 								color,
 								flipx,flipy,
 								sx,sy,
-								&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+								&Machine->visible_area,TRANSPARENCY_PEN,0);
 						break;
 
 					case 0x04:	/* 16x8 */
@@ -208,13 +208,13 @@ void ironhors_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 									color,
 									flipx,flipy,
 									flipx?sx+8:sx,sy,
-									&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+									&Machine->visible_area,TRANSPARENCY_PEN,0);
 							drawgfx(bitmap,Machine->gfx[2],
 									code | 1,
 									color,
 									flipx,flipy,
 									flipx?sx:sx+8,sy,
-									&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+									&Machine->visible_area,TRANSPARENCY_PEN,0);
 						}
 						break;
 
@@ -225,13 +225,13 @@ void ironhors_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 									color,
 									flipx,flipy,
 									sx,flipy?sy+8:sy,
-									&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+									&Machine->visible_area,TRANSPARENCY_PEN,0);
 							drawgfx(bitmap,Machine->gfx[2],
 									code | 2,
 									color,
 									flipx,flipy,
 									sx,flipy?sy:sy+8,
-									&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+									&Machine->visible_area,TRANSPARENCY_PEN,0);
 						}
 						break;
 
@@ -242,7 +242,7 @@ void ironhors_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 									color,
 									flipx,flipy,
 									sx,sy,
-									&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+									&Machine->visible_area,TRANSPARENCY_PEN,0);
 						}
 						break;
 				}

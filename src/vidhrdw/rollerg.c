@@ -98,7 +98,7 @@ void rollerg_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_render(ALL_TILEMAPS);
 
 	fillbitmap(priority_bitmap,0,NULL);
-	fillbitmap(bitmap,Machine->pens[16 * bg_colorbase],&Machine->drv->visible_area);
+	fillbitmap(bitmap,Machine->pens[16 * bg_colorbase],&Machine->visible_area);
 	K051316_zoom_draw_0(bitmap,1);
 
 	K053245_sprites_draw(bitmap);

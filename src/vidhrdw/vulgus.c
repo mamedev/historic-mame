@@ -101,7 +101,7 @@ int vulgus_vh_start(void)
 	memset(dirtybuffer2,1,vulgus_bgvideoram_size);
 
 	/* the background area is twice as tall and twice as large as the screen */
-	if ((tmpbitmap2 = osd_create_bitmap(2*Machine->drv->screen_width,2*Machine->drv->screen_height)) == 0)
+	if ((tmpbitmap2 = bitmap_alloc(2*Machine->drv->screen_width,2*Machine->drv->screen_height)) == 0)
 	{
 		free(dirtybuffer2);
 		generic_vh_stop();
@@ -120,7 +120,7 @@ int vulgus_vh_start(void)
 ***************************************************************************/
 void vulgus_vh_stop(void)
 {
-	osd_free_bitmap(tmpbitmap2);
+	bitmap_free(tmpbitmap2);
 	free(dirtybuffer2);
 	generic_vh_stop();
 }
@@ -202,10 +202,10 @@ void vulgus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			maxy = (sy + 15 + scrolly) & 0x1ff;
 			if (miny > maxy) miny = maxy - 15;
 
-			if (minx + 15 >= Machine->drv->visible_area.min_x &&
-					maxx - 15 <= Machine->drv->visible_area.max_x &&
-					miny + 15 >= Machine->drv->visible_area.min_y &&
-					maxy - 15 <= Machine->drv->visible_area.max_y)
+			if (minx + 15 >= Machine->visible_area.min_x &&
+					maxx - 15 <= Machine->visible_area.max_x &&
+					miny + 15 >= Machine->visible_area.min_y &&
+					maxy - 15 <= Machine->visible_area.max_y)
 */
 			{
 				dirtybuffer2[offs] = 0;
@@ -222,7 +222,7 @@ void vulgus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 
 	/* copy the background graphics */
-	copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 
 	/* Draw the sprites. */
@@ -246,7 +246,7 @@ void vulgus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					col,
 					0, 0,
 					sx, sy + 16 * i,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
+					&Machine->visible_area,TRANSPARENCY_PEN,15);
 
 			/* draw again with wraparound */
 			drawgfx(bitmap,Machine->gfx[2],
@@ -254,7 +254,7 @@ void vulgus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					col,
 					0, 0,
 					sx, sy + 16 * i - 256,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
+					&Machine->visible_area,TRANSPARENCY_PEN,15);
 			i--;
 		} while (i >= 0);
 	}
@@ -274,6 +274,6 @@ void vulgus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				colorram[offs] & 0x3f,
 				0,0,
 				sx,sy,
-				&Machine->drv->visible_area,TRANSPARENCY_COLOR,47);
+				&Machine->visible_area,TRANSPARENCY_COLOR,47);
 	}
 }

@@ -203,6 +203,7 @@ maketree:
 	@md $(OBJ)\cpu\adsp2100
 	@md $(OBJ)\cpu\pdp1
 	@md $(OBJ)\cpu\mips
+	@md $(OBJ)\cpu\sc61860
 	@md $(OBJ)\sound
 	@md $(OBJ)\msdos
 	@md $(OBJ)\drivers
@@ -217,9 +218,6 @@ ifdef MESS
 	@md $(OBJ)\mess\vidhrdw
 	@md $(OBJ)\mess\sndhrdw
 	@md $(OBJ)\mess\tools
-	@md $(OBJ)\mess\tools\dat2html
-	@md $(OBJ)\mess\tools\mkhdimg
-	@md $(OBJ)\mess\tools\imgtool
 endif
 
 clean:

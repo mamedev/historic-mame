@@ -123,7 +123,7 @@ READ_HANDLER( terrac_videoram2_r )
 void terrac_vh_stop(void)
 {
         free(dirtybuffer2);
-	osd_free_bitmap(tmpbitmap2);
+	bitmap_free(tmpbitmap2);
 	generic_vh_stop();
 }
 
@@ -145,8 +145,8 @@ int terrac_vh_start(void)
 	memset(dirtybuffer2,1,terrac_videoram_size);
 
 	/* the background area is 4 x 1 (90 Rotated!) */
-	if ((tmpbitmap2 = osd_new_bitmap(4*Machine->drv->screen_width,
-			1*Machine->drv->screen_height,Machine->scrbitmap->depth)) == 0)
+	if ((tmpbitmap2 = bitmap_alloc(4*Machine->drv->screen_width,
+			1*Machine->drv->screen_height)) == 0)
 	{
 		terrac_vh_stop();
 		return 1;
@@ -192,14 +192,14 @@ void terracre_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	/* copy the background graphics */
 	if (READ_WORD(terrac_scrolly) & 0x2000)	/* background disable */
-		fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);
+		fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 	else
 	{
 		int scrollx;
 
 		scrollx = -READ_WORD(terrac_scrolly);
 
-		copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 
@@ -223,7 +223,7 @@ void terracre_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				color + 16 * (spritepalettebank[code >> 1] & 0x0f),
 				flipx,flipy,
 				sx,sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 
 
@@ -240,6 +240,6 @@ void terracre_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				0,
 				0,0,
 				8*sx,8*sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
+				&Machine->visible_area,TRANSPARENCY_PEN,15);
 	}
 }

@@ -9,7 +9,6 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static int flipscreen = 0;
 
 WRITE_HANDLER( jack_paletteram_w )
 {
@@ -20,18 +19,13 @@ WRITE_HANDLER( jack_paletteram_w )
 
 READ_HANDLER( jack_flipscreen_r )
 {
-	if (offset != flipscreen)
-	{
-		flipscreen = offset;
-		memset(dirtybuffer,1,videoram_size);
-	}
-
+	flip_screen_w(0, offset);
 	return 0;
 }
 
 WRITE_HANDLER( jack_flipscreen_w )
 {
-	jack_flipscreen_r(offset);
+	flip_screen_w(0, offset);
 }
 
 
@@ -40,7 +34,7 @@ void jack_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int offs;
 
 
-	if (palette_recalc())
+	if (palette_recalc() || full_refresh)
 		memset(dirtybuffer,1,videoram_size);
 
 	/* for every character in the Video RAM, check if it has been modified */
@@ -57,7 +51,7 @@ void jack_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			sx = offs / 32;
 			sy = 31 - offs % 32;
 
-			if (flipscreen)
+			if (flip_screen)
 			{
 				sx = 31 - sx;
 				sy = 31 - sy;
@@ -66,15 +60,15 @@ void jack_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					videoram[offs] + ((colorram[offs] & 0x18) << 5),
 					colorram[offs] & 0x07,
-					flipscreen,flipscreen,
+					flip_screen,flip_screen,
 					8*sx,8*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+					&Machine->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
 
 
 	/* copy the temporary bitmap to the screen */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 	/* draw sprites */
 	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
@@ -88,7 +82,7 @@ void jack_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		flipx = (spriteram[offs + 3] & 0x80);
 		flipy = (spriteram[offs + 3] & 0x40);
 
-		if (flipscreen)
+		if (flip_screen)
 		{
 			sx = 248 - sx;
 			sy = 248 - sy;
@@ -101,6 +95,6 @@ void jack_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				color,
 				flipx,flipy,
 				sx,sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

@@ -106,6 +106,10 @@
 #if (HAS_MIPS)
 #include "cpu/mips/mips.h"
 #endif
+#if (HAS_SC61860)
+#include "cpu/sc61860/sc61860.h"
+#endif
+
 
 /* these are triggers sent to the timer system for various interrupt events */
 #define TRIGGER_TIMESLICE		-1000
@@ -512,6 +516,10 @@ struct cpu_interface cpuintf[] =
 #endif
 #if (HAS_MIPS)
 	CPU0(MIPS,	   mips,	 8, -1,1.00,MIPS_INT_NONE,	   MIPS_INT_NONE,  MIPS_INT_NONE,  32lew, 0,32,LE,4, 4,32LEW),
+#endif
+#if (HAS_SC61860)
+	#define sc61860_ICount sc61860_icount
+	CPU0(SC61860,  sc61860,  1,  0,1.00,-1,				   -1,			   -1,			   16,    0,16,BE,1, 4,16	),
 #endif
 };
 
@@ -2263,7 +2271,7 @@ static void cpu_inittimers(void)
 	/* while we're at it, compute the scanline times */
 	if (Machine->drv->vblank_duration)
 		scanline_period = (refresh_period - TIME_IN_USEC(Machine->drv->vblank_duration)) /
-				(double)(Machine->drv->visible_area.max_y - Machine->drv->visible_area.min_y + 1);
+				(double)(Machine->visible_area.max_y - Machine->visible_area.min_y + 1);
 	else
 		scanline_period = refresh_period / (double)Machine->drv->screen_height;
 	scanline_period_inv = 1.0 / scanline_period;

@@ -4240,7 +4240,9 @@ static void cmd_go_break( void )
 	osd_set_display(
 		Machine->scrbitmap->width,
 		Machine->scrbitmap->height,
-		Machine->drv->video_attributes);
+		Machine->scrbitmap->depth,
+		Machine->drv->video_attributes,
+		Machine->orientation);
 }
 
 /**************************************************************************
@@ -4255,9 +4257,12 @@ static void cmd_here( void )
 	dbg_active = 0;
 
     osd_sound_enable(1);
-	osd_set_display(Machine->scrbitmap->width,
-					Machine->scrbitmap->height,
-					Machine->drv->video_attributes);
+	osd_set_display(
+		Machine->scrbitmap->width,
+		Machine->scrbitmap->height,
+		Machine->scrbitmap->depth,
+		Machine->drv->video_attributes,
+		Machine->orientation);
 
     edit_cmds_reset();
 }
@@ -4789,7 +4794,9 @@ static void cmd_view_screen( void )
     osd_set_display(
 		Machine->scrbitmap->width,
 		Machine->scrbitmap->height,
-        Machine->drv->video_attributes);
+		Machine->scrbitmap->depth,
+		Machine->drv->video_attributes,
+		Machine->orientation);
 
 	/* Let memory changes eventually do something to the video */
 	do
@@ -4897,7 +4904,9 @@ static void cmd_go( void )
 	osd_set_display(
 		Machine->scrbitmap->width,
 		Machine->scrbitmap->height,
-		Machine->drv->video_attributes);
+		Machine->scrbitmap->depth,
+		Machine->drv->video_attributes,
+		Machine->orientation);
 }
 
 /**************************************************************************
@@ -5159,7 +5168,9 @@ void MAME_Debug(void)
             osd_set_display(
                 Machine->scrbitmap->width,
                 Machine->scrbitmap->height,
-                Machine->drv->video_attributes);
+				Machine->scrbitmap->depth,
+				Machine->drv->video_attributes,
+				Machine->orientation);
         }
 		DBG.prev_sp = 0;
     }

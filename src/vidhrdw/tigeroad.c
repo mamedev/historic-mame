@@ -75,7 +75,7 @@ static void render_background( struct osd_bitmap *bitmap, int priority )
 						color,
 						!flipx,!flipy,
 						224-sx,224-sy,
-						&Machine->drv->visible_area,
+						&Machine->visible_area,
 						TRANSPARENCY_PENS,(attr & 0x10) ? transp1 : transp0);
 			else
 				drawgfx(bitmap,Machine->gfx[1],
@@ -83,7 +83,7 @@ static void render_background( struct osd_bitmap *bitmap, int priority )
 						color,
 						flipx,flipy,
 						sx,sy,
-						&Machine->drv->visible_area,
+						&Machine->visible_area,
 						TRANSPARENCY_PENS,(attr & 0x10) ? transp1 : transp0);
 
 			sx+=32;
@@ -129,7 +129,7 @@ static void render_sprites( struct osd_bitmap *bitmap )
 				color,
 				flipx,flipy,
 				sx,240-sy,
-				&Machine->drv->visible_area,
+				&Machine->visible_area,
 				TRANSPARENCY_PEN,15);
 		}
 		source-=8;
@@ -165,7 +165,7 @@ static void render_text( struct osd_bitmap *bitmap )
 				color,
 				flipscreen,flipy,
 				8*sx,8*sy,
-				&Machine->drv->visible_area, TRANSPARENCY_PEN,3);
+				&Machine->visible_area, TRANSPARENCY_PEN,3);
 	}
 }
 

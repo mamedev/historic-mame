@@ -182,7 +182,7 @@ static void mcr1_update_background(struct osd_bitmap *bitmap)
 
 			/* draw the tile */
 			drawgfx(bitmap, Machine->gfx[0], code, 0, mcr_cocktail_flip, mcr_cocktail_flip,
-					sx, sy, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
+					sx, sy, &Machine->visible_area, TRANSPARENCY_NONE, 0);
 
 			/* if there's live sprite data here, draw the sprite data */
 			if (dirty & 2)
@@ -234,7 +234,7 @@ static void mcr2_update_background(struct osd_bitmap *bitmap, int check_sprites)
 
 			/* draw the tile */
 			drawgfx(bitmap, Machine->gfx[0], code, color, hflip, vflip,
-					sx, sy, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
+					sx, sy, &Machine->visible_area, TRANSPARENCY_NONE, 0);
 
 			/* if there's live sprite data here, draw the sprite data */
 			if (check_sprites && (dirty & 2))
@@ -294,9 +294,9 @@ static void mcr12_update_sprites(int scale)
 			x += mcr12_sprite_xoffs;
 
 		/* wrap and clip */
-		if (x > Machine->drv->visible_area.max_x)
+		if (x > Machine->visible_area.max_x)
 			x -= 512;
-		if (y > Machine->drv->visible_area.max_y)
+		if (y > Machine->visible_area.max_y)
 			y -= 512;
 		if (x <= -32 || y <= -32)
 			continue;
@@ -385,7 +385,7 @@ void journey_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	mcr2_update_background(tmpbitmap, 0);
 
 	/* copy it to the destination */
-	copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
+	copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_NONE, 0);
 
 	/* draw the sprites */
 	mcr3_update_sprites(bitmap, 0x03, 0, 0, 0);

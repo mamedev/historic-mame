@@ -139,7 +139,7 @@ WRITE_HANDLER( lasso_backcolor_w )
 static void draw_sprites( struct osd_bitmap *bitmap )
 {
     const struct GfxElement *gfx = Machine->gfx[2+gfxbank];
-    struct rectangle clip = Machine->drv->visible_area;
+    struct rectangle clip = Machine->visible_area;
     const unsigned char *finish = spriteram;
 	const unsigned char *source = spriteram + 0x80 - 4;
 	while( source>=finish )

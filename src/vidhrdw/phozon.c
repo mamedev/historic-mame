@@ -82,14 +82,14 @@ void phozon_vh_stop( void ) {
 void phozon_draw_sprite(struct osd_bitmap *dest,unsigned int code,unsigned int color,
 	int flipx,int flipy,int sx,int sy)
 {
-	drawgfx(dest,Machine->gfx[2],code,color,flipx,flipy,sx,sy,&Machine->drv->visible_area,
+	drawgfx(dest,Machine->gfx[2],code,color,flipx,flipy,sx,sy,&Machine->visible_area,
 		TRANSPARENCY_PEN,0);
 }
 
 void phozon_draw_sprite8(struct osd_bitmap *dest,unsigned int code,unsigned int color,
 	int flipx,int flipy,int sx,int sy)
 {
-	drawgfx(dest,Machine->gfx[3],code,color,flipx,flipy,sx,sy,&Machine->drv->visible_area,
+	drawgfx(dest,Machine->gfx[3],code,color,flipx,flipy,sx,sy,&Machine->visible_area,
 		TRANSPARENCY_PEN,0);
 }
 
@@ -146,11 +146,11 @@ void phozon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					colorram[offs] & 0x3f,
 					0,0,
 					8*sx,8*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+					&Machine->visible_area,TRANSPARENCY_NONE,0);
 			}
 	}
 
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 	/* Draw the sprites. */
 	for (offs = 0;offs < spriteram_size;offs += 2){
@@ -255,7 +255,7 @@ usrintf_showmessage(buf);
 					colorram[offs] & 0x3f,
 					0,0,
 					8*sx,8*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					&Machine->visible_area,TRANSPARENCY_PEN,0);
 			}
 	}
 }

@@ -118,7 +118,7 @@ void chqflag_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh )
 
 	tilemap_render(ALL_TILEMAPS);
 
-	fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);
+	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
 	K051316_zoom_draw_1(bitmap,0);
 	K051960_sprites_draw(bitmap,0,128);

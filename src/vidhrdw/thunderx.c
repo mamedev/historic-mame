@@ -93,7 +93,7 @@ void scontra_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	fillbitmap(priority_bitmap,0,NULL);
 
 	/* The background color is always from layer 1 - but it's always black anyway */
-//	fillbitmap(bitmap,Machine->pens[16 * layer_colorbase[1]],&Machine->drv->visible_area);
+//	fillbitmap(bitmap,Machine->pens[16 * layer_colorbase[1]],&Machine->visible_area);
 	if (scontra_priority)
 	{
 		K052109_tilemap_draw(bitmap,2,TILEMAP_IGNORE_TRANSPARENCY|(1<<16));

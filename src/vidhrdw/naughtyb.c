@@ -140,7 +140,7 @@ int naughtyb_vh_start(void)
 		return 1;
 	memset(dirtybuffer, 1, videoram_size);
 
-	if ((tmpbitmap = osd_create_bitmap(68*8,28*8)) == 0)
+	if ((tmpbitmap = bitmap_alloc(68*8,28*8)) == 0)
 	{
 		free(dirtybuffer);
 		return 1;
@@ -158,7 +158,7 @@ int naughtyb_vh_start(void)
 ***************************************************************************/
 void naughtyb_vh_stop(void)
 {
-	osd_free_bitmap(tmpbitmap);
+	bitmap_free(tmpbitmap);
 	free(dirtybuffer);
 }
 

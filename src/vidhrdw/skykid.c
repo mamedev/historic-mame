@@ -204,7 +204,7 @@ static void skykid_draw_sprites(struct osd_bitmap *bitmap)
 						color,
 						flipx, flipy,
 						sx+x*16,sy+y*16,
-						&Machine->drv->visible_area,
+						&Machine->visible_area,
 						TRANSPARENCY_COLOR,255);
 				}
 			}
@@ -256,7 +256,7 @@ void skykid_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			drawgfx(bitmap,Machine->gfx[0],	skykid_textram[offs] + (flipscreen << 8),
 					skykid_textram[offs+0x400] & 0x3f,
 					0,0,sx*8,sy*8,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					&Machine->visible_area,TRANSPARENCY_PEN,0);
         }
 	}
 	if ((priority & 0xf0) == 0x50)

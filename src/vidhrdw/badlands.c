@@ -186,7 +186,7 @@ void badlands_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 		atarigen_overrender_colortable[i] = palette_transparent_pen;
 
 	/* draw the playfield */
-	atarigen_pf_process(pf_render_callback, bitmap, &Machine->drv->visible_area);
+	atarigen_pf_process(pf_render_callback, bitmap, &Machine->visible_area);
 
 	/* render the motion objects */
 	atarigen_mo_process(mo_render_callback, bitmap);

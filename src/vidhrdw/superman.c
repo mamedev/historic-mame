@@ -181,7 +181,7 @@ void superman_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 						color,
 						flipx,flipy,
 						x,y,
-						&Machine->drv->visible_area,
+						&Machine->visible_area,
 						TRANSPARENCY_PEN,0);
 				}
 			}
@@ -212,7 +212,7 @@ void superman_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 					color,
 					flipx,flipy,
 					x,y,
-					&Machine->drv->visible_area,
+					&Machine->visible_area,
 					TRANSPARENCY_PEN,0);
 			}
 		}

@@ -48,7 +48,7 @@ int jailbrek_vh_start( void ) {
 		return 1;
 	memset( dirtybuffer, 1, videoram_size );
 
-	if ( ( tmpbitmap = osd_new_bitmap(Machine->drv->screen_width * 2,Machine->drv->screen_height,Machine->scrbitmap->depth ) ) == 0 ) {
+	if ( ( tmpbitmap = bitmap_alloc(Machine->drv->screen_width * 2,Machine->drv->screen_height) ) == 0 ) {
 		free(dirtybuffer);
 		return 1;
 	}
@@ -59,7 +59,7 @@ int jailbrek_vh_start( void ) {
 void jailbrek_vh_stop( void ) {
 
 	free( dirtybuffer );
-	osd_free_bitmap( tmpbitmap );
+	bitmap_free( tmpbitmap );
 }
 
 static void drawsprites( struct osd_bitmap *bitmap ) {
@@ -81,7 +81,7 @@ static void drawsprites( struct osd_bitmap *bitmap ) {
 				tile,color,
 				flipx,flipy,
 				sx,sy,
-				&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+				&Machine->visible_area,TRANSPARENCY_COLOR,0);
 	}
 }
 
@@ -117,7 +117,7 @@ void jailbrek_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh) {
 		for ( i = 0; i < 32; i++ )
 			scrollx[i] = -( ( jailbrek_scroll_x[i+32] << 8 ) + jailbrek_scroll_x[i] );
 
-		copyscrollbitmap(bitmap,tmpbitmap,32,scrollx,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,32,scrollx,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 	drawsprites( bitmap );

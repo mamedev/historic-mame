@@ -60,7 +60,7 @@ void snowbros_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	/* This clears & redraws the entire screen each pass */
 
-  	fillbitmap(bitmap,Machine->gfx[0]->colortable[0],&Machine->drv->visible_area);
+  	fillbitmap(bitmap,Machine->gfx[0]->colortable[0],&Machine->visible_area);
 
 	for (offs = 0;offs < 0x1e00; offs += 16)
 	{
@@ -96,7 +96,7 @@ void snowbros_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					(tilecolour & 0xf0) >> 4,
 					attr & 0x80, attr & 0x40,
 					x,y,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+					&Machine->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}
 }

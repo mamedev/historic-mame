@@ -189,7 +189,7 @@ static void bionicc_draw_sprites( struct osd_bitmap *bitmap )
 {
 	int offs;
 	const struct GfxElement *gfx = Machine->gfx[3];
-	const struct rectangle *clip = &Machine->drv->visible_area;
+	const struct rectangle *clip = &Machine->visible_area;
 
 	for (offs = spriteram_size-8;offs >= 0;offs -= 8)
 	{
@@ -261,7 +261,7 @@ void bionicc_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	tilemap_render(ALL_TILEMAPS);
 
-	fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);
+	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 	tilemap_draw(bitmap,fg_tilemap,2);
 	tilemap_draw(bitmap,bg_tilemap,0);
 	tilemap_draw(bitmap,fg_tilemap,0);

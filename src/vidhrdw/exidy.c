@@ -41,15 +41,15 @@ int exidy_vh_start(void)
     if (generic_vh_start()!=0)
         return 1;
 
-    if ((motion_object_1_vid = osd_create_bitmap(16,16)) == 0)
+    if ((motion_object_1_vid = bitmap_alloc(16,16)) == 0)
     {
         generic_vh_stop();
         return 1;
     }
 
-    if ((motion_object_2_vid = osd_create_bitmap(16,16)) == 0)
+    if ((motion_object_2_vid = bitmap_alloc(16,16)) == 0)
     {
-        osd_free_bitmap(motion_object_1_vid);
+        bitmap_free(motion_object_1_vid);
         generic_vh_stop();
         return 1;
     }
@@ -63,8 +63,8 @@ exidy_vh_stop
 
 void exidy_vh_stop(void)
 {
-    osd_free_bitmap(motion_object_1_vid);
-    osd_free_bitmap(motion_object_2_vid);
+    bitmap_free(motion_object_1_vid);
+    bitmap_free(motion_object_2_vid);
     generic_vh_stop();
 }
 
@@ -248,7 +248,7 @@ void exidy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					charcode,color,
 					0,0,sx,sy,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+					&Machine->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
 
@@ -260,7 +260,7 @@ void exidy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 
 	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
     exidy_check_collision(bitmap);
 
@@ -279,7 +279,7 @@ void exidy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				((*exidy_sprite_no>>4) & 0x0F)+32,1,
 				0,0,
 				sx,sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 		}
 
 		/* Now draw Motion Object 1. */
@@ -297,7 +297,7 @@ void exidy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				(*exidy_sprite_no & 0x0F)+16*enable_set,0,
 				0,0,
 				sx,sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 		}
 
 	}

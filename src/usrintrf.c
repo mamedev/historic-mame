@@ -28,7 +28,6 @@ extern unsigned int coins[COIN_COUNTERS];
 extern unsigned int coinlockedout[COIN_COUNTERS];
 
 /* MARTINEZ.F 990207 Memory Card */
-#ifndef NEOFREE
 #ifndef TINY_COMPILE
 int 		memcard_menu(struct osd_bitmap *bitmap, int);
 extern int	mcd_action;
@@ -36,7 +35,6 @@ extern int	mcd_number;
 extern int	memcard_status;
 extern int	memcard_number;
 extern int	memcard_manager;
-#endif
 #endif
 
 extern int neogeo_memcard_load(int);
@@ -515,24 +513,9 @@ void ui_text(struct osd_bitmap *bitmap,const char *buf,int x,int y)
 	ui_text_ex(bitmap, buf, buf + strlen(buf), x, y, UI_COLOR_NORMAL);
 }
 
-INLINE void drawhline(struct osd_bitmap *bitmap, int x, int w, int y, unsigned short color)
-{
-	int i;
-
-	for (i = 0; i < w; i++)  plot_pixel(bitmap, x+i, y, color);
-}
-
-INLINE void drawvline(struct osd_bitmap *bitmap, int x, int y, int h, unsigned short color)
-{
-	int i;
-
-	for (i = 0; i < h; i++)  plot_pixel(bitmap, x, y+i, color);
-}
-
 
 void ui_drawbox(struct osd_bitmap *bitmap,int leftx,int topy,int width,int height)
 {
-	int y;
 	unsigned short black,white;
 
 
@@ -549,12 +532,11 @@ void ui_drawbox(struct osd_bitmap *bitmap,int leftx,int topy,int width,int heigh
 	black = Machine->uifont->colortable[0];
 	white = Machine->uifont->colortable[1];
 
-	drawhline(bitmap,leftx,width,topy, 		white);
-	drawhline(bitmap,leftx,width,topy+height-1,white);
-	drawvline(bitmap,leftx,		topy,height,white);
-	drawvline(bitmap,leftx+width-1,topy,height,white);
-	for (y = topy+1;y < topy+height-1;y++)
-		drawhline(bitmap,leftx+1,width-2,y,black);
+	plot_box(bitmap,leftx,        topy,         width,  1,       white);
+	plot_box(bitmap,leftx,        topy+height-1,width,  1,       white);
+	plot_box(bitmap,leftx,        topy,         1,      height,  white);
+	plot_box(bitmap,leftx+width-1,topy,         1,      height,  white);
+	plot_box(bitmap,leftx+1,      topy+1,       width-2,height-2,black);
 
 	switch_true_orientation();
 }
@@ -562,7 +544,6 @@ void ui_drawbox(struct osd_bitmap *bitmap,int leftx,int topy,int width,int heigh
 
 static void drawbar(struct osd_bitmap *bitmap,int leftx,int topy,int width,int height,int percentage,int default_percentage)
 {
-	int y;
 	unsigned short black,white;
 
 
@@ -579,18 +560,15 @@ static void drawbar(struct osd_bitmap *bitmap,int leftx,int topy,int width,int h
 	black = Machine->uifont->colortable[0];
 	white = Machine->uifont->colortable[1];
 
-	for (y = topy;y < topy + height/8;y++)
-		plot_pixel(bitmap,leftx+(width-1)*default_percentage/100, y, white);
+	plot_box(bitmap,leftx+(width-1)*default_percentage/100,topy,1,height/8,white);
 
-	drawhline(bitmap,leftx,width,topy+height/8,white);
+	plot_box(bitmap,leftx,topy+height/8,width,1,white);
 
-	for (y = topy+height/8;y < topy+height-height/8;y++)
-		drawhline(bitmap,leftx,1+(width-1)*percentage/100,y,white);
+	plot_box(bitmap,leftx,topy+height/8,1+(width-1)*percentage/100,height-2*(height/8),white);
 
-	drawhline(bitmap,leftx,width,topy+height-height/8-1,white);
+	plot_box(bitmap,leftx,topy+height-height/8-1,width,1,white);
 
-	for (y = topy+height-height/8;y < topy + height;y++)
-		plot_pixel(bitmap,leftx+(width-1)*default_percentage/100, y, white);
+	plot_box(bitmap,leftx+(width-1)*default_percentage/100,topy+height-height/8,1,height/8,white);
 
 	switch_true_orientation();
 }
@@ -953,7 +931,6 @@ void ui_displaymessagewindow(struct osd_bitmap *bitmap,const char *text)
 
 
 
-#ifndef NEOFREE
 #ifndef TINY_COMPILE
 extern int no_of_tiles;
 void NeoMVSDrawGfx(unsigned char **line,const struct GfxElement *gfx,
@@ -963,7 +940,6 @@ void NeoMVSDrawGfx16(unsigned char **line,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		int zx,int zy,const struct rectangle *clip);
 extern struct GameDriver driver_neogeo;
-#endif
 #endif
 
 static void showcharset(struct osd_bitmap *bitmap)
@@ -985,13 +961,11 @@ static void showcharset(struct osd_bitmap *bitmap)
 		memcpy(orig_used_colors,palette_used_colors,Machine->drv->total_colors * sizeof(unsigned char));
 	}
 
-#ifndef NEOFREE
 #ifndef TINY_COMPILE
 	if (Machine->gamedrv->clone_of == &driver_neogeo ||
 			(Machine->gamedrv->clone_of &&
 				Machine->gamedrv->clone_of->clone_of == &driver_neogeo))
 		game_is_neogeo=1;
-#endif
 #endif
 
 	bank = -1;
@@ -1077,7 +1051,7 @@ static void showcharset(struct osd_bitmap *bitmap)
 				}
 				else
 				{
-					int sx,sy,x,y,colors;
+					int sx,sy,colors;
 
 					colors = Machine->drv->total_colors - 256 * palpage;
 					if (colors > 256) colors = 256;
@@ -1108,19 +1082,12 @@ static void showcharset(struct osd_bitmap *bitmap)
 					{
 						sx = Machine->uixmin + 3*Machine->uifontwidth + (Machine->uifontwidth*4/3)*(i % 16);
 						sy = Machine->uiymin + 2*Machine->uifontheight + (Machine->uifontheight)*(i / 16) + Machine->uifontheight;
-						for (y = 0;y < Machine->uifontheight;y++)
-						{
-							for (x = 0;x < Machine->uifontwidth*4/3;x++)
-							{
-								plot_pixel(bitmap, sx+x, sy+y, Machine->pens[i + 256*palpage]);
-							}
-						}
+						plot_box(bitmap,sx,sy,Machine->uifontwidth*4/3,Machine->uifontheight,Machine->pens[i + 256*palpage]);
 					}
 				}
 
 				switch_true_orientation();
 			}
-#ifndef NEOFREE
 #ifndef TINY_COMPILE
 			else	/* neogeo sprite tiles */
 			{
@@ -1160,7 +1127,6 @@ static void showcharset(struct osd_bitmap *bitmap)
 				}
 			}
 #endif
-#endif
 
 			if (bank >= 0)
 				sprintf(buf,"GFXSET %d COLOR %2X CODE %X-%X",bank,color,firstdrawn,lastdrawn);
@@ -1171,8 +1137,6 @@ static void showcharset(struct osd_bitmap *bitmap)
 			changed = 0;
 		}
 
-		/* the OS dependant code must not assume that */
-		/* osd_skip_this_frame() is called before osd_update_video_and_audio() - NS */
 		update_video_and_audio();
 
 		if (code_pressed(KEYCODE_LCONTROL) || code_pressed(KEYCODE_RCONTROL))
@@ -1265,7 +1229,7 @@ static void showcharset(struct osd_bitmap *bitmap)
 		}
 
 		if (input_ui_pressed(IPT_UI_SNAPSHOT))
-			osd_save_snapshot();
+			osd_save_snapshot(bitmap);
 	} while (!input_ui_pressed(IPT_UI_SHOW_GFX) &&
 			!input_ui_pressed(IPT_UI_CANCEL));
 
@@ -2204,8 +2168,8 @@ static int displaygameinfo(struct osd_bitmap *bitmap,int selected)
 	{
 		int pixelx,pixely,tmax,tmin,rem;
 
-		pixelx = 4 * (Machine->drv->visible_area.max_y - Machine->drv->visible_area.min_y + 1);
-		pixely = 3 * (Machine->drv->visible_area.max_x - Machine->drv->visible_area.min_x + 1);
+		pixelx = 4 * (Machine->visible_area.max_y - Machine->visible_area.min_y + 1);
+		pixely = 3 * (Machine->visible_area.max_x - Machine->visible_area.min_x + 1);
 
 		/* calculate MCD */
 		if (pixelx >= pixely)
@@ -2230,8 +2194,8 @@ static int displaygameinfo(struct osd_bitmap *bitmap,int selected)
 
 		sprintf(&buf[strlen(buf)],"\n%s:\n", ui_getstring (UI_screenres));
 		sprintf(&buf[strlen(buf)],"%d x %d (%s) %f Hz\n",
-				Machine->drv->visible_area.max_x - Machine->drv->visible_area.min_x + 1,
-				Machine->drv->visible_area.max_y - Machine->drv->visible_area.min_y + 1,
+				Machine->visible_area.max_x - Machine->visible_area.min_x + 1,
+				Machine->visible_area.max_y - Machine->visible_area.min_y + 1,
 				(Machine->gamedrv->flags & ORIENTATION_SWAP_XY) ? "V" : "H",
 				Machine->drv->frames_per_second);
 #if 0
@@ -2699,7 +2663,6 @@ static int displayhistory (struct osd_bitmap *bitmap, int selected)
 }
 
 
-#ifndef NEOFREE
 #ifndef TINY_COMPILE
 int memcard_menu(struct osd_bitmap *bitmap, int selection)
 {
@@ -2820,7 +2783,6 @@ int memcard_menu(struct osd_bitmap *bitmap, int selection)
 	return sel + 1;
 }
 #endif
-#endif
 
 
 #ifndef MESS
@@ -2876,13 +2838,15 @@ static void setup_menu_init(void)
 		menu_item[menu_total] = ui_getstring (UI_calibrate); menu_action[menu_total++] = UI_CALIBRATE;
 	}
 
+#ifndef MESS
 	menu_item[menu_total] = ui_getstring (UI_bookkeeping); menu_action[menu_total++] = UI_STATS;
 	menu_item[menu_total] = ui_getstring (UI_gameinfo); menu_action[menu_total++] = UI_GAMEINFO;
 	menu_item[menu_total] = ui_getstring (UI_history); menu_action[menu_total++] = UI_HISTORY;
-#ifdef MESS
+#else
 	menu_item[menu_total] = ui_getstring (UI_imageinfo); menu_action[menu_total++] = UI_IMAGEINFO;
 	menu_item[menu_total] = ui_getstring (UI_filemanager); menu_action[menu_total++] = UI_FILEMANAGER;
 	menu_item[menu_total] = ui_getstring (UI_tapecontrol); menu_action[menu_total++] = UI_TAPECONTROL;
+	menu_item[menu_total] = ui_getstring (UI_history); menu_action[menu_total++] = UI_HISTORY;
 #endif
 
 	if (options.cheat)
@@ -2890,7 +2854,6 @@ static void setup_menu_init(void)
 		menu_item[menu_total] = ui_getstring (UI_cheat); menu_action[menu_total++] = UI_CHEAT;
 	}
 
-#ifndef NEOFREE
 #ifndef TINY_COMPILE
 	if (Machine->gamedrv->clone_of == &driver_neogeo ||
 			(Machine->gamedrv->clone_of &&
@@ -2898,7 +2861,6 @@ static void setup_menu_init(void)
 	{
 		menu_item[menu_total] = ui_getstring (UI_memorycard); menu_action[menu_total++] = UI_MEMCARD;
 	}
-#endif
 #endif
 
 	menu_item[menu_total] = ui_getstring (UI_resetgame); menu_action[menu_total++] = UI_RESET;
@@ -2961,12 +2923,10 @@ static int setup_menu(struct osd_bitmap *bitmap, int selected)
 			case UI_CHEAT:
 				res = cheat_menu(bitmap, sel >> SEL_BITS);
 				break;
-#ifndef NEOFREE
 #ifndef TINY_COMPILE
 			case UI_MEMCARD:
 				res = memcard_menu(bitmap, sel >> SEL_BITS);
 				break;
-#endif
 #endif
 		}
 
@@ -3488,7 +3448,7 @@ if (Machine->gamedrv->flags & GAME_COMPUTER)
 
 	/* if the user pressed F12, save the screen to a file */
 	if (input_ui_pressed(IPT_UI_SNAPSHOT))
-		osd_save_snapshot();
+		osd_save_snapshot(bitmap);
 
 	/* This call is for the cheat, it must be called once a frame */
 	if (options.cheat) DoCheat(bitmap);
@@ -3610,7 +3570,7 @@ draw_screen(bitmap_dirty);
 			profiler_mark(PROFILER_END);
 
 			if (input_ui_pressed(IPT_UI_SNAPSHOT))
-				osd_save_snapshot();
+				osd_save_snapshot(bitmap);
 
 			if (setup_selected == 0 && input_ui_pressed(IPT_UI_CANCEL))
 				return 1;

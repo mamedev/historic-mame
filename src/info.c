@@ -491,14 +491,14 @@ static void print_game_video(FILE* out, const struct GameDriver* game)
 
 	if (game->flags & ORIENTATION_SWAP_XY)
 	{
-		dx = driver->visible_area.max_y - driver->visible_area.min_y + 1;
-		dy = driver->visible_area.max_x - driver->visible_area.min_x + 1;
+		dx = driver->default_visible_area.max_y - driver->default_visible_area.min_y + 1;
+		dy = driver->default_visible_area.max_x - driver->default_visible_area.min_x + 1;
 		orientation = 1;
 	}
 	else
 	{
-		dx = driver->visible_area.max_x - driver->visible_area.min_x + 1;
-		dy = driver->visible_area.max_y - driver->visible_area.min_y + 1;
+		dx = driver->default_visible_area.max_x - driver->default_visible_area.min_x + 1;
+		dy = driver->default_visible_area.max_y - driver->default_visible_area.min_y + 1;
 		orientation = 0;
 	}
 

@@ -421,7 +421,7 @@ void dday_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 							   code_background,
 							   code_background >> 5,
 							   sx,sy,
-							   &Machine->drv->visible_area,TRANSPARENCY_NONE,
+							   &Machine->visible_area,TRANSPARENCY_NONE,
 							   searchlight_bitmap,
 							   layer_bitmap, 1);
 			}
@@ -432,7 +432,7 @@ void dday_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 						   code,
 						   code >> 5,
 						   sx,sy,
-						   &Machine->drv->visible_area,TRANSPARENCY_PEN,
+						   &Machine->visible_area,TRANSPARENCY_PEN,
 						   searchlight_bitmap,
 						   0, 0);
 
@@ -446,7 +446,7 @@ void dday_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 							   code_background,
 							   code_background >> 5,
 							   sx,sy,
-							   &Machine->drv->visible_area,TRANSPARENCY_NONE,
+							   &Machine->visible_area,TRANSPARENCY_NONE,
 							   searchlight_bitmap,
 							   layer_bitmap, 0);
 			}
@@ -458,7 +458,7 @@ void dday_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 						   code_background,
 						   code_background >> 5,
 						   sx,sy,
-						   &Machine->drv->visible_area,TRANSPARENCY_NONE,
+						   &Machine->visible_area,TRANSPARENCY_NONE,
 						   searchlight_bitmap,
 						   0, 0);
 		}
@@ -473,7 +473,7 @@ void dday_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 						   code,
 						   code >> 5,
 						   sx,sy,
-						   &Machine->drv->visible_area,TRANSPARENCY_PEN,
+						   &Machine->visible_area,TRANSPARENCY_PEN,
 						   searchlight_bitmap,
 						   0, 0);
 		}

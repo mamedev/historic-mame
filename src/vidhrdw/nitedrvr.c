@@ -75,12 +75,12 @@ void nitedrvr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					charcode, 0,
 					0,0,sx,sy,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+					&Machine->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
 
 	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 	/* Draw roadway */
 	for (roadway=0; roadway < 16; roadway++)
@@ -104,12 +104,12 @@ void nitedrvr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		drawgfx(bitmap,Machine->gfx[0],
 				gear_buf[offs],0,
 				0,0,(offs)*8,31*8,
-				&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+				&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 	/* track indicator - not a part of the original game!!! */
 	for (offs = 0; offs < 6; offs++)
 		drawgfx(bitmap,Machine->gfx[0],
 				track_buf[offs + 6*nitedrvr_track],0,
 				0,0,(offs+26)*8,31*8,
-				&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+				&Machine->visible_area,TRANSPARENCY_NONE,0);
 }

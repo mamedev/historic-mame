@@ -168,7 +168,7 @@ void karnov_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		my = (offs/2) / 32;
 		drawgfx(bitmap,Machine->gfx[0],
 			tile,color,0,0,8*mx,8*my,
-			&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 }
 
@@ -272,7 +272,7 @@ void wndrplnt_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		mx = (offs/2) / 32;
 		drawgfx(bitmap,Machine->gfx[0],
 			tile,color,0,0,8*mx,8*my,
-			&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 }
 
@@ -290,13 +290,13 @@ void karnov_vh_stop (void)
 {
 	if (dirty_f) free(dirty_f);
 	if (karnov_foreground) free(karnov_foreground);
-	if (bitmap_f) osd_free_bitmap (bitmap_f);
+	if (bitmap_f) bitmap_free (bitmap_f);
 }
 
 int karnov_vh_start (void)
 {
 	/* Allocate bitmaps */
-	if ((bitmap_f = osd_create_bitmap(512,512)) == 0) {
+	if ((bitmap_f = bitmap_alloc(512,512)) == 0) {
 		karnov_vh_stop ();
 		return 1;
 	}

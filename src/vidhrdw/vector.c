@@ -828,8 +828,8 @@ void vector_vh_update(struct osd_bitmap *bitmap,int full_refresh)
 	vecheight = bitmap->height;
 
 	/* setup scaling */
-	temp_x = (1<<(44-vecshift)) / (Machine->drv->visible_area.max_x - Machine->drv->visible_area.min_x);
-	temp_y = (1<<(44-vecshift)) / (Machine->drv->visible_area.max_y - Machine->drv->visible_area.min_y);
+	temp_x = (1<<(44-vecshift)) / (Machine->visible_area.max_x - Machine->visible_area.min_x);
+	temp_y = (1<<(44-vecshift)) / (Machine->visible_area.max_y - Machine->visible_area.min_y);
 
 	if (Machine->orientation & ORIENTATION_SWAP_XY)
 	{

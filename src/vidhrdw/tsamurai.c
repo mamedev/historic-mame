@@ -9,7 +9,6 @@
 ** prototypes
 */
 WRITE_HANDLER( tsamurai_bgcolor_w );
-WRITE_HANDLER( tsamurai_flipscreen_w );
 WRITE_HANDLER( tsamurai_textbank_w );
 WRITE_HANDLER( tsamurai_scrolly_w );
 WRITE_HANDLER( tsamurai_scrollx_w );
@@ -25,7 +24,6 @@ int tsamurai_vh_start( void );
 ** variables
 */
 unsigned char *tsamurai_videoram;
-static int flipscreen;
 static int bgcolor;
 static int textbank;
 
@@ -131,15 +129,6 @@ WRITE_HANDLER( tsamurai_bgcolor_w )
 	bgcolor = data;
 }
 
-WRITE_HANDLER( tsamurai_flipscreen_w )
-{
-	if( flipscreen!=data )
-	{
-		flipscreen = data;
-		tilemap_set_flip( ALL_TILEMAPS, flipscreen?(TILEMAP_FLIPX | TILEMAP_FLIPY):0 );
-	}
-}
-
 WRITE_HANDLER( tsamurai_textbank_w )
 {
 	if( textbank!=data )
@@ -191,7 +180,7 @@ WRITE_HANDLER( tsamurai_fg_colorram_w )
 static void draw_sprites( struct osd_bitmap *bitmap )
 {
 	struct GfxElement *gfx = Machine->gfx[2];
-	const struct rectangle *clip = &Machine->drv->visible_area;
+	const struct rectangle *clip = &Machine->visible_area;
 	const unsigned char *source = spriteram+32*4-4;
 	const unsigned char *finish = spriteram; /* ? */
 	static int flicker;
@@ -208,7 +197,7 @@ static void draw_sprites( struct osd_bitmap *bitmap )
 		//color = 0x2d - color; nunchakun fix?
 		if( sy<-16 ) sy += 256;
 
-		if( flipscreen )
+		if( flip_screen )
 		{
 			drawgfx( bitmap,gfx,
 				sprite_number&0x7f,

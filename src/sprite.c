@@ -853,7 +853,7 @@ skip3:
 /*********************************************************************/
 
 void sprite_init( void ){
-	const struct rectangle *clip = &Machine->drv->visible_area;
+	const struct rectangle *clip = &Machine->visible_area;
 	int left = clip->min_x;
 	int top = clip->min_y;
 	int right = clip->max_x+1;

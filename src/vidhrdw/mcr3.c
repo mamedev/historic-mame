@@ -127,10 +127,10 @@ static void mcr3_update_background(struct osd_bitmap *bitmap, UINT8 color_xor)
 
 			if (!mcr_cocktail_flip)
 				drawgfx(bitmap, Machine->gfx[0], code, color, attr & 0x04, attr & 0x08,
-						16 * mx, 16 * my, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
+						16 * mx, 16 * my, &Machine->visible_area, TRANSPARENCY_NONE, 0);
 			else
 				drawgfx(bitmap, Machine->gfx[0], code, color, !(attr & 0x04), !(attr & 0x08),
-						16 * (31 - mx), 16 * (29 - my), &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
+						16 * (31 - mx), 16 * (29 - my), &Machine->visible_area, TRANSPARENCY_NONE, 0);
 
 			dirtybuffer[offs] = 0;
 		}
@@ -175,10 +175,10 @@ void mcr3_update_sprites(struct osd_bitmap *bitmap, int color_mask, int code_xor
 		/* draw the sprite */
 		if (!mcr_cocktail_flip)
 			drawgfx(bitmap, Machine->gfx[1], code, color, flipx, flipy, sx, sy,
-					&Machine->drv->visible_area, TRANSPARENCY_PEN, 0);
+					&Machine->visible_area, TRANSPARENCY_PEN, 0);
 		else
 			drawgfx(bitmap, Machine->gfx[1], code, color, !flipx, !flipy, 480 - sx, 452 - sy,
-					&Machine->drv->visible_area, TRANSPARENCY_PEN, 0);
+					&Machine->visible_area, TRANSPARENCY_PEN, 0);
 
 		/* sprites use color 0 for background pen and 8 for the 'under tile' pen.
 			The color 8 is used to cover over other sprites. */
@@ -215,7 +215,7 @@ void mcr3_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	mcr3_update_background(tmpbitmap, 0);
 
 	/* copy it to the destination */
-	copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
+	copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_NONE, 0);
 
 	/* draw the sprites */
 	mcr3_update_sprites(bitmap, 0x03, 0, 0, 0);
@@ -238,7 +238,7 @@ void mcrmono_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	mcr3_update_background(tmpbitmap, 3);
 
 	/* copy it to the destination */
-	copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
+	copybitmap(bitmap, tmpbitmap, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_NONE, 0);
 
 	/* draw the sprites */
 	mcr3_update_sprites(bitmap, 0x03, 0, 0, 0);
@@ -292,7 +292,7 @@ int spyhunt_vh_start(void)
 	memset(dirtybuffer, 1, videoram_size);
 
 	/* allocate a bitmap for the background */
-	spyhunt_backbitmap = osd_create_bitmap(64*64, 32*32);
+	spyhunt_backbitmap = bitmap_alloc(64*64, 32*32);
 	if (!spyhunt_backbitmap)
 	{
 		free(dirtybuffer);
@@ -316,7 +316,7 @@ int spyhunt_vh_start(void)
 void spyhunt_vh_stop(void)
 {
 	/* free the buffers */
-	osd_free_bitmap(spyhunt_backbitmap);
+	bitmap_free(spyhunt_backbitmap);
 	free(dirtybuffer);
 }
 
@@ -391,7 +391,7 @@ void spyhunt_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 				spyhunt_lamp[4] ? "GUNS" : "    ");
 		for (offs = 0; offs < 30; offs++)
 			drawgfx(bitmap, Machine->gfx[2], buffer[offs], 0, 0, 0,
-					30 * 16, (29 - offs) * 16, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
+					30 * 16, (29 - offs) * 16, &Machine->visible_area, TRANSPARENCY_NONE, 0);
 	}
 }
 
@@ -503,8 +503,8 @@ void dotron_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 		if (artwork_backdrop)
 		{
 			backdrop_refresh(artwork_backdrop);
-			copybitmap(tmpbitmap, artwork_backdrop->artwork, 0, 0, 0, 0, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
-			copybitmap(bitmap, artwork_backdrop->artwork, 0, 0, 0, 0, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
+			copybitmap(tmpbitmap, artwork_backdrop->artwork, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_NONE, 0);
+			copybitmap(bitmap, artwork_backdrop->artwork, 0, 0, 0, 0, &Machine->visible_area, TRANSPARENCY_NONE, 0);
 			osd_mark_dirty(0,0,bitmap->width, bitmap->height, 0);
 		}
 		memset(dirtybuffer, 1 ,videoram_size);

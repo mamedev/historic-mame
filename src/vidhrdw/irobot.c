@@ -72,11 +72,11 @@ void irobot_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 	    color = *color_prom;
 	    intensity = color & 0x03;
 	    bits = (color >> 6) & 0x03;
-	    r = 16 * bits * intensity;
+	    r = 28 * bits * intensity;
 	    bits = (color >> 4) & 0x03;
-	    g = 16 * bits * intensity;
+	    g = 28 * bits * intensity;
 	    bits = (color >> 2) & 0x03;
-	    b = 16 * bits * intensity;
+	    b = 28 * bits * intensity;
 		*(palette++) = r;
 		*(palette++) = g;
 		*(palette++) = b;
@@ -104,11 +104,11 @@ WRITE_HANDLER( irobot_paletteram_w )
     color = ((data << 1) | (offset & 0x01)) ^ 0x1ff;
     intensity = color & 0x07;
     bits = (color >> 3) & 0x03;
-    b = 8 * bits * intensity;
+    b = 12 * bits * intensity;
     bits = (color >> 5) & 0x03;
-    g = 8 * bits * intensity;
+    g = 12 * bits * intensity;
     bits = (color >> 7) & 0x03;
-    r = 8 * bits * intensity;
+    r = 12 * bits * intensity;
     palette_change_color((offset >> 1) & 0x3F,r,g,b);
 }
 
@@ -169,9 +169,9 @@ static void (*hline_16_table[8])(int x1, int x2, int y, int col) =
 int irobot_vh_start(void)
 {
 	/* Setup 2 bitmaps for the polygon generator */
-	if ((polybitmap1 = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if ((polybitmap1 = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
-	if ((polybitmap2 = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if ((polybitmap2 = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
 
 	/* Set clipping */
@@ -195,8 +195,8 @@ int irobot_vh_start(void)
 ***************************************************************************/
 void irobot_vh_stop(void)
 {
-	osd_free_bitmap(polybitmap1);
-	osd_free_bitmap(polybitmap2);
+	bitmap_free(polybitmap1);
+	bitmap_free(polybitmap2);
 }
 
 /***************************************************************************
@@ -307,7 +307,7 @@ void irobot_draw_line (int x1, int y1, int x2, int y2, int col)
 }
 
 
-#define ROUND_TO_PIXEL(x)	(((x) >> 7) - 128)
+#define ROUND_TO_PIXEL(x)	((x >> 7) - 128)
 
 void run_video(void)
 {
@@ -325,7 +325,6 @@ void run_video(void)
 	else
 		polybitmap = polybitmap1;
 
-	//    if (irvg_clear) irobot_poly_clear();
 	lpnt=0;
 	while (lpnt < 0xFFF)
 	{
@@ -388,16 +387,18 @@ void run_video(void)
 				ey = ROUND_TO_PIXEL(ey);
 				spnt+=4;
 
-				sx += word1;
+			//	sx += word1;
 
 				word2 = (INT16)READ_WORD(&irobot_combase[spnt2]);
 				ey2 = ROUND_TO_PIXEL(READ_WORD(&irobot_combase[spnt2+2]));
 				spnt2+=4;
 
-				sx2 += word2;
+			//	sx2 += word2;
 
 				while(1)
 				{
+
+
 					if (sy >= ir_ymin && sy < ir_ymax)
 					{
 						int x1 = ROUND_TO_PIXEL(sx);
@@ -407,13 +408,12 @@ void run_video(void)
 						if (x1 > x2) temp = x1, x1 = x2, x2 = temp;
 						if (x1 < ir_xmin) x1 = ir_xmin;
 						if (x2 > ir_xmax) x2 = ir_xmax;
-						if (x1 <= x2)
-							(*draw_hline)(x1, x2, sy, color);
+						if (x1 < x2)
+							(*draw_hline)(x1 + 1, x2, sy, color);
 					}
-
 					sy++;
 
-					if (sy >= ey)
+					if (sy > ey)
 					{
 						word1 = (INT16)READ_WORD(&irobot_combase[spnt]);
 						ey = READ_WORD(&irobot_combase[spnt+2]);
@@ -425,7 +425,7 @@ void run_video(void)
 					else
 						sx += word1;
 
-					if (sy >= ey2)
+					if (sy > ey2)
 					{
 						word2 = (INT16)READ_WORD(&irobot_combase[spnt2]);
 						ey2 = ROUND_TO_PIXEL(READ_WORD(&irobot_combase[spnt2+2]));
@@ -459,9 +459,9 @@ void irobot_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	/* copy the polygon bitmap */
 	if (irobot_bufsel)
-		copybitmap(bitmap,polybitmap1,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copybitmap(bitmap,polybitmap1,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	else
-		copybitmap(bitmap,polybitmap2,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copybitmap(bitmap,polybitmap2,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 	/* redraw the non-zero characters in the alpha layer */
 	for (y = offs = 0; y < 32; y++)
@@ -470,11 +470,12 @@ void irobot_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			{
 				int code = videoram[offs] & 0x3f;
 				int color = ((videoram[offs] & 0xC0) >> 6) | (irobot_alphamap >> 3);
+				int transp=color + 64;
 
 				drawgfx(bitmap,Machine->gfx[0],
 						code, color,
 						0,0,
 						8*x,8*y,
-						&Machine->drv->visible_area,TRANSPARENCY_COLOR,64);
+						&Machine->visible_area,TRANSPARENCY_COLOR,transp);
 			}
 }

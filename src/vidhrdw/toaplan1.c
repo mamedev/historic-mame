@@ -177,20 +177,9 @@ void rallybik_vh_stop(void)
 
 int toaplan1_vh_start(void)
 {
-	tmpbitmap1 = osd_new_bitmap(
-					Machine->drv->screen_width,
-					Machine->drv->screen_height,
-					Machine->scrbitmap->depth);
-
-	tmpbitmap2 = osd_new_bitmap(
-					Machine->drv->screen_width,
-					Machine->drv->screen_height,
-					Machine->scrbitmap->depth);
-
-	tmpbitmap3 = osd_new_bitmap(
-					Machine->drv->screen_width,
-					Machine->drv->screen_height,
-					Machine->scrbitmap->depth);
+	tmpbitmap1 = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height);
+	tmpbitmap2 = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height);
+	tmpbitmap3 = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height);
 
 
 	if ((toaplan1_videoram1 = calloc(VIDEORAM1_SIZE, 1)) == 0)
@@ -228,9 +217,9 @@ void toaplan1_vh_stop(void)
 	free(toaplan1_videoram2);
 	free(toaplan1_buffered_videoram1);
 	free(toaplan1_videoram1);
-	osd_free_bitmap(tmpbitmap3);
-	osd_free_bitmap(tmpbitmap2);
-	osd_free_bitmap(tmpbitmap1);
+	bitmap_free(tmpbitmap3);
+	bitmap_free(tmpbitmap2);
+	bitmap_free(tmpbitmap1);
 }
 
 
@@ -936,7 +925,7 @@ static void toaplan1_render (struct osd_bitmap *bitmap)
 	tile_struct *tinfo2;
 	struct rectangle sp_rect;
 
-	fillbitmap (bitmap, palette_transparent_pen, &Machine->drv->visible_area);
+	fillbitmap (bitmap, palette_transparent_pen, &Machine->visible_area);
 
 #ifdef BGDBG
 
@@ -974,7 +963,7 @@ if( toaplan_dbg_priority != 0 ){
 				(tinfo->color&0x3f),
 				0,0,						/* flipx,flipy */
 				tinfo->xpos,tinfo->ypos,
-				&Machine->drv->visible_area,pen,0);
+				&Machine->visible_area,pen,0);
 			tinfo++ ;
 		}
 	}
@@ -1022,7 +1011,7 @@ if( toaplan_dbg_priority != 0 ){
 				(tinfo->color&0x3f),
 				flip,flip,							/* flipx,flipy */
 				tinfo->xpos,tinfo->ypos,
-				&Machine->drv->visible_area,pen,0);
+				&Machine->visible_area,pen,0);
 			tinfo++ ;
 		}
 		priority++;
@@ -1051,7 +1040,7 @@ if( toaplan_dbg_priority != 0 ){
 			(tinfo2->color&0x3f), 			/* bit 7 not for colour */
 			flipx,flipy,					/* flipx,flipy */
 			tinfo2->xpos,tinfo2->ypos,
-			&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			&Machine->visible_area,TRANSPARENCY_PEN,0);
 
 		priority = tinfo2->priority;
 		{
@@ -1157,7 +1146,7 @@ static void rallybik_render (struct osd_bitmap *bitmap)
 	int priority,pen;
 	tile_struct *tinfo;
 
-	fillbitmap (bitmap, palette_transparent_pen, &Machine->drv->visible_area);
+	fillbitmap (bitmap, palette_transparent_pen, &Machine->visible_area);
 
 	for ( priority = 0 ; priority < 16 ; priority++ )	/* draw priority layers in order */
 	{
@@ -1178,7 +1167,7 @@ static void rallybik_render (struct osd_bitmap *bitmap)
 				(tinfo->color&0x3f), 			/* bit 7 not for colour */
 				(tinfo->color & 0x0100),(tinfo->color & 0x0200),	/* flipx,flipy */
 				tinfo->xpos,tinfo->ypos,
-				&Machine->drv->visible_area,pen,0);
+				&Machine->visible_area,pen,0);
 			tinfo++ ;
 		}
 	}

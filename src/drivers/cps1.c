@@ -5303,6 +5303,32 @@ ROM_START( wof )
 	ROM_LOAD( "tk2_q4.rom",     0x180000, 0x80000, 0x36642e88 )
 ROM_END
 
+ROM_START( wofa )
+	ROM_REGION( CODE_SIZE, REGION_CPU1 )      /* 68000 code */
+	ROM_LOAD_WIDE_SWAP( "tk2a_23b.rom",  0x000000, 0x80000, 0x2e024628 )
+	ROM_LOAD_WIDE_SWAP( "tk2a_22b.rom",  0x080000, 0x80000, 0x900ad4cd )
+
+	ROM_REGION( 0x400000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "tk2_gfx2.rom",   0x000000, 0x80000, 0xc5ca2460 )
+	ROM_LOAD( "tk2_gfx6.rom",   0x080000, 0x80000, 0x1abd14d6 )
+	ROM_LOAD( "tk2_gfx1.rom",   0x100000, 0x80000, 0x0d9cb9bf )
+	ROM_LOAD( "tk2_gfx5.rom",   0x180000, 0x80000, 0x291f0f0b )
+	ROM_LOAD( "tk2_gfx4.rom",   0x200000, 0x80000, 0xe349551c )
+	ROM_LOAD( "tk2_gfx8.rom",   0x280000, 0x80000, 0xb27948e3 )
+	ROM_LOAD( "tk2_gfx3.rom",   0x300000, 0x80000, 0x45227027 )
+	ROM_LOAD( "tk2_gfx7.rom",   0x380000, 0x80000, 0x3edeb949 )
+
+	ROM_REGION( 2*0x28000, REGION_CPU2 ) /* QSound Z80 code + space for decrypted opcodes */
+	ROM_LOAD( "tk2_qa.rom",     0x00000, 0x08000, 0xc9183a0d )
+	ROM_CONTINUE(               0x10000, 0x18000 )
+
+	ROM_REGION( 0x200000, REGION_SOUND1 ) /* QSound samples */
+	ROM_LOAD( "tk2_q1.rom",     0x000000, 0x80000, 0x611268cf )
+	ROM_LOAD( "tk2_q2.rom",     0x080000, 0x80000, 0x20f55ca9 )
+	ROM_LOAD( "tk2_q3.rom",     0x100000, 0x80000, 0xbfcf6f52 )
+	ROM_LOAD( "tk2_q4.rom",     0x180000, 0x80000, 0x36642e88 )
+ROM_END
+
 ROM_START( wofj )
 	ROM_REGION( CODE_SIZE, REGION_CPU1 )      /* 68000 code */
 	ROM_LOAD_WIDE_SWAP( "tk2j23c.bin",  0x000000, 0x80000, 0x9b215a68 )
@@ -5805,6 +5831,25 @@ ROM_END
 
 ROM_START( pang3 )
 	ROM_REGION( CODE_SIZE, REGION_CPU1 )      /* 68000 code */
+	ROM_LOAD_WIDE_SWAP( "pa3w-17.11l",  0x00000, 0x80000, 0x12138234 )
+	ROM_LOAD_WIDE_SWAP( "pa3w-16.10l",  0x80000, 0x80000, 0xd1ba585c )
+
+	ROM_REGION( 0x400000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "pa3-01m.2c",    0x100000, 0x100000, 0x068a152c )
+	ROM_CONTINUE(              0x000000, 0x100000 )
+	ROM_LOAD( "pa3-07m.2f",    0x300000, 0x100000, 0x3a4a619d )
+	ROM_CONTINUE(              0x200000, 0x100000 )
+
+	ROM_REGION( 0x18000, REGION_CPU2 ) /* 64k for the audio CPU (+banks) */
+	ROM_LOAD( "pa3-11.11f",    0x00000, 0x08000, 0x90a08c46 )
+
+	ROM_REGION( 0x40000, REGION_SOUND1 )	/* Samples */
+	ROM_LOAD( "pa3-05.10d",    0x00000, 0x20000, 0x73a10d5d )
+	ROM_LOAD( "pa3-06.11d",    0x20000, 0x20000, 0xaffa4f82 )
+ROM_END
+
+ROM_START( pang3j )
+	ROM_REGION( CODE_SIZE, REGION_CPU1 )      /* 68000 code */
 	ROM_LOAD_WIDE_SWAP( "pa3j-17.11l",  0x00000, 0x80000, 0x21f6e51f )
 	ROM_LOAD_WIDE_SWAP( "pa3j-16.10l",  0x80000, 0x80000, 0xca1d7897 )
 
@@ -6036,6 +6081,7 @@ GAME( 1995, rockmanj, megaman,  cps1,     megaman,  0,        ROT0_16BIT, "Capco
 GAME( 1995, sfzch,    0,        cps1,     sfzch,    0,        ROT0_16BIT, "Capcom", "Street Fighter ZERO (Japan CPS Changer)" )
 
 GAME( 1992, wof,      0,        qsound,   wof,      wof,      ROT0,       "Capcom", "Warriors of Fate (World)" )
+GAME( 1992, wofa,     wof,      qsound,   wof,      wof,      ROT0,       "Capcom", "Sangokushi II (Asia)" )
 GAME( 1992, wofj,     wof,      qsound,   wof,      wof,      ROT0,       "Capcom", "Tenchi wo Kurau II - Sekiheki no Tatakai (Japan)" )
 GAME( 1993, dino,     0,        qsound,   dino,     dino,     ROT0,       "Capcom", "Cadillacs and Dinosaurs (World)" )
 GAME( 1993, dinoj,    dino,     qsound,   dino,     dino ,    ROT0,       "Capcom", "Cadillacs Kyouryuu-Shinseiki (Japan)" )
@@ -6047,7 +6093,9 @@ GAME( 1993, mbomberj, slammast, qsound,   slammast, slammast, ROT0_16BIT, "Capco
 GAME( 1993, mbombrd,  slammast, qsound,   slammast, slammast, ROT0_16BIT, "Capcom", "Muscle Bomber Duo - Ultimate Team Battle (World)" )
 GAME( 1993, mbombrdj, slammast, qsound,   slammast, slammast, ROT0_16BIT, "Capcom", "Muscle Bomber Duo - Heat Up Warriors (Japan)" )
 
-GAME( 1995, pang3,    0,        pang3,    pang3,    pang3,    ROT0_16BIT, "Mitchell", "Pang! 3 (Japan)" )
+/* Japanese version of Pang 3 is encrypted, Euro version is not */
+GAME( 1995, pang3,    0,        pang3,    pang3,    0,        ROT0_16BIT, "Mitchell", "Pang! 3 (Euro)" )
+GAME( 1995, pang3j,   pang3,    pang3,    pang3,    pang3,    ROT0_16BIT, "Mitchell", "Pang! 3 (Japan)" )
 
 
 #include "cps2.c"

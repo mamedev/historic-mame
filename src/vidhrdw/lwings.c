@@ -58,8 +58,8 @@ int lwings_vh_start(void)
         memset(dirtybuffer4,1,lwings_backgroundram_size);
 
 	/* the background area is twice as tall as the screen */
-        if ((tmpbitmap2 = osd_new_bitmap(2*Machine->drv->screen_width,
-                2*Machine->drv->screen_height,Machine->scrbitmap->depth)) == 0)
+        if ((tmpbitmap2 = bitmap_alloc(2*Machine->drv->screen_width,
+                2*Machine->drv->screen_height)) == 0)
 	{
 		free(dirtybuffer2);
 		generic_vh_stop();
@@ -106,7 +106,7 @@ int lwings_vh_start(void)
 ***************************************************************************/
 void lwings_vh_stop(void)
 {
-	osd_free_bitmap(tmpbitmap2);
+	bitmap_free(tmpbitmap2);
 	free(dirtybuffer2);
 	free(dirtybuffer4);
 	generic_vh_stop();
@@ -198,7 +198,7 @@ void lwings_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		scrolly = -(lwings_scrollx[0] + 256 * lwings_scrollx[1]);
 		scrollx = -(lwings_scrolly[0] + 256 * lwings_scrolly[1]);
 
-		copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap2,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 
@@ -231,7 +231,7 @@ void lwings_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					(spriteram[offs + 1] & 0x38) >> 3,
 					spriteram[offs + 1] & 0x02,spriteram[offs + 1] & 0x04,
 					sx,sy,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
+					&Machine->visible_area,TRANSPARENCY_PEN,15);
 		}
 	}
 
@@ -249,7 +249,7 @@ void lwings_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				colorram[offs] & 0x0f,
 				colorram[offs] & 0x10,colorram[offs] & 0x20,
 				8*sx,8*sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,3);
+				&Machine->visible_area,TRANSPARENCY_PEN,3);
 	}
 }
 
@@ -288,8 +288,7 @@ int  trojan_vh_start(void)
 	}
         memset(dirtybuffer4,1,lwings_backgroundram_size);
 
-        if ((tmpbitmap3 = osd_new_bitmap(16*0x12,
-                16*0x12,Machine->scrbitmap->depth)) == 0)
+        if ((tmpbitmap3 = bitmap_alloc(16*0x12,16*0x12)) == 0)
         {
 		free(dirtybuffer4);
 		free(dirtybuffer2);
@@ -346,7 +345,7 @@ int avengers_vh_start( void ){
 
 void trojan_vh_stop(void)
 {
-        osd_free_bitmap(tmpbitmap3);
+        bitmap_free(tmpbitmap3);
 		free(dirtybuffer4);
 		free(dirtybuffer2);
         generic_vh_stop();
@@ -393,14 +392,14 @@ void trojan_render_foreground( struct osd_bitmap *bitmap, int scrollx, int scrol
                                 attribute & 0x07,
                                 attribute & 0x10,
                                 0,
-                                16 * sx+scrlx-16,16 * sy+scrly-16, &Machine->drv->visible_area, TRANSPARENCY_PENS,(attribute & 0x08)?transp1:transp0 );
+                                16 * sx+scrlx-16,16 * sy+scrly-16, &Machine->visible_area, TRANSPARENCY_PENS,(attribute & 0x08)?transp1:transp0 );
                 }
                 offsx+=0x20;
 	}
 }
 
 static void trojan_draw_sprites( struct osd_bitmap *bitmap ){
-	const struct rectangle *clip = &Machine->drv->visible_area;
+	const struct rectangle *clip = &Machine->visible_area;
 	int offs;
 
 	for( offs = spriteram_size - 4;offs >= 0;offs -= 4 ){
@@ -491,7 +490,7 @@ void trojan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
                       offsy += 0x800;
                   }
               }
-              copyscrollbitmap(bitmap,tmpbitmap3,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+              copyscrollbitmap(bitmap,tmpbitmap3,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
         }
 
         scrollx = (trojan_scrollx[0] + 256 * trojan_scrollx[1]);
@@ -511,6 +510,6 @@ void trojan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				colorram[offs] & 0x0f,
 				colorram[offs] & 0x10,colorram[offs] & 0x20,
 				8*sx,8*sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,3);
+				&Machine->visible_area,TRANSPARENCY_PEN,3);
 	}
 }

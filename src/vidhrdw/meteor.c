@@ -27,7 +27,7 @@ void meteor_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	/* draw the characters as sprites because they could be overlapping */
 
-	fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);
+	fillbitmap(bitmap,Machine->pens[0],&Machine->visible_area);
 
 
 	for (offs = 0; offs < videoram_size; offs++)
@@ -46,6 +46,6 @@ void meteor_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				col,
 				0,0,
 				sx,sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

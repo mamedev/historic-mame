@@ -415,7 +415,7 @@ static void wave_display(int id)
         t0 = w->playpos / w->smpfreq;
 		t1 = w->samples / w->smpfreq;
 		sprintf(buf, "%c%c %2d:%02d [%2d:%02d]", n*2+2,n*2+3, t0/60,t0%60, t1/60,t1%60);
-		ui_text(buf, x, y);
+		ui_text(Machine->scrbitmap,buf, x, y);
 		tapepos = w->playpos;
     }
 }
@@ -627,6 +627,7 @@ int wave_status(int id, int newstatus)
 		{
 			if( w->timer )
 				w->offset += timer_timeelapsed(w->timer) * w->smpfreq;
+			timer_remove(w->timer);
 			w->timer = NULL;
 			bitmap_dirty = 1;
 		}
@@ -841,7 +842,10 @@ void wave_close(int id)
 		free(w->data);
     w->data = NULL;
 
-	w->file = NULL;
+	if (w->file) {
+		osd_fclose(w->file);
+		w->file = NULL;
+	}
 	w->offset = 0;
 	w->playpos = 0;
 	w->counter = 0;

@@ -27,7 +27,7 @@ int spiders_vh_start(void)
 {
 	int loop;
 
-	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0) return 1;
+	if ((tmpbitmap = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0) return 1;
 
 	for(loop=0;loop<256;loop++)
 	{
@@ -55,7 +55,7 @@ int spiders_vh_start(void)
 ***************************************************************************/
 void spiders_vh_stop(void)
 {
-	osd_free_bitmap(tmpbitmap);
+	bitmap_free(tmpbitmap);
 	free(screenbuffer);
 }
 
@@ -141,6 +141,6 @@ void spiders_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	if (full_refresh)
 	{
 		/* Now copy the temp bitmap to the screen */
-		copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 }

@@ -12,9 +12,6 @@
 static struct osd_bitmap *sprite_bm;
 static struct osd_bitmap *maskbitmap;
 
-static int flipscreen;
-static int screen_flipped;
-
 unsigned char *ccastles_screen_addr;
 unsigned char *ccastles_screen_inc;
 unsigned char *ccastles_screen_inc_enable;
@@ -89,19 +86,19 @@ WRITE_HANDLER( ccastles_paletteram_w )
 ***************************************************************************/
 int ccastles_vh_start(void)
 {
-	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if ((tmpbitmap = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 		return 1;
 
-	if ((maskbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if ((maskbitmap = bitmap_alloc(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
 	{
-		osd_free_bitmap(tmpbitmap);
+		bitmap_free(tmpbitmap);
 		return 1;
 	}
 
-	if ((sprite_bm = osd_create_bitmap(16,16)) == 0)
+	if ((sprite_bm = bitmap_alloc(16,16)) == 0)
 	{
-		osd_free_bitmap(maskbitmap);
-		osd_free_bitmap(tmpbitmap);
+		bitmap_free(maskbitmap);
+		bitmap_free(tmpbitmap);
 		return 1;
 	}
 
@@ -117,9 +114,9 @@ int ccastles_vh_start(void)
 ***************************************************************************/
 void ccastles_vh_stop(void)
 {
-	osd_free_bitmap(sprite_bm);
-	osd_free_bitmap(maskbitmap);
-	osd_free_bitmap(tmpbitmap);
+	bitmap_free(sprite_bm);
+	bitmap_free(maskbitmap);
+	bitmap_free(tmpbitmap);
 }
 
 
@@ -190,7 +187,7 @@ WRITE_HANDLER( ccastles_bitmode_w )
 		j = 2*addr;
 		x = j%256;
 		y = j/256;
-		if (!flipscreen)
+		if (!flip_screen)
 		{
 			plot_pixel(tmpbitmap, x  , y, Machine->pens[16 + ((videoram[addr] & 0xf0) >> 4)]);
 			plot_pixel(tmpbitmap, x+1, y, Machine->pens[16 +  (videoram[addr] & 0x0f)      ]);
@@ -238,17 +235,6 @@ WRITE_HANDLER( ccastles_bitmode_w )
 	}
 
 }
-
-WRITE_HANDLER( ccastles_flipscreen_w )
-{
-	if (flipscreen != (data & 1))
-	{
-		flipscreen = data & 1;
-
-		screen_flipped = 1;
-	}
-}
-
 
 
 /***************************************************************************
@@ -304,24 +290,23 @@ void ccastles_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int scrollx,scrolly;
 
 
-	if (palette_recalc() || screen_flipped)
+	if (palette_recalc() || full_refresh)
 	{
 		redraw_bitmap();
-		screen_flipped = 0;
 	}
 
 
 	scrollx = 255 - *ccastles_scrollx;
 	scrolly = 255 - *ccastles_scrolly;
 
-	if (flipscreen)
+	if (flip_screen)
 	{
 		scrollx = 254 - scrollx;
 		scrolly = 231 - scrolly;
 	}
 
 	copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,
-				     &Machine->drv->visible_area,
+				     &Machine->visible_area,
 		   			 TRANSPARENCY_NONE,0);
 
 
@@ -346,7 +331,7 @@ void ccastles_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			fillbitmap(sprite_bm,Machine->gfx[0]->colortable[7],0);
 			drawgfx(sprite_bm,Machine->gfx[0],
 					spriteaddr[offs],1,
-					flipscreen,flipscreen,
+					flip_screen,flip_screen,
 					0,0,
 					0,TRANSPARENCY_PEN,7);
 
@@ -369,15 +354,15 @@ void ccastles_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				}
 			}
 
-			copybitmap(bitmap,sprite_bm,0,0,x,y,&Machine->drv->visible_area,TRANSPARENCY_PEN,Machine->gfx[0]->colortable[7]);
+			copybitmap(bitmap,sprite_bm,0,0,x,y,&Machine->visible_area,TRANSPARENCY_PEN,Machine->gfx[0]->colortable[7]);
 		}
 		else
 		{
 			drawgfx(bitmap,Machine->gfx[0],
 					spriteaddr[offs],1,
-					flipscreen,flipscreen,
+					flip_screen,flip_screen,
 					x,y,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,7);
+					&Machine->visible_area,TRANSPARENCY_PEN,7);
 		}
 	}
 }

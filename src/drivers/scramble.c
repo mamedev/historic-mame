@@ -78,9 +78,6 @@ extern unsigned char *galaxian_bulletsram;
 extern size_t galaxian_bulletsram_size;
 void galaxian_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void mariner_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-WRITE_HANDLER( galaxian_flipx_w );
-WRITE_HANDLER( galaxian_flipy_w );
-WRITE_HANDLER( hotshock_flipscreen_w );
 WRITE_HANDLER( galaxian_attributes_w );
 WRITE_HANDLER( galaxian_stars_w );
 WRITE_HANDLER( scramble_background_w );
@@ -253,8 +250,8 @@ static struct MemoryWriteAddress scramble_writemem[] =
 	{ 0x6802, 0x6802, coin_counter_w },
 	{ 0x6803, 0x6803, scramble_background_w },
 	{ 0x6804, 0x6804, galaxian_stars_w },
-	{ 0x6806, 0x6806, galaxian_flipx_w },
-	{ 0x6807, 0x6807, galaxian_flipy_w },
+	{ 0x6806, 0x6806, flip_screen_x_w },
+	{ 0x6807, 0x6807, flip_screen_y_w },
 	{ 0x8200, 0x8200, soundlatch_w },
 	{ 0x8201, 0x8201, scramble_sh_irqtrigger_w },
 	{ -1 }	/* end of table */
@@ -273,8 +270,8 @@ static struct MemoryWriteAddress triplep_writemem[] =
 	{ 0x6802, 0x6802, coin_counter_w },
 	{ 0x6803, 0x6803, MWA_NOP },   /* ??? (it's NOT a background enable) */
 	{ 0x6804, 0x6804, galaxian_stars_w },
-	{ 0x6806, 0x6806, galaxian_flipx_w },
-	{ 0x6807, 0x6807, galaxian_flipy_w },
+	{ 0x6806, 0x6806, flip_screen_x_w },
+	{ 0x6807, 0x6807, flip_screen_y_w },
 	{ -1 }	/* end of table */
 };
 
@@ -291,8 +288,8 @@ static struct MemoryWriteAddress ckongs_writemem[] =
 	{ 0xa801, 0xa801, interrupt_enable_w },
 	{ 0xa802, 0xa802, coin_counter_w },
 	{ 0xa804, 0xa804, galaxian_stars_w },
-	{ 0xa806, 0xa806, galaxian_flipx_w },
-	{ 0xa807, 0xa807, galaxian_flipy_w },
+	{ 0xa806, 0xa806, flip_screen_x_w },
+	{ 0xa807, 0xa807, flip_screen_y_w },
 	{ -1 }	/* end of table */
 };
 
@@ -309,8 +306,8 @@ static struct MemoryWriteAddress mars_writemem[] =
 	{ 0x6801, 0x6801, galaxian_stars_w },
 	{ 0x6802, 0x6802, interrupt_enable_w },
 	{ 0x6808, 0x6808, coin_counter_w },
-	{ 0x6809, 0x6809, galaxian_flipx_w },
-	{ 0x680b, 0x680b, galaxian_flipy_w },
+	{ 0x6809, 0x6809, flip_screen_x_w },
+	{ 0x680b, 0x680b, flip_screen_y_w },
 	{ 0x810a, 0x810a, MWA_NOP },    /* ??? */
 	{ 0x8200, 0x8200, soundlatch_w },
 	{ 0x8202, 0x8202, scramble_sh_irqtrigger_w },
@@ -331,7 +328,7 @@ static struct MemoryWriteAddress hotshock_writemem[] =
 	{ 0x5060, 0x507f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
 	{ 0x6000, 0x6000, scramble_coin_counter_3_w },
 	{ 0x6002, 0x6002, scramble_coin_counter_2_w },
-	{ 0x6004, 0x6004, hotshock_flipscreen_w },
+	{ 0x6004, 0x6004, flip_screen_w },
 	{ 0x6005, 0x6005, coin_counter_w },
 	{ 0x6006, 0x6006, pisces_gfxbank_w },
 	{ 0x6801, 0x6801, interrupt_enable_w },
@@ -352,8 +349,8 @@ static struct MemoryWriteAddress hunchbks_writemem[] =
 	{ 0x1400, 0x143f, galaxian_attributes_w, &galaxian_attributesram },
 	{ 0x1440, 0x145f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x1460, 0x147f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
-	{ 0x1606, 0x1606, galaxian_flipx_w },
-	{ 0x1607, 0x1607, galaxian_flipy_w },
+	{ 0x1606, 0x1606, flip_screen_x_w },
+	{ 0x1607, 0x1607, flip_screen_y_w },
 	{ 0x1210, 0x1210, soundlatch_w },
 	{ 0x1211, 0x1211, scramble_sh_irqtrigger_w },
 	{ 0x3000, 0x3fff, hunchbks_mirror_w },

@@ -12,48 +12,29 @@
 
 unsigned char *marineb_column_scroll;
 int marineb_active_low_flipscreen;
-static int palbank;
-
-
-static int flipscreen_x;
-static int flipscreen_y;
+static data_t palbank;
 
 
 WRITE_HANDLER( marineb_palbank0_w )
 {
-	if ((palbank & 1) != (data & 1))
-	{
-		palbank = (palbank & ~1) | (data & 1);
-		memset(dirtybuffer, 1, videoram_size);
-	}
+	data_t new_palbank = (palbank & ~1) | (data & 1);
+	set_vh_global_attribute(&palbank, new_palbank);
 }
 
 WRITE_HANDLER( marineb_palbank1_w )
 {
-	data <<= 1;
-	if ((palbank & 2) != (data & 2))
-	{
-		palbank = (palbank & ~2) | (data & 2);
-		memset(dirtybuffer, 1, videoram_size);
-	}
+	data_t new_palbank = (palbank & ~2) | ((data << 1) & 2);
+	set_vh_global_attribute(&palbank, new_palbank);
 }
 
 WRITE_HANDLER( marineb_flipscreen_x_w )
 {
-	if (flipscreen_x != (data ^ marineb_active_low_flipscreen))
-	{
-		flipscreen_x = data ^ marineb_active_low_flipscreen;
-		memset(dirtybuffer, 1, videoram_size);
-	}
+	flip_screen_x_w(offset, data ^ marineb_active_low_flipscreen);
 }
 
 WRITE_HANDLER( marineb_flipscreen_y_w )
 {
-	if (flipscreen_y != (data ^ marineb_active_low_flipscreen))
-	{
-		flipscreen_y = data ^ marineb_active_low_flipscreen;
-		memset(dirtybuffer, 1, videoram_size);
-	}
+	flip_screen_y_w(offset, data ^ marineb_active_low_flipscreen);
 }
 
 
@@ -65,9 +46,15 @@ WRITE_HANDLER( marineb_flipscreen_y_w )
 
 ***************************************************************************/
 static void draw_chars(struct osd_bitmap *_tmpbitmap, struct osd_bitmap *bitmap,
-                       int scroll_cols)
+                       int scroll_cols, int full_refresh)
 {
 	int offs;
+
+
+	if (full_refresh)
+	{
+		memset(dirtybuffer,1,videoram_size);
+	}
 
 
 	/* for every character in the Video RAM, check if it has been modified */
@@ -87,13 +74,13 @@ static void draw_chars(struct osd_bitmap *_tmpbitmap, struct osd_bitmap *bitmap,
 			flipx = colorram[offs] & 0x20;
 			flipy = colorram[offs] & 0x10;
 
-			if (flipscreen_y)
+			if (flip_screen_y)
 			{
 				sy = 31 - sy;
 				flipy = !flipy;
 			}
 
-			if (flipscreen_x)
+			if (flip_screen_x)
 			{
 				sx = 31 - sx;
 				flipx = !flipx;
@@ -114,7 +101,7 @@ static void draw_chars(struct osd_bitmap *_tmpbitmap, struct osd_bitmap *bitmap,
 		int scroll[32];
 
 
-		if (flipscreen_y)
+		if (flip_screen_y)
 		{
 			for (offs = 0;offs < 32 - scroll_cols;offs++)
 				scroll[offs] = 0;
@@ -130,7 +117,7 @@ static void draw_chars(struct osd_bitmap *_tmpbitmap, struct osd_bitmap *bitmap,
 			for (;offs < 32;offs++)
 				scroll[offs] = 0;
 		}
-		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->visible_area,TRANSPARENCY_NONE,0);
 	}
 }
 
@@ -140,7 +127,7 @@ void marineb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int offs;
 
 
-	draw_chars(tmpbitmap, bitmap, 24);
+	draw_chars(tmpbitmap, bitmap, 24, full_refresh);
 
 
 	/* draw the sprites */
@@ -182,13 +169,13 @@ void marineb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			code >>= 2;
 		}
 
-		if (!flipscreen_y)
+		if (!flip_screen_y)
 		{
 			sy = 256 - Machine->gfx[gfx]->width - sy;
 			flipy = !flipy;
 		}
 
-		if (flipscreen_x)
+		if (flip_screen_x)
 		{
 			sx++;
 		}
@@ -198,7 +185,7 @@ void marineb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				col,
 				flipx,flipy,
 				sx,sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 }
 
@@ -208,7 +195,7 @@ void changes_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int offs,sx,sy,code,col,flipx,flipy;
 
 
-	draw_chars(tmpbitmap, bitmap, 26);
+	draw_chars(tmpbitmap, bitmap, 26, full_refresh);
 
 
 	/* draw the small sprites */
@@ -226,13 +213,13 @@ void changes_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		flipx =   code & 0x02;
 		flipy = !(code & 0x01);
 
-		if (!flipscreen_y)
+		if (!flip_screen_y)
 		{
 			sy = 256 - Machine->gfx[1]->width - sy;
 			flipy = !flipy;
 		}
 
-		if (flipscreen_x)
+		if (flip_screen_x)
 		{
 			sx++;
 		}
@@ -242,7 +229,7 @@ void changes_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				col,
 				flipx,flipy,
 				sx,sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 
 	/* draw the big sprite */
@@ -254,13 +241,13 @@ void changes_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	flipx =   code & 0x02;
 	flipy = !(code & 0x01);
 
-	if (!flipscreen_y)
+	if (!flip_screen_y)
 	{
 		sy = 256 - Machine->gfx[2]->width - sy;
 		flipy = !flipy;
 	}
 
-	if (flipscreen_x)
+	if (flip_screen_x)
 	{
 		sx++;
 	}
@@ -272,7 +259,7 @@ void changes_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			col,
 			flipx,flipy,
 			sx,sy,
-			&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			&Machine->visible_area,TRANSPARENCY_PEN,0);
 
 	/* draw again for wrap around */
 
@@ -281,7 +268,7 @@ void changes_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			col,
 			flipx,flipy,
 			sx-256,sy,
-			&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			&Machine->visible_area,TRANSPARENCY_PEN,0);
 }
 
 
@@ -290,7 +277,7 @@ void springer_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int offs;
 
 
-	draw_chars(tmpbitmap, bitmap, 0);
+	draw_chars(tmpbitmap, bitmap, 0, full_refresh);
 
 
 	/* draw the sprites */
@@ -326,13 +313,13 @@ void springer_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			code >>= 2;
 		}
 
-		if (!flipscreen_y)
+		if (!flip_screen_y)
 		{
 			sy = 256 - Machine->gfx[gfx]->width - sy;
 			flipy = !flipy;
 		}
 
-		if (!flipscreen_x)
+		if (!flip_screen_x)
 		{
 			sx--;
 		}
@@ -342,7 +329,7 @@ void springer_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				col,
 				flipx,flipy,
 				sx,sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 }
 
@@ -352,7 +339,7 @@ void hoccer_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int offs;
 
 
-	draw_chars(tmpbitmap, bitmap, 0);
+	draw_chars(tmpbitmap, bitmap, 0, full_refresh);
 
 
 	/* draw the sprites */
@@ -371,13 +358,13 @@ void hoccer_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		flipx =   code & 0x02;
 		flipy = !(code & 0x01);
 
-		if (!flipscreen_y)
+		if (!flip_screen_y)
 		{
 			sy = 256 - Machine->gfx[1]->width - sy;
 			flipy = !flipy;
 		}
 
-		if (flipscreen_x)
+		if (flip_screen_x)
 		{
 			sx = 256 - Machine->gfx[1]->width - sx;
 			flipx = !flipx;
@@ -388,7 +375,7 @@ void hoccer_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				col,
 				flipx,flipy,
 				sx,sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 }
 
@@ -398,7 +385,7 @@ void hopprobo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int offs;
 
 
-	draw_chars(tmpbitmap, bitmap, 0);
+	draw_chars(tmpbitmap, bitmap, 0, full_refresh);
 
 
 	/* draw the sprites */
@@ -433,13 +420,13 @@ void hopprobo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			code >>= 2;
 		}
 
-		if (!flipscreen_y)
+		if (!flip_screen_y)
 		{
 			sy = 256 - Machine->gfx[gfx]->width - sy;
 			flipy = !flipy;
 		}
 
-		if (!flipscreen_x)
+		if (!flip_screen_x)
 		{
 			sx--;
 		}
@@ -449,6 +436,6 @@ void hopprobo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				col,
 				flipx,flipy,
 				sx,sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

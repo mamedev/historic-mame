@@ -32,12 +32,12 @@ static void draw_background( struct osd_bitmap *bitmap ) {
         }
     }
 
-    copybitmap( bitmap, tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0 );
+    copybitmap( bitmap, tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0 );
 }
 
 static void draw_text( struct osd_bitmap *bitmap ) {
     int offs;
-    const struct rectangle *clip = &Machine->drv->visible_area;
+    const struct rectangle *clip = &Machine->visible_area;
 
     for ( offs = 0; offs < 0x800; offs += 2 ) {
         unsigned short data = READ_WORD( &colorram[offs] );
@@ -59,7 +59,7 @@ static void draw_text( struct osd_bitmap *bitmap ) {
 }
 
 static void draw_sprites( struct osd_bitmap *bitmap ){
-    const struct rectangle *clip = &Machine->drv->visible_area;
+    const struct rectangle *clip = &Machine->visible_area;
     const struct GfxElement *gfx = Machine->gfx[2];
     int offs;
 

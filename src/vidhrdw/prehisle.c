@@ -128,7 +128,7 @@ palette_change_color(pal_base + 16 * color +15 ,0,0,0);
 
 	scrollx=-(READ_WORD(&vid_control[6])&0xf);
 	scrolly=-READ_WORD(&vid_control[4]);
-	copyscrollbitmap(bitmap,pf1_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	copyscrollbitmap(bitmap,pf1_bitmap,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_NONE,0);
 
 	/* Calculate tilebase for background, 64 bytes per column */
 	tile_base=((READ_WORD(&vid_control[2])&0xff0)>>4)*64;
@@ -161,7 +161,7 @@ palette_change_color(pal_base + 16 * color +15 ,0,0,0);
 
 	scrollx=-(READ_WORD(&vid_control[2])&0xf);
 	scrolly=-READ_WORD(&vid_control[0]);
-	copyscrollbitmap(bitmap,pf2_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
+	copyscrollbitmap(bitmap,pf2_bitmap,1,&scrollx,1,&scrolly,&Machine->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
 
 	/* Sprites */
 	for (offs = 0;offs <0x800 ;offs += 8) {
@@ -186,7 +186,7 @@ palette_change_color(pal_base + 16 * color +15 ,0,0,0);
 		drawgfx(bitmap,Machine->gfx[3],
 				sprite,
 				colour,fx,fy,x,y,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
+				&Machine->visible_area,TRANSPARENCY_PEN,15);
 	}
 
 	/* Text layer */
@@ -208,7 +208,7 @@ palette_change_color(pal_base + 16 * color +15 ,0,0,0);
 					color,
 					0,0,
 					8*mx,8*my,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
+					&Machine->visible_area,TRANSPARENCY_PEN,15);
     }
 }
 
@@ -216,15 +216,15 @@ palette_change_color(pal_base + 16 * color +15 ,0,0,0);
 
 int prehisle_vh_start (void)
 {
-	pf1_bitmap=osd_create_bitmap(256+16,512);
-	pf2_bitmap=osd_create_bitmap(256+16,512);
+	pf1_bitmap=bitmap_alloc(256+16,512);
+	pf2_bitmap=bitmap_alloc(256+16,512);
 	return 0;
 }
 
 void prehisle_vh_stop (void)
 {
-	osd_free_bitmap(pf1_bitmap);
-	osd_free_bitmap(pf2_bitmap);
+	bitmap_free(pf1_bitmap);
+	bitmap_free(pf2_bitmap);
 }
 
 WRITE_HANDLER( prehisle_video_w )
