@@ -196,7 +196,7 @@ static unsigned char color_prom[] =
 
 
 
-const struct MachineDriver scobra_driver =
+static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -209,17 +209,14 @@ const struct MachineDriver scobra_driver =
 		}
 	},
 	60,
-	input_ports,dsw,
 	0,
 
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
 	32+64,32+64,	/* 32 for the characters, 64 for the stars */
-	color_prom,scramble_vh_convert_color_prom,0,0,
-	0,17,
-	0x00,0x01,
-	8*13,8*16,0x04,
+	scramble_vh_convert_color_prom,
+
 	0,
 	scramble_vh_start,
 	generic_vh_stop,
@@ -231,4 +228,149 @@ const struct MachineDriver scobra_driver =
 	0,
 	0,
 	0
+};
+
+
+
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+ROM_START( scobra_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "scobra2c.bin", 0x0000, 0x1000 )
+	ROM_LOAD( "scobra2e.bin", 0x1000, 0x1000 )
+	ROM_LOAD( "scobra2f.bin", 0x2000, 0x1000 )
+	ROM_LOAD( "scobra2h.bin", 0x3000, 0x1000 )
+	ROM_LOAD( "scobra2j.bin", 0x4000, 0x1000 )
+	ROM_LOAD( "scobra2l.bin", 0x5000, 0x1000 )
+
+	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "scobra5f.bin", 0x0000, 0x0800 )
+	ROM_LOAD( "scobra5h.bin", 0x0800, 0x0800 )
+ROM_END
+
+ROM_START( scobrak_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "2c", 0x0000, 0x1000 )
+	ROM_LOAD( "2e", 0x1000, 0x1000 )
+	ROM_LOAD( "2f", 0x2000, 0x1000 )
+	ROM_LOAD( "2h", 0x3000, 0x1000 )
+	ROM_LOAD( "2j", 0x4000, 0x1000 )
+	ROM_LOAD( "2l", 0x5000, 0x1000 )
+
+	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "5f", 0x0000, 0x0800 )
+	ROM_LOAD( "5h", 0x0800, 0x0800 )
+ROM_END
+
+ROM_START( scobrab_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "vid_2c.bin",   0x0000, 0x0800 )
+	ROM_LOAD( "vid_2e.bin",   0x0800, 0x0800 )
+	ROM_LOAD( "vid_2f.bin",   0x1000, 0x0800 )
+	ROM_LOAD( "vid_2h.bin",   0x1800, 0x0800 )
+	ROM_LOAD( "vid_2j_l.bin", 0x2000, 0x0800 )
+	ROM_LOAD( "vid_2l_l.bin", 0x2800, 0x0800 )
+	ROM_LOAD( "vid_2m_l.bin", 0x3000, 0x0800 )
+	ROM_LOAD( "vid_2p_l.bin", 0x3800, 0x0800 )
+	ROM_LOAD( "vid_2j_u.bin", 0x4000, 0x0800 )
+	ROM_LOAD( "vid_2l_u.bin", 0x4800, 0x0800 )
+	ROM_LOAD( "vid_2m_u.bin", 0x5000, 0x0800 )
+	ROM_LOAD( "vid_2p_u.bin", 0x5800, 0x0800 )
+
+	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "vid_5f.bin",   0x0000, 0x0800 )
+	ROM_LOAD( "vid_5h.bin",   0x0800, 0x0800 )
+ROM_END
+
+ROM_START( losttomb_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "2c",      0x0000, 0x1000 )
+	ROM_LOAD( "2e",      0x1000, 0x1000 )
+	ROM_LOAD( "2f",      0x2000, 0x1000 )
+	ROM_LOAD( "2h-easy", 0x3000, 0x1000 )
+	ROM_LOAD( "2j",      0x4000, 0x1000 )
+	ROM_LOAD( "2l",      0x5000, 0x1000 )
+	ROM_LOAD( "2m",      0x6000, 0x1000 )
+
+	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "5f",      0x0000, 0x0800 )
+	ROM_LOAD( "5h",      0x0800, 0x0800 )
+ROM_END
+
+
+
+struct GameDriver scobra_driver =
+{
+	"scobra",
+	&machine_driver,
+
+	scobra_rom,
+	0, 0,
+
+	input_ports, dsw,
+
+	color_prom, 0, 0,
+	0, 17,
+	0x00, 0x01,
+	8*13, 8*16, 0x04,
+
+	0, 0
+};
+
+struct GameDriver scobrak_driver =
+{
+	"scobrak",
+	&machine_driver,
+
+	scobrak_rom,
+	0, 0,
+
+	input_ports, dsw,
+
+	color_prom, 0, 0,
+	0, 17,
+	0x00, 0x01,
+	8*13, 8*16, 0x04,
+
+	0, 0
+};
+
+struct GameDriver scobrab_driver =
+{
+	"scobrab",
+	&machine_driver,
+
+	scobrab_rom,
+	0, 0,
+
+	input_ports, dsw,
+
+	color_prom, 0, 0,
+	0, 17,
+	0x00, 0x01,
+	8*13, 8*16, 0x04,
+
+	0, 0
+};
+
+struct GameDriver losttomb_driver =
+{
+	"losttomb",
+	&machine_driver,
+
+	losttomb_rom,
+	0, 0,
+
+	input_ports, dsw,
+
+	color_prom, 0, 0,
+	0, 17,
+	0x00, 0x01,
+	8*13, 8*16, 0x04,
+
+	0, 0
 };

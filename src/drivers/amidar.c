@@ -227,7 +227,7 @@ static unsigned char colortable[] =
 
 
 
-const struct MachineDriver amidar_driver =
+static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -240,17 +240,14 @@ const struct MachineDriver amidar_driver =
 		}
 	},
 	60,
-	input_ports,amidar_dsw,
 	0,
 
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
 	sizeof(palette)/3,sizeof(colortable),
-	0,0,palette,colortable,
-	0,17,
-	0x06,0x04,
-	8*13,8*16,0x00,
+	0,
+
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -266,39 +263,102 @@ const struct MachineDriver amidar_driver =
 
 
 
-const struct MachineDriver turtles_driver =
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+ROM_START( amidar_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "amidarus.2c", 0x0000, 0x1000 )
+	ROM_LOAD( "amidarus.2e", 0x1000, 0x1000 )
+	ROM_LOAD( "amidarus.2f", 0x2000, 0x1000 )
+	ROM_LOAD( "amidarus.2h", 0x3000, 0x1000 )
+	ROM_LOAD( "amidarus.2j", 0x4000, 0x1000 )
+
+	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "amidarus.5f", 0x0000, 0x0800 )
+	ROM_LOAD( "amidarus.5h", 0x0800, 0x0800 )
+ROM_END
+
+ROM_START( amidarjp_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "amidar.2c", 0x0000, 0x1000 )
+	ROM_LOAD( "amidar.2e", 0x1000, 0x1000 )
+	ROM_LOAD( "amidar.2f", 0x2000, 0x1000 )
+	ROM_LOAD( "amidar.2h", 0x3000, 0x1000 )
+
+	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "amidar.5f", 0x0000, 0x0800 )
+	ROM_LOAD( "amidar.5h", 0x0800, 0x0800 )
+ROM_END
+
+ROM_START( turtles_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "turt_vid.2c", 0x0000, 0x1000 )
+	ROM_LOAD( "turt_vid.2e", 0x1000, 0x1000 )
+	ROM_LOAD( "turt_vid.2f", 0x2000, 0x1000 )
+	ROM_LOAD( "turt_vid.2h", 0x3000, 0x1000 )
+	ROM_LOAD( "turt_vid.2j", 0x4000, 0x1000 )
+
+	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "turt_vid.5f", 0x0000, 0x0800 )
+	ROM_LOAD( "turt_vid.5h", 0x0800, 0x0800 )
+ROM_END
+
+
+
+struct GameDriver amidar_driver =
 {
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3072000,	/* 3.072 Mhz */
-			0,
-			readmem,writemem,0,0,
-			nmi_interrupt,1
-		}
-	},
-	60,
-	input_ports,turtles_dsw,
-	0,
+	"amidar",
+	&machine_driver,
 
-	/* video hardware */
-	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
-	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable),
-	0,0,palette,colortable,
-	0,17,
-	0x07,0x01,
-	8*13,8*16,0x06,
-	0,
-	generic_vh_start,
-	generic_vh_stop,
-	amidar_vh_screenrefresh,
+	amidar_rom,
+	0, 0,
 
-	/* sound hardware */
-	0,
-	0,
-	0,
-	0,
-	0
+	input_ports, amidar_dsw,
+
+	0, palette, colortable,
+	0, 17,
+	0x06, 0x04,
+	8*13, 8*16, 0x00,
+
+	0, 0
+};
+
+struct GameDriver amidarjp_driver =
+{
+	"amidarjp",
+	&machine_driver,
+
+	amidarjp_rom,
+	0, 0,
+
+	input_ports, amidar_dsw,
+
+	0, palette, colortable,
+	0, 17,
+	0x06, 0x04,
+	8*13, 8*16, 0x00,
+
+	0, 0
+};
+
+struct GameDriver turtles_driver =
+{
+	"turtles",
+	&machine_driver,
+
+	turtles_rom,
+	0, 0,
+
+	input_ports, turtles_dsw,
+
+	0, palette, colortable,
+	0, 17,
+	0x06, 0x04,
+	8*13, 8*16, 0x00,
+
+	0, 0
 };

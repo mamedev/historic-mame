@@ -39,14 +39,13 @@ CFLAGS = -Isrc -Isrc/Z80 -Isrc/unix -fstrength-reduce -funroll-loops -fomit-fram
 OBJS   = obj/mame.o obj/common.o obj/driver.o obj/cpuintrf.o obj/osdepend.o \
          obj/vidhrdw/generic.o \
          obj/machine/pacman.o obj/vidhrdw/pacman.o obj/drivers/pacman.o \
-		 obj/drivers/crush.o \
          obj/vidhrdw/pengo.o obj/sndhrdw/pengo.o obj/drivers/pengo.o \
          obj/machine/ladybug.o obj/vidhrdw/ladybug.o obj/sndhrdw/ladybug.o obj/drivers/ladybug.o \
          obj/machine/mrdo.o obj/vidhrdw/mrdo.o obj/drivers/mrdo.o \
          obj/machine/docastle.o obj/vidhrdw/docastle.o obj/drivers/docastle.o \
          obj/vidhrdw/cclimber.o obj/sndhrdw/cclimber.o obj/drivers/cclimber.o \
          obj/vidhrdw/ckong.o obj/drivers/ckong.o \
-         obj/vidhrdw/dkong.o obj/drivers/dkong.o \
+         obj/vidhrdw/dkong.o obj/sndhrdw/dkong.o obj/drivers/dkong.o \
          obj/vidhrdw/dkong3.o obj/drivers/dkong3.o \
          obj/machine/bagman.o obj/vidhrdw/bagman.o obj/drivers/bagman.o \
          obj/vidhrdw/wow.o obj/drivers/wow.o \
@@ -73,6 +72,7 @@ OBJS   = obj/mame.o obj/common.o obj/driver.o obj/cpuintrf.o obj/osdepend.o \
          obj/machine/mpatrol.o obj/vidhrdw/mpatrol.o obj/drivers/mpatrol.o \
          obj/machine/btime.o obj/vidhrdw/btime.o obj/sndhrdw/btime.o obj/drivers/btime.o \
          obj/drivers/jumpbug.o \
+         obj/machine/vanguard.o obj/vidhrdw/vanguard.o obj/drivers/vanguard.o \
 		 obj/sndhrdw/psg.o obj/sndhrdw/pokey.o \
          obj/Z80/Z80.o obj/M6502/M6502.o
 

@@ -226,7 +226,7 @@ static unsigned char color_prom[] =
 
 
 
-const struct MachineDriver ckong_driver =
+static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -239,17 +239,14 @@ const struct MachineDriver ckong_driver =
 		}
 	},
 	60,
-	input_ports,dsw,
 	0,
 
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
 	96,4*24,
-	color_prom,cclimber_vh_convert_color_prom,0,0,
-	0,17,
-	0x00,0x02,
-	8*13,8*16,0x0c,
+	cclimber_vh_convert_color_prom,
+
 	0,
 	ckong_vh_start,
 	ckong_vh_stop,
@@ -261,4 +258,93 @@ const struct MachineDriver ckong_driver =
 	cclimber_sh_start,
 	cclimber_sh_stop,
 	cclimber_sh_update
+};
+
+
+
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+ROM_START( ckong_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "7.dat",  0x0000, 0x1000 )
+	ROM_LOAD( "8.dat",  0x1000, 0x1000 )
+	ROM_LOAD( "9.dat",  0x2000, 0x1000 )
+	ROM_LOAD( "10.dat", 0x3000, 0x1000 )
+	ROM_LOAD( "11.dat", 0x4000, 0x1000 )
+	ROM_LOAD( "12.dat", 0x5000, 0x1000 )
+
+	ROM_REGION(0x5000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "6.dat",  0x0000, 0x1000 )
+	ROM_LOAD( "4.dat",  0x1000, 0x1000 )
+	ROM_LOAD( "5.dat",  0x2000, 0x1000 )
+	ROM_LOAD( "3.dat",  0x3000, 0x1000 )
+	ROM_LOAD( "2.dat",  0x4000, 0x0800 )
+	ROM_LOAD( "1.dat",  0x4800, 0x0800 )
+
+	ROM_REGION(0x2000)	/* samples */
+	ROM_LOAD( "14.dat", 0x0000, 0x1000 )
+	ROM_LOAD( "13.dat", 0x1000, 0x1000 )
+ROM_END
+
+
+
+static int hiload(const char *name)
+{
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x611d],"\x50\x76\x00",3) == 0 &&
+			memcmp(&RAM[0x61a5],"\x00\x43\x00",3) == 0)
+	{
+		FILE *f;
+
+
+		if ((f = fopen(name,"rb")) != 0)
+		{
+			fread(&RAM[0x6100],1,34*5,f);
+			RAM[0x60b8] = RAM[0x611d];
+			RAM[0x60b9] = RAM[0x611e];
+			RAM[0x60ba] = RAM[0x611f];
+			fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+static void hisave(const char *name)
+{
+	FILE *f;
+
+
+	if ((f = fopen(name,"wb")) != 0)
+	{
+		fwrite(&RAM[0x6100],1,34*5,f);
+		fclose(f);
+	}
+}
+
+
+
+struct GameDriver ckong_driver =
+{
+	"ckong",
+	&machine_driver,
+
+	ckong_rom,
+	0, 0,
+
+	input_ports, dsw,
+
+	color_prom, 0, 0,
+	0, 17,
+	0x00, 0x02,
+	8*13, 8*16, 0x0c,
+
+	hiload, hisave
 };

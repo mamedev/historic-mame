@@ -1,6 +1,6 @@
 /*****************************************************************************/
 /*                                                                           */
-/* Module:  POKEY Chip Emulator, V2.0                                        */
+/* Module:  POKEY Chip Emulator, V2.1                                        */
 /* Purpose: To emulate the sound generation hardware of the Atari POKEY chip.*/
 /* Author:  Ron Fries                                                        */
 /*                                                                           */
@@ -10,6 +10,9 @@
 /* 01/14/97 - Ron Fries - Corrected a minor problem to improve sound quality */
 /*                        Also changed names from POKEY11.x to POKEY.x       */
 /* 01/17/97 - Ron Fries - Added support for multiple POKEY chips.            */
+/* 03/31/97 - Ron Fries - Made some minor mods for MAME (changed to signed   */
+/*                        8-bit sample, increased gain range, removed        */
+/*                        _disable() and _enable().)                         */
 /*                                                                           */
 /* V2.0 Detailed Changes                                                     */
 /* ---------------------                                                     */
@@ -227,7 +230,7 @@ void Pokey_sound_init (uint32 freq17, uint16 playback_freq, uint8 num_pokeys)
    }
 
    /* disable interrupts to handle critical sections */
-/*   _disable();*/
+/*    _disable();*/		/* RSF - removed for portability 31-MAR-97 */
 
    /* start all of the polynomial counters at zero */
    Poly_adjust = 0;
@@ -262,7 +265,7 @@ void Pokey_sound_init (uint32 freq17, uint16 playback_freq, uint8 num_pokeys)
    /* set the number of pokey chips currently emulated */
    Num_pokeys = num_pokeys;
 
-/*   _enable();*/
+/*    _enable();*/		/* RSF - removed for portability 31-MAR-97 */
 }
 
 
@@ -278,8 +281,8 @@ void Pokey_sound_init (uint32 freq17, uint16 playback_freq, uint8 num_pokeys)
 /*                                                                           */
 /* Inputs:  addr - the address of the parameter to be changed                */
 /*          val - the new value to be placed in the specified address        */
-/*          gain - specified as an 8-bit fixed point number - use 16 for no  */
-/*                 amplification (output is multiplied by gain/16)           */
+/*          gain - specified as an 8-bit fixed point number - use 1 for no   */
+/*                 amplification (output is multiplied by gain)              */
 /*                                                                           */
 /* Outputs: Adjusts local globals - no return value                          */
 /*                                                                           */
@@ -293,7 +296,7 @@ void Update_pokey_sound (uint16 addr, uint8 val, uint8 chip, uint8 gain)
     uint8 chip_offs;
 
     /* disable interrupts to handle critical sections */
-/*    _disable();*/
+/*    _disable();*/		/* RSF - removed for portability 31-MAR-97 */
 
     /* calculate the chip_offs for the channel arrays */
     chip_offs = chip << 2;
@@ -311,7 +314,8 @@ void Update_pokey_sound (uint16 addr, uint8 val, uint8 chip, uint8 gain)
 
        case AUDC1_C:
           AUDC[CHAN1 + chip_offs] = val;
-          AUDV[CHAN1 + chip_offs] = ((val & VOLUME_MASK) * gain) >> 4;
+			   /* RSF - changed gain (removed >> 4) 31-MAR-97 */
+          AUDV[CHAN1 + chip_offs] = (val & VOLUME_MASK) * gain;
           chan_mask = 1 << CHAN1;
           break;
 
@@ -322,7 +326,8 @@ void Update_pokey_sound (uint16 addr, uint8 val, uint8 chip, uint8 gain)
 
        case AUDC2_C:
           AUDC[CHAN2 + chip_offs] = val;
-          AUDV[CHAN2 + chip_offs] = ((val & VOLUME_MASK) * gain) >> 4;
+			   /* RSF - changed gain (removed >> 4) 31-MAR-97 */
+          AUDV[CHAN2 + chip_offs] = (val & VOLUME_MASK) * gain;
           chan_mask = 1 << CHAN2;
           break;
 
@@ -336,7 +341,8 @@ void Update_pokey_sound (uint16 addr, uint8 val, uint8 chip, uint8 gain)
 
        case AUDC3_C:
           AUDC[CHAN3 + chip_offs] = val;
-          AUDV[CHAN3 + chip_offs] = ((val & VOLUME_MASK) * gain) >> 4;
+			   /* RSF - changed gain (removed >> 4) 31-MAR-97 */
+          AUDV[CHAN3 + chip_offs] = (val & VOLUME_MASK) * gain;
           chan_mask = 1 << CHAN3;
           break;
 
@@ -347,7 +353,8 @@ void Update_pokey_sound (uint16 addr, uint8 val, uint8 chip, uint8 gain)
 
        case AUDC4_C:
           AUDC[CHAN4 + chip_offs] = val;
-          AUDV[CHAN4 + chip_offs] = ((val & VOLUME_MASK) * gain) >> 4;
+			   /* RSF - changed gain (removed >> 4) 31-MAR-97 */
+          AUDV[CHAN4 + chip_offs] = (val & VOLUME_MASK) * gain;
           chan_mask = 1 << CHAN4;
           break;
 
@@ -490,7 +497,7 @@ void Update_pokey_sound (uint16 addr, uint8 val, uint8 chip, uint8 gain)
        }
     }
 
-/*    _enable(); */
+/*    _enable();*/		/* RSF - removed for portability 31-MAR-97 */
 }
 
 
@@ -539,7 +546,7 @@ void Pokey_process (register unsigned char *buffer, register uint16 n)
     /* The current output is pre-determined and then adjusted based on each */
     /* output change for increased performance (less over-all math). */
     /* add the output values of all 4 channels */
-    cur_val = 128;
+    cur_val = 0;	  /* RSF - changed to unsigned sample 31-MAR-97 */
 
     count = Num_pokeys;
     do
@@ -736,13 +743,13 @@ void Pokey_process (register unsigned char *buffer, register uint16 n)
           *Samp_n_cnt += Samp_n_max;
 
 #ifdef CLIP                         /* if clipping is selected */
-          if (cur_val > 255)        /* then check high limit */
+          if (cur_val > 127)        /* then check high limit */
           {
-             *buffer++ = 255;       /* and limit if greater */
+             *buffer++ = 127;       /* and limit if greater */
           }
-          else if (cur_val < 0)     /* else check low limit */
+          else if (cur_val < -128)     /* else check low limit */
           {
-             *buffer++ = 0;         /* and limit if less */
+             *buffer++ = -128;         /* and limit if less */
           }
           else                      /* otherwise use raw value */
           {

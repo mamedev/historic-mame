@@ -189,7 +189,7 @@ static unsigned char colortable[] =
 
 
 
-const struct MachineDriver centiped_driver =
+static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -202,17 +202,14 @@ const struct MachineDriver centiped_driver =
 		}
 	},
 	60,
-	input_ports,dsw,
 	centiped_init_machine,
 
 	/* video hardware */
 	32*8, 32*8, { 1*8, 31*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
 	sizeof(palette)/3,sizeof(colortable),
-	0,0,palette,colortable,
-	0x60,0x41,
-	0x06,0x04,
-	8*13,8*16,0x00,
+	0,
+
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -224,4 +221,81 @@ const struct MachineDriver centiped_driver =
 	milliped_sh_start,
 	milliped_sh_stop,
 	milliped_sh_update
+};
+
+
+
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+ROM_START( centiped_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "%s.307", 0x2000, 0x0800 )
+	ROM_LOAD( "%s.308", 0x2800, 0x0800 )
+	ROM_LOAD( "%s.309", 0x3000, 0x0800 )
+	ROM_LOAD( "%s.310", 0x3800, 0x0800 )
+	ROM_LOAD( "%s.310", 0xf800, 0x0800 )	/* for the reset and interrupt vectors */
+
+	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "%s.211", 0x0000, 0x0800 )
+	ROM_LOAD( "%s.212", 0x0800, 0x0800 )
+ROM_END
+
+
+
+static int hiload(const char *name)
+{
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x0002],"\x43\x65\x01",3) == 0 &&
+			memcmp(&RAM[0x0017],"\x02\x21\x01",3) == 0)
+	{
+		FILE *f;
+
+
+		if ((f = fopen(name,"rb")) != 0)
+		{
+			fread(&RAM[0x0002],1,6*8,f);
+			fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+static void hisave(const char *name)
+{
+	FILE *f;
+
+
+	if ((f = fopen(name,"wb")) != 0)
+	{
+		fwrite(&RAM[0x0002],1,6*8,f);
+		fclose(f);
+	}
+}
+
+
+
+struct GameDriver centiped_driver =
+{
+	"centiped",
+	&machine_driver,
+
+	centiped_rom,
+	0, 0,
+
+	input_ports, dsw,
+
+	0, palette, colortable,
+	0x60, 0x41,
+	0x06, 0x04,
+	8*13, 8*16, 0x00,
+
+	hiload, hisave
 };

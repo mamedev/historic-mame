@@ -281,7 +281,7 @@ static unsigned char colortable[] =
 
 
 
-const struct MachineDriver bagman_driver =
+static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -294,17 +294,14 @@ const struct MachineDriver bagman_driver =
 		}
 	},
 	60,
-	input_ports,dsw,
 	0,
 
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
 	sizeof(palette)/3,sizeof(colortable),
-	0,0,palette,colortable,
-	0,17,
-	7,4,
-	8*13,8*16,1,
+	0,
+
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -316,4 +313,52 @@ const struct MachineDriver bagman_driver =
 	cclimber_sh_start,
 	cclimber_sh_stop,
 	cclimber_sh_update
+};
+
+
+
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+ROM_START( bagman_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "a4_9e.bin", 0x0000, 0x1000 )
+	ROM_LOAD( "a4_9f.bin", 0x1000, 0x1000 )
+	ROM_LOAD( "a4_9j.bin", 0x2000, 0x1000 )
+	ROM_LOAD( "a4_9k.bin", 0x3000, 0x1000 )
+	ROM_LOAD( "a4_9m.bin", 0x4000, 0x1000 )
+	ROM_LOAD( "a4_9n.bin", 0x5000, 0x1000 )
+
+	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "a2_1e.bin", 0x0000, 0x1000 )
+	ROM_LOAD( "a2_1j.bin", 0x1000, 0x1000 )
+	ROM_LOAD( "a2_1c.bin", 0x2000, 0x1000 )
+	ROM_LOAD( "a2_1f.bin", 0x3000, 0x1000 )
+
+	ROM_REGION(0x2000)	/* ??? */
+	ROM_LOAD( "a1_9r.bin", 0x0000, 0x1000 )
+	ROM_LOAD( "a1_9t.bin", 0x1000, 0x1000 )
+ROM_END
+
+
+
+struct GameDriver bagman_driver =
+{
+	"bagman",
+	&machine_driver,
+
+	bagman_rom,
+	0, 0,
+
+	input_ports, dsw,
+
+	0, palette, colortable,
+	0, 17,
+	7, 4,
+	8*13, 8*16, 1,
+
+	0, 0
 };

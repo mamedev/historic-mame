@@ -225,7 +225,7 @@ static unsigned char samples[32] =	/* a simple sine (sort of) wave */
 
 
 
-const struct MachineDriver ladybug_driver =
+static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -238,17 +238,14 @@ const struct MachineDriver ladybug_driver =
 		}
 	},
 	60,
-	input_ports,dsw,
 	0,
 
 	/* video hardware */
 	32*8, 32*8, { 4*8, 28*8-1, 1*8, 31*8-1 },
 	gfxdecodeinfo,
 	32,4*24,
-	color_prom,ladybug_vh_convert_color_prom,0,0,
-	0,10,
-	0x02,0x06,
-	8*13,8*30,0x07,
+	ladybug_vh_convert_color_prom,
+
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -260,4 +257,86 @@ const struct MachineDriver ladybug_driver =
 	ladybug_sh_start,
 	0,
 	ladybug_sh_update
+};
+
+
+
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+ROM_START( ladybug_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "lb1.cpu",  0x0000, 0x1000 )
+	ROM_LOAD( "lb2.cpu",  0x1000, 0x1000 )
+	ROM_LOAD( "lb3.cpu",  0x2000, 0x1000 )
+	ROM_LOAD( "lb4.cpu",  0x3000, 0x1000 )
+	ROM_LOAD( "lb5.cpu",  0x4000, 0x1000 )
+	ROM_LOAD( "lb6.cpu",  0x5000, 0x1000 )
+
+	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "lb9.vid",  0x0000, 0x1000 )
+	ROM_LOAD( "lb10.vid", 0x1000, 0x1000 )
+	ROM_LOAD( "lb8.cpu",  0x2000, 0x1000 )
+	ROM_LOAD( "lb7.cpu",  0x3000, 0x1000 )
+ROM_END
+
+
+
+static int hiload(const char *name)
+{
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x6073],"\x01\x00\x00",3) == 0 &&
+			memcmp(&RAM[0x608b],"\x01\x00\x00",3) == 0)
+	{
+		FILE *f;
+
+
+		if ((f = fopen(name,"rb")) != 0)
+		{
+			fread(&RAM[0x6073],1,3*9,f);
+			fread(&RAM[0xd380],1,13*9,f);
+			fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+static void hisave(const char *name)
+{
+	FILE *f;
+
+
+	if ((f = fopen(name,"wb")) != 0)
+	{
+		fwrite(&RAM[0x6073],1,3*9,f);
+		fwrite(&RAM[0xd380],1,13*9,f);
+		fclose(f);
+	}
+}
+
+
+
+struct GameDriver ladybug_driver =
+{
+	"ladybug",
+	&machine_driver,
+
+	ladybug_rom,
+	0, 0,
+
+	input_ports, dsw,
+
+	color_prom, 0, 0,
+	0, 10,
+	0x02, 0x06,
+	8*13, 8*30, 0x07,
+
+	hiload, hisave
 };

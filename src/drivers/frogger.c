@@ -192,7 +192,7 @@ static unsigned char color_prom[] =
 
 
 
-const struct MachineDriver frogger_driver =
+static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -205,17 +205,14 @@ const struct MachineDriver frogger_driver =
 		}
 	},
 	60,
-	input_ports,dsw,
 	0,
 
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
 	32,64,
-	color_prom,frogger_vh_convert_color_prom,0,0,
-	0,17,
-	0x00,0x03,
-	8*13,8*16,0x06,
+	frogger_vh_convert_color_prom,
+
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -227,4 +224,44 @@ const struct MachineDriver frogger_driver =
 	0,
 	0,
 	0
+};
+
+
+
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+ROM_START( frogger_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "frogger.ic5", 0x0000, 0x1000 )
+	ROM_LOAD( "frogger.ic6", 0x1000, 0x1000 )
+	ROM_LOAD( "frogger.ic7", 0x2000, 0x1000 )
+	ROM_LOAD( "frogger.ic8", 0x3000, 0x1000 )
+
+	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "frogger.606", 0x0000, 0x0800 )
+	ROM_LOAD( "frogger.607", 0x0800, 0x0800 )
+ROM_END
+
+
+
+struct GameDriver frogger_driver =
+{
+	"frogger",
+	&machine_driver,
+
+	frogger_rom,
+	0, 0,
+
+	input_ports, dsw,
+
+	color_prom, 0, 0,
+	0, 17,
+	0x00, 0x03,
+	8*13, 8*16, 0x06,
+
+	0, 0
 };

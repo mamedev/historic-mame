@@ -1,10 +1,10 @@
 Put the files :
 
-amidar.2c
-amidar.2e
-amidar.2f
-amidar.2h
-amidar.5f
-amidar.5h
+amidarus.2c
+amidarus.2e
+amidarus.2f
+amidarus.2h
+amidarus.5f
+amidarus.5h
 
 in this directory.

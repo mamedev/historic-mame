@@ -213,7 +213,7 @@ static unsigned char colortable[] =
 
 
 
-const struct MachineDriver milliped_driver =
+static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -226,17 +226,14 @@ const struct MachineDriver milliped_driver =
 		}
 	},
 	60,
-	input_ports,dsw,
 	0,
 
 	/* video hardware */
 	32*8, 32*8, { 1*8, 31*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
 	sizeof(palette)/3,sizeof(colortable),
-	0,0,palette,colortable,
-	0x60,0x41,
-	0x06,0x04,
-	8*13,8*16,0x00,
+	0,
+
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -249,3 +246,81 @@ const struct MachineDriver milliped_driver =
 	milliped_sh_stop,
 	milliped_sh_update
 };
+
+
+
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+ROM_START( milliped_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "%s.104", 0x4000, 0x1000 )
+	ROM_LOAD( "%s.103", 0x5000, 0x1000 )
+	ROM_LOAD( "%s.102", 0x6000, 0x1000 )
+	ROM_LOAD( "%s.101", 0x7000, 0x1000 )
+	ROM_LOAD( "%s.101", 0xf000, 0x1000 )	/* for the reset and interrupt vectors */
+
+	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "%s.106", 0x0000, 0x0800 )
+	ROM_LOAD( "%s.107", 0x0800, 0x0800 )
+ROM_END
+
+
+
+static int hiload(const char *name)
+{
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x0064],"\x75\x91\x08",3) == 0 &&
+			memcmp(&RAM[0x0079],"\x16\x19\x04",3) == 0)
+	{
+		FILE *f;
+
+
+		if ((f = fopen(name,"rb")) != 0)
+		{
+			fread(&RAM[0x0064],1,6*8,f);
+			fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+static void hisave(const char *name)
+{
+	FILE *f;
+
+
+	if ((f = fopen(name,"wb")) != 0)
+	{
+		fwrite(&RAM[0x0064],1,6*8,f);
+		fclose(f);
+	}
+}
+
+
+
+struct GameDriver milliped_driver =
+{
+	"milliped",
+	&machine_driver,
+
+	milliped_rom,
+	0, 0,
+
+	input_ports, dsw,
+
+	0, palette, colortable,
+	0x60, 0x41,
+	0x06, 0x04,
+	8*13, 8*16, 0x00,
+
+	hiload, hisave
+};
+

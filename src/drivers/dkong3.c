@@ -292,7 +292,7 @@ static unsigned char colortable[] =
 
 
 
-const struct MachineDriver dkong3_driver =
+static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -305,17 +305,14 @@ const struct MachineDriver dkong3_driver =
 		}
 	},
 	60,
-	input_ports,dsw,
 	0,
 
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
 	sizeof(palette)/3,sizeof(colortable),
-	0,0,palette,colortable,
-	0,17,
-	1,11,
-	8*13,8*16,0,
+	0,
+
 	0,
 	dkong3_vh_start,
 	generic_vh_stop,
@@ -327,4 +324,95 @@ const struct MachineDriver dkong3_driver =
 	0,
 	0,
 	0
+};
+
+
+
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+ROM_START( dkong3_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "dk3c.7b",  0x0000, 0x2000 )
+	ROM_LOAD( "dk3c.7c",  0x2000, 0x2000 )
+	ROM_LOAD( "dk3c.7d",  0x4000, 0x2000 )
+	ROM_LOAD( "dk3c.7e",  0x8000, 0x2000 )
+
+	ROM_REGION(0x6000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "dk3v.3n",  0x0000, 0x1000 )
+	ROM_LOAD( "dk3v.3p",  0x1000, 0x1000 )
+	ROM_LOAD( "dk3v.7c",  0x2000, 0x1000 )
+	ROM_LOAD( "dk3v.7d",  0x3000, 0x1000 )
+	ROM_LOAD( "dk3v.7e",  0x4000, 0x1000 )
+	ROM_LOAD( "dk3v.7f",  0x5000, 0x1000 )
+
+	ROM_REGION(0x4000)	/* sound? */
+	ROM_LOAD( "dk3c.5l",  0x0000, 0x2000 )
+	ROM_LOAD( "dk3c.6h",  0x2000, 0x2000 )
+ROM_END
+
+
+
+static int hiload(const char *name)
+{
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x6b1d],"\x00\x20\x01",3) == 0 &&
+			memcmp(&RAM[0x6ba5],"\x00\x32\x00",3) == 0)
+	{
+		FILE *f;
+
+
+		if ((f = fopen(name,"rb")) != 0)
+		{
+			fread(&RAM[0x6b00],1,34*5,f);	/* hi scores */
+			RAM[0x68f3] = RAM[0x6b1f];
+			RAM[0x68f4] = RAM[0x6b1e];
+			RAM[0x68f5] = RAM[0x6b1d];
+			fread(&RAM[0x6c20],1,0x40,f);	/* distributions */
+			fread(&RAM[0x6c16],1,4,f);
+			fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+static void hisave(const char *name)
+{
+	FILE *f;
+
+
+	if ((f = fopen(name,"wb")) != 0)
+	{
+		fwrite(&RAM[0x6b00],1,34*5,f);	/* hi scores */
+		fwrite(&RAM[0x6c20],1,0x40,f);	/* distribution */
+		fwrite(&RAM[0x6c16],1,4,f);
+		fclose(f);
+	}
+}
+
+
+
+struct GameDriver dkong3_driver =
+{
+	"dkong3",
+	&machine_driver,
+
+	dkong3_rom,
+	0, 0,
+
+	input_ports, dsw,
+
+	0, palette, colortable,
+	0, 17,
+	1, 11,
+	8*13, 8*16, 0,
+
+	hiload, hisave
 };

@@ -257,7 +257,7 @@ static unsigned char colortable[] =
 
 
 
-const struct MachineDriver rallyx_driver =
+static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -270,17 +270,14 @@ const struct MachineDriver rallyx_driver =
 		}
 	},
 	60,
-	input_ports,dsw,
 	0,
 
 	/* video hardware */
 	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
 	gfxdecodeinfo,
 	sizeof(palette)/3,sizeof(colortable),
-	0,0,palette,colortable,
-	'0','A',
-	0x0f,0x09,
-	8*11,8*19,0x01,
+	0,
+
 	0,
 	rallyx_vh_start,
 	rallyx_vh_stop,
@@ -292,4 +289,43 @@ const struct MachineDriver rallyx_driver =
 	0,
 	0,
 	0
+};
+
+
+
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+ROM_START( rallyx_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "%s.1b", 0x0000, 0x1000 )
+	ROM_LOAD( "%s.1e", 0x1000, 0x1000 )
+	ROM_LOAD( "%s.1h", 0x2000, 0x1000 )
+	ROM_LOAD( "%s.1k", 0x3000, 0x1000 )
+
+	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "%s.8e", 0x0000, 0x1000 )
+ROM_END
+
+
+
+struct GameDriver rallyx_driver =
+{
+	"rallyx",
+	&machine_driver,
+
+	rallyx_rom,
+	0, 0,
+
+	input_ports, dsw,
+
+	0, palette, colortable,
+	'0', 'A',
+	0x0f, 0x09,
+	8*11, 8*19, 0x01,
+
+	0, 0
 };

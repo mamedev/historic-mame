@@ -139,7 +139,11 @@ void bombjack_vh_screenrefresh(struct osd_bitmap *bitmap)
 			tilecode = Machine->memory_region[2][bgoffs],
 			tileattribute = Machine->memory_region[2][bgoffs + 0x100];
 		}
-		else tilecode = 0xff;
+		else
+		{
+			tilecode = 0xff;
+			bx = by = tileattribute = 0;	/* avoid compiler warning */
+		}
 
 		if (dirtybuffer[offs] || dirtycolor[colorram[offs] & 0x0f] ||
 				(tilecode != 0xff && dirtycolor[tileattribute & 0x0f]))

@@ -83,6 +83,47 @@ write:
 I/O ports:
 OUT on port $0 sets the interrupt vector
 
+
+
+
+Crush Roller:
+
+*
+ * IN0 (all bits are inverted)
+ * bit 7 : CREDIT
+ * bit 6 : COIN 2
+ * bit 5 : COIN 1
+ * bit 4 : COCKTAIL or UPRIGHT cabinet (0 = UPRIGHT)
+ * bit 3 : DOWN player 1
+ * bit 2 : RIGHT player 1
+ * bit 1 : LEFT player 1
+ * bit 0 : UP player 1
+ *
+*
+ * IN1 (all bits are inverted)
+ * bit 7 : ??
+ * bit 6 : START 2
+ * bit 5 : START 1
+ * bit 4 : ??
+ * bit 3 : DOWN player 2 (TABLE only)
+ * bit 2 : RIGHT player 2 (TABLE only)
+ * bit 1 : LEFT player 2 (TABLE only)
+ * bit 0 : UP player 2 (TABLE ony)
+ *
+*
+ * DSW1 (all bits are inverted)
+ * bit 7 :  ??
+ * bit 6 :  difficulty level
+ *                       1 = Normal  0 = Harder
+ * bit 5 : Teleport holes 0 = on 1 = off
+ * bit 4 : First pattern difficulty 1 = easy 0 = hard
+ * bit 3 :\ nr of lives
+ * bit 2 :/ 00 = 3  01 = 4  10 = 5  11 = 6
+ * bit 1 :\ play mode
+ * bit 0 :/ 00 = free play   01 = 1 coin 1 credit
+ *          10 = 1 coin 2 credits   11 = 2 coins 1 credit
+ *
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -104,29 +145,19 @@ extern void pengo_sh_update(void);
 
 
 
-static struct MemoryReadAddress pacman_readmem[] =
+static struct MemoryReadAddress readmem[] =
 {
 	{ 0x4c00, 0x4fff, MRA_RAM },	/* includeing sprite codes at 4ff0-4fff */
 	{ 0x4000, 0x47ff, MRA_RAM },	/* video and color RAM */
 	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x5000, 0x503f, input_port_0_r },	/* IN0 */
-	{ 0x5040, 0x507f, input_port_1_r },	/* IN1 */
-	{ 0x5080, 0x50bf, input_port_2_r },	/* DSW1 */
-	{ -1 }	/* end of table */
-};
-static struct MemoryReadAddress mspacman_readmem[] =
-{
-	{ 0x4c00, 0x4fff, MRA_RAM },	/* includeing sprite codes at 4ff0-4fff */
-	{ 0x4000, 0x47ff, MRA_RAM },	/* video and color RAM */
-	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x8000, 0x9fff, MRA_ROM },
+	{ 0x8000, 0x9fff, MRA_ROM },	/* Ms. Pac Man only */
 	{ 0x5000, 0x503f, input_port_0_r },	/* IN0 */
 	{ 0x5040, 0x507f, input_port_1_r },	/* IN1 */
 	{ 0x5080, 0x50bf, input_port_2_r },	/* DSW1 */
 	{ -1 }	/* end of table */
 };
 
-static struct MemoryWriteAddress pacman_writemem[] =
+static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x4c00, 0x4fef, MWA_RAM },
 	{ 0x4000, 0x43ff, videoram_w, &videoram },
@@ -141,36 +172,21 @@ static struct MemoryWriteAddress pacman_writemem[] =
 	{ 0x5001, 0x5001, pengo_sound_enable_w },
 	{ 0x5002, 0x5007, MWA_NOP },
 	{ 0x0000, 0x3fff, MWA_ROM },
+	{ 0x8000, 0x9fff, MWA_ROM },	/* Ms. Pac Man only */
 	{ -1 }	/* end of table */
 };
-static struct MemoryWriteAddress mspacman_writemem[] =
-{
-	{ 0x4c00, 0x4fef, MWA_RAM },
-	{ 0x4000, 0x43ff, videoram_w, &videoram },
-	{ 0x4400, 0x47ff, colorram_w, &colorram },
-	{ 0x5040, 0x505f, pengo_sound_w, &pengo_soundregs },
-	{ 0x4ff0, 0x4fff, MWA_RAM, &spriteram },
-	{ 0x5060, 0x506f, MWA_RAM, &spriteram_2 },
-	{ 0xc000, 0xc3ff, videoram_w },	/* mirror address for video ram, */
-	{ 0xc400, 0xc7ef, colorram_w },	/* used to display HIGH SCORE and CREDITS */
-	{ 0x5000, 0x5000, interrupt_enable_w },
-	{ 0x50c0, 0x50c0, MWA_NOP },
-	{ 0x5001, 0x5001, pengo_sound_enable_w },
-	{ 0x5002, 0x5007, MWA_NOP },
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x8000, 0x9fff, MWA_ROM },
-	{ -1 }	/* end of table */
-};
+
+
 
 static struct IOWritePort writeport[] =
 {
-	{ 0, 0, interrupt_vector_w },
+	{ 0, 0, interrupt_vector_w },	/* Pac Man only */
 	{ -1 }	/* end of table */
 };
 
 
 
-static struct InputPort input_ports[] =
+static struct InputPort pacman_input_ports[] =
 {
 	{	/* IN0 */
 		0xff,
@@ -192,9 +208,31 @@ static struct InputPort input_ports[] =
 	{ -1 }	/* end of table */
 };
 
+static struct InputPort crush_input_ports[] =
+{
+	{	/* IN0 */
+		0xef,	/* standup cabinet */
+		{ OSD_KEY_UP, OSD_KEY_LEFT, OSD_KEY_RIGHT, OSD_KEY_DOWN,
+				0, 0, 0, OSD_KEY_3 },
+		{ OSD_JOY_UP, OSD_JOY_LEFT, OSD_JOY_RIGHT, OSD_JOY_DOWN,
+				0, 0, 0, 0 }
+	},
+	{	/* IN1 */
+		0xff,
+		{ 0, 0, 0, 0, 0, OSD_KEY_1, OSD_KEY_2, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+	},
+	{	/* DSW1 */
+		0xf1,
+		{ 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+	},
+	{ -1 }	/* end of table */
+};
 
 
-static struct DSW pacdsw[] =
+
+static struct DSW pacman_dsw[] =
 {
 	{ 2, 0x0c, "LIVES", { "1", "2", "3", "5" } },
 	{ 2, 0x30, "BONUS", { "10000", "15000", "20000", "NONE" } },
@@ -202,11 +240,20 @@ static struct DSW pacdsw[] =
 	{ 2, 0x80, "GHOST NAMES", { "ALTERNATE", "NORMAL" }, 1 },
 	{ -1 }
 };
-static struct DSW mspacdsw[] =
+
+static struct DSW mspacman_dsw[] =
 {
 	{ 2, 0x0c, "LIVES", { "1", "2", "3", "5" } },
 	{ 2, 0x30, "BONUS", { "10000", "15000", "20000", "NONE" } },
 	{ 2, 0x40, "DIFFICULTY", { "HARD", "NORMAL" }, 1 },
+	{ -1 }
+};
+
+static struct DSW crush_dsw[] =
+{
+	{ 2, 0x0c, "LIVES", { "3", "4", "5", "6" }, },
+	{ 2, 0x20, "TELEPORT HOLES", { "ON", "OFF" }, 1 },
+	{ 2, 0x10, "FIRST PATTERN", { "HARD", "EASY" }, 1 },
 	{ -1 }
 };
 
@@ -246,7 +293,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static unsigned char color_prom[] =
+static unsigned char pacman_color_prom[] =
 {
 	/* palette */
 	0x00,0x07,0x66,0xEF,0x00,0xF8,0xEA,0x6F,0x00,0x3F,0x00,0xC9,0x38,0xAA,0xAF,0xF6,
@@ -259,6 +306,21 @@ static unsigned char color_prom[] =
 	0x00,0x01,0x02,0x0F,0x00,0x07,0x0C,0x02,0x00,0x09,0x06,0x0F,0x00,0x0D,0x0C,0x0F,
 	0x00,0x05,0x03,0x09,0x00,0x0F,0x0B,0x00,0x00,0x0E,0x00,0x0B,0x00,0x0E,0x00,0x0B,
 	0x00,0x00,0x00,0x00,0x00,0x0F,0x0E,0x01,0x00,0x0F,0x0B,0x0E,0x00,0x0E,0x00,0x0F
+};
+
+static unsigned char crush_color_prom[] =
+{
+	/* palette */
+	0x00,0x07,0x66,0xEF,0x00,0xF8,0xEA,0x6F,0x00,0x3F,0x00,0xC9,0x38,0xAA,0xAF,0xF6,
+	/* color lookup table */
+	0x00,0x00,0x00,0x00,0x00,0x0f,0x0b,0x01,0x00,0x0f,0x0b,0x03,0x00,0x0f,0x0b,0x0f,
+	0x00,0x0f,0x0b,0x07,0x00,0x0f,0x0b,0x05,0x00,0x0f,0x0b,0x0c,0x00,0x0f,0x0b,0x09,
+	0x00,0x05,0x0b,0x07,0x00,0x0b,0x01,0x09,0x00,0x05,0x0b,0x01,0x00,0x02,0x05,0x01,
+	0x00,0x02,0x0b,0x01,0x00,0x05,0x0b,0x09,0x00,0x0c,0x01,0x07,0x00,0x01,0x0c,0x0f,
+	0x00,0x0f,0x00,0x0b,0x00,0x0c,0x05,0x0f,0x00,0x0f,0x0b,0x0e,0x00,0x0f,0x0b,0x0d,
+	0x00,0x01,0x09,0x0f,0x00,0x09,0x0c,0x09,0x00,0x09,0x05,0x0f,0x00,0x05,0x0c,0x0f,
+	0x00,0x01,0x07,0x0b,0x00,0x0f,0x0b,0x00,0x00,0x0f,0x00,0x0b,0x00,0x0b,0x05,0x09,
+	0x00,0x0b,0x0c,0x0f,0x00,0x0b,0x07,0x09,0x00,0x02,0x0b,0x00,0x00,0x02,0x0b,0x07
 };
 
 
@@ -293,7 +355,7 @@ static unsigned char samples[8*32] =
 
 
 
-const struct MachineDriver pacman_driver =
+static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -301,22 +363,19 @@ const struct MachineDriver pacman_driver =
 			CPU_Z80,
 			3072000,	/* 3.072 Mhz */
 			0,
-			pacman_readmem,pacman_writemem,0,writeport,
+			readmem,writemem,0,writeport,
 			pacman_interrupt,1
 		}
 	},
 	60,
-	input_ports,pacdsw,
 	pacman_init_machine,
 
 	/* video hardware */
 	28*8, 36*8, { 0*8, 28*8-1, 0*8, 36*8-1 },
 	gfxdecodeinfo,
 	16,4*32,
-	color_prom,pacman_vh_convert_color_prom,0,0,
-	'0','A',
-	0x0f,0x09,
-	8*11,8*20,0x01,
+	pacman_vh_convert_color_prom,
+
 	0,
 	pengo_vh_start,
 	generic_vh_stop,
@@ -332,39 +391,224 @@ const struct MachineDriver pacman_driver =
 
 
 
-const struct MachineDriver mspacman_driver =
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+ROM_START( pacman_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "%s.6e", 0x0000, 0x1000 )
+	ROM_LOAD( "%s.6f", 0x1000, 0x1000 )
+	ROM_LOAD( "%s.6h", 0x2000, 0x1000 )
+	ROM_LOAD( "%s.6j", 0x3000, 0x1000 )
+
+	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "%s.5e", 0x0000, 0x1000 )
+	ROM_LOAD( "%s.5f", 0x1000, 0x1000 )
+ROM_END
+
+ROM_START( pacmod_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "6e.mod",    0x0000, 0x1000 )
+	ROM_LOAD( "pacman.6f", 0x1000, 0x1000 )
+	ROM_LOAD( "6h.mod",    0x2000, 0x1000 )
+	ROM_LOAD( "pacman.6j", 0x3000, 0x1000 )
+
+	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "5e",        0x0000, 0x1000 )
+	ROM_LOAD( "5f",        0x1000, 0x1000 )
+ROM_END
+
+ROM_START( piranha_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "pr1.cpu", 0x0000, 0x1000 )
+	ROM_LOAD( "pr2.cpu", 0x1000, 0x1000 )
+	ROM_LOAD( "pr3.cpu", 0x2000, 0x1000 )
+	ROM_LOAD( "pr4.cpu", 0x3000, 0x1000 )
+
+	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "pr5.cpu", 0x0000, 0x0800 )
+	ROM_LOAD( "pr7.cpu", 0x0800, 0x0800 )
+	ROM_LOAD( "pr6.cpu", 0x1000, 0x0800 )
+	ROM_LOAD( "pr8.cpu", 0x1800, 0x0800 )
+ROM_END
+
+ROM_START( mspacman_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "boot1", 0x0000, 0x1000 )
+	ROM_LOAD( "boot2", 0x1000, 0x1000 )
+	ROM_LOAD( "boot3", 0x2000, 0x1000 )
+	ROM_LOAD( "boot4", 0x3000, 0x1000 )
+	ROM_LOAD( "boot5", 0x8000, 0x1000 )
+	ROM_LOAD( "boot6", 0x9000, 0x1000 )
+
+	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "5e",    0x0000, 0x1000 )
+	ROM_LOAD( "5f",    0x1000, 0x1000 )
+ROM_END
+
+ROM_START( crush_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "CR1", 0x0000, 0x0800 )
+	ROM_LOAD( "CR5", 0x0800, 0x0800 )
+	ROM_LOAD( "CR2", 0x1000, 0x0800 )
+	ROM_LOAD( "CR6", 0x1800, 0x0800 )
+	ROM_LOAD( "CR3", 0x2000, 0x0800 )
+	ROM_LOAD( "CR7", 0x2800, 0x0800 )
+	ROM_LOAD( "CR4", 0x3000, 0x0800 )
+	ROM_LOAD( "CR8", 0x3800, 0x0800 )
+
+	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "CRA", 0x0000, 0x0800 )
+	ROM_LOAD( "CRC", 0x0800, 0x0800 )
+	ROM_LOAD( "CRB", 0x1000, 0x0800 )
+	ROM_LOAD( "CRD", 0x1800, 0x0800 )
+ROM_END
+
+
+
+struct GameDriver pacman_driver =
 {
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3072000,	/* 3.072 Mhz */
-			0,
-			mspacman_readmem,mspacman_writemem,0,0,
-			pacman_interrupt,1
-		}
-	},
-	60,
-	input_ports,mspacdsw,
-	pacman_init_machine,
+	"pacman",
+	&machine_driver,
 
-	/* video hardware */
-	28*8,36*8, { 0*8, 28*8-1, 0*8, 36*8-1 },
-	gfxdecodeinfo,
-	16,4*32,
-	color_prom,pacman_vh_convert_color_prom,0,0,
-	'0','A',
-	0x0f,0x09,
-	8*11,8*20,0x01,
-	0,
-	pengo_vh_start,
-	generic_vh_stop,
-	pengo_vh_screenrefresh,
+	pacman_rom,
+	0, 0,
 
-	/* sound hardware */
-	samples,
-	0,
-	0,
-	0,
-	pengo_sh_update
+	pacman_input_ports, pacman_dsw,
+
+	pacman_color_prom, 0, 0,
+	'0', 'A',
+	0x0f, 0x09,
+	8*11, 8*20, 0x01,
+
+	0, 0
+};
+
+struct GameDriver pacmod_driver =
+{
+	"pacmod",
+	&machine_driver,
+
+	pacmod_rom,
+	0, 0,
+
+	pacman_input_ports, pacman_dsw,
+
+	pacman_color_prom, 0, 0,
+	'0', 'A',
+	0x0f, 0x09,
+	8*11, 8*20, 0x01,
+
+	0, 0
+};
+
+struct GameDriver namcopac_driver =
+{
+	"namcopac",
+	&machine_driver,
+
+	pacman_rom,
+	0, 0,
+
+	pacman_input_ports, pacman_dsw,
+
+	pacman_color_prom, 0, 0,
+	'0', 'A',
+	0x0f, 0x09,
+	8*11, 8*20, 0x01,
+
+	0, 0
+};
+
+struct GameDriver hangly_driver =
+{
+	"hangly",
+	&machine_driver,
+
+	pacman_rom,
+	0, 0,
+
+	pacman_input_ports, pacman_dsw,
+
+	pacman_color_prom, 0, 0,
+	'0', 'A',
+	0x0f, 0x09,
+	8*11, 8*20, 0x01,
+
+	0, 0
+};
+
+struct GameDriver puckman_driver =
+{
+	"puckman",
+	&machine_driver,
+
+	pacman_rom,
+	0, 0,
+
+	pacman_input_ports, pacman_dsw,
+
+	pacman_color_prom, 0, 0,
+	'0', 'A',
+	0x0f, 0x09,
+	8*11, 8*20, 0x01,
+
+	0, 0
+};
+
+struct GameDriver piranha_driver =
+{
+	"piranha",
+	&machine_driver,
+
+	piranha_rom,
+	0, 0,
+
+	pacman_input_ports, pacman_dsw,
+
+	pacman_color_prom, 0, 0,
+	'0', 'A',
+	0x0f, 0x09,
+	8*11, 8*20, 0x01,
+
+	0, 0
+};
+
+struct GameDriver mspacman_driver =
+{
+	"mspacman",
+	&machine_driver,
+
+	mspacman_rom,
+	0, 0,
+
+	pacman_input_ports, mspacman_dsw,
+
+	pacman_color_prom, 0, 0,
+	'0', 'A',
+	0x0f, 0x09,
+	8*11, 8*20, 0x01,
+
+	0, 0
+};
+
+struct GameDriver crush_driver =
+{
+	"crush",
+	&machine_driver,
+
+	crush_rom,
+	0, 0,
+
+	crush_input_ports, crush_dsw,
+
+	crush_color_prom, 0, 0,
+	0, 'A',
+	0x0f, 0x09,
+	8*11, 8*19, 0x01,
+
+	0, 0
 };

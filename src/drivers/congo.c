@@ -331,7 +331,7 @@ static unsigned char colortable[] =
 
 
 
-const struct MachineDriver congo_driver =
+static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -344,21 +344,18 @@ const struct MachineDriver congo_driver =
 		}
 	},
 	60,
-	input_ports,dsw,
 	0,
 
 	/* video hardware */
         32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
 	sizeof(palette)/3,sizeof(colortable),
-	0,0,palette,colortable,
-	80,97,
-	0x00,0x01,
-	8*13,8*16,0x05,
 	0,
-        congo_vh_start,
-        congo_vh_stop,
-        congo_vh_screenrefresh,
+
+	0,
+	congo_vh_start,
+	congo_vh_stop,
+	congo_vh_screenrefresh,
 
 	/* sound hardware */
 	0,
@@ -366,4 +363,67 @@ const struct MachineDriver congo_driver =
 	0,
 	0,
 	0
+};
+
+
+
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+ROM_START( congo_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+        ROM_LOAD( "%s1.bin",  0x0000, 0x2000 )
+        ROM_LOAD( "%s2.bin",  0x2000, 0x2000 )
+        ROM_LOAD( "%s3.bin",  0x4000, 0x2000 )
+        ROM_LOAD( "%s4.bin",  0x6000, 0x2000 )
+
+        ROM_REGION(0x13000)      /* temporary space for graphics (disposed after conversion) */
+        ROM_LOAD( "%s5.bin", 0x0000, 0x1000 )
+        ROM_LOAD( "%s16.bin", 0x1000, 0x2000 )
+        ROM_LOAD( "%s15.bin", 0x3000, 0x2000 )
+        ROM_LOAD( "%s12.bin", 0x5000, 0x2000 )
+        ROM_LOAD( "%s14.bin", 0x7000, 0x2000 )
+        ROM_LOAD( "%s11.bin", 0x9000, 0x2000 )
+        ROM_LOAD( "%s13.bin", 0xb000, 0x2000 )
+        ROM_LOAD( "%s10.bin", 0xd000, 0x2000 )
+        ROM_LOAD( "%s9.bin",  0xf000, 0x2000 )
+        ROM_LOAD( "%s8.bin",  0x11000, 0x2000 )
+/*
+*        5 is characters, 3 bitplanes in one rom
+*        16 and 15 are 1 plane of the sprites
+*        12 and 14 the second
+*        11 and 13 third one
+*        10 - 8 are the background graphics
+*/
+        ROM_REGION(0x8000)      /* background data */
+        ROM_LOAD( "%s6.bin",  0x0000, 0x2000 )
+        ROM_LOAD( "%s6.bin",  0x2000, 0x2000 )
+        ROM_LOAD( "%s7.bin",  0x4000, 0x2000 )
+        ROM_LOAD( "%s7.bin", 0x6000, 0x2000 )
+       /* I cheated a little with the background graphics - this
+        * approach involved least writing ;)
+        */
+ROM_END
+
+
+
+struct GameDriver congo_driver =
+{
+	"congo",
+	&machine_driver,
+
+	congo_rom,
+	0, 0,
+
+	input_ports, dsw,
+
+	0, palette, colortable,
+	80, 97,
+	0x00, 0x01,
+	8*13, 8*16, 0x05,
+
+	0, 0
 };

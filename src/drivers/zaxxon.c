@@ -379,7 +379,7 @@ static unsigned char colortable[] =
 
 
 
-const struct MachineDriver zaxxon_driver =
+static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -392,17 +392,14 @@ const struct MachineDriver zaxxon_driver =
 		}
 	},
 	60,
-	input_ports,dsw,
 	0,
 
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
 	sizeof(palette)/3,sizeof(colortable),
-	0,0,palette,colortable,
-	80,97,
-	0x00,0x0f,
-	8*13,8*16,0x0f,
+	0,
+
 	0,
 	zaxxon_vh_start,
 	zaxxon_vh_stop,
@@ -414,4 +411,55 @@ const struct MachineDriver zaxxon_driver =
 	0,
 	0,
 	0
+};
+
+
+
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+ROM_START( zaxxon_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "%s.3",  0x0000, 0x2000 )
+	ROM_LOAD( "%s.2",  0x2000, 0x2000 )
+	ROM_LOAD( "%s.1",  0x4000, 0x1000 )
+
+	ROM_REGION(0xd000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "%s.15", 0x0000, 0x0800 )
+	ROM_LOAD( "%s.14", 0x0800, 0x0800 )
+	ROM_LOAD( "%s.13", 0x1000, 0x2000 )
+	ROM_LOAD( "%s.12", 0x3000, 0x2000 )
+	ROM_LOAD( "%s.11", 0x5000, 0x2000 )
+	ROM_LOAD( "%s.6",  0x7000, 0x2000 )
+	ROM_LOAD( "%s.5",  0x9000, 0x2000 )
+	ROM_LOAD( "%s.4",  0xb000, 0x2000 )
+
+	ROM_REGION(0x8000)	/* background graphics */
+	ROM_LOAD( "%s.8",  0x0000, 0x2000 )
+	ROM_LOAD( "%s.7",  0x2000, 0x2000 )
+	ROM_LOAD( "%s.10", 0x4000, 0x2000 )
+	ROM_LOAD( "%s.9",  0x6000, 0x2000 )
+ROM_END
+
+
+
+struct GameDriver zaxxon_driver =
+{
+	"zaxxon",
+	&machine_driver,
+
+	zaxxon_rom,
+	0, 0,
+
+	input_ports, dsw,
+
+	0, palette, colortable,
+	80, 97,
+	0x00, 0x0f,
+	8*13, 8*16, 0x0f,
+
+	0, 0
 };

@@ -210,7 +210,7 @@ static unsigned char color_prom[] =
 
 
 
-const struct MachineDriver pooyan_driver =
+static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -223,17 +223,14 @@ const struct MachineDriver pooyan_driver =
 		}
 	},
 	60,
-	input_ports,dsw,
 	0,
 
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
 	256,32*16,
-	color_prom,pooyan_vh_convert_color_prom,0,0,
-	0,17,
-	0x00,0x03,
-	8*13,8*16,0x07,
+	pooyan_vh_convert_color_prom,
+
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -245,4 +242,46 @@ const struct MachineDriver pooyan_driver =
 	0,
 	0,
 	0
+};
+
+
+
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+ROM_START( pooyan_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "ic22_a4.cpu",  0x0000, 0x2000 )
+	ROM_LOAD( "ic23_a5.cpu",  0x2000, 0x2000 )
+	ROM_LOAD( "ic24_a6.cpu",  0x4000, 0x2000 )
+	ROM_LOAD( "ic25_a7.cpu",  0x6000, 0x2000 )
+
+	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ic13_g10.cpu", 0x0000, 0x1000 )
+	ROM_LOAD( "ic14_g9.cpu",  0x1000, 0x1000 )
+	ROM_LOAD( "ic16_a8.cpu",  0x2000, 0x1000 )
+	ROM_LOAD( "ic15_a9.cpu",  0x3000, 0x1000 )
+ROM_END
+
+
+
+struct GameDriver pooyan_driver =
+{
+	"pooyan",
+	&machine_driver,
+
+	pooyan_rom,
+	0, 0,
+
+	input_ports, dsw,
+
+	color_prom, 0, 0,
+	0, 17,
+	0x00, 0x03,
+	8*13, 8*16, 0x07,
+
+	0, 0
 };

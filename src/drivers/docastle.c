@@ -193,7 +193,7 @@ static unsigned char colortable[] =
 
 
 
-const struct MachineDriver docastle_driver =
+static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -213,17 +213,14 @@ const struct MachineDriver docastle_driver =
 		}
 	},
 	60,
-	input_ports,dsw,
 	docastle_init_machine,
 
 	/* video hardware */
 	32*8, 32*8, { 4*8, 28*8-1, 1*8, 31*8-1 },
 	gfxdecodeinfo,
 	sizeof(palette)/3,sizeof(colortable),
-	0,0,palette,colortable,
-	0x00,0x41,
-	0x00,0x01,
-	8*13,8*16,0x03,
+	0,
+
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -235,4 +232,50 @@ const struct MachineDriver docastle_driver =
 	0,
 	0,
 	0
+};
+
+
+
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+ROM_START( docastle_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "A1",  0x0000, 0x2000 )
+	ROM_LOAD( "A2",  0x2000, 0x2000 )
+	ROM_LOAD( "A3",  0x4000, 0x2000 )
+	ROM_LOAD( "A4",  0x6000, 0x2000 )
+
+	ROM_REGION(0xc000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "A5",  0x0000, 0x4000 )
+	ROM_LOAD( "A9",  0x4000, 0x2000 )
+	ROM_LOAD( "A8",  0x6000, 0x2000 )
+	ROM_LOAD( "A7",  0x8000, 0x2000 )
+	ROM_LOAD( "A6",  0xa000, 0x2000 )
+
+	ROM_REGION(0x10000)	/* 64k for the second CPU */
+	ROM_LOAD( "A10", 0x0000, 0x4000 )
+ROM_END
+
+
+
+struct GameDriver docastle_driver =
+{
+	"docastle",
+	&machine_driver,
+
+	docastle_rom,
+	0, 0,
+
+	input_ports, dsw,
+
+	0, palette, colortable,
+	0x00, 0x41,
+	0x00, 0x01,
+	8*13, 8*16, 0x03,
+
+	0, 0
 };

@@ -177,8 +177,8 @@ void Reset6502(M6502 *R,int IPeriod)	/* -NS- */
   R->S=0xFF;
   R->PC.B.l=Rd6502(0xFFFC);
   R->PC.B.h=Rd6502(0xFFFD);
-  R->ICount=R->IPeriod;
 R->IPeriod = IPeriod;	/* -NS - */
+  R->ICount=R->IPeriod;
   R->IRequest=INT_NONE;
   R->AfterCLI=0;
 }

@@ -145,7 +145,7 @@ int readinputport(int port)
 	struct InputPort *in;
 
 
-	in = &Machine->drv->input_ports[port];
+	in = &Machine->gamedrv->input_ports[port];
 
 	res = in->default_value;
 

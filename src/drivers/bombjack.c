@@ -205,7 +205,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-const struct MachineDriver bombjack_driver =
+static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -218,17 +218,14 @@ const struct MachineDriver bombjack_driver =
 		}
 	},
 	60,
-	input_ports,dsw,
 	0,
 
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0, 32*8-1 },
 	gfxdecodeinfo,
 	256,256+8*16,
-	0,bombjack_vh_convert_color_prom,0,0,
-	48,65,
-	5,0,
-	8*13,8*16,2,
+	bombjack_vh_convert_color_prom,
+
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -242,3 +239,119 @@ const struct MachineDriver bombjack_driver =
 	0
 };
 
+
+
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+ROM_START( bombjack_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "09_j01b.bin",  0x0000, 0x2000 )
+	ROM_LOAD( "10_l01b.bin",  0x2000, 0x2000 )
+	ROM_LOAD( "11_m01b.bin",  0x4000, 0x2000 )
+	ROM_LOAD( "12_n01b.bin",  0x6000, 0x2000 )
+	ROM_LOAD( "13_r01b.bin",  0xc000, 0x2000 )
+
+	ROM_REGION(0xf000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "03_e08t.bin",  0x0000, 0x1000 )	/* chars */
+	ROM_LOAD( "04_h08t.bin",  0x1000, 0x1000 )
+	ROM_LOAD( "05_k08t.bin",  0x2000, 0x1000 )
+	ROM_LOAD( "06_l08t.bin",  0x3000, 0x2000 )	/* background tiles */
+	ROM_LOAD( "07_n08t.bin",  0x5000, 0x2000 )
+	ROM_LOAD( "08_r08t.bin",  0x7000, 0x2000 )
+	ROM_LOAD( "16_m07b.bin",  0x9000, 0x2000 )	/* sprites */
+	ROM_LOAD( "15_l07b.bin",  0xb000, 0x2000 )
+	ROM_LOAD( "14_j07b.bin",  0xd000, 0x2000 )
+
+	ROM_REGION(0x1000)	/* background graphics */
+	ROM_LOAD( "02_p04t.bin",  0x0000, 0x1000 )
+
+	ROM_REGION(0x10000)	/* 64k for sound board */
+	ROM_LOAD( "01_h03t.bin",  0x0000, 0x2000 )
+ROM_END
+
+
+
+static int hiload(const char *name)
+{
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x8100],"\x00\x00\x01\x00",4) == 0 &&
+			memcmp(&RAM[0x8124],"\x00\x00\x01\x00",4) == 0)
+	{
+		FILE *f;
+
+
+		if ((f = fopen(name,"rb")) != 0)
+		{
+			char buf[10];
+			int hi;
+
+
+			fread(&RAM[0x8100],1,15*10,f);
+			RAM[0x80e2] = RAM[0x8100];
+			RAM[0x80e3] = RAM[0x8101];
+			RAM[0x80e4] = RAM[0x8102];
+			RAM[0x80e5] = RAM[0x8103];
+			/* also copy the high score to the screen, otherwise it won't be */
+			/* updated until a new game is started */
+			hi = (RAM[0x8100] & 0x0f) +
+					(RAM[0x8100] >> 4) * 10 +
+					(RAM[0x8101] & 0x0f) * 100 +
+					(RAM[0x8101] >> 4) * 1000 +
+					(RAM[0x8102] & 0x0f) * 10000 +
+					(RAM[0x8102] >> 4) * 100000 +
+					(RAM[0x8103] & 0x0f) * 1000000 +
+					(RAM[0x8103] >> 4) * 10000000;
+			sprintf(buf,"%8d",hi);
+			cpu_writemem(0x913f,buf[0]);
+			cpu_writemem(0x911f,buf[1]);
+			cpu_writemem(0x90ff,buf[2]);
+			cpu_writemem(0x90df,buf[3]);
+			cpu_writemem(0x90bf,buf[4]);
+			cpu_writemem(0x909f,buf[5]);
+			cpu_writemem(0x907f,buf[6]);
+			cpu_writemem(0x905f,buf[7]);
+			fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+static void hisave(const char *name)
+{
+	FILE *f;
+
+
+	if ((f = fopen(name,"wb")) != 0)
+	{
+		fwrite(&RAM[0x8100],1,15*10,f);
+		fclose(f);
+	}
+}
+
+
+
+struct GameDriver bombjack_driver =
+{
+	"bombjack",
+	&machine_driver,
+
+	bombjack_rom,
+	0, 0,
+
+	input_ports, dsw,
+
+	0, 0, 0,
+	48, 65,
+	5, 0,
+	8*13, 8*16,2,
+
+	hiload, hisave
+};

@@ -137,9 +137,6 @@ struct MachineDriver
 	/* basic machine hardware */
 	struct MachineCPU cpu[MAX_CPU];
 	int frames_per_second;
-	struct InputPort *input_ports;
-	const struct DSW *dswsettings;
-
 	int (*init_machine)(const char *gamename);
 
 	/* video hardware */
@@ -148,19 +145,7 @@ struct MachineDriver
 	struct GfxDecodeInfo *gfxdecodeinfo;
 	int total_colors;	/* palette is 3*total_colors bytes long */
 	int color_table_len;	/* length in bytes of the color lookup table */
-		/* if they are available, provide a dump of the color proms (there is no */
-		/* copyright infringement in that, since you can't copyright a color scheme) */
-		/* and a function to convert them to a usable palette and colortable. */
-		/* Otherwise, leave these two fields null and provide palette and colortable. */
-	const unsigned char *color_prom;
 	void (*vh_convert_color_prom)(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-	const unsigned char *palette;
-	const unsigned char *colortable;
-
-	int	numbers_start;	/* start of numbers and letters in the character roms */
-	int letters_start;	/* (used by displaytext() ) */
-	int white_text,yellow_text;	/* used by the dip switch menu */
-	int paused_x,paused_y,paused_color;	/* used to print PAUSED on the screen */
 
 	int (*vh_init)(const char *gamename);
 	int (*vh_start)(void);
@@ -180,19 +165,37 @@ struct MachineDriver
 struct GameDriver
 {
 	const char *name;
-	const struct RomModule *rom;
 	const struct MachineDriver *drv;
+
+	const struct RomModule *rom;
+	unsigned (*rom_decode)(int A);	/* used to decrypt the ROMs after loading them */
+	unsigned (*opcode_decode)(int A);	/* used to decrypt the ROMs when the CPU fetches an opcode */
+
+	struct InputPort *input_ports;
+	const struct DSW *dswsettings;
+
+		/* if they are available, provide a dump of the color proms (there is no */
+		/* copyright infringement in that, since you can't copyright a color scheme) */
+		/* and a function to convert them to a usable palette and colortable (the */
+		/* function pointer is in the MachineDriver, not here) */
+		/* Otherwise, leave this field null and provide palette and colortable. */
+	const unsigned char *color_prom;
+	const unsigned char *palette;
+	const unsigned char *colortable;
+	int	numbers_start;	/* start of numbers and letters in the character roms */
+	int letters_start;	/* (used by displaytext() ) */
+	int white_text,yellow_text;	/* used by the dip switch menu */
+	int paused_x,paused_y,paused_color;	/* used to print PAUSED on the screen */
+
 	int (*hiscore_load)(const char *name);	/* will be called every vblank until it */
 											/* returns nonzero */
 	void (*hiscore_save)(const char *name);	/* will not be loaded if hiscore_load() hasn't yet */
 										/* returned nonzero, to avoid saving an invalid table */
-	unsigned (*rom_decode)(int A);	/* used to decrypt the ROMs after loading them */
-	unsigned (*opcode_decode)(int A);	/* used to decrypt the ROMs when the CPU fetches an opcode */
 };
 
 
 
-extern struct GameDriver drivers[];
+extern const struct GameDriver *drivers[];
 
 
 #endif

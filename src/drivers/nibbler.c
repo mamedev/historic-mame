@@ -4,8 +4,8 @@ Nibbler memory map (preliminary)
 
 0000-03ff RAM
 0400-07ff Video RAM (playfield 1)
-0800-0cff Video RAM (playfield 2)
-0d00-0fff Color RAM (4 bits per playfield)
+0800-0bff Video RAM (playfield 2)
+0c00-0fff Color RAM (4 bits per playfield)
 1000-1fff Character generator RAM
 3000-bfff ROM
 
@@ -226,30 +226,27 @@ static unsigned char colortable[] =
 
 
 
-const struct MachineDriver nibbler_driver =
+static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M6502,
-			800000,	/* 0.8 Mhz ???? */
+			1000000,	/* 1 Mhz ???? */
 			0,
 			readmem,writemem,0,0,
 			nibbler_interrupt,1
 		}
 	},
 	60,
-	input_ports,dsw,
 	0,
 
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
 	sizeof(palette)/3,sizeof(colortable),
-	0,0,palette,colortable,
-	0,10,
-	0x06,0x04,
-	8*13,8*16,0x00,
+	0,
+
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -261,4 +258,90 @@ const struct MachineDriver nibbler_driver =
 	0,
 	0,
 	0
+};
+
+
+
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+ROM_START( nibbler_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "IC12", 0x3000, 0x1000 )
+	ROM_LOAD( "IC07", 0x4000, 0x1000 )
+	ROM_LOAD( "IC08", 0x5000, 0x1000 )
+	ROM_LOAD( "IC09", 0x6000, 0x1000 )
+	ROM_LOAD( "IC10", 0x7000, 0x1000 )
+	ROM_LOAD( "IC14", 0x8000, 0x1000 )
+	ROM_LOAD( "IC15", 0x9000, 0x1000 )
+	ROM_LOAD( "IC16", 0xa000, 0x1000 )
+	ROM_LOAD( "IC17", 0xb000, 0x1000 )
+/*	ROM_LOAD( "IC52", 0x????, 0x0800 )	what is this ??? */
+/*	ROM_LOAD( "IC53", 0x????, 0x0800 )	what is this ??? */
+	ROM_LOAD( "IC14", 0xf000, 0x1000 )	/* for the reset and interrupt vectors */
+
+	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "IC50", 0x0000, 0x1000 )
+	ROM_LOAD( "IC51", 0x1000, 0x1000 )
+ROM_END
+
+
+
+static int hiload(const char *name)
+{
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x0290],"\x00\x50\x00\x00",4) == 0 &&
+			memcmp(&RAM[0x02b4],"\x00\x05\x00\x00",4) == 0)
+	{
+		FILE *f;
+
+
+		if ((f = fopen(name,"rb")) != 0)
+		{
+			fread(&RAM[0x0290],1,4*10,f);
+			fread(&RAM[0x02d0],1,3*10,f);
+			fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+static void hisave(const char *name)
+{
+	FILE *f;
+
+
+	if ((f = fopen(name,"wb")) != 0)
+	{
+		fwrite(&RAM[0x0290],1,4*10,f);
+		fwrite(&RAM[0x02d0],1,3*10,f);
+		fclose(f);
+	}
+}
+
+
+
+struct GameDriver nibbler_driver =
+{
+	"nibbler",
+	&machine_driver,
+
+	nibbler_rom,
+	0, 0,
+
+	input_ports, dsw,
+
+	0, palette, colortable,
+	0, 10,
+	0x06, 0x04,
+	8*13, 8*16, 0x00,
+
+	hiload, hisave
 };

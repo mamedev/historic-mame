@@ -198,7 +198,7 @@ static unsigned char color_prom[] =
 
 
 
-const struct MachineDriver timeplt_driver =
+static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -211,17 +211,14 @@ const struct MachineDriver timeplt_driver =
 		}
 	},
 	60,
-	input_ports,dsw,
 	0,
 
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
 	256,32*16,
-	color_prom,timeplt_vh_convert_color_prom,0,0,
-	0,17,
-	0x00,0x03,
-	8*13,8*16,0x07,
+	timeplt_vh_convert_color_prom,
+
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -233,4 +230,106 @@ const struct MachineDriver timeplt_driver =
 	0,
 	0,
 	0
+};
+
+
+
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+ROM_START( timeplt_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "tm1", 0x0000, 0x2000 )
+	ROM_LOAD( "tm2", 0x2000, 0x2000 )
+	ROM_LOAD( "tm3", 0x4000, 0x2000 )
+
+	ROM_REGION(0x6000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "tm6", 0x0000, 0x2000 )
+	ROM_LOAD( "tm4", 0x2000, 0x2000 )
+	ROM_LOAD( "tm5", 0x4000, 0x2000 )
+
+/*  this is for audio
+	ROM_REGION(0x10000)
+	ROM_LOAD( "tm7", 0x0000, 0x1000 )
+*/
+ROM_END
+
+
+
+static int hiload(const char *name)
+{
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0xab09],"\x00\x00\x01",3) == 0 &&
+			memcmp(&RAM[0xab29],"\x00\x43\x00",3) == 0)
+	{
+		FILE *f;
+
+
+		if ((f = fopen(name,"rb")) != 0)
+		{
+			fread(&RAM[0xab08],1,8*5,f);
+			RAM[0xa98b] = RAM[0xab09];
+			RAM[0xa98c] = RAM[0xab0a];
+			RAM[0xa98d] = RAM[0xab0b];
+			fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+static void hisave(const char *name)
+{
+	FILE *f;
+
+
+	if ((f = fopen(name,"wb")) != 0)
+	{
+		fwrite(&RAM[0xab08],1,8*5,f);
+		fclose(f);
+	}
+}
+
+
+
+struct GameDriver timeplt_driver =
+{
+	"timeplt",
+	&machine_driver,
+
+	timeplt_rom,
+	0, 0,
+
+	input_ports, dsw,
+
+	color_prom, 0, 0,
+	0, 17,
+	0x00, 0x03,
+	8*13, 8*16, 0x07,
+
+	hiload, hisave
+};
+
+struct GameDriver spaceplt_driver =
+{
+	"spaceplt",
+	&machine_driver,
+
+	timeplt_rom,
+	0, 0,
+
+	input_ports, dsw,
+
+	color_prom, 0, 0,
+	0, 17,
+	0x00, 0x03,
+	8*13, 8*16, 0x07,
+
+	hiload, hisave
 };

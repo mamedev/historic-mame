@@ -264,7 +264,7 @@ static unsigned char samples[8*32] =
 
 
 
-const struct MachineDriver pengo_driver =
+static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -277,17 +277,14 @@ const struct MachineDriver pengo_driver =
 		}
 	},
 	60,
-	input_ports,dsw,
 	0,
 
 	/* video hardware */
 	28*8, 36*8, { 0*8, 28*8-1, 0*8, 36*8-1 },
 	gfxdecodeinfo,
 	32,4*64,
-	color_prom,pengo_vh_convert_color_prom,0,0,
-	'0','A',
-	0x01,0x18,
-	8*11,8*20,0x16,
+	pengo_vh_convert_color_prom,
+
 	0,
 	pengo_vh_start,
 	generic_vh_stop,
@@ -299,4 +296,120 @@ const struct MachineDriver pengo_driver =
 	0,
 	0,
 	pengo_sh_update
+};
+
+
+
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+ROM_START( pengo_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "pengopop.u8",  0x0000, 0x1000 )
+	ROM_LOAD( "pengopop.u7",  0x1000, 0x1000 )
+	ROM_LOAD( "pengopop.u15", 0x2000, 0x1000 )
+	ROM_LOAD( "pengopop.u14", 0x3000, 0x1000 )
+	ROM_LOAD( "pengopop.u21", 0x4000, 0x1000 )
+	ROM_LOAD( "pengopop.u20", 0x5000, 0x1000 )
+	ROM_LOAD( "pengopop.u32", 0x6000, 0x1000 )
+	ROM_LOAD( "pengopop.u31", 0x7000, 0x1000 )
+
+	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "pengopop.u92", 0x0000, 0x2000 )
+	ROM_LOAD( "pengopop.105", 0x2000, 0x2000 )
+ROM_END
+
+ROM_START( penta_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "penta.u8",  0x0000, 0x1000 )
+	ROM_LOAD( "penta.u7",  0x1000, 0x1000 )
+	ROM_LOAD( "penta.u15", 0x2000, 0x1000 )
+	ROM_LOAD( "penta.u14", 0x3000, 0x1000 )
+	ROM_LOAD( "penta.u21", 0x4000, 0x1000 )
+	ROM_LOAD( "penta.u20", 0x5000, 0x1000 )
+	ROM_LOAD( "penta.u32", 0x6000, 0x1000 )
+	ROM_LOAD( "penta.u31", 0x7000, 0x1000 )
+
+	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "penta.u92", 0x0000, 0x2000 )
+	ROM_LOAD( "penta.105", 0x2000, 0x2000 )
+ROM_END
+
+
+
+static int hiload(const char *name)
+{
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x8840],"\xd0\x07",2) == 0 &&
+			memcmp(&RAM[0x8858],"\xd0\x07",2) == 0)
+	{
+		FILE *f;
+
+
+		if ((f = fopen(name,"rb")) != 0)
+		{
+			fread(&RAM[0x8840],1,6*5,f);
+			RAM[0x880c] = RAM[0x8858];
+			RAM[0x880d] = RAM[0x8859];
+			fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+static void hisave(const char *name)
+{
+	FILE *f;
+
+
+	if ((f = fopen(name,"wb")) != 0)
+	{
+		fwrite(&RAM[0x8840],1,6*5,f);
+		fclose(f);
+	}
+}
+
+
+
+struct GameDriver pengo_driver =
+{
+	"pengo",
+	&machine_driver,
+
+	pengo_rom,
+	0, 0,
+
+	input_ports, dsw,
+
+	color_prom, 0, 0,
+	'0', 'A',
+	0x01, 0x18,
+	8*11, 8*20, 0x16,
+
+	hiload, hisave
+};
+
+struct GameDriver penta_driver =
+{
+	"penta",
+	&machine_driver,
+
+	penta_rom,
+	0, 0,
+
+	input_ports, dsw,
+
+	color_prom, 0, 0,
+	'0', 'A',
+	0x01, 0x18,
+	8*11, 8*20, 0x16,
+
+	hiload, hisave
 };

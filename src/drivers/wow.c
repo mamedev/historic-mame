@@ -213,7 +213,7 @@ static unsigned char colortable[] =
 
 
 
-const struct MachineDriver wow_driver =
+static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -226,17 +226,14 @@ const struct MachineDriver wow_driver =
 		}
 	},
 	60,
-	input_ports,dsw,
 	0,
 
 	/* video hardware */
 	320, 204, { 0, 320-1, 0, 204-1 },
 	gfxdecodeinfo,
 	sizeof(palette)/3,sizeof(colortable),
-	0,0,palette,colortable,
-	0,11,
-	2,0,
-	(320-8*6)/2,(204-10)/2,3,
+	0,
+
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -248,4 +245,106 @@ const struct MachineDriver wow_driver =
 	0,
 	0,
 	0
+};
+
+
+
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+ROM_START( wow_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "wow.x1", 0x0000, 0x1000 )
+	ROM_LOAD( "wow.x2", 0x1000, 0x1000 )
+	ROM_LOAD( "wow.x3", 0x2000, 0x1000 )
+	ROM_LOAD( "wow.x4", 0x3000, 0x1000 )
+	ROM_LOAD( "wow.x5", 0x8000, 0x1000 )
+	ROM_LOAD( "wow.x6", 0x9000, 0x1000 )
+	ROM_LOAD( "wow.x7", 0xa000, 0x1000 )
+/*	ROM_LOAD( "wow.x8", 0xc000, 0x1000 )	here would go the foreign language ROM */
+ROM_END
+
+ROM_START( robby_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "robbya", 0x0000, 0x1000 )
+	ROM_LOAD( "robbyb", 0x1000, 0x1000 )
+	ROM_LOAD( "robbyc", 0x2000, 0x1000 )
+	ROM_LOAD( "robbyd", 0x3000, 0x1000 )
+	ROM_LOAD( "robbye", 0x8000, 0x1000 )
+	ROM_LOAD( "robbyf", 0x9000, 0x1000 )
+	ROM_LOAD( "robbyg", 0xa000, 0x1000 )
+	ROM_LOAD( "robbyh", 0xb000, 0x1000 )
+	ROM_LOAD( "robbyi", 0xc000, 0x1000 )
+	ROM_LOAD( "robbyj", 0xd000, 0x1000 )
+ROM_END
+
+ROM_START( gorf_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "gorf-a.bin", 0x0000, 0x1000 )
+	ROM_LOAD( "gorf-b.bin", 0x1000, 0x1000 )
+	ROM_LOAD( "gorf-c.bin", 0x2000, 0x1000 )
+	ROM_LOAD( "gorf-d.bin", 0x3000, 0x1000 )
+	ROM_LOAD( "gorf-e.bin", 0x8000, 0x1000 )
+	ROM_LOAD( "gorf-f.bin", 0x9000, 0x1000 )
+	ROM_LOAD( "gorf-g.bin", 0xa000, 0x1000 )
+	ROM_LOAD( "gorf-h.bin", 0xb000, 0x1000 )
+ROM_END
+
+
+
+struct GameDriver wow_driver =
+{
+	"wow",
+	&machine_driver,
+
+	wow_rom,
+	0, 0,
+
+	input_ports, dsw,
+
+	0, palette, colortable,
+	0, 11,
+	2, 0,
+	(320-8*6)/2, (204-10)/2, 3,
+
+	0, 0
+};
+
+struct GameDriver robby_driver =
+{
+	"robby",
+	&machine_driver,
+
+	robby_rom,
+	0, 0,
+
+	input_ports, dsw,
+
+	0, palette, colortable,
+	0, 11,
+	2, 0,
+	(320-8*6)/2, (204-10)/2, 3,
+
+	0, 0
+};
+
+struct GameDriver gorf_driver =
+{
+	"gorf",
+	&machine_driver,
+
+	gorf_rom,
+	0, 0,
+
+	input_ports, dsw,
+
+	0, palette, colortable,
+	0, 11,
+	2, 0,
+	(320-8*6)/2, (204-10)/2, 3,
+
+	0, 0
 };

@@ -730,7 +730,7 @@ int setdipswitches(void)
 	const struct DSW *dswsettings;
 
 
-	dswsettings = Machine->drv->dswsettings;
+	dswsettings = Machine->gamedrv->dswsettings;
 
 	total = 0;
 	while (dswsettings[total].num != -1)
@@ -740,7 +740,7 @@ int setdipswitches(void)
 
 		msk = dswsettings[total].mask;
 		if (msk == 0) return 0;	/* error in DSW definition, quit */
-		val = Machine->drv->input_ports[dswsettings[total].num].default_value;
+		val = Machine->gamedrv->input_ports[dswsettings[total].num].default_value;
 		while ((msk & 1) == 0)
 		{
 			val >>= 1;
@@ -756,11 +756,11 @@ int setdipswitches(void)
 	{
 		for (i = 0;i < total;i++)
 		{
-			dt[2 * i].color = (i == s) ? Machine->drv->yellow_text : Machine->drv->white_text;
+			dt[2 * i].color = (i == s) ? Machine->gamedrv->yellow_text : Machine->gamedrv->white_text;
 			dt[2 * i].text = dswsettings[i].name;
 			dt[2 * i].x = 2*8;
 			dt[2 * i].y = 2*8 * i + (Machine->drv->screen_height - 2*8 * (total - 1)) / 2;
-			dt[2 * i + 1].color = (i == s) ? Machine->drv->yellow_text : Machine->drv->white_text;
+			dt[2 * i + 1].color = (i == s) ? Machine->gamedrv->yellow_text : Machine->gamedrv->white_text;
 			dt[2 * i + 1].text = dswsettings[i].values[settings[i]];
 			dt[2 * i + 1].x = Machine->drv->screen_width - 2*8 - 8*strlen(dt[2 * i + 1].text);
 			dt[2 * i + 1].y = dt[2 * i].y;
@@ -819,8 +819,8 @@ int setdipswitches(void)
 			msk >>= 1;
 		}
 
-		Machine->drv->input_ports[dswsettings[total].num].default_value =
-				(Machine->drv->input_ports[dswsettings[total].num].default_value
+		Machine->gamedrv->input_ports[dswsettings[total].num].default_value =
+				(Machine->gamedrv->input_ports[dswsettings[total].num].default_value
 				& ~dswsettings[total].mask) | settings[total];
 	}
 
@@ -893,8 +893,8 @@ void displaytext(const struct DisplayText *dt,int erase)
 			else
 			{
 				if (*c >= '0' && *c <= '9')
-					drawgfx(Machine->scrbitmap,Machine->gfx[0],*c - '0' + Machine->drv->numbers_start,dt->color,0,0,x,y,0,TRANSPARENCY_NONE,0);
-				else drawgfx(Machine->scrbitmap,Machine->gfx[0],*c - 'A' + Machine->drv->letters_start,dt->color,0,0,x,y,0,TRANSPARENCY_NONE,0);
+					drawgfx(Machine->scrbitmap,Machine->gfx[0],*c - '0' + Machine->gamedrv->numbers_start,dt->color,0,0,x,y,0,TRANSPARENCY_NONE,0);
+				else drawgfx(Machine->scrbitmap,Machine->gfx[0],*c - 'A' + Machine->gamedrv->letters_start,dt->color,0,0,x,y,0,TRANSPARENCY_NONE,0);
 
 				x += Machine->gfx[0]->width;
 			}
@@ -939,7 +939,7 @@ int showcharset(void)
 
 		sprintf(buf,"GFXSET %d  COLOR %d",bank,color);
 		dt[0].text = buf;
-		dt[0].color = Machine->drv->paused_color;
+		dt[0].color = Machine->gamedrv->paused_color;
 		dt[0].x = 0;
 		dt[0].y = 0;
 		dt[1].text = 0;

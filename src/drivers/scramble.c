@@ -293,7 +293,7 @@ static unsigned char froggers_color_prom[] =
 
 
 
-const struct MachineDriver scramble_driver =
+static struct MachineDriver scramble_machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -313,17 +313,14 @@ const struct MachineDriver scramble_driver =
 		}
 	},
 	60,
-	input_ports,scramble_dsw,
 	0,
 
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
 	32+64,32+64,	/* 32 for the characters, 64 for the stars */
-	scramble_color_prom,scramble_vh_convert_color_prom,0,0,
-	0,17,
-	0x00,0x01,
-	8*13,8*16,0x04,
+	scramble_vh_convert_color_prom,
+
 	0,
 	scramble_vh_start,
 	generic_vh_stop,
@@ -339,7 +336,7 @@ const struct MachineDriver scramble_driver =
 
 
 
-const struct MachineDriver atlantis_driver =
+static struct MachineDriver scramble_nosound_machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -352,17 +349,14 @@ const struct MachineDriver atlantis_driver =
 		}
 	},
 	60,
-	input_ports,atlantis_dsw,
 	0,
 
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
 	32+64,32+64,	/* 32 for the characters, 64 for the stars */
-	scramble_color_prom,scramble_vh_convert_color_prom,0,0,
-	0,17,
-	0x00,0x01,
-	8*13,8*16,0x04,
+	scramble_vh_convert_color_prom,
+
 	0,
 	scramble_vh_start,
 	generic_vh_stop,
@@ -378,78 +372,147 @@ const struct MachineDriver atlantis_driver =
 
 
 
-const struct MachineDriver theend_driver =
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+ROM_START( scramble_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "2c", 0x0000, 0x0800 )
+	ROM_LOAD( "2e", 0x0800, 0x0800 )
+	ROM_LOAD( "2f", 0x1000, 0x0800 )
+	ROM_LOAD( "2h", 0x1800, 0x0800 )
+	ROM_LOAD( "2j", 0x2000, 0x0800 )
+	ROM_LOAD( "2l", 0x2800, 0x0800 )
+	ROM_LOAD( "2m", 0x3000, 0x0800 )
+	ROM_LOAD( "2p", 0x3800, 0x0800 )
+
+	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "5f", 0x0000, 0x0800 )
+	ROM_LOAD( "5h", 0x0800, 0x0800 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "5c", 0x0000, 0x0800 )
+	ROM_LOAD( "5d", 0x0800, 0x0800 )
+	ROM_LOAD( "5e", 0x1000, 0x0800 )
+ROM_END
+
+ROM_START( atlantis_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "2c", 0x0000, 0x0800 )
+	ROM_LOAD( "2e", 0x0800, 0x0800 )
+	ROM_LOAD( "2f", 0x1000, 0x0800 )
+	ROM_LOAD( "2h", 0x1800, 0x0800 )
+	ROM_LOAD( "2j", 0x2000, 0x0800 )
+	ROM_LOAD( "2l", 0x2800, 0x0800 )
+
+	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "5f", 0x0000, 0x0800 )
+	ROM_LOAD( "5h", 0x0800, 0x0800 )
+ROM_END
+
+ROM_START( theend_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "IC13", 0x0000, 0x0800 )
+	ROM_LOAD( "IC14", 0x0800, 0x0800 )
+	ROM_LOAD( "IC15", 0x1000, 0x0800 )
+	ROM_LOAD( "IC16", 0x1800, 0x0800 )
+	ROM_LOAD( "IC17", 0x2000, 0x0800 )
+	ROM_LOAD( "IC18", 0x2800, 0x0800 )
+	ROM_LOAD( "IC56", 0x3000, 0x0800 )
+	ROM_LOAD( "IC55", 0x3800, 0x0800 )
+
+	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "IC30", 0x0000, 0x0800 )
+	ROM_LOAD( "IC31", 0x0800, 0x0800 )
+ROM_END
+
+ROM_START( froggers_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "vid_d2.bin", 0x0000, 0x0800 )
+	ROM_LOAD( "vid_e2.bin", 0x0800, 0x0800 )
+	ROM_LOAD( "vid_f2.bin", 0x1000, 0x0800 )
+	ROM_LOAD( "vid_h2.bin", 0x1800, 0x0800 )
+	ROM_LOAD( "vid_j2.bin", 0x2000, 0x0800 )
+	ROM_LOAD( "vid_l2.bin", 0x2800, 0x0800 )
+
+	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "vid_f5.bin", 0x0000, 0x0800 )
+	ROM_LOAD( "vid_h5.bin", 0x0800, 0x0800 )
+ROM_END
+
+
+
+struct GameDriver scramble_driver =
 {
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3072000,	/* 3.072 Mhz */
-			0,
-			readmem,writemem,0,0,
-			nmi_interrupt,1
-		}
-	},
-	60,
-	input_ports,theend_dsw,
-	0,
+	"scramble",
+	&scramble_machine_driver,
 
-	/* video hardware */
-	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
-	gfxdecodeinfo,
-	32+64,32+64,	/* 32 for the characters, 64 for the stars */
-	scramble_color_prom,scramble_vh_convert_color_prom,0,0,
-	0,17,
-	0x00,0x01,
-	8*13,8*16,0x04,
-	0,
-	scramble_vh_start,
-	generic_vh_stop,
-	scramble_vh_screenrefresh,
+	scramble_rom,
+	0, 0,
 
-	/* sound hardware */
-	0,
-	0,
-	0,
-	0,
-	0
+	input_ports, scramble_dsw,
+
+	scramble_color_prom, 0, 0,
+	0, 17,
+	0x00, 0x01,
+	8*13, 8*16, 0x04,
+
+	0, 0
 };
 
-
-
-const struct MachineDriver froggers_driver =
+struct GameDriver atlantis_driver =
 {
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3072000,	/* 3.072 Mhz */
-			0,
-			readmem,writemem,0,0,
-			nmi_interrupt,1
-		}
-	},
-	60,
-	input_ports,scramble_dsw,
-	0,
+	"atlantis",
+	&scramble_nosound_machine_driver,
 
-	/* video hardware */
-	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
-	gfxdecodeinfo,
-	32+64,32+64,	/* 32 for the characters, 64 for the stars */
-	froggers_color_prom,scramble_vh_convert_color_prom,0,0,
-	0,17,
-	0x07,0x02,
-	8*13,8*16,0x01,
-	0,
-	scramble_vh_start,
-	generic_vh_stop,
-	scramble_vh_screenrefresh,
+	atlantis_rom,
+	0, 0,
 
-	/* sound hardware */
-	0,
-	0,
-	scramble_sh_start,
-	scramble_sh_stop,
-	scramble_sh_update
+	input_ports, atlantis_dsw,
+
+	scramble_color_prom, 0, 0,
+	0, 17,
+	0x00, 0x01,
+	8*13, 8*16, 0x04,
+
+	0, 0
+};
+
+struct GameDriver theend_driver =
+{
+	"theend",
+	&scramble_nosound_machine_driver,
+
+	theend_rom,
+	0, 0,
+
+	input_ports, theend_dsw,
+
+	scramble_color_prom, 0, 0,
+	0, 17,
+	0x00, 0x01,
+	8*13, 8*16, 0x04,
+
+	0, 0
+};
+
+struct GameDriver froggers_driver =
+{
+	"froggers",
+	&scramble_nosound_machine_driver,
+
+	froggers_rom,
+	0, 0,
+
+	input_ports, scramble_dsw,
+
+	froggers_color_prom, 0, 0,
+	0, 17,
+	0x07, 0x02,
+	8*13, 8*16, 0x01,
+
+	0, 0
 };

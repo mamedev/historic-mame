@@ -149,7 +149,7 @@ static unsigned char colortable[] =
 
 
 
-const struct MachineDriver invaders_driver =
+static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -162,17 +162,14 @@ const struct MachineDriver invaders_driver =
 		}
 	},
 	60,
-	input_ports,dsw,
 	0,
 
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
 	sizeof(palette)/3,sizeof(colortable),
-	0,0,palette,colortable,
-	26,0,
-	0,3,
-	8*13,8*16,2,
+	0,
+
 	0,
 	generic_vh_start,
 	generic_vh_stop,
@@ -184,4 +181,196 @@ const struct MachineDriver invaders_driver =
 	0,
 	0,
 	0
+};
+
+
+
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+ROM_START( invaders_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "invaders.h", 0x0000, 0x0800)
+	ROM_LOAD( "invaders.g", 0x0800, 0x0800)
+	ROM_LOAD( "invaders.f", 0x1000, 0x0800)
+	ROM_LOAD( "invaders.e", 0x1800, 0x0800)
+ROM_END
+
+ROM_START( spaceatt_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "spaceatt.h", 0x0000, 0x0800)
+	ROM_LOAD( "spaceatt.g", 0x0800, 0x0800)
+	ROM_LOAD( "spaceatt.f", 0x1000, 0x0800)
+	ROM_LOAD( "spaceatt.e", 0x1800, 0x0800)
+ROM_END
+
+ROM_START( invdelux_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "invdelux.h", 0x0000, 0x0800)
+	ROM_LOAD( "invdelux.g", 0x0800, 0x0800)
+	ROM_LOAD( "invdelux.f", 0x1000, 0x0800)
+	ROM_LOAD( "invdelux.e", 0x1800, 0x0800)
+	ROM_LOAD( "invdelux.d", 0x4000, 0x0800)
+ROM_END
+
+ROM_START( galxwars_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "galxwars.0", 0x0000, 0x0400)
+	ROM_LOAD( "galxwars.1", 0x0400, 0x0400)
+	ROM_LOAD( "galxwars.2", 0x0800, 0x0400)
+	ROM_LOAD( "galxwars.3", 0x0c00, 0x0400)
+	ROM_LOAD( "galxwars.4", 0x4000, 0x0400)
+	ROM_LOAD( "galxwars.5", 0x4400, 0x0400)
+ROM_END
+
+ROM_START( lrescue_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "lrescue.1", 0x0000, 0x0800)
+	ROM_LOAD( "lrescue.2", 0x0800, 0x0800)
+	ROM_LOAD( "lrescue.3", 0x1000, 0x0800)
+	ROM_LOAD( "lrescue.4", 0x1800, 0x0800)
+	ROM_LOAD( "lrescue.5", 0x4000, 0x0800)
+	ROM_LOAD( "lrescue.6", 0x4800, 0x0800)
+ROM_END
+
+ROM_START( desterth_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "36_h.bin", 0x0000, 0x0800)
+	ROM_LOAD( "35_g.bin", 0x0800, 0x0800)
+	ROM_LOAD( "34_f.bin", 0x1000, 0x0800)
+	ROM_LOAD( "33_e.bin", 0x1800, 0x0800)
+	ROM_LOAD( "32_d.bin", 0x4000, 0x0800)
+	ROM_LOAD( "31_c.bin", 0x4800, 0x0800)
+	ROM_LOAD( "42_b.bin", 0x5000, 0x0800)
+ROM_END
+
+
+
+struct GameDriver invaders_driver =
+{
+	"invaders",
+	&machine_driver,
+
+	invaders_rom,
+	0, 0,
+
+	input_ports, dsw,
+
+	0, palette, colortable,
+	26, 0,
+	0, 3,
+	8*13, 8*16, 2,
+
+	0, 0
+};
+
+struct GameDriver earthinv_driver =
+{
+	"earthinv",
+	&machine_driver,
+
+	invaders_rom,
+	0, 0,
+
+	input_ports, dsw,
+
+	0, palette, colortable,
+	26, 0,
+	0, 3,
+	8*13, 8*16, 2,
+
+	0, 0
+};
+
+struct GameDriver spaceatt_driver =
+{
+	"spaceatt",
+	&machine_driver,
+
+	spaceatt_rom,
+	0, 0,
+
+	input_ports, dsw,
+
+	0, palette, colortable,
+	26, 0,
+	0, 3,
+	8*13, 8*16, 2,
+
+	0, 0
+};
+
+struct GameDriver invdelux_driver =
+{
+	"invdelux",
+	&machine_driver,
+
+	invdelux_rom,
+	0, 0,
+
+	input_ports, dsw,
+
+	0, palette, colortable,
+	26, 0,
+	0, 3,
+	8*13, 8*16, 2,
+
+	0, 0
+};
+
+struct GameDriver galxwars_driver =
+{
+	"galxwars",
+	&machine_driver,
+
+	galxwars_rom,
+	0, 0,
+
+	input_ports, dsw,
+
+	0, palette, colortable,
+	26, 0,
+	0, 3,
+	8*13, 8*16, 2,
+
+	0, 0
+};
+
+struct GameDriver lrescue_driver =
+{
+	"lrescue",
+	&machine_driver,
+
+	lrescue_rom,
+	0, 0,
+
+	input_ports, dsw,
+
+	0, palette, colortable,
+	26, 0,
+	0, 3,
+	8*13, 8*16, 2,
+
+	0, 0
+};
+
+struct GameDriver desterth_driver =
+{
+	"desterth",
+	&machine_driver,
+
+	desterth_rom,
+	0, 0,
+
+	input_ports, dsw,
+
+	0, palette, colortable,
+	26, 0,
+	0, 3,
+	8*13, 8*16, 2,
+
+	0, 0
 };

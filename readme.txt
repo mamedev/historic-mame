@@ -35,7 +35,7 @@ Bagman                         Yes          No     Music only    No
 Wizard of Wor               Partially     Maybe        No        No
 The Adventures of Robby Roto    No          No         No       n/a
 Gorf                            No          No         No       n/a
-Galaxian                       Yes         Yes      Limited      No
+Galaxian                       Yes         Yes      Limited     Yes
 Pisces                         Yes         Yes      Limited      No
 "Japanese Irem game"           Yes         Yes      Limited      No
 War of the Bugs                Yes          No      Limited      No
@@ -48,22 +48,23 @@ Frogger                        Yes        Close        No        No
 Amidar                         Yes        Close        No        No
 Turtles                        Yes          No         No        No
 Rally X                        Yes          No         No        No
-Time Pilot                     Yes          No         No        No
+Time Pilot                     Yes          No         No       Yes
 Pooyan                         Yes          No         No        No
 Phoenix                        Yes        Close     Limited      No
-Pleiades                       Yes          No      Limited      No
+Pleiads                        Yes          No      Limited      No
 Space Invaders                 Yes         Yes         No        No
 Carnival                        No          No         No       n/a
 Zaxxon                         Yes          No         No        No
 Congo Bongo                    Yes          No         No        No
 Bomb Jack                      Yes         Yes         No       Yes
-Centipede                      Yes          No        Yes        No
-Millipede                      Yes          No         No        No
+Centipede                      Yes          No        Yes       Yes
+Millipede                      Yes          No         No       Yes
 Nibbler                        Yes          No         No       Yes
 Moon Patrol                    Yes          No         No        No
 Burger Time                    Yes         Yes        Yes        No
 Lost Tomb                       No          No         No       n/a
 Jump Bug                        No          No         No       n/a
+Vanguard                       Yes          No         No        No
 
 
 
@@ -104,6 +105,10 @@ Mario Bros., Zaxxon, Bomb Jack, Burger Time and Donkey Kong 3 drivers provided
    by Mirko Buffoni (mix@lim.dsi.unimi.it)
 Congo Bongo driver provided by Ville Laitinen (ville@sms.fi).
 Millipede driver provided by Ivan Mackintosh (ivan@rcp.co.uk).
+Donkey Kong sound emulation by Ron Fries (rfries@tcmail.frco.com).
+Vanguard driver by Brad Oliver and Mirko Buffoni, based on code by Brian
+   Levine.
+
 
 Very special thanks to Sergio Munoz for the precious information about the
    Pengo sound hardware and colors.
@@ -610,8 +615,8 @@ Arrows  Move around
 CTRL    Jump
 
 Clones supported:
-  US version ("amidarus"). This version is quite different, it has a better
-    attract mode and displayes the number of jumps left.
+  Japanese version ("amidarjp"). This version has a worse attract mode and
+                                 does not display the number of jumps left.
 
 Known issues:
 - What do the dip switches do?
@@ -688,7 +693,7 @@ ALT     Barrier
 
 
 
-Pleiades ("pleiades")
+Pleiads ("pleiads")
 ---------------------
 
 This runs on the same hardware as Phoenix.
@@ -791,6 +796,7 @@ CTRL    Fire
 Known issues:
 - What is the clock speed of the original machine? I'm currently using 1Mhz,
   I don't know if the game runs correctly.
+- High scores don't seem to work.
 
 
 
@@ -857,7 +863,17 @@ Known issues:
 Jump Bug ("jumpbug")
 --------------------
 
-This seems to run on hardware similar to Scramble
+This seems to run on hardware similar to Super Cobra.
 
 Known issues:
 - Not playable. Crashes during demo.
+
+
+
+Vanguard ("vanguard")
+--------------------
+
+Runs on hardware similar to Nibbler.
+
+Arrows  Move around
+S,D,E,F Fire

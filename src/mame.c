@@ -9,9 +9,9 @@
 #endif
 
 
-static struct GameDriver *gamedrv;
 static struct RunningMachine machine;
 struct RunningMachine *Machine = &machine;
+static const struct GameDriver *gamedrv;
 static const struct MachineDriver *drv;
 
 static int hiscoreloaded;
@@ -112,18 +112,17 @@ int init_machine(const char *gamename,int argc,char **argv)
 	}
 
 	i = 0;
-	while (drivers[i].name && strcmp(gamename,drivers[i].name) != 0)
+	while (drivers[i] && strcmp(gamename,drivers[i]->name) != 0)
 		i++;
 
-	if (drivers[i].name == 0)
+	if (drivers[i] == 0)
 	{
 		printf("game \"%s\" not supported\n",gamename);
 		return 1;
 	}
 
-	gamedrv = &drivers[i];
-	drv = gamedrv->drv;
-	Machine->drv = drv;
+	Machine->gamedrv = gamedrv = drivers[i];
+	Machine->drv = drv = gamedrv->drv;
 
 	if (readroms(gamedrv->rom,gamename) != 0)
 		return 1;
@@ -214,14 +213,14 @@ int vh_open(void)
 
 	if (drv->vh_convert_color_prom)
 	{
-		(*drv->vh_convert_color_prom)(convpalette,convtable,drv->color_prom);
+		(*drv->vh_convert_color_prom)(convpalette,convtable,gamedrv->color_prom);
 		palette = convpalette;
 		colortable = convtable;
 	}
 	else
 	{
-		palette = drv->palette;
-		colortable = drv->colortable;
+		palette = gamedrv->palette;
+		colortable = gamedrv->colortable;
 	}
 
 	for (i = 0;i < drv->total_colors;i++)
@@ -260,7 +259,7 @@ int vh_open(void)
 		   "THE RIGHTFUL COPYRIGHT HOLDERS OF THOSE ROM IMAGES AND CAN RESULT IN LEGAL "
 		   "ACTION UNDERTAKEN BY EARLIER MENTIONED COPYRIGHT HOLDERS\n\n"
 		   "IF YOU DO NOT AGREE WITH THE ABOVE CONDITIONS PRESS ESC";
-	dt[0].color = drv->paused_color;
+	dt[0].color = gamedrv->paused_color;
 	dt[0].x = 0;
 	dt[0].y = 0;
 	dt[1].text = 0;
@@ -271,6 +270,7 @@ int vh_open(void)
 	if (i == OSD_KEY_ESC) return 1;
 
 	clearbitmap(Machine->scrbitmap);	/* initialize the bitmap to the correct background color */
+	osd_update_display();
 
 	return 0;
 }
@@ -313,9 +313,9 @@ int updatescreen(void)
 
 
 		dt[0].text = "PAUSED";
-		dt[0].color = drv->paused_color;
-		dt[0].x = drv->paused_x;
-		dt[0].y = drv->paused_y;
+		dt[0].color = gamedrv->paused_color;
+		dt[0].x = gamedrv->paused_x;
+		dt[0].y = gamedrv->paused_y;
 		dt[1].text = 0;
 		displaytext(dt,0);
 
@@ -388,9 +388,9 @@ int updatescreen(void)
 
 		if (showfps)
 		{
-			drawgfx(Machine->scrbitmap,Machine->gfx[0],fps/100 + drv->numbers_start,drv->white_text,0,0,0,0,0,TRANSPARENCY_NONE,0);
-			drawgfx(Machine->scrbitmap,Machine->gfx[0],(fps%100)/10 + drv->numbers_start,drv->white_text,0,0,8,0,0,TRANSPARENCY_NONE,0);
-			drawgfx(Machine->scrbitmap,Machine->gfx[0],fps%10 + drv->numbers_start,drv->white_text,0,0,16,0,0,TRANSPARENCY_NONE,0);
+			drawgfx(Machine->scrbitmap,Machine->gfx[0],fps/100 + gamedrv->numbers_start,gamedrv->white_text,0,0,0,0,0,TRANSPARENCY_NONE,0);
+			drawgfx(Machine->scrbitmap,Machine->gfx[0],(fps%100)/10 + gamedrv->numbers_start,gamedrv->white_text,0,0,8,0,0,TRANSPARENCY_NONE,0);
+			drawgfx(Machine->scrbitmap,Machine->gfx[0],fps%10 + gamedrv->numbers_start,gamedrv->white_text,0,0,16,0,0,TRANSPARENCY_NONE,0);
 		}
 
 		osd_update_display();
@@ -439,7 +439,7 @@ int run_machine(const char *gamename)
 
 
 				incount = 0;
-				while (drv->input_ports[incount].default_value != -1) incount++;
+				while (gamedrv->input_ports[incount].default_value != -1) incount++;
 
 				/* read dipswitch settings from disk */
 				sprintf(name,"%s/%s.dsw",gamename,gamename);
@@ -449,7 +449,7 @@ int run_machine(const char *gamename)
 					if (fread(name,1,incount,f) == incount)
 					{
 						for (i = 0;i < incount;i++)
-							drv->input_ports[i].default_value = name[i];
+							gamedrv->input_ports[i].default_value = name[i];
 					}
 					fclose(f);
 				}
@@ -474,7 +474,7 @@ int run_machine(const char *gamename)
 				{
 					/* use name as temporary buffer */
 					for (i = 0;i < incount;i++)
-						name[i] = drv->input_ports[i].default_value;
+						name[i] = gamedrv->input_ports[i].default_value;
 
 					fwrite(name,1,incount,f);
 					fclose(f);

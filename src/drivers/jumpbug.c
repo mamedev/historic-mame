@@ -161,7 +161,7 @@ static unsigned char color_prom[] =
 
 
 
-const struct MachineDriver jumpbug_driver =
+static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -174,17 +174,14 @@ const struct MachineDriver jumpbug_driver =
 		}
 	},
 	60,
-	input_ports,dsw,
 	0,
 
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
 	32+64,32+64,	/* 32 for the characters, 64 for the stars */
-	color_prom,scramble_vh_convert_color_prom,0,0,
-	0,256,
-	0x00,0x01,
-	8*13,8*16,0x04,
+	scramble_vh_convert_color_prom,
+
 	0,
 	scramble_vh_start,
 	generic_vh_stop,
@@ -196,4 +193,51 @@ const struct MachineDriver jumpbug_driver =
 	0,
 	0,
 	0
+};
+
+
+
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+ROM_START( jumpbug_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "jb1", 0x0000, 0x1000 )
+	ROM_LOAD( "jb2", 0x1000, 0x1000 )
+	ROM_LOAD( "jb3", 0x2000, 0x1000 )
+	ROM_LOAD( "jb4", 0x3000, 0x1000 )
+	ROM_LOAD( "jb5", 0x8000, 0x1000 )
+	ROM_LOAD( "jb6", 0x9000, 0x1000 )
+	ROM_LOAD( "jb7", 0xa000, 0x1000 )
+
+	ROM_REGION(0x3000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "jbi", 0x0000, 0x0800 )
+	ROM_LOAD( "jbj", 0x0800, 0x0800 )
+	ROM_LOAD( "jbk", 0x1000, 0x0800 )
+	ROM_LOAD( "jbl", 0x1800, 0x0800 )
+	ROM_LOAD( "jbm", 0x2000, 0x0800 )
+	ROM_LOAD( "jbn", 0x2800, 0x0800 )
+ROM_END
+
+
+
+struct GameDriver jumpbug_driver =
+{
+	"jumpbug",
+	&machine_driver,
+
+	jumpbug_rom,
+	0, 0,
+
+	input_ports, dsw,
+
+	color_prom, 0, 0,
+	0, 256,
+	0x00, 0x01,
+	8*13, 8*16, 0x04,
+
+	0, 0
 };

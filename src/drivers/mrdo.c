@@ -240,7 +240,7 @@ static unsigned char samples[32] =	/* a simple sine (sort of) wave */
 
 
 
-const struct MachineDriver mrdo_driver =
+static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -253,17 +253,14 @@ const struct MachineDriver mrdo_driver =
 		}
 	},
 	60,
-	input_ports,dsw,
 	0,
 
 	/* video hardware */
 	32*8, 32*8, { 4*8, 28*8-1, 1*8, 31*8-1 },
 	gfxdecodeinfo,
 	256,4*144,
-	color_prom,mrdo_vh_convert_color_prom,0,0,
-	0,10,
-	0x09,0x3e,
-	8*17,8*29,0x2c,
+	mrdo_vh_convert_color_prom,
+
 	0,
 	mrdo_vh_start,
 	mrdo_vh_stop,
@@ -275,4 +272,118 @@ const struct MachineDriver mrdo_driver =
 	ladybug_sh_start,
 	0,
 	ladybug_sh_update
+};
+
+
+
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+ROM_START( mrdo_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "D1",  0x0000, 0x2000 )
+	ROM_LOAD( "D2",  0x2000, 0x2000 )
+	ROM_LOAD( "D3",  0x4000, 0x2000 )
+	ROM_LOAD( "D4",  0x6000, 0x2000 )
+
+	ROM_REGION(0x6000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "D9",  0x0000, 0x1000 )
+	ROM_LOAD( "D10", 0x1000, 0x1000 )
+	ROM_LOAD( "D8",  0x2000, 0x1000 )
+	ROM_LOAD( "D7",  0x3000, 0x1000 )
+	ROM_LOAD( "D5",  0x4000, 0x1000 )
+	ROM_LOAD( "D6",  0x5000, 0x1000 )
+ROM_END
+
+ROM_START( mrlo_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "a4-01.bin", 0x0000, 0x2000 )
+	ROM_LOAD( "c4-02.bin", 0x2000, 0x2000 )
+	ROM_LOAD( "e4-03.bin", 0x4000, 0x2000 )
+	ROM_LOAD( "g4-04.bin", 0x6000, 0x2000 )
+
+	ROM_REGION(0x6000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "s8-09.bin", 0x0000, 0x1000 )
+	ROM_LOAD( "u8-10.bin", 0x1000, 0x1000 )
+	ROM_LOAD( "r8-08.bin", 0x2000, 0x1000 )
+	ROM_LOAD( "n8-07.bin", 0x3000, 0x1000 )
+	ROM_LOAD( "h5-05.bin", 0x4000, 0x1000 )
+	ROM_LOAD( "k5-06.bin", 0x5000, 0x1000 )
+ROM_END
+
+
+
+static int hiload(const char *name)
+{
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0xe017],"\x01\x00\x00",3) == 0 &&
+			memcmp(&RAM[0xe071],"\x01\x00\x00",3) == 0)
+	{
+		FILE *f;
+
+
+		if ((f = fopen(name,"rb")) != 0)
+		{
+			fread(&RAM[0xe017],1,10*10+2,f);
+			fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+static void hisave(const char *name)
+{
+	FILE *f;
+
+
+	if ((f = fopen(name,"wb")) != 0)
+	{
+		fwrite(&RAM[0xe017],1,10*10+2,f);
+		fclose(f);
+	}
+}
+
+
+
+struct GameDriver mrdo_driver =
+{
+	"mrdo",
+	&machine_driver,
+
+	mrdo_rom,
+	0, 0,
+
+	input_ports, dsw,
+
+	color_prom, 0, 0,
+	0, 10,
+	0x09, 0x3e,
+	8*17, 8*29, 0x2c,
+
+	hiload, hisave
+};
+
+struct GameDriver mrlo_driver =
+{
+	"mrlo",
+	&machine_driver,
+
+	mrlo_rom,
+	0, 0,
+
+	input_ports, dsw,
+
+	color_prom, 0, 0,
+	0, 10,
+	0x09, 0x3e,
+	8*17, 8*29, 0x2c,
+
+	hiload, hisave
 };

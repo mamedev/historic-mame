@@ -20,7 +20,8 @@ struct RunningMachine
 	struct GfxElement *gfx[MAX_GFX_ELEMENTS];	/* graphic sets (chars, sprites) */
 								/* the first one is used by DisplayText() */
 	int background_pen;	/* pen to use to clear the bitmap (DON'T use 0) */
-	const struct MachineDriver *drv;	/* contains the definition of the machine */
+	const struct GameDriver *gamedrv;	/* contains the definition of the game machine */
+	const struct MachineDriver *drv;	/* same as gamedrv->drv */
 };
 
 

@@ -278,7 +278,7 @@ static unsigned char colortable[] =
 
 
 
-const struct MachineDriver mpatrol_driver =
+static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -291,17 +291,14 @@ const struct MachineDriver mpatrol_driver =
 		}
 	},
 	60,
-	input_ports,dsw,
 	0,
 
 	/* video hardware */
 	32*8, 32*8, { 1*8, 31*8-1, 0*8, 32*8-1 },
 	gfxdecodeinfo,
 	sizeof(palette)/3,sizeof(colortable),
-	0,0,palette,colortable,
-	0x30,0x41,
-	0x06,0x04,
-	8*13,8*16,0x00,
+	0,
+
 	0,
 	mpatrol_vh_start,
 	mpatrol_vh_stop,
@@ -313,4 +310,84 @@ const struct MachineDriver mpatrol_driver =
 	0,
 	0,
 	0
+};
+
+
+
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+ROM_START( mpatrol_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "mp-a.3m", 0x0000, 0x1000 )
+	ROM_LOAD( "mp-a.3l", 0x1000, 0x1000 )
+	ROM_LOAD( "mp-a.3k", 0x2000, 0x1000 )
+	ROM_LOAD( "mp-a.3j", 0x3000, 0x1000 )
+
+	ROM_REGION(0x7000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "mp-e.3e", 0x0000, 0x1000 )	/* chars */
+	ROM_LOAD( "mp-e.3f", 0x1000, 0x1000 )
+	ROM_LOAD( "mp-b.3m", 0x2000, 0x1000 )	/* sprites */
+	ROM_LOAD( "mp-b.3n", 0x3000, 0x1000 )
+	ROM_LOAD( "mp-e.3h", 0x4000, 0x1000 )	/* background graphics */
+	ROM_LOAD( "mp-e.3k", 0x5000, 0x1000 )
+	ROM_LOAD( "mp-e.3l", 0x6000, 0x1000 )
+ROM_END
+
+ROM_START( mranger_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "mr-a.3m", 0x0000, 0x1000 )
+	ROM_LOAD( "mr-a.3l", 0x1000, 0x1000 )
+	ROM_LOAD( "mr-a.3k", 0x2000, 0x1000 )
+	ROM_LOAD( "mr-a.3j", 0x3000, 0x1000 )
+
+	ROM_REGION(0x7000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "mr-e.3e", 0x0000, 0x1000 )	/* chars */
+	ROM_LOAD( "mr-e.3f", 0x1000, 0x1000 )
+	ROM_LOAD( "mr-b.3m", 0x2000, 0x1000 )	/* sprites */
+	ROM_LOAD( "mr-b.3n", 0x3000, 0x1000 )
+	ROM_LOAD( "mr-e.3h", 0x4000, 0x1000 )	/* background graphics */
+	ROM_LOAD( "mr-e.3k", 0x5000, 0x1000 )
+	ROM_LOAD( "mr-e.3l", 0x6000, 0x1000 )
+ROM_END
+
+
+
+struct GameDriver mpatrol_driver =
+{
+	"mpatrol",
+	&machine_driver,
+
+	mpatrol_rom,
+	0, 0,
+
+	input_ports, dsw,
+
+	0, palette, colortable,
+	0x30, 0x41,
+	0x06, 0x04,
+	8*13, 8*16, 0x00,
+
+	0, 0
+};
+
+struct GameDriver mranger_driver =
+{
+	"mranger",
+	&machine_driver,
+
+	mranger_rom,
+	0, 0,
+
+	input_ports, dsw,
+
+	0, palette, colortable,
+	0x30, 0x41,
+	0x06, 0x04,
+	8*13, 8*16, 0x00,
+
+	0, 0
 };

@@ -281,7 +281,7 @@ static unsigned char colortable[] =
 
 
 
-const struct MachineDriver mario_driver =
+static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -294,17 +294,14 @@ const struct MachineDriver mario_driver =
 		}
 	},
 	60,
-	input_ports,dsw,
 	0,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
 	sizeof(palette)/3,sizeof(colortable),
-	0,0,palette,colortable,
-	0,17,
-	1,11,
-	8*13,8*16,0,
+	0,
+
 	0,
 	mario_vh_start,
 	generic_vh_stop,
@@ -316,4 +313,94 @@ const struct MachineDriver mario_driver =
 	0,
 	0,
 	0
+};
+
+
+
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+ROM_START( mario_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "%s.7f", 0x0000, 0x2000 )
+	ROM_LOAD( "%s.7e", 0x2000, 0x2000 )
+	ROM_LOAD( "%s.7d", 0x4000, 0x2000 )
+	ROM_LOAD( "%s.7c", 0xf000, 0x1000 )
+
+	ROM_REGION(0x8000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "%s.3f", 0x0000, 0x1000 )
+	ROM_LOAD( "%s.3j", 0x1000, 0x1000 )
+	ROM_LOAD( "%s.7m", 0x2000, 0x1000 )
+	ROM_LOAD( "%s.7n", 0x3000, 0x1000 )
+	ROM_LOAD( "%s.7p", 0x4000, 0x1000 )
+	ROM_LOAD( "%s.7s", 0x5000, 0x1000 )
+	ROM_LOAD( "%s.7t", 0x6000, 0x1000 )
+	ROM_LOAD( "%s.7u", 0x7000, 0x1000 )
+
+	ROM_REGION(0x1000)	/* sound? */
+	ROM_LOAD( "%s.6k", 0x0000, 0x1000 )
+ROM_END
+
+
+
+static int hiload(const char *name)
+{
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x6b1d],"\x00\x20\x01",3) == 0 &&
+			memcmp(&RAM[0x6ba5],"\x00\x32\x00",3) == 0)
+	{
+		FILE *f;
+
+
+		if ((f = fopen(name,"rb")) != 0)
+		{
+			fread(&RAM[0x6b00],1,34*5,f);	/* hi scores */
+			RAM[0x6823] = RAM[0x6b1f];
+			RAM[0x6824] = RAM[0x6b1e];
+			RAM[0x6825] = RAM[0x6b1d];
+			fread(&RAM[0x6c00],1,0x3c,f);	/* distributions */
+			fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+static void hisave(const char *name)
+{
+	FILE *f;
+
+
+	if ((f = fopen(name,"wb")) != 0)
+	{
+		fwrite(&RAM[0x6b00],1,34*5,f);	/* hi scores */
+		fwrite(&RAM[0x6c00],1,0x3c,f);	/* distribution */
+		fclose(f);
+	}
+}
+
+
+
+struct GameDriver mario_driver =
+{
+	"mario",
+	&machine_driver,
+
+	mario_rom,
+	0, 0,
+
+	input_ports, dsw,
+
+	0, palette, colortable,
+	0, 17,
+	1, 11,
+	8*13, 8*16, 0,
+
+	hiload, hisave
 };

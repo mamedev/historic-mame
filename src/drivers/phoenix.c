@@ -167,14 +167,14 @@ static unsigned char palette[] =
         0xff,0x24,0xb6, /* LTPURPLE */
 	0xff,0xb6,0x00,	/* DKORANGE */
         0xb6,0x24,0xff, /* DKPURPLE */
-	0x00,0xdb,0xdb,	/* DKCYAN */
+        0x95,0x95,0x95, /* GREY */
 	0xdb,0xdb,0x00,	/* DKYELLOW */
         0x00,0x95,0xff, /* BLUISH */
         0xff,0x00,0xff, /* PURPLE */
 };
 
 enum {pBLACK,pWHITE,pRED,pGREEN,pBLUE,pCYAN,pYELLOW,pPINK,pORANGE,pLTPURPLE,pDKORANGE,
-                pDKPURPLE,pDKCYAN,pDKYELLOW,pBLUISH,pPURPLE};
+                pDKPURPLE,pGREY,pDKYELLOW,pBLUISH,pPURPLE};
 
 /* 4 colors per pixel * 8 groups of characters * 2 charsets * 2 pallettes */
 static unsigned char colortable[] =
@@ -198,7 +198,7 @@ static unsigned char colortable[] =
         pBLACK,pWHITE,pRED,pPURPLE,         /* Background, Explosions */
         pBLACK,pPURPLE,pGREEN,pWHITE,       /* Background, Barrier */
         /* charset B pallette A */
-        pBLACK,pRED,pBLUE,pWHITE,           /* Background, Starfield */
+        pBLACK,pRED,pBLUE,pGREY,            /* Background, Starfield */
         pBLACK,pPURPLE,pBLUISH,pDKORANGE,   /* Background, Planets */
         pBLACK,pDKPURPLE,pGREEN,pDKORANGE,  /* Background, Mothership: turrets, u-body, l-body */
         pBLACK,pBLUISH,pDKPURPLE,pLTPURPLE, /* Background, Motheralien: face, body, feet */
@@ -207,28 +207,40 @@ static unsigned char colortable[] =
         pBLACK,pPURPLE,pBLUISH,pGREEN,      /* Background, Eagles: face, body, feet */
         pBLACK,pPURPLE,pBLUISH,pGREEN,      /* Background, Eagles: face, body, feet */
         /* charset B pallette B */
-        pBLACK,pRED,pBLUE,pWHITE,           /* Background, Starfield */
+        pBLACK,pRED,pBLUE,pGREY,            /* Background, Starfield */
         pBLACK,pPURPLE,pBLUISH,pDKORANGE,   /* Background, Planets */
         pBLACK,pDKPURPLE,pGREEN,pDKORANGE,  /* Background, Mothership: turrets, upper body, lower body */
         pBLACK,pBLUISH,pDKPURPLE,pLTPURPLE, /* Background, Motheralien: face, body, feet */
         pBLACK,pBLUISH,pLTPURPLE,pGREEN,    /* Background, Eagles: face, body, shell */
         pBLACK,pBLUISH,pLTPURPLE,pGREEN,    /* Background, Eagles: face, body, feet */
         pBLACK,pBLUISH,pLTPURPLE,pGREEN,    /* Background, Eagles: face, body, feet */
-        pBLACK,pBLUISH,pLTPURPLE,pGREEN    /* Background, Eagles: face, body, feet */
+        pBLACK,pBLUISH,pLTPURPLE,pGREEN     /* Background, Eagles: face, body, feet */
 };
 
 
 
 /* waveforms for the audio hardware */
-static unsigned char samples[32] =
+static unsigned char samples[160] =
 {
-	0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,
-	0x88,0x88,0x88,0x88,0x88,0x88,0x88,0x88,0x88,0x88,0x88,0x88,0x88,0x88,0x88,0x88,
+        /* sine-wave */
+	0x00,0x00,0x00,0x00,0x22,0x22,0x22,0x22,0x44,0x44,0x44,0x44,0x22,0x22,0x22,0x22,
+        0x00,0x00,0x00,0x00,0xdd,0xdd,0xdd,0xdd,0xbb,0xbb,0xbb,0xbb,0xdd,0xdd,0xdd,0xdd,
+
+        /* white-noise ? */
+        207, 14, 102, 195, 75, 200, 140, 4, 109, 43, 201, 43, 81, 170,
+        61, 57, 76, 27, 151, 158, 172, 196, 109, 163, 98, 101, 64, 131,
+        15, 106, 47, 8, 121, 149, 204, 196, 135, 130, 201, 30, 173, 188,
+        74, 40, 144, 136, 97, 5, 163, 33, 164, 121, 15, 59, 70, 113, 160,
+        134, 30, 176, 26, 77, 185, 148, 12, 174, 130, 147, 89, 116, 178,
+        48, 90, 38, 88, 20, 174, 185, 25, 123, 4, 190, 30, 20, 34, 100,
+        133, 195, 20, 164, 156, 47, 26, 127, 196, 39, 87, 111, 187, 177,
+        13, 150, 10, 104, 189, 99, 124, 148, 70, 150, 57, 75, 126, 88, 95,
+        160, 189, 14, 141, 210, 178, 83, 43, 205, 210, 24, 29, 83
 };
 
 
 
-const struct MachineDriver phoenix_driver =
+static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -241,17 +253,14 @@ const struct MachineDriver phoenix_driver =
 		}
 	},
 	60,
-	input_ports,dsw,
 	0,
 
 	/* video hardware */
 	32*8, 32*8, { 3*8, 29*8-1, 0*8, 31*8-1 },
 	gfxdecodeinfo,
 	sizeof(palette)/3,sizeof(colortable),
-	0,0,palette,colortable,
-	32,1,
-	0x00,0x04,
-	8*13,8*16,0x01,
+	0,
+
 	0,
 	phoenix_vh_start,
 	phoenix_vh_stop,
@@ -263,4 +272,86 @@ const struct MachineDriver phoenix_driver =
         phoenix_sh_start,
 	0,
         phoenix_sh_update
+};
+
+
+
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+ROM_START( phoenix_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD("phoenix.45", 0x0000, 0x0800)
+	ROM_LOAD("phoenix.46", 0x0800, 0x0800)
+	ROM_LOAD("phoenix.47", 0x1000, 0x0800)
+	ROM_LOAD("phoenix.48", 0x1800, 0x0800)
+	ROM_LOAD("phoenix.49", 0x2000, 0x0800)
+	ROM_LOAD("phoenix.50", 0x2800, 0x0800)
+	ROM_LOAD("phoenix.51", 0x3000, 0x0800)
+	ROM_LOAD("phoenix.52", 0x3800, 0x0800)
+
+	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD("phoenix.39", 0x0000, 0x0800)
+	ROM_LOAD("phoenix.40", 0x0800, 0x0800)
+	ROM_LOAD("phoenix.23", 0x1000, 0x0800)
+	ROM_LOAD("phoenix.24", 0x1800, 0x0800)
+ROM_END
+
+ROM_START( pleiads_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "pleiades.47", 0x0000, 0x0800)
+	ROM_LOAD( "pleiades.48", 0x0800, 0x0800)
+	ROM_LOAD( "pleiades.49", 0x1000, 0x0800)
+	ROM_LOAD( "pleiades.50", 0x1800, 0x0800)
+	ROM_LOAD( "pleiades.51", 0x2000, 0x0800)
+	ROM_LOAD( "pleiades.52", 0x2800, 0x0800)
+	ROM_LOAD( "pleiades.53", 0x3000, 0x0800)
+	ROM_LOAD( "pleiades.54", 0x3800, 0x0800)
+
+	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "pleiades.27", 0x0000, 0x0800)
+	ROM_LOAD( "pleiades.26", 0x0800, 0x0800)
+	ROM_LOAD( "pleiades.45", 0x1000, 0x0800)
+	ROM_LOAD( "pleiades.44", 0x1800, 0x0800)
+ROM_END
+
+
+
+struct GameDriver phoenix_driver =
+{
+	"phoenix",
+	&machine_driver,
+
+	phoenix_rom,
+	0, 0,
+
+	input_ports, dsw,
+
+	0, palette, colortable,
+	32, 1,
+	0x00, 0x04,
+	8*13, 8*16, 0x01,
+
+	0, 0
+};
+
+struct GameDriver pleiads_driver =
+{
+	"pleiads",
+	&machine_driver,
+
+	pleiads_rom,
+	0, 0,
+
+	input_ports, dsw,
+
+	0, palette, colortable,
+	32, 1,
+	0x00, 0x04,
+	8*13, 8*16, 0x01,
+
+	0, 0
 };

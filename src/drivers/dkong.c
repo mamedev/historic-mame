@@ -65,16 +65,39 @@ write:
 6900-6a7f sprites
 7800-7803 ?
 7808      ?
-7c00      ?
+7c00      Background sound/music select:
+          00 - nothing
+		  01 - Intro tune
+		  02 - How High? (intermisson) tune
+		  03 - Out of time
+		  04 - Hammer
+		  05 - Rivet level 2 completed (end tune)
+		  06 - Hammer hit
+		  07 - Standard level end
+		  08 - Background 1	(first screen)
+		  09 - ???
+		  0A - Background 3	(springs)
+		  0B - Background 2 (rivet)
+		  0C - Rivet level 1 completed (end tune)
+		  0D - Rivet removed
+		  0E - Rivet level completed
+		  0F - Gorilla roar
 7c80      gfx bank select (Donkey Kong Jr. only)
-7d00-7d07 sound related? (digital sound trigger?)
-7d80      ?
+7d00      digital sound trigger - walk
+7d01      digital sound trigger - jump
+7d02      digital sound trigger - boom (gorilla stomps foot)
+7d03      digital sound trigger - coin input/spring
+7d04      digital sound trigger	- gorilla fall
+7d05      digital sound trigger - barrel jump/prize
+7d06      ?
+7d07      ?
+7d80      digital sound trigger - dead
 7d82      ?
 7d83      ?
 7d84      interrupt enable
-7d85      ?
-7d86      ?
-7d87      ?
+7d85      0/1 toggle
+7d86      sound processor control?
+7d87      sound processor control?
 
 ***************************************************************************/
 
@@ -86,6 +109,12 @@ write:
 extern void dkongjr_gfxbank_w(int offset,int data);
 extern int dkong_vh_start(void);
 extern void dkong_vh_screenrefresh(struct osd_bitmap *bitmap);
+
+extern void dkong_sh1_w(int offset,int data);
+extern void dkong_sh2_w(int offset,int data);
+extern void dkong_sh3_w(int offset,int data);
+extern int dkong_sh_init(const char *gamename);
+extern void dkong_sh_update(void);
 
 
 
@@ -123,9 +152,10 @@ static struct MemoryWriteAddress dkong_writemem[] =
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x7800, 0x7803, MWA_RAM },	/* ???? */
 	{ 0x7808, 0x7808, MWA_RAM },	/* ???? */
-	{ 0x7c00, 0x7c00, MWA_RAM },	/* ???? */
-	{ 0x7d00, 0x7d07, MWA_RAM },	/* ???? */
-	{ 0x7d80, 0x7d83, MWA_RAM },	/* ???? */
+	{ 0x7c00, 0x7c00, dkong_sh2_w },    	/* ???? */
+	{ 0x7d00, 0x7d07, dkong_sh1_w },    /* ???? */
+	{ 0x7d80, 0x7d80, dkong_sh3_w },
+	{ 0x7d81, 0x7d83, MWA_RAM },	/* ???? */
 	{ 0x7d85, 0x7d87, MWA_RAM },	/* ???? */
 	{ -1 }	/* end of table */
 };
@@ -505,7 +535,7 @@ static unsigned char dkongjr_colortable[] =
 
 
 
-const struct MachineDriver dkong_driver =
+static struct MachineDriver dkong_machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -518,17 +548,50 @@ const struct MachineDriver dkong_driver =
 		}
 	},
 	60,
-	input_ports,dsw,
 	0,
 
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
 	dkong_gfxdecodeinfo,
 	sizeof(palette)/3,sizeof(dkong_colortable),
-	0,0,palette,dkong_colortable,
-	0,17,
-	0,45,
-	8*13,8*16,4,
+	0,
+
+	0,
+	dkong_vh_start,
+	generic_vh_stop,
+	dkong_vh_screenrefresh,
+
+	/* sound hardware */
+	0,
+	dkong_sh_init,
+	0,
+	0,
+	dkong_sh_update
+};
+
+
+
+static struct MachineDriver dkongjr_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			3072000,	/* 3.072 Mhz (?) */
+			0,
+			dkongjr_readmem,dkongjr_writemem,0,0,
+			nmi_interrupt,1
+		}
+	},
+	60,
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
+	dkongjr_gfxdecodeinfo,
+	sizeof(palette)/3,sizeof(dkongjr_colortable),
+	0,
+
 	0,
 	dkong_vh_start,
 	generic_vh_stop,
@@ -544,39 +607,137 @@ const struct MachineDriver dkong_driver =
 
 
 
-const struct MachineDriver dkongjr_driver =
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+ROM_START( dkong_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "dk.5e",  0x0000, 0x1000 )
+	ROM_LOAD( "dk.5c",  0x1000, 0x1000 )
+	ROM_LOAD( "dk.5b",  0x2000, 0x1000 )
+	ROM_LOAD( "dk.5a",  0x3000, 0x1000 )
+
+	ROM_REGION(0x3000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "dk.3n",  0x0000, 0x0800 )
+	ROM_LOAD( "dk.3p",  0x0800, 0x0800 )
+	ROM_LOAD( "dk.7c",  0x1000, 0x0800 )
+	ROM_LOAD( "dk.7d",  0x1800, 0x0800 )
+	ROM_LOAD( "dk.7e",  0x2000, 0x0800 )
+	ROM_LOAD( "dk.7f",  0x2800, 0x0800 )
+
+	ROM_REGION(0x1000)	/* sound? */
+	ROM_LOAD( "dk.3h",  0x0000, 0x0800 )
+	ROM_LOAD( "dk.3f",  0x0800, 0x0800 )
+ROM_END
+
+ROM_START( dkongjr_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "dkj.5b",  0x0000, 0x1000 )
+	ROM_CONTINUE(        0x3000, 0x1000 )
+	ROM_LOAD( "dkj.5c",  0x2000, 0x0800 )
+	ROM_CONTINUE(        0x4800, 0x0800 )
+	ROM_CONTINUE(        0x1000, 0x0800 )
+	ROM_CONTINUE(        0x5800, 0x0800 )
+	ROM_LOAD( "dkj.5e",  0x4000, 0x0800 )
+	ROM_CONTINUE(        0x2800, 0x0800 )
+	ROM_CONTINUE(        0x5000, 0x0800 )
+	ROM_CONTINUE(        0x1800, 0x0800 )
+
+	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "dkj.3n",  0x0000, 0x1000 )
+	ROM_LOAD( "dkj.3p",  0x1000, 0x1000 )
+	ROM_LOAD( "dkj.7c",  0x2000, 0x0800 )
+	ROM_LOAD( "dkj.7d",  0x2800, 0x0800 )
+	ROM_LOAD( "dkj.7e",  0x3000, 0x0800 )
+	ROM_LOAD( "dkj.7f",  0x3800, 0x0800 )
+
+	ROM_REGION(0x1000)	/* sound? */
+	ROM_LOAD( "dkj.3h",  0x0000, 0x1000 )
+ROM_END
+
+
+
+static int hiload(const char *name)
 {
-	/* basic machine hardware */
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x611d],"\x50\x76\x00",3) == 0 &&
+			memcmp(&RAM[0x61a5],"\x00\x43\x00",3) == 0)
 	{
+		FILE *f;
+
+
+		if ((f = fopen(name,"rb")) != 0)
 		{
-			CPU_Z80,
-			3072000,	/* 3.072 Mhz (?) */
-			0,
-			dkongjr_readmem,dkongjr_writemem,0,0,
-			nmi_interrupt,1
+			fread(&RAM[0x6100],1,34*5,f);
+			RAM[0x60b8] = RAM[0x611d];
+			RAM[0x60b9] = RAM[0x611e];
+			RAM[0x60ba] = RAM[0x611f];
+			/* also copy the high score to the screen, otherwise it won't be */
+			/* updated until a new game is started */
+			cpu_writemem(0x7621,RAM[0x6108]);
+			cpu_writemem(0x7601,RAM[0x6109]);
+			cpu_writemem(0x75e1,RAM[0x610a]);
+			cpu_writemem(0x75c1,RAM[0x610b]);
+			cpu_writemem(0x75a1,RAM[0x610b]);
+			fclose(f);
 		}
-	},
-	60,
-	input_ports,dsw,
-	0,
 
-	/* video hardware */
-	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
-	dkongjr_gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(dkongjr_colortable),
-	0,0,palette,dkongjr_colortable,
-	0,17,
-	0,60,
-	8*13,8*16,4,
-	0,
-	dkong_vh_start,
-	generic_vh_stop,
-	dkong_vh_screenrefresh,
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
 
-	/* sound hardware */
-	0,
-	0,
-	0,
-	0,
-	0
+
+
+static void hisave(const char *name)
+{
+	FILE *f;
+
+
+	if ((f = fopen(name,"wb")) != 0)
+	{
+		fwrite(&RAM[0x6100],1,34*5,f);
+		fclose(f);
+	}
+}
+
+
+
+struct GameDriver dkong_driver =
+{
+	"dkong",
+	&dkong_machine_driver,
+
+	dkong_rom,
+	0, 0,
+
+	input_ports, dsw,
+
+	0, palette, dkong_colortable,
+	0, 17,
+	0, 45,
+	8*13, 8*16, 4,
+
+	hiload, hisave
+};
+
+struct GameDriver dkongjr_driver =
+{
+	"dkongjr",
+	&dkongjr_machine_driver,
+
+	dkongjr_rom,
+	0, 0,
+
+	input_ports, dsw,
+
+	0, palette, dkongjr_colortable,
+	0, 17,
+	0, 60,
+	8*13, 8*16, 4,
+
+	hiload, hisave
 };
