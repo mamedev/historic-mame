@@ -7,12 +7,13 @@ CFLAGS = -Isrc -Isrc/z80 -fstrength-reduce -funroll-loops -fomit-frame-pointer -
 LIBS   = -lalleg
 OBJS   = obj/mame.o obj/common.o obj/machine.o obj/driver.o obj/osdepend.o \
          obj/pacman/machine.o obj/pacman/vidhrdw.o obj/pacman/driver.o \
-		 obj/crush/machine.o obj/crush/driver.o \
-         obj/pengo/machine.o obj/pengo/vidhrdw.o obj/pengo/sndhrdw.o obj/pengo/driver.o \
+		 obj/crush/driver.o \
+         obj/pengo/vidhrdw.o obj/pengo/sndhrdw.o obj/pengo/driver.o \
          obj/ladybug/machine.o obj/ladybug/vidhrdw.o obj/ladybug/sndhrdw.o obj/ladybug/driver.o \
          obj/mrdo/machine.o obj/mrdo/vidhrdw.o obj/mrdo/driver.o \
-         obj/cclimber/machine.o obj/cclimber/vidhrdw.o obj/cclimber/sndhrdw.o obj/cclimber/driver.o \
-         obj/ckong/machine.o obj/ckong/vidhrdw.o obj/ckong/driver.o \
+         obj/cclimber/vidhrdw.o obj/cclimber/sndhrdw.o obj/cclimber/driver.o \
+         obj/ckong/vidhrdw.o obj/ckong/driver.o \
+         obj/dkong/vidhrdw.o obj/dkong/driver.o \
          obj/Z80/Z80.o
 
 VPATH = src src/z80
@@ -26,11 +27,10 @@ mame.exe:  $(OBJS)
 obj/osdepend.o: src/msdos/msdos.c
 	 $(CC) $(DEFS) $(CFLAGS) -Isrc/msdos -o $@ -c $<
 
-obj/%.o: src/%.c
+obj/%.o: src/%.c common.h machine.h driver.h
 	 $(CC) $(DEFS) $(CFLAGS) -o $@ -c $<
 
 # dependencies
-obj/%.o:	    common.h machine.h driver.h
 obj/cclimber/sndhrdw.o:  src/cclimber/psg.c src/cclimber/psg.h
 obj/Z80/Z80.o:  Z80.c Z80.h Z80Codes.h Z80IO.h DAA.h
 
@@ -45,4 +45,5 @@ clean:
 	del obj\mrdo\*.o
 	del obj\cclimber\*.o
 	del obj\ckong\*.o
+	del obj\dkong\*.o
 	del mame.exe

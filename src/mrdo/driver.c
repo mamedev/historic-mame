@@ -89,10 +89,7 @@ f800      playfield 0 X scroll position
 #include "machine.h"
 #include "common.h"
 
-int mrdo_IN0_r(int offset);
-int mrdo_IN1_r(int offset);
-int mrdo_DSW1_r(int offset);
-int mrdo_DSW2_r(int offset);
+
 int mrdo_SECRE_r(int offset);
 
 unsigned char *mrdo_videoram1;
@@ -122,10 +119,10 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xe000, 0xefff, MRA_RAM },
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x8fff, MRA_RAM },	/* video and color RAM */
-	{ 0xa000, 0xa000, mrdo_IN0_r },
-	{ 0xa001, 0xa001, mrdo_IN1_r },
-	{ 0xa002, 0xa002, mrdo_DSW1_r },
-	{ 0xa003, 0xa003, mrdo_DSW2_r },
+	{ 0xa000, 0xa000, input_port_0_r },	/* IN0 */
+	{ 0xa001, 0xa001, input_port_1_r },	/* IN1 */
+	{ 0xa002, 0xa002, input_port_2_r },	/* DSW1 */
+	{ 0xa003, 0xa003, input_port_3_r },	/* DSW2 */
 	{ 0x9803, 0x9803, mrdo_SECRE_r },
 	{ -1 }	/* end of table */
 };
@@ -149,12 +146,41 @@ static struct MemoryWriteAddress writemem[] =
 
 
 
+static struct InputPort input_ports[] =
+{
+	{	/* IN0 */
+		0xff,
+		{ OSD_KEY_LEFT, OSD_KEY_DOWN, OSD_KEY_RIGHT, OSD_KEY_UP,
+				OSD_KEY_CONTROL, OSD_KEY_1, OSD_KEY_2, 0 },
+		{ OSD_JOY_LEFT, OSD_JOY_DOWN, OSD_JOY_RIGHT, OSD_JOY_UP,
+				OSD_JOY_FIRE, 0, 0, 0 }
+	},
+	{	/* IN1 */
+		0xff,
+		{ 0, 0, 0, 0, 0, 0, OSD_KEY_3, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+	},
+	{	/* DSW1 */
+		0xdf,
+		{ 0, 0, OSD_KEY_F1, 0, 0, 0, 0, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+	},
+	{	/* DSW2 */
+		0xff,
+		{ 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+	},
+	{ -1 }	/* end of table */
+};
+
+
+
 static struct DSW dsw[] =
 {
-	{ 0, 0xc0, "LIVES", { "2", "5", "4", "3" }, 1 },
-	{ 0, 0x03, "DIFFICULTY", { "HARDEST", "HARD", "MEDIUM", "EASY" }, 1 },
-	{ 0, 0x10, "EXTRA", { "HARD", "EASY" }, 1 },
-	{ 0, 0x08, "SPECIAL", { "HARD", "EASY" }, 1 },
+	{ 2, 0xc0, "LIVES", { "2", "5", "4", "3" }, 1 },
+	{ 2, 0x03, "DIFFICULTY", { "HARDEST", "HARD", "MEDIUM", "EASY" }, 1 },
+	{ 2, 0x10, "EXTRA", { "HARD", "EASY" }, 1 },
+	{ 2, 0x08, "SPECIAL", { "HARD", "EASY" }, 1 },
 	{ -1 }
 };
 
@@ -165,7 +191,7 @@ static struct GfxLayout charlayout =
 	8,8,	/* 8*8 characters */
 	512,	/* 512 characters */
 	2,	/* 2 bits per pixel */
-	512*8*8,	/* the two bitplanes are separated */
+	{ 0, 512*8*8 },	/* the two bitplanes are separated */
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	8*8	/* every char takes 8 consecutive bytes */
@@ -175,11 +201,11 @@ static struct GfxLayout spritelayout =
 	16,16,	/* 16*16 sprites */
 	128,	/* 128 sprites */
 	2,	/* 2 bits per pixel */
-	-4,	/* the two bitplanes for 4 pixels are packed into one byte */
+	{ 4, 0 },	/* the two bitplanes for 4 pixels are packed into one byte */
 	{ 0*16, 2*16, 4*16, 6*16, 8*16, 10*16, 12*16, 14*16,
 			16*16, 18*16, 20*16, 22*16, 24*16, 26*16, 28*16, 30*16 },
-	{ 24+4, 24+5, 24+6, 24+7, 16+4, 16+5, 16+6, 16+7,
-			8+4, 8+5, 8+6, 8+7, 4, 5, 6, 7 },
+	{ 24+0, 24+1, 24+2, 24+3, 16+0, 16+1, 16+2, 16+3,
+			8+0, 8+1, 8+2, 8+3, 0, 1, 2, 3 },
 	64*8	/* every sprite takes 64 consecutive bytes */
 };
 
@@ -187,9 +213,9 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 0x10000, &charlayout,     0, 127 },
-	{ 0x12000, &charlayout,     0, 127 },
-	{ 0x14000, &spritelayout, 128, 143 },
+	{ 0x10000, &charlayout,       0, 128 },
+	{ 0x12000, &charlayout,       0, 128 },
+	{ 0x14000, &spritelayout, 4*128,  16 },
 	{ -1 } /* end of array */
 };
 
@@ -226,7 +252,7 @@ const struct MachineDriver mrdo_driver =
 	60,
 	readmem,
 	writemem,
-	dsw, { 0xdf , 0xff },
+	input_ports,dsw,
 	0,
 	interrupt,
 	0,
@@ -234,7 +260,7 @@ const struct MachineDriver mrdo_driver =
 	/* video hardware */
 	256,256,
 	gfxdecodeinfo,
-	256,144,
+	256,4*144,
 	color_prom,mrdo_vh_convert_color_prom,0,0,
 	0,10,
 	0x09,0x3e,

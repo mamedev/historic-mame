@@ -114,6 +114,4 @@ void ladybug_sh_update(void)
 			osd_adjust_sample(voice,freq,volume);
 		}
 	}
-
-	osd_update_audio();
 }

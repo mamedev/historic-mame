@@ -19,6 +19,7 @@ Lady Bug                   Yes            Yes            Partial
 Mr. Do!                    Yes            Yes             Yes
 Crazy Climber              Yes            Yes             Yes
 Crazy Kong                 Yes            No              Yes
+Donkey Kong                Yes            No              No
 
 
 
@@ -37,8 +38,9 @@ Z80Em Portable Zilog Z80 Emulator Copyright (C) Marcel de Kogel 1996,1997
 Allegro library by Shawn Hargreaves, 1994/96
 SEAL Synthetic Audio Library API Interface Copyright (C) 1995, 1996
    Carlos Hasan. All Rights Reserved.
-Video mode created using Tweak 1.6b by Robert Schmidt, who also wrote
-TwkUser.c.
+Video modes created using Tweak 1.6b by Robert Schmidt, who also wrote
+   TwkUser.c. Thanks to Chuck Cochems for the help in making them more
+   compatible.
 AY-3-8910 emulation by Ville Hallik (ville@physic.ut.ee) and Michael Cuddy
   (mcuddy@FensEnde.com).
 
@@ -52,6 +54,7 @@ Information about the Crazy Climber machine hardware (including palette) and
 Thanks to Andy Milne (andy@canetics.com) for the information on the Crazy
    Climber sound roms.
 Crazy Kong emulation set up by Ville Laitinen (ville@sms.fi).
+Some information on Donkey Kong gathered from MageX by Edward Massey
 
 
 
@@ -223,3 +226,14 @@ CTRL    Jump
 
 Known issues:
 - Some problems with sound
+
+
+
+Donkey Kong ("dkong")
+--------------------
+
+Arrows  Move around
+CTRL    Jump
+
+Known issues:
+- I can't find the color RAM!

@@ -87,9 +87,6 @@ write:
 #include "machine.h"
 #include "common.h"
 
-int crush_IN0_r(int offset);
-int crush_IN1_r(int offset);
-int pacman_DSW1_r(int offset);
 
 unsigned char *pengo_videoram;
 unsigned char *pengo_colorram;
@@ -113,9 +110,9 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x4c00, 0x4fff, MRA_RAM },	/* includeing sprite codes at 4ff0-4fff */
 	{ 0x4000, 0x47ff, MRA_RAM },	/* video and color RAM */
 	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x5000, 0x503f, crush_IN0_r },
-	{ 0x5040, 0x507f, crush_IN1_r },
-	{ 0x5080, 0x50bf, pacman_DSW1_r },
+	{ 0x5000, 0x503f, input_port_0_r },	/* IN0 */
+	{ 0x5040, 0x507f, input_port_1_r },	/* IN1 */
+	{ 0x5080, 0x50bf, input_port_2_r },	/* DSW1 */
 	{ -1 }	/* end of table */
 };
 
@@ -137,11 +134,35 @@ static struct MemoryWriteAddress writemem[] =
 
 
 
+static struct InputPort input_ports[] =
+{
+	{	/* IN0 */
+		0xef,	/* standup cabinet */
+		{ OSD_KEY_UP, OSD_KEY_LEFT, OSD_KEY_RIGHT, OSD_KEY_DOWN,
+				0, 0, 0, OSD_KEY_3 },
+		{ OSD_JOY_UP, OSD_JOY_LEFT, OSD_JOY_RIGHT, OSD_JOY_DOWN,
+				0, 0, 0, 0 }
+	},
+	{	/* IN1 */
+		0xff,
+		{ 0, 0, 0, 0, 0, OSD_KEY_1, OSD_KEY_2, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+	},
+	{	/* DSW1 */
+		0xf1,
+		{ 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+	},
+	{ -1 }	/* end of table */
+};
+
+
+
 static struct DSW dsw[] =
 {
-	{ 0, 0x0c, "LIVES", { "3", "4", "5", "6" }, },
-	{ 0, 0x20, "TELEPORT HOLES", { "ON", "OFF" }, 1 },
-	{ 0, 0x10, "FIRST PATTERN", { "HARD", "EASY" }, 1 },
+	{ 2, 0x0c, "LIVES", { "3", "4", "5", "6" }, },
+	{ 2, 0x20, "TELEPORT HOLES", { "ON", "OFF" }, 1 },
+	{ 2, 0x10, "FIRST PATTERN", { "HARD", "EASY" }, 1 },
 	{ -1 }
 };
 
@@ -152,7 +173,7 @@ static struct GfxLayout charlayout =
 	8,8,	/* 8*8 characters */
 	256,	/* 256 characters */
 	2,	/* 2 bits per pixel */
-	4,	/* the two bitplanes for 4 pixels are packed into one byte */
+	{ 0, 4 },	/* the two bitplanes for 4 pixels are packed into one byte */
 	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 }, /* characters are rotated 90 degrees */
 	{ 8*8+0, 8*8+1, 8*8+2, 8*8+3, 0, 1, 2, 3 },	/* bits are packed in groups of four */
 	16*8	/* every char takes 16 bytes */
@@ -162,7 +183,7 @@ static struct GfxLayout spritelayout =
 	16,16,	/* 16*16 sprites */
 	64,	/* 64 sprites */
 	2,	/* 2 bits per pixel */
-	4,	/* the two bitplanes for 4 pixels are packed into one byte */
+	{ 0, 4 },	/* the two bitplanes for 4 pixels are packed into one byte */
 	{ 39 * 8, 38 * 8, 37 * 8, 36 * 8, 35 * 8, 34 * 8, 33 * 8, 32 * 8,
 			7 * 8, 6 * 8, 5 * 8, 4 * 8, 3 * 8, 2 * 8, 1 * 8, 0 * 8 },
 	{ 8*8, 8*8+1, 8*8+2, 8*8+3, 16*8+0, 16*8+1, 16*8+2, 16*8+3,
@@ -174,8 +195,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 0x10000, &charlayout,   0, 31 },
-	{ 0x11000, &spritelayout, 0, 31 },
+	{ 0x10000, &charlayout,   0, 32 },
+	{ 0x11000, &spritelayout, 0, 32 },
 	{ -1 } /* end of array */
 };
 
@@ -283,7 +304,7 @@ const struct MachineDriver crush_driver =
 	60,
 	readmem,
 	writemem,
-	dsw, { 0xf1 },
+	input_ports,dsw,
 	0,
 	interrupt,
 	0,
@@ -291,7 +312,7 @@ const struct MachineDriver crush_driver =
 	/* video hardware */
 	224,288,
 	gfxdecodeinfo,
-	sizeof(palette)/3,sizeof(colortable)/4,
+	sizeof(palette)/3,sizeof(colortable),
 	0,0,palette,colortable,
 	0,'A',
 	0x0f,0x09,

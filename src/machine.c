@@ -155,7 +155,7 @@ int vh_open(void)
 
 	Machine->background_pen = pens[0];
 
-	for (i = 0;i < 4 * drv->color_codes;i++)
+	for (i = 0;i < drv->color_table_len;i++)
 		remappedtable[i] = pens[colortable[i]];
 
 
@@ -174,9 +174,8 @@ int vh_open(void)
 			return 1;
 		}
 
-		Machine->gfx[i]->colortable = &remappedtable[4 * drv->gfxdecodeinfo[i].first_color_code];
-		Machine->gfx[i]->total_colors =
-				drv->gfxdecodeinfo[i].last_color_code - drv->gfxdecodeinfo[i].first_color_code + 1;
+		Machine->gfx[i]->colortable = &remappedtable[drv->gfxdecodeinfo[i].color_codes_start];
+		Machine->gfx[i]->total_colors = drv->gfxdecodeinfo[i].total_color_codes;
 	}
 
 	return 0;
@@ -203,17 +202,22 @@ int run_machine(const char *gamename)
 			{
 				FILE *f;
 				char name[100];
-				int i;
+				int i,incount;
 
 
-				for (i = 0;i < MAX_DIP_SWITCHES;i++)
-					Machine->dsw[i] = drv->defaultdsw[i];
+				incount = 0;
+				while (drv->input_ports[incount].default_value != -1) incount++;
 
 				/* read dipswitch settings from disk */
 				sprintf(name,"%s/%s.dsw",gamename,gamename);
 				if ((f = fopen(name,"rb")) != 0)
 				{
-					fread(Machine->dsw,1,MAX_DIP_SWITCHES,f);
+					/* use name as temporary buffer */
+					if (fread(name,1,incount,f) == incount)
+					{
+						for (i = 0;i < incount;i++)
+							drv->input_ports[i].default_value = name[i];
+					}
 					fclose(f);
 				}
 
@@ -228,7 +232,11 @@ int run_machine(const char *gamename)
 				sprintf(name,"%s/%s.dsw",gamename,gamename);
 				if ((f = fopen(name,"wb")) != 0)
 				{
-					fwrite(Machine->dsw,1,MAX_DIP_SWITCHES,f);
+					/* use name as temporary buffer */
+					for (i = 0;i < incount;i++)
+						name[i] = drv->input_ports[i].default_value;
+
+					fwrite(name,1,incount,f);
 					fclose(f);
 				}
 
@@ -248,6 +256,79 @@ int run_machine(const char *gamename)
 
 
 /* some functions commonly used by emulators */
+
+int readinputport(int port)
+{
+	int res,i;
+	struct InputPort *in;
+
+
+	in = &Machine->drv->input_ports[port];
+
+	res = in->default_value;
+
+	for (i = 7;i >= 0;i--)
+	{
+		int c;
+
+
+		c = in->keyboard[i];
+		if (c && osd_key_pressed(c))
+			res ^= (1 << i);
+		else
+		{
+			c = in->joystick[i];
+			if (c && osd_joy_pressed(c))
+				res ^= (1 << i);
+		}
+	}
+
+	return res;
+}
+
+
+
+int input_port_0_r(int offset)
+{
+	return readinputport(0);
+}
+
+
+
+int input_port_1_r(int offset)
+{
+	return readinputport(1);
+}
+
+
+
+int input_port_2_r(int offset)
+{
+	return readinputport(2);
+}
+
+
+
+int input_port_3_r(int offset)
+{
+	return readinputport(3);
+}
+
+
+
+int input_port_4_r(int offset)
+{
+	return readinputport(4);
+}
+
+
+
+int input_port_5_r(int offset)
+{
+	return readinputport(5);
+}
+
+
 
 /* start with interrupts enabled, so the generic routine will work even if */
 /* the machine doesn't have an interrupt enable port */
@@ -429,7 +510,7 @@ int Z80_Interrupt(void)
 			if (key == OSD_KEY_ESC) Z80_Running = 0;
 			else if (key == OSD_KEY_TAB)
 			{
-				setdipswitches(Machine->dsw,drv->dswsettings);	/* might set CPURunning to 0 */
+				setdipswitches();	/* might set CPURunning to 0 */
 				displaytext(dt,0);
 			}
 		} while (Z80_Running && key != OSD_KEY_P);
@@ -437,10 +518,13 @@ int Z80_Interrupt(void)
 	}
 
 	/* if the user pressed TAB, go to dipswitch setup menu */
-	if (osd_key_pressed(OSD_KEY_TAB)) setdipswitches(Machine->dsw,drv->dswsettings);
+	if (osd_key_pressed(OSD_KEY_TAB)) setdipswitches();
 
-	(*drv->sh_update)();	/* update sound */
-	osd_update_audio();
+	if (*drv->sh_update)
+	{
+		(*drv->sh_update)();	/* update sound */
+		osd_update_audio();
+	}
 
 	if (++framecount > frameskip)
 	{
@@ -453,11 +537,10 @@ int Z80_Interrupt(void)
 
 		osd_update_display();
 
-		osd_poll_joystick();
-
 		/* now wait until it's time to trigger the interrupt */
 		do
 		{
+			osd_poll_joystick();
 			curr = uclock();
 		} while ((curr - prev) < (frameskip+1) * UCLOCKS_PER_SEC/drv->frames_per_second);
 

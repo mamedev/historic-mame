@@ -21,16 +21,6 @@ static int speedcheat = 0;	/* a well known hack allows to make Pac Man run at fo
 static int interrupt_enable;
 
 
-#define IN0_CREDIT (1<<7)
-#define IN0_RACK_TEST (1<<4)
-#define IN0_DOWN (1<<3)
-#define IN0_RIGHT (1<<2)
-#define IN0_LEFT (1<<1)
-#define IN0_UP (1<<0)
-#define IN1_START2 (1<<6)
-#define IN1_START1 (1<<5)
-#define IN1_TEST (1<<4)
-
 
 int pacman_init_machine(const char *gamename)
 {
@@ -40,67 +30,6 @@ int pacman_init_machine(const char *gamename)
 	else speedcheat = 0;
 
 	return 0;
-}
-
-
-
-int pacman_IN0_r(int offset)
-{
-	int res = 0xff;
-
-
-	if (offset != 0 && errorlog)
-		fprintf(errorlog,"%04x: warning - read IN0 from mirror address %04x\n",Z80_GetPC(),offset);
-
-	if (osd_key_pressed(OSD_KEY_3)) res &= ~IN0_CREDIT;
-	if (osd_key_pressed(OSD_KEY_F1)) res &= ~IN0_RACK_TEST;
-	if (osd_key_pressed(OSD_KEY_DOWN) || osd_joy_down) res &= ~IN0_DOWN;
-	if (osd_key_pressed(OSD_KEY_RIGHT) || osd_joy_right) res &= ~IN0_RIGHT;
-	if (osd_key_pressed(OSD_KEY_LEFT) || osd_joy_left) res &= ~IN0_LEFT;
-	if (osd_key_pressed(OSD_KEY_UP) || osd_joy_up) res &= ~IN0_UP;
-
-	/* speed up cheat */
-	if (speedcheat)
-	{
-		if (osd_key_pressed(OSD_KEY_CONTROL) || osd_joy_b1 || osd_joy_b2)
-		{
-			RAM[0x180b] = 0x01;
-			RAM[0x1ffd] = 0xbd;
-		}
-		else
-		{
-			RAM[0x180b] = 0xbe;
-			RAM[0x1ffd] = 0x00;
-		}
-	}
-
-	return res;
-}
-
-
-
-int pacman_IN1_r(int offset)
-{
-	int res = 0xff;
-
-
-	if (offset != 0 && errorlog)
-		fprintf(errorlog,"%04x: warning - read IN1 from mirror address %04x\n",Z80_GetPC(),offset);
-
-	if (osd_key_pressed(OSD_KEY_2)) res &= ~IN1_START2;
-	if (osd_key_pressed(OSD_KEY_1)) res &= ~IN1_START1;
-	if (osd_key_pressed(OSD_KEY_F2)) res &= ~IN1_TEST;
-	return res;
-}
-
-
-
-int pacman_DSW1_r(int offset)
-{
-	if (offset != 0 && errorlog)
-		fprintf(errorlog,"%04x: warning - read DSW1 from mirror address %04x\n",Z80_GetPC(),offset);
-
-	return Machine->dsw[0];
 }
 
 
@@ -126,6 +55,21 @@ int IntVector = 0xff;	/* Here we store the interrupt vector, if the code perform
 
 int pacman_interrupt(void)
 {
+	/* speed up cheat */
+	if (speedcheat)
+	{
+		if (osd_key_pressed(OSD_KEY_CONTROL) || osd_joy_pressed(OSD_JOY_FIRE))
+		{
+			RAM[0x180b] = 0x01;
+			RAM[0x1ffd] = 0xbd;
+		}
+		else
+		{
+			RAM[0x180b] = 0xbe;
+			RAM[0x1ffd] = 0x00;
+		}
+	}
+
 	if (interrupt_enable == 0) return Z80_IGNORE_INT;
 	else return IntVector;
 }

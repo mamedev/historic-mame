@@ -89,9 +89,7 @@ OUT on port $0 sets the interrupt vector
 #include "machine.h"
 #include "common.h"
 
-int pacman_IN0_r(int offset);
-int pacman_IN1_r(int offset);
-int pacman_DSW1_r(int offset);
+
 void pacman_interrupt_enable_w(int offset,int data);
 int pacman_init_machine(const char *gamename);
 int pacman_interrupt(void);
@@ -120,9 +118,9 @@ static struct MemoryReadAddress pacman_readmem[] =
 	{ 0x4c00, 0x4fff, MRA_RAM },	/* includeing sprite codes at 4ff0-4fff */
 	{ 0x4000, 0x47ff, MRA_RAM },	/* video and color RAM */
 	{ 0x0000, 0x3fff, MRA_ROM },
-	{ 0x5000, 0x503f, pacman_IN0_r },
-	{ 0x5040, 0x507f, pacman_IN1_r },
-	{ 0x5080, 0x50bf, pacman_DSW1_r },
+	{ 0x5000, 0x503f, input_port_0_r },	/* IN0 */
+	{ 0x5040, 0x507f, input_port_1_r },	/* IN1 */
+	{ 0x5080, 0x50bf, input_port_2_r },	/* DSW1 */
 	{ -1 }	/* end of table */
 };
 static struct MemoryReadAddress mspacman_readmem[] =
@@ -131,9 +129,9 @@ static struct MemoryReadAddress mspacman_readmem[] =
 	{ 0x4000, 0x47ff, MRA_RAM },	/* video and color RAM */
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x8000, 0x9fff, MRA_ROM },
-	{ 0x5000, 0x503f, pacman_IN0_r },
-	{ 0x5040, 0x507f, pacman_IN1_r },
-	{ 0x5080, 0x50bf, pacman_DSW1_r },
+	{ 0x5000, 0x503f, input_port_0_r },	/* IN0 */
+	{ 0x5040, 0x507f, input_port_1_r },	/* IN1 */
+	{ 0x5080, 0x50bf, input_port_2_r },	/* DSW1 */
 	{ -1 }	/* end of table */
 };
 
@@ -164,7 +162,7 @@ static struct MemoryWriteAddress mspacman_writemem[] =
 	{ 0x5060, 0x506f, MWA_RAM, &pengo_spritepos },
 	{ 0xc000, 0xc3ff, pengo_videoram_w },	/* mirror address for video ram, */
 	{ 0xc400, 0xc7ef, pengo_colorram_w },	/* used to display HIGH SCORE and CREDITS */
-	{ 0x5000, 0x5000, interrupt_enable_w },
+	{ 0x5000, 0x5000, pacman_interrupt_enable_w },
 	{ 0x50c0, 0x50c0, MWA_NOP },
 	{ 0x5001, 0x5001, pengo_sound_enable_w },
 	{ 0x5002, 0x5007, MWA_NOP },
@@ -175,19 +173,43 @@ static struct MemoryWriteAddress mspacman_writemem[] =
 
 
 
+static struct InputPort input_ports[] =
+{
+	{	/* IN0 */
+		0xff,
+		{ OSD_KEY_UP, OSD_KEY_LEFT, OSD_KEY_RIGHT, OSD_KEY_DOWN,
+				OSD_KEY_F1, 0, 0, OSD_KEY_3 },
+		{ OSD_JOY_UP, OSD_JOY_LEFT, OSD_JOY_RIGHT, OSD_JOY_DOWN,
+				0, 0, 0, 0 }
+	},
+	{	/* IN1 */
+		0xff,
+		{ 0, 0, 0, 0, OSD_KEY_F2, OSD_KEY_1, OSD_KEY_2, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+	},
+	{	/* DSW1 */
+		0xe9,
+		{ 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+	},
+	{ -1 }	/* end of table */
+};
+
+
+
 static struct DSW pacdsw[] =
 {
-	{ 0, 0x0c, "LIVES", { "1", "2", "3", "5" } },
-	{ 0, 0x30, "BONUS", { "10000", "15000", "20000", "NONE" } },
-	{ 0, 0x40, "DIFFICULTY", { "HARD", "NORMAL" }, 1 },
-	{ 0, 0x80, "GHOST NAMES", { "ALTERNATE", "NORMAL" }, 1 },
+	{ 2, 0x0c, "LIVES", { "1", "2", "3", "5" } },
+	{ 2, 0x30, "BONUS", { "10000", "15000", "20000", "NONE" } },
+	{ 2, 0x40, "DIFFICULTY", { "HARD", "NORMAL" }, 1 },
+	{ 2, 0x80, "GHOST NAMES", { "ALTERNATE", "NORMAL" }, 1 },
 	{ -1 }
 };
 static struct DSW mspacdsw[] =
 {
-	{ 0, 0x0c, "LIVES", { "1", "2", "3", "5" } },
-	{ 0, 0x30, "BONUS", { "10000", "15000", "20000", "NONE" } },
-	{ 0, 0x40, "DIFFICULTY", { "HARD", "NORMAL" }, 1 },
+	{ 2, 0x0c, "LIVES", { "1", "2", "3", "5" } },
+	{ 2, 0x30, "BONUS", { "10000", "15000", "20000", "NONE" } },
+	{ 2, 0x40, "DIFFICULTY", { "HARD", "NORMAL" }, 1 },
 	{ -1 }
 };
 
@@ -198,7 +220,7 @@ static struct GfxLayout charlayout =
 	8,8,	/* 8*8 characters */
 	256,	/* 256 characters */
 	2,	/* 2 bits per pixel */
-	4,	/* the two bitplanes for 4 pixels are packed into one byte */
+	{ 0, 4},	/* the two bitplanes for 4 pixels are packed into one byte */
 	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 }, /* characters are rotated 90 degrees */
 	{ 8*8+0, 8*8+1, 8*8+2, 8*8+3, 0, 1, 2, 3 },	/* bits are packed in groups of four */
 	16*8	/* every char takes 16 bytes */
@@ -208,7 +230,7 @@ static struct GfxLayout spritelayout =
 	16,16,	/* 16*16 sprites */
 	64,	/* 64 sprites */
 	2,	/* 2 bits per pixel */
-	4,	/* the two bitplanes for 4 pixels are packed into one byte */
+	{ 0, 4 },	/* the two bitplanes for 4 pixels are packed into one byte */
 	{ 39 * 8, 38 * 8, 37 * 8, 36 * 8, 35 * 8, 34 * 8, 33 * 8, 32 * 8,
 			7 * 8, 6 * 8, 5 * 8, 4 * 8, 3 * 8, 2 * 8, 1 * 8, 0 * 8 },
 	{ 8*8, 8*8+1, 8*8+2, 8*8+3, 16*8+0, 16*8+1, 16*8+2, 16*8+3,
@@ -220,8 +242,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 0x10000, &charlayout,   0, 31 },
-	{ 0x11000, &spritelayout, 0, 31 },
+	{ 0x10000, &charlayout,   0, 32 },
+	{ 0x11000, &spritelayout, 0, 32 },
 	{ -1 } /* end of array */
 };
 
@@ -281,7 +303,7 @@ const struct MachineDriver pacman_driver =
 	60,
 	pacman_readmem,
 	pacman_writemem,
-	pacdsw, { 0xe9 },
+	input_ports,pacdsw,
 	pacman_init_machine,
 	pacman_interrupt,
 	pacman_out,
@@ -289,7 +311,7 @@ const struct MachineDriver pacman_driver =
 	/* video hardware */
 	224,288,
 	gfxdecodeinfo,
-	16,32,
+	16,4*32,
 	color_prom,pacman_vh_convert_color_prom,0,0,
 	'0','A',
 	0x0f,0x09,
@@ -318,15 +340,15 @@ const struct MachineDriver mspacman_driver =
 	60,
 	mspacman_readmem,
 	mspacman_writemem,
-	mspacdsw, { 0xe9 },
+	input_ports,mspacdsw,
 	pacman_init_machine,
-	interrupt,
+	pacman_interrupt,
 	0,
 
 	/* video hardware */
 	224,288,
 	gfxdecodeinfo,
-	16,32,
+	16,4*32,
 	color_prom,pacman_vh_convert_color_prom,0,0,
 	'0','A',
 	0x0f,0x09,

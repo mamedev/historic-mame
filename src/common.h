@@ -26,7 +26,7 @@ struct GfxLayout
 	int width,height;	/* width and height of chars/sprites */
 	int total;	/* total numer of chars/sprites in the rom */
 	int planes;	/* number of bitplanes */
-	int planeincrement;	/* distance (in bits) between two adjacent bitplanes */
+	int planeoffset[8];	/* start of every bitplane */
 	int xoffset[32];	/* coordinates of the bit corresponding to the pixel */
 	int yoffset[32];	/* of the given coordinates */
 	int charincrement;	/* distance between two consecutive characters/sprites */
@@ -58,19 +58,6 @@ struct rectangle
 
 
 
-/* dipswitch setting definition */
-struct DSW
-{
-	int num;	/* dispswitch pack affected */
-				/* -1 terminates the array */
-	int mask;	/* bits affected */
-	const char *name;	/* name of the setting */
-	const char *values[16];/* null terminated array of names for the values */
-									/* the setting can have */
-	int reverse; 	/* set to 1 to display values in reverse order */
-};
-
-
 struct DisplayText
 {
 	const unsigned char *text;	/* 0 marks the end of the array */
@@ -89,7 +76,7 @@ void freegfx(struct GfxElement *gfx);
 void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
 		struct rectangle *clip,int transparency,int transparent_color);
-void setdipswitches(int *dsw,const struct DSW *dswsettings);
+void setdipswitches(void);
 void displaytext(const struct DisplayText *dt,int erase);
 
 

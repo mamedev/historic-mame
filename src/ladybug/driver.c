@@ -88,10 +88,9 @@ Coin insertion in left slot generates an interrupt, in right slot a NMI.
 #include "machine.h"
 #include "common.h"
 
+
 int ladybug_IN0_r(int offset);
 int ladybug_IN1_r(int offset);
-int ladybug_DSW1_r(int offset);
-int ladybug_DSW2_r(int offset);
 int ladybug_interrupt(void);
 
 unsigned char *ladybug_videoram;
@@ -113,13 +112,13 @@ void ladybug_sh_update(void);
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0x9001, 0x9001, ladybug_IN1_r },
+	{ 0x9001, 0x9001, ladybug_IN1_r },	/* IN1 */
 	{ 0x6000, 0x6fff, MRA_RAM },
 	{ 0x0000, 0x5fff, MRA_ROM },
 	{ 0xd000, 0xd7ff, MRA_RAM },	/* video and color RAM */
-	{ 0x9000, 0x9000, ladybug_IN0_r },
-	{ 0x9002, 0x9002, ladybug_DSW1_r },
-	{ 0x9003, 0x9003, ladybug_DSW2_r },
+	{ 0x9000, 0x9000, ladybug_IN0_r },	/* IN0 */
+	{ 0x9002, 0x9002, input_port_2_r },	/* DSW1 */
+	{ 0x9003, 0x9003, input_port_3_r },	/* DSW2 */
 	{ 0x8000, 0x8fff, MRA_NOP },
 	{ -1 }	/* end of table */
 };
@@ -139,11 +138,40 @@ static struct MemoryWriteAddress writemem[] =
 
 
 
+static struct InputPort input_ports[] =
+{
+	{	/* IN0 */
+		0xff,
+		{ OSD_KEY_LEFT, OSD_KEY_DOWN, OSD_KEY_RIGHT, OSD_KEY_UP,
+				0, OSD_KEY_1, OSD_KEY_2, 0 },
+		{ OSD_JOY_LEFT, OSD_JOY_DOWN, OSD_JOY_RIGHT, OSD_JOY_UP,
+				0, 0, 0, 0 }
+	},
+	{	/* IN1 */
+		0x3f,
+		{ 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+	},
+	{	/* DSW1 */
+		0xdf,
+		{ 0, 0, 0, OSD_KEY_F1, 0, 0, 0, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+	},
+	{	/* DSW2 */
+		0xff,
+		{ 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+	},
+	{ -1 }	/* end of table */
+};
+
+
+
 static struct DSW dsw[] =
 {
-	{ 0, 0x80, "LIVES", { "5", "3" }, 1 },
-	{ 0, 0x03, "DIFFICULTY", { "HARDEST", "HARD", "MEDIUM", "EASY" }, 1 },
-	{ 0, 0x04, "INITIALS", { "3 LETTERS", "10 LETTERS" } },
+	{ 2, 0x80, "LIVES", { "5", "3" }, 1 },
+	{ 2, 0x03, "DIFFICULTY", { "HARDEST", "HARD", "MEDIUM", "EASY" }, 1 },
+	{ 2, 0x04, "INITIALS", { "3 LETTERS", "10 LETTERS" } },
 	{ -1 }
 };
 
@@ -154,7 +182,7 @@ static struct GfxLayout charlayout =
 	8,8,	/* 8*8 characters */
 	512,	/* 512 characters */
 	2,	/* 2 bits per pixel */
-	512*8*8,	/* the two bitplanes are separated */
+	{ 0, 512*8*8 },	/* the two bitplanes are separated */
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	8*8	/* every char takes 8 consecutive bytes */
@@ -164,11 +192,11 @@ static struct GfxLayout spritelayout =
 	16,16,	/* 16*16 sprites */
 	128,	/* 128 sprites */
 	2,	/* 2 bits per pixel */
-	-1,	/* the two bitplanes are packed in two consecutive bits */
+	{ 1, 0 },	/* the two bitplanes are packed in two consecutive bits */
 	{ 23*16, 22*16, 21*16, 20*16, 19*16, 18*16, 17*16, 16*16,
 			7*16, 6*16, 5*16, 4*16, 3*16, 2*16, 1*16, 0*16 },
-	{ 8*16+15, 8*16+13, 8*16+11, 8*16+9, 8*16+7, 8*16+5, 8*16+3, 8*16+1,
-			15, 13, 11, 9, 7, 5, 3, 1 },
+	{ 8*16+14, 8*16+12, 8*16+10, 8*16+8, 8*16+6, 8*16+4, 8*16+2, 8*16+0,
+			14, 12, 10, 8, 6, 4, 2, 0 },
 	64*8	/* every sprite takes 64 consecutive bytes */
 };
 
@@ -176,8 +204,8 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 0x10000, &charlayout,   0, 7 },
-	{ 0x12000, &spritelayout, 8, 23 },
+	{ 0x10000, &charlayout,     0,  8 },
+	{ 0x12000, &spritelayout, 4*8, 16 },
 	{ -1 } /* end of array */
 };
 
@@ -211,7 +239,7 @@ const struct MachineDriver ladybug_driver =
 	60,
 	readmem,
 	writemem,
-	dsw, { 0xdf , 0xff },
+	input_ports,dsw,
 	0,
 	ladybug_interrupt,
 	0,
@@ -219,7 +247,7 @@ const struct MachineDriver ladybug_driver =
 	/* video hardware */
 	256,256,
 	gfxdecodeinfo,
-	32,24,
+	32,4*24,
 	color_prom,ladybug_vh_convert_color_prom,0,0,
 	0,10,
 	0x02,0x06,

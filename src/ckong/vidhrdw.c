@@ -33,7 +33,6 @@ static unsigned char dirtybuffer[VIDEO_RAM_SIZE];	/* keep track of modified port
 static unsigned char bsdirtybuffer[BIGSPRITE_SIZE];
 
 static struct osd_bitmap *tmpbitmap,*bsbitmap;
-const unsigned char *bscolortable;
 
 
 static struct rectangle visiblearea =
@@ -41,53 +40,6 @@ static struct rectangle visiblearea =
 	2*8, 30*8-1,
 	0*8, 32*8-1
 };
-
-
-
-/***************************************************************************
-
-  Convert the color PROMs into a more useable format.
-
-  Crazy Climber has three 32 bytes palette PROM.
-  The palette PROMs are connected to the RGB output this way:
-
-  bit 7 -- 220 ohm resistor  -- BLUE
-        -- 470 ohm resistor  -- BLUE
-        -- 220 ohm resistor  -- GREEN
-        -- 470 ohm resistor  -- GREEN
-        -- 1  kohm resistor  -- GREEN
-        -- 220 ohm resistor  -- RED
-        -- 470 ohm resistor  -- RED
-  bit 0 -- 1  kohm resistor  -- RED
-
-***************************************************************************/
-void ckong_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
-{
-	int i;
-
-
-	for (i = 0;i < 4 * 24;i++)
-	{
-		int bit0,bit1,bit2;
-
-
-		bit0 = (color_prom[i] >> 0) & 0x01;
-		bit1 = (color_prom[i] >> 1) & 0x01;
-		bit2 = (color_prom[i] >> 2) & 0x01;
-		palette[3*i] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-		bit0 = (color_prom[i] >> 3) & 0x01;
-		bit1 = (color_prom[i] >> 4) & 0x01;
-		bit2 = (color_prom[i] >> 5) & 0x01;
-		palette[3*i + 1] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-		bit0 = 0;
-		bit1 = (color_prom[i] >> 6) & 0x01;
-		bit2 = (color_prom[i] >> 7) & 0x01;
-		palette[3*i + 2] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-	}
-
-	for (i = 0;i < 4 * 24;i++)
-		colortable[i] = i;
-}
 
 
 
@@ -104,11 +56,6 @@ int ckong_vh_start(void)
 		osd_free_bitmap(tmpbitmap);
 		return 1;
 	}
-
-	/* hack: to speed things up, the bigsprite is stored in a temporary bitmap, */
-	/* sp the color remapping has to be done at that time. */
-	bscolortable = Machine->gfx[2]->colortable;
-	Machine->gfx[2]->colortable = 0;	/* do a verbatim copy */
 
 	for (i = 0;i < tmpbitmap->height;i++)
 		memset(tmpbitmap->line[i],Machine->background_pen,tmpbitmap->width);
@@ -212,27 +159,6 @@ void ckong_vh_screenrefresh(struct osd_bitmap *bitmap)
 		}
 	}
 
-	/* update the Big Sprite */
-	for (offs = 0;offs < BIGSPRITE_SIZE;offs++)
-	{
-		int sx,sy;
-
-
-		if (bsdirtybuffer[offs])
-		{
-			bsdirtybuffer[offs] = 0;
-
-			sx = 8 * (16 - offs / 16);
-			sy = 8 * (offs % 16);
-
-			drawgfx(bsbitmap,Machine->gfx[2],
-					ckong_bsvideoram[offs],
-					0,
-					0,0,sx,sy,
-					0,TRANSPARENCY_NONE,0);
-		}
-	}
-
 	/* copy the character mapped graphics */
 {
 	struct GfxElement mygfx =
@@ -254,27 +180,51 @@ void ckong_vh_screenrefresh(struct osd_bitmap *bitmap)
 				(ckong_spriteram[i] & 0x3f) + 2 * (ckong_spriteram[i +1] & 0x20),
 				ckong_spriteram[i + 1] & 0x0f,
 				ckong_spriteram[i] & 0x80,ckong_spriteram[i] & 0x40,
-				ckong_spriteram[i + 2],ckong_spriteram[i + 3],
+				ckong_spriteram[i + 2] + 1,ckong_spriteram[i + 3],
 				&visiblearea,TRANSPARENCY_PEN,0);
 	}
 
 
 	/* draw the "big sprite" */
 {
-	struct GfxElement bsgfx =
+	struct GfxElement mygfx =
 	{
 		bsbitmap->width,bsbitmap->height,
 		bsbitmap,
 		1,
-		4,
-		bscolortable,
-		8
+		1,0,1
 	};
+	int newcol;
+	static int lastcol;
 
-	drawgfx(Machine->scrbitmap,&bsgfx,
-			0,
-			ckong_bigspriteram[1] & 0x07,
-			ckong_bigspriteram[1] & 0x20,!ckong_bigspriteram[1] & 0x10,
+
+	newcol = ckong_bigspriteram[1] & 0x07;
+
+	/* first of all, update it. */
+	for (offs = 0;offs < BIGSPRITE_SIZE;offs++)
+	{
+		int sx,sy;
+
+		if (bsdirtybuffer[offs] || newcol != lastcol)
+		{
+			bsdirtybuffer[offs] = 0;
+
+			sx = 8 * (15 - offs / 16);
+			sy = 8 * (offs % 16);
+
+			drawgfx(bsbitmap,Machine->gfx[2],
+					ckong_bsvideoram[offs],newcol,
+					0,0,sx,sy,
+					0,TRANSPARENCY_NONE,0);
+		}
+	}
+
+	lastcol = newcol;
+
+	/* copy the temporary bitmap to the screen */
+	drawgfx(bitmap,&mygfx,
+			0,0,
+			ckong_bigspriteram[1] & 0x20,!(ckong_bigspriteram[1] & 0x10),
 			ckong_bigspriteram[2],ckong_bigspriteram[3] - 8,
 			&visiblearea,TRANSPARENCY_PEN,0);
 }

@@ -6,7 +6,6 @@
 #include "common.h"
 
 
-#define MAX_DIP_SWITCHES 2
 #define MAX_GFX_ELEMENTS 10
 
 struct RunningMachine
@@ -15,7 +14,6 @@ struct RunningMachine
 	struct GfxElement *gfx[MAX_GFX_ELEMENTS];	/* graphic sets (chars, sprites) */
 								/* the first one is used by DisplayText() */
 	int background_pen;	/* pen to use to clear the bitmap (DON'T use 0) */
-	int dsw[MAX_DIP_SWITCHES];	/* dipswitch banks */
 	const struct MachineDriver *drv;	/* contains the definition of the machine */
 };
 
@@ -27,6 +25,13 @@ int init_machine(const char *gamename,int argc,char **argv);
 int run_machine(const char *gamename);
 
 /* some useful general purpose functions for the memory map */
+int readinputport(int port);
+int input_port_0_r(int offset);
+int input_port_1_r(int offset);
+int input_port_2_r(int offset);
+int input_port_3_r(int offset);
+int input_port_4_r(int offset);
+int input_port_5_r(int offset);
 void interrupt_enable_w(int offset,int data);
 int interrupt(void);
 int nmi_interrupt(void);

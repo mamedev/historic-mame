@@ -162,7 +162,7 @@ struct GfxElement *decodegfx(const unsigned char *src,const struct GfxLayout *gl
 	{
 		for (plane = 0;plane < gl->planes;plane++)
 		{
-			offs = c * gl->charincrement + plane * gl->planeincrement;
+			offs = c * gl->charincrement + gl->planeoffset[plane];
 			for (y = 0;y < gl->height;y++)
 			{
 				for (x = 0;x < gl->width;x++)
@@ -546,13 +546,16 @@ void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 
 
 
-void setdipswitches(int *dsw,const struct DSW *dswsettings)
+void setdipswitches(void)
 {
 	struct DisplayText dt[40];
 	int settings[20];
 	int i,s,key;
 	int total;
+	const struct DSW *dswsettings;
 
+
+	dswsettings = Machine->drv->dswsettings;
 
 	total = 0;
 	while (dswsettings[total].num != -1)
@@ -562,7 +565,7 @@ void setdipswitches(int *dsw,const struct DSW *dswsettings)
 
 		msk = dswsettings[total].mask;
 		if (msk == 0) return;	/* error in DSW definition, quit */
-		val = dsw[dswsettings[total].num];
+		val = Machine->drv->input_ports[dswsettings[total].num].default_value;
 		while ((msk & 1) == 0)
 		{
 			val >>= 1;
@@ -643,7 +646,9 @@ void setdipswitches(int *dsw,const struct DSW *dswsettings)
 			msk >>= 1;
 		}
 
-		dsw[dswsettings[total].num] = (dsw[dswsettings[total].num] & ~dswsettings[total].mask) | settings[total];
+		Machine->drv->input_ports[dswsettings[total].num].default_value =
+				(Machine->drv->input_ports[dswsettings[total].num].default_value
+				& ~dswsettings[total].mask) | settings[total];
 	}
 
 	/* clear the screen before returning */

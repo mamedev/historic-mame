@@ -108,9 +108,6 @@ I/O C  ;AY-3-8910 Data Read Reg.
 #include "machine.h"
 #include "common.h"
 
-int cclimber_IN0_r(int offset);
-int cclimber_IN2_r(int offset);
-int cclimber_DSW1_r(int offset);
 
 unsigned char *cclimber_videoram;
 unsigned char *cclimber_colorram;
@@ -141,15 +138,15 @@ static struct MemoryReadAddress readmem[] =
 {
 	{ 0x8000, 0x83ff, MRA_RAM },
 	{ 0x0000, 0x4fff, MRA_ROM },
-	{ 0xb800, 0xb800, cclimber_IN2_r },
 	{ 0x9880, 0x989f, MRA_RAM },	/* sprite registers */
 	{ 0x98dc, 0x98df, MRA_RAM },	/* bigsprite registers */
-	{ 0xb000, 0xb000, cclimber_DSW1_r },
-	{ 0xa000, 0xa000, cclimber_IN0_r },
+	{ 0xa000, 0xa000, input_port_0_r },	/* IN0 */
+	{ 0xa800, 0xa800, input_port_1_r },	/* IN1 */
+	{ 0xb000, 0xb000, input_port_2_r },	/* DSW1 */
+	{ 0xb800, 0xb800, input_port_3_r },	/* IN2 */
 	{ 0x9000, 0x93ff, MRA_RAM },	/* video RAM */
 	{ 0x9c00, 0x9fff, MRA_RAM },	/* color RAM */
 	{ 0x9800, 0x981f, MRA_RAM },	/* column scroll registers */
-	{ 0xa800, 0xa800, MRA_NOP },
 	{ -1 }	/* end of table */
 };
 
@@ -174,10 +171,39 @@ static struct MemoryWriteAddress writemem[] =
 
 
 
+static struct InputPort input_ports[] =
+{
+	{	/* IN0 */
+		0x00,
+		{ OSD_KEY_E, OSD_KEY_D, OSD_KEY_S, OSD_KEY_F,
+				OSD_KEY_I, OSD_KEY_K, OSD_KEY_J, OSD_KEY_L },
+		{ OSD_JOY_UP, OSD_JOY_DOWN, OSD_JOY_LEFT, OSD_JOY_RIGHT,
+				OSD_JOY_FIRE2, OSD_JOY_FIRE3, OSD_JOY_FIRE1, OSD_JOY_FIRE4 }
+	},
+	{	/* IN1 */
+		0x00,
+		{ 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+	},
+	{	/* DSW1 */
+		0x00,
+		{ 0, 0, 0, OSD_KEY_F1, 0, 0, 0, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+	},
+	{	/* IN2 */
+		0x10,	/* standup cabinet */
+		{ 0, OSD_KEY_3, OSD_KEY_1, OSD_KEY_2, 0, 0, 0, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+	},
+	{ -1 }	/* end of table */
+};
+
+
+
 static struct DSW dsw[] =
 {
-	{ 0, 0x03, "LIVES", { "3", "4", "5", "6" } },
-	{ 0, 0x04, "BONUS", { "30000", "50000" } },
+	{ 2, 0x03, "LIVES", { "3", "4", "5", "6" } },
+	{ 2, 0x04, "BONUS", { "30000", "50000" } },
 	{ -1 }
 };
 
@@ -188,7 +214,7 @@ static struct GfxLayout charlayout =
 	8,8,	/* 8*8 characters */
 	256,	/* 256 characters */
 	2,	/* 2 bits per pixel */
-	256*8*8,	/* the two bitplanes are separated */
+	{ 0, 256*8*8 },	/* the two bitplanes are separated */
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },	/* pretty straightforward layout */
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8	/* every char takes 8 consecutive bytes */
@@ -198,7 +224,7 @@ static struct GfxLayout spritelayout =
 	16,16,	/* 16*16 sprites */
 	64,	/* 64 sprites */
 	2,	/* 2 bits per pixel */
-	64*16*16,	/* the two bitplanes are separated */
+	{ 0, 64*16*16 },	/* the two bitplanes are separated */
 	{ 0, 1, 2, 3, 4, 5, 6, 7,	/* pretty straightforward layout */
 			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
@@ -210,11 +236,11 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 0x10000, &charlayout,   0, 15 },	/* char set #1 */
-	{ 0x11000, &charlayout,   0, 15 },	/* char set #2 */
-	{ 0x12000, &charlayout,  16, 23 },	/* big sprite char set */
-	{ 0x10000, &spritelayout, 0, 15 },	/* sprite set #1 */
-	{ 0x11000, &spritelayout, 0, 15 },	/* sprite set #2 */
+	{ 0x10000, &charlayout,     0, 16 },	/* char set #1 */
+	{ 0x11000, &charlayout,     0, 16 },	/* char set #2 */
+	{ 0x12000, &charlayout,  4*16,  8 },	/* big sprite char set */
+	{ 0x10000, &spritelayout,   0, 16 },	/* sprite set #1 */
+	{ 0x11000, &spritelayout,   0, 16 },	/* sprite set #2 */
 	{ -1 } /* end of array */
 };
 
@@ -241,7 +267,7 @@ const struct MachineDriver cclimber_driver =
 	60,
 	readmem,
 	writemem,
-	dsw, { 0x00 },
+	input_ports,dsw,
 	0,
 	nmi_interrupt,
 	0,
@@ -249,7 +275,7 @@ const struct MachineDriver cclimber_driver =
 	/* video hardware */
 	256,256,
 	gfxdecodeinfo,
-	96,24,
+	96,4*24,
 	color_prom,cclimber_vh_convert_color_prom,0,0,
 	0,10,
 	0x0a,0x0b,

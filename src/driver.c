@@ -8,6 +8,7 @@ extern struct MachineDriver ladybug_driver;
 extern struct MachineDriver mrdo_driver;
 extern struct MachineDriver cclimber_driver;
 extern struct MachineDriver ckong_driver;
+extern struct MachineDriver dkong_driver;
 
 
 static struct RomModule pacman_rom[] =
@@ -356,6 +357,28 @@ static struct RomModule ckong_rom[] =
 
 
 
+static struct RomModule dkong_rom[] =
+{
+	/* code */
+	{ "dk.5e",  0x00000, 0x1000 },
+	{ "dk.5c",  0x01000, 0x1000 },
+	{ "dk.5b",  0x02000, 0x1000 },
+	{ "dk.5a",  0x03000, 0x1000 },
+	/* gfx */
+	{ "dk.3n",  0x10000, 0x0800 },
+	{ "dk.3p",  0x10800, 0x0800 },
+	{ "dk.7c",  0x11000, 0x0800 },
+	{ "dk.7d",  0x11800, 0x0800 },
+	{ "dk.7e",  0x12000, 0x0800 },
+	{ "dk.7f",  0x12800, 0x0800 },
+	/* samples? */
+	{ "dk.3f",  0x18000, 0x0800 },
+	{ "dk.3h",  0x18800, 0x0800 },
+	{ 0 }	/* end of table */
+};
+
+
+
 struct GameDriver drivers[] =
 {
 	{ "pacman",   pacman_rom,   0,               &pacman_driver },
@@ -374,5 +397,6 @@ struct GameDriver drivers[] =
 	{ "cclimber", cclimber_rom, cclimber_decode, &cclimber_driver },
 	{ "ccboot",   ccboot_rom,   ccboot_decode,   &cclimber_driver },
 	{ "ckong",    ckong_rom,    0,               &ckong_driver },
+	{ "dkong",    dkong_rom,    0,               &dkong_driver },
 	{ 0	}	/* end of array */
 };

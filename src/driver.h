@@ -43,12 +43,36 @@ struct MemoryWriteAddress
 #define MWA_ROM ((void(*)())-2)	/* plain ROM location (do nothing) */
 
 
+
+struct InputPort
+{
+	int default_value;	/* default value for the input port */
+	int keyboard[8];	/* keys affecting the 8 bits of the input port (0 means none) */
+	int joystick[8];	/* same for joystick */
+};
+
+
+
+/* dipswitch setting definition */
+struct DSW
+{
+	int num;	/* input port affected */
+				/* -1 terminates the array */
+	int mask;	/* bits affected */
+	const char *name;	/* name of the setting */
+	const char *values[16];/* null terminated array of names for the values */
+									/* the setting can have */
+	int reverse; 	/* set to 1 to display values in reverse order */
+};
+
+
+
 struct GfxDecodeInfo
 {
 	int start;	/* beginning of data data to decode (offset in RAM[]) */
 	struct GfxLayout *gfxlayout;
-	int first_color_code;	/* first and last color codes used by this */
-	int last_color_code;	/* gfx elements */
+	int color_codes_start;	/* offset in the color lookup table where color codes start */
+	int total_color_codes;	/* total number of color codes */
 };
 
 
@@ -60,8 +84,8 @@ struct MachineDriver
 	int frames_per_second;
 	const struct MemoryReadAddress *memory_read;
 	const struct MemoryWriteAddress *memory_write;
+	struct InputPort *input_ports;
 	const struct DSW *dswsettings;
-	int defaultdsw[MAX_DIP_SWITCHES];	/* default dipswitch settings */
 
 	int (*init_machine)(const char *gamename);
 	int (*interrupt)(void);
@@ -71,9 +95,7 @@ struct MachineDriver
 	int screen_width,screen_height;
 	struct GfxDecodeInfo *gfxdecodeinfo;
 	int total_colors;	/* palette is 3*total_colors bytes long */
-	int color_codes;	/* colortable has color_codes tuples - the length */
-						/* of each tuple depends on the graphic data, for example */
-						/* 2-bitplane characters use 4 bytes in each tuple. */
+	int color_table_len;	/* length in bytes of the color lookup table */
 		/* if they are available, provide a dump of the color proms (there is no */
 		/* copyright infringement in that, since you can't copyright a color scheme) */
 		/* and a function to convert them to a usable palette and colortable. */

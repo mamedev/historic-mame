@@ -16,15 +16,46 @@ RAM is at 6000-6bff
  * bit 1 : \ 00 = 3 lives  01 = 4 lives
  * bit 0 : / 10 = 5 lives  11 = 6 lives
  *
+
+Notable differences are: (thanks to Ville Laitinen)
+ address	bits		r/w
+ 0x1234	76543210
+ ----------------------------------------------------------------
+ 0xA000	76543xxx	r	player 1 control:
+ 		10000000	r	right
+ 		01000000	r	left
+ 		00100000	r	down
+ 		00010000	r	up
+ 		00001000	r	jump
+ 0xA800	76543xxx	r	player 2 controls, same as 0xa000
+
+ 0xb800	xxxx321x	r	coin/start: (inverted input - not like CC)
+ 		11110111	r	2 pl start
+ 		11111011	r	1 pl start
+ 		11111101	r	insert coin
+
+ 0xb000	76543210	r	dipswitches
+ 		10000000	r	cabinet upright (0 for cocktail)
+ 		00001100	r	bonus at:
+ 					00 -> 7000
+ 					else 5000 + 5000 * ((0xb000) >> 2)&0x03
+ 		01110000	r	coins/credits
+ 					000 1 coin  / 1 credit
+ 					001 1 coin  / 2 cr
+ 					010 1 coin  / 3 cr
+ 					011 1 coin  / 4 cr
+ 					100 2 coins / 1 cr
+ 					101 3 coins / 1 cr
+ 					110 4 coins / 1 cr
+ 					111 5 coins / 1 cr
+ 		xxxxx10	r	no of jumpmen (actually (3 + (0xb000)&0x03) )
+
 ***************************************************************************/
 
 #include "driver.h"
 #include "machine.h"
 #include "common.h"
 
-int ckong_IN0_r(int offset);
-int ckong_IN2_r(int offset);
-int ckong_DSW1_r(int offset);
 
 unsigned char *ckong_videoram;
 unsigned char *ckong_colorram;
@@ -34,7 +65,6 @@ unsigned char *ckong_bigspriteram;
 void ckong_videoram_w(int offset,int data);
 void ckong_colorram_w(int offset,int data);
 void ckong_bigsprite_videoram_w(int offset,int data);
-void ckong_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 int ckong_vh_start(void);
 void ckong_vh_stop(void);
 void ckong_vh_screenrefresh(struct osd_bitmap *bitmap);
@@ -54,14 +84,14 @@ static struct MemoryReadAddress readmem[] =
 {
 	{ 0x6000, 0x6bff, MRA_RAM },
 	{ 0x0000, 0x5fff, MRA_ROM },
-	{ 0xb800, 0xb800, ckong_IN2_r },
 	{ 0x9880, 0x989f, MRA_RAM },	/* sprite registers */
 	{ 0x98dc, 0x98df, MRA_RAM },	/* bigsprite registers */
-	{ 0xb000, 0xb000, ckong_DSW1_r },
-	{ 0xa000, 0xa000, ckong_IN0_r },
+	{ 0xa000, 0xa000, input_port_0_r },	/* IN0 */
+	{ 0xa800, 0xa800, input_port_1_r },	/* IN1 */
+	{ 0xb000, 0xb000, input_port_2_r },	/* DSW1 */
+	{ 0xb800, 0xb800, input_port_3_r },	/* IN2 */
 	{ 0x9000, 0x93ff, MRA_RAM },	/* video RAM */
 	{ 0x9c00, 0x9fff, MRA_RAM },	/* color RAM */
-	{ 0xa800, 0xa800, MRA_NOP },
 	{ -1 }	/* end of table */
 };
 
@@ -84,10 +114,39 @@ static struct MemoryWriteAddress writemem[] =
 
 
 
+static struct InputPort input_ports[] =
+{
+	{	/* IN0 */
+		0x00,
+		{ 0, 0, 0, OSD_KEY_CONTROL,
+				OSD_KEY_UP, OSD_KEY_DOWN, OSD_KEY_LEFT, OSD_KEY_RIGHT },
+		{ 0, 0, 0, OSD_JOY_FIRE,
+				OSD_JOY_UP, OSD_JOY_DOWN, OSD_JOY_LEFT, OSD_JOY_RIGHT }
+	},
+	{	/* IN1 */
+		0x00,
+		{ 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+	},
+	{	/* DSW1 */
+		0x84,
+		{ 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+	},
+	{	/* IN2 */
+		0xff,
+		{ 0, OSD_KEY_3, OSD_KEY_1, OSD_KEY_2, 0, 0, 0, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+	},
+	{ -1 }	/* end of table */
+};
+
+
+
 static struct DSW dsw[] =
 {
-	{ 0, 0x03, "LIVES", { "3", "4", "5", "6" } },
-	{ 0, 0x0c, "BONUS", { "7000", "10000", "15000", "20000" } },
+	{ 2, 0x03, "LIVES", { "3", "4", "5", "6" } },
+	{ 2, 0x0c, "BONUS", { "7000", "10000", "15000", "20000" } },
 	{ -1 }
 };
 
@@ -98,7 +157,7 @@ static struct GfxLayout charlayout =
 	8,8,	/* 8*8 characters */
 	512,	/* 512 characters */
 	2,	/* 2 bits per pixel */
-	512*8*8,	/* the two bitplanes are separated */
+	{ 0, 512*8*8 },	/* the two bitplanes are separated */
 	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },	/* pretty straightforward layout */
 	8*8	/* every char takes 8 consecutive bytes */
@@ -108,7 +167,7 @@ static struct GfxLayout bscharlayout =
 	8,8,	/* 8*8 characters */
 	256,	/* 256 characters */
 	2,	/* 2 bits per pixel */
-	256*8*8,	/* the two bitplanes are separated */
+	{ 0, 256*8*8 },	/* the two bitplanes are separated */
 	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },	/* pretty straightforward layout */
 	8*8	/* every char takes 8 consecutive bytes */
@@ -118,7 +177,7 @@ static struct GfxLayout spritelayout =
 	16,16,	/* 16*16 sprites */
 	128,	/* 128 sprites */
 	2,	/* 2 bits per pixel */
-	128*16*16,	/* the two bitplanes are separated */
+	{ 0, 128*16*16 },	/* the two bitplanes are separated */
 	{ 23*8, 22*8, 21*8, 20*8, 19*8, 18*8, 17*8, 16*8,
 			7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7,	/* pretty straightforward layout */
@@ -130,11 +189,11 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 0x10000, &charlayout,   0, 15 },	/* char set #1 */
-	{ 0x12000, &charlayout,   0, 15 },	/* char set #2 */
-	{ 0x14000, &bscharlayout,  16, 23 },	/* big sprite char set */
-	{ 0x10000, &spritelayout, 0, 15 },	/* sprite set #1 */
-	{ 0x12000, &spritelayout, 0, 15 },	/* sprite set #2 */
+	{ 0x10000, &charlayout,      0, 16 },	/* char set #1 */
+	{ 0x12000, &charlayout,      0, 16 },	/* char set #2 */
+	{ 0x14000, &bscharlayout, 4*16,  8 },	/* big sprite char set */
+	{ 0x10000, &spritelayout,    0, 16 },	/* sprite set #1 */
+	{ 0x12000, &spritelayout,    0, 16 },	/* sprite set #2 */
 	{ -1 } /* end of array */
 };
 
@@ -191,7 +250,7 @@ enum {BLACK,DKRED1,DKRED2,RED,DKGRN1,DKBRN1,DKBRN2,LTRED1,BROWN,DKGRN2,
 	PINK1,DKBLU3,PINK2,CREAM,LTORG3,BLUE,PURPLE,LTBLU1,LTBLU2,WHITE1,
 	WHITE2};
 
-const unsigned char colortable[] =
+static unsigned char colortable[] =
 {
 	/* characters and sprites */
         BLACK,LTYEL,BROWN,WHITE1,      /* hammers, white text */
@@ -231,7 +290,7 @@ const struct MachineDriver ckong_driver =
 	60,
 	readmem,
 	writemem,
-	dsw, { 0x80 },
+	input_ports,dsw,
 	0,
 	nmi_interrupt,
 	0,
@@ -239,7 +298,7 @@ const struct MachineDriver ckong_driver =
 	/* video hardware */
 	256,256,
 	gfxdecodeinfo,
-	41,24,
+	41,4*24,
 	0,0,palette,colortable,
 	0,17,
 	0x0a,0x0b,

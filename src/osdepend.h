@@ -97,9 +97,18 @@ struct osd_bitmap
 #define OSD_KEY_F12         88
 
 
+#define OSD_JOY_LEFT	1
+#define OSD_JOY_RIGHT	2
+#define OSD_JOY_UP		3
+#define OSD_JOY_DOWN	4
+#define OSD_JOY_FIRE1	5
+#define OSD_JOY_FIRE2	6
+#define OSD_JOY_FIRE3	7
+#define OSD_JOY_FIRE4	8
+#define OSD_JOY_FIRE	9	/* any of the fire buttons */
+
+
 extern int play_sound;
-extern int osd_joy_up, osd_joy_down, osd_joy_left, osd_joy_right;
-extern int osd_joy_b1, osd_joy_b2, osd_joy_b3, osd_joy_b4;
 
 int osd_init(int argc,char **argv);
 void osd_exit(void);
@@ -117,6 +126,7 @@ void osd_stop_sample(int channel);
 int osd_key_pressed(int keycode);
 int osd_read_key(void);
 void osd_poll_joystick(void);
+int osd_joy_pressed(int joycode);
 
 
 #endif

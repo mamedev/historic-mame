@@ -34,7 +34,6 @@ static unsigned char dirtybuffer[VIDEO_RAM_SIZE];	/* keep track of modified port
 static unsigned char bsdirtybuffer[BIGSPRITE_SIZE];
 
 static struct osd_bitmap *tmpbitmap,*bsbitmap;
-const unsigned char *bscolortable;
 
 
 static struct rectangle visiblearea =
@@ -87,7 +86,12 @@ void cclimber_vh_convert_color_prom(unsigned char *palette, unsigned char *color
 	}
 
 	for (i = 0;i < 4 * 24;i++)
-		colortable[i] = i;
+	{
+		if ((i & 3) == 0) colortable[i] = 0;	/* so I can use TRANSPARENCY_PEN */
+										/* instead of TRANSPARENCY_COLOR when blitting */
+										/* the big sprite */
+		else colortable[i] = i;
+	}
 }
 
 
@@ -105,11 +109,6 @@ int cclimber_vh_start(void)
 		osd_free_bitmap(tmpbitmap);
 		return 1;
 	}
-
-	/* hack: to speed things up, the bigsprite is stored in a temporary bitmap, */
-	/* sp the color remapping has to be done at that time. */
-	bscolortable = Machine->gfx[2]->colortable;
-	Machine->gfx[2]->colortable = 0;	/* do a verbatim copy */
 
 	for (i = 0;i < tmpbitmap->height;i++)
 		memset(tmpbitmap->line[i],Machine->background_pen,tmpbitmap->width);
@@ -213,27 +212,6 @@ void cclimber_vh_screenrefresh(struct osd_bitmap *bitmap)
 		}
 	}
 
-	/* update the Big Sprite */
-	for (offs = 0;offs < BIGSPRITE_SIZE;offs++)
-	{
-		int sx,sy;
-
-
-		if (bsdirtybuffer[offs])
-		{
-			bsdirtybuffer[offs] = 0;
-
-			sx = 8 * (offs % 16);
-			sy = 8 * (offs / 16);
-
-			drawgfx(bsbitmap,Machine->gfx[2],
-					cclimber_bsvideoram[offs],
-					0,
-					0,0,sx,sy,
-					0,TRANSPARENCY_NONE,0);
-		}
-	}
-
 	/* copy the character mapped graphics */
 	i = 0;
 	while (i < 8 * 32)
@@ -252,7 +230,7 @@ void cclimber_vh_screenrefresh(struct osd_bitmap *bitmap)
 		y1 = (y + cclimber_column_scroll[i / 8]) % tmpbitmap->height;
 		while (y < 8*30)
 		{
-			memcpy(Machine->scrbitmap->line[y] + i,tmpbitmap->line[y1] + i,cons);
+			memcpy(bitmap->line[y] + i,tmpbitmap->line[y1] + i,cons);
 
 			y++;
 			y1++;
@@ -264,19 +242,45 @@ void cclimber_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 	/* draw the "big sprite" */
 {
-	struct GfxElement bsgfx =
+	struct GfxElement mygfx =
 	{
 		bsbitmap->width,bsbitmap->height,
 		bsbitmap,
 		1,
-		4,
-		bscolortable,
-		8
+		1,0,1
 	};
+	int newcol;
+	static int lastcol;
 
-	drawgfx(Machine->scrbitmap,&bsgfx,
-			0,
-			cclimber_bigspriteram[1] & 0x07,
+
+	newcol = cclimber_bigspriteram[1] & 0x07;
+
+	/* first of all, update it. */
+	for (offs = 0;offs < BIGSPRITE_SIZE;offs++)
+	{
+		int sx,sy;
+
+
+		if (bsdirtybuffer[offs] || newcol != lastcol)
+		{
+			bsdirtybuffer[offs] = 0;
+
+			sx = 8 * (offs % 16);
+			sy = 8 * (offs / 16);
+
+			drawgfx(bsbitmap,Machine->gfx[2],
+					cclimber_bsvideoram[offs],newcol,
+					0,0,sx,sy,
+					0,TRANSPARENCY_NONE,0);
+		}
+
+	}
+
+	lastcol = newcol;
+
+	/* copy the temporary bitmap to the screen */
+	drawgfx(bitmap,&mygfx,
+			0,0,
 			cclimber_bigspriteram[1] & 0x10,cclimber_bigspriteram[1] & 0x20,
 			136 - cclimber_bigspriteram[3],128 - cclimber_bigspriteram[2],
 			&visiblearea,TRANSPARENCY_PEN,0);

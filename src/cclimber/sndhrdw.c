@@ -162,6 +162,4 @@ if (!playing)
 	playing = 1;
 }
 	c ^= 1;
-
-	osd_update_audio();
 }
