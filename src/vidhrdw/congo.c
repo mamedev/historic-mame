@@ -132,20 +132,20 @@ void congo_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 
 	/* copy the background */
+    if (*congo_background_enable)
 	{
-
-                int i,skew,scroll;
+		int i,skew,scroll;
 		struct rectangle clip;
 
 
 		clip.min_x = Machine->drv->visible_area.min_x;
 		clip.max_x = Machine->drv->visible_area.max_x;
 
-                scroll = 1024+61 - (congo_background_position[0] + 256*congo_background_position[1]) * congo_background_enable[0];
+		scroll = 1023+63 - (congo_background_position[0] + 256*congo_background_position[1]);
 
-                skew = 128;
+		skew = 128;
 
-                for (i = 0;i < 256-2*8;i++)
+		for (i = 0;i < 256-2*8;i++)
 		{
 			clip.min_y = i;
 			clip.max_y = i;
@@ -154,6 +154,7 @@ void congo_vh_screenrefresh(struct osd_bitmap *bitmap)
 			skew -= 2;
 		}
 	}
+	else clearbitmap(bitmap);
 
 
 	/* Draw the sprites. Note that it is important to draw them exactly in this */
@@ -173,7 +174,7 @@ void congo_vh_screenrefresh(struct osd_bitmap *bitmap)
 			drawgfx(bitmap,Machine->gfx[1],
 					spriteram[offs+2+1]& 0x7f,spriteram[offs+2+2],
 					spriteram[offs+2+1] & 0x80,spriteram[offs+2+2] & 0x80,
-					spriteram[offs+2] - 15,((spriteram[offs+2+3] + 16) & 0xff) - 32,
+					spriteram[offs+2] - 16,((spriteram[offs+2+3] + 16) & 0xff) - 31,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}

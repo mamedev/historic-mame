@@ -109,6 +109,8 @@ struct osd_bitmap
 
 
 extern int play_sound;
+extern int video_sync;
+
 
 int osd_init(int argc,char **argv);
 void osd_exit(void);

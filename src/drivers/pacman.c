@@ -469,6 +469,138 @@ ROM_END
 
 
 
+static int pacman_hiload(const char *name)
+{
+	static int resetcount;
+
+
+	/* during a reset, leave time to the game to clear the screen */
+	if (++resetcount < 60) return 0;
+
+	/* wait for "HIGH SCORE" to be on screen */
+	if (memcmp(&RAM[0x43d1],"\x48\x47\x49\x48",2) == 0)
+	{
+		FILE *f;
+
+
+		resetcount = 0;
+
+		if ((f = fopen(name,"rb")) != 0)
+		{
+			char buf[10];
+			int hi;
+
+
+			fread(&RAM[0x4e88],1,4,f);
+			/* also copy the high score to the screen, otherwise it won't be */
+			/* updated */
+			hi = (RAM[0x4e88] & 0x0f) +
+					(RAM[0x4e88] >> 4) * 10 +
+					(RAM[0x4e89] & 0x0f) * 100 +
+					(RAM[0x4e89] >> 4) * 1000 +
+					(RAM[0x4e8a] & 0x0f) * 10000 +
+					(RAM[0x4e8a] >> 4) * 100000 +
+					(RAM[0x4e8b] & 0x0f) * 1000000 +
+					(RAM[0x4e8b] >> 4) * 10000000;
+			if (hi)
+			{
+				sprintf(buf,"%8d",hi);
+				if (buf[2] != ' ') cpu_writemem(0x43f2,buf[2]-'0');
+				if (buf[3] != ' ') cpu_writemem(0x43f1,buf[3]-'0');
+				if (buf[4] != ' ') cpu_writemem(0x43f0,buf[4]-'0');
+				if (buf[5] != ' ') cpu_writemem(0x43ef,buf[5]-'0');
+				if (buf[6] != ' ') cpu_writemem(0x43ee,buf[6]-'0');
+				cpu_writemem(0x43ed,buf[7]-'0');
+			}
+			fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+static void pacman_hisave(const char *name)
+{
+	FILE *f;
+
+
+	if ((f = fopen(name,"wb")) != 0)
+	{
+		fwrite(&RAM[0x4e88],1,4,f);
+		fclose(f);
+	}
+}
+
+
+
+static int crush_hiload(const char *name)
+{
+	static int resetcount;
+
+
+	/* during a reset, leave time to the game to clear the screen */
+	if (++resetcount < 60) return 0;
+
+	/* wait for "HI SCORE" to be on screen */
+	if (memcmp(&RAM[0x43d0],"\x53\x40\x49\x48",2) == 0)
+	{
+		FILE *f;
+
+
+		resetcount = 0;
+
+		if ((f = fopen(name,"rb")) != 0)
+		{
+			char buf[10];
+			int hi;
+
+
+			fread(&RAM[0x4c80],1,3,f);
+			/* also copy the high score to the screen, otherwise it won't be */
+			/* updated */
+			hi = (RAM[0x4c82] & 0x0f) +
+					(RAM[0x4c82] >> 4) * 10 +
+					(RAM[0x4c81] & 0x0f) * 100 +
+					(RAM[0x4c81] >> 4) * 1000 +
+					(RAM[0x4c80] & 0x0f) * 10000 +
+					(RAM[0x4c80] >> 4) * 100000;
+			if (hi)
+			{
+				sprintf(buf,"%8d",hi);
+				if (buf[2] != ' ') cpu_writemem(0x43f3,buf[2]-'0');
+				if (buf[3] != ' ') cpu_writemem(0x43f2,buf[3]-'0');
+				if (buf[4] != ' ') cpu_writemem(0x43f1,buf[4]-'0');
+				if (buf[5] != ' ') cpu_writemem(0x43f0,buf[5]-'0');
+				if (buf[6] != ' ') cpu_writemem(0x43ef,buf[6]-'0');
+				cpu_writemem(0x43ee,buf[7]-'0');
+			}
+			fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+static void crush_hisave(const char *name)
+{
+	FILE *f;
+
+
+	if ((f = fopen(name,"wb")) != 0)
+	{
+		fwrite(&RAM[0x4c80],1,3,f);
+		fclose(f);
+	}
+}
+
+
+
 struct GameDriver pacman_driver =
 {
 	"pacman",
@@ -484,7 +616,7 @@ struct GameDriver pacman_driver =
 	0x0f, 0x09,
 	8*11, 8*20, 0x01,
 
-	0, 0
+	pacman_hiload, pacman_hisave
 };
 
 struct GameDriver pacmod_driver =
@@ -502,7 +634,7 @@ struct GameDriver pacmod_driver =
 	0x0f, 0x09,
 	8*11, 8*20, 0x01,
 
-	0, 0
+	pacman_hiload, pacman_hisave
 };
 
 struct GameDriver namcopac_driver =
@@ -520,7 +652,7 @@ struct GameDriver namcopac_driver =
 	0x0f, 0x09,
 	8*11, 8*20, 0x01,
 
-	0, 0
+	pacman_hiload, pacman_hisave
 };
 
 struct GameDriver hangly_driver =
@@ -538,7 +670,7 @@ struct GameDriver hangly_driver =
 	0x0f, 0x09,
 	8*11, 8*20, 0x01,
 
-	0, 0
+	pacman_hiload, pacman_hisave
 };
 
 struct GameDriver puckman_driver =
@@ -556,7 +688,7 @@ struct GameDriver puckman_driver =
 	0x0f, 0x09,
 	8*11, 8*20, 0x01,
 
-	0, 0
+	pacman_hiload, pacman_hisave
 };
 
 struct GameDriver piranha_driver =
@@ -574,7 +706,7 @@ struct GameDriver piranha_driver =
 	0x0f, 0x09,
 	8*11, 8*20, 0x01,
 
-	0, 0
+	pacman_hiload, pacman_hisave
 };
 
 struct GameDriver mspacman_driver =
@@ -592,7 +724,7 @@ struct GameDriver mspacman_driver =
 	0x0f, 0x09,
 	8*11, 8*20, 0x01,
 
-	0, 0
+	pacman_hiload, pacman_hisave
 };
 
 struct GameDriver crush_driver =
@@ -610,5 +742,5 @@ struct GameDriver crush_driver =
 	0x0f, 0x09,
 	8*11, 8*19, 0x01,
 
-	0, 0
+	crush_hiload, crush_hisave
 };

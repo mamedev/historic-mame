@@ -58,7 +58,8 @@ a804      stars on
 a805      ? (POUT2)
 a806      screen vertical flip
 a807      screen horizontal flip
-a000      To AY-3-8910 port A (commands for the second Z80?)
+a000      To AY-3-8910 port A (commands for the audio CPU)
+a001      bit 3 = trigger interrupt on audio CPU
 a002      protection check control?
 
 ***************************************************************************/
@@ -78,6 +79,18 @@ extern void scramble_attributes_w(int offset,int data);
 extern void scramble_stars_w(int offset,int data);
 extern int scramble_vh_start(void);
 extern void scramble_vh_screenrefresh(struct osd_bitmap *bitmap);
+
+extern void scramble_soundcommand_w(int offset,int data);
+extern int scramble_sh_read_port1_r(int offset);
+extern void scramble_sh_control_port1_w(int offset,int data);
+extern void scramble_sh_write_port1_w(int offset,int data);
+extern int scramble_sh_read_port2_r(int offset);
+extern void scramble_sh_control_port2_w(int offset,int data);
+extern void scramble_sh_write_port2_w(int offset,int data);
+extern int scramble_sh_interrupt(void);
+extern int scramble_sh_start(void);
+extern void scramble_sh_stop(void);
+extern void scramble_sh_update(void);
 
 
 
@@ -103,7 +116,42 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x9060, 0x907f, MWA_RAM, &scramble_bulletsram },
 	{ 0xa801, 0xa801, interrupt_enable_w },
 	{ 0xa804, 0xa804, scramble_stars_w },
+	{ 0xa000, 0xa000, scramble_soundcommand_w },
 	{ 0x0000, 0x6fff, MWA_ROM },
+	{ -1 }	/* end of table */
+};
+
+
+
+static struct MemoryReadAddress sound_readmem[] =
+{
+	{ 0x8000, 0x83ff, MRA_RAM },
+	{ 0x0000, 0x17ff, MRA_ROM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress sound_writemem[] =
+{
+	{ 0x8000, 0x83ff, MWA_RAM },
+	{ 0x0000, 0x17ff, MWA_ROM },
+	{ -1 }	/* end of table */
+};
+
+
+
+static struct IOReadPort sound_readport[] =
+{
+	{ 0x80, 0x80, scramble_sh_read_port1_r },
+	{ 0x20, 0x20, scramble_sh_read_port2_r },
+	{ -1 }	/* end of table */
+};
+
+static struct IOWritePort sound_writeport[] =
+{
+	{ 0x40, 0x40, scramble_sh_control_port1_w },
+	{ 0x80, 0x80, scramble_sh_write_port1_w },
+	{ 0x10, 0x10, scramble_sh_control_port2_w },
+	{ 0x20, 0x20, scramble_sh_write_port2_w },
 	{ -1 }	/* end of table */
 };
 
@@ -206,6 +254,13 @@ static struct MachineDriver machine_driver =
 			0,
 			readmem,writemem,0,0,
 			nmi_interrupt,1
+		},
+		{
+			CPU_Z80,
+			1789750,	/* 1.78975 Mhz?????? */
+			2,	/* memory region #2 */
+			sound_readmem,sound_writemem,sound_readport,sound_writeport,
+			scramble_sh_interrupt,1
 		}
 	},
 	60,
@@ -225,9 +280,9 @@ static struct MachineDriver machine_driver =
 	/* sound hardware */
 	0,
 	0,
-	0,
-	0,
-	0
+	scramble_sh_start,
+	scramble_sh_stop,
+	scramble_sh_update
 };
 
 
@@ -250,6 +305,11 @@ ROM_START( scobra_rom )
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "scobra5f.bin", 0x0000, 0x0800 )
 	ROM_LOAD( "scobra5h.bin", 0x0800, 0x0800 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "scobra5c.bin", 0x0000, 0x0800 )
+	ROM_LOAD( "scobra5d.bin", 0x0800, 0x0800 )
+	ROM_LOAD( "scobra5e.bin", 0x1000, 0x0800 )
 ROM_END
 
 ROM_START( scobrak_rom )
@@ -264,6 +324,11 @@ ROM_START( scobrak_rom )
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "5f", 0x0000, 0x0800 )
 	ROM_LOAD( "5h", 0x0800, 0x0800 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "5c",      0x0000, 0x0800 )
+	ROM_LOAD( "5d",      0x0800, 0x0800 )
+	ROM_LOAD( "5e",      0x1000, 0x0800 )
 ROM_END
 
 ROM_START( scobrab_rom )
@@ -284,6 +349,11 @@ ROM_START( scobrab_rom )
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "vid_5f.bin",   0x0000, 0x0800 )
 	ROM_LOAD( "vid_5h.bin",   0x0800, 0x0800 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "snd_5c.bin",   0x0000, 0x0800 )
+	ROM_LOAD( "snd_5d.bin",   0x0800, 0x0800 )
+	ROM_LOAD( "snd_5e.bin",   0x1000, 0x0800 )
 ROM_END
 
 ROM_START( losttomb_rom )
@@ -299,6 +369,10 @@ ROM_START( losttomb_rom )
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "5f",      0x0000, 0x0800 )
 	ROM_LOAD( "5h",      0x0800, 0x0800 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "5c",      0x0000, 0x0800 )
+	ROM_LOAD( "5d",      0x0800, 0x0800 )
 ROM_END
 
 

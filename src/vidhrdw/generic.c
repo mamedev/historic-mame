@@ -30,6 +30,11 @@ int generic_vh_start(void)
 
 
 	len = (Machine->drv->screen_width/8) * (Machine->drv->screen_height/8);
+	/* round the length to the next 0x100 boundary. This is necessary to */
+	/* allocate a buffer large enough for Pac Man and other games using */
+	/* 224x288 and 288x224 video modes, but still a 256x256 video memory */
+	/* layout. */
+	len = (len + 0xff) & 0xfffffe00;
 
 	if ((dirtybuffer = malloc(len)) == 0)
 		return 1;

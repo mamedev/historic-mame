@@ -1241,6 +1241,50 @@ static unsigned btimea_decode(int A)
 
 
 
+static int hiload(const char *name)
+{
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x0036],"\x00\x80\x02",3) == 0 &&
+			memcmp(&RAM[0x0042],"\x50\x48\00",3) == 0)
+	{
+		FILE *f;
+
+
+		if ((f = fopen(name,"rb")) != 0)
+		{
+			fread(&RAM[0x0033],1,6*6+3,f);
+			fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+static void hisave(const char *name)
+{
+	FILE *f;
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+
+	if ((f = fopen(name,"wb")) != 0)
+	{
+		fwrite(&RAM[0x0033],1,6*6+3,f);
+		fclose(f);
+	}
+}
+
+
+
 struct GameDriver btime_driver =
 {
 	"btime",
@@ -1256,7 +1300,7 @@ struct GameDriver btime_driver =
 	0x00, 0x01,
 	8*13, 8*16, 0x00,
 
-	0, 0
+	hiload, hisave
 };
 
 struct GameDriver btimea_driver =
@@ -1274,5 +1318,5 @@ struct GameDriver btimea_driver =
 	0x00, 0x01,
 	8*13, 8*16, 0x00,
 
-	0, 0
+	hiload, hisave
 };

@@ -14,12 +14,11 @@ AY-8910 #2 : reg 0x7000
 	     wr  0x6000
              rd  0x6000
 
-CPU command register : 0x8000
-
 Main processor memory map.
 0000-7fff ROM
 8000-83ff color RAM
 8400-87ff video RAM
+8800-8fff RAM
 9000-97ff sprite RAM (only areas 0x9010 and 0x9410 are used).
 
 memory mapped ports:
@@ -40,7 +39,7 @@ read:
 0xA0C0	IN2 Port
 
 write:
-0xA100	read as 0x8000 on audio CPU.
+0xA100	command for the audio CPU.
 0xA180	NMI enable. (0xA180 == 1 = deliver NMI to CPU).
 
 0xA181	interrupt trigger on audio CPU.
@@ -64,11 +63,23 @@ standard NMI at 0x66
 extern void pooyan_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 extern void pooyan_vh_screenrefresh(struct osd_bitmap *bitmap);
 
+extern void pooyan_soundcommand_w(int offset,int data);
+extern int pooyan_sh_read_port1_r(int offset);
+extern void pooyan_sh_control_port1_w(int offset,int data);
+extern void pooyan_sh_write_port1_w(int offset,int data);
+extern int pooyan_sh_read_port2_r(int offset);
+extern void pooyan_sh_control_port2_w(int offset,int data);
+extern void pooyan_sh_write_port2_w(int offset,int data);
+extern int pooyan_sh_interrupt(void);
+extern int pooyan_sh_start(void);
+extern void pooyan_sh_stop(void);
+extern void pooyan_sh_update(void);
+
 
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0x8000, 0x87ff, MRA_RAM },	/* color and video RAM */
+	{ 0x8000, 0x8fff, MRA_RAM },	/* color and video RAM */
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0xa080, 0xa080, input_port_0_r },	/* IN0 */
 	{ 0xa0a0, 0xa0a0, input_port_1_r },	/* IN1 */
@@ -80,13 +91,37 @@ static struct MemoryReadAddress readmem[] =
 
 static struct MemoryWriteAddress writemem[] =
 {
+	{ 0x8800, 0x8fff, MWA_RAM },
 	{ 0x8000, 0x83ff, colorram_w, &colorram },
 	{ 0x8400, 0x87ff, videoram_w, &videoram },
 	{ 0x9010, 0x903f, MWA_RAM, &spriteram },
 	{ 0x9410, 0x943f, MWA_RAM, &spriteram_2 },
 	{ 0xa180, 0xa180, interrupt_enable_w },
 	{ 0xa187, 0xa187, MWA_NOP },
+	{ 0xa100, 0xa100, pooyan_soundcommand_w },
 	{ 0x0000, 0x7fff, MWA_ROM },
+	{ -1 }	/* end of table */
+};
+
+
+
+static struct MemoryReadAddress sound_readmem[] =
+{
+	{ 0x3000, 0x33ff, MRA_RAM },
+	{ 0x4000, 0x4000, pooyan_sh_read_port1_r },
+	{ 0x6000, 0x6000, pooyan_sh_read_port2_r },
+	{ 0x0000, 0x1fff, MRA_ROM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress sound_writemem[] =
+{
+	{ 0x3000, 0x33ff, MWA_RAM },
+	{ 0x5000, 0x5000, pooyan_sh_control_port1_w },
+	{ 0x4000, 0x4000, pooyan_sh_write_port1_w },
+	{ 0x7000, 0x7000, pooyan_sh_control_port2_w },
+	{ 0x6000, 0x6000, pooyan_sh_write_port2_w },
+	{ 0x0000, 0x1fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
@@ -220,6 +255,13 @@ static struct MachineDriver machine_driver =
 			0,
 			readmem,writemem,0,0,
 			nmi_interrupt,1
+		},
+		{
+			CPU_Z80,
+			2000000,	/* 2 Mhz ????? */
+			2,	/* memory region #2 */
+			sound_readmem,sound_writemem,0,0,
+			pooyan_sh_interrupt,1
 		}
 	},
 	60,
@@ -239,9 +281,9 @@ static struct MachineDriver machine_driver =
 	/* sound hardware */
 	0,
 	0,
-	0,
-	0,
-	0
+	pooyan_sh_start,
+	pooyan_sh_stop,
+	pooyan_sh_update
 };
 
 
@@ -264,7 +306,62 @@ ROM_START( pooyan_rom )
 	ROM_LOAD( "ic14_g9.cpu",  0x1000, 0x1000 )
 	ROM_LOAD( "ic16_a8.cpu",  0x2000, 0x1000 )
 	ROM_LOAD( "ic15_a9.cpu",  0x3000, 0x1000 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "sd01_a7.snd",  0x0000, 0x1000 )
+	ROM_LOAD( "sd02_a8.snd",  0x1000, 0x1000 )
 ROM_END
+
+
+
+static int hiload(const char *name)
+{
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x8a00],"\x00\x00\x01",3) == 0 &&
+			memcmp(&RAM[0x8a1b],"\x00\x00\x01",3) == 0)
+	{
+		FILE *f;
+
+
+		if ((f = fopen(name,"rb")) != 0)
+		{
+			fread(&RAM[0x89c0],1,3*10,f);
+			fread(&RAM[0x8a00],1,3*10,f);
+			fread(&RAM[0x8e00],1,3*10,f);
+			RAM[0x88a8] = RAM[0x8a00];
+			RAM[0x88a9] = RAM[0x8a01];
+			RAM[0x88aa] = RAM[0x8a02];
+			fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+static void hisave(const char *name)
+{
+	FILE *f;
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+
+	if ((f = fopen(name,"wb")) != 0)
+	{
+		fwrite(&RAM[0x89c0],1,3*10,f);
+		fwrite(&RAM[0x8a00],1,3*10,f);
+		fwrite(&RAM[0x8e00],1,3*10,f);
+		fclose(f);
+	}
+}
 
 
 
@@ -283,5 +380,5 @@ struct GameDriver pooyan_driver =
 	0x00, 0x03,
 	8*13, 8*16, 0x07,
 
-	0, 0
+	hiload, hisave
 };

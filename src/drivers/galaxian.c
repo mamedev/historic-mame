@@ -177,6 +177,15 @@ static struct InputPort warofbug_input_ports[] =
 
 static struct DSW galaxian_dsw[] =
 {
+	{ 2, 0x04, "LIVES", { "2", "3" } },
+	{ 2, 0x03, "BONUS", { "7000", "10000", "12000", "20000" } },
+	{ -1 }
+};
+
+
+
+static struct DSW galboot_dsw[] =
+{
 	{ 2, 0x04, "LIVES", { "3", "5" } },
 	{ 2, 0x03, "BONUS", { "7000", "10000", "12000", "20000" } },
 	{ -1 }
@@ -422,15 +431,26 @@ static struct MachineDriver pisces_machine_driver =
 
 ROM_START( galaxian_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "%s.u",  0x0000, 0x0800 )
-	ROM_LOAD( "%s.v",  0x0800, 0x0800 )
-	ROM_LOAD( "%s.w",  0x1000, 0x0800 )
-	ROM_LOAD( "%s.y",  0x1800, 0x0800 )
-	ROM_LOAD( "%s.z",  0x2000, 0x0800 )
+	ROM_LOAD( "7f", 0x0000, 0x1000 )
+	ROM_LOAD( "7j", 0x1000, 0x1000 )
+	ROM_LOAD( "7l", 0x2000, 0x1000 )
 
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "%s.1j", 0x0000, 0x0800 )
-	ROM_LOAD( "%s.1k", 0x0800, 0x0800 )
+	ROM_LOAD( "1h", 0x0000, 0x0800 )
+	ROM_LOAD( "1k", 0x0800, 0x0800 )
+ROM_END
+
+ROM_START( galmidw_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "galaxian.u",  0x0000, 0x0800 )
+	ROM_LOAD( "galaxian.v",  0x0800, 0x0800 )
+	ROM_LOAD( "galaxian.w",  0x1000, 0x0800 )
+	ROM_LOAD( "galaxian.y",  0x1800, 0x0800 )
+	ROM_LOAD( "galaxian.z",  0x2000, 0x0800 )
+
+	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "galaxian.1j", 0x0000, 0x0800 )
+	ROM_LOAD( "galaxian.1k", 0x0800, 0x0800 )
 ROM_END
 
 ROM_START( galnamco_rom )
@@ -527,6 +547,19 @@ ROM_START( uniwars_rom )
 	ROM_LOAD( "u11", 0x1800, 0x0800 )
 ROM_END
 
+ROM_START( warofbug_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "%s.u",  0x0000, 0x0800 )
+	ROM_LOAD( "%s.v",  0x0800, 0x0800 )
+	ROM_LOAD( "%s.w",  0x1000, 0x0800 )
+	ROM_LOAD( "%s.y",  0x1800, 0x0800 )
+	ROM_LOAD( "%s.z",  0x2000, 0x0800 )
+
+	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "%s.1j", 0x0000, 0x0800 )
+	ROM_LOAD( "%s.1k", 0x0800, 0x0800 )
+ROM_END
+
 
 
 static int galaxian_hiload(const char *name)
@@ -582,6 +615,24 @@ struct GameDriver galaxian_driver =
 	galaxian_hiload, galaxian_hisave
 };
 
+struct GameDriver galmidw_driver =
+{
+	"galmidw",
+	&galaxian_machine_driver,
+
+	galmidw_rom,
+	0, 0,
+
+	galaxian_input_ports, galaxian_dsw,
+
+	galaxian_color_prom, 0, 0,
+	0, 17,
+	0x00, 0x01,
+	8*13, 8*16, 0x05,
+
+	galaxian_hiload, galaxian_hisave
+};
+
 struct GameDriver galnamco_driver =
 {
 	"galnamco",
@@ -590,7 +641,7 @@ struct GameDriver galnamco_driver =
 	galnamco_rom,
 	0, 0,
 
-	galaxian_input_ports, galaxian_dsw,
+	galaxian_input_ports, galboot_dsw,
 
 	galaxian_color_prom, 0, 0,
 	0, 17,
@@ -608,7 +659,7 @@ struct GameDriver superg_driver =
 	galnamco_rom,
 	0, 0,
 
-	galaxian_input_ports, galaxian_dsw,
+	galaxian_input_ports, galboot_dsw,
 
 	galaxian_color_prom, 0, 0,
 	0, 17,
@@ -626,7 +677,7 @@ struct GameDriver galapx_driver =
 	galapx_rom,
 	0, 0,
 
-	galaxian_input_ports, galaxian_dsw,
+	galaxian_input_ports, galboot_dsw,
 
 	galaxian_color_prom, 0, 0,
 	0, 17,
@@ -644,7 +695,7 @@ struct GameDriver galap1_driver =
 	galap1_rom,
 	0, 0,
 
-	galaxian_input_ports, galaxian_dsw,
+	galaxian_input_ports, galboot_dsw,
 
 	galaxian_color_prom, 0, 0,
 	0, 17,
@@ -662,7 +713,7 @@ struct GameDriver galap4_driver =
 	galap4_rom,
 	0, 0,
 
-	galaxian_input_ports, galaxian_dsw,
+	galaxian_input_ports, galboot_dsw,
 
 	galaxian_color_prom, 0, 0,
 	0, 17,
@@ -680,7 +731,7 @@ struct GameDriver galturbo_driver =
 	galnamco_rom,
 	0, 0,
 
-	galaxian_input_ports, galaxian_dsw,
+	galaxian_input_ports, galboot_dsw,
 
 	galaxian_color_prom, 0, 0,
 	0, 17,
@@ -749,7 +800,7 @@ struct GameDriver warofbug_driver =
 	"warofbug",
 	&galaxian_machine_driver,
 
-	galaxian_rom,
+	warofbug_rom,
 	0, 0,
 
 	warofbug_input_ports, warofbug_dsw,

@@ -19,8 +19,7 @@
 
 #define VESA_SCREEN_WIDTH 640
 #define VESA_SCREEN_HEIGHT 480
-#define VESASCAN_SCREEN_WIDTH 800
-#define VESASCAN_SCREEN_HEIGHT 600
+#define VESASCAN_MAX_WIDTH 800
 #define SCREEN_MODE GFX_VESA1
 
 
@@ -28,10 +27,19 @@ struct osd_bitmap *bitmap;
 int first_free_pen;
 int use_vesa;
 int use_vesascan;
+int use_vesaskip;
 int noscanlines;
 int videofreq;
+int video_sync;
 int play_sound;
 int use_joystick;
+
+int vs_width;
+int vs_height;
+int vs_skiplines;
+int vs_xoffset;
+int vs_yoffset;
+int vs_lastline;
 
 
 /* audio related stuff */
@@ -52,8 +60,10 @@ int osd_init(int argc,char **argv)
 
 	use_vesa = 0;
 	use_vesascan = 0;
+	use_vesaskip = 0;
 	noscanlines = 0;
 	videofreq = 0;
+	video_sync = 0;
 	play_sound = 1;
 	use_joystick = 1;
 	soundcard = -1;
@@ -63,6 +73,13 @@ int osd_init(int argc,char **argv)
 			use_vesa = 1;
 		if (strcmp(argv[i],"-vesascan") == 0)
 			use_vesascan = 1;
+		if (strcmp(argv[i],"-vesaskip") == 0)
+		{
+			use_vesascan = 1;
+			use_vesaskip = 1;
+			i++;
+			if (i < argc) vs_skiplines = atoi(argv[i]);
+		}
 		if (strcmp(argv[i],"-soundcard") == 0)
 		{
 			i++;
@@ -77,6 +94,8 @@ int osd_init(int argc,char **argv)
 			if (videofreq < 0) videofreq = 0;
 			if (videofreq > 3) videofreq = 3;
 		}
+		if (strcmp(argv[i],"-vsync") == 0)
+			video_sync = 1;
 		if (strcmp(argv[i],"-nojoy") == 0)
 			use_joystick = 0;
 	}
@@ -355,8 +374,33 @@ struct osd_bitmap *osd_create_display(int width,int height)
 	}
 	else if (use_vesascan)
 	{
-		if (set_gfx_mode(SCREEN_MODE,VESASCAN_SCREEN_WIDTH,VESASCAN_SCREEN_HEIGHT,0,0) != 0)
+		/* Perhaps it fits into a 640x480 screen? No need to use 800x600 then. */
+
+		if (height <= 240 || use_vesaskip == 1)
+		{
+			vs_height = 480;
+			vs_width = 640;
+		}
+		else
+		{
+			vs_height = 600;
+			vs_width = 800;
+			vs_skiplines = 0;
+		}
+
+		if (set_gfx_mode(SCREEN_MODE,vs_width,vs_height,0,0) != 0)
 			return 0;
+
+
+		/* Calculate the offsets to center the image */
+		vs_yoffset = (vs_height - height * 2) / 2;
+		if (vs_yoffset < 0) vs_yoffset = 0;
+		vs_xoffset = (vs_width - width * 2) / 2;
+		if (vs_xoffset < 0) vs_xoffset = 0;
+
+		vs_lastline = height - vs_skiplines;
+		if (vs_height/2 < vs_lastline)
+			vs_lastline = vs_height / 2;
 	}
 	else
 	{
@@ -452,6 +496,8 @@ int osd_obtain_pen(unsigned char red, unsigned char green, unsigned char blue)
 /* when the user presses F5. This is not required for porting. */
 void osd_update_display(void)
 {
+	if (video_sync) vsync();
+
 	if (use_vesa)
 	{
 		int y;
@@ -470,33 +516,55 @@ void osd_update_display(void)
 			lb += width4;
 		}
 	}
-    else if (use_vesascan)
- 	{
- 		int x,y;
- 		int width4 = bitmap->width / 4;
-		unsigned char vesa_line[VESASCAN_SCREEN_WIDTH];
+ 	else if (use_vesascan)
+   	{
+		int x,y;
+		int width4 = bitmap->width / 4;
+		unsigned char vesa_line[VESASCAN_MAX_WIDTH];
 
- 		unsigned long *lb = (unsigned long *) vesa_line;
- 		unsigned char *line = (unsigned char *) bitmap->private;
+		unsigned long *lb = (unsigned long *) vesa_line;
+		unsigned char *line = (unsigned char *) bitmap->private;
+		unsigned char *p;
 
+		line += bitmap->width*vs_skiplines;
 
- 		for (y = 0;y < bitmap->height;y++)
- 		{
- 			unsigned long address;
+		for (y = 0; y < vs_lastline; y++)
+		{
+			unsigned long address;
+			register unsigned char pixel;
 
+			p = vesa_line;
 
-          for (x = 0; x < bitmap->width;x++)
-          {
-             vesa_line[2*x] = vesa_line[2*x+1] = line[x];
-          }
+			/* For some strange reason, counting down and comparing
+			to zero is way faster. "Vesascan" is almost
+			as fast as tweaked modes now. Can this little
+			pixel-doubling loop be sped up some more? */
 
-          address = bmp_write_line(screen, 2*y + (VESASCAN_SCREEN_HEIGHT - bitmap->height*2) / 2)
- 					+ (VESASCAN_SCREEN_WIDTH - bitmap->width*2) / 2;
+			for (x = bitmap->width ; x != 0 ; x--)
+			{
+				pixel =*(line++);
+				*(p++)=pixel;
+				*(p++)=pixel;
+			}
+
+			address = bmp_write_line(screen, 2*y + vs_yoffset) + vs_xoffset;
 
 			_dosmemputl(lb,width4*2,address);
+		}
 
- 			line += bitmap->width;
- 		}
+
+		/* Check for PGUP, PGDN and scroll screen */
+
+		if (osd_key_pressed(OSD_KEY_PGDN))
+		{
+			if (vs_height/2 + vs_skiplines < bitmap->height)
+				vs_skiplines++;
+		}
+
+		if (osd_key_pressed(OSD_KEY_PGUP))
+		{
+			if (vs_skiplines > 0) vs_skiplines--;
+		}
  	}
 	else
 	{

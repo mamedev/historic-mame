@@ -25,10 +25,13 @@
 						 will be loaded.
 
 ***************************************************************************/
-int readroms(const struct RomModule *romp,const char *basename)
+int readroms(const struct RomModule *rommodule,const char *basename)
 {
 	int region;
+	const struct RomModule *romp;
 
+
+	romp = rommodule;
 
 	for (region = 0;region < MAX_MEMORY_REGIONS;region++)
 		Machine->memory_region[region] = 0;
@@ -76,8 +79,8 @@ int readroms(const struct RomModule *romp,const char *basename)
 
 			if ((f = fopen(name,"rb")) == 0)
 			{
-				printf("Unable to open file %s\n",name);
-				goto getout;
+				printf("Unable to open ROM %s\n",name);
+				goto printromlist;
 			}
 
 			do
@@ -91,9 +94,9 @@ int readroms(const struct RomModule *romp,const char *basename)
 
 				if (fread(Machine->memory_region[region] + romp->offset,1,romp->length,f) != romp->length)
 				{
-					printf("Unable to read file %s\n",name);
+					printf("Unable to read ROM %s\n",name);
 					fclose(f);
-					goto getout;
+					goto printromlist;
 				}
 
 				romp++;
@@ -106,6 +109,46 @@ int readroms(const struct RomModule *romp,const char *basename)
 	}
 
 	return 0;
+
+
+printromlist:
+	romp = rommodule;
+	printf( "\nMAME is an emulator: it reproduces, more or less faithfully, the behaviour of\n"
+			"several arcade machines. But hardware is useless without software, so an image\n"
+			"of the ROMs which run on that hardware is required. Such ROMs, like any other\n"
+			"commercial software, are copyrighted material and it is therefore illegal to\n"
+			"use them if you don't own the original arcade machine. Needless to say, ROMs\n"
+			"are not distributed together with MAME. Distribution of MAME together with ROM\n"
+			"images is a violation of copyright law and should be promptly reported to the\n"
+			"author so that appropriate legal action can be taken.\n\nPress return to continue\n");
+	getchar();
+	printf("This is the list of the ROMs required.\n"
+			"All the ROMs must reside in a subdirectory called \"%s\".\n"
+			"Name             Size\n",basename);
+	while (romp->name || romp->offset || romp->length)
+	{
+		romp++;	/* skip memory region definition */
+
+		while (romp->length)
+		{
+			char name[100];
+			int length;
+
+
+			sprintf(name,romp->name,basename);
+
+			length = 0;
+
+			do
+			{
+				length += romp->length;
+
+				romp++;
+			} while (romp->length && romp->name == 0);
+
+			printf("%-12s %5d bytes\n",name,length);
+		}
+	}
 
 getout:
 	for (region = 0;region < MAX_MEMORY_REGIONS;region++)

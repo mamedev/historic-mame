@@ -29,6 +29,7 @@ extern struct GameDriver wow_driver;
 extern struct GameDriver robby_driver;
 extern struct GameDriver gorf_driver;
 extern struct GameDriver galaxian_driver;
+extern struct GameDriver galmidw_driver;
 extern struct GameDriver galnamco_driver;
 extern struct GameDriver superg_driver;
 extern struct GameDriver galapx_driver;
@@ -51,6 +52,7 @@ extern struct GameDriver scobrak_driver;
 extern struct GameDriver scobrab_driver;
 extern struct GameDriver losttomb_driver;
 extern struct GameDriver frogger_driver;
+extern struct GameDriver frogsega_driver;
 extern struct GameDriver amidar_driver;
 extern struct GameDriver amidarjp_driver;
 extern struct GameDriver turtles_driver;
@@ -112,6 +114,7 @@ const struct GameDriver *drivers[] =
 	&robby_driver,
 	&gorf_driver,
 	&galaxian_driver,
+	&galmidw_driver,
 	&galnamco_driver,
 	&superg_driver,
 	&galapx_driver,
@@ -134,6 +137,7 @@ const struct GameDriver *drivers[] =
 	&scobrab_driver,
 	&losttomb_driver,
 	&frogger_driver,
+	&frogsega_driver,
 	&amidar_driver,
 	&amidarjp_driver,
 	&turtles_driver,

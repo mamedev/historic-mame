@@ -236,47 +236,64 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static unsigned char palette[] =
 {
 	0x00,0x00,0x00,	/* BLACK */
-	0xdb,0x00,0x00,	/* RED */
-	0xdb,0x92,0x49,	/* BROWN */
+
+  0xff,0x00,0x00, /* RED */
+  0x00,0xff,0x00, /* GREEN */
+  0x00,0x00,0xff, /* BLUE */
+  0xff,0xff,0x00, /* YELLOW */
+  0xff,0x00,0xff, /* MAGENTA */
+  0x00,0xff,0xff, /* CYAN */
+  0xff,0xff,0xff, /* WHITE */
+  0xE0,0xE0,0xE0, /* LTGRAY */
+  0xC0,0xC0,0xC0, /* DKGRAY */
+
+	0xe0,0xb0,0x70,	/* BROWN */
+	0xd0,0xa0,0x60,	/* BROWN0 */
+	0xc0,0x90,0x50,	/* BROWN1 */
+	0xa3,0x78,0x3a,	/* BROWN2 */
+	0x80,0x60,0x20,	/* BROWN3 */
+	0x54,0x40,0x14,	/* BROWN4 */
+
+  0x54,0xa8,0xff, /* LTBLUE */
+  0x00,0xa0,0x00, /* DKGREEN */
+  0x00,0xe0,0x00, /* GRASSGREEN */
+
+
+
 	0xff,0xb6,0xdb,	/* PINK */
-	0x00,0xdb,0x00,	/* UNUSED */
-	0x00,0xdb,0xdb,	/* CYAN */
 	0x49,0xb6,0xdb,	/* DKCYAN */
 	0xff,0xb6,0x49,	/* DKORANGE */
-	0x88,0x88,0x88,	/* UNUSED */
-	0xdb,0xdb,0x00,	/* YELLOW */
-        0x00,0x00,0xdb, /* UNUSED */
-	0x24,0x24,0xdb,	/* BLUE */
-	0x00,0xdb,0x00,	/* GREEN */
 	0x49,0xb6,0x92,	/* DKGREEN */
 	0xff,0xb6,0x92,	/* LTORANGE */
 	0xdb,0xdb,0xdb	/* GREY */
 };
 
-enum {BLACK,RED,BROWN,PINK,UNUSED1,CYAN,DKCYAN,DKORANGE,
-		UNUSED2,YELLOW,UNUSED3,BLUE,GREEN,DKGREEN,LTORANGE,GREY};
+enum {BLACK,RED,GREEN,BLUE,YELLOW,MAGENTA,CYAN,WHITE,LTGRAY,DKGRAY,
+       BROWN,BROWN0,BROWN1,BROWN2,BROWN3,BROWN4,
+			 LTBLUE,DKGREEN,GRASSGREEN,
+            };
 
 static unsigned char colortable[] =
 {
-	/* chars */
-        0,2,0,14,
-        0,14,0,4,
-        0,4,0,13,
-        0,13,0,6,
-        0,6,0,7,
-        0,7,0,8,
-        0,8,0,7,
-        0,7,0,9,
-        0,9,0,2,
-        0,2,0,5,
-        0,5,0,13,
-        0,13,0,8,
-        0,8,0,13,
-        0,13,0,7,
-        0,7,0,2,
-        0,7,0,2,
+	/* chars (16) */
+        7,7,BLACK,CYAN,   /* Top line */
+        7,7,BLACK,WHITE,  /* Second line, HIGH SCORES, SEGA */
+        7,7,BLACK,YELLOW, /* CREDITS, INSERT COIN */
+        7,CYAN,BLACK,RED,    /* scores, BONUS */
+        7,7,BLACK,GREEN,  /* 1 PLAYER... */
+        1,2,BLACK,5,      /* Life */
+        3,4,BLACK,6,      /* Life */
+        7,7,7,7,
+        7,7,7,7,
+        7,7,7,7,
+        7,7,7,7,
+        7,7,7,7,
+        7,7,7,7,
+        7,7,7,7,
+        7,7,7,7,
+        7,7,7,7,
 
-	/* sprites */
+	/* sprites (32) */
         0,1,2,14,4,13,6,7,
         0,2,14,4,13,6,7,8,
         0,14,4,13,6,7,8,7,
@@ -310,23 +327,23 @@ static unsigned char colortable[] =
         0,13,7,2,14,4,5,6,
         0,13,7,2,14,4,5,6,
 
-	/* background tiles */
-        0,1,2,14,4,13,6,7,
-        0,2,14,4,13,6,7,8,
-        0,14,4,13,6,7,8,7,
-        0,4,13,6,7,8,17,9,
-        0,13,6,7,8,7,9,2,
-        0,6,7,8,7,9,2,5,
-        0,7,8,7,9,2,5,13,
-        0,8,7,9,2,5,13,8,
-        0,7,9,2,5,13,8,13,
-        0,9,2,5,13,8,13,7,
-        0,2,5,13,8,13,7,2,
-        0,5,13,8,13,7,2,14,
-        0,13,8,13,7,2,14,4,
-        0,8,13,7,2,14,4,5,
-        0,13,7,2,14,4,5,6,
-        0,13,7,2,14,4,5,6
+	/* background tiles (16) */
+        0,0,0,0,0,0,0,0,  /* Score Back, all Black */
+        0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,
+ BROWN4,BROWN1,BROWN2,BROWN3,BLUE,LTBLUE,WHITE,DKGREEN, /* Brown with trees */
+ BROWN4,BROWN1,BROWN2,BROWN3,BLUE,BROWN0,WHITE,BROWN3, /* Brown wood:stage 1 bridge, stage 2 */
+ BROWN4,BROWN1,BROWN2,BROWN3,BLUE,GRASSGREEN,LTGRAY,DKGREEN, /* stage 2 green */
+ BLACK,BROWN1,BROWN2,BROWN3,BLUE,BROWN3,WHITE,LTGRAY, /* stage 1 under the skeleton, stage 3 */
+        0,0,0,0,0,0,0,0,
+        0,0,0,0,0,0,0,0,
 };
 
 

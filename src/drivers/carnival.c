@@ -10,15 +10,25 @@ e800-efff Character RAM
 
 I/O ports:
 read:
-00        ?
-01        IN1 (just an arbitrary name)
+00        IN0
+          bit 4 = ?
+
+01        IN1
           bit 3 = vblank
-		  bit 4 = ?
-		  bit 5 = ?
+          bit 4 = LEFT
+          bit 5 = RIGHT
+
+02        IN2
+          bit 4 = START 1
+          bit 5 = FIRE
+
+03        IN3
+          bit 3 = COIN (must reset the CPU to make the game acknowledge it)
+          bit 5 = START 2
 
 write:
-01        ?
-02        ?
+01 ?
+02 ?
 
 ***************************************************************************/
 
@@ -56,7 +66,10 @@ static struct MemoryWriteAddress writemem[] =
 
 static struct IOReadPort readport[] =
 {
+	{ 0x00, 0x00, input_port_0_r },
 	{ 0x01, 0x01, carnival_IN1_r },
+	{ 0x02, 0x02, input_port_2_r },
+	{ 0x03, 0x03, input_port_3_r },
 	{ -1 }	/* end of table */
 };
 
@@ -69,6 +82,26 @@ static struct IOWritePort writeport[] =
 
 static struct InputPort input_ports[] =
 {
+	{       /* IN0 */
+		0xff,
+		{ 0, 0, 0, 0, 0, 0, 0, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+	},
+	{       /* IN1 */
+		0xff,
+		{ 0, 0, 0, 0, OSD_KEY_LEFT, OSD_KEY_RIGHT, 0, 0 },
+		{ 0, 0, 0, 0, OSD_JOY_LEFT, OSD_JOY_RIGHT, 0, 0 }
+	},
+	{       /* IN2 */
+		0xff,
+		{ 0, 0, 0, 0, OSD_KEY_1, OSD_KEY_CONTROL, 0, 0 },
+		{ 0, 0, 0, 0, 0, OSD_JOY_FIRE, 0, 0 }
+	},
+	{       /* IN3 */
+		0xff,
+		{ 0, 0, 0, OSD_KEY_3, 0, OSD_KEY_2, 0, 0 },
+		{ 0, 0, 0, 0, 0, 0, 0, 0 }
+	},
 	{ -1 }
 };
 
@@ -76,6 +109,7 @@ static struct InputPort input_ports[] =
 
 static struct DSW dsw[] =
 {
+	{ 0, 0x10, "IN0 BIT 4", { "0", "1" } },
 	{ -1 }
 };
 

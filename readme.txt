@@ -18,9 +18,9 @@ The list doesn't include variants of the same game.
                                          Accurate            Hi score
 Game                         Playable?    colors?    Sound?    save?
 
-Pac Man                        Yes         Yes        Yes        No
-Ms Pac Man (bootleg)           Yes         Yes        Yes        No
-Crush Roller                   Yes         Yes        Yes        No
+Pac Man                        Yes         Yes        Yes       Yes
+Ms Pac Man (bootleg)           Yes         Yes        Yes       Yes
+Crush Roller                   Yes         Yes        Yes       Yes
 Pengo                          Yes         Yes        Yes       Yes
 Lady Bug                       Yes         Yes      No noise    Yes
 Mr. Do!                        Yes         Yes        Yes       Yes
@@ -32,37 +32,37 @@ Donkey Kong Jr.                Yes          No         No       Yes
 Donkey Kong 3                  Yes          No         No       Yes
 Mario Bros.                    Yes          No         No       Yes
 Bagman                         Yes          No     Music only    No
-Wizard of Wor               Partially     Maybe        No        No
+Wizard of Wor                  Yes        Maybe        No        No
 The Adventures of Robby Roto    No          No         No       n/a
 Gorf                            No          No         No       n/a
 Galaxian                       Yes         Yes      Limited     Yes
 Pisces                         Yes         Yes      Limited      No
 "Japanese Irem game"           Yes         Yes      Limited      No
 War of the Bugs                Yes          No      Limited      No
-Moon Cresta                    Yes         Yes      Limited      No
-Moon Quasar                    Yes         Yes      Limited      No
-Scramble                       Yes         Yes         No        No
-Super Cobra                    Yes          No         No        No
-The End                        Yes          No         No        No
-Frogger                        Yes        Close        No        No
-Amidar                         Yes        Close        No        No
-Turtles                        Yes          No         No        No
+Moon Cresta                    Yes         Yes      Limited     Yes
+Moon Quasar                    Yes         Yes      Limited     Yes
+Scramble                       Yes         Yes        Yes        No
+Super Cobra                    Yes          No        Yes        No
+The End                        Yes          No        Yes        No
+Frogger                        Yes        Close       Yes        No
+Amidar                         Yes        Close       Yes        No
+Turtles                        Yes          No        Yes        No
 Rally X                        Yes          No         No        No
-Time Pilot                     Yes          No         No       Yes
-Pooyan                         Yes          No         No        No
+Time Pilot                     Yes          No        Yes       Yes
+Pooyan                         Yes          No        Yes       Yes
 Phoenix                        Yes        Close     Limited      No
 Pleiads                        Yes          No      Limited      No
 Space Invaders                 Yes         Yes         No        No
-Carnival                        No          No         No       n/a
-Zaxxon                         Yes          No         No        No
-Congo Bongo                    Yes          No         No        No
-Bomb Jack                      Yes         Yes         No       Yes
+Carnival                       Yes          No         No        No
+Zaxxon                         Yes          No         No       Yes
+Congo Bongo                    Yes          No         No       Yes
+Bomb Jack                      Yes         Yes        Yes       Yes
 Centipede                      Yes          No        Yes       Yes
 Millipede                      Yes          No         No       Yes
 Nibbler                        Yes          No         No       Yes
 Moon Patrol                    Yes          No         No        No
-Burger Time                    Yes         Yes        Yes        No
-Lost Tomb                       No          No         No       n/a
+Burger Time                    Yes         Yes        Yes       Yes
+Lost Tomb                       No          No        Yes       n/a
 Jump Bug                        No          No         No       n/a
 Vanguard                       Yes          No         No        No
 
@@ -103,11 +103,13 @@ Phoenix driver provided by Brad Oliver (bradman@primenet.com), Mirko
    Buffoni (mix@lim.dsi.unimi.it) and Richard Davies (R.Davies@dcs.hull.ac.uk)
 Mario Bros., Zaxxon, Bomb Jack, Burger Time and Donkey Kong 3 drivers provided
    by Mirko Buffoni (mix@lim.dsi.unimi.it)
+Bomb Jack sound driver by Jarek Burczynski (pbk01@ikp.atm.com.pl).
 Congo Bongo driver provided by Ville Laitinen (ville@sms.fi).
 Millipede driver provided by Ivan Mackintosh (ivan@rcp.co.uk).
 Donkey Kong sound emulation by Ron Fries (rfries@tcmail.frco.com).
 Vanguard driver by Brad Oliver and Mirko Buffoni, based on code by Brian
    Levine.
+Carnival driver completed by Mike Coates and Richard Davies.
 
 
 Very special thanks to Sergio Munoz for the precious information about the
@@ -144,7 +146,9 @@ Colors for Donkey Kong, Donkey Kong Jr. and Mario Bros. derived from Kong
 Colors for Amidar, Frogger and Zaxxon derived from SPARCADE by Dave Spicer.
 Thanks to Brad Oliver, Marc Vergoossen (marc.vergoossen@pi.net) and Richard
    Davies (R.Davies@dcs.hull.ac.uk) for help with Donky Kong Jr. colors.
-Thanks to Marc Vergoossen and Marc Lafontaine (marclaf@sympatico.ca) for Zaxxon colors.
+Thanks to Marc Vergoossen and Marc Lafontaine (marclaf@sympatico.ca) for
+   Zaxxon colors.
+Thanks to Marc Lafontaine for Congo Bongo colors.
 Centipede information taken from Centipede emulator by Ivan Mackintosh, MageX
    0.3 by Edward Massey and memory map by Pete Rittwage.
 Info on Burger Time taken from Replay 0.01a by Kevin Brisley (kevin@isgtec.com)
@@ -156,6 +160,10 @@ Thanks to Philip Chapman (Philip_Chapman@qsp.co.uk) for useful feedback on
    Bomb Jack.
 Thanks to Mike Cuddy for Pooyan and Time pilot colors.
 Thanks to Thomas Meyer for Moon Patrol screenshots.
+Many thanks to Steve Scavone (krunch@intac.com) for his invaluable help with
+   Wizard of Wor and related games.
+-vesascan and -vesaskip implemented by Bernd Wiebelt
+   (bernardo@studi.mathematik.hu-berlin.de)
 
 
 
@@ -173,27 +181,40 @@ options:
               if the default mode doesn't work with your monitor/video card.
 -vesa         use standard 640x480x256 VESA mode instead of custom video mode.
               Use this as a last resort if -noscanlines doesn't solve your
-			  video problems.
+              video problems.
 -vesascan     use a VESA 800x600 screen to simulate scanlines. This is much
               slower than the other video modes. Use this if you want
-			  scanlines and the default video mode doesn't work.
+              scanlines and the default video mode doesn't work.
+-vesaskip n   similar to -vesascan, but use a 640x480 screen instead of
+              800x600. Since most games use a screen taller than 240 lines,
+              it won't fit in the screen - n sets the initial number of lines
+              to skip at the top of the screen. You can adjust the position
+              while the game is running using the PGUP and PGDOWN keys.
 -vgafreq n    where n can be 0 (default) 1, 2 or 3.
               use different frequencies for the custom video modes. This
               could reduce flicker, especially in the 224x288noscanlines
               mode. WARNING: THE FREQUENCIES USED MIGHT BE WAY OUTSIDE OF
-			  YOUR MONITOR RANGE, AND COULD EVEN DAMAGE IT. USE THESE OPTIONS
-			  AT YOUR OWN RISK.
+              YOUR MONITOR RANGE, AND COULD EVEN DAMAGE IT. USE THESE OPTIONS
+              AT YOUR OWN RISK.
+-vsync        syncronize video display with the video beam instead of using
+              the timer. This works best with -noscanlines and the -vesaxxx
+              modes. Use F11 to check your actual frame rate - it should be
+              around 60. If it is lower, try to increase it with -vgafreq (if
+              you are using a tqeked video mode) or use your video board
+              utilities to set the VESA refresh rate to 60 Hz.
+              Note that when this option is turned on, speed will NOT
+              downgrade nicely if your system is not fast enough.
 -soundcard n  select sound card (if this is not specified, you will be asked
               interactively)
 -nojoy        don't poll joystick
 -log          create a log of illegal memory accesses in ERROR.LOG
 -frameskip n  skip frames to speed up the emulation. For example, if the game
               normally runs at 60 fps, "-skipframe 1" will make it run at 30
-			  fps, and "-skipframe 2" at 20 fps. Use F11 to check the fps your
-			  computer is actually displaying. If the game is too slow,
-			  increase the frameskip value. Note that this setting can also
-			  affect audio quality (some games sound better, others sound
-			  worse).
+              fps, and "-skipframe 2" at 20 fps. Use F11 to check the fps your
+              computer is actually displaying. If the game is too slow,
+              increase the frameskip value. Note that this setting can also
+              affect audio quality (some games sound better, others sound
+              worse).
 
 
 The following keys work in all emulators:
@@ -413,14 +434,8 @@ pushing the joystick fully, to simulate the "half press" you can press Alt.
 
 
 Known issues:
-- This game is completely different from anything else I have emulated before.
-  The video memory is bitmapped. There are no character generator ROMs,
-  graphics data is contained in the code ROMs and the program sends commands
-  to some custom circuitry on the board to do copies, fills, and so on.
-  Understanding how the thing works without the schematics is tricky. There
-  are no memory mapped ports, everything is done via IN and OUT instructions.
-  As of now, it is somewhat playable but there are several faults.
 - No background stars, no fade in/fade out.
+
 
 
 The Adventures of Robby Roto ("robby")
@@ -442,13 +457,15 @@ It boots, shows some text on the screen and that's all.
 Galaxian ("galaxian")
 ---------------------
 
+Original version with Namco copyright
+
 Arrows  Move around
 CTRL    Fire
 F2      Test mode
 
-There are so many clones here that I'm not even sure which is the "original"
-one. The dip switch menu might display wrong settings.
-  Namco Galaxian ("galnamco")
+  original with Midway copyright ("galmidw")
+  and several bootlegs:
+  one with Namco copyright ("galnamco")
   Super Galaxian ("superg")
   Galaxian Part X ("galapx")
   Galaxian Part 1 ("galap1")
@@ -555,8 +572,8 @@ ALT     Bomb
 Clones supported:
   Battle of Atlantis ("atlantis") [I don't know what most of the dip switches
                                    do, and you get a massive 14 credits per
-								   coin - now that's what I call good value
-								   for money! ;-)]
+                                   coin - now that's what I call good value
+                                   for money! ;-)]
 
 Known issues:
 - The star background is probably not entirely accurate. Also, maybe it should
@@ -604,6 +621,8 @@ Frogger ("frogger")
 Arrows  Move around
 
 Clones supported:
+  alternate version, smaller, with different help, but still (C) Sega 1981
+     ("frogsega")
   bootleg version, which runs on a modified Scramble board ("froggers")
 
 
@@ -727,7 +746,8 @@ Known issues:
 Carnival ("carnival")
 ---------------------
 
-Not playable yet!
+Arrows  Move around
+CTRL    Fire
 
 
 
@@ -821,7 +841,7 @@ CTRL    Fire
 ALT     Jump
 F2+F3   Test mode (press and release, then be patient. After the RAM/ROM
                    tests, press 2 for an additional menu of options, then
-				   left/right to choose the option, and 1 to select it)
+                   left/right to choose the option, and 1 to select it)
 
 Clones supported:
   bootleg version, called Moon Ranger ("mranger")

@@ -289,7 +289,7 @@ void scramble_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 
 		blink_count++;
-		if (blink_count >= 72)
+		if (blink_count >= 43)
 		{
 			blink_count = 0;
 			stars_blink = (stars_blink + 1) % 4;

@@ -309,7 +309,7 @@ static struct MachineDriver scramble_machine_driver =
 			1789750,	/* 1.78975 Mhz?????? */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
-			scramble_sh_interrupt,2
+			scramble_sh_interrupt,1
 		}
 	},
 	60,
@@ -380,7 +380,7 @@ static struct MachineDriver scramble_nosound_machine_driver =
 
 ROM_START( scramble_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "2c", 0x0000, 0x0800 )
+	ROM_LOAD( "2d", 0x0000, 0x0800 )
 	ROM_LOAD( "2e", 0x0800, 0x0800 )
 	ROM_LOAD( "2f", 0x1000, 0x0800 )
 	ROM_LOAD( "2h", 0x1800, 0x0800 )
@@ -411,6 +411,11 @@ ROM_START( atlantis_rom )
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "5f", 0x0000, 0x0800 )
 	ROM_LOAD( "5h", 0x0800, 0x0800 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "5c", 0x0000, 0x0800 )
+	ROM_LOAD( "5d", 0x0800, 0x0800 )
+	ROM_LOAD( "5e", 0x1000, 0x0800 )
 ROM_END
 
 ROM_START( theend_rom )
@@ -427,6 +432,10 @@ ROM_START( theend_rom )
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "IC30", 0x0000, 0x0800 )
 	ROM_LOAD( "IC31", 0x0800, 0x0800 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "IC56", 0x0000, 0x0800 )
+	ROM_LOAD( "IC55", 0x0800, 0x0800 )
 ROM_END
 
 ROM_START( froggers_rom )
@@ -441,6 +450,11 @@ ROM_START( froggers_rom )
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "vid_f5.bin", 0x0000, 0x0800 )
 	ROM_LOAD( "vid_h5.bin", 0x0800, 0x0800 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "snd_c5.bin", 0x0000, 0x0800 )
+	ROM_LOAD( "snd_d5.bin", 0x0800, 0x0800 )
+	ROM_LOAD( "snd_e5.bin", 0x1000, 0x0800 )
 ROM_END
 
 
@@ -466,7 +480,7 @@ struct GameDriver scramble_driver =
 struct GameDriver atlantis_driver =
 {
 	"atlantis",
-	&scramble_nosound_machine_driver,
+	&scramble_machine_driver,
 
 	atlantis_rom,
 	0, 0,
@@ -484,7 +498,7 @@ struct GameDriver atlantis_driver =
 struct GameDriver theend_driver =
 {
 	"theend",
-	&scramble_nosound_machine_driver,
+	&scramble_machine_driver,
 
 	theend_rom,
 	0, 0,

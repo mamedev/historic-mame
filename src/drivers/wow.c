@@ -2,7 +2,7 @@
 
 Wizard of Wor memory map (preliminary)
 
-0000-3fff ROM A/B/C/D but also masked video RAM
+0000-3fff ROM A/B/C/D but also "magic" RAM (which processes data and copies it to the video RAM)
 4000-7fff SCREEN RAM (bitmap)
 8000-afff ROM E/F/G
 c000-cfff ROM X (Foreign language - not required)
@@ -10,7 +10,15 @@ d000-d3ff STATIC RAM
 
 I/O ports:
 IN:
-08        collision detector?
+08        intercept register (collision detector)
+          bit 0: intercept in pixel 3 in an OR or XOR write since last reset
+          bit 1: intercept in pixel 2 in an OR or XOR write since last reset
+          bit 2: intercept in pixel 1 in an OR or XOR write since last reset
+          bit 3: intercept in pixel 0 in an OR or XOR write since last reset
+          bit 4: intercept in pixel 3 in last OR or XOR write
+          bit 5: intercept in pixel 2 in last OR or XOR write
+          bit 6: intercept in pixel 1 in last OR or XOR write
+          bit 7: intercept in pixel 0 in last OR or XOR write
 10        IN0
 11        IN1
 12        IN2
@@ -65,11 +73,24 @@ IN:
 
 
 OUT:
+00-07     palette (00-03 = left part of screen; 04-07 right part)
+09        position where to switch from the "left" to the "right" palette.
+08        select video mode (0 = low res 160x102, 1 = high res 320x204)
+0a        screen height
+0b        color block transfer
+0c        magic RAM control
+          bit 7: ?
+          bit 6: flip
+          bit 5: draw in XOR mode
+          bit 4: draw in OR mode
+          bit 3: "expand" mode (convert 1bpp data to 2bpp)
+          bit 2: ?
+          bit 1:\ shift amount to be applied before copying
+          bit 0:/
 0d        set interrupt vector
-blitter registers:
-0c        ?
-19        plane mask?
-78-7e     blitter (see vidhrdw.c for details)
+10-18     sound
+19        magic RAM expand mode color
+78-7e     pattern board (see vidhrdw.c for details)
 
 ***************************************************************************/
 
@@ -79,12 +100,12 @@ blitter registers:
 
 
 extern unsigned char *wow_videoram;
-extern int wow_collision_r(int offset);
+extern int wow_intercept_r(int offset);
 extern void wow_videoram_w(int offset,int data);
-extern void wow_mask_w(int offset,int data);
-extern void wow_unknown_w(int offset,int data);
-extern void wow_masked_videoram_w(int offset,int data);
-extern void wow_blitter_w(int offset,int data);
+extern void wow_magic_expand_color_w(int offset,int data);
+extern void wow_magic_control_w(int offset,int data);
+extern void wow_magicram_w(int offset,int data);
+extern void wow_pattern_board_w(int offset,int data);
 extern void wow_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 
@@ -103,7 +124,7 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0xd000, 0xd3ff, MWA_RAM },
 	{ 0x4000, 0x7fff, wow_videoram_w, &wow_videoram },
-	{ 0x0000, 0x3fff, wow_masked_videoram_w },
+	{ 0x0000, 0x3fff, wow_magicram_w },
 	{ 0x8000, 0xafff, MWA_ROM },
 	{ 0xc000, 0xcfff, MWA_ROM },
 	{ -1 }	/* end of table */
@@ -113,7 +134,7 @@ static struct MemoryWriteAddress writemem[] =
 
 static struct IOReadPort readport[] =
 {
-	{ 0x08, 0x08, wow_collision_r },
+	{ 0x08, 0x08, wow_intercept_r },
 	{ 0x10, 0x10, input_port_0_r },
 	{ 0x11, 0x11, input_port_1_r },
 	{ 0x12, 0x12, input_port_2_r },
@@ -124,9 +145,9 @@ static struct IOReadPort readport[] =
 static struct IOWritePort writeport[] =
 {
 	{ 0x0d, 0x0d, interrupt_vector_w },
-	{ 0x19, 0x19, wow_mask_w },
-	{ 0x0c, 0x0c, wow_unknown_w },
-	{ 0x78, 0x7e, wow_blitter_w },
+	{ 0x19, 0x19, wow_magic_expand_color_w },
+	{ 0x0c, 0x0c, wow_magic_control_w },
+	{ 0x78, 0x7e, wow_pattern_board_w },
 	{ -1 }	/* end of table */
 };
 

@@ -20,12 +20,12 @@ OBJS   = obj/mame.o obj/common.o obj/driver.o obj/cpuintrf.o obj/osdepend.o \
          obj/drivers/galaxian.o \
          obj/vidhrdw/mooncrst.o obj/sndhrdw/mooncrst.o obj/drivers/mooncrst.o \
          obj/vidhrdw/moonqsr.o obj/drivers/moonqsr.o \
-         obj/vidhrdw/frogger.o obj/drivers/frogger.o \
+         obj/vidhrdw/frogger.o obj/sndhrdw/frogger.o obj/drivers/frogger.o \
          obj/machine/scramble.o obj/vidhrdw/scramble.o obj/sndhrdw/scramble.o obj/drivers/scramble.o \
          obj/drivers/scobra.o \
          obj/vidhrdw/amidar.o obj/drivers/amidar.o \
          obj/vidhrdw/rallyx.o obj/drivers/rallyx.o \
-         obj/vidhrdw/pooyan.o obj/drivers/pooyan.o \
+         obj/vidhrdw/pooyan.o obj/sndhrdw/pooyan.o obj/drivers/pooyan.o \
          obj/vidhrdw/timeplt.o obj/drivers/timeplt.o \
          obj/machine/phoenix.o obj/vidhrdw/phoenix.o obj/sndhrdw/phoenix.o obj/drivers/phoenix.o \
          obj/machine/carnival.o obj/vidhrdw/carnival.o obj/drivers/carnival.o \
@@ -33,7 +33,7 @@ OBJS   = obj/mame.o obj/common.o obj/driver.o obj/cpuintrf.o obj/osdepend.o \
          obj/vidhrdw/mario.o obj/drivers/mario.o \
          obj/machine/zaxxon.o obj/vidhrdw/zaxxon.o obj/drivers/zaxxon.o \
          obj/vidhrdw/congo.o obj/drivers/congo.o \
-         obj/vidhrdw/bombjack.o obj/drivers/bombjack.o \
+         obj/vidhrdw/bombjack.o obj/sndhrdw/bombjack.o obj/drivers/bombjack.o \
          obj/machine/centiped.o obj/drivers/centiped.o \
          obj/vidhrdw/milliped.o obj/sndhrdw/milliped.o obj/drivers/milliped.o \
          obj/machine/nibbler.o obj/vidhrdw/nibbler.o obj/drivers/nibbler.o \

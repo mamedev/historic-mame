@@ -64,6 +64,27 @@ b820      DSW2 (not Turtles)
 
 write:
 a008      interrupt enable
+b800      To AY-3-8910 port A (commands for the audio CPU)
+b810      bit 3 = interrupt trigger on audio CPU
+
+
+SOUND BOARD:
+0000-1fff ROM
+8000-83ff RAM
+
+I/0 ports:
+read:
+20      8910 #2  read
+80      8910 #1  read
+
+write
+10      8910 #2  control
+20      8910 #2  write
+40      8910 #1  control
+80      8910 #1  write
+
+interrupts:
+interrupt mode 1 triggered by the main CPU
 
 ***************************************************************************/
 
@@ -75,6 +96,18 @@ a008      interrupt enable
 extern unsigned char *amidar_attributesram;
 extern void amidar_attributes_w(int offset,int data);
 extern void amidar_vh_screenrefresh(struct osd_bitmap *bitmap);
+
+extern void scramble_soundcommand_w(int offset,int data);
+extern int scramble_sh_read_port1_r(int offset);
+extern void scramble_sh_control_port1_w(int offset,int data);
+extern void scramble_sh_write_port1_w(int offset,int data);
+extern int scramble_sh_read_port2_r(int offset);
+extern void scramble_sh_control_port2_w(int offset,int data);
+extern void scramble_sh_write_port2_w(int offset,int data);
+extern int scramble_sh_interrupt(void);
+extern int scramble_sh_start(void);
+extern void scramble_sh_stop(void);
+extern void scramble_sh_update(void);
 
 
 
@@ -100,7 +133,42 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x9840, 0x985f, MWA_RAM, &spriteram },
 	{ 0x9860, 0x987f, MWA_NOP },
 	{ 0xa008, 0xa008, interrupt_enable_w },
+	{ 0xb800, 0xb800, scramble_soundcommand_w },
 	{ 0x0000, 0x4fff, MWA_ROM },
+	{ -1 }	/* end of table */
+};
+
+
+
+static struct MemoryReadAddress sound_readmem[] =
+{
+	{ 0x8000, 0x83ff, MRA_RAM },
+	{ 0x0000, 0x1fff, MRA_ROM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress sound_writemem[] =
+{
+	{ 0x8000, 0x83ff, MWA_RAM },
+	{ 0x0000, 0x1fff, MWA_ROM },
+	{ -1 }	/* end of table */
+};
+
+
+
+static struct IOReadPort sound_readport[] =
+{
+	{ 0x80, 0x80, scramble_sh_read_port1_r },
+	{ 0x20, 0x20, scramble_sh_read_port2_r },
+	{ -1 }	/* end of table */
+};
+
+static struct IOWritePort sound_writeport[] =
+{
+	{ 0x40, 0x40, scramble_sh_control_port1_w },
+	{ 0x80, 0x80, scramble_sh_write_port1_w },
+	{ 0x10, 0x10, scramble_sh_control_port2_w },
+	{ 0x20, 0x20, scramble_sh_write_port2_w },
 	{ -1 }	/* end of table */
 };
 
@@ -237,6 +305,13 @@ static struct MachineDriver machine_driver =
 			0,
 			readmem,writemem,0,0,
 			nmi_interrupt,1
+		},
+		{
+			CPU_Z80,
+			1789750,	/* 1.78975 Mhz?????? */
+			2,	/* memory region #2 */
+			sound_readmem,sound_writemem,sound_readport,sound_writeport,
+			scramble_sh_interrupt,1
 		}
 	},
 	60,
@@ -256,9 +331,9 @@ static struct MachineDriver machine_driver =
 	/* sound hardware */
 	0,
 	0,
-	0,
-	0,
-	0
+	scramble_sh_start,
+	scramble_sh_stop,
+	scramble_sh_update
 };
 
 
@@ -280,6 +355,10 @@ ROM_START( amidar_rom )
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "amidarus.5f", 0x0000, 0x0800 )
 	ROM_LOAD( "amidarus.5h", 0x0800, 0x0800 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "amidarus.5c", 0x0000, 0x1000 )
+	ROM_LOAD( "amidarus.5d", 0x1000, 0x1000 )
 ROM_END
 
 ROM_START( amidarjp_rom )
@@ -292,6 +371,10 @@ ROM_START( amidarjp_rom )
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "amidar.5f", 0x0000, 0x0800 )
 	ROM_LOAD( "amidar.5h", 0x0800, 0x0800 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "amidar.5c", 0x0000, 0x1000 )
+	ROM_LOAD( "amidar.5d", 0x1000, 0x1000 )
 ROM_END
 
 ROM_START( turtles_rom )
@@ -305,6 +388,10 @@ ROM_START( turtles_rom )
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "turt_vid.5f", 0x0000, 0x0800 )
 	ROM_LOAD( "turt_vid.5h", 0x0800, 0x0800 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "turt_snd.5c", 0x0000, 0x1000 )
+	ROM_LOAD( "turt_snd.5d", 0x1000, 0x1000 )
 ROM_END
 
 

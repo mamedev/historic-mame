@@ -279,13 +279,15 @@ ROM_START( nibbler_rom )
 	ROM_LOAD( "IC15", 0x9000, 0x1000 )
 	ROM_LOAD( "IC16", 0xa000, 0x1000 )
 	ROM_LOAD( "IC17", 0xb000, 0x1000 )
-/*	ROM_LOAD( "IC52", 0x????, 0x0800 )	what is this ??? */
-/*	ROM_LOAD( "IC53", 0x????, 0x0800 )	what is this ??? */
 	ROM_LOAD( "IC14", 0xf000, 0x1000 )	/* for the reset and interrupt vectors */
 
 	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "IC50", 0x0000, 0x1000 )
 	ROM_LOAD( "IC51", 0x1000, 0x1000 )
+
+	/* sound? */
+/*	ROM_LOAD( "IC52", 0x????, 0x0800 ) */
+/*	ROM_LOAD( "IC53", 0x????, 0x0800 ) */
 ROM_END
 
 

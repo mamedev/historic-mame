@@ -55,8 +55,24 @@ b80c      screen horizontal flip
 b810      screen vertical flip
 b818      coin counter 1
 b81c      coin counter 2
-d000      To AY-3-8910 port A (commands for the second Z80?)
-d002      sound control?
+d000      To AY-3-8910 port A (commands for the second Z80)
+d002      trigger interrupt on sound CPU
+
+
+SOUND BOARD:
+0000-17ff ROM
+4000-43ff RAM
+
+I/0 ports:
+read:
+40      8910 #1  read
+
+write
+40      8910 #1  write
+80      8910 #1  control
+
+interrupts:
+interrupt mode 1 triggered by the main CPU
 
 ***************************************************************************/
 
@@ -69,6 +85,16 @@ extern unsigned char *frogger_attributesram;
 extern void frogger_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 extern void frogger_attributes_w(int offset,int data);
 extern void frogger_vh_screenrefresh(struct osd_bitmap *bitmap);
+
+extern void frogger_soundcommand_w(int offset,int data);
+extern int frogger_sh_read_port_r(int offset);
+extern void frogger_sh_control_port_w(int offset,int data);
+extern void frogger_sh_write_port_w(int offset,int data);
+extern int frogger_sh_interrupt(void);
+extern int frogger_sh_init(const char *gamename);
+extern int frogger_sh_start(void);
+extern void frogger_sh_stop(void);
+extern void frogger_sh_update(void);
 
 
 
@@ -92,7 +118,39 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xb000, 0xb03f, frogger_attributes_w, &frogger_attributesram },
 	{ 0xb040, 0xb05f, MWA_RAM, &spriteram },
 	{ 0xb808, 0xb808, interrupt_enable_w },
+	{ 0xd000, 0xd000, frogger_soundcommand_w },
 	{ 0x0000, 0x3fff, MWA_ROM },
+	{ -1 }	/* end of table */
+};
+
+
+
+static struct MemoryReadAddress sound_readmem[] =
+{
+	{ 0x4000, 0x43ff, MRA_RAM },
+	{ 0x0000, 0x17ff, MRA_ROM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress sound_writemem[] =
+{
+	{ 0x4000, 0x43ff, MWA_RAM },
+	{ 0x0000, 0x17ff, MWA_ROM },
+	{ -1 }	/* end of table */
+};
+
+
+
+static struct IOReadPort sound_readport[] =
+{
+	{ 0x40, 0x40, frogger_sh_read_port_r },
+	{ -1 }	/* end of table */
+};
+
+static struct IOWritePort sound_writeport[] =
+{
+	{ 0x80, 0x80, frogger_sh_control_port_w },
+	{ 0x40, 0x40, frogger_sh_write_port_w },
 	{ -1 }	/* end of table */
 };
 
@@ -202,6 +260,13 @@ static struct MachineDriver machine_driver =
 			0,
 			readmem,writemem,0,0,
 			nmi_interrupt,1
+		},
+		{
+			CPU_Z80,
+			1789750,	/* 1.78975 Mhz?????? */
+			2,	/* memory region #2 */
+			sound_readmem,sound_writemem,sound_readport,sound_writeport,
+			frogger_sh_interrupt,1
 		}
 	},
 	60,
@@ -220,10 +285,10 @@ static struct MachineDriver machine_driver =
 
 	/* sound hardware */
 	0,
-	0,
-	0,
-	0,
-	0
+	frogger_sh_init,
+	frogger_sh_start,
+	frogger_sh_stop,
+	frogger_sh_update
 };
 
 
@@ -244,6 +309,27 @@ ROM_START( frogger_rom )
 	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "frogger.606", 0x0000, 0x0800 )
 	ROM_LOAD( "frogger.607", 0x0800, 0x0800 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "frogger.608", 0x0000, 0x0800 )
+	ROM_LOAD( "frogger.609", 0x0800, 0x0800 )
+	ROM_LOAD( "frogger.610", 0x1000, 0x0800 )
+ROM_END
+
+ROM_START( frogsega_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "frogger.ic5", 0x0000, 0x1000 )
+	ROM_LOAD( "frogger.ic6", 0x1000, 0x1000 )
+	ROM_LOAD( "frogger.ic7", 0x2000, 0x1000 )
+
+	ROM_REGION(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "frogger.606", 0x0000, 0x0800 )
+	ROM_LOAD( "frogger.607", 0x0800, 0x0800 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "frogger.608", 0x0000, 0x0800 )
+	ROM_LOAD( "frogger.609", 0x0800, 0x0800 )
+	ROM_LOAD( "frogger.610", 0x1000, 0x0800 )
 ROM_END
 
 
@@ -254,6 +340,26 @@ struct GameDriver frogger_driver =
 	&machine_driver,
 
 	frogger_rom,
+	0, 0,
+
+	input_ports, dsw,
+
+	color_prom, 0, 0,
+	0, 17,
+	0x00, 0x03,
+	8*13, 8*16, 0x06,
+
+	0, 0
+};
+
+
+
+struct GameDriver frogsega_driver =
+{
+	"frogsega",
+	&machine_driver,
+
+	frogsega_rom,
 	0, 0,
 
 	input_ports, dsw,

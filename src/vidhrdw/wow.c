@@ -13,13 +13,19 @@
 
 
 unsigned char *wow_videoram;
-int mask,unknown,collision;
+int magic_expand_color, magic_control, collision;
 
 
 
-int wow_collision_r(int offset)
+int wow_intercept_r(int offset)
 {
-	return collision;
+	int res;
+
+
+	res = collision;
+	collision = 0;
+
+	return res;
 }
 
 
@@ -63,25 +69,25 @@ void wow_videoram_w(int offset,int data)
 
 
 
-void wow_mask_w(int offset,int data)
+void wow_magic_expand_color_w(int offset,int data)
 {
-if (errorlog) fprintf(errorlog,"%04x: mask = %02x\n",Z80_GetPC(),data);
-	mask = data;
+if (errorlog) fprintf(errorlog,"%04x: magic_expand_color = %02x\n",Z80_GetPC(),data);
+	magic_expand_color = data;
 }
 
 
 
-void wow_unknown_w(int offset,int data)
+void wow_magic_control_w(int offset,int data)
 {
-if (errorlog) fprintf(errorlog,"%04x: unknown = %02x\n",Z80_GetPC(),data);
-	unknown = data;
+if (errorlog) fprintf(errorlog,"%04x: magic_control = %02x\n",Z80_GetPC(),data);
+	magic_control = data;
 }
 
 
 
 static void copywithflip(int offset,int data)
 {
-	if (unknown & 0x40)	/* copy backwards */
+	if (magic_control & 0x40)	/* copy backwards */
 	{
 		int bits,stib,k;
 
@@ -97,12 +103,12 @@ static void copywithflip(int offset,int data)
 		data = stib;
 	}
 
-	if (unknown & 0x40)	/* copy backwards */
+	if (magic_control & 0x40)	/* copy backwards */
 	{
 		int shift,data1,mask;
 
 
-		shift = unknown & 3;
+		shift = magic_control & 3;
 		data1 = 0;
 		mask = 0xff;
 		while (shift > 0)
@@ -114,13 +120,21 @@ static void copywithflip(int offset,int data)
 			shift--;
 		}
 
-		if ((mask & wow_videoram[offset]) || (~mask & wow_videoram[offset-1])) collision = 1;
-		else collision = 0;
+		if (magic_control & 0x30)
+		{
+			/* TODO: the collision detection should be made independently for */
+			/* each of the four pixels */
+			if ((mask & wow_videoram[offset]) || (~mask & wow_videoram[offset-1]))
+				collision |= 0xff;
+			else collision &= 0x0f;
+		}
 
-		if (unknown & 0x20) data ^= wow_videoram[offset];	/* draw in XOR mode */
+		if (magic_control & 0x20) data ^= wow_videoram[offset];	/* draw in XOR mode */
+		else if (magic_control & 0x10) data |= wow_videoram[offset];	/* draw in OR mode */
 		else data |= ~mask & wow_videoram[offset];	/* draw in copy mode */
 		wow_videoram_w(offset,data);
-		if (unknown & 0x20) data1 ^= wow_videoram[offset-1];	/* draw in XOR mode */
+		if (magic_control & 0x20) data1 ^= wow_videoram[offset-1];	/* draw in XOR mode */
+		else if (magic_control & 0x10) data1 |= wow_videoram[offset-1];	/* draw in OR mode */
 		else data1 |= mask & wow_videoram[offset-1];	/* draw in copy mode */
 		wow_videoram_w(offset-1,data1);
 	}
@@ -129,7 +143,7 @@ static void copywithflip(int offset,int data)
 		int shift,data1,mask;
 
 
-		shift = unknown & 3;
+		shift = magic_control & 3;
 		data1 = 0;
 		mask = 0xff;
 		while (shift > 0)
@@ -141,16 +155,26 @@ static void copywithflip(int offset,int data)
 			shift--;
 		}
 
-		if ((mask & wow_videoram[offset]) || (~mask & wow_videoram[offset+1])) collision = 1;
-		else collision = 0;
+		if (magic_control & 0x30)
+		{
+			/* TODO: the collision detection should be made independently for */
+			/* each of the four pixels */
+			if ((mask & wow_videoram[offset]) || (~mask & wow_videoram[offset+1]))
+				collision |= 0xff;
+			else collision &= 0x0f;
+		}
 
-		if (unknown & 0x20)
+		if (magic_control & 0x20)
 			data ^= wow_videoram[offset];	/* draw in XOR mode */
+		else if (magic_control & 0x10)
+			data |= wow_videoram[offset];	/* draw in OR mode */
 		else
 			data |= ~mask & wow_videoram[offset];	/* draw in copy mode */
 		wow_videoram_w(offset,data);
-		if (unknown & 0x20)
+		if (magic_control & 0x20)
 			data1 ^= wow_videoram[offset+1];	/* draw in XOR mode */
+		else if (magic_control & 0x10)
+			data1 |= wow_videoram[offset+1];	/* draw in OR mode */
 		else
 			data1 |= mask & wow_videoram[offset+1];	/* draw in copy mode */
 		wow_videoram_w(offset+1,data1);
@@ -159,10 +183,9 @@ static void copywithflip(int offset,int data)
 
 
 
-void wow_masked_videoram_w(int offset,int data)
+void wow_magicram_w(int offset,int data)
 {
-	if ((unknown & 0x9c) == 0x08	/* copy 1 bitplane with color */
-			|| (unknown & 0x9c) == 0x18)
+	if (magic_control & 0x08)	/* expand mode */
 	{
 		int bits,bibits,k;
 
@@ -176,14 +199,12 @@ if (!count) return;
 		for (k = 0;k < 4;k++)
 		{
 			bibits <<= 2;
-			if (bits & 0x80) bibits |= 0x03;
+			if (bits & 0x80) bibits |= (magic_expand_color >> 2) & 0x03;
+			else bibits |= magic_expand_color & 0x03;
 			bits <<= 1;
 		}
-		if (mask == 0) bibits = 0;
-		else if (mask == 4) bibits &= 0x55;
-		else if (mask == 8) bibits &= 0xaa;
 
-		if (unknown & 0x40)	/* copy backwards */
+		if (magic_control & 0x40)	/* copy backwards */
 			copywithflip(offset+1,bibits);
 		else
 			copywithflip(offset,bibits);
@@ -193,14 +214,15 @@ if (!count) return;
 		for (k = 0;k < 4;k++)
 		{
 			bibits <<= 2;
-			if (bits & 0x08) bibits |= 0x03;
+			if (bits & 0x08) bibits |= (magic_expand_color >> 2) & 0x03;
+			else bibits |= magic_expand_color & 0x03;
 			bits <<= 1;
 		}
-		if (mask == 0) bibits = 0;
-		else if (mask == 4) bibits &= 0x55;
-		else if (mask == 8) bibits &= 0xaa;
+		if (magic_expand_color == 0) bibits = 0;
+		else if (magic_expand_color == 4) bibits &= 0x55;
+		else if (magic_expand_color == 8) bibits &= 0xaa;
 
-		if (unknown & 0x40)	/* copy backwards */
+		if (magic_control & 0x40)	/* copy backwards */
 			copywithflip(offset,bibits);
 		else
 			copywithflip(offset+1,bibits);
@@ -213,7 +235,7 @@ if (!count) return;
 
 
 
-void wow_blitter_w(int offset,int data)
+void wow_pattern_board_w(int offset,int data)
 {
 	static int src;
 	static int mode;	/* ?? */
@@ -264,7 +286,7 @@ if (errorlog) fprintf(errorlog,"%04x: blit src %04x mode %02x skip %d dest %04x 
 			for (j = 0;j <= length;j++)
 			{
 if (!(mode & 0x08) || j < length)
-				Z80_WRMEM(dest,RAM[src]);
+				cpu_writemem(dest,RAM[src]);
 				if (mode & 0x20) dest++;	/* copy forwards */
 				else dest--;				/* backwards */
 

@@ -15,7 +15,7 @@ static const struct GameDriver *gamedrv;
 static const struct MachineDriver *drv;
 
 static int hiscoreloaded;
-static char hiscorename[32];
+static char hiscorename[50];
 
 
 int frameskip;
@@ -401,7 +401,7 @@ int updatescreen(void)
 		do
 		{
 			curr = uclock();
-		} while (throttle && (curr - prev[i]) < (frameskip+1) * UCLOCKS_PER_SEC/drv->frames_per_second);
+		} while (video_sync == 0 && throttle != 0 && (curr - prev[i]) < (frameskip+1) * UCLOCKS_PER_SEC/drv->frames_per_second);
 
 		i = (i+1) % MEMORY;
 

@@ -14,7 +14,7 @@ static int command_queue[10],pending_commands;
 
 
 
-void scramble_soundcommand_w(int offset,int data)
+void pooyan_soundcommand_w(int offset,int data)
 {
 	command_queue[pending_commands] = data;
 	pending_commands++;
@@ -49,14 +49,11 @@ static unsigned char porthandler(AY8910 *chip, int port, int iswrite, unsigned c
 		{
 			int clockticks,clock;
 
-#define TIMER_RATE (512*2)
+#define TIMER_RATE (32)
 
 			clockticks = (Z80_IPeriod - Z80_ICount);
 
 			clock = clockticks / TIMER_RATE;
-
-			clock = ((clock & 0x01) << 4) | ((clock & 0x02) << 6) |
-					((clock & 0x08) << 2) | ((clock & 0x10) << 2);
 
 			chip->Regs[port] = clock;
 		}
@@ -67,7 +64,7 @@ static unsigned char porthandler(AY8910 *chip, int port, int iswrite, unsigned c
 
 
 
-int scramble_sh_interrupt(void)
+int pooyan_sh_interrupt(void)
 {
 	if (pending_commands > 0)
 	{
@@ -79,7 +76,7 @@ int scramble_sh_interrupt(void)
 
 
 
-int scramble_sh_start(void)
+int pooyan_sh_start(void)
 {
 	pending_commands = 0;
 
@@ -95,7 +92,7 @@ int scramble_sh_start(void)
 
 
 
-void scramble_sh_stop(void)
+void pooyan_sh_stop(void)
 {
 	AYShutdown();
 }
@@ -104,49 +101,49 @@ void scramble_sh_stop(void)
 
 int static lastreg1,lastreg2;	/* AY-3-8910 register currently selected */
 
-int scramble_sh_read_port1_r(int offset)
+int pooyan_sh_read_port1_r(int offset)
 {
 	return AYReadReg(0,lastreg1);
 }
 
 
 
-void scramble_sh_control_port1_w(int offset,int data)
+void pooyan_sh_control_port1_w(int offset,int data)
 {
 	lastreg1 = data;
 }
 
 
 
-void scramble_sh_write_port1_w(int offset,int data)
+void pooyan_sh_write_port1_w(int offset,int data)
 {
 	AYWriteReg(0,lastreg1,data);
 }
 
 
 
-int scramble_sh_read_port2_r(int offset)
+int pooyan_sh_read_port2_r(int offset)
 {
 	return AYReadReg(1,lastreg2);
 }
 
 
 
-void scramble_sh_control_port2_w(int offset,int data)
+void pooyan_sh_control_port2_w(int offset,int data)
 {
 	lastreg2 = data;
 }
 
 
 
-void scramble_sh_write_port2_w(int offset,int data)
+void pooyan_sh_write_port2_w(int offset,int data)
 {
 	AYWriteReg(1,lastreg2,data);
 }
 
 
 
-void scramble_sh_update(void)
+void pooyan_sh_update(void)
 {
 	unsigned char buffer[2][buffer_len];
 	static int playing;

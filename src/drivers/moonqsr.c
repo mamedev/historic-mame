@@ -282,6 +282,42 @@ static unsigned moonqsr_decode(int A)
 
 
 
+static int hiload(const char *name)
+{
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x804e],"\x00\x50\x00",3) == 0 &&
+			memcmp(&RAM[0x805a],"\x00\x50\x00",3) == 0)
+	{
+		FILE *f;
+
+
+		if ((f = fopen(name,"rb")) != 0)
+		{
+			fread(&RAM[0x804e],1,10*5,f);
+			fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+static void hisave(const char *name)
+{
+	FILE *f;
+
+
+	if ((f = fopen(name,"wb")) != 0)
+	{
+		fwrite(&RAM[0x804e],1,10*5,f);
+		fclose(f);
+	}
+}
+
+
+
 struct GameDriver moonqsr_driver =
 {
 	"moonqsr",
@@ -297,5 +333,5 @@ struct GameDriver moonqsr_driver =
 	0x07, 0x02,
 	8*13, 8*16, 0x01,
 
-	0, 0
+	hiload, hisave
 };

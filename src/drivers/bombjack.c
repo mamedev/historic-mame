@@ -1,6 +1,7 @@
 /***************************************************************************
 
 Bomb Jack memory map (preliminary)
+MAIN BOARD:
 
 0000-1fff ROM 0
 2000-3fff ROM 1
@@ -25,11 +26,36 @@ b005      DSW2
 
 write:
 9820-987f sprites
-9a00      ?
+9a00      ? number of small sprites for video controller
 9c00-9cff palette
 9e00      background image selector
 b000      interrupt enable
-b800      ?
+b800      command to soundboard & trigger NMI on sound board
+
+
+
+SOUND BOARD:
+0x0000 0x1fff ROM
+0x2000 0x4400 RAM
+
+memory mapped ports:
+read:
+0x6000 command from soundboard
+write :
+none
+
+IO ports:
+write:
+0x00 AY#1 control
+0x01 AY#1 write
+0x10 AY#2 control
+0x11 AY#2 write
+0x80 AY#3 control
+0x81 AY#3 write
+
+interrupts:
+NMI triggered by the commands sent by MAIN BOARD (?)
+NMI interrupts for music timing
 
 ***************************************************************************/
 
@@ -43,6 +69,21 @@ extern void bombjack_paletteram_w(int offset,int data);
 extern void bombjack_background_w(int offset,int data);
 extern void bombjack_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 extern void bombjack_vh_screenrefresh(struct osd_bitmap *bitmap);
+
+extern int bombjack_soundcommand_r(int offset);
+extern void bombjack_soundcommand_w(int offset,int data);
+extern void bombjack_sh_control_port1_w(int offset,int data);
+extern void bombjack_sh_control_port2_w(int offset,int data);
+extern void bombjack_sh_control_port3_w(int offset,int data);
+
+extern void bombjack_sh_write_port1_w(int offset,int data);
+extern void bombjack_sh_write_port2_w(int offset,int data);
+extern void bombjack_sh_write_port3_w(int offset,int data);
+
+extern int bombjack_sh_interrupt(void);
+extern int bombjack_sh_start(void);
+extern void bombjack_sh_stop(void);
+extern void bombjack_sh_update(void);
 
 
 
@@ -69,10 +110,37 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x9c00, 0x9cff, bombjack_paletteram_w, &bombjack_paletteram },
 	{ 0xb000, 0xb000, interrupt_enable_w },
 	{ 0x9e00, 0x9e00, bombjack_background_w },
-	{ 0xb800, 0xb800, MWA_NOP },
+	{ 0xb800, 0xb800, bombjack_soundcommand_w },
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0xc000, 0xdfff, MWA_ROM },
 	{ -1 }  /* end of table */
+};
+
+static struct MemoryReadAddress bombjack_sound_readmem[] =
+{
+	{ 0x0000, 0x1fff, MRA_ROM },
+	{ 0x2000, 0x5fff, MRA_RAM },
+	{ 0x6000, 0x6000, bombjack_soundcommand_r },
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryWriteAddress bombjack_sound_writemem[] =
+{
+	{ 0x2000, 0x5fff, MWA_RAM },
+	{ 0x0000, 0x1fff, MWA_ROM },
+	{ -1 }  /* end of table */
+};
+
+
+static struct IOWritePort bombjack_sound_writeport[] =
+{
+	{ 0x00, 0x00, bombjack_sh_control_port1_w },
+	{ 0x01, 0x01, bombjack_sh_write_port1_w },
+	{ 0x10, 0x10, bombjack_sh_control_port2_w },
+	{ 0x11, 0x11, bombjack_sh_write_port2_w },
+	{ 0x80, 0x80, bombjack_sh_control_port3_w },
+	{ 0x81, 0x81, bombjack_sh_write_port3_w },
+	{ -1 }	/* end of table */
 };
 
 
@@ -215,6 +283,13 @@ static struct MachineDriver machine_driver =
 			0,
 			readmem,writemem,0,0,
 			nmi_interrupt,1
+		},
+		{
+			CPU_Z80,
+			3000000,	/* 2 Mhz????? */
+			3,	/* memory region #3 */
+			bombjack_sound_readmem,bombjack_sound_writemem,0,bombjack_sound_writeport,
+			bombjack_sh_interrupt,1
 		}
 	},
 	60,
@@ -234,9 +309,9 @@ static struct MachineDriver machine_driver =
 	/* sound hardware */
 	0,
 	0,
-	0,
-	0,
-	0
+	bombjack_sh_start,
+	bombjack_sh_stop,
+	bombjack_sh_update
 };
 
 
@@ -277,6 +352,11 @@ ROM_END
 
 static int hiload(const char *name)
 {
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x8100],"\x00\x00\x01\x00",4) == 0 &&
 			memcmp(&RAM[0x8124],"\x00\x00\x01\x00",4) == 0)
@@ -327,6 +407,9 @@ static int hiload(const char *name)
 static void hisave(const char *name)
 {
 	FILE *f;
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
 
 
 	if ((f = fopen(name,"wb")) != 0)

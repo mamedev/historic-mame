@@ -28,12 +28,19 @@ c360      DSW1
         l == left coin mech, r = right coinmech.
 
 write:
+c000      command for the audio CPU
 c200      watchdog reset
 c300      interrupt enable
-c301-c307 ?
+c301-c303 ?
+c304      trigger interrupt on audio CPU
+c305-c307 ?
 
 interrupts:
 standard NMI at 0x66
+
+
+SOUND BOARD:
+same as Pooyan
 
 ***************************************************************************/
 
@@ -44,6 +51,18 @@ standard NMI at 0x66
 
 extern void timeplt_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 extern void timeplt_vh_screenrefresh(struct osd_bitmap *bitmap);
+
+extern void pooyan_soundcommand_w(int offset,int data);
+extern int pooyan_sh_read_port1_r(int offset);
+extern void pooyan_sh_control_port1_w(int offset,int data);
+extern void pooyan_sh_write_port1_w(int offset,int data);
+extern int pooyan_sh_read_port2_r(int offset);
+extern void pooyan_sh_control_port2_w(int offset,int data);
+extern void pooyan_sh_write_port2_w(int offset,int data);
+extern int pooyan_sh_interrupt(void);
+extern int pooyan_sh_start(void);
+extern void pooyan_sh_stop(void);
+extern void pooyan_sh_update(void);
 
 
 
@@ -69,7 +88,30 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xb410, 0xb43f, MWA_RAM, &spriteram_2 },
 	{ 0xc300, 0xc300, interrupt_enable_w },
 	{ 0xc200, 0xc200, MWA_NOP },
+	{ 0xc000, 0xc000, pooyan_soundcommand_w },
 	{ 0x0000, 0x5fff, MWA_ROM },
+	{ -1 }	/* end of table */
+};
+
+
+
+static struct MemoryReadAddress sound_readmem[] =
+{
+	{ 0x3000, 0x33ff, MRA_RAM },
+	{ 0x4000, 0x4000, pooyan_sh_read_port1_r },
+	{ 0x6000, 0x6000, pooyan_sh_read_port2_r },
+	{ 0x0000, 0x0fff, MRA_ROM },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress sound_writemem[] =
+{
+	{ 0x3000, 0x33ff, MWA_RAM },
+	{ 0x5000, 0x5000, pooyan_sh_control_port1_w },
+	{ 0x4000, 0x4000, pooyan_sh_write_port1_w },
+	{ 0x7000, 0x7000, pooyan_sh_control_port2_w },
+	{ 0x6000, 0x6000, pooyan_sh_write_port2_w },
+	{ 0x0000, 0x0fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
@@ -208,6 +250,13 @@ static struct MachineDriver machine_driver =
 			0,
 			readmem,writemem,0,0,
 			nmi_interrupt,1
+		},
+		{
+			CPU_Z80,
+			2000000,	/* 2 Mhz ????? */
+			2,	/* memory region #2 */
+			sound_readmem,sound_writemem,0,0,
+			pooyan_sh_interrupt,1
 		}
 	},
 	60,
@@ -227,9 +276,9 @@ static struct MachineDriver machine_driver =
 	/* sound hardware */
 	0,
 	0,
-	0,
-	0,
-	0
+	pooyan_sh_start,
+	pooyan_sh_stop,
+	pooyan_sh_update
 };
 
 
@@ -251,16 +300,19 @@ ROM_START( timeplt_rom )
 	ROM_LOAD( "tm4", 0x2000, 0x2000 )
 	ROM_LOAD( "tm5", 0x4000, 0x2000 )
 
-/*  this is for audio
-	ROM_REGION(0x10000)
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "tm7", 0x0000, 0x1000 )
-*/
 ROM_END
 
 
 
 static int hiload(const char *name)
 {
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0xab09],"\x00\x00\x01",3) == 0 &&
 			memcmp(&RAM[0xab29],"\x00\x43\x00",3) == 0)
@@ -287,6 +339,9 @@ static int hiload(const char *name)
 static void hisave(const char *name)
 {
 	FILE *f;
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
 
 
 	if ((f = fopen(name,"wb")) != 0)
