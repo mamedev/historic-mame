@@ -59,26 +59,24 @@
 #define YDIM (YCHARS*8)
 
 
-#define DEBUG_VIDEO 0
-
 
 /*************************************
  *
- *		Structures
+ *	Structures
  *
  *************************************/
 
 struct mo_data
 {
 	struct osd_bitmap *bitmap;
-	unsigned char shade_table[256];
+	UINT8 shade_table[256];
 };
 
 
 
 /*************************************
  *
- *		Globals we own
+ *	Globals we own
  *
  *************************************/
 
@@ -88,7 +86,7 @@ int vindctr2_screen_refresh;
 
 /*************************************
  *
- *		Statics
+ *	Statics
  *
  *************************************/
 
@@ -100,27 +98,23 @@ static int playfield_color_base;
 
 /*************************************
  *
- *		Prototypes
+ *	Prototypes
  *
  *************************************/
 
-static const unsigned char *update_palette(unsigned char *shade_table);
+static const UINT8 *update_palette(UINT8 *shade_table);
 
 static void pf_color_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *data);
 static void pf_render_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *data);
 
-static void mo_color_callback(const unsigned short *data, const struct rectangle *clip, void *param);
-static void mo_render_callback(const unsigned short *data, const struct rectangle *clip, void *param);
-
-#if DEBUG_VIDEO
-static void debug(void);
-#endif
+static void mo_color_callback(const UINT16 *data, const struct rectangle *clip, void *param);
+static void mo_render_callback(const UINT16 *data, const struct rectangle *clip, void *param);
 
 
 
 /*************************************
  *
- *		Video system start
+ *	Video system start
  *
  *************************************/
 
@@ -170,7 +164,7 @@ int gauntlet_vh_start(void)
 
 /*************************************
  *
- *		Video system shutdown
+ *	Video system shutdown
  *
  *************************************/
 
@@ -184,7 +178,7 @@ void gauntlet_vh_stop(void)
 
 /*************************************
  *
- *		Horizontal scroll register
+ *	Horizontal scroll register
  *
  *************************************/
 
@@ -204,7 +198,7 @@ void gauntlet_hscroll_w(int offset, int data)
 
 /*************************************
  *
- *		Vertical scroll/PF bank register
+ *	Vertical scroll/PF bank register
  *
  *************************************/
 
@@ -225,7 +219,7 @@ void gauntlet_vscroll_w(int offset, int data)
 
 /*************************************
  *
- *		Playfield RAM write handler
+ *	Playfield RAM write handler
  *
  *************************************/
 
@@ -244,7 +238,7 @@ void gauntlet_playfieldram_w(int offset, int data)
 
 /*************************************
  *
- *		Periodic scanline updater
+ *	Periodic scanline updater
  *
  *************************************/
 
@@ -257,17 +251,13 @@ void gauntlet_scanline_update(int scanline)
 
 /*************************************
  *
- *		Main refresh
+ *	Main refresh
  *
  *************************************/
 
 void gauntlet_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	struct mo_data modata;
-
-#if DEBUG_VIDEO
-	debug();
-#endif
 
 	/* update the palette, and mark things dirty */
 	if (update_palette(modata.shade_table))
@@ -309,14 +299,14 @@ void gauntlet_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 /*************************************
  *
- *		Palette management
+ *	Palette management
  *
  *************************************/
 
-static const unsigned char *update_palette(unsigned char *shade_table)
+static const UINT8 *update_palette(UINT8 *shade_table)
 {
-	unsigned short pf_map[32], al_map[64], mo_map[16];
-	const unsigned char *result;
+	UINT16 pf_map[32], al_map[64], mo_map[16];
+	const UINT8 *result;
 	int i, j;
 
 	/* reset color tracking */
@@ -353,7 +343,7 @@ static const unsigned char *update_palette(unsigned char *shade_table)
 	/* rebuild the playfield palette */
 	for (i = 0; i < 16; i++)
 	{
-		unsigned short used = pf_map[i + 16];
+		UINT16 used = pf_map[i + 16];
 		if (used)
 			for (j = 0; j < 16; j++)
 				if (used & (1 << j))
@@ -363,7 +353,7 @@ static const unsigned char *update_palette(unsigned char *shade_table)
 	/* rebuild the motion object palette */
 	for (i = 0; i < 16; i++)
 	{
-		unsigned short used = mo_map[i];
+		UINT16 used = mo_map[i];
 		if (used)
 		{
 			palette_used_colors[0x100 + i * 16 + 0] = PALETTE_COLOR_TRANSPARENT;
@@ -376,7 +366,7 @@ static const unsigned char *update_palette(unsigned char *shade_table)
 	/* rebuild the alphanumerics palette */
 	for (i = 0; i < 64; i++)
 	{
-		unsigned short used = al_map[i];
+		UINT16 used = al_map[i];
 		if (used)
 			for (j = 0; j < 4; j++)
 				if (used & (1 << j))
@@ -392,7 +382,7 @@ static const unsigned char *update_palette(unsigned char *shade_table)
 		/* build the shading lookup table */
 		for (i = 0; i < 256; i++)
 		{
-			unsigned char r, g, b;
+			UINT8 r, g, b;
 			int y;
 			osd_get_pen(i, &r, &g, &b);
 			y = (r * 10 + g * 18 + b * 4) >> 8;
@@ -407,14 +397,14 @@ static const unsigned char *update_palette(unsigned char *shade_table)
 
 /*************************************
  *
- *		Playfield palette
+ *	Playfield palette
  *
  *************************************/
 
 static void pf_color_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *param)
 {
 	const unsigned int *usage = &Machine->gfx[0]->pen_usage[state->param[0] * 0x1000];
-	unsigned short *colormap = (unsigned short *)param;
+	UINT16 *colormap = (UINT16 *)param;
 	int bank = state->param[0];
 	int x, y;
 
@@ -436,7 +426,7 @@ static void pf_color_callback(const struct rectangle *clip, const struct rectang
 
 /*************************************
  *
- *		Playfield rendering
+ *	Playfield rendering
  *
  *************************************/
 
@@ -478,20 +468,20 @@ static void pf_render_callback(const struct rectangle *clip, const struct rectan
 
 /*************************************
  *
- *		Motion object palette
+ *	Motion object palette
  *
  *************************************/
 
-static void mo_color_callback(const unsigned short *data, const struct rectangle *clip, void *param)
+static void mo_color_callback(const UINT16 *data, const struct rectangle *clip, void *param)
 {
 	const unsigned int *usage = Machine->gfx[0]->pen_usage;
-	unsigned short *colormap = param;
+	UINT16 *colormap = param;
 	int code = (data[0] & 0x7fff) ^ 0x800;
 	int hsize = ((data[2] >> 3) & 7) + 1;
 	int vsize = (data[2] & 7) + 1;
 	int color = data[1] & 0x000f;
 	int tiles = hsize * vsize;
-	unsigned short temp = 0;
+	UINT16 temp = 0;
 	int i;
 
 	for (i = 0; i < tiles; i++)
@@ -503,11 +493,11 @@ static void mo_color_callback(const unsigned short *data, const struct rectangle
 
 /*************************************
  *
- *		Motion object rendering
+ *	Motion object rendering
  *
  *************************************/
 
-static void mo_render_callback(const unsigned short *data, const struct rectangle *clip, void *param)
+static void mo_render_callback(const UINT16 *data, const struct rectangle *clip, void *param)
 {
 	const struct GfxElement *gfx = Machine->gfx[0];
 	const unsigned int *usage = gfx->pen_usage;
@@ -571,89 +561,3 @@ static void mo_render_callback(const unsigned short *data, const struct rectangl
 		}
 	}
 }
-
-
-
-/*************************************
- *
- *		Debugging
- *
- *************************************/
-
-#if DEBUG_VIDEO
-
-static void mo_print_callback(struct osd_bitmap *bitmap, struct rectangle *clip, unsigned short *data, void *param)
-{
-	FILE *f = param;
-
-	/* extract data from the various words */
-	int pict = data[0] & 0x7fff;
-	int color = data[1] & 0x0f;
-	int xpos = xscroll + (data[1] >> 7);
-	int vsize = (data[2] & 7) + 1;
-	int hsize = ((data[2] >> 3) & 7) + 1;
-	int hflip = data[2] & 0x40;
-	int ypos = yscroll - (data[2] >> 7) - vsize * 8;
-
-	fprintf(f, "PICT=%04X color=%1X X=%03X Y=%03X SIZE=%dx%d FLIP=%d\n",
-		pict, color, xpos, ypos, hsize, vsize, hflip);
-}
-
-
-static void debug(void)
-{
-	if (keyboard_key_pressed(KEYCODE_9))
-	{
-		static int count;
-		char name[50];
-		FILE *f;
-		int i;
-
-		while (keyboard_key_pressed(KEYCODE_9)) { }
-
-		sprintf(name, "Dump %d", ++count);
-		f = fopen(name, "wt");
-
-		fprintf(f, "\n\nAlpha Palette:\n");
-		for (i = 0x000; i < 0x100; i++)
-		{
-			fprintf(f, "%04X ", READ_WORD(&paletteram[i*2]));
-			if ((i & 15) == 15) fprintf(f, "\n");
-		}
-
-		fprintf(f, "\n\nMotion Object Palette:\n");
-		for (i = 0x100; i < 0x200; i++)
-		{
-			fprintf(f, "%04X ", READ_WORD(&paletteram[i*2]));
-			if ((i & 15) == 15) fprintf(f, "\n");
-		}
-
-		fprintf(f, "\n\nPlayfield Palette:\n");
-		for (i = 0x200; i < 0x400; i++)
-		{
-			fprintf(f, "%04X ", READ_WORD(&paletteram[i*2]));
-			if ((i & 15) == 15) fprintf(f, "\n");
-		}
-
-		fprintf(f, "\n\nPlayfield dump\n");
-		for (i = 0; i < atarigen_playfieldram_size / 2; i++)
-		{
-			fprintf(f, "%04X ", READ_WORD(&atarigen_playfieldram[i*2]));
-			if ((i & 63) == 63) fprintf(f, "\n");
-		}
-
-		fprintf(f, "\n\nAlpha dump\n");
-		for (i = 0; i < atarigen_alpharam_size / 2; i++)
-		{
-			fprintf(f, "%04X ", READ_WORD(&atarigen_alpharam[i*2]));
-			if ((i & 63) == 63) fprintf(f, "\n");
-		}
-
-		fprintf(f,"\n\nMotion objects\n");
-		atarigen_render_display_list(NULL, mo_print_callback, f);
-
-		fclose(f);
-	}
-}
-
-#endif

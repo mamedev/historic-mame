@@ -1617,7 +1617,7 @@ ROM_START( neo_gpilots_rom )
 
 	ROM_REGION_OPTIONAL(0x180000) /* sound samples */
 	ROM_LOAD( "ghst_v11.rom", 0x000000, 0x100000, 0x1b526c8b )
-	ROM_LOAD( "ghst_v12.rom", 0x080000, 0x080000, 0x4a9e6f03 )
+	ROM_LOAD( "ghst_v12.rom", 0x100000, 0x080000, 0x4a9e6f03 )
 
 	ROM_REGION_OPTIONAL(0x080000) /* sound samples */
 	ROM_LOAD( "ghst_v21.rom", 0x000000, 0x080000, 0x7abf113d )

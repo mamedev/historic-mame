@@ -2320,7 +2320,7 @@ static struct MachineDriver detatwin_machine_driver =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			2*3579545,	/* ????? */
+			3579545,	/* ????? */
 			3,
 			ssriders_s_readmem,ssriders_s_writemem,0,0,
 			ignore_interrupt,0	/* IRQs are triggered by the main CPU */

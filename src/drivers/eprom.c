@@ -105,7 +105,7 @@ Write sound processor   360030          W    D0-D7
 #include "vidhrdw/generic.h"
 
 
-extern unsigned char *eprom_playfieldpalram;
+extern UINT8 *eprom_playfieldpalram;
 extern int eprom_playfieldpalram_size;
 
 void eprom_latch_w(int offset, int data);
@@ -119,12 +119,12 @@ void eprom_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void eprom_scanline_update(int scanline);
 
 
-static unsigned char *sync_data;
+static UINT8 *sync_data;
 
 
 /*************************************
  *
- *		Initialization
+ *	Initialization
  *
  *************************************/
 
@@ -162,7 +162,7 @@ static void init_machine(void)
 
 /*************************************
  *
- *		I/O handling
+ *	I/O handling
  *
  *************************************/
 
@@ -190,7 +190,7 @@ static int adc_r(int offset)
 
 /*************************************
  *
- *		Latch write handler
+ *	Latch write handler
  *
  *************************************/
 
@@ -215,7 +215,7 @@ void eprom_latch_w(int offset, int data)
 
 /*************************************
  *
- *		Synchronization
+ *	Synchronization
  *
  *************************************/
 
@@ -235,9 +235,10 @@ static void sync_w(int offset, int data)
 }
 
 
+
 /*************************************
  *
- *		Main CPU memory handlers
+ *	Main CPU memory handlers
  *
  *************************************/
 
@@ -286,7 +287,7 @@ static struct MemoryWriteAddress main_writemem[] =
 
 /*************************************
  *
- *		Extra CPU memory handlers
+ *	Extra CPU memory handlers
  *
  *************************************/
 
@@ -319,7 +320,7 @@ static struct MemoryWriteAddress extra_writemem[] =
 
 /*************************************
  *
- *		Port definitions
+ *	Port definitions
  *
  *************************************/
 
@@ -370,7 +371,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *		Graphics definitions
+ *	Graphics definitions
  *
  *************************************/
 
@@ -409,7 +410,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *		Machine driver
+ *	Machine driver
  *
  *************************************/
 
@@ -433,7 +434,7 @@ static struct MachineDriver machine_driver =
 		},
 		{
 			JSA_I_CPU(2)
-		},
+		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	10,
@@ -459,7 +460,7 @@ static struct MachineDriver machine_driver =
 
 /*************************************
  *
- *		ROM decoding
+ *	ROM decoding
  *
  *************************************/
 
@@ -470,13 +471,16 @@ static void rom_decode(void)
 	/* invert the graphics bits on the playfield and motion objects */
 	for (i = 0; i < 0x100000; i++)
 		Machine->memory_region[3][i] ^= 0xff;
+	
+	/* copy the shared ROM from region 0 to region 1 */
+	memcpy(&Machine->memory_region[1][0x60000], &Machine->memory_region[0][0x60000], 0x20000);
 }
 
 
 
 /*************************************
  *
- *		ROM definition(s)
+ *	ROM definition(s)
  *
  *************************************/
 
@@ -494,8 +498,6 @@ ROM_START( eprom_rom )
 	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "136069.10s",   0x00000, 0x10000, 0xdeff6469 )
 	ROM_LOAD_ODD ( "136069.10u",   0x00000, 0x10000, 0x5d7afca2 )
-	ROM_LOAD_EVEN( "136069.40k",   0x60000, 0x10000, 0x130650f6 )
-	ROM_LOAD_ODD ( "136069.50k",   0x60000, 0x10000, 0x1da21ed8 )
 
 	ROM_REGION(0x14000)	/* 64k + 16k for 6502 code */
 	ROM_LOAD( "136069.7b",    0x10000, 0x4000, 0x86e93695 )
@@ -538,8 +540,6 @@ ROM_START( eprom2_rom )
 	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "1035.10s",   0x00000, 0x10000, 0xffeb5647 )
 	ROM_LOAD_ODD ( "1034.10u",   0x00000, 0x10000, 0xc68f58dd )
-	ROM_LOAD_EVEN( "1033.40k",   0x60000, 0x10000, 0x395fc203 )
-	ROM_LOAD_ODD ( "1032.50k",   0x60000, 0x10000, 0xa19c8acb )
 
 	ROM_REGION(0x14000)	/* 64k + 16k for 6502 code */
 	ROM_LOAD( "136069.7b",    0x10000, 0x4000, 0x86e93695 )
@@ -569,7 +569,7 @@ ROM_END
 
 /*************************************
  *
- *		Driver initialization
+ *	Driver initialization
  *
  *************************************/
 
@@ -589,7 +589,7 @@ static void eprom_init(void)
 
 /*************************************
  *
- *		Game driver(s)
+ *	Game driver(s)
  *
  *************************************/
 

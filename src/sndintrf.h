@@ -93,6 +93,9 @@ struct MachineSound
 #if (HAS_RF5C68)
 #include "sound/rf5c68.h"
 #endif
+#if (HAS_CEM3394)
+#include "sound/cem3394.h"
+#endif
 
 
 enum
@@ -193,6 +196,9 @@ enum
 #endif
 #if (HAS_RF5C68)
 	SOUND_RF5C68,
+#endif
+#if (HAS_CEM3394)
+	SOUND_CEM3394,
 #endif
 	SOUND_COUNT
 };

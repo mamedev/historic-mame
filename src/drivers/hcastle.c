@@ -295,6 +295,8 @@ static struct YM3812interface ym3812_interface =
 	{ irqhandler },
 };
 
+
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */

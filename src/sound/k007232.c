@@ -417,48 +417,22 @@ static void K007232_WriteReg( int r, int v, int chip )
 /************************************************/
 /*    Konami PCM read register                  */
 /************************************************/
-static void check_err_fncode( int data ){
-  /**** not make keycode ****/
-  if( data < 0x054 )
-  {
-  	if (errorlog) fprintf( errorlog,"err!! KDAC_A param %04x\n", data );
-  }
-  else if( data > 0x1e5 )
-  {
-  	if (errorlog) fprintf( errorlog,"err!! KDAC_A param %04x\n", data );
-  }
-  else if( data > 0x054 && data < 0x0ac )
-  {
-  	if (errorlog) fprintf( errorlog,"err!! KDAC_A param %04x\n", data );
-  }
-  else if( data > 0x0ac && data < 0x0e2 )
-  {
-  	if (errorlog) fprintf( errorlog,"err!! KDAC_A param %04x\n", data );
-  }
-  else if( data > 0x0f2 && data < 0x12a )
-  {
-  	if (errorlog) fprintf( errorlog,"err!! KDAC_A param %04x\n", data );
-  }
-}
-
-static int  K007232_ReadReg( int r, int chip )
+static int K007232_ReadReg( int r, int chip )
 {
-	if (r == 0x0005)
+	if (r == 0x05)
 	{
 		if (kpcm[chip].start[0] < 0x20000)
 		{
 			kpcm[chip].play[0] = 1;
 			kpcm[chip].addr[0] = 0;
-			//check_err_fncode( (((((unsigned int)kpcm.wreg[0x01])<<8)&0x0100) | (((unsigned int)kpcm.wreg[0x00])&0x00ff)) );
 		}
 	}
-	else if (r == 0x000b)
+	else if (r == 0x0b)
 	{
 		if (kpcm[chip].start[1] < 0x20000)
 		{
 			kpcm[chip].play[1] = 1;
 			kpcm[chip].addr[1] = 0;
-			//check_err_fncode( (((((unsigned int)kpcm.wreg[0x07])<<8)&0x0100) | (((unsigned int)kpcm.wreg[0x06])&0x00ff)) );
 		}
 	}
 	return 0;

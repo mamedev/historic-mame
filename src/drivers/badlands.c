@@ -21,13 +21,13 @@ void badlands_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void badlands_scanline_update(int scanline);
 
 
-static int pedal_value[2];
+static UINT8 pedal_value[2];
 
 
 
 /*************************************
  *
- *		Initialization
+ *	Initialization
  *
  *************************************/
 
@@ -61,7 +61,7 @@ static void init_machine(void)
 
 /*************************************
  *
- *		Interrupt handling
+ *	Interrupt handling
  *
  *************************************/
 
@@ -85,7 +85,7 @@ static int vblank_int(void)
 
 /*************************************
  *
- *		I/O read dispatch
+ *	I/O read dispatch
  *
  *************************************/
 
@@ -116,7 +116,7 @@ static int pedal_1_r(int offset)
 
 /*************************************
  *
- *		Main CPU memory handlers
+ *	Main CPU memory handlers
  *
  *************************************/
 
@@ -158,7 +158,7 @@ static struct MemoryWriteAddress main_writemem[] =
 
 /*************************************
  *
- *		Port definitions
+ *	Port definitions
  *
  *************************************/
 
@@ -193,7 +193,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *		Graphics definitions
+ *	Graphics definitions
  *
  *************************************/
 
@@ -232,7 +232,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *		Machine driver
+ *	Machine driver
  *
  *************************************/
 
@@ -249,7 +249,7 @@ static struct MachineDriver machine_driver =
 		},
 		{
 			JSA_I_CPU(1)
-		},
+		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
@@ -276,7 +276,7 @@ static struct MachineDriver machine_driver =
 
 /*************************************
  *
- *		ROM decoding
+ *	ROM decoding
  *
  *************************************/
 
@@ -292,7 +292,7 @@ static void rom_decode(void)
 
 /*************************************
  *
- *		ROM definition(s)
+ *	ROM definition(s)
  *
  *************************************/
 
@@ -323,7 +323,7 @@ ROM_END
 
 /*************************************
  *
- *		Driver initialization
+ *	Driver initialization
  *
  *************************************/
 
@@ -343,7 +343,7 @@ static void badlands_init(void)
 
 /*************************************
  *
- *		Game driver(s)
+ *	Game driver(s)
  *
  *************************************/
 

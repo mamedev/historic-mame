@@ -5,33 +5,29 @@
   This file contains drivers for:
 
     * Heavy Barrel                            (USA set)
-    * Heavy Barrel                            (Japanese set)
+    * Heavy Barrel                            (World set)
 	* Bad Dudes vs. Dragonninja               (USA set)
     * Dragonninja                             (Japanese version of above)
-	* Birdy Try                               (Japanese set?)
-    * Robocop                                 (Japanese pirate rom set)
+	* Birdy Try                               (Japanese set)
+    * Robocop                                 (World bootleg rom set)
+    * Robocop                                 (World rev 3)
+    * Robocop                                 (USA rev 1)
+    * Robocop                                 (USA rev 0)
     * Hippodrome                              (USA set)
     * Fighting Fantasy                        (Japanese version of above)
-    * Sly Spy                                 (USA set)
+    * Sly Spy                                 (USA rev 3)
+    * Sly Spy                                 (USA rev 2)
+    * Secret Agent                            (World set)
     * Midnight Resistance                     (World set)
 	* Midnight Resistance                     (USA set)
     * Midnight Resistance                     (Japanese set)
-	* Boulderdash                             (Japanese set?)
+	* Boulderdash                             (World set)
 
 	Heavy Barrel, Bad Dudes, Robocop, Birdy Try & Hippodrome use the 'MEC-M1'
 motherboard and varying game boards.  Sly Spy, Midnight Resistance and
 Boulderdash use the same graphics chips but are different pcbs.
 
-To do:
-Add Robocop (Japanese original & 2nd bootleg set), Secret Agent (Sly Spy bootleg),
-Birdy Try
-
-Figure out weapon placement in Heavy Barrel.
-
-The truck tires in level 2 of Bad Dudes are misplaced (they are sprites).
-
-
-Dips in Boulderdash (and some others)
+	There are Secret Agent (bootleg) and Robocop (bootleg) sets to add.
 
   Thanks to Gouky & Richard Bush for information along the way, especially
   Gouky's patch for Bad Dudes & YM3812 information!
@@ -61,12 +57,15 @@ Mid res: bpx at c02 for level check, can go straight to credits.
 /* Video emulation definitions */
 int  dec0_vh_start(void);
 void dec0_vh_stop(void);
-void dec0_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void midres_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void slyspy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-void hippodrm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+int  dec0_nodma_vh_start(void);
+void dec0_nodma_vh_stop(void);
 void hbarrel_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void baddudes_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void birdtry_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void robocop_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void hippodrm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void slyspy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void midres_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 extern unsigned char *dec0_pf1_rowscroll,*dec0_pf2_rowscroll,*dec0_pf3_rowscroll;
 extern unsigned char *dec0_pf1_colscroll,*dec0_pf2_colscroll,*dec0_pf3_colscroll;
@@ -92,6 +91,7 @@ int dec0_pf3_colscroll_r(int offset);
 void dec0_pf3_data_w(int offset,int data);
 int dec0_pf3_data_r(int offset);
 void dec0_priority_w(int offset,int data);
+void dec0_update_sprites(int offset, int data);
 
 void dec0_paletteram_w_rg(int offset,int data);
 void dec0_paletteram_w_b(int offset,int data);
@@ -136,6 +136,7 @@ static void dec0_control_w(int offset,int data)
 			break;
 
 		case 2: /* DMA flag */
+			dec0_update_sprites(0,0);
 			break;
 
 		case 4: /* 6502 sound cpu */
@@ -231,6 +232,20 @@ static struct MemoryWriteAddress dec0_writemem[] =
 	{ 0x314000, 0x3147ff, dec0_paletteram_w_b, &paletteram_2 },	/* Blue bits */
 	{ 0xff8000, 0xffbfff, MWA_BANK1, &dec0_ram },
 	{ 0xffc000, 0xffc7ff, MWA_BANK2, &spriteram },
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryReadAddress robocop_sub_readmem[] =
+{
+	{ 0x000000, 0x00ffff, MRA_ROM },
+	{ 0x1f0000, 0x1f1fff, MRA_BANK8 }, /* Main ram */
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryWriteAddress robocop_sub_writemem[] =
+{
+	{ 0x000000, 0x00ffff, MWA_ROM },
+	{ 0x1f0000, 0x1f1fff, MWA_BANK8 }, /* Main ram */
 	{ -1 }  /* end of table */
 };
 
@@ -490,16 +505,18 @@ INPUT_PORTS_START( hbarrel_input_ports )
 
 	PORT_START	/* Dip switch bank 1 */
 	DEC0_COIN_SETTING
-	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* Dip switch bank 2 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
@@ -518,9 +535,11 @@ INPUT_PORTS_START( hbarrel_input_ports )
 	PORT_DIPSETTING(    0x20, "100k 200k 300k" )
 	PORT_DIPSETTING(    0x00, "150k 300k 450k" )
 	PORT_DIPNAME( 0x40, 0x00, "Allow Continue" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* player 1 12-way rotary control - converted in controls_r() */
 	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 25, 10, 0, 0, 0, KEYCODE_Z, KEYCODE_X, 0, 0 )
@@ -536,16 +555,18 @@ INPUT_PORTS_START( baddudes_input_ports )
 
 	PORT_START	/* DSW0 */
 	DEC0_COIN_SETTING
-	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* Dip switch bank 2 */
 	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Lives ) )
@@ -559,11 +580,17 @@ INPUT_PORTS_START( baddudes_input_ports )
 	PORT_DIPSETTING(    0x08, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
 	PORT_DIPNAME( 0x10, 0x10, "Allow Continue" )
-	PORT_DIPSETTING(    0x10, DEF_STR( Yes ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPSETTING(    0x10, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* player 1 12-way rotary control - converted in controls_r() */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* unused */
@@ -579,7 +606,9 @@ INPUT_PORTS_START( robocop_input_ports )
 
 	PORT_START	/* DSW0 */
 	DEC0_COIN_SETTING
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
@@ -602,15 +631,17 @@ INPUT_PORTS_START( robocop_input_ports )
 	PORT_DIPSETTING(    0x08, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
 	PORT_DIPNAME( 0x10, 0x10, "Allow Continue" )
-	PORT_DIPSETTING(    0x10, DEF_STR( Yes ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x20, 0x20, "Bonus Stage Energy" )
 	PORT_DIPSETTING(    0x00, "Low" )
 	PORT_DIPSETTING(    0x20, "High" )
 	PORT_DIPNAME( 0x40, 0x40, "Brink Time" )
 	PORT_DIPSETTING(    0x40, "Normal" )
 	PORT_DIPSETTING(    0x00, "Less" )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( hippodrm_input_ports )
@@ -699,7 +730,9 @@ INPUT_PORTS_START( slyspy_input_ports )
 
 	PORT_START	/* Dip switch bank 1 */
 	DEC0_COIN_SETTING
-	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
@@ -722,11 +755,17 @@ INPUT_PORTS_START( slyspy_input_ports )
 	PORT_DIPSETTING(    0x08, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
 	PORT_DIPNAME( 0x10, 0x10, "Allow Continue" )
-	PORT_DIPSETTING(    0x10, DEF_STR( Yes ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPSETTING(    0x10, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( midres_input_ports )
@@ -754,9 +793,9 @@ INPUT_PORTS_START( midres_input_ports )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* Dip switch bank 2 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
@@ -776,9 +815,9 @@ INPUT_PORTS_START( midres_input_ports )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x00, "Allow Continue" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -805,7 +844,9 @@ INPUT_PORTS_START( bouldash_input_ports )
 
 	PORT_START	/* Dip switch bank 1 */
 	DEC0_COIN_SETTING
-	PORT_SERVICE( 0x10, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
@@ -817,28 +858,28 @@ INPUT_PORTS_START( bouldash_input_ports )
 	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
 
 	PORT_START	/* Dip switch bank 2 */
-	PORT_DIPNAME( 0x03, 0x03, "Energy" )
-	PORT_DIPSETTING(    0x01, "Low" )
-	PORT_DIPSETTING(    0x03, "Medium" )
-	PORT_DIPSETTING(    0x02, "High" )
-	PORT_DIPSETTING(    0x00, "Very High" )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x03, "3" )
+	PORT_DIPSETTING(    0x02, "4" )
+	PORT_DIPSETTING(    0x01, "5" )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x04, "Easy" )
-	PORT_DIPSETTING(    0x0c, "Normal" )
-	PORT_DIPSETTING(    0x08, "Hard" )
+	PORT_DIPSETTING(    0x08, "Easy" )
+	PORT_DIPSETTING(    0x04, "Medium" )
+	PORT_DIPSETTING(    0x0c, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x10, 0x10, "Unknown" )
-	PORT_DIPSETTING(    0x10, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, "Game" )
-	PORT_DIPSETTING(    0x00, "Part 2" )
 	PORT_DIPSETTING(    0x20, "Part 1" )
-	PORT_DIPNAME( 0x40, 0x40, "Unknown" )
-	PORT_DIPSETTING(    0x40, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown" )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x00, "Part 2" )
+	PORT_DIPNAME( 0x40, 0x40, "Allow Continue" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 /******************************************************************************/
@@ -889,21 +930,19 @@ static struct GfxDecodeInfo midres_gfxdecodeinfo[] =
 
 static void sound_irq(int linestate)
 {
-	cpu_set_irq_line(1,0,linestate);
-	//cpu_cause_interrupt(1,M6502_INT_IRQ);
+	cpu_set_irq_line(1,0,linestate); /* IRQ */
 }
 
 static void sound_irq2(int linestate)
 {
-	cpu_set_irq_line(1,1,linestate);
-	//cpu_cause_interrupt(1,H6280_INT_IRQ2);
+	cpu_set_irq_line(1,1,linestate); /* IRQ2 */
 }
 
 static struct YM2203interface ym2203_interface =
 {
 	1,
 	1500000,	/* 12MHz clock divided by 8 = 1.50 MHz */
-	{ YM2203_VOL(40,95) },
+	{ YM2203_VOL(35,90) },
 	AY8910_DEFAULT_GAIN,
 	{ 0 },
 	{ 0 },
@@ -913,15 +952,15 @@ static struct YM2203interface ym2203_interface =
 
 static struct YM3812interface ym3812_interface =
 {
-	1,			/* 1 chip (no more supported) */
-	3250000,	/* 3.25 MHz ? Might actually be 3?  (12MHz/4) */
+	1,			/* 1 chip */
+	3000000,	/* 12MHz clock divided by 4 = 3.00 MHz */
 	{ 40 },
 	{ sound_irq },
 };
 
 static struct YM3812interface ym3812b_interface =
 {
-	1,			/* 1 chip (no more supported) */
+	1,			/* 1 chip */
 	3000000,
 	{ 40 },
 	{ sound_irq2 },
@@ -956,7 +995,7 @@ static struct MachineDriver hbarrel_machine_driver =
 			ignore_interrupt,0
 		}
 	},
-	57, 1536, /* frames per second, vblank duration taken from Burger Time */
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
@@ -1010,7 +1049,7 @@ static struct MachineDriver baddudes_machine_driver =
 			ignore_interrupt,0
 		}
 	},
-	57, 1536, /* frames per second, vblank duration taken from Burger Time */
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
@@ -1025,7 +1064,61 @@ static struct MachineDriver baddudes_machine_driver =
 	0,
 	dec0_vh_start,
 	dec0_vh_stop,
-	dec0_vh_screenrefresh,
+	baddudes_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_YM2203,
+			&ym2203_interface
+		},
+		{
+			SOUND_YM3812,
+			&ym3812_interface
+		},
+		{
+			SOUND_OKIM6295,
+			&okim6295_interface
+		}
+	}
+};
+
+static struct MachineDriver birdtry_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M68000,
+			10000000,
+			0,
+			dec0_readmem,dec0_writemem,0,0,
+			m68_level6_irq,1 /* VBL, level 5 interrupts from i8751 */
+		},
+		{
+			CPU_M6502 | CPU_AUDIO_CPU,
+			1500000,
+			2,
+			dec0_s_readmem,dec0_s_writemem,0,0,
+			ignore_interrupt,0
+		}
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	0,
+
+	/* video hardware */
+ 	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
+
+	gfxdecodeinfo,
+	1024, 1024,
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	0,
+	dec0_vh_start,
+	dec0_vh_stop,
+	birdtry_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -1062,9 +1155,16 @@ static struct MachineDriver robocop_machine_driver =
 			2,
 			dec0_s_readmem,dec0_s_writemem,0,0,
 			ignore_interrupt,0
-		}
+		},
+		{
+			CPU_H6280,
+			21477200/16, /* 21.4772MHz clock */
+			4,
+			robocop_sub_readmem,robocop_sub_writemem,0,0,
+			ignore_interrupt,0
+		},
 	},
-	57, 1536, /* frames per second, vblank duration taken from Burger Time */
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
@@ -1075,7 +1175,7 @@ static struct MachineDriver robocop_machine_driver =
 	1024, 1024,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	dec0_vh_start,
 	dec0_vh_stop,
@@ -1125,7 +1225,7 @@ static struct MachineDriver hippodrm_machine_driver =
 			ignore_interrupt,0
 		}
 	},
-	57, 1536, /* frames per second, vblank duration taken from Burger Time */
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	5,	/* Interleave between H6280 & 68000 */
 	0,
 
@@ -1173,13 +1273,13 @@ static struct MachineDriver slyspy_machine_driver =
 		},
 		{
 			CPU_H6280 | CPU_AUDIO_CPU,
-			4000000,
+			3000000,
 			2,
 			slyspy_s_readmem,slyspy_s_writemem,0,0,
 			ignore_interrupt,0
 		}
 	},
-	57, 1536, /* frames per second, vblank duration taken from Burger Time */
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
@@ -1192,8 +1292,8 @@ static struct MachineDriver slyspy_machine_driver =
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
-	dec0_vh_start,
-	dec0_vh_stop,
+	dec0_nodma_vh_start,
+	dec0_nodma_vh_stop,
 	slyspy_vh_screenrefresh,
 
 	/* sound hardware */
@@ -1227,13 +1327,13 @@ static struct MachineDriver midres_machine_driver =
 		},
 		{
 			CPU_H6280 | CPU_AUDIO_CPU,
-			4000000,
+			3000000,
 			2,
 			midres_s_readmem,midres_s_writemem,0,0,
 			ignore_interrupt,0
 		}
 	},
-	57, 1536, /* frames per second, vblank duration taken from Burger Time */
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
@@ -1246,8 +1346,8 @@ static struct MachineDriver midres_machine_driver =
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
-	dec0_vh_start,
-	dec0_vh_stop,
+	dec0_nodma_vh_start,
+	dec0_nodma_vh_stop,
 	midres_vh_screenrefresh,
 
 	/* sound hardware */
@@ -1462,15 +1562,52 @@ ROM_START( drgninja_rom )
 	ROM_LOAD( "baddudes.8",   0x0000, 0x10000, 0x3c87463e )
 ROM_END
 
-/* Birdy Try here */
+ROM_START( birdtry_rom )
+	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
+	ROM_LOAD_EVEN( "ek-04.bin",     0x00000, 0x10000, 0x5f0f4686 )
+	ROM_LOAD_ODD ( "ek-01.bin",     0x00000, 0x10000, 0x47f470db )
+	ROM_LOAD_EVEN( "ek-05.bin",     0x20000, 0x10000, 0xb508cffd )
+	ROM_LOAD_ODD ( "ek-02.bin",     0x20000, 0x10000, 0x0195d989 )
+	ROM_LOAD_EVEN( "ek-06.bin",     0x40000, 0x10000, 0x301d57d8 )
+	ROM_LOAD_ODD ( "ek-03.bin",     0x40000, 0x10000, 0x73b0acc5 )
 
+	ROM_REGION_DISPOSE(0x1a0000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ek-25.bin",     0x000000, 0x08000, 0x4df134ad )	/* chars */
+	ROM_LOAD( "ek-26.bin",     0x010000, 0x08000, 0xa00d3e8e )
+
+	ROM_LOAD( "ek-18.bin",     0x020000, 0x10000, 0x9886fb70 )	/* tiles */
+	ROM_LOAD( "ek-17.bin",     0x030000, 0x10000, 0xbed91bf7 )
+	ROM_LOAD( "ek-20.bin",     0x040000, 0x10000, 0x45d53965 )
+	ROM_LOAD( "ek-19.bin",     0x050000, 0x10000, 0xc2949dd2 )
+	ROM_LOAD( "ek-22.bin",     0x060000, 0x10000, 0x7f2cc80a )
+	ROM_LOAD( "ek-21.bin",     0x070000, 0x10000, 0x281bc793 )
+	ROM_LOAD( "ek-24.bin",     0x080000, 0x10000, 0x2244cc75 )
+	ROM_LOAD( "ek-23.bin",     0x090000, 0x10000, 0xd0ed0116 )
+
+	/* This game doesn't seem to have the extra playfield chip, so no roms */
+
+	ROM_LOAD( "ek-15.bin",     0x120000, 0x10000, 0xa6a041a3 )	/* sprites */
+	ROM_LOAD( "ek-16.bin",     0x130000, 0x08000, 0x784f62b0 )
+	ROM_LOAD( "ek-11.bin",     0x140000, 0x10000, 0x9224a6b9 )
+	ROM_LOAD( "ek-12.bin",     0x150000, 0x08000, 0x12deecfa )
+	ROM_LOAD( "ek-13.bin",     0x160000, 0x10000, 0x1f023459 )
+	ROM_LOAD( "ek-14.bin",     0x170000, 0x08000, 0x57d54943 )
+	ROM_LOAD( "ek-09.bin",     0x180000, 0x10000, 0x6d2d488a )
+	ROM_LOAD( "ek-10.bin",     0x190000, 0x08000, 0x580ba206 )
+
+	ROM_REGION(0x10000)	/* 6502 Sound */
+	ROM_LOAD( "ek-07.bin",     0x8000, 0x8000, 0x236549bc )
+
+	ROM_REGION(0x10000)	/* ADPCM samples */
+	ROM_LOAD( "ek-08.bin",     0x0000, 0x10000, 0xbe3db6cb )
+ROM_END
 
 ROM_START( robocop_rom )
 	ROM_REGION(0x40000) /* 68000 code */
-	ROM_LOAD_EVEN( "ep05-3", 0x00000, 0x10000, 0xbcef3e9b )
-	ROM_LOAD_ODD ( "ep01-3", 0x00000, 0x10000, 0xc9803685 )
-	ROM_LOAD_EVEN( "ep04-3", 0x20000, 0x10000, 0x9d7b79e0 )
-	ROM_LOAD_ODD ( "ep00-3", 0x20000, 0x10000, 0x80ba64ab )
+	ROM_LOAD_EVEN( "ep05-3", 0x00000, 0x10000, 0xba69bf84 )
+	ROM_LOAD_ODD ( "ep01-3", 0x00000, 0x10000, 0x2a9f6e2c )
+	ROM_LOAD_EVEN( "ep04-3", 0x20000, 0x10000, 0x39181778 )
+	ROM_LOAD_ODD ( "ep00-3", 0x20000, 0x10000, 0xe128541f )
 
 	ROM_REGION_DISPOSE(0x1a0000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "ep23", 0x000000, 0x10000, 0xa77e4ab1 )	/* chars */
@@ -1501,9 +1638,94 @@ ROM_START( robocop_rom )
 
 	ROM_REGION(0x10000)	/* ADPCM samples */
 	ROM_LOAD( "ep02", 0x00000, 0x10000, 0x711ce46f )
+
+	ROM_REGION(0x10000)	/* HuC6280 CPU */
+	/* Filled in later */
 ROM_END
 
-ROM_START( robocopp_rom )
+ROM_START( robocopu_rom )
+	ROM_REGION(0x40000) /* 68000 code */
+	ROM_LOAD_EVEN( "ep05-1", 0x00000, 0x10000, 0x8de5cb3d )
+	ROM_LOAD_ODD ( "ep01-1", 0x00000, 0x10000, 0xb3c6bc02 )
+	ROM_LOAD_EVEN( "ep04", 0x20000, 0x10000, 0xc38b9d18 )
+	ROM_LOAD_ODD ( "ep00", 0x20000, 0x10000, 0x374c91aa )
+
+	ROM_REGION_DISPOSE(0x1a0000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ep23", 0x000000, 0x10000, 0xa77e4ab1 )	/* chars */
+	ROM_LOAD( "ep22", 0x010000, 0x10000, 0x9fbd6903 )
+	ROM_LOAD( "ep20", 0x020000, 0x10000, 0x1d8d38b8 )	/* tiles */
+	ROM_LOAD( "ep21", 0x040000, 0x10000, 0x187929b2 )
+	ROM_LOAD( "ep18", 0x060000, 0x10000, 0xb6580b5e )
+	ROM_LOAD( "ep19", 0x080000, 0x10000, 0x9bad01c7 )
+	ROM_LOAD( "ep14", 0x0a0000, 0x08000, 0xca56ceda )	/* tiles */
+	ROM_LOAD( "ep15", 0x0c0000, 0x08000, 0xa945269c )
+	ROM_LOAD( "ep16", 0x0e0000, 0x08000, 0xe7fa4d58 )
+	ROM_LOAD( "ep17", 0x100000, 0x08000, 0x84aae89d )
+	ROM_LOAD( "ep07", 0x120000, 0x10000, 0x495d75cf )	/* sprites */
+	ROM_LOAD( "ep06", 0x130000, 0x08000, 0xa2ae32e2 )
+	/* 98000-9ffff empty */
+	ROM_LOAD( "ep11", 0x140000, 0x10000, 0x62fa425a )
+	ROM_LOAD( "ep10", 0x150000, 0x08000, 0xcce3bd95 )
+	/* b8000-bffff empty */
+	ROM_LOAD( "ep09", 0x160000, 0x10000, 0x11bed656 )
+	ROM_LOAD( "ep08", 0x170000, 0x08000, 0xc45c7b4c )
+	/* d8000-dffff empty */
+	ROM_LOAD( "ep13", 0x180000, 0x10000, 0x8fca9f28 )
+	ROM_LOAD( "ep12", 0x190000, 0x08000, 0x3cd1d0c3 )
+	/* f8000-fffff empty */
+
+	ROM_REGION(0x10000)	/* 6502 Sound */
+	ROM_LOAD( "ep03", 0x08000, 0x08000, 0x1089eab8 )
+
+	ROM_REGION(0x10000)	/* ADPCM samples */
+	ROM_LOAD( "ep02", 0x00000, 0x10000, 0x711ce46f )
+
+	ROM_REGION(0x10000)	/* HuC6280 CPU */
+	/* Filled in later */
+ROM_END
+
+ROM_START( robocpu0_rom )
+	ROM_REGION(0x40000) /* 68000 code */
+	ROM_LOAD_EVEN( "ep05", 0x00000, 0x10000, 0xc465bdd8 )
+	ROM_LOAD_ODD ( "ep01", 0x00000, 0x10000, 0x1352d36e )
+	ROM_LOAD_EVEN( "ep04", 0x20000, 0x10000, 0xc38b9d18 )
+	ROM_LOAD_ODD ( "ep00", 0x20000, 0x10000, 0x374c91aa )
+
+	ROM_REGION_DISPOSE(0x1a0000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ep23", 0x000000, 0x10000, 0xa77e4ab1 )	/* chars */
+	ROM_LOAD( "ep22", 0x010000, 0x10000, 0x9fbd6903 )
+	ROM_LOAD( "ep20", 0x020000, 0x10000, 0x1d8d38b8 )	/* tiles */
+	ROM_LOAD( "ep21", 0x040000, 0x10000, 0x187929b2 )
+	ROM_LOAD( "ep18", 0x060000, 0x10000, 0xb6580b5e )
+	ROM_LOAD( "ep19", 0x080000, 0x10000, 0x9bad01c7 )
+	ROM_LOAD( "ep14", 0x0a0000, 0x08000, 0xca56ceda )	/* tiles */
+	ROM_LOAD( "ep15", 0x0c0000, 0x08000, 0xa945269c )
+	ROM_LOAD( "ep16", 0x0e0000, 0x08000, 0xe7fa4d58 )
+	ROM_LOAD( "ep17", 0x100000, 0x08000, 0x84aae89d )
+	ROM_LOAD( "ep07", 0x120000, 0x10000, 0x495d75cf )	/* sprites */
+	ROM_LOAD( "ep06", 0x130000, 0x08000, 0xa2ae32e2 )
+	/* 98000-9ffff empty */
+	ROM_LOAD( "ep11", 0x140000, 0x10000, 0x62fa425a )
+	ROM_LOAD( "ep10", 0x150000, 0x08000, 0xcce3bd95 )
+	/* b8000-bffff empty */
+	ROM_LOAD( "ep09", 0x160000, 0x10000, 0x11bed656 )
+	ROM_LOAD( "ep08", 0x170000, 0x08000, 0xc45c7b4c )
+	/* d8000-dffff empty */
+	ROM_LOAD( "ep13", 0x180000, 0x10000, 0x8fca9f28 )
+	ROM_LOAD( "ep12", 0x190000, 0x08000, 0x3cd1d0c3 )
+	/* f8000-fffff empty */
+
+	ROM_REGION(0x10000)	/* 6502 Sound */
+	ROM_LOAD( "ep03", 0x08000, 0x08000, 0x1089eab8 )
+
+	ROM_REGION(0x10000)	/* ADPCM samples */
+	ROM_LOAD( "ep02", 0x00000, 0x10000, 0x711ce46f )
+
+	ROM_REGION(0x10000)	/* HuC6280 CPU */
+	/* Filled in later */
+ROM_END
+
+ROM_START( robocopb_rom )
 	ROM_REGION(0x40000) /* 68000 code */
 	ROM_LOAD_EVEN( "robop_05.rom", 0x00000, 0x10000, 0xbcef3e9b )
 	ROM_LOAD_ODD ( "robop_01.rom", 0x00000, 0x10000, 0xc9803685 )
@@ -1511,34 +1733,34 @@ ROM_START( robocopp_rom )
 	ROM_LOAD_ODD ( "robop_00.rom", 0x20000, 0x10000, 0x80ba64ab )
 
 	ROM_REGION_DISPOSE(0x1a0000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "robop_23.rom", 0x000000, 0x10000, 0xa77e4ab1 )	/* chars */
-	ROM_LOAD( "robop_22.rom", 0x010000, 0x10000, 0x9fbd6903 )
-	ROM_LOAD( "robop_20.rom", 0x020000, 0x10000, 0x1d8d38b8 )	/* tiles */
-	ROM_LOAD( "robop_21.rom", 0x040000, 0x10000, 0x187929b2 )
-	ROM_LOAD( "robop_18.rom", 0x060000, 0x10000, 0xb6580b5e )
-	ROM_LOAD( "robop_19.rom", 0x080000, 0x10000, 0x9bad01c7 )
-	ROM_LOAD( "robop_14.rom", 0x0a0000, 0x08000, 0xca56ceda )	/* tiles */
-	ROM_LOAD( "robop_15.rom", 0x0c0000, 0x08000, 0xa945269c )
-	ROM_LOAD( "robop_16.rom", 0x0e0000, 0x08000, 0xe7fa4d58 )
-	ROM_LOAD( "robop_17.rom", 0x100000, 0x08000, 0x84aae89d )
-	ROM_LOAD( "robop_07.rom", 0x120000, 0x10000, 0x495d75cf )	/* sprites */
-	ROM_LOAD( "robop_06.rom", 0x130000, 0x08000, 0xa2ae32e2 )
+	ROM_LOAD( "ep23", 0x000000, 0x10000, 0xa77e4ab1 )	/* chars */
+	ROM_LOAD( "ep22", 0x010000, 0x10000, 0x9fbd6903 )
+	ROM_LOAD( "ep20", 0x020000, 0x10000, 0x1d8d38b8 )	/* tiles */
+	ROM_LOAD( "ep21", 0x040000, 0x10000, 0x187929b2 )
+	ROM_LOAD( "ep18", 0x060000, 0x10000, 0xb6580b5e )
+	ROM_LOAD( "ep19", 0x080000, 0x10000, 0x9bad01c7 )
+	ROM_LOAD( "ep14", 0x0a0000, 0x08000, 0xca56ceda )	/* tiles */
+	ROM_LOAD( "ep15", 0x0c0000, 0x08000, 0xa945269c )
+	ROM_LOAD( "ep16", 0x0e0000, 0x08000, 0xe7fa4d58 )
+	ROM_LOAD( "ep17", 0x100000, 0x08000, 0x84aae89d )
+	ROM_LOAD( "ep07", 0x120000, 0x10000, 0x495d75cf )	/* sprites */
+	ROM_LOAD( "ep06", 0x130000, 0x08000, 0xa2ae32e2 )
 	/* 98000-9ffff empty */
-	ROM_LOAD( "robop_11.rom", 0x140000, 0x10000, 0x62fa425a )
-	ROM_LOAD( "robop_10.rom", 0x150000, 0x08000, 0xcce3bd95 )
+	ROM_LOAD( "ep11", 0x140000, 0x10000, 0x62fa425a )
+	ROM_LOAD( "ep10", 0x150000, 0x08000, 0xcce3bd95 )
 	/* b8000-bffff empty */
-	ROM_LOAD( "robop_09.rom", 0x160000, 0x10000, 0x11bed656 )
-	ROM_LOAD( "robop_08.rom", 0x170000, 0x08000, 0xc45c7b4c )
+	ROM_LOAD( "ep09", 0x160000, 0x10000, 0x11bed656 )
+	ROM_LOAD( "ep08", 0x170000, 0x08000, 0xc45c7b4c )
 	/* d8000-dffff empty */
-	ROM_LOAD( "robop_13.rom", 0x180000, 0x10000, 0x8fca9f28 )
-	ROM_LOAD( "robop_12.rom", 0x190000, 0x08000, 0x3cd1d0c3 )
+	ROM_LOAD( "ep13", 0x180000, 0x10000, 0x8fca9f28 )
+	ROM_LOAD( "ep12", 0x190000, 0x08000, 0x3cd1d0c3 )
 	/* f8000-fffff empty */
 
 	ROM_REGION(0x10000)	/* 6502 Sound */
-	ROM_LOAD( "robop_03.rom", 0x08000, 0x08000, 0x5b164b24 )
+	ROM_LOAD( "ep03-3", 0x08000, 0x08000, 0x5b164b24 )
 
 	ROM_REGION(0x10000)	/* ADPCM samples */
-	ROM_LOAD( "robop_02.rom", 0x00000, 0x10000, 0x711ce46f )
+	ROM_LOAD( "ep02", 0x00000, 0x10000, 0x711ce46f )
 ROM_END
 
 ROM_START( hippodrm_rom )
@@ -1692,6 +1914,51 @@ ROM_START( slyspy2_rom )
 	ROM_LOAD( "fa11.11k",     0x00000, 0x20000, 0x4e547bad )
 ROM_END
 
+ROM_START( secretag_rom )
+	ROM_REGION(0x60000) /* 68000 code */
+	ROM_LOAD_EVEN( "fb14.bin",   0x00000, 0x10000, 0x9be6ac90 )
+	ROM_LOAD_ODD ( "fb12.bin",   0x00000, 0x10000, 0x28904b6b )
+	ROM_LOAD_EVEN( "fb15.bin",   0x20000, 0x10000, 0x106bb26c )
+	ROM_LOAD_ODD ( "fb13.bin",   0x20000, 0x10000, 0x90523413 )
+
+	ROM_REGION_DISPOSE(0x1a0000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "fa05.11a",     0x008000, 0x04000, 0x09802924 )	/* chars */
+	/* 0c000-0ffff empty */
+	ROM_CONTINUE(             0x000000, 0x04000 )	/* the two halves are swapped */
+	/* 04000-07fff empty */
+	ROM_LOAD( "fa04.9a",      0x018000, 0x04000, 0xec25b895 )
+	/* 1c000-1ffff empty */
+	ROM_CONTINUE(             0x010000, 0x04000 )
+	/* 14000-17fff empty */
+	ROM_LOAD( "fa07.17a",     0x020000, 0x08000, 0xe932268b )	/* tiles */
+	/* 28000-3ffff empty */
+	ROM_CONTINUE(             0x040000, 0x08000 )
+	/* 48000-5ffff empty */
+	ROM_LOAD( "fa06.15a",     0x060000, 0x08000, 0xc4dd38c0 )
+	/* 68000-7ffff empty */
+	ROM_CONTINUE(             0x080000, 0x08000 )
+	/* 88000-9ffff empty */
+	ROM_LOAD( "fa09.22a",     0x0a0000, 0x10000, 0x1395e9be )	/* tiles */
+	/* b0000-bffff empty */
+	ROM_CONTINUE(             0x0c0000, 0x10000 )
+	/* d0000-dffff empty */
+	ROM_LOAD( "fa08.21a",     0x0e0000, 0x10000, 0x4d7464db )
+	/* f0000-fffff empty */
+	ROM_CONTINUE(             0x100000, 0x10000 )
+	/* 110000-11ffff empty */
+	ROM_LOAD( "fa01.4a",      0x120000, 0x20000, 0x99b0cd92 )	/* sprites */
+	ROM_LOAD( "fa03.7a",      0x140000, 0x20000, 0x0e7ea74d )
+	ROM_LOAD( "fa00.2a",      0x160000, 0x20000, 0xf7df3fd7 )
+	ROM_LOAD( "fa02.5a",      0x180000, 0x20000, 0x84e8da9d )
+
+	ROM_REGION (0x10000)	/* Sound CPU */
+	ROM_LOAD( "fa10.5h",      0x00000, 0x10000, 0xdfd2ff25 )
+
+	ROM_REGION (0x20000)	/* ADPCM samples */
+	ROM_LOAD( "fa11.11k",     0x00000, 0x20000, 0x4e547bad )
+ROM_END
+
+#if 0
 ROM_START( secretab_rom )
 	ROM_REGION(0x60000) /* 68000 code */
 	ROM_LOAD_EVEN( "sa_05.bin",    0x00000, 0x10000, 0x54353a84 )
@@ -1724,6 +1991,7 @@ ROM_START( secretab_rom )
 	ROM_REGION (0x20000)	/* ADPCM samples */
 	ROM_LOAD( "fa11.11k",     0x00000, 0x20000, 0x4e547bad )
 ROM_END
+#endif
 
 ROM_START( midres_rom )
 	ROM_REGION(0x80000) /* 68000 code */
@@ -1865,67 +2133,6 @@ ROM_START( bouldash_rom )
 
 	ROM_REGION (0x20000)	/* ADPCM samples */
 	ROM_LOAD( "fn-11",      0x00000, 0x10000, 0x990fd8d9 )
-ROM_END
-
-
-
-
-//MOVE THIS
-ROM_START( birdtry_rom )
-	ROM_REGION(0x60000)	/* 6*64k for 68000 code */
-	ROM_LOAD_EVEN( "ek-04.bin",     0x00000, 0x10000, 0x4877b09e )
-	ROM_LOAD_ODD ( "ek-01.bin",     0x00000, 0x10000, 0x8b41c219 )
-	ROM_LOAD_EVEN( "ek-05.bin",     0x20000, 0x10000, 0x2087d570 )
-	ROM_LOAD_ODD ( "ek-02.bin",     0x20000, 0x10000, 0x815536ae )
-	ROM_LOAD_EVEN( "ek-06.bin",     0x40000, 0x10000, 0xda4e3fbc )
-	ROM_LOAD_ODD ( "ek-03.bin",     0x40000, 0x10000, 0x7fed7c46 )
-
-	ROM_REGION_DISPOSE(0x1a0000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ek-25.bin",     0x000000, 0x08000, 0x8649762c )	/* chars */
-	ROM_LOAD( "ek-26.bin",     0x010000, 0x08000, 0xf8189bbd )
-
-	ROM_LOAD( "ek-18.bin",     0x020000, 0x10000, 0xef664373 )	/* tiles */
-	ROM_LOAD( "ek-17.bin",     0x030000, 0x10000, 0xa4f186ac )
-	ROM_LOAD( "ek-20.bin",     0x040000, 0x10000, 0x2fc13be0 )
-	ROM_LOAD( "ek-19.bin",     0x050000, 0x10000, 0xd6b47869 )
-	ROM_LOAD( "ek-22.bin",     0x060000, 0x10000, 0x50d6a1ad )
-	ROM_LOAD( "ek-21.bin",     0x070000, 0x10000, 0xf01d75c5 )
-	ROM_LOAD( "ek-24.bin",     0x080000, 0x10000, 0xae377361 )
-	ROM_LOAD( "ek-23.bin",     0x090000, 0x10000, 0xbbdaf771 )
-
-
-
-ROM_LOAD( "ek-17.bin",     0x0a0000, 0x10000, 0x5514b296 )	/* tiles */
-	/* b0000-bfff empty */
-ROM_LOAD( "ek-19.bin",     0x0c0000, 0x10000, 0x5855e8ef )
-	/* d0000-dfff empty */
-ROM_LOAD( "ek-21.bin",     0x0e0000, 0x10000, 0x99db7b9c )
-	/* f0000-ffff empty */
-ROM_LOAD( "ek-23.bin",     0x100000, 0x10000, 0x33ce2b1a )
-	/* 110000-11fff empty */
-
-//REMEMBER altered memory.c
-
-
-	ROM_LOAD( "ek-15.bin",     0x120000, 0x10000, 0x21816707 )	/* sprites */
-	//ROM_LOAD( "ek-16.bin",     0xa0000, 0x10000, 0xa5684574 )
-
-	ROM_LOAD( "ek-11.bin",     0x140000, 0x10000, 0x5c768315 )
-	//ROM_LOAD( "ek-12.bin",     0xc0000, 0x10000, 0x8b64d7a4 )
-
-	ROM_LOAD( "ek-13.bin",     0x160000, 0x10000, 0x56e3ed65 )
-
-	//ROM_LOAD( "ek-14.bin",     0xe0000, 0x10000, 0xbedfe7f3 )
-
-	ROM_LOAD( "ek-09.bin",     0x180000, 0x10000, 0x26240ea0 )
-
-	//ROM_LOAD( "ek-10.bin",     0x100000, 0x10000, 0x47d95447 )
-
-	ROM_REGION(0x10000)	/* 6502 Sound */
-	ROM_LOAD( "ek-07.bin",     0x8000, 0x8000, 0xa127f0f7 )
-
-	ROM_REGION(0x10000)	/* ADPCM samples */
-	ROM_LOAD( "ek-08.bin",     0x0000, 0x10000, 0x645c5b68 )
 ROM_END
 
 /******************************************************************************/
@@ -2237,31 +2444,6 @@ struct GameDriver hbarrel_driver =
 	__FILE__,
 	0,
 	"hbarrel",
-	"Heavy Barrel (World)",
-	"1987",
-	"Data East Corporation",
-	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
-	0,
-	&hbarrel_machine_driver,
-	dec0_custom_memory,
-
-	hbarrel_rom,
-	0, 0,
-	0,
-	0,	/* sound_prom */
-
-	hbarrel_input_ports,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_270,
-	hbarrelj_hiload, hbarrelj_hisave
-};
-
-struct GameDriver hbarrelu_driver =
-{
-	__FILE__,
-	&hbarrel_driver,
-	"hbarrelu",
 	"Heavy Barrel (US)",
 	"1987",
 	"Data East USA",
@@ -2280,6 +2462,31 @@ struct GameDriver hbarrelu_driver =
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_ROTATE_270,
 	hbarrel_hiload, hbarrel_hisave
+};
+
+struct GameDriver hbarrelw_driver =
+{
+	__FILE__,
+	&hbarrel_driver,
+	"hbarrelw",
+	"Heavy Barrel (World)",
+	"1987",
+	"Data East Corporation",
+	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
+	0,
+	&hbarrel_machine_driver,
+	dec0_custom_memory,
+
+	hbarrel_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	hbarrel_input_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_ROTATE_270,
+	hbarrelj_hiload, hbarrelj_hisave
 };
 
 struct GameDriver baddudes_driver =
@@ -2337,12 +2544,12 @@ struct GameDriver birdtry_driver =
 	__FILE__,
 	0,
 	"birdtry",
-	"Heavy Barrel",
-	"1987",
-	"Data East USA",
+	"Birdie Try (Japan)",
+	"1988",
+	"Data East Corporation",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
-	0,
-	&hbarrel_machine_driver,
+	GAME_NOT_WORKING,
+	&birdtry_machine_driver,
 	dec0_custom_memory,
 
 	birdtry_rom,
@@ -2350,7 +2557,7 @@ struct GameDriver birdtry_driver =
 	0,
 	0,	/* sound_prom */
 
-	hbarrel_input_ports,
+	hbarrel_input_ports, /* For now */
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_ROTATE_270,
@@ -2362,11 +2569,11 @@ struct GameDriver robocop_driver =
 	__FILE__,
 	0,
 	"robocop",
-	"Robocop (Rev 3)",
+	"Robocop (World revision 3)",
 	"1988",
 	"Data East Corporation",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
-	0,
+	GAME_NOT_WORKING,
 	&robocop_machine_driver,
 	dec0_custom_memory,
 
@@ -2382,12 +2589,62 @@ struct GameDriver robocop_driver =
 	robocopp_hiload, robocopp_hisave
 };
 
-struct GameDriver robocopp_driver =
+struct GameDriver robocopu_driver =
 {
 	__FILE__,
+	&robocop_driver,
+	"robocopu",
+	"Robocop (US revision 1)",
+	"1988",
+	"Data East USA",
+	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
+	GAME_NOT_WORKING,
+	&robocop_machine_driver,
+	dec0_custom_memory,
+
+	robocopu_rom,
+	0, 0,
 	0,
-	"robocopp",
-	"Robocop (bootleg)",
+	0,
+
+	robocop_input_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_DEFAULT,
+	robocopp_hiload, robocopp_hisave
+};
+
+struct GameDriver robocpu0_driver =
+{
+	__FILE__,
+	&robocop_driver,
+	"robocpu0",
+	"Robocop (US revision 0)",
+	"1988",
+	"Data East USA",
+	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
+	GAME_NOT_WORKING,
+	&robocop_machine_driver,
+	dec0_custom_memory,
+
+	robocpu0_rom,
+	0, 0,
+	0,
+	0,
+
+	robocop_input_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_DEFAULT,
+	robocopp_hiload,robocopp_hisave
+};
+
+struct GameDriver robocopb_driver =
+{
+	__FILE__,
+	&robocop_driver,
+	"robocopb",
+	"Robocop (World bootleg)",
 	"1988",
 	"bootleg",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
@@ -2395,7 +2652,7 @@ struct GameDriver robocopp_driver =
 	&robocop_machine_driver,
 	dec0_custom_memory,
 
-	robocopp_rom,
+	robocopb_rom,
 	0, 0,
 	0,
 	0,
@@ -2507,6 +2764,32 @@ struct GameDriver slyspy2_driver =
 	slyspy_hiload,slyspy_hisave
 };
 
+struct GameDriver secretag_driver =
+{
+	__FILE__,
+	&slyspy_driver,
+	"secretag",
+	"Secret Agent (World)",
+	"1989",
+	"Data East Corporation",
+	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
+	0,
+	&slyspy_machine_driver,
+	dec0_custom_memory,
+
+	secretag_rom,
+	slyspy_patch,0,
+	0,
+	0,
+
+	slyspy_input_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_DEFAULT,
+	slyspy_hiload,slyspy_hisave
+};
+
+#if 0
 struct GameDriver secretab_driver =
 {
 	__FILE__,
@@ -2531,6 +2814,7 @@ struct GameDriver secretab_driver =
 	ORIENTATION_DEFAULT,
 	slyspy_hiload,slyspy_hisave
 };
+#endif
 
 struct GameDriver midres_driver =
 {
@@ -2612,7 +2896,7 @@ struct GameDriver bouldash_driver =
 	__FILE__,
 	0,
 	"bouldash",
-	"Boulder Dash / Boulder Dash Part 2",
+	"Boulder Dash / Boulder Dash Part 2 (World)",
 	"1990",
 	"Data East Corporation (licensed from First Star)",
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",

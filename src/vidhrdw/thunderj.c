@@ -64,7 +64,7 @@
 
 /*************************************
  *
- *		Structures
+ *	Structures
  *
  *************************************/
 
@@ -78,31 +78,31 @@ struct pf_overrender_data
 
 /*************************************
  *
- *		Statics
+ *	Statics
  *
  *************************************/
 
 static struct atarigen_pf_state pf_state;
 static struct atarigen_pf_state pf2_state;
 
-static int alpha_bank;
-static int palette_bank;
-static unsigned int *start_end;
+static UINT16 alpha_bank;
+static UINT16 palette_bank;
+static UINT32 *start_end;
 
 #if DEBUG_VIDEO
-static int show_colors;
-static int special_pen;
+static UINT8 show_colors;
+static UINT8 special_pen;
 #endif
 
 
 
 /*************************************
  *
- *		Prototypes
+ *	Prototypes
  *
  *************************************/
 
-static const unsigned char *update_palette(void);
+static const UINT8 *update_palette(void);
 
 static void pf_color_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *data);
 static void pf2_color_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *data);
@@ -111,8 +111,8 @@ static void pf2_render_callback(const struct rectangle *clip, const struct recta
 static void pf_overrender_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *data);
 static void pf2_overrender_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *data);
 
-static void mo_color_callback(const unsigned short *data, const struct rectangle *clip, void *param);
-static void mo_render_callback(const unsigned short *data, const struct rectangle *clip, void *param);
+static void mo_color_callback(const UINT16 *data, const struct rectangle *clip, void *param);
+static void mo_render_callback(const UINT16 *data, const struct rectangle *clip, void *param);
 
 #if DEBUG_VIDEO
 static void debug(void);
@@ -122,7 +122,7 @@ static void debug(void);
 
 /*************************************
  *
- *		Video system start
+ *	Video system start
  *
  *************************************/
 
@@ -149,7 +149,7 @@ int thunderj_vh_start(void)
 	memset(&pf2_state, 0, sizeof(pf2_state));
 	
 	/* allocate memory */
-	start_end = malloc(sizeof(unsigned int) * 512);
+	start_end = malloc(sizeof(UINT32) * 512);
 	if (!start_end)
 		return 1;
 	
@@ -184,7 +184,7 @@ int thunderj_vh_start(void)
 
 /*************************************
  *
- *		Video system shutdown
+ *	Video system shutdown
  *
  *************************************/
 
@@ -202,7 +202,7 @@ void thunderj_vh_stop(void)
 
 /*************************************
  *
- *		Alpha banking
+ *	Alpha banking
  *
  *************************************/
 
@@ -215,7 +215,7 @@ void thunderj_set_alpha_bank(int bank)
 
 /*************************************
  *
- *		Playfield RAM write handlers
+ *	Playfield RAM write handlers
  *
  *************************************/
 
@@ -281,7 +281,7 @@ void thunderj_playfield2ram_w(int offset, int data)
 
 /*************************************
  *
- *		Scroll register parser
+ *	Scroll register parser
  *
  *************************************/
 
@@ -302,7 +302,7 @@ static void recompute_scrolls_and_update(int scanline)
 
 /*************************************
  *
- *		Periodic scanline updater
+ *	Periodic scanline updater
  *
  *************************************/
 
@@ -333,7 +333,7 @@ void thunderj_scanline_update(int scanline)
 
 /*************************************
  *
- *		Main refresh
+ *	Main refresh
  *
  *************************************/
 
@@ -373,7 +373,7 @@ void thunderj_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	atarigen_pf2_process(pf2_render_callback, bitmap, &Machine->drv->visible_area);
 
 	/* render the motion objects */
-	memset(start_end, 0xff, 512 * sizeof(unsigned int));
+	memset(start_end, 0xff, 512 * sizeof(UINT32));
 	atarigen_mo_process(mo_render_callback, bitmap);
 	
 	/* redraw the alpha layer completely */
@@ -406,13 +406,13 @@ void thunderj_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 /*************************************
  *
- *		Palette management
+ *	Palette management
  *
  *************************************/
 
-static const unsigned char *update_palette(void)
+static const UINT8 *update_palette(void)
 {
-	unsigned short mo_map[16], al_map[64], pf_map[32];
+	UINT16 mo_map[16], al_map[64], pf_map[32];
 	int i, j;
 
 	/* reset color tracking */
@@ -448,7 +448,7 @@ static const unsigned char *update_palette(void)
 	/* rebuild the playfield palettes */
 	for (i = 0; i < 16; i++)
 	{
-		unsigned short used = pf_map[i];
+		UINT16 used = pf_map[i];
 		if (used)
 		{
 			if (palette_bank == 0 || i == 0)
@@ -462,7 +462,7 @@ static const unsigned char *update_palette(void)
 	}
 	for (i = 16; i < 32; i++)
 	{
-		unsigned short used = pf_map[i];
+		UINT16 used = pf_map[i];
 		if (used)
 			for (j = 0; j < 16; j++)
 				if (used & (1 << j))
@@ -472,7 +472,7 @@ static const unsigned char *update_palette(void)
 	/* rebuild the motion object palette */
 	for (i = 0; i < 16; i++)
 	{
-		unsigned short used = mo_map[i];
+		UINT16 used = mo_map[i];
 		if (used)
 		{
 			palette_used_colors[0x100 + palette_bank + i * 16 + 0] = PALETTE_COLOR_TRANSPARENT;
@@ -485,7 +485,7 @@ static const unsigned char *update_palette(void)
 	/* rebuild the alphanumerics palette */
 	for (i = 0; i < 64; i++)
 	{
-		unsigned short used = al_map[i];
+		UINT16 used = al_map[i];
 		if (used)
 			for (j = 0; j < 4; j++)
 				if (used & (1 << j))
@@ -499,14 +499,14 @@ static const unsigned char *update_palette(void)
 
 /*************************************
  *
- *		Playfield palette
+ *	Playfield palette
  *
  *************************************/
 
 static void pf_color_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *param)
 {
 	const unsigned int *usage = Machine->gfx[0]->pen_usage;
-	unsigned short *colormap = param;
+	UINT16 *colormap = param;
 	int x, y;
 	
 	/* standard loop over tiles */
@@ -531,7 +531,7 @@ static void pf_color_callback(const struct rectangle *clip, const struct rectang
 static void pf2_color_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *param)
 {
 	const unsigned int *usage = Machine->gfx[0]->pen_usage;
-	unsigned short *colormap = param;
+	UINT16 *colormap = param;
 	int x, y;
 	
 	/* standard loop over tiles */
@@ -556,7 +556,7 @@ static void pf2_color_callback(const struct rectangle *clip, const struct rectan
 
 /*************************************
  *
- *		Playfield rendering
+ *	Playfield rendering
  *
  *************************************/
 
@@ -665,11 +665,11 @@ static void pf2_render_callback(const struct rectangle *clip, const struct recta
 
 /*************************************
  *
- *		Playfield overrendering
+ *	Playfield overrendering
  *
  *************************************/
 
-static const unsigned short transparency_mask[4] = { 0xffff, 0x00ff, 0x00ff, 0x00ff };
+static const UINT16 transparency_mask[4] = { 0xffff, 0x00ff, 0x00ff, 0x00ff };
 
 static void pf_overrender_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *param)
 {
@@ -766,20 +766,20 @@ static void pf2_overrender_callback(const struct rectangle *clip, const struct r
 
 /*************************************
  *
- *		Motion object palette
+ *	Motion object palette
  *
  *************************************/
  
-static void mo_color_callback(const unsigned short *data, const struct rectangle *clip, void *param)
+static void mo_color_callback(const UINT16 *data, const struct rectangle *clip, void *param)
 {
 	const unsigned int *usage = Machine->gfx[1]->pen_usage;
-	unsigned short *colormap = param;
+	UINT16 *colormap = param;
 	int code = data[1] & 0x7fff;
 	int color = data[2] & 0x000f;
 	int hsize = ((data[3] >> 4) & 7) + 1;
 	int vsize = (data[3] & 7) + 1;
 	int tiles = hsize * vsize;
-	unsigned short temp = 0;
+	UINT16 temp = 0;
 	int i;
 
 	for (i = 0; i < tiles; i++)
@@ -791,11 +791,11 @@ static void mo_color_callback(const unsigned short *data, const struct rectangle
 
 /*************************************
  *
- *		Motion object rendering
+ *	Motion object rendering
  *
  *************************************/
 
-static void mo_render_callback(const unsigned short *data, const struct rectangle *clip, void *param)
+static void mo_render_callback(const UINT16 *data, const struct rectangle *clip, void *param)
 {
 	struct GfxElement *gfx = Machine->gfx[1];
 	struct pf_overrender_data overrender_data;
@@ -830,9 +830,9 @@ static void mo_render_callback(const unsigned short *data, const struct rectangl
 	/* special case? */
 	if (special)
 	{
-		unsigned int temp = start_end[ypos & 0x1ff];
-		unsigned int start = temp >> 16;
-		unsigned int stop = temp & 0xffff;
+		UINT32 temp = start_end[ypos & 0x1ff];
+		UINT32 start = temp >> 16;
+		UINT32 stop = temp & 0xffff;
 		
 		/* update the data */
 		if (code == 2)
@@ -928,7 +928,7 @@ static void mo_render_callback(const unsigned short *data, const struct rectangl
 
 /*************************************
  *
- *		Debugging
+ *	Debugging
  *
  *************************************/
  
@@ -938,9 +938,9 @@ static void debug(void)
 {
 	int new_show_colors;
 	
-	new_show_colors = (keyboard_key_pressed(KEYCODE_LSHIFT)) ? 1 : keyboard_key_pressed(KEYCODE_RSHIFT) ? 2 : 0;
+	new_show_colors = (keyboard_pressed(KEYCODE_LSHIFT)) ? 1 : keyboard_pressed(KEYCODE_RSHIFT) ? 2 : 0;
 	if (new_show_colors)
-		if (keyboard_key_pressed(KEYCODE_LCONTROL) || keyboard_key_pressed(KEYCODE_RCONTROL))
+		if (keyboard_pressed(KEYCODE_LCONTROL) || keyboard_pressed(KEYCODE_RCONTROL))
 			new_show_colors = -new_show_colors;
 	
 	if (new_show_colors != show_colors)
@@ -951,32 +951,32 @@ static void debug(void)
 	}
 
 	special_pen = -1;
-	if (keyboard_key_pressed(KEYCODE_Q)) special_pen = 0;
-	if (keyboard_key_pressed(KEYCODE_W)) special_pen = 1;
-	if (keyboard_key_pressed(KEYCODE_E)) special_pen = 2;
-	if (keyboard_key_pressed(KEYCODE_R)) special_pen = 3;
-	if (keyboard_key_pressed(KEYCODE_T)) special_pen = 4;
-	if (keyboard_key_pressed(KEYCODE_Y)) special_pen = 5;
-	if (keyboard_key_pressed(KEYCODE_U)) special_pen = 6;
-	if (keyboard_key_pressed(KEYCODE_I)) special_pen = 7;
+	if (keyboard_pressed(KEYCODE_Q)) special_pen = 0;
+	if (keyboard_pressed(KEYCODE_W)) special_pen = 1;
+	if (keyboard_pressed(KEYCODE_E)) special_pen = 2;
+	if (keyboard_pressed(KEYCODE_R)) special_pen = 3;
+	if (keyboard_pressed(KEYCODE_T)) special_pen = 4;
+	if (keyboard_pressed(KEYCODE_Y)) special_pen = 5;
+	if (keyboard_pressed(KEYCODE_U)) special_pen = 6;
+	if (keyboard_pressed(KEYCODE_I)) special_pen = 7;
 
-	if (keyboard_key_pressed(KEYCODE_A)) special_pen = 8;
-	if (keyboard_key_pressed(KEYCODE_S)) special_pen = 9;
-	if (keyboard_key_pressed(KEYCODE_D)) special_pen = 10;
-	if (keyboard_key_pressed(KEYCODE_F)) special_pen = 11;
-	if (keyboard_key_pressed(KEYCODE_G)) special_pen = 12;
-	if (keyboard_key_pressed(KEYCODE_H)) special_pen = 13;
-	if (keyboard_key_pressed(KEYCODE_J)) special_pen = 14;
-	if (keyboard_key_pressed(KEYCODE_K)) special_pen = 15;
+	if (keyboard_pressed(KEYCODE_A)) special_pen = 8;
+	if (keyboard_pressed(KEYCODE_S)) special_pen = 9;
+	if (keyboard_pressed(KEYCODE_D)) special_pen = 10;
+	if (keyboard_pressed(KEYCODE_F)) special_pen = 11;
+	if (keyboard_pressed(KEYCODE_G)) special_pen = 12;
+	if (keyboard_pressed(KEYCODE_H)) special_pen = 13;
+	if (keyboard_pressed(KEYCODE_J)) special_pen = 14;
+	if (keyboard_pressed(KEYCODE_K)) special_pen = 15;
 	
-	if (keyboard_key_pressed(KEYCODE_9))
+	if (keyboard_pressed(KEYCODE_9))
 	{
 		static int count;
 		char name[50];
 		FILE *f;
 		int i;
 
-		while (keyboard_key_pressed(KEYCODE_9)) { }
+		while (keyboard_pressed(KEYCODE_9)) { }
 
 		sprintf(name, "Dump %d", ++count);
 		f = fopen(name, "wt");
@@ -1026,7 +1026,7 @@ static void debug(void)
 		fprintf(f, "\n\nMotion Objects\n");
 		for (i = 0; i < 0x400; i++)
 		{
-			unsigned short *data = (unsigned short *)&atarigen_spriteram[i*8];
+			UINT16 *data = (UINT16 *)&atarigen_spriteram[i*8];
 			int hflip = data[1] & 0x8000;
 			int code = data[1] & 0x7fff;
 			int xpos = (data[2] >> 7);

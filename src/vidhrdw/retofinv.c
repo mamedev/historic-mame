@@ -21,9 +21,17 @@ unsigned char *retofinv_fg_colorram;
 
 static unsigned char flipscreen=0;
 static unsigned char *bg_dirtybuffer;
+static unsigned bg_bank; /* last background bank active, 0 or 1 */
 static struct osd_bitmap *bitmap_bg;
 
 
+/* data corrections for color rom */
+static unsigned adj_data(unsigned v)
+{
+	/* reverse bits 4-7 */
+	return (v & 0xF) |
+			((v & 0x80) >> 3) | ((v & 0x40) >> 1) | ((v & 0x20) << 1) | ((v & 0x10) << 3);
+}
 
 void retofinv_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
@@ -31,36 +39,37 @@ void retofinv_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
-	for (i = 0; i<Machine->drv->total_colors; i++)
+
+	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
 		int bit0,bit1,bit2,bit3;
 
-		bit0 = (color_prom[2*256] >> 0) & 0x01;
-		bit1 = (color_prom[2*256] >> 1) & 0x01;
-		bit2 = (color_prom[2*256] >> 2) & 0x01;
-		bit3 = (color_prom[2*256] >> 3) & 0x01;
+		bit0 = (color_prom[2*Machine->drv->total_colors] >> 0) & 0x01;
+		bit1 = (color_prom[2*Machine->drv->total_colors] >> 1) & 0x01;
+		bit2 = (color_prom[2*Machine->drv->total_colors] >> 2) & 0x01;
+		bit3 = (color_prom[2*Machine->drv->total_colors] >> 3) & 0x01;
 		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
-		bit0 = (color_prom[1*256] >> 0) & 0x01;
-		bit1 = (color_prom[1*256] >> 1) & 0x01;
-		bit2 = (color_prom[1*256] >> 2) & 0x01;
-		bit3 = (color_prom[1*256] >> 3) & 0x01;
+		bit0 = (color_prom[1*Machine->drv->total_colors] >> 0) & 0x01;
+		bit1 = (color_prom[1*Machine->drv->total_colors] >> 1) & 0x01;
+		bit2 = (color_prom[1*Machine->drv->total_colors] >> 2) & 0x01;
+		bit3 = (color_prom[1*Machine->drv->total_colors] >> 3) & 0x01;
 
 		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-		bit0 = (color_prom[0*256] >> 0) & 0x01;
-		bit1 = (color_prom[0*256] >> 1) & 0x01;
-		bit2 = (color_prom[0*256] >> 2) & 0x01;
-		bit3 = (color_prom[0*256] >> 3) & 0x01;
+		bit0 = (color_prom[0*Machine->drv->total_colors] >> 0) & 0x01;
+		bit1 = (color_prom[0*Machine->drv->total_colors] >> 1) & 0x01;
+		bit2 = (color_prom[0*Machine->drv->total_colors] >> 2) & 0x01;
+		bit3 = (color_prom[0*Machine->drv->total_colors] >> 3) & 0x01;
 		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
 		color_prom++;
 	}
 
-	color_prom += 2*256;
-	/* color_prom now points to the beginning of the lookup tables */
+	color_prom += 2*Machine->drv->total_colors;
+	/* color_prom now points to the beginning of the lookup table */
 
 	/* foreground colors */
-	for (i = 0; i<TOTAL_COLORS(0);i++)
+	for (i = 0;i < TOTAL_COLORS(0);i++)
 	{
 		if (i % 2)
 			COLOR(0,i) = i/2;
@@ -68,14 +77,14 @@ void retofinv_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 			COLOR(0,i) = 0;
 	}
 
-/* 	background & sprites ! WRONG !
+	/* sprites */
+	for(i = 0;i < TOTAL_COLORS(2);i++)
+		COLOR(2,i) = adj_data(*color_prom++);
 
-	for (i=0; i<TOTAL_COLORS(1); i++)
-	{
-		COLOR(1,i) = color_prom[i];
-		COLOR(2,i) = color_prom[i+1024];
-	}
-*/
+	/* background bank 0 (gameplay) */
+	/* background bank 1 (title screen) */
+	for(i = 0;i < TOTAL_COLORS(1);i++)
+		COLOR(1,i) = adj_data(color_prom[i]);
 }
 
 
@@ -91,8 +100,8 @@ int retofinv_vh_start(void)
 		return 1;
 	}
 	memset(bg_dirtybuffer,1,retofinv_videoram_size);
-	fillbitmap(bitmap_bg,0,0);
-        return 0;
+	bg_bank = 0;
+	return 0;
 }
 
 void retofinv_vh_stop(void)
@@ -106,6 +115,26 @@ void retofinv_flip_screen_w(int offset, int data)
 	flipscreen = data;
 	memset(bg_dirtybuffer,1,retofinv_videoram_size);
 	fillbitmap(bitmap_bg,0,0);
+}
+
+int retofinv_bg_videoram_r(int offset)
+{
+	return retofinv_bg_videoram[offset];
+}
+
+int retofinv_fg_videoram_r(int offset)
+{
+	return retofinv_fg_videoram[offset];
+}
+
+int retofinv_bg_colorram_r(int offset)
+{
+	return retofinv_bg_colorram[offset];
+}
+
+int retofinv_fg_colorram_r(int offset)
+{
+	return retofinv_fg_colorram[offset];
 }
 
 void retofinv_bg_videoram_w(int offset,int data)
@@ -229,43 +258,50 @@ void retofinv_render_sprites(struct osd_bitmap *bitmap)
 void retofinv_draw_background(struct osd_bitmap *bitmap)
 {
 	int x,y,offs;
-	int sx,sy,tile,palette,flipx,flipy;
+	int sx,sy,tile,palette;
+	int bg_dirtybank;
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
+
+	/* if bank differ redraw all */
+	bg_dirtybank = (retofinv_bg_char_bank[0] & 1) != bg_bank;
+
+	/* save active bank */
+	bg_bank = (retofinv_bg_char_bank[0] & 1);
 
 	for (y = 31; y>=0; y--)
 	{
 		for (x = 31; x>=0; x--)
 		{
 			offs = y*32+x;
-			sx = (31-x) << 3;
-			sy = (31-y) << 3;
 
-			flipx = flipy =0;
+			if (bg_dirtybank || bg_dirtybuffer[offs])
+			{
+				sx = 31-x;
+				sy = 31-y;
 
-			if (flipscreen)
-			{
-				sx = 248 - sx;
-				sy = 248 - sy;
-				flipx = flipy = 1;
-			}
-			if (bg_dirtybuffer[offs])
-			{
+				if (flipscreen)
+				{
+					sx = 31 - sx;
+					sy = 31 - sy;
+				}
+
 				bg_dirtybuffer[offs] = 0;
-				tile = retofinv_bg_videoram[offs]+(retofinv_bg_char_bank[0]*256);
+				tile = retofinv_bg_videoram[offs] + 256 * bg_bank;
 				palette = retofinv_bg_colorram[offs] & 0x3f;
 
-				drawgfx(bitmap,Machine->gfx[1],
-							tile,
-						  	palette,
-						  	flipx,flipy,
-						  	sx+16,sy,
-						  	&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-
+				drawgfx(bitmap_bg,Machine->gfx[1],
+						tile,
+						palette,
+						flipscreen,flipscreen,
+						8*sx+16,8*sy,
+						&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 			}
 		}
 	}
+
+	copybitmap(bitmap,bitmap_bg,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 }
 
 
@@ -300,7 +336,7 @@ void retofinv_draw_foreground(struct osd_bitmap *bitmap)
 						  palette,
 						  flipx,flipy,
 						  sx,sy,
-						  &Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+						  &Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
 
@@ -330,7 +366,6 @@ void retofinv_draw_foreground(struct osd_bitmap *bitmap)
 						  flipx,flipy,
 						  sx,sy,
 						  &Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-
 		}
 	}
 
@@ -359,7 +394,7 @@ void retofinv_draw_foreground(struct osd_bitmap *bitmap)
 						  palette,
 						  flipx,flipy,
 						  sx,sy,
-						  &Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+						  &Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
 }
@@ -375,8 +410,7 @@ void retofinv_draw_foreground(struct osd_bitmap *bitmap)
 
 void retofinv_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	retofinv_draw_background(bitmap_bg);
-	copybitmap(bitmap,bitmap_bg,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	retofinv_draw_background(bitmap);
 	retofinv_render_sprites(bitmap);
 	retofinv_draw_foreground(bitmap);
 }

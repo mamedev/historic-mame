@@ -151,6 +151,7 @@
   315-5098      Ninja Princess         unencrypted version available
   315-5102      Sega Ninja             unencrypted version available
   315-5110      I'm Sorry              used My Hero for k.p.a.
+  315-5114      ?? pcb 834-5492        not decoded yet
   315-5115      TeddyBoy Blues
   315-5135      Heavy Metal &
                 Wonder Boy (set 1 & 2; bootlegs?)

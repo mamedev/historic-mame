@@ -236,8 +236,8 @@ void twocrude_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* Background - Rowscroll enable */
 	if (pf23_control&0x4000) {
 		int scrollx=READ_WORD(&twocrude_control_0[6]),rows;
-		tilemap_set_scroll_cols(twocrude_pf3_tilemap,1);
-		tilemap_set_scrolly( twocrude_pf3_tilemap,0, READ_WORD(&twocrude_control_0[8]) );
+		tilemap_set_scroll_cols(twocrude_pf2_tilemap,1);
+		tilemap_set_scrolly( twocrude_pf2_tilemap,0, READ_WORD(&twocrude_control_0[8]) );
 
 		/* Several different rowscroll styles! */
 		switch ((READ_WORD (&twocrude_control_0[0xa])>>11)&7) {
@@ -353,14 +353,14 @@ void twocrude_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		/* Several different rowscroll styles! */
 		switch ((READ_WORD (&twocrude_control_1[0xa])>>3)&7) {
-			case 0: rows=512; break;/* Every line of 512 height bitmap */
-			case 1: rows=256; break;
-			case 2: rows=128; break;
-			case 3: rows=64; break;
-			case 4: rows=32; break;
-			case 5: rows=16; break;
-			case 6: rows=8; break;
-			case 7: rows=4; break;
+			case 0: rows=256; break;/* Every line of 256 height bitmap */
+			case 1: rows=128; break;
+			case 2: rows=64; break;
+			case 3: rows=32; break;
+			case 4: rows=16; break;
+			case 5: rows=8; break;
+			case 6: rows=4; break;
+			case 7: rows=2; break;
 			default: rows=1; break;
 		}
 

@@ -137,7 +137,7 @@ void invaders_videoram_w (int offset,int data)
 	}
 }
 
-void invdelux_videoram_w (int offset,int data)
+void invdpt2m_videoram_w (int offset,int data)
 {
 	if (invaders_videoram[offset] != data)
 	{

@@ -22,12 +22,12 @@ void batman_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void batman_scanline_update(int scanline);
 
 
-static unsigned char *latch_data;
+static UINT8 *latch_data;
 
 
 /*************************************
  *
- *		Initialization
+ *	Initialization
  *
  *************************************/
 
@@ -60,7 +60,7 @@ static void init_machine(void)
 
 /*************************************
  *
- *		I/O handling
+ *	I/O handling
  *
  *************************************/
 
@@ -102,7 +102,7 @@ static void latch_w(int offset, int data)
 
 /*************************************
  *
- *		Main CPU memory handlers
+ *	Main CPU memory handlers
  *
  *************************************/
 
@@ -149,7 +149,7 @@ static struct MemoryWriteAddress main_writemem[] =
 
 /*************************************
  *
- *		Port definitions
+ *	Port definitions
  *
  *************************************/
 
@@ -182,7 +182,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *		Graphics definitions
+ *	Graphics definitions
  *
  *************************************/
 
@@ -222,7 +222,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *		Machine driver
+ *	Machine driver
  *
  *************************************/
 
@@ -265,13 +265,13 @@ static struct MachineDriver machine_driver =
 
 /*************************************
  *
- *		ROM decoding
+ *	ROM decoding
  *
  *************************************/
 
 static void rom_decode(void)
 {
-	unsigned char *base = Machine->memory_region[2];
+	UINT8 *base = Machine->memory_region[2];
 	int i;
 
 	/* invert the graphics bits on the playfield and motion objects */
@@ -295,13 +295,13 @@ static void rom_decode(void)
 
 /*************************************
  *
- *		Driver initialization
+ *	Driver initialization
  *
  *************************************/
 
 static void batman_init(void)
 {
-	static const unsigned short default_eeprom[] =
+	static const UINT16 default_eeprom[] =
 	{
 		0x0001,0x01F1,0x0154,0x01C5,0x0100,0x0113,0x0300,0x0173,
 		0x0700,0x0154,0x0200,0x0107,0x0100,0x0120,0x0300,0x0165,
@@ -331,7 +331,7 @@ static void batman_init(void)
 
 /*************************************
  *
- *		ROM definition(s)
+ *	ROM definition(s)
  *
  *************************************/
 
@@ -382,7 +382,7 @@ ROM_END
 
 /*************************************
  *
- *		Game driver(s)
+ *	Game driver(s)
  *
  *************************************/
 

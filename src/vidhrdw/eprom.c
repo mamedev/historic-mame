@@ -64,18 +64,18 @@
 
 /*************************************
  *
- *		Globals we own
+ *	Globals we own
  *
  *************************************/
 
-unsigned char *eprom_playfieldpalram;
+UINT8 *eprom_playfieldpalram;
 int eprom_playfieldpalram_size;
 
 
 
 /*************************************
  *
- *		Structures
+ *	Structures
  *
  *************************************/
 
@@ -89,7 +89,7 @@ struct pf_overrender_data
 
 /*************************************
  *
- *		Statics
+ *	Statics
  *
  *************************************/
 
@@ -104,18 +104,18 @@ static int special_pen;
 
 /*************************************
  *
- *		Prototypes
+ *	Prototypes
  *
  *************************************/
 
-static const unsigned char *update_palette(void);
+static const UINT8 *update_palette(void);
 
 static void pf_color_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *data);
 static void pf_render_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *data);
 static void pf_overrender_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *data);
 
-static void mo_color_callback(const unsigned short *data, const struct rectangle *clip, void *param);
-static void mo_render_callback(const unsigned short *data, const struct rectangle *clip, void *param);
+static void mo_color_callback(const UINT16 *data, const struct rectangle *clip, void *param);
+static void mo_render_callback(const UINT16 *data, const struct rectangle *clip, void *param);
 
 #if DEBUG_VIDEO
 static void debug(void);
@@ -125,7 +125,7 @@ static void debug(void);
 
 /*************************************
  *
- *		Video system start
+ *	Video system start
  *
  *************************************/
 
@@ -168,7 +168,7 @@ int eprom_vh_start(void)
 
 /*************************************
  *
- *		Video system shutdown
+ *	Video system shutdown
  *
  *************************************/
 
@@ -182,7 +182,7 @@ void eprom_vh_stop(void)
 
 /*************************************
  *
- *		Playfield RAM write handler
+ *	Playfield RAM write handler
  *
  *************************************/
 
@@ -202,7 +202,7 @@ void eprom_playfieldram_w(int offset, int data)
 
 /*************************************
  *
- *		Playfield palette RAM write handler
+ *	Playfield palette RAM write handler
  *
  *************************************/
 
@@ -222,7 +222,7 @@ void eprom_playfieldpalram_w(int offset, int data)
 
 /*************************************
  *
- *		Periodic scanline updater
+ *	Periodic scanline updater
  *
  *************************************/
 
@@ -244,7 +244,7 @@ void eprom_scanline_update(int scanline)
 
 /*************************************
  *
- *		Main refresh
+ *	Main refresh
  *
  *************************************/
 
@@ -300,13 +300,13 @@ void eprom_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 /*************************************
  *
- *		Palette management
+ *	Palette management
  *
  *************************************/
 
-static const unsigned char *update_palette(void)
+static const UINT8 *update_palette(void)
 {
-	unsigned short mo_map[16], al_map[64], pf_map[16];
+	UINT16 mo_map[16], al_map[64], pf_map[16];
 	int i, j;
 
 	/* reset color tracking */
@@ -340,7 +340,7 @@ static const unsigned char *update_palette(void)
 	/* rebuild the playfield palette */
 	for (i = 0; i < 16; i++)
 	{
-		unsigned short used = pf_map[i];
+		UINT16 used = pf_map[i];
 		if (used)
 			for (j = 0; j < 16; j++)
 				if (used & (1 << j))
@@ -350,7 +350,7 @@ static const unsigned char *update_palette(void)
 	/* rebuild the motion object palette */
 	for (i = 0; i < 16; i++)
 	{
-		unsigned short used = mo_map[i];
+		UINT16 used = mo_map[i];
 		if (used)
 		{
 			palette_used_colors[0x100 + i * 16 + 0] = PALETTE_COLOR_TRANSPARENT;
@@ -363,7 +363,7 @@ static const unsigned char *update_palette(void)
 	/* rebuild the alphanumerics palette */
 	for (i = 0; i < 64; i++)
 	{
-		unsigned short used = al_map[i];
+		UINT16 used = al_map[i];
 		if (used)
 			for (j = 0; j < 4; j++)
 				if (used & (1 << j))
@@ -377,14 +377,14 @@ static const unsigned char *update_palette(void)
 
 /*************************************
  *
- *		Playfield palette
+ *	Playfield palette
  *
  *************************************/
 
 static void pf_color_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *param)
 {
 	const unsigned int *usage = Machine->gfx[0]->pen_usage;
-	unsigned short *colormap = param;
+	UINT16 *colormap = param;
 	int x, y;
 
 	/* standard loop over tiles */
@@ -409,7 +409,7 @@ static void pf_color_callback(const struct rectangle *clip, const struct rectang
 
 /*************************************
  *
- *		Playfield rendering
+ *	Playfield rendering
  *
  *************************************/
 
@@ -461,7 +461,7 @@ static void pf_render_callback(const struct rectangle *clip, const struct rectan
 
 /*************************************
  *
- *		Playfield overrendering
+ *	Playfield overrendering
  *
  *************************************/
 
@@ -512,20 +512,20 @@ static void pf_overrender_callback(const struct rectangle *clip, const struct re
 
 /*************************************
  *
- *		Motion object palette
+ *	Motion object palette
  *
  *************************************/
 
-static void mo_color_callback(const unsigned short *data, const struct rectangle *clip, void *param)
+static void mo_color_callback(const UINT16 *data, const struct rectangle *clip, void *param)
 {
 	const unsigned int *usage = Machine->gfx[0]->pen_usage;
-	unsigned short *colormap = param;
+	UINT16 *colormap = param;
 	int code = data[1] & 0x7fff;
 	int color = data[2] & 0x000f;
 	int hsize = ((data[3] >> 4) & 7) + 1;
 	int vsize = (data[3] & 7) + 1;
 	int tiles = hsize * vsize;
-	unsigned short temp = 0;
+	UINT16 temp = 0;
 	int i;
 
 	for (i = 0; i < tiles; i++)
@@ -537,11 +537,11 @@ static void mo_color_callback(const unsigned short *data, const struct rectangle
 
 /*************************************
  *
- *		Motion object rendering
+ *	Motion object rendering
  *
  *************************************/
 
-static void mo_render_callback(const unsigned short *data, const struct rectangle *clip, void *param)
+static void mo_render_callback(const UINT16 *data, const struct rectangle *clip, void *param)
 {
 	struct GfxElement *gfx = Machine->gfx[0];
 	struct pf_overrender_data overrender_data;
@@ -613,7 +613,7 @@ static void mo_render_callback(const unsigned short *data, const struct rectangl
 
 /*************************************
  *
- *		Debugging
+ *	Debugging
  *
  *************************************/
 
@@ -623,7 +623,7 @@ static void debug(void)
 {
 	int new_show_colors;
 
-	new_show_colors = keyboard_key_pressed(KEYCODE_CAPSLOCK);
+	new_show_colors = keyboard_pressed(KEYCODE_CAPSLOCK);
 	if (new_show_colors != show_colors)
 	{
 		show_colors = new_show_colors;
@@ -631,32 +631,32 @@ static void debug(void)
 	}
 
 	special_pen = -1;
-	if (keyboard_key_pressed(KEYCODE_Q)) special_pen = 0;
-	if (keyboard_key_pressed(KEYCODE_W)) special_pen = 1;
-	if (keyboard_key_pressed(KEYCODE_E)) special_pen = 2;
-	if (keyboard_key_pressed(KEYCODE_R)) special_pen = 3;
-	if (keyboard_key_pressed(KEYCODE_T)) special_pen = 4;
-	if (keyboard_key_pressed(KEYCODE_Y)) special_pen = 5;
-	if (keyboard_key_pressed(KEYCODE_U)) special_pen = 6;
-	if (keyboard_key_pressed(KEYCODE_I)) special_pen = 7;
+	if (keyboard_pressed(KEYCODE_Q)) special_pen = 0;
+	if (keyboard_pressed(KEYCODE_W)) special_pen = 1;
+	if (keyboard_pressed(KEYCODE_E)) special_pen = 2;
+	if (keyboard_pressed(KEYCODE_R)) special_pen = 3;
+	if (keyboard_pressed(KEYCODE_T)) special_pen = 4;
+	if (keyboard_pressed(KEYCODE_Y)) special_pen = 5;
+	if (keyboard_pressed(KEYCODE_U)) special_pen = 6;
+	if (keyboard_pressed(KEYCODE_I)) special_pen = 7;
 
-	if (keyboard_key_pressed(KEYCODE_A)) special_pen = 8;
-	if (keyboard_key_pressed(KEYCODE_S)) special_pen = 9;
-	if (keyboard_key_pressed(KEYCODE_D)) special_pen = 10;
-	if (keyboard_key_pressed(KEYCODE_F)) special_pen = 11;
-	if (keyboard_key_pressed(KEYCODE_G)) special_pen = 12;
-	if (keyboard_key_pressed(KEYCODE_H)) special_pen = 13;
-	if (keyboard_key_pressed(KEYCODE_J)) special_pen = 14;
-	if (keyboard_key_pressed(KEYCODE_K)) special_pen = 15;
+	if (keyboard_pressed(KEYCODE_A)) special_pen = 8;
+	if (keyboard_pressed(KEYCODE_S)) special_pen = 9;
+	if (keyboard_pressed(KEYCODE_D)) special_pen = 10;
+	if (keyboard_pressed(KEYCODE_F)) special_pen = 11;
+	if (keyboard_pressed(KEYCODE_G)) special_pen = 12;
+	if (keyboard_pressed(KEYCODE_H)) special_pen = 13;
+	if (keyboard_pressed(KEYCODE_J)) special_pen = 14;
+	if (keyboard_pressed(KEYCODE_K)) special_pen = 15;
 
-	if (keyboard_key_pressed(KEYCODE_9))
+	if (keyboard_pressed(KEYCODE_9))
 	{
 		static int count;
 		char name[50];
 		FILE *f;
 		int i;
 
-		while (keyboard_key_pressed(KEYCODE_9)) { }
+		while (keyboard_pressed(KEYCODE_9)) { }
 
 		sprintf(name, "Dump %d", ++count);
 		f = fopen(name, "wt");
@@ -699,7 +699,7 @@ static void debug(void)
 		fprintf(f, "\n\nMotion Objects\n");
 		for (i = 0; i < 0x400; i++)
 		{
-			unsigned short *data = (unsigned short *)&atarigen_spriteram[i*8];
+			UINT16 *data = (UINT16 *)&atarigen_spriteram[i*8];
 			int code = data[1] & 0x7fff;
 			int hsize = ((data[3] >> 4) & 7) + 1;
 			int vsize = (data[3] & 7) + 1;

@@ -1,12 +1,14 @@
 /*******************************************************************************
 
-	Act Fancer (USA?)				(c) 1989 Data East Corporation
-	Act Fancer (Japan?)				(c) 1989 Data East Corporation
+	Act Fancer (World)				(c) 1989 Data East Corporation
+	Act Fancer (Japan)				(c) 1989 Data East Corporation
 
-	The 'USA' set has rom code FE, the 'Japan' set has rom code FD.
+	The 'World' set has rom code FE, the 'Japan' set has rom code FD.
 
 	Most Data East games give the Japanese version the earlier code, though
-	there is no real difference between the sets
+	there is no real difference between the sets.
+
+	I believe the USA version is called 'Out Fencer'
 
 	Emulation by Bryan McPhail, mish@tendril.force9.net
 
@@ -239,8 +241,7 @@ static struct GfxDecodeInfo actfan_gfxdecodeinfo[] =
 
 static void sound_irq(int linestate)
 {
-	cpu_set_irq_line(1,0,linestate);
-	//cpu_cause_interrupt(1,M6502_INT_IRQ);
+	cpu_set_irq_line(1,0,linestate); /* IRQ */
 }
 
 static struct YM2203interface ym2203_interface =
@@ -442,7 +443,7 @@ struct GameDriver actfancr_driver =
 	__FILE__,
 	0,
 	"actfancr",
-	"Act-Fancer Cybernetick Hyper Weapon (US?)",
+	"Act-Fancer Cybernetick Hyper Weapon (World)",
 	"1989",
 	"Data East Corporation",
 	"Bryan McPhail",
@@ -468,7 +469,7 @@ struct GameDriver actfancj_driver =
 	__FILE__,
 	&actfancr_driver,
 	"actfancj",
-	"Act-Fancer Cybernetick Hyper Weapon (Japan?)",
+	"Act-Fancer Cybernetick Hyper Weapon (Japan)",
 	"1989",
 	"Data East Corporation",
 	"Bryan McPhail",

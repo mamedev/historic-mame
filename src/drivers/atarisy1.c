@@ -104,8 +104,8 @@ Program ROM (48K bytes)                   4000-FFFF   R    D0-D7
 #include "machine/atarigen.h"
 #include "vidhrdw/generic.h"
 
-extern unsigned char *atarisys1_bankselect;
-extern unsigned char *atarisys1_prioritycolor;
+extern UINT8 *atarisys1_bankselect;
+extern UINT8 *atarisys1_prioritycolor;
 
 int atarisys1_int3state_r(int offset);
 
@@ -123,28 +123,26 @@ void atarisys1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 
-static int joystick_type;
-static int trackball_type;
+static UINT8 joystick_type;
+static UINT8 trackball_type;
 
 static void *joystick_timer;
-static int joystick_int;
-static int joystick_int_enable;
-static int joystick_value;
+static UINT8 joystick_int;
+static UINT8 joystick_int_enable;
+static UINT8 joystick_value;
 
-static int pedal_value;
+static UINT8 m6522_ddra, m6522_ddrb;
+static UINT8 m6522_dra, m6522_drb;
+static UINT8 m6522_regs[16];
 
-static int m6522_ddra, m6522_ddrb;
-static int m6522_dra, m6522_drb;
-static unsigned char m6522_regs[16];
-
-static unsigned char *marble_speedcheck;
-static unsigned long speedcheck_time1, speedcheck_time2;
+static UINT8 *marble_speedcheck;
+static UINT32 speedcheck_time1, speedcheck_time2;
 
 
 
 /*************************************
  *
- *		Initialization of globals.
+ *	Initialization of globals.
  *
  *************************************/
 
@@ -198,7 +196,7 @@ static void init_machine(void)
 
 /*************************************
  *
- *		LED handlers.
+ *	LED handlers.
  *
  *************************************/
 
@@ -211,35 +209,7 @@ static void led_w(int offset, int data)
 
 /*************************************
  *
- *		Interrupt handlers.
- *
- *************************************/
-
-static int vblank_interrupt(void)
-{
-	/* update the gas pedal for RoadBlasters */
-	if (joystick_type == 3)
-	{
-		if (input_port_1_r(0) & 0x80)
-		{
-			pedal_value += 64;
-			if (pedal_value > 0xff) pedal_value = 0xff;
-		}
-		else
-		{
-			pedal_value -= 64;
-			if (pedal_value < 0) pedal_value = 0;
-		}
-	}
-
-	return atarigen_video_int_gen();
-}
-
-
-
-/*************************************
- *
- *		Joystick read.
+ *	Joystick read.
  *
  *************************************/
 
@@ -266,7 +236,7 @@ static int joystick_r(int offset)
 
 	/* Road Blasters gas pedal */
 	else if (joystick_type == 3)
-		newval = pedal_value;
+		newval = input_port_1_r(offset);
 
 	/* set a timer on the joystick interrupt */
 	if (joystick_timer)
@@ -295,7 +265,7 @@ static void joystick_w(int offset, int data)
 
 /*************************************
  *
- *		Trackball read.
+ *	Trackball read.
  *
  *************************************/
 
@@ -318,13 +288,13 @@ static int trakball_r(int offset)
 
 			if (player == 0)
 			{
-				dx = (signed char)input_port_0_r(offset);
-				dy = (signed char)input_port_1_r(offset);
+				dx = (INT8)input_port_0_r(offset);
+				dy = (INT8)input_port_1_r(offset);
 			}
 			else
 			{
-				dx = (signed char)input_port_2_r(offset);
-				dy = (signed char)input_port_3_r(offset);
+				dx = (INT8)input_port_2_r(offset);
+				dy = (INT8)input_port_3_r(offset);
 			}
 
 			cur[player][0] += dx + dy;
@@ -349,7 +319,7 @@ static int trakball_r(int offset)
 
 /*************************************
  *
- *		I/O read dispatch.
+ *	I/O read dispatch.
  *
  *************************************/
 
@@ -376,7 +346,7 @@ static int switch_6502_r(int offset)
 
 /*************************************
  *
- *		TMS5220 communications
+ *	TMS5220 communications
  *
  *************************************/
 
@@ -477,7 +447,7 @@ void m6522_w(int offset, int data)
 
 /*************************************
  *
- *		Speed cheats
+ *	Speed cheats
  *
  *************************************/
 
@@ -510,7 +480,7 @@ void marble_speedcheck_w(int offset, int data)
 
 /*************************************
  *
- *		Opcode memory catcher.
+ *	Opcode memory catcher.
  *
  *************************************/
 
@@ -548,7 +518,7 @@ static int indytemp_setopbase(int pc)
 
 /*************************************
  *
- *		Main CPU memory handlers
+ *	Main CPU memory handlers
  *
  *************************************/
 
@@ -598,7 +568,7 @@ static struct MemoryWriteAddress main_writemem[] =
 
 /*************************************
  *
- *		Sound CPU memory handlers
+ *	Sound CPU memory handlers
  *
  *************************************/
 
@@ -633,7 +603,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 /*************************************
  *
- *		Port definitions
+ *	Port definitions
  *
  *************************************/
 
@@ -785,8 +755,7 @@ INPUT_PORTS_START( roadblst_ports )
 	PORT_ANALOG ( 0xff, 0x40, IPT_DIAL | IPF_REVERSE, 25, 10, 0, 0x00, 0x7f )
 
 	PORT_START	/* IN1 */
-	PORT_BIT( 0x7f, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_ANALOG ( 0xff, 0x00, IPT_PEDAL, 100, 64, 0, 0x00, 0xff )
 
 	PORT_START	/* IN2 */
 	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -817,7 +786,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *		Graphics definitions
+ *	Graphics definitions
  *
  *************************************/
 
@@ -843,7 +812,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *		Sound definitions
+ *	Sound definitions
  *
  *************************************/
 
@@ -877,7 +846,7 @@ static struct TMS5220interface tms5220_interface =
 
 /*************************************
  *
- *		Machine driver
+ *	Machine driver
  *
  *************************************/
 
@@ -890,7 +859,7 @@ static struct MachineDriver machine_driver =
 			7159160,		/* 7.159 Mhz */
 			0,
 			main_readmem,main_writemem,0,0,
-			vblank_interrupt,1
+			atarigen_video_int_gen,1
 		},
 		{
 			CPU_M6502,
@@ -938,13 +907,13 @@ static struct MachineDriver machine_driver =
 
 /*************************************
  *
- *		ROM decoders
+ *	ROM decoders
  *
  *************************************/
 
 static void rom_decode(void)
 {
-	unsigned long *data = (unsigned long *)&Machine->memory_region[4][0];
+	UINT32 *data = (UINT32 *)&Machine->memory_region[4][0];
 	int chips = Machine->memory_region_length[4] / 0x8000;
 	int i, j;
 
@@ -986,7 +955,7 @@ static void roadblst_rom_decode(void)
 
 /*************************************
  *
- *		Driver initialization
+ *	Driver initialization
  *
  *************************************/
 
@@ -1085,7 +1054,7 @@ static void roadblst_init(void)
 
 /*************************************
  *
- *		ROM definition(s)
+ *	ROM definition(s)
  *
  *************************************/
 
@@ -1302,6 +1271,7 @@ ROM_START( indytemp_rom )
 	ROM_LOAD( "136036.150",   0xa8000, 0x08000, 0xa10c4bd9 )  /* bank 4, plane 3 */
 ROM_END
 
+
 ROM_START( indytem2_rom )
 	ROM_REGION(0x88000)	/* 8.5*64k for 68000 code & slapstic ROM */
 	ROM_LOAD_EVEN( "136032.205",   0x00000, 0x04000, 0x88d0be26 )
@@ -1349,6 +1319,7 @@ ROM_START( indytem2_rom )
 	ROM_LOAD( "136036.150",   0xa8000, 0x08000, 0xa10c4bd9 )  /* bank 4, plane 3 */
 ROM_END
 
+
 ROM_START( indytem3_rom )
 	ROM_REGION(0x88000)	/* 8.5*64k for 68000 code & slapstic ROM */
 	ROM_LOAD_EVEN( "136032.205",   0x00000, 0x04000, 0x88d0be26 )
@@ -1361,6 +1332,54 @@ ROM_START( indytem3_rom )
 	ROM_LOAD_ODD ( "257.15a",      0x30000, 0x04000, 0x15293606 )
 	ROM_LOAD_EVEN( "158.16b",      0x80000, 0x04000, 0x10372888 )
 	ROM_LOAD_ODD ( "159.16a",      0x80000, 0x04000, 0x50f890a8 )
+
+	ROM_REGION(0x10000)	/* 64k for 6502 code */
+	ROM_LOAD( "136036.153",   0x4000, 0x4000, 0x95294641 )
+	ROM_LOAD( "136036.154",   0x8000, 0x4000, 0xcbfc6adb )
+	ROM_LOAD( "136036.155",   0xc000, 0x4000, 0x4c8233ac )
+
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "136032.107",   0x00000, 0x02000, 0x7a29dc07 )  /* alpha font */
+
+	ROM_REGION_DISPOSE(0x400)	/* temporary space for graphics mapping PROMs */
+	ROM_LOAD( "136036.152",   0x000, 0x200, 0x4f96e57c )  /* remap */
+	ROM_LOAD( "136036.151",   0x200, 0x200, 0x7daf351f )  /* color */
+
+	ROM_REGION_DISPOSE(0xc0000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "136036.135",   0x00000, 0x08000, 0xffa8749c )  /* bank 1, plane 0 */
+	ROM_LOAD( "136036.139",   0x08000, 0x08000, 0xb682bfca )  /* bank 1, plane 1 */
+	ROM_LOAD( "136036.143",   0x10000, 0x08000, 0x7697da26 )  /* bank 1, plane 2 */
+	ROM_LOAD( "136036.147",   0x18000, 0x08000, 0x4e9d664c )  /* bank 1, plane 3 */
+
+	ROM_LOAD( "136036.136",   0x30000, 0x08000, 0xb2b403aa )  /* bank 2, plane 0 */
+	ROM_LOAD( "136036.140",   0x38000, 0x08000, 0xec0c19ca )  /* bank 2, plane 1 */
+	ROM_LOAD( "136036.144",   0x40000, 0x08000, 0x4407df98 )  /* bank 2, plane 2 */
+	ROM_LOAD( "136036.148",   0x48000, 0x08000, 0x70dce06d )  /* bank 2, plane 3 */
+
+	ROM_LOAD( "136036.137",   0x60000, 0x08000, 0x3f352547 )  /* bank 3, plane 0 */
+	ROM_LOAD( "136036.141",   0x68000, 0x08000, 0x9cbdffd0 )  /* bank 3, plane 1 */
+	ROM_LOAD( "136036.145",   0x70000, 0x08000, 0xe828e64b )  /* bank 3, plane 2 */
+	ROM_LOAD( "136036.149",   0x78000, 0x08000, 0x81503a23 )  /* bank 3, plane 3 */
+
+	ROM_LOAD( "136036.138",   0x90000, 0x08000, 0x48c4d79d )  /* bank 4, plane 0 */
+	ROM_LOAD( "136036.142",   0x98000, 0x08000, 0x7faae75f )  /* bank 4, plane 1 */
+	ROM_LOAD( "136036.146",   0xa0000, 0x08000, 0x8ae5a7b5 )  /* bank 4, plane 2 */
+	ROM_LOAD( "136036.150",   0xa8000, 0x08000, 0xa10c4bd9 )  /* bank 4, plane 3 */
+ROM_END
+
+
+ROM_START( indytem4_rom )
+	ROM_REGION(0x88000)	/* 8.5*64k for 68000 code & slapstic ROM */
+	ROM_LOAD_EVEN( "136032.205",   0x00000, 0x04000, 0x88d0be26 )
+	ROM_LOAD_ODD ( "136032.206",   0x00000, 0x04000, 0x3c79ef05 )
+	ROM_LOAD_EVEN( "136036.332",   0x10000, 0x08000, 0xa5563773 )
+	ROM_LOAD_ODD ( "136036.331",   0x10000, 0x08000, 0x7d562141 )
+	ROM_LOAD_EVEN( "136036.334",   0x20000, 0x08000, 0xe40828e5 )
+	ROM_LOAD_ODD ( "136036.333",   0x20000, 0x08000, 0x96e1f1aa )
+	ROM_LOAD_EVEN( "136036.356",   0x30000, 0x04000, 0x5eba2ac7 )
+	ROM_LOAD_ODD ( "136036.357",   0x30000, 0x04000, 0x26e84b5c )
+	ROM_LOAD_EVEN( "136036.358",   0x80000, 0x04000, 0xd9351106 )
+	ROM_LOAD_ODD ( "136036.359",   0x80000, 0x04000, 0xe731caea )
 
 	ROM_REGION(0x10000)	/* 64k for 6502 code */
 	ROM_LOAD( "136036.153",   0x4000, 0x4000, 0x95294641 )
@@ -1523,246 +1542,76 @@ ROM_END
 
 /*************************************
  *
- *		Game driver(s)
+ *	Game driver(s)
  *
  *************************************/
 
-struct GameDriver marble_driver =
-{
-	__FILE__,
-	0,
-	"marble",
-	"Marble Madness (set 1)",
-	"1984",
-	"Atari Games",
-	"Aaron Giles (MAME driver)\nFrank Palazzolo (Slapstic decoding)\nTim Lindquist (Hardware Info)",
-	0,
-	&machine_driver,
-	marble_init,
+#define ATARISY1_DRIVER_EXT(name,year,fullname,decoder)	\
+	struct GameDriver name##_driver =			\
+	{											\
+		__FILE__,								\
+		0,										\
+		#name,									\
+		fullname,								\
+		#year,									\
+		"Atari Games",							\
+		"Aaron Giles (MAME driver)\n"			\
+		"Frank Palazzolo (Slapstic decoding)\n"	\
+		"Tim Lindquist (Hardware Info)",		\
+		0,										\
+		&machine_driver,						\
+		name##_init,							\
+												\
+		name##_rom,								\
+		decoder,								\
+		0,										\
+		0,										\
+		0,	/* sound_prom */					\
+												\
+		name##_ports,							\
+												\
+		0, 0, 0,   /* colors, palette, colortable */\
+		ORIENTATION_DEFAULT,					\
+		atarigen_hiload, atarigen_hisave		\
+	};
+#define ATARISY1_DRIVER(name,year,fullname) ATARISY1_DRIVER_EXT(name,year,fullname,rom_decode)
 
-	marble_rom,
-	rom_decode,
-	0,
-	0,
-	0,	/* sound_prom */
+#define ATARISY1_CLONE_DRIVER(name,year,fullname,cloneof)		\
+	struct GameDriver name##_driver =			\
+	{											\
+		__FILE__,								\
+		&cloneof##_driver,						\
+		#name,									\
+		fullname,								\
+		#year,									\
+		"Atari Games",							\
+		"Aaron Giles (MAME driver)\n"			\
+		"Frank Palazzolo (Slapstic decoding)\n"	\
+		"Tim Lindquist (Hardware Info)",		\
+		0,										\
+		&machine_driver,						\
+		cloneof##_init,							\
+												\
+		name##_rom,								\
+		rom_decode,								\
+		0,										\
+		0,										\
+		0,	/* sound_prom */					\
+												\
+		cloneof##_ports,						\
+												\
+		0, 0, 0,   /* colors, palette, colortable */\
+		ORIENTATION_DEFAULT,					\
+		atarigen_hiload, atarigen_hisave		\
+	};
 
-	marble_ports,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
-};
-
-
-struct GameDriver marble2_driver =
-{
-	__FILE__,
-	&marble_driver,
-	"marble2",
-	"Marble Madness (set 2)",
-	"1984",
-	"Atari Games",
-	"Aaron Giles (MAME driver)\nFrank Palazzolo (Slapstic decoding)\nTim Lindquist (Hardware Info)",
-	0,
-	&machine_driver,
-	marble_init,
-
-	marble2_rom,
-	rom_decode,
-	0,
-	0,
-	0,	/* sound_prom */
-
-	marble_ports,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
-};
-
-
-struct GameDriver marblea_driver =
-{
-	__FILE__,
-	&marble_driver,
-	"marblea",
-	"Marble Madness (set 3)",
-	"1984",
-	"Atari Games",
-	"Aaron Giles (MAME driver)\nFrank Palazzolo (Slapstic decoding)\nTim Lindquist (Hardware Info)",
-	0,
-	&machine_driver,
-	marble_init,
-
-	marblea_rom,
-	rom_decode,
-	0,
-	0,
-	0,	/* sound_prom */
-
-	marble_ports,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
-};
-
-
-struct GameDriver peterpak_driver =
-{
-	__FILE__,
-	0,
-	"peterpak",
-	"Peter Pack-Rat",
-	"1984",
-	"Atari Games",
-	"Aaron Giles (MAME driver)\nFrank Palazzolo (Slapstic decoding)\nTim Lindquist (Hardware Info)",
-	0,
-	&machine_driver,
-	peterpak_init,
-
-	peterpak_rom,
-	rom_decode,
-	0,
-	0,
-	0,	/* sound_prom */
-
-	peterpak_ports,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
-};
-
-
-struct GameDriver indytemp_driver =
-{
-	__FILE__,
-	0,
-	"indytemp",
-	"Indiana Jones and the Temple of Doom (set 1)",
-	"1985",
-	"Atari Games",
-	"Aaron Giles (MAME driver)\nFrank Palazzolo (Slapstic decoding)\nTim Lindquist (Hardware Info)",
-	0,
-	&machine_driver,
-	indytemp_init,
-
-	indytemp_rom,
-	rom_decode,
-	0,
-	0,
-	0,	/* sound_prom */
-
-	indytemp_ports,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
-};
-
-struct GameDriver indytem2_driver =
-{
-	__FILE__,
-	&indytemp_driver,
-	"indytem2",
-	"Indiana Jones and the Temple of Doom (set 2)",
-	"1985",
-	"Atari Games",
-	"Aaron Giles (MAME driver)\nFrank Palazzolo (Slapstic decoding)\nTim Lindquist (Hardware Info)",
-	0,
-	&machine_driver,
-	indytemp_init,
-
-	indytem2_rom,
-	rom_decode,
-	0,
-	0,
-	0,	/* sound_prom */
-
-	indytemp_ports,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
-};
-
-struct GameDriver indytem3_driver =
-{
-	__FILE__,
-	&indytemp_driver,
-	"indytem3",
-	"Indiana Jones and the Temple of Doom (set 3)",
-	"1985",
-	"Atari Games",
-	"Aaron Giles (MAME driver)\nFrank Palazzolo (Slapstic decoding)\nTim Lindquist (Hardware Info)",
-	0,
-	&machine_driver,
-	indytemp_init,
-
-	indytem3_rom,
-	rom_decode,
-	0,
-	0,
-	0,	/* sound_prom */
-
-	indytemp_ports,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
-};
-
-
-struct GameDriver roadrunn_driver =
-{
-	__FILE__,
-	0,
-	"roadrunn",
-	"Road Runner",
-	"1985",
-	"Atari Games",
-	"Aaron Giles (MAME driver)\nFrank Palazzolo (Slapstic decoding)\nTim Lindquist (Hardware Info)",
-	0,
-	&machine_driver,
-	roadrunn_init,
-
-	roadrunn_rom,
-	rom_decode,
-	0,
-	0,
-	0,	/* sound_prom */
-
-	roadrunn_ports,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
-};
-
-
-struct GameDriver roadblst_driver =
-{
-	__FILE__,
-	0,
-	"roadblst",
-	"Road Blasters",
-	"1987",
-	"Atari Games",
-	"Aaron Giles (MAME driver)\nFrank Palazzolo (Slapstic decoding)\nTim Lindquist (Hardware Info)",
-	0,
-	&machine_driver,
-	roadblst_init,
-
-	roadblst_rom,
-	roadblst_rom_decode,
-	0,
-	0,
-	0,	/* sound_prom */
-
-	roadblst_ports,
-
-	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
-	atarigen_hiload, atarigen_hisave
-};
+ATARISY1_DRIVER      (marble,   1984, "Marble Madness (set 1)")
+ATARISY1_CLONE_DRIVER(marble2,  1984, "Marble Madness (set 2)", marble)
+ATARISY1_CLONE_DRIVER(marblea,  1984, "Marble Madness (set 3)", marble)
+ATARISY1_DRIVER      (peterpak, 1984, "Peter Pack-Rat")
+ATARISY1_DRIVER      (indytemp, 1985, "Indiana Jones and the Temple of Doom (set 1)")
+ATARISY1_CLONE_DRIVER(indytem2, 1985, "Indiana Jones and the Temple of Doom (set 2)", indytemp)
+ATARISY1_CLONE_DRIVER(indytem3, 1985, "Indiana Jones and the Temple of Doom (set 3)", indytemp)
+ATARISY1_CLONE_DRIVER(indytem4, 1985, "Indiana Jones and the Temple of Doom (set 4)", indytemp)
+ATARISY1_DRIVER      (roadrunn, 1985, "Road Runner")
+ATARISY1_DRIVER_EXT  (roadblst, 1987, "Road Blasters", roadblst_rom_decode)

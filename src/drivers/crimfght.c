@@ -488,6 +488,9 @@ ROM_START( crimfght_rom )
 
 	ROM_REGION( 0x40000 )	/* data for the 007232 */
 	ROM_LOAD( "821k03.e5",  0x00000, 0x40000, 0xfef8505a )
+
+	ROM_REGION(0x0100)	/* PROMs */
+	ROM_LOAD( "prom",        0x0000, 0x0100, 0x00000000 )	/* priority encoder (not used) */
 ROM_END
 
 ROM_START( crimfgtj_rom )
@@ -508,6 +511,9 @@ ROM_START( crimfgtj_rom )
 
 	ROM_REGION( 0x40000 )	/* data for the 007232 */
 	ROM_LOAD( "821k03.e5",  0x00000, 0x40000, 0xfef8505a )
+
+	ROM_REGION(0x0100)	/* PROMs */
+	ROM_LOAD( "prom",        0x0000, 0x0100, 0x00000000 )	/* priority encoder (not used) */
 ROM_END
 
 

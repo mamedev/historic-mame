@@ -354,6 +354,42 @@ ROM_START( sichuan2_rom )
 	ROM_LOAD( "ic05.05",      0x30000, 0x10000, 0x92ffe22a )
 ROM_END
 
+ROM_START( sichuana_rom )
+	ROM_REGION(0x30000)	/* 64k+128k for main CPU */
+	ROM_LOAD( "sichuan.a6",      0x00000, 0x10000, 0xf8ac05ef )
+	ROM_RELOAD(               0x10000, 0x10000 )
+	ROM_LOAD( "ic07.03",      0x20000, 0x10000, 0x0350f6e2 )
+
+	ROM_REGION_DISPOSE(0x100000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ic08.04",      0x00000, 0x10000, 0x1c0e221c )
+	ROM_LOAD( "ic09.05",      0x10000, 0x10000, 0x8a7d8284 )
+	ROM_LOAD( "ic12.08",      0x20000, 0x10000, 0x48e1d043 )
+	ROM_LOAD( "ic13.09",      0x30000, 0x10000, 0x3feff3f2 )
+	ROM_LOAD( "ic14.10",      0x40000, 0x10000, 0xb76a517d )
+	ROM_LOAD( "ic15.11",      0x50000, 0x10000, 0x8ff5ee7a )
+	ROM_LOAD( "ic16.12",      0x60000, 0x10000, 0x64e5d837 )
+	ROM_LOAD( "ic17.13",      0x70000, 0x10000, 0x02c1b2c4 )
+	ROM_LOAD( "ic18.14",      0x80000, 0x10000, 0xf5a8370e )
+	ROM_LOAD( "ic19.15",      0x90000, 0x10000, 0x7a9b7671 )
+	ROM_LOAD( "ic20.16",      0xa0000, 0x10000, 0x7fb396ad )
+	ROM_LOAD( "ic21.17",      0xb0000, 0x10000, 0xfb83c652 )
+	ROM_LOAD( "ic22.18",      0xc0000, 0x10000, 0xd8b689e9 )
+	ROM_LOAD( "ic23.19",      0xd0000, 0x10000, 0xe6611947 )
+	ROM_LOAD( "ic10.06",      0xe0000, 0x10000, 0x473b349a )
+	ROM_LOAD( "ic11.07",      0xf0000, 0x10000, 0xd9a60285 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "ic01.01",      0x00000, 0x10000, 0x51b0a26c )
+
+	ROM_REGION(0x40000)	/* samples */
+	ROM_LOAD( "ic02.02",      0x00000, 0x10000, 0x92f0093d )
+	ROM_LOAD( "ic03.03",      0x10000, 0x10000, 0x116a049c )
+	ROM_LOAD( "ic04.04",      0x20000, 0x10000, 0x6840692b )
+	ROM_LOAD( "ic05.05",      0x30000, 0x10000, 0x92ffe22a )
+ROM_END
+
+
+
 ROM_START( shisen_rom )
 	ROM_REGION(0x30000)	/* 64k+128k for main CPU */
 	ROM_LOAD( "a-27-a.rom",   0x00000, 0x20000, 0xde2ecf05 )
@@ -431,7 +467,7 @@ struct GameDriver sichuan2_driver =
 	__FILE__,
 	0,
 	"sichuan2",
-	"Sichuan II (hack?)",
+	"Sichuan II (hack?) (set 1)",
 	"1989",
 	"Tamtex",
 	"Nicola Salmoria",
@@ -439,7 +475,33 @@ struct GameDriver sichuan2_driver =
 	&machine_driver,
 	0,
 
-	sichuan2_rom,
+        sichuan2_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	sichuan2_hiload, sichuan2_hisave
+};
+
+struct GameDriver sichuana_driver =
+{
+	__FILE__,
+	&sichuan2_driver,
+	"sichuana",
+	"Sichuan II (hack ?) (set 2)",
+	"1989",
+	"Tamtex",
+	"Nicola Salmoria",
+	0,
+	&machine_driver,
+	0,
+
+        sichuana_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */

@@ -39,7 +39,7 @@ void xybots_scanline_update(int scanline);
 
 /*************************************
  *
- *		Initialization
+ *	Initialization
  *
  *************************************/
 
@@ -72,7 +72,7 @@ static void init_machine(void)
 
 /*************************************
  *
- *		I/O handlers
+ *	I/O handlers
  *
  *************************************/
 
@@ -91,7 +91,7 @@ static int special_port1_r(int offset)
 
 /*************************************
  *
- *		Main CPU memory handlers
+ *	Main CPU memory handlers
  *
  *************************************/
 
@@ -132,7 +132,7 @@ static struct MemoryWriteAddress main_writemem[] =
 
 /*************************************
  *
- *		Port definitions
+ *	Port definitions
  *
  *************************************/
 
@@ -170,7 +170,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *		Graphics definitions
+ *	Graphics definitions
  *
  *************************************/
 
@@ -222,7 +222,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *		Machine driver
+ *	Machine driver
  *
  *************************************/
 
@@ -239,7 +239,7 @@ static struct MachineDriver machine_driver =
 		},
 		{
 			JSA_I_CPU(1)
-		},
+		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
@@ -265,7 +265,7 @@ static struct MachineDriver machine_driver =
 
 /*************************************
  *
- *		ROM definition(s)
+ *	ROM definition(s)
  *
  *************************************/
 
@@ -299,7 +299,7 @@ ROM_END
 
 /*************************************
  *
- *		Driver initialization
+ *	Driver initialization
  *
  *************************************/
 
@@ -322,7 +322,7 @@ static void xybots_init(void)
 
 /*************************************
  *
- *		Game driver(s)
+ *	Game driver(s)
  *
  *************************************/
 

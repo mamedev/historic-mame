@@ -35,7 +35,7 @@
 /* 739 - Space Invaders                  (invaders)                         */
 /* 742 - Blue Shark                      (blueshrk)                         */
 /* 851 - Space Invaders II cocktail      NO DRIVER                          */
-/* 852 - Space Invaders Deluxe           (invdelux)                         */
+/* 852 - Space Invaders Deluxe           (invdpt2m)                         */
 /* 870 - Space Invaders Deluxe cocktail  NO DRIVER                          */
 /*                                                                          */
 /* Taito                                                                    */
@@ -122,7 +122,7 @@ extern unsigned char *invaders_videoram;
 
 void boothill_videoram_w(int offset,int data);   /* MAB */
 void invaders_videoram_w(int offset,int data);
-void invdelux_videoram_w(int offset,int data);   /* V.V */
+void invdpt2m_videoram_w(int offset,int data);   /* V.V */
 void invrvnge_videoram_w(int offset,int data);   /* V.V */
 void lrescue_videoram_w(int offset,int data);    /* V.V */
 void rollingc_videoram_w(int offset,int data);   /* L.T */
@@ -224,7 +224,7 @@ ROM_START( invaders_rom )
 	ROM_LOAD( "invaders.e",   0x1800, 0x0800, 0x14e538b0 )
 ROM_END
 
-/* invaders, earthinv, spaceatt, invrvnge, invdelux, invadpt2, galxwars, lrescue, */
+/* invaders, earthinv, spaceatt, invrvnge, invdpt2m, invadpt2, galxwars, lrescue, */
 /* desterth, cosmicmo, spaceph */
 static struct MemoryReadAddress readmem[] =
 {
@@ -234,7 +234,7 @@ static struct MemoryReadAddress readmem[] =
 	{ -1 }  /* end of table */
 };
 
-/* invaders, earthinv, spaceatt, invdelux, galxwars, desterth, cosmicmo */
+/* invaders, earthinv, spaceatt, invdpt2m, galxwars, desterth, cosmicmo */
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x1fff, MWA_ROM },
@@ -963,7 +963,7 @@ struct GameDriver invrvnga_driver =
 /*                                                     */
 /*******************************************************/
 
-ROM_START( invdelux_rom )
+ROM_START( invdpt2m_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "invdelux.h",   0x0000, 0x0800, 0xe690818f )
 	ROM_LOAD( "invdelux.g",   0x0800, 0x0800, 0x4268c12d )
@@ -972,7 +972,7 @@ ROM_START( invdelux_rom )
 	ROM_LOAD( "invdelux.d",   0x4000, 0x0800, 0xe8d5afcd )
 ROM_END
 
-static struct IOReadPort invdelux_readport[] =
+static struct IOReadPort invdpt2m_readport[] =
 {
 	{ 0x00, 0x00, input_port_0_r },
 	{ 0x01, 0x01, input_port_1_r },
@@ -981,16 +981,16 @@ static struct IOReadPort invdelux_readport[] =
 	{ -1 }  /* end of table */
 };
 
-static struct MemoryWriteAddress invdelux_writemem[] =
+static struct MemoryWriteAddress invdpt2m_writemem[] =
 {
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x2000, 0x23ff, MWA_RAM },
-	{ 0x2400, 0x3fff, invdelux_videoram_w, &invaders_videoram },
+	{ 0x2400, 0x3fff, invdpt2m_videoram_w, &invaders_videoram },
 	{ 0x4000, 0x57ff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
 
-INPUT_PORTS_START( invdelux_input_ports )
+INPUT_PORTS_START( invdpt2m_input_ports )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -1033,7 +1033,7 @@ INPUT_PORTS_START( invdelux_input_ports )
 INPUT_PORTS_END
 
 
-static struct MachineDriver invdelux_machine_driver =
+static struct MachineDriver invdpt2m_machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -1041,7 +1041,7 @@ static struct MachineDriver invdelux_machine_driver =
 			CPU_8080,
 			2000000,        /* 2 Mhz? */
 			0,
-			readmem, invdelux_writemem, invdelux_readport, writeport,
+			readmem, invdpt2m_writemem, invdpt2m_readport, writeport,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
 	},
@@ -1071,7 +1071,7 @@ static struct MachineDriver invdelux_machine_driver =
 	}
 };
 
-static int invdelux_hiload(void)
+static int invdpt2m_hiload(void)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
@@ -1095,7 +1095,7 @@ static int invdelux_hiload(void)
 	else return 0;  /* we can't load the hi scores yet */
 }
 
-static void invdelux_hisave(void)
+static void invdpt2m_hisave(void)
 {
 	void *f;
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
@@ -1112,30 +1112,30 @@ static void invdelux_hisave(void)
 	}
 }
 
-struct GameDriver invdelux_driver =
+struct GameDriver invdpt2m_driver =
 {
 	__FILE__,
 	&invadpt2_driver,
-	"invdelux",
+	"invdpt2m",
 	"Space Invaders Part II (Midway)",
 	"1980",
 	"Midway",
 	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nValerio Verrando\nMarco Cassili",
 	0,
-	&invdelux_machine_driver,
+	&invdpt2m_machine_driver,
 	0,
 
-	invdelux_rom,
+	invdpt2m_rom,
 	0, 0,
 	invaders_sample_names,
 	0,      /* sound_prom */
 
-	invdelux_input_ports,
+	invdpt2m_input_ports,
 
 	0, palette, 0,
 	ORIENTATION_ROTATE_270,
 
-	invdelux_hiload, invdelux_hisave
+	invdpt2m_hiload, invdpt2m_hisave
 };
 
 
@@ -1251,7 +1251,7 @@ struct GameDriver astlaser_driver =
 	"?????",
 	"The Space Invaders Team",
 	0,
-	&invdelux_machine_driver,
+	&invdpt2m_machine_driver,
 	0,
 
 	astlaser_rom,
@@ -1333,7 +1333,7 @@ struct GameDriver intruder_driver =
 	"Game Plan, Inc. (Taito)",
 	"The Space Invaders Team",
 	0,
-	&invdelux_machine_driver,
+	&invdpt2m_machine_driver,
 	0,
 
 	intruder_rom,
@@ -1956,7 +1956,7 @@ static struct MachineDriver rollingc_machine_driver =
 			CPU_8080,
 			2000000,        /* 2 Mhz? */
 			0,
-			rollingc_readmem,rollingc_writemem,invdelux_readport,writeport,
+			rollingc_readmem,rollingc_writemem,invdpt2m_readport,writeport,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
 	},
@@ -2785,7 +2785,7 @@ static struct MachineDriver clowns_machine_driver =
 			CPU_8080,
 			2000000,        /* 2 Mhz? */
 			0,
-			readmem, boothill_writemem, invdelux_readport, spcenctr_writeport,
+			readmem, boothill_writemem, invdpt2m_readport, spcenctr_writeport,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
 	},
@@ -3371,7 +3371,7 @@ static struct MachineDriver zzzap_machine_driver =
 			CPU_8080,
 			2000000,        /* 2 Mhz? */
 			0,
-			readmem,boothill_writemem,invdelux_readport,zzzap_writeport,
+			readmem,boothill_writemem,invdpt2m_readport,zzzap_writeport,
 			invaders_interrupt, 2    /* two interrupts per frame */
 		}
 	},
@@ -3570,7 +3570,7 @@ static struct MachineDriver lupin3_machine_driver =
 			CPU_8080,
 			2000000,        /* 2 Mhz? */
 			0,
-			readmem,lupin3_writemem,invdelux_readport,writeport,
+			readmem,lupin3_writemem,invdpt2m_readport,writeport,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
 	},
@@ -5382,7 +5382,7 @@ static struct MachineDriver maze_machine_driver =
 			CPU_8080,
 			2000000,        /* 2 Mhz? */
 			0,
-			readmem,boothill_writemem,invdelux_readport,writeport,
+			readmem,boothill_writemem,invdpt2m_readport,writeport,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
 	},
@@ -5501,7 +5501,7 @@ static struct MachineDriver tornbase_machine_driver =
 			CPU_8080,
 			2000000,        /* 2 Mhz? */
 			0,
-			readmem,boothill_writemem,invdelux_readport,writeport,
+			readmem,boothill_writemem,invdpt2m_readport,writeport,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
 	},

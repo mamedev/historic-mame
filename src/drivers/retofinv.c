@@ -4,6 +4,10 @@ int  retofinv_vh_start(void);
 void retofinv_vh_stop(void);
 void retofinv_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void retofinv_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+int  retofinv_bg_videoram_r(int offset);
+int  retofinv_fg_videoram_r(int offset);
+int  retofinv_bg_colorram_r(int offset);
+int  retofinv_fg_colorram_r(int offset);
 void retofinv_bg_videoram_w(int offset, int data);
 void retofinv_fg_videoram_w(int offset, int data);
 void retofinv_bg_colorram_w(int offset, int data);
@@ -144,12 +148,14 @@ static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x5fff, MRA_ROM },
 	{ 0x7b00, 0x7b00, protection_2_r },
-	{ 0x8000, 0x87ff, MRA_RAM },
+	{ 0x8000, 0x83ff, retofinv_fg_videoram_r },
+	{ 0x8400, 0x87ff, retofinv_fg_colorram_r },
 	{ 0x8800, 0x9fff, retofinv_shared_ram_r },
 	{ 0x8f00, 0x8f7f, MRA_RAM, &retofinv_sprite_ram1 },
 	{ 0x9700, 0x977f, MRA_RAM, &retofinv_sprite_ram2 },
 	{ 0x9f00, 0x9f7f, MRA_RAM, &retofinv_sprite_ram3 },
-	{ 0xa000, 0xa7ff, MRA_RAM },
+	{ 0xa000, 0xa3ff, retofinv_bg_videoram_r },
+	{ 0xa400, 0xa7ff, retofinv_bg_colorram_r },
 	{ 0xc800, 0xc800, MRA_NOP },
 	{ 0xc000, 0xc000, input_port_1_r },
 	{ 0xc001, 0xc001, input_port_2_r },
@@ -191,9 +197,11 @@ static struct MemoryWriteAddress writemem[] =
 static struct MemoryReadAddress readmem_sub[] =
 {
 	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x8000, 0x87ff, MRA_RAM },
+	{ 0x8000, 0x83ff, retofinv_fg_videoram_r },
+	{ 0x8400, 0x87ff, retofinv_fg_colorram_r },
 	{ 0x8800, 0x9fff, retofinv_shared_ram_r },
-	{ 0xa000, 0xa7ff, MRA_RAM },
+	{ 0xa000, 0xa3ff, retofinv_bg_videoram_r },
+	{ 0xa400, 0xa7ff, retofinv_bg_colorram_r },
 	{ 0xc804, 0xc804, MRA_NOP },
 	{ 0xe000, 0xe000, retofinv_protection_r },
 	{ 0xe800, 0xe800, MRA_NOP },
@@ -362,12 +370,12 @@ static struct GfxLayout charlayout =
 	8*8 	/* every char takes 8 consecutive bytes */
 };
 
-static struct GfxLayout backgroundlayout =
+static struct GfxLayout bglayout =
 {
 	8,8,	/* 8*8 characters */
 	512,	/* 512 characters */
 	4,	/* 4 bits per pixel */
-	{ 0, 4, 0x2000*8, 0x2000*8+4 },	/* the bitplanes are packed in one byte */
+	{ 0, 0x2000*8+4, 0x2000*8, 4 },
 	{ 8*8+3, 8*8+2, 8*8+1, 8*8+0, 3, 2, 1, 0 },
 	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
 	16*8	/* every char takes 16 consecutive bytes */
@@ -378,7 +386,7 @@ static struct GfxLayout spritelayout =
 	16,16,	/* 16*16 characters */
 	256,	/* 256 characters */
 	4,	/* 4 bits per pixel */
-	{ 0, 4, 0x4000*8, 0x4000*8+4 },	/* the bitplanes are packed in one byte */
+	{ 0, 0x4000*8+4, 0x4000*8, 4 },
 	{ 24*8+3, 24*8+2, 24*8+1, 24*8+0, 16*8+3, 16*8+2, 16*8+1, 16*8+0,
 	  8*8+3, 8*8+2, 8*8+1, 8*8+0, 3, 2, 1, 0 },
 	{ 39*8, 38*8, 37*8, 36*8, 35*8, 34*8, 33*8, 32*8,
@@ -388,9 +396,9 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,                 0, 256 },
-	{ 1, 0x2000, &backgroundlayout,       256*2,  16 },
-	{ 1, 0x6000, &spritelayout,     256*2+16*16,  16 },
+	{ 1, 0x0000, &charlayout,             0, 256 },
+	{ 1, 0x2000, &bglayout,           256*2,  64 },
+	{ 1, 0x6000, &spritelayout, 64*16+256*2,  64 },
 	{ -1 } /* end of array */
 };
 
@@ -434,7 +442,7 @@ static struct MachineDriver machine_driver =
 	36*8, 32*8,
 	{ 0*8, 36*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	256, 16*16+16*16+256*2,
+	256, 256*2+64*16+64*16,
 	retofinv_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -481,14 +489,11 @@ ROM_START( retofinv_rom )
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
 	ROM_LOAD( "ic17.rom", 0x0000, 0x2000, 0x9025abea )
 
-	ROM_REGION(0x1300)	/* color PROMs */
+	ROM_REGION(0x0b00)	/* color PROMs */
 	ROM_LOAD( "74s287.p6", 0x0000, 0x0100, 0x50030af0 )	/* palette blue bits   */
 	ROM_LOAD( "74s287.o6", 0x0100, 0x0100, 0xe8f34e11 )	/* palette green bits */
 	ROM_LOAD( "74s287.q5", 0x0200, 0x0100, 0xe9643b8b )	/* palette red bits  */
-
-	ROM_LOAD( "82s137.01", 0x0300, 0x0400, 0xc63cf10e )	/* lookup table for ? */
-	ROM_LOAD( "82s137.02", 0x0700, 0x0400, 0x6db07bd1 )
-	ROM_LOAD( "82s191n",   0x0b00, 0x0800, 0x93c891e3 )
+	ROM_LOAD( "82s191n",   0x0300, 0x0800, 0x93c891e3 )	/* lookup table */
 ROM_END
 
 ROM_START( retofin1_rom )
@@ -513,14 +518,11 @@ ROM_START( retofin1_rom )
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
 	ROM_LOAD( "ic17.rom", 0x0000, 0x2000, 0x9025abea )
 
-	ROM_REGION(0x1300)	/* color PROMs */
+	ROM_REGION(0x0b00)	/* color PROMs */
 	ROM_LOAD( "74s287.p6", 0x0000, 0x0100, 0x50030af0 )	/* palette blue bits   */
 	ROM_LOAD( "74s287.o6", 0x0100, 0x0100, 0xe8f34e11 )	/* palette green bits */
 	ROM_LOAD( "74s287.q5", 0x0200, 0x0100, 0xe9643b8b )	/* palette red bits  */
-
-	ROM_LOAD( "82s137.01", 0x0300, 0x0400, 0xc63cf10e )	/* lookup table for ? */
-	ROM_LOAD( "82s137.02", 0x0700, 0x0400, 0x6db07bd1 )
-	ROM_LOAD( "82s191n",   0x0b00, 0x0800, 0x93c891e3 )
+	ROM_LOAD( "82s191n",   0x0300, 0x0800, 0x93c891e3 )	/* lookup table */
 ROM_END
 
 ROM_START( retofin2_rom )
@@ -545,14 +547,11 @@ ROM_START( retofin2_rom )
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
 	ROM_LOAD( "ic17.rom", 0x0000, 0x2000, 0x9025abea )
 
-	ROM_REGION(0x1300)	/* color PROMs */
+	ROM_REGION(0x0b00)	/* color PROMs */
 	ROM_LOAD( "74s287.p6", 0x0000, 0x0100, 0x50030af0 )	/* palette blue bits   */
 	ROM_LOAD( "74s287.o6", 0x0100, 0x0100, 0xe8f34e11 )	/* palette green bits */
 	ROM_LOAD( "74s287.q5", 0x0200, 0x0100, 0xe9643b8b )	/* palette red bits  */
-
-	ROM_LOAD( "82s137.01", 0x0300, 0x0400, 0xc63cf10e )	/* lookup table for ? */
-	ROM_LOAD( "82s137.02", 0x0700, 0x0400, 0x6db07bd1 )
-	ROM_LOAD( "82s191n",   0x0b00, 0x0800, 0x93c891e3 )
+	ROM_LOAD( "82s191n",   0x0300, 0x0800, 0x93c891e3 )	/* lookup table */
 ROM_END
 
 
@@ -600,8 +599,8 @@ struct GameDriver retofinv_driver =
 	"Return of the Invaders",
 	"1985",
 	"Taito Corporation",
-	"Jarek Parchanski (MAME driver)\nRicardo Fdez Vega (hardware info)\nLee Taylor (hardware info)\n",
-	GAME_WRONG_COLORS,
+	"Jarek Parchanski (MAME driver)\nAndrea Mazzoleni (MAME driver)\nRicardo Fdez Vega (hardware info)\nLee Taylor (hardware info)\n",
+	0,
 	&machine_driver,
 	0,
 	retofinv_rom,
@@ -623,8 +622,8 @@ struct GameDriver retofin1_driver =
 	"Return of the Invaders (bootleg set 1)",
 	"1985",
 	"bootleg",
-	"Jarek Parchanski (MAME driver)\nRicardo Fdez Vega (hardware info)\nLee Taylor (hardware info)\n",
-	GAME_WRONG_COLORS,
+	"Jarek Parchanski (MAME driver)\nAndrea Mazzoleni (MAME driver)\nRicardo Fdez Vega (hardware info)\nLee Taylor (hardware info)\n",
+	0,
 	&machine_driver,
 	0,
 	retofin1_rom,
@@ -646,8 +645,8 @@ struct GameDriver retofin2_driver =
 	"Return of the Invaders (bootleg set 2)",
 	"1985",
 	"bootleg",
-	"Jarek Parchanski (MAME driver)\nRicardo Fdez Vega (hardware info)\nLee Taylor (hardware info)\n",
-	GAME_WRONG_COLORS,
+	"Jarek Parchanski (MAME driver)\nAndrea Mazzoleni (MAME driver)\nRicardo Fdez Vega (hardware info)\nLee Taylor (hardware info)\n",
+	0,
 	&machine_driver,
 	0,
 	retofin2_rom,

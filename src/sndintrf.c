@@ -657,6 +657,18 @@ struct snd_interface sndintf[] =
 		0
 	},
 #endif
+#if (HAS_CEM3394)
+	{
+		SOUND_CEM3394,
+		"CEM3394",
+		0,
+		0,
+		cem3394_sh_start,
+		cem3394_sh_stop,
+		0,
+		0
+	},
+#endif
 };
 
 

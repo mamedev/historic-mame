@@ -62,7 +62,7 @@
 
 /*************************************
  *
- *		Structures
+ *	Structures
  *
  *************************************/
 
@@ -76,25 +76,25 @@ struct pf_overrender_data
 
 /*************************************
  *
- *		Prototypes
+ *	Prototypes
  *
  *************************************/
 
-static const unsigned char *update_palette(void);
+static const UINT8 *update_palette(void);
 
 static void pf_color_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *data);
 static void pf_render_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *data);
 static void pf_check_overrender_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *data);
 static void pf_overrender_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *data);
 
-static void mo_color_callback(const unsigned short *data, const struct rectangle *clip, void *param);
-static void mo_render_callback(const unsigned short *data, const struct rectangle *clip, void *param);
+static void mo_color_callback(const UINT16 *data, const struct rectangle *clip, void *param);
+static void mo_render_callback(const UINT16 *data, const struct rectangle *clip, void *param);
 
 
 
 /*************************************
  *
- *		Video system start
+ *	Video system start
  *
  *************************************/
 
@@ -134,7 +134,7 @@ int xybots_vh_start(void)
 
 /*************************************
  *
- *		Video system shutdown
+ *	Video system shutdown
  *
  *************************************/
 
@@ -148,7 +148,7 @@ void xybots_vh_stop(void)
 
 /*************************************
  *
- *		Playfield RAM write handler
+ *	Playfield RAM write handler
  *
  *************************************/
 
@@ -168,7 +168,7 @@ void xybots_playfieldram_w(int offset, int data)
 
 /*************************************
  *
- *		Periodic scanline updater
+ *	Periodic scanline updater
  *
  *************************************/
 
@@ -182,7 +182,7 @@ void xybots_scanline_update(int scanline)
 
 /*************************************
  *
- *		Main refresh
+ *	Main refresh
  *
  *************************************/
 
@@ -234,13 +234,13 @@ void xybots_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 /*************************************
  *
- *		Palette management
+ *	Palette management
  *
  *************************************/
 
-static const unsigned char *update_palette(void)
+static const UINT8 *update_palette(void)
 {
-	unsigned short mo_map[48], al_map[8], pf_map[16];
+	UINT16 mo_map[48], al_map[8], pf_map[16];
 	int i, j;
 
 	/* reset color tracking */
@@ -273,7 +273,7 @@ static const unsigned char *update_palette(void)
 	/* rebuild the playfield palette */
 	for (i = 0; i < 16; i++)
 	{
-		unsigned short used = pf_map[i];
+		UINT16 used = pf_map[i];
 		if (used)
 			for (j = 0; j < 16; j++)
 				if (used & (1 << j))
@@ -283,7 +283,7 @@ static const unsigned char *update_palette(void)
 	/* rebuild the motion object palette */
 	for (i = 0; i < 48; i++)
 	{
-		unsigned short used = mo_map[i];
+		UINT16 used = mo_map[i];
 		if (used)
 		{
 			palette_used_colors[0x100 + i * 16 + 0] = PALETTE_COLOR_TRANSPARENT;
@@ -296,7 +296,7 @@ static const unsigned char *update_palette(void)
 	/* rebuild the alphanumerics palette */
 	for (i = 0; i < 8; i++)
 	{
-		unsigned short used = al_map[i];
+		UINT16 used = al_map[i];
 		if (used)
 			for (j = 0; j < 4; j++)
 				if (used & (1 << j))
@@ -310,14 +310,14 @@ static const unsigned char *update_palette(void)
 
 /*************************************
  *
- *		Playfield palette
+ *	Playfield palette
  *
  *************************************/
 
 static void pf_color_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *param)
 {
 	const unsigned int *usage = Machine->gfx[0]->pen_usage;
-	unsigned short *colormap = param;
+	UINT16 *colormap = param;
 	int x, y;
 
 	/* standard loop over tiles */
@@ -338,7 +338,7 @@ static void pf_color_callback(const struct rectangle *clip, const struct rectang
 
 /*************************************
  *
- *		Playfield rendering
+ *	Playfield rendering
  *
  *************************************/
 
@@ -375,7 +375,7 @@ static void pf_render_callback(const struct rectangle *clip, const struct rectan
 
 /*************************************
  *
- *		Playfield overrender check
+ *	Playfield overrender check
  *
  *************************************/
 
@@ -410,7 +410,7 @@ static void pf_check_overrender_callback(const struct rectangle *clip, const str
 
 /*************************************
  *
- *		Playfield overrendering
+ *	Playfield overrendering
  *
  *************************************/
 
@@ -445,18 +445,18 @@ static void pf_overrender_callback(const struct rectangle *clip, const struct re
 
 /*************************************
  *
- *		Motion object palette
+ *	Motion object palette
  *
  *************************************/
 
-static void mo_color_callback(const unsigned short *data, const struct rectangle *clip, void *param)
+static void mo_color_callback(const UINT16 *data, const struct rectangle *clip, void *param)
 {
 	const unsigned int *usage = Machine->gfx[1]->pen_usage;
-	unsigned short *colormap = param;
+	UINT16 *colormap = param;
 	int code = data[0] & 0x3fff;
 	int color = data[3] & 7;
 	int vsize = (data[2] & 7) + 1;
-	unsigned short temp = 0;
+	UINT16 temp = 0;
 	int i;
 
 	/* sneaky -- an extra color bank is hidden after the playfield palette */
@@ -471,11 +471,11 @@ static void mo_color_callback(const unsigned short *data, const struct rectangle
 
 /*************************************
  *
- *		Motion object rendering
+ *	Motion object rendering
  *
  *************************************/
 
-static void mo_render_callback(const unsigned short *data, const struct rectangle *clip, void *param)
+static void mo_render_callback(const UINT16 *data, const struct rectangle *clip, void *param)
 {
 	struct GfxElement *gfx = Machine->gfx[1];
 	struct pf_overrender_data overrender_data;

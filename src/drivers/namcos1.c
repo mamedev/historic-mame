@@ -423,6 +423,70 @@ static struct MachineDriver machine_driver =
 	}
 };
 
+static struct MachineDriver machine_driver16 =
+{
+	/* basic machine hardware */
+	{
+		{
+		    CPU_M6809,
+		    49152000/32,        /* Not sure if divided by 32 or 24 */
+		    0,
+		    main_readmem,main_writemem,0,0,
+		    interrupt,1,
+		},
+		{
+		    CPU_M6809,
+		    49152000/32,        /* Not sure if divided by 32 or 24 */
+		    2,
+		    sub_readmem,sub_writemem,0,0,
+		    interrupt,1,
+		},
+		{
+		    CPU_M6809,
+			49152000/32,        /* Not sure if divided by 32 or 24 */
+		    3,
+		    sound_readmem,sound_writemem,0,0,
+		    interrupt,1
+		},
+		{
+		    CPU_HD63701,	/* or compatible 6808 with extra instructions */
+			49152000/8/4,
+		    6,
+		    mcu_readmem,mcu_writemem,mcu_readport,mcu_writeport,
+		    interrupt,1
+		}
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
+	25, /* 25 CPU slice per frame - enough for the cpu's to communicate */
+	namcos1_machine_init,
+
+	/* video hardware */
+	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
+	gfxdecodeinfo,
+	128*16+6*256, 128*16+6*256,
+	namcos1_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_SUPPORTS_16BIT,
+	0,
+	namcos1_vh_start,
+	namcos1_vh_stop,
+	namcos1_vh_screenrefresh,
+
+	/* sound hardware */
+	SOUND_SUPPORTS_STEREO,0,0,0,
+	{
+		{
+			SOUND_YM2151,
+			&ym2151_interface
+		},
+		{
+			SOUND_NAMCO,
+			&namco_interface
+		}
+	}
+};
+
+
 /***************************************************************************
 
   Game driver(s)
@@ -455,10 +519,9 @@ ROM_START( shadowld_rom )
 	ROM_REGION(0x10000)     /* 64k for the sub cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
-	ROM_REGION(0x30000)     /* 192k for the sound cpu */
-	ROM_LOAD( "yd1.sd0",		0x10000, 0x10000, 0xa9cb51fb )
-	ROM_RELOAD(					0x0c000, 0x04000 )
-	ROM_LOAD( "yd1.sd1",		0x20000, 0x10000, 0x65d1dc0d )
+	ROM_REGION(0x2c000)     /* 192k for the sound cpu */
+	ROM_LOAD( "yd1.sd0",		0x0c000, 0x10000, 0xa9cb51fb )
+	ROM_LOAD( "yd1.sd1",		0x1c000, 0x10000, 0x65d1dc0d )
 
 	ROM_REGION( 0x100000 ) /* 1m for ROMs */
 	/* PRGx ROMs go here - they can be 128k max. */
@@ -519,10 +582,9 @@ ROM_START( youkaidk_rom )
 	ROM_REGION(0x10000)     /* 64k for the sub cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
-	ROM_REGION(0x30000)     /* 192k for the sound cpu */
-	ROM_LOAD( "yd1.sd0",		0x10000, 0x10000, 0xa9cb51fb )
-	ROM_RELOAD(					0x0c000, 0x04000 )
-	ROM_LOAD( "yd1.sd1",		0x20000, 0x10000, 0x65d1dc0d )
+	ROM_REGION(0x2c000)     /* 192k for the sound cpu */
+	ROM_LOAD( "yd1.sd0",		0x0c000, 0x10000, 0xa9cb51fb )
+	ROM_LOAD( "yd1.sd1",		0x1c000, 0x10000, 0x65d1dc0d )
 
 	ROM_REGION( 0x100000 ) /* 1m for ROMs */
 	/* PRGx ROMs go here - they can be 128k max. */
@@ -583,10 +645,9 @@ ROM_START( dspirit_rom )
 	ROM_REGION(0x10000)     /* 64k for the sub cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
-	ROM_REGION(0x30000)     /* 192k for the sound cpu */
-	ROM_LOAD( "dssnd-0.bin",	0x10000, 0x10000, 0x27100065 )
-	ROM_RELOAD(					0x0c000, 0x04000 )
-	ROM_LOAD( "dssnd-1.bin",	0x20000, 0x10000, 0xb398645f )
+	ROM_REGION(0x2c000)     /* 192k for the sound cpu */
+	ROM_LOAD( "dssnd-0.bin",	0x0c000, 0x10000, 0x27100065 )
+	ROM_LOAD( "dssnd-1.bin",	0x1c000, 0x10000, 0xb398645f )
 
 	ROM_REGION( 0x100000 ) /* 1m for ROMs */
 	/* PRGx ROMs go here - they can be 128k max. */
@@ -629,7 +690,7 @@ ROM_START( blazer_rom )
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
 	ROM_REGION_DISPOSE(0x220000)     /* temporary space for graphics (disposed after conversion) */
-//	ROM_LOAD( "chr8.rom",		0x00000, 0x20000, 1 )	/* missing! */
+	ROM_LOAD( "chr8.rom",		0x20000, 0x20000, 0x00000000 )	/* missing! - would go at 00000 */
 	ROM_LOAD( "chr0.rom",		0x20000, 0x20000, 0xd346ba61 )	/* characters */
 	ROM_LOAD( "chr1.rom",		0x40000, 0x20000, 0xe45eb2ea )	/* characters */
 	ROM_LOAD( "chr2.rom",		0x60000, 0x20000, 0x599079ee )	/* characters */
@@ -647,10 +708,9 @@ ROM_START( blazer_rom )
 	ROM_REGION(0x10000)     /* 64k for the sub cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
-	ROM_REGION(0x40000)     /* 192k for the sound cpu */
-	ROM_LOAD( "sound0.rom",		0x10000, 0x10000, 0x6c3a580b )
-	ROM_RELOAD(					0x0c000, 0x04000 )
-	ROM_LOAD( "sound1.rom",		0x20000, 0x20000, 0xd206b1bd )
+	ROM_REGION(0x3c000)     /* 192k for the sound cpu */
+	ROM_LOAD( "sound0.rom",		0x0c000, 0x10000, 0x6c3a580b )
+	ROM_LOAD( "sound1.rom",		0x1c000, 0x20000, 0xd206b1bd )
 
 	ROM_REGION( 0x100000 ) /* 1m for ROMs */
 	/* PRGx ROMs go here - they can be 128k max. */
@@ -701,10 +761,9 @@ ROM_START( pacmania_rom )
 	ROM_REGION(0x10000)     /* 64k for the sub cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
-	ROM_REGION(0x30000)     /* 192k for the sound cpu */
-	ROM_LOAD( "pm_snd0.bin",	0x10000, 0x10000, 0xc10370fa )
-	ROM_RELOAD(					0x0c000, 0x04000 )
-	ROM_LOAD( "pm_snd1.bin",	0x20000, 0x10000, 0xf761ed5a )
+	ROM_REGION(0x2c000)     /* 192k for the sound cpu */
+	ROM_LOAD( "pm_snd0.bin",	0x0c000, 0x10000, 0xc10370fa )
+	ROM_LOAD( "pm_snd1.bin",	0x1c000, 0x10000, 0xf761ed5a )
 
 	ROM_REGION( 0x100000 ) /* 1m for ROMs */
 	/* PRGx ROMs go here - they can be 128k max. */
@@ -742,10 +801,9 @@ ROM_START( pacmanij_rom )
 	ROM_REGION(0x10000)     /* 64k for the sub cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
-	ROM_REGION(0x30000)     /* 192k for the sound cpu */
-	ROM_LOAD( "pm-s0.a10",		0x10000, 0x10000, 0xd5ef5eee )
-	ROM_RELOAD(					0x0c000, 0x04000 )
-	ROM_LOAD( "pm-s1.b10",		0x20000, 0x10000, 0x411bc134 )
+	ROM_REGION(0x2c000)     /* 192k for the sound cpu */
+	ROM_LOAD( "pm-s0.a10",		0x0c000, 0x10000, 0xd5ef5eee )
+	ROM_LOAD( "pm-s1.b10",		0x1c000, 0x10000, 0x411bc134 )
 
 	ROM_REGION( 0x100000 ) /* 1m for ROMs */
 	/* PRGx ROMs go here - they can be 128k max. */
@@ -787,10 +845,9 @@ ROM_START( galaga88_rom )
 	ROM_REGION(0x10000)     /* 64k for the sub cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
-	ROM_REGION(0x30000)     /* 192k for the sound cpu */
-	ROM_LOAD( "g88_snd0.rom",	0x10000, 0x10000, 0x164a3fdc )
-	ROM_RELOAD(					0x0c000, 0x04000 )
-	ROM_LOAD( "g88_snd1.rom",	0x20000, 0x10000, 0x16a4b784 )
+	ROM_REGION(0x2c000)     /* 192k for the sound cpu */
+	ROM_LOAD( "g88_snd0.rom",	0x0c000, 0x10000, 0x164a3fdc )
+	ROM_LOAD( "g88_snd1.rom",	0x1c000, 0x10000, 0x16a4b784 )
 
 	ROM_REGION( 0x100000 ) /* 1m for ROMs */
 	/* PRGx ROMs go here - they can be 128k max. */
@@ -844,10 +901,9 @@ ROM_START( galag88j_rom )
 	ROM_REGION(0x10000)     /* 64k for the sub cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
-	ROM_REGION(0x30000)     /* 192k for the sound cpu */
-	ROM_LOAD( "g88_snd0.rom",	0x10000, 0x10000, 0x164a3fdc )
-	ROM_RELOAD(					0x0c000, 0x04000 )
-	ROM_LOAD( "g88_snd1.rom",	0x20000, 0x10000, 0x16a4b784 )
+	ROM_REGION(0x2c000)     /* 192k for the sound cpu */
+	ROM_LOAD( "g88_snd0.rom",	0x0c000, 0x10000, 0x164a3fdc )
+	ROM_LOAD( "g88_snd1.rom",	0x1c000, 0x10000, 0x16a4b784 )
 
 	ROM_REGION( 0x100000 ) /* 1m for ROMs */
 	/* PRGx ROMs go here - they can be 128k max. */
@@ -905,9 +961,8 @@ ROM_START( berabohm_rom )
 	ROM_REGION(0x10000)     /* 64k for the sub cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
-	ROM_REGION(0x30000)     /* 192k for the sound cpu */
-	ROM_LOAD( "bm1-snd0.bin",	0x10000, 0x10000, 0xd5d53cb1 )
-	ROM_RELOAD(					0x0c000, 0x04000 )
+	ROM_REGION(0x2c000)     /* 192k for the sound cpu */
+	ROM_LOAD( "bm1-snd0.bin",	0x0c000, 0x10000, 0xd5d53cb1 )
 
 	ROM_REGION( 0x100000 ) /* 1m for ROMs */
 	/* PRGx ROMs go here - they can be 128k max. */
@@ -953,10 +1008,9 @@ ROM_END
 	ROM_REGION(0x10000)     /* 64k for the sub cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
-	ROM_REGION(0x30000)     /* 192k for the sound cpu */
-	ROM_LOAD( "mm.sd0",			0x10000, 0x10000, 0x25d25e07 )
-	ROM_RELOAD(					0x0c000, 0x04000 )
-	ROM_LOAD( "mm1.sd1",		0x20000, 0x10000, 0x4a3cc89e )
+	ROM_REGION(0x2c000)     /* 192k for the sound cpu */
+	ROM_LOAD( "mm.sd0",			0x0c000, 0x10000, 0x25d25e07 )
+	ROM_LOAD( "mm1.sd1",		0x1c000, 0x10000, 0x4a3cc89e )
 
 	ROM_REGION( 0x100000 ) /* 1m for ROMs */
 	/* PRGx ROMs go here - they can be 128k max. */
@@ -1005,10 +1059,9 @@ ROM_START( mmaze_rom )
 	ROM_REGION(0x10000)     /* 64k for the sub cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
-	ROM_REGION(0x30000)     /* 192k for the sound cpu */
-	ROM_LOAD( "mm.sd0",			0x10000, 0x10000, 0x25d25e07 )
-	ROM_RELOAD(					0x0c000, 0x04000 )
-	ROM_LOAD( "mm1.sd1",		0x20000, 0x10000, 0x4a3cc89e )
+	ROM_REGION(0x2c000)     /* 192k for the sound cpu */
+	ROM_LOAD( "mm.sd0",			0x0c000, 0x10000, 0x25d25e07 )
+	ROM_LOAD( "mm1.sd1",		0x1c000, 0x10000, 0x4a3cc89e )
 
 	ROM_REGION( 0x100000 ) /* 1m for ROMs */
 	/* PRGx ROMs go here - they can be 128k max. */
@@ -1056,9 +1109,8 @@ ROM_START( bakutotu_rom )
 	ROM_REGION(0x10000)     /* 64k for the sub cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
-	ROM_REGION(0x30000)     /* 192k for the sound cpu */
-	ROM_LOAD( "bk1-snd0.bin",	0x10000, 0x10000, 0xc35d7df6 )
-	ROM_RELOAD(					0x0c000, 0x04000 )
+	ROM_REGION(0x2c000)     /* 192k for the sound cpu */
+	ROM_LOAD( "bk1-snd0.bin",	0x0c000, 0x10000, 0xc35d7df6 )
 
 	ROM_REGION( 0x100000 ) /* 1m for ROMs */
 	/* PRGx ROMs go here - they can be 128k max. */
@@ -1105,9 +1157,8 @@ ROM_START( wldcourt_rom )
 	ROM_REGION(0x10000)     /* 64k for the sub cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
-	ROM_REGION(0x30000)     /* 192k for the sound cpu */
-	ROM_LOAD( "wc1-snd0.bin",	0x10000, 0x10000, 0x17a6505d )
-	ROM_RELOAD(					0x0c000, 0x04000 )
+	ROM_REGION(0x2c000)     /* 192k for the sound cpu */
+	ROM_LOAD( "wc1-snd0.bin",	0x0c000, 0x10000, 0x17a6505d )
 
 	ROM_REGION( 0x100000 ) /* 1m for ROMs */
 	/* PRGx ROMs go here - they can be 128k max. */
@@ -1155,10 +1206,9 @@ ROM_START( splatter_rom )
 	ROM_REGION(0x10000)     /* 64k for the sub cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
-	ROM_REGION(0x30000)     /* 192k for the sound cpu */
-	ROM_LOAD( "sound0",			0x10000, 0x10000, 0x90abd4ad )
-	ROM_RELOAD(					0x0c000, 0x04000 )
-	ROM_LOAD( "sound1",			0x20000, 0x10000, 0x8ece9e0a )
+	ROM_REGION(0x2c000)     /* 192k for the sound cpu */
+	ROM_LOAD( "sound0",			0x0c000, 0x10000, 0x90abd4ad )
+	ROM_LOAD( "sound1",			0x1c000, 0x10000, 0x8ece9e0a )
 
 	ROM_REGION( 0x100000 ) /* 1m for ROMs */
 	/* PRGx ROMs go here - they can be 128k max. */
@@ -1218,9 +1268,8 @@ ROM_START( rompers_rom )
 	ROM_REGION(0x10000)     /* 64k for the sub cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
-	ROM_REGION(0x30000)     /* 192k for the sound cpu */
-	ROM_LOAD( "rp1-snd0.bin",	0x10000, 0x10000, 0xc7c8d649 )
-	ROM_RELOAD(					0x0c000, 0x04000 )
+	ROM_REGION(0x2c000)     /* 192k for the sound cpu */
+	ROM_LOAD( "rp1-snd0.bin",	0x0c000, 0x10000, 0xc7c8d649 )
 
 	ROM_REGION( 0x100000 ) /* 1m for ROMs */
 	/* PRGx ROMs go here - they can be 128k max. */
@@ -1267,10 +1316,9 @@ ROM_START( blastoff_rom )
 	ROM_REGION(0x10000)     /* 64k for the sub cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
-	ROM_REGION(0x30000)     /* 192k for the sound cpu */
-	ROM_LOAD( "bo1-snd0.bin",	0x10000, 0x10000, 0x2ecab76e )
-	ROM_RELOAD(					0x0c000, 0x04000 )
-	ROM_LOAD( "bo1-snd1.bin",	0x20000, 0x10000, 0x048a6af1 )
+	ROM_REGION(0x2c000)     /* 192k for the sound cpu */
+	ROM_LOAD( "bo1-snd0.bin",	0x0c000, 0x10000, 0x2ecab76e )
+	ROM_LOAD( "bo1-snd1.bin",	0x1c000, 0x10000, 0x048a6af1 )
 
 	ROM_REGION( 0x100000 ) /* 1m for ROMs */
 	/* PRGx ROMs go here - they can be 128k max. */
@@ -1312,9 +1360,8 @@ ROM_START( dangseed_rom )
 	ROM_REGION(0x10000)     /* 64k for the sub cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
-	ROM_REGION(0x30000)     /* 192k for the sound cpu */
-	ROM_LOAD( "dr1-snd0.bin",	0x10000, 0x20000, 0xbcbbb21d )
-	ROM_RELOAD(					0x0c000, 0x04000 )
+	ROM_REGION(0x2c000)     /* 192k for the sound cpu */
+	ROM_LOAD( "dr1-snd0.bin",	0x0c000, 0x20000, 0xbcbbb21d )
 
 	ROM_REGION( 0x100000 ) /* 1m for ROMs */
 	/* PRGx ROMs go here - they can be 128k max. */
@@ -1356,10 +1403,9 @@ ROM_START( ws90_rom )
 	ROM_REGION(0x10000)     /* 64k for the sub cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
-	ROM_REGION(0x30000)     /* 192k for the sound cpu */
-	ROM_LOAD( "wssnd-0.bin",	0x10000, 0x10000, 0x52b84d5a )
-	ROM_RELOAD(					0x0c000, 0x04000 )
-	ROM_LOAD( "wssnd-1.bin",	0x20000, 0x10000, 0x31bf74c1 )
+	ROM_REGION(0x2c000)     /* 192k for the sound cpu */
+	ROM_LOAD( "wssnd-0.bin",	0x0c000, 0x10000, 0x52b84d5a )
+	ROM_LOAD( "wssnd-1.bin",	0x1c000, 0x10000, 0x31bf74c1 )
 
 	ROM_REGION( 0x100000 ) /* 1m for ROMs */
 	/* PRGx ROMs go here - they can be 128k max. */
@@ -1409,9 +1455,8 @@ ROM_START( pistoldm_rom )
 	ROM_REGION(0x10000)     /* 64k for the sub cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
-	ROM_REGION(0x30000)     /* 192k for the sound cpu */
-	ROM_LOAD( "pd1-snd0.bin",	0x10000, 0x20000, 0x026da54e )
-	ROM_RELOAD(					0x0c000, 0x04000 )
+	ROM_REGION(0x2c000)     /* 192k for the sound cpu */
+	ROM_LOAD( "pd1-snd0.bin",	0x0c000, 0x20000, 0x026da54e )
 
 	ROM_REGION( 0x100000 ) /* 1m for ROMs */
 	/* PRGx ROMs go here - they can be 128k max. */
@@ -1447,9 +1492,8 @@ ROM_START( soukobdx_rom )
 	ROM_REGION(0x10000)     /* 64k for the sub cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
-	ROM_REGION(0x30000)     /* 192k for the sound cpu */
-	ROM_LOAD( "sb1-snd0.bin",	0x10000, 0x10000, 0xbf46a106 )
-	ROM_RELOAD(					0x0c000, 0x04000 )
+	ROM_REGION(0x2c000)     /* 192k for the sound cpu */
+	ROM_LOAD( "sb1-snd0.bin",	0x0c000, 0x10000, 0xbf46a106 )
 
 	ROM_REGION( 0x100000 ) /* 1m for ROMs */
 	/* PRGx ROMs go here - they can be 128k max. */
@@ -1487,9 +1531,8 @@ ROM_START( tankfrce_rom )
 	ROM_REGION(0x10000)     /* 64k for the sub cpu */
 	/* Nothing loaded here. Bankswitching makes sure this gets the necessary code */
 
-	ROM_REGION(0x30000)     /* 192k for the sound cpu */
-	ROM_LOAD( "tf1-snd0.bin",	0x10000, 0x20000, 0x4d9cf7aa )
-	ROM_RELOAD(					0x0c000, 0x04000 )
+	ROM_REGION(0x2c000)     /* 192k for the sound cpu */
+	ROM_LOAD( "tf1-snd0.bin",	0x0c000, 0x20000, 0x4d9cf7aa )
 
 	ROM_REGION( 0x100000 ) /* 1m for ROMs */
 	/* PRGx ROMs go here - they can be 128k max. */
@@ -1559,6 +1602,54 @@ struct GameDriver NAME##_driver  = \
 	0, 0              \
 };
 
+#define NAMCOS1_DRIVER16(NAME,REALNAME,YEAR,MANU,INIT_NAME,ORIENTATION) \
+extern void INIT_NAME##_driver_init(void); \
+struct GameDriver NAME##_driver  = \
+{ \
+	__FILE__,         \
+	0,                \
+	#NAME,            \
+	REALNAME,         \
+	YEAR,             \
+	MANU,             \
+	"Ernesto Corvi\nJROK\nTatsuyuki Satoh(optimize)", \
+	0,                \
+	&machine_driver16,  \
+	INIT_NAME##_driver_init, \
+	NAME##_rom,       \
+	0, 0,             \
+	0,                \
+	0,                \
+	input_ports,      \
+	0, 0, 0,          \
+	ORIENTATION,      \
+	0, 0              \
+};
+
+#define NAMCOS1_DRIVER16CLONE(NAME,CLONE,REALNAME,YEAR,MANU,INIT_NAME,ORIENTATION) \
+extern void INIT_NAME##_driver_init(void); \
+struct GameDriver NAME##_driver  = \
+{ \
+	__FILE__,         \
+	&CLONE##_driver,  \
+	#NAME,            \
+	REALNAME,         \
+	YEAR,             \
+	MANU,             \
+	"Ernesto Corvi\nJROK\nTatsuyuki Satoh(optimize)", \
+	0,                \
+	&machine_driver16,  \
+	INIT_NAME##_driver_init, \
+	NAME##_rom,       \
+	0, 0,             \
+	0,                \
+	0,                \
+	input_ports,      \
+	0, 0, 0,          \
+	ORIENTATION,      \
+	0, 0              \
+};
+
 #define NAMCOS1_NWDRIVER(NAME,REALNAME,YEAR,MANU,INIT_NAME,ORIENTATION) \
 extern void INIT_NAME##_driver_init(void); \
 struct GameDriver NAME##_driver  = \
@@ -1583,14 +1674,14 @@ struct GameDriver NAME##_driver  = \
 	0, 0              \
 };
 
-NAMCOS1_DRIVER(shadowld,"Shadow Land","1987","Namco",shadowld,ORIENTATION_DEFAULT)
-NAMCOS1_DRIVERCLONE(youkaidk,shadowld,"Yokai Douchuuki (Japan)","1987","Namco",shadowld,ORIENTATION_DEFAULT)
+NAMCOS1_DRIVER16(shadowld,"Shadow Land","1987","Namco",shadowld,ORIENTATION_DEFAULT)
+NAMCOS1_DRIVER16CLONE(youkaidk,shadowld,"Yokai Douchuuki (Japan)","1987","Namco",shadowld,ORIENTATION_DEFAULT)
 NAMCOS1_DRIVER(dspirit,"Dragon Spirit","1987","Namco",dspirit,ORIENTATION_ROTATE_90)
 //NAMCOS1_DRIVER(dspirita,"Dragon Spirit (set 2)","1987","Namco",dspirit,ORIENTATION_ROTATE_90)
 NAMCOS1_DRIVER(blazer,"Blazer (Japan)","1987","Namco",blazer,ORIENTATION_ROTATE_90)
 //NAMCOS1_NWDRIVER(quester,"Quester","1987","Namco",quester,ORIENTATION_DEFAULT)
-NAMCOS1_DRIVER(pacmania,"Pacmania","1987","Namco",pacmania,ORIENTATION_ROTATE_90)
-NAMCOS1_DRIVERCLONE(pacmanij,pacmania,"Pacmania (Japan)","1987","Namco",pacmanij,ORIENTATION_ROTATE_90)
+NAMCOS1_DRIVER16(pacmania,"Pacmania","1987","Namco",pacmania,ORIENTATION_ROTATE_90)
+NAMCOS1_DRIVER16CLONE(pacmanij,pacmania,"Pacmania (Japan)","1987","Namco",pacmanij,ORIENTATION_ROTATE_90)
 NAMCOS1_DRIVER(galaga88,"Galaga '88","1987","Namco",galaga88,ORIENTATION_ROTATE_90)
 NAMCOS1_DRIVERCLONE(galag88j,galaga88,"Galaga '88 (Japan)","1987","Namco",galag88j,ORIENTATION_ROTATE_90)
 //NAMCOS1_NWDRIVER(wstadium,"World Stadium","1988","Namco",wstadium,ORIENTATION_DEFAULT)
@@ -1599,11 +1690,13 @@ NAMCOS1_NWDRIVER(berabohm,"Beraboh Man","1988","Namco",berabohm,ORIENTATION_DEFA
 NAMCOS1_DRIVER(mmaze,"Marchen Maze (Japan)","1988","Namco",alice,ORIENTATION_DEFAULT)
 NAMCOS1_NWDRIVER(bakutotu,"Bakutotsu Kijuutei","1988","Namco",bakutotu,ORIENTATION_DEFAULT)
 NAMCOS1_DRIVER(wldcourt,"World Court (Japan)","1988","Namco",wldcourt,ORIENTATION_DEFAULT)
-NAMCOS1_DRIVER(splatter,"Splatter House (Japan)","1988","Namco",splatter,ORIENTATION_DEFAULT)
+/* in theory Splatterhouse could fit in 256 colors */
+NAMCOS1_DRIVER16(splatter,"Splatter House (Japan)","1988","Namco",splatter,ORIENTATION_DEFAULT)
 //NAMCOS1_NWDRIVER(faceoff,"Face Off","1988","Namco",faceoff,ORIENTATION_DEFAULT)
 NAMCOS1_DRIVER(rompers,"Rompers (Japan)","1989","Namco",rompers,ORIENTATION_ROTATE_90)
 NAMCOS1_DRIVER(blastoff,"Blast Off (Japan)","1989","Namco",blastoff,ORIENTATION_ROTATE_90)
 //NAMCOS1_NWDRIVER(ws89,"World Stadium 89","1989","Namco",ws89,ORIENTATION_DEFAULT)
+/* dangseed overflows palette in a few places, it might be improveable */
 NAMCOS1_DRIVER(dangseed,"Dangerous Seed (Japan)","1989","Namco",dangseed,ORIENTATION_ROTATE_90)
 NAMCOS1_DRIVER(ws90,"World Stadium 90 (Japan)","1990","Namco",ws90,ORIENTATION_DEFAULT)
 NAMCOS1_DRIVER(pistoldm,"Pistol Daimyo no Bouken (Japan)","1990","Namco",pistoldm,ORIENTATION_DEFAULT)

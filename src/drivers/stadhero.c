@@ -173,18 +173,16 @@ INPUT_PORTS_START( stadhero_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
 
 	PORT_START	/* Dip switch bank 1 */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -292,8 +290,8 @@ static struct YM2203interface ym2203_interface =
 
 static struct YM3812interface ym3812_interface =
 {
-	1,			/* 1 chip (no more supported) */
-	3250000,	/* 3.25 MHz ? Might actually be 3?  (12MHz/4) */
+	1,			/* 1 chip */
+	3000000,	/* 3 MHz (12MHz/4) */
 	{ 40 },
 	{ irqhandler },
 };
@@ -338,7 +336,7 @@ static struct MachineDriver stadhero_machine_driver =
 	1024, 1024,
 	0,
 
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,// | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	stadhero_vh_start,
 	stadhero_vh_stop,

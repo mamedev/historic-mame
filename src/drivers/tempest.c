@@ -408,46 +408,6 @@ static struct MachineDriver machine_driver =
 	0,
 
 	/* video hardware */
-	300, 400, { 0, 510, 0, 540 },
-	gfxdecodeinfo,
-	256,256,
-	avg_init_colors,
-
-	VIDEO_TYPE_VECTOR,
-	0,
-	avg_start_tempest,
-	avg_stop,
-	avg_screenrefresh,
-
-	/* sound hardware */
-	0,0,0,0,
-	{
-		{
-			SOUND_POKEY,
-			&pokey_interface
-		}
-	}
-};
-
-
-/* Tempest Tube uses a slightly different visual area */
-static struct MachineDriver tempest_tube_machine_driver =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_M6502,
-			1500000,	/* 1.5 Mhz */
-			0,
-			readmem,writemem,0,0,
-			interrupt,4 /* 4.1ms */
-		}
-	},
-	60, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
-	1,
-	0,
-
-	/* video hardware */
 	300, 400, { 0, 550, 0, 580 },
 	gfxdecodeinfo,
 	256,256,
@@ -658,7 +618,7 @@ struct GameDriver temptube_driver =
 	"hack",
 	"Brad Oliver (MAME driver)\n"VECTOR_TEAM"Keith Gerdes (Pokey protection)",
 	0,
-	&tempest_tube_machine_driver,
+	&machine_driver,
 	0,
 
 	temptube_rom,

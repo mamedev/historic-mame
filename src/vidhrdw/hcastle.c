@@ -87,6 +87,7 @@ static void draw_sprites( struct osd_bitmap *bitmap, unsigned char *sbank, int b
 	Known sizes:
 		0x08	- 32 x 32 sprite (Combination of 4 16x16's)
 		0x06	- 8 x 8 sprite
+		0x04 	- 8 x 16 sprite
 		0x02 	- 16 x 8 sprite
 		0x00 	- 16 x 16 sprite
 

@@ -30,11 +30,13 @@ extern unsigned char tw256x240_h, tw256x240_v;
 extern unsigned char tw256x256_h, tw256x256_v;
 extern unsigned char tw256x256_hor_h, tw256x256_hor_v;
 extern unsigned char tw288x224_h, tw288x224_v;
+extern unsigned char tw240x320_h, tw240x320_v;
 extern unsigned char tw320x240_h, tw320x240_v;
 extern unsigned char tw336x240_h, tw336x240_v;
 extern unsigned char tw384x224_h, tw384x224_v;
 extern unsigned char tw384x240_h, tw384x240_v;
 extern unsigned char tw384x256_h, tw384x256_v;
+extern unsigned char tw400x256_h, tw400x256_v;
 
 
 /* Tweak values for 15.75KHz arcade/ntsc/pal modes */
@@ -84,27 +86,27 @@ char *rompath, *samplepath;
 
 struct { char *name; int id; } joy_table[] =
 {
-	{ "none",			JOY_TYPE_NONE },
-	{ "auto",			JOY_TYPE_AUTODETECT },
-	{ "standard",		JOY_TYPE_STANDARD },
-	{ "dual",			JOY_TYPE_2PADS },
-	{ "4button",		JOY_TYPE_4BUTTON },
-	{ "6button",		JOY_TYPE_6BUTTON },
-	{ "8button",		JOY_TYPE_8BUTTON },
-	{ "fspro",			JOY_TYPE_FSPRO },
-	{ "wingex",			JOY_TYPE_WINGEX },
-	{ "sidewinder",		JOY_TYPE_SIDEWINDER },
-	{ "gamepadpro",		JOY_TYPE_GAMEPAD_PRO },
-	{ "sneslpt1",		JOY_TYPE_SNESPAD_LPT1 },
-	{ "sneslpt2",		JOY_TYPE_SNESPAD_LPT2 },
-	{ "sneslpt3",		JOY_TYPE_SNESPAD_LPT3 },
-	{ "psxlpt1",		JOY_TYPE_PSXPAD_LPT1 },
-	{ "psxlpt2",		JOY_TYPE_PSXPAD_LPT2 },
-	{ "psxlpt3",		JOY_TYPE_PSXPAD_LPT3 },
-	{ "n64lpt1",		JOY_TYPE_N64PAD_LPT1 },
-	{ "n64lpt2",		JOY_TYPE_N64PAD_LPT2 },
-	{ "n64lpt3",		JOY_TYPE_N64PAD_LPT3 },
-	{ "wingwarrior",	JOY_TYPE_WINGWARRIOR },
+	{ "none",                       JOY_TYPE_NONE },
+	{ "auto",                       JOY_TYPE_AUTODETECT },
+	{ "standard",           JOY_TYPE_STANDARD },
+	{ "dual",                       JOY_TYPE_2PADS },
+	{ "4button",            JOY_TYPE_4BUTTON },
+	{ "6button",            JOY_TYPE_6BUTTON },
+	{ "8button",            JOY_TYPE_8BUTTON },
+	{ "fspro",                      JOY_TYPE_FSPRO },
+	{ "wingex",                     JOY_TYPE_WINGEX },
+	{ "sidewinder",         JOY_TYPE_SIDEWINDER },
+	{ "gamepadpro",         JOY_TYPE_GAMEPAD_PRO },
+	{ "sneslpt1",           JOY_TYPE_SNESPAD_LPT1 },
+	{ "sneslpt2",           JOY_TYPE_SNESPAD_LPT2 },
+	{ "sneslpt3",           JOY_TYPE_SNESPAD_LPT3 },
+	{ "psxlpt1",            JOY_TYPE_PSXPAD_LPT1 },
+	{ "psxlpt2",            JOY_TYPE_PSXPAD_LPT2 },
+	{ "psxlpt3",            JOY_TYPE_PSXPAD_LPT3 },
+	{ "n64lpt1",            JOY_TYPE_N64PAD_LPT1 },
+	{ "n64lpt2",            JOY_TYPE_N64PAD_LPT2 },
+	{ "n64lpt3",            JOY_TYPE_N64PAD_LPT3 },
+	{ "wingwarrior",        JOY_TYPE_WINGWARRIOR },
 	{ 0, 0 }
 } ;
 
@@ -113,10 +115,10 @@ struct { char *name; int id; } joy_table[] =
 /* monitor type */
 struct { char *name; int id; } monitor_table[] =
 {
-	{ "standard",	MONITOR_TYPE_STANDARD},
+	{ "standard",   MONITOR_TYPE_STANDARD},
 	{ "ntsc",       MONITOR_TYPE_NTSC},
-	{ "pal",		MONITOR_TYPE_PAL},
-	{ "arcade",		MONITOR_TYPE_ARCADE},
+	{ "pal",                MONITOR_TYPE_PAL},
+	{ "arcade",             MONITOR_TYPE_ARCADE},
 	{ NULL, NULL }
 } ;
 
@@ -424,60 +426,62 @@ void parse_cmdline (int argc, char **argv, int game_index)
 	artworkdir = get_string ("directory", "artwork", NULL, "ARTWORK");
 
 	/* get tweaked modes info */
-	tw224x288_h		= get_int ("tweaked", "224x288_h",		NULL, 0x5f);
-	tw224x288_v     = get_int ("tweaked", "224x288_v",		NULL, 0x53);
-	tw240x256_h     = get_int ("tweaked", "240x256_h",		NULL, 0x67);
-	tw240x256_v     = get_int ("tweaked", "240x256_v",		NULL, 0x23);
-	tw256x240_h     = get_int ("tweaked", "256x240_h",		NULL, 0x55);
-	tw256x240_v     = get_int ("tweaked", "256x240_v",		NULL, 0x43);
-	tw256x256_h     = get_int ("tweaked", "256x256_h",		NULL, 0x6c);
-	tw256x256_v     = get_int ("tweaked", "256x256_v",		NULL, 0x23);
-	tw256x256_hor_h	= get_int ("tweaked", "256x256_hor_h",	NULL, 0x55);
-	tw256x256_hor_v	= get_int ("tweaked", "256x256_hor_v",	NULL, 0x60);
-	tw288x224_h     = get_int ("tweaked", "288x224_h",		NULL, 0x5f);
-	tw288x224_v     = get_int ("tweaked", "288x224_v",		NULL, 0x0c);
-	tw320x240_h		= get_int ("tweaked", "320x240_h",		NULL, 0x5f);
-	tw320x240_v		= get_int ("tweaked", "320x240_v",		NULL, 0x0c);
-	tw336x240_h		= get_int ("tweaked", "336x240_h",		NULL, 0x5f);
-	tw336x240_v		= get_int ("tweaked", "336x240_v",		NULL, 0x0c);
-	tw384x224_h		= get_int ("tweaked", "384x224_h",		NULL, 0x6c);
-	tw384x224_v		= get_int ("tweaked", "384x224_v",		NULL, 0x0c);
-	tw384x240_h		= get_int ("tweaked", "384x240_h",		NULL, 0x6c);
-	tw384x240_v		= get_int ("tweaked", "384x240_v",		NULL, 0x0c);
-	tw384x256_h		= get_int ("tweaked", "384x256_h",		NULL, 0x6c);
-	tw384x256_v		= get_int ("tweaked", "384x256_v",		NULL, 0x23);
+	tw224x288_h			= get_int ("tweaked", "224x288_h",              NULL, 0x5f);
+	tw224x288_v     	= get_int ("tweaked", "224x288_v",              NULL, 0x53);
+	tw240x256_h     = get_int ("tweaked", "240x256_h",              NULL, 0x67);
+	tw240x256_v     = get_int ("tweaked", "240x256_v",              NULL, 0x23);
+	tw256x240_h     = get_int ("tweaked", "256x240_h",              NULL, 0x55);
+	tw256x240_v     = get_int ("tweaked", "256x240_v",              NULL, 0x43);
+	tw256x256_h     = get_int ("tweaked", "256x256_h",              NULL, 0x6c);
+	tw256x256_v     = get_int ("tweaked", "256x256_v",              NULL, 0x23);
+	tw256x256_hor_h = get_int ("tweaked", "256x256_hor_h",  NULL, 0x55);
+	tw256x256_hor_v = get_int ("tweaked", "256x256_hor_v",  NULL, 0x60);
+	tw288x224_h     = get_int ("tweaked", "288x224_h",              NULL, 0x5f);
+	tw288x224_v     = get_int ("tweaked", "288x224_v",              NULL, 0x0c);
+	tw240x320_h             = get_int ("tweaked", "240x320_h",              NULL, 0x5a);
+	tw240x320_v             = get_int ("tweaked", "240x320_v",              NULL, 0x8c);
+	tw320x240_h             = get_int ("tweaked", "320x240_h",              NULL, 0x5f);
+	tw320x240_v             = get_int ("tweaked", "320x240_v",              NULL, 0x0c);
+	tw336x240_h             = get_int ("tweaked", "336x240_h",              NULL, 0x5f);
+	tw336x240_v             = get_int ("tweaked", "336x240_v",              NULL, 0x0c);
+	tw384x224_h             = get_int ("tweaked", "384x224_h",              NULL, 0x6c);
+	tw384x224_v             = get_int ("tweaked", "384x224_v",              NULL, 0x0c);
+	tw384x240_h             = get_int ("tweaked", "384x240_h",              NULL, 0x6c);
+	tw384x240_v             = get_int ("tweaked", "384x240_v",              NULL, 0x0c);
+	tw384x256_h             = get_int ("tweaked", "384x256_h",              NULL, 0x6c);
+	tw384x256_v             = get_int ("tweaked", "384x256_v",              NULL, 0x23);
 
 	/* Get 15.75KHz tweak values */
-	tw224x288arc_h		= get_int ("tweaked", "224x288arc_h",	NULL, 0x5d);
-	tw224x288arc_v		= get_int ("tweaked", "224x288arc_v",	NULL, 0x38);
-	tw288x224arc_h		= get_int ("tweaked", "288x224arc_h",	NULL, 0x5d);
-	tw288x224arc_v		= get_int ("tweaked", "288x224arc_v",	NULL, 0x09);
-	tw256x240arc_h		= get_int ("tweaked", "256x240arc_h",	NULL, 0x5d);
-	tw256x240arc_v		= get_int ("tweaked", "256x240arc_v",	NULL, 0x09);
-	tw256x256arc_h		= get_int ("tweaked", "256x256arc_h",	NULL, 0x5d);
-	tw256x256arc_v		= get_int ("tweaked", "256x256arc_v",	NULL, 0x17);
-	tw320x240arc_h		= get_int ("tweaked", "320x240arc_h",	NULL, 0x69);
-	tw320x240arc_v		= get_int ("tweaked", "320x240arc_v",	NULL, 0x09);
-	tw320x256arc_h		= get_int ("tweaked", "320x256arc_h",	NULL, 0x69);
-	tw320x256arc_v		= get_int ("tweaked", "320x256arc_v",	NULL, 0x17);
-	tw352x240arc_h		= get_int ("tweaked", "352x240arc_h",	NULL, 0x6a);
-	tw352x240arc_v		= get_int ("tweaked", "352x240arc_v",	NULL, 0x09);
-	tw352x256arc_h		= get_int ("tweaked", "352x256arc_h",	NULL, 0x6a);
-	tw352x256arc_v		= get_int ("tweaked", "352x256arc_v",	NULL, 0x17);
-	tw368x224arc_h		= get_int ("tweaked", "368x224arc_h",	NULL, 0x6a);
-	tw368x224arc_v		= get_int ("tweaked", "368x224arc_v",	NULL, 0x09);
-	tw368x240arc_h		= get_int ("tweaked", "368x240arc_h",	NULL, 0x6a);
-	tw368x240arc_v		= get_int ("tweaked", "368x240arc_v",	NULL, 0x09);
-	tw368x256arc_h		= get_int ("tweaked", "368x256arc_h",	NULL, 0x6a);
-	tw368x256arc_v		= get_int ("tweaked", "368x256arc_v",	NULL, 0x17);
-	tw512x224arc_h		= get_int ("tweaked", "512x224arc_h",	NULL, 0xbf);
-	tw512x224arc_v		= get_int ("tweaked", "512x224arc_v",	NULL, 0x09);
-	tw512x256arc_h		= get_int ("tweaked", "512x256arc_h",	NULL, 0xbf);
-	tw512x256arc_v		= get_int ("tweaked", "512x256arc_v",	NULL, 0x17);
-	tw512x448arc_h		= get_int ("tweaked", "512x448arc_h",	NULL, 0xbf);
-	tw512x448arc_v		= get_int ("tweaked", "512x448arc_v",	NULL, 0x09);
-	tw512x512arc_h		= get_int ("tweaked", "512x512arc_h",	NULL, 0xbf);
-	tw512x512arc_v		= get_int ("tweaked", "512x512arc_v",	NULL, 0x17);
+	tw224x288arc_h          = get_int ("tweaked", "224x288arc_h",   NULL, 0x5d);
+	tw224x288arc_v          = get_int ("tweaked", "224x288arc_v",   NULL, 0x38);
+	tw288x224arc_h          = get_int ("tweaked", "288x224arc_h",   NULL, 0x5d);
+	tw288x224arc_v          = get_int ("tweaked", "288x224arc_v",   NULL, 0x09);
+	tw256x240arc_h          = get_int ("tweaked", "256x240arc_h",   NULL, 0x5d);
+	tw256x240arc_v          = get_int ("tweaked", "256x240arc_v",   NULL, 0x09);
+	tw256x256arc_h          = get_int ("tweaked", "256x256arc_h",   NULL, 0x5d);
+	tw256x256arc_v          = get_int ("tweaked", "256x256arc_v",   NULL, 0x17);
+	tw320x240arc_h          = get_int ("tweaked", "320x240arc_h",   NULL, 0x69);
+	tw320x240arc_v          = get_int ("tweaked", "320x240arc_v",   NULL, 0x09);
+	tw320x256arc_h          = get_int ("tweaked", "320x256arc_h",   NULL, 0x69);
+	tw320x256arc_v          = get_int ("tweaked", "320x256arc_v",   NULL, 0x17);
+	tw352x240arc_h          = get_int ("tweaked", "352x240arc_h",   NULL, 0x6a);
+	tw352x240arc_v          = get_int ("tweaked", "352x240arc_v",   NULL, 0x09);
+	tw352x256arc_h          = get_int ("tweaked", "352x256arc_h",   NULL, 0x6a);
+	tw352x256arc_v          = get_int ("tweaked", "352x256arc_v",   NULL, 0x17);
+	tw368x224arc_h          = get_int ("tweaked", "368x224arc_h",   NULL, 0x6a);
+	tw368x224arc_v          = get_int ("tweaked", "368x224arc_v",   NULL, 0x09);
+	tw368x240arc_h          = get_int ("tweaked", "368x240arc_h",   NULL, 0x6a);
+	tw368x240arc_v          = get_int ("tweaked", "368x240arc_v",   NULL, 0x09);
+	tw368x256arc_h          = get_int ("tweaked", "368x256arc_h",   NULL, 0x6a);
+	tw368x256arc_v          = get_int ("tweaked", "368x256arc_v",   NULL, 0x17);
+	tw512x224arc_h          = get_int ("tweaked", "512x224arc_h",   NULL, 0xbf);
+	tw512x224arc_v          = get_int ("tweaked", "512x224arc_v",   NULL, 0x09);
+	tw512x256arc_h          = get_int ("tweaked", "512x256arc_h",   NULL, 0xbf);
+	tw512x256arc_v          = get_int ("tweaked", "512x256arc_v",   NULL, 0x17);
+	tw512x448arc_h          = get_int ("tweaked", "512x448arc_h",   NULL, 0xbf);
+	tw512x448arc_v          = get_int ("tweaked", "512x448arc_v",   NULL, 0x09);
+	tw512x512arc_h          = get_int ("tweaked", "512x512arc_h",   NULL, 0xbf);
+	tw512x512arc_v          = get_int ("tweaked", "512x512arc_v",   NULL, 0x17);
 
 	/* this is handled externally cause the audit stuff needs it, too */
 	get_rom_sample_path (argc, argv, game_index);

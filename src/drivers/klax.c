@@ -68,9 +68,10 @@ void klax_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void klax_scanline_update(int scanline);
 
 
+
 /*************************************
  *
- *		Interrupt handling
+ *	Interrupt handling
  *
  *************************************/
 
@@ -109,7 +110,7 @@ static void interrupt_ack_w(int offset, int data)
 
 /*************************************
  *
- *		Initialization
+ *	Initialization
  *
  *************************************/
 
@@ -124,7 +125,7 @@ static void init_machine(void)
 
 /*************************************
  *
- *		Sound I/O
+ *	Sound I/O
  *
  *************************************/
 
@@ -144,7 +145,7 @@ static void adpcm_w(int offset, int data)
 
 /*************************************
  *
- *		Main CPU memory handlers
+ *	Main CPU memory handlers
  *
  *************************************/
 
@@ -183,7 +184,7 @@ static struct MemoryWriteAddress writemem[] =
 
 /*************************************
  *
- *		Port definitions
+ *	Port definitions
  *
  *************************************/
 
@@ -215,7 +216,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *		Graphics definitions
+ *	Graphics definitions
  *
  *************************************/
 
@@ -254,7 +255,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *		Sound definitions
+ *	Sound definitions
  *
  *************************************/
 
@@ -270,7 +271,7 @@ static struct OKIM6295interface okim6295_interface =
 
 /*************************************
  *
- *		Machine driver
+ *	Machine driver
  *
  *************************************/
 
@@ -316,7 +317,7 @@ static struct MachineDriver machine_driver =
 
 /*************************************
  *
- *		ROM definition(s)
+ *	ROM definition(s)
  *
  *************************************/
 
@@ -340,6 +341,7 @@ ROM_START( klax_rom )
 	ROM_LOAD( "136075-1.016", 0x10000, 0x10000, 0x12e9b4b7 )
 ROM_END
 
+
 ROM_START( klax2_rom )
 	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
 	ROM_LOAD_EVEN( "136075.006",   0x00000, 0x10000, 0x05c98fc0 )
@@ -360,6 +362,7 @@ ROM_START( klax2_rom )
 	ROM_LOAD( "136075-1.016", 0x10000, 0x10000, 0x12e9b4b7 )
 ROM_END
 
+
 ROM_START( klax3_rom )
 	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
 	ROM_LOAD_EVEN( "5006",         0x00000, 0x10000, 0x65eb9a31 )
@@ -379,6 +382,7 @@ ROM_START( klax3_rom )
 	ROM_LOAD( "136075-1.015", 0x00000, 0x10000, 0x4d24c768 )
 	ROM_LOAD( "136075-1.016", 0x10000, 0x10000, 0x12e9b4b7 )
 ROM_END
+
 
 ROM_START( klaxj_rom )
 	ROM_REGION(0x40000)	/* 4*64k for 68000 code */
@@ -404,7 +408,7 @@ ROM_END
 
 /*************************************
  *
- *		Driver initialization
+ *	Driver initialization
  *
  *************************************/
 
@@ -417,7 +421,7 @@ static void klax_init(void)
 
 /*************************************
  *
- *		Game driver(s)
+ *	Game driver(s)
  *
  *************************************/
 
@@ -447,6 +451,7 @@ struct GameDriver klax_driver =
 	atarigen_hiload, atarigen_hisave
 };
 
+
 struct GameDriver klax2_driver =
 {
 	__FILE__,
@@ -473,6 +478,7 @@ struct GameDriver klax2_driver =
 	atarigen_hiload, atarigen_hisave
 };
 
+
 struct GameDriver klax3_driver =
 {
 	__FILE__,
@@ -498,6 +504,7 @@ struct GameDriver klax3_driver =
 	ORIENTATION_DEFAULT,
 	atarigen_hiload, atarigen_hisave
 };
+
 
 struct GameDriver klaxj_driver =
 {

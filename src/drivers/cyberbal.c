@@ -83,8 +83,8 @@ void cyberbal_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 
 void cyberbal_scanline_update(int param);
 
-extern unsigned char *cyberbal_playfieldram_1;
-extern unsigned char *cyberbal_playfieldram_2;
+extern UINT8 *cyberbal_playfieldram_1;
+extern UINT8 *cyberbal_playfieldram_2;
 
 
 
@@ -92,16 +92,16 @@ extern unsigned char *cyberbal_playfieldram_2;
 static void update_sound_68k_interrupts(void);
 static void handle_68k_sound_command(int data);
 
-static unsigned char *bank_base;
-static int fast_68k_int, io_68k_int;
-static int sound_data_from_68k, sound_data_from_6502;
-static int sound_data_from_68k_ready, sound_data_from_6502_ready;
+static UINT8 *bank_base;
+static UINT8 fast_68k_int, io_68k_int;
+static UINT8 sound_data_from_68k, sound_data_from_6502;
+static UINT8 sound_data_from_68k_ready, sound_data_from_6502_ready;
 
 
 
 /*************************************
  *
- *		Initialization
+ *	Initialization
  *
  *************************************/
 
@@ -187,7 +187,7 @@ static void cyberb2p_init_machine(void)
 
 /*************************************
  *
- *		I/O read dispatch.
+ *	I/O read dispatch.
  *
  *************************************/
 
@@ -220,7 +220,7 @@ static int sound_state_r(int offset)
 
 /*************************************
  *
- *		Extra I/O handlers.
+ *	Extra I/O handlers.
  *
  *************************************/
 
@@ -236,7 +236,7 @@ static void p2_reset_w(int offset, int data)
 
 /*************************************
  *
- *		6502 Sound Interface
+ *	6502 Sound Interface
  *
  *************************************/
 
@@ -297,7 +297,7 @@ static void sound_68k_6502_w(int offset, int data)
 
 /*************************************
  *
- *		68000 Sound Interface
+ *	68000 Sound Interface
  *
  *************************************/
 
@@ -368,7 +368,7 @@ static void sound_68k_w(int offset, int data)
 
 static void sound_68k_dac_w(int offset, int data)
 {
-	DAC_signed_data_w((offset >> 4) & 1, (signed short)data >> 8);
+	DAC_signed_data_w((offset >> 4) & 1, (INT16)data >> 8);
 
 	if (fast_68k_int)
 	{
@@ -380,7 +380,7 @@ static void sound_68k_dac_w(int offset, int data)
 
 /*************************************
  *
- *		68000 Sound Simulator
+ *	68000 Sound Simulator
  *
  *************************************/
 
@@ -388,47 +388,47 @@ static void sound_68k_dac_w(int offset, int data)
 
 struct sound_descriptor
 {
-	/*00*/unsigned short start_address_h;
-	/*02*/unsigned short start_address_l;
-	/*04*/unsigned short end_address_h;
-	/*06*/unsigned short end_address_l;
-	/*08*/unsigned short reps;
-	/*0a*/signed short volume;
-	/*0c*/signed short delta_volume;
-	/*0e*/signed short target_volume;
-	/*10*/unsigned short voice_priority;	/* voice high, priority low */
-	/*12*/unsigned short buffer_number;		/* buffer high, number low */
-	/*14*/unsigned short continue_unused;	/* continue high, unused low */
+	/*00*/UINT16 start_address_h;
+	/*02*/UINT16 start_address_l;
+	/*04*/UINT16 end_address_h;
+	/*06*/UINT16 end_address_l;
+	/*08*/UINT16 reps;
+	/*0a*/INT16 volume;
+	/*0c*/INT16 delta_volume;
+	/*0e*/INT16 target_volume;
+	/*10*/UINT16 voice_priority;	/* voice high, priority low */
+	/*12*/UINT16 buffer_number;		/* buffer high, number low */
+	/*14*/UINT16 continue_unused;	/* continue high, unused low */
 };
 
 struct voice_descriptor
 {
-	unsigned char playing;
-	unsigned char *start;
-	unsigned char *current;
-	unsigned char *end;
-	unsigned short reps;
-	signed short volume;
-	signed short delta_volume;
-	signed short target_volume;
-	unsigned char priority;
-	unsigned char number;
-	unsigned char buffer;
-	unsigned char cont;
-	signed short chunk[48];
-	unsigned char chunk_remaining;
+	UINT8 playing;
+	UINT8 *start;
+	UINT8 *current;
+	UINT8 *end;
+	UINT16 reps;
+	INT16 volume;
+	INT16 delta_volume;
+	INT16 target_volume;
+	UINT8 priority;
+	UINT8 number;
+	UINT8 buffer;
+	UINT8 cont;
+	INT16 chunk[48];
+	UINT8 chunk_remaining;
 };
 
 
-static signed short *volume_table;
+static INT16 *volume_table;
 static struct voice_descriptor voices[6];
-static unsigned char sound_enabled;
+static UINT8 sound_enabled;
 static int stream_channel;
 
 
-static void decode_chunk(unsigned char *memory, signed short *output, int overall)
+static void decode_chunk(UINT8 *memory, INT16 *output, int overall)
 {
-	unsigned short volume_bits = READ_WORD(memory);
+	UINT16 volume_bits = READ_WORD(memory);
 	int volume, i, j;
 
 	memory += 2;
@@ -440,7 +440,7 @@ static void decode_chunk(unsigned char *memory, signed short *output, int overal
 
 		for (j = 0; j < 4; j++)
 		{
-			unsigned short data = READ_WORD(memory);
+			UINT16 data = READ_WORD(memory);
 			memory += 2;
 			*output++ = volume_table[volume | ((data >>  0) & 0x000f)];
 			*output++ = volume_table[volume | ((data >>  4) & 0x000f)];
@@ -480,7 +480,7 @@ static void sample_stream_update(int param, void **buffer, int length)
 		/* loop until we're done */
 		while (left)
 		{
-			signed short *source;
+			INT16 *source;
 			int this_batch;
 
 			if (!voice->chunk_remaining)
@@ -516,14 +516,14 @@ static void sample_stream_update(int param, void **buffer, int length)
 			/* copy either 8-bit or 16-bit */
 			if (Machine->sample_bits == 16)
 			{
-				signed short *dest = output;
+				INT16 *dest = output;
 				while (this_batch--)
 					*dest++ += *source++;
 				output = dest;
 			}
 			else
 			{
-				signed char *dest = output;
+				INT8 *dest = output;
 				while (this_batch--)
 					*dest++ += *source++ >> 8;
 				output = dest;
@@ -545,7 +545,7 @@ static int samples_start(const struct MachineSound *msound)
 	(void)msound;
 
 	/* allocate volume table */
-	volume_table = malloc(sizeof(short) * 64 * 16);
+	volume_table = malloc(sizeof(INT16) * 64 * 16);
 	if (!volume_table)
 		return 1;
 
@@ -554,7 +554,7 @@ static int samples_start(const struct MachineSound *msound)
 	{
 		double factor = pow(0.5, (double)j * 0.25);
 		for (i = 0; i < 16; i++)
-			volume_table[j * 16 + i] = (signed short)(factor * (double)((signed short)(i << 12)));
+			volume_table[j * 16 + i] = (INT16)(factor * (double)((INT16)(i << 12)));
 	}
 
 	/* get stream channels */
@@ -587,7 +587,7 @@ static void handle_68k_sound_command(int command)
 {
 	struct sound_descriptor *sound;
 	struct voice_descriptor *voice;
-	unsigned short offset;
+	UINT16 offset;
 	int actual_delta, actual_volume;
 	int temp;
 
@@ -674,7 +674,7 @@ static void handle_68k_sound_command(int command)
 
 /*************************************
  *
- *		Main CPU memory handlers
+ *	Main CPU memory handlers
  *
  *************************************/
 
@@ -719,6 +719,13 @@ static struct MemoryWriteAddress main_writemem[] =
 };
 
 
+
+/*************************************
+ *
+ *	Extra CPU memory handlers
+ *
+ *************************************/
+
 static struct MemoryReadAddress extra_readmem[] =
 {
 	{ 0x000000, 0x03ffff, MRA_ROM },
@@ -753,6 +760,13 @@ static struct MemoryWriteAddress extra_writemem[] =
 };
 
 
+
+/*************************************
+ *
+ *	Sound CPU memory handlers
+ *
+ *************************************/
+
 struct MemoryReadAddress sound_readmem[] =
 {
 	{ 0x0000, 0x1fff, MRA_RAM },
@@ -782,9 +796,16 @@ struct MemoryWriteAddress sound_writemem[] =
 };
 
 
+
+/*************************************
+ *
+ *	68000 Sound CPU memory handlers
+ *
+ *************************************/
+
 #ifdef EMULATE_SOUND_68000
 
-static unsigned char *ram;
+static UINT8 *ram;
 static int ram_r(int offset) { return READ_WORD(&ram[offset]); }
 static void ram_w(int offset, int data) { COMBINE_WORD_MEM(&ram[offset], data); }
 
@@ -808,6 +829,13 @@ static struct MemoryWriteAddress sound_68k_writemem[] =
 
 #endif
 
+
+
+/*************************************
+ *
+ *	2-player main CPU memory handlers
+ *
+ *************************************/
 
 static struct MemoryReadAddress cyberb2p_readmem[] =
 {
@@ -847,7 +875,7 @@ static struct MemoryWriteAddress cyberb2p_writemem[] =
 
 /*************************************
  *
- *		Port definitions
+ *	Port definitions
  *
  *************************************/
 
@@ -935,7 +963,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *		Graphics definitions
+ *	Graphics definitions
  *
  *************************************/
 
@@ -1015,7 +1043,7 @@ static struct GfxDecodeInfo gfxdecodeinfo_interleaved[] =
 
 /*************************************
  *
- *		Sound definitions
+ *	Sound definitions
  *
  *************************************/
 
@@ -1049,7 +1077,7 @@ static struct CustomSound_interface samples_interface =
 
 /*************************************
  *
- *		Machine driver
+ *	Machine driver
  *
  *************************************/
 
@@ -1142,7 +1170,7 @@ static struct MachineDriver cyberb2p_machine_driver =
 		},
 		{
 			JSA_II_CPU(1)
-		},
+		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
@@ -1169,7 +1197,7 @@ static struct MachineDriver cyberb2p_machine_driver =
 
 /*************************************
  *
- *		ROM definition(s)
+ *	ROM definition(s)
  *
  *************************************/
 
@@ -1326,11 +1354,11 @@ ROM_END
 
 /*************************************
  *
- *		Machine initialization
+ *	Machine initialization
  *
  *************************************/
 
-static const unsigned short default_eeprom[] =
+static const UINT16 default_eeprom[] =
 {
 	0x0001,0x01FF,0x0F00,0x011A,0x014A,0x0100,0x01A1,0x0200,
 	0x010E,0x01AF,0x0300,0x01FF,0x0114,0x0144,0x01FF,0x0F00,
@@ -1394,9 +1422,10 @@ static void cyberb2p_init(void)
 }
 
 
+
 /*************************************
  *
- *		Game driver(s)
+ *	Game driver(s)
  *
  *************************************/
 

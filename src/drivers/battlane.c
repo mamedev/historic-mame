@@ -11,6 +11,7 @@
 #include "vidhrdw/generic.h"
 #include "cpu/m6809/m6809.h"
 
+
 int battlane_vh_start(void);
 void battlane_vh_stop(void);
 void battlane_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -25,11 +26,36 @@ extern void battlane_video_ctrl_w(int, int);
 extern int battlane_video_ctrl_r(int);
 
 
+/*
+BattleLane uses an unknown M6809 interrupt vector 0xfffa (this is actually the
+SWI vector, so the following is completely wrong - NS).
+
+Since the core doesn't support this, I will swap the FIRQ and unknown vectors
+around (swapping keeps the self test happy)
+*/
+
+#define VECTOR_KLUDGE 1
+
+#if VECTOR_KLUDGE
+#define M6809_IRQ2_LINE M6809_FIRQ_LINE
+
+void battlane_machine_init(void)
+{
+	unsigned char *SLAVERAM =
+		Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	int b1, b2;
+	b1=SLAVERAM[0xfff6];
+	b2=SLAVERAM[0xfff7];
+	SLAVERAM[0xfff6]=SLAVERAM[0xfffa];
+	SLAVERAM[0xfff7]=SLAVERAM[0xfffb];
+	SLAVERAM[0xfffa]=b1;
+	SLAVERAM[0xfffb]=b2;
+}
+#else
 void battlane_machine_init(void)
 {
 }
-
-static int battlane_irq_enable;
+#endif
 
 void battlane_shared_ram_w(int offset, int data)
 {
@@ -45,18 +71,56 @@ int battlane_shared_ram_r(int offset)
 	return RAM[offset];
 }
 
+static int battlane_cpu_control;
+
 void cpu1_command_w(int offset, int data)
 {
-	battlane_irq_enable=data;
-	if (errorlog)
+	battlane_cpu_control=data;
+	/*if (errorlog)
 	{
-		fprintf(errorlog, "IRQ=%02x\n", data);
-	}
-}
+		fprintf(errorlog, "CPU# PC=%04x IRQ=%02x\n", cpu_get_pc(), data);
+	}*/
 
-int cpu1_command_r(int offset)
-{
-	return battlane_irq_enable;
+	/*
+	CPU control register
+
+		0x80	= ???
+		0x08	= ???
+		0x04	= Unknown IRQ vector 0xfffa (1=Activate)
+		0x02	= IRQ	(0=Activate)
+		0x01	= ???
+	*/
+
+
+	/*
+	No idea what is connected to the NMI lines yet
+	*/
+	//cpu_set_nmi_line(0,     data & 0x80 ? CLEAR_LINE : HOLD_LINE);
+	//cpu_set_nmi_line(1,     data & 0x80 ? CLEAR_LINE : HOLD_LINE);
+
+
+	/*
+	Trigger an 6809 IRQ at vector 0xfffa
+	*/
+	cpu_set_irq_line(1, M6809_IRQ2_LINE,  (~data) & 0x04 ? CLEAR_LINE : HOLD_LINE);
+
+	/*
+	Slave function call (e.g. ROM test):
+	FA7F: 86 03       LDA   #$03	; Function code
+	FA81: 97 6B       STA   $6B
+	FA83: 86 0E       LDA   #$0E
+	FA85: 84 FD       ANDA  #$FD	; Trigger IRQ
+	FA87: 97 66       STA   $66
+	FA89: B7 1C 03    STA   $1C03	; Do Trigger
+	FA8C: C6 40       LDB   #$40
+	FA8E: D5 68       BITB  $68
+	FA90: 27 FA       BEQ   $FA8C	; Wait for slave IRQ pre-function dispatch
+	FA92: 96 68       LDA   $68
+	FA94: 84 01       ANDA  #$01
+	FA96: 27 FA       BEQ   $FA92	; Wait for bit to be set
+	*/
+
+	cpu_set_irq_line(1, M6809_IRQ_LINE,   data & 0x02 ? CLEAR_LINE : HOLD_LINE);
 }
 
 static struct MemoryReadAddress cpu1_readmem[] =
@@ -89,78 +153,9 @@ static struct MemoryWriteAddress cpu1_writemem[] =
 	{ -1 }  /* end of table */
 };
 
-#if 0
-static struct MemoryReadAddress cpu2_readmem[] =
-{
-	{ 0x0000, 0x0fff, battlane_shared_ram_r },
-	{ 0x1c00, 0x1c00, input_port_0_r },
-	{ 0x1c01, 0x1c01, input_port_1_r },
-	{ 0x1c02, 0x1c02, input_port_2_r },
-	{ 0x1c03, 0x1c03, input_port_3_r },
-	{ 0x4000, 0xffff, MRA_ROM },
-	{ -1 }  /* end of table */
-};
-
-static struct MemoryWriteAddress cpu2_writemem[] =
-{
-	{ 0x0000, 0x0fff, battlane_shared_ram_w },
-//	{ 0x1c00, 0x1c00, battlane_video_ctrl_w },
-//	{ 0x2000, 0x3fff, battlane_bitmap_w, &battlane_bitmap, &battlane_bitmap_size },
-	{ 0x4000, 0xffff, MWA_ROM },
-	{ -1 }  /* end of table */
-};
-#endif
-
-static int nmipending=0;
 
 int battlane_cpu1_interrupt(void)
 {
-	static int s1;
-	s1++;
-
-#if 1
-	if (keyboard_pressed(KEYCODE_N))
-	{
-		while (keyboard_pressed(KEYCODE_F)) ;
-		nmipending=1;
-	}
-#else
-	nmipending=1;
-#endif
-	switch (s1)
-	{
-		case 1:
-			if (! (battlane_irq_enable & 0x02))
-			{
-                    return interrupt();
-			}
-			break;
-
-		case 2:
-		{
-		    return M6809_INT_FIRQ;
-		}
-		break;
-
-		case 3:
-		{
-			s1=0;
-			if (!(battlane_irq_enable & 0x08))
-			{
-				if (nmipending)
-                    return nmi_interrupt(); //M6809_INT_NMI;
-			}
-		}
-		break;
-	}
-
-    return ignore_interrupt(); //M6809_INT_NONE;
-}
-
-int battlane_cpu2_interrupt(void)
-{
-	static int s1;
-	s1++;
 
 #ifdef MAME_DEBUG
 	if (keyboard_pressed(KEYCODE_F))
@@ -180,36 +175,40 @@ int battlane_cpu2_interrupt(void)
 #endif
 
 
-	switch (s1)
+	if (cpu_getiloops()!=0)
 	{
-		case 1:
-			if (! (battlane_irq_enable & 0x02))
-			{
-                    return interrupt();
-			}
-			break;
-		case 2:
-		{
-			return M6809_INT_FIRQ;
-		}
-		break;
-
-		case 3:
-		{
-			s1=0;
-			if (!(battlane_irq_enable & 0x08))
-			{
-				if (nmipending)
-                    return nmi_interrupt();
-			}
-			nmipending=0;
-		}
+		return interrupt();
 	}
+	else
+	{
+		/*
+		Hit N like crazy to get the demo loop running. Both must be triggered
+		at the same time since the slave NMI waits for the master to complete.
+		NMI is used to update the sprites.
+		*/
+		if (keyboard_pressed(KEYCODE_N))
+		{
+			static int NMI=0;
+			NMI=~NMI;
+			cpu_set_nmi_line(0,  NMI ? CLEAR_LINE : HOLD_LINE);
+			cpu_set_nmi_line(1,  NMI ? CLEAR_LINE : HOLD_LINE);
+		}
 
-    return ignore_interrupt();
 
+		/*
+		FIRQ seems to drive the music & coin inputs. I have no idea what it is
+		attached to
+		*/
+
+		return M6809_INT_FIRQ;
+	}
 }
 
+int battlane_cpu2_interrupt(void)
+{
+	/* CPU2's interrupts are generated on-demand by CPU1 */
+	return ignore_interrupt();
+}
 
 
 INPUT_PORTS_START( input_ports )
@@ -231,7 +230,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )	/* VBLank ? */
 
 	PORT_START      /* DSW1 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_B ) )
@@ -326,7 +325,7 @@ static struct GfxLayout tilelayout2 =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-    { 1, 0x00000, &spritelayout,    32, 32},
+    { 1, 0x00000, &spritelayout,     0, 32},
     { 1, 0x18000, &tilelayout,       8, 32},
     { 1, 0x18000, &tilelayout2,      8, 32},
 	{ -1 } /* end of array */
@@ -349,14 +348,14 @@ static struct MachineDriver machine_driver =
 			1250000,        /* 1.25 Mhz ? */
 			0,
 			cpu1_readmem,cpu1_writemem,0,0,
-            battlane_cpu1_interrupt,6
+            battlane_cpu1_interrupt,3
 		},
 		{
 			CPU_M6809,
 			1250000,        /* 1.25 Mhz ? */
 			2,      /* memory region #2 */
 			cpu1_readmem,cpu1_writemem,0,0,
-            battlane_cpu2_interrupt,6
+            battlane_cpu2_interrupt,1
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */

@@ -488,10 +488,10 @@ static struct MachineDriver raidena_machine_driver =
 
 ROM_START( raiden_rom )
 	ROM_REGION(0x100000) /* Region 0 - v30 main cpu */
-	ROM_LOAD_GFX_EVEN("rai1.bin",   0x0a0000, 0x10000, 0xa4b12785 )
-	ROM_LOAD_GFX_ODD ("rai2.bin",   0x0a0000, 0x10000, 0x17640bd5 )
-	ROM_LOAD_GFX_EVEN("rai3.bin",   0x0c0000, 0x20000, 0x9d735bf5 )
-	ROM_LOAD_GFX_ODD ("rai4.bin",   0x0c0000, 0x20000, 0x8d184b99 )
+	ROM_LOAD_GFX_EVEN( "rai1.bin",   0x0a0000, 0x10000, 0xa4b12785 )
+	ROM_LOAD_GFX_ODD ( "rai2.bin",   0x0a0000, 0x10000, 0x17640bd5 )
+	ROM_LOAD_GFX_EVEN( "rai3.bin",   0x0c0000, 0x20000, 0x9d735bf5 )
+	ROM_LOAD_GFX_ODD ( "rai4.bin",   0x0c0000, 0x20000, 0x8d184b99 )
 
 	ROM_REGION_DISPOSE(0x1a0000)	/* Region 1 - Graphics */
 	ROM_LOAD( "rai9.bin",     0x000000, 0x08000, 0x1922b25e ) /* chars */
@@ -505,8 +505,8 @@ ROM_START( raiden_rom )
 	ROM_LOAD( "rai6.bin", 0x000000, 0x10000, 0x723a483b )
 
 	ROM_REGION(0x100000) /* Region 3 - v30 sub cpu */
-	ROM_LOAD_GFX_EVEN("rai5.bin",   0x0c0000, 0x20000, 0x7aca6d61 )
-	ROM_LOAD_GFX_ODD ("rai6a.bin",  0x0c0000, 0x20000, 0xe3d35cc2 )
+	ROM_LOAD_GFX_EVEN( "rai5.bin",   0x0c0000, 0x20000, 0x7aca6d61 )
+	ROM_LOAD_GFX_ODD ( "rai6a.bin",  0x0c0000, 0x20000, 0xe3d35cc2 )
 
 	ROM_REGION(0x10000)	 /* Region 4 - ADPCM samples */
 	ROM_LOAD( "rai7.bin", 0x000000, 0x10000, 0x8f927822 )
@@ -514,12 +514,12 @@ ROM_END
 
 ROM_START(raidena_rom)
 	ROM_REGION(0x100000) /* Region 0 - v20 main cpu */
-	ROM_LOAD_GFX_EVEN("rai1.bin",   0x0a0000, 0x10000, 0xa4b12785 )
-	ROM_LOAD_GFX_ODD ("rai2.bin",   0x0a0000, 0x10000, 0x17640bd5 )
-//	ROM_LOAD_GFX_EVEN("raiden03.rom", 0x0c0000, 0x20000, 0x9d75bf5 )
-//	ROM_LOAD_GFX_ODD ("raiden04.rom", 0x0c0000, 0x20000, 0x8d18b99 )
+	ROM_LOAD_GFX_EVEN( "rai1.bin",     0x0a0000, 0x10000, 0xa4b12785 )
+	ROM_LOAD_GFX_ODD ( "rai2.bin",     0x0a0000, 0x10000, 0x17640bd5 )
+//	ROM_LOAD_GFX_EVEN( "raiden03.rom", 0x0c0000, 0x20000, 0xffffffff )
+//	ROM_LOAD_GFX_ODD ( "raiden04.rom", 0x0c0000, 0x20000, 0xffffffff )
 
-	ROM_LOAD("dec.out",               0x0c0000, 0x40000, 1)
+	ROM_LOAD("dec.out",               0x0c0000, 0x40000, 0xffffffff )
 
 	ROM_REGION_DISPOSE(0x1a0000)	/* Region 1 - Graphics */
 	ROM_LOAD( "rai9.bin",     0x000000, 0x08000, 0x1922b25e ) /* chars */
@@ -530,13 +530,13 @@ ROM_START(raidena_rom)
 	ROM_LOAD( "raiu165.bin",  0x120000, 0x80000, 0x946d7bde )
 
 	ROM_REGION(0x10000)	 /* Region 2 - 64k code for sound Z80 */
-	ROM_LOAD( "raiden08.rom", 0x000000, 0x10000, 0x72a483b )
+	ROM_LOAD( "raiden08.rom", 0x000000, 0x10000, 0xffffffff )
 
 	ROM_REGION(0x100000) /* Region 3 - v20 sub cpu */
-//	ROM_LOAD_GFX_EVEN("raiden05.rom",   0x0c0000, 0x20000, 0x7a6d61 )
-//	ROM_LOAD_GFX_ODD ("raiden06.rom",   0x0c0000, 0x20000, 0xe35cc2 )
-	ROM_LOAD_GFX_EVEN("rai5.bin",   0x0c0000, 0x20000, 0x7aca6d61 )
-	ROM_LOAD_GFX_ODD ("rai6a.bin",  0x0c0000, 0x20000, 0xe3d35cc2 )
+//	ROM_LOAD_GFX_EVEN( "raiden05.rom",   0x0c0000, 0x20000, 0xffffffff )
+//	ROM_LOAD_GFX_ODD ( "raiden06.rom",   0x0c0000, 0x20000, 0xffffffff )
+	ROM_LOAD_GFX_EVEN( "rai5.bin",   0x0c0000, 0x20000, 0x7aca6d61 )
+	ROM_LOAD_GFX_ODD ( "rai6a.bin",  0x0c0000, 0x20000, 0xe3d35cc2 )
 
 	ROM_REGION(0x10000)	 /* Region 4 - ADPCM samples */
 	ROM_LOAD( "rai7.bin", 0x000000, 0x10000, 0x8f927822 )

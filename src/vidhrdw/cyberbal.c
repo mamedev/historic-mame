@@ -59,13 +59,10 @@
 #define YDIM (YCHARS*8)
 
 
-#define DEBUG_VIDEO 0
-
-
 
 /*************************************
  *
- *		Structures
+ *	Structures
  *
  *************************************/
 
@@ -79,50 +76,46 @@ struct mo_params
 
 /*************************************
  *
- *		Globals we own
+ *	Globals we own
  *
  *************************************/
 
-unsigned char *cyberbal_playfieldram_1;
-unsigned char *cyberbal_playfieldram_2;
+UINT8 *cyberbal_playfieldram_1;
+UINT8 *cyberbal_playfieldram_2;
 
 
 
 /*************************************
  *
- *		Statics
+ *	Statics
  *
  *************************************/
 
 static struct atarigen_pf_state pf_state;
-static int current_slip;
-static unsigned char *active_palette;
+static UINT8 current_slip;
+static UINT8 *active_palette;
 
 
 
 /*************************************
  *
- *		Prototypes
+ *	Prototypes
  *
  *************************************/
 
-static const unsigned char *update_palette(void);
+static const UINT8 *update_palette(void);
 
 static void pf_color_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *data);
 static void pf_render_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *data);
 
-static void mo_color_callback(const unsigned short *data, const struct rectangle *clip, void *param);
-static void mo_render_callback(const unsigned short *data, const struct rectangle *clip, void *param);
-
-#if DEBUG_VIDEO
-static int debug(void);
-#endif
+static void mo_color_callback(const UINT16 *data, const struct rectangle *clip, void *param);
+static void mo_render_callback(const UINT16 *data, const struct rectangle *clip, void *param);
 
 
 
 /*************************************
  *
- *		Video system start
+ *	Video system start
  *
  *************************************/
 
@@ -166,7 +159,7 @@ int cyberbal_vh_start(void)
 
 /*************************************
  *
- *		Video system shutdown
+ *	Video system shutdown
  *
  *************************************/
 
@@ -180,11 +173,11 @@ void cyberbal_vh_stop(void)
 
 /*************************************
  *
- *		Palette tweaker
+ *	Palette tweaker
  *
  *************************************/
 
-INLINE void set_palette_entry(int entry, unsigned short value)
+INLINE void set_palette_entry(int entry, UINT16 value)
 {
 	int r, g, b;
 
@@ -203,7 +196,7 @@ INLINE void set_palette_entry(int entry, unsigned short value)
 
 /*************************************
  *
- *		Screen switcher
+ *	Screen switcher
  *
  *************************************/
 
@@ -234,7 +227,7 @@ void cyberbal_set_screen(int which)
 
 /*************************************
  *
- *		Playfield RAM write handlers
+ *	Playfield RAM write handlers
  *
  *************************************/
 
@@ -269,7 +262,7 @@ void cyberbal_playfieldram_2_w(int offset, int data)
 
 /*************************************
  *
- *		Palette RAM write handlers
+ *	Palette RAM write handlers
  *
  *************************************/
 
@@ -314,16 +307,16 @@ int cyberbal_paletteram_2_r(int offset)
 
 /*************************************
  *
- *		Periodic scanline updater
+ *	Periodic scanline updater
  *
  *************************************/
 
 void cyberbal_scanline_update(int scanline)
 {
-	unsigned short *base = (unsigned short *)&atarigen_alpharam[((scanline / 8) * 64 + 47) * 2];
+	UINT16 *base = (UINT16 *)&atarigen_alpharam[((scanline / 8) * 64 + 47) * 2];
 
 	/* keep in range */
-	if ((unsigned char *)base >= &atarigen_alpharam[atarigen_alpharam_size])
+	if ((UINT8 *)base >= &atarigen_alpharam[atarigen_alpharam_size])
 		return;
 
 	/* update the playfield with the previous parameters */
@@ -355,7 +348,7 @@ void cyberbal_scanline_update(int scanline)
 
 /*************************************
  *
- *		Main refresh
+ *	Main refresh
  *
  *************************************/
 
@@ -364,10 +357,6 @@ void cyberbal_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	struct mo_params modata;
 	const struct GfxElement *gfx;
 	int x, y, offs;
-
-#if DEBUG_VIDEO
-	int xorval = debug();
-#endif
 
 	/* update the palette, and mark things dirty */
 	if (update_palette())
@@ -402,13 +391,13 @@ void cyberbal_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 /*************************************
  *
- *		Palette management
+ *	Palette management
  *
  *************************************/
 
-static const unsigned char *update_palette(void)
+static const UINT8 *update_palette(void)
 {
-	unsigned short pf_map[16 * 8], mo_map[16], al_map[8];
+	UINT16 pf_map[16 * 8], mo_map[16], al_map[8];
 	const unsigned int *usage;
 	int i, j, x, y, offs;
 
@@ -438,7 +427,7 @@ static const unsigned char *update_palette(void)
 	/* rebuild the playfield palette */
 	for (i = 0; i < 16 * 8; i++)
 	{
-		unsigned short used = pf_map[i];
+		UINT16 used = pf_map[i];
 		if (used)
 			for (j = 0; j < 16; j++)
 				if (used & (1 << j))
@@ -448,7 +437,7 @@ static const unsigned char *update_palette(void)
 	/* rebuild the motion object palette */
 	for (i = 0; i < 16; i++)
 	{
-		unsigned short used = mo_map[i];
+		UINT16 used = mo_map[i];
 		if (used)
 		{
 			palette_used_colors[0x600 + i * 16 + 0] = PALETTE_COLOR_TRANSPARENT;
@@ -461,7 +450,7 @@ static const unsigned char *update_palette(void)
 	/* rebuild the alphanumerics palette */
 	for (i = 0; i < 8; i++)
 	{
-		unsigned short used = al_map[i];
+		UINT16 used = al_map[i];
 		if (used)
 		{
 			palette_used_colors[0x780 + i * 16 + 0] = PALETTE_COLOR_TRANSPARENT;
@@ -479,13 +468,13 @@ static const unsigned char *update_palette(void)
 
 /*************************************
  *
- *		Playfield palette
+ *	Playfield palette
  *
  *************************************/
 
 static void pf_color_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *param)
 {
-	unsigned short *colormap = (unsigned short *)param + 16 * state->param[0];
+	UINT16 *colormap = (UINT16 *)param + 16 * state->param[0];
 	const unsigned int *usage = Machine->gfx[0]->pen_usage;
 	int x, y;
 
@@ -507,7 +496,7 @@ static void pf_color_callback(const struct rectangle *clip, const struct rectang
 
 /*************************************
  *
- *		Playfield rendering
+ *	Playfield rendering
  *
  *************************************/
 
@@ -549,15 +538,15 @@ static void pf_render_callback(const struct rectangle *clip, const struct rectan
 
 /*************************************
  *
- *		Motion object palette
+ *	Motion object palette
  *
  *************************************/
 
-static void mo_color_callback(const unsigned short *data, const struct rectangle *clip, void *param)
+static void mo_color_callback(const UINT16 *data, const struct rectangle *clip, void *param)
 {
 	const unsigned int *usage = Machine->gfx[1]->pen_usage;
-	unsigned short *colormap = param;
-	unsigned short temp = 0;
+	UINT16 *colormap = param;
+	UINT16 temp = 0;
 	int y;
 
 	int code = data[0] & 0x7fff;
@@ -573,11 +562,11 @@ static void mo_color_callback(const unsigned short *data, const struct rectangle
 
 /*************************************
  *
- *		Motion object rendering
+ *	Motion object rendering
  *
  *************************************/
 
-static void mo_render_callback(const unsigned short *data, const struct rectangle *clip, void *param)
+static void mo_render_callback(const UINT16 *data, const struct rectangle *clip, void *param)
 {
 	const struct GfxElement *gfx = Machine->gfx[1];
 	struct mo_params *modata = param;
@@ -614,107 +603,3 @@ static void mo_render_callback(const unsigned short *data, const struct rectangl
 	/* draw the motion object */
 	atarigen_mo_draw_16x8_strip(bitmap, gfx, code, color, hflip, 0, xpos, ypos, vsize, clip, TRANSPARENCY_PEN, 0);
 }
-
-
-
-/*************************************
- *
- *		Debugging
- *
- *************************************/
-
-#if DEBUG_VIDEO
-
-static void mo_print_callback(struct osd_bitmap *bitmap, struct rectangle *clip, unsigned short *data, void *param)
-{
-	int code = (data[0] & 0x7fff);
-	int vsize = (data[1] & 15) + 1;
-	int xpos = (data[3] >> 7);
-	int ypos = (data[1] >> 7);
-	int color = data[3] & 15;
-	int hflip = data[0] & 0x8000;
-
-	FILE *f = (FILE *)param;
-	fprintf(f, "P=%04X X=%03X Y=%03X SIZE=%X COL=%X FLIP=%X  -- DATA=%04X %04X %04X %04X\n",
-			code, xpos, ypos, vsize, color, hflip >> 15, data[0], data[1], data[2], data[3]);
-}
-
-static int debug(void)
-{
-	int hidebank = -1;
-
-	if (keyboard_key_pressed(KEYCODE_Q)) hidebank = 0;
-	if (keyboard_key_pressed(KEYCODE_W)) hidebank = 1;
-	if (keyboard_key_pressed(KEYCODE_E)) hidebank = 2;
-	if (keyboard_key_pressed(KEYCODE_R)) hidebank = 3;
-	if (keyboard_key_pressed(KEYCODE_T)) hidebank = 4;
-	if (keyboard_key_pressed(KEYCODE_Y)) hidebank = 5;
-	if (keyboard_key_pressed(KEYCODE_U)) hidebank = 6;
-	if (keyboard_key_pressed(KEYCODE_I)) hidebank = 7;
-
-	if (keyboard_key_pressed(KEYCODE_A)) hidebank = 8;
-	if (keyboard_key_pressed(KEYCODE_S)) hidebank = 9;
-	if (keyboard_key_pressed(KEYCODE_D)) hidebank = 10;
-	if (keyboard_key_pressed(KEYCODE_F)) hidebank = 11;
-	if (keyboard_key_pressed(KEYCODE_G)) hidebank = 12;
-	if (keyboard_key_pressed(KEYCODE_H)) hidebank = 13;
-	if (keyboard_key_pressed(KEYCODE_J)) hidebank = 14;
-	if (keyboard_key_pressed(KEYCODE_K)) hidebank = 15;
-
-	if (keyboard_key_pressed(KEYCODE_9))
-	{
-		static int count;
-		char name[50];
-		FILE *f;
-		int i;
-
-		while (keyboard_key_pressed(KEYCODE_9)) { }
-
-		sprintf(name, "Dump %d", ++count);
-		f = fopen(name, "wt");
-
-		fprintf(f, "\n\nPalette RAM:\n");
-
-		for (i = 0x000; i < 0x800; i++)
-		{
-			fprintf(f, "%04X ", READ_WORD(&paletteram[i*2]));
-			if ((i & 15) == 15) fprintf(f, "\n");
-			if ((i & 255) == 255) fprintf(f, "\n");
-		}
-
-		fprintf(f, "\n\nMotion Objects (drawn)\n");
-		atarigen_mo_process(mo_print_callback, f);
-
-		fprintf(f, "\n\nMotion Objects\n");
-		for (i = 0; i < 0x400; i++)
-		{
-			fprintf(f, "   Object %02X:  P=%04X  Y=%04X  L=%04X  X=%04X\n",
-					i,
-					READ_WORD(&atarigen_spriteram[i*8+0]),
-					READ_WORD(&atarigen_spriteram[i*8+2]),
-					READ_WORD(&atarigen_spriteram[i*8+4]),
-					READ_WORD(&atarigen_spriteram[i*8+6])
-			);
-		}
-
-		fprintf(f, "\n\nPlayfield dump\n");
-		for (i = 0; i < atarigen_playfieldram_size / 2; i++)
-		{
-			fprintf(f, "%04X ", READ_WORD(&atarigen_playfieldram[i*2]));
-			if ((i & 63) == 63) fprintf(f, "\n");
-		}
-
-		fprintf(f, "\n\nAlpha dump\n");
-		for (i = 0; i < atarigen_alpharam_size / 2; i++)
-		{
-			fprintf(f, "%04X ", READ_WORD(&atarigen_alpharam[i*2]));
-			if ((i & 63) == 63) fprintf(f, "\n");
-		}
-
-		fclose(f);
-	}
-
-	return hidebank;
-}
-
-#endif

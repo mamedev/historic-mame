@@ -68,19 +68,19 @@
 
 /*************************************
  *
- *		Globals
+ *	Globals
  *
  *************************************/
 
 struct rectangle hydra_mo_area;
-int hydra_mo_priority_offset;
-int hydra_pf_xoffset;
+UINT32 hydra_mo_priority_offset;
+INT32 hydra_pf_xoffset;
 
 
 
 /*************************************
  *
- *		Structures
+ *	Structures
  *
  *************************************/
 
@@ -101,28 +101,28 @@ struct mo_sort_entry
 
 /*************************************
  *
- *		Statics
+ *	Statics
  *
  *************************************/
 
 static struct atarigen_pf_state pf_state;
-static int current_control;
+static UINT16 current_control;
 
 
 
 /*************************************
  *
- *		Prototypes
+ *	Prototypes
  *
  *************************************/
 
-static const unsigned char *update_palette(void);
+static const UINT8 *update_palette(void);
 
 static void pf_color_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *param);
 static void pf_render_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *param);
 
-static void mo_color_callback(const unsigned short *data, const struct rectangle *clip, void *param);
-static void mo_render_callback(const unsigned short *data, const struct rectangle *clip, void *param);
+static void mo_color_callback(const UINT16 *data, const struct rectangle *clip, void *param);
+static void mo_render_callback(const UINT16 *data, const struct rectangle *clip, void *param);
 
 #if DEBUG_VIDEO
 static int debug(void);
@@ -132,7 +132,7 @@ static int debug(void);
 
 /*************************************
  *
- *		Video system start
+ *	Video system start
  *
  *************************************/
 
@@ -152,10 +152,10 @@ int hydra_vh_start(void)
 	/* add the top bit to the playfield graphics */
 	if (Machine->gfx[0])
 	{
-		const unsigned char *src = &Machine->memory_region[4][0x80000];
+		const UINT8 *src = &Machine->memory_region[4][0x80000];
 		unsigned int *pen_usage = Machine->gfx[0]->pen_usage;
 		int n, h, w;
-		unsigned char *dst = Machine->gfx[0]->gfxdata;
+		UINT8 *dst = Machine->gfx[0]->gfxdata;
 
 		for (n = 0; n < Machine->gfx[0]->total_elements; n ++)
 		{
@@ -163,7 +163,7 @@ int hydra_vh_start(void)
 
 			for (h = 0; h < 8; h++)
 			{
-				unsigned char bits = *src++;
+				UINT8 bits = *src++;
 
 				for (w = 0; w < 8; w++, dst += (1 << HIGH_RES), bits <<= 1)
 				{
@@ -198,7 +198,7 @@ int hydra_vh_start(void)
 
 /*************************************
  *
- *		Video system shutdown
+ *	Video system shutdown
  *
  *************************************/
 
@@ -212,7 +212,7 @@ void hydra_vh_stop(void)
 
 /*************************************
  *
- *		Playfield RAM write handler
+ *	Playfield RAM write handler
  *
  *************************************/
 
@@ -232,7 +232,7 @@ void hydra_playfieldram_w(int offset, int data)
 
 /*************************************
  *
- *		Periodic scanline updater
+ *	Periodic scanline updater
  *
  *************************************/
 
@@ -247,13 +247,13 @@ void hydra_mo_control_w(int offset, int data)
 
 void hydra_scanline_update(int scanline)
 {
-	unsigned short *base = (unsigned short *)&atarigen_alpharam[((scanline / 8) * 64 + 47) * 2];
+	UINT16 *base = (UINT16 *)&atarigen_alpharam[((scanline / 8) * 64 + 47) * 2];
 	int i;
 
 if (scanline == 0 && errorlog) fprintf(errorlog, "-------\n");
 
 	/* keep in range */
-	if ((unsigned char *)base >= &atarigen_alpharam[atarigen_alpharam_size])
+	if ((UINT8 *)base >= &atarigen_alpharam[atarigen_alpharam_size])
 		return;
 
 	/* update the current parameters */
@@ -286,7 +286,7 @@ if (scanline == 0 && errorlog) fprintf(errorlog, "-------\n");
 
 /*************************************
  *
- *		Main refresh
+ *	Main refresh
  *
  *************************************/
 
@@ -294,7 +294,7 @@ void hydra_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	/* 	a note about this: I don't see how to compute the MO ROM checksums, so these
 		are just the values Pit Fighter is expecting. Hydra never checks. */
-	static unsigned short mo_checksum[16] =
+	static UINT16 mo_checksum[16] =
 	{
 		0xc289, 0x3103, 0x2b8d, 0xe048, 0xc12e, 0x0ede, 0x2cd7, 0x7dc8,
 		0x58fc, 0xb877, 0x9449, 0x59d4, 0x8b63, 0x241b, 0xa3de, 0x4724
@@ -351,7 +351,7 @@ void hydra_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	/* now loop back and process */
 	for (x = 1; x < 256; x++)
 		for (current = list_head[x]; current; current = current->next)
-			mo_render_callback((const unsigned short *)&atarigen_spriteram[current->entry * 16], &hydra_mo_area, &modata);
+			mo_render_callback((const UINT16 *)&atarigen_spriteram[current->entry * 16], &hydra_mo_area, &modata);
 
 	/* draw the alphanumerics */
 	gfx = Machine->gfx[1];
@@ -373,14 +373,14 @@ void hydra_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 /*************************************
  *
- *		Palette management
+ *	Palette management
  *
  *************************************/
 
-static const unsigned char *update_palette(void)
+static const UINT8 *update_palette(void)
 {
-	unsigned short mo_map[16+4], al_map[16];
-	unsigned long pf_map[8];
+	UINT16 mo_map[16+4], al_map[16];
+	UINT32 pf_map[8];
 	const unsigned int *usage;
 	int i, j, x, y, offs;
 
@@ -398,7 +398,7 @@ static const unsigned char *update_palette(void)
 	{
 		int priority = READ_WORD(&atarigen_spriteram[j * 16 + hydra_mo_priority_offset]) & 0xff;
 		if (priority != 0)
-			mo_color_callback((const unsigned short *)&atarigen_spriteram[j * 16], &Machine->drv->visible_area, mo_map);
+			mo_color_callback((const UINT16 *)&atarigen_spriteram[j * 16], &Machine->drv->visible_area, mo_map);
 	}
 
 	/* update color usage for the alphanumerics */
@@ -415,7 +415,7 @@ static const unsigned char *update_palette(void)
 	/* rebuild the playfield palette */
 	for (i = 0; i < 8; i++)
 	{
-		unsigned long used = pf_map[i];
+		UINT32 used = pf_map[i];
 		if (used)
 			for (j = 0; j < 32; j++)
 				if (used & (1 << j))
@@ -425,7 +425,7 @@ static const unsigned char *update_palette(void)
 	/* rebuild the motion object palette */
 	for (i = 0; i < 16; i++)
 	{
-		unsigned short used = mo_map[i];
+		UINT16 used = mo_map[i];
 		if (used)
 		{
 			for (j = 0; j < 16; j++)
@@ -437,7 +437,7 @@ static const unsigned char *update_palette(void)
 	/* rebuild the alphanumerics palette */
 	for (i = 0; i < 16; i++)
 	{
-		unsigned short used = al_map[i];
+		UINT16 used = al_map[i];
 		if (used)
 		{
 			if (i < 8)
@@ -458,14 +458,14 @@ static const unsigned char *update_palette(void)
 
 /*************************************
  *
- *		Playfield palette
+ *	Playfield palette
  *
  *************************************/
 
 static void pf_color_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *param)
 {
 	const unsigned int *usage = Machine->gfx[0]->pen_usage;
-	unsigned long *colormap = (unsigned long *)param;
+	UINT32 *colormap = (UINT32 *)param;
 	int bankbase = state->param[0] * 0x1000;
 	int x, y;
 
@@ -487,7 +487,7 @@ static void pf_color_callback(const struct rectangle *clip, const struct rectang
 
 /*************************************
  *
- *		Playfield rendering
+ *	Playfield rendering
  *
  *************************************/
 
@@ -529,13 +529,13 @@ static void pf_render_callback(const struct rectangle *clip, const struct rectan
 
 /*************************************
  *
- *		Motion object palette
+ *	Motion object palette
  *
  *************************************/
 
-static void mo_color_callback(const unsigned short *data, const struct rectangle *clip, void *param)
+static void mo_color_callback(const UINT16 *data, const struct rectangle *clip, void *param)
 {
-	unsigned short *colormap = param;
+	UINT16 *colormap = param;
 
 	int scale = data[4];
 	int code = data[0] & 0x7fff;
@@ -580,11 +580,11 @@ static void mo_color_callback(const unsigned short *data, const struct rectangle
 
 /*************************************
  *
- *		Motion object rendering
+ *	Motion object rendering
  *
  *************************************/
 
-static void mo_render_callback(const unsigned short *data, const struct rectangle *clip, void *param)
+static void mo_render_callback(const UINT16 *data, const struct rectangle *clip, void *param)
 {
 	int scale = data[4];
 	int code = data[0] & 0x7fff;
@@ -594,8 +594,8 @@ static void mo_render_callback(const unsigned short *data, const struct rectangl
 		struct osd_bitmap *bitmap = modata->bitmap;
 		int hflip = data[0] & 0x8000;
 		int color = data[1] & 0xff;
-		int x = ((signed short)data[2] >> 6);
-		int y = ((signed short)data[3] >> 6);
+		int x = ((INT16)data[2] >> 6);
+		int y = ((INT16)data[3] >> 6);
 
 		atarigen_rle_render(bitmap, &atarigen_rle_info[code], color, hflip, 0, (x << HIGH_RES) + clip->min_x, y, scale << HIGH_RES, scale, clip);
 	}
@@ -605,13 +605,13 @@ static void mo_render_callback(const unsigned short *data, const struct rectangl
 
 /*************************************
  *
- *		Debugging
+ *	Debugging
  *
  *************************************/
 
 #if DEBUG_VIDEO
 
-static void mo_print_callback(struct osd_bitmap *bitmap, struct rectangle *clip, unsigned short *data, void *param)
+static void mo_print_callback(struct osd_bitmap *bitmap, struct rectangle *clip, UINT16 *data, void *param)
 {
 	int code = (data[0] & 0x7fff);
 	int vsize = (data[1] & 15) + 1;
@@ -629,32 +629,32 @@ static int debug(void)
 {
 	int hidebank = -1;
 
-	if (keyboard_key_pressed(KEYCODE_Q)) hidebank = 0;
-	if (keyboard_key_pressed(KEYCODE_W)) hidebank = 1;
-	if (keyboard_key_pressed(KEYCODE_E)) hidebank = 2;
-	if (keyboard_key_pressed(KEYCODE_R)) hidebank = 3;
-	if (keyboard_key_pressed(KEYCODE_T)) hidebank = 4;
-	if (keyboard_key_pressed(KEYCODE_Y)) hidebank = 5;
-	if (keyboard_key_pressed(KEYCODE_U)) hidebank = 6;
-	if (keyboard_key_pressed(KEYCODE_I)) hidebank = 7;
+	if (keyboard_pressed(KEYCODE_Q)) hidebank = 0;
+	if (keyboard_pressed(KEYCODE_W)) hidebank = 1;
+	if (keyboard_pressed(KEYCODE_E)) hidebank = 2;
+	if (keyboard_pressed(KEYCODE_R)) hidebank = 3;
+	if (keyboard_pressed(KEYCODE_T)) hidebank = 4;
+	if (keyboard_pressed(KEYCODE_Y)) hidebank = 5;
+	if (keyboard_pressed(KEYCODE_U)) hidebank = 6;
+	if (keyboard_pressed(KEYCODE_I)) hidebank = 7;
 
-	if (keyboard_key_pressed(KEYCODE_A)) hidebank = 8;
-	if (keyboard_key_pressed(KEYCODE_S)) hidebank = 9;
-	if (keyboard_key_pressed(KEYCODE_D)) hidebank = 10;
-	if (keyboard_key_pressed(KEYCODE_F)) hidebank = 11;
-	if (keyboard_key_pressed(KEYCODE_G)) hidebank = 12;
-	if (keyboard_key_pressed(KEYCODE_H)) hidebank = 13;
-	if (keyboard_key_pressed(KEYCODE_J)) hidebank = 14;
-	if (keyboard_key_pressed(KEYCODE_K)) hidebank = 15;
+	if (keyboard_pressed(KEYCODE_A)) hidebank = 8;
+	if (keyboard_pressed(KEYCODE_S)) hidebank = 9;
+	if (keyboard_pressed(KEYCODE_D)) hidebank = 10;
+	if (keyboard_pressed(KEYCODE_F)) hidebank = 11;
+	if (keyboard_pressed(KEYCODE_G)) hidebank = 12;
+	if (keyboard_pressed(KEYCODE_H)) hidebank = 13;
+	if (keyboard_pressed(KEYCODE_J)) hidebank = 14;
+	if (keyboard_pressed(KEYCODE_K)) hidebank = 15;
 
-	if (keyboard_key_pressed(KEYCODE_9))
+	if (keyboard_pressed(KEYCODE_9))
 	{
 		static int count;
 		char name[50];
 		FILE *f;
 		int i;
 
-		while (keyboard_key_pressed(KEYCODE_9)) { }
+		while (keyboard_pressed(KEYCODE_9)) { }
 
 		sprintf(name, "Dump %d", ++count);
 		f = fopen(name, "wt");

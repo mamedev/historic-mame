@@ -321,10 +321,10 @@ int png_read_file(void *fp, struct png_info *p)
 		default:
 			if (errorlog)
 			{
-				if (chunk_type & 0x40000000)
-					fprintf (errorlog, "Ignoring critical chunk name %s!\n",str_chunk_type);
+				if (chunk_type & 0x20000000)
+					fprintf (errorlog, "Ignoring ancillary chunk %s\n",str_chunk_type);
 				else
-					fprintf (errorlog, "Ignoring uncritical chunk name %s\n",str_chunk_type);
+					fprintf (errorlog, "Ignoring critical chunk %s!\n",str_chunk_type);
 			}
 			if (chunk_data)
 				free(chunk_data);

@@ -11,9 +11,10 @@
 
 
 
-unsigned int gberet_scroll[32];
+unsigned char *gberet_videoram,*gberet_colorram;
 unsigned char *gberet_spritebank;
 unsigned char *gberet_scrollram;
+static struct tilemap *bg_tilemap;
 static int interruptenable;
 static int flipscreen;
 static int sprites_type;
@@ -37,6 +38,7 @@ static int sprites_type;
   bit 0 -- 1  kohm resistor  -- RED
 
 ***************************************************************************/
+
 void gberet_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
 	int i;
@@ -74,21 +76,36 @@ void gberet_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 
 /***************************************************************************
 
+  Callbacks for the TileMap code
+
+***************************************************************************/
+
+static void get_tile_info( int col, int row )
+{
+	int tile_index = row*64+col;
+	unsigned char attr = gberet_colorram[tile_index];
+	SET_TILE_INFO(0,gberet_videoram[tile_index] + ((attr & 0x40) << 2),attr & 0x0f)
+	tile_info.flags = TILE_FLIPYX((attr & 0x30) >> 4) | TILE_SPLIT((attr & 0x80) >> 7);
+}
+
+
+
+/***************************************************************************
+
   Start the video hardware emulation.
 
 ***************************************************************************/
+
 int gberet_vh_start(void)
 {
-	if ((dirtybuffer = malloc(videoram_size)) == 0)
-		return 1;
-	memset(dirtybuffer,1,videoram_size);
+	bg_tilemap = tilemap_create(get_tile_info,TILEMAP_SPLIT,8,8,64,32);
 
-	/* Green Beret has a virtual screen twice as large as the visible screen */
-	if ((tmpbitmap = osd_create_bitmap(2 * Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
-	{
-		free(dirtybuffer);
-		return 1;
-	}
+	if (!bg_tilemap)
+		return 0;
+
+	bg_tilemap->transmask[0] = 0x0001; /* split type 0 has pen 1 transparent in front half */
+	bg_tilemap->transmask[1] = 0xffff; /* split type 1 is totally transparent in front half */
+	tilemap_set_scroll_rows(bg_tilemap,32);
 
 	return 0;
 }
@@ -104,18 +121,30 @@ void gberetb_init(void)
 }
 
 
+
 /***************************************************************************
 
-  Stop the video hardware emulation.
+  Memory handlers
 
 ***************************************************************************/
-void gberet_vh_stop(void)
+
+void gberet_videoram_w(int offset,int data)
 {
-	free(dirtybuffer);
-	osd_free_bitmap(tmpbitmap);
+	if (gberet_videoram[offset] != data)
+	{
+		gberet_videoram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap,offset%64,offset/64);
+	}
 }
 
-
+void gberet_colorram_w(int offset,int data)
+{
+	if (gberet_colorram[offset] != data)
+	{
+		gberet_colorram[offset] = data;
+		tilemap_mark_tile_dirty(bg_tilemap,offset%64,offset/64);
+	}
+}
 
 void gberet_e044_w(int offset,int data)
 {
@@ -123,23 +152,20 @@ void gberet_e044_w(int offset,int data)
 	interruptenable = data & 1;
 
 	/* bit 3 flips screen */
-	if (flipscreen != (data & 0x08))
-	{
-		flipscreen = data & 0x08;
-		memset(dirtybuffer,1,videoram_size);
-	}
+	flipscreen = data & 0x08;
+	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 
 	/* don't know about the other bits */
 }
 
 void gberet_scroll_w(int offset,int data)
 {
+	int scroll;
+
 	gberet_scrollram[offset] = data;
 
-	if (offset < 32)
-		gberet_scroll[offset] = (gberet_scroll[offset] & 0xff00) | data;
-	else
-		gberet_scroll[offset&0x1f] = (gberet_scroll[offset&0x1f] & 0x00ff) | (data << 8);
+	scroll = gberet_scrollram[offset & 0x1f] | (gberet_scrollram[offset | 0x20] << 8);
+	tilemap_set_scrollx(bg_tilemap,offset & 0x1f,scroll);
 }
 
 void gberetb_scroll_w(int offset,int data)
@@ -147,7 +173,7 @@ void gberetb_scroll_w(int offset,int data)
 	if (offset) data |= 0x100;
 
 	for (offset = 6;offset < 29;offset++)
-		gberet_scroll[offset] = data + 64-8;
+		tilemap_set_scrollx(bg_tilemap,offset,data + 64-8);
 }
 
 
@@ -166,9 +192,7 @@ int gberet_interrupt(void)
 
 /***************************************************************************
 
-  Draw the game screen in the given osd_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
+  Display refresh
 
 ***************************************************************************/
 
@@ -253,62 +277,12 @@ static void draw_sprites1(struct osd_bitmap *bitmap)
 
 void gberet_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int offs;
+	tilemap_update(ALL_TILEMAPS);
 
+	tilemap_render(ALL_TILEMAPS);
 
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		if (dirtybuffer[offs])
-		{
-			int sx,sy,flipx,flipy;
-
-
-			dirtybuffer[offs] = 0;
-
-			sx = offs % 64;
-			sy = offs / 64;
-			flipx = colorram[offs] & 0x10;
-			flipy = colorram[offs] & 0x20;
-			if (flipscreen)
-			{
-				sx = 63 - sx;
-				sy = 31 - sy;
-				flipx = !flipx;
-				flipy = !flipy;
-			}
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs] + ((colorram[offs] & 0x40) << 2),
-					colorram[offs] & 0x0f,
-					flipx,flipy,
-					8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
-		}
-	}
-
-
-	/* copy the temporary bitmap to the screen */
-	{
-		int scroll[32];
-
-
-		if (flipscreen)
-		{
-			for (offs = 0;offs < 32;offs++)
-				scroll[31-offs] = 256 + gberet_scroll[offs];
-		}
-		else
-		{
-			for (offs = 0;offs < 32;offs++)
-				scroll[offs] = -gberet_scroll[offs];
-		}
-
-		copyscrollbitmap(bitmap,tmpbitmap,32,scroll,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-	}
-
-
+	tilemap_draw(bitmap,bg_tilemap,TILEMAP_BACK);
 	if (sprites_type == 0) draw_sprites0(bitmap);	/* original */
 	else draw_sprites1(bitmap);	/* bootleg */
+	tilemap_draw(bitmap,bg_tilemap,TILEMAP_FRONT);
 }

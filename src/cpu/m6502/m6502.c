@@ -43,6 +43,9 @@ extern FILE * errorlog;
 #if HAS_M6510
 #define SUBTYPE_6510	2
 #endif
+#if HAS_N2A03
+#define SUBTYPE_2A03	3
+#endif
 
 /* Layout of the registers in the debugger */
 static UINT8 m6502_reg_layout[] = {
@@ -97,6 +100,10 @@ static m6502_Regs m6502;
 
 #if HAS_M6510
 #include "tbl6510.c"
+#endif
+
+#if HAS_N2A03
+#include "tbln2a03.c"
 #endif
 
 /*****************************************************************************
@@ -536,6 +543,69 @@ const char *m6510_info(void *context, int regnum)
 }
 
 unsigned m6510_dasm(char *buffer, unsigned pc)
+{
+#ifdef MAME_DEBUG
+    return Dasm6502( buffer, pc );
+#else
+	sprintf( buffer, "$%02X", cpu_readop(pc) );
+	return 1;
+#endif
+}
+#endif
+
+/****************************************************************************
+ * 2A03 section
+ ****************************************************************************/
+#if HAS_N2A03
+/* Layout of the registers in the debugger */
+static UINT8 n2a03_reg_layout[] = {
+	N2A03_A,N2A03_X,N2A03_Y,N2A03_S,N2A03_PC,N2A03_P, -1,
+	N2A03_EA,N2A03_ZP,N2A03_NMI_STATE,N2A03_IRQ_STATE, 0
+};
+
+/* Layout of the debugger windows x,y,w,h */
+static UINT8 n2a03_win_layout[] = {
+	25, 0,55, 2,	/* register window (top, right rows) */
+     0, 0,24,22,    /* disassembler window (left colums) */
+    25, 3,55, 9,    /* memory #1 window (right, upper middle) */
+	25,13,55, 9,	/* memory #2 window (right, lower middle) */
+	 0,23,80, 1,	/* command line window (bottom rows) */
+};
+
+void n2a03_reset (void *param)
+{
+	m6502_reset(param);
+	m6502.subtype = SUBTYPE_2A03;
+	m6502.insn = insn2a03;
+}
+void n2a03_exit  (void) { m6502_exit(); }
+int  n2a03_execute(int cycles) { return m6502_execute(cycles); }
+unsigned n2a03_get_context (void *dst) { return m6502_get_context(dst); }
+void n2a03_set_context (void *src) { m6502_set_context(src); }
+unsigned n2a03_get_pc (void) { return m6502_get_pc(); }
+void n2a03_set_pc (unsigned val) { m6502_set_pc(val); }
+unsigned n2a03_get_sp (void) { return m6502_get_sp(); }
+void n2a03_set_sp (unsigned val) { m6502_set_sp(val); }
+unsigned n2a03_get_reg (int regnum) { return m6502_get_reg(regnum); }
+void n2a03_set_reg (int regnum, unsigned val) { m6502_set_reg(regnum,val); }
+void n2a03_set_nmi_line(int state) { m6502_set_nmi_line(state); }
+void n2a03_set_irq_line(int irqline, int state) { m6502_set_irq_line(irqline,state); }
+void n2a03_set_irq_callback(int (*callback)(int irqline)) { m6502_set_irq_callback(callback); }
+void n2a03_state_save(void *file) { m6502_state_save(file); }
+void n2a03_state_load(void *file) { m6502_state_load(file); }
+const char *n2a03_info(void *context, int regnum)
+{
+	switch( regnum )
+    {
+		case CPU_INFO_NAME: return "N2A03";
+		case CPU_INFO_VERSION: return "1.0";
+		case CPU_INFO_REG_LAYOUT: return (const char*)n2a03_reg_layout;
+		case CPU_INFO_WIN_LAYOUT: return (const char*)n2a03_win_layout;
+    }
+	return m6502_info(context,regnum);
+}
+
+unsigned n2a03_dasm(char *buffer, unsigned pc)
 {
 #ifdef MAME_DEBUG
     return Dasm6502( buffer, pc );

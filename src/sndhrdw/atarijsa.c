@@ -34,28 +34,29 @@ Static Program ROM (48K bytes)            4000-FFFF   R    D0-D7
 #include "sndhrdw/atarijsa.h"
 #include "cpu/m6502/m6502.h"
 
-static unsigned char *bank_base;
+static UINT8 *bank_base;
+static UINT8 *bank_source_data;
 
-static int speech_data;
-static int last_ctl;
+static UINT8 speech_data;
+static UINT8 last_ctl;
 
-static int cpu_num;
-static int input_port;
-static int test_port;
-static int test_mask;
+static UINT8 cpu_num;
+static UINT8 input_port;
+static UINT8 test_port;
+static UINT16 test_mask;
 
-static int has_pokey;
-static int has_ym2151;
-static int has_tms5220;
-static int has_oki6295;
+static UINT8 has_pokey;
+static UINT8 has_ym2151;
+static UINT8 has_tms5220;
+static UINT8 has_oki6295;
 
-static int oki6295_bank_base;
+static UINT32 oki6295_bank_base;
 
-static int overall_volume;
-static int pokey_volume;
-static int ym2151_volume;
-static int tms5220_volume;
-static int oki6295_volume;
+static UINT8 overall_volume;
+static UINT8 pokey_volume;
+static UINT8 ym2151_volume;
+static UINT8 tms5220_volume;
+static UINT8 oki6295_volume;
 
 static void update_all_volumes(void);
 
@@ -69,7 +70,7 @@ static void jsa3_io_w(int offset, int data);
 
 /*************************************
  *
- *		External interfaces
+ *	External interfaces
  *
  *************************************/
 
@@ -84,7 +85,8 @@ void atarijsa_init(int cpunum, int inputport, int testport, int testmask)
 	test_mask = testmask;
 
 	/* predetermine the bank base */
-	bank_base = &Machine->memory_region[Machine->drv->cpu[cpunum].memory_region][0x10000];
+	bank_base = &Machine->memory_region[Machine->drv->cpu[cpunum].memory_region][0x03000];
+	bank_source_data = &Machine->memory_region[Machine->drv->cpu[cpunum].memory_region][0x10000];
 
 	/* determine which sound hardware is installed */
 	has_tms5220 = has_oki6295 = has_pokey = has_ym2151 = 0;
@@ -134,14 +136,14 @@ void atarijsa_reset(void)
 	oki6295_volume = 100;
 
 	/* Guardians of the Hood assumes we're reset to bank 0 on startup */
-	cpu_setbank(8, &bank_base[0x0000]);
+	memcpy(bank_base, &bank_source_data[0x0000], 0x1000);
 }
 
 
 
 /*************************************
  *
- *		JSA I I/O handlers
+ *	JSA I I/O handlers
  *
  *************************************/
 
@@ -234,7 +236,7 @@ static void jsa1_io_w(int offset, int data)
 			}
 
 			/* update the bank */
-			cpu_setbank(8, &bank_base[0x1000 * ((data >> 6) & 3)]);
+			memcpy(bank_base, &bank_source_data[0x1000 * ((data >> 6) & 3)], 0x1000);
 			last_ctl = data;
 			break;
 
@@ -257,7 +259,7 @@ static void jsa1_io_w(int offset, int data)
 
 /*************************************
  *
- *		JSA II I/O handlers
+ *	JSA II I/O handlers
  *
  *************************************/
 
@@ -348,7 +350,7 @@ static void jsa2_io_w(int offset, int data)
 			*/
 
 			/* update the bank */
-			cpu_setbank(8, &bank_base[0x1000 * ((data >> 6) & 3)]);
+			memcpy(bank_base, &bank_source_data[0x1000 * ((data >> 6) & 3)], 0x1000);
 			last_ctl = data;
 			break;
 
@@ -371,7 +373,7 @@ static void jsa2_io_w(int offset, int data)
 
 /*************************************
  *
- *		JSA III I/O handlers
+ *	JSA III I/O handlers
  *
  *************************************/
 
@@ -466,7 +468,7 @@ static void jsa3_io_w(int offset, int data)
 			OKIM6295_set_bank_base(0, ALL_VOICES, oki6295_bank_base);
 
 			/* update the bank */
-			cpu_setbank(8, &bank_base[0x1000 * ((data >> 6) & 3)]);
+			memcpy(bank_base, &bank_source_data[0x1000 * ((data >> 6) & 3)], 0x1000);
 			last_ctl = data;
 			break;
 
@@ -495,7 +497,7 @@ static void jsa3_io_w(int offset, int data)
 
 /*************************************
  *
- *		Volume helpers
+ *	Volume helpers
  *
  *************************************/
 
@@ -511,7 +513,7 @@ static void update_all_volumes(void)
 
 /*************************************
  *
- *		Sound CPU memory handlers
+ *	Sound CPU memory handlers
  *
  *************************************/
 
@@ -520,8 +522,7 @@ struct MemoryReadAddress atarijsa1_readmem[] =
 	{ 0x0000, 0x1fff, MRA_RAM },
 	{ 0x2000, 0x2001, YM2151_status_port_0_r },
 	{ 0x2800, 0x2bff, jsa1_io_r },
-	{ 0x3000, 0x3fff, MRA_BANK8 },
-	{ 0x4000, 0xffff, MRA_ROM },
+	{ 0x3000, 0xffff, MRA_ROM },
 	{ -1 }  /* end of table */
 };
 
@@ -542,8 +543,7 @@ struct MemoryReadAddress atarijsa2_readmem[] =
 	{ 0x0000, 0x1fff, MRA_RAM },
 	{ 0x2000, 0x2001, YM2151_status_port_0_r },
 	{ 0x2800, 0x2bff, jsa2_io_r },
-	{ 0x3000, 0x3fff, MRA_BANK8 },
-	{ 0x4000, 0xffff, MRA_ROM },
+	{ 0x3000, 0xffff, MRA_ROM },
 	{ -1 }  /* end of table */
 };
 
@@ -564,8 +564,7 @@ struct MemoryReadAddress atarijsa3_readmem[] =
 	{ 0x0000, 0x1fff, MRA_RAM },
 	{ 0x2000, 0x2001, YM2151_status_port_0_r },
 	{ 0x2800, 0x2bff, jsa3_io_r },
-	{ 0x3000, 0x3fff, MRA_BANK8 },
-	{ 0x4000, 0xffff, MRA_ROM },
+	{ 0x3000, 0xffff, MRA_ROM },
 	{ -1 }  /* end of table */
 };
 
@@ -584,7 +583,7 @@ struct MemoryWriteAddress atarijsa3_writemem[] =
 
 /*************************************
  *
- *		Sound definitions
+ *	Sound definitions
  *
  *************************************/
 
@@ -638,5 +637,32 @@ struct OKIM6295interface atarijsa_okim6295_interface_3 =
 	1,              /* 1 chip */
 	{ 8000 },       /* 8000Hz ??? TODO: find out the real frequency */
 	{ 3 },          /* memory region 3 */
+	{ 75 }
+};
+
+
+struct OKIM6295interface atarijsa_okim6295_interface_4 =
+{
+	1,              /* 1 chip */
+	{ 8000 },       /* 8000Hz ??? TODO: find out the real frequency */
+	{ 4 },          /* memory region 4 */
+	{ 75 }
+};
+
+
+struct OKIM6295interface atarijsa_okim6295_interface_5 =
+{
+	1,              /* 1 chip */
+	{ 8000 },       /* 8000Hz ??? TODO: find out the real frequency */
+	{ 5 },          /* memory region 5 */
+	{ 75 }
+};
+
+
+struct OKIM6295interface atarijsa_okim6295_interface_6 =
+{
+	1,              /* 1 chip */
+	{ 8000 },       /* 8000Hz ??? TODO: find out the real frequency */
+	{ 6 },          /* memory region 6 */
 	{ 75 }
 };

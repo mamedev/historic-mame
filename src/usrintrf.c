@@ -2478,7 +2478,7 @@ int showgamewarnings(void)
 					if ((drivers[i]->flags & GAME_NOT_WORKING) == 0)
 					{
 						if (foundworking == 0)
-							strcat(buf,"\n\nThere are clones of this game which work. They are:\n\n");
+							strcat(buf,"\n\nThere are working clones of this game. They are:\n\n");
 						foundworking = 1;
 
 						sprintf(&buf[strlen(buf)],"%s\n",drivers[i]->name);
@@ -2496,6 +2496,7 @@ int showgamewarnings(void)
 		do
 		{
 			osd_update_video_and_audio();
+			osd_poll_joysticks();
 			if (input_ui_pressed(IPT_UI_CANCEL))
 				return 1;
 			if (keyboard_pressed_memory(KEYCODE_O) ||

@@ -115,6 +115,7 @@ struct tilemap {
 	int scroll_rows, scroll_cols;
 	int *rowscroll, *colscroll;
 
+	int orientation;
 	int clip_left,clip_right,clip_top,clip_bottom;
 
 	/* cached color data */

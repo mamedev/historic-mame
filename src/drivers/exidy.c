@@ -1661,6 +1661,7 @@ static void fax_hisave(void)
 	}
 }
 
+#if 0
 static int sidetrac_hiload(void)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
@@ -1702,6 +1703,7 @@ static void sidetrac_hisave(void)
 		osd_fclose(f);
 	}
 }
+#endif
 
 
 /***************************************************************************
@@ -1767,7 +1769,7 @@ struct GameDriver spectar_driver =
 	__FILE__,
 	0,
 	"spectar",
-	"Spectar (revision 3)",
+	"Spectar (revision 2)",
 	"1980",
 	"Exidy",
 	"Neil Bradley (hardware info)\nDan Boris (adaptation of Venture driver)",

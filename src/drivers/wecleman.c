@@ -287,7 +287,7 @@ void hotchase_vh_stop(void);
 	unsigned char *src = _from; \
 	if ((buffer = malloc(_len))) \
 	{ \
-		for (i = 0 ; i <= _len ; i++) \
+		for (i = 0 ; i < _len ; i++) \
 			buffer[i] = \
 			 src[(((i & (1 << _0))?(1<<0x0):0) + \
 				 ((i & (1 << _1))?(1<<0x1):0) + \

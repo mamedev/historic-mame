@@ -294,7 +294,7 @@ OP(bc) { int tmp; m6502_ICount -= 4; RD_ABX; LDY;		  } // 4 LDY ABX
 #define m65c02_3e m6502_3e									// 7 ROL ABX
 #define m65c02_5e m6502_5e									// 7 LSR ABX
 #define m65c02_7e m6502_7e									// 7 ROR ABX
-#define m65c02_9e m6502_9e									// 5 STZ ABX
+OP(9e) { int tmp; m6502_ICount -= 5;		 STZ; WR_ABX; } // 5 STZ ABX
 #define m65c02_be m6502_be									// 4 LDX ABY
 #define m65c02_de m6502_de									// 7 DEC ABX
 #define m65c02_fe m6502_fe									// 7 INC ABX

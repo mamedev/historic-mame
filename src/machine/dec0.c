@@ -314,9 +314,9 @@ static void hippodrm_68000_share_w(int offset,int data)
 
 static void hbarrel_i8751_write(int data)
 {
-  static int level,state;
+	static int level,state;
 
-  int title[]={  1, 2, 5, 6, 9,10,13,14,17,18,21,22,25,26,29,30,33,34,37,38,41,42,0,
+	int title[]={  1, 2, 5, 6, 9,10,13,14,17,18,21,22,25,26,29,30,33,34,37,38,41,42,0,
                  3, 4, 7, 8,11,12,15,16,19,20,23,24,27,28,31,32,35,36,39,40,43,44,0,
                 45,46,49,50,53,54,57,58,61,62,65,66,69,70,73,74,77,78,81,82,0,
                 47,48,51,52,55,56,59,60,63,64,67,68,71,72,75,76,79,80,83,84,0,
@@ -324,26 +324,47 @@ static void hbarrel_i8751_write(int data)
                 87,88,91,92,95,96,99,100,103,104,107,108,111,112,115,116,119,120,123,124,127,128,0,
                 129,130,133,134,137,138,141,142,145,146,149,150,153,154,157,158,161,162,165,166,169,170,173,174,0,
                 131,132,135,136,139,140,143,144,147,148,151,152,155,156,159,160,163,164,167,168,171,172,175,176,0,
-                177,178,0,179,180,-1
-                };
+                0x10b1,0x10b2,0,0x10b3,0x10b4,-1
+	};
 
-	/* Unknown, initialise the variables? */
-	if (data==0xb3b || data==0x500) i8751_return=level=0;
+	/* This table is from the USA version - others could be different.. */
+	int weapons_table[][0x20]={
+		{ 0x558,0x520,0x5c0,0x600,0x520,0x540,0x560,0x5c0,0x688,0x688,0x7a8,0x850,0x880,0x880,0x990,0x9b0,0x9b0,0x9e0,0xffff }, /* Level 1 */
+		{ 0x330,0x370,0x3d8,0x580,0x5b0,0x640,0x6a0,0x8e0,0x8e0,0x940,0x9f0,0xa20,0xa50,0xa80,0xffff }, /* Level 2 */
+		{ 0xb20,0xbd0,0xb20,0xb20,0xbd8,0xb50,0xbd8,0xb20,0xbe0,0xb40,0xb80,0xa18,0xa08,0xa08,0x980,0x8e0,0x780,0x790,0x650,0x600,0x5d0,0x5a0,0x570,0x590,0x5e0,0xffff }, /* Level 3 */
+		{ 0x530,0x5d0,0x5e0,0x5c8,0x528,0x520,0x5d8,0x5e0,0x5d8,0x540,0x570,0x5a0,0x658,0x698,0x710,0x7b8,0x8e0,0x8e0,0x8d8,0x818,0x8e8,0x820,0x8e0,0x848,0x848,0xffff }, /* Level 4 */
+		{ 0x230,0x280,0x700,0x790,0x790,0x7e8,0x7e8,0x8d0,0x920,0x950,0xad0,0xb90,0xb50,0xb10,0xbe0,0xbe0,0xffff }, /* Level 5 */
+		{ 0xd20,0xde0,0xd20,0xde0,0xd80,0xd80,0xd90,0xdd0,0xdb0,0xb20,0xa40,0x9e0,0x960,0x8a0,0x870,0x840,0x7e0,0x7b0,0x780,0xffff }, /* Level 6 */
+		{ 0x730,0x7e0,0x720,0x7e0,0x740,0x7c0,0x730,0x7d0,0x740,0x7c0,0x730,0x7d0,0x720,0x7e0,0x720,0x7e0,0x720,0x7e0,0x720,0x7e0,0x730,0x7d0,0xffff } /* Level 7 */
+	};
 
-	/* Command 0x301 is written at end of each level */
-	if (data==0x301) {level++;i8751_return=level;}
-//  if (data==0x301) {level=5;i8751_return=level;} /* Cheat: Go to level 5 at end of 1 */
-
-	/* 0x200 selects level */
-	if (data==0x200) i8751_return=level;
+	switch (data>>8) {
+		case 0x2:	/* Selects level */
+			i8751_return=level;
+			break;
+		case 0x3:	/* Increment level counter */
+			level++;
+			i8751_return=0x301;
+			break;
+		case 0x5:	/* Set level 0 */
+			i8751_return=0xb3b;
+			level=0;
+			break;
+		case 0x06:	/* Controls appearance & placement of special weapons */
+			i8751_return=weapons_table[level][data&0x1f];
+			//if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - write %02x to i8751, returning %04x\n",cpu_get_pc(),data,i8751_return);
+			break;
+		case 0xb:	/* Initialise the variables? */
+			i8751_return=0;
+			break;
+		default:
+			i8751_return=0;
+	}
 
 	/* Protection */
 	if (data==7) i8751_return=0xc000; /* Stack pointer */
-	if (data==0x175) i8751_return=0x68b; /* Protection - USA version */
-	if (data==0x174) i8751_return=0x68c; /* Protection - Japan version */
-
-	/* Related to appearance & placement of special weapons */
-	if (data>0x5ff && data<0x700) i8751_return=rand()%0xfff;
+	if (data==0x175) i8751_return=0x68b; /* ID check - USA version */
+	if (data==0x174) i8751_return=0x68c; /* ID check - World version */
 
 	/* All commands in range 4xx are related to title screen.. */
 	if (data==0x4ff) state=0;
@@ -352,6 +373,7 @@ static void hbarrel_i8751_write(int data)
 
 		if (title[state-1]==0) i8751_return=0xfffe;
 		else if (title[state-1]==-1) i8751_return=0xffff;
+		else if (title[state-1]>0x1000) i8751_return=(title[state-1]&0xfff)+128+15;
 		else i8751_return=title[state-1]+128+15+0x2000;
 
 		/* We have to use a state as the microcontroller remembers previous commands */
@@ -484,36 +506,6 @@ static int hbarrelu_cycle_r(int offset)
 	if (cpu_get_pc()==0x131a0) {cpu_spinuntil_int(); return 0;} return READ_WORD(&dec0_ram[0x10]);
 }
 
-static int dude_skip(int offset)
-{
-	cpu_spinuntil_int();
-	return READ_WORD(&dec0_ram[0x212]);
-}
-
-static int robocop_skip(int offset)
-{
-	int p=cpu_get_pc();
-	int result=READ_WORD(&dec0_ram[0x4]);
-
-	if (p==0x17c8 || p==0x17f6) { cpu_spinuntil_int(); return result+1; }
-
-	return result;
-}
-
-static int slyspy_skip(int offset)
-{
-	int result=READ_WORD(&dec0_ram[0x2018]);
-
-	if (cpu_get_pc()==0xe04 && !(result&0x100)) { cpu_spinuntil_int(); return (READ_WORD(&dec0_ram[0x2018]) | 0x0100); }
-	return result;
-}
-
-static int midres_skip(int offset)
-{
-	if (cpu_get_pc()==0x3a9c) cpu_spinuntil_int();
-	return READ_WORD(&dec0_ram[0x207c]);
-}
-
 static void sprite_mirror(int offset, int data)
 {
 	extern unsigned char *spriteram;
@@ -543,40 +535,16 @@ WRITE_WORD (&RAM[0xb68],0x8008);
 }
 }
 
-static void baddudes_custom_memory(void)
-{
-//	install_mem_read_handler(0, 0xff8212, 0xff8213, dude_skip);
-	GAME=2;
-}
-
-static void birdtry_custom_memory(void)
-{
-	GAME=3;
-}
-
 static void robocop_custom_memory(void)
 {
-//	install_mem_read_handler(0, 0xff8004, 0xff8005, robocop_skip);
-//	install_mem_read_handler (0, 0x242800, 0x243fff, MRA_BANK3); /* Extra ram bank */
-//	install_mem_write_handler(0, 0x242800, 0x243fff, MWA_BANK3);
+	/* To do */
 }
 
 static void hippodrm_custom_memory(void)
 {
-//	install_mem_read_handler(0, 0xff8004, 0xff8005, robocop_skip);
 	install_mem_read_handler(0, 0x180000, 0x180fff, hippodrm_68000_share_r);
 	install_mem_write_handler(0, 0x180000, 0x180fff, hippodrm_68000_share_w);
 	install_mem_write_handler(0, 0xffc800, 0xffcfff, sprite_mirror);
-}
-
-static void midres_custom_memory(void)
-{
-//	install_mem_read_handler(0, 0x10207c, 0x10207d, midres_skip);
-}
-
-static void slyspy_custom_memory(void)
-{
-//	install_mem_read_handler(0, 0x306018, 0x306019, slyspy_skip);
 }
 
 void dec0_custom_memory(void)
@@ -584,15 +552,12 @@ void dec0_custom_memory(void)
 	GAME=0;
 	i8751_timer=NULL;
 
-	if (!strcmp(Machine->gamedrv->name,"hbarrel")) hbarrel_custom_memory();
-	if (!strcmp(Machine->gamedrv->name,"hbarrelu")) hbarrelu_custom_memory();
-	if (!strcmp(Machine->gamedrv->name,"baddudes")) baddudes_custom_memory();
-	if (!strcmp(Machine->gamedrv->name,"drgninja")) baddudes_custom_memory();
-	if (!strcmp(Machine->gamedrv->name,"birdtry")) birdtry_custom_memory();
-	if (!strcmp(Machine->gamedrv->name,"robocopp")) robocop_custom_memory();
+	if (!strcmp(Machine->gamedrv->name,"hbarrelw")) hbarrel_custom_memory();
+	if (!strcmp(Machine->gamedrv->name,"hbarrel")) hbarrelu_custom_memory();
+	if (!strcmp(Machine->gamedrv->name,"baddudes")) GAME=2;
+	if (!strcmp(Machine->gamedrv->name,"drgninja"))	GAME=2;
+	if (!strcmp(Machine->gamedrv->name,"birdtry")) 	GAME=3;
+	if (!strcmp(Machine->gamedrv->name,"robocop")) robocop_custom_memory();
 	if (!strcmp(Machine->gamedrv->name,"hippodrm")) hippodrm_custom_memory();
 	if (!strcmp(Machine->gamedrv->name,"ffantasy")) hippodrm_custom_memory();
-//	if (!strcmp(Machine->gamedrv->name,"slyspy")) slyspy_custom_memory();
-//	if (!strcmp(Machine->gamedrv->name,"midres")) midres_custom_memory();
-//	if (!strcmp(Machine->gamedrv->name,"midresj")) midres_custom_memory();
 }

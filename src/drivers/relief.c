@@ -22,15 +22,15 @@ void relief_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void relief_scanline_update(int scanline);
 
 
-static int ym2413_volume;
-static int overall_volume;
-static int adpcm_bank_base;
+static UINT8 ym2413_volume;
+static UINT8 overall_volume;
+static UINT32 adpcm_bank_base;
 
 
 
 /*************************************
  *
- *		Interrupt handling
+ *	Interrupt handling
  *
  *************************************/
 
@@ -51,7 +51,7 @@ static void update_interrupts(void)
 
 /*************************************
  *
- *		Initialization
+ *	Initialization
  *
  *************************************/
 
@@ -72,7 +72,7 @@ static void init_machine(void)
 
 /*************************************
  *
- *		I/O handling
+ *	I/O handling
  *
  *************************************/
 
@@ -88,7 +88,7 @@ static int special_port2_r(int offset)
 
 /*************************************
  *
- *		Audio control I/O
+ *	Audio control I/O
  *
  *************************************/
 
@@ -123,7 +123,7 @@ static void audio_volume_w(int offset, int data)
 
 /*************************************
  *
- *		MSM5295 I/O
+ *	MSM5295 I/O
  *
  *************************************/
 
@@ -143,7 +143,7 @@ static void adpcm_w(int offset, int data)
 
 /*************************************
  *
- *		YM2413 I/O
+ *	YM2413 I/O
  *
  *************************************/
 
@@ -169,7 +169,7 @@ static void ym2413_w(int offset, int data)
 
 /*************************************
  *
- *		Main CPU memory handlers
+ *	Main CPU memory handlers
  *
  *************************************/
 
@@ -220,7 +220,7 @@ static struct MemoryWriteAddress writemem[] =
 
 /*************************************
  *
- *		Port definitions
+ *	Port definitions
  *
  *************************************/
 
@@ -271,7 +271,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *		Graphics definitions
+ *	Graphics definitions
  *
  *************************************/
 
@@ -298,7 +298,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *		Sound definitions
+ *	Sound definitions
  *
  *************************************/
 
@@ -322,7 +322,7 @@ static struct YM2413interface ym2413_interface =
 
 /*************************************
  *
- *		Machine driver
+ *	Machine driver
  *
  *************************************/
 
@@ -372,13 +372,13 @@ static struct MachineDriver machine_driver =
 
 /*************************************
  *
- *		ROM decoding
+ *	ROM decoding
  *
  *************************************/
 
 static void rom_decode(void)
 {
-	unsigned char *base = Machine->memory_region[1];
+	UINT8 *base = Machine->memory_region[1];
 	int i;
 
 	/* invert the graphics bits */
@@ -410,13 +410,13 @@ static void rom_decode(void)
 
 /*************************************
  *
- *		Driver initialization
+ *	Driver initialization
  *
  *************************************/
 
 static void relief_init(void)
 {
-	static const unsigned short default_eeprom[] =
+	static const UINT16 default_eeprom[] =
 	{
 		0x0001,0x0166,0x0128,0x01E6,0x0100,0x012C,0x0300,0x0144,
 		0x0700,0x01C0,0x2F00,0x01EC,0x0B00,0x0148,0x0140,0x0100,
@@ -430,9 +430,10 @@ static void relief_init(void)
 	atarigen_eeprom_default = default_eeprom;
 }
 
+
 static void relief2_init(void)
 {
-	static const unsigned short default_eeprom[] =
+	static const UINT16 default_eeprom[] =
 	{
 		0x0001,0x01FD,0x019F,0x015E,0x01FF,0x019E,0x03FF,0x015F,
 		0x07FF,0x01FD,0x12FF,0x01FC,0x01FB,0x07FF,0x01F7,0x01FF,
@@ -457,7 +458,7 @@ static void relief2_init(void)
 
 /*************************************
  *
- *		ROM definition(s)
+ *	ROM definition(s)
  *
  *************************************/
 
@@ -504,7 +505,7 @@ ROM_END
 
 /*************************************
  *
- *		Game driver(s)
+ *	Game driver(s)
  *
  *************************************/
 

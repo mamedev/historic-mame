@@ -19,9 +19,10 @@ void shuuz_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void shuuz_scanline_update(int scanline);
 
 
+
 /*************************************
  *
- *		Interrupt handling
+ *	Interrupt handling
  *
  *************************************/
 
@@ -42,7 +43,7 @@ static void update_interrupts(void)
 
 /*************************************
  *
- *		Initialization
+ *	Initialization
  *
  *************************************/
 
@@ -65,7 +66,7 @@ static void latch_w(int offset, int data)
 
 /*************************************
  *
- *		LETA I/O
+ *	LETA I/O
  *
  *************************************/
 
@@ -78,8 +79,8 @@ static int leta_r(int offset)
 	/* when reading the even ports, do a real analog port update */
 	if (which == 0)
 	{
-		int dx = (signed char)input_port_2_r(offset);
-		int dy = (signed char)input_port_3_r(offset);
+		int dx = (INT8)input_port_2_r(offset);
+		int dy = (INT8)input_port_3_r(offset);
 
 		cur[0] = dx + dy;
 		cur[1] = dx - dy;
@@ -93,7 +94,7 @@ static int leta_r(int offset)
 
 /*************************************
  *
- *		MSM5295 I/O
+ *	MSM5295 I/O
  *
  *************************************/
 
@@ -113,7 +114,7 @@ static void adpcm_w(int offset, int data)
 
 /*************************************
  *
- *		Additional I/O
+ *	Additional I/O
  *
  *************************************/
 
@@ -131,7 +132,7 @@ static int special_port0_r(int offset)
 
 /*************************************
  *
- *		Main CPU memory handlers
+ *	Main CPU memory handlers
  *
  *************************************/
 
@@ -176,7 +177,7 @@ static struct MemoryWriteAddress writemem[] =
 
 /*************************************
  *
- *		Port definitions
+ *	Port definitions
  *
  *************************************/
 
@@ -243,7 +244,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *		Graphics definitions
+ *	Graphics definitions
  *
  *************************************/
 
@@ -282,7 +283,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *		Sound definitions
+ *	Sound definitions
  *
  *************************************/
 
@@ -298,7 +299,7 @@ static struct OKIM6295interface okim6295_interface =
 
 /*************************************
  *
- *		Machine driver
+ *	Machine driver
  *
  *************************************/
 
@@ -344,7 +345,7 @@ static struct MachineDriver machine_driver =
 
 /*************************************
  *
- *		ROM decoding
+ *	ROM decoding
  *
  *************************************/
 
@@ -360,7 +361,7 @@ static void rom_decode(void)
 
 /*************************************
  *
- *		ROM definition(s)
+ *	ROM definition(s)
  *
  *************************************/
 
@@ -419,7 +420,7 @@ ROM_END
 
 /*************************************
  *
- *		Driver initialization
+ *	Driver initialization
  *
  *************************************/
 
@@ -432,7 +433,7 @@ static void shuuz_init(void)
 
 /*************************************
  *
- *		Game driver(s)
+ *	Game driver(s)
  *
  *************************************/
 

@@ -124,8 +124,16 @@ static unsigned char dec0_pf2_control_0[8];
 static unsigned char dec0_pf2_control_1[8];
 static unsigned char dec0_pf3_control_0[8];
 static unsigned char dec0_pf3_control_1[8];
+static unsigned char *dec0_spriteram;
 
 static int dec0_pri;
+
+/******************************************************************************/
+
+void dec0_update_sprites(int offset, int data)
+{
+	memcpy(dec0_spriteram,spriteram,0x800);
+}
 
 /******************************************************************************/
 
@@ -236,10 +244,10 @@ static void dec0_update_palette(int pf23priority)
 	{
 		int x,y,sprite,multi;
 
-		y = READ_WORD(&spriteram[offs]);
+		y = READ_WORD(&dec0_spriteram[offs]);
 		if ((y&0x8000) == 0) continue;
 
-		x = READ_WORD(&spriteram[offs+4]);
+		x = READ_WORD(&dec0_spriteram[offs+4]);
 		color = (x & 0xf000) >> 12;
 
 		multi = (1 << ((y & 0x1800) >> 11)) - 1;	/* 1x, 2x, 4x, 8x height */
@@ -250,7 +258,7 @@ static void dec0_update_palette(int pf23priority)
 		x = 240 - x;
 		if (x>256) continue; /* Speedup + save colours */
 
-		sprite = READ_WORD (&spriteram[offs+2]) & 0x0fff;
+		sprite = READ_WORD (&dec0_spriteram[offs+2]) & 0x0fff;
 
 		sprite &= ~multi;
 
@@ -290,10 +298,10 @@ static void dec0_drawsprites(struct osd_bitmap *bitmap,int pri_mask,int pri_val)
 	{
 		int x,y,sprite,colour,multi,fx,fy,inc,flash;
 
-		y = READ_WORD(&spriteram[offs]);
+		y = READ_WORD(&dec0_spriteram[offs]);
 		if ((y&0x8000) == 0) continue;
 
-		x = READ_WORD(&spriteram[offs+4]);
+		x = READ_WORD(&dec0_spriteram[offs+4]);
 		colour = x >> 12;
 		if ((colour & pri_mask) != pri_val) continue;
 
@@ -305,7 +313,7 @@ static void dec0_drawsprites(struct osd_bitmap *bitmap,int pri_mask,int pri_val)
 		multi = (1 << ((y & 0x1800) >> 11)) - 1;	/* 1x, 2x, 4x, 8x height */
 											/* multi = 0   1   3   7 */
 
-		sprite = READ_WORD (&spriteram[offs+2]) & 0x0fff;
+		sprite = READ_WORD (&dec0_spriteram[offs+2]) & 0x0fff;
 
 		x = x & 0x01ff;
 		y = y & 0x01ff;
@@ -809,19 +817,17 @@ void dec0_pf2_draw(struct osd_bitmap *bitmap, int trans)
 		/* Rowscroll style */
 		switch (READ_WORD(&dec0_pf2_control_1[4])&0xf)
 		{
-			case 0: lines=256; break; /* 256 horizontal scroll registers (Robocop) */
-			case 1: lines=128; break; /* 128 horizontal scroll registers (Not used?) */
-			case 2: lines=64; break; /* 128 horizontal scroll registers (Not used?) */
-			case 3: lines=32; break; /* 32 horizontal scroll registers (Heavy Barrel title screen) */
-			case 4: lines=16; break; /* 16 horizontal scroll registers (Bad Dudes, Sly Spy) */
-			case 5: lines=8; break; /* 8 horizontal scroll registers (Not used?) */
-			case 6: lines=4; break; /* 4 horizontal scroll registers (Not used?) */
+			case 0: lines=64; break; /* 256 horizontal scroll registers (Robocop) */
+			case 1: lines=32; break; /* 128 horizontal scroll registers (Not used?) */
+			case 2: lines=16; break; /* 128 horizontal scroll registers (Not used?) */
+			case 3: lines=8; break; /* 32 horizontal scroll registers (Heavy Barrel title screen) */
+			case 4: lines=4; break; /* 16 horizontal scroll registers (Bad Dudes, Sly Spy) */
+			case 5: lines=2; break; /* 8 horizontal scroll registers (Not used?) */
+			case 6: lines=1; break; /* 4 horizontal scroll registers (Not used?) */
 			case 7: lines=2; break; /* 2 horizontal scroll registers (Not used?) */
 			case 8: lines=1; break; /* Appears to be no row-scroll */
 			default: lines=1; break; /* Just in case */
 		}
-
-//width removed
 
 		for (offs = 0; offs < lines; offs++)
 			rscrollx[offs] = scrolly - READ_WORD(&dec0_pf2_colscroll[offs<<1]);
@@ -903,7 +909,26 @@ void dec0_pf3_draw(struct osd_bitmap *bitmap, int trans)
 
 /******************************************************************************/
 
-void dec0_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void hbarrel_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	dec0_update_palette(dec0_pri & 0x01);
+
+	dec0_pf1_update();
+	dec0_pf3_update(0,0);
+	dec0_pf2_update(1,0);
+	dec0_pf3_draw(bitmap,0);
+	dec0_drawsprites(bitmap,0x08,0x08);
+	dec0_pf2_draw(bitmap,1);
+
+	/* HB always keeps pf2 on top of pf3, no need explicitly support priority register */
+
+	dec0_drawsprites(bitmap,0x08,0x00);
+	dec0_pf1_draw(bitmap);
+}
+
+/******************************************************************************/
+
+void baddudes_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	/* WARNING: priority inverted wrt all the other games */
 	dec0_update_palette(~dec0_pri & 0x01);
@@ -1018,24 +1043,20 @@ void robocop_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 /******************************************************************************/
 
-void hbarrel_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+void birdtry_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	dec0_update_palette(dec0_pri & 0x01);
 
+	/* This game doesn't have the extra playfield chip on the game board */
 	dec0_pf1_update();
-	dec0_pf3_update(0,0);
-	dec0_pf2_update(1,0);
-
-	dec0_pf3_draw(bitmap,0);
-	dec0_pf2_draw(bitmap,1);
-
-	/* HB always keeps pf2 on top of pf3, no need explicitly support priority register */
-
+	dec0_pf2_update(0,0);
+	dec0_pf2_draw(bitmap,0);
 	dec0_drawsprites(bitmap,0x00,0x00);
 	dec0_pf1_draw(bitmap);
 
 
-#if 0
+
+#if 1
 {
 
 	int i,j;
@@ -1094,6 +1115,8 @@ for (i = 0;i < 8;i+=2)
 #endif
 }
 
+/******************************************************************************/
+
 void hippodrm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	dec0_update_palette(dec0_pri & 0x01);
@@ -1117,6 +1140,28 @@ void hippodrm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 
 	dec0_drawsprites(bitmap,0x00,0x00);
+	dec0_pf1_draw(bitmap);
+}
+
+/******************************************************************************/
+
+void slyspy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	dec0_update_palette(0);
+
+	dec0_pf1_update();
+	dec0_pf3_update(0,0);
+	dec0_pf2_update(1,1);
+	dec0_pf2_update(1,0);
+
+	dec0_pf3_draw(bitmap,0);
+	dec0_pf2_draw(bitmap,1);
+
+	dec0_drawsprites(bitmap,0x00,0x00);
+
+	if (dec0_pri&0x80)
+		dec0_pf2_draw(bitmap,2);
+
 	dec0_pf1_draw(bitmap);
 }
 
@@ -1175,86 +1220,6 @@ else
 	}
 
 	dec0_pf1_draw(bitmap);
-}
-
-/******************************************************************************/
-
-void slyspy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
-{
-	dec0_update_palette(0);
-
-	dec0_pf1_update();
-	dec0_pf3_update(0,0);
-	dec0_pf2_update(1,1);
-	dec0_pf2_update(1,0);
-
-	dec0_pf3_draw(bitmap,0);
-	dec0_pf2_draw(bitmap,1);
-
-	dec0_drawsprites(bitmap,0x00,0x00);
-
-	if (dec0_pri&0x80)
-		dec0_pf2_draw(bitmap,2);
-
-	dec0_pf1_draw(bitmap);
-
-
-/*
-{
-
-	int i,j;
-	char buf[20];
-	int trueorientation;
-	struct osd_bitmap *mybitmap = Machine->scrbitmap;
-
-	trueorientation = Machine->orientation;
-	Machine->orientation = ORIENTATION_DEFAULT;
-
-for (i = 0;i < 8;i+=2)
-{
-	sprintf(buf,"%04X",READ_WORD(&dec0_pf1_control_0[i]));
-	for (j = 0;j < 4;j++)
-		drawgfx(mybitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j+10,8*2,0,TRANSPARENCY_NONE,0);
-}
-for (i = 0;i < 8;i+=2)
-{
-	sprintf(buf,"%04X",READ_WORD(&dec0_pf1_control_1[i]));
-	for (j = 0;j < 4;j++)
-		drawgfx(mybitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j+10,8*3,0,TRANSPARENCY_NONE,0);
-}
-for (i = 0;i < 8;i+=2)
-{
-	sprintf(buf,"%04X",READ_WORD(&dec0_pf2_control_0[i]));
-	for (j = 0;j < 4;j++)
-		drawgfx(mybitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j+10,8*5,0,TRANSPARENCY_NONE,0);
-}
-for (i = 0;i < 8;i+=2)
-{
-	sprintf(buf,"%04X",READ_WORD(&dec0_pf2_control_1[i]));
-	for (j = 0;j < 4;j++)
-		drawgfx(mybitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j+10,8*6,0,TRANSPARENCY_NONE,0);
-}
-for (i = 0;i < 8;i+=2)
-{
-	sprintf(buf,"%04X",READ_WORD(&dec0_pf3_control_0[i]));
-	for (j = 0;j < 4;j++)
-		drawgfx(mybitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j+10,8*8,0,TRANSPARENCY_NONE,0);
-}
-for (i = 0;i < 8;i+=2)
-{
-	sprintf(buf,"%04X",READ_WORD(&dec0_pf3_control_1[i]));
-	for (j = 0;j < 4;j++)
-		drawgfx(mybitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j+10,8*9,0,TRANSPARENCY_NONE,0);
-}
-{
-	sprintf(buf,"%04X",dec0_pri);
-	for (j = 0;j < 4;j++)
-		drawgfx(mybitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,8*j+10,8*11,0,TRANSPARENCY_NONE,0);
-}
-
-	Machine->orientation = trueorientation;
-
-}*/
 }
 
 /******************************************************************************/
@@ -1421,7 +1386,7 @@ int dec0_pf3_data_8bit_r(int offset)
 
 /******************************************************************************/
 
-void dec0_vh_stop (void)
+void dec0_nodma_vh_stop (void)
 {
 	osd_free_bitmap(dec0_pf3_bitmap);
 	osd_free_bitmap(dec0_pf2_bitmap);
@@ -1433,7 +1398,13 @@ void dec0_vh_stop (void)
 	free(dec0_pf1_dirty);
 }
 
-int dec0_vh_start (void)
+void dec0_vh_stop (void)
+{
+	free(dec0_spriteram);
+	dec0_nodma_vh_stop();
+}
+
+int dec0_nodma_vh_start (void)
 {
 	/* Allocate bitmaps */
 	if ((dec0_pf1_bitmap = osd_create_bitmap(512,512)) == 0) {
@@ -1471,6 +1442,16 @@ int dec0_vh_start (void)
 	memset(dec0_pf1_dirty,1,TEXTRAM_SIZE);
 	memset(dec0_pf2_dirty,1,TILERAM_SIZE);
 	memset(dec0_pf3_dirty,1,TILERAM_SIZE);
+
+	dec0_spriteram=spriteram;
+
+	return 0;
+}
+
+int dec0_vh_start (void)
+{
+	dec0_nodma_vh_start();
+	dec0_spriteram=malloc(0x800);
 
 	return 0;
 }

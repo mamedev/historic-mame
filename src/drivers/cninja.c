@@ -1,11 +1,16 @@
 /***************************************************************************
 
+  Edward Randy      (c) 1990 Data East Corporation (World version)
+  Edward Randy      (c) 1990 Data East Corporation (Japanese version)
   Caveman Ninja     (c) 1991 Data East Corporation (World version)
   Caveman Ninja     (c) 1991 Data East Corporation (USA version)
   Joe & Mac         (c) 1991 Data East Corporation (Japanese version)
   Stone Age         (Italian bootleg)
 
-  The 'USA' set has a 'Winners Don't Use Drugs' screen, the other set doesn't.
+  Edward Randy runs on the same board as Caveman Ninja but one custom chip
+  is different.  The chip controls protection and also seems to affect the
+  memory map.
+
 
 Sound (Original):
   Hu6280 CPU
@@ -18,8 +23,7 @@ Sound (Bootleg):
   YM2151
   Oki chip
 
-Issues:
-  Colours can be wrong when gfx banks are switching.
+Caveman Ninja Issues:
   End of level 2 is corrupt.
 
   Emulation by Bryan McPhail, mish@tendril.force9.net
@@ -79,7 +83,18 @@ static void stoneage_sound_w(int offset, int data)
 
 static void cninja_loopback_w(int offset, int data)
 {
-	WRITE_WORD(&loopback[offset],data);
+//	WRITE_WORD(&loopback[offset],data);
+	COMBINE_WORD_MEM(&loopback[offset],data);
+#if 1
+	if (errorlog && (offset>0x22 || offset<0x8) && (offset>0x94 || offset<0x80)
+&& offset!=0x36 && offset!=0x9e && offset!=0x76 && offset!=0x58 && offset!=0x56
+&& offset!=0x2c && offset!=0x34
+&& (offset>0xb0 || offset<0xa0) /* in game prot writes */
+)
+
+//if (errorlog)
+fprintf(errorlog,"Protection PC %06x: warning - write %04x to %04x\n",cpu_get_pc(),data,offset);
+#endif
 }
 
 static int cninja_prot_r(int offset)
@@ -124,9 +139,181 @@ static int cninja_prot_r(int offset)
 		case 0x22c: /* Player 1 & 2 input ports */
 			return (readinputport(0) + (readinputport(1) << 8));
 	}
-//	if (errorlog) fprintf(errorlog,"Protection PC %06x: warning - read unmapped memory address %04x\n",cpu_getpc(),offset);
+	if (errorlog) fprintf(errorlog,"Protection PC %06x: warning - read unmapped memory address %04x\n",cpu_get_pc(),offset);
 	return 0;
 }
+
+static int edrandy_prot_r(int offset)
+{
+ 	switch (offset) {
+		/* Video registers */
+		case 0x32a: /* Moved to 0x140006 on int */
+			return READ_WORD(&loopback[0x80]);
+		case 0x380: /* Moved to 0x140008 on int */
+			return READ_WORD(&loopback[0x84]);
+		case 0x63a: /* Moved to 0x150002 on int */
+			return READ_WORD(&loopback[0x88]);
+		case 0x42a: /* Moved to 0x150004 on int */
+			return READ_WORD(&loopback[0x8c]);
+		case 0x030: /* Moved to 0x150006 on int */
+			return READ_WORD(&loopback[0x90]);
+		case 0x6b2: /* Moved to 0x150008 on int */
+			return READ_WORD(&loopback[0x94]);
+
+
+
+
+case 0x6c4: /* dma enable, bit 7 set, below bit 5 */
+case 0x33e: return READ_WORD(&loopback[0x2c]); /* allows video registers */
+
+
+
+
+		/* memcpy selectors, transfer occurs in interrupt */
+		case 0x32e: return READ_WORD(&loopback[0x8]); /* src msb */
+		case 0x6d8: return READ_WORD(&loopback[0xa]); /* src lsb */
+		case 0x010: return READ_WORD(&loopback[0xc]); /* dst msb */
+		case 0x07a: return READ_WORD(&loopback[0xe]); /* src lsb */
+
+		case 0x37c: return READ_WORD(&loopback[0x10]); /* src msb */
+		case 0x250: return READ_WORD(&loopback[0x12]);
+		case 0x04e: return READ_WORD(&loopback[0x14]);
+		case 0x5ba: return READ_WORD(&loopback[0x16]);
+		case 0x5f4: return READ_WORD(&loopback[0x18]); /* length */
+
+		case 0x38c: return READ_WORD(&loopback[0x1a]); /* src msb */
+		case 0x02c: return READ_WORD(&loopback[0x1c]);
+		case 0x1e6: return READ_WORD(&loopback[0x1e]);
+		case 0x3e4: return READ_WORD(&loopback[0x20]);
+		case 0x174: return READ_WORD(&loopback[0x22]); /* length */
+
+		/* Player 1 & 2 controls, read in IRQ then written *back* to protection device */
+		case 0x50: /* written to 9e byte */
+			return readinputport(0);
+		case 0x6f8: /* written to 76 byte */
+			return readinputport(1);
+		/* Controls are *really* read here! */
+		case 0x6fa:
+			return (READ_WORD(&loopback[0x9e])&0xff00) | ((READ_WORD(&loopback[0x76])>>8)&0xff);
+		/* These two go to the low bytes of 9e and 76.. */
+		case 0xc6: return 0;
+		case 0x7bc: return 0;
+		case 0x5c: /* After coin insert, high 0x8000 bit set starts game */
+			return READ_WORD(&loopback[0x76]);
+		case 0x3a6: /* Top byte OR'd with above, masked to 7 */
+			return READ_WORD(&loopback[0x9e]);
+
+//		case 0xac: /* Dip switches */
+
+		case 0xc2: /* Dip switches */
+			return (readinputport(3) + (readinputport(4) << 8));
+		case 0x5d4: /* The state of the dips _last_ frame */
+			return READ_WORD(&loopback[0x34]);
+
+		case 0x76a: /* Coins */
+			return readinputport(2);
+
+
+
+case 0x156: /* Interrupt regulate */
+
+if (errorlog) fprintf(errorlog,"Int stop %04x\n",READ_WORD(&loopback[0x1a]));
+
+cpu_spinuntil_int();
+//return readinputport(2);
+
+	/* 4058 or 4056? */
+	return READ_WORD(&loopback[0x36])>>8;
+
+
+
+
+#if 0
+
+// 5d4 == 80 when coin is inserted
+
+// 284 == LOOKUP TABLE IMPROTANT (0 4 8 etc
+case 0x284: return 0;
+
+
+
+case 0x2f6: /* btst 2, jsr 11a if set */
+if (READ_WORD(&loopback[0x40])) return 0xffff;
+return 0;//READ_WORD(&loopback[0x40]);//0;
+
+
+//case 0x5d4:
+//case 0xc2: return READ_WORD(&loopback[0x40]);//0; /* Screen flip related?! */
+
+
+
+
+//case 0x33e:
+//case 0x6c4:
+//	case 0x6f8: /* Player 1 & 2 input ports */
+
+
+// return value 36 is important
+
+
+/*
+
+6006 written to 0x40 at end of japan screen
+
+
+*/
+
+
+
+//case 0xc2:
+//case 0x5c: /* 9cde */
+//case 0x5d4:
+//return READ_WORD(&loopback[0x40]);//0;
+
+//case 0x6fa:
+
+
+
+
+
+/* in game prot */
+case 0x102: return READ_WORD(&loopback[0xa0]);
+case 0x15a: return READ_WORD(&loopback[0xa2]);
+case 0x566: return READ_WORD(&loopback[0xa4]);
+case 0xd2: return READ_WORD(&loopback[0xa6]);
+case 0x4a6: return READ_WORD(&loopback[0xa8]);
+case 0x3dc: return READ_WORD(&loopback[0xb0]);
+case 0x2a0: return READ_WORD(&loopback[0xb2]);
+//case 0x392: return READ_WORD(&loopback[0xa0]);
+
+
+		case 0x3b2: return READ_WORD(&loopback[0xd0]);
+
+/* Enemy power related HIGH WORD*/
+		case 0x440: return READ_WORD(&loopback[0xd2]);/* Enemy power related LOW WORD*/
+			return 0;
+
+//case 0x6fa:
+//return rand()%0xffff;
+
+//case 0x5d4: /* Top byte:  Player 1?  lsl.4 then mask 3 for fire buttons? */
+//case 0x5d4:
+
+		return 0xffff;//(readinputport(0) + (readinputport(1) << 8));
+#endif
+	}
+
+//	if (errorlog) fprintf(errorlog,"Protection PC %06x: warning - read unmapped memory address %04x\n",cpu_get_pc(),offset);
+	return 0;
+}
+
+#if 0
+static void log_m_w(int offset, int data)
+{
+	if (errorlog) fprintf(errorlog,"INTERRUPT %06x: warning - write address %04x\n",cpu_get_pc(),offset);
+
+}
+#endif
 
 /**********************************************************************************/
 
@@ -165,9 +352,45 @@ static struct MemoryWriteAddress cninja_writemem[] =
 	{ 0x1a4000, 0x1a47ff, MWA_BANK2, &spriteram },
 	{ 0x1b4000, 0x1b4001, cninja_update_sprites }, /* DMA flag */
 	{ 0x1bc000, 0x1bc0ff, cninja_loopback_w }, /* Protection writes */
-
 	{ 0x308000, 0x308fff, MWA_NOP }, /* Bootleg only */
+	{ -1 }  /* end of table */
+};
 
+static struct MemoryReadAddress edrandy_readmem[] =
+{
+	{ 0x000000, 0x0fffff, MRA_ROM },
+	{ 0x144000, 0x144fff, cninja_pf1_data_r },
+	{ 0x15c000, 0x15c7ff, cninja_pf3_rowscroll_r },
+	{ 0x188000, 0x189fff, paletteram_word_r },
+	{ 0x194000, 0x197fff, MRA_BANK1 },
+	{ 0x198000, 0x198fff, edrandy_prot_r }, /* Protection device */
+	{ 0x1bc000, 0x1bc7ff, MRA_BANK2 }, /* Sprites */
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryWriteAddress edrandy_writemem[] =
+{
+	{ 0x000000, 0x0fffff, MWA_ROM },
+
+	{ 0x140000, 0x14000f, cninja_control_1_w },
+	{ 0x144000, 0x144fff, cninja_pf1_data_w, &cninja_pf1_data },
+	{ 0x146000, 0x146fff, cninja_pf4_data_w, &cninja_pf4_data },
+	{ 0x14c000, 0x14c7ff, cninja_pf1_rowscroll_w, &cninja_pf1_rowscroll },
+	{ 0x14e000, 0x14e7ff, cninja_pf4_rowscroll_w, &cninja_pf4_rowscroll },
+
+	{ 0x150000, 0x15000f, cninja_control_0_w },
+	{ 0x154000, 0x154fff, cninja_pf3_data_w, &cninja_pf3_data },
+	{ 0x156000, 0x156fff, cninja_pf2_data_w, &cninja_pf2_data },
+	{ 0x15c000, 0x15c7ff, cninja_pf3_rowscroll_w, &cninja_pf3_rowscroll },
+	{ 0x15e000, 0x15e7ff, cninja_pf2_rowscroll_w, &cninja_pf2_rowscroll },
+
+	{ 0x188000, 0x189fff, cninja_palette_24bit_w, &paletteram },
+	{ 0x194000, 0x197fff, MWA_BANK1, &cninja_ram }, /* Main ram */
+	{ 0x198064, 0x198065, cninja_sound_w }, /* Soundlatch is amongst protection */
+	{ 0x198000, 0x1980ff, cninja_loopback_w }, /* Protection writes */
+	{ 0x1a4000, 0x1a4007, MWA_NOP }, /* IRQ Ack + DMA flags? */
+	{ 0x1ac000, 0x1ac001, cninja_update_sprites }, /* DMA flag */
+	{ 0x1bc000, 0x1bc7ff, MWA_BANK2, &spriteram },
 	{ -1 }  /* end of table */
 };
 
@@ -256,12 +479,12 @@ static struct MemoryWriteAddress stoneage_s_writemem[] =
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED ) \
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 ) \
 	PORT_START \
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL ) \
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL ) \
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL ) \
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL ) \
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL ) \
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL ) \
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 ) \
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 ) \
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 ) \
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 ) \
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 ) \
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 ) \
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED ) \
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 ) \
 	PORT_START \
@@ -271,10 +494,9 @@ static struct MemoryWriteAddress stoneage_s_writemem[] =
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_VBLANK ) \
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-
 INPUT_PORTS_START( input_ports )
 
-PORTS_COINS
+	PORTS_COINS
 
 	PORT_START	/* Dip switch bank 1 */
 	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_A ) )
@@ -327,10 +549,9 @@ PORTS_COINS
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-
 INPUT_PORTS_START( cninjau_input_ports )
 
-PORTS_COINS
+	PORTS_COINS
 
 	PORT_START	/* Dip switch bank 1 */
 	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_A ) )
@@ -400,9 +621,22 @@ static struct GfxLayout charlayout =
 static struct GfxLayout spritelayout =
 {
 	16,16,
-	4096*4,  /* A lotta sprites.. */
+	0x4000,  /* A lotta sprites.. */
 	4,
 	{ 8, 0, 0x100000*8+8, 0x100000*8 },
+	{ 32*8+0, 32*8+1, 32*8+2, 32*8+3, 32*8+4, 32*8+5, 32*8+6, 32*8+7,
+		0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
+			8*16, 9*16, 10*16, 11*16, 12*16, 13*16, 14*16, 15*16 },
+	64*8
+};
+
+static struct GfxLayout spritelayout2 =
+{
+	16,16,
+	0xa000,  /* A lotta sprites.. */
+	4,
+	{ 8, 0, 0x280000*8+8, 0x280000*8 },
 	{ 32*8+0, 32*8+1, 32*8+2, 32*8+3, 32*8+4, 32*8+5, 32*8+6, 32*8+7,
 		0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
@@ -427,10 +661,20 @@ static struct GfxLayout tilelayout =
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ 1, 0x000000, &charlayout,    0, 16 },	/* Characters 8x8 */
-	{ 1, 0x020000, &tilelayout, 1280, 16 },	/* Tiles 16x16 */
-	{ 1, 0x0a0000, &tilelayout,  512, 16 },	/* Tiles 16x16 */
+	{ 1, 0x020000, &tilelayout,  512, 64 },	/* Tiles 16x16 (BASE 1280) */
+	{ 1, 0x0a0000, &tilelayout,  512, 64 },	/* Tiles 16x16 */
 	{ 1, 0x120000, &tilelayout,  256, 16 },	/* Tiles 16x16 */
 	{ 1, 0x1a0000, &spritelayout,768, 16 },	/* Sprites 16x16 */
+	{ -1 } /* end of array */
+};
+
+static struct GfxDecodeInfo gfxdecodeinfo2[] =
+{
+	{ 1, 0x000000, &charlayout,     0, 16 },	/* Characters 8x8 */
+	{ 1, 0x020000, &tilelayout,   512, 64 },	/* Tiles 16x16 (BASE 1280) */
+	{ 1, 0x0a0000, &tilelayout,   512, 64 },	/* Tiles 16x16 */
+	{ 1, 0x120000, &tilelayout,   256, 16 },	/* Tiles 16x16 */
+	{ 1, 0x1a0000, &spritelayout2,768, 16 },	/* Sprites 16x16 */
 	{ -1 } /* end of array */
 };
 
@@ -467,7 +711,8 @@ static void sound_bankswitch_w(int offset,int data)
 static struct YM2151interface ym2151_interface =
 {
 	1,
-	32220000/8, /* Accurate */
+	3700000,
+//	32220000/8, /* Accurate?  Seems too high */
 	{ YM3012_VOL(45,MIXER_PAN_CENTER,45,MIXER_PAN_CENTER) },
 	{ sound_irq },
 	{ sound_bankswitch_w }
@@ -476,7 +721,8 @@ static struct YM2151interface ym2151_interface =
 static struct YM2151interface ym2151_interface2 =
 {
 	1,
-	32220000/8, /* Bootleg frequency - who knows.. */
+	3579545,	/* 3.579545 Mhz (?) */
+//	32220000/8, /* Bootleg frequency - who knows.. */
 	{ YM3012_VOL(50,MIXER_PAN_CENTER,50,MIXER_PAN_CENTER) },
 	{ sound_irq2 }
 };
@@ -587,6 +833,60 @@ static struct MachineDriver stoneage_machine_driver =
 		{
 			SOUND_YM2151,
 			&ym2151_interface2
+		},
+		{
+			SOUND_OKIM6295,
+			&okim6295_interface
+		}
+	}
+};
+
+static struct MachineDriver edrandy_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M68000,
+			12000000,
+			0,
+			edrandy_readmem,edrandy_writemem,0,0,
+			m68_level5_irq,1
+		},
+		{
+			CPU_H6280 | CPU_AUDIO_CPU,
+			32220000/8,	/* Accurate */
+			2,
+			sound_readmem,sound_writemem,0,0,
+			ignore_interrupt,0
+		}
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 1*8, 31*8-1 },
+
+	gfxdecodeinfo2,
+	2048, 2048,
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
+	0,
+	cninja_vh_start,
+	cninja_vh_stop,
+	cninja_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0, /* Mono */
+  	{
+		{
+			SOUND_YM2203,
+			&ym2203_interface
+		},
+		{
+			SOUND_YM2151_ALT,
+			&ym2151_interface
 		},
 		{
 			SOUND_OKIM6295,
@@ -757,7 +1057,88 @@ ROM_START( stoneage_rom )
 	ROM_LOAD( "sa_1_069.bin",  0x00000,  0x40000, 0x2188f3ca )
 
 	ROM_REGION(0x100) /* No extra Oki samples in the bootleg */
+ROM_END
 
+ROM_START( edrandy_rom )
+	ROM_REGION(0x100000) /* 68000 code */
+  	ROM_LOAD_EVEN( "gg-00-2", 0x00000, 0x20000, 0xce1ba964 )
+  	ROM_LOAD_ODD ( "gg-04-2", 0x00000, 0x20000, 0x24caed19 )
+	ROM_LOAD_EVEN( "gg-01-2", 0x40000, 0x20000, 0x33677b80 )
+ 	ROM_LOAD_ODD ( "gg-05-2", 0x40000, 0x20000, 0x79a68ca6 )
+	ROM_LOAD_EVEN( "ge-02",   0x80000, 0x20000, 0xc2969fbb )
+	ROM_LOAD_ODD ( "ge-06",   0x80000, 0x20000, 0x5c2e6418 )
+	ROM_LOAD_EVEN( "ge-03",   0xc0000, 0x20000, 0x5e7b19a8 )
+	ROM_LOAD_ODD ( "ge-07",   0xc0000, 0x20000, 0x5eb819a1 )
+
+	ROM_REGION_DISPOSE(0x6a0000) /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "gg-11",   0x000000, 0x10000, 0xee567448 )
+  	ROM_LOAD( "gg-10",   0x010000, 0x10000, 0xb96c6cbe )
+
+	ROM_LOAD( "mad-00", 0x020000, 0x80000, 0x3735b22d ) /* tiles 1 */
+	ROM_LOAD( "mad-01", 0x0a0000, 0x80000, 0x7bb13e1c ) /* tiles 2 */
+	ROM_LOAD( "mad-02", 0x120000, 0x80000, 0x6c76face ) /* tiles 3 */
+
+	ROM_LOAD( "mad-03", 0x1a0000, 0x80000, 0xc0bff892 ) /* sprites */
+	ROM_LOAD( "mad-04", 0x220000, 0x80000, 0x464f3eb9 )
+	ROM_LOAD( "mad-07", 0x2a0000, 0x80000, 0xac03466e )
+	ROM_LOAD( "mad-10", 0x320000, 0x80000, 0x42da8ef0 )
+	ROM_LOAD( "mad-09", 0x3a0000, 0x80000, 0x930f4900 )
+
+	ROM_LOAD( "mad-05", 0x420000, 0x80000, 0x3f2ccf95 )
+	ROM_LOAD( "mad-06", 0x4a0000, 0x80000, 0x60871f77 )
+	ROM_LOAD( "mad-08", 0x520000, 0x80000, 0x1b420ec8 )
+	ROM_LOAD( "mad-11", 0x5a0000, 0x80000, 0x03c1f982 )
+	ROM_LOAD( "mad-12", 0x620000, 0x80000, 0xa0bd62b6 )
+
+	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_LOAD( "ge-09",    0x00000, 0x10000, 0x9f94c60b )
+
+	ROM_REGION(0x20000)	/* ADPCM samples */
+	ROM_LOAD( "ge-08",    0x00000, 0x20000, 0xdfe28c7b )
+
+	ROM_REGION(0x80000) /* Extra Oki samples */
+	ROM_LOAD( "mad-13", 0x00000, 0x80000, 0x6ab28eba )	/* banked */
+ROM_END
+
+ROM_START( edrandyj_rom )
+	ROM_REGION(0x100000) /* 68000 code */
+  	ROM_LOAD_EVEN( "ge-00-2",   0x00000, 0x20000, 0xb3d2403c )
+  	ROM_LOAD_ODD ( "ge-04-2",   0x00000, 0x20000, 0x8a9624d6 )
+	ROM_LOAD_EVEN( "ge-01-2",   0x40000, 0x20000, 0x84360123 )
+ 	ROM_LOAD_ODD ( "ge-05-2",   0x40000, 0x20000, 0x0bf85d9d )
+	ROM_LOAD_EVEN( "ge-02",     0x80000, 0x20000, 0xc2969fbb )
+	ROM_LOAD_ODD ( "ge-06",     0x80000, 0x20000, 0x5c2e6418 )
+	ROM_LOAD_EVEN( "ge-03",     0xc0000, 0x20000, 0x5e7b19a8 )
+	ROM_LOAD_ODD ( "ge-07",     0xc0000, 0x20000, 0x5eb819a1 )
+
+	ROM_REGION_DISPOSE(0x6a0000) /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ge-10",  0x000000, 0x10000, 0x2528d795 )
+  	ROM_LOAD( "ge-11",  0x010000, 0x10000, 0xe34a931e )
+
+	ROM_LOAD( "mad-00", 0x020000, 0x80000, 0x3735b22d ) /* tiles 1 */
+	ROM_LOAD( "mad-01", 0x0a0000, 0x80000, 0x7bb13e1c ) /* tiles 2 */
+	ROM_LOAD( "mad-02", 0x120000, 0x80000, 0x6c76face ) /* tiles 3 */
+
+	ROM_LOAD( "mad-03", 0x1a0000, 0x80000, 0xc0bff892 ) /* sprites */
+	ROM_LOAD( "mad-04", 0x220000, 0x80000, 0x464f3eb9 )
+	ROM_LOAD( "mad-07", 0x2a0000, 0x80000, 0xac03466e )
+	ROM_LOAD( "mad-10", 0x320000, 0x80000, 0x42da8ef0 )
+	ROM_LOAD( "mad-09", 0x3a0000, 0x80000, 0x930f4900 )
+
+	ROM_LOAD( "mad-05", 0x420000, 0x80000, 0x3f2ccf95 )
+	ROM_LOAD( "mad-06", 0x4a0000, 0x80000, 0x60871f77 )
+	ROM_LOAD( "mad-08", 0x520000, 0x80000, 0x1b420ec8 )
+	ROM_LOAD( "mad-11", 0x5a0000, 0x80000, 0x03c1f982 )
+	ROM_LOAD( "mad-12", 0x620000, 0x80000, 0xa0bd62b6 )
+
+	ROM_REGION(0x10000)	/* Sound CPU */
+	ROM_LOAD( "ge-09",    0x00000, 0x10000, 0x9f94c60b )
+
+	ROM_REGION(0x20000)	/* ADPCM samples */
+	ROM_LOAD( "ge-08",    0x00000, 0x20000, 0xdfe28c7b )
+
+	ROM_REGION(0x80000) /* Extra Oki samples */
+	ROM_LOAD( "mad-13", 0x00000, 0x80000, 0x6ab28eba )	/* banked */
 ROM_END
 
 /**********************************************************************************/
@@ -785,6 +1166,17 @@ static void cninja_patch(void)
 		}
 	}
 }
+
+#if 0
+static void edrandyj_patch(void)
+{
+//	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+//	WRITE_WORD (&RAM[0x98cc],0x4E71);
+//	WRITE_WORD (&RAM[0x98ce],0x4E71);
+
+}
+#endif
 
 /**********************************************************************************/
 
@@ -925,3 +1317,54 @@ struct GameDriver stoneage_driver =
 	ORIENTATION_DEFAULT,
 	0, 0
 };
+
+struct GameDriver edrandy_driver =
+{
+	__FILE__,
+	0,
+	"edrandy",
+	"Edward Randy (World)",
+	"1990",
+	"Data East Corporation",
+	"Bryan McPhail",
+	0,
+	&edrandy_machine_driver,
+	0,
+
+	edrandy_rom,
+	0, 0,
+	0,
+	0,
+
+	input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+	0 , 0
+};
+
+struct GameDriver edrandyj_driver =
+{
+	__FILE__,
+	&edrandy_driver,
+	"edrandyj",
+	"Edward Randy (Japan)",
+	"1990",
+	"Data East Corporation",
+	"Bryan McPhail",
+	0,
+	&edrandy_machine_driver,
+	0,
+
+	edrandyj_rom,
+	0, 0,
+	0,
+	0,
+
+	input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+	0 , 0
+};
+

@@ -46,7 +46,10 @@ enum { IPT_END=1,IPT_PORT,
 	/* the "arg" field contains the default sensitivity expressed as a percentage */
 	/* (100 = default, 50 = half, 200 = twice) */
 	IPT_ANALOG_START,
-	IPT_PADDLE, IPT_DIAL, IPT_TRACKBALL_X, IPT_TRACKBALL_Y, IPT_AD_STICK_X, IPT_AD_STICK_Y,
+	IPT_PADDLE, IPT_DIAL,
+	IPT_TRACKBALL_X, IPT_TRACKBALL_Y,
+	IPT_AD_STICK_X, IPT_AD_STICK_Y,
+	IPT_PEDAL,
 	IPT_ANALOG_END,
 
 	IPT_COIN1, IPT_COIN2, IPT_COIN3, IPT_COIN4,	/* coin slots */

@@ -391,7 +391,8 @@ static void sound_irq(int state)
 static struct YM2151interface ym2151_interface =
 {
 	1,
-	32220000/8, /* Accurate */
+	3700000, /* This sounds much better than the value below, but I don't understand where the value comes from */
+//	32220000/8, /* Accurate? */
 	{ YM3012_VOL(35,MIXER_PAN_LEFT,35,MIXER_PAN_RIGHT) },
 	{ sound_irq }
 };

@@ -25,7 +25,7 @@ void offtwall_scanline_update(int scanline);
 
 /*************************************
  *
- *		Interrupt handling
+ *	Interrupt handling
  *
  *************************************/
 
@@ -48,7 +48,7 @@ static void update_interrupts(void)
 
 /*************************************
  *
- *		Initialization
+ *	Initialization
  *
  *************************************/
 
@@ -65,7 +65,7 @@ static void init_machine(void)
 
 /*************************************
  *
- *		I/O handling
+ *	I/O handling
  *
  *************************************/
 
@@ -99,7 +99,7 @@ static void io_latch_w(int offset, int data)
 
 /*************************************
  *
- *		Son-of-slapstic workarounds
+ *	Son-of-slapstic workarounds
  *
  *************************************/
 
@@ -131,9 +131,9 @@ static void io_latch_w(int offset, int data)
 
 -------------------------------------------------------------------------*/
 
-static unsigned char *bankswitch_base;
-static unsigned char *bankrom_base;
-static int bank_offset;
+static UINT8 *bankswitch_base;
+static UINT8 *bankrom_base;
+static UINT32 bank_offset;
 
 static int bankswitch_r(int offset)
 {
@@ -182,7 +182,7 @@ static int bankrom_r(int offset)
 
 -------------------------------------------------------------------------*/
 
-static unsigned char *spritecache_count;
+static UINT8 *spritecache_count;
 
 static int spritecache_count_r(int offset)
 {
@@ -191,7 +191,7 @@ static int spritecache_count_r(int offset)
 	/* if this read is coming from $99f8 or $9992, it's in the sprite copy loop */
 	if (prevpc == 0x99f8 || prevpc == 0x9992)
 	{
-		unsigned short *data = (unsigned short *)&spritecache_count[-0x200];
+		UINT16 *data = (UINT16 *)&spritecache_count[-0x200];
 		int oldword = READ_WORD(&spritecache_count[0]);
 		int count = oldword >> 8;
 		int i, width = 0;
@@ -235,7 +235,7 @@ static int spritecache_count_r(int offset)
 
 -------------------------------------------------------------------------*/
 
-static unsigned char *unknown_verify_base;
+static UINT8 *unknown_verify_base;
 
 static int unknown_verify_r(int offset)
 {
@@ -250,7 +250,7 @@ static int unknown_verify_r(int offset)
 
 /*************************************
  *
- *		Main CPU memory handlers
+ *	Main CPU memory handlers
  *
  *************************************/
 
@@ -298,7 +298,7 @@ static struct MemoryWriteAddress writemem[] =
 
 /*************************************
  *
- *		Port definitions
+ *	Port definitions
  *
  *************************************/
 
@@ -339,7 +339,9 @@ INPUT_PORTS_START( offtwall_ports )
 
 	PORT_START	/* 260010 */
 	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_UNUSED )	/* analog read ready */
+	PORT_DIPNAME( 0x0002, 0x0000, "Controls" )
+	PORT_DIPSETTING(      0x0000, "Whirly-gigs" )	/* this is official Atari terminology! */
+	PORT_DIPSETTING(      0x0002, "Joysticks" )
 	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_UNUSED )	/* tested at a454 */
 	PORT_BIT(  0x0008, IP_ACTIVE_LOW, IPT_UNUSED )	/* tested at a466 */
 	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -352,15 +354,15 @@ INPUT_PORTS_START( offtwall_ports )
 	PORT_BIT(  0xffff, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* 260020 */
-    PORT_ANALOG ( 0xff, 0, IPT_TRACKBALL_X | IPF_PLAYER1, 50, 10, 0x7f, 0, 0 )
+    PORT_ANALOG ( 0xff, 0, IPT_DIAL | IPF_PLAYER1, 50, 10, 0x7f, 0, 0 )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* 260022 */
-    PORT_ANALOG ( 0xff, 0, IPT_TRACKBALL_X | IPF_PLAYER2, 50, 10, 0x7f, 0, 0 )
+    PORT_ANALOG ( 0xff, 0, IPT_DIAL | IPF_PLAYER2, 50, 10, 0x7f, 0, 0 )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* 260024 */
-    PORT_ANALOG ( 0xff, 0, IPT_TRACKBALL_X | IPF_PLAYER3, 50, 10, 0x7f, 0, 0 )
+    PORT_ANALOG ( 0xff, 0, IPT_DIAL | IPF_PLAYER3, 50, 10, 0x7f, 0, 0 )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
@@ -368,7 +370,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *		Graphics definitions
+ *	Graphics definitions
  *
  *************************************/
 
@@ -394,7 +396,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *		Machine driver
+ *	Machine driver
  *
  *************************************/
 
@@ -437,7 +439,7 @@ static struct MachineDriver machine_driver =
 
 /*************************************
  *
- *		ROM decoding
+ *	ROM decoding
  *
  *************************************/
 
@@ -453,7 +455,7 @@ static void rom_decode(void)
 
 /*************************************
  *
- *		ROM definition(s)
+ *	ROM definition(s)
  *
  *************************************/
 
@@ -498,11 +500,11 @@ ROM_END
 
 /*************************************
  *
- *		Driver initialization
+ *	Driver initialization
  *
  *************************************/
 
-static const unsigned short default_eeprom[] =
+static const UINT16 default_eeprom[] =
 {
 	0x0001,0x011A,0x012A,0x0146,0x0100,0x0168,0x0300,0x011E,
 	0x0700,0x0122,0x0600,0x0120,0x0400,0x0102,0x0300,0x017E,
@@ -515,6 +517,7 @@ static const unsigned short default_eeprom[] =
 	0x01D3,0x0105,0x0116,0x0127,0x0134,0x0100,0x0104,0x01B0,
 	0x0165,0x0102,0x1600,0x0000
 };
+
 
 static void offtwall_init(void)
 {
@@ -556,7 +559,7 @@ static void offtwalc_init(void)
 
 /*************************************
  *
- *		Game driver(s)
+ *	Game driver(s)
  *
  *************************************/
 

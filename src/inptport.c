@@ -191,6 +191,15 @@ struct ipd inputport_defaults[] =
 	{ IPT_BUTTON3             | IPF_PLAYER4, "P4 Button 3",    KEYCODE_NONE,    JOYCODE_4_BUTTON3 },
 	{ IPT_BUTTON4             | IPF_PLAYER4, "P4 Button 4",    KEYCODE_NONE,    JOYCODE_4_BUTTON4 },
 
+	{ IPT_PEDAL	                | IPF_PLAYER1, "Pedal 1",        KEYCODE_LCONTROL,JOYCODE_1_BUTTON1 },
+	{ IPT_PEDAL	| IPT_EXTENSION | IPF_PLAYER1, "P1 Auto Release <Y/N>", KEYCODE_Y,   JOYCODE_NONE },
+	{ IPT_PEDAL                 | IPF_PLAYER2, "Pedal 2",        KEYCODE_A,       JOYCODE_2_BUTTON1 },
+	{ IPT_PEDAL	| IPT_EXTENSION | IPF_PLAYER2, "P2 Auto Release <Y/N>", KEYCODE_Y,   JOYCODE_NONE },
+	{ IPT_PEDAL                 | IPF_PLAYER3, "Pedal 3",        KEYCODE_RCONTROL,JOYCODE_3_BUTTON1 },
+	{ IPT_PEDAL	| IPT_EXTENSION | IPF_PLAYER3, "P3 Auto Release <Y/N>", KEYCODE_Y,   JOYCODE_NONE },
+	{ IPT_PEDAL                 | IPF_PLAYER4, "Pedal 4",        KEYCODE_NONE,    JOYCODE_4_BUTTON1 },
+	{ IPT_PEDAL	| IPT_EXTENSION | IPF_PLAYER4, "P4 Auto Release <Y/N>", KEYCODE_Y,   JOYCODE_NONE },
+
 	{ IPT_PADDLE | IPF_PLAYER1,  "Paddle",        KEYCODE_LEFT,  JOYCODE_1_LEFT },
 	{ (IPT_PADDLE | IPF_PLAYER1)+IPT_EXTENSION,             "Paddle",        KEYCODE_RIGHT, JOYCODE_1_RIGHT  },
 	{ IPT_PADDLE | IPF_PLAYER2,  "Paddle 2",      KEYCODE_D,     JOYCODE_2_LEFT },
@@ -986,8 +995,8 @@ void update_analog_port(int port)
 
 
 	deckey = input_port_key(in);
-	inckey = input_port_key(in+1);
 	decjoy = input_port_joy(in);
+	inckey = input_port_key(in+1);
 	incjoy = input_port_joy(in+1);
 
 	keydelta = IP_GET_DELTA(in);
@@ -1006,6 +1015,8 @@ void update_analog_port(int port)
 			axis = X_AXIS; is_stick = 1; check_bounds = 1; break;
 		case IPT_AD_STICK_Y:
 			axis = Y_AXIS; is_stick = 1; check_bounds = 1; break;
+		case IPT_PEDAL:
+			axis = Y_AXIS; is_stick = 0; check_bounds = 1; break;
 		default:
 			/* Use some defaults to prevent crash */
 			axis = X_AXIS; is_stick = 0; check_bounds = 0;
@@ -1054,9 +1065,19 @@ void update_analog_port(int port)
 		delta = mouse_delta_y[player];
 
 	if (keyboard_pressed(deckey)) delta -= keydelta;
-	if (keyboard_pressed(inckey)) delta += keydelta;
 	if (joystick_pressed(decjoy)) delta -= keydelta;
-	if (joystick_pressed(incjoy)) delta += keydelta;
+
+	if (type != IPT_PEDAL)
+	{
+		if (keyboard_pressed(inckey)) delta += keydelta;
+		if (joystick_pressed(incjoy)) delta += keydelta;
+	}
+	else
+	{
+		/* is this cheesy or what? */
+		if (!delta && inckey == KEYCODE_Y) delta += keydelta;
+		delta = -delta;
+	}
 
 	if (clip != 0)
 	{

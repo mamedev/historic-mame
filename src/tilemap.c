@@ -48,7 +48,7 @@ Optimizations/Features TBA:
 static unsigned char flip_bit_table[0x100];
 
 static struct tilemap *first_tilemap;
-static int orientation, screen_width, screen_height;
+static int screen_width, screen_height;
 struct tile_info tile_info;
 
 #define SWAP(X,Y) {int temp=X; X=Y; Y=temp; }
@@ -68,10 +68,10 @@ void tilemap_set_flip( struct tilemap *tilemap, int attributes ){
 	else if( tilemap->attributes!=attributes ){
 		tilemap->attributes = attributes;
 
-		orientation = Machine->orientation;
+		tilemap->orientation = Machine->orientation;
 
 		if( attributes&TILEMAP_FLIPY ){
-			orientation ^= ORIENTATION_FLIP_Y;
+			tilemap->orientation ^= ORIENTATION_FLIP_Y;
 			tilemap->scrolly_delta = tilemap->dy_if_flipped;
 		}
 		else {
@@ -79,7 +79,7 @@ void tilemap_set_flip( struct tilemap *tilemap, int attributes ){
 		}
 
 		if( attributes&TILEMAP_FLIPX ){
-			orientation ^= ORIENTATION_FLIP_X;
+			tilemap->orientation ^= ORIENTATION_FLIP_X;
 			tilemap->scrollx_delta = tilemap->dx_if_flipped;
 		}
 		else {
@@ -91,7 +91,7 @@ void tilemap_set_flip( struct tilemap *tilemap, int attributes ){
 }
 
 static struct osd_bitmap *create_tmpbitmap( int width, int height ){
-	if( orientation&ORIENTATION_SWAP_XY ) SWAP(width,height);
+	if( Machine->orientation&ORIENTATION_SWAP_XY ) SWAP(width,height);
 	return osd_create_bitmap( width,height );
 }
 
@@ -105,16 +105,16 @@ void tilemap_set_clip( struct tilemap *tilemap, const struct rectangle *clip ){
 		right = clip->max_x+1;
 		bottom = clip->max_y+1;
 
-		if( orientation & ORIENTATION_SWAP_XY ){
+		if( tilemap->orientation & ORIENTATION_SWAP_XY ){
 			SWAP(left,top)
 			SWAP(right,bottom)
 		}
-		if( orientation & ORIENTATION_FLIP_X ){
+		if( tilemap->orientation & ORIENTATION_FLIP_X ){
 			SWAP(left,right)
 			left = screen_width-left;
 			right = screen_width-right;
 		}
-		if( orientation & ORIENTATION_FLIP_Y ){
+		if( tilemap->orientation & ORIENTATION_FLIP_Y ){
 			SWAP(top,bottom)
 			top = screen_height-top;
 			bottom = screen_height-bottom;
@@ -142,7 +142,6 @@ void tilemap_init( void ){
 		for( bit=0; bit<8; bit++ ) if( (value>>bit)&1 ) data |= 0x80>>bit;
 		flip_bit_table[value] = data;
 	}
-	orientation = Machine->orientation;
 	screen_width = Machine->scrbitmap->width;
 	screen_height = Machine->scrbitmap->height;
 	first_tilemap = 0;
@@ -322,7 +321,7 @@ static int create_tile_info( struct tilemap *tilemap ){
 
 void tilemap_set_scroll_cols( struct tilemap *tilemap, int n )
 {
-	if( orientation & ORIENTATION_SWAP_XY )
+	if( tilemap->orientation & ORIENTATION_SWAP_XY )
 	{
 		if (tilemap->scroll_rows != n)
 		{
@@ -342,7 +341,7 @@ void tilemap_set_scroll_cols( struct tilemap *tilemap, int n )
 
 void tilemap_set_scroll_rows( struct tilemap *tilemap, int n )
 {
-	if( orientation & ORIENTATION_SWAP_XY )
+	if( tilemap->orientation & ORIENTATION_SWAP_XY )
 	{
 		if (tilemap->scroll_cols != n)
 		{
@@ -448,7 +447,10 @@ struct tilemap *tilemap_create(
 
 	struct tilemap *tilemap = (struct tilemap *)calloc( 1,sizeof( struct tilemap ) );
 	if( tilemap ){
-		if( orientation & ORIENTATION_SWAP_XY ){
+		memset( tilemap, 0, sizeof( struct tilemap ) );
+
+		tilemap->orientation = Machine->orientation;
+		if( tilemap->orientation & ORIENTATION_SWAP_XY ){
 			SWAP( tile_width, tile_height )
 			SWAP( num_cols,num_rows )
 		}
@@ -459,7 +461,6 @@ struct tilemap *tilemap_create(
 			fprintf( errorlog, "cols,rows:%d,%d\n",num_cols,num_rows );
 		}
 
-		memset( tilemap, 0, sizeof( struct tilemap ) );
 		tilemap->tile_get_info = tile_get_info;
 		tilemap->enable = 1;
 		tilemap_set_clip( tilemap, &Machine->drv->visible_area );
@@ -553,9 +554,9 @@ void tilemap_close( void ){
 
 void tilemap_mark_tile_dirty( struct tilemap *tilemap, int col, int row ){
 	/* convert logical coordinates to cached coordinates */
-	if( orientation & ORIENTATION_SWAP_XY ) SWAP(col,row)
-	if( orientation & ORIENTATION_FLIP_X ) col = tilemap->num_cols-1-col;
-	if( orientation & ORIENTATION_FLIP_Y ) row = tilemap->num_rows-1-row;
+	if( tilemap->orientation & ORIENTATION_SWAP_XY ) SWAP(col,row)
+	if( tilemap->orientation & ORIENTATION_FLIP_X ) col = tilemap->num_cols-1-col;
+	if( tilemap->orientation & ORIENTATION_FLIP_Y ) row = tilemap->num_rows-1-row;
 
 //	tilemap->dirty_vram_row[row][col] = 1;
 	tilemap->dirty_vram[row*tilemap->num_cols + col] = 1;
@@ -1353,9 +1354,9 @@ void tilemap_update( struct tilemap *tilemap ){
 					int col = tile_index%tilemap->num_cols;
 					int flags;
 
-					if( orientation & ORIENTATION_FLIP_Y ) row = tilemap->num_rows-1-row;
-					if( orientation & ORIENTATION_FLIP_X ) col = tilemap->num_cols-1-col;
-					if( orientation & ORIENTATION_SWAP_XY ) SWAP(col,row)
+					if( tilemap->orientation & ORIENTATION_FLIP_Y ) row = tilemap->num_rows-1-row;
+					if( tilemap->orientation & ORIENTATION_FLIP_X ) col = tilemap->num_cols-1-col;
+					if( tilemap->orientation & ORIENTATION_SWAP_XY ) SWAP(col,row)
 
 					{
 						unsigned short *the_color = paldata[tile_index];
@@ -1372,7 +1373,7 @@ void tilemap_update( struct tilemap *tilemap ){
 					tilemap->tile_get_info( col, row );
 
 					flags = tile_info.flags ^ tile_flip;
-					if( orientation & ORIENTATION_SWAP_XY ){
+					if( tilemap->orientation & ORIENTATION_SWAP_XY ){
 						flags =
 							(flags&0xfc) |
 							((flags&1)<<1) | ((flags&2)>>1);
@@ -1404,17 +1405,17 @@ void tilemap_update( struct tilemap *tilemap ){
 void tilemap_set_scrollx( struct tilemap *tilemap, int which, int value ){
 	value = tilemap->scrollx_delta-value;
 
-	if( orientation & ORIENTATION_SWAP_XY ){
-		if( orientation & ORIENTATION_FLIP_X ) which = tilemap->scroll_cols-1 - which;
-		if( orientation & ORIENTATION_FLIP_Y ) value = screen_height-tilemap->height-value;
+	if( tilemap->orientation & ORIENTATION_SWAP_XY ){
+		if( tilemap->orientation & ORIENTATION_FLIP_X ) which = tilemap->scroll_cols-1 - which;
+		if( tilemap->orientation & ORIENTATION_FLIP_Y ) value = screen_height-tilemap->height-value;
 		if( tilemap->colscroll[which]!=value ){
 			tilemap->scrolled = 1;
 			tilemap->colscroll[which] = value;
 		}
 	}
 	else {
-		if( orientation & ORIENTATION_FLIP_Y ) which = tilemap->scroll_rows-1 - which;
-		if( orientation & ORIENTATION_FLIP_X ) value = screen_width-tilemap->width-value;
+		if( tilemap->orientation & ORIENTATION_FLIP_Y ) which = tilemap->scroll_rows-1 - which;
+		if( tilemap->orientation & ORIENTATION_FLIP_X ) value = screen_width-tilemap->width-value;
 		if( tilemap->rowscroll[which]!=value ){
 			tilemap->scrolled = 1;
 			tilemap->rowscroll[which] = value;
@@ -1424,17 +1425,17 @@ void tilemap_set_scrollx( struct tilemap *tilemap, int which, int value ){
 void tilemap_set_scrolly( struct tilemap *tilemap, int which, int value ){
 	value = tilemap->scrolly_delta - value;
 
-	if( orientation & ORIENTATION_SWAP_XY ){
-		if( orientation & ORIENTATION_FLIP_Y ) which = tilemap->scroll_rows-1 - which;
-		if( orientation & ORIENTATION_FLIP_X ) value = screen_width-tilemap->width-value;
+	if( tilemap->orientation & ORIENTATION_SWAP_XY ){
+		if( tilemap->orientation & ORIENTATION_FLIP_Y ) which = tilemap->scroll_rows-1 - which;
+		if( tilemap->orientation & ORIENTATION_FLIP_X ) value = screen_width-tilemap->width-value;
 		if( tilemap->rowscroll[which]!=value ){
 			tilemap->scrolled = 1;
 			tilemap->rowscroll[which] = value;
 		}
 	}
 	else {
-		if( orientation & ORIENTATION_FLIP_X ) which = tilemap->scroll_cols-1 - which;
-		if( orientation & ORIENTATION_FLIP_Y ) value = screen_height-tilemap->height-value;
+		if( tilemap->orientation & ORIENTATION_FLIP_X ) which = tilemap->scroll_cols-1 - which;
+		if( tilemap->orientation & ORIENTATION_FLIP_Y ) value = screen_height-tilemap->height-value;
 		if( tilemap->colscroll[which]!=value ){
 			tilemap->scrolled = 1;
 			tilemap->colscroll[which] = value;

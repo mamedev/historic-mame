@@ -121,8 +121,8 @@ Program ROM (48K bytes)                   4000-FFFF   R    D0-D7
 #include "vidhrdw/generic.h"
 
 
-extern unsigned char *atarisys2_slapstic;
-extern int atarisys2_mo_mask;
+extern UINT8 *atarisys2_slapstic;
+extern UINT16 atarisys2_mo_mask;
 
 
 int atarisys2_slapstic_r(int offset);
@@ -142,26 +142,25 @@ void atarisys2_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 
 
 
-static unsigned char *interrupt_enable;
-static unsigned char *bankselect;
+static UINT8 *interrupt_enable;
+static UINT8 *bankselect;
 
-static signed char pedal_count;
-static signed char pedal_value[3];
+static INT8 pedal_count;
 
-static unsigned char has_tms5220;
-static unsigned char tms5220_data;
-static unsigned char tms5220_data_strobe;
+static UINT8 has_tms5220;
+static UINT8 tms5220_data;
+static UINT8 tms5220_data_strobe;
 
-static unsigned char which_adc;
+static UINT8 which_adc;
 
-static unsigned char p2portwr_state;
-static unsigned char p2portrd_state;
+static UINT8 p2portwr_state;
+static UINT8 p2portrd_state;
 
 
 
 /*************************************
  *
- *		Interrupt updating
+ *	Interrupt updating
  *
  *************************************/
 
@@ -192,7 +191,7 @@ static void update_interrupts(void)
 
 /*************************************
  *
- *		Every 8-scanline update
+ *	Every 8-scanline update
  *
  *************************************/
 
@@ -215,7 +214,7 @@ static void scanline_update(int scanline)
 
 /*************************************
  *
- *		Initialization
+ *	Initialization
  *
  *************************************/
 
@@ -233,38 +232,18 @@ static void init_machine(void)
 	p2portrd_state = 0;
 
 	which_adc = 0;
-	pedal_value[0] = pedal_value[1] = pedal_value[2] = 0x00;
 }
 
 
 
 /*************************************
  *
- *		Interrupt handlers
+ *	Interrupt handlers
  *
  *************************************/
 
 static int vblank_interrupt(void)
 {
-    int i;
-
-	/* update the pedals once per frame */
-    for (i = 0; i < pedal_count; i++)
-	{
-    	/* note: APB explicitly checks to make sure the min/max range never
-    		exceeds 0x50; this seems to work just fine for the Sprint games as well */
-		if (readinputport(3 + i) & 0x80)
-		{
-			pedal_value[i] += 4;
-			if (pedal_value[i] > 0x40) pedal_value[i] = 0x40;
-		}
-		else
-		{
-			pedal_value[i] -= 4;
-			if (pedal_value[i] < 0x00) pedal_value[i] = 0x00;
-		}
-	}
-
 	/* clock the VBLANK through */
 	if (READ_WORD(&interrupt_enable[0]) & 8)
 		atarigen_video_int_gen();
@@ -313,7 +292,7 @@ static void interrupt_ack_w(int offset, int data)
 
 /*************************************
  *
- *		Bank selection.
+ *	Bank selection.
  *
  *************************************/
 
@@ -341,8 +320,8 @@ static void bankselect_w(int offset, int data)
 
 	int oldword = READ_WORD(&bankselect[offset]);
 	int newword = COMBINE_WORD(oldword, data);
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-	unsigned char *base = &RAM[bankoffset[(newword >> 10) & 0x3f]];
+	UINT8 *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	UINT8 *base = &RAM[bankoffset[(newword >> 10) & 0x3f]];
 
 	WRITE_WORD(&bankselect[offset], newword);
 	if (offset == 0)
@@ -361,7 +340,7 @@ static void bankselect_w(int offset, int data)
 
 /*************************************
  *
- *		I/O read dispatch.
+ *	I/O read dispatch.
  *
  *************************************/
 
@@ -399,7 +378,7 @@ static void switch_6502_w(int offset, int data)
 
 /*************************************
  *
- *		Controls read
+ *	Controls read
  *
  *************************************/
 
@@ -415,7 +394,7 @@ static int adc_r(int offset)
 	(void)offset;
 
 	if (which_adc < pedal_count)
-		return ~pedal_value[which_adc];
+		return ~readinputport(3 + which_adc);
 
 	return readinputport(3 + which_adc) | 0xff00;
 }
@@ -441,7 +420,7 @@ static int leta_r(int offset)
 
 /*************************************
  *
- *		Global sound control
+ *	Global sound control
  *
  *************************************/
 
@@ -497,7 +476,7 @@ static int sound_6502_r(int offset)
 
 /*************************************
  *
- *		Speech chip
+ *	Speech chip
  *
  *************************************/
 
@@ -522,7 +501,7 @@ static void tms5220_strobe_w(int offset, int data)
 
 /*************************************
  *
- *		Main CPU memory handlers
+ *	Main CPU memory handlers
  *
  *************************************/
 
@@ -565,7 +544,7 @@ static struct MemoryWriteAddress main_writemem[] =
 
 /*************************************
  *
- *		Sound CPU memory handlers
+ *	Sound CPU memory handlers
  *
  *************************************/
 
@@ -608,7 +587,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 /*************************************
  *
- *		Port definitions
+ *	Port definitions
  *
  *************************************/
 
@@ -837,16 +816,13 @@ INPUT_PORTS_START( ssprint_input_ports )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
 	PORT_START	/* ADC0 */
-	PORT_BIT( 0x7f, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_ANALOG ( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER1, 100, 4, 0, 0x00, 0x3f )
 
 	PORT_START	/* ADC1 */
-	PORT_BIT( 0x7f, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_ANALOG ( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER2, 100, 4, 0, 0x00, 0x3f )
 
 	PORT_START	/* ADC2 */
-	PORT_BIT( 0x7f, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER3 )
+	PORT_ANALOG ( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER3, 100, 4, 0, 0x00, 0x3f )
 
 	PORT_START	/* ADC3 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -939,12 +915,10 @@ INPUT_PORTS_START( csprint_input_ports )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
 	PORT_START	/* ADC0 */
-	PORT_BIT( 0x7f, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_ANALOG ( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER1, 100, 4, 0, 0x00, 0x3f )
 
 	PORT_START	/* ADC1 */
-	PORT_BIT( 0x7f, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_ANALOG ( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER2, 100, 4, 0, 0x00, 0x3f )
 
 	PORT_START	/* ADC2 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -1043,8 +1017,7 @@ INPUT_PORTS_START( apb_input_ports )
 	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START	/* ADC1 */
-	PORT_BIT( 0x7f, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_ANALOG ( 0xff, 0x00, IPT_PEDAL | IPF_PLAYER1, 100, 4, 0, 0x00, 0x3f )
 
 	PORT_START	/* ADC2 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -1117,7 +1090,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *		Graphics definitions
+ *	Graphics definitions
  *
  *************************************/
 
@@ -1169,7 +1142,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *		Sound definitions
+ *	Sound definitions
  *
  *************************************/
 
@@ -1214,7 +1187,7 @@ static struct TMS5220interface tms5220_interface =
 
 /*************************************
  *
- *		Machine driver
+ *	Machine driver
  *
  *************************************/
 
@@ -1379,7 +1352,7 @@ static struct MachineDriver sprint_machine_driver =
 
 /*************************************
  *
- *		ROM decoding
+ *	ROM decoding
  *
  *************************************/
 
@@ -1396,13 +1369,13 @@ static void rom_decode(void)
 
 /*************************************
  *
- *		Driver initialization
+ *	Driver initialization
  *
  *************************************/
 
 static void paperboy_init(void)
 {
-	static const unsigned short compressed_default_eeprom[] =
+	static const UINT16 compressed_default_eeprom[] =
 	{
 		0x0000,0x4300,0x0113,0x0124,0x0150,0x0153,0x0154,0x0100,
 		0x0112,0x01C0,0x0155,0x0143,0x0148,0x0100,0x0112,0x015C,
@@ -1477,7 +1450,7 @@ static void a720_init(void)
 
 static void ssprint_init(void)
 {
-	static const unsigned short compressed_default_eeprom[] =
+	static const UINT16 compressed_default_eeprom[] =
 	{
 		0x0000,0x01FF,0x0E00,0x01FF,0x0100,0x0120,0x0100,0x0120,
 		0x0300,0x0120,0x0500,0x0120,0x01FF,0x0100,0x0140,0x0100,
@@ -1528,7 +1501,7 @@ static void ssprint_init(void)
 
 static void csprint_init(void)
 {
-	static const unsigned short compressed_default_eeprom[] =
+	static const UINT16 compressed_default_eeprom[] =
 	{
 		0x0000,0x01FF,0x0E00,0x0128,0x01D0,0x0127,0x0100,0x0120,
 		0x0300,0x01F7,0x01D0,0x0107,0x0300,0x0120,0x010F,0x01F0,
@@ -1601,7 +1574,7 @@ static void apb_init(void)
 
 /*************************************
  *
- *		ROM definition(s)
+ *	ROM definition(s)
  *
  *************************************/
 
@@ -1991,7 +1964,7 @@ ROM_END
 
 /*************************************
  *
- *		Game driver(s)
+ *	Game driver(s)
  *
  *************************************/
 

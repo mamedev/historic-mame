@@ -54,6 +54,7 @@ to list them.
 | Astro Blaster        |  Yes   |  Yes   | Yes(1) |  Yes   |  Yes   | astrob   |
 | Astro Fighter        |  Yes   |  Yes   | Yes(1) |  Yes   |  Yes   | astrof   |
 | Astro Invader        |  Yes   |  Yes   |  Yes   |  Yes   |   No   | astinvad |
+| Astyanax, The        |  Yes   |  Yes   |  Yes   |   No   |   No   | astyanax |
 | Atari Baseball       |  Yes   |  b/w   |Partial |  n/a   |  n/a   | abaseb   |
 | Atari Basketball     |  Yes   |  b/w   |Partial |  n/a   |   No   | bsktball |
 | Atari Football       |  Yes   |  b/w   |Partial |  n/a   |  n/a   | atarifb  |
@@ -69,6 +70,7 @@ to list them.
 | Bandido              |  Yes   |  b/w   |   No   |   No   |   No   | bandido  |
 | Bank Panic           |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | bankp    |
 | Batman               |  Yes   |  Yes   |  Yes   |  Yes   |   No   | batman   |
+| Battlantis           |  Yes   |  Yes   |  Yes   |   No   |   No   | battlnts |
 | Battle Lane Vol. 5   |   No   |   No   |  Yes   |   No   |   No   | battlane |
 | Battle Zone          |  Yes   |Overlay | Yes(1) |  Yes   |   No   | bzone    |
 | Battle of Atlantis   |  Yes   |  Yes   |  Yes   |  Yes   |   No   | atlantis |
@@ -158,6 +160,7 @@ to list them.
 | Crude Buster         |  Yes   |  Yes   |  Yes   |   No   |  Yes   | cbuster  |
 | Crystal Castles      |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | ccastles |
 | Curve Ball           |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | curvebal |
+| Cybattler            |  Yes   |  Yes   |  Yes   |   No   |   No   | cybattlr |
 | Cyberball 2072 (2 Pla|  Yes   |  Yes   |  Yes   |  Yes   |   No   | cyberb2p |
 | D-Day                |  Yes   |   No   |  Yes   |  Yes   |  n/a   | dday     |
 | DakkoChan Jansoh     |   No   |  Yes   |  Yes   |   No   |   No   | dakkochn |
@@ -239,6 +242,7 @@ to list them.
 | Galaga               |  Yes   |  Yes   | Yes(1) |  Yes   |  Yes   | galaga   |
 | Galaxian             |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | galaxian |
 | Gals Panic           |  Yes   |  Yes   |  Yes   |   No   |   No   | galpanic |
+| Gang Busters         |  Yes   |  Yes   |  Yes   |   No   |  Yes   | gbusters |
 | Gang Wars            |  Yes   |  Yes   |  Yes   |   No   |   No   | gangwars |
 | Gaplus               |  Yes   |  Yes   | Yes(1) |   No   |   No   | gaplus   |
 | Gardia               |   No   |  Yes   |  Yes   |   No   |   No   | gardia   |
@@ -274,6 +278,7 @@ to list them.
 | Gypsy Juggler        |  Yes   |Overlay |   No   |   No   |   No   | gypsyjug |
 | Gyrodine             |  Yes   |  Yes   |  Yes   |   No   |  Yes   | gyrodine |
 | Gyruss               |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | gyruss   |
+| Hachoo!              |  Yes   |  Yes   |  Yes   |   No   |   No   | hachoo   |
 | Hang-On              |  Yes   |  Yes   |  Yes   |   No   |   No   | hangon   |
 | Hard Hat             |  Yes   |  Yes   |   No   |   No   |   No   | hardhat  |
 | Haunted Castle       |  Yes   |  Yes   |Partial |   No   |   No   | hcastle  |
@@ -372,6 +377,7 @@ to list them.
 | MACH 3               |   No   |  Yes   |  Yes   |  Yes   |  n/a   | mach3    |
 | Mad Crasher          |  Yes   |  Yes   |Partial |   No   |   No   | madcrash |
 | Mad Gear             |Partial.|  Yes   |  Yes   |  Yes   |   No   | madgear  |
+| Mad motor            |  Yes   |  Yes   |  Yes   |   No   |   No   | madmotor |
 | Mad Planets          |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | mplanets |
 | Magic Sword          |  Yes   |  Yes   |  Yes   |   No   |   No   | msword   |
 | Magical Spot II      |  Yes   |  Yes   |Partial |   No   |   No   | magspot2 |
@@ -422,6 +428,7 @@ to list them.
 | Mr. Do! Run Run      |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | dorunrun |
 | Mr. Do's Castle      |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | docastle |
 | Mr. Do's Wild Ride   |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | dowild   |
+| Mr. Goemon           |  Yes   |   No   |  Yes   |   No   |  Yes   | mrgoemon |
 | Mr. TNT              |  Yes   |  Yes?  |  Yes   |  Yes   |  Yes   | mrtnt    |
 | Ms Pac Man           |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | mspacman |
 | Munch Mobile         |  Yes   |   No   | Wrong  |   No   |   No   | mnchmobl |
@@ -498,6 +505,7 @@ to list them.
 | Qix                  |  Yes   |  Yes   |  Yes   |  Yes   |   No   | qix      |
 | Quantum              |  Yes   |   No   |  Yes   |  Yes   |   No   | quantum  |
 | Quartet II           |   No   |  Yes   |   No   |   No   |   No   | quartet2 |
+| Quarth               |  Yes   |  Yes   |  Yes   |   No   |  Yes   | quarth   |
 | Quiz Sangokushi      |  Yes   |  Yes   |Partial |  Yes   |  Yes   | qsangoku |
 | Quiz Tonosama no Yabou  Yes   |  Yes   |Partial |  Yes   |  Yes   | qtono1   |
 | Qwak                 |  Yes   |  Yes   |  Yes   |  Yes   |   No   | qwakprot |
@@ -519,7 +527,7 @@ to list them.
 | Relief Pitcher       |  Yes   |  Yes   |  Yes   |  Yes   |   No   | relief   |
 | Renegade             |  Yes   |  Yes   |  Yes   |   No   |   No   | renegade |
 | Rescue               |  Yes   |  Yes   |  Yes   |  Yes   |  n/a   | rescue   |
-| Return of the Invaders  Yes   |   No   |  Yes   |  Yes   |   No   | retofinv |
+| Return of the Invader|  Yes   |  Yes   |  Yes   |  Yes   |   No   | retofinv |
 | Return of the Jedi   |  Yes   |   No   |  Yes   |  Yes   |   No   | jedi     |
 | Return of Ishtar, The|  Yes   |  Yes   |  Yes   |   No   |  Yes   | roishtar |
 | River Patrol         |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | rpatrolb |
@@ -530,7 +538,7 @@ to list them.
 | Robot Bowl           |  Yes   |  Yes   |   No   |   No   |   No   | robotbwl |
 | Robotron             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | robotron |
 | Roc'n Rope           |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | rocnrope |
-| RodLand              |  Yes   |  Yes   |  Yes   |   No   |   No   | rodlandj |
+| RodLand              |  Yes   |  Yes   |  Yes   |   No   |   No   | rodland  |
 | Rollergames          |  Yes   |  Yes   |  Yes   |   No   |  Yes   | rollerg  |
 | Rolling Crash        |  Yes   |  Yes   |   No   |   No   |   No   | rollingc |
 | Rolling Thunder      |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | rthunder |
@@ -540,6 +548,7 @@ to list them.
 | SDI                  |   No   |  Yes   |   No   |   No   |   No   | sdi      |
 | SWAT                 |  Yes   |  Yes   |  Yes   |  Yes   |   No   | swat     |
 | Safari               |  Yes   |  b/w   |   No   |   No   |  n/a   | safari   |
+| Saint Dragon         |  Yes   |  Yes   |  Yes   |   No   |   No   | stdragon |
 | Salamander           |  Yes   |  Yes   |Partial |   No   |   No   | salamand |
 | Samurai (Sega)       |  Yes   |  Yes?  |   No   |   No   |   No   | samurai  |
 | Samurai (Taito)      |  Yes   | Close  |  Bad   |   No   |  Yes   | tsamurai |

@@ -605,10 +605,10 @@ ROM_START( hal21_rom )
 	ROM_LOAD( "hal21p12.bin", 0x0000, 0x2000, 0x9839a7cd )
 	ROM_REGION_DISPOSE( 0x4000 ) /* tiles */
 	ROM_LOAD( "hal21p11.bin", 0x0000, 0x4000, 0x24abc57e )
-	ROM_REGION_DISPOSE( 0x6000 ) /* 16x16 sprites */
-	ROM_LOAD( "hal21p13.bin", 0x0000, 0x2000, 0x052b4f4f )
-	ROM_LOAD( "hal21p14.bin", 0x2000, 0x2000, 0xda0cb670 )
-	ROM_LOAD( "hal21p15.bin", 0x4000, 0x2000, 0x5c5ea945 )
+	ROM_REGION_DISPOSE( 0xc000 ) /* 16x16 sprites */
+	ROM_LOAD( "hal21p13.bin", 0x0000, 0x4000, 0x052b4f4f )
+	ROM_LOAD( "hal21p14.bin", 0x4000, 0x4000, 0xda0cb670 )
+	ROM_LOAD( "hal21p15.bin", 0x8000, 0x4000, 0x5c5ea945 )
 
 	ROM_REGION(0xc00)	/* color PROM */
 	ROM_LOAD( "marvmaze.j1",  0x000, 0x400, 0 ) //fake

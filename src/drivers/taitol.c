@@ -1763,7 +1763,7 @@ struct GameDriver raimais_driver =
 	"1988",
 	"Taito Corporation",
 	"",
-	0,
+	GAME_NOT_WORKING,
 	&raimais_machine_driver,
 	0,
 

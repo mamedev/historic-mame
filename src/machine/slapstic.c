@@ -142,7 +142,7 @@ documented in the MAME code.
 
 /*************************************
  *
- *		Structure of slapstic params
+ *	Structure of slapstic params
  *
  *************************************/
 
@@ -160,7 +160,7 @@ struct slapstic_params
 
 /*************************************
  *
- *		Constants
+ *	Constants
  *
  *************************************/
 
@@ -176,7 +176,7 @@ enum state_type { ENABLED, DISABLED, IGNORE, SPECIAL };
 
 /*************************************
  *
- *		The master table
+ *	The master table
  *
  *************************************/
 
@@ -236,17 +236,17 @@ static struct slapstic_params slapstic_table[18] =
 
 /*************************************
  *
- *		Statics
+ *	Statics
  *
  *************************************/
 
 static struct slapstic_params *slapstic;
 
 static enum state_type state;
-static int next_bank;
-static int extra_bank;
-static int current_bank;
-static int version;
+static INT8 next_bank;
+static INT8 extra_bank;
+static INT8 current_bank;
+static UINT8 version;
 
 #if LOG_SLAPSTIC
 	static void slapstic_log(int offset);
@@ -256,9 +256,10 @@ static int version;
 #endif
 
 
+
 /*************************************
  *
- *		Initialization
+ *	Initialization
  *
  *************************************/
 
@@ -293,7 +294,7 @@ void slapstic_reset(void)
 
 /*************************************
  *
- *		Returns active bank without tweaking
+ *	Returns active bank without tweaking
  *
  *************************************/
 
@@ -306,9 +307,10 @@ int slapstic_bank(void)
 
 /*************************************
  *
- *		Call this before every access
+ *	Call this before every access
  *
  *************************************/
+
 int slapstic_tweak(int offset)
 {
 	/* switch banks now if one is pending */
@@ -449,7 +451,7 @@ int slapstic_tweak(int offset)
 
 /*************************************
  *
- *		Debugging
+ *	Debugging
  *
  *************************************/
 

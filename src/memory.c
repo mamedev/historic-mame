@@ -65,13 +65,17 @@ int mhshift[MAX_CPU][3], mhmask[MAX_CPU][3];
 
 /* pointers to port structs */
 /* ASG: port speedup */
-static const struct IOReadPort *readport[MAX_CPU];
-static const struct IOWritePort *writeport[MAX_CPU];
+static struct IOReadPort *readport[MAX_CPU];
+static struct IOWritePort *writeport[MAX_CPU];
 static int portmask[MAX_CPU];
+static int readport_size[MAX_CPU];
+static int writeport_size[MAX_CPU];
 /* HJB 990210: removed 'static' for access by assembly CPU core memory handlers */
 const struct IOReadPort *cur_readport;
 const struct IOWritePort *cur_writeport;
 int cur_portmask;
+static int cur_readport_max;
+static int cur_writeport_max;
 
 /* current hardware element map */
 static MHELE *cur_mr_element[MAX_CPU];
@@ -306,7 +310,7 @@ static int memory_allocate_ext (void)
 		int region = Machine->drv->cpu[cpu].memory_region;
 		int curr = 0, size = 0;
 
-      /* skip through the ROM regions to the matching one */
+		/* skip through the ROM regions to the matching one */
 		while (romp->name || romp->offset || romp->length)
 		{
 			/* headers are all zeros except from the offset */
@@ -400,6 +404,8 @@ int initmemoryhandlers(void)
 	const struct MemoryWriteAddress *memorywrite;
 	const struct MemoryReadAddress *mra;
 	const struct MemoryWriteAddress *mwa;
+	const struct IOReadPort *ioread;
+	const struct IOWritePort *iowrite;
 	MHELE hardware;
 	int abits1,abits2,abits3,abitsmin;
 	rdelement_max = 0;
@@ -445,8 +451,42 @@ int initmemoryhandlers(void)
 		}
 
 		/* initialize port structures */
-		readport[cpu] = Machine->drv->cpu[cpu].port_read;
-		writeport[cpu] = Machine->drv->cpu[cpu].port_write;
+		readport_size[cpu] = 0;
+		writeport_size[cpu] = 0;
+		readport[cpu] = 0;
+		writeport[cpu] = 0;
+
+		/* install port handlers */
+		ioread = Machine->drv->cpu[cpu].port_read;
+		if (ioread)
+		{
+			while (ioread->start != -1)
+			{
+				if (install_port_read_handler(cpu, ioread->start, ioread->end, ioread->handler) == 0)
+				{
+					shutdownmemoryhandler();
+					return 0;
+				}
+
+				ioread++;
+			}
+		}
+
+		iowrite = Machine->drv->cpu[cpu].port_write;
+		if (iowrite)
+		{
+			while (iowrite->start != -1)
+			{
+				if (install_port_write_handler(cpu, iowrite->start, iowrite->end, iowrite->handler) == 0)
+				{
+					shutdownmemoryhandler();
+					return 0;
+				}
+
+				iowrite++;
+			}
+		}
+
 		portmask[cpu] = 0xffff;
 #if HAS_Z80
         if ((Machine->drv->cpu[cpu].cpu_type & ~CPU_FLAGS_MASK) == CPU_Z80 &&
@@ -762,6 +802,8 @@ void memorycontextswap(int activecpu)
 	cur_readport = readport[activecpu];
 	cur_writeport = writeport[activecpu];
 	cur_portmask = portmask[activecpu];
+	cur_readport_max = readport_size[activecpu] / sizeof(struct IOReadPort) - 2;
+	cur_writeport_max = writeport_size[activecpu] / sizeof(struct IOWritePort) - 2;
 
 	/* op code memory pointer */
 	ophw = HT_RAM;
@@ -785,6 +827,18 @@ void shutdownmemoryhandler(void)
 		{
 			free( cur_mw_element[cpu] );
 			cur_mw_element[cpu] = 0;
+		}
+
+		if (readport[cpu] != 0)
+		{
+			free(readport[cpu]);
+			readport[cpu] = 0;
+		}
+
+		if (writeport[cpu] != 0)
+		{
+			free(writeport[cpu]);
+			writeport[cpu] = 0;
 		}
 	}
 
@@ -1627,30 +1681,31 @@ void cpu_writemem29_dword (int address, int data)  /* AJP 980803 */
   Perform an I/O port read. This function is called by the CPU emulation.
 
 ***************************************************************************/
-int cpu_readport(int Port)
+int cpu_readport(int port)
 {
-	const struct IOReadPort *iorp = cur_readport;
+	port &= cur_portmask;
 
-
-	if (iorp)
+	if (cur_readport_max >= 0)
 	{
-		Port &= cur_portmask;
-		while (iorp->start != -1)
+		const struct IOReadPort *iorp = &cur_readport[cur_readport_max];
+
+		/* search backwards so the most recently installed handlers get a preference */
+		while (iorp >= cur_readport)
 		{
-			if (Port >= iorp->start && Port <= iorp->end)
+			if (port >= iorp->start && port <= iorp->end)
 			{
 				int (*handler)(int) = iorp->handler;
 
 
 				if (handler == IORP_NOP) return 0;
-				else return (*handler)(Port - iorp->start);
+				else return (*handler)(port - iorp->start);
 			}
 
-			iorp++;
+			iorp--;
 		}
 	}
 
-	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - read unmapped I/O port %02x\n",cpu_getactivecpu(),cpu_get_pc(),Port & cur_portmask);
+	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - read unmapped I/O port %02x\n",cpu_getactivecpu(),cpu_get_pc(),port);
 	return 0;
 }
 
@@ -1660,32 +1715,33 @@ int cpu_readport(int Port)
   Perform an I/O port write. This function is called by the CPU emulation.
 
 ***************************************************************************/
-void cpu_writeport(int Port,int Value)
+void cpu_writeport(int port, int value)
 {
-	const struct IOWritePort *iowp = cur_writeport;
+	port &= cur_portmask;
 
-	Port &= cur_portmask;
-
-	if (iowp)
+	if (cur_writeport_max >= 0)
 	{
-		while (iowp->start != -1)
+		const struct IOWritePort *iowp = &cur_writeport[cur_writeport_max];
+
+		/* search backwards so the most recently installed handlers get a preference */
+		while (iowp >= cur_writeport)
 		{
-			if (Port >= iowp->start && Port <= iowp->end)
+			if (port >= iowp->start && port <= iowp->end)
 			{
 				void (*handler)(int,int) = iowp->handler;
 
 
 				if (handler == IOWP_NOP) return;
-				else (*handler)(Port - iowp->start,Value);
+				else (*handler)(port - iowp->start,value);
 
 				return;
 			}
 
-			iowp++;
+			iowp--;
 		}
 	}
 
-	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to unmapped I/O port %02x\n",cpu_getactivecpu(),cpu_get_pc(),Value,Port);
+	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to unmapped I/O port %02x\n",cpu_getactivecpu(),cpu_get_pc(),value,port);
 }
 
 
@@ -2131,6 +2187,7 @@ void *install_mem_read_handler(int cpu, int start, int end, int (*handler)(int))
 	}
 	return memory_find_base(cpu, start);
 }
+
 void *install_mem_write_handler(int cpu, int start, int end, void (*handler)(int, int))
 {
 	MHELE hardware = 0;
@@ -2241,6 +2298,62 @@ void *install_mem_write_handler(int cpu, int start, int end, void (*handler)(int
 		    ,wrelement_max,MH_ELEMAX , wrhard_max,MH_HARDMAX );
 	}
 	return memory_find_base(cpu, start);
+}
+
+void *install_port_read_handler(int cpu, int start, int end, int (*handler)(int))
+{
+	int i;
+
+	readport_size[cpu] += sizeof(struct IOReadPort);
+
+	if (readport[cpu] == 0)
+	{
+		// extra space for the end marker
+		readport_size[cpu] += sizeof(struct IOReadPort);
+		readport[cpu] = malloc(readport_size[cpu]);
+	}
+	else
+	{
+		readport[cpu] = realloc(readport[cpu], readport_size[cpu]);
+	}
+
+	i = readport_size[cpu] / sizeof(struct IOReadPort) - 2;
+
+	readport[cpu][i].start = start;
+	readport[cpu][i].end = end;
+	readport[cpu][i].handler = handler;
+
+	readport[cpu][i+1].start = -1;
+
+	return readport[cpu];
+}
+
+void *install_port_write_handler(int cpu, int start, int end, void (*handler)(int, int))
+{
+	int i;
+
+	writeport_size[cpu] += sizeof(struct IOWritePort);
+
+	if (writeport[cpu] == 0)
+	{
+		// extra space for the end marker
+		writeport_size[cpu] += sizeof(struct IOWritePort);
+		writeport[cpu] = malloc(writeport_size[cpu]);
+	}
+	else
+	{
+		writeport[cpu] = realloc(writeport[cpu], writeport_size[cpu]);
+	}
+
+	i = writeport_size[cpu] / sizeof(struct IOWritePort) - 2;
+
+	writeport[cpu][i].start = start;
+	writeport[cpu][i].end = end;
+	writeport[cpu][i].handler = handler;
+
+	writeport[cpu][i+1].start = -1;
+
+	return writeport[cpu];
 }
 
 #ifdef MEM_DUMP

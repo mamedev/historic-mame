@@ -22,12 +22,13 @@ void thunderj_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void thunderj_scanline_update(int scanline);
 
 
-static unsigned char *rts_address;
+static UINT8 *rts_address;
+
 
 
 /*************************************
  *
- *		Initialization
+ *	Initialization
  *
  *************************************/
 
@@ -66,7 +67,7 @@ static void init_machine(void)
 
 /*************************************
  *
- *		I/O handling
+ *	I/O handling
  *
  *************************************/
 
@@ -105,7 +106,7 @@ static void latch_w(int offset, int data)
 
 /*************************************
  *
- *		Video Controller Hack
+ *	Video Controller Hack
  *
  *************************************/
 
@@ -124,17 +125,6 @@ int thunderj_video_control_r(int offset)
 	   memory (which is what it does if this interrupt test fails -- see the code
 	   at $1E56 to see!) */
 
-	/* Note: we're no longer explicitly syncing the two CPUs, so the timing should
-	   work properly; however, if we start seeing lockups, we may want to re-enable
-	   the code below:
-
-	if (offset == 0)
-	{
-		static const int values[2] = { 0x40f5, 0x40f7 };
-		static int value_counter;
-		return values[value_counter++ % 2];
-	}*/
-
 	/* Use these lines to detect when things go south:
 
 	if (cpu_readmem24_word(0x163482) > 0xfff)
@@ -147,7 +137,7 @@ int thunderj_video_control_r(int offset)
 
 /*************************************
  *
- *		Main CPU memory handlers
+ *	Main CPU memory handlers
  *
  *************************************/
 
@@ -169,6 +159,7 @@ static struct MemoryReadAddress main_readmem[] =
 	{ 0x800000, 0x800001, MRA_BANK7, &rts_address },
 	{ -1 }  /* end of table */
 };
+
 
 static struct MemoryWriteAddress main_writemem[] =
 {
@@ -195,7 +186,7 @@ static struct MemoryWriteAddress main_writemem[] =
 
 /*************************************
  *
- *		Extra CPU memory handlers
+ *	Extra CPU memory handlers
  *
  *************************************/
 
@@ -228,7 +219,7 @@ static struct MemoryWriteAddress extra_writemem[] =
 
 /*************************************
  *
- *		Port definitions
+ *	Port definitions
  *
  *************************************/
 
@@ -270,7 +261,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *		Graphics definitions
+ *	Graphics definitions
  *
  *************************************/
 
@@ -310,7 +301,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *		Machine driver
+ *	Machine driver
  *
  *************************************/
 
@@ -360,7 +351,7 @@ static struct MachineDriver machine_driver =
 
 /*************************************
  *
- *		ROM decoding
+ *	ROM decoding
  *
  *************************************/
 
@@ -371,13 +362,16 @@ static void rom_decode(void)
 	/* invert the graphics bits on the playfield and motion objects */
 	for (i = 0; i < 0x200000; i++)
 		Machine->memory_region[4][i] ^= 0xff;
+	
+	/* copy the shared ROM from region 0 to region 1 */
+	memcpy(&Machine->memory_region[1][0x60000], &Machine->memory_region[0][0x60000], 0x20000);
 }
 
 
 
 /*************************************
  *
- *		Driver initialization
+ *	Driver initialization
  *
  *************************************/
 
@@ -402,7 +396,7 @@ static void thunderj_init(void)
 
 /*************************************
  *
- *		ROM definition(s)
+ *	ROM definition(s)
  *
  *************************************/
 
@@ -422,8 +416,6 @@ ROM_START( thunderj_rom )
 	ROM_REGION(0x80000)	/* 8*64k for 68000 code */
 	ROM_LOAD_EVEN( "1011.17l",   0x00000, 0x10000, 0xbbbbca45 )
 	ROM_LOAD_ODD ( "1012.17n",   0x00000, 0x10000, 0x53e5e638 )
-	ROM_LOAD_EVEN( "1005.15h",   0x60000, 0x10000, 0x05474ebb )
-	ROM_LOAD_ODD ( "1010.16h",   0x60000, 0x10000, 0xccff21c8 )
 
 	ROM_REGION(0x14000)	/* 64k + 16k for 6502 code */
 	ROM_LOAD( "tjw65snd.bin",  0x10000, 0x4000, 0xd8feb7fb )
@@ -479,7 +471,7 @@ ROM_END
 
 /*************************************
  *
- *		Game driver(s)
+ *	Game driver(s)
  *
  *************************************/
 

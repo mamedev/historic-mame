@@ -72,7 +72,7 @@ void skullxbo_scanline_update(int param);
 
 /*************************************
  *
- *		Initialization & interrupts
+ *	Initialization & interrupts
  *
  *************************************/
 
@@ -103,11 +103,11 @@ static void irq_gen(int param)
 
 static void alpha_row_update(int scanline)
 {
-	unsigned short *check = (unsigned short *)&atarigen_alpharam[((scanline / 8) * 64 + 42) * 2];
+	UINT16 *check = (UINT16 *)&atarigen_alpharam[((scanline / 8) * 64 + 42) * 2];
 
 	/* check for interrupts in the alpha ram */
 	/* the interrupt occurs on the HBLANK of the 6th scanline following */
-	if ((unsigned char *)check < &atarigen_alpharam[atarigen_alpharam_size] && (*check & 0x8000))
+	if ((UINT8 *)check < &atarigen_alpharam[atarigen_alpharam_size] && (*check & 0x8000))
 		timer_set(cpu_getscanlineperiod() * 6.9, 0, irq_gen);
 
 	/* update the playfield and motion objects */
@@ -127,7 +127,7 @@ static void init_machine(void)
 
 /*************************************
  *
- *		I/O read dispatch.
+ *	I/O read dispatch.
  *
  *************************************/
 
@@ -143,7 +143,7 @@ static int special_port1_r(int offset)
 
 /*************************************
  *
- *		Who knows what this is?
+ *	Who knows what this is?
  *
  *************************************/
 
@@ -156,7 +156,7 @@ static void skullxbo_mobwr_w(int offset, int data)
 
 /*************************************
  *
- *		Main CPU memory handlers
+ *	Main CPU memory handlers
  *
  *************************************/
 
@@ -208,7 +208,7 @@ static struct MemoryWriteAddress main_writemem[] =
 
 /*************************************
  *
- *		Port definitions
+ *	Port definitions
  *
  *************************************/
 
@@ -246,7 +246,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *		Graphics definitions
+ *	Graphics definitions
  *
  *************************************/
 
@@ -299,7 +299,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *		Machine driver
+ *	Machine driver
  *
  *************************************/
 
@@ -316,7 +316,7 @@ static struct MachineDriver machine_driver =
 		},
 		{
 			JSA_II_CPU(1)
-		},
+		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
@@ -343,7 +343,7 @@ static struct MachineDriver machine_driver =
 
 /*************************************
  *
- *		ROM definition(s)
+ *	ROM definition(s)
  *
  *************************************/
 
@@ -482,7 +482,7 @@ ROM_END
 
 /*************************************
  *
- *		ROM decoding
+ *	ROM decoding
  *
  *************************************/
 
@@ -499,7 +499,7 @@ static void rom_decode(void)
 
 /*************************************
  *
- *		Driver initialization
+ *	Driver initialization
  *
  *************************************/
 
@@ -520,7 +520,7 @@ static void skullxbo_init(void)
 
 /*************************************
  *
- *		Game driver(s)
+ *	Game driver(s)
  *
  *************************************/
 

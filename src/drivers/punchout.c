@@ -796,7 +796,7 @@ static struct MachineDriver punchout_machine_driver =
 			nmi_interrupt,1
 		},
 		{
-			CPU_M6502 | CPU_AUDIO_CPU,
+			CPU_N2A03 | CPU_AUDIO_CPU,
 			21477270/16,	/* ??? the external clock is right, I assume it is */
 							/* demultiplied internally by the CPU */
 			3,	/* memory region #3 */
@@ -851,7 +851,7 @@ static struct MachineDriver spnchout_machine_driver =
 			nmi_interrupt,1
 		},
 		{
-			CPU_M6502 | CPU_AUDIO_CPU,
+			CPU_N2A03 | CPU_AUDIO_CPU,
 			21477270/16,	/* ??? the external clock is right, I assume it is */
 							/* demultiplied internally by the CPU */
 			3,	/* memory region #3 */
@@ -905,7 +905,7 @@ static struct MachineDriver armwrest_machine_driver =
 			nmi_interrupt,1
 		},
 		{
-			CPU_M6502 | CPU_AUDIO_CPU,
+			CPU_N2A03 | CPU_AUDIO_CPU,
 			21477270/16,	/* ??? the external clock is right, I assume it is */
 							/* demultiplied internally by the CPU */
 			3,	/* memory region #3 */

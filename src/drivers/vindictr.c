@@ -79,14 +79,14 @@ void vindictr_scanline_update(int scanline);
 
 /*************************************
  *
- *		Shared RAM handling
+ *	Shared RAM handling
  *
  *************************************/
 
-static unsigned char *shared_ram_1;
-static unsigned char *shared_ram_2;
-static unsigned char *shared_ram_3;
-static unsigned char *shared_ram_4;
+static UINT8 *shared_ram_1;
+static UINT8 *shared_ram_2;
+static UINT8 *shared_ram_3;
+static UINT8 *shared_ram_4;
 
 static int shared_ram_1_r(int offset) { return READ_WORD(&shared_ram_1[offset]); }
 static int shared_ram_2_r(int offset) { return READ_WORD(&shared_ram_2[offset]); }
@@ -102,7 +102,7 @@ static void shared_ram_4_w(int offset, int data) { COMBINE_WORD_MEM(&shared_ram_
 
 /*************************************
  *
- *		Initialization
+ *	Initialization
  *
  *************************************/
 
@@ -134,7 +134,7 @@ static void init_machine(void)
 
 /*************************************
  *
- *		I/O handling
+ *	I/O handling
  *
  *************************************/
 
@@ -195,7 +195,7 @@ static int special_input_r(int offset)
 
 /*************************************
  *
- *		Main CPU memory handlers
+ *	Main CPU memory handlers
  *
  *************************************/
 
@@ -245,7 +245,7 @@ static struct MemoryWriteAddress main_writemem[] =
 
 /*************************************
  *
- *		Port definitions
+ *	Port definitions
  *
  *************************************/
 
@@ -302,7 +302,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *		Graphics definitions
+ *	Graphics definitions
  *
  *************************************/
 
@@ -341,7 +341,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *		Machine driver
+ *	Machine driver
  *
  *************************************/
 
@@ -384,7 +384,7 @@ static struct MachineDriver machine_driver =
 
 /*************************************
  *
- *		ROM decoding
+ *	ROM decoding
  *
  *************************************/
 
@@ -401,7 +401,7 @@ static void rom_decode(void)
 
 /*************************************
  *
- *		ROM definition(s)
+ *	ROM definition(s)
  *
  *************************************/
 
@@ -438,7 +438,7 @@ ROM_END
 
 /*************************************
  *
- *		Driver initialization
+ *	Driver initialization
  *
  *************************************/
 
@@ -459,7 +459,7 @@ static void vindictr_init(void)
 
 /*************************************
  *
- *		Game driver(s)
+ *	Game driver(s)
  *
  *************************************/
 

@@ -66,6 +66,15 @@ struct rectangle
 #define TRANSPARENCY_PENS 4
 #define TRANSPARENCY_COLOR 2
 #define TRANSPARENCY_THROUGH 3
+#define TRANSPARENCY_PEN_TABLE 5
+
+/* drawing mode case TRANSPARENCY_PEN_TABLE */
+extern UINT8 gfx_drawmode_table[256];
+#define DRAWMODE_NONE   0
+#define DRAWMODE_SOURCE 1
+#define DRAWMODE_HALF   2
+#define DRAWMODE_DOUBLE 3
+#define DRAWMODE_MIX    4
 
 void decodechar(struct GfxElement *gfx,int num,const unsigned char *src,const struct GfxLayout *gl);
 struct GfxElement *decodegfx(const unsigned char *src,const struct GfxLayout *gl);

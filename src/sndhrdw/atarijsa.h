@@ -25,6 +25,9 @@ extern struct YM2151interface atarijsa_ym2151_interface_stereo;
 extern struct POKEYinterface atarijsa_pokey_interface;
 extern struct OKIM6295interface atarijsa_okim6295_interface_2;
 extern struct OKIM6295interface atarijsa_okim6295_interface_3;
+extern struct OKIM6295interface atarijsa_okim6295_interface_4;
+extern struct OKIM6295interface atarijsa_okim6295_interface_5;
+extern struct OKIM6295interface atarijsa_okim6295_interface_6;
 
 
 /* Used by Xybots, Blasteroids, Badlands(?) */

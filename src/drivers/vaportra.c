@@ -1,7 +1,9 @@
 /***************************************************************************
 
-  Vapor Trail                  (c) 1989 Data East USA
-  Kuhga                        (c) 1989 Data East Corporation
+  Vapor Trail (USA version)    (c) 1989 Data East USA
+  Kuhga (Japanese version)     (c) 1989 Data East Corporation
+
+  A 'World' version of Vapor Trail also exists.
 
   Emulation by Bryan McPhail, mish@tendril.force9.net
 
@@ -328,7 +330,8 @@ static void sound_irq(int state)
 static struct YM2151interface ym2151_interface =
 {
 	1,
-	32220000/8, /* Audio section crystal is 32.220 MHz */
+	3700000,
+//	32220000/8, /* Audio section crystal is 32.220 MHz */
 	{ YM3012_VOL(40,MIXER_PAN_LEFT,40,MIXER_PAN_RIGHT) },
 	{ sound_irq }
 };

@@ -152,6 +152,51 @@ extern const char *m6510_info(void *context, int regnum);
 extern unsigned m6510_dasm(char *buffer, unsigned pc);
 #endif
 
+/****************************************************************************
+ * The 2A03 (NES 6502 without decimal mode ADC/SBC)
+ ****************************************************************************/
+#if HAS_N2A03
+#define N2A03_A 						M6502_A
+#define N2A03_X 						M6502_X
+#define N2A03_Y 						M6502_Y
+#define N2A03_S 						M6502_S
+#define N2A03_PC						M6502_PC
+#define N2A03_P 						M6502_P
+#define N2A03_EA						M6502_EA
+#define N2A03_ZP						M6502_ZP
+#define N2A03_NMI_STATE 				M6502_NMI_STATE
+#define N2A03_IRQ_STATE 				M6502_IRQ_STATE
+
+#define N2A03_INT_NONE					M6502_INT_NONE
+#define N2A03_INT_IRQ					M6502_INT_IRQ
+#define N2A03_INT_NMI					M6502_INT_NMI
+
+#define N2A03_NMI_VEC					M6502_NMI_VEC
+#define N2A03_RST_VEC					M6502_RST_VEC
+#define N2A03_IRQ_VEC					M6502_IRQ_VEC
+
+#define n2a03_ICount					m6502_ICount
+
+extern void n2a03_reset (void *param);
+extern void n2a03_exit	(void);
+extern int	n2a03_execute(int cycles);
+extern unsigned n2a03_get_context (void *dst);
+extern void n2a03_set_context (void *src);
+extern unsigned n2a03_get_pc (void);
+extern void n2a03_set_pc (unsigned val);
+extern unsigned n2a03_get_sp (void);
+extern void n2a03_set_sp (unsigned val);
+extern unsigned n2a03_get_reg (int regnum);
+extern void n2a03_set_reg (int regnum, unsigned val);
+extern void n2a03_set_nmi_line(int state);
+extern void n2a03_set_irq_line(int irqline, int state);
+extern void n2a03_set_irq_callback(int (*callback)(int irqline));
+extern void n2a03_state_save(void *file);
+extern void n2a03_state_load(void *file);
+extern const char *n2a03_info(void *context, int regnum);
+extern unsigned n2a03_dasm(char *buffer, unsigned pc);
+#endif
+
 #ifdef MAME_DEBUG
 extern unsigned Dasm6502( char *dst, unsigned pc );
 #endif

@@ -589,6 +589,12 @@ ROM_START( jackal_rom )
 
 	ROM_REGION(0x10000)     /* 64k for 2nd cpu (Graphics & Sound)*/
 	ROM_LOAD( "j-t01.rom",    0x8000, 0x8000, 0xb189af6a )
+
+	ROM_REGION(0x0400)	/* color lookup tables */
+	ROM_LOAD( "prom1",        0x0000, 0x0100, 0x00000000 )
+	ROM_LOAD( "prom2",        0x0100, 0x0100, 0x00000000 )
+	ROM_LOAD( "prom3",        0x0200, 0x0100, 0x00000000 )
+	ROM_LOAD( "prom4",        0x0300, 0x0100, 0x00000000 )
 ROM_END
 
 ROM_START( topgunr_rom )
@@ -605,6 +611,12 @@ ROM_START( topgunr_rom )
 
 	ROM_REGION(0x10000)     /* 64k for 2nd cpu (Graphics & Sound)*/
 	ROM_LOAD( "j-t01.rom",    0x8000, 0x8000, 0xb189af6a )
+
+	ROM_REGION(0x0400)	/* color lookup tables */
+	ROM_LOAD( "prom1",        0x0000, 0x0100, 0x00000000 )
+	ROM_LOAD( "prom2",        0x0100, 0x0100, 0x00000000 )
+	ROM_LOAD( "prom3",        0x0200, 0x0100, 0x00000000 )
+	ROM_LOAD( "prom4",        0x0300, 0x0100, 0x00000000 )
 ROM_END
 
 ROM_START( topgunbl_rom )
@@ -633,6 +645,12 @@ ROM_START( topgunbl_rom )
 
 	ROM_REGION(0x10000)     /* 64k for 2nd cpu (Graphics & Sound)*/
 	ROM_LOAD( "t-1.c14",      0x8000, 0x8000, 0x54aa2d29 )
+
+	ROM_REGION(0x0400)	/* color lookup tables */
+	ROM_LOAD( "prom1",        0x0000, 0x0100, 0x00000000 )
+	ROM_LOAD( "prom2",        0x0100, 0x0100, 0x00000000 )
+	ROM_LOAD( "prom3",        0x0200, 0x0100, 0x00000000 )
+	ROM_LOAD( "prom4",        0x0300, 0x0100, 0x00000000 )
 ROM_END
 
 

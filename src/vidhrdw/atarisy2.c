@@ -62,13 +62,10 @@
 #define YDIM (YCHARS*8)
 
 
-#define DEBUG_VIDEO 0
-
-
 
 /*************************************
  *
- *		Constants
+ *	Constants
  *
  *************************************/
 
@@ -80,7 +77,7 @@
 
 /*************************************
  *
- *		Structures
+ *	Structures
  *
  *************************************/
 
@@ -101,34 +98,34 @@ struct pf_overrender_data
 
 /*************************************
  *
- *		Globals we own
+ *	Globals we own
  *
  *************************************/
 
-int atarisys2_mo_mask;
-unsigned char *atarisys2_slapstic;
+UINT16 atarisys2_mo_mask;
+UINT8 *atarisys2_slapstic;
 
 
 
 /*************************************
  *
- *		Statics
+ *	Statics
  *
  *************************************/
 
-static unsigned char *playfieldram;
-static unsigned char *alpharam;
+static UINT8 *playfieldram;
+static UINT8 *alpharam;
 
-static int videobank;
+static UINT8 videobank;
 
 static struct atarigen_pf_state pf_state;
-static int latched_vscroll;
+static UINT16 latched_vscroll;
 
 
 
 /*************************************
  *
- *		Prototypes
+ *	Prototypes
  *
  *************************************/
 
@@ -136,17 +133,13 @@ static void pf_render_callback(const struct rectangle *clip, const struct rectan
 static void pf_check_overrender_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *data);
 static void pf_overrender_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *data);
 
-static void mo_render_callback(const unsigned short *data, const struct rectangle *clip, void *param);
-
-#if DEBUG_VIDEO
-static void debug(void);
-#endif
+static void mo_render_callback(const UINT16 *data, const struct rectangle *clip, void *param);
 
 
 
 /*************************************
  *
- *		Video system start
+ *	Video system start
  *
  *************************************/
 
@@ -188,7 +181,7 @@ int atarisys2_vh_start(void)
 	if (palette_used_colors)
 	{
 		int i;
-		memset(palette_used_colors, PALETTE_COLOR_USED, Machine->drv->total_colors * sizeof(unsigned char));
+		memset(palette_used_colors, PALETTE_COLOR_USED, Machine->drv->total_colors * sizeof(UINT8));
 		for (i = 0; i < 4; i++)
 			palette_used_colors[15 + i * 16] = PALETTE_COLOR_TRANSPARENT;
 		for (i = 0; i < 8; i++)
@@ -217,7 +210,7 @@ int atarisys2_vh_start(void)
 
 /*************************************
  *
- *		Video system shutdown
+ *	Video system shutdown
  *
  *************************************/
 
@@ -236,7 +229,7 @@ void atarisys2_vh_stop(void)
 
 /*************************************
  *
- *		Scroll/playfield bank write
+ *	Scroll/playfield bank write
  *
  *************************************/
 
@@ -282,7 +275,7 @@ void atarisys2_vscroll_w(int offset, int data)
 
 /*************************************
  *
- *		Palette RAM write handler
+ *	Palette RAM write handler
  *
  *************************************/
 
@@ -320,7 +313,7 @@ void atarisys2_paletteram_w(int offset, int data)
 
 /*************************************
  *
- *		Video RAM bank read/write handlers
+ *	Video RAM bank read/write handlers
  *
  *************************************/
 
@@ -349,7 +342,7 @@ void atarisys2_slapstic_w(int offset, int data)
 
 /*************************************
  *
- *		Video RAM read/write handlers
+ *	Video RAM read/write handlers
  *
  *************************************/
 
@@ -382,7 +375,7 @@ void atarisys2_videoram_w(int offset, int data)
 
 /*************************************
  *
- *		Periodic scanline updater
+ *	Periodic scanline updater
  *
  *************************************/
 
@@ -404,7 +397,7 @@ void atarisys2_scanline_update(int scanline)
 
 /*************************************
  *
- *		Main refresh
+ *	Main refresh
  *
  *************************************/
 
@@ -412,10 +405,6 @@ void atarisys2_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	struct mo_data modata;
 	int i;
-
-#if DEBUG_VIDEO
-	if (keyboard_key_pressed(KEYCODE_9)) debug();
-#endif
 
 	/* recalc the palette if necessary */
 	if (palette_recalc())
@@ -463,7 +452,7 @@ void atarisys2_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 /*************************************
  *
- *		Playfield rendering
+ *	Playfield rendering
  *
  *************************************/
 
@@ -502,7 +491,7 @@ static void pf_render_callback(const struct rectangle *clip, const struct rectan
 
 /*************************************
  *
- *		Playfield overrender check
+ *	Playfield overrender check
  *
  *************************************/
 
@@ -542,7 +531,7 @@ static void pf_check_overrender_callback(const struct rectangle *clip, const str
 
 /*************************************
  *
- *		Playfield overrendering
+ *	Playfield overrendering
  *
  *************************************/
 
@@ -584,11 +573,11 @@ static void pf_overrender_callback(const struct rectangle *clip, const struct re
 
 /*************************************
  *
- *		Motion object rendering
+ *	Motion object rendering
  *
  *************************************/
 
-static void mo_render_callback(const unsigned short *data, const struct rectangle *clip, void *param)
+static void mo_render_callback(const UINT16 *data, const struct rectangle *clip, void *param)
 {
 	struct GfxElement *gfx = Machine->gfx[1];
 	struct mo_data *modata = param;
@@ -655,92 +644,3 @@ static void mo_render_callback(const unsigned short *data, const struct rectangl
 		copybitmap(bitmap, atarigen_pf_overrender_bitmap, 0, 0, 0, 0, &pf_clip, TRANSPARENCY_THROUGH, palette_transparent_pen);
 	}
 }
-
-
-
-/*************************************
- *
- *		Debugging
- *
- *************************************/
-
-#if DEBUG_VIDEO
-static void debug(void)
-{
-	static int count;
-	char name[50];
-	FILE *f;
-	int i;
-
-	while (keyboard_key_pressed(KEYCODE_9)) { }
-
-	sprintf(name, "Dump %d", ++count);
-	f = fopen(name, "wt");
-
-	fprintf(f, "MO Palette\n");
-	for (i = 0x00; i < 0x40; i++)
-	{
-		fprintf(f, "%04X ", READ_WORD(&paletteram[i*2]));
-		if ((i & 15) == 15) fprintf(f, "\n");
-	}
-
-	fprintf(f, "\n\nAlpha Palette\n");
-	for (i = 0x40; i < 0x80; i++)
-	{
-		fprintf(f, "%04X ", READ_WORD(&paletteram[i*2]));
-		if ((i & 15) == 15) fprintf(f, "\n");
-	}
-
-	fprintf(f, "\n\nPlayfield Palette\n");
-	for (i = 0x80; i < 0x100; i++)
-	{
-		fprintf(f, "%04X ", READ_WORD(&paletteram[i*2]));
-		if ((i & 15) == 15) fprintf(f, "\n");
-	}
-
-	fprintf(f, "\n\nX Scroll = %03X\nY Scroll = %03X\n",
-		READ_WORD(&atarigen_hscroll[0]) >> 6, READ_WORD(&atarigen_vscroll[0]) >> 6);
-
-	fprintf(f, "\n\nX PFBank0 = %X\nY PFBank1 = %X\n",
-		READ_WORD(&atarigen_hscroll[0]) & 15, READ_WORD(&atarigen_vscroll[0]) & 15);
-
-	fprintf(f, "\n\nMotion Objects\n");
-	for (i = 0; i < MORAM_SIZE; i += 8)
-	{
-		int data1 = READ_WORD(&spriteram[i+0]);
-		int data2 = READ_WORD(&spriteram[i+2]);
-		int data3 = READ_WORD(&spriteram[i+4]);
-		int data4 = READ_WORD(&spriteram[i+6]);
-
-		int ypos = (data1 >> 6) & 0x1ff;
-		int vsize = ((data1 >> 3) & 7) + 1;
-		int hsize = (data1 & 7) + 1;
-		int code = (data2 & 0x3fff);
-		int vflip = ((data2 >> 15) & 1);
-		int hflip = ((data2 >> 14) & 1);
-		int link = (data3 & 0xff);
-		int color = (data4 & 0x0f);
-		int xpos = (data4 >> 6) & 0x3ff;
-
-		fprintf(f, "  Object %02X: 0=%04X 1=%04X 2=%04X 3=%04X\n",
-			i, data1, data2, data3, data4);
-	}
-
-	fprintf(f, "\n\nPlayfield dump\n");
-	for (i = 0; i < PFRAM_SIZE / 2; i++)
-	{
-		fprintf(f, "%04X ", READ_WORD(&playfieldram[i*2]));
-		if ((i & 127) == 127) fprintf(f, "\n");
-		else if ((i & 127) == 63) fprintf(f, "\n      ");
-	}
-
-	fprintf(f, "\n\nAlpha dump\n");
-	for (i = 0; i < ANRAM_SIZE / 2; i++)
-	{
-		fprintf(f, "%04X ", READ_WORD(&alpharam[i*2]));
-		if ((i & 63) == 63) fprintf(f, "\n");
-	}
-
-	fclose(f);
-}
-#endif

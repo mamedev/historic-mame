@@ -66,58 +66,49 @@
 #define YDIM (YCHARS*8)
 
 
-#define DEBUG_VIDEO 0
-
 
 /*************************************
  *
- *		Globals we own
+ *	Globals we own
  *
  *************************************/
 
-unsigned char *toobin_intensity;
-unsigned char *toobin_moslip;
+UINT8 *toobin_intensity;
+UINT8 *toobin_moslip;
 
 
 
 /*************************************
  *
- *		Statics
+ *	Statics
  *
  *************************************/
 
 static struct atarigen_pf_state pf_state;
-static int last_intensity;
+static UINT8 last_intensity;
 
-#if DEBUG_VIDEO
-static int show_colors;
-#endif
 
 
 /*************************************
  *
- *		Prototypes
+ *	Prototypes
  *
  *************************************/
 
-static const unsigned char *update_palette(void);
+static const UINT8 *update_palette(void);
 
 static void pf_color_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *data);
 static void pf_render_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *data);
 static void pf_overrender_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *data);
 
-static void mo_color_callback(const unsigned short *data, const struct rectangle *clip, void *param);
-static void mo_render_callback(const unsigned short *data, const struct rectangle *clip, void *param);
-
-#if DEBUG_VIDEO
-static void debug(void);
-#endif
+static void mo_color_callback(const UINT16 *data, const struct rectangle *clip, void *param);
+static void mo_render_callback(const UINT16 *data, const struct rectangle *clip, void *param);
 
 
 
 /*************************************
  *
- *		Video system start
+ *	Video system start
  *
  *************************************/
 
@@ -160,7 +151,7 @@ int toobin_vh_start(void)
 
 /*************************************
  *
- *		Video system shutdown
+ *	Video system shutdown
  *
  *************************************/
 
@@ -174,7 +165,7 @@ void toobin_vh_stop(void)
 
 /*************************************
  *
- *		Playfield RAM write handler
+ *	Playfield RAM write handler
  *
  *************************************/
 
@@ -194,7 +185,7 @@ void toobin_playfieldram_w(int offset, int data)
 
 /*************************************
  *
- *		Palette RAM write handler
+ *	Palette RAM write handler
  *
  *************************************/
 
@@ -228,7 +219,7 @@ void toobin_paletteram_w(int offset, int data)
 
 /*************************************
  *
- *		Periodic scanline updater
+ *	Periodic scanline updater
  *
  *************************************/
 
@@ -253,7 +244,7 @@ void toobin_scanline_update(int scanline)
 
 /*************************************
  *
- *		MO SLIP write handler
+ *	MO SLIP write handler
  *
  *************************************/
 
@@ -267,16 +258,12 @@ void toobin_moslip_w(int offset, int data)
 
 /*************************************
  *
- *		Main refresh
+ *	Main refresh
  *
  *************************************/
 
 void toobin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-#if DEBUG_VIDEO
-	debug();
-#endif
-
 	/* update the palette */
 	if (update_palette())
 		memset(atarigen_pf_dirty, 1, atarigen_playfieldram_size / 4);
@@ -319,13 +306,13 @@ void toobin_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 /*************************************
  *
- *		Palette management
+ *	Palette management
  *
  *************************************/
 
-static const unsigned char *update_palette(void)
+static const UINT8 *update_palette(void)
 {
-	unsigned short al_map[16], pf_map[16], mo_map[16];
+	UINT16 al_map[16], pf_map[16], mo_map[16];
 	int intensity, i, j;
 
 	/* compute the intensity and modify the palette if it's different */
@@ -385,7 +372,7 @@ static const unsigned char *update_palette(void)
 	/* rebuild the playfield palette */
 	for (i = 0; i < 16; i++)
 	{
-		unsigned short used = pf_map[i];
+		UINT16 used = pf_map[i];
 		if (used)
 			for (j = 0; j < 16; j++)
 				if (used & (1 << j))
@@ -395,7 +382,7 @@ static const unsigned char *update_palette(void)
 	/* rebuild the motion object palette */
 	for (i = 0; i < 16; i++)
 	{
-		unsigned short used = mo_map[i];
+		UINT16 used = mo_map[i];
 		if (used)
 		{
 			palette_used_colors[0x100 + i * 16 + 0] = PALETTE_COLOR_TRANSPARENT;
@@ -408,7 +395,7 @@ static const unsigned char *update_palette(void)
 	/* rebuild the alphanumerics palette */
 	for (i = 0; i < 16; i++)
 	{
-		unsigned short used = al_map[i];
+		UINT16 used = al_map[i];
 		if (used)
 			for (j = 0; j < 4; j++)
 				if (used & (1 << j))
@@ -422,14 +409,14 @@ static const unsigned char *update_palette(void)
 
 /*************************************
  *
- *		Playfield palette
+ *	Playfield palette
  *
  *************************************/
 
 static void pf_color_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *param)
 {
 	const unsigned int *usage = Machine->gfx[0]->pen_usage;
-	unsigned short *colormap = param;
+	UINT16 *colormap = param;
 	int x, y;
 
 	/* standard loop over tiles */
@@ -454,7 +441,7 @@ static void pf_color_callback(const struct rectangle *clip, const struct rectang
 
 /*************************************
  *
- *		Playfield rendering
+ *	Playfield rendering
  *
  *************************************/
 
@@ -476,22 +463,13 @@ static void pf_render_callback(const struct rectangle *clip, const struct rectan
 				int data1 = READ_WORD(&atarigen_playfieldram[offs * 4]);
 				int data2 = READ_WORD(&atarigen_playfieldram[offs * 4 + 2]);
 				int color = data1 & 0x000f;
-//				int priority = (data1 >> 4) & 3;
+/*				int priority = (data1 >> 4) & 3;*/
 				int vflip = data2 & 0x8000;
 				int hflip = data2 & 0x4000;
 				int code = data2 & 0x3fff;
 
 				drawgfx(atarigen_pf_bitmap, gfx, code, color, hflip, vflip, 8 * x, 8 * y, 0, TRANSPARENCY_NONE, 0);
 				atarigen_pf_dirty[offs] = 0;
-
-#if DEBUG_VIDEO
-				if (show_colors)
-				{
-					drawgfx(atarigen_pf_bitmap, Machine->uifont, "0123456789ABCDEF"[priority], 1, 0, 0, 8 * x + 0, 8 * y, 0, TRANSPARENCY_PEN, 0);
-					drawgfx(atarigen_pf_bitmap, Machine->uifont, "0123456789ABCDEF"[priority], 1, 0, 0, 8 * x + 2, 8 * y, 0, TRANSPARENCY_PEN, 0);
-					drawgfx(atarigen_pf_bitmap, Machine->uifont, "0123456789ABCDEF"[priority], 0, 0, 0, 8 * x + 1, 8 * y, 0, TRANSPARENCY_PEN, 0);
-				}
-#endif
 			}
 
 			/* track the tiles we've visited */
@@ -508,7 +486,7 @@ static void pf_render_callback(const struct rectangle *clip, const struct rectan
 
 /*************************************
  *
- *		Playfield overrendering
+ *	Playfield overrendering
  *
  *************************************/
 
@@ -552,20 +530,20 @@ static void pf_overrender_callback(const struct rectangle *clip, const struct re
 
 /*************************************
  *
- *		Motion object palette
+ *	Motion object palette
  *
  *************************************/
 
-static void mo_color_callback(const unsigned short *data, const struct rectangle *clip, void *param)
+static void mo_color_callback(const UINT16 *data, const struct rectangle *clip, void *param)
 {
 	const unsigned int *usage = Machine->gfx[1]->pen_usage;
-	unsigned short *colormap = param;
+	UINT16 *colormap = param;
 	int hsize = (data[0] & 7) + 1;
 	int vsize = ((data[0] >> 3) & 7) + 1;
 	int code = data[1] & 0x3fff;
 	int color = data[3] & 0x000f;
 	int tiles = hsize * vsize;
-	unsigned short temp = 0;
+	UINT16 temp = 0;
 	int i;
 
 	for (i = 0; i < tiles; i++)
@@ -577,11 +555,11 @@ static void mo_color_callback(const unsigned short *data, const struct rectangle
 
 /*************************************
  *
- *		Motion object rendering
+ *	Motion object rendering
  *
  *************************************/
 
-static void mo_render_callback(const unsigned short *data, const struct rectangle *clip, void *param)
+static void mo_render_callback(const UINT16 *data, const struct rectangle *clip, void *param)
 {
 	const struct GfxElement *gfx = Machine->gfx[1];
 	struct osd_bitmap *bitmap = param;
@@ -662,117 +640,6 @@ static void mo_render_callback(const unsigned short *data, const struct rectangl
 		}
 	}
 
-#if DEBUG_VIDEO
-	if (show_colors)
-	{
-		int tx = (pf_clip.min_x + pf_clip.max_x) / 2 - 3;
-		int ty = (pf_clip.min_y + pf_clip.max_y) / 2 - 4;
-		drawgfx(bitmap, Machine->uifont, ' ', 0, 0, 0, tx - 2, ty - 2, 0, TRANSPARENCY_NONE, 0);
-		drawgfx(bitmap, Machine->uifont, ' ', 0, 0, 0, tx + 2, ty - 2, 0, TRANSPARENCY_NONE, 0);
-		drawgfx(bitmap, Machine->uifont, ' ', 0, 0, 0, tx - 2, ty + 2, 0, TRANSPARENCY_NONE, 0);
-		drawgfx(bitmap, Machine->uifont, ' ', 0, 0, 0, tx + 2, ty + 2, 0, TRANSPARENCY_NONE, 0);
-		drawgfx(bitmap, Machine->uifont, "0123456789ABCDEF"[priority], 0, 0, 0, tx, ty, 0, TRANSPARENCY_NONE, 0);
-	}
-#endif
-
 	/* overrender the playfield */
 	atarigen_pf_process(pf_overrender_callback, bitmap, &pf_clip);
 }
-
-
-
-/*************************************
- *
- *		Debugging
- *
- *************************************/
-
-#if DEBUG_VIDEO
-
-static void debug(void)
-{
-	static int count;
-	char name[50];
-	FILE *f;
-	int i;
-
-	int new_show_colors;
-
-	new_show_colors = keyboard_key_pressed(KEYCODE_CAPSLOCK);
-	if (new_show_colors != show_colors)
-	{
-		show_colors = new_show_colors;
-		memset(atarigen_pf_dirty, 0xff, atarigen_playfieldram_size / 4);
-	}
-
-	if (!keyboard_key_pressed(KEYCODE_9)) return;
-	while (keyboard_key_pressed(KEYCODE_9)) { }
-
-	sprintf(name, "Dump %d", ++count);
-	f = fopen(name, "wt");
-
-	fprintf(f, "\n\nPlayfield Palette:\n");
-	for (i = 0x000; i < 0x100; i++)
-	{
-		fprintf(f, "%04X ", READ_WORD(&paletteram[i*2]));
-		if ((i & 15) == 15) fprintf(f, "\n");
-	}
-
-	fprintf(f, "\n\nMotion Object Palette:\n");
-	for (i = 0x100; i < 0x200; i++)
-	{
-		fprintf(f, "%04X ", READ_WORD(&paletteram[i*2]));
-		if ((i & 15) == 15) fprintf(f, "\n");
-	}
-
-	fprintf(f, "\n\nAlpha Palette\n");
-	for (i = 0x200; i < 0x300; i++)
-	{
-		fprintf(f, "%04X ", READ_WORD(&paletteram[i*2]));
-		if ((i & 15) == 15) fprintf(f, "\n");
-	}
-
-	fprintf(f, "\n\nX Scroll = %03X\nY Scroll = %03X\n",
-		READ_WORD(&atarigen_hscroll[0]) >> 6, READ_WORD(&atarigen_vscroll[0]) >> 6);
-
-	fprintf(f, "\n\nMotion Objects\n");
-	for (i = 0; i < atarigen_spriteram_size; i += 8)
-	{
-		int data1 = READ_WORD(&atarigen_spriteram[i+0]);
-		int data2 = READ_WORD(&atarigen_spriteram[i+2]);
-		int data3 = READ_WORD(&atarigen_spriteram[i+4]);
-		int data4 = READ_WORD(&atarigen_spriteram[i+6]);
-
-		int ypos = (data1 >> 6) & 0x1ff;
-		int vsize = ((data1 >> 3) & 7) + 1;
-		int hsize = (data1 & 7) + 1;
-		int code = (data2 & 0x3fff);
-		int vflip = ((data2 >> 15) & 1);
-		int hflip = ((data2 >> 14) & 1);
-		int link = (data3 & 0xff);
-		int color = (data4 & 0x0f);
-		int xpos = (data4 >> 6) & 0x3ff;
-
-		fprintf(f, "  Object %02X: P=%04X C=%01X X=%03X Y=%03X HSIZ=%d VSIZ=%d HFLP=%d VFLP=%d L=%02X Leftovers: %04X %04X\n",
-				i/8, code, color, xpos, ypos, hsize, vsize, hflip, vflip, link, data3 & 0xff00, data4 & 0x30);
-	}
-
-	fprintf(f, "\n\nPlayfield dump\n");
-	for (i = 0; i < atarigen_playfieldram_size / 4; i++)
-	{
-		fprintf(f, "%01X%04X ", READ_WORD(&atarigen_playfieldram[i*4]), READ_WORD(&atarigen_playfieldram[i*4+2]));
-		if ((i & 127) == 127) fprintf(f, "\n");
-		else if ((i & 127) == 63) fprintf(f, "\n      ");
-	}
-
-	fprintf(f, "\n\nAlpha dump\n");
-	for (i = 0; i < atarigen_alpharam_size / 2; i++)
-	{
-		fprintf(f, "%04X ", READ_WORD(&atarigen_alpharam[i*2]));
-		if ((i & 63) == 63) fprintf(f, "\n");
-	}
-
-	fclose(f);
-}
-
-#endif

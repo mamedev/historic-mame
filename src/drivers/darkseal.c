@@ -5,13 +5,6 @@
   Gate Of Doom (Rev 4) (c) 1990 Data East Corporation (USA version)
   Gate of Doom (Rev 1) (c) 1990 Data East Corporation (USA version)
 
-  PCB number: DE-0332
-
-Driver notes:
-  Gate of Doom has no tile or sprite roms dumped as they were soldered to the
-  board, it seems quite safe to use the ones from Dark Seal.
-
-  The higher program revisions have better attract modes.
 
   Sound works correctly only with YM2151_ALT, not with YM2151. You will hear
   the difference on the music that plays as the game starts, the lead
@@ -179,12 +172,12 @@ INPUT_PORTS_START( darkseal_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
 	PORT_START	/* Player 2 controls */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )	/* button 3 - unused */
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
@@ -220,7 +213,9 @@ INPUT_PORTS_START( darkseal_input_ports )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* Dip switch bank 2 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
@@ -324,7 +319,8 @@ static void sound_irq(int state)
 static struct YM2151interface ym2151_interface =
 {
 	1,
-	32220000/8, /* Audio section crystal is 32.220 MHz */
+	3700000, /* Very close to the board frequency */
+//	32220000/8, /* Audio section crystal is 32.220 MHz */
 	{ YM3012_VOL(37,MIXER_PAN_LEFT,37,MIXER_PAN_RIGHT) },
 	{ sound_irq }
 };

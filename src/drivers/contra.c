@@ -251,6 +251,8 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x08, "Stereo" )
 INPUT_PORTS_END
 
+
+
 static struct GfxLayout gfx_layout =
 {
 	8,8,
@@ -264,10 +266,12 @@ static struct GfxLayout gfx_layout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &gfx_layout,          0, 	8*16 },
-	{ 1, 0x80000, &gfx_layout,   		0, 	8*16 },
+	{ 1, 0x00000, &gfx_layout, 0, 8*16 },
+	{ 1, 0x80000, &gfx_layout, 0, 8*16 },
 	{ -1 }
 };
+
+
 
 static struct YM2151interface ym2151_interface =
 {
@@ -277,7 +281,9 @@ static struct YM2151interface ym2151_interface =
 	{ 0 }
 };
 
-static struct MachineDriver contra_machine_driver =
+
+
+static struct MachineDriver machine_driver =
 {
 	{
 		{
@@ -303,7 +309,7 @@ static struct MachineDriver contra_machine_driver =
 
 	37*8, 32*8, { 0*8, 35*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	128, 128*16,
+	128, 8*16*16,
 	contra_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
@@ -351,11 +357,11 @@ ROM_START( contra_rom )
 	ROM_LOAD( "g-13.rom",     0xe0000, 0x10000, 0x2b513d12 )
 	// 0xf0000..0xfffff is unpopulated, but gfx_decode reads from here
 
-	ROM_REGION(0x0400)	/* color lookup tables */
-	ROM_LOAD( "633e09.12g",   0x0000, 0x0100, 0x14ca5e19 )
-	ROM_LOAD( "633e08.10g",   0x0100, 0x0100, 0x9f0949fa )
-	ROM_LOAD( "20g",          0x0200, 0x0100, 0x00000000 )
-	ROM_LOAD( "18g",          0x0300, 0x0100, 0x00000000 )
+	ROM_REGION(0x0400)	/* PROMs */
+	ROM_LOAD( "633e08.10g",   0x0000, 0x0100, 0x9f0949fa )	/* 007121 #1 sprite lookup table */
+	ROM_LOAD( "633e09.12g",   0x0100, 0x0100, 0x14ca5e19 )	/* 007121 #1 char lookup table */
+	ROM_LOAD( "633f10.18g",   0x0200, 0x0100, 0x2b244d84 )	/* 007121 #2 sprite lookup table */
+	ROM_LOAD( "633f11.20g",   0x0300, 0x0100, 0x14ca5e19 )	/* 007121 #2 charlookup table */
 
 	ROM_REGION(0x10000)	/* 64k for SOUND code */
 	ROM_LOAD( "633e01.12a",   0x08000, 0x08000, 0xd1549255 )
@@ -388,11 +394,11 @@ ROM_START( contrab_rom )
 	ROM_LOAD( "g-13.rom",     0xe0000, 0x10000, 0x2b513d12 )
 	// 0xf0000..0xfffff is unpopulated, but gfx_decode reads from here
 
-	ROM_REGION(0x0400)	/* color lookup tables */
-	ROM_LOAD( "633e09.12g",   0x0000, 0x0100, 0x14ca5e19 )
-	ROM_LOAD( "633e08.10g",   0x0100, 0x0100, 0x9f0949fa )
-	ROM_LOAD( "20g",          0x0200, 0x0100, 0x00000000 )
-	ROM_LOAD( "18g",          0x0300, 0x0100, 0x00000000 )
+	ROM_REGION(0x0400)	/* PROMs */
+	ROM_LOAD( "633e08.10g",   0x0000, 0x0100, 0x9f0949fa )	/* 007121 #1 sprite lookup table */
+	ROM_LOAD( "633e09.12g",   0x0100, 0x0100, 0x14ca5e19 )	/* 007121 #1 char lookup table */
+	ROM_LOAD( "633f10.18g",   0x0200, 0x0100, 0x2b244d84 )	/* 007121 #2 sprite lookup table */
+	ROM_LOAD( "633f11.20g",   0x0300, 0x0100, 0x14ca5e19 )	/* 007121 #2 charlookup table */
 
 	ROM_REGION(0x10000)	/* 64k for SOUND code */
 	ROM_LOAD( "633e01.12a",   0x08000, 0x08000, 0xd1549255 )
@@ -425,11 +431,11 @@ ROM_START( contrajb_rom )
 	ROM_LOAD( "g-13.rom",     0xe0000, 0x10000, 0x2b513d12 )
 	// 0xf0000..0xfffff is unpopulated, but gfx_decode reads from here
 
-	ROM_REGION(0x0400)	/* color lookup tables */
-	ROM_LOAD( "633e09.12g",   0x0000, 0x0100, 0x14ca5e19 )
-	ROM_LOAD( "633e08.10g",   0x0100, 0x0100, 0x9f0949fa )
-	ROM_LOAD( "20g",          0x0200, 0x0100, 0x00000000 )
-	ROM_LOAD( "18g",          0x0300, 0x0100, 0x00000000 )
+	ROM_REGION(0x0400)	/* PROMs */
+	ROM_LOAD( "633e08.10g",   0x0000, 0x0100, 0x9f0949fa )	/* 007121 #1 sprite lookup table */
+	ROM_LOAD( "633e09.12g",   0x0100, 0x0100, 0x14ca5e19 )	/* 007121 #1 char lookup table */
+	ROM_LOAD( "633f10.18g",   0x0200, 0x0100, 0x2b244d84 )	/* 007121 #2 sprite lookup table */
+	ROM_LOAD( "633f11.20g",   0x0300, 0x0100, 0x14ca5e19 )	/* 007121 #2 charlookup table */
 
 	ROM_REGION(0x10000)	/* 64k for SOUND code */
 	ROM_LOAD( "633e01.12a",   0x08000, 0x08000, 0xd1549255 )
@@ -462,11 +468,11 @@ ROM_START( gryzor_rom )
 	ROM_LOAD( "g-13.rom",     0xe0000, 0x10000, 0x2b513d12 )
 	// 0xf0000..0xfffff is unpopulated, but gfx_decode reads from here
 
-	ROM_REGION(0x0400)	/* color lookup tables */
-	ROM_LOAD( "633e09.12g",   0x0000, 0x0100, 0x14ca5e19 )
-	ROM_LOAD( "633e08.10g",   0x0100, 0x0100, 0x9f0949fa )
-	ROM_LOAD( "20g",          0x0200, 0x0100, 0x00000000 )
-	ROM_LOAD( "18g",          0x0300, 0x0100, 0x00000000 )
+	ROM_REGION(0x0400)	/* PROMs */
+	ROM_LOAD( "633e08.10g",   0x0000, 0x0100, 0x9f0949fa )	/* 007121 #1 sprite lookup table */
+	ROM_LOAD( "633e09.12g",   0x0100, 0x0100, 0x14ca5e19 )	/* 007121 #1 char lookup table */
+	ROM_LOAD( "633f10.18g",   0x0200, 0x0100, 0x2b244d84 )	/* 007121 #2 sprite lookup table */
+	ROM_LOAD( "633f11.20g",   0x0300, 0x0100, 0x14ca5e19 )	/* 007121 #2 charlookup table */
 
 	ROM_REGION(0x10000)	/* 64k for SOUND code */
 	ROM_LOAD( "633e01.12a",   0x08000, 0x08000, 0xd1549255 )
@@ -522,7 +528,7 @@ struct GameDriver contra_driver =
 	"Konami",
 	"Carlos A. Lozano\nJose Tejada Gomez\nPhil Stroffolino\nEric Hustvedt",
 	0,
-	&contra_machine_driver,
+	&machine_driver,
 	0,
 
 	contra_rom,
@@ -548,7 +554,7 @@ struct GameDriver contrab_driver =
 	"bootleg",
 	"Carlos A. Lozano\nJose Tejada Gomez\nPhil Stroffolino\nEric Hustvedt",
 	0,
-	&contra_machine_driver,
+	&machine_driver,
 	0,
 
 	contrab_rom,
@@ -574,7 +580,7 @@ struct GameDriver contrajb_driver =
 	"bootleg",
 	"Carlos A. Lozano\nJose Tejada Gomez\nPhil Stroffolino\nEric Hustvedt",
 	0,
-	&contra_machine_driver,
+	&machine_driver,
 	0,
 
 	contrajb_rom,
@@ -600,7 +606,7 @@ struct GameDriver gryzor_driver =
 	"Konami",
 	"Carlos A. Lozano\nJose Tejada Gomez\nPhil Stroffolino\nEric Hustvedt",
 	0,
-	&contra_machine_driver,
+	&machine_driver,
 	0,
 
 	gryzor_rom,

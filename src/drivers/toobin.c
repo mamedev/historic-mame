@@ -61,10 +61,10 @@ Program RAM                        FFC000-FFFFFF  R/W  D0-D15
 #include "vidhrdw/generic.h"
 
 
-extern unsigned char *toobin_intensity;
-extern unsigned char *toobin_moslip;
+extern UINT8 *toobin_intensity;
+extern UINT8 *toobin_moslip;
 
-static unsigned char *interrupt_scan;
+static UINT8 *interrupt_scan;
 
 
 void toobin_moslip_w(int offset, int data);
@@ -81,7 +81,7 @@ void toobin_scanline_update(int scanline);
 
 /*************************************
  *
- *		Initialization
+ *	Initialization
  *
  *************************************/
 
@@ -113,7 +113,7 @@ static void init_machine(void)
 
 /*************************************
  *
- *		Interrupt handlers.
+ *	Interrupt handlers.
  *
  *************************************/
 
@@ -134,7 +134,7 @@ static void interrupt_scan_w(int offset, int data)
 
 /*************************************
  *
- *		I/O read dispatch
+ *	I/O read dispatch
  *
  *************************************/
 
@@ -150,7 +150,7 @@ static int special_port1_r(int offset)
 
 /*************************************
  *
- *		Main CPU memory handlers
+ *	Main CPU memory handlers
  *
  *************************************/
 
@@ -197,7 +197,7 @@ static struct MemoryWriteAddress main_writemem[] =
 
 /*************************************
  *
- *		Port definitions
+ *	Port definitions
  *
  *************************************/
 
@@ -233,7 +233,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *		Graphics definitions
+ *	Graphics definitions
  *
  *************************************/
 
@@ -285,7 +285,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *		Machine driver
+ *	Machine driver
  *
  *************************************/
 
@@ -328,7 +328,7 @@ static struct MachineDriver machine_driver =
 
 /*************************************
  *
- *		ROM definition(s)
+ *	ROM definition(s)
  *
  *************************************/
 
@@ -491,7 +491,7 @@ ROM_END
 
 /*************************************
  *
- *		Driver initialization
+ *	Driver initialization
  *
  *************************************/
 
@@ -512,7 +512,7 @@ static void toobin_init(void)
 
 /*************************************
  *
- *		Game driver(s)
+ *	Game driver(s)
  *
  *************************************/
 
@@ -542,6 +542,7 @@ struct GameDriver toobin_driver =
 	atarigen_hiload, atarigen_hisave
 };
 
+
 struct GameDriver toobin2_driver =
 {
 	__FILE__,
@@ -567,6 +568,7 @@ struct GameDriver toobin2_driver =
 	ORIENTATION_ROTATE_270,
 	atarigen_hiload, atarigen_hisave
 };
+
 
 struct GameDriver toobinp_driver =
 {

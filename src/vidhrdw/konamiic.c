@@ -4,64 +4,67 @@
 
                       Emulated
                          |
-                  board #|year   CPU      tiles        sprites  priority other (unknown)
-                    -----|---- ------ ------------- ------------- ------ ------
+                  board #|year   CPU      tiles        sprites  priority     other
+                    -----|---- ------ ------------- ------------- ------ ----------------
 Hyper Crash         GX401 1985
-Twinbee             GX412*1985
+Twinbee             GX412*1985  68000           GX400
 Yie Ar Kung Fu      GX407*1985
-Gradius / Nemesis   GX456*1985
+Gradius / Nemesis   GX456*1985  68000           GX400
 Shao-lins Road      GX477*1985
-Jail Break          GX507*1986   6809?
+Jail Break          GX507*1986   6809?          005849
 Finaliser           GX523 1985
-Konami's Ping Pong  GX555 1985
-Iron Horse          GX560*1986   6809                                    005885
-Konami GT           GX561*1985
-Green Beret         GX577*1985    Z80                                    005849
-Salamander          GX587*1986
-WEC Le Mans 24      GX602*1986
+Konami's Ping Pong  GX555*1985    Z80
+Iron Horse          GX560*1986   6809           005885
+Konami GT           GX561*1985  68000           GX400
+Green Beret         GX577*1985    Z80           005849
+Galactic Warriors   GX578*1985  68000           GX400
+Salamander          GX587*1986  68000           GX400
+WEC Le Mans 24      GX602*1986 2x
+                                68000
 BAW                 GX604 1987
-Combat School       GX611*1987   6309                                    007121(x2)
+Combat School       GX611*1987   6309           007121(x2)
 Rock 'n Rage        GX620 1986
-Mr Kabuki           GX621 1986
-Jackal              GX631*1986   6809?                                   005885(x2)
-Contra / Gryzor     GX633*1986   6809?                                   007121(x2) 007593 (palette)
+Mr Kabuki /         GX621*1986    Z80           005849
+  Mr Goemon
+Jackal              GX631*1986   6809?          005885(x2)
+Contra / Gryzor     GX633*1987   6809?          007121(x2)               007593 (palette)
 Flak Attack         GX669 1987
-Devil World         GX687 1987 2x         TWIN16
-                                68010
-Double Dribble      GX690*1986 3x6809                                    005885(x2) 007327 (palette) 007452
+Devil World / Dark  GX687 1987 2x               TWIN16
+  Adventure / Majuu no Oukoku   68010
+Double Dribble      GX690*1986 3x6809           005885(x2)               007327 (palette) 007452
 Kitten Kaboodle     GX712 1988
 Chequered Flag      GX717 1988
 Fast Lane           GX752 1987
 Hot Chase           GX763*1988
 Rack 'Em Up         GX765 1987
-Haunted Castle      GX768*1988 052001                                    007121(x2) 007327 (palette)
+Haunted Castle      GX768*1988 052001           007121(x2)               007327 (palette)
 Ajax / Typhoon      GX770*1987  6309+ 052109 051962 051960 051937  PROM  051316 (zoom/rotation) 007327 (palette)
                                052001
-Labyrinth Runner    GX771 1987  6309+                                    007121
+Labyrinth Runner    GX771 1987  6309+           007121
                                051733
 Super Contra        GX775*1988 052001 052109 051962 051960 051937  PROM  007327 (palette)
-Battlantis          GX777 1987
-Vulcan Venture /    GX785 1988 2x         TWIN16
+Battlantis          GX777*1987   6309           007420 007432            007327 (palette) 051550 007324
+Vulcan Venture /    GX785 1988 2x               TWIN16
   Gradius 2                     68010
 City Bomber         GX787 1987  68000
 Over Drive          GX789 1990
 Hyper Crash         GX790 1987
-Blades of Steel     GX797 1987  6309+                                    007121?
+Blades of Steel     GX797 1987  6309+           007121?
                                051733
 The Main Event      GX799*1988   6309 052109 051962 051960 051937  PROM
 Missing in Action   GX808*1989  68000 052109 051962 051960 051937  PROM
 Crime Fighters      GX821*1989 052526 052109 051962 051960 051937
 Special Project Y   GX857 1989 should be similar to GX891 Bottom of the 9th
 '88 Games           GX861*1988 052001 052109 051962 051960 051937  PROM  051316 (zoom/rotation)
-Final Round         GX870 1988 2x         TWIN16
-                                68010
+Final Round /       GX870 1988 2x               TWIN16
+  Hard Puncher                  68010
 Thunder Cross       GX873*1988 052001 052109 051962 051960 051937  PROM  007327 (palette) 052591
 Aliens              GX875*1990 052526 052109 051962 051960 051937
-Gangbusters         GX878 1988 052526 052109 051962 051960 051937
+Gang Busters        GX878*1988 052526 052109 051962 051960 051937  PROM
 Devastators         GX890*1988  6309+ 052109 051962 051960 051937  PROM  007324
                                051733
 Bottom of the Ninth GX891*1989   6809 052109 051962 051960 051937  PROM  051316 (zoom/rotation)
-Cue Brick           GX903 1989 2x         TWIN16
+Cue Brick           GX903 1989 2x               TWIN16
                                 68010
 Punk Shot           GX907*1990  68000 052109 051962 051960 051937 053251
 Surprise Attack     GX911*1990 053248 052109 051962 053245 053244 053251
@@ -70,8 +73,7 @@ Lightning Fighters /
 Gradius 3           GX945 1989
 Parodius            GX955*1990 053248 052109 051962 053245 053244 053251
 TMNT                GX963*1989  68000 052109 051962 051960 051937  PROM
-Block Hole          GX973 1989 052526 052109 051962 051960 051937
-                            or 052001?
+Block Hole          GX973*1989 052526 052109 051962 051960 051937  PROM
 Escape Kids         GX975 1991 053248 052109 051962 053247 053246 053251 053252 - same board as Vendetta
 Rollergames         GX999*1991 053248 ------ ------ 053245 053244        051316 (zoom/rotation) 053252
 Bells & Whistles /
@@ -122,6 +124,7 @@ Crime Fighters      pass
 Konami 88           pass
 Thunder Cross       pass
 Aliens              pass
+Gang Busters        pass
 Devastators         pass
 Bottom of the Ninth pass
 Punk Shot           pass
@@ -131,6 +134,7 @@ Surprise Attack     fails D05-6 (052109) because it uses mirror addresses to
 Lightning Fighters  pass
 Parodius            pass
 TMNT                pass
+Block Hole          pass
 Rollergames         pass
 Bells & Whistles    pass
 Golfing Greats      fails B05..B10 (053936)
@@ -898,6 +902,7 @@ void K052109_set_RMRD_line(int state)
 void K052109_tilemap_update(void)
 {
 #if 0
+{
 char baf[40];
 sprintf(baf,"%x %x %x %x",
 	K052109_charrombank[0],
@@ -905,6 +910,7 @@ sprintf(baf,"%x %x %x %x",
 	K052109_charrombank[2],
 	K052109_charrombank[3]);
 usrintf_showmessage(baf);
+}
 #endif
 	if ((K052109_scrollctrl & 0x03) == 0x02)
 	{
@@ -1906,6 +1912,11 @@ else zoomx = zoomy;	/* workaround for TMNT2 */
 					fy = flipy;
 				}
 
+				/* the sprite can start at any point in the 8x8 grid, but it must stay */
+				/* in a 64 entries window, wrapping around at the edges. The animation */
+				/* at the end of the saloon level in SUnset Riders breaks otherwise. */
+				c = (c & 0x3f) | (code & ~0x3f);
+
 				if (zoomx == 0x10000 && zoomy == 0x10000)
 					drawgfx(bitmap,K053245_gfx,
 							c,
@@ -2279,8 +2290,24 @@ switch (K053247_spriteoffsY)
 		oy = -READ_WORD(&K053247_ram[offs+0x04]) - 0x278;
 		break;
 	case 0x02fa:	/* vendetta */
+	case 0x02fb:	/* vendetta (fat guy jumping) */
+	case 0x02fc:	/* vendetta (fat guy jumping) */
+	case 0x02fd:	/* vendetta (fat guy jumping) */
+	case 0x02fe:	/* vendetta (fat guy jumping) */
+	case 0x02ff:	/* vendetta (fat guy jumping) */
+/* since sprites are not in sync with background, I'm not sure the Y offset */
+/* adjustment is right - it might have to be negated */
+		oy = -READ_WORD(&K053247_ram[offs+0x04]) - 0x300 + (K053247_spriteoffsY - 0x2fa);
+		break;
 	case 0x03fa:	/* vendetta flip */
-		oy = -READ_WORD(&K053247_ram[offs+0x04]) - 0x300;
+	case 0x03fb:	/* vendetta flip (fat guy jumping) */
+	case 0x03fc:	/* vendetta flip (fat guy jumping) */
+	case 0x03fd:	/* vendetta flip (fat guy jumping) */
+	case 0x03fe:	/* vendetta flip (fat guy jumping) */
+	case 0x03ff:	/* vendetta flip (fat guy jumping) */
+/* since sprites are not in sync with background, I'm not sure the Y offset */
+/* adjustment is right - it might have to be negated */
+		oy = -READ_WORD(&K053247_ram[offs+0x04]) - 0x300 + (K053247_spriteoffsY - 0x3fa);
 		break;
 	case 0x0292:	/* xmen */
 	case 0x0072:	/* xmen flip */
@@ -2650,6 +2677,7 @@ void K051316_zoom_draw(struct osd_bitmap *bitmap)
 	int incxx,incxy,incyx,incyy;
 	int x,sx,sy,ex,ey;
 	struct osd_bitmap *srcbitmap = K051316_tilemap->pixmap;
+	unsigned char *dest;
 /* TODO: remove this kludge */
 #ifndef TINY_COMPILE
 extern struct GameDriver rollerg_driver;
@@ -2746,13 +2774,17 @@ int is_rollergames = 0;
 						x = sx;
 						cx = startx;
 						cy = starty >> 11;
+						dest = &bitmap->line[sy][sx];
 						while (x <= ex && cx < 512)
 						{
-							if (srcbitmap->line[cy][cx] != palette_transparent_pen)
-								bitmap->line[sy][x] = srcbitmap->line[cy][cx];
+							int c = srcbitmap->line[cy][cx];
+
+							if (c != palette_transparent_pen)
+								*dest = c;
 
 							cx++;
 							x++;
+							dest++;
 						}
 					}
 					starty += incyy;
@@ -2777,13 +2809,17 @@ int is_rollergames = 0;
 						x = sx;
 						cx = startx;
 						cy = starty >> 11;
+						dest = &bitmap->line[sy][sx];
 						while (x <= ex && (cx & 0xfff00000) == 0)
 						{
-							if (srcbitmap->line[cy][cx >> 11] != palette_transparent_pen)
-								bitmap->line[sy][x] = srcbitmap->line[cy][cx >> 11];
+							int c = srcbitmap->line[cy][cx >> 11];
+
+							if (c != palette_transparent_pen)
+								*dest = c;
 
 							cx += incxx;
 							x++;
+							dest++;
 						}
 					}
 					starty += incyy;
@@ -2802,19 +2838,18 @@ int is_rollergames = 0;
 				x = sx;
 				cx = startx;
 				cy = starty;
+				dest = &bitmap->line[sy][sx];
 				while (x <= ex)
 				{
-					int srcx,srcy;
+					int c = srcbitmap->line[(cy >> 11) & 0x1ff][(cx >> 11) & 0x1ff];
 
-					srcx = (cx >> 11) & 0x1ff;
-					srcy = (cy >> 11) & 0x1ff;
-
-					if (srcbitmap->line[srcy][srcx] != palette_transparent_pen)
-						bitmap->line[sy][x] = srcbitmap->line[srcy][srcx];
+					if (c != palette_transparent_pen)
+						*dest = c;
 
 					cx += incxx;
 					cy += incxy;
 					x++;
+					dest++;
 				}
 				startx += incyx;
 				starty += incyy;
@@ -2828,15 +2863,21 @@ int is_rollergames = 0;
 				x = sx;
 				cx = startx;
 				cy = starty;
+				dest = &bitmap->line[sy][sx];
 				while (x <= ex)
 				{
-					if ((cx & 0xfff00000) == 0 && (cy & 0xfff00000) == 0 &&
-							srcbitmap->line[cy >> 11][cx >> 11] != palette_transparent_pen)
-						bitmap->line[sy][x] = srcbitmap->line[cy >> 11][cx >> 11];
+					if ((cx & 0xfff00000) == 0 && (cy & 0xfff00000) == 0)
+					{
+						int c = srcbitmap->line[cy >> 11][cx >> 11];
+
+						if (c != palette_transparent_pen)
+							*dest = c;
+					}
 
 					cx += incxx;
 					cy += incxy;
 					x++;
+					dest++;
 				}
 				startx += incyx;
 				starty += incyy;
@@ -2960,15 +3001,14 @@ if (errorlog) fprintf(errorlog,"%04x: read 054000 address %02x\n",cpu_get_pc(),o
 
 	Acx = (K054000_ram[0x02] << 8) | K054000_ram[0x03];
 	Acy = (K054000_ram[0x0a] << 8) | K054000_ram[0x0b];
-	Aax = K054000_ram[0x06];
-	Aay = K054000_ram[0x07];
+	Aax = K054000_ram[0x06] + 1;
+	Aay = K054000_ram[0x07] + 1;
 
 	Bcx = (K054000_ram[0x16] << 8) | K054000_ram[0x17];
 	Bcy = (K054000_ram[0x12] << 8) | K054000_ram[0x13];
-	Bax = K054000_ram[0x0e];
-	Bay = K054000_ram[0x0f];
+	Bax = K054000_ram[0x0e] + 1;
+	Bay = K054000_ram[0x0f] + 1;
 
-#if 0
 	if (Acx + Aax < Bcx - Bax)
 		return 1;
 
@@ -2982,31 +3022,4 @@ if (errorlog) fprintf(errorlog,"%04x: read 054000 address %02x\n",cpu_get_pc(),o
 		return 1;
 
 	return 0;
-#else
-	{
-#include <math.h>
-		double SAax,SAay,SBax,SBay;
-		double x1,x2;
-
-		/* translate first ellipse on the origin */
-		Bcx -= Acx;
-		Bcy -= Acy;
-
-		/* change scale, center second ellipse in (1,1) */
-		SAax = ((double)Aax) / Bcx;
-		SAay = ((double)Aay) / Bcy;
-		SBax = ((double)Bax) / Bcx;
-		SBay = ((double)Bay) / Bcy;
-
-		/* find intersection of the first ellipse with the line connecting the two centers */
-		x1 = 1 / sqrt(1 / (SAax * SAax) + 1 / (SAay * SAay));
-
-		/* find intersection of the second ellipse with the line connecting the two centers */
-		x2 = 1 - 1 / sqrt(1 / (SBax * SBax) + 1 / (SBay * SBay));
-
-		/* do the two ellipses intersect? */
-		if (x1 > x2) return 0;
-		else return 1;
-	}
-#endif
 }

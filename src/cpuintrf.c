@@ -23,7 +23,7 @@
 #if (HAS_8080 || HAS_8085A)
 #include "cpu/i8085/i8085.h"
 #endif
-#if (HAS_M6502 || HAS_M65C02 || HAS_M6510)
+#if (HAS_M6502 || HAS_M65C02 || HAS_M6510 || HAS_N2A03)
 #include "cpu/m6502/m6502.h"
 #endif
 #if (HAS_H6280)
@@ -508,6 +508,40 @@ struct cpu_interface cpuintf[] =
 		M6510_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
 		M6510_INT_IRQ,
 		M6510_INT_NMI,
+		cpu_readmem16,						/* Memory read */
+		cpu_writemem16, 					/* Memory write */
+		cpu_setOPbase16,					/* Update CPU opcode base */
+		0,16,CPU_IS_LE,1,3, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
+		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
+    },
+#endif
+#if (HAS_N2A03)
+    {
+		CPU_N2A03,							/* CPU number and family cores sharing resources */
+        n2a03_reset,                        /* Reset CPU */
+		n2a03_exit, 						/* Shut down the CPU */
+		n2a03_execute,						/* Execute a number of cycles */
+		n2a03_get_context,					/* Get the contents of the registers */
+		n2a03_set_context,					/* Set the contents of the registers */
+		n2a03_get_pc,						/* Return the current program counter */
+		n2a03_set_pc,						/* Set the current program counter */
+		n2a03_get_sp,						/* Return the current stack pointer */
+		n2a03_set_sp,						/* Set the current stack pointer */
+		n2a03_get_reg,						/* Get a specific register value */
+		n2a03_set_reg,						/* Set a specific register value */
+        n2a03_set_nmi_line,                 /* Set state of the NMI line */
+		n2a03_set_irq_line, 				/* Set state of the IRQ line */
+		n2a03_set_irq_callback, 			/* Set IRQ enable/vector callback */
+		NULL,								/* Cause internal interrupt */
+		n2a03_state_save,					/* Save CPU state */
+		n2a03_state_load,					/* Load CPU state */
+        n2a03_info,                         /* Get formatted string for a specific register */
+		n2a03_dasm, 						/* Disassemble one instruction */
+		1,0,								/* Number of IRQ lines, default IRQ vector */
+		&n2a03_ICount,						/* Pointer to the instruction count */
+		N2A03_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
+		N2A03_INT_IRQ,
+		N2A03_INT_NMI,
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
@@ -2671,6 +2705,9 @@ static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
 #endif
 #if (HAS_M6510)
             case CPU_M6510:             irq_line = 0; LOG((errorlog,"M6510 IRQ\n")); break;
+#endif
+#if (HAS_N2A03)
+            case CPU_N2A03:             irq_line = 0; LOG((errorlog,"N2A03 IRQ\n")); break;
 #endif
 #if (HAS_H6280)
             case CPU_H6280:

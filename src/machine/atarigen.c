@@ -222,16 +222,16 @@ static void scanline_interrupt_callback(int param)
 --------------------------------------------------------------------------*/
 
 /* globals */
-const unsigned short *atarigen_eeprom_default;
-unsigned char *atarigen_eeprom;
+const UINT16 *atarigen_eeprom_default;
+UINT8 *atarigen_eeprom;
 int atarigen_eeprom_size;
 
 /* statics */
-static int unlocked;
+static UINT8 unlocked;
 
 /* prototypes */
-static void decompress_eeprom_word(const unsigned short *data);
-static void decompress_eeprom_byte(const unsigned short *data);
+static void decompress_eeprom_word(const UINT16 *data);
+static void decompress_eeprom_byte(const UINT16 *data);
 
 
 /*
@@ -365,10 +365,10 @@ void atarigen_hisave(void)
  *
  */
 
-void decompress_eeprom_word(const unsigned short *data)
+void decompress_eeprom_word(const UINT16 *data)
 {
-	unsigned short *dest = (unsigned short *)atarigen_eeprom;
-	unsigned short value;
+	UINT16 *dest = (UINT16 *)atarigen_eeprom;
+	UINT16 value;
 
 	while ((value = *data++) != 0)
 	{
@@ -391,10 +391,10 @@ void decompress_eeprom_word(const unsigned short *data)
  *
  */
 
-void decompress_eeprom_byte(const unsigned short *data)
+void decompress_eeprom_byte(const UINT16 *data)
 {
-	unsigned char *dest = (unsigned char *)atarigen_eeprom;
-	unsigned short value;
+	UINT8 *dest = (UINT8 *)atarigen_eeprom;
+	UINT16 value;
 
 	while ((value = *data++) != 0)
 	{
@@ -428,8 +428,8 @@ void decompress_eeprom_byte(const unsigned short *data)
 --------------------------------------------------------------------------*/
 
 /* globals */
-static int atarigen_slapstic_num;
-static unsigned char *atarigen_slapstic;
+static UINT8 atarigen_slapstic_num;
+static UINT8 *atarigen_slapstic;
 
 
 /*
@@ -537,11 +537,11 @@ int atarigen_cpu_to_sound_ready;
 int atarigen_sound_to_cpu_ready;
 
 /* statics */
-static int sound_cpu_num;
-static int atarigen_cpu_to_sound;
-static int atarigen_sound_to_cpu;
-static int timed_int;
-static int ym2151_int;
+static UINT8 sound_cpu_num;
+static UINT8 atarigen_cpu_to_sound;
+static UINT8 atarigen_sound_to_cpu;
+static UINT8 timed_int;
+static UINT8 ym2151_int;
 
 /* prototypes */
 static void update_6502_irq(void);
@@ -821,8 +821,8 @@ static void delayed_6502_sound_w(int param)
 --------------------------------------------------------------------------*/
 
 /* statics */
-static unsigned char *speed_a, *speed_b;
-static unsigned int speed_pc;
+static UINT8 *speed_a, *speed_b;
+static UINT32 speed_pc;
 
 /* prototypes */
 static int m6502_speedup_r(int offset);
@@ -839,7 +839,7 @@ static int m6502_speedup_r(int offset);
 
 void atarigen_init_6502_speedup(int cpunum, int compare_pc1, int compare_pc2)
 {
-	unsigned char *memory = Machine->memory_region[Machine->drv->cpu[cpunum].memory_region];
+	UINT8 *memory = Machine->memory_region[Machine->drv->cpu[cpunum].memory_region];
 	int address_low, address_high;
 
 	/* determine the pointer to the first speed check location */
@@ -991,14 +991,14 @@ static int m6502_speedup_r(int offset)
 
 
 /* general video globals */
-unsigned char *atarigen_playfieldram;
-unsigned char *atarigen_playfield2ram;
-unsigned char *atarigen_playfieldram_color;
-unsigned char *atarigen_playfield2ram_color;
-unsigned char *atarigen_spriteram;
-unsigned char *atarigen_alpharam;
-unsigned char *atarigen_vscroll;
-unsigned char *atarigen_hscroll;
+UINT8 *atarigen_playfieldram;
+UINT8 *atarigen_playfield2ram;
+UINT8 *atarigen_playfieldram_color;
+UINT8 *atarigen_playfield2ram_color;
+UINT8 *atarigen_spriteram;
+UINT8 *atarigen_alpharam;
+UINT8 *atarigen_vscroll;
+UINT8 *atarigen_hscroll;
 
 int atarigen_playfieldram_size;
 int atarigen_playfield2ram_size;
@@ -1111,7 +1111,7 @@ static void scanline_timer(int scanline)
 --------------------------------------------------------------------------*/
 
 /* globals */
-unsigned char *atarigen_video_control_data;
+UINT8 *atarigen_video_control_data;
 struct atarigen_video_control_state_desc atarigen_video_control_state;
 
 /* statics */
@@ -1145,7 +1145,7 @@ void atarigen_video_control_reset(void)
  *
  */
 
-void atarigen_video_control_update(const unsigned char *data)
+void atarigen_video_control_update(const UINT8 *data)
 {
 	int i;
 
@@ -1323,10 +1323,10 @@ int atarigen_video_control_r(int offset)
 /* statics */
 static struct atarigen_mo_desc modesc;
 
-static unsigned short *molist;
-static unsigned short *molist_end;
-static unsigned short *molist_last;
-static unsigned short *molist_upper_bound;
+static UINT16 *molist;
+static UINT16 *molist_end;
+static UINT16 *molist_last;
+static UINT16 *molist_upper_bound;
 
 
 /*
@@ -1395,11 +1395,11 @@ void atarigen_mo_reset(void)
  *
  */
 
-void atarigen_mo_update(const unsigned char *base, int link, int scanline)
+void atarigen_mo_update(const UINT8 *base, int link, int scanline)
 {
 	int entryskip = modesc.entryskip, wordskip = modesc.wordskip, wordcount = modesc.entrywords - 1;
-	unsigned char spritevisit[ATARIGEN_MAX_MAXCOUNT];
-	unsigned short *data, *data_start, *prev_data;
+	UINT8 spritevisit[ATARIGEN_MAX_MAXCOUNT];
+	UINT16 *data, *data_start, *prev_data;
 	int match = 0;
 
 	/* set up local pointers */
@@ -1419,8 +1419,8 @@ void atarigen_mo_update(const unsigned char *base, int link, int scanline)
 	memset(spritevisit, 0, modesc.linkmask + 1);
 	while (!spritevisit[link])
 	{
-		const unsigned char *modata = &base[link * entryskip];
-		unsigned short tempdata[16];
+		const UINT8 *modata = &base[link * entryskip];
+		UINT16 tempdata[16];
 		int temp, i;
 
 		/* bounds checking */
@@ -1477,7 +1477,7 @@ void atarigen_mo_update(const unsigned char *base, int link, int scanline)
  *
  */
 
-void atarigen_mo_update_slip_512(const unsigned char *base, int scroll, int scanline, const unsigned char *slips)
+void atarigen_mo_update_slip_512(const UINT8 *base, int scroll, int scanline, const UINT8 *slips)
 {
 	/* catch a fractional character off the top of the screen */
 	if (scanline == 0 && (scroll & 7) != 0)
@@ -1506,7 +1506,7 @@ void atarigen_mo_update_slip_512(const unsigned char *base, int scroll, int scan
 
 void atarigen_mo_process(atarigen_mo_callback callback, void *param)
 {
-	unsigned short *base = molist;
+	UINT16 *base = molist;
 	int last_start_scan = -1;
 	struct rectangle clip;
 
@@ -1517,7 +1517,7 @@ void atarigen_mo_process(atarigen_mo_callback callback, void *param)
 	/* loop over the list until the end */
 	while (base < molist_end)
 	{
-		unsigned short *data, *first, *last;
+		UINT16 *data, *first, *last;
 		int start_scan = base[0], step;
 
 		last_start_scan = start_scan;
@@ -1575,24 +1575,24 @@ int atarigen_rle_count;
 struct atarigen_rle_descriptor *atarigen_rle_info;
 
 /* statics */
-static int rle_region;
-static unsigned short *rle_table[8];
-static unsigned short *rle_colortable;
+static UINT8 rle_region;
+static UINT16 *rle_table[8];
+static UINT16 *rle_colortable;
 
 /* prototypes */
 static int build_rle_tables(void);
 static void prescan_rle(int which);
 static void draw_rle_zoom(struct osd_bitmap *bitmap, const struct atarigen_rle_descriptor *gfx,
-		unsigned int color, int flipy, int sx, int sy, int scalex, int scaley,
+		UINT32 color, int flipy, int sx, int sy, int scalex, int scaley,
 		const struct rectangle *clip);
 static void draw_rle_zoom_16(struct osd_bitmap *bitmap, const struct atarigen_rle_descriptor *gfx,
-		unsigned int color, int flipy, int sx, int sy, int scalex, int scaley,
+		UINT32 color, int flipy, int sx, int sy, int scalex, int scaley,
 		const struct rectangle *clip);
 static void draw_rle_zoom_hflip(struct osd_bitmap *bitmap, const struct atarigen_rle_descriptor *gfx,
-		unsigned int color, int flipy, int sx, int sy, int scalex, int scaley,
+		UINT32 color, int flipy, int sx, int sy, int scalex, int scaley,
 		const struct rectangle *clip);
 static void draw_rle_zoom_hflip_16(struct osd_bitmap *bitmap, const struct atarigen_rle_descriptor *gfx,
-		unsigned int color, int flipy, int sx, int sy, int scalex, int scaley,
+		UINT32 color, int flipy, int sx, int sy, int scalex, int scaley,
 		const struct rectangle *clip);
 
 /*
@@ -1604,7 +1604,7 @@ static void draw_rle_zoom_hflip_16(struct osd_bitmap *bitmap, const struct atari
 
 int atarigen_rle_init(int region, int colorbase)
 {
-	const unsigned short *base = (const unsigned short *)Machine->memory_region[region];
+	const UINT16 *base = (const UINT16 *)Machine->memory_region[region];
 	int lowest_address = Machine->memory_region_length[region];
 	int i;
 
@@ -1716,19 +1716,20 @@ void atarigen_rle_render(struct osd_bitmap *bitmap, struct atarigen_rle_descript
 
 static int build_rle_tables(void)
 {
-	unsigned short *base;
+	UINT16 *base;
 	int i;
 
-	/* allocate all 4 tables */
-	base = malloc(0x400 * sizeof(unsigned short));
+	/* allocate all 5 tables */
+	base = malloc(0x500 * sizeof(UINT16));
 	if (!base)
 		return 1;
 
 	/* assign the tables */
-	rle_table[0] = rle_table[1] = &base[0x000];
-	rle_table[2] = rle_table[3] = &base[0x100];
-	rle_table[5] = rle_table[7] = &base[0x200];
+	rle_table[0] = &base[0x000];
+	rle_table[1] = &base[0x100];
+	rle_table[2] = rle_table[3] = &base[0x200];
 	rle_table[4] = rle_table[6] = &base[0x300];
+	rle_table[5] = rle_table[7] = &base[0x400];
 
 	/* build the 4bpp table */
 	for (i = 0; i < 256; i++)
@@ -1738,11 +1739,20 @@ static int build_rle_tables(void)
 	for (i = 0; i < 256; i++)
 		rle_table[2][i] = (((i & 0xe0) + 0x20) << 3) | (i & 0x1f);
 
+	/* build the special 5bpp table */
+	for (i = 0; i < 256; i++)
+	{
+		if ((i & 0x0f) == 0)
+			rle_table[1][i] = (((i & 0xf0) + 0x10) << 4) | (i & 0x0f);
+		else
+			rle_table[1][i] = (((i & 0xe0) + 0x20) << 3) | (i & 0x1f);
+	}
+
 	/* build the 6bpp table */
 	for (i = 0; i < 256; i++)
 		rle_table[5][i] = (((i & 0xc0) + 0x40) << 2) | (i & 0x3f);
 
-	/* build the special 6bpp table (only used in Primal Rage, I think) */
+	/* build the special 6bpp table */
 	for (i = 0; i < 256; i++)
 	{
 		if ((i & 0x0f) == 0)
@@ -1764,15 +1774,15 @@ static int build_rle_tables(void)
 
 static void prescan_rle(int which)
 {
-	unsigned short *base = (unsigned short *)&Machine->memory_region[rle_region][which * 8];
+	UINT16 *base = (UINT16 *)&Machine->memory_region[rle_region][which * 8];
 	struct atarigen_rle_descriptor *rle_data = &atarigen_rle_info[which];
-	unsigned int usage = 0, usage_hi = 0;
+	UINT32 usage = 0, usage_hi = 0;
 	int width = 0, height, flags, offset;
-	const unsigned short *table;
+	const UINT16 *table;
 
 	/* look up the offset */
-	rle_data->xoffs = (signed short)base[0];
-	rle_data->yoffs = (signed short)base[1];
+	rle_data->xoffs = (INT16)base[0];
+	rle_data->yoffs = (INT16)base[1];
 
 	/* determine the depth and table */
 	flags = base[2];
@@ -1781,7 +1791,7 @@ static void prescan_rle(int which)
 
 	/* determine the starting offset */
 	offset = ((base[2] & 0xff) << 16) | base[3];
-	rle_data->data = base = (unsigned short *)&Machine->memory_region[rle_region][offset * 2];
+	rle_data->data = base = (UINT16 *)&Machine->memory_region[rle_region][offset * 2];
 
 	/* make sure it's valid */
 	if (offset < which * 4 || offset > Machine->memory_region_length[rle_region])
@@ -1854,12 +1864,12 @@ static void prescan_rle(int which)
  */
 
 void draw_rle_zoom(struct osd_bitmap *bitmap, const struct atarigen_rle_descriptor *gfx,
-		unsigned int color, int flipy, int sx, int sy, int scalex, int scaley,
+		UINT32 color, int flipy, int sx, int sy, int scalex, int scaley,
 		const struct rectangle *clip)
 {
-	const unsigned short *palette = &rle_colortable[color];
-	const unsigned short *row_start = gfx->data;
-	const unsigned short *table = gfx->table;
+	const UINT16 *palette = &rle_colortable[color];
+	const UINT16 *row_start = gfx->data;
+	const UINT16 *table = gfx->table;
 	volatile int current_row = 0;
 
 	int scaled_width = (scalex * gfx->width + 0x7fff) >> 16;
@@ -1910,9 +1920,9 @@ void draw_rle_zoom(struct osd_bitmap *bitmap, const struct atarigen_rle_descript
 	/* loop top to bottom */
 	for (y = sy; y <= ey; y++, sourcey += dy)
 	{
-		unsigned char *dest = &bitmap->line[y][sx];
+		UINT8 *dest = &bitmap->line[y][sx];
 		int j, sourcex = dx / 2, rle_end = 0;
-		const unsigned short *base;
+		const UINT16 *base;
 		int entry_count;
 
 		/* loop until we hit the row we're on */
@@ -1973,7 +1983,7 @@ void draw_rle_zoom(struct osd_bitmap *bitmap, const struct atarigen_rle_descript
 		/* clipped case */
 		else
 		{
-			const unsigned char *end = &bitmap->line[y][ex];
+			const UINT8 *end = &bitmap->line[y][ex];
 			int to_be_skipped = pixels_to_skip;
 
 			/* decode the pixels */
@@ -2046,12 +2056,12 @@ void draw_rle_zoom(struct osd_bitmap *bitmap, const struct atarigen_rle_descript
  */
 
 void draw_rle_zoom_16(struct osd_bitmap *bitmap, const struct atarigen_rle_descriptor *gfx,
-		unsigned int color, int flipy, int sx, int sy, int scalex, int scaley,
+		UINT32 color, int flipy, int sx, int sy, int scalex, int scaley,
 		const struct rectangle *clip)
 {
-	const unsigned short *palette = &rle_colortable[color];
-	const unsigned short *row_start = gfx->data;
-	const unsigned short *table = gfx->table;
+	const UINT16 *palette = &rle_colortable[color];
+	const UINT16 *row_start = gfx->data;
+	const UINT16 *table = gfx->table;
 	volatile int current_row = 0;
 
 	int scaled_width = (scalex * gfx->width + 0x7fff) >> 16;
@@ -2102,9 +2112,9 @@ void draw_rle_zoom_16(struct osd_bitmap *bitmap, const struct atarigen_rle_descr
 	/* loop top to bottom */
 	for (y = sy; y <= ey; y++, sourcey += dy)
 	{
-		unsigned short *dest = (unsigned short *)&bitmap->line[y][sx * 2];
+		UINT16 *dest = (UINT16 *)&bitmap->line[y][sx * 2];
 		int j, sourcex = dx / 2, rle_end = 0;
-		const unsigned short *base;
+		const UINT16 *base;
 		int entry_count;
 
 		/* loop until we hit the row we're on */
@@ -2165,7 +2175,7 @@ void draw_rle_zoom_16(struct osd_bitmap *bitmap, const struct atarigen_rle_descr
 		/* clipped case */
 		else
 		{
-			const unsigned short *end = (const unsigned short *)&bitmap->line[y][ex * 2];
+			const UINT16 *end = (const UINT16 *)&bitmap->line[y][ex * 2];
 			int to_be_skipped = pixels_to_skip;
 
 			/* decode the pixels */
@@ -2238,12 +2248,12 @@ void draw_rle_zoom_16(struct osd_bitmap *bitmap, const struct atarigen_rle_descr
  */
 
 void draw_rle_zoom_hflip(struct osd_bitmap *bitmap, const struct atarigen_rle_descriptor *gfx,
-		unsigned int color, int flipy, int sx, int sy, int scalex, int scaley,
+		UINT32 color, int flipy, int sx, int sy, int scalex, int scaley,
 		const struct rectangle *clip)
 {
-	const unsigned short *palette = &rle_colortable[color];
-	const unsigned short *row_start = gfx->data;
-	const unsigned short *table = gfx->table;
+	const UINT16 *palette = &rle_colortable[color];
+	const UINT16 *row_start = gfx->data;
+	const UINT16 *table = gfx->table;
 	volatile int current_row = 0;
 
 	int scaled_width = (scalex * gfx->width + 0x7fff) >> 16;
@@ -2293,9 +2303,9 @@ void draw_rle_zoom_hflip(struct osd_bitmap *bitmap, const struct atarigen_rle_de
 	/* loop top to bottom */
 	for (y = sy; y <= ey; y++, sourcey += dy)
 	{
-		unsigned char *dest = &bitmap->line[y][ex];
+		UINT8 *dest = &bitmap->line[y][ex];
 		int j, sourcex = dx / 2, rle_end = 0;
-		const unsigned short *base;
+		const UINT16 *base;
 		int entry_count;
 
 		/* loop until we hit the row we're on */
@@ -2356,7 +2366,7 @@ void draw_rle_zoom_hflip(struct osd_bitmap *bitmap, const struct atarigen_rle_de
 		/* clipped case */
 		else
 		{
-			const unsigned char *start = &bitmap->line[y][sx];
+			const UINT8 *start = &bitmap->line[y][sx];
 			int to_be_skipped = pixels_to_skip;
 
 			/* decode the pixels */
@@ -2429,12 +2439,12 @@ void draw_rle_zoom_hflip(struct osd_bitmap *bitmap, const struct atarigen_rle_de
  */
 
 void draw_rle_zoom_hflip_16(struct osd_bitmap *bitmap, const struct atarigen_rle_descriptor *gfx,
-		unsigned int color, int flipy, int sx, int sy, int scalex, int scaley,
+		UINT32 color, int flipy, int sx, int sy, int scalex, int scaley,
 		const struct rectangle *clip)
 {
-	const unsigned short *palette = &rle_colortable[color];
-	const unsigned short *row_start = gfx->data;
-	const unsigned short *table = gfx->table;
+	const UINT16 *palette = &rle_colortable[color];
+	const UINT16 *row_start = gfx->data;
+	const UINT16 *table = gfx->table;
 	volatile int current_row = 0;
 
 	int scaled_width = (scalex * gfx->width + 0x7fff) >> 16;
@@ -2484,9 +2494,9 @@ void draw_rle_zoom_hflip_16(struct osd_bitmap *bitmap, const struct atarigen_rle
 	/* loop top to bottom */
 	for (y = sy; y <= ey; y++, sourcey += dy)
 	{
-		unsigned short *dest = (unsigned short *)&bitmap->line[y][ex * 2];
+		UINT16 *dest = (UINT16 *)&bitmap->line[y][ex * 2];
 		int j, sourcex = dx / 2, rle_end = 0;
-		const unsigned short *base;
+		const UINT16 *base;
 		int entry_count;
 
 		/* loop until we hit the row we're on */
@@ -2547,7 +2557,7 @@ void draw_rle_zoom_hflip_16(struct osd_bitmap *bitmap, const struct atarigen_rle
 		/* clipped case */
 		else
 		{
-			const unsigned short *start = (const unsigned short *)&bitmap->line[y][sx * 2];
+			const UINT16 *start = (const UINT16 *)&bitmap->line[y][sx * 2];
 			int to_be_skipped = pixels_to_skip;
 
 			/* decode the pixels */
@@ -2638,8 +2648,8 @@ void draw_rle_zoom_hflip_16(struct osd_bitmap *bitmap, const struct atarigen_rle
 struct playfield_data
 {
 	struct osd_bitmap *bitmap;
-	unsigned char *dirty;
-	unsigned char *visit;
+	UINT8 *dirty;
+	UINT8 *visit;
 
 	int tilewidth;
 	int tileheight;
@@ -2656,15 +2666,15 @@ struct playfield_data
 
 /* globals */
 struct osd_bitmap *atarigen_pf_bitmap;
-unsigned char *atarigen_pf_dirty;
-unsigned char *atarigen_pf_visit;
+UINT8 *atarigen_pf_dirty;
+UINT8 *atarigen_pf_visit;
 
 struct osd_bitmap *atarigen_pf2_bitmap;
-unsigned char *atarigen_pf2_dirty;
-unsigned char *atarigen_pf2_visit;
+UINT8 *atarigen_pf2_dirty;
+UINT8 *atarigen_pf2_visit;
 
 struct osd_bitmap *atarigen_pf_overrender_bitmap;
-unsigned short atarigen_overrender_colortable[32];
+UINT16 atarigen_overrender_colortable[32];
 
 /* statics */
 static struct playfield_data playfield;
@@ -3123,9 +3133,9 @@ void atarigen_expanded_666_paletteram_w(int offset, int data)
  *
  */
 
-void atarigen_shade_render(struct osd_bitmap *bitmap, const struct GfxElement *gfx, int code, int hflip, int x, int y, const struct rectangle *clip, const unsigned char *shade_table)
+void atarigen_shade_render(struct osd_bitmap *bitmap, const struct GfxElement *gfx, int code, int hflip, int x, int y, const struct rectangle *clip, const UINT8 *shade_table)
 {
-	unsigned char *base = gfx->gfxdata + code * gfx->char_modulo;
+	UINT8 *base = gfx->gfxdata + code * gfx->char_modulo;
 	int width = gfx->width;
 	int height = gfx->height;
 	int i, j, diff, xoff = 0;
@@ -3147,10 +3157,10 @@ void atarigen_shade_render(struct osd_bitmap *bitmap, const struct GfxElement *g
 		height -= diff;
 
 	/* loop over the data */
-	for (i = 0; i < height; i++, y++, base+=gfx->line_modulo)
+	for (i = 0; i < height; i++, y++, base += gfx->line_modulo)
 	{
-		const unsigned char *src = &base[xoff];
-		unsigned char *dst = &bitmap->line[y][x + xoff];
+		const UINT8 *src = &base[xoff];
+		UINT8 *dst = &bitmap->line[y][x + xoff];
 
 		if (hflip)
 		{

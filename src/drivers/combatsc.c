@@ -508,13 +508,12 @@ INPUT_PORTS_END
 static struct GfxLayout gfx_layout =
 {
 	8,8,
-	0x2000,
+	0x4000,
 	4,
 	{ 0,1,2,3 },
-	{ 0*0x4000*8*8, 0*0x4000*8*8+4, 2*0x4000*8*8, 2*0x4000*8*8+4,
-	  1*0x4000*8*8, 1*0x4000*8*8+4, 3*0x4000*8*8, 3*0x4000*8*8+4 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8
+	{ 0, 4, 8, 12, 16, 20, 24, 28},
+	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 },
+	32*8
 };
 
 static struct GfxLayout tile_layout =
@@ -549,8 +548,6 @@ static struct GfxDecodeInfo combatsc_gfxdecodeinfo[] =
 {
 	{ 2, 0x00000, &gfx_layout, 0, 8*16 },
 	{ 2, 0x80000, &gfx_layout, 0, 8*16 },
-	{ 2, 0x10000, &gfx_layout, 0, 8*16 },
-	{ 2, 0x90000, &gfx_layout, 0, 8*16 },
 	{ -1 }
 };
 
@@ -679,6 +676,8 @@ static struct MachineDriver combatsc_machine_driver =
 	}
 };
 
+
+
 ROM_START( combatscb_rom )
 	ROM_REGION( 0x48000 ) /* 6809 code */
 	ROM_LOAD( "combat.002",	0x10000, 0x10000, 0x0996755d )
@@ -731,10 +730,10 @@ ROM_START( combatsc_rom )
 	ROM_LOAD( "611g03.rom", 0x00000, 0x08000, 0x2a544db5 )
 
 	ROM_REGION_DISPOSE( 0x100000 )
-	ROM_LOAD( "611g07.rom",	0x00000, 0x40000, 0x4ac64f85 )
-	ROM_LOAD( "611g08.rom",	0x40000, 0x40000, 0x52cf260e )
-	ROM_LOAD( "611g11.rom",	0x80000, 0x40000, 0x6c19d4a9 )
-	ROM_LOAD( "611g12.rom",	0xc0000, 0x40000, 0x24475d25 )
+	ROM_LOAD_EVEN( "611g08.rom",	0x00000, 0x40000, 0x46e7d28c )
+	ROM_LOAD_ODD ( "611g07.rom",	0x00000, 0x40000, 0x73b38720 )
+	ROM_LOAD_EVEN( "611g12.rom",	0x80000, 0x40000, 0x9c6bf898 )
+	ROM_LOAD_ODD ( "611g11.rom",	0x80000, 0x40000, 0x69687538 )
 
 	ROM_REGION( 0x400 ) /* color lookup table */
 	ROM_LOAD( "611g06.h14", 0x000, 0x100, 0xf916129a ) /* sprites lookup table */
@@ -744,7 +743,6 @@ ROM_START( combatsc_rom )
 
     ROM_REGION(0x20000)	/* uPD7759 data */
 	ROM_LOAD( "611g04.rom", 0x00000, 0x20000, 0x2987e158 )
-
 ROM_END
 
 ROM_START( combatsct_rom )
@@ -756,11 +754,11 @@ ROM_START( combatsct_rom )
 	ROM_REGION( 0x10000 ) /* sound CPU */
 	ROM_LOAD( "611g03.rom", 0x00000, 0x08000, 0x2a544db5 )
 
-	ROM_REGION_DISPOSE( 0x100000 ) /* missing!!! */
-	ROM_LOAD( "611g07.rom",	0x00000, 0x40000, 0x4ac64f85 )
-	ROM_LOAD( "611g08.rom",	0x40000, 0x40000, 0x52cf260e )
-	ROM_LOAD( "611g11.rom",	0x80000, 0x40000, 0x6c19d4a9 )
-	ROM_LOAD( "611g12.rom",	0xc0000, 0x40000, 0x24475d25 )
+	ROM_REGION_DISPOSE( 0x100000 )
+	ROM_LOAD_EVEN( "611g08.rom",	0x00000, 0x40000, 0x46e7d28c )
+	ROM_LOAD_ODD ( "611g07.rom",	0x00000, 0x40000, 0x73b38720 )
+	ROM_LOAD_EVEN( "611g12.rom",	0x80000, 0x40000, 0x9c6bf898 )
+	ROM_LOAD_ODD ( "611g11.rom",	0x80000, 0x40000, 0x69687538 )
 
 	ROM_REGION( 0x400 ) /* color lookup table */
 	ROM_LOAD( "611g06.h14", 0x000, 0x100, 0xf916129a ) /* sprites lookup table */
@@ -771,6 +769,31 @@ ROM_START( combatsct_rom )
     ROM_REGION(0x20000)	/* uPD7759 data */
 	ROM_LOAD( "611g04.rom", 0x00000, 0x20000, 0x2987e158 )
 
+ROM_END
+
+ROM_START( combatscj_rom )
+	ROM_REGION( 0x48000 ) /* 6309 code */
+	ROM_LOAD( "611p01.a14",	0x10000, 0x10000, 0xd748268e )
+	ROM_LOAD( "611g02.rom",	0x20000, 0x20000, 0x9ba05327 )
+	/* extra 0x8000 for banked RAM */
+
+	ROM_REGION( 0x10000 ) /* sound CPU */
+	ROM_LOAD( "611g03.rom", 0x00000, 0x08000, 0x2a544db5 )
+
+	ROM_REGION_DISPOSE( 0x100000 )
+	ROM_LOAD_EVEN( "611g08.rom",	0x00000, 0x40000, 0x46e7d28c )
+	ROM_LOAD_ODD ( "611g07.rom",	0x00000, 0x40000, 0x73b38720 )
+	ROM_LOAD_EVEN( "611g12.rom",	0x80000, 0x40000, 0x9c6bf898 )
+	ROM_LOAD_ODD ( "611g11.rom",	0x80000, 0x40000, 0x69687538 )
+
+	ROM_REGION( 0x400 ) /* color lookup table */
+	ROM_LOAD( "611g06.h14", 0x000, 0x100, 0xf916129a ) /* sprites lookup table */
+	ROM_LOAD( "611g10.h6",  0x100, 0x100, 0xf916129a ) /* sprites lookup table */
+	ROM_LOAD( "611g05.h15",	0x200, 0x100, 0x207a7b07 ) /* chars lookup table */
+	ROM_LOAD( "611g09.h7",  0x300, 0x100, 0x207a7b07 ) /* chars lookup table */
+
+    ROM_REGION(0x20000)	/* uPD7759 data */
+	ROM_LOAD( "611g04.rom", 0x00000, 0x20000, 0x2987e158 )
 ROM_END
 
 ROM_START( bootcamp_rom )
@@ -782,11 +805,11 @@ ROM_START( bootcamp_rom )
 	ROM_REGION( 0x10000 ) /* sound CPU */
 	ROM_LOAD( "611g03.rom", 0x00000, 0x08000, 0x2a544db5 )
 
-	ROM_REGION_DISPOSE( 0x100000 ) /* missing!!! */
-	ROM_LOAD( "611g07.rom",	0x00000, 0x40000, 0x4ac64f85 )
-	ROM_LOAD( "611g08.rom",	0x40000, 0x40000, 0x52cf260e )
-	ROM_LOAD( "611g11.rom",	0x80000, 0x40000, 0x6c19d4a9 )
-	ROM_LOAD( "611g12.rom",	0xc0000, 0x40000, 0x24475d25 )
+	ROM_REGION_DISPOSE( 0x100000 )
+	ROM_LOAD_EVEN( "611g08.rom",	0x00000, 0x40000, 0x46e7d28c )
+	ROM_LOAD_ODD ( "611g07.rom",	0x00000, 0x40000, 0x73b38720 )
+	ROM_LOAD_EVEN( "611g12.rom",	0x80000, 0x40000, 0x9c6bf898 )
+	ROM_LOAD_ODD ( "611g11.rom",	0x80000, 0x40000, 0x69687538 )
 
 	ROM_REGION( 0x400 ) /* color lookup table */
 	ROM_LOAD( "611g06.h14", 0x000, 0x100, 0xf916129a ) /* sprites lookup table */
@@ -796,8 +819,9 @@ ROM_START( bootcamp_rom )
 
     ROM_REGION(0x20000)	/* uPD7759 data */
 	ROM_LOAD( "611g04.rom", 0x00000, 0x20000, 0x2987e158 )
-
 ROM_END
+
+
 
 static void gfx_untangle( void ){
 	unsigned char *gfx = Machine->memory_region[2];
@@ -846,7 +870,7 @@ struct GameDriver combasc_driver =
 	__FILE__,
 	0,
 	"combasc",
-	"Combat School (joystick version)",
+	"Combat School (joystick)",
 	"1988",
 	"Konami",
 	"Manuel Abadia\nJose Tejada\nCesareo Gutierrez\nPhil Stroffolino",
@@ -871,8 +895,8 @@ struct GameDriver combasct_driver =
 	__FILE__,
 	&combasc_driver,
 	"combasct",
-	"Combat School (trackball version)",
-	"1988",
+	"Combat School (trackball)",
+	"1987",
 	"Konami",
 	"Manuel Abadia\nJose Tejada\nCesareo Gutierrez\nPhil Stroffolino",
 	GAME_NOT_WORKING,
@@ -880,6 +904,31 @@ struct GameDriver combasct_driver =
 	0,
 
 	combatsct_rom,
+	0, 0,
+	0,
+	0, /* sound_prom */
+
+	combatsct_input_ports,
+
+	PROM_MEMORY_REGION(3), 0, 0, /* color lookup table */
+	ORIENTATION_DEFAULT,
+	combatsc_hiload, combatsc_hisave	/* hiload,hisave */
+};
+
+struct GameDriver combascj_driver =
+{
+	__FILE__,
+	&combasc_driver,
+	"combascj",
+	"Combat School (Japan trackball)",
+	"1987",
+	"Konami",
+	"Manuel Abadia\nJose Tejada\nCesareo Gutierrez\nPhil Stroffolino",
+	GAME_NOT_WORKING,
+	&combatsc_machine_driver,
+	0,
+
+	combatscj_rom,
 	0, 0,
 	0,
 	0, /* sound_prom */
@@ -922,7 +971,7 @@ struct GameDriver bootcamp_driver =
 	&combasc_driver,
 	"bootcamp",
 	"Boot Camp",
-	"1988",
+	"1987",
 	"Konami",
 	"Manuel Abadia\nJose Tejada\nCesareo Gutierrez\nPhil Stroffolino",
 	GAME_NOT_WORKING,

@@ -10,7 +10,7 @@
 static int actfancr_control_1[0x20],actfancr_control_2[0x20];
 unsigned char *actfancr_pf1_data,*actfancr_pf2_data;
 static struct tilemap *pf1_tilemap;
-static int flipscreen,last_flip;
+static int flipscreen;
 
 /******************************************************************************/
 
@@ -30,9 +30,16 @@ void actfancr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int scrollx=(actfancr_control_1[0x10]+(actfancr_control_1[0x11]<<8));
 	int scrolly=(actfancr_control_1[0x12]+(actfancr_control_1[0x13]<<8));
 
-	tilemap_update(pf1_tilemap);
-	palette_init_used_colors();
+	/* Draw playfield */
+	flipscreen=actfancr_control_2[0]&0x80;
+	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 
+	tilemap_set_scrollx( pf1_tilemap,0, scrollx );
+	tilemap_set_scrolly( pf1_tilemap,0, scrolly );
+
+	tilemap_update(pf1_tilemap);
+
+	palette_init_used_colors();
 	pal_base = Machine->drv->gfxdecodeinfo[0].color_codes_start;
 	for (color = 0;color < 16;color++) colmask[color] = 0;
 	for (offs = 0; offs < 0x800; offs += 2)
@@ -73,14 +80,6 @@ void actfancr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	if (palette_recalc())
 		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
 
-	/* Draw playfield */
-	flipscreen=actfancr_control_2[0]&0x80;
-	if (last_flip!=flipscreen)
-		tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
-	last_flip=flipscreen;
-
-	tilemap_set_scrollx( pf1_tilemap,0, scrollx );
-	tilemap_set_scrolly( pf1_tilemap,0, scrolly );
 	tilemap_render(ALL_TILEMAPS);
 	tilemap_draw(bitmap,pf1_tilemap,0);
 

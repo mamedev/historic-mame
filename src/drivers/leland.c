@@ -2326,7 +2326,7 @@ struct GameDriver pigoutj_driver =
 	__FILE__,
 	&pigout_driver,
 	"pigoutj",
-	"Pigout (Japanese)",
+	"Pigout (Japan)",
 	"1990",
 	LELAND,
 	"Paul Leaman",
@@ -2478,7 +2478,7 @@ struct GameDriver offroad_driver =
 	__FILE__,
 	0,
 	"offroad",
-	"Super Off-road Racer",
+	"Super Off-Road Racer",
 	"1989",
 	LELAND,
 	"Paul Leaman",
@@ -2547,7 +2547,7 @@ struct GameDriver offroadt_driver =
 	__FILE__,
 	0,
 	"offroadt",
-	"Super Off-road Racer (Track Pack)",
+	"Super Off-Road Racer (Track Pack)",
 	"????",
 	LELAND,
 	"Paul Leaman",
@@ -3317,9 +3317,9 @@ ROM_START( aafb_rom )
     ROM_LOAD("24015-02.u59",   0x10000, 0x10000, 0x00000000 ) /* SUSPECT */
 
 	ROM_REGION_DISPOSE(0x18000)     /* temporary space for graphics (disposed after conversion) */
-    ROM_LOAD("24011-02.u93", 0x00000, 0x04000, 0x011c0235 )  /* SUSPECT */
-    ROM_LOAD("24012-02.u94", 0x08000, 0x04000, 0x376199a2 )  /* SUSPECT */
-    ROM_LOAD("24013-02.u95", 0x10000, 0x04000, 0x0a604e0d )  /* SUSPECT */
+    ROM_LOAD("24011-02.u93", 0x00000, 0x08000, 0x011c0235 )  /* SUSPECT */
+    ROM_LOAD("24012-02.u94", 0x08000, 0x08000, 0x376199a2 )  /* SUSPECT */
+    ROM_LOAD("24013-02.u95", 0x10000, 0x08000, 0x0a604e0d )  /* SUSPECT */
 
 	ROM_REGION(0x80000)     /* Z80 slave CPU */
     ROM_LOAD("24000-02.u3",   0x00000, 0x02000, 0x52df0354 ) /* SUSPECT */
@@ -3380,51 +3380,50 @@ struct GameDriver aafb_driver =
 
 ROM_START( aafb2p_rom )
 	ROM_REGION(0x020000)     /* 64k for code + banked ROMs images */
-	ROM_LOAD("aafb2p.58t",   0x00000, 0x10000, 0x79fd14cd )
-	ROM_LOAD("aafb2p.59t",   0x10000, 0x10000, 0x3b0382f0 )
+	ROM_LOAD("26014-01.58t", 0x00000, 0x10000, 0x79fd14cd )
+	ROM_LOAD("26015-01.59t", 0x10000, 0x10000, 0x3b0382f0 )
 
 	ROM_REGION_DISPOSE(0x18000)     /* temporary space for graphics (disposed after conversion) */
-
-    ROM_LOAD("aafb2p.u93",   0x00000, 0x08000, 0x00000000 )
-    ROM_LOAD("aafb2p.u94",   0x08000, 0x08000, 0x00000000 )
-    ROM_LOAD("aafb2p.u95",   0x10000, 0x08000, 0x00000000 )
+    ROM_LOAD("24011-02.u93", 0x00000, 0x08000, 0x00000000 )
+    ROM_LOAD("24012-02.u94", 0x08000, 0x08000, 0x00000000 )
+    ROM_LOAD("24013-02.u95", 0x10000, 0x08000, 0x00000000 )
 
 	ROM_REGION(0x80000)     /* Z80 slave CPU */
-    ROM_LOAD("aafb2p.u3",   0x00000, 0x04000, 0x7a8259c4 )
-    ROM_LOAD("aafb2p.u2t",  0x10000, 0x10000, 0xf118b9b4 )
-    ROM_LOAD("aafb2p.u3t",  0x20000, 0x10000, 0xbbb92184 )
-    ROM_LOAD("aafb2p.u4t",  0x30000, 0x10000, 0xcdc9c09d )
-    ROM_LOAD("aafb2p.u5t",  0x40000, 0x10000, 0x3c03e92e )
-    ROM_LOAD("aafb2p.u6t",  0x50000, 0x10000, 0xcdf7d19c )
-    ROM_LOAD("aafb2p.u7t",  0x60000, 0x10000, 0x8eeb007c )
-    ROM_LOAD("aafb2p.u8t",  0x70000, 0x10000, 0x3d9747c9 )
+    ROM_LOAD("26000-01.u3",   0x00000, 0x02000, 0x98c06c63 )
+    ROM_LOAD("26001-01.2t",   0x10000, 0x10000, 0xf118b9b4 )
+    ROM_LOAD("24002-02.u3t",  0x20000, 0x10000, 0xbbb92184 )
+    ROM_LOAD("15603-01.u4t",  0x30000, 0x10000, 0xcdc9c09d )
+    ROM_LOAD("15604-01.u5t",  0x40000, 0x10000, 0x3c03e92e )
+    ROM_LOAD("15605-01.u6t",  0x50000, 0x10000, 0xcdf7d19c )
+    ROM_LOAD("15606-01.u7t",  0x60000, 0x10000, 0x8eeb007c )
+    ROM_LOAD("24002-02.u8t",  0x70000, 0x10000, 0x3d9747c9 )
 
 	ROM_REGION(0x100000)     /* 80186 CPU */
-    ROM_LOAD_EVEN("aafb2p.25t", 0x040000, 0x10000, 0x9e344768 )
-    ROM_LOAD_ODD ("aafb2p.13t", 0x040000, 0x10000, 0x6997025f )
-    ROM_LOAD_EVEN("aafb2p.26t", 0x060000, 0x10000, 0x0788f2a5 )
-    ROM_LOAD_ODD ("aafb2p.14t", 0x060000, 0x10000, 0xa48bd721 )
-	ROM_LOAD_EVEN("aafb2p.27t", 0x0e0000, 0x10000, 0x94081899 )
-	ROM_LOAD_ODD ("aafb2p.15t", 0x0e0000, 0x10000, 0x76eb6077 )
+    ROM_LOAD_EVEN("24019-01.u25", 0x040000, 0x10000, 0x9e344768 )
+    ROM_LOAD_ODD ("24016-01.u13", 0x040000, 0x10000, 0x6997025f )
+    ROM_LOAD_EVEN("24020-01.u26", 0x060000, 0x10000, 0x0788f2a5 )
+    ROM_LOAD_ODD ("24017-01.u14", 0x060000, 0x10000, 0xa48bd721 )
+    ROM_LOAD_EVEN("24021-01.u27", 0x0e0000, 0x10000, 0x94081899 )
+    ROM_LOAD_ODD ("24018-01.u15", 0x0e0000, 0x10000, 0x76eb6077 )
 
 	ROM_REGION(0x20000)     /* Background PROMS */
 	/* 70, 92, 69, 91, 68, 90, 67, 89 */
-    ROM_LOAD( "aafb2p.u70",  0x00000, 0x4000, 0x40e46aa4 )
-    ROM_LOAD( "aafb2p.u92",  0x04000, 0x4000, 0x78705f42 )
-    ROM_LOAD( "aafb2p.u69",  0x08000, 0x4000, 0x6a576aa9 )
-    ROM_LOAD( "aafb2p.u91",  0x0c000, 0x4000, 0xb857a1ad )
-    ROM_LOAD( "aafb2p.u68",  0x10000, 0x4000, 0x8ea75319 )
-    ROM_LOAD( "aafb2p.u90",  0x14000, 0x4000, 0x4538bc58 )
-    ROM_LOAD( "aafb2p.u67",  0x18000, 0x4000, 0xcd7a3338 )
+    ROM_LOAD( "24007-01.u70",  0x00000, 0x4000, 0x40e46aa4 )
+    ROM_LOAD( "24010-01.u92",  0x04000, 0x4000, 0x78705f42 )
+    ROM_LOAD( "24006-01.u69",  0x08000, 0x4000, 0x6a576aa9 )
+    ROM_LOAD( "24009-02.u91",  0x0c000, 0x4000, 0xb857a1ad )
+    ROM_LOAD( "24005-02.u68",  0x10000, 0x4000, 0x8ea75319 )
+    ROM_LOAD( "24008-01.u90",  0x14000, 0x4000, 0x4538bc58 )
+    ROM_LOAD( "24004-02.u67",  0x18000, 0x4000, 0xcd7a3338 )
 	/* 89 = empty */
 ROM_END
 
 struct GameDriver aafb2p_driver =
 {
 	__FILE__,
-	0,
+	&aafb_driver,
 	"aafb2p",
-    "All American Football (2 player)",
+    "All American Football (2 Players)",
 	"????",
 	LELAND,
 	"Paul Leaman",
@@ -3536,9 +3535,9 @@ ROM_START( aafbu_rom )
 	ROM_LOAD("aafbu59t.bin",   0x10000, 0x10000, 0xab6a606f )
 
 	ROM_REGION_DISPOSE(0x18000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD("aafbu93.bin",   0x00000, 0x04000, 0x68f8addc )
-	ROM_LOAD("aafbu94.bin",   0x08000, 0x04000, 0x669791ac )
-	ROM_LOAD("aafbu95.bin",   0x10000, 0x04000, 0xbd62aa8a )
+	ROM_LOAD("aafbu93.bin",   0x00000, 0x08000, 0x00000000 )
+	ROM_LOAD("aafbu94.bin",   0x08000, 0x08000, 0x00000000 )
+	ROM_LOAD("aafbu95.bin",   0x10000, 0x08000, 0x00000000 )
 
 	/* Everything from here down may be from the wrong version */
 	ROM_REGION(0x80000)     /* Z80 slave CPU */
@@ -3574,7 +3573,7 @@ ROM_END
 struct GameDriver aafbu_driver =
 {
 	__FILE__,
-	0,
+	&aafb_driver,
 	"aafbu",
 	"All American Football (US Version?)",
 	"????",

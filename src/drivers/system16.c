@@ -4228,7 +4228,7 @@ struct GameDriver eswat_driver =
 	"1989",
 	"Sega",
 	SYS16_CREDITS,
-	0,
+	GAME_NOT_WORKING,
 	&eswatbl_machine_driver,
 	eswatbl_onetime_init_machine,
 	eswat_rom,

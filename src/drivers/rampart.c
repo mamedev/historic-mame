@@ -18,14 +18,15 @@ void rampart_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void rampart_scanline_update(int scanline);
 
-static unsigned char *slapstic_base;
-static int current_bank;
+
+static UINT8 *slapstic_base;
+static UINT32 current_bank;
 
 
 
 /*************************************
  *
- *		Interrupt handling
+ *	Interrupt handling
  *
  *************************************/
 
@@ -57,11 +58,11 @@ static void scanline_update(int scanline)
 
 /*************************************
  *
- *		Slapstic fun & joy
+ *	Slapstic fun & joy
  *
  *************************************/
 
-static int bank_list[] = { 0x4000, 0x6000, 0x0000, 0x2000 };
+static UINT32 bank_list[] = { 0x4000, 0x6000, 0x0000, 0x2000 };
 
 static int slapstic_bank_r(int offset)
 {
@@ -124,7 +125,7 @@ static int opbase_override(int pc)
 
 /*************************************
  *
- *		Initialization
+ *	Initialization
  *
  *************************************/
 
@@ -140,7 +141,7 @@ static void init_machine(void)
 
 /*************************************
  *
- *		MSM5295 I/O
+ *	MSM5295 I/O
  *
  *************************************/
 
@@ -160,7 +161,7 @@ static void adpcm_w(int offset, int data)
 
 /*************************************
  *
- *		YM2413 I/O
+ *	YM2413 I/O
  *
  *************************************/
 
@@ -186,7 +187,7 @@ static void ym2413_w(int offset, int data)
 
 /*************************************
  *
- *		Latch write
+ *	Latch write
  *
  *************************************/
 
@@ -226,7 +227,7 @@ static void latch_w(int offset, int data)
 
 /*************************************
  *
- *		Main CPU memory handlers
+ *	Main CPU memory handlers
  *
  *************************************/
 
@@ -274,7 +275,7 @@ static struct MemoryWriteAddress writemem[] =
 
 /*************************************
  *
- *		Port definitions
+ *	Port definitions
  *
  *************************************/
 
@@ -391,7 +392,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *		Graphics definitions
+ *	Graphics definitions
  *
  *************************************/
 
@@ -417,7 +418,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *		Sound definitions
+ *	Sound definitions
  *
  *************************************/
 
@@ -442,7 +443,7 @@ static struct YM2413interface ym2413_interface =
 
 /*************************************
  *
- *		Machine driver
+ *	Machine driver
  *
  *************************************/
 
@@ -492,7 +493,7 @@ static struct MachineDriver machine_driver =
 
 /*************************************
  *
- *		ROM decoding
+ *	ROM decoding
  *
  *************************************/
 
@@ -510,7 +511,7 @@ static void rom_decode(void)
 
 /*************************************
  *
- *		ROM definition(s)
+ *	ROM definition(s)
  *
  *************************************/
 
@@ -549,13 +550,13 @@ ROM_END
 
 /*************************************
  *
- *		Driver initialization
+ *	Driver initialization
  *
  *************************************/
 
 static void rampart_init(void)
 {
-	static const unsigned short compressed_default_eeprom[] =
+	static const UINT16 compressed_default_eeprom[] =
 	{
 		0x0001,0x01FF,0x0E00,0x01FF,0x0E00,0x01FF,0x0150,0x0101,
 		0x0100,0x0151,0x0300,0x0151,0x0400,0x0150,0x0101,0x01FB,
@@ -594,7 +595,7 @@ static void rampart_init(void)
 
 /*************************************
  *
- *		Game driver(s)
+ *	Game driver(s)
  *
  *************************************/
 

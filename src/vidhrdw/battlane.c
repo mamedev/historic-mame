@@ -121,6 +121,14 @@ void battlane_dump_bitmap(void)
         }
         fclose(fp);
     }
+	fp=fopen("SPRITES.DMP", "w+b");
+	if (fp)
+	{
+		fwrite(battlane_spriteram, 0x100, 1, fp);
+		fclose(fp);
+	}
+
+
 }
 #endif
 
@@ -258,14 +266,14 @@ void battlane_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	for (offs=0x0100-4; offs>=0; offs-=4)
 	{
-	      int code=battlane_spriteram[offs+3];
-//          if (!(battlane_spriteram[offs+1]&0x80))
+	      int code=battlane_spriteram[offs+3]+((battlane_spriteram[offs+1]&0x80)<<1);
+          //if (battlane_spriteram[offs+1])
 	      {
                drawgfx(bitmap,Machine->gfx[0],
 					 code,
 					 battlane_spriteram[offs+1]&0x07,
 					 0,1,
-					 256-battlane_spriteram[offs+2],
+					 battlane_spriteram[offs+2],
 					 battlane_spriteram[offs],
 					 &Machine->drv->visible_area,
 					 TRANSPARENCY_PEN, 15);
@@ -310,9 +318,10 @@ void battlane_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
             }
         }
     }
-    if (keyboard_pressed(KEYCODE_F))
+    if (keyboard_pressed(KEYCODE_S))
     {
          battlane_dump_bitmap();
     }
 #endif
+
 }

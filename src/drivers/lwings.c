@@ -386,6 +386,87 @@ INPUT_PORTS_START( trojan_input_ports )
 	PORT_DIPSETTING(    0x80, DEF_STR( Yes ) )
 INPUT_PORTS_END
 
+/* Trojan with level selection - starting level dip switches not used */
+INPUT_PORTS_START( trojanls_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )    /* probably unused */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )    /* probably unused */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )    /* probably unused */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )    /* probably unused */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )    /* probably unused */
+
+	PORT_START      /* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )    /* probably unused */
+
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, "Upright 1 Joystick" )
+	PORT_DIPSETTING(    0x02, "Upright 2 Joysticks" )
+	PORT_DIPSETTING(    0x03, DEF_STR( Cocktail ) )
+/* 0x01 same as 0x02 or 0x03 */
+	PORT_DIPNAME( 0x1c, 0x1c, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x10, "20000 60000" )
+	PORT_DIPSETTING(    0x0c, "20000 70000" )
+	PORT_DIPSETTING(    0x08, "20000 80000" )
+	PORT_DIPSETTING(    0x1c, "30000 60000" )
+	PORT_DIPSETTING(    0x18, "30000 70000" )
+	PORT_DIPSETTING(    0x14, "30000 80000" )
+	PORT_DIPSETTING(    0x04, "40000 80000" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START      /* DSW1 */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_3C ) )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x20, "2" )
+	PORT_DIPSETTING(    0x30, "3" )
+	PORT_DIPSETTING(    0x10, "4" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x40, 0x40, "Flip Screen?" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Allow Continue" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Yes ) )
+INPUT_PORTS_END
+
 
 
 static struct GfxLayout charlayout =
@@ -944,6 +1025,43 @@ static struct MachineDriver trojan_machine_driver =
 
 ROM_START( trojan_rom )
 	ROM_REGION(0x20000)     /* 64k for code + 3*16k for the banked ROMs images */
+	ROM_LOAD( "t4",           0x00000, 0x8000, 0xc1bbeb4e )
+	ROM_LOAD( "t6",           0x10000, 0x8000, 0xd49592ef )
+	ROM_LOAD( "tb05.bin",     0x18000, 0x8000, 0x9273b264 )
+
+	ROM_REGION_DISPOSE(0xa0000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "tb03.bin",     0x00000, 0x4000, 0x581a2b4c )     /* characters */
+	ROM_LOAD( "tb13.bin",     0x10000, 0x8000, 0x285a052b )     /* tiles */
+	ROM_LOAD( "tb09.bin",     0x18000, 0x8000, 0xaeb693f7 )
+	ROM_LOAD( "tb12.bin",     0x20000, 0x8000, 0xdfb0fe5c )
+	ROM_LOAD( "tb08.bin",     0x28000, 0x8000, 0xd3a4c9d1 )
+	ROM_LOAD( "tb11.bin",     0x30000, 0x8000, 0x00f0f4fd )
+	ROM_LOAD( "tb07.bin",     0x38000, 0x8000, 0xdff2ee02 )
+	ROM_LOAD( "tb14.bin",     0x40000, 0x8000, 0x14bfac18 )
+	ROM_LOAD( "tb10.bin",     0x48000, 0x8000, 0x71ba8a6d )
+	ROM_LOAD( "tb18.bin",     0x50000, 0x8000, 0x862c4713 )     /* sprites */
+	ROM_LOAD( "tb16.bin",     0x58000, 0x8000, 0xd86f8cbd )
+	ROM_LOAD( "tb17.bin",     0x60000, 0x8000, 0x12a73b3f )
+	ROM_LOAD( "tb15.bin",     0x68000, 0x8000, 0xbb1a2769 )
+	ROM_LOAD( "tb22.bin",     0x70000, 0x8000, 0x39daafd4 )
+	ROM_LOAD( "tb20.bin",     0x78000, 0x8000, 0x94615d2a )
+	ROM_LOAD( "tb21.bin",     0x80000, 0x8000, 0x66c642bd )
+	ROM_LOAD( "tb19.bin",     0x88000, 0x8000, 0x81d5ab36 )
+	ROM_LOAD( "tb25.bin",     0x90000, 0x8000, 0x6e38c6fa )     /* Bk Tiles */
+	ROM_LOAD( "tb24.bin",     0x98000, 0x8000, 0x14fc6cf2 )
+
+	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_LOAD( "tb02.bin",     0x0000, 0x8000, 0x21154797 )
+
+	ROM_REGION(0x08000)     /* 64k for ADPCM CPU (CPU not emulated) */
+	ROM_LOAD( "tb01.bin",     0x0000, 0x4000, 0x1c0f91b2 )
+
+	ROM_REGION(0x08000)
+	ROM_LOAD( "tb23.bin",     0x00000, 0x08000, 0xeda13c0e )  /* Tile Map */
+ROM_END
+
+ROM_START( trojanr_rom )
+	ROM_REGION(0x20000)     /* 64k for code + 3*16k for the banked ROMs images */
 	ROM_LOAD( "tb04.bin",     0x00000, 0x8000, 0x92670f27 )
 	ROM_LOAD( "tb06.bin",     0x10000, 0x8000, 0xa4951173 )
 	ROM_LOAD( "tb05.bin",     0x18000, 0x8000, 0x9273b264 )
@@ -1065,13 +1183,38 @@ struct GameDriver trojan_driver =
 	"trojan",
 	"Trojan (US)",
 	"1986",
-	"Capcom (Romstar license)",
+	"Capcom",
 	"Paul Leaman\nPhil Stroffolino\nMarco Cassili (dip switches)",
 	0,
 	&trojan_machine_driver,
 	0,
 
 	trojan_rom,
+	0, 0,
+	0,
+	(void *)trojan_samples, /* sound_prom */
+
+	trojanls_input_ports,
+
+	NULL, 0, 0,
+	ORIENTATION_DEFAULT,
+	trojan_hiload, trojan_hisave
+};
+
+struct GameDriver trojanr_driver =
+{
+	__FILE__,
+	&trojan_driver,
+	"trojanr",
+	"Trojan (Romstar)",
+	"1986",
+	"Capcom (Romstar license)",
+	"Paul Leaman\nPhil Stroffolino\nMarco Cassili (dip switches)",
+	0,
+	&trojan_machine_driver,
+	0,
+
+	trojanr_rom,
 	0, 0,
 	0,
 	(void *)trojan_samples, /* sound_prom */

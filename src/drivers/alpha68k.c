@@ -155,7 +155,7 @@ static int alpha_II_trigger_r(int offset)
 
 	switch (offset) {
 		case 0:	/* Dipswitch 2 */
-			WRITE_WORD(&timesold_ram[0], (source&0xff00)|~(readinputport(4)));
+			WRITE_WORD(&timesold_ram[0], (source&0xff00)| readinputport(4));
 			return 0;
 
 		case 0x44: /* Coin value */
@@ -553,7 +553,7 @@ INPUT_PORTS_START( timesold_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START /* A 6 way dip switch */
-	PORT_DIPNAME( 0x07, 0x04, DEF_STR( Coinage ) )
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x00, "A 3C/2C B 8C/1C" )
 	PORT_DIPSETTING(    0x01, "A 2C/3C B 7C/1C" )
 	PORT_DIPSETTING(    0x07, "A 1C/1C B 1C/1C" )
@@ -1438,63 +1438,63 @@ static struct MachineDriver alpha68k_V_sb_machine_driver =
 
 ROM_START( kyros_rom )
 	ROM_REGION(0x20000)
-	ROM_LOAD_EVEN( "2.10c", 0x0000, 0x4000, 0xc227a6e8 )
+	ROM_LOAD_EVEN( "2.10c", 0x0000, 0x4000, 0x4bd030b1 )
 	ROM_CONTINUE ( 0x10000, 0x4000 | ROMFLAG_ALTERNATE )
-	ROM_LOAD_ODD ( "1.13c", 0x0000, 0x4000, 0xf11a21aa )
+	ROM_LOAD_ODD ( "1.13c", 0x0000, 0x4000, 0x75cfbc5e )
 	ROM_CONTINUE ( 0x10001, 0x4000 | ROMFLAG_ALTERNATE )
-	ROM_LOAD_EVEN( "4.10b", 0x8000, 0x4000, 0x8897555f )
+	ROM_LOAD_EVEN( "4.10b", 0x8000, 0x4000, 0xbe2626c2 )
 	ROM_CONTINUE ( 0x18000, 0x4000 | ROMFLAG_ALTERNATE )
-	ROM_LOAD_ODD ( "3.13b", 0x8001, 0x4000, 0xf0fe9b9d )
+	ROM_LOAD_ODD ( "3.13b", 0x8001, 0x4000, 0xfb25e71a )
 	ROM_CONTINUE ( 0x18001, 0x4000 | ROMFLAG_ALTERNATE )
 
 	ROM_REGION_DISPOSE(0x30000)	/* temporary space for graphics (disposed after conversion) */
 
-	ROM_LOAD( "8.9pr",     0x000000, 0x8000, 0x83fc9e0e )
-	ROM_LOAD( "11.11m", 0x028000, 0x8000, 0x83fc9e0e )
+	ROM_LOAD( "8.9pr",     0x000000, 0x8000, 0xc5290944 )
+	ROM_LOAD( "11.11m",    0x028000, 0x8000, 0xfbd44f1e )
 /*
-	ROM_LOAD( "ss_13.rom", 0x010000, 0x4000, 0x83fc9e0e )
-	ROM_LOAD( "ss_10.rom", 0x018000, 0x4000, 0x83fc9e0e )
+	ROM_LOAD( "ss_13.rom", 0x010000, 0x4000, 0xffffffff )
+	ROM_LOAD( "ss_10.rom", 0x018000, 0x4000, 0xffffffff )
 
-	ROM_LOAD( "ss_11.rom", 0x020000, 0x4000, 0x83fc9e0e )
-	ROM_LOAD( "ss_09.rom", 0x028000, 0x4000, 0x83fc9e0e )
+	ROM_LOAD( "ss_11.rom", 0x020000, 0x4000, 0xffffffff )
+	ROM_LOAD( "ss_09.rom", 0x028000, 0x4000, 0xffffffff )
 */
 	ROM_REGION(0x10000)	/* Sound CPU */
-	ROM_LOAD( "2s.1f", 0x000000, 0x4000, 0x9269778d )
+	ROM_LOAD( "2s.1f", 0x000000, 0x4000, 0x800ceb27 )
 
 	ROM_REGION(0x8000)	/* ADPCM samples? */
-//	ROM_LOAD( "padlem.18n", 0x000000, 0x8000, 0x06506200 )
+//	ROM_LOAD( "padlem.18n", 0x000000, 0x8000, 0xffffffff )
 
 	ROM_REGION(0x300)	/* Colour proms */
-//	ROM_LOAD( "padlem.a", 0x000000, 0x100, 0xcae6bcd6 )
-//	ROM_LOAD( "padlem.b", 0x000100, 0x100, 0xb6df8dcb )
-//	ROM_LOAD( "padlem.c", 0x000200, 0x100, 0x39ca9b86 )
+//	ROM_LOAD( "padlem.a", 0x000000, 0x100, 0xffffffff )
+//	ROM_LOAD( "padlem.b", 0x000100, 0x100, 0xffffffff )
+//	ROM_LOAD( "padlem.c", 0x000200, 0x100, 0xffffffff )
 ROM_END
 
 ROM_START( sstingry_rom )
 	ROM_REGION(0x10000)     /* 68000 code */
-	ROM_LOAD_EVEN( "ss_05.rom",  0x00000, 0x4000, 0xa67c15aa )
-	ROM_LOAD_ODD ( "ss_07.rom",  0x00000, 0x4000, 0x7224f9bc )
-	ROM_LOAD_EVEN( "ss_04.rom",  0x08000, 0x4000, 0xa67c15aa )
-	ROM_LOAD_ODD ( "ss_06.rom",  0x08000, 0x4000, 0x7224f9bc )
+	ROM_LOAD_EVEN( "ss_05.rom",  0x00000, 0x4000, 0xbfb28d53 )
+	ROM_LOAD_ODD ( "ss_07.rom",  0x00000, 0x4000, 0xeb1b65c5 )
+	ROM_LOAD_EVEN( "ss_04.rom",  0x08000, 0x4000, 0x2e477a79 )
+	ROM_LOAD_ODD ( "ss_06.rom",  0x08000, 0x4000, 0x597620cb )
 
 	ROM_REGION_DISPOSE(0x30000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "ss_12.rom", 0x000000, 0x4000, 0x83fc9e0e )
-	ROM_LOAD( "ss_08.rom", 0x008000, 0x4000, 0x83fc9e0e )
+	ROM_LOAD( "ss_12.rom", 0x000000, 0x4000, 0x74caa9e9 )
+	ROM_LOAD( "ss_08.rom", 0x008000, 0x4000, 0x32368925 )
 
-	ROM_LOAD( "ss_13.rom", 0x010000, 0x4000, 0x83fc9e0e )
-	ROM_LOAD( "ss_10.rom", 0x018000, 0x4000, 0x83fc9e0e )
+	ROM_LOAD( "ss_13.rom", 0x010000, 0x4000, 0x13da6203 )
+	ROM_LOAD( "ss_10.rom", 0x018000, 0x4000, 0x2903234a )
 
-	ROM_LOAD( "ss_11.rom", 0x020000, 0x4000, 0x83fc9e0e )
-	ROM_LOAD( "ss_09.rom", 0x028000, 0x4000, 0x83fc9e0e )
+	ROM_LOAD( "ss_11.rom", 0x020000, 0x4000, 0xd134302e )
+	ROM_LOAD( "ss_09.rom", 0x028000, 0x4000, 0x6f9d938a )
 
 	ROM_REGION(0x10000)      /* sound cpu */
-	ROM_LOAD( "ss_01.rom",  0x0000, 0x04000, 0x87997597 )
-	ROM_LOAD( "ss_02.rom",  0x4000, 0x04000, 0x87997597 )
+	ROM_LOAD( "ss_01.rom",  0x0000, 0x04000, 0xfef09a92 )
+	ROM_LOAD( "ss_02.rom",  0x4000, 0x04000, 0xab4e8c01 )
 
 	ROM_REGION(0x300)	/* Colour proms */
-	ROM_LOAD( "ic91", 0x000000, 0x100, 0xcae6bcd6 )
-	ROM_LOAD( "ic92", 0x000100, 0x100, 0xb6df8dcb )
-	ROM_LOAD( "ic93", 0x000200, 0x100, 0x39ca9b86 )
+	ROM_LOAD( "ic91", 0x000000, 0x100, 0xc3965079 )
+	ROM_LOAD( "ic92", 0x000100, 0x100, 0xe7ce1179 )
+	ROM_LOAD( "ic93", 0x000200, 0x100, 0x9af8a375 )
 ROM_END
 
 ROM_START( paddlema_rom )
@@ -1706,10 +1706,10 @@ ROM_END
 
 ROM_START( goldmedb_rom )
 	ROM_REGION(0x40000)
-	ROM_LOAD_EVEN( "l_3.bin", 0x00000, 0x10000, 0xddf0113 )
-	ROM_LOAD_ODD ( "l_4.bin", 0x00000, 0x10000, 0x16db432 )
-	ROM_LOAD_EVEN( "l_1.bin", 0x20000, 0x08000, 0x54a11e2 )
- 	ROM_LOAD_ODD ( "l_2.bin", 0x20000, 0x08000, 0x4b6a13e )
+	ROM_LOAD_EVEN( "l_3.bin", 0x00000, 0x10000, 0x5e106bcf)
+	ROM_LOAD_ODD ( "l_4.bin", 0x00000, 0x10000, 0xe19966af)
+	ROM_LOAD_EVEN( "l_1.bin", 0x20000, 0x08000, 0x7eec7ee5)
+ 	ROM_LOAD_ODD ( "l_2.bin", 0x20000, 0x08000, 0xbf59e4f9)
 
 	ROM_REGION_DISPOSE(0x210000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "gm.5", 0x000000, 0x08000, 0x667f33f1 )
@@ -1728,8 +1728,8 @@ ROM_START( goldmedb_rom )
 	ROM_CONTINUE(            0x10000, 0x78000 )
 
 	ROM_REGION(0x10000)
-	ROM_LOAD_EVEN( "l_1.bin", 0x00000, 0x08000, 0x54a11e2 )
- 	ROM_LOAD_ODD ( "l_2.bin", 0x00000, 0x08000, 0x4b6a13e )
+	ROM_LOAD_EVEN( "l_1.bin", 0x00000, 0x08000, 0x7eec7ee5)
+ 	ROM_LOAD_ODD ( "l_2.bin", 0x00000, 0x08000, 0xbf59e4f9)
 ROM_END
 
 ROM_START( skyadvnt_rom )

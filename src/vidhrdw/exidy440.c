@@ -11,33 +11,36 @@
 
 
 /* external globals */
-extern unsigned char exidy440_bank;
+extern UINT8 exidy440_bank;
+extern UINT8 exidy440_topsecret;
 
 
 /* globals */
-unsigned char *exidy440_scanline;
-unsigned char *exidy440_imageram;
-unsigned char *exidy440_latched_x;
-unsigned char exidy440_firq_vblank;
-unsigned char exidy440_firq_beam;
-unsigned char topsecex_yscroll;
+UINT8 *exidy440_scanline;
+UINT8 *exidy440_imageram;
+UINT8 *exidy440_latched_x;
+UINT8 exidy440_firq_vblank;
+UINT8 exidy440_firq_beam;
+UINT8 topsecex_yscroll;
 
 /* local allocated storage */
-static unsigned char *local_videoram;
-static unsigned char *local_paletteram;
-static unsigned char *scanline_dirty;
+static UINT8 *local_videoram;
+static UINT8 *local_paletteram;
+static UINT8 *scanline_dirty;
 
 /* local variables */
-static unsigned char firq_enable;
-static unsigned char firq_select;
-static unsigned char palettebank_io;
-static unsigned char palettebank_vis;
-static unsigned char topsecex_last_yscroll;
+static UINT8 firq_enable;
+static UINT8 firq_select;
+static UINT8 palettebank_io;
+static UINT8 palettebank_vis;
+static UINT8 topsecex_last_yscroll;
 
 /* function prototypes */
 void exidy440_vh_stop(void);
 void exidy440_update_firq(void);
 void exidy440_update_callback(int param);
+
+static void generic_refresh(struct osd_bitmap *bitmap, int scroll_offset);
 
 
 #if EXIDY440_DEBUG
@@ -45,9 +48,12 @@ static void exidy440_dump_video(void);
 #endif
 
 
-/************************************
-	Initialize the video system
-*************************************/
+
+/*************************************
+ *
+ *	Initialize the video system
+ *
+ *************************************/
 
 int exidy440_vh_start(void)
 {
@@ -100,9 +106,12 @@ int exidy440_vh_start(void)
 }
 
 
-/************************************
-	Tear down the video system
-*************************************/
+
+/*************************************
+ *
+ *	Tear down the video system
+ *
+ *************************************/
 
 void exidy440_vh_stop(void)
 {
@@ -127,21 +136,25 @@ void exidy440_vh_stop(void)
 }
 
 
-/************************************
-	Video RAM read/write
-*************************************/
+
+/*************************************
+ *
+ *	Video RAM read/write
+ *
+ *************************************/
 
 int exidy440_videoram_r(int offset)
 {
-	unsigned char *base = &local_videoram[(*exidy440_scanline * 256 + offset) * 2];
+	UINT8 *base = &local_videoram[(*exidy440_scanline * 256 + offset) * 2];
 
 	/* combine the two pixel values into one byte */
 	return (base[0] << 4) | base[1];
 }
 
+
 void exidy440_videoram_w(int offset, int data)
 {
-	unsigned char *base = &local_videoram[(*exidy440_scanline * 256 + offset) * 2];
+	UINT8 *base = &local_videoram[(*exidy440_scanline * 256 + offset) * 2];
 
 	/* expand the two pixel values into two bytes */
 	base[0] = (data >> 4) & 15;
@@ -152,19 +165,21 @@ void exidy440_videoram_w(int offset, int data)
 }
 
 
-/************************************
-	Palette RAM read/write
-*************************************/
+
+/*************************************
+ *
+ *	Palette RAM read/write
+ *
+ *************************************/
 
 int exidy440_paletteram_r(int offset)
 {
 	return local_paletteram[palettebank_io * 512 + offset];
 }
 
+
 void exidy440_paletteram_w(int offset, int data)
 {
-	if (errorlog) fprintf(errorlog, "W palette[%03X]=%02X\n", offset, data);
-
 	/* update palette ram in the I/O bank */
 	local_paletteram[palettebank_io * 512 + offset] = data;
 
@@ -183,14 +198,15 @@ void exidy440_paletteram_w(int offset, int data)
 }
 
 
-/************************************
-	Horizontal/vertical positions
-*************************************/
+
+/*************************************
+ *
+ *	Horizontal/vertical positions
+ *
+ *************************************/
 
 int exidy440_horizontal_pos_r(int offset)
 {
-	if (errorlog) fprintf(errorlog, "R horizontal (%d)\n", *exidy440_latched_x);
-
 	/* clear the FIRQ on a read here */
 	exidy440_firq_beam = 0;
 	exidy440_update_firq();
@@ -200,11 +216,10 @@ int exidy440_horizontal_pos_r(int offset)
 	return *exidy440_latched_x;
 }
 
+
 int exidy440_vertical_pos_r(int offset)
 {
 	int result;
-
-	if (errorlog) fprintf(errorlog, "R vertical (%d)\n", cpu_getscanline());
 
 	/* according to the schems, this value is latched on any FIRQ
 	 * caused by collision or beam, ORed together with CHRCLK,
@@ -215,16 +230,16 @@ int exidy440_vertical_pos_r(int offset)
 }
 
 
-/************************************
-	Interrupt and I/O control regs
-*************************************/
+
+/*************************************
+ *
+ *	Interrupt and I/O control regs
+ *
+ *************************************/
 
 void exidy440_control_w(int offset, int data)
 {
 	int oldvis = palettebank_vis;
-
-	if (!firq_enable && (data & 0x08))
- 		if (errorlog) fprintf(errorlog, "FIRQ enabled (time=%20.0f)\n", timer_get_time() * 2000000.);
 
 	/* extract the various bits */
 	exidy440_bank = data >> 4;
@@ -255,6 +270,7 @@ void exidy440_control_w(int offset, int data)
 	}
 }
 
+
 void exidy440_interrupt_clear_w(int offset, int data)
 {
 	/* clear the VBLANK FIRQ on a write here */
@@ -263,30 +279,12 @@ void exidy440_interrupt_clear_w(int offset, int data)
 }
 
 
-/************************************
-	Interrupt generators
-*************************************/
 
-int exidy440_vblank_interrupt(void)
-{
-	/* set the FIRQ line on a VBLANK */
-	exidy440_firq_vblank = 1;
-	exidy440_update_firq();
-
-	/* allocate a timer to go off just before the refresh */
-	timer_set(TIME_IN_USEC(Machine->drv->vblank_duration - 50), 0, exidy440_update_callback);
-
-	return 0;
-}
-
-int topsecex_vblank_interrupt(void)
-{
-	/* set the FIRQ line on a VBLANK */
-	exidy440_firq_vblank = 1;
-	exidy440_update_firq();
-
-	return 0;
-}
+/*************************************
+ *
+ *	Interrupt generators
+ *
+ *************************************/
 
 void exidy440_update_firq(void)
 {
@@ -296,10 +294,30 @@ void exidy440_update_firq(void)
 		cpu_set_irq_line(0, 1, CLEAR_LINE);
 }
 
+
+int exidy440_vblank_interrupt(void)
+{
+	/* set the FIRQ line on a VBLANK */
+	exidy440_firq_vblank = 1;
+	exidy440_update_firq();
+
+	/* allocate a timer to go off just before the refresh (but not for Top Secret */
+	if (!exidy440_topsecret)
+		timer_set(TIME_IN_USEC(Machine->drv->vblank_duration - 50), 0, exidy440_update_callback);
+
+	return 0;
+}
+
+
+
+/*************************************
+ *
+ *	IRQ callback handlers
+ *
+ *************************************/
+
 void beam_firq_callback(int param)
 {
-/*	if (errorlog) fprintf(errorlog, "Got beam FIRQ at %d,%d (time=%20.0f)\n", cpu_gethorzbeampos(), cpu_getscanline(), timer_get_time() * 2000000.);*/
-
 	/* generate the interrupt, if we're selected */
 	if (firq_select && firq_enable)
 	{
@@ -314,10 +332,9 @@ void beam_firq_callback(int param)
 	*exidy440_latched_x = (param + 3) ^ 2;
 }
 
+
 void collide_firq_callback(int param)
 {
-/*	if (errorlog) fprintf(errorlog, "Got collision FIRQ at %d,%d\n", cpu_gethorzbeampos(), cpu_getscanline());*/
-
 	/* generate the interrupt, if we're selected */
 	if (!firq_select && firq_enable)
 	{
@@ -333,10 +350,13 @@ void collide_firq_callback(int param)
 }
 
 
-/************************************
-	Determine the time when the beam
-	will intersect a given pixel
-*************************************/
+
+/*************************************
+ *
+ *	Determine the time when the beam
+ *	will intersect a given pixel
+ *
+ *************************************/
 
 double compute_pixel_time(int x, int y)
 {
@@ -346,55 +366,55 @@ double compute_pixel_time(int x, int y)
 }
 
 
-/************************************
-	Refresh the screen
-*************************************/
 
-void exidy440_update_callback(int param)
+/*************************************
+ *
+ *	Refresh the screen
+ *
+ *************************************/
+
+void generic_refresh(struct osd_bitmap *bitmap, int scroll_offset)
 {
-	/* note: we do most of the work here, because collision detection and beam detection need
-		to happen at 60Hz, whether or not we're frameskipping; in order to do those, we pretty
-		much need to do all the update handling */
-
-	struct osd_bitmap *bitmap = Machine->scrbitmap;
-
-	unsigned char *palette;
-	unsigned char *sprite;
-	int x, y, i, count;
-	int xoffs, yoffs;
-	double time, increment;
-	int beamx, beamy;
-
-	/* make sure color 256 is white for our crosshair */
-	palette_change_color(256, 0xff, 0xff, 0xff);
+	int xoffs, yoffs, count;
+	int x, y, i, sy;
+	UINT8 *palette;
+	UINT8 *sprite;
 
 	/* recompute the palette, and mark all scanlines dirty if we need to redraw */
 	if (palette_recalc())
 		memset(scanline_dirty, 1, 256);
 
 	/* draw any dirty scanlines from the VRAM directly */
-	for (y = 0; y < 240; y++)
+	sy = scroll_offset;
+	for (y = 0; y < 240; y++, sy++)
 	{
-		if (scanline_dirty[y])
+		/* wrap at the bottom of the screen */
+		if (sy >= 240)
+			sy -= 240;
+
+		/* only redraw if dirty */
+		if (scanline_dirty[sy])
 		{
-			unsigned char *src = &local_videoram[y * 512];
-			unsigned char *dst = &bitmap->line[y][0];
+			UINT8 *src = &local_videoram[sy * 512];
+			UINT8 *dst = &bitmap->line[y][0];
 
 			for (x = 0; x < 320; x++)
 				*dst++ = Machine->pens[*src++];
-			scanline_dirty[y] = 0;
+			scanline_dirty[sy] = 0;
 		}
 	}
 
 	/* get a pointer to the palette to look for collision flags */
 	palette = &local_paletteram[palettebank_vis * 512];
-	count = 0;
+
+	/* start the count high for topsecret, which doesn't use collision flags */
+	count = exidy440_topsecret ? 128 : 0;
 
 	/* draw the sprite images, checking for collisions along the way */
 	sprite = spriteram + 39 * 4;
 	for (i = 0; i < 40; i++, sprite -= 4)
 	{
-		unsigned char *src;
+		UINT8 *src;
 		int image = (~sprite[3] & 0x3f);
 		xoffs = (~((sprite[1] << 8) | sprite[2]) & 0x1ff);
 		yoffs = (~sprite[0] & 0xff) + 1;
@@ -407,16 +427,24 @@ void exidy440_update_callback(int param)
 			xoffs -= 0x1ff;
 
 		/* loop over y */
-		for (y = 0; y < 16; y++, yoffs--)
+		sy = yoffs + scroll_offset;
+		for (y = 0; y < 16; y++, yoffs--, sy--)
 		{
+			/* wrap at the top and bottom of the screen */
+			if (sy >= 240)
+				sy -= 240;
+			else if (sy < 0)
+				sy += 240;
+
+			/* only draw scanlines that are visible */
 			if (yoffs >= 0 && yoffs < 240)
 			{
-				unsigned char *old = &local_videoram[yoffs * 512 + xoffs];
-				unsigned char *dst = &bitmap->line[yoffs][xoffs];
+				UINT8 *old = &local_videoram[sy * 512 + xoffs];
+				UINT8 *dst = &bitmap->line[yoffs][xoffs];
 				int currx = xoffs;
 
 				/* mark this scanline dirty */
-				scanline_dirty[yoffs] = 1;
+				scanline_dirty[sy] = 1;
 
 				/* loop over x */
 				for (x = 0; x < 8; x++, dst += 2, old += 2)
@@ -457,6 +485,34 @@ void exidy440_update_callback(int param)
 				src += 8;
 		}
 	}
+}
+
+
+
+/*************************************
+ *
+ *	Update handling for shooters
+ *
+ *************************************/
+
+void exidy440_update_callback(int param)
+{
+	/* note: we do most of the work here, because collision detection and beam detection need
+		to happen at 60Hz, whether or not we're frameskipping; in order to do those, we pretty
+		much need to do all the update handling */
+
+	struct osd_bitmap *bitmap = Machine->scrbitmap;
+
+	int y, i;
+	int xoffs, yoffs;
+	double time, increment;
+	int beamx, beamy;
+
+	/* make sure color 256 is white for our crosshair */
+	palette_change_color(256, 0xff, 0xff, 0xff);
+
+	/* redraw the screen */
+	generic_refresh(bitmap, 0);
 
 	/* update the analog x,y values */
 	beamx = ((input_port_4_r(0) & 0xff) * 320) >> 8;
@@ -473,8 +529,6 @@ void exidy440_update_callback(int param)
 	for (i = 0; i <= 12; i++, time += increment)
 		timer_set(time, beamx, beam_firq_callback);
 
-/*	if (errorlog) fprintf(errorlog, "Attempt beam FIRQ at %d,%d\n", beamx, beamy);*/
-
 	/* draw a crosshair */
 	xoffs = beamx - 3;
 	yoffs = beamy - 3;
@@ -490,116 +544,49 @@ void exidy440_update_callback(int param)
 	}
 }
 
+
+
+/*************************************
+ *
+ *	Standard screen refresh callback
+ *
+ *************************************/
+
 void exidy440_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	/* if we need a full refresh, mark all scanlines dirty */
 	if (full_refresh)
 		memset(scanline_dirty, 1, 256);
-}
 
-void topsecex_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
-{
-	unsigned char *sprite;
-	int x, y, i, sy;
-	int xoffs, yoffs;
-
-	/* recompute the palette, and mark all scanlines dirty if we need to redraw */
-	if (palette_recalc())
-		memset(scanline_dirty, 1, 256);
-
-	/* if the scroll changed, mark everything dirty */
-	if (topsecex_yscroll != topsecex_last_yscroll)
+	/* if we're Top Secret, do our refresh here; others are done in the update function above */
+	if (exidy440_topsecret)
 	{
-		topsecex_last_yscroll = topsecex_yscroll;
-		memset(scanline_dirty, 1, 256);
-	}
-
-	/* draw any dirty scanlines from the VRAM directly */
-	sy = topsecex_yscroll;
-	for (y = 0; y < 240; y++, sy++)
-	{
-		if (sy >= 240)
-			sy -= 240;
-		if (scanline_dirty[sy])
+		/* if the scroll changed, mark everything dirty */
+		if (topsecex_yscroll != topsecex_last_yscroll)
 		{
-			unsigned char *src = &local_videoram[sy * 512];
-			unsigned char *dst = &bitmap->line[y][0];
-
-			for (x = 0; x < 320; x++)
-				*dst++ = Machine->pens[*src++];
-			scanline_dirty[sy] = 0;
+			topsecex_last_yscroll = topsecex_yscroll;
+			memset(scanline_dirty, 1, 256);
 		}
-	}
 
-	/* draw the sprite images */
-	sprite = spriteram + 39 * 4;
-	for (i = 0; i < 40; i++, sprite -= 4)
-	{
-		unsigned char *src;
-		int image = (~sprite[3] & 0x3f);
-		xoffs = (~((sprite[1] << 8) | sprite[2]) & 0x1ff);
-		yoffs = (~sprite[0] & 0xff) + 1;
-
-		/* get a pointer to the source image */
-		src = &exidy440_imageram[image * 128];
-
-		/* account for large positive offsets meaning small negative values */
-		if (xoffs >= 0x1ff - 16)
-			xoffs -= 0x1ff;
-
-		/* loop over y */
-		sy = yoffs + topsecex_yscroll;
-		for (y = 0; y < 16; y++, yoffs--, sy--)
-		{
-			if (sy >= 240)
-				sy -= 240;
-			else if (sy < 0)
-				sy += 240;
-
-			if (yoffs >= 0 && yoffs < 240)
-			{
-				unsigned char *old = &local_videoram[sy * 512 + xoffs];
-				unsigned char *dst = &bitmap->line[yoffs][xoffs];
-				int currx = xoffs;
-
-				/* mark this scanline dirty */
-				scanline_dirty[sy] = 1;
-
-				/* loop over x */
-				for (x = 0; x < 8; x++, dst += 2, old += 2)
-				{
-					int ipixel = *src++;
-					int left = ipixel & 0xf0;
-					int right = (ipixel << 4) & 0xf0;
-
-					/* left pixel */
-					if (left && currx >= 0 && currx < 320)
-						dst[0] = Machine->pens[left | old[0]];
-					currx++;
-
-					/* right pixel */
-					if (right && currx >= 0 && currx < 320)
-						dst[1] = Machine->pens[right | old[1]];
-					currx++;
-				}
-			}
-			else
-				src += 8;
-		}
+		/* redraw the screen */
+		generic_refresh(bitmap, topsecex_yscroll);
 	}
 }
 
 
-/************************************
-	Debugging
-*************************************/
+
+/*************************************
+ *
+ *	Debugging
+ *
+ *************************************/
 
 #if EXIDY440_DEBUG
 
 void exidy440_dump_video(void)
 {
-	unsigned char *sprite = spriteram;
-	unsigned char *pal = local_paletteram;
+	UINT8 *sprite = spriteram;
+	UINT8 *pal = local_paletteram;
 	FILE *f = fopen ("local_videoram.log", "w");
 
 	int x, y;

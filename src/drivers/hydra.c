@@ -17,12 +17,11 @@
 
 
 extern struct rectangle hydra_mo_area;
-extern int hydra_mo_priority_offset;
-extern int hydra_pf_xoffset;
+extern UINT32 hydra_mo_priority_offset;
+extern INT32 hydra_pf_xoffset;
 
 
-static int which_input;
-static int pedal_value;
+static UINT8 which_input;
 
 
 void hydra_playfieldram_w(int offset, int data);
@@ -38,7 +37,7 @@ void hydra_mo_control_w(int offset, int data);
 
 /*************************************
  *
- *		Initialization
+ *	Initialization
  *
  *************************************/
 
@@ -71,32 +70,7 @@ static void init_machine(void)
 
 /*************************************
  *
- *		Interrupt handling
- *
- *************************************/
-
-static int vblank_gen(void)
-{
-	/* update the pedals once per frame */
-	if (input_port_4_r(0) & 1)
-	{
-		if (pedal_value < 255 - 16)
-			pedal_value += 16;
-	}
-	else
-	{
-		if (pedal_value > 16)
-			pedal_value -= 16;
-	}
-
-	return atarigen_video_int_gen();
-}
-
-
-
-/*************************************
- *
- *		I/O read dispatch.
+ *	I/O read dispatch.
  *
  *************************************/
 
@@ -123,17 +97,8 @@ static int a2d_data_r(int offset)
 		return input_port_1_r(offset);
 
 	/* otherwise, assume it's hydra */
-	switch (which_input)
-	{
-		case 0:
-			return input_port_1_r(offset) << 8;
-
-		case 1:
-			return input_port_2_r(offset) << 8;
-
-		case 2:
-			return pedal_value << 8;
-	}
+	if (which_input < 3)
+		return readinputport(1 + which_input) << 8;
 
 	return 0;
 }
@@ -142,7 +107,7 @@ static int a2d_data_r(int offset)
 
 /*************************************
  *
- *		Main CPU memory handlers
+ *	Main CPU memory handlers
  *
  *************************************/
 
@@ -186,7 +151,7 @@ static struct MemoryWriteAddress main_writemem[] =
 
 /*************************************
  *
- *		Port definitions
+ *	Port definitions
  *
  *************************************/
 
@@ -211,11 +176,10 @@ INPUT_PORTS_START( hydra_ports )
 	PORT_ANALOG ( 0x00ff, 0x0080, IPT_AD_STICK_Y, 70, 10, 0, 0, 255 )
 	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNUSED )
 
-	JSA_II_PORT		/* audio board port */
+	PORT_START      /* ADC 2 @ fc8000 */
+	PORT_ANALOG ( 0xff, 0x00, IPT_PEDAL, 100, 16, 0, 0x00, 0xff )
 
-	PORT_START      /* fake for pedals */
-	PORT_BIT( 0x0001, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )
-	PORT_BIT( 0xfffe, IP_ACTIVE_HIGH, IPT_UNUSED )
+	JSA_II_PORT		/* audio board port */
 INPUT_PORTS_END
 
 
@@ -258,6 +222,9 @@ INPUT_PORTS_START( pitfight_ports )
 	PORT_START      /* not used */
 	PORT_BIT( 0xffff, IP_ACTIVE_LOW, IPT_UNUSED )
 
+	PORT_START      /* not used */
+	PORT_BIT( 0xffff, IP_ACTIVE_LOW, IPT_UNUSED )
+
 	JSA_II_PORT		/* audio board port */
 INPUT_PORTS_END
 
@@ -265,7 +232,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *		Graphics definitions
+ *	Graphics definitions
  *
  *************************************/
 
@@ -312,7 +279,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *		Machine driver
+ *	Machine driver
  *
  *************************************/
 
@@ -325,7 +292,7 @@ static struct MachineDriver machine_driver =
 			7159160*2,		/* 7.159 Mhz */
 			0,
 			main_readmem,main_writemem,0,0,
-			vblank_gen,1
+			atarigen_video_int_gen,1
 		},
 		{
 			JSA_II_CPU(1)
@@ -359,7 +326,7 @@ static struct MachineDriver machine_driver =
 
 /*************************************
  *
- *		Driver initialization
+ *	Driver initialization
  *
  *************************************/
 
@@ -375,7 +342,7 @@ static void hydra_init(void)
 	hydra_mo_priority_offset = 10;
 	hydra_pf_xoffset = 0;
 
-	atarijsa_init(1, 3, 0, 0x8000);
+	atarijsa_init(1, 4, 0, 0x8000);
 
 	/* speed up the 6502 */
 	atarigen_init_6502_speedup(1, 0x4159, 0x4171);
@@ -397,7 +364,7 @@ static void hydrap_init(void)
 	hydra_mo_priority_offset = 10;
 	hydra_pf_xoffset = 0;
 
-	atarijsa_init(1, 3, 0, 0x8000);
+	atarijsa_init(1, 4, 0, 0x8000);
 
 	/* speed up the 6502 */
 	atarigen_init_6502_speedup(1, 0x4159, 0x4171);
@@ -419,7 +386,7 @@ static void pitfight_init(void)
 	hydra_mo_priority_offset = 12;
 	hydra_pf_xoffset = 2;
 
-	atarijsa_init(1, 3, 0, 0x8000);
+	atarijsa_init(1, 4, 0, 0x8000);
 
 	/* speed up the 6502 */
 	atarigen_init_6502_speedup(1, 0x4159, 0x4171);
@@ -433,7 +400,7 @@ static void pitfight_init(void)
 
 /*************************************
  *
- *		ROM definition(s)
+ *	ROM definition(s)
  *
  *************************************/
 
@@ -640,7 +607,7 @@ ROM_END
 
 /*************************************
  *
- *		Game driver(s)
+ *	Game driver(s)
  *
  *************************************/
 

@@ -32,6 +32,7 @@ static void sprite_callback(int *code,int *color,int *priority)
 		case 0x10: *priority = 0; break;
 		case 0x00: *priority = 1; break;
 		case 0x40: *priority = 2; break;
+#if 0
 		default:
 		{
 			char buf[40];
@@ -41,6 +42,7 @@ static void sprite_callback(int *code,int *color,int *priority)
 			*priority = 0;
 			break;
 		}
+#endif
 	}
 	/* bit 7 is on in the "Game Over" sprites, meaning unknown */
 	/* in Aliens it is the top bit of the code, but that's not needed here */

@@ -47,44 +47,33 @@
 #define YDIM (YCHARS*8)
 
 
-#define DEBUG_VIDEO 0
-
-
 
 /*************************************
  *
- *		Statics
+ *	Statics
  *
  *************************************/
 
 static struct atarigen_pf_state pf_state;
 
-#if DEBUG_VIDEO
-static int show_colors;
-#endif
-
 
 
 /*************************************
  *
- *		Prototypes
+ *	Prototypes
  *
  *************************************/
 
 static void pf_render_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *data);
 static void pf_overrender_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *data);
 
-static void mo_render_callback(const unsigned short *data, const struct rectangle *clip, void *param);
-
-#if DEBUG_VIDEO
-static int debug(void);
-#endif
+static void mo_render_callback(const UINT16 *data, const struct rectangle *clip, void *param);
 
 
 
 /*************************************
  *
- *		Generic video system start
+ *	Generic video system start
  *
  *************************************/
 
@@ -129,7 +118,7 @@ int badlands_vh_start(void)
 	{
 		int i;
 
-		memset(palette_used_colors, PALETTE_COLOR_USED, Machine->drv->total_colors * sizeof(unsigned char));
+		memset(palette_used_colors, PALETTE_COLOR_USED, Machine->drv->total_colors * sizeof(UINT8));
 		for (i = 0; i < 8; i++)
 			palette_used_colors[0x80 + i * 16] = PALETTE_COLOR_TRANSPARENT;
 	}
@@ -141,7 +130,7 @@ int badlands_vh_start(void)
 
 /*************************************
  *
- *		Video system shutdown
+ *	Video system shutdown
  *
  *************************************/
 
@@ -155,7 +144,7 @@ void badlands_vh_stop(void)
 
 /*************************************
  *
- *		Periodic scanline updater
+ *	Periodic scanline updater
  *
  *************************************/
 
@@ -170,7 +159,7 @@ void badlands_scanline_update(int scanline)
 
 /*************************************
  *
- *		Playfield bank write handler
+ *	Playfield bank write handler
  *
  *************************************/
 
@@ -190,7 +179,7 @@ void badlands_pf_bank_w(int offset, int data)
 
 /*************************************
  *
- *		Playfield RAM write handler
+ *	Playfield RAM write handler
  *
  *************************************/
 
@@ -210,17 +199,13 @@ void badlands_playfieldram_w(int offset, int data)
 
 /*************************************
  *
- *		Main refresh
+ *	Main refresh
  *
  *************************************/
 
 void badlands_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	int i;
-
-#if DEBUG_VIDEO
-	debug();
-#endif
 
 	/* remap if necessary */
 	if (palette_recalc())
@@ -244,7 +229,7 @@ void badlands_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 /*************************************
  *
- *		Playfield rendering
+ *	Playfield rendering
  *
  *************************************/
 
@@ -271,15 +256,6 @@ static void pf_render_callback(const struct rectangle *clip, const struct rectan
 
 				drawgfx(atarigen_pf_bitmap, gfx, code, color, 0, 0, 8 * x, 8 * y, 0, TRANSPARENCY_NONE, 0);
 				atarigen_pf_dirty[offs] = state->param[0];
-
-#if DEBUG_VIDEO
-				if (show_colors)
-				{
-					drawgfx(atarigen_pf_bitmap, Machine->uifont, "0123456789ABCDEF"[color], 1, 0, 0, 8 * x + 0, 8 * y, 0, TRANSPARENCY_PEN, 0);
-					drawgfx(atarigen_pf_bitmap, Machine->uifont, "0123456789ABCDEF"[color], 1, 0, 0, 8 * x + 2, 8 * y, 0, TRANSPARENCY_PEN, 0);
-					drawgfx(atarigen_pf_bitmap, Machine->uifont, "0123456789ABCDEF"[color], 0, 0, 0, 8 * x + 1, 8 * y, 0, TRANSPARENCY_PEN, 0);
-				}
-#endif
 			}
 		}
 
@@ -291,7 +267,7 @@ static void pf_render_callback(const struct rectangle *clip, const struct rectan
 
 /*************************************
  *
- *		Playfield overrendering
+ *	Playfield overrendering
  *
  *************************************/
 
@@ -307,7 +283,7 @@ static void pf_overrender_callback(const struct rectangle *clip, const struct re
 		for (x = tiles->min_x; x != tiles->max_x; x = (x + 1) & 63)
 		{
 			int offs = y * 64 + x;
-//			int priority_offs = y * 64 + XCHARS + x / 2;
+/*			int priority_offs = y * 64 + XCHARS + x / 2;*/
 			int data = READ_WORD(&atarigen_playfieldram[offs * 2]);
 			int color = data >> 13;
 			int code = data & 0x1fff;
@@ -321,11 +297,11 @@ static void pf_overrender_callback(const struct rectangle *clip, const struct re
 
 /*************************************
  *
- *		Motion object rendering
+ *	Motion object rendering
  *
  *************************************/
 
-static void mo_render_callback(const unsigned short *data, const struct rectangle *clip, void *param)
+static void mo_render_callback(const UINT16 *data, const struct rectangle *clip, void *param)
 {
 	struct GfxElement *gfx = Machine->gfx[1];
 	struct osd_bitmap *bitmap = param;
@@ -378,97 +354,3 @@ static void mo_render_callback(const unsigned short *data, const struct rectangl
 		copybitmap(bitmap, atarigen_pf_overrender_bitmap, 0, 0, 0, 0, &pf_clip, TRANSPARENCY_THROUGH, palette_transparent_pen);
 	}
 }
-
-
-
-/*************************************
- *
- *		Debugging
- *
- *************************************/
-
-#if DEBUG_VIDEO
-
-static int debug(void)
-{
-	int hidebank = -1;
-	int new_show_colors;
-
-	new_show_colors = keyboard_key_pressed(KEYCODE_CAPSLOCK);
-	if (new_show_colors != show_colors)
-	{
-		show_colors = new_show_colors;
-		memset(atarigen_pf_dirty, 0xff, atarigen_playfieldram_size / 2);
-	}
-
-
-	if (keyboard_key_pressed(KEYCODE_Q)) hidebank = 0;
-	if (keyboard_key_pressed(KEYCODE_W)) hidebank = 1;
-	if (keyboard_key_pressed(KEYCODE_E)) hidebank = 2;
-	if (keyboard_key_pressed(KEYCODE_R)) hidebank = 3;
-	if (keyboard_key_pressed(KEYCODE_T)) hidebank = 4;
-	if (keyboard_key_pressed(KEYCODE_Y)) hidebank = 5;
-	if (keyboard_key_pressed(KEYCODE_U)) hidebank = 6;
-	if (keyboard_key_pressed(KEYCODE_I)) hidebank = 7;
-
-	if (keyboard_key_pressed(KEYCODE_A)) hidebank = 8;
-	if (keyboard_key_pressed(KEYCODE_S)) hidebank = 9;
-	if (keyboard_key_pressed(KEYCODE_D)) hidebank = 10;
-	if (keyboard_key_pressed(KEYCODE_F)) hidebank = 11;
-	if (keyboard_key_pressed(KEYCODE_G)) hidebank = 12;
-	if (keyboard_key_pressed(KEYCODE_H)) hidebank = 13;
-	if (keyboard_key_pressed(KEYCODE_J)) hidebank = 14;
-	if (keyboard_key_pressed(KEYCODE_K)) hidebank = 15;
-
-	if (keyboard_key_pressed(KEYCODE_9))
-	{
-		static int count;
-		char name[50];
-		FILE *f;
-		int i;
-
-		while (keyboard_key_pressed(KEYCODE_9)) { }
-
-		sprintf(name, "Dump %d", ++count);
-		f = fopen(name, "wt");
-
-		fprintf(f, "\n\nPlayfield Palette:\n");
-		for (i = 0x00; i < 0x80; i++)
-		{
-			fprintf(f, "%04X ", READ_WORD(&paletteram[i*2]));
-			if ((i & 15) == 15) fprintf(f, "\n");
-		}
-
-		fprintf(f, "\n\nMotion Object Palette:\n");
-		for (i = 0x80; i < 0x100; i++)
-		{
-			fprintf(f, "%04X ", READ_WORD(&paletteram[i*2]));
-			if ((i & 15) == 15) fprintf(f, "\n");
-		}
-
-		fprintf(f, "\n\nMotion Objects\n");
-		for (i = 0; i < 0x40; i++)
-		{
-			fprintf(f, "   Object %02X:  P=%04X  Y=%04X  L=%04X  X=%04X\n",
-					i,
-					READ_WORD(&atarigen_spriteram[i*2+0x000]),
-					READ_WORD(&atarigen_spriteram[i*2+0x080]),
-					READ_WORD(&atarigen_spriteram[i*2+0x100]),
-					READ_WORD(&atarigen_spriteram[i*2+0x180])
-			);
-		}
-
-		fprintf(f, "\n\nPlayfield dump\n");
-		for (i = 0; i < atarigen_playfieldram_size / 2; i++)
-		{
-			fprintf(f, "%04X ", READ_WORD(&atarigen_playfieldram[i*2]));
-			if ((i & 63) == 63) fprintf(f, "\n");
-		}
-
-		fclose(f);
-	}
-
-	return hidebank;
-}
-
-#endif

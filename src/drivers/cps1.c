@@ -44,6 +44,8 @@ static void cps1_snd_bankswitch_w(int offset,int data)
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
 
 	cpu_setbank (1, &RAM[0x10000+(data&0x01)*0x4000]);
+
+if (errorlog && (data & 0xfe)) fprintf(errorlog,"%04x: write %02x to f004\n",cpu_get_pc(),data);
 }
 
 static void cps1_sound_fade_w(int offset, int data)
@@ -65,6 +67,28 @@ static int cps1_input_r(int offset)
 static int cps1_player_input_r(int offset)
 {
 	return (readinputport(offset + 4) + (readinputport(offset+1 + 4)<<8));
+}
+
+static int dial[2];
+
+static int forgottn_dial_0_r(int offset)
+{
+	return ((readinputport(6) - dial[0]) >> (4*offset)) & 0xff;
+}
+
+static int forgottn_dial_1_r(int offset)
+{
+	return ((readinputport(7) - dial[1]) >> (4*offset)) & 0xff;
+}
+
+static void forgottn_dial_0_reset_w(int offset,int data)
+{
+	dial[0] = readinputport(6);
+}
+
+static void forgottn_dial_1_reset_w(int offset,int data)
+{
+	dial[1] = readinputport(7);
 }
 
 static void cps1_coinctrl_w(int offset,int data)
@@ -256,6 +280,7 @@ static void cps1_eeprom_save(void)
 }
 
 
+
 static struct MemoryReadAddress cps1_readmem[] =
 {
 	{ 0x000000, 0x1fffff, MRA_ROM },     /* 68000 ROM */
@@ -263,6 +288,8 @@ static struct MemoryReadAddress cps1_readmem[] =
 	{ 0x800010, 0x800013, cps1_player_input_r }, /* ?? */
 	{ 0x800018, 0x80001f, cps1_input_r }, /* Input ports */
 	{ 0x800020, 0x800021, MRA_NOP }, /* ? Used by Rockman ? */
+	{ 0x800052, 0x800055, forgottn_dial_0_r }, /* forgotten worlds */
+	{ 0x80005a, 0x80005d, forgottn_dial_1_r }, /* forgotten worlds */
 	{ 0x800176, 0x800177, cps1_input2_r }, /* Extra input ports */
 	{ 0x8001fc, 0x8001fc, cps1_input2_r }, /* Input ports (SF Rev E) */
 	{ 0x800100, 0x8001ff, cps1_output_r },   /* Output ports */
@@ -278,6 +305,8 @@ static struct MemoryWriteAddress cps1_writemem[] =
 {
 	{ 0x000000, 0x1fffff, MWA_ROM },      /* ROM */
 	{ 0x800030, 0x800031, cps1_coinctrl_w },
+	{ 0x800040, 0x800041, forgottn_dial_0_reset_w },
+	{ 0x800048, 0x800049, forgottn_dial_1_reset_w },
 	{ 0x800180, 0x800181, soundlatch_w },  /* Sound command */
 	{ 0x800188, 0x800189, cps1_sound_fade_w },
 	{ 0x800100, 0x8001ff, cps1_output_w, &cps1_output, &cps1_output_size },  /* Output ports */
@@ -310,7 +339,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0xf001, 0xf001, YM2151_data_port_0_w },
 	{ 0xf002, 0xf002, OKIM6295_data_0_w },
 	{ 0xf004, 0xf004, cps1_snd_bankswitch_w },
-	{ 0xf006, 0xf006, MWA_NOP }, /* ???? Unknown ???? */
+//	{ 0xf006, 0xf006, MWA_NOP }, /* ???? Unknown ???? */
 	{ -1 }  /* end of table */
 };
 
@@ -342,7 +371,7 @@ INPUT_PORTS_START( forgottn_input_ports )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )  /* Service, but it doesn't give any credit */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
@@ -350,25 +379,25 @@ INPUT_PORTS_START( forgottn_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* DSWA */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x06, "2 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x07, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x38, 0x38, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x30, "2 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x38, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x28, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Flip_Screen ) )
@@ -377,23 +406,23 @@ INPUT_PORTS_START( forgottn_input_ports )
 
 	PORT_START      /* DSWB */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x40, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x80, 0x80, "Freeze" )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
@@ -401,49 +430,55 @@ INPUT_PORTS_START( forgottn_input_ports )
 
 	PORT_START      /* DSWC */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START      /* Player 1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START      /* Player 2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_ANALOGX( 0x0fff, 0x0000, IPT_DIAL | IPF_PLAYER1, 100, 20, 0, 0, 0, KEYCODE_Z, KEYCODE_X, 0, 0 )
+
+	PORT_START
+	PORT_ANALOGX( 0x0fff, 0x0000, IPT_DIAL | IPF_PLAYER2, 100, 20, 0, 0, 0, KEYCODE_N, KEYCODE_M, 0, 0 )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( ghouls_input_ports )
@@ -477,8 +512,8 @@ INPUT_PORTS_START( ghouls_input_ports )
 	PORT_DIPSETTING(    0x20, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0x18, DEF_STR( 1C_6C ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
@@ -494,19 +529,19 @@ INPUT_PORTS_START( ghouls_input_ports )
 	PORT_DIPSETTING(    0x01, "Very Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x20, "10K, 30K and every 30K" )
 	PORT_DIPSETTING(    0x10, "20K, 50K and every 70K" )
 	PORT_DIPSETTING(    0x30, "30K, 60K and every 70K" )
 	PORT_DIPSETTING(    0x00, "40K, 70K and every 80K" )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START      /* DSWC */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
@@ -515,11 +550,11 @@ INPUT_PORTS_START( ghouls_input_ports )
 	PORT_DIPSETTING(    0x01, "5" )
 	PORT_DIPSETTING(    0x00, "6" )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1804,20 +1839,20 @@ INPUT_PORTS_START( sf2_input_ports )
 	PORT_DIPSETTING(    0x01, "Very Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START      /* DSWC */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Unknown ) )
@@ -2800,8 +2835,8 @@ INPUT_PORTS_START( pnickj_input_ports )
 	PORT_DIPSETTING(    0x01, "3" )
 	PORT_DIPSETTING(    0x00, "4" )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x08, 0x08, "Freeze" )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -2812,8 +2847,8 @@ INPUT_PORTS_START( pnickj_input_ports )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
 	PORT_START      /* Player 1 */
@@ -3236,8 +3271,8 @@ INPUT_PORTS_START( megaman_input_ports )
 	PORT_DIPSETTING(    0x60, "2 Credits - pl1 may play on right" )
 	   /* Unused 0x00 */
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START      /* DSWB */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
@@ -3251,40 +3286,40 @@ INPUT_PORTS_START( megaman_input_ports )
 	PORT_DIPSETTING(    0x04, "70" )
 	PORT_DIPSETTING(    0x00, "60" )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, "Voice" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START      /* DSWC */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x04, 0x04, "Allow Continue" )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Yes ) )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
 	PORT_START      /* Player 1 */
@@ -3453,10 +3488,18 @@ static struct YM2151interface ym2151_interface =
 	{ cps1_irq_handler_mus }
 };
 
-static struct OKIM6295interface okim6295_interface =
+static struct OKIM6295interface okim6295_interface_6061 =
 {
 	1,  /* 1 chip */
-	{ 7600 },   /* hand tuned to match the real SF2 */
+	{ 6061 },
+	{ 3 },  /* memory region 3 */
+	{ 25 }
+};
+
+static struct OKIM6295interface okim6295_interface_7576 =
+{
+	1,  /* 1 chip */
+	{ 7576 },
 	{ 3 },  /* memory region 3 */
 	{ 25 }
 };
@@ -3472,14 +3515,14 @@ static struct OKIM6295interface okim6295_interface =
 *
 ********************************************************************/
 
-#define MACHINE_DRIVER(CPS1_DRVNAME, CPS1_CPU_FRQ) \
-static struct MachineDriver CPS1_DRVNAME##_machine_driver =           \
+#define MACHINE_DRIVER(DRVNAME,CPU_FRQ,OKI_FREQ) \
+static struct MachineDriver DRVNAME##_machine_driver =           \
 {                                                                        \
 	/* basic machine hardware */                                     \
 	{                                                                \
 		{                                                        \
 			CPU_M68000,                                      \
-			CPS1_CPU_FRQ,                                    \
+			CPU_FRQ,                                    \
 			0,                                               \
 			cps1_readmem,cps1_writemem,0,0,                  \
 			cps1_interrupt, 1										\
@@ -3513,18 +3556,18 @@ static struct MachineDriver CPS1_DRVNAME##_machine_driver =           \
 	/* sound hardware */                                             \
 	0,0,0,0,                                     \
 	{ { SOUND_YM2151,  &ym2151_interface },                          \
-	  { SOUND_OKIM6295,  &okim6295_interface }                       \
+	  { SOUND_OKIM6295,  &okim6295_interface_##OKI_FREQ }                       \
 	}                            \
 };
 
-#define MACHINE_DRIVER_16BIT(CPS1_DRVNAME, CPS1_CPU_FRQ) \
-static struct MachineDriver CPS1_DRVNAME##_machine_driver =           \
+#define MACHINE_DRIVER_16BIT(DRVNAME,CPU_FRQ,OKI_FREQ) \
+static struct MachineDriver DRVNAME##_machine_driver =           \
 {                                                                        \
 	/* basic machine hardware */                                     \
 	{                                                                \
 		{                                                        \
 			CPU_M68000,                                      \
-			CPS1_CPU_FRQ,                                    \
+			CPU_FRQ,                                    \
 			0,                                               \
 			cps1_readmem,cps1_writemem,0,0,                  \
 			cps1_interrupt, 1										\
@@ -3558,7 +3601,7 @@ static struct MachineDriver CPS1_DRVNAME##_machine_driver =           \
 	/* sound hardware */                                             \
 	0,0,0,0,                                     \
 	{ { SOUND_YM2151,  &ym2151_interface },                          \
-	  { SOUND_OKIM6295,  &okim6295_interface }                       \
+	  { SOUND_OKIM6295,  &okim6295_interface_##OKI_FREQ }                       \
 	}                            \
 };
 
@@ -3610,37 +3653,37 @@ static struct MachineDriver CPS1_DRVNAME##_machine_driver =            \
 #define CPS1_DEFAULT_CPU_SPEED          10000000
 #define CPS1_DEFAULT_CPU_SLOW_SPEED      8000000
 
-MACHINE_DRIVER( forgottn,  CPS1_DEFAULT_CPU_SLOW_SPEED )
-MACHINE_DRIVER( ghouls,    CPS1_DEFAULT_CPU_SLOW_SPEED )
-MACHINE_DRIVER( strider,   CPS1_DEFAULT_CPU_SPEED )
-MACHINE_DRIVER( dwj,       CPS1_DEFAULT_CPU_SPEED )
-MACHINE_DRIVER( willow,    CPS1_DEFAULT_CPU_SLOW_SPEED )
-MACHINE_DRIVER( unsquad,   CPS1_DEFAULT_CPU_SPEED )
-MACHINE_DRIVER( ffight,    10000000 )  /* 10 MHz */
-MACHINE_DRIVER( c1941,     CPS1_DEFAULT_CPU_SPEED )
-MACHINE_DRIVER( mercs,     CPS1_DEFAULT_CPU_SPEED )
-MACHINE_DRIVER( mtwins,    CPS1_DEFAULT_CPU_SPEED )
-MACHINE_DRIVER( msword,    CPS1_DEFAULT_CPU_SPEED )
-MACHINE_DRIVER( cawing,    CPS1_DEFAULT_CPU_SPEED )
-MACHINE_DRIVER( nemo,      CPS1_DEFAULT_CPU_SPEED )
-MACHINE_DRIVER( sf2,       12000000 )   /* 12 MHz */
-MACHINE_DRIVER( c3wonders, CPS1_DEFAULT_CPU_SPEED )
-MACHINE_DRIVER( kod,       CPS1_DEFAULT_CPU_SPEED )
-MACHINE_DRIVER( captcomm,  CPS1_DEFAULT_CPU_SPEED )
-MACHINE_DRIVER( knights,   CPS1_DEFAULT_CPU_SPEED )
-MACHINE_DRIVER( varth,     CPS1_DEFAULT_CPU_SPEED )
-MACHINE_DRIVER_16BIT( cworld2j,  CPS1_DEFAULT_CPU_SPEED )
+MACHINE_DRIVER( forgottn,  CPS1_DEFAULT_CPU_SLOW_SPEED, 6061 )
+MACHINE_DRIVER( ghouls,    CPS1_DEFAULT_CPU_SLOW_SPEED, 7576 )
+MACHINE_DRIVER( strider,   CPS1_DEFAULT_CPU_SPEED, 7576 )
+MACHINE_DRIVER( dwj,       CPS1_DEFAULT_CPU_SPEED, 7576 )
+MACHINE_DRIVER( willow,    CPS1_DEFAULT_CPU_SLOW_SPEED, 7576 )
+MACHINE_DRIVER( unsquad,   CPS1_DEFAULT_CPU_SPEED, 7576 )
+MACHINE_DRIVER( ffight,    10000000, 7576 )  /* 10 MHz */
+MACHINE_DRIVER( c1941,     CPS1_DEFAULT_CPU_SPEED, 7576 )
+MACHINE_DRIVER( mercs,     CPS1_DEFAULT_CPU_SPEED, 7576 )
+MACHINE_DRIVER( mtwins,    CPS1_DEFAULT_CPU_SPEED, 7576 )
+MACHINE_DRIVER( msword,    CPS1_DEFAULT_CPU_SPEED, 7576 )
+MACHINE_DRIVER( cawing,    CPS1_DEFAULT_CPU_SPEED, 7576 )
+MACHINE_DRIVER( nemo,      CPS1_DEFAULT_CPU_SPEED, 7576 )
+MACHINE_DRIVER( sf2,       12000000, 7576 )   /* 12 MHz */
+MACHINE_DRIVER( c3wonders, CPS1_DEFAULT_CPU_SPEED, 7576 )
+MACHINE_DRIVER( kod,       CPS1_DEFAULT_CPU_SPEED, 7576 )
+MACHINE_DRIVER( captcomm,  CPS1_DEFAULT_CPU_SPEED, 7576 )
+MACHINE_DRIVER( knights,   CPS1_DEFAULT_CPU_SPEED, 7576 )
+MACHINE_DRIVER( varth,     CPS1_DEFAULT_CPU_SPEED, 7576 )
+MACHINE_DRIVER_16BIT( cworld2j,  CPS1_DEFAULT_CPU_SPEED, 7576 )
 QSOUND_MACHINE_DRIVER( wof,      CPS1_DEFAULT_CPU_SPEED )
 QSOUND_MACHINE_DRIVER( dino,     CPS1_DEFAULT_CPU_SPEED )
 QSOUND_MACHINE_DRIVER( punisher, CPS1_DEFAULT_CPU_SPEED )
 QSOUND_MACHINE_DRIVER( slammast, CPS1_DEFAULT_CPU_SPEED )
 QSOUND_MACHINE_DRIVER( mbombrd,  CPS1_DEFAULT_CPU_SPEED )
-MACHINE_DRIVER( pnickj,    CPS1_DEFAULT_CPU_SPEED )
-MACHINE_DRIVER( qad,       CPS1_DEFAULT_CPU_SPEED )
-MACHINE_DRIVER( qtono2,    CPS1_DEFAULT_CPU_SPEED )
-MACHINE_DRIVER_16BIT( pang3,     CPS1_DEFAULT_CPU_SPEED )
-MACHINE_DRIVER_16BIT( megaman,   CPS1_DEFAULT_CPU_SPEED )
-MACHINE_DRIVER_16BIT( sfzch,   CPS1_DEFAULT_CPU_SPEED )
+MACHINE_DRIVER( pnickj,    CPS1_DEFAULT_CPU_SPEED, 7576 )
+MACHINE_DRIVER( qad,       CPS1_DEFAULT_CPU_SPEED, 7576 )
+MACHINE_DRIVER( qtono2,    CPS1_DEFAULT_CPU_SPEED, 7576 )
+MACHINE_DRIVER_16BIT( pang3,     CPS1_DEFAULT_CPU_SPEED, 7576 )
+MACHINE_DRIVER_16BIT( megaman,   CPS1_DEFAULT_CPU_SPEED, 7576 )
+MACHINE_DRIVER_16BIT( sfzch,   CPS1_DEFAULT_CPU_SPEED, 7576 )
 
 
 
@@ -3654,21 +3697,56 @@ MACHINE_DRIVER_16BIT( sfzch,   CPS1_DEFAULT_CPU_SPEED )
 
 ROM_START( forgottn_rom )
 	ROM_REGION(CODE_SIZE)
-	ROM_LOAD_EVEN( "lwu11a.14f",    0x00000, 0x20000, 0xddf78831 )
-	ROM_LOAD_ODD ( "lwu15a.14g",    0x00000, 0x20000, 0xf7ce2097 )
-	ROM_LOAD_EVEN( "lwu10a.13f",    0x40000, 0x20000, 0x8cb38c81 )
-	ROM_LOAD_ODD ( "lwu14a.13g",    0x40000, 0x20000, 0xd70ef9fd )
-	ROM_LOAD_WIDE( "code",          0x80000, 0x80000, 0x00000000 )
+	ROM_LOAD_EVEN( "lwu11a",        0x00000, 0x20000, 0xddf78831 )
+	ROM_LOAD_ODD ( "lwu15a",        0x00000, 0x20000, 0xf7ce2097 )
+	ROM_LOAD_EVEN( "lwu10a",        0x40000, 0x20000, 0x8cb38c81 )
+	ROM_LOAD_ODD ( "lwu14a",        0x40000, 0x20000, 0xd70ef9fd )
+	ROM_LOAD_WIDE_SWAP( "lw-07",         0x80000, 0x80000, 0xfd252a26 )
 
 	ROM_REGION_DISPOSE(0x400000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "gfx",   0x000000, 0x400000, 0x00000000 )
+	ROM_LOAD( "lw-06",         0x000000, 0x80000, 0x5b9edffc )
+	ROM_LOAD( "lw-05",         0x080000, 0x80000, 0xe4552fd7 )
+	ROM_LOAD( "lw-02",         0x100000, 0x80000, 0x43e6c5c8 )
+	ROM_LOAD( "lw-01",         0x180000, 0x80000, 0x0318f298 )
+	ROM_LOAD( "lw-13",         0x200000, 0x80000, 0x8e058ef5 )
+	ROM_LOAD( "lw-12",         0x280000, 0x80000, 0x8e6a832b )
+	ROM_LOAD( "lw-09",         0x300000, 0x80000, 0x899cb4ad )
+	ROM_LOAD( "lw-08",         0x380000, 0x80000, 0x25a8e43c )
 
 	ROM_REGION(0x18000) /* 64k for the audio CPU */
-	ROM_LOAD( "lwu-00.14a",    0x000000, 0x08000, 0x59df2a63 )
+	ROM_LOAD( "lwu00",         0x000000, 0x08000, 0x59df2a63 )
 	ROM_CONTINUE(              0x010000, 0x08000 )
 
 	ROM_REGION(0x40000) /* Samples */
-//	ROM_LOAD( "samples",       0x00000, 0x40000, 0x00000000 )
+	ROM_LOAD( "lw-03u",        0x00000, 0x20000, 0x807d051f )
+	ROM_LOAD( "lw-04u",        0x20000, 0x20000, 0xe6cd098e )
+ROM_END
+
+ROM_START( lostwrld_rom )
+	ROM_REGION(CODE_SIZE)
+	ROM_LOAD_EVEN( "lw-11c.14f",    0x00000, 0x20000, 0x67e42546 )
+	ROM_LOAD_ODD ( "lw-15c.14g",    0x00000, 0x20000, 0x402e2a46 )
+	ROM_LOAD_EVEN( "lw-10c.13f",    0x40000, 0x20000, 0xc46479d7 )
+	ROM_LOAD_ODD ( "lw-14c.13g",    0x40000, 0x20000, 0x97670f4a )
+	ROM_LOAD_WIDE_SWAP( "lw-07",         0x80000, 0x80000, 0xfd252a26 )
+
+	ROM_REGION_DISPOSE(0x400000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "lw-06",         0x000000, 0x80000, 0x5b9edffc )
+	ROM_LOAD( "lw-05",         0x080000, 0x80000, 0xe4552fd7 )
+	ROM_LOAD( "lw-02",         0x100000, 0x80000, 0x43e6c5c8 )
+	ROM_LOAD( "lw-01",         0x180000, 0x80000, 0x0318f298 )
+	ROM_LOAD( "lw-13",         0x200000, 0x80000, 0x8e058ef5 )
+	ROM_LOAD( "lw-12",         0x280000, 0x80000, 0x8e6a832b )
+	ROM_LOAD( "lw-09",         0x300000, 0x80000, 0x899cb4ad )
+	ROM_LOAD( "lw-08",         0x380000, 0x80000, 0x25a8e43c )
+
+	ROM_REGION(0x18000) /* 64k for the audio CPU */
+	ROM_LOAD( "lwu00",         0x000000, 0x08000, 0x59df2a63 )
+	ROM_CONTINUE(              0x010000, 0x08000 )
+
+	ROM_REGION(0x40000) /* Samples */
+	ROM_LOAD( "lw-03.14c",     0x00000, 0x20000, 0xce2159e7 )
+	ROM_LOAD( "lw-04.13c",     0x20000, 0x20000, 0x39305536 )
 ROM_END
 
 ROM_START( ghouls_rom )
@@ -5976,6 +6054,7 @@ struct GameDriver NAME##_driver =  \
 
 
 GAME_DRIVER      (forgottn,          "Forgotten Worlds (US)",             "1988","Capcom",ORIENTATION_DEFAULT)
+GAME_DRIVER_CLONE(lostwrld,forgottn, "Lost Worlds (Japan)",               "1988","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER      (ghouls,            "Ghouls'n Ghosts (World?)",          "1988","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER_CLONE(ghoulsj, ghouls,   "Dai Makai-Mura (Japan)",            "1988","Capcom",ORIENTATION_DEFAULT)
 GAME_DRIVER      (strider,           "Strider (US)",                      "1989","Capcom",ORIENTATION_DEFAULT)

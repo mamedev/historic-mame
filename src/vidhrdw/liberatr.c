@@ -112,7 +112,7 @@ INLINE void bitmap_common_w(UINT8 x, UINT8 y, int data)
 {
 	int pen;
 
-	liberatr_videoram[(y<<8) | x] = data;
+	liberatr_videoram[(y<<8) | x] = data & 0xe0;
 
 	pen = Machine->pens[(data >> 5) + 0x10];
 	Machine->scrbitmap->line[y][x] = tmpbitmap->line[y][x] = pen;
@@ -120,13 +120,20 @@ INLINE void bitmap_common_w(UINT8 x, UINT8 y, int data)
 
 void liberatr_bitmap_xy_w(int offset, int data)
 {
+	if (*liberatr_x == 0)
+	{
+	}
 	bitmap_common_w(*liberatr_x, *liberatr_y, data);
 }
 
 void liberatr_bitmap_w(int offset, int data)
 {
+	extern unsigned char *RAM;
+
 	UINT8 x = (offset & 0x3f) << 2;
 	UINT8 y = (offset >> 6);
+
+	RAM[offset] = data;
 
     bitmap_common_w(x , y, data);
     bitmap_common_w(x+1, y, data);
@@ -135,25 +142,9 @@ void liberatr_bitmap_w(int offset, int data)
 }
 
 
-INLINE int bitmap_common_r(UINT8 x, UINT8 y)
-{
-	return liberatr_videoram[(y<<8) | x];
-}
-
 int liberatr_bitmap_xy_r(int offset)
 {
-	UINT8 x = *liberatr_x;
-	UINT8 y = *liberatr_y;
-
-	return bitmap_common_r(x, y);
-}
-
-int liberatr_bitmap_r(int offset, int data)
-{
-	UINT8 x = (offset & 0x3f) << 2;
-	UINT8 y = (offset >> 6);
-
-	return bitmap_common_r(x, y);
+	return liberatr_videoram[((*liberatr_y)<<8) | (*liberatr_x)];
 }
 
 

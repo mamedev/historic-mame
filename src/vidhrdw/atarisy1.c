@@ -58,13 +58,10 @@
 #define YDIM (YCHARS*8)
 
 
-#define DEBUG_VIDEO 0
-
-
 
 /*************************************
  *
- *		Constants
+ *	Constants
  *
  *************************************/
 
@@ -90,7 +87,7 @@
 
 /*************************************
  *
- *		Macros
+ *	Macros
  *
  *************************************/
 
@@ -111,7 +108,7 @@
 
 /*************************************
  *
- *		Structures
+ *	Structures
  *
  *************************************/
 
@@ -125,35 +122,35 @@ struct pf_overrender_data
 
 /*************************************
  *
- *		Globals we own
+ *	Globals we own
  *
  *************************************/
 
-unsigned char *atarisys1_bankselect;
-unsigned char *atarisys1_prioritycolor;
+UINT8 *atarisys1_bankselect;
+UINT8 *atarisys1_prioritycolor;
 
 
 
 /*************************************
  *
- *		Statics
+ *	Statics
  *
  *************************************/
 
 /* playfield parameters */
 static struct atarigen_pf_state pf_state;
-static int priority_pens;
+static UINT16 priority_pens;
 
 /* indirection tables */
-static int pf_lookup[256];
-static int mo_lookup[256];
+static UINT32 pf_lookup[256];
+static UINT32 mo_lookup[256];
 
 /* INT3 tracking */
 static void *int3_timer[YDIM];
 static void *int3off_timer;
 
 /* graphics bank tracking */
-static unsigned char bank_gfx[3][8];
+static UINT8 bank_gfx[3][8];
 static unsigned int *pen_usage[MAX_GFX_ELEMENTS];
 
 /* basic form of a graphics bank */
@@ -172,33 +169,29 @@ static struct GfxLayout objlayout =
 
 /*************************************
  *
- *		Prototypes
+ *	Prototypes
  *
  *************************************/
 
-static const unsigned char *update_palette(void);
+static const UINT8 *update_palette(void);
 
 static void pf_color_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *data);
 static void pf_render_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *data);
 static void pf_overrender_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *data);
 
-static void mo_color_callback(const unsigned short *data, const struct rectangle *clip, void *param);
-static void mo_render_callback(const unsigned short *data, const struct rectangle *clip, void *param);
+static void mo_color_callback(const UINT16 *data, const struct rectangle *clip, void *param);
+static void mo_render_callback(const UINT16 *data, const struct rectangle *clip, void *param);
 
 static int decode_gfx(void);
-static int get_bank(unsigned char prom1, unsigned char prom2, int bpp);
+static int get_bank(UINT8 prom1, UINT8 prom2, int bpp);
 
 void atarisys1_scanline_update(int scanline);
-
-#if DEBUG_VIDEO
-static int debug(void);
-#endif
 
 
 
 /*************************************
  *
- *		Generic video system start
+ *	Generic video system start
  *
  *************************************/
 
@@ -252,7 +245,7 @@ int atarisys1_vh_start(void)
 					memset(pen_usage[e], 0, gfx->total_elements * 2 * sizeof(int));
 					for (i = 0, entry = pen_usage[e]; i < gfx->total_elements; i++, entry += 2)
 					{
-						unsigned char *dp = gfx->gfxdata + i * gfx->char_modulo;
+						UINT8 *dp = gfx->gfxdata + i * gfx->char_modulo;
 						for (y = 0; y < gfx->height; y++)
 						{
 							for (x = 0; x < gfx->width; x++)
@@ -285,7 +278,7 @@ int atarisys1_vh_start(void)
 
 /*************************************
  *
- *		Video system shutdown
+ *	Video system shutdown
  *
  *************************************/
 
@@ -309,7 +302,7 @@ void atarisys1_vh_stop(void)
 
 /*************************************
  *
- *		Graphics bank selection
+ *	Graphics bank selection
  *
  *************************************/
 
@@ -347,7 +340,7 @@ void atarisys1_bankselect_w(int offset, int data)
 
 /*************************************
  *
- *		Playfield horizontal scroll
+ *	Playfield horizontal scroll
  *
  *************************************/
 
@@ -366,7 +359,7 @@ void atarisys1_hscroll_w(int offset, int data)
 
 /*************************************
  *
- *		Playfield vertical scroll
+ *	Playfield vertical scroll
  *
  *************************************/
 
@@ -389,7 +382,7 @@ void atarisys1_vscroll_w(int offset, int data)
 
 /*************************************
  *
- *		Playfield RAM write handler
+ *	Playfield RAM write handler
  *
  *************************************/
 
@@ -409,7 +402,7 @@ void atarisys1_playfieldram_w(int offset, int data)
 
 /*************************************
  *
- *		Sprite RAM write handler
+ *	Sprite RAM write handler
  *
  *************************************/
 
@@ -440,7 +433,7 @@ void atarisys1_spriteram_w(int offset, int data)
 
 /*************************************
  *
- *		MO interrupt handlers
+ *	MO interrupt handlers
  *
  *************************************/
 
@@ -472,7 +465,7 @@ void atarisys1_int3_callback(int param)
 
 /*************************************
  *
- *		MO interrupt state read
+ *	MO interrupt state read
  *
  *************************************/
 
@@ -485,16 +478,16 @@ int atarisys1_int3state_r(int offset)
 
 /*************************************
  *
- *		Periodic MO updater
+ *	Periodic MO updater
  *
  *************************************/
 
 void atarisys1_scanline_update(int scanline)
 {
 	int bank = ((READ_WORD(&atarisys1_bankselect[0]) >> 3) & 7) * 0x200;
-	unsigned char *base = &atarigen_spriteram[bank];
-	unsigned char spritevisit[64];
-	unsigned char timer[YDIM];
+	UINT8 *base = &atarigen_spriteram[bank];
+	UINT8 spritevisit[64];
+	UINT8 timer[YDIM];
 	int link = 0;
 	int i;
 
@@ -549,17 +542,13 @@ void atarisys1_scanline_update(int scanline)
 
 /*************************************
  *
- *		Main refresh
+ *	Main refresh
  *
  *************************************/
 
 void atarisys1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int i;
-
-#if DEBUG_VIDEO
-	debug();
-#endif
 
 	/* update the palette */
 	if (update_palette())
@@ -606,13 +595,13 @@ void atarisys1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 /*************************************
  *
- *		Palette management
+ *	Palette management
  *
  *************************************/
 
-static const unsigned char *update_palette(void)
+static const UINT8 *update_palette(void)
 {
-	unsigned short al_map[8], pfmo_map[32];
+	UINT16 al_map[8], pfmo_map[32];
 	int i, j;
 
 	/* reset color tracking */
@@ -647,7 +636,7 @@ static const unsigned char *update_palette(void)
 	/* determine the final playfield palette */
 	for (i = 16; i < 32; i++)
 	{
-		unsigned short used = pfmo_map[i];
+		UINT16 used = pfmo_map[i];
 		if (used)
 			for (j = 0; j < 16; j++)
 				if (used & (1 << j))
@@ -657,7 +646,7 @@ static const unsigned char *update_palette(void)
 	/* determine the final motion object palette */
 	for (i = 0; i < 16; i++)
 	{
-		unsigned short used = pfmo_map[i];
+		UINT16 used = pfmo_map[i];
 		if (used)
 		{
 			palette_used_colors[0x100 + i * 16] = PALETTE_COLOR_TRANSPARENT;
@@ -670,7 +659,7 @@ static const unsigned char *update_palette(void)
 	/* determine the final alpha palette */
 	for (i = 0; i < 8; i++)
 	{
-		unsigned short used = al_map[i];
+		UINT16 used = al_map[i];
 		if (used)
 			for (j = 0; j < 4; j++)
 				if (used & (1 << j))
@@ -685,14 +674,14 @@ static const unsigned char *update_palette(void)
 
 /*************************************
  *
- *		Playfield palette
+ *	Playfield palette
  *
  *************************************/
 
 static void pf_color_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *param)
 {
-	const int *lookup_table = &pf_lookup[state->param[0]];
-	unsigned short *colormap = param;
+	const UINT32 *lookup_table = &pf_lookup[state->param[0]];
+	UINT16 *colormap = param;
 	int x, y;
 
 	/* standard loop over tiles */
@@ -736,14 +725,14 @@ static void pf_color_callback(const struct rectangle *clip, const struct rectang
 
 /*************************************
  *
- *		Playfield rendering
+ *	Playfield rendering
  *
  *************************************/
 
 static void pf_render_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *param)
 {
 	int bank = state->param[0];
-	const int *lookup_table = &pf_lookup[bank];
+	const UINT32 *lookup_table = &pf_lookup[bank];
 	struct osd_bitmap *bitmap = param;
 	int x, y;
 
@@ -781,13 +770,13 @@ static void pf_render_callback(const struct rectangle *clip, const struct rectan
 
 /*************************************
  *
- *		Playfield overrendering
+ *	Playfield overrendering
  *
  *************************************/
 
 static void pf_overrender_callback(const struct rectangle *clip, const struct rectangle *tiles, const struct atarigen_pf_state *state, void *param)
 {
-	const int *lookup_table = &pf_lookup[state->param[0]];
+	const UINT32 *lookup_table = &pf_lookup[state->param[0]];
 	const struct pf_overrender_data *overrender_data = param;
 	struct osd_bitmap *bitmap = overrender_data->bitmap;
 	int type = overrender_data->type;
@@ -829,17 +818,17 @@ static void pf_overrender_callback(const struct rectangle *clip, const struct re
 
 /*************************************
  *
- *		Motion object palette
+ *	Motion object palette
  *
  *************************************/
 
-static void mo_color_callback(const unsigned short *data, const struct rectangle *clip, void *param)
+static void mo_color_callback(const UINT16 *data, const struct rectangle *clip, void *param)
 {
-	unsigned short *colormap = param;
-	unsigned short temp = 0;
+	UINT16 *colormap = param;
+	UINT16 temp = 0;
 	int i;
 
-	int lookup = mo_lookup[data[1] >> 8];
+	UINT32 lookup = mo_lookup[data[1] >> 8];
 	const unsigned int *usage = pen_usage[LOOKUP_GFX(lookup)];
 	int code = LOOKUP_CODE(lookup) | (data[1] & 0xff);
 	int color = LOOKUP_COLOR(lookup);
@@ -860,18 +849,18 @@ static void mo_color_callback(const unsigned short *data, const struct rectangle
 
 /*************************************
  *
- *		Motion object rendering
+ *	Motion object rendering
  *
  *************************************/
 
-static void mo_render_callback(const unsigned short *data, const struct rectangle *clip, void *param)
+static void mo_render_callback(const UINT16 *data, const struct rectangle *clip, void *param)
 {
 	struct osd_bitmap *bitmap = param;
 	struct pf_overrender_data overrender_data;
 	struct rectangle pf_clip;
 
 	/* extract data from the various words */
-	int lookup = mo_lookup[data[1] >> 8];
+	UINT32 lookup = mo_lookup[data[1] >> 8];
 	struct GfxElement *gfx = Machine->gfx[LOOKUP_GFX(lookup)];
 	int code = LOOKUP_CODE(lookup) | (data[1] & 0xff);
 	int color = LOOKUP_COLOR(lookup);
@@ -937,14 +926,14 @@ static void mo_render_callback(const unsigned short *data, const struct rectangl
 
 /*************************************
  *
- *		Graphics decoding
+ *	Graphics decoding
  *
  *************************************/
 
 static int decode_gfx(void)
 {
-	unsigned char *prom1 = &Machine->memory_region[3][0x000];
-	unsigned char *prom2 = &Machine->memory_region[3][0x200];
+	UINT8 *prom1 = &Machine->memory_region[3][0x000];
+	UINT8 *prom2 = &Machine->memory_region[3][0x200];
 	int obj, i;
 
 	/* reset the globals */
@@ -953,7 +942,7 @@ static int decode_gfx(void)
 	/* loop for two sets of objects */
 	for (obj = 0; obj < 2; obj++)
 	{
-		int *table = (obj == 0) ? pf_lookup : mo_lookup;
+		UINT32 *table = (obj == 0) ? pf_lookup : mo_lookup;
 
 		/* loop for 256 objects in the set */
 		for (i = 0; i < 256; i++, prom1++, prom2++)
@@ -997,11 +986,11 @@ static int decode_gfx(void)
 
 /*************************************
  *
- *		Graphics bank mapping
+ *	Graphics bank mapping
  *
  *************************************/
 
-static int get_bank(unsigned char prom1, unsigned char prom2, int bpp)
+static int get_bank(UINT8 prom1, UINT8 prom2, int bpp)
 {
 	int bank_offset[8] = { 0, 0x00000, 0x30000, 0x60000, 0x90000, 0xc0000, 0xe0000, 0x100000 };
 	int bank_index, i, gfx_index;
@@ -1059,123 +1048,3 @@ static int get_bank(unsigned char prom1, unsigned char prom2, int bpp)
 	/* set the entry and return it */
 	return bank_gfx[bpp - 4][bank_index] = gfx_index;
 }
-
-
-
-/*************************************
- *
- *		Debugging
- *
- *************************************/
-
-#if DEBUG_VIDEO
-
-static int debug(void)
-{
-	static int lasttrans[0x200];
-	int hidebank = -1;
-
-	if (memcmp(lasttrans, &paletteram[0x600], 0x200))
-	{
-		static FILE *trans;
-		int i;
-
-		if (!trans) trans = fopen("trans.log", "w");
-		if (trans)
-		{
-			fprintf(trans, "\n\nTrans Palette:\n");
-			for (i = 0x300; i < 0x400; i++)
-			{
-				fprintf(trans, "%04X ", READ_WORD(&paletteram[i*2]));
-				if ((i & 15) == 15) fprintf(trans, "\n");
-			}
-		}
-		memcpy(lasttrans, &paletteram[0x600], 0x200);
-	}
-
-	if (keyboard_key_pressed(KEYCODE_Q)) hidebank = 0;
-	if (keyboard_key_pressed(KEYCODE_W)) hidebank = 1;
-	if (keyboard_key_pressed(KEYCODE_E)) hidebank = 2;
-	if (keyboard_key_pressed(KEYCODE_R)) hidebank = 3;
-	if (keyboard_key_pressed(KEYCODE_T)) hidebank = 4;
-	if (keyboard_key_pressed(KEYCODE_Y)) hidebank = 5;
-	if (keyboard_key_pressed(KEYCODE_U)) hidebank = 6;
-	if (keyboard_key_pressed(KEYCODE_I)) hidebank = 7;
-
-	if (keyboard_key_pressed(KEYCODE_A)) hidebank = 8;
-	if (keyboard_key_pressed(KEYCODE_S)) hidebank = 9;
-	if (keyboard_key_pressed(KEYCODE_D)) hidebank = 10;
-	if (keyboard_key_pressed(KEYCODE_F)) hidebank = 11;
-	if (keyboard_key_pressed(KEYCODE_G)) hidebank = 12;
-	if (keyboard_key_pressed(KEYCODE_H)) hidebank = 13;
-	if (keyboard_key_pressed(KEYCODE_J)) hidebank = 14;
-	if (keyboard_key_pressed(KEYCODE_K)) hidebank = 15;
-
-	if (keyboard_key_pressed(KEYCODE_9))
-	{
-		static int count;
-		char name[50];
-		FILE *f;
-		int i, bank;
-
-		while (keyboard_key_pressed(KEYCODE_9)) { }
-
-		sprintf(name, "Dump %d", ++count);
-		f = fopen(name, "wt");
-
-		fprintf(f, "\n\nAlpha Palette:\n");
-		for (i = 0x000; i < 0x100; i++)
-		{
-			fprintf(f, "%04X ", READ_WORD(&paletteram[i*2]));
-			if ((i & 15) == 15) fprintf(f, "\n");
-		}
-
-		fprintf(f, "\n\nMotion Object Palette:\n");
-		for (i = 0x100; i < 0x200; i++)
-		{
-			fprintf(f, "%04X ", READ_WORD(&paletteram[i*2]));
-			if ((i & 15) == 15) fprintf(f, "\n");
-		}
-
-		fprintf(f, "\n\nPlayfield Palette:\n");
-		for (i = 0x200; i < 0x300; i++)
-		{
-			fprintf(f, "%04X ", READ_WORD(&paletteram[i*2]));
-			if ((i & 15) == 15) fprintf(f, "\n");
-		}
-
-		fprintf(f, "\n\nTrans Palette:\n");
-		for (i = 0x300; i < 0x400; i++)
-		{
-			fprintf(f, "%04X ", READ_WORD(&paletteram[i*2]));
-			if ((i & 15) == 15) fprintf(f, "\n");
-		}
-
-		bank = (READ_WORD(&atarisys1_bankselect[0]) >> 3) & 7;
-		fprintf(f, "\n\nMotion Object Bank = %d\n", bank);
-		bank *= 0x200;
-		for (i = 0; i < 0x40; i++)
-		{
-			fprintf(f, "   Object %02X:  P=%04X  X=%04X  Y=%04X  L=%04X\n",
-					i,
-					READ_WORD(&atarigen_spriteram[bank+0x080+i*2]),
-					READ_WORD(&atarigen_spriteram[bank+0x100+i*2]),
-					READ_WORD(&atarigen_spriteram[bank+0x000+i*2]),
-					READ_WORD(&atarigen_spriteram[bank+0x180+i*2])
-			);
-		}
-
-		fprintf(f, "\n\nPlayfield dump\n");
-		for (i = 0; i < atarigen_playfieldram_size / 2; i++)
-		{
-			fprintf(f, "%04X ", READ_WORD(&atarigen_playfieldram[i*2]));
-			if ((i & 63) == 63) fprintf(f, "\n");
-		}
-
-		fclose(f);
-	}
-
-	return hidebank;
-}
-
-#endif

@@ -152,8 +152,8 @@ static struct MachineDriver machine_driver =
 
 ROM_START( riskchal_rom )
 	ROM_REGION(0x100000)
-	ROM_LOAD_EVEN( "rc_h0.rom",    0x80000, 0x40000, 0x4c9b5344 )
-	ROM_LOAD_ODD ( "rc_l0.rom",    0x80000, 0x40000, 0x0455895a )
+	ROM_LOAD_GFX_EVEN( "rc_h0.rom",    0x80000, 0x40000, 0x4c9b5344 )
+	ROM_LOAD_GFX_ODD ( "rc_l0.rom",    0x80000, 0x40000, 0x0455895a )
 
 	ROM_REGION_DISPOSE(0x200000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "rc_c0.rom",         0x000000, 0x80000, 0x84d0b907 )
@@ -170,8 +170,8 @@ ROM_END
 
 ROM_START( shisen2_rom )
 	ROM_REGION(0x100000)
-	ROM_LOAD_EVEN( "sis2-ho-.rom", 0x80000, 0x40000, 0x6fae0aea )
-	ROM_LOAD_ODD ( "sis2-lo-.rom", 0x80000, 0x40000, 0x2af25182 )
+	ROM_LOAD_GFX_EVEN( "sis2-ho-.rom", 0x80000, 0x40000, 0x6fae0aea )
+	ROM_LOAD_GFX_ODD ( "sis2-lo-.rom", 0x80000, 0x40000, 0x2af25182 )
 
 	ROM_REGION_DISPOSE(0x200000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "ic81.rom",          0x000000, 0x80000, 0x5a7cb88f )
@@ -185,10 +185,10 @@ ROM_END
 
 ROM_START( quizf1_rom )
 	ROM_REGION(0x200000)
-	ROM_LOAD_EVEN( "qf1-h0-.77",   0x080000, 0x40000, 0x280e3049 )
-	ROM_LOAD_ODD ( "qf1-l0-.79",   0x080000, 0x40000, 0x94588a6f )
-	ROM_LOAD_EVEN( "qf1-h1-.78",   0x100000, 0x80000, 0xc6c2eb2b )	/* banked? */
-	ROM_LOAD_ODD ( "qf1-l1-.80",   0x100000, 0x80000, 0x3132c144 )	/* banked? */
+	ROM_LOAD_GFX_EVEN( "qf1-h0-.77",   0x080000, 0x40000, 0x280e3049 )
+	ROM_LOAD_GFX_ODD ( "qf1-l0-.79",   0x080000, 0x40000, 0x94588a6f )
+	ROM_LOAD_GFX_EVEN( "qf1-h1-.78",   0x100000, 0x80000, 0xc6c2eb2b )	/* banked? */
+	ROM_LOAD_GFX_ODD ( "qf1-l1-.80",   0x100000, 0x80000, 0x3132c144 )	/* banked? */
 
 	ROM_REGION_DISPOSE(0x200000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "qf1-c0-.81",        0x000000, 0x80000, 0xc26b521e )
@@ -205,8 +205,8 @@ ROM_END
 
 ROM_START( bbmanw_rom )
 	ROM_REGION(0x100000)
-	ROM_LOAD_EVEN( "bbm2_h0.bin",  0x080000, 0x20000, 0xf694b461 )
-	ROM_LOAD_ODD ( "bbm2_l0.bin",  0x080000, 0x20000, 0x755126cc )
+	ROM_LOAD_GFX_EVEN( "bbm2_h0.bin",  0x080000, 0x20000, 0xf694b461 )
+	ROM_LOAD_GFX_ODD ( "bbm2_l0.bin",  0x080000, 0x20000, 0x755126cc )
 
 	ROM_REGION_DISPOSE(0x200000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "bbm2_c0.bin",       0x000000, 0x40000, 0xe7ce058a )

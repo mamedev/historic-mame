@@ -131,16 +131,17 @@ void gauntlet_vh_stop(void);
 void gauntlet_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
-static unsigned char *speed_check;
-static int last_speed_check;
+static UINT8 *speed_check;
+static UINT32 last_speed_check;
 
-static int speech_val;
-static int last_speech_write;
+static UINT8 speech_val;
+static UINT8 last_speech_write;
+
 
 
 /*************************************
  *
- *		Initialization of globals.
+ *	Initialization of globals.
  *
  *************************************/
 
@@ -176,7 +177,7 @@ static void init_machine(void)
 
 /*************************************
  *
- *		Controller read dispatch.
+ *	Controller read dispatch.
  *
  *************************************/
 
@@ -252,7 +253,7 @@ static int control_r(int offset)
 
 /*************************************
  *
- *		I/O read dispatch.
+ *	I/O read dispatch.
  *
  *************************************/
 
@@ -291,7 +292,7 @@ static int switch_6502_r(int offset)
 
 /*************************************
  *
- *		Controller write dispatch.
+ *	Controller write dispatch.
  *
  *************************************/
 
@@ -312,7 +313,7 @@ static void input_w(int offset, int data)
 
 /*************************************
  *
- *		Sound TMS5220 write.
+ *	Sound TMS5220 write.
  *
  *************************************/
 
@@ -326,7 +327,7 @@ static void tms5220_w(int offset, int data)
 
 /*************************************
  *
- *		Sound control write.
+ *	Sound control write.
  *
  *************************************/
 
@@ -355,7 +356,7 @@ static void sound_ctl_w(int offset, int data)
 
 /*************************************
  *
- *		Sound mixer write.
+ *	Sound mixer write.
  *
  *************************************/
 
@@ -371,7 +372,7 @@ static void mixer_w(int offset, int data)
 
 /*************************************
  *
- *		Speed cheats
+ *	Speed cheats
  *
  *************************************/
 
@@ -399,7 +400,7 @@ static void speedup_68010_w(int offset, int data)
 
 /*************************************
  *
- *		Main CPU memory handlers
+ *	Main CPU memory handlers
  *
  *************************************/
 
@@ -446,7 +447,7 @@ static struct MemoryWriteAddress main_writemem[] =
 
 /*************************************
  *
- *		Sound CPU memory handlers
+ *	Sound CPU memory handlers
  *
  *************************************/
 
@@ -483,7 +484,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 /*************************************
  *
- *		Port definitions
+ *	Port definitions
  *
  *************************************/
 
@@ -617,7 +618,7 @@ INPUT_PORTS_END
 
 /*************************************
  *
- *		Graphics definitions
+ *	Graphics definitions
  *
  *************************************/
 
@@ -656,7 +657,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /*************************************
  *
- *		Sound definitions
+ *	Sound definitions
  *
  *************************************/
 
@@ -690,7 +691,7 @@ static struct TMS5220interface tms5220_interface =
 
 /*************************************
  *
- *		Machine driver
+ *	Machine driver
  *
  *************************************/
 
@@ -712,7 +713,7 @@ static struct MachineDriver machine_driver =
 			sound_readmem,sound_writemem,0,0,
 			0,0,
 			atarigen_6502_irq_gen,250
-		},
+		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
@@ -752,7 +753,7 @@ static struct MachineDriver machine_driver =
 
 /*************************************
  *
- *		ROM definition(s)
+ *	ROM definition(s)
  *
  *************************************/
 
@@ -977,35 +978,35 @@ ROM_END
 
 /*************************************
  *
- *		ROM decoding
+ *	ROM decoding
  *
  *************************************/
 
 static void rom_decode(void)
 {
-	unsigned long *p1, *p2, temp;
-	unsigned char *data;
+	UINT32 *p1, *p2, temp;
+	UINT8 *data;
 	int i;
 
 	/* swap the top and bottom halves of the main CPU ROM images */
-	p1 = (unsigned long *)&Machine->memory_region[0][0x000000];
-	p2 = (unsigned long *)&Machine->memory_region[0][0x008000];
+	p1 = (UINT32 *)&Machine->memory_region[0][0x000000];
+	p2 = (UINT32 *)&Machine->memory_region[0][0x008000];
 	for (i = 0; i < 0x8000 / 4; i++)
 		temp = *p1, *p1++ = *p2, *p2++ = temp;
-	p1 = (unsigned long *)&Machine->memory_region[0][0x040000];
-	p2 = (unsigned long *)&Machine->memory_region[0][0x048000];
+	p1 = (UINT32 *)&Machine->memory_region[0][0x040000];
+	p2 = (UINT32 *)&Machine->memory_region[0][0x048000];
 	for (i = 0; i < 0x8000 / 4; i++)
 		temp = *p1, *p1++ = *p2, *p2++ = temp;
-	p1 = (unsigned long *)&Machine->memory_region[0][0x050000];
-	p2 = (unsigned long *)&Machine->memory_region[0][0x058000];
+	p1 = (UINT32 *)&Machine->memory_region[0][0x050000];
+	p2 = (UINT32 *)&Machine->memory_region[0][0x058000];
 	for (i = 0; i < 0x8000 / 4; i++)
 		temp = *p1, *p1++ = *p2, *p2++ = temp;
-	p1 = (unsigned long *)&Machine->memory_region[0][0x060000];
-	p2 = (unsigned long *)&Machine->memory_region[0][0x068000];
+	p1 = (UINT32 *)&Machine->memory_region[0][0x060000];
+	p2 = (UINT32 *)&Machine->memory_region[0][0x068000];
 	for (i = 0; i < 0x8000 / 4; i++)
 		temp = *p1, *p1++ = *p2, *p2++ = temp;
-	p1 = (unsigned long *)&Machine->memory_region[0][0x070000];
-	p2 = (unsigned long *)&Machine->memory_region[0][0x078000];
+	p1 = (UINT32 *)&Machine->memory_region[0][0x070000];
+	p2 = (UINT32 *)&Machine->memory_region[0][0x078000];
 	for (i = 0; i < 0x8000 / 4; i++)
 		temp = *p1, *p1++ = *p2, *p2++ = temp;
 
@@ -1032,7 +1033,7 @@ static void rom_decode(void)
 
 /*************************************
  *
- *		Driver initialization
+ *	Driver initialization
  *
  *************************************/
 
@@ -1115,7 +1116,7 @@ static void vindctr2_init(void)
 
 /*************************************
  *
- *		Game driver(s)
+ *	Game driver(s)
  *
  *************************************/
 

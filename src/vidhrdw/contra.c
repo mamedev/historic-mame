@@ -41,17 +41,23 @@ void contra_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 			/* sprite lookup tables */
 			case 0:
 			case 2:
+			clut = 0;
+			break;
+
 			case 4:
 			case 6:
-			clut = 1;
+			clut = 2;
 			break;
 
 			/* background lookup tables */
 			case 1:
 			case 3:
+			clut = 1;
+			break;
+
 			case 5:
 			case 7:
-			clut = 0;
+			clut = 3;
 			break;
 		}
 
@@ -143,13 +149,10 @@ void contra_text_cram_w(int offset,int data){
 	contra_text_cram[offset] = data;
 }
 
-void contra_0007_w(int offset,int data){
-	if (flipscreen != (data & 0x08)){
-		flipscreen = data & 0x08;
-		tilemap_mark_all_tiles_dirty( fg_tilemap );
-		tilemap_mark_all_tiles_dirty( bg_tilemap );
-		tilemap_mark_all_tiles_dirty( text_tilemap );
-	}
+void contra_0007_w(int offset,int data)
+{
+	flipscreen = data & 0x08;
+	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 }
 
 void contra_fg_palette_bank_w(int offset,int data){
@@ -226,7 +229,7 @@ static void draw_sprites( struct osd_bitmap *bitmap, int bank )
 
 	const unsigned char *source = spriteram + bank*0x2000 + spriteram_offset;
 	const unsigned char *finish = source+(40)*5;
-	int base_color = bank?2:0;
+	int base_color = bank?2:4;
 /*
 	spriteram[0]	tile_number
 	spriteram[1]	XXXX		color
@@ -286,7 +289,8 @@ static void draw_sprites( struct osd_bitmap *bitmap, int bank )
 	}
 }
 
-void contra_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh){
+void contra_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
 	tilemap_set_scrollx( fg_tilemap,0, *contra_fg_vertical_scroll - 40 );
 	tilemap_set_scrolly( fg_tilemap,0, *contra_fg_horizontal_scroll );
 	tilemap_set_scrollx( bg_tilemap,0, *contra_bg_vertical_scroll - 40 );

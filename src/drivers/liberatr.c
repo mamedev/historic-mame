@@ -113,6 +113,14 @@ On   On                                  2 coins for 1 credit
 -------------------------------------------------------------------------------------
 <-  = Manufacturer's suggested settings
 
+
+Note:
+----
+
+The loop at $cf60 should count down from Y=0 instead of Y=0xff.  Because of this the first
+four leftmost pixels of each row are not cleared.  This bug is masked by the visible area
+covering up the offending pixels.
+
 ******************************************************************************************/
 
 #include "driver.h"
@@ -137,7 +145,6 @@ int  liberatr_vh_start(void);
 void liberatr_vh_stop(void);
 void liberatr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void liberatr_colorram_w(int offset, int data) ;
-int  liberatr_bitmap_r(int offset);
 void liberatr_bitmap_w(int offset, int data);
 int liberatr_bitmap_xy_r(int offset);
 void liberatr_bitmap_xy_w(int offset, int data);
@@ -145,11 +152,8 @@ void liberatr_bitmap_xy_w(int offset, int data);
 
 static struct MemoryReadAddress liberatr_readmem[] =
 {
-	{ 0x0000, 0x0001, MRA_RAM },
 	{ 0x0002, 0x0002, liberatr_bitmap_xy_r },
-	{ 0x0003, 0x033f, MRA_RAM },
-	{ 0x3d40, 0x3fff, MRA_RAM },
-	{ 0x0000, 0x3fff, liberatr_bitmap_r },	/* overlapping for my convinience */
+	{ 0x0000, 0x3fff, MRA_RAM },	/* overlapping for my convinience */
 	{ 0x4000, 0x403f, atari_vg_earom_r },
 	{ 0x5000, 0x5000, liberatr_input_port_0_r },
 	{ 0x5001, 0x5001, input_port_1_r },
@@ -162,11 +166,8 @@ static struct MemoryReadAddress liberatr_readmem[] =
 
 static struct MemoryReadAddress liberat2_readmem[] =
 {
-	{ 0x0000, 0x0001, MRA_RAM },
 	{ 0x0002, 0x0002, liberatr_bitmap_xy_r },
-	{ 0x0003, 0x033f, MRA_RAM },
-	{ 0x3d40, 0x3fff, MRA_RAM },
-	{ 0x0000, 0x3fff, liberatr_bitmap_r },	/* overlapping for my convinience */
+	{ 0x0000, 0x3fff, MRA_RAM },	/* overlapping for my convinience */
 	{ 0x4000, 0x4000, liberatr_input_port_0_r },
 	{ 0x4001, 0x4001, input_port_1_r },
 	{ 0x4800, 0x483f, atari_vg_earom_r },
@@ -180,11 +181,7 @@ static struct MemoryReadAddress liberat2_readmem[] =
 
 static struct MemoryWriteAddress liberatr_writemem[] =
 {
-	{ 0x0000, 0x0000, MWA_RAM, &liberatr_x },
-	{ 0x0001, 0x0001, MWA_RAM, &liberatr_y },
 	{ 0x0002, 0x0002, liberatr_bitmap_xy_w },
-	{ 0x0003, 0x033f, MWA_RAM },
-	{ 0x3d40, 0x3fff, MWA_RAM },
 	{ 0x0000, 0x3fff, liberatr_bitmap_w },	/* overlapping for my convinience */
 	{ 0x6000, 0x600f, MWA_RAM, &liberatr_base_ram },
 	{ 0x6200, 0x621f, liberatr_colorram_w },
@@ -201,16 +198,15 @@ static struct MemoryWriteAddress liberatr_writemem[] =
 	{ 0x7800, 0x781f, pokey1_w },
 	{ 0x8000, 0xefff, MWA_ROM },
 	{ 0xfffa, 0xffff, MWA_ROM },
+
+	{ 0x0000, 0x0000, MWA_RAM, &liberatr_x },	/* just here to assign pointer */
+	{ 0x0001, 0x0001, MWA_RAM, &liberatr_y },	/* just here to assign pointer */
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress liberat2_writemem[] =
 {
-	{ 0x0000, 0x0000, MWA_RAM, &liberatr_x },
-	{ 0x0001, 0x0001, MWA_RAM, &liberatr_y },
 	{ 0x0002, 0x0002, liberatr_bitmap_xy_w },
-	{ 0x0003, 0x033f, MWA_RAM },
-	{ 0x3d40, 0x3fff, MWA_RAM },
 	{ 0x0000, 0x3fff, liberatr_bitmap_w },	/* overlapping for my convinience */
 	{ 0x4000, 0x400f, MWA_RAM, &liberatr_base_ram },
 	{ 0x4200, 0x421f, liberatr_colorram_w },
@@ -228,6 +224,9 @@ static struct MemoryWriteAddress liberat2_writemem[] =
 	//{ 0x6000, 0x601f, pokey1_w }, /* bug ??? */
 	{ 0x6000, 0xbfff, MWA_ROM },
 	{ 0xfffa, 0xffff, MWA_ROM },
+
+	{ 0x0000, 0x0000, MWA_RAM, &liberatr_x },	/* just here to assign pointer */
+	{ 0x0001, 0x0001, MWA_RAM, &liberatr_y },	/* just here to assign pointer */
 	{ -1 }	/* end of table */
 };
 
@@ -347,12 +346,12 @@ static struct MachineDriver NAME##_machine_driver =		\
 			interrupt, 4								\
 		}												\
 	},													\
-	57, DEFAULT_REAL_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */	\
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */	\
 	1,      /* single CPU, no need for interleaving */	\
 	0,													\
 														\
 	/* video hardware */								\
-	256, 256, { 0, 255, 13, 244 },						\
+	256, 256, { 8, 247, 13, 244 },						\
 	0,      /* no gfxdecodeinfo - bitmapped display */	\
 	32, 0,												\
 	0,													\

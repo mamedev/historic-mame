@@ -293,8 +293,11 @@ int frontend_help (int argc, char **argv)
 		/* find the FIRST "gamename" field (without '-') */
 		if ((strlen(gamename) == 0) && (argv[i][0] != '-'))
 		{
-			strncpy(gamename, argv[i], 8);
-			gamename[8] = 0;
+			/* check if a filename was entered as the game name */
+			/* and remove any remaining portion of file extension */
+			for (j = 0;j < 8 && argv[i][j] && argv[i][j] != '.';j++)
+				gamename[j] = argv[i][j];
+			gamename[j] = 0;
 		}
 	}
 

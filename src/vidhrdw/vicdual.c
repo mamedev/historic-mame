@@ -98,6 +98,11 @@ void vicdual_characterram_w(int offset,int data)
 	}
 }
 
+int vicdual_characterram_r(int offset)
+{
+	return vicdual_characterram[offset];
+}
+
 void vicdual_palette_bank_w(int offset, int data)
 {
 	if (palette_bank != (data & 3))

@@ -19,15 +19,14 @@ extern struct GameDriver starhawk_driver;
 extern struct GameDriver solarq_driver;
 extern struct GameDriver demon_driver;
 extern struct GameDriver boxingb_driver;
+extern struct GameDriver speedfrk_driver;
 
 Don't work due to bug in the input handling
 
-extern struct GameDriver speedfrk_driver;
 extern struct GameDriver sundance_driver;
 
 to do:
 
-* Fix Speed Freak controls
 * Fix Sundance controls
 
 ***************************************************************************/
@@ -45,6 +44,11 @@ extern int cinemat_vh_start (void);
 extern void cinemat_vh_stop (void);
 extern void cinemat_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
 extern int cinemat_clear_list(void);
+
+extern void spacewar_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+extern int spacewar_vh_start (void);
+extern void spacewar_vh_stop (void);
+extern void spacewar_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
 
 /* from sndhrdw/cinemat.c */
 extern void cinemat_sound_init (void);
@@ -291,11 +295,12 @@ void cinemat32k_rom_decode (void)
 
 static unsigned char color_prom_bilevel_overlay[] = { CCPU_MONITOR_BILEV | 0x80 };
 static unsigned char color_prom_bilevel_backdrop[] = { CCPU_MONITOR_BILEV | 0x40 };
+//static unsigned char color_prom_bilevel_artwork[] = { CCPU_MONITOR_BILEV | 0xc0 };
 static unsigned char color_prom_bilevel[] = { CCPU_MONITOR_BILEV };
 static unsigned char color_prom_bilevel_sc[] = { CCPU_MONITOR_BILEV | 0xa0 , 1};
 static unsigned char color_prom_bilevel_sd[] = { CCPU_MONITOR_BILEV | 0xa0 , 2};
 static unsigned char color_prom_bilevel_tg[] = { CCPU_MONITOR_BILEV | 0xa0 , 3};
-static unsigned char color_prom_bilevel_sq[] = { CCPU_MONITOR_BILEV | 0xa0 , 4};
+static unsigned char color_prom_bilevel_sq[] = { CCPU_MONITOR_BILEV | 0xe0 , 4};
 static unsigned char color_prom_wotw[] = { CCPU_MONITOR_WOWCOL };
 
 
@@ -401,9 +406,43 @@ void spacewar_init_machine (void)
     cinemat_sound_handler = spacewar_sound;
 }
 
+static struct MachineDriver spacewar_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_CCPU,
+			5000000,
+			0,
+			readmem,writemem,readport,writeport,
+			cinemat_clear_list, 1
+		}
+	},
+	38, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
+	1,
+	spacewar_init_machine,
 
-CINEMA_MACHINE (spacewar, 0, 0, 1024, 768)
+	/* video hardware */
+	400, 300, { 0, 1024, 0, 768 },
+	gfxdecodeinfo,
+	256, 256,
+ 	spacewar_init_colors,
 
+	VIDEO_TYPE_VECTOR,
+	0,
+	spacewar_vh_start,
+	spacewar_vh_stop,
+	spacewar_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_SAMPLES,
+			&cinemat_samples_interface
+		}
+	}
+};
 
 struct GameDriver spacewar_driver =
 {
@@ -1014,33 +1053,40 @@ struct GameDriver ripoff_driver =
 
 ***************************************************************************/
 
-int speedfrk_gear = 1;
-
-static UINT8 speedfrk_steer[] = {0xe, 0x6, 0x2, 0x0, 0x01, 0x3, 0x7, 0xf};
+static UINT8 speedfrk_steer[] = {0xe, 0x6, 0x2, 0x0, 0x3, 0x7, 0xf};
 
 int speedfrk_in2_r(int offset)
 {
-	int gear;
-	int val;
+    static int last_wheel=0, delta_wheel, last_frame=0, gear=0xe0;
+	int val, current_frame;
 
 	/* check the fake gear input port and determine the bit settings for the gear */
-	gear = input_port_5_r(0);
-	if (gear & 0x10)				speedfrk_gear=1;
-	else if (gear & 0x20)			speedfrk_gear=2;
-	else if (gear & 0x40)			speedfrk_gear=3;
-	else if (gear & 0x80)			speedfrk_gear=4;
+	if ((input_port_4_r(0) & 0xf0) != 0xf0)
+        gear = input_port_4_r(0) & 0xf0;
 
-	if (speedfrk_gear==1)		val = 0xE0;
-	else if (speedfrk_gear==2)	val = 0xD0;
-	else if (speedfrk_gear==3)	val = 0xB0;
-	else						val = 0x70;
+    val = gear;
 
 	/* add the start key into the mix */
-	if (input_port_2_r(0) & 0x80) val |= 0x80;
-	else val &= ~0x80;
+	if (input_port_2_r(0) & 0x80)
+        val |= 0x80;
+	else
+        val &= ~0x80;
 
 	/* and for the cherry on top, we add the scrambled analog steering */
-    val |= speedfrk_steer[input_port_2_r(0) & 0x07];
+    current_frame = cpu_getcurrentframe();
+    if (current_frame > last_frame)
+    {
+        /* the shift register is cleared once per 'frame' */
+        delta_wheel = input_port_3_r(0) - last_wheel;
+        last_wheel += delta_wheel;
+        if (delta_wheel > 3)
+            delta_wheel = 3;
+        else if (delta_wheel < -3)
+            delta_wheel = -3;
+    }
+    last_frame = current_frame;
+
+    val |= speedfrk_steer[delta_wheel + 3];
 
 	return val;
 }
@@ -1057,12 +1103,6 @@ static int speedfrk_readports (int offset)
 
 		case CCPU_PORT_IOOUTPUTS:
 			return cinemat_outputs;
-
-		case CCPU_PORT_IN_JOYSTICKX:
-			return readinputport (3) << 2;
-
-		case CCPU_PORT_IN_JOYSTICKY:
-			return readinputport (4) << 2;
 	}
 
 	return 0;
@@ -1107,18 +1147,15 @@ INPUT_PORTS_START ( speedfrk_input_ports )
 	PORT_BIT ( 0x70, IP_ACTIVE_LOW,  IPT_UNUSED ) /* actually the gear shift, see fake below */
 	PORT_ANALOG ( 0x0f, 0x04, IPT_AD_STICK_X|IPF_CENTER, 25, 1, 0, 0x00, 0x08 )
 
-	PORT_START /* joystick X */
-	PORT_BIT ( 0xff, IP_ACTIVE_LOW,  IPT_UNUSED )
+    PORT_START /* steering wheel */
+	PORT_ANALOG ( 0xff, 0x00, IPT_DIAL, 100, 1, 0, 0x00, 0xff )
 
-	PORT_START /* joystick Y */
-	PORT_BIT ( 0xff, IP_ACTIVE_LOW,  IPT_UNUSED )
-
-	PORT_START /* in5 - fake for gear shift */
+	PORT_START /* in4 - fake for gear shift */
 	PORT_BIT ( 0x0f, IP_ACTIVE_HIGH, IPT_UNUSED )
-	PORT_BITX( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_PLAYER2, "1st gear", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
-	PORT_BITX( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_PLAYER2, "2nd gear", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
-	PORT_BITX( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER2, "3rd gear", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
-	PORT_BITX( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_PLAYER2, "4th gear", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2, "1st gear", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2, "2nd gear", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2, "3rd gear", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER2, "4th gear", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 INPUT_PORTS_END
 
 
@@ -1157,7 +1194,7 @@ struct GameDriver speedfrk_driver =
 	"Vectorbeam",
 	"Aaron Giles (Mame Driver)\nZonn Moore (hardware info)\nJeff Mitchell (hardware info)\n"
 	"Neil Bradley (hardware info)\n"VECTOR_TEAM,
-	GAME_NOT_WORKING,
+	0,
 	&speedfrk_machine_driver,
 	0,
 

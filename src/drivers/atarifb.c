@@ -478,7 +478,7 @@ static struct MachineDriver machine_driver =
 			interrupt,4
 		}
 	},
-	57, 2037,	/* frames per second, vblank duration: 16.3ms * 1/8 = 2037.5. Is it 1/8th or 3/32nds? (1528?) */
+	60, 2037,	/* frames per second, vblank duration: 16.3ms * 1/8 = 2037.5. Is it 1/8th or 3/32nds? (1528?) */
 //	60, 1528,	/* frames per second, vblank duration: 16.3ms * 3/32 = 1528.125. Is it 1/8th or 3/32nds? (1528?) */
 	1,	/* single CPU, no need for interleaving */
 	0,
@@ -517,7 +517,7 @@ static struct MachineDriver atarifb4_machine_driver =
 			interrupt,4
 		}
 	},
-	57, 2037,	/* frames per second, vblank duration: 16.3ms * 1/8 = 2037.5. Is it 1/8th or 3/32nds? (1528?) */
+	60, 2037,	/* frames per second, vblank duration: 16.3ms * 1/8 = 2037.5. Is it 1/8th or 3/32nds? (1528?) */
 //	60, 1528,	/* frames per second, vblank duration: 16.3ms * 3/32 = 1528.125. Is it 1/8th or 3/32nds? (1528?) */
 	1,	/* single CPU, no need for interleaving */
 	0,

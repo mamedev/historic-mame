@@ -22,12 +22,12 @@ playfield 2.  Caveman Ninja uses two of these chips.
 		Mask 0xffff: Playfield 1 Y scroll (bottom playfield)
 	Word 0xa:
 		Mask 0xc000: Playfield 1 shape??
-		Mask 0x3000: Playfield 1 rowscroll style (maybe mask 0x3800??)
-		Mask 0x0300: Playfield 1 colscroll style (maybe mask 0x0700??)?
+		Mask 0x3800: Playfield 1 rowscroll style
+		Mask 0x0700: Playfield 1 colscroll style
 
 		Mask 0x00c0: Playfield 2 shape??
-		Mask 0x0030: Playfield 2 rowscroll style (maybe mask 0x0038??)
-		Mask 0x0003: Playfield 2 colscroll style (maybe mask 0x0007??)?
+		Mask 0x0038: Playfield 2 rowscroll style
+		Mask 0x0007: Playfield 2 colscroll style
 	Word 0xc:
 		Mask 0x8000: Playfield 1 is 8*8 tiles else 16*16
 		Mask 0x4000: Playfield 1 rowscroll enabled
@@ -111,7 +111,7 @@ static unsigned char cninja_control_0[16];
 static unsigned char cninja_control_1[16];
 
 static int cninja_pf2_bank,cninja_pf3_bank;
-static int bootleg;
+static int bootleg,spritemask,color_base,flipscreen;
 
 static unsigned char *cninja_spriteram;
 
@@ -158,7 +158,7 @@ static void mark_sprites_colors(void)
 	{
 		int x,y,sprite,multi;
 
-		sprite = READ_WORD (&cninja_spriteram[offs+2]) & 0x3fff;
+		sprite = READ_WORD (&cninja_spriteram[offs+2]) & spritemask;
 		if (!sprite) continue;
 
 		x = READ_WORD(&cninja_spriteram[offs+4]);
@@ -198,8 +198,8 @@ static void cninja_drawsprites(struct osd_bitmap *bitmap, int pri)
 
 	for (offs = 0;offs < 0x800;offs += 8)
 	{
-		int x,y,sprite,colour,multi,fx,fy,inc,flash;
-		sprite = READ_WORD (&cninja_spriteram[offs+2]) & 0x3fff;
+		int x,y,sprite,colour,multi,fx,fy,inc,flash,mult;
+		sprite = READ_WORD (&cninja_spriteram[offs+2]) & spritemask;
 		if (!sprite) continue;
 
 		x = READ_WORD(&cninja_spriteram[offs+4]);
@@ -235,13 +235,22 @@ static void cninja_drawsprites(struct osd_bitmap *bitmap, int pri)
 			inc = 1;
 		}
 
+		if (flipscreen) {
+			y=240-y;
+			x=240-x;
+			if (fx) fx=0; else fx=1;
+			if (fy) fy=0; else fy=1;
+			mult=16;
+		}
+		else mult=-16;
+
 		while (multi >= 0)
 		{
 			drawgfx(bitmap,Machine->gfx[4],
 					sprite - multi * inc,
 					colour,
 					fx,fy,
-					x,y - 16 * multi,
+					x,y + mult * multi,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 
 			multi--;
@@ -263,7 +272,7 @@ static void get_back_tile_info( int col, int row )
 	color=tile >> 12;
 	tile=tile&0xfff;
 
-	SET_TILE_INFO(gfx_bank,tile,color)
+	SET_TILE_INFO(gfx_bank,tile,color+color_base)
 }
 
 /* 8x8 top layer */
@@ -285,6 +294,10 @@ void cninja_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	int offs;
 	int pf23_control,pf1_control;
 
+	/* Update flipscreen */
+	flipscreen = READ_WORD(&cninja_control_1[0])&0x80;
+	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
+
 	/* Handle gfx rom switching */
 	pf23_control=READ_WORD (&cninja_control_0[0xe]);
 	if ((pf23_control&0xff)==0x00)
@@ -303,23 +316,26 @@ void cninja_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 	/* Background - Rowscroll enable */
 	if (pf23_control&0x4000) {
-		int scrollx=READ_WORD(&cninja_control_0[6]);
-		tilemap_set_scroll_cols(cninja_pf3_tilemap,1);
-		tilemap_set_scrolly( cninja_pf3_tilemap,0, READ_WORD(&cninja_control_0[8]) );
+		int scrollx=READ_WORD(&cninja_control_0[6]),rows;
+		tilemap_set_scroll_cols(cninja_pf2_tilemap,1);
+		tilemap_set_scrolly( cninja_pf2_tilemap,0, READ_WORD(&cninja_control_0[8]) );
 
 		/* Several different rowscroll styles! */
-		switch ((READ_WORD (&cninja_control_0[0xa])>>12)&7) {
-			case 2: /* 16 rows (of 16 pixels) */
-				tilemap_set_scroll_rows(cninja_pf2_tilemap,16);
-				for (offs = 0;offs < 16;offs++)
-					tilemap_set_scrollx( cninja_pf2_tilemap,offs, scrollx + READ_WORD(&cninja_pf2_rowscroll[2*offs]) );
-				break;
-			case 0: /* 256 rows (doubled because the bitmap is 512 */
-				tilemap_set_scroll_rows(cninja_pf2_tilemap,512);
-				for (offs = 0;offs < 512; offs++)
-					tilemap_set_scrollx( cninja_pf2_tilemap,offs, scrollx + READ_WORD(&cninja_pf2_rowscroll[2*offs]) );
-				break;
+		switch ((READ_WORD (&cninja_control_0[0xa])>>11)&7) {
+			case 0: rows=512; break;/* Every line of 512 height bitmap */
+			case 1: rows=256; break;
+			case 2: rows=128; break;
+			case 3: rows=64; break;
+			case 4: rows=32; break;
+			case 5: rows=16; break;
+			case 6: rows=8; break;
+			case 7: rows=4; break;
+			default: rows=1; break;
 		}
+
+		tilemap_set_scroll_rows(cninja_pf2_tilemap,rows);
+		for (offs = 0;offs < rows;offs++)
+			tilemap_set_scrollx( cninja_pf2_tilemap,offs, scrollx + READ_WORD(&cninja_pf2_rowscroll[2*offs]) );
 	}
 	else {
 		tilemap_set_scroll_rows(cninja_pf2_tilemap,1);
@@ -330,13 +346,25 @@ void cninja_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 	/* Playfield 3 */
 	if (pf23_control&0x40) { /* Rowscroll */
-		int scrollx=READ_WORD(&cninja_control_0[2]);
-		tilemap_set_scroll_rows(cninja_pf3_tilemap,32);
+		int scrollx=READ_WORD(&cninja_control_0[2]),rows;
 		tilemap_set_scroll_cols(cninja_pf3_tilemap,1);
 		tilemap_set_scrolly( cninja_pf3_tilemap,0, READ_WORD(&cninja_control_0[4]) );
 
-		/* We have to map 16 screen tiles to the size of the bitmap... */
-		for (offs = 0;offs < 32;offs++)
+		/* Several different rowscroll styles! */
+		switch ((READ_WORD (&cninja_control_0[0xa])>>3)&7) {
+			case 0: rows=512; break;/* Every line of 512 height bitmap */
+			case 1: rows=256; break;
+			case 2: rows=128; break;
+			case 3: rows=64; break;
+			case 4: rows=32; break;
+			case 5: rows=16; break;
+			case 6: rows=8; break;
+			case 7: rows=4; break;
+			default: rows=1; break;
+		}
+
+		tilemap_set_scroll_rows(cninja_pf3_tilemap,rows);
+		for (offs = 0;offs < rows;offs++)
 			tilemap_set_scrollx( cninja_pf3_tilemap,offs, scrollx + READ_WORD(&cninja_pf3_rowscroll[2*offs]) );
 	}
 	else if (pf23_control&0x20) { /* Colscroll */
@@ -357,7 +385,29 @@ void cninja_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	}
 
 	/* Top foreground */
-	if (pf1_control&0x2000) { /* Colscroll */
+	if (pf1_control&0x4000) {
+		int scrollx=READ_WORD(&cninja_control_1[6]),rows;
+		tilemap_set_scroll_cols(cninja_pf4_tilemap,1);
+		tilemap_set_scrolly( cninja_pf4_tilemap,0, READ_WORD(&cninja_control_1[8]) );
+
+		/* Several different rowscroll styles! */
+		switch ((READ_WORD (&cninja_control_1[0xa])>>11)&7) {
+			case 0: rows=512; break;/* Every line of 512 height bitmap */
+			case 1: rows=256; break;
+			case 2: rows=128; break;
+			case 3: rows=64; break;
+			case 4: rows=32; break;
+			case 5: rows=16; break;
+			case 6: rows=8; break;
+			case 7: rows=4; break;
+			default: rows=1; break;
+		}
+
+		tilemap_set_scroll_rows(cninja_pf4_tilemap,rows);
+		for (offs = 0;offs < rows;offs++)
+			tilemap_set_scrollx( cninja_pf4_tilemap,offs, scrollx + READ_WORD(&cninja_pf4_rowscroll[2*offs]) );
+	}
+	else if (pf1_control&0x2000) { /* Colscroll */
 		int scrolly=READ_WORD(&cninja_control_1[8]);
 		tilemap_set_scroll_rows(cninja_pf4_tilemap,1);
 		tilemap_set_scroll_cols(cninja_pf4_tilemap,64);
@@ -376,16 +426,30 @@ void cninja_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 	/* Playfield 1 - 8 * 8 Text */
 	if (pf1_control&0x40) { /* Rowscroll */
-		int scrollx=READ_WORD(&cninja_control_1[2]);
-		tilemap_set_scroll_rows(cninja_pf1_tilemap,256);
+		int scrollx=READ_WORD(&cninja_control_1[2]),rows;
 		tilemap_set_scroll_cols(cninja_pf1_tilemap,1);
 		tilemap_set_scrolly( cninja_pf1_tilemap,0, READ_WORD(&cninja_control_1[4]) );
 
-		/* We have to map 16 screen tiles to the size of the bitmap... */
-		for (offs = 0;offs < 256;offs++)
+		/* Several different rowscroll styles! */
+		switch ((READ_WORD (&cninja_control_1[0xa])>>3)&7) {
+			case 0: rows=256; break;
+			case 1: rows=128; break;
+			case 2: rows=64; break;
+			case 3: rows=32; break;
+			case 4: rows=16; break;
+			case 5: rows=8; break;
+			case 6: rows=4; break;
+			case 7: rows=2; break;
+			default: rows=1; break;
+		}
+
+		tilemap_set_scroll_rows(cninja_pf1_tilemap,rows);
+		for (offs = 0;offs < rows;offs++)
 			tilemap_set_scrollx( cninja_pf1_tilemap,offs, scrollx + READ_WORD(&cninja_pf1_rowscroll[2*offs]) );
 	}
 	else {
+		tilemap_set_scroll_rows(cninja_pf1_tilemap,1);
+		tilemap_set_scroll_cols(cninja_pf1_tilemap,1);
 		tilemap_set_scrollx( cninja_pf1_tilemap,0, READ_WORD(&cninja_control_1[2]) );
 		tilemap_set_scrolly( cninja_pf1_tilemap,0, READ_WORD(&cninja_control_1[4]) );
 	}
@@ -393,14 +457,17 @@ void cninja_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	/* Update playfields */
 	gfx_bank=cninja_pf2_bank;
 	gfx_base=cninja_pf2_data;
+	color_base=48;
 	tilemap_update(cninja_pf2_tilemap);
 
 	gfx_bank=cninja_pf3_bank;
 	gfx_base=cninja_pf3_data;
+	color_base=0;
 	tilemap_update(cninja_pf3_tilemap);
 
 	gfx_bank=3;
 	gfx_base=cninja_pf4_data;
+	color_base=0;
 	tilemap_update(cninja_pf4_tilemap);
 	tilemap_update(cninja_pf1_tilemap);
 
@@ -418,6 +485,49 @@ void cninja_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 	tilemap_draw(bitmap,cninja_pf4_tilemap,TILEMAP_FRONT);
 	cninja_drawsprites(bitmap,1);
 	tilemap_draw(bitmap,cninja_pf1_tilemap,0);
+
+#if 0
+{
+
+	int i,j;
+	char buf[20];
+	int trueorientation;
+	struct osd_bitmap *mybitmap = Machine->scrbitmap;
+
+	trueorientation = Machine->orientation;
+	Machine->orientation = ORIENTATION_DEFAULT;
+
+
+for (i = 0;i < 8;i+=2)
+{
+	sprintf(buf,"%04X",READ_WORD(&cninja_control_0[i]));
+	for (j = 0;j < 4;j++)
+		drawgfx(mybitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j,8*5,0,TRANSPARENCY_NONE,0);
+}
+for (i = 0;i < 8;i+=2)
+{
+	sprintf(buf,"%04X",READ_WORD(&cninja_control_0[i+8]));
+	for (j = 0;j < 4;j++)
+		drawgfx(mybitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j,8*6,0,TRANSPARENCY_NONE,0);
+}
+for (i = 0;i < 8;i+=2)
+{
+	sprintf(buf,"%04X",READ_WORD(&cninja_control_1[i+0]));
+	for (j = 0;j < 4;j++)
+		drawgfx(mybitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j,8*8,0,TRANSPARENCY_NONE,0);
+}
+for (i = 0;i < 8;i+=2)
+{
+	sprintf(buf,"%04X",READ_WORD(&cninja_control_1[i+8]));
+	for (j = 0;j < 4;j++)
+		drawgfx(mybitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j,8*9,0,TRANSPARENCY_NONE,0);
+}
+
+
+	Machine->orientation = trueorientation;
+
+}
+#endif
 }
 
 /******************************************************************************/
@@ -556,6 +666,12 @@ int cninja_vh_start(void)
 		bootleg=1;
 	else
 		bootleg=0;
+
+	if (!strcmp(Machine->gamedrv->name,"edrandy")
+		|| !strcmp(Machine->gamedrv->name,"edrandyj"))
+		spritemask=0xffff;
+	else
+		spritemask=0x3fff;
 
 	cninja_pf2_bank=1;
 	cninja_pf3_bank=2;

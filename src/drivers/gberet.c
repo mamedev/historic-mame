@@ -47,6 +47,14 @@ f600      watchdog reset (?)
 interrupts:
 The game uses both IRQ (mode 1) and NMI.
 
+
+TODO:
+gberetb:
+- cocktail mode
+mrgoemon:
+- flickering rogue sprites
+- it resets during the first boot sequence, but works afterwards
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -54,8 +62,11 @@ The game uses both IRQ (mode 1) and NMI.
 
 
 
+extern unsigned char *gberet_videoram,*gberet_colorram;
 extern unsigned char *gberet_spritebank;
 extern unsigned char *gberet_scrollram;
+void gberet_videoram_w(int offset,int data);
+void gberet_colorram_w(int offset,int data);
 void gberet_e044_w(int offset,int data);
 void gberet_scroll_w(int offset,int data);
 void gberetb_scroll_w(int offset,int data);
@@ -63,10 +74,31 @@ void gberet_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 int gberet_vh_start(void);
 void gberet_init(void);
 void gberetb_init(void);
-void gberet_vh_stop(void);
 void gberet_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 int gberet_interrupt(void);
+
+
+static void gberet_coincounter_w(int offset,int data)
+{
+	/* bits 0/1 = coin counters */
+	coin_counter_w(0,data & 1);
+	coin_counter_w(1,data & 2);
+}
+
+static void mrgoemon_bankswitch_w(int offset,int data)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	int offs;
+
+	/* bits 0/1 = coin counters */
+	coin_counter_w(0,data & 1);
+	coin_counter_w(1,data & 2);
+
+	/* bits 5-7 = ROM bank select */
+	offs = 0x10000 + ((data & 0xe0) >> 5) * 0x800;
+	cpu_setbank(1,&RAM[offs]);
+}
 
 
 
@@ -87,15 +119,15 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xc7ff, colorram_w, &colorram },
-	{ 0xc800, 0xcfff, videoram_w, &videoram, &videoram_size },
+	{ 0xc000, 0xc7ff, gberet_colorram_w, &gberet_colorram },
+	{ 0xc800, 0xcfff, gberet_videoram_w, &gberet_videoram },
 	{ 0xd000, 0xd0ff, MWA_RAM, &spriteram_2 },
 	{ 0xd100, 0xd1ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xd200, 0xdfff, MWA_RAM },
 	{ 0xe000, 0xe03f, gberet_scroll_w, &gberet_scrollram },
 	{ 0xe043, 0xe043, MWA_RAM, &gberet_spritebank },
 	{ 0xe044, 0xe044, gberet_e044_w },
-//	{ 0xf000, 0xf000, MWA_NOP },
+	{ 0xf000, 0xf000, gberet_coincounter_w },
 	{ 0xf200, 0xf200, MWA_NOP },		/* Loads the snd command into the snd latch */
 	{ 0xf400, 0xf400, SN76496_0_w },	/* This address triggers the SN chip to read the data port. */
 //	{ 0xf600, 0xf600, MWA_NOP },
@@ -105,8 +137,8 @@ static struct MemoryWriteAddress writemem[] =
 static struct MemoryWriteAddress gberetb_writemem[] =
 {
 	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xc7ff, colorram_w, &colorram },
-	{ 0xc800, 0xcfff, videoram_w, &videoram, &videoram_size },
+	{ 0xc000, 0xc7ff, gberet_colorram_w, &gberet_colorram },
+	{ 0xc800, 0xcfff, gberet_videoram_w, &gberet_videoram },
 	{ 0xd000, 0xd0ff, MWA_RAM },
 	{ 0xd100, 0xd1ff, MWA_RAM },
 	{ 0xd200, 0xdfff, MWA_RAM },
@@ -117,8 +149,39 @@ static struct MemoryWriteAddress gberetb_writemem[] =
 	{ 0xf900, 0xf901, gberetb_scroll_w },
 //	{ 0xe043, 0xe043, MWA_RAM, &gberet_spritebank },
 	{ 0xe044, 0xe044, gberet_e044_w },
-//	{ 0xf000, 0xf000, MWA_NOP },
 	{ 0xf400, 0xf400, SN76496_0_w },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryReadAddress mrgoemon_readmem[] =
+{
+	{ 0x0000, 0xbfff, MRA_ROM },
+	{ 0xc000, 0xe03f, MRA_RAM },
+	{ 0xf200, 0xf200, input_port_4_r },	/* DSW1 */
+	{ 0xf400, 0xf400, input_port_5_r },	/* DSW2 */
+	{ 0xf600, 0xf600, input_port_3_r },	/* DSW0 */
+	{ 0xf601, 0xf601, input_port_1_r },	/* IN1 */
+	{ 0xf602, 0xf602, input_port_0_r },	/* IN0 */
+	{ 0xf603, 0xf603, input_port_2_r },	/* IN2 */
+	{ 0xf800, 0xffff, MRA_BANK1 },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress mrgoemon_writemem[] =
+{
+	{ 0x0000, 0xbfff, MWA_ROM },
+	{ 0xc000, 0xc7ff, gberet_colorram_w, &gberet_colorram },
+	{ 0xc800, 0xcfff, gberet_videoram_w, &gberet_videoram },
+	{ 0xd000, 0xd0ff, MWA_RAM, &spriteram_2 },
+	{ 0xd100, 0xd1ff, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0xd200, 0xdfff, MWA_RAM },
+	{ 0xe000, 0xe03f, gberet_scroll_w, &gberet_scrollram },
+	{ 0xe043, 0xe043, MWA_RAM, &gberet_spritebank },
+	{ 0xe044, 0xe044, gberet_e044_w },
+	{ 0xf000, 0xf000, mrgoemon_bankswitch_w },	/* + coin counters */
+	{ 0xf200, 0xf200, MWA_NOP },		/* Loads the snd command into the snd latch */
+	{ 0xf400, 0xf400, SN76496_0_w },	/* This address triggers the SN chip to read the data port. */
+	{ 0xf800, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
@@ -126,20 +189,20 @@ static struct MemoryWriteAddress gberetb_writemem[] =
 
 INPUT_PORTS_START( gberet_input_ports )
 	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -211,8 +274,8 @@ INPUT_PORTS_START( gberet_input_ports )
 	PORT_DIPSETTING(    0x20, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* DSW2 */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
@@ -233,10 +296,10 @@ INPUT_PORTS_END
 /* IN2 is different and IN1 and DSW0 are swapped */
 INPUT_PORTS_START( gberetb_input_ports )
 	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -289,10 +352,10 @@ INPUT_PORTS_START( gberetb_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
 	PORT_START	/* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -318,8 +381,8 @@ INPUT_PORTS_START( gberetb_input_ports )
 	PORT_DIPSETTING(    0x20, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
 	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* DSW2 */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
@@ -331,6 +394,110 @@ INPUT_PORTS_START( gberetb_input_ports )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR ( Unknown ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR ( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( mrgoemon_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x05, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(    0x07, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x0e, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x06, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(    0x0d, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x0b, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x0a, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x09, DEF_STR( 1C_7C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0x50, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 3C_4C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 2C_5C ) )
+	PORT_DIPSETTING(    0xd0, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0xb0, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) )
+	/* 0x00 is invalid */
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x03, "2" )
+	PORT_DIPSETTING(    0x02, "3" )
+	PORT_DIPSETTING(    0x01, "5" )
+	PORT_DIPSETTING(    0x00, "7" )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x18, "20000 and every 60000" )
+	PORT_DIPSETTING(    0x10, "30000 and every 70000" )
+	PORT_DIPSETTING(    0x08, "40000 and every 80000" )
+	PORT_DIPSETTING(    0x00, "50000 and every 90000" )
+	PORT_DIPNAME( 0x60, 0x60, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x60, "Easy" )
+	PORT_DIPSETTING(    0x40, "Medium" )
+	PORT_DIPSETTING(    0x20, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	/* DSW2 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "Controls" )
+	PORT_DIPSETTING(    0x02, "Single" )
+	PORT_DIPSETTING(    0x00, "Dual" )
+	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR ( Unknown ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -423,7 +590,6 @@ static struct MachineDriver machine_driver =
 			0,
 			readmem,writemem,0,0,
 			gberet_interrupt,32	/* 1 IRQ + 16 NMI (generated by a custom IC) */
-				/* the IC also generates FIRQ, so it was designed to interface with a 6809 */
 		}
 	},
 	30, DEFAULT_30HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -439,7 +605,7 @@ static struct MachineDriver machine_driver =
 	VIDEO_TYPE_RASTER,
 	0,
 	gberet_vh_start,
-	gberet_vh_stop,
+	0,
 	gberet_vh_screenrefresh,
 
 	/* sound hardware */
@@ -477,7 +643,45 @@ static struct MachineDriver gberetb_machine_driver =
 	VIDEO_TYPE_RASTER,
 	0,
 	gberet_vh_start,
-	gberet_vh_stop,
+	0,
+	gberet_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_SN76496,
+			&sn76496_interface
+		}
+	}
+};
+
+static struct MachineDriver mrgoemon_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			18432000/6,	/* X1S (generated by a custom IC) */
+			0,
+			mrgoemon_readmem,mrgoemon_writemem,0,0,
+			gberet_interrupt,16	/* 1 IRQ + 8 NMI */
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* single CPU, no need for interleaving */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 1*8, 31*8-1, 2*8, 30*8-1 },
+	gfxdecodeinfo,
+	32,2*16*16,
+	gberet_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER,
+	0,
+	gberet_vh_start,
+	0,
 	gberet_vh_screenrefresh,
 
 	/* sound hardware */
@@ -511,10 +715,10 @@ ROM_START( gberet_rom )
 	ROM_LOAD( "f04_l08.bin",  0x0c000, 0x4000, 0x883933a4 )
 	ROM_LOAD( "e03_l04.bin",  0x10000, 0x4000, 0xccecda4c )
 
-	ROM_REGION(0x220)	/* color/lookup proms */
-	ROM_LOAD( "577h09",       0x00000, 0x0020, 0xc15e7c80 ) /* palette */
-	ROM_LOAD( "577h10",       0x00020, 0x0100, 0xe9de1e53 ) /* sprites */
-	ROM_LOAD( "577h11",       0x00120, 0x0100, 0x2a1a992b ) /* characters */
+	ROM_REGION(0x0220)	/* color/lookup proms */
+	ROM_LOAD( "577h09",       0x0000, 0x0020, 0xc15e7c80 ) /* palette */
+	ROM_LOAD( "577h10",       0x0020, 0x0100, 0xe9de1e53 ) /* sprites */
+	ROM_LOAD( "577h11",       0x0120, 0x0100, 0x2a1a992b ) /* characters */
 ROM_END
 
 ROM_START( rushatck_rom )
@@ -530,10 +734,10 @@ ROM_START( rushatck_rom )
 	ROM_LOAD( "f04_l08.bin",  0x0c000, 0x4000, 0x883933a4 )
 	ROM_LOAD( "e03_l04.bin",  0x10000, 0x4000, 0xccecda4c )
 
-	ROM_REGION(0x220)	/* color/lookup proms */
-	ROM_LOAD( "577h09",       0x00000, 0x0020, 0xc15e7c80 ) /* palette */
-	ROM_LOAD( "577h10",       0x00020, 0x0100, 0xe9de1e53 ) /* sprites */
-	ROM_LOAD( "577h11",       0x00120, 0x0100, 0x2a1a992b ) /* characters */
+	ROM_REGION(0x0220)	/* color/lookup proms */
+	ROM_LOAD( "577h09",       0x0000, 0x0020, 0xc15e7c80 ) /* palette */
+	ROM_LOAD( "577h10",       0x0020, 0x0100, 0xe9de1e53 ) /* sprites */
+	ROM_LOAD( "577h11",       0x0120, 0x0100, 0x2a1a992b ) /* characters */
 ROM_END
 
 ROM_START( gberetb_rom )
@@ -548,10 +752,27 @@ ROM_START( gberetb_rom )
 	ROM_LOAD( "5-ic10.2d",    0x0c000, 0x4000, 0x6a7b3881 )
 	ROM_LOAD( "4-ic11.2e",    0x10000, 0x4000, 0x3fb186c9 )
 
-	ROM_REGION(0x220)	/* color/lookup proms */
-	ROM_LOAD( "577h09",       0x00000, 0x0020, 0xc15e7c80 ) /* palette */
-	ROM_LOAD( "577h10",       0x00020, 0x0100, 0xe9de1e53 ) /* sprites */
-	ROM_LOAD( "577h11",       0x00120, 0x0100, 0x2a1a992b ) /* characters */
+	ROM_REGION(0x0220)	/* color/lookup proms */
+	ROM_LOAD( "577h09",       0x0000, 0x0020, 0xc15e7c80 ) /* palette */
+	ROM_LOAD( "577h10",       0x0020, 0x0100, 0xe9de1e53 ) /* sprites */
+	ROM_LOAD( "577h11",       0x0120, 0x0100, 0x2a1a992b ) /* characters */
+ROM_END
+
+ROM_START( mrgoemon_rom )
+	ROM_REGION(0x14000)	/* 64k for code + banked ROM */
+	ROM_LOAD( "621d01.10c",   0x00000, 0x8000, 0xb2219c56 )
+	ROM_LOAD( "621d02.12c",   0x08000, 0x4000, 0xc3337a97 )
+	ROM_CONTINUE(             0x10000, 0x4000 )
+
+	ROM_REGION_DISPOSE(0x14000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "621a05.6d",   0x00000, 0x4000, 0xf0a6dfc5 )
+	ROM_LOAD( "621d03.4d",   0x04000, 0x8000, 0x66f2b973 )
+	ROM_LOAD( "621d04.5d",   0x0c000, 0x8000, 0x47df6301 )
+
+	ROM_REGION(0x0220)	/* color/lookup proms */
+	ROM_LOAD( "621a06.5f",    0x0000, 0x0020, 0x7c90de5f ) /* palette */
+	ROM_LOAD( "621a07.6f",    0x0020, 0x0100, 0x3980acdc ) /* sprites */
+	ROM_LOAD( "621a08.7f",    0x0120, 0x0100, 0x2fb244dd ) /* characters */
 ROM_END
 
 
@@ -675,4 +896,30 @@ struct GameDriver gberetb_driver =
 	ORIENTATION_DEFAULT,
 
 	0,0
+};
+
+struct GameDriver mrgoemon_driver =
+{
+	__FILE__,
+	0,
+	"mrgoemon",
+	"Mr. Goemon (Japan)",
+	"1986",
+	"Konami",
+	"Nicola Salmoria",
+	0,
+	&mrgoemon_machine_driver,
+	gberet_init,
+
+	mrgoemon_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	mrgoemon_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_DEFAULT,
+
+	0, 0
 };
