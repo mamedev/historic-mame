@@ -677,12 +677,12 @@ VIDEO_UPDATE( hyprduel )
 	   enabled! */
 
 #if 0
-if (keyboard_pressed(KEYCODE_Z))
+if (code_pressed(KEYCODE_Z))
 {	int msk = 0;
-	if (keyboard_pressed(KEYCODE_Q))	msk |= 0x01;
-	if (keyboard_pressed(KEYCODE_W))	msk |= 0x02;
-	if (keyboard_pressed(KEYCODE_E))	msk |= 0x04;
-	if (keyboard_pressed(KEYCODE_A))	msk |= 0x08;
+	if (code_pressed(KEYCODE_Q))	msk |= 0x01;
+	if (code_pressed(KEYCODE_W))	msk |= 0x02;
+	if (code_pressed(KEYCODE_E))	msk |= 0x04;
+	if (code_pressed(KEYCODE_A))	msk |= 0x08;
 	if (msk != 0)
 	{	fillbitmap(bitmap,0,cliprect);
 		layers_ctrl &= msk;	}

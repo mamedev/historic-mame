@@ -51,6 +51,7 @@ static UINT32 recompile_cop1x(struct drccore *drc, UINT32 pc, UINT32 op);
 
 static UINT64 dmult_temp1;
 static UINT64 dmult_temp2;
+static UINT32 jr_temp;
 
 static UINT8 in_delay_slot = 0;
 
@@ -2445,8 +2446,10 @@ static UINT32 recompile_special(struct drccore *drc, UINT32 pc, UINT32 op)
 			return RECOMPILE_SUCCESSFUL_CP(1,4);
 
 		case 0x08:	/* JR */
+			_mov_r32_m32abs(REG_EAX, &mips3.r[RSREG]);								// mov	eax,[rsreg]
+			_mov_m32abs_r32(&jr_temp, REG_EAX);										// mov	jr_temp,eax
 			cycles = recompile_delay_slot(drc, pc + 4);								// <next instruction>
-			_mov_r32_m32abs(REG_EDI, &mips3.r[RSREG]);								// mov	edi,[rsreg]
+			_mov_r32_m32abs(REG_EDI, &jr_temp);										// mov	edi,jr_temp
 			return RECOMPILE_SUCCESSFUL_CP(1+cycles,0) | RECOMPILE_END_OF_STRING | RECOMPILE_ADD_DISPATCH;
 
 		case 0x09:	/* JALR */

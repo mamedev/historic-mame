@@ -121,12 +121,12 @@ static void get_pf4_tile_info(int tile_index)
 
 /*****************************************************************************/
 
-READ_HANDLER( m107_vram_r )
+READ8_HANDLER( m107_vram_r )
 {
 	return m107_vram_data[offset];
 }
 
-WRITE_HANDLER( m107_vram_w )
+WRITE8_HANDLER( m107_vram_w )
 {
 	int a;
 
@@ -151,7 +151,7 @@ WRITE_HANDLER( m107_vram_w )
 
 /*****************************************************************************/
 
-WRITE_HANDLER( m107_control_w )
+WRITE8_HANDLER( m107_control_w )
 {
 	static int last_pf1,last_pf2,last_pf3,last_pf4;
 
@@ -458,7 +458,7 @@ void m107_vh_raster_partial_refresh(struct mame_bitmap *bitmap,int start_line,in
 
 /*****************************************************************************/
 
-WRITE_HANDLER( m107_spritebuffer_w )
+WRITE8_HANDLER( m107_spritebuffer_w )
 {
 	if (offset==0) {
 //		logerror("%04x: buffered spriteram\n",activecpu_get_pc());

@@ -10,7 +10,7 @@ extern VIDEO_EOF( sprint8 );
 extern VIDEO_START( sprint8 );
 extern VIDEO_UPDATE( sprint8 );
 
-extern WRITE_HANDLER( sprint8_video_ram_w );
+extern WRITE8_HANDLER( sprint8_video_ram_w );
 
 extern UINT8* sprint8_video_ram;
 extern UINT8* sprint8_pos_h_ram;
@@ -28,7 +28,7 @@ void sprint8_collision_callback(int n)
 {
 	if (collision_reset == 0)
 	{
-		cpu_set_irq_line(0, 0, ASSERT_LINE);
+		cpunum_set_input_line(0, 0, ASSERT_LINE);
 
 		collision_index = n;
 	}
@@ -131,13 +131,13 @@ static MACHINE_INIT( sprint8 )
 }
 
 
-static READ_HANDLER( sprint8_collision_r )
+static READ8_HANDLER( sprint8_collision_r )
 {
 	return collision_index;
 }
 
 
-static READ_HANDLER( sprint8_input_r )
+static READ8_HANDLER( sprint8_input_r )
 {
 	UINT8 val = readinputport(offset);
 
@@ -154,37 +154,37 @@ static READ_HANDLER( sprint8_input_r )
 }
 
 
-static WRITE_HANDLER( sprint8_lockout_w )
+static WRITE8_HANDLER( sprint8_lockout_w )
 {
 	coin_lockout_w(offset, !(data & 1));
 }
 
 
-static WRITE_HANDLER( sprint8_team_w )
+static WRITE8_HANDLER( sprint8_team_w )
 {
 	fill_palette(!(data & 1));
 }
 
 
-static WRITE_HANDLER( sprint8_int_reset_w )
+static WRITE8_HANDLER( sprint8_int_reset_w )
 {
 	collision_reset = !(data & 1);
 
 	if (collision_reset)
 	{
-		cpu_set_irq_line(0, 0, CLEAR_LINE);
+		cpunum_set_input_line(0, 0, CLEAR_LINE);
 	}
 }
 
 
 /* names of sound effects taken from Tank 8, might differ for Sprint 8 */
 
-static WRITE_HANDLER( sprint8_crash_w ) {}
-static WRITE_HANDLER( sprint8_explosion_w ) {}
-static WRITE_HANDLER( sprint8_bugle_w ) {}
-static WRITE_HANDLER( sprint8_bug_w ) {}
-static WRITE_HANDLER( sprint8_attract_w ) {}
-static WRITE_HANDLER( sprint8_motor_w ) {}
+static WRITE8_HANDLER( sprint8_crash_w ) {}
+static WRITE8_HANDLER( sprint8_explosion_w ) {}
+static WRITE8_HANDLER( sprint8_bugle_w ) {}
+static WRITE8_HANDLER( sprint8_bug_w ) {}
+static WRITE8_HANDLER( sprint8_attract_w ) {}
+static WRITE8_HANDLER( sprint8_motor_w ) {}
 
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )

@@ -30,8 +30,8 @@
 **
 ** 3 jan 2001, Sean Young:
 ** - A few minor cleanups
-** - Changed TMS9928A_vram_[rw] and  TMS9928A_register_[rw] to READ_HANDLER
-**   and WRITE_HANDLER.
+** - Changed TMS9928A_vram_[rw] and  TMS9928A_register_[rw] to READ8_HANDLER
+**   and WRITE8_HANDLER.
 ** - Got rid of the color table, unused. Also got rid of the old colors,
 **   which were commented out anyway.
 **
@@ -286,7 +286,7 @@ static void _TMS9928A_set_dirty (char dirty) {
 /*
 ** The I/O functions.
 */
-READ_HANDLER (TMS9928A_vram_r) {
+READ8_HANDLER (TMS9928A_vram_r) {
     UINT8 b;
     b = tms.ReadAhead;
     tms.ReadAhead = tms.vMem[tms.Addr];
@@ -295,7 +295,7 @@ READ_HANDLER (TMS9928A_vram_r) {
     return b;
 }
 
-WRITE_HANDLER (TMS9928A_vram_w) {
+WRITE8_HANDLER (TMS9928A_vram_w) {
     int i;
 
     if (tms.vMem[tms.Addr] != data) {
@@ -325,7 +325,7 @@ WRITE_HANDLER (TMS9928A_vram_w) {
     tms.latch = 0;
 }
 
-READ_HANDLER (TMS9928A_register_r) {
+READ8_HANDLER (TMS9928A_register_r) {
     UINT8 b;
     b = tms.StatusReg;
     tms.StatusReg = 0x1f;
@@ -337,7 +337,7 @@ READ_HANDLER (TMS9928A_register_r) {
     return b;
 }
 
-WRITE_HANDLER (TMS9928A_register_w) {
+WRITE8_HANDLER (TMS9928A_register_w) {
 	int reg;
 
     if (tms.latch) {

@@ -55,12 +55,12 @@ VIDEO_START( starfire )
  *
  *************************************/
 
-WRITE_HANDLER( starfire_vidctrl_w )
+WRITE8_HANDLER( starfire_vidctrl_w )
 {
     starfire_vidctrl = data;
 }
 
-WRITE_HANDLER( starfire_vidctrl1_w )
+WRITE8_HANDLER( starfire_vidctrl1_w )
 {
     starfire_vidctrl1 = data;
 }
@@ -73,7 +73,7 @@ WRITE_HANDLER( starfire_vidctrl1_w )
  *
  *************************************/
 
-WRITE_HANDLER( starfire_colorram_w )
+WRITE8_HANDLER( starfire_colorram_w )
 {
 	/* handle writes to the pseudo-color RAM */
 	if ((offset & 0xe0) == 0)
@@ -109,7 +109,7 @@ WRITE_HANDLER( starfire_colorram_w )
 	}
 }
 
-READ_HANDLER( starfire_colorram_r )
+READ8_HANDLER( starfire_colorram_r )
 {
 	return starfire_colorram[offset];
 }
@@ -122,7 +122,7 @@ READ_HANDLER( starfire_colorram_r )
  *
  *************************************/
 
-WRITE_HANDLER( starfire_videoram_w )
+WRITE8_HANDLER( starfire_videoram_w )
 {
 	int sh, lr, dm, ds, mask, d0, dalu;
 	int offset1 = offset & 0x1fff;
@@ -203,7 +203,7 @@ WRITE_HANDLER( starfire_videoram_w )
 	}
 }
 
-READ_HANDLER( starfire_videoram_r )
+READ8_HANDLER( starfire_videoram_r )
 {
 	int sh, mask, d0;
 	int offset1 = offset & 0x1fff;

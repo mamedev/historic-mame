@@ -567,7 +567,7 @@ void hd6309_exit(void)
  ****************************************************************************/
 static void set_irq_line(int irqline, int state)
 {
-	if (irqline == IRQ_LINE_NMI)
+	if (irqline == INPUT_LINE_NMI)
 	{
 		if (hd6309.nmi_state == state) return;
 		hd6309.nmi_state = state;
@@ -1219,9 +1219,9 @@ static void hd6309_set_info(UINT32 state, union cpuinfo *info)
 	switch (state)
 	{
 		/* --- the following bits of info are set as 64-bit signed integers --- */
-		case CPUINFO_INT_IRQ_STATE + HD6309_IRQ_LINE:	set_irq_line(HD6309_IRQ_LINE, info->i); break;
-		case CPUINFO_INT_IRQ_STATE + HD6309_FIRQ_LINE:	set_irq_line(HD6309_FIRQ_LINE, info->i);break;
-		case CPUINFO_INT_IRQ_STATE + IRQ_LINE_NMI:		set_irq_line(IRQ_LINE_NMI, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + HD6309_IRQ_LINE:	set_irq_line(HD6309_IRQ_LINE, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + HD6309_FIRQ_LINE:set_irq_line(HD6309_FIRQ_LINE, info->i);break;
+		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:	set_irq_line(INPUT_LINE_NMI, info->i);	break;
 
 		case CPUINFO_INT_PC:
 		case CPUINFO_INT_REGISTER + HD6309_PC:		PC = info->i; CHANGE_PC;					break;
@@ -1256,7 +1256,7 @@ void hd6309_get_info(UINT32 state, union cpuinfo *info)
 	{
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
 		case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(hd6309);				break;
-		case CPUINFO_INT_IRQ_LINES:						info->i = 2;							break;
+		case CPUINFO_INT_INPUT_LINES:					info->i = 2;							break;
 		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
 		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_BE;					break;
 		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
@@ -1275,9 +1275,9 @@ void hd6309_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 0;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
 
-		case CPUINFO_INT_IRQ_STATE + HD6309_IRQ_LINE:	info->i = hd6309.irq_state[HD6309_IRQ_LINE]; break;
-		case CPUINFO_INT_IRQ_STATE + HD6309_FIRQ_LINE:	info->i = hd6309.irq_state[HD6309_FIRQ_LINE]; break;
-		case CPUINFO_INT_IRQ_STATE + IRQ_LINE_NMI:		info->i = hd6309.nmi_state;				break;
+		case CPUINFO_INT_INPUT_STATE + HD6309_IRQ_LINE:	info->i = hd6309.irq_state[HD6309_IRQ_LINE]; break;
+		case CPUINFO_INT_INPUT_STATE + HD6309_FIRQ_LINE:info->i = hd6309.irq_state[HD6309_FIRQ_LINE]; break;
+		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:	info->i = hd6309.nmi_state;				break;
 
 		case CPUINFO_INT_PREVIOUSPC:					info->i = PPC;							break;
 

@@ -49,49 +49,49 @@ static MACHINE_INIT( wbml )
 
 static int inport16_step,inport17_step,inport23_step;
 
-static READ_HANDLER( inport16_r )
+static READ8_HANDLER( inport16_r )
 {
 //	logerror("IN  $16 : pc = %04x - data = %02x\n",activecpu_get_pc(),inport16_step);
 	return(inport16_step);
 }
 
-static READ_HANDLER( inport1c_r )
+static READ8_HANDLER( inport1c_r )
 {
 //	logerror("IN  $1c : pc = %04x - data = 0x80\n",activecpu_get_pc());
 	return(0x80);	// infinite loop (at 0x0fb3) until bit 7 is set
 }
 
-static READ_HANDLER( inport22_r )
+static READ8_HANDLER( inport22_r )
 {
 //	logerror("IN  $22 : pc = %04x - data = %02x\n",activecpu_get_pc(),inport17_step);
 	return(inport17_step);
 }
 
-static READ_HANDLER( inport23_r )
+static READ8_HANDLER( inport23_r )
 {
 //	logerror("IN  $23 : pc = %04x - step = %02x\n",activecpu_get_pc(),inport23_step);
 	return(inport23_step);
 }
 
-static WRITE_HANDLER( outport16_w )
+static WRITE8_HANDLER( outport16_w )
 {
 //	logerror("OUT $16 : pc = %04x - data = %02x\n",activecpu_get_pc(),data);
 	inport16_step = data;
 }
 
-static WRITE_HANDLER( outport17_w )
+static WRITE8_HANDLER( outport17_w )
 {
 //	logerror("OUT $17 : pc = %04x - data = %02x\n",activecpu_get_pc(),data);
 	inport17_step = data;
 }
 
-static WRITE_HANDLER( outport24_w )
+static WRITE8_HANDLER( outport24_w )
 {
 //	logerror("OUT $24 : pc = %04x - data = %02x\n",activecpu_get_pc(),data);
 	inport23_step = data;
 }
 
-WRITE_HANDLER( hvymetal_videomode_w )
+WRITE8_HANDLER( hvymetal_videomode_w )
 {
 	int bankaddress;
 	unsigned char *rom = memory_region(REGION_CPU1);
@@ -107,7 +107,7 @@ WRITE_HANDLER( hvymetal_videomode_w )
 	system1_videomode_w(0, data);
 }
 
-WRITE_HANDLER( brain_videomode_w )
+WRITE8_HANDLER( brain_videomode_w )
 {
 	int bankaddress;
 	unsigned char *rom = memory_region(REGION_CPU1);
@@ -118,7 +118,7 @@ WRITE_HANDLER( brain_videomode_w )
 	system1_videomode_w(0, data);
 }
 
-WRITE_HANDLER( chplft_videomode_w )
+WRITE8_HANDLER( chplft_videomode_w )
 {
 	int bankaddress;
 	unsigned char *rom = memory_region(REGION_CPU1);
@@ -130,10 +130,10 @@ WRITE_HANDLER( chplft_videomode_w )
 }
 
 
-WRITE_HANDLER( system1_soundport_w )
+WRITE8_HANDLER( system1_soundport_w )
 {
 	soundlatch_w(0,data);
-	cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
+	cpunum_set_input_line(1,INPUT_LINE_NMI,PULSE_LINE);
 	/* spin for a while to let the Z80 read the command (fixes hanging sound in Regulus) */
 	cpu_spinuntil_time(TIME_IN_USEC(50));
 }
@@ -325,12 +325,12 @@ ADDRESS_MAP_END
 
 static unsigned char *work_ram;
 
-static READ_HANDLER( work_ram_r )
+static READ8_HANDLER( work_ram_r )
 {
 	return work_ram[offset];
 }
 
-static WRITE_HANDLER( work_ram_w )
+static WRITE8_HANDLER( work_ram_w )
 {
 	work_ram[offset] = data;
 }

@@ -68,7 +68,7 @@ static WRITE16_HANDLER( fuuki16_sound_command_w )
 	if (ACCESSING_LSB)
 	{
 		soundlatch_w(0,data & 0xff);
-		cpu_set_nmi_line(1,PULSE_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 //		cpu_spinuntil_time(TIME_IN_USEC(50));	// Allow the other CPU to reply
 		cpu_boost_interleave(0, TIME_IN_USEC(50)); // Fixes glitching in rasters
 	}
@@ -117,7 +117,7 @@ To do: ADPCM samples banking in gogomile.
 
 ***************************************************************************/
 
-static WRITE_HANDLER( fuuki16_sound_rombank_w )
+static WRITE8_HANDLER( fuuki16_sound_rombank_w )
 {
 	if (data <= 2)
 		cpu_setbank(1, memory_region(REGION_CPU2) + 0x8000 * data + 0x10000);
@@ -483,7 +483,7 @@ static struct GfxDecodeInfo fuuki16_gfxdecodeinfo[] =
 
 static void soundirq(int state)
 {
-	cpu_set_irq_line(1, 0, state);
+	cpunum_set_input_line(1, 0, state);
 }
 
 static struct YM2203interface fuuki16_ym2203_intf =
@@ -529,16 +529,16 @@ static struct OKIM6295interface fuuki16_m6295_intf =
 INTERRUPT_GEN( fuuki16_interrupt )
 {
 	if ( cpu_getiloops() == 1 )
-		cpu_set_irq_line(0, 1, PULSE_LINE);
+		cpunum_set_input_line(0, 1, PULSE_LINE);
 
 //	if ( cpu_getiloops() == 2 ) /* Not used - Glitches hiscore table? */
-//		cpu_set_irq_line(0, 2, PULSE_LINE);
+//		cpunum_set_input_line(0, 2, PULSE_LINE);
 
 	if ( cpu_getiloops() == 0 )
 	{
-		cpu_set_irq_line(0, 3, PULSE_LINE);	// VBlank IRQ
+		cpunum_set_input_line(0, 3, PULSE_LINE);	// VBlank IRQ
 
-		if (keyboard_pressed_memory(KEYCODE_F1))
+		if (code_pressed_memory(KEYCODE_F1))
 		{
 			fuuki16_raster_enable ^= 1;
 			usrintf_showmessage("raster effects %sabled",fuuki16_raster_enable ? "en" : "dis");
@@ -547,7 +547,7 @@ INTERRUPT_GEN( fuuki16_interrupt )
 
 	if ( (fuuki16_vregs[0x1c/2] & 0xff) == (INTERRUPTS_NUM-1 - cpu_getiloops()) )
 	{
-		cpu_set_irq_line(0, 5, PULSE_LINE);	// Raster Line IRQ
+		cpunum_set_input_line(0, 5, PULSE_LINE);	// Raster Line IRQ
 		if(fuuki16_raster_enable) force_partial_update(cpu_getscanline());
 	}
 }

@@ -423,7 +423,7 @@ static void update_widget_irq(void);
 static MACHINE_INIT( seattle )
 {
 	/* set the fastest DRC options, but strict verification */
-	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_DRC_OPTIONS, MIPS3DRC_FASTEST_OPTIONS + MIPS3DRC_STRICT_VERIFY + MIPS3DRC_FLUSH_PC);
+	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_DRC_OPTIONS, MIPS3DRC_FASTEST_OPTIONS + MIPS3DRC_STRICT_VERIFY);
 
 	/* allocate timers for the galileo */
 	galileo.timer[0].timer = timer_alloc(galileo_timer_callback);
@@ -465,7 +465,7 @@ static MACHINE_INIT( seattle )
 
 static void ide_interrupt(int state)
 {
-	cpu_set_irq_line(0, IDE_IRQ_NUM, state);
+	cpunum_set_input_line(0, IDE_IRQ_NUM, state);
 }
 
 
@@ -489,14 +489,14 @@ static void ethernet_interrupt(int state)
 	{
 		UINT8 assert = ethernet_irq_state && (*interrupt_enable & (1 << ETHERNET_IRQ_SHIFT));
 		if (ethernet_irq_num != 0)
-			cpu_set_irq_line(0, ethernet_irq_num, assert ? ASSERT_LINE : CLEAR_LINE);
+			cpunum_set_input_line(0, ethernet_irq_num, assert ? ASSERT_LINE : CLEAR_LINE);
 	}
 	else if (board_config == SEATTLE_WIDGET_CONFIG)
 		update_widget_irq();
 }
 
 
-struct smc91c9x_interface ethernet_intf =
+static struct smc91c9x_interface ethernet_intf =
 {
 	ethernet_interrupt
 };
@@ -511,7 +511,7 @@ struct smc91c9x_interface ethernet_intf =
 
 static void ioasic_irq(int state)
 {
-	cpu_set_irq_line(0, IOASIC_IRQ_NUM, state);
+	cpunum_set_input_line(0, IOASIC_IRQ_NUM, state);
 }
 
 
@@ -546,7 +546,7 @@ static WRITE32_HANDLER( interrupt_config_w )
 
 	/* VBLANK: clear anything pending on the old IRQ */
 	if (vblank_irq_num != 0)
-		cpu_set_irq_line(0, vblank_irq_num, CLEAR_LINE);
+		cpunum_set_input_line(0, vblank_irq_num, CLEAR_LINE);
 
 	/* VBLANK: compute the new IRQ vector */
 	irq = (*interrupt_config >> (2*VBLANK_IRQ_SHIFT)) & 3;
@@ -557,7 +557,7 @@ static WRITE32_HANDLER( interrupt_config_w )
 	{
 		/* Widget: clear anything pending on the old IRQ */
 		if (widget.irq_num != 0)
-			cpu_set_irq_line(0, widget.irq_num, CLEAR_LINE);
+			cpunum_set_input_line(0, widget.irq_num, CLEAR_LINE);
 
 		/* Widget: compute the new IRQ vector */
 		irq = (*interrupt_config >> (2*WIDGET_IRQ_SHIFT)) & 3;
@@ -569,7 +569,7 @@ static WRITE32_HANDLER( interrupt_config_w )
 	{
 		/* Ethernet: clear anything pending on the old IRQ */
 		if (ethernet_irq_num != 0)
-			cpu_set_irq_line(0, ethernet_irq_num, CLEAR_LINE);
+			cpunum_set_input_line(0, ethernet_irq_num, CLEAR_LINE);
 
 		/* Ethernet: compute the new IRQ vector */
 		irq = (*interrupt_config >> (2*ETHERNET_IRQ_SHIFT)) & 3;
@@ -608,7 +608,7 @@ static void update_vblank_irq(void)
 	/* if the VBLANK has been latched, and the interrupt is enabled, assert */
 	if (vblank_latch && (*interrupt_enable & (1 << VBLANK_IRQ_SHIFT)))
 		state = ASSERT_LINE;
-	cpu_set_irq_line(0, vblank_irq_num, state);
+	cpunum_set_input_line(0, vblank_irq_num, state);
 }
 
 
@@ -778,7 +778,7 @@ static void update_galileo_irqs(void)
 	/* if any unmasked interrupts are live, we generate */
 	if (galileo.reg[GREG_INT_STATE] & galileo.reg[GREG_INT_MASK])
 		state = ASSERT_LINE;
-	cpu_set_irq_line(0, GALILEO_IRQ_NUM, state);
+	cpunum_set_input_line(0, GALILEO_IRQ_NUM, state);
 
 	if (LOG_GALILEO)
 		logerror("Galileo IRQ %s\n", (state == ASSERT_LINE) ? "asserted" : "cleared");
@@ -1342,7 +1342,7 @@ static void update_widget_irq(void)
 	
 	/* update the IRQ state */
 	if (widget.irq_num != 0)
-		cpu_set_irq_line(0, widget.irq_num, assert ? ASSERT_LINE : CLEAR_LINE);
+		cpunum_set_input_line(0, widget.irq_num, assert ? ASSERT_LINE : CLEAR_LINE);
 }
 
 
@@ -2789,6 +2789,18 @@ ROM_START( vaportrx )
 ROM_END
 
 
+ROM_START( vaportrp )
+	ROM_REGION( 0x408000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
+	ROM_LOAD( "vaportrx.snd", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
+
+	ROM_REGION32_LE( 0x80000, REGION_USER1, 0 )
+	ROM_LOAD( "vtrxboot.bin", 0x000000, 0x80000, CRC(ee487a6c) SHA1(fb9efda85047cf615f24f7276a9af9fd542f3354) )
+
+	DISK_REGION( REGION_DISKS )
+	DISK_IMAGE( "vaportrp", 0, MD5(fac4d37e049bc649696f4834044860e6) SHA1(75e2eaf81c69d2a337736dbead804ac339fd0675) )
+ROM_END
+
+
 ROM_START( biofreak )
 	ROM_REGION( 0x408000, REGION_SOUND1, 0 )	/* ADSP-2115 data Version 1.02 */
 	ROM_LOAD( "sound102.u95", 0x000000, 0x8000, CRC(bec7d3ae) SHA1(db80aa4a645804a4574b07b9f34dec6b6b64190d) )
@@ -2883,31 +2895,25 @@ static void init_common(int ioasic, int serialnum, int yearoffs, int config)
 	{
 		case PHOENIX_CONFIG:
 			/* original Phoenix board only has 4MB of RAM */
-			install_mem_read32_handler (0, 0x00400000, 0x007fffff, MRA32_NOP);
-			install_mem_write32_handler(0, 0x00400000, 0x007fffff, MWA32_NOP);
-			install_mem_read32_handler (0, 0x20400000, 0x207fffff, MRA32_NOP);
-			install_mem_write32_handler(0, 0x20400000, 0x207fffff, MWA32_NOP);
-			install_mem_read32_handler (0, 0x80400000, 0x807fffff, MRA32_NOP);
-			install_mem_write32_handler(0, 0x80400000, 0x807fffff, MWA32_NOP);
-			install_mem_read32_handler (0, 0xa0400000, 0xa07fffff, MRA32_NOP);
-			install_mem_write32_handler(0, 0xa0400000, 0xa07fffff, MWA32_NOP);
+			memory_install_read32_handler (0, ADDRESS_SPACE_PROGRAM, 0x00400000, 0x007fffff, 0, 0xa0000000, MRA32_NOP);
+			memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00400000, 0x007fffff, 0, 0xa0000000, MWA32_NOP);
 			break;
 		
 		case SEATTLE_WIDGET_CONFIG:
 			/* set up the widget board */
-			install_mem_read32_handler(0, 0xb6c00000, 0xb6c0001f, widget_r);
-			install_mem_write32_handler(0, 0xb6c00000, 0xb6c0001f, widget_w);
+			memory_install_read32_handler (0, ADDRESS_SPACE_PROGRAM, 0xb6c00000, 0xb6c0001f, 0, 0, widget_r);
+			memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0xb6c00000, 0xb6c0001f, 0, 0, widget_w);
 			smc91c94_init(&ethernet_intf);
 			break;
 	
 		case FLAGSTAFF_CONFIG:
 			/* set up the analog inputs */
-			install_mem_read32_handler(0, 0xb4000000, 0xb4000003, analog_port_r);
-			install_mem_write32_handler(0, 0xb4000000, 0xb4000003, analog_port_w);
+			memory_install_read32_handler (0, ADDRESS_SPACE_PROGRAM, 0xb4000000, 0xb4000003, 0, 0, analog_port_r);
+			memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0xb4000000, 0xb4000003, 0, 0, analog_port_w);
 
 			/* set up the ethernet controller */
-			install_mem_read32_handler(0, 0xb6c00000, 0xb6c0003f, ethernet_r);
-			install_mem_write32_handler(0, 0xb6c00000, 0xb6c0003f, ethernet_w);
+			memory_install_read32_handler (0, ADDRESS_SPACE_PROGRAM, 0xb6c00000, 0xb6c0003f, 0, 0, ethernet_r);
+			memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0xb6c00000, 0xb6c0003f, 0, 0, ethernet_w);
 			smc91c94_init(&ethernet_intf);
 			break;
 	}
@@ -2920,7 +2926,7 @@ static DRIVER_INIT( wg3dh )
 	init_common(MIDWAY_IOASIC_STANDARD, 310/* others? */, 80, PHOENIX_CONFIG);
 
 	/* speedups */
-	install_mem_read32_handler(0, 0x80115e00, 0x80115e03, generic_speedup_r);
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x80115e00, 0x80115e03, 0, 0, generic_speedup_r);
 	generic_speedup = &rambase[0x115e00/4];
 }
 
@@ -2928,7 +2934,7 @@ static DRIVER_INIT( wg3dh )
 static DRIVER_INIT( mace )
 {
 	dcs2_init(0x3839);
-	init_common(MIDWAY_IOASIC_MACE, 450/* unknown */, 80, SEATTLE_CONFIG);
+	init_common(MIDWAY_IOASIC_MACE, 319/* others? */, 80, SEATTLE_CONFIG);
 
 	/* no obvious speedups */
 }
@@ -2940,9 +2946,9 @@ static DRIVER_INIT( sfrush )
 	init_common(MIDWAY_IOASIC_STANDARD, 315/* no alternates */, 100, FLAGSTAFF_CONFIG);
 
 	/* speedups */
-	install_mem_read32_handler(0, 0x8012498c, 0x8012498f, generic_speedup_r);
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x8012498c, 0x8012498f, 0, 0, generic_speedup_r);
 	generic_speedup = &rambase[0x12498c/4];
-	install_mem_read32_handler(0, 0x80120000, 0x80120003, generic_speedup2_r);
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x80120000, 0x80120003, 0, 0, generic_speedup2_r);
 	generic_speedup2 = &rambase[0x120000/4];
 }
 
@@ -2950,12 +2956,12 @@ static DRIVER_INIT( sfrush )
 static DRIVER_INIT( sfrushrk )
 {
 	cage_init(REGION_USER2, 0x5329);
-	init_common(MIDWAY_IOASIC_SFRUSHRK, /*267*/ 275 /* unknown */, 100, FLAGSTAFF_CONFIG);
+	init_common(MIDWAY_IOASIC_SFRUSHRK, 331/* unknown */, 100, FLAGSTAFF_CONFIG);
 
 	/* speedups */
-//	install_mem_read32_handler(0, 0x8012498c, 0x8012498f, generic_speedup_r);
+//	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x8012498c, 0x8012498f, 0, 0, generic_speedup_r);
 //	generic_speedup = &rambase[0x12498c/4];
-//	install_mem_read32_handler(0, 0x80120000, 0x80120003, generic_speedup2_r);
+//	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x80120000, 0x80120003, 0, 0, generic_speedup2_r);
 //	generic_speedup2 = &rambase[0x120000/4];
 }
 
@@ -2963,11 +2969,11 @@ static DRIVER_INIT( sfrushrk )
 static DRIVER_INIT( calspeed )
 {
 	dcs2_init(0x39c0);
-	init_common(MIDWAY_IOASIC_CALSPEED, 450/* unknown */, 100, SEATTLE_WIDGET_CONFIG);
+	init_common(MIDWAY_IOASIC_CALSPEED, 328/* others? */, 100, SEATTLE_WIDGET_CONFIG);
 	midway_ioasic_set_auto_ack(1);
 
 	/* speedups */
-	install_mem_read32_handler(0, 0x802e6480, 0x802e6483, generic_speedup_r);
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x802e6480, 0x802e6483, 0, 0, generic_speedup_r);
 	generic_speedup = &rambase[0x2e6480/4];
 }
 
@@ -2975,7 +2981,7 @@ static DRIVER_INIT( calspeed )
 static DRIVER_INIT( vaportrx )
 {
 	dcs2_init(0);
-	init_common(MIDWAY_IOASIC_VAPORTRX, 324/* unknown */, 100, SEATTLE_WIDGET_CONFIG);
+	init_common(MIDWAY_IOASIC_VAPORTRX, 324/* 334? unknown */, 100, SEATTLE_WIDGET_CONFIG);
 
 	/* speedups */
 }
@@ -2987,7 +2993,7 @@ static DRIVER_INIT( biofreak )
 	init_common(MIDWAY_IOASIC_STANDARD, 231/* no alternates */, 80, SEATTLE_CONFIG);
 
 	/* speedups */
-//	install_mem_write32_handler(0, 0x802502bc, 0x802502bf, generic_speedup_w);
+//	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x802502bc, 0x802502bf, 0, 0, generic_speedup_w);
 //	generic_speedup = &rambase[0x2502bc/4];
 }
 
@@ -3001,7 +3007,7 @@ static DRIVER_INIT( blitz )
 	rombase[0x934/4] += 4;
 
 	/* speedups */
-	install_mem_write32_handler(0, 0x80243d58, 0x80243d5b, generic_speedup_w);
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x80243d58, 0x80243d5b, 0, 0, generic_speedup_w);
 	generic_speedup = &rambase[0x243d58/4];
 }
 
@@ -3012,7 +3018,7 @@ static DRIVER_INIT( blitz99 )
 	init_common(MIDWAY_IOASIC_BLITZ99, 481/* or 484 or 520 */, 80, SEATTLE_CONFIG);
 
 	/* speedups */
-	install_mem_write32_handler(0, 0x802502bc, 0x802502bf, generic_speedup_w);
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x802502bc, 0x802502bf, 0, 0, generic_speedup_w);
 	generic_speedup = &rambase[0x2502bc/4];
 }
 
@@ -3023,7 +3029,7 @@ static DRIVER_INIT( blitz2k )
 	init_common(MIDWAY_IOASIC_BLITZ99, 494/* or 498 */, 80, SEATTLE_CONFIG);
 
 	/* speedups */
-	install_mem_write32_handler(0, 0x8024e8d8, 0x8024e8db, generic_speedup_w);
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x8024e8d8, 0x8024e8db, 0, 0, generic_speedup_w);
 	generic_speedup = &rambase[0x24e8d8/4];
 }
 
@@ -3034,11 +3040,11 @@ static DRIVER_INIT( carnevil )
 	init_common(MIDWAY_IOASIC_CARNEVIL, 469/* 469 or 486 or 528 */, 80, SEATTLE_CONFIG);
 
 	/* set up the gun */
-	install_mem_read32_handler(0, 0xb6800000, 0xb680001f, carnevil_gun_r);
-	install_mem_write32_handler(0, 0xb6800000, 0xb680001f, carnevil_gun_w);
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0xb6800000, 0xb680001f, 0, 0, carnevil_gun_r);
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0xb6800000, 0xb680001f, 0, 0, carnevil_gun_w);
 
 	/* speedups */
-	install_mem_write32_handler(0, 0x801a2bac, 0x801a2baf, generic_speedup_w);
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x801a2bac, 0x801a2baf, 0, 0, generic_speedup_w);
 	generic_speedup = &rambase[0x1a2bac/4];
 }
 
@@ -3066,6 +3072,7 @@ GAME ( 1996, sfrush,   0,        flagstaff,  sfrush,   sfrush,   ROT0, "Atari Ga
 GAMEX( 1996, sfrushrk, 0,        flagstaff,  sfrushrk, sfrushrk, ROT0, "Atari Games",  "San Francisco Rush: The Rock", GAME_NOT_WORKING )
 GAME ( 1998, calspeed, 0,        seattle150, calspeed, calspeed, ROT0, "Atari Games",  "California Speed" )
 GAME ( 1998, vaportrx, 0,        seattle200, vaportrx, vaportrx, ROT0, "Atari Games",  "Vapor TRX" )
+GAME ( 1998, vaportrp, vaportrx, seattle200, vaportrx, vaportrx, ROT0, "Atari Games",  "Vapor TRX (prototype)" )
 
 /* Midway */
 GAME ( 1997, biofreak, 0,        seattle150, biofreak, biofreak, ROT0, "Midway Games", "BioFreaks (prototype)" )

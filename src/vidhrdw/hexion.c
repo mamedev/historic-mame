@@ -68,7 +68,7 @@ VIDEO_START( hexion )
 
 ***************************************************************************/
 
-WRITE_HANDLER( hexion_bankswitch_w )
+WRITE8_HANDLER( hexion_bankswitch_w )
 {
 	unsigned char *rom = memory_region(REGION_CPU1) + 0x10000;
 
@@ -92,7 +92,7 @@ if (data & 0x30)
 //logerror("%04x: bankswitch_w %02x\n",activecpu_get_pc(),data);
 }
 
-READ_HANDLER( hexion_bankedram_r )
+READ8_HANDLER( hexion_bankedram_r )
 {
 	if (gfxrom_select && offset < 0x1000)
 	{
@@ -113,7 +113,7 @@ READ_HANDLER( hexion_bankedram_r )
 	}
 }
 
-WRITE_HANDLER( hexion_bankedram_w )
+WRITE8_HANDLER( hexion_bankedram_w )
 {
 	if (bankctrl == 3 && offset == 0 && (data & 0xfe) == 0)
 	{
@@ -148,13 +148,13 @@ WRITE_HANDLER( hexion_bankedram_w )
 logerror("%04x: bankedram_w offset %04x, data %02x, bankctrl = %02x\n",activecpu_get_pc(),offset,data,bankctrl);
 }
 
-WRITE_HANDLER( hexion_bankctrl_w )
+WRITE8_HANDLER( hexion_bankctrl_w )
 {
 //logerror("%04x: bankctrl_w %02x\n",activecpu_get_pc(),data);
 	bankctrl = data;
 }
 
-WRITE_HANDLER( hexion_gfxrom_select_w )
+WRITE8_HANDLER( hexion_gfxrom_select_w )
 {
 //logerror("%04x: gfxrom_select_w %02x\n",activecpu_get_pc(),data);
 	gfxrom_select = data;

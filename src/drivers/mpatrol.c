@@ -41,15 +41,15 @@ c0        background control
 
 
 
-WRITE_HANDLER( mpatrol_scroll_w );
-WRITE_HANDLER( mpatrol_bg1xpos_w );
-WRITE_HANDLER( mpatrol_bg1ypos_w );
-WRITE_HANDLER( mpatrol_bg2xpos_w );
-WRITE_HANDLER( mpatrol_bg2ypos_w );
-WRITE_HANDLER( mpatrol_bgcontrol_w );
-WRITE_HANDLER( mpatrol_flipscreen_w );
-WRITE_HANDLER( mpatrol_videoram_w );
-WRITE_HANDLER( mpatrol_colorram_w );
+WRITE8_HANDLER( mpatrol_scroll_w );
+WRITE8_HANDLER( mpatrol_bg1xpos_w );
+WRITE8_HANDLER( mpatrol_bg1ypos_w );
+WRITE8_HANDLER( mpatrol_bg2xpos_w );
+WRITE8_HANDLER( mpatrol_bg2ypos_w );
+WRITE8_HANDLER( mpatrol_bgcontrol_w );
+WRITE8_HANDLER( mpatrol_flipscreen_w );
+WRITE8_HANDLER( mpatrol_videoram_w );
+WRITE8_HANDLER( mpatrol_colorram_w );
 
 PALETTE_INIT( mpatrol );
 VIDEO_START( mpatrol );
@@ -59,13 +59,13 @@ VIDEO_UPDATE( mpatrol );
 
 /* this looks like some kind of protection. The game does strange things */
 /* if a read from this address doesn't return the value it expects. */
-static READ_HANDLER( mpatrol_protection_r )
+static READ8_HANDLER( mpatrol_protection_r )
 {
 	return activecpu_get_reg(Z80_DE) & 0xff;
 }
 
 
-READ_HANDLER( mpatrol_input_port_3_r )
+READ8_HANDLER( mpatrol_input_port_3_r )
 {
 	int ret = input_port_3_r(0);
 

@@ -79,22 +79,22 @@ static int page = 0;
 static int IOpage = 8;
 
 
-WRITE_HANDLER( cvs_videoram_w );
-WRITE_HANDLER( cvs_bullet_w );
-WRITE_HANDLER( cvs_2636_1_w );
-WRITE_HANDLER( cvs_2636_2_w );
-WRITE_HANDLER( cvs_2636_3_w );
-WRITE_HANDLER( cvs_scroll_w );
-WRITE_HANDLER( cvs_video_fx_w );
+WRITE8_HANDLER( cvs_videoram_w );
+WRITE8_HANDLER( cvs_bullet_w );
+WRITE8_HANDLER( cvs_2636_1_w );
+WRITE8_HANDLER( cvs_2636_2_w );
+WRITE8_HANDLER( cvs_2636_3_w );
+WRITE8_HANDLER( cvs_scroll_w );
+WRITE8_HANDLER( cvs_video_fx_w );
 
-READ_HANDLER( cvs_collision_r );
-READ_HANDLER( cvs_collision_clear );
-READ_HANDLER( cvs_videoram_r );
-READ_HANDLER( cvs_bullet_r );
-READ_HANDLER( cvs_2636_1_r );
-READ_HANDLER( cvs_2636_2_r );
-READ_HANDLER( cvs_2636_3_r );
-READ_HANDLER( cvs_character_mode_r );
+READ8_HANDLER( cvs_collision_r );
+READ8_HANDLER( cvs_collision_clear );
+READ8_HANDLER( cvs_videoram_r );
+READ8_HANDLER( cvs_bullet_r );
+READ8_HANDLER( cvs_2636_1_r );
+READ8_HANDLER( cvs_2636_2_r );
+READ8_HANDLER( cvs_2636_3_r );
+READ8_HANDLER( cvs_character_mode_r );
 
 /************************************************************************
 
@@ -106,47 +106,47 @@ READ_HANDLER( cvs_character_mode_r );
 
 ************************************************************************/
 
-static WRITE_HANDLER( page_0_w )
+static WRITE8_HANDLER( page_0_w )
 {
 	page = 0;
 }
 
-static WRITE_HANDLER( page_1_w )
+static WRITE8_HANDLER( page_1_w )
 {
 	page = 1;
 }
 
-static WRITE_HANDLER( page_2_w )
+static WRITE8_HANDLER( page_2_w )
 {
 	page = 2;
 }
 
-static WRITE_HANDLER( page_3_w )
+static WRITE8_HANDLER( page_3_w )
 {
 	page = 3;
 }
 
-static WRITE_HANDLER( page_8_w )
+static WRITE8_HANDLER( page_8_w )
 {
 	IOpage = 8;
 }
 
-static WRITE_HANDLER( page_9_w )
+static WRITE8_HANDLER( page_9_w )
 {
 	IOpage = 9;
 }
 
-static WRITE_HANDLER( page_A_w )
+static WRITE8_HANDLER( page_A_w )
 {
 	IOpage = 10;
 }
 
-static WRITE_HANDLER( page_B_w )
+static WRITE8_HANDLER( page_B_w )
 {
 	IOpage = 11;
 }
 
-static WRITE_HANDLER( quasar_video_w )
+static WRITE8_HANDLER( quasar_video_w )
 {
 	if (page == 0) videoram_w(offset,data);
 	if (page == 1) colorram_w(offset,(data & 7));	// 3 bits of ram only - 3 x 2102
@@ -162,7 +162,7 @@ static WRITE_HANDLER( quasar_video_w )
 	}
 }
 
-static READ_HANDLER( quasar_IO_r )
+static READ8_HANDLER( quasar_IO_r )
 {
 	unsigned int ans = 0;
 
@@ -174,7 +174,7 @@ static READ_HANDLER( quasar_IO_r )
 	return ans;
 }
 
-WRITE_HANDLER( quasar_bullet_w )
+WRITE8_HANDLER( quasar_bullet_w )
 {
     bullet_ram[offset] = (data ^ 0xff);
 }
@@ -183,7 +183,7 @@ static int Quasar_T1=0;
 static int Quasar_Command=0;
 //static int sh_page=0;
 
-WRITE_HANDLER( quasar_sh_command_w )
+WRITE8_HANDLER( quasar_sh_command_w )
 {
 	// bit 4 = Sound Invader : Linked to an NE555V circuit
 	// Not handled yet
@@ -195,7 +195,7 @@ WRITE_HANDLER( quasar_sh_command_w )
 	Quasar_T1      = (Quasar_Command != 15);
 }
 
-READ_HANDLER( quasar_sh_command_r )
+READ8_HANDLER( quasar_sh_command_r )
 {
 	// Clear T1 signal
 	Quasar_T1 = 0;
@@ -207,12 +207,12 @@ READ_HANDLER( quasar_sh_command_r )
 	return (Quasar_Command) + (input_port_5_r(0) & 0x30);
 }
 
-READ_HANDLER( Quasar_T1_r )
+READ8_HANDLER( Quasar_T1_r )
 {
 	return Quasar_T1;
 }
 
-WRITE_HANDLER( Quasar_DAC_w )
+WRITE8_HANDLER( Quasar_DAC_w )
 {
 	DAC_0_signed_data_w(0,data);
 }
@@ -421,7 +421,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static INTERRUPT_GEN( quasar_interrupt )
 {
-	cpu_set_irq_line_and_vector(0,0,PULSE_LINE,0x03);
+	cpunum_set_input_line_and_vector(0,0,PULSE_LINE,0x03);
 }
 
 static struct DACinterface dac_interface =

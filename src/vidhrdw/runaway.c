@@ -16,7 +16,7 @@ static int tile_bank = 0;
 
 
 
-WRITE_HANDLER( runaway_paletteram_w )
+WRITE8_HANDLER( runaway_paletteram_w )
 {
 	int R =
 		0x21 * ((~data >> 2) & 1) +
@@ -38,7 +38,7 @@ WRITE_HANDLER( runaway_paletteram_w )
 
 
 
-WRITE_HANDLER( runaway_video_ram_w )
+WRITE8_HANDLER( runaway_video_ram_w )
 {
 	if (data != runaway_video_ram[offset])
 	{
@@ -50,7 +50,7 @@ WRITE_HANDLER( runaway_video_ram_w )
 
 
 
-WRITE_HANDLER( runaway_tile_bank_w )
+WRITE8_HANDLER( runaway_tile_bank_w )
 {
 	if ((data & 1) != tile_bank)
 	{

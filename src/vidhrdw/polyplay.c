@@ -33,7 +33,7 @@ PALETTE_INIT( polyplay )
 }
 
 
-WRITE_HANDLER( polyplay_characterram_w )
+WRITE8_HANDLER( polyplay_characterram_w )
 {
 	if (polyplay_characterram[offset] != data)
 	{
@@ -43,7 +43,7 @@ WRITE_HANDLER( polyplay_characterram_w )
 	}
 }
 
-READ_HANDLER( polyplay_characterram_r )
+READ8_HANDLER( polyplay_characterram_r )
 {
 	return polyplay_characterram[offset];
 }

@@ -107,38 +107,38 @@ PALETTE_INIT( bking2 )
 }
 
 
-WRITE_HANDLER( bking2_xld1_w )
+WRITE8_HANDLER( bking2_xld1_w )
 {
 	xld1 = -data;
 }
 
-WRITE_HANDLER( bking2_yld1_w )
+WRITE8_HANDLER( bking2_yld1_w )
 {
 	yld1 = -data;
 }
 
-WRITE_HANDLER( bking2_xld2_w )
+WRITE8_HANDLER( bking2_xld2_w )
 {
 	xld2 = -data;
 }
 
-WRITE_HANDLER( bking2_yld2_w )
+WRITE8_HANDLER( bking2_yld2_w )
 {
 	yld2 = -data;
 }
 
-WRITE_HANDLER( bking2_xld3_w )
+WRITE8_HANDLER( bking2_xld3_w )
 {
 	xld3 = -data;
 }
 
-WRITE_HANDLER( bking2_yld3_w )
+WRITE8_HANDLER( bking2_yld3_w )
 {
 	yld3 = -data;
 }
 
 
-WRITE_HANDLER( bking2_cont1_w )
+WRITE8_HANDLER( bking2_cont1_w )
 {
 	/* D0 = COIN LOCK */
 	/* D1 = BALL 5 (Controller selection) */
@@ -157,7 +157,7 @@ WRITE_HANDLER( bking2_cont1_w )
 	crow_pic = (data >> 4) & 0x0f;
 }
 
-WRITE_HANDLER( bking2_cont2_w )
+WRITE8_HANDLER( bking2_cont2_w )
 {
 	/* D0-D2 = BALL10 - BALL12 (Selects player 1 ball picture) */
 	/* D3-D5 = BALL20 - BALL22 (Selects player 2 ball picture) */
@@ -170,7 +170,7 @@ WRITE_HANDLER( bking2_cont2_w )
 	hit = data >> 6;
 }
 
-WRITE_HANDLER( bking2_cont3_w )
+WRITE8_HANDLER( bking2_cont3_w )
 {
 	/* D0 = CROW INV (inverts Crow picture and coordinates) */
 	/* D1-D2 = COLOR 0 - COLOR 1 (switches 4 color palettes, global across all graphics) */
@@ -189,13 +189,13 @@ WRITE_HANDLER( bking2_cont3_w )
 }
 
 
-WRITE_HANDLER( bking2_msk_w )
+WRITE8_HANDLER( bking2_msk_w )
 {
 	pc3259_mask++;
 }
 
 
-WRITE_HANDLER( bking2_hitclr_w )
+WRITE8_HANDLER( bking2_hitclr_w )
 {
 	pc3259_mask = 0;
 
@@ -206,7 +206,7 @@ WRITE_HANDLER( bking2_hitclr_w )
 }
 
 
-WRITE_HANDLER( bking2_playfield_w )
+WRITE8_HANDLER( bking2_playfield_w )
 {
 	if (bking2_playfield_ram[offset] != data)
 	{
@@ -217,17 +217,17 @@ WRITE_HANDLER( bking2_playfield_w )
 }
 
 
-READ_HANDLER( bking2_input_port_5_r )
+READ8_HANDLER( bking2_input_port_5_r )
 {
 	return readinputport(controller ? 7 : 5);
 }
 
-READ_HANDLER( bking2_input_port_6_r )
+READ8_HANDLER( bking2_input_port_6_r )
 {
 	return readinputport(controller ? 8 : 6);
 }
 
-READ_HANDLER( bking2_pos_r )
+READ8_HANDLER( bking2_pos_r )
 {
 	return pc3259_output[offset / 8] << 4;
 }

@@ -38,27 +38,27 @@ INTERRUPT_GEN( sbrkout_interrupt )
     else if (game_switch & 0x04)
         sbrkout_game_switch=SBRKOUT_CAVITY;
 
-    cpu_set_irq_line(0, 0, HOLD_LINE);
+    cpunum_set_input_line(0, 0, HOLD_LINE);
 }
 
-READ_HANDLER( sbrkout_select1_r )
+READ8_HANDLER( sbrkout_select1_r )
 {
     if (sbrkout_game_switch==SBRKOUT_CAVITY)
         return 0x80;
     else return 0x00;
 }
 
-READ_HANDLER( sbrkout_select2_r )
+READ8_HANDLER( sbrkout_select2_r )
 {
     if (sbrkout_game_switch==SBRKOUT_DOUBLE)
         return 0x80;
     else return 0x00;
 }
 
-WRITE_HANDLER( sbrkout_irq_w )
+WRITE8_HANDLER( sbrkout_irq_w )
 {
         /* generate irq */
-        cpu_set_irq_line(0,M6502_IRQ_LINE,HOLD_LINE);
+        cpunum_set_input_line(0,M6502_IRQ_LINE,HOLD_LINE);
 }
 
 
@@ -70,7 +70,7 @@ because some of the DIP switch settings would be spread across multiple
 bytes, and MAME doesn't currently support that.
 ***************************************************************************/
 
-READ_HANDLER( sbrkout_read_DIPs_r )
+READ8_HANDLER( sbrkout_read_DIPs_r )
 {
         switch (offset)
         {
@@ -92,17 +92,17 @@ The LEDs are turned on and off by two consecutive memory addresses.  The
 first address turns them off, the second address turns them on.  This is
 reversed for the Serve LED, which has a NOT on the signal.
 ***************************************************************************/
-WRITE_HANDLER( sbrkout_start_1_led_w )
+WRITE8_HANDLER( sbrkout_start_1_led_w )
 {
 	set_led_status(0,offset & 1);
 }
 
-WRITE_HANDLER( sbrkout_start_2_led_w )
+WRITE8_HANDLER( sbrkout_start_2_led_w )
 {
 	set_led_status(1,offset & 1);
 }
 
-WRITE_HANDLER( sbrkout_serve_led_w )
+WRITE8_HANDLER( sbrkout_serve_led_w )
 {
 	set_led_status(2,~offset & 1);
 }

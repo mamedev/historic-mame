@@ -203,7 +203,7 @@ static WRITE16_HANDLER( sound_command_w )
 	{
 		pending_command = 1;
 		soundlatch_w(offset,data & 0xff);
-		cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 	}
 }
 
@@ -214,12 +214,12 @@ static READ16_HANDLER( pending_command_r )
 }
 #endif
 
-static WRITE_HANDLER( gs_sh_pending_command_clear_w )
+static WRITE8_HANDLER( gs_sh_pending_command_clear_w )
 {
 	pending_command = 0;
 }
 
-static WRITE_HANDLER( gs_sh_bankswitch_w )
+static WRITE8_HANDLER( gs_sh_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU2);
 	int bankaddress;
@@ -272,9 +272,9 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static void gs_ym2610_irq(int irq)
 {
 	if (irq)
-		cpu_set_irq_line(1, 0, ASSERT_LINE);
+		cpunum_set_input_line(1, 0, ASSERT_LINE);
 	else
-		cpu_set_irq_line(1, 0, CLEAR_LINE);
+		cpunum_set_input_line(1, 0, CLEAR_LINE);
 }
 
 static struct YM2610interface ym2610_interface =

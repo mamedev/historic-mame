@@ -25,9 +25,9 @@ static PALETTE_INIT( rotaryf )
 INTERRUPT_GEN( rotaryf_interrupt )
 {
 	if(cpu_getvblank())
-		cpu_set_irq_line(0,I8085_RST55_LINE,HOLD_LINE);
+		cpunum_set_input_line(0,I8085_RST55_LINE,HOLD_LINE);
 	else
-		cpu_set_irq_line(0,I8085_RST75_LINE,HOLD_LINE);
+		cpunum_set_input_line(0,I8085_RST75_LINE,HOLD_LINE);
 
 }
 

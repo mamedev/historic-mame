@@ -8,7 +8,7 @@ data8_t *me_fgram;
 data8_t *me_bgram;
 static int me_gfx_ctrl;
 
-WRITE_HANDLER(me_c600_w)
+WRITE8_HANDLER(me_c600_w)
 {
 	bg_color = data&0xf;
 	me_gfx_ctrl=data;
@@ -71,13 +71,13 @@ static void update_palette( int type )
 }
 
 
-READ_HANDLER( me_fgram_r )
+READ8_HANDLER( me_fgram_r )
 {
 	return me_fgram[offset];
 }
 
 
-WRITE_HANDLER( me_fgram_w )
+WRITE8_HANDLER( me_fgram_w )
 {
 	me_fgram[offset] = data;
 	tilemap_mark_tile_dirty(me_fg_tilemap,offset);
@@ -96,13 +96,13 @@ static void get_me_bg_tile_info(int tile_index)
 }
 
 
-READ_HANDLER( me_bgram_r )
+READ8_HANDLER( me_bgram_r )
 {
 	return me_bgram[offset];
 
 }
 
-WRITE_HANDLER( me_bgram_w )
+WRITE8_HANDLER( me_bgram_w )
 {
 	me_bgram[offset] = data;
 	tilemap_mark_tile_dirty(me_bg_tilemap,offset);

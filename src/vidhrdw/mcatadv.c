@@ -207,18 +207,18 @@ VIDEO_UPDATE( mcatadv )
 	for (i=0; i<=3; i++)
 	{
 #ifdef MAME_DEBUG
-		if (!keyboard_pressed(KEYCODE_Q))
+		if (!code_pressed(KEYCODE_Q))
 #endif
 			tilemap_draw(bitmap, cliprect, mcatadv_tilemap1, i, i);
 #ifdef MAME_DEBUG
-		if (!keyboard_pressed(KEYCODE_W))
+		if (!code_pressed(KEYCODE_W))
 #endif
 			tilemap_draw(bitmap, cliprect, mcatadv_tilemap2, i, i);
 	}
 
 	profiler_mark(PROFILER_USER1);
 #ifdef MAME_DEBUG
-	if (!keyboard_pressed(KEYCODE_E))
+	if (!code_pressed(KEYCODE_E))
 #endif
 		mcatadv_drawsprites (bitmap, cliprect);
 	profiler_mark(PROFILER_END);

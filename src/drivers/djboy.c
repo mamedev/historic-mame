@@ -70,28 +70,28 @@ BS07    4464 4464     BS-64           BS-200
 
 /* public functions from vidhrdw/djboy.h */
 extern void djboy_set_videoreg( data8_t data );
-extern WRITE_HANDLER( djboy_scrollx_w );
-extern WRITE_HANDLER( djboy_scrolly_w );
-extern WRITE_HANDLER( djboy_videoram_w );
-extern WRITE_HANDLER( djboy_paletteram_w );
+extern WRITE8_HANDLER( djboy_scrollx_w );
+extern WRITE8_HANDLER( djboy_scrolly_w );
+extern WRITE8_HANDLER( djboy_videoram_w );
+extern WRITE8_HANDLER( djboy_paletteram_w );
 extern VIDEO_START( djboy );
 extern VIDEO_UPDATE( djboy );
 
 static data8_t *sharedram;
-static READ_HANDLER( sharedram_r )	{ return sharedram[offset]; }
-static WRITE_HANDLER( sharedram_w )	{ sharedram[offset] = data; }
+static READ8_HANDLER( sharedram_r )	{ return sharedram[offset]; }
+static WRITE8_HANDLER( sharedram_w )	{ sharedram[offset] = data; }
 
 static int prot_offs;
 static data8_t prot_ram[0x80];
 
 /******************************************************************************/
 
-static WRITE_HANDLER( cpu1_cause_nmi_w )
+static WRITE8_HANDLER( cpu1_cause_nmi_w )
 {
-	cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+	cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 }
 
-static WRITE_HANDLER( cpu1_bankswitch_w )
+static WRITE8_HANDLER( cpu1_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -110,7 +110,7 @@ static WRITE_HANDLER( cpu1_bankswitch_w )
 
 /******************************************************************************/
 
-static WRITE_HANDLER( cpu2_bankswitch_w )
+static WRITE8_HANDLER( cpu2_bankswitch_w )
 {
 	data8_t *RAM = memory_region(REGION_CPU2);
 	
@@ -146,7 +146,7 @@ static WRITE_HANDLER( cpu2_bankswitch_w )
  * rather than tying the behavior to specific addresses.
  */
 
-static WRITE_HANDLER( cpu2_data_w )
+static WRITE8_HANDLER( cpu2_data_w )
 {
 	switch( activecpu_get_pc() )
 	{
@@ -205,7 +205,7 @@ static WRITE_HANDLER( cpu2_data_w )
 	logerror( "pc == %04x; data_w(%02x)\n", activecpu_get_pc(), data );
 } /* cpu2_data_w */
 
-static READ_HANDLER( cpu2_data_r )
+static READ8_HANDLER( cpu2_data_r )
 {
 	data8_t result = 0x00;
 	static int which;
@@ -251,10 +251,10 @@ static READ_HANDLER( cpu2_data_r )
 		 * Each value dispatches to a different routine.  Most of them do very little.
 		 */
 		result = 0x82; // 'normal' - polls inputs
-		if( keyboard_pressed( KEYCODE_Q ) ) result = 0;
-		if( keyboard_pressed( KEYCODE_5 ) ) result = 1; /* "PUSH 1P START" */
-		if( keyboard_pressed( KEYCODE_6 ) ) result = 0x8b; /* "COIN ERROR" */
-//		if( keyboard_pressed( KEYCODE_B ) ) result = 0x8e;
+		if( code_pressed( KEYCODE_Q ) ) result = 0;
+		if( code_pressed( KEYCODE_5 ) ) result = 1; /* "PUSH 1P START" */
+		if( code_pressed( KEYCODE_6 ) ) result = 0x8b; /* "COIN ERROR" */
+//		if( code_pressed( KEYCODE_B ) ) result = 0x8e;
 		return result;
 
 	case 0x7204: result = readinputport(1); break; /* (ix+$42) */
@@ -270,7 +270,7 @@ static READ_HANDLER( cpu2_data_r )
 	return result;
 } /* cpu2_data_r */
 
-static READ_HANDLER( cpu2_status_r )
+static READ8_HANDLER( cpu2_status_r )
 {
 	switch( activecpu_get_pc() )
 	{
@@ -335,13 +335,13 @@ static READ_HANDLER( cpu2_status_r )
 
 /******************************************************************************/
 
-static WRITE_HANDLER( cpu3_nmi_soundcommand_w )
+static WRITE8_HANDLER( cpu3_nmi_soundcommand_w )
 {
 	soundlatch_w(0,data);
-	cpu_set_irq_line(2, IRQ_LINE_NMI, PULSE_LINE);
+	cpunum_set_input_line(2, INPUT_LINE_NMI, PULSE_LINE);
 }
 
-static WRITE_HANDLER( cpu3_bankswitch_w )
+static WRITE8_HANDLER( cpu3_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU3);
 
@@ -501,7 +501,7 @@ static INTERRUPT_GEN( djboy_interrupt )
 	 */
 	static int addr = 0xff;
 	addr ^= 0x02;
-	cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, addr);
+	cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, addr);
 }
 
 static MACHINE_DRIVER_START( djboy )

@@ -30,7 +30,7 @@ PALETTE_INIT( kchamp )
 	}
 }
 
-WRITE_HANDLER( kchamp_videoram_w )
+WRITE8_HANDLER( kchamp_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -39,7 +39,7 @@ WRITE_HANDLER( kchamp_videoram_w )
 	}
 }
 
-WRITE_HANDLER( kchamp_colorram_w )
+WRITE8_HANDLER( kchamp_colorram_w )
 {
 	if (colorram[offset] != data)
 	{
@@ -48,7 +48,7 @@ WRITE_HANDLER( kchamp_colorram_w )
 	}
 }
 
-WRITE_HANDLER( kchamp_flipscreen_w )
+WRITE8_HANDLER( kchamp_flipscreen_w )
 {
 	flip_screen_set(data & 0x01);
 }

@@ -105,17 +105,17 @@ VIDEO_START( pandoras )
 
 ***************************************************************************/
 
-READ_HANDLER( pandoras_vram_r )
+READ8_HANDLER( pandoras_vram_r )
 {
 	return videoram[offset];
 }
 
-READ_HANDLER( pandoras_cram_r )
+READ8_HANDLER( pandoras_cram_r )
 {
 	return colorram[offset];
 }
 
-WRITE_HANDLER( pandoras_vram_w )
+WRITE8_HANDLER( pandoras_vram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -124,7 +124,7 @@ WRITE_HANDLER( pandoras_vram_w )
 	}
 }
 
-WRITE_HANDLER( pandoras_cram_w )
+WRITE8_HANDLER( pandoras_cram_w )
 {
 	if (colorram[offset] != data)
 	{
@@ -133,12 +133,12 @@ WRITE_HANDLER( pandoras_cram_w )
 	}
 }
 
-WRITE_HANDLER( pandoras_scrolly_w )
+WRITE8_HANDLER( pandoras_scrolly_w )
 {
 	tilemap_set_scrolly(layer0,0,data);
 }
 
-WRITE_HANDLER( pandoras_flipscreen_w )
+WRITE8_HANDLER( pandoras_flipscreen_w )
 {
 	flipscreen = data;
 	tilemap_set_flip(ALL_TILEMAPS, flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);

@@ -24,49 +24,49 @@ VIDEO_UPDATE( victnine );
 
 extern UINT8 *flstory_scrlram;
 
-WRITE_HANDLER( flstory_videoram_w );
-READ_HANDLER( flstory_palette_r );
-WRITE_HANDLER( flstory_palette_w );
-WRITE_HANDLER( flstory_gfxctrl_w );
-READ_HANDLER( flstory_scrlram_r );
-WRITE_HANDLER( flstory_scrlram_w );
-WRITE_HANDLER( victnine_gfxctrl_w );
+WRITE8_HANDLER( flstory_videoram_w );
+READ8_HANDLER( flstory_palette_r );
+WRITE8_HANDLER( flstory_palette_w );
+WRITE8_HANDLER( flstory_gfxctrl_w );
+READ8_HANDLER( flstory_scrlram_r );
+WRITE8_HANDLER( flstory_scrlram_w );
+WRITE8_HANDLER( victnine_gfxctrl_w );
 
-READ_HANDLER( flstory_68705_portA_r );
-WRITE_HANDLER( flstory_68705_portA_w );
-READ_HANDLER( flstory_68705_portB_r );
-WRITE_HANDLER( flstory_68705_portB_w );
-READ_HANDLER( flstory_68705_portC_r );
-WRITE_HANDLER( flstory_68705_portC_w );
-WRITE_HANDLER( flstory_68705_ddrA_w );
-WRITE_HANDLER( flstory_68705_ddrB_w );
-WRITE_HANDLER( flstory_68705_ddrC_w );
-WRITE_HANDLER( flstory_mcu_w );
-READ_HANDLER( flstory_mcu_r );
-READ_HANDLER( flstory_mcu_status_r );
-WRITE_HANDLER( onna34ro_mcu_w );
-READ_HANDLER( onna34ro_mcu_r );
-READ_HANDLER( onna34ro_mcu_status_r );
-WRITE_HANDLER( victnine_mcu_w );
-READ_HANDLER( victnine_mcu_r );
-READ_HANDLER( victnine_mcu_status_r );
+READ8_HANDLER( flstory_68705_portA_r );
+WRITE8_HANDLER( flstory_68705_portA_w );
+READ8_HANDLER( flstory_68705_portB_r );
+WRITE8_HANDLER( flstory_68705_portB_w );
+READ8_HANDLER( flstory_68705_portC_r );
+WRITE8_HANDLER( flstory_68705_portC_w );
+WRITE8_HANDLER( flstory_68705_ddrA_w );
+WRITE8_HANDLER( flstory_68705_ddrB_w );
+WRITE8_HANDLER( flstory_68705_ddrC_w );
+WRITE8_HANDLER( flstory_mcu_w );
+READ8_HANDLER( flstory_mcu_r );
+READ8_HANDLER( flstory_mcu_status_r );
+WRITE8_HANDLER( onna34ro_mcu_w );
+READ8_HANDLER( onna34ro_mcu_r );
+READ8_HANDLER( onna34ro_mcu_status_r );
+WRITE8_HANDLER( victnine_mcu_w );
+READ8_HANDLER( victnine_mcu_r );
+READ8_HANDLER( victnine_mcu_status_r );
 
 
 static UINT8 snd_data;
 static UINT8 snd_flag;
 
-static READ_HANDLER( from_snd_r )
+static READ8_HANDLER( from_snd_r )
 {
 	snd_flag = 0;
 	return snd_data;
 }
 
-static READ_HANDLER( snd_flag_r )
+static READ8_HANDLER( snd_flag_r )
 {
 	return snd_flag | 0xfd;
 }
 
-static WRITE_HANDLER( to_main_w )
+static WRITE8_HANDLER( to_main_w )
 {
 	snd_data = data;
 	snd_flag = 2;
@@ -77,28 +77,28 @@ static int sound_nmi_enable,pending_nmi;
 
 static void nmi_callback(int param)
 {
-	if (sound_nmi_enable) cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
+	if (sound_nmi_enable) cpunum_set_input_line(1,INPUT_LINE_NMI,PULSE_LINE);
 	else pending_nmi = 1;
 }
 
-static WRITE_HANDLER( sound_command_w )
+static WRITE8_HANDLER( sound_command_w )
 {
 	soundlatch_w(0,data);
 	timer_set(TIME_NOW,data,nmi_callback);
 }
 
 
-static WRITE_HANDLER( nmi_disable_w )
+static WRITE8_HANDLER( nmi_disable_w )
 {
 	sound_nmi_enable = 0;
 }
 
-static WRITE_HANDLER( nmi_enable_w )
+static WRITE8_HANDLER( nmi_enable_w )
 {
 	sound_nmi_enable = 1;
 	if (pending_nmi)
 	{
-		cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
+		cpunum_set_input_line(1,INPUT_LINE_NMI,PULSE_LINE);
 		pending_nmi = 0;
 	}
 }
@@ -180,7 +180,7 @@ static ADDRESS_MAP_START( onna34ro_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xe000, 0xe7ff) AM_WRITE(MWA8_RAM)	/* work RAM */
 ADDRESS_MAP_END
 
-static READ_HANDLER( victnine_port_5_r )
+static READ8_HANDLER( victnine_port_5_r )
 {
 	return (victnine_mcu_status_r(0) & 3) | (readinputport(5) & ~3);
 }
@@ -264,7 +264,7 @@ static UINT8 snd_ctrl1=0;
 static UINT8 snd_ctrl2=0;
 static UINT8 snd_ctrl3=0;
 
-static WRITE_HANDLER( sound_control_0_w )
+static WRITE8_HANDLER( sound_control_0_w )
 {
 	snd_ctrl0 = data & 0xff;
 //	usrintf_showmessage("SND0 0=%02x 1=%02x 2=%02x 3=%02x", snd_ctrl0, snd_ctrl1, snd_ctrl2, snd_ctrl3);
@@ -273,14 +273,14 @@ static WRITE_HANDLER( sound_control_0_w )
 	mixer_set_volume (3, vol_ctrl[ (snd_ctrl0>>4) & 15 ]);	/* group1 from msm5232 */
 
 }
-static WRITE_HANDLER( sound_control_1_w )
+static WRITE8_HANDLER( sound_control_1_w )
 {
 	snd_ctrl1 = data & 0xff;
 //	usrintf_showmessage("SND1 0=%02x 1=%02x 2=%02x 3=%02x", snd_ctrl0, snd_ctrl1, snd_ctrl2, snd_ctrl3);
 	mixer_set_volume (4, vol_ctrl[ (snd_ctrl1>>4) & 15 ]);	/* group2 from msm5232 */
 }
 
-static WRITE_HANDLER( sound_control_2_w )
+static WRITE8_HANDLER( sound_control_2_w )
 {
 	int i;
 
@@ -291,7 +291,7 @@ static WRITE_HANDLER( sound_control_2_w )
 		mixer_set_volume (i, vol_ctrl[ (snd_ctrl2>>4) & 15 ]);	/* ym2149f all */
 }
 
-static WRITE_HANDLER( sound_control_3_w ) /* unknown */
+static WRITE8_HANDLER( sound_control_3_w ) /* unknown */
 {
 	snd_ctrl3 = data & 0xff;
 //	usrintf_showmessage("SND3 0=%02x 1=%02x 2=%02x 3=%02x", snd_ctrl0, snd_ctrl1, snd_ctrl2, snd_ctrl3);

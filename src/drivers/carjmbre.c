@@ -42,9 +42,9 @@ Notes:
 
 #include "vidhrdw/generic.h"
 
-WRITE_HANDLER( carjmbre_flipscreen_w );
-WRITE_HANDLER( carjmbre_bgcolor_w );
-WRITE_HANDLER( carjmbre_videoram_w );
+WRITE8_HANDLER( carjmbre_flipscreen_w );
+WRITE8_HANDLER( carjmbre_bgcolor_w );
+WRITE8_HANDLER( carjmbre_videoram_w );
 
 PALETTE_INIT( carjmbre );
 VIDEO_START( carjmbre );

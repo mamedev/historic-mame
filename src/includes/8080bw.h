@@ -6,28 +6,28 @@
 
 /*----------- defined in machine/8080bw.c -----------*/
 
-WRITE_HANDLER( c8080bw_shift_amount_w );
-WRITE_HANDLER( c8080bw_shift_data_w );
-READ_HANDLER( c8080bw_shift_data_r );
-READ_HANDLER( c8080bw_shift_data_rev_r );
-READ_HANDLER( c8080bw_shift_data_comp_r );
+WRITE8_HANDLER( c8080bw_shift_amount_w );
+WRITE8_HANDLER( c8080bw_shift_data_w );
+READ8_HANDLER( c8080bw_shift_data_r );
+READ8_HANDLER( c8080bw_shift_data_rev_r );
+READ8_HANDLER( c8080bw_shift_data_comp_r );
 INTERRUPT_GEN( c8080bw_interrupt );
 
-READ_HANDLER( boothill_shift_data_r );
+READ8_HANDLER( boothill_shift_data_r );
 
-READ_HANDLER( spcenctr_port_0_r );
-READ_HANDLER( spcenctr_port_1_r );
+READ8_HANDLER( spcenctr_port_0_r );
+READ8_HANDLER( spcenctr_port_1_r );
 
-READ_HANDLER( boothill_port_0_r );
-READ_HANDLER( boothill_port_1_r );
+READ8_HANDLER( boothill_port_0_r );
+READ8_HANDLER( boothill_port_1_r );
 
-READ_HANDLER( gunfight_port_0_r );
-READ_HANDLER( gunfight_port_1_r );
+READ8_HANDLER( gunfight_port_0_r );
+READ8_HANDLER( gunfight_port_1_r );
 
-READ_HANDLER( seawolf_port_1_r );
+READ8_HANDLER( seawolf_port_1_r );
 
-WRITE_HANDLER( desertgu_controller_select_w );
-READ_HANDLER( desertgu_port_1_r );
+WRITE8_HANDLER( desertgu_controller_select_w );
+READ8_HANDLER( desertgu_port_1_r );
 
 /*----------- defined in sndhrdw/8080bw.c -----------*/
 
@@ -85,11 +85,11 @@ void c8080bw_screen_red_w(int data);
 INTERRUPT_GEN( polaris_interrupt );
 INTERRUPT_GEN( phantom2_interrupt );
 
-WRITE_HANDLER( c8080bw_videoram_w );
-WRITE_HANDLER( schaser_colorram_w );
-READ_HANDLER( schaser_colorram_r );
-WRITE_HANDLER( spaceint_color_w );
-WRITE_HANDLER( cosmo_colorram_w );
+WRITE8_HANDLER( c8080bw_videoram_w );
+WRITE8_HANDLER( schaser_colorram_w );
+READ8_HANDLER( schaser_colorram_r );
+WRITE8_HANDLER( spaceint_color_w );
+WRITE8_HANDLER( cosmo_colorram_w );
 
 VIDEO_UPDATE( 8080bw );
 
@@ -97,4 +97,4 @@ PALETTE_INIT( invadpt2 );
 PALETTE_INIT( sflush );
 PALETTE_INIT( cosmo );
 
-WRITE_HANDLER( bowler_bonus_display_w );
+WRITE8_HANDLER( bowler_bonus_display_w );

@@ -51,7 +51,7 @@ VIDEO_START( battlera )
 
 /******************************************************************************/
 
-WRITE_HANDLER( battlera_palette_w )
+WRITE8_HANDLER( battlera_palette_w )
 {
 	int r,g,b,pal_word;
 
@@ -68,16 +68,16 @@ WRITE_HANDLER( battlera_palette_w )
 
 /******************************************************************************/
 
-READ_HANDLER( HuC6270_debug_r )
+READ8_HANDLER( HuC6270_debug_r )
 {
 	return HuC6270_vram[offset];
 }
 
-WRITE_HANDLER( HuC6270_debug_w )
+WRITE8_HANDLER( HuC6270_debug_w )
 {
 	HuC6270_vram[offset]=data;
 }
-READ_HANDLER( HuC6270_register_r )
+READ8_HANDLER( HuC6270_register_r )
 {
 	int rr;
 
@@ -93,7 +93,7 @@ READ_HANDLER( HuC6270_register_r )
 		| (0 << 7);	/* Always zero */
 }
 
-WRITE_HANDLER( HuC6270_register_w )
+WRITE8_HANDLER( HuC6270_register_w )
 {
 	switch (offset) {
 	case 0: /* Select data region */
@@ -106,7 +106,7 @@ WRITE_HANDLER( HuC6270_register_w )
 
 /******************************************************************************/
 
-READ_HANDLER( HuC6270_data_r )
+READ8_HANDLER( HuC6270_data_r )
 {
 	int result;
 
@@ -123,7 +123,7 @@ READ_HANDLER( HuC6270_data_r )
 	return 0;
 }
 
-WRITE_HANDLER( HuC6270_data_w )
+WRITE8_HANDLER( HuC6270_data_w )
 {
 	switch (offset) {
 		case 0: /* LSB */
@@ -444,7 +444,7 @@ INTERRUPT_GEN( battlera_interrupt )
 	if (rcr_enable && (current_scanline+56)==HuC6270_registers[6]) {
 		battlera_raster_partial_refresh(Machine->scrbitmap,last_line,current_scanline);
 		last_line=current_scanline;
-		cpu_set_irq_line(0, 0, HOLD_LINE); /* RCR interrupt */
+		cpunum_set_input_line(0, 0, HOLD_LINE); /* RCR interrupt */
 	}
 
 	/* Start of vblank */
@@ -452,7 +452,7 @@ INTERRUPT_GEN( battlera_interrupt )
 		bldwolf_vblank=1;
 		battlera_raster_partial_refresh(Machine->scrbitmap,last_line,240);
 		if (irq_enable)
-			cpu_set_irq_line(0, 0, HOLD_LINE); /* VBL */
+			cpunum_set_input_line(0, 0, HOLD_LINE); /* VBL */
 	}
 
 	/* End of vblank */

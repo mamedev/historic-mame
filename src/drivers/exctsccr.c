@@ -26,10 +26,10 @@ based on wich Coin input was connected.
 #include "vidhrdw/generic.h"
 
 /* from vidhrdw */
-extern WRITE_HANDLER( exctsccr_videoram_w );
-extern WRITE_HANDLER( exctsccr_colorram_w );
-extern WRITE_HANDLER( exctsccr_gfx_bank_w );
-extern WRITE_HANDLER( exctsccr_flipscreen_w );
+extern WRITE8_HANDLER( exctsccr_videoram_w );
+extern WRITE8_HANDLER( exctsccr_colorram_w );
+extern WRITE8_HANDLER( exctsccr_gfx_bank_w );
+extern WRITE8_HANDLER( exctsccr_flipscreen_w );
 
 extern PALETTE_INIT( exctsccr );
 extern VIDEO_START( exctsccr );
@@ -37,11 +37,11 @@ extern VIDEO_UPDATE( exctsccr );
 
 /* from machine */
 extern UINT8 *exctsccr_mcu_ram;
-extern WRITE_HANDLER( exctsccr_mcu_w );
-extern WRITE_HANDLER( exctsccr_mcu_control_w );
+extern WRITE8_HANDLER( exctsccr_mcu_w );
+extern WRITE8_HANDLER( exctsccr_mcu_control_w );
 
 
-WRITE_HANDLER( exctsccr_DAC_data_w )
+WRITE8_HANDLER( exctsccr_DAC_data_w )
 {
 	DAC_signed_data_w(offset,data << 2);
 }

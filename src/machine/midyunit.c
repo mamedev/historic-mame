@@ -221,7 +221,7 @@ static WRITE16_HANDLER( term2la1_hack_w )
  *************************************/
 
 static UINT8 *cvsd_protection_base;
-static WRITE_HANDLER( cvsd_protection_w )
+static WRITE8_HANDLER( cvsd_protection_w )
 {
 	/* because the entire CVSD ROM is banked, we have to make sure that writes */
 	/* go to the proper location (i.e., bank 0); currently bank 0 always lives */
@@ -290,7 +290,7 @@ static void init_generic(int bpp, int sound, int prot_start, int prot_end)
 			memcpy(&base[0x20000], &base[0x10000], 0x10000);
 			memcpy(&base[0x40000], &base[0x30000], 0x10000);
 			memcpy(&base[0x60000], &base[0x50000], 0x10000);
-			cvsd_protection_base = install_mem_write_handler(1, prot_start, prot_end, cvsd_protection_w);
+			cvsd_protection_base = memory_install_write8_handler(1, ADDRESS_SPACE_PROGRAM, prot_start, prot_end, 0, 0, cvsd_protection_w);
 			break;
 
 		case SOUND_ADPCM:
@@ -298,12 +298,12 @@ static void init_generic(int bpp, int sound, int prot_start, int prot_end)
 			memcpy(base + 0xa0000, base + 0x20000, 0x20000);
 			memcpy(base + 0x80000, base + 0x60000, 0x20000);
 			memcpy(base + 0x60000, base + 0x20000, 0x20000);
-			install_mem_write_handler(1, prot_start, prot_end, MWA8_RAM);
+			memory_install_write8_handler(1, ADDRESS_SPACE_PROGRAM, prot_start, prot_end, 0, 0, MWA8_RAM);
 			break;
 
 		case SOUND_CVSD:
 		case SOUND_NARC:
-			install_mem_write_handler(1, prot_start, prot_end, MWA8_RAM);
+			memory_install_write8_handler(1, ADDRESS_SPACE_PROGRAM, prot_start, prot_end, 0, 0, MWA8_RAM);
 			break;
 	}
 }
@@ -461,12 +461,12 @@ static void term2_init_common(write16_handler hack_w)
 	init_generic(6, SOUND_ADPCM, 0xfa8d, 0xfa9c);
 
 	/* special inputs */
-	install_mem_read16_handler(0, 0x01c00000, 0x01c0005f, term2_input_r);
-	install_mem_write16_handler(0, 0x01e00000, 0x01e0001f, term2_sound_w);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x01c00000, 0x01c0005f, 0, 0, term2_input_r);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x01e00000, 0x01e0001f, 0, 0, term2_sound_w);
 
 	/* HACK: this prevents the freeze on the movies */
 	/* until we figure whats causing it, this is better than nothing */
-	t2_hack_mem = install_mem_write16_handler(0, 0x010aa0e0, 0x010aa0ff, hack_w);
+	t2_hack_mem = memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x010aa0e0, 0x010aa0ff, 0, 0, hack_w);
 }
 
 DRIVER_INIT( term2 ) { term2_init_common(term2_hack_w); }

@@ -21,73 +21,73 @@ static unsigned track_vert[2];
 static unsigned track_ice;
 
 
-WRITE_HANDLER( sspeedr_driver_horz_w )
+WRITE8_HANDLER( sspeedr_driver_horz_w )
 {
 	driver_horz = (driver_horz & 0x100) | data;
 }
 
 
-WRITE_HANDLER( sspeedr_driver_horz_2_w )
+WRITE8_HANDLER( sspeedr_driver_horz_2_w )
 {
 	driver_horz = (driver_horz & 0xff) | ((data & 1) << 8);
 }
 
 
-WRITE_HANDLER( sspeedr_driver_vert_w )
+WRITE8_HANDLER( sspeedr_driver_vert_w )
 {
 	driver_vert = data;
 }
 
 
-WRITE_HANDLER( sspeedr_driver_pic_w )
+WRITE8_HANDLER( sspeedr_driver_pic_w )
 {
 	driver_pic = data & 0x1f;
 }
 
 
-WRITE_HANDLER( sspeedr_drones_horz_w )
+WRITE8_HANDLER( sspeedr_drones_horz_w )
 {
 	drones_horz = (drones_horz & 0x100) | data;
 }
 
 
-WRITE_HANDLER( sspeedr_drones_horz_2_w )
+WRITE8_HANDLER( sspeedr_drones_horz_2_w )
 {
 	drones_horz = (drones_horz & 0xff) | ((data & 1) << 8);
 }
 
 
-WRITE_HANDLER( sspeedr_drones_mask_w )
+WRITE8_HANDLER( sspeedr_drones_mask_w )
 {
 	drones_mask = data & 0x3f;
 }
 
 
-WRITE_HANDLER( sspeedr_drones_vert_w )
+WRITE8_HANDLER( sspeedr_drones_vert_w )
 {
 	drones_vert[offset] = data;
 }
 
 
-WRITE_HANDLER( sspeedr_track_horz_w )
+WRITE8_HANDLER( sspeedr_track_horz_w )
 {
 	track_horz = (track_horz & 0x100) | data;
 }
 
 
-WRITE_HANDLER( sspeedr_track_horz_2_w )
+WRITE8_HANDLER( sspeedr_track_horz_2_w )
 {
 	track_horz = (track_horz & 0xff) | ((data & 1) << 8);
 }
 
 
-WRITE_HANDLER( sspeedr_track_vert_w )
+WRITE8_HANDLER( sspeedr_track_vert_w )
 {
 	track_vert[offset] = data & 0x7f;
 }
 
 
-WRITE_HANDLER( sspeedr_track_ice_w )
+WRITE8_HANDLER( sspeedr_track_ice_w )
 {
 	track_ice = data & 0x07;
 }

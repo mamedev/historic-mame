@@ -64,12 +64,12 @@ void ticket_dispenser_init(int msec, int motoronhigh, int statusactivehigh)
 /***************************************************************************
   ticket_dispenser_r
 ***************************************************************************/
-READ_HANDLER( ticket_dispenser_r )
+READ8_HANDLER( ticket_dispenser_r )
 {
 	return ticket_dispenser_0_r(offset);
 }
 
-READ_HANDLER( ticket_dispenser_0_r )
+READ8_HANDLER( ticket_dispenser_0_r )
 {
 #ifdef DEBUG_TICKET
 	logerror("PC: %04X  Ticket Status Read = %02X\n", activecpu_get_pc(), status);
@@ -77,7 +77,7 @@ READ_HANDLER( ticket_dispenser_0_r )
 	return dispenser[0].status;
 }
 
-READ_HANDLER( ticket_dispenser_1_r )
+READ8_HANDLER( ticket_dispenser_1_r )
 {
 #ifdef DEBUG_TICKET
 	logerror("PC: %04X  Ticket Status Read = %02X\n", activecpu_get_pc(), status);
@@ -88,12 +88,12 @@ READ_HANDLER( ticket_dispenser_1_r )
 /***************************************************************************
   ticket_dispenser_w
 ***************************************************************************/
-WRITE_HANDLER( ticket_dispenser_w )
+WRITE8_HANDLER( ticket_dispenser_w )
 {
 	ticket_dispenser_0_w(offset, data);
 }
 
-WRITE_HANDLER( ticket_dispenser_0_w )
+WRITE8_HANDLER( ticket_dispenser_0_w )
 {
 	/* On an activate signal, start dispensing! */
 	if ((data & active_bit) == motoron)
@@ -123,7 +123,7 @@ WRITE_HANDLER( ticket_dispenser_0_w )
 	}
 }
 
-WRITE_HANDLER( ticket_dispenser_1_w )
+WRITE8_HANDLER( ticket_dispenser_1_w )
 {
 	/* On an activate signal, start dispensing! */
 	if ((data & active_bit) == motoron)

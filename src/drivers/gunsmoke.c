@@ -61,21 +61,21 @@ Stephh's notes (based on the games Z80 code and some tests) :
 #define GUNSMOKE_HACK	0
 
 
-READ_HANDLER( gunsmoke_bankedrom_r );
+READ8_HANDLER( gunsmoke_bankedrom_r );
 extern MACHINE_INIT( gunsmoke );
 
 extern unsigned char *gunsmoke_bg_scrollx;
 extern unsigned char *gunsmoke_bg_scrolly;
 
-WRITE_HANDLER( gunsmoke_c804_w );	/* in vidhrdw/c1943.c */
-WRITE_HANDLER( gunsmoke_d806_w );	/* in vidhrdw/c1943.c */
+WRITE8_HANDLER( gunsmoke_c804_w );	/* in vidhrdw/c1943.c */
+WRITE8_HANDLER( gunsmoke_d806_w );	/* in vidhrdw/c1943.c */
 PALETTE_INIT( gunsmoke );
 VIDEO_UPDATE( gunsmoke );
 VIDEO_START( gunsmoke );
 
 
 #if GUNSMOKE_HACK
-static READ_HANDLER( gunsmoke_input_r )
+static READ8_HANDLER( gunsmoke_input_r )
 {
 	if ((activecpu_get_pc() == 0x0173) || (activecpu_get_pc() == 0x0181))	// to get correct coinage
 		return (readinputport(4));
@@ -88,7 +88,7 @@ static READ_HANDLER( gunsmoke_input_r )
 #endif
 
 
-static READ_HANDLER( gunsmoke_unknown_r )
+static READ8_HANDLER( gunsmoke_unknown_r )
 {
     static int gunsmoke_fixed_data[]={ 0xff, 0x00, 0x00 };
     /*

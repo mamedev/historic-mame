@@ -30,22 +30,22 @@ static WRITE16_HANDLER( magmax_sound_w )
 	if (ACCESSING_LSB)
 	{
 		sound_latch = (data & 0xff) << 1;
-		cpu_set_irq_line(1, 0, ASSERT_LINE);
+		cpunum_set_input_line(1, 0, ASSERT_LINE);
 	}
 }
 
-static READ_HANDLER( magmax_sound_irq_ack )
+static READ8_HANDLER( magmax_sound_irq_ack )
 {
-	cpu_set_irq_line(1, 0, CLEAR_LINE);
+	cpunum_set_input_line(1, 0, CLEAR_LINE);
 	return 0;
 }
 
-static READ_HANDLER( magmax_sound_r )
+static READ8_HANDLER( magmax_sound_r )
 {
 	return (sound_latch | LS74_q);
 }
 
-WRITE_HANDLER( ay8910_portB_0_w )
+WRITE8_HANDLER( ay8910_portB_0_w )
 {
 	/*bit 0 is input to CLR line of the LS74*/
 	LS74_clr = data & 1;
@@ -81,7 +81,7 @@ static MACHINE_INIT( magmax )
 
 static int gain_control = 0;
 
-WRITE_HANDLER( ay8910_portA_0_w )
+WRITE8_HANDLER( ay8910_portA_0_w )
 {
 int percent;
 

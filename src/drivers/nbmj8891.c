@@ -109,10 +109,10 @@ VIDEO_UPDATE( gionbana );
 VIDEO_START( gionbana );
 VIDEO_START( hanamomo );
 
-READ_HANDLER( gionbana_palette_r );
-WRITE_HANDLER( gionbana_palette_w );
-READ_HANDLER( maiko_palette_r );
-WRITE_HANDLER( maiko_palette_w );
+READ8_HANDLER( gionbana_palette_r );
+WRITE8_HANDLER( gionbana_palette_w );
+READ8_HANDLER( maiko_palette_r );
+WRITE8_HANDLER( maiko_palette_w );
 void gionbana_radrx_w(int data);
 void gionbana_radry_w(int data);
 void gionbana_sizex_w(int data);
@@ -124,8 +124,8 @@ void gionbana_scrolly_w(int data);
 void gionbana_vramsel_w(int data);
 void gionbana_romsel_w(int data);
 void gionbana_paltblnum_w(int data);
-READ_HANDLER( gionbana_paltbl_r );
-WRITE_HANDLER( gionbana_paltbl_w );
+READ8_HANDLER( gionbana_paltbl_r );
+WRITE8_HANDLER( gionbana_paltbl_w );
 
 
 static DRIVER_INIT( gionbana )
@@ -421,7 +421,7 @@ static ADDRESS_MAP_START( writemem_hanaoji, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 
-static READ_HANDLER( io_gionbana_r )
+static READ8_HANDLER( io_gionbana_r )
 {
 	offset = (((offset & 0xff00) >> 8) | ((offset & 0x00ff) << 8));
 
@@ -443,7 +443,7 @@ static ADDRESS_MAP_START( readport_gionbana, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x0000, 0xffff) AM_READ(io_gionbana_r)
 ADDRESS_MAP_END
 
-static WRITE_HANDLER( io_gionbana_w )
+static WRITE8_HANDLER( io_gionbana_w )
 {
 	offset = (((offset & 0xff00) >> 8) | ((offset & 0x00ff) << 8));
 
@@ -480,7 +480,7 @@ static ADDRESS_MAP_START( writeport_gionbana, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x0000, 0xffff) AM_WRITE(io_gionbana_w)
 ADDRESS_MAP_END
 
-static WRITE_HANDLER( io_hanamomo_w )
+static WRITE8_HANDLER( io_hanamomo_w )
 {
 	offset = (((offset & 0xff00) >> 8) | ((offset & 0x00ff) << 8));
 
@@ -517,7 +517,7 @@ static ADDRESS_MAP_START( writeport_hanamomo, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x0000, 0xffff) AM_WRITE(io_hanamomo_w)
 ADDRESS_MAP_END
 
-static WRITE_HANDLER( io_msjiken_w )
+static WRITE8_HANDLER( io_msjiken_w )
 {
 	offset = (((offset & 0xff00) >> 8) | ((offset & 0x00ff) << 8));
 
@@ -554,7 +554,7 @@ static ADDRESS_MAP_START( writeport_msjiken, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x0000, 0xffff) AM_WRITE(io_msjiken_w)
 ADDRESS_MAP_END
 
-static WRITE_HANDLER( io_scandal_w )
+static WRITE8_HANDLER( io_scandal_w )
 {
 	offset = (((offset & 0xff00) >> 8) | ((offset & 0x00ff) << 8));
 
@@ -596,7 +596,7 @@ static ADDRESS_MAP_START( writeport_scandal, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x0000, 0xffff) AM_WRITE(io_scandal_w)
 ADDRESS_MAP_END
 
-static READ_HANDLER( io_scandalm_r )
+static READ8_HANDLER( io_scandalm_r )
 {
 	offset = (((offset & 0xff00) >> 8) | ((offset & 0x00ff) << 8));
 
@@ -619,7 +619,7 @@ static ADDRESS_MAP_START( readport_scandalm, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x0000, 0xffff) AM_READ(io_scandalm_r)
 ADDRESS_MAP_END
 
-static WRITE_HANDLER( io_scandalm_w )
+static WRITE8_HANDLER( io_scandalm_w )
 {
 	offset = (((offset & 0xff00) >> 8) | ((offset & 0x00ff) << 8));
 
@@ -661,7 +661,7 @@ static ADDRESS_MAP_START( writeport_scandalm, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x0000, 0xffff) AM_WRITE(io_scandalm_w)
 ADDRESS_MAP_END
 
-static WRITE_HANDLER( io_bananadr_w )
+static WRITE8_HANDLER( io_bananadr_w )
 {
 	offset = (((offset & 0xff00) >> 8) | ((offset & 0x00ff) << 8));
 
@@ -704,7 +704,7 @@ static ADDRESS_MAP_START( writeport_bananadr, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x0000, 0xffff) AM_WRITE(io_bananadr_w)
 ADDRESS_MAP_END
 
-static READ_HANDLER( io_maiko_r )
+static READ8_HANDLER( io_maiko_r )
 {
 	offset = (((offset & 0xff00) >> 8) | ((offset & 0x00ff) << 8));
 
@@ -726,7 +726,7 @@ static ADDRESS_MAP_START( readport_maiko, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x0000, 0xffff) AM_READ(io_maiko_r)
 ADDRESS_MAP_END
 
-static WRITE_HANDLER( io_maiko_w )
+static WRITE8_HANDLER( io_maiko_w )
 {
 	offset = (((offset & 0xff00) >> 8) | ((offset & 0x00ff) << 8));
 

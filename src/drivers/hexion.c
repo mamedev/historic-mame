@@ -85,15 +85,15 @@ Notes:
 VIDEO_START( hexion );
 VIDEO_UPDATE( hexion );
 
-WRITE_HANDLER( hexion_bankswitch_w );
-READ_HANDLER( hexion_bankedram_r );
-WRITE_HANDLER( hexion_bankedram_w );
-WRITE_HANDLER( hexion_bankctrl_w );
-WRITE_HANDLER( hexion_gfxrom_select_w );
+WRITE8_HANDLER( hexion_bankswitch_w );
+READ8_HANDLER( hexion_bankedram_r );
+WRITE8_HANDLER( hexion_bankedram_w );
+WRITE8_HANDLER( hexion_bankctrl_w );
+WRITE8_HANDLER( hexion_gfxrom_select_w );
 
 
 
-static WRITE_HANDLER( coincntr_w )
+static WRITE8_HANDLER( coincntr_w )
 {
 //logerror("%04x: coincntr_w %02x\n",activecpu_get_pc(),data);
 
@@ -290,9 +290,9 @@ static INTERRUPT_GEN( hexion_interrupt )
 {
 	/* NMI handles start and coin inputs, origin unknown */
 	if (cpu_getiloops())
-		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+		cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 	else
-		cpu_set_irq_line(0, 0, HOLD_LINE);
+		cpunum_set_input_line(0, 0, HOLD_LINE);
 }
 
 static MACHINE_DRIVER_START( hexion )

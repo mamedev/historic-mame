@@ -25,49 +25,49 @@ size_t  exzisus_objectram_size1;
   Memory handlers
 ***************************************************************************/
 
-READ_HANDLER ( exzisus_videoram_0_r )
+READ8_HANDLER ( exzisus_videoram_0_r )
 {
 	return exzisus_videoram0[offset];
 }
 
 
-READ_HANDLER ( exzisus_videoram_1_r )
+READ8_HANDLER ( exzisus_videoram_1_r )
 {
 	return exzisus_videoram1[offset];
 }
 
 
-READ_HANDLER ( exzisus_objectram_0_r )
+READ8_HANDLER ( exzisus_objectram_0_r )
 {
 	return exzisus_objectram0[offset];
 }
 
 
-READ_HANDLER ( exzisus_objectram_1_r )
+READ8_HANDLER ( exzisus_objectram_1_r )
 {
 	return exzisus_objectram1[offset];
 }
 
 
-WRITE_HANDLER( exzisus_videoram_0_w )
+WRITE8_HANDLER( exzisus_videoram_0_w )
 {
 	exzisus_videoram0[offset] = data;
 }
 
 
-WRITE_HANDLER( exzisus_videoram_1_w )
+WRITE8_HANDLER( exzisus_videoram_1_w )
 {
 	exzisus_videoram1[offset] = data;
 }
 
 
-WRITE_HANDLER( exzisus_objectram_0_w )
+WRITE8_HANDLER( exzisus_objectram_0_w )
 {
 	exzisus_objectram0[offset] = data;
 }
 
 
-WRITE_HANDLER( exzisus_objectram_1_w )
+WRITE8_HANDLER( exzisus_objectram_1_w )
 {
 	exzisus_objectram1[offset] = data;
 }

@@ -12,19 +12,19 @@ driver by Mirko Buffoni
 extern UINT8 *solomon_videoram2;
 extern UINT8 *solomon_colorram2;
 
-extern WRITE_HANDLER( solomon_videoram_w );
-extern WRITE_HANDLER( solomon_colorram_w );
-extern WRITE_HANDLER( solomon_videoram2_w );
-extern WRITE_HANDLER( solomon_colorram2_w );
-extern WRITE_HANDLER( solomon_flipscreen_w );
+extern WRITE8_HANDLER( solomon_videoram_w );
+extern WRITE8_HANDLER( solomon_colorram_w );
+extern WRITE8_HANDLER( solomon_videoram2_w );
+extern WRITE8_HANDLER( solomon_colorram2_w );
+extern WRITE8_HANDLER( solomon_flipscreen_w );
 
 extern VIDEO_START( solomon );
 extern VIDEO_UPDATE( solomon );
 
-static WRITE_HANDLER( solomon_sh_command_w )
+static WRITE8_HANDLER( solomon_sh_command_w )
 {
 	soundlatch_w(offset,data);
-	cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
+	cpunum_set_input_line(1,INPUT_LINE_NMI,PULSE_LINE);
 }
 
 

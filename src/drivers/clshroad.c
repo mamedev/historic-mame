@@ -27,9 +27,9 @@ data8_t *clshroad_sharedram;
 extern data8_t *clshroad_vram_0, *clshroad_vram_1;
 extern data8_t *clshroad_vregs;
 
-WRITE_HANDLER( clshroad_vram_0_w );
-WRITE_HANDLER( clshroad_vram_1_w );
-WRITE_HANDLER( clshroad_flipscreen_w );
+WRITE8_HANDLER( clshroad_vram_0_w );
+WRITE8_HANDLER( clshroad_vram_1_w );
+WRITE8_HANDLER( clshroad_flipscreen_w );
 
 PALETTE_INIT( firebatl );
 PALETTE_INIT( clshroad );
@@ -40,7 +40,7 @@ VIDEO_UPDATE( clshroad );
 extern unsigned char *wiping_soundregs;
 int wiping_sh_start(const struct MachineSound *msound);
 void wiping_sh_stop(void);
-WRITE_HANDLER( wiping_sound_w );
+WRITE8_HANDLER( wiping_sound_w );
 
 
 
@@ -52,10 +52,10 @@ MACHINE_INIT( clshroad )
 
 /* Shared RAM with the sound CPU */
 
-READ_HANDLER ( clshroad_sharedram_r )	{	return clshroad_sharedram[offset];	}
-WRITE_HANDLER( clshroad_sharedram_w )	{	clshroad_sharedram[offset] = data;	}
+READ8_HANDLER ( clshroad_sharedram_r )	{	return clshroad_sharedram[offset];	}
+WRITE8_HANDLER( clshroad_sharedram_w )	{	clshroad_sharedram[offset] = data;	}
 
-READ_HANDLER( clshroad_input_r )
+READ8_HANDLER( clshroad_input_r )
 {
 	return	((~readinputport(0) & (1 << offset)) ? 1 : 0) |
 			((~readinputport(1) & (1 << offset)) ? 2 : 0) |

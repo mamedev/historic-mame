@@ -25,11 +25,11 @@ SOUND : (none)
 #include "cpu/z80/z80.h"
 
 
-WRITE_HANDLER( dotrikun_videoram_w );
+WRITE8_HANDLER( dotrikun_videoram_w );
 VIDEO_UPDATE( dotrikun );
 VIDEO_START( dotrikun );
 
-WRITE_HANDLER( dotrikun_color_w );
+WRITE8_HANDLER( dotrikun_color_w );
 
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )

@@ -37,10 +37,10 @@ CHIP #  POSITION   TYPE
 
 extern data8_t *flower_textram, *flower_bg0ram, *flower_bg1ram, *flower_bg0_scroll, *flower_bg1_scroll;
 
-WRITE_HANDLER( flower_textram_w );
-WRITE_HANDLER( flower_bg0ram_w );
-WRITE_HANDLER( flower_bg1ram_w );
-WRITE_HANDLER( flower_flipscreen_w );
+WRITE8_HANDLER( flower_textram_w );
+WRITE8_HANDLER( flower_bg0ram_w );
+WRITE8_HANDLER( flower_bg1ram_w );
+WRITE8_HANDLER( flower_flipscreen_w );
 VIDEO_UPDATE( flower );
 VIDEO_START( flower );
 
@@ -48,41 +48,41 @@ VIDEO_START( flower );
 extern data8_t *flower_soundregs1,*flower_soundregs2;
 int flower_sh_start(const struct MachineSound *msound);
 void flower_sh_stop(void);
-WRITE_HANDLER( flower_sound1_w );
-WRITE_HANDLER( flower_sound2_w );
+WRITE8_HANDLER( flower_sound1_w );
+WRITE8_HANDLER( flower_sound2_w );
 
 
-static WRITE_HANDLER( flower_irq_ack )
+static WRITE8_HANDLER( flower_irq_ack )
 {
-	cpu_set_irq_line(0, 0, CLEAR_LINE);
+	cpunum_set_input_line(0, 0, CLEAR_LINE);
 }
 
 
 static int sn_irq_enable,sn_nmi_enable;
 
-static WRITE_HANDLER( sn_irq_enable_w )
+static WRITE8_HANDLER( sn_irq_enable_w )
 {
 	sn_irq_enable = data & 1;
 
-	cpu_set_irq_line(2, 0, CLEAR_LINE);
+	cpunum_set_input_line(2, 0, CLEAR_LINE);
 }
 
 static INTERRUPT_GEN( sn_irq )
 {
 	if (sn_irq_enable)
-		cpu_set_irq_line(2, 0, ASSERT_LINE);
+		cpunum_set_input_line(2, 0, ASSERT_LINE);
 }
 
-static WRITE_HANDLER( sn_nmi_enable_w )
+static WRITE8_HANDLER( sn_nmi_enable_w )
 {
 	sn_nmi_enable = data & 1;
 }
 
-static WRITE_HANDLER( sound_command_w )
+static WRITE8_HANDLER( sound_command_w )
 {
 	soundlatch_w(0,data);
 	if (sn_nmi_enable)
-		cpu_set_nmi_line(2, PULSE_LINE);
+		cpunum_set_input_line(2, INPUT_LINE_NMI, PULSE_LINE);
 }
 
 static ADDRESS_MAP_START( flower_cpu1, ADDRESS_SPACE_PROGRAM, 8 )

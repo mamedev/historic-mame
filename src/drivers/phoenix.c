@@ -37,28 +37,28 @@ Pleiads:
 
 
 
-READ_HANDLER( phoenix_videoram_r );
-WRITE_HANDLER( phoenix_videoram_w );
-WRITE_HANDLER( phoenix_videoreg_w );
-WRITE_HANDLER( pleiads_videoreg_w );
-WRITE_HANDLER( phoenix_scroll_w );
-READ_HANDLER( phoenix_input_port_0_r );
-READ_HANDLER( pleiads_input_port_0_r );
-READ_HANDLER( survival_input_port_0_r );
-READ_HANDLER( survival_protection_r );
+READ8_HANDLER( phoenix_videoram_r );
+WRITE8_HANDLER( phoenix_videoram_w );
+WRITE8_HANDLER( phoenix_videoreg_w );
+WRITE8_HANDLER( pleiads_videoreg_w );
+WRITE8_HANDLER( phoenix_scroll_w );
+READ8_HANDLER( phoenix_input_port_0_r );
+READ8_HANDLER( pleiads_input_port_0_r );
+READ8_HANDLER( survival_input_port_0_r );
+READ8_HANDLER( survival_protection_r );
 PALETTE_INIT( phoenix );
 PALETTE_INIT( pleiads );
 VIDEO_START( phoenix );
 VIDEO_UPDATE( phoenix );
 
-WRITE_HANDLER( phoenix_sound_control_a_w );
-WRITE_HANDLER( phoenix_sound_control_b_w );
+WRITE8_HANDLER( phoenix_sound_control_a_w );
+WRITE8_HANDLER( phoenix_sound_control_b_w );
 int phoenix_sh_start(const struct MachineSound *msound);
 void phoenix_sh_stop(void);
 void phoenix_sh_update(void);
 
-WRITE_HANDLER( pleiads_sound_control_a_w );
-WRITE_HANDLER( pleiads_sound_control_b_w );
+WRITE8_HANDLER( pleiads_sound_control_a_w );
+WRITE8_HANDLER( pleiads_sound_control_b_w );
 int pleiads_sh_start(const struct MachineSound *msound);
 void pleiads_sh_stop(void);
 void pleiads_sh_update(void);

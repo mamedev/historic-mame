@@ -53,7 +53,7 @@ static WRITE16_HANDLER( soundcmd_w )
 	if (ACCESSING_LSB)
 	{
 		soundlatch_w(offset,data & 0xff);
-		cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
+		cpunum_set_input_line(1,INPUT_LINE_NMI,PULSE_LINE);
 	}
 }
 
@@ -174,13 +174,13 @@ static READ16_HANDLER( button2_r )
 }
 
 
-static WRITE_HANDLER( sound2_bank_w )
+static WRITE8_HANDLER( sound2_bank_w )
 {
 	cpu_setbank(1,memory_region(REGION_CPU3)+0x8000*(data+1));
 }
 
 
-static WRITE_HANDLER( msm5205_w )
+static WRITE8_HANDLER( msm5205_w )
 {
 	MSM5205_reset_w(offset,(data>>7)&1);
 	/* ?? bit 6?? */
@@ -800,7 +800,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static void irq_handler(int irq)
 {
-	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2151interface ym2151_interface =

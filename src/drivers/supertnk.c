@@ -138,7 +138,7 @@ VIDEO_START( supertnk )
 
 
 
-WRITE_HANDLER( supertnk_videoram_w )
+WRITE8_HANDLER( supertnk_videoram_w )
 {
 	int x, y, i, col, col0, col1, col2;
 
@@ -168,7 +168,7 @@ WRITE_HANDLER( supertnk_videoram_w )
 
 
 
-READ_HANDLER( supertnk_videoram_r )
+READ8_HANDLER( supertnk_videoram_r )
 {
 	if (supertnk_video_bitplane < 3)
 		return supertnk_videoram[0x2000 * supertnk_video_bitplane + offset];
@@ -184,14 +184,14 @@ VIDEO_UPDATE( supertnk )
 
 
 
-WRITE_HANDLER( supertnk_intack )
+WRITE8_HANDLER( supertnk_intack )
 {
-	cpu_set_irq_line(0, 0, CLEAR_LINE);
+	cpunum_set_input_line(0, 0, CLEAR_LINE);
 }
 
 
 
-WRITE_HANDLER( supertnk_bankswitch_w )
+WRITE8_HANDLER( supertnk_bankswitch_w )
 {
 	int bankaddress;
 	UINT8 *ROM = memory_region(REGION_CPU1);
@@ -212,7 +212,7 @@ WRITE_HANDLER( supertnk_bankswitch_w )
 
 
 
-WRITE_HANDLER( supertnk_set_video_bitplane )
+WRITE8_HANDLER( supertnk_set_video_bitplane )
 {
 	switch (offset)
 	{
@@ -232,7 +232,7 @@ WRITE_HANDLER( supertnk_set_video_bitplane )
 INTERRUPT_GEN( supertnk_interrupt )
 {
 	/* On a TMS9980, a 6 on the interrupt bus means a level 4 interrupt */
-	cpu_set_irq_line_and_vector(0, 0, ASSERT_LINE, 6);
+	cpunum_set_input_line_and_vector(0, 0, ASSERT_LINE, 6);
 }
 
 

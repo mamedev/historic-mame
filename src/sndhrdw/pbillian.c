@@ -16,7 +16,7 @@ int pbillian_sh_start(const struct MachineSound *msound)
 
 #define pb_play_s(start,end) mixer_play_sample(channel,samplebuf + (start<<8),	(end-start)<<8,5000,0) // 5khz ?
 
-WRITE_HANDLER(data_41a_w)
+WRITE8_HANDLER(data_41a_w)
 {
 	/* 
 	 i/o port $41a wrties are sample related

@@ -19,14 +19,14 @@
 static struct tilemap *tilemap;
 
 
-WRITE_HANDLER( amspdwy_paletteram_w )
+WRITE8_HANDLER( amspdwy_paletteram_w )
 {
 	data ^= 0xff;
 	paletteram_BBGGGRRR_w(offset,data);
 //	paletteram_RRRGGGBB_w(offset,data);
 }
 
-WRITE_HANDLER( amspdwy_flipscreen_w )
+WRITE8_HANDLER( amspdwy_flipscreen_w )
 {
 	static int flip = 0;
 	flip ^= 1;
@@ -57,7 +57,7 @@ static void get_tile_info( int tile_index )
 			0)
 }
 
-WRITE_HANDLER( amspdwy_videoram_w )
+WRITE8_HANDLER( amspdwy_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -66,7 +66,7 @@ WRITE_HANDLER( amspdwy_videoram_w )
 	}
 }
 
-WRITE_HANDLER( amspdwy_colorram_w )
+WRITE8_HANDLER( amspdwy_colorram_w )
 {
 	if (colorram[offset] != data)
 	{

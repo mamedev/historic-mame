@@ -67,7 +67,7 @@ WRITE16_HANDLER( afega_soundlatch_w )
 	if (ACCESSING_LSB && Machine->sample_rate)
 	{
 		soundlatch_w(0,data&0xff);
-		cpu_set_irq_line(1, 0, PULSE_LINE);
+		cpunum_set_input_line(1, 0, PULSE_LINE);
 	}
 }
 
@@ -552,7 +552,7 @@ static struct GfxDecodeInfo stagger1_gfxdecodeinfo[] =
 
 static void irq_handler(int irq)
 {
-	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2151interface afega_ym2151_intf =

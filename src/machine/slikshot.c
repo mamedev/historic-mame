@@ -416,7 +416,7 @@ static void compute_sensors(void)
  *
  *************************************/
 
-READ_HANDLER( slikz80_port_r )
+READ8_HANDLER( slikz80_port_r )
 {
 	int result = 0;
 
@@ -446,7 +446,7 @@ READ_HANDLER( slikz80_port_r )
  *
  *************************************/
 
-WRITE_HANDLER( slikz80_port_w )
+WRITE8_HANDLER( slikz80_port_w )
 {
 	z80_port_val = data;
 	z80_clear_to_send = 0;
@@ -460,7 +460,7 @@ WRITE_HANDLER( slikz80_port_w )
  *
  *************************************/
 
-READ_HANDLER( slikshot_z80_r )
+READ8_HANDLER( slikshot_z80_r )
 {
 	/* allow the Z80 to send us stuff now */
 	z80_clear_to_send = 1;
@@ -477,7 +477,7 @@ READ_HANDLER( slikshot_z80_r )
  *
  *************************************/
 
-READ_HANDLER( slikshot_z80_control_r )
+READ8_HANDLER( slikshot_z80_control_r )
 {
 	return z80_ctrl;
 }
@@ -490,7 +490,7 @@ READ_HANDLER( slikshot_z80_control_r )
  *
  *************************************/
 
-WRITE_HANDLER( slikshot_z80_control_w )
+WRITE8_HANDLER( slikshot_z80_control_w )
 {
 	UINT8 delta = z80_ctrl ^ data;
 	z80_ctrl = data;
@@ -504,7 +504,7 @@ WRITE_HANDLER( slikshot_z80_control_w )
 		/* at its endpoint; otherwise, we never get a result from the Z80 */
 		if ((data & 0x10) || cpunum_get_reg(2, Z80_PC) == 0x13a)
 		{
-			cpu_set_reset_line(2, (data & 0x10) ? CLEAR_LINE : ASSERT_LINE);
+			cpunum_set_input_line(2, INPUT_LINE_RESET, (data & 0x10) ? CLEAR_LINE : ASSERT_LINE);
 
 			/* on the rising edge, do housekeeping */
 			if (data & 0x10)

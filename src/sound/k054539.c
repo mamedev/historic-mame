@@ -720,22 +720,22 @@ void K054539_sh_stop(void)
 	K054539_flags = K054539_RESET_FLAGS;
 }
 
-WRITE_HANDLER( K054539_0_w )
+WRITE8_HANDLER( K054539_0_w )
 {
 	K054539_w(0, offset, data);
 }
 
-READ_HANDLER( K054539_0_r )
+READ8_HANDLER( K054539_0_r )
 {
 	return K054539_r(0, offset);
 }
 
-WRITE_HANDLER( K054539_1_w )
+WRITE8_HANDLER( K054539_1_w )
 {
 	K054539_w(1, offset, data);
 }
 
-READ_HANDLER( K054539_1_r )
+READ8_HANDLER( K054539_1_r )
 {
 	return K054539_r(1, offset);
 }

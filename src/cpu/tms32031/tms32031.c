@@ -609,19 +609,20 @@ static void tms32031_set_info(UINT32 state, union cpuinfo *info)
 	switch (state)
 	{
 		/* --- the following bits of info are set as 64-bit signed integers --- */
-		case CPUINFO_INT_IRQ_STATE + TMS32031_IRQ0:		set_irq_line(TMS32031_IRQ0, info->i);	break;
-		case CPUINFO_INT_IRQ_STATE + TMS32031_IRQ1:		set_irq_line(TMS32031_IRQ1, info->i);	break;
-		case CPUINFO_INT_IRQ_STATE + TMS32031_IRQ2:		set_irq_line(TMS32031_IRQ2, info->i);	break;
-		case CPUINFO_INT_IRQ_STATE + TMS32031_IRQ3:		set_irq_line(TMS32031_IRQ3, info->i);	break;
-		case CPUINFO_INT_IRQ_STATE + TMS32031_XINT0:	set_irq_line(TMS32031_XINT0, info->i);	break;
-		case CPUINFO_INT_IRQ_STATE + TMS32031_RINT0:	set_irq_line(TMS32031_RINT0, info->i);	break;
-		case CPUINFO_INT_IRQ_STATE + TMS32031_XINT1:	set_irq_line(TMS32031_XINT1, info->i);	break;
-		case CPUINFO_INT_IRQ_STATE + TMS32031_RINT1:	set_irq_line(TMS32031_RINT1, info->i);	break;
-		case CPUINFO_INT_IRQ_STATE + TMS32031_TINT0:	set_irq_line(TMS32031_TINT0, info->i);	break;
-		case CPUINFO_INT_IRQ_STATE + TMS32031_TINT1:	set_irq_line(TMS32031_TINT1, info->i);	break;
-		case CPUINFO_INT_IRQ_STATE + TMS32031_DINT:		set_irq_line(TMS32031_DINT, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + TMS32031_IRQ0:	set_irq_line(TMS32031_IRQ0, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + TMS32031_IRQ1:	set_irq_line(TMS32031_IRQ1, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + TMS32031_IRQ2:	set_irq_line(TMS32031_IRQ2, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + TMS32031_IRQ3:	set_irq_line(TMS32031_IRQ3, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + TMS32031_XINT0:	set_irq_line(TMS32031_XINT0, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + TMS32031_RINT0:	set_irq_line(TMS32031_RINT0, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + TMS32031_XINT1:	set_irq_line(TMS32031_XINT1, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + TMS32031_RINT1:	set_irq_line(TMS32031_RINT1, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + TMS32031_TINT0:	set_irq_line(TMS32031_TINT0, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + TMS32031_TINT1:	set_irq_line(TMS32031_TINT1, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + TMS32031_DINT:	set_irq_line(TMS32031_DINT, info->i);	break;
 
-		case CPUINFO_INT_PC:							tms32031.pc = info->i; 					break;
+		case CPUINFO_INT_PC:
+		case CPUINFO_INT_REGISTER + TMS32031_PC:		tms32031.pc = info->i; 					break;
 		case CPUINFO_INT_REGISTER + TMS32031_R0:		IREG(TMR_R0) = info->i; 				break;
 		case CPUINFO_INT_REGISTER + TMS32031_R1:		IREG(TMR_R1) = info->i; 				break;
 		case CPUINFO_INT_REGISTER + TMS32031_R2:		IREG(TMR_R2) = info->i; 				break;
@@ -687,7 +688,7 @@ void tms32031_get_info(UINT32 state, union cpuinfo *info)
 	{
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
 		case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(tms32031);				break;
-		case CPUINFO_INT_IRQ_LINES:						info->i = 11;							break;
+		case CPUINFO_INT_INPUT_LINES:					info->i = 11;							break;
 		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
 		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_LE;					break;
 		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
@@ -706,21 +707,22 @@ void tms32031_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 0;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
 
-		case CPUINFO_INT_IRQ_STATE + TMS32031_IRQ0:		info->i = (IREG(TMR_IF) & (1 << TMS32031_IRQ0)) ? ASSERT_LINE : CLEAR_LINE; break;
-		case CPUINFO_INT_IRQ_STATE + TMS32031_IRQ1:		info->i = (IREG(TMR_IF) & (1 << TMS32031_IRQ1)) ? ASSERT_LINE : CLEAR_LINE; break;
-		case CPUINFO_INT_IRQ_STATE + TMS32031_IRQ2:		info->i = (IREG(TMR_IF) & (1 << TMS32031_IRQ2)) ? ASSERT_LINE : CLEAR_LINE; break;
-		case CPUINFO_INT_IRQ_STATE + TMS32031_IRQ3:		info->i = (IREG(TMR_IF) & (1 << TMS32031_IRQ3)) ? ASSERT_LINE : CLEAR_LINE; break;
-		case CPUINFO_INT_IRQ_STATE + TMS32031_XINT0:	info->i = (IREG(TMR_IF) & (1 << TMS32031_XINT0)) ? ASSERT_LINE : CLEAR_LINE; break;
-		case CPUINFO_INT_IRQ_STATE + TMS32031_RINT0:	info->i = (IREG(TMR_IF) & (1 << TMS32031_RINT0)) ? ASSERT_LINE : CLEAR_LINE; break;
-		case CPUINFO_INT_IRQ_STATE + TMS32031_XINT1:	info->i = (IREG(TMR_IF) & (1 << TMS32031_XINT1)) ? ASSERT_LINE : CLEAR_LINE; break;
-		case CPUINFO_INT_IRQ_STATE + TMS32031_RINT1:	info->i = (IREG(TMR_IF) & (1 << TMS32031_RINT1)) ? ASSERT_LINE : CLEAR_LINE; break;
-		case CPUINFO_INT_IRQ_STATE + TMS32031_TINT0:	info->i = (IREG(TMR_IF) & (1 << TMS32031_TINT0)) ? ASSERT_LINE : CLEAR_LINE; break;
-		case CPUINFO_INT_IRQ_STATE + TMS32031_TINT1:	info->i = (IREG(TMR_IF) & (1 << TMS32031_TINT1)) ? ASSERT_LINE : CLEAR_LINE; break;
-		case CPUINFO_INT_IRQ_STATE + TMS32031_DINT:		info->i = (IREG(TMR_IF) & (1 << TMS32031_DINT)) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_INPUT_STATE + TMS32031_IRQ0:	info->i = (IREG(TMR_IF) & (1 << TMS32031_IRQ0)) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_INPUT_STATE + TMS32031_IRQ1:	info->i = (IREG(TMR_IF) & (1 << TMS32031_IRQ1)) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_INPUT_STATE + TMS32031_IRQ2:	info->i = (IREG(TMR_IF) & (1 << TMS32031_IRQ2)) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_INPUT_STATE + TMS32031_IRQ3:	info->i = (IREG(TMR_IF) & (1 << TMS32031_IRQ3)) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_INPUT_STATE + TMS32031_XINT0:	info->i = (IREG(TMR_IF) & (1 << TMS32031_XINT0)) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_INPUT_STATE + TMS32031_RINT0:	info->i = (IREG(TMR_IF) & (1 << TMS32031_RINT0)) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_INPUT_STATE + TMS32031_XINT1:	info->i = (IREG(TMR_IF) & (1 << TMS32031_XINT1)) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_INPUT_STATE + TMS32031_RINT1:	info->i = (IREG(TMR_IF) & (1 << TMS32031_RINT1)) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_INPUT_STATE + TMS32031_TINT0:	info->i = (IREG(TMR_IF) & (1 << TMS32031_TINT0)) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_INPUT_STATE + TMS32031_TINT1:	info->i = (IREG(TMR_IF) & (1 << TMS32031_TINT1)) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_INPUT_STATE + TMS32031_DINT:	info->i = (IREG(TMR_IF) & (1 << TMS32031_DINT)) ? ASSERT_LINE : CLEAR_LINE; break;
 
 		case CPUINFO_INT_PREVIOUSPC:					info->i = tms32031.ppc;					break;
 
-		case CPUINFO_INT_PC:							info->i = tms32031.pc;					break;
+		case CPUINFO_INT_PC:
+		case CPUINFO_INT_REGISTER + TMS32031_PC:		info->i = tms32031.pc;					break;
 
 		case CPUINFO_INT_REGISTER + TMS32031_R0:		info->i = IREG(TMR_R0);					break;
 		case CPUINFO_INT_REGISTER + TMS32031_R1:		info->i = IREG(TMR_R1);					break;

@@ -242,14 +242,14 @@ static MACHINE_INIT( omegrace )
  *
  *************************************/
 
-static READ_HANDLER( omegrace_vg_go_r )
+static READ8_HANDLER( omegrace_vg_go_r )
 {
 	avgdvg_go_w(0,0);
 	return 0;
 }
 
 
-static READ_HANDLER( omegrace_vg_status_r )
+static READ8_HANDLER( omegrace_vg_status_r )
 {
 	return avgdvg_done() ? 0x00 : 0x80;
 }
@@ -287,7 +287,7 @@ static unsigned char spinnerTable[64] =
 };
 
 
-READ_HANDLER( omegrace_spinner1_r )
+READ8_HANDLER( omegrace_spinner1_r )
 {
 	return (spinnerTable[readinputport(4) & 0x3f]);
 }
@@ -300,7 +300,7 @@ READ_HANDLER( omegrace_spinner1_r )
  *
  *************************************/
 
-WRITE_HANDLER( omegrace_leds_w )
+WRITE8_HANDLER( omegrace_leds_w )
 {
 	/* bits 0 and 1 are coin counters */
 	coin_counter_w(0,data & 0x01);
@@ -316,10 +316,10 @@ WRITE_HANDLER( omegrace_leds_w )
 }
 
 
-WRITE_HANDLER( omegrace_soundlatch_w )
+WRITE8_HANDLER( omegrace_soundlatch_w )
 {
 	soundlatch_w (offset, data);
-	cpu_set_irq_line(1, 0, HOLD_LINE);
+	cpunum_set_input_line(1, 0, HOLD_LINE);
 }
 
 

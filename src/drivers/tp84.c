@@ -87,16 +87,16 @@ C004      76489 #4 trigger
 
 extern UINT8 *tp84_videoram2, *tp84_colorram2;
 
-extern WRITE_HANDLER( tp84_videoram_w );
-extern WRITE_HANDLER( tp84_colorram_w );
-extern WRITE_HANDLER( tp84_videoram2_w );
-extern WRITE_HANDLER( tp84_colorram2_w );
-extern WRITE_HANDLER( tp84_scroll_x_w );
-extern WRITE_HANDLER( tp84_scroll_y_w );
-extern WRITE_HANDLER( tp84_flipscreen_x_w );
-extern WRITE_HANDLER( tp84_flipscreen_y_w );
-extern WRITE_HANDLER( tp84_col0_w );
-extern READ_HANDLER( tp84_scanline_r );
+extern WRITE8_HANDLER( tp84_videoram_w );
+extern WRITE8_HANDLER( tp84_colorram_w );
+extern WRITE8_HANDLER( tp84_videoram2_w );
+extern WRITE8_HANDLER( tp84_colorram2_w );
+extern WRITE8_HANDLER( tp84_scroll_x_w );
+extern WRITE8_HANDLER( tp84_scroll_y_w );
+extern WRITE8_HANDLER( tp84_flipscreen_x_w );
+extern WRITE8_HANDLER( tp84_flipscreen_y_w );
+extern WRITE8_HANDLER( tp84_col0_w );
+extern READ8_HANDLER( tp84_scanline_r );
 
 extern PALETTE_INIT( tp84 );
 extern VIDEO_START( tp84 );
@@ -107,19 +107,19 @@ extern INTERRUPT_GEN( tp84_6809_interrupt );
 
 static UINT8 *sharedram;
 
-static READ_HANDLER( sharedram_r )
+static READ8_HANDLER( sharedram_r )
 {
 	return sharedram[offset];
 }
 
-static WRITE_HANDLER( sharedram_w )
+static WRITE8_HANDLER( sharedram_w )
 {
 	sharedram[offset] = data;
 }
 
 
 
-static READ_HANDLER( tp84_sh_timer_r )
+static READ8_HANDLER( tp84_sh_timer_r )
 {
 	/* main xtal 14.318MHz, divided by 4 to get the CPU clock, further */
 	/* divided by 2048 to get this timer */
@@ -128,7 +128,7 @@ static READ_HANDLER( tp84_sh_timer_r )
 	return (activecpu_gettotalcycles() / (2048/2)) & 0x0f;
 }
 
-static WRITE_HANDLER( tp84_filter_w )
+static WRITE8_HANDLER( tp84_filter_w )
 {
 	int C;
 
@@ -155,9 +155,9 @@ static WRITE_HANDLER( tp84_filter_w )
 	set_RC_filter(2,1000,2200,1000,C);
 }
 
-static WRITE_HANDLER( tp84_sh_irqtrigger_w )
+static WRITE8_HANDLER( tp84_sh_irqtrigger_w )
 {
-	cpu_set_irq_line_and_vector(2,0,HOLD_LINE,0xff);
+	cpunum_set_input_line_and_vector(2,0,HOLD_LINE,0xff);
 }
 
 

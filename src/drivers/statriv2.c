@@ -4,6 +4,7 @@
 * Triv Quiz driver by MooglyGuy                                  *
 * Triv Four driver by Pierpaolo Prazzoli                         *
 * Super Triv III driver by Pierpaolo Prazzoli                    *
+* Hangman driver by Pierpaolo Prazzoli                           *
 *                                                                *
 ******************************************************************
 *                                                                *
@@ -98,15 +99,11 @@ static void get_statriv2_tile_info(int tile_index)
 	int code = statriv2_videoram[0x400+tile_index];
 	int attr = statriv2_videoram[tile_index];
 
-	SET_TILE_INFO(
-			0,
-			code,
-			attr,
-			0)
+	SET_TILE_INFO(0, code, attr, 0)
 }
 
 
-WRITE_HANDLER( statriv2_videoram_w )
+WRITE8_HANDLER( statriv2_videoram_w )
 {
 	statriv2_videoram[offset] = data;
 	tilemap_mark_tile_dirty(statriv2_tilemap,offset & 0x3ff);
@@ -178,22 +175,22 @@ static data8_t  question_offset_low;
 static data8_t  question_offset_med;
 static data8_t  question_offset_high;
 
-static WRITE_HANDLER ( question_offset_low_w )
+static WRITE8_HANDLER ( question_offset_low_w )
 {
 	question_offset_low = data;
 }
 
-static WRITE_HANDLER ( question_offset_med_w )
+static WRITE8_HANDLER ( question_offset_med_w )
 {
 	question_offset_med = data;
 }
 
-static WRITE_HANDLER ( question_offset_high_w )
+static WRITE8_HANDLER ( question_offset_high_w )
 {
 	question_offset_high = data;
 }
 
-static READ_HANDLER (statriv2_questions_read)
+static READ8_HANDLER (statriv2_questions_read)
 {
 	data8_t *question_data    = memory_region       ( REGION_USER1 );
 	int offs;
@@ -265,7 +262,7 @@ static READ_HANDLER (statriv2_questions_read)
 *                                                   *
 \***************************************************/
 
-static READ_HANDLER (supertr2_questions_read)
+static READ8_HANDLER (supertr2_questions_read)
 {
 	data8_t *question_data = memory_region( REGION_USER1 );
 	int offs;
@@ -282,7 +279,7 @@ static READ_HANDLER (supertr2_questions_read)
 	return (question_data[offs] ^ 0xFF) ^ XORval;
 }
 
-static READ_HANDLER (supertr3_questions_read)
+static READ8_HANDLER (supertr3_questions_read)
 {
 	data8_t *question_data = memory_region( REGION_USER1 );
 	int offs;
@@ -290,6 +287,16 @@ static READ_HANDLER (supertr3_questions_read)
 	offs = (question_offset_high << 16) | (question_offset_med << 8) | question_offset_low;
 
 	return question_data[offs] ^ 0xFF;
+}
+
+static READ8_HANDLER (hangman_questions_read)
+{
+	data8_t *question_data = memory_region( REGION_USER1 );
+	int offs;
+
+	offs = (question_offset_high << 16) | (question_offset_med << 8) | question_offset_low;
+
+	return question_data[offs];
 }
 
 static ADDRESS_MAP_START( statriv2_readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -401,23 +408,12 @@ static ADDRESS_MAP_START( supertr3_readport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0xce, 0xce) AM_READ(MRA8_NOP)				// ???
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( quaquiz2_readport, ADDRESS_SPACE_IO, 8 )
+static ADDRESS_MAP_START( hangman_readport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x20, 0x20) AM_READ(input_port_0_r)
 	AM_RANGE(0x21, 0x21) AM_READ(input_port_1_r)
-	AM_RANGE(0x28, 0x28) AM_READ(supertr3_questions_read)                // question data
+	AM_RANGE(0x28, 0x28) AM_READ(hangman_questions_read)                // question data
 	AM_RANGE(0xb1, 0xb1) AM_READ(AY8910_read_port_0_r)		// ???
-	AM_RANGE(0xce, 0xce) AM_READ(MRA8_NOP)			// ???
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( quaquiz2_writeport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x22, 0x22) AM_WRITE(MWA8_NOP)				// ???
-	AM_RANGE(0x23, 0x23) AM_WRITE(MWA8_NOP)			// ???
-	AM_RANGE(0x28, 0x28) AM_WRITE(question_offset_low_w)
-	AM_RANGE(0x29, 0x29) AM_WRITE(question_offset_med_w)
-	AM_RANGE(0x2a, 0x2a) AM_WRITE(question_offset_high_w)
-	AM_RANGE(0xb0, 0xb0) AM_WRITE(AY8910_control_port_0_w)
-	AM_RANGE(0xb1, 0xb1) AM_WRITE(AY8910_write_port_0_w)
-	AM_RANGE(0xc0, 0xcf) AM_WRITE(MWA8_NOP)				// ???
+	AM_RANGE(0xce, 0xce) AM_READ(MRA8_NOP)			// ???	
 ADDRESS_MAP_END
 
 INPUT_PORTS_START( statriv2 )
@@ -528,6 +524,36 @@ INPUT_PORTS_START( quaquiz2 )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( hangman )
+	PORT_START
+	PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_LOW, IPT_START1, 8 )
+	PORT_BIT_IMPULSE_NAME( 0x02, IP_ACTIVE_LOW, IPT_BUTTON3, 8, "Choose" )
+	PORT_BIT_IMPULSE_NAME( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2, 8, "Right" )
+	PORT_BIT_IMPULSE_NAME( 0x08, IP_ACTIVE_LOW, IPT_BUTTON5, 8, "Go For It" )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT_IMPULSE_NAME( 0x40, IP_ACTIVE_LOW, IPT_BUTTON4, 8, "Spinner" )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	
+ 	PORT_START
+	PORT_BIT_IMPULSE_NAME( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1, 8, "Left" )
+	PORT_BIT_IMPULSE( 0x02, IP_ACTIVE_LOW, IPT_START2, 8 )
+	PORT_BIT_IMPULSE( 0x04, IP_ACTIVE_LOW, IPT_COIN1, 8 )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_SERVICE_NO_TOGGLE( 0x10, IP_ACTIVE_LOW )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+INPUT_PORTS_END
+
 static struct GfxLayout statriv2_tiles8x16_layout =
 {
 	8,16,
@@ -560,7 +586,7 @@ static struct AY8910interface ay8910_interface =
 
 static INTERRUPT_GEN( statriv2_interrupt )
 {
-	cpu_set_irq_line(0, I8085_RST75_LINE, HOLD_LINE);
+	cpunum_set_input_line(0, I8085_RST75_LINE, HOLD_LINE);
 }
 
 static MACHINE_DRIVER_START( statriv2 )
@@ -637,15 +663,21 @@ MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( quaquiz2 )
 	/* basic machine hardware */
-	MDRV_IMPORT_FROM(statriv2)
-
-	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PROGRAM_MAP(supertr2_readmem,supertr2_writemem)
-	MDRV_CPU_IO_MAP(quaquiz2_readport,quaquiz2_writeport)
+	MDRV_IMPORT_FROM(supertr3)
 
 	MDRV_NVRAM_HANDLER(quaquiz2)
 
 	MDRV_VISIBLE_AREA(4*8, 38*8-1, 0, 32*8-1)
+MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( hangman )
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(statriv2)
+
+	MDRV_CPU_REPLACE("main",8085A,12400000/4)
+	MDRV_CPU_IO_MAP(hangman_readport,supertr2_writeport)
+
+	MDRV_VISIBLE_AREA(1*8, 35*8-1, 0, 32*8-1)
 MACHINE_DRIVER_END
 
 ROM_START( statriv2 )
@@ -771,6 +803,30 @@ ROM_START( quaquiz2 )
 	ROM_LOAD( "gst.08",    0x38000, 0x08000, CRC(64a54915) SHA1(13bbdff3617ec14595bc72891f56d327d76f539d) )
 ROM_END
 
+ROM_START( hangman )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )
+	ROM_LOAD( "main_hang_1b_2732.u7", 0x0000, 0x1000, CRC(0d71b2ad) SHA1(636e5e0e356c9c7de174a0b6a5663fedcb1e697f) )
+	ROM_LOAD( "main_hang_2b_2732.u8", 0x1000, 0x1000, CRC(77533554) SHA1(fe97a412135b770ce7e85442507eac0c25b7256a) )
+	ROM_LOAD( "main_hang_3b_2732.u9", 0x2000, 0x1000, CRC(daab4853) SHA1(b3b8ef051f4b04195cf7b25232f1af561c3ff7ba) )
+	
+	ROM_REGION( 0x1000,  REGION_GFX1, ROMREGION_INVERT )
+	ROM_LOAD( "main_hang_0b_2732.u36", 0x0000, 0x1000, CRC(e031dbf8) SHA1(ae6d34ad02b2d7deb1665d2420f8399a3ca88585) )
+
+	ROM_REGION( 0x16000, REGION_USER1, 0 ) /* question data */
+	ROM_LOAD( "aux_27c256.8", 0x00000, 0x8000, CRC(c7d76338) SHA1(40e88efd7e250ad867772258eb6dc3b225de781f) )
+	ROM_LOAD( "aux_2764.1",   0x08000, 0x2000, CRC(a88563c8) SHA1(23cb169268ded6c81494197cfb9b34180667fc8c) )
+	ROM_LOAD( "aux_2764.2",   0x0a000, 0x2000, CRC(4bddbe3c) SHA1(391012de04e8a3638fac6f173a81cf1f86d8f751) )
+	ROM_LOAD( "aux_2764.3",   0x0c000, 0x2000, CRC(3ece427a) SHA1(ff09bf3734ecfa6d848037cca11b80adb8074e39) )
+	ROM_LOAD( "aux_2764.4",   0x0e000, 0x2000, CRC(bb0efc98) SHA1(4317d1243f6aaf8178d19574645a43f9c2e42725) )
+	ROM_LOAD( "aux_2764.5",   0x10000, 0x2000, CRC(8bebf907) SHA1(76d01b71e696b06cdf9d9c93839ef797c56b78db) )
+	ROM_LOAD( "aux_2764.6",   0x12000, 0x2000, CRC(d1732f3b) SHA1(c4e862bd98f237e1d2ecad430226cba6aba4ebb8) )
+	ROM_LOAD( "aux_2764.7",   0x14000, 0x2000, CRC(e51d45b8) SHA1(7cd0ced0245dbd55a225182e43b89d55d8d33197) )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 ) /* unknown */
+	ROM_LOAD( "main_74s288.u17", 0x0000, 0x0020, CRC(63b8a63e) SHA1(d59ad84edd583f7befce73b79e12dfb58a204c4f) )
+ROM_END
+
+GAMEX( 1984, hangman,  0, hangman,  hangman,  0, ROT0, "Status Games", "Hangman",        GAME_WRONG_COLORS )
 GAMEX( 1984, trivquiz, 0, trivquiz, statriv2, 0, ROT0, "Status Games", "Triv Quiz",      GAME_WRONG_COLORS )
 GAMEX( 1984, statriv2, 0, statriv2, statriv2, 0, ROT0, "Status Games", "Triv Two",       GAME_WRONG_COLORS )
 GAMEX( 1985, statriv4, 0, statriv4, statriv4, 0, ROT0, "Status Games", "Triv Four",      GAME_WRONG_COLORS )

@@ -40,7 +40,7 @@ static void chk_ldw(void)
 	ldw = 0;
 }
 
-WRITE_HANDLER( tms57002_control_w )
+WRITE8_HANDLER( tms57002_control_w )
 {
 	chk_ldw();
 
@@ -81,13 +81,13 @@ WRITE_HANDLER( tms57002_control_w )
 	}
 }
 
-READ_HANDLER( tms57002_status_r )
+READ8_HANDLER( tms57002_status_r )
 {
 	chk_ldw();
 	return 1;
 }
 
-WRITE_HANDLER( tms57002_data_w )
+WRITE8_HANDLER( tms57002_data_w )
 {
 	switch(tms57002.control)
 	{
@@ -127,7 +127,7 @@ WRITE_HANDLER( tms57002_data_w )
 	}
 }
 
-READ_HANDLER( tms57002_data_r )
+READ8_HANDLER( tms57002_data_r )
 {
 	unsigned char res;
 

@@ -43,7 +43,7 @@ static int squeal_off_counter;
 static int squeal_on_counter;
 static int squeal_out;
 
-WRITE_HANDLER( redbaron_sounds_w )
+WRITE8_HANDLER( redbaron_sounds_w )
 {
 	/* If sound is off, don't bother playing samples */
 	if( data == latch )
@@ -54,7 +54,7 @@ WRITE_HANDLER( redbaron_sounds_w )
     rb_input_select = data & 1;
 }
 
-WRITE_HANDLER( redbaron_pokey_w )
+WRITE8_HANDLER( redbaron_pokey_w )
 {
     if( latch & 0x20 )
         pokey1_w (offset, data);

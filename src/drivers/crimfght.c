@@ -21,19 +21,19 @@ VIDEO_START( crimfght );
 VIDEO_UPDATE( crimfght );
 
 
-static WRITE_HANDLER( crimfght_coin_w )
+static WRITE8_HANDLER( crimfght_coin_w )
 {
 	coin_counter_w(0,data & 1);
 	coin_counter_w(1,data & 2);
 }
 
-static WRITE_HANDLER( crimfght_sh_irqtrigger_w )
+static WRITE8_HANDLER( crimfght_sh_irqtrigger_w )
 {
 	soundlatch_w(offset,data);
-	cpu_set_irq_line_and_vector(1,0,HOLD_LINE,0xff);
+	cpunum_set_input_line_and_vector(1,0,HOLD_LINE,0xff);
 }
 
-static WRITE_HANDLER( crimfght_snd_bankswitch_w )
+static WRITE8_HANDLER( crimfght_snd_bankswitch_w )
 {
 	/* b1: bank for channel A */
 	/* b0: bank for channel B */
@@ -46,7 +46,7 @@ static WRITE_HANDLER( crimfght_snd_bankswitch_w )
 
 /********************************************/
 
-static READ_HANDLER( speedup_r )
+static READ8_HANDLER( speedup_r )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -503,12 +503,12 @@ static void crimfght_banking( int lines )
 
 	/* bit 5 = select work RAM or palette */
 	if (lines & 0x20){
-		install_mem_read_handler (0, 0x0000, 0x03ff, paletteram_r);							/* palette */
-		install_mem_write_handler(0, 0x0000, 0x03ff, paletteram_xBBBBBGGGGGRRRRR_swap_w);	/* palette */
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x03ff, 0, 0, paletteram_r);							/* palette */
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x03ff, 0, 0, paletteram_xBBBBBGGGGGRRRRR_swap_w);	/* palette */
 	}
 	else{
-		install_mem_read_handler (0, 0x0000, 0x03ff, MRA8_RAM);								/* RAM */
-		install_mem_write_handler(0, 0x0000, 0x03ff, MWA8_RAM);								/* RAM */
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x03ff, 0, 0, MRA8_RAM);								/* RAM */
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x03ff, 0, 0, MWA8_RAM);								/* RAM */
 	}
 
 	/* bit 6 = enable char ROM reading through the video RAM */

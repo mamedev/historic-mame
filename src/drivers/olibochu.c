@@ -58,7 +58,7 @@ PALETTE_INIT( olibochu )
 		COLOR(1,i) = (*(color_prom++) & 0x0f);
 }
 
-WRITE_HANDLER( olibochu_videoram_w )
+WRITE8_HANDLER( olibochu_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -67,7 +67,7 @@ WRITE_HANDLER( olibochu_videoram_w )
 	}
 }
 
-WRITE_HANDLER( olibochu_colorram_w )
+WRITE8_HANDLER( olibochu_colorram_w )
 {
 	if (colorram[offset] != data)
 	{
@@ -76,7 +76,7 @@ WRITE_HANDLER( olibochu_colorram_w )
 	}
 }
 
-WRITE_HANDLER( olibochu_flipscreen_w )
+WRITE8_HANDLER( olibochu_flipscreen_w )
 {
 	if (flip_screen != (data & 0x80))
 	{
@@ -176,7 +176,7 @@ VIDEO_UPDATE( olibochu )
 }
 
 
-static WRITE_HANDLER( sound_command_w )
+static WRITE8_HANDLER( sound_command_w )
 {
 	static int cmd;
 	int c;
@@ -389,9 +389,9 @@ static struct AY8910interface ay8910_interface =
 static INTERRUPT_GEN( olibochu_interrupt )
 {
 	if (cpu_getiloops() == 0)
-		cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0xcf);	/* RST 08h */
+		cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, 0xcf);	/* RST 08h */
 	else
-		cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0xd7);	/* RST 10h */
+		cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, 0xd7);	/* RST 10h */
 }
 
 static MACHINE_DRIVER_START( olibochu )

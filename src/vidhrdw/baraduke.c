@@ -148,12 +148,12 @@ VIDEO_START( baraduke )
 
 ***************************************************************************/
 
-READ_HANDLER( baraduke_videoram_r )
+READ8_HANDLER( baraduke_videoram_r )
 {
 	return baraduke_videoram[offset];
 }
 
-WRITE_HANDLER( baraduke_videoram_w )
+WRITE8_HANDLER( baraduke_videoram_w )
 {
 	if (baraduke_videoram[offset] != data)
 	{
@@ -162,12 +162,12 @@ WRITE_HANDLER( baraduke_videoram_w )
 	}
 }
 
-READ_HANDLER( baraduke_textram_r )
+READ8_HANDLER( baraduke_textram_r )
 {
 	return baraduke_textram[offset];
 }
 
-WRITE_HANDLER( baraduke_textram_w )
+WRITE8_HANDLER( baraduke_textram_w )
 {
 	if (baraduke_textram[offset] != data)
 	{
@@ -193,11 +193,11 @@ static void scroll_w(int layer,int offset,int data)
 	}
 }
 
-WRITE_HANDLER( baraduke_scroll0_w )
+WRITE8_HANDLER( baraduke_scroll0_w )
 {
 	scroll_w(0, offset, data);
 }
-WRITE_HANDLER( baraduke_scroll1_w )
+WRITE8_HANDLER( baraduke_scroll1_w )
 {
 	scroll_w(1, offset, data);
 }
@@ -205,12 +205,12 @@ WRITE_HANDLER( baraduke_scroll1_w )
 
 static int copy_sprites;
 
-READ_HANDLER( baraduke_spriteram_r )
+READ8_HANDLER( baraduke_spriteram_r )
 {
 	return baraduke_spriteram[offset];
 }
 
-WRITE_HANDLER( baraduke_spriteram_w )
+WRITE8_HANDLER( baraduke_spriteram_w )
 {
 	baraduke_spriteram[offset] = data;
 

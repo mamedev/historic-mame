@@ -25,8 +25,8 @@ extern VIDEO_UPDATE( orbit );
 extern UINT8* orbit_playfield_ram;
 extern UINT8* orbit_sprite_ram;
 
-extern WRITE_HANDLER( orbit_playfield_w );
-extern WRITE_HANDLER( orbit_sprite_w );
+extern WRITE8_HANDLER( orbit_playfield_w );
+extern WRITE8_HANDLER( orbit_sprite_w );
 
 static int orbit_nmi_enable;
 
@@ -37,7 +37,7 @@ static INTERRUPT_GEN( orbit_interrupt )
 {
 	if (orbit_nmi_enable)
 	{
-		cpu_set_nmi_line(0, PULSE_LINE);
+		cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 	}
 }
 
@@ -72,30 +72,30 @@ static MACHINE_INIT( orbit )
 }
 
 
-WRITE_HANDLER( orbit_note_w )
+WRITE8_HANDLER( orbit_note_w )
 {
 	discrete_sound_w(0, (~data) & 0xff);
 }
 
-WRITE_HANDLER( orbit_note_amp_w )
+WRITE8_HANDLER( orbit_note_amp_w )
 {
 	discrete_sound_w(1, data & 0x0f);
 	discrete_sound_w(2, (data >> 4) & 0x0f);
 }
 
-WRITE_HANDLER( orbit_noise_amp_w )
+WRITE8_HANDLER( orbit_noise_amp_w )
 {
 	discrete_sound_w(3, data & 0x0f);
 	discrete_sound_w(4, (data & 0xf0) >> 4);
 }
 
-WRITE_HANDLER( orbit_noise_rst_w )
+WRITE8_HANDLER( orbit_noise_rst_w )
 {
 	discrete_sound_w(6, 0);
 }
 
 
-WRITE_HANDLER( orbit_misc_w )
+WRITE8_HANDLER( orbit_misc_w )
 {
 	UINT8 bit = offset >> 1;
 
@@ -110,13 +110,13 @@ WRITE_HANDLER( orbit_misc_w )
 }
 
 
-WRITE_HANDLER( orbit_zeropage_w )
+WRITE8_HANDLER( orbit_zeropage_w )
 {
 	memory_region(REGION_CPU1)[offset & 0xff] = data;
 }
 
 
-READ_HANDLER( orbit_zeropage_r )
+READ8_HANDLER( orbit_zeropage_r )
 {
 	return memory_region(REGION_CPU1)[offset & 0xff];
 }

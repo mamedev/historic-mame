@@ -31,11 +31,11 @@ D000      Paddle Position and Interrupt Reset
 #include "artwork.h"
 #include "vidhrdw/generic.h"
 
-extern WRITE_HANDLER( circus_clown_x_w );
-extern WRITE_HANDLER( circus_clown_y_w );
-extern WRITE_HANDLER( circus_clown_z_w );
+extern WRITE8_HANDLER( circus_clown_x_w );
+extern WRITE8_HANDLER( circus_clown_y_w );
+extern WRITE8_HANDLER( circus_clown_z_w );
 
-extern WRITE_HANDLER( circus_videoram_w );
+extern WRITE8_HANDLER( circus_videoram_w );
 
 extern VIDEO_START( circus );
 extern VIDEO_UPDATE( crash );
@@ -49,7 +49,7 @@ extern struct Samplesinterface circus_samples_interface;
 #if 0
 static int circus_interrupt;
 
-static READ_HANDLER( ripcord_IN2_r )
+static READ8_HANDLER( ripcord_IN2_r )
 {
 	circus_interrupt ++;
 	logerror("circus_int: %02x\n", circus_interrupt);

@@ -20,20 +20,6 @@ extern "C" {
 
 /*************************************
  *
- *	Interrupt constants
- *
- *************************************/
-
-enum
-{
-	/* generic "none" vector */
-	INTERRUPT_NONE = 126
-};
-
-
-
-/*************************************
- *
  *	Startup/shutdown
  *
  *************************************/
@@ -48,25 +34,27 @@ extern int (*cpu_irq_callbacks[])(int);
 
 /*************************************
  *
- *	Interrupt handling
+ *	CPU lines
  *
  *************************************/
 
-/* Install a driver callback for IRQ acknowledge */
-void cpu_set_irq_callback(int cpunum, int (*callback)(int irqline));
+// fix me:
+// cpu_set_reset_line/cpunum_set_reset_line
+// cpu_set_halt_line/cpunum_set_halt_line
+// cpunum_set_input_line/cpunum_set_input_line_and_vector
+// cpu_set_nmi_line
+
+/* Set the logical state (ASSERT_LINE/CLEAR_LINE) of the an input line on a CPU */
+void cpunum_set_input_line(int cpunum, int line, int state);
 
 /* Set the vector to be returned during a CPU's interrupt acknowledge cycle */
-void cpu_irq_line_vector_w(int cpunum, int irqline, int vector);
+void cpunum_set_input_line_vector(int cpunum, int irqline, int vector);
 
-/* set the IRQ line state for a specific irq line of a CPU */
-/* normally use state HOLD_LINE, irqline 0 for first IRQ type of a cpu */
-void cpu_set_irq_line(int cpunum, int irqline, int state);
+/* Set the logical state (ASSERT_LINE/CLEAR_LINE) of the an input line on a CPU and its associated vector */
+void cpunum_set_input_line_and_vector(int cpunum, int line, int state, int vector);
 
-/* set the IRQ line state and a vector for the IRQ */
-void cpu_set_irq_line_and_vector(int cpunum, int irqline, int state, int vector);
-
-/* macro for handling NMI lines */
-#define cpu_set_nmi_line(cpunum, state) cpu_set_irq_line(cpunum, IRQ_LINE_NMI, state)
+/* Install a driver callback for IRQ acknowledge */
+void cpu_set_irq_callback(int cpunum, int (*callback)(int irqline));
 
 
 
@@ -127,9 +115,9 @@ INTERRUPT_GEN( irq7_line_assert );
    go away in the future! */
 
 void cpu_interrupt_enable(int cpu,int enabled);
-WRITE_HANDLER( interrupt_enable_w );
-WRITE_HANDLER( interrupt_vector_w );
-READ_HANDLER( interrupt_enable_r );
+WRITE8_HANDLER( interrupt_enable_w );
+WRITE8_HANDLER( interrupt_vector_w );
+READ8_HANDLER( interrupt_enable_r );
 
 /* OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE */
 /* OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE OBSOLETE */

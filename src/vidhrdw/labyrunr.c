@@ -119,7 +119,7 @@ VIDEO_START( labyrunr )
 
 ***************************************************************************/
 
-WRITE_HANDLER( labyrunr_vram1_w )
+WRITE8_HANDLER( labyrunr_vram1_w )
 {
 	if (labyrunr_videoram1[offset] != data)
 	{
@@ -128,7 +128,7 @@ WRITE_HANDLER( labyrunr_vram1_w )
 	}
 }
 
-WRITE_HANDLER( labyrunr_vram2_w )
+WRITE8_HANDLER( labyrunr_vram2_w )
 {
 	if (labyrunr_videoram2[offset] != data)
 	{

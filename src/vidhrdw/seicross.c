@@ -57,7 +57,7 @@ PALETTE_INIT( seicross )
 	}
 }
 
-WRITE_HANDLER( seicross_videoram_w )
+WRITE8_HANDLER( seicross_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -66,7 +66,7 @@ WRITE_HANDLER( seicross_videoram_w )
 	}
 }
 
-WRITE_HANDLER( seicross_colorram_w )
+WRITE8_HANDLER( seicross_colorram_w )
 {
 	if (colorram[offset] != data)
 	{

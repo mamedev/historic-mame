@@ -35,7 +35,7 @@ static INTERRUPT_GEN( lasso_interrupt )
 	// VBlank
 	if (cpu_getiloops() == 0)
 	{
-		cpu_set_irq_line(0, 0, HOLD_LINE);
+		cpunum_set_input_line(0, 0, HOLD_LINE);
 		return;
 	}
 
@@ -44,7 +44,7 @@ static INTERRUPT_GEN( lasso_interrupt )
 
 	if ( ((new & 0x10) && !(old & 0x10)) ||
 		 ((new & 0x20) && !(old & 0x20)) )
-		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+		cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 
 	old = new;
 }
@@ -54,11 +54,11 @@ static INTERRUPT_GEN( lasso_interrupt )
 
 static data8_t *lasso_sharedram;
 
-static READ_HANDLER( lasso_sharedram_r )
+static READ8_HANDLER( lasso_sharedram_r )
 {
 	return lasso_sharedram[offset];
 }
-static WRITE_HANDLER( lasso_sharedram_w )
+static WRITE8_HANDLER( lasso_sharedram_w )
 {
 	lasso_sharedram[offset] = data;
 }
@@ -66,13 +66,13 @@ static WRITE_HANDLER( lasso_sharedram_w )
 
 /* Write to the sound latch and generate an IRQ on the sound CPU */
 
-static WRITE_HANDLER( sound_command_w )
+static WRITE8_HANDLER( sound_command_w )
 {
 	soundlatch_w(offset,data);
-	cpu_set_irq_line( 1, 0, PULSE_LINE );
+	cpunum_set_input_line( 1, 0, PULSE_LINE );
 }
 
-static READ_HANDLER( sound_status_r )
+static READ8_HANDLER( sound_status_r )
 {
 	/*	0x01: chip#0 ready; 0x02: chip#1 ready */
 	return 0x03;
@@ -80,12 +80,12 @@ static READ_HANDLER( sound_status_r )
 
 static data8_t lasso_chip_data;
 
-static WRITE_HANDLER( sound_data_w )
+static WRITE8_HANDLER( sound_data_w )
 {
 	lasso_chip_data = BITSWAP8(data,0,1,2,3,4,5,6,7);
 }
 
-static WRITE_HANDLER( sound_select_w )
+static WRITE8_HANDLER( sound_select_w )
 {
 	if (~data & 0x01)	/* chip #0 */
 		SN76496_0_w(0,lasso_chip_data);

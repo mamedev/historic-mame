@@ -117,7 +117,7 @@ PALETTE_INIT( tp84 )
 }
 
 
-WRITE_HANDLER( tp84_videoram_w )
+WRITE8_HANDLER( tp84_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -126,7 +126,7 @@ WRITE_HANDLER( tp84_videoram_w )
 	}
 }
 
-WRITE_HANDLER( tp84_colorram_w )
+WRITE8_HANDLER( tp84_colorram_w )
 {
 	if (colorram[offset] != data)
 	{
@@ -135,7 +135,7 @@ WRITE_HANDLER( tp84_colorram_w )
 	}
 }
 
-WRITE_HANDLER( tp84_videoram2_w )
+WRITE8_HANDLER( tp84_videoram2_w )
 {
 	if (tp84_videoram2[offset] != data)
 	{
@@ -144,7 +144,7 @@ WRITE_HANDLER( tp84_videoram2_w )
 	}
 }
 
-WRITE_HANDLER( tp84_colorram2_w )
+WRITE8_HANDLER( tp84_colorram2_w )
 {
 	if (tp84_colorram2[offset] != data)
 	{
@@ -153,22 +153,22 @@ WRITE_HANDLER( tp84_colorram2_w )
 	}
 }
 
-WRITE_HANDLER( tp84_scroll_x_w )
+WRITE8_HANDLER( tp84_scroll_x_w )
 {
 	tilemap_set_scrollx(bg_tilemap, 0, data);
 }
 
-WRITE_HANDLER( tp84_scroll_y_w )
+WRITE8_HANDLER( tp84_scroll_y_w )
 {
 	tilemap_set_scrolly(bg_tilemap, 0, data);
 }
 
-WRITE_HANDLER( tp84_flipscreen_x_w )
+WRITE8_HANDLER( tp84_flipscreen_x_w )
 {
 	flip_screen_x_set(data & 0x01);
 }
 
-WRITE_HANDLER( tp84_flipscreen_y_w )
+WRITE8_HANDLER( tp84_flipscreen_y_w )
 {
 	flip_screen_y_set(data & 0x01);
 }
@@ -176,7 +176,7 @@ WRITE_HANDLER( tp84_flipscreen_y_w )
 /*****
   col0 is a register to index the color Proms
 *****/
-WRITE_HANDLER( tp84_col0_w )
+WRITE8_HANDLER( tp84_col0_w )
 {
 	if (col0 != data)
 	{
@@ -186,7 +186,7 @@ WRITE_HANDLER( tp84_col0_w )
 }
 
 /* Return the current video scan line */
-READ_HANDLER( tp84_scanline_r )
+READ8_HANDLER( tp84_scanline_r )
 {
 	return scanline;
 }

@@ -186,10 +186,10 @@ TODO:
 
 
 extern data8_t *rallyx_videoram,*rallyx_radarattr;
-WRITE_HANDLER( rallyx_videoram_w );
-WRITE_HANDLER( rallyx_scrollx_w );
-WRITE_HANDLER( rallyx_scrolly_w );
-WRITE_HANDLER( tactcian_starson_w );
+WRITE8_HANDLER( rallyx_videoram_w );
+WRITE8_HANDLER( rallyx_scrollx_w );
+WRITE8_HANDLER( rallyx_scrolly_w );
+WRITE8_HANDLER( tactcian_starson_w );
 PALETTE_INIT( rallyx );
 VIDEO_START( rallyx );
 VIDEO_UPDATE( rallyx );
@@ -201,7 +201,7 @@ DRIVER_INIT( commsega );
 
 
 
-static WRITE_HANDLER( rallyx_bang_w )
+static WRITE8_HANDLER( rallyx_bang_w )
 {
 	static int last;
 
@@ -225,7 +225,7 @@ static WRITE8_HANDLER( rallyx_latch_w )
 		case 0x01:	/* INT ON */
 			cpu_interrupt_enable(0,bit);
 			if (!bit)
-				cpu_set_irq_line(0, 0, CLEAR_LINE);
+				cpunum_set_input_line(0, 0, CLEAR_LINE);
 			break;
 
 		case 0x02:	/* SOUND ON */

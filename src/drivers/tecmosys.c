@@ -351,7 +351,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static WRITE_HANDLER( deroon_bankswitch_w )
+static WRITE8_HANDLER( deroon_bankswitch_w )
 {
 	cpu_setbank( 1, memory_region(REGION_CPU2) + ((data-2) & 0x0f) * 0x4000 + 0x10000 );
 }
@@ -417,11 +417,11 @@ VIDEO_UPDATE(deroon)
 	char buf[64];
 	static int command_data=0;
 
-	if (keyboard_pressed_memory(KEYCODE_Q))
+	if (code_pressed_memory(KEYCODE_Q))
 	{
 		command_data++;
 	}
-	if (keyboard_pressed_memory(KEYCODE_A))
+	if (code_pressed_memory(KEYCODE_A))
 	{
 		command_data--;
 	}
@@ -440,10 +440,10 @@ VIDEO_UPDATE(deroon)
 	Machine->orientation = trueorientation;
 
 
-	if (keyboard_pressed_memory(KEYCODE_C))
+	if (code_pressed_memory(KEYCODE_C))
 	{
 		soundlatch_w(0,command_data);
-		cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 		usrintf_showmessage("command write=%2x",command_data);
 	}
 #endif
@@ -465,7 +465,7 @@ VIDEO_UPDATE(deroon)
 
 //hacks
 
-	if(keyboard_pressed_memory(KEYCODE_Z))
+	if(code_pressed_memory(KEYCODE_Z))
 	{
 		if(!gametype)
 			cpunum_set_reg(0, M68K_PC, 0x23ae8); /* deroon */
@@ -477,7 +477,7 @@ VIDEO_UPDATE(deroon)
 		}
 	}
 
-	if(keyboard_pressed_memory(KEYCODE_X))
+	if(code_pressed_memory(KEYCODE_X))
 	{
 		if(gametype)
 		{
@@ -526,7 +526,7 @@ VIDEO_UPDATE(deroon)
 static void sound_irq(int irq)
 {
 	/* IRQ */
-	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YMF262interface ymf262_interface =
@@ -656,7 +656,7 @@ ROM_END
 
 static void reset_callback(int param)
 {
-	cpu_set_reset_line(0, PULSE_LINE);
+	cpunum_set_input_line(0, INPUT_LINE_RESET, PULSE_LINE);
 }
 
 

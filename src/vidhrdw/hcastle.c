@@ -128,7 +128,7 @@ VIDEO_START( hcastle )
 
 ***************************************************************************/
 
-WRITE_HANDLER( hcastle_pf1_video_w )
+WRITE8_HANDLER( hcastle_pf1_video_w )
 {
 	if (hcastle_pf1_videoram[offset] != data)
 	{
@@ -137,7 +137,7 @@ WRITE_HANDLER( hcastle_pf1_video_w )
 	}
 }
 
-WRITE_HANDLER( hcastle_pf2_video_w )
+WRITE8_HANDLER( hcastle_pf2_video_w )
 {
 	if (hcastle_pf2_videoram[offset] != data)
 	{
@@ -146,17 +146,17 @@ WRITE_HANDLER( hcastle_pf2_video_w )
 	}
 }
 
-WRITE_HANDLER( hcastle_gfxbank_w )
+WRITE8_HANDLER( hcastle_gfxbank_w )
 {
 	gfx_bank = data;
 }
 
-READ_HANDLER( hcastle_gfxbank_r )
+READ8_HANDLER( hcastle_gfxbank_r )
 {
 	return gfx_bank;
 }
 
-WRITE_HANDLER( hcastle_pf1_control_w )
+WRITE8_HANDLER( hcastle_pf1_control_w )
 {
 	if (offset==3)
 	{
@@ -172,7 +172,7 @@ WRITE_HANDLER( hcastle_pf1_control_w )
 	K007121_ctrl_0_w(offset,data);
 }
 
-WRITE_HANDLER( hcastle_pf2_control_w )
+WRITE8_HANDLER( hcastle_pf2_control_w )
 {
 	if (offset==3)
 	{

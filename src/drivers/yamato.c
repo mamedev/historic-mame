@@ -17,8 +17,8 @@ extern unsigned char *cclimber_bsvideoram;
 extern size_t cclimber_bsvideoram_size;
 extern unsigned char *cclimber_bigspriteram;
 extern unsigned char *cclimber_column_scroll;
-WRITE_HANDLER( cclimber_colorram_w );
-WRITE_HANDLER( cclimber_bigsprite_videoram_w );
+WRITE8_HANDLER( cclimber_colorram_w );
+WRITE8_HANDLER( cclimber_bigsprite_videoram_w );
 PALETTE_INIT( cclimber );
 VIDEO_UPDATE( cclimber );
 
@@ -110,29 +110,29 @@ PALETTE_INIT( yamato )
 
 static int p0,p1;
 
-static WRITE_HANDLER( p0_w )
+static WRITE8_HANDLER( p0_w )
 {
 	p0 = data;
 }
-static WRITE_HANDLER( p1_w )
+static WRITE8_HANDLER( p1_w )
 {
 	p1 = data;
 }
-static READ_HANDLER( p0_r )
+static READ8_HANDLER( p0_r )
 {
 	return p0;
 }
-static READ_HANDLER( p1_r )
+static READ8_HANDLER( p1_r )
 {
 	return p1;
 }
 
-static WRITE_HANDLER( flip_screen_x_w )
+static WRITE8_HANDLER( flip_screen_x_w )
 {
 	flip_screen_x_set(data);
 }
 
-static WRITE_HANDLER( flip_screen_y_w )
+static WRITE8_HANDLER( flip_screen_y_w )
 {
 	flip_screen_y_set(data);
 }

@@ -45,7 +45,7 @@ static int swap_bg_ramrom;
   bit 0 -- 2  kohm resistor  -- BLUE
 
 ***************************************************************************/
-WRITE_HANDLER( gottlieb_paletteram_w )
+WRITE8_HANDLER( gottlieb_paletteram_w )
 {
 	int bit0, bit1, bit2, bit3;
 	int r, g, b, val;
@@ -88,7 +88,7 @@ WRITE_HANDLER( gottlieb_paletteram_w )
 	palette_set_color(offset / 2, r, g, b);
 }
 
-WRITE_HANDLER( gottlieb_video_outputs_w )
+WRITE8_HANDLER( gottlieb_video_outputs_w )
 {
 	extern void gottlieb_knocker(void);
 	int last = 0;
@@ -115,7 +115,7 @@ WRITE_HANDLER( gottlieb_video_outputs_w )
 	last = data;
 }
 
-WRITE_HANDLER( usvsthem_video_outputs_w )
+WRITE8_HANDLER( usvsthem_video_outputs_w )
 {
 	background_priority = data & 0x01;
 
@@ -130,7 +130,7 @@ WRITE_HANDLER( usvsthem_video_outputs_w )
 	/* bit 3 genlock control (1 = show laserdisc image) */
 }
 
-WRITE_HANDLER( gottlieb_videoram_w )
+WRITE8_HANDLER( gottlieb_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -139,7 +139,7 @@ WRITE_HANDLER( gottlieb_videoram_w )
 	}
 }
 
-WRITE_HANDLER( gottlieb_charram_w )
+WRITE8_HANDLER( gottlieb_charram_w )
 {
 	if (gottlieb_charram[offset] != data)
 	{

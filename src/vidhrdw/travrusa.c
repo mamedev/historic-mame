@@ -232,7 +232,7 @@ VIDEO_START( travrusa )
 
 ***************************************************************************/
 
-WRITE_HANDLER( travrusa_videoram_w )
+WRITE8_HANDLER( travrusa_videoram_w )
 {
 	if (travrusa_videoram[offset] != data)
 	{
@@ -253,20 +253,20 @@ static void set_scroll(void)
 	tilemap_set_scrollx(bg_tilemap,3,0);
 }
 
-WRITE_HANDLER( travrusa_scroll_x_low_w )
+WRITE8_HANDLER( travrusa_scroll_x_low_w )
 {
 	scrollx[0] = data;
 	set_scroll();
 }
 
-WRITE_HANDLER( travrusa_scroll_x_high_w )
+WRITE8_HANDLER( travrusa_scroll_x_high_w )
 {
 	scrollx[1] = data;
 	set_scroll();
 }
 
 
-WRITE_HANDLER( travrusa_flipscreen_w )
+WRITE8_HANDLER( travrusa_flipscreen_w )
 {
 	/* screen flip is handled both by software and hardware */
 	data ^= ~readinputport(4) & 1;

@@ -32,7 +32,7 @@ static int protdata=0;
 static int flipscreen;
 static int blink_cnt=0;
 
-static READ_HANDLER( dipsw_r )
+static READ8_HANDLER( dipsw_r )
 {
 	if(protdata!=0xff)
 		return protdata^0x88;
@@ -40,33 +40,33 @@ static READ_HANDLER( dipsw_r )
 		return readinputport(2);
 }
 
-static WRITE_HANDLER(sound_w)
+static WRITE8_HANDLER(sound_w)
 {
 	if((!(data&4)) && (prevdata&4)) // 0->1
 		sndlatch=((sndlatch<<1)|((data&1)^1))&0xff;
 	
 	if(data&2)
-		cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 		
 	prevdata=data;	
 }
 
-static READ_HANDLER(sound_r)
+static READ8_HANDLER(sound_r)
 {
 	return BITSWAP8(sndlatch,0,1,2,3,4,5,6,7);
 }
 
-static WRITE_HANDLER(protection_w)
+static WRITE8_HANDLER(protection_w)
 {
 	protdata=data;
 }
 
-static WRITE_HANDLER(videoctrl_w)
+static WRITE8_HANDLER(videoctrl_w)
 {
 	flipscreen=data&0x20;
 }
 
-static WRITE_HANDLER(videoctrl2a_w)
+static WRITE8_HANDLER(videoctrl2a_w)
 {
 	if(flipscreen != (data&0x20))
 	{
@@ -78,7 +78,7 @@ static WRITE_HANDLER(videoctrl2a_w)
 	}
 }
 
-WRITE_HANDLER( enigma2a_videoram_w )
+WRITE8_HANDLER( enigma2a_videoram_w )
 {
 	int i,x,y,col;
 	videoram[offset]=data;
@@ -98,7 +98,7 @@ WRITE_HANDLER( enigma2a_videoram_w )
 
 /* unknown reads - protection ? mirrors ?*/
 
-static READ_HANDLER( unknown_r1 )
+static READ8_HANDLER( unknown_r1 )
 {
 	if( activecpu_get_pc() == 0x7e5 )
 		return 0xaa;
@@ -106,17 +106,17 @@ static READ_HANDLER( unknown_r1 )
 		return 0xf4;
 }
 
-static READ_HANDLER( unknown_r2 )
+static READ8_HANDLER( unknown_r2 )
 {
 	return 0x38;
 }
 
-static READ_HANDLER( unknown_r3 )
+static READ8_HANDLER( unknown_r3 )
 {
 	return 0xaa;
 }
 
-static READ_HANDLER( unknown_r4 )
+static READ8_HANDLER( unknown_r4 )
 {
 	return 0x38;
 }
@@ -319,7 +319,7 @@ INPUT_PORTS_END
 INTERRUPT_GEN( enigma2_interrupt )
 {
 	int vector = cpu_getvblank() ? 0xcf : 0xd7;
-    cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, vector);
+    cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, vector);
 }
 
 

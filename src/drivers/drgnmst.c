@@ -54,12 +54,12 @@ static WRITE16_HANDLER( drgnmst_snd_flag_w )
 }
 
 
-static READ_HANDLER( pic16c5x_port0_r )
+static READ8_HANDLER( pic16c5x_port0_r )
 {
 	return pic16c5x_port0;
 }
 
-static READ_HANDLER( drgnmst_snd_command_r )
+static READ8_HANDLER( drgnmst_snd_command_r )
 {
 	int data = 0;
 
@@ -75,7 +75,7 @@ static READ_HANDLER( drgnmst_snd_command_r )
 	return data;
 }
 
-static READ_HANDLER( drgnmst_snd_flag_r )
+static READ8_HANDLER( drgnmst_snd_flag_r )
 {
 	if (drgnmst_snd_flag) {
 		drgnmst_snd_flag = 0;
@@ -85,7 +85,7 @@ static READ_HANDLER( drgnmst_snd_flag_r )
 	return 0x00;
 }
 
-static WRITE_HANDLER( drgnmst_pcm_banksel_w )
+static WRITE8_HANDLER( drgnmst_pcm_banksel_w )
 {
 	/*	This is a 4 bit port.
 		Each pair of bits is used in part of the OKI PCM ROM bank selectors.
@@ -95,12 +95,12 @@ static WRITE_HANDLER( drgnmst_pcm_banksel_w )
 	pic16c5x_port0 = data;
 }
 
-static WRITE_HANDLER( drgnmst_oki_w )
+static WRITE8_HANDLER( drgnmst_oki_w )
 {
 	drgnmst_oki_command = data;
 }
 
-static WRITE_HANDLER( drgnmst_snd_control_w )
+static WRITE8_HANDLER( drgnmst_snd_control_w )
 {
 	/*	This port controls communications to and from the 68K, both OKI
 		devices, and part of the OKI PCM ROM bank selection.
@@ -158,7 +158,7 @@ static WRITE_HANDLER( drgnmst_snd_control_w )
 }
 
 
-static READ_HANDLER( PIC16C5X_T0_clk_r )
+static READ8_HANDLER( PIC16C5X_T0_clk_r )
 {
 	return 0;
 }

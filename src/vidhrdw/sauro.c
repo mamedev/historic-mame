@@ -18,7 +18,7 @@ static struct tilemap *bg_tilemap, *fg_tilemap;
 
 /* General */
 
-WRITE_HANDLER( tecfri_videoram_w )
+WRITE8_HANDLER( tecfri_videoram_w )
 {
 	if (tecfri_videoram[offset] != data)
 	{
@@ -27,7 +27,7 @@ WRITE_HANDLER( tecfri_videoram_w )
 	}
 }
 
-WRITE_HANDLER( tecfri_colorram_w )
+WRITE8_HANDLER( tecfri_colorram_w )
 {
 	if (tecfri_colorram[offset] != data)
 	{
@@ -36,7 +36,7 @@ WRITE_HANDLER( tecfri_colorram_w )
 	}
 }
 
-WRITE_HANDLER( tecfri_videoram2_w )
+WRITE8_HANDLER( tecfri_videoram2_w )
 {
 	if (tecfri_videoram2[offset] != data)
 	{
@@ -45,7 +45,7 @@ WRITE_HANDLER( tecfri_videoram2_w )
 	}
 }
 
-WRITE_HANDLER( tecfri_colorram2_w )
+WRITE8_HANDLER( tecfri_colorram2_w )
 {
 	if (tecfri_colorram2[offset] != data)
 	{
@@ -54,12 +54,12 @@ WRITE_HANDLER( tecfri_colorram2_w )
 	}
 }
 
-WRITE_HANDLER( tecfri_scroll_bg_w )
+WRITE8_HANDLER( tecfri_scroll_bg_w )
 {
 	tilemap_set_scrollx(bg_tilemap, 0, data);
 }
 
-WRITE_HANDLER( flip_screen_w )
+WRITE8_HANDLER( flip_screen_w )
 {
 	flip_screen_set(data);
 }
@@ -87,7 +87,7 @@ static void get_tile_info_fg(int tile_index)
 static int scroll2_map     [8] = {2, 1, 4, 3, 6, 5, 0, 7};
 static int scroll2_map_flip[8] = {0, 7, 2, 1, 4, 3, 6, 5};
 
-WRITE_HANDLER( sauro_scroll_fg_w )
+WRITE8_HANDLER( sauro_scroll_fg_w )
 {
 	int *map = (flip_screen ? scroll2_map_flip : scroll2_map);
 	int scroll = (data & 0xf8) | map[data & 7];
@@ -169,7 +169,7 @@ VIDEO_UPDATE( sauro )
 
 /* Tricky Doc */
 
-WRITE_HANDLER ( trckydoc_spriteram_mirror_w )
+WRITE8_HANDLER ( trckydoc_spriteram_mirror_w )
 {
 	spriteram[offset] = data;
 }

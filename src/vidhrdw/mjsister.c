@@ -68,7 +68,7 @@ void mjsister_plot1(int offset,unsigned char data)
 	plot_pixel(mjsister_tmpbitmap1, x*2+1, y, Machine->pens[c2] );
 }
 
-WRITE_HANDLER( mjsister_videoram_w )
+WRITE8_HANDLER( mjsister_videoram_w )
 {
 	if (vrambank)
 	{

@@ -1020,7 +1020,7 @@ static void psikyosh_drawsprites( struct mame_bitmap *bitmap, const struct recta
 
 #if 0
 #ifdef MAME_DEBUG
-				if (keyboard_pressed(KEYCODE_Z))	/* Display some info on each sprite */
+				if (code_pressed(KEYCODE_Z))	/* Display some info on each sprite */
 				{
 					struct DisplayText dt[2];
 					char buf[10];

@@ -147,7 +147,7 @@ VIDEO_START( fastfred )
  *
  *************************************/
 
-WRITE_HANDLER( fastfred_videoram_w )
+WRITE8_HANDLER( fastfred_videoram_w )
 {
 	if (fastfred_videoram[offset] != data)
 	{
@@ -158,7 +158,7 @@ WRITE_HANDLER( fastfred_videoram_w )
 }
 
 
-WRITE_HANDLER( fastfred_attributes_w )
+WRITE8_HANDLER( fastfred_attributes_w )
 {
 	if (fastfred_attributesram[offset] != data)
 	{
@@ -181,7 +181,7 @@ WRITE_HANDLER( fastfred_attributes_w )
 }
 
 
-WRITE_HANDLER( fastfred_charbank1_w )
+WRITE8_HANDLER( fastfred_charbank1_w )
 {
 	data16_t new_data = (charbank & 0x0200) | ((data & 0x01) << 8);
 
@@ -193,7 +193,7 @@ WRITE_HANDLER( fastfred_charbank1_w )
 	}
 }
 
-WRITE_HANDLER( fastfred_charbank2_w )
+WRITE8_HANDLER( fastfred_charbank2_w )
 {
 	data16_t new_data = (charbank & 0x0100) | ((data & 0x01) << 9);
 
@@ -206,7 +206,7 @@ WRITE_HANDLER( fastfred_charbank2_w )
 }
 
 
-WRITE_HANDLER( fastfred_colorbank1_w )
+WRITE8_HANDLER( fastfred_colorbank1_w )
 {
 	data8_t new_data = (colorbank & 0x10) | ((data & 0x01) << 3);
 
@@ -218,7 +218,7 @@ WRITE_HANDLER( fastfred_colorbank1_w )
 	}
 }
 
-WRITE_HANDLER( fastfred_colorbank2_w )
+WRITE8_HANDLER( fastfred_colorbank2_w )
 {
 	data8_t new_data = (colorbank & 0x08) | ((data & 0x01) << 4);
 
@@ -231,13 +231,13 @@ WRITE_HANDLER( fastfred_colorbank2_w )
 }
 
 
-WRITE_HANDLER( fastfred_background_color_w )
+WRITE8_HANDLER( fastfred_background_color_w )
 {
 	set_color(0, data);
 }
 
 
-WRITE_HANDLER( fastfred_flip_screen_x_w )
+WRITE8_HANDLER( fastfred_flip_screen_x_w )
 {
 	if (flip_screen_x != (data & 0x01))
 	{
@@ -247,7 +247,7 @@ WRITE_HANDLER( fastfred_flip_screen_x_w )
 	}
 }
 
-WRITE_HANDLER( fastfred_flip_screen_y_w )
+WRITE8_HANDLER( fastfred_flip_screen_y_w )
 {
 	if (flip_screen_y != (data & 0x01))
 	{
@@ -360,7 +360,7 @@ static void imago_get_tile_info_fg(int tile_index)
 }
 
 
-WRITE_HANDLER( imago_fg_videoram_w )
+WRITE8_HANDLER( imago_fg_videoram_w )
 {
 	if( imago_fg_videoram[offset] != data)
 	{
@@ -369,7 +369,7 @@ WRITE_HANDLER( imago_fg_videoram_w )
 	}
 }
 
-WRITE_HANDLER( imago_charbank_w )
+WRITE8_HANDLER( imago_charbank_w )
 {
 	if( charbank != data )
 	{

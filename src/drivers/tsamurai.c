@@ -45,18 +45,18 @@ TODO:
 #include "cpu/z80/z80.h"
 #include "vidhrdw/generic.h"
 
-WRITE_HANDLER( vsgongf_color_w );
+WRITE8_HANDLER( vsgongf_color_w );
 
-WRITE_HANDLER( tsamurai_bgcolor_w );
-WRITE_HANDLER( tsamurai_textbank1_w );
-WRITE_HANDLER( tsamurai_textbank2_w );
+WRITE8_HANDLER( tsamurai_bgcolor_w );
+WRITE8_HANDLER( tsamurai_textbank1_w );
+WRITE8_HANDLER( tsamurai_textbank2_w );
 
-WRITE_HANDLER( tsamurai_scrolly_w );
-WRITE_HANDLER( tsamurai_scrollx_w );
+WRITE8_HANDLER( tsamurai_scrolly_w );
+WRITE8_HANDLER( tsamurai_scrollx_w );
 VIDEO_UPDATE( tsamurai );
-WRITE_HANDLER( tsamurai_bg_videoram_w );
-WRITE_HANDLER( tsamurai_fg_videoram_w );
-WRITE_HANDLER( tsamurai_fg_colorram_w );
+WRITE8_HANDLER( tsamurai_bg_videoram_w );
+WRITE8_HANDLER( tsamurai_fg_videoram_w );
+WRITE8_HANDLER( tsamurai_fg_colorram_w );
 extern VIDEO_START( tsamurai );
 extern unsigned char *tsamurai_videoram;
 
@@ -89,63 +89,63 @@ static struct DACinterface vsgongf_dac_interface =
 static int nmi_enabled;
 static int sound_command1, sound_command2, sound_command3;
 
-static WRITE_HANDLER( nmi_enable_w ){
+static WRITE8_HANDLER( nmi_enable_w ){
 	nmi_enabled = data;
 }
 
 static INTERRUPT_GEN( samurai_interrupt ){
-	if (nmi_enabled) cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+	if (nmi_enabled) cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 }
 
-READ_HANDLER( unknown_d803_r )
+READ8_HANDLER( unknown_d803_r )
 {
 	return 0x6b;
 }
 
-READ_HANDLER( unknown_d803_m660_r )
+READ8_HANDLER( unknown_d803_m660_r )
 {
 	return 0x53;     // this is what the bootleg patches in.
 }
 
-READ_HANDLER( unknown_d806_r )
+READ8_HANDLER( unknown_d806_r )
 {
 	return 0x40;
 }
 
-READ_HANDLER( unknown_d900_r )
+READ8_HANDLER( unknown_d900_r )
 {
 	return 0x6a;
 }
 
-READ_HANDLER( unknown_d938_r )
+READ8_HANDLER( unknown_d938_r )
 {
 	return 0xfb;
 }
 
-static WRITE_HANDLER( sound_command1_w )
+static WRITE8_HANDLER( sound_command1_w )
 {
 	sound_command1 = data;
-	cpu_set_irq_line( 1, 0, HOLD_LINE );
+	cpunum_set_input_line( 1, 0, HOLD_LINE );
 }
 
-static WRITE_HANDLER( sound_command2_w )
+static WRITE8_HANDLER( sound_command2_w )
 {
 	sound_command2 = data;
-	cpu_set_irq_line( 2, 0, HOLD_LINE );
+	cpunum_set_input_line( 2, 0, HOLD_LINE );
 }
 
-static WRITE_HANDLER( sound_command3_w )
+static WRITE8_HANDLER( sound_command3_w )
 {
 	sound_command3 = data;
-	cpu_set_irq_line( 3, 0, HOLD_LINE );
+	cpunum_set_input_line( 3, 0, HOLD_LINE );
 }
 
-static WRITE_HANDLER( flip_screen_w )
+static WRITE8_HANDLER( flip_screen_w )
 {
 	flip_screen_set(data);
 }
 
-static WRITE_HANDLER( tsamurai_coin_counter_w )
+static WRITE8_HANDLER( tsamurai_coin_counter_w )
 {
 	coin_counter_w(offset,data);
 }
@@ -260,26 +260,26 @@ static ADDRESS_MAP_START( z80_writeport_m660, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x02, 0x02) AM_WRITE(MWA8_NOP)               /* Always follows above with 0x01 data */
 ADDRESS_MAP_END
 
-static READ_HANDLER( sound_command1_r )
+static READ8_HANDLER( sound_command1_r )
 {
 	return sound_command1;
 }
 
-static WRITE_HANDLER( sound_out1_w )
+static WRITE8_HANDLER( sound_out1_w )
 {
 	DAC_data_w(0,data);
 }
 
-static READ_HANDLER( sound_command2_r ){
+static READ8_HANDLER( sound_command2_r ){
 	return sound_command2;
 }
 
-static WRITE_HANDLER( sound_out2_w )
+static WRITE8_HANDLER( sound_out2_w )
 {
 	DAC_data_w(1,data);
 }
 
-static READ_HANDLER( sound_command3_r ){
+static READ8_HANDLER( sound_command3_r ){
 	return sound_command3;
 }
 
@@ -367,17 +367,17 @@ ADDRESS_MAP_END
 /*******************************************************************************/
 
 static int vsgongf_sound_nmi_enabled;
-static WRITE_HANDLER( vsgongf_sound_nmi_enable_w ){
+static WRITE8_HANDLER( vsgongf_sound_nmi_enable_w ){
 	vsgongf_sound_nmi_enabled = data;
 }
 
 static INTERRUPT_GEN( vsgongf_sound_interrupt ){
-	if (vsgongf_sound_nmi_enabled) cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);
+	if (vsgongf_sound_nmi_enabled) cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 }
 
 /* what are these, protection of some kind? */
 
-static READ_HANDLER( vsgongf_a006_r ){
+static READ8_HANDLER( vsgongf_a006_r ){
 	/* sound CPU busy? */
 	if (!strcmp(Machine->gamedrv->name,"vsgongf"))  return 0x80;
 	if (!strcmp(Machine->gamedrv->name,"ringfgt"))  return 0x80;
@@ -387,7 +387,7 @@ static READ_HANDLER( vsgongf_a006_r ){
 	return 0x00;
 }
 
-static READ_HANDLER( vsgongf_a100_r ){
+static READ8_HANDLER( vsgongf_a100_r ){
 	/* protection? */
 	if (!strcmp(Machine->gamedrv->name,"vsgongf"))  return 0xaa;
 	if (!strcmp(Machine->gamedrv->name,"ringfgt"))  return 0x63;
@@ -397,9 +397,9 @@ static READ_HANDLER( vsgongf_a100_r ){
 	return 0x00;
 }
 
-static WRITE_HANDLER( vsgongf_sound_command_w ){
+static WRITE8_HANDLER( vsgongf_sound_command_w ){
 	soundlatch_w( offset, data );
-	cpu_set_irq_line( 1, IRQ_LINE_NMI, PULSE_LINE );
+	cpunum_set_input_line( 1, INPUT_LINE_NMI, PULSE_LINE );
 }
 
 static ADDRESS_MAP_START( readmem_vsgongf, ADDRESS_SPACE_PROGRAM, 8 )

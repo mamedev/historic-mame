@@ -553,7 +553,7 @@ static void phoenix_sound_update(int param, INT16 *buffer, int length)
 	}
 }
 
-WRITE_HANDLER( phoenix_sound_control_a_w )
+WRITE8_HANDLER( phoenix_sound_control_a_w )
 {
 	if( data == sound_latch_a )
 		return;
@@ -568,7 +568,7 @@ WRITE_HANDLER( phoenix_sound_control_a_w )
 		tone1_level = VMAX;
 }
 
-WRITE_HANDLER( phoenix_sound_control_b_w )
+WRITE8_HANDLER( phoenix_sound_control_b_w )
 {
 	if( data == sound_latch_b )
 		return;

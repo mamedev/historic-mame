@@ -878,7 +878,7 @@ static void avgdvg_clr_busy(int dummy)
 }
 
 
-WRITE_HANDLER( avgdvg_go_w )
+WRITE8_HANDLER( avgdvg_go_w )
 {
 	int total_length;
 
@@ -927,7 +927,7 @@ WRITE16_HANDLER( avgdvg_go_word_w )
  *
  ************************************/
 
-WRITE_HANDLER( avgdvg_reset_w )
+WRITE8_HANDLER( avgdvg_reset_w )
 {
 	avgdvg_clr_busy(0);
 }
@@ -1107,7 +1107,7 @@ PALETTE_INIT( avg_multi )
  *
  ************************************/
 
-WRITE_HANDLER( tempest_colorram_w )
+WRITE8_HANDLER( tempest_colorram_w )
 {
 	int bit3 = (~data >> 3) & 1;
 	int bit2 = (~data >> 2) & 1;
@@ -1121,7 +1121,7 @@ WRITE_HANDLER( tempest_colorram_w )
 }
 
 
-WRITE_HANDLER( mhavoc_colorram_w )
+WRITE8_HANDLER( mhavoc_colorram_w )
 {
 	int bit3 = (~data >> 3) & 1;
 	int bit2 = (~data >> 2) & 1;

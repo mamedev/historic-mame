@@ -74,13 +74,13 @@ extern data32_t *f3_shared_ram;
 
 static void gunbustr_interrupt5(int x)
 {
-	cpu_set_irq_line(0,5,HOLD_LINE);
+	cpunum_set_input_line(0,5,HOLD_LINE);
 }
 
 static INTERRUPT_GEN( gunbustr_interrupt )
 {
 	timer_set(TIME_IN_CYCLES(200000-500,0),0, gunbustr_interrupt5);
-	cpu_set_irq_line(0, 4, HOLD_LINE);
+	cpunum_set_input_line(0, 4, HOLD_LINE);
 }
 
 static WRITE32_HANDLER( gunbustr_palette_w )
@@ -511,7 +511,7 @@ static READ32_HANDLER( main_cycle_r )
 static DRIVER_INIT( gunbustr )
 {
 	/* Speedup handler */
-	install_mem_read32_handler(0, 0x203acc, 0x203acf, main_cycle_r);
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x203acc, 0x203acf, 0, 0, main_cycle_r);
 }
 
 GAME( 1992, gunbustr, 0,      gunbustr, gunbustr, gunbustr, ORIENTATION_FLIP_X, "Taito Corporation", "Gunbuster (Japan)" )

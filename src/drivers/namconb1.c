@@ -347,14 +347,14 @@ static void namconb1_TriggerPOSIRQ( int scanline )
 {
 	int irqlevel = GetCPURegister(0x04)>>4;
 	force_partial_update(scanline);
-	cpu_set_irq_line(0, irqlevel, PULSE_LINE);
+	cpunum_set_input_line(0, irqlevel, PULSE_LINE);
 }
 
 static void namconb2_TriggerPOSIRQ( int scanline )
 {
 	int irqlevel = GetCPURegister(0x02);
 	force_partial_update(scanline);
-	cpu_set_irq_line(0, irqlevel, PULSE_LINE);
+	cpunum_set_input_line(0, irqlevel, PULSE_LINE);
 }
 
 static INTERRUPT_GEN( namconb2_interrupt )
@@ -390,7 +390,7 @@ static INTERRUPT_GEN( namconb2_interrupt )
 	 */
 	int scanline = (paletteram32[0x1808/4]&0xffff)-32;
 	int irqlevel = GetCPURegister(0x00);
-	cpu_set_irq_line( 0, irqlevel, HOLD_LINE);
+	cpunum_set_input_line( 0, irqlevel, HOLD_LINE);
 
 	if( scanline<0 )
 	{
@@ -439,7 +439,7 @@ static INTERRUPT_GEN( namconb1_interrupt )
 	 */
 	int scanline = (paletteram32[0x1808/4]&0xffff)-32;
 	int irqlevel = GetCPURegister(0x04)&0xf;
-	cpu_set_irq_line( 0, irqlevel, HOLD_LINE);
+	cpunum_set_input_line( 0, irqlevel, HOLD_LINE);
 	if( scanline<0 )
 	{
 		scanline = 0;

@@ -812,7 +812,7 @@ void hd63705_reset(void *param)
 
 void hd63705_set_irq_line(int irqline, int state)
 {
-	if (irqline == IRQ_LINE_NMI)
+	if (irqline == INPUT_LINE_NMI)
 	{
 		if (m6805.nmi_state == state) return;
 
@@ -840,7 +840,7 @@ static void m6805_set_info(UINT32 state, union cpuinfo *info)
 	switch (state)
 	{
 		/* --- the following bits of info are set as 64-bit signed integers --- */
-		case CPUINFO_INT_IRQ_STATE + M6805_IRQ_LINE:	set_irq_line(M6805_IRQ_LINE, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + M6805_IRQ_LINE:	set_irq_line(M6805_IRQ_LINE, info->i);	break;
 
 		case CPUINFO_INT_REGISTER + M6805_A:			A = info->i;							break;
 		case CPUINFO_INT_PC:
@@ -867,7 +867,7 @@ void m6805_get_info(UINT32 state, union cpuinfo *info)
 	{
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
 		case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(m6805);				break;
-		case CPUINFO_INT_IRQ_LINES:						info->i = 1;							break;
+		case CPUINFO_INT_INPUT_LINES:					info->i = 1;							break;
 		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
 		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_BE;					break;
 		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
@@ -886,7 +886,7 @@ void m6805_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 0;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
 
-		case CPUINFO_INT_IRQ_STATE + M6805_IRQ_LINE:	info->i = m6805.irq_state[M6805_IRQ_LINE]; break;
+		case CPUINFO_INT_INPUT_STATE + M6805_IRQ_LINE:	info->i = m6805.irq_state[M6805_IRQ_LINE]; break;
 
 		case CPUINFO_INT_PREVIOUSPC:					/* not implemented */					break;
 
@@ -975,15 +975,15 @@ static void hd63705_set_info(UINT32 state, union cpuinfo *info)
 	switch (state)
 	{
 		/* --- the following bits of info are set as 64-bit signed integers --- */
-		case CPUINFO_INT_IRQ_STATE + HD63705_INT_IRQ1:	hd63705_set_irq_line(HD63705_INT_IRQ1, info->i); break;
-		case CPUINFO_INT_IRQ_STATE + HD63705_INT_IRQ2:	hd63705_set_irq_line(HD63705_INT_IRQ2, info->i); break;
-		case CPUINFO_INT_IRQ_STATE + HD63705_INT_TIMER1:hd63705_set_irq_line(HD63705_INT_TIMER1, info->i); break;
-		case CPUINFO_INT_IRQ_STATE + HD63705_INT_TIMER2:hd63705_set_irq_line(HD63705_INT_TIMER2, info->i); break;
-		case CPUINFO_INT_IRQ_STATE + HD63705_INT_TIMER3:hd63705_set_irq_line(HD63705_INT_TIMER3, info->i); break;
-		case CPUINFO_INT_IRQ_STATE + HD63705_INT_PCI:	hd63705_set_irq_line(HD63705_INT_PCI, info->i);	break;
-		case CPUINFO_INT_IRQ_STATE + HD63705_INT_SCI:	hd63705_set_irq_line(HD63705_INT_SCI, info->i);	break;
-		case CPUINFO_INT_IRQ_STATE + HD63705_INT_ADCONV:hd63705_set_irq_line(HD63705_INT_ADCONV, info->i); break;
-		case CPUINFO_INT_IRQ_STATE + IRQ_LINE_NMI:		hd63705_set_irq_line(IRQ_LINE_NMI, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + HD63705_INT_IRQ1:	hd63705_set_irq_line(HD63705_INT_IRQ1, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + HD63705_INT_IRQ2:	hd63705_set_irq_line(HD63705_INT_IRQ2, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + HD63705_INT_TIMER1:	hd63705_set_irq_line(HD63705_INT_TIMER1, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + HD63705_INT_TIMER2:	hd63705_set_irq_line(HD63705_INT_TIMER2, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + HD63705_INT_TIMER3:	hd63705_set_irq_line(HD63705_INT_TIMER3, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + HD63705_INT_PCI:		hd63705_set_irq_line(HD63705_INT_PCI, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + HD63705_INT_SCI:		hd63705_set_irq_line(HD63705_INT_SCI, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + HD63705_INT_ADCONV:	hd63705_set_irq_line(HD63705_INT_ADCONV, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:		hd63705_set_irq_line(INPUT_LINE_NMI, info->i); break;
 
 		/* --- the following bits of info are set as pointers to data or functions --- */
 
@@ -998,15 +998,15 @@ void hd63705_get_info(UINT32 state, union cpuinfo *info)
 	switch (state)
 	{
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
-		case CPUINFO_INT_IRQ_STATE + HD63705_INT_IRQ1:	info->i = m6805.irq_state[HD63705_INT_IRQ1]; break;
-		case CPUINFO_INT_IRQ_STATE + HD63705_INT_IRQ2:	info->i = m6805.irq_state[HD63705_INT_IRQ2]; break;
-		case CPUINFO_INT_IRQ_STATE + HD63705_INT_TIMER1:info->i = m6805.irq_state[HD63705_INT_TIMER1]; break;
-		case CPUINFO_INT_IRQ_STATE + HD63705_INT_TIMER2:info->i = m6805.irq_state[HD63705_INT_TIMER2]; break;
-		case CPUINFO_INT_IRQ_STATE + HD63705_INT_TIMER3:info->i = m6805.irq_state[HD63705_INT_TIMER3]; break;
-		case CPUINFO_INT_IRQ_STATE + HD63705_INT_PCI:	info->i = m6805.irq_state[HD63705_INT_PCI];	break;
-		case CPUINFO_INT_IRQ_STATE + HD63705_INT_SCI:	info->i = m6805.irq_state[HD63705_INT_SCI];	break;
-		case CPUINFO_INT_IRQ_STATE + HD63705_INT_ADCONV:info->i = m6805.irq_state[HD63705_INT_ADCONV]; break;
-		case CPUINFO_INT_IRQ_STATE + IRQ_LINE_NMI:		info->i = m6805.irq_state[HD63705_INT_NMI];	break;
+		case CPUINFO_INT_INPUT_STATE + HD63705_INT_IRQ1:	info->i = m6805.irq_state[HD63705_INT_IRQ1]; break;
+		case CPUINFO_INT_INPUT_STATE + HD63705_INT_IRQ2:	info->i = m6805.irq_state[HD63705_INT_IRQ2]; break;
+		case CPUINFO_INT_INPUT_STATE + HD63705_INT_TIMER1:	info->i = m6805.irq_state[HD63705_INT_TIMER1]; break;
+		case CPUINFO_INT_INPUT_STATE + HD63705_INT_TIMER2:	info->i = m6805.irq_state[HD63705_INT_TIMER2]; break;
+		case CPUINFO_INT_INPUT_STATE + HD63705_INT_TIMER3:	info->i = m6805.irq_state[HD63705_INT_TIMER3]; break;
+		case CPUINFO_INT_INPUT_STATE + HD63705_INT_PCI:		info->i = m6805.irq_state[HD63705_INT_PCI];	break;
+		case CPUINFO_INT_INPUT_STATE + HD63705_INT_SCI:		info->i = m6805.irq_state[HD63705_INT_SCI];	break;
+		case CPUINFO_INT_INPUT_STATE + HD63705_INT_ADCONV:	info->i = m6805.irq_state[HD63705_INT_ADCONV]; break;
+		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:		info->i = m6805.irq_state[HD63705_INT_NMI];	break;
 
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 16;					break;
 

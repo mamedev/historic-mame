@@ -329,7 +329,7 @@ static struct YMZ280Binterface ymz280b_intf =
 
 static INTERRUPT_GEN(avengrgs_interrupt)
 {
-	cpu_set_irq_line(0, 1, HOLD_LINE);
+	cpunum_set_input_line(0, 1, HOLD_LINE);
 }
 
 static MACHINE_DRIVER_START( avengrgs )
@@ -499,13 +499,13 @@ static READ32_HANDLER( avengrgs_speedup_r )
 
 static DRIVER_INIT( avengrgs )
 {
-	install_mem_read32_handler(0, 0x01089a0, 0x01089a3, avengrgs_speedup_r );
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x01089a0, 0x01089a3, 0, 0, avengrgs_speedup_r );
 }
 
 static DRIVER_INIT( mlc )
 {
 	// deco156_decrypt();
-	cpu_set_reset_line(0, ASSERT_LINE);
+	cpunum_set_input_line(0, INPUT_LINE_RESET, ASSERT_LINE);
 }
 
 /***************************************************************************/

@@ -44,7 +44,7 @@ unsigned char *ccastles_scrolly;
   bit 0 -- inverter -- 1  kohm resistor  -- GREEN
 
 ***************************************************************************/
-WRITE_HANDLER( ccastles_paletteram_w )
+WRITE8_HANDLER( ccastles_paletteram_w )
 {
 	int r,g,b;
 	int bit0,bit1,bit2;
@@ -100,7 +100,7 @@ VIDEO_START( ccastles )
 
 
 
-READ_HANDLER( ccastles_bitmode_r )
+READ8_HANDLER( ccastles_bitmode_r )
 {
 	int addr;
 
@@ -137,7 +137,7 @@ READ_HANDLER( ccastles_bitmode_r )
 	return 0;
 }
 
-WRITE_HANDLER( ccastles_bitmode_w )
+WRITE8_HANDLER( ccastles_bitmode_w )
 {
 	int addr;
 

@@ -741,10 +741,10 @@ INLINE void apu_write(int chip,int address, uint8 value)
 /* EXTERNAL INTERFACE FUNCTIONS */
 
 /* REGISTER READ/WRITE FUNCTIONS */
-READ_HANDLER( NESPSG_0_r ) {return apu_read(0,offset);}
-READ_HANDLER( NESPSG_1_r ) {return apu_read(1,offset);}
-WRITE_HANDLER( NESPSG_0_w ) {apu_write(0,offset,data);}
-WRITE_HANDLER( NESPSG_1_w ) {apu_write(1,offset,data);}
+READ8_HANDLER( NESPSG_0_r ) {return apu_read(0,offset);}
+READ8_HANDLER( NESPSG_1_r ) {return apu_read(1,offset);}
+WRITE8_HANDLER( NESPSG_0_w ) {apu_write(0,offset,data);}
+WRITE8_HANDLER( NESPSG_1_w ) {apu_write(1,offset,data);}
 
 /* INITIALIZE APU SYSTEM */
 int NESPSG_sh_start(const struct MachineSound *msound)

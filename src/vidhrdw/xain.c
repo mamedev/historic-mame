@@ -86,7 +86,7 @@ VIDEO_START( xain )
 
 ***************************************************************************/
 
-WRITE_HANDLER( xain_bgram0_w )
+WRITE8_HANDLER( xain_bgram0_w )
 {
 	if (xain_bgram0[offset] != data)
 	{
@@ -95,7 +95,7 @@ WRITE_HANDLER( xain_bgram0_w )
 	}
 }
 
-WRITE_HANDLER( xain_bgram1_w )
+WRITE8_HANDLER( xain_bgram1_w )
 {
 	if (xain_bgram1[offset] != data)
 	{
@@ -104,7 +104,7 @@ WRITE_HANDLER( xain_bgram1_w )
 	}
 }
 
-WRITE_HANDLER( xain_charram_w )
+WRITE8_HANDLER( xain_charram_w )
 {
 	if (xain_charram[offset] != data)
 	{
@@ -113,7 +113,7 @@ WRITE_HANDLER( xain_charram_w )
 	}
 }
 
-WRITE_HANDLER( xain_scrollxP0_w )
+WRITE8_HANDLER( xain_scrollxP0_w )
 {
 	static unsigned char xain_scrollxP0[2];
 
@@ -121,7 +121,7 @@ WRITE_HANDLER( xain_scrollxP0_w )
 	tilemap_set_scrollx(bgram0_tilemap, 0, xain_scrollxP0[0]|(xain_scrollxP0[1]<<8));
 }
 
-WRITE_HANDLER( xain_scrollyP0_w )
+WRITE8_HANDLER( xain_scrollyP0_w )
 {
 	static unsigned char xain_scrollyP0[2];
 
@@ -129,7 +129,7 @@ WRITE_HANDLER( xain_scrollyP0_w )
 	tilemap_set_scrolly(bgram0_tilemap, 0, xain_scrollyP0[0]|(xain_scrollyP0[1]<<8));
 }
 
-WRITE_HANDLER( xain_scrollxP1_w )
+WRITE8_HANDLER( xain_scrollxP1_w )
 {
 	static unsigned char xain_scrollxP1[2];
 
@@ -137,7 +137,7 @@ WRITE_HANDLER( xain_scrollxP1_w )
 	tilemap_set_scrollx(bgram1_tilemap, 0, xain_scrollxP1[0]|(xain_scrollxP1[1]<<8));
 }
 
-WRITE_HANDLER( xain_scrollyP1_w )
+WRITE8_HANDLER( xain_scrollyP1_w )
 {
 	static unsigned char xain_scrollyP1[2];
 
@@ -146,7 +146,7 @@ WRITE_HANDLER( xain_scrollyP1_w )
 }
 
 
-WRITE_HANDLER( xain_flipscreen_w )
+WRITE8_HANDLER( xain_flipscreen_w )
 {
 	flip_screen_set(data & 1);
 }

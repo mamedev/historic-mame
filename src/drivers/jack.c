@@ -41,18 +41,18 @@ The 2 ay-8910 read ports are responsible for reading the sound commands.
 #include "cpu/z80/z80.h"
 
 
-extern WRITE_HANDLER( jack_videoram_w );
-extern WRITE_HANDLER( jack_colorram_w );
-extern WRITE_HANDLER( jack_paletteram_w );
-extern READ_HANDLER( jack_flipscreen_r );
-extern WRITE_HANDLER( jack_flipscreen_w );
+extern WRITE8_HANDLER( jack_videoram_w );
+extern WRITE8_HANDLER( jack_colorram_w );
+extern WRITE8_HANDLER( jack_paletteram_w );
+extern READ8_HANDLER( jack_flipscreen_r );
+extern WRITE8_HANDLER( jack_flipscreen_w );
 
 extern VIDEO_START( jack );
 extern VIDEO_UPDATE( jack );
 
 static int timer_rate;
 
-static READ_HANDLER( timer_r )
+static READ8_HANDLER( timer_r )
 {
 	/* wrong! there should be no need for timer_rate, the same function */
 	/* should work for both games */
@@ -60,10 +60,10 @@ static READ_HANDLER( timer_r )
 }
 
 
-static WRITE_HANDLER( jack_sh_command_w )
+static WRITE8_HANDLER( jack_sh_command_w )
 {
 	soundlatch_w(0,data);
-	cpu_set_irq_line(1, 0, HOLD_LINE);
+	cpunum_set_input_line(1, 0, HOLD_LINE);
 }
 
 

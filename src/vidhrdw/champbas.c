@@ -77,7 +77,7 @@ PALETTE_INIT( champbas )
 		COLOR(0,i) = (*(color_prom++) & 0x0f);
 }
 
-WRITE_HANDLER( champbas_videoram_w )
+WRITE8_HANDLER( champbas_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -86,7 +86,7 @@ WRITE_HANDLER( champbas_videoram_w )
 	}
 }
 
-WRITE_HANDLER( champbas_colorram_w )
+WRITE8_HANDLER( champbas_colorram_w )
 {
 	if (colorram[offset] != data)
 	{
@@ -95,7 +95,7 @@ WRITE_HANDLER( champbas_colorram_w )
 	}
 }
 
-WRITE_HANDLER( champbas_gfxbank_w )
+WRITE8_HANDLER( champbas_gfxbank_w )
 {
 	if (gfxbank != (data & 0x01))
 	{
@@ -104,7 +104,7 @@ WRITE_HANDLER( champbas_gfxbank_w )
 	}
 }
 
-WRITE_HANDLER( champbas_flipscreen_w )
+WRITE8_HANDLER( champbas_flipscreen_w )
 {
 	if (flip_screen != data)
 	{

@@ -68,16 +68,16 @@ extern unsigned char *c1942_bgvideoram;
 
 VIDEO_START( 1942 );
 PALETTE_INIT( 1942 );
-WRITE_HANDLER( c1942_fgvideoram_w );
-WRITE_HANDLER( c1942_bgvideoram_w );
-WRITE_HANDLER( c1942_scroll_w );
-WRITE_HANDLER( c1942_c804_w );
-WRITE_HANDLER( c1942_palette_bank_w );
+WRITE8_HANDLER( c1942_fgvideoram_w );
+WRITE8_HANDLER( c1942_bgvideoram_w );
+WRITE8_HANDLER( c1942_scroll_w );
+WRITE8_HANDLER( c1942_c804_w );
+WRITE8_HANDLER( c1942_palette_bank_w );
 VIDEO_UPDATE( 1942 );
 
 
 
-static WRITE_HANDLER( c1942_bankswitch_w )
+static WRITE8_HANDLER( c1942_bankswitch_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -92,9 +92,9 @@ static WRITE_HANDLER( c1942_bankswitch_w )
 static INTERRUPT_GEN( c1942_interrupt )
 {
 	if (cpu_getiloops() != 0)
-		cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0xcf);/* RST 08h */
+		cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, 0xcf);/* RST 08h */
 	else
-		cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0xd7);	/* RST 10h - vblank */
+		cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, 0xd7);	/* RST 10h - vblank */
 }
 
 

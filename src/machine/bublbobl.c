@@ -17,26 +17,26 @@ unsigned char *bublbobl_sharedram1,*bublbobl_sharedram2;
 extern int bublbobl_video_enable;
 
 
-READ_HANDLER( bublbobl_sharedram1_r )
+READ8_HANDLER( bublbobl_sharedram1_r )
 {
 	return bublbobl_sharedram1[offset];
 }
-READ_HANDLER( bublbobl_sharedram2_r )
+READ8_HANDLER( bublbobl_sharedram2_r )
 {
 	return bublbobl_sharedram2[offset];
 }
-WRITE_HANDLER( bublbobl_sharedram1_w )
+WRITE8_HANDLER( bublbobl_sharedram1_w )
 {
 	bublbobl_sharedram1[offset] = data;
 }
-WRITE_HANDLER( bublbobl_sharedram2_w )
+WRITE8_HANDLER( bublbobl_sharedram2_w )
 {
 	bublbobl_sharedram2[offset] = data;
 }
 
 
 
-WRITE_HANDLER( bublbobl_bankswitch_w )
+WRITE8_HANDLER( bublbobl_bankswitch_w )
 {
 	unsigned char *ROM = memory_region(REGION_CPU1);
 
@@ -56,7 +56,7 @@ WRITE_HANDLER( bublbobl_bankswitch_w )
 	flip_screen_set(data & 0x80);
 }
 
-WRITE_HANDLER( tokio_bankswitch_w )
+WRITE8_HANDLER( tokio_bankswitch_w )
 {
 	unsigned char *ROM = memory_region(REGION_CPU1);
 
@@ -66,7 +66,7 @@ WRITE_HANDLER( tokio_bankswitch_w )
 	/* bits 3-7 unknown */
 }
 
-WRITE_HANDLER( tokio_videoctrl_w )
+WRITE8_HANDLER( tokio_videoctrl_w )
 {
 	/* bit 7 flips screen */
 	flip_screen_set(data & 0x80);
@@ -74,12 +74,12 @@ WRITE_HANDLER( tokio_videoctrl_w )
 	/* other bits unknown */
 }
 
-WRITE_HANDLER( bublbobl_nmitrigger_w )
+WRITE8_HANDLER( bublbobl_nmitrigger_w )
 {
-	cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
+	cpunum_set_input_line(1,INPUT_LINE_NMI,PULSE_LINE);
 }
 
-READ_HANDLER( tokio_fake_r )
+READ8_HANDLER( tokio_fake_r )
 {
   return 0xbf; /* ad-hoc value set to pass initial testing */
 }
@@ -90,27 +90,27 @@ static int sound_nmi_enable,pending_nmi;
 
 static void nmi_callback(int param)
 {
-	if (sound_nmi_enable) cpu_set_irq_line(2,IRQ_LINE_NMI,PULSE_LINE);
+	if (sound_nmi_enable) cpunum_set_input_line(2,INPUT_LINE_NMI,PULSE_LINE);
 	else pending_nmi = 1;
 }
 
-WRITE_HANDLER( bublbobl_sound_command_w )
+WRITE8_HANDLER( bublbobl_sound_command_w )
 {
 	soundlatch_w(offset,data);
 	timer_set(TIME_NOW,data,nmi_callback);
 }
 
-WRITE_HANDLER( bublbobl_sh_nmi_disable_w )
+WRITE8_HANDLER( bublbobl_sh_nmi_disable_w )
 {
 	sound_nmi_enable = 0;
 }
 
-WRITE_HANDLER( bublbobl_sh_nmi_enable_w )
+WRITE8_HANDLER( bublbobl_sh_nmi_enable_w )
 {
 	sound_nmi_enable = 1;
 	if (pending_nmi)
 	{
-		cpu_set_irq_line(2,IRQ_LINE_NMI,PULSE_LINE);
+		cpunum_set_input_line(2,INPUT_LINE_NMI,PULSE_LINE);
 		pending_nmi = 0;
 	}
 }
@@ -128,28 +128,28 @@ INTERRUPT_GEN( bublbobl_m68705_interrupt )
 {
 	/* I don't know how to handle the interrupt line so I just toggle it every time. */
 	if (cpu_getiloops() & 1)
-		cpu_set_irq_line(3,0,CLEAR_LINE);
+		cpunum_set_input_line(3,0,CLEAR_LINE);
 	else
-		cpu_set_irq_line(3,0,ASSERT_LINE);
+		cpunum_set_input_line(3,0,ASSERT_LINE);
 }
 
 
 
 static unsigned char portA_in,portA_out,ddrA;
 
-READ_HANDLER( bublbobl_68705_portA_r )
+READ8_HANDLER( bublbobl_68705_portA_r )
 {
 //logerror("%04x: 68705 port A read %02x\n",activecpu_get_pc(),portA_in);
 	return (portA_out & ddrA) | (portA_in & ~ddrA);
 }
 
-WRITE_HANDLER( bublbobl_68705_portA_w )
+WRITE8_HANDLER( bublbobl_68705_portA_w )
 {
 //logerror("%04x: 68705 port A write %02x\n",activecpu_get_pc(),data);
 	portA_out = data;
 }
 
-WRITE_HANDLER( bublbobl_68705_ddrA_w )
+WRITE8_HANDLER( bublbobl_68705_ddrA_w )
 {
 	ddrA = data;
 }
@@ -177,14 +177,14 @@ WRITE_HANDLER( bublbobl_68705_ddrA_w )
 
 static unsigned char portB_in,portB_out,ddrB;
 
-READ_HANDLER( bublbobl_68705_portB_r )
+READ8_HANDLER( bublbobl_68705_portB_r )
 {
 	return (portB_out & ddrB) | (portB_in & ~ddrB);
 }
 
 static int address,latch;
 
-WRITE_HANDLER( bublbobl_68705_portB_w )
+WRITE8_HANDLER( bublbobl_68705_portB_w )
 {
 //logerror("%04x: 68705 port B write %02x\n",activecpu_get_pc(),data);
 
@@ -234,8 +234,8 @@ logerror("%04x: 68705 unknown write to address %04x\n",activecpu_get_pc(),addres
 		/* hack to get random EXTEND letters (who is supposed to do this? 68705? PAL?) */
 		bublbobl_sharedram2[0x7c] = rand()%6;
 
-		cpu_irq_line_vector_w(0,0,bublbobl_sharedram2[0]);
-		cpu_set_irq_line(0,0,HOLD_LINE);
+		cpunum_set_input_line_vector(0,0,bublbobl_sharedram2[0]);
+		cpunum_set_input_line(0,0,HOLD_LINE);
 	}
 	if ((ddrB & 0x40) && (~data & 0x40) && (portB_out & 0x40))
 	{
@@ -249,7 +249,7 @@ logerror("%04x: 68705 unknown port B bit %02x\n",activecpu_get_pc(),data);
 	portB_out = data;
 }
 
-WRITE_HANDLER( bublbobl_68705_ddrB_w )
+WRITE8_HANDLER( bublbobl_68705_ddrB_w )
 {
 	ddrB = data;
 }

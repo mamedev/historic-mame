@@ -81,7 +81,7 @@ static ADDRESS_MAP_START( writemem_pastelgl, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 
-static READ_HANDLER( io_pastelgl_r )
+static READ8_HANDLER( io_pastelgl_r )
 {
 	offset = (((offset & 0xff00) >> 8) | ((offset & 0x00ff) << 8));
 
@@ -105,7 +105,7 @@ static ADDRESS_MAP_START( readport_pastelgl, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x0000, 0xffff) AM_READ(io_pastelgl_r)
 ADDRESS_MAP_END
 
-static WRITE_HANDLER( io_pastelgl_w )
+static WRITE8_HANDLER( io_pastelgl_w )
 {
 	offset = (((offset & 0xff00) >> 8) | ((offset & 0x00ff) << 8));
 

@@ -193,9 +193,9 @@ WRITE16_HANDLER( rastan_spriteflip_w );
 VIDEO_START( topspeed );
 VIDEO_UPDATE( topspeed );
 
-WRITE_HANDLER( rastan_adpcm_trigger_w );
-WRITE_HANDLER( rastan_c000_w );
-WRITE_HANDLER( rastan_d000_w );
+WRITE8_HANDLER( rastan_adpcm_trigger_w );
+WRITE8_HANDLER( rastan_c000_w );
+WRITE8_HANDLER( rastan_d000_w );
 
 static UINT16 cpua_ctrl = 0xff;
 static int ioc220_port = 0;
@@ -223,7 +223,7 @@ static void parse_control(void)	/* assumes Z80 sandwiched between 68Ks */
 	/* bit 0 enables cpu B */
 	/* however this fails when recovering from a save state
 	   if cpu B is disabled !! */
-	cpu_set_reset_line(2,(cpua_ctrl &0x1) ? CLEAR_LINE : ASSERT_LINE);
+	cpunum_set_input_line(2, INPUT_LINE_RESET, (cpua_ctrl &0x1) ? CLEAR_LINE : ASSERT_LINE);
 
 }
 
@@ -247,14 +247,14 @@ static WRITE16_HANDLER( cpua_ctrl_w )
 
 void topspeed_interrupt6(int x)
 {
-	cpu_set_irq_line(0,6,HOLD_LINE);
+	cpunum_set_input_line(0,6,HOLD_LINE);
 }
 
 /* 68000 B */
 
 void topspeed_cpub_interrupt6(int x)
 {
-	cpu_set_irq_line(2,6,HOLD_LINE);	/* assumes Z80 sandwiched between the 68Ks */
+	cpunum_set_input_line(2,6,HOLD_LINE);	/* assumes Z80 sandwiched between the 68Ks */
 }
 
 
@@ -262,14 +262,14 @@ static INTERRUPT_GEN( topspeed_interrupt )
 {
 	/* Unsure how many int6's per frame */
 	timer_set(TIME_IN_CYCLES(200000-500,0),0, topspeed_interrupt6);
-	cpu_set_irq_line(0, 5, HOLD_LINE);
+	cpunum_set_input_line(0, 5, HOLD_LINE);
 }
 
 static INTERRUPT_GEN( topspeed_cpub_interrupt )
 {
 	/* Unsure how many int6's per frame */
 	timer_set(TIME_IN_CYCLES(200000-500,0),0, topspeed_cpub_interrupt6);
-	cpu_set_irq_line(2, 5, HOLD_LINE);
+	cpunum_set_input_line(2, 5, HOLD_LINE);
 }
 
 
@@ -358,7 +358,7 @@ static void reset_sound_region(void)
 	cpu_setbank( 10, memory_region(REGION_CPU2) + (banknum * 0x4000) + 0x10000 );
 }
 
-static WRITE_HANDLER( sound_bankswitch_w )	/* assumes Z80 sandwiched between 68Ks */
+static WRITE8_HANDLER( sound_bankswitch_w )	/* assumes Z80 sandwiched between 68Ks */
 {
 	banknum = (data - 1) & 7;
 	reset_sound_region();
@@ -756,7 +756,7 @@ static struct GfxDecodeInfo topspeed_gfxdecodeinfo[] =
 
 static void irq_handler(int irq)	/* assumes Z80 sandwiched between 68Ks */
 {
-	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2151interface ym2151_interface =

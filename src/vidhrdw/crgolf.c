@@ -29,7 +29,7 @@ static struct mame_bitmap *highbit;
  *
  *************************************/
 
-WRITE_HANDLER( crgolf_videoram_bit0_w )
+WRITE8_HANDLER( crgolf_videoram_bit0_w )
 {
 	struct mame_bitmap *screen = (*crgolf_screen_select & 1) ? screenb : screena;
 	int x = (offset % 32) * 8;
@@ -47,7 +47,7 @@ WRITE_HANDLER( crgolf_videoram_bit0_w )
 }
 
 
-WRITE_HANDLER( crgolf_videoram_bit1_w )
+WRITE8_HANDLER( crgolf_videoram_bit1_w )
 {
 	struct mame_bitmap *screen = (*crgolf_screen_select & 1) ? screenb : screena;
 	int x = (offset % 32) * 8;
@@ -65,7 +65,7 @@ WRITE_HANDLER( crgolf_videoram_bit1_w )
 }
 
 
-WRITE_HANDLER( crgolf_videoram_bit2_w )
+WRITE8_HANDLER( crgolf_videoram_bit2_w )
 {
 	struct mame_bitmap *screen = (*crgolf_screen_select & 1) ? screenb : screena;
 	int x = (offset % 32) * 8;
@@ -90,7 +90,7 @@ WRITE_HANDLER( crgolf_videoram_bit2_w )
  *
  *************************************/
 
-READ_HANDLER( crgolf_videoram_bit0_r )
+READ8_HANDLER( crgolf_videoram_bit0_r )
 {
 	struct mame_bitmap *screen = (*crgolf_screen_select & 1) ? screenb : screena;
 	int x = (offset % 32) * 8;
@@ -108,7 +108,7 @@ READ_HANDLER( crgolf_videoram_bit0_r )
 }
 
 
-READ_HANDLER( crgolf_videoram_bit1_r )
+READ8_HANDLER( crgolf_videoram_bit1_r )
 {
 	struct mame_bitmap *screen = (*crgolf_screen_select & 1) ? screenb : screena;
 	int x = (offset % 32) * 8;
@@ -126,7 +126,7 @@ READ_HANDLER( crgolf_videoram_bit1_r )
 }
 
 
-READ_HANDLER( crgolf_videoram_bit2_r )
+READ8_HANDLER( crgolf_videoram_bit2_r )
 {
 	struct mame_bitmap *screen = (*crgolf_screen_select & 1) ? screenb : screena;
 	int x = (offset % 32) * 8;

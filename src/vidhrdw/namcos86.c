@@ -158,12 +158,12 @@ VIDEO_START( namcos86 )
 
 ***************************************************************************/
 
-READ_HANDLER( rthunder_videoram1_r )
+READ8_HANDLER( rthunder_videoram1_r )
 {
 	return rthunder_videoram1[offset];
 }
 
-WRITE_HANDLER( rthunder_videoram1_w )
+WRITE8_HANDLER( rthunder_videoram1_w )
 {
 	if (rthunder_videoram1[offset] != data)
 	{
@@ -172,12 +172,12 @@ WRITE_HANDLER( rthunder_videoram1_w )
 	}
 }
 
-READ_HANDLER( rthunder_videoram2_r )
+READ8_HANDLER( rthunder_videoram2_r )
 {
 	return rthunder_videoram2[offset];
 }
 
-WRITE_HANDLER( rthunder_videoram2_w )
+WRITE8_HANDLER( rthunder_videoram2_w )
 {
 	if (rthunder_videoram2[offset] != data)
 	{
@@ -186,7 +186,7 @@ WRITE_HANDLER( rthunder_videoram2_w )
 	}
 }
 
-WRITE_HANDLER( rthunder_tilebank_select_w )
+WRITE8_HANDLER( rthunder_tilebank_select_w )
 {
 	int bit = BIT(offset,10);
 	if (tilebank != bit)
@@ -213,24 +213,24 @@ static void scroll_w(int layer,int offset,int data)
 	}
 }
 
-WRITE_HANDLER( rthunder_scroll0_w )
+WRITE8_HANDLER( rthunder_scroll0_w )
 {
 	scroll_w(0,offset,data);
 }
-WRITE_HANDLER( rthunder_scroll1_w )
+WRITE8_HANDLER( rthunder_scroll1_w )
 {
 	scroll_w(1,offset,data);
 }
-WRITE_HANDLER( rthunder_scroll2_w )
+WRITE8_HANDLER( rthunder_scroll2_w )
 {
 	scroll_w(2,offset,data);
 }
-WRITE_HANDLER( rthunder_scroll3_w )
+WRITE8_HANDLER( rthunder_scroll3_w )
 {
 	scroll_w(3,offset,data);
 }
 
-WRITE_HANDLER( rthunder_backcolor_w )
+WRITE8_HANDLER( rthunder_backcolor_w )
 {
 	backcolor = data;
 }
@@ -238,12 +238,12 @@ WRITE_HANDLER( rthunder_backcolor_w )
 
 static int copy_sprites;
 
-READ_HANDLER( rthunder_spriteram_r )
+READ8_HANDLER( rthunder_spriteram_r )
 {
 	return rthunder_spriteram[offset];
 }
 
-WRITE_HANDLER( rthunder_spriteram_w )
+WRITE8_HANDLER( rthunder_spriteram_w )
 {
 	rthunder_spriteram[offset] = data;
 

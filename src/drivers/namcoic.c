@@ -711,7 +711,7 @@ void namco_roz_draw(
 				{
 					SetRozSize( which,128 );
 				}
-				//if( keyboard_pressed(KEYCODE_LSHIFT) )
+				//if( code_pressed(KEYCODE_LSHIFT) )
 				//	roz_pri = pSource[0]&0xf;
 				break;
 

@@ -14,11 +14,11 @@ void cyberbal_samples_stop(void);
 
 INTERRUPT_GEN( cyberbal_sound_68k_irq_gen );
 
-READ_HANDLER( cyberbal_special_port3_r );
-READ_HANDLER( cyberbal_sound_6502_stat_r );
-READ_HANDLER( cyberbal_sound_68k_6502_r );
-WRITE_HANDLER( cyberbal_sound_bank_select_w );
-WRITE_HANDLER( cyberbal_sound_68k_6502_w );
+READ8_HANDLER( cyberbal_special_port3_r );
+READ8_HANDLER( cyberbal_sound_6502_stat_r );
+READ8_HANDLER( cyberbal_sound_68k_6502_r );
+WRITE8_HANDLER( cyberbal_sound_bank_select_w );
+WRITE8_HANDLER( cyberbal_sound_68k_6502_w );
 
 READ16_HANDLER( cyberbal_sound_68k_r );
 WRITE16_HANDLER( cyberbal_io_68k_irq_ack_w );

@@ -117,7 +117,7 @@ static WRITE32_HANDLER( color_ram_w )
 
 static void groundfx_interrupt5(int x)
 {
-	cpu_set_irq_line(0,5,HOLD_LINE); //from 5... ADC port
+	cpunum_set_input_line(0,5,HOLD_LINE); //from 5... ADC port
 }
 
 
@@ -454,7 +454,7 @@ static struct ES5505interface es5505_interface =
 static INTERRUPT_GEN( groundfx_interrupt )
 {
 	frame_counter^=1;
-	cpu_set_irq_line(0, 4, HOLD_LINE);
+	cpunum_set_input_line(0, 4, HOLD_LINE);
 }
 
 static MACHINE_DRIVER_START( groundfx )
@@ -552,7 +552,7 @@ DRIVER_INIT( groundfx )
 	int data;
 
 	/* Speedup handlers */
-	install_mem_read32_handler(0, 0x20b574, 0x20b577, irq_speedup_r_groundfx);
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x20b574, 0x20b577, 0, 0, irq_speedup_r_groundfx);
 
 	/* make piv tile GFX format suitable for gfxdecode */
 	offset = size/2;

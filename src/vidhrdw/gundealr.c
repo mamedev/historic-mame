@@ -78,7 +78,7 @@ VIDEO_START( gundealr )
 
 ***************************************************************************/
 
-WRITE_HANDLER( gundealr_bg_videoram_w )
+WRITE8_HANDLER( gundealr_bg_videoram_w )
 {
 	if (gundealr_bg_videoram[offset] != data)
 	{
@@ -87,7 +87,7 @@ WRITE_HANDLER( gundealr_bg_videoram_w )
 	}
 }
 
-WRITE_HANDLER( gundealr_fg_videoram_w )
+WRITE8_HANDLER( gundealr_fg_videoram_w )
 {
 	if (gundealr_fg_videoram[offset] != data)
 	{
@@ -96,7 +96,7 @@ WRITE_HANDLER( gundealr_fg_videoram_w )
 	}
 }
 
-WRITE_HANDLER( gundealr_paletteram_w )
+WRITE8_HANDLER( gundealr_paletteram_w )
 {
 	int r,g,b,val;
 
@@ -118,7 +118,7 @@ WRITE_HANDLER( gundealr_paletteram_w )
 	palette_set_color(offset / 2,r,g,b);
 }
 
-WRITE_HANDLER( gundealr_fg_scroll_w )
+WRITE8_HANDLER( gundealr_fg_scroll_w )
 {
 	static unsigned char scroll[4];
 
@@ -127,7 +127,7 @@ WRITE_HANDLER( gundealr_fg_scroll_w )
 	tilemap_set_scrolly(fg_tilemap,0,scroll[3] | ((scroll[2] & 0x03) << 8));
 }
 
-WRITE_HANDLER( yamyam_fg_scroll_w )
+WRITE8_HANDLER( yamyam_fg_scroll_w )
 {
 	static unsigned char scroll[4];
 
@@ -136,7 +136,7 @@ WRITE_HANDLER( yamyam_fg_scroll_w )
 	tilemap_set_scrolly(fg_tilemap,0,scroll[2] | ((scroll[3] & 0x03) << 8));
 }
 
-WRITE_HANDLER( gundealr_flipscreen_w )
+WRITE8_HANDLER( gundealr_flipscreen_w )
 {
 	flipscreen = data;
 	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);

@@ -125,28 +125,28 @@ extern unsigned char* banked_area;
 /* from vidhrdw/combasc.c */
 PALETTE_INIT( combasc );
 PALETTE_INIT( combascb );
-READ_HANDLER( combasc_video_r );
-WRITE_HANDLER( combasc_video_w );
+READ8_HANDLER( combasc_video_r );
+WRITE8_HANDLER( combasc_video_w );
 VIDEO_START( combasc );
 VIDEO_START( combascb );
 
-WRITE_HANDLER( combascb_bankselect_w );
-WRITE_HANDLER( combasc_bankselect_w );
+WRITE8_HANDLER( combascb_bankselect_w );
+WRITE8_HANDLER( combasc_bankselect_w );
 MACHINE_INIT( combasc );
 MACHINE_INIT( combascb );
-WRITE_HANDLER( combasc_pf_control_w );
-READ_HANDLER( combasc_scrollram_r );
-WRITE_HANDLER( combasc_scrollram_w );
+WRITE8_HANDLER( combasc_pf_control_w );
+READ8_HANDLER( combasc_scrollram_r );
+WRITE8_HANDLER( combasc_scrollram_w );
 
 VIDEO_UPDATE( combascb );
 VIDEO_UPDATE( combasc );
-WRITE_HANDLER( combasc_io_w );
-WRITE_HANDLER( combasc_vreg_w );
+WRITE8_HANDLER( combasc_io_w );
+WRITE8_HANDLER( combasc_vreg_w );
 
 
 
 
-static WRITE_HANDLER( combasc_coin_counter_w )
+static WRITE8_HANDLER( combasc_coin_counter_w )
 {
 	/* b7-b3: unused? */
 	/* b1: coin counter 2 */
@@ -156,7 +156,7 @@ static WRITE_HANDLER( combasc_coin_counter_w )
 	coin_counter_w(1,data & 0x02);
 }
 
-static READ_HANDLER( trackball_r )
+static READ8_HANDLER( trackball_r )
 {
 	static UINT8 pos[4],sign[4];
 
@@ -195,15 +195,15 @@ static READ_HANDLER( trackball_r )
 /* the protection is a simple multiply */
 static int prot[2];
 
-static WRITE_HANDLER( protection_w )
+static WRITE8_HANDLER( protection_w )
 {
 	prot[offset] = data;
 }
-static READ_HANDLER( protection_r )
+static READ8_HANDLER( protection_r )
 {
 	return ((prot[0] * prot[1]) >> (offset * 8)) & 0xff;
 }
-static WRITE_HANDLER( protection_clock_w )
+static WRITE8_HANDLER( protection_clock_w )
 {
 	/* 0x3f is written here every time before accessing the other registers */
 }
@@ -211,29 +211,29 @@ static WRITE_HANDLER( protection_clock_w )
 
 /****************************************************************************/
 
-static WRITE_HANDLER( combasc_sh_irqtrigger_w )
+static WRITE8_HANDLER( combasc_sh_irqtrigger_w )
 {
-	cpu_set_irq_line_and_vector(1,0,HOLD_LINE,0xff);
+	cpunum_set_input_line_and_vector(1,0,HOLD_LINE,0xff);
 }
 
-static WRITE_HANDLER( combasc_play_w )
+static WRITE8_HANDLER( combasc_play_w )
 {
 	UPD7759_start_w(0, data & 2);
 }
 
-static WRITE_HANDLER( combasc_voice_reset_w )
+static WRITE8_HANDLER( combasc_voice_reset_w )
 {
     UPD7759_reset_w(0,data & 1);
 }
 
-static WRITE_HANDLER( combasc_portA_w )
+static WRITE8_HANDLER( combasc_portA_w )
 {
 	/* unknown. always write 0 */
 }
 
 static mame_timer *combasc_interleave_timer;
 
-static READ_HANDLER ( combasc_YM2203_status_port_0_r )
+static READ8_HANDLER ( combasc_YM2203_status_port_0_r )
 {
 	static int boost = 1;
 	int status = YM2203Read(0,0);
@@ -904,7 +904,7 @@ static DRIVER_INIT( combasct )
 static DRIVER_INIT( combasc )
 {
 	/* joystick instead of trackball */
-	install_mem_read_handler(0,0x0404,0x0404,input_port_4_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0404, 0x0404, 0, 0, input_port_4_r);
 
 	combasc_init_common();
 }

@@ -38,17 +38,17 @@ AT08XX03:
 **
 ***************************************************************************/
 
-extern READ_HANDLER( marvins_background_ram_r );
-extern WRITE_HANDLER( marvins_background_ram_w );
+extern READ8_HANDLER( marvins_background_ram_r );
+extern WRITE8_HANDLER( marvins_background_ram_w );
 
-extern READ_HANDLER( marvins_foreground_ram_r );
-extern WRITE_HANDLER( marvins_foreground_ram_w );
+extern READ8_HANDLER( marvins_foreground_ram_r );
+extern WRITE8_HANDLER( marvins_foreground_ram_w );
 
-extern READ_HANDLER( marvins_text_ram_r );
-extern WRITE_HANDLER( marvins_text_ram_w );
+extern READ8_HANDLER( marvins_text_ram_r );
+extern WRITE8_HANDLER( marvins_text_ram_w );
 
-extern READ_HANDLER( marvins_spriteram_r );
-extern WRITE_HANDLER( marvins_spriteram_w );
+extern READ8_HANDLER( marvins_spriteram_r );
+extern WRITE8_HANDLER( marvins_spriteram_w );
 
 
 /***************************************************************************
@@ -61,7 +61,7 @@ extern VIDEO_START( marvins );
 extern VIDEO_UPDATE( marvins );
 extern VIDEO_UPDATE( madcrash );
 
-extern WRITE_HANDLER( marvins_palette_bank_w );
+extern WRITE8_HANDLER( marvins_palette_bank_w );
 
 
 /***************************************************************************
@@ -96,7 +96,7 @@ extern WRITE_HANDLER( marvins_palette_bank_w );
 **
 ***************************************************************************/
 
-extern WRITE_HANDLER( snkwave_w );
+extern WRITE8_HANDLER( snkwave_w );
 
 static int sound_cpu_busy;
 
@@ -125,27 +125,27 @@ static void init_sound( int busy_bit )
 	sound_cpu_busy = 0;
 }
 
-static WRITE_HANDLER( sound_command_w )
+static WRITE8_HANDLER( sound_command_w )
 {
 	sound_cpu_busy = snk_sound_busy_bit;
 	soundlatch_w(0, data);
-	cpu_set_irq_line(2, 0, HOLD_LINE);
+	cpunum_set_input_line(2, 0, HOLD_LINE);
 }
 
-static READ_HANDLER( sound_command_r )
+static READ8_HANDLER( sound_command_r )
 {
 	sound_cpu_busy = 0;
 	return(soundlatch_r(0));
 }
 
-static READ_HANDLER( sound_nmi_ack_r )
+static READ8_HANDLER( sound_nmi_ack_r )
 {
-	cpu_set_nmi_line(2, CLEAR_LINE);
+	cpunum_set_input_line(2, INPUT_LINE_NMI, CLEAR_LINE);
 	return 0;
 }
 
 /* this input port has one of its bits mapped to sound CPU status */
-static READ_HANDLER( marvins_port_0_r )
+static READ8_HANDLER( marvins_port_0_r )
 {
 	return(input_port_0_r(0) | sound_cpu_busy);
 }

@@ -98,8 +98,8 @@ static WRITE32_HANDLER( cpua_ctrl_w )
 
 	if (ACCESSING_MSB)
 	{
-		cpu_set_reset_line(2,(data &0x200) ? CLEAR_LINE : ASSERT_LINE);
-		if (data&0x8000) cpu_set_irq_line(0,3,HOLD_LINE); /* Guess */
+		cpunum_set_input_line(2, INPUT_LINE_RESET, (data &0x200) ? CLEAR_LINE : ASSERT_LINE);
+		if (data&0x8000) cpunum_set_input_line(0,3,HOLD_LINE); /* Guess */
 	}
 
 	if (ACCESSING_LSB32)
@@ -232,7 +232,7 @@ static WRITE32_HANDLER( superchs_stick_w )
 		different byte in this long word before the RTE.  I assume all but the last
 		(top) byte cause an IRQ with the final one being an ACK.  (Total guess but it works). */
 	if (mem_mask!=0x00ffffff)
-		cpu_set_irq_line(0,3,HOLD_LINE);
+		cpunum_set_input_line(0,3,HOLD_LINE);
 }
 
 /***********************************************************
@@ -558,8 +558,8 @@ static READ16_HANDLER( sub_cycle_r )
 static DRIVER_INIT( superchs )
 {
 	/* Speedup handlers */
-	install_mem_read32_handler(0, 0x100000, 0x100003, main_cycle_r);
-	install_mem_read16_handler(2, 0x80000a, 0x80000b, sub_cycle_r);
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x100000, 0x100003, 0, 0, main_cycle_r);
+	memory_install_read16_handler(2, ADDRESS_SPACE_PROGRAM, 0x80000a, 0x80000b, 0, 0, sub_cycle_r);
 }
 
 GAME( 1992, superchs, 0, superchs, superchs, superchs, ROT0, "Taito America Corporation", "Super Chase - Criminal Termination (US)" )

@@ -14,7 +14,7 @@
 // These values were derived based on disassembly of the code. Usually, it
 // was pretty obvious what the values should be. Of course, this will have
 // to change if a different ROM set ever surfaces.
-static READ_HANDLER( fastfred_custom_io_r )
+static READ8_HANDLER( fastfred_custom_io_r )
 {
     switch (activecpu_get_pc())
     {
@@ -46,7 +46,7 @@ static READ_HANDLER( fastfred_custom_io_r )
     return 0x00;
 }
 
-static READ_HANDLER( flyboy_custom1_io_r )
+static READ8_HANDLER( flyboy_custom1_io_r )
 {
 
 	switch (activecpu_get_pc())
@@ -74,7 +74,7 @@ static READ_HANDLER( flyboy_custom1_io_r )
 	return 0x00;
 }
 
-static READ_HANDLER( flyboy_custom2_io_r )
+static READ8_HANDLER( flyboy_custom2_io_r )
 {
 
 	switch (activecpu_get_pc())
@@ -100,7 +100,7 @@ static READ_HANDLER( flyboy_custom2_io_r )
 }
 
 
-static READ_HANDLER( jumpcoas_custom_io_r )
+static READ8_HANDLER( jumpcoas_custom_io_r )
 {
 	if (offset == 0x100)  return 0x63;
 
@@ -852,8 +852,8 @@ extern int fastfred_hardware_type;
 
 static DRIVER_INIT( flyboy )
 {
-	install_mem_read_handler( 0, 0xc085, 0xc099, flyboy_custom1_io_r);
-	install_mem_read_handler( 0, 0xc8fb, 0xc900, flyboy_custom2_io_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc085, 0xc099, 0, 0, flyboy_custom1_io_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc8fb, 0xc900, 0, 0, flyboy_custom2_io_r);
 	fastfred_hardware_type = 1;
 }
 
@@ -864,22 +864,22 @@ static DRIVER_INIT( flyboyb )
 
 static DRIVER_INIT( fastfred )
 {
-	install_mem_write_handler(0, 0xc800, 0xcfff, MWA8_NOP );
-	install_mem_read_handler( 0, 0xc800, 0xcfff, fastfred_custom_io_r);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc800, 0xcfff, 0, 0, MWA8_NOP );
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc800, 0xcfff, 0, 0, fastfred_custom_io_r);
 	fastfred_hardware_type = 1;
 }
 
 static DRIVER_INIT( jumpcoas )
 {
-	install_mem_write_handler(0, 0xc800, 0xcfff, MWA8_NOP );
-	install_mem_read_handler(0,  0xc800, 0xcfff, jumpcoas_custom_io_r);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc800, 0xcfff, 0, 0, MWA8_NOP );
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc800, 0xcfff, 0, 0, jumpcoas_custom_io_r);
 	fastfred_hardware_type = 0;
 }
 
 static DRIVER_INIT( boggy84 )
 {
-	install_mem_write_handler(0, 0xc800, 0xcfff, MWA8_NOP );
-	install_mem_read_handler(0,  0xc800, 0xcfff, jumpcoas_custom_io_r);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc800, 0xcfff, 0, 0, MWA8_NOP );
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc800, 0xcfff, 0, 0, jumpcoas_custom_io_r);
 	fastfred_hardware_type = 2;
 }
 
@@ -893,5 +893,5 @@ GAME( 1982, flyboyb,  flyboy, fastfred, flyboy,   flyboyb,  ROT90, "Kaneko", "Fl
 GAME( 1982, fastfred, flyboy, fastfred, fastfred, fastfred, ROT90, "Atari", "Fast Freddie" )
 GAME( 1983, jumpcoas, 0,      jumpcoas, jumpcoas, jumpcoas, ROT90, "Kaneko", "Jump Coaster" )
 GAME( 1983, boggy84,  0,      jumpcoas, boggy84,  boggy84,  ROT90, "bootleg", "Boggy '84" )
-GAME( 1986, redrobin, 0,      fastfred, redrobin, flyboy,   ROT90, "Elettronolo", "Red Robin" )
+GAME( 1986, redrobin, 0,      fastfred, redrobin, flyboyb,  ROT90, "Elettronolo", "Red Robin" )
 GAMEX(1983, imago,	  0,	  imago,	imago,	  imago,	ROT90, "Acom", "Imago", GAME_IMPERFECT_GRAPHICS | GAME_WRONG_COLORS )

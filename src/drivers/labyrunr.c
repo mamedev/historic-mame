@@ -18,8 +18,8 @@ Driver by Nicola Salmoria
 /* from vidhrdw/labyrunr.c */
 extern unsigned char *labyrunr_videoram1,*labyrunr_videoram2;
 PALETTE_INIT( labyrunr );
-WRITE_HANDLER( labyrunr_vram1_w );
-WRITE_HANDLER( labyrunr_vram2_w );
+WRITE8_HANDLER( labyrunr_vram1_w );
+WRITE8_HANDLER( labyrunr_vram2_w );
 VIDEO_START( labyrunr );
 VIDEO_UPDATE( labyrunr );
 
@@ -28,16 +28,16 @@ static INTERRUPT_GEN( labyrunr_interrupt )
 	if (cpu_getiloops() == 0)
 	{
 		if (K007121_ctrlram[0][0x07] & 0x02)
-			cpu_set_irq_line(0, HD6309_IRQ_LINE, HOLD_LINE);
+			cpunum_set_input_line(0, HD6309_IRQ_LINE, HOLD_LINE);
 	}
 	else if (cpu_getiloops() % 2)
 	{
 		if (K007121_ctrlram[0][0x07] & 0x01)
-			cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+			cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 	}
 }
 
-static WRITE_HANDLER( labyrunr_bankswitch_w )
+static WRITE8_HANDLER( labyrunr_bankswitch_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);

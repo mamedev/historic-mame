@@ -16,7 +16,7 @@ extern UINT8 *liberatr_bitmapram;
 VIDEO_START( liberatr );
 VIDEO_UPDATE( liberatr );
 
-WRITE_HANDLER( liberatr_colorram_w ) ;
-WRITE_HANDLER( liberatr_bitmap_w );
-READ_HANDLER( liberatr_bitmap_xy_r );
-WRITE_HANDLER( liberatr_bitmap_xy_w );
+WRITE8_HANDLER( liberatr_colorram_w ) ;
+WRITE8_HANDLER( liberatr_bitmap_w );
+READ8_HANDLER( liberatr_bitmap_xy_r );
+WRITE8_HANDLER( liberatr_bitmap_xy_w );

@@ -9,11 +9,11 @@
 #define USE_MTRANDOM 1
 
 /* from vidhrdw */
-READ_HANDLER( namcos1_videoram_r );
-WRITE_HANDLER( namcos1_videoram_w );
-READ_HANDLER( namcos1_paletteram_r );
-WRITE_HANDLER( namcos1_paletteram_w );
-WRITE_HANDLER( namcos1_videocontrol_w );
+READ8_HANDLER( namcos1_videoram_r );
+WRITE8_HANDLER( namcos1_videoram_w );
+READ8_HANDLER( namcos1_paletteram_r );
+WRITE8_HANDLER( namcos1_paletteram_w );
+WRITE8_HANDLER( namcos1_videocontrol_w );
 extern void namcos1_set_scroll_offsets( const int *bgx, const int *bgy, int negative, int optimize );
 extern void namcos1_set_sprite_offsets( int x, int y );
 
@@ -46,39 +46,39 @@ typedef struct {
 static bankhandler namcos1_bank_element[NAMCOS1_MAX_BANK];
 static bankhandler namcos1_active_bank[16];
 
-static READ_HANDLER( bank1_r )  { return (*namcos1_active_bank[0].bank_handler_r )(offset + namcos1_active_bank[0].bank_offset); }
-static READ_HANDLER( bank2_r )  { return (*namcos1_active_bank[1].bank_handler_r )(offset + namcos1_active_bank[1].bank_offset); }
-static READ_HANDLER( bank3_r )  { return (*namcos1_active_bank[2].bank_handler_r )(offset + namcos1_active_bank[2].bank_offset); }
-static READ_HANDLER( bank4_r )  { return (*namcos1_active_bank[3].bank_handler_r )(offset + namcos1_active_bank[3].bank_offset); }
-static READ_HANDLER( bank5_r )  { return (*namcos1_active_bank[4].bank_handler_r )(offset + namcos1_active_bank[4].bank_offset); }
-static READ_HANDLER( bank6_r )  { return (*namcos1_active_bank[5].bank_handler_r )(offset + namcos1_active_bank[5].bank_offset); }
-static READ_HANDLER( bank7_r )  { return (*namcos1_active_bank[6].bank_handler_r )(offset + namcos1_active_bank[6].bank_offset); }
-static READ_HANDLER( bank8_r )  { return (*namcos1_active_bank[7].bank_handler_r )(offset + namcos1_active_bank[7].bank_offset); }
-static READ_HANDLER( bank9_r )  { return (*namcos1_active_bank[8].bank_handler_r )(offset + namcos1_active_bank[8].bank_offset); }
-static READ_HANDLER( bank10_r ) { return (*namcos1_active_bank[9].bank_handler_r )(offset + namcos1_active_bank[9].bank_offset); }
-static READ_HANDLER( bank11_r ) { return (*namcos1_active_bank[10].bank_handler_r)(offset + namcos1_active_bank[10].bank_offset); }
-static READ_HANDLER( bank12_r ) { return (*namcos1_active_bank[11].bank_handler_r)(offset + namcos1_active_bank[11].bank_offset); }
-static READ_HANDLER( bank13_r ) { return (*namcos1_active_bank[12].bank_handler_r)(offset + namcos1_active_bank[12].bank_offset); }
-static READ_HANDLER( bank14_r ) { return (*namcos1_active_bank[13].bank_handler_r)(offset + namcos1_active_bank[13].bank_offset); }
-static READ_HANDLER( bank15_r ) { return (*namcos1_active_bank[14].bank_handler_r)(offset + namcos1_active_bank[14].bank_offset); }
-static READ_HANDLER( bank16_r ) { return (*namcos1_active_bank[15].bank_handler_r)(offset + namcos1_active_bank[15].bank_offset); }
+static READ8_HANDLER( bank1_r )  { return (*namcos1_active_bank[0].bank_handler_r )(offset + namcos1_active_bank[0].bank_offset); }
+static READ8_HANDLER( bank2_r )  { return (*namcos1_active_bank[1].bank_handler_r )(offset + namcos1_active_bank[1].bank_offset); }
+static READ8_HANDLER( bank3_r )  { return (*namcos1_active_bank[2].bank_handler_r )(offset + namcos1_active_bank[2].bank_offset); }
+static READ8_HANDLER( bank4_r )  { return (*namcos1_active_bank[3].bank_handler_r )(offset + namcos1_active_bank[3].bank_offset); }
+static READ8_HANDLER( bank5_r )  { return (*namcos1_active_bank[4].bank_handler_r )(offset + namcos1_active_bank[4].bank_offset); }
+static READ8_HANDLER( bank6_r )  { return (*namcos1_active_bank[5].bank_handler_r )(offset + namcos1_active_bank[5].bank_offset); }
+static READ8_HANDLER( bank7_r )  { return (*namcos1_active_bank[6].bank_handler_r )(offset + namcos1_active_bank[6].bank_offset); }
+static READ8_HANDLER( bank8_r )  { return (*namcos1_active_bank[7].bank_handler_r )(offset + namcos1_active_bank[7].bank_offset); }
+static READ8_HANDLER( bank9_r )  { return (*namcos1_active_bank[8].bank_handler_r )(offset + namcos1_active_bank[8].bank_offset); }
+static READ8_HANDLER( bank10_r ) { return (*namcos1_active_bank[9].bank_handler_r )(offset + namcos1_active_bank[9].bank_offset); }
+static READ8_HANDLER( bank11_r ) { return (*namcos1_active_bank[10].bank_handler_r)(offset + namcos1_active_bank[10].bank_offset); }
+static READ8_HANDLER( bank12_r ) { return (*namcos1_active_bank[11].bank_handler_r)(offset + namcos1_active_bank[11].bank_offset); }
+static READ8_HANDLER( bank13_r ) { return (*namcos1_active_bank[12].bank_handler_r)(offset + namcos1_active_bank[12].bank_offset); }
+static READ8_HANDLER( bank14_r ) { return (*namcos1_active_bank[13].bank_handler_r)(offset + namcos1_active_bank[13].bank_offset); }
+static READ8_HANDLER( bank15_r ) { return (*namcos1_active_bank[14].bank_handler_r)(offset + namcos1_active_bank[14].bank_offset); }
+static READ8_HANDLER( bank16_r ) { return (*namcos1_active_bank[15].bank_handler_r)(offset + namcos1_active_bank[15].bank_offset); }
 
-static WRITE_HANDLER( bank1_w )  { (*namcos1_active_bank[0].bank_handler_w )(offset + namcos1_active_bank[0].bank_offset, data); }
-static WRITE_HANDLER( bank2_w )  { (*namcos1_active_bank[1].bank_handler_w )(offset + namcos1_active_bank[1].bank_offset, data); }
-static WRITE_HANDLER( bank3_w )  { (*namcos1_active_bank[2].bank_handler_w )(offset + namcos1_active_bank[2].bank_offset, data); }
-static WRITE_HANDLER( bank4_w )  { (*namcos1_active_bank[3].bank_handler_w )(offset + namcos1_active_bank[3].bank_offset, data); }
-static WRITE_HANDLER( bank5_w )  { (*namcos1_active_bank[4].bank_handler_w )(offset + namcos1_active_bank[4].bank_offset, data); }
-static WRITE_HANDLER( bank6_w )  { (*namcos1_active_bank[5].bank_handler_w )(offset + namcos1_active_bank[5].bank_offset, data); }
-static WRITE_HANDLER( bank7_w )  { (*namcos1_active_bank[6].bank_handler_w )(offset + namcos1_active_bank[6].bank_offset, data); }
-static WRITE_HANDLER( bank8_w )  { (*namcos1_active_bank[7].bank_handler_w )(offset + namcos1_active_bank[7].bank_offset, data); }
-static WRITE_HANDLER( bank9_w )  { (*namcos1_active_bank[8].bank_handler_w )(offset + namcos1_active_bank[8].bank_offset, data); }
-static WRITE_HANDLER( bank10_w ) { (*namcos1_active_bank[9].bank_handler_w )(offset + namcos1_active_bank[9].bank_offset, data); }
-static WRITE_HANDLER( bank11_w ) { (*namcos1_active_bank[10].bank_handler_w)(offset + namcos1_active_bank[10].bank_offset, data); }
-static WRITE_HANDLER( bank12_w ) { (*namcos1_active_bank[11].bank_handler_w)(offset + namcos1_active_bank[11].bank_offset, data); }
-static WRITE_HANDLER( bank13_w ) { (*namcos1_active_bank[12].bank_handler_w)(offset + namcos1_active_bank[12].bank_offset, data); }
-static WRITE_HANDLER( bank14_w ) { (*namcos1_active_bank[13].bank_handler_w)(offset + namcos1_active_bank[13].bank_offset, data); }
-static WRITE_HANDLER( bank15_w ) { (*namcos1_active_bank[14].bank_handler_w)(offset + namcos1_active_bank[14].bank_offset, data); }
-static WRITE_HANDLER( bank16_w ) { (*namcos1_active_bank[15].bank_handler_w)(offset + namcos1_active_bank[15].bank_offset, data); }
+static WRITE8_HANDLER( bank1_w )  { (*namcos1_active_bank[0].bank_handler_w )(offset + namcos1_active_bank[0].bank_offset, data); }
+static WRITE8_HANDLER( bank2_w )  { (*namcos1_active_bank[1].bank_handler_w )(offset + namcos1_active_bank[1].bank_offset, data); }
+static WRITE8_HANDLER( bank3_w )  { (*namcos1_active_bank[2].bank_handler_w )(offset + namcos1_active_bank[2].bank_offset, data); }
+static WRITE8_HANDLER( bank4_w )  { (*namcos1_active_bank[3].bank_handler_w )(offset + namcos1_active_bank[3].bank_offset, data); }
+static WRITE8_HANDLER( bank5_w )  { (*namcos1_active_bank[4].bank_handler_w )(offset + namcos1_active_bank[4].bank_offset, data); }
+static WRITE8_HANDLER( bank6_w )  { (*namcos1_active_bank[5].bank_handler_w )(offset + namcos1_active_bank[5].bank_offset, data); }
+static WRITE8_HANDLER( bank7_w )  { (*namcos1_active_bank[6].bank_handler_w )(offset + namcos1_active_bank[6].bank_offset, data); }
+static WRITE8_HANDLER( bank8_w )  { (*namcos1_active_bank[7].bank_handler_w )(offset + namcos1_active_bank[7].bank_offset, data); }
+static WRITE8_HANDLER( bank9_w )  { (*namcos1_active_bank[8].bank_handler_w )(offset + namcos1_active_bank[8].bank_offset, data); }
+static WRITE8_HANDLER( bank10_w ) { (*namcos1_active_bank[9].bank_handler_w )(offset + namcos1_active_bank[9].bank_offset, data); }
+static WRITE8_HANDLER( bank11_w ) { (*namcos1_active_bank[10].bank_handler_w)(offset + namcos1_active_bank[10].bank_offset, data); }
+static WRITE8_HANDLER( bank12_w ) { (*namcos1_active_bank[11].bank_handler_w)(offset + namcos1_active_bank[11].bank_offset, data); }
+static WRITE8_HANDLER( bank13_w ) { (*namcos1_active_bank[12].bank_handler_w)(offset + namcos1_active_bank[12].bank_offset, data); }
+static WRITE8_HANDLER( bank14_w ) { (*namcos1_active_bank[13].bank_handler_w)(offset + namcos1_active_bank[13].bank_offset, data); }
+static WRITE8_HANDLER( bank15_w ) { (*namcos1_active_bank[14].bank_handler_w)(offset + namcos1_active_bank[14].bank_offset, data); }
+static WRITE8_HANDLER( bank16_w ) { (*namcos1_active_bank[15].bank_handler_w)(offset + namcos1_active_bank[15].bank_offset, data); }
 
 static const read8_handler ram_bank_handler_r[16] =
 {
@@ -122,7 +122,7 @@ static const write8_handler io_bank_handler_w[16] =
 static int key_id;
 static int key_id_query;
 
-static READ_HANDLER( rev1_key_r ) {
+static READ8_HANDLER( rev1_key_r ) {
 	//logerror("CPU #%d PC %08x: keychip read %04X=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,key[offset]);
 	if(offset >= NAMCOS1_MAX_KEY)
 	{
@@ -132,7 +132,7 @@ static READ_HANDLER( rev1_key_r ) {
 	return key[offset];
 }
 
-static WRITE_HANDLER( rev1_key_w ) {
+static WRITE8_HANDLER( rev1_key_w ) {
 	static unsigned short divider, divide_32 = 0;
 	//logerror("CPU #%d PC %08x: keychip write %04X=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,data);
 	if(offset >= NAMCOS1_MAX_KEY)
@@ -198,7 +198,7 @@ static WRITE_HANDLER( rev1_key_w ) {
 *                                                                              *
 *******************************************************************************/
 
-static READ_HANDLER( rev2_key_r )
+static READ8_HANDLER( rev2_key_r )
 {
 	//logerror("CPU #%d PC %08x: keychip read %04X=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,key[offset]);
 	if(offset >= NAMCOS1_MAX_KEY)
@@ -209,7 +209,7 @@ static READ_HANDLER( rev2_key_r )
 	return key[offset];
 }
 
-static WRITE_HANDLER( rev2_key_w )
+static WRITE8_HANDLER( rev2_key_w )
 {
 	//logerror("CPU #%d PC %08x: keychip write %04X=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,data);
 	if(offset >= NAMCOS1_MAX_KEY)
@@ -282,7 +282,7 @@ static WRITE_HANDLER( rev2_key_w )
 *                                                                              *
 *******************************************************************************/
 
-static READ_HANDLER( dangseed_key_r ) {
+static READ8_HANDLER( dangseed_key_r ) {
 	//logerror("CPU #%d PC %08x: keychip read %04X=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,key[offset]);
 	if(offset >= NAMCOS1_MAX_KEY)
 	{
@@ -292,7 +292,7 @@ static READ_HANDLER( dangseed_key_r ) {
 	return key[offset];
 }
 
-static WRITE_HANDLER( dangseed_key_w ) {
+static WRITE8_HANDLER( dangseed_key_w ) {
 	int i;
 	//logerror("CPU #%d PC %08x: keychip write %04X=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,data);
 	if(offset >= NAMCOS1_MAX_KEY)
@@ -324,7 +324,7 @@ static WRITE_HANDLER( dangseed_key_w ) {
 *                                                                              *
 *******************************************************************************/
 
-static READ_HANDLER( dspirit_key_r )
+static READ8_HANDLER( dspirit_key_r )
 {
 	//logerror("CPU #%d PC %08x: keychip read %04X=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,key[offset]);
 	if(offset >= NAMCOS1_MAX_KEY)
@@ -335,7 +335,7 @@ static READ_HANDLER( dspirit_key_r )
 	return key[offset];
 }
 
-static WRITE_HANDLER( dspirit_key_w )
+static WRITE8_HANDLER( dspirit_key_w )
 {
 	static unsigned short divisor;
 	//logerror("CPU #%d PC %08x: keychip write %04X=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,data);
@@ -424,7 +424,7 @@ static WRITE_HANDLER( dspirit_key_w )
 *                                                                              *
 *******************************************************************************/
 
-static READ_HANDLER( blazer_key_r )
+static READ8_HANDLER( blazer_key_r )
 {
 	logerror("CPU #%d PC %08x: keychip read %04X=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,key[offset]);
 	if(offset >= NAMCOS1_MAX_KEY)
@@ -435,7 +435,7 @@ static READ_HANDLER( blazer_key_r )
 	return key[offset];
 }
 
-static WRITE_HANDLER( blazer_key_w )
+static WRITE8_HANDLER( blazer_key_w )
 {
 	static unsigned short divisor;
 	logerror("CPU #%d PC %08x: keychip write %04X=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,data);
@@ -505,7 +505,7 @@ static WRITE_HANDLER( blazer_key_w )
 *                                                                              *
 *******************************************************************************/
 
-static READ_HANDLER( ws_key_r ) {
+static READ8_HANDLER( ws_key_r ) {
 	//logerror("CPU #%d PC %08x: keychip read %04X=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,key[offset]);
 	if(offset >= NAMCOS1_MAX_KEY)
 	{
@@ -515,7 +515,7 @@ static READ_HANDLER( ws_key_r ) {
 	return key[offset];
 }
 
-static WRITE_HANDLER( ws_key_w ) {
+static WRITE8_HANDLER( ws_key_w ) {
 	static unsigned short divider;
 	//logerror("CPU #%d PC %08x: keychip write %04X=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,data);
 	if(offset >= NAMCOS1_MAX_KEY)
@@ -630,7 +630,7 @@ INLINE uint32 randomMT(void)
 
 #endif
 
-static READ_HANDLER( splatter_key_r ) {
+static READ8_HANDLER( splatter_key_r ) {
 
 	unsigned long data;
 
@@ -674,7 +674,7 @@ static READ_HANDLER( splatter_key_r ) {
 	return 0;
 }
 
-static WRITE_HANDLER( splatter_key_w ) {
+static WRITE8_HANDLER( splatter_key_w ) {
 	//logerror("CPU #%d PC %08x: keychip write %04X=%02x\n",cpu_getactivecpu(),activecpu_get_pc(),offset,data);
 	/* ignored */
 }
@@ -686,7 +686,7 @@ static WRITE_HANDLER( splatter_key_w ) {
 *                                                                              *
 *******************************************************************************/
 
-static READ_HANDLER( soundram_r )
+static READ8_HANDLER( soundram_r )
 {
 	if(offset<0x100)
 		return namcos1_wavedata_r(offset);
@@ -697,7 +697,7 @@ static READ_HANDLER( soundram_r )
 	return namco_wavedata[offset];
 }
 
-static WRITE_HANDLER( soundram_w )
+static WRITE8_HANDLER( soundram_w )
 {
 	if(offset<0x100)
 	{
@@ -718,17 +718,17 @@ static WRITE_HANDLER( soundram_w )
 
 /* ROM handlers */
 
-static WRITE_HANDLER( rom_w ) {
+static WRITE8_HANDLER( rom_w ) {
 	logerror("CPU #%d PC %04x: warning - write %02x to rom address %04x\n",cpu_getactivecpu(),activecpu_get_pc(),data,offset);
 }
 
 /* error handlers */
-static READ_HANDLER( unknown_r ) {
+static READ8_HANDLER( unknown_r ) {
 	logerror("CPU #%d PC %04x: warning - read from unknown chip\n",cpu_getactivecpu(),activecpu_get_pc() );
 	return 0;
 }
 
-static WRITE_HANDLER( unknown_w ) {
+static WRITE8_HANDLER( unknown_w ) {
 	logerror("CPU #%d PC %04x: warning - wrote to unknown chip\n",cpu_getactivecpu(),activecpu_get_pc() );
 }
 
@@ -745,12 +745,12 @@ static void set_bank(int banknum, bankhandler *handler)
 	if (!handler->bank_handler_r)
 	{
 		if (namcos1_active_bank[banknum].bank_handler_r)
-			install_mem_read_handler(cpunum, bankstart, bankstart + 0x1fff, ram_bank_handler_r[banknum]);
+			memory_install_read8_handler(cpunum, ADDRESS_SPACE_PROGRAM, bankstart, bankstart + 0x1fff, 0, 0, ram_bank_handler_r[banknum]);
 	}
 	else
 	{
 		if (!namcos1_active_bank[banknum].bank_handler_r)
-			install_mem_read_handler(cpunum, bankstart, bankstart + 0x1fff, io_bank_handler_r[banknum]);
+			memory_install_read8_handler(cpunum, ADDRESS_SPACE_PROGRAM, bankstart, bankstart + 0x1fff, 0, 0, io_bank_handler_r[banknum]);
 	}
 			
 	/* write handlers (except for the 0xe000-0xffff range) */
@@ -759,12 +759,12 @@ static void set_bank(int banknum, bankhandler *handler)
 		if (!handler->bank_handler_w)
 		{
 			if (namcos1_active_bank[banknum].bank_handler_w)
-				install_mem_write_handler(cpunum, bankstart, bankstart + 0x1fff, ram_bank_handler_w[banknum]);
+				memory_install_write8_handler(cpunum, ADDRESS_SPACE_PROGRAM, bankstart, bankstart + 0x1fff, 0, 0, ram_bank_handler_w[banknum]);
 		}
 		else
 		{
 			if (!namcos1_active_bank[banknum].bank_handler_r)
-				install_mem_write_handler(cpunum, bankstart, bankstart + 0x1fff, io_bank_handler_w[banknum]);
+				memory_install_write8_handler(cpunum, ADDRESS_SPACE_PROGRAM, bankstart, bankstart + 0x1fff, 0, 0, io_bank_handler_w[banknum]);
 		}
 	}
 
@@ -798,19 +798,19 @@ void namcos1_bankswitch(int cpu, offs_t offset, data8_t data)
 	}
 }
 
-WRITE_HANDLER( namcos1_bankswitch_w ) {
+WRITE8_HANDLER( namcos1_bankswitch_w ) {
 	namcos1_bankswitch(cpu_getactivecpu(), offset, data);
 }
 
 /* Sub cpu set start bank port */
-WRITE_HANDLER( namcos1_subcpu_bank_w )
+WRITE8_HANDLER( namcos1_subcpu_bank_w )
 {
 	//logerror("cpu1 bank selected %02x=%02x\n",offset,data);
 	namcos1_cpu1_banklatch = (namcos1_cpu1_banklatch&0x300)|data;
 	/* Prepare code for Cpu 1 */
 	namcos1_bankswitch( 1, 0x0e00, namcos1_cpu1_banklatch>>8  );
 	namcos1_bankswitch( 1, 0x0e01, namcos1_cpu1_banklatch&0xff);
-	/* cpu_set_reset_line(1,PULSE_LINE); */
+	/* cpunum_set_input_line(1, INPUT_LINE_RESET, PULSE_LINE); */
 
 }
 
@@ -822,7 +822,7 @@ WRITE_HANDLER( namcos1_subcpu_bank_w )
 
 static int mcu_patch_data;
 
-WRITE_HANDLER( namcos1_cpu_control_w )
+WRITE8_HANDLER( namcos1_cpu_control_w )
 {
 	//logerror("reset control pc=%04x %02x\n",activecpu_get_pc(),data);
 	if( (data&1)^namcos1_reset)
@@ -830,16 +830,16 @@ WRITE_HANDLER( namcos1_cpu_control_w )
 		namcos1_reset = data&1;
 		if (namcos1_reset)
 		{
-			cpu_set_reset_line(1,CLEAR_LINE);
-			cpu_set_reset_line(2,CLEAR_LINE);
-			cpu_set_reset_line(3,CLEAR_LINE);
+			cpunum_set_input_line(1, INPUT_LINE_RESET, CLEAR_LINE);
+			cpunum_set_input_line(2, INPUT_LINE_RESET, CLEAR_LINE);
+			cpunum_set_input_line(3, INPUT_LINE_RESET, CLEAR_LINE);
 			mcu_patch_data = 0;
 		}
 		else
 		{
-			cpu_set_reset_line(1,ASSERT_LINE);
-			cpu_set_reset_line(2,ASSERT_LINE);
-			cpu_set_reset_line(3,ASSERT_LINE);
+			cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE);
+			cpunum_set_input_line(2, INPUT_LINE_RESET, ASSERT_LINE);
+			cpunum_set_input_line(3, INPUT_LINE_RESET, ASSERT_LINE);
 		}
 	}
 }
@@ -850,7 +850,7 @@ WRITE_HANDLER( namcos1_cpu_control_w )
 *                                                                              *
 *******************************************************************************/
 
-WRITE_HANDLER( namcos1_sound_bankswitch_w )
+WRITE8_HANDLER( namcos1_sound_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU3);
 	int bank = ( data >> 4 ) & 0x07;
@@ -867,7 +867,7 @@ static unsigned char *sound_spinlock_ram;
 static int sound_spinlock_pc;
 
 /* sound cpu */
-static READ_HANDLER( namcos1_sound_spinlock_r )
+static READ8_HANDLER( namcos1_sound_spinlock_r )
 {
 	if(activecpu_get_pc()==sound_spinlock_pc && *sound_spinlock_ram == 0)
 		cpu_spinuntil_int();
@@ -881,7 +881,7 @@ static READ_HANDLER( namcos1_sound_spinlock_r )
 *******************************************************************************/
 
 /* mcu banked rom area select */
-WRITE_HANDLER( namcos1_mcu_bankswitch_w )
+WRITE8_HANDLER( namcos1_mcu_bankswitch_w )
 {
 	int addr;
 	/* bit 2-7 : chip select line of ROM chip */
@@ -917,7 +917,7 @@ WRITE_HANDLER( namcos1_mcu_bankswitch_w )
 /* I found set $A6 only initialize in MCU                       */
 /* This patch kill write this data by MCU case $A6 to xx(clear) */
 
-WRITE_HANDLER( namcos1_mcu_patch_w )
+WRITE8_HANDLER( namcos1_mcu_patch_w )
 {
 	//logerror("mcu C000 write pc=%04x data=%02x\n",activecpu_get_pc(),data);
 	if(mcu_patch_data == 0xa6) return;
@@ -1026,9 +1026,9 @@ MACHINE_INIT( namcos1 ) {
 	}
 
 	/* In case we had some cpu's suspended, resume them now */
-	cpu_set_reset_line(1,ASSERT_LINE);
-	cpu_set_reset_line(2,ASSERT_LINE);
-	cpu_set_reset_line(3,ASSERT_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE);
+	cpunum_set_input_line(2, INPUT_LINE_RESET, ASSERT_LINE);
+	cpunum_set_input_line(3, INPUT_LINE_RESET, ASSERT_LINE);
 
 	namcos1_reset = 0;
 	/* mcu patch data clear */
@@ -1085,7 +1085,7 @@ static void namcos1_driver_init(const struct namcos1_specific *specific )
 				if(flag_ptr>0x5140 && flag_ptr<0x5400)
 				{
 					sound_spinlock_pc   = addr+3;
-					sound_spinlock_ram  = install_mem_read_handler(2,flag_ptr,flag_ptr,namcos1_sound_spinlock_r);
+					sound_spinlock_ram  = memory_install_read8_handler(2, ADDRESS_SPACE_PROGRAM, flag_ptr, flag_ptr, 0, 0, namcos1_sound_spinlock_r);
 					logerror("Set sound cpu spinlock : pc=%04x , addr = %04x\n",sound_spinlock_pc,flag_ptr);
 					break;
 				}
@@ -1231,7 +1231,7 @@ DRIVER_INIT( ws )
 /*******************************************************************************
 *   Beraboh Man specific                                                       *
 *******************************************************************************/
-static READ_HANDLER( berabohm_buttons_r )
+static READ8_HANDLER( berabohm_buttons_r )
 {
 	int res;
 
@@ -1292,7 +1292,7 @@ DRIVER_INIT( berabohm )
 		normal_slice,           /* CPU slice normal */
 	};
 	namcos1_driver_init(&berabohm_specific);
-	install_mem_read_handler(3,0x1400,0x1401,berabohm_buttons_r);
+	memory_install_read8_handler(3, ADDRESS_SPACE_PROGRAM, 0x1400, 0x1401, 0, 0, berabohm_buttons_r);
 	namcos1_game_id = 0x0588;
 }
 

@@ -30,7 +30,7 @@ data8_t *toaplan1_sharedram;
 INTERRUPT_GEN( toaplan1_interrupt )
 {
 	if (toaplan1_intenable)
-		cpu_set_irq_line(0, 4, HOLD_LINE);
+		cpunum_set_input_line(0, 4, HOLD_LINE);
 }
 
 WRITE16_HANDLER( toaplan1_intenable_w )
@@ -98,7 +98,7 @@ WRITE16_HANDLER( demonwld_dsp_bio_w )
 	if (data == 0) {
 		if (dsp_execute) {
 			logerror("Turning 68000 on\n");
-			timer_suspendcpu(0, CLEAR, SUSPEND_REASON_HALT);
+			cpunum_resume(0, SUSPEND_REASON_HALT);
 			dsp_execute = 0;
 		}
 		demonwld_dsp_BIO = ASSERT_LINE;
@@ -117,15 +117,15 @@ static void demonwld_dsp(int enable)
 	if (enable)
 	{
 		logerror("Turning DSP on and 68000 off\n");
-		timer_suspendcpu(2, CLEAR, SUSPEND_REASON_HALT);
-		cpu_set_irq_line(2, 0, ASSERT_LINE); /* TMS32010 INT */
-		timer_suspendcpu(0, ASSERT, SUSPEND_REASON_HALT);
+		cpunum_resume(2, SUSPEND_REASON_HALT);
+		cpunum_set_input_line(2, 0, ASSERT_LINE); /* TMS32010 INT */
+		cpunum_suspend(0, SUSPEND_REASON_HALT, 1);
 	}
 	else
 	{
 		logerror("Turning DSP off\n");
-		cpu_set_irq_line(2, 0, CLEAR_LINE); /* TMS32010 INT */
-		timer_suspendcpu(2, ASSERT, SUSPEND_REASON_HALT);
+		cpunum_set_input_line(2, 0, CLEAR_LINE); /* TMS32010 INT */
+		cpunum_suspend(2, SUSPEND_REASON_HALT, 1);
 	}
 }
 static void demonwld_restore_dsp(void)
@@ -228,12 +228,12 @@ WRITE16_HANDLER( toaplan1_reset_sound )
 		if (Machine->drv->sound[0].sound_type == SOUND_YM3812)
 			YM3812_sh_reset();
 		if (Machine->drv->cpu[1].cpu_type == CPU_Z80)
-			cpu_set_reset_line(1,PULSE_LINE);
+			cpunum_set_input_line(1, INPUT_LINE_RESET, PULSE_LINE);
 	}
 }
 
 
-WRITE_HANDLER( rallybik_coin_w )
+WRITE8_HANDLER( rallybik_coin_w )
 {
 	switch (data) {
 		case 0x08: if (toaplan1_coin_count) { coin_counter_w(0,1); coin_counter_w(0,0); } break;
@@ -248,7 +248,7 @@ WRITE_HANDLER( rallybik_coin_w )
 	}
 }
 
-WRITE_HANDLER( toaplan1_coin_w )
+WRITE8_HANDLER( toaplan1_coin_w )
 {
 	logerror("Z80 writing %02x to coin control\n",data);
 	/* This still isnt too clear yet. */

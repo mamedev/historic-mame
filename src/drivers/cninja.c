@@ -50,13 +50,13 @@ static data16_t *cninja_ram;
 static WRITE16_HANDLER( cninja_sound_w )
 {
 	soundlatch_w(0,data&0xff);
-	cpu_set_irq_line(1,0,HOLD_LINE);
+	cpunum_set_input_line(1,0,HOLD_LINE);
 }
 
 static WRITE16_HANDLER( stoneage_sound_w )
 {
 	soundlatch_w(0,data&0xff);
-	cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
+	cpunum_set_input_line(1,INPUT_LINE_NMI,PULSE_LINE);
 }
 
 static void interrupt_gen(int scanline)
@@ -72,7 +72,7 @@ static void interrupt_gen(int scanline)
 	deco16_raster_display_list[deco16_raster_display_position++]=deco16_pf34_control[3]&0xffff;
 	deco16_raster_display_list[deco16_raster_display_position++]=deco16_pf34_control[4]&0xffff;
 
-	cpu_set_irq_line(0, (cninja_irq_mask&0x10) ? 3 : 4, ASSERT_LINE);
+	cpunum_set_input_line(0, (cninja_irq_mask&0x10) ? 3 : 4, ASSERT_LINE);
 	timer_adjust(raster_irq_timer,TIME_NEVER,0,0);
 }
 
@@ -84,8 +84,8 @@ static READ16_HANDLER( cninja_irq_r )
 		return cninja_scanline;
 
 	case 2: /* Raster IRQ ACK - value read is not used */
-		cpu_set_irq_line(0, 3, CLEAR_LINE);
-		cpu_set_irq_line(0, 4, CLEAR_LINE);
+		cpunum_set_input_line(0, 3, CLEAR_LINE);
+		cpunum_set_input_line(0, 4, CLEAR_LINE);
 		return 0;
 	}
 
@@ -845,15 +845,15 @@ static struct YM2203interface ym2203_interface =
 
 static void sound_irq(int state)
 {
-	cpu_set_irq_line(1,1,state); /* IRQ 2 */
+	cpunum_set_input_line(1,1,state); /* IRQ 2 */
 }
 
 static void sound_irq2(int state)
 {
-	cpu_set_irq_line(1,0,state);
+	cpunum_set_input_line(1,0,state);
 }
 
-static WRITE_HANDLER( sound_bankswitch_w )
+static WRITE8_HANDLER( sound_bankswitch_w )
 {
 	/* the second OKIM6295 ROM is bank switched */
 	OKIM6295_set_bank_base(1, (data & 1) * 0x40000);
@@ -1708,13 +1708,13 @@ static void cninja_patch(void)
 
 static DRIVER_INIT( cninja )
 {
-	install_mem_write16_handler(0, 0x1bc0a8, 0x1bc0a9, cninja_sound_w);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x1bc0a8, 0x1bc0a9, 0, 0, cninja_sound_w);
 	cninja_patch();
 }
 
 static DRIVER_INIT( stoneage )
 {
-	install_mem_write16_handler(0, 0x1bc0a8, 0x1bc0a9, stoneage_sound_w);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x1bc0a8, 0x1bc0a9, 0, 0, stoneage_sound_w);
 }
 
 static DRIVER_INIT( mutantf )

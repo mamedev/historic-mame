@@ -130,13 +130,13 @@ static int InterruptFlag=0;
 
 static int GorfDelay;				/* Gorf */
 
-WRITE_HANDLER( astrocde_interrupt_vector_w )
+WRITE8_HANDLER( astrocde_interrupt_vector_w )
 {
 	interrupt_vector = data;
 }
 
 
-WRITE_HANDLER( astrocde_interrupt_enable_w )
+WRITE8_HANDLER( astrocde_interrupt_enable_w )
 {
 	InterruptFlag = data;
 
@@ -166,7 +166,7 @@ WRITE_HANDLER( astrocde_interrupt_enable_w )
 #endif
 }
 
-WRITE_HANDLER( astrocde_interrupt_w )
+WRITE8_HANDLER( astrocde_interrupt_w )
 {
 	/* A write to 0F triggers an interrupt at that scanline */
 
@@ -201,7 +201,7 @@ INTERRUPT_GEN( wow_interrupt )
 	/* Scanline interrupt enabled ? */
 
 	if (interrupt_enable && (InterruptFlag & 0x08) && (CurrentScan == NextScanInt))
-		cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, interrupt_vector);
+		cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, interrupt_vector);
 }
 
 /****************************************************************************
@@ -214,22 +214,22 @@ INTERRUPT_GEN( gorf_interrupt )
 
 	/* Gorf Special Bits */
 
-	cpu_set_irq_line(0,0,CLEAR_LINE);
+	cpunum_set_input_line(0,0,CLEAR_LINE);
 
 	if (interrupt_enable && (InterruptFlag & 0x10) && (CurrentScan==GorfDelay))
-		cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, interrupt_vector & 0xf0);
+		cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, interrupt_vector & 0xf0);
 	else if (interrupt_enable && (InterruptFlag & 0x08) && (CurrentScan == NextScanInt))
-		cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, interrupt_vector);
+		cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, interrupt_vector);
 }
 
 /* ======================================================================= */
 
-READ_HANDLER( wow_video_retrace_r )
+READ8_HANDLER( wow_video_retrace_r )
 {
 	return CurrentScan;
 }
 
-READ_HANDLER( wow_intercept_r )
+READ8_HANDLER( wow_intercept_r )
 {
 	int res;
 
@@ -242,7 +242,7 @@ READ_HANDLER( wow_intercept_r )
 
 /* Switches color registers at this zone - 40 zones (NOT USED) */
 
-WRITE_HANDLER( astrocde_colour_split_w )
+WRITE8_HANDLER( astrocde_colour_split_w )
 {
 	colorsplit[CurrentScan] = 2 * (data & 0x3f);
 
@@ -253,13 +253,13 @@ WRITE_HANDLER( astrocde_colour_split_w )
 /* This selects commercial (high res, arcade) or
                   consumer (low res, astrocade) mode */
 
-WRITE_HANDLER( astrocde_mode_w )
+WRITE8_HANDLER( astrocde_mode_w )
 {
 //	astrocade_mode = data & 0x01;
 }
 
 
-WRITE_HANDLER( astrocde_vertical_blank_w )
+WRITE8_HANDLER( astrocde_vertical_blank_w )
 {
 	if (VerticalBlank != data)
 	{
@@ -268,7 +268,7 @@ WRITE_HANDLER( astrocde_vertical_blank_w )
 }
 
 
-WRITE_HANDLER( astrocde_colour_register_w )
+WRITE8_HANDLER( astrocde_colour_register_w )
 {
 	colors[CurrentScan][offset] = data;
 
@@ -277,7 +277,7 @@ WRITE_HANDLER( astrocde_colour_register_w )
 #endif
 }
 
-WRITE_HANDLER( astrocde_colour_block_w )
+WRITE8_HANDLER( astrocde_colour_block_w )
 {
 	static int color_reg_num = 7;
 
@@ -287,7 +287,7 @@ WRITE_HANDLER( astrocde_colour_block_w )
 }
 
 
-WRITE_HANDLER( wow_videoram_w )
+WRITE8_HANDLER( wow_videoram_w )
 {
 	if ((offset < 0x4000) && (wow_videoram[offset] != data))
 	{
@@ -296,7 +296,7 @@ WRITE_HANDLER( wow_videoram_w )
 }
 
 
-WRITE_HANDLER( astrocde_magic_expand_color_w )
+WRITE8_HANDLER( astrocde_magic_expand_color_w )
 {
 #ifdef MAME_DEBUG
 //	logerror("%04x: magic_expand_color = %02x\n",activecpu_get_pc(),data);
@@ -306,7 +306,7 @@ WRITE_HANDLER( astrocde_magic_expand_color_w )
 }
 
 
-WRITE_HANDLER( astrocde_magic_control_w )
+WRITE8_HANDLER( astrocde_magic_control_w )
 {
 #ifdef MAME_DEBUG
 //	logerror("%04x: magic_control = %02x\n",activecpu_get_pc(),data);
@@ -384,7 +384,7 @@ static void copywithflip(int offset,int data)
 }
 
 
-WRITE_HANDLER( wow_magicram_w )
+WRITE8_HANDLER( wow_magicram_w )
 {
 	if (magic_control & 0x08)	/* expand mode */
 	{
@@ -409,7 +409,7 @@ WRITE_HANDLER( wow_magicram_w )
 }
 
 
-WRITE_HANDLER( astrocde_pattern_board_w )
+WRITE8_HANDLER( astrocde_pattern_board_w )
 {
 	static int src;
 	static int mode;	/*  bit 0 = direction
@@ -609,7 +609,7 @@ static void init_star_field(void)
  *
  */
 
-READ_HANDLER( gorf_io_r )
+READ8_HANDLER( gorf_io_r )
 {
 	int data;
 
@@ -661,7 +661,7 @@ READ_HANDLER( gorf_io_r )
  *
  */
 
-READ_HANDLER( wow_io_r )
+READ8_HANDLER( wow_io_r )
 {
 	int data;
 

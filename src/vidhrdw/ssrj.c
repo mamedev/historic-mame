@@ -5,13 +5,13 @@ unsigned char *ssrj_vram1,*ssrj_vram2,*ssrj_vram3,*ssrj_vram4,*ssrj_scrollram;
 
 /* tilemap 1 */
 
-WRITE_HANDLER(ssrj_vram1_w)
+WRITE8_HANDLER(ssrj_vram1_w)
 {
 	ssrj_vram1[offset]=data;
 	tilemap_mark_tile_dirty(tilemap1,offset>>1);
 }
 
-READ_HANDLER(ssrj_vram1_r)
+READ8_HANDLER(ssrj_vram1_r)
 {
 	return ssrj_vram1[offset];
 }
@@ -29,13 +29,13 @@ static void get_tile_info1(int tile_index)
 
 /* tilemap 2 */
 
-WRITE_HANDLER(ssrj_vram2_w)
+WRITE8_HANDLER(ssrj_vram2_w)
 {
 	ssrj_vram2[offset]=data;
 	tilemap_mark_tile_dirty(tilemap2,offset>>1);
 }
 
-READ_HANDLER(ssrj_vram2_r)
+READ8_HANDLER(ssrj_vram2_r)
 {
 	return ssrj_vram2[offset];
 }
@@ -53,13 +53,13 @@ static void get_tile_info2(int tile_index)
 
 /* tilemap 4 */
 
-WRITE_HANDLER(ssrj_vram4_w)
+WRITE8_HANDLER(ssrj_vram4_w)
 {
 	ssrj_vram4[offset]=data;
 	tilemap_mark_tile_dirty(tilemap4,offset>>1);
 }
 
-READ_HANDLER(ssrj_vram4_r)
+READ8_HANDLER(ssrj_vram4_r)
 {
 	return ssrj_vram4[offset];
 }

@@ -73,7 +73,7 @@ VIDEO_START( cbasebal )
 
 ***************************************************************************/
 
-WRITE_HANDLER( cbasebal_textram_w )
+WRITE8_HANDLER( cbasebal_textram_w )
 {
 	if (cbasebal_textram[offset] != data)
 	{
@@ -82,12 +82,12 @@ WRITE_HANDLER( cbasebal_textram_w )
 	}
 }
 
-READ_HANDLER( cbasebal_textram_r )
+READ8_HANDLER( cbasebal_textram_r )
 {
 	return cbasebal_textram[offset];
 }
 
-WRITE_HANDLER( cbasebal_scrollram_w )
+WRITE8_HANDLER( cbasebal_scrollram_w )
 {
 	if (cbasebal_scrollram[offset] != data)
 	{
@@ -96,12 +96,12 @@ WRITE_HANDLER( cbasebal_scrollram_w )
 	}
 }
 
-READ_HANDLER( cbasebal_scrollram_r )
+READ8_HANDLER( cbasebal_scrollram_r )
 {
 	return cbasebal_scrollram[offset];
 }
 
-WRITE_HANDLER( cbasebal_gfxctrl_w )
+WRITE8_HANDLER( cbasebal_gfxctrl_w )
 {
 	/* bit 0 is unknown - toggles continuously */
 
@@ -131,7 +131,7 @@ WRITE_HANDLER( cbasebal_gfxctrl_w )
 	/* other bits unknown, but used */
 }
 
-WRITE_HANDLER( cbasebal_scrollx_w )
+WRITE8_HANDLER( cbasebal_scrollx_w )
 {
 	static unsigned char scroll[2];
 
@@ -139,7 +139,7 @@ WRITE_HANDLER( cbasebal_scrollx_w )
 	tilemap_set_scrollx(bg_tilemap,0,scroll[0] + 256 * scroll[1]);
 }
 
-WRITE_HANDLER( cbasebal_scrolly_w )
+WRITE8_HANDLER( cbasebal_scrolly_w )
 {
 	static unsigned char scroll[2];
 

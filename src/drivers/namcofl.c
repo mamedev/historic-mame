@@ -274,13 +274,13 @@ static INTERRUPT_GEN(namcofl_interrupt)
 	switch (cpu_getiloops())
 	{
 		case 0:
-			cpu_set_irq_line(0, I960_IRQ2, ASSERT_LINE);
+			cpunum_set_input_line(0, I960_IRQ2, ASSERT_LINE);
 			break;
 		case 1:
-			cpu_set_irq_line(0, I960_IRQ1, ASSERT_LINE);
+			cpunum_set_input_line(0, I960_IRQ1, ASSERT_LINE);
 			break;
 		case 2:
-			cpu_set_irq_line(0, I960_IRQ0, ASSERT_LINE);
+			cpunum_set_input_line(0, I960_IRQ0, ASSERT_LINE);
 			break;
 	}
 }

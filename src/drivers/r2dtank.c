@@ -44,14 +44,14 @@ Should be very similar to Sigma's Spiders hardware.
 #include "cpu/m6809/m6809.h"
 
 static int dipsw_bank;
-static WRITE_HANDLER( dipsw_bank_w )
+static WRITE8_HANDLER( dipsw_bank_w )
 {
 //	printf("bank = %x\n",data);
 	dipsw_bank = data;
 }
 
 static int r2dtank_video_flip;
-WRITE_HANDLER( r2dtank_video_flip_w )
+WRITE8_HANDLER( r2dtank_video_flip_w )
 {
 	/*	0 -> flipped
 		1 -> not flipped */
@@ -59,7 +59,7 @@ WRITE_HANDLER( r2dtank_video_flip_w )
 	r2dtank_video_flip = !data;
 }
 
-static READ_HANDLER( dipsw_r )
+static READ8_HANDLER( dipsw_r )
 {
 	switch( dipsw_bank )
 	{
@@ -107,12 +107,12 @@ static READ_HANDLER( dipsw_r )
 	}
 }
 
-WRITE_HANDLER( r2dtank_pia_0_w )
+WRITE8_HANDLER( r2dtank_pia_0_w )
 {
 	pia_0_w(offset, ~data);
 }
 
-WRITE_HANDLER( r2dtank_pia_1_w )
+WRITE8_HANDLER( r2dtank_pia_1_w )
 {
 	pia_1_w(offset, ~data);
 }
@@ -330,7 +330,7 @@ MACHINE_INIT( r2dtank )
 
 INTERRUPT_GEN( r2dtank_interrupt )
 {
-	cpu_set_irq_line(0, 0, HOLD_LINE);
+	cpunum_set_input_line(0, 0, HOLD_LINE);
 }
 
 static MACHINE_DRIVER_START( r2dtank )

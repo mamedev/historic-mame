@@ -41,10 +41,10 @@ extern data8_t *metlclsh_bgram, *metlclsh_fgram, *metlclsh_scrollx;
 
 /* Functions defined in vidhrdw: */
 
-WRITE_HANDLER( metlclsh_bgram_w );
-WRITE_HANDLER( metlclsh_fgram_w );
-WRITE_HANDLER( metlclsh_gfxbank_w );
-WRITE_HANDLER( metlclsh_rambank_w );
+WRITE8_HANDLER( metlclsh_bgram_w );
+WRITE8_HANDLER( metlclsh_fgram_w );
+WRITE8_HANDLER( metlclsh_gfxbank_w );
+WRITE8_HANDLER( metlclsh_rambank_w );
 
 VIDEO_START( metlclsh );
 VIDEO_UPDATE( metlclsh );
@@ -57,17 +57,17 @@ VIDEO_UPDATE( metlclsh );
 
 static data8_t *sharedram;
 
-static READ_HANDLER ( sharedram_r )	{ return sharedram[offset]; }
-static WRITE_HANDLER( sharedram_w )	{ sharedram[offset] = data; }
+static READ8_HANDLER ( sharedram_r )	{ return sharedram[offset]; }
+static WRITE8_HANDLER( sharedram_w )	{ sharedram[offset] = data; }
 
-static WRITE_HANDLER( metlclsh_cause_irq )
+static WRITE8_HANDLER( metlclsh_cause_irq )
 {
-	cpu_set_irq_line(1,M6809_IRQ_LINE,ASSERT_LINE);
+	cpunum_set_input_line(1,M6809_IRQ_LINE,ASSERT_LINE);
 }
 
-static WRITE_HANDLER( metlclsh_ack_nmi )
+static WRITE8_HANDLER( metlclsh_ack_nmi )
 {
-	cpu_set_irq_line(0,IRQ_LINE_NMI,CLEAR_LINE);
+	cpunum_set_input_line(0,INPUT_LINE_NMI,CLEAR_LINE);
 }
 
 static ADDRESS_MAP_START( metlclsh_readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -111,22 +111,22 @@ ADDRESS_MAP_END
 
 ***************************************************************************/
 
-static WRITE_HANDLER( metlclsh_cause_nmi2 )
+static WRITE8_HANDLER( metlclsh_cause_nmi2 )
 {
-	cpu_set_irq_line(0,IRQ_LINE_NMI,ASSERT_LINE);
+	cpunum_set_input_line(0,INPUT_LINE_NMI,ASSERT_LINE);
 }
 
-static WRITE_HANDLER( metlclsh_ack_irq2 )
+static WRITE8_HANDLER( metlclsh_ack_irq2 )
 {
-	cpu_set_irq_line(1,M6809_IRQ_LINE,CLEAR_LINE);
+	cpunum_set_input_line(1,M6809_IRQ_LINE,CLEAR_LINE);
 }
 
-static WRITE_HANDLER( metlclsh_ack_nmi2 )
+static WRITE8_HANDLER( metlclsh_ack_nmi2 )
 {
-	cpu_set_irq_line(1,IRQ_LINE_NMI,CLEAR_LINE);
+	cpunum_set_input_line(1,INPUT_LINE_NMI,CLEAR_LINE);
 }
 
-static WRITE_HANDLER( metlclsh_flipscreen_w )
+static WRITE8_HANDLER( metlclsh_flipscreen_w )
 {
 	flip_screen_set(data & 1);
 }
@@ -289,7 +289,7 @@ static struct GfxDecodeInfo metlclsh_gfxdecodeinfo[] =
 
 static void metlclsh_irqhandler(int linestate)
 {
-	cpu_set_irq_line(0,M6809_IRQ_LINE,linestate);
+	cpunum_set_input_line(0,M6809_IRQ_LINE,linestate);
 }
 
 static struct YM2203interface metlclsh_ym2203_interface =
@@ -317,7 +317,7 @@ INTERRUPT_GEN( metlclsh_interrupt2 )
 		return;
 	/* generate NMI on coin insertion */
 	if ((~readinputport(2) & 0xc0) || (~readinputport(3) & 0x40))
-		cpu_set_nmi_line(1, ASSERT_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_NMI, ASSERT_LINE);
 }
 
 static MACHINE_INIT( metlclsh )

@@ -40,7 +40,7 @@ static int scramble_timer[10] =
 	0x00, 0x10, 0x20, 0x30, 0x40, 0x90, 0xa0, 0xb0, 0xa0, 0xd0
 };
 
-READ_HANDLER( scramble_portB_r )
+READ8_HANDLER( scramble_portB_r )
 {
 	/* need to protect from totalcycles overflow */
 	static int last_totalcycles = 0;
@@ -82,7 +82,7 @@ static int frogger_timer[10] =
 	0x00, 0x10, 0x08, 0x18, 0x40, 0x90, 0x88, 0x98, 0x88, 0xd0
 };
 
-READ_HANDLER( frogger_portB_r )
+READ8_HANDLER( frogger_portB_r )
 {
 	/* need to protect from totalcycles overflow */
 	static int last_totalcycles = 0;
@@ -101,7 +101,7 @@ READ_HANDLER( frogger_portB_r )
 }
 
 
-WRITE_HANDLER( scramble_sh_irqtrigger_w )
+WRITE8_HANDLER( scramble_sh_irqtrigger_w )
 {
 	/* the complement of bit 3 is connected to the flip-flop's clock */
 	TTL7474_clock_w(2, ~data & 0x08);
@@ -111,21 +111,21 @@ WRITE_HANDLER( scramble_sh_irqtrigger_w )
 	mixer_sound_enable_global_w(~data & 0x10);
 }
 
-WRITE_HANDLER( sfx_sh_irqtrigger_w )
+WRITE8_HANDLER( sfx_sh_irqtrigger_w )
 {
 	/* bit 1 is connected to the flip-flop's clock */
 	TTL7474_clock_w(3, data & 0x01);
 	TTL7474_update(3);
 }
 
-WRITE_HANDLER( mrkougar_sh_irqtrigger_w )
+WRITE8_HANDLER( mrkougar_sh_irqtrigger_w )
 {
 	/* the complement of bit 3 is connected to the flip-flop's clock */
 	TTL7474_clock_w(2, ~data & 0x08);
 	TTL7474_update(2);
 }
 
-WRITE_HANDLER( froggrmc_sh_irqtrigger_w )
+WRITE8_HANDLER( froggrmc_sh_irqtrigger_w )
 {
 	/* the complement of bit 0 is connected to the flip-flop's clock */
 	TTL7474_clock_w(2, ~data & 0x01);
@@ -166,24 +166,24 @@ static void scramble_sh_7474_callback(void)
 {
 	/* the Q bar is connected to the Z80's INT line.  But since INT is complemented, */
 	/* we need to complement Q bar */
-	cpu_set_irq_line(1, 0, !TTL7474_output_comp_r(2) ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1, 0, !TTL7474_output_comp_r(2) ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static void sfx_sh_7474_callback(void)
 {
 	/* the Q bar is connected to the Z80's INT line.  But since INT is complemented, */
 	/* we need to complement Q bar */
-	cpu_set_irq_line(2, 0, !TTL7474_output_comp_r(3) ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(2, 0, !TTL7474_output_comp_r(3) ? ASSERT_LINE : CLEAR_LINE);
 }
 
-WRITE_HANDLER( hotshock_sh_irqtrigger_w )
+WRITE8_HANDLER( hotshock_sh_irqtrigger_w )
 {
-	cpu_set_irq_line(1, 0, PULSE_LINE);
+	cpunum_set_input_line(1, 0, PULSE_LINE);
 }
 
-WRITE_HANDLER( explorer_sh_irqtrigger_w  )
+WRITE8_HANDLER( explorer_sh_irqtrigger_w  )
 {
-	cpu_set_irq_line(1, 0, PULSE_LINE);
+	cpunum_set_input_line(1, 0, PULSE_LINE);
 	cpu_spinuntil_time(TIME_IN_USEC(100));
 }
 
@@ -198,7 +198,7 @@ static void filter_w(int chip, int channel, int data)
 	set_RC_filter(3*chip + channel,1000,5100,0,C);
 }
 
-WRITE_HANDLER( scramble_filter_w )
+WRITE8_HANDLER( scramble_filter_w )
 {
 	filter_w(1, 0, (offset >>  0) & 3);
 	filter_w(1, 1, (offset >>  2) & 3);
@@ -208,7 +208,7 @@ WRITE_HANDLER( scramble_filter_w )
 	filter_w(0, 2, (offset >> 10) & 3);
 }
 
-WRITE_HANDLER( frogger_filter_w )
+WRITE8_HANDLER( frogger_filter_w )
 {
 	filter_w(0, 0, (offset >>  6) & 3);
 	filter_w(0, 1, (offset >>  8) & 3);
@@ -252,17 +252,17 @@ void sfx_sh_init(void)
 
 static int latch;
 
-WRITE_HANDLER( zigzag_8910_latch_w )
+WRITE8_HANDLER( zigzag_8910_latch_w )
 {
 	latch = offset;
 }
 
-WRITE_HANDLER( zigzag_8910_data_trigger_w )
+WRITE8_HANDLER( zigzag_8910_data_trigger_w )
 {
 	AY8910_write_port_0_w(0,latch);
 }
 
-WRITE_HANDLER( zigzag_8910_control_trigger_w )
+WRITE8_HANDLER( zigzag_8910_control_trigger_w )
 {
 	AY8910_control_port_0_w(0,latch);
 }

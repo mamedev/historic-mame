@@ -95,7 +95,7 @@ VIDEO_START( gyruss )
 
 
 
-WRITE_HANDLER( gyruss_flipscreen_w )
+WRITE8_HANDLER( gyruss_flipscreen_w )
 {
 	if (flipscreen != (data & 1))
 	{
@@ -107,7 +107,7 @@ WRITE_HANDLER( gyruss_flipscreen_w )
 
 
 /* Return the current video scan line */
-READ_HANDLER( gyruss_scanline_r )
+READ8_HANDLER( gyruss_scanline_r )
 {
 	return scanline;
 }

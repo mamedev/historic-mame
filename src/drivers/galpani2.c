@@ -476,10 +476,10 @@ INTERRUPT_GEN( galpani2_interrupt )
 {
 	switch ( cpu_getiloops() )
 	{
-		case 3:  cpu_set_irq_line(0, 3, HOLD_LINE); break;
-		case 2:  cpu_set_irq_line(0, 4, HOLD_LINE); break;
-		case 1:  cpu_set_irq_line(0, 5, HOLD_LINE); break;	// vblank?
-		case 0:  cpu_set_irq_line(0, 6, HOLD_LINE); break;	// hblank?
+		case 3:  cpunum_set_input_line(0, 3, HOLD_LINE); break;
+		case 2:  cpunum_set_input_line(0, 4, HOLD_LINE); break;
+		case 1:  cpunum_set_input_line(0, 5, HOLD_LINE); break;	// vblank?
+		case 0:  cpunum_set_input_line(0, 6, HOLD_LINE); break;	// hblank?
 	}
 }
 
@@ -490,9 +490,9 @@ INTERRUPT_GEN( galpani2_interrupt2 )
 {
 	switch ( cpu_getiloops() )
 	{
-		case 2:  cpu_set_irq_line(1, 3, HOLD_LINE); break;
-		case 1:  cpu_set_irq_line(1, 4, HOLD_LINE); break;
-		case 0:  cpu_set_irq_line(1, 5, HOLD_LINE); break;
+		case 2:  cpunum_set_input_line(1, 3, HOLD_LINE); break;
+		case 1:  cpunum_set_input_line(1, 4, HOLD_LINE); break;
+		case 0:  cpunum_set_input_line(1, 5, HOLD_LINE); break;
 	}
 }
 

@@ -184,7 +184,7 @@ static void draw_center(struct mame_bitmap *bitmap, const struct rectangle *clip
 	memory handlers
  ********************************************/
 
-WRITE_HANDLER( decocass_paletteram_w )
+WRITE8_HANDLER( decocass_paletteram_w )
 {
 	/*
 	 * RGB output is inverted and A4 is inverted too
@@ -194,7 +194,7 @@ WRITE_HANDLER( decocass_paletteram_w )
 	paletteram_BBGGGRRR_w( offset, ~data );
 }
 
-WRITE_HANDLER( decocass_charram_w )
+WRITE8_HANDLER( decocass_charram_w )
 {
 	if (data == decocass_charram[offset])
 		return;
@@ -206,7 +206,7 @@ WRITE_HANDLER( decocass_charram_w )
 }
 
 
-WRITE_HANDLER( decocass_fgvideoram_w )
+WRITE8_HANDLER( decocass_fgvideoram_w )
 {
 	if (data == decocass_fgvideoram[offset])
 		return;
@@ -214,7 +214,7 @@ WRITE_HANDLER( decocass_fgvideoram_w )
 	tilemap_mark_tile_dirty( fg_tilemap, offset );
 }
 
-WRITE_HANDLER( decocass_colorram_w )
+WRITE8_HANDLER( decocass_colorram_w )
 {
 	if (data == decocass_colorram[offset])
 		return;
@@ -230,7 +230,7 @@ static void mark_bg_tile_dirty(offs_t offset)
 		tilemap_mark_tile_dirty( bg_tilemap_l, offset );
 }
 
-WRITE_HANDLER( decocass_tileram_w )
+WRITE8_HANDLER( decocass_tileram_w )
 {
 	if (data == decocass_tileram[offset])
 		return;
@@ -242,7 +242,7 @@ WRITE_HANDLER( decocass_tileram_w )
 		mark_bg_tile_dirty( offset );
 }
 
-WRITE_HANDLER( decocass_objectram_w )
+WRITE8_HANDLER( decocass_objectram_w )
 {
 	if (data == decocass_objectram[offset])
 		return;
@@ -251,7 +251,7 @@ WRITE_HANDLER( decocass_objectram_w )
 	object_dirty = 1;
 }
 
-WRITE_HANDLER( decocass_bgvideoram_w )
+WRITE8_HANDLER( decocass_bgvideoram_w )
 {
 	if (data == decocass_bgvideoram[offset])
 		return;
@@ -259,7 +259,7 @@ WRITE_HANDLER( decocass_bgvideoram_w )
 	mark_bg_tile_dirty( offset );
 }
 
-READ_HANDLER( decocass_mirrorvideoram_r )
+READ8_HANDLER( decocass_mirrorvideoram_r )
 {
 	int x,y;
 
@@ -271,7 +271,7 @@ READ_HANDLER( decocass_mirrorvideoram_r )
 	return decocass_fgvideoram[offset];
 }
 
-READ_HANDLER( decocass_mirrorcolorram_r )
+READ8_HANDLER( decocass_mirrorcolorram_r )
 {
 	int x,y;
 
@@ -283,7 +283,7 @@ READ_HANDLER( decocass_mirrorcolorram_r )
 	return decocass_colorram[offset];
 }
 
-WRITE_HANDLER( decocass_mirrorvideoram_w )
+WRITE8_HANDLER( decocass_mirrorvideoram_w )
 {
 	int x,y;
 
@@ -295,7 +295,7 @@ WRITE_HANDLER( decocass_mirrorvideoram_w )
 	decocass_fgvideoram_w(offset,data);
 }
 
-WRITE_HANDLER( decocass_mirrorcolorram_w )
+WRITE8_HANDLER( decocass_mirrorcolorram_w )
 {
 	int x,y;
 
@@ -308,19 +308,19 @@ WRITE_HANDLER( decocass_mirrorcolorram_w )
 }
 
 /* The watchdog is a 4bit counter counting down every frame */
-WRITE_HANDLER( decocass_watchdog_count_w )
+WRITE8_HANDLER( decocass_watchdog_count_w )
 {
 	LOG(1,("decocass_watchdog_count_w: $%02x\n", data));
 	watchdog_count = data & 0x0f;
 }
 
-WRITE_HANDLER( decocass_watchdog_flip_w )
+WRITE8_HANDLER( decocass_watchdog_flip_w )
 {
 	LOG(1,("decocass_watchdog_flip_w: $%02x\n", data));
 	watchdog_flip = data;
 }
 
-WRITE_HANDLER( decocass_color_missiles_w )
+WRITE8_HANDLER( decocass_color_missiles_w )
 {
 	LOG(1,("decocass_color_missiles_w: $%02x\n", data));
 	/* only bits D0-D2 and D4-D6 are connected to
@@ -341,7 +341,7 @@ WRITE_HANDLER( decocass_color_missiles_w )
  * D6 - tunnel
  * D7 - part h enable
  */
-WRITE_HANDLER( decocass_mode_set_w )
+WRITE8_HANDLER( decocass_mode_set_w )
 {
 	if (data == mode_set)
 		return;
@@ -358,7 +358,7 @@ WRITE_HANDLER( decocass_mode_set_w )
 	set_vh_global_attribute( &mode_set, data );
 }
 
-WRITE_HANDLER( decocass_color_center_bot_w )
+WRITE8_HANDLER( decocass_color_center_bot_w )
 {
 	if (data == color_center_bot)
 		return;
@@ -376,7 +376,7 @@ WRITE_HANDLER( decocass_color_center_bot_w )
 	set_vh_global_attribute( &color_center_bot, data);
 }
 
-WRITE_HANDLER( decocass_back_h_shift_w )
+WRITE8_HANDLER( decocass_back_h_shift_w )
 {
 	if (data == back_h_shift)
 		return;
@@ -384,7 +384,7 @@ WRITE_HANDLER( decocass_back_h_shift_w )
 	back_h_shift = data;
 }
 
-WRITE_HANDLER( decocass_back_vl_shift_w )
+WRITE8_HANDLER( decocass_back_vl_shift_w )
 {
 	if (data == back_vl_shift)
 		return;
@@ -392,7 +392,7 @@ WRITE_HANDLER( decocass_back_vl_shift_w )
 	back_vl_shift = data;
 }
 
-WRITE_HANDLER( decocass_back_vr_shift_w )
+WRITE8_HANDLER( decocass_back_vr_shift_w )
 {
 	if (data == back_vr_shift)
 		return;
@@ -400,7 +400,7 @@ WRITE_HANDLER( decocass_back_vr_shift_w )
 	back_vr_shift = data;
 }
 
-WRITE_HANDLER( decocass_part_h_shift_w )
+WRITE8_HANDLER( decocass_part_h_shift_w )
 {
 	if (data == part_v_shift )
 		return;
@@ -408,7 +408,7 @@ WRITE_HANDLER( decocass_part_h_shift_w )
 	part_h_shift = data;
 }
 
-WRITE_HANDLER( decocass_part_v_shift_w )
+WRITE8_HANDLER( decocass_part_v_shift_w )
 {
 	if (data == part_v_shift )
 		return;
@@ -416,7 +416,7 @@ WRITE_HANDLER( decocass_part_v_shift_w )
 	part_v_shift = data;
 }
 
-WRITE_HANDLER( decocass_center_h_shift_space_w )
+WRITE8_HANDLER( decocass_center_h_shift_space_w )
 {
 	if (data == center_h_shift_space)
 		return;
@@ -424,7 +424,7 @@ WRITE_HANDLER( decocass_center_h_shift_space_w )
 	center_h_shift_space = data;
 }
 
-WRITE_HANDLER( decocass_center_v_shift_w )
+WRITE8_HANDLER( decocass_center_v_shift_w )
 {
 	LOG(1,("decocass_center_v_shift_w: $%02x\n", data));
 	center_v_shift = data;
@@ -646,7 +646,7 @@ VIDEO_UPDATE( decocass )
 	struct rectangle clip;
 
 	if (0xc0 != (input_port_2_r(0) & 0xc0))  /* coin slots assert an NMI */
-		cpu_set_nmi_line(0, ASSERT_LINE);
+		cpunum_set_input_line(0, INPUT_LINE_NMI, ASSERT_LINE);
 
 	if (0 == (watchdog_flip & 0x04))
 		watchdog_reset_w (0,0);

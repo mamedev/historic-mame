@@ -44,13 +44,13 @@ static INTERRUPT_GEN(targeth_interrupt )
 {
 	switch(cpu_getiloops()){
 		case 0: /* IRQ 2: drives the game */
-			cpu_set_irq_line(0, 2, HOLD_LINE);
+			cpunum_set_input_line(0, 2, HOLD_LINE);
 			break;
 		case 1: /* IRQ 4: Read 1P Gun */
-			cpu_set_irq_line(0, 4, HOLD_LINE);
+			cpunum_set_input_line(0, 4, HOLD_LINE);
 			break;
 		case 2:	/* IRQ 6: Read 2P Gun */
-			cpu_set_irq_line(0, 6, HOLD_LINE);
+			cpunum_set_input_line(0, 6, HOLD_LINE);
 			break;
 	}
 }

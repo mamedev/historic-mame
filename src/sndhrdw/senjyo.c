@@ -6,7 +6,7 @@
 /* z80 pio */
 static void pio_interrupt(int state)
 {
-	cpu_set_irq_line_and_vector (1, 0, HOLD_LINE, Z80_VECTOR(0,state) );
+	cpunum_set_input_line_and_vector (1, 0, HOLD_LINE, Z80_VECTOR(0,state) );
 }
 
 static z80pio_interface pio_intf =
@@ -20,7 +20,7 @@ static z80pio_interface pio_intf =
 /* z80 ctc */
 static void ctc_interrupt (int state)
 {
-	cpu_set_irq_line_and_vector (1, 0, HOLD_LINE, Z80_VECTOR(1,state) );
+	cpunum_set_input_line_and_vector (1, 0, HOLD_LINE, Z80_VECTOR(1,state) );
 }
 
 static z80ctc_interface ctc_intf =
@@ -45,7 +45,7 @@ static int single_volume = 0;
 static int channel;
 
 
-WRITE_HANDLER( senjyo_volume_w )
+WRITE8_HANDLER( senjyo_volume_w )
 {
 	single_volume = data & 0x0f;
 	mixer_set_volume(channel,single_volume * 100 / 15);

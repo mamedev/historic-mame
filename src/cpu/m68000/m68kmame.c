@@ -180,7 +180,7 @@ struct m68k_memory_interface m68k_memory_intf;
 
 static void set_irq_line(int irqline, int state)
 {
-	if (irqline == IRQ_LINE_NMI)
+	if (irqline == INPUT_LINE_NMI)
 		irqline = 7;
 	switch(state)
 	{
@@ -486,14 +486,14 @@ static void m68000_set_info(UINT32 state, union cpuinfo *info)
 	switch (state)
 	{
 		/* --- the following bits of info are set as 64-bit signed integers --- */
-		case CPUINFO_INT_IRQ_STATE + 0:				set_irq_line(0, info->i);					break;
-		case CPUINFO_INT_IRQ_STATE + 1:				set_irq_line(1, info->i);					break;
-		case CPUINFO_INT_IRQ_STATE + 2:				set_irq_line(2, info->i);					break;
-		case CPUINFO_INT_IRQ_STATE + 3:				set_irq_line(3, info->i);					break;
-		case CPUINFO_INT_IRQ_STATE + 4:				set_irq_line(4, info->i);					break;
-		case CPUINFO_INT_IRQ_STATE + 5:				set_irq_line(5, info->i);					break;
-		case CPUINFO_INT_IRQ_STATE + 6:				set_irq_line(6, info->i);					break;
-		case CPUINFO_INT_IRQ_STATE + 7:				set_irq_line(7, info->i);					break;
+		case CPUINFO_INT_INPUT_STATE + 0:			set_irq_line(0, info->i);					break;
+		case CPUINFO_INT_INPUT_STATE + 1:			set_irq_line(1, info->i);					break;
+		case CPUINFO_INT_INPUT_STATE + 2:			set_irq_line(2, info->i);					break;
+		case CPUINFO_INT_INPUT_STATE + 3:			set_irq_line(3, info->i);					break;
+		case CPUINFO_INT_INPUT_STATE + 4:			set_irq_line(4, info->i);					break;
+		case CPUINFO_INT_INPUT_STATE + 5:			set_irq_line(5, info->i);					break;
+		case CPUINFO_INT_INPUT_STATE + 6:			set_irq_line(6, info->i);					break;
+		case CPUINFO_INT_INPUT_STATE + 7:			set_irq_line(7, info->i);					break;
 
 		case CPUINFO_INT_PC:  						m68k_set_reg(M68K_REG_PC, info->i&0x00ffffff); break;
 		case CPUINFO_INT_REGISTER + M68K_PC:  		m68k_set_reg(M68K_REG_PC, info->i);			break;
@@ -537,7 +537,7 @@ void m68000_get_info(UINT32 state, union cpuinfo *info)
 	{
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
 		case CPUINFO_INT_CONTEXT_SIZE:					info->i = m68k_get_context(NULL);		break;
-		case CPUINFO_INT_IRQ_LINES:						info->i = 8;							break;
+		case CPUINFO_INT_INPUT_LINES:					info->i = 8;							break;
 		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = -1;							break;
 		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_BE;					break;
 		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
@@ -556,14 +556,14 @@ void m68000_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 0;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
 
-		case CPUINFO_INT_IRQ_STATE + 0:					info->i = 0;	/* fix me */			break;
-		case CPUINFO_INT_IRQ_STATE + 1:					info->i = 0;	/* fix me */			break;
-		case CPUINFO_INT_IRQ_STATE + 2:					info->i = 0;	/* fix me */			break;
-		case CPUINFO_INT_IRQ_STATE + 3:					info->i = 0;	/* fix me */			break;
-		case CPUINFO_INT_IRQ_STATE + 4:					info->i = 0;	/* fix me */			break;
-		case CPUINFO_INT_IRQ_STATE + 5:					info->i = 0;	/* fix me */			break;
-		case CPUINFO_INT_IRQ_STATE + 6:					info->i = 0;	/* fix me */			break;
-		case CPUINFO_INT_IRQ_STATE + 7:					info->i = 0;	/* fix me */			break;
+		case CPUINFO_INT_INPUT_STATE + 0:				info->i = 0;	/* fix me */			break;
+		case CPUINFO_INT_INPUT_STATE + 1:				info->i = 0;	/* fix me */			break;
+		case CPUINFO_INT_INPUT_STATE + 2:				info->i = 0;	/* fix me */			break;
+		case CPUINFO_INT_INPUT_STATE + 3:				info->i = 0;	/* fix me */			break;
+		case CPUINFO_INT_INPUT_STATE + 4:				info->i = 0;	/* fix me */			break;
+		case CPUINFO_INT_INPUT_STATE + 5:				info->i = 0;	/* fix me */			break;
+		case CPUINFO_INT_INPUT_STATE + 6:				info->i = 0;	/* fix me */			break;
+		case CPUINFO_INT_INPUT_STATE + 7:				info->i = 0;	/* fix me */			break;
 
 		case CPUINFO_INT_PREVIOUSPC:					info->i = m68k_get_reg(NULL, M68K_REG_PPC); break;
 
@@ -669,14 +669,14 @@ static void m68008_set_info(UINT32 state, union cpuinfo *info)
 	switch (state)
 	{
 		/* --- the following bits of info are set as 64-bit signed integers --- */
-		case CPUINFO_INT_IRQ_STATE + 0:				set_irq_line(0, info->i);					break;
-		case CPUINFO_INT_IRQ_STATE + 1:				set_irq_line(1, info->i);					break;
-		case CPUINFO_INT_IRQ_STATE + 2:				set_irq_line(2, info->i);					break;
-		case CPUINFO_INT_IRQ_STATE + 3:				set_irq_line(3, info->i);					break;
-		case CPUINFO_INT_IRQ_STATE + 4:				set_irq_line(4, info->i);					break;
-		case CPUINFO_INT_IRQ_STATE + 5:				set_irq_line(5, info->i);					break;
-		case CPUINFO_INT_IRQ_STATE + 6:				set_irq_line(6, info->i);					break;
-		case CPUINFO_INT_IRQ_STATE + 7:				set_irq_line(7, info->i);					break;
+		case CPUINFO_INT_INPUT_STATE + 0:			set_irq_line(0, info->i);					break;
+		case CPUINFO_INT_INPUT_STATE + 1:			set_irq_line(1, info->i);					break;
+		case CPUINFO_INT_INPUT_STATE + 2:			set_irq_line(2, info->i);					break;
+		case CPUINFO_INT_INPUT_STATE + 3:			set_irq_line(3, info->i);					break;
+		case CPUINFO_INT_INPUT_STATE + 4:			set_irq_line(4, info->i);					break;
+		case CPUINFO_INT_INPUT_STATE + 5:			set_irq_line(5, info->i);					break;
+		case CPUINFO_INT_INPUT_STATE + 6:			set_irq_line(6, info->i);					break;
+		case CPUINFO_INT_INPUT_STATE + 7:			set_irq_line(7, info->i);					break;
 
 		case CPUINFO_INT_PC:  						m68k_set_reg(M68K_REG_PC, info->i&0x00ffffff); break;
 		case CPUINFO_INT_REGISTER + M68K_PC:  		m68k_set_reg(M68K_REG_PC, info->i);			break;
@@ -715,7 +715,7 @@ void m68008_get_info(UINT32 state, union cpuinfo *info)
 	{
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
 		case CPUINFO_INT_CONTEXT_SIZE:					info->i = m68k_get_context(NULL);		break;
-		case CPUINFO_INT_IRQ_LINES:						info->i = 8;							break;
+		case CPUINFO_INT_INPUT_LINES:					info->i = 8;							break;
 		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = -1;							break;
 		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_BE;					break;
 		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
@@ -734,14 +734,14 @@ void m68008_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 0;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
 
-		case CPUINFO_INT_IRQ_STATE + 0:					info->i = 0;	/* fix me */			break;
-		case CPUINFO_INT_IRQ_STATE + 1:					info->i = 0;	/* fix me */			break;
-		case CPUINFO_INT_IRQ_STATE + 2:					info->i = 0;	/* fix me */			break;
-		case CPUINFO_INT_IRQ_STATE + 3:					info->i = 0;	/* fix me */			break;
-		case CPUINFO_INT_IRQ_STATE + 4:					info->i = 0;	/* fix me */			break;
-		case CPUINFO_INT_IRQ_STATE + 5:					info->i = 0;	/* fix me */			break;
-		case CPUINFO_INT_IRQ_STATE + 6:					info->i = 0;	/* fix me */			break;
-		case CPUINFO_INT_IRQ_STATE + 7:					info->i = 0;	/* fix me */			break;
+		case CPUINFO_INT_INPUT_STATE + 0:				info->i = 0;	/* fix me */			break;
+		case CPUINFO_INT_INPUT_STATE + 1:				info->i = 0;	/* fix me */			break;
+		case CPUINFO_INT_INPUT_STATE + 2:				info->i = 0;	/* fix me */			break;
+		case CPUINFO_INT_INPUT_STATE + 3:				info->i = 0;	/* fix me */			break;
+		case CPUINFO_INT_INPUT_STATE + 4:				info->i = 0;	/* fix me */			break;
+		case CPUINFO_INT_INPUT_STATE + 5:				info->i = 0;	/* fix me */			break;
+		case CPUINFO_INT_INPUT_STATE + 6:				info->i = 0;	/* fix me */			break;
+		case CPUINFO_INT_INPUT_STATE + 7:				info->i = 0;	/* fix me */			break;
 
 		case CPUINFO_INT_PREVIOUSPC:					info->i = m68k_get_reg(NULL, M68K_REG_PPC); break;
 
@@ -907,14 +907,14 @@ static void m68020_set_info(UINT32 state, union cpuinfo *info)
 	switch (state)
 	{
 		/* --- the following bits of info are set as 64-bit signed integers --- */
-		case CPUINFO_INT_IRQ_STATE + 0:				set_irq_line(0, info->i);					break;
-		case CPUINFO_INT_IRQ_STATE + 1:				set_irq_line(1, info->i);					break;
-		case CPUINFO_INT_IRQ_STATE + 2:				set_irq_line(2, info->i);					break;
-		case CPUINFO_INT_IRQ_STATE + 3:				set_irq_line(3, info->i);					break;
-		case CPUINFO_INT_IRQ_STATE + 4:				set_irq_line(4, info->i);					break;
-		case CPUINFO_INT_IRQ_STATE + 5:				set_irq_line(5, info->i);					break;
-		case CPUINFO_INT_IRQ_STATE + 6:				set_irq_line(6, info->i);					break;
-		case CPUINFO_INT_IRQ_STATE + 7:				set_irq_line(7, info->i);					break;
+		case CPUINFO_INT_INPUT_STATE + 0:			set_irq_line(0, info->i);					break;
+		case CPUINFO_INT_INPUT_STATE + 1:			set_irq_line(1, info->i);					break;
+		case CPUINFO_INT_INPUT_STATE + 2:			set_irq_line(2, info->i);					break;
+		case CPUINFO_INT_INPUT_STATE + 3:			set_irq_line(3, info->i);					break;
+		case CPUINFO_INT_INPUT_STATE + 4:			set_irq_line(4, info->i);					break;
+		case CPUINFO_INT_INPUT_STATE + 5:			set_irq_line(5, info->i);					break;
+		case CPUINFO_INT_INPUT_STATE + 6:			set_irq_line(6, info->i);					break;
+		case CPUINFO_INT_INPUT_STATE + 7:			set_irq_line(7, info->i);					break;
 
 		case CPUINFO_INT_PC:  						m68k_set_reg(M68K_REG_PC, info->i);			break;
 		case CPUINFO_INT_REGISTER + M68K_PC:  		m68k_set_reg(M68K_REG_PC, info->i);			break;
@@ -959,7 +959,7 @@ void m68020_get_info(UINT32 state, union cpuinfo *info)
 	{
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
 		case CPUINFO_INT_CONTEXT_SIZE:					info->i = m68k_get_context(NULL);		break;
-		case CPUINFO_INT_IRQ_LINES:						info->i = 8;							break;
+		case CPUINFO_INT_INPUT_LINES:					info->i = 8;							break;
 		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = -1;							break;
 		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_BE;					break;
 		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
@@ -978,14 +978,14 @@ void m68020_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 0;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
 
-		case CPUINFO_INT_IRQ_STATE + 0:					info->i = 0;	/* fix me */			break;
-		case CPUINFO_INT_IRQ_STATE + 1:					info->i = 1;	/* fix me */			break;
-		case CPUINFO_INT_IRQ_STATE + 2:					info->i = 2;	/* fix me */			break;
-		case CPUINFO_INT_IRQ_STATE + 3:					info->i = 3;	/* fix me */			break;
-		case CPUINFO_INT_IRQ_STATE + 4:					info->i = 4;	/* fix me */			break;
-		case CPUINFO_INT_IRQ_STATE + 5:					info->i = 5;	/* fix me */			break;
-		case CPUINFO_INT_IRQ_STATE + 6:					info->i = 6;	/* fix me */			break;
-		case CPUINFO_INT_IRQ_STATE + 7:					info->i = 7;	/* fix me */			break;
+		case CPUINFO_INT_INPUT_STATE + 0:				info->i = 0;	/* fix me */			break;
+		case CPUINFO_INT_INPUT_STATE + 1:				info->i = 1;	/* fix me */			break;
+		case CPUINFO_INT_INPUT_STATE + 2:				info->i = 2;	/* fix me */			break;
+		case CPUINFO_INT_INPUT_STATE + 3:				info->i = 3;	/* fix me */			break;
+		case CPUINFO_INT_INPUT_STATE + 4:				info->i = 4;	/* fix me */			break;
+		case CPUINFO_INT_INPUT_STATE + 5:				info->i = 5;	/* fix me */			break;
+		case CPUINFO_INT_INPUT_STATE + 6:				info->i = 6;	/* fix me */			break;
+		case CPUINFO_INT_INPUT_STATE + 7:				info->i = 7;	/* fix me */			break;
 
 		case CPUINFO_INT_PREVIOUSPC:					info->i = m68k_get_reg(NULL, M68K_REG_PPC); break;
 

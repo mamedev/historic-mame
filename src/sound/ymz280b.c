@@ -1022,12 +1022,12 @@ static int compute_status(struct YMZ280BChip *chip)
 
 ***********************************************************************************************/
 
-READ_HANDLER( YMZ280B_status_0_r )
+READ8_HANDLER( YMZ280B_status_0_r )
 {
 	return compute_status(&ymz280b[0]);
 }
 
-READ_HANDLER( YMZ280B_status_1_r )
+READ8_HANDLER( YMZ280B_status_1_r )
 {
 	return compute_status(&ymz280b[1]);
 }
@@ -1058,12 +1058,12 @@ READ16_HANDLER( YMZ280B_status_1_msb_r )
 
 ***********************************************************************************************/
 
-WRITE_HANDLER( YMZ280B_register_0_w )
+WRITE8_HANDLER( YMZ280B_register_0_w )
 {
 	ymz280b[0].current_register = data;
 }
 
-WRITE_HANDLER( YMZ280B_register_1_w )
+WRITE8_HANDLER( YMZ280B_register_1_w )
 {
 	ymz280b[1].current_register = data;
 }
@@ -1094,12 +1094,12 @@ WRITE16_HANDLER( YMZ280B_register_1_msb_w )
 
 ***********************************************************************************************/
 
-WRITE_HANDLER( YMZ280B_data_0_w )
+WRITE8_HANDLER( YMZ280B_data_0_w )
 {
 	write_to_register(&ymz280b[0], data);
 }
 
-WRITE_HANDLER( YMZ280B_data_1_w )
+WRITE8_HANDLER( YMZ280B_data_1_w )
 {
 	write_to_register(&ymz280b[1], data);
 }

@@ -769,13 +769,13 @@ driftout  8000 0000/8  0000 0000	The first control changes from 8000 to 0000 at 
 
 void taitof2_interrupt6(int x)
 {
-	cpu_set_irq_line(0,6,HOLD_LINE);
+	cpunum_set_input_line(0,6,HOLD_LINE);
 }
 
 static INTERRUPT_GEN( taitof2_interrupt )
 {
 	timer_set(TIME_IN_CYCLES(500,0),0, taitof2_interrupt6);
-	cpu_set_irq_line(0, 5, HOLD_LINE);
+	cpunum_set_input_line(0, 5, HOLD_LINE);
 }
 
 
@@ -788,7 +788,7 @@ static void reset_sound_region(void)
 	cpu_setbank( 2, memory_region(REGION_CPU2) + (banknum * 0x4000) + 0x10000 );
 }
 
-static WRITE_HANDLER( sound_bankswitch_w )
+static WRITE8_HANDLER( sound_bankswitch_w )
 {
 	banknum = (data - 1) & 7;
 	reset_sound_region();
@@ -817,9 +817,9 @@ READ16_HANDLER( taitof2_msb_sound_r )
 static int driveout_sound_latch = 0;
 
 
-static READ_HANDLER( driveout_sound_command_r)
+static READ8_HANDLER( driveout_sound_command_r)
 {
-	cpu_set_irq_line(1,0,CLEAR_LINE);
+	cpunum_set_input_line(1,0,CLEAR_LINE);
 //	logerror("sound IRQ OFF (sound command=%02x)\n",driveout_sound_latch);
 	return driveout_sound_latch;
 }
@@ -831,7 +831,7 @@ static void reset_driveout_sound_region(void)
 	OKIM6295_set_bank_base(0, oki_bank*0x40000);
 }
 
-static WRITE_HANDLER (oki_bank_w)
+static WRITE8_HANDLER (oki_bank_w)
 {
 	if ((data&4) && (oki_bank!=(data&3)) )
 	{
@@ -860,7 +860,7 @@ static WRITE16_HANDLER ( driveout_sound_command_w )
 			else
 			{
 				driveout_sound_latch = ((data<<4) & 0xf0) | (driveout_sound_latch & 0x0f);
-				cpu_set_irq_line (1, 0, ASSERT_LINE);
+				cpunum_set_input_line (1, 0, ASSERT_LINE);
 			}
 		}
 	}
@@ -4694,7 +4694,7 @@ static struct GfxDecodeInfo deadconx_gfxdecodeinfo[] =
 /* handler called by the YM2610 emulator when the internal timers cause an IRQ */
 static void irq_handler(int irq)
 {
-	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2610interface ym2610_interface =
@@ -4713,7 +4713,7 @@ static struct YM2610interface ym2610_interface =
 };
 
 
-static WRITE_HANDLER( camltrua_porta_w )
+static WRITE8_HANDLER( camltrua_porta_w )
 {
 	// Implement //
 }
@@ -5295,6 +5295,38 @@ ROM_START( finalbj )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )     /* 256k for 68000 code */
 	ROM_LOAD16_BYTE( "b82_09.10",  0x00000, 0x20000, CRC(632f1ecd) SHA1(aa3d1c2059b0dd619d1f6e3e0705b65b4f4be74e) )
 	ROM_LOAD16_BYTE( "b82_08.11",  0x00001, 0x20000, CRC(07154fe5) SHA1(4772362375c8c2984a305c3bb0320ea80a2e9a40) )
+
+	ROM_REGION( 0x040000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
+	ROM_LOAD16_BYTE( "b82-06.19",  0x00000, 0x20000, CRC(fc450a25) SHA1(6929bd2d47549cab037e8807b778741b3c215788) )
+	ROM_LOAD16_BYTE( "b82-07.18",  0x00001, 0x20000, CRC(ec3df577) SHA1(37a0bb87a12f0332c8e67b22f91c24584f3d46ce) )
+
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )	/* OBJ */
+	ROM_LOAD16_BYTE( "b82-04.4",   0x000000, 0x80000, CRC(6346f98e) SHA1(3fac5ea56b5ae280cd7ca0e0c6c308376056e1ba) ) /* sprites 4-bit format*/
+	ROM_LOAD16_BYTE( "b82-03.5",   0x000001, 0x80000, CRC(daa11561) SHA1(81dd596c1b36138904971c36466ec29d08d4fd84) ) /* sprites 4-bit format*/
+
+	/* Note: this is intentional to load at 0x180000, not at 0x100000
+	   because finalb_driver_init will move some bits around before data
+	   will be 'gfxdecoded'. The whole thing is because this data is 2bits-
+	   while above is 4bits-packed format, for a total of 6 bits per pixel. */
+
+	ROM_LOAD( "b82-05.3",    0x180000, 0x80000, CRC(aa90b93a) SHA1(06f41052659959c58d72c9f68f9f6069cb835672) ) /* sprites 2-bit format */
+
+	ROM_REGION( 0x1c000, REGION_CPU2, 0 )      /* sound cpu */
+	ROM_LOAD( "b82_10.16",   0x00000, 0x04000, CRC(a38aaaed) SHA1(d476ea516a797e71e0306da54c17ed1759fe1ccd) )
+	ROM_CONTINUE(            0x10000, 0x0c000 ) /* banked stuff */
+
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* ADPCM samples */
+	ROM_LOAD( "b82-02.1",    0x00000, 0x80000, CRC(5dd06bdd) SHA1(6eeaec6743805ba429b0ef58a530bc0740646324) )
+
+	ROM_REGION( 0x80000, REGION_SOUND2, 0 )	/* Delta-T samples */
+	ROM_LOAD( "b82-01.2",    0x00000, 0x80000, CRC(f0eb6846) SHA1(4697c3fd61ac0d55c0d2a4354ff74719947397c5) )
+ROM_END
+
+ROM_START( finalbu )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )     /* 256k for 68000 code */
+	/* are these even good dumps / legit ? there are some strange changes around 0x00fxx as well as the region byte */
+	ROM_LOAD16_BYTE( "b82-09-1",  0x00000, 0x20000, CRC(66729cb9) SHA1(f265c07966cf3930a9b5e2dd63d49554705c60f7) )
+	ROM_LOAD16_BYTE( "b82-6-14",  0x00001, 0x20000, CRC(879387fa) SHA1(9d7aa8ece6cfc66e7c131d9c7a3db792a0336e09) )
 
 	ROM_REGION( 0x040000, REGION_GFX1, ROMREGION_DISPOSE )	/* SCR */
 	ROM_LOAD16_BYTE( "b82-06.19",  0x00000, 0x20000, CRC(fc450a25) SHA1(6929bd2d47549cab037e8807b778741b3c215788) )
@@ -6650,6 +6682,7 @@ DRIVER_INIT( driveout )
 
 GAME( 1988, finalb,   0,        finalb,   finalb,   finalb,   ROT0,   "Taito Corporation Japan", "Final Blow (World)" )
 GAME( 1988, finalbj,  finalb,   finalb,   finalbj,  finalb,   ROT0,   "Taito Corporation", "Final Blow (Japan)" )
+GAME( 1988, finalbu,  finalb,   finalb,   finalbj,  finalb,   ROT0,   "Taito America Corporation", "Final Blow (US)" )
 GAME( 1989, dondokod, 0,        dondokod, dondokod, f2,       ROT0,   "Taito Corporation Japan", "Don Doko Don (World)" )
 GAME( 1989, dondokdu, dondokod, dondokod, dondokdu, f2,       ROT0,   "Taito America Corporation", "Don Doko Don (US)" )
 GAME( 1989, dondokdj, dondokod, dondokod, dondokdj, f2,       ROT0,   "Taito Corporation", "Don Doko Don (Japan)" )

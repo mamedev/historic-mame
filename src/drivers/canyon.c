@@ -34,7 +34,7 @@
 
 #include "driver.h"
 
-extern WRITE_HANDLER( canyon_videoram_w );
+extern WRITE8_HANDLER( canyon_videoram_w );
 
 extern VIDEO_START( canyon );
 extern VIDEO_UPDATE( canyon );
@@ -67,7 +67,7 @@ static PALETTE_INIT( canyon )
  *
  *************************************/
 
-static READ_HANDLER( canyon_switches_r )
+static READ8_HANDLER( canyon_switches_r )
 {
 	UINT8 val = 0;
 
@@ -84,13 +84,13 @@ static READ_HANDLER( canyon_switches_r )
 }
 
 
-static READ_HANDLER( canyon_options_r )
+static READ8_HANDLER( canyon_options_r )
 {
 	return (readinputport(0) >> (2 * (~offset & 3))) & 3;
 }
 
 
-static READ_HANDLER( canyon_wram_r )
+static READ8_HANDLER( canyon_wram_r )
 {
 	return memory_region(REGION_CPU1)[offset];
 }
@@ -103,37 +103,37 @@ static READ_HANDLER( canyon_wram_r )
  *
  *************************************/
 
-static WRITE_HANDLER( canyon_led_w )
+static WRITE8_HANDLER( canyon_led_w )
 {
 	set_led_status(offset & 0x01, offset & 0x02);
 }
 
 
-static WRITE_HANDLER( canyon_motor_w )
+static WRITE8_HANDLER( canyon_motor_w )
 {
 	discrete_sound_w(offset & 0x01, data & 0x0f);
 }
 
 
-static WRITE_HANDLER( canyon_explode_w )
+static WRITE8_HANDLER( canyon_explode_w )
 {
 	discrete_sound_w(6, data / 16);
 }
 
 
-static WRITE_HANDLER( canyon_attract_w )
+static WRITE8_HANDLER( canyon_attract_w )
 {
 	discrete_sound_w(4 + (offset & 0x01), !(offset & 0x02));
 }
 
 
-static WRITE_HANDLER( canyon_whistle_w )
+static WRITE8_HANDLER( canyon_whistle_w )
 {
 	discrete_sound_w(2 + (offset & 0x01), (offset & 0x02) >> 1);
 }
 
 
-static WRITE_HANDLER( canyon_wram_w )
+static WRITE8_HANDLER( canyon_wram_w )
 {
 	memory_region(REGION_CPU1)[offset] = data;
 }

@@ -25,7 +25,7 @@ static int gyruss_timer[10] =
 	0x00, 0x01, 0x02, 0x03, 0x04, 0x09, 0x0a, 0x0b, 0x0a, 0x0d
 };
 
-READ_HANDLER( gyruss_portA_r )
+READ8_HANDLER( gyruss_portA_r )
 {
 	/* need to protect from totalcycles overflow */
 	static int last_totalcycles = 0;
@@ -63,24 +63,24 @@ static void filter_w(int chip,int data)
 	}
 }
 
-WRITE_HANDLER( gyruss_filter0_w )
+WRITE8_HANDLER( gyruss_filter0_w )
 {
 	filter_w(0,data);
 }
 
-WRITE_HANDLER( gyruss_filter1_w )
+WRITE8_HANDLER( gyruss_filter1_w )
 {
 	filter_w(1,data);
 }
 
 
-WRITE_HANDLER( gyruss_sh_irqtrigger_w )
+WRITE8_HANDLER( gyruss_sh_irqtrigger_w )
 {
 	/* writing to this register triggers IRQ on the sound CPU */
-	cpu_set_irq_line_and_vector(2,0,HOLD_LINE,0xff);
+	cpunum_set_input_line_and_vector(2,0,HOLD_LINE,0xff);
 }
 
-WRITE_HANDLER( gyruss_i8039_irq_w )
+WRITE8_HANDLER( gyruss_i8039_irq_w )
 {
-	cpu_set_irq_line(3, 0, PULSE_LINE);
+	cpunum_set_input_line(3, 0, PULSE_LINE);
 }

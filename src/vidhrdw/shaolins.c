@@ -94,7 +94,7 @@ PALETTE_INIT( shaolins )
 	}
 }
 
-WRITE_HANDLER( shaolins_videoram_w )
+WRITE8_HANDLER( shaolins_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -103,7 +103,7 @@ WRITE_HANDLER( shaolins_videoram_w )
 	}
 }
 
-WRITE_HANDLER( shaolins_colorram_w )
+WRITE8_HANDLER( shaolins_colorram_w )
 {
 	if (colorram[offset] != data)
 	{
@@ -112,7 +112,7 @@ WRITE_HANDLER( shaolins_colorram_w )
 	}
 }
 
-WRITE_HANDLER( shaolins_palettebank_w )
+WRITE8_HANDLER( shaolins_palettebank_w )
 {
 	if (palettebank != (data & 0x07))
 	{
@@ -121,7 +121,7 @@ WRITE_HANDLER( shaolins_palettebank_w )
 	}
 }
 
-WRITE_HANDLER( shaolins_scroll_w )
+WRITE8_HANDLER( shaolins_scroll_w )
 {
 	int col;
 
@@ -131,7 +131,7 @@ WRITE_HANDLER( shaolins_scroll_w )
 	}
 }
 
-WRITE_HANDLER( shaolins_nmi_w )
+WRITE8_HANDLER( shaolins_nmi_w )
 {
 	shaolins_nmi_enable = data;
 

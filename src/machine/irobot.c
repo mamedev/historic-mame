@@ -57,7 +57,7 @@ static void irmb_run(void);
 
 
 
-READ_HANDLER( irobot_sharedmem_r )
+READ8_HANDLER( irobot_sharedmem_r )
 {
 	if (irobot_outx == 3)
 		return mbRAM[BYTE_XOR_BE(offset)];
@@ -75,7 +75,7 @@ READ_HANDLER( irobot_sharedmem_r )
 }
 
 /* Comment out the mbRAM =, comRAM2 = or comRAM1 = and it will start working */
-WRITE_HANDLER( irobot_sharedmem_w )
+WRITE8_HANDLER( irobot_sharedmem_w )
 {
 	if (irobot_outx == 3)
 		mbRAM[BYTE_XOR_BE(offset)] = data;
@@ -91,7 +91,7 @@ static void irvg_done_callback (int param)
 	irvg_running = 0;
 }
 
-WRITE_HANDLER( irobot_statwr_w )
+WRITE8_HANDLER( irobot_statwr_w )
 {
 	logerror("write %2x ", data);
 	IR_CPU_STATE;
@@ -122,7 +122,7 @@ WRITE_HANDLER( irobot_statwr_w )
 	irobot_statwr = data;
 }
 
-WRITE_HANDLER( irobot_out0_w )
+WRITE8_HANDLER( irobot_out0_w )
 {
 	UINT8 *RAM = memory_region(REGION_CPU1);
 
@@ -144,7 +144,7 @@ WRITE_HANDLER( irobot_out0_w )
 	irobot_alphamap = (data & 0x80);
 }
 
-WRITE_HANDLER( irobot_rom_banksel_w )
+WRITE8_HANDLER( irobot_rom_banksel_w )
 {
 	UINT8 *RAM = memory_region(REGION_CPU1);
 
@@ -179,7 +179,7 @@ static void scanline_callback(int scanline)
     if (scanline == 224) irvg_vblank=1;
     logerror("SCANLINE CALLBACK %d\n",scanline);
     /* set the IRQ line state based on the 32V line state */
-    cpu_set_irq_line(0, M6809_IRQ_LINE, (scanline & 32) ? ASSERT_LINE : CLEAR_LINE);
+    cpunum_set_input_line(0, M6809_IRQ_LINE, (scanline & 32) ? ASSERT_LINE : CLEAR_LINE);
 
     /* set a callback for the next 32-scanline increment */
     scanline += 32;
@@ -214,13 +214,13 @@ MACHINE_INIT( irobot )
 	irobot_outx = 0;
 }
 
-WRITE_HANDLER( irobot_control_w )
+WRITE8_HANDLER( irobot_control_w )
 {
 
 	irobot_control_num = offset & 0x03;
 }
 
-READ_HANDLER( irobot_control_r )
+READ8_HANDLER( irobot_control_r )
 {
 
 	if (irobot_control_num == 0)
@@ -233,7 +233,7 @@ READ_HANDLER( irobot_control_r )
 
 /*  we allow irmb_running and irvg_running to appear running before clearing
 	them to simulate the mathbox and vector generator running in real time */
-READ_HANDLER( irobot_status_r )
+READ8_HANDLER( irobot_status_r )
 {
 	int d=0;
 
@@ -458,7 +458,7 @@ static void irmb_done_callback (int param)
     logerror("mb done. ");
 	IR_CPU_STATE;
 	irmb_running = 0;
-	cpu_set_irq_line(0, M6809_FIRQ_LINE, ASSERT_LINE);
+	cpunum_set_input_line(0, M6809_FIRQ_LINE, ASSERT_LINE);
 }
 
 
@@ -862,7 +862,7 @@ default:	case 0x3f:	IXOR(irmb_din(curop), 0);							break;
 		timer_adjust(irmb_timer, TIME_IN_NSEC(200) * icount, 0, 0);
 	}
 #else
-	cpu_set_irq_line(0, M6809_FIRQ_LINE, ASSERT_LINE);
+	cpunum_set_input_line(0, M6809_FIRQ_LINE, ASSERT_LINE);
 #endif
 	irmb_running=1;
 }

@@ -38,41 +38,41 @@ dip: 6.7 7.7
 #include "cpu/z80/z80.h"
 
 
-WRITE_HANDLER( wiping_flipscreen_w );
+WRITE8_HANDLER( wiping_flipscreen_w );
 PALETTE_INIT( wiping );
 VIDEO_UPDATE( wiping );
 
 extern unsigned char *wiping_soundregs;
 int wiping_sh_start(const struct MachineSound *msound);
 void wiping_sh_stop(void);
-WRITE_HANDLER( wiping_sound_w );
+WRITE8_HANDLER( wiping_sound_w );
 
 
 static unsigned char *sharedram1,*sharedram2;
 
-static READ_HANDLER( shared1_r )
+static READ8_HANDLER( shared1_r )
 {
 	return sharedram1[offset];
 }
 
-static READ_HANDLER( shared2_r )
+static READ8_HANDLER( shared2_r )
 {
 	return sharedram2[offset];
 }
 
-static WRITE_HANDLER( shared1_w )
+static WRITE8_HANDLER( shared1_w )
 {
 	sharedram1[offset] = data;
 }
 
-static WRITE_HANDLER( shared2_w )
+static WRITE8_HANDLER( shared2_w )
 {
 	sharedram2[offset] = data;
 }
 
 
 /* input ports are rotated 90 degrees */
-static READ_HANDLER( ports_r )
+static READ8_HANDLER( ports_r )
 {
 	int i,res;
 
@@ -84,12 +84,12 @@ static READ_HANDLER( ports_r )
 	return res;
 }
 
-static WRITE_HANDLER( subcpu_reset_w )
+static WRITE8_HANDLER( subcpu_reset_w )
 {
 	if (data & 1)
-		cpu_set_reset_line(1,CLEAR_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_RESET, CLEAR_LINE);
 	else
-		cpu_set_reset_line(1,ASSERT_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE);
 }
 
 

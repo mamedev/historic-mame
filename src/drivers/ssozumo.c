@@ -15,13 +15,13 @@ Driver by Takahiro Nogi (nogi@kt.rim.or.jp) 1999/10/04
 extern UINT8 *ssozumo_videoram2;
 extern UINT8 *ssozumo_colorram2;
 
-extern WRITE_HANDLER( ssozumo_videoram_w );
-extern WRITE_HANDLER( ssozumo_colorram_w );
-extern WRITE_HANDLER( ssozumo_videoram2_w );
-extern WRITE_HANDLER( ssozumo_colorram2_w );
-extern WRITE_HANDLER( ssozumo_paletteram_w );
-extern WRITE_HANDLER( ssozumo_scroll_w );
-extern WRITE_HANDLER( ssozumo_flipscreen_w );
+extern WRITE8_HANDLER( ssozumo_videoram_w );
+extern WRITE8_HANDLER( ssozumo_colorram_w );
+extern WRITE8_HANDLER( ssozumo_videoram2_w );
+extern WRITE8_HANDLER( ssozumo_colorram2_w );
+extern WRITE8_HANDLER( ssozumo_paletteram_w );
+extern WRITE8_HANDLER( ssozumo_scroll_w );
+extern WRITE8_HANDLER( ssozumo_flipscreen_w );
 
 extern PALETTE_INIT( ssozumo );
 extern VIDEO_START( ssozumo );
@@ -47,10 +47,10 @@ static INTERRUPT_GEN( ssozumo_interrupt )
 }
 
 
-WRITE_HANDLER( ssozumo_sh_command_w )
+WRITE8_HANDLER( ssozumo_sh_command_w )
 {
 	soundlatch_w(offset, data);
-	cpu_set_irq_line(1, M6502_IRQ_LINE, HOLD_LINE);
+	cpunum_set_input_line(1, M6502_IRQ_LINE, HOLD_LINE);
 }
 
 

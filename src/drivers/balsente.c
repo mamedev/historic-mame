@@ -719,10 +719,10 @@ INPUT_PORTS_START( triviag1 )
 INPUT_PORTS_END
 
 
-#define input_ports_triviag2 input_ports_triviag1
-#define input_ports_triviasp input_ports_triviag1
-#define input_ports_triviayp input_ports_triviag1
-#define input_ports_triviabb input_ports_triviag1
+INPUT_PORTS_ALIAS(triviag2, triviag1)
+INPUT_PORTS_ALIAS(triviasp, triviag1)
+INPUT_PORTS_ALIAS(triviayp, triviag1)
+INPUT_PORTS_ALIAS(triviabb, triviag1)
 
 
 INPUT_PORTS_START( gimeabrk )
@@ -749,7 +749,6 @@ INPUT_PORTS_START( gimeabrk )
 	PORT_DIPSETTING(    0x40, "x4" )
 	PORT_DIPSETTING(    0x80, "x5" )
 	PORT_DIPSETTING(    0xc0, "x6" )
-
 	PORT_START	/* IN1 */
 	PORT_DIPNAME( 0x03, 0x01, "Bonus Shot" )
 	PORT_DIPSETTING(    0x00, "Every 6 Balls" )
@@ -2226,44 +2225,44 @@ static DRIVER_INIT( minigol2 ) { expand_roms(0x0c);        balsente_shooter = 0;
 static DRIVER_INIT( toggle )   { expand_roms(EXPAND_ALL);  balsente_shooter = 0; /* noanalog */ }
 static DRIVER_INIT( nametune )
 {
-	install_mem_write_handler(0, 0x9f00, 0x9f00, balsente_rombank2_select_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x9f00, 0x9f00, 0, 0, balsente_rombank2_select_w);
 	expand_roms(EXPAND_NONE | SWAP_HALVES); balsente_shooter = 0; /* noanalog */
 }
 static DRIVER_INIT( nstocker )
 {
-	install_mem_read_handler(0, 0x9902, 0x9902, nstocker_port2_r);
-	install_mem_write_handler(0, 0x9f00, 0x9f00, balsente_rombank2_select_w);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x9902, 0x9902, 0, 0, nstocker_port2_r);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x9f00, 0x9f00, 0, 0, balsente_rombank2_select_w);
 	expand_roms(EXPAND_NONE | SWAP_HALVES); balsente_shooter = 1; balsente_adc_shift = 1;
 }
 static DRIVER_INIT( sfootbal )
 {
-	install_mem_write_handler(0, 0x9f00, 0x9f00, balsente_rombank2_select_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x9f00, 0x9f00, 0, 0, balsente_rombank2_select_w);
 	expand_roms(EXPAND_ALL  | SWAP_HALVES); balsente_shooter = 0; balsente_adc_shift = 0;
 }
 static DRIVER_INIT( spiker )
 {
-	install_mem_write_handler(0, 0x9f80, 0x9f8f, spiker_expand_w);
-	install_mem_read_handler(0, 0x9f80, 0x9f8f, spiker_expand_r);
-	install_mem_write_handler(0, 0x9f00, 0x9f00, balsente_rombank2_select_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x9f80, 0x9f8f, 0, 0, spiker_expand_w);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x9f80, 0x9f8f, 0, 0, spiker_expand_r);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x9f00, 0x9f00, 0, 0, balsente_rombank2_select_w);
 	expand_roms(EXPAND_ALL  | SWAP_HALVES); balsente_shooter = 0; balsente_adc_shift = 1;
 }
 static DRIVER_INIT( stompin )
 {
-	install_mem_write_handler(0, 0x9f00, 0x9f00, balsente_rombank2_select_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x9f00, 0x9f00, 0, 0, balsente_rombank2_select_w);
 	expand_roms(0x0c | SWAP_HALVES); balsente_shooter = 0; balsente_adc_shift = 32;
 }
 static DRIVER_INIT( rescraid ) { expand_roms(EXPAND_NONE); balsente_shooter = 0; /* noanalog */ }
 static DRIVER_INIT( grudge )
 {
-	install_mem_read_handler(0, 0x9400, 0x9400, grudge_steering_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x9400, 0x9400, 0, 0, grudge_steering_r);
 	expand_roms(EXPAND_NONE); balsente_shooter = 0;
 }
 static DRIVER_INIT( shrike )
 {
-	install_mem_read_handler(0, 0x9e00, 0x9fff, MRA8_RAM);
-	install_mem_write_handler(0, 0x9e00, 0x9fff, MWA8_RAM);
-	install_mem_read_handler(0, 0x9e00, 0x9e0f, shrike_shared_6809_r);
-	install_mem_write_handler(0, 0x9e00, 0x9e0f, shrike_shared_6809_w);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x9e00, 0x9fff, 0, 0, MRA8_RAM);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x9e00, 0x9fff, 0, 0, MWA8_RAM);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x9e00, 0x9e0f, 0, 0, shrike_shared_6809_r);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x9e00, 0x9e0f, 0, 0, shrike_shared_6809_w);
 	expand_roms(EXPAND_ALL);  balsente_shooter = 0; balsente_adc_shift = 32;
 }
 

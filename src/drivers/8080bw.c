@@ -1609,7 +1609,7 @@ INPUT_PORTS_END
 
 static int sfl_int=0;
 
-static READ_HANDLER( sfl_input_r )
+static READ8_HANDLER( sfl_input_r )
 {
 	sfl_int^=0x80;//vblank flag ?
 	return sfl_int|input_port_1_r(0);

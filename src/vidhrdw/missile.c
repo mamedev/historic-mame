@@ -33,7 +33,7 @@ VIDEO_START( missile )
 
 
 /********************************************************************************************/
-READ_HANDLER( missile_video_r )
+READ8_HANDLER( missile_video_r )
 {
 	return (missile_videoram[offset] & 0xe0);
 }
@@ -67,7 +67,7 @@ static void missile_blit_w (offs_t offset)
 }
 
 /********************************************************************************************/
-WRITE_HANDLER( missile_video_w )
+WRITE8_HANDLER( missile_video_w )
 {
 	/* $0640 - $4fff */
 	int wbyte, wbit;
@@ -92,7 +92,7 @@ WRITE_HANDLER( missile_video_w )
 	}
 }
 
-WRITE_HANDLER( missile_video2_w )
+WRITE8_HANDLER( missile_video2_w )
 {
 	/* $5000 - $ffff */
 	offset += 0x5000;
@@ -100,7 +100,7 @@ WRITE_HANDLER( missile_video2_w )
 }
 
 /********************************************************************************************/
-WRITE_HANDLER( missile_video_mult_w )
+WRITE8_HANDLER( missile_video_mult_w )
 {
 	/*
 		$1900 - $3fff
@@ -130,7 +130,7 @@ WRITE_HANDLER( missile_video_mult_w )
 
 
 /********************************************************************************************/
-WRITE_HANDLER( missile_video_3rd_bit_w )
+WRITE8_HANDLER( missile_video_3rd_bit_w )
 {
 	int i;
 	unsigned char *RAM = memory_region(REGION_CPU1);

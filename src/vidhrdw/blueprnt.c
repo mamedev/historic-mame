@@ -61,7 +61,7 @@ PALETTE_INIT( blueprnt )
 
 
 
-WRITE_HANDLER( blueprnt_flipscreen_w )
+WRITE8_HANDLER( blueprnt_flipscreen_w )
 {
 	if (flipscreen != (~data & 2))
 	{

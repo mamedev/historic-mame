@@ -19,11 +19,11 @@ VBlank duration: 1/VSYNC * (70/262) = 4368 us
 
 
 extern unsigned char *mrdo_bgvideoram,*mrdo_fgvideoram;
-WRITE_HANDLER( mrdo_bgvideoram_w );
-WRITE_HANDLER( mrdo_fgvideoram_w );
-WRITE_HANDLER( mrdo_scrollx_w );
-WRITE_HANDLER( mrdo_scrolly_w );
-WRITE_HANDLER( mrdo_flipscreen_w );
+WRITE8_HANDLER( mrdo_bgvideoram_w );
+WRITE8_HANDLER( mrdo_fgvideoram_w );
+WRITE8_HANDLER( mrdo_scrollx_w );
+WRITE8_HANDLER( mrdo_scrolly_w );
+WRITE8_HANDLER( mrdo_flipscreen_w );
 PALETTE_INIT( mrdo );
 VIDEO_START( mrdo );
 VIDEO_UPDATE( mrdo );
@@ -32,7 +32,7 @@ VIDEO_UPDATE( mrdo );
 
 /* this looks like some kind of protection. The game doesn't clear the screen */
 /* if a read from this address doesn't return the value it expects. */
-READ_HANDLER( mrdo_SECRE_r )
+READ8_HANDLER( mrdo_SECRE_r )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	return RAM[ activecpu_get_reg(Z80_HL) ];

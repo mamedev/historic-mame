@@ -120,7 +120,7 @@ static PALETTE_INIT( skydiver )
  *
  *************************************/
 
-static WRITE_HANDLER( skydiver_nmion_w )
+static WRITE8_HANDLER( skydiver_nmion_w )
 {
 	skydiver_nmion = offset;
 }
@@ -136,7 +136,7 @@ static INTERRUPT_GEN( skydiver_interrupt )
 	discrete_sound_w(3,  skydiver_videoram[0x396] & 0x0f);	// NAM - Noise Amplitude
 
 	if (skydiver_nmion)
-		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+		cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 }
 
 
@@ -147,22 +147,22 @@ static INTERRUPT_GEN( skydiver_interrupt )
  *
  *************************************/
 
-static WRITE_HANDLER( skydiver_sound_enable_w )
+static WRITE8_HANDLER( skydiver_sound_enable_w )
 {
 	discrete_sound_w(9, offset);
 }
 
-static WRITE_HANDLER( skydiver_whistle_w )
+static WRITE8_HANDLER( skydiver_whistle_w )
 {
 	discrete_sound_w(5 + (offset / 2), offset & 0x01);
 }
 
-static WRITE_HANDLER( skydiver_oct_w )
+static WRITE8_HANDLER( skydiver_oct_w )
 {
 	discrete_sound_w(7 + (offset / 2), offset & 0x01);
 }
 
-static WRITE_HANDLER( skydiver_noise_reset_w )
+static WRITE8_HANDLER( skydiver_noise_reset_w )
 {
 	discrete_sound_w(4, !offset);
 }

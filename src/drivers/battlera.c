@@ -28,35 +28,35 @@ VIDEO_UPDATE( battlera );
 VIDEO_START( battlera );
 INTERRUPT_GEN( battlera_interrupt );
 
-READ_HANDLER( HuC6270_register_r );
-WRITE_HANDLER( HuC6270_register_w );
-READ_HANDLER( HuC6270_data_r );
-WRITE_HANDLER( HuC6270_data_w );
-WRITE_HANDLER( battlera_palette_w );
+READ8_HANDLER( HuC6270_register_r );
+WRITE8_HANDLER( HuC6270_register_w );
+READ8_HANDLER( HuC6270_data_r );
+WRITE8_HANDLER( HuC6270_data_w );
+WRITE8_HANDLER( battlera_palette_w );
 
-READ_HANDLER( HuC6270_debug_r );
-WRITE_HANDLER( HuC6270_debug_w );
+READ8_HANDLER( HuC6270_debug_r );
+WRITE8_HANDLER( HuC6270_debug_w );
 
 static int control_port_select;
 
 /******************************************************************************/
 
-static WRITE_HANDLER( battlera_sound_w )
+static WRITE8_HANDLER( battlera_sound_w )
 {
 	if (offset==0) {
 		soundlatch_w(0,data);
-		cpu_set_irq_line(1, 0, HOLD_LINE);
+		cpunum_set_input_line(1, 0, HOLD_LINE);
 	}
 }
 
 /******************************************************************************/
 
-static WRITE_HANDLER( control_data_w )
+static WRITE8_HANDLER( control_data_w )
 {
 	control_port_select=data;
 }
 
-static READ_HANDLER( control_data_r )
+static READ8_HANDLER( control_data_r )
 {
 	switch (control_port_select) {
 		case 0xfe: return readinputport(0); /* Player 1 */
@@ -98,7 +98,7 @@ ADDRESS_MAP_END
 
 /******************************************************************************/
 
-static WRITE_HANDLER( YM2203_w )
+static WRITE8_HANDLER( YM2203_w )
 {
 	switch (offset) {
 	case 0: YM2203_control_port_0_w(0,data); break;
@@ -117,15 +117,15 @@ static void battlera_adpcm_int(int data)
 
 	toggle = 1 - toggle;
 	if (toggle)
-		cpu_set_irq_line(1, 1, HOLD_LINE);
+		cpunum_set_input_line(1, 1, HOLD_LINE);
 }
 
-static WRITE_HANDLER( battlera_adpcm_data_w )
+static WRITE8_HANDLER( battlera_adpcm_data_w )
 {
 	msm5205next=data;
 }
 
-static WRITE_HANDLER( battlera_adpcm_reset_w )
+static WRITE8_HANDLER( battlera_adpcm_reset_w )
 {
 	MSM5205_reset_w(0,0);
 }

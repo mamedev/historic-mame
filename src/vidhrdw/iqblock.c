@@ -67,24 +67,24 @@ VIDEO_START( iqblock )
 
 ***************************************************************************/
 
-WRITE_HANDLER( iqblock_fgvideoram_w )
+WRITE8_HANDLER( iqblock_fgvideoram_w )
 {
 	iqblock_fgvideoram[offset] = data;
 	tilemap_mark_tile_dirty(fg_tilemap,offset);
 }
 
-WRITE_HANDLER( iqblock_bgvideoram_w )
+WRITE8_HANDLER( iqblock_bgvideoram_w )
 {
 	iqblock_bgvideoram[offset] = data;
 	tilemap_mark_tile_dirty(bg_tilemap,offset & 0x7ff);
 }
 
-READ_HANDLER( iqblock_bgvideoram_r )
+READ8_HANDLER( iqblock_bgvideoram_r )
 {
 	return iqblock_bgvideoram[offset];
 }
 
-WRITE_HANDLER( iqblock_fgscroll_w )
+WRITE8_HANDLER( iqblock_fgscroll_w )
 {
 	tilemap_set_scrolly(fg_tilemap,offset,data);
 }

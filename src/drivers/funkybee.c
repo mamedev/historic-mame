@@ -47,24 +47,24 @@ Known issues:
 #include "vidhrdw/generic.h"
 
 
-extern WRITE_HANDLER( funkybee_videoram_w );
-extern WRITE_HANDLER( funkybee_colorram_w );
-extern WRITE_HANDLER( funkybee_gfx_bank_w );
-extern WRITE_HANDLER( funkybee_scroll_w );
-extern WRITE_HANDLER( funkybee_flipscreen_w );
+extern WRITE8_HANDLER( funkybee_videoram_w );
+extern WRITE8_HANDLER( funkybee_colorram_w );
+extern WRITE8_HANDLER( funkybee_gfx_bank_w );
+extern WRITE8_HANDLER( funkybee_scroll_w );
+extern WRITE8_HANDLER( funkybee_flipscreen_w );
 
 extern PALETTE_INIT( funkybee );
 extern VIDEO_START( funkybee );
 extern VIDEO_UPDATE( funkybee );
 
 
-static READ_HANDLER( funkybee_input_port_0_r )
+static READ8_HANDLER( funkybee_input_port_0_r )
 {
 	watchdog_reset_r(0);
 	return input_port_0_r(offset);
 }
 
-static WRITE_HANDLER( funkybee_coin_counter_w )
+static WRITE8_HANDLER( funkybee_coin_counter_w )
 {
 	coin_counter_w(offset,data);
 }

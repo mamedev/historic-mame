@@ -183,12 +183,12 @@ extern DRIVER_INIT( vsgshoe );
 extern DRIVER_INIT( vsfdf );
 extern DRIVER_INIT( mightybj);
 
-extern READ_HANDLER( vsnes_in0_r );
-extern READ_HANDLER( vsnes_in1_r );
-extern READ_HANDLER( vsnes_in0_1_r );
-extern READ_HANDLER( vsnes_in1_1_r );
-extern WRITE_HANDLER( vsnes_in0_w );
-extern WRITE_HANDLER( vsnes_in0_1_w );
+extern READ8_HANDLER( vsnes_in0_r );
+extern READ8_HANDLER( vsnes_in1_r );
+extern READ8_HANDLER( vsnes_in0_1_r );
+extern READ8_HANDLER( vsnes_in1_1_r );
+extern WRITE8_HANDLER( vsnes_in0_w );
+extern WRITE8_HANDLER( vsnes_in0_1_w );
 
 /******************************************************************************/
 
@@ -196,21 +196,21 @@ extern WRITE_HANDLER( vsnes_in0_1_w );
 static UINT8 *work_ram, *work_ram_1;
 static int coin;
 
-static WRITE_HANDLER( sprite_dma_w )
+static WRITE8_HANDLER( sprite_dma_w )
 {
 	int source = ( data & 7 ) * 0x100;
 
 	ppu2c03b_spriteram_dma( 0, &work_ram[source] );
 }
 
-static WRITE_HANDLER( sprite_dma_1_w )
+static WRITE8_HANDLER( sprite_dma_1_w )
 {
 	int source = ( data & 7 ) * 0x100;
 
 	ppu2c03b_spriteram_dma( 1, &work_ram_1[source] );
 }
 
-static WRITE_HANDLER( vsnes_coin_counter_w )
+static WRITE8_HANDLER( vsnes_coin_counter_w )
 {
 	coin_counter_w( 0, data & 0x01 );
 	coin = data;
@@ -220,13 +220,13 @@ static WRITE_HANDLER( vsnes_coin_counter_w )
 	}
 }
 
-static READ_HANDLER( vsnes_coin_counter_r )
+static READ8_HANDLER( vsnes_coin_counter_r )
 {
 	//only for platoon
 	return coin;
 }
 
-static WRITE_HANDLER( vsnes_coin_counter_1_w )
+static WRITE8_HANDLER( vsnes_coin_counter_1_w )
 {
 	coin_counter_w( 1, data & 0x01 );
 	if( data & 0xfe ) //vsbball service mode

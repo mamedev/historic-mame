@@ -92,7 +92,7 @@ PALETTE_INIT( exedexes )
 	}
 }
 
-WRITE_HANDLER( exedexes_videoram_w )
+WRITE8_HANDLER( exedexes_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -101,7 +101,7 @@ WRITE_HANDLER( exedexes_videoram_w )
 	}
 }
 
-WRITE_HANDLER( exedexes_colorram_w )
+WRITE8_HANDLER( exedexes_colorram_w )
 {
 	if (colorram[offset] != data)
 	{
@@ -110,7 +110,7 @@ WRITE_HANDLER( exedexes_colorram_w )
 	}
 }
 
-WRITE_HANDLER( exedexes_c804_w )
+WRITE8_HANDLER( exedexes_c804_w )
 {
 	/* bits 0 and 1 are coin counters */
 	coin_counter_w(0, data & 0x01);
@@ -125,7 +125,7 @@ WRITE_HANDLER( exedexes_c804_w )
 	/* other bits seem to be unused */
 }
 
-WRITE_HANDLER( exedexes_gfxctrl_w )
+WRITE8_HANDLER( exedexes_gfxctrl_w )
 {
 	/* bit 4 is bg enable */
 	sc2on = data & 0x10;

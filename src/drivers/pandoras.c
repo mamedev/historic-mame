@@ -28,42 +28,42 @@ static unsigned char *pandoras_sharedram2;
 
 /* from vidhrdw */
 PALETTE_INIT( pandoras );
-READ_HANDLER( pandoras_vram_r );
-READ_HANDLER( pandoras_cram_r );
-WRITE_HANDLER( pandoras_vram_w );
-WRITE_HANDLER( pandoras_cram_w );
-WRITE_HANDLER( pandoras_flipscreen_w );
-WRITE_HANDLER( pandoras_scrolly_w );
+READ8_HANDLER( pandoras_vram_r );
+READ8_HANDLER( pandoras_cram_r );
+WRITE8_HANDLER( pandoras_vram_w );
+WRITE8_HANDLER( pandoras_cram_w );
+WRITE8_HANDLER( pandoras_flipscreen_w );
+WRITE8_HANDLER( pandoras_scrolly_w );
 VIDEO_START( pandoras );
 VIDEO_UPDATE( pandoras );
 
 static INTERRUPT_GEN( pandoras_interrupt_a ){
 	if (irq_enable_a)
-		cpu_set_irq_line(0, M6809_IRQ_LINE, HOLD_LINE);
+		cpunum_set_input_line(0, M6809_IRQ_LINE, HOLD_LINE);
 }
 
 static INTERRUPT_GEN( pandoras_interrupt_b ){
 	if (irq_enable_b)
-		cpu_set_irq_line(1, M6809_IRQ_LINE, HOLD_LINE);
+		cpunum_set_input_line(1, M6809_IRQ_LINE, HOLD_LINE);
 }
 
-static READ_HANDLER( pandoras_sharedram_r ){
+static READ8_HANDLER( pandoras_sharedram_r ){
 	return pandoras_sharedram[offset];
 }
 
-static WRITE_HANDLER( pandoras_sharedram_w ){
+static WRITE8_HANDLER( pandoras_sharedram_w ){
 	pandoras_sharedram[offset] = data;
 }
 
-static READ_HANDLER( pandoras_sharedram2_r ){
+static READ8_HANDLER( pandoras_sharedram2_r ){
 	return pandoras_sharedram2[offset];
 }
 
-static WRITE_HANDLER( pandoras_sharedram2_w ){
+static WRITE8_HANDLER( pandoras_sharedram2_w ){
 	pandoras_sharedram2[offset] = data;
 }
 
-static WRITE_HANDLER( pandoras_int_control_w ){
+static WRITE8_HANDLER( pandoras_int_control_w ){
 	/*	byte 0:	irq enable (CPU A)
 		byte 2:	coin counter 1
 		byte 3: coin counter 2
@@ -74,7 +74,7 @@ static WRITE_HANDLER( pandoras_int_control_w ){
 		other bytes unknown */
 
 	switch (offset){
-		case 0x00:	if (!data) cpu_set_irq_line(0, M6809_IRQ_LINE, CLEAR_LINE);
+		case 0x00:	if (!data) cpunum_set_input_line(0, M6809_IRQ_LINE, CLEAR_LINE);
 					irq_enable_a = data;
 					break;
 		case 0x02:	coin_counter_w(0,data & 0x01);
@@ -83,10 +83,10 @@ static WRITE_HANDLER( pandoras_int_control_w ){
 					break;
 		case 0x05:	pandoras_flipscreen_w(0, data);
 					break;
-		case 0x06:	if (!data) cpu_set_irq_line(1, M6809_IRQ_LINE, CLEAR_LINE);
+		case 0x06:	if (!data) cpunum_set_input_line(1, M6809_IRQ_LINE, CLEAR_LINE);
 					irq_enable_b = data;
 					break;
-		case 0x07:	cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
+		case 0x07:	cpunum_set_input_line(1,INPUT_LINE_NMI,PULSE_LINE);
 					break;
 
 		default:
@@ -94,40 +94,40 @@ static WRITE_HANDLER( pandoras_int_control_w ){
 	}
 }
 
-WRITE_HANDLER( pandoras_cpua_irqtrigger_w ){
+WRITE8_HANDLER( pandoras_cpua_irqtrigger_w ){
 	if (!firq_old_data_a && data){
-		cpu_set_irq_line(0,M6809_FIRQ_LINE,HOLD_LINE);
+		cpunum_set_input_line(0,M6809_FIRQ_LINE,HOLD_LINE);
 	}
 
 	firq_old_data_a = data;
 }
 
-WRITE_HANDLER( pandoras_cpub_irqtrigger_w ){
+WRITE8_HANDLER( pandoras_cpub_irqtrigger_w ){
 	if (!firq_old_data_b && data){
-		cpu_set_irq_line(1,M6809_FIRQ_LINE,HOLD_LINE);
+		cpunum_set_input_line(1,M6809_FIRQ_LINE,HOLD_LINE);
 	}
 
 	firq_old_data_b = data;
 }
 
-WRITE_HANDLER( pandoras_i8039_irqtrigger_w )
+WRITE8_HANDLER( pandoras_i8039_irqtrigger_w )
 {
-	cpu_set_irq_line(3, 0, ASSERT_LINE);
+	cpunum_set_input_line(3, 0, ASSERT_LINE);
 }
 
-static WRITE_HANDLER( i8039_irqen_and_status_w )
+static WRITE8_HANDLER( i8039_irqen_and_status_w )
 {
 	/* bit 7 enables IRQ */
 	if ((data & 0x80) == 0)
-		cpu_set_irq_line(3, 0, CLEAR_LINE);
+		cpunum_set_input_line(3, 0, CLEAR_LINE);
 
 	/* bit 5 goes to 8910 port A */
 	i8039_status = (data & 0x20) >> 5;
 }
 
-WRITE_HANDLER( pandoras_z80_irqtrigger_w )
+WRITE8_HANDLER( pandoras_z80_irqtrigger_w )
 {
-	cpu_set_irq_line_and_vector(2,0,HOLD_LINE,0xff);
+	cpunum_set_input_line_and_vector(2,0,HOLD_LINE,0xff);
 }
 
 
@@ -379,12 +379,12 @@ static MACHINE_INIT( pandoras )
 	irq_enable_a = irq_enable_b = 0;
 }
 
-static READ_HANDLER( pandoras_portA_r )
+static READ8_HANDLER( pandoras_portA_r )
 {
 	return i8039_status;
 }
 
-static READ_HANDLER( pandoras_portB_r )
+static READ8_HANDLER( pandoras_portB_r )
 {
 	return (activecpu_gettotalcycles() / 512) & 0x0f;
 }

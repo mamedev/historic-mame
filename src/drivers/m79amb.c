@@ -17,11 +17,11 @@
  *
  */
 
-WRITE_HANDLER( ramtek_videoram_w );
+WRITE8_HANDLER( ramtek_videoram_w );
 
 INTERRUPT_GEN( invaders_interrupt );
 void ramtek_sh_update(void);
-WRITE_HANDLER( ramtek_mask_w );
+WRITE8_HANDLER( ramtek_mask_w );
 
 /*
  * since these functions aren't used anywhere else, i've made them
@@ -34,12 +34,12 @@ static const int ControllerTable[32] = {
     20 , 21 , 23 , 22 , 18 , 19 , 17 , 16
 };
 
-static READ_HANDLER( gray5bit_controller0_r )
+static READ8_HANDLER( gray5bit_controller0_r )
 {
     return (input_port_2_r(0) & 0xe0) | (~ControllerTable[input_port_2_r(0) & 0x1f] & 0x1f);
 }
 
-static READ_HANDLER( gray5bit_controller1_r )
+static READ8_HANDLER( gray5bit_controller1_r )
 {
     return (input_port_3_r(0) & 0xe0) | (~ControllerTable[input_port_3_r(0) & 0x1f] & 0x1f);
 }
@@ -55,7 +55,7 @@ static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xC200, 0xC27f) AM_READ(MRA8_RAM)			/* ?? */
 ADDRESS_MAP_END
 
-WRITE_HANDLER( sound_w )
+WRITE8_HANDLER( sound_w )
 {
 }
 
@@ -121,7 +121,7 @@ static PALETTE_INIT( m79amb )
 
 static INTERRUPT_GEN( M79_interrupt )
 {
-	cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0xcf);  /* RST 08h */
+	cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, 0xcf);  /* RST 08h */
 }
 
 static DRIVER_INIT( m79amb )

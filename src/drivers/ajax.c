@@ -15,15 +15,15 @@ TO DO:
 
 extern unsigned char *ajax_sharedram;
 
-static WRITE_HANDLER( k007232_extvol_w );
-static WRITE_HANDLER( sound_bank_w );
+static WRITE8_HANDLER( k007232_extvol_w );
+static WRITE8_HANDLER( sound_bank_w );
 
 /* from machine/ajax.c */
-WRITE_HANDLER( ajax_bankswitch_2_w );
-READ_HANDLER( ajax_sharedram_r );
-WRITE_HANDLER( ajax_sharedram_w );
-READ_HANDLER( ajax_ls138_f10_r );
-WRITE_HANDLER( ajax_ls138_f10_w );
+WRITE8_HANDLER( ajax_bankswitch_2_w );
+READ8_HANDLER( ajax_sharedram_r );
+WRITE8_HANDLER( ajax_sharedram_w );
+READ8_HANDLER( ajax_ls138_f10_r );
+WRITE8_HANDLER( ajax_ls138_f10_w );
 MACHINE_INIT( ajax );
 INTERRUPT_GEN( ajax_interrupt );
 
@@ -225,7 +225,7 @@ static struct YM2151interface ym2151_interface =
 	0	/ 2MBANK
 */
 
-static WRITE_HANDLER( sound_bank_w )
+static WRITE8_HANDLER( sound_bank_w )
 {
 	int bank_A, bank_B;
 
@@ -246,7 +246,7 @@ static void volume_callback0(int v)
 	K007232_set_volume(0,1,0,(v & 0x0f) * 0x11);
 }
 
-static WRITE_HANDLER( k007232_extvol_w )
+static WRITE8_HANDLER( k007232_extvol_w )
 {
 	/* channel A volume (mono) */
 	K007232_set_volume(1,0,(data & 0x0f) * 0x11/2,(data & 0x0f) * 0x11/2);

@@ -14,23 +14,23 @@ extern VIDEO_UPDATE( wolfpack );
 extern VIDEO_START( wolfpack );
 extern VIDEO_EOF( wolfpack );
 
-extern WRITE_HANDLER( wolfpack_video_invert_w );
-extern WRITE_HANDLER( wolfpack_ship_reflect_w );
-extern WRITE_HANDLER( wolfpack_pt_pos_select_w );
-extern WRITE_HANDLER( wolfpack_pt_horz_w );
-extern WRITE_HANDLER( wolfpack_pt_pic_w );
-extern WRITE_HANDLER( wolfpack_ship_h_w );
-extern WRITE_HANDLER( wolfpack_torpedo_pic_w );
-extern WRITE_HANDLER( wolfpack_ship_size_w );
-extern WRITE_HANDLER( wolfpack_ship_h_precess_w );
-extern WRITE_HANDLER( wolfpack_ship_pic_w );
-extern WRITE_HANDLER( wolfpack_torpedo_h_w );
-extern WRITE_HANDLER( wolfpack_torpedo_v_w );
+extern WRITE8_HANDLER( wolfpack_video_invert_w );
+extern WRITE8_HANDLER( wolfpack_ship_reflect_w );
+extern WRITE8_HANDLER( wolfpack_pt_pos_select_w );
+extern WRITE8_HANDLER( wolfpack_pt_horz_w );
+extern WRITE8_HANDLER( wolfpack_pt_pic_w );
+extern WRITE8_HANDLER( wolfpack_ship_h_w );
+extern WRITE8_HANDLER( wolfpack_torpedo_pic_w );
+extern WRITE8_HANDLER( wolfpack_ship_size_w );
+extern WRITE8_HANDLER( wolfpack_ship_h_precess_w );
+extern WRITE8_HANDLER( wolfpack_ship_pic_w );
+extern WRITE8_HANDLER( wolfpack_torpedo_h_w );
+extern WRITE8_HANDLER( wolfpack_torpedo_v_w );
 
 
 static void periodic_callback(int scanline)
 {
-	cpu_set_nmi_line(0, PULSE_LINE);
+	cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 
 	scanline += 64;
 
@@ -81,13 +81,13 @@ static PALETTE_INIT( wolfpack )
 }
 
 
-static READ_HANDLER( wolfpack_zeropage_r )
+static READ8_HANDLER( wolfpack_zeropage_r )
 {
 	return memory_region(REGION_CPU1)[offset & 0xff];
 }
 
 
-static READ_HANDLER( wolfpack_input_r )
+static READ8_HANDLER( wolfpack_input_r )
 {
 	UINT8 val = readinputport(0);
 
@@ -104,7 +104,7 @@ static READ_HANDLER( wolfpack_input_r )
 }
 
 
-static READ_HANDLER( wolfpack_misc_r )
+static READ8_HANDLER( wolfpack_misc_r )
 {
 	UINT8 val = 0;
 
@@ -130,39 +130,39 @@ static READ_HANDLER( wolfpack_misc_r )
 }
 
 
-static WRITE_HANDLER( wolfpack_zeropage_w )
+static WRITE8_HANDLER( wolfpack_zeropage_w )
 {
 	memory_region(REGION_CPU1)[offset & 0xff] = data;
 }
 
 
-static WRITE_HANDLER( wolfpack_high_explo_w ) { }
-static WRITE_HANDLER( wolfpack_sonar_ping_w ) {}
-static WRITE_HANDLER( wolfpack_sirlat_w ) {}
-static WRITE_HANDLER( wolfpack_pt_sound_w ) {}
-static WRITE_HANDLER( wolfpack_start_speech_w ) {}
-static WRITE_HANDLER( wolfpack_launch_torpedo_w ) {}
-static WRITE_HANDLER( wolfpack_low_explo_w ) {}
-static WRITE_HANDLER( wolfpack_screw_cont_w ) {}
-static WRITE_HANDLER( wolfpack_lamp_flash_w ) {}
-static WRITE_HANDLER( wolfpack_warning_light_w ) {}
-static WRITE_HANDLER( wolfpack_audamp_w ) {}
-static WRITE_HANDLER( wolfpack_word_w ) {}
+static WRITE8_HANDLER( wolfpack_high_explo_w ) { }
+static WRITE8_HANDLER( wolfpack_sonar_ping_w ) {}
+static WRITE8_HANDLER( wolfpack_sirlat_w ) {}
+static WRITE8_HANDLER( wolfpack_pt_sound_w ) {}
+static WRITE8_HANDLER( wolfpack_start_speech_w ) {}
+static WRITE8_HANDLER( wolfpack_launch_torpedo_w ) {}
+static WRITE8_HANDLER( wolfpack_low_explo_w ) {}
+static WRITE8_HANDLER( wolfpack_screw_cont_w ) {}
+static WRITE8_HANDLER( wolfpack_lamp_flash_w ) {}
+static WRITE8_HANDLER( wolfpack_warning_light_w ) {}
+static WRITE8_HANDLER( wolfpack_audamp_w ) {}
+static WRITE8_HANDLER( wolfpack_word_w ) {}
 
 
-static WRITE_HANDLER( wolfpack_attract_w )
+static WRITE8_HANDLER( wolfpack_attract_w )
 {
 	coin_lockout_global_w(!(data & 1));
 }
 
 
-static WRITE_HANDLER( wolfpack_credit_w )
+static WRITE8_HANDLER( wolfpack_credit_w )
 {
 	set_led_status(0, !(data & 1));
 }
 
 
-static WRITE_HANDLER( wolfpack_coldetres_w )
+static WRITE8_HANDLER( wolfpack_coldetres_w )
 {
 	wolfpack_collision = 0;
 }

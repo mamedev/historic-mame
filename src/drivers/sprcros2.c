@@ -60,10 +60,10 @@ Notes:
 extern data8_t *sprcros2_fgvideoram, *sprcros2_spriteram, *sprcros2_bgvideoram;
 extern size_t sprcros2_spriteram_size;
 
-WRITE_HANDLER( sprcros2_fgvideoram_w );
-WRITE_HANDLER( sprcros2_bgvideoram_w );
-WRITE_HANDLER( sprcros2_bgscrollx_w );
-WRITE_HANDLER( sprcros2_bgscrolly_w );
+WRITE8_HANDLER( sprcros2_fgvideoram_w );
+WRITE8_HANDLER( sprcros2_bgvideoram_w );
+WRITE8_HANDLER( sprcros2_bgscrollx_w );
+WRITE8_HANDLER( sprcros2_bgscrolly_w );
 
 PALETTE_INIT( sprcros2 );
 VIDEO_START( sprcros2 );
@@ -72,17 +72,17 @@ static data8_t *sprcros2_sharedram;
 int sprcros2_m_port7 = 0;
 static int sprcros2_s_port3 = 0;
 
-static READ_HANDLER( sprcros2_sharedram_r )
+static READ8_HANDLER( sprcros2_sharedram_r )
 {
 	return sprcros2_sharedram[offset];
 }
 
-static WRITE_HANDLER( sprcros2_sharedram_w )
+static WRITE8_HANDLER( sprcros2_sharedram_w )
 {
 	sprcros2_sharedram[offset]=data;
 }
 
-static WRITE_HANDLER( sprcros2_m_port7_w )
+static WRITE8_HANDLER( sprcros2_m_port7_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -103,7 +103,7 @@ static WRITE_HANDLER( sprcros2_m_port7_w )
 	sprcros2_m_port7 = data;
 }
 
-static WRITE_HANDLER( sprcros2_s_port3_w )
+static WRITE8_HANDLER( sprcros2_s_port3_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU2);
 
@@ -282,19 +282,19 @@ static INTERRUPT_GEN( sprcros2_m_interrupt )
 	if (cpu_getiloops() == 0)
 	{
 		if(sprcros2_m_port7&0x01)
-			cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+			cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 	}
 	else
 	{
 		if(sprcros2_m_port7&0x08)
-			cpu_set_irq_line(0, 0, HOLD_LINE);
+			cpunum_set_input_line(0, 0, HOLD_LINE);
 	}
 }
 
 static INTERRUPT_GEN( sprcros2_s_interrupt )
 {
 	if(sprcros2_s_port3&0x01)
-		cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 }
 
 static MACHINE_DRIVER_START( sprcros2 )

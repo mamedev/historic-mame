@@ -165,7 +165,7 @@ static void tms34061_interrupt(int param)
  *
  *************************************/
 
-static WRITE_HANDLER( register_w )
+static WRITE8_HANDLER( register_w )
 {
 	int regnum = offset >> 2;
 	UINT16 oldval = tms34061.regs[regnum];
@@ -232,7 +232,7 @@ static WRITE_HANDLER( register_w )
  *
  *************************************/
 
-static READ_HANDLER( register_r )
+static READ8_HANDLER( register_r )
 {
 	int regnum = offset >> 2;
 	data8_t result;
@@ -360,7 +360,7 @@ INLINE void adjust_xyaddress(int offset)
 }
 
 
-static WRITE_HANDLER( xypixel_w )
+static WRITE8_HANDLER( xypixel_w )
 {
 	/* determine the offset, then adjust it */
 	offs_t pixeloffs = tms34061.regs[TMS34061_XYADDRESS];
@@ -383,7 +383,7 @@ static WRITE_HANDLER( xypixel_w )
 }
 
 
-static READ_HANDLER( xypixel_r )
+static READ8_HANDLER( xypixel_r )
 {
 	/* determine the offset, then adjust it */
 	offs_t pixeloffs = tms34061.regs[TMS34061_XYADDRESS];
@@ -533,13 +533,13 @@ data8_t tms34061_r(int col, int row, int func)
  *
  *************************************/
 
-READ_HANDLER( tms34061_latch_r )
+READ8_HANDLER( tms34061_latch_r )
 {
 	return tms34061.latchdata;
 }
 
 
-WRITE_HANDLER( tms34061_latch_w )
+WRITE8_HANDLER( tms34061_latch_w )
 {
 	tms34061.latchdata = data;
 }

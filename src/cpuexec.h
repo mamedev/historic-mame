@@ -106,8 +106,8 @@ void cpu_loadsave_reset(void);
  *************************************/
 
 /* 8-bit watchdog read/write handlers */
-WRITE_HANDLER( watchdog_reset_w );
-READ_HANDLER( watchdog_reset_r );
+WRITE8_HANDLER( watchdog_reset_w );
+READ8_HANDLER( watchdog_reset_r );
 
 /* 16-bit watchdog read/write handlers */
 WRITE16_HANDLER( watchdog_reset16_w );
@@ -116,24 +116,6 @@ READ16_HANDLER( watchdog_reset16_r );
 /* 32-bit watchdog read/write handlers */
 WRITE32_HANDLER( watchdog_reset32_w );
 READ32_HANDLER( watchdog_reset32_r );
-
-
-
-/*************************************
- *
- *	CPU halt/reset lines
- *
- *************************************/
-
-/* Set the logical state (ASSERT_LINE/CLEAR_LINE) of the RESET line on a CPU */
-void cpunum_set_reset_line(int cpunum, int state);
-
-/* Set the logical state (ASSERT_LINE/CLEAR_LINE) of the HALT line on a CPU */
-void cpunum_set_halt_line(int cpunum, int state);
-
-/* Backwards compatibility */
-#define cpu_set_reset_line 		cpunum_set_reset_line
-#define cpu_set_halt_line 		cpunum_set_halt_line
 
 
 
@@ -178,13 +160,6 @@ void cpunum_set_clockscale(int cpunum, double clockscale);
 /* Temporarily boosts the interleave factor */
 void cpu_boost_interleave(double timeslice_time, double boost_duration);
 
-/* Backwards compatibility */
-#define timer_suspendcpu(cpunum, suspend, reason)	do { if (suspend) cpunum_suspend(cpunum, reason, 1); else cpunum_resume(cpunum, reason); } while (0)
-#define timer_holdcpu(cpunum, suspend, reason)		do { if (suspend) cpunum_suspend(cpunum, reason, 0); else cpunum_resume(cpunum, reason); } while (0)
-#define cpu_getstatus(cpunum)						(!cpunum_is_suspended(cpunum, SUSPEND_REASON_HALT | SUSPEND_REASON_RESET | SUSPEND_REASON_DISABLE))
-#define timer_get_overclock(cpunum)					cpunum_get_clockscale(cpunum)
-#define timer_set_overclock(cpunum, overclock)		cpunum_set_clockscale(cpunum, overclock)
-
 
 
 /*************************************
@@ -215,11 +190,6 @@ void activecpu_eat_cycles(int cycles);
 
 /* Scales a given value by the ratio of fcount / fperiod */
 int cpu_scalebyfcount(int value);
-
-/* Backwards compatibility */
-#define cpu_gettotalcycles cpunum_gettotalcycles
-#define cpu_gettotalcycles64 cpunum_gettotalcycles64
-
 
 
 

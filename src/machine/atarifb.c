@@ -17,7 +17,7 @@ static int sign_x_3, sign_y_3;
 static int sign_x_4, sign_y_4;
 
 
-WRITE_HANDLER( atarifb_out1_w )
+WRITE8_HANDLER( atarifb_out1_w )
 {
 	CTRLD = data;
 
@@ -60,7 +60,7 @@ WRITE_HANDLER( atarifb_out1_w )
 }
 
 
-WRITE_HANDLER( atarifb_out2_w )
+WRITE8_HANDLER( atarifb_out2_w )
 {
 	discrete_sound_w(1, data & 0x0f);	// Crowd
 
@@ -80,7 +80,7 @@ WRITE_HANDLER( atarifb_out2_w )
  *
  *************************************/
 
-WRITE_HANDLER( atarifb_out3_w )
+WRITE8_HANDLER( atarifb_out3_w )
 {
 	int loop = cpu_getiloops();
 
@@ -111,7 +111,7 @@ WRITE_HANDLER( atarifb_out3_w )
 }
 
 
-READ_HANDLER( atarifb_in0_r )
+READ8_HANDLER( atarifb_in0_r )
 {
 	if ((CTRLD & 0x20)==0x00)
 	{
@@ -149,7 +149,7 @@ READ_HANDLER( atarifb_in0_r )
 }
 
 
-READ_HANDLER( atarifb_in2_r )
+READ8_HANDLER( atarifb_in2_r )
 {
 	if ((CTRLD & 0x20)==0x00)
 	{
@@ -179,7 +179,7 @@ READ_HANDLER( atarifb_in2_r )
 	}
 }
 
-READ_HANDLER( atarifb4_in0_r )
+READ8_HANDLER( atarifb4_in0_r )
 {
 	/* LD1 and LD2 low, return sign bits */
 	if ((CTRLD & 0x60)==0x00)
@@ -247,7 +247,7 @@ READ_HANDLER( atarifb4_in0_r )
 }
 
 
-READ_HANDLER( atarifb4_in2_r )
+READ8_HANDLER( atarifb4_in2_r )
 {
 	if ((CTRLD & 0x40)==0x00)
 	{

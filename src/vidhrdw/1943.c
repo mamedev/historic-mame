@@ -129,7 +129,7 @@ VIDEO_START( 1943 )
 
 
 
-WRITE_HANDLER( c1943_c804_w )
+WRITE8_HANDLER( c1943_c804_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -158,7 +158,7 @@ WRITE_HANDLER( c1943_c804_w )
 
 
 
-WRITE_HANDLER( c1943_d806_w )
+WRITE8_HANDLER( c1943_d806_w )
 {
 	/* bit 4 enables bg 1 */
 	sc1on = data & 0x10;

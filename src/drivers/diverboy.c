@@ -60,11 +60,11 @@ static WRITE16_HANDLER( soundcmd_w )
 	if (ACCESSING_LSB)
 	{
 		soundlatch_w(0,data & 0xff);
-		cpu_set_irq_line(1,0,HOLD_LINE);
+		cpunum_set_input_line(1,0,HOLD_LINE);
 	}
 }
 
-static WRITE_HANDLER( okibank_w )
+static WRITE8_HANDLER( okibank_w )
 {
 	/* bit 2 might be reset */
 //	usrintf_showmessage("%02x",data);

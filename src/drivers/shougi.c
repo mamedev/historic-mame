@@ -201,36 +201,36 @@ static UINT8 cpu_sharedram_control_val = 0;
 //to do:
 // add separate sharedram/r/w() for both CPUs and use control value to verify access
 
-static WRITE_HANDLER ( cpu_sharedram_sub_w )
+static WRITE8_HANDLER ( cpu_sharedram_sub_w )
 {
 	if (cpu_sharedram_control_val!=0) logerror("sub CPU access to shared RAM when access set for main cpu\n");
 	cpu_sharedram[offset] = data;
 }
 
-static WRITE_HANDLER ( cpu_sharedram_main_w )
+static WRITE8_HANDLER ( cpu_sharedram_main_w )
 {
 	if (cpu_sharedram_control_val!=1) logerror("main CPU access to shared RAM when access set for sub cpu\n");
 	cpu_sharedram[offset] = data;
 }
 
-static READ_HANDLER ( cpu_sharedram_r )
+static READ8_HANDLER ( cpu_sharedram_r )
 {
 	return cpu_sharedram[offset];
 }
 
-static WRITE_HANDLER ( cpu_shared_ctrl_sub_w )
+static WRITE8_HANDLER ( cpu_shared_ctrl_sub_w )
 {
 	cpu_sharedram_control_val = 0;
 logerror("cpu_sharedram_ctrl=SUB");
 }
 
-static WRITE_HANDLER ( cpu_shared_ctrl_main_w )
+static WRITE8_HANDLER ( cpu_shared_ctrl_main_w )
 {
 	cpu_sharedram_control_val = 1;
 logerror("cpu_sharedram_ctrl=MAIN");
 }
 
-static WRITE_HANDLER( shougi_watchdog_reset_w )
+static WRITE8_HANDLER( shougi_watchdog_reset_w )
 {
 	watchdog_reset_w(0,data);
 }
@@ -238,16 +238,16 @@ static WRITE_HANDLER( shougi_watchdog_reset_w )
 
 static int nmi_enabled = 0;
 
-static WRITE_HANDLER( nmi_disable_and_clear_line_w )
+static WRITE8_HANDLER( nmi_disable_and_clear_line_w )
 {
 	nmi_enabled = 0; /* disable NMIs */
 
 	/* NMI lines are tied together on both CPUs and connected to the LS74 /Q output */
-	cpu_set_irq_line(0, IRQ_LINE_NMI, CLEAR_LINE);
-	cpu_set_irq_line(1, IRQ_LINE_NMI, CLEAR_LINE);
+	cpunum_set_input_line(0, INPUT_LINE_NMI, CLEAR_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_NMI, CLEAR_LINE);
 }
 
-static WRITE_HANDLER( nmi_enable_w )
+static WRITE8_HANDLER( nmi_enable_w )
 {
 	nmi_enabled = 1; /* enable NMIs */
 }
@@ -257,8 +257,8 @@ static INTERRUPT_GEN( shougi_vblank_nmi )
 	if ( nmi_enabled == 1 )
 	{
 		/* NMI lines are tied together on both CPUs and connected to the LS74 /Q output */
-		cpu_set_irq_line(0, IRQ_LINE_NMI, ASSERT_LINE);
-		cpu_set_irq_line(1, IRQ_LINE_NMI, ASSERT_LINE);
+		cpunum_set_input_line(0, INPUT_LINE_NMI, ASSERT_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_NMI, ASSERT_LINE);
 	}
 }
 
@@ -304,7 +304,7 @@ ADDRESS_MAP_END
 
 /* sub */
 static int r=0;
-static READ_HANDLER ( dummy_r )
+static READ8_HANDLER ( dummy_r )
 {
 	r ^= 1;
 	if(r)

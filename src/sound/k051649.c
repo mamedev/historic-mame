@@ -164,7 +164,7 @@ void K051649_sh_stop(void)
 
 /********************************************************************************/
 
-WRITE_HANDLER( K051649_waveform_w )
+WRITE8_HANDLER( K051649_waveform_w )
 {
 	stream_update(stream,0);
 	channel_list[offset>>5].waveform[offset&0x1f]=data;
@@ -173,25 +173,25 @@ WRITE_HANDLER( K051649_waveform_w )
 		channel_list[4].waveform[offset&0x1f]=data;
 }
 
-READ_HANDLER ( K051649_waveform_r )
+READ8_HANDLER ( K051649_waveform_r )
 {
 	return channel_list[offset>>5].waveform[offset&0x1f];
 }
 
 /* SY 20001114: Channel 5 doesn't share the waveform with channel 4 on this chip */
-WRITE_HANDLER( K052539_waveform_w )
+WRITE8_HANDLER( K052539_waveform_w )
 {
 	stream_update(stream,0);
 	channel_list[offset>>5].waveform[offset&0x1f]=data;
 }
 
-WRITE_HANDLER( K051649_volume_w )
+WRITE8_HANDLER( K051649_volume_w )
 {
 	stream_update(stream,0);
 	channel_list[offset&0x7].volume=data&0xf;
 }
 
-WRITE_HANDLER( K051649_frequency_w )
+WRITE8_HANDLER( K051649_frequency_w )
 {
 	static int f[10];
 	f[offset]=data;
@@ -200,7 +200,7 @@ WRITE_HANDLER( K051649_frequency_w )
 	channel_list[offset>>1].frequency=(f[offset&0xe] + (f[offset|1]<<8))&0xfff;
 }
 
-WRITE_HANDLER( K051649_keyonoff_w )
+WRITE8_HANDLER( K051649_keyonoff_w )
 {
 	stream_update(stream,0);
 	channel_list[0].key=data&1;

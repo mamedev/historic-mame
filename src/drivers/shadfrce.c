@@ -212,7 +212,7 @@ static WRITE16_HANDLER ( shadfrce_sound_brt_w )
 	if (ACCESSING_MSB)
 	{
 		soundlatch_w(1,data >> 8);
-		cpu_set_irq_line( 1, IRQ_LINE_NMI, PULSE_LINE );
+		cpunum_set_input_line( 1, INPUT_LINE_NMI, PULSE_LINE );
 	}
 	else
 	{
@@ -281,7 +281,7 @@ ADDRESS_MAP_END
 
 /* and the sound cpu */
 
-static WRITE_HANDLER( oki_bankswitch_w )
+static WRITE8_HANDLER( oki_bankswitch_w )
 {
 	OKIM6295_set_bank_base(0, (data & 1) * 0x40000);
 }
@@ -534,7 +534,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static void irq_handler(int irq)
 {
-	cpu_set_irq_line( 1, 0, irq ? ASSERT_LINE : CLEAR_LINE );
+	cpunum_set_input_line( 1, 0, irq ? ASSERT_LINE : CLEAR_LINE );
 }
 
 static struct YM2151interface ym2151_interface =
@@ -555,9 +555,9 @@ static struct OKIM6295interface okim6295_interface =
 
 static INTERRUPT_GEN( shadfrce_interrupt ) {
 	if( cpu_getiloops() == 0 )
-		cpu_set_irq_line(0, 3, HOLD_LINE);
+		cpunum_set_input_line(0, 3, HOLD_LINE);
 	else
-		cpu_set_irq_line(0, 2, HOLD_LINE);
+		cpunum_set_input_line(0, 2, HOLD_LINE);
 }
 
 

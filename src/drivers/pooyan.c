@@ -67,9 +67,9 @@ standard NMI at 0x66
 #include "sndhrdw/timeplt.h"
 
 
-extern WRITE_HANDLER( pooyan_videoram_w );
-extern WRITE_HANDLER( pooyan_colorram_w );
-extern WRITE_HANDLER( pooyan_flipscreen_w );
+extern WRITE8_HANDLER( pooyan_videoram_w );
+extern WRITE8_HANDLER( pooyan_colorram_w );
+extern WRITE8_HANDLER( pooyan_flipscreen_w );
 
 extern PALETTE_INIT( pooyan );
 extern VIDEO_START( pooyan );

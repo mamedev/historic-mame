@@ -374,11 +374,11 @@ static WRITE16_HANDLER( irqctrl_w )
 
 		// Bit 0 : SUBINT
 		if ( (wecleman_irqctrl & 1) && (!(data & 1)) )	// 1->0 transition
-			cpu_set_irq_line(1,4,HOLD_LINE);
+			cpunum_set_input_line(1,4,HOLD_LINE);
 
 		// Bit 1 : NSUBRST
-		if (data & 2)   cpu_set_reset_line(1, CLEAR_LINE  );
-		else                    cpu_set_reset_line(1, ASSERT_LINE );
+		if (data & 2)   cpunum_set_input_line(1, INPUT_LINE_RESET, CLEAR_LINE  );
+		else                    cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE );
 
 		// Bit 2 : SOUND-ON
 		// Bit 3 : SOUNDRST
@@ -692,17 +692,17 @@ WRITE16_HANDLER( wecleman_soundlatch_w )
 	if (ACCESSING_LSB)
 	{
 		soundlatch_w(0,data & 0xFF);
-		cpu_set_irq_line(2,0, HOLD_LINE);
+		cpunum_set_input_line(2,0, HOLD_LINE);
 	}
 }
 
 /* Protection - an external multiplyer connected to the sound CPU */
-READ_HANDLER( multiply_r )
+READ8_HANDLER( multiply_r )
 {
 	return (multiply_reg[0] * multiply_reg[1]) & 0xFF;
 }
 
-WRITE_HANDLER( multiply_w )
+WRITE8_HANDLER( multiply_w )
 {
 	multiply_reg[offset] = data;
 }
@@ -723,7 +723,7 @@ WRITE_HANDLER( multiply_w )
 
 ** sample playing ends when a byte with bit 7 set is reached **/
 
-WRITE_HANDLER( wecleman_K00723216_bank_w )
+WRITE8_HANDLER( wecleman_K00723216_bank_w )
 {
 	K007232_set_bank( 0, 0, ~data&1 );	//* (wecleman062gre)
 }
@@ -760,7 +760,7 @@ WRITE16_HANDLER( hotchase_soundlatch_w )
 	if (ACCESSING_LSB)
 	{
 		soundlatch_w(0,data & 0xFF);
-		cpu_set_irq_line(2,M6809_IRQ_LINE, HOLD_LINE);
+		cpunum_set_input_line(2,M6809_IRQ_LINE, HOLD_LINE);
 	}
 }
 
@@ -775,7 +775,7 @@ static struct K007232_interface hotchase_k007232_interface =
 	{ 0,0,0 }
 };
 
-WRITE_HANDLER( hotchase_sound_control_w )
+WRITE8_HANDLER( hotchase_sound_control_w )
 {
 	int reg[8];
 
@@ -825,11 +825,11 @@ WRITE_HANDLER( hotchase_sound_control_w )
 /* Read and write handlers for one K007232 chip:
    even and odd register are mapped swapped */
 #define HOTCHASE_K007232_RW(_chip_) \
-READ_HANDLER( hotchase_K007232_##_chip_##_r ) \
+READ8_HANDLER( hotchase_K007232_##_chip_##_r ) \
 { \
 	return K007232_read_port_##_chip_##_r(offset ^ 1); \
 } \
-WRITE_HANDLER( hotchase_K007232_##_chip_##_w ) \
+WRITE8_HANDLER( hotchase_K007232_##_chip_##_w ) \
 { \
 	K007232_write_port_##_chip_##_w(offset ^ 1, data); \
 } \
@@ -1121,9 +1121,9 @@ static struct GfxDecodeInfo hotchase_gfxdecodeinfo[] =
 static INTERRUPT_GEN( wecleman_interrupt )
 {
 	if (cpu_getiloops() == 0)
-		cpu_set_irq_line(0, 4, HOLD_LINE);	/* once */
+		cpunum_set_input_line(0, 4, HOLD_LINE);	/* once */
 	else
-		cpu_set_irq_line(0, 5, HOLD_LINE);	/* to read input ports */
+		cpunum_set_input_line(0, 5, HOLD_LINE);	/* to read input ports */
 }
 
 static struct YM2151interface ym2151_interface =
@@ -1192,7 +1192,7 @@ MACHINE_DRIVER_END
 
 static INTERRUPT_GEN( hotchase_sound_timer )
 {
-	cpu_set_irq_line( 2, M6809_FIRQ_LINE, PULSE_LINE );
+	cpunum_set_input_line( 2, M6809_FIRQ_LINE, PULSE_LINE );
 }
 
 static MACHINE_DRIVER_START( hotchase )

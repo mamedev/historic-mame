@@ -197,7 +197,7 @@ void m65ce02_set_reg (int regnum, unsigned val)
 		case M65CE02_B: m65ce02.zp.b.h = val; break;
 		case M65CE02_EA: m65ce02.ea.w.l = val; break;
 		case M65CE02_ZP: m65ce02.zp.b.l = val; break;
-		case M65CE02_NMI_STATE: m65ce02_set_irq_line( IRQ_LINE_NMI, val ); break;
+		case M65CE02_NMI_STATE: m65ce02_set_irq_line( INPUT_LINE_NMI, val ); break;
 		case M65CE02_IRQ_STATE: m65ce02_set_irq_line( 0, val ); break;
 	}
 }
@@ -268,7 +268,7 @@ int m65ce02_execute(int cycles)
 
 void m65ce02_set_irq_line(int irqline, int state)
 {
-	if (irqline == IRQ_LINE_NMI)
+	if (irqline == INPUT_LINE_NMI)
 	{
 		if (m65ce02.nmi_state == state) return;
 		m65ce02.nmi_state = state;

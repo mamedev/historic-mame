@@ -26,7 +26,7 @@ static struct rectangle tilemap_clip;
 **
 ***************************************************************************/
 
-WRITE_HANDLER( marvins_palette_bank_w )
+WRITE8_HANDLER( marvins_palette_bank_w )
 {
 	bg_color = data>>4;
 	fg_color = data&0xf;
@@ -90,42 +90,42 @@ static void update_palette( int type )
 **
 ***************************************************************************/
 
-WRITE_HANDLER( marvins_spriteram_w )
+WRITE8_HANDLER( marvins_spriteram_w )
 {
 	spriteram[offset] = data;
 }
-READ_HANDLER( marvins_spriteram_r )
+READ8_HANDLER( marvins_spriteram_r )
 {
 	return spriteram[offset];
 }
 
-READ_HANDLER( marvins_foreground_ram_r )
+READ8_HANDLER( marvins_foreground_ram_r )
 {
 	return spriteram_2[offset];
 }
-WRITE_HANDLER( marvins_foreground_ram_w )
+WRITE8_HANDLER( marvins_foreground_ram_w )
 {
 	if (offset < 0x800 && spriteram_2[offset] != data) tilemap_mark_tile_dirty(fg_tilemap,offset);
 
 	spriteram_2[offset] = data;
 }
 
-READ_HANDLER( marvins_background_ram_r )
+READ8_HANDLER( marvins_background_ram_r )
 {
 	return spriteram_3[offset];
 }
-WRITE_HANDLER( marvins_background_ram_w )
+WRITE8_HANDLER( marvins_background_ram_w )
 {
 	if (offset < 0x800 && spriteram_3[offset] != data) tilemap_mark_tile_dirty(bg_tilemap,offset);
 
 	spriteram_3[offset] = data;
 }
 
-READ_HANDLER( marvins_text_ram_r )
+READ8_HANDLER( marvins_text_ram_r )
 {
 	return videoram[offset];
 }
-WRITE_HANDLER( marvins_text_ram_w )
+WRITE8_HANDLER( marvins_text_ram_w )
 {
 	if (offset < 0x400 && videoram[offset] != data) tilemap_mark_tile_dirty(tx_tilemap,offset);
 

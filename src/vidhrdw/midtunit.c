@@ -616,7 +616,7 @@ DECLARE_BLITTER_SET(dma_draw_noskip_noscale,   dma_state.bpp, EXTRACTGEN,   SKIP
 
 static int temp_irq_callback(int irqline)
 {
-	cpunum_set_info_int(0, CPUINFO_INT_IRQ_STATE + 0, CLEAR_LINE);
+	cpunum_set_info_int(0, CPUINFO_INT_INPUT_STATE + 0, CLEAR_LINE);
 	return 0;
 }
 
@@ -627,10 +627,10 @@ static void dma_callback(int is_in_34010_context)
 	if (is_in_34010_context)
 	{
 		cpunum_set_info_ptr(0, CPUINFO_PTR_IRQ_CALLBACK, (void *)temp_irq_callback);
-		cpunum_set_info_int(0, CPUINFO_INT_IRQ_STATE + 0, ASSERT_LINE);
+		cpunum_set_info_int(0, CPUINFO_INT_INPUT_STATE + 0, ASSERT_LINE);
 	}
 	else
-		cpu_set_irq_line(0, 0, HOLD_LINE);
+		cpunum_set_input_line(0, 0, HOLD_LINE);
 }
 
 
@@ -717,7 +717,7 @@ WRITE16_HANDLER( midtunit_dma_w )
 	command = dma_register[DMA_COMMAND];
 	if (!(command & 0x8000))
 	{
-		cpunum_set_info_int(0, CPUINFO_INT_IRQ_STATE + 0, CLEAR_LINE);
+		cpunum_set_info_int(0, CPUINFO_INT_INPUT_STATE + 0, CLEAR_LINE);
 		return;
 	}
 
@@ -752,7 +752,7 @@ WRITE16_HANDLER( midtunit_dma_w )
 	gfxoffset = dma_register[DMA_OFFSETLO] | (dma_register[DMA_OFFSETHI] << 16);
 
 #if LOG_DMA
-	if (keyboard_pressed(KEYCODE_L))
+	if (code_pressed(KEYCODE_L))
 	{
 		logerror("DMA command %04X: (bpp=%d skip=%d xflip=%d yflip=%d preskip=%d postskip=%d)\n",
 				command, (command >> 12) & 7, (command >> 7) & 1, (command >> 4) & 1, (command >> 5) & 1, (command >> 8) & 3, (command >> 10) & 3);
@@ -838,13 +838,13 @@ skipdma:
 			dma_callback(1);
 		else
 		{
-			cpunum_set_info_int(0, CPUINFO_INT_IRQ_STATE + 0, CLEAR_LINE);
+			cpunum_set_info_int(0, CPUINFO_INT_INPUT_STATE + 0, CLEAR_LINE);
 			timer_set(TIME_IN_NSEC(41 * pixels), 0, dma_callback);
 		}
 	}
 	else
 	{
-		cpunum_set_info_int(0, CPUINFO_INT_IRQ_STATE + 0, CLEAR_LINE);
+		cpunum_set_info_int(0, CPUINFO_INT_INPUT_STATE + 0, CLEAR_LINE);
 		timer_set(TIME_IN_NSEC(41 * pixels), 0, dma_callback);
 	}
 
@@ -865,7 +865,7 @@ VIDEO_UPDATE( midtunit )
 	UINT32 offset;
 
 #if LOG_DMA
-	if (keyboard_pressed(KEYCODE_L))
+	if (code_pressed(KEYCODE_L))
 		logerror("---\n");
 #endif
 

@@ -78,7 +78,7 @@ PALETTE_INIT( rockola )
 	}
 }
 
-WRITE_HANDLER( rockola_videoram_w )
+WRITE8_HANDLER( rockola_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -87,7 +87,7 @@ WRITE_HANDLER( rockola_videoram_w )
 	}
 }
 
-WRITE_HANDLER( rockola_videoram2_w )
+WRITE8_HANDLER( rockola_videoram2_w )
 {
 	if (rockola_videoram2[offset] != data)
 	{
@@ -96,7 +96,7 @@ WRITE_HANDLER( rockola_videoram2_w )
 	}
 }
 
-WRITE_HANDLER( rockola_colorram_w )
+WRITE8_HANDLER( rockola_colorram_w )
 {
 	if (colorram[offset] != data)
 	{
@@ -106,7 +106,7 @@ WRITE_HANDLER( rockola_colorram_w )
 	}
 }
 
-WRITE_HANDLER( rockola_charram_w )
+WRITE8_HANDLER( rockola_charram_w )
 {
 	if (rockola_charram[offset] != data)
 	{
@@ -115,7 +115,7 @@ WRITE_HANDLER( rockola_charram_w )
 	}
 }
 
-WRITE_HANDLER( rockola_flipscreen_w )
+WRITE8_HANDLER( rockola_flipscreen_w )
 {
 	int bank;
 
@@ -152,12 +152,12 @@ WRITE_HANDLER( rockola_flipscreen_w )
 	}
 }
 
-WRITE_HANDLER( rockola_scrollx_w )
+WRITE8_HANDLER( rockola_scrollx_w )
 {
 	tilemap_set_scrollx(bg_tilemap, 0, data);
 }
 
-WRITE_HANDLER( rockola_scrolly_w )
+WRITE8_HANDLER( rockola_scrolly_w )
 {
 	tilemap_set_scrolly(bg_tilemap, 0, data);
 }
@@ -269,7 +269,7 @@ PALETTE_INIT( satansat )
 	}
 }
 
-WRITE_HANDLER( satansat_b002_w )
+WRITE8_HANDLER( satansat_b002_w )
 {
 	/* bit 0 flips screen */
 
@@ -288,7 +288,7 @@ WRITE_HANDLER( satansat_b002_w )
 	/* other bits unused */
 }
 
-WRITE_HANDLER( satansat_backcolor_w )
+WRITE8_HANDLER( satansat_backcolor_w )
 {
 	/* bits 0-1 select background color. Other bits unused. */
 

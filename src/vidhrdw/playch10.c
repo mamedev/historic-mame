@@ -10,7 +10,7 @@ extern int pc10_int_detect;
 
 static struct tilemap *bg_tilemap;
 
-WRITE_HANDLER( playch10_videoram_w )
+WRITE8_HANDLER( playch10_videoram_w )
 {
 	if (pc10_sdcs)
 	{
@@ -66,7 +66,7 @@ PALETTE_INIT( playch10 )
 
 static void ppu_irq( int num, int *ppu_regs )
 {
-	cpu_set_nmi_line( 1, PULSE_LINE );
+	cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE );
 	pc10_int_detect = 1;
 }
 

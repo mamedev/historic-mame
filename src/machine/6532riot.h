@@ -21,11 +21,11 @@ struct R6532interface
 
 void r6532_init(int n, const struct R6532interface* RI);
 
-READ_HANDLER( r6532_0_r );
-READ_HANDLER( r6532_1_r );
+READ8_HANDLER( r6532_0_r );
+READ8_HANDLER( r6532_1_r );
 
-WRITE_HANDLER( r6532_0_w );
-WRITE_HANDLER( r6532_1_w );
+WRITE8_HANDLER( r6532_0_w );
+WRITE8_HANDLER( r6532_1_w );
 
-WRITE_HANDLER( r6532_0_PA7_w );	/* for edge detect irq generation; the function checks bit 7 of data */
-WRITE_HANDLER( r6532_1_PA7_w );
+WRITE8_HANDLER( r6532_0_PA7_w );	/* for edge detect irq generation; the function checks bit 7 of data */
+WRITE8_HANDLER( r6532_1_PA7_w );

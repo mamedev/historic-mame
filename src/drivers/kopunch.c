@@ -3,11 +3,11 @@
 
 extern UINT8 *kopunch_videoram2;
 
-extern WRITE_HANDLER( kopunch_videoram_w );
-extern WRITE_HANDLER( kopunch_videoram2_w );
-extern WRITE_HANDLER( kopunch_scroll_x_w );
-extern WRITE_HANDLER( kopunch_scroll_y_w );
-extern WRITE_HANDLER( kopunch_gfxbank_w );
+extern WRITE8_HANDLER( kopunch_videoram_w );
+extern WRITE8_HANDLER( kopunch_videoram2_w );
+extern WRITE8_HANDLER( kopunch_scroll_x_w );
+extern WRITE8_HANDLER( kopunch_scroll_y_w );
+extern WRITE8_HANDLER( kopunch_gfxbank_w );
 
 extern PALETTE_INIT( kopunch );
 extern VIDEO_START( kopunch );
@@ -20,20 +20,20 @@ INTERRUPT_GEN( kopunch_interrupt )
 	{
 		if (~input_port_1_r(0) & 0x80)	/* coin 1 */
 		{
-			cpu_set_irq_line_and_vector(0,0,HOLD_LINE,0xf7);	/* RST 30h */
+			cpunum_set_input_line_and_vector(0,0,HOLD_LINE,0xf7);	/* RST 30h */
 			return;
 		}
 		else if (~input_port_1_r(0) & 0x08)	/* coin 2 */
 		{
-			cpu_set_irq_line_and_vector(0,0,HOLD_LINE,0xef);	/* RST 28h */
+			cpunum_set_input_line_and_vector(0,0,HOLD_LINE,0xef);	/* RST 28h */
 			return;
 		}
 	}
 
-	cpu_set_irq_line_and_vector(0,0,HOLD_LINE,0xff);	/* RST 38h */
+	cpunum_set_input_line_and_vector(0,0,HOLD_LINE,0xff);	/* RST 38h */
 }
 
-static READ_HANDLER( kopunch_in_r )
+static READ8_HANDLER( kopunch_in_r )
 {
 	/* port 31 + low 3 bits of port 32 contain the punch strength */
 	if (offset == 0)
@@ -42,7 +42,7 @@ static READ_HANDLER( kopunch_in_r )
 		return (rand() & 0x07) | input_port_1_r(0);
 }
 
-static WRITE_HANDLER( kopunch_lamp_w )
+static WRITE8_HANDLER( kopunch_lamp_w )
 {
 	set_led_status(0,~data & 0x80);
 
@@ -50,7 +50,7 @@ static WRITE_HANDLER( kopunch_lamp_w )
 //		usrintf_showmessage("port 38 = %02x",data);
 }
 
-static WRITE_HANDLER( kopunch_coin_w )
+static WRITE8_HANDLER( kopunch_coin_w )
 {
 	coin_counter_w(0,~data & 0x80);
 	coin_counter_w(1,~data & 0x40);
@@ -69,7 +69,7 @@ static ADDRESS_MAP_START( kopunch_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x7100, 0x7aff) AM_RAM	// ???
 ADDRESS_MAP_END
 
-static READ_HANDLER( pip_r )
+static READ8_HANDLER( pip_r )
 {
 	return rand();
 }

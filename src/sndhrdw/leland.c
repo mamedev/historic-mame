@@ -303,8 +303,8 @@ static struct counter_state
 
 static void set_dac_frequency(int which, int frequency);
 
-static READ_HANDLER( peripheral_r );
-static WRITE_HANDLER( peripheral_w );
+static READ8_HANDLER( peripheral_r );
+static WRITE8_HANDLER( peripheral_w );
 
 
 
@@ -634,7 +634,7 @@ static int int_callback(int line)
 	if (LOG_INTERRUPTS) logerror("(%f) **** Acknowledged interrupt vector %02X\n", timer_get_time(), i186.intr.poll_status & 0x1f);
 
 	/* clear the interrupt */
-	activecpu_set_info_int(CPUINFO_INT_IRQ_STATE + 0, CLEAR_LINE);
+	activecpu_set_info_int(CPUINFO_INT_INPUT_STATE + 0, CLEAR_LINE);
 	i186.intr.pending = 0;
 
 	/* clear the request and set the in-service bit */
@@ -742,7 +742,7 @@ generate_int:
 	/* generate the appropriate interrupt */
 	i186.intr.poll_status = 0x8000 | new_vector;
 	if (!i186.intr.pending)
-		cpu_set_irq_line(2, 0, ASSERT_LINE);
+		cpunum_set_input_line(2, 0, ASSERT_LINE);
 	i186.intr.pending = 1;
 	cpu_trigger(CPU_RESUME_TRIGGER);
 	if (LOG_OPTIMIZATION) logerror("  - trigger due to interrupt pending\n");
@@ -1098,7 +1098,7 @@ static void update_dma_control(int which, int new_control)
  *
  *************************************/
 
-static READ_HANDLER( i186_internal_port_r )
+static READ8_HANDLER( i186_internal_port_r )
 {
 	int shift = 8 * (offset & 1);
 	int temp, which;
@@ -1283,7 +1283,7 @@ static READ_HANDLER( i186_internal_port_r )
  *
  *************************************/
 
-static WRITE_HANDLER( i186_internal_port_w )
+static WRITE8_HANDLER( i186_internal_port_w )
 {
 	static UINT8 even_byte;
 	int temp, which, data16;
@@ -1441,14 +1441,14 @@ static WRITE_HANDLER( i186_internal_port_w )
 			temp = (i186.mem.peripheral & 0xffc0) << 4;
 			if (i186.mem.middle_size & 0x0040)
 			{
-				install_mem_read_handler(2, temp, temp + 0x2ff, peripheral_r);
-				install_mem_write_handler(2, temp, temp + 0x2ff, peripheral_w);
+				memory_install_read8_handler(2, ADDRESS_SPACE_PROGRAM, temp, temp + 0x2ff, 0, 0, peripheral_r);
+				memory_install_write8_handler(2, ADDRESS_SPACE_PROGRAM, temp, temp + 0x2ff, 0, 0, peripheral_w);
 			}
 			else
 			{
 				temp &= 0xffff;
-				install_port_read_handler(2, temp, temp + 0x2ff, peripheral_r);
-				install_port_write_handler(2, temp, temp + 0x2ff, peripheral_w);
+				memory_install_read8_handler(2, ADDRESS_SPACE_IO, temp, temp + 0x2ff, 0, 0, peripheral_r);
+				memory_install_write8_handler(2, ADDRESS_SPACE_IO, temp, temp + 0x2ff, 0, 0, peripheral_w);
 			}
 
 			/* we need to do this at a time when the I86 context is swapped in */
@@ -1514,14 +1514,14 @@ static WRITE_HANDLER( i186_internal_port_w )
 			temp = (data16 & 0x0fff) << 8;
 			if (data16 & 0x1000)
 			{
-				install_mem_read_handler(2, temp, temp + 0xff, i186_internal_port_r);
-				install_mem_write_handler(2, temp, temp + 0xff, i186_internal_port_w);
+				memory_install_read8_handler(2, ADDRESS_SPACE_PROGRAM, temp, temp + 0xff, 0, 0, i186_internal_port_r);
+				memory_install_write8_handler(2, ADDRESS_SPACE_PROGRAM, temp, temp + 0xff, 0, 0, i186_internal_port_w);
 			}
 			else
 			{
 				temp &= 0xffff;
-				install_port_read_handler(2, temp, temp + 0xff, i186_internal_port_r);
-				install_port_write_handler(2, temp, temp + 0xff, i186_internal_port_w);
+				memory_install_read8_handler(2, ADDRESS_SPACE_IO, temp, temp + 0xff, 0, 0, i186_internal_port_r);
+				memory_install_write8_handler(2, ADDRESS_SPACE_IO, temp, temp + 0xff, 0, 0, i186_internal_port_w);
 			}
 /*			usrintf_showmessage("Sound CPU reset");*/
 			break;
@@ -1552,7 +1552,7 @@ INLINE void counter_update_count(int which)
 }
 
 
-static READ_HANDLER( pit8254_r )
+static READ8_HANDLER( pit8254_r )
 {
 	struct counter_state *ctr;
 	int which = offset / 0x80;
@@ -1594,7 +1594,7 @@ static READ_HANDLER( pit8254_r )
 }
 
 
-static WRITE_HANDLER( pit8254_w )
+static WRITE8_HANDLER( pit8254_w )
 {
 	struct counter_state *ctr;
 	int which = offset / 0x80;
@@ -1672,7 +1672,7 @@ static WRITE_HANDLER( pit8254_w )
  *
  *************************************/
 
-WRITE_HANDLER( leland_i86_control_w )
+WRITE8_HANDLER( leland_i86_control_w )
 {
 	/* see if anything changed */
 	int diff = (last_control ^ data) & 0xf8;
@@ -1692,14 +1692,14 @@ WRITE_HANDLER( leland_i86_control_w )
 	}
 
 	/* /RESET */
-	cpu_set_reset_line(2, data & 0x80  ? CLEAR_LINE : ASSERT_LINE);
+	cpunum_set_input_line(2, INPUT_LINE_RESET, data & 0x80  ? CLEAR_LINE : ASSERT_LINE);
 
 	/* /NMI */
 /* 	If the master CPU doesn't get a response by the time it's ready to send
 	the next command, it uses an NMI to force the issue; unfortunately, this
 	seems to really screw up the sound system. It turns out it's better to
 	just wait for the original interrupt to occur naturally */
-/*	cpu_set_nmi_line  (2, data & 0x40  ? CLEAR_LINE : ASSERT_LINE);*/
+/*	cpunum_set_input_line(2, INPUT_LINE_NMI, data & 0x40  ? CLEAR_LINE : ASSERT_LINE);*/
 
 	/* INT0 */
 	if (data & 0x20)
@@ -1743,20 +1743,20 @@ static void command_lo_sync(int data)
 }
 
 
-WRITE_HANDLER( leland_i86_command_lo_w )
+WRITE8_HANDLER( leland_i86_command_lo_w )
 {
 	timer_set(TIME_NOW, data, command_lo_sync);
 }
 
 
-WRITE_HANDLER( leland_i86_command_hi_w )
+WRITE8_HANDLER( leland_i86_command_hi_w )
 {
 	if (LOG_COMM) logerror("%04X:Write sound command latch hi = %02X\n", activecpu_get_previouspc(), data);
 	sound_command[1] = data;
 }
 
 
-static READ_HANDLER( main_to_sound_comm_r )
+static READ8_HANDLER( main_to_sound_comm_r )
 {
 	if (!(offset & 1))
 	{
@@ -1802,7 +1802,7 @@ static void delayed_response_r(int checkpc)
 }
 
 
-READ_HANDLER( leland_i86_response_r )
+READ8_HANDLER( leland_i86_response_r )
 {
 	if (LOG_COMM) logerror("%04X:Read sound response latch = %02X\n", activecpu_get_previouspc(), sound_response);
 
@@ -1818,7 +1818,7 @@ READ_HANDLER( leland_i86_response_r )
 }
 
 
-static WRITE_HANDLER( sound_to_main_comm_w )
+static WRITE8_HANDLER( sound_to_main_comm_w )
 {
 	if (LOG_COMM) logerror("%05X:Write sound response latch = %02X\n", activecpu_get_pc(), data);
 	sound_response = data;
@@ -1860,7 +1860,7 @@ static void set_dac_frequency(int which, int frequency)
 }
 
 
-static WRITE_HANDLER( dac_w )
+static WRITE8_HANDLER( dac_w )
 {
 	int which = offset / 2;
 	struct dac_state *d = &dac[which];
@@ -1900,7 +1900,7 @@ static WRITE_HANDLER( dac_w )
 }
 
 
-static WRITE_HANDLER( redline_dac_w )
+static WRITE8_HANDLER( redline_dac_w )
 {
 	int which = offset / 0x200;
 	struct dac_state *d = &dac[which];
@@ -1931,7 +1931,7 @@ static WRITE_HANDLER( redline_dac_w )
 }
 
 
-static WRITE_HANDLER( dac_10bit_w )
+static WRITE8_HANDLER( dac_10bit_w )
 {
 	static UINT8 even_byte;
 	struct dac_state *d = &dac[6];
@@ -1969,7 +1969,7 @@ static WRITE_HANDLER( dac_10bit_w )
 }
 
 
-static WRITE_HANDLER( ataxx_dac_control )
+static WRITE8_HANDLER( ataxx_dac_control )
 {
 	/* handle common offsets */
 	switch (offset)
@@ -2042,7 +2042,7 @@ static WRITE_HANDLER( ataxx_dac_control )
  *
  *************************************/
 
-static READ_HANDLER( peripheral_r )
+static READ8_HANDLER( peripheral_r )
 {
 	int select = offset / 0x80;
 	offset &= 0x7f;
@@ -2108,7 +2108,7 @@ static READ_HANDLER( peripheral_r )
 }
 
 
-static WRITE_HANDLER( peripheral_w )
+static WRITE8_HANDLER( peripheral_w )
 {
 	int select = offset / 0x80;
 	offset &= 0x7f;
@@ -2173,7 +2173,7 @@ void leland_i86_optimize_address(offs_t offset)
  *
  *************************************/
 
-WRITE_HANDLER( ataxx_i86_control_w )
+WRITE8_HANDLER( ataxx_i86_control_w )
 {
 	/* compute the bit-shuffled variants of the bits and then write them */
 	int modified = 	((data & 0x01) << 7) |

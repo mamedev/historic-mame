@@ -189,7 +189,7 @@ VIDEO_START( yard )
 
 
 
-WRITE_HANDLER( yard_flipscreen_w )
+WRITE8_HANDLER( yard_flipscreen_w )
 {
 	/* screen flip is handled both by software and hardware */
 	data ^= ~readinputport(4) & 1;
@@ -201,7 +201,7 @@ WRITE_HANDLER( yard_flipscreen_w )
 }
 
 
-WRITE_HANDLER( yard_scroll_panel_w )
+WRITE8_HANDLER( yard_scroll_panel_w )
 {
 	int sx,sy,i;
 

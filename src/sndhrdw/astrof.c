@@ -65,7 +65,7 @@ static int start_explosion = 0;
 static int death_playing = 0;
 static int bosskill_playing = 0;
 
-WRITE_HANDLER( astrof_sample1_w )
+WRITE8_HANDLER( astrof_sample1_w )
 {
 	static int last = 0;
 
@@ -127,7 +127,7 @@ WRITE_HANDLER( astrof_sample1_w )
 }
 
 
-WRITE_HANDLER( astrof_sample2_w )
+WRITE8_HANDLER( astrof_sample2_w )
 {
 	static int last = 0;
 

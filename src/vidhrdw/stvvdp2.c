@@ -3966,12 +3966,12 @@ VIDEO_UPDATE( stv_vdp2 )
 	/*If a plane has a priority value of zero it isn't shown at all.*/
 	for(pri=1;pri<8;pri++)
 	{
-		if (!(keyboard_pressed(KEYCODE_T))) {if(pri==STV_VDP2_N3PRIN) stv_vdp2_draw_NBG3(bitmap,cliprect);}
-		if (!(keyboard_pressed(KEYCODE_Y))) {if(pri==STV_VDP2_N2PRIN) stv_vdp2_draw_NBG2(bitmap,cliprect);}
-		if (!(keyboard_pressed(KEYCODE_U))) {if(pri==STV_VDP2_N1PRIN) stv_vdp2_draw_NBG1(bitmap,cliprect);}
-		if (!(keyboard_pressed(KEYCODE_I))) {if(pri==STV_VDP2_N0PRIN) stv_vdp2_draw_NBG0(bitmap,cliprect);}
-		if (!(keyboard_pressed(KEYCODE_K))) {if(pri==STV_VDP2_R0PRIN) stv_vdp2_draw_RBG0(bitmap,cliprect);}
-		if (!(keyboard_pressed(KEYCODE_O))) {stv_vdp2_drawsprites(bitmap,cliprect,pri);}
+		if (!(code_pressed(KEYCODE_T))) {if(pri==STV_VDP2_N3PRIN) stv_vdp2_draw_NBG3(bitmap,cliprect);}
+		if (!(code_pressed(KEYCODE_Y))) {if(pri==STV_VDP2_N2PRIN) stv_vdp2_draw_NBG2(bitmap,cliprect);}
+		if (!(code_pressed(KEYCODE_U))) {if(pri==STV_VDP2_N1PRIN) stv_vdp2_draw_NBG1(bitmap,cliprect);}
+		if (!(code_pressed(KEYCODE_I))) {if(pri==STV_VDP2_N0PRIN) stv_vdp2_draw_NBG0(bitmap,cliprect);}
+		if (!(code_pressed(KEYCODE_K))) {if(pri==STV_VDP2_R0PRIN) stv_vdp2_draw_RBG0(bitmap,cliprect);}
+		if (!(code_pressed(KEYCODE_O))) {stv_vdp2_drawsprites(bitmap,cliprect,pri);}
 	}
 
 #ifdef MAME_DEBUG
@@ -3984,7 +3984,7 @@ VIDEO_UPDATE( stv_vdp2 )
 	,STV_VDP2_N1ZMXI,STV_VDP2_N1ZMXD
 	,STV_VDP2_N1ZMYI,STV_VDP2_N1ZMYD);*/
 
-	if ( keyboard_pressed_memory(KEYCODE_W) )
+	if ( code_pressed_memory(KEYCODE_W) )
 	{
 		int tilecode;
 
@@ -4028,7 +4028,7 @@ VIDEO_UPDATE( stv_vdp2 )
 		}
 	}
 
-	if ( keyboard_pressed_memory(KEYCODE_N) )
+	if ( code_pressed_memory(KEYCODE_N) )
 	{
 		FILE *fp;
 
@@ -4040,7 +4040,7 @@ VIDEO_UPDATE( stv_vdp2 )
 		}
 	}
 
-	if ( keyboard_pressed_memory(KEYCODE_M) )
+	if ( code_pressed_memory(KEYCODE_M) )
 	{
 		FILE *fp;
 

@@ -11,7 +11,7 @@ int  ics2115_sh_start( const struct MachineSound *msound );
 void ics2115_sh_stop( void );
 void ics2115_reset( void );
 
-READ_HANDLER( ics2115_r );
-WRITE_HANDLER( ics2115_w );
+READ8_HANDLER( ics2115_r );
+WRITE8_HANDLER( ics2115_w );
 
 #endif

@@ -81,14 +81,14 @@ static WRITE16_HANDLER( sshangha_protection16_w )
 
 	if (offset == (0x260 >> 1)) {
 		//soundlatch_w(0,data&0xff);
-		//cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);
+		//cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 	}
 }
 
 static WRITE16_HANDLER( sshangha_sound_w )
 {
 	soundlatch_w(0,data&0xff);
-	cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 }
 
 /* Protection/IO chip 146 */
@@ -344,7 +344,7 @@ static struct OKIM6295interface okim6295_interface =
 
 static void irqhandler(int state)
 {
-	cpu_set_irq_line(1,0,state);
+	cpunum_set_input_line(1,0,state);
 }
 
 static struct YM2203interface ym2203_interface =

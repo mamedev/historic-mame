@@ -54,9 +54,9 @@ unsigned char *brkthru_nmi_enable; /* needs to be tracked down */
 extern unsigned char *brkthru_videoram;
 extern size_t brkthru_videoram_size;
 
-WRITE_HANDLER( brkthru_1800_w );
-WRITE_HANDLER( brkthru_bgram_w );
-WRITE_HANDLER( brkthru_fgram_w );
+WRITE8_HANDLER( brkthru_1800_w );
+WRITE8_HANDLER( brkthru_bgram_w );
+WRITE8_HANDLER( brkthru_fgram_w );
 VIDEO_START( brkthru );
 PALETTE_INIT( brkthru );
 VIDEO_UPDATE( brkthru );
@@ -64,14 +64,14 @@ VIDEO_UPDATE( brkthru );
 
 static int nmi_enable;
 
-WRITE_HANDLER( brkthru_1803_w )
+WRITE8_HANDLER( brkthru_1803_w )
 {
 	/* bit 0 = NMI enable */
 	nmi_enable = ~data & 1;
 
 	/* bit 1 = ? maybe IRQ acknowledge */
 }
-WRITE_HANDLER( darwin_0803_w )
+WRITE8_HANDLER( darwin_0803_w )
 {
 	/* bit 0 = NMI enable */
 	/*nmi_enable = ~data & 1;*/
@@ -80,10 +80,10 @@ WRITE_HANDLER( darwin_0803_w )
 	/* bit 1 = ? maybe IRQ acknowledge */
 }
 
-WRITE_HANDLER( brkthru_soundlatch_w )
+WRITE8_HANDLER( brkthru_soundlatch_w )
 {
 	soundlatch_w(offset,data);
-	cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
+	cpunum_set_input_line(1,INPUT_LINE_NMI,PULSE_LINE);
 }
 
 
@@ -162,13 +162,13 @@ INTERRUPT_GEN( brkthru_interrupt )
 	if (cpu_getiloops() == 0)
 	{
 		if (nmi_enable)
-			cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+			cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 	}
 	else
 	{
 		/* generate IRQ on coin insertion */
 		if ((readinputport(2) & 0xe0) != 0xe0)
-			cpu_set_irq_line(0, 0, HOLD_LINE);
+			cpunum_set_input_line(0, 0, HOLD_LINE);
 	}
 }
 
@@ -432,7 +432,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 /* handler called by the 3812 emulator when the internal timers cause an IRQ */
 static void irqhandler(int linestate)
 {
-	cpu_set_irq_line(1,M6809_IRQ_LINE,linestate);
+	cpunum_set_input_line(1,M6809_IRQ_LINE,linestate);
 }
 
 static struct YM2203interface ym2203_interface =

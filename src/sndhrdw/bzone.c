@@ -52,7 +52,7 @@ static int motor_amp_new;
 static int motor_amp_step;
 static int motor_amp_counter;
 
-WRITE_HANDLER( bzone_sounds_w )
+WRITE8_HANDLER( bzone_sounds_w )
 {
 	if( data == latch )
 		return;

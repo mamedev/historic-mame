@@ -23,24 +23,24 @@ Could be bad dump ('final' romset is made of two sets marked as 'bad' )
 
 data8_t *jcr_textram;
 
-WRITE_HANDLER( snkwave_w );
+WRITE8_HANDLER( snkwave_w );
 
-READ_HANDLER( jcross_background_ram_r );
-WRITE_HANDLER( jcross_background_ram_w );
+READ8_HANDLER( jcross_background_ram_r );
+WRITE8_HANDLER( jcross_background_ram_w );
 
-READ_HANDLER( jcross_text_ram_r );
-WRITE_HANDLER( jcross_text_ram_w );
+READ8_HANDLER( jcross_text_ram_r );
+WRITE8_HANDLER( jcross_text_ram_w );
 
 extern VIDEO_START( jcross );
 extern VIDEO_UPDATE( jcross );
 extern int jcross_vregs[5];
-WRITE_HANDLER( jcross_palettebank_w );
+WRITE8_HANDLER( jcross_palettebank_w );
 
 static int sound_cpu_busy=0;
 
 data8_t *jcr_sharedram;
-static READ_HANDLER(sharedram_r){	return jcr_sharedram[offset];}
-static WRITE_HANDLER(sharedram_w){	jcr_sharedram[offset]=data;}
+static READ8_HANDLER(sharedram_r){	return jcr_sharedram[offset];}
+static WRITE8_HANDLER(sharedram_w){	jcr_sharedram[offset]=data;}
 
 static struct namco_interface snkwave_interface =
 {
@@ -61,35 +61,35 @@ static struct AY8910interface ay8910_interface =
 	{ 0 }
 };
 
-static WRITE_HANDLER( sound_command_w )
+static WRITE8_HANDLER( sound_command_w )
 {
 	sound_cpu_busy = 0x20;
 	soundlatch_w(0, data);
-	cpu_set_irq_line(2, IRQ_LINE_NMI, PULSE_LINE);
+	cpunum_set_input_line(2, INPUT_LINE_NMI, PULSE_LINE);
 }
 
-static READ_HANDLER( sound_command_r )
+static READ8_HANDLER( sound_command_r )
 {
 	sound_cpu_busy = 0;
 	return(soundlatch_r(0));
 }
 
-static READ_HANDLER( sound_nmi_ack_r )
+static READ8_HANDLER( sound_nmi_ack_r )
 {
-	cpu_set_nmi_line(2, CLEAR_LINE);
+	cpunum_set_input_line(2, INPUT_LINE_NMI, CLEAR_LINE);
 	return 0;
 }
 
-static READ_HANDLER( jcross_port_0_r )
+static READ8_HANDLER( jcross_port_0_r )
 {
 	return(input_port_0_r(0) | sound_cpu_busy);
 }
 
-static WRITE_HANDLER(jcross_vregs0_w){jcross_vregs[0]=data;}
-static WRITE_HANDLER(jcross_vregs1_w){jcross_vregs[1]=data;}
-static WRITE_HANDLER(jcross_vregs2_w){jcross_vregs[2]=data;}
-static WRITE_HANDLER(jcross_vregs3_w){jcross_vregs[3]=data;}
-static WRITE_HANDLER(jcross_vregs4_w){jcross_vregs[4]=data;}
+static WRITE8_HANDLER(jcross_vregs0_w){jcross_vregs[0]=data;}
+static WRITE8_HANDLER(jcross_vregs1_w){jcross_vregs[1]=data;}
+static WRITE8_HANDLER(jcross_vregs2_w){jcross_vregs[2]=data;}
+static WRITE8_HANDLER(jcross_vregs3_w){jcross_vregs[3]=data;}
+static WRITE8_HANDLER(jcross_vregs4_w){jcross_vregs[4]=data;}
 
 
 static ADDRESS_MAP_START( readmem_sound, ADDRESS_SPACE_PROGRAM, 8 )

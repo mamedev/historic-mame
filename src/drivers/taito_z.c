@@ -823,7 +823,7 @@ static void parse_control(void)
 	/* bit 0 enables cpu B */
 	/* however this fails when recovering from a save state
 	   if cpu B is disabled !! */
-	cpu_set_reset_line(2,(cpua_ctrl &0x1) ? CLEAR_LINE : ASSERT_LINE);
+	cpunum_set_input_line(2, INPUT_LINE_RESET, (cpua_ctrl &0x1) ? CLEAR_LINE : ASSERT_LINE);
 
 }
 
@@ -832,7 +832,7 @@ static void parse_control_noz80(void)
 	/* bit 0 enables cpu B */
 	/* however this fails when recovering from a save state
 	   if cpu B is disabled !! */
-	cpu_set_reset_line(1,(cpua_ctrl &0x1) ? CLEAR_LINE : ASSERT_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_RESET, (cpua_ctrl &0x1) ? CLEAR_LINE : ASSERT_LINE);
 
 }
 
@@ -867,7 +867,7 @@ static WRITE16_HANDLER( cpua_noz80_ctrl_w )	/* assumes no Z80 */
 
 static void taitoz_interrupt6(int x)
 {
-	cpu_set_irq_line(0,6,HOLD_LINE);
+	cpunum_set_input_line(0,6,HOLD_LINE);
 }
 
 /* 68000 B */
@@ -875,19 +875,19 @@ static void taitoz_interrupt6(int x)
 #if 0
 static void taitoz_cpub_interrupt5(int x)
 {
-	cpu_set_irq_line(2,5,HOLD_LINE);	/* assumes Z80 sandwiched between the 68Ks */
+	cpunum_set_input_line(2,5,HOLD_LINE);	/* assumes Z80 sandwiched between the 68Ks */
 }
 #endif
 
 static void taitoz_sg_cpub_interrupt5(int x)
 {
-	cpu_set_irq_line(1,5,HOLD_LINE);	/* assumes no Z80 */
+	cpunum_set_input_line(1,5,HOLD_LINE);	/* assumes no Z80 */
 }
 
 #if 0
 static void taitoz_cpub_interrupt6(int x)
 {
-	cpu_set_irq_line(2,6,HOLD_LINE);	/* assumes Z80 sandwiched between the 68Ks */
+	cpunum_set_input_line(2,6,HOLD_LINE);	/* assumes Z80 sandwiched between the 68Ks */
 }
 #endif
 
@@ -904,7 +904,7 @@ static INTERRUPT_GEN( sci_interrupt )
 
 	if (sci_int6)
 		timer_set(TIME_IN_CYCLES(200000-500,0),0, taitoz_interrupt6);
-	cpu_set_irq_line(0, 4, HOLD_LINE);
+	cpunum_set_input_line(0, 4, HOLD_LINE);
 }
 
 /* Double Axle seems to keep only 1 sprite frame in sprite ram,
@@ -920,14 +920,14 @@ static INTERRUPT_GEN( dblaxle_interrupt )
 	if (dblaxle_int6)
 		timer_set(TIME_IN_CYCLES(200000-500,0),0, taitoz_interrupt6);
 
-	cpu_set_irq_line(0, 4, HOLD_LINE);
+	cpunum_set_input_line(0, 4, HOLD_LINE);
 }
 
 static INTERRUPT_GEN( dblaxle_cpub_interrupt )
 {
 	// Unsure how many int6's per frame
 	timer_set(TIME_IN_CYCLES(200000-500,0),0, taitoz_interrupt6);
-	cpu_set_irq_line(2, 4, HOLD_LINE);
+	cpunum_set_input_line(2, 4, HOLD_LINE);
 }
 
 
@@ -1331,7 +1331,7 @@ static void reset_sound_region(void)	/* assumes Z80 sandwiched between 68Ks */
 	cpu_setbank( 10, memory_region(REGION_CPU2) + (banknum * 0x4000) + 0x10000 );
 }
 
-static WRITE_HANDLER( sound_bankswitch_w )
+static WRITE8_HANDLER( sound_bankswitch_w )
 {
 	banknum = (data - 1) & 7;
 	reset_sound_region();
@@ -2074,7 +2074,7 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( chasehq )	// IN3-6 perhaps used with cockpit setup? //
 	PORT_START /* DSW A */
-	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Cabinet ) )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Cabinet ) )	/* US Manual states DIPS 1 & 2 "MUST REMAIN OFF" */
 	PORT_DIPSETTING(    0x03, "Upright / Steering Lock" )
 	PORT_DIPSETTING(    0x02, "Upright / No Steering Lock" )
 	PORT_DIPSETTING(    0x01, "Full Throttle Convert, Cockpit" )
@@ -2095,7 +2095,7 @@ INPUT_PORTS_START( chasehq )	// IN3-6 perhaps used with cockpit setup? //
 	PORT_DIPNAME( 0x10, 0x10, "Turbos Stocked" )
 	PORT_DIPSETTING(    0x10, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
+	PORT_DIPNAME( 0x20, 0x20, "Discounted Continue Play" )	/* Full coin price to start, 1 coin to continue */
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, "Damage Cleared at Continue" )
@@ -2201,7 +2201,7 @@ INPUT_PORTS_START( chasehqj )	// IN3-6 perhaps used with cockpit setup? //
 	PORT_DIPNAME( 0x10, 0x10, "Turbos Stocked" )
 	PORT_DIPSETTING(    0x10, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
+	PORT_DIPNAME( 0x20, 0x20, "Discounted Continue Play" )	/* Full coin price to start, 1 coin to continue */
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, "Damage Cleared at Continue" )
@@ -2478,12 +2478,12 @@ INPUT_PORTS_START( bsharkj )
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( sci )	// dsws may be slightly wrong
+INPUT_PORTS_START( sci )
 	PORT_START /* DSW A */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x01, "Cockpit" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unused ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unused ) ) /* Manual states "MUST REMAIN OFF" */
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
@@ -2502,9 +2502,9 @@ INPUT_PORTS_START( sci )	// dsws may be slightly wrong
 	PORT_DIPNAME( 0x10, 0x10, "Turbos Stocked" )
 	PORT_DIPSETTING(    0x10, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x20, 0x20, "Respond to Controls" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "Steering Radius" )
+	PORT_DIPSETTING(    0x00, "270 Degree" )
+	PORT_DIPSETTING(    0x20, "360 Degree" )
 	PORT_DIPNAME( 0x40, 0x40, "Damage Cleared at Continue" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
@@ -2545,12 +2545,12 @@ INPUT_PORTS_START( sci )	// dsws may be slightly wrong
 	PORT_DIPSETTING(    0x00, "Analogue" )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( sciu )	// dsws may be slightly wrong
+INPUT_PORTS_START( sciu )
 	PORT_START /* DSW A */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x01, "Cockpit" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unused ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unused ) ) /* Manual states "MUST REMAIN OFF" */
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
@@ -2569,9 +2569,9 @@ INPUT_PORTS_START( sciu )	// dsws may be slightly wrong
 	PORT_DIPNAME( 0x10, 0x10, "Turbos Stocked" )
 	PORT_DIPSETTING(    0x10, "3" )
 	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x20, 0x20, "Respond to Controls" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, "Steering Radius" )
+	PORT_DIPSETTING(    0x00, "270 Degree" )
+	PORT_DIPSETTING(    0x20, "360 Degree" )
 	PORT_DIPNAME( 0x40, 0x40, "Damage Cleared at Continue" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
@@ -3113,14 +3113,14 @@ Interface B is for games which lack a Z80 (Spacegun, Bshark).
 /* handler called by the YM2610 emulator when the internal timers cause an IRQ */
 static void irqhandler(int irq)	// assumes Z80 sandwiched between 68Ks
 {
-	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 /* handler called by the YM2610 emulator when the internal timers cause an IRQ */
 static void irqhandlerb(int irq)
 {
 	// DG: this is probably specific to Z80 and wrong?
-//	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+//	cpunum_set_input_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2610interface ym2610_interface =

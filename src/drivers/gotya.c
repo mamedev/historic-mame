@@ -34,17 +34,17 @@ TODO: Emulated sound
 extern UINT8 *gotya_scroll;
 extern UINT8 *gotya_videoram2;
 
-extern WRITE_HANDLER( gotya_videoram_w );
-extern WRITE_HANDLER( gotya_colorram_w );
-extern WRITE_HANDLER( gotya_videoram2_w );
+extern WRITE8_HANDLER( gotya_videoram_w );
+extern WRITE8_HANDLER( gotya_colorram_w );
+extern WRITE8_HANDLER( gotya_videoram2_w );
 
 extern PALETTE_INIT( gotya );
 extern VIDEO_START( gotya );
 extern VIDEO_UPDATE( gotya );
 
-extern WRITE_HANDLER( gotya_video_control_w );
+extern WRITE8_HANDLER( gotya_video_control_w );
 
-extern WRITE_HANDLER( gotya_soundlatch_w );
+extern WRITE8_HANDLER( gotya_soundlatch_w );
 
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )

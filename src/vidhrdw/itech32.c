@@ -396,7 +396,7 @@ WRITE32_HANDLER( itech020_paletteram_w )
 
 static void logblit(const char *tag)
 {
-	if (!keyboard_pressed(KEYCODE_L))
+	if (!code_pressed(KEYCODE_L))
 		return;
 	if (is_drivedge && VIDEO_TRANSFER_FLAGS == 0x5490)
 	{

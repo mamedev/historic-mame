@@ -16,7 +16,7 @@ static const UINT8 *color_codes;
 
 static struct tilemap *bg_tilemap;
 
-WRITE_HANDLER( dkong_videoram_w )
+WRITE8_HANDLER( dkong_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -174,7 +174,7 @@ VIDEO_START( dkong )
 }
 
 
-WRITE_HANDLER( dkongjr_gfxbank_w )
+WRITE8_HANDLER( dkongjr_gfxbank_w )
 {
 	if (gfx_bank != (data & 0x01))
 	{
@@ -183,7 +183,7 @@ WRITE_HANDLER( dkongjr_gfxbank_w )
 	}
 }
 
-WRITE_HANDLER( dkong3_gfxbank_w )
+WRITE8_HANDLER( dkong3_gfxbank_w )
 {
 	if (gfx_bank != (~data & 0x01))
 	{
@@ -192,7 +192,7 @@ WRITE_HANDLER( dkong3_gfxbank_w )
 	}
 }
 
-WRITE_HANDLER( dkong_palettebank_w )
+WRITE8_HANDLER( dkong_palettebank_w )
 {
 	int newbank;
 
@@ -210,12 +210,12 @@ WRITE_HANDLER( dkong_palettebank_w )
 	}
 }
 
-WRITE_HANDLER( radarscp_grid_enable_w )
+WRITE8_HANDLER( radarscp_grid_enable_w )
 {
 	grid_on = data & 0x01;
 }
 
-WRITE_HANDLER( radarscp_grid_color_w )
+WRITE8_HANDLER( radarscp_grid_color_w )
 {
 	int r,g,b;
 
@@ -226,7 +226,7 @@ WRITE_HANDLER( radarscp_grid_color_w )
 	palette_set_color(257,0x00,0x00,0xff);
 }
 
-WRITE_HANDLER( dkong_flipscreen_w )
+WRITE8_HANDLER( dkong_flipscreen_w )
 {
 	flip_screen_set(~data & 0x01);
 }

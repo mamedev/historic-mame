@@ -32,14 +32,14 @@ VIDEO_START( mayumi )
 	return 0;
 }
 
-WRITE_HANDLER( mayumi_videoram_w )
+WRITE8_HANDLER( mayumi_videoram_w )
 {
 	mayumi_videoram[offset] = data;
 
 	tilemap_mark_tile_dirty(mayumi_tilemap, offset & 0x7ff );
 }
 
-READ_HANDLER( mayumi_videoram_r )
+READ8_HANDLER( mayumi_videoram_r )
 {
 	return mayumi_videoram[offset];
 }

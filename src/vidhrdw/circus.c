@@ -37,7 +37,7 @@ struct Samplesinterface circus_samples_interface =
 	circus_sample_names
 };
 
-WRITE_HANDLER( circus_videoram_w )
+WRITE8_HANDLER( circus_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -46,12 +46,12 @@ WRITE_HANDLER( circus_videoram_w )
 	}
 }
 
-WRITE_HANDLER( circus_clown_x_w )
+WRITE8_HANDLER( circus_clown_x_w )
 {
 	clown_x = 240-data;
 }
 
-WRITE_HANDLER( circus_clown_y_w )
+WRITE8_HANDLER( circus_clown_y_w )
 {
 	clown_y = 240-data;
 }
@@ -60,7 +60,7 @@ WRITE_HANDLER( circus_clown_y_w )
 /* and also is used to enable the amplifier and trigger the   */
 /* discrete circuitry that produces sound effects and music   */
 
-WRITE_HANDLER( circus_clown_z_w )
+WRITE8_HANDLER( circus_clown_z_w )
 {
 	clown_z = (data & 0x0f);
 *(memory_region(REGION_CPU1)+0x8000)=data; logerror("Z:%02x\n",data); //DEBUG
@@ -343,8 +343,8 @@ static void ripcord_draw_skydiver( struct mame_bitmap *bitmap )
 	// report collision only when the character is not blank and within display area
 	if (collision && code!=0xf && clown_x>0 && clown_x<240 && clown_y>-12 && clown_y<240)
 	{
-		cpu_set_irq_line(0, 0, ASSERT_LINE); // interrupt accuracy is critical in Ripcord
-		cpu_set_irq_line(0, 0, CLEAR_LINE);
+		cpunum_set_input_line(0, 0, ASSERT_LINE); // interrupt accuracy is critical in Ripcord
+		cpunum_set_input_line(0, 0, CLEAR_LINE);
 	}
 }
 

@@ -54,12 +54,12 @@ int skyfox_bg_pos, skyfox_bg_ctrl;
 
 ***************************************************************************/
 
-READ_HANDLER( skyfox_vregs_r )	// for debug
+READ8_HANDLER( skyfox_vregs_r )	// for debug
 {
 	return vreg[offset];
 }
 
-WRITE_HANDLER( skyfox_vregs_w )
+WRITE8_HANDLER( skyfox_vregs_w )
 {
 	vreg[offset] = data;
 

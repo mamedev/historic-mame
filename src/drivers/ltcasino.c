@@ -43,13 +43,13 @@ VIDEO_START(ltcasino)
 }
 
 
-WRITE_HANDLER( ltcasino_tile_num_w )
+WRITE8_HANDLER( ltcasino_tile_num_w )
 {
 	ltcasino_tile_num_ram[offset] = data;
 	tilemap_mark_tile_dirty(ltcasino_tilemap,offset);
 }
 
-WRITE_HANDLER( ltcasino_tile_atr_w )
+WRITE8_HANDLER( ltcasino_tile_atr_w )
 {
 	ltcasino_tile_atr_ram[offset] = data;
 	tilemap_mark_tile_dirty(ltcasino_tilemap,offset);

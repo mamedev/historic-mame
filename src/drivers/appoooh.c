@@ -71,7 +71,7 @@ static void appoooh_adpcm_int(int num)
 	}
 }
 /* adpcm address write */
-static WRITE_HANDLER( appoooh_adpcm_w )
+static WRITE8_HANDLER( appoooh_adpcm_w )
 {
 	unsigned char *RAM = memory_region(REGION_SOUND1);
 	adpcmptr  = &RAM[data*256];

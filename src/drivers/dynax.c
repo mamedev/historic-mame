@@ -95,16 +95,16 @@ void sprtmtch_update_irq(void)
 	int irq	=	((dynax_sound_irq)   ? 0x08 : 0) |
 				((dynax_vblank_irq)  ? 0x10 : 0) |
 				((dynax_blitter_irq) ? 0x20 : 0) ;
-	cpu_set_irq_line_and_vector(0, 0, irq ? ASSERT_LINE : CLEAR_LINE, 0xc7 | irq); /* rst $xx */
+	cpunum_set_input_line_and_vector(0, 0, irq ? ASSERT_LINE : CLEAR_LINE, 0xc7 | irq); /* rst $xx */
 }
 
-WRITE_HANDLER( dynax_vblank_ack_w )
+WRITE8_HANDLER( dynax_vblank_ack_w )
 {
 	dynax_vblank_irq = 0;
 	sprtmtch_update_irq();
 }
 
-WRITE_HANDLER( dynax_blitter_ack_w )
+WRITE8_HANDLER( dynax_blitter_ack_w )
 {
 	dynax_blitter_irq = 0;
 	sprtmtch_update_irq();
@@ -135,22 +135,22 @@ void jantouki_update_irq(void)
 	int irq	=	((dynax_blitter_irq)	? 0x08 : 0) |
 				((dynax_blitter2_irq)	? 0x10 : 0) |
 				((dynax_vblank_irq)		? 0x20 : 0) ;
-	cpu_set_irq_line_and_vector(0, 0, irq ? ASSERT_LINE : CLEAR_LINE, 0xc7 | irq); /* rst $xx */
+	cpunum_set_input_line_and_vector(0, 0, irq ? ASSERT_LINE : CLEAR_LINE, 0xc7 | irq); /* rst $xx */
 }
 
-WRITE_HANDLER( jantouki_vblank_ack_w )
+WRITE8_HANDLER( jantouki_vblank_ack_w )
 {
 	dynax_vblank_irq = 0;
 	jantouki_update_irq();
 }
 
-WRITE_HANDLER( jantouki_blitter_ack_w )
+WRITE8_HANDLER( jantouki_blitter_ack_w )
 {
 	dynax_blitter_irq = data;
 	jantouki_update_irq();
 }
 
-WRITE_HANDLER( jantouki_blitter2_ack_w )
+WRITE8_HANDLER( jantouki_blitter2_ack_w )
 {
 	dynax_blitter2_irq = data;
 	jantouki_update_irq();
@@ -175,7 +175,7 @@ void jantouki_sound_update_irq(void)
 	int irq	=	((dynax_sound_irq)			? 0x08 : 0) |
 				((dynax_soundlatch_irq)		? 0x10 : 0) |
 				((dynax_sound_vblank_irq)	? 0x20 : 0) ;
-	cpu_set_irq_line_and_vector(1, 0, irq ? ASSERT_LINE : CLEAR_LINE, 0xc7 | irq); /* rst $xx */
+	cpunum_set_input_line_and_vector(1, 0, irq ? ASSERT_LINE : CLEAR_LINE, 0xc7 | irq); /* rst $xx */
 }
 
 INTERRUPT_GEN( jantouki_sound_vblank_interrupt )
@@ -184,7 +184,7 @@ INTERRUPT_GEN( jantouki_sound_vblank_interrupt )
 	jantouki_sound_update_irq();
 }
 
-WRITE_HANDLER( jantouki_sound_vblank_ack_w )
+WRITE8_HANDLER( jantouki_sound_vblank_ack_w )
 {
 	dynax_sound_vblank_irq = 0;
 	jantouki_sound_update_irq();
@@ -209,21 +209,21 @@ void jantouki_sound_callback(int state)
 								Sports Match
 ***************************************************************************/
 
-static WRITE_HANDLER( dynax_coincounter_0_w )
+static WRITE8_HANDLER( dynax_coincounter_0_w )
 {
 	coin_counter_w(0, data);
 }
-static WRITE_HANDLER( dynax_coincounter_1_w )
+static WRITE8_HANDLER( dynax_coincounter_1_w )
 {
 	coin_counter_w(1, data);
 }
 
-static READ_HANDLER( ret_ff )	{	return 0xff;	}
+static READ8_HANDLER( ret_ff )	{	return 0xff;	}
 
 
 static int keyb;
 
-static READ_HANDLER( hanamai_keyboard_0_r )
+static READ8_HANDLER( hanamai_keyboard_0_r )
 {
 	int res = 0x3f;
 
@@ -237,24 +237,24 @@ static READ_HANDLER( hanamai_keyboard_0_r )
 	return res;
 }
 
-static READ_HANDLER( hanamai_keyboard_1_r )
+static READ8_HANDLER( hanamai_keyboard_1_r )
 {
 	return 0x3f;
 }
 
-static WRITE_HANDLER( hanamai_keyboard_w )
+static WRITE8_HANDLER( hanamai_keyboard_w )
 {
 	keyb = data;
 }
 
 
-static WRITE_HANDLER( dynax_rombank_w )
+static WRITE8_HANDLER( dynax_rombank_w )
 {
 	data8_t *ROM = memory_region(REGION_CPU1);
 	cpu_setbank(1,&ROM[0x08000+0x8000*(data & 0x0f)]);
 }
 
-static WRITE_HANDLER( jantouki_sound_rombank_w )
+static WRITE8_HANDLER( jantouki_sound_rombank_w )
 {
 	data8_t *ROM = memory_region(REGION_CPU2);
 	cpu_setbank(2,&ROM[0x08000+0x8000*data]);
@@ -263,7 +263,7 @@ static WRITE_HANDLER( jantouki_sound_rombank_w )
 
 static int hnoridur_bank;
 
-static WRITE_HANDLER( hnoridur_rombank_w )
+static WRITE8_HANDLER( hnoridur_rombank_w )
 {
 	data8_t *ROM = memory_region(REGION_CPU1) + 0x10000 + 0x8000*data;
 //logerror("%04x: rom bank = %02x\n",activecpu_get_pc(),data);
@@ -274,13 +274,13 @@ static WRITE_HANDLER( hnoridur_rombank_w )
 static data8_t palette_ram[16*256*2];
 static int palbank;
 
-static WRITE_HANDLER( hnoridur_palbank_w )
+static WRITE8_HANDLER( hnoridur_palbank_w )
 {
 	palbank = data & 0x0f;
 	dynax_blit_palbank_w(0,data);
 }
 
-static WRITE_HANDLER( hnoridur_palette_w )
+static WRITE8_HANDLER( hnoridur_palette_w )
 {
 	switch (hnoridur_bank)
 	{
@@ -320,7 +320,7 @@ static WRITE_HANDLER( hnoridur_palette_w )
 	}
 }
 
-static WRITE_HANDLER( yarunara_palette_w )
+static WRITE8_HANDLER( yarunara_palette_w )
 {
 	int addr = 512*palbank + offset;
 
@@ -351,7 +351,7 @@ static WRITE_HANDLER( yarunara_palette_w )
 	}
 }
 
-static WRITE_HANDLER( nanajign_palette_w )
+static WRITE8_HANDLER( nanajign_palette_w )
 {
 	switch (hnoridur_bank)
 	{
@@ -395,7 +395,7 @@ static void adpcm_int(int data)
 	if (toggle)
 	{
 		if (resetkludge)	// don't know what's wrong, but NMIs when the 5205 is reset make the game crash
-		cpu_set_nmi_line(0,PULSE_LINE);
+		cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 	}
 }
 static void adpcm_int_cpu1(int data)
@@ -409,17 +409,17 @@ static void adpcm_int_cpu1(int data)
 	if (toggle)
 	{
 		if (resetkludge)	// don't know what's wrong, but NMIs when the 5205 is reset make the game crash
-		cpu_set_nmi_line(1,PULSE_LINE);	// cpu1
+		cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);	// cpu1
 	}
 }
 
 
-static WRITE_HANDLER( adpcm_data_w )
+static WRITE8_HANDLER( adpcm_data_w )
 {
 	msm5205next = data;
 }
 
-static WRITE_HANDLER( adpcm_reset_w )
+static WRITE8_HANDLER( adpcm_reset_w )
 {
 	resetkludge = data & 1;
 	MSM5205_reset_w(0,~data & 1);
@@ -432,15 +432,15 @@ static MACHINE_INIT( adpcm )
 	MSM5205_reset_w(0,1);
 }
 
-static WRITE_HANDLER( yarunara_layer_half_w )
+static WRITE8_HANDLER( yarunara_layer_half_w )
 {
 	hanamai_layer_half_w(0,data >> 1);
 }
-static WRITE_HANDLER( yarunara_layer_half2_w )
+static WRITE8_HANDLER( yarunara_layer_half2_w )
 {
 	hnoridur_layer_half2_w(0,data >> 1);
 }
-WRITE_HANDLER( nanajign_layer_half_w )
+WRITE8_HANDLER( nanajign_layer_half_w )
 {
 	hanamai_layer_half_w(0,~data);
 }
@@ -781,7 +781,7 @@ ADDRESS_MAP_END
 ***************************************************************************/
 
 static data8_t yarunara_select, yarunara_ip;
-static WRITE_HANDLER( yarunara_input_w )
+static WRITE8_HANDLER( yarunara_input_w )
 {
 	switch (offset)
 	{
@@ -794,7 +794,7 @@ static WRITE_HANDLER( yarunara_input_w )
 
 }
 
-static READ_HANDLER( yarunara_input_r )
+static READ8_HANDLER( yarunara_input_r )
 {
 	switch (offset)
 	{
@@ -835,7 +835,7 @@ static READ_HANDLER( yarunara_input_r )
 	return 0xff;
 }
 
-static WRITE_HANDLER( yarunara_rombank_w )
+static WRITE8_HANDLER( yarunara_rombank_w )
 {
 	UINT8 *rom = memory_region(REGION_CPU1) + 0x10000 + 0x8000 * data;
 	cpu_setbank(1, rom);
@@ -845,7 +845,7 @@ static WRITE_HANDLER( yarunara_rombank_w )
 		rom[0x0d] = 0x00;	// RTC
 }
 
-WRITE_HANDLER( yarunara_flipscreen_w )
+WRITE8_HANDLER( yarunara_flipscreen_w )
 {
 	dynax_flipscreen_w(0,(data&2)?1:0);
 }
@@ -894,12 +894,12 @@ UINT8 dynax_soundlatch_ack;
 UINT8 dynax_soundlatch_full;
 static data8_t latch;
 
-READ_HANDLER( jantouki_soundlatch_ack_r )
+READ8_HANDLER( jantouki_soundlatch_ack_r )
 {
 	return (dynax_soundlatch_ack) ? 0x80 : 0;
 }
 
-WRITE_HANDLER( jantouki_soundlatch_w )
+WRITE8_HANDLER( jantouki_soundlatch_w )
 {
 	dynax_soundlatch_ack = 1;
 	dynax_soundlatch_full = 1;
@@ -908,12 +908,12 @@ WRITE_HANDLER( jantouki_soundlatch_w )
 	jantouki_sound_update_irq();
 }
 
-READ_HANDLER( jantouki_blitter_busy_r )
+READ8_HANDLER( jantouki_blitter_busy_r )
 {
 	return 0;	// bit 0 & 1
 }
 
-static WRITE_HANDLER( jantouki_rombank_w )
+static WRITE8_HANDLER( jantouki_rombank_w )
 {
 	data8_t *ROM = memory_region(REGION_CPU1);
 	cpu_setbank(1,&ROM[0x8000 + 0x8000*(data&0x0f)]);
@@ -958,20 +958,20 @@ ADDRESS_MAP_END
 							Jantouki - Sound CPU
 ***************************************************************************/
 
-WRITE_HANDLER( jantouki_soundlatch_ack_w )
+WRITE8_HANDLER( jantouki_soundlatch_ack_w )
 {
 	dynax_soundlatch_ack = data;
 	dynax_soundlatch_irq = 0;
 	jantouki_sound_update_irq();
 }
 
-READ_HANDLER( jantouki_soundlatch_r )
+READ8_HANDLER( jantouki_soundlatch_r )
 {
 	dynax_soundlatch_full = 0;
 	return latch;
 }
 
-READ_HANDLER( jantouki_soundlatch_status_r )
+READ8_HANDLER( jantouki_soundlatch_status_r )
 {
 	return (dynax_soundlatch_full) ? 0 : 0x80;
 }
@@ -1001,19 +1001,19 @@ ADDRESS_MAP_END
 							Mahjong Electron Base
 ***************************************************************************/
 
-static READ_HANDLER( mjelctrn_keyboard_1_r )
+static READ8_HANDLER( mjelctrn_keyboard_1_r )
 {
 	return (hanamai_keyboard_1_r(0) & 0x3f) | (readinputport(10) ? 0x40 : 0);
 }
 
-static READ_HANDLER( mjelctrn_dsw_r )
+static READ8_HANDLER( mjelctrn_dsw_r )
 {
 	int dsw = (keyb & 0xc0) >> 6;
 	if (dsw >= 2)	dsw = dsw - 2 + 8;	// 0-3 -> IN0,IN1,IN8,IN9
 	return readinputport(dsw);
 }
 
-static WRITE_HANDLER( mjelctrn_blitter_ack_w )
+static WRITE8_HANDLER( mjelctrn_blitter_ack_w )
 {
 	dynax_blitter_irq = 0;
 }
@@ -3038,7 +3038,7 @@ MACHINE_DRIVER_END
 void mjelctrn_update_irq(void)
 {
 	dynax_blitter_irq = 1;
-	cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0xfa);
+	cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, 0xfa);
 }
 
 INTERRUPT_GEN( mjelctrn_vblank_interrupt )
@@ -3046,7 +3046,7 @@ INTERRUPT_GEN( mjelctrn_vblank_interrupt )
 	// This is a kludge to avoid losing blitter interrupts
 	// there should be a vblank ack mechanism
 	if (!dynax_blitter_irq)
-		cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0xf8);
+		cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, 0xf8);
 }
 
 static MACHINE_DRIVER_START( mjelctrn )
@@ -3072,7 +3072,7 @@ MACHINE_DRIVER_END
 void neruton_update_irq(void)
 {
 	dynax_blitter_irq = 1;
-	cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0x42);
+	cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, 0x42);
 }
 
 INTERRUPT_GEN( neruton_vblank_interrupt )
@@ -3083,8 +3083,8 @@ INTERRUPT_GEN( neruton_vblank_interrupt )
 
 	switch(cpu_getiloops())
 	{
-		case 0:		cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0x40);	break;
-		default:	cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0x46);
+		case 0:		cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, 0x40);	break;
+		default:	cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, 0x46);
 	}
 }
 

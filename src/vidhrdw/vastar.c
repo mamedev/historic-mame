@@ -97,31 +97,31 @@ VIDEO_START( vastar )
 
 ***************************************************************************/
 
-WRITE_HANDLER( vastar_fgvideoram_w )
+WRITE8_HANDLER( vastar_fgvideoram_w )
 {
 	vastar_fgvideoram[offset] = data;
 	tilemap_mark_tile_dirty(fg_tilemap,offset & 0x3ff);
 }
 
-WRITE_HANDLER( vastar_bg1videoram_w )
+WRITE8_HANDLER( vastar_bg1videoram_w )
 {
 	vastar_bg1videoram[offset] = data;
 	tilemap_mark_tile_dirty(bg1_tilemap,offset & 0x3ff);
 }
 
-WRITE_HANDLER( vastar_bg2videoram_w )
+WRITE8_HANDLER( vastar_bg2videoram_w )
 {
 	vastar_bg2videoram[offset] = data;
 	tilemap_mark_tile_dirty(bg2_tilemap,offset & 0x3ff);
 }
 
 
-READ_HANDLER( vastar_bg1videoram_r )
+READ8_HANDLER( vastar_bg1videoram_r )
 {
 	return vastar_bg1videoram[offset];
 }
 
-READ_HANDLER( vastar_bg2videoram_r )
+READ8_HANDLER( vastar_bg2videoram_r )
 {
 	return vastar_bg2videoram[offset];
 }

@@ -10,7 +10,7 @@ data8_t *homerun_videoram;
 
 #define half_screen 116
 
-WRITE_HANDLER(homerun_banking_w)
+WRITE8_HANDLER(homerun_banking_w)
 {
 	if(cpu_getscanline()>half_screen)
 		homerun_gc_down=data&3;
@@ -26,14 +26,14 @@ WRITE_HANDLER(homerun_banking_w)
 		cpu_setbank(1, memory_region(REGION_CPU1) + 0x10000 + (((data-1)&0x7)*0x4000 ));	
 }
 
-WRITE_HANDLER( homerun_videoram_w )
+WRITE8_HANDLER( homerun_videoram_w )
 {
 
 	homerun_videoram[offset]=data;
 	tilemap_mark_tile_dirty(homerun_tilemap,offset&0xfff);
 }
 
-WRITE_HANDLER(homerun_color_w)
+WRITE8_HANDLER(homerun_color_w)
 {
 	int r,g,b;
 	int bit0,bit1,bit2;

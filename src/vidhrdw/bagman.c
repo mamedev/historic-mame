@@ -16,7 +16,7 @@ UINT8 *bagman_video_enable;
 static struct tilemap *bg_tilemap;
 
 
-WRITE_HANDLER( bagman_videoram_w )
+WRITE8_HANDLER( bagman_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -25,7 +25,7 @@ WRITE_HANDLER( bagman_videoram_w )
 	}
 }
 
-WRITE_HANDLER( bagman_colorram_w )
+WRITE8_HANDLER( bagman_colorram_w )
 {
 	if (colorram[offset] != data)
 	{
@@ -90,7 +90,7 @@ PALETTE_INIT( bagman )
 	}
 }
 
-WRITE_HANDLER( bagman_flipscreen_w )
+WRITE8_HANDLER( bagman_flipscreen_w )
 {
 	if (flip_screen != (data & 0x01))
 	{

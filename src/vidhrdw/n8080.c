@@ -95,7 +95,7 @@ static const UINT8 sheriff_color_PROM[] =
 };
 
 
-WRITE_HANDLER( n8080_video_control_w )
+WRITE8_HANDLER( n8080_video_control_w )
 {
 	sheriff_color_mode = (data >> 3) & 3;
 	sheriff_color_data = (data >> 0) & 7;

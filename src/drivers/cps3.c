@@ -81,7 +81,7 @@ MACHINE_DRIVER_END
 
 static DRIVER_INIT (nocpu)
 {
-	cpu_set_reset_line(0, ASSERT_LINE);
+	cpunum_set_input_line(0, INPUT_LINE_RESET, ASSERT_LINE);
 }
 
 

@@ -102,33 +102,33 @@ PALETTE_INIT( suprridr )
  *
  *************************************/
 
-WRITE_HANDLER( suprridr_flipx_w )
+WRITE8_HANDLER( suprridr_flipx_w )
 {
 	flipx = data & 1;
 	tilemap_set_flip(ALL_TILEMAPS, (flipx ? TILEMAP_FLIPX : 0) | (flipy ? TILEMAP_FLIPY : 0));
 }
 
 
-WRITE_HANDLER( suprridr_flipy_w )
+WRITE8_HANDLER( suprridr_flipy_w )
 {
 	flipy = data & 1;
 	tilemap_set_flip(ALL_TILEMAPS, (flipx ? TILEMAP_FLIPX : 0) | (flipy ? TILEMAP_FLIPY : 0));
 }
 
 
-WRITE_HANDLER( suprridr_fgdisable_w )
+WRITE8_HANDLER( suprridr_fgdisable_w )
 {
 	tilemap_set_enable(fg_tilemap, ~data & 1);
 }
 
 
-WRITE_HANDLER( suprridr_fgscrolly_w )
+WRITE8_HANDLER( suprridr_fgscrolly_w )
 {
 	tilemap_set_scrolly(fg_tilemap, 0, data);
 }
 
 
-WRITE_HANDLER( suprridr_bgscrolly_w )
+WRITE8_HANDLER( suprridr_bgscrolly_w )
 {
 	tilemap_set_scrolly(bg_tilemap, 0, data);
 }
@@ -141,7 +141,7 @@ WRITE_HANDLER( suprridr_bgscrolly_w )
  *
  *************************************/
 
-WRITE_HANDLER( suprridr_bgram_w )
+WRITE8_HANDLER( suprridr_bgram_w )
 {
 	suprridr_bgram[offset] = data;
 	tilemap_mark_tile_dirty(bg_tilemap, offset);
@@ -149,7 +149,7 @@ WRITE_HANDLER( suprridr_bgram_w )
 }
 
 
-WRITE_HANDLER( suprridr_fgram_w )
+WRITE8_HANDLER( suprridr_fgram_w )
 {
 	suprridr_fgram[offset] = data;
 	tilemap_mark_tile_dirty(fg_tilemap, offset);

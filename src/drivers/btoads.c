@@ -91,27 +91,27 @@ static READ16_HANDLER( main_sound_r )
  *
  *************************************/
 
-static WRITE_HANDLER( sound_data_w )
+static WRITE8_HANDLER( sound_data_w )
 {
 	sound_to_main_data = data;
 	sound_to_main_ready = 1;
 }
 
 
-static READ_HANDLER( sound_data_r )
+static READ8_HANDLER( sound_data_r )
 {
 	main_to_sound_ready = 0;
 	return main_to_sound_data;
 }
 
 
-static READ_HANDLER( sound_ready_to_send_r )
+static READ8_HANDLER( sound_ready_to_send_r )
 {
 	return sound_to_main_ready ? 0x00 : 0x80;
 }
 
 
-static READ_HANDLER( sound_data_ready_r )
+static READ8_HANDLER( sound_data_ready_r )
 {
 	if (activecpu_get_pc() == 0xd50 && !main_to_sound_ready)
 		cpu_spinuntil_int();
@@ -130,16 +130,16 @@ static INTERRUPT_GEN( sound_interrupt )
 {
 	if (sound_int_state & 0x80)
 	{
-		cpu_set_irq_line(1, 0, ASSERT_LINE);
+		cpunum_set_input_line(1, 0, ASSERT_LINE);
 		sound_int_state = 0x00;
 	}
 }
 
 
-static WRITE_HANDLER( sound_int_state_w )
+static WRITE8_HANDLER( sound_int_state_w )
 {
 	if (!(sound_int_state & 0x80) && (data & 0x80))
-		cpu_set_irq_line(1, 0, CLEAR_LINE);
+		cpunum_set_input_line(1, 0, CLEAR_LINE);
 
 	sound_int_state = data;
 }
@@ -152,13 +152,13 @@ static WRITE_HANDLER( sound_int_state_w )
  *
  *************************************/
 
-static READ_HANDLER( bsmt_ready_r )
+static READ8_HANDLER( bsmt_ready_r )
 {
 	return 0x80;
 }
 
 
-static WRITE_HANDLER( bsmt2000_port_w )
+static WRITE8_HANDLER( bsmt2000_port_w )
 {
 	UINT16 reg = offset >> 8;
 	UINT16 val = ((offset & 0xff) << 8) | data;

@@ -45,14 +45,14 @@ static void update_interrupts(void)
 		newstate |= 6;
 
 	if (newstate)
-		cpu_set_irq_line(0, newstate, ASSERT_LINE);
+		cpunum_set_input_line(0, newstate, ASSERT_LINE);
 	else
-		cpu_set_irq_line(0, 7, CLEAR_LINE);
+		cpunum_set_input_line(0, 7, CLEAR_LINE);
 
 	if (newstate2)
-		cpu_set_irq_line(1, newstate2, ASSERT_LINE);
+		cpunum_set_input_line(1, newstate2, ASSERT_LINE);
 	else
-		cpu_set_irq_line(1, 7, CLEAR_LINE);
+		cpunum_set_input_line(1, 7, CLEAR_LINE);
 }
 
 
@@ -95,9 +95,9 @@ static WRITE16_HANDLER( latch_w )
 	{
 		/* 0 means hold CPU 2's reset low */
 		if (data & 1)
-			cpu_set_reset_line(1, CLEAR_LINE);
+			cpunum_set_input_line(1, INPUT_LINE_RESET, CLEAR_LINE);
 		else
-			cpu_set_reset_line(1, ASSERT_LINE);
+			cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE);
 
 		/* bits 2-5 are the alpha bank */
 		if (thunderj_alpha_tile_bank != ((data >> 2) & 7))
@@ -462,7 +462,6 @@ static DRIVER_INIT( thunderj )
 {
 	atarigen_eeprom_default = NULL;
 	atarijsa_init(2, 3, 2, 0x0002);
-	atarigen_init_6502_speedup(2, 0x4159, 0x4171);
 }
 
 

@@ -53,8 +53,8 @@ data8_t* sbugger_videoram, *sbugger_videoram_attr;
 PALETTE_INIT(sbugger);
 VIDEO_UPDATE(sbugger);
 VIDEO_START(sbugger);
-WRITE_HANDLER( sbugger_videoram_attr_w );
-WRITE_HANDLER( sbugger_videoram_w );
+WRITE8_HANDLER( sbugger_videoram_attr_w );
+WRITE8_HANDLER( sbugger_videoram_w );
 
 /* memory maps */
 

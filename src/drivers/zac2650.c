@@ -15,11 +15,11 @@
 
 extern UINT8 *s2636ram;
 
-extern WRITE_HANDLER( tinvader_videoram_w );
-extern WRITE_HANDLER( zac_s2636_w );
-extern WRITE_HANDLER( tinvader_sound_w );
-extern READ_HANDLER( zac_s2636_r );
-extern READ_HANDLER( tinvader_port_0_r );
+extern WRITE8_HANDLER( tinvader_videoram_w );
+extern WRITE8_HANDLER( zac_s2636_w );
+extern WRITE8_HANDLER( tinvader_sound_w );
+extern READ8_HANDLER( zac_s2636_r );
+extern READ8_HANDLER( tinvader_port_0_r );
 
 extern VIDEO_START( tinvader );
 extern VIDEO_UPDATE( tinvader );
@@ -345,7 +345,7 @@ static MACHINE_DRIVER_START( tinvader )
 	/* sound hardware */
 MACHINE_DRIVER_END
 
-WRITE_HANDLER( tinvader_sound_w )
+WRITE8_HANDLER( tinvader_sound_w )
 {
     /* sounds are NOT the same as space invaders */
 

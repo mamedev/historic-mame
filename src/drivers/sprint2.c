@@ -19,12 +19,12 @@
 
 #include "driver.h"
 
-extern READ_HANDLER( sprint2_collision1_r );
-extern READ_HANDLER( sprint2_collision2_r );
+extern READ8_HANDLER( sprint2_collision1_r );
+extern READ8_HANDLER( sprint2_collision2_r );
 
-extern WRITE_HANDLER( sprint2_collision_reset1_w );
-extern WRITE_HANDLER( sprint2_collision_reset2_w );
-extern WRITE_HANDLER( sprint2_video_ram_w );
+extern WRITE8_HANDLER( sprint2_collision_reset1_w );
+extern WRITE8_HANDLER( sprint2_collision_reset2_w );
+extern WRITE8_HANDLER( sprint2_video_ram_w );
 
 extern VIDEO_UPDATE( sprint2 );
 extern VIDEO_START( sprint2 );
@@ -92,7 +92,7 @@ static INTERRUPT_GEN( sprint2 )
 	discrete_sound_w(3, sprint2_video_ram[0x395] & 15);
 	discrete_sound_w(4, sprint2_video_ram[0x396] & 15);
 
-	cpu_set_nmi_line(0, PULSE_LINE);
+	cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 }
 
 
@@ -119,19 +119,19 @@ static PALETTE_INIT( sprint2 )
 }
 
 
-static READ_HANDLER( sprint2_wram_r )
+static READ8_HANDLER( sprint2_wram_r )
 {
 	return sprint2_video_ram[0x380 + offset % 0x80];
 }
 
 
-static READ_HANDLER( sprint2_dip_r )
+static READ8_HANDLER( sprint2_dip_r )
 {
 	return (readinputport(0) << (2 * ((offset & 3) ^ 3))) & 0xc0;
 }
 
 
-static READ_HANDLER( sprint2_input_A_r )
+static READ8_HANDLER( sprint2_input_A_r )
 {
 	UINT8 val = readinputport(1);
 
@@ -149,7 +149,7 @@ static READ_HANDLER( sprint2_input_A_r )
 }
 
 
-static READ_HANDLER( sprint2_input_B_r )
+static READ8_HANDLER( sprint2_input_B_r )
 {
 	UINT8 val = readinputport(2);
 
@@ -164,7 +164,7 @@ static READ_HANDLER( sprint2_input_B_r )
 }
 
 
-static READ_HANDLER( sprint2_sync_r )
+static READ8_HANDLER( sprint2_sync_r )
 {
 	UINT8 val = 0;
 
@@ -189,33 +189,33 @@ static READ_HANDLER( sprint2_sync_r )
 }
 
 
-static READ_HANDLER( sprint2_steering1_r )
+static READ8_HANDLER( sprint2_steering1_r )
 {
 	return steering[0];
 }
-static READ_HANDLER( sprint2_steering2_r )
+static READ8_HANDLER( sprint2_steering2_r )
 {
 	return steering[1];
 }
 
 
-static WRITE_HANDLER( sprint2_steering_reset1_w )
+static WRITE8_HANDLER( sprint2_steering_reset1_w )
 {
 	steering[0] |= 0x80;
 }
-static WRITE_HANDLER( sprint2_steering_reset2_w )
+static WRITE8_HANDLER( sprint2_steering_reset2_w )
 {
 	steering[1] |= 0x80;
 }
 
 
-static WRITE_HANDLER( sprint2_wram_w )
+static WRITE8_HANDLER( sprint2_wram_w )
 {
 	sprint2_video_ram[0x380 + offset % 0x80] = data;
 }
 
 
-static WRITE_HANDLER( sprint2_attract_w )
+static WRITE8_HANDLER( sprint2_attract_w )
 {
 	attract = offset & 1;
 
@@ -223,27 +223,27 @@ static WRITE_HANDLER( sprint2_attract_w )
 }
 
 
-static WRITE_HANDLER( sprint2_noise_reset_w )
+static WRITE8_HANDLER( sprint2_noise_reset_w )
 {
 	discrete_sound_w(6, 0);
 }
 
 
-static WRITE_HANDLER( sprint2_skid1_w )
+static WRITE8_HANDLER( sprint2_skid1_w )
 {
 	discrete_sound_w(0, offset & 1);
 }
-static WRITE_HANDLER( sprint2_skid2_w )
+static WRITE8_HANDLER( sprint2_skid2_w )
 {
 	discrete_sound_w(1, offset & 1);
 }
 
 
-static WRITE_HANDLER( sprint2_lamp1_w )
+static WRITE8_HANDLER( sprint2_lamp1_w )
 {
 	set_led_status(0, offset & 1);
 }
-static WRITE_HANDLER( sprint2_lamp2_w )
+static WRITE8_HANDLER( sprint2_lamp2_w )
 {
 	set_led_status(1, offset & 1);
 }

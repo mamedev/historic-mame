@@ -134,7 +134,7 @@ VIDEO_START( spyhunt )
  *
  *************************************/
 
-WRITE_HANDLER( mcr3_paletteram_w )
+WRITE8_HANDLER( mcr3_paletteram_w )
 {
 	int r, g, b;
 
@@ -162,21 +162,21 @@ WRITE_HANDLER( mcr3_paletteram_w )
  *
  *************************************/
 
-WRITE_HANDLER( mcr3_videoram_w )
+WRITE8_HANDLER( mcr3_videoram_w )
 {
 	videoram[offset] = data;
 	tilemap_mark_tile_dirty(bg_tilemap, offset / 2);
 }
 
 
-WRITE_HANDLER( spyhunt_videoram_w )
+WRITE8_HANDLER( spyhunt_videoram_w )
 {
 	videoram[offset] = data;
 	tilemap_mark_tile_dirty(bg_tilemap, offset);
 }
 
 
-WRITE_HANDLER( spyhunt_alpharam_w )
+WRITE8_HANDLER( spyhunt_alpharam_w )
 {
 	spyhunt_alpharam[offset] = data;
 	tilemap_mark_tile_dirty(alpha_tilemap, offset);

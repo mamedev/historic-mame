@@ -112,7 +112,7 @@ static void delayed_sound_reset(int param);
 static void delayed_sound_w(int param);
 static void delayed_6502_sound_w(int param);
 
-static READ_HANDLER( m6502_speedup_r );
+static READ8_HANDLER( m6502_speedup_r );
 static void atarigen_set_vol(int volume, const char *string);
 
 static void vblank_timer(int param);
@@ -466,8 +466,8 @@ void atarigen_slapstic_init(int cpunum, int base, int chipnum)
 		slapstic_init(chipnum);
 
 		/* install the memory handlers */
-		atarigen_slapstic = install_mem_read16_handler(cpunum, base, base + 0x7fff, atarigen_slapstic_r);
-		atarigen_slapstic = install_mem_write16_handler(cpunum, base, base + 0x7fff, atarigen_slapstic_w);
+		atarigen_slapstic = memory_install_read16_handler(cpunum, ADDRESS_SPACE_PROGRAM, base, base + 0x7fff, 0, 0, atarigen_slapstic_r);
+		atarigen_slapstic = memory_install_write16_handler(cpunum, ADDRESS_SPACE_PROGRAM, base, base + 0x7fff, 0, 0, atarigen_slapstic_w);
 
 		/* allocate memory for a copy of bank 0 */
 		atarigen_slapstic_bank0 = auto_malloc(0x2000);
@@ -560,14 +560,14 @@ INTERRUPT_GEN( atarigen_6502_irq_gen )
 	sound processor. Both reads and writes can be used.
 ---------------------------------------------------------------*/
 
-READ_HANDLER( atarigen_6502_irq_ack_r )
+READ8_HANDLER( atarigen_6502_irq_ack_r )
 {
 	timed_int = 0;
 	update_6502_irq();
 	return 0;
 }
 
-WRITE_HANDLER( atarigen_6502_irq_ack_w )
+WRITE8_HANDLER( atarigen_6502_irq_ack_w )
 {
 	timed_int = 0;
 	update_6502_irq();
@@ -668,7 +668,7 @@ READ32_HANDLER( atarigen_sound_upper32_r )
 	CPU to the main CPU.
 ---------------------------------------------------------------*/
 
-WRITE_HANDLER( atarigen_6502_sound_w )
+WRITE8_HANDLER( atarigen_6502_sound_w )
 {
 	timer_set(TIME_NOW, data, delayed_6502_sound_w);
 }
@@ -679,10 +679,10 @@ WRITE_HANDLER( atarigen_6502_sound_w )
 	from the main CPU to the sound CPU.
 ---------------------------------------------------------------*/
 
-READ_HANDLER( atarigen_6502_sound_r )
+READ8_HANDLER( atarigen_6502_sound_r )
 {
 	atarigen_cpu_to_sound_ready = 0;
-	cpu_set_nmi_line(sound_cpu_num, CLEAR_LINE);
+	cpunum_set_input_line(sound_cpu_num, INPUT_LINE_NMI, CLEAR_LINE);
 	return atarigen_cpu_to_sound;
 }
 
@@ -697,9 +697,9 @@ READ_HANDLER( atarigen_6502_sound_r )
 void update_6502_irq(void)
 {
 	if (timed_int || ym2151_int)
-		cpu_set_irq_line(sound_cpu_num, M6502_IRQ_LINE, ASSERT_LINE);
+		cpunum_set_input_line(sound_cpu_num, M6502_IRQ_LINE, ASSERT_LINE);
 	else
-		cpu_set_irq_line(sound_cpu_num, M6502_IRQ_LINE, CLEAR_LINE);
+		cpunum_set_input_line(sound_cpu_num, M6502_IRQ_LINE, CLEAR_LINE);
 }
 
 
@@ -727,8 +727,8 @@ static void delayed_sound_reset(int param)
 	/* unhalt and reset the sound CPU */
 	if (param == 0)
 	{
-		cpu_set_halt_line(sound_cpu_num, CLEAR_LINE);
-		cpu_set_reset_line(sound_cpu_num, PULSE_LINE);
+		cpunum_set_input_line(sound_cpu_num, INPUT_LINE_HALT, CLEAR_LINE);
+		cpunum_set_input_line(sound_cpu_num, INPUT_LINE_RESET, PULSE_LINE);
 	}
 
 	/* reset the sound write state */
@@ -751,7 +751,7 @@ static void delayed_sound_w(int param)
 	/* set up the states and signal an NMI to the sound CPU */
 	atarigen_cpu_to_sound = param;
 	atarigen_cpu_to_sound_ready = 1;
-	cpu_set_nmi_line(sound_cpu_num, ASSERT_LINE);
+	cpunum_set_input_line(sound_cpu_num, INPUT_LINE_NMI, ASSERT_LINE);
 
 	/* allocate a high frequency timer until a response is generated */
 	/* the main CPU is *very* sensistive to the timing of the response */
@@ -781,38 +781,6 @@ static void delayed_6502_sound_w(int param)
 /*##########################################################################
 	SOUND HELPERS
 ##########################################################################*/
-
-/*---------------------------------------------------------------
-	atarigen_init_6502_speedup: Installs a special read handler
-	to catch the main spin loop in the 6502 sound code. The
-	addresses accessed seem to be the same across a large
-	number of games, though the PC shifts.
----------------------------------------------------------------*/
-
-void atarigen_init_6502_speedup(int cpunum, int compare_pc1, int compare_pc2)
-{
-	UINT8 *memory = memory_region(REGION_CPU1+cpunum);
-	int address_low, address_high;
-
-	/* determine the pointer to the first speed check location */
-	address_low = memory[compare_pc1 + 1] | (memory[compare_pc1 + 2] << 8);
-	address_high = memory[compare_pc1 + 4] | (memory[compare_pc1 + 5] << 8);
-	if (address_low != address_high - 1)
-		logerror("Error: address %04X does not point to a speedup location!", compare_pc1);
-	speed_a = &memory[address_low];
-
-	/* determine the pointer to the second speed check location */
-	address_low = memory[compare_pc2 + 1] | (memory[compare_pc2 + 2] << 8);
-	address_high = memory[compare_pc2 + 4] | (memory[compare_pc2 + 5] << 8);
-	if (address_low != address_high - 1)
-		logerror("Error: address %04X does not point to a speedup location!", compare_pc2);
-	speed_b = &memory[address_low];
-
-	/* install a handler on the second address */
-	speed_pc = compare_pc2;
-	install_mem_read_handler(cpunum, address_low, address_low, m6502_speedup_r);
-}
-
 
 /*---------------------------------------------------------------
 	atarigen_set_vol: Scans for a particular sound chip and
@@ -867,7 +835,7 @@ void atarigen_set_oki6295_vol(int volume)
 	m6502_speedup_r: Handles speeding up the 6502.
 ---------------------------------------------------------------*/
 
-static READ_HANDLER( m6502_speedup_r )
+static READ8_HANDLER( m6502_speedup_r )
 {
 	int result = speed_b[0];
 
@@ -1007,7 +975,7 @@ void atarivc_update(const data16_t *data)
 
 	/* use this for debugging the video controller values */
 #if 0
-	if (keyboard_pressed(KEYCODE_8))
+	if (code_pressed(KEYCODE_8))
 	{
 		static FILE *out;
 		if (!out) out = fopen("scroll.log", "w");
@@ -1375,7 +1343,7 @@ WRITE16_HANDLER( atarigen_halt_until_hblank_0_w )
 	/* halt and set a timer to wake up */
 	fraction = (double)(hblank - hpos) / (double)Machine->drv->screen_width;
 	timer_set(cpu_getscanlineperiod() * fraction, 0, unhalt_cpu);
-	cpu_set_halt_line(0, ASSERT_LINE);
+	cpunum_set_input_line(0, INPUT_LINE_HALT, ASSERT_LINE);
 }
 
 
@@ -1479,7 +1447,7 @@ WRITE32_HANDLER( atarigen_666_paletteram32_w )
 
 static void unhalt_cpu(int param)
 {
-	cpu_set_halt_line(param, CLEAR_LINE);
+	cpunum_set_input_line(param, INPUT_LINE_HALT, CLEAR_LINE);
 }
 
 

@@ -57,7 +57,7 @@
 
 struct cpu_interface
 m6502_interface=
-CPU0(M6502,    m6502,    1,  0,1.00,M6502_INT_NONE,    M6502_IRQ_LINE,  IRQ_LINE_NMI,  8, 16,     0,16,LE,1, 3),
+CPU0(M6502,    m6502,    1,  0,1.00,M6502_INT_NONE,    M6502_IRQ_LINE,  INPUT_LINE_NMI,  8, 16,     0,16,LE,1, 3),
 	m65c02_interface=
 CPU0(M65C02,   m65c02,   1,  0,1.00,M65C02_INT_NONE,   M65C02_INT_IRQ, M65C02_INT_NMI, 8, 16,     0,16,LE,1, 3),
 	m65sc02_interface=
@@ -308,7 +308,7 @@ static int m6502_execute(int cycles)
 
 static void m6502_set_irq_line(int irqline, int state)
 {
-	if (irqline == IRQ_LINE_NMI)
+	if (irqline == INPUT_LINE_NMI)
 	{
 		if (m6502.nmi_state == state) return;
 		m6502.nmi_state = state;
@@ -507,7 +507,7 @@ static int m65c02_execute(int cycles)
 
 static void m65c02_set_irq_line(int irqline, int state)
 {
-	if (irqline == IRQ_LINE_NMI)
+	if (irqline == INPUT_LINE_NMI)
 	{
 		if (m6502.nmi_state == state) return;
 		m6502.nmi_state = state;
@@ -601,7 +601,7 @@ INLINE void deco16_take_irq(void)
 
 static void deco16_set_irq_line(int irqline, int state)
 {
-	if (irqline == IRQ_LINE_NMI)
+	if (irqline == INPUT_LINE_NMI)
 	{
 		if (m6502.nmi_state == state) return;
 		m6502.nmi_state = state;
@@ -699,9 +699,9 @@ static void m6502_set_info(UINT32 state, union cpuinfo *info)
 	switch (state)
 	{
 		/* --- the following bits of info are set as 64-bit signed integers --- */
-		case CPUINFO_INT_IRQ_STATE + M6502_IRQ_LINE:	m6502_set_irq_line(M6502_IRQ_LINE, info->i); break;
-		case CPUINFO_INT_IRQ_STATE + M6502_SET_OVERFLOW:m6502_set_irq_line(M6502_SET_OVERFLOW, info->i); break;
-		case CPUINFO_INT_IRQ_STATE + IRQ_LINE_NMI:		m6502_set_irq_line(IRQ_LINE_NMI, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + M6502_IRQ_LINE:	m6502_set_irq_line(M6502_IRQ_LINE, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + M6502_SET_OVERFLOW:m6502_set_irq_line(M6502_SET_OVERFLOW, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:	m6502_set_irq_line(INPUT_LINE_NMI, info->i); break;
 
 		case CPUINFO_INT_PC:							PCW = info->i; change_pc(PCD);		break;
 		case CPUINFO_INT_REGISTER + M6502_PC:			m6502.pc.w.l = info->i;					break;
@@ -731,7 +731,7 @@ void m6502_get_info(UINT32 state, union cpuinfo *info)
 	{
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
 		case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(m6502);				break;
-		case CPUINFO_INT_IRQ_LINES:						info->i = 2;							break;
+		case CPUINFO_INT_INPUT_LINES:					info->i = 2;							break;
 		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
 		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_LE;					break;
 		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
@@ -750,9 +750,9 @@ void m6502_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 0;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
 
-		case CPUINFO_INT_IRQ_STATE + M6502_IRQ_LINE:	info->i = m6502.irq_state;				break;
-		case CPUINFO_INT_IRQ_STATE + M6502_SET_OVERFLOW:info->i = m6502.so_state;				break;
-		case CPUINFO_INT_IRQ_STATE + IRQ_LINE_NMI:		info->i = m6502.nmi_state;				break;
+		case CPUINFO_INT_INPUT_STATE + M6502_IRQ_LINE:	info->i = m6502.irq_state;				break;
+		case CPUINFO_INT_INPUT_STATE + M6502_SET_OVERFLOW:info->i = m6502.so_state;				break;
+		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:	info->i = m6502.nmi_state;				break;
 
 		case CPUINFO_INT_PREVIOUSPC:					info->i = m6502.ppc.w.l;				break;
 
@@ -948,7 +948,7 @@ static void m65c02_set_info(UINT32 state, union cpuinfo *info)
 	switch (state)
 	{
 		/* --- the following bits of info are set as 64-bit signed integers --- */
-		case CPUINFO_INT_IRQ_STATE + IRQ_LINE_NMI:		m65c02_set_irq_line(IRQ_LINE_NMI, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:	m65c02_set_irq_line(INPUT_LINE_NMI, info->i);	break;
 
 		/* --- the following bits of info are set as pointers to data or functions --- */
 
@@ -1017,9 +1017,9 @@ static void deco16_set_info(UINT32 state, union cpuinfo *info)
 	switch (state)
 	{
 		/* --- the following bits of info are set as 64-bit signed integers --- */
-		case CPUINFO_INT_IRQ_STATE + M6502_IRQ_LINE:	deco16_set_irq_line(M6502_IRQ_LINE, info->i); break;
-		case CPUINFO_INT_IRQ_STATE + M6502_SET_OVERFLOW:deco16_set_irq_line(M6502_SET_OVERFLOW, info->i); break;
-		case CPUINFO_INT_IRQ_STATE + IRQ_LINE_NMI:		deco16_set_irq_line(IRQ_LINE_NMI, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + M6502_IRQ_LINE:	deco16_set_irq_line(M6502_IRQ_LINE, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + M6502_SET_OVERFLOW:deco16_set_irq_line(M6502_SET_OVERFLOW, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:	deco16_set_irq_line(INPUT_LINE_NMI, info->i);	break;
 
 		/* --- the following bits of info are set as pointers to data or functions --- */
 

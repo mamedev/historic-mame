@@ -150,9 +150,9 @@ WRITE32_HANDLER( z80_enable_w )
 {
 	z80_fifo_pos = 0;
 	if( data & 0x1 ) {
-		cpunum_set_reset_line( 1, CLEAR_LINE );
+		cpunum_set_input_line(1, INPUT_LINE_RESET, CLEAR_LINE );
 	} else {
-		cpunum_set_reset_line( 1, ASSERT_LINE );
+		cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE );
 	}
 }
 
@@ -299,11 +299,11 @@ static void irqhandler(int state)
 {
 	if (state)
 	{
-		cpu_set_irq_line_and_vector(1, 0, ASSERT_LINE, 0xd7);	// IRQ is RST10
+		cpunum_set_input_line_and_vector(1, 0, ASSERT_LINE, 0xd7);	// IRQ is RST10
 	}
 	else
 	{
-		cpu_set_irq_line(1, 0, CLEAR_LINE);
+		cpunum_set_input_line(1, 0, CLEAR_LINE);
 	}
 }
 
@@ -670,7 +670,7 @@ static NVRAM_HANDLER( sxx2f )
 
 static INTERRUPT_GEN( spi_interrupt )
 {
-	cpu_set_irq_line( 0, 0x20, PULSE_LINE );
+	cpunum_set_input_line( 0, 0x20, PULSE_LINE );
 }
 
 /* SPI */
@@ -680,16 +680,16 @@ static MACHINE_INIT( spi )
 //	UINT8* rom = memory_region(REGION_USER1);
 	UINT8* ram = memory_region(REGION_CPU1);
 
-	cpunum_set_reset_line( 1, ASSERT_LINE );
+	cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE );
 
-	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00000688, 0x0000068b, 0, z80_fifo_w);
-	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000068c, 0x0000068f, 0, z80_enable_w);
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00000688, 0x0000068b, 0, 0, z80_fifo_w);
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000068c, 0x0000068f, 0, 0, z80_enable_w);
 
 	if( !old_vidhw ) {
-		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00038000, 0x000387ff, 0, spi_back_layer_w);
-		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00039000, 0x000397ff, 0, spi_fore_layer_w);
-		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0003a000, 0x0003a7ff, 0, spi_mid_layer_w);
-		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0003b000, 0x0003bfff, 0, spi_textlayer_w);
+		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00038000, 0x000387ff, 0, 0, spi_back_layer_w);
+		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00039000, 0x000397ff, 0, 0, spi_fore_layer_w);
+		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0003a000, 0x0003a7ff, 0, 0, spi_mid_layer_w);
+		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0003b000, 0x0003bfff, 0, 0, spi_textlayer_w);
 		back_ram = (UINT32*)&ram[0x38000];
 		back_rowscroll_ram = (UINT32*)&ram[0x38800];
 		fore_ram = (UINT32*)&ram[0x39000];
@@ -698,10 +698,10 @@ static MACHINE_INIT( spi )
 		mid_rowscroll_ram = (UINT32*)&ram[0x3a800];
 		videoram32 = (UINT32*)&ram[0x3b000];
 	} else {
-		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00038000, 0x000387ff, 0, spi_back_layer_w);
-		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00038800, 0x00038fff, 0, spi_fore_layer_w);
-		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00039000, 0x000397ff, 0, spi_mid_layer_w);
-		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00039800, 0x0003a7ff, 0, spi_textlayer_w);
+		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00038000, 0x000387ff, 0, 0, spi_back_layer_w);
+		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00038800, 0x00038fff, 0, 0, spi_fore_layer_w);
+		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00039000, 0x000397ff, 0, 0, spi_mid_layer_w);
+		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00039800, 0x0003a7ff, 0, 0, spi_textlayer_w);
 		back_ram = (UINT32*)&ram[0x38000];
 		fore_ram = (UINT32*)&ram[0x38800];
 		mid_ram = (UINT32*)&ram[0x39000];
@@ -748,8 +748,8 @@ MACHINE_DRIVER_END
 
 static MACHINE_INIT( sxx2f )
 {
-	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00000688, 0x0000068b, 0, eeprom_r);
-	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000068c, 0x0000068f, 0, eeprom_w);
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00000688, 0x0000068b, 0, 0, eeprom_r);
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000068c, 0x0000068f, 0, 0, eeprom_w);
 }
 
 static MACHINE_DRIVER_START( sxx2f )
@@ -814,7 +814,7 @@ static DRIVER_INIT( raidnfgt )
 	UINT8* rom = memory_region(REGION_USER1);
 	/* sound hack */
 	rom[0x6d847] = 0x00;
-	install_mem_read32_handler(0, 0x00298d0, 0x00298d3, raidnfgt_speedup_r );
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00298d0, 0x00298d3, 0, 0, raidnfgt_speedup_r );
 
 	init_spi();
 	old_vidhw = 0;
@@ -826,7 +826,7 @@ static DRIVER_INIT( senkyu )
 	UINT8* rom = memory_region(REGION_USER1);
 	/* sound hack */
 	rom[0x13c813] = 0x00;
-	install_mem_read32_handler(0, 0x0018cb4, 0x0018cb7, senkyu_speedup_r );
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0018cb4, 0x0018cb7, 0, 0, senkyu_speedup_r );
 
 	init_spi();
 	old_vidhw = 1;
@@ -838,7 +838,7 @@ static DRIVER_INIT( batlball )
 	UINT8* rom = memory_region(REGION_USER1);
 	/* sound hack */
 	rom[0x13c8bf] = 0x00;
-	install_mem_read32_handler(0, 0x0018db4, 0x0018db7, batlball_speedup_r );
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0018db4, 0x0018db7, 0, 0, batlball_speedup_r );
 
 	init_spi();
 	old_vidhw = 1;
@@ -851,7 +851,7 @@ static DRIVER_INIT( ejanhs )
 	/* sound hack */
 	rom[0x12f167] = 0x00;
 //	idle skip doesn't work properly?
-//	install_mem_read32_handler(0, 0x002d224, 0x002d227, ejanhs_speedup_r );
+//	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x002d224, 0x002d227, 0, 0, ejanhs_speedup_r );
 
 	init_spi();
 	old_vidhw = 1;
@@ -863,7 +863,7 @@ static DRIVER_INIT( viperp1 )
 	UINT8* rom = memory_region(REGION_USER1);
 	/* sound hack */
 	rom[0x6442f] = 0x00;
-	install_mem_read32_handler(0, 0x001e2e0, 0x001e2e3, viperp1_speedup_r );
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x001e2e0, 0x001e2e3, 0, 0, viperp1_speedup_r );
 
 	init_spi();
 	old_vidhw = 1;
@@ -875,7 +875,7 @@ static DRIVER_INIT( viperp1o )
 	UINT8* rom = memory_region(REGION_USER1);
 	/* sound hack */
 	rom[0x60a73] = 0x00;
-	install_mem_read32_handler(0, 0x001d49c, 0x001d49f, viperp1o_speedup_r );
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x001d49c, 0x001d49f, 0, 0, viperp1o_speedup_r );
 
 	init_spi();
 	old_vidhw = 1;
@@ -894,7 +894,7 @@ READ32_HANDLER ( rf2_2k_speedup_r )
 
 static DRIVER_INIT( rf2_2k )
 {
-	install_mem_read32_handler(0, 0x0282AC, 0x0282AF, rf2_2k_speedup_r );
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x0282AC, 0x0282AF, 0, 0, rf2_2k_speedup_r );
 }
 
 static MACHINE_INIT( seibu386 )

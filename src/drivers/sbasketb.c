@@ -26,10 +26,10 @@ extern UINT8 *sbasketb_scroll;
 extern UINT8 *sbasketb_palettebank;
 extern UINT8 *sbasketb_spriteram_select;
 
-extern WRITE_HANDLER( sbasketb_videoram_w );
-extern WRITE_HANDLER( sbasketb_colorram_w );
-extern WRITE_HANDLER( sbasketb_flipscreen_w );
-extern WRITE_HANDLER( sbasketb_scroll_w );
+extern WRITE8_HANDLER( sbasketb_videoram_w );
+extern WRITE8_HANDLER( sbasketb_colorram_w );
+extern WRITE8_HANDLER( sbasketb_flipscreen_w );
+extern WRITE8_HANDLER( sbasketb_scroll_w );
 
 extern PALETTE_INIT( sbasketb );
 extern VIDEO_START( sbasketb );
@@ -39,18 +39,18 @@ extern struct VLM5030interface konami_vlm5030_interface;
 extern struct SN76496interface konami_sn76496_interface;
 extern struct DACinterface konami_dac_interface;
 
-extern WRITE_HANDLER( konami_SN76496_latch_w );
-extern WRITE_HANDLER( konami_SN76496_0_w );
-extern WRITE_HANDLER( hyperspt_sound_w );
-extern READ_HANDLER( hyperspt_sh_timer_r );
+extern WRITE8_HANDLER( konami_SN76496_latch_w );
+extern WRITE8_HANDLER( konami_SN76496_0_w );
+extern WRITE8_HANDLER( hyperspt_sound_w );
+extern READ8_HANDLER( hyperspt_sh_timer_r );
 
 
-WRITE_HANDLER( sbasketb_sh_irqtrigger_w )
+WRITE8_HANDLER( sbasketb_sh_irqtrigger_w )
 {
-	cpu_set_irq_line_and_vector(1,0,HOLD_LINE,0xff);
+	cpunum_set_input_line_and_vector(1,0,HOLD_LINE,0xff);
 }
 
-static WRITE_HANDLER( sbasketb_coin_counter_w )
+static WRITE8_HANDLER( sbasketb_coin_counter_w )
 {
 	coin_counter_w(offset,data);
 }

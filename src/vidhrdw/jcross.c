@@ -12,7 +12,7 @@ extern data8_t *jcr_textram;
 
 int jcross_vregs[5];
 
-WRITE_HANDLER( jcross_palettebank_w )
+WRITE8_HANDLER( jcross_palettebank_w )
 {
 	fg_color = data&0xf;
 }
@@ -59,31 +59,31 @@ static void update_palette( int type )
 	}
 }
 
-WRITE_HANDLER( jcross_spriteram_w )
+WRITE8_HANDLER( jcross_spriteram_w )
 {
 	spriteram[offset] = data;
 }
-READ_HANDLER( jcross_spriteram_r )
+READ8_HANDLER( jcross_spriteram_r )
 {
 	return spriteram[offset];
 }
 
-READ_HANDLER( jcross_background_ram_r )
+READ8_HANDLER( jcross_background_ram_r )
 {
 	return videoram[offset];
 }
-WRITE_HANDLER( jcross_background_ram_w )
+WRITE8_HANDLER( jcross_background_ram_w )
 {
 	videoram[offset]=data;
 	tilemap_mark_tile_dirty(bg_tilemap,offset);
 }
 
-READ_HANDLER( jcross_text_ram_r )
+READ8_HANDLER( jcross_text_ram_r )
 {
 	return jcr_textram[offset];
 }
 
-WRITE_HANDLER( jcross_text_ram_w )
+WRITE8_HANDLER( jcross_text_ram_w )
 {
 	jcr_textram[offset]=data;
 	tilemap_mark_tile_dirty(tx_tilemap,offset);

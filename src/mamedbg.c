@@ -619,105 +619,105 @@ static int readkey(void)
 		update_video_and_audio();
 
 		k = KEYCODE_NONE;
-		if (keyboard_pressed_memory_repeat(KEYCODE_A,dbg_key_repeat)) k = KEYCODE_A;
-		if (keyboard_pressed_memory_repeat(KEYCODE_B,dbg_key_repeat)) k = KEYCODE_B;
-		if (keyboard_pressed_memory_repeat(KEYCODE_C,dbg_key_repeat)) k = KEYCODE_C;
-		if (keyboard_pressed_memory_repeat(KEYCODE_D,dbg_key_repeat)) k = KEYCODE_D;
-		if (keyboard_pressed_memory_repeat(KEYCODE_E,dbg_key_repeat)) k = KEYCODE_E;
-		if (keyboard_pressed_memory_repeat(KEYCODE_F,dbg_key_repeat)) k = KEYCODE_F;
-		if (keyboard_pressed_memory_repeat(KEYCODE_G,dbg_key_repeat)) k = KEYCODE_G;
-		if (keyboard_pressed_memory_repeat(KEYCODE_H,dbg_key_repeat)) k = KEYCODE_H;
-		if (keyboard_pressed_memory_repeat(KEYCODE_I,dbg_key_repeat)) k = KEYCODE_I;
-		if (keyboard_pressed_memory_repeat(KEYCODE_J,dbg_key_repeat)) k = KEYCODE_J;
-		if (keyboard_pressed_memory_repeat(KEYCODE_K,dbg_key_repeat)) k = KEYCODE_K;
-		if (keyboard_pressed_memory_repeat(KEYCODE_L,dbg_key_repeat)) k = KEYCODE_L;
-		if (keyboard_pressed_memory_repeat(KEYCODE_M,dbg_key_repeat)) k = KEYCODE_M;
-		if (keyboard_pressed_memory_repeat(KEYCODE_N,dbg_key_repeat)) k = KEYCODE_N;
-		if (keyboard_pressed_memory_repeat(KEYCODE_O,dbg_key_repeat)) k = KEYCODE_O;
-		if (keyboard_pressed_memory_repeat(KEYCODE_P,dbg_key_repeat)) k = KEYCODE_P;
-		if (keyboard_pressed_memory_repeat(KEYCODE_Q,dbg_key_repeat)) k = KEYCODE_Q;
-		if (keyboard_pressed_memory_repeat(KEYCODE_R,dbg_key_repeat)) k = KEYCODE_R;
-		if (keyboard_pressed_memory_repeat(KEYCODE_S,dbg_key_repeat)) k = KEYCODE_S;
-		if (keyboard_pressed_memory_repeat(KEYCODE_T,dbg_key_repeat)) k = KEYCODE_T;
-		if (keyboard_pressed_memory_repeat(KEYCODE_U,dbg_key_repeat)) k = KEYCODE_U;
-		if (keyboard_pressed_memory_repeat(KEYCODE_V,dbg_key_repeat)) k = KEYCODE_V;
-		if (keyboard_pressed_memory_repeat(KEYCODE_W,dbg_key_repeat)) k = KEYCODE_W;
-		if (keyboard_pressed_memory_repeat(KEYCODE_X,dbg_key_repeat)) k = KEYCODE_X;
-		if (keyboard_pressed_memory_repeat(KEYCODE_Y,dbg_key_repeat)) k = KEYCODE_Y;
-		if (keyboard_pressed_memory_repeat(KEYCODE_Z,dbg_key_repeat)) k = KEYCODE_Z;
-		if (keyboard_pressed_memory_repeat(KEYCODE_0,dbg_key_repeat)) k = KEYCODE_0;
-		if (keyboard_pressed_memory_repeat(KEYCODE_1,dbg_key_repeat)) k = KEYCODE_1;
-		if (keyboard_pressed_memory_repeat(KEYCODE_2,dbg_key_repeat)) k = KEYCODE_2;
-		if (keyboard_pressed_memory_repeat(KEYCODE_3,dbg_key_repeat)) k = KEYCODE_3;
-		if (keyboard_pressed_memory_repeat(KEYCODE_4,dbg_key_repeat)) k = KEYCODE_4;
-		if (keyboard_pressed_memory_repeat(KEYCODE_5,dbg_key_repeat)) k = KEYCODE_5;
-		if (keyboard_pressed_memory_repeat(KEYCODE_6,dbg_key_repeat)) k = KEYCODE_6;
-		if (keyboard_pressed_memory_repeat(KEYCODE_7,dbg_key_repeat)) k = KEYCODE_7;
-		if (keyboard_pressed_memory_repeat(KEYCODE_8,dbg_key_repeat)) k = KEYCODE_8;
-		if (keyboard_pressed_memory_repeat(KEYCODE_9,dbg_key_repeat)) k = KEYCODE_9;
-		if (keyboard_pressed_memory_repeat(KEYCODE_0_PAD,dbg_key_repeat)) k = KEYCODE_0_PAD;
-		if (keyboard_pressed_memory_repeat(KEYCODE_1_PAD,dbg_key_repeat)) k = KEYCODE_1_PAD;
-		if (keyboard_pressed_memory_repeat(KEYCODE_2_PAD,dbg_key_repeat)) k = KEYCODE_2_PAD;
-		if (keyboard_pressed_memory_repeat(KEYCODE_3_PAD,dbg_key_repeat)) k = KEYCODE_3_PAD;
-		if (keyboard_pressed_memory_repeat(KEYCODE_4_PAD,dbg_key_repeat)) k = KEYCODE_4_PAD;
-		if (keyboard_pressed_memory_repeat(KEYCODE_5_PAD,dbg_key_repeat)) k = KEYCODE_5_PAD;
-		if (keyboard_pressed_memory_repeat(KEYCODE_6_PAD,dbg_key_repeat)) k = KEYCODE_6_PAD;
-		if (keyboard_pressed_memory_repeat(KEYCODE_7_PAD,dbg_key_repeat)) k = KEYCODE_7_PAD;
-		if (keyboard_pressed_memory_repeat(KEYCODE_8_PAD,dbg_key_repeat)) k = KEYCODE_8_PAD;
-		if (keyboard_pressed_memory_repeat(KEYCODE_9_PAD,dbg_key_repeat)) k = KEYCODE_9_PAD;
-		if (keyboard_pressed_memory(KEYCODE_F1)) k = KEYCODE_F1;
-		if (keyboard_pressed_memory(KEYCODE_F2)) k = KEYCODE_F2;
-		if (keyboard_pressed_memory(KEYCODE_F3)) k = KEYCODE_F3;
-		if (keyboard_pressed_memory(KEYCODE_F4)) k = KEYCODE_F4;
-/*		if (keyboard_pressed_memory(KEYCODE_F5)) k = KEYCODE_F5; */
-		if (keyboard_pressed_memory(KEYCODE_F6)) k = KEYCODE_F6;
-		if (keyboard_pressed_memory(KEYCODE_F7)) k = KEYCODE_F7;
-		if (keyboard_pressed_memory(KEYCODE_F8)) k = KEYCODE_F8;
-		if (keyboard_pressed_memory(KEYCODE_F9)) k = KEYCODE_F9;
-		if (keyboard_pressed_memory(KEYCODE_F10)) k = KEYCODE_F10;
-		if (keyboard_pressed_memory(KEYCODE_F11)) k = KEYCODE_F11;
-		if (keyboard_pressed_memory(KEYCODE_F12)) k = KEYCODE_F12;
-		if (keyboard_pressed_memory(KEYCODE_ESC)) k = KEYCODE_ESC;
-/*		if (keyboard_pressed_memory_repeat(KEYCODE_TILDE,dbg_key_repeat)) k = KEYCODE_TILDE; */
-		if (keyboard_pressed_memory_repeat(KEYCODE_MINUS,dbg_key_repeat)) k = KEYCODE_MINUS;
-		if (keyboard_pressed_memory_repeat(KEYCODE_EQUALS,dbg_key_repeat)) k = KEYCODE_EQUALS;
-		if (keyboard_pressed_memory_repeat(KEYCODE_BACKSPACE,dbg_key_repeat)) k = KEYCODE_BACKSPACE;
-		if (keyboard_pressed_memory_repeat(KEYCODE_TAB,dbg_key_repeat)) k = KEYCODE_TAB;
-		if (keyboard_pressed_memory_repeat(KEYCODE_OPENBRACE,dbg_key_repeat)) k = KEYCODE_OPENBRACE;
-		if (keyboard_pressed_memory_repeat(KEYCODE_CLOSEBRACE,dbg_key_repeat)) k = KEYCODE_CLOSEBRACE;
-		if (keyboard_pressed_memory_repeat(KEYCODE_ENTER,dbg_key_repeat)) k = KEYCODE_ENTER;
-		if (keyboard_pressed_memory_repeat(KEYCODE_COLON,dbg_key_repeat)) k = KEYCODE_COLON;
-		if (keyboard_pressed_memory_repeat(KEYCODE_QUOTE,dbg_key_repeat)) k = KEYCODE_QUOTE;
-		if (keyboard_pressed_memory_repeat(KEYCODE_BACKSLASH,dbg_key_repeat)) k = KEYCODE_BACKSLASH;
-		if (keyboard_pressed_memory_repeat(KEYCODE_BACKSLASH2,dbg_key_repeat)) k = KEYCODE_BACKSLASH2;
-		if (keyboard_pressed_memory_repeat(KEYCODE_COMMA,dbg_key_repeat)) k = KEYCODE_COMMA;
-		if (keyboard_pressed_memory_repeat(KEYCODE_STOP,dbg_key_repeat)) k = KEYCODE_STOP;
-		if (keyboard_pressed_memory_repeat(KEYCODE_SLASH,dbg_key_repeat)) k = KEYCODE_SLASH;
-		if (keyboard_pressed_memory_repeat(KEYCODE_SPACE,dbg_key_repeat)) k = KEYCODE_SPACE;
-		if (keyboard_pressed_memory_repeat(KEYCODE_INSERT,dbg_key_repeat)) k = KEYCODE_INSERT;
-		if (keyboard_pressed_memory_repeat(KEYCODE_DEL,dbg_key_repeat)) k = KEYCODE_DEL;
-		if (keyboard_pressed_memory_repeat(KEYCODE_HOME,dbg_key_repeat)) k = KEYCODE_HOME;
-		if (keyboard_pressed_memory_repeat(KEYCODE_END,dbg_key_repeat)) k = KEYCODE_END;
-		if (keyboard_pressed_memory_repeat(KEYCODE_PGUP,dbg_key_repeat)) k = KEYCODE_PGUP;
-		if (keyboard_pressed_memory_repeat(KEYCODE_PGDN,dbg_key_repeat)) k = KEYCODE_PGDN;
-		if (keyboard_pressed_memory_repeat(KEYCODE_LEFT,dbg_key_repeat)) k = KEYCODE_LEFT;
-		if (keyboard_pressed_memory_repeat(KEYCODE_RIGHT,dbg_key_repeat)) k = KEYCODE_RIGHT;
-		if (keyboard_pressed_memory_repeat(KEYCODE_UP,dbg_key_repeat)) k = KEYCODE_UP;
-		if (keyboard_pressed_memory_repeat(KEYCODE_DOWN,dbg_key_repeat)) k = KEYCODE_DOWN;
-		if (keyboard_pressed_memory_repeat(KEYCODE_SLASH_PAD,dbg_key_repeat)) k = KEYCODE_SLASH_PAD;
-		if (keyboard_pressed_memory_repeat(KEYCODE_ASTERISK,dbg_key_repeat)) k = KEYCODE_ASTERISK;
-		if (keyboard_pressed_memory_repeat(KEYCODE_MINUS_PAD,dbg_key_repeat)) k = KEYCODE_MINUS_PAD;
-		if (keyboard_pressed_memory_repeat(KEYCODE_PLUS_PAD,dbg_key_repeat)) k = KEYCODE_PLUS_PAD;
-/*		if (keyboard_pressed_memory_repeat(KEYCODE_DEL_PAD,dbg_key_repeat)) k = KEYCODE_DEL_PAD; */
-/*		if (keyboard_pressed_memory_repeat(KEYCODE_ENTER_PAD,dbg_key_repeat)) k = KEYCODE_ENTER_PAD; */
-/*		if (keyboard_pressed_memory(KEYCODE_PRTSCR)) k = KEYCODE_PRTSCR; */
-/*		if (keyboard_pressed_memory(KEYCODE_PAUSE)) k = KEYCODE_PAUSE; */
-/*		if (keyboard_pressed_memory(KEYCODE_SCRLOCK)) k = KEYCODE_SCRLOCK; */
-/*		if (keyboard_pressed_memory(KEYCODE_NUMLOCK)) k = KEYCODE_NUMLOCK; */
-/*		if (keyboard_pressed_memory(KEYCODE_CAPSLOCK)) k = KEYCODE_CAPSLOCK; */
-/*		if (keyboard_pressed(KEYCODE_LWIN)) k = KEYCODE_LWIN; */
-/*		if (keyboard_pressed(KEYCODE_RWIN)) k = KEYCODE_RWIN; */
-/*		if (keyboard_pressed(KEYCODE_MENU)) k = KEYCODE_MENU; */
+		if (code_pressed_memory_repeat(KEYCODE_A,dbg_key_repeat)) k = KEYCODE_A;
+		if (code_pressed_memory_repeat(KEYCODE_B,dbg_key_repeat)) k = KEYCODE_B;
+		if (code_pressed_memory_repeat(KEYCODE_C,dbg_key_repeat)) k = KEYCODE_C;
+		if (code_pressed_memory_repeat(KEYCODE_D,dbg_key_repeat)) k = KEYCODE_D;
+		if (code_pressed_memory_repeat(KEYCODE_E,dbg_key_repeat)) k = KEYCODE_E;
+		if (code_pressed_memory_repeat(KEYCODE_F,dbg_key_repeat)) k = KEYCODE_F;
+		if (code_pressed_memory_repeat(KEYCODE_G,dbg_key_repeat)) k = KEYCODE_G;
+		if (code_pressed_memory_repeat(KEYCODE_H,dbg_key_repeat)) k = KEYCODE_H;
+		if (code_pressed_memory_repeat(KEYCODE_I,dbg_key_repeat)) k = KEYCODE_I;
+		if (code_pressed_memory_repeat(KEYCODE_J,dbg_key_repeat)) k = KEYCODE_J;
+		if (code_pressed_memory_repeat(KEYCODE_K,dbg_key_repeat)) k = KEYCODE_K;
+		if (code_pressed_memory_repeat(KEYCODE_L,dbg_key_repeat)) k = KEYCODE_L;
+		if (code_pressed_memory_repeat(KEYCODE_M,dbg_key_repeat)) k = KEYCODE_M;
+		if (code_pressed_memory_repeat(KEYCODE_N,dbg_key_repeat)) k = KEYCODE_N;
+		if (code_pressed_memory_repeat(KEYCODE_O,dbg_key_repeat)) k = KEYCODE_O;
+		if (code_pressed_memory_repeat(KEYCODE_P,dbg_key_repeat)) k = KEYCODE_P;
+		if (code_pressed_memory_repeat(KEYCODE_Q,dbg_key_repeat)) k = KEYCODE_Q;
+		if (code_pressed_memory_repeat(KEYCODE_R,dbg_key_repeat)) k = KEYCODE_R;
+		if (code_pressed_memory_repeat(KEYCODE_S,dbg_key_repeat)) k = KEYCODE_S;
+		if (code_pressed_memory_repeat(KEYCODE_T,dbg_key_repeat)) k = KEYCODE_T;
+		if (code_pressed_memory_repeat(KEYCODE_U,dbg_key_repeat)) k = KEYCODE_U;
+		if (code_pressed_memory_repeat(KEYCODE_V,dbg_key_repeat)) k = KEYCODE_V;
+		if (code_pressed_memory_repeat(KEYCODE_W,dbg_key_repeat)) k = KEYCODE_W;
+		if (code_pressed_memory_repeat(KEYCODE_X,dbg_key_repeat)) k = KEYCODE_X;
+		if (code_pressed_memory_repeat(KEYCODE_Y,dbg_key_repeat)) k = KEYCODE_Y;
+		if (code_pressed_memory_repeat(KEYCODE_Z,dbg_key_repeat)) k = KEYCODE_Z;
+		if (code_pressed_memory_repeat(KEYCODE_0,dbg_key_repeat)) k = KEYCODE_0;
+		if (code_pressed_memory_repeat(KEYCODE_1,dbg_key_repeat)) k = KEYCODE_1;
+		if (code_pressed_memory_repeat(KEYCODE_2,dbg_key_repeat)) k = KEYCODE_2;
+		if (code_pressed_memory_repeat(KEYCODE_3,dbg_key_repeat)) k = KEYCODE_3;
+		if (code_pressed_memory_repeat(KEYCODE_4,dbg_key_repeat)) k = KEYCODE_4;
+		if (code_pressed_memory_repeat(KEYCODE_5,dbg_key_repeat)) k = KEYCODE_5;
+		if (code_pressed_memory_repeat(KEYCODE_6,dbg_key_repeat)) k = KEYCODE_6;
+		if (code_pressed_memory_repeat(KEYCODE_7,dbg_key_repeat)) k = KEYCODE_7;
+		if (code_pressed_memory_repeat(KEYCODE_8,dbg_key_repeat)) k = KEYCODE_8;
+		if (code_pressed_memory_repeat(KEYCODE_9,dbg_key_repeat)) k = KEYCODE_9;
+		if (code_pressed_memory_repeat(KEYCODE_0_PAD,dbg_key_repeat)) k = KEYCODE_0_PAD;
+		if (code_pressed_memory_repeat(KEYCODE_1_PAD,dbg_key_repeat)) k = KEYCODE_1_PAD;
+		if (code_pressed_memory_repeat(KEYCODE_2_PAD,dbg_key_repeat)) k = KEYCODE_2_PAD;
+		if (code_pressed_memory_repeat(KEYCODE_3_PAD,dbg_key_repeat)) k = KEYCODE_3_PAD;
+		if (code_pressed_memory_repeat(KEYCODE_4_PAD,dbg_key_repeat)) k = KEYCODE_4_PAD;
+		if (code_pressed_memory_repeat(KEYCODE_5_PAD,dbg_key_repeat)) k = KEYCODE_5_PAD;
+		if (code_pressed_memory_repeat(KEYCODE_6_PAD,dbg_key_repeat)) k = KEYCODE_6_PAD;
+		if (code_pressed_memory_repeat(KEYCODE_7_PAD,dbg_key_repeat)) k = KEYCODE_7_PAD;
+		if (code_pressed_memory_repeat(KEYCODE_8_PAD,dbg_key_repeat)) k = KEYCODE_8_PAD;
+		if (code_pressed_memory_repeat(KEYCODE_9_PAD,dbg_key_repeat)) k = KEYCODE_9_PAD;
+		if (code_pressed_memory(KEYCODE_F1)) k = KEYCODE_F1;
+		if (code_pressed_memory(KEYCODE_F2)) k = KEYCODE_F2;
+		if (code_pressed_memory(KEYCODE_F3)) k = KEYCODE_F3;
+		if (code_pressed_memory(KEYCODE_F4)) k = KEYCODE_F4;
+/*		if (code_pressed_memory(KEYCODE_F5)) k = KEYCODE_F5; */
+		if (code_pressed_memory(KEYCODE_F6)) k = KEYCODE_F6;
+		if (code_pressed_memory(KEYCODE_F7)) k = KEYCODE_F7;
+		if (code_pressed_memory(KEYCODE_F8)) k = KEYCODE_F8;
+		if (code_pressed_memory(KEYCODE_F9)) k = KEYCODE_F9;
+		if (code_pressed_memory(KEYCODE_F10)) k = KEYCODE_F10;
+		if (code_pressed_memory(KEYCODE_F11)) k = KEYCODE_F11;
+		if (code_pressed_memory(KEYCODE_F12)) k = KEYCODE_F12;
+		if (code_pressed_memory(KEYCODE_ESC)) k = KEYCODE_ESC;
+/*		if (code_pressed_memory_repeat(KEYCODE_TILDE,dbg_key_repeat)) k = KEYCODE_TILDE; */
+		if (code_pressed_memory_repeat(KEYCODE_MINUS,dbg_key_repeat)) k = KEYCODE_MINUS;
+		if (code_pressed_memory_repeat(KEYCODE_EQUALS,dbg_key_repeat)) k = KEYCODE_EQUALS;
+		if (code_pressed_memory_repeat(KEYCODE_BACKSPACE,dbg_key_repeat)) k = KEYCODE_BACKSPACE;
+		if (code_pressed_memory_repeat(KEYCODE_TAB,dbg_key_repeat)) k = KEYCODE_TAB;
+		if (code_pressed_memory_repeat(KEYCODE_OPENBRACE,dbg_key_repeat)) k = KEYCODE_OPENBRACE;
+		if (code_pressed_memory_repeat(KEYCODE_CLOSEBRACE,dbg_key_repeat)) k = KEYCODE_CLOSEBRACE;
+		if (code_pressed_memory_repeat(KEYCODE_ENTER,dbg_key_repeat)) k = KEYCODE_ENTER;
+		if (code_pressed_memory_repeat(KEYCODE_COLON,dbg_key_repeat)) k = KEYCODE_COLON;
+		if (code_pressed_memory_repeat(KEYCODE_QUOTE,dbg_key_repeat)) k = KEYCODE_QUOTE;
+		if (code_pressed_memory_repeat(KEYCODE_BACKSLASH,dbg_key_repeat)) k = KEYCODE_BACKSLASH;
+		if (code_pressed_memory_repeat(KEYCODE_BACKSLASH2,dbg_key_repeat)) k = KEYCODE_BACKSLASH2;
+		if (code_pressed_memory_repeat(KEYCODE_COMMA,dbg_key_repeat)) k = KEYCODE_COMMA;
+		if (code_pressed_memory_repeat(KEYCODE_STOP,dbg_key_repeat)) k = KEYCODE_STOP;
+		if (code_pressed_memory_repeat(KEYCODE_SLASH,dbg_key_repeat)) k = KEYCODE_SLASH;
+		if (code_pressed_memory_repeat(KEYCODE_SPACE,dbg_key_repeat)) k = KEYCODE_SPACE;
+		if (code_pressed_memory_repeat(KEYCODE_INSERT,dbg_key_repeat)) k = KEYCODE_INSERT;
+		if (code_pressed_memory_repeat(KEYCODE_DEL,dbg_key_repeat)) k = KEYCODE_DEL;
+		if (code_pressed_memory_repeat(KEYCODE_HOME,dbg_key_repeat)) k = KEYCODE_HOME;
+		if (code_pressed_memory_repeat(KEYCODE_END,dbg_key_repeat)) k = KEYCODE_END;
+		if (code_pressed_memory_repeat(KEYCODE_PGUP,dbg_key_repeat)) k = KEYCODE_PGUP;
+		if (code_pressed_memory_repeat(KEYCODE_PGDN,dbg_key_repeat)) k = KEYCODE_PGDN;
+		if (code_pressed_memory_repeat(KEYCODE_LEFT,dbg_key_repeat)) k = KEYCODE_LEFT;
+		if (code_pressed_memory_repeat(KEYCODE_RIGHT,dbg_key_repeat)) k = KEYCODE_RIGHT;
+		if (code_pressed_memory_repeat(KEYCODE_UP,dbg_key_repeat)) k = KEYCODE_UP;
+		if (code_pressed_memory_repeat(KEYCODE_DOWN,dbg_key_repeat)) k = KEYCODE_DOWN;
+		if (code_pressed_memory_repeat(KEYCODE_SLASH_PAD,dbg_key_repeat)) k = KEYCODE_SLASH_PAD;
+		if (code_pressed_memory_repeat(KEYCODE_ASTERISK,dbg_key_repeat)) k = KEYCODE_ASTERISK;
+		if (code_pressed_memory_repeat(KEYCODE_MINUS_PAD,dbg_key_repeat)) k = KEYCODE_MINUS_PAD;
+		if (code_pressed_memory_repeat(KEYCODE_PLUS_PAD,dbg_key_repeat)) k = KEYCODE_PLUS_PAD;
+/*		if (code_pressed_memory_repeat(KEYCODE_DEL_PAD,dbg_key_repeat)) k = KEYCODE_DEL_PAD; */
+/*		if (code_pressed_memory_repeat(KEYCODE_ENTER_PAD,dbg_key_repeat)) k = KEYCODE_ENTER_PAD; */
+/*		if (code_pressed_memory(KEYCODE_PRTSCR)) k = KEYCODE_PRTSCR; */
+/*		if (code_pressed_memory(KEYCODE_PAUSE)) k = KEYCODE_PAUSE; */
+/*		if (code_pressed_memory(KEYCODE_SCRLOCK)) k = KEYCODE_SCRLOCK; */
+/*		if (code_pressed_memory(KEYCODE_NUMLOCK)) k = KEYCODE_NUMLOCK; */
+/*		if (code_pressed_memory(KEYCODE_CAPSLOCK)) k = KEYCODE_CAPSLOCK; */
+/*		if (code_pressed(KEYCODE_LWIN)) k = KEYCODE_LWIN; */
+/*		if (code_pressed(KEYCODE_RWIN)) k = KEYCODE_RWIN; */
+/*		if (code_pressed(KEYCODE_MENU)) k = KEYCODE_MENU; */
 
 		if (k == KEYCODE_NONE)
 			debugger_idle = 1;
@@ -2921,7 +2921,7 @@ static void edit_regs( void )
 	set_screen_curpos( win_get_cx_abs(win), win_get_cy_abs(win) );
 
 	i = readkey();
-	k = keyboard_name(i);
+	k = code_name(i);
 
 	shift = ( pedit[ regs->idx ].w - 1 - regs->nibble ) * 4;
 	mask = ~(0x0000000f << shift);
@@ -3043,7 +3043,7 @@ static void edit_dasm(void)
 	set_screen_curpos( win_get_cx_abs(win), win_get_cy_abs(win) );
 
 	i = readkey();
-	k = keyboard_name(i);
+	k = code_name(i);
 
 	switch( i )
 	{
@@ -3119,7 +3119,7 @@ static void edit_mem( int which )
 	win_set_title( win, name_memory(DBGMEM[which].address) );
 
 	i = readkey();
-	k = keyboard_name(i);
+	k = code_name(i);
 
 	shift = (pedit[DBGMEM[which].offset].w - 1 - DBGMEM[which].nibble) * 4;
 	mask = ~(0x0f << shift);
@@ -3394,7 +3394,7 @@ static void edit_cmds(void)
 	cmd = edit_cmds_info();
 
 	i = readkey();
-	k = keyboard_name(i);
+	k = code_name(i);
 	l = strlen(k);
 
 	if( l == 1 )
@@ -3566,7 +3566,7 @@ static void cmd_help( void )
 			}
 			else
 			{
-				dst += sprintf( dst, "[%s]\t%s", keyboard_name(commands[i].key), commands[i].info ) + 1;
+				dst += sprintf( dst, "[%s]\t%s", code_name(commands[i].key), commands[i].info ) + 1;
 			}
 		}
 	}
@@ -4287,7 +4287,7 @@ static void cmd_search_memory(void)
 		set_screen_curpos( win_get_cx_abs(win), win_get_cy_abs(win) );
 
 		i = readkey();
-		k = keyboard_name(i);
+		k = code_name(i);
 
 		shift = (1 - nibble) * 4;
 		mask = ~(0xf << shift);
@@ -5093,7 +5093,7 @@ static void cmd_step_over( void )
  **************************************************************************/
 static void cmd_switch_window( void )
 {
-	if( keyboard_pressed(KEYCODE_LSHIFT) || keyboard_pressed(KEYCODE_RSHIFT) )
+	if( code_pressed(KEYCODE_LSHIFT) || code_pressed(KEYCODE_RSHIFT) )
 		DBG.window = --DBG.window % DBG_WINDOWS;
 	else
 		DBG.window = ++DBG.window % DBG_WINDOWS;

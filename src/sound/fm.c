@@ -3592,7 +3592,7 @@ void YM2608ResetChip(int num)
 	DELTAT->output_pointer = out_delta;
 	DELTAT->portshift = 5;		/* always 5bits shift */ /* ASG */
 	DELTAT->output_range = 1<<23;
-	YM_DELTAT_ADPCM_Reset(DELTAT,OUTD_CENTER);
+	YM_DELTAT_ADPCM_Reset(DELTAT,OUTD_CENTER,YM_DELTAT_EMULATION_MODE_NORMAL);
 }
 
 /* YM2608 write */
@@ -4282,7 +4282,7 @@ void YM2610ResetChip(int num)
 	DELTAT->output_pointer = out_delta;
 	DELTAT->portshift = 8;		/* allways 8bits shift */
 	DELTAT->output_range = 1<<23;
-	YM_DELTAT_ADPCM_Reset(DELTAT,OUTD_CENTER);
+	YM_DELTAT_ADPCM_Reset(DELTAT,OUTD_CENTER,YM_DELTAT_EMULATION_MODE_YM2610);
 }
 
 /* YM2610 write */
@@ -4337,29 +4337,7 @@ int YM2610Write(int n, int a, UINT8 v)
 			case 0x1a:	/* delta-n H */
 			case 0x1b:	/* volume */
 				{
-					UINT8 val = v;
-					/* 0x10-0x1b */
-					if ( (addr-0x10)==0x00 )
-					{
-					/*	YM2610 always uses external memory and doesn't even have
-						memory flag bit.
-						To keep it in-line with other chips, we always set
-						the external memory flag bit (which is expected by the DELTA-T code).
-					*/
-						val |= 0x20;	/* set external memory flag */
-					}
-
-					if ( (addr-0x10)==0x01 )
-					{
-					/*	YM2610 always uses ROM as an external memory and doesn't tave
-						ROM/RAM memory flag bit.
-						To keep it in-line with other chips, we always set
-						ROM flag bit (which is expected by the DELTA-T code).
-					*/
-						val |= 0x01;	/* set ROM memory flag */
-					}
-
-					YM_DELTAT_ADPCM_Write(&F2610->deltaT,addr-0x10,val);
+					YM_DELTAT_ADPCM_Write(&F2610->deltaT,addr-0x10,v);
 				}
 				break;
 

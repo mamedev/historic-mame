@@ -139,7 +139,7 @@ static void bootleg_drawsprites(struct mame_bitmap *bitmap,const struct rectangl
 }
 #endif
 
-WRITE_HANDLER( m90_video_control_w )
+WRITE8_HANDLER( m90_video_control_w )
 {
 	m90_video_control_data[offset]=data;
 }
@@ -154,7 +154,7 @@ static void markdirty(struct tilemap *tilemap,int page,offs_t offset)
 }
 
 
-WRITE_HANDLER( m90_video_w )
+WRITE8_HANDLER( m90_video_w )
 {
 	m90_video_data[offset] = data;
 

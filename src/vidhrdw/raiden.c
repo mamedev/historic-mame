@@ -9,35 +9,35 @@ static int flipscreen,ALTERNATE;
 
 /******************************************************************************/
 
-READ_HANDLER( raiden_background_r )
+READ8_HANDLER( raiden_background_r )
 {
 	return raiden_back_data[offset];
 }
 
-READ_HANDLER( raiden_foreground_r )
+READ8_HANDLER( raiden_foreground_r )
 {
 	return raiden_fore_data[offset];
 }
 
-WRITE_HANDLER( raiden_background_w )
+WRITE8_HANDLER( raiden_background_w )
 {
 	raiden_back_data[offset]=data;
 	tilemap_mark_tile_dirty( bg_layer,offset/2);
 }
 
-WRITE_HANDLER( raiden_foreground_w )
+WRITE8_HANDLER( raiden_foreground_w )
 {
 	raiden_fore_data[offset]=data;
 	tilemap_mark_tile_dirty( fg_layer,offset/2);
 }
 
-WRITE_HANDLER( raiden_text_w )
+WRITE8_HANDLER( raiden_text_w )
 {
 	videoram[offset]=data;
 	tilemap_mark_tile_dirty( tx_layer,offset/2);
 }
 
-WRITE_HANDLER( raidena_text_w )
+WRITE8_HANDLER( raidena_text_w )
 {
 	videoram[offset]=data;
 	tilemap_mark_tile_dirty( tx_layer,offset/2);
@@ -115,7 +115,7 @@ VIDEO_START( raidena )
 	return 0;
 }
 
-WRITE_HANDLER( raiden_control_w )
+WRITE8_HANDLER( raiden_control_w )
 {
 	/* All other bits unknown - could be playfield enables */
 

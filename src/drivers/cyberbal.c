@@ -44,14 +44,14 @@ static void update_interrupts(void)
 		newstate2 |= 1;
 
 	if (newstate1)
-		cpu_set_irq_line(0, newstate1, ASSERT_LINE);
+		cpunum_set_input_line(0, newstate1, ASSERT_LINE);
 	else
-		cpu_set_irq_line(0, 7, CLEAR_LINE);
+		cpunum_set_input_line(0, 7, CLEAR_LINE);
 
 	if (newstate2)
-		cpu_set_irq_line(2, newstate2, ASSERT_LINE);
+		cpunum_set_input_line(2, newstate2, ASSERT_LINE);
 	else
-		cpu_set_irq_line(2, 7, CLEAR_LINE);
+		cpunum_set_input_line(2, 7, CLEAR_LINE);
 
 	/* check for screen swapping */
 	temp = readinputport(2);
@@ -71,7 +71,7 @@ static MACHINE_INIT( cyberbal )
 	cyberbal_sound_reset();
 
 	/* CPU 2 doesn't run until reset */
-	cpu_set_reset_line(2, ASSERT_LINE);
+	cpunum_set_input_line(2, INPUT_LINE_RESET, ASSERT_LINE);
 
 	/* make sure we're pointing to the right screen by default */
 	cyberbal_set_screen(0);
@@ -88,9 +88,9 @@ static void cyberb2p_update_interrupts(void)
 		newstate |= 3;
 
 	if (newstate)
-		cpu_set_irq_line(0, newstate, ASSERT_LINE);
+		cpunum_set_input_line(0, newstate, ASSERT_LINE);
 	else
-		cpu_set_irq_line(0, 7, CLEAR_LINE);
+		cpunum_set_input_line(0, 7, CLEAR_LINE);
 }
 
 
@@ -146,7 +146,7 @@ static READ16_HANDLER( sound_state_r )
 
 static WRITE16_HANDLER( p2_reset_w )
 {
-	cpu_set_reset_line(2, CLEAR_LINE);
+	cpunum_set_input_line(2, INPUT_LINE_RESET, CLEAR_LINE);
 }
 
 

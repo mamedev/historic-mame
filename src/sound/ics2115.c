@@ -465,7 +465,7 @@ void ics2115_sh_stop( void )
 {
 }
 
-READ_HANDLER( ics2115_r )
+READ8_HANDLER( ics2115_r )
 {
 	switch(offset) {
 	case 0: {
@@ -495,7 +495,7 @@ READ_HANDLER( ics2115_r )
 	}
 }
 
-WRITE_HANDLER( ics2115_w )
+WRITE8_HANDLER( ics2115_w )
 {
 	switch(offset) {
 	case 1:

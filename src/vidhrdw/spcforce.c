@@ -13,7 +13,7 @@
 unsigned char *spcforce_scrollram;
 
 
-WRITE_HANDLER( spcforce_flip_screen_w )
+WRITE8_HANDLER( spcforce_flip_screen_w )
 {
 	flip_screen_set(~data & 0x01);
 }

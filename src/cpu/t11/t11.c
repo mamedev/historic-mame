@@ -450,10 +450,10 @@ static void t11_set_info(UINT32 state, union cpuinfo *info)
 	switch (state)
 	{
 		/* --- the following bits of info are set as 64-bit signed integers --- */
-		case CPUINFO_INT_IRQ_STATE + T11_IRQ0:			set_irq_line(T11_IRQ0, info->i);		break;
-		case CPUINFO_INT_IRQ_STATE + T11_IRQ1:			set_irq_line(T11_IRQ1, info->i);		break;
-		case CPUINFO_INT_IRQ_STATE + T11_IRQ2:			set_irq_line(T11_IRQ2, info->i);		break;
-		case CPUINFO_INT_IRQ_STATE + T11_IRQ3:			set_irq_line(T11_IRQ3, info->i);		break;
+		case CPUINFO_INT_INPUT_STATE + T11_IRQ0:		set_irq_line(T11_IRQ0, info->i);		break;
+		case CPUINFO_INT_INPUT_STATE + T11_IRQ1:		set_irq_line(T11_IRQ1, info->i);		break;
+		case CPUINFO_INT_INPUT_STATE + T11_IRQ2:		set_irq_line(T11_IRQ2, info->i);		break;
+		case CPUINFO_INT_INPUT_STATE + T11_IRQ3:		set_irq_line(T11_IRQ3, info->i);		break;
 
 		case CPUINFO_INT_PC:
 		case CPUINFO_INT_REGISTER + T11_PC:				PC = info->i; /* change_pc not needed */ break;
@@ -492,7 +492,7 @@ void t11_get_info(UINT32 state, union cpuinfo *info)
 	{
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
 		case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(t11);					break;
-		case CPUINFO_INT_IRQ_LINES:						info->i = 4;							break;
+		case CPUINFO_INT_INPUT_LINES:					info->i = 4;							break;
 		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
 		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_LE;					break;
 		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
@@ -511,10 +511,10 @@ void t11_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 0;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
 
-		case CPUINFO_INT_IRQ_STATE + T11_IRQ0:			info->i = (t11.irq_state & 1) ? ASSERT_LINE : CLEAR_LINE; break;
-		case CPUINFO_INT_IRQ_STATE + T11_IRQ1:			info->i = (t11.irq_state & 2) ? ASSERT_LINE : CLEAR_LINE; break;
-		case CPUINFO_INT_IRQ_STATE + T11_IRQ2:			info->i = (t11.irq_state & 4) ? ASSERT_LINE : CLEAR_LINE; break;
-		case CPUINFO_INT_IRQ_STATE + T11_IRQ3:			info->i = (t11.irq_state & 8) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_INPUT_STATE + T11_IRQ0:		info->i = (t11.irq_state & 1) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_INPUT_STATE + T11_IRQ1:		info->i = (t11.irq_state & 2) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_INPUT_STATE + T11_IRQ2:		info->i = (t11.irq_state & 4) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_INPUT_STATE + T11_IRQ3:		info->i = (t11.irq_state & 8) ? ASSERT_LINE : CLEAR_LINE; break;
 
 		case CPUINFO_INT_PREVIOUSPC:					info->i = t11.ppc.w.l;					break;
 

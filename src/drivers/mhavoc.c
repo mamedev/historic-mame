@@ -191,7 +191,7 @@
  *
  *************************************/
 
-static READ_HANDLER( dual_pokey_r )
+static READ8_HANDLER( dual_pokey_r )
 {
 	int pokey_num = (offset >> 3) & 0x01;
 	int control = (offset & 0x10) >> 1;
@@ -204,7 +204,7 @@ static READ_HANDLER( dual_pokey_r )
 }
 
 
-static WRITE_HANDLER( dual_pokey_w )
+static WRITE8_HANDLER( dual_pokey_w )
 {
 	int pokey_num = (offset >> 3) & 0x01;
 	int control = (offset & 0x10) >> 1;
@@ -226,12 +226,12 @@ static WRITE_HANDLER( dual_pokey_w )
 
 static data8_t *gammaram;
 
-static READ_HANDLER( mhavoc_gammaram_r )
+static READ8_HANDLER( mhavoc_gammaram_r )
 {
 	return gammaram[offset & 0x7ff];
 }
 
-static WRITE_HANDLER( mhavoc_gammaram_w )
+static WRITE8_HANDLER( mhavoc_gammaram_w )
 {
 	gammaram[offset & 0x7ff] = data;
 }

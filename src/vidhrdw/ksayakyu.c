@@ -6,13 +6,13 @@ struct tilemap *ksayakyu_textmap;
 static int video_ctrl;
 static int flipscreen;
 
-WRITE_HANDLER(ksayakyu_videoram_w)
+WRITE8_HANDLER(ksayakyu_videoram_w)
 {
 	videoram[offset]=data;
 	tilemap_mark_tile_dirty(ksayakyu_textmap,offset>>1); 
 }
 
-WRITE_HANDLER(ksayakyu_videoctrl_w)
+WRITE8_HANDLER(ksayakyu_videoctrl_w)
 {
 	/* 
 		bits:

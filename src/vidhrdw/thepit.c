@@ -139,7 +139,7 @@ PALETTE_INIT( suprmous )
 }
 
 
-WRITE_HANDLER( thepit_attributes_w )
+WRITE8_HANDLER( thepit_attributes_w )
 {
 	if ((offset & 1) && thepit_attributesram[offset] != data)
 	{
@@ -154,13 +154,13 @@ WRITE_HANDLER( thepit_attributes_w )
 }
 
 
-WRITE_HANDLER( intrepid_graphics_bank_select_w )
+WRITE8_HANDLER( intrepid_graphics_bank_select_w )
 {
 	set_vh_global_attribute(&graphics_bank, data << 1);
 }
 
 
-READ_HANDLER( thepit_input_port_0_r )
+READ8_HANDLER( thepit_input_port_0_r )
 {
 	/* Read either the real or the fake input ports depending on the
 	   horizontal flip switch. (This is how the real PCB does it) */
@@ -175,7 +175,7 @@ READ_HANDLER( thepit_input_port_0_r )
 }
 
 
-WRITE_HANDLER( thepit_sound_enable_w )
+WRITE8_HANDLER( thepit_sound_enable_w )
 {
 	mixer_sound_enable_global_w(data);
 }

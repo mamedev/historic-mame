@@ -17,20 +17,20 @@ struct YM2151interface
 	write8_handler portwritehandler[MAX_2151];
 };
 
-READ_HANDLER( YM2151_status_port_0_r );
-READ_HANDLER( YM2151_status_port_1_r );
-READ_HANDLER( YM2151_status_port_2_r );
+READ8_HANDLER( YM2151_status_port_0_r );
+READ8_HANDLER( YM2151_status_port_1_r );
+READ8_HANDLER( YM2151_status_port_2_r );
 
-WRITE_HANDLER( YM2151_register_port_0_w );
-WRITE_HANDLER( YM2151_register_port_1_w );
-WRITE_HANDLER( YM2151_register_port_2_w );
+WRITE8_HANDLER( YM2151_register_port_0_w );
+WRITE8_HANDLER( YM2151_register_port_1_w );
+WRITE8_HANDLER( YM2151_register_port_2_w );
 
-WRITE_HANDLER( YM2151_data_port_0_w );
-WRITE_HANDLER( YM2151_data_port_1_w );
-WRITE_HANDLER( YM2151_data_port_2_w );
+WRITE8_HANDLER( YM2151_data_port_0_w );
+WRITE8_HANDLER( YM2151_data_port_1_w );
+WRITE8_HANDLER( YM2151_data_port_2_w );
 
-WRITE_HANDLER( YM2151_word_0_w );
-WRITE_HANDLER( YM2151_word_1_w );
+WRITE8_HANDLER( YM2151_word_0_w );
+WRITE8_HANDLER( YM2151_word_1_w );
 
 READ16_HANDLER( YM2151_status_port_0_lsb_r );
 READ16_HANDLER( YM2151_status_port_1_lsb_r );

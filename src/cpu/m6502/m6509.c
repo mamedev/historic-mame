@@ -113,24 +113,24 @@ static m6509_Regs m6509;
 
 #include "t6509.c"
 
-static READ_HANDLER( m6509_read_00000 )
+static READ8_HANDLER( m6509_read_00000 )
 {
 	return m6509.pc_bank.b.h2;
 }
 
-static READ_HANDLER( m6509_read_00001 )
+static READ8_HANDLER( m6509_read_00001 )
 {
 	return m6509.ind_bank.b.h2;
 }
 
-static WRITE_HANDLER( m6509_write_00000 )
+static WRITE8_HANDLER( m6509_write_00000 )
 {
 	m6509.pc_bank.b.h2=data&0xf;
 	m6509.pc.w.h=m6509.pc_bank.w.h;
 	change_pc(PCD);
 }
 
-static WRITE_HANDLER( m6509_write_00001 )
+static WRITE8_HANDLER( m6509_write_00001 )
 {
 	m6509.ind_bank.b.h2=data&0xf;
 }
@@ -254,7 +254,7 @@ static int m6509_execute(int cycles)
 
 static void m6509_set_irq_line(int irqline, int state)
 {
-	if (irqline == IRQ_LINE_NMI)
+	if (irqline == INPUT_LINE_NMI)
 	{
 		if (m6509.nmi_state == state) return;
 		m6509.nmi_state = state;
@@ -314,9 +314,9 @@ static void m6509_set_info(UINT32 state, union cpuinfo *info)
 	switch (state)
 	{
 		/* --- the following bits of info are set as 64-bit signed integers --- */
-		case CPUINFO_INT_IRQ_STATE + M6509_IRQ_LINE:	m6509_set_irq_line(M6509_IRQ_LINE, info->i); break;
-		case CPUINFO_INT_IRQ_STATE + M6509_SET_OVERFLOW:m6509_set_irq_line(M6509_SET_OVERFLOW, info->i); break;
-		case CPUINFO_INT_IRQ_STATE + IRQ_LINE_NMI:		m6509_set_irq_line(IRQ_LINE_NMI, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + M6509_IRQ_LINE:	m6509_set_irq_line(M6509_IRQ_LINE, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + M6509_SET_OVERFLOW:m6509_set_irq_line(M6509_SET_OVERFLOW, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:	m6509_set_irq_line(INPUT_LINE_NMI, info->i); break;
 
 		case CPUINFO_INT_PC:							PCW = info->i; change_pc(PCD);		break;
 		case CPUINFO_INT_REGISTER + M6509_PC:			m6509.pc.w.l = info->i;					break;
@@ -348,7 +348,7 @@ void m6509_get_info(UINT32 state, union cpuinfo *info)
 	{
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
 		case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(m6502);				break;
-		case CPUINFO_INT_IRQ_LINES:						info->i = 2;							break;
+		case CPUINFO_INT_INPUT_LINES:					info->i = 2;							break;
 		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
 		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_LE;					break;
 		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
@@ -367,9 +367,9 @@ void m6509_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 0;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
 
-		case CPUINFO_INT_IRQ_STATE + M6509_IRQ_LINE:	info->i = m6509.irq_state;				break;
-		case CPUINFO_INT_IRQ_STATE + M6509_SET_OVERFLOW:info->i = m6509.so_state;				break;
-		case CPUINFO_INT_IRQ_STATE + IRQ_LINE_NMI:		info->i = m6509.nmi_state;				break;
+		case CPUINFO_INT_INPUT_STATE + M6509_IRQ_LINE:	info->i = m6509.irq_state;				break;
+		case CPUINFO_INT_INPUT_STATE + M6509_SET_OVERFLOW:info->i = m6509.so_state;				break;
+		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:	info->i = m6509.nmi_state;				break;
 
 		case CPUINFO_INT_PREVIOUSPC:					info->i = m6509.ppc.w.l;				break;
 

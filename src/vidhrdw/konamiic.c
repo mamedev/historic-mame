@@ -1227,12 +1227,12 @@ if ((K007121_ctrlram[chip][offset] & 0x30) != (data & 0x30))
 	K007121_ctrlram[chip][offset] = data;
 }
 
-WRITE_HANDLER( K007121_ctrl_0_w )
+WRITE8_HANDLER( K007121_ctrl_0_w )
 {
 	K007121_ctrl_w(0,offset,data);
 }
 
-WRITE_HANDLER( K007121_ctrl_1_w )
+WRITE8_HANDLER( K007121_ctrl_1_w )
 {
 	K007121_ctrl_w(1,offset,data);
 }
@@ -1287,7 +1287,7 @@ usrintf_showmessage("%02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x  %02x-%02x-%02x-%02
 	K007121_ctrlram[0][0x00],K007121_ctrlram[0][0x01],K007121_ctrlram[0][0x02],K007121_ctrlram[0][0x03],K007121_ctrlram[0][0x04],K007121_ctrlram[0][0x05],K007121_ctrlram[0][0x06],K007121_ctrlram[0][0x07],
 	K007121_ctrlram[1][0x00],K007121_ctrlram[1][0x01],K007121_ctrlram[1][0x02],K007121_ctrlram[1][0x03],K007121_ctrlram[1][0x04],K007121_ctrlram[1][0x05],K007121_ctrlram[1][0x06],K007121_ctrlram[1][0x07]);
 
-if (keyboard_pressed(KEYCODE_D))
+if (code_pressed(KEYCODE_D))
 {
 	FILE *fp;
 	fp=fopen(chip?"SPRITE1.DMP":"SPRITE0.DMP", "w+b");
@@ -1516,12 +1516,12 @@ int K007342_vh_start(int gfx_index, void (*callback)(int tilemap, int bank, int 
 	return 0;
 }
 
-READ_HANDLER( K007342_r )
+READ8_HANDLER( K007342_r )
 {
 	return K007342_ram[offset];
 }
 
-WRITE_HANDLER( K007342_w )
+WRITE8_HANDLER( K007342_w )
 {
 	if (offset < 0x1000)
 	{		/* layer 0 */
@@ -1541,17 +1541,17 @@ WRITE_HANDLER( K007342_w )
 	}
 }
 
-READ_HANDLER( K007342_scroll_r )
+READ8_HANDLER( K007342_scroll_r )
 {
 	return K007342_scroll_ram[offset];
 }
 
-WRITE_HANDLER( K007342_scroll_w )
+WRITE8_HANDLER( K007342_scroll_w )
 {
 	K007342_scroll_ram[offset] = data;
 }
 
-WRITE_HANDLER( K007342_vreg_w )
+WRITE8_HANDLER( K007342_vreg_w )
 {
 	switch(offset)
 	{
@@ -1632,7 +1632,7 @@ void K007342_tilemap_update(void)
 	{
 		static int current_layer = 0;
 
-		if (keyboard_pressed_memory(KEYCODE_Z)) current_layer = !current_layer;
+		if (code_pressed_memory(KEYCODE_Z)) current_layer = !current_layer;
 		tilemap_set_enable(K007342_tilemap[current_layer], 1);
 		tilemap_set_enable(K007342_tilemap[!current_layer], 0);
 
@@ -1686,12 +1686,12 @@ int K007420_vh_start(int gfxnum, void (*callback)(int *code,int *color))
 	return 0;
 }
 
-READ_HANDLER( K007420_r )
+READ8_HANDLER( K007420_r )
 {
 	return K007420_ram[offset];
 }
 
-WRITE_HANDLER( K007420_w )
+WRITE8_HANDLER( K007420_w )
 {
 	K007420_ram[offset] = data;
 }
@@ -1847,8 +1847,8 @@ void K007420_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cli
 	{
 		static int current_sprite = 0;
 
-		if (keyboard_pressed_memory(KEYCODE_Z)) current_sprite = (current_sprite+1) & ((K007420_SPRITERAM_SIZE/8)-1);
-		if (keyboard_pressed_memory(KEYCODE_X)) current_sprite = (current_sprite-1) & ((K007420_SPRITERAM_SIZE/8)-1);
+		if (code_pressed_memory(KEYCODE_Z)) current_sprite = (current_sprite+1) & ((K007420_SPRITERAM_SIZE/8)-1);
+		if (code_pressed_memory(KEYCODE_X)) current_sprite = (current_sprite-1) & ((K007420_SPRITERAM_SIZE/8)-1);
 
 		usrintf_showmessage("%02x:%02x %02x %02x %02x %02x %02x %02x %02x", current_sprite,
 			K007420_ram[(current_sprite*8)+0], K007420_ram[(current_sprite*8)+1],
@@ -2044,7 +2044,7 @@ int K052109_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int 
 
 
 
-READ_HANDLER( K052109_r )
+READ8_HANDLER( K052109_r )
 {
 	if (K052109_RMRD_line == CLEAR_LINE)
 	{
@@ -2086,7 +2086,7 @@ else
 	}
 }
 
-WRITE_HANDLER( K052109_w )
+WRITE8_HANDLER( K052109_w )
 {
 	if ((offset & 0x1fff) < 0x1800) /* tilemap RAM */
 	{
@@ -2375,7 +2375,7 @@ if ((K052109_scrollctrl & 0x03) == 0x01 ||
 		(K052109_scrollctrl & 0xc0) != 0)
 	usrintf_showmessage("scrollcontrol = %02x",K052109_scrollctrl);
 
-if (keyboard_pressed(KEYCODE_F))
+if (code_pressed(KEYCODE_F))
 {
 	FILE *fp;
 	fp=fopen("TILE.DMP", "w+b");
@@ -2505,7 +2505,7 @@ static int K051960_fetchromdata(int byte)
 	return memory_region(K051960_memory_region)[addr];
 }
 
-READ_HANDLER( K051960_r )
+READ8_HANDLER( K051960_r )
 {
 	if (K051960_readroms)
 	{
@@ -2517,7 +2517,7 @@ READ_HANDLER( K051960_r )
 		return K051960_ram[offset];
 }
 
-WRITE_HANDLER( K051960_w )
+WRITE8_HANDLER( K051960_w )
 {
 	K051960_ram[offset] = data;
 }
@@ -2535,7 +2535,7 @@ WRITE16_HANDLER( K051960_word_w )
 		K051960_w(offset*2 + 1,data & 0xff);
 }
 
-READ_HANDLER( K051937_r )
+READ8_HANDLER( K051937_r )
 {
 	if (K051960_readroms && offset >= 4 && offset < 8)
 	{
@@ -2555,7 +2555,7 @@ READ_HANDLER( K051937_r )
 	}
 }
 
-WRITE_HANDLER( K051937_w )
+WRITE8_HANDLER( K051937_w )
 {
 	if (offset == 0)
 	{
@@ -2797,7 +2797,7 @@ void K051960_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cli
 		}
 	}
 #if 0
-if (keyboard_pressed(KEYCODE_D))
+if (code_pressed(KEYCODE_D))
 {
 	FILE *fp;
 	fp=fopen("SPRITE.DMP", "w+b");
@@ -2825,7 +2825,7 @@ int K051960_is_NMI_enabled(void)
 
 
 
-READ_HANDLER( K052109_051960_r )
+READ8_HANDLER( K052109_051960_r )
 {
 	if (K052109_RMRD_line == CLEAR_LINE)
 	{
@@ -2839,7 +2839,7 @@ READ_HANDLER( K052109_051960_r )
 	else return K052109_r(offset);
 }
 
-WRITE_HANDLER( K052109_051960_w )
+WRITE8_HANDLER( K052109_051960_w )
 {
 	if (offset >= 0x3800 && offset < 0x3808)
 		K051937_w(offset - 0x3800,data);
@@ -2984,7 +2984,7 @@ WRITE16_HANDLER( K053245_word_w )
 	COMBINE_DATA(K053245_ram+offset);
 }
 
-READ_HANDLER( K053245_r )
+READ8_HANDLER( K053245_r )
 {
 	if(offset & 1)
 		return K053245_ram[offset>>1] & 0xff;
@@ -2992,7 +2992,7 @@ READ_HANDLER( K053245_r )
 		return (K053245_ram[offset>>1]>>8) & 0xff;
 }
 
-WRITE_HANDLER( K053245_w )
+WRITE8_HANDLER( K053245_w )
 {
 	if(offset & 1)
 		K053245_ram[offset>>1] = (K053245_ram[offset>>1] & 0xff00) | data;
@@ -3011,7 +3011,7 @@ INLINE void K053245_update_buffer( void )
 	memcpy(K053245_buffer, K053245_ram, K053245_ramsize);
 }
 
-READ_HANDLER( K053244_r )
+READ8_HANDLER( K053244_r )
 {
 	if ((K053244_regs[5] & 0x10) && offset >= 0x0c && offset < 0x10)
 	{
@@ -3038,7 +3038,7 @@ READ_HANDLER( K053244_r )
 	}
 }
 
-WRITE_HANDLER( K053244_w )
+WRITE8_HANDLER( K053244_w )
 {
 	K053244_regs[offset] = data;
 
@@ -3322,7 +3322,7 @@ void K053245_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cli
 		}
 	}
 #if 0
-if (keyboard_pressed(KEYCODE_D))
+if (code_pressed(KEYCODE_D))
 {
 	FILE *fp;
 	fp=fopen("SPRITE.DMP", "w+b");
@@ -3661,7 +3661,7 @@ WRITE32_HANDLER( K053247_long_w )
 	COMBINE_DATA(K053247_ram + offset);
 }
 
-READ_HANDLER( K053247_r )
+READ8_HANDLER( K053247_r )
 {
 	int offs = offset >> 1;
 
@@ -3671,7 +3671,7 @@ READ_HANDLER( K053247_r )
 		return(K053247_ram[offs] >> 8);
 }
 
-WRITE_HANDLER( K053247_w )
+WRITE8_HANDLER( K053247_w )
 {
 	int offs = offset >> 1;
 
@@ -3773,7 +3773,7 @@ READ16_HANDLER( K055673_GX6bpp_rom_word_r )
 	return 0;
 }
 
-READ_HANDLER( K053246_r )
+READ8_HANDLER( K053246_r )
 {
 	if (K053246_OBJCHA_line == ASSERT_LINE)
 	{
@@ -3795,7 +3795,7 @@ logerror("%04x: read from unknown 053246 address %x\n",activecpu_get_pc(),offset
 	}
 }
 
-WRITE_HANDLER( K053246_w )
+WRITE8_HANDLER( K053246_w )
 {
 	K053246_regs[offset] = data;
 }
@@ -4425,17 +4425,17 @@ int K051316_r(int chip, int offset)
 	return K051316_ram[chip][offset];
 }
 
-READ_HANDLER( K051316_0_r )
+READ8_HANDLER( K051316_0_r )
 {
 	return K051316_r(0, offset);
 }
 
-READ_HANDLER( K051316_1_r )
+READ8_HANDLER( K051316_1_r )
 {
 	return K051316_r(1, offset);
 }
 
-READ_HANDLER( K051316_2_r )
+READ8_HANDLER( K051316_2_r )
 {
 	return K051316_r(2, offset);
 }
@@ -4450,17 +4450,17 @@ void K051316_w(int chip,int offset,int data)
 	}
 }
 
-WRITE_HANDLER( K051316_0_w )
+WRITE8_HANDLER( K051316_0_w )
 {
 	K051316_w(0,offset,data);
 }
 
-WRITE_HANDLER( K051316_1_w )
+WRITE8_HANDLER( K051316_1_w )
 {
 	K051316_w(1,offset,data);
 }
 
-WRITE_HANDLER( K051316_2_w )
+WRITE8_HANDLER( K051316_2_w )
 {
 	K051316_w(2,offset,data);
 }
@@ -4487,17 +4487,17 @@ int K051316_rom_r(int chip, int offset)
 	}
 }
 
-READ_HANDLER( K051316_rom_0_r )
+READ8_HANDLER( K051316_rom_0_r )
 {
 	return K051316_rom_r(0,offset);
 }
 
-READ_HANDLER( K051316_rom_1_r )
+READ8_HANDLER( K051316_rom_1_r )
 {
 	return K051316_rom_r(1,offset);
 }
 
-READ_HANDLER( K051316_rom_2_r )
+READ8_HANDLER( K051316_rom_2_r )
 {
 	return K051316_rom_r(2,offset);
 }
@@ -4510,17 +4510,17 @@ void K051316_ctrl_w(int chip,int offset,int data)
 //if (offset >= 0x0c) logerror("%04x: write %02x to 051316 reg %x\n",activecpu_get_pc(),data,offset);
 }
 
-WRITE_HANDLER( K051316_ctrl_0_w )
+WRITE8_HANDLER( K051316_ctrl_0_w )
 {
 	K051316_ctrl_w(0,offset,data);
 }
 
-WRITE_HANDLER( K051316_ctrl_1_w )
+WRITE8_HANDLER( K051316_ctrl_1_w )
 {
 	K051316_ctrl_w(1,offset,data);
 }
 
-WRITE_HANDLER( K051316_ctrl_2_w )
+WRITE8_HANDLER( K051316_ctrl_2_w )
 {
 	K051316_ctrl_w(2,offset,data);
 }
@@ -4698,7 +4698,7 @@ static void K053936_zoom_draw(int chip,data16_t *ctrl,data16_t *linectrl,struct 
 	}
 
 #if 0
-if (keyboard_pressed(KEYCODE_D))
+if (code_pressed(KEYCODE_D))
 	usrintf_showmessage("%04x %04x %04x %04x\n%04x %04x %04x %04x\n%04x %04x %04x %04x\n%04x %04x %04x %04x",
 			ctrl[0x00],
 			ctrl[0x01],
@@ -4786,7 +4786,7 @@ void K053251_set_tilemaps(struct tilemap *ci0,struct tilemap *ci1,struct tilemap
 	K053251_tilemaps_set = (ci0 || ci1 || ci2 || ci3 || ci4) ? 1 : 0;
 }
 
-WRITE_HANDLER( K053251_w )
+WRITE8_HANDLER( K053251_w )
 {
 	int i,newind;
 
@@ -4866,14 +4866,14 @@ int K053251_get_palette_index(int ci)
 
 static unsigned char K054000_ram[0x20];
 
-WRITE_HANDLER( K054000_w )
+WRITE8_HANDLER( K054000_w )
 {
 //logerror("%04x: write %02x to 054000 address %02x\n",activecpu_get_pc(),data,offset);
 
 	K054000_ram[offset] = data;
 }
 
-READ_HANDLER( K054000_r )
+READ8_HANDLER( K054000_r )
 {
 	int Acx,Acy,Aax,Aay;
 	int Bcx,Bcy,Bax,Bay;
@@ -4931,7 +4931,7 @@ WRITE16_HANDLER( K054000_lsb_w )
 
 static unsigned char K051733_ram[0x20];
 
-WRITE_HANDLER( K051733_w )
+WRITE8_HANDLER( K051733_w )
 {
 //logerror("%04x: write %02x to 051733 address %02x\n",activecpu_get_pc(),data,offset);
 
@@ -4955,7 +4955,7 @@ static int int_sqrt(UINT32 op)
 	return i;
 }
 
-READ_HANDLER( K051733_r )
+READ8_HANDLER( K051733_r )
 {
 	int op1 = (K051733_ram[0x00] << 8) | K051733_ram[0x01];
 	int op2 = (K051733_ram[0x02] << 8) | K051733_ram[0x03];
@@ -5427,21 +5427,21 @@ WRITE16_HANDLER( K054157_ram_half_word_w )
 		tilemap_mark_tile_dirty(K054157_cur_tilemap, (offset & 0x7ff) + K054157_cur_offset);
 }
 
-READ_HANDLER( K054157_ram_code_r )
+READ8_HANDLER( K054157_ram_code_r )
 {
 	data16_t *adr = K054157_cur_rambase + offset;
 
 	return *adr & 0xff;
 }
 
-READ_HANDLER( K054157_ram_attr_r )
+READ8_HANDLER( K054157_ram_attr_r )
 {
 	data16_t *adr = K054157_cur_rambase + offset;
 
 	return *adr>>8;
 }
 
-WRITE_HANDLER( K054157_ram_code_w )
+WRITE8_HANDLER( K054157_ram_code_w )
 {
 	data16_t *adr = K054157_cur_rambase + offset;
 
@@ -5449,7 +5449,7 @@ WRITE_HANDLER( K054157_ram_code_w )
 	*adr |= data;
 }
 
-WRITE_HANDLER( K054157_ram_attr_w )
+WRITE8_HANDLER( K054157_ram_attr_w )
 {
 	data16_t *adr = K054157_cur_rambase + offset;
 
@@ -5503,7 +5503,7 @@ WRITE16_HANDLER( K054157_word_w )
 	}
 }
 
-WRITE_HANDLER( K054157_w )
+WRITE8_HANDLER( K054157_w )
 {
 	if (offset & 1)
 	{
@@ -5520,7 +5520,7 @@ WRITE16_HANDLER( K054157_b_word_w )
 	COMBINE_DATA (K054157_regsb + offset);
 }
 
-WRITE_HANDLER( K054157_b_w )
+WRITE8_HANDLER( K054157_b_w )
 {
 	if (offset & 1)
 	{
@@ -7797,32 +7797,32 @@ void K053250_draw(struct mame_bitmap *bitmap, const struct rectangle *cliprect, 
 	if(chip && ++kk == 3) {
 		int kx=0, kkc = 0;
 		kk = 0;
-		if(keyboard_pressed(KEYCODE_Y)) {
+		if(code_pressed(KEYCODE_Y)) {
 			kx = 1;
 			kc--;
 			if(kc<-1)
 				kc = 511;
 		}
-		if(keyboard_pressed(KEYCODE_U)) {
+		if(code_pressed(KEYCODE_U)) {
 			kx = 1;
 			kc++;
 			if(kc==512)
 				kc = -1;
 		}
 
-		if(keyboard_pressed(KEYCODE_T)) {
+		if(code_pressed(KEYCODE_T)) {
 			kkc = 1;
 			kyy--;
 		}
-		if(keyboard_pressed(KEYCODE_V)) {
+		if(code_pressed(KEYCODE_V)) {
 			kkc = 1;
 			kyy++;
 		}
-		if(keyboard_pressed(KEYCODE_F)) {
+		if(code_pressed(KEYCODE_F)) {
 			kkc = 1;
 			kxx--;
 		}
-		if(keyboard_pressed(KEYCODE_G)) {
+		if(code_pressed(KEYCODE_G)) {
 			kkc = 1;
 			kxx++;
 		}

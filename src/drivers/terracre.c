@@ -159,7 +159,7 @@ static WRITE16_HANDLER( amazon_sound_w )
 	soundlatch_w(0,((data & 0x7f) << 1) | 1);
 }
 
-static READ_HANDLER( soundlatch_clear_r )
+static READ8_HANDLER( soundlatch_clear_r )
 {
 	soundlatch_clear_w(0,0);
 	return 0;
@@ -954,7 +954,7 @@ DRIVER_INIT( amatelas )
 DRIVER_INIT( horekid )
 {
 	mpProtData = mHoreKidProtData;
-	install_mem_read16_handler(0, 0x44004, 0x44005, horekid_IN2_r);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x44004, 0x44005, 0, 0, horekid_IN2_r);
 }
 
 /*    YEAR, NAME,   PARENT,     MACHINE, INPUT,    INIT,     MONITOR,  COMPANY,      FULLNAME, FLAGS */

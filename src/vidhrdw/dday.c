@@ -29,7 +29,7 @@ static int timer_value;
 
   Thanks Zwaxy for the timer info. */
 
-READ_HANDLER( dday_countdown_timer_r )
+READ8_HANDLER( dday_countdown_timer_r )
 {
     return ((timer_value / 10) << 4) | (timer_value % 10);
 }
@@ -262,26 +262,26 @@ VIDEO_START( dday )
 	return 0;
 }
 
-WRITE_HANDLER( dday_bgvideoram_w )
+WRITE8_HANDLER( dday_bgvideoram_w )
 {
 	dday_bgvideoram[offset] = data;
 	tilemap_mark_tile_dirty(bg_tilemap, offset);
 }
 
-WRITE_HANDLER( dday_fgvideoram_w )
+WRITE8_HANDLER( dday_fgvideoram_w )
 {
 	dday_fgvideoram[offset] = data;
 	tilemap_mark_tile_dirty(fg_tilemap, offset);
 	tilemap_mark_tile_dirty(fg_tilemap, offset ^ 0x1f);  /* for flipx case */
 }
 
-WRITE_HANDLER( dday_textvideoram_w )
+WRITE8_HANDLER( dday_textvideoram_w )
 {
 	dday_textvideoram[offset] = data;
 	tilemap_mark_tile_dirty(text_tilemap, offset);
 }
 
-WRITE_HANDLER( dday_colorram_w )
+WRITE8_HANDLER( dday_colorram_w )
 {
 	int i;
 
@@ -296,13 +296,13 @@ WRITE_HANDLER( dday_colorram_w )
 	}
 }
 
-READ_HANDLER( dday_colorram_r )
+READ8_HANDLER( dday_colorram_r )
 {
     return dday_colorram[offset & 0x03e0];
 }
 
 
-WRITE_HANDLER( dday_sl_control_w )
+WRITE8_HANDLER( dday_sl_control_w )
 {
 	if (sl_image != data)
 	{
@@ -313,7 +313,7 @@ WRITE_HANDLER( dday_sl_control_w )
 }
 
 
-WRITE_HANDLER( dday_control_w )
+WRITE8_HANDLER( dday_control_w )
 {
 	//if (data & 0xac)  logerror("Control = %02X\n", data & 0xac);
 

@@ -64,8 +64,8 @@ data8_t tms34061_r(int col, int row, int func);
 void tms34061_w(int col, int row, int func, data8_t data);
 
 /* latch settings */
-READ_HANDLER( tms34061_latch_r );
-WRITE_HANDLER( tms34061_latch_w );
+READ8_HANDLER( tms34061_latch_r );
+WRITE8_HANDLER( tms34061_latch_w );
 
 /* video update handling */
 void tms34061_get_display_state(struct tms34061_display *state);

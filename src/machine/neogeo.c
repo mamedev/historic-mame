@@ -538,51 +538,51 @@ static void neogeo_custom_memory(void)
 	if (!Machine->sample_rate &&
 			!strcmp(Machine->gamedrv->name,"popbounc"))
 	/* the game hangs after a while without this patch */
-		install_mem_read16_handler(0, 0x104fbc, 0x104fbd, popbounc_sfix_16_r);
+		memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x104fbc, 0x104fbd, 0, 0, popbounc_sfix_16_r);
 
 	if (!strcmp(Machine->gamedrv->name,"kof99") || !strcmp(Machine->gamedrv->name,"kof99a") || !strcmp(Machine->gamedrv->name,"kof99e"))
 	{
 		/* special ROM banking handler */
-		install_mem_write16_handler(0, 0x2ffff0, 0x2ffff1, kof99_bankswitch_w);
+		memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2ffff0, 0x2ffff1, 0, 0, kof99_bankswitch_w);
 
 		/* additional protection */
-		install_mem_read16_handler(0, 0x2fe446, 0x2fe447, prot_9a37_r);
+		memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2fe446, 0x2fe447, 0, 0, prot_9a37_r);
 	}
 
 	if (!strcmp(Machine->gamedrv->name,"garou"))
 	{
 		/* special ROM banking handler */
-		install_mem_write16_handler(0, 0x2fffc0, 0x2fffc1, garou_bankswitch_w);
+		memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2fffc0, 0x2fffc1, 0, 0, garou_bankswitch_w);
 
 		/* additional protection */
-		install_mem_read16_handler(0, 0x2fe446, 0x2fe447, prot_9a37_r);
+		memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2fe446, 0x2fe447, 0, 0, prot_9a37_r);
 	}
 
 	if (!strcmp(Machine->gamedrv->name,"garouo"))
 	{
 		/* special ROM banking handler */
-		install_mem_write16_handler(0, 0x2fffc0, 0x2fffc1, garouo_bankswitch_w);
+		memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2fffc0, 0x2fffc1, 0, 0, garouo_bankswitch_w);
 
 		/* additional protection */
-		install_mem_read16_handler(0, 0x2fe446, 0x2fe447, prot_9a37_r);
+		memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2fe446, 0x2fe447, 0, 0, prot_9a37_r);
 	}
 
 	if (!strcmp(Machine->gamedrv->name,"mslug3"))
 	{
 		/* special ROM banking handler */
-		install_mem_write16_handler(0, 0x2fffe4, 0x2fffe5, mslug3_bankswitch_w);
+		memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2fffe4, 0x2fffe5, 0, 0, mslug3_bankswitch_w);
 
 		/* additional protection */
-		install_mem_read16_handler(0, 0x2fe446, 0x2fe447, prot_9a37_r);
+		memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2fe446, 0x2fe447, 0, 0, prot_9a37_r);
 	}
 
 	if (!strcmp(Machine->gamedrv->name,"kof2000"))
 	{
 		/* special ROM banking handler */
-		install_mem_write16_handler(0, 0x2fffec, 0x2fffed, kof2000_bankswitch_w);
+		memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2fffec, 0x2fffed, 0, 0, kof2000_bankswitch_w);
 
 		/* additional protection */
-		install_mem_read16_handler(0, 0x2fe446, 0x2fe447, prot_9a37_r);
+		memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2fe446, 0x2fe447, 0, 0, prot_9a37_r);
 	}
 
 	/* hacks to make the games which do protection checks run in arcade mode */
@@ -650,8 +650,8 @@ static void neogeo_custom_memory(void)
 
 		/* again, the protection involves reading and writing addresses in the */
 		/* 0x2xxxxx range. There are several checks all around the code. */
-		install_mem_read16_handler(0, 0x200000, 0x2fffff, fatfury2_protection_16_r);
-		install_mem_write16_handler(0, 0x200000, 0x2fffff, fatfury2_protection_16_w);
+		memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x200000, 0x2fffff, 0, 0, fatfury2_protection_16_r);
+		memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x200000, 0x2fffff, 0, 0, fatfury2_protection_16_w);
 	}
 
 	if (!strcmp(Machine->gamedrv->name,"fatfury3"))

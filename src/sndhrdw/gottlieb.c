@@ -3,7 +3,7 @@
 
 
 
-WRITE_HANDLER( gottlieb_sh_w )
+WRITE8_HANDLER( gottlieb_sh_w )
 {
 	static int score_sample=7;
 	static int random_offset=0;
@@ -70,13 +70,13 @@ WRITE_HANDLER( gottlieb_sh_w )
 		{
 		case 2:
 			/* Revision 1 sound board */
-			cpu_set_irq_line(1,M6502_IRQ_LINE,HOLD_LINE);
+			cpunum_set_input_line(1,M6502_IRQ_LINE,HOLD_LINE);
 			break;
 		case 3:
 		case 4:
 			/* Revision 2 & 3 sound board */
-			cpu_set_irq_line(cpu_gettotalcpu()-1,M6502_IRQ_LINE,HOLD_LINE);
-			cpu_set_irq_line(cpu_gettotalcpu()-2,M6502_IRQ_LINE,HOLD_LINE);
+			cpunum_set_input_line(cpu_gettotalcpu()-1,M6502_IRQ_LINE,HOLD_LINE);
+			cpunum_set_input_line(cpu_gettotalcpu()-2,M6502_IRQ_LINE,HOLD_LINE);
 			break;
 		}
 	}
@@ -98,7 +98,7 @@ void gottlieb_knocker(void)
 /* callback for the timer */
 void gottlieb_nmi_generate(int param)
 {
-	cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
+	cpunum_set_input_line(1,INPUT_LINE_NMI,PULSE_LINE);
 }
 
 static const char *PhonemeTable[65] =
@@ -115,7 +115,7 @@ static const char *PhonemeTable[65] =
 };
 
 
-WRITE_HANDLER( gottlieb_speech_w )
+WRITE8_HANDLER( gottlieb_speech_w )
 {
 	static int queue[100],pos;
 
@@ -151,7 +151,7 @@ logerror("Votrax: intonation %d, phoneme %02x %s\n",data >> 6,data & 0x3f,Phonem
 	timer_set(TIME_IN_USEC(50),0,gottlieb_nmi_generate);
 }
 
-WRITE_HANDLER( gottlieb_speech_clock_DAC_w )
+WRITE8_HANDLER( gottlieb_speech_clock_DAC_w )
 {}
 
 
@@ -163,12 +163,12 @@ WRITE_HANDLER( gottlieb_speech_clock_DAC_w )
 
 unsigned char *riot_ram;
 
-READ_HANDLER( riot_ram_r )
+READ8_HANDLER( riot_ram_r )
 {
     return riot_ram[offset&0x7f];
 }
 
-WRITE_HANDLER( riot_ram_w )
+WRITE8_HANDLER( riot_ram_w )
 {
 	riot_ram[offset&0x7f]=data;
 }
@@ -176,7 +176,7 @@ WRITE_HANDLER( riot_ram_w )
 static unsigned char riot_regs[32];
     /* lazy handling of the 6532's I/O, and no handling of timers at all */
 
-READ_HANDLER( gottlieb_riot_r )
+READ8_HANDLER( gottlieb_riot_r )
 {
     switch (offset&0x1f) {
 	case 0: /* port A */
@@ -190,7 +190,7 @@ READ_HANDLER( gottlieb_riot_r )
     }
 }
 
-WRITE_HANDLER( gottlieb_riot_w )
+WRITE8_HANDLER( gottlieb_riot_w )
 {
     riot_regs[offset&0x1f]=data;
 }
@@ -209,7 +209,7 @@ void gottlieb_sound_init(void)
 	nmi_timer = timer_alloc(nmi_callback);
 }
 
-READ_HANDLER( stooges_sound_input_r )
+READ8_HANDLER( stooges_sound_input_r )
 {
 	/* bits 0-3 are probably unused (future expansion) */
 
@@ -222,7 +222,7 @@ READ_HANDLER( stooges_sound_input_r )
 	return 0xc0;
 }
 
-WRITE_HANDLER( stooges_8910_latch_w )
+WRITE8_HANDLER( stooges_8910_latch_w )
 {
 	psg_latch = data;
 }
@@ -230,10 +230,10 @@ WRITE_HANDLER( stooges_8910_latch_w )
 /* callback for the timer */
 static void nmi_callback(int param)
 {
-	cpu_set_irq_line(cpu_gettotalcpu()-1, IRQ_LINE_NMI, PULSE_LINE);
+	cpunum_set_input_line(cpu_gettotalcpu()-1, INPUT_LINE_NMI, PULSE_LINE);
 }
 
-static WRITE_HANDLER( common_sound_control_w )
+static WRITE8_HANDLER( common_sound_control_w )
 {
 	/* Bit 0 enables and starts NMI timer */
 	if (data & 0x01)
@@ -248,7 +248,7 @@ static WRITE_HANDLER( common_sound_control_w )
 	/* Bit 1 controls a LED on the sound board. I'm not emulating it */
 }
 
-WRITE_HANDLER( stooges_sound_control_w )
+WRITE8_HANDLER( stooges_sound_control_w )
 {
 	static int last;
 
@@ -288,7 +288,7 @@ WRITE_HANDLER( stooges_sound_control_w )
 	last = data & 0x44;
 }
 
-WRITE_HANDLER( exterm_sound_control_w )
+WRITE8_HANDLER( exterm_sound_control_w )
 {
 	common_sound_control_w(offset, data);
 
@@ -296,23 +296,23 @@ WRITE_HANDLER( exterm_sound_control_w )
 	ym2151_port = data & 0x80;
 }
 
-WRITE_HANDLER( gottlieb_nmi_rate_w )
+WRITE8_HANDLER( gottlieb_nmi_rate_w )
 {
 	nmi_rate = data;
 }
 
-WRITE_HANDLER( gottlieb_cause_dac_nmi_w )
+WRITE8_HANDLER( gottlieb_cause_dac_nmi_w )
 {
-	cpu_set_irq_line(cpu_gettotalcpu()-2, IRQ_LINE_NMI, PULSE_LINE);
+	cpunum_set_input_line(cpu_gettotalcpu()-2, INPUT_LINE_NMI, PULSE_LINE);
 }
 
-READ_HANDLER( gottlieb_cause_dac_nmi_r )
+READ8_HANDLER( gottlieb_cause_dac_nmi_r )
 {
     gottlieb_cause_dac_nmi_w(offset, 0);
 	return 0;
 }
 
-WRITE_HANDLER( exterm_ym2151_w )
+WRITE8_HANDLER( exterm_ym2151_w )
 {
 	if (ym2151_port)
 	{
@@ -327,13 +327,13 @@ WRITE_HANDLER( exterm_ym2151_w )
 static UINT8 exterm_dac_volume;
 static UINT8 exterm_dac_data;
 
-WRITE_HANDLER( exterm_dac_vol_w )
+WRITE8_HANDLER( exterm_dac_vol_w )
 {
 	exterm_dac_volume = data ^ 0xff;
 	DAC_data_16_w(0, exterm_dac_volume * exterm_dac_data);
 }
 
-WRITE_HANDLER( exterm_dac_data_w )
+WRITE8_HANDLER( exterm_dac_data_w )
 {
 	exterm_dac_data = data;
 	DAC_data_16_w(0, exterm_dac_volume * exterm_dac_data);

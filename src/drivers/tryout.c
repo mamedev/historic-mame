@@ -17,33 +17,33 @@
 
 extern data8_t *tryout_gfx_control;
 
-extern READ_HANDLER( tryout_vram_r );
-extern WRITE_HANDLER( tryout_videoram_w );
-extern WRITE_HANDLER( tryout_vram_w );
-extern WRITE_HANDLER( tryout_vram_bankswitch_w );
-extern WRITE_HANDLER( tryout_flipscreen_w );
+extern READ8_HANDLER( tryout_vram_r );
+extern WRITE8_HANDLER( tryout_videoram_w );
+extern WRITE8_HANDLER( tryout_vram_w );
+extern WRITE8_HANDLER( tryout_vram_bankswitch_w );
+extern WRITE8_HANDLER( tryout_flipscreen_w );
 
 extern PALETTE_INIT( tryout );
 extern VIDEO_START( tryout );
 extern VIDEO_UPDATE( tryout );
 
-static WRITE_HANDLER( tryout_nmi_ack_w )
+static WRITE8_HANDLER( tryout_nmi_ack_w )
 {
-	cpu_set_nmi_line( 0, CLEAR_LINE );
+	cpunum_set_input_line(0, INPUT_LINE_NMI, CLEAR_LINE );
 }
 
-static WRITE_HANDLER( tryout_sound_w )
+static WRITE8_HANDLER( tryout_sound_w )
 {
 	soundlatch_w(0,data);
-	cpu_set_irq_line( 1, 0, PULSE_LINE );
+	cpunum_set_input_line( 1, 0, PULSE_LINE );
 }
 
-static WRITE_HANDLER( tryout_sound_irq_ack_w )
+static WRITE8_HANDLER( tryout_sound_irq_ack_w )
 {
-	cpu_set_irq_line( 1, 0, CLEAR_LINE );
+	cpunum_set_input_line( 1, 0, CLEAR_LINE );
 }
 
-static WRITE_HANDLER( tryout_bankswitch_w )
+static WRITE8_HANDLER( tryout_bankswitch_w )
 {
  	data8_t *RAM = memory_region(REGION_CPU1);
 	int bankaddress;
@@ -185,7 +185,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static INTERRUPT_GEN( tryout_interrupt )
 {
 	if ((input_port_3_r(0) & 0x1c)!=0x1c)
-		cpu_set_nmi_line(0, ASSERT_LINE);
+		cpunum_set_input_line(0, INPUT_LINE_NMI, ASSERT_LINE);
 }
 
 static struct YM2203interface ym2203_interface =

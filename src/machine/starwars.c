@@ -60,7 +60,7 @@ static void run_mbox(void);
  *
  *************************************/
 
-WRITE_HANDLER( starwars_out_w )
+WRITE8_HANDLER( starwars_out_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -117,7 +117,7 @@ WRITE_HANDLER( starwars_out_w )
  *
  *************************************/
 
-READ_HANDLER( starwars_input_1_r )
+READ8_HANDLER( starwars_input_1_r )
 {
 	int x = readinputport(1);
 
@@ -143,7 +143,7 @@ READ_HANDLER( starwars_input_1_r )
  *
  *************************************/
 
-READ_HANDLER( starwars_adc_r )
+READ8_HANDLER( starwars_adc_r )
 {
 	/* pitch */
 	if (control_num == kPitch)
@@ -159,7 +159,7 @@ READ_HANDLER( starwars_adc_r )
 }
 
 
-WRITE_HANDLER( starwars_adc_select_w )
+WRITE8_HANDLER( starwars_adc_select_w )
 {
 	control_num = offset;
 }
@@ -326,7 +326,7 @@ void run_mbox(void)
  *
  *************************************/
 
-READ_HANDLER( swmathbx_prng_r )
+READ8_HANDLER( swmathbx_prng_r )
 {
 	PRN = (int)((PRN + 0x2364) ^ 2); /* This is a total bodge for now, but it works!*/
 	return PRN;
@@ -340,19 +340,19 @@ READ_HANDLER( swmathbx_prng_r )
  *
  *************************************/
 
-READ_HANDLER( swmathbx_reh_r )
+READ8_HANDLER( swmathbx_reh_r )
 {
 	return (div_result & 0xff00) >> 8;
 }
 
 
-READ_HANDLER( swmathbx_rel_r )
+READ8_HANDLER( swmathbx_rel_r )
 {
 	return div_result & 0x00ff;
 }
 
 
-WRITE_HANDLER( swmathbx_w )
+WRITE8_HANDLER( swmathbx_w )
 {
 	data &= 0xff;	/* ASG 971002 -- make sure we only get bytes here */
 	switch (offset)

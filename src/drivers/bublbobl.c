@@ -144,25 +144,25 @@ VIDEO_UPDATE( bublbobl );
 
 /* machine/bublbobl.c */
 extern unsigned char *bublbobl_sharedram1,*bublbobl_sharedram2;
-READ_HANDLER( bublbobl_sharedram1_r );
-READ_HANDLER( bublbobl_sharedram2_r );
-WRITE_HANDLER( bublbobl_sharedram1_w );
-WRITE_HANDLER( bublbobl_sharedram2_w );
+READ8_HANDLER( bublbobl_sharedram1_r );
+READ8_HANDLER( bublbobl_sharedram2_r );
+WRITE8_HANDLER( bublbobl_sharedram1_w );
+WRITE8_HANDLER( bublbobl_sharedram2_w );
 INTERRUPT_GEN( bublbobl_m68705_interrupt );
-READ_HANDLER( bublbobl_68705_portA_r );
-WRITE_HANDLER( bublbobl_68705_portA_w );
-WRITE_HANDLER( bublbobl_68705_ddrA_w );
-READ_HANDLER( bublbobl_68705_portB_r );
-WRITE_HANDLER( bublbobl_68705_portB_w );
-WRITE_HANDLER( bublbobl_68705_ddrB_w );
-WRITE_HANDLER( bublbobl_bankswitch_w );
-WRITE_HANDLER( tokio_bankswitch_w );
-WRITE_HANDLER( tokio_videoctrl_w );
-WRITE_HANDLER( bublbobl_nmitrigger_w );
-READ_HANDLER( tokio_fake_r );
-WRITE_HANDLER( bublbobl_sound_command_w );
-WRITE_HANDLER( bublbobl_sh_nmi_disable_w );
-WRITE_HANDLER( bublbobl_sh_nmi_enable_w );
+READ8_HANDLER( bublbobl_68705_portA_r );
+WRITE8_HANDLER( bublbobl_68705_portA_w );
+WRITE8_HANDLER( bublbobl_68705_ddrA_w );
+READ8_HANDLER( bublbobl_68705_portB_r );
+WRITE8_HANDLER( bublbobl_68705_portB_w );
+WRITE8_HANDLER( bublbobl_68705_ddrB_w );
+WRITE8_HANDLER( bublbobl_bankswitch_w );
+WRITE8_HANDLER( tokio_bankswitch_w );
+WRITE8_HANDLER( tokio_videoctrl_w );
+WRITE8_HANDLER( bublbobl_nmitrigger_w );
+READ8_HANDLER( tokio_fake_r );
+WRITE8_HANDLER( bublbobl_sound_command_w );
+WRITE8_HANDLER( bublbobl_sh_nmi_disable_w );
+WRITE8_HANDLER( bublbobl_sh_nmi_enable_w );
 
 
 
@@ -645,7 +645,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 /* handler called by the 2203 emulator when the internal timers cause an IRQ */
 static void irqhandler(int irq)
 {
-	cpu_set_irq_line(2,0,irq ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(2,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2203interface ym2203_interface =

@@ -47,7 +47,7 @@ static void sprite_callback(int *code,int *color)
 }
 
 
-WRITE_HANDLER( rockrage_vreg_w ){
+WRITE8_HANDLER( rockrage_vreg_w ){
 	/* bits 4-7: unused */
 	/* bit 3: bit 4 of bank # (layer 0) */
 	/* bit 2: bit 1 of bank # (layer 0) */

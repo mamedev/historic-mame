@@ -195,7 +195,7 @@ VIDEO_START( exerion )
  *
  *************************************/
 
-WRITE_HANDLER( exerion_videoreg_w )
+WRITE8_HANDLER( exerion_videoreg_w )
 {
 	/* bit 0 = flip screen and joystick input multiplexor */
 	exerion_cocktail_flip = data & 1;
@@ -213,7 +213,7 @@ WRITE_HANDLER( exerion_videoreg_w )
 }
 
 
-WRITE_HANDLER( exerion_video_latch_w )
+WRITE8_HANDLER( exerion_video_latch_w )
 {
 	int ybeam = cpu_getscanline();
 
@@ -233,7 +233,7 @@ WRITE_HANDLER( exerion_video_latch_w )
 }
 
 
-READ_HANDLER( exerion_video_timing_r )
+READ8_HANDLER( exerion_video_timing_r )
 {
 	/* bit 1 is VBLANK */
 	/* bit 0 is the SNMI signal, which is low for H >= 0x1c0 and /VBLANK */

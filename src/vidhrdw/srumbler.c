@@ -73,7 +73,7 @@ VIDEO_START( srumbler )
 
 ***************************************************************************/
 
-WRITE_HANDLER( srumbler_foreground_w )
+WRITE8_HANDLER( srumbler_foreground_w )
 {
 	if (srumbler_foregroundram[offset] != data)
 	{
@@ -82,7 +82,7 @@ WRITE_HANDLER( srumbler_foreground_w )
 	}
 }
 
-WRITE_HANDLER( srumbler_background_w )
+WRITE8_HANDLER( srumbler_background_w )
 {
 	if (srumbler_backgroundram[offset] != data)
 	{
@@ -92,7 +92,7 @@ WRITE_HANDLER( srumbler_background_w )
 }
 
 
-WRITE_HANDLER( srumbler_4009_w )
+WRITE8_HANDLER( srumbler_4009_w )
 {
 	/* bit 0 flips screen */
 	flip_screen_set(data & 1);
@@ -105,7 +105,7 @@ WRITE_HANDLER( srumbler_4009_w )
 }
 
 
-WRITE_HANDLER( srumbler_scroll_w )
+WRITE8_HANDLER( srumbler_scroll_w )
 {
 	static int scroll[4];
 

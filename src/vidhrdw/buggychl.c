@@ -44,7 +44,7 @@ VIDEO_START( buggychl )
 
 
 
-WRITE_HANDLER( buggychl_chargen_w )
+WRITE8_HANDLER( buggychl_chargen_w )
 {
 	if (buggychl_character_ram[offset] != data)
 	{
@@ -54,17 +54,17 @@ WRITE_HANDLER( buggychl_chargen_w )
 	}
 }
 
-WRITE_HANDLER( buggychl_sprite_lookup_bank_w )
+WRITE8_HANDLER( buggychl_sprite_lookup_bank_w )
 {
 	sl_bank = (data & 0x10) << 8;
 }
 
-WRITE_HANDLER( buggychl_sprite_lookup_w )
+WRITE8_HANDLER( buggychl_sprite_lookup_w )
 {
 	buggychl_sprite_lookup[offset + sl_bank] = data;
 }
 
-WRITE_HANDLER( buggychl_ctrl_w )
+WRITE8_HANDLER( buggychl_ctrl_w )
 {
 /*
 	bit7 = lamp
@@ -88,7 +88,7 @@ WRITE_HANDLER( buggychl_ctrl_w )
 	set_led_status(0,~data & 0x80);
 }
 
-WRITE_HANDLER( buggychl_bg_scrollx_w )
+WRITE8_HANDLER( buggychl_bg_scrollx_w )
 {
 	bg_scrollx = -(data - 0x12);
 }

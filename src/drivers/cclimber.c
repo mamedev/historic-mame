@@ -134,25 +134,25 @@ extern unsigned char *cclimber_bsvideoram;
 extern size_t cclimber_bsvideoram_size;
 extern unsigned char *cclimber_bigspriteram;
 extern unsigned char *cclimber_column_scroll;
-WRITE_HANDLER( cclimber_colorram_w );
-WRITE_HANDLER( cclimber_bigsprite_videoram_w );
+WRITE8_HANDLER( cclimber_colorram_w );
+WRITE8_HANDLER( cclimber_bigsprite_videoram_w );
 PALETTE_INIT( cclimber );
 VIDEO_UPDATE( cclimber );
 
 extern struct AY8910interface cclimber_ay8910_interface;
 extern struct AY8910interface swimmer_ay8910_interface;
 extern struct CustomSound_interface cclimber_custom_interface;
-WRITE_HANDLER( cclimber_sample_trigger_w );
-WRITE_HANDLER( cclimber_sample_rate_w );
-WRITE_HANDLER( cclimber_sample_volume_w );
+WRITE8_HANDLER( cclimber_sample_trigger_w );
+WRITE8_HANDLER( cclimber_sample_rate_w );
+WRITE8_HANDLER( cclimber_sample_volume_w );
 
 
-static WRITE_HANDLER( flip_screen_x_w )
+static WRITE8_HANDLER( flip_screen_x_w )
 {
 	flip_screen_x_set(data);
 }
 
-static WRITE_HANDLER( flip_screen_y_w )
+static WRITE8_HANDLER( flip_screen_y_w )
 {
 	flip_screen_y_set(data);
 }
@@ -1071,18 +1071,18 @@ static DRIVER_INIT( cannonb )
 
 ***************************************************************************/
 
-WRITE_HANDLER( swimmer_bgcolor_w );
-WRITE_HANDLER( swimmer_palettebank_w );
+WRITE8_HANDLER( swimmer_bgcolor_w );
+WRITE8_HANDLER( swimmer_palettebank_w );
 PALETTE_INIT( swimmer );
 VIDEO_UPDATE( swimmer );
-WRITE_HANDLER( swimmer_sidepanel_enable_w );
+WRITE8_HANDLER( swimmer_sidepanel_enable_w );
 
 
 
-WRITE_HANDLER( swimmer_sh_soundlatch_w )
+WRITE8_HANDLER( swimmer_sh_soundlatch_w )
 {
 	soundlatch_w(offset,data);
-	cpu_set_irq_line_and_vector(1,0,HOLD_LINE,0xff);
+	cpunum_set_input_line_and_vector(1,0,HOLD_LINE,0xff);
 }
 
 

@@ -42,7 +42,7 @@ PALETTE_INIT( markham )
 
 }
 
-WRITE_HANDLER( markham_videoram_w )
+WRITE8_HANDLER( markham_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -51,12 +51,12 @@ WRITE_HANDLER( markham_videoram_w )
 	}
 }
 
-WRITE_HANDLER( markham_scroll_x_w )
+WRITE8_HANDLER( markham_scroll_x_w )
 {
 	markham_xscroll[offset] = data;
 }
 
-WRITE_HANDLER( markham_flipscreen_w )
+WRITE8_HANDLER( markham_flipscreen_w )
 {
 	if (flip_screen != (data & 0x01))
 	{

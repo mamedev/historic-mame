@@ -175,16 +175,16 @@ extern UINT8 *segae_vdp_regs[];		/* pointer to vdp's registers */
 
 /*-- Prototypes --*/
 
-static WRITE_HANDLER (segae_mem_8000_w);
+static WRITE8_HANDLER (segae_mem_8000_w);
 
-static WRITE_HANDLER (segae_port_f7_w);
-static READ_HANDLER (segae_port_7e_7f_r);
+static WRITE8_HANDLER (segae_port_f7_w);
+static READ8_HANDLER (segae_port_7e_7f_r);
 
-static READ_HANDLER (segae_port_ba_bb_r);
-static READ_HANDLER (segae_port_be_bf_r);
+static READ8_HANDLER (segae_port_ba_bb_r);
+static READ8_HANDLER (segae_port_be_bf_r);
 
-static WRITE_HANDLER (segae_port_ba_bb_w);
-static WRITE_HANDLER (segae_port_be_bf_w);
+static WRITE8_HANDLER (segae_port_ba_bb_w);
+static WRITE8_HANDLER (segae_port_be_bf_w);
 
 /*- in (vidhrdw/segasyse.c) -*/
 
@@ -256,7 +256,7 @@ ADDRESS_MAP_END
 
 /*-- Memory -- */
 
-static WRITE_HANDLER (segae_mem_8000_w)
+static WRITE8_HANDLER (segae_mem_8000_w)
 {
 	/* write the data the non-selected VRAM bank of the opposite number VDP chip stored in segae_8000bank */
 	segae_vdp_vram [1-segae_8000bank][offset + (0x4000-(segae_vdp_vrambank[1-segae_8000bank] * 0x4000))] = data;
@@ -265,7 +265,7 @@ static WRITE_HANDLER (segae_mem_8000_w)
 /*-- Ports --*/
 
 /***************************************
- WRITE_HANDLER (segae_port_f7_w)
+ WRITE8_HANDLER (segae_port_f7_w)
 ****************************************
  writes here control the banking of
  ROM and RAM
@@ -293,7 +293,7 @@ void segae_bankswitch (void)
 }
 
 
-static WRITE_HANDLER (segae_port_f7_w)
+static WRITE8_HANDLER (segae_port_f7_w)
 {
 	segae_vdp_vrambank[0] = (data & 0x80) >> 7; /* Back  Layer VDP (0) VRAM Bank */
 	segae_vdp_vrambank[1] = (data & 0x40) >> 6; /* Front Layer VDP (1) VRAM Bank */
@@ -305,7 +305,7 @@ static WRITE_HANDLER (segae_port_f7_w)
 
 /*- Beam Position -*/
 
-static READ_HANDLER (segae_port_7e_7f_r)
+static READ8_HANDLER (segae_port_7e_7f_r)
 {
 	UINT8 temp = 0;
 	UINT16 sline;
@@ -326,7 +326,7 @@ static READ_HANDLER (segae_port_7e_7f_r)
 
 /*- VDP Related -*/
 
-static READ_HANDLER (segae_port_ba_bb_r)
+static READ8_HANDLER (segae_port_ba_bb_r)
 {
 	/* These Addresses access the Back Layer VDP (0) */
 	UINT8 temp = 0;
@@ -341,7 +341,7 @@ static READ_HANDLER (segae_port_ba_bb_r)
 	return temp;
 }
 
-static READ_HANDLER (segae_port_be_bf_r)
+static READ8_HANDLER (segae_port_be_bf_r)
 {
 	/* These Addresses access the Front Layer VDP (1) */
 	UINT8 temp = 0;
@@ -356,7 +356,7 @@ static READ_HANDLER (segae_port_be_bf_r)
 	return temp;
 }
 
-static WRITE_HANDLER (segae_port_ba_bb_w)
+static WRITE8_HANDLER (segae_port_ba_bb_w)
 {
 	/* These Addresses access the Back Layer VDP (0) */
 	switch (offset)
@@ -368,7 +368,7 @@ static WRITE_HANDLER (segae_port_ba_bb_w)
 	}
 }
 
-static WRITE_HANDLER (segae_port_be_bf_w)
+static WRITE8_HANDLER (segae_port_be_bf_w)
 {
 	/* These Addresses access the Front Layer VDP (1) */
 	switch (offset)
@@ -382,7 +382,7 @@ static WRITE_HANDLER (segae_port_be_bf_w)
 
 /*- Hang On Jr. Specific -*/
 
-static READ_HANDLER (segae_hangonjr_port_f8_r)
+static READ8_HANDLER (segae_hangonjr_port_f8_r)
 {
 	UINT8 temp;
 
@@ -397,7 +397,7 @@ static READ_HANDLER (segae_hangonjr_port_f8_r)
 	return temp;
 }
 
-static WRITE_HANDLER (segae_hangonjr_port_fa_w)
+static WRITE8_HANDLER (segae_hangonjr_port_fa_w)
 {
 	/* Seems to write the same pattern again and again bits ---- xx-x used */
 	port_fa_last = data;
@@ -407,7 +407,7 @@ static WRITE_HANDLER (segae_hangonjr_port_fa_w)
 
 static int port_to_read,last1,last2,diff1,diff2;
 
-static READ_HANDLER (segae_ridleofp_port_f8_r)
+static READ8_HANDLER (segae_ridleofp_port_f8_r)
 {
 	switch (port_to_read)
 	{
@@ -419,7 +419,7 @@ static READ_HANDLER (segae_ridleofp_port_f8_r)
 	}
 }
 
-static WRITE_HANDLER (segae_ridleofp_port_fa_w)
+static WRITE8_HANDLER (segae_ridleofp_port_fa_w)
 {
 	/* 0x10 is written before reading the dial (hold counters?) */
 	/* 0x03 is written after reading the dial (reset counters?) */
@@ -694,7 +694,7 @@ INPUT_PORTS_END
 			hintpending = 1;
 
 			if  ((segae_vdp_regs[1][0] & 0x10)) {
-				cpu_set_irq_line(0, 0, HOLD_LINE);
+				cpunum_set_input_line(0, 0, HOLD_LINE);
 				return;
 			}
 
@@ -707,7 +707,7 @@ INPUT_PORTS_END
 		hintcount = segae_vdp_regs[1][10];
 
 		if ( (sline<0xe0) && (vintpending) ) {
-			cpu_set_irq_line(0, 0, HOLD_LINE);
+			cpunum_set_input_line(0, 0, HOLD_LINE);
 		}
 	}
 }
@@ -779,8 +779,8 @@ static DRIVER_INIT( segasyse )
 
 static DRIVER_INIT( hangonjr )
 {
-	install_port_read_handler (0, 0xf8, 0xf8, segae_hangonjr_port_f8_r);
-	install_port_write_handler(0, 0xfa, 0xfa, segae_hangonjr_port_fa_w);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xf8, 0xf8, 0, 0, segae_hangonjr_port_f8_r);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0xfa, 0xfa, 0, 0, segae_hangonjr_port_fa_w);
 
 	state_save_register_UINT8 ( "SEGASYSE-HOJ", 0, "port_fa_last",			&port_fa_last, 1);
 
@@ -789,8 +789,8 @@ static DRIVER_INIT( hangonjr )
 
 static DRIVER_INIT( ridleofp )
 {
-	install_port_read_handler (0, 0xf8, 0xf8, segae_ridleofp_port_f8_r);
-	install_port_write_handler(0, 0xfa, 0xfa, segae_ridleofp_port_fa_w);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xf8, 0xf8, 0, 0, segae_ridleofp_port_f8_r);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0xfa, 0xfa, 0, 0, segae_ridleofp_port_fa_w);
 
 	init_segasyse();
 }

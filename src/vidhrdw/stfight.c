@@ -175,7 +175,7 @@ VIDEO_START( stfight )
 
 ***************************************************************************/
 
-WRITE_HANDLER( stfight_text_char_w )
+WRITE8_HANDLER( stfight_text_char_w )
 {
 	if (stfight_text_char_ram[offset] != data)
 	{
@@ -184,7 +184,7 @@ WRITE_HANDLER( stfight_text_char_w )
 	}
 }
 
-WRITE_HANDLER( stfight_text_attr_w )
+WRITE8_HANDLER( stfight_text_attr_w )
 {
 	if (stfight_text_attr_ram[offset] != data)
 	{
@@ -193,13 +193,13 @@ WRITE_HANDLER( stfight_text_attr_w )
 	}
 }
 
-WRITE_HANDLER( stfight_sprite_bank_w )
+WRITE8_HANDLER( stfight_sprite_bank_w )
 {
 	stfight_sprite_base = ( ( data & 0x04 ) << 7 ) |
 				          ( ( data & 0x01 ) << 8 );
 }
 
-WRITE_HANDLER( stfight_vh_latch_w )
+WRITE8_HANDLER( stfight_vh_latch_w )
 {
 	int scroll;
 

@@ -184,7 +184,7 @@ WRITE8_HANDLER( digdug_videoram_w )
 	}
 }
 
-WRITE_HANDLER( digdug_PORT_w )
+WRITE8_HANDLER( digdug_PORT_w )
 {
 	switch (offset)
 	{

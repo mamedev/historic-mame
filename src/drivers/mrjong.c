@@ -46,9 +46,9 @@ ROMs 6A, 7A, 8A, 9A: 2764
 #include "vidhrdw/generic.h"
 
 
-extern WRITE_HANDLER( mrjong_videoram_w );
-extern WRITE_HANDLER( mrjong_colorram_w );
-extern WRITE_HANDLER( mrjong_flipscreen_w );
+extern WRITE8_HANDLER( mrjong_videoram_w );
+extern WRITE8_HANDLER( mrjong_colorram_w );
+extern WRITE8_HANDLER( mrjong_flipscreen_w );
 
 extern PALETTE_INIT( mrjong );
 extern VIDEO_START( mrjong );
@@ -73,12 +73,12 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 
-WRITE_HANDLER( io_0x00_w )
+WRITE8_HANDLER( io_0x00_w )
 {
 	mrjong_flipscreen_w(0, ((data & 0x04) > 2));
 }
 
-READ_HANDLER( io_0x03_r )
+READ8_HANDLER( io_0x03_r )
 {
 	return 0x00;
 }

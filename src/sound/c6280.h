@@ -36,7 +36,7 @@ typedef struct {
 /* Function prototypes */
 int c6280_sh_start(const struct MachineSound *msound);
 void c6280_sh_stop(void);
-WRITE_HANDLER( C6280_0_w );
-WRITE_HANDLER( C6280_1_w );
+WRITE8_HANDLER( C6280_0_w );
+WRITE8_HANDLER( C6280_1_w );
 
 #endif /* _C6280_H_ */

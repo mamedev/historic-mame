@@ -86,7 +86,7 @@ PALETTE_INIT( sonson )
 		COLOR(1,i) = (*(color_prom++) & 0x0f) + 0x10;
 }
 
-WRITE_HANDLER( sonson_videoram_w )
+WRITE8_HANDLER( sonson_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -95,7 +95,7 @@ WRITE_HANDLER( sonson_videoram_w )
 	}
 }
 
-WRITE_HANDLER( sonson_colorram_w )
+WRITE8_HANDLER( sonson_colorram_w )
 {
 	if (colorram[offset] != data)
 	{
@@ -104,7 +104,7 @@ WRITE_HANDLER( sonson_colorram_w )
 	}
 }
 
-WRITE_HANDLER( sonson_scroll_w )
+WRITE8_HANDLER( sonson_scroll_w )
 {
 	int row;
 
@@ -114,7 +114,7 @@ WRITE_HANDLER( sonson_scroll_w )
 	}
 }
 
-WRITE_HANDLER( sonson_flipscreen_w )
+WRITE8_HANDLER( sonson_flipscreen_w )
 {
 	if (flip_screen != (~data & 0x01))
 	{

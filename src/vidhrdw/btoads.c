@@ -68,7 +68,7 @@ WRITE16_HANDLER( btoads_misc_control_w )
 	COMBINE_DATA(&misc_control);
 
 	/* bit 3 controls sound reset line */
-	cpu_set_reset_line(1, (misc_control & 8) ? CLEAR_LINE : ASSERT_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_RESET, (misc_control & 8) ? CLEAR_LINE : ASSERT_LINE);
 }
 
 
@@ -456,7 +456,7 @@ VIDEO_UPDATE( btoads )
 
 	/* debugging - dump the screen contents to a file */
 #if BT_DEBUG
-	if (keyboard_pressed(KEYCODE_X))
+	if (code_pressed(KEYCODE_X))
 	{
 		static int count = 0;
 		char name[10];

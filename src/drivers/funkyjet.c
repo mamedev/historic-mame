@@ -308,7 +308,7 @@ static struct OKIM6295interface okim6295_interface =
 
 static void sound_irq(int state)
 {
-	cpu_set_irq_line(1,1,state); /* IRQ 2 */
+	cpunum_set_input_line(1,1,state); /* IRQ 2 */
 }
 
 static struct YM2151interface ym2151_interface =

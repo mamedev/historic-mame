@@ -48,7 +48,7 @@ VIDEO_START( mjkjidai )
 
 ***************************************************************************/
 
-WRITE_HANDLER( mjkjidai_videoram_w )
+WRITE8_HANDLER( mjkjidai_videoram_w )
 {
 	if (mjkjidai_videoram[offset] != data)
 	{
@@ -57,7 +57,7 @@ WRITE_HANDLER( mjkjidai_videoram_w )
 	}
 }
 
-WRITE_HANDLER( mjkjidai_ctrl_w )
+WRITE8_HANDLER( mjkjidai_ctrl_w )
 {
 	data8_t *rom = memory_region(REGION_CPU1);
 

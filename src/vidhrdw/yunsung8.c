@@ -47,13 +47,13 @@ static int yunsung8_videobank;
 
 ***************************************************************************/
 
-WRITE_HANDLER( yunsung8_videobank_w )
+WRITE8_HANDLER( yunsung8_videobank_w )
 {
 	yunsung8_videobank = data;
 }
 
 
-READ_HANDLER( yunsung8_videoram_r )
+READ8_HANDLER( yunsung8_videoram_r )
 {
 	int bank;
 
@@ -68,7 +68,7 @@ READ_HANDLER( yunsung8_videoram_r )
 }
 
 
-WRITE_HANDLER( yunsung8_videoram_w )
+WRITE8_HANDLER( yunsung8_videoram_w )
 {
 	if (offset < 0x0800)		// c000-c7ff	Banked Palette RAM
 	{
@@ -105,7 +105,7 @@ WRITE_HANDLER( yunsung8_videoram_w )
 }
 
 
-WRITE_HANDLER( yunsung8_flipscreen_w )
+WRITE8_HANDLER( yunsung8_flipscreen_w )
 {
 	tilemap_set_flip(ALL_TILEMAPS, (data & 1) ? (TILEMAP_FLIPX|TILEMAP_FLIPY) : 0);
 }
@@ -199,11 +199,11 @@ VIDEO_UPDATE( yunsung8 )
 	int layers_ctrl = (~yunsung8_layers_ctrl) >> 4;
 
 #ifdef MAME_DEBUG
-if (keyboard_pressed(KEYCODE_Z))
+if (code_pressed(KEYCODE_Z))
 {
 	int msk = 0;
-	if (keyboard_pressed(KEYCODE_Q))	msk |= 1;
-	if (keyboard_pressed(KEYCODE_W))	msk |= 2;
+	if (code_pressed(KEYCODE_Q))	msk |= 1;
+	if (code_pressed(KEYCODE_W))	msk |= 2;
 	if (msk != 0) layers_ctrl &= msk;
 }
 #endif

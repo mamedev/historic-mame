@@ -72,7 +72,7 @@ PALETTE_INIT( spacefb )
 }
 
 
-WRITE_HANDLER( spacefb_video_control_w )
+WRITE8_HANDLER( spacefb_video_control_w )
 {
 	flip_screen_set(data & 0x01);
 
@@ -80,7 +80,7 @@ WRITE_HANDLER( spacefb_video_control_w )
 }
 
 
-WRITE_HANDLER( spacefb_port_2_w )
+WRITE8_HANDLER( spacefb_port_2_w )
 {
 logerror("Port #2 = %02d\n",data);
 	colour_control = data;

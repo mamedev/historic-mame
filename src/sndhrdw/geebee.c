@@ -24,7 +24,7 @@ static void volume_decay(int param)
 		volume = 0;
 }
 
-WRITE_HANDLER( geebee_sound_w )
+WRITE8_HANDLER( geebee_sound_w )
 {
 	stream_update(channel,0);
 	sound_latch = data;

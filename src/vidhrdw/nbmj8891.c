@@ -38,12 +38,12 @@ static void gionbana_gfxdraw(void);
 
 
 ******************************************************************************/
-READ_HANDLER( gionbana_palette_r )
+READ8_HANDLER( gionbana_palette_r )
 {
 	return gionbana_palette[offset];
 }
 
-WRITE_HANDLER( gionbana_palette_w )
+WRITE8_HANDLER( gionbana_palette_w )
 {
 	int r, g, b;
 
@@ -64,12 +64,12 @@ WRITE_HANDLER( gionbana_palette_w )
 	palette_set_color((offset >> 1), r, g, b);
 }
 
-READ_HANDLER( maiko_palette_r )
+READ8_HANDLER( maiko_palette_r )
 {
 	return gionbana_palette[offset];
 }
 
-WRITE_HANDLER( maiko_palette_w )
+WRITE8_HANDLER( maiko_palette_w )
 {
 	int r, g, b;
 
@@ -179,12 +179,12 @@ void gionbana_paltblnum_w(int data)
 	gionbana_paltblnum = data;
 }
 
-READ_HANDLER( gionbana_paltbl_r )
+READ8_HANDLER( gionbana_paltbl_r )
 {
 	return gionbana_paltbl[offset];
 }
 
-WRITE_HANDLER( gionbana_paltbl_w )
+WRITE8_HANDLER( gionbana_paltbl_w )
 {
 	gionbana_paltbl[((gionbana_paltblnum & 0x7f) * 0x10) + (offset & 0x0f)] = data;
 }

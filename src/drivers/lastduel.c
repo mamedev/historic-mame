@@ -117,7 +117,7 @@ static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xf001, 0xf001) AM_WRITE(YM2203_write_port_1_w)
 ADDRESS_MAP_END
 
-static WRITE_HANDLER( mg_bankswitch_w )
+static WRITE8_HANDLER( mg_bankswitch_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU2);
@@ -234,7 +234,7 @@ static struct GfxDecodeInfo madgear_gfxdecodeinfo[] =
 /* handler called by the 2203 emulator when the internal timers cause an IRQ */
 static void irqhandler(int irq)
 {
-	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct OKIM6295interface okim6295_interface =
@@ -259,14 +259,14 @@ static struct YM2203interface ym2203_interface =
 
 static INTERRUPT_GEN( lastduel_interrupt )
 {
-	if (cpu_getiloops() == 0) cpu_set_irq_line(0, 2, HOLD_LINE); /* VBL */
-	else cpu_set_irq_line(0, 4, HOLD_LINE); /* Controls */
+	if (cpu_getiloops() == 0) cpunum_set_input_line(0, 2, HOLD_LINE); /* VBL */
+	else cpunum_set_input_line(0, 4, HOLD_LINE); /* Controls */
 }
 
 static INTERRUPT_GEN( madgear_interrupt )
 {
-	if (cpu_getiloops() == 0) cpu_set_irq_line(0, 5, HOLD_LINE); /* VBL */
-	else cpu_set_irq_line(0, 6, HOLD_LINE); /* Controls */
+	if (cpu_getiloops() == 0) cpunum_set_input_line(0, 5, HOLD_LINE); /* VBL */
+	else cpunum_set_input_line(0, 6, HOLD_LINE); /* Controls */
 }
 
 static MACHINE_DRIVER_START( lastduel )

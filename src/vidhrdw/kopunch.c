@@ -38,7 +38,7 @@ PALETTE_INIT( kopunch )
 	}
 }
 
-WRITE_HANDLER( kopunch_videoram_w )
+WRITE8_HANDLER( kopunch_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -47,7 +47,7 @@ WRITE_HANDLER( kopunch_videoram_w )
 	}
 }
 
-WRITE_HANDLER( kopunch_videoram2_w )
+WRITE8_HANDLER( kopunch_videoram2_w )
 {
 	if (kopunch_videoram2[offset] != data)
 	{
@@ -56,19 +56,19 @@ WRITE_HANDLER( kopunch_videoram2_w )
 	}
 }
 
-WRITE_HANDLER( kopunch_scroll_x_w )
+WRITE8_HANDLER( kopunch_scroll_x_w )
 {
 	scroll[0] = data; // REMOVE
 	tilemap_set_scrollx(fg_tilemap, 0, data);
 }
 
-WRITE_HANDLER( kopunch_scroll_y_w )
+WRITE8_HANDLER( kopunch_scroll_y_w )
 {
 	scroll[1] = data; // REMOVE
 	tilemap_set_scrolly(fg_tilemap, 0, data);
 }
 
-WRITE_HANDLER( kopunch_gfxbank_w )
+WRITE8_HANDLER( kopunch_gfxbank_w )
 {
 	if (gfxbank != (data & 0x07))
 	{

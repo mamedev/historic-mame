@@ -109,7 +109,7 @@ static UINT8 last_trackball_val[2];
 static INTERRUPT_GEN( capbowl_interrupt )
 {
 	if (readinputport(4) & 1)	/* get status of the F2 key */
-		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);	/* trigger self test */
+		cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);	/* trigger self test */
 }
 
 
@@ -120,7 +120,7 @@ static INTERRUPT_GEN( capbowl_interrupt )
  *
  *************************************/
 
-WRITE_HANDLER( capbowl_rom_select_w )
+WRITE8_HANDLER( capbowl_rom_select_w )
 {
 	int bankaddress = ((data & 0x0c) << 13) + ((data & 0x01) << 14);
 	cpu_setbank(1, memory_region(REGION_CPU1) + 0x10000 + bankaddress);
@@ -134,19 +134,19 @@ WRITE_HANDLER( capbowl_rom_select_w )
  *
  *************************************/
 
-static READ_HANDLER( track_0_r )
+static READ8_HANDLER( track_0_r )
 {
 	return (input_port_0_r(offset) & 0xf0) | ((input_port_2_r(offset) - last_trackball_val[0]) & 0x0f);
 }
 
 
-static READ_HANDLER( track_1_r )
+static READ8_HANDLER( track_1_r )
 {
 	return (input_port_1_r(offset) & 0xf0) | ((input_port_3_r(offset) - last_trackball_val[1]) & 0x0f);
 }
 
 
-static WRITE_HANDLER( track_reset_w )
+static WRITE8_HANDLER( track_reset_w )
 {
 	/* reset the trackball counters */
 	last_trackball_val[0] = input_port_2_r(offset);
@@ -163,9 +163,9 @@ static WRITE_HANDLER( track_reset_w )
  *
  *************************************/
 
-static WRITE_HANDLER( capbowl_sndcmd_w )
+static WRITE8_HANDLER( capbowl_sndcmd_w )
 {
-	cpu_set_irq_line(1, M6809_IRQ_LINE, HOLD_LINE);
+	cpunum_set_input_line(1, M6809_IRQ_LINE, HOLD_LINE);
 	soundlatch_w(offset, data);
 }
 
@@ -180,7 +180,7 @@ static WRITE_HANDLER( capbowl_sndcmd_w )
 
 static void firqhandler(int irq)
 {
-	cpu_set_irq_line(1, 1, irq ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1, 1, irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 

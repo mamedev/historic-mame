@@ -857,7 +857,7 @@ void demon_sound_w(UINT8 sound_val, UINT8 bits_changed)
 	}
 }
 
-static READ_HANDLER( demon_sound_r )
+static READ8_HANDLER( demon_sound_r )
 {
 	int ret;
 
@@ -888,7 +888,7 @@ struct AY8910interface demon_ay8910_interface =
 
 static void ctc_interrupt(int state)
 {
-	cpu_set_irq_line_and_vector(1, 0, HOLD_LINE, Z80_VECTOR(0,state));
+	cpunum_set_input_line_and_vector(1, 0, HOLD_LINE, Z80_VECTOR(0,state));
 }
 
 

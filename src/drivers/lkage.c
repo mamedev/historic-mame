@@ -33,49 +33,49 @@ Take the following observations with a grain of salt (might not be true):
 
 
 extern unsigned char *lkage_scroll, *lkage_vreg;
-WRITE_HANDLER( lkage_videoram_w );
+WRITE8_HANDLER( lkage_videoram_w );
 VIDEO_START( lkage );
 VIDEO_UPDATE( lkage );
 
-READ_HANDLER( lkage_68705_portA_r );
-WRITE_HANDLER( lkage_68705_portA_w );
-READ_HANDLER( lkage_68705_portB_r );
-WRITE_HANDLER( lkage_68705_portB_w );
-READ_HANDLER( lkage_68705_portC_r );
-WRITE_HANDLER( lkage_68705_portC_w );
-WRITE_HANDLER( lkage_68705_ddrA_w );
-WRITE_HANDLER( lkage_68705_ddrB_w );
-WRITE_HANDLER( lkage_68705_ddrC_w );
-WRITE_HANDLER( lkage_mcu_w );
-READ_HANDLER( lkage_mcu_r );
-READ_HANDLER( lkage_mcu_status_r );
+READ8_HANDLER( lkage_68705_portA_r );
+WRITE8_HANDLER( lkage_68705_portA_w );
+READ8_HANDLER( lkage_68705_portB_r );
+WRITE8_HANDLER( lkage_68705_portB_w );
+READ8_HANDLER( lkage_68705_portC_r );
+WRITE8_HANDLER( lkage_68705_portC_w );
+WRITE8_HANDLER( lkage_68705_ddrA_w );
+WRITE8_HANDLER( lkage_68705_ddrB_w );
+WRITE8_HANDLER( lkage_68705_ddrC_w );
+WRITE8_HANDLER( lkage_mcu_w );
+READ8_HANDLER( lkage_mcu_r );
+READ8_HANDLER( lkage_mcu_status_r );
 
 
 static int sound_nmi_enable,pending_nmi;
 
 static void nmi_callback(int param)
 {
-	if (sound_nmi_enable) cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
+	if (sound_nmi_enable) cpunum_set_input_line(1,INPUT_LINE_NMI,PULSE_LINE);
 	else pending_nmi = 1;
 }
 
-static WRITE_HANDLER( lkage_sound_command_w )
+static WRITE8_HANDLER( lkage_sound_command_w )
 {
 	soundlatch_w(offset,data);
 	timer_set(TIME_NOW,data,nmi_callback);
 }
 
-static WRITE_HANDLER( lkage_sh_nmi_disable_w )
+static WRITE8_HANDLER( lkage_sh_nmi_disable_w )
 {
 	sound_nmi_enable = 0;
 }
 
-static WRITE_HANDLER( lkage_sh_nmi_enable_w )
+static WRITE8_HANDLER( lkage_sh_nmi_enable_w )
 {
 	sound_nmi_enable = 1;
 	if (pending_nmi)
 	{ /* probably wrong but commands may go lost otherwise */
-		cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
+		cpunum_set_input_line(1,INPUT_LINE_NMI,PULSE_LINE);
 		pending_nmi = 0;
 	}
 }
@@ -119,7 +119,7 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xf400, 0xffff) AM_WRITE(lkage_videoram_w) AM_BASE(&videoram) /* videoram */
 ADDRESS_MAP_END
 
-static READ_HANDLER( port_fetch_r )
+static READ8_HANDLER( port_fetch_r )
 {
 	return memory_region(REGION_USER1)[offset];
 }
@@ -336,7 +336,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static void irqhandler(int irq)
 {
-	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2203interface ym2203_interface =
@@ -521,7 +521,7 @@ static unsigned char mcu_val;
 
 /*Note:This probably uses another MCU dump,which is undumped.*/
 
-static READ_HANDLER( fake_mcu_r )
+static READ8_HANDLER( fake_mcu_r )
 {
 	switch(mcu_val)
 	{
@@ -537,7 +537,7 @@ static READ_HANDLER( fake_mcu_r )
 	}
 }
 
-static WRITE_HANDLER( fake_mcu_w )
+static WRITE8_HANDLER( fake_mcu_w )
 {
 	//if(data != 1 && data != 0xa6 && data != 0x34 && data != 0x48)
 	//	usrintf_showmessage("PC = %04x %02x",activecpu_get_pc(),data);
@@ -545,7 +545,7 @@ static WRITE_HANDLER( fake_mcu_w )
 	mcu_val = data;
 }
 
-static READ_HANDLER( fake_status_r )
+static READ8_HANDLER( fake_status_r )
 {
 	static int res = 3;// cpu data/mcu ready status
 
@@ -554,9 +554,9 @@ static READ_HANDLER( fake_status_r )
 
 DRIVER_INIT( lkageb )
 {
-	install_mem_read_handler (0,0xf062,0xf062,fake_mcu_r);
-	install_mem_read_handler (0,0xf087,0xf087,fake_status_r);
-	install_mem_write_handler(0,0xf062,0xf062,fake_mcu_w );
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xf062, 0xf062, 0, 0, fake_mcu_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xf087, 0xf087, 0, 0, fake_status_r);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xf062, 0xf062, 0, 0, fake_mcu_w );
 }
 
 

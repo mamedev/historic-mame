@@ -23,7 +23,7 @@ static struct tilemap *bg_tilemap;
 /* once it's workings are fully understood.                   */
 /**************************************************************/
 
-WRITE_HANDLER( tinvader_videoram_w )
+WRITE8_HANDLER( tinvader_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -32,7 +32,7 @@ WRITE_HANDLER( tinvader_videoram_w )
 	}
 }
 
-WRITE_HANDLER( zac_s2636_w )
+WRITE8_HANDLER( zac_s2636_w )
 {
 	if (s2636ram[offset] != data)
     {
@@ -41,13 +41,13 @@ WRITE_HANDLER( zac_s2636_w )
     }
 }
 
-READ_HANDLER( zac_s2636_r )
+READ8_HANDLER( zac_s2636_r )
 {
 	if(offset!=0xCB) return s2636ram[offset];
     else return CollisionSprite;
 }
 
-READ_HANDLER( tinvader_port_0_r )
+READ8_HANDLER( tinvader_port_0_r )
 {
 	return input_port_0_r(0) - CollisionBackground;
 }

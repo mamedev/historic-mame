@@ -22,14 +22,14 @@ static data8_t bowler_bonus_display;
 static write8_handler videoram_w_p;
 static void (*video_update_p)(struct mame_bitmap *bitmap,const struct rectangle *cliprect);
 
-static WRITE_HANDLER( bw_videoram_w );
-static WRITE_HANDLER( schaser_videoram_w );
-static WRITE_HANDLER( lupin3_videoram_w );
-static WRITE_HANDLER( polaris_videoram_w );
-static WRITE_HANDLER( sstrngr2_videoram_w );
-static WRITE_HANDLER( phantom2_videoram_w );
-static WRITE_HANDLER( invadpt2_videoram_w );
-static WRITE_HANDLER( cosmo_videoram_w );
+static WRITE8_HANDLER( bw_videoram_w );
+static WRITE8_HANDLER( schaser_videoram_w );
+static WRITE8_HANDLER( lupin3_videoram_w );
+static WRITE8_HANDLER( polaris_videoram_w );
+static WRITE8_HANDLER( sstrngr2_videoram_w );
+static WRITE8_HANDLER( phantom2_videoram_w );
+static WRITE8_HANDLER( invadpt2_videoram_w );
+static WRITE8_HANDLER( cosmo_videoram_w );
 
 static VIDEO_UPDATE( 8080bw_common );
 static VIDEO_UPDATE( seawolf );
@@ -297,13 +297,13 @@ INLINE void plot_byte(int x, int y, int data, int fore_color, int back_color)
 }
 
 
-WRITE_HANDLER( c8080bw_videoram_w )
+WRITE8_HANDLER( c8080bw_videoram_w )
 {
 	videoram_w_p(offset, data);
 }
 
 
-static WRITE_HANDLER( bw_videoram_w )
+static WRITE8_HANDLER( bw_videoram_w )
 {
 	int x,y;
 
@@ -315,7 +315,7 @@ static WRITE_HANDLER( bw_videoram_w )
 	plot_byte(x, y, data, 1, 0);
 }
 
-static WRITE_HANDLER( schaser_videoram_w )
+static WRITE8_HANDLER( schaser_videoram_w )
 {
 	UINT8 x,y,col;
 
@@ -329,7 +329,7 @@ static WRITE_HANDLER( schaser_videoram_w )
 	plot_byte(x, y, data, col, background_color);
 }
 
-static WRITE_HANDLER( lupin3_videoram_w )
+static WRITE8_HANDLER( lupin3_videoram_w )
 {
 	UINT8 x,y,col;
 
@@ -343,7 +343,7 @@ static WRITE_HANDLER( lupin3_videoram_w )
 	plot_byte(x, y, data, col, 0);
 }
 
-static WRITE_HANDLER( polaris_videoram_w )
+static WRITE8_HANDLER( polaris_videoram_w )
 {
 	int x,i,col,back_color,fore_color,color_map;
 	UINT8 y, cloud_y;
@@ -409,7 +409,7 @@ static WRITE_HANDLER( polaris_videoram_w )
 }
 
 
-WRITE_HANDLER( schaser_colorram_w )
+WRITE8_HANDLER( schaser_colorram_w )
 {
 	int i;
 
@@ -425,13 +425,13 @@ WRITE_HANDLER( schaser_colorram_w )
 	}
 }
 
-READ_HANDLER( schaser_colorram_r )
+READ8_HANDLER( schaser_colorram_r )
 {
 	return colorram[offset & 0x1f1f];
 }
 
 
-static WRITE_HANDLER( phantom2_videoram_w )
+static WRITE8_HANDLER( phantom2_videoram_w )
 {
 	static int CLOUD_SHIFT[] = { 0x01, 0x01, 0x02, 0x02, 0x04, 0x04, 0x08, 0x08,
 	                             0x10, 0x10, 0x20, 0x20, 0x40, 0x40, 0x80, 0x80 };
@@ -606,7 +606,7 @@ static VIDEO_UPDATE( desertgu )
 }
 
 
-WRITE_HANDLER( bowler_bonus_display_w )
+WRITE8_HANDLER( bowler_bonus_display_w )
 {
 	/* Bits 0-6 control which score is lit.
 	   Bit 7 appears to be a global enable, but the exact
@@ -702,7 +702,7 @@ PALETTE_INIT( sflush )
 }
 
 
-static WRITE_HANDLER( invadpt2_videoram_w )
+static WRITE8_HANDLER( invadpt2_videoram_w )
 {
 	UINT8 x,y,col;
 
@@ -739,7 +739,7 @@ PALETTE_INIT( cosmo )
 	}
 }
 
-WRITE_HANDLER( cosmo_colorram_w )
+WRITE8_HANDLER( cosmo_colorram_w )
 {
 	int i;
 	int offs = ((offset>>5)<<8) | (offset&0x1f);
@@ -754,7 +754,7 @@ WRITE_HANDLER( cosmo_colorram_w )
 	}		
 }
 
-static WRITE_HANDLER( cosmo_videoram_w )
+static WRITE8_HANDLER( cosmo_videoram_w )
 {
 	UINT8 x,y,col;
 
@@ -769,7 +769,7 @@ static WRITE_HANDLER( cosmo_videoram_w )
 	plot_byte(8*x, y, data, col, 0);
 }
 
-static WRITE_HANDLER( sstrngr2_videoram_w )
+static WRITE8_HANDLER( sstrngr2_videoram_w )
 {
 	UINT8 x,y,col;
 

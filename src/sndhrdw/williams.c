@@ -54,20 +54,20 @@ static void adpcm_ym2151_irq(int state);
 static void cvsd_irqa(int state);
 static void cvsd_irqb(int state);
 
-static READ_HANDLER( cvsd_pia_r );
+static READ8_HANDLER( cvsd_pia_r );
 
-static WRITE_HANDLER( cvsd_pia_w );
-static WRITE_HANDLER( cvsd_bank_select_w );
+static WRITE8_HANDLER( cvsd_pia_w );
+static WRITE8_HANDLER( cvsd_bank_select_w );
 
-static READ_HANDLER( adpcm_command_r );
-static WRITE_HANDLER( adpcm_bank_select_w );
-static WRITE_HANDLER( adpcm_6295_bank_select_w );
+static READ8_HANDLER( adpcm_command_r );
+static WRITE8_HANDLER( adpcm_bank_select_w );
+static WRITE8_HANDLER( adpcm_6295_bank_select_w );
 
-static READ_HANDLER( narc_command_r );
-static READ_HANDLER( narc_command2_r );
-static WRITE_HANDLER( narc_command2_w );
-static WRITE_HANDLER( narc_master_bank_select_w );
-static WRITE_HANDLER( narc_slave_bank_select_w );
+static READ8_HANDLER( narc_command_r );
+static READ8_HANDLER( narc_command2_r );
+static WRITE8_HANDLER( narc_command2_w );
+static WRITE8_HANDLER( narc_master_bank_select_w );
+static WRITE8_HANDLER( narc_slave_bank_select_w );
 
 
 
@@ -410,15 +410,15 @@ static void init_audio_state(void)
 	williams_sound_int_state = 0;
 	if (sound_cpunum != -1)
 	{
-		cpu_set_irq_line(sound_cpunum, M6809_FIRQ_LINE, CLEAR_LINE);
-		cpu_set_irq_line(sound_cpunum, M6809_IRQ_LINE, CLEAR_LINE);
-		cpu_set_nmi_line(sound_cpunum, CLEAR_LINE);
+		cpunum_set_input_line(sound_cpunum, M6809_FIRQ_LINE, CLEAR_LINE);
+		cpunum_set_input_line(sound_cpunum, M6809_IRQ_LINE, CLEAR_LINE);
+		cpunum_set_input_line(sound_cpunum, INPUT_LINE_NMI, CLEAR_LINE);
 	}
 	if (soundalt_cpunum != -1)
 	{
-		cpu_set_irq_line(soundalt_cpunum, M6809_FIRQ_LINE, CLEAR_LINE);
-		cpu_set_irq_line(soundalt_cpunum, M6809_IRQ_LINE, CLEAR_LINE);
-		cpu_set_nmi_line(soundalt_cpunum, CLEAR_LINE);
+		cpunum_set_input_line(soundalt_cpunum, M6809_FIRQ_LINE, CLEAR_LINE);
+		cpunum_set_input_line(soundalt_cpunum, M6809_IRQ_LINE, CLEAR_LINE);
+		cpunum_set_input_line(soundalt_cpunum, INPUT_LINE_NMI, CLEAR_LINE);
 	}
 }
 
@@ -462,13 +462,13 @@ static void cvsd_ym2151_irq(int state)
 
 static void cvsd_irqa(int state)
 {
-	cpu_set_irq_line(sound_cpunum, M6809_FIRQ_LINE, state ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(sound_cpunum, M6809_FIRQ_LINE, state ? ASSERT_LINE : CLEAR_LINE);
 }
 
 
 static void cvsd_irqb(int state)
 {
-	cpu_set_nmi_line(sound_cpunum, state ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(sound_cpunum, INPUT_LINE_NMI, state ? ASSERT_LINE : CLEAR_LINE);
 }
 
 
@@ -479,7 +479,7 @@ static void cvsd_irqb(int state)
 
 static void adpcm_ym2151_irq(int state)
 {
-	cpu_set_irq_line(sound_cpunum, M6809_FIRQ_LINE, state ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(sound_cpunum, M6809_FIRQ_LINE, state ? ASSERT_LINE : CLEAR_LINE);
 }
 
 
@@ -488,7 +488,7 @@ static void adpcm_ym2151_irq(int state)
 	CVSD BANK SELECT
 ****************************************************************************/
 
-static WRITE_HANDLER( cvsd_bank_select_w )
+static WRITE8_HANDLER( cvsd_bank_select_w )
 {
 	cpu_setbank(6, get_cvsd_bank_base(data));
 }
@@ -499,13 +499,13 @@ static WRITE_HANDLER( cvsd_bank_select_w )
 	ADPCM BANK SELECT
 ****************************************************************************/
 
-static WRITE_HANDLER( adpcm_bank_select_w )
+static WRITE8_HANDLER( adpcm_bank_select_w )
 {
 	cpu_setbank(6, get_adpcm_bank_base(data));
 }
 
 
-static WRITE_HANDLER( adpcm_6295_bank_select_w )
+static WRITE8_HANDLER( adpcm_6295_bank_select_w )
 {
 	if (adpcm_bank_count <= 3)
 	{
@@ -530,13 +530,13 @@ static WRITE_HANDLER( adpcm_6295_bank_select_w )
 	NARC BANK SELECT
 ****************************************************************************/
 
-static WRITE_HANDLER( narc_master_bank_select_w )
+static WRITE8_HANDLER( narc_master_bank_select_w )
 {
 	cpu_setbank(6, get_narc_master_bank_base(data));
 }
 
 
-static WRITE_HANDLER( narc_slave_bank_select_w )
+static WRITE8_HANDLER( narc_slave_bank_select_w )
 {
 	cpu_setbank(5, get_narc_slave_bank_base(data));
 }
@@ -547,13 +547,13 @@ static WRITE_HANDLER( narc_slave_bank_select_w )
 	PIA INTERFACES
 ****************************************************************************/
 
-static READ_HANDLER( cvsd_pia_r )
+static READ8_HANDLER( cvsd_pia_r )
 {
 	return pia_read(williams_pianum, offset);
 }
 
 
-static WRITE_HANDLER( cvsd_pia_w )
+static WRITE8_HANDLER( cvsd_pia_w )
 {
 	pia_write(williams_pianum, offset, data);
 }
@@ -585,11 +585,11 @@ void williams_cvsd_reset_w(int state)
 	{
 		cvsd_bank_select_w(0, 0);
 		init_audio_state();
-		cpu_set_reset_line(sound_cpunum, ASSERT_LINE);
+		cpunum_set_input_line(sound_cpunum, INPUT_LINE_RESET, ASSERT_LINE);
 	}
 	/* going low resets and reactivates the CPU */
 	else
-		cpu_set_reset_line(sound_cpunum, CLEAR_LINE);
+		cpunum_set_input_line(sound_cpunum, INPUT_LINE_RESET, CLEAR_LINE);
 }
 
 
@@ -598,9 +598,9 @@ void williams_cvsd_reset_w(int state)
 	ADPCM COMMUNICATIONS
 ****************************************************************************/
 
-static READ_HANDLER( adpcm_command_r )
+static READ8_HANDLER( adpcm_command_r )
 {
-	cpu_set_irq_line(sound_cpunum, M6809_IRQ_LINE, CLEAR_LINE);
+	cpunum_set_input_line(sound_cpunum, M6809_IRQ_LINE, CLEAR_LINE);
 	williams_sound_int_state = 0;
 	return soundlatch_r(0);
 }
@@ -611,7 +611,7 @@ void williams_adpcm_data_w(int data)
 	soundlatch_w(0, data & 0xff);
 	if (!(data & 0x200))
 	{
-		cpu_set_irq_line(sound_cpunum, M6809_IRQ_LINE, ASSERT_LINE);
+		cpunum_set_input_line(sound_cpunum, M6809_IRQ_LINE, ASSERT_LINE);
 		williams_sound_int_state = 1;
 	}
 }
@@ -624,11 +624,11 @@ void williams_adpcm_reset_w(int state)
 	{
 		adpcm_bank_select_w(0, 0);
 		init_audio_state();
-		cpu_set_reset_line(sound_cpunum, ASSERT_LINE);
+		cpunum_set_input_line(sound_cpunum, INPUT_LINE_RESET, ASSERT_LINE);
 	}
 	/* going low resets and reactivates the CPU */
 	else
-		cpu_set_reset_line(sound_cpunum, CLEAR_LINE);
+		cpunum_set_input_line(sound_cpunum, INPUT_LINE_RESET, CLEAR_LINE);
 }
 
 
@@ -637,10 +637,10 @@ void williams_adpcm_reset_w(int state)
 	NARC COMMUNICATIONS
 ****************************************************************************/
 
-static READ_HANDLER( narc_command_r )
+static READ8_HANDLER( narc_command_r )
 {
-	cpu_set_nmi_line(sound_cpunum, CLEAR_LINE);
-	cpu_set_irq_line(sound_cpunum, M6809_IRQ_LINE, CLEAR_LINE);
+	cpunum_set_input_line(sound_cpunum, INPUT_LINE_NMI, CLEAR_LINE);
+	cpunum_set_input_line(sound_cpunum, M6809_IRQ_LINE, CLEAR_LINE);
 	williams_sound_int_state = 0;
 	return soundlatch_r(0);
 }
@@ -650,10 +650,10 @@ void williams_narc_data_w(int data)
 {
 	soundlatch_w(0, data & 0xff);
 	if (!(data & 0x100))
-		cpu_set_nmi_line(sound_cpunum, ASSERT_LINE);
+		cpunum_set_input_line(sound_cpunum, INPUT_LINE_NMI, ASSERT_LINE);
 	if (!(data & 0x200))
 	{
-		cpu_set_irq_line(sound_cpunum, M6809_IRQ_LINE, ASSERT_LINE);
+		cpunum_set_input_line(sound_cpunum, M6809_IRQ_LINE, ASSERT_LINE);
 		williams_sound_int_state = 1;
 	}
 }
@@ -667,27 +667,27 @@ void williams_narc_reset_w(int state)
 		narc_master_bank_select_w(0, 0);
 		narc_slave_bank_select_w(0, 0);
 		init_audio_state();
-		cpu_set_reset_line(sound_cpunum, ASSERT_LINE);
-		cpu_set_reset_line(soundalt_cpunum, ASSERT_LINE);
+		cpunum_set_input_line(sound_cpunum, INPUT_LINE_RESET, ASSERT_LINE);
+		cpunum_set_input_line(soundalt_cpunum, INPUT_LINE_RESET, ASSERT_LINE);
 	}
 	/* going low resets and reactivates the CPU */
 	else
 	{
-		cpu_set_reset_line(sound_cpunum, CLEAR_LINE);
-		cpu_set_reset_line(soundalt_cpunum, CLEAR_LINE);
+		cpunum_set_input_line(sound_cpunum, INPUT_LINE_RESET, CLEAR_LINE);
+		cpunum_set_input_line(soundalt_cpunum, INPUT_LINE_RESET, CLEAR_LINE);
 	}
 }
 
 
-static READ_HANDLER( narc_command2_r )
+static READ8_HANDLER( narc_command2_r )
 {
-	cpu_set_irq_line(soundalt_cpunum, M6809_FIRQ_LINE, CLEAR_LINE);
+	cpunum_set_input_line(soundalt_cpunum, M6809_FIRQ_LINE, CLEAR_LINE);
 	return soundlatch2_r(0);
 }
 
 
-static WRITE_HANDLER( narc_command2_w )
+static WRITE8_HANDLER( narc_command2_w )
 {
 	soundlatch2_w(0, data & 0xff);
-	cpu_set_irq_line(soundalt_cpunum, M6809_FIRQ_LINE, ASSERT_LINE);
+	cpunum_set_input_line(soundalt_cpunum, M6809_FIRQ_LINE, ASSERT_LINE);
 }

@@ -170,7 +170,7 @@ VIDEO_START( zaccaria )
 
 ***************************************************************************/
 
-WRITE_HANDLER( zaccaria_videoram_w )
+WRITE8_HANDLER( zaccaria_videoram_w )
 {
 	if (zaccaria_videoram[offset] != data)
 	{
@@ -179,7 +179,7 @@ WRITE_HANDLER( zaccaria_videoram_w )
 	}
 }
 
-WRITE_HANDLER( zaccaria_attributes_w )
+WRITE8_HANDLER( zaccaria_attributes_w )
 {
 	if (offset & 1)
 	{
@@ -197,12 +197,12 @@ WRITE_HANDLER( zaccaria_attributes_w )
 	zaccaria_attributesram[offset] = data;
 }
 
-WRITE_HANDLER( zaccaria_flip_screen_x_w )
+WRITE8_HANDLER( zaccaria_flip_screen_x_w )
 {
 	flip_screen_x_set(data & 1);
 }
 
-WRITE_HANDLER( zaccaria_flip_screen_y_w )
+WRITE8_HANDLER( zaccaria_flip_screen_y_w )
 {
 	flip_screen_y_set(data & 1);
 }

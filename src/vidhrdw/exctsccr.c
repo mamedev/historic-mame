@@ -99,10 +99,10 @@ PALETTE_INIT( exctsccr )
 
 static void exctsccr_fm_callback( int param )
 {
-	cpu_set_irq_line_and_vector( 1, 0, HOLD_LINE, 0xff );
+	cpunum_set_input_line_and_vector( 1, 0, HOLD_LINE, 0xff );
 }
 
-WRITE_HANDLER( exctsccr_videoram_w )
+WRITE8_HANDLER( exctsccr_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -111,7 +111,7 @@ WRITE_HANDLER( exctsccr_videoram_w )
 	}
 }
 
-WRITE_HANDLER( exctsccr_colorram_w )
+WRITE8_HANDLER( exctsccr_colorram_w )
 {
 	if (colorram[offset] != data)
 	{
@@ -120,7 +120,7 @@ WRITE_HANDLER( exctsccr_colorram_w )
 	}
 }
 
-WRITE_HANDLER( exctsccr_gfx_bank_w )
+WRITE8_HANDLER( exctsccr_gfx_bank_w )
 {
 	if (gfx_bank != (data & 0x01))
 	{
@@ -129,7 +129,7 @@ WRITE_HANDLER( exctsccr_gfx_bank_w )
 	}
 }
 
-WRITE_HANDLER( exctsccr_flipscreen_w )
+WRITE8_HANDLER( exctsccr_flipscreen_w )
 {
 	if (flip_screen != data)
 	{

@@ -38,7 +38,7 @@ PALETTE_INIT( mnchmobl )
 	}
 }
 
-WRITE_HANDLER( mnchmobl_palette_bank_w )
+WRITE8_HANDLER( mnchmobl_palette_bank_w )
 {
 	if( mnchmobl_palette_bank!=(data&0x3) )
 	{
@@ -47,7 +47,7 @@ WRITE_HANDLER( mnchmobl_palette_bank_w )
 	}
 }
 
-WRITE_HANDLER( mnchmobl_flipscreen_w )
+WRITE8_HANDLER( mnchmobl_flipscreen_w )
 {
 	if( flipscreen!=data )
 	{
@@ -57,14 +57,14 @@ WRITE_HANDLER( mnchmobl_flipscreen_w )
 }
 
 
-READ_HANDLER( mnchmobl_sprite_xpos_r ){ return mnchmobl_sprite_xpos[offset]; }
-WRITE_HANDLER( mnchmobl_sprite_xpos_w ){ mnchmobl_sprite_xpos[offset] = data; }
+READ8_HANDLER( mnchmobl_sprite_xpos_r ){ return mnchmobl_sprite_xpos[offset]; }
+WRITE8_HANDLER( mnchmobl_sprite_xpos_w ){ mnchmobl_sprite_xpos[offset] = data; }
 
-READ_HANDLER( mnchmobl_sprite_attr_r ){ return mnchmobl_sprite_attr[offset]; }
-WRITE_HANDLER( mnchmobl_sprite_attr_w ){ mnchmobl_sprite_attr[offset] = data; }
+READ8_HANDLER( mnchmobl_sprite_attr_r ){ return mnchmobl_sprite_attr[offset]; }
+WRITE8_HANDLER( mnchmobl_sprite_attr_w ){ mnchmobl_sprite_attr[offset] = data; }
 
-READ_HANDLER( mnchmobl_sprite_tile_r ){ return mnchmobl_sprite_tile[offset]; }
-WRITE_HANDLER( mnchmobl_sprite_tile_w ){ mnchmobl_sprite_tile[offset] = data; }
+READ8_HANDLER( mnchmobl_sprite_tile_r ){ return mnchmobl_sprite_tile[offset]; }
+WRITE8_HANDLER( mnchmobl_sprite_tile_w ){ mnchmobl_sprite_tile[offset] = data; }
 
 VIDEO_START( mnchmobl )
 {
@@ -78,12 +78,12 @@ VIDEO_START( mnchmobl )
 	return 1;
 }
 
-READ_HANDLER( mnchmobl_videoram_r )
+READ8_HANDLER( mnchmobl_videoram_r )
 {
 	return videoram[offset];
 }
 
-WRITE_HANDLER( mnchmobl_videoram_w )
+WRITE8_HANDLER( mnchmobl_videoram_w )
 {
 	offset = offset&0xff; /* mirror the two banks? */
 	if( videoram[offset]!=data )

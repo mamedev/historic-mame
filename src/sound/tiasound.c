@@ -160,7 +160,7 @@ static int oversampling;				/* Added oversampling for sample_rate > clock_rate *
 /*                                                                           */
 /*****************************************************************************/
 
-WRITE_HANDLER( tia_sound_w )
+WRITE8_HANDLER( tia_sound_w )
 {
     UINT16 new_val = 0;
     UINT8 chan;

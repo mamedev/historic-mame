@@ -129,7 +129,7 @@ VIDEO_START( nekkyoku )
  *
  *************************************/
 
-WRITE_HANDLER( fromance_gfxreg_w )
+WRITE8_HANDLER( fromance_gfxreg_w )
 {
 	static int flipscreen_old = -1;
 
@@ -153,7 +153,7 @@ WRITE_HANDLER( fromance_gfxreg_w )
  *
  *************************************/
 
-READ_HANDLER( fromance_paletteram_r )
+READ8_HANDLER( fromance_paletteram_r )
 {
 	/* adjust for banking and read */
 	offset |= selected_paletteram << 11;
@@ -161,7 +161,7 @@ READ_HANDLER( fromance_paletteram_r )
 }
 
 
-WRITE_HANDLER( fromance_paletteram_w )
+WRITE8_HANDLER( fromance_paletteram_w )
 {
 	int palword;
 	int r, g, b;
@@ -191,13 +191,13 @@ WRITE_HANDLER( fromance_paletteram_w )
  *
  *************************************/
 
-READ_HANDLER( fromance_videoram_r )
+READ8_HANDLER( fromance_videoram_r )
 {
 	return local_videoram[selected_videoram][offset];
 }
 
 
-WRITE_HANDLER( fromance_videoram_w )
+WRITE8_HANDLER( fromance_videoram_w )
 {
 	local_videoram[selected_videoram][offset] = data;
 	tilemap_mark_tile_dirty(selected_videoram ? fg_tilemap : bg_tilemap, offset & 0x0fff);
@@ -211,7 +211,7 @@ WRITE_HANDLER( fromance_videoram_w )
  *
  *************************************/
 
-WRITE_HANDLER( fromance_scroll_w )
+WRITE8_HANDLER( fromance_scroll_w )
 {
 	if (flipscreen)
 	{
@@ -261,13 +261,13 @@ WRITE_HANDLER( fromance_scroll_w )
 
 static void crtc_interrupt_gen(int param)
 {
-	cpu_set_irq_line(1, 0, HOLD_LINE);
+	cpunum_set_input_line(1, 0, HOLD_LINE);
 	if (param != 0)
 		timer_adjust(crtc_timer, TIME_IN_HZ(Machine->drv->frames_per_second * param), 0, TIME_IN_HZ(Machine->drv->frames_per_second * param));
 }
 
 
-WRITE_HANDLER( fromance_crtc_data_w )
+WRITE8_HANDLER( fromance_crtc_data_w )
 {
 	crtc_data[crtc_register] = data;
 
@@ -285,7 +285,7 @@ WRITE_HANDLER( fromance_crtc_data_w )
 }
 
 
-WRITE_HANDLER( fromance_crtc_register_w )
+WRITE8_HANDLER( fromance_crtc_register_w )
 {
 	crtc_register = data;
 }

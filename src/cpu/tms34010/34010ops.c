@@ -66,7 +66,7 @@ static void unimpl(void)
 	/* extra check to prevent bad things */
 	if (PC == 0 || opcode_table[cpu_readop16(TOBYTE(PC)) >> 4] == unimpl)
 	{
-		cpu_set_halt_line(cpu_getactivecpu(),ASSERT_LINE);
+		cpunum_set_input_line(cpu_getactivecpu(), INPUT_LINE_HALT, ASSERT_LINE);
 #ifdef MAME_DEBUG
 		debug_key_pressed = 1;
 #endif

@@ -433,11 +433,11 @@ VIDEO_UPDATE( rohga )
 	fillbitmap(priority_bitmap,0,cliprect);
 	fillbitmap(bitmap,Machine->pens[512],cliprect);
 
-	if (!keyboard_pressed(KEYCODE_Z))
+	if (!code_pressed(KEYCODE_Z))
 	deco16_tilemap_4_draw(bitmap,cliprect,TILEMAP_IGNORE_TRANSPARENCY,1);
-	if (!keyboard_pressed(KEYCODE_X))
+	if (!code_pressed(KEYCODE_X))
 	deco16_tilemap_3_draw(bitmap,cliprect,0,2);
-	if (!keyboard_pressed(KEYCODE_C))
+	if (!code_pressed(KEYCODE_C))
 	deco16_tilemap_2_draw(bitmap,cliprect,0,4);
 
 	rohga_drawsprites(bitmap,spriteram16);

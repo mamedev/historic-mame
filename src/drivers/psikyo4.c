@@ -162,7 +162,7 @@ static READ32_HANDLER( ps4_eeprom_r )
 
 static INTERRUPT_GEN(psikyosh_interrupt)
 {
-	cpu_set_irq_line(0, 4, HOLD_LINE);
+	cpunum_set_input_line(0, 4, HOLD_LINE);
 }
 
 static READ32_HANDLER(hotgmck_io32_r) /* used by hotgmck/hgkairak */
@@ -386,9 +386,9 @@ ADDRESS_MAP_END
 static void irqhandler(int linestate)
 {
 	if (linestate)
-		cpu_set_irq_line(0, 12, ASSERT_LINE);
+		cpunum_set_input_line(0, 12, ASSERT_LINE);
 	else
-		cpu_set_irq_line(0, 12, CLEAR_LINE);
+		cpunum_set_input_line(0, 12, CLEAR_LINE);
 }
 
 static struct YMF278B_interface ymf278b_interface =
@@ -895,22 +895,22 @@ static DRIVER_INIT( hotgmck )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	cpu_setbank(1,&RAM[0x100000]);
-	install_mem_read32_handler (0, 0x5800000, 0x5800007, hotgmck_io32_r ); // Different Inputs
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x5800000, 0x5800007, 0, 0, hotgmck_io32_r ); // Different Inputs
 }
 
 static DRIVER_INIT( loderndf )
 {
-	install_mem_read32_handler(0, 0x6000020, 0x6000023, loderndf_speedup_r );
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x6000020, 0x6000023, 0, 0, loderndf_speedup_r );
 }
 
 static DRIVER_INIT( loderdfa )
 {
-	install_mem_read32_handler(0, 0x6000020, 0x6000023, loderdfa_speedup_r );
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x6000020, 0x6000023, 0, 0, loderdfa_speedup_r );
 }
 
 static DRIVER_INIT( hotdebut )
 {
-	install_mem_read32_handler(0, 0x600001c, 0x600001f, hotdebut_speedup_r );
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x600001c, 0x600001f, 0, 0, hotdebut_speedup_r );
 }
 
 

@@ -160,7 +160,7 @@ static WRITE16_HANDLER( tigeroad_soundcmd_w )
 		soundlatch_w(offset,data >> 8);
 }
 
-static WRITE_HANDLER( msm5205_w )
+static WRITE8_HANDLER( msm5205_w )
 {
 	MSM5205_reset_w(offset,(data>>7)&1);
 	MSM5205_data_w(offset,data);
@@ -526,7 +526,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 /* handler called by the 2203 emulator when the internal timers cause an IRQ */
 static void irqhandler(int irq)
 {
-	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2203interface ym2203_interface =
@@ -749,12 +749,12 @@ ROM_END
 
 DRIVER_INIT( tigeroad )
 {
-	install_mem_write16_handler(0, 0xfe4002, 0xfe4003, tigeroad_soundcmd_w);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xfe4002, 0xfe4003, 0, 0, tigeroad_soundcmd_w);
 }
 
 DRIVER_INIT( f1dream )
 {
-	install_mem_write16_handler(0, 0xfe4002, 0xfe4003, f1dream_control_w);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xfe4002, 0xfe4003, 0, 0, f1dream_control_w);
 }
 
 

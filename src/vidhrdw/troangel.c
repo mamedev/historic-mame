@@ -106,7 +106,7 @@ PALETTE_INIT( troangel )
 
 
 
-WRITE_HANDLER( troangel_flipscreen_w )
+WRITE8_HANDLER( troangel_flipscreen_w )
 {
 	/* screen flip is handled both by software and hardware */
 	data ^= ~readinputport(4) & 1;

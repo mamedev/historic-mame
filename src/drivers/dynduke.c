@@ -26,24 +26,24 @@
 #include "cpu/z80/z80.h"
 #include "sndhrdw/seibu.h"
 
-READ_HANDLER( dynduke_background_r );
-READ_HANDLER( dynduke_foreground_r );
-WRITE_HANDLER( dynduke_background_w );
-WRITE_HANDLER( dynduke_foreground_w );
-WRITE_HANDLER( dynduke_text_w );
-WRITE_HANDLER( dynduke_gfxbank_w );
+READ8_HANDLER( dynduke_background_r );
+READ8_HANDLER( dynduke_foreground_r );
+WRITE8_HANDLER( dynduke_background_w );
+WRITE8_HANDLER( dynduke_foreground_w );
+WRITE8_HANDLER( dynduke_text_w );
+WRITE8_HANDLER( dynduke_gfxbank_w );
 VIDEO_START( dynduke );
-WRITE_HANDLER( dynduke_control_w );
+WRITE8_HANDLER( dynduke_control_w );
 VIDEO_UPDATE( dynduke );
-WRITE_HANDLER( dynduke_paletteram_w );
+WRITE8_HANDLER( dynduke_paletteram_w );
 
 static unsigned char *dynduke_shared_ram;
 extern unsigned char *dynduke_back_data,*dynduke_fore_data,*dynduke_scroll_ram,*dynduke_control_ram;
 
 /***************************************************************************/
 
-static READ_HANDLER( dynduke_shared_r ) { return dynduke_shared_ram[offset]; }
-static WRITE_HANDLER( dynduke_shared_w ) { dynduke_shared_ram[offset]=data; }
+static READ8_HANDLER( dynduke_shared_r ) { return dynduke_shared_ram[offset]; }
+static WRITE8_HANDLER( dynduke_shared_w ) { dynduke_shared_ram[offset]=data; }
 
 
 /******************************************************************************/
@@ -244,7 +244,7 @@ SEIBU_SOUND_SYSTEM_YM3812_HARDWARE(14318180/4,8000,REGION_SOUND1);
 
 static INTERRUPT_GEN( dynduke_interrupt )
 {
-	cpu_set_irq_line_and_vector(cpu_getactivecpu(), 0, HOLD_LINE, 0xc8/4);	/* VBL */
+	cpunum_set_input_line_and_vector(cpu_getactivecpu(), 0, HOLD_LINE, 0xc8/4);	/* VBL */
 }
 
 VIDEO_EOF( dynduke )

@@ -211,10 +211,10 @@ static void fuuki32_draw_sprites(struct mame_bitmap *bitmap, const struct rectan
 		else		{ ystart = 0;       yend = ynum;  yinc = +1; }
 
 #if 0
-		if(!( (keyboard_pressed(KEYCODE_V) && (((attr >> 6)&3) == 0))
-		   || (keyboard_pressed(KEYCODE_B) && (((attr >> 6)&3) == 1))
-		   || (keyboard_pressed(KEYCODE_N) && (((attr >> 6)&3) == 2))
-		   || (keyboard_pressed(KEYCODE_M) && (((attr >> 6)&3) == 3))
+		if(!( (code_pressed(KEYCODE_V) && (((attr >> 6)&3) == 0))
+		   || (code_pressed(KEYCODE_B) && (((attr >> 6)&3) == 1))
+		   || (code_pressed(KEYCODE_N) && (((attr >> 6)&3) == 2))
+		   || (code_pressed(KEYCODE_M) && (((attr >> 6)&3) == 3))
 		   ))
 #endif
 
@@ -244,7 +244,7 @@ static void fuuki32_draw_sprites(struct mame_bitmap *bitmap, const struct rectan
 
 #ifdef MAME_DEBUG
 #if 0
-if (keyboard_pressed(KEYCODE_X))
+if (code_pressed(KEYCODE_X))
 {	/* Display some info on each sprite */
 	struct DisplayText dt[2];	char buf[10];
 	sprintf(buf, "%Xx%X %X",xnum,ynum,(attr>>6)&3);

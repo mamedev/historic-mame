@@ -15,7 +15,7 @@ static int h_pos, v_pos;
 
 
 /********************************************************************************************/
-READ_HANDLER( missile_IN0_r )
+READ8_HANDLER( missile_IN0_r )
 {
 	if (ctrld)	/* trackball */
 	{
@@ -37,7 +37,7 @@ MACHINE_INIT( missile )
 
 
 /********************************************************************************************/
-WRITE_HANDLER( missile_w )
+WRITE8_HANDLER( missile_w )
 {
 	int pc, opcode;
 	offset = offset + 0x640;
@@ -114,7 +114,7 @@ WRITE_HANDLER( missile_w )
 
 unsigned char *missile_video2ram;
 
-READ_HANDLER( missile_r )
+READ8_HANDLER( missile_r )
 {
 	int pc, opcode;
 	offset = offset + 0x1900;

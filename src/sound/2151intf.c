@@ -204,7 +204,7 @@ void YM2151_sh_reset(void)
 
 static int lastreg0,lastreg1,lastreg2;
 
-READ_HANDLER( YM2151_status_port_0_r )
+READ8_HANDLER( YM2151_status_port_0_r )
 {
 	switch(FMMode)
 	{
@@ -220,7 +220,7 @@ READ_HANDLER( YM2151_status_port_0_r )
 	return 0;
 }
 
-READ_HANDLER( YM2151_status_port_1_r )
+READ8_HANDLER( YM2151_status_port_1_r )
 {
 	switch(FMMode)
 	{
@@ -236,7 +236,7 @@ READ_HANDLER( YM2151_status_port_1_r )
 	return 0;
 }
 
-READ_HANDLER( YM2151_status_port_2_r )
+READ8_HANDLER( YM2151_status_port_2_r )
 {
 	switch(FMMode)
 	{
@@ -252,20 +252,20 @@ READ_HANDLER( YM2151_status_port_2_r )
 	return 0;
 }
 
-WRITE_HANDLER( YM2151_register_port_0_w )
+WRITE8_HANDLER( YM2151_register_port_0_w )
 {
 	lastreg0 = data;
 }
-WRITE_HANDLER( YM2151_register_port_1_w )
+WRITE8_HANDLER( YM2151_register_port_1_w )
 {
 	lastreg1 = data;
 }
-WRITE_HANDLER( YM2151_register_port_2_w )
+WRITE8_HANDLER( YM2151_register_port_2_w )
 {
 	lastreg2 = data;
 }
 
-WRITE_HANDLER( YM2151_data_port_0_w )
+WRITE8_HANDLER( YM2151_data_port_0_w )
 {
 	switch(FMMode)
 	{
@@ -284,7 +284,7 @@ WRITE_HANDLER( YM2151_data_port_0_w )
 	}
 }
 
-WRITE_HANDLER( YM2151_data_port_1_w )
+WRITE8_HANDLER( YM2151_data_port_1_w )
 {
 	switch(FMMode)
 	{
@@ -303,7 +303,7 @@ WRITE_HANDLER( YM2151_data_port_1_w )
 	}
 }
 
-WRITE_HANDLER( YM2151_data_port_2_w )
+WRITE8_HANDLER( YM2151_data_port_2_w )
 {
 	switch(FMMode)
 	{
@@ -322,7 +322,7 @@ WRITE_HANDLER( YM2151_data_port_2_w )
 	}
 }
 
-WRITE_HANDLER( YM2151_word_0_w )
+WRITE8_HANDLER( YM2151_word_0_w )
 {
 	if (offset)
 		YM2151_data_port_0_w(0,data);
@@ -330,7 +330,7 @@ WRITE_HANDLER( YM2151_word_0_w )
 		YM2151_register_port_0_w(0,data);
 }
 
-WRITE_HANDLER( YM2151_word_1_w )
+WRITE8_HANDLER( YM2151_word_1_w )
 {
 	if (offset)
 		YM2151_data_port_1_w(0,data);

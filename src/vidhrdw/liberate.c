@@ -87,7 +87,7 @@ static void get_fix_tile_info( int tile_index )
 
 /***************************************************************************/
 
-WRITE_HANDLER( deco16_io_w )
+WRITE8_HANDLER( deco16_io_w )
 {
 	deco16_io_ram[offset]=data;
 	if (offset>1 && offset<6)
@@ -106,16 +106,16 @@ WRITE_HANDLER( deco16_io_w )
 			/* Todo */
 			break;
 		case 8: /* Irq ack */
-			cpu_set_irq_line(0,DECO16_IRQ_LINE,CLEAR_LINE);
+			cpunum_set_input_line(0,DECO16_IRQ_LINE,CLEAR_LINE);
 			break;
 		case 9: /* Sound */
 			soundlatch_w(0,data);
-			cpu_set_irq_line(1,M6502_IRQ_LINE,HOLD_LINE);
+			cpunum_set_input_line(1,M6502_IRQ_LINE,HOLD_LINE);
 			break;
 	}
 }
 
-WRITE_HANDLER( liberate_videoram_w )
+WRITE8_HANDLER( liberate_videoram_w )
 {
 	videoram[offset]=data;
 	tilemap_mark_tile_dirty(fix_tilemap,offset&0x3ff);
@@ -165,7 +165,7 @@ VIDEO_START( liberate )
 
 /***************************************************************************/
 
-WRITE_HANDLER( prosport_paletteram_w )
+WRITE8_HANDLER( prosport_paletteram_w )
 {
 	/* RGB output is inverted */
 	paletteram_BBGGGRRR_w(offset,~data);

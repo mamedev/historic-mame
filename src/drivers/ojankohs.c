@@ -39,19 +39,19 @@ VIDEO_UPDATE( ojankohs );
 PALETTE_INIT( ojankoy );
 VIDEO_START( ojankohs );
 VIDEO_START( ojankoy );
-READ_HANDLER( ojankohs_palette_r );
-WRITE_HANDLER( ojankohs_palette_w );
-WRITE_HANDLER( ccasino_palette_w );
-READ_HANDLER( ojankohs_videoram_r );
-WRITE_HANDLER( ojankohs_videoram_w );
-READ_HANDLER( ojankohs_colorram_r );
-WRITE_HANDLER( ojankohs_colorram_w );
-WRITE_HANDLER( ojankohs_gfxreg_w );
-WRITE_HANDLER( ojankohs_flipscreen_w );
+READ8_HANDLER( ojankohs_palette_r );
+WRITE8_HANDLER( ojankohs_palette_w );
+WRITE8_HANDLER( ccasino_palette_w );
+READ8_HANDLER( ojankohs_videoram_r );
+WRITE8_HANDLER( ojankohs_videoram_w );
+READ8_HANDLER( ojankohs_colorram_r );
+WRITE8_HANDLER( ojankohs_colorram_w );
+WRITE8_HANDLER( ojankohs_gfxreg_w );
+WRITE8_HANDLER( ojankohs_flipscreen_w );
 VIDEO_UPDATE( ojankoc );
 VIDEO_START( ojankoc );
-WRITE_HANDLER( ojankoc_palette_w );
-WRITE_HANDLER( ojankoc_videoram_w );
+WRITE8_HANDLER( ojankoc_palette_w );
+WRITE8_HANDLER( ojankoc_videoram_w );
 void ojankoc_flipscreen(int data);
 
 
@@ -70,14 +70,14 @@ static MACHINE_INIT( ojankohs )
 	ojankohs_vclk_left = 0;
 }
 
-static WRITE_HANDLER( ojankohs_rombank_w )
+static WRITE8_HANDLER( ojankohs_rombank_w )
 {
 	unsigned char *ROM = memory_region(REGION_CPU1);
 
 	cpu_setbank(1, &ROM[0x10000 + (0x4000 * (data & 0x3f))]);
 }
 
-static WRITE_HANDLER( ojankoy_rombank_w )
+static WRITE8_HANDLER( ojankoy_rombank_w )
 {
 	unsigned char *ROM = memory_region(REGION_CPU1);
 
@@ -89,7 +89,7 @@ static WRITE_HANDLER( ojankoy_rombank_w )
 	MSM5205_reset_w(0, !ojankohs_adpcm_reset);
 }
 
-static WRITE_HANDLER( ojankohs_adpcm_reset_w )
+static WRITE8_HANDLER( ojankohs_adpcm_reset_w )
 {
 	ojankohs_adpcm_reset = (data & 0x01);
 	ojankohs_vclk_left = 0;
@@ -97,7 +97,7 @@ static WRITE_HANDLER( ojankohs_adpcm_reset_w )
 	MSM5205_reset_w(0, !ojankohs_adpcm_reset);
 }
 
-static WRITE_HANDLER( ojankohs_msm5205_w )
+static WRITE8_HANDLER( ojankohs_msm5205_w )
 {
 	ojankohs_adpcm_data = data;
 	ojankohs_vclk_left = 2;
@@ -118,10 +118,10 @@ static void ojankohs_adpcm_int(int irq)
 
 	/* generate an NMI if we're out of data */
 	if (!ojankohs_vclk_left) 
-		cpu_set_nmi_line(0, PULSE_LINE);
+		cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 }
 
-static WRITE_HANDLER( ojankoc_ctrl_w )
+static WRITE8_HANDLER( ojankoc_ctrl_w )
 {
 	data8_t *BANKROM = memory_region(REGION_USER1);
 	UINT32 bank_address = (data & 0x0f) * 0x8000;
@@ -133,12 +133,12 @@ static WRITE_HANDLER( ojankoc_ctrl_w )
 	ojankoc_flipscreen(data);
 }
 
-static WRITE_HANDLER( ojankohs_portselect_w )
+static WRITE8_HANDLER( ojankohs_portselect_w )
 {
 	ojankohs_portselect = data;
 }
 
-static READ_HANDLER( ojankohs_keymatrix_r )
+static READ8_HANDLER( ojankohs_keymatrix_r )
 {
 	int ret;
 
@@ -164,7 +164,7 @@ static READ_HANDLER( ojankohs_keymatrix_r )
 	return ret;
 }
 
-static READ_HANDLER( ojankoc_keymatrix_r )
+static READ8_HANDLER( ojankoc_keymatrix_r )
 {
 	int i;
 	int ret = 0;
@@ -177,7 +177,7 @@ static READ_HANDLER( ojankoc_keymatrix_r )
 	return (ret & 0x3f) | (readinputport(12 + offset) & 0xc0);
 }
 
-static READ_HANDLER( ojankohs_ay8910_0_r )
+static READ8_HANDLER( ojankohs_ay8910_0_r )
 {
 	// DIPSW 2
 	return (((readinputport(2) & 0x01) << 7) | ((readinputport(2) & 0x02) << 5) |
@@ -186,7 +186,7 @@ static READ_HANDLER( ojankohs_ay8910_0_r )
 	        ((readinputport(2) & 0x40) >> 5) | ((readinputport(2) & 0x80) >> 7));
 }
 
-static READ_HANDLER( ojankohs_ay8910_1_r )
+static READ8_HANDLER( ojankohs_ay8910_1_r )
 {
 	// DIPSW 1
 	return (((readinputport(3) & 0x01) << 7) | ((readinputport(3) & 0x02) << 5) |
@@ -195,32 +195,32 @@ static READ_HANDLER( ojankohs_ay8910_1_r )
 	        ((readinputport(3) & 0x40) >> 5) | ((readinputport(3) & 0x80) >> 7));
 }
 
-static READ_HANDLER( ojankoy_ay8910_0_r )
+static READ8_HANDLER( ojankoy_ay8910_0_r )
 {
 	return readinputport(2);				// DIPSW 2
 }
 
-static READ_HANDLER( ojankoy_ay8910_1_r )
+static READ8_HANDLER( ojankoy_ay8910_1_r )
 {
 	return readinputport(3);				// DIPSW 1
 }
 
-static READ_HANDLER( ccasino_dipsw3_r )
+static READ8_HANDLER( ccasino_dipsw3_r )
 {
 	return (readinputport(9) ^ 0xff);		// DIPSW 3
 }
 
-static READ_HANDLER( ccasino_dipsw4_r )
+static READ8_HANDLER( ccasino_dipsw4_r )
 {
 	return (readinputport(10) ^ 0xff);		// DIPSW 4
 }
 
-static WRITE_HANDLER( ojankoy_coinctr_w )
+static WRITE8_HANDLER( ojankoy_coinctr_w )
 {
 	coin_counter_w( 0, (data & 0x01));
 }
 
-static WRITE_HANDLER( ccasino_coinctr_w )
+static WRITE8_HANDLER( ccasino_coinctr_w )
 {
 	coin_counter_w(0, (data & 0x02));
 }

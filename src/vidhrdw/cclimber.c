@@ -229,7 +229,7 @@ PALETTE_INIT( swimmer )
   bit 0 -- 1  kohm resistor  -- BLUE
 
 ***************************************************************************/
-WRITE_HANDLER( swimmer_bgcolor_w )
+WRITE8_HANDLER( swimmer_bgcolor_w )
 {
 	int bit0,bit1,bit2;
 	int r,g,b;
@@ -258,7 +258,7 @@ WRITE_HANDLER( swimmer_bgcolor_w )
 
 
 
-WRITE_HANDLER( cclimber_colorram_w )
+WRITE8_HANDLER( cclimber_colorram_w )
 {
 	if (colorram[offset] != data)
 	{
@@ -277,21 +277,21 @@ WRITE_HANDLER( cclimber_colorram_w )
 
 
 
-WRITE_HANDLER( cclimber_bigsprite_videoram_w )
+WRITE8_HANDLER( cclimber_bigsprite_videoram_w )
 {
 	cclimber_bsvideoram[offset] = data;
 }
 
 
 
-WRITE_HANDLER( swimmer_palettebank_w )
+WRITE8_HANDLER( swimmer_palettebank_w )
 {
 	set_vh_global_attribute(&palettebank, data & 1);
 }
 
 
 
-WRITE_HANDLER( swimmer_sidepanel_enable_w )
+WRITE8_HANDLER( swimmer_sidepanel_enable_w )
 {
 	set_vh_global_attribute(&sidepanel_enabled, data );
 }

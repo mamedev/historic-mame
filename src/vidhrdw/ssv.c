@@ -744,7 +744,7 @@ else
 				}
 
 				#ifdef MAME_DEBUG
-				if (keyboard_pressed(KEYCODE_Z))	/* Display some info on each sprite */
+				if (code_pressed(KEYCODE_Z))	/* Display some info on each sprite */
 				{	struct DisplayText dt[2];	char buf[10];
 					sprintf(buf, "%02X",/*(s2[2] & ~0x3ff)>>8*/mode>>8);
 					dt[0].text = buf;	dt[0].color = ((s1[0] & 0x0200) ? UI_COLOR_INVERSE : UI_COLOR_NORMAL);

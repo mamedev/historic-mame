@@ -6,10 +6,10 @@
 
 /*----------- defined in vidhrdw/cloud9.c -----------*/
 
-WRITE_HANDLER( cloud9_paletteram_w );
-READ_HANDLER( cloud9_bitmap_regs_r );
-WRITE_HANDLER( cloud9_bitmap_regs_w );
-WRITE_HANDLER( cloud9_bitmap_w );
+WRITE8_HANDLER( cloud9_paletteram_w );
+READ8_HANDLER( cloud9_bitmap_regs_r );
+WRITE8_HANDLER( cloud9_bitmap_regs_w );
+WRITE8_HANDLER( cloud9_bitmap_w );
 
 VIDEO_UPDATE( cloud9 );
 VIDEO_START( cloud9 );

@@ -24,13 +24,13 @@ convert to tilemaps
 /* vidhrdw/funybubl.c */
 extern data8_t* funybubl_banked_videoram;
 extern data8_t *funybubl_paletteram;
-WRITE_HANDLER ( funybubl_paldatawrite );
+WRITE8_HANDLER ( funybubl_paldatawrite );
 VIDEO_START(funybubl);
 VIDEO_UPDATE(funybubl);
 
 
 
-static WRITE_HANDLER ( funybubl_vidram_bank_w )
+static WRITE8_HANDLER ( funybubl_vidram_bank_w )
 {
 	if ((data&1) == 0)
 		cpu_setbank(1,&funybubl_banked_videoram[0x000000]);
@@ -38,7 +38,7 @@ static WRITE_HANDLER ( funybubl_vidram_bank_w )
 		cpu_setbank(1,&funybubl_banked_videoram[0x001000]);
 }
 
-static WRITE_HANDLER ( funybubl_cpurombank_w )
+static WRITE8_HANDLER ( funybubl_cpurombank_w )
 {
 	unsigned char *rom = memory_region(REGION_CPU1);
 
@@ -47,13 +47,13 @@ static WRITE_HANDLER ( funybubl_cpurombank_w )
 
 
 
-WRITE_HANDLER( funybubl_soundcommand_w )
+WRITE8_HANDLER( funybubl_soundcommand_w )
 {
 	soundlatch_w(0,data);
-	cpu_set_irq_line(1,0, PULSE_LINE);
+	cpunum_set_input_line(1,0, PULSE_LINE);
 }
 
-WRITE_HANDLER( funybubl_oki_bank_sw )
+WRITE8_HANDLER( funybubl_oki_bank_sw )
 {
 	OKIM6295_set_bank_base(0, ((data & 1) * 0x40000));
 }

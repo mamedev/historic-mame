@@ -23,7 +23,7 @@
  *
  ****************************************************************/
 
-static READ_HANDLER( beaminv_input_port_3_r )
+static READ8_HANDLER( beaminv_input_port_3_r )
 {
 	return (input_port_3_r(offset) & 0xfe) | ((cpu_getscanline() >> 7) & 0x01);
 }

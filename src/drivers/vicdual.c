@@ -82,41 +82,41 @@ static unsigned char *vicdual_ram;
 
 extern unsigned char *vicdual_characterram;
 PALETTE_INIT( vicdual );
-WRITE_HANDLER( vicdual_characterram_w );
-READ_HANDLER( vicdual_characterram_r );
-WRITE_HANDLER( vicdual_palette_bank_w );
+WRITE8_HANDLER( vicdual_characterram_w );
+READ8_HANDLER( vicdual_characterram_r );
+WRITE8_HANDLER( vicdual_palette_bank_w );
 VIDEO_UPDATE( vicdual );
 
 /* Carnival sound handlers */
 extern const char *carnival_sample_names[];
-WRITE_HANDLER( carnival_sh_port1_w );
-WRITE_HANDLER( carnival_sh_port2_w );
-READ_HANDLER( carnival_music_port_t1_r );
-WRITE_HANDLER( carnival_music_port_1_w );
-WRITE_HANDLER( carnival_music_port_2_w );
+WRITE8_HANDLER( carnival_sh_port1_w );
+WRITE8_HANDLER( carnival_sh_port2_w );
+READ8_HANDLER( carnival_music_port_t1_r );
+WRITE8_HANDLER( carnival_music_port_1_w );
+WRITE8_HANDLER( carnival_music_port_2_w );
 
 /* Depth Charge sound handlers */
 extern const char *depthch_sample_names[];
-WRITE_HANDLER( depthch_sh_port1_w );
+WRITE8_HANDLER( depthch_sh_port1_w );
 
 /* Invinco sound handlers */
 extern const char *invinco_sample_names[];
-WRITE_HANDLER( invinco_sh_port2_w );
+WRITE8_HANDLER( invinco_sh_port2_w );
 
 /* Pulsar sound handlers */
 extern const char *pulsar_sample_names[];
-WRITE_HANDLER( pulsar_sh_port1_w );
-WRITE_HANDLER( pulsar_sh_port2_w );
+WRITE8_HANDLER( pulsar_sh_port1_w );
+WRITE8_HANDLER( pulsar_sh_port2_w );
 
 
 static int protection_data;
 
-static WRITE_HANDLER( samurai_protection_w )
+static WRITE8_HANDLER( samurai_protection_w )
 {
 	protection_data = data;
 }
 
-static READ_HANDLER( samurai_input_r )
+static READ8_HANDLER( samurai_input_r )
 {
 	int answer = 0;
 
@@ -127,18 +127,18 @@ static READ_HANDLER( samurai_input_r )
 }
 
 
-static WRITE_HANDLER( vicdual_ram_w )
+static WRITE8_HANDLER( vicdual_ram_w )
 {
 	vicdual_ram[offset] = data;
 }
 
-static READ_HANDLER( vicdual_ram_r )
+static READ8_HANDLER( vicdual_ram_r )
 {
 	return vicdual_ram[offset];
 }
 
 
-static READ_HANDLER( depthch_input_port_1_r )
+static READ8_HANDLER( depthch_input_port_1_r )
 {
 	/* bit 0 is 64V according to the schematics */
 	return (input_port_1_r(0) & 0xfe) | ((cpu_getscanline() >> 6) & 0x01);
@@ -1885,10 +1885,10 @@ static DRIVER_INIT( nosamples )
 
 static DRIVER_INIT( depthch )
 {
-	install_port_read_handler(0, 0x08, 0x08, depthch_input_port_1_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x08, 0x08, 0, 0, depthch_input_port_1_r);
 
 	/* install sample trigger */
-	install_port_write_handler(0, 0x04, 0x04, depthch_sh_port1_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x04, 0x04, 0, 0, depthch_sh_port1_w);
 
 	vicdual_decode();
 }
@@ -1896,8 +1896,8 @@ static DRIVER_INIT( depthch )
 static DRIVER_INIT( samurai )
 {
 	/* install protection handlers */
-	install_mem_write_handler(0, 0x7f00, 0x7f00, samurai_protection_w);
-	install_port_read_handler(0, 0x01, 0x03, samurai_input_r);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x7f00, 0x7f00, 0, 0, samurai_protection_w);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x01, 0x03, 0, 0, samurai_input_r);
 
 	vicdual_decode();
 }
@@ -1905,8 +1905,8 @@ static DRIVER_INIT( samurai )
 static DRIVER_INIT( carnival )
 {
 	/* install sample triggers */
-	install_port_write_handler(0, 0x01, 0x01, carnival_sh_port1_w);
-	install_port_write_handler(0, 0x02, 0x02, carnival_sh_port2_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x01, 0x01, 0, 0, carnival_sh_port1_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x02, 0x02, 0, 0, carnival_sh_port2_w);
 
 	vicdual_decode();
 }
@@ -1914,7 +1914,7 @@ static DRIVER_INIT( carnival )
 static DRIVER_INIT( invinco )
 {
 	/* install sample trigger */
-	install_port_write_handler(0, 0x02, 0x02, invinco_sh_port2_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x02, 0x02, 0, 0, invinco_sh_port2_w);
 
 	vicdual_decode();
 }
@@ -1922,7 +1922,7 @@ static DRIVER_INIT( invinco )
 static DRIVER_INIT( invho2 )
 {
 	/* install sample trigger */
-	install_port_write_handler(0, 0x02, 0x02, invinco_sh_port2_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x02, 0x02, 0, 0, invinco_sh_port2_w);
 
 	vicdual_decode();
 }
@@ -1930,7 +1930,7 @@ static DRIVER_INIT( invho2 )
 static DRIVER_INIT( invds )
 {
 	/* install sample trigger */
-	install_port_write_handler(0, 0x01, 0x01, invinco_sh_port2_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x01, 0x01, 0, 0, invinco_sh_port2_w);
 
 	vicdual_decode();
 }
@@ -1938,8 +1938,8 @@ static DRIVER_INIT( invds )
 static DRIVER_INIT( pulsar )
 {
 	/* install sample triggers */
-	install_port_write_handler(0, 0x01, 0x01, pulsar_sh_port1_w);
-	install_port_write_handler(0, 0x02, 0x02, pulsar_sh_port2_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x01, 0x01, 0, 0, pulsar_sh_port1_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x02, 0x02, 0, 0, pulsar_sh_port2_w);
 
 	vicdual_decode();
 }
@@ -1948,8 +1948,8 @@ static DRIVER_INIT( pulsar )
 static DRIVER_INIT( alphaho )
 {
 	/* install sample trigger */
-	install_port_write_handler(0, 0x01, 0x01, invinco_sh_port2_w);
-	install_port_write_handler(0, 0x02, 0x02, invinco_sh_port2_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x01, 0x01, 0, 0, invinco_sh_port2_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x02, 0x02, 0, 0, invinco_sh_port2_w);
 
 	vicdual_decode();
 }

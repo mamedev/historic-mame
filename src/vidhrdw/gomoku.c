@@ -76,30 +76,30 @@ static void get_fg_tile_info(int tile_index)
 			TILE_FLIPYX(flipyx))
 }
 
-WRITE_HANDLER( gomoku_videoram_w )
+WRITE8_HANDLER( gomoku_videoram_w )
 {
 	gomoku_videoram[offset] = data;
 	tilemap_mark_tile_dirty(fg_tilemap,offset);
 }
 
-WRITE_HANDLER( gomoku_colorram_w )
+WRITE8_HANDLER( gomoku_colorram_w )
 {
 	gomoku_colorram[offset] = data;
 	tilemap_mark_tile_dirty(fg_tilemap,offset);
 }
 
-WRITE_HANDLER( gomoku_bgram_w )
+WRITE8_HANDLER( gomoku_bgram_w )
 {
 	gomoku_bgram[offset] = data;
 	gomoku_bg_dirty[offset] = 1;
 }
 
-WRITE_HANDLER( gomoku_flipscreen_w )
+WRITE8_HANDLER( gomoku_flipscreen_w )
 {
 	gomoku_flipscreen = (data & 0x02) ? 0 : 1;
 }
 
-WRITE_HANDLER( gomoku_bg_dispsw_w )
+WRITE8_HANDLER( gomoku_bg_dispsw_w )
 {
 	gomoku_bg_dispsw = (data & 0x02) ? 0 : 1;
 }
@@ -251,7 +251,7 @@ VIDEO_UPDATE( gomoku )
 		static int key_ins = 0;
 		static int dispsw = 0;
 
-		if (keyboard_pressed(KEYCODE_INSERT)) {
+		if (code_pressed(KEYCODE_INSERT)) {
 			if (key_ins == 0) {
 				key_ins = 1;
 				dispsw ^= 1;
@@ -303,7 +303,7 @@ VIDEO_UPDATE( gomoku )
 #endif
 
 #if 0
-if (keyboard_pressed(KEYCODE_F))
+if (code_pressed(KEYCODE_F))
 {
 	FILE *fp;
 	fp=fopen("TILE_VID.DMP", "w+b");

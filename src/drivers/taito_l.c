@@ -68,11 +68,11 @@ void taitol_bg19_m(int offset);
 void taitol_char1a_m(int offset);
 void taitol_obj1b_m(int offset);
 
-WRITE_HANDLER( taitol_control_w );
-READ_HANDLER( taitol_control_r );
-WRITE_HANDLER( horshoes_bankg_w );
-WRITE_HANDLER( taitol_bankc_w );
-READ_HANDLER( taitol_bankc_r );
+WRITE8_HANDLER( taitol_control_w );
+READ8_HANDLER( taitol_control_r );
+WRITE8_HANDLER( horshoes_bankg_w );
+WRITE8_HANDLER( taitol_bankc_w );
+READ8_HANDLER( taitol_bankc_r );
 
 
 
@@ -269,37 +269,37 @@ static INTERRUPT_GEN( vbl_interrupt )
 	// What is really generating interrupts 0 and 1 is still to be found
 
 	if (cpu_getiloops() == 1 && (irq_enable & 1))
-		cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, irq_adr_table[0]);
+		cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, irq_adr_table[0]);
 	else if (cpu_getiloops() == 2 && (irq_enable & 2))
-		cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, irq_adr_table[1]);
+		cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, irq_adr_table[1]);
 	else if (cpu_getiloops() == 0 && (irq_enable & 4))
-		cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, irq_adr_table[2]);
+		cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, irq_adr_table[2]);
 }
 
-static WRITE_HANDLER( irq_adr_w )
+static WRITE8_HANDLER( irq_adr_w )
 {
 //logerror("irq_adr_table[%d] = %02x\n",offset,data);
 	irq_adr_table[offset] = data;
 }
 
-static READ_HANDLER( irq_adr_r )
+static READ8_HANDLER( irq_adr_r )
 {
 	return irq_adr_table[offset];
 }
 
-static WRITE_HANDLER( irq_enable_w )
+static WRITE8_HANDLER( irq_enable_w )
 {
 //logerror("irq_enable = %02x\n",data);
 	irq_enable = data;
 }
 
-static READ_HANDLER( irq_enable_r )
+static READ8_HANDLER( irq_enable_r )
 {
 	return irq_enable;
 }
 
 
-static WRITE_HANDLER( rombankswitch_w )
+static WRITE8_HANDLER( rombankswitch_w )
 {
 	static int high = 0;
 	if(cur_rombank != data)
@@ -316,7 +316,7 @@ static WRITE_HANDLER( rombankswitch_w )
 	}
 }
 
-static WRITE_HANDLER( rombank2switch_w )
+static WRITE8_HANDLER( rombank2switch_w )
 {
 	static int high = 0;
 
@@ -337,17 +337,17 @@ static WRITE_HANDLER( rombank2switch_w )
 	}
 }
 
-static READ_HANDLER( rombankswitch_r )
+static READ8_HANDLER( rombankswitch_r )
 {
 	return cur_rombank;
 }
 
-static READ_HANDLER( rombank2switch_r )
+static READ8_HANDLER( rombank2switch_r )
 {
 	return cur_rombank2;
 }
 
-static WRITE_HANDLER( rambankswitch_w )
+static WRITE8_HANDLER( rambankswitch_w )
 {
 	if(cur_rambank[offset]!=data)
 	{
@@ -374,12 +374,12 @@ logerror("unknown rambankswitch %d, %02x (%04x)\n", offset, data, activecpu_get_
 	}
 }
 
-static READ_HANDLER( rambankswitch_r )
+static READ8_HANDLER( rambankswitch_r )
 {
 	return cur_rambank[offset];
 }
 
-static WRITE_HANDLER( bank0_w )
+static WRITE8_HANDLER( bank0_w )
 {
 	if(current_base[0][offset]!=data)
 	{
@@ -389,7 +389,7 @@ static WRITE_HANDLER( bank0_w )
 	}
 }
 
-static WRITE_HANDLER( bank1_w )
+static WRITE8_HANDLER( bank1_w )
 {
 	if(current_base[1][offset]!=data)
 	{
@@ -399,7 +399,7 @@ static WRITE_HANDLER( bank1_w )
 	}
 }
 
-static WRITE_HANDLER( bank2_w )
+static WRITE8_HANDLER( bank2_w )
 {
 	if(current_base[2][offset]!=data)
 	{
@@ -409,7 +409,7 @@ static WRITE_HANDLER( bank2_w )
 	}
 }
 
-static WRITE_HANDLER( bank3_w )
+static WRITE8_HANDLER( bank3_w )
 {
 	if(current_base[3][offset]!=data)
 	{
@@ -419,7 +419,7 @@ static WRITE_HANDLER( bank3_w )
 	}
 }
 
-static WRITE_HANDLER( control2_w )
+static WRITE8_HANDLER( control2_w )
 {
 	coin_lockout_w(0,~data & 0x01);
 	coin_lockout_w(1,~data & 0x02);
@@ -429,25 +429,25 @@ static WRITE_HANDLER( control2_w )
 
 static int extport;
 
-static READ_HANDLER( portA_r )
+static READ8_HANDLER( portA_r )
 {
 	if (extport == 0) return porte0_r(0);
 	else return porte1_r(0);
 }
 
-static READ_HANDLER( portB_r )
+static READ8_HANDLER( portB_r )
 {
 	if (extport == 0) return portf0_r(0);
 	else return portf1_r(0);
 }
 
-static READ_HANDLER( ym2203_data0_r )
+static READ8_HANDLER( ym2203_data0_r )
 {
 	extport = 0;
 	return YM2203_read_port_0_r(offset);
 }
 
-static READ_HANDLER( ym2203_data1_r )
+static READ8_HANDLER( ym2203_data1_r )
 {
 	extport = 1;
 	return YM2203_read_port_0_r(offset);
@@ -459,7 +459,7 @@ static int last_data_adr, last_data;
 
 static int puzznic_mcu_reply[] = { 0x50, 0x1f, 0xb6, 0xba, 0x06, 0x03, 0x47, 0x05, 0x00 };
 
-static WRITE_HANDLER( mcu_data_w )
+static WRITE8_HANDLER( mcu_data_w )
 {
 	last_data = data;
 	last_data_adr = activecpu_get_pc();
@@ -474,12 +474,12 @@ static WRITE_HANDLER( mcu_data_w )
 	}
 }
 
-static WRITE_HANDLER( mcu_control_w )
+static WRITE8_HANDLER( mcu_control_w )
 {
 //	logerror("mcu control %02x (%04x)\n", data, activecpu_get_pc());
 }
 
-static READ_HANDLER( mcu_data_r )
+static READ8_HANDLER( mcu_data_r )
 {
 //	logerror("mcu read (%04x) [%02x, %04x]\n", activecpu_get_pc(), last_data, last_data_adr);
 	if(mcu_pos==mcu_reply_len)
@@ -488,32 +488,32 @@ static READ_HANDLER( mcu_data_r )
 	return mcu_reply[mcu_pos++];
 }
 
-static READ_HANDLER( mcu_control_r )
+static READ8_HANDLER( mcu_control_r )
 {
 //	logerror("mcu control read (%04x)\n", activecpu_get_pc());
 	return 0x1;
 }
 
 #if 0
-static WRITE_HANDLER( sound_w )
+static WRITE8_HANDLER( sound_w )
 {
 	logerror("Sound_w %02x (%04x)\n", data, activecpu_get_pc());
 }
 #endif
 
-static READ_HANDLER( shared_r )
+static READ8_HANDLER( shared_r )
 {
 	return shared_ram[offset];
 }
 
-static WRITE_HANDLER( shared_w )
+static WRITE8_HANDLER( shared_w )
 {
 	shared_ram[offset] = data;
 }
 
 static int mux_ctrl = 0;
 
-static READ_HANDLER( mux_r )
+static READ8_HANDLER( mux_r )
 {
 	switch(mux_ctrl)
 	{
@@ -533,7 +533,7 @@ static READ_HANDLER( mux_r )
 	}
 }
 
-static WRITE_HANDLER( mux_w )
+static WRITE8_HANDLER( mux_w )
 {
 	switch(mux_ctrl)
 	{
@@ -545,7 +545,7 @@ static WRITE_HANDLER( mux_w )
 	}
 }
 
-static WRITE_HANDLER( mux_ctrl_w )
+static WRITE8_HANDLER( mux_ctrl_w )
 {
 	mux_ctrl = data;
 }
@@ -555,12 +555,12 @@ static WRITE_HANDLER( mux_ctrl_w )
 
 static int champwr_adpcm_start;
 
-static WRITE_HANDLER( champwr_adpcm_lo_w )
+static WRITE8_HANDLER( champwr_adpcm_lo_w )
 {
 	champwr_adpcm_start = (champwr_adpcm_start & 0xff00ff) | (data << 8);
 }
 
-static WRITE_HANDLER( champwr_adpcm_hi_w )
+static WRITE8_HANDLER( champwr_adpcm_hi_w )
 {
 	UINT8 *rom = memory_region(REGION_SOUND1);
 	int romlen = memory_region_length(REGION_SOUND1);
@@ -580,36 +580,36 @@ static WRITE_HANDLER( champwr_adpcm_hi_w )
 
 static int trackx,tracky;
 
-static READ_HANDLER( horshoes_tracky_reset_r )
+static READ8_HANDLER( horshoes_tracky_reset_r )
 {
 	/* reset the trackball counter */
 	tracky = readinputport(4);
 	return 0;
 }
 
-static READ_HANDLER( horshoes_trackx_reset_r )
+static READ8_HANDLER( horshoes_trackx_reset_r )
 {
 	/* reset the trackball counter */
 	trackx = readinputport(5);
 	return 0;
 }
 
-static READ_HANDLER( horshoes_tracky_lo_r )
+static READ8_HANDLER( horshoes_tracky_lo_r )
 {
 	return (readinputport(4) - tracky) & 0xff;
 }
 
-static READ_HANDLER( horshoes_tracky_hi_r )
+static READ8_HANDLER( horshoes_tracky_hi_r )
 {
 	return (readinputport(4) - tracky) >> 8;
 }
 
-static READ_HANDLER( horshoes_trackx_lo_r )
+static READ8_HANDLER( horshoes_trackx_lo_r )
 {
 	return (readinputport(5) - trackx) & 0xff;
 }
 
-static READ_HANDLER( horshoes_trackx_hi_r )
+static READ8_HANDLER( horshoes_trackx_hi_r )
 {
 	return (readinputport(5) - trackx) >> 8;
 }
@@ -754,7 +754,7 @@ static ADDRESS_MAP_START( raimais_3_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xe201, 0xe201) AM_READ(taitosound_slave_comm_r)
 ADDRESS_MAP_END
 
-static WRITE_HANDLER( sound_bankswitch_w )
+static WRITE8_HANDLER( sound_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU2);
 	int banknum = (data - 1) & 3;
@@ -984,10 +984,10 @@ ADDRESS_MAP_END
 
 
 
-static WRITE_HANDLER (evilston_snd_w)
+static WRITE8_HANDLER (evilston_snd_w)
 {
 	shared_ram[0x7fe]=data&0x7f;
-	cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
+	cpunum_set_input_line(1,INPUT_LINE_NMI,PULSE_LINE);
 }
 
 
@@ -2132,10 +2132,10 @@ static struct GfxDecodeInfo gfxdecodeinfo2[] =
 
 static void irqhandler(int irq)
 {
-	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
-static WRITE_HANDLER( portA_w )
+static WRITE8_HANDLER( portA_w )
 {
 	static int cur_bank = 0;
 
@@ -2791,7 +2791,7 @@ static DRIVER_INIT( evilston )
 {
 	unsigned char *ROM = memory_region(REGION_CPU2);
 	ROM[0x72]=0x45;	/* reti -> retn  ('dead' loop @ $1104 )*/
-	install_mem_write_handler( 0, 0xa7fe, 0xa7fe, evilston_snd_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa7fe, 0xa7fe, 0, 0, evilston_snd_w);
 }
 
 

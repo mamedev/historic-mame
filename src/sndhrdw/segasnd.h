@@ -4,7 +4,7 @@
 
 *************************************************************************/
 
-WRITE_HANDLER( sega_sh_speechboard_w );
+WRITE8_HANDLER( sega_sh_speechboard_w );
 
 ADDRESS_MAP_EXTERN(sega_speechboard_readmem);
 ADDRESS_MAP_EXTERN(sega_speechboard_writemem);

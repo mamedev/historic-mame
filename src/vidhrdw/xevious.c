@@ -248,27 +248,27 @@ VIDEO_START( xevious )
 
 ***************************************************************************/
 
-READ_HANDLER( xevious_fg_videoram_r )
+READ8_HANDLER( xevious_fg_videoram_r )
 {
 	return xevious_fg_videoram[offset];
 }
 
-READ_HANDLER( xevious_fg_colorram_r )
+READ8_HANDLER( xevious_fg_colorram_r )
 {
 	return xevious_fg_colorram[offset];
 }
 
-READ_HANDLER( xevious_bg_videoram_r )
+READ8_HANDLER( xevious_bg_videoram_r )
 {
 	return xevious_bg_videoram[offset];
 }
 
-READ_HANDLER( xevious_bg_colorram_r )
+READ8_HANDLER( xevious_bg_colorram_r )
 {
 	return xevious_bg_colorram[offset];
 }
 
-WRITE_HANDLER( xevious_fg_videoram_w )
+WRITE8_HANDLER( xevious_fg_videoram_w )
 {
 	if (xevious_fg_videoram[offset] != data)
 	{
@@ -277,7 +277,7 @@ WRITE_HANDLER( xevious_fg_videoram_w )
 	}
 }
 
-WRITE_HANDLER( xevious_fg_colorram_w )
+WRITE8_HANDLER( xevious_fg_colorram_w )
 {
 	if (xevious_fg_colorram[offset] != data)
 	{
@@ -286,7 +286,7 @@ WRITE_HANDLER( xevious_fg_colorram_w )
 	}
 }
 
-WRITE_HANDLER( xevious_bg_videoram_w )
+WRITE8_HANDLER( xevious_bg_videoram_w )
 {
 	if (xevious_bg_videoram[offset] != data)
 	{
@@ -295,7 +295,7 @@ WRITE_HANDLER( xevious_bg_videoram_w )
 	}
 }
 
-WRITE_HANDLER( xevious_bg_colorram_w )
+WRITE8_HANDLER( xevious_bg_colorram_w )
 {
 	if (xevious_bg_colorram[offset] != data)
 	{
@@ -304,7 +304,7 @@ WRITE_HANDLER( xevious_bg_colorram_w )
 	}
 }
 
-WRITE_HANDLER( xevious_vh_latch_w )
+WRITE8_HANDLER( xevious_vh_latch_w )
 {
 	int reg;
 	int scroll = data + ((offset&0x01)<<8);   /* A0 -> D8 */
@@ -338,12 +338,12 @@ WRITE_HANDLER( xevious_vh_latch_w )
 static int xevious_bs[2];
 
 /* emulation for schematic 9B */
-WRITE_HANDLER( xevious_bs_w )
+WRITE8_HANDLER( xevious_bs_w )
 {
 	xevious_bs[offset & 1] = data;
 }
 
-READ_HANDLER( xevious_bb_r )
+READ8_HANDLER( xevious_bb_r )
 {
 	data8_t *rom2a = memory_region(REGION_GFX4);
 	data8_t *rom2b = memory_region(REGION_GFX4)+0x1000;

@@ -303,7 +303,7 @@ Notes & Todo:
 #define N2A03_DEFAULTCLOCK (21477272.724 / 12)
 
 /* from vidhrdw */
-extern WRITE_HANDLER( playch10_videoram_w );
+extern WRITE8_HANDLER( playch10_videoram_w );
 extern PALETTE_INIT( playch10 );
 extern VIDEO_START( playch10 );
 extern VIDEO_UPDATE( playch10 );
@@ -324,24 +324,24 @@ extern DRIVER_INIT( pcgboard_type2 ); /* g-board games with 4 screen mirror */
 extern DRIVER_INIT( pchboard );	/* h-board games */
 extern DRIVER_INIT( pciboard );	/* i-board games */
 extern DRIVER_INIT( pckboard );	/* k-board games */
-extern READ_HANDLER( pc10_port_0_r );
-extern READ_HANDLER( pc10_instrom_r );
-extern READ_HANDLER( pc10_prot_r );
-extern READ_HANDLER( pc10_detectclr_r );
-extern READ_HANDLER( pc10_in0_r );
-extern READ_HANDLER( pc10_in1_r );
-extern WRITE_HANDLER( pc10_SDCS_w );
-extern WRITE_HANDLER( pc10_CNTRLMASK_w );
-extern WRITE_HANDLER( pc10_DISPMASK_w );
-extern WRITE_HANDLER( pc10_SOUNDMASK_w );
-extern WRITE_HANDLER( pc10_NMIENABLE_w );
-extern WRITE_HANDLER( pc10_DOGDI_w );
-extern WRITE_HANDLER( pc10_GAMERES_w );
-extern WRITE_HANDLER( pc10_GAMESTOP_w );
-extern WRITE_HANDLER( pc10_PPURES_w );
-extern WRITE_HANDLER( pc10_prot_w );
-extern WRITE_HANDLER( pc10_CARTSEL_w );
-extern WRITE_HANDLER( pc10_in0_w );
+extern READ8_HANDLER( pc10_port_0_r );
+extern READ8_HANDLER( pc10_instrom_r );
+extern READ8_HANDLER( pc10_prot_r );
+extern READ8_HANDLER( pc10_detectclr_r );
+extern READ8_HANDLER( pc10_in0_r );
+extern READ8_HANDLER( pc10_in1_r );
+extern WRITE8_HANDLER( pc10_SDCS_w );
+extern WRITE8_HANDLER( pc10_CNTRLMASK_w );
+extern WRITE8_HANDLER( pc10_DISPMASK_w );
+extern WRITE8_HANDLER( pc10_SOUNDMASK_w );
+extern WRITE8_HANDLER( pc10_NMIENABLE_w );
+extern WRITE8_HANDLER( pc10_DOGDI_w );
+extern WRITE8_HANDLER( pc10_GAMERES_w );
+extern WRITE8_HANDLER( pc10_GAMESTOP_w );
+extern WRITE8_HANDLER( pc10_PPURES_w );
+extern WRITE8_HANDLER( pc10_prot_w );
+extern WRITE8_HANDLER( pc10_CARTSEL_w );
+extern WRITE8_HANDLER( pc10_in0_w );
 
 extern int pc10_sdcs;
 extern int pc10_nmi_enable;
@@ -353,12 +353,12 @@ extern int pc10_dog_di;
 static UINT8 *work_ram, *ram_8w;
 static int up_8w;
 
-static WRITE_HANDLER( up8w_w )
+static WRITE8_HANDLER( up8w_w )
 {
 	up_8w = data & 1;
 }
 
-static READ_HANDLER( ram_8w_r )
+static READ8_HANDLER( ram_8w_r )
 {
 	if ( offset >= 0x400 && up_8w )
 		return ram_8w[offset];
@@ -366,7 +366,7 @@ static READ_HANDLER( ram_8w_r )
 	return ram_8w[offset & 0x3ff];
 }
 
-static WRITE_HANDLER( ram_8w_w )
+static WRITE8_HANDLER( ram_8w_w )
 {
 	if ( offset >= 0x400 && up_8w )
 		ram_8w[offset] = data;
@@ -374,17 +374,17 @@ static WRITE_HANDLER( ram_8w_w )
 		ram_8w[offset & 0x3ff] = data;
 }
 
-static READ_HANDLER( mirror_ram_r )
+static READ8_HANDLER( mirror_ram_r )
 {
 	return work_ram[ offset & 0x7ff ];
 }
 
-static WRITE_HANDLER( mirror_ram_w )
+static WRITE8_HANDLER( mirror_ram_w )
 {
 	work_ram[ offset & 0x7ff ] = data;
 }
 
-static WRITE_HANDLER( sprite_dma_w )
+static WRITE8_HANDLER( sprite_dma_w )
 {
 	int source = ( data & 7 ) * 0x100;
 
@@ -744,11 +744,11 @@ static INTERRUPT_GEN( playch10_interrupt ) {
 
 	/* LS161A, Sheet 1 - bottom left of Z80 */
 	if ( !pc10_dog_di && !pc10_nmi_enable ) {
-		cpu_set_reset_line( 0, PULSE_LINE );
+		cpunum_set_input_line(0, INPUT_LINE_RESET, PULSE_LINE );
 	}
 
 	else if ( pc10_nmi_enable )
-		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+		cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 }
 
 static struct NESinterface nes_interface =

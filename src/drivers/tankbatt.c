@@ -65,18 +65,18 @@ extern size_t tankbatt_bulletsram_size;
 static int tankbatt_nmi_enable; /* No need to init this - the game will set it on reset */
 static int tankbatt_sound_enable;
 
-extern WRITE_HANDLER( tankbatt_videoram_w );
+extern WRITE8_HANDLER( tankbatt_videoram_w );
 
 extern PALETTE_INIT( tankbatt );
 extern VIDEO_START( tankbatt );
 extern VIDEO_UPDATE( tankbatt );
 
-WRITE_HANDLER( tankbatt_led_w )
+WRITE8_HANDLER( tankbatt_led_w )
 {
 	set_led_status(offset,data & 1);
 }
 
-READ_HANDLER( tankbatt_in0_r )
+READ8_HANDLER( tankbatt_in0_r )
 {
 	int val;
 
@@ -84,7 +84,7 @@ READ_HANDLER( tankbatt_in0_r )
 	return ((val << (7-offset)) & 0x80);
 }
 
-READ_HANDLER( tankbatt_in1_r )
+READ8_HANDLER( tankbatt_in1_r )
 {
 	int val;
 
@@ -92,7 +92,7 @@ READ_HANDLER( tankbatt_in1_r )
 	return ((val << (7-offset)) & 0x80);
 }
 
-READ_HANDLER( tankbatt_dsw_r )
+READ8_HANDLER( tankbatt_dsw_r )
 {
 	int val;
 
@@ -100,38 +100,38 @@ READ_HANDLER( tankbatt_dsw_r )
 	return ((val << (7-offset)) & 0x80);
 }
 
-WRITE_HANDLER( tankbatt_interrupt_enable_w )
+WRITE8_HANDLER( tankbatt_interrupt_enable_w )
 {
 	tankbatt_nmi_enable = !data;
 	tankbatt_sound_enable = !data;
 	if (data != 0)
 	{
-		cpu_set_irq_line(0, 0, CLEAR_LINE);
-		cpu_set_nmi_line(0, CLEAR_LINE);
+		cpunum_set_input_line(0, 0, CLEAR_LINE);
+		cpunum_set_input_line(0, INPUT_LINE_NMI, CLEAR_LINE);
 	}
 	/* hack - turn off the engine noise if the normal game nmi's are disabled */
 	if (data) sample_stop (2);
 //	interrupt_enable_w (offset, !data);
 }
 
-WRITE_HANDLER( tankbatt_demo_interrupt_enable_w )
+WRITE8_HANDLER( tankbatt_demo_interrupt_enable_w )
 {
 	tankbatt_nmi_enable = data;
 	if (data != 0)
 	{
-		cpu_set_irq_line(0, 0, CLEAR_LINE);
-		cpu_set_nmi_line(0, CLEAR_LINE);
+		cpunum_set_input_line(0, 0, CLEAR_LINE);
+		cpunum_set_input_line(0, INPUT_LINE_NMI, CLEAR_LINE);
 	}
 //	interrupt_enable_w (offset, data);
 }
 
-WRITE_HANDLER( tankbatt_sh_expl_w )
+WRITE8_HANDLER( tankbatt_sh_expl_w )
 {
 	if (tankbatt_sound_enable)
 		sample_start (1, 3, 0);
 }
 
-WRITE_HANDLER( tankbatt_sh_engine_w )
+WRITE8_HANDLER( tankbatt_sh_engine_w )
 {
 	if (tankbatt_sound_enable)
 	{
@@ -143,7 +143,7 @@ WRITE_HANDLER( tankbatt_sh_engine_w )
 	else sample_stop (2);
 }
 
-WRITE_HANDLER( tankbatt_sh_fire_w )
+WRITE8_HANDLER( tankbatt_sh_fire_w )
 {
 	if (tankbatt_sound_enable)
 		sample_start (0, 0, 0);
@@ -176,8 +176,8 @@ ADDRESS_MAP_END
 
 INTERRUPT_GEN( tankbatt_interrupt )
 {
-	if ((readinputport (0) & 0x60) == 0) cpu_set_irq_line(0,0,HOLD_LINE);
-	else if (tankbatt_nmi_enable) cpu_set_irq_line(0,IRQ_LINE_NMI,PULSE_LINE);
+	if ((readinputport (0) & 0x60) == 0) cpunum_set_input_line(0,0,HOLD_LINE);
+	else if (tankbatt_nmi_enable) cpunum_set_input_line(0,INPUT_LINE_NMI,PULSE_LINE);
 }
 
 INPUT_PORTS_START( tankbatt )

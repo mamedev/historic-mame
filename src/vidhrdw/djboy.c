@@ -14,12 +14,12 @@ void djboy_set_videoreg( data8_t data )
 	djboy_videoreg = data;
 }
 
-WRITE_HANDLER( djboy_scrollx_w )
+WRITE8_HANDLER( djboy_scrollx_w )
 {
 	djboy_scrollx = data;
 }
 
-WRITE_HANDLER( djboy_scrolly_w )
+WRITE8_HANDLER( djboy_scrolly_w )
 {
 	djboy_scrolly = data;
 }
@@ -35,7 +35,7 @@ static void get_bg_tile_info(int tile_index)
 			0)
 }
 
-WRITE_HANDLER( djboy_videoram_w )
+WRITE8_HANDLER( djboy_videoram_w )
 {
 	if( videoram[offset] != data)
 	{
@@ -94,7 +94,7 @@ draw_sprites( struct mame_bitmap *bitmap,const struct rectangle *cliprect )
 	} /* next page */
 } /* draw_sprites */
 
-WRITE_HANDLER( djboy_paletteram_w )
+WRITE8_HANDLER( djboy_paletteram_w )
 {
 	int r,g,b;
 	int val;

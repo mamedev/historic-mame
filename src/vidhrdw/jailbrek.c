@@ -48,7 +48,7 @@ PALETTE_INIT( jailbrek )
 		COLOR(1,i) = *color_prom++;
 }
 
-WRITE_HANDLER( jailbrek_videoram_w )
+WRITE8_HANDLER( jailbrek_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -57,7 +57,7 @@ WRITE_HANDLER( jailbrek_videoram_w )
 	}
 }
 
-WRITE_HANDLER( jailbrek_colorram_w )
+WRITE8_HANDLER( jailbrek_colorram_w )
 {
 	if (colorram[offset] != data)
 	{

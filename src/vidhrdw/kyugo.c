@@ -84,7 +84,7 @@ VIDEO_START( kyugo )
  *
  *************************************/
 
-WRITE_HANDLER( kyugo_fgvideoram_w )
+WRITE8_HANDLER( kyugo_fgvideoram_w )
 {
 	if (kyugo_fgvideoram[offset] != data)
 	{
@@ -94,7 +94,7 @@ WRITE_HANDLER( kyugo_fgvideoram_w )
 }
 
 
-WRITE_HANDLER( kyugo_bgvideoram_w )
+WRITE8_HANDLER( kyugo_bgvideoram_w )
 {
 	if (kyugo_bgvideoram[offset] != data)
 	{
@@ -104,7 +104,7 @@ WRITE_HANDLER( kyugo_bgvideoram_w )
 }
 
 
-WRITE_HANDLER( kyugo_bgattribram_w )
+WRITE8_HANDLER( kyugo_bgattribram_w )
 {
 	if (kyugo_bgattribram[offset] != data)
 	{
@@ -114,20 +114,20 @@ WRITE_HANDLER( kyugo_bgattribram_w )
 }
 
 
-READ_HANDLER( kyugo_spriteram_2_r )
+READ8_HANDLER( kyugo_spriteram_2_r )
 {
 	// only the lower nibble is connected
 	return kyugo_spriteram_2[offset] | 0xf0;
 }
 
 
-WRITE_HANDLER( kyugo_scroll_x_lo_w )
+WRITE8_HANDLER( kyugo_scroll_x_lo_w )
 {
 	scroll_x_lo = data;
 }
 
 
-WRITE_HANDLER( kyugo_gfxctrl_w )
+WRITE8_HANDLER( kyugo_gfxctrl_w )
 {
 	/* bit 0 is scroll MSB */
 	scroll_x_hi = data & 0x01;
@@ -153,13 +153,13 @@ WRITE_HANDLER( kyugo_gfxctrl_w )
 }
 
 
-WRITE_HANDLER( kyugo_scroll_y_w )
+WRITE8_HANDLER( kyugo_scroll_y_w )
 {
 	scroll_y = data;
 }
 
 
-WRITE_HANDLER( kyugo_flipscreen_w )
+WRITE8_HANDLER( kyugo_flipscreen_w )
 {
 	if (flipscreen != (data & 0x01))
 	{

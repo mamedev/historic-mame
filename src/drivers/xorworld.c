@@ -204,11 +204,11 @@ static INTERRUPT_GEN( xorworld_interrupt )
 {
 	if (cpu_getiloops() == 0)
 	{		
-		cpu_set_irq_line(0, 2, HOLD_LINE);
+		cpunum_set_input_line(0, 2, HOLD_LINE);
 	}
 	else if (cpu_getiloops() % 2)
 	{
-		cpu_set_irq_line(0, 6, HOLD_LINE);
+		cpunum_set_input_line(0, 6, HOLD_LINE);
 	}
 }
 

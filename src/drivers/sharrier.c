@@ -49,7 +49,7 @@ static WRITE16_HANDLER( hangon_io_w )
 					case 0x00: /* Port A : Z80 sound command */
 						ppi_reg[0][0] = data;
 						soundlatch_w(0, data & 0xff);
-						cpu_set_nmi_line(1, PULSE_LINE);
+						cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 						return;
 
 					case 0x01: /* Port B : Miscellaneous outputs */
@@ -99,15 +99,15 @@ static WRITE16_HANDLER( hangon_io_w )
 
 					/* To S.RES of second CPU */
 					if(data & 0x20)
-					cpu_set_reset_line(2, CLEAR_LINE);
+					cpunum_set_input_line(2, INPUT_LINE_RESET, CLEAR_LINE);
 					else
-					cpu_set_reset_line(2, ASSERT_LINE);
+					cpunum_set_input_line(2, INPUT_LINE_RESET, ASSERT_LINE);
 					
 					/* To S.INT of second CPU */
 					if(data & 0x10)
-					cpu_set_irq_line(2, 1, HOLD_LINE);
+					cpunum_set_input_line(2, 1, HOLD_LINE);
 					else
-					cpu_set_irq_line(2, 1, CLEAR_LINE);
+					cpunum_set_input_line(2, 1, CLEAR_LINE);
 #endif
 					return;
 				
@@ -335,13 +335,13 @@ static void set_page( int page[4], data16_t data ){
 
 static INTERRUPT_GEN( sys16_interrupt ){
 	if(sys16_custom_irq) sys16_custom_irq();
-	cpu_set_irq_line(cpu_getactivecpu(), 4, HOLD_LINE); /* Interrupt vector 4, used by VBlank */
+	cpunum_set_input_line(cpu_getactivecpu(), 4, HOLD_LINE); /* Interrupt vector 4, used by VBlank */
 }
 
 static WRITE16_HANDLER( sound_command_nmi_w ){
 	if( ACCESSING_LSB ){
 		soundlatch_w( 0,data&0xff );
-		cpu_set_nmi_line(1, PULSE_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 	}
 }
 
@@ -810,7 +810,7 @@ static WRITE16_HANDLER( er_io_analog_w )
 
 static READ16_HANDLER( er_reset2_r )
 {
-	cpu_set_reset_line(2,PULSE_LINE);
+	cpunum_set_input_line(2, INPUT_LINE_RESET, PULSE_LINE);
 	return 0;
 }
 

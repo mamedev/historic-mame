@@ -18,7 +18,7 @@ int sqix_current_bitmap;
 
 static struct tilemap *bg_tilemap;
 
-WRITE_HANDLER( superqix_videoram_w )
+WRITE8_HANDLER( superqix_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -27,7 +27,7 @@ WRITE_HANDLER( superqix_videoram_w )
 	}
 }
 
-WRITE_HANDLER( superqix_colorram_w )
+WRITE8_HANDLER( superqix_colorram_w )
 {
 	if (colorram[offset] != data)
 	{
@@ -36,12 +36,12 @@ WRITE_HANDLER( superqix_colorram_w )
 	}
 }
 
-READ_HANDLER( superqix_bitmapram_r )
+READ8_HANDLER( superqix_bitmapram_r )
 {
 	return superqix_bitmapram[offset];
 }
 
-WRITE_HANDLER( superqix_bitmapram_w )
+WRITE8_HANDLER( superqix_bitmapram_w )
 {
 	if (data != superqix_bitmapram[offset])
 	{
@@ -57,12 +57,12 @@ WRITE_HANDLER( superqix_bitmapram_w )
 	}
 }
 
-READ_HANDLER( superqix_bitmapram2_r )
+READ8_HANDLER( superqix_bitmapram2_r )
 {
 	return superqix_bitmapram2[offset];
 }
 
-WRITE_HANDLER( superqix_bitmapram2_w )
+WRITE8_HANDLER( superqix_bitmapram2_w )
 {
 	if (data != superqix_bitmapram2[offset])
 	{
@@ -78,7 +78,7 @@ WRITE_HANDLER( superqix_bitmapram2_w )
 	}
 }
 
-WRITE_HANDLER( superqix_0410_w )
+WRITE8_HANDLER( superqix_0410_w )
 {
 	int bankaddress;
 	UINT8 *RAM = memory_region(REGION_CPU1);
@@ -108,7 +108,7 @@ WRITE_HANDLER( superqix_0410_w )
 	cpu_setbank(1,&RAM[bankaddress]);
 }
 
-WRITE_HANDLER( superqix_flipscreen_w )
+WRITE8_HANDLER( superqix_flipscreen_w )
 {
 	flip_screen_set(!data);
 }

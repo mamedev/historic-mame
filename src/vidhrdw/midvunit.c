@@ -54,7 +54,7 @@ static int polycount, pixelcount, lastfps, framecount, totalframes;
 
 static void scanline_timer_cb(int scanline)
 {
-	cpu_set_irq_line(0, 0, ASSERT_LINE);
+	cpunum_set_input_line(0, 0, ASSERT_LINE);
 	timer_adjust(scanline_timer, cpu_getscanlinetime(scanline + 1), scanline, 0);
 }
 
@@ -1023,7 +1023,7 @@ static void process_dma_queue(void)
 
 WRITE32_HANDLER( midvunit_dma_queue_w )
 {
-if (keyboard_pressed(KEYCODE_L))
+if (code_pressed(KEYCODE_L))
 	logerror("%06X:queue(%X) = %08X\n", activecpu_get_pc(), dma_data_index, data);
 	if (dma_data_index < 16)
 		dma_data[dma_data_index++] = data;
@@ -1041,7 +1041,7 @@ READ32_HANDLER( midvunit_dma_trigger_r )
 {
 	if (offset)
 	{
-if (keyboard_pressed(KEYCODE_L))
+if (code_pressed(KEYCODE_L))
 	logerror("%06X:trigger\n", activecpu_get_pc());
 		process_dma_queue();
 		dma_data_index = 0;
@@ -1062,7 +1062,7 @@ WRITE32_HANDLER( midvunit_page_control_w )
 	/* watch for the display page to change */
 	if ((page_control ^ data) & 1)
 	{
-if (keyboard_pressed(KEYCODE_L))
+if (code_pressed(KEYCODE_L))
 	logerror("##########################################################\n");
 #if KEEP_STATISTICS
 		usrintf_showmessage("Polys:%d  Render:%d%%  FPS:%d",

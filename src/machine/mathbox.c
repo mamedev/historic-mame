@@ -34,7 +34,7 @@ s16 mb_result = 0;
 
 /*define MB_TEST*/
 
-WRITE_HANDLER( mb_go_w )
+WRITE8_HANDLER( mb_go_w )
 {
   s32 mb_temp;  /* temp 32-bit multiply results */
   s16 mb_q;     /* temp used in division */
@@ -260,17 +260,17 @@ WRITE_HANDLER( mb_go_w )
 #endif
 }
 
-READ_HANDLER( mb_status_r )
+READ8_HANDLER( mb_status_r )
 {
 	return 0x00; /* always done! */
 }
 
-READ_HANDLER( mb_lo_r )
+READ8_HANDLER( mb_lo_r )
 {
 	return mb_result & 0xff;
 }
 
-READ_HANDLER( mb_hi_r )
+READ8_HANDLER( mb_hi_r )
 {
 	return (mb_result >> 8) & 0xff;
 }

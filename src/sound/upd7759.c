@@ -575,22 +575,22 @@ void UPD7759_set_bank_base(int chip, UINT32 base)
 	ch->cur_rombank = ch->rom + base;
 }
 
-WRITE_HANDLER(UPD7759_0_start_w)
+WRITE8_HANDLER(UPD7759_0_start_w)
 {
 	UPD7759_start_w(0,data);
 }
 
-WRITE_HANDLER(UPD7759_0_reset_w)
+WRITE8_HANDLER(UPD7759_0_reset_w)
 {
 	UPD7759_reset_w(0,data);
 }
 
-WRITE_HANDLER(UPD7759_0_port_w)
+WRITE8_HANDLER(UPD7759_0_port_w)
 {
 	UPD7759_port_w(0,data);
 }
 
-READ_HANDLER(UPD7759_0_busy_r)
+READ8_HANDLER(UPD7759_0_busy_r)
 {
 	return UPD7759_busy_r(0);
 }

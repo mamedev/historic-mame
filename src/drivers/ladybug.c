@@ -42,13 +42,13 @@ TODO:
 #include "vidhrdw/generic.h"
 
 
-extern READ_HANDLER( ladybug_IN0_r );
-extern READ_HANDLER( ladybug_IN1_r );
+extern READ8_HANDLER( ladybug_IN0_r );
+extern READ8_HANDLER( ladybug_IN1_r );
 extern INTERRUPT_GEN( ladybug_interrupt );
 
-extern WRITE_HANDLER( ladybug_videoram_w );
-extern WRITE_HANDLER( ladybug_colorram_w );
-extern WRITE_HANDLER( ladybug_flipscreen_w );
+extern WRITE8_HANDLER( ladybug_videoram_w );
+extern WRITE8_HANDLER( ladybug_colorram_w );
+extern WRITE8_HANDLER( ladybug_flipscreen_w );
 
 extern PALETTE_INIT( ladybug );
 extern VIDEO_START( ladybug );
@@ -88,9 +88,9 @@ ADDRESS_MAP_END
 INTERRUPT_GEN( ladybug_interrupt )
 {
 	if (readinputport(5) & 1)	/* Left Coin */
-		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+		cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 	else if (readinputport(5) & 2)	/* Right Coin */
-		cpu_set_irq_line(0, 0, HOLD_LINE);
+		cpunum_set_input_line(0, 0, HOLD_LINE);
 }
 
 INPUT_PORTS_START( ladybug )

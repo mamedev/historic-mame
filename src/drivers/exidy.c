@@ -136,7 +136,7 @@
  *
  *************************************/
 
-static WRITE_HANDLER( fax_bank_select_w )
+static WRITE8_HANDLER( fax_bank_select_w )
 {
 	UINT8 *RAM = memory_region(REGION_CPU1);
 
@@ -1401,7 +1401,7 @@ DRIVER_INIT( sidetrac )
 	targ_spec_flag 			= 0;
 
 	/* sound is handled directly instead of via a PIA */
-	install_mem_write_handler(0, 0x5200, 0x5201, targ_sh_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x5200, 0x5201, 0, 0, targ_sh_w);
 }
 
 DRIVER_INIT( targ )
@@ -1416,7 +1416,7 @@ DRIVER_INIT( targ )
 	targ_spec_flag 			= 1;
 
 	/* sound is handled directly instead of via a PIA */
-	install_mem_write_handler(0, 0x5200, 0x5201, targ_sh_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x5200, 0x5201, 0, 0, targ_sh_w);
 }
 
 DRIVER_INIT( spectar )
@@ -1431,7 +1431,7 @@ DRIVER_INIT( spectar )
 	targ_spec_flag 			= 0;
 
 	/* sound is handled directly instead of via a PIA */
-	install_mem_write_handler(0, 0x5200, 0x5201, targ_sh_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x5200, 0x5201, 0, 0, targ_sh_w);
 }
 
 DRIVER_INIT( mtrap )
@@ -1458,8 +1458,8 @@ DRIVER_INIT( pepper2 )
 	exidy_collision_invert	= 0x04;
 
 	/* two 6116 character RAMs */
-	install_mem_write_handler(0, 0x4800, 0x4fff, MWA8_NOP);
-	exidy_characterram = install_mem_write_handler(0, 0x6000, 0x6fff, exidy_characterram_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4800, 0x4fff, 0, 0, MWA8_NOP);
+	exidy_characterram = memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6000, 0x6fff, 0, 0, exidy_characterram_w);
 }
 
 DRIVER_INIT( fax )
@@ -1485,7 +1485,7 @@ DRIVER_INIT( phantoma )
 	targ_spec_flag 			= 0;
 
 	/* sound is handled directly instead of via a PIA */
-	install_mem_write_handler(0, 0x5200, 0x5201, targ_sh_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x5200, 0x5201, 0, 0, targ_sh_w);
 }
 
 /*************************************

@@ -12,11 +12,11 @@ driver by Allard Van Der Bas
 
 UINT8 shaolins_nmi_enable;
 
-extern WRITE_HANDLER( shaolins_videoram_w );
-extern WRITE_HANDLER( shaolins_colorram_w );
-extern WRITE_HANDLER( shaolins_palettebank_w );
-extern WRITE_HANDLER( shaolins_scroll_w );
-extern WRITE_HANDLER( shaolins_nmi_w );
+extern WRITE8_HANDLER( shaolins_videoram_w );
+extern WRITE8_HANDLER( shaolins_colorram_w );
+extern WRITE8_HANDLER( shaolins_palettebank_w );
+extern WRITE8_HANDLER( shaolins_scroll_w );
+extern WRITE8_HANDLER( shaolins_nmi_w );
 
 extern PALETTE_INIT( shaolins );
 extern VIDEO_START( shaolins );
@@ -25,10 +25,10 @@ extern VIDEO_UPDATE( shaolins );
 
 INTERRUPT_GEN( shaolins_interrupt )
 {
-	if (cpu_getiloops() == 0) cpu_set_irq_line(0, 0, HOLD_LINE);
+	if (cpu_getiloops() == 0) cpunum_set_input_line(0, 0, HOLD_LINE);
 	else if (cpu_getiloops() % 2)
 	{
-		if (shaolins_nmi_enable & 0x02) cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+		if (shaolins_nmi_enable & 0x02) cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 	}
 }
 

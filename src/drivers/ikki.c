@@ -18,20 +18,20 @@ static UINT8 *ikki_sharedram;
 
 /****************************************************************************/
 
-WRITE_HANDLER( ikki_scroll_w );
-WRITE_HANDLER( ikki_scrn_ctrl_w );
+WRITE8_HANDLER( ikki_scroll_w );
+WRITE8_HANDLER( ikki_scrn_ctrl_w );
 
-WRITE_HANDLER( ikki_sharedram_w )
+WRITE8_HANDLER( ikki_sharedram_w )
 {
 	ikki_sharedram[offset] = data;
 }
 
-READ_HANDLER( ikki_sharedram_r )
+READ8_HANDLER( ikki_sharedram_r )
 {
 	return ikki_sharedram[offset];
 }
 
-READ_HANDLER( ikki_e000_r )
+READ8_HANDLER( ikki_e000_r )
 {
 /* bit1: interrupt type?, bit0: CPU2 busack? */
 

@@ -64,102 +64,102 @@ int pit8254_r (int which, int offset)
 Port handler wrappers.
 */
 
-WRITE_HANDLER( pit8254_0_w )
+WRITE8_HANDLER( pit8254_0_w )
 {
 	pit8254_w(0, offset, data);
 }
 
-WRITE_HANDLER( pit8254_0_counter1_w )
+WRITE8_HANDLER( pit8254_0_counter1_w )
 {
 	pit8254_w(0, 0, data);
 }
 
-WRITE_HANDLER( pit8254_0_counter2_w )
+WRITE8_HANDLER( pit8254_0_counter2_w )
 {
 	pit8254_w(0, 1, data);
 }
 
-WRITE_HANDLER( pit8254_0_counter3_w )
+WRITE8_HANDLER( pit8254_0_counter3_w )
 {
 	pit8254_w(0, 2, data);
 }
 
-WRITE_HANDLER( pit8254_0_control_w )
+WRITE8_HANDLER( pit8254_0_control_w )
 {
 	pit8254_w(0, 3, data);
 }
 
-WRITE_HANDLER( pit8254_1_w )
+WRITE8_HANDLER( pit8254_1_w )
 {
 	pit8254_w(1, 0, data);
 }
 
-WRITE_HANDLER( pit8254_1_counter1_w )
+WRITE8_HANDLER( pit8254_1_counter1_w )
 {
 	pit8254_w(1, 0, data);
 }
 
-WRITE_HANDLER( pit8254_1_counter2_w )
+WRITE8_HANDLER( pit8254_1_counter2_w )
 {
 	pit8254_w(1, 1, data);
 }
 
-WRITE_HANDLER( pit8254_1_counter3_w )
+WRITE8_HANDLER( pit8254_1_counter3_w )
 {
 	pit8254_w(1, 2, data);
 }
 
-WRITE_HANDLER( pit8254_1_control_w )
+WRITE8_HANDLER( pit8254_1_control_w )
 {
 	pit8254_w(1, 3, data);
 }
 
 
-READ_HANDLER( pit8254_0_r )
+READ8_HANDLER( pit8254_0_r )
 {
 	return pit8254_r(0, offset);
 }
 
-READ_HANDLER( pit8254_0_counter1_r )
+READ8_HANDLER( pit8254_0_counter1_r )
 {
 	return pit8254_r(0, 0);
 }
 
-READ_HANDLER( pit8254_0_counter2_r )
+READ8_HANDLER( pit8254_0_counter2_r )
 {
 	return pit8254_r(0, 1);
 }
 
-READ_HANDLER( pit8254_0_counter3_r )
+READ8_HANDLER( pit8254_0_counter3_r )
 {
 	return pit8254_r(0, 2);
 }
 
-READ_HANDLER( pit8254_0_control_r )
+READ8_HANDLER( pit8254_0_control_r )
 {
 	return pit8254_r(0, 3);
 }
 
-READ_HANDLER( pit8254_1_r )
+READ8_HANDLER( pit8254_1_r )
 {
 	return pit8254_r(1, offset);
 }
 
-READ_HANDLER( pit8254_1_counter1_r )
+READ8_HANDLER( pit8254_1_counter1_r )
 {
 	return pit8254_r(1, 0);
 }
 
-READ_HANDLER( pit8254_1_counter2_r )
+READ8_HANDLER( pit8254_1_counter2_r )
 {
 	return pit8254_r(1, 1);
 }
 
-READ_HANDLER( pit8254_1_counter3_r )
+READ8_HANDLER( pit8254_1_counter3_r )
 {
 	return pit8254_r(1, 2);
 }
-READ_HANDLER( pit8254_1_control_r )
+READ8_HANDLER( pit8254_1_control_r )
 {
 	return pit8254_r(1, 3);
 }

@@ -104,7 +104,7 @@ INPUT_PORTS_END
 
 /* is it protection? */
 
-static READ_HANDLER( fcombat_protection_r )
+static READ8_HANDLER( fcombat_protection_r )
 {
 	/* Must match ONE of these values after a "and  $3E" intruction :
 
@@ -119,14 +119,14 @@ static READ_HANDLER( fcombat_protection_r )
 
 /* same as exerion again */
 
-static READ_HANDLER( fcombat_port01_r )
+static READ8_HANDLER( fcombat_port01_r )
 {
 	/* the cocktail flip bit muxes between ports 0 and 1 */
 	return exerion_cocktail_flip ? input_port_1_r(offset) : input_port_0_r(offset);
 }
 
 
-static READ_HANDLER( fcombat_port3_r )
+static READ8_HANDLER( fcombat_port3_r )
 {
 	/* bit 0 is VBLANK, which we simulate manually */
 	int result = input_port_3_r(offset);
@@ -284,7 +284,7 @@ static INTERRUPT_GEN( fcombat_interrupt )
 {
 	/* Exerion triggers NMIs on coin insertion */
 	if (readinputport(4) & 1)
-		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+		cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 }
 
 /*************************************

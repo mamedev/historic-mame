@@ -141,7 +141,7 @@ static MACHINE_INIT( kangaroo )
 	/* the copy protection. */
 	/* Anyway, what I do here is just immediately generate the NMI, so the game */
 	/* properly starts. */
-	cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+	cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 }
 
 
@@ -159,14 +159,14 @@ static UINT8 kangaroo_clock=0;
    this just seems to do the trick -V-
 */
 
-static READ_HANDLER( kangaroo_sec_chip_r )
+static READ8_HANDLER( kangaroo_sec_chip_r )
 {
 /*  kangaroo_clock = (kangaroo_clock << 1) + 1; */
   kangaroo_clock++;
   return (kangaroo_clock & 0x0f);
 }
 
-static WRITE_HANDLER( kangaroo_sec_chip_w )
+static WRITE8_HANDLER( kangaroo_sec_chip_w )
 {
 /*  kangaroo_clock = val & 0x0f; */
 }
@@ -179,7 +179,7 @@ static WRITE_HANDLER( kangaroo_sec_chip_w )
  *
  *************************************/
 
-static WRITE_HANDLER( kangaroo_coin_counter_w )
+static WRITE8_HANDLER( kangaroo_coin_counter_w )
 {
 	coin_counter_w(0, data & 1);
 	coin_counter_w(1, data & 2);

@@ -57,13 +57,13 @@ PALETTE_INIT( tugboat )
 
 /* see crtc6845.c. That file is only a placeholder, I process the writes here
    because I need the start_addr register to handle scrolling */
-static WRITE_HANDLER( tugboat_hd46505_0_w )
+static WRITE8_HANDLER( tugboat_hd46505_0_w )
 {
 	static int reg;
 	if (offset == 0) reg = data & 0x0f;
 	else if (reg < 18) hd46505_0_reg[reg] = data;
 }
-static WRITE_HANDLER( tugboat_hd46505_1_w )
+static WRITE8_HANDLER( tugboat_hd46505_1_w )
 {
 	static int reg;
 	if (offset == 0) reg = data & 0x0f;
@@ -72,7 +72,7 @@ static WRITE_HANDLER( tugboat_hd46505_1_w )
 
 
 
-static WRITE_HANDLER( tugboat_score_w )
+static WRITE8_HANDLER( tugboat_score_w )
 {
 	tugboat_ram[0x291d + 32*offset] = data ^ 0x0f;	/* ???? */
 }
@@ -127,7 +127,7 @@ VIDEO_UPDATE( tugboat )
 
 static int ctrl;
 
-static READ_HANDLER( tugboat_input_r )
+static READ8_HANDLER( tugboat_input_r )
 {
 	if (~ctrl & 0x80)
 		return readinputport(0);
@@ -141,12 +141,12 @@ static READ_HANDLER( tugboat_input_r )
 		return readinputport(4);
 }
 
-static READ_HANDLER( tugboat_ctrl_r )
+static READ8_HANDLER( tugboat_ctrl_r )
 {
 	return ctrl;
 }
 
-static WRITE_HANDLER( tugboat_ctrl_w )
+static WRITE8_HANDLER( tugboat_ctrl_w )
 {
 	ctrl = data;
 }
@@ -167,7 +167,7 @@ static struct pia6821_interface pia1_intf =
 
 static void interrupt_gen(int scanline)
 {
-	cpu_set_irq_line(0, 0, HOLD_LINE);
+	cpunum_set_input_line(0, 0, HOLD_LINE);
 	timer_set(cpu_getscanlinetime(1), 0, interrupt_gen);
 }
 

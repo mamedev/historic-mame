@@ -40,12 +40,12 @@ write:
 extern UINT8 *bankp_videoram2;
 extern UINT8 *bankp_colorram2;
 
-extern WRITE_HANDLER( bankp_videoram_w );
-extern WRITE_HANDLER( bankp_colorram_w );
-extern WRITE_HANDLER( bankp_videoram2_w );
-extern WRITE_HANDLER( bankp_colorram2_w );
-extern WRITE_HANDLER( bankp_scroll_w );
-extern WRITE_HANDLER( bankp_out_w );
+extern WRITE8_HANDLER( bankp_videoram_w );
+extern WRITE8_HANDLER( bankp_colorram_w );
+extern WRITE8_HANDLER( bankp_videoram2_w );
+extern WRITE8_HANDLER( bankp_colorram2_w );
+extern WRITE8_HANDLER( bankp_scroll_w );
+extern WRITE8_HANDLER( bankp_out_w );
 
 extern PALETTE_INIT( bankp );
 extern VIDEO_START( bankp );

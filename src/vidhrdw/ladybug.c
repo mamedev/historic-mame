@@ -81,7 +81,7 @@ PALETTE_INIT( ladybug )
 	}
 }
 
-WRITE_HANDLER( ladybug_videoram_w )
+WRITE8_HANDLER( ladybug_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -90,7 +90,7 @@ WRITE_HANDLER( ladybug_videoram_w )
 	}
 }
 
-WRITE_HANDLER( ladybug_colorram_w )
+WRITE8_HANDLER( ladybug_colorram_w )
 {
 	if (colorram[offset] != data)
 	{
@@ -100,7 +100,7 @@ WRITE_HANDLER( ladybug_colorram_w )
 	}
 }
 
-WRITE_HANDLER( ladybug_flipscreen_w )
+WRITE8_HANDLER( ladybug_flipscreen_w )
 {
 	if (flip_screen != (data & 0x01))
 	{

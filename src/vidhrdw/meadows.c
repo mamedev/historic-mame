@@ -51,7 +51,7 @@ VIDEO_START( meadows )
  *
  *************************************/
 
-WRITE_HANDLER( meadows_videoram_w )
+WRITE8_HANDLER( meadows_videoram_w )
 {
 	videoram[offset] = data;
 	tilemap_mark_tile_dirty(bg_tilemap, offset);
@@ -65,7 +65,7 @@ WRITE_HANDLER( meadows_videoram_w )
  *
  *************************************/
 
-WRITE_HANDLER( meadows_spriteram_w )
+WRITE8_HANDLER( meadows_spriteram_w )
 {
 	if (spriteram[offset] != data)
 		force_partial_update(cpu_getscanline());

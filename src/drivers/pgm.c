@@ -39,39 +39,38 @@ Sangoku Senki 2 Knights of Valour (c)2000 IGS
 Sangoku Senki Busyou Souha (c)2001 IGS
 -
 DoDonPachi II (Bee Storm)
-Photo Y2K? (and its sequel?)
-Material Artist
-Dragon World 2+3
-.. lots more ..
+Photo Y2K
+Photo Y2K II
+Martial Masters
+The Killing Blade
+Dragon World 2
+Dragon World 3
+Dragon World 2001
+Demon Front (c) 2002
+The Gladiator (c) 2002
+Puzzli II
+
+There is also a single board version of the PGM system used by
+
+Demon Front
+Later Cave shooters (with different bios?)
 
 
 To Do / Notes:
 
-sprite zooming (zoom table is contained in vidram)
-sprite masking (lower priority sprites under bg layers can mask higher ones) -? no?
-calender
+some sprite problems
 optimize?
 layer enables?
 sprites use dma?
 verify some things
-other 2 interrupts - one is sound related *dragon world 2 uses one of them for inputs
-the 'encryption' info came from unknown 3rd party
-see notes at bottom of driver, protection emulation by ElSemi
+protection in many games
 
-Sango / Kov level 2 'bridge' is drawn with bg sprites but needs to appear OVER the bg layer,
-ElSemi believes that bg sprites are drawn as fg sprites if the first sprite in the sprite
-list doesn't have the bg bit set. -fixed-
-
-the protection determines the region in both the supported games, however the 'china' board
-of orlegend is the same revision one of the other sets, but of an earlier build date.
+General Notes:
 
 the current 'kov' sets were from 'sango' boards but the protection determines the region so
 it makes more sense to name them kov since the roms are probably the same on the various
 boards.  The current sets were taken from taiwan boards incase somebody finds
 it not to be the case however due to the previous note.
-
-the dragon world 2 set is china only (whats the real chinese name?) there is an english
-version, however this set doesn't allow for that without hacks at least.
 
 dragon world 2 still has strange protection issues, we have to patch the code for now, what
 should really happen, it jumps to invalid code, should the protection device cause the 68k
@@ -80,6 +79,144 @@ to see valid code there or something?
 kov superheroes uses a different protection chip / different protection commands and doesn't
 work, some of the gfx also need redumping to check they're the same as kov, its using invalid
 codes for the ones we have (could just be protection tho)
+
+
+Protection Devices / Co-processors
+
+IGS used a variety of additional ASIC chips on the game boards, these act as protection and
+also give additional power to the board to make up for the limited power of the 68000
+processor.  Some protection devices use external data roms, others have internal code only.
+Most of these are not emulated correctly.
+
+ASIC 3:
+	used by:
+	different per region, supplies region code
+	used by:
+	Oriental Legend
+	function:
+
+ASIC 12 + ASIC 25
+	these seem to be used together
+	ASIC 25 appears to perform some kind of bitswap operations
+	used by:
+	Dragon World 2
+
+ASIC 22 + ASIC 25
+	these seem to be used together, ASIC22 (could be 25..) has an external software decrypted? data rom
+	ASIC 22 might be an updated version of ASIC12 ?
+	used by:
+	Dragon World 3
+	The Killing Blade
+	Oriental Legend Super (maybe, not confirmed)
+
+ASIC 28:
+	performs a variety of calculations, quite complex, different per region, supplies region code
+	used by:
+	Knights of Valour 1 / Plus / Superheroes (plus & superheroes seems to use extra functions, emulation issues reported in places in plus)
+	Photo Y2k / Real and Fake (maybe..)
+
+ASIC 27:
+	arm9? cpu with 64kb internal rom (different per game) + external data rom
+	probably used to give extra power to the system, lots of calculations are offloaded to it
+	used by:
+	DoDonPachi II
+	Knights of Valor 2 / 2 Plus
+	Martial Masters
+	Demon Front
+	Puzzli II
+
+there are probably more...
+
+PCB Layout
+----------
+
+IGS PCB NO-0133-2 (Main Board)
+|-------------------------------------------------------------------------------------|
+|   |----------------------------|   |----------|   |----------------------------|    |
+|   |----------------------------|   |----------|   |----------------------------|    |
+|                                      PGM_T01S.U29  UM61256    SRM2B61256  SRM2B61256|
+| |---------|  33.8688MHz   |----------|                        SRM2B61256  SRM2B61256|
+| |WAVEFRONT|               |L8A0290   |   UM6164  UM6164                             |
+| |ICS2115V |               |IGS023    |                 PGM_P01S.U20              SW2|
+| |(PLCC84) |               |(QFP256)  |                                              |
+| |         |               |          |                                              |
+| |---------|        50MHz  |----------|                                              |
+|    UPD6379  PGM_M01S.U18                             |----------|                   |
+|VOL                                                   |MC68HC000 |          74HC132  |
+|                                                      |FN20      |   20MHz  74HC132  |
+|  UPC844C    |------|                                 |(PLCC68)  |                   |
+|             |Z80   |                                 |          |          V3021    |
+|             |PLCC44|                  PAL            |----------|                   |
+|             |------|    |--------|                                      32.768kHz   |-|
+|                         |IGS026  |                                                    |
+|                         |(QFP144)|           |--------|                              I|
+|                         |        |           |IGS026  |                              D|
+|                         |--------|           |(QFP144)|                              C|
+|TDA1519A    UM61256 UM61256                   |        |                              3|
+|                              TD62064         |--------|                              4|
+|                                                                          3.6V_BATT    |
+|                                                                                     |-|
+|              |----|                                           |-----|     SW3       |
+|              |    |               J  A  M  M  A               |     | SW1           |
+|--------------|    |-------------------------------------------|     |---------------|
+
+
+IGS PCB NO-0136 (Riser)
+|-------------------------------------------------------------------------------------|
+|      |---------------------------------|  |---------------------------------|       |
+|      |---------------------------------|  |---------------------------------|       |
+|                                                                                     |
+|      |---------------------------------|  |---------------------------------|       |
+|      |---------------------------------|  |---------------------------------|       |
+|                                                                                     |
+|   |----------------------------|   |----------|   |----------------------------|    |
+|---|                            |---|          |---|                            |----|
+    |----------------------------|   |----------|   |----------------------------|
+
+Notes:
+      All IC's are shown.
+
+      CPU's
+      -----
+         68HC000FN20 - Motorola 68000 processor, clocked at 20.000MHz (PLCC68)
+         Z80         - Zilog Z0840008VSC Z80 processor, clocked at 8.468MHz (PLCC44)
+
+      SOUND
+      -----
+         ICS2115     - ICS WaveFront ICS2115V Wavetable Midi Synthesizer, clocked at 33.8688MHz (PLCC84)
+
+      RAM
+      ---
+         SRM2B256 - Epson SRM2B256SLMX55 8K x8 SRAM (x4, SOP28)
+         UM6164   - Unicorn Microelectronics UM6164DS-12 8K x8 SRAM (x2, SOJ28)
+         UM61256  - Unicorn Microelectronics UM61256FS-15 32K x8 SRAM (x3, SOJ28)
+
+      ROMs
+      ----
+         PGM_M01S.U18 - 16MBit MASKROM (TSOP48)
+         PGM_P01S.U20 - 1MBit  MASKROM (DIP40, socketed, equivalent to 27C1024 EPROM)
+         PGM_T01S.U29 - 16MBit MASKROM (SOP44)
+
+      CUSTOM IC's
+      -----------
+         IGS023 (QFP256)
+         IGS026 (x2, QFP144)
+
+      OTHER
+      -----
+         3.6V_BATT - 3.6V NICad battery, connected to the V3021 RTC
+         IDC34     - IDC34 way flat cable plug, doesn't appear to be used for any games. Might be for
+                     re-programming some of the custom IC's or on-board surface mounted ROMs?
+         PAL       - Atmel ATF16V8B PAL (DIP20)
+         SW1       - Push button switch to enter Test Mode
+         SW2       - 8 position DIP Switch (for configuration of PCB/game options)
+         SW3       - SPDT switch (purpose unknown)
+         TD62064   - Toshiba NPN 50V 1.5A Quad Darlinton Switch; for driving coin meters (DIP16)
+         TDA1519A  - Philips 2x 6W Stereo Power AMP (SIL9)
+         uPD6379   - NEC 2-channel 16-bit D/A converter 10mW typ. (SOIC8)
+         uPC844C   - NEC Quad High Speed Wide Band Operational Amplifier (DIP14)
+         V3021     - EM Microelectronic-Marin SA Ultra Low Power 32kHz CMOS Real Time Clock (DIP8)
+         VOL       - Volume potentiometer
 
 */
 
@@ -98,6 +235,7 @@ void pgm_kovsh_decrypt(void);
 void pgm_dw2_decrypt(void);
 void pgm_djlzz_decrypt(void);
 void pgm_dw3_decrypt(void);
+void pgm_killbld_decrypt(void);
 
 READ16_HANDLER( pgm_asic3_r );
 WRITE16_HANDLER( pgm_asic3_w );
@@ -133,8 +271,8 @@ static WRITE16_HANDLER ( z80_reset_w )
 
 	if(data == 0x5050) {
 		ics2115_reset();
-		cpu_set_halt_line(1, CLEAR_LINE);
-		cpu_set_reset_line(1, PULSE_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_HALT, CLEAR_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_RESET, PULSE_LINE);
 		if(0) {
 			FILE *out;
 			out = fopen("z80ram.bin", "wb");
@@ -154,11 +292,11 @@ static WRITE16_HANDLER ( m68k_l1_w )
 	if(ACCESSING_LSB) {
 		logerror("SL 1 m68.w %02x (%06x) IRQ\n", data & 0xff, activecpu_get_pc());
 		soundlatch_w(0, data);
-		cpu_set_nmi_line( 1, PULSE_LINE );
+		cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE );
 	}
 }
 
-static WRITE_HANDLER( z80_l3_w )
+static WRITE8_HANDLER( z80_l3_w )
 {
 	logerror("SL 3 z80.w %02x (%04x)\n", data, activecpu_get_pc());
 	soundlatch3_w(0, data);
@@ -166,7 +304,7 @@ static WRITE_HANDLER( z80_l3_w )
 
 static void sound_irq(int level)
 {
-	cpu_set_irq_line(1, 0, level);
+	cpunum_set_input_line(1, 0, level);
 }
 
 struct ics2115_interface pgm_ics2115_interface = {
@@ -528,9 +666,9 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static INTERRUPT_GEN( pgm_interrupt ) {
 	if( cpu_getiloops() == 0 )
-		cpu_set_irq_line(0, 6, HOLD_LINE);
+		cpunum_set_input_line(0, 6, HOLD_LINE);
 	else
-		cpu_set_irq_line(0, 4, HOLD_LINE);
+		cpunum_set_input_line(0, 4, HOLD_LINE);
 }
 
 static MACHINE_DRIVER_START( pgm )
@@ -641,54 +779,60 @@ static DRIVER_INIT( orlegend )
 {
 	pgm_basic_init();
 
-	install_mem_read16_handler (0, 0xC0400e, 0xC0400f, pgm_asic3_r);
-	install_mem_write16_handler(0, 0xC04000, 0xC04001, pgm_asic3_reg_w);
-	install_mem_write16_handler(0, 0xC0400e, 0xC0400f, pgm_asic3_w);
-	install_mem_read16_handler (0, 0x80a70e, 0x80a70f, orlegend_speedup);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xC0400e, 0xC0400f, 0, 0, pgm_asic3_r);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xC04000, 0xC04001, 0, 0, pgm_asic3_reg_w);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xC0400e, 0xC0400f, 0, 0, pgm_asic3_w);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x80a70e, 0x80a70f, 0, 0, orlegend_speedup);
 }
 
-static DRIVER_INIT( dragwld2 )
+static void drgwld2_common_init(void)
+{
+	pgm_basic_init();
+	pgm_dw2_decrypt();
+	/*
+	Info from Elsemi
+	Here is how to "bypass" the dw2 hang protection, it fixes the mode
+	select and after failing in the 2nd stage (probably there are other checks
+	out there).
+	*/
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xd80000, 0xd80003, 0, 0, dw2_d80000_r);
+}
+
+static DRIVER_INIT( drgw2 )
 {
 	data16_t *mem16 = (data16_t *)memory_region(REGION_CPU1);
+	drgwld2_common_init();
+	/* patches .. i hate patches .. */
+	mem16[0x131098/2]=0x4e93;
+	mem16[0x13113e/2]=0x4e93;
+	mem16[0x1311ce/2]=0x4e93;
+}
 
-	pgm_basic_init();
-
- 	pgm_dw2_decrypt();
-
-/* this seems to be some strange protection, its not right yet ..
-
-<ElSemi> patch the jmp (a0) to jmp(a3) (otherwise they jump to illegal code)
-<ElSemi> there are 3 (consecutive functions)
-<ElSemi> 303bc
-<ElSemi> 30462
-<ElSemi> 304f2
-
-*/
+static DRIVER_INIT( drgw2c )
+{
+	data16_t *mem16 = (data16_t *)memory_region(REGION_CPU1);
+	drgwld2_common_init();
+	/* this seems to be some strange protection
+	ElSemi
+	patch the jmp (a0) to jmp(a3) (otherwise they jump to illegal code)
+	there are 3 (consecutive functions)
+	303bc, 30462, 304f2
+	*/
 	mem16[0x1303bc/2]=0x4e93;
 	mem16[0x130462/2]=0x4e93;
 	mem16[0x1304F2/2]=0x4e93;
-
-/*
-
-<ElSemi> Here is how to "bypass" the dw2 hang protection, it fixes the mode
-select and after failing in the 2nd stage (probably there are other checks
-out there).
-
-*/
-	install_mem_read16_handler(0, 0xd80000, 0xd80003, dw2_d80000_r);
-
 }
 
 static DRIVER_INIT( kov )
 {
 	pgm_basic_init();
 
-	install_mem_read16_handler(0, 0x500000, 0x500003, ASIC28_r16);
-	install_mem_write16_handler(0, 0x500000, 0x500003, ASIC28_w16);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x500000, 0x500003, 0, 0, ASIC28_r16);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x500000, 0x500003, 0, 0, ASIC28_w16);
 
 	/* 0x4f0000 - ? is actually ram shared with the protection device,
 	  the protection device provides the region code */
-	install_mem_read16_handler(0, 0x4f0000, 0x4fffff, sango_protram_r);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x4f0000, 0x4fffff, 0, 0, sango_protram_r);
 
  	pgm_kov_decrypt();
 }
@@ -697,12 +841,12 @@ static DRIVER_INIT( kovsh )
 {
 	pgm_basic_init();
 
-	install_mem_read16_handler(0, 0x500000, 0x500003, ASIC28_r16);
-	install_mem_write16_handler(0, 0x500000, 0x500003, ASIC28_w16);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x500000, 0x500003, 0, 0, ASIC28_r16);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x500000, 0x500003, 0, 0, ASIC28_w16);
 
 	/* 0x4f0000 - ? is actually ram shared with the protection device,
 	  the protection device provides the region code */
-	install_mem_read16_handler(0, 0x4f0000, 0x4fffff, sango_protram_r);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x4f0000, 0x4fffff, 0, 0, sango_protram_r);
 
  	pgm_kovsh_decrypt();
 }
@@ -711,12 +855,12 @@ static DRIVER_INIT( djlzz )
 {
 	pgm_basic_init();
 
-	install_mem_read16_handler(0, 0x500000, 0x500003, ASIC28_r16);
-	install_mem_write16_handler(0, 0x500000, 0x500003, ASIC28_w16);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x500000, 0x500003, 0, 0, ASIC28_r16);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x500000, 0x500003, 0, 0, ASIC28_w16);
 
 	/* 0x4f0000 - ? is actually ram shared with the protection device,
 	  the protection device provides the region code */
-	install_mem_read16_handler(0, 0x4f0000, 0x4fffff, sango_protram_r);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x4f0000, 0x4fffff, 0, 0, sango_protram_r);
 
  	pgm_djlzz_decrypt();
 }
@@ -725,10 +869,16 @@ static DRIVER_INIT( dw3 )
 {
 	pgm_basic_init();
 
-//	install_mem_read16_handler(0, 0xda0000, 0xdaffff, dw3_prot_r);
-//	install_mem_write16_handler(0, 0xda0000, 0xdaffff, dw3_prot_w);
+//	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xda0000, 0xdaffff, 0, 0, dw3_prot_r);
+//	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xda0000, 0xdaffff, 0, 0, dw3_prot_w);
 
  	pgm_dw3_decrypt();
+}
+
+static DRIVER_INIT( killbld )
+{
+	pgm_basic_init();
+ 	pgm_killbld_decrypt();
 }
 
 
@@ -984,8 +1134,99 @@ ROM_START( orld105k )
 	ROM_LOAD( "m0100.rom",    0x400000, 0x200000, CRC(e5c36c83) SHA1(50c6f66770e8faa3df349f7d68c407a7ad021716) )
 ROM_END
 
+/*
 
-ROM_START( dragwld2 )
+Dragon World 2 (English / World Version)
+IGS, 1997
+
+This is a cart for the IGS PGM system.
+
+
+PCB Layout
+----------
+
+IGS PCB NO-0162
+|-----------------------------------------------|
+| |------|                                      |
+| |IGS012|       *1                    T0200.U7 |
+| |      |                                      |
+| |------|                                      |
+|              |--------|                       |
+|              |        |                       |
+|              | IGS025 |  *2   V-110X.U2       |
+| PAL    PAL   |        |                  PAL  |
+|              |--------|                       |
+|-|                                           |-|
+  |--------------------||---------------------|
+Notes:
+      IGS012       - Custom IGS IC (QFP80)
+
+      -- on english version
+      IGS025       - Custom IGS IC (PLCC68, labelled "DRAGON II 0006")
+      -- on china version
+      IGS025       - Custom IGS IC (PLCC68, labelled "DRAGON II 0005")
+
+
+      T0200.U7     - 32MBit MaskROM (SOP44)
+
+  	  -- on english version
+  	  V-110X.U2    - AM27C4096 4MBit EPROM (DIP42, labelled "DRAGON II V-110X")
+      -- on china version
+      V-110X.U2    - AM27C4096 4MBit EPROM (DIP42, labelled "DRAGON II V-100C")
+
+      PALs         - x3, labelled "CZ U3", "CZ U4", "CZ U6"
+      *1           - Unpopulated position for MX23C4100 SOP40 MASKROM
+      *2           - Unpopulated position for MX23C4100 DIP40 EPROM/MASKROM
+
+
+IGS PCB NO-0135
+|-----------------------------------------------|
+| U11    U12     U13      U14       U15      U16|
+|                                               |
+|                                               |
+|A0200.U5                       B0200.U9        |
+|        U6      U7       U8                 U10|
+|                                               |
+|                                               |
+|74LS138         U1       U2             74LS139|
+|                                               |
+|-|                                           |-|
+  |--------------------||---------------------|
+
+Notes:
+      This PCB contains only SOP44 MASKROMS and 2 logic IC's
+      Only U5 and U9 are populated
+
+      glitch on select screen exists on real board.
+
+*/
+
+ROM_START( drgw2 )
+	ROM_REGION( 0x600000, REGION_CPU1, 0 ) /* 68000 Code  */
+	ROM_LOAD16_WORD_SWAP( "pgm_p01s.rom", 0x000000, 0x020000, CRC(e42b166e) SHA1(2a9df9ec746b14b74fae48b1a438da14973702ea) )// (BIOS)
+	ROM_LOAD16_WORD_SWAP( "v-110x.u2",    0x100000, 0x080000, CRC(1978106b) SHA1(af8a13d7783b755a58762c98bdc32cab845b2251) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 - romless */
+
+	ROM_REGION( 0x800000, REGION_GFX1,  ROMREGION_DISPOSE ) /* 8x8 Text Tiles + 32x32 BG Tiles */
+	ROM_LOAD( "pgm_t01s.rom", 0x000000, 0x200000, CRC(1a7123a0) SHA1(cc567f577bfbf45427b54d6695b11b74f2578af3) ) // (BIOS)
+	ROM_LOAD( "pgmt0200.u7",    0x400000, 0x400000, CRC(b0f6534d) SHA1(174cacd81169a0e0d14790ac06d03caed737e05d) )
+
+	ROM_REGION( 0x800000/5*8, REGION_GFX2, ROMREGION_DISPOSE ) /* Region for 32x32 BG Tiles */
+	/* 32x32 Tile Data is put here for easier Decoding */
+
+	ROM_REGION( 0x400000, REGION_GFX3, ROMREGION_DISPOSE ) /* Sprite Colour Data */
+	ROM_LOAD( "pgma0200.u5",    0x0000000, 0x400000, CRC(13b95069) SHA1(4888b06002afb18eab81c010e9362629045767af) )
+
+	ROM_REGION( 0x400000, REGION_GFX4, 0 ) /* Sprite Masks + Colour Indexes */
+	ROM_LOAD( "pgmb0200.u9",    0x0000000, 0x400000, CRC(932d0f13) SHA1(4b8e008f9c617cb2b95effeb81abc065b30e5c86) )
+
+	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* Samples - (8 bit mono 11025Hz) - */
+	ROM_LOAD( "pgm_m01s.rom", 0x000000, 0x200000, CRC(45ae7159) SHA1(d3ed3ff3464557fd0df6b069b2e431528b0ebfa8) ) // (BIOS)
+ROM_END
+
+
+ROM_START( drgw2c )
 	ROM_REGION( 0x600000, REGION_CPU1, 0 ) /* 68000 Code  */
 	ROM_LOAD16_WORD_SWAP( "pgm_p01s.rom", 0x000000, 0x020000, CRC(e42b166e) SHA1(2a9df9ec746b14b74fae48b1a438da14973702ea) )// (BIOS)
 	ROM_LOAD16_WORD_SWAP( "v-100c.u2",    0x100000, 0x080000, CRC(67467981) SHA1(58af01a3871b6179fe42ff471cc39a2161940043) )
@@ -1033,7 +1274,7 @@ Bottom board contains.....
 
 */
 
-ROM_START( dw3 )
+ROM_START( drgw3 )
 	ROM_REGION( 0x600000, REGION_CPU1, 0 ) /* 68000 Code */
 	ROM_LOAD16_WORD_SWAP( "pgm_p01s.rom", 0x000000, 0x020000, CRC(e42b166e) SHA1(2a9df9ec746b14b74fae48b1a438da14973702ea) )  // (BIOS)
 	ROM_LOAD16_BYTE( "dw3_v100.u12",     0x100001, 0x080000,  CRC(47243906) SHA1(9cd46e3cba97f049bcb238ceb6edf27a760ef831) )
@@ -1079,7 +1320,7 @@ DW3_V106.U13 [28284e22]
 
 */
 
-ROM_START( dw3k )
+ROM_START( drgw3k )
 	ROM_REGION( 0x600000, REGION_CPU1, 0 ) /* 68000 Code */
 	ROM_LOAD16_WORD_SWAP( "pgm_p01s.rom", 0x000000, 0x020000, CRC(e42b166e) SHA1(2a9df9ec746b14b74fae48b1a438da14973702ea) )  // (BIOS)
 	ROM_LOAD16_BYTE( "dw3_v106.u12",     0x100001, 0x080000,  CRC(c3f6838b) SHA1(c135b1d4dd62af308139d40d03c29be7508fb1e7) )
@@ -1451,6 +1692,118 @@ ROM_START( raf102j )
 	ROM_LOAD( "m0700.rom",    0x400000, 0x080000, CRC(acc7afce) SHA1(ac2d344ebac336f0f363bb045dd8ea4e83d1fb50) )
 ROM_END
 
+/*
+
+The Killing Blade (English / World Version)
+IGS, 1998
+
+This is a cart for the IGS PGM system.
+
+
+PCB Layout
+----------
+
+IGS PCB NO-0179
+|-----------------------------------------------|
+|                      8MHz  |--------|         |
+|            32.768kHz|----| |        |T0300.U14|
+|6164  6164           |IGS | | IGS025 |         |
+|                     |022 | |        |         |
+|*                    |----| |--------|         |
+|                                               |
+|           U2     U3     U4     U5     U6      |
+| PAL   PAL                                PAL  |
+|                                               |
+|-|                                           |-|
+  |--------------------||---------------------|
+Notes:
+      IGS022       - Custom IGS IC (QFP100)
+      IGS025       - Custom IGS IC (PLCC68, labelled "ENGLISH")
+      T0300.U14    - 32MBit MaskROM (SOP44, labelled "T0300")
+      6164         - x2, 8K x8 SRAM (SOJ28)
+      U2           - 27C512 512KBit EPROM (DIP28, labelled "KB U2 V104")
+      U3           - 27C4000 4MBit EPROM (DIP32, labelled "KB U3 V104")
+      U4           - 27C4000 4MBit EPROM (DIP32, labelled "KB U4 V104")
+      U5           - 27C4000 4MBit EPROM (DIP32, labelled "KB U5 V104")
+      U6           - 27C4000 4MBit EPROM (DIP32, labelled "KB U6 V104")
+      PALs         - x3, labelled "DH U8", "DH U1", "DH U7"
+      *            - Unpopulated position for DIP42 EPROM/MASKROM (labelled "P0300")
+
+
+IGS PCB NO-0178
+|-----------------------------------------------|
+| U9    U10   U11    U12     U13     U14     U15|
+|                                               |
+|                                               |
+|                                               |
+| U1    U2                         74LS138      |
+|                                  74LS139      |
+|             U3     U4      U5              U8 |
+|                                               |
+|                                               |
+|-|                                           |-|
+  |--------------------||---------------------|
+
+Notes:
+      U1           - 32MBit MASKROM (SOP44, labelled "M0300")
+      U2           - 32MBit MASKROM (SOP44, labelled "A0307")
+      U3           - 16MBit MASKROM (DIP42, labelled "A0302")
+      U4           - 16MBit MASKROM (DIP42, labelled "A0304")
+      U5           - 16MBit MASKROM (DIP42, labelled "A0305")
+      U8           - 16MBit MASKROM (DIP42, labelled "B0301")
+      U9           - 32MBit MASKROM (SOP44, labelled "A0300")
+      U10          - 32MBit MASKROM (SOP44, labelled "A0301")
+      U11          - 32MBit MASKROM (SOP44, labelled "A0303")
+      U12          - 32MBit MASKROM (SOP44, labelled "A0306")
+      U13          - 32MBit MASKROM (SOP44, labelled "B0300")
+      U14          - 32MBit MASKROM (SOP44, labelled "B0302")
+      U15          - 32MBit MASKROM (SOP44, labelled "B0303")
+
+*/
+
+ROM_START( killbld )
+	ROM_REGION( 0x600000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_LOAD16_WORD_SWAP( "pgm_p01s.rom", 0x000000, 0x020000, CRC(e42b166e) SHA1(2a9df9ec746b14b74fae48b1a438da14973702ea) )  // (BIOS)
+	ROM_LOAD16_BYTE( "kb_u3_v104.u3",     0x100001, 0x080000, CRC(6db1d719) SHA1(804002f014d275aaf0368fb7f904938fe4ac07ee) )
+	ROM_LOAD16_BYTE( "kb_u6_v104.u6",     0x100000, 0x080000, CRC(31ecc978) SHA1(82666d534e4151775063af6d39f575faba0f1047) )
+	ROM_LOAD16_BYTE( "kb_u4_v104.u4",     0x200000, 0x080000, CRC(1ed8b2e7) SHA1(331c037640cfc1fe743cd0e65a1156c470b3303e) ) // order?
+	ROM_LOAD16_BYTE( "kb_u5_v104.u5",     0x200001, 0x080000, CRC(a0bafc29) SHA1(b20db7c16353c6f87ed3c08c9d037b07336711f1) ) // order?
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 - romless */
+
+
+	ROM_REGION( 0x010000, REGION_USER1, 0 ) /* Protection Data */
+	ROM_LOAD( "kb_u2_v104.u2", 0x000000, 0x010000,  CRC(c970f6d5) SHA1(399fc6f80262784c566363c847dc3fdc4fb37494) )
+
+	ROM_REGION( 0x800000, REGION_GFX1, 0 ) /* 8x8 Text Tiles + 32x32 BG Tiles */
+	ROM_LOAD( "pgm_t01s.rom", 0x000000, 0x200000, CRC(1a7123a0) SHA1(cc567f577bfbf45427b54d6695b11b74f2578af3) ) // (BIOS)
+	ROM_LOAD( "t0300.u14",    0x400000, 0x400000, CRC(0922f7d9) SHA1(4302b4b7369e13f315fad14f7d6cad1321101d24) )
+
+	ROM_REGION( 0x800000/5*8, REGION_GFX2, ROMREGION_DISPOSE ) /* Region for 32x32 BG Tiles */
+	/* 32x32 Tile Data is put here for easier Decoding */
+
+	/* all roms below need checking to see if they're the same on this board */
+	ROM_REGION( 0x2000000, REGION_GFX3, ROMREGION_DISPOSE ) /* Sprite Colour Data */
+	ROM_LOAD( "a0300.u9",   0x0000000, 0x0400000,  CRC(3f9455d3) SHA1(3718ce00ad93975383aafc14e5a74dc297b011a1) )
+	ROM_LOAD( "a0301.u10",  0x0400000, 0x0400000,  CRC(92776889) SHA1(6d677837fefff47bfd1c6166322f69f89989a5e2) )
+	ROM_LOAD( "a0302.u3",   0x0800000, 0x0200000,  CRC(a4810e38) SHA1(c31fe641feab2c93795fc35bf71d4f37af1056d4) )
+	ROM_LOAD( "a0303.u11",  0x0c00000, 0x0400000,  CRC(33f5cc69) SHA1(9cacd5058d4bb25b77f71658bbbbd4b38d0a6b6a) )
+	ROM_LOAD( "a0304.u4",   0x1000000, 0x0200000,  CRC(3096de1c) SHA1(d010990d21cfda9cb8ab5b4bc0e329c23b7719f5) )
+	ROM_LOAD( "a0305.u5",   0x1400000, 0x0200000,  CRC(2234531e) SHA1(58a82e31a1c0c1a4dd026576319f4e7ecffd140e) )
+	ROM_LOAD( "a0306.u12",  0x1800000, 0x0400000,  CRC(cc018a8e) SHA1(37752d46f238fb57c0ab5a4f96b1e013f2077347) )
+	ROM_LOAD( "a0307.u2",   0x1c00000, 0x0400000,  CRC(bc772e39) SHA1(079cc42a190cb916f02b59bca8fa90e524acefe9) )
+
+	ROM_REGION( 0x1000000, REGION_GFX4, 0 ) /* Sprite Masks + Colour Indexes */
+	ROM_LOAD( "b0300.u13",    0x0000000, 0x0400000, CRC(7f876981) SHA1(43555a200929ad5ecc42137fc9aeb42dc4f50d20) )
+	ROM_LOAD( "b0301.u8",     0x0400000, 0x0200000, CRC(400abe33) SHA1(20de1eb626424ea41bd55eb3cecd6b50be744ee0) )
+	ROM_LOAD( "b0302.u14",    0x0800000, 0x0400000, CRC(eea9c502) SHA1(04b3972c7111ea59a3cceab6ad124080c4ce3520) )
+	ROM_LOAD( "b0303.u15",    0x0c00000, 0x0200000, CRC(77a9652e) SHA1(2342f643d37945fbda224a5034c013796e5134ca) )
+
+	ROM_REGION( 0x800000, REGION_SOUND1, 0 ) /* Samples - (8 bit mono 11025Hz) - */
+	ROM_LOAD( "pgm_m01s.rom", 0x000000, 0x200000, CRC(45ae7159) SHA1(d3ed3ff3464557fd0df6b069b2e431528b0ebfa8) ) // (BIOS)
+	ROM_LOAD( "m0300.u1",     0x400000, 0x400000, CRC(93159695) SHA1(50c5976c9b681bd3d1ebefa3bfa9fe6e72dcb96f) )
+ROM_END
+
 
 /*** GAME ********************************************************************/
 
@@ -1461,7 +1814,8 @@ GAMEX( 1997, orlegnde, orlegend,   pgm, pgm,   orlegend,   ROT0, "IGS", "Orienta
 GAMEX( 1997, orlegndc, orlegend,   pgm, pgm,   orlegend,   ROT0, "IGS", "Oriental Legend / Xi Yo Gi Shi Re Zuang (ver. 112, Chinese Board)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND  )
 GAMEX( 1997, orld111c, orlegend,   pgm, pgm,   orlegend,   ROT0, "IGS", "Oriental Legend / Xi Yo Gi Shi Re Zuang (ver. 111, Chinese Board)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND  )
 GAMEX( 1997, orld105k, orlegend,   pgm, pgm,   orlegend,   ROT0, "IGS", "Oriental Legend / Xi Yo Gi Shi Re Zuang (ver. 105, Korean Board)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND  )
-GAMEX( 1997, dragwld2, pgm,        pgm, pgm,   dragwld2,   ROT0, "IGS", "Zhong Guo Long II (ver. 100C, China)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
+GAMEX( 1997, drgw2,    pgm,        pgm, pgm,   drgw2,      ROT0, "IGS", "Dragon World II (ver. 110X, Export)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
+GAMEX( 1997, drgw2c,   drgw2,      pgm, pgm,   drgw2c,     ROT0, "IGS", "Zhong Guo Long II (ver. 100C, China)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 GAMEX( 1999, kov,      pgm,        pgm, sango, kov, 	   ROT0, "IGS", "Knights of Valour / Sangoku Senki (ver. 117)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND ) /* ver # provided by protection? */
 GAMEX( 1999, kov115,   kov,        pgm, sango, kov, 	   ROT0, "IGS", "Knights of Valour / Sangoku Senki (ver. 115)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND ) /* ver # provided by protection? */
 GAMEX( 1999, kovj,     kov,        pgm, sango, kov, 	   ROT0, "IGS", "Knights of Valour / Sangoku Senki (ver. 100, Japanese Board)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND ) /* ver # provided by protection? */
@@ -1469,8 +1823,9 @@ GAMEX( 1999, kovplus,  kov,        pgm, sango, kov, 	   ROT0, "IGS", "Knights of
 GAMEX( 1999, kovplusa, kov,        pgm, sango, kov, 	   ROT0, "IGS", "Knights of Valour Plus / Sangoku Senki Plus (alt ver. 119)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
 
 /* not working */
-GAMEX( 1998, dw3,      pgm,        pgm, sango, dw3,	       ROT0, "IGS", "Dragon World 3", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
-GAMEX( 1998, dw3k,     dw3,        pgm, sango, dw3,	       ROT0, "IGS", "Dragon World 3 (Korean Board)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1998, drgw3,    pgm,        pgm, sango, dw3,	       ROT0, "IGS", "Dragon World 3", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1998, drgw3k,   drgw3,      pgm, sango, dw3,	       ROT0, "IGS", "Dragon World 3 (Korean Board)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 GAMEX( 1999, photoy2k, pgm,        pgm, sango, djlzz, 	   ROT0, "IGS", "Photo Y2K", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEX( 1999, raf102j,  photoy2k,   pgm, sango, djlzz, 	   ROT0, "IGS", "Real and Fake / Photo Y2K (ver. 102, Japan Board)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND | GAME_NOT_WORKING )
 GAMEX( 1999, kovsh,    kov,        pgm, sango, kovsh,	   ROT0, "IGS", "Knights of Valour Superheroes / Sangoku Senki Superheroes (ver. 322)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1998, killbld,  pgm,        pgm, sango, killbld,	   ROT0, "IGS", "The Killing Blade", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND | GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )

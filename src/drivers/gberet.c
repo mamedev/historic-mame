@@ -71,11 +71,11 @@
 
 extern UINT8 *gberet_scrollram;
 
-extern WRITE_HANDLER( gberet_videoram_w );
-extern WRITE_HANDLER( gberet_colorram_w );
-extern WRITE_HANDLER( gberet_scroll_w );
-extern WRITE_HANDLER( gberetb_scroll_w );
-extern WRITE_HANDLER( gberet_sprite_bank_w );
+extern WRITE8_HANDLER( gberet_videoram_w );
+extern WRITE8_HANDLER( gberet_colorram_w );
+extern WRITE8_HANDLER( gberet_scroll_w );
+extern WRITE8_HANDLER( gberetb_scroll_w );
+extern WRITE8_HANDLER( gberet_sprite_bank_w );
 
 extern PALETTE_INIT( gberet );
 extern VIDEO_START( gberet );
@@ -88,14 +88,14 @@ static int enable_NMI, enable_IRQ;
 
 /* Read/Write Handlers */
 
-static WRITE_HANDLER( gberet_coin_counter_w )
+static WRITE8_HANDLER( gberet_coin_counter_w )
 {
 	/* bits 0/1 = coin counters */
 	coin_counter_w(0, data & 0x01);
 	coin_counter_w(1, data & 0x02);
 }
 
-static WRITE_HANDLER( gberet_flipscreen_w )
+static WRITE8_HANDLER( gberet_flipscreen_w )
 {
 	enable_NMI = data & 0x01;
 	enable_IRQ = data & 0x04;
@@ -103,7 +103,7 @@ static WRITE_HANDLER( gberet_flipscreen_w )
 	flip_screen_set(data & 0x08);
 }
 
-static WRITE_HANDLER( mrgoemon_coin_counter_w )
+static WRITE8_HANDLER( mrgoemon_coin_counter_w )
 {
 	int offs;
 
@@ -116,7 +116,7 @@ static WRITE_HANDLER( mrgoemon_coin_counter_w )
 	cpu_setbank(1, &memory_region(REGION_CPU1)[offs]);
 }
 
-static WRITE_HANDLER( mrgoemon_flipscreen_w )
+static WRITE8_HANDLER( mrgoemon_flipscreen_w )
 {
 	enable_NMI = data & 0x01;
 	enable_IRQ = data & 0x02;
@@ -547,13 +547,13 @@ static INTERRUPT_GEN( gberet_interrupt )
 	if (cpu_getiloops() == 0)
 	{
 		if (enable_IRQ)
-			cpu_set_irq_line(0, 0, HOLD_LINE);
+			cpunum_set_input_line(0, 0, HOLD_LINE);
 	}
 
 	if (cpu_getiloops() % 2)
 	{
 		if (enable_NMI)
-			cpu_set_nmi_line(0, PULSE_LINE);
+			cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 	}
 }
 

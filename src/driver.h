@@ -73,10 +73,6 @@
 #include "messdrv.h"
 #endif
 
-#ifdef MAME_NET
-#include "network.h"
-#endif /* MAME_NET */
-
 #ifdef MMSND
 #include "mmsnd/mmsnd.h"
 #endif
@@ -412,7 +408,7 @@ struct GameDriver
 	const char *year;
 	const char *manufacturer;
 	void (*drv)(struct InternalMachineDriver *);
-	const struct InputPortTiny *input_ports;
+	void (*construct_ipt)(void *param);
 	void (*driver_init)(void);	/* optional function to be called during initialization */
 								/* This is called ONCE, unlike Machine->init_machine */
 								/* which is called every time the game is reset. */
@@ -476,7 +472,7 @@ const struct GameDriver driver_##NAME =		\
 	#YEAR,									\
 	COMPANY,								\
 	construct_##MACHINE,					\
-	input_ports_##INPUT,					\
+	construct_ipt_##INPUT,					\
 	init_##INIT,							\
 	rom_##NAME,								\
 	MONITOR									\
@@ -494,7 +490,7 @@ const struct GameDriver driver_##NAME =		\
 	#YEAR,									\
 	COMPANY,								\
 	construct_##MACHINE,					\
-	input_ports_##INPUT,					\
+	construct_ipt_##INPUT,					\
 	init_##INIT,							\
 	rom_##NAME,								\
 	(MONITOR)|(FLAGS)						\
@@ -512,7 +508,7 @@ const struct GameDriver driver_##NAME =		\
 	#YEAR,									\
 	COMPANY,								\
 	construct_##MACHINE,					\
-	input_ports_##INPUT,					\
+	construct_ipt_##INPUT,					\
 	init_##INIT,							\
 	rom_##NAME,								\
 	MONITOR									\
@@ -530,7 +526,7 @@ const struct GameDriver driver_##NAME =		\
 	#YEAR,									\
 	COMPANY,								\
 	construct_##MACHINE,					\
-	input_ports_##INPUT,					\
+	construct_ipt_##INPUT,					\
 	init_##INIT,							\
 	rom_##NAME,								\
 	(MONITOR)|(FLAGS)						\

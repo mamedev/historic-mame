@@ -70,7 +70,7 @@ VIDEO_START( quizdna )
 	return 0;
 }
 
-WRITE_HANDLER( quizdna_bg_ram_w )
+WRITE8_HANDLER( quizdna_bg_ram_w )
 {
 	data8_t *RAM = memory_region(REGION_CPU1);
 	quizdna_bg_ram[offset] = data;
@@ -79,7 +79,7 @@ WRITE_HANDLER( quizdna_bg_ram_w )
 	tilemap_mark_tile_dirty(quizdna_bg_tilemap, (offset & 0xfff) / 2 );
 }
 
-WRITE_HANDLER( quizdna_fg_ram_w )
+WRITE8_HANDLER( quizdna_fg_ram_w )
 {
 	int i;
 	int offs = offset & 0xfff;
@@ -93,12 +93,12 @@ WRITE_HANDLER( quizdna_fg_ram_w )
 		tilemap_mark_tile_dirty(quizdna_fg_tilemap, ((offs/2) & 0x1f) + i*0x20 );
 }
 
-WRITE_HANDLER( quizdna_bg_yscroll_w )
+WRITE8_HANDLER( quizdna_bg_yscroll_w )
 {
 	tilemap_set_scrolldy( quizdna_bg_tilemap, 255-data, 255-data+1 );
 }
 
-WRITE_HANDLER( quizdna_bg_xscroll_w )
+WRITE8_HANDLER( quizdna_bg_xscroll_w )
 {
 	int x;
 	quizdna_bg_xscroll[offset] = data;
@@ -107,7 +107,7 @@ WRITE_HANDLER( quizdna_bg_xscroll_w )
 	tilemap_set_scrolldx( quizdna_bg_tilemap, x+64, x-64+10 );
 }
 
-WRITE_HANDLER( quizdna_screen_ctrl_w )
+WRITE8_HANDLER( quizdna_screen_ctrl_w )
 {
 	int tmp = (data & 0x10) >> 4;
 	quizdna_video_enable = data & 0x20;
@@ -123,7 +123,7 @@ WRITE_HANDLER( quizdna_screen_ctrl_w )
 	tilemap_set_scrolldx( quizdna_fg_tilemap, 64, -64 +16);
 }
 
-WRITE_HANDLER( paletteram_xBGR_RRRR_GGGG_BBBB_w )
+WRITE8_HANDLER( paletteram_xBGR_RRRR_GGGG_BBBB_w )
 {
 	int r,g,b,d0,d1;
 	int offs = offset & ~1;

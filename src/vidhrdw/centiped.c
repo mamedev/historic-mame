@@ -114,7 +114,7 @@ VIDEO_START( bullsdrt )
  *
  *************************************/
 
-WRITE_HANDLER( centiped_videoram_w )
+WRITE8_HANDLER( centiped_videoram_w )
 {
 	videoram[offset] = data;
 	tilemap_mark_tile_dirty(tilemap, offset);
@@ -128,7 +128,7 @@ WRITE_HANDLER( centiped_videoram_w )
  *
  *************************************/
 
-WRITE_HANDLER( centiped_flip_screen_w )
+WRITE8_HANDLER( centiped_flip_screen_w )
 {
 	centiped_flipscreen = data >> 7;
 }
@@ -141,7 +141,7 @@ WRITE_HANDLER( centiped_flip_screen_w )
  *
  *************************************/
 
-WRITE_HANDLER( bullsdrt_tilesbank_w )
+WRITE8_HANDLER( bullsdrt_tilesbank_w )
 {
 	bullsdrt_tiles_bankram[offset] = data;
 	tilemap_mark_all_tiles_dirty(tilemap);
@@ -155,7 +155,7 @@ WRITE_HANDLER( bullsdrt_tilesbank_w )
  *
  *************************************/
 
-WRITE_HANDLER( bullsdrt_sprites_bank_w )
+WRITE8_HANDLER( bullsdrt_sprites_bank_w )
 {
 	bullsdrt_sprites_bank = data;
 }
@@ -230,7 +230,7 @@ PALETTE_INIT( centiped )
 }
 
 
-WRITE_HANDLER( centiped_paletteram_w )
+WRITE8_HANDLER( centiped_paletteram_w )
 {
 	int r, g, b;
 
@@ -346,7 +346,7 @@ PALETTE_INIT( milliped )
 }
 
 
-WRITE_HANDLER( milliped_paletteram_w )
+WRITE8_HANDLER( milliped_paletteram_w )
 {
 	int bit0,bit1,bit2;
 	int r,g,b;

@@ -11,7 +11,7 @@
 
 /*----------- defined in sndhrdw/gridlee.c -----------*/
 
-WRITE_HANDLER( gridlee_sound_w );
+WRITE8_HANDLER( gridlee_sound_w );
 int gridlee_sh_start(const struct MachineSound *msound);
 
 
@@ -24,6 +24,6 @@ PALETTE_INIT( gridlee );
 VIDEO_START( gridlee );
 VIDEO_UPDATE( gridlee );
 
-WRITE_HANDLER( gridlee_cocktail_flip_w );
-WRITE_HANDLER( gridlee_videoram_w );
-WRITE_HANDLER( gridlee_palette_select_w );
+WRITE8_HANDLER( gridlee_cocktail_flip_w );
+WRITE8_HANDLER( gridlee_videoram_w );
+WRITE8_HANDLER( gridlee_palette_select_w );

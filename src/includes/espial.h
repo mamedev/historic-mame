@@ -16,10 +16,10 @@ extern data8_t *espial_spriteram_3;
 PALETTE_INIT( espial );
 VIDEO_START( espial );
 VIDEO_START( netwars );
-WRITE_HANDLER( espial_videoram_w );
-WRITE_HANDLER( espial_colorram_w );
-WRITE_HANDLER( espial_attributeram_w );
-WRITE_HANDLER( espial_scrollram_w );
-WRITE_HANDLER( espial_flipscreen_w );
+WRITE8_HANDLER( espial_videoram_w );
+WRITE8_HANDLER( espial_colorram_w );
+WRITE8_HANDLER( espial_attributeram_w );
+WRITE8_HANDLER( espial_scrollram_w );
+WRITE8_HANDLER( espial_flipscreen_w );
 VIDEO_UPDATE( espial );
 

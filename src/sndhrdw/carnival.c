@@ -110,7 +110,7 @@ static int port2State = 0;
 static int psgData = 0;
 
 
-WRITE_HANDLER( carnival_sh_port1_w )
+WRITE8_HANDLER( carnival_sh_port1_w )
 {
 	static int port1State = 0;
 	int bitsChanged;
@@ -189,7 +189,7 @@ WRITE_HANDLER( carnival_sh_port1_w )
 }
 
 
-WRITE_HANDLER( carnival_sh_port2_w )
+WRITE8_HANDLER( carnival_sh_port2_w )
 {
 	int bitsChanged;
 	int bitsGoneHigh;
@@ -225,25 +225,25 @@ WRITE_HANDLER( carnival_sh_port2_w )
 	if ( bitsGoneHigh & OUT_PORT_2_MUSIC_RESET )
 	{
 		/* reset output is no longer asserted active low */
-		cpu_set_reset_line( CPU_MUSIC_ID, PULSE_LINE );
+		cpunum_set_input_line(CPU_MUSIC_ID, INPUT_LINE_RESET, PULSE_LINE );
 	}
 }
 
 
-READ_HANDLER( carnival_music_port_t1_r )
+READ8_HANDLER( carnival_music_port_t1_r )
 {
 	/* note: 8039 T1 signal is inverted on music board */
 	return ( port2State & OUT_PORT_2_MUSIC_T1 ) ? 0 : 1;
 }
 
 
-WRITE_HANDLER( carnival_music_port_1_w )
+WRITE8_HANDLER( carnival_music_port_1_w )
 {
 	psgData = data;
 }
 
 
-WRITE_HANDLER( carnival_music_port_2_w )
+WRITE8_HANDLER( carnival_music_port_2_w )
 {
 	static int psgSelect = 0;
 	int newSelect;

@@ -42,17 +42,17 @@ VIDEO_UPDATE( fantland );
 
 static data8_t fantland_nmi_enable;
 
-static WRITE_HANDLER( fantland_nmi_enable_w )
+static WRITE8_HANDLER( fantland_nmi_enable_w )
 {
 	fantland_nmi_enable = data;
 //	if ((fantland_nmi_enable != 0) && (fantland_nmi_enable != 8))
 //		logerror("CPU #0 : nmi_enable = %02x - PC = %04X\n", data, activecpu_get_pc());
 }
 
-static WRITE_HANDLER( fantland_soundlatch_w )
+static WRITE8_HANDLER( fantland_soundlatch_w )
 {
 	soundlatch_w(0,data);
-	cpu_set_nmi_line(1,PULSE_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 }
 
 /***************************************************************************
@@ -337,12 +337,12 @@ static MACHINE_INIT( fantland )
 static INTERRUPT_GEN( fantland_irq )
 {
 	if (fantland_nmi_enable & 8)
-		cpu_set_nmi_line(0, PULSE_LINE);
+		cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 }
 
 static INTERRUPT_GEN( fantland_sound_irq )
 {
-	cpu_set_irq_line_and_vector(1, 0, HOLD_LINE, 0x80/4);
+	cpunum_set_input_line_and_vector(1, 0, HOLD_LINE, 0x80/4);
 }
 
 static struct YM2151interface fantland_ym2151_interface =
@@ -356,7 +356,7 @@ static struct YM2151interface fantland_ym2151_interface =
 static struct DACinterface fantland_dac_interface =
 {
 	1,
-	{ 80 }
+	{ 50 }
 };
 
 static MACHINE_DRIVER_START( fantland )
@@ -396,7 +396,7 @@ MACHINE_DRIVER_END
 
 static void galaxygn_sound_irq(int line)
 {
-	cpu_set_irq_line_and_vector(1, 0, line ? ASSERT_LINE : CLEAR_LINE, 0x80/4);
+	cpunum_set_input_line_and_vector(1, 0, line ? ASSERT_LINE : CLEAR_LINE, 0x80/4);
 }
 
 static struct YM2151interface galaxygn_ym2151_interface =
@@ -494,6 +494,35 @@ ROM_START( fantland )
 	ROMX_LOAD( "fantasyl.07",  0x300002, 0x80000, CRC(162ad422) SHA1(0d3609e630481018d1326a908d1d4c204dfcdf13) , ROM_SKIP(2) )
 ROM_END
 
+/* this dump had several roms half size however they all appear to be data & gfx roms, the main program looks ok */
+ROM_START( fantlnda )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )					// Main CPU
+	ROMX_LOAD( "fantasyl.ev2", 0x00000, 0x20000, CRC(f5bdca0e) SHA1(d05cf6f68d4d1a3dcc0171f7cf220c4920bd47bb) , ROM_SKIP(1) ) // 04.bin (was first half only)
+	ROMX_LOAD( "fantasyl.od2", 0x00001, 0x20000, CRC(9db35023) SHA1(81e2accd67dcf8563a68b2c4e35526f23a40150c) , ROM_SKIP(1) ) // 03.bin (was first half only)
+	ROM_COPY( REGION_CPU1,     0x00000, 0x40000, 0x40000 )
+	ROMX_LOAD( "02.bin", 0xe0000, 0x10000, CRC(8b835eed) SHA1(6a6b3fe116145f685b91dcd5301165f17973697c) , ROM_SKIP(1) )
+	ROMX_LOAD( "01.bin", 0xe0001, 0x10000, CRC(4fa3eb8b) SHA1(56da42a4e2972a696ef28811116cbc20bb5ba3e8) , ROM_SKIP(1) )
+
+	ROM_REGION( 0x100000, REGION_CPU2, 0 )					// Sound CPU
+	ROM_LOAD16_WORD( "fantasyl.s2", 0x80000, 0x20000, CRC(f23837d8) SHA1(4048784f759781e50ae445ea61f1ca908e8e6ac1) ) // 05.bin (was first half only)
+	ROM_LOAD16_WORD( "fantasyl.s1", 0xc0000, 0x20000, CRC(1a324a69) SHA1(06f6877af6cd19bfaac8a4ea8057ef8faee276f5) ) // 06.bin (was first half only)
+	ROM_COPY( REGION_CPU2,          0xc0000, 0xe0000, 0x20000 )
+
+	ROM_REGION( 0x480000, REGION_GFX1, ROMREGION_DISPOSE )	// Sprites
+	ROMX_LOAD( "fantasyl.m00", 0x000000, 0x80000, CRC(82d819ff) SHA1(2b5b0759de8260eaa84ddded9dc2d12a6e0f5ec9) , ROM_GROUPWORD | ROM_SKIP(1) )
+	ROMX_LOAD( "fantasyl.m01", 0x0c0000, 0x80000, CRC(70a94139) SHA1(689fbfa267d60821cde13d5dc2dfe1dea67b434a) , ROM_GROUPWORD | ROM_SKIP(1) )
+	ROMX_LOAD( "fantasyl.05",  0x000002, 0x80000, CRC(62b9a00b) SHA1(ecd18e5e7a5e3535956fb693d2f7e35d2bb7ede9) , ROM_SKIP(2) )
+
+	ROMX_LOAD( "fantasyl.m02", 0x180000, 0x80000, CRC(ae52bf37) SHA1(60daa24d1f456cfeb643fa2107119d2939af0ffa) , ROM_GROUPWORD | ROM_SKIP(1) )
+	ROMX_LOAD( "fantasyl.m03", 0x240000, 0x80000, CRC(f3f534a1) SHA1(9d47cc5b5a40146ed1d9e57a16d67a1d92f3b5be) , ROM_GROUPWORD | ROM_SKIP(1) )
+	ROMX_LOAD( "fantasyl.06",  0x180002, 0x80000, CRC(867fa549) SHA1(9777b4837e5bb25a39639597e88b713d43361a80) , ROM_SKIP(2) )
+
+	ROMX_LOAD( "fantasyl.m04", 0x300000, 0x80000, CRC(e7b1918c) SHA1(97230b21bb54c4c928dced83e0b3396068ab72db) , ROM_GROUPWORD | ROM_SKIP(1) )
+	ROMX_LOAD( "fantasyl.d0",  0x3c0001, 0x20000, CRC(0f907f19) SHA1(eea90e7d7e2e29db809e867d9b1205f4fbb7ada8) , ROM_SKIP(2) ) // 07.bin (was first half only)
+	ROMX_LOAD( "fantasyl.d1",  0x3c0000, 0x20000, CRC(10d10389) SHA1(3a5639050c769eedc62924dfde57c1bf020970c8) , ROM_SKIP(2) ) // 08.bin (was first half only)
+	ROMX_LOAD( "fantasyl.07",  0x300002, 0x80000, CRC(162ad422) SHA1(0d3609e630481018d1326a908d1d4c204dfcdf13) , ROM_SKIP(2) )
+ROM_END
+
 /***************************************************************************
 								Galaxy Gunners
 ***************************************************************************/
@@ -542,6 +571,7 @@ ROM_START( galaxygn )
 	ROMX_LOAD( "gg30.bin", 0x180002, 0x10000, CRC(ded7cacf) SHA1(adbfaa8f46e5ce8df264d5b5a201d75ca2b3dbeb) , ROM_SKIP(2) )
 ROM_END
 
-GAME( 19??, fantland, 0, fantland, fantland, 0, ROT0,  "Electronic Devices Italy", "Fantasy Land"   )
-GAME( 1989, galaxygn, 0, galaxygn, galaxygn, 0, ROT90, "Electronic Devices Italy", "Galaxy Gunners" )
+GAME( 19??, fantland, 0,        fantland, fantland, 0, ROT0,  "Electronic Devices Italy", "Fantasy Land (set 1)"   )
+GAME( 19??, fantlnda, fantland, fantland, fantland, 0, ROT0,  "Electronic Devices Italy", "Fantasy Land (set 2)"   )
+GAME( 1989, galaxygn, 0,        galaxygn, galaxygn, 0, ROT90, "Electronic Devices Italy", "Galaxy Gunners" )
 

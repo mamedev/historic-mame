@@ -271,7 +271,7 @@ static READ32_HANDLER ( ms32_read_inputs3 )
 static WRITE32_HANDLER( ms32_sound_w )
 {
 	soundlatch_w(0, data & 0xff);
-	cpu_set_irq_line(1, IRQ_LINE_NMI, ASSERT_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_NMI, ASSERT_LINE);
 
 	// give the Z80 time to respond
 	cpu_spinuntil_time(TIME_IN_USEC(40));
@@ -284,7 +284,7 @@ static READ32_HANDLER( ms32_sound_r )
 
 static WRITE32_HANDLER( reset_sub_w )
 {
-	if(data) cpu_set_reset_line(1,PULSE_LINE); // 0 too ?
+	if(data) cpunum_set_input_line(1, INPUT_LINE_RESET, PULSE_LINE); // 0 too ?
 }
 
 
@@ -1441,21 +1441,21 @@ static int irq_callback(int irqline)
 	for(i=15; i>=0 && !(irqreq & (1<<i)); i--);
 	irqreq &= ~(1<<i);
 	if(!irqreq)
-		cpu_set_irq_line(0, 0, CLEAR_LINE);
+		cpunum_set_input_line(0, 0, CLEAR_LINE);
 	return i;
 }
 
 static void irq_init(void)
 {
 	irqreq = 0;
-	cpu_set_irq_line(0, 0, CLEAR_LINE);
+	cpunum_set_input_line(0, 0, CLEAR_LINE);
 	cpu_set_irq_callback(0, irq_callback);
 }
 
 static void irq_raise(int level)
 {
 	irqreq |= (1<<level);
-	cpu_set_irq_line(0, 0, ASSERT_LINE);
+	cpunum_set_input_line(0, 0, ASSERT_LINE);
 }
 
 static INTERRUPT_GEN(ms32_interrupt)
@@ -1496,19 +1496,19 @@ static INTERRUPT_GEN(ms32_interrupt)
  code at $38 reads the 2nd command latch ??
 */
 
-static READ_HANDLER( latch_r )
+static READ8_HANDLER( latch_r )
 {
-	cpu_set_irq_line(1, IRQ_LINE_NMI, CLEAR_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_NMI, CLEAR_LINE);
 	return soundlatch_r(0)^0xff;
 }
 
-static WRITE_HANDLER( ms32_snd_bank_w )
+static WRITE8_HANDLER( ms32_snd_bank_w )
 {
 		cpu_setbank(4, memory_region(REGION_CPU2) + 0x14000+0x4000*(data&0xf));
 		cpu_setbank(5, memory_region(REGION_CPU2) + 0x14000+0x4000*(data>>4));
 }
 
-static WRITE_HANDLER( to_main_w )
+static WRITE8_HANDLER( to_main_w )
 {
 		to_main=data;
 		irq_raise(1);
@@ -2276,7 +2276,7 @@ static DRIVER_INIT (ss92048_01)
 static DRIVER_INIT (kirarast)
 {
 //	{ 0xfcc00004, 0xfcc00007, ms32_mahjong_read_inputs1 }
-	install_mem_read32_handler(0, 0xfcc00004, 0xfcc00007, ms32_mahjong_read_inputs1 );
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0xfcc00004, 0xfcc00007, 0, 0, ms32_mahjong_read_inputs1 );
 
 	init_ss92047_01();
 }
@@ -2284,7 +2284,7 @@ static DRIVER_INIT (kirarast)
 static DRIVER_INIT (47pie2)
 {
 //	{ 0xfcc00004, 0xfcc00007, ms32_mahjong_read_inputs1 }
-	install_mem_read32_handler(0, 0xfcc00004, 0xfcc00007, ms32_mahjong_read_inputs1 );
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0xfcc00004, 0xfcc00007, 0, 0, ms32_mahjong_read_inputs1 );
 
 	init_ss92048_01();
 }

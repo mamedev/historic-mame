@@ -40,21 +40,21 @@ Notes:
 
 extern UINT8 *pbaction_videoram2,*pbaction_colorram2;
 
-extern WRITE_HANDLER( pbaction_videoram_w );
-extern WRITE_HANDLER( pbaction_colorram_w );
-extern WRITE_HANDLER( pbaction_videoram2_w );
-extern WRITE_HANDLER( pbaction_colorram2_w );
-extern WRITE_HANDLER( pbaction_flipscreen_w );
-extern WRITE_HANDLER( pbaction_scroll_w );
+extern WRITE8_HANDLER( pbaction_videoram_w );
+extern WRITE8_HANDLER( pbaction_colorram_w );
+extern WRITE8_HANDLER( pbaction_videoram2_w );
+extern WRITE8_HANDLER( pbaction_colorram2_w );
+extern WRITE8_HANDLER( pbaction_flipscreen_w );
+extern WRITE8_HANDLER( pbaction_scroll_w );
 
 extern VIDEO_START( pbaction );
 extern VIDEO_UPDATE( pbaction );
 
 
-static WRITE_HANDLER( pbaction_sh_command_w )
+static WRITE8_HANDLER( pbaction_sh_command_w )
 {
 	soundlatch_w(offset,data);
-	cpu_set_irq_line_and_vector(1,0,HOLD_LINE,0x00);
+	cpunum_set_input_line_and_vector(1,0,HOLD_LINE,0x00);
 }
 
 
@@ -266,7 +266,7 @@ static struct AY8910interface ay8910_interface =
 
 INTERRUPT_GEN( pbaction_interrupt )
 {
-	cpu_set_irq_line_and_vector(1, 0, HOLD_LINE, 0x02);	/* the CPU is in Interrupt Mode 2 */
+	cpunum_set_input_line_and_vector(1, 0, HOLD_LINE, 0x02);	/* the CPU is in Interrupt Mode 2 */
 }
 
 

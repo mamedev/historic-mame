@@ -306,9 +306,9 @@ WRITE16_HANDLER( bigrun_vregs_w )
 		case 0x2208/2   : break;	// watchdog reset
 
 		/* Not sure about this one.. */
-		case 0x2308/2   :	cpu_set_reset_line(1, (new_data & 2) ? ASSERT_LINE : CLEAR_LINE );
-							cpu_set_reset_line(2, (new_data & 2) ? ASSERT_LINE : CLEAR_LINE );
-							cpu_set_reset_line(3, (new_data & 1) ? ASSERT_LINE : CLEAR_LINE );
+		case 0x2308/2   :	cpunum_set_input_line(1, INPUT_LINE_RESET, (new_data & 2) ? ASSERT_LINE : CLEAR_LINE );
+							cpunum_set_input_line(2, INPUT_LINE_RESET, (new_data & 2) ? ASSERT_LINE : CLEAR_LINE );
+							cpunum_set_input_line(3, INPUT_LINE_RESET, (new_data & 1) ? ASSERT_LINE : CLEAR_LINE );
 							break;
 
 		default: SHOW_WRITE_ERROR("vreg %04X <- %04X",offset*2,data);
@@ -395,13 +395,13 @@ WRITE16_HANDLER( cischeat_vregs_w )
 
 		case 0x2300/2   :	/* Sound CPU: reads latch during int 4, and stores command */
 							soundlatch_word_w(0,new_data,0);
-							cpu_set_irq_line(3,4,HOLD_LINE);
+							cpunum_set_input_line(3,4,HOLD_LINE);
 							break;
 
 		/* Not sure about this one.. */
-		case 0x2308/2   :	cpu_set_reset_line(1, (new_data & 2) ? ASSERT_LINE : CLEAR_LINE );
-							cpu_set_reset_line(2, (new_data & 2) ? ASSERT_LINE : CLEAR_LINE );
-							cpu_set_reset_line(3, (new_data & 1) ? ASSERT_LINE : CLEAR_LINE );
+		case 0x2308/2   :	cpunum_set_input_line(1, INPUT_LINE_RESET, (new_data & 2) ? ASSERT_LINE : CLEAR_LINE );
+							cpunum_set_input_line(2, INPUT_LINE_RESET, (new_data & 2) ? ASSERT_LINE : CLEAR_LINE );
+							cpunum_set_input_line(3, INPUT_LINE_RESET, (new_data & 1) ? ASSERT_LINE : CLEAR_LINE );
 							break;
 
 		default: SHOW_WRITE_ERROR("vreg %04X <- %04X",offset*2,data);
@@ -514,7 +514,7 @@ CPU #0 PC 00235C : Warning, vreg 0006 <- 0000
 
 		/* Usually written in sequence, but not always */
 		case 0x0008/2   :	soundlatch_word_w(0,new_data,0);	break;
-		case 0x0018/2   :	cpu_set_irq_line(3,4,HOLD_LINE);	break;
+		case 0x0018/2   :	cpunum_set_input_line(3,4,HOLD_LINE);	break;
 
 		case 0x0010/2   :	break;
 
@@ -534,9 +534,9 @@ CPU #0 PC 00235C : Warning, vreg 0006 <- 0000
 		case 0x2208/2   : break;	// watchdog reset
 
 		/* Not sure about this one. Values: $10 then 0, $7 then 0 */
-		case 0x2308/2   :	cpu_set_reset_line(1, (new_data & 1) ? ASSERT_LINE : CLEAR_LINE );
-							cpu_set_reset_line(2, (new_data & 2) ? ASSERT_LINE : CLEAR_LINE );
-							cpu_set_reset_line(3, (new_data & 4) ? ASSERT_LINE : CLEAR_LINE );
+		case 0x2308/2   :	cpunum_set_input_line(1, INPUT_LINE_RESET, (new_data & 1) ? ASSERT_LINE : CLEAR_LINE );
+							cpunum_set_input_line(2, INPUT_LINE_RESET, (new_data & 2) ? ASSERT_LINE : CLEAR_LINE );
+							cpunum_set_input_line(3, INPUT_LINE_RESET, (new_data & 4) ? ASSERT_LINE : CLEAR_LINE );
 							break;
 
 		default:		SHOW_WRITE_ERROR("vreg %04X <- %04X",offset*2,data);
@@ -556,8 +556,8 @@ WRITE16_HANDLER( f1gpstr2_vregs_w )
 		case 0x0000/2   :
 			if (ACCESSING_LSB)
 			{
-				cpu_set_irq_line(4,4,(new_data & 4)?ASSERT_LINE:CLEAR_LINE);
-				cpu_set_irq_line(4,2,(new_data & 2)?ASSERT_LINE:CLEAR_LINE);
+				cpunum_set_input_line(4,4,(new_data & 4)?ASSERT_LINE:CLEAR_LINE);
+				cpunum_set_input_line(4,2,(new_data & 2)?ASSERT_LINE:CLEAR_LINE);
 			}
 			break;
 
@@ -886,7 +886,7 @@ static void cischeat_draw_sprites(struct mame_bitmap *bitmap , const struct rect
 
 		/* dimension of a tile after zoom */
 #ifdef MAME_DEBUG
-		if ( keyboard_pressed(KEYCODE_Z) && keyboard_pressed(KEYCODE_M) )
+		if ( code_pressed(KEYCODE_Z) && code_pressed(KEYCODE_M) )
 		{
 			xdim	=	16 << 16;
 			ydim	=	16 << 16;
@@ -952,7 +952,7 @@ if ( (debugsprites) && ( ((attr & 0x0300)>>8) != (debugsprites-1) ) ) 	{ continu
 		}
 #ifdef MAME_DEBUG
 #if 0
-if (keyboard_pressed(KEYCODE_X))
+if (code_pressed(KEYCODE_X))
 {	/* Display some info on each sprite */
 	struct DisplayText dt[2];
 	sprintf(buf, "%04x",attr);
@@ -1045,7 +1045,7 @@ static void bigrun_draw_sprites(struct mame_bitmap *bitmap , const struct rectan
 
 		/* dimension of a tile after zoom */
 #ifdef MAME_DEBUG
-		if ( keyboard_pressed(KEYCODE_Z) && keyboard_pressed(KEYCODE_M) )
+		if ( code_pressed(KEYCODE_Z) && code_pressed(KEYCODE_M) )
 		{
 			xdim	=	16 << 16;
 			ydim	=	16 << 16;
@@ -1109,7 +1109,7 @@ if ( (debugsprites) && ( ((attr & 0x0300)>>8) != (debugsprites-1) ) ) 	{ continu
 		}
 #ifdef MAME_DEBUG
 #if 0
-if (keyboard_pressed(KEYCODE_X))
+if (code_pressed(KEYCODE_X))
 {	/* Display some info on each sprite */
 	struct DisplayText dt[2];
 	sprintf(buf, "%04x",attr);
@@ -1133,25 +1133,25 @@ if (keyboard_pressed(KEYCODE_X))
 
 #define CISCHEAT_LAYERSCTRL \
 debugsprites = 0; \
-if ( keyboard_pressed(KEYCODE_Z) || keyboard_pressed(KEYCODE_X) ) \
+if ( code_pressed(KEYCODE_Z) || code_pressed(KEYCODE_X) ) \
 { \
 	int msk = 0; \
-	if (keyboard_pressed(KEYCODE_Q))	{ msk |= 0x01;} \
-	if (keyboard_pressed(KEYCODE_W))	{ msk |= 0x02;} \
-	if (keyboard_pressed(KEYCODE_E))	{ msk |= 0x04;} \
-	if (keyboard_pressed(KEYCODE_A))	{ msk |= 0x08; debugsprites = 1;} \
-	if (keyboard_pressed(KEYCODE_S))	{ msk |= 0x08; debugsprites = 2;} \
-	if (keyboard_pressed(KEYCODE_D))	{ msk |= 0x08; debugsprites = 3;} \
-	if (keyboard_pressed(KEYCODE_F))	{ msk |= 0x08; debugsprites = 4;} \
-	if (keyboard_pressed(KEYCODE_R))	{ msk |= 0x10;} \
-	if (keyboard_pressed(KEYCODE_T))	{ msk |= 0x20;} \
+	if (code_pressed(KEYCODE_Q))	{ msk |= 0x01;} \
+	if (code_pressed(KEYCODE_W))	{ msk |= 0x02;} \
+	if (code_pressed(KEYCODE_E))	{ msk |= 0x04;} \
+	if (code_pressed(KEYCODE_A))	{ msk |= 0x08; debugsprites = 1;} \
+	if (code_pressed(KEYCODE_S))	{ msk |= 0x08; debugsprites = 2;} \
+	if (code_pressed(KEYCODE_D))	{ msk |= 0x08; debugsprites = 3;} \
+	if (code_pressed(KEYCODE_F))	{ msk |= 0x08; debugsprites = 4;} \
+	if (code_pressed(KEYCODE_R))	{ msk |= 0x10;} \
+	if (code_pressed(KEYCODE_T))	{ msk |= 0x20;} \
  \
 	if (msk != 0) megasys1_active_layers &= msk; \
 } \
 \
 { \
 	static int show_unknown; \
-	if ( keyboard_pressed(KEYCODE_Z) && keyboard_pressed_memory(KEYCODE_U) ) \
+	if ( code_pressed(KEYCODE_Z) && code_pressed_memory(KEYCODE_U) ) \
 		show_unknown ^= 1; \
 	if (show_unknown) \
 		usrintf_showmessage("0:%04X 2:%04X 4:%04X 6:%04X c:%04X", \
@@ -1344,16 +1344,16 @@ VIDEO_UPDATE( scudhamm )
 
 #ifdef MAME_DEBUG
 debugsprites = 0;
-if ( keyboard_pressed(KEYCODE_Z) || keyboard_pressed(KEYCODE_X) )
+if ( code_pressed(KEYCODE_Z) || code_pressed(KEYCODE_X) )
 {
 	int msk = 0;
-	if (keyboard_pressed(KEYCODE_Q))	{ msk |= 0x1;}
-	if (keyboard_pressed(KEYCODE_W))	{ msk |= 0x2;}
-	if (keyboard_pressed(KEYCODE_E))	{ msk |= 0x4;}
-	if (keyboard_pressed(KEYCODE_A))	{ msk |= 0x8; debugsprites = 1;}
-	if (keyboard_pressed(KEYCODE_S))	{ msk |= 0x8; debugsprites = 2;}
-	if (keyboard_pressed(KEYCODE_D))	{ msk |= 0x8; debugsprites = 3;}
-	if (keyboard_pressed(KEYCODE_F))	{ msk |= 0x8; debugsprites = 4;}
+	if (code_pressed(KEYCODE_Q))	{ msk |= 0x1;}
+	if (code_pressed(KEYCODE_W))	{ msk |= 0x2;}
+	if (code_pressed(KEYCODE_E))	{ msk |= 0x4;}
+	if (code_pressed(KEYCODE_A))	{ msk |= 0x8; debugsprites = 1;}
+	if (code_pressed(KEYCODE_S))	{ msk |= 0x8; debugsprites = 2;}
+	if (code_pressed(KEYCODE_D))	{ msk |= 0x8; debugsprites = 3;}
+	if (code_pressed(KEYCODE_F))	{ msk |= 0x8; debugsprites = 4;}
 
 	if (msk != 0) megasys1_active_layers &= msk;
 #if 1

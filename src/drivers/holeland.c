@@ -19,11 +19,11 @@ VIDEO_START( crzrally );
 VIDEO_UPDATE( holeland );
 VIDEO_UPDATE( crzrally );
 
-WRITE_HANDLER( holeland_videoram_w );
-WRITE_HANDLER( holeland_colorram_w );
-WRITE_HANDLER( holeland_flipscreen_w );
-WRITE_HANDLER( holeland_pal_offs_w );
-WRITE_HANDLER( holeland_scroll_w );
+WRITE8_HANDLER( holeland_videoram_w );
+WRITE8_HANDLER( holeland_colorram_w );
+WRITE8_HANDLER( holeland_flipscreen_w );
+WRITE8_HANDLER( holeland_pal_offs_w );
+WRITE8_HANDLER( holeland_scroll_w );
 
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )

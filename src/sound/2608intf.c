@@ -145,13 +145,13 @@ void YM2608_sh_reset(void)
 /************************************************/
 /* Status Read for YM2608 - Chip 0				*/
 /************************************************/
-READ_HANDLER( YM2608_status_port_0_A_r )
+READ8_HANDLER( YM2608_status_port_0_A_r )
 {
 //logerror("PC %04x: 2608 S0A=%02X\n",activecpu_get_pc(),YM2608Read(0,0));
 	return YM2608Read(0,0);
 }
 
-READ_HANDLER( YM2608_status_port_0_B_r )
+READ8_HANDLER( YM2608_status_port_0_B_r )
 {
 //logerror("PC %04x: 2608 S0B=%02X\n",activecpu_get_pc(),YM2608Read(0,2));
 	return YM2608Read(0,2);
@@ -160,25 +160,25 @@ READ_HANDLER( YM2608_status_port_0_B_r )
 /************************************************/
 /* Status Read for YM2608 - Chip 1				*/
 /************************************************/
-READ_HANDLER( YM2608_status_port_1_A_r ) {
+READ8_HANDLER( YM2608_status_port_1_A_r ) {
 	return YM2608Read(1,0);
 }
 
-READ_HANDLER( YM2608_status_port_1_B_r ) {
+READ8_HANDLER( YM2608_status_port_1_B_r ) {
 	return YM2608Read(1,2);
 }
 
 /************************************************/
 /* Port Read for YM2608 - Chip 0				*/
 /************************************************/
-READ_HANDLER( YM2608_read_port_0_r ){
+READ8_HANDLER( YM2608_read_port_0_r ){
 	return YM2608Read(0,1);
 }
 
 /************************************************/
 /* Port Read for YM2608 - Chip 1				*/
 /************************************************/
-READ_HANDLER( YM2608_read_port_1_r ){
+READ8_HANDLER( YM2608_read_port_1_r ){
 	return YM2608Read(1,1);
 }
 
@@ -186,12 +186,12 @@ READ_HANDLER( YM2608_read_port_1_r ){
 /* Control Write for YM2608 - Chip 0			*/
 /* Consists of 2 addresses						*/
 /************************************************/
-WRITE_HANDLER( YM2608_control_port_0_A_w )
+WRITE8_HANDLER( YM2608_control_port_0_A_w )
 {
 	YM2608Write(0,0,data);
 }
 
-WRITE_HANDLER( YM2608_control_port_0_B_w )
+WRITE8_HANDLER( YM2608_control_port_0_B_w )
 {
 	YM2608Write(0,2,data);
 }
@@ -200,11 +200,11 @@ WRITE_HANDLER( YM2608_control_port_0_B_w )
 /* Control Write for YM2608 - Chip 1			*/
 /* Consists of 2 addresses						*/
 /************************************************/
-WRITE_HANDLER( YM2608_control_port_1_A_w ){
+WRITE8_HANDLER( YM2608_control_port_1_A_w ){
 	YM2608Write(1,0,data);
 }
 
-WRITE_HANDLER( YM2608_control_port_1_B_w ){
+WRITE8_HANDLER( YM2608_control_port_1_B_w ){
 	YM2608Write(1,2,data);
 }
 
@@ -212,12 +212,12 @@ WRITE_HANDLER( YM2608_control_port_1_B_w ){
 /* Data Write for YM2608 - Chip 0				*/
 /* Consists of 2 addresses						*/
 /************************************************/
-WRITE_HANDLER( YM2608_data_port_0_A_w )
+WRITE8_HANDLER( YM2608_data_port_0_A_w )
 {
 	YM2608Write(0,1,data);
 }
 
-WRITE_HANDLER( YM2608_data_port_0_B_w )
+WRITE8_HANDLER( YM2608_data_port_0_B_w )
 {
 	YM2608Write(0,3,data);
 }
@@ -226,10 +226,10 @@ WRITE_HANDLER( YM2608_data_port_0_B_w )
 /* Data Write for YM2608 - Chip 1				*/
 /* Consists of 2 addresses						*/
 /************************************************/
-WRITE_HANDLER( YM2608_data_port_1_A_w ){
+WRITE8_HANDLER( YM2608_data_port_1_A_w ){
 	YM2608Write(1,1,data);
 }
-WRITE_HANDLER( YM2608_data_port_1_B_w ){
+WRITE8_HANDLER( YM2608_data_port_1_B_w ){
 	YM2608Write(1,3,data);
 }
 

@@ -45,7 +45,7 @@ static void videowrite(int offset,int data)
 
 
 
-WRITE_HANDLER( tutankhm_videoram_w )
+WRITE8_HANDLER( tutankhm_videoram_w )
 {
 	videoram[offset] = data;
 	videowrite(offset,data);
@@ -126,7 +126,7 @@ VIDEO_UPDATE( tutankhm )
 		The clear works properly.
 */
 
-WRITE_HANDLER( junofrst_blitter_w )
+WRITE8_HANDLER( junofrst_blitter_w )
 {
 	static unsigned char blitterdata[4];
 

@@ -73,7 +73,7 @@ static void spritebuffer_callback (int dummy)
 		m92_sprite_interrupt();
 }
 
-WRITE_HANDLER( m92_spritecontrol_w )
+WRITE8_HANDLER( m92_spritecontrol_w )
 {
 	static int sprite_extent;
 
@@ -111,7 +111,7 @@ WRITE_HANDLER( m92_spritecontrol_w )
 //	logerror("%04x: m92_spritecontrol_w %08x %08x\n",activecpu_get_pc(),offset,data);
 }
 
-WRITE_HANDLER( m92_videocontrol_w )
+WRITE8_HANDLER( m92_videocontrol_w )
 {
 	/*
 		Many games write:
@@ -135,12 +135,12 @@ WRITE_HANDLER( m92_videocontrol_w )
 //	logerror("%04x: m92_videocontrol_w %d = %02x\n",activecpu_get_pc(),offset,data);
 }
 
-READ_HANDLER( m92_paletteram_r )
+READ8_HANDLER( m92_paletteram_r )
 {
 	return paletteram_r(offset + 0x800*m92_palette_bank);
 }
 
-WRITE_HANDLER( m92_paletteram_w )
+WRITE8_HANDLER( m92_paletteram_w )
 {
 	paletteram_xBBBBBGGGGGRRRRR_w(offset + 0x800*m92_palette_bank,data);
 }
@@ -276,12 +276,12 @@ static void get_pf3_wide_tile_info(int tile_index)
 
 /*****************************************************************************/
 
-READ_HANDLER( m92_vram_r )
+READ8_HANDLER( m92_vram_r )
 {
 	return m92_vram_data[offset];
 }
 
-WRITE_HANDLER( m92_vram_w )
+WRITE8_HANDLER( m92_vram_w )
 {
 	int a,wide;
 
@@ -316,22 +316,22 @@ WRITE_HANDLER( m92_vram_w )
 
 /*****************************************************************************/
 
-WRITE_HANDLER( m92_pf1_control_w )
+WRITE8_HANDLER( m92_pf1_control_w )
 {
 	pf1_control[offset]=data;
 }
 
-WRITE_HANDLER( m92_pf2_control_w )
+WRITE8_HANDLER( m92_pf2_control_w )
 {
 	pf2_control[offset]=data;
 }
 
-WRITE_HANDLER( m92_pf3_control_w )
+WRITE8_HANDLER( m92_pf3_control_w )
 {
 	pf3_control[offset]=data;
 }
 
-WRITE_HANDLER( m92_master_control_w )
+WRITE8_HANDLER( m92_master_control_w )
 {
 	static int last_pf1_ptr,last_pf2_ptr,last_pf3_ptr;
 
@@ -592,7 +592,7 @@ VIDEO_UPDATE( m92 )
 {
 	/* Screen refresh is handled by raster interrupt routine, here
 		we just check the keyboard */
-	if (keyboard_pressed_memory(KEYCODE_F1)) {
+	if (code_pressed_memory(KEYCODE_F1)) {
 		m92_raster_enable ^= 1;
 		if (m92_raster_enable)
 			usrintf_showmessage("Raster IRQ enabled");

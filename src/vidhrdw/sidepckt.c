@@ -86,7 +86,7 @@ VIDEO_START( sidepckt )
 
 ***************************************************************************/
 
-WRITE_HANDLER( sidepckt_videoram_w )
+WRITE8_HANDLER( sidepckt_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -95,7 +95,7 @@ WRITE_HANDLER( sidepckt_videoram_w )
 	}
 }
 
-WRITE_HANDLER( sidepckt_colorram_w )
+WRITE8_HANDLER( sidepckt_colorram_w )
 {
 	if (colorram[offset] != data)
 	{
@@ -104,7 +104,7 @@ WRITE_HANDLER( sidepckt_colorram_w )
 	}
 }
 
-WRITE_HANDLER( sidepckt_flipscreen_w )
+WRITE8_HANDLER( sidepckt_flipscreen_w )
 {
 	flipscreen = data;
 	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? TILEMAP_FLIPY : TILEMAP_FLIPX);

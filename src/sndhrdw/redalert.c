@@ -39,37 +39,37 @@ static int c030_data = 0;
 static int sound_register_IC1 = 0;
 static int sound_register_IC2 = 0;
 
-WRITE_HANDLER( redalert_c030_w )
+WRITE8_HANDLER( redalert_c030_w )
 {
 	c030_data = data & 0x3F;
 
 	/* Is this some type of sound command? */
 	if (data & 0x80)
 		/* Cause an NMI on the voice CPU here? */
-		cpu_set_irq_line(2,I8085_RST75_LINE,HOLD_LINE);
+		cpunum_set_input_line(2,I8085_RST75_LINE,HOLD_LINE);
 }
 
-READ_HANDLER( redalert_voicecommand_r )
+READ8_HANDLER( redalert_voicecommand_r )
 {
 	return c030_data;
 }
 
-WRITE_HANDLER( redalert_soundlatch_w )
+WRITE8_HANDLER( redalert_soundlatch_w )
 {
 	/* The byte is connected to Port A of the AY8910 */
 	AY8910_A_input_data = data;
 
 	/* Bit D7 is also connected to the NMI input of the CPU */
 	if ((data & 0x80)!=0x80)
-		cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
+		cpunum_set_input_line(1,INPUT_LINE_NMI,PULSE_LINE);
 }
 
-READ_HANDLER( redalert_AY8910_A_r )
+READ8_HANDLER( redalert_AY8910_A_r )
 {
 	return AY8910_A_input_data;
 }
 
-WRITE_HANDLER( redalert_AY8910_w )
+WRITE8_HANDLER( redalert_AY8910_w )
 {
 	/* BC2 is connected to a pull-up resistor, so BC2=1 always */
 	switch (data)
@@ -95,17 +95,17 @@ WRITE_HANDLER( redalert_AY8910_w )
 	}
 }
 
-READ_HANDLER( redalert_sound_register_IC1_r )
+READ8_HANDLER( redalert_sound_register_IC1_r )
 {
 	return sound_register_IC1;
 }
 
-WRITE_HANDLER( redalert_sound_register_IC2_w )
+WRITE8_HANDLER( redalert_sound_register_IC2_w )
 {
 	sound_register_IC2 = data;
 }
 
-WRITE_HANDLER( redalert_AY8910_B_w )
+WRITE8_HANDLER( redalert_AY8910_B_w )
 {
 	/* I'm fairly certain this port triggers analog sounds */
 	logerror("Port B Trigger: %02X\n",data);

@@ -87,7 +87,7 @@
  *
  *************************************/
 
-WRITE_HANDLER( irobot_nvram_w )
+WRITE8_HANDLER( irobot_nvram_w )
 {
 	generic_nvram[offset] = data & 0x0f;
 }
@@ -100,15 +100,15 @@ WRITE_HANDLER( irobot_nvram_w )
  *
  *************************************/
 
-static WRITE_HANDLER( irobot_clearirq_w )
+static WRITE8_HANDLER( irobot_clearirq_w )
 {
-    cpu_set_irq_line(0, M6809_IRQ_LINE ,CLEAR_LINE);
+    cpunum_set_input_line(0, M6809_IRQ_LINE ,CLEAR_LINE);
 }
 
 
-static WRITE_HANDLER( irobot_clearfirq_w )
+static WRITE8_HANDLER( irobot_clearfirq_w )
 {
-    cpu_set_irq_line(0, M6809_FIRQ_LINE ,CLEAR_LINE);
+    cpunum_set_input_line(0, M6809_FIRQ_LINE ,CLEAR_LINE);
 }
 
 

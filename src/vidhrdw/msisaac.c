@@ -81,38 +81,38 @@ VIDEO_START( msisaac )
 
 ***************************************************************************/
 
-WRITE_HANDLER( msisaac_fg_scrolly_w )
+WRITE8_HANDLER( msisaac_fg_scrolly_w )
 {
 	tilemap_set_scrolly( foreground, 0, data );
 }
 
-WRITE_HANDLER( msisaac_fg_scrollx_w )
+WRITE8_HANDLER( msisaac_fg_scrollx_w )
 {
 	tilemap_set_scrollx( foreground, 0, 9+data );
 }
 
-WRITE_HANDLER( msisaac_bg2_scrolly_w )
+WRITE8_HANDLER( msisaac_bg2_scrolly_w )
 {
 	tilemap_set_scrolly( background2, 0, data );
 }
 
-WRITE_HANDLER( msisaac_bg2_scrollx_w )
+WRITE8_HANDLER( msisaac_bg2_scrollx_w )
 {
 	tilemap_set_scrollx( background2, 0, 9+2+data );
 }
 
-WRITE_HANDLER( msisaac_bg_scrolly_w )
+WRITE8_HANDLER( msisaac_bg_scrolly_w )
 {
 	tilemap_set_scrolly( background, 0, data );
 }
 
-WRITE_HANDLER( msisaac_bg_scrollx_w )
+WRITE8_HANDLER( msisaac_bg_scrollx_w )
 {
 	tilemap_set_scrollx( background, 0, 9+4+data );
 }
 
 
-WRITE_HANDLER( msisaac_textbank1_w )
+WRITE8_HANDLER( msisaac_textbank1_w )
 {
 	if( textbank1!=data )
 	{
@@ -121,7 +121,7 @@ WRITE_HANDLER( msisaac_textbank1_w )
 	}
 }
 
-WRITE_HANDLER( msisaac_bg2_textbank_w )
+WRITE8_HANDLER( msisaac_bg2_textbank_w )
 {
 	if( bg2_textbank != data )
 	{
@@ -136,7 +136,7 @@ WRITE_HANDLER( msisaac_bg2_textbank_w )
 	}
 }
 
-WRITE_HANDLER( msisaac_bg_videoram_w )
+WRITE8_HANDLER( msisaac_bg_videoram_w )
 {
 	if( msisaac_videoram[offset]!=data )
 	{
@@ -145,7 +145,7 @@ WRITE_HANDLER( msisaac_bg_videoram_w )
 	}
 }
 
-WRITE_HANDLER( msisaac_bg2_videoram_w )
+WRITE8_HANDLER( msisaac_bg2_videoram_w )
 {
 	if( msisaac_videoram2[offset]!=data )
 	{
@@ -154,7 +154,7 @@ WRITE_HANDLER( msisaac_bg2_videoram_w )
 	}
 }
 
-WRITE_HANDLER( msisaac_fg_videoram_w )
+WRITE8_HANDLER( msisaac_fg_videoram_w )
 {
 	if( videoram[offset]!=data )
 	{

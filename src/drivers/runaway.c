@@ -21,16 +21,16 @@ extern VIDEO_UPDATE( qwak );
 extern UINT8* runaway_video_ram;
 extern UINT8* runaway_sprite_ram;
 
-extern WRITE_HANDLER( runaway_paletteram_w );
-extern WRITE_HANDLER( runaway_video_ram_w );
-extern WRITE_HANDLER( runaway_tile_bank_w );
+extern WRITE8_HANDLER( runaway_paletteram_w );
+extern WRITE8_HANDLER( runaway_video_ram_w );
+extern WRITE8_HANDLER( runaway_tile_bank_w );
 
 
 static void interrupt_callback(int scanline)
 {
 	/* assume Centipede-style interrupt timing */
 
-	cpu_set_irq_line(0, 0, (scanline & 32) ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(0, 0, (scanline & 32) ? ASSERT_LINE : CLEAR_LINE);
 
 	scanline += 32;
 
@@ -49,7 +49,7 @@ static MACHINE_INIT( runaway )
 }
 
 
-static READ_HANDLER( runaway_input_r )
+static READ8_HANDLER( runaway_input_r )
 {
 	UINT8 val = 0;
 
@@ -66,21 +66,21 @@ static READ_HANDLER( runaway_input_r )
 }
 
 
-static READ_HANDLER( runaway_pot_r )
+static READ8_HANDLER( runaway_pot_r )
 {
 	return (readinputport(4) << (7 - offset)) & 0x80;
 }
 
 
-static WRITE_HANDLER( runaway_led_w )
+static WRITE8_HANDLER( runaway_led_w )
 {
 	set_led_status(offset, ~data & 1);
 }
 
 
-static WRITE_HANDLER( runaway_irq_ack_w )
+static WRITE8_HANDLER( runaway_irq_ack_w )
 {
-	cpu_set_irq_line(0, 0, CLEAR_LINE);
+	cpunum_set_input_line(0, 0, CLEAR_LINE);
 }
 
 

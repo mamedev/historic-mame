@@ -442,11 +442,11 @@ DRIVER_INIT( mktunit )
 	init_tunit_generic(SOUND_ADPCM);
 
 	/* protection */
-	install_mem_read16_handler (0, 0x1b00000, 0x1b6ffff, mk_prot_r);
-	install_mem_write16_handler(0, 0x1b00000, 0x1b6ffff, mk_prot_w);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x1b00000, 0x1b6ffff, 0, 0, mk_prot_r);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x1b00000, 0x1b6ffff, 0, 0, mk_prot_w);
 
 	/* sound chip protection (hidden RAM) */
-	install_mem_write_handler(1, 0xfb9c, 0xfbc6, MWA8_RAM);
+	memory_install_write8_handler(1, ADDRESS_SPACE_PROGRAM, 0xfb9c, 0xfbc6, 0, 0, MWA8_RAM);
 }
 
 static void init_nbajam_common(int te_protection)
@@ -458,23 +458,23 @@ static void init_nbajam_common(int te_protection)
 	if (!te_protection)
 	{
 		nbajam_prot_table = nbajam_prot_values;
-		install_mem_read16_handler (0, 0x1b14020, 0x1b2503f, nbajam_prot_r);
-		install_mem_write16_handler(0, 0x1b14020, 0x1b2503f, nbajam_prot_w);
+		memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x1b14020, 0x1b2503f, 0, 0, nbajam_prot_r);
+		memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x1b14020, 0x1b2503f, 0, 0, nbajam_prot_w);
 	}
 	else
 	{
 		nbajam_prot_table = nbajamte_prot_values;
-		install_mem_read16_handler (0, 0x1b15f40, 0x1b37f5f, nbajam_prot_r);
-		install_mem_read16_handler (0, 0x1b95f40, 0x1bb7f5f, nbajam_prot_r);
-		install_mem_write16_handler(0, 0x1b15f40, 0x1b37f5f, nbajam_prot_w);
-		install_mem_write16_handler(0, 0x1b95f40, 0x1bb7f5f, nbajam_prot_w);
+		memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x1b15f40, 0x1b37f5f, 0, 0, nbajam_prot_r);
+		memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x1b95f40, 0x1bb7f5f, 0, 0, nbajam_prot_r);
+		memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x1b15f40, 0x1b37f5f, 0, 0, nbajam_prot_w);
+		memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x1b95f40, 0x1bb7f5f, 0, 0, nbajam_prot_w);
 	}
 
 	/* sound chip protection (hidden RAM) */
 	if (!te_protection)
-		install_mem_write_handler(1, 0xfbaa, 0xfbd4, MWA8_RAM);
+		memory_install_write8_handler(1, ADDRESS_SPACE_PROGRAM, 0xfbaa, 0xfbd4, 0, 0, MWA8_RAM);
 	else
-		install_mem_write_handler(1, 0xfbec, 0xfc16, MWA8_RAM);
+		memory_install_write8_handler(1, ADDRESS_SPACE_PROGRAM, 0xfbec, 0xfc16, 0, 0, MWA8_RAM);
 }
 
 DRIVER_INIT( nbajam )
@@ -493,18 +493,18 @@ DRIVER_INIT( jdreddp )
 	init_tunit_generic(SOUND_ADPCM_LARGE);
 
 	/* looks like the watchdog needs to be disabled */
-	install_mem_write16_handler(0, 0x01d81060, 0x01d8107f, MWA16_NOP);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x01d81060, 0x01d8107f, 0, 0, MWA16_NOP);
 
 	/* protection */
-	install_mem_read16_handler (0, 0x1b00000, 0x1bfffff, jdredd_prot_r);
-	install_mem_write16_handler(0, 0x1b00000, 0x1bfffff, jdredd_prot_w);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x1b00000, 0x1bfffff, 0, 0, jdredd_prot_r);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x1b00000, 0x1bfffff, 0, 0, jdredd_prot_w);
 
 	/* sound chip protection (hidden RAM) */
-	install_mem_write_handler(1, 0xfbcf, 0xfbf9, MWA8_RAM);
+	memory_install_write8_handler(1, ADDRESS_SPACE_PROGRAM, 0xfbcf, 0xfbf9, 0, 0, MWA8_RAM);
 
 #if ENABLE_ALL_JDREDD_LEVELS
 	/* how about the final levels? */
-	jdredd_hack = install_mem_read16_handler(0, 0xFFBA7FF0, 0xFFBA7FFf, jdredd_hack_r);
+	jdredd_hack = memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xFFBA7FF0, 0xFFBA7FFf, 0, 0, jdredd_hack_r);
 #endif
 }
 
@@ -525,13 +525,13 @@ DRIVER_INIT( mk2 )
 	midtunit_gfx_rom_large = 1;
 
 	/* protection */
-	install_mem_write16_handler(0, 0x00f20c60, 0x00f20c7f, mk2_prot_w);
-	install_mem_write16_handler(0, 0x00f42820, 0x00f4283f, mk2_prot_w);
-	install_mem_read16_handler (0, 0x01a190e0, 0x01a190ff, mk2_prot_r);
-	install_mem_read16_handler (0, 0x01a191c0, 0x01a191df, mk2_prot_shift_r);
-	install_mem_read16_handler (0, 0x01a3d0c0, 0x01a3d0ff, mk2_prot_r);
-	install_mem_read16_handler (0, 0x01d9d1e0, 0x01d9d1ff, mk2_prot_const_r);
-	install_mem_read16_handler (0, 0x01def920, 0x01def93f, mk2_prot_const_r);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x00f20c60, 0x00f20c7f, 0, 0, mk2_prot_w);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x00f42820, 0x00f4283f, 0, 0, mk2_prot_w);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x01a190e0, 0x01a190ff, 0, 0, mk2_prot_r);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x01a191c0, 0x01a191df, 0, 0, mk2_prot_shift_r);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x01a3d0c0, 0x01a3d0ff, 0, 0, mk2_prot_r);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x01d9d1e0, 0x01d9d1ff, 0, 0, mk2_prot_const_r);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x01def920, 0x01def93f, 0, 0, mk2_prot_const_r);
 }
 
 

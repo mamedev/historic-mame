@@ -90,7 +90,7 @@ PALETTE_INIT( ironhors )
 	}
 }
 
-WRITE_HANDLER( ironhors_videoram_w )
+WRITE8_HANDLER( ironhors_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -99,7 +99,7 @@ WRITE_HANDLER( ironhors_videoram_w )
 	}
 }
 
-WRITE_HANDLER( ironhors_colorram_w )
+WRITE8_HANDLER( ironhors_colorram_w )
 {
 	if (colorram[offset] != data)
 	{
@@ -108,7 +108,7 @@ WRITE_HANDLER( ironhors_colorram_w )
 	}
 }
 
-WRITE_HANDLER( ironhors_charbank_w )
+WRITE8_HANDLER( ironhors_charbank_w )
 {
 	if (charbank != (data & 0x03))
 	{
@@ -121,7 +121,7 @@ WRITE_HANDLER( ironhors_charbank_w )
 	/* other bits unknown */
 }
 
-WRITE_HANDLER( ironhors_palettebank_w )
+WRITE8_HANDLER( ironhors_palettebank_w )
 {
 	if (palettebank != (data & 0x07))
 	{
@@ -137,7 +137,7 @@ WRITE_HANDLER( ironhors_palettebank_w )
 	if (data & 0x88) usrintf_showmessage("ironhors_palettebank_w %02x",data);
 }
 
-WRITE_HANDLER( ironhors_flipscreen_w )
+WRITE8_HANDLER( ironhors_flipscreen_w )
 {
 	if (flip_screen != (~data & 0x08))
 	{

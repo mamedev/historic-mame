@@ -105,30 +105,30 @@ void YM3812_sh_reset(void)
 		YM3812ResetChip(i);
 }
 
-WRITE_HANDLER( YM3812_control_port_0_w ) {
+WRITE8_HANDLER( YM3812_control_port_0_w ) {
 	YM3812Write(0, 0, data);
 }
-WRITE_HANDLER( YM3812_write_port_0_w ) {
+WRITE8_HANDLER( YM3812_write_port_0_w ) {
 	YM3812Write(0, 1, data);
 }
-READ_HANDLER( YM3812_status_port_0_r ) {
+READ8_HANDLER( YM3812_status_port_0_r ) {
 	return YM3812Read(0, 0);
 }
-READ_HANDLER( YM3812_read_port_0_r ) {
+READ8_HANDLER( YM3812_read_port_0_r ) {
 	return YM3812Read(0, 1);
 }
 
 
-WRITE_HANDLER( YM3812_control_port_1_w ) {
+WRITE8_HANDLER( YM3812_control_port_1_w ) {
 	YM3812Write(1, 0, data);
 }
-WRITE_HANDLER( YM3812_write_port_1_w ) {
+WRITE8_HANDLER( YM3812_write_port_1_w ) {
 	YM3812Write(1, 1, data);
 }
-READ_HANDLER( YM3812_status_port_1_r ) {
+READ8_HANDLER( YM3812_status_port_1_r ) {
 	return YM3812Read(1, 0);
 }
-READ_HANDLER( YM3812_read_port_1_r ) {
+READ8_HANDLER( YM3812_read_port_1_r ) {
 	return YM3812Read(1, 1);
 }
 
@@ -220,30 +220,30 @@ void YM3526_sh_reset(void)
 		YM3526ResetChip(i);
 }
 
-WRITE_HANDLER( YM3526_control_port_0_w ) {
+WRITE8_HANDLER( YM3526_control_port_0_w ) {
 	YM3526Write(0, 0, data);
 }
-WRITE_HANDLER( YM3526_write_port_0_w ) {
+WRITE8_HANDLER( YM3526_write_port_0_w ) {
 	YM3526Write(0, 1, data);
 }
-READ_HANDLER( YM3526_status_port_0_r ) {
+READ8_HANDLER( YM3526_status_port_0_r ) {
 	return YM3526Read(0, 0);
 }
-READ_HANDLER( YM3526_read_port_0_r ) {
+READ8_HANDLER( YM3526_read_port_0_r ) {
 	return YM3526Read(0, 1);
 }
 
 
-WRITE_HANDLER( YM3526_control_port_1_w ) {
+WRITE8_HANDLER( YM3526_control_port_1_w ) {
 	YM3526Write(1, 0, data);
 }
-WRITE_HANDLER( YM3526_write_port_1_w ) {
+WRITE8_HANDLER( YM3526_write_port_1_w ) {
 	YM3526Write(1, 1, data);
 }
-READ_HANDLER( YM3526_status_port_1_r ) {
+READ8_HANDLER( YM3526_status_port_1_r ) {
 	return YM3526Read(1, 0);
 }
-READ_HANDLER( YM3526_read_port_1_r ) {
+READ8_HANDLER( YM3526_read_port_1_r ) {
 	return YM3526Read(1, 1);
 }
 
@@ -368,30 +368,30 @@ void Y8950_sh_reset(void)
 		Y8950ResetChip(i);
 }
 
-WRITE_HANDLER( Y8950_control_port_0_w ) {
+WRITE8_HANDLER( Y8950_control_port_0_w ) {
 	Y8950Write(0, 0, data);
 }
-WRITE_HANDLER( Y8950_write_port_0_w ) {
+WRITE8_HANDLER( Y8950_write_port_0_w ) {
 	Y8950Write(0, 1, data);
 }
-READ_HANDLER( Y8950_status_port_0_r ) {
+READ8_HANDLER( Y8950_status_port_0_r ) {
 	return Y8950Read(0, 0);
 }
-READ_HANDLER( Y8950_read_port_0_r ) {
+READ8_HANDLER( Y8950_read_port_0_r ) {
 	return Y8950Read(0, 1);
 }
 
 
-WRITE_HANDLER( Y8950_control_port_1_w ) {
+WRITE8_HANDLER( Y8950_control_port_1_w ) {
 	Y8950Write(1, 0, data);
 }
-WRITE_HANDLER( Y8950_write_port_1_w ) {
+WRITE8_HANDLER( Y8950_write_port_1_w ) {
 	Y8950Write(1, 1, data);
 }
-READ_HANDLER( Y8950_status_port_1_r ) {
+READ8_HANDLER( Y8950_status_port_1_r ) {
 	return Y8950Read(1, 0);
 }
-READ_HANDLER( Y8950_read_port_1_r ) {
+READ8_HANDLER( Y8950_read_port_1_r ) {
 	return Y8950Read(1, 1);
 }
 

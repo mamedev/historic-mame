@@ -52,16 +52,16 @@ static unsigned char pia1_ca1 = 0 ;
 static unsigned char dac_volume = 0 ;
 static unsigned char dac_enable = 0 ;
 
-READ_HANDLER( nyny_videoram0_r );
-WRITE_HANDLER( nyny_videoram0_w );
-READ_HANDLER( nyny_videoram1_r );
-WRITE_HANDLER( nyny_videoram1_w );
+READ8_HANDLER( nyny_videoram0_r );
+WRITE8_HANDLER( nyny_videoram0_w );
+READ8_HANDLER( nyny_videoram1_r );
+WRITE8_HANDLER( nyny_videoram1_w );
 
-READ_HANDLER( nyny_colourram0_r );
-WRITE_HANDLER( nyny_colourram0_w );
-READ_HANDLER( nyny_colourram1_r );
-WRITE_HANDLER( nyny_colourram1_w );
-WRITE_HANDLER( nyny_flipscreen_w ) ;
+READ8_HANDLER( nyny_colourram0_r );
+WRITE8_HANDLER( nyny_colourram0_w );
+READ8_HANDLER( nyny_colourram1_r );
+WRITE8_HANDLER( nyny_colourram1_w );
+WRITE8_HANDLER( nyny_flipscreen_w ) ;
 
 
 
@@ -75,7 +75,7 @@ INTERRUPT_GEN( nyny_interrupt )
 	pia_0_ca1_w(0,input_port_5_r(0)&0x01);
 	pia_0_ca2_w(0,input_port_6_r(0)&0x01);
 
-	cpu_set_irq_line(0, 0, HOLD_LINE);
+	cpunum_set_input_line(0, 0, HOLD_LINE);
 }
 
 /***************************************************************************
@@ -84,29 +84,29 @@ INTERRUPT_GEN( nyny_interrupt )
 
 void cpu0_irq(int state)
 {
-	cpu_set_irq_line(0,M6809_IRQ_LINE,state ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(0,M6809_IRQ_LINE,state ? ASSERT_LINE : CLEAR_LINE);
 }
 
 
-static READ_HANDLER( pia1_ca1_r )
+static READ8_HANDLER( pia1_ca1_r )
 {
 	return pia1_ca1;
 }
 
 
-static WRITE_HANDLER( pia1_porta_w )
+static WRITE8_HANDLER( pia1_porta_w )
 {
 	/* bits 0-7 control a timer (low 8 bits) - is this for a starfield? */
 }
 
-static WRITE_HANDLER( pia1_portb_w )
+static WRITE8_HANDLER( pia1_portb_w )
 {
 	/* bits 0-3 control a timer (high 4 bits) - is this for a starfield? */
 	/* bit 4 enables the starfield? */
 
 	/* bits 5-7 go to the music board */
 	soundlatch2_w(0,(data & 0x60) >> 5);
-	cpu_set_irq_line(2,M6802_IRQ_LINE,(data & 0x80) ? CLEAR_LINE : ASSERT_LINE);
+	cpunum_set_input_line(2,M6802_IRQ_LINE,(data & 0x80) ? CLEAR_LINE : ASSERT_LINE);
 }
 
 static struct pia6821_interface pia0_intf =
@@ -133,14 +133,14 @@ MACHINE_INIT( nyny )
 
 
 
-WRITE_HANDLER( ay8910_porta_w )
+WRITE8_HANDLER( ay8910_porta_w )
 {
 	/* dac sounds like crap most likely bad implementation */
 	dac_volume = data ;
 	DAC_1_data_w( 0, dac_enable * dac_volume ) ;
 }
 
-WRITE_HANDLER( ay8910_portb_w )
+WRITE8_HANDLER( ay8910_portb_w )
 {
 	int v = (data & 7) << 5 ;
 	DAC_0_data_w( 0, v ) ;
@@ -149,21 +149,21 @@ WRITE_HANDLER( ay8910_portb_w )
 	DAC_1_data_w( 0, dac_enable * dac_volume ) ;
 }
 
-WRITE_HANDLER( shared_w_irq )
+WRITE8_HANDLER( shared_w_irq )
 {
 	soundlatch_w(0,data);
-	cpu_set_irq_line(1,M6802_IRQ_LINE,HOLD_LINE);
+	cpunum_set_input_line(1,M6802_IRQ_LINE,HOLD_LINE);
 }
 
 
 static unsigned char snd_w = 0;
 
-READ_HANDLER( snd_answer_r )
+READ8_HANDLER( snd_answer_r )
 {
 	return snd_w;
 }
 
-WRITE_HANDLER( snd_answer_w )
+WRITE8_HANDLER( snd_answer_w )
 {
 	snd_w = data;
 }

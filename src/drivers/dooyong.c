@@ -47,9 +47,9 @@ extern unsigned char *lastday_txvideoram;
 extern unsigned char *lastday_bgscroll,*lastday_fgscroll,*bluehawk_fg2scroll;
 extern data16_t *rshark_scroll1,*rshark_scroll2,*rshark_scroll3,*rshark_scroll4;
 
-WRITE_HANDLER( lastday_ctrl_w );
-WRITE_HANDLER( pollux_ctrl_w );
-WRITE_HANDLER( primella_ctrl_w );
+WRITE8_HANDLER( lastday_ctrl_w );
+WRITE8_HANDLER( pollux_ctrl_w );
+WRITE8_HANDLER( primella_ctrl_w );
 WRITE16_HANDLER( rshark_ctrl_w );
 VIDEO_UPDATE( lastday );
 VIDEO_UPDATE( gulfstrm );
@@ -62,7 +62,7 @@ VIDEO_EOF( rshark );
 
 
 
-static WRITE_HANDLER( lastday_bankswitch_w )
+static WRITE8_HANDLER( lastday_bankswitch_w )
 {
  	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -73,7 +73,7 @@ static WRITE_HANDLER( lastday_bankswitch_w )
 if (data & 0xf8) usrintf_showmessage("bankswitch %02x",data);
 }
 
-static WRITE_HANDLER( flip_screen_w )
+static WRITE8_HANDLER( flip_screen_w )
 {
 	flip_screen_set(data);
 }
@@ -877,10 +877,10 @@ static struct GfxDecodeInfo rshark_gfxdecodeinfo[] =
 
 static void irqhandler(int irq)
 {
-	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
-READ_HANDLER( unk_r )
+READ8_HANDLER( unk_r )
 {
 	return 0;
 }
@@ -1070,9 +1070,9 @@ MACHINE_DRIVER_END
 static INTERRUPT_GEN( rshark_interrupt )
 {
 	if (cpu_getiloops() == 0)
-		cpu_set_irq_line(0, 5, HOLD_LINE);
+		cpunum_set_input_line(0, 5, HOLD_LINE);
 	else
-		cpu_set_irq_line(0, 6, HOLD_LINE);
+		cpunum_set_input_line(0, 6, HOLD_LINE);
 }
 
 static MACHINE_DRIVER_START( rshark )

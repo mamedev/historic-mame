@@ -34,23 +34,23 @@ extern size_t raiders5_fgram_size;
 static UINT8 *raiders5_shared_workram;
 
 
-WRITE_HANDLER( raiders5_scroll_x_w );
-WRITE_HANDLER( raiders5_scroll_y_w );
-WRITE_HANDLER( raiders5_flipscreen_w );
+WRITE8_HANDLER( raiders5_scroll_x_w );
+WRITE8_HANDLER( raiders5_scroll_y_w );
+WRITE8_HANDLER( raiders5_flipscreen_w );
 
-READ_HANDLER( raiders5_videoram_r );
-WRITE_HANDLER( raiders5_videoram_w );
-READ_HANDLER( raiders5_fgram_r );
-WRITE_HANDLER( raiders5_fgram_w );
+READ8_HANDLER( raiders5_videoram_r );
+WRITE8_HANDLER( raiders5_videoram_w );
+READ8_HANDLER( raiders5_fgram_r );
+WRITE8_HANDLER( raiders5_fgram_w );
 
-WRITE_HANDLER( raiders5_paletteram_w );
+WRITE8_HANDLER( raiders5_paletteram_w );
 
-WRITE_HANDLER( raiders5_shared_workram_w )
+WRITE8_HANDLER( raiders5_shared_workram_w )
 {
 	raiders5_shared_workram[offset] = data;
 }
 
-READ_HANDLER( raiders5_shared_workram_r )
+READ8_HANDLER( raiders5_shared_workram_r )
 {
 	return raiders5_shared_workram[offset];
 }

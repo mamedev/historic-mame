@@ -29,19 +29,19 @@ extern int m107_raster_irq_position,m107_sprite_list;
 #define m107_IRQ_2 ((m107_irq_vectorbase+8)/4) /* Raster interrupt */
 #define m107_IRQ_3 ((m107_irq_vectorbase+12)/4) /* ??? */
 
-WRITE_HANDLER( m107_spritebuffer_w );
+WRITE8_HANDLER( m107_spritebuffer_w );
 void m107_vh_raster_partial_refresh(struct mame_bitmap *bitmap,int start_line,int end_line);
 void m107_screenrefresh(struct mame_bitmap *bitmap,const struct rectangle *clip);
 VIDEO_UPDATE( m107 );
 VIDEO_UPDATE( dsoccr );
 VIDEO_START( m107 );
-WRITE_HANDLER( m107_control_w );
-WRITE_HANDLER( m107_vram_w );
-READ_HANDLER( m107_vram_r );
+WRITE8_HANDLER( m107_control_w );
+WRITE8_HANDLER( m107_vram_w );
+READ8_HANDLER( m107_vram_r );
 
 /*****************************************************************************/
 
-static WRITE_HANDLER( bankswitch_w )
+static WRITE8_HANDLER( bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -49,13 +49,13 @@ static WRITE_HANDLER( bankswitch_w )
 	cpu_setbank(1,&RAM[0x100000 + ((data&0x7)*0x10000)]);
 }
 
-static READ_HANDLER( m107_port_4_r )
+static READ8_HANDLER( m107_port_4_r )
 {
 	if (m107_vblank) return readinputport(4) | 0;
 	return readinputport(4) | 0x80;
 }
 
-static WRITE_HANDLER( m107_coincounter_w )
+static WRITE8_HANDLER( m107_coincounter_w )
 {
 	if (offset==0) {
 		coin_counter_w(0,data & 0x01);
@@ -81,17 +81,17 @@ static void setvector_callback(int param)
 	}
 
 	if (irqvector & 0x2)		/* YM2151 has precedence */
-		cpu_irq_line_vector_w(1,0,0x18);
+		cpunum_set_input_line_vector(1,0,0x18);
 	else if (irqvector & 0x1)	/* V30 */
-		cpu_irq_line_vector_w(1,0,0x19);
+		cpunum_set_input_line_vector(1,0,0x19);
 
 	if (irqvector == 0)	/* no IRQs pending */
-		cpu_set_irq_line(1,0,CLEAR_LINE);
+		cpunum_set_input_line(1,0,CLEAR_LINE);
 	else	/* IRQ pending */
-		cpu_set_irq_line(1,0,ASSERT_LINE);
+		cpunum_set_input_line(1,0,ASSERT_LINE);
 }
 
-static WRITE_HANDLER( m92_soundlatch_w )
+static WRITE8_HANDLER( m92_soundlatch_w )
 {
 	if (offset==0)
 	{
@@ -103,12 +103,12 @@ static WRITE_HANDLER( m92_soundlatch_w )
 
 static int sound_status;
 
-static READ_HANDLER( m92_sound_status_r )
+static READ8_HANDLER( m92_sound_status_r )
 {
 	return 0xff;
 }
 
-static READ_HANDLER( m92_soundlatch_r )
+static READ8_HANDLER( m92_soundlatch_r )
 {
 	if (offset == 0)
 	{
@@ -119,7 +119,7 @@ static READ_HANDLER( m92_soundlatch_r )
 	else return 0xff;
 }
 
-static WRITE_HANDLER( m92_sound_irq_ack_w )
+static WRITE8_HANDLER( m92_sound_irq_ack_w )
 {
 	if (offset == 0)
 	{
@@ -127,7 +127,7 @@ static WRITE_HANDLER( m92_sound_irq_ack_w )
 	}
 }
 
-static WRITE_HANDLER( m92_sound_status_w )
+static WRITE8_HANDLER( m92_sound_status_w )
 {
 	if (offset == 0)
 	{
@@ -465,7 +465,7 @@ static INTERRUPT_GEN( m107_interrupt )
 {
 	m107_vblank=0;
 	m107_vh_raster_partial_refresh(Machine->scrbitmap,0,248);
-	cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, m107_IRQ_0); /* VBL */
+	cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, m107_IRQ_0); /* VBL */
 }
 
 static INTERRUPT_GEN( m107_raster_interrupt )
@@ -473,7 +473,7 @@ static INTERRUPT_GEN( m107_raster_interrupt )
 	static int last_line=0;
 	int line = 256 - cpu_getiloops();
 
-	if (keyboard_pressed_memory(KEYCODE_F1)) {
+	if (code_pressed_memory(KEYCODE_F1)) {
 		raster_enable ^= 1;
 		if (raster_enable)
 			usrintf_showmessage("Raster IRQ enabled");
@@ -487,13 +487,13 @@ static INTERRUPT_GEN( m107_raster_interrupt )
 			m107_vh_raster_partial_refresh(Machine->scrbitmap,last_line,line);
 		last_line=line+1;
 
-		cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, m107_IRQ_2);
+		cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, m107_IRQ_2);
 	}
 
 	/* Kludge to get Fire Barrel running */
 	else if (line==118)
 	{
-		cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, m107_IRQ_3);
+		cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, m107_IRQ_3);
 	}
 
 	/* Redraw screen, then set vblank and trigger the VBL interrupt */
@@ -502,7 +502,7 @@ static INTERRUPT_GEN( m107_raster_interrupt )
 			m107_vh_raster_partial_refresh(Machine->scrbitmap,last_line,248);
 		last_line=0;
 		m107_vblank=1;
-		cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, m107_IRQ_0);
+		cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, m107_IRQ_0);
 	}
 
 	/* End of vblank */

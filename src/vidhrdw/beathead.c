@@ -121,7 +121,7 @@ WRITE32_HANDLER( beathead_finescroll_w )
 	if ((oldword & 8) && !(newword & 8) && current_scanline != 0)
 	{
 		logerror("Suspending time! (scanline = %d)\n", current_scanline);
-		cpu_set_halt_line(0, ASSERT_LINE);
+		cpunum_set_input_line(0, INPUT_LINE_HALT, ASSERT_LINE);
 	}
 }
 

@@ -140,10 +140,10 @@ reg: 0->1 (main->2nd) /     : (1->0) 2nd->main :
 #include "machine/tait8741.h"
 
 
-extern WRITE_HANDLER( gsword_charbank_w );
-extern WRITE_HANDLER( gsword_videoctrl_w );
-extern WRITE_HANDLER( gsword_videoram_w );
-extern WRITE_HANDLER( gsword_scroll_w );
+extern WRITE8_HANDLER( gsword_charbank_w );
+extern WRITE8_HANDLER( gsword_videoctrl_w );
+extern WRITE8_HANDLER( gsword_videoram_w );
+extern WRITE8_HANDLER( gsword_scroll_w );
 
 extern PALETTE_INIT( josvolly );
 extern PALETTE_INIT( gsword );
@@ -175,7 +175,7 @@ static int gsword_coins_in(void)
 }
 #endif
 
-static READ_HANDLER( gsword_8741_2_r )
+static READ8_HANDLER( gsword_8741_2_r )
 {
 	switch (offset)
 	{
@@ -192,7 +192,7 @@ static READ_HANDLER( gsword_8741_2_r )
 	return 0;
 }
 
-static READ_HANDLER( gsword_8741_3_r )
+static READ8_HANDLER( gsword_8741_3_r )
 {
 	switch (offset)
 	{
@@ -233,11 +233,11 @@ static INTERRUPT_GEN( gsword_snd_interrupt )
 	if( (gsword_nmi_count+=gsword_nmi_step) >= 4)
 	{
 		gsword_nmi_count = 0;
-		cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 	}
 }
 
-static WRITE_HANDLER( gsword_nmi_set_w )
+static WRITE8_HANDLER( gsword_nmi_set_w )
 {
 	switch(data)
 	{
@@ -259,37 +259,37 @@ static WRITE_HANDLER( gsword_nmi_set_w )
 	logerror("NMI controll %02x\n",data);
 }
 
-static WRITE_HANDLER( gsword_AY8910_control_port_0_w )
+static WRITE8_HANDLER( gsword_AY8910_control_port_0_w )
 {
 	AY8910_control_port_0_w(offset,data);
 	fake8910_0 = data;
 }
-static WRITE_HANDLER( gsword_AY8910_control_port_1_w )
+static WRITE8_HANDLER( gsword_AY8910_control_port_1_w )
 {
 	AY8910_control_port_1_w(offset,data);
 	fake8910_1 = data;
 }
 
-static READ_HANDLER( gsword_fake_0_r )
+static READ8_HANDLER( gsword_fake_0_r )
 {
 	return fake8910_0+1;
 }
-static READ_HANDLER( gsword_fake_1_r )
+static READ8_HANDLER( gsword_fake_1_r )
 {
 	return fake8910_1+1;
 }
 
-WRITE_HANDLER( gsword_adpcm_data_w )
+WRITE8_HANDLER( gsword_adpcm_data_w )
 {
 	MSM5205_data_w (0,data & 0x0f); /* bit 0..3 */
 	MSM5205_reset_w(0,(data>>5)&1); /* bit 5    */
 	MSM5205_vclk_w(0,(data>>4)&1);  /* bit 4    */
 }
 
-WRITE_HANDLER( adpcm_soundcommand_w )
+WRITE8_HANDLER( adpcm_soundcommand_w )
 {
 	soundlatch_w(0,data);
-	cpu_set_nmi_line(2, PULSE_LINE);
+	cpunum_set_input_line(2, INPUT_LINE_NMI, PULSE_LINE);
 }
 
 static ADDRESS_MAP_START( gsword_readmem, ADDRESS_SPACE_PROGRAM, 8 )

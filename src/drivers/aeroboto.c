@@ -32,16 +32,16 @@ extern data8_t *aeroboto_starx, *aeroboto_stary, *aeroboto_bgcolor;
 VIDEO_START( aeroboto );
 VIDEO_UPDATE( aeroboto );
 
-READ_HANDLER( aeroboto_in0_r );
-WRITE_HANDLER( aeroboto_3000_w );
-WRITE_HANDLER( aeroboto_videoram_w );
-WRITE_HANDLER( aeroboto_tilecolor_w );
+READ8_HANDLER( aeroboto_in0_r );
+WRITE8_HANDLER( aeroboto_3000_w );
+WRITE8_HANDLER( aeroboto_videoram_w );
+WRITE8_HANDLER( aeroboto_tilecolor_w );
 
 static data8_t *aeroboto_mainram;
 static int disable_irq = 0;
 
 
-static READ_HANDLER( aeroboto_201_r )
+static READ8_HANDLER( aeroboto_201_r )
 {
 	/* if you keep a button pressed during boot, the game will expect this */
 	/* serie of values to be returned from 3004, and display "PASS 201" if it is */
@@ -55,18 +55,18 @@ static READ_HANDLER( aeroboto_201_r )
 static INTERRUPT_GEN( aeroboto_interrupt )
 {
 	if (!disable_irq)
-		cpu_set_irq_line(0, 0, HOLD_LINE);
+		cpunum_set_input_line(0, 0, HOLD_LINE);
 	else
 		disable_irq--;
 }
 
-static READ_HANDLER( aeroboto_2973_r )
+static READ8_HANDLER( aeroboto_2973_r )
 {
 	aeroboto_mainram[0x02be] = 0;
 	return(0xff);
 }
 
-static WRITE_HANDLER ( aeroboto_1a2_w )
+static WRITE8_HANDLER ( aeroboto_1a2_w )
 {
 	aeroboto_mainram[0x01a2] = data;
 	if (data) disable_irq = 1;

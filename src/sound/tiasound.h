@@ -37,7 +37,7 @@
 
 void tia_sound_init(int clock, int sample_rate, int gain);
 void tia_process (int param, INT16 *buffer, int length);
-WRITE_HANDLER( tia_sound_w );
+WRITE8_HANDLER( tia_sound_w );
 
 #endif	/* TIASOUND_H */
 

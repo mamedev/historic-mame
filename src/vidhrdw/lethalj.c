@@ -104,7 +104,7 @@ VIDEO_START( lethalj )
 
 static void gen_ext1_int(int param)
 {
-	cpu_set_irq_line(0, 0, ASSERT_LINE);
+	cpunum_set_input_line(0, 0, ASSERT_LINE);
 }
 
 
@@ -164,7 +164,7 @@ WRITE16_HANDLER( lethalj_blitter_w )
 
 	/* clear the IRQ on offset 0 */
 	else if (offset == 0)
-		cpu_set_irq_line(0, 0, CLEAR_LINE);
+		cpunum_set_input_line(0, 0, CLEAR_LINE);
 }
 
 

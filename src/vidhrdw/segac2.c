@@ -426,13 +426,13 @@ VIDEO_UPDATE( segac2 )
 	int y;
 
 #ifdef MAME_DEBUG
-if (keyboard_pressed(KEYCODE_Z)) segac2_bg_palbase ^= 0x40;
-if (keyboard_pressed(KEYCODE_X)) segac2_bg_palbase ^= 0x80;
-if (keyboard_pressed(KEYCODE_C)) segac2_bg_palbase ^= 0x100;
+if (code_pressed(KEYCODE_Z)) segac2_bg_palbase ^= 0x40;
+if (code_pressed(KEYCODE_X)) segac2_bg_palbase ^= 0x80;
+if (code_pressed(KEYCODE_C)) segac2_bg_palbase ^= 0x100;
 
-if (keyboard_pressed(KEYCODE_A)) segac2_sp_palbase ^= 0x40;
-if (keyboard_pressed(KEYCODE_S)) segac2_sp_palbase ^= 0x80;
-if (keyboard_pressed(KEYCODE_D)) segac2_sp_palbase ^= 0x100;
+if (code_pressed(KEYCODE_A)) segac2_sp_palbase ^= 0x40;
+if (code_pressed(KEYCODE_S)) segac2_sp_palbase ^= 0x80;
+if (code_pressed(KEYCODE_D)) segac2_sp_palbase ^= 0x100;
 #endif
 
 #if GEN_TILEMAP_WIP
@@ -464,13 +464,13 @@ VIDEO_UPDATE( megatech )
 	int y;
 
 #if 0
-if (keyboard_pressed(KEYCODE_Z)) segac2_bg_palbase ^= 0x40;
-if (keyboard_pressed(KEYCODE_X)) segac2_bg_palbase ^= 0x80;
-if (keyboard_pressed(KEYCODE_C)) segac2_bg_palbase ^= 0x100;
+if (code_pressed(KEYCODE_Z)) segac2_bg_palbase ^= 0x40;
+if (code_pressed(KEYCODE_X)) segac2_bg_palbase ^= 0x80;
+if (code_pressed(KEYCODE_C)) segac2_bg_palbase ^= 0x100;
 
-if (keyboard_pressed(KEYCODE_A)) segac2_sp_palbase ^= 0x40;
-if (keyboard_pressed(KEYCODE_S)) segac2_sp_palbase ^= 0x80;
-if (keyboard_pressed(KEYCODE_D)) segac2_sp_palbase ^= 0x100;
+if (code_pressed(KEYCODE_A)) segac2_sp_palbase ^= 0x40;
+if (code_pressed(KEYCODE_S)) segac2_sp_palbase ^= 0x80;
+if (code_pressed(KEYCODE_D)) segac2_sp_palbase ^= 0x100;
 #endif
 
 #if GEN_TILEMAP_WIP
@@ -508,13 +508,13 @@ VIDEO_UPDATE( megaplay )
 	int y;
 
 #if 0
-if (keyboard_pressed(KEYCODE_Z)) segac2_bg_palbase ^= 0x40;
-if (keyboard_pressed(KEYCODE_X)) segac2_bg_palbase ^= 0x80;
-if (keyboard_pressed(KEYCODE_C)) segac2_bg_palbase ^= 0x100;
+if (code_pressed(KEYCODE_Z)) segac2_bg_palbase ^= 0x40;
+if (code_pressed(KEYCODE_X)) segac2_bg_palbase ^= 0x80;
+if (code_pressed(KEYCODE_C)) segac2_bg_palbase ^= 0x100;
 
-if (keyboard_pressed(KEYCODE_A)) segac2_sp_palbase ^= 0x40;
-if (keyboard_pressed(KEYCODE_S)) segac2_sp_palbase ^= 0x80;
-if (keyboard_pressed(KEYCODE_D)) segac2_sp_palbase ^= 0x100;
+if (code_pressed(KEYCODE_A)) segac2_sp_palbase ^= 0x40;
+if (code_pressed(KEYCODE_S)) segac2_sp_palbase ^= 0x80;
+if (code_pressed(KEYCODE_D)) segac2_sp_palbase ^= 0x100;
 #endif
 
 #if GEN_TILEMAP_WIP

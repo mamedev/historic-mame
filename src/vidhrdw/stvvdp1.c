@@ -1382,7 +1382,7 @@ void stv_vdp1_process_list(struct mame_bitmap *bitmap, const struct rectangle *c
 
 	/* not here! this is done every frame drawn even if the cpu isn't running eg in the debugger */
 //	if(!(stv_scu[40] & 0x2000)) /*Sprite draw end irq*/
-//		cpu_set_irq_line_and_vector(0, 2, HOLD_LINE , 0x4d);
+//		cpunum_set_input_line_and_vector(0, 2, HOLD_LINE , 0x4d);
 
 	if (vdp1_sprite_log) logerror ("End of list processing!\n");
 }
@@ -1390,10 +1390,10 @@ void stv_vdp1_process_list(struct mame_bitmap *bitmap, const struct rectangle *c
 void video_update_vdp1(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 //	int enable;
-//	if (keyboard_pressed (KEYCODE_R)) vdp1_sprite_log = 1;
-//	if (keyboard_pressed (KEYCODE_T)) vdp1_sprite_log = 0;
+//	if (code_pressed (KEYCODE_R)) vdp1_sprite_log = 1;
+//	if (code_pressed (KEYCODE_T)) vdp1_sprite_log = 0;
 
-//	if (keyboard_pressed (KEYCODE_Y)) vdp1_sprite_log = 0;
+//	if (code_pressed (KEYCODE_Y)) vdp1_sprite_log = 0;
 //	{
 //		FILE *fp;
 //

@@ -24,13 +24,13 @@ static data8_t *sharedram;
 
 /* from vidhrdw/skykid.c */
 VIDEO_START( skykid );
-READ_HANDLER( skykid_videoram_r );
-WRITE_HANDLER( skykid_videoram_w );
-READ_HANDLER( skykid_textram_r );
-WRITE_HANDLER( skykid_textram_w );
-WRITE_HANDLER( skykid_scroll_x_w );
-WRITE_HANDLER( skykid_scroll_y_w );
-WRITE_HANDLER( skykid_flipscreen_priority_w );
+READ8_HANDLER( skykid_videoram_r );
+WRITE8_HANDLER( skykid_videoram_w );
+READ8_HANDLER( skykid_textram_r );
+WRITE8_HANDLER( skykid_textram_w );
+WRITE8_HANDLER( skykid_scroll_x_w );
+WRITE8_HANDLER( skykid_scroll_y_w );
+WRITE8_HANDLER( skykid_flipscreen_priority_w );
 VIDEO_UPDATE( skykid );
 VIDEO_UPDATE( drgnbstr );
 PALETTE_INIT( skykid );
@@ -38,7 +38,7 @@ PALETTE_INIT( skykid );
 
 static int inputport_selected;
 
-static WRITE_HANDLER( inputport_select_w )
+static WRITE8_HANDLER( inputport_select_w )
 {
 	if ((data & 0xe0) == 0x60)
 		inputport_selected = data & 0x07;
@@ -50,7 +50,7 @@ static WRITE_HANDLER( inputport_select_w )
 	}
 }
 
-static READ_HANDLER( inputport_r )
+static READ8_HANDLER( inputport_r )
 {
 	switch (inputport_selected)
 	{
@@ -73,7 +73,7 @@ static READ_HANDLER( inputport_r )
 	}
 }
 
-static WRITE_HANDLER( skykid_led_w )
+static WRITE8_HANDLER( skykid_led_w )
 {
 	set_led_status(0,data & 0x08);
 	set_led_status(1,data & 0x10);
@@ -82,19 +82,19 @@ static WRITE_HANDLER( skykid_led_w )
 static WRITE8_HANDLER( skykid_subreset_w )
 {
 	int bit = !BIT(offset,11);
-	cpu_set_reset_line(1, bit ? CLEAR_LINE : ASSERT_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_RESET, bit ? CLEAR_LINE : ASSERT_LINE);
 }
 
-static READ_HANDLER( sharedram_r )
+static READ8_HANDLER( sharedram_r )
 {
 	return sharedram[offset];
 }
-static WRITE_HANDLER( sharedram_w )
+static WRITE8_HANDLER( sharedram_w )
 {
 	sharedram[offset] = data;
 }
 
-static WRITE_HANDLER( skykid_bankswitch_w )
+static WRITE8_HANDLER( skykid_bankswitch_w )
 {
 	int bit = !BIT(offset,11);
 	data8_t *rom = memory_region(REGION_CPU1) + 0x10000;
@@ -107,7 +107,7 @@ static WRITE8_HANDLER( skykid_irq_1_ctrl_w )
 	int bit = !BIT(offset,11);
 	cpu_interrupt_enable(0,bit);
 	if (!bit)
-		cpu_set_irq_line(0, 0, CLEAR_LINE);
+		cpunum_set_input_line(0, 0, CLEAR_LINE);
 }
 
 static WRITE8_HANDLER( skykid_irq_2_ctrl_w )
@@ -115,7 +115,7 @@ static WRITE8_HANDLER( skykid_irq_2_ctrl_w )
 	int bit = !BIT(offset,13);
 	cpu_interrupt_enable(1,bit);
 	if (!bit)
-		cpu_set_irq_line(1, 0, CLEAR_LINE);
+		cpunum_set_input_line(1, 0, CLEAR_LINE);
 }
 
 
@@ -155,7 +155,7 @@ static ADDRESS_MAP_START( mcu_map, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 
-static READ_HANDLER( readFF )
+static READ8_HANDLER( readFF )
 {
 	return 0xff;
 }

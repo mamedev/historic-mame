@@ -581,12 +581,12 @@ static WRITE16_HANDLER( namcos2_68k_dpram_word_w )
 	}
 }
 
-static READ_HANDLER( namcos2_dpram_byte_r )
+static READ8_HANDLER( namcos2_dpram_byte_r )
 {
 	return namcos2_dpram[offset];
 }
 
-static WRITE_HANDLER( namcos2_dpram_byte_w )
+static WRITE8_HANDLER( namcos2_dpram_byte_w )
 {
 	namcos2_dpram[offset] = data;
 }

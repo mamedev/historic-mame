@@ -136,9 +136,11 @@ extern int raiga_alpha;
 
 VIDEO_START( gaiden );
 VIDEO_START( raiga );
+VIDEO_START( drgnbowl );
 
 VIDEO_UPDATE( gaiden );
 VIDEO_UPDATE( raiga );
+VIDEO_UPDATE( drgnbowl );
 
 WRITE16_HANDLER( gaiden_videoram_w );
 WRITE16_HANDLER( gaiden_videoram2_w );
@@ -160,7 +162,16 @@ static WRITE16_HANDLER( gaiden_sound_command_w )
 {
 	if (ACCESSING_LSB) soundlatch_w(0,data & 0xff);	/* Ninja Gaiden */
 	if (ACCESSING_MSB) soundlatch_w(0,data >> 8);	/* Tecmo Knight */
-	cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
+	cpunum_set_input_line(1,INPUT_LINE_NMI,PULSE_LINE);
+}
+
+static WRITE16_HANDLER( drgnbowl_sound_command_w )
+{
+	if (ACCESSING_MSB)
+	{ 
+		soundlatch_w(0,data >> 8);
+		cpunum_set_input_line(1,0,PULSE_LINE);
+	}
 }
 
 
@@ -397,6 +408,25 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x07a808, 0x07a809) AM_WRITE(gaiden_flip_w)
 ADDRESS_MAP_END
 
+static ADDRESS_MAP_START( drgnbowl_map, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x03ffff) AM_ROM
+	AM_RANGE(0x060000, 0x063fff) AM_RAM
+	AM_RANGE(0x070000, 0x070fff) AM_READWRITE(MRA16_RAM, gaiden_videoram_w) AM_BASE(&gaiden_videoram)
+	AM_RANGE(0x072000, 0x073fff) AM_READWRITE(MRA16_RAM, gaiden_videoram2_w) AM_BASE(&gaiden_videoram2)
+	AM_RANGE(0x074000, 0x075fff) AM_READWRITE(MRA16_RAM, gaiden_videoram3_w) AM_BASE(&gaiden_videoram3)
+	AM_RANGE(0x076000, 0x077fff) AM_RAM AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0x078000, 0x079fff) AM_READWRITE(MRA16_RAM, paletteram16_xxxxBBBBGGGGRRRR_word_w) AM_BASE(&paletteram16)
+	AM_RANGE(0x07a000, 0x07a001) AM_READ(input_port_0_word_r)
+	AM_RANGE(0x07a002, 0x07a003) AM_READ(input_port_1_word_r)
+	AM_RANGE(0x07a004, 0x07a005) AM_READ(input_port_2_word_r)
+	AM_RANGE(0x07a00e, 0x07a00f) AM_WRITENOP
+	AM_RANGE(0x07e000, 0x07e001) AM_WRITE(drgnbowl_sound_command_w)
+	AM_RANGE(0x07f000, 0x07f001) AM_WRITE(gaiden_bgscrolly_w)
+	AM_RANGE(0x07f002, 0x07f003) AM_WRITE(gaiden_bgscrollx_w)
+	AM_RANGE(0x07f004, 0x07f005) AM_WRITE(gaiden_fgscrolly_w)
+	AM_RANGE(0x07f006, 0x07f007) AM_WRITE(gaiden_fgscrollx_w)
+ADDRESS_MAP_END
+
 static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0xdfff) AM_READ(MRA8_ROM)
 	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_RAM) // raiga only?
@@ -418,6 +448,17 @@ static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xfc00, 0xfc00) AM_WRITE(MWA8_NOP)	/* ?? */
 ADDRESS_MAP_END
 
+static ADDRESS_MAP_START( drgnbowl_sound_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xf7ff) AM_ROM
+	AM_RANGE(0xf800, 0xffff) AM_RAM
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( drgnbowl_sound_port_map, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_WRITE(YM2151_register_port_0_w)
+	AM_RANGE(0x01, 0x01) AM_READWRITE(YM2151_status_port_0_r, YM2151_data_port_0_w)
+	AM_RANGE(0x80, 0x80) AM_READWRITE(OKIM6295_status_0_r, OKIM6295_data_0_w)
+	AM_RANGE(0xc0, 0xc0) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
 
 INPUT_PORTS_START( shadoww )
@@ -750,6 +791,86 @@ INPUT_PORTS_START( raiga )
 	PORT_DIPSETTING(      0x0000, "None" )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( drgnbowl )
+	PORT_START	/* System Inputs */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+
+	PORT_START	/* Players Inputs */
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	/* Dip Switches order fits the first screen */
+
+	PORT_START	/* DSW */
+	PORT_DIPNAME( 0x00e0, 0x00e0, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(      0x0080, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0040, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0020, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x00e0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0060, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x00a0, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x00c0, DEF_STR( 1C_4C ) )
+	PORT_DIPNAME( 0x001c, 0x001c, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(      0x0010, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0008, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x001c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x000c, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0014, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0018, DEF_STR( 1C_4C ) )
+	PORT_DIPNAME( 0x0002, 0x0002, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0xc000, 0xc000, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x0000, "1" )
+	PORT_DIPSETTING(      0xc000, "2" )
+	PORT_DIPSETTING(      0x4000, "3" )
+	PORT_DIPSETTING(      0x8000, "4" )
+	PORT_DIPNAME( 0x3000, 0x3000, "Energy" )
+	PORT_DIPSETTING(      0x0000, "2" )
+	PORT_DIPSETTING(      0x3000, "3" )
+	PORT_DIPSETTING(      0x1000, "4" )
+	PORT_DIPSETTING(      0x2000, "5" )
+	PORT_DIPNAME( 0x0800, 0x0800, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0800, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0400, 0x0400, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0400, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0200, 0x0200, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0200, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+	PORT_DIPNAME( 0x0100, 0x0100, DEF_STR( Unused ) )
+	PORT_DIPSETTING(      0x0100, DEF_STR( Off ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
+INPUT_PORTS_END
+
 
 
 static struct GfxLayout tilelayout =
@@ -794,16 +915,44 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ REGION_GFX2, 0, &tile2layout,       768, 4096 - 768 },	/* tiles 16x16 */
 	{ REGION_GFX3, 0, &tile2layout,       512, 4096 - 512 },	/* tiles 16x16 */
 	{ REGION_GFX4, 0, &spritelayout,        0, 4096 -   0 },	/* sprites 8x8 */
-
 	{ -1 } /* end of array */
 };
 
+static struct GfxLayout drgnbowl_tile2layout =
+{
+	16,16,
+	RGN_FRAC(1,8),
+	4,
+	{ RGN_FRAC(3,4),RGN_FRAC(2,4),RGN_FRAC(1,4),RGN_FRAC(0,4) },
+	{ STEP8(0,1), STEP8(8*8*2,1) },
+	{ STEP16(0,8) },
+	32*8
+};
 
+static struct GfxLayout drgnbowl_spritelayout =
+{
+	16,16,
+	RGN_FRAC(1,4),
+	4,
+	{ RGN_FRAC(0,4),RGN_FRAC(1,4),RGN_FRAC(2,4),RGN_FRAC(3,4) },
+	{ STEP8(0,1), STEP8(8*8*2,1) },
+	{ STEP16(0,8) },
+	32*8
+};
+
+static struct GfxDecodeInfo drgnbowl_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0,       &tilelayout,                0, 16 },	/* tiles 8x8  */
+	{ REGION_GFX2, 0x00000, &drgnbowl_tile2layout,  0x300, 16 },	/* tiles 16x16 */
+	{ REGION_GFX2, 0x20000, &drgnbowl_tile2layout,  0x200, 16 },	/* tiles 16x16 */
+	{ REGION_GFX3, 0,       &drgnbowl_spritelayout, 0x100, 16 },	/* sprites 16x16 */
+	{ -1 } /* end of array */
+};
 
 /* handler called by the 2203 emulator when the internal timers cause an IRQ */
 static void irqhandler(int irq)
 {
-	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2203interface ym2203_interface =
@@ -818,6 +967,12 @@ static struct YM2203interface ym2203_interface =
 	{ irqhandler }
 };
 
+static struct YM2151interface ym2151_interface =
+{	1,
+	4000000,
+	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) },
+	{ 0 }
+};
 
 static struct OKIM6295interface okim6295_interface =
 {
@@ -826,7 +981,6 @@ static struct OKIM6295interface okim6295_interface =
 	{ REGION_SOUND1 },	/* memory region */
 	{ 20 }
 };
-
 
 static MACHINE_DRIVER_START( shadoww )
 
@@ -868,6 +1022,35 @@ static MACHINE_DRIVER_START( raiga )
 	MDRV_VIDEO_UPDATE(raiga)
 MACHINE_DRIVER_END
 
+static MACHINE_DRIVER_START( drgnbowl )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 18432000/2)	/* 9.216 MHz */
+	MDRV_CPU_PROGRAM_MAP(drgnbowl_map,0)
+	MDRV_CPU_VBLANK_INT(irq5_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 4000000)	/* 4 MHz */
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_PROGRAM_MAP(drgnbowl_sound_map,0)
+	MDRV_CPU_IO_MAP(drgnbowl_sound_port_map,0)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
+	MDRV_GFXDECODE(drgnbowl_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(4096)
+
+	MDRV_VIDEO_START(drgnbowl)
+	MDRV_VIDEO_UPDATE(drgnbowl)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(YM2151, ym2151_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 
@@ -1139,6 +1322,43 @@ ROM_START( raiga )
 	ROM_LOAD( "a-4a.4", 0x00000, 0x20000, CRC(ef9acdcf) SHA1(8d62a666843f0cb22e8926ae18a961052d4f9ed5) )
 ROM_END
 
+ROM_START( drgnbowl )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )	/* 2*128k for 68000 code */
+	ROM_LOAD16_BYTE( "db_4.bin",     0x00000, 0x20000, CRC(90730008) SHA1(84f0668cf978d99f861cbaeb4b33f7cb1428a648) )
+	ROM_LOAD16_BYTE( "db_5.bin",     0x00001, 0x20000, CRC(193cc915) SHA1(e898f31766eaf515e0787848134b1365e75b32a9) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
+	ROM_LOAD( "db_1.bin",     0x00000, 0x10000, CRC(d9cbf84a) SHA1(d14d749a41a440a56fea1d836a8d62be65786d68) ) /* Audio CPU is a Z80  */
+
+	ROM_REGION( 0x010000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "db_22.bin",    0x00000, 0x10000, CRC(86e41198) SHA1(40201a139a668e6fc441d500f40601c7af934b1d) ) /* 8x8 tiles */
+
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "db_6.bin",     0x00000, 0x20000, CRC(b15759f7) SHA1(1710e5ebe8197fdc622ed5c2813257ebe662b7f2) )
+	ROM_LOAD( "db_7.bin",     0x20000, 0x20000, CRC(2541d445) SHA1(a9688cb216bc56fe1b454bc79f967582709991b1) )
+	ROM_LOAD( "db_8.bin",     0x40000, 0x20000, CRC(51a2f5c4) SHA1(dba1278303055b420b128907ba9909e7a39b2df6) )
+	ROM_LOAD( "db_9.bin",     0x60000, 0x20000, CRC(f4c8850f) SHA1(d618c3b8b5d93b9e6fa47b833d8f06a664f63e49) )
+	ROM_LOAD( "db_10.bin",    0x80000, 0x20000, CRC(9e4b3c61) SHA1(5a3739a40d8ffe551262fe42fc36d5a07a59457e) )
+	ROM_LOAD( "db_11.bin",    0xa0000, 0x20000, CRC(0d33d083) SHA1(204889531cce4f7251edfa44f723b43a08c3b28c) )
+	ROM_LOAD( "db_12.bin",    0xc0000, 0x20000, CRC(6c497ad3) SHA1(f0bbf5d7b6efe64c34829104f97b343def705d7f) )
+	ROM_LOAD( "db_13.bin",    0xe0000, 0x20000, CRC(7a84adff) SHA1(86b15842e1fcdb882af6159ff3d44c5806fe3ced) )
+
+	ROM_REGION( 0x100000, REGION_GFX3, ROMREGION_DISPOSE | ROMREGION_INVERT )
+	ROM_LOAD( "db_15.bin",    0x00000, 0x20000, CRC(7429371c) SHA1(1412312d429ea4bb00db2b8704a7c3d7e14db19b) )
+	ROM_LOAD( "db_14.bin",    0x20000, 0x20000, CRC(4301b97f) SHA1(70614691794a04e0ac1547ba1772ee527fe77ba8) )
+	ROM_LOAD( "db_17.bin",    0x40000, 0x20000, CRC(9088af09) SHA1(8b5090d8a88ad06152030e92acecd76cb2f0f88c) )
+	ROM_LOAD( "db_16.bin",    0x60000, 0x20000, CRC(8ade4e01) SHA1(f02fcc66d1f842ff3861813431942a95de08f654) )
+	ROM_LOAD( "db_19.bin",    0x80000, 0x20000, CRC(5082ceff) SHA1(fad67375b774236b345d3496ce17665947a21201) )
+	ROM_LOAD( "db_18.bin",    0xa0000, 0x20000, CRC(d18a7ffb) SHA1(8ea792dfb8e7c9e6df0fd7596c3972f79b15d860) )
+	ROM_LOAD( "db_21.bin",    0xc0000, 0x20000, CRC(0cee8711) SHA1(5ec071db383a56629a7063d86264bd2bbb6b0036) )
+	ROM_LOAD( "db_20.bin",    0xe0000, 0x20000, NO_DUMP )
+	ROM_FILL(                 0xe0000, 0x20000, 0)
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0 ) /* 2*128k for ADPCM samples - sound chip is OKIM6295 */
+	ROM_LOAD( "db_3.bin",     0x00000, 0x20000, CRC(489c6d0e) SHA1(5a276fad500a760c83a16e0a4cd91d5963ad8089) ) /* samples */
+	ROM_LOAD( "db_2.bin",     0x20000, 0x20000, CRC(7710ce39) SHA1(7a7cf0b4005b000589d0bad380575d625d9d20f7) ) /* samples */
+ROM_END
+
 
 
 static DRIVER_INIT( shadoww )
@@ -1152,8 +1372,8 @@ static DRIVER_INIT( wildfang )
 	/* sprite size Y = sprite size X */
 	gaiden_sprite_sizey = 0;
 
-	install_mem_read16_handler (0, 0x07a006, 0x07a007, wildfang_protection_r);
-	install_mem_write16_handler(0, 0x07a804, 0x07a805, wildfang_protection_w);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x07a006, 0x07a007, 0, 0, wildfang_protection_r);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x07a804, 0x07a805, 0, 0, wildfang_protection_w);
 }
 
 static DRIVER_INIT( raiga )
@@ -1161,10 +1381,52 @@ static DRIVER_INIT( raiga )
 	/* sprite size Y independent from sprite size X */
 	gaiden_sprite_sizey = 2;
 
-	install_mem_read16_handler (0, 0x07a006, 0x07a007, raiga_protection_r);
-	install_mem_write16_handler(0, 0x07a804, 0x07a805, raiga_protection_w);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x07a006, 0x07a007, 0, 0, raiga_protection_r);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x07a804, 0x07a805, 0, 0, raiga_protection_w);
 }
 
+static DRIVER_INIT( drgnbowl )
+{
+	int i;
+	data8_t *ROM = memory_region(REGION_CPU1);
+	size_t  size = memory_region_length(REGION_CPU1);
+	data8_t *buffer = malloc(size);
+
+	if(!buffer) return;
+
+	memcpy(buffer,ROM,size);
+	for( i = 0; i < size; i++ )
+	{
+		ROM[i] = buffer[BITSWAP24(i,23,22,21,20,
+			                        19,18,17,15,
+									16,14,13,12,
+									11,10, 9, 8,
+									 7, 6, 5, 4,
+									 3, 2, 1, 0)];
+	}
+
+	free(buffer);
+
+	ROM = memory_region(REGION_GFX2);
+	size = memory_region_length(REGION_GFX2);
+	buffer = malloc(size);
+
+	if(!buffer) return;
+
+	memcpy(buffer,ROM,size);
+	for( i = 0; i < size; i++ )
+	{
+
+		ROM[i] = buffer[BITSWAP24(i,23,22,21,20,
+		                            19,18,16,17,
+		                            15,14,13, 4,
+		                             3,12,11,10,
+		                             9, 8, 7, 6,
+		                             5, 2, 1, 0)];
+	}
+
+	free(buffer);
+}
 
 
 GAME( 1988, shadoww,  0,        shadoww, shadoww,  shadoww,  ROT0, "Tecmo", "Shadow Warriors (World set 1)" )
@@ -1175,3 +1437,4 @@ GAME( 1989, wildfang, 0,        shadoww, wildfang, wildfang, ROT0, "Tecmo", "Wil
 GAME( 1989, tknight,  wildfang, shadoww, tknight,  wildfang, ROT0, "Tecmo", "Tecmo Knight" )
 GAMEX(1991, stratof,  0,        raiga,	 raiga,    raiga,    ROT0, "Tecmo", "Raiga - Strato Fighter (US)", GAME_IMPERFECT_GRAPHICS )
 GAMEX(1991, raiga,    stratof,  raiga,	 raiga,    raiga,    ROT0, "Tecmo", "Raiga - Strato Fighter (Japan)", GAME_IMPERFECT_GRAPHICS )
+GAMEX(1992, drgnbowl, 0,        drgnbowl,drgnbowl, drgnbowl, ROT0, "Nics",  "Dragon Bowl", GAME_IMPERFECT_COLORS | GAME_IMPERFECT_SOUND )

@@ -78,8 +78,8 @@ Input is unique but has a few similarities to DD2 (the coin inputs)
 
 /**************** Video stuff ******************/
 
-WRITE_HANDLER( ddragon_bgvideoram_w );
-WRITE_HANDLER( ddragon_fgvideoram_w );
+WRITE8_HANDLER( ddragon_bgvideoram_w );
+WRITE8_HANDLER( ddragon_fgvideoram_w );
 
 VIDEO_START( chinagat );
 VIDEO_UPDATE( ddragon );
@@ -108,10 +108,10 @@ static MACHINE_INIT( chinagat )
 {
 	technos_video_hw = 1;
 	sprite_irq = M6809_IRQ_LINE;
-	sound_irq = IRQ_LINE_NMI;
+	sound_irq = INPUT_LINE_NMI;
 }
 
-WRITE_HANDLER( chinagat_video_ctrl_w )
+WRITE8_HANDLER( chinagat_video_ctrl_w )
 {
 	/***************************
 	---- ---x   X Scroll MSB
@@ -126,58 +126,58 @@ WRITE_HANDLER( chinagat_video_ctrl_w )
 	flip_screen_set(~data & 0x04);
 }
 
-static WRITE_HANDLER( chinagat_bankswitch_w )
+static WRITE8_HANDLER( chinagat_bankswitch_w )
 {
 	data8_t *RAM = memory_region(REGION_CPU1);
 	cpu_setbank( 1,&RAM[ 0x10000 + (0x4000 * (data & 7)) ] );
 }
 
-static WRITE_HANDLER( chinagat_sub_bankswitch_w )
+static WRITE8_HANDLER( chinagat_sub_bankswitch_w )
 {
 	data8_t *RAM = memory_region( REGION_CPU2 );
 	cpu_setbank( 4,&RAM[ 0x10000 + (0x4000 * (data & 7)) ] );
 }
 
-static WRITE_HANDLER( chinagat_sub_IRQ_w )
+static WRITE8_HANDLER( chinagat_sub_IRQ_w )
 {
-	cpu_set_irq_line( 1, sprite_irq, (sprite_irq == IRQ_LINE_NMI) ? PULSE_LINE : HOLD_LINE );
+	cpunum_set_input_line( 1, sprite_irq, (sprite_irq == INPUT_LINE_NMI) ? PULSE_LINE : HOLD_LINE );
 }
 
-static WRITE_HANDLER( chinagat_cpu_sound_cmd_w )
+static WRITE8_HANDLER( chinagat_cpu_sound_cmd_w )
 {
 	soundlatch_w( offset, data );
-	cpu_set_irq_line( 2, sound_irq, (sound_irq == IRQ_LINE_NMI) ? PULSE_LINE : HOLD_LINE );
+	cpunum_set_input_line( 2, sound_irq, (sound_irq == INPUT_LINE_NMI) ? PULSE_LINE : HOLD_LINE );
 }
 
-static READ_HANDLER( saiyugb1_mcu_command_r )
+static READ8_HANDLER( saiyugb1_mcu_command_r )
 {
 #if 0
 	if (saiyugb1_mcu_command == 0x78)
 	{
-		timer_suspendcpu(3, 1, SUSPEND_REASON_HALT);	/* Suspend (speed up) */
+		cpunum_suspend(3, SUSPEND_REASON_HALT, 1);	/* Suspend (speed up) */
 	}
 #endif
 	return saiyugb1_mcu_command;
 }
 
-static WRITE_HANDLER( saiyugb1_mcu_command_w )
+static WRITE8_HANDLER( saiyugb1_mcu_command_w )
 {
 	saiyugb1_mcu_command = data;
 #if 0
 	if (data != 0x78)
 	{
-		timer_suspendcpu(3, 0, SUSPEND_REASON_HALT);	/* Wake up */
+		cpunum_resume(3, SUSPEND_REASON_HALT);	/* Wake up */
 	}
 #endif
 }
 
-static WRITE_HANDLER( saiyugb1_adpcm_rom_addr_w )
+static WRITE8_HANDLER( saiyugb1_adpcm_rom_addr_w )
 {
 	/* i8748 Port 1 write */
 	saiyugb1_i8748_P1 = data;
 }
 
-static WRITE_HANDLER( saiyugb1_adpcm_control_w )
+static WRITE8_HANDLER( saiyugb1_adpcm_control_w )
 {
 	/* i8748 Port 2 write */
 
@@ -224,7 +224,7 @@ static WRITE_HANDLER( saiyugb1_adpcm_control_w )
 	saiyugb1_i8748_P2 = data;
 }
 
-static WRITE_HANDLER( saiyugb1_m5205_clk_w )
+static WRITE8_HANDLER( saiyugb1_m5205_clk_w )
 {
 	/* i8748 T0 output clk mode */
 	/* This signal goes through a divide by 8 counter */
@@ -246,7 +246,7 @@ static WRITE_HANDLER( saiyugb1_m5205_clk_w )
 #endif
 }
 
-static READ_HANDLER( saiyugb1_m5205_irq_r )
+static READ8_HANDLER( saiyugb1_m5205_irq_r )
 {
 	if (adpcm_sound_irq)
 	{
@@ -499,7 +499,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 static void chinagat_irq_handler(int irq) {
-	cpu_set_irq_line( 2, 0, irq ? ASSERT_LINE : CLEAR_LINE );
+	cpunum_set_input_line( 2, 0, irq ? ASSERT_LINE : CLEAR_LINE );
 }
 
 static struct YM2151interface ym2151_interface =
@@ -531,8 +531,8 @@ static struct MSM5205interface msm5205_interface =
 
 static INTERRUPT_GEN( chinagat_interrupt )
 {
-	cpu_set_irq_line(0, 1, HOLD_LINE);	/* hold the FIRQ line */
-	cpu_set_nmi_line(0, PULSE_LINE);	/* pulse the NMI line */
+	cpunum_set_input_line(0, 1, HOLD_LINE);	/* hold the FIRQ line */
+	cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);	/* pulse the NMI line */
 }
 
 /* This is only on the second bootleg board */

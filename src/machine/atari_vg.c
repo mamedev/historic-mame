@@ -13,14 +13,14 @@ static int earom_data;
 static char earom[EAROM_SIZE];
 
 
-READ_HANDLER( atari_vg_earom_r )
+READ8_HANDLER( atari_vg_earom_r )
 {
 	logerror("read earom: %02x(%02x):%02x\n", earom_offset, offset, earom_data);
 	return (earom_data);
 }
 
 
-WRITE_HANDLER( atari_vg_earom_w )
+WRITE8_HANDLER( atari_vg_earom_w )
 {
 	logerror("write earom: %02x:%02x\n", offset, data);
 	earom_offset = offset;
@@ -31,7 +31,7 @@ WRITE_HANDLER( atari_vg_earom_w )
 /* 0,8 and 14 get written to this location, too.
  * Don't know what they do exactly
  */
-WRITE_HANDLER( atari_vg_earom_ctrl_w )
+WRITE8_HANDLER( atari_vg_earom_ctrl_w )
 {
 	logerror("earom ctrl: %02x:%02x\n",offset, data);
 	/*

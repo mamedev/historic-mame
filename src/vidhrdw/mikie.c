@@ -90,7 +90,7 @@ PALETTE_INIT( mikie )
 	}
 }
 
-WRITE_HANDLER( mikie_videoram_w )
+WRITE8_HANDLER( mikie_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -99,7 +99,7 @@ WRITE_HANDLER( mikie_videoram_w )
 	}
 }
 
-WRITE_HANDLER( mikie_colorram_w )
+WRITE8_HANDLER( mikie_colorram_w )
 {
 	if (colorram[offset] != data)
 	{
@@ -108,7 +108,7 @@ WRITE_HANDLER( mikie_colorram_w )
 	}
 }
 
-WRITE_HANDLER( mikie_palettebank_w )
+WRITE8_HANDLER( mikie_palettebank_w )
 {
 	if (palettebank != (data & 0x07))
 	{
@@ -117,7 +117,7 @@ WRITE_HANDLER( mikie_palettebank_w )
 	}
 }
 
-WRITE_HANDLER( mikie_flipscreen_w )
+WRITE8_HANDLER( mikie_flipscreen_w )
 {
 	if (flip_screen != (data & 0x01))
 	{

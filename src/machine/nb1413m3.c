@@ -54,7 +54,7 @@ MACHINE_INIT( nb1413m3 )
 	nb1413m3_outcoin_flag = 1;
 }
 
-WRITE_HANDLER( nb1413m3_nmi_clock_w )
+WRITE8_HANDLER( nb1413m3_nmi_clock_w )
 {
 	nb1413m3_nmi_clock = ((data & 0xf0) >> 4);
 }
@@ -65,12 +65,12 @@ INTERRUPT_GEN( nb1413m3_interrupt )
 	{
 		nb1413m3_busyflag = 1;
 		nb1413m3_busyctr = 0;
-		cpu_set_irq_line(0, 0, HOLD_LINE);
+		cpunum_set_input_line(0, 0, HOLD_LINE);
 	}
 
 	else if (nb1413m3_nmi_enable)
 	{
-		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+		cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 	}
 }
 
@@ -165,14 +165,14 @@ int nb1413m3_sndrom_r(int offset)
 	}
 }
 
-WRITE_HANDLER( nb1413m3_sndrombank1_w )
+WRITE8_HANDLER( nb1413m3_sndrombank1_w )
 {
 	// if (data & 0x02) coin counter ?
 	nb1413m3_nmi_enable = ((data & 0x20) >> 5);
 	nb1413m3_sndrombank1 = (((data & 0xc0) >> 5) | ((data & 0x10) >> 4));
 }
 
-WRITE_HANDLER( nb1413m3_sndrombank2_w )
+WRITE8_HANDLER( nb1413m3_sndrombank2_w )
 {
 	nb1413m3_sndrombank2 = (data & 0x03);
 }
@@ -199,12 +199,12 @@ void nb1413m3_gfxradr_h_w(int data)
 	nb1413m3_gfxradr_h = data;
 }
 
-WRITE_HANDLER( nb1413m3_inputportsel_w )
+WRITE8_HANDLER( nb1413m3_inputportsel_w )
 {
 	nb1413m3_inputport = data;
 }
 
-READ_HANDLER( nb1413m3_inputport0_r )
+READ8_HANDLER( nb1413m3_inputport0_r )
 {
 	switch (nb1413m3_type)
 	{
@@ -220,7 +220,7 @@ READ_HANDLER( nb1413m3_inputport0_r )
 	}
 }
 
-READ_HANDLER( nb1413m3_inputport1_r )
+READ8_HANDLER( nb1413m3_inputport1_r )
 {
 	switch (nb1413m3_type)
 	{
@@ -276,7 +276,7 @@ READ_HANDLER( nb1413m3_inputport1_r )
 	}
 }
 
-READ_HANDLER( nb1413m3_inputport2_r )
+READ8_HANDLER( nb1413m3_inputport2_r )
 {
 	switch (nb1413m3_type)
 	{
@@ -332,7 +332,7 @@ READ_HANDLER( nb1413m3_inputport2_r )
 	}
 }
 
-READ_HANDLER( nb1413m3_inputport3_r )
+READ8_HANDLER( nb1413m3_inputport3_r )
 {
 	switch (nb1413m3_type)
 	{
@@ -358,7 +358,7 @@ case	NB1413M3_PAIRSTEN:	// verify
 	}
 }
 
-READ_HANDLER( nb1413m3_dipsw1_r )
+READ8_HANDLER( nb1413m3_dipsw1_r )
 {
 	switch (nb1413m3_type)
 	{
@@ -402,7 +402,7 @@ READ_HANDLER( nb1413m3_dipsw1_r )
 	}
 }
 
-READ_HANDLER( nb1413m3_dipsw2_r )
+READ8_HANDLER( nb1413m3_dipsw2_r )
 {
 	switch (nb1413m3_type)
 	{
@@ -456,7 +456,7 @@ int nb1413m3_dipsw3_h_r(void)
 	return ((readinputport(2) & 0x0f) >> 0);
 }
 
-WRITE_HANDLER( nb1413m3_outcoin_w )
+WRITE8_HANDLER( nb1413m3_outcoin_w )
 {
 	switch (nb1413m3_type)
 	{

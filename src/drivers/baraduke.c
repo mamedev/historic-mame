@@ -112,19 +112,19 @@ extern data8_t *baraduke_textram, *spriteram, *baraduke_videoram, *baraduke_spri
 VIDEO_START( baraduke );
 VIDEO_UPDATE( baraduke );
 VIDEO_EOF( baraduke );
-READ_HANDLER( baraduke_videoram_r );
-WRITE_HANDLER( baraduke_videoram_w );
-READ_HANDLER( baraduke_textram_r );
-WRITE_HANDLER( baraduke_textram_w );
-WRITE_HANDLER( baraduke_scroll0_w );
-WRITE_HANDLER( baraduke_scroll1_w );
-READ_HANDLER( baraduke_spriteram_r );
-WRITE_HANDLER( baraduke_spriteram_w );
+READ8_HANDLER( baraduke_videoram_r );
+WRITE8_HANDLER( baraduke_videoram_w );
+READ8_HANDLER( baraduke_textram_r );
+WRITE8_HANDLER( baraduke_textram_w );
+WRITE8_HANDLER( baraduke_scroll0_w );
+WRITE8_HANDLER( baraduke_scroll1_w );
+READ8_HANDLER( baraduke_spriteram_r );
+WRITE8_HANDLER( baraduke_spriteram_w );
 PALETTE_INIT( baraduke );
 
 static int inputport_selected;
 
-static WRITE_HANDLER( inputport_select_w )
+static WRITE8_HANDLER( inputport_select_w )
 {
 	if ((data & 0xe0) == 0x60)
 		inputport_selected = data & 0x07;
@@ -136,7 +136,7 @@ static WRITE_HANDLER( inputport_select_w )
 	}
 }
 
-static READ_HANDLER( inputport_r )
+static READ8_HANDLER( inputport_r )
 {
 	switch (inputport_selected)
 	{
@@ -159,24 +159,24 @@ static READ_HANDLER( inputport_r )
 	}
 }
 
-static WRITE_HANDLER( baraduke_lamps_w )
+static WRITE8_HANDLER( baraduke_lamps_w )
 {
 	set_led_status(0,data & 0x08);
 	set_led_status(1,data & 0x10);
 }
 
-READ_HANDLER( baraduke_sharedram_r )
+READ8_HANDLER( baraduke_sharedram_r )
 {
 	return sharedram[offset];
 }
-WRITE_HANDLER( baraduke_sharedram_w )
+WRITE8_HANDLER( baraduke_sharedram_w )
 {
 	sharedram[offset] = data;
 }
 
 static WRITE8_HANDLER( baraduke_irq_ack_w )
 {
-	cpu_set_irq_line(0, 0, CLEAR_LINE);
+	cpunum_set_input_line(0, 0, CLEAR_LINE);
 }
 
 
@@ -196,7 +196,7 @@ static ADDRESS_MAP_START( baraduke_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x6000, 0xffff) AM_READ(MRA8_ROM)				/* ROM */
 ADDRESS_MAP_END
 
-READ_HANDLER( soundkludge_r )
+READ8_HANDLER( soundkludge_r )
 {
 	static int counter;
 
@@ -220,7 +220,7 @@ static ADDRESS_MAP_START( mcu_map, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 
-static READ_HANDLER( readFF )
+static READ8_HANDLER( readFF )
 {
 	return 0xff;
 }

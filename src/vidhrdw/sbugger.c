@@ -16,13 +16,13 @@ static void get_sbugger_tile_info(int tile_index)
 	SET_TILE_INFO(0,tileno,color,0)
 }
 
-WRITE_HANDLER( sbugger_videoram_w )
+WRITE8_HANDLER( sbugger_videoram_w )
 {
 	sbugger_videoram[offset] = data;
 	tilemap_mark_tile_dirty(sbugger_tilemap,offset);
 }
 
-WRITE_HANDLER( sbugger_videoram_attr_w )
+WRITE8_HANDLER( sbugger_videoram_attr_w )
 {
 	sbugger_videoram_attr[offset] = data;
 	tilemap_mark_tile_dirty(sbugger_tilemap,offset);

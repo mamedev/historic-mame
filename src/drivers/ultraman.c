@@ -103,7 +103,7 @@ static WRITE16_HANDLER( sound_cmd_w )
 static WRITE16_HANDLER( sound_irq_trigger_w )
 {
 	if (ACCESSING_LSB)
-		cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
+		cpunum_set_input_line(1,INPUT_LINE_NMI,PULSE_LINE);
 }
 
 

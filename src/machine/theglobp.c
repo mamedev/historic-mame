@@ -211,7 +211,7 @@ static void theglobp_decrypt_rom_B(void)
 }
 
 
-READ_HANDLER( theglobp_decrypt_rom )
+READ8_HANDLER( theglobp_decrypt_rom )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 

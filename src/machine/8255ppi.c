@@ -335,19 +335,19 @@ static void set_mode(int which, int data, int call_handlers)
 
 
 /* Helpers */
-READ_HANDLER( ppi8255_0_r ) { return ppi8255_r( 0, offset ); }
-READ_HANDLER( ppi8255_1_r ) { return ppi8255_r( 1, offset ); }
-READ_HANDLER( ppi8255_2_r ) { return ppi8255_r( 2, offset ); }
-READ_HANDLER( ppi8255_3_r ) { return ppi8255_r( 3, offset ); }
-READ_HANDLER( ppi8255_4_r ) { return ppi8255_r( 4, offset ); }
-READ_HANDLER( ppi8255_5_r ) { return ppi8255_r( 5, offset ); }
-READ_HANDLER( ppi8255_6_r ) { return ppi8255_r( 6, offset ); }
-READ_HANDLER( ppi8255_7_r ) { return ppi8255_r( 7, offset ); }
-WRITE_HANDLER( ppi8255_0_w ) { ppi8255_w( 0, offset, data ); }
-WRITE_HANDLER( ppi8255_1_w ) { ppi8255_w( 1, offset, data ); }
-WRITE_HANDLER( ppi8255_2_w ) { ppi8255_w( 2, offset, data ); }
-WRITE_HANDLER( ppi8255_3_w ) { ppi8255_w( 3, offset, data ); }
-WRITE_HANDLER( ppi8255_4_w ) { ppi8255_w( 4, offset, data ); }
-WRITE_HANDLER( ppi8255_5_w ) { ppi8255_w( 5, offset, data ); }
-WRITE_HANDLER( ppi8255_6_w ) { ppi8255_w( 6, offset, data ); }
-WRITE_HANDLER( ppi8255_7_w ) { ppi8255_w( 7, offset, data ); }
+READ8_HANDLER( ppi8255_0_r ) { return ppi8255_r( 0, offset ); }
+READ8_HANDLER( ppi8255_1_r ) { return ppi8255_r( 1, offset ); }
+READ8_HANDLER( ppi8255_2_r ) { return ppi8255_r( 2, offset ); }
+READ8_HANDLER( ppi8255_3_r ) { return ppi8255_r( 3, offset ); }
+READ8_HANDLER( ppi8255_4_r ) { return ppi8255_r( 4, offset ); }
+READ8_HANDLER( ppi8255_5_r ) { return ppi8255_r( 5, offset ); }
+READ8_HANDLER( ppi8255_6_r ) { return ppi8255_r( 6, offset ); }
+READ8_HANDLER( ppi8255_7_r ) { return ppi8255_r( 7, offset ); }
+WRITE8_HANDLER( ppi8255_0_w ) { ppi8255_w( 0, offset, data ); }
+WRITE8_HANDLER( ppi8255_1_w ) { ppi8255_w( 1, offset, data ); }
+WRITE8_HANDLER( ppi8255_2_w ) { ppi8255_w( 2, offset, data ); }
+WRITE8_HANDLER( ppi8255_3_w ) { ppi8255_w( 3, offset, data ); }
+WRITE8_HANDLER( ppi8255_4_w ) { ppi8255_w( 4, offset, data ); }
+WRITE8_HANDLER( ppi8255_5_w ) { ppi8255_w( 5, offset, data ); }
+WRITE8_HANDLER( ppi8255_6_w ) { ppi8255_w( 6, offset, data ); }
+WRITE8_HANDLER( ppi8255_7_w ) { ppi8255_w( 7, offset, data ); }

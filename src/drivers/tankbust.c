@@ -25,15 +25,15 @@ VIDEO_UPDATE( tankbust );
 
 extern data8_t * txt_ram;
 
-WRITE_HANDLER( tankbust_background_videoram_w );
-READ_HANDLER ( tankbust_background_videoram_r );
-WRITE_HANDLER( tankbust_background_colorram_w );
-READ_HANDLER ( tankbust_background_colorram_r );
-WRITE_HANDLER( tankbust_txtram_w );
-READ_HANDLER ( tankbust_txtram_r );
+WRITE8_HANDLER( tankbust_background_videoram_w );
+READ8_HANDLER ( tankbust_background_videoram_r );
+WRITE8_HANDLER( tankbust_background_colorram_w );
+READ8_HANDLER ( tankbust_background_colorram_r );
+WRITE8_HANDLER( tankbust_txtram_w );
+READ8_HANDLER ( tankbust_txtram_r );
 
-WRITE_HANDLER( tankbust_xscroll_w );
-WRITE_HANDLER( tankbust_yscroll_w );
+WRITE8_HANDLER( tankbust_xscroll_w );
+WRITE8_HANDLER( tankbust_yscroll_w );
 
 
 //port A of ay8910#0
@@ -44,19 +44,19 @@ static void soundlatch_callback (int data)
 	latch = data;
 }
 
-static WRITE_HANDLER( tankbust_soundlatch_w )
+static WRITE8_HANDLER( tankbust_soundlatch_w )
 {
 	timer_set(TIME_NOW,data,soundlatch_callback);
 }
 
-static READ_HANDLER( tankbust_soundlatch_r )
+static READ8_HANDLER( tankbust_soundlatch_r )
 {
 	return latch;
 }
 
 //port B of ay8910#0
 static unsigned int timer1=0;
-static READ_HANDLER( tankbust_soundtimer_r )
+static READ8_HANDLER( tankbust_soundtimer_r )
 {
 	int ret;
 
@@ -70,13 +70,13 @@ static void soundirqline_callback (int param)
 //logerror("sound_irq_line write = %2x (after CPUs synced) \n",param);
 
 		if ((param&1) == 0)
-			cpu_set_irq_line(1, 0, HOLD_LINE);
+			cpunum_set_input_line(1, 0, HOLD_LINE);
 }
 
 
 static int e0xx_data[8] = { 0,0,0,0, 0,0,0,0 };
 
-static WRITE_HANDLER( tankbust_e0xx_w )
+static WRITE8_HANDLER( tankbust_e0xx_w )
 {
 	e0xx_data[offset] = data;
 
@@ -119,7 +119,7 @@ static WRITE_HANDLER( tankbust_e0xx_w )
 	}
 }
 
-static READ_HANDLER( debug_output_area_r )
+static READ8_HANDLER( debug_output_area_r )
 {
 	return e0xx_data[offset];
 }
@@ -178,14 +178,14 @@ PALETTE_INIT( tankbust )
 }
 
 #if 0
-static READ_HANDLER( read_from_unmapped_memory )
+static READ8_HANDLER( read_from_unmapped_memory )
 {
 	return 0xff;
 }
 #endif
 
 static int variable_data=0x11;
-static READ_HANDLER( some_changing_input )
+static READ8_HANDLER( some_changing_input )
 {
 	variable_data = (variable_data+8) & 0xff;
 	return variable_data;

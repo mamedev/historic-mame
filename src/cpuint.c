@@ -66,16 +66,16 @@
 
 /* current states for each CPU */
 static UINT8 interrupt_enable[MAX_CPU];
-static INT32 interrupt_vector[MAX_CPU][MAX_IRQ_LINES];
+static INT32 interrupt_vector[MAX_CPU][MAX_INPUT_LINES];
 
 /* deferred states written in callbacks */
-static UINT8 irq_line_state[MAX_CPU][MAX_IRQ_LINES];
-static INT32 irq_line_vector[MAX_CPU][MAX_IRQ_LINES];
+static UINT8 input_line_state[MAX_CPU][MAX_INPUT_LINES];
+static INT32 input_line_vector[MAX_CPU][MAX_INPUT_LINES];
 
 /* ick, interrupt event queues */
-#define MAX_IRQ_EVENTS		32
-static INT32 irq_event_queue[MAX_CPU][MAX_IRQ_LINES][MAX_IRQ_EVENTS];
-static int irq_event_index[MAX_CPU][MAX_IRQ_LINES];
+#define MAX_INPUT_EVENTS		32
+static INT32 input_event_queue[MAX_CPU][MAX_INPUT_LINES][MAX_INPUT_EVENTS];
+static int input_event_index[MAX_CPU][MAX_INPUT_LINES];
 
 
 
@@ -85,14 +85,14 @@ static int irq_event_index[MAX_CPU][MAX_IRQ_LINES];
  *
  *************************************/
 
-static int cpu_0_irq_callback(int irqline);
-static int cpu_1_irq_callback(int irqline);
-static int cpu_2_irq_callback(int irqline);
-static int cpu_3_irq_callback(int irqline);
-static int cpu_4_irq_callback(int irqline);
-static int cpu_5_irq_callback(int irqline);
-static int cpu_6_irq_callback(int irqline);
-static int cpu_7_irq_callback(int irqline);
+static int cpu_0_irq_callback(int line);
+static int cpu_1_irq_callback(int line);
+static int cpu_2_irq_callback(int line);
+static int cpu_3_irq_callback(int line);
+static int cpu_4_irq_callback(int line);
+static int cpu_5_irq_callback(int line);
+static int cpu_6_irq_callback(int line);
+static int cpu_7_irq_callback(int line);
 
 int (*cpu_irq_callbacks[MAX_CPU])(int) =
 {
@@ -123,24 +123,24 @@ static int (*drv_irq_callbacks[MAX_CPU])(int);
 int cpuint_init(void)
 {
 	int cpunum;
-	int irqline;
+	int line;
 
-	/* loop over all CPUs and IRQ lines */
+	/* loop over all CPUs and input lines */
 	for (cpunum = 0; cpunum < cpu_gettotalcpu(); cpunum++)
-		for (irqline = 0; irqline < MAX_IRQ_LINES; irqline++)
+		for (line = 0; line < MAX_INPUT_LINES; line++)
 		{
-			irq_line_state[cpunum][irqline] = CLEAR_LINE;
-			interrupt_vector[cpunum][irqline] =
-			irq_line_vector[cpunum][irqline] = cputype_default_irq_vector(Machine->drv->cpu[cpunum].cpu_type);
-			irq_event_index[cpunum][irqline] = 0;
+			input_line_state[cpunum][line] = CLEAR_LINE;
+			interrupt_vector[cpunum][line] =
+			input_line_vector[cpunum][line] = cputype_default_irq_vector(Machine->drv->cpu[cpunum].cpu_type);
+			input_event_index[cpunum][line] = 0;
 		}
 
 	/* set up some stuff to save */
 	state_save_set_current_tag(0);
-	state_save_register_UINT8("cpu", 0, "irq enable",     interrupt_enable,  cpu_gettotalcpu());
-	state_save_register_INT32("cpu", 0, "irq vector",     &interrupt_vector[0][0],cpu_gettotalcpu() * MAX_IRQ_LINES);
-	state_save_register_UINT8("cpu", 0, "irqline state",  &irq_line_state[0][0],  cpu_gettotalcpu() * MAX_IRQ_LINES);
-	state_save_register_INT32("cpu", 0, "irqline vector", &irq_line_vector[0][0], cpu_gettotalcpu() * MAX_IRQ_LINES);
+	state_save_register_UINT8("cpu", 0, "irq enable",  interrupt_enable,  cpu_gettotalcpu());
+	state_save_register_INT32("cpu", 0, "irq vector",  &interrupt_vector[0][0],cpu_gettotalcpu() * MAX_INPUT_LINES);
+	state_save_register_UINT8("cpu", 0, "line state",  &input_line_state[0][0],  cpu_gettotalcpu() * MAX_INPUT_LINES);
+	state_save_register_INT32("cpu", 0, "line vector", &input_line_vector[0][0], cpu_gettotalcpu() * MAX_INPUT_LINES);
 
 	return 0;
 }
@@ -155,20 +155,183 @@ int cpuint_init(void)
 
 void cpuint_reset_cpu(int cpunum)
 {
-	int irqline;
+	int line;
 
 	/* start with interrupts enabled, so the generic routine will work even if */
 	/* the machine doesn't have an interrupt enable port */
 	interrupt_enable[cpunum] = 1;
-	for (irqline = 0; irqline < MAX_IRQ_LINES; irqline++)
+	for (line = 0; line < MAX_INPUT_LINES; line++)
 	{
-		interrupt_vector[cpunum][irqline] = cpunum_default_irq_vector(cpunum);
-		irq_event_index[cpunum][irqline] = 0;
+		interrupt_vector[cpunum][line] = cpunum_default_irq_vector(cpunum);
+		input_event_index[cpunum][line] = 0;
 	}
 
 	/* reset any driver hooks into the IRQ acknowledge callbacks */
 	drv_irq_callbacks[cpunum] = NULL;
 }
+
+
+
+#if 0
+#pragma mark -
+#pragma mark LINE STATES
+#endif
+
+
+/*************************************
+ *
+ *	Empty a CPU's event queue for
+ *	a specific input line
+ *
+ *************************************/
+
+static void cpunum_empty_event_queue(int cpu_and_inputline)
+{
+	int cpunum = cpu_and_inputline & 0xff;
+	int line = cpu_and_inputline >> 8;
+	int i;
+
+	/* swap to the CPU's context */
+	cpuintrf_push_context(cpunum);
+
+	/* loop over all events */
+	for (i = 0; i < input_event_index[cpunum][line]; i++)
+	{
+		INT32 input_event = input_event_queue[cpunum][line][i];
+		int state = input_event & 0xff;
+		int vector = input_event >> 8;
+
+		LOG(("cpunum_empty_event_queue %d,%d,%d\n",cpunum,line,state));
+
+		/* set the input line state and vector */
+		input_line_state[cpunum][line] = state;
+		input_line_vector[cpunum][line] = vector;
+		
+		/* special case: RESET */
+		if (line == INPUT_LINE_RESET)
+		{
+			/* if we're asserting the line, just halt the CPU */
+			if (state == ASSERT_LINE)
+				cpunum_suspend(cpunum, SUSPEND_REASON_RESET, 1);
+			else
+			{
+				/* if we're clearing the line that was previously asserted, or if we're just */
+				/* pulsing the line, reset the CPU */
+				if ((state == CLEAR_LINE && cpunum_is_suspended(cpunum, SUSPEND_REASON_RESET)) || state == PULSE_LINE)
+					cpunum_reset(cpunum, Machine->drv->cpu[cpunum].reset_param, cpu_irq_callbacks[cpunum]);
+
+				/* if we're clearing the line, make sure the CPU is not halted */
+				cpunum_resume(cpunum, SUSPEND_REASON_RESET);
+			}
+		}
+		
+		/* special case: HALT */
+		else if (line == INPUT_LINE_HALT)
+		{
+			/* if asserting, halt the CPU */
+			if (state == ASSERT_LINE)
+				cpunum_suspend(cpunum, SUSPEND_REASON_HALT, 1);
+
+			/* if clearing, unhalt the CPU */
+			else if (state == CLEAR_LINE)
+				cpunum_resume(cpunum, SUSPEND_REASON_HALT);
+		}
+		
+		/* all other cases */
+		else
+		{
+			/* switch off the requested state */
+			switch (state)
+			{
+				case PULSE_LINE:
+					activecpu_set_input_line(line, INTERNAL_ASSERT_LINE);
+					activecpu_set_input_line(line, INTERNAL_CLEAR_LINE);
+					break;
+
+				case HOLD_LINE:
+				case ASSERT_LINE:
+					activecpu_set_input_line(line, INTERNAL_ASSERT_LINE);
+					break;
+
+				case CLEAR_LINE:
+					activecpu_set_input_line(line, INTERNAL_CLEAR_LINE);
+					break;
+
+				default:
+					logerror("cpunum_empty_event_queue cpu #%d, line %d, unknown state %d\n", cpunum, line, state);
+			}
+
+			/* generate a trigger to unsuspend any CPUs waiting on the interrupt */
+			if (state != CLEAR_LINE)
+				cpu_triggerint(cpunum);
+		}
+	}
+
+	/* swap back */
+	cpuintrf_pop_context();
+
+	/* reset counter */
+	input_event_index[cpunum][line] = 0;
+}
+
+
+
+/*************************************
+ *
+ *	Set the state of a CPU's input
+ *	line
+ *
+ *************************************/
+
+void cpunum_set_input_line(int cpunum, int line, int state)
+{
+	int vector = (line >= 0 && line < MAX_INPUT_LINES) ? interrupt_vector[cpunum][line] : 0xff;
+	cpunum_set_input_line_and_vector(cpunum, line, state, vector);
+}
+
+
+void cpunum_set_input_line_vector(int cpunum, int line, int vector)
+{
+	if (cpunum < cpu_gettotalcpu() && line >= 0 && line < MAX_INPUT_LINES)
+	{
+		LOG(("cpunum_set_input_line_vector(%d,%d,$%04x)\n",cpunum,line,vector));
+		interrupt_vector[cpunum][line] = vector;
+		return;
+	}
+	LOG(("cpunum_set_input_line_vector CPU#%d line %d > max input lines\n", cpunum, line));
+}
+
+
+void cpunum_set_input_line_and_vector(int cpunum, int line, int state, int vector)
+{
+	if (line >= 0 && line < MAX_INPUT_LINES)
+	{
+		INT32 input_event = (state & 0xff) | (vector << 8);
+		int event_index = input_event_index[cpunum][line]++;
+
+		LOG(("cpunum_set_input_line_and_vector(%d,%d,%d,%02x)\n", cpunum, line, state, vector));
+
+		/* if we're full of events, flush the queue and log a message */
+		if (event_index >= MAX_INPUT_EVENTS)
+		{
+			input_event_index[cpunum][line]--;
+			cpunum_empty_event_queue(cpunum | (line << 8));
+			event_index = input_event_index[cpunum][line]++;
+			logerror("Exceeded pending input line event queue on CPU %d!\n", cpunum);
+		}
+
+		/* enqueue the event */
+		if (event_index < MAX_INPUT_EVENTS)
+		{
+			input_event_queue[cpunum][line][event_index] = input_event;
+			
+			/* if this is the first one, set the timer */
+			if (event_index == 0)
+				mame_timer_set(time_zero, cpunum | (line << 8), cpunum_empty_event_queue);
+		}
+	}
+}
+
 
 
 
@@ -196,167 +359,37 @@ void cpu_set_irq_callback(int cpunum, int (*callback)(int))
  *
  *************************************/
 
-INLINE int cpu_irq_callback(int cpunum, int irqline)
+INLINE int cpu_irq_callback(int cpunum, int line)
 {
-	int vector = irq_line_vector[cpunum][irqline];
+	int vector = input_line_vector[cpunum][line];
 
-	LOG(("cpu_%d_irq_callback(%d) $%04x\n", cpunum, irqline, vector));
+	LOG(("cpu_%d_irq_callback(%d) $%04x\n", cpunum, line, vector));
 
 	/* if the IRQ state is HOLD_LINE, clear it */
-	if (irq_line_state[cpunum][irqline] == HOLD_LINE)
+	if (input_line_state[cpunum][line] == HOLD_LINE)
 	{
-		LOG(("->set_irq_line(%d,%d,%d)\n", cpunum, irqline, CLEAR_LINE));
-		activecpu_set_irq_line(irqline, INTERNAL_CLEAR_LINE);
-		irq_line_state[cpunum][irqline] = CLEAR_LINE;
+		LOG(("->set_irq_line(%d,%d,%d)\n", cpunum, line, CLEAR_LINE));
+		activecpu_set_input_line(line, INTERNAL_CLEAR_LINE);
+		input_line_state[cpunum][line] = CLEAR_LINE;
 	}
 
 	/* if there's a driver callback, run it */
 	if (drv_irq_callbacks[cpunum])
-		vector = (*drv_irq_callbacks[cpunum])(irqline);
+		vector = (*drv_irq_callbacks[cpunum])(line);
 
 	/* otherwise, just return the current vector */
 	return vector;
 }
 
-static int cpu_0_irq_callback(int irqline) { return cpu_irq_callback(0, irqline); }
-static int cpu_1_irq_callback(int irqline) { return cpu_irq_callback(1, irqline); }
-static int cpu_2_irq_callback(int irqline) { return cpu_irq_callback(2, irqline); }
-static int cpu_3_irq_callback(int irqline) { return cpu_irq_callback(3, irqline); }
-static int cpu_4_irq_callback(int irqline) { return cpu_irq_callback(4, irqline); }
-static int cpu_5_irq_callback(int irqline) { return cpu_irq_callback(5, irqline); }
-static int cpu_6_irq_callback(int irqline) { return cpu_irq_callback(6, irqline); }
-static int cpu_7_irq_callback(int irqline) { return cpu_irq_callback(7, irqline); }
+static int cpu_0_irq_callback(int line) { return cpu_irq_callback(0, line); }
+static int cpu_1_irq_callback(int line) { return cpu_irq_callback(1, line); }
+static int cpu_2_irq_callback(int line) { return cpu_irq_callback(2, line); }
+static int cpu_3_irq_callback(int line) { return cpu_irq_callback(3, line); }
+static int cpu_4_irq_callback(int line) { return cpu_irq_callback(4, line); }
+static int cpu_5_irq_callback(int line) { return cpu_irq_callback(5, line); }
+static int cpu_6_irq_callback(int line) { return cpu_irq_callback(6, line); }
+static int cpu_7_irq_callback(int line) { return cpu_irq_callback(7, line); }
 
-
-
-/*************************************
- *
- *	Set the IRQ vector for a given
- *	IRQ line on a CPU
- *
- *************************************/
-
-void cpu_irq_line_vector_w(int cpunum, int irqline, int vector)
-{
-	if (cpunum < cpu_gettotalcpu() && irqline >= 0 && irqline < MAX_IRQ_LINES)
-	{
-		LOG(("cpu_irq_line_vector_w(%d,%d,$%04x)\n",cpunum,irqline,vector));
-		interrupt_vector[cpunum][irqline] = vector;
-		return;
-	}
-	LOG(("cpu_irq_line_vector_w CPU#%d irqline %d > max irq lines\n", cpunum, irqline));
-}
-
-
-
-/*************************************
- *
- *	Generate a IRQ interrupt
- *
- *************************************/
-
-static void cpu_empty_event_queue(int cpu_and_irqline)
-{
-	int cpunum = cpu_and_irqline & 0xff;
-	int irqline = cpu_and_irqline >> 8;
-	int i;
-
-	/* swap to the CPU's context */
-	cpuintrf_push_context(cpunum);
-
-	/* loop over all events */
-	for (i = 0; i < irq_event_index[cpunum][irqline]; i++)
-	{
-		INT32 irq_event = irq_event_queue[cpunum][irqline][i];
-		int state = irq_event & 0xff;
-		int vector = irq_event >> 8;
-
-		LOG(("cpu_empty_event_queue %d,%d,%d\n",cpunum,irqline,state));
-
-		/* set the IRQ line state and vector */
-		if (irqline >= 0 && irqline < MAX_IRQ_LINES)
-		{
-			irq_line_state[cpunum][irqline] = state;
-			irq_line_vector[cpunum][irqline] = vector;
-		}
-
-		/* switch off the requested state */
-		switch (state)
-		{
-			case PULSE_LINE:
-				activecpu_set_irq_line(irqline, INTERNAL_ASSERT_LINE);
-				activecpu_set_irq_line(irqline, INTERNAL_CLEAR_LINE);
-				break;
-
-			case HOLD_LINE:
-			case ASSERT_LINE:
-				activecpu_set_irq_line(irqline, INTERNAL_ASSERT_LINE);
-				break;
-
-			case CLEAR_LINE:
-				activecpu_set_irq_line(irqline, INTERNAL_CLEAR_LINE);
-				break;
-
-			default:
-				logerror("cpu_manualirqcallback cpu #%d, line %d, unknown state %d\n", cpunum, irqline, state);
-		}
-
-		/* generate a trigger to unsuspend any CPUs waiting on the interrupt */
-		if (state != CLEAR_LINE)
-			cpu_triggerint(cpunum);
-	}
-
-	/* swap back */
-	cpuintrf_pop_context();
-
-	/* reset counter */
-	irq_event_index[cpunum][irqline] = 0;
-}
-
-	
-void cpu_set_irq_line(int cpunum, int irqline, int state)
-{
-	int vector = (irqline >= 0 && irqline < MAX_IRQ_LINES) ? interrupt_vector[cpunum][irqline] : 0xff;
-	cpu_set_irq_line_and_vector(cpunum, irqline, state, vector);
-}
-
-
-void cpu_set_irq_line_and_vector(int cpunum, int irqline, int state, int vector)
-{
-	if (irqline >= 0 && irqline < MAX_IRQ_LINES)
-	{
-		INT32 irq_event = (state & 0xff) | (vector << 8);
-		int event_index = irq_event_index[cpunum][irqline]++;
-
-		LOG(("cpu_set_irq_line(%d,%d,%d,%02x)\n", cpunum, irqline, state, vector));
-
-		/* if we're full of events, flush the queue and log a message */
-		if (event_index >= MAX_IRQ_EVENTS)
-		{
-			irq_event_index[cpunum][irqline]--;
-			cpu_empty_event_queue(cpunum | (irqline << 8));
-			event_index = irq_event_index[cpunum][irqline]++;
-			logerror("Exceeded pending IRQ event queue on CPU %d!\n", cpunum);
-		}
-
-		/* enqueue the event */
-		if (event_index < MAX_IRQ_EVENTS)
-		{
-			irq_event_queue[cpunum][irqline][event_index] = irq_event;
-			
-			/* if this is the first one, set the timer */
-			if (event_index == 0)
-				mame_timer_set(time_zero, cpunum | (irqline << 8), cpu_empty_event_queue);
-		}
-	}
-}
-
-
-
-#if 0
-#pragma mark -
-#pragma mark PREFERRED INTERRUPT HANDLING
-#endif
 
 
 /*************************************
@@ -369,14 +402,14 @@ INTERRUPT_GEN( nmi_line_pulse )
 {
 	int cpunum = cpu_getactivecpu();
 	if (interrupt_enable[cpunum])
-		cpu_set_irq_line(cpunum, IRQ_LINE_NMI, PULSE_LINE);
+		cpunum_set_input_line(cpunum, INPUT_LINE_NMI, PULSE_LINE);
 }
 
 INTERRUPT_GEN( nmi_line_assert )
 {
 	int cpunum = cpu_getactivecpu();
 	if (interrupt_enable[cpunum])
-		cpu_set_irq_line(cpunum, IRQ_LINE_NMI, ASSERT_LINE);
+		cpunum_set_input_line(cpunum, INPUT_LINE_NMI, ASSERT_LINE);
 }
 
 
@@ -387,33 +420,33 @@ INTERRUPT_GEN( nmi_line_assert )
  *
  *************************************/
 
-INLINE void irqn_line_hold(int irqline)
+INLINE void irqn_line_hold(int line)
 {
 	int cpunum = cpu_getactivecpu();
 	if (interrupt_enable[cpunum])
 	{
-		int vector = (irqline >= 0 && irqline < MAX_IRQ_LINES) ? interrupt_vector[cpunum][irqline] : 0xff;
-		cpu_set_irq_line_and_vector(cpunum, irqline, HOLD_LINE, vector);
+		int vector = (line >= 0 && line < MAX_INPUT_LINES) ? interrupt_vector[cpunum][line] : 0xff;
+		cpunum_set_input_line_and_vector(cpunum, line, HOLD_LINE, vector);
 	}
 }
 
-INLINE void irqn_line_pulse(int irqline)
+INLINE void irqn_line_pulse(int line)
 {
 	int cpunum = cpu_getactivecpu();
 	if (interrupt_enable[cpunum])
 	{
-		int vector = (irqline >= 0 && irqline < MAX_IRQ_LINES) ? interrupt_vector[cpunum][irqline] : 0xff;
-		cpu_set_irq_line_and_vector(cpunum, irqline, PULSE_LINE, vector);
+		int vector = (line >= 0 && line < MAX_INPUT_LINES) ? interrupt_vector[cpunum][line] : 0xff;
+		cpunum_set_input_line_and_vector(cpunum, line, PULSE_LINE, vector);
 	}
 }
 
-INLINE void irqn_line_assert(int irqline)
+INLINE void irqn_line_assert(int line)
 {
 	int cpunum = cpu_getactivecpu();
 	if (interrupt_enable[cpunum])
 	{
-		int vector = (irqline >= 0 && irqline < MAX_IRQ_LINES) ? interrupt_vector[cpunum][irqline] : 0xff;
-		cpu_set_irq_line_and_vector(cpunum, irqline, ASSERT_LINE, vector);
+		int vector = (line >= 0 && line < MAX_INPUT_LINES) ? interrupt_vector[cpunum][line] : 0xff;
+		cpunum_set_input_line_and_vector(cpunum, line, ASSERT_LINE, vector);
 	}
 }
 
@@ -472,15 +505,15 @@ INTERRUPT_GEN( irq7_line_assert )	{ irqn_line_assert(7); }
 
 static void cpu_clearintcallback(int cpunum)
 {
-	int irqcount = cpunum_irq_lines(cpunum);
-	int irqline;
+	int inputcount = cpunum_input_lines(cpunum);
+	int line;
 
 	cpuintrf_push_context(cpunum);
 
-	/* clear NMI and all IRQs */
-	activecpu_set_irq_line(IRQ_LINE_NMI, INTERNAL_CLEAR_LINE);
-	for (irqline = 0; irqline < irqcount; irqline++)
-		activecpu_set_irq_line(irqline, INTERNAL_CLEAR_LINE);
+	/* clear NMI and all inputs */
+	activecpu_set_input_line(INPUT_LINE_NMI, INTERNAL_CLEAR_LINE);
+	for (line = 0; line < inputcount; line++)
+		activecpu_set_input_line(line, INTERNAL_CLEAR_LINE);
 
 	cpuintrf_pop_context();
 }
@@ -498,21 +531,21 @@ LOG(("CPU#%d interrupt_enable=%d\n", cpunum, enabled));
 }
 
 
-WRITE_HANDLER( interrupt_enable_w )
+WRITE8_HANDLER( interrupt_enable_w )
 {
 	VERIFY_ACTIVECPU_VOID(interrupt_enable_w);
 	cpu_interrupt_enable(activecpu, data);
 }
 
 
-READ_HANDLER( interrupt_enable_r )
+READ8_HANDLER( interrupt_enable_r )
 {
 	VERIFY_ACTIVECPU(1, interrupt_enable_r);
 	return interrupt_enable[activecpu];
 }
 
 
-WRITE_HANDLER( interrupt_vector_w )
+WRITE8_HANDLER( interrupt_vector_w )
 {
 	VERIFY_ACTIVECPU_VOID(interrupt_vector_w);
 	if (interrupt_vector[activecpu][0] != data)

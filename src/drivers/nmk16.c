@@ -195,17 +195,17 @@ WRITE16_HANDLER ( ssmissin_sound_w )
 	if (ACCESSING_LSB)
 	{
 		soundlatch_w(0,data & 0xff);
-		cpu_set_irq_line(1,0, ASSERT_LINE);
+		cpunum_set_input_line(1,0, ASSERT_LINE);
 	}
 
 	if (ACCESSING_MSB)
 		if ((data >> 8) & 0x80)
-			cpu_set_irq_line(1,0, CLEAR_LINE);
+			cpunum_set_input_line(1,0, CLEAR_LINE);
 }
 
 
 
-WRITE_HANDLER ( ssmissin_soundbank_w )
+WRITE8_HANDLER ( ssmissin_soundbank_w )
 {
 	unsigned char *rom = memory_region(REGION_SOUND1);
 	int bank;
@@ -396,14 +396,14 @@ static READ16_HANDLER( macross2_sound_result_r )
 	return soundlatch2_r(0);
 }
 
-static WRITE_HANDLER( macross2_sound_bank_w )
+static WRITE8_HANDLER( macross2_sound_bank_w )
 {
 	UINT8 *rom = memory_region(REGION_CPU2) + 0x10000;
 
 	cpu_setbank(1,rom + (data & 0x07) * 0x4000);
 }
 
-static WRITE_HANDLER( macross2_oki6295_bankswitch_w )
+static WRITE8_HANDLER( macross2_oki6295_bankswitch_w )
 {
 	/* The OKI6295 ROM space is divided in four banks, each one indepentently
 	   controlled. The sample table at the beginning of the addressing space is
@@ -2610,7 +2610,7 @@ static struct GfxDecodeInfo strahl_gfxdecodeinfo[] =
 
 static void ym2203_irqhandler(int irq)
 {
-	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2203interface ym2203_interface_15 =
@@ -2643,8 +2643,8 @@ static struct OKIM6295interface okim6295_interface_ssmissin =
 
 static INTERRUPT_GEN( nmk_interrupt )
 {
-	if (cpu_getiloops() == 0) cpu_set_irq_line(0, 4, HOLD_LINE);
-	else cpu_set_irq_line(0, 2, HOLD_LINE);
+	if (cpu_getiloops() == 0) cpunum_set_input_line(0, 4, HOLD_LINE);
+	else cpunum_set_input_line(0, 2, HOLD_LINE);
 }
 
 
@@ -3992,6 +3992,27 @@ ROM_START( sabotenb )
 	ROM_LOAD( "ic27.sb7",    0x040000, 0x100000, CRC(43e33a7e) SHA1(51068b63f4415712eaa25dcf1ee6b0cc2850974e) )	/* all banked */
 ROM_END
 
+ROM_START( sabotnba )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 )		/* 68000 code */
+	ROM_LOAD16_BYTE( "sb1.76",  0x00000, 0x40000, CRC(df6f65e2) SHA1(6ad9e9f13539310646895c5e7992c6546e75684b) )
+	ROM_LOAD16_BYTE( "sb2.75",  0x00001, 0x40000, CRC(0d2c1ab8) SHA1(abb43a8c5398195c0ad48d8d772ef47635bf25c2) )
+
+	ROM_REGION( 0x010000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "ic35.sb3",		0x000000, 0x010000, CRC(eb7bc99d) SHA1(b3063afd58025a441d4750c22483e9129da402e7) )	/* 8x8 tiles */
+
+	ROM_REGION( 0x200000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "ic32.sb4",		0x000000, 0x200000, CRC(24c62205) SHA1(3ab0ca5d7c698328d91421ccf6f7dafc20df3c8d) )	/* 16x16 tiles */
+
+	ROM_REGION( 0x200000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD16_WORD_SWAP( "ic100.sb5",	0x000000, 0x200000, CRC(b20f166e) SHA1(074d770fd6d233040a80a92f4467d81f961c650b) )	/* Sprites */
+
+	ROM_REGION( 0x140000, REGION_SOUND1, 0 )	/* OKIM6295 samples */
+	ROM_LOAD( "ic30.sb6",    0x040000, 0x100000, CRC(288407af) SHA1(78c08fae031337222681c593dc86a08df6a34a4b) )	/* all banked */
+
+	ROM_REGION( 0x140000, REGION_SOUND2, 0 )	/* OKIM6295 samples */
+	ROM_LOAD( "ic27.sb7",    0x040000, 0x100000, CRC(43e33a7e) SHA1(51068b63f4415712eaa25dcf1ee6b0cc2850974e) )	/* all banked */
+ROM_END
+
 ROM_START( bjtwin )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )  /* 68000 code */
 	ROM_LOAD16_BYTE( "93087-1.bin",  0x00000, 0x20000, CRC(93c84e2d) SHA1(ad0755cabfef78e7e689856379d6f8c88a9b27c1) )
@@ -4351,7 +4372,7 @@ static DRIVER_INIT( blkheart )
    	RAM[0x23dc/2] = 0x0300;
    	RAM[0x3dea/2] = 0x0300;
 
-	install_mem_write16_handler(0, 0xf902a, 0xf902b, test_2a_w );
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xf902a, 0xf902b, 0, 0, test_2a_w );
 }
 
 static DRIVER_INIT( mustang )
@@ -4368,7 +4389,7 @@ static DRIVER_INIT( mustang )
   	RAM[0xc00/2] = 0x0300;
   	RAM[0x30b2/2] = 0x0300;
 
-	install_mem_write16_handler(0, 0xf902a, 0xf902b, test_2a_mustang_w );
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xf902a, 0xf902b, 0, 0, test_2a_mustang_w );
 }
 
 static DRIVER_INIT( bjtwin )
@@ -4422,6 +4443,7 @@ GAMEX( 1993, tdragon2, 0,       tdragon2, tdragon2, 0,        ROT270, "NMK",				
 GAMEX( 1993, bigbang,  tdragon2,tdragon2, tdragon2, 0,        ROT270, "NMK",				         	"Big Bang", GAME_NO_COCKTAIL )
 GAMEX( 1994, raphero,  0,       raphero,  tdragon2, 0,        ROT270, "Media Trading Corp",             "Rapid Hero (Japan?)", GAME_NO_SOUND ) // 23rd July 1993 in test mode, (c)1994 on title screen
 
-GAMEX( 1992, sabotenb, 0,       bjtwin,   sabotenb, nmk,      ROT0,   "NMK / Tecmo",					"Saboten Bombers", GAME_NO_COCKTAIL )
+GAMEX( 1992, sabotenb, 0,       bjtwin,   sabotenb, nmk,      ROT0,   "NMK / Tecmo",					"Saboten Bombers (set 1)", GAME_NO_COCKTAIL )
+GAMEX( 1992, sabotnba, sabotenb,bjtwin,   sabotenb, nmk,      ROT0,   "NMK / Tecmo",					"Saboten Bombers (set 2)", GAME_NO_COCKTAIL )
 GAMEX( 1993, bjtwin,   0,       bjtwin,   bjtwin,   bjtwin,   ROT270, "NMK",							"Bombjack Twin", GAME_NO_COCKTAIL )
 GAMEX( 1995, nouryoku, 0,       bjtwin,   nouryoku, nmk,      ROT0,   "Tecmo",							"Nouryoku Koujou Iinkai", GAME_NO_COCKTAIL )

@@ -1987,15 +1987,15 @@ static void f3_tilemap_draw(struct mame_bitmap *bitmap,
 
 	if(deb_enable)
 	{
-		if (keyboard_pressed(KEYCODE_Z)) enable[0]=0;
-		if (keyboard_pressed(KEYCODE_X)) enable[1]=0;
-		if (keyboard_pressed(KEYCODE_C)) enable[2]=0;
-		if (keyboard_pressed(KEYCODE_V)) enable[3]=0;
+		if (code_pressed(KEYCODE_Z)) enable[0]=0;
+		if (code_pressed(KEYCODE_X)) enable[1]=0;
+		if (code_pressed(KEYCODE_C)) enable[2]=0;
+		if (code_pressed(KEYCODE_V)) enable[3]=0;
 
-		if (keyboard_pressed(KEYCODE_A)) sprite_pri_usage &= ~(1<<3);
-		if (keyboard_pressed(KEYCODE_S)) sprite_pri_usage &= ~(1<<2);
-		if (keyboard_pressed(KEYCODE_D)) sprite_pri_usage &= ~(1<<1);
-		if (keyboard_pressed(KEYCODE_F)) sprite_pri_usage &= ~(1<<0);
+		if (code_pressed(KEYCODE_A)) sprite_pri_usage &= ~(1<<3);
+		if (code_pressed(KEYCODE_S)) sprite_pri_usage &= ~(1<<2);
+		if (code_pressed(KEYCODE_D)) sprite_pri_usage &= ~(1<<1);
+		if (code_pressed(KEYCODE_F)) sprite_pri_usage &= ~(1<<0);
 	}
 #endif	//DEBUG_F3
 
@@ -3257,7 +3257,7 @@ if (deb_enable) fillbitmap(bitmap,255,cliprect);
 	tempclip = pixel_layer_clip;
 	sect_rect(&tempclip,cliprect);
 #if DEBUG_F3
-if (!deb_enable || !keyboard_pressed(KEYCODE_N))
+if (!deb_enable || !code_pressed(KEYCODE_N))
 #endif	//DEBUG_F3
 {
 	priority_bitmap_bak=priority_bitmap;
@@ -3274,7 +3274,7 @@ if (!deb_enable || !keyboard_pressed(KEYCODE_N))
 	}
 
 #if DEBUG_F3
-if (!deb_enable || !keyboard_pressed(KEYCODE_B))
+if (!deb_enable || !code_pressed(KEYCODE_B))
 #endif	//DEBUG_F3
 {
 	f3_drawsprites(bitmap,cliprect);
@@ -3282,7 +3282,7 @@ if (!deb_enable || !keyboard_pressed(KEYCODE_B))
 
 #if DEBUG_F3
 deb_tileflag=0;
-if (deb_enable && keyboard_pressed(KEYCODE_G))
+if (deb_enable && code_pressed(KEYCODE_G))
 {
 	deb_tileflag=1;
 	tilemap_mark_all_tiles_dirty( pf1_tilemap );
@@ -3303,18 +3303,18 @@ if (deb_enable && keyboard_pressed(KEYCODE_G))
 
 	/* vram layer */
 #if DEBUG_F3
-if (!deb_enable || !keyboard_pressed(KEYCODE_M))
+if (!deb_enable || !code_pressed(KEYCODE_M))
 #endif	//DEBUG_F3
 	f3_draw_vram_layer(bitmap,cliprect);
 
 
 #if DEBUG_F3
-	if (0 && keyboard_pressed(KEYCODE_O))
+	if (0 && code_pressed(KEYCODE_O))
 		print_debug_info(0,0,0,0,0,0,0,0);
 #endif	//DEBUG_F3
 
 
-	if (!keyboard_pressed(KEYCODE_LSHIFT) && keyboard_pressed_memory(KEYCODE_F1))
+	if (!code_pressed(KEYCODE_LSHIFT) && code_pressed_memory(KEYCODE_F1))
 	{
 		alpha_disable=!alpha_disable;
 		if(alpha_disable)
@@ -3327,7 +3327,7 @@ if (!deb_enable || !keyboard_pressed(KEYCODE_M))
 		static int debdisp = 0;
 		static int cz_pos=0,cz_line=24;
 
-		if (keyboard_pressed(KEYCODE_LSHIFT) && keyboard_pressed_memory(KEYCODE_F1))
+		if (code_pressed(KEYCODE_LSHIFT) && code_pressed_memory(KEYCODE_F1))
 		{
 			deb_enable=!deb_enable;
 			if(!deb_enable)
@@ -3339,7 +3339,7 @@ if (!deb_enable || !keyboard_pressed(KEYCODE_M))
 
 		}
 
-		if (deb_enable && keyboard_pressed_memory(KEYCODE_Q))
+		if (deb_enable && code_pressed_memory(KEYCODE_Q))
 		{
 			debdisp++;
 			if(debdisp==4) debdisp = 0;
@@ -3348,10 +3348,10 @@ if (!deb_enable || !keyboard_pressed(KEYCODE_M))
 		if(debdisp)
 		{
 			int sft;
-			if (keyboard_pressed(KEYCODE_K))	cz_line--;
-			if (keyboard_pressed(KEYCODE_L))	cz_line++;
-			if (keyboard_pressed_memory(KEYCODE_I))	cz_line--;
-			if (keyboard_pressed_memory(KEYCODE_O))	cz_line++;
+			if (code_pressed(KEYCODE_K))	cz_line--;
+			if (code_pressed(KEYCODE_L))	cz_line++;
+			if (code_pressed_memory(KEYCODE_I))	cz_line--;
+			if (code_pressed_memory(KEYCODE_O))	cz_line++;
 			cz_line=cz_line & 0xff;
 			sft=16*~(cz_line & 1);
 
@@ -3421,40 +3421,40 @@ if (!deb_enable || !keyboard_pressed(KEYCODE_M))
 
 			if(1)
 			{
-				if (keyboard_pressed_memory(KEYCODE_0_PAD))	deb_sc_x-=0x0400;
-				if (keyboard_pressed_memory(KEYCODE_DEL_PAD))	deb_sc_x+=0x0400;
-				if (keyboard_pressed_memory(KEYCODE_1_PAD))	deb_sc_x-=0x10000;
-				if (keyboard_pressed_memory(KEYCODE_2_PAD))	deb_sc_x+=0x10000;
+				if (code_pressed_memory(KEYCODE_0_PAD))	deb_sc_x-=0x0400;
+				if (code_pressed_memory(KEYCODE_DEL_PAD))	deb_sc_x+=0x0400;
+				if (code_pressed_memory(KEYCODE_1_PAD))	deb_sc_x-=0x10000;
+				if (code_pressed_memory(KEYCODE_2_PAD))	deb_sc_x+=0x10000;
 
-				if (keyboard_pressed_memory(KEYCODE_4_PAD))	deb_sc_y-=0x0200;
-				if (keyboard_pressed_memory(KEYCODE_5_PAD))	deb_sc_y+=0x0200;
-				if (keyboard_pressed_memory(KEYCODE_7_PAD))	deb_sc_y-=0x10000;
-				if (keyboard_pressed_memory(KEYCODE_8_PAD))	deb_sc_y+=0x10000;
+				if (code_pressed_memory(KEYCODE_4_PAD))	deb_sc_y-=0x0200;
+				if (code_pressed_memory(KEYCODE_5_PAD))	deb_sc_y+=0x0200;
+				if (code_pressed_memory(KEYCODE_7_PAD))	deb_sc_y-=0x10000;
+				if (code_pressed_memory(KEYCODE_8_PAD))	deb_sc_y+=0x10000;
 				sprintf(deb_buf[5],"sc offset x:%8x y:%8x",deb_sc_x,deb_sc_y);
 
 				sprintf(deb_buf[6],"flip:%d alp/loop:%2d/%2d",!(!flipscreen),deb_alpha_cnt,deb_loop);
 
-				if (keyboard_pressed_memory(KEYCODE_H))	deb_tile_code--;
-				if (keyboard_pressed_memory(KEYCODE_J))	deb_tile_code++;
+				if (code_pressed_memory(KEYCODE_H))	deb_tile_code--;
+				if (code_pressed_memory(KEYCODE_J))	deb_tile_code++;
 				deb_tile_code&=0x1f;
 				sprintf(deb_buf[7],"tile code flg:%02x",deb_tile_code);
 			}
 			else
 			{
-				if (keyboard_pressed(KEYCODE_0_PAD))	deb_alpha_level_a-=1;
-				if (keyboard_pressed(KEYCODE_DEL_PAD))	deb_alpha_level_a+=1;
-				if (keyboard_pressed_memory(KEYCODE_1_PAD))	deb_alpha_level_a-=1;
-				if (keyboard_pressed_memory(KEYCODE_2_PAD))	deb_alpha_level_a+=1;
+				if (code_pressed(KEYCODE_0_PAD))	deb_alpha_level_a-=1;
+				if (code_pressed(KEYCODE_DEL_PAD))	deb_alpha_level_a+=1;
+				if (code_pressed_memory(KEYCODE_1_PAD))	deb_alpha_level_a-=1;
+				if (code_pressed_memory(KEYCODE_2_PAD))	deb_alpha_level_a+=1;
 
-				if (keyboard_pressed(KEYCODE_4_PAD))	deb_alpha_level_b-=1;
-				if (keyboard_pressed(KEYCODE_5_PAD))	deb_alpha_level_b+=1;
-				if (keyboard_pressed_memory(KEYCODE_7_PAD))	deb_alpha_level_b-=1;
-				if (keyboard_pressed_memory(KEYCODE_8_PAD))	deb_alpha_level_b+=1;
+				if (code_pressed(KEYCODE_4_PAD))	deb_alpha_level_b-=1;
+				if (code_pressed(KEYCODE_5_PAD))	deb_alpha_level_b+=1;
+				if (code_pressed_memory(KEYCODE_7_PAD))	deb_alpha_level_b-=1;
+				if (code_pressed_memory(KEYCODE_8_PAD))	deb_alpha_level_b+=1;
 
 				deb_alpha_level_a &= 0xff;
 				deb_alpha_level_b &= 0xff;
 
-				if (keyboard_pressed_memory(KEYCODE_6_PAD)) deb_alp_mode++;
+				if (code_pressed_memory(KEYCODE_6_PAD)) deb_alp_mode++;
 				if (deb_alp_mode>2 ) deb_alp_mode=0;
 
 				sprintf(deb_buf[5],"mode:%d alpha_a:%2x alpha_b:%2x",

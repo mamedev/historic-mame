@@ -38,7 +38,7 @@ static int counter = 0;
 
 MACHINE_INIT( dealer );
 
-WRITE_HANDLER( dealer_decrypt_rom )
+WRITE8_HANDLER( dealer_decrypt_rom )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 

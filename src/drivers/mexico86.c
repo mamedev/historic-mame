@@ -72,22 +72,22 @@ Revision:
 /* in machine/mexico86.c */
 extern unsigned char *mexico86_protection_ram;
 INTERRUPT_GEN( mexico86_m68705_interrupt );
-READ_HANDLER( mexico86_68705_portA_r );
-WRITE_HANDLER( mexico86_68705_portA_w );
-WRITE_HANDLER( mexico86_68705_ddrA_w );
-READ_HANDLER( mexico86_68705_portB_r );
-WRITE_HANDLER( mexico86_68705_portB_w );
-WRITE_HANDLER( mexico86_68705_ddrB_w );
+READ8_HANDLER( mexico86_68705_portA_r );
+WRITE8_HANDLER( mexico86_68705_portA_w );
+WRITE8_HANDLER( mexico86_68705_ddrA_w );
+READ8_HANDLER( mexico86_68705_portB_r );
+WRITE8_HANDLER( mexico86_68705_portB_w );
+WRITE8_HANDLER( mexico86_68705_ddrB_w );
 
 /* in vidhrdw/mexico86.c */
 extern unsigned char *mexico86_videoram,*mexico86_objectram;
 extern size_t mexico86_objectram_size;
-WRITE_HANDLER( mexico86_bankswitch_w );
+WRITE8_HANDLER( mexico86_bankswitch_w );
 VIDEO_UPDATE( mexico86 );
 VIDEO_UPDATE( kikikai );
 
 //AT
-static READ_HANDLER( kiki_2203_r )
+static READ8_HANDLER( kiki_2203_r )
 {
 	return(YM2203Read(0,0) & 0x7f);
 }
@@ -95,12 +95,12 @@ static READ_HANDLER( kiki_2203_r )
 
 static unsigned char *shared;
 
-static READ_HANDLER( shared_r )
+static READ8_HANDLER( shared_r )
 {
 	return shared[offset];
 }
 
-static WRITE_HANDLER( shared_w )
+static WRITE8_HANDLER( shared_w )
 {
 	shared[offset] = data;
 }
@@ -116,10 +116,10 @@ bit 2 = sound cpu reset line
 bit 1 = microcontroller reset line
 bit 0 = ? (unused?)
 */
-static WRITE_HANDLER( mexico86_f008_w )
+static WRITE8_HANDLER( mexico86_f008_w )
 {
-	cpu_set_reset_line(1,(data & 4) ? CLEAR_LINE : ASSERT_LINE);
-	cpu_set_reset_line(2,(data & 2) ? CLEAR_LINE : ASSERT_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_RESET, (data & 4) ? CLEAR_LINE : ASSERT_LINE);
+	cpunum_set_input_line(2, INPUT_LINE_RESET, (data & 2) ? CLEAR_LINE : ASSERT_LINE);
 }
 
 

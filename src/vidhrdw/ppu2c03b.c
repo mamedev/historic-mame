@@ -1330,22 +1330,22 @@ void ppu2c03b_set_scanlines_per_frame( int num, int scanlines )
  *
  *************************************/
 
-READ_HANDLER( ppu2c03b_0_r )
+READ8_HANDLER( ppu2c03b_0_r )
 {
 	return ppu2c03b_r( 0, offset );
 }
 
-READ_HANDLER( ppu2c03b_1_r )
+READ8_HANDLER( ppu2c03b_1_r )
 {
 	return ppu2c03b_r( 1, offset );
 }
 
-WRITE_HANDLER( ppu2c03b_0_w )
+WRITE8_HANDLER( ppu2c03b_0_w )
 {
 	ppu2c03b_w( 0, offset, data );
 }
 
-WRITE_HANDLER( ppu2c03b_1_w )
+WRITE8_HANDLER( ppu2c03b_1_w )
 {
 	ppu2c03b_w( 1, offset, data );
 }

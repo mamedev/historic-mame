@@ -6,19 +6,19 @@ data8_t *deadang_video_data,*deadang_scroll_ram;
 
 /******************************************************************************/
 
-WRITE_HANDLER( deadang_foreground_w )
+WRITE8_HANDLER( deadang_foreground_w )
 {
 	deadang_video_data[offset]=data;
 	tilemap_mark_tile_dirty( pf1_layer, offset/2 );
 }
 
-WRITE_HANDLER( deadang_text_w )
+WRITE8_HANDLER( deadang_text_w )
 {
 	videoram[offset]=data;
 	tilemap_mark_tile_dirty( text_layer, offset/2 );
 }
 
-WRITE_HANDLER( deadang_bank_w )
+WRITE8_HANDLER( deadang_bank_w )
 {
 	deadangle_tilebank = data&1;
 	if (deadangle_tilebank!=deadangle_oldtilebank) {

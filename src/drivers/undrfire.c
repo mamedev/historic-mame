@@ -176,7 +176,7 @@ static WRITE32_HANDLER( color_ram_w )
 
 void undrfire_interrupt5(int x)
 {
-	cpu_set_irq_line(0,5,HOLD_LINE);
+	cpunum_set_input_line(0,5,HOLD_LINE);
 }
 
 
@@ -593,7 +593,7 @@ static struct ES5505interface es5505_interface =
 static INTERRUPT_GEN( undrfire_interrupt )
 {
 	frame_counter^=1;
-	cpu_set_irq_line(0, 4, HOLD_LINE);
+	cpunum_set_input_line(0, 4, HOLD_LINE);
 }
 
 static MACHINE_DRIVER_START( undrfire )
@@ -765,7 +765,7 @@ DRIVER_INIT( undrfire )
 	int data;
 
 	/* Speedup handlers */
-	install_mem_read32_handler(0, 0x2004f8, 0x2004fb, main_cycle_r);
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x2004f8, 0x2004fb, 0, 0, main_cycle_r);
 
 	/* make piv tile GFX format suitable for gfxdecode */
 	offset = size/2;

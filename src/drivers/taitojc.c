@@ -404,7 +404,7 @@ VIDEO_START( taitojc )
 }
 VIDEO_UPDATE( taitojc )
 {
-	if ( keyboard_pressed_memory(KEYCODE_M) )
+	if ( code_pressed_memory(KEYCODE_M) )
 	{
 		{
 			FILE *fp;
@@ -567,9 +567,9 @@ static MACHINE_INIT( jc )
 	RAM[2]=RAM[0x80002];
 	RAM[3]=RAM[0x80003];
 
-	cpu_set_reset_line(1, ASSERT_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE);
 // do not let the 68k start up until f3_shared_ram points to valid RAM
-//	cpu_set_reset_line(1, CLEAR_LINE);
+//	cpunum_set_input_line(1, INPUT_LINE_RESET, CLEAR_LINE);
 	f3_68681_reset();
 
 	// Code assumes RAM at 05800000 is initalized to all FF, but then tests it

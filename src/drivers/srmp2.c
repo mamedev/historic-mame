@@ -94,8 +94,8 @@ static INTERRUPT_GEN( srmp2_interrupt )
 {
 	switch (cpu_getiloops())
 	{
-		case 0:		cpu_set_irq_line(0, 4, HOLD_LINE);	break;	/* vblank */
-		default:	cpu_set_irq_line(0, 2, HOLD_LINE);	break;	/* sound */
+		case 0:		cpunum_set_input_line(0, 4, HOLD_LINE);	break;	/* vblank */
+		default:	cpunum_set_input_line(0, 2, HOLD_LINE);	break;	/* sound */
 	}
 }
 
@@ -210,7 +210,7 @@ static WRITE16_HANDLER( srmp2_adpcm_code_w )
 }
 
 
-static WRITE_HANDLER( srmp3_adpcm_code_w )
+static WRITE8_HANDLER( srmp3_adpcm_code_w )
 {
 /*
 	- Received data may be playing ADPCM number.
@@ -356,7 +356,7 @@ static WRITE16_HANDLER( srmp2_input_2_w )
 }
 
 
-static WRITE_HANDLER( srmp3_rombank_w )
+static WRITE8_HANDLER( srmp3_rombank_w )
 {
 /*
 	---x xxxx : MAIN ROM bank
@@ -452,17 +452,17 @@ static ADDRESS_MAP_START( mjyuugi_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 ADDRESS_MAP_END
 
 
-static READ_HANDLER( srmp3_cchip_status_0_r )
+static READ8_HANDLER( srmp3_cchip_status_0_r )
 {
 	return 0x01;
 }
 
-static READ_HANDLER( srmp3_cchip_status_1_r )
+static READ8_HANDLER( srmp3_cchip_status_1_r )
 {
 	return 0x01;
 }
 
-static WRITE_HANDLER( srmp3_input_1_w )
+static WRITE8_HANDLER( srmp3_input_1_w )
 {
 /*
 	---- --x- : Player 1 side flag ?
@@ -488,7 +488,7 @@ static WRITE_HANDLER( srmp3_input_1_w )
 	}
 }
 
-static WRITE_HANDLER( srmp3_input_2_w )
+static WRITE8_HANDLER( srmp3_input_2_w )
 {
 
 	/* Key matrix reading related ? */
@@ -499,7 +499,7 @@ static WRITE_HANDLER( srmp3_input_2_w )
 
 }
 
-static READ_HANDLER( srmp3_input_r )
+static READ8_HANDLER( srmp3_input_r )
 {
 /*
 	---x xxxx : Key code
@@ -544,7 +544,7 @@ static READ_HANDLER( srmp3_input_r )
 	return keydata;
 }
 
-static WRITE_HANDLER( srmp3_flags_w )
+static WRITE8_HANDLER( srmp3_flags_w )
 {
 /*
 	---- ---x : Coin Counter

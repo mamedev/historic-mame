@@ -267,7 +267,7 @@ DISCRETE_SOUND_START(astdelux_sound_interface)
 DISCRETE_SOUND_END
 
 
-WRITE_HANDLER( asteroid_explode_w )
+WRITE8_HANDLER( asteroid_explode_w )
 {
 	discrete_sound_w(0x20,(data&0x3c)>>2);				// Volume
 	/* We will modify the pitch data to send the divider value. */
@@ -289,26 +289,26 @@ WRITE_HANDLER( asteroid_explode_w )
 	discrete_sound_w(0x21, data);
 }
 
-WRITE_HANDLER( asteroid_thump_w )
+WRITE8_HANDLER( asteroid_thump_w )
 {
 	discrete_sound_w(0x10,data&0x10);		//Thump enable
 	discrete_sound_w(0x11,(data&0x0f)^0x0f);	//Thump frequency
 	discrete_sound_w(0x12,data&0x0f);		//Thump duty
 }
 
-WRITE_HANDLER( asteroid_sounds_w )
+WRITE8_HANDLER( asteroid_sounds_w )
 {
 	discrete_sound_w(0x00+offset,(data&0x80)?1:0);
 }
 
-WRITE_HANDLER( astdelux_sounds_w )
+WRITE8_HANDLER( astdelux_sounds_w )
 {
 	/* Only ever activates the thrusters in Astdelux */
 //	discrete_sound_w(0x03,(data&0x80)?0:1);
 	discrete_sound_w(0x03,(data&0x80)?1:0);
 }
 
-WRITE_HANDLER( asteroid_noise_reset_w )
+WRITE8_HANDLER( asteroid_noise_reset_w )
 {
 	discrete_sound_w(6, 0);
 }

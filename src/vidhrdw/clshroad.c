@@ -42,12 +42,12 @@ static struct tilemap *tilemap_0a, *tilemap_0b, *tilemap_1;
 data8_t *clshroad_vram_0, *clshroad_vram_1;
 data8_t *clshroad_vregs;
 
-WRITE_HANDLER( clshroad_vram_0_w );
-WRITE_HANDLER( clshroad_vram_1_w );
-WRITE_HANDLER( clshroad_flipscreen_w );
+WRITE8_HANDLER( clshroad_vram_0_w );
+WRITE8_HANDLER( clshroad_vram_1_w );
+WRITE8_HANDLER( clshroad_flipscreen_w );
 
 
-WRITE_HANDLER( clshroad_flipscreen_w )
+WRITE8_HANDLER( clshroad_flipscreen_w )
 {
 	flip_screen_set( data & 1 );
 }
@@ -154,7 +154,7 @@ static void get_tile_info_0b( int tile_index )
 			0)
 }
 
-WRITE_HANDLER( clshroad_vram_0_w )
+WRITE8_HANDLER( clshroad_vram_0_w )
 {
 	if (clshroad_vram_0[offset] != data)
 	{
@@ -223,7 +223,7 @@ static void get_tile_info_1( int tile_index )
 			0)
 }
 
-WRITE_HANDLER( clshroad_vram_1_w )
+WRITE8_HANDLER( clshroad_vram_1_w )
 {
 	if (clshroad_vram_1[offset] != data)
 	{

@@ -11,7 +11,7 @@
 
 static struct tilemap *bg_tilemap;
 
-WRITE_HANDLER( jack_videoram_w )
+WRITE8_HANDLER( jack_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -20,7 +20,7 @@ WRITE_HANDLER( jack_videoram_w )
 	}
 }
 
-WRITE_HANDLER( jack_colorram_w )
+WRITE8_HANDLER( jack_colorram_w )
 {
 	if (colorram[offset] != data)
 	{
@@ -29,19 +29,19 @@ WRITE_HANDLER( jack_colorram_w )
 	}
 }
 
-WRITE_HANDLER( jack_paletteram_w )
+WRITE8_HANDLER( jack_paletteram_w )
 {
 	/* RGB output is inverted */
 	paletteram_BBGGGRRR_w(offset,~data);
 }
 
-READ_HANDLER( jack_flipscreen_r )
+READ8_HANDLER( jack_flipscreen_r )
 {
 	flip_screen_set(offset);
 	return 0;
 }
 
-WRITE_HANDLER( jack_flipscreen_w )
+WRITE8_HANDLER( jack_flipscreen_w )
 {
 	flip_screen_set(offset);
 }

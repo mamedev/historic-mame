@@ -27,8 +27,8 @@ Sound: AY-3-8912
 #include "vidhrdw/crtc6845.h"
 
 /* vidhrdw */
-WRITE_HANDLER( usg_videoram_w );
-WRITE_HANDLER( usg_charram_w );
+WRITE8_HANDLER( usg_videoram_w );
+WRITE8_HANDLER( usg_charram_w );
 VIDEO_START(usg);
 PALETTE_INIT(usg);
 VIDEO_UPDATE(usg);
@@ -38,7 +38,7 @@ extern struct tilemap *usg_tilemap;
 extern data8_t *usg_videoram,*usg_charram;
 
 
-static WRITE_HANDLER( usg_rombank_w )
+static WRITE8_HANDLER( usg_rombank_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -48,7 +48,7 @@ static WRITE_HANDLER( usg_rombank_w )
 	cpu_setbank( 1,&RAM[ 0x10000 + 0x4000 * data] );
 }
 
-static WRITE_HANDLER( lamps1_w )
+static WRITE8_HANDLER( lamps1_w )
 {
 	/* button lamps */
 	set_led_status(0,data & 0x01);
@@ -60,7 +60,7 @@ static WRITE_HANDLER( lamps1_w )
 	/* bit 5 toggles all the time - extra lamp? */
 }
 
-static WRITE_HANDLER( lamps2_w )
+static WRITE8_HANDLER( lamps2_w )
 {
 	/* bit 5 toggles all the time - extra lamp? */
 }

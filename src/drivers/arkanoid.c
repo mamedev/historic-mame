@@ -48,31 +48,31 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-extern WRITE_HANDLER( arkanoid_videoram_w );
+extern WRITE8_HANDLER( arkanoid_videoram_w );
 extern VIDEO_START( arkanoid );
 extern VIDEO_UPDATE( arkanoid );
 
 extern MACHINE_INIT( arkanoid );
 
-extern WRITE_HANDLER( arkanoid_d008_w );
+extern WRITE8_HANDLER( arkanoid_d008_w );
 
-extern READ_HANDLER( arkanoid_Z80_mcu_r );
-extern WRITE_HANDLER( arkanoid_Z80_mcu_w );
+extern READ8_HANDLER( arkanoid_Z80_mcu_r );
+extern WRITE8_HANDLER( arkanoid_Z80_mcu_w );
 
-extern READ_HANDLER( arkanoid_68705_portA_r );
-extern WRITE_HANDLER( arkanoid_68705_portA_w );
-extern WRITE_HANDLER( arkanoid_68705_ddrA_w );
+extern READ8_HANDLER( arkanoid_68705_portA_r );
+extern WRITE8_HANDLER( arkanoid_68705_portA_w );
+extern WRITE8_HANDLER( arkanoid_68705_ddrA_w );
 
-extern READ_HANDLER( arkanoid_68705_portC_r );
-extern WRITE_HANDLER( arkanoid_68705_portC_w );
-extern WRITE_HANDLER( arkanoid_68705_ddrC_w );
+extern READ8_HANDLER( arkanoid_68705_portC_r );
+extern WRITE8_HANDLER( arkanoid_68705_portC_w );
+extern WRITE8_HANDLER( arkanoid_68705_ddrC_w );
 
-extern READ_HANDLER( arkanoid_68705_input_0_r );
-extern READ_HANDLER( arkanoid_input_2_r );
+extern READ8_HANDLER( arkanoid_68705_input_0_r );
+extern READ8_HANDLER( arkanoid_input_2_r );
 
-extern READ_HANDLER( paddle2_prot_r );
-extern WRITE_HANDLER( paddle2_prot_w );
-extern READ_HANDLER( paddle2_track_kludge_r );
+extern READ8_HANDLER( paddle2_prot_r );
+extern WRITE8_HANDLER( paddle2_prot_w );
+extern READ8_HANDLER( paddle2_track_kludge_r );
 
 /* Memory Maps */
 
@@ -561,9 +561,9 @@ ROM_END
 
 static DRIVER_INIT( paddle2 )
 {
-	install_mem_read_handler ( 0, 0xf002, 0xf002, paddle2_prot_r );
-	install_mem_write_handler( 0, 0xd018, 0xd018, paddle2_prot_w );
-	install_mem_read_handler ( 0, 0xd008, 0xd008, paddle2_track_kludge_r );
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xf002, 0xf002, 0, 0, paddle2_prot_r );
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd018, 0xd018, 0, 0, paddle2_prot_w );
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd008, 0xd008, 0, 0, paddle2_track_kludge_r );
 }
 
 /* Game Drivers */

@@ -126,7 +126,7 @@ VIDEO_START( circusc )
 
 ***************************************************************************/
 
-WRITE_HANDLER( circusc_videoram_w )
+WRITE8_HANDLER( circusc_videoram_w )
 {
 	if (circusc_videoram[offset] != data)
 	{
@@ -135,7 +135,7 @@ WRITE_HANDLER( circusc_videoram_w )
 	}
 }
 
-WRITE_HANDLER( circusc_colorram_w )
+WRITE8_HANDLER( circusc_colorram_w )
 {
 	if (circusc_colorram[offset] != data)
 	{
@@ -144,7 +144,7 @@ WRITE_HANDLER( circusc_colorram_w )
 	}
 }
 
-WRITE_HANDLER( circusc_flipscreen_w )
+WRITE8_HANDLER( circusc_flipscreen_w )
 {
 	flip_screen_set(data & 1);
 }

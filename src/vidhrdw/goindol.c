@@ -77,7 +77,7 @@ VIDEO_START( goindol )
 
 ***************************************************************************/
 
-WRITE_HANDLER( goindol_fg_videoram_w )
+WRITE8_HANDLER( goindol_fg_videoram_w )
 {
 	if (goindol_fg_videoram[offset] != data)
 	{
@@ -86,7 +86,7 @@ WRITE_HANDLER( goindol_fg_videoram_w )
 	}
 }
 
-WRITE_HANDLER( goindol_bg_videoram_w )
+WRITE8_HANDLER( goindol_bg_videoram_w )
 {
 	if (goindol_bg_videoram[offset] != data)
 	{

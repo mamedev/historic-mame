@@ -182,7 +182,7 @@ void sp0250_sh_stop( void )
 }
 
 
-WRITE_HANDLER( sp0250_w )
+WRITE8_HANDLER( sp0250_w )
 {
 	if(sp0250.fifo_pos != 15) {
 		sp0250.fifo[sp0250.fifo_pos++] = data;

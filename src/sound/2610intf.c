@@ -197,7 +197,7 @@ void YM2610_sh_reset(void)
 /************************************************/
 /* Status Read for YM2610 - Chip 0				*/
 /************************************************/
-READ_HANDLER( YM2610_status_port_0_A_r )
+READ8_HANDLER( YM2610_status_port_0_A_r )
 {
 //logerror("PC %04x: 2610 S0A=%02X\n",activecpu_get_pc(),YM2610Read(0,0));
 	return YM2610Read(0,0);
@@ -209,7 +209,7 @@ READ16_HANDLER( YM2610_status_port_0_A_lsb_r )
 	return YM2610Read(0,0);
 }
 
-READ_HANDLER( YM2610_status_port_0_B_r )
+READ8_HANDLER( YM2610_status_port_0_B_r )
 {
 //logerror("PC %04x: 2610 S0B=%02X\n",activecpu_get_pc(),YM2610Read(0,2));
 	return YM2610Read(0,2);
@@ -224,7 +224,7 @@ READ16_HANDLER( YM2610_status_port_0_B_lsb_r )
 /************************************************/
 /* Status Read for YM2610 - Chip 1				*/
 /************************************************/
-READ_HANDLER( YM2610_status_port_1_A_r ) {
+READ8_HANDLER( YM2610_status_port_1_A_r ) {
 	return YM2610Read(1,0);
 }
 
@@ -232,7 +232,7 @@ READ16_HANDLER( YM2610_status_port_1_A_lsb_r ) {
 	return YM2610Read(1,0);
 }
 
-READ_HANDLER( YM2610_status_port_1_B_r ) {
+READ8_HANDLER( YM2610_status_port_1_B_r ) {
 	return YM2610Read(1,2);
 }
 
@@ -243,7 +243,7 @@ READ16_HANDLER( YM2610_status_port_1_B_lsb_r ) {
 /************************************************/
 /* Port Read for YM2610 - Chip 0				*/
 /************************************************/
-READ_HANDLER( YM2610_read_port_0_r ){
+READ8_HANDLER( YM2610_read_port_0_r ){
 	return YM2610Read(0,1);
 }
 
@@ -254,7 +254,7 @@ READ16_HANDLER( YM2610_read_port_0_lsb_r ){
 /************************************************/
 /* Port Read for YM2610 - Chip 1				*/
 /************************************************/
-READ_HANDLER( YM2610_read_port_1_r ){
+READ8_HANDLER( YM2610_read_port_1_r ){
 	return YM2610Read(1,1);
 }
 
@@ -266,7 +266,7 @@ READ16_HANDLER( YM2610_read_port_1_lsb_r ){
 /* Control Write for YM2610 - Chip 0			*/
 /* Consists of 2 addresses						*/
 /************************************************/
-WRITE_HANDLER( YM2610_control_port_0_A_w )
+WRITE8_HANDLER( YM2610_control_port_0_A_w )
 {
 //logerror("PC %04x: 2610 Reg A %02X",activecpu_get_pc(),data);
 	YM2610Write(0,0,data);
@@ -281,7 +281,7 @@ WRITE16_HANDLER( YM2610_control_port_0_A_lsb_w )
 	}
 }
 
-WRITE_HANDLER( YM2610_control_port_0_B_w )
+WRITE8_HANDLER( YM2610_control_port_0_B_w )
 {
 //logerror("PC %04x: 2610 Reg B %02X",activecpu_get_pc(),data);
 	YM2610Write(0,2,data);
@@ -300,7 +300,7 @@ WRITE16_HANDLER( YM2610_control_port_0_B_lsb_w )
 /* Control Write for YM2610 - Chip 1			*/
 /* Consists of 2 addresses						*/
 /************************************************/
-WRITE_HANDLER( YM2610_control_port_1_A_w ){
+WRITE8_HANDLER( YM2610_control_port_1_A_w ){
 	YM2610Write(1,0,data);
 }
 
@@ -311,7 +311,7 @@ WRITE16_HANDLER( YM2610_control_port_1_A_lsb_w ){
 	}
 }
 
-WRITE_HANDLER( YM2610_control_port_1_B_w ){
+WRITE8_HANDLER( YM2610_control_port_1_B_w ){
 	YM2610Write(1,2,data);
 }
 
@@ -326,7 +326,7 @@ WRITE16_HANDLER( YM2610_control_port_1_B_lsb_w ){
 /* Data Write for YM2610 - Chip 0				*/
 /* Consists of 2 addresses						*/
 /************************************************/
-WRITE_HANDLER( YM2610_data_port_0_A_w )
+WRITE8_HANDLER( YM2610_data_port_0_A_w )
 {
 //logerror(" =%02X\n",data);
 	YM2610Write(0,1,data);
@@ -341,7 +341,7 @@ WRITE16_HANDLER( YM2610_data_port_0_A_lsb_w )
 	}
 }
 
-WRITE_HANDLER( YM2610_data_port_0_B_w )
+WRITE8_HANDLER( YM2610_data_port_0_B_w )
 {
 //logerror(" =%02X\n",data);
 	YM2610Write(0,3,data);
@@ -360,7 +360,7 @@ WRITE16_HANDLER( YM2610_data_port_0_B_lsb_w )
 /* Data Write for YM2610 - Chip 1				*/
 /* Consists of 2 addresses						*/
 /************************************************/
-WRITE_HANDLER( YM2610_data_port_1_A_w ){
+WRITE8_HANDLER( YM2610_data_port_1_A_w ){
 	YM2610Write(1,1,data);
 }
 
@@ -371,7 +371,7 @@ WRITE16_HANDLER( YM2610_data_port_1_A_lsb_w ){
 	}
 }
 
-WRITE_HANDLER( YM2610_data_port_1_B_w ){
+WRITE8_HANDLER( YM2610_data_port_1_B_w ){
 	YM2610Write(1,3,data);
 }
 

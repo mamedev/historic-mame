@@ -48,7 +48,7 @@ VIDEO_START( mole )
 	return 0;
 }
 
-WRITE_HANDLER( mole_videoram_w )
+WRITE8_HANDLER( mole_videoram_w )
 {
 	if (tile_data[offset] != data)
 	{
@@ -57,13 +57,13 @@ WRITE_HANDLER( mole_videoram_w )
 	}
 }
 
-WRITE_HANDLER( mole_tilebank_w )
+WRITE8_HANDLER( mole_tilebank_w )
 {
 	tile_bank = data;
 	tilemap_mark_all_tiles_dirty(bg_tilemap);
 }
 
-WRITE_HANDLER( mole_flipscreen_w )
+WRITE8_HANDLER( mole_flipscreen_w )
 {
 	flip_screen_set(data & 0x01);
 }

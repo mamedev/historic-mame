@@ -226,7 +226,7 @@ static void fuuki16_draw_sprites(struct mame_bitmap *bitmap, const struct rectan
 
 #ifdef MAME_DEBUG
 #if 0
-if (keyboard_pressed(KEYCODE_X))
+if (code_pressed(KEYCODE_X))
 {	/* Display some info on each sprite */
 	struct DisplayText dt[2];	char buf[10];
 	sprintf(buf, "%Xx%X %X",xnum,ynum,(attr>>6)&3);

@@ -10,9 +10,9 @@ INTERRUPT_GEN( beezer_interrupt )
 	scanline = (scanline + 1) % 0x80;
 	via_0_ca2_w (0, scanline & 0x10);
 	if ((scanline & 0x78) == 0x78)
-		cpu_set_irq_line(0, M6809_FIRQ_LINE, ASSERT_LINE);
+		cpunum_set_input_line(0, M6809_FIRQ_LINE, ASSERT_LINE);
 	else
-		cpu_set_irq_line(0, M6809_FIRQ_LINE, CLEAR_LINE);
+		cpunum_set_input_line(0, M6809_FIRQ_LINE, CLEAR_LINE);
 }
 
 VIDEO_UPDATE( beezer )
@@ -32,7 +32,7 @@ VIDEO_UPDATE( beezer )
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->visible_area,TRANSPARENCY_NONE,0);
 }
 
-WRITE_HANDLER( beezer_map_w )
+WRITE8_HANDLER( beezer_map_w )
 {
 	/*
 	  bit 7 -- 330  ohm resistor  -- BLUE
@@ -65,7 +65,7 @@ WRITE_HANDLER( beezer_map_w )
 	palette_set_color(offset, r, g, b);
 }
 
-WRITE_HANDLER( beezer_ram_w )
+WRITE8_HANDLER( beezer_ram_w )
 {
 	int x, y;
 	x = offset % 0x100;
@@ -80,7 +80,7 @@ WRITE_HANDLER( beezer_ram_w )
 	videoram[offset] = data;
 }
 
-READ_HANDLER( beezer_line_r )
+READ8_HANDLER( beezer_line_r )
 {
 	return (scanline & 0xfe) << 1;
 }

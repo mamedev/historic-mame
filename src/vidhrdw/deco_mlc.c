@@ -363,9 +363,9 @@ VIDEO_UPDATE( avengrgs )
 //	static int base=0x40000;
 //	int o=0;
 
-//	if (keyboard_pressed_memory(KEYCODE_X))
+//	if (code_pressed_memory(KEYCODE_X))
 //		base+=0x200;
-//	if (keyboard_pressed_memory(KEYCODE_Z))
+//	if (code_pressed_memory(KEYCODE_Z))
 //		base-=0x200;
 
 // 22a65c0 == linescroll

@@ -16,22 +16,22 @@ Quiz Gekiretsu Scramble (Gakuen Paradise 2) (c) 1993 Face
 VIDEO_START( quizdna );
 VIDEO_UPDATE( quizdna );
 
-WRITE_HANDLER( quizdna_fg_ram_w );
-WRITE_HANDLER( quizdna_bg_ram_w );
-WRITE_HANDLER( quizdna_bg_yscroll_w );
-WRITE_HANDLER( quizdna_bg_xscroll_w );
-WRITE_HANDLER( quizdna_screen_ctrl_w );
+WRITE8_HANDLER( quizdna_fg_ram_w );
+WRITE8_HANDLER( quizdna_bg_ram_w );
+WRITE8_HANDLER( quizdna_bg_yscroll_w );
+WRITE8_HANDLER( quizdna_bg_xscroll_w );
+WRITE8_HANDLER( quizdna_screen_ctrl_w );
 
-WRITE_HANDLER( paletteram_xBGR_RRRR_GGGG_BBBB_w );
+WRITE8_HANDLER( paletteram_xBGR_RRRR_GGGG_BBBB_w );
 
 
-static WRITE_HANDLER( quizdna_rombank_w )
+static WRITE8_HANDLER( quizdna_rombank_w )
 {
 	data8_t *ROM = memory_region(REGION_CPU1);
 	cpu_setbank(1,&ROM[0x10000+0x4000*(data & 0x3f)]);
 }
 
-static WRITE_HANDLER( gekiretu_rombank_w )
+static WRITE8_HANDLER( gekiretu_rombank_w )
 {
 	data8_t *ROM = memory_region(REGION_CPU1);
 	cpu_setbank(1,&ROM[0x10000+0x4000*((data & 0x3f) ^ 0x0a)]);

@@ -161,7 +161,7 @@ static void gijoe_objdma(void)
 static void dmaend_callback(int data)
 {
 	if (cur_control2 & 0x0020)
-		cpu_set_irq_line(0, 6, HOLD_LINE);
+		cpunum_set_input_line(0, 6, HOLD_LINE);
 }
 
 static INTERRUPT_GEN( gijoe_interrupt )
@@ -179,7 +179,7 @@ static INTERRUPT_GEN( gijoe_interrupt )
 
 	// trigger V-blank interrupt
 	if (cur_control2 & 0x0080)
-		cpu_set_irq_line(0, 5, HOLD_LINE);
+		cpunum_set_input_line(0, 5, HOLD_LINE);
 }
 
 static WRITE16_HANDLER( sound_cmd_w )
@@ -195,7 +195,7 @@ static WRITE16_HANDLER( sound_cmd_w )
 
 static WRITE16_HANDLER( sound_irq_w )
 {
-	cpu_set_irq_line(1, 0, HOLD_LINE);
+	cpunum_set_input_line(1, 0, HOLD_LINE);
 }
 
 static READ16_HANDLER( sound_status_r )
@@ -205,7 +205,7 @@ static READ16_HANDLER( sound_status_r )
 
 static void sound_nmi(void)
 {
-	cpu_set_nmi_line(1, PULSE_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 }
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 16 )

@@ -117,7 +117,7 @@ PALETTE_INIT( gsword )
 		COLOR(1,i) = sprite_lookup_table[*(color_prom++)];
 }
 
-WRITE_HANDLER( gsword_videoram_w )
+WRITE8_HANDLER( gsword_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -126,7 +126,7 @@ WRITE_HANDLER( gsword_videoram_w )
 	}
 }
 
-WRITE_HANDLER( gsword_charbank_w )
+WRITE8_HANDLER( gsword_charbank_w )
 {
 	if (charbank != data)
 	{
@@ -135,7 +135,7 @@ WRITE_HANDLER( gsword_charbank_w )
 	}
 }
 
-WRITE_HANDLER( gsword_videoctrl_w )
+WRITE8_HANDLER( gsword_videoctrl_w )
 {
 	if (data & 0x8f)
 	{
@@ -163,7 +163,7 @@ WRITE_HANDLER( gsword_videoctrl_w )
 	/* other bits unused */
 }
 
-WRITE_HANDLER( gsword_scroll_w )
+WRITE8_HANDLER( gsword_scroll_w )
 {
 	tilemap_set_scrolly(bg_tilemap, 0, data);
 }

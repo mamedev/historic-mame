@@ -117,9 +117,9 @@ VIDEO_START( cadash );
 VIDEO_UPDATE( asuka );
 VIDEO_UPDATE( bonzeadv );
 
-WRITE_HANDLER( rastan_adpcm_trigger_w );
-WRITE_HANDLER( rastan_c000_w );
-WRITE_HANDLER( rastan_d000_w );
+WRITE8_HANDLER( rastan_adpcm_trigger_w );
+WRITE8_HANDLER( rastan_c000_w );
+WRITE8_HANDLER( rastan_d000_w );
 
 WRITE16_HANDLER( bonzeadv_c_chip_w );
 READ16_HANDLER( bonzeadv_c_chip_r );
@@ -133,13 +133,13 @@ void cadash_irq_handler(int irq);
 
 static void cadash_interrupt5(int param)
 {
-	cpu_set_irq_line(0, 5, HOLD_LINE);
+	cpunum_set_input_line(0, 5, HOLD_LINE);
 }
 
 INTERRUPT_GEN( cadash_interrupt )
 {
 	timer_set(TIME_IN_CYCLES(500,0),0, cadash_interrupt5);
-	cpu_set_irq_line(0, 4, HOLD_LINE);  /* interrupt vector 4 */
+	cpunum_set_input_line(0, 4, HOLD_LINE);  /* interrupt vector 4 */
 }
 
 
@@ -147,7 +147,7 @@ INTERRUPT_GEN( cadash_interrupt )
 			SOUND
 ************************************************/
 
-static WRITE_HANDLER( sound_bankswitch_w )
+static WRITE8_HANDLER( sound_bankswitch_w )
 {
 	cpu_setbank( 1, memory_region(REGION_CPU2) + ((data-1) & 0x03) * 0x4000 + 0x10000 );
 }
@@ -946,7 +946,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static void irq_handler(int irq)
 {
-	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2610interface ym2610_interface =

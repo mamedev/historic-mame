@@ -43,7 +43,7 @@ PALETTE_INIT( dribling )
  *
  *************************************/
 
-WRITE_HANDLER( dribling_colorram_w )
+WRITE8_HANDLER( dribling_colorram_w )
 {
 	/* it is very important that we mask off the two bits here */
 	colorram[offset & 0x1f9f] = data;

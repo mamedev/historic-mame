@@ -14,8 +14,8 @@ WRITE16_HANDLER( cchasm_led_w );
 
 /*----------- defined in sndhrdw/cchasm.c -----------*/
 
-READ_HANDLER( cchasm_snd_io_r );
-WRITE_HANDLER( cchasm_snd_io_w );
+READ8_HANDLER( cchasm_snd_io_r );
+WRITE8_HANDLER( cchasm_snd_io_w );
 
 WRITE16_HANDLER( cchasm_io_w );
 READ16_HANDLER( cchasm_io_r );

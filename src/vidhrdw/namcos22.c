@@ -1157,9 +1157,9 @@ DrawPolygons( struct mame_bitmap *bitmap )
 	SetupWindow( pWindow,0 ); /* HACK! */
 	if( mbDSPisActive )
 	{
-		SimulateSlaveDSP( keyboard_pressed(KEYCODE_Q) );
+		SimulateSlaveDSP( code_pressed(KEYCODE_Q) );
 
-		if( 0 && keyboard_pressed(KEYCODE_Q) )
+		if( 0 && code_pressed(KEYCODE_Q) )
 		{
 			int i;
 			for( i=0x10000; i<0x20000; i+=4 )
@@ -1169,7 +1169,7 @@ DrawPolygons( struct mame_bitmap *bitmap )
 			}
 		}
 
-		while( keyboard_pressed(KEYCODE_Q) ){}
+		while( code_pressed(KEYCODE_Q) ){}
 	}
 } /* DrawPolygons */
 

@@ -432,7 +432,7 @@ unsigned char radr_default_eeprom[128] = {
 static void irq_raise(int level)
 {
 	irq_status |= (1 << level);
-	cpu_set_irq_line(0, 0, ASSERT_LINE);
+	cpunum_set_input_line(0, 0, ASSERT_LINE);
 }
 
 static int irq_callback(int irqline)
@@ -450,14 +450,14 @@ static WRITE16_HANDLER(irq_ack_w)
 	if(ACCESSING_MSB) {
 		irq_status &= data >> 8;
 		if(!irq_status)
-			cpu_set_irq_line(0, 0, CLEAR_LINE);
+			cpunum_set_input_line(0, 0, CLEAR_LINE);
 	}
 }
 
 static void irq_init(void)
 {
 	irq_status = 0;
-	cpu_set_irq_line(0, 0, CLEAR_LINE);
+	cpunum_set_input_line(0, 0, CLEAR_LINE);
 	cpu_set_irq_callback(0, irq_callback);
 }
 
@@ -763,7 +763,7 @@ static WRITE16_HANDLER( system32_io_w )
 	case 0x06:
 		// jp_v60_write_cab / titlef
 		tocab = data;
-		cpu_set_irq_line(1, 0, HOLD_LINE);
+		cpunum_set_input_line(1, 0, HOLD_LINE);
 		break;
 	case 0x07:
 		// multi32 tilebank per layer
@@ -901,7 +901,7 @@ static READ16_HANDLER( jp_v60_read_cab )
 static WRITE16_HANDLER( jp_v60_write_cab )
 {
 	tocab = data;
-	cpu_set_irq_line(1, 0, HOLD_LINE);
+	cpunum_set_input_line(1, 0, HOLD_LINE);
 }
 
 
@@ -966,20 +966,20 @@ ADDRESS_MAP_END
 
 static UINT8 *sys32_SoundMemBank;
 
-static READ_HANDLER( system32_bank_r )
+static READ8_HANDLER( system32_bank_r )
 {
 	return sys32_SoundMemBank[offset];
 }
 
 // the Z80's work RAM is fully shared with the V60 or V70 and battery backed up.
-static READ_HANDLER( sys32_shared_snd_r )
+static READ8_HANDLER( sys32_shared_snd_r )
 {
 	data8_t *RAM = (data8_t *)system32_shared_ram;
 
 	return RAM[offset];
 }
 
-static WRITE_HANDLER( sys32_shared_snd_w )
+static WRITE8_HANDLER( sys32_shared_snd_w )
 {
 	data8_t *RAM = (data8_t *)system32_shared_ram;
 
@@ -988,12 +988,12 @@ static WRITE_HANDLER( sys32_shared_snd_w )
 
 // some games require that port f1 be a magic echo-back latch.
 // thankfully, it's not required to do any math or anything on the values.
-static READ_HANDLER( sys32_sound_prot_r )
+static READ8_HANDLER( sys32_sound_prot_r )
 {
 	return s32_f1_prot;
 }
 
-static WRITE_HANDLER( sys32_sound_prot_w )
+static WRITE8_HANDLER( sys32_sound_prot_w )
 {
 	s32_f1_prot = data;
 }
@@ -1039,13 +1039,13 @@ static void s32_recomp_bank(void)
 	sys32_SoundMemBank = &RAM[Bank+0x100000];
 }
 
-static WRITE_HANDLER( sys32_soundbank_lo_w )
+static WRITE8_HANDLER( sys32_soundbank_lo_w )
 {
 	s32_blo = data;
 	s32_recomp_bank();
 }
 
-static WRITE_HANDLER( sys32_soundbank_hi_w )
+static WRITE8_HANDLER( sys32_soundbank_hi_w )
 {
 	s32_bhi = data;
 	s32_recomp_bank();
@@ -1105,7 +1105,7 @@ static INTERRUPT_GEN( system32_interrupt )
 
 /* jurassic park moving cab - not working yet */
 
-static READ_HANDLER( jpcab_z80_read )
+static READ8_HANDLER( jpcab_z80_read )
 {
 	return tocab;
 }
@@ -1991,7 +1991,7 @@ INPUT_PORTS_END
 
 static void irq_handler(int irq)
 {
-	cpu_set_irq_line( 1, 0 , irq ? ASSERT_LINE : CLEAR_LINE );
+	cpunum_set_input_line( 1, 0 , irq ? ASSERT_LINE : CLEAR_LINE );
 }
 
 struct RF5C68interface sys32_rf5c68_interface =
@@ -2957,15 +2957,15 @@ static DRIVER_INIT ( s32 )
 	system32_temp_kludge = 0;
 	system32_mixerShift = 4;
 
-	install_mem_write16_handler(0, 0x20f4e0, 0x20f4e1, trap_w);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x20f4e0, 0x20f4e1, 0, 0, trap_w);
 }
 
 static DRIVER_INIT ( driving )
 {
 	multi32 = 0;
 
-	install_mem_read16_handler (0, 0xc00050, 0xc00057, system32_io_analog_r);
-	install_mem_write16_handler(0, 0xc00050, 0xc00057, system32_io_analog_w);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xc00050, 0xc00057, 0, 0, system32_io_analog_r);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xc00050, 0xc00057, 0, 0, system32_io_analog_w);
 }
 
 static DRIVER_INIT ( alien3 )
@@ -2975,15 +2975,15 @@ static DRIVER_INIT ( alien3 )
 	system32_temp_kludge = 0;
 	system32_mixerShift = 4;
 
-	install_mem_read16_handler(0, 0xc00050, 0xc00051, sys32_gun_p1_x_c00050_r);
-	install_mem_read16_handler(0, 0xc00052, 0xc00053, sys32_gun_p1_y_c00052_r);
-	install_mem_read16_handler(0, 0xc00054, 0xc00055, sys32_gun_p2_x_c00054_r);
-	install_mem_read16_handler (0, 0xc00056, 0xc00057, sys32_gun_p2_y_c00056_r);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xc00050, 0xc00051, 0, 0, sys32_gun_p1_x_c00050_r);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xc00052, 0xc00053, 0, 0, sys32_gun_p1_y_c00052_r);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xc00054, 0xc00055, 0, 0, sys32_gun_p2_x_c00054_r);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xc00056, 0xc00057, 0, 0, sys32_gun_p2_y_c00056_r);
 
-	install_mem_write16_handler(0, 0xc00050, 0xc00051, sys32_gun_p1_x_c00050_w);
-	install_mem_write16_handler(0, 0xc00052, 0xc00053, sys32_gun_p1_y_c00052_w);
-	install_mem_write16_handler(0, 0xc00054, 0xc00055, sys32_gun_p2_x_c00054_w);
-	install_mem_write16_handler(0, 0xc00056, 0xc00057, sys32_gun_p2_y_c00056_w);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xc00050, 0xc00051, 0, 0, sys32_gun_p1_x_c00050_w);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xc00052, 0xc00053, 0, 0, sys32_gun_p1_y_c00052_w);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xc00054, 0xc00055, 0, 0, sys32_gun_p2_x_c00054_w);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xc00056, 0xc00057, 0, 0, sys32_gun_p2_y_c00056_w);
 }
 
 static DRIVER_INIT ( brival )
@@ -2993,8 +2993,8 @@ static DRIVER_INIT ( brival )
 	system32_temp_kludge = 0;
 	system32_mixerShift = 5;
 
-	install_mem_read16_handler (0, 0x20ba00, 0x20ba07, brival_protection_r);
-	install_mem_write16_handler(0, 0xa00000, 0xa00fff, brival_protboard_w);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x20ba00, 0x20ba07, 0, 0, brival_protection_r);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xa00000, 0xa00fff, 0, 0, brival_protboard_w);
 }
 
 static DRIVER_INIT ( ga2 )
@@ -3006,8 +3006,8 @@ static DRIVER_INIT ( ga2 )
 
 	/* Protection - the game expects a string from a RAM area shared with the protection device */
 	/* still problems with enemies in level2, protection related? */
-	install_mem_read16_handler (0, 0xa00000, 0xa0001f, ga2_sprite_protection_r); /* main sprite colours */
-	install_mem_read16_handler (0, 0xa00100, 0xa0015f, ga2_wakeup_protection_r);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xa00000, 0xa0001f, 0, 0, ga2_sprite_protection_r); /* main sprite colours */
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xa00100, 0xa0015f, 0, 0, ga2_wakeup_protection_r);
 }
 
 static DRIVER_INIT ( spidey )
@@ -3032,9 +3032,9 @@ static DRIVER_INIT ( arf )
 	system32_temp_kludge = 0;
 	system32_mixerShift = 4;
 
-	install_mem_read16_handler (0, 0xa00000, 0xa000ff, arabfgt_protboard_r);
-	install_mem_read16_handler (0, 0xa00100, 0xa0011f, arf_wakeup_protection_r);
-	install_mem_write16_handler(0, 0xa00000, 0xa00fff, arabfgt_protboard_w);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xa00000, 0xa000ff, 0, 0, arabfgt_protboard_r);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xa00100, 0xa0011f, 0, 0, arf_wakeup_protection_r);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xa00000, 0xa00fff, 0, 0, arabfgt_protboard_w);
 }
 
 static DRIVER_INIT ( holo )
@@ -3051,9 +3051,9 @@ static DRIVER_INIT ( sonic )
 	multi32 = 0;
 	system32_mixerShift = 5;
 
-	install_mem_write16_handler(0, 0xc00040, 0xc00055, sonic_track_reset_w);
-	install_mem_read16_handler (0, 0xc00040, 0xc00055, sonic_track_r);
-	install_mem_write16_handler(0, 0x20E5C4, 0x20E5C5, sonic_level_load_protection);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xc00040, 0xc00055, 0, 0, sonic_track_reset_w);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xc00040, 0xc00055, 0, 0, sonic_track_r);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x20E5C4, 0x20E5C5, 0, 0, sonic_level_load_protection);
 }
 
 static DRIVER_INIT ( radm )
@@ -3093,15 +3093,15 @@ static DRIVER_INIT ( jpark )
 	system32_mixerShift = 6;
 	multi32 = 0;
 
-	install_mem_read16_handler(0, 0xc00050, 0xc00051, sys32_gun_p1_x_c00050_r);
-	install_mem_read16_handler(0, 0xc00052, 0xc00053, sys32_gun_p1_y_c00052_r);
-	install_mem_read16_handler(0, 0xc00054, 0xc00055, sys32_gun_p2_x_c00054_r);
-	install_mem_read16_handler (0, 0xc00056, 0xc00057, sys32_gun_p2_y_c00056_r);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xc00050, 0xc00051, 0, 0, sys32_gun_p1_x_c00050_r);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xc00052, 0xc00053, 0, 0, sys32_gun_p1_y_c00052_r);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xc00054, 0xc00055, 0, 0, sys32_gun_p2_x_c00054_r);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xc00056, 0xc00057, 0, 0, sys32_gun_p2_y_c00056_r);
 
-	install_mem_write16_handler(0, 0xc00050, 0xc00051, sys32_gun_p1_x_c00050_w);
-	install_mem_write16_handler(0, 0xc00052, 0xc00053, sys32_gun_p1_y_c00052_w);
-	install_mem_write16_handler(0, 0xc00054, 0xc00055, sys32_gun_p2_x_c00054_w);
-	install_mem_write16_handler(0, 0xc00056, 0xc00057, sys32_gun_p2_y_c00056_w);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xc00050, 0xc00051, 0, 0, sys32_gun_p1_x_c00050_w);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xc00052, 0xc00053, 0, 0, sys32_gun_p1_y_c00052_w);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xc00054, 0xc00055, 0, 0, sys32_gun_p2_x_c00054_w);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xc00056, 0xc00057, 0, 0, sys32_gun_p2_y_c00056_w);
 }
 
 static READ16_HANDLER ( arescue_unknown_r )
@@ -3119,7 +3119,7 @@ static DRIVER_INIT ( arescue )
 	system32_temp_kludge = 0;
 	system32_mixerShift = 4;
 
-	install_mem_read16_handler (0, 0x800000, 0x8fffff, arescue_unknown_r); // protection? communication?
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x800000, 0x8fffff, 0, 0, arescue_unknown_r); // protection? communication?
 }
 
 

@@ -91,9 +91,9 @@ VIDEO_UPDATE( pstadium );
 VIDEO_UPDATE( galkoku );
 VIDEO_START( pstadium );
 
-WRITE_HANDLER( pstadium_palette_w );
-WRITE_HANDLER( galkoku_palette_w );
-WRITE_HANDLER( galkaika_palette_w );
+WRITE8_HANDLER( pstadium_palette_w );
+WRITE8_HANDLER( galkoku_palette_w );
+WRITE8_HANDLER( galkaika_palette_w );
 void pstadium_radrx_w(int data);
 void pstadium_radry_w(int data);
 void pstadium_sizex_w(int data);
@@ -106,11 +106,11 @@ void pstadium_scrollx_w(int data);
 void pstadium_scrolly_w(int data);
 void pstadium_romsel_w(int data);
 void pstadium_paltblnum_w(int data);
-READ_HANDLER( pstadium_paltbl_r );
-WRITE_HANDLER( pstadium_paltbl_w );
+READ8_HANDLER( pstadium_paltbl_r );
+WRITE8_HANDLER( pstadium_paltbl_w );
 
 
-static WRITE_HANDLER( pstadium_soundbank_w )
+static WRITE8_HANDLER( pstadium_soundbank_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU2);
 
@@ -118,12 +118,12 @@ static WRITE_HANDLER( pstadium_soundbank_w )
 	cpu_setbank(1, &RAM[0x08000 + (0x8000 * (data & 0x03))]);
 }
 
-static WRITE_HANDLER( pstadium_sound_w )
+static WRITE8_HANDLER( pstadium_sound_w )
 {
 	soundlatch_w(0, data);
 }
 
-static READ_HANDLER( pstadium_sound_r )
+static READ8_HANDLER( pstadium_sound_r )
 {
 	int data;
 
@@ -367,7 +367,7 @@ static ADDRESS_MAP_START( writemem_av2mj2rg, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 
-static READ_HANDLER( io_pstadium_r )
+static READ8_HANDLER( io_pstadium_r )
 {
 	offset = (((offset & 0xff00) >> 8) | ((offset & 0x00ff) << 8));
 
@@ -387,7 +387,7 @@ static ADDRESS_MAP_START( readport_pstadium, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x0000, 0xffff) AM_READ(io_pstadium_r)
 ADDRESS_MAP_END
 
-static WRITE_HANDLER( io_pstadium_w )
+static WRITE8_HANDLER( io_pstadium_w )
 {
 	offset = (((offset & 0xff00) >> 8) | ((offset & 0x00ff) << 8));
 
@@ -420,7 +420,7 @@ static ADDRESS_MAP_START( writeport_pstadium, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x0000, 0xffff) AM_WRITE(io_pstadium_w)
 ADDRESS_MAP_END
 
-static WRITE_HANDLER( io_av2mj1bb_w )
+static WRITE8_HANDLER( io_av2mj1bb_w )
 {
 	offset = (((offset & 0xff00) >> 8) | ((offset & 0x00ff) << 8));
 
@@ -453,7 +453,7 @@ static ADDRESS_MAP_START( writeport_av2mj1bb, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x0000, 0xffff) AM_WRITE(io_av2mj1bb_w)
 ADDRESS_MAP_END
 
-static READ_HANDLER( io_galkoku_r )
+static READ8_HANDLER( io_galkoku_r )
 {
 	offset = (((offset & 0xff00) >> 8) | ((offset & 0x00ff) << 8));
 
@@ -475,7 +475,7 @@ static ADDRESS_MAP_START( readport_galkoku, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x0000, 0xffff) AM_READ(io_galkoku_r)
 ADDRESS_MAP_END
 
-static WRITE_HANDLER( io_galkoku_w )
+static WRITE8_HANDLER( io_galkoku_w )
 {
 	offset = (((offset & 0xff00) >> 8) | ((offset & 0x00ff) << 8));
 
@@ -515,7 +515,7 @@ static ADDRESS_MAP_START( writeport_galkoku, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x0000, 0xffff) AM_WRITE(io_galkoku_w)
 ADDRESS_MAP_END
 
-static READ_HANDLER( io_hyouban_r )
+static READ8_HANDLER( io_hyouban_r )
 {
 	offset = (((offset & 0xff00) >> 8) | ((offset & 0x00ff) << 8));
 
@@ -538,7 +538,7 @@ static ADDRESS_MAP_START( readport_hyouban, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x0000, 0xffff) AM_READ(io_hyouban_r)
 ADDRESS_MAP_END
 
-static WRITE_HANDLER( io_hyouban_w )
+static WRITE8_HANDLER( io_hyouban_w )
 {
 	offset = (((offset & 0xff00) >> 8) | ((offset & 0x00ff) << 8));
 

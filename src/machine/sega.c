@@ -21,7 +21,7 @@ static UINT8 mult1;
 static UINT16 result;
 static UINT8 ioSwitch; /* determines whether we're reading the spinner or the buttons */
 
-WRITE_HANDLER( sega_w )
+WRITE8_HANDLER( sega_w )
 {
 	int pc,off;
 
@@ -60,34 +60,34 @@ WRITE_HANDLER( sega_w )
 INTERRUPT_GEN( sega_interrupt )
 {
 	if (input_port_5_r(0) & 0x01)
-		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+		cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 	else
-		cpu_set_irq_line(0, 0, HOLD_LINE);
+		cpunum_set_input_line(0, 0, HOLD_LINE);
 }
 
-WRITE_HANDLER( sega_mult1_w )
+WRITE8_HANDLER( sega_mult1_w )
 {
 	mult1 = data;
 }
 
-WRITE_HANDLER( sega_mult2_w )
+WRITE8_HANDLER( sega_mult2_w )
 {
 	/* Curiously, the multiply is _only_ calculated by writes to this port. */
 	result = mult1 * data;
 }
 
-WRITE_HANDLER( sega_switch_w )
+WRITE8_HANDLER( sega_switch_w )
 {
 	ioSwitch = data;
 /*	logerror("ioSwitch: %02x\n",ioSwitch); */
 }
 
-WRITE_HANDLER( sega_coin_counter_w )
+WRITE8_HANDLER( sega_coin_counter_w )
 {
 	coin_counter_w(offset,data);
 }
 
-READ_HANDLER( sega_mult_r )
+READ8_HANDLER( sega_mult_r )
 {
 	int c;
 
@@ -112,7 +112,7 @@ READ_HANDLER( sega_mult_r )
   Port 7 - 2-1, 2-2, 2-3, 2-4, 2-5, 2-6, 2-7, 2-8
 ***************************************************************************/
 
-READ_HANDLER( sega_ports_r )
+READ8_HANDLER( sega_ports_r )
 {
 	int dip1, dip2;
 
@@ -139,7 +139,7 @@ READ_HANDLER( sega_ports_r )
 }
 
 
-READ_HANDLER( sega_IN4_r ) {
+READ8_HANDLER( sega_IN4_r ) {
 
 /*
  * The values returned are always increasing.  That is, regardless of whether
@@ -169,7 +169,7 @@ READ_HANDLER( sega_IN4_r ) {
 	return (~((spinner<<1) | sign));
 }
 
-READ_HANDLER( elim4_IN4_r )
+READ8_HANDLER( elim4_IN4_r )
 {
 	/* If the ioPort ($f8) is 0x1f, we're reading the 4 coin inputs.    */
 	/* If the ioPort ($f8) is 0x1e, we're reading player 3 & 4 controls.*/

@@ -24,7 +24,7 @@ static void soundlatch_callback(int param)
 	read_debug = 0;
 }
 
-WRITE_HANDLER( soundlatch_w )
+WRITE8_HANDLER( soundlatch_w )
 {
 	/* make all the CPUs synchronize, and only AFTER that write the new command to the latch */
 	mame_timer_set(time_zero,data,soundlatch_callback);
@@ -39,7 +39,7 @@ WRITE16_HANDLER( soundlatch_word_w )
 	mame_timer_set(time_zero,word,soundlatch_callback);
 }
 
-READ_HANDLER( soundlatch_r )
+READ8_HANDLER( soundlatch_r )
 {
 	read_debug = 1;
 	return latch;
@@ -51,7 +51,7 @@ READ16_HANDLER( soundlatch_word_r )
 	return latch;
 }
 
-WRITE_HANDLER( soundlatch_clear_w )
+WRITE8_HANDLER( soundlatch_clear_w )
 {
 	latch = cleared_value;
 }
@@ -67,7 +67,7 @@ static void soundlatch2_callback(int param)
 	read_debug2 = 0;
 }
 
-WRITE_HANDLER( soundlatch2_w )
+WRITE8_HANDLER( soundlatch2_w )
 {
 	/* make all the CPUs synchronize, and only AFTER that write the new command to the latch */
 	mame_timer_set(time_zero,data,soundlatch2_callback);
@@ -82,7 +82,7 @@ WRITE16_HANDLER( soundlatch2_word_w )
 	mame_timer_set(time_zero,word,soundlatch2_callback);
 }
 
-READ_HANDLER( soundlatch2_r )
+READ8_HANDLER( soundlatch2_r )
 {
 	read_debug2 = 1;
 	return latch2;
@@ -94,7 +94,7 @@ READ16_HANDLER( soundlatch2_word_r )
 	return latch2;
 }
 
-WRITE_HANDLER( soundlatch2_clear_w )
+WRITE8_HANDLER( soundlatch2_clear_w )
 {
 	latch2 = cleared_value;
 }
@@ -110,7 +110,7 @@ static void soundlatch3_callback(int param)
 	read_debug3 = 0;
 }
 
-WRITE_HANDLER( soundlatch3_w )
+WRITE8_HANDLER( soundlatch3_w )
 {
 	/* make all the CPUs synchronize, and only AFTER that write the new command to the latch */
 	mame_timer_set(time_zero,data,soundlatch3_callback);
@@ -125,7 +125,7 @@ WRITE16_HANDLER( soundlatch3_word_w )
 	mame_timer_set(time_zero,word,soundlatch3_callback);
 }
 
-READ_HANDLER( soundlatch3_r )
+READ8_HANDLER( soundlatch3_r )
 {
 	read_debug3 = 1;
 	return latch3;
@@ -137,7 +137,7 @@ READ16_HANDLER( soundlatch3_word_r )
 	return latch3;
 }
 
-WRITE_HANDLER( soundlatch3_clear_w )
+WRITE8_HANDLER( soundlatch3_clear_w )
 {
 	latch3 = cleared_value;
 }
@@ -153,7 +153,7 @@ static void soundlatch4_callback(int param)
 	read_debug4 = 0;
 }
 
-WRITE_HANDLER( soundlatch4_w )
+WRITE8_HANDLER( soundlatch4_w )
 {
 	/* make all the CPUs synchronize, and only AFTER that write the new command to the latch */
 	mame_timer_set(time_zero,data,soundlatch4_callback);
@@ -168,7 +168,7 @@ WRITE16_HANDLER( soundlatch4_word_w )
 	mame_timer_set(time_zero,word,soundlatch4_callback);
 }
 
-READ_HANDLER( soundlatch4_r )
+READ8_HANDLER( soundlatch4_r )
 {
 	read_debug4 = 1;
 	return latch4;
@@ -180,7 +180,7 @@ READ16_HANDLER( soundlatch4_word_r )
 	return latch4;
 }
 
-WRITE_HANDLER( soundlatch4_clear_w )
+WRITE8_HANDLER( soundlatch4_clear_w )
 {
 	latch4 = cleared_value;
 }

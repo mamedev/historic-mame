@@ -136,6 +136,9 @@ void adsp2105_get_info(UINT32 state, union cpuinfo *info);
 #if (HAS_ADSP2115)
 void adsp2115_get_info(UINT32 state, union cpuinfo *info);
 #endif
+#if (HAS_ADSP2181)
+void adsp2181_get_info(UINT32 state, union cpuinfo *info);
+#endif
 #if (HAS_PSXCPU)
 #include "cpu/mips/psx.h"
 #endif
@@ -556,6 +559,9 @@ const struct
 #endif
 #if (HAS_ADSP2115)
 	{ CPU_ADSP2115, adsp2115_get_info },
+#endif
+#if (HAS_ADSP2181)
+	{ CPU_ADSP2181, adsp2181_get_info },
 #endif
 #if (HAS_PSXCPU)
 	{ CPU_PSXCPU, psxcpu_get_info },
@@ -1040,18 +1046,18 @@ void activecpu_reset_banking(void)
 
 
 /*--------------------------
- 	IRQ line setting
+ 	Input line setting
 --------------------------*/
 
-void activecpu_set_irq_line(int irqline, int state)
+void activecpu_set_input_line(int irqline, int state)
 {
-	VERIFY_ACTIVECPU_VOID(activecpu_set_irq_line);
+	VERIFY_ACTIVECPU_VOID(activecpu_set_input_line);
 	if (state != INTERNAL_CLEAR_LINE && state != INTERNAL_ASSERT_LINE)
 	{
-		logerror("activecpu_set_irq_line called when cpu_set_irq_line should have been used!\n");
+		logerror("activecpu_set_input_line called when cpu_set_input_line should have been used!\n");
 		return;
 	}
-	activecpu_set_info_int(CPUINFO_INT_IRQ_STATE + irqline, state - INTERNAL_CLEAR_LINE);
+	activecpu_set_info_int(CPUINFO_INT_INPUT_STATE + irqline, state - INTERNAL_CLEAR_LINE);
 }
 
 
@@ -1452,7 +1458,7 @@ void dummy_get_info(UINT32 state, union cpuinfo *info)
 	{
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
 		case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(dummy_state); 			break;
-		case CPUINFO_INT_IRQ_LINES:						info->i = 1;							break;
+		case CPUINFO_INT_INPUT_LINES:					info->i = 1;							break;
 		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
 		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_LE;					break;
 		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
@@ -1471,7 +1477,7 @@ void dummy_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 0;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
 
-		case CPUINFO_INT_IRQ_STATE + 0:					info->i = 0;							break;
+		case CPUINFO_INT_INPUT_STATE + 0:				info->i = 0;							break;
 
 		case CPUINFO_INT_PREVIOUSPC:					info->i = 0;							break;
 		case CPUINFO_INT_PC:							info->i = 0;							break;

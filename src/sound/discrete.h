@@ -2386,7 +2386,7 @@ void discrete_sh_stop(void);
 void discrete_sh_reset(void);
 void discrete_sh_update(void);
 
-WRITE_HANDLER(discrete_sound_w);
-READ_HANDLER(discrete_sound_r);
+WRITE8_HANDLER(discrete_sound_w);
+READ8_HANDLER(discrete_sound_r);
 
 #endif

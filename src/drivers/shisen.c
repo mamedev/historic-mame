@@ -9,14 +9,14 @@ driver by Nicola Salmoria
 #include "vidhrdw/generic.h"
 #include "sndhrdw/m72.h"
 
-extern WRITE_HANDLER( sichuan2_videoram_w );
-extern WRITE_HANDLER( sichuan2_bankswitch_w );
-extern WRITE_HANDLER( sichuan2_paletteram_w );
+extern WRITE8_HANDLER( sichuan2_videoram_w );
+extern WRITE8_HANDLER( sichuan2_bankswitch_w );
+extern WRITE8_HANDLER( sichuan2_paletteram_w );
 
 extern VIDEO_START( sichuan2 );
 extern VIDEO_UPDATE( sichuan2 );
 
-static READ_HANDLER( sichuan2_dsw1_r )
+static READ8_HANDLER( sichuan2_dsw1_r )
 {
 	int ret = input_port_3_r(0);
 
@@ -35,7 +35,7 @@ static READ_HANDLER( sichuan2_dsw1_r )
 	return ret;
 }
 
-static WRITE_HANDLER( sichuan2_coin_w )
+static WRITE8_HANDLER( sichuan2_coin_w )
 {
 	if ((data & 0xf9) != 0x01) logerror("coin ctrl = %02x\n",data);
 

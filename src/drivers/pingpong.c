@@ -1,8 +1,8 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-extern WRITE_HANDLER( pingpong_videoram_w );
-extern WRITE_HANDLER( pingpong_colorram_w );
+extern WRITE8_HANDLER( pingpong_videoram_w );
+extern WRITE8_HANDLER( pingpong_colorram_w );
 
 extern PALETTE_INIT( pingpong );
 extern VIDEO_START( pingpong );
@@ -10,7 +10,7 @@ extern VIDEO_UPDATE( pingpong );
 
 static int intenable;
 
-static WRITE_HANDLER( coin_w )
+static WRITE8_HANDLER( coin_w )
 {
 	/* bit 2 = irq enable, bit 3 = nmi enable */
 	intenable = data & 0x0c;
@@ -26,11 +26,11 @@ static INTERRUPT_GEN( pingpong_interrupt )
 {
 	if (cpu_getiloops() == 0)
 	{
-		if (intenable & 0x04) cpu_set_irq_line(0, 0, HOLD_LINE);
+		if (intenable & 0x04) cpunum_set_input_line(0, 0, HOLD_LINE);
 	}
 	else if (cpu_getiloops() % 2)
 	{
-		if (intenable & 0x08) cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+		if (intenable & 0x08) cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 	}
 }
 

@@ -785,7 +785,7 @@ WRITE16_HANDLER( dec0_priority_w )
   	COMBINE_DATA(&dec0_pri);
 }
 
-WRITE_HANDLER( dec0_pf3_control_8bit_w )
+WRITE8_HANDLER( dec0_pf3_control_8bit_w )
 {
 	static int buffer[0x20];
 	data16_t myword;
@@ -800,7 +800,7 @@ WRITE_HANDLER( dec0_pf3_control_8bit_w )
 	else dec0_pf3_control_1_w((offset-0x10)/2,myword,0);
 }
 
-WRITE_HANDLER( dec0_pf3_data_8bit_w )
+WRITE8_HANDLER( dec0_pf3_data_8bit_w )
 {
 	if (offset&1) { /* MSB has changed */
 		data16_t lsb=dec0_pf3_data[offset>>1];
@@ -817,7 +817,7 @@ WRITE_HANDLER( dec0_pf3_data_8bit_w )
 	tilemap_mark_tile_dirty(pf3_tilemap_2,offset>>1);
 }
 
-READ_HANDLER( dec0_pf3_data_8bit_r )
+READ8_HANDLER( dec0_pf3_data_8bit_r )
 {
 	if (offset&1) /* MSB */
 		return dec0_pf3_data[offset>>1]>>8;

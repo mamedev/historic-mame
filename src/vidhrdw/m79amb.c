@@ -17,12 +17,12 @@ enum { BLACK, WHITE };
 
 static unsigned char mask = 0;
 
-WRITE_HANDLER( ramtek_mask_w )
+WRITE8_HANDLER( ramtek_mask_w )
 {
 	mask = data;
 }
 
-WRITE_HANDLER( ramtek_videoram_w )
+WRITE8_HANDLER( ramtek_videoram_w )
 {
 	data = data & ~mask;
 

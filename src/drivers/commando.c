@@ -49,11 +49,11 @@ Note : there is an ingame typo bug that doesn't display the bonus life values
 extern unsigned char *commando_fgvideoram;
 extern unsigned char *commando_bgvideoram;
 
-WRITE_HANDLER( commando_fgvideoram_w );
-WRITE_HANDLER( commando_bgvideoram_w );
-WRITE_HANDLER( commando_scrollx_w );
-WRITE_HANDLER( commando_scrolly_w );
-WRITE_HANDLER( commando_c804_w );
+WRITE8_HANDLER( commando_fgvideoram_w );
+WRITE8_HANDLER( commando_bgvideoram_w );
+WRITE8_HANDLER( commando_scrollx_w );
+WRITE8_HANDLER( commando_scrolly_w );
+WRITE8_HANDLER( commando_c804_w );
 VIDEO_START( commando );
 VIDEO_UPDATE( commando );
 VIDEO_EOF( commando );
@@ -62,7 +62,7 @@ VIDEO_EOF( commando );
 
 static INTERRUPT_GEN( commando_interrupt )
 {
-	cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0xd7);	/* RST 10h - VBLANK */
+	cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, 0xd7);	/* RST 10h - VBLANK */
 }
 
 

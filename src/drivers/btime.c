@@ -73,30 +73,30 @@ VIDEO_UPDATE( zoar );
 VIDEO_UPDATE( disco );
 VIDEO_UPDATE( eggs );
 
-WRITE_HANDLER( btime_paletteram_w );
-WRITE_HANDLER( bnj_background_w );
-WRITE_HANDLER( bnj_scroll1_w );
-WRITE_HANDLER( bnj_scroll2_w );
-READ_HANDLER( btime_mirrorvideoram_r );
-WRITE_HANDLER( btime_mirrorvideoram_w );
-READ_HANDLER( btime_mirrorcolorram_r );
-WRITE_HANDLER( btime_mirrorcolorram_w );
-WRITE_HANDLER( lnc_videoram_w );
-WRITE_HANDLER( lnc_mirrorvideoram_w );
-WRITE_HANDLER( deco_charram_w );
+WRITE8_HANDLER( btime_paletteram_w );
+WRITE8_HANDLER( bnj_background_w );
+WRITE8_HANDLER( bnj_scroll1_w );
+WRITE8_HANDLER( bnj_scroll2_w );
+READ8_HANDLER( btime_mirrorvideoram_r );
+WRITE8_HANDLER( btime_mirrorvideoram_w );
+READ8_HANDLER( btime_mirrorcolorram_r );
+WRITE8_HANDLER( btime_mirrorcolorram_w );
+WRITE8_HANDLER( lnc_videoram_w );
+WRITE8_HANDLER( lnc_mirrorvideoram_w );
+WRITE8_HANDLER( deco_charram_w );
 
-WRITE_HANDLER( zoar_video_control_w );
-WRITE_HANDLER( btime_video_control_w );
-WRITE_HANDLER( bnj_video_control_w );
-WRITE_HANDLER( lnc_video_control_w );
-WRITE_HANDLER( disco_video_control_w );
+WRITE8_HANDLER( zoar_video_control_w );
+WRITE8_HANDLER( btime_video_control_w );
+WRITE8_HANDLER( bnj_video_control_w );
+WRITE8_HANDLER( lnc_video_control_w );
+WRITE8_HANDLER( disco_video_control_w );
 
 INTERRUPT_GEN( lnc_sound_interrupt );
 
-static WRITE_HANDLER( sound_command_w );
+static WRITE8_HANDLER( sound_command_w );
 
-READ_HANDLER( mmonkey_protection_r );
-WRITE_HANDLER( mmonkey_protection_w );
+READ8_HANDLER( mmonkey_protection_r );
+WRITE8_HANDLER( mmonkey_protection_w );
 
 
 INLINE int swap_bits_5_6(int data)
@@ -135,7 +135,7 @@ static void btime_decrypt(void)
 	}
 }
 
-static WRITE_HANDLER( lnc_w )
+static WRITE8_HANDLER( lnc_w )
 {
 	unsigned char *rom = memory_region(REGION_CPU1);
 	int diff = memory_region_length(REGION_CPU1) / 2;
@@ -157,7 +157,7 @@ static WRITE_HANDLER( lnc_w )
 	rom[offset+diff] = swap_bits_5_6(data);
 }
 
-static WRITE_HANDLER( mmonkey_w )
+static WRITE8_HANDLER( mmonkey_w )
 {
 	unsigned char *rom = memory_region(REGION_CPU1);
 	int diff = memory_region_length(REGION_CPU1) / 2;
@@ -178,7 +178,7 @@ static WRITE_HANDLER( mmonkey_w )
 	rom[offset+diff] = swap_bits_5_6(data);
 }
 
-static WRITE_HANDLER( btime_w )
+static WRITE8_HANDLER( btime_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -196,7 +196,7 @@ static WRITE_HANDLER( btime_w )
 	btime_decrypt();
 }
 
-static WRITE_HANDLER( zoar_w )
+static WRITE8_HANDLER( zoar_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -216,7 +216,7 @@ static WRITE_HANDLER( zoar_w )
 
 }
 
-static WRITE_HANDLER( disco_w )
+static WRITE8_HANDLER( disco_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -485,7 +485,7 @@ static void btime_interrupt(int generated_interrupt, int active_high)
 		if (coin == 0)
 		{
 			coin = 1;
-			cpu_set_irq_line(0, generated_interrupt, (generated_interrupt == IRQ_LINE_NMI) ? PULSE_LINE : HOLD_LINE);
+			cpunum_set_input_line(0, generated_interrupt, (generated_interrupt == INPUT_LINE_NMI) ? PULSE_LINE : HOLD_LINE);
 		}
 	}
 	else coin = 0;
@@ -503,13 +503,13 @@ static INTERRUPT_GEN( zoar_irq_interrupt )
 
 static INTERRUPT_GEN( btime_nmi_interrupt )
 {
-	btime_interrupt(IRQ_LINE_NMI, 0);
+	btime_interrupt(INPUT_LINE_NMI, 0);
 }
 
-static WRITE_HANDLER( sound_command_w )
+static WRITE8_HANDLER( sound_command_w )
 {
 	soundlatch_w(offset,data);
-	cpu_set_irq_line(1, 0, HOLD_LINE);
+	cpunum_set_input_line(1, 0, HOLD_LINE);
 }
 
 
@@ -1811,7 +1811,7 @@ static void decrypt_C10707_cpu(int cpu, int region)
 		rom[A+diff] = swap_bits_5_6(rom[A]);
 }
 
-static READ_HANDLER( wtennis_reset_hack_r )
+static READ8_HANDLER( wtennis_reset_hack_r )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -1858,7 +1858,7 @@ static DRIVER_INIT( lnc )
 
 static DRIVER_INIT( wtennis )
 {
-	install_mem_read_handler(0, 0xc15f, 0xc15f, wtennis_reset_hack_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc15f, 0xc15f, 0, 0, wtennis_reset_hack_r);
 	init_lnc();
 }
 

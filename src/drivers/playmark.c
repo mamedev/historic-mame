@@ -151,7 +151,7 @@ static WRITE16_HANDLER( playmark_snd_command_w )
 	}
 }
 
-static READ_HANDLER( playmark_snd_command_r )
+static READ8_HANDLER( playmark_snd_command_r )
 {
 	int data = 0;
 
@@ -167,7 +167,7 @@ static READ_HANDLER( playmark_snd_command_r )
 	return data;
 }
 
-static READ_HANDLER( playmark_snd_flag_r )
+static READ8_HANDLER( playmark_snd_flag_r )
 {
 	if (playmark_snd_flag) {
 		playmark_snd_flag = 0;
@@ -178,12 +178,12 @@ static READ_HANDLER( playmark_snd_flag_r )
 }
 
 
-static WRITE_HANDLER( playmark_oki_w )
+static WRITE8_HANDLER( playmark_oki_w )
 {
 	playmark_oki_command = data;
 }
 
-static WRITE_HANDLER( playmark_snd_control_w )
+static WRITE8_HANDLER( playmark_snd_control_w )
 {
 	/*	This port controls communications to and from the 68K, and the OKI
 		device.
@@ -209,7 +209,7 @@ static WRITE_HANDLER( playmark_snd_control_w )
 }
 
 
-static READ_HANDLER( PIC16C5X_T0_clk_r )
+static READ8_HANDLER( PIC16C5X_T0_clk_r )
 {
 	return 0;
 }

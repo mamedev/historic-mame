@@ -113,7 +113,7 @@ static int MC6809_CTR = 0;
 static int MC6809_FLAG = 0;
 
 
-static WRITE_HANDLER( MC6840_control_port_0_w )
+static WRITE8_HANDLER( MC6840_control_port_0_w )
 {
 	/* MC6840 Emulation by Takahiro Nogi. 1999/09/27
 	(This routine hasn't been completed yet.) */
@@ -140,7 +140,7 @@ static WRITE_HANDLER( MC6840_control_port_0_w )
 #endif
 }
 
-static WRITE_HANDLER( MC6840_control_port_1_w )
+static WRITE8_HANDLER( MC6840_control_port_1_w )
 {
 	/* MC6840 Emulation by Takahiro Nogi. 1999/09/27
 	(This routine hasn't been completed yet.) */
@@ -148,7 +148,7 @@ static WRITE_HANDLER( MC6840_control_port_1_w )
 	MC6840_index1 = data;
 }
 
-static WRITE_HANDLER( MC6840_write_port_0_w )
+static WRITE8_HANDLER( MC6840_write_port_0_w )
 {
 	/* MC6840 Emulation by Takahiro Nogi. 1999/09/27
 	(This routine hasn't been completed yet.) */
@@ -156,7 +156,7 @@ static WRITE_HANDLER( MC6840_write_port_0_w )
 	MC6840_register0 = data;
 }
 
-static WRITE_HANDLER( MC6840_write_port_1_w )
+static WRITE8_HANDLER( MC6840_write_port_1_w )
 {
 	/* MC6840 Emulation by Takahiro Nogi. 1999/09/27
 	(This routine hasn't been completed yet.) */
@@ -328,7 +328,7 @@ INTERRUPT_GEN( ginganin_sound_interrupt )
 		if (MC6809_CTR > S_TEMPO)
 		{
 			MC6809_CTR = 0;
-			cpu_set_irq_line(1, 0, HOLD_LINE);
+			cpunum_set_input_line(1, 0, HOLD_LINE);
 		}
 		else
 		{

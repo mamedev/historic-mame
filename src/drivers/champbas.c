@@ -43,10 +43,10 @@ The second CPU plays speech
 
 
 
-extern WRITE_HANDLER( champbas_videoram_w );
-extern WRITE_HANDLER( champbas_colorram_w );
-extern WRITE_HANDLER( champbas_gfxbank_w );
-extern WRITE_HANDLER( champbas_flipscreen_w );
+extern WRITE8_HANDLER( champbas_videoram_w );
+extern WRITE8_HANDLER( champbas_colorram_w );
+extern WRITE8_HANDLER( champbas_gfxbank_w );
+extern WRITE8_HANDLER( champbas_flipscreen_w );
 
 extern PALETTE_INIT( champbas );
 extern VIDEO_START( champbas );
@@ -54,7 +54,7 @@ extern VIDEO_UPDATE( champbas );
 
 
 
-WRITE_HANDLER( champbas_dac_w )
+WRITE8_HANDLER( champbas_dac_w )
 {
 	DAC_signed_data_w(0,data<<2);
 }

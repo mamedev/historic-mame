@@ -9,7 +9,7 @@ int taxidrvr_bghide;
 static int spritectrl[9];
 
 
-WRITE_HANDLER( taxidrvr_spritectrl_w )
+WRITE8_HANDLER( taxidrvr_spritectrl_w )
 {
 	spritectrl[offset] = data;
 }

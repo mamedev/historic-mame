@@ -56,23 +56,23 @@ PALETTE_INIT( mariner );
 PALETTE_INIT( frogger );
 PALETTE_INIT( rockclim );
 
-WRITE_HANDLER( galaxian_videoram_w );
-READ_HANDLER( galaxian_videoram_r );
+WRITE8_HANDLER( galaxian_videoram_w );
+READ8_HANDLER( galaxian_videoram_r );
 
-WRITE_HANDLER( rockclim_videoram_w );
-WRITE_HANDLER( rockclim_scroll_w );
-READ_HANDLER( rockclim_videoram_r );
+WRITE8_HANDLER( rockclim_videoram_w );
+WRITE8_HANDLER( rockclim_scroll_w );
+READ8_HANDLER( rockclim_videoram_r );
 
 
-WRITE_HANDLER( galaxian_attributesram_w );
+WRITE8_HANDLER( galaxian_attributesram_w );
 
-WRITE_HANDLER( galaxian_stars_enable_w );
-WRITE_HANDLER( scramble_background_enable_w );
-WRITE_HANDLER( scramble_background_red_w );
-WRITE_HANDLER( scramble_background_green_w );
-WRITE_HANDLER( scramble_background_blue_w );
-WRITE_HANDLER( hotshock_flip_screen_w );
-WRITE_HANDLER( darkplnt_bullet_color_w );
+WRITE8_HANDLER( galaxian_stars_enable_w );
+WRITE8_HANDLER( scramble_background_enable_w );
+WRITE8_HANDLER( scramble_background_red_w );
+WRITE8_HANDLER( scramble_background_green_w );
+WRITE8_HANDLER( scramble_background_blue_w );
+WRITE8_HANDLER( hotshock_flip_screen_w );
+WRITE8_HANDLER( darkplnt_bullet_color_w );
 
 VIDEO_START( galaxian_plain );
 VIDEO_START( galaxian );
@@ -108,12 +108,12 @@ VIDEO_START( bongo );
 
 VIDEO_UPDATE( galaxian );
 
-WRITE_HANDLER( galaxian_gfxbank_w );
-WRITE_HANDLER( galaxian_nmi_enable_w );
-WRITE_HANDLER( galaxian_flip_screen_x_w );
-WRITE_HANDLER( galaxian_flip_screen_y_w );
-WRITE_HANDLER( gteikob2_flip_screen_x_w );
-WRITE_HANDLER( gteikob2_flip_screen_y_w );
+WRITE8_HANDLER( galaxian_gfxbank_w );
+WRITE8_HANDLER( galaxian_nmi_enable_w );
+WRITE8_HANDLER( galaxian_flip_screen_x_w );
+WRITE8_HANDLER( galaxian_flip_screen_y_w );
+WRITE8_HANDLER( gteikob2_flip_screen_x_w );
+WRITE8_HANDLER( gteikob2_flip_screen_y_w );
 
 
 /* defined in machine/scramble.c */
@@ -172,94 +172,94 @@ MACHINE_INIT( explorer );
 MACHINE_INIT( galaxian );
 MACHINE_INIT( devilfsg );
 
-READ_HANDLER(scobra_type2_ppi8255_0_r);
-READ_HANDLER(scobra_type2_ppi8255_1_r);
-WRITE_HANDLER(scobra_type2_ppi8255_0_w);
-WRITE_HANDLER(scobra_type2_ppi8255_1_w);
+READ8_HANDLER(scobra_type2_ppi8255_0_r);
+READ8_HANDLER(scobra_type2_ppi8255_1_r);
+WRITE8_HANDLER(scobra_type2_ppi8255_0_w);
+WRITE8_HANDLER(scobra_type2_ppi8255_1_w);
 
-READ_HANDLER(hustler_ppi8255_0_r);
-READ_HANDLER(hustler_ppi8255_1_r);
-WRITE_HANDLER(hustler_ppi8255_0_w);
-WRITE_HANDLER(hustler_ppi8255_1_w);
+READ8_HANDLER(hustler_ppi8255_0_r);
+READ8_HANDLER(hustler_ppi8255_1_r);
+WRITE8_HANDLER(hustler_ppi8255_0_w);
+WRITE8_HANDLER(hustler_ppi8255_1_w);
 
-READ_HANDLER(amidar_ppi8255_0_r);
-READ_HANDLER(amidar_ppi8255_1_r);
-WRITE_HANDLER(amidar_ppi8255_0_w);
-WRITE_HANDLER(amidar_ppi8255_1_w);
+READ8_HANDLER(amidar_ppi8255_0_r);
+READ8_HANDLER(amidar_ppi8255_1_r);
+WRITE8_HANDLER(amidar_ppi8255_0_w);
+WRITE8_HANDLER(amidar_ppi8255_1_w);
 
-READ_HANDLER(frogger_ppi8255_0_r);
-READ_HANDLER(frogger_ppi8255_1_r);
-WRITE_HANDLER(frogger_ppi8255_0_w);
-WRITE_HANDLER(frogger_ppi8255_1_w);
+READ8_HANDLER(frogger_ppi8255_0_r);
+READ8_HANDLER(frogger_ppi8255_1_r);
+WRITE8_HANDLER(frogger_ppi8255_0_w);
+WRITE8_HANDLER(frogger_ppi8255_1_w);
 
-READ_HANDLER(mars_ppi8255_0_r);
-READ_HANDLER(mars_ppi8255_1_r);
-WRITE_HANDLER(mars_ppi8255_0_w);
-WRITE_HANDLER(mars_ppi8255_1_w);
+READ8_HANDLER(mars_ppi8255_0_r);
+READ8_HANDLER(mars_ppi8255_1_r);
+WRITE8_HANDLER(mars_ppi8255_0_w);
+WRITE8_HANDLER(mars_ppi8255_1_w);
 
-READ_HANDLER( triplep_pip_r );
-READ_HANDLER( triplep_pap_r );
+READ8_HANDLER( triplep_pip_r );
+READ8_HANDLER( triplep_pap_r );
 
-WRITE_HANDLER( galaxian_coin_lockout_w );
-WRITE_HANDLER( galaxian_coin_counter_w );
+WRITE8_HANDLER( galaxian_coin_lockout_w );
+WRITE8_HANDLER( galaxian_coin_counter_w );
 #define galaxian_coin_counter_0_w galaxian_coin_counter_w
-WRITE_HANDLER( galaxian_coin_counter_1_w );
-WRITE_HANDLER( galaxian_coin_counter_2_w );
-WRITE_HANDLER( galaxian_leds_w );
+WRITE8_HANDLER( galaxian_coin_counter_1_w );
+WRITE8_HANDLER( galaxian_coin_counter_2_w );
+WRITE8_HANDLER( galaxian_leds_w );
 
-READ_HANDLER( scramblb_protection_1_r );
-READ_HANDLER( scramblb_protection_2_r );
+READ8_HANDLER( scramblb_protection_1_r );
+READ8_HANDLER( scramblb_protection_2_r );
 
-READ_HANDLER( jumpbug_protection_r );
+READ8_HANDLER( jumpbug_protection_r );
 
-WRITE_HANDLER( kingball_speech_dip_w );
-WRITE_HANDLER( kingball_sound1_w );
-WRITE_HANDLER( kingball_sound2_w );
+WRITE8_HANDLER( kingball_speech_dip_w );
+WRITE8_HANDLER( kingball_sound1_w );
+WRITE8_HANDLER( kingball_sound2_w );
 
-WRITE_HANDLER( _4in1_bank_w );
-READ_HANDLER( _4in1_input_port_1_r );
-READ_HANDLER( _4in1_input_port_2_r );
+WRITE8_HANDLER( _4in1_bank_w );
+READ8_HANDLER( _4in1_input_port_1_r );
+READ8_HANDLER( _4in1_input_port_2_r );
 
-READ_HANDLER( hunchbks_mirror_r );
-WRITE_HANDLER( hunchbks_mirror_w );
+READ8_HANDLER( hunchbks_mirror_r );
+WRITE8_HANDLER( hunchbks_mirror_w );
 
-WRITE_HANDLER( zigzag_sillyprotection_w );
+WRITE8_HANDLER( zigzag_sillyprotection_w );
 
 INTERRUPT_GEN( hunchbks_vh_interrupt );
 INTERRUPT_GEN( gmgalax_vh_interrupt );
 
-READ_HANDLER( gmgalax_input_port_0_r );
-READ_HANDLER( gmgalax_input_port_1_r );
-READ_HANDLER( gmgalax_input_port_2_r );
+READ8_HANDLER( gmgalax_input_port_0_r );
+READ8_HANDLER( gmgalax_input_port_1_r );
+READ8_HANDLER( gmgalax_input_port_2_r );
 
 
 /* defined in sndhrdw/galaxian.c */
 extern struct CustomSound_interface galaxian_custom_interface;
-WRITE_HANDLER( galaxian_pitch_w );
-WRITE_HANDLER( galaxian_vol_w );
-WRITE_HANDLER( galaxian_noise_enable_w );
-WRITE_HANDLER( galaxian_background_enable_w );
-WRITE_HANDLER( galaxian_shoot_enable_w );
-WRITE_HANDLER( galaxian_lfo_freq_w );
+WRITE8_HANDLER( galaxian_pitch_w );
+WRITE8_HANDLER( galaxian_vol_w );
+WRITE8_HANDLER( galaxian_noise_enable_w );
+WRITE8_HANDLER( galaxian_background_enable_w );
+WRITE8_HANDLER( galaxian_shoot_enable_w );
+WRITE8_HANDLER( galaxian_lfo_freq_w );
 
 
 /* defined in sndhrdw/scramble.c */
 void scramble_sh_init(void);
 void sfx_sh_init(void);
 
-WRITE_HANDLER( scramble_filter_w );
-WRITE_HANDLER( frogger_filter_w );
+WRITE8_HANDLER( scramble_filter_w );
+WRITE8_HANDLER( frogger_filter_w );
 
-READ_HANDLER( scramble_portB_r );
-READ_HANDLER( frogger_portB_r );
+READ8_HANDLER( scramble_portB_r );
+READ8_HANDLER( frogger_portB_r );
 
-WRITE_HANDLER( scramble_sh_irqtrigger_w );
-WRITE_HANDLER( sfx_sh_irqtrigger_w );
-WRITE_HANDLER( mrkougar_sh_irqtrigger_w );
-WRITE_HANDLER( froggrmc_sh_irqtrigger_w );
-WRITE_HANDLER( hotshock_sh_irqtrigger_w );
-WRITE_HANDLER( explorer_sh_irqtrigger_w  );
+WRITE8_HANDLER( scramble_sh_irqtrigger_w );
+WRITE8_HANDLER( sfx_sh_irqtrigger_w );
+WRITE8_HANDLER( mrkougar_sh_irqtrigger_w );
+WRITE8_HANDLER( froggrmc_sh_irqtrigger_w );
+WRITE8_HANDLER( hotshock_sh_irqtrigger_w );
+WRITE8_HANDLER( explorer_sh_irqtrigger_w  );
 
-WRITE_HANDLER( zigzag_8910_latch_w );
-WRITE_HANDLER( zigzag_8910_data_trigger_w );
-WRITE_HANDLER( zigzag_8910_control_trigger_w );
+WRITE8_HANDLER( zigzag_8910_latch_w );
+WRITE8_HANDLER( zigzag_8910_data_trigger_w );
+WRITE8_HANDLER( zigzag_8910_control_trigger_w );

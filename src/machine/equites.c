@@ -34,11 +34,11 @@ extern void equites_8404init(void);
 extern void equites_8404rule(unsigned pc, int offset, int data);
 
 extern READ16_HANDLER(equites_8404_r);
-extern WRITE_HANDLER(equites_5232_w);
-extern WRITE_HANDLER(equites_8910control_w);
-extern WRITE_HANDLER(equites_8910data_w);
-extern WRITE_HANDLER(equites_dac0_w);
-extern WRITE_HANDLER(equites_dac1_w);
+extern WRITE8_HANDLER(equites_5232_w);
+extern WRITE8_HANDLER(equites_8910control_w);
+extern WRITE8_HANDLER(equites_8910data_w);
+extern WRITE8_HANDLER(equites_dac0_w);
+extern WRITE8_HANDLER(equites_dac1_w);
 
 extern data16_t *equites_8404ram;
 extern struct MSM5232interface equites_5232intf;
@@ -167,8 +167,8 @@ static void equites_synth_callback (int param)
 {
 	static int parity = 0;
 
-	if (parity^=1) cpu_set_irq_line(1, I8085_INTR_LINE, HOLD_LINE);
-	cpu_set_irq_line(1, I8085_RST75_LINE, HOLD_LINE);
+	if (parity^=1) cpunum_set_input_line(1, I8085_INTR_LINE, HOLD_LINE);
+	cpunum_set_input_line(1, I8085_RST75_LINE, HOLD_LINE);
 }
 
 // Optimized Mersenne Twister - courtesy of Shawn J. Cokus, University of Washington
@@ -377,38 +377,38 @@ READ16_HANDLER(equites_8404_r)
 	return (equites_8404ram[offset]);
 }
 
-WRITE_HANDLER(equites_5232_w)
+WRITE8_HANDLER(equites_5232_w)
 {
 	if (offset < 0x08 && data) data |= 0x80; // gets around a current 5232 emulation restriction
 	MSM5232_0_w(offset, data);
 }
 
-WRITE_HANDLER(equites_8910control_w)
+WRITE8_HANDLER(equites_8910control_w)
 {
 	AY8910Write(0, 0, data);
 }
 
-WRITE_HANDLER(equites_8910data_w)
+WRITE8_HANDLER(equites_8910data_w)
 {
 	AY8910Write(0, 1, data);
 }
 
-static WRITE_HANDLER(equites_8910porta_w)
+static WRITE8_HANDLER(equites_8910porta_w)
 {
 	// sync with one or more MSM5232 channels. MIDI out?
 }
 
-static WRITE_HANDLER(equites_8910portb_w)
+static WRITE8_HANDLER(equites_8910portb_w)
 {
 	// sync with one or more MSM5232 channels. MIDI out?
 }
 
-WRITE_HANDLER(equites_dac0_w)
+WRITE8_HANDLER(equites_dac0_w)
 {
 	DAC_signed_data_w(0, data<<2);
 }
 
-WRITE_HANDLER(equites_dac1_w)
+WRITE8_HANDLER(equites_dac1_w)
 {
 	DAC_signed_data_w(1, data<<2);
 }

@@ -1204,8 +1204,8 @@ static void arm_set_info(UINT32 state, union cpuinfo *info)
 	switch (state)
 	{
 		/* --- the following bits of info are set as 64-bit signed integers --- */
-		case CPUINFO_INT_IRQ_STATE + ARM_IRQ_LINE:	set_irq_line(ARM_IRQ_LINE, info->i);		break;
-		case CPUINFO_INT_IRQ_STATE + ARM_FIRQ_LINE:	set_irq_line(ARM_FIRQ_LINE, info->i);		break;
+		case CPUINFO_INT_INPUT_STATE + ARM_IRQ_LINE:	set_irq_line(ARM_IRQ_LINE, info->i);		break;
+		case CPUINFO_INT_INPUT_STATE + ARM_FIRQ_LINE:	set_irq_line(ARM_FIRQ_LINE, info->i);		break;
 
 		case CPUINFO_INT_REGISTER + ARM32_R0:	arm.sArmRegister[ 0]= info->i;					break;
 		case CPUINFO_INT_REGISTER + ARM32_R1:	arm.sArmRegister[ 1]= info->i;					break;
@@ -1255,7 +1255,7 @@ void arm_get_info(UINT32 state, union cpuinfo *info)
 	{
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
 		case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(arm);					break;
-		case CPUINFO_INT_IRQ_LINES:						info->i = 2;							break;
+		case CPUINFO_INT_INPUT_LINES:					info->i = 2;							break;
 		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
 		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_LE;					break;
 		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
@@ -1274,8 +1274,8 @@ void arm_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 0;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
 
-		case CPUINFO_INT_IRQ_STATE + ARM_IRQ_LINE:		info->i = arm.pendingIrq;				break;
-		case CPUINFO_INT_IRQ_STATE + ARM_FIRQ_LINE:		info->i = arm.pendingFiq;				break;
+		case CPUINFO_INT_INPUT_STATE + ARM_IRQ_LINE:	info->i = arm.pendingIrq;				break;
+		case CPUINFO_INT_INPUT_STATE + ARM_FIRQ_LINE:	info->i = arm.pendingFiq;				break;
 
 		case CPUINFO_INT_PREVIOUSPC:					info->i = 0;	/* not implemented */	break;
 		case CPUINFO_INT_PC:							info->i = arm.sArmRegister[15]&ADDRESS_MASK; break;

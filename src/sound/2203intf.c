@@ -111,61 +111,61 @@ void YM2203_sh_reset(void)
 
 
 
-READ_HANDLER( YM2203_status_port_0_r ) { return YM2203Read(0,0); }
-READ_HANDLER( YM2203_status_port_1_r ) { return YM2203Read(1,0); }
-READ_HANDLER( YM2203_status_port_2_r ) { return YM2203Read(2,0); }
-READ_HANDLER( YM2203_status_port_3_r ) { return YM2203Read(3,0); }
-READ_HANDLER( YM2203_status_port_4_r ) { return YM2203Read(4,0); }
+READ8_HANDLER( YM2203_status_port_0_r ) { return YM2203Read(0,0); }
+READ8_HANDLER( YM2203_status_port_1_r ) { return YM2203Read(1,0); }
+READ8_HANDLER( YM2203_status_port_2_r ) { return YM2203Read(2,0); }
+READ8_HANDLER( YM2203_status_port_3_r ) { return YM2203Read(3,0); }
+READ8_HANDLER( YM2203_status_port_4_r ) { return YM2203Read(4,0); }
 
-READ_HANDLER( YM2203_read_port_0_r ) { return YM2203Read(0,1); }
-READ_HANDLER( YM2203_read_port_1_r ) { return YM2203Read(1,1); }
-READ_HANDLER( YM2203_read_port_2_r ) { return YM2203Read(2,1); }
-READ_HANDLER( YM2203_read_port_3_r ) { return YM2203Read(3,1); }
-READ_HANDLER( YM2203_read_port_4_r ) { return YM2203Read(4,1); }
+READ8_HANDLER( YM2203_read_port_0_r ) { return YM2203Read(0,1); }
+READ8_HANDLER( YM2203_read_port_1_r ) { return YM2203Read(1,1); }
+READ8_HANDLER( YM2203_read_port_2_r ) { return YM2203Read(2,1); }
+READ8_HANDLER( YM2203_read_port_3_r ) { return YM2203Read(3,1); }
+READ8_HANDLER( YM2203_read_port_4_r ) { return YM2203Read(4,1); }
 
-WRITE_HANDLER( YM2203_control_port_0_w )
+WRITE8_HANDLER( YM2203_control_port_0_w )
 {
 	YM2203Write(0,0,data);
 }
-WRITE_HANDLER( YM2203_control_port_1_w )
+WRITE8_HANDLER( YM2203_control_port_1_w )
 {
 	YM2203Write(1,0,data);
 }
-WRITE_HANDLER( YM2203_control_port_2_w )
+WRITE8_HANDLER( YM2203_control_port_2_w )
 {
 	YM2203Write(2,0,data);
 }
-WRITE_HANDLER( YM2203_control_port_3_w )
+WRITE8_HANDLER( YM2203_control_port_3_w )
 {
 	YM2203Write(3,0,data);
 }
-WRITE_HANDLER( YM2203_control_port_4_w )
+WRITE8_HANDLER( YM2203_control_port_4_w )
 {
 	YM2203Write(4,0,data);
 }
 
-WRITE_HANDLER( YM2203_write_port_0_w )
+WRITE8_HANDLER( YM2203_write_port_0_w )
 {
 	YM2203Write(0,1,data);
 }
-WRITE_HANDLER( YM2203_write_port_1_w )
+WRITE8_HANDLER( YM2203_write_port_1_w )
 {
 	YM2203Write(1,1,data);
 }
-WRITE_HANDLER( YM2203_write_port_2_w )
+WRITE8_HANDLER( YM2203_write_port_2_w )
 {
 	YM2203Write(2,1,data);
 }
-WRITE_HANDLER( YM2203_write_port_3_w )
+WRITE8_HANDLER( YM2203_write_port_3_w )
 {
 	YM2203Write(3,1,data);
 }
-WRITE_HANDLER( YM2203_write_port_4_w )
+WRITE8_HANDLER( YM2203_write_port_4_w )
 {
 	YM2203Write(4,1,data);
 }
 
-WRITE_HANDLER( YM2203_word_0_w )
+WRITE8_HANDLER( YM2203_word_0_w )
 {
 	if (offset)
 		YM2203_write_port_0_w(0,data);
@@ -173,7 +173,7 @@ WRITE_HANDLER( YM2203_word_0_w )
 		YM2203_control_port_0_w(0,data);
 }
 
-WRITE_HANDLER( YM2203_word_1_w )
+WRITE8_HANDLER( YM2203_word_1_w )
 {
 	if (offset)
 		YM2203_write_port_1_w(0,data);

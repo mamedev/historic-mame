@@ -8,7 +8,7 @@
 #include "vidhrdw/generic.h"
 #include "subs.h"
 
-WRITE_HANDLER( subs_invert1_w )
+WRITE8_HANDLER( subs_invert1_w )
 {
 	if ((offset & 0x01) == 1)
 	{
@@ -22,7 +22,7 @@ WRITE_HANDLER( subs_invert1_w )
 	}
 }
 
-WRITE_HANDLER( subs_invert2_w )
+WRITE8_HANDLER( subs_invert2_w )
 {
 	if ((offset & 0x01) == 1)
 	{

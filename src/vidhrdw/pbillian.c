@@ -13,7 +13,7 @@ struct tilemap *pb_tilemap;
 extern data8_t *pb_videoram;
 extern int is_pbillian;
 
-WRITE_HANDLER( pb_videoram_w )
+WRITE8_HANDLER( pb_videoram_w )
 {
 	pb_videoram[offset] = data;
 	tilemap_mark_tile_dirty(pb_tilemap,offset&0x3ff);

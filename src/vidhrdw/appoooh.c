@@ -126,13 +126,13 @@ VIDEO_START( appoooh )
 	return 0;
 }
 
-WRITE_HANDLER( appoooh_scroll_w )
+WRITE8_HANDLER( appoooh_scroll_w )
 {
 	scroll_x = data;
 }
 
 
-WRITE_HANDLER( appoooh_fg_videoram_w )
+WRITE8_HANDLER( appoooh_fg_videoram_w )
 {
 	if (appoooh_fg_videoram[offset] != data)
 	{
@@ -141,7 +141,7 @@ WRITE_HANDLER( appoooh_fg_videoram_w )
 	}
 }
 
-WRITE_HANDLER( appoooh_fg_colorram_w )
+WRITE8_HANDLER( appoooh_fg_colorram_w )
 {
 	if (appoooh_fg_colorram[offset] != data)
 	{
@@ -150,7 +150,7 @@ WRITE_HANDLER( appoooh_fg_colorram_w )
 	}
 }
 
-WRITE_HANDLER( appoooh_bg_videoram_w )
+WRITE8_HANDLER( appoooh_bg_videoram_w )
 {
 	if (appoooh_bg_videoram[offset] != data)
 	{
@@ -159,7 +159,7 @@ WRITE_HANDLER( appoooh_bg_videoram_w )
 	}
 }
 
-WRITE_HANDLER( appoooh_bg_colorram_w )
+WRITE8_HANDLER( appoooh_bg_colorram_w )
 {
 	if (appoooh_bg_colorram[offset] != data)
 	{
@@ -168,7 +168,7 @@ WRITE_HANDLER( appoooh_bg_colorram_w )
 	}
 }
 
-WRITE_HANDLER( appoooh_out_w )
+WRITE8_HANDLER( appoooh_out_w )
 {
 	/* bit 0 controls NMI */
 	interrupt_enable_w(0,data & 0x01);

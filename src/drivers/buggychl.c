@@ -83,18 +83,18 @@ dcxx = /SPOSI (S36)
 
 
 /* in machine */
-READ_HANDLER( buggychl_68705_portA_r );
-WRITE_HANDLER( buggychl_68705_portA_w );
-WRITE_HANDLER( buggychl_68705_ddrA_w );
-READ_HANDLER( buggychl_68705_portB_r );
-WRITE_HANDLER( buggychl_68705_portB_w );
-WRITE_HANDLER( buggychl_68705_ddrB_w );
-READ_HANDLER( buggychl_68705_portC_r );
-WRITE_HANDLER( buggychl_68705_portC_w );
-WRITE_HANDLER( buggychl_68705_ddrC_w );
-WRITE_HANDLER( buggychl_mcu_w );
-READ_HANDLER( buggychl_mcu_r );
-READ_HANDLER( buggychl_mcu_status_r );
+READ8_HANDLER( buggychl_68705_portA_r );
+WRITE8_HANDLER( buggychl_68705_portA_w );
+WRITE8_HANDLER( buggychl_68705_ddrA_w );
+READ8_HANDLER( buggychl_68705_portB_r );
+WRITE8_HANDLER( buggychl_68705_portB_w );
+WRITE8_HANDLER( buggychl_68705_ddrB_w );
+READ8_HANDLER( buggychl_68705_portC_r );
+WRITE8_HANDLER( buggychl_68705_portC_w );
+WRITE8_HANDLER( buggychl_68705_ddrC_w );
+WRITE8_HANDLER( buggychl_mcu_w );
+READ8_HANDLER( buggychl_mcu_r );
+READ8_HANDLER( buggychl_mcu_status_r );
 
 /* in vidhrdw */
 extern unsigned char *buggychl_scrollv,*buggychl_scrollh;
@@ -103,17 +103,17 @@ extern unsigned char *buggychl_character_ram;
 
 PALETTE_INIT( buggychl );
 VIDEO_START( buggychl );
-WRITE_HANDLER( buggychl_chargen_w );
-WRITE_HANDLER( buggychl_sprite_lookup_bank_w );
-WRITE_HANDLER( buggychl_sprite_lookup_w );
-WRITE_HANDLER( buggychl_ctrl_w );
-WRITE_HANDLER( buggychl_bg_scrollx_w );
+WRITE8_HANDLER( buggychl_chargen_w );
+WRITE8_HANDLER( buggychl_sprite_lookup_bank_w );
+WRITE8_HANDLER( buggychl_sprite_lookup_w );
+WRITE8_HANDLER( buggychl_ctrl_w );
+WRITE8_HANDLER( buggychl_bg_scrollx_w );
 VIDEO_UPDATE( buggychl );
 
 
 
 
-static WRITE_HANDLER( bankswitch_w )
+static WRITE8_HANDLER( bankswitch_w )
 {
 	cpu_setbank(1,&memory_region(REGION_CPU1)[0x10000 + (data & 7) * 0x2000]);
 }
@@ -123,32 +123,32 @@ static int sound_nmi_enable,pending_nmi;
 
 static void nmi_callback(int param)
 {
-	if (sound_nmi_enable) cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
+	if (sound_nmi_enable) cpunum_set_input_line(1,INPUT_LINE_NMI,PULSE_LINE);
 	else pending_nmi = 1;
 }
 
-static WRITE_HANDLER( sound_command_w )
+static WRITE8_HANDLER( sound_command_w )
 {
 	soundlatch_w(0,data);
 	timer_set(TIME_NOW,data,nmi_callback);
 }
 
-static WRITE_HANDLER( nmi_disable_w )
+static WRITE8_HANDLER( nmi_disable_w )
 {
 	sound_nmi_enable = 0;
 }
 
-static WRITE_HANDLER( nmi_enable_w )
+static WRITE8_HANDLER( nmi_enable_w )
 {
 	sound_nmi_enable = 1;
 	if (pending_nmi)
 	{
-		cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
+		cpunum_set_input_line(1,INPUT_LINE_NMI,PULSE_LINE);
 		pending_nmi = 0;
 	}
 }
 
-static WRITE_HANDLER( sound_enable_w )
+static WRITE8_HANDLER( sound_enable_w )
 {
 	mixer_sound_enable_global_w(data & 1);
 }
@@ -385,19 +385,19 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static WRITE_HANDLER( portA_0_w )
+static WRITE8_HANDLER( portA_0_w )
 {
 	/* VOL/BAL   for the 7630 on this 8910 output */
 }
-static WRITE_HANDLER( portB_0_w )
+static WRITE8_HANDLER( portB_0_w )
 {
 	/* TRBL/BASS for the 7630 on this 8910 output */
 }
-static WRITE_HANDLER( portA_1_w )
+static WRITE8_HANDLER( portA_1_w )
 {
 	/* VOL/BAL   for the 7630 on this 8910 output */
 }
-static WRITE_HANDLER( portB_1_w )
+static WRITE8_HANDLER( portB_1_w )
 {
 	/* TRBL/BASS for the 7630 on this 8910 output */
 }

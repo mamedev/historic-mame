@@ -179,7 +179,7 @@ static void strtheat_decrypt_rom_B(void)
 }
 
 
-READ_HANDLER( strtheat_decrypt_rom )
+READ8_HANDLER( strtheat_decrypt_rom )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -229,7 +229,7 @@ MACHINE_INIT( strtheat )
 }
 
 /*
-WRITE_HANDLER( strtheat_writeport)
+WRITE8_HANDLER( strtheat_writeport)
 {
 logerror("Port Write: pc = %4x ############## \n",activecpu_get_pc());
 }

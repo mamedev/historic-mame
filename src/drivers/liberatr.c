@@ -148,13 +148,13 @@ static UINT8 *liberatr_ctrld;
  *
  *************************************/
 
-static WRITE_HANDLER( liberatr_led_w )
+static WRITE8_HANDLER( liberatr_led_w )
 {
 	set_led_status(offset,~data & 0x10);
 }
 
 
-static WRITE_HANDLER( liberatr_coin_counter_w )
+static WRITE8_HANDLER( liberatr_coin_counter_w )
 {
 	coin_counter_w(offset ^ 0x01, data);
 }
@@ -167,7 +167,7 @@ static WRITE_HANDLER( liberatr_coin_counter_w )
  *
  *************************************/
 
-static READ_HANDLER( liberatr_input_port_0_r )
+static READ8_HANDLER( liberatr_input_port_0_r )
 {
 	int	res ;
 	int xdelta, ydelta;

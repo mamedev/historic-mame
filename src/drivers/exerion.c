@@ -25,14 +25,14 @@
  *
  *************************************/
 
-static READ_HANDLER( exerion_port01_r )
+static READ8_HANDLER( exerion_port01_r )
 {
 	/* the cocktail flip bit muxes between ports 0 and 1 */
 	return exerion_cocktail_flip ? input_port_1_r(offset) : input_port_0_r(offset);
 }
 
 
-static READ_HANDLER( exerion_port3_r )
+static READ8_HANDLER( exerion_port3_r )
 {
 	/* bit 0 is VBLANK, which we simulate manually */
 	int result = input_port_3_r(offset);
@@ -47,7 +47,7 @@ static INTERRUPT_GEN( exerion_interrupt )
 {
 	/* Exerion triggers NMIs on coin insertion */
 	if (readinputport(4) & 1)
-		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+		cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 }
 
 
@@ -63,14 +63,14 @@ static INTERRUPT_GEN( exerion_interrupt )
 static UINT8 porta;
 static UINT8 portb;
 
-static READ_HANDLER( exerion_porta_r )
+static READ8_HANDLER( exerion_porta_r )
 {
 	porta ^= 0x40;
 	return porta;
 }
 
 
-static WRITE_HANDLER( exerion_portb_w )
+static WRITE8_HANDLER( exerion_portb_w )
 {
 	/* pull the expected value from the ROM */
 	porta = memory_region(REGION_CPU1)[0x5f76];
@@ -80,7 +80,7 @@ static WRITE_HANDLER( exerion_portb_w )
 }
 
 
-static READ_HANDLER( exerion_protection_r )
+static READ8_HANDLER( exerion_protection_r )
 {
 	UINT8 *RAM = memory_region(REGION_CPU1);
 

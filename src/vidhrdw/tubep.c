@@ -440,7 +440,7 @@ VIDEO_START( tubep )
 	return 0;
 }
 
-WRITE_HANDLER( tubep_textram_w )
+WRITE8_HANDLER( tubep_textram_w )
 {
 	if (tubep_textram[offset] != data)
 	{
@@ -452,7 +452,7 @@ WRITE_HANDLER( tubep_textram_w )
 
 static UINT8 background_romsel = 0;
 
-WRITE_HANDLER( tubep_background_romselect_w )
+WRITE8_HANDLER( tubep_background_romselect_w )
 {
 	background_romsel = data & 1;
 }
@@ -460,7 +460,7 @@ WRITE_HANDLER( tubep_background_romselect_w )
 
 static UINT8 color_A4 = 0;
 
-WRITE_HANDLER( tubep_colorproms_A4_line_w )
+WRITE8_HANDLER( tubep_colorproms_A4_line_w )
 {
 	if (color_A4 != ((data & 1)<<4))
 	{
@@ -472,7 +472,7 @@ WRITE_HANDLER( tubep_colorproms_A4_line_w )
 
 static UINT8 ls175_b7 = 0x0f | 0xf0;
 
-WRITE_HANDLER( tubep_background_a000_w )
+WRITE8_HANDLER( tubep_background_a000_w )
 {
 	ls175_b7 = ((data&0x0f)^0x0f) | 0xf0;
 }
@@ -480,7 +480,7 @@ WRITE_HANDLER( tubep_background_a000_w )
 
 static UINT8 ls175_e8 = 0x0f;
 
-WRITE_HANDLER( tubep_background_c000_w )
+WRITE8_HANDLER( tubep_background_c000_w )
 {
 	ls175_e8 = ((data&0x0f)^0x0f);
 }
@@ -488,7 +488,7 @@ WRITE_HANDLER( tubep_background_c000_w )
 
 static void sprite_timer_callback(int n)
 {
-	cpu_set_irq_line(3,0,ASSERT_LINE);
+	cpunum_set_input_line(3,0,ASSERT_LINE);
 }
 
 /*static UINT8 graph_ctrl[10];*/
@@ -580,7 +580,7 @@ static void draw_sprite(void)
 }
 
 
-WRITE_HANDLER( tubep_sprite_control_w )
+WRITE8_HANDLER( tubep_sprite_control_w )
 {
 	if (offset < 10)
 	{
@@ -636,7 +636,7 @@ WRITE_HANDLER( tubep_sprite_control_w )
 			/SINT line will be reasserted in XSize * YSize cycles (RH0 signal cycles)
 			*/
 			/* 1.clear the /SINT interrupt line */
-			cpu_set_irq_line(3,0,CLEAR_LINE);
+			cpunum_set_input_line(3,0,CLEAR_LINE);
 
 			/* 2.assert /SINT again after this time */
 			timer_set( TIME_IN_SEC( (1/(19968000/8.0))*(XSize+1)*(YSize+1) ), 0, sprite_timer_callback);
@@ -763,7 +763,7 @@ VIDEO_UPDATE( tubep )
 
 static UINT8 ls377_data = 0;
 
-WRITE_HANDLER( rjammer_background_LS377_w )
+WRITE8_HANDLER( rjammer_background_LS377_w )
 {
 	ls377_data = data & 0xff;
 }
@@ -771,7 +771,7 @@ WRITE_HANDLER( rjammer_background_LS377_w )
 
 static UINT32 page = 0;
 
-WRITE_HANDLER( rjammer_background_page_w )
+WRITE8_HANDLER( rjammer_background_page_w )
 {
 	page = (data & 1) * 0x200;
 }

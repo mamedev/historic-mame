@@ -41,12 +41,12 @@ Notes:
 extern UINT8 *sidearms_bg_scrollx;
 extern UINT8 *sidearms_bg_scrolly;
 
-extern WRITE_HANDLER( sidearms_videoram_w );
-extern WRITE_HANDLER( sidearms_colorram_w );
-extern WRITE_HANDLER( sidearms_star_scrollx_w );
-extern WRITE_HANDLER( sidearms_star_scrolly_w );
-extern WRITE_HANDLER( sidearms_c804_w );
-extern WRITE_HANDLER( sidearms_gfxctrl_w );
+extern WRITE8_HANDLER( sidearms_videoram_w );
+extern WRITE8_HANDLER( sidearms_colorram_w );
+extern WRITE8_HANDLER( sidearms_star_scrollx_w );
+extern WRITE8_HANDLER( sidearms_star_scrolly_w );
+extern WRITE8_HANDLER( sidearms_c804_w );
+extern WRITE8_HANDLER( sidearms_gfxctrl_w );
 
 extern PALETTE_INIT( sidearms );
 extern VIDEO_START( sidearms );
@@ -55,7 +55,7 @@ extern VIDEO_EOF( sidearms );
 
 int sidearms_gameid;
 
-static WRITE_HANDLER( sidearms_bankswitch_w )
+static WRITE8_HANDLER( sidearms_bankswitch_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -70,7 +70,7 @@ static WRITE_HANDLER( sidearms_bankswitch_w )
 
 
 /* Turtle Ship input ports are rotated 90 degrees */
-static READ_HANDLER( turtship_ports_r )
+static READ8_HANDLER( turtship_ports_r )
 {
 	int i,res;
 
@@ -162,7 +162,7 @@ ADDRESS_MAP_END
 
 /* Whizz */
 
-static WRITE_HANDLER( whizz_bankswitch_w )
+static WRITE8_HANDLER( whizz_bankswitch_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -481,15 +481,15 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( whizz )
 	PORT_START	/* 8-bit */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x07, 0x04, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x07, "0 (Easiest)" )
+	PORT_DIPSETTING(    0x06, "1" )
+	PORT_DIPSETTING(    0x05, "2" )
+	PORT_DIPSETTING(    0x04, "3 (Normal)" )
+	PORT_DIPSETTING(    0x03, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPSETTING(    0x01, "6" )
+	PORT_DIPSETTING(    0x00, "7 (Hardest)" )
 	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -516,12 +516,11 @@ INPUT_PORTS_START( whizz )
 	PORT_DIPSETTING(    0x05, DEF_STR( 1C_3C ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( 1C_5C ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, "First Bonus" )
-	PORT_DIPSETTING(    0x10, "100000" )
-	PORT_DIPSETTING(    0x00, "150000" )
+	PORT_DIPNAME( 0x18, 0x18, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x18, "100000 Only" )
+	PORT_DIPSETTING(    0x10, "Every 100000" )
+	PORT_DIPSETTING(    0x08, "Every 150000" )
+	PORT_DIPSETTING(    0x00, "Every 200000" )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -701,7 +700,7 @@ static struct GfxDecodeInfo turtship_gfxdecodeinfo[] =
 /* handler called by the 2203 emulator when the internal timers cause an IRQ */
 static void irqhandler(int irq)
 {
-	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2203interface ym2203_interface =

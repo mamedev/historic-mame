@@ -24,11 +24,11 @@ Notes:
 extern UINT8 *popeye_background_pos;
 extern UINT8 *popeye_palettebank;
 
-extern WRITE_HANDLER( popeye_videoram_w );
-extern WRITE_HANDLER( popeye_colorram_w );
-extern WRITE_HANDLER( popeye_backgroundram_w );
-extern WRITE_HANDLER( popeye_bitmap_w );
-extern WRITE_HANDLER( skyskipr_bitmap_w );
+extern WRITE8_HANDLER( popeye_videoram_w );
+extern WRITE8_HANDLER( popeye_colorram_w );
+extern WRITE8_HANDLER( popeye_backgroundram_w );
+extern WRITE8_HANDLER( popeye_bitmap_w );
+extern WRITE8_HANDLER( skyskipr_bitmap_w );
 
 extern PALETTE_INIT( popeye );
 extern PALETTE_INIT( popeyebl );
@@ -42,7 +42,7 @@ static INTERRUPT_GEN( popeye_interrupt )
 {
 	/* NMIs are enabled by the I register?? How can that be? */
 	if (activecpu_get_reg(Z80_I) & 1)	/* skyskipr: 0/1, popeye: 2/3 but also 0/1 */
-		cpu_set_nmi_line(0, PULSE_LINE);
+		cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 }
 
 
@@ -50,7 +50,7 @@ static INTERRUPT_GEN( popeye_interrupt )
 /* by a variable amount. */
 static int prot0,prot1,prot_shift;
 
-static READ_HANDLER( protection_r )
+static READ8_HANDLER( protection_r )
 {
 	if (offset == 0)
 	{
@@ -63,7 +63,7 @@ static READ_HANDLER( protection_r )
 	}
 }
 
-static WRITE_HANDLER( protection_w )
+static WRITE8_HANDLER( protection_w )
 {
 	if (offset == 0)
 	{
@@ -449,7 +449,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static int dswbit;
 
-static WRITE_HANDLER( popeye_portB_w )
+static WRITE8_HANDLER( popeye_portB_w )
 {
 	/* bit 0 flips screen */
 	flip_screen_set(data & 1);
@@ -458,7 +458,7 @@ static WRITE_HANDLER( popeye_portB_w )
 	dswbit = (data & 0x0e) >> 1;
 }
 
-static READ_HANDLER( popeye_portA_r )
+static READ8_HANDLER( popeye_portA_r )
 {
 	int res;
 

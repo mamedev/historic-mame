@@ -14,23 +14,23 @@
 
 void mcr_sound_init(void);
 
-WRITE_HANDLER( ssio_data_w );
-READ_HANDLER( ssio_status_r );
+WRITE8_HANDLER( ssio_data_w );
+READ8_HANDLER( ssio_status_r );
 void ssio_reset_w(int state);
 
-WRITE_HANDLER( csdeluxe_data_w );
-READ_HANDLER( csdeluxe_status_r );
+WRITE8_HANDLER( csdeluxe_data_w );
+READ8_HANDLER( csdeluxe_status_r );
 void csdeluxe_reset_w(int state);
 
-WRITE_HANDLER( turbocs_data_w );
-READ_HANDLER( turbocs_status_r );
+WRITE8_HANDLER( turbocs_data_w );
+READ8_HANDLER( turbocs_status_r );
 void turbocs_reset_w(int state);
 
-WRITE_HANDLER( soundsgood_data_w );
-READ_HANDLER( soundsgood_status_r );
+WRITE8_HANDLER( soundsgood_data_w );
+READ8_HANDLER( soundsgood_status_r );
 void soundsgood_reset_w(int state);
 
-WRITE_HANDLER( squawkntalk_data_w );
+WRITE8_HANDLER( squawkntalk_data_w );
 void squawkntalk_reset_w(int state);
 
 

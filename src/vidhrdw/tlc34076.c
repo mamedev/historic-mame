@@ -95,7 +95,7 @@ void tlc34076_reset(int dacwidth)
  *
  *************************************/
 
-READ_HANDLER( tlc34076_r )
+READ8_HANDLER( tlc34076_r )
 {
 	UINT8 result;
 
@@ -133,7 +133,7 @@ READ_HANDLER( tlc34076_r )
  *
  *************************************/
 
-WRITE_HANDLER( tlc34076_w )
+WRITE8_HANDLER( tlc34076_w )
 {
 	UINT8 oldval;
 

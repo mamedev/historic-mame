@@ -116,7 +116,7 @@ VIDEO_START( suprloco )
 
 ***************************************************************************/
 
-WRITE_HANDLER( suprloco_videoram_w )
+WRITE8_HANDLER( suprloco_videoram_w )
 {
 	if (suprloco_videoram[offset] != data)
 	{
@@ -127,7 +127,7 @@ WRITE_HANDLER( suprloco_videoram_w )
 
 static int suprloco_scrollram[32];
 
-WRITE_HANDLER( suprloco_scrollram_w )
+WRITE8_HANDLER( suprloco_scrollram_w )
 {
 	int adj = flip_screen ? -8 : 8;
 
@@ -135,12 +135,12 @@ WRITE_HANDLER( suprloco_scrollram_w )
 	tilemap_set_scrollx(bg_tilemap,offset, data - adj);
 }
 
-READ_HANDLER( suprloco_scrollram_r )
+READ8_HANDLER( suprloco_scrollram_r )
 {
 	return suprloco_scrollram[offset];
 }
 
-WRITE_HANDLER( suprloco_control_w )
+WRITE8_HANDLER( suprloco_control_w )
 {
 	/* There is probably a palette select in here */
 
@@ -167,7 +167,7 @@ WRITE_HANDLER( suprloco_control_w )
 }
 
 
-READ_HANDLER( suprloco_control_r )
+READ8_HANDLER( suprloco_control_r )
 {
 	return control;
 }

@@ -97,7 +97,7 @@ static void get_bg_tile_info(int tile_index)
 	SET_TILE_INFO(region, code & 0x7f,colour,0)
 }
 
-WRITE_HANDLER( brkthru_bgram_w )
+WRITE8_HANDLER( brkthru_bgram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -113,7 +113,7 @@ static void get_fg_tile_info(int tile_index)
 	SET_TILE_INFO(0, code, 0, 0)
 }
 
-WRITE_HANDLER( brkthru_fgram_w )
+WRITE8_HANDLER( brkthru_fgram_w )
 {
 	if (brkthru_videoram[offset] != data)
 	{
@@ -141,7 +141,7 @@ VIDEO_START( brkthru )
 
 
 
-WRITE_HANDLER( brkthru_1800_w )
+WRITE8_HANDLER( brkthru_1800_w )
 {
 	if (offset == 0)	/* low 8 bits of scroll */
 		bgscroll = (bgscroll & 0x100) | data;

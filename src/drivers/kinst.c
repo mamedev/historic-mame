@@ -47,8 +47,8 @@ static MACHINE_INIT( kinst )
 	cpunum_set_info_int(0, CPUINFO_INT_MIPS3_DRC_OPTIONS, MIPS3DRC_FASTEST_OPTIONS);
 
 	/* both games map one logical 4k page at address 0 to physical address 0x8090000 */
-	install_mem_read32_handler(0, 0x00000000, 0x00000fff, MRA32_BANK1);
-	install_mem_write32_handler(0, 0x00000000, 0x00000fff, MWA32_BANK1);
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00000000, 0x00000fff, 0, 0, MRA32_BANK1);
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00000000, 0x00000fff, 0, 0, MWA32_BANK1);
 	cpu_setbank(1, &rambase2[0x90000/4]);
 
 	/* keep the DCS held in reset at startup */
@@ -104,20 +104,20 @@ VIDEO_UPDATE( kinst )
 
 static void irq0_stop(int param)
 {
-	cpu_set_irq_line(0, 0, CLEAR_LINE);
+	cpunum_set_input_line(0, 0, CLEAR_LINE);
 }
 
 
 static INTERRUPT_GEN( irq0_start )
 {
-	cpu_set_irq_line(0, 0, ASSERT_LINE);
+	cpunum_set_input_line(0, 0, ASSERT_LINE);
 	timer_set(TIME_IN_USEC(50), 0, irq0_stop);
 }
 
 
 static void ide_interrupt(int state)
 {
-	cpu_set_irq_line(0, 1, state);
+	cpunum_set_input_line(0, 1, state);
 }
 
 
@@ -588,7 +588,7 @@ static DRIVER_INIT( kinst )
 	features[31*2+1] = 0x20;
 
 	/* optimize one of the non-standard loops */
-	kinst_speedup = install_mem_read32_handler(0, 0x8808f5bc, 0x8808f5bf, kinst_speedup_r);
+	kinst_speedup = memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x8808f5bc, 0x8808f5bf, 0, 0, kinst_speedup_r);
 }
 
 
@@ -626,7 +626,7 @@ static DRIVER_INIT( kinst2 )
 	features[14*2+1] = 0x41;
 
 	/* optimize one of the non-standard loops */
-	kinst_speedup = install_mem_read32_handler(0, 0x887ff544, 0x887ff547, kinst_speedup_r);
+	kinst_speedup = memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x887ff544, 0x887ff547, 0, 0, kinst_speedup_r);
 }
 
 

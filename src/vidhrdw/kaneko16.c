@@ -582,7 +582,7 @@ void kaneko16_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *c
 					primask );
 #ifdef MAME_DEBUG
 #if 0
-if (keyboard_pressed(KEYCODE_Z))
+if (code_pressed(KEYCODE_Z))
 {	/* Display some info on each sprite */
 	struct DisplayText dt[2];	char buf[10];
 	sprintf(buf, "%X",s->priority);
@@ -864,23 +864,23 @@ VIDEO_UPDATE( kaneko16 )
 	}
 
 #ifdef MAME_DEBUG
-if ( keyboard_pressed(KEYCODE_Z) ||
-	 keyboard_pressed(KEYCODE_X) || keyboard_pressed(KEYCODE_C) ||
-     keyboard_pressed(KEYCODE_V) || keyboard_pressed(KEYCODE_B) )
+if ( code_pressed(KEYCODE_Z) ||
+	 code_pressed(KEYCODE_X) || code_pressed(KEYCODE_C) ||
+     code_pressed(KEYCODE_V) || code_pressed(KEYCODE_B) )
 {	int msk = 0, val = 0;
 
-	if (keyboard_pressed(KEYCODE_X))	val = 1;	// priority 0 only
-	if (keyboard_pressed(KEYCODE_C))	val = 2;	// ""       1
-	if (keyboard_pressed(KEYCODE_V))	val = 4;	// ""       2
-	if (keyboard_pressed(KEYCODE_B))	val = 8;	// ""       3
+	if (code_pressed(KEYCODE_X))	val = 1;	// priority 0 only
+	if (code_pressed(KEYCODE_C))	val = 2;	// ""       1
+	if (code_pressed(KEYCODE_V))	val = 4;	// ""       2
+	if (code_pressed(KEYCODE_B))	val = 8;	// ""       3
 
-	if (keyboard_pressed(KEYCODE_Z))	val = 1|2|4|8;	// All of the above priorities
+	if (code_pressed(KEYCODE_Z))	val = 1|2|4|8;	// All of the above priorities
 
-	if (keyboard_pressed(KEYCODE_Q))	msk |= val << 0;	// for tmap 0
-	if (keyboard_pressed(KEYCODE_W))	msk |= val << 4;	// ""       1
-	if (keyboard_pressed(KEYCODE_E))	msk |= val << 8;	// ""       2
-	if (keyboard_pressed(KEYCODE_R))	msk |= val << 12;	// ""       3
-	if (keyboard_pressed(KEYCODE_A))	msk |= val << 16;	// for sprites
+	if (code_pressed(KEYCODE_Q))	msk |= val << 0;	// for tmap 0
+	if (code_pressed(KEYCODE_W))	msk |= val << 4;	// ""       1
+	if (code_pressed(KEYCODE_E))	msk |= val << 8;	// ""       2
+	if (code_pressed(KEYCODE_R))	msk |= val << 12;	// ""       3
+	if (code_pressed(KEYCODE_A))	msk |= val << 16;	// for sprites
 	if (msk != 0) layers_ctrl &= msk;
 
 #if 0

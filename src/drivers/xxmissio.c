@@ -21,41 +21,41 @@ static UINT8 *shared_workram;
 static UINT8 xxmissio_status;
 
 
-WRITE_HANDLER( xxmissio_scroll_x_w );
-WRITE_HANDLER( xxmissio_scroll_y_w );
-WRITE_HANDLER( xxmissio_flipscreen_w );
+WRITE8_HANDLER( xxmissio_scroll_x_w );
+WRITE8_HANDLER( xxmissio_scroll_y_w );
+WRITE8_HANDLER( xxmissio_flipscreen_w );
 
-READ_HANDLER( xxmissio_videoram_r );
-WRITE_HANDLER( xxmissio_videoram_w );
-READ_HANDLER( xxmissio_fgram_r );
-WRITE_HANDLER( xxmissio_fgram_w );
+READ8_HANDLER( xxmissio_videoram_r );
+WRITE8_HANDLER( xxmissio_videoram_w );
+READ8_HANDLER( xxmissio_fgram_r );
+WRITE8_HANDLER( xxmissio_fgram_w );
 
-WRITE_HANDLER( xxmissio_paletteram_w );
+WRITE8_HANDLER( xxmissio_paletteram_w );
 
-WRITE_HANDLER( shared_workram_w )
+WRITE8_HANDLER( shared_workram_w )
 {
 	shared_workram[offset ^ 0x1000] = data;
 }
 
-READ_HANDLER( shared_workram_r )
+READ8_HANDLER( shared_workram_r )
 {
 	return shared_workram[offset ^ 0x1000];
 }
 
-WRITE_HANDLER( xxmissio_bank_sel_w )
+WRITE8_HANDLER( xxmissio_bank_sel_w )
 {
 	UINT8 *BANK = memory_region(REGION_USER1);
 	UINT32 bank_address = (data & 0x07) * 0x4000;
 	cpu_setbank(1, &BANK[bank_address]);
 }
 
-READ_HANDLER( xxmissio_status_r )
+READ8_HANDLER( xxmissio_status_r )
 {
 	xxmissio_status = (xxmissio_status | 2) & ( readinputport(4) | 0xfd );
 	return xxmissio_status;
 }
 
-WRITE_HANDLER ( xxmissio_status_m_w )
+WRITE8_HANDLER ( xxmissio_status_m_w )
 {
 	switch (data)
 	{
@@ -65,7 +65,7 @@ WRITE_HANDLER ( xxmissio_status_m_w )
 
 		case 0x40:
 			xxmissio_status &= ~0x08;
-			cpu_set_irq_line_and_vector(1,0,HOLD_LINE,0x10);
+			cpunum_set_input_line_and_vector(1,0,HOLD_LINE,0x10);
 			break;
 
 		case 0x80:
@@ -74,7 +74,7 @@ WRITE_HANDLER ( xxmissio_status_m_w )
 	}
 }
 
-WRITE_HANDLER ( xxmissio_status_s_w )
+WRITE8_HANDLER ( xxmissio_status_s_w )
 {
 	switch (data)
 	{
@@ -88,7 +88,7 @@ WRITE_HANDLER ( xxmissio_status_s_w )
 
 		case 0x80:
 			xxmissio_status &= ~0x04;
-			cpu_set_irq_line_and_vector(0,0,HOLD_LINE,0x10);
+			cpunum_set_input_line_and_vector(0,0,HOLD_LINE,0x10);
 			break;
 	}
 }
@@ -96,13 +96,13 @@ WRITE_HANDLER ( xxmissio_status_s_w )
 INTERRUPT_GEN( xxmissio_interrupt_m )
 {
 	xxmissio_status &= ~0x20;
-	cpu_set_irq_line(0, 0, HOLD_LINE);
+	cpunum_set_input_line(0, 0, HOLD_LINE);
 }
 
 INTERRUPT_GEN( xxmissio_interrupt_s )
 {
 	xxmissio_status &= ~0x10;
-	cpu_set_irq_line(1, 0, HOLD_LINE);
+	cpunum_set_input_line(1, 0, HOLD_LINE);
 }
 
 /****************************************************************************/

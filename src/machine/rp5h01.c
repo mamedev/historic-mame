@@ -182,26 +182,26 @@ int RP5H01_data_r( int which ) {
 
 /****************************************************************************/
 
-WRITE_HANDLER( RP5H01_0_enable_w ) {
+WRITE8_HANDLER( RP5H01_0_enable_w ) {
 	RP5H01_enable_w( 0, data );
 }
 
-WRITE_HANDLER( RP5H01_0_reset_w ) {
+WRITE8_HANDLER( RP5H01_0_reset_w ) {
 	RP5H01_reset_w( 0, data );
 }
 
-WRITE_HANDLER( RP5H01_0_clock_w ) {
+WRITE8_HANDLER( RP5H01_0_clock_w ) {
 	RP5H01_clock_w( 0, data );
 }
 
-WRITE_HANDLER( RP5H01_0_test_w ) {
+WRITE8_HANDLER( RP5H01_0_test_w ) {
 	RP5H01_test_w( 0, data );
 }
 
-READ_HANDLER( RP5H01_0_counter_r ) {
+READ8_HANDLER( RP5H01_0_counter_r ) {
 	return RP5H01_counter_r( 0 );
 }
 
-READ_HANDLER( RP5H01_0_data_r ) {
+READ8_HANDLER( RP5H01_0_data_r ) {
 	return RP5H01_data_r( 0 );
 }

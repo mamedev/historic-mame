@@ -127,7 +127,7 @@ static data16_t irq_enable;
 /* Update the IRQ state based on all possible causes */
 static void update_irq_state(void)
 {
-	cpu_set_irq_line(0, 0, (requested_int & irq_enable)? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(0, 0, (requested_int & irq_enable)? ASSERT_LINE : CLEAR_LINE);
 }
 
 int ssv_irq_callback(int level)

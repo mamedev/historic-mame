@@ -361,7 +361,7 @@ static ADDRESS_MAP_START( cclimbr2_soundwritemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xc000, 0xffff) AM_WRITE(MWA8_RAM)
 ADDRESS_MAP_END
 
-static READ_HANDLER( soundlatch_clear_r )
+static READ8_HANDLER( soundlatch_clear_r )
 {
 	soundlatch_clear_w(0,0);
 	return 0;

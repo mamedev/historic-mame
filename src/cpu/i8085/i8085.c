@@ -1501,7 +1501,7 @@ static void i8085_set_INTR(int state)
 
 static void i8085_set_irq_line(int irqline, int state)
 {
-	if (irqline == IRQ_LINE_NMI)
+	if (irqline == INPUT_LINE_NMI)
 	{
 		I.nmi_state = state;
 		if( state != CLEAR_LINE )
@@ -1594,7 +1594,7 @@ void i8080_init(void)
 
 void i8080_set_irq_line(int irqline, int state)
 {
-	if (irqline == IRQ_LINE_NMI)
+	if (irqline == INPUT_LINE_NMI)
 	{
 		i8085_set_irq_line(irqline, state);
 	}
@@ -1625,11 +1625,11 @@ static void i8085_set_info(UINT32 state, union cpuinfo *info)
 	switch (state)
 	{
 		/* --- the following bits of info are set as 64-bit signed integers --- */
-		case CPUINFO_INT_IRQ_STATE + I8085_INTR_LINE:	i8085_set_irq_line(I8085_INTR_LINE, info->i); break;
-		case CPUINFO_INT_IRQ_STATE + I8085_RST55_LINE:	i8085_set_irq_line(I8085_RST55_LINE, info->i); break;
-		case CPUINFO_INT_IRQ_STATE + I8085_RST65_LINE:	i8085_set_irq_line(I8085_RST65_LINE, info->i); break;
-		case CPUINFO_INT_IRQ_STATE + I8085_RST75_LINE:	i8085_set_irq_line(I8085_RST75_LINE, info->i); break;
-		case CPUINFO_INT_IRQ_STATE + IRQ_LINE_NMI:		i8085_set_irq_line(IRQ_LINE_NMI, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + I8085_INTR_LINE:	i8085_set_irq_line(I8085_INTR_LINE, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + I8085_RST55_LINE:i8085_set_irq_line(I8085_RST55_LINE, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + I8085_RST65_LINE:i8085_set_irq_line(I8085_RST65_LINE, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + I8085_RST75_LINE:i8085_set_irq_line(I8085_RST75_LINE, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:	i8085_set_irq_line(INPUT_LINE_NMI, info->i); break;
 
 		case CPUINFO_INT_PC:							I.PC.w.l = info->i; change_pc(I.PC.d); break;
 		case CPUINFO_INT_REGISTER + I8085_PC:			I.PC.w.l = info->i;						break;
@@ -1665,7 +1665,7 @@ void i8085_get_info(UINT32 state, union cpuinfo *info)
 	{
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
 		case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(I);					break;
-		case CPUINFO_INT_IRQ_LINES:						info->i = 4;							break;
+		case CPUINFO_INT_INPUT_LINES:					info->i = 4;							break;
 		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0xff;							break;
 		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_LE;					break;
 		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
@@ -1684,11 +1684,11 @@ void i8085_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 8;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
 
-		case CPUINFO_INT_IRQ_STATE + I8085_INTR_LINE:	info->i = (I.IREQ & IM_INTR) ? ASSERT_LINE : CLEAR_LINE; break;
-		case CPUINFO_INT_IRQ_STATE + I8085_RST55_LINE:	info->i = (I.IREQ & IM_RST55) ? ASSERT_LINE : CLEAR_LINE; break;
-		case CPUINFO_INT_IRQ_STATE + I8085_RST65_LINE:	info->i = (I.IREQ & IM_RST65) ? ASSERT_LINE : CLEAR_LINE; break;
-		case CPUINFO_INT_IRQ_STATE + I8085_RST75_LINE:	info->i = (I.IREQ & IM_RST75) ? ASSERT_LINE : CLEAR_LINE; break;
-		case CPUINFO_INT_IRQ_STATE + IRQ_LINE_NMI:		info->i = (I.IREQ & IM_TRAP) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_INPUT_STATE + I8085_INTR_LINE:	info->i = (I.IREQ & IM_INTR) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_INPUT_STATE + I8085_RST55_LINE:info->i = (I.IREQ & IM_RST55) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_INPUT_STATE + I8085_RST65_LINE:info->i = (I.IREQ & IM_RST65) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_INPUT_STATE + I8085_RST75_LINE:info->i = (I.IREQ & IM_RST75) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:	info->i = (I.IREQ & IM_TRAP) ? ASSERT_LINE : CLEAR_LINE; break;
 
 		case CPUINFO_INT_PREVIOUSPC:					/* not supported */						break;
 
@@ -1765,8 +1765,8 @@ static void i8080_set_info(UINT32 state, union cpuinfo *info)
 	switch (state)
 	{
 		/* --- the following bits of info are set as 64-bit signed integers --- */
-		case CPUINFO_INT_IRQ_STATE + I8080_INTR_LINE:	i8080_set_irq_line(I8080_INTR_LINE, info->i); break;
-		case CPUINFO_INT_IRQ_STATE + IRQ_LINE_NMI:		i8080_set_irq_line(IRQ_LINE_NMI, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + I8080_INTR_LINE:	i8080_set_irq_line(I8080_INTR_LINE, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:	i8080_set_irq_line(INPUT_LINE_NMI, info->i); break;
 
 		/* --- the following bits of info are set as pointers to data or functions --- */
 
@@ -1781,9 +1781,9 @@ void i8080_get_info(UINT32 state, union cpuinfo *info)
 	switch (state)
 	{
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
-		case CPUINFO_INT_IRQ_LINES:						info->i = 1;							break;
-		case CPUINFO_INT_IRQ_STATE + I8085_INTR_LINE:	info->i = (I.IREQ & IM_INTR) ? ASSERT_LINE : CLEAR_LINE; break;
-		case CPUINFO_INT_IRQ_STATE + IRQ_LINE_NMI:		info->i = (I.IREQ & IM_TRAP) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_INPUT_LINES:					info->i = 1;							break;
+		case CPUINFO_INT_INPUT_STATE + I8085_INTR_LINE:	info->i = (I.IREQ & IM_INTR) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:	info->i = (I.IREQ & IM_TRAP) ? ASSERT_LINE : CLEAR_LINE; break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_SET_INFO:						info->setinfo = i8080_set_info;			break;

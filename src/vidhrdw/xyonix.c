@@ -45,7 +45,7 @@ static void get_xyonix_tile_info(int tile_index)
 	SET_TILE_INFO(0,tileno,attr >> 4,0)
 }
 
-WRITE_HANDLER( xyonix_vidram_w )
+WRITE8_HANDLER( xyonix_vidram_w )
 {
 	xyonix_vidram[offset] = data;
 	tilemap_mark_tile_dirty(xyonix_tilemap,(offset-1)&0x0fff);

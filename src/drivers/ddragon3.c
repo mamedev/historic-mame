@@ -45,7 +45,7 @@ extern VIDEO_UPDATE( ctribe );
 
 /* Read/Write Handlers */
 
-static WRITE_HANDLER( oki_bankswitch_w )
+static WRITE8_HANDLER( oki_bankswitch_w )
 {
 	OKIM6295_set_bank_base(0, (data & 1) * 0x40000);
 }
@@ -64,7 +64,7 @@ static WRITE16_HANDLER( ddragon3_io16_w )
 
 		case 1: /* soundlatch_w */
 		soundlatch_w(1,reg[1]&0xff);
-		cpu_set_irq_line( 1, IRQ_LINE_NMI, PULSE_LINE );
+		cpunum_set_input_line( 1, INPUT_LINE_NMI, PULSE_LINE );
 		break;
 
 		case 2:
@@ -481,7 +481,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static void dd3_ymirq_handler(int irq)
 {
-	cpu_set_irq_line( 1, 0 , irq ? ASSERT_LINE : CLEAR_LINE );
+	cpunum_set_input_line( 1, 0 , irq ? ASSERT_LINE : CLEAR_LINE );
 }
 
 static struct YM2151interface ym2151_interface =
@@ -504,10 +504,10 @@ static struct OKIM6295interface okim6295_interface =
 
 static INTERRUPT_GEN( ddragon3_cpu_interrupt ) { /* 6:0x177e - 5:0x176a */
 	if( cpu_getiloops() == 0 ){
-		cpu_set_irq_line(0, 6, HOLD_LINE);  /* VBlank */
+		cpunum_set_input_line(0, 6, HOLD_LINE);  /* VBlank */
 	}
 	else {
-		cpu_set_irq_line(0, 5, HOLD_LINE); /* Input Ports */
+		cpunum_set_input_line(0, 5, HOLD_LINE); /* Input Ports */
 	}
 }
 

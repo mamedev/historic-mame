@@ -1230,12 +1230,12 @@ pen_t get_black_pen(void)
 
 ******************************************************************************/
 
-READ_HANDLER( paletteram_r )
+READ8_HANDLER( paletteram_r )
 {
 	return paletteram[offset];
 }
 
-READ_HANDLER( paletteram_2_r )
+READ8_HANDLER( paletteram_2_r )
 {
 	return paletteram_2[offset];
 }
@@ -1255,7 +1255,7 @@ READ32_HANDLER( paletteram32_r )
 	return paletteram32[offset];
 }
 
-WRITE_HANDLER( paletteram_RRRGGGBB_w )
+WRITE8_HANDLER( paletteram_RRRGGGBB_w )
 {
 	int r,g,b;
 	int bit0,bit1,bit2;
@@ -1282,7 +1282,7 @@ WRITE_HANDLER( paletteram_RRRGGGBB_w )
 	palette_set_color(offset,r,g,b);
 }
 
-WRITE_HANDLER( paletteram_BBBGGGRR_w )
+WRITE8_HANDLER( paletteram_BBBGGGRR_w )
 {
 	int r,g,b;
 	int bit0,bit1,bit2;
@@ -1307,7 +1307,7 @@ WRITE_HANDLER( paletteram_BBBGGGRR_w )
 	palette_set_color(offset,r,g,b);
 }
 
-WRITE_HANDLER( paletteram_BBGGGRRR_w )
+WRITE8_HANDLER( paletteram_BBGGGRRR_w )
 {
 	int r,g,b;
 	int bit0,bit1,bit2;
@@ -1335,7 +1335,7 @@ WRITE_HANDLER( paletteram_BBGGGRRR_w )
 }
 
 
-WRITE_HANDLER( paletteram_IIBBGGRR_w )
+WRITE8_HANDLER( paletteram_IIBBGGRR_w )
 {
 	int r,g,b,i;
 
@@ -1360,7 +1360,7 @@ WRITE_HANDLER( paletteram_IIBBGGRR_w )
 }
 
 
-WRITE_HANDLER( paletteram_BBGGRRII_w )
+WRITE8_HANDLER( paletteram_BBGGRRII_w )
 {
 	int r,g,b,i;
 
@@ -1395,25 +1395,25 @@ INLINE void changecolor_xxxxBBBBGGGGRRRR(pen_t color,int data)
 	palette_set_color(color,r,g,b);
 }
 
-WRITE_HANDLER( paletteram_xxxxBBBBGGGGRRRR_w )
+WRITE8_HANDLER( paletteram_xxxxBBBBGGGGRRRR_w )
 {
 	paletteram[offset] = data;
 	changecolor_xxxxBBBBGGGGRRRR(offset / 2,paletteram[offset & ~1] | (paletteram[offset | 1] << 8));
 }
 
-WRITE_HANDLER( paletteram_xxxxBBBBGGGGRRRR_swap_w )
+WRITE8_HANDLER( paletteram_xxxxBBBBGGGGRRRR_swap_w )
 {
 	paletteram[offset] = data;
 	changecolor_xxxxBBBBGGGGRRRR(offset / 2,paletteram[offset | 1] | (paletteram[offset & ~1] << 8));
 }
 
-WRITE_HANDLER( paletteram_xxxxBBBBGGGGRRRR_split1_w )
+WRITE8_HANDLER( paletteram_xxxxBBBBGGGGRRRR_split1_w )
 {
 	paletteram[offset] = data;
 	changecolor_xxxxBBBBGGGGRRRR(offset,paletteram[offset] | (paletteram_2[offset] << 8));
 }
 
-WRITE_HANDLER( paletteram_xxxxBBBBGGGGRRRR_split2_w )
+WRITE8_HANDLER( paletteram_xxxxBBBBGGGGRRRR_split2_w )
 {
 	paletteram_2[offset] = data;
 	changecolor_xxxxBBBBGGGGRRRR(offset,paletteram[offset] | (paletteram_2[offset] << 8));
@@ -1442,25 +1442,25 @@ INLINE void changecolor_xxxxBBBBRRRRGGGG(pen_t color,int data)
 	palette_set_color(color,r,g,b);
 }
 
-WRITE_HANDLER( paletteram_xxxxBBBBRRRRGGGG_w )
+WRITE8_HANDLER( paletteram_xxxxBBBBRRRRGGGG_w )
 {
 	paletteram[offset] = data;
 	changecolor_xxxxBBBBRRRRGGGG(offset / 2,paletteram[offset & ~1] | (paletteram[offset | 1] << 8));
 }
 
-WRITE_HANDLER( paletteram_xxxxBBBBRRRRGGGG_swap_w )
+WRITE8_HANDLER( paletteram_xxxxBBBBRRRRGGGG_swap_w )
 {
 	paletteram[offset] = data;
 	changecolor_xxxxBBBBRRRRGGGG(offset / 2,paletteram[offset | 1] | (paletteram[offset & ~1] << 8));
 }
 
-WRITE_HANDLER( paletteram_xxxxBBBBRRRRGGGG_split1_w )
+WRITE8_HANDLER( paletteram_xxxxBBBBRRRRGGGG_split1_w )
 {
 	paletteram[offset] = data;
 	changecolor_xxxxBBBBRRRRGGGG(offset,paletteram[offset] | (paletteram_2[offset] << 8));
 }
 
-WRITE_HANDLER( paletteram_xxxxBBBBRRRRGGGG_split2_w )
+WRITE8_HANDLER( paletteram_xxxxBBBBRRRRGGGG_split2_w )
 {
 	paletteram_2[offset] = data;
 	changecolor_xxxxBBBBRRRRGGGG(offset,paletteram[offset] | (paletteram_2[offset] << 8));
@@ -1489,13 +1489,13 @@ INLINE void changecolor_xxxxRRRRBBBBGGGG(pen_t color,int data)
 	palette_set_color(color,r,g,b);
 }
 
-WRITE_HANDLER( paletteram_xxxxRRRRBBBBGGGG_split1_w )
+WRITE8_HANDLER( paletteram_xxxxRRRRBBBBGGGG_split1_w )
 {
 	paletteram[offset] = data;
 	changecolor_xxxxRRRRBBBBGGGG(offset,paletteram[offset] | (paletteram_2[offset] << 8));
 }
 
-WRITE_HANDLER( paletteram_xxxxRRRRBBBBGGGG_split2_w )
+WRITE8_HANDLER( paletteram_xxxxRRRRBBBBGGGG_split2_w )
 {
 	paletteram_2[offset] = data;
 	changecolor_xxxxRRRRBBBBGGGG(offset,paletteram[offset] | (paletteram_2[offset] << 8));
@@ -1518,13 +1518,13 @@ INLINE void changecolor_xxxxRRRRGGGGBBBB(pen_t color,int data)
 	palette_set_color(color,r,g,b);
 }
 
-WRITE_HANDLER( paletteram_xxxxRRRRGGGGBBBB_w )
+WRITE8_HANDLER( paletteram_xxxxRRRRGGGGBBBB_w )
 {
 	paletteram[offset] = data;
 	changecolor_xxxxRRRRGGGGBBBB(offset / 2,paletteram[offset & ~1] | (paletteram[offset | 1] << 8));
 }
 
-WRITE_HANDLER( paletteram_xxxxRRRRGGGGBBBB_swap_w )
+WRITE8_HANDLER( paletteram_xxxxRRRRGGGGBBBB_swap_w )
 {
 	paletteram[offset] = data;
 	changecolor_xxxxRRRRGGGGBBBB(offset / 2,paletteram[offset | 1] | (paletteram[offset & ~1] << 8));
@@ -1553,19 +1553,19 @@ INLINE void changecolor_RRRRGGGGBBBBxxxx(pen_t color,int data)
 	palette_set_color(color,r,g,b);
 }
 
-WRITE_HANDLER( paletteram_RRRRGGGGBBBBxxxx_swap_w )
+WRITE8_HANDLER( paletteram_RRRRGGGGBBBBxxxx_swap_w )
 {
 	paletteram[offset] = data;
 	changecolor_RRRRGGGGBBBBxxxx(offset / 2,paletteram[offset | 1] | (paletteram[offset & ~1] << 8));
 }
 
-WRITE_HANDLER( paletteram_RRRRGGGGBBBBxxxx_split1_w )
+WRITE8_HANDLER( paletteram_RRRRGGGGBBBBxxxx_split1_w )
 {
 	paletteram[offset] = data;
 	changecolor_RRRRGGGGBBBBxxxx(offset,paletteram[offset] | (paletteram_2[offset] << 8));
 }
 
-WRITE_HANDLER( paletteram_RRRRGGGGBBBBxxxx_split2_w )
+WRITE8_HANDLER( paletteram_RRRRGGGGBBBBxxxx_split2_w )
 {
 	paletteram_2[offset] = data;
 	changecolor_RRRRGGGGBBBBxxxx(offset,paletteram[offset] | (paletteram_2[offset] << 8));
@@ -1594,19 +1594,19 @@ INLINE void changecolor_BBBBGGGGRRRRxxxx(pen_t color,int data)
 	palette_set_color(color,r,g,b);
 }
 
-WRITE_HANDLER( paletteram_BBBBGGGGRRRRxxxx_swap_w )
+WRITE8_HANDLER( paletteram_BBBBGGGGRRRRxxxx_swap_w )
 {
 	paletteram[offset] = data;
 	changecolor_BBBBGGGGRRRRxxxx(offset / 2,paletteram[offset | 1] | (paletteram[offset & ~1] << 8));
 }
 
-WRITE_HANDLER( paletteram_BBBBGGGGRRRRxxxx_split1_w )
+WRITE8_HANDLER( paletteram_BBBBGGGGRRRRxxxx_split1_w )
 {
 	paletteram[offset] = data;
 	changecolor_BBBBGGGGRRRRxxxx(offset,paletteram[offset] | (paletteram_2[offset] << 8));
 }
 
-WRITE_HANDLER( paletteram_BBBBGGGGRRRRxxxx_split2_w )
+WRITE8_HANDLER( paletteram_BBBBGGGGRRRRxxxx_split2_w )
 {
 	paletteram_2[offset] = data;
 	changecolor_BBBBGGGGRRRRxxxx(offset,paletteram[offset] | (paletteram_2[offset] << 8));
@@ -1635,25 +1635,25 @@ INLINE void changecolor_xBBBBBGGGGGRRRRR(pen_t color,int data)
 	palette_set_color(color,r,g,b);
 }
 
-WRITE_HANDLER( paletteram_xBBBBBGGGGGRRRRR_w )
+WRITE8_HANDLER( paletteram_xBBBBBGGGGGRRRRR_w )
 {
 	paletteram[offset] = data;
 	changecolor_xBBBBBGGGGGRRRRR(offset / 2,paletteram[offset & ~1] | (paletteram[offset | 1] << 8));
 }
 
-WRITE_HANDLER( paletteram_xBBBBBGGGGGRRRRR_swap_w )
+WRITE8_HANDLER( paletteram_xBBBBBGGGGGRRRRR_swap_w )
 {
 	paletteram[offset] = data;
 	changecolor_xBBBBBGGGGGRRRRR(offset / 2,paletteram[offset | 1] | (paletteram[offset & ~1] << 8));
 }
 
-WRITE_HANDLER( paletteram_xBBBBBGGGGGRRRRR_split1_w )
+WRITE8_HANDLER( paletteram_xBBBBBGGGGGRRRRR_split1_w )
 {
 	paletteram[offset] = data;
 	changecolor_xBBBBBGGGGGRRRRR(offset,paletteram[offset] | (paletteram_2[offset] << 8));
 }
 
-WRITE_HANDLER( paletteram_xBBBBBGGGGGRRRRR_split2_w )
+WRITE8_HANDLER( paletteram_xBBBBBGGGGGRRRRR_split2_w )
 {
 	paletteram_2[offset] = data;
 	changecolor_xBBBBBGGGGGRRRRR(offset,paletteram[offset] | (paletteram_2[offset] << 8));
@@ -1682,13 +1682,13 @@ INLINE void changecolor_xBBBBBRRRRRGGGGG(pen_t color,int data)
 	palette_set_color(color,r,g,b);
 }
 
-WRITE_HANDLER( paletteram_xBBBBBRRRRRGGGGG_split1_w )
+WRITE8_HANDLER( paletteram_xBBBBBRRRRRGGGGG_split1_w )
 {
 	paletteram[offset] = data;
 	changecolor_xBBBBBRRRRRGGGGG(offset,paletteram[offset] | (paletteram_2[offset] << 8));
 }
 
-WRITE_HANDLER( paletteram_xBBBBBRRRRRGGGGG_split2_w )
+WRITE8_HANDLER( paletteram_xBBBBBRRRRRGGGGG_split2_w )
 {
 	paletteram_2[offset] = data;
 	changecolor_xBBBBBRRRRRGGGGG(offset,paletteram[offset] | (paletteram_2[offset] << 8));
@@ -1711,7 +1711,7 @@ INLINE void changecolor_xRRRRRGGGGGBBBBB(pen_t color,int data)
 	palette_set_color(color,r,g,b);
 }
 
-WRITE_HANDLER( paletteram_xRRRRRGGGGGBBBBB_w )
+WRITE8_HANDLER( paletteram_xRRRRRGGGGGBBBBB_w )
 {
 	paletteram[offset] = data;
 	changecolor_xRRRRRGGGGGBBBBB(offset / 2,paletteram[offset & ~1] | (paletteram[offset | 1] << 8));
@@ -1786,7 +1786,7 @@ INLINE void changecolor_RRRRRGGGGGBBBBBx(pen_t color,int data)
 	palette_set_color(color,r,g,b);
 }
 
-WRITE_HANDLER( paletteram_RRRRRGGGGGBBBBBx_w )
+WRITE8_HANDLER( paletteram_RRRRRGGGGGBBBBBx_w )
 {
 	paletteram[offset] = data;
 	changecolor_RRRRRGGGGGBBBBBx(offset / 2,paletteram[offset & ~1] | (paletteram[offset | 1] << 8));

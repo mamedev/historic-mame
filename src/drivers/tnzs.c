@@ -190,20 +190,20 @@ DRIVER_INIT( tnzs );
 DRIVER_INIT( tnzsb );
 DRIVER_INIT( insectx );
 DRIVER_INIT( kageki );
-READ_HANDLER( arknoid2_sh_f000_r );
+READ8_HANDLER( arknoid2_sh_f000_r );
 MACHINE_INIT( tnzs );
 INTERRUPT_GEN( arknoid2_interrupt );
-READ_HANDLER( tnzs_port1_r );
-READ_HANDLER( tnzs_port2_r );
-WRITE_HANDLER( tnzs_port2_w );
-READ_HANDLER( tnzs_mcu_r );
-READ_HANDLER( tnzs_workram_r );
-READ_HANDLER( tnzs_workram_sub_r );
-WRITE_HANDLER( tnzs_workram_w );
-WRITE_HANDLER( tnzs_workram_sub_w );
-WRITE_HANDLER( tnzs_mcu_w );
-WRITE_HANDLER( tnzs_bankswitch_w );
-WRITE_HANDLER( tnzs_bankswitch1_w );
+READ8_HANDLER( tnzs_port1_r );
+READ8_HANDLER( tnzs_port2_r );
+WRITE8_HANDLER( tnzs_port2_w );
+READ8_HANDLER( tnzs_mcu_r );
+READ8_HANDLER( tnzs_workram_r );
+READ8_HANDLER( tnzs_workram_sub_r );
+WRITE8_HANDLER( tnzs_workram_w );
+WRITE8_HANDLER( tnzs_workram_sub_w );
+WRITE8_HANDLER( tnzs_mcu_w );
+WRITE8_HANDLER( tnzs_bankswitch_w );
+WRITE8_HANDLER( tnzs_bankswitch1_w );
 
 
 /* prototypes for functions in ../vidhrdw/tnzs.c */
@@ -269,7 +269,7 @@ int kageki_init_samples(const struct MachineSound *msound)
 
 
 static int kageki_csport_sel = 0;
-static READ_HANDLER( kageki_csport_r )
+static READ8_HANDLER( kageki_csport_r )
 {
 	int	dsw, dsw1, dsw2;
 
@@ -298,7 +298,7 @@ static READ_HANDLER( kageki_csport_r )
 	return (dsw & 0xff);
 }
 
-static WRITE_HANDLER( kageki_csport_w )
+static WRITE8_HANDLER( kageki_csport_w )
 {
 	char mess[80];
 
@@ -394,10 +394,10 @@ ADDRESS_MAP_END
 
 /* the bootleg board is different, it has a third CPU (and of course no mcu) */
 
-static WRITE_HANDLER( tnzsb_sound_command_w )
+static WRITE8_HANDLER( tnzsb_sound_command_w )
 {
 	soundlatch_w(offset,data);
-	cpu_set_irq_line_and_vector(2,0,HOLD_LINE,0xff);
+	cpunum_set_input_line_and_vector(2,0,HOLD_LINE,0xff);
 }
 
 static ADDRESS_MAP_START( tnzsb_readmem1, ADDRESS_SPACE_PROGRAM, 8 )
@@ -1637,7 +1637,7 @@ static struct YM2203interface ym2203_interface =
 /* handler called by the 2203 emulator when the internal timers cause an IRQ */
 static void irqhandler(int irq)
 {
-	cpu_set_nmi_line(2,irq ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(2, INPUT_LINE_NMI, irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2203interface ym2203b_interface =

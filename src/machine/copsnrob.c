@@ -15,7 +15,7 @@ static int gun_mask[] = {0x7e, 0x7d, 0x7b, 0x77, 0x6f, 0x5f, 0x3f};
 // I read out the current gun position via the sprite image locations,
 // and then decrement/increment it if the up/down keys are pressed.
 
-READ_HANDLER( copsnrob_gun_position_r )
+READ8_HANDLER( copsnrob_gun_position_r )
 {
     int keys, current_car_image, current_gun_pos = 0;
 

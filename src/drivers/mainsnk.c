@@ -12,15 +12,15 @@
 */
 
 #include "driver.h"
-WRITE_HANDLER( snkwave_w );
+WRITE8_HANDLER( snkwave_w );
 
 extern data8_t *me_fgram;
 extern data8_t *me_bgram;
-WRITE_HANDLER(me_c600_w);
-WRITE_HANDLER(me_fgram_w);
-WRITE_HANDLER(me_bgram_w);
-READ_HANDLER(me_fgram_r);
-READ_HANDLER(me_bgram_r);
+WRITE8_HANDLER(me_c600_w);
+WRITE8_HANDLER(me_fgram_w);
+WRITE8_HANDLER(me_bgram_w);
+READ8_HANDLER(me_fgram_r);
+READ8_HANDLER(me_bgram_r);
 VIDEO_START(mainsnk);
 VIDEO_UPDATE(mainsnk);
 
@@ -35,7 +35,7 @@ static void init_sound( int busy_bit )
 	sound_fetched = 1;
 }
 
-static WRITE_HANDLER( sound_command_w )
+static WRITE8_HANDLER( sound_command_w )
 {
 	if( sound_fetched==0 ){
 		logerror("missed sound command: %02x\n", sound_command );
@@ -44,22 +44,22 @@ static WRITE_HANDLER( sound_command_w )
 	sound_fetched = 0;
 	sound_command = data;
 	sound_cpu_ready = 0;
-	cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 }
 
-static READ_HANDLER( sound_command_r )
+static READ8_HANDLER( sound_command_r )
 {
 	sound_fetched = 1;
 	return sound_command;
 }
 
-static READ_HANDLER( sound_ack_r )
+static READ8_HANDLER( sound_ack_r )
 {
 	sound_cpu_ready = 1;
 	return 0xff;
 }
 
-static READ_HANDLER( mainsnk_port_0_r )
+static READ8_HANDLER( mainsnk_port_0_r )
 {
 	int result = input_port_0_r( 0 );
 	if( !sound_cpu_ready ) result |= 0x20;

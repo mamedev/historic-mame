@@ -423,12 +423,12 @@ void namco_sh_stop(void)
 	0x1f:		ch 2	volume
 */
 
-WRITE_HANDLER( pengo_sound_enable_w )
+WRITE8_HANDLER( pengo_sound_enable_w )
 {
 	sound_enable = data;
 }
 
-WRITE_HANDLER( pengo_sound_w )
+WRITE8_HANDLER( pengo_sound_w )
 {
 	sound_channel *voice;
 	int ch;
@@ -523,7 +523,7 @@ void polepos_sound_enable(int enable)
 	sound_enable = enable;
 }
 
-WRITE_HANDLER( polepos_sound_w )
+WRITE8_HANDLER( polepos_sound_w )
 {
 	sound_channel *voice;
 	int ch;
@@ -599,7 +599,7 @@ void mappy_sound_enable(int enable)
 	sound_enable = enable;
 }
 
-WRITE_HANDLER( namco_15xx_w )
+WRITE8_HANDLER( namco_15xx_w )
 {
 	sound_channel *voice;
 	int ch;
@@ -664,7 +664,7 @@ WRITE_HANDLER( namco_15xx_w )
 	0x3c		ch 0	noise sw
 */
 
-WRITE_HANDLER( namcos1_sound_w )
+WRITE8_HANDLER( namcos1_sound_w )
 {
 	sound_channel *voice;
 	int ch;
@@ -719,12 +719,12 @@ WRITE_HANDLER( namcos1_sound_w )
 	}
 }
 
-READ_HANDLER( namcos1_sound_r )
+READ8_HANDLER( namcos1_sound_r )
 {
 	return namco_soundregs[offset];
 }
 
-WRITE_HANDLER( namcos1_wavedata_w )
+WRITE8_HANDLER( namcos1_wavedata_w )
 {
 	if (namco_wavedata[offset] != data)
 	{
@@ -738,7 +738,7 @@ WRITE_HANDLER( namcos1_wavedata_w )
 	}
 }
 
-READ_HANDLER( namcos1_wavedata_r )
+READ8_HANDLER( namcos1_wavedata_r )
 {
 	return namco_wavedata[offset];
 }
@@ -746,7 +746,7 @@ READ_HANDLER( namcos1_wavedata_r )
 
 /********************************************************************************/
 
-WRITE_HANDLER( snkwave_w )
+WRITE8_HANDLER( snkwave_w )
 {
 	static int freq0 = 0xff;
 	sound_channel *voice = channel_list;

@@ -33,16 +33,16 @@ TODO:
 #include "vidhrdw/generic.h"
 
 
-extern WRITE_HANDLER( hanaawas_videoram_w );
-extern WRITE_HANDLER( hanaawas_colorram_w );
-extern WRITE_HANDLER( hanaawas_portB_w );
+extern WRITE8_HANDLER( hanaawas_videoram_w );
+extern WRITE8_HANDLER( hanaawas_colorram_w );
+extern WRITE8_HANDLER( hanaawas_portB_w );
 
 extern PALETTE_INIT( hanaawas );
 extern VIDEO_START( hanaawas );
 extern VIDEO_UPDATE( hanaawas );
 
 
-static READ_HANDLER( hanaawas_input_port_0_r )
+static READ8_HANDLER( hanaawas_input_port_0_r )
 {
 	int i,ordinal = 0;
 	UINT16 buttons;

@@ -140,7 +140,7 @@ READ32_HANDLER( midvunit_adc_r )
 
 static void adc_ready(int param)
 {
-	cpu_set_irq_line(0, 3, ASSERT_LINE);
+	cpunum_set_input_line(0, 3, ASSERT_LINE);
 }
 
 
@@ -1306,7 +1306,7 @@ static void init_crusnusa_common(offs_t speedup)
 	adc_shift = 24;
 
 	/* speedups */
-	generic_speedup = install_mem_read32_handler(0, speedup, speedup + 1, generic_speedup_r);
+	generic_speedup = memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, speedup, speedup + 1, 0, 0, generic_speedup_r);
 }
 static DRIVER_INIT( crusnusa ) { init_crusnusa_common(0xc93e); }
 static DRIVER_INIT( crusnu40 ) { init_crusnusa_common(0xc957); }
@@ -1319,21 +1319,21 @@ static void init_crusnwld_common(offs_t speedup)
 	adc_shift = 16;
 
 	/* control register is different */
-	install_mem_write32_handler(0, 0x994000, 0x994000, crusnwld_control_w);
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x994000, 0x994000, 0, 0, crusnwld_control_w);
 
 	/* valid values are 450 or 460 */
 	midway_serial_pic_init(450);
-	install_mem_read32_handler(0, 0x991030, 0x991030, offroadc_serial_status_r);
-	install_mem_read32_handler(0, 0x996000, 0x996000, offroadc_serial_data_r);
-	install_mem_write32_handler(0, 0x996000, 0x996000, offroadc_serial_data_w);
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x991030, 0x991030, 0, 0, offroadc_serial_status_r);
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x996000, 0x996000, 0, 0, offroadc_serial_data_r);
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x996000, 0x996000, 0, 0, offroadc_serial_data_w);
 
 	/* install strange protection device */
-	install_mem_read32_handler(0, 0x9d0000, 0x9d1fff, bit_data_r);
-	install_mem_write32_handler(0, 0x9d0000, 0x9d0000, bit_reset_w);
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x9d0000, 0x9d1fff, 0, 0, bit_data_r);
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x9d0000, 0x9d0000, 0, 0, bit_reset_w);
 
 	/* speedups */
 	if (speedup)
-		generic_speedup = install_mem_read32_handler(0, speedup, speedup + 1, generic_speedup_r);
+		generic_speedup = memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, speedup, speedup + 1, 0, 0, generic_speedup_r);
 }
 static DRIVER_INIT( crusnwld ) { init_crusnwld_common(0xd4c0); }
 static DRIVER_INIT( crusnw20 ) { init_crusnwld_common(0xd49c); }
@@ -1346,16 +1346,16 @@ static DRIVER_INIT( offroadc )
 	adc_shift = 16;
 
 	/* control register is different */
-	install_mem_write32_handler(0, 0x994000, 0x994000, crusnwld_control_w);
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x994000, 0x994000, 0, 0, crusnwld_control_w);
 
 	/* valid values are 230 or 234 */
 	midway_serial_pic2_init(230, 94);
-	install_mem_read32_handler(0, 0x991030, 0x991030, offroadc_serial_status_r);
-	install_mem_read32_handler(0, 0x996000, 0x996000, offroadc_serial_data_r);
-	install_mem_write32_handler(0, 0x996000, 0x996000, offroadc_serial_data_w);
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x991030, 0x991030, 0, 0, offroadc_serial_status_r);
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x996000, 0x996000, 0, 0, offroadc_serial_data_r);
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x996000, 0x996000, 0, 0, offroadc_serial_data_w);
 
 	/* speedups */
-	generic_speedup = install_mem_read32_handler(0, 0x195aa, 0x195aa, generic_speedup_r);
+	generic_speedup = memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x195aa, 0x195aa, 0, 0, generic_speedup_r);
 }
 
 
@@ -1386,7 +1386,7 @@ static DRIVER_INIT( wargods )
 	midway_serial_pic2_set_default_nvram(default_nvram);
 
 	/* speedups */
-	generic_speedup = install_mem_read32_handler(0, 0x2f4c, 0x2f4c, generic_speedup_r);
+	generic_speedup = memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x2f4c, 0x2f4c, 0, 0, generic_speedup_r);
 }
 
 

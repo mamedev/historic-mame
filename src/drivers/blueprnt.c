@@ -50,30 +50,30 @@ write:
 extern unsigned char *blueprnt_scrollram;
 
 PALETTE_INIT( blueprnt );
-WRITE_HANDLER( blueprnt_flipscreen_w );
+WRITE8_HANDLER( blueprnt_flipscreen_w );
 VIDEO_UPDATE( blueprnt );
 
 
 
 static int dipsw;
 
-static WRITE_HANDLER( dipsw_w )
+static WRITE8_HANDLER( dipsw_w )
 {
 	dipsw = data;
 }
 
-static READ_HANDLER( blueprnt_sh_dipsw_r )
+static READ8_HANDLER( blueprnt_sh_dipsw_r )
 {
 	return dipsw;
 }
 
-static WRITE_HANDLER( blueprnt_sound_command_w )
+static WRITE8_HANDLER( blueprnt_sound_command_w )
 {
 	soundlatch_w(offset,data);
-	cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
+	cpunum_set_input_line(1,INPUT_LINE_NMI,PULSE_LINE);
 }
 
-static WRITE_HANDLER( blueprnt_coin_w )
+static WRITE8_HANDLER( blueprnt_coin_w )
 {
 	static int lastval;
 

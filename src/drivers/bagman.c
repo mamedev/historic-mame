@@ -61,16 +61,16 @@ I/O C  ;AY-3-8910 Data Read Reg.
 #include "sound/tms5110.h"
 
 
-extern READ_HANDLER( bagman_pal16r6_r );
+extern READ8_HANDLER( bagman_pal16r6_r );
 extern MACHINE_INIT( bagman );
-extern WRITE_HANDLER( bagman_pal16r6_w );
+extern WRITE8_HANDLER( bagman_pal16r6_w );
 
 
 extern UINT8 *bagman_video_enable;
 
-extern WRITE_HANDLER( bagman_videoram_w );
-extern WRITE_HANDLER( bagman_colorram_w );
-extern WRITE_HANDLER( bagman_flipscreen_w );
+extern WRITE8_HANDLER( bagman_videoram_w );
+extern WRITE8_HANDLER( bagman_colorram_w );
+extern WRITE8_HANDLER( bagman_flipscreen_w );
 
 extern PALETTE_INIT( bagman );
 extern VIDEO_START( bagman );
@@ -155,13 +155,13 @@ int bagman_speech_rom_read_bit(void)
 }
 
 #if 0
-static READ_HANDLER( bagman_ls259_r )
+static READ8_HANDLER( bagman_ls259_r )
 {
 	return ls259_buf[offset];
 }
 #endif
 
-static WRITE_HANDLER( bagman_ls259_w )
+static WRITE8_HANDLER( bagman_ls259_w )
 {
 	bagman_pal16r6_w(offset,data); /*this is just a simulation*/
 
@@ -183,7 +183,7 @@ static WRITE_HANDLER( bagman_ls259_w )
 	}
 }
 
-static WRITE_HANDLER( bagman_coin_counter_w )
+static WRITE8_HANDLER( bagman_coin_counter_w )
 {
 	coin_counter_w(offset,data);
 }

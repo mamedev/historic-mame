@@ -440,7 +440,7 @@ static WRITE32_HANDLER( esc_w )
 		if (konamigx_wrport1_1 & 0x10)
 		{
 			gx_rdport1_3 &= ~8;
-			cpu_set_irq_line(0, 4, HOLD_LINE);
+			cpunum_set_input_line(0, 4, HOLD_LINE);
 		}
 	}
 	else
@@ -559,13 +559,13 @@ static WRITE32_HANDLER( control_w )
 		{
 			// enable 68k
 			// clear the halt condition and reset the 68000
-			cpu_set_halt_line(1, CLEAR_LINE);
-			cpu_set_reset_line(1, PULSE_LINE);
+			cpunum_set_input_line(1, INPUT_LINE_HALT, CLEAR_LINE);
+			cpunum_set_input_line(1, INPUT_LINE_RESET, PULSE_LINE);
 		}
 		else
 		{
 			// disable 68k
-			cpu_set_halt_line(1, ASSERT_LINE);
+			cpunum_set_input_line(1, INPUT_LINE_HALT, ASSERT_LINE);
 		}
 
 		K053246_set_OBJCHA_line((data&0x100000) ? ASSERT_LINE : CLEAR_LINE);
@@ -584,8 +584,8 @@ static WRITE32_HANDLER( control_w )
   waitskip.data = DATA;      \
   waitskip.mask = MASK;      \
   resume_trigger= 1000;      \
-  install_mem_read32_handler \
-  (0, (BASE+START)&~3, (BASE+END)|3, waitskip_r);}
+  memory_install_read32_handler \
+  (0, ADDRESS_SPACE_PROGRAM, (BASE+START)&~3, (BASE+END)|3, 0, 0, waitskip_r);}
 
 static struct { UINT32 offs, pc, mask, data; } waitskip;
 static int suspension_active, resume_trigger;
@@ -627,14 +627,14 @@ static WRITE32_HANDLER( ccu_w )
 		// vblank interrupt ACK
 		if (!(mem_mask & 0xff000000))
 		{
-			cpu_set_irq_line(0, 1, CLEAR_LINE);
+			cpunum_set_input_line(0, 1, CLEAR_LINE);
 			gx_syncen |= 0x20;
 		}
 
 		// hblank interrupt ACK
 		if (!(mem_mask & 0x0000ff00))
 		{
-			cpu_set_irq_line(0, 2, CLEAR_LINE);
+			cpunum_set_input_line(0, 2, CLEAR_LINE);
 			gx_syncen |= 0x40;
 		}
 	}
@@ -664,7 +664,7 @@ static void dmaend_callback(int data)
 
 		// lower OBJINT-REQ flag and trigger interrupt
 		gx_rdport1_3 &= ~0x80;
-		cpu_set_irq_line(0, 3, HOLD_LINE);
+		cpunum_set_input_line(0, 3, HOLD_LINE);
 	}
 }
 
@@ -698,7 +698,7 @@ static INTERRUPT_GEN(konamigx_vbinterrupt)
 		if ((konamigx_wrport1_1 & 0x81) == 0x81 || (gx_syncen & 1))
 		{
 			gx_syncen &= ~1;
-			cpu_set_irq_line(0, 1, HOLD_LINE);
+			cpunum_set_input_line(0, 1, HOLD_LINE);
 		}
 	}
 
@@ -720,7 +720,7 @@ static INTERRUPT_GEN(konamigx_vbinterrupt_type4)
 		if ((konamigx_wrport1_1 & 0x81) == 0x81 || (gx_syncen & 1))
 		{
 			gx_syncen &= ~1;
-			cpu_set_irq_line(0, 1, HOLD_LINE);
+			cpunum_set_input_line(0, 1, HOLD_LINE);
 		}
 	}
 
@@ -743,7 +743,7 @@ static INTERRUPT_GEN(konamigx_hbinterrupt)
 			if ((konamigx_wrport1_1 & 0x82) == 0x82 || (gx_syncen & 2))
 			{
 				gx_syncen &= ~2;
-				cpu_set_irq_line(0, 2, HOLD_LINE);
+				cpunum_set_input_line(0, 2, HOLD_LINE);
 			}
 		}
 	}
@@ -810,7 +810,7 @@ INLINE void write_snd_020(int reg, int val)
 
 	if (reg == 7)
 	{
-		cpu_set_irq_line(1, 1, HOLD_LINE);
+		cpunum_set_input_line(1, 1, HOLD_LINE);
 	}
 }
 
@@ -1120,7 +1120,7 @@ static WRITE32_HANDLER( type4_prot_w )
 				if (konamigx_wrport1_1 & 0x10)
 				{
 					gx_rdport1_3 &= ~8;
-					cpu_set_irq_line(0, 4, HOLD_LINE);
+					cpunum_set_input_line(0, 4, HOLD_LINE);
 				}
 
 				// don't accidentally do a phony command
@@ -2677,8 +2677,8 @@ ROM_START( dragoona )
 	/* main program */
 	ROM_REGION( 0x600000, REGION_CPU1, 0 )
 	GX_BIOS
-	ROM_LOAD32_WORD_SWAP( "417aab02.31b", 0x200002, 512*1024, CRC(0421c19c) )
-	ROM_LOAD32_WORD_SWAP( "417aab03.27b", 0x200000, 512*1024, CRC(813dd8d5) )
+	ROM_LOAD32_WORD_SWAP( "417aab02.31b", 0x200002, 512*1024, CRC(0421c19c) SHA1(7b79685047df996f6eda6d9bd6327d7a1cf40dd6) )
+	ROM_LOAD32_WORD_SWAP( "417aab03.27b", 0x200000, 512*1024, CRC(813dd8d5) SHA1(fb07e4836662d179902b751fefcf19f004a4f009) )
 
 	/* data roms */
 	ROM_LOAD32_WORD_SWAP( "417a04.26c", 0x400002, 1024*1024, CRC(dc574747) SHA1(43cbb6a08c27bb96bb25568c3b636c44fff3e08e) )
@@ -2758,8 +2758,8 @@ ROM_START( soccersa )
 	/* main program */
 	ROM_REGION( 0x600000, REGION_CPU1, 0 )
 	GX_BIOS
-	ROM_LOAD32_WORD_SWAP( "427aaa02.28m", 0x200000, 512*1024, CRC(a001d4bf)  )
-	ROM_LOAD32_WORD_SWAP( "427aaa03.30m", 0x200002, 512*1024, CRC(83d37f48)  )
+	ROM_LOAD32_WORD_SWAP( "427aaa02.28m", 0x200000, 512*1024, CRC(a001d4bf) SHA1(424d6ee1fed8c0278bf87e989f88a90b34387068) )
+	ROM_LOAD32_WORD_SWAP( "427aaa03.30m", 0x200002, 512*1024, CRC(83d37f48) SHA1(c96e564ec39d74c9f4447d7f339d7861a7cead14) )
 
 	/* data roms */
 	ROM_LOAD32_WORD_SWAP( "427a04.28r",   0x400000, 0x080000, CRC(c7d3e1a2) SHA1(5e1e4f4c97def36902ad853248014a7af62e0c5e) )
@@ -3167,7 +3167,7 @@ MACHINE_INIT(konamigx)
 	tms57002_init();
 
 	// sound CPU initially disabled?
-	cpu_set_halt_line(1, ASSERT_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_HALT, ASSERT_LINE);
 }
 
 static DRIVER_INIT(konamigx)
@@ -3210,8 +3210,8 @@ static DRIVER_INIT(konamigx)
 			ADD_SKIPPER32(0x2010f0, 0xc00000, 0xfe, 0x13f, -1, 0xff)
 		#endif
 
-		install_mem_read32_handler( 0, 0xd44000, 0xd44003, le2_gun_H_r );
-		install_mem_read32_handler( 0, 0xd44004, 0xd44007, le2_gun_V_r );
+		memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0xd44000, 0xd44003, 0, 0, le2_gun_H_r );
+		memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0xd44004, 0xd44007, 0, 0, le2_gun_V_r );
 
 		snd020_hack = 1;
 		konamigx_cfgport = 13;
@@ -3333,7 +3333,7 @@ static DRIVER_INIT(konamigx)
 		snd020_hack = 2;
 		konamigx_cfgport = 8;
 		// Winning Spike uses the type 4 Xilinx protection
-		install_mem_write32_handler(0, 0xcc0000, 0xcc0007, type4_prot_w );
+		memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0xcc0000, 0xcc0007, 0, 0, type4_prot_w );
 	}
 
 	else if (!strcmp(Machine->gamedrv->name, "soccerss"))
@@ -3368,14 +3368,14 @@ static DRIVER_INIT(konamigx)
 	switch (readback)
 	{
 		case BPP5:
-			install_mem_read32_handler(0, 0xd4a000, 0xd4a00f, gx5bppspr_r);
+			memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0xd4a000, 0xd4a00f, 0, 0, gx5bppspr_r);
 		break;
 
 		case BPP66:
-			install_mem_read32_handler(0, 0xd00000, 0xd01fff, K056832_6bpp_rom_long_r);
+			memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0xd00000, 0xd01fff, 0, 0, K056832_6bpp_rom_long_r);
 
 		case BPP6:
-			install_mem_read32_handler(0, 0xd4a000, 0xd4a00f, gx6bppspr_r);
+			memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0xd4a000, 0xd4a00f, 0, 0, gx6bppspr_r);
 		break;
 	}
 

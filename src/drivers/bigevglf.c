@@ -61,27 +61,27 @@ J1100072A
 VIDEO_START( bigevglf );
 VIDEO_UPDATE( bigevglf );
 
-READ_HANDLER( bigevglf_vidram_r );
-WRITE_HANDLER( bigevglf_vidram_w );
-WRITE_HANDLER( bigevglf_vidram_addr_w );
+READ8_HANDLER( bigevglf_vidram_r );
+WRITE8_HANDLER( bigevglf_vidram_w );
+WRITE8_HANDLER( bigevglf_vidram_addr_w );
 
-READ_HANDLER( bigevglf_68705_portA_r );
-WRITE_HANDLER( bigevglf_68705_portA_w );
-READ_HANDLER( bigevglf_68705_portB_r );
-WRITE_HANDLER( bigevglf_68705_portB_w );
-READ_HANDLER( bigevglf_68705_portC_r );
-WRITE_HANDLER( bigevglf_68705_portC_w );
-WRITE_HANDLER( bigevglf_68705_ddrA_w );
-WRITE_HANDLER( bigevglf_68705_ddrB_w );
-WRITE_HANDLER( bigevglf_68705_ddrC_w );
+READ8_HANDLER( bigevglf_68705_portA_r );
+WRITE8_HANDLER( bigevglf_68705_portA_w );
+READ8_HANDLER( bigevglf_68705_portB_r );
+WRITE8_HANDLER( bigevglf_68705_portB_w );
+READ8_HANDLER( bigevglf_68705_portC_r );
+WRITE8_HANDLER( bigevglf_68705_portC_w );
+WRITE8_HANDLER( bigevglf_68705_ddrA_w );
+WRITE8_HANDLER( bigevglf_68705_ddrB_w );
+WRITE8_HANDLER( bigevglf_68705_ddrC_w );
 
-WRITE_HANDLER( bigevglf_mcu_w );
-WRITE_HANDLER( bigevglf_mcu_set_w );
-READ_HANDLER( bigevglf_mcu_r );
-READ_HANDLER( bigevglf_mcu_status_r );
+WRITE8_HANDLER( bigevglf_mcu_w );
+WRITE8_HANDLER( bigevglf_mcu_set_w );
+READ8_HANDLER( bigevglf_mcu_r );
+READ8_HANDLER( bigevglf_mcu_status_r );
 
-WRITE_HANDLER( beg_gfxcontrol_w );
-WRITE_HANDLER( beg_palette_w );
+WRITE8_HANDLER( beg_gfxcontrol_w );
+WRITE8_HANDLER( beg_palette_w );
 
 extern UINT8 *beg_spriteram1;
 extern UINT8 *beg_spriteram2;
@@ -94,7 +94,7 @@ static UINT8 for_sound = 0;
 static UINT8 from_sound = 0;
 static UINT8 sound_state = 0;
 
-static WRITE_HANDLER( beg_banking_w )
+static WRITE8_HANDLER( beg_banking_w )
 {
 	beg_bank = data;
 
@@ -109,19 +109,19 @@ static void from_sound_latch_callback(int param)
 	from_sound = param&0xff;
 	sound_state |= 2;
 }
-static WRITE_HANDLER(beg_fromsound_w)	/* write to D800 sets bit 1 in status */
+static WRITE8_HANDLER(beg_fromsound_w)	/* write to D800 sets bit 1 in status */
 {
 	timer_set(TIME_NOW, (activecpu_get_pc()<<16)|data, from_sound_latch_callback);
 }
 
-static READ_HANDLER(beg_fromsound_r)
+static READ8_HANDLER(beg_fromsound_r)
 {
 	/* set a timer to force synchronization after the read */
 	timer_set(TIME_NOW, 0, NULL);
 	return from_sound;
 }
 
-static READ_HANDLER(beg_soundstate_r)
+static READ8_HANDLER(beg_soundstate_r)
 {
 	UINT8 ret = sound_state;
 	/* set a timer to force synchronization after the read */
@@ -130,7 +130,7 @@ static READ_HANDLER(beg_soundstate_r)
 	return ret;
 }
 
-static READ_HANDLER(soundstate_r)
+static READ8_HANDLER(soundstate_r)
 {
 	/* set a timer to force synchronization after the read */
 	timer_set(TIME_NOW, 0, NULL);
@@ -139,33 +139,33 @@ static READ_HANDLER(soundstate_r)
 
 static void nmi_callback(int param)
 {
-	if (sound_nmi_enable) cpu_set_irq_line(2,IRQ_LINE_NMI,PULSE_LINE);
+	if (sound_nmi_enable) cpunum_set_input_line(2,INPUT_LINE_NMI,PULSE_LINE);
 	else pending_nmi = 1;
 	sound_state &= ~1;
 }
-static WRITE_HANDLER( sound_command_w )	/* write to port 20 clears bit 0 in status */
+static WRITE8_HANDLER( sound_command_w )	/* write to port 20 clears bit 0 in status */
 {
 	for_sound = data;
 	timer_set(TIME_NOW,data,nmi_callback);
 }
 
-static READ_HANDLER( sound_command_r )	/* read from D800 sets bit 0 in status */
+static READ8_HANDLER( sound_command_r )	/* read from D800 sets bit 0 in status */
 {
 	sound_state |= 1;
 	return for_sound;
 }
 
-static WRITE_HANDLER( nmi_disable_w )
+static WRITE8_HANDLER( nmi_disable_w )
 {
 	sound_nmi_enable = 0;
 }
 
-static WRITE_HANDLER( nmi_enable_w )
+static WRITE8_HANDLER( nmi_enable_w )
 {
 	sound_nmi_enable = 1;
 	if (pending_nmi)
 	{
-		cpu_set_irq_line(2,IRQ_LINE_NMI,PULSE_LINE);
+		cpunum_set_input_line(2,INPUT_LINE_NMI,PULSE_LINE);
 		pending_nmi = 0;
 	}
 }
@@ -180,24 +180,24 @@ static void deferred_ls74_w( int param )
 }
 
 /* do this on a timer to let the CPUs synchronize */
-static WRITE_HANDLER (beg13A_clr_w)
+static WRITE8_HANDLER (beg13A_clr_w)
 {
 	timer_set(TIME_NOW, (0<<8) | 0, deferred_ls74_w);
 }
-static WRITE_HANDLER (beg13B_clr_w)
+static WRITE8_HANDLER (beg13B_clr_w)
 {
 	timer_set(TIME_NOW, (1<<8) | 0, deferred_ls74_w);
 }
-static WRITE_HANDLER (beg13A_set_w)
+static WRITE8_HANDLER (beg13A_set_w)
 {
 	timer_set(TIME_NOW, (0<<8) | 1, deferred_ls74_w);
 }
-static WRITE_HANDLER (beg13B_set_w)
+static WRITE8_HANDLER (beg13B_set_w)
 {
 	timer_set(TIME_NOW, (1<<8) | 1, deferred_ls74_w);
 }
 
-static READ_HANDLER( beg_status_r )
+static READ8_HANDLER( beg_status_r )
 {
 /* d0 = Q of 74ls74 IC13(partA)
    d1 = Q of 74ls74 IC13(partB)
@@ -214,11 +214,11 @@ static READ_HANDLER( beg_status_r )
 }
 
 
-static READ_HANDLER(  beg_sharedram_r )
+static READ8_HANDLER(  beg_sharedram_r )
 {
 	return beg_sharedram[offset];
 }
-static WRITE_HANDLER( beg_sharedram_w )
+static WRITE8_HANDLER( beg_sharedram_w )
 {
 	beg_sharedram[offset] = data;
 }
@@ -351,7 +351,7 @@ ADDRESS_MAP_END
 
 
 
-static READ_HANDLER( sub_cpu_mcu_coin_port_r )
+static READ8_HANDLER( sub_cpu_mcu_coin_port_r )
 {
 	static int bit5=0;
 	/*

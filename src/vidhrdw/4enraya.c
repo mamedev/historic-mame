@@ -11,7 +11,7 @@
 
 static struct tilemap *tilemap;
 
-WRITE_HANDLER( fenraya_videoram_w )
+WRITE8_HANDLER( fenraya_videoram_w )
 {
 	videoram[(offset&0x3ff)*2]=data;
 	videoram[(offset&0x3ff)*2+1]=(offset&0xc00)>>10;

@@ -12,9 +12,9 @@ Based on drivers from Juno First emulator by Chris Hardy (chrish@kcbbs.gen.nz)
 
 extern void konami1_decode(void);
 
-extern WRITE_HANDLER( rocnrope_videoram_w );
-extern WRITE_HANDLER( rocnrope_colorram_w );
-extern WRITE_HANDLER( rocnrope_flipscreen_w );
+extern WRITE8_HANDLER( rocnrope_videoram_w );
+extern WRITE8_HANDLER( rocnrope_colorram_w );
+extern WRITE8_HANDLER( rocnrope_flipscreen_w );
 
 extern PALETTE_INIT( rocnrope );
 extern VIDEO_START( rocnrope );
@@ -22,7 +22,7 @@ extern VIDEO_UPDATE( rocnrope );
 
 
 /* Roc'n'Rope has the IRQ vectors in RAM. The rom contains $FFFF at this address! */
-WRITE_HANDLER( rocnrope_interrupt_vector_w )
+WRITE8_HANDLER( rocnrope_interrupt_vector_w )
 {
 	UINT8 *RAM = memory_region(REGION_CPU1);
 

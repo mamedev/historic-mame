@@ -11,9 +11,9 @@
 
 extern UINT8 *scotrsht_scroll;
 
-extern WRITE_HANDLER( scotrsht_videoram_w );
-extern WRITE_HANDLER( scotrsht_colorram_w );
-extern WRITE_HANDLER( scotrsht_charbank_w );
+extern WRITE8_HANDLER( scotrsht_videoram_w );
+extern WRITE8_HANDLER( scotrsht_colorram_w );
+extern WRITE8_HANDLER( scotrsht_charbank_w );
 
 extern PALETTE_INIT( scotrsht );
 extern VIDEO_START( scotrsht );
@@ -21,7 +21,7 @@ extern VIDEO_UPDATE( scotrsht );
 
 static int irq_enable;
 
-static WRITE_HANDLER( ctrl_w )
+static WRITE8_HANDLER( ctrl_w )
 {
 	irq_enable = data & 0x02;
 	flip_screen_set(data & 0x08);
@@ -30,16 +30,16 @@ static WRITE_HANDLER( ctrl_w )
 static INTERRUPT_GEN( scotrsht_interrupt )
 {
 	if (irq_enable)
-		cpu_set_irq_line(0, 0, HOLD_LINE);
+		cpunum_set_input_line(0, 0, HOLD_LINE);
 }
 
-static WRITE_HANDLER( scotrsht_soundlatch_w )
+static WRITE8_HANDLER( scotrsht_soundlatch_w )
 {
 	soundlatch_w(0,data);
-	cpu_set_irq_line(1, 0, HOLD_LINE);
+	cpunum_set_input_line(1, 0, HOLD_LINE);
 }
 
-static WRITE_HANDLER( scotrsht_coin_counters_w )
+static WRITE8_HANDLER( scotrsht_coin_counters_w )
 {
 	coin_counter_w(0, data & 1);
 	coin_counter_w(1, data & 2);

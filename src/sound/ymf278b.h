@@ -15,23 +15,22 @@ struct YMF278B_interface {
 
 int  YMF278B_sh_start( const struct MachineSound *msound );
 void YMF278B_sh_stop( void );
+READ8_HANDLER( YMF278B_status_port_0_r );
+READ8_HANDLER( YMF278B_data_port_0_r );
+WRITE8_HANDLER( YMF278B_control_port_0_A_w );
+WRITE8_HANDLER( YMF278B_data_port_0_A_w );
+WRITE8_HANDLER( YMF278B_control_port_0_B_w );
+WRITE8_HANDLER( YMF278B_data_port_0_B_w );
+WRITE8_HANDLER( YMF278B_control_port_0_C_w );
+WRITE8_HANDLER( YMF278B_data_port_0_C_w );
 
-READ_HANDLER( YMF278B_status_port_0_r );
-READ_HANDLER( YMF278B_data_port_0_r );
-WRITE_HANDLER( YMF278B_control_port_0_A_w );
-WRITE_HANDLER( YMF278B_data_port_0_A_w );
-WRITE_HANDLER( YMF278B_control_port_0_B_w );
-WRITE_HANDLER( YMF278B_data_port_0_B_w );
-WRITE_HANDLER( YMF278B_control_port_0_C_w );
-WRITE_HANDLER( YMF278B_data_port_0_C_w );
-
-READ_HANDLER( YMF278B_status_port_1_r );
-READ_HANDLER( YMF278B_data_port_1_r );
-WRITE_HANDLER( YMF278B_control_port_1_A_w );
-WRITE_HANDLER( YMF278B_data_port_1_A_w );
-WRITE_HANDLER( YMF278B_control_port_1_B_w );
-WRITE_HANDLER( YMF278B_data_port_1_B_w );
-WRITE_HANDLER( YMF278B_control_port_1_C_w );
-WRITE_HANDLER( YMF278B_data_port_1_C_w );
+READ8_HANDLER( YMF278B_status_port_1_r );
+READ8_HANDLER( YMF278B_data_port_1_r );
+WRITE8_HANDLER( YMF278B_control_port_1_A_w );
+WRITE8_HANDLER( YMF278B_data_port_1_A_w );
+WRITE8_HANDLER( YMF278B_control_port_1_B_w );
+WRITE8_HANDLER( YMF278B_data_port_1_B_w );
+WRITE8_HANDLER( YMF278B_control_port_1_C_w );
+WRITE8_HANDLER( YMF278B_data_port_1_C_w );
 
 #endif

@@ -86,23 +86,23 @@ VIDEO_START( rtype2 );
 VIDEO_START( majtitle );
 VIDEO_START( hharry );
 VIDEO_START( poundfor );
-READ_HANDLER( m72_palette1_r );
-READ_HANDLER( m72_palette2_r );
-WRITE_HANDLER( m72_palette1_w );
-WRITE_HANDLER( m72_palette2_w );
-READ_HANDLER( m72_videoram1_r );
-READ_HANDLER( m72_videoram2_r );
-WRITE_HANDLER( m72_videoram1_w );
-WRITE_HANDLER( m72_videoram2_w );
-WRITE_HANDLER( m72_irq_line_w );
-WRITE_HANDLER( m72_scrollx1_w );
-WRITE_HANDLER( m72_scrollx2_w );
-WRITE_HANDLER( m72_scrolly1_w );
-WRITE_HANDLER( m72_scrolly2_w );
-WRITE_HANDLER( m72_dmaon_w );
-WRITE_HANDLER( m72_port02_w );
-WRITE_HANDLER( rtype2_port02_w );
-WRITE_HANDLER( majtitle_gfx_ctrl_w );
+READ8_HANDLER( m72_palette1_r );
+READ8_HANDLER( m72_palette2_r );
+WRITE8_HANDLER( m72_palette1_w );
+WRITE8_HANDLER( m72_palette2_w );
+READ8_HANDLER( m72_videoram1_r );
+READ8_HANDLER( m72_videoram2_r );
+WRITE8_HANDLER( m72_videoram1_w );
+WRITE8_HANDLER( m72_videoram2_w );
+WRITE8_HANDLER( m72_irq_line_w );
+WRITE8_HANDLER( m72_scrollx1_w );
+WRITE8_HANDLER( m72_scrollx2_w );
+WRITE8_HANDLER( m72_scrolly1_w );
+WRITE8_HANDLER( m72_scrolly2_w );
+WRITE8_HANDLER( m72_dmaon_w );
+WRITE8_HANDLER( m72_port02_w );
+WRITE8_HANDLER( rtype2_port02_w );
+WRITE8_HANDLER( majtitle_gfx_ctrl_w );
 VIDEO_UPDATE( m72 );
 VIDEO_UPDATE( majtitle );
 VIDEO_EOF( m72 );
@@ -159,50 +159,50 @@ static INTERRUPT_GEN(fake_nmi)
 }
 
 
-static WRITE_HANDLER( bchopper_sample_trigger_w )
+static WRITE8_HANDLER( bchopper_sample_trigger_w )
 {
 	int a[6] = { 0x0000, 0x0010, 0x2510, 0x6510, 0x8510, 0x9310 };
 	if (data < 6) m72_set_sample_start(a[data]);
 }
 
-static WRITE_HANDLER( nspirit_sample_trigger_w )
+static WRITE8_HANDLER( nspirit_sample_trigger_w )
 {
 	int a[9] = { 0x0000, 0x0020, 0x2020, 0, 0x5720, 0, 0x7b60, 0x9b60, 0xc360 };
 	if (data < 9) m72_set_sample_start(a[data]);
 }
 
-static WRITE_HANDLER( imgfight_sample_trigger_w )
+static WRITE8_HANDLER( imgfight_sample_trigger_w )
 {
 	int a[7] = { 0x0000, 0x0020, 0x44e0, 0x98a0, 0xc820, 0xf7a0, 0x108c0 };
 	if (data < 7) m72_set_sample_start(a[data]);
 }
 
-static WRITE_HANDLER( loht_sample_trigger_w )
+static WRITE8_HANDLER( loht_sample_trigger_w )
 {
 	int a[7] = { 0x0000, 0x0020, 0, 0x2c40, 0x4320, 0x7120, 0xb200 };
 	if (data < 7) m72_set_sample_start(a[data]);
 }
 
-static WRITE_HANDLER( xmultipl_sample_trigger_w )
+static WRITE8_HANDLER( xmultipl_sample_trigger_w )
 {
 	int a[3] = { 0x0000, 0x0020, 0x1a40 };
 	if (data < 3) m72_set_sample_start(a[data]);
 }
 
-static WRITE_HANDLER( dbreed_sample_trigger_w )
+static WRITE8_HANDLER( dbreed_sample_trigger_w )
 {
 	int a[9] = { 0x00000, 0x00020, 0x02c40, 0x08160, 0x0c8c0, 0x0ffe0, 0x13000, 0x15820, 0x15f40 };
 	if (data < 9) m72_set_sample_start(a[data]);
 }
 
-static WRITE_HANDLER( airduel_sample_trigger_w )
+static WRITE8_HANDLER( airduel_sample_trigger_w )
 {
 	int a[16] = { 0x00000, 0x00020, 0x03ec0, 0x05640, 0x06dc0, 0x083a0, 0x0c000, 0x0eb60,
 				  0x112e0, 0x13dc0, 0x16520, 0x16d60, 0x18ae0, 0x1a5a0, 0x1bf00, 0x1c340 };
 	if (data < 16) m72_set_sample_start(a[data]);
 }
 
-static WRITE_HANDLER( dkgenm72_sample_trigger_w )
+static WRITE8_HANDLER( dkgenm72_sample_trigger_w )
 {
 	int a[28] = { 0x00000, 0x00020, 0x01800, 0x02da0, 0x03be0, 0x05ae0, 0x06100, 0x06de0,
 			      0x07260, 0x07a60, 0x08720, 0x0a5c0, 0x0c3c0, 0x0c7a0, 0x0e140, 0x0fb00,
@@ -212,7 +212,7 @@ static WRITE_HANDLER( dkgenm72_sample_trigger_w )
 	if (data < 28) m72_set_sample_start(a[data]);
 }
 
-static WRITE_HANDLER( gallop_sample_trigger_w )
+static WRITE8_HANDLER( gallop_sample_trigger_w )
 {
 	int a[31] = { 0x00000, 0x00020, 0x00040, 0x01360, 0x02580, 0x04f20, 0x06240, 0x076e0,
 			      0x08660, 0x092a0, 0x09ba0, 0x0a560, 0x0cee0, 0x0de20, 0x0e620, 0x0f1c0,
@@ -407,7 +407,7 @@ static unsigned char dkgenm72_crc[CRC_LEN] =  {	0xc8,0xb4,0xdc,0xf8, 0xd3,0xba,0
 
 unsigned char *protection_code,*protection_crc;
 
-static READ_HANDLER( protection_r )
+static READ8_HANDLER( protection_r )
 {
 	if (offset == 0xffb)
 		memcpy(protection_ram,protection_code,CODE_LEN);
@@ -415,7 +415,7 @@ static READ_HANDLER( protection_r )
 	return protection_ram[offset];
 }
 
-static WRITE_HANDLER( protection_w )
+static WRITE8_HANDLER( protection_w )
 {
 	protection_ram[offset] = data ^ 0xff;;
 
@@ -427,8 +427,8 @@ static void install_protection_handler(unsigned char *code,unsigned char *crc)
 {
 	protection_code = code;
 	protection_crc =  crc;
-	install_mem_read_handler (0,0xb0000,0xb0fff,protection_r);
-	install_mem_write_handler(0,0xb0000,0xb0fff,protection_w);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb0000, 0xb0fff, 0, 0, protection_r);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb0000, 0xb0fff, 0, 0, protection_w);
 	protection_ram = &memory_region(REGION_CPU1)[0xb0000];
 }
 
@@ -436,42 +436,42 @@ static DRIVER_INIT( bchopper )
 {
 	install_protection_handler(bchopper_code,bchopper_crc);
 
-	install_port_write_handler(0,0xc0,0xc0,bchopper_sample_trigger_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0xc0, 0xc0, 0, 0, bchopper_sample_trigger_w);
 }
 
 static DRIVER_INIT( mrheli )
 {
 	install_protection_handler(bchopper_code,mrheli_crc);
 
-	install_port_write_handler(0,0xc0,0xc0,bchopper_sample_trigger_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0xc0, 0xc0, 0, 0, bchopper_sample_trigger_w);
 }
 
 static DRIVER_INIT( nspirit )
 {
 	install_protection_handler(nspirit_code,nspirit_crc);
 
-	install_port_write_handler(0,0xc0,0xc0,nspirit_sample_trigger_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0xc0, 0xc0, 0, 0, nspirit_sample_trigger_w);
 }
 
 static DRIVER_INIT( nspiritj )
 {
 	install_protection_handler(nspirit_code,nspiritj_crc);
 
-	install_port_write_handler(0,0xc0,0xc0,nspirit_sample_trigger_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0xc0, 0xc0, 0, 0, nspirit_sample_trigger_w);
 }
 
 static DRIVER_INIT( imgfight )
 {
 	install_protection_handler(imgfight_code,imgfight_crc);
 
-	install_port_write_handler(0,0xc0,0xc0,imgfight_sample_trigger_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0xc0, 0xc0, 0, 0, imgfight_sample_trigger_w);
 }
 
 static DRIVER_INIT( loht )
 {
 	install_protection_handler(loht_code,loht_crc);
 
-	install_port_write_handler(0,0xc0,0xc0,loht_sample_trigger_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0xc0, 0xc0, 0, 0, loht_sample_trigger_w);
 
 	/* since we skip the startup tests, clear video RAM to prevent garbage on title screen */
 	memset(m72_videoram2,0,0x4000);
@@ -481,33 +481,33 @@ static DRIVER_INIT( xmultipl )
 {
 	install_protection_handler(xmultipl_code,xmultipl_crc);
 
-	install_port_write_handler(0,0xc0,0xc0,xmultipl_sample_trigger_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0xc0, 0xc0, 0, 0, xmultipl_sample_trigger_w);
 }
 
 static DRIVER_INIT( dbreed )
 {
 	install_protection_handler(dbreed_code,dbreed_crc);
 
-	install_port_write_handler(0,0xc0,0xc0,dbreed_sample_trigger_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0xc0, 0xc0, 0, 0, dbreed_sample_trigger_w);
 }
 
 static DRIVER_INIT( airduel )
 {
 	install_protection_handler(airduel_code,airduel_crc);
 
-	install_port_write_handler(0,0xc0,0xc0,airduel_sample_trigger_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0xc0, 0xc0, 0, 0, airduel_sample_trigger_w);
 }
 
 static DRIVER_INIT( dkgenm72 )
 {
 	install_protection_handler(dkgenm72_code,dkgenm72_crc);
 
-	install_port_write_handler(0,0xc0,0xc0,dkgenm72_sample_trigger_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0xc0, 0xc0, 0, 0, dkgenm72_sample_trigger_w);
 }
 
 static DRIVER_INIT( gallop )
 {
-	install_port_write_handler(0,0xc0,0xc0,gallop_sample_trigger_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0xc0, 0xc0, 0, 0, gallop_sample_trigger_w);
 }
 
 
@@ -516,18 +516,18 @@ static DRIVER_INIT( gallop )
 static unsigned char *soundram;
 
 
-static READ_HANDLER( soundram_r )
+static READ8_HANDLER( soundram_r )
 {
 	return soundram[offset];
 }
 
-static WRITE_HANDLER( soundram_w )
+static WRITE8_HANDLER( soundram_w )
 {
 	soundram[offset] = data;
 }
 
 
-static READ_HANDLER( poundfor_trackball_r )
+static READ8_HANDLER( poundfor_trackball_r )
 {
 	static int prev[4],diff[4];
 

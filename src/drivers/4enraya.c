@@ -55,16 +55,16 @@ Sound :
 VIDEO_START( 4enraya );
 VIDEO_UPDATE( 4enraya );
 
-WRITE_HANDLER( fenraya_videoram_w );
+WRITE8_HANDLER( fenraya_videoram_w );
 
 static int soundlatch;
 
-static WRITE_HANDLER( sound_data_w )
+static WRITE8_HANDLER( sound_data_w )
 {
 	soundlatch = data;
 }
 
-static WRITE_HANDLER( sound_control_w )
+static WRITE8_HANDLER( sound_control_w )
 {
 	static int last;
 	if ((last & 0x04) == 0x04 && (data & 0x4) == 0x00)

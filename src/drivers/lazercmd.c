@@ -258,7 +258,7 @@ static INTERRUPT_GEN( lazercmd_timer )
 	if( ++timer_count >= 64*128 ) {
 		timer_count = 0;
 		sense_state ^= 1;
-		cpu_set_irq_line( 0, 1, (sense_state) ? ASSERT_LINE : CLEAR_LINE );
+		cpunum_set_input_line( 0, 1, (sense_state) ? ASSERT_LINE : CLEAR_LINE );
 	}
 }
 
@@ -275,31 +275,31 @@ static INTERRUPT_GEN( bbonk_timer )
  *************************************************************/
 
 /* triggered by WRTC,r opcode */
-static WRITE_HANDLER( lazercmd_ctrl_port_w )
+static WRITE8_HANDLER( lazercmd_ctrl_port_w )
 {
 }
 
 /* triggered by REDC,r opcode */
-static READ_HANDLER( lazercmd_ctrl_port_r )
+static READ8_HANDLER( lazercmd_ctrl_port_r )
 {
 	int data = 0;
 	return data;
 }
 
 /* triggered by WRTD,r opcode */
-static WRITE_HANDLER( lazercmd_data_port_w )
+static WRITE8_HANDLER( lazercmd_data_port_w )
 {
 }
 
 /* triggered by REDD,r opcode */
-static READ_HANDLER( lazercmd_data_port_r )
+static READ8_HANDLER( lazercmd_data_port_r )
 {
 	int data;
 	data = input_port_2_r(0) & 0x0f;
 	return data;
 }
 
-static WRITE_HANDLER( lazercmd_hardware_w )
+static WRITE8_HANDLER( lazercmd_hardware_w )
 {
 	static int DAC_data = 0;
 
@@ -329,7 +329,7 @@ static WRITE_HANDLER( lazercmd_hardware_w )
 	}
 }
 
-static WRITE_HANDLER( medlanes_hardware_w )
+static WRITE8_HANDLER( medlanes_hardware_w )
 {
 	static int DAC_data = 0;
 
@@ -362,7 +362,7 @@ static WRITE_HANDLER( medlanes_hardware_w )
 	}
 }
 
-static WRITE_HANDLER( bbonk_hardware_w )
+static WRITE8_HANDLER( bbonk_hardware_w )
 {
 	static int DAC_data = 0;
 
@@ -387,7 +387,7 @@ static WRITE_HANDLER( bbonk_hardware_w )
 	}
 }
 
-static READ_HANDLER( lazercmd_hardware_r )
+static READ8_HANDLER( lazercmd_hardware_r )
 {
 	int data = 0;
 

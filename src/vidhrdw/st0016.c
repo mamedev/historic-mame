@@ -42,7 +42,7 @@ static struct GfxLayout charlayout =
 	8*8*4
 };
 
-WRITE_HANDLER(st0016_sprite_bank_w)
+WRITE8_HANDLER(st0016_sprite_bank_w)
 {
 /* 
 	76543210
@@ -53,7 +53,7 @@ WRITE_HANDLER(st0016_sprite_bank_w)
 	st0016_spr2_bank=(data>>4)&ST0016_SPR_BANK_MASK;
 }
 
-WRITE_HANDLER(st0016_palette_bank_w)
+WRITE8_HANDLER(st0016_palette_bank_w)
 {
 /* 
 	76543210
@@ -63,7 +63,7 @@ WRITE_HANDLER(st0016_palette_bank_w)
 	st0016_pal_bank=data&ST0016_PAL_BANK_MASK;
 }
 
-WRITE_HANDLER(st0016_character_bank_w)
+WRITE8_HANDLER(st0016_character_bank_w)
 {
 /*
 	fedcba9876543210	
@@ -79,33 +79,33 @@ WRITE_HANDLER(st0016_character_bank_w)
 }
 
 
-READ_HANDLER (st0016_sprite_ram_r)
+READ8_HANDLER (st0016_sprite_ram_r)
 {
 	return st0016_spriteram[ST0016_SPR_BANK_SIZE*st0016_spr_bank+offset];
 }
 
-WRITE_HANDLER (st0016_sprite_ram_w)
+WRITE8_HANDLER (st0016_sprite_ram_w)
 {
 	
 	st0016_spriteram[ST0016_SPR_BANK_SIZE*st0016_spr_bank+offset]=data;
 }
 
-READ_HANDLER (st0016_sprite2_ram_r)
+READ8_HANDLER (st0016_sprite2_ram_r)
 {
 	return st0016_spriteram[ST0016_SPR_BANK_SIZE*st0016_spr2_bank+offset];
 }
 
-WRITE_HANDLER (st0016_sprite2_ram_w)
+WRITE8_HANDLER (st0016_sprite2_ram_w)
 {
 	st0016_spriteram[ST0016_SPR_BANK_SIZE*st0016_spr2_bank+offset]=data;
 }
 
-READ_HANDLER (st0016_palette_ram_r)
+READ8_HANDLER (st0016_palette_ram_r)
 {
 	return st0016_paletteram[ST0016_PAL_BANK_SIZE*st0016_pal_bank+offset];
 }
 
-WRITE_HANDLER (st0016_palette_ram_w)
+WRITE8_HANDLER (st0016_palette_ram_w)
 {
 	int color=(ST0016_PAL_BANK_SIZE*st0016_pal_bank+offset)/2;
 	int r,g,b,val;
@@ -121,18 +121,18 @@ WRITE_HANDLER (st0016_palette_ram_w)
 	palette_set_color(color,r,g,b);
 }
 
-READ_HANDLER(st0016_character_ram_r)
+READ8_HANDLER(st0016_character_ram_r)
 {
 	return st0016_charram[ST0016_CHAR_BANK_SIZE*st0016_char_bank+offset];
 }
 
-WRITE_HANDLER(st0016_character_ram_w)
+WRITE8_HANDLER(st0016_character_ram_w)
 {
 	st0016_charram[ST0016_CHAR_BANK_SIZE*st0016_char_bank+offset]=data;
 	decodechar(Machine->gfx[st0016_ramgfx], st0016_char_bank,(UINT8 *) st0016_charram,  &charlayout);
 }
 
-READ_HANDLER(st0016_vregs_r)
+READ8_HANDLER(st0016_vregs_r)
 {
 /* 
 	    $0, $1 = max scanline(including vblank)/timer? ($3e7)
@@ -150,14 +150,14 @@ READ_HANDLER(st0016_vregs_r)
 	return st0016_vregs[offset];
 }
 
-READ_HANDLER(st0016_dma_r)
+READ8_HANDLER(st0016_dma_r)
 {
 	/* bits 0 and 1 = 0 -> DMA transfer complete */
 	return 0;
 }
 
 
-WRITE_HANDLER(st0016_vregs_w)
+WRITE8_HANDLER(st0016_vregs_w)
 {
 	/*
 		
@@ -352,7 +352,7 @@ static void drawsprites( struct mame_bitmap *bitmap, const struct rectangle *cli
 
 }
 
-WRITE_HANDLER(st0016_rom_bank_w);
+WRITE8_HANDLER(st0016_rom_bank_w);
 extern int st0016_rom_bank;
 
 static void st0016_postload(void)
@@ -430,7 +430,7 @@ VIDEO_START( st0016 )
 VIDEO_UPDATE( st0016 )
 {
 #ifdef MAME_DEBUG
-	if(keyboard_pressed_memory(KEYCODE_Z))
+	if(code_pressed_memory(KEYCODE_Z))
 	{
 		int h,j;
 		FILE *p=fopen("vram_renjyu.bin","wb");

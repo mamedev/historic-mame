@@ -62,7 +62,7 @@ static WRITE16_HANDLER( pushman_68705_w )
 
 	if (offset==1)
 	{
-        cpu_set_irq_line(2,M68705_IRQ_LINE,HOLD_LINE);
+        cpunum_set_input_line(2,M68705_IRQ_LINE,HOLD_LINE);
 		cpu_spin();
 		new_latch=0;
 	}
@@ -111,12 +111,12 @@ static WRITE16_HANDLER( bballs_68705_w )
 }
 
 
-static READ_HANDLER( pushman_68000_r )
+static READ8_HANDLER( pushman_68000_r )
 {
 	return shared_ram[offset];
 }
 
-static WRITE_HANDLER( pushman_68000_w )
+static WRITE8_HANDLER( pushman_68000_w )
 {
 	if (offset==2 && (shared_ram[2]&2)==0 && data&2) {
 		latch=(shared_ram[1]<<8)|shared_ram[0];
@@ -427,7 +427,7 @@ static struct GfxDecodeInfo pushman_gfxdecodeinfo[] =
 
 static void irqhandler(int irq)
 {
-    cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+    cpunum_set_input_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2203interface ym2203_interface =

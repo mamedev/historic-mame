@@ -49,13 +49,13 @@ static int char_bank = 0;
 static struct tilemap *bg_tilemap, *fg_tilemap;
 static data8_t *bgram;
 
-static WRITE_HANDLER( char_bank_w )
+static WRITE8_HANDLER( char_bank_w )
 {
 	char_bank = data;
 	tilemap_mark_all_tiles_dirty(fg_tilemap);
 }
 
-static WRITE_HANDLER( ddayjlc_bgram_w )
+static WRITE8_HANDLER( ddayjlc_bgram_w )
 {
 	if( bgram[offset] != data )
 	{
@@ -64,7 +64,7 @@ static WRITE_HANDLER( ddayjlc_bgram_w )
 	}
 }
 
-static WRITE_HANDLER( ddayjlc_videoram_w )
+static WRITE8_HANDLER( ddayjlc_videoram_w )
 {
 	if( videoram[offset] != data )
 	{
@@ -243,7 +243,7 @@ static struct AY8910interface ay8910_interface =
 static INTERRUPT_GEN( ddayjlc_interrupt )
 {
 //	maskable?
-	cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+	cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 }
 
 static MACHINE_DRIVER_START( ddayjlc )

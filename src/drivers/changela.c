@@ -632,7 +632,7 @@ else
 }
 
 
-static WRITE_HANDLER (colors_w)
+static WRITE8_HANDLER (colors_w)
 {
 	int bit0, bit1, bit2, r, g, b;
 	UINT32 c, color_index;
@@ -665,14 +665,14 @@ static WRITE_HANDLER (colors_w)
 	palette_set_color(color_index,r,g,b);
 }
 
-static READ_HANDLER( mcu_r )
+static READ8_HANDLER( mcu_r )
 {
 	//printf("Z80 MCU  R = %x\n",mcu_out);
 	return mcu_out;
 }
 
 /* latch LS374 at U39 */
-static WRITE_HANDLER( mcu_w )
+static WRITE8_HANDLER( mcu_w )
 {
 	mcu_in = data;
 }
@@ -685,44 +685,44 @@ static WRITE_HANDLER( mcu_w )
 
 
 
-READ_HANDLER( changela_68705_portA_r )
+READ8_HANDLER( changela_68705_portA_r )
 {	
 	return (portA_out & ddrA) | (portA_in & ~ddrA);
 }
 
-WRITE_HANDLER( changela_68705_portA_w )
+WRITE8_HANDLER( changela_68705_portA_w )
 {
 	portA_out = data;
 }
 
-WRITE_HANDLER( changela_68705_ddrA_w )
+WRITE8_HANDLER( changela_68705_ddrA_w )
 {	
 	ddrA = data; 
 }
 
 
-READ_HANDLER( changela_68705_portB_r )
+READ8_HANDLER( changela_68705_portB_r )
 {	
 	return (portB_out & ddrB) | (readinputport(4) & ~ddrB);
 }
 
-WRITE_HANDLER( changela_68705_portB_w )
+WRITE8_HANDLER( changela_68705_portB_w )
 {
 	portB_out = data;
 }
 
-WRITE_HANDLER( changela_68705_ddrB_w )
+WRITE8_HANDLER( changela_68705_ddrB_w )
 {	
 	ddrB = data; 
 }
 
 
-READ_HANDLER( changela_68705_portC_r )
+READ8_HANDLER( changela_68705_portC_r )
 {	
 	return (portC_out & ddrC) | (portC_in & ~ddrC);
 }
 
-WRITE_HANDLER( changela_68705_portC_w )
+WRITE8_HANDLER( changela_68705_portC_w )
 {
 	/* PC3 is connected to the CLOCK input of the LS374,
 		so we latch the data on positive going edge of the clock */
@@ -740,7 +740,7 @@ WRITE_HANDLER( changela_68705_portC_w )
 	portC_out = data;
 }
 
-WRITE_HANDLER( changela_68705_ddrC_w )
+WRITE8_HANDLER( changela_68705_ddrC_w )
 {	
 	ddrC = data; 
 }
@@ -772,27 +772,27 @@ ADDRESS_MAP_END
 
 
 /* U30 */
-static READ_HANDLER( changela_24_r )
+static READ8_HANDLER( changela_24_r )
 {
 	return ((portC_out&2)<<2) | 7;	/* bits 2,1,0-N/C inputs */
 }
 
-static READ_HANDLER( changela_25_r )
+static READ8_HANDLER( changela_25_r )
 {
 	return 0x03;//collisions on bits 3,2, bits 1,0-N/C inputs
 }
 
-static READ_HANDLER( changela_30_r )
+static READ8_HANDLER( changela_30_r )
 {
 	return readinputport(7);	//wheel control (clocked input) signal on bits 3,2,1,0
 }
 
-static READ_HANDLER( changela_31_r )
+static READ8_HANDLER( changela_31_r )
 {
 	return 0x00;	//wheel UP/DOWN control signal on bit 3, collisions on bits:2,1,0
 }
 
-static READ_HANDLER( changela_2c_r )
+static READ8_HANDLER( changela_2c_r )
 {
 	int val = readinputport(5);
 
@@ -801,7 +801,7 @@ static READ_HANDLER( changela_2c_r )
 	return val;
 }
 
-static READ_HANDLER( changela_2d_r )
+static READ8_HANDLER( changela_2d_r )
 {
 	/* the schems are unreadable - i'm not sure it is V8 (page 74, SOUND I/O BOARD SCHEMATIC 1 OF 2, FIGURE 24 - in the middle on the right side) */
 	int v8 = 0;
@@ -812,23 +812,23 @@ static READ_HANDLER( changela_2d_r )
 	return (readinputport(6) & 0xe0) | (v8<<4);
 }
 
-static WRITE_HANDLER( mcu_PC0_w )
+static WRITE8_HANDLER( mcu_PC0_w )
 {
 	portC_in = (portC_in&0xfe) | (data&1);
 	//printf("PC0 W = %x\n",data&1);
 }
 
-static WRITE_HANDLER( changela_collision_reset_0 )
+static WRITE8_HANDLER( changela_collision_reset_0 )
 {
 
 }
 
-static WRITE_HANDLER( changela_collision_reset_1 )
+static WRITE8_HANDLER( changela_collision_reset_1 )
 {
 
 }
 
-static WRITE_HANDLER( changela_coin_counter_w )
+static WRITE8_HANDLER( changela_coin_counter_w )
 {
 	coin_counter_w(offset,data);
 }
@@ -837,7 +837,7 @@ static WRITE_HANDLER( changela_coin_counter_w )
 static int dev_sel;
 
 
-static WRITE_HANDLER( mem_device_select_w )
+static WRITE8_HANDLER( mem_device_select_w )
 {
 	dev_sel = data & 7;
 
@@ -861,7 +861,7 @@ static WRITE_HANDLER( mem_device_select_w )
 	*/
 }
 
-static WRITE_HANDLER( mem_device_w )
+static WRITE8_HANDLER( mem_device_w )
 {
 	memory_devices[mem_dev_selected + offset] = data;
 
@@ -869,7 +869,7 @@ static WRITE_HANDLER( mem_device_w )
 		usrintf_showmessage("RAM1 offset=%4x",offset);
 
 }
-static READ_HANDLER( mem_device_r )
+static READ8_HANDLER( mem_device_r )
 {
 	return memory_devices[mem_dev_selected + offset];
 }
@@ -877,13 +877,13 @@ static READ_HANDLER( mem_device_r )
 
 
 
-static WRITE_HANDLER( slope_rom_addr_hi_w )
+static WRITE8_HANDLER( slope_rom_addr_hi_w )
 {
 	slopeROM_bank = (data&3)<<9;
 //	usrintf_showmessage("bank = %04x", slopeROM_bank);
 }
 
-static WRITE_HANDLER( slope_rom_addr_lo_w )
+static WRITE8_HANDLER( slope_rom_addr_lo_w )
 {
 	address = data;
 //    usrintf_showmessage("address = %04x", address);
@@ -1120,13 +1120,13 @@ INTERRUPT_GEN( chl_interrupt )
 
 //    force_partial_update(cpu_getscanline());
 
-	cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, vector);
+	cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, vector);
 
 	/* it seems the V8 == Vblank and it is connected to the INT on the 68705 */
 	//so we should cause an INT on the cpu 1 here, as well.
 	//but only once per frame !
 	if (vector == 0xdf) /* only on vblank */
-		cpu_set_irq_line(1, 0, PULSE_LINE );
+		cpunum_set_input_line(1, 0, PULSE_LINE );
 
 }
 

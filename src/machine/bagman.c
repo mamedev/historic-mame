@@ -207,7 +207,7 @@ unsigned char row, column, val;
 }
 
 
-WRITE_HANDLER( bagman_pal16r6_w )
+WRITE8_HANDLER( bagman_pal16r6_w )
 {
 unsigned char line;
 
@@ -229,7 +229,7 @@ MACHINE_INIT( bagman )
 	update_pal();
 }
 
-READ_HANDLER( bagman_pal16r6_r )
+READ8_HANDLER( bagman_pal16r6_r )
 {
 	update_pal();
 	return	(outvalue[6]) + (outvalue[5]<<1) + (outvalue[4]<<2) +

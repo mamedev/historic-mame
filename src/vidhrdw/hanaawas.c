@@ -69,7 +69,7 @@ PALETTE_INIT( hanaawas )
 	}
 }
 
-WRITE_HANDLER( hanaawas_videoram_w )
+WRITE8_HANDLER( hanaawas_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -78,7 +78,7 @@ WRITE_HANDLER( hanaawas_videoram_w )
 	}
 }
 
-WRITE_HANDLER( hanaawas_colorram_w )
+WRITE8_HANDLER( hanaawas_colorram_w )
 {
 	if (colorram[offset] != data)
 	{
@@ -90,7 +90,7 @@ WRITE_HANDLER( hanaawas_colorram_w )
 	}
 }
 
-WRITE_HANDLER( hanaawas_portB_w )
+WRITE8_HANDLER( hanaawas_portB_w )
 {
 	/* bit 7 is flip screen */
 	if (flip_screen != (~data & 0x80))

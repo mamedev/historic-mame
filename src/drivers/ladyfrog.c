@@ -57,64 +57,64 @@ static int sound_nmi_enable=0,pending_nmi=0;
 static int snd_flag;
 static UINT8 snd_data;
 
-WRITE_HANDLER( ladyfrog_videoram_w );
-WRITE_HANDLER( ladyfrog_spriteram_w );
-WRITE_HANDLER( ladyfrog_palette_w );
-WRITE_HANDLER( ladyfrog_gfxctrl_w );
-WRITE_HANDLER( ladyfrog_gfxctrl2_w );
-WRITE_HANDLER( ladyfrog_scrlram_w );
+WRITE8_HANDLER( ladyfrog_videoram_w );
+WRITE8_HANDLER( ladyfrog_spriteram_w );
+WRITE8_HANDLER( ladyfrog_palette_w );
+WRITE8_HANDLER( ladyfrog_gfxctrl_w );
+WRITE8_HANDLER( ladyfrog_gfxctrl2_w );
+WRITE8_HANDLER( ladyfrog_scrlram_w );
 
-READ_HANDLER( ladyfrog_spriteram_r );
-READ_HANDLER( ladyfrog_palette_r );
-READ_HANDLER( ladyfrog_scrlram_r );
-READ_HANDLER( ladyfrog_videoram_r );
+READ8_HANDLER( ladyfrog_spriteram_r );
+READ8_HANDLER( ladyfrog_palette_r );
+READ8_HANDLER( ladyfrog_scrlram_r );
+READ8_HANDLER( ladyfrog_videoram_r );
 
-static READ_HANDLER( from_snd_r )
+static READ8_HANDLER( from_snd_r )
 {
 	snd_flag=0;
 	return snd_data;
 }
 
-static WRITE_HANDLER( to_main_w )
+static WRITE8_HANDLER( to_main_w )
 {
 	snd_data = data;
 	snd_flag = 2;
 
 }
 
-static WRITE_HANDLER( sound_cpu_reset_w )
+static WRITE8_HANDLER( sound_cpu_reset_w )
 {
-	cpu_set_reset_line(1, (data&1 )? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_RESET, (data&1 )? ASSERT_LINE : CLEAR_LINE);
 }
 
 static void nmi_callback(int param)
 {
-	if (sound_nmi_enable) cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
+	if (sound_nmi_enable) cpunum_set_input_line(1,INPUT_LINE_NMI,PULSE_LINE);
 	else pending_nmi = 1;
 }
 
-static WRITE_HANDLER( sound_command_w )
+static WRITE8_HANDLER( sound_command_w )
 {
 	soundlatch_w(0,data);
 	timer_set(TIME_NOW,data,nmi_callback);
 }
 
-static WRITE_HANDLER( nmi_disable_w )
+static WRITE8_HANDLER( nmi_disable_w )
 {
 	sound_nmi_enable = 0;
 }
 
-static WRITE_HANDLER( nmi_enable_w )
+static WRITE8_HANDLER( nmi_enable_w )
 {
 	sound_nmi_enable = 1;
 	if (pending_nmi)
 	{
-		cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
+		cpunum_set_input_line(1,INPUT_LINE_NMI,PULSE_LINE);
 		pending_nmi = 0;
 	}
 }
 
-static WRITE_HANDLER(unk_w)
+static WRITE8_HANDLER(unk_w)
 {
 
 }
@@ -138,7 +138,7 @@ static struct MSM5232interface msm5232_interface =
 	{ 100 }
 };
 
-static READ_HANDLER( snd_flag_r )
+static READ8_HANDLER( snd_flag_r )
 {
 	return snd_flag | 0xfd;
 }

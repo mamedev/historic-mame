@@ -1,7 +1,7 @@
 #include "driver.h"
 
 /* Game writes here to set ADPCM ROM address */
-WRITE_HANDLER( rastan_adpcm_trigger_w )
+WRITE8_HANDLER( rastan_adpcm_trigger_w )
 {
 	UINT8 *rom = memory_region(REGION_SOUND1);
 	int len = memory_region_length(REGION_SOUND1);
@@ -17,12 +17,12 @@ WRITE_HANDLER( rastan_adpcm_trigger_w )
 }
 
 /* Game writes here to START ADPCM_voice playing */
-WRITE_HANDLER( rastan_c000_w )
+WRITE8_HANDLER( rastan_c000_w )
 {
 }
 
 /* Game writes here to STOP ADPCM_voice playing */
-WRITE_HANDLER( rastan_d000_w )
+WRITE8_HANDLER( rastan_d000_w )
 {
 #if 0
 	if (Machine->samples == 0) return;

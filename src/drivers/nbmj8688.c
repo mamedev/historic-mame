@@ -48,23 +48,23 @@ VIDEO_START( mbmj8688_hybrid_16bit );
 VIDEO_START( mbmj8688_pure_16bit );
 VIDEO_START( mbmj8688_pure_16bit_LCD );
 
-WRITE_HANDLER( nbmj8688_color_lookup_w );
-WRITE_HANDLER( nbmj8688_blitter_w );
-WRITE_HANDLER( mjsikaku_gfxflag1_w );
-WRITE_HANDLER( mjsikaku_gfxflag2_w );
-WRITE_HANDLER( mjsikaku_gfxflag3_w );
-WRITE_HANDLER( mjsikaku_scrolly_w );
-WRITE_HANDLER( mjsikaku_romsel_w );
-WRITE_HANDLER( secolove_romsel_w );
-WRITE_HANDLER( seiha_romsel_w );
-WRITE_HANDLER( crystal2_romsel_w );
+WRITE8_HANDLER( nbmj8688_color_lookup_w );
+WRITE8_HANDLER( nbmj8688_blitter_w );
+WRITE8_HANDLER( mjsikaku_gfxflag1_w );
+WRITE8_HANDLER( mjsikaku_gfxflag2_w );
+WRITE8_HANDLER( mjsikaku_gfxflag3_w );
+WRITE8_HANDLER( mjsikaku_scrolly_w );
+WRITE8_HANDLER( mjsikaku_romsel_w );
+WRITE8_HANDLER( secolove_romsel_w );
+WRITE8_HANDLER( seiha_romsel_w );
+WRITE8_HANDLER( crystal2_romsel_w );
 
-WRITE_HANDLER( nbmj8688_HD61830B_0_instr_w );
-WRITE_HANDLER( nbmj8688_HD61830B_0_data_w );
-WRITE_HANDLER( nbmj8688_HD61830B_1_instr_w );
-WRITE_HANDLER( nbmj8688_HD61830B_1_data_w );
-WRITE_HANDLER( nbmj8688_HD61830B_both_instr_w );
-WRITE_HANDLER( nbmj8688_HD61830B_both_data_w );
+WRITE8_HANDLER( nbmj8688_HD61830B_0_instr_w );
+WRITE8_HANDLER( nbmj8688_HD61830B_0_data_w );
+WRITE8_HANDLER( nbmj8688_HD61830B_1_instr_w );
+WRITE8_HANDLER( nbmj8688_HD61830B_1_data_w );
+WRITE8_HANDLER( nbmj8688_HD61830B_both_instr_w );
+WRITE8_HANDLER( nbmj8688_HD61830B_both_data_w );
 
 
 static DRIVER_INIT( mjsikaku )
@@ -244,14 +244,14 @@ ADDRESS_MAP_END
 
 
 
-static READ_HANDLER( sndrom_r )
+static READ8_HANDLER( sndrom_r )
 {
 	/* get top 8 bits of the I/O port address */
 	offset = (offset << 8) | (activecpu_get_reg(Z80_BC) >> 8);
 	return nb1413m3_sndrom_r(offset);
 }
 
-static READ_HANDLER( ff_r )
+static READ8_HANDLER( ff_r )
 {
 	/* possibly because of a bug, reads from port 0xd0 must return 0xff
 	   otherwise apparel doesn't clear the background when you insert a coin */
@@ -396,7 +396,7 @@ static ADDRESS_MAP_START( writeport_iemoto, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 
-static WRITE_HANDLER( seiha_b0_w )
+static WRITE8_HANDLER( seiha_b0_w )
 {
 	nb1413m3_outcoin_w(0,data);
 	nb1413m3_sndrombank1_w(0,data);

@@ -44,14 +44,14 @@ extern unsigned char *tomahawk_protection;
 PALETTE_INIT( astrof );
 VIDEO_START( astrof );
 VIDEO_UPDATE( astrof );
-WRITE_HANDLER( astrof_videoram_w );
-WRITE_HANDLER( tomahawk_videoram_w );
-WRITE_HANDLER( astrof_video_control1_w );
-WRITE_HANDLER( astrof_video_control2_w );
-WRITE_HANDLER( tomahawk_video_control2_w );
-READ_HANDLER( tomahawk_protection_r );
-WRITE_HANDLER( astrof_sample1_w );
-WRITE_HANDLER( astrof_sample2_w );
+WRITE8_HANDLER( astrof_videoram_w );
+WRITE8_HANDLER( tomahawk_videoram_w );
+WRITE8_HANDLER( astrof_video_control1_w );
+WRITE8_HANDLER( astrof_video_control2_w );
+WRITE8_HANDLER( tomahawk_video_control2_w );
+READ8_HANDLER( tomahawk_protection_r );
+WRITE8_HANDLER( astrof_sample1_w );
+WRITE8_HANDLER( astrof_sample2_w );
 
 extern struct Samplesinterface astrof_samples_interface;
 extern struct Samplesinterface tomahawk_samples_interface;
@@ -97,7 +97,7 @@ ADDRESS_MAP_END
 static INTERRUPT_GEN( astrof_interrupt )
 {
 	if (readinputport(2) & 1)	/* Coin */
-		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+		cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 }
 
 

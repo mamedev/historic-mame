@@ -103,7 +103,7 @@ void tms5220_sh_update(void)
 
 ***********************************************************************************************/
 
-WRITE_HANDLER( tms5220_data_w )
+WRITE8_HANDLER( tms5220_data_w )
 {
     /* bring up to date first */
     stream_update(stream, 0);
@@ -118,7 +118,7 @@ WRITE_HANDLER( tms5220_data_w )
 
 ***********************************************************************************************/
 
-READ_HANDLER( tms5220_status_r )
+READ8_HANDLER( tms5220_status_r )
 {
     /* bring up to date first */
     stream_update(stream, -1);

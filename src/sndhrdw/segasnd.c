@@ -13,33 +13,33 @@
 static UINT8 sega_speechboard_latch, sega_speechboard_t0, sega_speechboard_p2, sega_speechboard_drq;
 
 
-static READ_HANDLER( speechboard_t0_r )
+static READ8_HANDLER( speechboard_t0_r )
 {
 	return sega_speechboard_t0;
 }
 
-static READ_HANDLER( speechboard_t1_r )
+static READ8_HANDLER( speechboard_t1_r )
 {
 	return sega_speechboard_drq;
 }
 
-static READ_HANDLER( speechboard_p1_r )
+static READ8_HANDLER( speechboard_p1_r )
 {
 	return sega_speechboard_latch;
 }
 
-static READ_HANDLER( speechboard_rom_r )
+static READ8_HANDLER( speechboard_rom_r )
 {
 	return memory_region(REGION_CPU2)[0x800 + 0x100*(sega_speechboard_p2 & 0x3f) + offset];
 }
 
-static WRITE_HANDLER( speechboard_p1_w )
+static WRITE8_HANDLER( speechboard_p1_w )
 {
 	if(!(data & 0x80))
 		sega_speechboard_t0 = 0;
 }
 
-static WRITE_HANDLER( speechboard_p2_w )
+static WRITE8_HANDLER( speechboard_p2_w )
 {
 	sega_speechboard_p2 = data;
 }
@@ -49,10 +49,10 @@ static void speechboard_drq_w(int level)
 	sega_speechboard_drq = level == ASSERT_LINE;
 }
 
-WRITE_HANDLER( sega_sh_speechboard_w )
+WRITE8_HANDLER( sega_sh_speechboard_w )
 {
 	sega_speechboard_latch = data & 0x7f;
-	cpu_set_irq_line(1, 0, data & 0x80 ? CLEAR_LINE : ASSERT_LINE);
+	cpunum_set_input_line(1, 0, data & 0x80 ? CLEAR_LINE : ASSERT_LINE);
 	if(!(data & 0x80))
 		sega_speechboard_t0 = 1;
 }

@@ -474,28 +474,28 @@ int sound_clock(const struct MachineSound *msound);
 int sound_scalebufferpos(int value);
 
 
-READ_HANDLER( soundlatch_r );
-READ_HANDLER( soundlatch2_r );
-READ_HANDLER( soundlatch3_r );
-READ_HANDLER( soundlatch4_r );
+READ8_HANDLER( soundlatch_r );
+READ8_HANDLER( soundlatch2_r );
+READ8_HANDLER( soundlatch3_r );
+READ8_HANDLER( soundlatch4_r );
 READ16_HANDLER( soundlatch_word_r );
 READ16_HANDLER( soundlatch2_word_r );
 READ16_HANDLER( soundlatch3_word_r );
 READ16_HANDLER( soundlatch4_word_r );
 
-WRITE_HANDLER( soundlatch_w );
-WRITE_HANDLER( soundlatch2_w );
-WRITE_HANDLER( soundlatch3_w );
-WRITE_HANDLER( soundlatch4_w );
+WRITE8_HANDLER( soundlatch_w );
+WRITE8_HANDLER( soundlatch2_w );
+WRITE8_HANDLER( soundlatch3_w );
+WRITE8_HANDLER( soundlatch4_w );
 WRITE16_HANDLER( soundlatch_word_w );
 WRITE16_HANDLER( soundlatch2_word_w );
 WRITE16_HANDLER( soundlatch3_word_w );
 WRITE16_HANDLER( soundlatch4_word_w );
 
-WRITE_HANDLER( soundlatch_clear_w );
-WRITE_HANDLER( soundlatch2_clear_w );
-WRITE_HANDLER( soundlatch3_clear_w );
-WRITE_HANDLER( soundlatch4_clear_w );
+WRITE8_HANDLER( soundlatch_clear_w );
+WRITE8_HANDLER( soundlatch2_clear_w );
+WRITE8_HANDLER( soundlatch3_clear_w );
+WRITE8_HANDLER( soundlatch4_clear_w );
 
 
 /* If you're going to use soundlatchX_clear_w, and the cleared value is

@@ -37,12 +37,12 @@ Known issues:
 
 extern struct GfxLayout bwing_tilelayout;
 
-extern WRITE_HANDLER( bwing_paletteram_w );
-extern WRITE_HANDLER( bwing_videoram_w );
-extern WRITE_HANDLER( bwing_spriteram_w );
-extern WRITE_HANDLER( bwing_scrollreg_w );
-extern WRITE_HANDLER( bwing_scrollram_w );
-extern READ_HANDLER( bwing_scrollram_r );
+extern WRITE8_HANDLER( bwing_paletteram_w );
+extern WRITE8_HANDLER( bwing_videoram_w );
+extern WRITE8_HANDLER( bwing_spriteram_w );
+extern WRITE8_HANDLER( bwing_scrollreg_w );
+extern WRITE8_HANDLER( bwing_scrollram_w );
+extern READ8_HANDLER( bwing_scrollram_r );
 extern VIDEO_START( bwing );
 extern VIDEO_UPDATE( bwing );
 
@@ -72,36 +72,36 @@ INTERRUPT_GEN ( bwp1_interrupt )
 				latch_data = sound_fifo[fftail];
 				fftail = (fftail + 1) & (MAX_SOUNDS - 1);
 				soundlatch_w(0, latch_data);
-				cpu_set_irq_line(2, DECO16_IRQ_LINE, HOLD_LINE); // SNDREQ
+				cpunum_set_input_line(2, DECO16_IRQ_LINE, HOLD_LINE); // SNDREQ
 			}
 		break;
 
 		case 1:
 			if (~readinputport(4) & 0x03)
-				{ if (!coin) { coin = 1; cpu_set_nmi_line(0, ASSERT_LINE); } }
+				{ if (!coin) { coin = 1; cpunum_set_input_line(0, INPUT_LINE_NMI, ASSERT_LINE); } }
 			else
 				coin = 0;
 		break;
 
 		case 2:
-			if (readinputport(5)) cpu_set_irq_line(0, M6809_FIRQ_LINE, ASSERT_LINE);
+			if (readinputport(5)) cpunum_set_input_line(0, M6809_FIRQ_LINE, ASSERT_LINE);
 		break;
 	}
 }
 
 
-INTERRUPT_GEN ( bwp3_interrupt ) { if (!bwp3_nmimask) cpu_set_nmi_line(2, ASSERT_LINE); }
+INTERRUPT_GEN ( bwp3_interrupt ) { if (!bwp3_nmimask) cpunum_set_input_line(2, INPUT_LINE_NMI, ASSERT_LINE); }
 
 //****************************************************************************
 // Memory and I/O Handlers
 
-static WRITE_HANDLER( bwp12_sharedram1_w ) { bwp1_sharedram1[offset] = bwp2_sharedram1[offset] = data; }
-static WRITE_HANDLER( bwp3_u8F_w ) { bwp3_u8F_d = data; } // prepares custom chip for various operations
-static WRITE_HANDLER( bwp3_nmiack_w ) { cpu_set_nmi_line(2, CLEAR_LINE); }
-static WRITE_HANDLER( bwp3_nmimask_w ) { bwp3_nmimask = data & 0x80; }
+static WRITE8_HANDLER( bwp12_sharedram1_w ) { bwp1_sharedram1[offset] = bwp2_sharedram1[offset] = data; }
+static WRITE8_HANDLER( bwp3_u8F_w ) { bwp3_u8F_d = data; } // prepares custom chip for various operations
+static WRITE8_HANDLER( bwp3_nmiack_w ) { cpunum_set_input_line(2, INPUT_LINE_NMI, CLEAR_LINE); }
+static WRITE8_HANDLER( bwp3_nmimask_w ) { bwp3_nmimask = data & 0x80; }
 
 
-static READ_HANDLER( bwp1_io_r )
+static READ8_HANDLER( bwp1_io_r )
 {
 	if (offset == 0) return(readinputport(0));
 	if (offset == 1) return(readinputport(1));
@@ -113,21 +113,21 @@ static READ_HANDLER( bwp1_io_r )
 }
 
 
-static WRITE_HANDLER( bwp1_ctrl_w )
+static WRITE8_HANDLER( bwp1_ctrl_w )
 {
 	switch (offset)
 	{
 		// MSSTB
-		case 0: cpu_set_irq_line(1, M6809_IRQ_LINE, ASSERT_LINE); break;
+		case 0: cpunum_set_input_line(1, M6809_IRQ_LINE, ASSERT_LINE); break;
 
 		// IRQACK
-		case 1: cpu_set_irq_line(0, M6809_IRQ_LINE, CLEAR_LINE); break;
+		case 1: cpunum_set_input_line(0, M6809_IRQ_LINE, CLEAR_LINE); break;
 
 		// FIRQACK
-		case 2: cpu_set_irq_line(0, M6809_FIRQ_LINE, CLEAR_LINE); break;
+		case 2: cpunum_set_input_line(0, M6809_FIRQ_LINE, CLEAR_LINE); break;
 
 		// NMIACK
-		case 3: cpu_set_nmi_line(0, CLEAR_LINE); break;
+		case 3: cpunum_set_input_line(0, INPUT_LINE_NMI, CLEAR_LINE); break;
 
 		// SWAP(bank-swaps sprite RAM between 1800 & 1900; ignored bc. they're treated as a single chunk.)
 		case 4: break;
@@ -135,7 +135,7 @@ static WRITE_HANDLER( bwp1_ctrl_w )
 		// SNDREQ
 		case 5:
 			if (data == 0x80) // protection trick to screw CPU1 & 3
-				cpu_set_nmi_line(1, ASSERT_LINE); // SNMI
+				cpunum_set_input_line(1, INPUT_LINE_NMI, ASSERT_LINE); // SNMI
 			else
 			if (ffcount < MAX_SOUNDS)
 			{
@@ -158,17 +158,17 @@ static WRITE_HANDLER( bwp1_ctrl_w )
 }
 
 
-static WRITE_HANDLER( bwp2_ctrl_w )
+static WRITE8_HANDLER( bwp2_ctrl_w )
 {
 	switch (offset)
 	{
-		case 0: cpu_set_irq_line(0, M6809_IRQ_LINE, ASSERT_LINE); break; // SMSTB
+		case 0: cpunum_set_input_line(0, M6809_IRQ_LINE, ASSERT_LINE); break; // SMSTB
 
-		case 1: cpu_set_irq_line(1, M6809_FIRQ_LINE, CLEAR_LINE); break;
+		case 1: cpunum_set_input_line(1, M6809_FIRQ_LINE, CLEAR_LINE); break;
 
-		case 2: cpu_set_irq_line(1, M6809_IRQ_LINE, CLEAR_LINE); break;
+		case 2: cpunum_set_input_line(1, M6809_IRQ_LINE, CLEAR_LINE); break;
 
-		case 3: cpu_set_nmi_line(1, CLEAR_LINE); break;
+		case 3: cpunum_set_input_line(1, INPUT_LINE_NMI, CLEAR_LINE); break;
 	}
 
 	#if BW_DEBUG

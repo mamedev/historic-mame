@@ -14,22 +14,22 @@ Preliminary driver by:
 #include "vidhrdw/konamiic.h"
 
 /* from vidhrdw */
-WRITE_HANDLER( battlnts_spritebank_w );
+WRITE8_HANDLER( battlnts_spritebank_w );
 VIDEO_START( battlnts );
 VIDEO_UPDATE( battlnts );
 
 static INTERRUPT_GEN( battlnts_interrupt )
 {
 	if (K007342_is_INT_enabled())
-		cpu_set_irq_line(0, HD6309_IRQ_LINE, HOLD_LINE);
+		cpunum_set_input_line(0, HD6309_IRQ_LINE, HOLD_LINE);
 }
 
-WRITE_HANDLER( battlnts_sh_irqtrigger_w )
+WRITE8_HANDLER( battlnts_sh_irqtrigger_w )
 {
-	cpu_set_irq_line_and_vector(1, 0, HOLD_LINE, 0xff);
+	cpunum_set_input_line_and_vector(1, 0, HOLD_LINE, 0xff);
 }
 
-static WRITE_HANDLER( battlnts_bankswitch_w )
+static WRITE8_HANDLER( battlnts_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	int bankaddress;

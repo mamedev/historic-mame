@@ -66,7 +66,7 @@ PALETTE_INIT( tankbatt )
 	}
 }
 
-WRITE_HANDLER( tankbatt_videoram_w )
+WRITE8_HANDLER( tankbatt_videoram_w )
 {
 	if (videoram[offset] != data)
 	{

@@ -72,7 +72,7 @@ int gridlee_sh_start(const struct MachineSound *msound)
 
 
 
-WRITE_HANDLER( gridlee_sound_w )
+WRITE8_HANDLER( gridlee_sound_w )
 {
 static UINT8 sound_data[24];
 

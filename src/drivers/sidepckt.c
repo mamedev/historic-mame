@@ -23,31 +23,31 @@ PALETTE_INIT( sidepckt );
 VIDEO_START( sidepckt );
 VIDEO_UPDATE( sidepckt );
 
-WRITE_HANDLER( sidepckt_flipscreen_w );
-WRITE_HANDLER( sidepckt_videoram_w );
-WRITE_HANDLER( sidepckt_colorram_w );
+WRITE8_HANDLER( sidepckt_flipscreen_w );
+WRITE8_HANDLER( sidepckt_videoram_w );
+WRITE8_HANDLER( sidepckt_colorram_w );
 static int i8751_return;
 
 
-static WRITE_HANDLER( sound_cpu_command_w )
+static WRITE8_HANDLER( sound_cpu_command_w )
 {
     soundlatch_w(offset,data);
-    cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
+    cpunum_set_input_line(1,INPUT_LINE_NMI,PULSE_LINE);
 }
 
-static READ_HANDLER( sidepckt_i8751_r )
+static READ8_HANDLER( sidepckt_i8751_r )
 {
 	return i8751_return;
 }
 
-static WRITE_HANDLER( sidepckt_i8751_w )
+static WRITE8_HANDLER( sidepckt_i8751_w )
 {
 	int table_1[]={5,3,2};
 	int table_2[]={0x8e,0x42,0xad,0x58,0xec,0x85,0xdd,0x4c,0xad,0x9f,0x00,0x4c,0x7e,0x42,0xa2,0xff};
 	int table_3[]={0xbd,0x73,0x80,0xbd,0x73,0xa7,0xbd,0x73,0xe0,0x7e,0x72,0x56,0xff,0xff,0xff,0xff};
 	static int current_ptr=0,current_table=0,in_math=0,math_param;
 
-	cpu_set_irq_line(0,M6809_FIRQ_LINE,HOLD_LINE); /* i8751 triggers FIRQ on main cpu */
+	cpunum_set_input_line(0,M6809_FIRQ_LINE,HOLD_LINE); /* i8751 triggers FIRQ on main cpu */
 
 	/* This function takes multiple parameters */
 	if (in_math==1) {
@@ -81,14 +81,14 @@ static WRITE_HANDLER( sidepckt_i8751_w )
 	}
 }
 
-static WRITE_HANDLER( sidepctj_i8751_w )
+static WRITE8_HANDLER( sidepctj_i8751_w )
 {
 	int table_1[]={5,3,0};
 	int table_2[]={0x8e,0x42,0xb2,0x58,0xec,0x85,0xdd,0x4c,0xad,0x9f,0x00,0x4c,0x7e,0x42,0xa7,0xff};
 	int table_3[]={0xbd,0x71,0xc8,0xbd,0x71,0xef,0xbd,0x72,0x28,0x7e,0x70,0x9e,0xff,0xff,0xff,0xff};
 	static int current_ptr=0,current_table=0,in_math,math_param;
 
-	cpu_set_irq_line(0,M6809_FIRQ_LINE,HOLD_LINE); /* i8751 triggers FIRQ on main cpu */
+	cpunum_set_input_line(0,M6809_FIRQ_LINE,HOLD_LINE); /* i8751 triggers FIRQ on main cpu */
 
 	/* This function takes multiple parameters */
 	if (in_math==1) {
@@ -280,7 +280,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 /* handler called by the 3526 emulator when the internal timers cause an IRQ */
 static void irqhandler(int linestate)
 {
-	cpu_set_irq_line(1,0,linestate);
+	cpunum_set_input_line(1,0,linestate);
 }
 
 static struct YM2203interface ym2203_interface =

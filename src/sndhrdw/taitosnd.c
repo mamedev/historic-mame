@@ -43,12 +43,12 @@ static void Interrupt_Controller(void)
 {
 	if ( tc0140syt.nmi_req && tc0140syt.nmi_enabled )
 	{
-		cpu_set_irq_line( 1, IRQ_LINE_NMI, PULSE_LINE );
+		cpunum_set_input_line( 1, INPUT_LINE_NMI, PULSE_LINE );
 		tc0140syt.nmi_req = 0;
 	}
 }
 
-WRITE_HANDLER( taitosound_port_w )
+WRITE8_HANDLER( taitosound_port_w )
 {
 	data &= 0x0f;
 
@@ -60,7 +60,7 @@ WRITE_HANDLER( taitosound_port_w )
 	}
 }
 
-WRITE_HANDLER( taitosound_comm_w )
+WRITE8_HANDLER( taitosound_comm_w )
 {
 
 	data &= 0x0f;	/*this is important, otherwise ballbros won't work*/
@@ -97,10 +97,10 @@ WRITE_HANDLER( taitosound_comm_w )
 //#endif
 			/* this does a hi-lo transition to reset the sound cpu */
 			if (data)
-				cpu_set_reset_line(1,ASSERT_LINE);
+				cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE);
 			else
 			{
-				cpu_set_reset_line(1,CLEAR_LINE);
+				cpunum_set_input_line(1, INPUT_LINE_RESET, CLEAR_LINE);
                 cpu_spin(); /* otherwise no sound in driftout */
             }
 			break;
@@ -111,7 +111,7 @@ WRITE_HANDLER( taitosound_comm_w )
 
 }
 
-READ_HANDLER( taitosound_comm_r )
+READ8_HANDLER( taitosound_comm_r )
 {
 	switch( tc0140syt.mainmode )
 	{
@@ -150,7 +150,7 @@ READ_HANDLER( taitosound_comm_r )
 
 //SLAVE SIDE
 
-WRITE_HANDLER( taitosound_slave_port_w )
+WRITE8_HANDLER( taitosound_slave_port_w )
 {
 	data &= 0x0f;
 	tc0140syt.submode = data;
@@ -159,7 +159,7 @@ WRITE_HANDLER( taitosound_slave_port_w )
 		logerror("tc0140syt error : Slave cpu unknown mode[%02x]\n", data);
 }
 
-WRITE_HANDLER( taitosound_slave_comm_w )
+WRITE8_HANDLER( taitosound_slave_comm_w )
 {
 	data &= 0x0f;
 
@@ -210,7 +210,7 @@ WRITE_HANDLER( taitosound_slave_comm_w )
 
 }
 
-READ_HANDLER( taitosound_slave_comm_r )
+READ8_HANDLER( taitosound_slave_comm_r )
 {
 	unsigned char res = 0;
 

@@ -1550,11 +1550,11 @@ static struct GfxDecodeInfo gfxdecodeinfo_scudhamm[] =
 INTERRUPT_GEN( cischeat_interrupt )
 {
 	if (cpu_getiloops()==0)
-		cpu_set_irq_line(0, 4, HOLD_LINE); /* Once */
+		cpunum_set_input_line(0, 4, HOLD_LINE); /* Once */
 	else
 	{
-		if (cpu_getiloops()%2)	cpu_set_irq_line(0, 2, HOLD_LINE);
-		else 					cpu_set_irq_line(0, 1, HOLD_LINE);
+		if (cpu_getiloops()%2)	cpunum_set_input_line(0, 2, HOLD_LINE);
+		else 					cpunum_set_input_line(0, 1, HOLD_LINE);
 	}
 }
 
@@ -1719,8 +1719,8 @@ INTERRUPT_GEN( interrupt_scudhamm )
 {
 	switch ( cpu_getiloops() )
 	{
-		case 0:		cpu_set_irq_line(0, 3, PULSE_LINE);	// update palette, layers etc. Not the sprites.
-		case 14:	cpu_set_irq_line(0, 2, PULSE_LINE);	// "real" vblank. It just sets a flag that
+		case 0:		cpunum_set_input_line(0, 3, PULSE_LINE);	// update palette, layers etc. Not the sprites.
+		case 14:	cpunum_set_input_line(0, 2, PULSE_LINE);	// "real" vblank. It just sets a flag that
 														// the main loop polls before updating the sprites.
 	}
 }
@@ -2490,7 +2490,7 @@ ROM_END
 
 DRIVER_INIT( wildplt )
 {
-	install_mem_read16_handler(0, 0x080000, 0x087fff, wildplt_vregs_r );
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x080000, 0x087fff, 0, 0, wildplt_vregs_r );
 	
 	init_f1gpstar();
 }

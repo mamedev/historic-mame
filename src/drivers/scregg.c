@@ -20,11 +20,11 @@ PALETTE_INIT( btime );
 VIDEO_START( btime );
 VIDEO_UPDATE( eggs );
 
-READ_HANDLER( btime_mirrorvideoram_r );
-WRITE_HANDLER( btime_mirrorvideoram_w );
-READ_HANDLER( btime_mirrorcolorram_r );
-WRITE_HANDLER( btime_mirrorcolorram_w );
-WRITE_HANDLER( btime_video_control_w );
+READ8_HANDLER( btime_mirrorvideoram_r );
+WRITE8_HANDLER( btime_mirrorvideoram_w );
+READ8_HANDLER( btime_mirrorcolorram_r );
+WRITE8_HANDLER( btime_mirrorcolorram_w );
+WRITE8_HANDLER( btime_video_control_w );
 
 static ADDRESS_MAP_START( dommy_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_RAM)

@@ -106,7 +106,7 @@ struct sa sa[TOTAL_SOUNDS] =
 	{ 11, 11, 1, 1, 1 },	/* background */
 };
 
-WRITE_HANDLER( zaxxon_sound_w )
+WRITE8_HANDLER( zaxxon_sound_w )
 {
 	int line;
 	int noise;

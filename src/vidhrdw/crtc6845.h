@@ -47,6 +47,6 @@
 	extern int crtc6845_page_flip;
 #endif
 
-READ_HANDLER( crtc6845_register_r );
-WRITE_HANDLER( crtc6845_address_w );
-WRITE_HANDLER( crtc6845_register_w );
+READ8_HANDLER( crtc6845_register_r );
+WRITE8_HANDLER( crtc6845_address_w );
+WRITE8_HANDLER( crtc6845_register_w );

@@ -870,7 +870,7 @@ VIDEO_START( bongo )
 }
 
 
-WRITE_HANDLER( galaxian_videoram_w )
+WRITE8_HANDLER( galaxian_videoram_w )
 {
 	if (galaxian_videoram[offset] != data)
 	{
@@ -879,13 +879,13 @@ WRITE_HANDLER( galaxian_videoram_w )
 	}
 }
 
-READ_HANDLER( galaxian_videoram_r )
+READ8_HANDLER( galaxian_videoram_r )
 {
 	return galaxian_videoram[offset];
 }
 
 
-WRITE_HANDLER( galaxian_attributesram_w )
+WRITE8_HANDLER( galaxian_attributesram_w )
 {
 	if (galaxian_attributesram[offset] != data)
 	{
@@ -912,7 +912,7 @@ WRITE_HANDLER( galaxian_attributesram_w )
 }
 
 
-WRITE_HANDLER( galaxian_flip_screen_x_w )
+WRITE8_HANDLER( galaxian_flip_screen_x_w )
 {
 	if (flip_screen_x != (data & 0x01))
 	{
@@ -922,7 +922,7 @@ WRITE_HANDLER( galaxian_flip_screen_x_w )
 	}
 }
 
-WRITE_HANDLER( galaxian_flip_screen_y_w )
+WRITE8_HANDLER( galaxian_flip_screen_y_w )
 {
 	if (flip_screen_y != (data & 0x01))
 	{
@@ -933,46 +933,46 @@ WRITE_HANDLER( galaxian_flip_screen_y_w )
 }
 
 
-WRITE_HANDLER( gteikob2_flip_screen_x_w )
+WRITE8_HANDLER( gteikob2_flip_screen_x_w )
 {
 	galaxian_flip_screen_x_w(offset, ~data);
 }
 
-WRITE_HANDLER( gteikob2_flip_screen_y_w )
+WRITE8_HANDLER( gteikob2_flip_screen_y_w )
 {
 	galaxian_flip_screen_y_w(offset, ~data);
 }
 
 
-WRITE_HANDLER( hotshock_flip_screen_w )
+WRITE8_HANDLER( hotshock_flip_screen_w )
 {
 	galaxian_flip_screen_x_w(offset, data);
 	galaxian_flip_screen_y_w(offset, data);
 }
 
 
-WRITE_HANDLER( scramble_background_enable_w )
+WRITE8_HANDLER( scramble_background_enable_w )
 {
 	background_enable = data & 0x01;
 }
 
-WRITE_HANDLER( scramble_background_red_w )
+WRITE8_HANDLER( scramble_background_red_w )
 {
 	background_red = data & 0x01;
 }
 
-WRITE_HANDLER( scramble_background_green_w )
+WRITE8_HANDLER( scramble_background_green_w )
 {
 	background_green = data & 0x01;
 }
 
-WRITE_HANDLER( scramble_background_blue_w )
+WRITE8_HANDLER( scramble_background_blue_w )
 {
 	background_blue = data & 0x01;
 }
 
 
-WRITE_HANDLER( galaxian_stars_enable_w )
+WRITE8_HANDLER( galaxian_stars_enable_w )
 {
 	galaxian_stars_on = data & 0x01;
 
@@ -983,14 +983,14 @@ WRITE_HANDLER( galaxian_stars_enable_w )
 }
 
 
-WRITE_HANDLER( darkplnt_bullet_color_w )
+WRITE8_HANDLER( darkplnt_bullet_color_w )
 {
 	darkplnt_bullet_color = data & 0x01;
 }
 
 
 
-WRITE_HANDLER( galaxian_gfxbank_w )
+WRITE8_HANDLER( galaxian_gfxbank_w )
 {
 	if (gfxbank[offset] != data)
 	{
@@ -1000,7 +1000,7 @@ WRITE_HANDLER( galaxian_gfxbank_w )
 	}
 }
 
-WRITE_HANDLER( rockclim_videoram_w )
+WRITE8_HANDLER( rockclim_videoram_w )
 {
 	if (rockclim_videoram[offset] != data)
 	{
@@ -1012,7 +1012,7 @@ WRITE_HANDLER( rockclim_videoram_w )
 static int rockclim_v=0;
 static int rockclim_h=0;
 
-WRITE_HANDLER( rockclim_scroll_w )
+WRITE8_HANDLER( rockclim_scroll_w )
 {
 
 
@@ -1027,7 +1027,7 @@ WRITE_HANDLER( rockclim_scroll_w )
 }
 
 
-READ_HANDLER( rockclim_videoram_r )
+READ8_HANDLER( rockclim_videoram_r )
 {
 	return rockclim_videoram[offset];
 }

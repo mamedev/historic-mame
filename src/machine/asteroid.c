@@ -17,25 +17,25 @@ INTERRUPT_GEN( asteroid_interrupt )
 {
 	/* Turn off interrupts if self-test is enabled */
 	if (!(readinputport(0) & 0x80))
-		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+		cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 }
 
 INTERRUPT_GEN( asterock_interrupt )
 {
 	/* Turn off interrupts if self-test is enabled */
 	if ((readinputport(0) & 0x80))
-		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+		cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 }
 
 INTERRUPT_GEN( llander_interrupt )
 {
 	/* Turn off interrupts if self-test is enabled */
 	if (readinputport(0) & 0x02)
-		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+		cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 }
 
 
-READ_HANDLER( asteroid_IN0_r )
+READ8_HANDLER( asteroid_IN0_r )
 {
 
 	int res;
@@ -59,7 +59,7 @@ READ_HANDLER( asteroid_IN0_r )
 }
 
 
-READ_HANDLER( asteroib_IN0_r )
+READ8_HANDLER( asteroib_IN0_r )
 {
 	int res;
 
@@ -73,7 +73,7 @@ READ_HANDLER( asteroib_IN0_r )
 	return res;
 }
 
-READ_HANDLER( asterock_IN0_r )
+READ8_HANDLER( asterock_IN0_r )
 {
 	int res;
 	int bitmask;
@@ -100,7 +100,7 @@ READ_HANDLER( asterock_IN0_r )
  * Typically, only the high bit is used. This is handled by one input port.
  */
 
-READ_HANDLER( asteroid_IN1_r )
+READ8_HANDLER( asteroid_IN1_r )
 {
 	int res;
 	int bitmask;
@@ -116,7 +116,7 @@ READ_HANDLER( asteroid_IN1_r )
 }
 
 
-READ_HANDLER( asteroid_DSW1_r )
+READ8_HANDLER( asteroid_DSW1_r )
 {
 	int res;
 	int res1;
@@ -128,7 +128,7 @@ READ_HANDLER( asteroid_DSW1_r )
 }
 
 
-WRITE_HANDLER( asteroid_bank_switch_w )
+WRITE8_HANDLER( asteroid_bank_switch_w )
 {
 	static int asteroid_bank = 0;
 	int asteroid_newbank;
@@ -153,7 +153,7 @@ WRITE_HANDLER( asteroid_bank_switch_w )
 }
 
 
-WRITE_HANDLER( astdelux_bank_switch_w )
+WRITE8_HANDLER( astdelux_bank_switch_w )
 {
 	static int astdelux_bank = 0;
 	int astdelux_newbank;
@@ -176,7 +176,7 @@ WRITE_HANDLER( astdelux_bank_switch_w )
 }
 
 
-WRITE_HANDLER( astdelux_led_w )
+WRITE8_HANDLER( astdelux_led_w )
 {
 	set_led_status(offset,(data&0x80)?0:1);
 }
@@ -191,7 +191,7 @@ MACHINE_INIT( asteroid )
 /*
  * This is Lunar Lander's Inputport 0.
  */
-READ_HANDLER( llander_IN0_r )
+READ8_HANDLER( llander_IN0_r )
 {
 	int res;
 

@@ -5,7 +5,7 @@ static int bg_index[4];
 
 static struct tilemap *bg_tilemap, *fg_tilemap;
 
-WRITE_HANDLER( exprraid_videoram_w )
+WRITE8_HANDLER( exprraid_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -14,7 +14,7 @@ WRITE_HANDLER( exprraid_videoram_w )
 	}
 }
 
-WRITE_HANDLER( exprraid_colorram_w )
+WRITE8_HANDLER( exprraid_colorram_w )
 {
 	if (colorram[offset] != data)
 	{
@@ -23,7 +23,7 @@ WRITE_HANDLER( exprraid_colorram_w )
 	}
 }
 
-WRITE_HANDLER( exprraid_flipscreen_w )
+WRITE8_HANDLER( exprraid_flipscreen_w )
 {
 	if (flip_screen != (data & 0x01))
 	{
@@ -32,7 +32,7 @@ WRITE_HANDLER( exprraid_flipscreen_w )
 	}
 }
 
-WRITE_HANDLER( exprraid_bgselect_w )
+WRITE8_HANDLER( exprraid_bgselect_w )
 {
 	if (bg_index[offset] != data)
 	{
@@ -41,12 +41,12 @@ WRITE_HANDLER( exprraid_bgselect_w )
 	}
 }
 
-WRITE_HANDLER( exprraid_scrollx_w )
+WRITE8_HANDLER( exprraid_scrollx_w )
 {
 	tilemap_set_scrollx(bg_tilemap, offset, data);
 }
 
-WRITE_HANDLER( exprraid_scrolly_w )
+WRITE8_HANDLER( exprraid_scrolly_w )
 {
 	tilemap_set_scrolly(bg_tilemap, 0, data);
 }

@@ -90,15 +90,15 @@ extern unsigned char *tutankhm_scrollx;
 
 static int i8039_status;
 
-WRITE_HANDLER( tutankhm_videoram_w );
-WRITE_HANDLER( junofrst_blitter_w );
+WRITE8_HANDLER( tutankhm_videoram_w );
+WRITE8_HANDLER( junofrst_blitter_w );
 VIDEO_UPDATE( tutankhm );
 
 
-WRITE_HANDLER( tutankhm_sh_irqtrigger_w );
+WRITE8_HANDLER( tutankhm_sh_irqtrigger_w );
 
 
-WRITE_HANDLER( junofrst_bankselect_w )
+WRITE8_HANDLER( junofrst_bankselect_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -107,7 +107,7 @@ WRITE_HANDLER( junofrst_bankselect_w )
 	cpu_setbank(1,&RAM[bankaddress]);
 }
 
-static READ_HANDLER( junofrst_portA_r )
+static READ8_HANDLER( junofrst_portA_r )
 {
 	int timer;
 
@@ -123,7 +123,7 @@ static READ_HANDLER( junofrst_portA_r )
 	return (timer << 4) | i8039_status;
 }
 
-static WRITE_HANDLER( junofrst_portB_w )
+static WRITE8_HANDLER( junofrst_portB_w )
 {
 	int i;
 
@@ -141,7 +141,7 @@ static WRITE_HANDLER( junofrst_portB_w )
 	}
 }
 
-WRITE_HANDLER( junofrst_sh_irqtrigger_w )
+WRITE8_HANDLER( junofrst_sh_irqtrigger_w )
 {
 	static int last;
 
@@ -149,30 +149,30 @@ WRITE_HANDLER( junofrst_sh_irqtrigger_w )
 	if (last == 0 && data == 1)
 	{
 		/* setting bit 0 low then high triggers IRQ on the sound CPU */
-		cpu_set_irq_line_and_vector(1,0,HOLD_LINE,0xff);
+		cpunum_set_input_line_and_vector(1,0,HOLD_LINE,0xff);
 	}
 
 	last = data;
 }
 
-WRITE_HANDLER( junofrst_i8039_irq_w )
+WRITE8_HANDLER( junofrst_i8039_irq_w )
 {
-	cpu_set_irq_line(2, 0, ASSERT_LINE);
+	cpunum_set_input_line(2, 0, ASSERT_LINE);
 }
 
-static WRITE_HANDLER( i8039_irqen_and_status_w )
+static WRITE8_HANDLER( i8039_irqen_and_status_w )
 {
 	if ((data & 0x80) == 0)
-		cpu_set_irq_line(2, 0, CLEAR_LINE);
+		cpunum_set_input_line(2, 0, CLEAR_LINE);
 	i8039_status = (data & 0x70) >> 4;
 }
 
-static WRITE_HANDLER( flip_screen_w )
+static WRITE8_HANDLER( flip_screen_w )
 {
 	flip_screen_set(data);
 }
 
-static WRITE_HANDLER( junofrst_coin_counter_w )
+static WRITE8_HANDLER( junofrst_coin_counter_w )
 {
 	coin_counter_w(offset,data);
 }

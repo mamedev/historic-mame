@@ -184,9 +184,9 @@ INTERRUPT_GEN( interrupt_A )
 {
 	switch ( cpu_getiloops() )
 	{
-		case 0:		cpu_set_irq_line(0, 3, HOLD_LINE);	break;
-		case 1:		cpu_set_irq_line(0, 2, HOLD_LINE);	break;
-		case 2:		cpu_set_irq_line(0, 1, HOLD_LINE);	break;
+		case 0:		cpunum_set_input_line(0, 3, HOLD_LINE);	break;
+		case 1:		cpunum_set_input_line(0, 2, HOLD_LINE);	break;
+		case 2:		cpunum_set_input_line(0, 1, HOLD_LINE);	break;
 	}
 }
 
@@ -194,9 +194,9 @@ INTERRUPT_GEN( interrupt_A_iganinju )
 {
 	switch ( cpu_getiloops() )
 	{
-		case 0:		cpu_set_irq_line(0, 2, HOLD_LINE);	break;
-		case 1:		cpu_set_irq_line(0, 1, HOLD_LINE);	break;
-	//	case 2:		cpu_set_irq_line(0, 1, HOLD_LINE);	break;
+		case 0:		cpunum_set_input_line(0, 2, HOLD_LINE);	break;
+		case 1:		cpunum_set_input_line(0, 1, HOLD_LINE);	break;
+	//	case 2:		cpunum_set_input_line(0, 1, HOLD_LINE);	break;
 	}
 }
 
@@ -243,9 +243,9 @@ INTERRUPT_GEN( interrupt_B )
 {
 	switch (cpu_getiloops())
 	{
-		case 0:		cpu_set_irq_line(0, 4, HOLD_LINE); break;
-		case 1:		cpu_set_irq_line(0, 1, HOLD_LINE); break;
-		default:	cpu_set_irq_line(0, 2, HOLD_LINE); break;
+		case 0:		cpunum_set_input_line(0, 4, HOLD_LINE); break;
+		case 1:		cpunum_set_input_line(0, 1, HOLD_LINE); break;
+		default:	cpunum_set_input_line(0, 2, HOLD_LINE); break;
 	}
 }
 
@@ -290,7 +290,7 @@ static READ16_HANDLER( ip_select_r )
 static WRITE16_HANDLER( ip_select_w )
 {
 	COMBINE_DATA(&ip_select);
-	cpu_set_irq_line(0,2,HOLD_LINE);
+	cpunum_set_input_line(0,2,HOLD_LINE);
 }
 
 
@@ -368,7 +368,7 @@ ADDRESS_MAP_END
 #define INTERRUPT_NUM_D		1
 INTERRUPT_GEN( interrupt_D )
 {
-	cpu_set_irq_line(0, 2, HOLD_LINE);
+	cpunum_set_input_line(0, 2, HOLD_LINE);
 }
 
 static ADDRESS_MAP_START( readmem_D, ADDRESS_SPACE_PROGRAM, 16 )
@@ -466,7 +466,7 @@ ADDRESS_MAP_END
 static void megasys1_sound_irq(int irq)
 {
 	if (irq)
-		cpu_set_irq_line(1, 4, HOLD_LINE);
+		cpunum_set_input_line(1, 4, HOLD_LINE);
 }
 
 static READ16_HANDLER( oki_status_0_r )
@@ -783,7 +783,7 @@ MACHINE_DRIVER_END
 
 static void irq_handler(int irq)
 {
-	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 
@@ -2584,7 +2584,7 @@ static WRITE16_HANDLER( protection_peekaboo_w )
 		}
 	}
 
-	cpu_set_irq_line(0,4,HOLD_LINE);
+	cpunum_set_input_line(0,4,HOLD_LINE);
 }
 
 
@@ -3475,14 +3475,14 @@ static DRIVER_INIT( jitsupro )
 	RAM[0x438/2] = 0x4e71;	//
 
 	/* the sound code writes oki commands to both the lsb and msb */
-	install_mem_write16_handler(1, 0xa0000, 0xa0003, OKIM6295_data_0_both_w);
-	install_mem_write16_handler(1, 0xc0000, 0xc0003, OKIM6295_data_1_both_w);
+	memory_install_write16_handler(1, ADDRESS_SPACE_PROGRAM, 0xa0000, 0xa0003, 0, 0, OKIM6295_data_0_both_w);
+	memory_install_write16_handler(1, ADDRESS_SPACE_PROGRAM, 0xc0000, 0xc0003, 0, 0, OKIM6295_data_1_both_w);
 }
 
 static DRIVER_INIT( peekaboo )
 {
-	install_mem_read16_handler (0, 0x100000, 0x100001, protection_peekaboo_r);
-	install_mem_write16_handler(0, 0x100000, 0x100001, protection_peekaboo_w);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x100000, 0x100001, 0, 0, protection_peekaboo_r);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x100000, 0x100001, 0, 0, protection_peekaboo_w);
 }
 
 static DRIVER_INIT( phantasm )
@@ -3518,8 +3518,8 @@ static DRIVER_INIT( soldam )
 	astyanax_rom_decode(0);
 
 	/* Sprite RAM is mirrored. Why? */
-	install_mem_read16_handler (0, 0x8c000, 0x8cfff, soldamj_spriteram16_r);
-	install_mem_write16_handler(0, 0x8c000, 0x8cfff, soldamj_spriteram16_w);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x8c000, 0x8cfff, 0, 0, soldamj_spriteram16_r);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x8c000, 0x8cfff, 0, 0, soldamj_spriteram16_w);
 }
 
 static DRIVER_INIT( stdragon )

@@ -151,12 +151,12 @@ static NVRAM_HANDLER( lethalen )
 	}
 }
 
-static READ_HANDLER( control2_r )
+static READ8_HANDLER( control2_r )
 {
 	return 0x02 | EEPROM_read_bit();
 }
 
-static WRITE_HANDLER( control2_w )
+static WRITE8_HANDLER( control2_w )
 {
 	/* bit 0  is data */
 	/* bit 1  is cs (active low) */
@@ -173,20 +173,20 @@ static INTERRUPT_GEN(lethalen_interrupt)
 {
 	// only IRQ is a valid interrupt - all other vectors
 	// lock up the 6309
-	cpu_set_irq_line(0, HD6309_IRQ_LINE, HOLD_LINE);
+	cpunum_set_input_line(0, HD6309_IRQ_LINE, HOLD_LINE);
 }
 
-static WRITE_HANDLER( sound_cmd_w )
+static WRITE8_HANDLER( sound_cmd_w )
 {
 	soundlatch_w(0, data);
 }
 
-static WRITE_HANDLER( sound_irq_w )
+static WRITE8_HANDLER( sound_irq_w )
 {
-	cpu_set_irq_line(1, 0, HOLD_LINE);
+	cpunum_set_input_line(1, 0, HOLD_LINE);
 }
 
-static READ_HANDLER( sound_status_r )
+static READ8_HANDLER( sound_status_r )
 {
 //	int result = soundlatch2_r(0);
 //	printf("Z80 result: %x\n", result);
@@ -196,24 +196,24 @@ static READ_HANDLER( sound_status_r )
 
 static void sound_nmi(void)
 {
-	cpu_set_nmi_line(1, PULSE_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 }
 
-static WRITE_HANDLER( le_bankswitch_w )
+static WRITE8_HANDLER( le_bankswitch_w )
 {
 	data8_t *prgrom = (data8_t *)memory_region(REGION_CPU1)+0x10000;
 
 	cpu_setbank(1, &prgrom[data * 0x2000]);
 }
 
-static READ_HANDLER( le_palette_r )
+static READ8_HANDLER( le_palette_r )
 {
 	int bankofs = K054157_get_current_rambank() * 0x800;
 
 	return le_paletteram[offset + bankofs];
 }
 
-static WRITE_HANDLER( le_palette_w )
+static WRITE8_HANDLER( le_palette_w )
 {
 	int bankofs = K054157_get_current_rambank() * 0x800;
 	int r,g,b, base;
@@ -228,7 +228,7 @@ static WRITE_HANDLER( le_palette_w )
 //	palette_set_color(offset/4, r, g, b);
 }
 
-static READ_HANDLER( workram_r )
+static READ8_HANDLER( workram_r )
 {
 	if (offset == 0x1500 && activecpu_get_pc() == 0x8695)
 	{
@@ -237,12 +237,12 @@ static READ_HANDLER( workram_r )
 	return le_workram[offset];
 }
 
-static READ_HANDLER( unk_r )
+static READ8_HANDLER( unk_r )
 {
 	return 0;
 }
 
-static READ_HANDLER( unk_2_r )
+static READ8_HANDLER( unk_2_r )
 {
 	return 0xff;
 }

@@ -14,7 +14,7 @@ extern int arkanoid_paddle_select;
 
 static struct tilemap *bg_tilemap;
 
-WRITE_HANDLER( arkanoid_videoram_w )
+WRITE8_HANDLER( arkanoid_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -23,7 +23,7 @@ WRITE_HANDLER( arkanoid_videoram_w )
 	}
 }
 
-WRITE_HANDLER( arkanoid_d008_w )
+WRITE8_HANDLER( arkanoid_d008_w )
 {
 	int bank;
 

@@ -34,7 +34,7 @@ static void get_tile_info(int tile_index)
  *
  *************************************/
 
-WRITE_HANDLER( atetris_videoram_w )
+WRITE8_HANDLER( atetris_videoram_w )
 {
 	videoram[offset] = data;
 	tilemap_mark_tile_dirty(tilemap, offset / 2);

@@ -172,14 +172,14 @@ static int p[8] = { 255,255,255,255,255,255,255,255 };
 static int t[2] = { 1,1 };
 
 
-extern WRITE_HANDLER( radarscp_grid_enable_w );
-extern WRITE_HANDLER( radarscp_grid_color_w );
-extern WRITE_HANDLER( dkong_flipscreen_w );
-extern WRITE_HANDLER( dkongjr_gfxbank_w );
-extern WRITE_HANDLER( dkong3_gfxbank_w );
-extern WRITE_HANDLER( dkong_palettebank_w );
+extern WRITE8_HANDLER( radarscp_grid_enable_w );
+extern WRITE8_HANDLER( radarscp_grid_color_w );
+extern WRITE8_HANDLER( dkong_flipscreen_w );
+extern WRITE8_HANDLER( dkongjr_gfxbank_w );
+extern WRITE8_HANDLER( dkong3_gfxbank_w );
+extern WRITE8_HANDLER( dkong_palettebank_w );
 
-extern WRITE_HANDLER( dkong_videoram_w );
+extern WRITE8_HANDLER( dkong_videoram_w );
 
 extern PALETTE_INIT( dkong );
 extern PALETTE_INIT( dkong3 );
@@ -189,39 +189,39 @@ extern VIDEO_UPDATE( dkong );
 extern VIDEO_UPDATE( pestplce );
 extern VIDEO_UPDATE( spclforc );
 
-extern WRITE_HANDLER( dkong_sh_w );
-extern WRITE_HANDLER( dkongjr_sh_death_w );
-extern WRITE_HANDLER( dkongjr_sh_drop_w );
-extern WRITE_HANDLER( dkongjr_sh_roar_w );
-extern WRITE_HANDLER( dkongjr_sh_jump_w );
-extern WRITE_HANDLER( dkongjr_sh_walk_w );
-extern WRITE_HANDLER( dkongjr_sh_climb_w );
-extern WRITE_HANDLER( dkongjr_sh_land_w );
-extern WRITE_HANDLER( dkongjr_sh_snapjaw_w );
+extern WRITE8_HANDLER( dkong_sh_w );
+extern WRITE8_HANDLER( dkongjr_sh_death_w );
+extern WRITE8_HANDLER( dkongjr_sh_drop_w );
+extern WRITE8_HANDLER( dkongjr_sh_roar_w );
+extern WRITE8_HANDLER( dkongjr_sh_jump_w );
+extern WRITE8_HANDLER( dkongjr_sh_walk_w );
+extern WRITE8_HANDLER( dkongjr_sh_climb_w );
+extern WRITE8_HANDLER( dkongjr_sh_land_w );
+extern WRITE8_HANDLER( dkongjr_sh_snapjaw_w );
 
-extern WRITE_HANDLER( dkong_sh1_w );
+extern WRITE8_HANDLER( dkong_sh1_w );
 
 #define ACTIVELOW_PORT_BIT(P,A,D)   ((P & (~(1 << A))) | ((D ^ 1) << A))
 
 
-WRITE_HANDLER( dkong_sh_sound3_w )     { p[2] = ACTIVELOW_PORT_BIT(p[2],5,data); }
-WRITE_HANDLER( dkong_sh_sound4_w )    { t[1] = ~data & 1; }
-WRITE_HANDLER( dkong_sh_sound5_w )    { t[0] = ~data & 1; }
-WRITE_HANDLER( dkong_sh_tuneselect_w ) { soundlatch_w(offset,data ^ 0x0f); }
+WRITE8_HANDLER( dkong_sh_sound3_w )     { p[2] = ACTIVELOW_PORT_BIT(p[2],5,data); }
+WRITE8_HANDLER( dkong_sh_sound4_w )    { t[1] = ~data & 1; }
+WRITE8_HANDLER( dkong_sh_sound5_w )    { t[0] = ~data & 1; }
+WRITE8_HANDLER( dkong_sh_tuneselect_w ) { soundlatch_w(offset,data ^ 0x0f); }
 
-WRITE_HANDLER( dkongjr_sh_test6_w )      { p[2] = ACTIVELOW_PORT_BIT(p[2],6,data); }
-WRITE_HANDLER( dkongjr_sh_test5_w )      { p[2] = ACTIVELOW_PORT_BIT(p[2],5,data); }
-WRITE_HANDLER( dkongjr_sh_test4_w )      { p[2] = ACTIVELOW_PORT_BIT(p[2],4,data); }
-WRITE_HANDLER( dkongjr_sh_tuneselect_w ) { soundlatch_w(offset,data); }
+WRITE8_HANDLER( dkongjr_sh_test6_w )      { p[2] = ACTIVELOW_PORT_BIT(p[2],6,data); }
+WRITE8_HANDLER( dkongjr_sh_test5_w )      { p[2] = ACTIVELOW_PORT_BIT(p[2],5,data); }
+WRITE8_HANDLER( dkongjr_sh_test4_w )      { p[2] = ACTIVELOW_PORT_BIT(p[2],4,data); }
+WRITE8_HANDLER( dkongjr_sh_tuneselect_w ) { soundlatch_w(offset,data); }
 
-READ_HANDLER( hunchbks_mirror_r );
-WRITE_HANDLER( hunchbks_mirror_w );
+READ8_HANDLER( hunchbks_mirror_r );
+WRITE8_HANDLER( hunchbks_mirror_w );
 
-static READ_HANDLER( dkong_sh_p1_r )   { return p[1]; }
-static READ_HANDLER( dkong_sh_p2_r )   { return p[2]; }
-static READ_HANDLER( dkong_sh_t0_r )   { return t[0]; }
-static READ_HANDLER( dkong_sh_t1_r )   { return t[1]; }
-static READ_HANDLER( dkong_sh_tune_r )
+static READ8_HANDLER( dkong_sh_p1_r )   { return p[1]; }
+static READ8_HANDLER( dkong_sh_p2_r )   { return p[2]; }
+static READ8_HANDLER( dkong_sh_t0_r )   { return t[0]; }
+static READ8_HANDLER( dkong_sh_t1_r )   { return t[1]; }
+static READ8_HANDLER( dkong_sh_tune_r )
 {
 	UINT8 *SND = memory_region(REGION_CPU2);
 	if (page & 0x40)
@@ -235,8 +235,8 @@ static READ_HANDLER( dkong_sh_tune_r )
 }
 
 MACHINE_INIT( strtheat );
-READ_HANDLER( strtheat_decrypt_rom );
-//WRITE_HANDLER( strtheat_writeport );
+READ8_HANDLER( strtheat_decrypt_rom );
+//WRITE8_HANDLER( strtheat_writeport );
 
 
 #include <math.h>
@@ -246,7 +246,7 @@ static int decay;
 
 #define TSTEP 0.001
 
-static WRITE_HANDLER( dkong_sh_p1_w )
+static WRITE8_HANDLER( dkong_sh_p1_w )
 {
 	envelope=exp(-tt);
 	DAC_data_w(0,(int)(data*envelope));
@@ -254,7 +254,7 @@ static WRITE_HANDLER( dkong_sh_p1_w )
 	else tt=0;
 }
 
-static WRITE_HANDLER( dkong_sh_p2_w )
+static WRITE8_HANDLER( dkong_sh_p2_w )
 {
 	/*   If P2.Bit7 -> is apparently an external signal decay or other output control
 	 *   If P2.Bit6 -> activates the external compressed sample ROM
@@ -268,7 +268,7 @@ static WRITE_HANDLER( dkong_sh_p2_w )
 }
 
 
-static READ_HANDLER( dkong_in2_r )
+static READ8_HANDLER( dkong_in2_r )
 {
 	return input_port_2_r(offset) | (mcustatus << 6);
 }
@@ -420,12 +420,12 @@ ADDRESS_MAP_END
 
 int hunchloopback;
 
-WRITE_HANDLER( hunchbkd_data_w )
+WRITE8_HANDLER( hunchbkd_data_w )
 {
 	hunchloopback=data;
 }
 
-READ_HANDLER( hunchbkd_port0_r )
+READ8_HANDLER( hunchbkd_port0_r )
 {
 	logerror("port 0 : pc = %4x\n",activecpu_get_pc());
 
@@ -438,12 +438,12 @@ READ_HANDLER( hunchbkd_port0_r )
     return 0;
 }
 
-READ_HANDLER( hunchbkd_port1_r )
+READ8_HANDLER( hunchbkd_port1_r )
 {
 	return hunchloopback;
 }
 
-READ_HANDLER( herbiedk_port1_r )
+READ8_HANDLER( herbiedk_port1_r )
 {
 	switch (activecpu_get_pc())
 	{
@@ -454,7 +454,7 @@ READ_HANDLER( herbiedk_port1_r )
     return 1;
 }
 
-READ_HANDLER( spclforc_port0_r )
+READ8_HANDLER( spclforc_port0_r )
 {
 	switch (activecpu_get_pc())
 	{
@@ -466,7 +466,7 @@ READ_HANDLER( spclforc_port0_r )
     return 0;
 }
 
-READ_HANDLER( eightact_port1_r )
+READ8_HANDLER( eightact_port1_r )
 {
 	switch (activecpu_get_pc())
 	{
@@ -477,7 +477,7 @@ READ_HANDLER( eightact_port1_r )
     return 1;
 }
 
-READ_HANDLER( shootgal_port0_r )
+READ8_HANDLER( shootgal_port0_r )
 {
 	switch (activecpu_get_pc())
 	{
@@ -607,17 +607,17 @@ static ADDRESS_MAP_START( pestplce_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 
-WRITE_HANDLER( dkong3_2a03_reset_w )
+WRITE8_HANDLER( dkong3_2a03_reset_w )
 {
 	if (data & 1)
 	{
-		cpu_set_reset_line(1,CLEAR_LINE);
-		cpu_set_reset_line(2,CLEAR_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_RESET, CLEAR_LINE);
+		cpunum_set_input_line(2, INPUT_LINE_RESET, CLEAR_LINE);
 	}
 	else
 	{
-		cpu_set_reset_line(1,ASSERT_LINE);
-		cpu_set_reset_line(2,ASSERT_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE);
+		cpunum_set_input_line(2, INPUT_LINE_RESET, ASSERT_LINE);
 	}
 }
 
@@ -1520,7 +1520,7 @@ MACHINE_DRIVER_END
 
 static INTERRUPT_GEN( hunchbkd_interrupt )
 {
-	cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0x03);
+	cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, 0x03);
 }
 
 static MACHINE_DRIVER_START( hunchbkd )

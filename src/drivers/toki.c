@@ -43,7 +43,7 @@ WRITE16_HANDLER( toki_foreground_videoram16_w );
 static WRITE16_HANDLER( tokib_soundcommand16_w )
 {
 	soundlatch_w(0,data & 0xff);
-	cpu_set_irq_line(1, 0, HOLD_LINE);
+	cpunum_set_input_line(1, 0, HOLD_LINE);
 }
 
 static READ16_HANDLER( pip16_r )
@@ -63,10 +63,10 @@ static void toki_adpcm_int (int data)
 
 	toggle ^= 1;
 	if (toggle)
-		cpu_set_nmi_line(1, PULSE_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 }
 
-static WRITE_HANDLER( toki_adpcm_control_w )
+static WRITE8_HANDLER( toki_adpcm_control_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU2);
@@ -79,7 +79,7 @@ static WRITE_HANDLER( toki_adpcm_control_w )
 	MSM5205_reset_w(0,data & 0x08);
 }
 
-static WRITE_HANDLER( toki_adpcm_data_w )
+static WRITE8_HANDLER( toki_adpcm_data_w )
 {
 	msm5205next = data;
 }

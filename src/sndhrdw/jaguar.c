@@ -190,13 +190,13 @@ static void serial_callback(int param);
 
 void jaguar_dsp_suspend(void)
 {
-	timer_suspendcpu(2, 1, SUSPEND_REASON_SPIN);
+	cpunum_suspend(2, SUSPEND_REASON_SPIN, 1);
 }
 
 
 void jaguar_dsp_resume(void)
 {
-	timer_suspendcpu(2, 0, SUSPEND_REASON_SPIN);
+	cpunum_resume(2, SUSPEND_REASON_SPIN);
 }
 
 
@@ -211,11 +211,11 @@ static void update_gpu_irq(void)
 {
 	if (gpu_irq_state & dsp_regs[JINTCTRL] & 0x1f)
 	{
-		cpu_set_irq_line(1, 1, ASSERT_LINE);
+		cpunum_set_input_line(1, 1, ASSERT_LINE);
 		jaguar_gpu_resume();
 	}
 	else
-		cpu_set_irq_line(1, 1, CLEAR_LINE);
+		cpunum_set_input_line(1, 1, CLEAR_LINE);
 }
 
 
@@ -269,7 +269,7 @@ void cojag_sound_init(void)
 	}
 
 #if ENABLE_SPEEDUP_HACKS
-	install_mem_write32_handler(2, 0xf1a100, 0xf1a103, dsp_flags_w);
+	memory_install_write32_handler(2, ADDRESS_SPACE_PROGRAM, 0xf1a100, 0xf1a103, 0, 0, dsp_flags_w);
 #endif
 }
 
@@ -395,7 +395,7 @@ static WRITE32_HANDLER( dsp_flags_w )
 static void serial_chunky_callback(int param)
 {
 	/* assert the A2S IRQ on CPU #2 (DSP) */
-	cpu_set_irq_line(2, 1, ASSERT_LINE);
+	cpunum_set_input_line(2, 1, ASSERT_LINE);
 	jaguar_dsp_resume();
 
 	/* fix flaky code in interrupt handler which thwarts our speedup */
@@ -414,7 +414,7 @@ static void serial_chunky_callback(int param)
 static void serial_callback(int param)
 {
 	/* assert the A2S IRQ on CPU #2 (DSP) */
-	cpu_set_irq_line(2, 1, ASSERT_LINE);
+	cpunum_set_input_line(2, 1, ASSERT_LINE);
 	jaguar_dsp_resume();
 }
 

@@ -27,7 +27,7 @@ static void flyball_joystick_callback(int potsense)
 {
 	if (potsense & ~flyball_potmask)
 	{
-		cpu_set_irq_line(0, 0, PULSE_LINE);
+		cpunum_set_input_line(0, 0, PULSE_LINE);
 	}
 
 	flyball_potsense |= potsense;
@@ -80,52 +80,52 @@ static MACHINE_INIT( flyball )
 
 /* two physical buttons (start game and stop runner) share the same port bit */
 
-READ_HANDLER( flyball_input_r )
+READ8_HANDLER( flyball_input_r )
 {
 	return readinputport(0) & readinputport(5);
 }
 
-READ_HANDLER( flyball_scanline_r )
+READ8_HANDLER( flyball_scanline_r )
 {
 	return cpu_getscanline() & 0x3f;
 }
 
-READ_HANDLER( flyball_potsense_r )
+READ8_HANDLER( flyball_potsense_r )
 {
 	return flyball_potsense & ~flyball_potmask;
 }
 
-WRITE_HANDLER( flyball_potmask_w )
+WRITE8_HANDLER( flyball_potmask_w )
 {
 	flyball_potmask |= data & 0xf;
 }
 
-WRITE_HANDLER( flyball_pitcher_pic_w )
+WRITE8_HANDLER( flyball_pitcher_pic_w )
 {
 	flyball_pitcher_pic = data & 0xf;
 }
 
-WRITE_HANDLER( flyball_ball_vert_w )
+WRITE8_HANDLER( flyball_ball_vert_w )
 {
 	flyball_ball_vert = data;
 }
 
-WRITE_HANDLER( flyball_ball_horz_w )
+WRITE8_HANDLER( flyball_ball_horz_w )
 {
 	flyball_ball_horz = data;
 }
 
-WRITE_HANDLER( flyball_pitcher_vert_w )
+WRITE8_HANDLER( flyball_pitcher_vert_w )
 {
 	flyball_pitcher_vert = data;
 }
 
-WRITE_HANDLER( flyball_pitcher_horz_w )
+WRITE8_HANDLER( flyball_pitcher_horz_w )
 {
 	flyball_pitcher_horz = data;
 }
 
-WRITE_HANDLER( flyball_misc_w )
+WRITE8_HANDLER( flyball_misc_w )
 {
 	int bit = ~data & 1;
 

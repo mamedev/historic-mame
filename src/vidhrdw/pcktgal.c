@@ -31,7 +31,7 @@ PALETTE_INIT( pcktgal )
 	}
 }
 
-WRITE_HANDLER( pcktgal_videoram_w )
+WRITE8_HANDLER( pcktgal_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -40,7 +40,7 @@ WRITE_HANDLER( pcktgal_videoram_w )
 	}
 }
 
-WRITE_HANDLER( pcktgal_flipscreen_w )
+WRITE8_HANDLER( pcktgal_flipscreen_w )
 {
 	if (flip_screen != (data & 0x80))
 	{

@@ -47,8 +47,8 @@ This info came from http://www.ne.jp/asahi/cc-sakura/akkun/old/fryski.html
 
 extern UINT8 *seicross_row_scroll;
 
-extern WRITE_HANDLER( seicross_videoram_w );
-extern WRITE_HANDLER( seicross_colorram_w );
+extern WRITE8_HANDLER( seicross_videoram_w );
+extern WRITE8_HANDLER( seicross_colorram_w );
 
 extern PALETTE_INIT( seicross );
 extern VIDEO_START( seicross );
@@ -80,19 +80,19 @@ static NVRAM_HANDLER( seicross )
 static MACHINE_INIT( friskyt )
 {
 	/* start with the protection mcu halted */
-	cpu_set_halt_line(1, ASSERT_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_HALT, ASSERT_LINE);
 }
 
 
 
 static int portb;
 
-static READ_HANDLER( friskyt_portB_r )
+static READ8_HANDLER( friskyt_portB_r )
 {
 	return (portb & 0x9f) | (readinputport(6) & 0x60);
 }
 
-static WRITE_HANDLER( friskyt_portB_w )
+static WRITE8_HANDLER( friskyt_portB_w )
 {
 //logerror("PC %04x: 8910 port B = %02x\n",activecpu_get_pc(),data);
 	/* bit 0 is IRQ enable */
@@ -104,8 +104,8 @@ static WRITE_HANDLER( friskyt_portB_w )
 	if (((portb & 4) == 0) && (data & 4))
 	{
 		/* reset and start the protection mcu */
-		cpu_set_reset_line(1, PULSE_LINE);
-		cpu_set_halt_line(1, CLEAR_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_RESET, PULSE_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_HALT, CLEAR_LINE);
 	}
 
 	/* other bits unknown */
@@ -115,12 +115,12 @@ static WRITE_HANDLER( friskyt_portB_w )
 
 static UINT8 *sharedram;
 
-static READ_HANDLER( sharedram_r )
+static READ8_HANDLER( sharedram_r )
 {
 	return sharedram[offset];
 }
 
-static WRITE_HANDLER( sharedram_w )
+static WRITE8_HANDLER( sharedram_w )
 {
 	sharedram[offset] = data;
 }

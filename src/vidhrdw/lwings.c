@@ -133,20 +133,20 @@ VIDEO_START( avengers )
 
 ***************************************************************************/
 
-WRITE_HANDLER( lwings_fgvideoram_w )
+WRITE8_HANDLER( lwings_fgvideoram_w )
 {
 	lwings_fgvideoram[offset] = data;
 	tilemap_mark_tile_dirty(fg_tilemap,offset & 0x3ff);
 }
 
-WRITE_HANDLER( lwings_bg1videoram_w )
+WRITE8_HANDLER( lwings_bg1videoram_w )
 {
 	lwings_bg1videoram[offset] = data;
 	tilemap_mark_tile_dirty(bg1_tilemap,offset & 0x3ff);
 }
 
 
-WRITE_HANDLER( lwings_bg1_scrollx_w )
+WRITE8_HANDLER( lwings_bg1_scrollx_w )
 {
 	static unsigned char scroll[2];
 
@@ -154,7 +154,7 @@ WRITE_HANDLER( lwings_bg1_scrollx_w )
 	tilemap_set_scrollx(bg1_tilemap,0,scroll[0] | (scroll[1] << 8));
 }
 
-WRITE_HANDLER( lwings_bg1_scrolly_w )
+WRITE8_HANDLER( lwings_bg1_scrolly_w )
 {
 	static unsigned char scroll[2];
 
@@ -162,12 +162,12 @@ WRITE_HANDLER( lwings_bg1_scrolly_w )
 	tilemap_set_scrolly(bg1_tilemap,0,scroll[0] | (scroll[1] << 8));
 }
 
-WRITE_HANDLER( trojan_bg2_scrollx_w )
+WRITE8_HANDLER( trojan_bg2_scrollx_w )
 {
 	tilemap_set_scrollx(bg2_tilemap,0,data);
 }
 
-WRITE_HANDLER( trojan_bg2_image_w )
+WRITE8_HANDLER( trojan_bg2_image_w )
 {
 	if (bg2_image != data)
 	{

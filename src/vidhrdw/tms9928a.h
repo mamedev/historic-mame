@@ -26,10 +26,10 @@ extern void TMS9928A_reset (void);
 /*
 ** The I/O functions
 */
-extern READ_HANDLER (TMS9928A_vram_r);
-extern WRITE_HANDLER (TMS9928A_vram_w);
-extern READ_HANDLER (TMS9928A_register_r);
-extern WRITE_HANDLER (TMS9928A_register_w);
+extern READ8_HANDLER (TMS9928A_vram_r);
+extern WRITE8_HANDLER (TMS9928A_vram_w);
+extern READ8_HANDLER (TMS9928A_register_r);
+extern WRITE8_HANDLER (TMS9928A_register_w);
 
 /*
 ** Call this function to render the screen.

@@ -96,7 +96,7 @@ VIDEO_START( flkatck )
 
 ***************************************************************************/
 
-WRITE_HANDLER( flkatck_k007121_w )
+WRITE8_HANDLER( flkatck_k007121_w )
 {
 	if (offset < 0x1000){	/* tiles */
 		if (k007121_ram[offset] != data)
@@ -112,7 +112,7 @@ WRITE_HANDLER( flkatck_k007121_w )
 		k007121_ram[offset] = data;
 }
 
-WRITE_HANDLER( flkatck_k007121_regs_w )
+WRITE8_HANDLER( flkatck_k007121_regs_w )
 {
 	switch (offset)
 	{

@@ -6,7 +6,7 @@ UINT8 *solomon_colorram2;
 
 static struct tilemap *bg_tilemap, *fg_tilemap;
 
-WRITE_HANDLER( solomon_videoram_w )
+WRITE8_HANDLER( solomon_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -15,7 +15,7 @@ WRITE_HANDLER( solomon_videoram_w )
 	}
 }
 
-WRITE_HANDLER( solomon_colorram_w )
+WRITE8_HANDLER( solomon_colorram_w )
 {
 	if (colorram[offset] != data)
 	{
@@ -24,7 +24,7 @@ WRITE_HANDLER( solomon_colorram_w )
 	}
 }
 
-WRITE_HANDLER( solomon_videoram2_w )
+WRITE8_HANDLER( solomon_videoram2_w )
 {
 	if (solomon_videoram2[offset] != data)
 	{
@@ -33,7 +33,7 @@ WRITE_HANDLER( solomon_videoram2_w )
 	}
 }
 
-WRITE_HANDLER( solomon_colorram2_w )
+WRITE8_HANDLER( solomon_colorram2_w )
 {
 	if (solomon_colorram2[offset] != data)
 	{
@@ -42,7 +42,7 @@ WRITE_HANDLER( solomon_colorram2_w )
 	}
 }
 
-WRITE_HANDLER( solomon_flipscreen_w )
+WRITE8_HANDLER( solomon_flipscreen_w )
 {
 	if (flip_screen != (data & 0x01))
 	{

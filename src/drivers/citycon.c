@@ -10,15 +10,15 @@
 extern data8_t *citycon_videoram;
 extern data8_t *citycon_scroll;
 extern data8_t *citycon_linecolor;
-WRITE_HANDLER( citycon_videoram_w );
-WRITE_HANDLER( citycon_linecolor_w );
-WRITE_HANDLER( citycon_background_w );
+WRITE8_HANDLER( citycon_videoram_w );
+WRITE8_HANDLER( citycon_linecolor_w );
+WRITE8_HANDLER( citycon_background_w );
 
 VIDEO_UPDATE( citycon );
 VIDEO_START( citycon );
 
 
-READ_HANDLER( citycon_in_r )
+READ8_HANDLER( citycon_in_r )
 {
 	return readinputport(flip_screen ? 1 : 0);
 }

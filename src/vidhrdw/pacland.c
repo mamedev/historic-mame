@@ -196,7 +196,7 @@ VIDEO_START( pacland )
 
 ***************************************************************************/
 
-WRITE_HANDLER( pacland_videoram_w )
+WRITE8_HANDLER( pacland_videoram_w )
 {
 	if (pacland_videoram[offset] != data)
 	{
@@ -205,7 +205,7 @@ WRITE_HANDLER( pacland_videoram_w )
 	}
 }
 
-WRITE_HANDLER( pacland_videoram2_w )
+WRITE8_HANDLER( pacland_videoram2_w )
 {
 	if (pacland_videoram2[offset] != data)
 	{
@@ -214,17 +214,17 @@ WRITE_HANDLER( pacland_videoram2_w )
 	}
 }
 
-WRITE_HANDLER( pacland_scroll0_w )
+WRITE8_HANDLER( pacland_scroll0_w )
 {
 	scroll0 = data + 256 * offset;
 }
 
-WRITE_HANDLER( pacland_scroll1_w )
+WRITE8_HANDLER( pacland_scroll1_w )
 {
 	scroll1 = data + 256 * offset;
 }
 
-WRITE_HANDLER( pacland_bankswitch_w )
+WRITE8_HANDLER( pacland_bankswitch_w )
 {
 	int bankaddress;
 	UINT8 *RAM = memory_region(REGION_CPU1);

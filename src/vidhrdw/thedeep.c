@@ -75,7 +75,7 @@ static void get_tile_info_1( int tile_index )
 			0)
 }
 
-WRITE_HANDLER( thedeep_vram_0_w )
+WRITE8_HANDLER( thedeep_vram_0_w )
 {
 	if (thedeep_vram_0[offset] != data)
 	{
@@ -84,7 +84,7 @@ WRITE_HANDLER( thedeep_vram_0_w )
 	}
 }
 
-WRITE_HANDLER( thedeep_vram_1_w )
+WRITE8_HANDLER( thedeep_vram_1_w )
 {
 	if (thedeep_vram_1[offset] != data)
 	{

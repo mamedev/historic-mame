@@ -70,11 +70,11 @@ extern data8_t *vastar_bg1videoram,*vastar_bg2videoram,*vastar_fgvideoram;
 extern data8_t *vastar_bg1_scroll,*vastar_bg2_scroll;
 extern data8_t *vastar_sprite_priority;
 
-WRITE_HANDLER( vastar_bg1videoram_w );
-WRITE_HANDLER( vastar_bg2videoram_w );
-WRITE_HANDLER( vastar_fgvideoram_w );
-READ_HANDLER( vastar_bg1videoram_r );
-READ_HANDLER( vastar_bg2videoram_r );
+WRITE8_HANDLER( vastar_bg1videoram_w );
+WRITE8_HANDLER( vastar_bg2videoram_w );
+WRITE8_HANDLER( vastar_fgvideoram_w );
+READ8_HANDLER( vastar_bg1videoram_r );
+READ8_HANDLER( vastar_bg2videoram_r );
 VIDEO_START( vastar );
 VIDEO_UPDATE( vastar );
 
@@ -85,29 +85,29 @@ static unsigned char *vastar_sharedram;
 static MACHINE_INIT( vastar )
 {
 	/* we must start with the second CPU halted */
-	cpu_set_reset_line(1,ASSERT_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE);
 }
 
-static WRITE_HANDLER( vastar_hold_cpu2_w )
+static WRITE8_HANDLER( vastar_hold_cpu2_w )
 {
 	/* I'm not sure that this works exactly like this */
 	if (data & 1)
-		cpu_set_reset_line(1,CLEAR_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_RESET, CLEAR_LINE);
 	else
-		cpu_set_reset_line(1,ASSERT_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE);
 }
 
-static READ_HANDLER( vastar_sharedram_r )
+static READ8_HANDLER( vastar_sharedram_r )
 {
 	return vastar_sharedram[offset];
 }
 
-static WRITE_HANDLER( vastar_sharedram_w )
+static WRITE8_HANDLER( vastar_sharedram_w )
 {
 	vastar_sharedram[offset] = data;
 }
 
-static WRITE_HANDLER( flip_screen_w )
+static WRITE8_HANDLER( flip_screen_w )
 {
 	flip_screen_set(data);
 }

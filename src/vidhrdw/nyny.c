@@ -52,32 +52,32 @@ VIDEO_START( nyny )
   Stop the video hardware emulation.
 ***************************************************************************/
 
-WRITE_HANDLER( nyny_flipscreen_w )
+WRITE8_HANDLER( nyny_flipscreen_w )
 {
 	flip_screen_set(data);
 }
 
-READ_HANDLER( nyny_videoram0_r )
+READ8_HANDLER( nyny_videoram0_r )
 {
 	return( nyny_videoram[offset] ) ;
 }
 
-READ_HANDLER( nyny_videoram1_r )
+READ8_HANDLER( nyny_videoram1_r )
 {
 	return( nyny_videoram[offset+0x2000] ) ;
 }
 
-READ_HANDLER( nyny_colourram0_r )
+READ8_HANDLER( nyny_colourram0_r )
 {
 	return( nyny_colourram[offset] ) ;
 }
 
-READ_HANDLER( nyny_colourram1_r )
+READ8_HANDLER( nyny_colourram1_r )
 {
 	return( nyny_colourram[offset+0x2000] ) ;
 }
 
-WRITE_HANDLER( nyny_colourram0_w )
+WRITE8_HANDLER( nyny_colourram0_w )
 {
 	int x,y,z,d,v,c;
 	nyny_colourram[offset] = data;
@@ -95,7 +95,7 @@ WRITE_HANDLER( nyny_colourram0_w )
 	}
 }
 
-WRITE_HANDLER( nyny_videoram0_w )
+WRITE8_HANDLER( nyny_videoram0_w )
 {
 	int x,y,z,c,d;
 	nyny_videoram[offset] = data;
@@ -112,7 +112,7 @@ WRITE_HANDLER( nyny_videoram0_w )
 	}
 }
 
-WRITE_HANDLER( nyny_colourram1_w )
+WRITE8_HANDLER( nyny_colourram1_w )
 {
 	int x,y,z,d,v,c;
 	nyny_colourram[offset+0x2000] = data;
@@ -131,7 +131,7 @@ WRITE_HANDLER( nyny_colourram1_w )
 
 }
 
-WRITE_HANDLER( nyny_videoram1_w )
+WRITE8_HANDLER( nyny_videoram1_w )
 {
 	int x,y,z,c,d;
 	nyny_videoram[offset+0x2000] = data;

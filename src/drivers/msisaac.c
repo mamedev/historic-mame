@@ -19,36 +19,36 @@ TO DO:
 */
 
 /* in machine/buggychl.c */
-READ_HANDLER( buggychl_68705_portA_r );
-WRITE_HANDLER( buggychl_68705_portA_w );
-WRITE_HANDLER( buggychl_68705_ddrA_w );
-READ_HANDLER( buggychl_68705_portB_r );
-WRITE_HANDLER( buggychl_68705_portB_w );
-WRITE_HANDLER( buggychl_68705_ddrB_w );
-READ_HANDLER( buggychl_68705_portC_r );
-WRITE_HANDLER( buggychl_68705_portC_w );
-WRITE_HANDLER( buggychl_68705_ddrC_w );
-WRITE_HANDLER( buggychl_mcu_w );
-READ_HANDLER( buggychl_mcu_r );
-READ_HANDLER( buggychl_mcu_status_r );
+READ8_HANDLER( buggychl_68705_portA_r );
+WRITE8_HANDLER( buggychl_68705_portA_w );
+WRITE8_HANDLER( buggychl_68705_ddrA_w );
+READ8_HANDLER( buggychl_68705_portB_r );
+WRITE8_HANDLER( buggychl_68705_portB_w );
+WRITE8_HANDLER( buggychl_68705_ddrB_w );
+READ8_HANDLER( buggychl_68705_portC_r );
+WRITE8_HANDLER( buggychl_68705_portC_w );
+WRITE8_HANDLER( buggychl_68705_ddrC_w );
+WRITE8_HANDLER( buggychl_mcu_w );
+READ8_HANDLER( buggychl_mcu_r );
+READ8_HANDLER( buggychl_mcu_status_r );
 
 
 //not used
-//WRITE_HANDLER( msisaac_textbank1_w );
+//WRITE8_HANDLER( msisaac_textbank1_w );
 
 //used
-WRITE_HANDLER( msisaac_fg_scrolly_w );
-WRITE_HANDLER( msisaac_fg_scrollx_w );
-WRITE_HANDLER( msisaac_bg_scrolly_w );
-WRITE_HANDLER( msisaac_bg_scrollx_w );
-WRITE_HANDLER( msisaac_bg2_scrolly_w );
-WRITE_HANDLER( msisaac_bg2_scrollx_w );
+WRITE8_HANDLER( msisaac_fg_scrolly_w );
+WRITE8_HANDLER( msisaac_fg_scrollx_w );
+WRITE8_HANDLER( msisaac_bg_scrolly_w );
+WRITE8_HANDLER( msisaac_bg_scrollx_w );
+WRITE8_HANDLER( msisaac_bg2_scrolly_w );
+WRITE8_HANDLER( msisaac_bg2_scrollx_w );
 
-WRITE_HANDLER( msisaac_bg2_textbank_w );
+WRITE8_HANDLER( msisaac_bg2_textbank_w );
 
-WRITE_HANDLER( msisaac_bg_videoram_w );
-WRITE_HANDLER( msisaac_bg2_videoram_w );
-WRITE_HANDLER( msisaac_fg_videoram_w );
+WRITE8_HANDLER( msisaac_bg_videoram_w );
+WRITE8_HANDLER( msisaac_bg2_videoram_w );
+WRITE8_HANDLER( msisaac_fg_videoram_w );
 
 extern VIDEO_UPDATE( msisaac );
 extern VIDEO_START( msisaac );
@@ -61,43 +61,43 @@ static int sound_nmi_enable,pending_nmi;
 
 static void nmi_callback(int param)
 {
-	if (sound_nmi_enable) cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
+	if (sound_nmi_enable) cpunum_set_input_line(1,INPUT_LINE_NMI,PULSE_LINE);
 	else pending_nmi = 1;
 }
 
-static WRITE_HANDLER( sound_command_w )
+static WRITE8_HANDLER( sound_command_w )
 {
 	soundlatch_w(0,data);
 	timer_set(TIME_NOW,data,nmi_callback);
 }
 
-static WRITE_HANDLER( nmi_disable_w )
+static WRITE8_HANDLER( nmi_disable_w )
 {
 	sound_nmi_enable = 0;
 }
 
-static WRITE_HANDLER( nmi_enable_w )
+static WRITE8_HANDLER( nmi_enable_w )
 {
 	sound_nmi_enable = 1;
 	if (pending_nmi)
 	{
-		cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
+		cpunum_set_input_line(1,INPUT_LINE_NMI,PULSE_LINE);
 		pending_nmi = 0;
 	}
 }
 
 #if 0
-static WRITE_HANDLER( flip_screen_w )
+static WRITE8_HANDLER( flip_screen_w )
 {
 	flip_screen_set(data);
 }
 
-static WRITE_HANDLER( msisaac_coin_counter_w )
+static WRITE8_HANDLER( msisaac_coin_counter_w )
 {
 	coin_counter_w(offset,data);
 }
 #endif
-static WRITE_HANDLER( ms_unknown_w )
+static WRITE8_HANDLER( ms_unknown_w )
 {
 	if (data!=0x08)
 		usrintf_showmessage("CPU #0 write to 0xf0a3 data=%2x",data);
@@ -119,7 +119,7 @@ static UINT8 direction = 0;
 #endif
 
 
-static READ_HANDLER( msisaac_mcu_r )
+static READ8_HANDLER( msisaac_mcu_r )
 {
 #ifdef USE_MCU
 	return buggychl_mcu_r(offset);
@@ -195,7 +195,7 @@ MCU simulation TODO:
 #endif
 }
 
-static READ_HANDLER( msisaac_mcu_status_r )
+static READ8_HANDLER( msisaac_mcu_status_r )
 {
 #ifdef USE_MCU
 	return buggychl_mcu_status_r(offset);
@@ -204,7 +204,7 @@ static READ_HANDLER( msisaac_mcu_status_r )
 #endif
 }
 
-static WRITE_HANDLER( msisaac_mcu_w )
+static WRITE8_HANDLER( msisaac_mcu_w )
 {
 #ifdef USE_MCU
 	buggychl_mcu_w(offset,data);
@@ -306,7 +306,7 @@ static MACHINE_INIT( ta7630 )
 static UINT8 snd_ctrl0=0;
 static UINT8 snd_ctrl1=0;
 
-static WRITE_HANDLER( sound_control_0_w )
+static WRITE8_HANDLER( sound_control_0_w )
 {
 	snd_ctrl0 = data & 0xff;
 	//usrintf_showmessage("SND0 0=%2x 1=%2x", snd_ctrl0, snd_ctrl1);
@@ -315,7 +315,7 @@ static WRITE_HANDLER( sound_control_0_w )
 	mixer_set_volume (7, vol_ctrl[ (snd_ctrl0>>4) & 15 ]);	/* group2 from msm5232 */
 
 }
-static WRITE_HANDLER( sound_control_1_w )
+static WRITE8_HANDLER( sound_control_1_w )
 {
 	snd_ctrl1 = data & 0xff;
 	//usrintf_showmessage("SND1 0=%2x 1=%2x", snd_ctrl0, snd_ctrl1);

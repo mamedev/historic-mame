@@ -11,37 +11,37 @@ Taxi Driver  (c) 1984 Graphic Techno
 
 
 
-WRITE_HANDLER( p2a_w ) { taxidrvr_spritectrl_w(0,data); }
-WRITE_HANDLER( p2b_w ) { taxidrvr_spritectrl_w(1,data); }
-WRITE_HANDLER( p2c_w ) { taxidrvr_spritectrl_w(2,data); }
-WRITE_HANDLER( p3a_w ) { taxidrvr_spritectrl_w(3,data); }
-WRITE_HANDLER( p3b_w ) { taxidrvr_spritectrl_w(4,data); }
-WRITE_HANDLER( p3c_w ) { taxidrvr_spritectrl_w(5,data); }
-WRITE_HANDLER( p4a_w ) { taxidrvr_spritectrl_w(6,data); }
-WRITE_HANDLER( p4b_w ) { taxidrvr_spritectrl_w(7,data); }
-WRITE_HANDLER( p4c_w ) { taxidrvr_spritectrl_w(8,data); }
+WRITE8_HANDLER( p2a_w ) { taxidrvr_spritectrl_w(0,data); }
+WRITE8_HANDLER( p2b_w ) { taxidrvr_spritectrl_w(1,data); }
+WRITE8_HANDLER( p2c_w ) { taxidrvr_spritectrl_w(2,data); }
+WRITE8_HANDLER( p3a_w ) { taxidrvr_spritectrl_w(3,data); }
+WRITE8_HANDLER( p3b_w ) { taxidrvr_spritectrl_w(4,data); }
+WRITE8_HANDLER( p3c_w ) { taxidrvr_spritectrl_w(5,data); }
+WRITE8_HANDLER( p4a_w ) { taxidrvr_spritectrl_w(6,data); }
+WRITE8_HANDLER( p4b_w ) { taxidrvr_spritectrl_w(7,data); }
+WRITE8_HANDLER( p4c_w ) { taxidrvr_spritectrl_w(8,data); }
 
 
 
 
 static int s1,s2,s3,s4,latchA,latchB;
 
-static READ_HANDLER( p0a_r )
+static READ8_HANDLER( p0a_r )
 {
 	return latchA;
 }
 
-static READ_HANDLER( p0c_r )
+static READ8_HANDLER( p0c_r )
 {
 	return (s1 << 7);
 }
 
-static WRITE_HANDLER( p0b_w )
+static WRITE8_HANDLER( p0b_w )
 {
 	latchB = data;
 }
 
-static WRITE_HANDLER( p0c_w )
+static WRITE8_HANDLER( p0c_w )
 {
 	s2 = data & 1;
 
@@ -54,40 +54,40 @@ static WRITE_HANDLER( p0c_w )
 //	usrintf_showmessage("%02x",data&0x0f);
 }
 
-static READ_HANDLER( p1b_r )
+static READ8_HANDLER( p1b_r )
 {
 	return latchB;
 }
 
-static READ_HANDLER( p1c_r )
+static READ8_HANDLER( p1c_r )
 {
 	return (s2 << 7) | (s4 << 6) | ((readinputport(5) & 1) << 4);
 }
 
-static WRITE_HANDLER( p1a_w )
+static WRITE8_HANDLER( p1a_w )
 {
 	latchA = data;
 }
 
-static WRITE_HANDLER( p1c_w )
+static WRITE8_HANDLER( p1c_w )
 {
 	s1 = data & 1;
 	s3 = (data & 2) >> 1;
 }
 
-static READ_HANDLER( p8910_0a_r )
+static READ8_HANDLER( p8910_0a_r )
 {
 	return latchA;
 }
 
-static READ_HANDLER( p8910_1a_r )
+static READ8_HANDLER( p8910_1a_r )
 {
 	return s3;
 }
 
 /* note that a lot of writes happen with port B set as input. I think this is a bug in the
    original, since it works anyway even if the communication is flawed. */
-static WRITE_HANDLER( p8910_0b_w )
+static WRITE8_HANDLER( p8910_0b_w )
 {
 	s4 = data & 1;
 }

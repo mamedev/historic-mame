@@ -34,13 +34,13 @@ DRIVER_INIT( grchamp ) {
 
 ***************************************************************************/
 
-READ_HANDLER( grchamp_port_0_r ) {
+READ8_HANDLER( grchamp_port_0_r ) {
 	return comm_latch;
 }
 
-extern WRITE_HANDLER( PC3259_control_w );
+extern WRITE8_HANDLER( PC3259_control_w );
 
-WRITE_HANDLER( grchamp_control0_w ){
+WRITE8_HANDLER( grchamp_control0_w ){
 	/* *OUT0 - Page 42 */
 	/* bit 0 = trigger irq on cpu1 (itself) when vblank arrives */
 	/* bit 1 = enable PC3259 (10A), page 41, top-left. TODO */
@@ -54,7 +54,7 @@ WRITE_HANDLER( grchamp_control0_w ){
 //	osd_led_w( 0, ( ~data >> 4 ) & 1 ); 	/* bit 4 */
 }
 
-WRITE_HANDLER( grchamp_coinled_w ){
+WRITE8_HANDLER( grchamp_coinled_w ){
 	/* *OUT9 - Page 40 */
 	/* bit 0-3 = unused */
 	/* bit 4 = Coin Lockout */
@@ -64,13 +64,13 @@ WRITE_HANDLER( grchamp_coinled_w ){
 //	osd_led_w( 1, ( ~data >> 5 ) & 1 ); 			/* bit 5 */
 }
 
-WRITE_HANDLER( grchamp_sound_w ){
+WRITE8_HANDLER( grchamp_sound_w ){
 	/* *OUT14 - Page 42 */
 	soundlatch_w( 0, data );
-	cpu_set_nmi_line( 2, PULSE_LINE );
+	cpunum_set_input_line(2, INPUT_LINE_NMI, PULSE_LINE );
 }
 
-WRITE_HANDLER( grchamp_comm_w ){
+WRITE8_HANDLER( grchamp_comm_w ){
 	/* *OUT16 - Page 40 */
 	comm_latch2[ offset & 3] = data;
 }
@@ -81,11 +81,11 @@ WRITE_HANDLER( grchamp_comm_w ){
 
 ***************************************************************************/
 
-READ_HANDLER( grchamp_port_1_r ) {
+READ8_HANDLER( grchamp_port_1_r ) {
 	return comm_latch2[offset];
 }
 
-WRITE_HANDLER( grchamp_port_1_w ) {
+WRITE8_HANDLER( grchamp_port_1_w ) {
 	grchamp_vreg1[offset] = data;
 
 	switch( offset ) { 	/* OUT0 - OUTF (Page 48) */

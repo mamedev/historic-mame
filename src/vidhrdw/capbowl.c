@@ -23,7 +23,7 @@ static offs_t blitter_addr;
 
 static void generate_interrupt(int state)
 {
-	cpu_set_irq_line(0, M6809_FIRQ_LINE, state);
+	cpunum_set_input_line(0, M6809_FIRQ_LINE, state);
 }
 
 static struct tms34061_interface tms34061intf =
@@ -56,7 +56,7 @@ VIDEO_START( capbowl )
  *
  *************************************/
 
-WRITE_HANDLER( capbowl_tms34061_w )
+WRITE8_HANDLER( capbowl_tms34061_w )
 {
 	int func = (offset >> 8) & 3;
 	int col = offset & 0xff;
@@ -71,7 +71,7 @@ WRITE_HANDLER( capbowl_tms34061_w )
 }
 
 
-READ_HANDLER( capbowl_tms34061_r )
+READ8_HANDLER( capbowl_tms34061_r )
 {
 	int func = (offset >> 8) & 3;
 	int col = offset & 0xff;
@@ -93,7 +93,7 @@ READ_HANDLER( capbowl_tms34061_r )
  *
  *************************************/
 
-WRITE_HANDLER( bowlrama_blitter_w )
+WRITE8_HANDLER( bowlrama_blitter_w )
 {
 	switch (offset)
 	{
@@ -116,7 +116,7 @@ WRITE_HANDLER( bowlrama_blitter_w )
 }
 
 
-READ_HANDLER( bowlrama_blitter_r )
+READ8_HANDLER( bowlrama_blitter_r )
 {
 	data8_t data = memory_region(REGION_GFX1)[blitter_addr];
 	data8_t result = 0;

@@ -175,33 +175,33 @@ static void get_tile_info2(int tile_index)
 }
 
 
-WRITE_HANDLER( firetrk_vert_w )
+WRITE8_HANDLER( firetrk_vert_w )
 {
 	tilemap_set_scrolly(tilemap1, 0, data);
 	tilemap_set_scrolly(tilemap2, 0, data);
 }
 
 
-WRITE_HANDLER( firetrk_horz_w )
+WRITE8_HANDLER( firetrk_horz_w )
 {
 	tilemap_set_scrollx(tilemap1, 0, data - 37);
 	tilemap_set_scrollx(tilemap2, 0, data - 37);
 }
 
 
-WRITE_HANDLER( firetrk_drone_hpos_w )
+WRITE8_HANDLER( firetrk_drone_hpos_w )
 {
 	drone_hpos = data;
 }
 
 
-WRITE_HANDLER( firetrk_drone_vpos_w )
+WRITE8_HANDLER( firetrk_drone_vpos_w )
 {
 	drone_vpos = data;
 }
 
 
-WRITE_HANDLER( firetrk_car_rot_w )
+WRITE8_HANDLER( firetrk_car_rot_w )
 {
 	if (GAME_IS_FIRETRUCK)
 	{
@@ -256,7 +256,7 @@ WRITE_HANDLER( firetrk_car_rot_w )
 }
 
 
-WRITE_HANDLER( firetrk_drone_rot_w )
+WRITE8_HANDLER( firetrk_drone_rot_w )
 {
 	car[1].number = data & 0x07;
 
@@ -283,7 +283,7 @@ WRITE_HANDLER( firetrk_drone_rot_w )
 }
 
 
-WRITE_HANDLER( firetrk_playfield_w )
+WRITE8_HANDLER( firetrk_playfield_w )
 {
 	if (firetrk_playfield_ram[offset] != data)
 	{

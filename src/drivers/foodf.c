@@ -119,9 +119,9 @@ static void update_interrupts(void)
 		newstate |= 2;
 
 	if (newstate)
-		cpu_set_irq_line(0, newstate, ASSERT_LINE);
+		cpunum_set_input_line(0, newstate, ASSERT_LINE);
 	else
-		cpu_set_irq_line(0, 7, CLEAR_LINE);
+		cpunum_set_input_line(0, 7, CLEAR_LINE);
 }
 
 
@@ -324,7 +324,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
  *
  *************************************/
 
-static READ_HANDLER( pot_r )
+static READ8_HANDLER( pot_r )
 {
 	return (readinputport(5) >> offset) << 7;
 }

@@ -25,8 +25,8 @@ void konami1_decode(void);
 extern UINT8 *jailbrek_scroll_x;
 extern UINT8 *jailbrek_scroll_dir;
 
-extern WRITE_HANDLER( jailbrek_videoram_w );
-extern WRITE_HANDLER( jailbrek_colorram_w );
+extern WRITE8_HANDLER( jailbrek_videoram_w );
+extern WRITE8_HANDLER( jailbrek_colorram_w );
 
 extern PALETTE_INIT( jailbrek );
 extern VIDEO_START( jailbrek );
@@ -36,7 +36,7 @@ extern VIDEO_UPDATE( jailbrek );
 static int irq_enable,nmi_enable;
 
 
-static WRITE_HANDLER( ctrl_w )
+static WRITE8_HANDLER( ctrl_w )
 {
 	nmi_enable = data & 0x01;
 	irq_enable = data & 0x02;
@@ -46,21 +46,21 @@ static WRITE_HANDLER( ctrl_w )
 static INTERRUPT_GEN( jb_interrupt )
 {
 	if (irq_enable)
-		cpu_set_irq_line(0, 0, HOLD_LINE);
+		cpunum_set_input_line(0, 0, HOLD_LINE);
 }
 
 static INTERRUPT_GEN( jb_interrupt_nmi )
 {
 	if (nmi_enable)
-		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+		cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 }
 
 
-static READ_HANDLER( jailbrek_speech_r ) {
+static READ8_HANDLER( jailbrek_speech_r ) {
 	return ( VLM5030_BSY() ? 1 : 0 );
 }
 
-static WRITE_HANDLER( jailbrek_speech_w ) {
+static WRITE8_HANDLER( jailbrek_speech_w ) {
 	/* bit 0 could be latch direction like in yiear */
 	VLM5030_ST( ( data >> 1 ) & 1 );
 	VLM5030_RST( ( data >> 2 ) & 1 );

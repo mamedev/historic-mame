@@ -443,22 +443,22 @@ data8_t K053260_read( int chip, offs_t offset )
 /**************************************************************************************************/
 /* Accesors */
 
-READ_HANDLER( K053260_0_r )
+READ8_HANDLER( K053260_0_r )
 {
 	return K053260_read( 0, offset );
 }
 
-WRITE_HANDLER( K053260_0_w )
+WRITE8_HANDLER( K053260_0_w )
 {
 	K053260_write( 0, offset, data );
 }
 
-READ_HANDLER( K053260_1_r )
+READ8_HANDLER( K053260_1_r )
 {
 	return K053260_read( 1, offset );
 }
 
-WRITE_HANDLER( K053260_1_w )
+WRITE8_HANDLER( K053260_1_w )
 {
 	K053260_write( 1, offset, data );
 }

@@ -2096,12 +2096,12 @@ static void tms32025_set_info(UINT32 state, union cpuinfo *info)
 	switch (state)
 	{
 		/* --- the following bits of info are set as 64-bit signed integers --- */
-		case CPUINFO_INT_IRQ_STATE + TMS32025_INT0:		set_irq_line(TMS32025_INT0, info->i);	break;
-		case CPUINFO_INT_IRQ_STATE + TMS32025_INT1:		set_irq_line(TMS32025_INT1, info->i);	break;
-		case CPUINFO_INT_IRQ_STATE + TMS32025_INT2:		set_irq_line(TMS32025_INT2, info->i);	break;
-		case CPUINFO_INT_IRQ_STATE + TMS32025_TINT:		set_irq_line(TMS32025_TINT, info->i);	break;
-		case CPUINFO_INT_IRQ_STATE + TMS32025_RINT:		set_irq_line(TMS32025_RINT, info->i);	break;
-		case CPUINFO_INT_IRQ_STATE + TMS32025_XINT:		set_irq_line(TMS32025_XINT, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + TMS32025_INT0:	set_irq_line(TMS32025_INT0, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + TMS32025_INT1:	set_irq_line(TMS32025_INT1, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + TMS32025_INT2:	set_irq_line(TMS32025_INT2, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + TMS32025_TINT:	set_irq_line(TMS32025_TINT, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + TMS32025_RINT:	set_irq_line(TMS32025_RINT, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + TMS32025_XINT:	set_irq_line(TMS32025_XINT, info->i);	break;
 
 		case CPUINFO_INT_PC:
 		case CPUINFO_INT_REGISTER + TMS32025_PC:		R.PC = info->i;							break;
@@ -2154,7 +2154,7 @@ void tms32025_get_info(UINT32 state, union cpuinfo *info)
 	{
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
 		case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(R);					break;
-		case CPUINFO_INT_IRQ_LINES:						info->i = 6;							break;
+		case CPUINFO_INT_INPUT_LINES:					info->i = 6;							break;
 		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
 		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_BE;					break;
 		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
@@ -2173,12 +2173,12 @@ void tms32025_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 17;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = -1;					break;
 
-		case CPUINFO_INT_IRQ_STATE + TMS32025_INT0:		info->i = (R.IFR & 0x01) ? ASSERT_LINE : CLEAR_LINE; break;
-		case CPUINFO_INT_IRQ_STATE + TMS32025_INT1:		info->i = (R.IFR & 0x02) ? ASSERT_LINE : CLEAR_LINE; break;
-		case CPUINFO_INT_IRQ_STATE + TMS32025_INT2:		info->i = (R.IFR & 0x04) ? ASSERT_LINE : CLEAR_LINE; break;
-		case CPUINFO_INT_IRQ_STATE + TMS32025_TINT:		info->i = (R.IFR & 0x08) ? ASSERT_LINE : CLEAR_LINE; break;
-		case CPUINFO_INT_IRQ_STATE + TMS32025_RINT:		info->i = (R.IFR & 0x10) ? ASSERT_LINE : CLEAR_LINE; break;
-		case CPUINFO_INT_IRQ_STATE + TMS32025_XINT:		info->i = (R.IFR & 0x20) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_INPUT_STATE + TMS32025_INT0:	info->i = (R.IFR & 0x01) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_INPUT_STATE + TMS32025_INT1:	info->i = (R.IFR & 0x02) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_INPUT_STATE + TMS32025_INT2:	info->i = (R.IFR & 0x04) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_INPUT_STATE + TMS32025_TINT:	info->i = (R.IFR & 0x08) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_INPUT_STATE + TMS32025_RINT:	info->i = (R.IFR & 0x10) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_INPUT_STATE + TMS32025_XINT:	info->i = (R.IFR & 0x20) ? ASSERT_LINE : CLEAR_LINE; break;
 
 		case CPUINFO_INT_PREVIOUSPC:					info->i = R.PREVPC;						break;
 

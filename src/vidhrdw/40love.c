@@ -147,7 +147,7 @@ static void fortyl_set_scroll_x(int offset)
 	tilemap_set_scrollx(background, offset/2, x);
 }
 
-WRITE_HANDLER( fortyl_pixram_sel_w )
+WRITE8_HANDLER( fortyl_pixram_sel_w )
 {
 	int offs;
 	int f = data & 0x01;
@@ -165,7 +165,7 @@ WRITE_HANDLER( fortyl_pixram_sel_w )
 	}
 }
 
-READ_HANDLER( fortyl_pixram_r )
+READ8_HANDLER( fortyl_pixram_r )
 {
 	if (pixram_sel)
 		return fortyl_pixram2[offset];
@@ -202,7 +202,7 @@ static void fortyl_plot_pix(int offset)
 	}
 }
 
-WRITE_HANDLER( fortyl_pixram_w )
+WRITE8_HANDLER( fortyl_pixram_w )
 {
 	if (pixram_sel)
 		fortyl_pixram2[offset] = data;
@@ -213,7 +213,7 @@ WRITE_HANDLER( fortyl_pixram_w )
 }
 
 
-WRITE_HANDLER( fortyl_bg_videoram_w )
+WRITE8_HANDLER( fortyl_bg_videoram_w )
 {
 	if( videoram[offset]!=data )
 	{
@@ -221,12 +221,12 @@ WRITE_HANDLER( fortyl_bg_videoram_w )
 		tilemap_mark_tile_dirty(background,offset);
 	}
 }
-READ_HANDLER( fortyl_bg_videoram_r )
+READ8_HANDLER( fortyl_bg_videoram_r )
 {
 	return videoram[offset];
 }
 
-WRITE_HANDLER( fortyl_bg_colorram_w )
+WRITE8_HANDLER( fortyl_bg_colorram_w )
 {
 	if( colorram[offset]!=data )
 	{
@@ -239,7 +239,7 @@ WRITE_HANDLER( fortyl_bg_colorram_w )
 		fortyl_set_scroll_x(offset);
 	}
 }
-READ_HANDLER( fortyl_bg_colorram_r )
+READ8_HANDLER( fortyl_bg_colorram_r )
 {
 	return colorram[offset];
 }

@@ -135,7 +135,7 @@ MACHINE_INIT( pipedrm )
 }
 
 
-static WRITE_HANDLER( pipedrm_bankswitch_w )
+static WRITE8_HANDLER( pipedrm_bankswitch_w )
 {
 	/*
 		Bit layout:
@@ -158,7 +158,7 @@ static WRITE_HANDLER( pipedrm_bankswitch_w )
 }
 
 
-static WRITE_HANDLER( sound_bankswitch_w )
+static WRITE8_HANDLER( sound_bankswitch_w )
 {
 	UINT8 *ram = memory_region(REGION_CPU2);
 	cpu_setbank(2, &ram[0x10000 + (data & 0x01) * 0x8000]);
@@ -181,36 +181,36 @@ static void delayed_command_w(int data)
 	/* sound commands. It's possible the NMI isn't really hooked up on the YM2608 */
 	/* sound board. */
 	if (data & 0x100)
-		cpu_set_nmi_line(1, ASSERT_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_NMI, ASSERT_LINE);
 }
 
 
-static WRITE_HANDLER( sound_command_w )
+static WRITE8_HANDLER( sound_command_w )
 {
 	timer_set(TIME_NOW, data | 0x100, delayed_command_w);
 }
 
 
-static WRITE_HANDLER( sound_command_nonmi_w )
+static WRITE8_HANDLER( sound_command_nonmi_w )
 {
 	timer_set(TIME_NOW, data, delayed_command_w);
 }
 
 
-static WRITE_HANDLER( pending_command_clear_w )
+static WRITE8_HANDLER( pending_command_clear_w )
 {
 	pending_command = 0;
-	cpu_set_nmi_line(1, CLEAR_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_NMI, CLEAR_LINE);
 }
 
 
-static READ_HANDLER( pending_command_r )
+static READ8_HANDLER( pending_command_r )
 {
 	return pending_command;
 }
 
 
-static READ_HANDLER( sound_command_r )
+static READ8_HANDLER( sound_command_r )
 {
 	return sound_command;
 }
@@ -560,7 +560,7 @@ static struct GfxDecodeInfo gfxdecodeinfo_hatris[] =
 
 static void irqhandler(int irq)
 {
-	cpu_set_irq_line(1, 0, irq ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1, 0, irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 
@@ -765,16 +765,16 @@ ROM_END
 static DRIVER_INIT( pipedrm )
 {
 	/* sprite RAM lives at the end of palette RAM */
-	spriteram = install_mem_read_handler(0, 0xcc00, 0xcfff, MRA8_RAM);
-	spriteram = install_mem_write_handler(0, 0xcc00, 0xcfff, MWA8_RAM);
+	spriteram = memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xcc00, 0xcfff, 0, 0, MRA8_RAM);
+	spriteram = memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xcc00, 0xcfff, 0, 0, MWA8_RAM);
 	spriteram_size = 0x400;
 }
 
 
 static DRIVER_INIT( hatris )
 {
-	install_port_write_handler(0, 0x20, 0x20, sound_command_nonmi_w);
-	install_port_write_handler(0, 0x21, 0x21, fromance_gfxreg_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x20, 0x20, 0, 0, sound_command_nonmi_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x21, 0x21, 0, 0, fromance_gfxreg_w);
 }
 
 

@@ -121,7 +121,7 @@ static const UINT8 one_joy_trans[16] =
  *
  *************************************/
 
-static READ_HANDLER( dotron_port_2_r )
+static READ8_HANDLER( dotron_port_2_r )
 {
 	static char lastfake = 0;
 	static int mask = 0x00FF;
@@ -165,7 +165,7 @@ static READ_HANDLER( dotron_port_2_r )
 }
 
 
-static WRITE_HANDLER( dotron_port_4_w )
+static WRITE8_HANDLER( dotron_port_4_w )
 {
 	/* light control is in the top 2 bits */
 	set_led_status(0, data & 0x40);		/* background light */
@@ -184,7 +184,7 @@ static WRITE_HANDLER( dotron_port_4_w )
  *
  *************************************/
 
-static WRITE_HANDLER( demoderb_port_4_w )
+static WRITE8_HANDLER( demoderb_port_4_w )
 {
 	if (data & 0x40) input_mux = 1;
 	if (data & 0x80) input_mux = 0;
@@ -192,7 +192,7 @@ static WRITE_HANDLER( demoderb_port_4_w )
 }
 
 
-static READ_HANDLER( demoderb_port12_r )
+static READ8_HANDLER( demoderb_port12_r )
 {
 	return readinputport(input_mux ? (6 + offset) : (1 + offset));
 }
@@ -205,13 +205,13 @@ static READ_HANDLER( demoderb_port12_r )
  *
  *************************************/
 
-static READ_HANDLER( sarge_port_1_r )
+static READ8_HANDLER( sarge_port_1_r )
 {
 	return readinputport(1) & ~one_joy_trans[readinputport(6) & 0x0f];
 }
 
 
-static READ_HANDLER( sarge_port_2_r )
+static READ8_HANDLER( sarge_port_2_r )
 {
 	return readinputport(2) & ~one_joy_trans[(readinputport(6) >> 4) & 0x0f];
 }
@@ -224,21 +224,21 @@ static READ_HANDLER( sarge_port_2_r )
  *
  *************************************/
 
-static WRITE_HANDLER( maxrpm_port_5_w )
+static WRITE8_HANDLER( maxrpm_port_5_w )
 {
 	input_mux = (data >> 1) & 3;
 	mcrmono_control_port_w(offset, data);
 }
 
 
-static READ_HANDLER( maxrpm_port_1_r )
+static READ8_HANDLER( maxrpm_port_1_r )
 {
 	/* multiplexed steering wheel/gas pedal */
 	return readinputport(6 + input_mux);
 }
 
 
-static READ_HANDLER( maxrpm_port_2_r )
+static READ8_HANDLER( maxrpm_port_2_r )
 {
 	static const UINT8 shift_bits[5] = { 0x00, 0x05, 0x06, 0x01, 0x02 };
 	UINT8 start = readinputport(0);
@@ -289,14 +289,14 @@ static READ_HANDLER( maxrpm_port_2_r )
  *
  *************************************/
 
-static READ_HANDLER( powerdrv_port_2_r )
+static READ8_HANDLER( powerdrv_port_2_r )
 {
 	int result = readinputport(2) & 0x7f;
 	return result | (input_mux & 0x80);
 }
 
 
-static WRITE_HANDLER( powerdrv_port_5_w )
+static WRITE8_HANDLER( powerdrv_port_5_w )
 {
 	/* bit 1 controls led 0 */
 	/* bit 2 controls led 1 */
@@ -308,7 +308,7 @@ static WRITE_HANDLER( powerdrv_port_5_w )
 }
 
 
-static WRITE_HANDLER( powerdrv_port_7_w )
+static WRITE8_HANDLER( powerdrv_port_7_w )
 {
 	/* use input_mux for scratch */
 	input_mux = ~input_mux & 0x80;
@@ -322,7 +322,7 @@ static WRITE_HANDLER( powerdrv_port_7_w )
  *
  *************************************/
 
-static READ_HANDLER( stargrds_port_0_r )
+static READ8_HANDLER( stargrds_port_0_r )
 {
 	int result = readinputport(input_mux ? 6 : 0);
 
@@ -334,7 +334,7 @@ static READ_HANDLER( stargrds_port_0_r )
 }
 
 
-static WRITE_HANDLER( stargrds_port_5_w )
+static WRITE8_HANDLER( stargrds_port_5_w )
 {
 	/* bit 1 controls input muxing on port 0 */
 	/* bit 2 controls led 0 */
@@ -348,7 +348,7 @@ static WRITE_HANDLER( stargrds_port_5_w )
 }
 
 
-static WRITE_HANDLER( stargrds_soundsgood_data_w )
+static WRITE8_HANDLER( stargrds_soundsgood_data_w )
 {
 	soundsgood_data_w(offset, (data << 1) | (data >> 7));
 }
@@ -361,14 +361,14 @@ static WRITE_HANDLER( stargrds_soundsgood_data_w )
  *
  *************************************/
 
-static READ_HANDLER( spyhunt_port_2_r )
+static READ8_HANDLER( spyhunt_port_2_r )
 {
 	/* multiplexed steering wheel/gas pedal */
 	return readinputport(6 + input_mux);
 }
 
 
-static WRITE_HANDLER( spyhunt_port_4_w )
+static WRITE8_HANDLER( spyhunt_port_4_w )
 {
 	static UINT8 lastport4;
 
@@ -404,7 +404,7 @@ static WRITE_HANDLER( spyhunt_port_4_w )
  *
  *************************************/
 
-static READ_HANDLER( turbotag_kludge_r )
+static READ8_HANDLER( turbotag_kludge_r )
 {
 	/* The checksum on the ttprog1.bin ROM seems to be bad by 1 bit */
 	/* The checksum should come out to $82 but it should be $92     */
@@ -1976,85 +1976,85 @@ static DRIVER_INIT( timber )
 	MCR_CONFIGURE_SOUND(MCR_SSIO);
 
 	/* Timber uses a modified SSIO with RAM in place of one of the ROMs */
-	install_mem_read_handler(1, 0x3000, 0x3fff, MRA8_RAM);
-	install_mem_write_handler(1, 0x3000, 0x3fff, MWA8_RAM);
+	memory_install_read8_handler(1, ADDRESS_SPACE_PROGRAM, 0x3000, 0x3fff, 0, 0, MRA8_RAM);
+	memory_install_write8_handler(1, ADDRESS_SPACE_PROGRAM, 0x3000, 0x3fff, 0, 0, MWA8_RAM);
 }
 
 
 static DRIVER_INIT( dotron )
 {
 	MCR_CONFIGURE_SOUND(MCR_SSIO | MCR_SQUAWK_N_TALK);
-	install_port_read_handler(0, 0x02, 0x02, dotron_port_2_r);
-	install_port_write_handler(0, 0x04, 0x04, dotron_port_4_w);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x02, 0x02, 0, 0, dotron_port_2_r);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x04, 0x04, 0, 0, dotron_port_4_w);
 }
 
 
 static DRIVER_INIT( demoderb )
 {
 	MCR_CONFIGURE_SOUND(MCR_TURBO_CHIP_SQUEAK);
-	install_port_read_handler(0, 0x01, 0x02, demoderb_port12_r);
-	install_port_write_handler(0, 0x04, 0x04, demoderb_port_4_w);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x01, 0x02, 0, 0, demoderb_port12_r);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x04, 0x04, 0, 0, demoderb_port_4_w);
 }
 
 
 static DRIVER_INIT( demoderm )
 {
 	MCR_CONFIGURE_SOUND(MCR_TURBO_CHIP_SQUEAK);
-	install_port_read_handler(0, 0x01, 0x02, demoderb_port12_r);
-	install_port_write_handler(0, 0x06, 0x06, demoderb_port_4_w);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x01, 0x02, 0, 0, demoderb_port12_r);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x06, 0x06, 0, 0, demoderb_port_4_w);
 }
 
 
 static DRIVER_INIT( sarge )
 {
 	MCR_CONFIGURE_SOUND(MCR_TURBO_CHIP_SQUEAK);
-	install_port_read_handler(0, 0x01, 0x01, sarge_port_1_r);
-	install_port_read_handler(0, 0x02, 0x02, sarge_port_2_r);
-	install_port_write_handler(0, 0x06, 0x06, turbocs_data_w);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x01, 0x01, 0, 0, sarge_port_1_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x02, 0x02, 0, 0, sarge_port_2_r);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x06, 0x06, 0, 0, turbocs_data_w);
 }
 
 
 static DRIVER_INIT( maxrpm )
 {
 	MCR_CONFIGURE_SOUND(MCR_TURBO_CHIP_SQUEAK);
-	install_port_read_handler(0, 0x01, 0x01, maxrpm_port_1_r);
-	install_port_read_handler(0, 0x02, 0x02, maxrpm_port_2_r);
-	install_port_write_handler(0, 0x05, 0x05, maxrpm_port_5_w);
-	install_port_write_handler(0, 0x06, 0x06, turbocs_data_w);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x01, 0x01, 0, 0, maxrpm_port_1_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x02, 0x02, 0, 0, maxrpm_port_2_r);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x05, 0x05, 0, 0, maxrpm_port_5_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x06, 0x06, 0, 0, turbocs_data_w);
 }
 
 
 static DRIVER_INIT( rampage )
 {
 	MCR_CONFIGURE_SOUND(MCR_SOUNDS_GOOD);
-	install_port_write_handler(0, 0x06, 0x06, soundsgood_data_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x06, 0x06, 0, 0, soundsgood_data_w);
 }
 
 
 static DRIVER_INIT( powerdrv )
 {
 	MCR_CONFIGURE_SOUND(MCR_SOUNDS_GOOD);
-	install_port_read_handler(0, 0x02, 0x02, powerdrv_port_2_r);
-	install_port_write_handler(0, 0x05, 0x05, powerdrv_port_5_w);
-	install_port_write_handler(0, 0x06, 0x06, soundsgood_data_w);
-	install_port_write_handler(0, 0x07, 0x07, powerdrv_port_7_w);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x02, 0x02, 0, 0, powerdrv_port_2_r);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x05, 0x05, 0, 0, powerdrv_port_5_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x06, 0x06, 0, 0, soundsgood_data_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x07, 0x07, 0, 0, powerdrv_port_7_w);
 }
 
 
 static DRIVER_INIT( stargrds )
 {
 	MCR_CONFIGURE_SOUND(MCR_SOUNDS_GOOD);
-	install_port_read_handler(0, 0x00, 0x00, stargrds_port_0_r);
-	install_port_write_handler(0, 0x05, 0x05, stargrds_port_5_w);
-	install_port_write_handler(0, 0x06, 0x06, stargrds_soundsgood_data_w);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x00, 0x00, 0, 0, stargrds_port_0_r);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x05, 0x05, 0, 0, stargrds_port_5_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x06, 0x06, 0, 0, stargrds_soundsgood_data_w);
 }
 
 
 static DRIVER_INIT( spyhunt )
 {
 	MCR_CONFIGURE_SOUND(MCR_SSIO | MCR_CHIP_SQUEAK_DELUXE);
-	install_port_read_handler(0, 0x02, 0x02, spyhunt_port_2_r);
-	install_port_write_handler(0, 0x04, 0x04, spyhunt_port_4_w);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x02, 0x02, 0, 0, spyhunt_port_2_r);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x04, 0x04, 0, 0, spyhunt_port_4_w);
 
 	spyhunt_sprite_color_mask = 0x00;
 	spyhunt_scroll_offset = 16;
@@ -2073,14 +2073,14 @@ static DRIVER_INIT( crater )
 static DRIVER_INIT( turbotag )
 {
 	MCR_CONFIGURE_SOUND(MCR_CHIP_SQUEAK_DELUXE);
-	install_port_read_handler(0, 0x02, 0x02, spyhunt_port_2_r);
-	install_port_write_handler(0, 0x04, 0x04, spyhunt_port_4_w);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x02, 0x02, 0, 0, spyhunt_port_2_r);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x04, 0x04, 0, 0, spyhunt_port_4_w);
 
 	spyhunt_sprite_color_mask = 0x00;
 	spyhunt_scroll_offset = 88;
 
 	/* kludge for bad ROM read */
-	install_mem_read_handler(0, 0x0b53, 0x0b53, turbotag_kludge_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0b53, 0x0b53, 0, 0, turbotag_kludge_r);
 }
 
 

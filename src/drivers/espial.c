@@ -17,7 +17,7 @@ MACHINE_INIT( espial )
 }
 
 
-WRITE_HANDLER( zodiac_master_interrupt_enable_w )
+WRITE8_HANDLER( zodiac_master_interrupt_enable_w )
 {
 	interrupt_enable_w(offset,~data & 1);
 }
@@ -32,10 +32,10 @@ INTERRUPT_GEN( zodiac_master_interrupt )
 }
 
 
-WRITE_HANDLER( zodiac_master_soundlatch_w )
+WRITE8_HANDLER( zodiac_master_soundlatch_w )
 {
 	soundlatch_w(offset, data);
-	cpu_set_irq_line(1, 0, HOLD_LINE);
+	cpunum_set_input_line(1, 0, HOLD_LINE);
 }
 
 

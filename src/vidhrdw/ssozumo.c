@@ -48,7 +48,7 @@ PALETTE_INIT( ssozumo )
 	}
 }
 
-WRITE_HANDLER( ssozumo_videoram_w )
+WRITE8_HANDLER( ssozumo_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -57,7 +57,7 @@ WRITE_HANDLER( ssozumo_videoram_w )
 	}
 }
 
-WRITE_HANDLER( ssozumo_colorram_w )
+WRITE8_HANDLER( ssozumo_colorram_w )
 {
 	if (colorram[offset] != data)
 	{
@@ -66,7 +66,7 @@ WRITE_HANDLER( ssozumo_colorram_w )
 	}
 }
 
-WRITE_HANDLER( ssozumo_videoram2_w )
+WRITE8_HANDLER( ssozumo_videoram2_w )
 {
 	if (ssozumo_videoram2[offset] != data)
 	{
@@ -75,7 +75,7 @@ WRITE_HANDLER( ssozumo_videoram2_w )
 	}
 }
 
-WRITE_HANDLER( ssozumo_colorram2_w )
+WRITE8_HANDLER( ssozumo_colorram2_w )
 {
 	if (ssozumo_colorram2[offset] != data)
 	{
@@ -84,7 +84,7 @@ WRITE_HANDLER( ssozumo_colorram2_w )
 	}
 }
 
-WRITE_HANDLER( ssozumo_paletteram_w )
+WRITE8_HANDLER( ssozumo_paletteram_w )
 {
 	int	bit0, bit1, bit2, bit3, val;
 	int	r, g, b;
@@ -117,12 +117,12 @@ WRITE_HANDLER( ssozumo_paletteram_w )
 	palette_set_color(offs2 + 64, r, g, b);
 }
 
-WRITE_HANDLER( ssozumo_scroll_w )
+WRITE8_HANDLER( ssozumo_scroll_w )
 {
 	tilemap_set_scrolly(bg_tilemap, 0, data);
 }
 
-WRITE_HANDLER( ssozumo_flipscreen_w )
+WRITE8_HANDLER( ssozumo_flipscreen_w )
 {
 	flip_screen_set(data & 0x80);
 }

@@ -25,7 +25,7 @@ lev 5 : 0x74 : 0000 09c4 - "write to Text RAM" (?)
 lev 6 : 0x78 : 0000 09ce - "write to Text RAM" (?)
 lev 7 : 0x7c : 0000 09d8 - "write to Text RAM" (?)
 
-kakumei/kakumei2 68k irq table vectors
+kakumei/kakumei2/suchipi 68k irq table vectors
 lev 1 : 0x64 : 0000 0506 - rte
 lev 2 : 0x68 : 0000 050a - vblank
 lev 3 : 0x6c : 0000 051c - rte
@@ -458,6 +458,80 @@ ROM_START( kakumei2 )
 	ROM_LOAD( "mj17.bpr", 0x200, 0x020, CRC(a17c3e8a) SHA1(d7969fad7cec9c792c53aa457f4ad764a727e0a5) )
 ROM_END
 
+/*
+
+Idol Janshi Su-Chi-Pi Special
+(c)Jaleco 1994
+
+CPU  : M68000P10
+Sound: OKI M6295
+OSC  : 12.000MHz 4.000MHz
+
+MJ-8956
+YSP-40101 171
+
+1.bin - Main program ver.1.2 (27c2001)
+2.bin - Main program ver.1.2 (27c2001)
+
+3.bin - Sound data (27c4000)
+4.bin - Sound data (27c4000)
+
+7.bin  (27c4000) \
+8.bin  (27c4000) |
+9.bin  (27c4000) |
+10.bin (27c4000) |
+                 |- Graphics
+12.bin (27c2001) |
+                 |
+13.bin (27c1001) |
+                 |
+14.bin (27c1001) /
+
+pr92000a.prm (82s129) \
+pr92000b.prm (82s129) |- Not dumped
+pr93035.prm  (82s123) /
+
+Custom chips:
+GS-9000406 9345K5005 (80pin QFP) x4
+GS-9000404 9248EP004 (44pin QFP)
+
+Other chips:
+MO-92000 (64pin DIP)
+NEC D65012GF303 9050KX016 (80pin QFP) x4
+
+*/
+
+ROM_START( suchipi )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68000 Code */
+	ROM_LOAD16_BYTE( "1.bin", 0x00001, 0x40000, CRC(e37cc745) SHA1(73b3314d27a0332068e0d2bbc08d7401e371da1b) )
+	ROM_LOAD16_BYTE( "2.bin", 0x00000, 0x40000, CRC(42ecf88a) SHA1(7bb85470bc9f94c867646afeb91c4730599ea299) )
+
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 ) /* Samples */
+	ROM_LOAD( "3.bin", 0x00000, 0x80000, CRC(691b5387) SHA1(b8bc9f904eab7653566042b18d89276d537ba586) )
+	ROM_LOAD( "4.bin", 0x80000, 0x80000, CRC(3fe932a1) SHA1(9e768b901738ee9eba207a67c4fd19efb0035a68) )
+
+	ROM_REGION( 0x20000, REGION_GFX1, 0 ) /* BG0 */
+	ROM_LOAD( "14.bin", 0x00000, 0x20000, CRC(e465a540) SHA1(10e19599ab90b0c0b6ef6ee41f16620bd1ba6800) )
+
+	ROM_REGION( 0x20000, REGION_GFX2, 0 ) /* BG1 */
+	ROM_LOAD( "13.bin", 0x00000, 0x20000, CRC(99466044) SHA1(ca31b58a5d4656f95d80ddb9bc1f9a53f5f2446c) )
+
+	ROM_REGION( 0x40000, REGION_GFX3, 0 ) /* BG2 */
+	ROM_LOAD( "12.bin", 0x00000, 0x40000, CRC(146596eb) SHA1(f85e92e6dc9ebef5e67d28f1d450225cd2a2abaa) )
+
+	ROM_REGION( 0x200000, REGION_GFX4, 0 ) /* BG3 */
+	ROM_LOAD( "7.bin",  0x000000, 0x80000, CRC(18caf6f3) SHA1(3df6b257867487adcba1a05c8745413d9a15c3d7) )
+	ROM_LOAD( "8.bin",  0x080000, 0x80000, CRC(0403399a) SHA1(8d39a68b3a1a431afe93ff485e837389a4502d0c) )
+	ROM_LOAD( "9.bin",  0x100000, 0x80000, CRC(8a348246) SHA1(13516c48bdbe8d78e7517473ef2835a4dea2ce93) )
+	ROM_LOAD( "10.bin", 0x180000, 0x80000, CRC(2b0d1afd) SHA1(40009b450901567052aa63c4629a2f7a10343e63) )
+
+	/* the 3 missing proms should be the same as the other games */
+	ROM_REGION( 0x220, REGION_USER1, 0 ) /* Proms */
+	ROM_LOAD( "mj15.bpr", 0x000, 0x100, CRC(ebac41f9) SHA1(9d1629d977849663392cbf03a3ddf76665f88608) )
+	ROM_LOAD( "mj16.bpr", 0x100, 0x100, CRC(8d5dc1f6) SHA1(9f723e7cd44f8c09ec30b04725644346484ec753) )
+	ROM_LOAD( "mj17.bpr", 0x200, 0x020, CRC(a17c3e8a) SHA1(d7969fad7cec9c792c53aa457f4ad764a727e0a5) )
+ROM_END
+
 
 /******************************************************************************************
 
@@ -522,10 +596,23 @@ static READ16_HANDLER( kakumei_mcu_r )
 	return res;
 }
 
+static READ16_HANDLER( suchipi_mcu_r )
+{
+	static int resp[] = { 0x00 };
+	int res;
+
+	res = resp[respcount++];
+	if (respcount >= sizeof(resp)/sizeof(resp[0])) respcount = 0;
+
+	logerror("%04x: mcu_r %02x\n",activecpu_get_pc(),res);
+
+	return res;
+}
+
 
 static DRIVER_INIT( daireika )
 {
-	install_mem_read16_handler( 0, 0x80004, 0x80005, daireika_mcu_r );
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x80004, 0x80005, 0, 0, daireika_mcu_r );
 }
 
 static DRIVER_INIT( mjzoomin )
@@ -537,14 +624,14 @@ static DRIVER_INIT( mjzoomin )
 	RAM[0x2a5e/2] = 0x4e71;
 	RAM[0x2a60/2] = 0x4e71;
 
-	install_mem_read16_handler( 0, 0x80004, 0x80005, mjzoomin_mcu_r );
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x80004, 0x80005, 0, 0, mjzoomin_mcu_r );
 }
 
 static DRIVER_INIT( kakumei )
 {
 	UINT16 *RAM = (data16_t *)memory_region(REGION_CPU1);
 
-	install_mem_read16_handler( 0, 0x80004, 0x80005, kakumei_mcu_r );
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x80004, 0x80005, 0, 0, kakumei_mcu_r );
 
 	RAM[0x227e/2] = 0x4e71;
 }
@@ -553,12 +640,18 @@ static DRIVER_INIT( kakumei2 )
 {
 	UINT16 *RAM = (data16_t *)memory_region(REGION_CPU1);
 
-	install_mem_read16_handler( 0, 0x80004, 0x80005, kakumei_mcu_r );
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x80004, 0x80005, 0, 0, kakumei_mcu_r );
 
 	RAM[0x229a/2] = 0x4e71;
+}
+
+static DRIVER_INIT( suchipi )
+{
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x80004, 0x80005, 0, 0, suchipi_mcu_r );
 }
 
 GAMEX( 1989, daireika, 0, jalmah, jalmah, daireika, ROT0, "Jaleco / NMK", "Mahjong Daireikai",					  GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 GAMEX( 1990, mjzoomin, 0, jalmah, jalmah, mjzoomin, ROT0, "Jaleco",       "Mahjong Channel Zoom In",              GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 GAMEX( 1990, kakumei,  0, jalmah, jalmah, kakumei,  ROT0, "Jaleco",       "Mahjong Kakumei",                      GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
 GAMEX( 1992, kakumei2, 0, jalmah, jalmah, kakumei2, ROT0, "Jaleco",       "Mahjong Kakumei 2 - Princess League",  GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )
+GAMEX( 1994, suchipi,  0, jalmah, jalmah, suchipi,  ROT0, "Jaleco",       "Idol Janshi Su-Chi-Pi Special",        GAME_UNEMULATED_PROTECTION | GAME_NOT_WORKING )

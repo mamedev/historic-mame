@@ -20,7 +20,7 @@ static UINT8 led0,led1;
 
 static struct tilemap *bg_tilemap, *fg_tilemap;
 
-WRITE_HANDLER( tehkanwc_videoram_w )
+WRITE8_HANDLER( tehkanwc_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -29,7 +29,7 @@ WRITE_HANDLER( tehkanwc_videoram_w )
 	}
 }
 
-WRITE_HANDLER( tehkanwc_colorram_w )
+WRITE8_HANDLER( tehkanwc_colorram_w )
 {
 	if (colorram[offset] != data)
 	{
@@ -38,7 +38,7 @@ WRITE_HANDLER( tehkanwc_colorram_w )
 	}
 }
 
-WRITE_HANDLER( tehkanwc_videoram2_w )
+WRITE8_HANDLER( tehkanwc_videoram2_w )
 {
 	if (tehkanwc_videoram2[offset] != data)
 	{
@@ -47,31 +47,31 @@ WRITE_HANDLER( tehkanwc_videoram2_w )
 	}
 }
 
-WRITE_HANDLER( tehkanwc_scroll_x_w )
+WRITE8_HANDLER( tehkanwc_scroll_x_w )
 {
 	scroll_x[offset] = data;
 }
 
-WRITE_HANDLER( tehkanwc_scroll_y_w )
+WRITE8_HANDLER( tehkanwc_scroll_y_w )
 {
 	tilemap_set_scrolly(bg_tilemap, 0, data);
 }
 
-WRITE_HANDLER( tehkanwc_flipscreen_x_w )
+WRITE8_HANDLER( tehkanwc_flipscreen_x_w )
 {
 	flip_screen_x_set(data & 0x40);
 }
 
-WRITE_HANDLER( tehkanwc_flipscreen_y_w )
+WRITE8_HANDLER( tehkanwc_flipscreen_y_w )
 {
 	flip_screen_y_set(data & 0x40);
 }
 
-WRITE_HANDLER( gridiron_led0_w )
+WRITE8_HANDLER( gridiron_led0_w )
 {
 	led0 = data;
 }
-WRITE_HANDLER( gridiron_led1_w )
+WRITE8_HANDLER( gridiron_led1_w )
 {
 	led1 = data;
 }

@@ -228,26 +228,26 @@ int snk_sound_busy_bit = 0;
 int snk_irq_delay = 1500;
 
 // see IRQ notes in drivers\marvins.c
-static void irq_trigger_callback(int cpu) { cpu_set_irq_line(cpu, 0, HOLD_LINE); }
+static void irq_trigger_callback(int cpu) { cpunum_set_input_line(cpu, 0, HOLD_LINE); }
 
 INTERRUPT_GEN( snk_irq_AB )
 {
-	cpu_set_irq_line(0, 0, HOLD_LINE);
+	cpunum_set_input_line(0, 0, HOLD_LINE);
 	timer_set(TIME_IN_USEC(snk_irq_delay), 1, irq_trigger_callback);
 }
 
 INTERRUPT_GEN( snk_irq_BA )
 {
-	cpu_set_irq_line(1, 0, HOLD_LINE);
+	cpunum_set_input_line(1, 0, HOLD_LINE);
 	timer_set(TIME_IN_USEC(snk_irq_delay), 0, irq_trigger_callback);
 }
 
 // NMI handshakes between CPUs are determined to be much simpler
-READ_HANDLER ( snk_cpuA_nmi_trigger_r ) { cpu_set_nmi_line(0, ASSERT_LINE); return 0; }
-WRITE_HANDLER( snk_cpuA_nmi_ack_w ) { cpu_set_nmi_line(0, CLEAR_LINE); }
+READ8_HANDLER ( snk_cpuA_nmi_trigger_r ) { cpunum_set_input_line(0, INPUT_LINE_NMI, ASSERT_LINE); return 0; }
+WRITE8_HANDLER( snk_cpuA_nmi_ack_w ) { cpunum_set_input_line(0, INPUT_LINE_NMI, CLEAR_LINE); }
 
-READ_HANDLER ( snk_cpuB_nmi_trigger_r ) { cpu_set_nmi_line(1, ASSERT_LINE); return 0; }
-WRITE_HANDLER( snk_cpuB_nmi_ack_w ) { cpu_set_nmi_line(1, CLEAR_LINE); }
+READ8_HANDLER ( snk_cpuB_nmi_trigger_r ) { cpunum_set_input_line(1, INPUT_LINE_NMI, ASSERT_LINE); return 0; }
+WRITE8_HANDLER( snk_cpuB_nmi_ack_w ) { cpunum_set_input_line(1, INPUT_LINE_NMI, CLEAR_LINE); }
 
 /*********************************************************************/
 
@@ -363,11 +363,11 @@ static int snk_input_port_r( int which ){
 
 /*********************************************************************/
 
-static WRITE_HANDLER( snk_sound_register_w ){
+static WRITE8_HANDLER( snk_sound_register_w ){
 	snk_sound_register &= (data>>4);
 }
 
-static READ_HANDLER( snk_sound_register_r ){
+static READ8_HANDLER( snk_sound_register_r ){
 	return snk_sound_register;// | 0x2; /* hack; lets chopper1 play music */
 }
 
@@ -408,12 +408,12 @@ static struct YM3812interface ym3812_interface = {
 	{ snk_sound_callback0_w } /* ? */
 };
 
-static WRITE_HANDLER( snk_soundlatch_w ){
+static WRITE8_HANDLER( snk_soundlatch_w ){
 	snk_sound_register |= 0x08 | 0x04;
 	soundlatch_w( offset, data );
 }
 
-static READ_HANDLER( snk_soundlatch_clear_r ){ /* TNK3 */
+static READ8_HANDLER( snk_soundlatch_clear_r ){ /* TNK3 */
 	soundlatch_w( 0, 0 );
 	snk_sound_register = 0;
 	return 0x00;
@@ -511,21 +511,21 @@ ADDRESS_MAP_END
 
 /**********************  Tnk3, Athena, Fighting Golf ********************/
 
-static READ_HANDLER( shared_ram_r ){
+static READ8_HANDLER( shared_ram_r ){
 	return shared_ram[offset];
 }
-static WRITE_HANDLER( shared_ram_w ){
+static WRITE8_HANDLER( shared_ram_w ){
 	shared_ram[offset] = data;
 }
 
-static READ_HANDLER( shared_ram2_r ){
+static READ8_HANDLER( shared_ram2_r ){
 	return shared_ram2[offset];
 }
-static WRITE_HANDLER( shared_ram2_w ){
+static WRITE8_HANDLER( shared_ram2_w ){
 	shared_ram2[offset] = data;
 }
 
-static READ_HANDLER( cpuA_io_r ){
+static READ8_HANDLER( cpuA_io_r ){
 	switch( offset ){
 		case 0x000: return snk_input_port_r( 0 );	// coin input, player start
 		case 0x100: return snk_input_port_r( 1 );	// joy1
@@ -555,7 +555,7 @@ static READ_HANDLER( cpuA_io_r ){
 	return io_ram[offset];
 }
 
-static WRITE_HANDLER( cpuA_io_w ){
+static WRITE8_HANDLER( cpuA_io_w ){
 	switch( offset ){
 		case 0x000:
 		break;
@@ -575,7 +575,7 @@ static WRITE_HANDLER( cpuA_io_w ){
 	}
 }
 
-static READ_HANDLER( cpuB_io_r ){
+static READ8_HANDLER( cpuB_io_r ){
 	switch( offset ){
 		case 0x000:
 		case 0x700: return(snk_cpuA_nmi_trigger_r(0));
@@ -592,7 +592,7 @@ static READ_HANDLER( cpuB_io_r ){
 	return io_ram[offset];
 }
 
-static WRITE_HANDLER( cpuB_io_w )
+static WRITE8_HANDLER( cpuB_io_w )
 {
 	io_ram[offset] = data;
 

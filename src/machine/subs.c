@@ -30,7 +30,7 @@ INTERRUPT_GEN( subs_interrupt )
 {
 	/* only do NMI interrupt if not in TEST mode */
 	if ((input_port_2_r(0) & 0x40)==0x40)
-		cpu_set_irq_line(0,IRQ_LINE_NMI,PULSE_LINE);
+		cpunum_set_input_line(0,INPUT_LINE_NMI,PULSE_LINE);
 }
 
 /***************************************************************************
@@ -101,7 +101,7 @@ static int subs_steering_2(void)
 /***************************************************************************
 subs_steer_reset
 ***************************************************************************/
-WRITE_HANDLER( subs_steer_reset_w )
+WRITE8_HANDLER( subs_steer_reset_w )
 {
     subs_steering_val1 = 0x00;
     subs_steering_val2 = 0x00;
@@ -110,7 +110,7 @@ WRITE_HANDLER( subs_steer_reset_w )
 /***************************************************************************
 subs_control_r
 ***************************************************************************/
-READ_HANDLER( subs_control_r )
+READ8_HANDLER( subs_control_r )
 {
 	int inport = input_port_1_r(offset);
 
@@ -132,7 +132,7 @@ READ_HANDLER( subs_control_r )
 /***************************************************************************
 subs_coin_r
 ***************************************************************************/
-READ_HANDLER( subs_coin_r )
+READ8_HANDLER( subs_coin_r )
 {
 	int inport = input_port_2_r(offset);
 
@@ -154,7 +154,7 @@ READ_HANDLER( subs_coin_r )
 /***************************************************************************
 subs_options_r
 ***************************************************************************/
-READ_HANDLER( subs_options_r )
+READ8_HANDLER( subs_options_r )
 {
 	int opts = input_port_0_r(offset);
 
@@ -172,7 +172,7 @@ READ_HANDLER( subs_options_r )
 /***************************************************************************
 subs_lamp1_w
 ***************************************************************************/
-WRITE_HANDLER( subs_lamp1_w )
+WRITE8_HANDLER( subs_lamp1_w )
 {
 	set_led_status(0,~offset & 1);
 }
@@ -180,7 +180,7 @@ WRITE_HANDLER( subs_lamp1_w )
 /***************************************************************************
 subs_lamp2_w
 ***************************************************************************/
-WRITE_HANDLER( subs_lamp2_w )
+WRITE8_HANDLER( subs_lamp2_w )
 {
 	set_led_status(1,~offset & 1);
 }
@@ -189,27 +189,27 @@ WRITE_HANDLER( subs_lamp2_w )
 sub sound functions
 ***************************************************************************/
 
-WRITE_HANDLER( subs_sonar2_w )
+WRITE8_HANDLER( subs_sonar2_w )
 {
 	discrete_sound_w(1, offset & 0x01);
 }
 
-WRITE_HANDLER( subs_sonar1_w )
+WRITE8_HANDLER( subs_sonar1_w )
 {
 	discrete_sound_w(0, offset & 0x01);
 }
 
-WRITE_HANDLER( subs_crash_w )
+WRITE8_HANDLER( subs_crash_w )
 {
 	discrete_sound_w(4, ~offset & 0x01);
 }
 
-WRITE_HANDLER( subs_explode_w )
+WRITE8_HANDLER( subs_explode_w )
 {
 	discrete_sound_w(5, ~offset & 0x01);
 }
 
-WRITE_HANDLER( subs_noise_reset_w )
+WRITE8_HANDLER( subs_noise_reset_w )
 {
 	/* Pulse noise reset */
 	discrete_sound_w(6, 0);

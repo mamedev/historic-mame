@@ -21,14 +21,14 @@ PALETTE_INIT(gomoku);
 VIDEO_START(gomoku);
 VIDEO_UPDATE(gomoku);
 
-WRITE_HANDLER( gomoku_videoram_w );
-WRITE_HANDLER( gomoku_colorram_w );
-WRITE_HANDLER( gomoku_bgram_w );
-WRITE_HANDLER( gomoku_flipscreen_w );
-WRITE_HANDLER( gomoku_bg_dispsw_w );
+WRITE8_HANDLER( gomoku_videoram_w );
+WRITE8_HANDLER( gomoku_colorram_w );
+WRITE8_HANDLER( gomoku_bgram_w );
+WRITE8_HANDLER( gomoku_flipscreen_w );
+WRITE8_HANDLER( gomoku_bg_dispsw_w );
 
 extern data8_t *gomoku_soundregs;
-WRITE_HANDLER( gomoku_sound_w );
+WRITE8_HANDLER( gomoku_sound_w );
 
 extern data8_t *gomoku_videoram;
 extern data8_t *gomoku_colorram;
@@ -38,7 +38,7 @@ int gomoku_sh_start(const struct MachineSound *msound);
 void gomoku_sh_stop(void);
 
 /* input ports are rotated 90 degrees */
-static READ_HANDLER( input_port_r )
+static READ8_HANDLER( input_port_r )
 {
 	int i, res;
 

@@ -21,12 +21,12 @@ VIDEO_UPDATE( centiped );
 VIDEO_UPDATE( warlords );
 VIDEO_UPDATE( bullsdrt );
 
-WRITE_HANDLER( centiped_paletteram_w );
-WRITE_HANDLER( milliped_paletteram_w );
-WRITE_HANDLER( qwakprot_paletteram_w );
+WRITE8_HANDLER( centiped_paletteram_w );
+WRITE8_HANDLER( milliped_paletteram_w );
+WRITE8_HANDLER( qwakprot_paletteram_w );
 
-WRITE_HANDLER( centiped_videoram_w );
-WRITE_HANDLER( centiped_flip_screen_w );
-WRITE_HANDLER( bullsdrt_tilesbank_w );
-WRITE_HANDLER( bullsdrt_sprites_bank_w );
+WRITE8_HANDLER( centiped_videoram_w );
+WRITE8_HANDLER( centiped_flip_screen_w );
+WRITE8_HANDLER( bullsdrt_tilesbank_w );
+WRITE8_HANDLER( bullsdrt_sprites_bank_w );
 

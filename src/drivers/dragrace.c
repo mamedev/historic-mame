@@ -93,7 +93,7 @@ static void dragrace_update_misc_flags(void)
 	discrete_sound_w(0x03, (dragrace_misc_flags & 0x20000000) ? 1: 0);	// HiTone enable
 }
 
-WRITE_HANDLER( dragrace_misc_w )
+WRITE8_HANDLER( dragrace_misc_w )
 {
 	/* Set/clear individual bit */
 	UINT32 mask = 1 << offset;
@@ -105,7 +105,7 @@ WRITE_HANDLER( dragrace_misc_w )
 	dragrace_update_misc_flags();
 	}
 
-WRITE_HANDLER( dragrace_misc_clear_w )
+WRITE8_HANDLER( dragrace_misc_clear_w )
 {
 	/* Clear 8 bits */
 	UINT32 mask = 0xff << (((offset >> 3) & 0x03) * 8);
@@ -114,7 +114,7 @@ WRITE_HANDLER( dragrace_misc_clear_w )
 	dragrace_update_misc_flags();
 }
 
-READ_HANDLER( dragrace_input_r )
+READ8_HANDLER( dragrace_input_r )
 {
 	int val = readinputport(2);
 
@@ -142,7 +142,7 @@ READ_HANDLER( dragrace_input_r )
 }
 
 
-READ_HANDLER( dragrace_steering_r )
+READ8_HANDLER( dragrace_steering_r )
 {
 	int bitA[2];
 	int bitB[2];
@@ -163,7 +163,7 @@ READ_HANDLER( dragrace_steering_r )
 }
 
 
-READ_HANDLER( dragrace_scanline_r )
+READ8_HANDLER( dragrace_scanline_r )
 {
 	return (cpu_getscanline() ^ 0xf0) | 0x0f;
 }

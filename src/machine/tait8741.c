@@ -316,44 +316,44 @@ static void I8741_command_w(int num, int data)
 }
 
 /* Write port handler */
-WRITE_HANDLER( TAITO8741_0_w )
+WRITE8_HANDLER( TAITO8741_0_w )
 {
 	if(offset&1) I8741_command_w(0,data);
 	else         I8741_data_w(0,data);
 }
-WRITE_HANDLER( TAITO8741_1_w )
+WRITE8_HANDLER( TAITO8741_1_w )
 {
 	if(offset&1) I8741_command_w(1,data);
 	else         I8741_data_w(1,data);
 }
-WRITE_HANDLER( TAITO8741_2_w )
+WRITE8_HANDLER( TAITO8741_2_w )
 {
 	if(offset&1) I8741_command_w(2,data);
 	else         I8741_data_w(2,data);
 }
-WRITE_HANDLER( TAITO8741_3_w )
+WRITE8_HANDLER( TAITO8741_3_w )
 {
 	if(offset&1) I8741_command_w(3,data);
 	else         I8741_data_w(3,data);
 }
 
 /* Read port handler */
-READ_HANDLER( TAITO8741_0_r )
+READ8_HANDLER( TAITO8741_0_r )
 {
 	if(offset&1) return I8741_status_r(0);
 	return I8741_data_r(0);
 }
-READ_HANDLER( TAITO8741_1_r )
+READ8_HANDLER( TAITO8741_1_r )
 {
 	if(offset&1) return I8741_status_r(1);
 	return I8741_data_r(1);
 }
-READ_HANDLER( TAITO8741_2_r )
+READ8_HANDLER( TAITO8741_2_r )
 {
 	if(offset&1) return I8741_status_r(2);
 	return I8741_data_r(2);
 }
-READ_HANDLER( TAITO8741_3_r )
+READ8_HANDLER( TAITO8741_3_r )
 {
 	if(offset&1) return I8741_status_r(3);
 	return I8741_data_r(3);

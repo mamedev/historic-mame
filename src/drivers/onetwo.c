@@ -22,30 +22,30 @@ static void get_fg_tile_info(int tile_index)
 	SET_TILE_INFO(0, code, color, 0)
 }
 
-static WRITE_HANDLER( onetwo_fgram_w )
+static WRITE8_HANDLER( onetwo_fgram_w )
 {
 	fgram[offset] = data;
 	tilemap_mark_tile_dirty(fg_tilemap, offset/2);
 }
 
-static WRITE_HANDLER( onetwo_cpubank_w )
+static WRITE8_HANDLER( onetwo_cpubank_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1) + 0x10000;
 
 	cpu_setbank(1,&RAM[data * 0x4000]);
 }
 
-static WRITE_HANDLER( onetwo_coin_counters_w )
+static WRITE8_HANDLER( onetwo_coin_counters_w )
 {
 	watchdog_reset_w(0, data & 0x01);
 	coin_counter_w(0, data & 0x02);
 	coin_counter_w(1, data & 0x04);
 }
 
-static WRITE_HANDLER( onetwo_soundlatch_w )
+static WRITE8_HANDLER( onetwo_soundlatch_w )
 {
 	soundlatch_w(0, data);
-	cpu_set_nmi_line(1, PULSE_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 }
 
 /* Main CPU */
@@ -205,7 +205,7 @@ VIDEO_UPDATE( onetwo )
 
 static void irqhandler(int linestate)
 {
-	cpu_set_irq_line(1,0,linestate);
+	cpunum_set_input_line(1,0,linestate);
 }
 
 static struct YM3812interface ym3812_interface =

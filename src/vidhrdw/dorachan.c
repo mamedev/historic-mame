@@ -39,7 +39,7 @@ const static int fakecols[]= /* fake color map , based on screenshots */
 
 int dorachan_ctrl; /* bit 6 - screen flip */
 
-WRITE_HANDLER( dorachan_videoram_w )
+WRITE8_HANDLER( dorachan_videoram_w )
 {
 	if (videoram[offset] != data)
 	{

@@ -73,12 +73,12 @@ static WRITE16_HANDLER( lemmings_palette_24bit_w )
 static WRITE16_HANDLER( lemmings_sound_w )
 {
 	soundlatch_w(0,data&0xff);
-	cpu_set_irq_line(1,1,HOLD_LINE);
+	cpunum_set_input_line(1,1,HOLD_LINE);
 }
 
-static WRITE_HANDLER( lemmings_sound_ack_w )
+static WRITE8_HANDLER( lemmings_sound_ack_w )
 {
-	cpu_set_irq_line(1,1,CLEAR_LINE);
+	cpunum_set_input_line(1,1,CLEAR_LINE);
 }
 
 /******************************************************************************/
@@ -270,7 +270,7 @@ static struct OKIM6295interface okim6295_interface =
 
 static void sound_irq(int state)
 {
-	cpu_set_irq_line(1,0,state);
+	cpunum_set_input_line(1,0,state);
 }
 
 static struct YM2151interface ym2151_interface =

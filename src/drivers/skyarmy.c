@@ -45,25 +45,25 @@ static void get_skyarmy_tile_info(int tile_index)
 	SET_TILE_INFO( 0, code, attr, 0)
 }
 
-WRITE_HANDLER( skyarmy_videoram_w )
+WRITE8_HANDLER( skyarmy_videoram_w )
 {
         skyarmy_videoram[offset] = data;
         tilemap_mark_tile_dirty(skyarmy_tilemap,offset);
 }
 
-WRITE_HANDLER( skyarmy_colorram_w )
+WRITE8_HANDLER( skyarmy_colorram_w )
 {
         skyarmy_colorram[offset] = data;
         tilemap_mark_tile_dirty(skyarmy_tilemap,offset);
 }
 
-WRITE_HANDLER( skyarmy_scrollram_w )
+WRITE8_HANDLER( skyarmy_scrollram_w )
 {
         skyarmy_scrollram[offset] = data;
 }
 
 
-READ_HANDLER( skyarmy_scrollram_r )
+READ8_HANDLER( skyarmy_scrollram_r )
 {
         return skyarmy_scrollram[offset];
 }
@@ -145,11 +145,11 @@ static int skyarmy_nmi=0;
 
 static INTERRUPT_GEN( skyarmy_nmi_source )
 {
-	 if(skyarmy_nmi) cpu_set_irq_line(0,IRQ_LINE_NMI, PULSE_LINE)	;
+	 if(skyarmy_nmi) cpunum_set_input_line(0,INPUT_LINE_NMI, PULSE_LINE)	;
 }
 
 
-WRITE_HANDLER( nmi_enable_w )
+WRITE8_HANDLER( nmi_enable_w )
 {
         skyarmy_nmi=data&1;
 }

@@ -11,11 +11,11 @@ struct k005289_interface
 int K005289_sh_start(const struct MachineSound *msound);
 void K005289_sh_stop(void);
 
-WRITE_HANDLER( k005289_control_A_w );
-WRITE_HANDLER( k005289_control_B_w );
-WRITE_HANDLER( k005289_pitch_A_w );
-WRITE_HANDLER( k005289_pitch_B_w );
-WRITE_HANDLER( k005289_keylatch_A_w );
-WRITE_HANDLER( k005289_keylatch_B_w );
+WRITE8_HANDLER( k005289_control_A_w );
+WRITE8_HANDLER( k005289_control_B_w );
+WRITE8_HANDLER( k005289_pitch_A_w );
+WRITE8_HANDLER( k005289_pitch_B_w );
+WRITE8_HANDLER( k005289_keylatch_A_w );
+WRITE8_HANDLER( k005289_keylatch_B_w );
 
 #endif

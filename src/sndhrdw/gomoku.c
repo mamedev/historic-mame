@@ -206,7 +206,7 @@ void gomoku_sh_stop(void)
 
 /********************************************************************************/
 
-WRITE_HANDLER( gomoku_sound_w )
+WRITE8_HANDLER( gomoku_sound_w )
 {
 	sound_channel *voice;
 	int base;

@@ -97,7 +97,7 @@ VIDEO_START( jrpacman )
 
 
 
-WRITE_HANDLER( jrpacman_videoram_w )
+WRITE8_HANDLER( jrpacman_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -122,7 +122,7 @@ WRITE_HANDLER( jrpacman_videoram_w )
 
 
 
-WRITE_HANDLER( jrpacman_palettebank_w )
+WRITE8_HANDLER( jrpacman_palettebank_w )
 {
 	if (*jrpacman_palettebank != data)
 	{
@@ -133,7 +133,7 @@ WRITE_HANDLER( jrpacman_palettebank_w )
 
 
 
-WRITE_HANDLER( jrpacman_colortablebank_w )
+WRITE8_HANDLER( jrpacman_colortablebank_w )
 {
 	if (*jrpacman_colortablebank != data)
 	{
@@ -144,7 +144,7 @@ WRITE_HANDLER( jrpacman_colortablebank_w )
 
 
 
-WRITE_HANDLER( jrpacman_charbank_w )
+WRITE8_HANDLER( jrpacman_charbank_w )
 {
 	if (*jrpacman_charbank != data)
 	{
@@ -154,7 +154,7 @@ WRITE_HANDLER( jrpacman_charbank_w )
 }
 
 
-WRITE_HANDLER( jrpacman_flipscreen_w )
+WRITE8_HANDLER( jrpacman_flipscreen_w )
 {
 	if (flipscreen != (data & 1))
 	{

@@ -75,7 +75,7 @@ static UINT8 nvram_write_enable;
 static void interrupt_gen(int scanline)
 {
 	/* assert/deassert the interrupt */
-	cpu_set_irq_line(0, 0, (scanline & 32) ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(0, 0, (scanline & 32) ? ASSERT_LINE : CLEAR_LINE);
 
 	/* set the next timer */
 	scanline += 32;
@@ -85,9 +85,9 @@ static void interrupt_gen(int scanline)
 }
 
 
-static WRITE_HANDLER( irq_ack_w )
+static WRITE8_HANDLER( irq_ack_w )
 {
-	cpu_set_irq_line(0, 0, CLEAR_LINE);
+	cpunum_set_input_line(0, 0, CLEAR_LINE);
 }
 
 
@@ -117,7 +117,7 @@ static MACHINE_INIT( atetris )
  *
  *************************************/
 
-static READ_HANDLER( atetris_slapstic_r )
+static READ8_HANDLER( atetris_slapstic_r )
 {
 	int result = slapstic_base[0x2000 + offset];
 	int new_bank = slapstic_tweak(offset) & 1;
@@ -139,7 +139,7 @@ static READ_HANDLER( atetris_slapstic_r )
  *
  *************************************/
 
-static WRITE_HANDLER( coincount_w )
+static WRITE8_HANDLER( coincount_w )
 {
 	coin_counter_w(0, (data >> 5) & 1);
 	coin_counter_w(1, (data >> 4) & 1);
@@ -153,7 +153,7 @@ static WRITE_HANDLER( coincount_w )
  *
  *************************************/
 
-static WRITE_HANDLER( nvram_w )
+static WRITE8_HANDLER( nvram_w )
 {
 	if (nvram_write_enable)
 		generic_nvram[offset] = data;
@@ -161,7 +161,7 @@ static WRITE_HANDLER( nvram_w )
 }
 
 
-static WRITE_HANDLER( nvram_enable_w )
+static WRITE8_HANDLER( nvram_enable_w )
 {
 	nvram_write_enable = 1;
 }

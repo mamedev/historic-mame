@@ -192,7 +192,7 @@ static READ16_HANDLER( tumblep_prot_r )
 static WRITE16_HANDLER( tumblep_sound_w )
 {
 	soundlatch_w(0,data & 0xff);
-	cpu_set_irq_line(1,0,HOLD_LINE);
+	cpunum_set_input_line(1,0,HOLD_LINE);
 }
 
 /******************************************************************************/
@@ -380,7 +380,7 @@ ADDRESS_MAP_END
 
 /******************************************************************************/
 
-static WRITE_HANDLER( YM2151_w )
+static WRITE8_HANDLER( YM2151_w )
 {
 	switch (offset) {
 	case 0:
@@ -934,7 +934,7 @@ static struct OKIM6295interface okim6295_interface =
 
 static void sound_irq(int state)
 {
-	cpu_set_irq_line(1,1,state); /* IRQ 2 */
+	cpunum_set_input_line(1,1,state); /* IRQ 2 */
 }
 
 static struct YM2151interface ym2151_interface =
@@ -1071,7 +1071,7 @@ MACHINE_DRIVER_END
 
 static void semicom_irqhandler(int irq)
 {
-	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 
@@ -1697,7 +1697,7 @@ static DRIVER_INIT( htchctch )
 
 	HCROM[0x1e228/2] = 0x4e75;
 
-	install_mem_write16_handler (0, 0x140000, 0x1407ff, MWA16_NOP ); // kill palette writes as the interrupt code we don't have controls them
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x140000, 0x1407ff, 0, 0, MWA16_NOP ); // kill palette writes as the interrupt code we don't have controls them
 
 
 	{

@@ -237,22 +237,22 @@ DRIVER_INIT( stfight );
 MACHINE_INIT( stfight );
 INTERRUPT_GEN( stfight_vb_interrupt );
 INTERRUPT_GEN( stfight_interrupt_1 );
-READ_HANDLER( stfight_dsw_r );
-WRITE_HANDLER( stfight_fm_w );
-WRITE_HANDLER( stfight_voice_w );
-READ_HANDLER( stfight_coin_r );
-WRITE_HANDLER( stfight_coin_w );
-WRITE_HANDLER( stfight_e800_w );
-READ_HANDLER( stfight_fm_r );
+READ8_HANDLER( stfight_dsw_r );
+WRITE8_HANDLER( stfight_fm_w );
+WRITE8_HANDLER( stfight_voice_w );
+READ8_HANDLER( stfight_coin_r );
+WRITE8_HANDLER( stfight_coin_w );
+WRITE8_HANDLER( stfight_e800_w );
+READ8_HANDLER( stfight_fm_r );
 void stfight_adpcm_int( int data );
-WRITE_HANDLER( stfight_adpcm_control_w );
+WRITE8_HANDLER( stfight_adpcm_control_w );
 
 // vidhrdw
 PALETTE_INIT( stfight );
-WRITE_HANDLER( stfight_text_char_w );
-WRITE_HANDLER( stfight_text_attr_w );
-WRITE_HANDLER( stfight_vh_latch_w );
-WRITE_HANDLER( stfight_sprite_bank_w );
+WRITE8_HANDLER( stfight_text_char_w );
+WRITE8_HANDLER( stfight_text_attr_w );
+WRITE8_HANDLER( stfight_vh_latch_w );
+WRITE8_HANDLER( stfight_sprite_bank_w );
 VIDEO_START( stfight );
 VIDEO_UPDATE( stfight );
 
@@ -591,6 +591,61 @@ ROM_START( empcity )
 	ROM_LOAD( "sf04.bin",   0x00000, 0x8000, CRC(1b8d0c07) SHA1(c163ccd2b7ed6c84facc075eb1564ca399f3ba17) )
 ROM_END
 
+/* set just contained the 3 roms cpu.4u, cpu.2u and vid.2p and the prom 82s123.a7 */
+ROM_START( empcityu )
+	ROM_REGION( 2*0x18000, REGION_CPU1, 0 )	/* 96k for code + 96k for decrypted opcodes */
+	ROM_LOAD( "cpu.4u",  0x00000, 0x8000, CRC(e2c40ea3) SHA1(fd3c21fe3b5faf323a16be54ad2eed23b12c977e) )
+	ROM_LOAD( "cpu.2u",  0x10000, 0x8000, CRC(96ee8b81) SHA1(95b516c023766fae79241d4422814e39e268ae7d) )	/* bank switched */
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the second CPU */
+	ROM_LOAD( "ec_04.rom",  0x0000,  0x8000, CRC(aa3e7d1e) SHA1(da350384d55f011253d19ce17fc327cd2604257f) )
+
+	ROM_REGION( 0x02000, REGION_GFX1, ROMREGION_DISPOSE )	/* character data */
+	ROM_LOAD( "vid.2p",   0x0000, 0x2000, CRC(15593793) SHA1(ac9ca8a0aa0ce3810f45aa41e74d4946ecced245) )
+
+	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE ) /* foreground tile pixel data */
+	ROM_LOAD( "sf07.bin",   0x10000, 0x8000, CRC(2c6caa5f) SHA1(f6893cb87004979ead331897c684f995f850447e) )
+	ROM_LOAD( "sf08.bin",   0x18000, 0x8000, CRC(e11ded31) SHA1(e3e634ad324d51e52d79dd79e5e6e5697cb8d21f) )
+	ROM_LOAD( "sf05.bin",   0x00000, 0x8000, CRC(0c099a31) SHA1(dabaf8edc59e4954941cd8176031a358f45a1956) )
+	ROM_LOAD( "sf06.bin",   0x08000, 0x8000, CRC(3cc77c31) SHA1(13d2324df5a322d499c9959a6bb3a844edaefb45) )
+
+	ROM_REGION( 0x20000, REGION_GFX3, ROMREGION_DISPOSE )	/* background tile pixel data */
+	ROM_LOAD( "sf13.bin",   0x10000, 0x8000, CRC(0ae48dd3) SHA1(ca3d9aeb9f4343c379cef9282e408fbf8aa67d99) )
+	ROM_LOAD( "sf14.bin",   0x18000, 0x8000, CRC(debf5d76) SHA1(eb18c35166eb5f93be98b3c30c7d909c0a68eada) )
+	ROM_LOAD( "sf11.bin",   0x00000, 0x8000, CRC(8261ecfe) SHA1(5817f4a0458a949298414fe09c86bbcf50be52f3) )
+	ROM_LOAD( "sf12.bin",   0x08000, 0x8000, CRC(71137301) SHA1(087a9f401939bc30f1dafa9916e8d8c564595a57) )
+
+	ROM_REGION( 0x20000, REGION_GFX4, ROMREGION_DISPOSE )	/* sprite data */
+	ROM_LOAD( "sf20.bin",   0x10000, 0x8000, CRC(8299f247) SHA1(71891f7b1fbfaed14c3854b7f6e10a3ddb4bd479) )
+	ROM_LOAD( "sf21.bin",   0x18000, 0x8000, CRC(b57dc037) SHA1(69ac79a95ba9ace7c9ca7af480a4a10176be5ace) )
+	ROM_LOAD( "sf18.bin",   0x00000, 0x8000, CRC(68acd627) SHA1(f98ff9ccb0913711079a2988e8dd08695fb5e107) )
+	ROM_LOAD( "sf19.bin",   0x08000, 0x8000, CRC(5170a057) SHA1(9222f9febc222fa0c2eead258ad77c857f6d40c8) )
+
+	ROM_REGION( 0x10000, REGION_GFX5, 0 )	/* foreground map data */
+	ROM_LOAD( "sf09.bin",   0x00000, 0x8000, CRC(8ceaf4fe) SHA1(5698f2ff44c109825b8d9d0b6dd2426624df668b) )
+	ROM_LOAD( "sf10.bin",   0x08000, 0x8000, CRC(5a1a227a) SHA1(24928ab218824ae1f5380398ceb90dcad525cc08) )
+
+	ROM_REGION( 0x10000, REGION_GFX6, 0 )	/* background map data */
+	ROM_LOAD( "sf15.bin",   0x00000, 0x8000, CRC(27a310bc) SHA1(dd30d72bc33b0bf7ddaf3ab730e028f51b20152a) )
+	ROM_LOAD( "sf16.bin",   0x08000, 0x8000, CRC(3d19ce18) SHA1(38f691a23c96ef672637965c1a13f6d1595f9d51) )
+
+	ROM_REGION( 0x0800, REGION_PROMS, 0 )
+	ROM_LOAD( "82s129.006", 0x0000, 0x0100, CRC(f9424b5b) SHA1(e3bc23213406d35d54f1221f17f25d433df273a2) )	/* text lookup table */
+	ROM_LOAD( "82s129.002", 0x0100, 0x0100, CRC(c883d49b) SHA1(e84900ccf6f27e5043e43c0d85ea1e4eee7e52d3) )	/* fg lookup table */
+	ROM_LOAD( "82s129.003", 0x0200, 0x0100, CRC(af81882a) SHA1(b1008c991bd8d1157b3479e465ab286c70418b58) )
+	ROM_LOAD( "82s129.004", 0x0300, 0x0100, CRC(1831ce7c) SHA1(57afbee9225f0efd63895a5f522e96dc87ca2616) )	/* bg lookup table */
+	ROM_LOAD( "82s129.005", 0x0400, 0x0100, CRC(96cb6293) SHA1(1dcdeaa995e6ffa3753b742842c5ffe0f68ef8cd) )
+	ROM_LOAD( "82s129.052", 0x0500, 0x0100, CRC(3d915ffc) SHA1(921be6d5e5fc0fdee9c9f545c1c4a0c334e9844c) )	/* sprite lookup table */
+	ROM_LOAD( "82s129.066", 0x0600, 0x0100, CRC(51e8832f) SHA1(ed8c00559e7a02bb8c11861d747c8c64c01b7437) )
+	ROM_LOAD( "82s129.015", 0x0700, 0x0100, CRC(0eaf5158) SHA1(bafd4108708f66cd7b280e47152b108f3e254fc9) )	/* timing? (not used) */
+
+	ROM_REGION( 0x08000, REGION_SOUND1, 0 )	/* adpcm voice data */
+	ROM_LOAD( "sf04.bin",   0x00000, 0x8000, CRC(1b8d0c07) SHA1(c163ccd2b7ed6c84facc075eb1564ca399f3ba17) )
+
+	ROM_REGION( 0x020, REGION_USER1, 0 )
+	ROM_LOAD( "82s123.a7", 0x0000, 0x0020, CRC(93e2d292) SHA1(af8edd0cfe85f28ede9604cfaf4516d54e5277c9) )	/* ?*/
+ROM_END
+
 ROM_START( empcityj )
 	ROM_REGION( 2*0x18000, REGION_CPU1, 0 )	/* 96k for code + 96k for decrypted opcodes */
 	ROM_LOAD( "1.bin",      0x00000, 0x8000, CRC(8162331c) SHA1(f2fdf5fbc52d4ea692fb87fa049c48935a73d67b) )
@@ -693,8 +748,61 @@ ROM_START( stfight )
 	ROM_LOAD( "sf04.bin",   0x00000, 0x8000, CRC(1b8d0c07) SHA1(c163ccd2b7ed6c84facc075eb1564ca399f3ba17) )
 ROM_END
 
+/* not sure if this is a bootleg or not, it still displays the seibu copyright on a screen during the attract mode
+   but not during the initial startup, must investigate this set more later */
+ROM_START( stfighta )
+	ROM_REGION( 2*0x18000, REGION_CPU1, 0 )	/* 96k for code + 96k for decrypted opcodes */
+	ROM_LOAD( "sfight2.bin",     0x00000, 0x8000, CRC(8fb4dfc9) SHA1(0350f4a8749883a4e2e9c4aed2447a64a078f9ce) )//  2.bin 58.532715%
+	ROM_LOAD( "sfight1.bin",     0x10000, 0x8000, CRC(983ce746) SHA1(3c7b9498f1adf253ba651558ee40641ec3dbc5eb) )/* bank switched */ //  a-1.4q 99.737549%
 
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the second CPU */
+	ROM_LOAD( "sf03.bin",   0x0000,  0x8000, CRC(6a8cb7a6) SHA1(dc123cc48d3623752b78e7c23dd8d2f5adf84f92) )
+
+	ROM_REGION( 0x02000, REGION_GFX1, ROMREGION_DISPOSE )	/* character data */
+	ROM_LOAD( "sf17.bin",   0x0000, 0x2000, CRC(1b3706b5) SHA1(61f069329a7a836523ffc8cce915b0d0129fd896) )
+
+	ROM_REGION( 0x20000, REGION_GFX2, ROMREGION_DISPOSE ) /* foreground tile pixel data */
+	ROM_LOAD( "sf07.bin",   0x10000, 0x8000, CRC(2c6caa5f) SHA1(f6893cb87004979ead331897c684f995f850447e) )
+	ROM_LOAD( "sf08.bin",   0x18000, 0x8000, CRC(e11ded31) SHA1(e3e634ad324d51e52d79dd79e5e6e5697cb8d21f) )
+	ROM_LOAD( "sf05.bin",   0x00000, 0x8000, CRC(0c099a31) SHA1(dabaf8edc59e4954941cd8176031a358f45a1956) )
+	ROM_LOAD( "sf06.bin",   0x08000, 0x8000, CRC(3cc77c31) SHA1(13d2324df5a322d499c9959a6bb3a844edaefb45) )
+
+	ROM_REGION( 0x20000, REGION_GFX3, ROMREGION_DISPOSE )	/* background tile pixel data */
+	ROM_LOAD( "sf13.bin",   0x10000, 0x8000, CRC(0ae48dd3) SHA1(ca3d9aeb9f4343c379cef9282e408fbf8aa67d99) )
+	ROM_LOAD( "sf14.bin",   0x18000, 0x8000, CRC(debf5d76) SHA1(eb18c35166eb5f93be98b3c30c7d909c0a68eada) )
+	ROM_LOAD( "sf11.bin",   0x00000, 0x8000, CRC(8261ecfe) SHA1(5817f4a0458a949298414fe09c86bbcf50be52f3) )
+	ROM_LOAD( "sf12.bin",   0x08000, 0x8000, CRC(71137301) SHA1(087a9f401939bc30f1dafa9916e8d8c564595a57) )
+
+	ROM_REGION( 0x20000, REGION_GFX4, ROMREGION_DISPOSE )	/* sprite data */
+	ROM_LOAD( "sf20.bin",   0x10000, 0x8000, CRC(8299f247) SHA1(71891f7b1fbfaed14c3854b7f6e10a3ddb4bd479) )
+	ROM_LOAD( "sf21.bin",   0x18000, 0x8000, CRC(b57dc037) SHA1(69ac79a95ba9ace7c9ca7af480a4a10176be5ace) )
+	ROM_LOAD( "sf18.bin",   0x00000, 0x8000, CRC(68acd627) SHA1(f98ff9ccb0913711079a2988e8dd08695fb5e107) )
+	ROM_LOAD( "sf19.bin",   0x08000, 0x8000, CRC(5170a057) SHA1(9222f9febc222fa0c2eead258ad77c857f6d40c8) )
+
+	ROM_REGION( 0x10000, REGION_GFX5, 0 )	/* foreground map data */
+	ROM_LOAD( "sf09.bin",   0x00000, 0x8000, CRC(8ceaf4fe) SHA1(5698f2ff44c109825b8d9d0b6dd2426624df668b) )
+	ROM_LOAD( "sf10.bin",   0x08000, 0x8000, CRC(5a1a227a) SHA1(24928ab218824ae1f5380398ceb90dcad525cc08) )
+
+	ROM_REGION( 0x10000, REGION_GFX6, 0 )	/* background map data */
+	ROM_LOAD( "sf15.bin",   0x00000, 0x8000, CRC(27a310bc) SHA1(dd30d72bc33b0bf7ddaf3ab730e028f51b20152a) )
+	ROM_LOAD( "sf16.bin",   0x08000, 0x8000, CRC(3d19ce18) SHA1(38f691a23c96ef672637965c1a13f6d1595f9d51) )
+
+	ROM_REGION( 0x0800, REGION_PROMS, 0 )
+	ROM_LOAD( "82s129.006", 0x0000, 0x0100, CRC(f9424b5b) SHA1(e3bc23213406d35d54f1221f17f25d433df273a2) )	/* text lookup table */
+	ROM_LOAD( "82s129.002", 0x0100, 0x0100, CRC(c883d49b) SHA1(e84900ccf6f27e5043e43c0d85ea1e4eee7e52d3) )	/* fg lookup table */
+	ROM_LOAD( "82s129.003", 0x0200, 0x0100, CRC(af81882a) SHA1(b1008c991bd8d1157b3479e465ab286c70418b58) )
+	ROM_LOAD( "82s129.004", 0x0300, 0x0100, CRC(1831ce7c) SHA1(57afbee9225f0efd63895a5f522e96dc87ca2616) )	/* bg lookup table */
+	ROM_LOAD( "82s129.005", 0x0400, 0x0100, CRC(96cb6293) SHA1(1dcdeaa995e6ffa3753b742842c5ffe0f68ef8cd) )
+	ROM_LOAD( "82s129.052", 0x0500, 0x0100, CRC(3d915ffc) SHA1(921be6d5e5fc0fdee9c9f545c1c4a0c334e9844c) )	/* sprite lookup table */
+	ROM_LOAD( "82s129.066", 0x0600, 0x0100, CRC(51e8832f) SHA1(ed8c00559e7a02bb8c11861d747c8c64c01b7437) )
+	ROM_LOAD( "82s129.015", 0x0700, 0x0100, CRC(0eaf5158) SHA1(bafd4108708f66cd7b280e47152b108f3e254fc9) )	/* timing? (not used) */
+
+	ROM_REGION( 0x08000, REGION_SOUND1, 0 )	/* adpcm voice data */
+	ROM_LOAD( "sf04.bin",   0x00000, 0x8000, CRC(1b8d0c07) SHA1(c163ccd2b7ed6c84facc075eb1564ca399f3ba17) )
+ROM_END
 
 GAME( 1986, empcity,  0,       stfight, stfight, empcity, ROT0, "Seibu Kaihatsu", "Empire City: 1931 (bootleg?)" )
+GAME( 1986, empcityu, empcity, stfight, stfight, stfight, ROT0, "[Seibu Kaihatsu] (Taito / Romstar license)", "Empire City: 1931 (US)" )
 GAME( 1986, empcityj, empcity, stfight, stfight, stfight, ROT0, "[Seibu Kaihatsu] (Taito license)", "Empire City: 1931 (Japan)" )
 GAME( 1986, stfight,  empcity, stfight, stfight, stfight, ROT0, "Seibu Kaihatsu", "Street Fight (Germany)" )
+GAME( 1986, stfighta, empcity, stfight, stfight, stfight, ROT0, "Seibu Kaihatsu", "Street Fight" )

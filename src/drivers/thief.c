@@ -32,18 +32,18 @@ Credits:
 
 static UINT8 thief_input_select;
 
-READ_HANDLER( thief_context_ram_r );
-WRITE_HANDLER( thief_context_ram_w );
-WRITE_HANDLER( thief_context_bank_w );
-WRITE_HANDLER( thief_video_control_w );
-WRITE_HANDLER( thief_vtcsel_w );
-WRITE_HANDLER( thief_color_map_w );
-WRITE_HANDLER( thief_color_plane_w );
-READ_HANDLER( thief_videoram_r );
-WRITE_HANDLER( thief_videoram_w );
-WRITE_HANDLER( thief_blit_w );
-READ_HANDLER( thief_coprocessor_r );
-WRITE_HANDLER( thief_coprocessor_w );
+READ8_HANDLER( thief_context_ram_r );
+WRITE8_HANDLER( thief_context_ram_w );
+WRITE8_HANDLER( thief_context_bank_w );
+WRITE8_HANDLER( thief_video_control_w );
+WRITE8_HANDLER( thief_vtcsel_w );
+WRITE8_HANDLER( thief_color_map_w );
+WRITE8_HANDLER( thief_color_plane_w );
+READ8_HANDLER( thief_videoram_r );
+WRITE8_HANDLER( thief_videoram_w );
+WRITE8_HANDLER( thief_blit_w );
+READ8_HANDLER( thief_coprocessor_r );
+WRITE8_HANDLER( thief_coprocessor_w );
 
 VIDEO_START( thief );
 VIDEO_UPDATE( thief );
@@ -53,9 +53,9 @@ static INTERRUPT_GEN( thief_interrupt )
 {
 	/* SLAM switch causes an NMI if it's pressed */
 	if( (input_port_3_r(0) & 0x10) == 0 )
-		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+		cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 	else
-		cpu_set_irq_line(0, 0, HOLD_LINE);
+		cpunum_set_input_line(0, 0, HOLD_LINE);
 }
 
 /**********************************************************/
@@ -96,12 +96,12 @@ static void tape_set_motor( int bOn )
 
 /***********************************************************/
 
-static WRITE_HANDLER( thief_input_select_w )
+static WRITE8_HANDLER( thief_input_select_w )
 {
 	thief_input_select = data;
 }
 
-static WRITE_HANDLER( tape_control_w )
+static WRITE8_HANDLER( tape_control_w )
 {
 	switch( data )
 	{
@@ -140,7 +140,7 @@ static WRITE_HANDLER( tape_control_w )
 	}
 }
 
-static READ_HANDLER( thief_io_r )
+static READ8_HANDLER( thief_io_r )
 {
 	switch( thief_input_select )
 	{

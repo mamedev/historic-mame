@@ -21,43 +21,43 @@ MACHINE_INIT( balsente );
 
 void balsente_noise_gen(int chip, int count, short *buffer);
 
-WRITE_HANDLER( balsente_random_reset_w );
-READ_HANDLER( balsente_random_num_r );
+WRITE8_HANDLER( balsente_random_reset_w );
+READ8_HANDLER( balsente_random_num_r );
 
-WRITE_HANDLER( balsente_rombank_select_w );
-WRITE_HANDLER( balsente_rombank2_select_w );
+WRITE8_HANDLER( balsente_rombank_select_w );
+WRITE8_HANDLER( balsente_rombank2_select_w );
 
-WRITE_HANDLER( balsente_misc_output_w );
+WRITE8_HANDLER( balsente_misc_output_w );
 
-READ_HANDLER( balsente_m6850_r );
-WRITE_HANDLER( balsente_m6850_w );
+READ8_HANDLER( balsente_m6850_r );
+WRITE8_HANDLER( balsente_m6850_w );
 
-READ_HANDLER( balsente_m6850_sound_r );
-WRITE_HANDLER( balsente_m6850_sound_w );
+READ8_HANDLER( balsente_m6850_sound_r );
+WRITE8_HANDLER( balsente_m6850_sound_w );
 
 INTERRUPT_GEN( balsente_update_analog_inputs );
-READ_HANDLER( balsente_adc_data_r );
-WRITE_HANDLER( balsente_adc_select_w );
+READ8_HANDLER( balsente_adc_data_r );
+WRITE8_HANDLER( balsente_adc_select_w );
 
-READ_HANDLER( balsente_counter_8253_r );
-WRITE_HANDLER( balsente_counter_8253_w );
+READ8_HANDLER( balsente_counter_8253_r );
+WRITE8_HANDLER( balsente_counter_8253_w );
 
-READ_HANDLER( balsente_counter_state_r );
-WRITE_HANDLER( balsente_counter_control_w );
+READ8_HANDLER( balsente_counter_state_r );
+WRITE8_HANDLER( balsente_counter_control_w );
 
-WRITE_HANDLER( balsente_chip_select_w );
-WRITE_HANDLER( balsente_dac_data_w );
-WRITE_HANDLER( balsente_register_addr_w );
+WRITE8_HANDLER( balsente_chip_select_w );
+WRITE8_HANDLER( balsente_dac_data_w );
+WRITE8_HANDLER( balsente_register_addr_w );
 
-READ_HANDLER( nstocker_port2_r );
-WRITE_HANDLER( spiker_expand_w );
-READ_HANDLER( spiker_expand_r );
-READ_HANDLER( grudge_steering_r );
+READ8_HANDLER( nstocker_port2_r );
+WRITE8_HANDLER( spiker_expand_w );
+READ8_HANDLER( spiker_expand_r );
+READ8_HANDLER( grudge_steering_r );
 
 READ16_HANDLER( shrike_shared_68k_r );
 WRITE16_HANDLER( shrike_shared_68k_w );
-READ_HANDLER( shrike_shared_6809_r );
-WRITE_HANDLER( shrike_shared_6809_w );
+READ8_HANDLER( shrike_shared_6809_r );
+WRITE8_HANDLER( shrike_shared_6809_w );
 
 
 /*----------- defined in vidhrdw/balsente.c -----------*/
@@ -65,6 +65,6 @@ WRITE_HANDLER( shrike_shared_6809_w );
 VIDEO_START( balsente );
 VIDEO_UPDATE( balsente );
 
-WRITE_HANDLER( balsente_videoram_w );
-WRITE_HANDLER( balsente_paletteram_w );
-WRITE_HANDLER( balsente_palette_select_w );
+WRITE8_HANDLER( balsente_videoram_w );
+WRITE8_HANDLER( balsente_paletteram_w );
+WRITE8_HANDLER( balsente_palette_select_w );

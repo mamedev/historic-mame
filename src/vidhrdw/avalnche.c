@@ -10,7 +10,7 @@
 #include "avalnche.h"
 
 
-WRITE_HANDLER( avalnche_videoram_w )
+WRITE8_HANDLER( avalnche_videoram_w )
 {
 	videoram[offset] = data;
 

@@ -16,7 +16,7 @@ static int ra_spritebank =0 ;
 #define RA_BGCHAR_BASE 	4
 #define RA_SP_BASE	5
 
-WRITE_HANDLER( rollrace_charbank_w)
+WRITE8_HANDLER( rollrace_charbank_w)
 {
 
 	ra_charbank[offset&1] = data;
@@ -24,17 +24,17 @@ WRITE_HANDLER( rollrace_charbank_w)
 }
 
 
-WRITE_HANDLER( rollrace_bkgpen_w)
+WRITE8_HANDLER( rollrace_bkgpen_w)
 {
 	ra_bkgpen = data;
 }
 
-WRITE_HANDLER(rollrace_spritebank_w)
+WRITE8_HANDLER(rollrace_spritebank_w)
 {
 	ra_spritebank = data;
 }
 
-WRITE_HANDLER(rollrace_backgroundpage_w)
+WRITE8_HANDLER(rollrace_backgroundpage_w)
 {
 
 	ra_bkgpage = data & 0x1f;
@@ -43,17 +43,17 @@ WRITE_HANDLER(rollrace_backgroundpage_w)
 	/* 0x80 flip vertical */
 }
 
-WRITE_HANDLER( rollrace_backgroundcolor_w )
+WRITE8_HANDLER( rollrace_backgroundcolor_w )
 {
 	ra_bkgcol = data;
 }
 
-WRITE_HANDLER( rollrace_flipy_w )
+WRITE8_HANDLER( rollrace_flipy_w )
 {
 	ra_flipy = data & 0x01;
 }
 
-WRITE_HANDLER( rollrace_flipx_w )
+WRITE8_HANDLER( rollrace_flipx_w )
 {
 	ra_flipx = data & 0x01;
 }

@@ -54,19 +54,19 @@ f80b      ????
 extern int tecmo_video_type;
 extern unsigned char *tecmo_txvideoram,*tecmo_fgvideoram,*tecmo_bgvideoram;
 
-WRITE_HANDLER( tecmo_txvideoram_w );
-WRITE_HANDLER( tecmo_fgvideoram_w );
-WRITE_HANDLER( tecmo_bgvideoram_w );
-WRITE_HANDLER( tecmo_fgscroll_w );
-WRITE_HANDLER( tecmo_bgscroll_w );
-WRITE_HANDLER( tecmo_flipscreen_w );
+WRITE8_HANDLER( tecmo_txvideoram_w );
+WRITE8_HANDLER( tecmo_fgvideoram_w );
+WRITE8_HANDLER( tecmo_bgvideoram_w );
+WRITE8_HANDLER( tecmo_fgscroll_w );
+WRITE8_HANDLER( tecmo_bgscroll_w );
+WRITE8_HANDLER( tecmo_flipscreen_w );
 
 VIDEO_START( tecmo );
 VIDEO_UPDATE( tecmo );
 
 
 
-WRITE_HANDLER( tecmo_bankswitch_w )
+WRITE8_HANDLER( tecmo_bankswitch_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -76,24 +76,24 @@ WRITE_HANDLER( tecmo_bankswitch_w )
 	cpu_setbank(1,&RAM[bankaddress]);
 }
 
-static WRITE_HANDLER( tecmo_sound_command_w )
+static WRITE8_HANDLER( tecmo_sound_command_w )
 {
 	soundlatch_w(offset,data);
-	cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
+	cpunum_set_input_line(1,INPUT_LINE_NMI,PULSE_LINE);
 }
 
 static int adpcm_pos,adpcm_end;
 
-static WRITE_HANDLER( tecmo_adpcm_start_w )
+static WRITE8_HANDLER( tecmo_adpcm_start_w )
 {
 	adpcm_pos = data << 8;
 	MSM5205_reset_w(0,0);
 }
-static WRITE_HANDLER( tecmo_adpcm_end_w )
+static WRITE8_HANDLER( tecmo_adpcm_end_w )
 {
 	adpcm_end = (data + 1) << 8;
 }
-static WRITE_HANDLER( tecmo_adpcm_vol_w )
+static WRITE8_HANDLER( tecmo_adpcm_vol_w )
 {
 	MSM5205_set_volume(0,(data & 0x0f) * 100 / 15);
 }
@@ -548,7 +548,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static void irqhandler(int linestate)
 {
-	cpu_set_irq_line(1,0,linestate);
+	cpunum_set_input_line(1,0,linestate);
 }
 
 static struct YM3526interface ym3812_interface =

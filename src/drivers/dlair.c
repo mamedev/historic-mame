@@ -34,11 +34,11 @@
 
 static int led0,led1;
 
-WRITE_HANDLER( dlair_led0_w )
+WRITE8_HANDLER( dlair_led0_w )
 {
 	led0 = data;
 }
-WRITE_HANDLER( dlair_led1_w )
+WRITE8_HANDLER( dlair_led1_w )
 {
 	led1 = data;
 }
@@ -117,7 +117,7 @@ if ((led1 & 64) == 0) drawgfx(bitmap,Machine->uifont,'x',0,0,0,
 /* z80 ctc */
 static void ctc_interrupt (int state)
 {
-	cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, Z80_VECTOR(0,state));
+	cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, Z80_VECTOR(0,state));
 }
 
 static z80ctc_interface ctc_intf =
@@ -157,12 +157,12 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static unsigned char pip[4];
-static READ_HANDLER( pip_r )
+static READ8_HANDLER( pip_r )
 {
 logerror("PC %04x: read I/O port %02x\n",activecpu_get_pc(),offset);
 	return pip[offset];
 }
-static WRITE_HANDLER( pip_w )
+static WRITE8_HANDLER( pip_w )
 {
 logerror("PC %04x: write %02x to I/O port %02x\n",activecpu_get_pc(),data,offset);
 	pip[offset] = data;

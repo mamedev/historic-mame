@@ -157,14 +157,14 @@ VIDEO_START( journey )
  *
  *************************************/
 
-WRITE_HANDLER( mcr1_videoram_w )
+WRITE8_HANDLER( mcr1_videoram_w )
 {
 	videoram[offset] = data;
 	tilemap_mark_tile_dirty(bg_tilemap, offset);
 }
 
 
-WRITE_HANDLER( mcr2_videoram_w )
+WRITE8_HANDLER( mcr2_videoram_w )
 {
 	videoram[offset] = data;
 	tilemap_mark_tile_dirty(bg_tilemap, offset / 2);
@@ -188,7 +188,7 @@ WRITE_HANDLER( mcr2_videoram_w )
 }
 
 
-WRITE_HANDLER( twotigra_videoram_w )
+WRITE8_HANDLER( twotigra_videoram_w )
 {
 	videoram[offset] = data;
 	tilemap_mark_tile_dirty(bg_tilemap, offset & 0x3ff);

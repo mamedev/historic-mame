@@ -45,16 +45,16 @@
 #include "vidhrdw/generic.h"
 
 
-extern WRITE_HANDLER(mole_videoram_w);
-extern WRITE_HANDLER(mole_tilebank_w);
-extern WRITE_HANDLER(mole_flipscreen_w);
+extern WRITE8_HANDLER(mole_videoram_w);
+extern WRITE8_HANDLER(mole_tilebank_w);
+extern WRITE8_HANDLER(mole_flipscreen_w);
 
 extern PALETTE_INIT(mole);
 extern VIDEO_START(mole);
 extern VIDEO_UPDATE(mole);
 
 
-static READ_HANDLER( mole_protection_r )
+static READ8_HANDLER( mole_protection_r )
 {
 	/*	Following are all known examples of Mole Attack
 	**	code reading from the protection circuitry:

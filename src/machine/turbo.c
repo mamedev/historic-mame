@@ -13,6 +13,7 @@
 UINT8 turbo_opa, turbo_opb, turbo_opc;
 UINT8 turbo_ipa, turbo_ipb, turbo_ipc;
 UINT8 turbo_fbpla, turbo_fbcol;
+UINT8 turbo_speed;
 
 UINT8 subroc3d_col, subroc3d_ply, subroc3d_chofs;
 
@@ -20,58 +21,15 @@ UINT8 buckrog_fchg, buckrog_mov, buckrog_obch;
 
 /* local data */
 static UINT8 segment_address, segment_increment;
-static UINT8 osel, bsel;
 static UINT8 port_8279;
-
-static UINT8 turbo_accel;
-static UINT8 turbo_speed;
 
 static UINT8 buckrog_status;
 static UINT8 buckrog_command;
-static UINT8 buckrog_hit;
-static UINT8 buckrog_myship;
-
-static UINT8 subroc3d_volume;
-static UINT8 subroc3d_select;
 
 static UINT8 old_segment_data[32];
 static UINT8 new_segment_data[32];
 
 static int segment_init;
-
-
-/*******************************************
-
-	Sample handling
-
-*******************************************/
-
-static void turbo_update_samples(void)
-{
-	/* accelerator sounds */
-	/* BSEL == 3 --> off */
-	/* BSEL == 2 --> standard */
-	/* BSEL == 1 --> tunnel */
-	/* BSEL == 0 --> ??? */
-	if (bsel == 3 && sample_playing(6))
-		sample_stop(6);
-	else if (bsel != 3 && !sample_playing(6))
-		sample_start(6, 7, 1);
-	if (sample_playing(6))
-		sample_set_freq(6, 44100 * (turbo_accel & 0x3f) / 5.25 + 44100);
-}
-
-
-static void buckrog_update_samples(void)
-{
-	/* accelerator sounds -- */
-	if (sample_playing(0))
-		sample_set_freq(0, 44100 * buckrog_myship / 100.25 + 44100);
-
-	if (sample_playing(1))
-		sample_set_freq(1, 44100 * buckrog_hit / 5.25 + 44100);
-}
-
 
 
 /*******************************************
@@ -87,114 +45,43 @@ static void buckrog_update_samples(void)
 	3 = IC6 - CPU Board, Sheet 5, D7
 */
 
-static WRITE_HANDLER( turbo_opa_w )
+static WRITE8_HANDLER( turbo_opa_w )
 {
 	turbo_opa = data;	/* signals 0PA0 to 0PA7 */
 }
 
 
-static WRITE_HANDLER( turbo_opb_w )
+static WRITE8_HANDLER( turbo_opb_w )
 {
 	turbo_opb = data;	/* signals 0PB0 to 0PB7 */
 }
 
 
-static WRITE_HANDLER( turbo_opc_w )
+static WRITE8_HANDLER( turbo_opc_w )
 {
 	turbo_opc = data;	/* signals 0PC0 to 0PC7 */
 }
 
 
-static WRITE_HANDLER( turbo_ipa_w )
+static WRITE8_HANDLER( turbo_ipa_w )
 {
 	turbo_ipa = data;	/* signals 1PA0 to 1PA7 */
 }
 
 
-static WRITE_HANDLER( turbo_ipb_w )
+static WRITE8_HANDLER( turbo_ipb_w )
 {
 	turbo_ipb = data;	/* signals 1PB0 to 1PB7 */
 }
 
 
-static WRITE_HANDLER( turbo_ipc_w )
+static WRITE8_HANDLER( turbo_ipc_w )
 {
 	turbo_ipc = data;	/* signals 1PC0 to 1PC7 */
 }
 
 
-static WRITE_HANDLER( turbo_sound_A_w )
-{
-	/*
-		2PA0 = /CRASH
-		2PA1 = /TRIG1
-		2PA2 = /TRIG2
-		2PA3 = /TRIG3
-		2PA4 = /TRIG4
-		2PA5 = OSEL0
-		2PA6 = /SLIP
-		2PA7 = /CRASHL
-	*/
-	/* missing short crash sample, but I've never seen it triggered */
-	if (!(data & 0x02)) sample_start(0, 0, 0);
-	if (!(data & 0x04)) sample_start(0, 1, 0);
-	if (!(data & 0x08)) sample_start(0, 2, 0);
-	if (!(data & 0x10)) sample_start(0, 3, 0);
-	if (!(data & 0x40)) sample_start(1, 4, 0);
-	if (!(data & 0x80)) sample_start(2, 5, 0);
-	osel = (osel & 6) | ((data >> 5) & 1);
-	turbo_update_samples();
-}
-
-
-static WRITE_HANDLER( turbo_sound_B_w )
-{
-	/*
-		2PB0 = ACC0
-		2PB1 = ACC1
-		2PB2 = ACC2
-		2PB3 = ACC3
-		2PB4 = ACC4
-		2PB5 = ACC5
-		2PB6 = /AMBU
-		2PB7 = /SPIN
-	*/
-	turbo_accel = data & 0x3f;
-	turbo_update_samples();
-	if (!(data & 0x40))
-	{
-		if (!sample_playing(7))
-			sample_start(7, 8, 0);
-		else
-			logerror("ambu didnt start\n");
-	}
-	else
-		sample_stop(7);
-	if (!(data & 0x80)) sample_start(3, 6, 0);
-}
-
-
-static WRITE_HANDLER( turbo_sound_C_w )
-{
-	/*
-		2PC0 = OSEL1
-		2PC1 = OSEL2
-		2PC2 = BSEL0
-		2PC3 = BSEL1
-		2PC4 = SPEED0
-		2PC5 = SPEED1
-		2PC6 = SPEED2
-		2PC7 = SPEED3
-	*/
-	turbo_speed = (data >> 4) & 0x0f;
-	bsel = (data >> 2) & 3;
-	osel = (osel & 1) | ((data & 3) << 1);
-	turbo_update_samples();
-	turbo_update_tachometer();
-}
-
-
-static WRITE_HANDLER( turbo_pla_col_w )
+static WRITE8_HANDLER( turbo_pla_col_w )
 {
 	/* bit 0-3 = signals PLA0 to PLA3 */
 	/* bit 4-6 = signals COL0 to COL2 */
@@ -223,13 +110,13 @@ static ppi8255_interface turbo_8255_intf =
 
 *******************************************/
 
-static WRITE_HANDLER( subroc3d_sprite_pri_w )
+static WRITE8_HANDLER( subroc3d_sprite_pri_w )
 {
 	subroc3d_ply = data & 0x0f;
 }
 
 
-static WRITE_HANDLER( subroc3d_coin_led_w )
+static WRITE8_HANDLER( subroc3d_coin_led_w )
 {
 	coin_counter_w(0, data & 0x01);
 	coin_counter_w(1, data & 0x02);
@@ -238,58 +125,9 @@ static WRITE_HANDLER( subroc3d_coin_led_w )
 }
 
 
-static WRITE_HANDLER( subroc3d_palette_w )
+static WRITE8_HANDLER( subroc3d_palette_w )
 {
 	subroc3d_col = data & 0x0f;
-}
-
-
-static WRITE_HANDLER( subroc3d_sound_A_w )
-{
-	/* bits 4 to 6 control balance */
-
-	subroc3d_volume = (data & 0x0f);
-	subroc3d_select = (data & 0x80);
-}
-
-
-static WRITE_HANDLER( subroc3d_sound_B_w )
-{
-	static UINT8 last = 0;
-
-	int volume = 16 * (15 - subroc3d_volume);
-
-	if ((data & 1) && !(last & 1))
-		sample_set_volume(0, volume);
-	if ((data & 2) && !(last & 2))
-		sample_set_volume(1, volume);
-	if ((data & 4) && !(last & 4))
-		sample_set_volume(2, volume);
-	if ((data & 8) && !(last & 8))
-		sample_set_volume(3, volume);
-
-	last = data;
-}
-
-
-static WRITE_HANDLER( subroc3d_sound_C_w )
-{
-	static UINT8 last = 0;
-
-	if ((data & 0x01) && !(last & 0x01))
-		sample_start(4, (data & 0x02) ? 6 : 5, 0);
-	if ((data & 0x04) && !(last & 0x04))
-		sample_start(6, 7, 0);
-	if ((data & 0x08) && !(last & 0x08))
-		sample_start(3, subroc3d_select ? 4 : 3, 0);
-	if ((data & 0x10) && !(last & 0x10))
-		sample_start(5, (data & 0x20) ? 10 : 9, 0);
-
-	sample_set_volume(7, (data & 0x40) ? 0 : 255);
-
-	last = data;
-
-	mixer_sound_enable_global_w(!(data & 0x80));
 }
 
 
@@ -312,83 +150,33 @@ static ppi8255_interface subroc3d_8255_intf =
 
 *******************************************/
 
-static READ_HANDLER( buckrog_cpu2_status_r )
+static READ8_HANDLER( buckrog_cpu2_status_r )
 {
 	return buckrog_status;
 }
 
 
-static WRITE_HANDLER( buckrog_cpu2_command_w )
+static WRITE8_HANDLER( buckrog_cpu2_command_w )
 {
 	buckrog_status &= ~0x80;
 	buckrog_command = data;
-	cpu_set_irq_line(1, 0, HOLD_LINE);
+	cpunum_set_input_line(1, 0, HOLD_LINE);
 }
 
 
-static WRITE_HANDLER( buckrog_back_palette_w )
+static WRITE8_HANDLER( buckrog_back_palette_w )
 {
 	buckrog_mov = data & 0x1f;
 }
 
 
-static WRITE_HANDLER( buckrog_fore_palette_w )
+static WRITE8_HANDLER( buckrog_fore_palette_w )
 {
 	buckrog_fchg = data & 0x07;
 }
 
 
-static WRITE_HANDLER( buckrog_sound_A_w )
-{
-	/* sound controls */
-	static int last = -1;
-
-	if ((last & 0x10) && !(data & 0x10))
-	{
-		buckrog_hit = data & 0x07;
-		buckrog_update_samples();
-	}
-
-	if ((last & 0x20) && !(data & 0x20))
-	{
-		buckrog_myship = data & 0x0f;
-		buckrog_update_samples();
-	}
-
-	if ((last & 0x40) && !(data & 0x40)) sample_start(5, 0, 0); /* alarm0 */
-	if ((last & 0x80) && !(data & 0x80)) sample_start(5, 1, 0); /* alarm1 */
-
-	last = data;
-}
-
-
-static WRITE_HANDLER( buckrog_sound_B_w )
-{
-	/* sound controls */
-	static int last = -1;
-
-	if ((last & 0x01) && !(data & 0x01)) sample_start(5, 2, 0); /* alarm2 */
-	if ((last & 0x02) && !(data & 0x02)) sample_start(5, 3, 0); /* alarm3 */
-	if ((last & 0x04) && !(data & 0x04)) sample_start(2, 5, 0); /* fire */
-	if ((last & 0x08) && !(data & 0x08)) sample_start(3, 4, 0); /* exp */
-	if ((last & 0x10) && !(data & 0x10)) { sample_start(1, 7, 0); buckrog_update_samples(); } /* hit */
-	if ((last & 0x20) && !(data & 0x20)) sample_start(4, 6, 0);	/* rebound */
-
-	if ((data & 0x40) && !sample_playing(0))
-	{
-		sample_start(0, 8, 1); /* ship */
-		buckrog_update_samples();
-	}
-	if (!(data & 0x40) && sample_playing(0))
-		sample_stop(0);
-
-	mixer_sound_enable_global_w(data & 0x80);
-
-	last = data;
-}
-
-
-static WRITE_HANDLER( buckrog_extra_w )
+static WRITE8_HANDLER( buckrog_extra_w )
 {
 	buckrog_obch = data & 0x07;
 	coin_counter_w(0, data & 0x10);
@@ -457,7 +245,7 @@ MACHINE_INIT( buckrog )
 
 *******************************************/
 
-READ_HANDLER( turbo_8279_r )
+READ8_HANDLER( turbo_8279_r )
 {
 	if ((offset & 1) == 0)
 		return readinputport(1);  /* DSW 1 */
@@ -468,7 +256,7 @@ READ_HANDLER( turbo_8279_r )
 	}
 }
 
-WRITE_HANDLER( turbo_8279_w )
+WRITE8_HANDLER( turbo_8279_w )
 {
 	switch (offset & 1)
 	{
@@ -532,19 +320,19 @@ void turbo_update_segments(void)
 
 *******************************************/
 
-READ_HANDLER( turbo_collision_r )
+READ8_HANDLER( turbo_collision_r )
 {
 	return readinputport(3) | (turbo_collision & 15);
 }
 
 
-WRITE_HANDLER( turbo_collision_clear_w )
+WRITE8_HANDLER( turbo_collision_clear_w )
 {
 	turbo_collision = 0;
 }
 
 
-WRITE_HANDLER( turbo_coin_and_lamp_w )
+WRITE8_HANDLER( turbo_coin_and_lamp_w )
 {
 	switch (offset & 7)
 	{
@@ -698,14 +486,14 @@ void turbo_rom_decode(void)
 
 *******************************************/
 
-READ_HANDLER( buckrog_cpu2_command_r )
+READ8_HANDLER( buckrog_cpu2_command_r )
 {
 	buckrog_status |= 0x80;
 	return buckrog_command;
 }
 
 
-READ_HANDLER( buckrog_port_2_r )
+READ8_HANDLER( buckrog_port_2_r )
 {
 	int inp1 = readinputport(2);
 	int inp2 = readinputport(3);
@@ -721,7 +509,7 @@ READ_HANDLER( buckrog_port_2_r )
 }
 
 
-READ_HANDLER( buckrog_port_3_r )
+READ8_HANDLER( buckrog_port_3_r )
 {
 	int inp1 = readinputport(2);
 	int inp2 = readinputport(3);

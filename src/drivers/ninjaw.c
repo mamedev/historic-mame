@@ -177,7 +177,7 @@ static void parse_control(void)	/* assumes Z80 sandwiched between 68Ks */
 	/* bit 0 enables cpu B */
 	/* however this fails when recovering from a save state
 	   if cpu B is disabled !! */
-	cpu_set_reset_line(2,(cpua_ctrl &0x1) ? CLEAR_LINE : ASSERT_LINE);
+	cpunum_set_input_line(2, INPUT_LINE_RESET, (cpua_ctrl &0x1) ? CLEAR_LINE : ASSERT_LINE);
 
 }
 
@@ -204,7 +204,7 @@ static void reset_sound_region(void)
 	cpu_setbank( 10, memory_region(REGION_CPU2) + (banknum * 0x4000) + 0x10000 );
 }
 
-static WRITE_HANDLER( sound_bankswitch_w )
+static WRITE8_HANDLER( sound_bankswitch_w )
 {
 	banknum = (data - 1) & 7;
 	reset_sound_region();
@@ -233,7 +233,7 @@ static READ16_HANDLER( ninjaw_sound_r )
 
 /**** sound pan control ****/
 static int ninjaw_pandata[4];
-WRITE_HANDLER( ninjaw_pancontrol )
+WRITE8_HANDLER( ninjaw_pancontrol )
 {
   offset = offset&3;
   ninjaw_pandata[offset] = (float)data * (100.f / 255.0f);
@@ -627,7 +627,7 @@ static struct GfxDecodeInfo ninjaw_gfxdecodeinfo[] =
 /* handler called by the YM2610 emulator when the internal timers cause an IRQ */
 static void irqhandler(int irq)
 {
-	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2610interface ym2610_interface =

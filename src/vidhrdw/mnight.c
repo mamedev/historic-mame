@@ -39,7 +39,7 @@ VIDEO_START( mnight )
 }
 
 
-WRITE_HANDLER( mnight_bgvideoram_w )
+WRITE8_HANDLER( mnight_bgvideoram_w )
 {
 	if (mnight_background_videoram[offset] != data)
 	{
@@ -48,13 +48,13 @@ WRITE_HANDLER( mnight_bgvideoram_w )
 	}
 }
 
-WRITE_HANDLER( mnight_fgvideoram_w )
+WRITE8_HANDLER( mnight_fgvideoram_w )
 {
 	if (mnight_foreground_videoram[offset] != data)
 		mnight_foreground_videoram[offset] = data;
 }
 
-WRITE_HANDLER( mnight_background_enable_w )
+WRITE8_HANDLER( mnight_background_enable_w )
 {
 	if (bg_enable!=data)
 	{
@@ -67,7 +67,7 @@ WRITE_HANDLER( mnight_background_enable_w )
 	}
 }
 
-WRITE_HANDLER( mnight_sprite_overdraw_w )
+WRITE8_HANDLER( mnight_sprite_overdraw_w )
 {
 	if (sp_overdraw != (data&1))
 	{

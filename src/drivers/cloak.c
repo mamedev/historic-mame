@@ -112,12 +112,12 @@
 
 static int cloak_nvram_enabled;
 
-extern WRITE_HANDLER( cloak_videoram_w );
-extern WRITE_HANDLER( cloak_paletteram_w );
-extern WRITE_HANDLER( cloak_clearbmp_w );
-extern WRITE_HANDLER( graph_processor_w );
-extern WRITE_HANDLER( cloak_flipscreen_w );
-extern READ_HANDLER( graph_processor_r );
+extern WRITE8_HANDLER( cloak_videoram_w );
+extern WRITE8_HANDLER( cloak_paletteram_w );
+extern WRITE8_HANDLER( cloak_clearbmp_w );
+extern WRITE8_HANDLER( graph_processor_w );
+extern WRITE8_HANDLER( cloak_flipscreen_w );
+extern READ8_HANDLER( graph_processor_r );
 
 extern VIDEO_START( cloak );
 extern VIDEO_UPDATE( cloak );
@@ -129,31 +129,31 @@ extern VIDEO_UPDATE( cloak );
  *
  *************************************/
 
-static WRITE_HANDLER( cloak_led_w )
+static WRITE8_HANDLER( cloak_led_w )
 {
 	set_led_status(1 - offset, ~data & 0x80);
 }
 
-static WRITE_HANDLER( cloak_coin_counter_w )
+static WRITE8_HANDLER( cloak_coin_counter_w )
 {
 	coin_counter_w(1 - offset, data & 0x80);
 }
 
-static WRITE_HANDLER( cloak_custom_w )
+static WRITE8_HANDLER( cloak_custom_w )
 {
 }
 
-static WRITE_HANDLER( cloak_irq_reset_0_w )
+static WRITE8_HANDLER( cloak_irq_reset_0_w )
 {
-	cpu_set_irq_line(0, 0, CLEAR_LINE);
+	cpunum_set_input_line(0, 0, CLEAR_LINE);
 }
 
-static WRITE_HANDLER( cloak_irq_reset_1_w )
+static WRITE8_HANDLER( cloak_irq_reset_1_w )
 {
-	cpu_set_irq_line(1, 0, CLEAR_LINE);
+	cpunum_set_input_line(1, 0, CLEAR_LINE);
 }
 
-static WRITE_HANDLER( cloak_nvram_enable_w )
+static WRITE8_HANDLER( cloak_nvram_enable_w )
 {
 	cloak_nvram_enabled = data & 0x01;
 }

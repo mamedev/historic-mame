@@ -59,8 +59,8 @@ READ32_HANDLER( stv_speedup2_r )
 void install_stvbios_speedups(void)
 {
 /* idle skip bios? .. not 100% sure this is safe .. we'll see */
-	install_mem_read32_handler(0, 0x60335d0, 0x60335d3, stv_speedup_r );
-	install_mem_read32_handler(0, 0x60335bc, 0x60335bf, stv_speedup2_r );
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x60335d0, 0x60335d3, 0, 0, stv_speedup_r );
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x60335bc, 0x60335bf, 0, 0, stv_speedup2_r );
 }
 
 static READ32_HANDLER( shienryu_slave_speedup_r )
@@ -81,8 +81,8 @@ static READ32_HANDLER( shienryu_speedup_r )
 
 DRIVER_INIT(shienryu)
 {
-	install_mem_read32_handler(0, 0x60ae8e0, 0x60ae8e3, shienryu_speedup_r ); // after you enable sound cpu
-	install_mem_read32_handler(1, 0x60ae8e4, 0x60ae8e7, shienryu_slave_speedup_r ); // after you enable sound cpu
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x60ae8e0, 0x60ae8e3, 0, 0, shienryu_speedup_r ); // after you enable sound cpu
+	memory_install_read32_handler(1, ADDRESS_SPACE_PROGRAM, 0x60ae8e4, 0x60ae8e7, 0, 0, shienryu_slave_speedup_r ); // after you enable sound cpu
 
 	init_stv();
 }
@@ -103,7 +103,7 @@ DRIVER_INIT(prikura)
 
     (loops for 263473 instructions)
 */
-	install_mem_read32_handler(0, 0x60b9228, 0x60b922b, prikura_speedup_r );
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x60b9228, 0x60b922b, 0, 0, prikura_speedup_r );
 
 	init_stv();
 }
@@ -119,7 +119,7 @@ static READ32_HANDLER( hanagumi_speedup_r )
 static READ32_HANDLER( hanagumi_slave_off )
 {
 	/* just turn the slave off, i don't think the game needs it */
-	cpu_set_halt_line(1,ASSERT_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_HALT, ASSERT_LINE);
 
 	return stv_workram_h[0x015438/4];
 }
@@ -143,8 +143,8 @@ DRIVER_INIT(hanagumi)
 
    (loops for 288688 instructions)
 */
-   	install_mem_read32_handler(0, 0x6094188, 0x609418b, hanagumi_speedup_r );
-   	install_mem_read32_handler(1, 0x6015438, 0x601543b, hanagumi_slave_off );
+   	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x6094188, 0x609418b, 0, 0, hanagumi_speedup_r );
+   	memory_install_read32_handler(1, ADDRESS_SPACE_PROGRAM, 0x6015438, 0x601543b, 0, 0, hanagumi_slave_off );
 
   	init_stv();
 }
@@ -190,8 +190,8 @@ static READ32_HANDLER( puyosun_speedup2_r )
 
 DRIVER_INIT(puyosun)
 {
-   	install_mem_read32_handler(0, 0x60ffc10, 0x60ffc13, puyosun_speedup_r ); // idle loop of main cpu
-   	install_mem_read32_handler(1, 0x6023700, 0x6023703, puyosun_speedup2_r ); // UGLY hack for second cpu
+   	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x60ffc10, 0x60ffc13, 0, 0, puyosun_speedup_r ); // idle loop of main cpu
+   	memory_install_read32_handler(1, ADDRESS_SPACE_PROGRAM, 0x6023700, 0x6023703, 0, 0, puyosun_speedup2_r ); // UGLY hack for second cpu
 
 	init_ic13();
 }
@@ -215,7 +215,7 @@ static READ32_HANDLER( mausuke_speedup_r )
 
 DRIVER_INIT(mausuke)
 {
-   	install_mem_read32_handler(0, 0x60ffc10, 0x60ffc13, mausuke_speedup_r ); // idle loop of main cpu
+   	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x60ffc10, 0x60ffc13, 0, 0, mausuke_speedup_r ); // idle loop of main cpu
 
 	init_ic13();
 }
@@ -258,8 +258,8 @@ static READ32_HANDLER( cottonbm_speedup2_r )
 
 DRIVER_INIT(cottonbm)
 {
-   	install_mem_read32_handler(0, 0x60ffc10, 0x60ffc13, cottonbm_speedup_r ); // idle loop of main cpu
-   	install_mem_read32_handler(1, 0x6032b50, 0x6032b53, cottonbm_speedup2_r ); // UGLY hack for second cpu
+   	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x60ffc10, 0x60ffc13, 0, 0, cottonbm_speedup_r ); // idle loop of main cpu
+   	memory_install_read32_handler(1, ADDRESS_SPACE_PROGRAM, 0x6032b50, 0x6032b53, 0, 0, cottonbm_speedup2_r ); // UGLY hack for second cpu
 
 	init_stv();
 }
@@ -302,8 +302,8 @@ static READ32_HANDLER( cotton2_speedup2_r )
 
 DRIVER_INIT(cotton2)
 {
-   	install_mem_read32_handler(0, 0x60ffc10, 0x60ffc13, cotton2_speedup_r ); // idle loop of main cpu
-   	install_mem_read32_handler(1, 0x60338ec, 0x60338ef, cotton2_speedup2_r ); // UGLY hack for second cpu
+   	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x60ffc10, 0x60ffc13, 0, 0, cotton2_speedup_r ); // idle loop of main cpu
+   	memory_install_read32_handler(1, ADDRESS_SPACE_PROGRAM, 0x60338ec, 0x60338ef, 0, 0, cotton2_speedup2_r ); // UGLY hack for second cpu
 
 	init_stv();
 }
@@ -318,7 +318,7 @@ static READ32_HANDLER( dnmtdeka_speedup_r )
 
 DRIVER_INIT(dnmtdeka)
 {
-//   	install_mem_read32_handler(0, 0x60985a0, 0x60985a3, dnmtdeka_speedup_r ); // idle loop of main cpu
+//   	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x60985a0, 0x60985a3, 0, 0, dnmtdeka_speedup_r ); // idle loop of main cpu
 
 	init_ic13();
 }
@@ -343,8 +343,8 @@ static READ32_HANDLER( fhboxers_speedup2_r )
 
 DRIVER_INIT(fhboxers)
 {
-   	install_mem_read32_handler(0, 0x600420c, 0x600420f, fhboxers_speedup_r ); // idle loop of main cpu
-   	install_mem_read32_handler(1, 0x6090740, 0x6090743, fhboxers_speedup2_r ); // idle loop of second cpu
+   	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x600420c, 0x600420f, 0, 0, fhboxers_speedup_r ); // idle loop of main cpu
+   	memory_install_read32_handler(1, ADDRESS_SPACE_PROGRAM, 0x6090740, 0x6090743, 0, 0, fhboxers_speedup2_r ); // idle loop of second cpu
 
 	init_ic13();
 }
@@ -359,7 +359,7 @@ static READ32_HANDLER( bakubaku_speedup_r )
 
 static READ32_HANDLER( bakubaku_speedup2_r )
 {
-	if (activecpu_get_pc()==0x06033762) 	cpu_set_halt_line(1,ASSERT_LINE);
+	if (activecpu_get_pc()==0x06033762) 	cpunum_set_input_line(1, INPUT_LINE_HALT, ASSERT_LINE);
 
 	return stv_workram_h[0x0033762/4];
 }
@@ -373,9 +373,9 @@ static READ32_HANDLER( bakubaku_hangskip_r )
 
 DRIVER_INIT(bakubaku)
 {
-   	install_mem_read32_handler(0, 0x60833f0, 0x60833f3, bakubaku_speedup_r ); // idle loop of main cpu
-   	install_mem_read32_handler(1, 0x60fdfe8, 0x60fdfeb, bakubaku_speedup2_r ); // turn off slave sh2, is it needed after boot ??
-   	install_mem_read32_handler(0, 0x6033660, 0x6033663, bakubaku_hangskip_r ); // it waits for a ram address to chamge what should change it?
+   	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x60833f0, 0x60833f3, 0, 0, bakubaku_speedup_r ); // idle loop of main cpu
+   	memory_install_read32_handler(1, ADDRESS_SPACE_PROGRAM, 0x60fdfe8, 0x60fdfeb, 0, 0, bakubaku_speedup2_r ); // turn off slave sh2, is it needed after boot ??
+   	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x6033660, 0x6033663, 0, 0, bakubaku_hangskip_r ); // it waits for a ram address to chamge what should change it?
 
 	init_ic13();
 }
@@ -409,7 +409,7 @@ static READ32_HANDLER( groovef_speedup_r )
 /*
 static READ32_HANDLER( groovef_second_cpu_off_r )
 {
-	if (activecpu_get_pc()==0x060060c2) 	cpu_set_halt_line(1,ASSERT_LINE);
+	if (activecpu_get_pc()==0x060060c2) 	cpunum_set_input_line(1, INPUT_LINE_HALT, ASSERT_LINE);
 	return 0;
 }
 */
@@ -425,12 +425,12 @@ static READ32_HANDLER( groovef_second_skip_r )
 DRIVER_INIT( groovef )
 {
 	/* prevent game from hanging on startup -- todo: remove these hacks */
-	install_mem_read32_handler(0, 0x60ca6cc, 0x60ca6cf, groovef_hack2_r );
-	install_mem_read32_handler(0, 0x60fffcc, 0x60fffcf, groovef_hack1_r );
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x60ca6cc, 0x60ca6cf, 0, 0, groovef_hack2_r );
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x60fffcc, 0x60fffcf, 0, 0, groovef_hack1_r );
 
-	install_mem_read32_handler(0, 0x60c64ec, 0x60c64ef, groovef_speedup_r );
-//	install_mem_read32_handler(1, 0x60060dc, 0x60060df, groovef_second_cpu_off_r ); // not a good idea, needs it for ai.
-	install_mem_read32_handler(1, 0x60060e0, 0x60060e3, groovef_second_skip_r ); // careful .. its not an interrupt wait loop
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x60c64ec, 0x60c64ef, 0, 0, groovef_speedup_r );
+//	memory_install_read32_handler(1, ADDRESS_SPACE_PROGRAM, 0x60060dc, 0x60060df, 0, 0, groovef_second_cpu_off_r ); // not a good idea, needs it for ai.
+	memory_install_read32_handler(1, ADDRESS_SPACE_PROGRAM, 0x60060e0, 0x60060e3, 0, 0, groovef_second_skip_r ); // careful .. its not an interrupt wait loop
 
 	init_stv();
 }
@@ -472,7 +472,7 @@ static READ32_HANDLER( danchih_hack_r )
 DRIVER_INIT( danchih )
 {
 	/* prevent game from hanging on title screen -- todo: remove these hacks */
-	install_mem_read32_handler(0, 0x60ffcbc, 0x60ffcbf, danchih_hack_r );
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x60ffcbc, 0x60ffcbf, 0, 0, danchih_hack_r );
 
 	init_stv();
 }

@@ -13,7 +13,7 @@ static int background_image;
 
 static struct tilemap *fg_tilemap, *bg_tilemap;
 
-WRITE_HANDLER( bombjack_videoram_w )
+WRITE8_HANDLER( bombjack_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -22,7 +22,7 @@ WRITE_HANDLER( bombjack_videoram_w )
 	}
 }
 
-WRITE_HANDLER( bombjack_colorram_w )
+WRITE8_HANDLER( bombjack_colorram_w )
 {
 	if (colorram[offset] != data)
 	{
@@ -31,7 +31,7 @@ WRITE_HANDLER( bombjack_colorram_w )
 	}
 }
 
-WRITE_HANDLER( bombjack_background_w )
+WRITE8_HANDLER( bombjack_background_w )
 {
 	if (background_image != data)
 	{
@@ -40,7 +40,7 @@ WRITE_HANDLER( bombjack_background_w )
 	}
 }
 
-WRITE_HANDLER( bombjack_flipscreen_w )
+WRITE8_HANDLER( bombjack_flipscreen_w )
 {
 	if (flip_screen != (data & 0x01))
 	{

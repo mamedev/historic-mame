@@ -88,7 +88,7 @@ static UINT8 *custom_cpu_ram;
  *
  *************************************/
 
-static WRITE_HANDLER( ay8910_porta_w )
+static WRITE8_HANDLER( ay8910_porta_w )
 {
 	/*
 		bit 7 = ENA
@@ -101,7 +101,7 @@ static WRITE_HANDLER( ay8910_porta_w )
 }
 
 
-static WRITE_HANDLER( ay8910_portb_w )
+static WRITE8_HANDLER( ay8910_portb_w )
 {
 	/*
 		bit 5 = /IREQ to custom CPU
@@ -126,7 +126,7 @@ static WRITE_HANDLER( ay8910_portb_w )
  *
  *************************************/
 
-static READ_HANDLER( custom_cpu_r )
+static READ8_HANDLER( custom_cpu_r )
 {
 	/* since we don't have a simulator for the Fujitsu 8841 4-bit microprocessor */
 	/* we have to simulate its behavior; it looks like Arabian reads out of the  */
@@ -189,14 +189,14 @@ static void update_flip_state(void)
 }
 
 
-static WRITE_HANDLER( custom_flip_w )
+static WRITE8_HANDLER( custom_flip_w )
 {
 	custom_cpu_ram[0x34b + offset] = data;
 	update_flip_state();
 }
 
 
-static WRITE_HANDLER( custom_cocktail_w )
+static WRITE8_HANDLER( custom_cocktail_w )
 {
 	custom_cpu_ram[0x400 + offset] = data;
 	update_flip_state();
@@ -424,8 +424,8 @@ ROM_END
 
 static DRIVER_INIT( arabian )
 {
-	install_mem_write_handler(0, 0xd34b, 0xd34b, custom_flip_w);
-	install_mem_write_handler(0, 0xd400, 0xd401, custom_cocktail_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd34b, 0xd34b, 0, 0, custom_flip_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd400, 0xd401, 0, 0, custom_cocktail_w);
 }
 
 

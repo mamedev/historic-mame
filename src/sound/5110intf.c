@@ -106,7 +106,7 @@ commands like Speech, Reset, etc., are loaded into the chip via the CTL pins
 
 ******************************************************************************/
 
-WRITE_HANDLER( tms5110_CTL_w )
+WRITE8_HANDLER( tms5110_CTL_w )
 {
     /* bring up to date first */
     stream_update(stream, 0);
@@ -119,7 +119,7 @@ WRITE_HANDLER( tms5110_CTL_w )
 
 ******************************************************************************/
 
-WRITE_HANDLER( tms5110_PDC_w )
+WRITE8_HANDLER( tms5110_PDC_w )
 {
     /* bring up to date first */
     stream_update(stream, 0);
@@ -134,7 +134,7 @@ WRITE_HANDLER( tms5110_PDC_w )
 
 ******************************************************************************/
 
-READ_HANDLER( tms5110_status_r )
+READ8_HANDLER( tms5110_status_r )
 {
     /* bring up to date first */
     stream_update(stream, 0);

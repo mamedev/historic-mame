@@ -58,7 +58,7 @@ PALETTE_INIT( hyhoo )
 	}
 }
 
-WRITE_HANDLER( hyhoo_palette_w )
+WRITE8_HANDLER( hyhoo_palette_w )
 {
 	hyhoo_palette[offset & 0x0f] = (data ^ 0xff);
 }

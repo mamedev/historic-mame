@@ -213,14 +213,14 @@ VIDEO_START( mpatrol )
 
 
 
-WRITE_HANDLER( mpatrol_scroll_w )
+WRITE8_HANDLER( mpatrol_scroll_w )
 {
 	tilemap_set_scrollx(tilemap, offset, -data);
 }
 
 
 
-WRITE_HANDLER( mpatrol_videoram_w )
+WRITE8_HANDLER( mpatrol_videoram_w )
 {
 	if (data != videoram[offset])
 	{
@@ -232,7 +232,7 @@ WRITE_HANDLER( mpatrol_videoram_w )
 
 
 
-WRITE_HANDLER( mpatrol_colorram_w )
+WRITE8_HANDLER( mpatrol_colorram_w )
 {
 	if (data != colorram[offset])
 	{
@@ -244,30 +244,30 @@ WRITE_HANDLER( mpatrol_colorram_w )
 
 
 
-WRITE_HANDLER( mpatrol_bg1ypos_w )
+WRITE8_HANDLER( mpatrol_bg1ypos_w )
 {
 	bg1ypos = data;
 }
-WRITE_HANDLER( mpatrol_bg1xpos_w )
+WRITE8_HANDLER( mpatrol_bg1xpos_w )
 {
 	bg1xpos = data;
 }
-WRITE_HANDLER( mpatrol_bg2xpos_w )
+WRITE8_HANDLER( mpatrol_bg2xpos_w )
 {
 	bg2xpos = data;
 }
-WRITE_HANDLER( mpatrol_bg2ypos_w )
+WRITE8_HANDLER( mpatrol_bg2ypos_w )
 {
 	bg2ypos = data;
 }
-WRITE_HANDLER( mpatrol_bgcontrol_w )
+WRITE8_HANDLER( mpatrol_bgcontrol_w )
 {
 	bgcontrol = data;
 }
 
 
 
-WRITE_HANDLER( mpatrol_flipscreen_w )
+WRITE8_HANDLER( mpatrol_flipscreen_w )
 {
 	coin_counter_w(0, data & 0x02);
 	coin_counter_w(1, data & 0x20);

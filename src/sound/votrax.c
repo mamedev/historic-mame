@@ -51,7 +51,6 @@ void sh_votrax_start(int Channel)
 
 void sh_votrax_stop(void)
 {
-	freesamples(VotraxSamples);
 }
 
 void votrax_w(int data)

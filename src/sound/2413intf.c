@@ -123,7 +123,7 @@ void YM2413_sh_reset (void)
 
 
 #ifdef YM2413ISA
-WRITE_HANDLER( YM2413_register_port_0_w ) {
+WRITE8_HANDLER( YM2413_register_port_0_w ) {
 int i,a;
 	outportb(0x308,data); // ym2413_write (0, 0, data);
 	//add delay
@@ -132,14 +132,14 @@ int i,a;
 
  } /* 1st chip */
 #else
-WRITE_HANDLER( YM2413_register_port_0_w ) { YM2413Write (0, 0, data); } /* 1st chip */
+WRITE8_HANDLER( YM2413_register_port_0_w ) { YM2413Write (0, 0, data); } /* 1st chip */
 #endif
-WRITE_HANDLER( YM2413_register_port_1_w ) { YM2413Write (1, 0, data); } /* 2nd chip */
-WRITE_HANDLER( YM2413_register_port_2_w ) { YM2413Write (2, 0, data); } /* 3rd chip */
-WRITE_HANDLER( YM2413_register_port_3_w ) { YM2413Write (3, 0, data); } /* 4th chip */
+WRITE8_HANDLER( YM2413_register_port_1_w ) { YM2413Write (1, 0, data); } /* 2nd chip */
+WRITE8_HANDLER( YM2413_register_port_2_w ) { YM2413Write (2, 0, data); } /* 3rd chip */
+WRITE8_HANDLER( YM2413_register_port_3_w ) { YM2413Write (3, 0, data); } /* 4th chip */
 
 #ifdef YM2413ISA
-WRITE_HANDLER( YM2413_data_port_0_w ) {
+WRITE8_HANDLER( YM2413_data_port_0_w ) {
 int i,a;
 	outportb(0x309,data);// YM2413Write (0, 1, data);
 	//add delay
@@ -147,11 +147,11 @@ int i,a;
 		a = inportb(0x80);
  } /* 1st chip */
 #else
-WRITE_HANDLER( YM2413_data_port_0_w ) { YM2413Write (0, 1, data); } /* 1st chip */
+WRITE8_HANDLER( YM2413_data_port_0_w ) { YM2413Write (0, 1, data); } /* 1st chip */
 #endif
-WRITE_HANDLER( YM2413_data_port_1_w ) { YM2413Write (1, 1, data); } /* 2nd chip */
-WRITE_HANDLER( YM2413_data_port_2_w ) { YM2413Write (2, 1, data); } /* 3rd chip */
-WRITE_HANDLER( YM2413_data_port_3_w ) { YM2413Write (3, 1, data); } /* 4th chip */
+WRITE8_HANDLER( YM2413_data_port_1_w ) { YM2413Write (1, 1, data); } /* 2nd chip */
+WRITE8_HANDLER( YM2413_data_port_2_w ) { YM2413Write (2, 1, data); } /* 3rd chip */
+WRITE8_HANDLER( YM2413_data_port_3_w ) { YM2413Write (3, 1, data); } /* 4th chip */
 
 WRITE16_HANDLER( YM2413_register_port_0_lsb_w ) { if (ACCESSING_LSB) YM2413_register_port_0_w(offset,data & 0xff); }
 WRITE16_HANDLER( YM2413_register_port_1_lsb_w ) { if (ACCESSING_LSB) YM2413_register_port_1_w(offset,data & 0xff); }

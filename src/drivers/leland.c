@@ -1880,12 +1880,12 @@ static void dasm_chunk(char *tag, UINT8 *base, UINT16 pc, UINT32 length, FILE *o
 static void init_master_ports(UINT8 mvram_base, UINT8 io_base)
 {
 	/* set up the master CPU VRAM I/O */
-	install_port_read_handler(0, mvram_base, mvram_base + 0x1f, leland_mvram_port_r);
-	install_port_write_handler(0, mvram_base, mvram_base + 0x1f, leland_mvram_port_w);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, mvram_base, mvram_base + 0x1f, 0, 0, leland_mvram_port_r);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, mvram_base, mvram_base + 0x1f, 0, 0, leland_mvram_port_w);
 
 	/* set up the master CPU I/O ports */
-	install_port_read_handler(0, io_base, io_base + 0x1f, leland_master_input_r);
-	install_port_write_handler(0, io_base, io_base + 0x0f, leland_master_output_w);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, io_base, io_base + 0x1f, 0, 0, leland_master_input_r);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, io_base, io_base + 0x0f, 0, 0, leland_master_output_w);
 }
 
 
@@ -1917,8 +1917,8 @@ static DRIVER_INIT( cerberus )
 	init_master_ports(0x40, 0x80);
 
 	/* set up additional input ports */
-	install_port_read_handler(0, 0x80, 0x80, cerberus_dial_1_r);
-	install_port_read_handler(0, 0x90, 0x90, cerberus_dial_2_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x80, 0x80, 0, 0, cerberus_dial_1_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x90, 0x90, 0, 0, cerberus_dial_2_r);
 }
 
 
@@ -2037,7 +2037,7 @@ static DRIVER_INIT( alleymas )
 	/* kludge warning: the game uses location E0CA to determine if the joysticks are available */
 	/* it gets cleared by the code, but there is no obvious way for the value to be set to a */
 	/* non-zero value. If the value is zero, the joystick is never read. */
-	alleymas_kludge_mem = install_mem_write_handler(0, 0xe0ca, 0xe0ca, alleymas_joystick_kludge);
+	alleymas_kludge_mem = memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe0ca, 0xe0ca, 0, 0, alleymas_joystick_kludge);
 }
 
 
@@ -2065,9 +2065,9 @@ static DRIVER_INIT( dangerz )
 	init_master_ports(0x40, 0x80);
 
 	/* set up additional input ports */
-	install_port_read_handler(0, 0xf4, 0xf4, dangerz_input_upper_r);
-	install_port_read_handler(0, 0xf8, 0xf8, dangerz_input_y_r);
-	install_port_read_handler(0, 0xfc, 0xfc, dangerz_input_x_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xf4, 0xf4, 0, 0, dangerz_input_upper_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xf8, 0xf8, 0, 0, dangerz_input_y_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xfc, 0xfc, 0, 0, dangerz_input_x_r);
 }
 
 
@@ -2158,10 +2158,10 @@ static DRIVER_INIT( redlin2p )
 	init_master_ports(0x00, 0xc0);
 
 	/* set up additional input ports */
-	install_port_read_handler(0, 0xc0, 0xc0, redline_pedal_1_r);
-	install_port_read_handler(0, 0xd0, 0xd0, redline_pedal_2_r);
-	install_port_read_handler(0, 0xf8, 0xf8, redline_wheel_2_r);
-	install_port_read_handler(0, 0xfb, 0xfb, redline_wheel_1_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xc0, 0xc0, 0, 0, redline_pedal_1_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xd0, 0xd0, 0, 0, redline_pedal_2_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xf8, 0xf8, 0, 0, redline_wheel_2_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xfb, 0xfb, 0, 0, redline_wheel_1_r);
 
 	/* optimize the sound */
 	leland_i86_optimize_address(0x828);
@@ -2222,9 +2222,9 @@ static DRIVER_INIT( viper )
 	init_master_ports(0x00, 0xc0);
 
 	/* set up additional input ports */
-	install_port_read_handler(0, 0xa4, 0xa4, dangerz_input_upper_r);
-	install_port_read_handler(0, 0xb8, 0xb8, dangerz_input_y_r);
-	install_port_read_handler(0, 0xbc, 0xbc, dangerz_input_x_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xa4, 0xa4, 0, 0, dangerz_input_upper_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xb8, 0xb8, 0, 0, dangerz_input_y_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xbc, 0xbc, 0, 0, dangerz_input_x_r);
 
 	/* optimize the sound */
 	leland_i86_optimize_address(0x788);
@@ -2256,8 +2256,8 @@ static DRIVER_INIT( teamqb )
 	init_master_ports(0x40, 0x80);
 
 	/* set up additional input ports */
-	install_port_read_handler(0, 0x7c, 0x7c, input_port_10_r);
-	install_port_read_handler(0, 0x7f, 0x7f, input_port_11_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x7c, 0x7c, 0, 0, input_port_10_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x7f, 0x7f, 0, 0, input_port_11_r);
 
 	/* optimize the sound */
 	leland_i86_optimize_address(0x788);
@@ -2289,8 +2289,8 @@ static DRIVER_INIT( aafb )
 	init_master_ports(0x00, 0xc0);
 
 	/* set up additional input ports */
-	install_port_read_handler(0, 0x7c, 0x7c, input_port_10_r);
-	install_port_read_handler(0, 0x7f, 0x7f, input_port_11_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x7c, 0x7c, 0, 0, input_port_10_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x7f, 0x7f, 0, 0, input_port_11_r);
 
 	/* optimize the sound */
 	leland_i86_optimize_address(0x788);
@@ -2322,8 +2322,8 @@ static DRIVER_INIT( aafbb )
 	init_master_ports(0x80, 0x40);
 
 	/* set up additional input ports */
-	install_port_read_handler(0, 0x7c, 0x7c, input_port_10_r);
-	install_port_read_handler(0, 0x7f, 0x7f, input_port_11_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x7c, 0x7c, 0, 0, input_port_10_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x7f, 0x7f, 0, 0, input_port_11_r);
 
 	/* optimize the sound */
 	leland_i86_optimize_address(0x788);
@@ -2355,8 +2355,8 @@ static DRIVER_INIT( aafbd2p )
 	init_master_ports(0x00, 0x40);
 
 	/* set up additional input ports */
-	install_port_read_handler(0, 0x7c, 0x7c, input_port_10_r);
-	install_port_read_handler(0, 0x7f, 0x7f, input_port_11_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x7c, 0x7c, 0, 0, input_port_10_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x7f, 0x7f, 0, 0, input_port_11_r);
 
 	/* optimize the sound */
 	leland_i86_optimize_address(0x788);
@@ -2394,9 +2394,9 @@ static DRIVER_INIT( offroad )
 	init_master_ports(0x40, 0x80);	/* yes, this is intentional */
 
 	/* set up additional input ports */
-	install_port_read_handler(0, 0xf8, 0xf8, offroad_wheel_3_r);
-	install_port_read_handler(0, 0xf9, 0xf9, offroad_wheel_1_r);
-	install_port_read_handler(0, 0xfb, 0xfb, offroad_wheel_2_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xf8, 0xf8, 0, 0, offroad_wheel_3_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xf9, 0xf9, 0, 0, offroad_wheel_1_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xfb, 0xfb, 0, 0, offroad_wheel_2_r);
 
 	/* optimize the sound */
 	leland_i86_optimize_address(0x788);
@@ -2433,9 +2433,9 @@ static DRIVER_INIT( offroadt )
 	init_master_ports(0x80, 0x40);
 
 	/* set up additional input ports */
-	install_port_read_handler(0, 0xf8, 0xf8, offroad_wheel_3_r);
-	install_port_read_handler(0, 0xf9, 0xf9, offroad_wheel_1_r);
-	install_port_read_handler(0, 0xfb, 0xfb, offroad_wheel_2_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xf8, 0xf8, 0, 0, offroad_wheel_3_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xf9, 0xf9, 0, 0, offroad_wheel_1_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xfb, 0xfb, 0, 0, offroad_wheel_2_r);
 
 	/* optimize the sound */
 	leland_i86_optimize_address(0x788);
@@ -2470,7 +2470,7 @@ static DRIVER_INIT( pigout )
 	init_master_ports(0x00, 0x40);
 
 	/* set up additional input ports */
-	install_port_read_handler(0, 0x7f, 0x7f, input_port_4_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x7f, 0x7f, 0, 0, input_port_4_r);
 
 	/* optimize the sound */
 	leland_i86_optimize_address(0x788);

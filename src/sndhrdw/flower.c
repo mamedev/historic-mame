@@ -199,7 +199,7 @@ void flower_sh_stop(void)
 
 /********************************************************************************/
 
-WRITE_HANDLER( flower_sound1_w )
+WRITE8_HANDLER( flower_sound1_w )
 {
 	sound_channel *voice;
 	int base;
@@ -235,7 +235,7 @@ WRITE_HANDLER( flower_sound1_w )
 	}
 }
 
-WRITE_HANDLER( flower_sound2_w )
+WRITE8_HANDLER( flower_sound2_w )
 {
 	sound_channel *voice;
 	int base = offset & 0xf8;

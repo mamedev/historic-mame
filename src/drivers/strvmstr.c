@@ -25,19 +25,19 @@ static int strvmstr_control = 0;
 static UINT8 *bg_videoram, *fg_videoram;
 static struct tilemap *bg_tilemap, *fg_tilemap;
 
-static WRITE_HANDLER( strvmstr_fg_w )
+static WRITE8_HANDLER( strvmstr_fg_w )
 {
 	fg_videoram[offset] = data;
 	tilemap_mark_tile_dirty(fg_tilemap,offset);
 }
 
-static WRITE_HANDLER( strvmstr_bg_w )
+static WRITE8_HANDLER( strvmstr_bg_w )
 {
 	bg_videoram[offset] = data;
 	tilemap_mark_tile_dirty(bg_tilemap,offset);
 }
 
-static WRITE_HANDLER( strvmstr_control_w )
+static WRITE8_HANDLER( strvmstr_control_w )
 {
 
 /*
@@ -61,13 +61,13 @@ bits:
 	}
 }
 
-static WRITE_HANDLER( a000_w )
+static WRITE8_HANDLER( a000_w )
 {
 	/* ? */
 }
 
 
-static READ_HANDLER( strvmstr_question_r )
+static READ8_HANDLER( strvmstr_question_r )
 {
 	data8_t *Question = memory_region(REGION_USER1);
 	return Question[offset + 0x10000 * ((strvmstr_control >> 3) & 3)];
@@ -75,17 +75,17 @@ static READ_HANDLER( strvmstr_question_r )
 
 static int b800_prev,b000_val,b000_ret;
 
-static WRITE_HANDLER( b000_w )
+static WRITE8_HANDLER( b000_w )
 {
 	b000_val = data;
 }
 
-static READ_HANDLER( b000_r )
+static READ8_HANDLER( b000_r )
 {
 	return b000_ret;
 }
 
-static WRITE_HANDLER( b800_w )
+static WRITE8_HANDLER( b800_w )
 {
 	switch(data)
 	{
@@ -255,11 +255,11 @@ static INTERRUPT_GEN( strvmstr_interrupt )
 {
 	if( readinputport(2) & 0x01 )
 	{
-		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+		cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 	}
 	else
 	{
-		cpu_set_irq_line(0, 0, PULSE_LINE);
+		cpunum_set_input_line(0, 0, PULSE_LINE);
 	}
 }
 

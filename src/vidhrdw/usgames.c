@@ -55,13 +55,13 @@ VIDEO_START(usg)
 }
 
 
-WRITE_HANDLER( usg_videoram_w )
+WRITE8_HANDLER( usg_videoram_w )
 {
 	usg_videoram[offset] = data;
 	tilemap_mark_tile_dirty(usg_tilemap,offset/2);
 }
 
-WRITE_HANDLER( usg_charram_w )
+WRITE8_HANDLER( usg_charram_w )
 {
 	usg_charram[offset] = data;
 

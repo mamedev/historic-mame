@@ -59,9 +59,9 @@ static void update_interrupts(void)
 		newstate = 5;
 
 	if (newstate)
-		cpu_set_irq_line(0, newstate, ASSERT_LINE);
+		cpunum_set_input_line(0, newstate, ASSERT_LINE);
 	else
-		cpu_set_irq_line(0, 7, CLEAR_LINE);
+		cpunum_set_input_line(0, 7, CLEAR_LINE);
 }
 
 
@@ -119,7 +119,7 @@ static WRITE16_HANDLER( io_latch_w )
 	if (ACCESSING_LSB)
 	{
 		/* bit 4 resets the sound CPU */
-		cpu_set_reset_line(1, (data & 0x10) ? CLEAR_LINE : ASSERT_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_RESET, (data & 0x10) ? CLEAR_LINE : ASSERT_LINE);
 		if (!(data & 0x10)) atarijsa_reset();
 
 		/* bit 5 is /XRESET, probably related to the ASIC */
@@ -664,8 +664,8 @@ static DRIVER_INIT( roadriot )
 	atarig42_motion_object_base = 0x200;
 	atarig42_motion_object_mask = 0x1ff;
 
-	sloop_base = install_mem_read16_handler(0, 0x000000, 0x07ffff, roadriot_sloop_data_r);
-	sloop_base = install_mem_write16_handler(0, 0x000000, 0x07ffff, roadriot_sloop_data_w);
+	sloop_base = memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x000000, 0x07ffff, 0, 0, roadriot_sloop_data_r);
+	sloop_base = memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x000000, 0x07ffff, 0, 0, roadriot_sloop_data_w);
 
 	asic65_config(ASIC65_STANDARD);
 /*
@@ -718,8 +718,8 @@ static DRIVER_INIT( guardian )
 	/* put an RTS there so we don't die */
 	*(data16_t *)&memory_region(REGION_CPU1)[0x80000] = 0x4E75;
 
-	sloop_base = install_mem_read16_handler(0, 0x000000, 0x07ffff, guardians_sloop_data_r);
-	sloop_base = install_mem_write16_handler(0, 0x000000, 0x07ffff, guardians_sloop_data_w);
+	sloop_base = memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x000000, 0x07ffff, 0, 0, guardians_sloop_data_r);
+	sloop_base = memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x000000, 0x07ffff, 0, 0, guardians_sloop_data_w);
 
 	asic65_config(ASIC65_GUARDIANS);
 /*

@@ -105,36 +105,36 @@ void YMF262_sh_reset(void)
 }
 
 /* chip #0 */
-READ_HANDLER( YMF262_status_0_r ) {
+READ8_HANDLER( YMF262_status_0_r ) {
 	return YMF262Read(0, 0);
 }
-WRITE_HANDLER( YMF262_register_A_0_w ) {
+WRITE8_HANDLER( YMF262_register_A_0_w ) {
 	YMF262Write(0, 0, data);
 }
-WRITE_HANDLER( YMF262_data_A_0_w ) {
+WRITE8_HANDLER( YMF262_data_A_0_w ) {
 	YMF262Write(0, 1, data);
 }
-WRITE_HANDLER( YMF262_register_B_0_w ) {
+WRITE8_HANDLER( YMF262_register_B_0_w ) {
 	YMF262Write(0, 2, data);
 }
-WRITE_HANDLER( YMF262_data_B_0_w ) {
+WRITE8_HANDLER( YMF262_data_B_0_w ) {
 	YMF262Write(0, 3, data);
 }
 
 /* chip #1 */
-READ_HANDLER( YMF262_status_1_r ) {
+READ8_HANDLER( YMF262_status_1_r ) {
 	return YMF262Read(1, 0);
 }
-WRITE_HANDLER( YMF262_register_A_1_w ) {
+WRITE8_HANDLER( YMF262_register_A_1_w ) {
 	YMF262Write(1, 0, data);
 }
-WRITE_HANDLER( YMF262_data_A_1_w ) {
+WRITE8_HANDLER( YMF262_data_A_1_w ) {
 	YMF262Write(1, 1, data);
 }
-WRITE_HANDLER( YMF262_register_B_1_w ) {
+WRITE8_HANDLER( YMF262_register_B_1_w ) {
 	YMF262Write(1, 2, data);
 }
-WRITE_HANDLER( YMF262_data_B_1_w ) {
+WRITE8_HANDLER( YMF262_data_B_1_w ) {
 	YMF262Write(1, 3, data);
 }
 

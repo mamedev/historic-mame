@@ -20,16 +20,16 @@ unsigned char mouser_nmi_enable;
 
 /* From "vidhrdw/mouser.c" */
 PALETTE_INIT( mouser );
-WRITE_HANDLER( mouser_flip_screen_x_w );
-WRITE_HANDLER( mouser_flip_screen_y_w );
-WRITE_HANDLER( mouser_spriteram_w );
-WRITE_HANDLER( mouser_colorram_w );
+WRITE8_HANDLER( mouser_flip_screen_x_w );
+WRITE8_HANDLER( mouser_flip_screen_y_w );
+WRITE8_HANDLER( mouser_spriteram_w );
+WRITE8_HANDLER( mouser_colorram_w );
 VIDEO_UPDATE( mouser );
 
 /* Mouser has external masking circuitry around
  * the NMI input on the main CPU */
 
-WRITE_HANDLER( mouser_nmi_enable_w )
+WRITE8_HANDLER( mouser_nmi_enable_w )
 {
 	mouser_nmi_enable = data;
 }
@@ -42,13 +42,13 @@ INTERRUPT_GEN( mouser_nmi_interrupt )
 
 /* Sound CPU interrupted on write */
 
-WRITE_HANDLER( mouser_sound_interrupt_w )
+WRITE8_HANDLER( mouser_sound_interrupt_w )
 {
 	mouser_sound_byte = data;
-	cpu_set_irq_line(1, 0, PULSE_LINE);
+	cpunum_set_input_line(1, 0, PULSE_LINE);
 }
 
-READ_HANDLER( mouser_sound_byte_r )
+READ8_HANDLER( mouser_sound_byte_r )
 {
 	return mouser_sound_byte;
 }

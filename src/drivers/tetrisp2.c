@@ -701,12 +701,12 @@ static struct YMZ280Binterface ymz280b_intf =
 
 void rockn_timer_level4_callback(int param)
 {
-	cpu_set_irq_line(0, 4, HOLD_LINE);
+	cpunum_set_input_line(0, 4, HOLD_LINE);
 }
 
 void rockn_timer_level1_callback(int param)
 {
-	cpu_set_irq_line(0, 1, HOLD_LINE);
+	cpunum_set_input_line(0, 1, HOLD_LINE);
 }
 
 DRIVER_INIT( rockn_timer )

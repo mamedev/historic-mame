@@ -11,7 +11,7 @@ void st0016_sh_stop( void );
 
 extern data8_t *st0016_sound_regs;
 
-WRITE_HANDLER(st0016_snd_w);
+WRITE8_HANDLER(st0016_snd_w);
 
 #endif
 

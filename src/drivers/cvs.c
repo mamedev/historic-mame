@@ -97,22 +97,22 @@ extern unsigned char *s2636_1_ram;
 extern unsigned char *s2636_2_ram;
 extern unsigned char *s2636_3_ram;
 
-WRITE_HANDLER( cvs_videoram_w );
-WRITE_HANDLER( cvs_bullet_w );
-WRITE_HANDLER( cvs_2636_1_w );
-WRITE_HANDLER( cvs_2636_2_w );
-WRITE_HANDLER( cvs_2636_3_w );
-WRITE_HANDLER( cvs_scroll_w );
-WRITE_HANDLER( cvs_video_fx_w );
+WRITE8_HANDLER( cvs_videoram_w );
+WRITE8_HANDLER( cvs_bullet_w );
+WRITE8_HANDLER( cvs_2636_1_w );
+WRITE8_HANDLER( cvs_2636_2_w );
+WRITE8_HANDLER( cvs_2636_3_w );
+WRITE8_HANDLER( cvs_scroll_w );
+WRITE8_HANDLER( cvs_video_fx_w );
 
-READ_HANDLER( cvs_collision_r );
-READ_HANDLER( cvs_collision_clear );
-READ_HANDLER( cvs_videoram_r );
-READ_HANDLER( cvs_bullet_r );
-READ_HANDLER( cvs_2636_1_r );
-READ_HANDLER( cvs_2636_2_r );
-READ_HANDLER( cvs_2636_3_r );
-READ_HANDLER( cvs_character_mode_r );
+READ8_HANDLER( cvs_collision_r );
+READ8_HANDLER( cvs_collision_clear );
+READ8_HANDLER( cvs_videoram_r );
+READ8_HANDLER( cvs_bullet_r );
+READ8_HANDLER( cvs_2636_1_r );
+READ8_HANDLER( cvs_2636_2_r );
+READ8_HANDLER( cvs_2636_3_r );
+READ8_HANDLER( cvs_character_mode_r );
 
 
 /***************************************************************************
@@ -149,7 +149,7 @@ static void reset_talking (void)
     speech_rom_bit     = 0x0;
 }
 
-WRITE_HANDLER( control_port_w )
+WRITE8_HANDLER( control_port_w )
 {
 	/* Controls both Speech and Effects */
 
@@ -158,7 +158,7 @@ WRITE_HANDLER( control_port_w )
     /* Sample CPU write - Causes interrupt if bit 7 set */
 
     soundlatch_w(0,data);
-	if(data & 0x80) cpu_set_irq_line(1,3,HOLD_LINE);
+	if(data & 0x80) cpunum_set_input_line(1,3,HOLD_LINE);
 
 
     /* Speech CPU stuff */
@@ -202,7 +202,7 @@ int cvs_speech_rom_read_bit(void)
 	return bit;
 }
 
-WRITE_HANDLER( cvs_DAC2_w )
+WRITE8_HANDLER( cvs_DAC2_w )
 {
     /* 4 Bit DAC - 4 memory locations used */
 
@@ -214,7 +214,7 @@ WRITE_HANDLER( cvs_DAC2_w )
 	DAC_1_data_w(0,DAC_Value);
 }
 
-READ_HANDLER( CVS_393hz_Clock_r )
+READ8_HANDLER( CVS_393hz_Clock_r )
 {
   	if(cpu_scalebyfcount(6) & 1) return 0x80;
     else return 0;

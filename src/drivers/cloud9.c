@@ -69,13 +69,13 @@
  *
  *************************************/
 
-static WRITE_HANDLER( cloud9_led_w )
+static WRITE8_HANDLER( cloud9_led_w )
 {
 	set_led_status(offset,~data & 0x80);
 }
 
 
-static WRITE_HANDLER( cloud9_coin_counter_w )
+static WRITE8_HANDLER( cloud9_coin_counter_w )
 {
 	coin_counter_w(offset,data);
 }

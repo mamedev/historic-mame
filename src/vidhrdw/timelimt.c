@@ -91,7 +91,7 @@ VIDEO_START( timelimt )
 
 /***************************************************************************/
 
-WRITE_HANDLER( timelimt_videoram_w )
+WRITE8_HANDLER( timelimt_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -100,7 +100,7 @@ WRITE_HANDLER( timelimt_videoram_w )
 	}
 }
 
-WRITE_HANDLER( timelimt_bg_videoram_w )
+WRITE8_HANDLER( timelimt_bg_videoram_w )
 {
 	if (timelimt_bg_videoram[offset] != data)
 	{
@@ -109,19 +109,19 @@ WRITE_HANDLER( timelimt_bg_videoram_w )
 	}
 }
 
-WRITE_HANDLER( timelimt_scroll_x_lsb_w )
+WRITE8_HANDLER( timelimt_scroll_x_lsb_w )
 {
 	scrollx &= 0x100;
 	scrollx |= data & 0xff;
 }
 
-WRITE_HANDLER( timelimt_scroll_x_msb_w )
+WRITE8_HANDLER( timelimt_scroll_x_msb_w )
 {
 	scrollx &= 0xff;
 	scrollx |= ( data & 1 ) << 8;
 }
 
-WRITE_HANDLER( timelimt_scroll_y_w )
+WRITE8_HANDLER( timelimt_scroll_y_w )
 {
 	scrolly = data;
 }

@@ -79,17 +79,17 @@ VIA 1 - video
 static int cmd,portA;
 static UINT8 xpos,ypos;
 
-WRITE_HANDLER( video_portA_w )
+WRITE8_HANDLER( video_portA_w )
 {
 	portA = data;
 }
 
-WRITE_HANDLER( video_portB_w )
+WRITE8_HANDLER( video_portB_w )
 {
 	cmd = data & 7;
 }
 
-WRITE_HANDLER( video_CA2_w )
+WRITE8_HANDLER( video_CA2_w )
 {
 	if (data != 0) return;
 
@@ -136,7 +136,7 @@ static INTERRUPT_GEN( gameplan_interrupt )
 
 static void via_irq_delayed(int state)
 {
-	cpu_set_irq_line(0, 0, state);
+	cpunum_set_input_line(0, 0, state);
 }
 
 static void via_irq(int state)
@@ -165,7 +165,7 @@ VIA 2 - I/O
 
 static int current_port;
 
-static WRITE_HANDLER( io_select_w )
+static WRITE8_HANDLER( io_select_w )
 {
 	switch(data)
 	{
@@ -178,12 +178,12 @@ static WRITE_HANDLER( io_select_w )
 	}
 }
 
-static READ_HANDLER( io_port_r )
+static READ8_HANDLER( io_port_r )
 {
 	return readinputport(current_port);
 }
 
-static WRITE_HANDLER( coin_w )
+static WRITE8_HANDLER( coin_w )
 {
 	coin_counter_w(0,~data & 1);
 }
@@ -206,33 +206,33 @@ VIA 3 - sound
 
 static data8_t sound_cmd, sound_ack, ca2;
 
-static WRITE_HANDLER( sound_reset_w )
+static WRITE8_HANDLER( sound_reset_w )
 {
-	cpu_set_reset_line(1, (data & 1) ? CLEAR_LINE : ASSERT_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_RESET, (data & 1) ? CLEAR_LINE : ASSERT_LINE);
 }
 
-static READ_HANDLER( sound_cmd_r )
+static READ8_HANDLER( sound_cmd_r )
 {
 	return (sound_cmd & 0x7f) | (ca2 << 7);
 }
 
-static WRITE_HANDLER( sound_cmd_w )
+static WRITE8_HANDLER( sound_cmd_w )
 {
 	sound_cmd = data;
 }
 
-static WRITE_HANDLER( sound_trigger_w )
+static WRITE8_HANDLER( sound_trigger_w )
 {
 	ca2 = data & 1;
 	r6532_0_PA7_w(0,ca2 << 7);
 }
 
-static READ_HANDLER( sound_ack_r )
+static READ8_HANDLER( sound_ack_r )
 {
 	return sound_ack;
 }
 
-static WRITE_HANDLER( sound_ack_w )
+static WRITE8_HANDLER( sound_ack_w )
 {
 	sound_ack = data;
 }
@@ -255,18 +255,18 @@ VIA 5 - sound
 
 static data8_t *r6532_0_ram;
 
-static READ_HANDLER( r6532_0_ram_r )
+static READ8_HANDLER( r6532_0_ram_r )
 {
 	return r6532_0_ram[offset];
 }
-static WRITE_HANDLER( r6532_0_ram_w )
+static WRITE8_HANDLER( r6532_0_ram_w )
 {
 	r6532_0_ram[offset] = data;
 }
 
 static void r6532_irq(int state)
 {
-	cpu_set_irq_line(1, 0, state);
+	cpunum_set_input_line(1, 0, state);
 }
 
 static const struct R6532interface r6532_interface =

@@ -373,8 +373,8 @@ static DRIVER_INIT( T2_noZ80 )
 
 static DRIVER_INIT( fixeight )
 {
-	install_mem_read16_handler(0, 0x28f002, 0x28fbff, MRA16_RAM );
-	install_mem_write16_handler(0, 0x28f002, 0x28fbff, MWA16_RAM );
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x28f002, 0x28fbff, 0, 0, MRA16_RAM );
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x28f002, 0x28fbff, 0, 0, MWA16_RAM );
 
 	toaplan2_sub_cpu = CPU_2_Zx80;
 }
@@ -500,7 +500,7 @@ static void toaplan2_irq(int irq_line)
 
 	if(current_scanline == 245)
 	{
-		cpu_set_irq_line(0, irq_line, HOLD_LINE);
+		cpunum_set_input_line(0, irq_line, HOLD_LINE);
 		vblank_irq = 1;
 	}
 
@@ -548,7 +548,7 @@ static READ16_HANDLER( video_count_r )
 	return video_status;
 }
 
-static WRITE_HANDLER( toaplan2_coin_w )
+static WRITE8_HANDLER( toaplan2_coin_w )
 {
 	/* +----------------+------ Bits 7-5 not used ------+--------------+ */
 	/* | Coin Lockout 2 | Coin Lockout 1 | Coin Count 2 | Coin Count 1 | */
@@ -841,14 +841,14 @@ static READ16_HANDLER( Zx80_status_port_r )
 		/* game keeping service mode. It writes/reads the settings to/from */
 		/* these shared RAM locations. The secondary CPU reads/writes them */
 		/* from/to nvram to store the settings (a 93C45 EEPROM) */
-		install_mem_read16_handler (0, 0x28f002, 0x28f003, MRA16_RAM);
-		install_mem_read16_handler (0, 0x28f004, 0x28f005, input_port_5_word_r);	/* Dip Switch A - Wrong !!! */
-		install_mem_read16_handler (0, 0x28f006, 0x28f007, input_port_6_word_r);	/* Dip Switch B - Wrong !!! */
-		install_mem_read16_handler (0, 0x28f008, 0x28f009, input_port_7_word_r);	/* Territory Jumper block - Wrong !!! */
-		install_mem_read16_handler (0, 0x28f00a, 0x28fbff, MRA16_RAM);
-		install_mem_write16_handler (0, 0x28f002, 0x28f003, MWA16_RAM);
-		install_mem_write16_handler (0, 0x28f004, 0x28f009, MWA16_NOP);
-		install_mem_write16_handler (0, 0x28f00a, 0x28fbff, MWA16_RAM);
+		memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x28f002, 0x28f003, 0, 0, MRA16_RAM);
+		memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x28f004, 0x28f005, 0, 0, input_port_5_word_r);	/* Dip Switch A - Wrong !!! */
+		memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x28f006, 0x28f007, 0, 0, input_port_6_word_r);	/* Dip Switch B - Wrong !!! */
+		memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x28f008, 0x28f009, 0, 0, input_port_7_word_r);	/* Territory Jumper block - Wrong !!! */
+		memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x28f00a, 0x28fbff, 0, 0, MRA16_RAM);
+		memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x28f002, 0x28f003, 0, 0, MWA16_RAM);
+		memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x28f004, 0x28f009, 0, 0, MWA16_NOP);
+		memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x28f00a, 0x28fbff, 0, 0, MWA16_RAM);
 
 		mcu_data = 0xffff;
 	}
@@ -916,18 +916,18 @@ static READ16_HANDLER( battleg_commram_r )
 static WRITE16_HANDLER( battleg_commram_w )
 {
 	COMBINE_DATA(&battleg_commram16[offset]);
-	cpu_set_irq_line(1, 0, HOLD_LINE);
+	cpunum_set_input_line(1, 0, HOLD_LINE);
 	if (offset == 0) cpu_yield();	/* Command issued so switch control */
 }
 
-static READ_HANDLER( battleg_commram_check_r0 )
+static READ8_HANDLER( battleg_commram_check_r0 )
 {
 	data8_t *battleg_common_RAM = (data8_t *)battleg_commram16;
 
 	return battleg_common_RAM[BYTE_XOR_BE(offset * 2 + 1)];
 }
 
-static WRITE_HANDLER( battleg_commram_check_w0 )
+static WRITE8_HANDLER( battleg_commram_check_w0 )
 {
 	data8_t *battleg_common_RAM = (data8_t *)battleg_commram16;
 
@@ -940,7 +940,7 @@ static READ16_HANDLER( battleg_z80check_r )
 	return raizing_shared_ram[offset + 0x10] & 0xff;
 }
 
-static WRITE_HANDLER( battleg_bankswitch_w )
+static WRITE8_HANDLER( battleg_bankswitch_w )
 {
 	data8_t *RAM = (data8_t *)memory_region(REGION_CPU2);
 	int bankaddress;
@@ -973,31 +973,31 @@ static void raizing_oki6295_set_bankbase( int chip, int channel, int base )
 }
 
 
-static WRITE_HANDLER( raizing_okim6295_bankselect_0 )
+static WRITE8_HANDLER( raizing_okim6295_bankselect_0 )
 {
 	raizing_oki6295_set_bankbase( 0, 0,  (data       & 0x0f) * 0x10000);
 	raizing_oki6295_set_bankbase( 0, 1, ((data >> 4) & 0x0f) * 0x10000);
 }
 
-static WRITE_HANDLER( raizing_okim6295_bankselect_1 )
+static WRITE8_HANDLER( raizing_okim6295_bankselect_1 )
 {
 	raizing_oki6295_set_bankbase( 0, 2,  (data       & 0x0f) * 0x10000);
 	raizing_oki6295_set_bankbase( 0, 3, ((data >> 4) & 0x0f) * 0x10000);
 }
 
-static WRITE_HANDLER( raizing_okim6295_bankselect_2 )
+static WRITE8_HANDLER( raizing_okim6295_bankselect_2 )
 {
 	raizing_oki6295_set_bankbase( 1, 0,  (data       & 0x0f) * 0x10000);
 	raizing_oki6295_set_bankbase( 1, 1, ((data >> 4) & 0x0f) * 0x10000);
 }
 
-static WRITE_HANDLER( raizing_okim6295_bankselect_3 )
+static WRITE8_HANDLER( raizing_okim6295_bankselect_3 )
 {
 	raizing_oki6295_set_bankbase( 1, 2,  (data       & 0x0f) * 0x10000);
 	raizing_oki6295_set_bankbase( 1, 3, ((data >> 4) & 0x0f) * 0x10000);
 }
 
-static WRITE_HANDLER( batrider_bankswitch_w )
+static WRITE8_HANDLER( batrider_bankswitch_w )
 {
 	data8_t *RAM = (data8_t *)memory_region(REGION_CPU2);
 	int bankaddress;
@@ -1169,48 +1169,48 @@ static WRITE16_HANDLER ( raizing_sndcomms_w )
 //	logerror("68K (PC:%06x) writing %04x to $50001%01x\n",activecpu_get_pc(),data,((offset*2)+4));
 	COMBINE_DATA(&raizing_cpu_comm16[offset]);
 
-	cpu_set_nmi_line(1, ASSERT_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_NMI, ASSERT_LINE);
 	cpu_yield();
 }
 
 /****** Battle Bakraid Z80 handlers ******/
-static READ_HANDLER ( raizing_command_r )
+static READ8_HANDLER ( raizing_command_r )
 {
 	data8_t *raizing_cpu_comm = (data8_t *)raizing_cpu_comm16;
 
 	logerror("Z80 (PC:%04x) reading %02x from $48\n",activecpu_get_pc(),raizing_cpu_comm[BYTE_XOR_BE(1)]);
 	return raizing_cpu_comm[BYTE_XOR_BE(1)];
 }
-static READ_HANDLER ( raizing_request_r )
+static READ8_HANDLER ( raizing_request_r )
 {
 	data8_t *raizing_cpu_comm = (data8_t *)raizing_cpu_comm16;
 
 	logerror("Z80 (PC:%04x) reading %02x from $4A\n",activecpu_get_pc(),raizing_cpu_comm[BYTE_XOR_BE(3)]);
 	return raizing_cpu_comm[BYTE_XOR_BE(3)];
 }
-static WRITE_HANDLER ( raizing_command_ack_w )
+static WRITE8_HANDLER ( raizing_command_ack_w )
 {
 //	logerror("Z80 (PC:%04x) writing %02x to $40\n",activecpu_get_pc(),data);
 	raizing_cpu_reply[0] = data;
 }
-static WRITE_HANDLER ( raizing_request_ack_w )
+static WRITE8_HANDLER ( raizing_request_ack_w )
 {
 //	logerror("Z80 (PC:%04x) writing %02x to $42\n",activecpu_get_pc(),data);
 	raizing_cpu_reply[1] = data;
 }
 
 
-static WRITE_HANDLER ( raizing_clear_nmi_w )
+static WRITE8_HANDLER ( raizing_clear_nmi_w )
 {
 //	logerror("Clear NMI on the Z80 (Z80 PC:%06x writing %04x)\n",activecpu_get_pc(),data);
-	cpu_set_nmi_line(1, CLEAR_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_NMI, CLEAR_LINE);
 	cpu_yield();
 }
 
 static WRITE16_HANDLER ( bbakraid_trigger_z80_irq )
 {
 //	logerror("Triggering IRQ on the Z80 (PC:%06x)\n",activecpu_get_pc());
-	cpu_set_irq_line(1, 0, HOLD_LINE);
+	cpunum_set_input_line(1, 0, HOLD_LINE);
 	cpu_yield();
 }
 
@@ -1222,7 +1222,7 @@ static void bbakraid_irqhandler (int state)
 
 static INTERRUPT_GEN( bbakraid_snd_interrupt )
 {
-	cpu_set_irq_line(1, 0, HOLD_LINE);
+	cpunum_set_input_line(1, 0, HOLD_LINE);
 }
 
 
@@ -3759,7 +3759,7 @@ static struct GfxDecodeInfo batrider_gfxdecodeinfo[] =
 
 static void irqhandler(int linestate)
 {
-	cpu_set_irq_line(1,0,linestate);
+	cpunum_set_input_line(1,0,linestate);
 }
 
 static struct YM3812interface ym3812_interface =
@@ -4553,7 +4553,7 @@ ROM_END
 
 ROM_START( fixeight )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 )			/* Main 68K code */
-	ROM_LOAD16_WORD_SWAP( "tp-026-1", 0x000000, 0x080000, CRC(f7b1746a) )
+	ROM_LOAD16_WORD_SWAP( "tp-026-1", 0x000000, 0x080000, CRC(f7b1746a) SHA1(0bbea6f111b818bc9b9b2060af4fe900f37cf7f9) )
 
 #if Zx80
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )			/* Secondary CPU code */
@@ -4563,15 +4563,15 @@ ROM_START( fixeight )
 #endif
 
 	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "tp-026-3", 0x000000, 0x200000, CRC(e5578d98) )
-	ROM_LOAD( "tp-026-4", 0x200000, 0x200000, CRC(b760cb53) )
+	ROM_LOAD( "tp-026-3", 0x000000, 0x200000, CRC(e5578d98) SHA1(280d2b716d955e767d311fc9596823852435b6d7) )
+	ROM_LOAD( "tp-026-4", 0x200000, 0x200000, CRC(b760cb53) SHA1(bc9c5e49e45cdda0f774be0038aa4deb21d4d285) )
 
 	ROM_REGION( 0x40000, REGION_SOUND1, 0 )			/* ADPCM Samples */
-	ROM_LOAD( "tp-026-2", 0x00000, 0x40000, CRC(85063f1f) )
+	ROM_LOAD( "tp-026-2", 0x00000, 0x40000, CRC(85063f1f) SHA1(1bf4d77494de421c98f6273b9876e60d827a6826) )
 
 	ROM_REGION( 0x80, REGION_USER1, 0 )
 	/* Serial EEPROM (93C45) connected to Secondary CPU */
-	ROM_LOAD( "93c45.u21", 0x00, 0x80, CRC(40d75df0) )
+	ROM_LOAD( "93c45.u21", 0x00, 0x80, CRC(40d75df0) SHA1(a22f1cc74ce9bc9bfe53f48f6a43ab60e921052b) )
 ROM_END
 
 ROM_START( grindstm )

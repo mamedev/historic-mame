@@ -74,7 +74,7 @@ PALETTE_INIT( redclash )
 	}
 }
 
-WRITE_HANDLER( redclash_videoram_w )
+WRITE8_HANDLER( redclash_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -83,7 +83,7 @@ WRITE_HANDLER( redclash_videoram_w )
 	}
 }
 
-WRITE_HANDLER( redclash_gfxbank_w )
+WRITE8_HANDLER( redclash_gfxbank_w )
 {
 	if (gfxbank != (data & 0x01))
 	{
@@ -92,7 +92,7 @@ WRITE_HANDLER( redclash_gfxbank_w )
 	}
 }
 
-WRITE_HANDLER( redclash_flipscreen_w )
+WRITE8_HANDLER( redclash_flipscreen_w )
 {
 	flip_screen_set(data & 0x01);
 }
@@ -108,10 +108,10 @@ star_speed:
 6 = backwards medium
 7 = backwards fast
 */
-WRITE_HANDLER( redclash_star0_w ) { star_speed = (star_speed & ~1) | ((data & 1) << 0); }
-WRITE_HANDLER( redclash_star1_w ) { star_speed = (star_speed & ~2) | ((data & 1) << 1); }
-WRITE_HANDLER( redclash_star2_w ) { star_speed = (star_speed & ~4) | ((data & 1) << 2); }
-WRITE_HANDLER( redclash_star_reset_w ) { }
+WRITE8_HANDLER( redclash_star0_w ) { star_speed = (star_speed & ~1) | ((data & 1) << 0); }
+WRITE8_HANDLER( redclash_star1_w ) { star_speed = (star_speed & ~2) | ((data & 1) << 1); }
+WRITE8_HANDLER( redclash_star2_w ) { star_speed = (star_speed & ~4) | ((data & 1) << 2); }
+WRITE8_HANDLER( redclash_star_reset_w ) { }
 
 static void get_fg_tile_info(int tile_index)
 {

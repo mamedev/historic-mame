@@ -16,8 +16,8 @@
 #define AVGDVG_MAX          10
 
 int avgdvg_done(void);
-WRITE_HANDLER( avgdvg_go_w );
-WRITE_HANDLER( avgdvg_reset_w );
+WRITE8_HANDLER( avgdvg_go_w );
+WRITE8_HANDLER( avgdvg_reset_w );
 WRITE16_HANDLER( avgdvg_go_word_w );
 WRITE16_HANDLER( avgdvg_reset_word_w );
 int avgdvg_init(int vgType);
@@ -36,8 +36,8 @@ PALETTE_INIT( avg_multi );
 
 /* Some games use a colorram. This is not handled via the Mame core functions
  * right now, but in src/vidhrdw/avgdvg.c itself. */
-WRITE_HANDLER( tempest_colorram_w );
-WRITE_HANDLER( mhavoc_colorram_w );
+WRITE8_HANDLER( tempest_colorram_w );
+WRITE8_HANDLER( mhavoc_colorram_w );
 WRITE16_HANDLER( quantum_colorram_w );
 
 VIDEO_START( dvg );

@@ -117,7 +117,7 @@ VIDEO_START( tecmo )
 
 ***************************************************************************/
 
-WRITE_HANDLER( tecmo_txvideoram_w )
+WRITE8_HANDLER( tecmo_txvideoram_w )
 {
 	if (tecmo_txvideoram[offset] != data)
 	{
@@ -126,7 +126,7 @@ WRITE_HANDLER( tecmo_txvideoram_w )
 	}
 }
 
-WRITE_HANDLER( tecmo_fgvideoram_w )
+WRITE8_HANDLER( tecmo_fgvideoram_w )
 {
 	if (tecmo_fgvideoram[offset] != data)
 	{
@@ -135,7 +135,7 @@ WRITE_HANDLER( tecmo_fgvideoram_w )
 	}
 }
 
-WRITE_HANDLER( tecmo_bgvideoram_w )
+WRITE8_HANDLER( tecmo_bgvideoram_w )
 {
 	if (tecmo_bgvideoram[offset] != data)
 	{
@@ -144,7 +144,7 @@ WRITE_HANDLER( tecmo_bgvideoram_w )
 	}
 }
 
-WRITE_HANDLER( tecmo_fgscroll_w )
+WRITE8_HANDLER( tecmo_fgscroll_w )
 {
 	static UINT8 scroll[3];
 
@@ -154,7 +154,7 @@ WRITE_HANDLER( tecmo_fgscroll_w )
 	tilemap_set_scrolly(fg_tilemap,0,scroll[2]);
 }
 
-WRITE_HANDLER( tecmo_bgscroll_w )
+WRITE8_HANDLER( tecmo_bgscroll_w )
 {
 	static UINT8 scroll[3];
 
@@ -164,7 +164,7 @@ WRITE_HANDLER( tecmo_bgscroll_w )
 	tilemap_set_scrolly(bg_tilemap,0,scroll[2]);
 }
 
-WRITE_HANDLER( tecmo_flipscreen_w )
+WRITE8_HANDLER( tecmo_flipscreen_w )
 {
 	flip_screen_set(data & 1);
 }

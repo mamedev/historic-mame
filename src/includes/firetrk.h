@@ -18,13 +18,13 @@ extern VIDEO_UPDATE( firetrk );
 extern VIDEO_START( firetrk );
 extern VIDEO_EOF( firetrk );
 
-extern WRITE_HANDLER( firetrk_vert_w );
-extern WRITE_HANDLER( firetrk_horz_w );
-extern WRITE_HANDLER( firetrk_drone_hpos_w );
-extern WRITE_HANDLER( firetrk_drone_vpos_w );
-extern WRITE_HANDLER( firetrk_drone_rot_w );
-extern WRITE_HANDLER( firetrk_playfield_w );
-extern WRITE_HANDLER( firetrk_car_rot_w );
+extern WRITE8_HANDLER( firetrk_vert_w );
+extern WRITE8_HANDLER( firetrk_horz_w );
+extern WRITE8_HANDLER( firetrk_drone_hpos_w );
+extern WRITE8_HANDLER( firetrk_drone_vpos_w );
+extern WRITE8_HANDLER( firetrk_drone_rot_w );
+extern WRITE8_HANDLER( firetrk_playfield_w );
+extern WRITE8_HANDLER( firetrk_car_rot_w );
 
 extern void firetrk_set_flash(int flag);
 extern void firetrk_set_blink(int flag);

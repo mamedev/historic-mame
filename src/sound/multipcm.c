@@ -526,27 +526,27 @@ static unsigned char MultiPCM_reg_r(int chip, int offset)
 
 /* MAME/M1 access functions */
 
-READ_HANDLER( MultiPCM_reg_0_r )
+READ8_HANDLER( MultiPCM_reg_0_r )
 {
 	return MultiPCM_reg_r(0, offset);
 }
 
-WRITE_HANDLER( MultiPCM_reg_0_w )
+WRITE8_HANDLER( MultiPCM_reg_0_w )
 {
 	MultiPCM_reg_w(0, offset, data);
 }
 
-READ_HANDLER( MultiPCM_reg_1_r )
+READ8_HANDLER( MultiPCM_reg_1_r )
 {
 	return MultiPCM_reg_r(1, offset);
 }
 
-WRITE_HANDLER( MultiPCM_reg_1_w )
+WRITE8_HANDLER( MultiPCM_reg_1_w )
 {
 	MultiPCM_reg_w(1, offset, data);
 }
 
-WRITE_HANDLER( MultiPCM_bank_0_w )
+WRITE8_HANDLER( MultiPCM_bank_0_w )
 {
 	if (mpcm[0].type == MULTIPCM_MODE_STADCROSS)	// multi32 with mono bankswitching GAL
 	{
@@ -563,7 +563,7 @@ WRITE_HANDLER( MultiPCM_bank_0_w )
 	}
 }
 
-WRITE_HANDLER( MultiPCM_bank_1_w )
+WRITE8_HANDLER( MultiPCM_bank_1_w )
 {
 	if (mpcm[1].type == MULTIPCM_MODE_STADCROSS)	// multi32 with mono bankswitching GAL
 	{

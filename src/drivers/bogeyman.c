@@ -14,11 +14,11 @@
 
 extern UINT8 *bogeyman_videoram2, *bogeyman_colorram2;
 
-extern WRITE_HANDLER( bogeyman_videoram_w );
-extern WRITE_HANDLER( bogeyman_colorram_w );
-extern WRITE_HANDLER( bogeyman_videoram2_w );
-extern WRITE_HANDLER( bogeyman_colorram2_w );
-extern WRITE_HANDLER( bogeyman_paletteram_w );
+extern WRITE8_HANDLER( bogeyman_videoram_w );
+extern WRITE8_HANDLER( bogeyman_colorram_w );
+extern WRITE8_HANDLER( bogeyman_videoram2_w );
+extern WRITE8_HANDLER( bogeyman_colorram2_w );
+extern WRITE8_HANDLER( bogeyman_paletteram_w );
 
 extern PALETTE_INIT( bogeyman );
 extern VIDEO_START( bogeyman );
@@ -30,12 +30,12 @@ extern VIDEO_UPDATE( bogeyman );
 
 static int psg_latch;
 
-static WRITE_HANDLER( bogeyman_8910_latch_w )
+static WRITE8_HANDLER( bogeyman_8910_latch_w )
 {
 	psg_latch = data;
 }
 
-static WRITE_HANDLER( bogeyman_8910_control_w )
+static WRITE8_HANDLER( bogeyman_8910_control_w )
 {
 	static int last;
 

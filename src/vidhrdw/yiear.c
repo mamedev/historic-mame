@@ -62,7 +62,7 @@ PALETTE_INIT( yiear )
 	}
 }
 
-WRITE_HANDLER( yiear_videoram_w )
+WRITE8_HANDLER( yiear_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -71,7 +71,7 @@ WRITE_HANDLER( yiear_videoram_w )
 	}
 }
 
-WRITE_HANDLER( yiear_control_w )
+WRITE8_HANDLER( yiear_control_w )
 {
 	/* bit 0 flips screen */
 

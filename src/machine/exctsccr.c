@@ -21,8 +21,8 @@ Ernesto Corvi - 10/30/98
 
 /* These are global */
 unsigned char *exctsccr_mcu_ram;
-WRITE_HANDLER( exctsccr_mcu_w );
-WRITE_HANDLER( exctsccr_mcu_control_w );
+WRITE8_HANDLER( exctsccr_mcu_w );
+WRITE8_HANDLER( exctsccr_mcu_control_w );
 
 /* Local stuff */
 static int mcu_code_latch;
@@ -103,7 +103,7 @@ static void mcu_sort_list( unsigned char *src, unsigned char *dst ) {
 	}
 }
 
-WRITE_HANDLER( exctsccr_mcu_control_w ) {
+WRITE8_HANDLER( exctsccr_mcu_control_w ) {
 
 	if ( data == 0xff ) { /* goes around the mcu checks */
 		exctsccr_mcu_ram[0x0003] = 0x01; /* mcu state = running */
@@ -178,7 +178,7 @@ WRITE_HANDLER( exctsccr_mcu_control_w ) {
 	}
 }
 
-WRITE_HANDLER( exctsccr_mcu_w ) {
+WRITE8_HANDLER( exctsccr_mcu_w ) {
 
 	if ( offset == 0x02f9 )
 		mcu_code_latch = data;

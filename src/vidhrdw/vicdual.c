@@ -103,7 +103,7 @@ PALETTE_INIT( vicdual )
 
 
 
-WRITE_HANDLER( vicdual_characterram_w )
+WRITE8_HANDLER( vicdual_characterram_w )
 {
 	if (vicdual_characterram[offset] != data)
 	{
@@ -113,12 +113,12 @@ WRITE_HANDLER( vicdual_characterram_w )
 	}
 }
 
-READ_HANDLER( vicdual_characterram_r )
+READ8_HANDLER( vicdual_characterram_r )
 {
 	return vicdual_characterram[offset];
 }
 
-WRITE_HANDLER( vicdual_palette_bank_w )
+WRITE8_HANDLER( vicdual_palette_bank_w )
 {
 	if (palette_bank != (data & 3))
 	{

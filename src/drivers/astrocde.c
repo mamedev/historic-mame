@@ -71,27 +71,27 @@ extern const char *wow_sample_names[];
 extern const char *gorf_sample_names[];
 
 PALETTE_INIT( astrocde );
-READ_HANDLER( wow_intercept_r );
-WRITE_HANDLER( wow_videoram_w );
-WRITE_HANDLER( astrocde_magic_expand_color_w );
-WRITE_HANDLER( astrocde_magic_control_w );
-WRITE_HANDLER( wow_magicram_w );
-WRITE_HANDLER( astrocde_pattern_board_w );
+READ8_HANDLER( wow_intercept_r );
+WRITE8_HANDLER( wow_videoram_w );
+WRITE8_HANDLER( astrocde_magic_expand_color_w );
+WRITE8_HANDLER( astrocde_magic_control_w );
+WRITE8_HANDLER( wow_magicram_w );
+WRITE8_HANDLER( astrocde_pattern_board_w );
 VIDEO_UPDATE( astrocde );
-READ_HANDLER( wow_video_retrace_r );
+READ8_HANDLER( wow_video_retrace_r );
 
-WRITE_HANDLER( astrocde_interrupt_vector_w );
-WRITE_HANDLER( astrocde_interrupt_enable_w );
-WRITE_HANDLER( astrocde_interrupt_w );
+WRITE8_HANDLER( astrocde_interrupt_vector_w );
+WRITE8_HANDLER( astrocde_interrupt_enable_w );
+WRITE8_HANDLER( astrocde_interrupt_w );
 INTERRUPT_GEN( wow_interrupt );
 
-READ_HANDLER( seawolf2_controller1_r );
-READ_HANDLER( seawolf2_controller2_r );
+READ8_HANDLER( seawolf2_controller1_r );
+READ8_HANDLER( seawolf2_controller2_r );
 VIDEO_UPDATE( seawolf2 );
 
 INTERRUPT_GEN( gorf_interrupt );
-READ_HANDLER( gorf_timer_r );
-READ_HANDLER( gorf_io_r );
+READ8_HANDLER( gorf_timer_r );
+READ8_HANDLER( gorf_io_r );
 
 VIDEO_START( astrocde );
 VIDEO_START( astrocde_stars );
@@ -99,28 +99,28 @@ VIDEO_START( astrocde_stars );
 int  wow_sh_start(const struct MachineSound *msound);
 void wow_sh_update(void);
 
-READ_HANDLER( wow_speech_r );
-READ_HANDLER( wow_port_2_r );
-READ_HANDLER( wow_io_r );
+READ8_HANDLER( wow_speech_r );
+READ8_HANDLER( wow_port_2_r );
+READ8_HANDLER( wow_io_r );
 
 int  gorf_sh_start(const struct MachineSound *msound);
 void gorf_sh_update(void);
-READ_HANDLER( gorf_speech_r );
-READ_HANDLER( gorf_port_2_r );
-WRITE_HANDLER( gorf_sound_control_a_w );
+READ8_HANDLER( gorf_speech_r );
+READ8_HANDLER( gorf_port_2_r );
+WRITE8_HANDLER( gorf_sound_control_a_w );
 
-WRITE_HANDLER( astrocde_mode_w );
-WRITE_HANDLER( astrocde_vertical_blank_w );
-WRITE_HANDLER( astrocde_colour_register_w );
-WRITE_HANDLER( astrocde_colour_split_w );
-WRITE_HANDLER( astrocde_colour_block_w );
+WRITE8_HANDLER( astrocde_mode_w );
+WRITE8_HANDLER( astrocde_vertical_blank_w );
+WRITE8_HANDLER( astrocde_colour_register_w );
+WRITE8_HANDLER( astrocde_colour_split_w );
+WRITE8_HANDLER( astrocde_colour_block_w );
 
-WRITE_HANDLER( ebases_trackball_select_w );
-READ_HANDLER( ebases_trackball_r );
+WRITE8_HANDLER( ebases_trackball_select_w );
+READ8_HANDLER( ebases_trackball_r );
 
 static int game_on = 0;
 
-static WRITE_HANDLER( seawolf2_lamps_w )
+static WRITE8_HANDLER( seawolf2_lamps_w )
 {
 	/* 0x42 = player 2 (left), 0x43 = player 1 (right) */
 	/* --x----- explosion */
@@ -134,7 +134,7 @@ static WRITE_HANDLER( seawolf2_lamps_w )
 	set_led_status(offset^1,data & 0x10);
 }
 
-static WRITE_HANDLER( seawolf2_sound_1_w )  // Port 40
+static WRITE8_HANDLER( seawolf2_sound_1_w )  // Port 40
 {
 	if (game_on)
 	{
@@ -153,7 +153,7 @@ static WRITE_HANDLER( seawolf2_sound_1_w )  // Port 40
 	}
 }
 
-static WRITE_HANDLER( seawolf2_sound_2_w )  // Port 41
+static WRITE8_HANDLER( seawolf2_sound_2_w )  // Port 41
 {
 	game_on = data & 0x80;
 
@@ -971,27 +971,27 @@ ROM_END
 
 static DRIVER_INIT( seawolf2 )
 {
-	install_port_read_handler(0, 0x10, 0x10, seawolf2_controller2_r);
-	install_port_read_handler(0, 0x11, 0x11, seawolf2_controller1_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x10, 0x10, 0, 0, seawolf2_controller2_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x11, 0x11, 0, 0, seawolf2_controller1_r);
 }
 static DRIVER_INIT( ebases )
 {
-	install_port_read_handler (0, 0x13, 0x13, ebases_trackball_r);
-	install_port_write_handler(0, 0x28, 0x28, ebases_trackball_select_w);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x13, 0x13, 0, 0, ebases_trackball_r);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x28, 0x28, 0, 0, ebases_trackball_select_w);
 }
 static DRIVER_INIT( wow )
 {
-	install_port_read_handler(0, 0x12, 0x12, wow_port_2_r);
-	install_port_read_handler(0, 0x15, 0x15, wow_io_r);
-	install_port_read_handler(0, 0x17, 0x17, wow_speech_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x12, 0x12, 0, 0, wow_port_2_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x15, 0x15, 0, 0, wow_io_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x17, 0x17, 0, 0, wow_speech_r);
 }
 static DRIVER_INIT( gorf )
 {
-	install_mem_read_handler (0, 0xd0a5, 0xd0a5, gorf_timer_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd0a5, 0xd0a5, 0, 0, gorf_timer_r);
 
-	install_port_read_handler(0, 0x12, 0x12, gorf_port_2_r);
-	install_port_read_handler(0, 0x15, 0x16, gorf_io_r);
-	install_port_read_handler(0, 0x17, 0x17, gorf_speech_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x12, 0x12, 0, 0, gorf_port_2_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x15, 0x16, 0, 0, gorf_io_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x17, 0x17, 0, 0, gorf_speech_r);
 }
 
 

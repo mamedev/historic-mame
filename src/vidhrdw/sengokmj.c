@@ -11,45 +11,45 @@ static struct tilemap *bg_tilemap,*md_tilemap,*tx_tilemap,*fg_tilemap;
 data8_t *sm_bgvram;
 data8_t *md_vram,*tx_vram,*fg_vram;
 
-READ_HANDLER( sengoku_sm_bgvram_r )
+READ8_HANDLER( sengoku_sm_bgvram_r )
 {
 	return sm_bgvram[offset];
 }
 
-READ_HANDLER( sengoku_md_vram_r )
+READ8_HANDLER( sengoku_md_vram_r )
 {
 	return md_vram[offset];
 }
 
-READ_HANDLER( sengoku_tx_vram_r )
+READ8_HANDLER( sengoku_tx_vram_r )
 {
 	return tx_vram[offset];
 }
 
-READ_HANDLER( sengoku_fg_vram_r )
+READ8_HANDLER( sengoku_fg_vram_r )
 {
 	return fg_vram[offset];
 }
 
-WRITE_HANDLER( sengoku_sm_bgvram_w )
+WRITE8_HANDLER( sengoku_sm_bgvram_w )
 {
 	sm_bgvram[offset] = data;
 	tilemap_mark_tile_dirty(bg_tilemap,offset/2);
 }
 
-WRITE_HANDLER( sengoku_md_vram_w )
+WRITE8_HANDLER( sengoku_md_vram_w )
 {
 	md_vram[offset] = data;
 	tilemap_mark_tile_dirty(md_tilemap,offset/2);
 }
 
-WRITE_HANDLER( sengoku_tx_vram_w )
+WRITE8_HANDLER( sengoku_tx_vram_w )
 {
 	tx_vram[offset] = data;
 	tilemap_mark_tile_dirty(tx_tilemap,offset/2);
 }
 
-WRITE_HANDLER( sengoku_fg_vram_w )
+WRITE8_HANDLER( sengoku_fg_vram_w )
 {
 	fg_vram[offset] = data;
 	tilemap_mark_tile_dirty(fg_tilemap,offset/2);

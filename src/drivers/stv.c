@@ -1939,14 +1939,14 @@ static void stv_SMPC_w8 (int offset, UINT8 data)
 		if(!(smpc_ram[0x77] & 0x10))
 		{
 			logerror("SMPC: M68k on\n");
-			cpu_set_reset_line(2, PULSE_LINE);
-			cpu_set_halt_line(2, CLEAR_LINE);
+			cpunum_set_input_line(2, INPUT_LINE_RESET, PULSE_LINE);
+			cpunum_set_input_line(2, INPUT_LINE_HALT, CLEAR_LINE);
 			en_68k = 1;
 		}
 		else
 		{
 			logerror("SMPC: M68k off\n");
-			cpu_set_halt_line(2, ASSERT_LINE);
+			cpunum_set_input_line(2, INPUT_LINE_HALT, ASSERT_LINE);
 			en_68k = 0;
 		}
 		PDR2 = (data & 0x60);
@@ -1985,21 +1985,21 @@ static void stv_SMPC_w8 (int offset, UINT8 data)
 				logerror ("SMPC: Slave ON\n");
 				smpc_ram[0x5f]=0x02;
 				#if USE_SLAVE
-				cpu_set_reset_line(1, PULSE_LINE);
-				cpu_set_halt_line(1,CLEAR_LINE);
+				cpunum_set_input_line(1, INPUT_LINE_RESET, PULSE_LINE);
+				cpunum_set_input_line(1, INPUT_LINE_HALT, CLEAR_LINE);
 				#endif
 				break;
 			case 0x03:
 				logerror ("SMPC: Slave OFF\n");
 				smpc_ram[0x5f]=0x03;
-				cpu_set_halt_line(1,ASSERT_LINE);
+				cpunum_set_input_line(1, INPUT_LINE_HALT, ASSERT_LINE);
 				break;
 			case 0x06:
 				logerror ("SMPC: Sound ON\n");
 				/* wrong? */
 				smpc_ram[0x5f]=0x06;
-				cpu_set_reset_line(2, PULSE_LINE);
-				cpu_set_halt_line(2, CLEAR_LINE);
+				cpunum_set_input_line(2, INPUT_LINE_RESET, PULSE_LINE);
+				cpunum_set_input_line(2, INPUT_LINE_HALT, CLEAR_LINE);
 				break;
 			case 0x07:
 				logerror ("SMPC: Sound OFF\n");
@@ -2011,18 +2011,18 @@ static void stv_SMPC_w8 (int offset, UINT8 data)
 			case 0x0d:
 				logerror ("SMPC: System Reset\n");
 				smpc_ram[0x5f]=0x0d;
-				cpu_set_reset_line(0, PULSE_LINE);
+				cpunum_set_input_line(0, INPUT_LINE_RESET, PULSE_LINE);
 				system_reset();
 				break;
 			case 0x0e:
 				logerror ("SMPC: Change Clock to 352\n");
 				smpc_ram[0x5f]=0x0e;
-				cpu_set_nmi_line(0,PULSE_LINE); // ff said this causes nmi, should we set a timer then nmi?
+				cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE); // ff said this causes nmi, should we set a timer then nmi?
 				break;
 			case 0x0f:
 				logerror ("SMPC: Change Clock to 320\n");
 				smpc_ram[0x5f]=0x0f;
-				cpu_set_nmi_line(0,PULSE_LINE); // ff said this causes nmi, should we set a timer then nmi?
+				cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE); // ff said this causes nmi, should we set a timer then nmi?
 				break;
 			/*"Interrupt Back"*/
 			case 0x10:
@@ -2068,7 +2068,7 @@ static void stv_SMPC_w8 (int offset, UINT8 data)
 			//	if(!(stv_scu[40] & 0x0080)) /*System Manager(SMPC) irq*/ /* we can't check this .. breaks controls .. probably issues elsewhere? */
 				{
 					logerror ("Interrupt: System Manager (SMPC) at scanline %04x, Vector 0x47 Level 0x08\n",scanline);
-					cpu_set_irq_line_and_vector(0, 8, HOLD_LINE , 0x47);
+					cpunum_set_input_line_and_vector(0, 8, HOLD_LINE , 0x47);
 				}
 			break;
 			/* RTC write*/
@@ -2092,7 +2092,7 @@ static void stv_SMPC_w8 (int offset, UINT8 data)
 				logerror ("SMPC: NMI request\n");
 				smpc_ram[0x5f]=0x18;
 				/*NMI is unconditionally requested for the Sound CPU?*/
-				cpu_set_nmi_line(2,PULSE_LINE);
+				cpunum_set_input_line(2, INPUT_LINE_NMI, PULSE_LINE);
 				break;
 			case 0x19:
 				logerror ("SMPC: NMI Enable\n");
@@ -2184,7 +2184,7 @@ static INTERRUPT_GEN( stv_interrupt )
 		if(!(stv_scu[40] & 2))/*VBLANK-OUT*/
 		{
 			logerror ("Interrupt: VBlank-OUT at scanline %04x, Vector 0x41 Level 0x0e\n",scanline);
-			cpu_set_irq_line_and_vector(0, 0xe, HOLD_LINE , 0x41);
+			cpunum_set_input_line_and_vector(0, 0xe, HOLD_LINE , 0x41);
 			stv_vblank = 0;
 			return;
 		}
@@ -2198,7 +2198,7 @@ static INTERRUPT_GEN( stv_interrupt )
 			if(!(stv_scu[40] & 8))/*Timer 0*/
 			{
 				logerror ("Interrupt: Timer 0 at scanline %04x, Vector 0x43 Level 0x0c\n",scanline);
-				cpu_set_irq_line_and_vector(0, 0xc, HOLD_LINE, 0x43 );
+				cpunum_set_input_line_and_vector(0, 0xc, HOLD_LINE, 0x43 );
 				return;
 			}
 		}
@@ -2207,7 +2207,7 @@ static INTERRUPT_GEN( stv_interrupt )
 		if(!(stv_scu[40] & 4))/*HBLANK-IN*/
 		{
 			logerror ("Interrupt: HBlank-In at scanline %04x, Vector 0x42 Level 0x0d\n",scanline);
-			cpu_set_irq_line_and_vector(0, 0xd, HOLD_LINE , 0x42);
+			cpunum_set_input_line_and_vector(0, 0xd, HOLD_LINE , 0x42);
 		}
 	}
 	else if(scanline == 224)
@@ -2217,7 +2217,7 @@ static INTERRUPT_GEN( stv_interrupt )
 		if(!(stv_scu[40] & 1))/*VBLANK-IN*/
 		{
 			logerror ("Interrupt: VBlank IN at scanline %04x, Vector 0x40 Level 0x0f\n",scanline);
-			cpu_set_irq_line_and_vector(0, 0xf, HOLD_LINE , 0x40);
+			cpunum_set_input_line_and_vector(0, 0xf, HOLD_LINE , 0x40);
 			stv_vblank = 1;
 			return;
 		}
@@ -2227,7 +2227,7 @@ static INTERRUPT_GEN( stv_interrupt )
 			if(!(stv_scu[40] & 8))/*Timer 0*/
 			{
 				logerror ("Interrupt: Timer 0 at scanline %04x, Vector 0x43 Level 0x0c\n",scanline);
-				cpu_set_irq_line_and_vector(0, 0xc, HOLD_LINE, 0x43 );
+				cpunum_set_input_line_and_vector(0, 0xc, HOLD_LINE, 0x43 );
 				return;
 			}
 		}
@@ -2756,7 +2756,7 @@ static void dma_direct_lv0()
 
 	logerror("DMA transfer END\n");
 	if(!(stv_scu[40] & 0x800))/*Lv 0 DMA end irq*/
-		cpu_set_irq_line_and_vector(0, 5, HOLD_LINE , 0x4b);
+		cpunum_set_input_line_and_vector(0, 5, HOLD_LINE , 0x4b);
 
 	SET_D0MV_FROM_1_TO_0;
 }
@@ -2794,7 +2794,7 @@ static void dma_direct_lv1()
 
 	logerror("DMA transfer END\n");
 	if(!(stv_scu[40] & 0x400))/*Lv 1 DMA end irq*/
-		cpu_set_irq_line_and_vector(0, 6, HOLD_LINE , 0x4a);
+		cpunum_set_input_line_and_vector(0, 6, HOLD_LINE , 0x4a);
 
 	SET_D1MV_FROM_1_TO_0;
 }
@@ -2832,7 +2832,7 @@ static void dma_direct_lv2()
 
 	logerror("DMA transfer END\n");
 	if(!(stv_scu[40] & 0x200))/*Lv 2 DMA end irq*/
-		cpu_set_irq_line_and_vector(0, 6, HOLD_LINE , 0x49);
+		cpunum_set_input_line_and_vector(0, 6, HOLD_LINE , 0x49);
 
 	SET_D2MV_FROM_1_TO_0;
 }
@@ -2893,7 +2893,7 @@ static void dma_indirect_lv0()
 	}while(job_done == 0);
 
 	if(!(stv_scu[40] & 0x800))/*Lv 0 DMA end irq*/
-		cpu_set_irq_line_and_vector(0, 5, HOLD_LINE , 0x4b);
+		cpunum_set_input_line_and_vector(0, 5, HOLD_LINE , 0x4b);
 
 	SET_D0MV_FROM_1_TO_0;
 }
@@ -2955,7 +2955,7 @@ static void dma_indirect_lv1()
 	}while(job_done == 0);
 
 	if(!(stv_scu[40] & 0x400))/*Lv 1 DMA end irq*/
-		cpu_set_irq_line_and_vector(0, 6, HOLD_LINE , 0x4a);
+		cpunum_set_input_line_and_vector(0, 6, HOLD_LINE , 0x4a);
 
 	SET_D1MV_FROM_1_TO_0;
 }
@@ -3016,7 +3016,7 @@ static void dma_indirect_lv2()
 	}while(job_done == 0);
 
 	if(!(stv_scu[40] & 0x200))/*Lv 2 DMA end irq*/
-		cpu_set_irq_line_and_vector(0, 6, HOLD_LINE , 0x49);
+		cpunum_set_input_line_and_vector(0, 6, HOLD_LINE , 0x49);
 
 	SET_D2MV_FROM_1_TO_0;
 }
@@ -3496,10 +3496,10 @@ DRIVER_INIT ( stv )
 	install_stvbios_speedups();
 
 	/* debug .. watch the command buffer rsgun, cottonbm etc. appear to use to communicate between cpus */
-	install_mem_write32_handler(0, 0x60ffc44, 0x60ffc47, w60ffc44_write );
-	install_mem_write32_handler(0, 0x60ffc48, 0x60ffc4b, w60ffc48_write );
-	install_mem_write32_handler(1, 0x60ffc44, 0x60ffc47, w60ffc44_write );
-	install_mem_write32_handler(1, 0x60ffc48, 0x60ffc4b, w60ffc48_write );
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x60ffc44, 0x60ffc47, 0, 0, w60ffc44_write );
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x60ffc48, 0x60ffc4b, 0, 0, w60ffc48_write );
+	memory_install_write32_handler(1, ADDRESS_SPACE_PROGRAM, 0x60ffc44, 0x60ffc47, 0, 0, w60ffc44_write );
+	memory_install_write32_handler(1, ADDRESS_SPACE_PROGRAM, 0x60ffc48, 0x60ffc4b, 0, 0, w60ffc48_write );
 
   	smpc_ram[0x23] = DectoBCD((today->tm_year + 1900)/100);
     smpc_ram[0x25] = DectoBCD((today->tm_year + 1900)%100);
@@ -3518,8 +3518,8 @@ MACHINE_INIT( stv )
 	cpu_setbank(1,memory_region(REGION_USER1));
 
 	// don't let the slave cpu and the 68k go anywhere
-	cpu_set_halt_line(1, ASSERT_LINE);
-	cpu_set_halt_line(2, ASSERT_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_HALT, ASSERT_LINE);
+	cpunum_set_input_line(2, INPUT_LINE_HALT, ASSERT_LINE);
 
 	timer_0 = 0;
 	en_68k = 0;
@@ -3632,11 +3632,11 @@ static void scsp_irq(int irq)
 	if (irq)
 	{
 		scsp_last_line = irq;
-		cpu_set_irq_line(2, irq, ASSERT_LINE);
+		cpunum_set_input_line(2, irq, ASSERT_LINE);
 	}
 	else
 	{
-		cpu_set_irq_line(2, scsp_last_line, CLEAR_LINE);
+		cpunum_set_input_line(2, scsp_last_line, CLEAR_LINE);
 	}
 }
 

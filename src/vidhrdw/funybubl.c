@@ -11,7 +11,7 @@ data8_t* funybubl_banked_videoram;
 data8_t *funybubl_paletteram;
 
 
-WRITE_HANDLER ( funybubl_paldatawrite )
+WRITE8_HANDLER ( funybubl_paldatawrite )
 {
 	int colchanged ;
 
@@ -106,7 +106,7 @@ VIDEO_UPDATE(funybubl)
 	funybubl_drawsprites(bitmap,cliprect);
 
 /*
-	if ( keyboard_pressed_memory(KEYCODE_W) )
+	if ( code_pressed_memory(KEYCODE_W) )
 	{
 		FILE *fp;
 

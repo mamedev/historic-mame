@@ -10,12 +10,12 @@
 /* machine/chaknpop.c */
 DRIVER_INIT( chaknpop );
 MACHINE_INIT( chaknpop );
-READ_HANDLER( chaknpop_mcu_portA_r );
-READ_HANDLER( chaknpop_mcu_portB_r );
-READ_HANDLER( chaknpop_mcu_portC_r );
-WRITE_HANDLER( chaknpop_mcu_portA_w );
-WRITE_HANDLER( chaknpop_mcu_portB_w );
-WRITE_HANDLER( chaknpop_mcu_portC_w );
+READ8_HANDLER( chaknpop_mcu_portA_r );
+READ8_HANDLER( chaknpop_mcu_portB_r );
+READ8_HANDLER( chaknpop_mcu_portC_r );
+WRITE8_HANDLER( chaknpop_mcu_portA_w );
+WRITE8_HANDLER( chaknpop_mcu_portB_w );
+WRITE8_HANDLER( chaknpop_mcu_portC_w );
 
 
 /* vidhrdw/chaknpop.c */
@@ -29,12 +29,12 @@ PALETTE_INIT( chaknpop );
 VIDEO_START( chaknpop );
 VIDEO_UPDATE( chaknpop );
 
-READ_HANDLER( chaknpop_gfxmode_r );
-WRITE_HANDLER( chaknpop_gfxmode_w );
+READ8_HANDLER( chaknpop_gfxmode_r );
+WRITE8_HANDLER( chaknpop_gfxmode_w );
 
-WRITE_HANDLER( chaknpop_txram_w );
+WRITE8_HANDLER( chaknpop_txram_w );
 
-WRITE_HANDLER( chaknpop_attrram_w );
+WRITE8_HANDLER( chaknpop_attrram_w );
 
 
 /***************************************************************************
@@ -43,17 +43,17 @@ WRITE_HANDLER( chaknpop_attrram_w );
 
 ***************************************************************************/
 
-static WRITE_HANDLER ( unknown_port_1_w )
+static WRITE8_HANDLER ( unknown_port_1_w )
 {
 	//logerror("%04x: write to unknow port 1: 0x%02x\n", activecpu_get_pc(), data);
 }
 
-static WRITE_HANDLER ( unknown_port_2_w )
+static WRITE8_HANDLER ( unknown_port_2_w )
 {
 	//logerror("%04x: write to unknow port 2: 0x%02x\n", activecpu_get_pc(), data);
 }
 
-static WRITE_HANDLER ( coinlock_w )
+static WRITE8_HANDLER ( coinlock_w )
 {
 	logerror("%04x: coin lock %sable\n", activecpu_get_pc(), data ? "dis" : "en");
 }

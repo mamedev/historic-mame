@@ -443,32 +443,32 @@ static int K007232_ReadReg( int r, int chip )
 
 /*****************************************************************************/
 
-WRITE_HANDLER( K007232_write_port_0_w )
+WRITE8_HANDLER( K007232_write_port_0_w )
 {
   K007232_WriteReg(offset,data,0);
 }
 
-READ_HANDLER( K007232_read_port_0_r )
+READ8_HANDLER( K007232_read_port_0_r )
 {
   return K007232_ReadReg(offset,0);
 }
 
-WRITE_HANDLER( K007232_write_port_1_w )
+WRITE8_HANDLER( K007232_write_port_1_w )
 {
   K007232_WriteReg(offset,data,1);
 }
 
-READ_HANDLER( K007232_read_port_1_r )
+READ8_HANDLER( K007232_read_port_1_r )
 {
   return K007232_ReadReg(offset,1);
 }
 
-WRITE_HANDLER( K007232_write_port_2_w )
+WRITE8_HANDLER( K007232_write_port_2_w )
 {
   K007232_WriteReg(offset,data,2);
 }
 
-READ_HANDLER( K007232_read_port_2_r )
+READ8_HANDLER( K007232_read_port_2_r )
 {
   return K007232_ReadReg(offset,2);
 }

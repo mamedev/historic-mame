@@ -29,7 +29,7 @@ A3-1J
 static struct tilemap *fg_tilemap;
 static unsigned char *char_bank;
 
-WRITE_HANDLER( supdrapo_videoram_w )
+WRITE8_HANDLER( supdrapo_videoram_w )
 {
 	if( videoram[offset] != data )
 	{
@@ -38,7 +38,7 @@ WRITE_HANDLER( supdrapo_videoram_w )
 	}
 }
 
-WRITE_HANDLER( supdrapo_char_bank_w )
+WRITE8_HANDLER( supdrapo_char_bank_w )
 {
 	if( char_bank[offset] != data )
 	{

@@ -220,6 +220,7 @@ void print_string(FILE* os, const char* s, unsigned len)
 		case '\r' : fprintf(os, "\\r"); break;
 		case '\t' : fprintf(os, "\\t"); break;
 		case '\v' : fprintf(os, "\\v"); break;
+		case '\xc2' : break;
 		case '\\' : fprintf(os, "\\\\"); break;
 		case '\"' : fprintf(os, "\\\""); break;
 		default:
@@ -382,6 +383,16 @@ void process_float3(struct state_t* state, enum token_t t, const char* s, unsign
 			}
 		}
 		process_item3(state, t, s, len, attributes);
+	}
+}
+
+/* Convert gamelist:game:biosset:default=yes -> game:biosset:default=yes */
+void process_biossetdefault(struct state_t* state, enum token_t t, const char* s, unsigned len, const char** attributes)
+{
+	if (t == token_data) {
+		if (strncmp("yes", s, len) == 0) {
+			fprintf(state->os, L2P "default yes" L2N);
+		}
 	}
 }
 
@@ -556,9 +567,14 @@ struct conversion_t {
 	{ 3, { "mame", "game", "disk", "region", 0 }, process_item3 },
 	{ 3, { "mame", "game", "disk", "index", 0 }, process_num3 },
 	{ 2, { "mame", "game", "cloneof", 0, 0 }, process_reference },
+	{ 2, { "mame", "game", "biosset", 0, 0 }, process_set2 },
+	{ 3, { "mame", "game", "biosset", "name", 0 }, process_item3 },
+	{ 3, { "mame", "game", "biosset", "description", 0 }, process_string3 },
+	{ 3, { "mame", "game", "biosset", "default", 0 }, process_biossetdefault },
 	{ 2, { "mame", "game", "romof", 0, 0 }, process_reference },
 	{ 2, { "mame", "game", "rom", 0, 0 }, process_set2 },
 	{ 3, { "mame", "game", "rom", "name", 0 }, process_item3 },
+	{ 3, { "mame", "game", "rom", "bios", 0 }, process_item3 },
 	{ 3, { "mame", "game", "rom", "merge", 0 }, process_item3 },
 	{ 3, { "mame", "game", "rom", "size", 0 }, process_num3 },
 	{ 3, { "mame", "game", "rom", "crc", 0 }, process_hex3 },

@@ -60,18 +60,18 @@ extern data8_t *cop01_bgvideoram,*cop01_fgvideoram;
 PALETTE_INIT( cop01 );
 VIDEO_START( cop01 );
 VIDEO_UPDATE( cop01 );
-WRITE_HANDLER( cop01_background_w );
-WRITE_HANDLER( cop01_foreground_w );
-WRITE_HANDLER( cop01_vreg_w );
+WRITE8_HANDLER( cop01_background_w );
+WRITE8_HANDLER( cop01_foreground_w );
+WRITE8_HANDLER( cop01_vreg_w );
 
 
-static WRITE_HANDLER( cop01_sound_command_w )
+static WRITE8_HANDLER( cop01_sound_command_w )
 {
 	soundlatch_w(offset,data);
-	cpu_set_irq_line_and_vector(1,0,HOLD_LINE,0xff);
+	cpunum_set_input_line_and_vector(1,0,HOLD_LINE,0xff);
 }
 
-static READ_HANDLER( cop01_sound_command_r )
+static READ8_HANDLER( cop01_sound_command_r )
 {
 	int res;
 	static int pulse;
@@ -92,7 +92,7 @@ static READ_HANDLER( cop01_sound_command_r )
 }
 
 
-static READ_HANDLER( mightguy_dsw_r )
+static READ8_HANDLER( mightguy_dsw_r )
 {
 	int data = 0xff;
 
@@ -170,7 +170,7 @@ static ADDRESS_MAP_START( sound_writeport, ADDRESS_SPACE_IO, 8 )
 ADDRESS_MAP_END
 
 /* this just gets some garbage out of the YM3526 */
-static READ_HANDLER( kludge ) { static int timer; return timer++; }
+static READ8_HANDLER( kludge ) { static int timer; return timer++; }
 
 static ADDRESS_MAP_START( mightguy_sound_readport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x03, 0x03) AM_READ(kludge)		/* 1412M2? */

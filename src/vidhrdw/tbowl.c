@@ -32,7 +32,7 @@ static void get_tx_tile_info(int tile_index)
 	SET_TILE_INFO(0,tileno,col,0)
 }
 
-WRITE_HANDLER( tbowl_txvideoram_w )
+WRITE8_HANDLER( tbowl_txvideoram_w )
 {
 	if (tbowl_txvideoram[offset] != data)
 	{
@@ -54,7 +54,7 @@ static void get_bg_tile_info(int tile_index)
 	SET_TILE_INFO(1,tileno,col,0)
 }
 
-WRITE_HANDLER( tbowl_bg2videoram_w )
+WRITE8_HANDLER( tbowl_bg2videoram_w )
 {
 	if (tbowl_bg2videoram[offset] != data)
 	{
@@ -63,25 +63,25 @@ WRITE_HANDLER( tbowl_bg2videoram_w )
 	}
 }
 
-WRITE_HANDLER (tbowl_bgxscroll_lo)
+WRITE8_HANDLER (tbowl_bgxscroll_lo)
 {
 tbowl_xscroll = (tbowl_xscroll & 0xff00) | data;
 tilemap_set_scrollx(bg_tilemap, 0, tbowl_xscroll );
 }
 
-WRITE_HANDLER (tbowl_bgxscroll_hi)
+WRITE8_HANDLER (tbowl_bgxscroll_hi)
 {
 tbowl_xscroll = (tbowl_xscroll & 0x00ff) | (data << 8);
 tilemap_set_scrollx(bg_tilemap, 0, tbowl_xscroll );
 }
 
-WRITE_HANDLER (tbowl_bgyscroll_lo)
+WRITE8_HANDLER (tbowl_bgyscroll_lo)
 {
 tbowl_yscroll = (tbowl_yscroll & 0xff00) | data;
 tilemap_set_scrolly(bg_tilemap, 0, tbowl_yscroll );
 }
 
-WRITE_HANDLER (tbowl_bgyscroll_hi)
+WRITE8_HANDLER (tbowl_bgyscroll_hi)
 {
 tbowl_yscroll = (tbowl_yscroll & 0x00ff) | (data << 8);
 tilemap_set_scrolly(bg_tilemap, 0, tbowl_yscroll );
@@ -101,7 +101,7 @@ static void get_bg2_tile_info(int tile_index)
 	SET_TILE_INFO(2,tileno,col,0)
 }
 
-WRITE_HANDLER( tbowl_bgvideoram_w )
+WRITE8_HANDLER( tbowl_bgvideoram_w )
 {
 	if (tbowl_bgvideoram[offset] != data)
 	{
@@ -110,25 +110,25 @@ WRITE_HANDLER( tbowl_bgvideoram_w )
 	}
 }
 
-WRITE_HANDLER (tbowl_bg2xscroll_lo)
+WRITE8_HANDLER (tbowl_bg2xscroll_lo)
 {
 tbowl_bg2xscroll = (tbowl_bg2xscroll & 0xff00) | data;
 tilemap_set_scrollx(bg2_tilemap, 0, tbowl_bg2xscroll );
 }
 
-WRITE_HANDLER (tbowl_bg2xscroll_hi)
+WRITE8_HANDLER (tbowl_bg2xscroll_hi)
 {
 tbowl_bg2xscroll = (tbowl_bg2xscroll & 0x00ff) | (data << 8);
 tilemap_set_scrollx(bg2_tilemap, 0, tbowl_bg2xscroll );
 }
 
-WRITE_HANDLER (tbowl_bg2yscroll_lo)
+WRITE8_HANDLER (tbowl_bg2yscroll_lo)
 {
 tbowl_bg2yscroll = (tbowl_bg2yscroll & 0xff00) | data;
 tilemap_set_scrolly(bg2_tilemap, 0, tbowl_bg2yscroll );
 }
 
-WRITE_HANDLER (tbowl_bg2yscroll_hi)
+WRITE8_HANDLER (tbowl_bg2yscroll_hi)
 {
 tbowl_bg2yscroll = (tbowl_bg2yscroll & 0x00ff) | (data << 8);
 tilemap_set_scrolly(bg2_tilemap, 0, tbowl_bg2yscroll );

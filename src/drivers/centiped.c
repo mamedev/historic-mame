@@ -296,7 +296,7 @@ static void generate_interrupt(int scanline)
 {
 	/* IRQ is clocked on the rising edge of 16V, equal to the previous 32V */
 	if (scanline & 16)
-		cpu_set_irq_line(0, 0, ((scanline - 1) & 32) ? ASSERT_LINE : CLEAR_LINE);
+		cpunum_set_input_line(0, 0, ((scanline - 1) & 32) ? ASSERT_LINE : CLEAR_LINE);
 
 	/* call back again after 16 scanlines */
 	scanline += 16;
@@ -309,7 +309,7 @@ static void generate_interrupt(int scanline)
 static MACHINE_INIT( centiped )
 {
 	timer_set(cpu_getscanlinetime(0), 0, generate_interrupt);
-	cpu_set_irq_line(0, 0, CLEAR_LINE);
+	cpunum_set_input_line(0, 0, CLEAR_LINE);
 	dsw_select = 0;
 }
 
@@ -323,9 +323,9 @@ static MACHINE_INIT( magworm )
 }
 
 
-static WRITE_HANDLER( irq_ack_w )
+static WRITE8_HANDLER( irq_ack_w )
 {
-	cpu_set_irq_line(0, 0, CLEAR_LINE);
+	cpunum_set_input_line(0, 0, CLEAR_LINE);
 }
 
 
@@ -379,31 +379,31 @@ INLINE int read_trackball(int idx, int switch_port)
 }
 
 
-static READ_HANDLER( centiped_IN0_r )
+static READ8_HANDLER( centiped_IN0_r )
 {
 	return read_trackball(0, 0);
 }
 
 
-static READ_HANDLER( centiped_IN2_r )
+static READ8_HANDLER( centiped_IN2_r )
 {
 	return read_trackball(1, 2);
 }
 
 
-static READ_HANDLER( milliped_IN1_r )
+static READ8_HANDLER( milliped_IN1_r )
 {
 	return read_trackball(1, 1);
 }
 
 
-static WRITE_HANDLER( input_select_w )
+static WRITE8_HANDLER( input_select_w )
 {
 	dsw_select = (~data >> 7) & 1;
 }
 
 
-static READ_HANDLER( bullsdrt_data_port_r )
+static READ8_HANDLER( bullsdrt_data_port_r )
 {
 	switch (activecpu_get_pc())
 	{
@@ -423,25 +423,25 @@ static READ_HANDLER( bullsdrt_data_port_r )
  *
  *************************************/
 
-static WRITE_HANDLER( led_w )
+static WRITE8_HANDLER( led_w )
 {
 	set_led_status(offset, ~data & 0x80);
 }
 
 
-static READ_HANDLER( centipdb_rand_r )
+static READ8_HANDLER( centipdb_rand_r )
 {
 	return mame_rand() % 0xff;
 }
 
 
-static WRITE_HANDLER( coin_count_w )
+static WRITE8_HANDLER( coin_count_w )
 {
 	coin_counter_w(offset, data);
 }
 
 
-static WRITE_HANDLER( bullsdrt_coin_count_w )
+static WRITE8_HANDLER( bullsdrt_coin_count_w )
 {
 	coin_counter_w(0, data);
 }
@@ -454,14 +454,14 @@ static WRITE_HANDLER( bullsdrt_coin_count_w )
  *
  *************************************/
 
-static WRITE_HANDLER( centipdb_AY8910_w )
+static WRITE8_HANDLER( centipdb_AY8910_w )
 {
 	AY8910_control_port_0_w(0, offset);
 	AY8910_write_port_0_w(0, data);
 }
 
 
-static READ_HANDLER( centipdb_AY8910_r )
+static READ8_HANDLER( centipdb_AY8910_r )
 {
 	AY8910_control_port_0_w(0, offset);
 	return AY8910_read_port_0_r(0);
@@ -1641,17 +1641,17 @@ ROM_END
 
 static DRIVER_INIT( centipdb )
 {
-	install_mem_write_handler(0, 0x1000, 0x100f, centipdb_AY8910_w);
-	install_mem_read_handler(0, 0x1000, 0x100f, centipdb_AY8910_r);
-	install_mem_read_handler(0, 0x1780, 0x1780, centipdb_rand_r);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1000, 0x100f, 0, 0, centipdb_AY8910_w);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1000, 0x100f, 0, 0, centipdb_AY8910_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1780, 0x1780, 0, 0, centipdb_rand_r);
 }
 
 
 static DRIVER_INIT( magworm )
 {
-	install_mem_write_handler(0, 0x1001, 0x1001, AY8910_control_port_0_w);
-	install_mem_write_handler(0, 0x1003, 0x1003, AY8910_write_port_0_w);
-	install_mem_read_handler(0, 0x1003, 0x1003, AY8910_read_port_0_r);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1001, 0x1001, 0, 0, AY8910_control_port_0_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1003, 0x1003, 0, 0, AY8910_write_port_0_w);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1003, 0x1003, 0, 0, AY8910_read_port_0_r);
 }
 
 

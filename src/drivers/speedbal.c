@@ -57,22 +57,22 @@ size_t speedbal_sprites_dataram_size;
 
 VIDEO_START( speedbal );
 VIDEO_UPDATE( speedbal );
-READ_HANDLER( speedbal_foreground_videoram_r );
-WRITE_HANDLER( speedbal_foreground_videoram_w );
-READ_HANDLER( speedbal_background_videoram_r );
-WRITE_HANDLER( speedbal_background_videoram_w );
+READ8_HANDLER( speedbal_foreground_videoram_r );
+WRITE8_HANDLER( speedbal_foreground_videoram_w );
+READ8_HANDLER( speedbal_background_videoram_r );
+WRITE8_HANDLER( speedbal_background_videoram_w );
 
 
 unsigned char *speedbal_sharedram;
 
-READ_HANDLER( speedbal_sharedram_r )
+READ8_HANDLER( speedbal_sharedram_r )
 {
 //  if (offset==0x0) speedbal_sharedram[offset]+=1;
   return speedbal_sharedram[offset];
 }
 
 
-WRITE_HANDLER( speedbal_sharedram_w )
+WRITE8_HANDLER( speedbal_sharedram_w )
 {
     speedbal_sharedram[offset] = data;
 }

@@ -107,14 +107,14 @@ VIDEO_UPDATE( videopin )
 }
 
 
-WRITE_HANDLER( videopin_ball_w )
+WRITE8_HANDLER( videopin_ball_w )
 {
 	ball_x = data & 15;
 	ball_y = data >> 4;
 }
 
 
-WRITE_HANDLER( videopin_video_ram_w )
+WRITE8_HANDLER( videopin_video_ram_w )
 {
 	if (videopin_video_ram[offset] != data)
 	{

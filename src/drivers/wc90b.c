@@ -86,26 +86,26 @@ extern data8_t *wc90b_scroll1y;
 extern data8_t *wc90b_scroll2y;
 
 VIDEO_START( wc90b );
-WRITE_HANDLER( wc90b_bgvideoram_w );
-WRITE_HANDLER( wc90b_fgvideoram_w );
-WRITE_HANDLER( wc90b_txvideoram_w );
+WRITE8_HANDLER( wc90b_bgvideoram_w );
+WRITE8_HANDLER( wc90b_fgvideoram_w );
+WRITE8_HANDLER( wc90b_txvideoram_w );
 VIDEO_UPDATE( wc90b );
 
 
 
 static data8_t *wc90b_shared;
 
-static READ_HANDLER( wc90b_shared_r )
+static READ8_HANDLER( wc90b_shared_r )
 {
 	return wc90b_shared[offset];
 }
 
-static WRITE_HANDLER( wc90b_shared_w )
+static WRITE8_HANDLER( wc90b_shared_w )
 {
 	wc90b_shared[offset] = data;
 }
 
-static WRITE_HANDLER( wc90b_bankswitch_w )
+static WRITE8_HANDLER( wc90b_bankswitch_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -115,7 +115,7 @@ static WRITE_HANDLER( wc90b_bankswitch_w )
 	cpu_setbank(1,&RAM[bankaddress]);
 }
 
-static WRITE_HANDLER( wc90b_bankswitch1_w )
+static WRITE8_HANDLER( wc90b_bankswitch1_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU2);
@@ -125,10 +125,10 @@ static WRITE_HANDLER( wc90b_bankswitch1_w )
 	cpu_setbank(2,&RAM[bankaddress]);
 }
 
-static WRITE_HANDLER( wc90b_sound_command_w )
+static WRITE8_HANDLER( wc90b_sound_command_w )
 {
 	soundlatch_w(offset,data);
-	cpu_set_irq_line(2,0,HOLD_LINE);
+	cpunum_set_input_line(2,0,HOLD_LINE);
 }
 
 
@@ -350,7 +350,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 /* handler called by the 2203 emulator when the internal timers cause an IRQ */
 static void irqhandler(int irq)
 {
-	cpu_set_nmi_line(2,irq ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(2, INPUT_LINE_NMI, irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2203interface ym2203_interface =

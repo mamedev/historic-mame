@@ -17,16 +17,16 @@ extern int rockrage_irq_enable;
 /* from vidhrdw */
 VIDEO_START( rockrage );
 VIDEO_UPDATE( rockrage );
-WRITE_HANDLER( rockrage_vreg_w );
+WRITE8_HANDLER( rockrage_vreg_w );
 PALETTE_INIT( rockrage );
 
 static INTERRUPT_GEN( rockrage_interrupt )
 {
 	if (K007342_is_INT_enabled())
-        cpu_set_irq_line(0, HD6309_IRQ_LINE, HOLD_LINE);
+        cpunum_set_input_line(0, HD6309_IRQ_LINE, HOLD_LINE);
 }
 
-static WRITE_HANDLER( rockrage_bankswitch_w )
+static WRITE8_HANDLER( rockrage_bankswitch_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -42,17 +42,17 @@ static WRITE_HANDLER( rockrage_bankswitch_w )
 	/* other bits unknown */
 }
 
-static WRITE_HANDLER( rockrage_sh_irqtrigger_w )
+static WRITE8_HANDLER( rockrage_sh_irqtrigger_w )
 {
 	soundlatch_w(offset, data);
-	cpu_set_irq_line(1,M6809_IRQ_LINE,HOLD_LINE);
+	cpunum_set_input_line(1,M6809_IRQ_LINE,HOLD_LINE);
 }
 
-static READ_HANDLER( rockrage_VLM5030_busy_r ) {
+static READ8_HANDLER( rockrage_VLM5030_busy_r ) {
 	return ( VLM5030_BSY() ? 1 : 0 );
 }
 
-static WRITE_HANDLER( rockrage_speech_w ) {
+static WRITE8_HANDLER( rockrage_speech_w ) {
 	/* bit2 = data bus enable */
 	VLM5030_RST( ( data >> 1 ) & 0x01 );
 	VLM5030_ST(  ( data >> 0 ) & 0x01 );

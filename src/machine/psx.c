@@ -35,11 +35,6 @@ INLINE void verboselog( int n_level, const char *s_fmt, ... )
 data32_t *g_p_n_psxram;
 size_t g_n_psxramsize;
 
-INLINE UINT8 psxreadbyte( UINT32 n_address )
-{
-	return *( (UINT8 *)g_p_n_psxram + BYTE_XOR_LE( n_address ) );
-}
-
 INLINE void psxwriteword( data32_t n_address, data16_t n_data )
 {
 	*( (UINT16 *)( (UINT8 *)g_p_n_psxram + WORD_XOR_LE( n_address ) ) ) = n_data;
@@ -66,12 +61,12 @@ static void psx_irq_update( void )
 	if( ( m_n_irqdata & m_n_irqmask ) != 0 )
 	{
 		verboselog( 2, "psx irq assert\n" );
-		cpu_set_irq_line( 0, 0, ASSERT_LINE );
+		cpunum_set_input_line( 0, 0, ASSERT_LINE );
 	}
 	else
 	{
 		verboselog( 2, "psx irq clear\n" );
-		cpu_set_irq_line( 0, 0, CLEAR_LINE );
+		cpunum_set_input_line( 0, 0, CLEAR_LINE );
 	}
 }
 
@@ -272,7 +267,7 @@ WRITE32_HANDLER( psx_dma_w )
 					m_p_fn_dma_read[ n_channel ]( n_address, n_size );
 					if( n_channel == 1 )
 					{
-						dma_start_timer( n_channel, 16384 );
+						dma_start_timer( n_channel, 16384 / 2 );
 					}
 					else
 					{
@@ -395,9 +390,16 @@ static data16_t m_p_n_root_count[ 3 ];
 static data16_t m_p_n_root_mode[ 3 ];
 static data16_t m_p_n_root_target[ 3 ];
 
+static void root_timer( int n_counter );
+
 static void root_finished( int n_counter )
 {
-	if( ( m_p_n_root_mode[ n_counter ] & 0x50 ) != 0 )
+	m_p_n_root_count[ n_counter ] = 0;
+	if( ( m_p_n_root_mode[ n_counter ] & 0x40 ) != 0 )
+	{
+		root_timer( n_counter );
+	}
+	if( ( m_p_n_root_mode[ n_counter ] & 0x10 ) != 0 )
 	{
 		psx_irq_set( 0x10 << n_counter );
 	}
@@ -1015,12 +1017,12 @@ INLINE UINT16 mdec_clamp_b5( INT32 n_b )
 INLINE void mdec_makergb15( UINT32 n_address, INT32 n_r, INT32 n_g, INT32 n_b, INT32 *p_n_y, UINT32 n_stp )
 {
 	g_p_n_psxram[ n_address / 4 ] = n_stp |
-		mdec_clamp_r5( p_n_y[ BYTE_XOR_LE( 0 ) ] + n_r ) |
-		mdec_clamp_g5( p_n_y[ BYTE_XOR_LE( 0 ) ] + n_g ) |
-		mdec_clamp_b5( p_n_y[ BYTE_XOR_LE( 0 ) ] + n_b ) |
-		( mdec_clamp_r5( p_n_y[ BYTE_XOR_LE( 1 ) ] + n_r ) |
-		mdec_clamp_g5( p_n_y[ BYTE_XOR_LE( 1 ) ] + n_g ) |
-		mdec_clamp_b5( p_n_y[ BYTE_XOR_LE( 1 ) ] + n_b ) ) << 16;
+		mdec_clamp_r5( p_n_y[ 0 ] + n_r ) |
+		mdec_clamp_g5( p_n_y[ 0 ] + n_g ) |
+		mdec_clamp_b5( p_n_y[ 0 ] + n_b ) |
+		( mdec_clamp_r5( p_n_y[ 1 ] + n_r ) |
+		mdec_clamp_g5( p_n_y[ 1 ] + n_g ) |
+		mdec_clamp_b5( p_n_y[ 1 ] + n_b ) ) << 16;
 }
 
 static void mdec_yuv2_to_rgb15( UINT32 n_address )
@@ -1096,9 +1098,9 @@ INLINE UINT16 mdec_clamp8( INT32 n_r )
 
 INLINE void mdec_makergb24( UINT32 n_address, INT32 n_r, INT32 n_g, INT32 n_b, INT32 *p_n_y, UINT32 n_stp )
 {
-	psxwriteword( n_address + 0, ( mdec_clamp8( p_n_y[ BYTE_XOR_LE( 0 ) ] + n_g ) << 8 ) | mdec_clamp8( p_n_y[ BYTE_XOR_LE( 0 ) ] + n_r ) );
-	psxwriteword( n_address + 2, ( mdec_clamp8( p_n_y[ BYTE_XOR_LE( 1 ) ] + n_r ) << 8 ) | mdec_clamp8( p_n_y[ BYTE_XOR_LE( 0 ) ] + n_b ) );
-	psxwriteword( n_address + 4, ( mdec_clamp8( p_n_y[ BYTE_XOR_LE( 1 ) ] + n_b ) << 8 ) | mdec_clamp8( p_n_y[ BYTE_XOR_LE( 1 ) ] + n_g ) );
+	psxwriteword( n_address + 0, ( mdec_clamp8( p_n_y[ 0 ] + n_g ) << 8 ) | mdec_clamp8( p_n_y[ 0 ] + n_r ) );
+	psxwriteword( n_address + 2, ( mdec_clamp8( p_n_y[ 1 ] + n_r ) << 8 ) | mdec_clamp8( p_n_y[ 0 ] + n_b ) );
+	psxwriteword( n_address + 4, ( mdec_clamp8( p_n_y[ 1 ] + n_b ) << 8 ) | mdec_clamp8( p_n_y[ 1 ] + n_g ) );
 }
 
 static void mdec_yuv2_to_rgb24( UINT32 n_address )
@@ -1181,17 +1183,38 @@ static void mdec0_write( UINT32 n_address, INT32 n_size )
 		break;
 	case 0x4:
 		verboselog( 1, "mdec quantize table %08x %08x %08x\n", m_n_mdec0_command, n_address, n_size );
-		for( n_index = 0; n_index < DCTSIZE2; n_index++ )
+		n_index = 0;
+		while( n_size > 0 )
 		{
-			m_p_n_mdec_quantize_y[ n_index ] = psxreadbyte( n_address + n_index );
-			m_p_n_mdec_quantize_uv[ n_index ] = psxreadbyte( n_address + n_index + DCTSIZE2 );
+			if( n_index < DCTSIZE2 )
+			{
+				m_p_n_mdec_quantize_y[ n_index + 0 ] = ( g_p_n_psxram[ n_address / 4 ] >> 0 ) & 0xff;
+				m_p_n_mdec_quantize_y[ n_index + 1 ] = ( g_p_n_psxram[ n_address / 4 ] >> 8 ) & 0xff;
+				m_p_n_mdec_quantize_y[ n_index + 2 ] = ( g_p_n_psxram[ n_address / 4 ] >> 16 ) & 0xff;
+				m_p_n_mdec_quantize_y[ n_index + 3 ] = ( g_p_n_psxram[ n_address / 4 ] >> 24 ) & 0xff;
+			}
+			else if( n_index < DCTSIZE2 * 2 )
+			{
+				m_p_n_mdec_quantize_uv[ n_index + 0 - DCTSIZE2 ] = ( g_p_n_psxram[ n_address / 4 ] >> 0 ) & 0xff;
+				m_p_n_mdec_quantize_uv[ n_index + 1 - DCTSIZE2 ] = ( g_p_n_psxram[ n_address / 4 ] >> 8 ) & 0xff;
+				m_p_n_mdec_quantize_uv[ n_index + 2 - DCTSIZE2 ] = ( g_p_n_psxram[ n_address / 4 ] >> 16 ) & 0xff;
+				m_p_n_mdec_quantize_uv[ n_index + 3 - DCTSIZE2 ] = ( g_p_n_psxram[ n_address / 4 ] >> 24 ) & 0xff;
+			}
+			n_index += 4;
+			n_address += 4;
+			n_size--;
 		}
 		break;
 	case 0x6:
 		verboselog( 1, "mdec cosine table %08x %08x %08x\n", m_n_mdec0_command, n_address, n_size );
-		for( n_index = 0; n_index < DCTSIZE2; n_index++ )
+		n_index = 0;
+		while( n_size > 0 )
 		{
-			m_p_n_mdec_cos[ n_index ] = (INT16)psxreadword( n_address + ( n_index * 2 ) );
+			m_p_n_mdec_cos[ n_index + 0 ] = (INT16)( ( g_p_n_psxram[ n_address / 4 ] >> 0 ) & 0xffff );
+			m_p_n_mdec_cos[ n_index + 1 ] = (INT16)( ( g_p_n_psxram[ n_address / 4 ] >> 16 ) & 0xffff );
+			n_index += 2;
+			n_address += 4;
+			n_size--;
 		}
 		mdec_cos_precalc();
 		break;

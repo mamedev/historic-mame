@@ -19,26 +19,26 @@ extern unsigned char* mermaid_foreground_scrollram;
 
 PALETTE_INIT( mermaid );
 VIDEO_UPDATE( mermaid );
-WRITE_HANDLER( mermaid_flip_screen_x_w );
-WRITE_HANDLER( mermaid_flip_screen_y_w );
+WRITE8_HANDLER( mermaid_flip_screen_x_w );
+WRITE8_HANDLER( mermaid_flip_screen_y_w );
 
 
 static unsigned char *mermaid_AY8910_enable;
 
-static WRITE_HANDLER( mermaid_AY8910_write_port_w )
+static WRITE8_HANDLER( mermaid_AY8910_write_port_w )
 {
 	if (mermaid_AY8910_enable[0])  AY8910_write_port_0_w(offset, data);
 	if (mermaid_AY8910_enable[1])  AY8910_write_port_1_w(offset, data);
 }
 
-static WRITE_HANDLER( mermaid_AY8910_control_port_w )
+static WRITE8_HANDLER( mermaid_AY8910_control_port_w )
 {
 	if (mermaid_AY8910_enable[0])  AY8910_control_port_0_w(offset, data);
 	if (mermaid_AY8910_enable[1])  AY8910_control_port_1_w(offset, data);
 }
 
 #if 0
-static READ_HANDLER( mermaid_f800_r )
+static READ8_HANDLER( mermaid_f800_r )
 {
 	// collision register active LO
 	// Bit 0

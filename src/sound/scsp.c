@@ -1031,7 +1031,7 @@ static void dma_scsp()
 
 	/*Job done,request a dma end irq*/
 	if(scsp_regs[0x41e/2] & 0x10)
-	cpu_set_irq_line(2,dma_transfer_end,HOLD_LINE);
+	cpunum_set_input_line(2,dma_transfer_end,HOLD_LINE);
 }
 
 int SCSP_IRQCB(int foo)

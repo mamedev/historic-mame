@@ -331,7 +331,7 @@ VIDEO_START( stactics )
 }
 
 
-WRITE_HANDLER( stactics_palette_w )
+WRITE8_HANDLER( stactics_palette_w )
 {
     int old_palette_select = palette_select;
 
@@ -358,7 +358,7 @@ WRITE_HANDLER( stactics_palette_w )
 }
 
 
-WRITE_HANDLER( stactics_scroll_ram_w )
+WRITE8_HANDLER( stactics_scroll_ram_w )
 {
     int temp;
 
@@ -390,7 +390,7 @@ WRITE_HANDLER( stactics_scroll_ram_w )
     }
 }
 
-WRITE_HANDLER( stactics_speed_latch_w )
+WRITE8_HANDLER( stactics_speed_latch_w )
 {
     /* This writes to a shift register which is clocked by   */
     /* a 555 oscillator.  This value determines the speed of */
@@ -414,17 +414,17 @@ WRITE_HANDLER( stactics_speed_latch_w )
     states_per_frame = num_rising_edges*19/8;
 }
 
-WRITE_HANDLER( stactics_shot_trigger_w )
+WRITE8_HANDLER( stactics_shot_trigger_w )
 {
     stactics_shot_standby = 0;
 }
 
-WRITE_HANDLER( stactics_shot_flag_clear_w )
+WRITE8_HANDLER( stactics_shot_flag_clear_w )
 {
     stactics_shot_arrive = 0;
 }
 
-WRITE_HANDLER( stactics_videoram_b_w )
+WRITE8_HANDLER( stactics_videoram_b_w )
 {
     if (stactics_videoram_b[offset] != data)
     {
@@ -433,7 +433,7 @@ WRITE_HANDLER( stactics_videoram_b_w )
     }
 }
 
-WRITE_HANDLER( stactics_chardata_b_w )
+WRITE8_HANDLER( stactics_chardata_b_w )
 {
     if (stactics_chardata_b[offset] != data)
     {
@@ -442,7 +442,7 @@ WRITE_HANDLER( stactics_chardata_b_w )
     }
 }
 
-WRITE_HANDLER( stactics_videoram_d_w )
+WRITE8_HANDLER( stactics_videoram_d_w )
 {
     if (stactics_videoram_d[offset] != data)
     {
@@ -451,7 +451,7 @@ WRITE_HANDLER( stactics_videoram_d_w )
     }
 }
 
-WRITE_HANDLER( stactics_chardata_d_w )
+WRITE8_HANDLER( stactics_chardata_d_w )
 {
     if (stactics_chardata_d[offset] != data)
     {
@@ -460,7 +460,7 @@ WRITE_HANDLER( stactics_chardata_d_w )
     }
 }
 
-WRITE_HANDLER( stactics_videoram_e_w )
+WRITE8_HANDLER( stactics_videoram_e_w )
 {
     if (stactics_videoram_e[offset] != data)
     {
@@ -469,7 +469,7 @@ WRITE_HANDLER( stactics_videoram_e_w )
     }
 }
 
-WRITE_HANDLER( stactics_chardata_e_w )
+WRITE8_HANDLER( stactics_chardata_e_w )
 {
     if (stactics_chardata_e[offset] != data)
     {
@@ -478,7 +478,7 @@ WRITE_HANDLER( stactics_chardata_e_w )
     }
 }
 
-WRITE_HANDLER( stactics_videoram_f_w )
+WRITE8_HANDLER( stactics_videoram_f_w )
 {
     if (stactics_videoram_f[offset] != data)
     {
@@ -487,7 +487,7 @@ WRITE_HANDLER( stactics_videoram_f_w )
     }
 }
 
-WRITE_HANDLER( stactics_chardata_f_w )
+WRITE8_HANDLER( stactics_chardata_f_w )
 {
     if (stactics_chardata_f[offset] != data)
     {

@@ -126,7 +126,7 @@ static void interrupt_gen(int scanline)
 	deco32_raster_display_list[deco32_raster_display_position++]=deco32_pf12_control[3]&0xffff;
 	deco32_raster_display_list[deco32_raster_display_position++]=deco32_pf12_control[4]&0xffff;
 
-	cpu_set_irq_line(0, ARM_IRQ_LINE, HOLD_LINE);
+	cpunum_set_input_line(0, ARM_IRQ_LINE, HOLD_LINE);
 	timer_adjust(raster_irq_timer,TIME_NEVER,0,0);
 }
 
@@ -134,7 +134,7 @@ static READ32_HANDLER( deco32_irq_controller_r )
 {
 	switch (offset) {
 	case 2: /* Raster IRQ ACK - value read is not used */
-		cpu_set_irq_line(0, ARM_IRQ_LINE, CLEAR_LINE);
+		cpunum_set_input_line(0, ARM_IRQ_LINE, CLEAR_LINE);
 		return 0;
 
 	case 3: /* Irq controller
@@ -184,7 +184,7 @@ static WRITE32_HANDLER( deco32_irq_controller_w )
 static WRITE32_HANDLER( deco32_sound_w )
 {
 	soundlatch_w(0,data & 0xff);
-	cpu_set_irq_line(1,0,HOLD_LINE);
+	cpunum_set_input_line(1,0,HOLD_LINE);
 }
 
 static READ32_HANDLER( deco32_71_r )
@@ -470,9 +470,9 @@ static WRITE32_HANDLER( tattass_control_w )
 
 	/* Sound board reset control */
 	if (data&0x80)
-		cpu_set_reset_line(1, CLEAR_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_RESET, CLEAR_LINE);
 	else
-		cpu_set_reset_line(1, ASSERT_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE);
 
 	/* bit 0x4 fade cancel? */
 	/* bit 0x8 ?? */
@@ -890,18 +890,18 @@ ADDRESS_MAP_END
 
 static int bsmt_latch;
 
-static WRITE_HANDLER(deco32_bsmt0_w)
+static WRITE8_HANDLER(deco32_bsmt0_w)
 {
 	bsmt_latch = data;
 }
 
-static WRITE_HANDLER(deco32_bsmt1_w)
+static WRITE8_HANDLER(deco32_bsmt1_w)
 {
 	BSMT2000_data_0_w(offset^ 0xff, ((bsmt_latch<<8)|data), 0);
-	cpu_set_irq_line(1, M6809_IRQ_LINE, HOLD_LINE); /* BSMT is ready */
+	cpunum_set_input_line(1, M6809_IRQ_LINE, HOLD_LINE); /* BSMT is ready */
 }
 
-static READ_HANDLER(deco32_bsmt_status_r)
+static READ8_HANDLER(deco32_bsmt_status_r)
 {
 	return 0x80;
 }
@@ -1491,10 +1491,10 @@ static struct GfxDecodeInfo gfxdecodeinfo_tattass[] =
 
 static void sound_irq(int state)
 {
-	cpu_set_irq_line(1,1,state); /* IRQ 2 */
+	cpunum_set_input_line(1,1,state); /* IRQ 2 */
 }
 
-static WRITE_HANDLER( sound_bankswitch_w )
+static WRITE8_HANDLER( sound_bankswitch_w )
 {
 	OKIM6295_set_bank_base(0, ((data >> 0)& 1) * 0x40000);
 	OKIM6295_set_bank_base(1, ((data >> 1)& 1) * 0x40000);
@@ -1588,12 +1588,12 @@ static MACHINE_INIT( deco32 )
 
 static INTERRUPT_GEN( deco32_vbl_interrupt )
 {
-	cpu_set_irq_line(0, ARM_IRQ_LINE, HOLD_LINE);
+	cpunum_set_input_line(0, ARM_IRQ_LINE, HOLD_LINE);
 }
 
 static INTERRUPT_GEN( tattass_snd_interrupt )
 {
-	cpu_set_irq_line(1, M6809_FIRQ_LINE, HOLD_LINE);
+	cpunum_set_input_line(1, M6809_FIRQ_LINE, HOLD_LINE);
 }
 
 static MACHINE_DRIVER_START( captaven )
@@ -2573,7 +2573,7 @@ static DRIVER_INIT( captaven )
 	deco56_decrypt(REGION_GFX2);
 
 	raster_offset=-1;
-	install_mem_read32_handler(0, 0x12748c, 0x12748f, captaven_skip);
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x12748c, 0x12748f, 0, 0, captaven_skip);
 }
 
 static DRIVER_INIT( dragngun )
@@ -2592,7 +2592,7 @@ static DRIVER_INIT( dragngun )
 	ROM[0x1b32c/4]=0xe1a00000;//  NOP test switch lock
 
 	raster_offset=0;
-	install_mem_read32_handler(0, 0x11f15c, 0x11f15f, dragngun_skip);
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x11f15c, 0x11f15f, 0, 0, dragngun_skip);
 }
 
 static DRIVER_INIT( fghthist )
@@ -2639,7 +2639,7 @@ static DRIVER_INIT( tattass )
 	deco56_decrypt(REGION_GFX1); /* 141 */
 	deco56_decrypt(REGION_GFX2); /* 141 */
 
-	install_mem_read32_handler(0, 0x100000, 0x100003, tattass_skip);
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x100000, 0x100003, 0, 0, tattass_skip);
 }
 
 static DRIVER_INIT( nslasher )

@@ -24,18 +24,18 @@ extern data8_t *momoko_bg_scrolly;
 
 VIDEO_UPDATE( momoko );
 
-WRITE_HANDLER( momoko_fg_scrollx_w );
-WRITE_HANDLER( momoko_fg_scrolly_w );
-WRITE_HANDLER( momoko_text_scrolly_w );
-WRITE_HANDLER( momoko_text_mode_w );
-WRITE_HANDLER( momoko_bg_scrollx_w );
-WRITE_HANDLER( momoko_bg_scrolly_w );
-WRITE_HANDLER( momoko_flipscreen_w );
-WRITE_HANDLER( momoko_fg_select_w);
-WRITE_HANDLER( momoko_bg_select_w);
-WRITE_HANDLER( momoko_bg_priority_w);
+WRITE8_HANDLER( momoko_fg_scrollx_w );
+WRITE8_HANDLER( momoko_fg_scrolly_w );
+WRITE8_HANDLER( momoko_text_scrolly_w );
+WRITE8_HANDLER( momoko_text_mode_w );
+WRITE8_HANDLER( momoko_bg_scrollx_w );
+WRITE8_HANDLER( momoko_bg_scrolly_w );
+WRITE8_HANDLER( momoko_flipscreen_w );
+WRITE8_HANDLER( momoko_fg_select_w);
+WRITE8_HANDLER( momoko_bg_select_w);
+WRITE8_HANDLER( momoko_bg_priority_w);
 
-WRITE_HANDLER( momoko_bg_read_bank_w )
+WRITE8_HANDLER( momoko_bg_read_bank_w )
 {
 	data8_t *BG_MAP = memory_region(REGION_USER1);
 	int bank_address = (data & 0x1f) * 0x1000;

@@ -72,7 +72,7 @@ PALETTE_INIT( pooyan )
 		COLOR(0,i) = (*(color_prom++) & 0x0f) + 0x10;
 }
 
-WRITE_HANDLER( pooyan_videoram_w )
+WRITE8_HANDLER( pooyan_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -81,7 +81,7 @@ WRITE_HANDLER( pooyan_videoram_w )
 	}
 }
 
-WRITE_HANDLER( pooyan_colorram_w )
+WRITE8_HANDLER( pooyan_colorram_w )
 {
 	if (colorram[offset] != data)
 	{
@@ -90,7 +90,7 @@ WRITE_HANDLER( pooyan_colorram_w )
 	}
 }
 
-WRITE_HANDLER( pooyan_flipscreen_w )
+WRITE8_HANDLER( pooyan_flipscreen_w )
 {
 	if (flip_screen != (data & 0x01))
 	{

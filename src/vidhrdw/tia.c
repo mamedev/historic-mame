@@ -7,7 +7,7 @@
 #include "driver.h"
 #include <math.h>
 
-extern WRITE_HANDLER( tia_sound_w );
+extern WRITE8_HANDLER( tia_sound_w );
 
 static UINT32 frame_cycles;
 static UINT32 paddle_cycles;
@@ -569,7 +569,7 @@ static void button_callback(int dummy)
 }
 
 
-static WRITE_HANDLER( WSYNC_w )
+static WRITE8_HANDLER( WSYNC_w )
 {
 	int cycles = activecpu_gettotalcycles() - frame_cycles;
 
@@ -580,7 +580,7 @@ static WRITE_HANDLER( WSYNC_w )
 }
 
 
-static WRITE_HANDLER( VSYNC_w )
+static WRITE8_HANDLER( VSYNC_w )
 {
 	if (data & 2)
 	{
@@ -603,7 +603,7 @@ static WRITE_HANDLER( VSYNC_w )
 }
 
 
-static WRITE_HANDLER( VBLANK_w )
+static WRITE8_HANDLER( VBLANK_w )
 {
 	if (data & 0x80)
 	{
@@ -614,7 +614,7 @@ static WRITE_HANDLER( VBLANK_w )
 }
 
 
-static WRITE_HANDLER( HMOVE_w )
+static WRITE8_HANDLER( HMOVE_w )
 {
 	int curr_x = current_x();
 	int curr_y = current_y();
@@ -654,13 +654,13 @@ static WRITE_HANDLER( HMOVE_w )
 }
 
 
-static WRITE_HANDLER( RSYNC_w )
+static WRITE8_HANDLER( RSYNC_w )
 {
 	/* this address is used in chip testing */
 }
 
 
-static WRITE_HANDLER( HMCLR_w )
+static WRITE8_HANDLER( HMCLR_w )
 {
 	HMP0 = 0;
 	HMP1 = 0;
@@ -670,7 +670,7 @@ static WRITE_HANDLER( HMCLR_w )
 }
 
 
-static WRITE_HANDLER( CXCLR_w )
+static WRITE8_HANDLER( CXCLR_w )
 {
 	CXM0P = 0;
 	CXM1P = 0;
@@ -683,7 +683,7 @@ static WRITE_HANDLER( CXCLR_w )
 }
 
 
-static WRITE_HANDLER( RESP0_w )
+static WRITE8_HANDLER( RESP0_w )
 {
 	horzP0 = current_x();
 
@@ -698,7 +698,7 @@ static WRITE_HANDLER( RESP0_w )
 }
 
 
-static WRITE_HANDLER( RESP1_w )
+static WRITE8_HANDLER( RESP1_w )
 {
 	horzP1 = current_x();
 
@@ -713,7 +713,7 @@ static WRITE_HANDLER( RESP1_w )
 }
 
 
-static WRITE_HANDLER( RESM0_w )
+static WRITE8_HANDLER( RESM0_w )
 {
 	horzM0 = current_x();
 
@@ -728,7 +728,7 @@ static WRITE_HANDLER( RESM0_w )
 }
 
 
-static WRITE_HANDLER( RESM1_w )
+static WRITE8_HANDLER( RESM1_w )
 {
 	horzM1 = current_x();
 
@@ -743,7 +743,7 @@ static WRITE_HANDLER( RESM1_w )
 }
 
 
-static WRITE_HANDLER( RESBL_w )
+static WRITE8_HANDLER( RESBL_w )
 {
 	horzBL = current_x();
 
@@ -758,7 +758,7 @@ static WRITE_HANDLER( RESBL_w )
 }
 
 
-static WRITE_HANDLER( RESMP0_w )
+static WRITE8_HANDLER( RESMP0_w )
 {
 	if (RESMP0 & 2)
 	{
@@ -769,7 +769,7 @@ static WRITE_HANDLER( RESMP0_w )
 }
 
 
-static WRITE_HANDLER( RESMP1_w )
+static WRITE8_HANDLER( RESMP1_w )
 {
 	if (RESMP1 & 2)
 	{
@@ -780,7 +780,7 @@ static WRITE_HANDLER( RESMP1_w )
 }
 
 
-static WRITE_HANDLER( GRP0_w )
+static WRITE8_HANDLER( GRP0_w )
 {
 	prevGRP1 = GRP1;
 
@@ -788,7 +788,7 @@ static WRITE_HANDLER( GRP0_w )
 }
 
 
-static WRITE_HANDLER( GRP1_w )
+static WRITE8_HANDLER( GRP1_w )
 {
 	prevGRP0 = GRP0;
 
@@ -798,7 +798,7 @@ static WRITE_HANDLER( GRP1_w )
 }
 
 
-static READ_HANDLER( INPT_r )
+static READ8_HANDLER( INPT_r )
 {
 	UINT32 elapsed = activecpu_gettotalcycles() - paddle_cycles;
 
@@ -806,7 +806,7 @@ static READ_HANDLER( INPT_r )
 }
 
 
-READ_HANDLER( tia_r )
+READ8_HANDLER( tia_r )
 {
 	UINT8 data = 0;
 
@@ -851,7 +851,7 @@ READ_HANDLER( tia_r )
 }
 
 
-WRITE_HANDLER( tia_w )
+WRITE8_HANDLER( tia_w )
 {
 	static const int delay[0x40] =
 	{

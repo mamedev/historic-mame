@@ -139,10 +139,6 @@ enum
 	REGION_MAX
 };
 
-#define BADCRC( crc ) (~(crc))
-
-#define ROMMD5(md5) ("MD5" #md5)
-
 
 
 /***************************************************************************
@@ -389,7 +385,6 @@ void showdisclaimer(void);
 /* helper function that reads samples from disk - this can be used by other */
 /* drivers as well (e.g. a sound chip emulator needing drum samples) */
 struct GameSamples *readsamples(const char **samplenames,const char *name);
-#define freesamples(samps)
 
 /* return a pointer to the specified memory region - num can be either an absolute */
 /* number, or one of the REGION_XXX identifiers defined above */

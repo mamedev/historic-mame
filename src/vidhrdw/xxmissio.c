@@ -18,16 +18,16 @@ static UINT8 flipscreen;
 static UINT8 xxmissio_bg_redraw;
 
 
-WRITE_HANDLER( xxmissio_scroll_x_w )
+WRITE8_HANDLER( xxmissio_scroll_x_w )
 {
 	xxmissio_xscroll = data;
 }
-WRITE_HANDLER( xxmissio_scroll_y_w )
+WRITE8_HANDLER( xxmissio_scroll_y_w )
 {
 	xxmissio_yscroll = data;
 }
 
-WRITE_HANDLER( xxmissio_flipscreen_w )
+WRITE8_HANDLER( xxmissio_flipscreen_w )
 {
 	if ((data & 0x01) != flipscreen)
 	{
@@ -36,16 +36,16 @@ WRITE_HANDLER( xxmissio_flipscreen_w )
 	}
 }
 
-READ_HANDLER( xxmissio_fgram_r )
+READ8_HANDLER( xxmissio_fgram_r )
 {
 	return xxmissio_fgram[offset];
 }
-WRITE_HANDLER( xxmissio_fgram_w )
+WRITE8_HANDLER( xxmissio_fgram_w )
 {
 	xxmissio_fgram[offset] = data;
 }
 
-WRITE_HANDLER( xxmissio_videoram_w )
+WRITE8_HANDLER( xxmissio_videoram_w )
 {
 	int offs = offset & 0x7e0;
 	int x = (offset + (xxmissio_xscroll >> 3) ) & 0x1f;
@@ -54,7 +54,7 @@ WRITE_HANDLER( xxmissio_videoram_w )
 	videoram[offs] = data;
 	dirtybuffer[offs & 0x3ff] = 1;
 }
-READ_HANDLER( xxmissio_videoram_r )
+READ8_HANDLER( xxmissio_videoram_r )
 {
 	int offs = offset & 0x7e0;
 	int x = (offset + (xxmissio_xscroll >> 3) ) & 0x1f;
@@ -63,7 +63,7 @@ READ_HANDLER( xxmissio_videoram_r )
 	return videoram[offs];
 }
 
-WRITE_HANDLER( xxmissio_paletteram_w )
+WRITE8_HANDLER( xxmissio_paletteram_w )
 {
 	if (paletteram[offset] != data)
 	{

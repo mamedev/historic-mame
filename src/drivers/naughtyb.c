@@ -111,16 +111,16 @@ TODO:
 extern unsigned char *naughtyb_videoram2;
 extern unsigned char *naughtyb_scrollreg;
 
-WRITE_HANDLER( naughtyb_videoram2_w );
-WRITE_HANDLER( naughtyb_scrollreg_w );
-WRITE_HANDLER( naughtyb_videoreg_w );
-WRITE_HANDLER( popflame_videoreg_w );
+WRITE8_HANDLER( naughtyb_videoram2_w );
+WRITE8_HANDLER( naughtyb_scrollreg_w );
+WRITE8_HANDLER( naughtyb_videoreg_w );
+WRITE8_HANDLER( popflame_videoreg_w );
 VIDEO_START( naughtyb );
 PALETTE_INIT( naughtyb );
 VIDEO_UPDATE( naughtyb );
 
-WRITE_HANDLER( pleiads_sound_control_a_w );
-WRITE_HANDLER( pleiads_sound_control_b_w );
+WRITE8_HANDLER( pleiads_sound_control_a_w );
+WRITE8_HANDLER( pleiads_sound_control_b_w );
 int naughtyb_sh_start(const struct MachineSound *msound);
 int popflame_sh_start(const struct MachineSound *msound);
 void pleiads_sh_stop(void);
@@ -136,7 +136,7 @@ void pleiads_sh_update(void);
 
 //static int popflame_prot_count = 0;
 
-READ_HANDLER( popflame_protection_r ) /* Not used by bootleg/hack */
+READ8_HANDLER( popflame_protection_r ) /* Not used by bootleg/hack */
 {
 	static int values[4] = { 0x78, 0x68, 0x48, 0x38|0x80 };
 	static int count;
@@ -213,7 +213,7 @@ ADDRESS_MAP_END
 INTERRUPT_GEN( naughtyb_interrupt )
 {
 	if (readinputport(2) & 1)
-		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+		cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 }
 
 INPUT_PORTS_START( naughtyb )
@@ -528,7 +528,7 @@ ROM_END
 DRIVER_INIT( popflame )
 {
 	/* install a handler to catch protection checks */
-	install_mem_read_handler(0, 0x9000, 0x9000, popflame_protection_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x9000, 0x9000, 0, 0, popflame_protection_r);
 }
 
 

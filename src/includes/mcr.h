@@ -26,9 +26,9 @@ MACHINE_INIT( zwackery );
 INTERRUPT_GEN( mcr_interrupt );
 INTERRUPT_GEN( mcr68_interrupt );
 
-WRITE_HANDLER( mcr_control_port_w );
-WRITE_HANDLER( mcrmono_control_port_w );
-WRITE_HANDLER( mcr_scroll_value_w );
+WRITE8_HANDLER( mcr_control_port_w );
+WRITE8_HANDLER( mcrmono_control_port_w );
+WRITE8_HANDLER( mcr_scroll_value_w );
 
 WRITE16_HANDLER( mcr68_6840_upper_w );
 WRITE16_HANDLER( mcr68_6840_lower_w );
@@ -46,9 +46,9 @@ VIDEO_START( mcr2 );
 VIDEO_START( twotigra );
 VIDEO_START( journey );
 
-WRITE_HANDLER( mcr1_videoram_w );
-WRITE_HANDLER( mcr2_videoram_w );
-WRITE_HANDLER( twotigra_videoram_w );
+WRITE8_HANDLER( mcr1_videoram_w );
+WRITE8_HANDLER( mcr2_videoram_w );
+WRITE8_HANDLER( twotigra_videoram_w );
 
 VIDEO_UPDATE( mcr1 );
 VIDEO_UPDATE( mcr2 );
@@ -63,10 +63,10 @@ extern INT16 spyhunt_scroll_offset;
 
 extern UINT8 *spyhunt_alpharam;
 
-WRITE_HANDLER( mcr3_paletteram_w );
-WRITE_HANDLER( mcr3_videoram_w );
-WRITE_HANDLER( spyhunt_videoram_w );
-WRITE_HANDLER( spyhunt_alpharam_w );
+WRITE8_HANDLER( mcr3_paletteram_w );
+WRITE8_HANDLER( mcr3_videoram_w );
+WRITE8_HANDLER( spyhunt_videoram_w );
+WRITE8_HANDLER( spyhunt_alpharam_w );
 
 void mcr3_update_sprites(struct mame_bitmap *bitmap, const struct rectangle *cliprect, int color_mask, int code_xor, int dx, int dy);
 

@@ -183,7 +183,7 @@ int tacscan_sh_start (const struct MachineSound *msound)
 	return 0;
 }
 
-WRITE_HANDLER( tacscan_sh_w )
+WRITE8_HANDLER( tacscan_sh_w )
 {
 	int sound;   /* index into the sample name array in drivers/sega.c */
 	int voice=0; /* which voice to play the sound on */
@@ -308,7 +308,7 @@ void tacscan_sh_update (void)
 }
 
 
-WRITE_HANDLER( elim1_sh_w )
+WRITE8_HANDLER( elim1_sh_w )
 {
 	data ^= 0xff;
 
@@ -341,7 +341,7 @@ WRITE_HANDLER( elim1_sh_w )
 	}
 }
 
-WRITE_HANDLER( elim2_sh_w )
+WRITE8_HANDLER( elim2_sh_w )
 {
 	data ^= 0xff;
 
@@ -367,7 +367,7 @@ WRITE_HANDLER( elim2_sh_w )
 }
 
 
-WRITE_HANDLER( zektor1_sh_w )
+WRITE8_HANDLER( zektor1_sh_w )
 {
 	data ^= 0xff;
 
@@ -400,7 +400,7 @@ WRITE_HANDLER( zektor1_sh_w )
 	}
 }
 
-WRITE_HANDLER( zektor2_sh_w )
+WRITE8_HANDLER( zektor2_sh_w )
 {
 	data ^= 0xff;
 
@@ -427,7 +427,7 @@ WRITE_HANDLER( zektor2_sh_w )
 
 
 
-WRITE_HANDLER( startrek_sh_w )
+WRITE8_HANDLER( startrek_sh_w )
 {
 	switch (data)
    	{
@@ -518,7 +518,7 @@ WRITE_HANDLER( startrek_sh_w )
 	}
 }
 
-WRITE_HANDLER( spacfury1_sh_w )
+WRITE8_HANDLER( spacfury1_sh_w )
 {
 	data ^= 0xff;
 
@@ -554,7 +554,7 @@ WRITE_HANDLER( spacfury1_sh_w )
 
 }
 
-WRITE_HANDLER( spacfury2_sh_w )
+WRITE8_HANDLER( spacfury2_sh_w )
 {
 	if (Machine->samples == 0) return;
 

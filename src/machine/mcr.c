@@ -76,9 +76,9 @@ static void subtract_from_counter(int counter, int count);
 static void mcr68_493_callback(int param);
 static void zwackery_493_callback(int param);
 
-static WRITE_HANDLER( zwackery_pia_2_w );
-static WRITE_HANDLER( zwackery_pia_3_w );
-static WRITE_HANDLER( zwackery_ca2_w );
+static WRITE8_HANDLER( zwackery_pia_2_w );
+static WRITE8_HANDLER( zwackery_pia_3_w );
+static WRITE8_HANDLER( zwackery_ca2_w );
 static void zwackery_pia_irq(int state);
 
 static void reload_count(int counter);
@@ -149,7 +149,7 @@ struct GfxLayout mcr_sprite_layout =
  *
  *************************************/
 
-READ_HANDLER( zwackery_port_2_r );
+READ8_HANDLER( zwackery_port_2_r );
 
 static struct pia6821_interface zwackery_pia_2_intf =
 {
@@ -182,7 +182,7 @@ static struct pia6821_interface zwackery_pia_4_intf =
 
 static void ctc_interrupt(int state)
 {
-	cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, Z80_VECTOR(0, state));
+	cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, Z80_VECTOR(0, state));
 }
 
 
@@ -351,9 +351,9 @@ static void update_mcr68_interrupts(void)
 
 	/* set the new state of the IRQ lines */
 	if (newstate)
-		cpu_set_irq_line(0, newstate, ASSERT_LINE);
+		cpunum_set_input_line(0, newstate, ASSERT_LINE);
 	else
-		cpu_set_irq_line(0, 7, CLEAR_LINE);
+		cpunum_set_input_line(0, 7, CLEAR_LINE);
 }
 
 
@@ -380,7 +380,7 @@ static void mcr68_493_callback(int param)
  *
  *************************************/
 
-WRITE_HANDLER( mcr_control_port_w )
+WRITE8_HANDLER( mcr_control_port_w )
 {
 	/*
 		Bit layout is as follows:
@@ -401,7 +401,7 @@ WRITE_HANDLER( mcr_control_port_w )
 }
 
 
-WRITE_HANDLER( mcrmono_control_port_w )
+WRITE8_HANDLER( mcrmono_control_port_w )
 {
 	/*
 		Bit layout is as follows:
@@ -420,7 +420,7 @@ WRITE_HANDLER( mcrmono_control_port_w )
 }
 
 
-WRITE_HANDLER( mcr_scroll_value_w )
+WRITE8_HANDLER( mcr_scroll_value_w )
 {
 	switch (offset)
 	{
@@ -450,7 +450,7 @@ WRITE_HANDLER( mcr_scroll_value_w )
  *
  *************************************/
 
-WRITE_HANDLER( zwackery_pia_2_w )
+WRITE8_HANDLER( zwackery_pia_2_w )
 {
 	/* bit 7 is the watchdog */
 	if (!(data & 0x80)) watchdog_reset_w(offset, data);
@@ -461,13 +461,13 @@ WRITE_HANDLER( zwackery_pia_2_w )
 }
 
 
-WRITE_HANDLER( zwackery_pia_3_w )
+WRITE8_HANDLER( zwackery_pia_3_w )
 {
 	zwackery_sound_data = (data >> 4) & 0x0f;
 }
 
 
-WRITE_HANDLER( zwackery_ca2_w )
+WRITE8_HANDLER( zwackery_ca2_w )
 {
 	csdeluxe_data_w(offset, (data << 4) | zwackery_sound_data);
 }
@@ -659,7 +659,7 @@ static UINT16 compute_counter(int counter)
  *
  *************************************/
 
-static WRITE_HANDLER( mcr68_6840_w_common )
+static WRITE8_HANDLER( mcr68_6840_w_common )
 {
 	int i;
 

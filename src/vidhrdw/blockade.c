@@ -3,7 +3,7 @@
 
 static struct tilemap *bg_tilemap;
 
-WRITE_HANDLER( blockade_videoram_w )
+WRITE8_HANDLER( blockade_videoram_w )
 {
 	if (videoram[offset] != data)
 	{

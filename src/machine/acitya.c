@@ -157,7 +157,7 @@ static void acitya_decrypt_rom_B(void)
 }
 
 
-READ_HANDLER( acitya_decrypt_rom )
+READ8_HANDLER( acitya_decrypt_rom )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 

@@ -14,7 +14,7 @@ struct IremGA20_interface {
 
 int IremGA20_sh_start( const struct MachineSound *msound );
 void IremGA20_sh_stop( void );
-WRITE_HANDLER( IremGA20_w );
-READ_HANDLER( IremGA20_r );
+WRITE8_HANDLER( IremGA20_w );
+READ8_HANDLER( IremGA20_r );
 
 #endif /* __IREMGA20_H__ */

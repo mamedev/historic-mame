@@ -135,7 +135,7 @@ static INTERRUPT_GEN( fromanc2_interrupt )
 	static int fromanc2_playerside_old = -1;
 	static int key_F1_old = 0;
 
-	if (keyboard_pressed(KEYCODE_F1)) {
+	if (code_pressed(KEYCODE_F1)) {
 		if (key_F1_old != 1) {
 			key_F1_old = 1;
 			fromanc2_playerside ^= 1;
@@ -159,7 +159,7 @@ static INTERRUPT_GEN( fromanc2_interrupt )
 		fromanc2_set_dispvram_w(fromanc2_playerside);
 	}
 
-	cpu_set_irq_line(0, 1, HOLD_LINE);
+	cpunum_set_input_line(0, 1, HOLD_LINE);
 }
 
 
@@ -172,7 +172,7 @@ static WRITE16_HANDLER( fromanc2_sndcmd_w )
 	soundlatch_w(offset, (data >> 8) & 0xff);	// 1P (LEFT)
 	soundlatch2_w(offset, data & 0xff);			// 2P (RIGHT)
 
-	cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 	fromanc2_sndcpu_nmi_flag = 0;
 }
 
@@ -280,53 +280,53 @@ static WRITE16_HANDLER( fromanc2_subcpu_w )
 {
 	fromanc2_datalatch1 = data;
 
-	cpu_set_irq_line(2, 0, HOLD_LINE);
+	cpunum_set_input_line(2, 0, HOLD_LINE);
 	fromanc2_subcpu_int_flag = 0;
 }
 
 static READ16_HANDLER( fromanc2_subcpu_r )
 {
-	cpu_set_irq_line(2, IRQ_LINE_NMI, PULSE_LINE);
+	cpunum_set_input_line(2, INPUT_LINE_NMI, PULSE_LINE);
 	fromanc2_subcpu_nmi_flag = 0;
 
 	return (fromanc2_datalatch_2h << 8) | fromanc2_datalatch_2l;
 }
 
-static READ_HANDLER( fromanc2_maincpu_r_l )
+static READ8_HANDLER( fromanc2_maincpu_r_l )
 {
 	return fromanc2_datalatch1 & 0x00ff;
 }
 
-static READ_HANDLER( fromanc2_maincpu_r_h )
+static READ8_HANDLER( fromanc2_maincpu_r_h )
 {
 	fromanc2_subcpu_int_flag = 1;
 
 	return (fromanc2_datalatch1 & 0xff00) >> 8;
 }
 
-static WRITE_HANDLER( fromanc2_maincpu_w_l )
+static WRITE8_HANDLER( fromanc2_maincpu_w_l )
 {
 	fromanc2_datalatch_2l = data;
 }
 
-static WRITE_HANDLER( fromanc2_maincpu_w_h )
+static WRITE8_HANDLER( fromanc2_maincpu_w_h )
 {
 	fromanc2_datalatch_2h = data;
 }
 
-static WRITE_HANDLER( fromanc2_subcpu_nmi_clr )
+static WRITE8_HANDLER( fromanc2_subcpu_nmi_clr )
 {
 	fromanc2_subcpu_nmi_flag = 1;
 }
 
-static READ_HANDLER( fromanc2_sndcpu_nmi_clr )
+static READ8_HANDLER( fromanc2_sndcpu_nmi_clr )
 {
 	fromanc2_sndcpu_nmi_flag = 1;
 
 	return 0xff;
 }
 
-static WRITE_HANDLER( fromanc2_subcpu_rombank_w )
+static WRITE8_HANDLER( fromanc2_subcpu_rombank_w )
 {
 	UINT8 *RAM = memory_region(REGION_CPU3);
 	int rombank = data & 0x03;
@@ -721,7 +721,7 @@ static struct GfxDecodeInfo fromancr_gfxdecodeinfo[] =
 
 static void irqhandler(int irq)
 {
-	cpu_set_irq_line(1, 0, irq ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1, 0, irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2610interface ym2610_interface =

@@ -208,14 +208,14 @@ extern VIDEO_START( namcos1 );
 extern VIDEO_UPDATE( namcos1 );
 
 /* from machine */
-WRITE_HANDLER( namcos1_bankswitch_w );
-WRITE_HANDLER( namcos1_subcpu_bank_w );
+WRITE8_HANDLER( namcos1_bankswitch_w );
+WRITE8_HANDLER( namcos1_subcpu_bank_w );
 
-WRITE_HANDLER( namcos1_cpu_control_w );
-WRITE_HANDLER( namcos1_sound_bankswitch_w );
+WRITE8_HANDLER( namcos1_cpu_control_w );
+WRITE8_HANDLER( namcos1_sound_bankswitch_w );
 
-WRITE_HANDLER( namcos1_mcu_bankswitch_w );
-WRITE_HANDLER( namcos1_mcu_patch_w );
+WRITE8_HANDLER( namcos1_mcu_bankswitch_w );
+WRITE8_HANDLER( namcos1_mcu_patch_w );
 
 extern MACHINE_INIT( namcos1 );
 
@@ -245,9 +245,9 @@ extern DRIVER_INIT( tankfrce );
 
 /**********************************************************************/
 
-static WRITE_HANDLER( namcos1_sub_firq_w )
+static WRITE8_HANDLER( namcos1_sub_firq_w )
 {
-	cpu_set_irq_line(1, 1, HOLD_LINE);
+	cpunum_set_input_line(1, 1, HOLD_LINE);
 }
 
 
@@ -332,14 +332,14 @@ static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xe000, 0xe000) AM_WRITE(MWA8_NOP)    /* IRQ clear ? */
 ADDRESS_MAP_END
 
-static READ_HANDLER( dsw_r )
+static READ8_HANDLER( dsw_r )
 {
 	int ret = readinputport(2);
 	if(offset&2) ret>>=4;
 	return 0xf0 | ret;
 }
 
-static WRITE_HANDLER( namcos1_coin_w )
+static WRITE8_HANDLER( namcos1_coin_w )
 {
 	coin_lockout_global_w(~data & 1);
 	coin_counter_w(0,data & 2);
@@ -353,7 +353,7 @@ static void namcos1_update_DACs(void)
 	DAC_signed_data_16_w(0,0x8000+(dac0_value * dac0_gain)+(dac1_value * dac1_gain));
 }
 
-static WRITE_HANDLER( namcos1_dac_gain_w )
+static WRITE8_HANDLER( namcos1_dac_gain_w )
 {
 	int value;
 	/* DAC0 */
@@ -365,13 +365,13 @@ static WRITE_HANDLER( namcos1_dac_gain_w )
 	namcos1_update_DACs();
 }
 
-static WRITE_HANDLER( namcos1_dac0_w )
+static WRITE8_HANDLER( namcos1_dac0_w )
 {
 	dac0_value = data-0x80; /* shift zero point */
 	namcos1_update_DACs();
 }
 
-static WRITE_HANDLER( namcos1_dac1_w )
+static WRITE8_HANDLER( namcos1_dac1_w )
 {
 	dac1_value = data-0x80; /* shift zero point */
 	namcos1_update_DACs();
@@ -379,7 +379,7 @@ static WRITE_HANDLER( namcos1_dac1_w )
 
 static int num=0, strobe=0;
 
-static READ_HANDLER( quester_in0_r )
+static READ8_HANDLER( quester_in0_r )
 {
 	int ret;
 
@@ -393,7 +393,7 @@ static READ_HANDLER( quester_in0_r )
 	return ret;
 }
 
-static READ_HANDLER( quester_in1_r )
+static READ8_HANDLER( quester_in1_r )
 {
 	int ret;
 
@@ -407,7 +407,7 @@ static READ_HANDLER( quester_in1_r )
 	return ret;
 }
 
-static READ_HANDLER( faceoff_in0_r )
+static READ8_HANDLER( faceoff_in0_r )
 {
 	int ret;
 
@@ -421,7 +421,7 @@ static READ_HANDLER( faceoff_in0_r )
 	return ret;
 }
 
-static READ_HANDLER( faceoff_in1_r )
+static READ8_HANDLER( faceoff_in1_r )
 {
 	int ret;
 
@@ -1125,7 +1125,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static void namcos1_sound_interrupt( int irq )
 {
-	cpu_set_irq_line( 2, M6809_FIRQ_LINE , irq ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line( 2, M6809_FIRQ_LINE , irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2151interface ym2151_interface =

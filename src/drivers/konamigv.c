@@ -4,12 +4,6 @@
   ===========================================================
   Driver by R. Belmont & smf
 
-  issues:
-  -------
-  simpbowl  missing trackball, missing flashrom state saving.
-
-  all games: need SPU for sound f/x
-
 
 Known Dumps
 -----------
@@ -121,18 +115,6 @@ Notes:
 #include "machine/intelfsh.h"
 #include "machine/am53cf96.h"
 
-static data8_t sector_buffer[4096];
-
-INLINE UINT8 psxreadbyte( UINT32 n_address )
-{
-	return *( (UINT8 *)g_p_n_psxram + BYTE_XOR_LE( n_address ) );
-}
-
-INLINE void psxwritebyte( UINT32 n_address, UINT8 n_data )
-{
-	*( (UINT8 *)g_p_n_psxram + BYTE_XOR_LE( n_address ) ) = n_data;
-}
-
 /* EEPROM handlers */
 
 static NVRAM_HANDLER( konamigv_93C46 )
@@ -156,36 +138,6 @@ static NVRAM_HANDLER( konamigv_93C46 )
 	}
 }
 
-static NVRAM_HANDLER( simpbowl )
-{
-	if( read_or_write )
-	{
-		EEPROM_save( file );
-		intelflash_save( 0, file );
-		intelflash_save( 1, file );
-		intelflash_save( 2, file );
-		intelflash_save( 3, file );
-	}
-	else
-	{
-		EEPROM_init( &eeprom_interface_93C46 );
-		intelflash_init();
-
-		if( file )
-		{
-			EEPROM_load( file );
-			intelflash_load( 0, file );
-			intelflash_load( 1, file );
-			intelflash_load( 2, file );
-			intelflash_load( 3, file );
-		}
-		else
-		{
-			EEPROM_set_data( memory_region( REGION_USER2 ), memory_region_length( REGION_USER2 ) );
-		}
-	}
-}
-
 static READ32_HANDLER( eeprom_r )
 {
 	return 0xffff0000 | ( EEPROM_read_bit() << 13 ) | readinputport( 0 );
@@ -198,9 +150,279 @@ static WRITE32_HANDLER( eeprom_w )
 	EEPROM_set_cs_line((data&0x02) ? CLEAR_LINE : ASSERT_LINE);
 }
 
-/* flash ROM handling */
+static READ32_HANDLER( inputs_0_r )
+{
+	return 0xffff0000 | readinputport(1);
+}
 
-int flash_address;
+static READ32_HANDLER( inputs_1_r )
+{
+	return 0xffff0000 | readinputport(2);
+}
+
+static WRITE32_HANDLER( mb89371_w )
+{
+}
+
+static READ32_HANDLER( mb89371_r )
+{
+	return 0xffffffff;
+}
+
+static ADDRESS_MAP_START( konamigv_map, ADDRESS_SPACE_PROGRAM, 32 )
+	AM_RANGE(0x00000000, 0x001fffff) AM_RAM	AM_SHARE(1) AM_BASE(&g_p_n_psxram) AM_SIZE(&g_n_psxramsize) /* ram */
+	AM_RANGE(0x1f000000, 0x1f00001f) AM_READWRITE(am53cf96_r, am53cf96_w)
+	AM_RANGE(0x1f100000, 0x1f100003) AM_READ(eeprom_r)
+	AM_RANGE(0x1f100004, 0x1f100007) AM_READ(inputs_0_r)
+	AM_RANGE(0x1f100008, 0x1f10000b) AM_READ(inputs_1_r)
+	AM_RANGE(0x1f180000, 0x1f180003) AM_WRITE(eeprom_w)
+	AM_RANGE(0x1f680000, 0x1f68001f) AM_READWRITE(mb89371_r, mb89371_w)
+	AM_RANGE(0x1f780000, 0x1f780003) AM_WRITENOP /* watchdog? */
+	AM_RANGE(0x1f800000, 0x1f8003ff) AM_RAM /* scratchpad */
+	AM_RANGE(0x1f801000, 0x1f801007) AM_WRITENOP
+	AM_RANGE(0x1f801008, 0x1f80100b) AM_RAM /* ?? */
+	AM_RANGE(0x1f80100c, 0x1f80102f) AM_WRITENOP
+	AM_RANGE(0x1f801010, 0x1f801013) AM_READNOP
+	AM_RANGE(0x1f801014, 0x1f801017) AM_READ(psx_spu_delay_r)
+	AM_RANGE(0x1f801040, 0x1f80105f) AM_READWRITE(psx_sio_r, psx_sio_w)
+	AM_RANGE(0x1f801060, 0x1f80106f) AM_WRITENOP
+	AM_RANGE(0x1f801070, 0x1f801077) AM_READWRITE(psx_irq_r, psx_irq_w)
+	AM_RANGE(0x1f801080, 0x1f8010ff) AM_READWRITE(psx_dma_r, psx_dma_w)
+	AM_RANGE(0x1f801100, 0x1f80113f) AM_READWRITE(psx_counter_r, psx_counter_w)
+	AM_RANGE(0x1f801810, 0x1f801817) AM_READWRITE(psx_gpu_r, psx_gpu_w)
+	AM_RANGE(0x1f801820, 0x1f801827) AM_READWRITE(psx_mdec_r, psx_mdec_w)
+	AM_RANGE(0x1f801c00, 0x1f801dff) AM_READWRITE(psx_spu_r, psx_spu_w)
+	AM_RANGE(0x1f802020, 0x1f802033) AM_RAM /* ?? */
+	AM_RANGE(0x1f802040, 0x1f802043) AM_WRITENOP
+	AM_RANGE(0x1fc00000, 0x1fc7ffff) AM_ROM AM_SHARE(2) AM_REGION(REGION_USER1, 0) /* bios */
+	AM_RANGE(0x80000000, 0x801fffff) AM_RAM AM_SHARE(1) /* ram mirror */
+	AM_RANGE(0x9fc00000, 0x9fc7ffff) AM_ROM AM_SHARE(2) /* bios mirror */
+	AM_RANGE(0xa0000000, 0xa01fffff) AM_RAM AM_SHARE(1) /* ram mirror */
+	AM_RANGE(0xbfc00000, 0xbfc7ffff) AM_ROM AM_SHARE(2) /* bios mirror */
+	AM_RANGE(0xfffe0130, 0xfffe0133) AM_WRITENOP
+ADDRESS_MAP_END
+
+/* SCSI */
+
+static data8_t sector_buffer[ 4096 ];
+
+static void scsi_dma_read( UINT32 n_address, INT32 n_size )
+{
+	int i;
+	int n_this;
+
+	while( n_size > 0 )
+	{
+		if( n_size > sizeof( sector_buffer ) / 4 )
+		{
+			n_this = sizeof( sector_buffer ) / 4;
+		}
+		else
+		{
+			n_this = n_size;
+		}
+		if( n_this < 2048 / 4 )
+		{
+			/* non-READ commands */
+			am53cf96_read_data( n_this * 4, sector_buffer );
+		}
+		else
+		{
+			/* assume normal 2048 byte data for now */
+			am53cf96_read_data( CD_FRAME_SIZE, sector_buffer );
+			n_this = 2048 / 4;
+		}
+		n_size -= n_this;
+
+		i = 0;
+		while( n_this > 0 )
+		{
+			g_p_n_psxram[ n_address / 4 ] =
+				( sector_buffer[ i + 0 ] << 0 ) |
+				( sector_buffer[ i + 1 ] << 8 ) |
+				( sector_buffer[ i + 2 ] << 16 ) |
+				( sector_buffer[ i + 3 ] << 24 );
+			n_address += 4;
+			i += 4;
+			n_this--;
+		}
+	}
+}
+
+static void scsi_dma_write( UINT32 n_address, INT32 n_size )
+{
+	int i;
+	int n_this;
+
+	while( n_size > 0 )
+	{
+		if( n_size > sizeof( sector_buffer ) / 4 )
+		{
+			n_this = sizeof( sector_buffer ) / 4;
+		}
+		else
+		{
+			n_this = n_size;
+		}
+		n_size -= n_this;
+
+		i = 0;
+		while( n_this > 0 )
+		{
+			sector_buffer[ i + 0 ] = ( g_p_n_psxram[ n_address / 4 ] >> 0 ) & 0xff;
+			sector_buffer[ i + 1 ] = ( g_p_n_psxram[ n_address / 4 ] >> 8 ) & 0xff;
+			sector_buffer[ i + 2 ] = ( g_p_n_psxram[ n_address / 4 ] >> 16 ) & 0xff;
+			sector_buffer[ i + 3 ] = ( g_p_n_psxram[ n_address / 4 ] >> 24 ) & 0xff;
+			n_address += 4;
+			i += 4;
+			n_this--;
+		}
+
+		am53cf96_write_data( n_this * 4, sector_buffer );
+	}
+}
+
+static void scsi_irq(void)
+{
+	psx_irq_set(0x400);
+}
+
+static struct AM53CF96interface scsi_intf =
+{
+	AM53CF96_DEVICE_CDROM,	/* CD-ROM */
+	&scsi_irq,		/* command completion IRQ */
+};
+
+static DRIVER_INIT( konamigv )
+{
+	psx_driver_init();
+
+	/* init the scsi controller and hook up it's DMA */
+	am53cf96_init(&scsi_intf);
+	psx_dma_install_read_handler(5, scsi_dma_read);
+	psx_dma_install_write_handler(5, scsi_dma_write);
+
+	/* also hook up CDDA audio to the CD-ROM drive */
+	CDDA_set_cdrom(0, am53cf96_get_device());
+}
+
+static MACHINE_INIT( konamigv )
+{
+	psx_machine_init();
+}
+
+static struct PSXSPUinterface konamigv_psxspu_interface =
+{
+	75
+};
+
+static struct CDDAinterface konamigv_cdda_interface =
+{
+	1,
+	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT),},
+};
+
+static MACHINE_DRIVER_START( konamigv )
+	/* basic machine hardware */
+	MDRV_CPU_ADD( PSXCPU, 33868800 / 2 ) /* 33MHz ?? */
+	MDRV_CPU_PROGRAM_MAP( konamigv_map, 0 )
+	MDRV_CPU_VBLANK_INT( psx_vblank, 1 )
+
+	MDRV_FRAMES_PER_SECOND( 60 )
+	MDRV_VBLANK_DURATION( 0 )
+
+	MDRV_MACHINE_INIT( konamigv )
+	MDRV_NVRAM_HANDLER(konamigv_93C46)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
+	MDRV_SCREEN_SIZE( 1024, 512 )
+	MDRV_VISIBLE_AREA( 0, 639, 0, 479 )
+	MDRV_PALETTE_LENGTH( 65536 )
+
+	MDRV_PALETTE_INIT( psx )
+	MDRV_VIDEO_START( psx_type2 )
+	MDRV_VIDEO_UPDATE( psx )
+	MDRV_VIDEO_STOP( psx )
+
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES( SOUND_SUPPORTS_STEREO )
+	MDRV_SOUND_ADD( PSXSPU, konamigv_psxspu_interface )
+	MDRV_SOUND_ADD( CDDA, konamigv_cdda_interface )
+MACHINE_DRIVER_END
+
+INPUT_PORTS_START( konamigv )
+	/* IN 0 */
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY)
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY)
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY)
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON3 )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BITX(0x1000, IP_ACTIVE_LOW, 0, "Test Switch", KEYCODE_F2, IP_JOY_NONE )
+	PORT_BIT( 0x2000, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* EEPROM data */
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	/* IN 1 */
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	/* IN 2 */
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER3 )
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER3 )
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER3 )
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START3 )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER4 )
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER4 )
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER4 )
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER4 )
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER4 )
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER4 )
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER4 )
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_START4 )
+
+INPUT_PORTS_END
+
+/* Simpsons Bowling */
+
+static NVRAM_HANDLER( simpbowl )
+{
+	nvram_handler_konamigv_93C46( file, read_or_write );
+	nvram_handler_intelflash_0( file, read_or_write );
+	nvram_handler_intelflash_1( file, read_or_write );
+	nvram_handler_intelflash_2( file, read_or_write );
+	nvram_handler_intelflash_3( file, read_or_write );
+}
+
+static int flash_address;
 
 static READ32_HANDLER( flash_r )
 {
@@ -266,23 +488,26 @@ static WRITE32_HANDLER( flash_w )
 	}
 }
 
-static READ32_HANDLER( inputs_0_r )
-{
-	return 0xffff0000 | readinputport(1);
-}
+static data16_t trackball_prev[ 2 ];
+static data32_t trackball_data[ 2 ];
 
-static READ32_HANDLER( inputs_1_r )
+static READ32_HANDLER( trackball_r )
 {
-	return 0xffff0000 | readinputport(2);
-}
+	if( offset == 0 && mem_mask == 0xffff0000 )
+	{
+		int axis;
+		data16_t diff;
+		data16_t value;
 
-static WRITE32_HANDLER( mb89371_w )
-{
-}
-
-static READ32_HANDLER( mb89371_r )
-{
-	return 0xffffffff;
+		for( axis = 0; axis < 2; axis++ )
+		{
+			value = readinputport( axis + 3 );
+			diff = value - trackball_prev[ axis ];
+			trackball_prev[ axis ] = value;
+			trackball_data[ axis ] = ( ( diff & 0xf00 ) << 16 ) | ( ( diff & 0xff ) << 8 );
+		}
+	}
+	return trackball_data[ offset ];
 }
 
 static READ32_HANDLER( unknown_r )
@@ -290,169 +515,15 @@ static READ32_HANDLER( unknown_r )
 	return 0xffffffff;
 }
 
-static ADDRESS_MAP_START( konamigv_map, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0x00000000, 0x001fffff) AM_RAM	AM_SHARE(1) AM_BASE(&g_p_n_psxram) AM_SIZE(&g_n_psxramsize) /* ram */
-	AM_RANGE(0x1f000000, 0x1f00001f) AM_READWRITE(am53cf96_r, am53cf96_w)
-	AM_RANGE(0x1f100000, 0x1f100003) AM_READ(eeprom_r)
-	AM_RANGE(0x1f100004, 0x1f100007) AM_READ(inputs_0_r)
-	AM_RANGE(0x1f100008, 0x1f10000b) AM_READ(inputs_1_r)
-	AM_RANGE(0x1f180000, 0x1f180003) AM_WRITE(eeprom_w)
-	AM_RANGE(0x1f680000, 0x1f68001f) AM_READWRITE(mb89371_r, mb89371_w)
-	AM_RANGE(0x1f780000, 0x1f780003) AM_WRITENOP /* watchdog? */
-	AM_RANGE(0x1f800000, 0x1f8003ff) AM_RAM /* scratchpad */
-	AM_RANGE(0x1f801000, 0x1f801007) AM_WRITENOP
-	AM_RANGE(0x1f801008, 0x1f80100b) AM_RAM /* ?? */
-	AM_RANGE(0x1f80100c, 0x1f80102f) AM_WRITENOP
-	AM_RANGE(0x1f801010, 0x1f801013) AM_READNOP
-	AM_RANGE(0x1f801014, 0x1f801017) AM_READ(psx_spu_delay_r)
-	AM_RANGE(0x1f801040, 0x1f80105f) AM_READWRITE(psx_sio_r, psx_sio_w)
-	AM_RANGE(0x1f801060, 0x1f80106f) AM_WRITENOP
-	AM_RANGE(0x1f801070, 0x1f801077) AM_READWRITE(psx_irq_r, psx_irq_w)
-	AM_RANGE(0x1f801080, 0x1f8010ff) AM_READWRITE(psx_dma_r, psx_dma_w)
-	AM_RANGE(0x1f801100, 0x1f80113f) AM_READWRITE(psx_counter_r, psx_counter_w)
-	AM_RANGE(0x1f801810, 0x1f801817) AM_READWRITE(psx_gpu_r, psx_gpu_w)
-	AM_RANGE(0x1f801820, 0x1f801827) AM_READWRITE(psx_mdec_r, psx_mdec_w)
-	AM_RANGE(0x1f801c00, 0x1f801dff) AM_READWRITE(psx_spu_r, psx_spu_w)
-	AM_RANGE(0x1f802020, 0x1f802033) AM_RAM /* ?? */
-	AM_RANGE(0x1f802040, 0x1f802043) AM_WRITENOP
-	AM_RANGE(0x1fc00000, 0x1fc7ffff) AM_ROM AM_SHARE(2) AM_REGION(REGION_USER1, 0) /* bios */
-	AM_RANGE(0x80000000, 0x801fffff) AM_RAM AM_SHARE(1) /* ram mirror */
-	AM_RANGE(0x9fc00000, 0x9fc7ffff) AM_ROM AM_SHARE(2) /* bios mirror */
-	AM_RANGE(0xa0000000, 0xa01fffff) AM_RAM AM_SHARE(1) /* ram mirror */
-	AM_RANGE(0xbfc00000, 0xbfc7ffff) AM_ROM AM_SHARE(2) /* bios mirror */
-	AM_RANGE(0xfffe0130, 0xfffe0133) AM_WRITENOP
-ADDRESS_MAP_END
-
-static void scsi_dma_read( UINT32 n_address, INT32 n_size )
+static MACHINE_INIT( simpbowl )
 {
-	int i;
-
-//	logerror("DMA read: %d bytes (%d words) to %08x\n", n_size<<2, n_size, n_address);
-
-	/* dma size is in 32-bit words */
-	n_size <<= 2;
-
-	while (n_size > 0)
-	{
-		if (n_size < 2048)	/* non-READ commands */
-		{
-			am53cf96_read_data(n_size, &sector_buffer[0]);
-			for (i = 0; i < n_size; i++)
-			{
-				psxwritebyte(n_address+i, sector_buffer[i]);
-			}
-			n_size = 0;
-		}
-		else	/* assume normal 2048 byte data for now */
-		{
-			am53cf96_read_data(CD_FRAME_SIZE, &sector_buffer[0]);
-			for (i = 0; i < 2048; i++)
-			{
-				psxwritebyte(n_address+i, sector_buffer[i]);
-			}
-			n_address += 2048;
-			n_size -= 2048;
-		}
-	}
-}
-
-static void scsi_dma_write( UINT32 n_address, INT32 n_size )
-{
-	int i;
-
-//	logerror("DMA write from %08x for %d bytes\n", n_address, n_size<<2);
-
-	/* dma size is in 32-bit words */
-	n_size <<= 2;
-
-	if (n_size < 4096)
-	{
-		for (i = 0; i < n_size; i++)
-		{
-			sector_buffer[i] = psxreadbyte(n_address+i);
-		}
-	}
-
-	am53cf96_write_data(n_size, sector_buffer);
-}
-
-static void scsi_irq(void)
-{
-	psx_irq_set(0x400);
-}
-
-static struct AM53CF96interface scsi_intf =
-{
-	AM53CF96_DEVICE_CDROM,	/* CD-ROM */
-	&scsi_irq,		/* command completion IRQ */
-};
-
-static DRIVER_INIT( konamigv )
-{
-	psx_driver_init();
-
-	/* init the scsi controller and hook up it's DMA */
-	am53cf96_init(&scsi_intf);
-	psx_dma_install_read_handler(5, scsi_dma_read);
-	psx_dma_install_write_handler(5, scsi_dma_write);
-
-	/* also hook up CDDA audio to the CD-ROM drive */
-	CDDA_set_cdrom(0, am53cf96_get_device());
-}
-
-MACHINE_INIT( konamigv )
-{
-	psx_machine_init();
-}
-
-MACHINE_INIT( simpbowl )
-{
-	install_mem_read32_handler( 0, 0x1f680080, 0x1f68008f, flash_r );
-	install_mem_write32_handler( 0, 0x1f680080, 0x1f68008f, flash_w );
-	install_mem_read32_handler( 0, 0x1f6800c0, 0x1f6800cf, unknown_r );	/* ?? */
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1f680080, 0x1f68008f, 0, 0, flash_r );
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1f680080, 0x1f68008f, 0, 0, flash_w );
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1f6800c0, 0x1f6800c7, 0, 0, trackball_r );
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1f6800c8, 0x1f6800cb, 0, 0, unknown_r ); /* ?? */
 
 	psx_machine_init();
 }
-
-static struct PSXSPUinterface konamigv_psxspu_interface =
-{
-	40	// keep quiet until it's working better
-};
-
-static struct CDDAinterface konamigv_cdda_interface =
-{
-	1,
-	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT),},
-};
-
-static MACHINE_DRIVER_START( konamigv )
-	/* basic machine hardware */
-	MDRV_CPU_ADD( PSXCPU, 33868800 / 2 ) /* 33MHz ?? */
-	MDRV_CPU_PROGRAM_MAP( konamigv_map, 0 )
-	MDRV_CPU_VBLANK_INT( psx_vblank, 1 )
-
-	MDRV_FRAMES_PER_SECOND( 60 )
-	MDRV_VBLANK_DURATION( 0 )
-
-	MDRV_MACHINE_INIT( konamigv )
-	MDRV_NVRAM_HANDLER(konamigv_93C46)
-
-	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
-	MDRV_SCREEN_SIZE( 1024, 512 )
-	MDRV_VISIBLE_AREA( 0, 639, 0, 479 )
-	MDRV_PALETTE_LENGTH( 65536 )
-
-	MDRV_PALETTE_INIT( psx )
-	MDRV_VIDEO_START( psx_type2 )
-	MDRV_VIDEO_UPDATE( psx )
-	MDRV_VIDEO_STOP( psx )
-
-	/* sound hardware */
-	MDRV_SOUND_ATTRIBUTES( SOUND_SUPPORTS_STEREO )
-	MDRV_SOUND_ADD( PSXSPU, konamigv_psxspu_interface )
-	MDRV_SOUND_ADD( CDDA, konamigv_cdda_interface )
-MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( simpbowl )
 	MDRV_IMPORT_FROM( konamigv )
@@ -460,7 +531,7 @@ static MACHINE_DRIVER_START( simpbowl )
 	MDRV_NVRAM_HANDLER( simpbowl )
 MACHINE_DRIVER_END
 
-INPUT_PORTS_START( konamigv )
+INPUT_PORTS_START( simpbowl )
 	/* IN 0 */
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
@@ -517,6 +588,15 @@ INPUT_PORTS_START( konamigv )
 	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER4 )
 	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER4 )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_START4 )
+
+	/* IN 3 */
+	PORT_START
+	PORT_ANALOG( 0x7ff, 0x0000, IPT_TRACKBALL_X | IPF_PLAYER1 | IPF_REVERSE, 100, 63, 0, 0 )
+
+	/* IN 4 */
+	PORT_START
+	PORT_ANALOG( 0x7ff, 0x0000, IPT_TRACKBALL_Y | IPF_PLAYER1, 100, 63, 0, 0 )
+
 INPUT_PORTS_END
 
 #define GV_BIOS	\
@@ -585,6 +665,4 @@ GAMEX( 1996, pbball96, konamigv, konamigv, konamigv, konamigv, ROT0, "Konami", "
 GAMEX( 1996, hyperath, konamigv, konamigv, konamigv, konamigv, ROT0, "Konami", "Hyper Athlete (GV021 JAPAN 1.00)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1996, susume,   konamigv, konamigv, konamigv, konamigv, ROT0, "Konami", "Susume! Taisen Puzzle-Dama (GV027 JAPAN 1.20)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
 GAMEX( 1997, weddingr, konamigv, konamigv, konamigv, konamigv, ROT0, "Konami", "Wedding Rhapsody (GX624 JAA)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )
-
-/* not working - does not boot on some MAME builds, no controls */
-GAMEX( 2000, simpbowl, konamigv, simpbowl, konamigv, konamigv, ROT0, "Konami", "Simpsons Bowling (GQ829 UAA)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS | GAME_NOT_WORKING )
+GAMEX( 2000, simpbowl, konamigv, simpbowl, simpbowl, konamigv, ROT0, "Konami", "Simpsons Bowling (GQ829 UAA)", GAME_IMPERFECT_SOUND | GAME_IMPERFECT_GRAPHICS )

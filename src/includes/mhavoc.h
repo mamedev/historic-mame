@@ -17,24 +17,24 @@
 
 /*----------- defined in machine/mhavoc.c -----------*/
 
-WRITE_HANDLER( mhavoc_alpha_irq_ack_w );
-WRITE_HANDLER( mhavoc_gamma_irq_ack_w );
+WRITE8_HANDLER( mhavoc_alpha_irq_ack_w );
+WRITE8_HANDLER( mhavoc_gamma_irq_ack_w );
 
 MACHINE_INIT( mhavoc );
 
-WRITE_HANDLER( mhavoc_gamma_w );
-READ_HANDLER( mhavoc_alpha_r );
+WRITE8_HANDLER( mhavoc_gamma_w );
+READ8_HANDLER( mhavoc_alpha_r );
 
-WRITE_HANDLER( mhavoc_alpha_w );
-READ_HANDLER( mhavoc_gamma_r );
+WRITE8_HANDLER( mhavoc_alpha_w );
+READ8_HANDLER( mhavoc_gamma_r );
 
-WRITE_HANDLER( mhavoc_ram_banksel_w );
-WRITE_HANDLER( mhavoc_rom_banksel_w );
+WRITE8_HANDLER( mhavoc_ram_banksel_w );
+WRITE8_HANDLER( mhavoc_rom_banksel_w );
 
-READ_HANDLER( mhavoc_port_0_r );
-READ_HANDLER( alphaone_port_0_r );
-READ_HANDLER( mhavoc_port_1_r );
+READ8_HANDLER( mhavoc_port_0_r );
+READ8_HANDLER( alphaone_port_0_r );
+READ8_HANDLER( mhavoc_port_1_r );
 
-WRITE_HANDLER( mhavoc_out_0_w );
-WRITE_HANDLER( alphaone_out_0_w );
-WRITE_HANDLER( mhavoc_out_1_w );
+WRITE8_HANDLER( mhavoc_out_0_w );
+WRITE8_HANDLER( alphaone_out_0_w );
+WRITE8_HANDLER( mhavoc_out_1_w );

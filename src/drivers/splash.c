@@ -30,7 +30,7 @@ static WRITE16_HANDLER( splash_sh_irqtrigger_w )
 {
 	if (ACCESSING_LSB){
 		soundlatch_w(0,data & 0xff);
-		cpu_set_irq_line(1,0,HOLD_LINE);
+		cpunum_set_input_line(1,0,HOLD_LINE);
 	}
 }
 
@@ -88,7 +88,7 @@ ADDRESS_MAP_END
 
 static int adpcm_data;
 
-static WRITE_HANDLER( splash_adpcm_data_w ){
+static WRITE8_HANDLER( splash_adpcm_data_w ){
 	adpcm_data = data;
 }
 

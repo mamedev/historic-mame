@@ -87,7 +87,7 @@ PALETTE_INIT( matmania )
 
 
 
-WRITE_HANDLER( matmania_paletteram_w )
+WRITE8_HANDLER( matmania_paletteram_w )
 {
 	int bit0,bit1,bit2,bit3,val;
 	int r,g,b;
@@ -150,7 +150,7 @@ VIDEO_START( matmania )
 
 
 
-WRITE_HANDLER( matmania_videoram3_w )
+WRITE8_HANDLER( matmania_videoram3_w )
 {
 	if (matmania_videoram3[offset] != data)
 	{
@@ -162,7 +162,7 @@ WRITE_HANDLER( matmania_videoram3_w )
 
 
 
-WRITE_HANDLER( matmania_colorram3_w )
+WRITE8_HANDLER( matmania_colorram3_w )
 {
 	if (matmania_colorram3[offset] != data)
 	{

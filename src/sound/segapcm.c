@@ -109,12 +109,12 @@ void SEGAPCM_sh_stop( void )
 }
 
 
-WRITE_HANDLER( SegaPCM_w )
+WRITE8_HANDLER( SegaPCM_w )
 {
 	spcm.ram[offset & 0x07ff] = data;
 }
 
-READ_HANDLER( SegaPCM_r )
+READ8_HANDLER( SegaPCM_r )
 {
 	return spcm.ram[offset & 0x07ff];
 }

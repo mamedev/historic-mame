@@ -39,7 +39,7 @@ enum
 };
 
 
-WRITE_HANDLER( depthch_sh_port1_w )
+WRITE8_HANDLER( depthch_sh_port1_w )
 {
 	static int port1State = 0;
 	int bitsChanged;

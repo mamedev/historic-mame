@@ -2,7 +2,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-extern WRITE_HANDLER( rockola_flipscreen_w );
+extern WRITE8_HANDLER( rockola_flipscreen_w );
 
 #define TONE_VOLUME		25
 #define SAMPLE_VOLUME	25
@@ -109,7 +109,7 @@ void rockola_sh_update(void)
 	}
 }
 
-WRITE_HANDLER( sasuke_sound_w )
+WRITE8_HANDLER( sasuke_sound_w )
 {
 	switch (offset)
 	{
@@ -128,7 +128,7 @@ WRITE_HANDLER( sasuke_sound_w )
 	}
 }
 
-WRITE_HANDLER( satansat_sound_w )
+WRITE8_HANDLER( satansat_sound_w )
 {
 	switch (offset)
 	{
@@ -195,7 +195,7 @@ WRITE_HANDLER( satansat_sound_w )
 	}
 }
 
-WRITE_HANDLER( vanguard_sound_w )
+WRITE8_HANDLER( vanguard_sound_w )
 {
 	switch (offset)
 	{
@@ -301,7 +301,7 @@ WRITE_HANDLER( vanguard_sound_w )
 	}
 }
 
-WRITE_HANDLER( fantasy_sound_w )
+WRITE8_HANDLER( fantasy_sound_w )
 {
 	switch (offset)
 	{

@@ -63,7 +63,7 @@ static UINT8 *hal21_vreg, *hal21_sndfifo;
 /**************************************************************************/
 // Test Handlers
 
-static WRITE_HANDLER( aso_scroll_sync_w )
+static WRITE8_HANDLER( aso_scroll_sync_w )
 {
 	if (data == 0x7f && shared_auxram[0x04d2] & 1) data++;
 
@@ -115,24 +115,24 @@ static void hal21_sound_scheduler(int mode, int data)
 
 	snk_sound_busy_bit = 0x20;
 	soundlatch_w(0, data);
-	cpu_set_nmi_line(2, PULSE_LINE);
+	cpunum_set_input_line(2, INPUT_LINE_NMI, PULSE_LINE);
 }
 
 /**************************************************************************/
 
-static READ_HANDLER( hal21_videoram_r ){ return videoram[offset]; }
-static WRITE_HANDLER( hal21_videoram_w ){ videoram[offset] = data; }
-static READ_HANDLER( hal21_spriteram_r ){ return spriteram[offset]; }
-static WRITE_HANDLER( hal21_spriteram_w ){ spriteram[offset] = data; }
+static READ8_HANDLER( hal21_videoram_r ){ return videoram[offset]; }
+static WRITE8_HANDLER( hal21_videoram_w ){ videoram[offset] = data; }
+static READ8_HANDLER( hal21_spriteram_r ){ return spriteram[offset]; }
+static WRITE8_HANDLER( hal21_spriteram_w ){ spriteram[offset] = data; }
 
-static WRITE_HANDLER( hal21_vreg0_w ){ hal21_vreg[0] = data; }
-static WRITE_HANDLER( hal21_vreg1_w ){ hal21_vreg[1] = data; }
-static WRITE_HANDLER( hal21_vreg2_w ){ hal21_vreg[2] = data; }
-static WRITE_HANDLER( hal21_vreg3_w ){ hal21_vreg[3] = data; }
-static WRITE_HANDLER( hal21_vreg4_w ){ hal21_vreg[4] = data; }
-static WRITE_HANDLER( hal21_vreg5_w ){ hal21_vreg[5] = data; }
-static WRITE_HANDLER( hal21_vreg6_w ){ hal21_vreg[6] = data; }
-static WRITE_HANDLER( hal21_vreg7_w ){ hal21_vreg[7] = data; }
+static WRITE8_HANDLER( hal21_vreg0_w ){ hal21_vreg[0] = data; }
+static WRITE8_HANDLER( hal21_vreg1_w ){ hal21_vreg[1] = data; }
+static WRITE8_HANDLER( hal21_vreg2_w ){ hal21_vreg[2] = data; }
+static WRITE8_HANDLER( hal21_vreg3_w ){ hal21_vreg[3] = data; }
+static WRITE8_HANDLER( hal21_vreg4_w ){ hal21_vreg[4] = data; }
+static WRITE8_HANDLER( hal21_vreg5_w ){ hal21_vreg[5] = data; }
+static WRITE8_HANDLER( hal21_vreg6_w ){ hal21_vreg[6] = data; }
+static WRITE8_HANDLER( hal21_vreg7_w ){ hal21_vreg[7] = data; }
 
 
 PALETTE_INIT( aso )
@@ -564,31 +564,31 @@ static struct GfxDecodeInfo aso_gfxdecodeinfo[] =
 
 /**************************************************************************/
 
-static READ_HANDLER( shared_auxram_r ) { return shared_auxram[offset]; }
-static WRITE_HANDLER( shared_auxram_w ) { shared_auxram[offset] = data; }
+static READ8_HANDLER( shared_auxram_r ) { return shared_auxram[offset]; }
+static WRITE8_HANDLER( shared_auxram_w ) { shared_auxram[offset] = data; }
 
-static READ_HANDLER( shared_ram_r ) { return shared_ram[offset]; }
-static WRITE_HANDLER( shared_ram_w ) { shared_ram[offset] = data; }
+static READ8_HANDLER( shared_ram_r ) { return shared_ram[offset]; }
+static WRITE8_HANDLER( shared_ram_w ) { shared_ram[offset] = data; }
 
-static READ_HANDLER( CPUC_ready_r ) { snk_sound_busy_bit = 0; return 0; }
+static READ8_HANDLER( CPUC_ready_r ) { snk_sound_busy_bit = 0; return 0; }
 
-static READ_HANDLER( hal21_input_port_0_r ) { return input_port_0_r(0) | snk_sound_busy_bit; }
+static READ8_HANDLER( hal21_input_port_0_r ) { return input_port_0_r(0) | snk_sound_busy_bit; }
 
-static WRITE_HANDLER( hal21_soundcommand_w ) { hal21_sound_scheduler(1, data); }
-static WRITE_HANDLER( hal21_soundack_w ) { hal21_sound_scheduler(2, data); }
+static WRITE8_HANDLER( hal21_soundcommand_w ) { hal21_sound_scheduler(1, data); }
+static WRITE8_HANDLER( hal21_soundack_w ) { hal21_sound_scheduler(2, data); }
 
-static READ_HANDLER( hal21_soundcommand_r )
+static READ8_HANDLER( hal21_soundcommand_r )
 {
 	int data = soundlatch_r(0);
 	soundlatch_clear_w(0, 0);
 	return data;
 }
 
-static WRITE_HANDLER( aso_soundcommand_w )
+static WRITE8_HANDLER( aso_soundcommand_w )
 {
 	snk_sound_busy_bit = 0x20;
 	soundlatch_w(0, data);
-	cpu_set_irq_line( 2, 0, HOLD_LINE );
+	cpunum_set_input_line( 2, 0, HOLD_LINE );
 }
 
 static INTERRUPT_GEN( hal21_sound_interrupt )

@@ -10,9 +10,9 @@ driver by Mirko Buffoni
 #include "vidhrdw/generic.h"
 
 
-extern WRITE_HANDLER( higemaru_videoram_w );
-extern WRITE_HANDLER( higemaru_colorram_w );
-extern WRITE_HANDLER( higemaru_c800_w );
+extern WRITE8_HANDLER( higemaru_videoram_w );
+extern WRITE8_HANDLER( higemaru_colorram_w );
+extern WRITE8_HANDLER( higemaru_c800_w );
 
 extern PALETTE_INIT( higemaru );
 extern VIDEO_START( higemaru );
@@ -22,9 +22,9 @@ extern VIDEO_UPDATE( higemaru );
 INTERRUPT_GEN( higemaru_interrupt )
 {
 	if (cpu_getiloops() == 0) 
-		cpu_set_irq_line_and_vector(0,0,HOLD_LINE,0xcf);	/* RST 08h */
+		cpunum_set_input_line_and_vector(0,0,HOLD_LINE,0xcf);	/* RST 08h */
 	else
-		cpu_set_irq_line_and_vector(0,0,HOLD_LINE,0xd7);	/* RST 10h */
+		cpunum_set_input_line_and_vector(0,0,HOLD_LINE,0xd7);	/* RST 10h */
 }
 
 

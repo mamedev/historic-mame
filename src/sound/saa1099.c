@@ -463,22 +463,22 @@ static void saa1099_write_port_w( int chip, int offset, int data )
 	SAA1099 interface functions
 *******************************************/
 
-WRITE_HANDLER( saa1099_control_port_0_w )
+WRITE8_HANDLER( saa1099_control_port_0_w )
 {
 	saa1099_control_port_w(0, offset, data);
 }
 
-WRITE_HANDLER( saa1099_write_port_0_w )
+WRITE8_HANDLER( saa1099_write_port_0_w )
 {
 	saa1099_write_port_w(0, offset, data);
 }
 
-WRITE_HANDLER( saa1099_control_port_1_w )
+WRITE8_HANDLER( saa1099_control_port_1_w )
 {
 	saa1099_control_port_w(1, offset, data);
 }
 
-WRITE_HANDLER( saa1099_write_port_1_w )
+WRITE8_HANDLER( saa1099_write_port_1_w )
 {
 	saa1099_write_port_w(1, offset, data);
 }

@@ -90,14 +90,14 @@ The two bit planes are separated in memory.  If either bit plane changes,
 mark the character as modified.
 ***************************************************************************/
 
-WRITE_HANDLER( segar_characterram_w )
+WRITE8_HANDLER( segar_characterram_w )
 {
 	sv.dirtychar[offset / 8] = 1;
 
 	segar_characterram[offset] = data;
 }
 
-WRITE_HANDLER( segar_characterram2_w )
+WRITE8_HANDLER( segar_characterram2_w )
 {
 	sv.dirtychar[offset / 8] = 1;
 
@@ -113,7 +113,7 @@ D3 = ??? (looks to be unused on the schems)
 D4-D7 = unused?
 ***************************************************************************/
 
-WRITE_HANDLER( segar_video_port_w )
+WRITE8_HANDLER( segar_video_port_w )
 {
 	logerror("VPort = %02X\n",data);
 
@@ -136,7 +136,7 @@ WRITE_HANDLER( segar_video_port_w )
 If a color changes, refresh the entire screen because it's possible that the
 color change affected the transparency (switched either to or from black)
 ***************************************************************************/
-WRITE_HANDLER( segar_colortable_w )
+WRITE8_HANDLER( segar_colortable_w )
 {
 	static unsigned char red[] = {0x00, 0x24, 0x49, 0x6D, 0x92, 0xB6, 0xDB, 0xFF };
 	static unsigned char grn[] = {0x00, 0x24, 0x49, 0x6D, 0x92, 0xB6, 0xDB, 0xFF };
@@ -175,7 +175,7 @@ WRITE_HANDLER( segar_colortable_w )
 	}
 }
 
-WRITE_HANDLER( segar_bcolortable_w )
+WRITE8_HANDLER( segar_bcolortable_w )
 {
 	static unsigned char red[] = {0x00, 0x24, 0x49, 0x6D, 0x92, 0xB6, 0xDB, 0xFF };
 	static unsigned char grn[] = {0x00, 0x24, 0x49, 0x6D, 0x92, 0xB6, 0xDB, 0xFF };
@@ -327,7 +327,7 @@ and temp_charset are analogous to control lines used to select the background.
 If the background changed, refresh the screen.
 ***************************************************************************/
 
-WRITE_HANDLER( spaceod_back_port_w )
+WRITE8_HANDLER( spaceod_back_port_w )
 {
 	unsigned int temp_scene, temp_charset;
 
@@ -363,7 +363,7 @@ by the program writing more often to this port.  Oddly enough, the value
 sent to this port also seems to indicate the speed, but the value itself
 is never checked.
 ***************************************************************************/
-WRITE_HANDLER( spaceod_backshift_w )
+WRITE8_HANDLER( spaceod_backshift_w )
 {
 	sv.backshift= (sv.backshift + 1) % 0x400;
 	sv.background_enable=1;
@@ -376,7 +376,7 @@ really important for the Black Hole level, since the only way the program
 can line up the background's Black Hole with knowing when to spin the ship
 is to force the background to restart every time you die.
 ***************************************************************************/
-WRITE_HANDLER( spaceod_backshift_clear_w )
+WRITE8_HANDLER( spaceod_backshift_clear_w )
 {
 	sv.backshift=0;
 	sv.background_enable=1;
@@ -386,7 +386,7 @@ WRITE_HANDLER( spaceod_backshift_clear_w )
 /***************************************************************************
 Space Odyssey also lets you fill the background with a specific color.
 ***************************************************************************/
-WRITE_HANDLER( spaceod_backfill_w )
+WRITE8_HANDLER( spaceod_backfill_w )
 {
 	sv.backfill=data + 0x40 + 1;
 	sv.fill_background=1;
@@ -394,7 +394,7 @@ WRITE_HANDLER( spaceod_backfill_w )
 
 /***************************************************************************
 ***************************************************************************/
-WRITE_HANDLER( spaceod_nobackfill_w )
+WRITE8_HANDLER( spaceod_nobackfill_w )
 {
 	sv.backfill=0;
 	sv.fill_background=0;
@@ -533,7 +533,7 @@ and tempoffset are analogous to control lines used to bank switch the
 background ROMs.  If the background changed, refresh the screen.
 ***************************************************************************/
 
-WRITE_HANDLER( monsterb_back_port_w )
+WRITE8_HANDLER( monsterb_back_port_w )
 {
 	unsigned int temp_scene, temp_charset;
 
@@ -630,7 +630,7 @@ VIDEO_UPDATE( monsterb )
 This port seems to control the background colors for Pig Newton.
 ***************************************************************************/
 
-WRITE_HANDLER( pignewt_back_color_w )
+WRITE8_HANDLER( pignewt_back_color_w )
 {
 	if (offset == 0)
 	{
@@ -651,7 +651,7 @@ are analogous to registers used to control bank-switching of the background
 If the background changed, refresh the screen.
 ***************************************************************************/
 
-WRITE_HANDLER( pignewt_back_ports_w )
+WRITE8_HANDLER( pignewt_back_ports_w )
 {
 	unsigned int tempscene;
 
@@ -709,7 +709,7 @@ WRITE_HANDLER( pignewt_back_ports_w )
 Controls the background image
 ***************************************************************************/
 
-WRITE_HANDLER( sindbadm_back_port_w )
+WRITE8_HANDLER( sindbadm_back_port_w )
 {
 	unsigned int tempscene;
 

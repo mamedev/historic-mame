@@ -18,7 +18,7 @@ PALETTE_INIT( vsdual )
 
 static void ppu_irq( int num, int *ppu_regs )
 {
-	cpu_set_nmi_line( num, PULSE_LINE );
+	cpunum_set_input_line(num, INPUT_LINE_NMI, PULSE_LINE );
 }
 
 /* our ppu interface											*/

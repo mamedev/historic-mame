@@ -29,7 +29,7 @@ static unsigned char bg_tile_bank, fg_tile_bank;
 
 struct tilemap *bg_tilemap, *fg_tilemap, *tx_tilemap;
 
-WRITE_HANDLER( lkage_videoram_w )
+WRITE8_HANDLER( lkage_videoram_w )
 {
 	if( videoram[offset]!=data )
 	{

@@ -13,19 +13,19 @@ struct namco_interface
 int namco_sh_start(const struct MachineSound *msound);
 void namco_sh_stop(void);
 
-WRITE_HANDLER( pengo_sound_enable_w );
-WRITE_HANDLER( pengo_sound_w );
+WRITE8_HANDLER( pengo_sound_enable_w );
+WRITE8_HANDLER( pengo_sound_w );
 
 void polepos_sound_enable(int enable);
-WRITE_HANDLER( polepos_sound_w );
+WRITE8_HANDLER( polepos_sound_w );
 
 void mappy_sound_enable(int enable);
-WRITE_HANDLER( namco_15xx_w );
+WRITE8_HANDLER( namco_15xx_w );
 
-WRITE_HANDLER( namcos1_sound_w );
-WRITE_HANDLER( namcos1_wavedata_w );
-READ_HANDLER( namcos1_sound_r );
-READ_HANDLER( namcos1_wavedata_r );
+WRITE8_HANDLER( namcos1_sound_w );
+WRITE8_HANDLER( namcos1_wavedata_w );
+READ8_HANDLER( namcos1_sound_r );
+READ8_HANDLER( namcos1_wavedata_r );
 
 extern unsigned char *namco_soundregs;
 extern unsigned char *namco_wavedata;

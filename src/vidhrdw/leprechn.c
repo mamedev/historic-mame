@@ -47,7 +47,7 @@ VIDEO_START( leprechn )
 }
 
 
-WRITE_HANDLER( leprechn_graphics_command_w )
+WRITE8_HANDLER( leprechn_graphics_command_w )
 {
     graphics_command = data & 0x38;
 }
@@ -61,7 +61,7 @@ static void clear_screen_done_callback(int param)
 }
 
 
-WRITE_HANDLER( leprechn_videoram_w )
+WRITE8_HANDLER( leprechn_videoram_w )
 {
 	int sx,sy;
 
@@ -136,7 +136,7 @@ WRITE_HANDLER( leprechn_videoram_w )
 }
 
 
-READ_HANDLER( leprechn_videoram_r )
+READ8_HANDLER( leprechn_videoram_r )
 {
     return videoram[y * Machine->drv->screen_width + x];
 }

@@ -70,7 +70,7 @@ static WRITE16_HANDLER( forgottn_dial_1_reset_w )
 
 static int cps1_sound_fade_timer;
 
-static WRITE_HANDLER( cps1_snd_bankswitch_w )
+static WRITE8_HANDLER( cps1_snd_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU2);
 	int length = memory_region_length(REGION_CPU2) - 0x10000;
@@ -88,7 +88,7 @@ static WRITE16_HANDLER( cps1_sound_fade_w )
 		cps1_sound_fade_timer = data & 0xff;
 }
 
-static READ_HANDLER( cps1_snd_fade_timer_r )
+static READ8_HANDLER( cps1_snd_fade_timer_r )
 {
 	return cps1_sound_fade_timer;
 }
@@ -143,7 +143,7 @@ static INTERRUPT_GEN( cps1_interrupt )
 	/* Strider also has a IRQ4 handler. It is input port related, but the game */
 	/* works without it (maybe it's used to multiplex controls). It is the */
 	/* *only* game to have that. */
-	cpu_set_irq_line(0, 2, HOLD_LINE);
+	cpunum_set_input_line(0, 2, HOLD_LINE);
 }
 
 /********************************************************************
@@ -171,7 +171,7 @@ I have removed CPU_AUDIO_CPU from the Z(0 so this is no longer necessary
 		qsound_sharedram1[0xfff] = 0x77;
 #endif
 
-	cpu_set_irq_line(cpu_getactivecpu(), 2, HOLD_LINE);
+	cpunum_set_input_line(cpu_getactivecpu(), 2, HOLD_LINE);
 }
 
 
@@ -209,7 +209,7 @@ static WRITE16_HANDLER( qsound_sharedram2_w )
 		qsound_sharedram2[offset] = data;
 }
 
-static WRITE_HANDLER( qsound_banksw_w )
+static WRITE8_HANDLER( qsound_banksw_w )
 {
 	/*
 	Z80 bank register for music note data. It's odd that it isn't encrypted
@@ -3641,7 +3641,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static void cps1_irq_handler_mus(int irq)
 {
-	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2151interface ym2151_interface =

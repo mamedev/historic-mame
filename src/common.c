@@ -1258,7 +1258,7 @@ static int display_rom_load_results(struct rom_load_data *romdata)
 			while (k == CODE_NONE || k == KEYCODE_LCONTROL);
 
 			/* bail on a control + C */
-			if (keyboard_pressed(KEYCODE_LCONTROL) && keyboard_pressed(KEYCODE_C))
+			if (code_pressed(KEYCODE_LCONTROL) && code_pressed(KEYCODE_C))
 				return 1;
 		}
 	}

@@ -29,9 +29,9 @@ MACHINE_INIT( zwackery );
 INTERRUPT_GEN( mcr_interrupt );
 INTERRUPT_GEN( mcr68_interrupt );
 
-WRITE_HANDLER( mcr_control_port_w );
-WRITE_HANDLER( mcrmono_control_port_w );
-WRITE_HANDLER( mcr_scroll_value_w );
+WRITE8_HANDLER( mcr_control_port_w );
+WRITE8_HANDLER( mcrmono_control_port_w );
+WRITE8_HANDLER( mcr_scroll_value_w );
 
 WRITE16_HANDLER( mcr68_6840_upper_w );
 WRITE16_HANDLER( mcr68_6840_lower_w );

@@ -103,6 +103,7 @@ enum
 	CPU_ADSP2104,
 	CPU_ADSP2105,
 	CPU_ADSP2115,
+	CPU_ADSP2181,
 	CPU_PSXCPU,
 	CPU_ASAP,
 	CPU_UPD7810,
@@ -170,9 +171,26 @@ enum
 	INTERNAL_CLEAR_LINE = 100 + CLEAR_LINE,
 	INTERNAL_ASSERT_LINE = 100 + ASSERT_LINE,
 
-	/* interrupt parameters */
-	MAX_IRQ_LINES =	32+1,			 /* maximum number of IRQ lines per CPU */
-	IRQ_LINE_NMI = MAX_IRQ_LINES - 1 /* IRQ line for NMIs */
+	/* input lines */
+	MAX_INPUT_LINES = 32+3,
+	INPUT_LINE_IRQ0 = 0,
+	INPUT_LINE_IRQ1 = 1,
+	INPUT_LINE_IRQ2 = 2,
+	INPUT_LINE_IRQ3 = 3,
+	INPUT_LINE_IRQ4 = 4,
+	INPUT_LINE_IRQ5 = 5,
+	INPUT_LINE_IRQ6 = 6,
+	INPUT_LINE_IRQ7 = 7,
+	INPUT_LINE_IRQ8 = 8,
+	INPUT_LINE_IRQ9 = 9,
+	INPUT_LINE_NMI = MAX_INPUT_LINES - 3,
+	
+	/* special input lines that are implemented in the core */
+	INPUT_LINE_RESET = MAX_INPUT_LINES - 2,
+	INPUT_LINE_HALT = MAX_INPUT_LINES - 1,
+	
+	/* output lines */
+	MAX_OUTPUT_LINES = 32
 };
 
 
@@ -195,7 +213,8 @@ enum
 	CPUINFO_INT_FIRST = 0x00000,
 
 	CPUINFO_INT_CONTEXT_SIZE = CPUINFO_INT_FIRST,		/* R/O: size of CPU context in bytes */
-	CPUINFO_INT_IRQ_LINES,								/* R/O: number of IRQ lines */
+	CPUINFO_INT_INPUT_LINES,							/* R/O: number of input lines */
+	CPUINFO_INT_OUTPUT_LINES,							/* R/O: number of output lines */
 	CPUINFO_INT_DEFAULT_IRQ_VECTOR,						/* R/O: default IRQ vector */
 	CPUINFO_INT_ENDIANNESS,								/* R/O: either CPU_IS_BE or CPU_IS_LE */
 	CPUINFO_INT_CLOCK_DIVIDER,							/* R/O: internal clock divider */
@@ -214,8 +233,10 @@ enum
 	CPUINFO_INT_SP,										/* R/W: the current stack pointer value */
 	CPUINFO_INT_PC,										/* R/W: the current PC value */
 	CPUINFO_INT_PREVIOUSPC,								/* R/W: the previous PC value */
-	CPUINFO_INT_IRQ_STATE,								/* R/W: states for each IRQ line */
-	CPUINFO_INT_IRQ_STATE_LAST = CPUINFO_INT_IRQ_STATE + MAX_IRQ_LINES - 1,
+	CPUINFO_INT_INPUT_STATE,							/* R/W: states for each input line */
+	CPUINFO_INT_INPUT_STATE_LAST = CPUINFO_INT_INPUT_STATE + MAX_INPUT_LINES - 1,
+	CPUINFO_INT_OUTPUT_STATE,							/* R/W: states for each output line */
+	CPUINFO_INT_OUTPUT_STATE_LAST = CPUINFO_INT_OUTPUT_STATE + MAX_OUTPUT_LINES - 1,
 	CPUINFO_INT_REGISTER,								/* R/W: values of up to MAX_REGs registers */
 	CPUINFO_INT_REGISTER_LAST = CPUINFO_INT_REGISTER + MAX_REGS - 1,
 
@@ -387,8 +408,8 @@ int activecpu_get_icount(void);
 /* ensure banking is reset properly */
 void activecpu_reset_banking(void);
 
-/* set the IRQ line on a CPU -- drivers use cpu_set_irq_line() */
-void activecpu_set_irq_line(int irqline, int state);
+/* set the input line on a CPU -- drivers use cpu_set_input_line() */
+void activecpu_set_input_line(int irqline, int state);
 
 /* return the PC, corrected to a byte offset, on the active CPU */
 offs_t activecpu_get_pc_byte(void);
@@ -406,7 +427,8 @@ const char *activecpu_flags(void);
 const char *activecpu_dump_state(void);
 
 #define activecpu_context_size()				activecpu_get_info_int(CPUINFO_INT_CONTEXT_SIZE)
-#define activecpu_irq_lines()					activecpu_get_info_int(CPUINFO_INT_IRQ_LINES)
+#define activecpu_input_lines()					activecpu_get_info_int(CPUINFO_INT_INPUT_LINES)
+#define activecpu_output_lines()				activecpu_get_info_int(CPUINFO_INT_OUTPUT_LINES)
 #define activecpu_default_irq_vector()			activecpu_get_info_int(CPUINFO_INT_DEFAULT_IRQ_VECTOR)
 #define activecpu_endianness()					activecpu_get_info_int(CPUINFO_INT_ENDIANNESS)
 #define activecpu_clock_divider()				activecpu_get_info_int(CPUINFO_INT_CLOCK_DIVIDER)
@@ -479,7 +501,8 @@ offs_t cpunum_dasm(int cpunum, char *buffer, offs_t pc);
 const char *cpunum_dump_state(int cpunum);
 
 #define cpunum_context_size(cpunum)				cpunum_get_info_int(cpunum, CPUINFO_INT_CONTEXT_SIZE)
-#define cpunum_irq_lines(cpunum)				cpunum_get_info_int(cpunum, CPUINFO_INT_IRQ_LINES)
+#define cpunum_input_lines(cpunum)				cpunum_get_info_int(cpunum, CPUINFO_INT_INPUT_LINES)
+#define cpunum_output_lines(cpunum)				cpunum_get_info_int(cpunum, CPUINFO_INT_OUTPUT_LINES)
 #define cpunum_default_irq_vector(cpunum)		cpunum_get_info_int(cpunum, CPUINFO_INT_DEFAULT_IRQ_VECTOR)
 #define cpunum_endianness(cpunum)				cpunum_get_info_int(cpunum, CPUINFO_INT_ENDIANNESS)
 #define cpunum_clock_divider(cpunum)			cpunum_get_info_int(cpunum, CPUINFO_INT_CLOCK_DIVIDER)
@@ -507,6 +530,7 @@ const char *cpunum_dump_state(int cpunum);
 #define cpunum_set_irq_callback(cpunum, val)	cpunum_set_info_ptr(cpunum, CPUINFO_PTR_IRQ_CALLBACK, (val)
 
 
+
 /*************************************
  *
  *	 CPU type acccessors
@@ -519,7 +543,8 @@ void *cputype_get_info_ptr(int cputype, UINT32 state);
 const char *cputype_get_info_string(int cputype, UINT32 state);
 
 #define cputype_context_size(cputype)			cputype_get_info_int(cputype, CPUINFO_INT_CONTEXT_SIZE)
-#define cputype_irq_lines(cputype)				cputype_get_info_int(cputype, CPUINFO_INT_IRQ_LINES)
+#define cputype_input_lines(cputype)			cputype_get_info_int(cputype, CPUINFO_INT_INPUT_LINES)
+#define cputype_output_lines(cputype)			cputype_get_info_int(cputype, CPUINFO_INT_OUTPUT_LINES)
 #define cputype_default_irq_vector(cputype)		cputype_get_info_int(cputype, CPUINFO_INT_DEFAULT_IRQ_VECTOR)
 #define cputype_endianness(cputype)				cputype_get_info_int(cputype, CPUINFO_INT_ENDIANNESS)
 #define cputype_clock_divider(cputype)			cputype_get_info_int(cputype, CPUINFO_INT_CLOCK_DIVIDER)
@@ -561,9 +586,9 @@ void cpu_set_m68k_reset(int cpunum, void (*resetfn)(void));
  *
  *************************************/
 
-#define		activecpu_get_previouspc()	((offs_t)activecpu_get_reg(REG_PREVIOUSPC))
-#define		activecpu_get_pc()			((offs_t)activecpu_get_reg(REG_PC))
-#define		activecpu_get_sp()			activecpu_get_reg(REG_SP)
+#define		activecpu_get_previouspc()			((offs_t)activecpu_get_reg(REG_PREVIOUSPC))
+#define		activecpu_get_pc()					((offs_t)activecpu_get_reg(REG_PC))
+#define		activecpu_get_sp()					activecpu_get_reg(REG_SP)
 
 
 

@@ -68,19 +68,19 @@ VIDEO_START( news )
 
 ***************************************************************************/
 
-WRITE_HANDLER( news_fgram_w )
+WRITE8_HANDLER( news_fgram_w )
 {
 	news_fgram[offset] = data;
 	tilemap_mark_tile_dirty(fg_tilemap,offset/2);
 }
 
-WRITE_HANDLER( news_bgram_w )
+WRITE8_HANDLER( news_bgram_w )
 {
 	news_bgram[offset] = data;
 	tilemap_mark_tile_dirty(bg_tilemap,offset/2);
 }
 
-WRITE_HANDLER( news_bgpic_w )
+WRITE8_HANDLER( news_bgpic_w )
 {
 	if (bgpic != data)
 	{

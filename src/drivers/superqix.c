@@ -18,14 +18,14 @@ Notes:
 #include "vidhrdw/generic.h"
 
 
-extern WRITE_HANDLER( superqix_videoram_w );
-extern WRITE_HANDLER( superqix_colorram_w );
-extern READ_HANDLER( superqix_bitmapram_r );
-extern WRITE_HANDLER( superqix_bitmapram_w );
-extern READ_HANDLER( superqix_bitmapram2_r );
-extern WRITE_HANDLER( superqix_bitmapram2_w );
-extern WRITE_HANDLER( superqix_0410_w );
-extern WRITE_HANDLER( superqix_flipscreen_w );
+extern WRITE8_HANDLER( superqix_videoram_w );
+extern WRITE8_HANDLER( superqix_colorram_w );
+extern READ8_HANDLER( superqix_bitmapram_r );
+extern WRITE8_HANDLER( superqix_bitmapram_w );
+extern READ8_HANDLER( superqix_bitmapram2_r );
+extern WRITE8_HANDLER( superqix_bitmapram2_w );
+extern WRITE8_HANDLER( superqix_0410_w );
+extern WRITE8_HANDLER( superqix_flipscreen_w );
 
 extern VIDEO_START( superqix );
 extern VIDEO_UPDATE( superqix );

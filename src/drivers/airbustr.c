@@ -199,9 +199,9 @@ int flipscreen;
 extern unsigned char *airbustr_bgram, *airbustr_fgram;
 
 /* Functions defined in vidhrdw */
-WRITE_HANDLER( airbustr_bgram_w );
-WRITE_HANDLER( airbustr_fgram_w );
-WRITE_HANDLER( airbustr_scrollregs_w );
+WRITE8_HANDLER( airbustr_bgram_w );
+WRITE8_HANDLER( airbustr_fgram_w );
+WRITE8_HANDLER( airbustr_scrollregs_w );
 extern VIDEO_START( airbustr );
 extern VIDEO_UPDATE( airbustr );
 
@@ -209,9 +209,9 @@ extern VIDEO_UPDATE( airbustr );
 int u1, u2, u3, u4;
 
 
-static WRITE_HANDLER( bankswitch_w );
-static WRITE_HANDLER( bankswitch2_w );
-static WRITE_HANDLER( sound_bankswitch_w );
+static WRITE8_HANDLER( bankswitch_w );
+static WRITE8_HANDLER( bankswitch2_w );
+static WRITE8_HANDLER( sound_bankswitch_w );
 
 static MACHINE_INIT( airbustr )
 {
@@ -236,16 +236,16 @@ INTERRUPT_GEN( airbustr_interrupt )
 static int addr = 0xff;
 
 	addr ^= 0x02;
-	cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, addr);
+	cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, addr);
 }
 
 
-static READ_HANDLER( sharedram_r )	{ return sharedram[offset]; }
-static WRITE_HANDLER( sharedram_w )	{ sharedram[offset] = data; }
+static READ8_HANDLER( sharedram_r )	{ return sharedram[offset]; }
+static WRITE8_HANDLER( sharedram_w )	{ sharedram[offset] = data; }
 
 
 /* There's an MCU here, possibly */
-READ_HANDLER( devram_r )
+READ8_HANDLER( devram_r )
 {
 	switch (offset)
 	{
@@ -278,10 +278,10 @@ READ_HANDLER( devram_r )
 	}
 
 }
-WRITE_HANDLER( devram_w )	{	devram[offset] = data; }
+WRITE8_HANDLER( devram_w )	{	devram[offset] = data; }
 
 
-static WRITE_HANDLER( bankswitch_w )
+static WRITE8_HANDLER( bankswitch_w )
 {
 unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -314,9 +314,9 @@ ADDRESS_MAP_END
 
 /* Ports */
 
-static WRITE_HANDLER( cause_nmi_w )
+static WRITE8_HANDLER( cause_nmi_w )
 {
-	cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 }
 
 static ADDRESS_MAP_START( writeport, ADDRESS_SPACE_IO, 8 )
@@ -349,11 +349,11 @@ INTERRUPT_GEN( airbustr_interrupt2 )
 static int addr = 0xfd;
 
 	addr ^= 0x02;
-	cpu_set_irq_line_and_vector(1, 0, HOLD_LINE, addr);
+	cpunum_set_input_line_and_vector(1, 0, HOLD_LINE, addr);
 }
 
 
-static WRITE_HANDLER( bankswitch2_w )
+static WRITE8_HANDLER( bankswitch2_w )
 {
 unsigned char *RAM = memory_region(REGION_CPU2);
 
@@ -370,7 +370,7 @@ unsigned char *RAM = memory_region(REGION_CPU2);
 }
 
 
-WRITE_HANDLER( airbustr_paletteram_w )
+WRITE8_HANDLER( airbustr_paletteram_w )
 {
 	int r,g,b;
 	int val;
@@ -433,29 +433,29 @@ Code at 505: waits for bit 1 to go low, writes command, waits for bit
 */
 
 
-static READ_HANDLER( soundcommand_status_r )
+static READ8_HANDLER( soundcommand_status_r )
 {
 /* bits: 2 <-> ?	1 <-> soundlatch full	0 <-> soundlatch2 empty */
 	return 4 + soundlatch_status * 2 + (1-soundlatch2_status);
 }
 
 
-static READ_HANDLER( soundcommand2_r )
+static READ8_HANDLER( soundcommand2_r )
 {
 	soundlatch2_status = 0;				// soundlatch2 has been read
 	return soundlatch2_r(0);
 }
 
 
-static WRITE_HANDLER( soundcommand_w )
+static WRITE8_HANDLER( soundcommand_w )
 {
 	soundlatch_w(0,data);
 	soundlatch_status = 1;				// soundlatch has been written
-	cpu_set_irq_line(2, IRQ_LINE_NMI, PULSE_LINE);	// cause a nmi to sub cpu
+	cpunum_set_input_line(2, INPUT_LINE_NMI, PULSE_LINE);	// cause a nmi to sub cpu
 }
 
 
-WRITE_HANDLER( port_38_w )	{	u4 = data; } // for debug
+WRITE8_HANDLER( port_38_w )	{	u4 = data; } // for debug
 
 
 static ADDRESS_MAP_START( readport2, ADDRESS_SPACE_IO, 8 )
@@ -489,7 +489,7 @@ ADDRESS_MAP_END
 **
 */
 
-static WRITE_HANDLER( sound_bankswitch_w )
+static WRITE8_HANDLER( sound_bankswitch_w )
 {
 unsigned char *RAM = memory_region(REGION_CPU3);
 
@@ -519,14 +519,14 @@ ADDRESS_MAP_END
 
 /* Ports */
 
-READ_HANDLER( soundcommand_r )
+READ8_HANDLER( soundcommand_r )
 {
 	soundlatch_status = 0;		// soundlatch has been read
 	return soundlatch_r(0);
 }
 
 
-WRITE_HANDLER( soundcommand2_w )
+WRITE8_HANDLER( soundcommand2_w )
 {
 	soundlatch2_status = 1;		// soundlatch2 has been written
 	soundlatch2_w(0,data);

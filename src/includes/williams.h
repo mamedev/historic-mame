@@ -52,18 +52,18 @@ MACHINE_INIT( williams2 );
 MACHINE_INIT( joust2 );
 
 /* banking */
-WRITE_HANDLER( williams_vram_select_w );
-WRITE_HANDLER( defender_bank_select_w );
-WRITE_HANDLER( blaster_bank_select_w );
-WRITE_HANDLER( blaster_vram_select_w );
-WRITE_HANDLER( williams2_bank_select_w );
+WRITE8_HANDLER( williams_vram_select_w );
+WRITE8_HANDLER( defender_bank_select_w );
+WRITE8_HANDLER( blaster_bank_select_w );
+WRITE8_HANDLER( blaster_vram_select_w );
+WRITE8_HANDLER( williams2_bank_select_w );
 
 /* misc */
-WRITE_HANDLER( williams2_7segment_w );
+WRITE8_HANDLER( williams2_7segment_w );
 
 /* Mayday protection */
 extern UINT8 *mayday_protection;
-READ_HANDLER( mayday_protection_r );
+READ8_HANDLER( mayday_protection_r );
 
 
 /*----------- defined in vidhrdw/wmsyunit.c -----------*/
@@ -95,13 +95,13 @@ extern UINT8 *blaster_color_zero_table;
 extern UINT8 *blaster_video_bits;
 
 
-WRITE_HANDLER( defender_videoram_w );
-WRITE_HANDLER( williams_videoram_w );
-WRITE_HANDLER( williams2_videoram_w );
-WRITE_HANDLER( williams_blitter_w );
-WRITE_HANDLER( blaster_remap_select_w );
-WRITE_HANDLER( blaster_palette_0_w );
-READ_HANDLER( williams_video_counter_r );
+WRITE8_HANDLER( defender_videoram_w );
+WRITE8_HANDLER( williams_videoram_w );
+WRITE8_HANDLER( williams2_videoram_w );
+WRITE8_HANDLER( williams_blitter_w );
+WRITE8_HANDLER( blaster_remap_select_w );
+WRITE8_HANDLER( blaster_palette_0_w );
+READ8_HANDLER( williams_video_counter_r );
 
 VIDEO_START( williams );
 VIDEO_UPDATE( williams );
@@ -110,5 +110,5 @@ VIDEO_UPDATE( williams2 );
 VIDEO_START( blaster );
 VIDEO_START( williams2 );
 
-WRITE_HANDLER( williams2_fg_select_w );
-WRITE_HANDLER( williams2_bg_select_w );
+WRITE8_HANDLER( williams2_fg_select_w );
+WRITE8_HANDLER( williams2_bg_select_w );

@@ -121,35 +121,35 @@ VIDEO_START( triothep )
 
 /******************************************************************************/
 
-WRITE_HANDLER( actfancr_pf1_control_w )
+WRITE8_HANDLER( actfancr_pf1_control_w )
 {
 	actfancr_control_1[offset]=data;
 }
 
-WRITE_HANDLER( actfancr_pf2_control_w )
+WRITE8_HANDLER( actfancr_pf2_control_w )
 {
 	actfancr_control_2[offset]=data;
 }
 
-WRITE_HANDLER( actfancr_pf1_data_w )
+WRITE8_HANDLER( actfancr_pf1_data_w )
 {
 	actfancr_pf1_data[offset]=data;
 	tilemap_mark_tile_dirty(pf1_tilemap,offset/2);
 	if (pf1_alt_tilemap) tilemap_mark_tile_dirty(pf1_alt_tilemap,offset/2);
 }
 
-READ_HANDLER( actfancr_pf1_data_r )
+READ8_HANDLER( actfancr_pf1_data_r )
 {
 	return actfancr_pf1_data[offset];
 }
 
-WRITE_HANDLER( actfancr_pf2_data_w )
+WRITE8_HANDLER( actfancr_pf2_data_w )
 {
 	actfancr_pf2_data[offset]=data;
 	tilemap_mark_tile_dirty(pf2_tilemap,offset/2);
 }
 
-READ_HANDLER( actfancr_pf2_data_r )
+READ8_HANDLER( actfancr_pf2_data_r )
 {
 	return actfancr_pf2_data[offset];
 }

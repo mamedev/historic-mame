@@ -718,7 +718,7 @@ UINT32 drc_x86_get_features(void)
 #if LOG_DISPATCHES
 static void log_dispatch(struct drccore *drc)
 {
-	if (keyboard_pressed(KEYCODE_D))
+	if (code_pressed(KEYCODE_D))
 		logerror("Disp:%08X\n", *drc->pcptr);
 }
 #endif

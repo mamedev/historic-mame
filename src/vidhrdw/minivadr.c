@@ -30,7 +30,7 @@ PALETTE_INIT( minivadr )
 	Draw Pixel.
 
 *******************************************************************/
-WRITE_HANDLER( minivadr_videoram_w )
+WRITE8_HANDLER( minivadr_videoram_w )
 {
 	int i;
 	int x, y;

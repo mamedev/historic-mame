@@ -76,20 +76,20 @@ VIDEO_START( commando )
 
 ***************************************************************************/
 
-WRITE_HANDLER( commando_fgvideoram_w )
+WRITE8_HANDLER( commando_fgvideoram_w )
 {
 	commando_fgvideoram[offset] = data;
 	tilemap_mark_tile_dirty(fg_tilemap,offset & 0x3ff);
 }
 
-WRITE_HANDLER( commando_bgvideoram_w )
+WRITE8_HANDLER( commando_bgvideoram_w )
 {
 	commando_bgvideoram[offset] = data;
 	tilemap_mark_tile_dirty(bg_tilemap,offset & 0x3ff);
 }
 
 
-WRITE_HANDLER( commando_scrollx_w )
+WRITE8_HANDLER( commando_scrollx_w )
 {
 	static unsigned char scroll[2];
 
@@ -97,7 +97,7 @@ WRITE_HANDLER( commando_scrollx_w )
 	tilemap_set_scrollx(bg_tilemap,0,scroll[0] | (scroll[1] << 8));
 }
 
-WRITE_HANDLER( commando_scrolly_w )
+WRITE8_HANDLER( commando_scrolly_w )
 {
 	static unsigned char scroll[2];
 
@@ -106,14 +106,14 @@ WRITE_HANDLER( commando_scrolly_w )
 }
 
 
-WRITE_HANDLER( commando_c804_w )
+WRITE8_HANDLER( commando_c804_w )
 {
 	/* bits 0 and 1 are coin counters */
 	coin_counter_w(0, data & 0x01);
 	coin_counter_w(1, data & 0x02);
 
 	/* bit 4 resets the sound CPU */
-	cpu_set_reset_line(1,(data & 0x10) ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_RESET, (data & 0x10) ? ASSERT_LINE : CLEAR_LINE);
 
 	/* bit 7 flips screen */
 	flip_screen_set(data & 0x80);

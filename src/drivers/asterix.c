@@ -118,7 +118,7 @@ static WRITE16_HANDLER( control2_w )
 static INTERRUPT_GEN( asterix_interrupt )
 {
 	if (K054157_is_IRQ_enabled())
-		cpu_set_irq_line(0, 5, HOLD_LINE); /* ??? All irqs have the same vector, and the
+		cpunum_set_input_line(0, 5, HOLD_LINE); /* ??? All irqs have the same vector, and the
                                               mask used is 0 or 7 */
 }
 
@@ -129,18 +129,18 @@ static READ16_HANDLER( asterix_sound_r )
 
 static void nmi_callback(int param)
 {
-	cpu_set_nmi_line(1,ASSERT_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_NMI, ASSERT_LINE);
 }
 
-static WRITE_HANDLER( sound_arm_nmi_w )
+static WRITE8_HANDLER( sound_arm_nmi_w )
 {
-	cpu_set_nmi_line(1,CLEAR_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_NMI, CLEAR_LINE);
 	timer_set(TIME_IN_USEC(5),0,nmi_callback);
 }
 
 static WRITE16_HANDLER( sound_irq_w )
 {
-	cpu_set_irq_line(1, 0, HOLD_LINE);
+	cpunum_set_input_line(1, 0, HOLD_LINE);
 }
 
 // Check the routine at 7f30 in the ead version.

@@ -25,7 +25,7 @@ VIDEO_START(speedspn)
 	return 0;
 }
 
-WRITE_HANDLER( speedspn_vidram_w )
+WRITE8_HANDLER( speedspn_vidram_w )
 {
 	speedspn_vidram[offset + speedspn_bank_vidram] = data;
 
@@ -33,26 +33,26 @@ WRITE_HANDLER( speedspn_vidram_w )
 		tilemap_mark_tile_dirty(speedspn_tilemap,offset/2);
 }
 
-WRITE_HANDLER( speedspn_attram_w )
+WRITE8_HANDLER( speedspn_attram_w )
 {
 	speedspn_attram[offset] = data;
 
 	tilemap_mark_tile_dirty(speedspn_tilemap,offset^0x400);
 }
 
-READ_HANDLER( speedspn_vidram_r )
+READ8_HANDLER( speedspn_vidram_r )
 {
 	return speedspn_vidram[offset + speedspn_bank_vidram];
 }
 
-WRITE_HANDLER(speedspn_banked_vidram_change)
+WRITE8_HANDLER(speedspn_banked_vidram_change)
 {
 //	logerror("VidRam Bank: %04x\n", data);
 	speedspn_bank_vidram = data & 1;
 	speedspn_bank_vidram *= 0x1000;
 }
 
-WRITE_HANDLER(speedspn_global_display_w)
+WRITE8_HANDLER(speedspn_global_display_w)
 {
 //	logerror("Global display: %u\n", data);
 	speedspn_display_disable = data & 1;

@@ -114,7 +114,7 @@ static PALETTE_INIT( wallc )
 	}
 }
 
-static WRITE_HANDLER( wallc_videoram_w )
+static WRITE8_HANDLER( wallc_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -148,7 +148,7 @@ VIDEO_UPDATE( wallc )
 }
 
 static int wcb0=-1;
-static WRITE_HANDLER( wc_b0 )
+static WRITE8_HANDLER( wc_b0 )
 {
 	if (wcb0!=data)
 	{
@@ -157,7 +157,7 @@ static WRITE_HANDLER( wc_b0 )
 	}
 }
 static int wcb1=-1;
-static WRITE_HANDLER( wc_b1 )
+static WRITE8_HANDLER( wc_b1 )
 {
 	if (wcb1!=data)
 	{
@@ -166,7 +166,7 @@ static WRITE_HANDLER( wc_b1 )
 	}
 }
 static int wcb2=-1;
-static WRITE_HANDLER( wc_b2 )
+static WRITE8_HANDLER( wc_b2 )
 {
 	if (wcb2!=data)
 	{

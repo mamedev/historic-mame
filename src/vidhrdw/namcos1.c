@@ -19,8 +19,8 @@
 #define SUB_COMPLETE 0x20
 
 //#define TRY_PDRAWGFX 1
-WRITE_HANDLER( namcos1_main_update_w );
-WRITE_HANDLER( namcos1_sub_update_w );
+WRITE8_HANDLER( namcos1_main_update_w );
+WRITE8_HANDLER( namcos1_sub_update_w );
 
 struct playfield
 {
@@ -110,7 +110,7 @@ static void namcos1_set_flipscreen(int flip)
 	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? TILEMAP_FLIPX|TILEMAP_FLIPY : 0);
 }
 
-static WRITE_HANDLER( namcos1_playfield_control_w )
+static WRITE8_HANDLER( namcos1_playfield_control_w )
 {
 	namcos1_playfield_control[offset] = data;
 #if 0
@@ -140,12 +140,12 @@ static WRITE_HANDLER( namcos1_playfield_control_w )
 	}
 }
 
-READ_HANDLER( namcos1_videoram_r )
+READ8_HANDLER( namcos1_videoram_r )
 {
 	return namcos1_videoram[offset];
 }
 
-WRITE_HANDLER( namcos1_videoram_w )
+WRITE8_HANDLER( namcos1_videoram_w )
 {
 	if (namcos1_videoram[offset] != data)
 	{
@@ -166,12 +166,12 @@ WRITE_HANDLER( namcos1_videoram_w )
 	}
 }
 
-READ_HANDLER( namcos1_paletteram_r )
+READ8_HANDLER( namcos1_paletteram_r )
 {
 	return namcos1_paletteram[offset];
 }
 
-WRITE_HANDLER( namcos1_paletteram_w )
+WRITE8_HANDLER( namcos1_paletteram_w )
 {
 	namcos1_paletteram[offset] = data;
 	if ((offset&0x1fff) < 0x1800)
@@ -227,7 +227,7 @@ static void namcos1_palette_refresh(int start,int offset,int num)
 7    sprite offset y
 8-15 unknown
 */
-static WRITE_HANDLER( namcos1_displaycontrol_w )
+static WRITE8_HANDLER( namcos1_displaycontrol_w )
 {
 	unsigned char *disp_reg = &namcos1_controlram[0xff0];
 	int newflip;
@@ -279,7 +279,7 @@ static WRITE_HANDLER( namcos1_displaycontrol_w )
 #endif
 }
 
-WRITE_HANDLER( namcos1_videocontrol_w )
+WRITE8_HANDLER( namcos1_videocontrol_w )
 {
 	int olddata = olddata = namcos1_controlram[offset];
 	namcos1_controlram[offset] = data;
@@ -658,15 +658,15 @@ VIDEO_START( namcos1 )
 	{
 		if (!(update_status & UPDATE_SUBLEAD))
 		{
-			install_mem_write_handler(0, 0xf600, 0xf600, namcos1_main_update_w);
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xf600, 0xf600, 0, 0, namcos1_main_update_w);
 			if (!(update_status & UPDATE_TIED) && update_status & USE_SP_BUFFER)
-				install_mem_write_handler(1, 0xf600, 0xf600, namcos1_sub_update_w);
+				memory_install_write8_handler(1, ADDRESS_SPACE_PROGRAM, 0xf600, 0xf600, 0, 0, namcos1_sub_update_w);
 		}
 		else
 		{
-			install_mem_write_handler(1, 0xf600, 0xf600, namcos1_main_update_w);
+			memory_install_write8_handler(1, ADDRESS_SPACE_PROGRAM, 0xf600, 0xf600, 0, 0, namcos1_main_update_w);
 			if (!(update_status & UPDATE_TIED) && update_status & USE_SP_BUFFER)
-				install_mem_write_handler(0, 0xf600, 0xf600, namcos1_sub_update_w);
+				memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xf600, 0xf600, 0, 0, namcos1_sub_update_w);
 		}
 	}
 
@@ -685,7 +685,7 @@ VIDEO_START( namcos1 )
 	return 0;
 }
 
-WRITE_HANDLER( namcos1_main_update_w )
+WRITE8_HANDLER( namcos1_main_update_w )
 {
 	idle_counter = 0;
 
@@ -698,7 +698,7 @@ WRITE_HANDLER( namcos1_main_update_w )
 	namcos1_draw_screen(Machine->scrbitmap, &Machine->visible_area);
 }
 
-WRITE_HANDLER( namcos1_sub_update_w )
+WRITE8_HANDLER( namcos1_sub_update_w )
 {
 	if (update_status & SUB_COMPLETE) return;
 	update_status |= SUB_COMPLETE;

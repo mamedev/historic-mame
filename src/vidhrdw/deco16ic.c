@@ -794,7 +794,7 @@ void deco16_print_debug_info(void)
 	char buf[64];
 	int j;
 
-	if (keyboard_pressed(KEYCODE_O))
+	if (code_pressed(KEYCODE_O))
 		return;
 
 	if (deco16_pf12_control) {

@@ -111,10 +111,10 @@ static void debug_vreg( struct mame_bitmap *bitmap ){
 	int g = 0x740;
 	int i;
 
-	if( keyboard_pressed( KEYCODE_Q ) ) g+=0x10;
-	if( keyboard_pressed( KEYCODE_W ) ) g+=0x20;
-	if( keyboard_pressed( KEYCODE_E ) ) g+=0x40;
-	if( keyboard_pressed( KEYCODE_R ) ) g+=0x80;
+	if( code_pressed( KEYCODE_Q ) ) g+=0x10;
+	if( code_pressed( KEYCODE_W ) ) g+=0x20;
+	if( code_pressed( KEYCODE_E ) ) g+=0x40;
+	if( code_pressed( KEYCODE_R ) ) g+=0x80;
 
 	for( i=0; i<16; i++ ){
 		debug_draw( bitmap, 8,8*i,sys16_textram[g+i] );
@@ -1255,12 +1255,12 @@ static void render_gr(struct mame_bitmap *bitmap,const struct rectangle *cliprec
 	pen_t *paldata2 = Machine->gfx[0]->colortable + sys16_gr_palette_default;
 
 #if 0
-if( keyboard_pressed( KEYCODE_S ) ){
+if( code_pressed( KEYCODE_S ) ){
 	FILE *f;
 	int i;
 	char fname[64];
 	static int fcount = 0;
-	while( keyboard_pressed( KEYCODE_S ) ){}
+	while( code_pressed( KEYCODE_S ) ){}
 	sprintf( fname, "road%d.txt",fcount );
 	fcount++;
 	f = fopen( fname,"w" );
@@ -1804,12 +1804,12 @@ static void aburner_draw_road( struct mame_bitmap *bitmap, const struct rectangl
 		}
 	}
 #if 0
-	if( keyboard_pressed( KEYCODE_S ) ){ /* debug */
+	if( code_pressed( KEYCODE_S ) ){ /* debug */
 		FILE *f;
 		int i;
 		char fname[64];
 		static int fcount = 0;
-		while( keyboard_pressed( KEYCODE_S ) ){}
+		while( code_pressed( KEYCODE_S ) ){}
 		sprintf( fname, "road%d.txt",fcount );
 		fcount++;
 		f = fopen( fname,"w" );

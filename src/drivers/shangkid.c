@@ -58,7 +58,7 @@ extern int shangkid_gfx_type;
 
 VIDEO_START( shangkid );
 VIDEO_UPDATE( shangkid );
-WRITE_HANDLER( shangkid_videoram_w );
+WRITE8_HANDLER( shangkid_videoram_w );
 
 PALETTE_INIT( dynamski );
 VIDEO_UPDATE( dynamski );
@@ -101,40 +101,40 @@ static DRIVER_INIT( shangkid )
 
 /***************************************************************************************/
 
-static WRITE_HANDLER( shangkid_maincpu_bank_w )
+static WRITE8_HANDLER( shangkid_maincpu_bank_w )
 {
 	cpu_setbank( 1,&memory_region(REGION_CPU1)[(data&1)?0x10000:0x8000] );
 }
 
-static WRITE_HANDLER( shangkid_bbx_enable_w )
+static WRITE8_HANDLER( shangkid_bbx_enable_w )
 {
-	cpu_set_halt_line( 1, data?0:1 );
+	cpunum_set_input_line(1, INPUT_LINE_HALT, data?0:1 );
 }
 
-static WRITE_HANDLER( shangkid_cpu_reset_w )
+static WRITE8_HANDLER( shangkid_cpu_reset_w )
 {
 	if( data == 0 )
 	{
-		cpu_set_reset_line(1,PULSE_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_RESET, PULSE_LINE);
 	}
 	else if( data == 1 )
 	{
-		cpu_set_reset_line(0,PULSE_LINE);
+		cpunum_set_input_line(0, INPUT_LINE_RESET, PULSE_LINE);
 	}
 }
 
-static WRITE_HANDLER( shangkid_sound_enable_w )
+static WRITE8_HANDLER( shangkid_sound_enable_w )
 {
 	bbx_sound_enable = data;
 }
 
-WRITE_HANDLER( shangkid_bbx_AY8910_control_w )
+WRITE8_HANDLER( shangkid_bbx_AY8910_control_w )
 {
 	bbx_AY8910_control = data;
 	AY8910_control_port_0_w( offset, data );
 }
 
-WRITE_HANDLER( shangkid_bbx_AY8910_write_w )
+WRITE8_HANDLER( shangkid_bbx_AY8910_write_w )
 {
 	switch( bbx_AY8910_control )
 	{
@@ -144,7 +144,7 @@ WRITE_HANDLER( shangkid_bbx_AY8910_write_w )
 			if( data == 0x01 )
 			{
 				/* 0->1 transition triggers interrupt on Sound CPU */
-				cpu_set_irq_line( 2, 0, HOLD_LINE );
+				cpunum_set_input_line( 2, 0, HOLD_LINE );
 			}
 		}
 		else
@@ -165,19 +165,19 @@ WRITE_HANDLER( shangkid_bbx_AY8910_write_w )
 
 /***************************************************************************************/
 
-READ_HANDLER( shangkid_soundlatch_r )
+READ8_HANDLER( shangkid_soundlatch_r )
 {
 	return sound_latch;
 }
 
 /***************************************************************************************/
 
-static WRITE_HANDLER( shareram_w )
+static WRITE8_HANDLER( shareram_w )
 {
 	shareram[offset] = data;
 }
 
-static READ_HANDLER( shareram_r )
+static READ8_HANDLER( shareram_r )
 {
 	return shareram[offset];
 }

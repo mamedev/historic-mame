@@ -105,7 +105,7 @@ static READ16_HANDLER( lordgun_check_r )
 	return mame_rand() | 0x10;
 }
 
-static READ_HANDLER( lordgun_random_r )
+static READ8_HANDLER( lordgun_random_r )
 {
 	return mame_rand();
 }
@@ -209,7 +209,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
-static WRITE_HANDLER(fake_w)
+static WRITE8_HANDLER(fake_w)
 {
 }
 

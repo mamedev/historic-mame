@@ -11,7 +11,7 @@
 #include "res_net.h"
 
 /* from sndhrdw/pleiads.c */
-WRITE_HANDLER( pleiads_sound_control_c_w );
+WRITE8_HANDLER( pleiads_sound_control_c_w );
 
 unsigned char *naughtyb_videoram2;
 
@@ -168,7 +168,7 @@ VIDEO_START( naughtyb )
 
 
 
-WRITE_HANDLER( naughtyb_videoram2_w )
+WRITE8_HANDLER( naughtyb_videoram2_w )
 {
 	if (naughtyb_videoram2[offset] != data)
 	{
@@ -180,7 +180,7 @@ WRITE_HANDLER( naughtyb_videoram2_w )
 
 
 
-WRITE_HANDLER( naughtyb_videoreg_w )
+WRITE8_HANDLER( naughtyb_videoreg_w )
 {
 	/* bits 4+5 control the sound circuit */
 	pleiads_sound_control_c_w(offset,data);
@@ -196,7 +196,7 @@ WRITE_HANDLER( naughtyb_videoreg_w )
 	}
 }
 
-WRITE_HANDLER( popflame_videoreg_w )
+WRITE8_HANDLER( popflame_videoreg_w )
 {
 	/* bits 4+5 control the sound circuit */
 	pleiads_sound_control_c_w(offset,data);

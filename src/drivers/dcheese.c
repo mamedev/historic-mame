@@ -102,17 +102,17 @@ VIDEO_UPDATE( dcheese )
 	static int en = 1, off=0;
 	int i;
 
-	if(keyboard_pressed_memory(KEYCODE_W))
+	if(code_pressed_memory(KEYCODE_W))
 	{
 		en ^= 1;
 	}
 
-	if(keyboard_pressed_memory(KEYCODE_Q))
+	if(code_pressed_memory(KEYCODE_Q))
 	{
 		off = (off + 1) & 0x3;
 	}
 
-	if(keyboard_pressed_memory(KEYCODE_A))
+	if(code_pressed_memory(KEYCODE_A))
 	{
 		off = (off - 1) & 0x3;
 	}

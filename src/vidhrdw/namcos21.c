@@ -368,7 +368,7 @@ DrawPolygons( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
 			 *
 			 * player shots
 			 */
-			if( !keyboard_pressed(KEYCODE_C) )
+			if( !code_pressed(KEYCODE_C) )
 			size = DrawPolyObject1( bitmap, cliprect, pDSPRAM, NULL );
 			break;
 

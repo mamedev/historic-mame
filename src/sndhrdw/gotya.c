@@ -36,7 +36,7 @@ static struct gotya_sample gotya_samples[] =
 	{   -1, 0, 0 }		/* end of array */
 };
 
-WRITE_HANDLER( gotya_soundlatch_w )
+WRITE8_HANDLER( gotya_soundlatch_w )
 {
 	static int theme_playing;
 	int sample_number;

@@ -49,7 +49,7 @@ static WRITE16_HANDLER( wwfwfest_paletteram16_xxxxBBBBGGGGRRRR_word_w );
 static WRITE16_HANDLER( wwfwfest_1410_write ); /* priority write */
 static WRITE16_HANDLER( wwfwfest_scroll_write ); /* scrolling write */
 static READ16_HANDLER( wwfwfest_inputs_read );
-static WRITE_HANDLER( oki_bankswitch_w );
+static WRITE8_HANDLER( oki_bankswitch_w );
 static WRITE16_HANDLER ( wwfwfest_soundwrite );
 
 static WRITE16_HANDLER( wwfwfest_flipscreen_w )
@@ -190,7 +190,7 @@ static READ16_HANDLER( wwfwfest_inputs_read )
 
 /*- Sound Related (from dd3) -*/
 
-static WRITE_HANDLER( oki_bankswitch_w )
+static WRITE8_HANDLER( oki_bankswitch_w )
 {
 	OKIM6295_set_bank_base(0, (data & 1) * 0x40000);
 }
@@ -198,7 +198,7 @@ static WRITE_HANDLER( oki_bankswitch_w )
 static WRITE16_HANDLER ( wwfwfest_soundwrite )
 {
 	soundlatch_w(1,data & 0xff);
-	cpu_set_irq_line( 1, IRQ_LINE_NMI, PULSE_LINE );
+	cpunum_set_input_line( 1, INPUT_LINE_NMI, PULSE_LINE );
 }
 
 /*******************************************************************************
@@ -373,9 +373,9 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static INTERRUPT_GEN( wwfwfest_interrupt ) {
 	if( cpu_getiloops() == 0 )
-		cpu_set_irq_line(0, 3, HOLD_LINE);
+		cpunum_set_input_line(0, 3, HOLD_LINE);
 	else
-		cpu_set_irq_line(0, 2, HOLD_LINE);
+		cpunum_set_input_line(0, 2, HOLD_LINE);
 }
 
 /*******************************************************************************
@@ -386,7 +386,7 @@ static INTERRUPT_GEN( wwfwfest_interrupt ) {
 
 static void dd3_ymirq_handler(int irq)
 {
-	cpu_set_irq_line( 1, 0 , irq ? ASSERT_LINE : CLEAR_LINE );
+	cpunum_set_input_line( 1, 0 , irq ? ASSERT_LINE : CLEAR_LINE );
 }
 
 static struct YM2151interface ym2151_interface =

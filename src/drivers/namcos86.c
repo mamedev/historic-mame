@@ -179,28 +179,28 @@ PALETTE_INIT( namcos86 );
 VIDEO_START( namcos86 );
 VIDEO_UPDATE( namcos86 );
 VIDEO_EOF( namcos86 );
-READ_HANDLER( rthunder_videoram1_r );
-WRITE_HANDLER( rthunder_videoram1_w );
-READ_HANDLER( rthunder_videoram2_r );
-WRITE_HANDLER( rthunder_videoram2_w );
-WRITE_HANDLER( rthunder_scroll0_w );
-WRITE_HANDLER( rthunder_scroll1_w );
-WRITE_HANDLER( rthunder_scroll2_w );
-WRITE_HANDLER( rthunder_scroll3_w );
-WRITE_HANDLER( rthunder_backcolor_w );
-WRITE_HANDLER( rthunder_tilebank_select_w );
-READ_HANDLER( rthunder_spriteram_r );
-WRITE_HANDLER( rthunder_spriteram_w );
+READ8_HANDLER( rthunder_videoram1_r );
+WRITE8_HANDLER( rthunder_videoram1_w );
+READ8_HANDLER( rthunder_videoram2_r );
+WRITE8_HANDLER( rthunder_videoram2_w );
+WRITE8_HANDLER( rthunder_scroll0_w );
+WRITE8_HANDLER( rthunder_scroll1_w );
+WRITE8_HANDLER( rthunder_scroll2_w );
+WRITE8_HANDLER( rthunder_scroll3_w );
+WRITE8_HANDLER( rthunder_backcolor_w );
+WRITE8_HANDLER( rthunder_tilebank_select_w );
+READ8_HANDLER( rthunder_spriteram_r );
+WRITE8_HANDLER( rthunder_spriteram_w );
 
 
 /* shared memory area with the mcu */
 static unsigned char *shared1;
-static READ_HANDLER( shared1_r ) { return shared1[offset]; }
-static WRITE_HANDLER( shared1_w ) { shared1[offset] = data; }
+static READ8_HANDLER( shared1_r ) { return shared1[offset]; }
+static WRITE8_HANDLER( shared1_w ) { shared1[offset] = data; }
 
 
 
-static WRITE_HANDLER( bankswitch1_w )
+static WRITE8_HANDLER( bankswitch1_w )
 {
 	unsigned char *base = memory_region(REGION_CPU1) + 0x10000;
 
@@ -211,7 +211,7 @@ static WRITE_HANDLER( bankswitch1_w )
 	cpu_setbank(1,base + ((data & 0x03) * 0x2000));
 }
 
-static WRITE_HANDLER( bankswitch1_ext_w )
+static WRITE8_HANDLER( bankswitch1_ext_w )
 {
 	unsigned char *base = memory_region(REGION_USER1);
 
@@ -220,7 +220,7 @@ static WRITE_HANDLER( bankswitch1_ext_w )
 	cpu_setbank(1,base + ((data & 0x1f) * 0x2000));
 }
 
-static WRITE_HANDLER( bankswitch2_w )
+static WRITE8_HANDLER( bankswitch2_w )
 {
 	unsigned char *base = memory_region(REGION_CPU2) + 0x10000;
 
@@ -228,7 +228,7 @@ static WRITE_HANDLER( bankswitch2_w )
 }
 
 /* Stubs to pass the correct Dip Switch setup to the MCU */
-static READ_HANDLER( dsw0_r )
+static READ8_HANDLER( dsw0_r )
 {
 	int rhi, rlo;
 
@@ -245,7 +245,7 @@ static READ_HANDLER( dsw0_r )
 	return rhi | rlo;
 }
 
-static READ_HANDLER( dsw1_r )
+static READ8_HANDLER( dsw1_r )
 {
 	int rhi, rlo;
 
@@ -263,20 +263,20 @@ static READ_HANDLER( dsw1_r )
 }
 
 
-static WRITE_HANDLER( int_ack1_w )
+static WRITE8_HANDLER( int_ack1_w )
 {
-	cpu_set_irq_line(0, 0, CLEAR_LINE);
+	cpunum_set_input_line(0, 0, CLEAR_LINE);
 }
 
-static WRITE_HANDLER( int_ack2_w )
+static WRITE8_HANDLER( int_ack2_w )
 {
-	cpu_set_irq_line(1, 0, CLEAR_LINE);
+	cpunum_set_input_line(1, 0, CLEAR_LINE);
 }
 
 
 static int wdog;
 
-static WRITE_HANDLER( watchdog1_w )
+static WRITE8_HANDLER( watchdog1_w )
 {
 	wdog |= 1;
 	if (wdog == 3)
@@ -286,7 +286,7 @@ static WRITE_HANDLER( watchdog1_w )
 	}
 }
 
-static WRITE_HANDLER( watchdog2_w )
+static WRITE8_HANDLER( watchdog2_w )
 {
 	wdog |= 2;
 	if (wdog == 3)
@@ -297,14 +297,14 @@ static WRITE_HANDLER( watchdog2_w )
 }
 
 
-static WRITE_HANDLER( namcos86_coin_w )
+static WRITE8_HANDLER( namcos86_coin_w )
 {
 	coin_lockout_global_w(data & 1);
 	coin_counter_w(0,~data & 2);
 	coin_counter_w(1,~data & 4);
 }
 
-static WRITE_HANDLER( namcos86_led_w )
+static WRITE8_HANDLER( namcos86_led_w )
 {
 	set_led_status(0,data & 0x08);
 	set_led_status(1,data & 0x10);
@@ -442,7 +442,7 @@ MCU_MEMORY( wndrmomo, 0x4000, 0x3800, 0xc000, 0xc800 )
 #undef UNUSED
 
 
-static READ_HANDLER( readFF )
+static READ8_HANDLER( readFF )
 {
 	return 0xff;
 }

@@ -181,7 +181,7 @@ static void RF5C68Update( int num, INT16 **buffer, int length )
 /************************************************/
 /*    RF5C68 write register                     */
 /************************************************/
-WRITE_HANDLER( RF5C68_reg_w )
+WRITE8_HANDLER( RF5C68_reg_w )
 {
 	int  i;
 	int  val;
@@ -250,7 +250,7 @@ WRITE_HANDLER( RF5C68_reg_w )
 /************************************************/
 /*    RF5C68 read memory                        */
 /************************************************/
-READ_HANDLER( RF5C68_r )
+READ8_HANDLER( RF5C68_r )
 {
 	unsigned int  bank;
 	bank = wreg[0x7] & 0x40 ? rpcm.start[reg_port] >> BASE_SHIFT : (wreg[0x7] & 0xf) << 12;
@@ -259,7 +259,7 @@ READ_HANDLER( RF5C68_r )
 /************************************************/
 /*    RF5C68 write memory                       */
 /************************************************/
-WRITE_HANDLER( RF5C68_w )
+WRITE8_HANDLER( RF5C68_w )
 {
 	unsigned int  bank;
 	bank = wreg[0x7] & 0x40 ? rpcm.start[reg_port] >> BASE_SHIFT : (wreg[0x7] & 0xf) << 12;

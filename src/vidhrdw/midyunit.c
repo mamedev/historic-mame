@@ -467,7 +467,7 @@ DECLARE_BLITTER_SET(dma_draw)
 
 static int temp_irq_callback(int irqline)
 {
-	cpunum_set_info_int(0, CPUINFO_INT_IRQ_STATE + 0, CLEAR_LINE);
+	cpunum_set_info_int(0, CPUINFO_INT_INPUT_STATE + 0, CLEAR_LINE);
 	return 0;
 }
 
@@ -478,10 +478,10 @@ static void dma_callback(int is_in_34010_context)
 	if (is_in_34010_context)
 	{
 		cpunum_set_info_ptr(0, CPUINFO_PTR_IRQ_CALLBACK, (void *)temp_irq_callback);
-		cpunum_set_info_int(0, CPUINFO_INT_IRQ_STATE + 0, ASSERT_LINE);
+		cpunum_set_info_int(0, CPUINFO_INT_INPUT_STATE + 0, ASSERT_LINE);
 	}
 	else
-		cpu_set_irq_line(0, 0, HOLD_LINE);
+		cpunum_set_input_line(0, 0, HOLD_LINE);
 }
 
 
@@ -574,12 +574,12 @@ WRITE16_HANDLER( midyunit_dma_w )
 	command = dma_register[DMA_COMMAND];
 	if (!(command & 0x8000))
 	{
-		cpunum_set_info_int(0, CPUINFO_INT_IRQ_STATE + 0, CLEAR_LINE);
+		cpunum_set_info_int(0, CPUINFO_INT_INPUT_STATE + 0, CLEAR_LINE);
 		return;
 	}
 
 #if LOG_DMA
-	if (keyboard_pressed(KEYCODE_L))
+	if (code_pressed(KEYCODE_L))
 	{
 		logerror("----\n");
 		logerror("DMA command %04X: (xflip=%d yflip=%d)\n",

@@ -31,13 +31,13 @@ VIDEO_START( liberate );
 static int deco16_bank;
 static data8_t *scratchram;
 
-WRITE_HANDLER( deco16_io_w );
-WRITE_HANDLER( prosport_paletteram_w );
-WRITE_HANDLER( liberate_videoram_w );
+WRITE8_HANDLER( deco16_io_w );
+WRITE8_HANDLER( prosport_paletteram_w );
+WRITE8_HANDLER( liberate_videoram_w );
 
 /***************************************************************************/
 
-static READ_HANDLER( deco16_bank_r )
+static READ8_HANDLER( deco16_bank_r )
 {
 	const data8_t *ROM = memory_region(REGION_USER1);
 
@@ -55,12 +55,12 @@ static READ_HANDLER( deco16_bank_r )
 	return 0;
 }
 
-static WRITE_HANDLER( deco16_bank_w )
+static WRITE8_HANDLER( deco16_bank_w )
 {
 	deco16_bank=data;
 }
 
-static READ_HANDLER( deco16_io_r )
+static READ8_HANDLER( deco16_io_r )
 {
 	const data8_t *ROM = memory_region(REGION_CPU1);
 
@@ -692,7 +692,7 @@ static INTERRUPT_GEN( deco16_interrupt )
 	static int latch=0;
 	int p=~readinputport(3);
 	if (p&0x43 && !latch) {
-		cpu_set_irq_line(0,DECO16_IRQ_LINE,ASSERT_LINE);
+		cpunum_set_input_line(0,DECO16_IRQ_LINE,ASSERT_LINE);
 		latch=1;
 	} else {
 		if (!(p&0x43))

@@ -53,25 +53,25 @@ The 6809 NMI is used for sound timing.
 
 extern int nmi_enable;
 
-extern WRITE_HANDLER( yiear_videoram_w );
-extern WRITE_HANDLER( yiear_control_w );
+extern WRITE8_HANDLER( yiear_videoram_w );
+extern WRITE8_HANDLER( yiear_control_w );
 
 extern PALETTE_INIT( yiear );
 extern VIDEO_START( yiear );
 extern VIDEO_UPDATE( yiear );
 
 /* in sndhrdw/trackfld.c */
-extern WRITE_HANDLER( konami_SN76496_latch_w );
-extern WRITE_HANDLER( konami_SN76496_0_w );
+extern WRITE8_HANDLER( konami_SN76496_latch_w );
+extern WRITE8_HANDLER( konami_SN76496_0_w );
 
 
-static READ_HANDLER( yiear_speech_r )
+static READ8_HANDLER( yiear_speech_r )
 {
 	if (VLM5030_BSY()) return 1;
 	else return 0;
 }
 
-static WRITE_HANDLER( yiear_VLM5030_control_w )
+static WRITE8_HANDLER( yiear_VLM5030_control_w )
 {
 	/* bit 0 is latch direction */
 	VLM5030_ST( ( data >> 1 ) & 1 );
@@ -81,7 +81,7 @@ static WRITE_HANDLER( yiear_VLM5030_control_w )
 INTERRUPT_GEN( yiear_nmi_interrupt )
 {
 	/* can't use nmi_line_pulse() because interrupt_enable_w() effects it */
-	if (nmi_enable) cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+	if (nmi_enable) cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 }
 
 

@@ -76,13 +76,13 @@ DISCRETE_SOUND_START(llander_sound_interface)
 	DISCRETE_OUTPUT(NODE_91, 100)															// Take the output from the mixer
 DISCRETE_SOUND_END
 
-WRITE_HANDLER( llander_snd_reset_w )
+WRITE8_HANDLER( llander_snd_reset_w )
 {
 	/* Resets the LFSR that is used for the white noise generator       */
 	discrete_sound_w(4, 0);				/* Reset */
 }
 
-WRITE_HANDLER( llander_sounds_w )
+WRITE8_HANDLER( llander_sounds_w )
 {
 	discrete_sound_w(0,data&0x07);		/* Thrust volume */
 	discrete_sound_w(1,data&0x10);		/* Tone 3KHz enable */

@@ -41,10 +41,10 @@ struct NESinterface
    int volume[MAX_NESPSG];
 };
 
-READ_HANDLER( NESPSG_0_r );
-READ_HANDLER( NESPSG_1_r );
-WRITE_HANDLER( NESPSG_0_w );
-WRITE_HANDLER( NESPSG_1_w );
+READ8_HANDLER( NESPSG_0_r );
+READ8_HANDLER( NESPSG_1_r );
+WRITE8_HANDLER( NESPSG_0_w );
+WRITE8_HANDLER( NESPSG_1_w );
 
 extern int NESPSG_sh_start(const struct MachineSound *);
 extern void NESPSG_sh_stop(void);

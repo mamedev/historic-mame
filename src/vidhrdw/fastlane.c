@@ -108,7 +108,7 @@ VIDEO_START( fastlane )
 
 ***************************************************************************/
 
-WRITE_HANDLER( fastlane_vram1_w )
+WRITE8_HANDLER( fastlane_vram1_w )
 {
 	if (fastlane_videoram1[offset] != data)
 	{
@@ -117,7 +117,7 @@ WRITE_HANDLER( fastlane_vram1_w )
 	}
 }
 
-WRITE_HANDLER( fastlane_vram2_w )
+WRITE8_HANDLER( fastlane_vram2_w )
 {
 	if (fastlane_videoram2[offset] != data)
 	{

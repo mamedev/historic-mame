@@ -126,7 +126,7 @@ static int dial_compute_value(int new_val, int indx)
  *
  *************************************/
 
-READ_HANDLER( cerberus_dial_1_r )
+READ8_HANDLER( cerberus_dial_1_r )
 {
 	int original = readinputport(0);
 	int modified = dial_compute_value(readinputport(4), 0);
@@ -134,7 +134,7 @@ READ_HANDLER( cerberus_dial_1_r )
 }
 
 
-READ_HANDLER( cerberus_dial_2_r )
+READ8_HANDLER( cerberus_dial_2_r )
 {
 	int original = readinputport(2);
 	int modified = dial_compute_value(readinputport(5), 1);
@@ -151,7 +151,7 @@ READ_HANDLER( cerberus_dial_2_r )
 
 UINT8 *alleymas_kludge_mem;
 
-WRITE_HANDLER( alleymas_joystick_kludge )
+WRITE8_HANDLER( alleymas_joystick_kludge )
 {
 	/* catch the case where they clear this memory location at PC $1827 and change */
 	/* the value written to be a 1 */
@@ -203,21 +203,21 @@ static void update_dangerz_xy(void)
 }
 
 
-READ_HANDLER( dangerz_input_y_r )
+READ8_HANDLER( dangerz_input_y_r )
 {
 	update_dangerz_xy();
 	return dangerz_y & 0xff;
 }
 
 
-READ_HANDLER( dangerz_input_x_r )
+READ8_HANDLER( dangerz_input_x_r )
 {
 	update_dangerz_xy();
 	return dangerz_x & 0xff;
 }
 
 
-READ_HANDLER( dangerz_input_upper_r )
+READ8_HANDLER( dangerz_input_upper_r )
 {
 	update_dangerz_xy();
 	return ((dangerz_y >> 2) & 0xc0) | ((dangerz_x >> 8) & 0x03);
@@ -233,27 +233,27 @@ READ_HANDLER( dangerz_input_upper_r )
 
 static const UINT8 redline_pedal_value[8] = { 0xf0, 0xe0, 0xc0, 0xd0, 0x90, 0xb0, 0x30, 0x70 };
 
-READ_HANDLER( redline_pedal_1_r )
+READ8_HANDLER( redline_pedal_1_r )
 {
 	int pedal = readinputport(0);
 	return redline_pedal_value[pedal >> 5] | 0x0f;
 }
 
 
-READ_HANDLER( redline_pedal_2_r )
+READ8_HANDLER( redline_pedal_2_r )
 {
 	int pedal = readinputport(2);
 	return redline_pedal_value[pedal >> 5] | 0x0f;
 }
 
 
-READ_HANDLER( redline_wheel_1_r )
+READ8_HANDLER( redline_wheel_1_r )
 {
 	return dial_compute_value(readinputport(4), 0);
 }
 
 
-READ_HANDLER( redline_wheel_2_r )
+READ8_HANDLER( redline_wheel_2_r )
 {
 	return dial_compute_value(readinputport(5), 1);
 }
@@ -266,19 +266,19 @@ READ_HANDLER( redline_wheel_2_r )
  *
  *************************************/
 
-READ_HANDLER( offroad_wheel_1_r )
+READ8_HANDLER( offroad_wheel_1_r )
 {
 	return dial_compute_value(readinputport(7), 0);
 }
 
 
-READ_HANDLER( offroad_wheel_2_r )
+READ8_HANDLER( offroad_wheel_2_r )
 {
 	return dial_compute_value(readinputport(8), 1);
 }
 
 
-READ_HANDLER( offroad_wheel_3_r )
+READ8_HANDLER( offroad_wheel_3_r )
 {
 	return dial_compute_value(readinputport(9), 2);
 }
@@ -291,7 +291,7 @@ READ_HANDLER( offroad_wheel_3_r )
  *
  *************************************/
 
-READ_HANDLER( ataxx_trackball_r )
+READ8_HANDLER( ataxx_trackball_r )
 {
 	return dial_compute_value(readinputport(3 + offset), offset);
 }
@@ -304,13 +304,13 @@ READ_HANDLER( ataxx_trackball_r )
  *
  *************************************/
 
-READ_HANDLER( indyheat_wheel_r )
+READ8_HANDLER( indyheat_wheel_r )
 {
 	return dial_compute_value(readinputport(3 + offset), offset);
 }
 
 
-READ_HANDLER( indyheat_analog_r )
+READ8_HANDLER( indyheat_analog_r )
 {
 	switch (offset)
 	{
@@ -331,7 +331,7 @@ READ_HANDLER( indyheat_analog_r )
 }
 
 
-WRITE_HANDLER( indyheat_analog_w )
+WRITE8_HANDLER( indyheat_analog_w )
 {
 	switch (offset)
 	{
@@ -456,7 +456,7 @@ static void leland_interrupt_callback(int scanline)
 
 	/* interrupts generated on the VA10 line, which is every */
 	/* 16 scanlines starting with scanline #8 */
-	cpu_set_irq_line(0, 0, HOLD_LINE);
+	cpunum_set_input_line(0, 0, HOLD_LINE);
 
 	/* set a timer for the next one */
 	scanline += 16;
@@ -472,7 +472,7 @@ static void ataxx_interrupt_callback(int scanline)
 	leland_last_scanline_int = scanline;
 
 	/* interrupts generated according to the interrupt control register */
-	cpu_set_irq_line(0, 0, HOLD_LINE);
+	cpunum_set_input_line(0, 0, HOLD_LINE);
 
 	/* set a timer for the next one */
 	timer_adjust(master_int_timer, cpu_getscanlinetime(scanline), scanline, 0);
@@ -483,7 +483,7 @@ INTERRUPT_GEN( leland_master_interrupt )
 {
 	/* check for coins here */
 	if ((readinputport(1) & 0x0e) != 0x0e)
-		cpu_set_irq_line(0, IRQ_LINE_NMI, ASSERT_LINE);
+		cpunum_set_input_line(0, INPUT_LINE_NMI, ASSERT_LINE);
 }
 
 
@@ -494,7 +494,7 @@ INTERRUPT_GEN( leland_master_interrupt )
  *
  *************************************/
 
-WRITE_HANDLER( leland_master_alt_bankswitch_w )
+WRITE8_HANDLER( leland_master_alt_bankswitch_w )
 {
 	/* update any bankswitching */
 	if (LOG_BANKSWITCHING_M)
@@ -831,7 +831,7 @@ void ataxx_init_eeprom(UINT8 default_val, const UINT16 *data, UINT8 serial_offse
  *
  *************************************/
 
-READ_HANDLER( ataxx_eeprom_r )
+READ8_HANDLER( ataxx_eeprom_r )
 {
 	int port = readinputport(2);
 	if (LOG_EEPROM) logerror("%04X:EE read\n", activecpu_get_previouspc());
@@ -839,7 +839,7 @@ READ_HANDLER( ataxx_eeprom_r )
 }
 
 
-WRITE_HANDLER( ataxx_eeprom_w )
+WRITE8_HANDLER( ataxx_eeprom_w )
 {
 	if (LOG_EEPROM) logerror("%04X:EE write %d%d%d\n", activecpu_get_previouspc(),
 			(data >> 6) & 1, (data >> 5) & 1, (data >> 4) & 1);
@@ -856,7 +856,7 @@ WRITE_HANDLER( ataxx_eeprom_w )
  *
  *************************************/
 
-WRITE_HANDLER( leland_battery_ram_w )
+WRITE8_HANDLER( leland_battery_ram_w )
 {
 	if (battery_ram_enable)
 	{
@@ -868,7 +868,7 @@ WRITE_HANDLER( leland_battery_ram_w )
 }
 
 
-WRITE_HANDLER( ataxx_battery_ram_w )
+WRITE8_HANDLER( ataxx_battery_ram_w )
 {
 	if (battery_ram_enable)
 	{
@@ -1068,7 +1068,7 @@ static void keycard_w(int data)
  *
  *************************************/
 
-READ_HANDLER( leland_master_analog_key_r )
+READ8_HANDLER( leland_master_analog_key_r )
 {
 	int result = 0;
 
@@ -1095,7 +1095,7 @@ READ_HANDLER( leland_master_analog_key_r )
 
 
 
-WRITE_HANDLER( leland_master_analog_key_w )
+WRITE8_HANDLER( leland_master_analog_key_w )
 {
 	switch (offset)
 	{
@@ -1127,7 +1127,7 @@ WRITE_HANDLER( leland_master_analog_key_w )
  *
  *************************************/
 
-READ_HANDLER( leland_master_input_r )
+READ8_HANDLER( leland_master_input_r )
 {
 	int result = 0xff;
 
@@ -1145,7 +1145,7 @@ READ_HANDLER( leland_master_input_r )
 
 		case 0x02:	/* /GIN2 */
 		case 0x12:
-			cpu_set_nmi_line(0, CLEAR_LINE);
+			cpunum_set_input_line(0, INPUT_LINE_NMI, CLEAR_LINE);
 			break;
 
 		case 0x03:	/* /IGID */
@@ -1171,15 +1171,15 @@ READ_HANDLER( leland_master_input_r )
 }
 
 
-WRITE_HANDLER( leland_master_output_w )
+WRITE8_HANDLER( leland_master_output_w )
 {
 	switch (offset)
 	{
 		case 0x09:	/* /MCONT */
-			cpu_set_reset_line(1,    (data & 0x01) ? CLEAR_LINE : ASSERT_LINE);
+			cpunum_set_input_line(1, INPUT_LINE_RESET, (data & 0x01) ? CLEAR_LINE : ASSERT_LINE);
 			wcol_enable = (data & 0x02);
-			cpu_set_nmi_line  (1,    (data & 0x04) ? CLEAR_LINE : ASSERT_LINE);
-			cpu_set_irq_line  (1, 0, (data & 0x08) ? CLEAR_LINE : ASSERT_LINE);
+			cpunum_set_input_line(1, INPUT_LINE_NMI, (data & 0x04) ? CLEAR_LINE : ASSERT_LINE);
+			cpunum_set_input_line  (1, 0, (data & 0x08) ? CLEAR_LINE : ASSERT_LINE);
 
 			if (LOG_EEPROM) logerror("%04X:EE write %d%d%d\n", activecpu_get_previouspc(),
 					(data >> 6) & 1, (data >> 5) & 1, (data >> 4) & 1);
@@ -1210,7 +1210,7 @@ WRITE_HANDLER( leland_master_output_w )
 }
 
 
-READ_HANDLER( ataxx_master_input_r )
+READ8_HANDLER( ataxx_master_input_r )
 {
 	int result = 0xff;
 
@@ -1234,7 +1234,7 @@ READ_HANDLER( ataxx_master_input_r )
 }
 
 
-WRITE_HANDLER( ataxx_master_output_w )
+WRITE8_HANDLER( ataxx_master_output_w )
 {
 	switch (offset)
 	{
@@ -1254,9 +1254,9 @@ WRITE_HANDLER( ataxx_master_output_w )
 			break;
 
 		case 0x05:	/* /SLV0 */
-			cpu_set_irq_line  (1, 0, (data & 0x01) ? CLEAR_LINE : ASSERT_LINE);
-			cpu_set_nmi_line  (1,    (data & 0x04) ? CLEAR_LINE : ASSERT_LINE);
-			cpu_set_reset_line(1,    (data & 0x10) ? CLEAR_LINE : ASSERT_LINE);
+			cpunum_set_input_line  (1, 0, (data & 0x01) ? CLEAR_LINE : ASSERT_LINE);
+			cpunum_set_input_line(1, INPUT_LINE_NMI, (data & 0x04) ? CLEAR_LINE : ASSERT_LINE);
+			cpunum_set_input_line(1, INPUT_LINE_RESET, (data & 0x10) ? CLEAR_LINE : ASSERT_LINE);
 			break;
 
 		case 0x08:	/*  */
@@ -1277,14 +1277,14 @@ WRITE_HANDLER( ataxx_master_output_w )
  *
  *************************************/
 
-WRITE_HANDLER( leland_gated_paletteram_w )
+WRITE8_HANDLER( leland_gated_paletteram_w )
 {
 	if (wcol_enable)
 		paletteram_BBGGGRRR_w(offset, data);
 }
 
 
-READ_HANDLER( leland_gated_paletteram_r )
+READ8_HANDLER( leland_gated_paletteram_r )
 {
 	if (wcol_enable)
 		return paletteram_r(offset);
@@ -1292,7 +1292,7 @@ READ_HANDLER( leland_gated_paletteram_r )
 }
 
 
-WRITE_HANDLER( ataxx_paletteram_and_misc_w )
+WRITE8_HANDLER( ataxx_paletteram_and_misc_w )
 {
 	if (wcol_enable)
 		paletteram_xxxxRRRRGGGGBBBB_w(offset, data);
@@ -1323,7 +1323,7 @@ WRITE_HANDLER( ataxx_paletteram_and_misc_w )
 }
 
 
-READ_HANDLER( ataxx_paletteram_and_misc_r )
+READ8_HANDLER( ataxx_paletteram_and_misc_r )
 {
 	if (wcol_enable)
 		return paletteram_r(offset);
@@ -1351,13 +1351,13 @@ READ_HANDLER( ataxx_paletteram_and_misc_r )
  *
  *************************************/
 
-READ_HANDLER( leland_sound_port_r )
+READ8_HANDLER( leland_sound_port_r )
 {
     return leland_gfx_control;
 }
 
 
-WRITE_HANDLER( leland_sound_port_w )
+WRITE8_HANDLER( leland_sound_port_w )
 {
 	int gfx_banks = Machine->gfx[0]->total_elements / 0x400;
 	int gfx_bank_mask = (gfx_banks - 1) << 4;
@@ -1387,7 +1387,7 @@ WRITE_HANDLER( leland_sound_port_w )
  *
  *************************************/
 
-WRITE_HANDLER( leland_slave_small_banksw_w )
+WRITE8_HANDLER( leland_slave_small_banksw_w )
 {
 	int bankaddress = 0x10000 + 0xc000 * (data & 1);
 
@@ -1402,7 +1402,7 @@ WRITE_HANDLER( leland_slave_small_banksw_w )
 }
 
 
-WRITE_HANDLER( leland_slave_large_banksw_w )
+WRITE8_HANDLER( leland_slave_large_banksw_w )
 {
 	int bankaddress = 0x10000 + 0x8000 * (data & 15);
 
@@ -1417,7 +1417,7 @@ WRITE_HANDLER( leland_slave_large_banksw_w )
 }
 
 
-WRITE_HANDLER( ataxx_slave_banksw_w )
+WRITE8_HANDLER( ataxx_slave_banksw_w )
 {
 	int bankaddress, bank = data & 15;
 
@@ -1448,7 +1448,7 @@ WRITE_HANDLER( ataxx_slave_banksw_w )
  *
  *************************************/
 
-READ_HANDLER( leland_raster_r )
+READ8_HANDLER( leland_raster_r )
 {
 	int scanline = cpu_getscanline();
 	return (scanline < 255) ? scanline : 255;

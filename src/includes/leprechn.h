@@ -7,7 +7,7 @@
 /*----------- defined in machine/leprechn.c -----------*/
 
 DRIVER_INIT( leprechn );
-READ_HANDLER( leprechn_sh_0805_r );
+READ8_HANDLER( leprechn_sh_0805_r );
 
 
 /*----------- defined in vidhrdw/leprechn.c -----------*/
@@ -15,6 +15,6 @@ READ_HANDLER( leprechn_sh_0805_r );
 PALETTE_INIT( leprechn );
 VIDEO_START( leprechn );
 
-WRITE_HANDLER( leprechn_graphics_command_w );
-READ_HANDLER( leprechn_videoram_r );
-WRITE_HANDLER( leprechn_videoram_w );
+WRITE8_HANDLER( leprechn_graphics_command_w );
+READ8_HANDLER( leprechn_videoram_r );
+WRITE8_HANDLER( leprechn_videoram_w );

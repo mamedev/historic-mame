@@ -21,28 +21,28 @@ UINT8 *grchamp_radar;		/* bitmap for radar */
 
 struct tilemap *tilemap[3];
 
-WRITE_HANDLER( grchamp_player_xpos_w )
+WRITE8_HANDLER( grchamp_player_xpos_w )
 {
 	grchamp_player_xpos = data;
 }
 
-WRITE_HANDLER( grchamp_player_ypos_w )
+WRITE8_HANDLER( grchamp_player_ypos_w )
 {
 	grchamp_player_ypos = data;
 }
 
-WRITE_HANDLER( grchamp_tile_select_w )
+WRITE8_HANDLER( grchamp_tile_select_w )
 {
 	/* tile select: bits 4..7:rain; bits 0..3:player car */
 	grchamp_tile_number = data;
 }
 
-WRITE_HANDLER( grchamp_rain_xpos_w )
+WRITE8_HANDLER( grchamp_rain_xpos_w )
 {
 	grchamp_rain_xpos = data;
 }
 
-WRITE_HANDLER( grchamp_rain_ypos_w )
+WRITE8_HANDLER( grchamp_rain_ypos_w )
 {
 	grchamp_rain_ypos = data;
 }
@@ -91,7 +91,7 @@ PALETTE_INIT( grchamp )
 	palette_set_color(0x43,0,0,0);
 }
 
-WRITE_HANDLER( grchamp_videoram_w )
+WRITE8_HANDLER( grchamp_videoram_w )
 {
 	if( grchamp_videoram[offset]!=data )
 	{

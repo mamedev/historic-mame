@@ -119,9 +119,9 @@ static READ16_HANDLER( hacked_soundcommand_r )
 INTERRUPT_GEN( bionicc_interrupt )
 {
 	if (cpu_getiloops() == 0) 
-		cpu_set_irq_line(0, 2, HOLD_LINE);
+		cpunum_set_input_line(0, 2, HOLD_LINE);
 	else
-		cpu_set_irq_line(0, 4, HOLD_LINE);
+		cpunum_set_input_line(0, 4, HOLD_LINE);
 }
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 16 )

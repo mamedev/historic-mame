@@ -125,7 +125,7 @@ VIDEO_START( wc90t )
 
 ***************************************************************************/
 
-WRITE_HANDLER( wc90_bgvideoram_w )
+WRITE8_HANDLER( wc90_bgvideoram_w )
 {
 	if (wc90_bgvideoram[offset] != data)
 	{
@@ -134,7 +134,7 @@ WRITE_HANDLER( wc90_bgvideoram_w )
 	}
 }
 
-WRITE_HANDLER( wc90_fgvideoram_w )
+WRITE8_HANDLER( wc90_fgvideoram_w )
 {
 	if (wc90_fgvideoram[offset] != data)
 	{
@@ -143,7 +143,7 @@ WRITE_HANDLER( wc90_fgvideoram_w )
 	}
 }
 
-WRITE_HANDLER( wc90_txvideoram_w )
+WRITE8_HANDLER( wc90_txvideoram_w )
 {
 	if (wc90_txvideoram[offset] != data)
 	{

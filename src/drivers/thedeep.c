@@ -36,15 +36,15 @@ Notes:
 
 static int nmi_enable;
 
-WRITE_HANDLER( thedeep_nmi_w )
+WRITE8_HANDLER( thedeep_nmi_w )
 {
 	nmi_enable = data;
 }
 
-static WRITE_HANDLER( thedeep_sound_w )
+static WRITE8_HANDLER( thedeep_sound_w )
 {
 	soundlatch_w(0,data);
-	cpu_set_nmi_line(1, PULSE_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 }
 
 static data8_t protection_command, protection_data;
@@ -64,7 +64,7 @@ static MACHINE_INIT( thedeep )
 	rombank = -1;
 }
 
-static WRITE_HANDLER( thedeep_protection_w )
+static WRITE8_HANDLER( thedeep_protection_w )
 {
 	protection_command = data;
 	switch (protection_command)
@@ -127,18 +127,18 @@ static WRITE_HANDLER( thedeep_protection_w )
 	}
 }
 
-static READ_HANDLER( thedeep_e004_r )
+static READ8_HANDLER( thedeep_e004_r )
 {
 	return protection_irq ? 1 : 0;
 }
 
-static READ_HANDLER( thedeep_protection_r )
+static READ8_HANDLER( thedeep_protection_r )
 {
 	protection_irq = 0;
 	return protection_data;
 }
 
-static WRITE_HANDLER( thedeep_e100_w )
+static WRITE8_HANDLER( thedeep_e100_w )
 {
 	if (data != 1)
 		logerror("pc %04x: e100 = %02x\n", activecpu_get_pc(),data);
@@ -324,7 +324,7 @@ static struct GfxDecodeInfo thedeep_gfxdecodeinfo[] =
 
 static void irqhandler(int irq)
 {
-	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2203interface thedeep_ym2203_intf =
@@ -355,14 +355,14 @@ static INTERRUPT_GEN( thedeep_interrupt )
 				protection_irq = 1;
 		}
 		if (protection_irq)
-			cpu_set_irq_line(0, 0, HOLD_LINE);
+			cpunum_set_input_line(0, 0, HOLD_LINE);
 	}
 	else
 	{
 		if (nmi_enable)
 		{
-			cpu_set_nmi_line(0, ASSERT_LINE);
-			cpu_set_nmi_line(0, CLEAR_LINE);
+			cpunum_set_input_line(0, INPUT_LINE_NMI, ASSERT_LINE);
+			cpunum_set_input_line(0, INPUT_LINE_NMI, CLEAR_LINE);
 		}
 	}
 }

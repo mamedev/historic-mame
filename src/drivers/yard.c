@@ -20,13 +20,13 @@ extern unsigned char *yard_score_panel_disabled;
 
 PALETTE_INIT( yard );
 VIDEO_START( yard );
-WRITE_HANDLER( yard_flipscreen_w );
-WRITE_HANDLER( yard_scroll_panel_w );
+WRITE8_HANDLER( yard_flipscreen_w );
+WRITE8_HANDLER( yard_scroll_panel_w );
 VIDEO_UPDATE( yard );
 
 
 
-READ_HANDLER( mpatrol_input_port_3_r );
+READ8_HANDLER( mpatrol_input_port_3_r );
 
 
 

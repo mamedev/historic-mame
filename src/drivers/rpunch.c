@@ -146,7 +146,7 @@ WRITE16_HANDLER( rpunch_crtc_register_w );
 static void ym2151_irq_gen(int state)
 {
 	ym2151_irq = state;
-	cpu_set_irq_line(1, 0, (ym2151_irq | sound_busy) ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1, 0, (ym2151_irq | sound_busy) ? ASSERT_LINE : CLEAR_LINE);
 }
 
 
@@ -180,7 +180,7 @@ void sound_command_w_callback(int data)
 {
 	sound_busy = 1;
 	sound_data = data;
-	cpu_set_irq_line(1, 0, (ym2151_irq | sound_busy) ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1, 0, (ym2151_irq | sound_busy) ? ASSERT_LINE : CLEAR_LINE);
 }
 
 
@@ -191,10 +191,10 @@ static WRITE16_HANDLER( sound_command_w )
 }
 
 
-static READ_HANDLER( sound_command_r )
+static READ8_HANDLER( sound_command_r )
 {
 	sound_busy = 0;
-	cpu_set_irq_line(1, 0, (ym2151_irq | sound_busy) ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1, 0, (ym2151_irq | sound_busy) ? ASSERT_LINE : CLEAR_LINE);
 	return sound_data;
 }
 
@@ -212,7 +212,7 @@ static READ16_HANDLER( sound_busy_r )
  *
  *************************************/
 
-WRITE_HANDLER( upd_control_w )
+WRITE8_HANDLER( upd_control_w )
 {
 	if ((data & 1) != upd_rom_bank)
 	{
@@ -223,7 +223,7 @@ WRITE_HANDLER( upd_control_w )
 }
 
 
-WRITE_HANDLER( upd_data_w )
+WRITE8_HANDLER( upd_data_w )
 {
 	UPD7759_port_w(0, data);
 	UPD7759_start_w(0, 0);

@@ -17,7 +17,7 @@ UINT8 *iremm15_chargen;
 static int bottomline;
 
 
-WRITE_HANDLER( skychut_colorram_w )
+WRITE8_HANDLER( skychut_colorram_w )
 {
 	if (colorram[offset] != data)
 	{
@@ -27,7 +27,7 @@ WRITE_HANDLER( skychut_colorram_w )
 	}
 }
 
-WRITE_HANDLER( skychut_ctrl_w )
+WRITE8_HANDLER( skychut_ctrl_w )
 {
 //usrintf_showmessage("%02x",data);
 

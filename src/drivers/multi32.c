@@ -67,7 +67,7 @@ static data16_t control[256];
 static void irq_raise(int level)
 {
 	irq_status |= (1 << level);
-	cpu_set_irq_line(0, 0, ASSERT_LINE);
+	cpunum_set_input_line(0, 0, ASSERT_LINE);
 }
 
 static int irq_callback(int irqline)
@@ -85,14 +85,14 @@ static WRITE16_HANDLER(irq_ack_w)
 	if(ACCESSING_MSB) {
 		irq_status &= data >> 8;
 		if(!irq_status)
-			cpu_set_irq_line(0, 0, CLEAR_LINE);
+			cpunum_set_input_line(0, 0, CLEAR_LINE);
 	}
 }
 
 static void irq_init(void)
 {
 	irq_status = 0;
-	cpu_set_irq_line(0, 0, CLEAR_LINE);
+	cpunum_set_input_line(0, 0, CLEAR_LINE);
 	cpu_set_irq_callback(0, irq_callback);
 }
 
@@ -572,7 +572,7 @@ static INTERRUPT_GEN( system32_interrupt )
 
 static void irq_handler(int irq)
 {
-	cpu_set_irq_line( 1, 0 , irq ? ASSERT_LINE : CLEAR_LINE );
+	cpunum_set_input_line( 1, 0 , irq ? ASSERT_LINE : CLEAR_LINE );
 }
 
 static struct GfxLayout s32_bgcharlayout =
@@ -608,19 +608,19 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static UINT8 *sys32_SoundMemBank;
 
-static READ_HANDLER( system32_bank_r )
+static READ8_HANDLER( system32_bank_r )
 {
 	return sys32_SoundMemBank[offset];
 }
 
-static READ_HANDLER( sys32_shared_snd_r )
+static READ8_HANDLER( sys32_shared_snd_r )
 {
 	data8_t *RAM = (data8_t *)system32_shared_ram;
 
 	return RAM[offset];
 }
 
-static WRITE_HANDLER( sys32_shared_snd_w )
+static WRITE8_HANDLER( sys32_shared_snd_w )
 {
 	data8_t *RAM = (data8_t *)system32_shared_ram;
 
@@ -640,7 +640,7 @@ static ADDRESS_MAP_START( multi32_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xe000, 0xffff) AM_WRITE(sys32_shared_snd_w)
 ADDRESS_MAP_END
 
-static WRITE_HANDLER( sys32_soundbank_w )
+static WRITE8_HANDLER( sys32_soundbank_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU2);
 	int Bank;

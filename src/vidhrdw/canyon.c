@@ -11,7 +11,7 @@ static struct tilemap *tilemap;
 UINT8* canyon_videoram;
 
 
-WRITE_HANDLER( canyon_videoram_w )
+WRITE8_HANDLER( canyon_videoram_w )
 {
 	if (canyon_videoram[offset] != data)
 	{

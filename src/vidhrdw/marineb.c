@@ -15,24 +15,24 @@ int marineb_active_low_flipscreen;
 static int palbank;
 
 
-WRITE_HANDLER( marineb_palbank0_w )
+WRITE8_HANDLER( marineb_palbank0_w )
 {
 	int new_palbank = (palbank & ~1) | (data & 1);
 	set_vh_global_attribute(&palbank, new_palbank);
 }
 
-WRITE_HANDLER( marineb_palbank1_w )
+WRITE8_HANDLER( marineb_palbank1_w )
 {
 	int new_palbank = (palbank & ~2) | ((data << 1) & 2);
 	set_vh_global_attribute(&palbank, new_palbank);
 }
 
-WRITE_HANDLER( marineb_flipscreen_x_w )
+WRITE8_HANDLER( marineb_flipscreen_x_w )
 {
 	flip_screen_x_set(data ^ marineb_active_low_flipscreen);
 }
 
-WRITE_HANDLER( marineb_flipscreen_y_w )
+WRITE8_HANDLER( marineb_flipscreen_y_w )
 {
 	flip_screen_y_set(data ^ marineb_active_low_flipscreen);
 }

@@ -336,9 +336,9 @@ static void update_interrupts(void)
 
 	/* either set or clear the appropriate lines */
 	if (level)
-		cpu_set_irq_line(0, level, ASSERT_LINE);
+		cpunum_set_input_line(0, level, ASSERT_LINE);
 	else
-		cpu_set_irq_line(0, 7, CLEAR_LINE);
+		cpunum_set_input_line(0, 7, CLEAR_LINE);
 }
 
 static WRITE16_HANDLER( neo_irqack_w )
@@ -450,7 +450,7 @@ static void raster_interrupt(int busy)
 	{
 		current_rasterline = 0;
 
-		if (keyboard_pressed_memory(KEYCODE_F1))
+		if (code_pressed_memory(KEYCODE_F1))
 		{
 			neogeo_raster_enable ^= 1;
 			usrintf_showmessage("raster effects %sabled",neogeo_raster_enable ? "en" : "dis");
@@ -535,7 +535,7 @@ static WRITE16_HANDLER( neo_z80_w )
 
 	soundlatch_w(0,(data>>8)&0xff);
 	pending_command = 1;
-	cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 	/* spin for a while to let the Z80 read the command (fixes hanging sound in pspikes2) */
 //	cpu_spinuntil_time(TIME_IN_USEC(20));
 	cpu_boost_interleave(0, TIME_IN_USEC(20));
@@ -855,7 +855,7 @@ static UINT32 bank[4] = {
 };
 
 
-static READ_HANDLER( z80_port_r )
+static READ8_HANDLER( z80_port_r )
 {
 #if 0
 {
@@ -927,7 +927,7 @@ logerror("CPU #1 PC %04x: read unmapped port %02x\n",activecpu_get_pc(),offset&0
 	}
 }
 
-static WRITE_HANDLER( z80_port_w )
+static WRITE8_HANDLER( z80_port_w )
 {
 	switch (offset & 0xff)
 	{
@@ -1403,7 +1403,7 @@ static struct GfxDecodeInfo neogeo_mvs_gfxdecodeinfo[] =
 
 static void neogeo_sound_irq( int irq )
 {
-	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 struct YM2610interface neogeo_ym2610_interface =
@@ -5819,8 +5819,8 @@ DRIVER_INIT( kof99 )
 	neogeo_fix_bank_type = 1;
 	kof99_neogeo_gfx_decrypt(0x00);
 	init_neogeo();
-	install_mem_read16_handler(0, 0x2ffff8, 0x2ffff9, sma_random_r);
-	install_mem_read16_handler(0, 0x2ffffa, 0x2ffffb, sma_random_r);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2ffff8, 0x2ffff9, 0, 0, sma_random_r);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2ffffa, 0x2ffffb, 0, 0, sma_random_r);
 }
 
 DRIVER_INIT( garou )
@@ -5858,8 +5858,8 @@ DRIVER_INIT( garou )
 	neogeo_fix_bank_type = 1;
 	kof99_neogeo_gfx_decrypt(0x06);
 	init_neogeo();
-	install_mem_read16_handler(0, 0x2fffcc, 0x2fffcd, sma_random_r);
-	install_mem_read16_handler(0, 0x2ffff0, 0x2ffff1, sma_random_r);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2fffcc, 0x2fffcd, 0, 0, sma_random_r);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2ffff0, 0x2ffff1, 0, 0, sma_random_r);
 }
 
 DRIVER_INIT( garouo )
@@ -5897,8 +5897,8 @@ DRIVER_INIT( garouo )
 	neogeo_fix_bank_type = 1;
 	kof99_neogeo_gfx_decrypt(0x06);
 	init_neogeo();
-	install_mem_read16_handler(0, 0x2fffcc, 0x2fffcd, sma_random_r);
-	install_mem_read16_handler(0, 0x2ffff0, 0x2ffff1, sma_random_r);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2fffcc, 0x2fffcd, 0, 0, sma_random_r);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2ffff0, 0x2ffff1, 0, 0, sma_random_r);
 }
 
 DRIVER_INIT( mslug3 )
@@ -5972,8 +5972,8 @@ DRIVER_INIT( kof2000 )
 	neogeo_fix_bank_type = 2;
 	kof2000_neogeo_gfx_decrypt(0x00);
 	init_neogeo();
-	install_mem_read16_handler(0, 0x2fffd8, 0x2fffd9, sma_random_r);
-	install_mem_read16_handler(0, 0x2fffda, 0x2fffdb, sma_random_r);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2fffd8, 0x2fffd9, 0, 0, sma_random_r);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2fffda, 0x2fffdb, 0, 0, sma_random_r);
 }
 
 
@@ -6109,7 +6109,7 @@ DRIVER_INIT ( kof98 )
 /* when 0x20aaaa contains 0x0090 (word) then 0x100 (normally the neogeo header) should return 0x00c200fd
    worked out using real hw */
 
-	install_mem_write16_handler(0, 0x20aaaa, 0x20aaab, kof98_prot_w);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x20aaaa, 0x20aaab, 0, 0, kof98_prot_w);
 
 	init_neogeo();
 
@@ -6117,16 +6117,16 @@ DRIVER_INIT ( kof98 )
 
 DRIVER_INIT( mjneogeo )
 {
-	install_mem_read16_handler (0, 0x300000, 0x300001, mjneogeo_r);
-	install_mem_write16_handler(0, 0x380000, 0x380001, mjneogeo_w);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x300000, 0x300001, 0, 0, mjneogeo_r);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x380000, 0x380001, 0, 0, mjneogeo_w);
 
 	init_neogeo();
 }
 
 DRIVER_INIT( popbounc )
 {
-	install_mem_read16_handler (0, 0x300000, 0x300001, popbounc1_16_r);
-	install_mem_read16_handler (0, 0x340000, 0x340001, popbounc2_16_r);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x300000, 0x300001, 0, 0, popbounc1_16_r);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x340000, 0x340001, 0, 0, popbounc2_16_r);
 
 	init_neogeo();
 }

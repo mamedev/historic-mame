@@ -13,16 +13,16 @@ ask.  - Mike Balfour (mab22@po.cwru.edu)
 
 /* vidhrdw/vigilant.c */
 VIDEO_START( vigilant );
-WRITE_HANDLER( vigilant_paletteram_w );
-WRITE_HANDLER( vigilant_sprite_paletteram_w );
-WRITE_HANDLER( vigilant_horiz_scroll_w );
-WRITE_HANDLER( vigilant_rear_horiz_scroll_w );
-WRITE_HANDLER( vigilant_rear_color_w );
+WRITE8_HANDLER( vigilant_paletteram_w );
+WRITE8_HANDLER( vigilant_sprite_paletteram_w );
+WRITE8_HANDLER( vigilant_horiz_scroll_w );
+WRITE8_HANDLER( vigilant_rear_horiz_scroll_w );
+WRITE8_HANDLER( vigilant_rear_color_w );
 VIDEO_UPDATE( vigilant );
 VIDEO_UPDATE( kikcubic );
 
 
-WRITE_HANDLER( vigilant_bank_select_w )
+WRITE8_HANDLER( vigilant_bank_select_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -34,7 +34,7 @@ WRITE_HANDLER( vigilant_bank_select_w )
 /***************************************************************************
  vigilant_out2_w
  **************************************************************************/
-WRITE_HANDLER( vigilant_out2_w )
+WRITE8_HANDLER( vigilant_out2_w )
 {
 	/* D0 = FILP = Flip screen? */
 	/* D1 = COA1 = Coin Counter A? */
@@ -45,7 +45,7 @@ WRITE_HANDLER( vigilant_out2_w )
 	coin_counter_w(1,data & 0x04);
 }
 
-WRITE_HANDLER( kikcubic_coin_w )
+WRITE8_HANDLER( kikcubic_coin_w )
 {
 	/* bits 0 is flip screen */
 

@@ -39,39 +39,39 @@ static UINT16 joust2_current_sound_data;
 static void williams_main_irq(int state);
 static void williams_main_firq(int state);
 static void williams_snd_irq(int state);
-static WRITE_HANDLER( williams_snd_cmd_w );
-static WRITE_HANDLER( playball_snd_cmd_w );
+static WRITE8_HANDLER( williams_snd_cmd_w );
+static WRITE8_HANDLER( playball_snd_cmd_w );
 
 /* input port mapping */
 static UINT8 port_select;
-static WRITE_HANDLER( williams_port_select_w );
-static READ_HANDLER( williams_input_port_0_3_r );
-static READ_HANDLER( williams_input_port_49way_0_5_r );
-static READ_HANDLER( williams_input_port_1_4_r );
-static READ_HANDLER( williams_49way_port_0_r );
+static WRITE8_HANDLER( williams_port_select_w );
+static READ8_HANDLER( williams_input_port_0_3_r );
+static READ8_HANDLER( williams_input_port_49way_0_5_r );
+static READ8_HANDLER( williams_input_port_1_4_r );
+static READ8_HANDLER( williams_49way_port_0_r );
 
 /* newer-Williams routines */
-static WRITE_HANDLER( williams2_snd_cmd_w );
+static WRITE8_HANDLER( williams2_snd_cmd_w );
 
 /* Defender-specific code */
-READ_HANDLER( defender_input_port_0_r );
-static READ_HANDLER( defender_io_r );
-static WRITE_HANDLER( defender_io_w );
+READ8_HANDLER( defender_input_port_0_r );
+static READ8_HANDLER( defender_io_r );
+static WRITE8_HANDLER( defender_io_w );
 
 /* Stargate-specific code */
-READ_HANDLER( stargate_input_port_0_r );
+READ8_HANDLER( stargate_input_port_0_r );
 
 /* Lotto Fun-specific code */
-static READ_HANDLER( lottofun_input_port_0_r );
+static READ8_HANDLER( lottofun_input_port_0_r );
 
 /* Turkey Shoot-specific code */
-static READ_HANDLER( tshoot_input_port_0_3_r );
-static WRITE_HANDLER( tshoot_lamp_w );
-static WRITE_HANDLER( tshoot_maxvol_w );
+static READ8_HANDLER( tshoot_input_port_0_3_r );
+static WRITE8_HANDLER( tshoot_lamp_w );
+static WRITE8_HANDLER( tshoot_maxvol_w );
 
 /* Joust 2-specific code */
-static WRITE_HANDLER( joust2_snd_cmd_w );
-static WRITE_HANDLER( joust2_pia_3_cb1_w );
+static WRITE8_HANDLER( joust2_snd_cmd_w );
+static WRITE8_HANDLER( joust2_pia_3_cb1_w );
 
 
 
@@ -311,21 +311,21 @@ static void williams_count240_callback(int param)
 static void williams_main_irq(int state)
 {
 	/* IRQ to the main CPU */
-	cpu_set_irq_line(0, M6809_IRQ_LINE, state ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(0, M6809_IRQ_LINE, state ? ASSERT_LINE : CLEAR_LINE);
 }
 
 
 static void williams_main_firq(int state)
 {
 	/* FIRQ to the main CPU */
-	cpu_set_irq_line(0, M6809_FIRQ_LINE, state ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(0, M6809_FIRQ_LINE, state ? ASSERT_LINE : CLEAR_LINE);
 }
 
 
 static void williams_snd_irq(int state)
 {
 	/* IRQ to the sound CPU */
-	cpu_set_irq_line(1, M6800_IRQ_LINE, state ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1, M6800_IRQ_LINE, state ? ASSERT_LINE : CLEAR_LINE);
 }
 
 
@@ -359,7 +359,7 @@ MACHINE_INIT( williams )
  *
  *************************************/
 
-WRITE_HANDLER( williams_vram_select_w )
+WRITE8_HANDLER( williams_vram_select_w )
 {
 	/* VRAM/ROM banking from bit 0 */
 	vram_bank = data & 0x01;
@@ -395,13 +395,13 @@ static void williams_deferred_snd_cmd_w(int param)
 	pia_2_cb1_w(0, (param == 0xff) ? 0 : 1);
 }
 
-WRITE_HANDLER( williams_snd_cmd_w )
+WRITE8_HANDLER( williams_snd_cmd_w )
 {
 	/* the high two bits are set externally, and should be 1 */
 	timer_set(TIME_NOW, data | 0xc0, williams_deferred_snd_cmd_w);
 }
 
-WRITE_HANDLER( playball_snd_cmd_w )
+WRITE8_HANDLER( playball_snd_cmd_w )
 {
 	timer_set(TIME_NOW, data, williams_deferred_snd_cmd_w);
 }
@@ -414,19 +414,19 @@ WRITE_HANDLER( playball_snd_cmd_w )
  *
  *************************************/
 
-WRITE_HANDLER( williams_port_select_w )
+WRITE8_HANDLER( williams_port_select_w )
 {
 	port_select = data;
 }
 
 
-READ_HANDLER( williams_input_port_0_3_r )
+READ8_HANDLER( williams_input_port_0_3_r )
 {
 	return readinputport(port_select ? 3 : 0);
 }
 
 
-READ_HANDLER( williams_input_port_1_4_r )
+READ8_HANDLER( williams_input_port_1_4_r )
 {
 	return readinputport(port_select ? 4 : 1);
 }
@@ -457,7 +457,7 @@ READ_HANDLER( williams_input_port_1_4_r )
  *
  */
 
-READ_HANDLER( williams_49way_port_0_r )
+READ8_HANDLER( williams_49way_port_0_r )
 {
 	int joy_x, joy_y;
 	int bits_x, bits_y;
@@ -472,7 +472,7 @@ READ_HANDLER( williams_49way_port_0_r )
 }
 
 
-READ_HANDLER( williams_input_port_49way_0_5_r )
+READ8_HANDLER( williams_input_port_49way_0_5_r )
 {
 	if (port_select)
 		return williams_49way_port_0_r(0);
@@ -554,7 +554,7 @@ MACHINE_INIT( williams2 )
  *
  *************************************/
 
-WRITE_HANDLER( williams2_bank_select_w )
+WRITE8_HANDLER( williams2_bank_select_w )
 {
 	static const UINT32 bank[8] = { 0, 0x10000, 0x20000, 0x10000, 0, 0x30000, 0x40000, 0x30000 };
 
@@ -603,7 +603,7 @@ static void williams2_deferred_snd_cmd_w(int param)
 }
 
 
-static WRITE_HANDLER( williams2_snd_cmd_w )
+static WRITE8_HANDLER( williams2_snd_cmd_w )
 {
 	timer_set(TIME_NOW, data, williams2_deferred_snd_cmd_w);
 }
@@ -616,7 +616,7 @@ static WRITE_HANDLER( williams2_snd_cmd_w )
  *
  *************************************/
 
-WRITE_HANDLER( williams2_7segment_w )
+WRITE8_HANDLER( williams2_7segment_w )
 {
 	int n;
 	char dot;
@@ -669,7 +669,7 @@ MACHINE_INIT( defender )
 
 
 
-WRITE_HANDLER( defender_bank_select_w )
+WRITE8_HANDLER( defender_bank_select_w )
 {
 	UINT32 bank_offset = defender_bank_list[data & 7];
 
@@ -679,20 +679,20 @@ WRITE_HANDLER( defender_bank_select_w )
 	/* if the bank maps into normal RAM, it represents I/O space */
 	if (bank_offset < 0x10000)
 	{
-		install_mem_read_handler(0, 0xc000, 0xcfff, defender_io_r);
-		install_mem_write_handler(0, 0xc000, 0xcfff, defender_io_w);
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xcfff, 0, 0, defender_io_r);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xcfff, 0, 0, defender_io_w);
 	}
 
 	/* otherwise, it's ROM space */
 	else
 	{
-		install_mem_read_handler(0, 0xc000, 0xcfff, MRA8_BANK2);
-		install_mem_write_handler(0, 0xc000, 0xcfff, MWA8_ROM);
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xcfff, 0, 0, MRA8_BANK2);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xcfff, 0, 0, MWA8_ROM);
 	}
 }
 
 
-READ_HANDLER( defender_input_port_0_r )
+READ8_HANDLER( defender_input_port_0_r )
 {
 	int keys, altkeys;
 
@@ -717,7 +717,7 @@ READ_HANDLER( defender_input_port_0_r )
 }
 
 
-READ_HANDLER( defender_io_r )
+READ8_HANDLER( defender_io_r )
 {
 	/* PIAs */
 	if (offset >= 0x0c00 && offset < 0x0c04)
@@ -734,7 +734,7 @@ READ_HANDLER( defender_io_r )
 }
 
 
-WRITE_HANDLER( defender_io_w )
+WRITE8_HANDLER( defender_io_w )
 {
 	/* write the data through */
 	defender_bank_base[offset] = data;
@@ -762,7 +762,7 @@ WRITE_HANDLER( defender_io_w )
  *
  *************************************/
 
-READ_HANDLER( mayday_protection_r )
+READ8_HANDLER( mayday_protection_r )
 {
 	/* Mayday does some kind of protection check that is not currently understood  */
 	/* However, the results of that protection check are stored at $a190 and $a191 */
@@ -780,7 +780,7 @@ READ_HANDLER( mayday_protection_r )
  *
  *************************************/
 
-READ_HANDLER( stargate_input_port_0_r )
+READ8_HANDLER( stargate_input_port_0_r )
 {
 	int keys, altkeys;
 
@@ -819,7 +819,7 @@ static const UINT32 blaster_bank_offset[16] =
 };
 
 
-WRITE_HANDLER( blaster_vram_select_w )
+WRITE8_HANDLER( blaster_vram_select_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -841,7 +841,7 @@ WRITE_HANDLER( blaster_vram_select_w )
 }
 
 
-WRITE_HANDLER( blaster_bank_select_w )
+WRITE8_HANDLER( blaster_bank_select_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -862,7 +862,7 @@ WRITE_HANDLER( blaster_bank_select_w )
  *
  *************************************/
 
-static READ_HANDLER( lottofun_input_port_0_r )
+static READ8_HANDLER( lottofun_input_port_0_r )
 {
 	/* merge in the ticket dispenser status */
 	return input_port_0_r(offset) | ticket_dispenser_r(offset);
@@ -876,7 +876,7 @@ static READ_HANDLER( lottofun_input_port_0_r )
  *
  *************************************/
 
-static READ_HANDLER( tshoot_input_port_0_3_r )
+static READ8_HANDLER( tshoot_input_port_0_3_r )
 {
 	/* merge in the gun inputs with the standard data */
 	int data = williams_input_port_0_3_r(offset);
@@ -885,14 +885,14 @@ static READ_HANDLER( tshoot_input_port_0_3_r )
 }
 
 
-static WRITE_HANDLER( tshoot_maxvol_w )
+static WRITE8_HANDLER( tshoot_maxvol_w )
 {
 	/* something to do with the sound volume */
 	logerror("tshoot maxvol = %d (pc:%x)\n", data, activecpu_get_pc());
 }
 
 
-static WRITE_HANDLER( tshoot_lamp_w )
+static WRITE8_HANDLER( tshoot_lamp_w )
 {
 	/* set the grenade lamp */
 	set_led_status(0,data & 0x04);
@@ -942,14 +942,14 @@ static void joust2_deferred_snd_cmd_w(int param)
 }
 
 
-static WRITE_HANDLER( joust2_pia_3_cb1_w )
+static WRITE8_HANDLER( joust2_pia_3_cb1_w )
 {
 	joust2_current_sound_data = (joust2_current_sound_data & ~0x100) | ((data << 8) & 0x100);
 	pia_3_cb1_w(offset, data);
 }
 
 
-static WRITE_HANDLER( joust2_snd_cmd_w )
+static WRITE8_HANDLER( joust2_snd_cmd_w )
 {
 	joust2_current_sound_data = (joust2_current_sound_data & ~0xff) | (data & 0xff);
 	williams_cvsd_data_w(joust2_current_sound_data);

@@ -18,7 +18,7 @@ static int magspot_pen_mask;
 
 
 
-WRITE_HANDLER( cosmic_color_register_w )
+WRITE8_HANDLER( cosmic_color_register_w )
 {
 	color_registers[offset] = data ? 1 : 0;
 }
@@ -251,7 +251,7 @@ PALETTE_INIT( nomnlnd )
 }
 
 
-WRITE_HANDLER( cosmic_background_enable_w )
+WRITE8_HANDLER( cosmic_background_enable_w )
 {
 	background_enable = data;
 }

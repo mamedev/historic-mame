@@ -403,7 +403,7 @@ static void pleiads_sound_update(int param, INT16 *buffer, int length)
 	}
 }
 
-WRITE_HANDLER( pleiads_sound_control_a_w )
+WRITE8_HANDLER( pleiads_sound_control_a_w )
 {
 	if (data == sound_latch_a)
 		return;
@@ -414,7 +414,7 @@ WRITE_HANDLER( pleiads_sound_control_a_w )
 	sound_latch_a = data;
 }
 
-WRITE_HANDLER( pleiads_sound_control_b_w )
+WRITE8_HANDLER( pleiads_sound_control_b_w )
 {
 	/*
 	 * pitch selects one of 4 possible clock inputs
@@ -439,7 +439,7 @@ WRITE_HANDLER( pleiads_sound_control_b_w )
 }
 
 /* two bits (4 + 5) from the videoreg_w latch go here */
-WRITE_HANDLER( pleiads_sound_control_c_w )
+WRITE8_HANDLER( pleiads_sound_control_c_w )
 {
 	if (data == sound_latch_c)
 		return;

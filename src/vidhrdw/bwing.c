@@ -62,11 +62,11 @@ struct GfxLayout bwing_tilelayout =
 };
 
 
-WRITE_HANDLER( bwing_spriteram_w ) { buffered_spriteram[offset] = data; }
-WRITE_HANDLER( bwing_videoram_w )  { videoram[offset] = data; tilemap_mark_tile_dirty(charmap, offset); }
+WRITE8_HANDLER( bwing_spriteram_w ) { buffered_spriteram[offset] = data; }
+WRITE8_HANDLER( bwing_videoram_w )  { videoram[offset] = data; tilemap_mark_tile_dirty(charmap, offset); }
 
 
-READ_HANDLER ( bwing_scrollram_r )
+READ8_HANDLER ( bwing_scrollram_r )
 {
 	if (!srbank) offset = srxlat[offset];
 
@@ -74,7 +74,7 @@ READ_HANDLER ( bwing_scrollram_r )
 }
 
 
-WRITE_HANDLER( bwing_scrollram_w )
+WRITE8_HANDLER( bwing_scrollram_w )
 {
 	if (!srbank)
 	{
@@ -87,7 +87,7 @@ WRITE_HANDLER( bwing_scrollram_w )
 }
 
 
-WRITE_HANDLER( bwing_scrollreg_w )
+WRITE8_HANDLER( bwing_scrollreg_w )
 {
 	static unsigned bp_ready=0;
 	unsigned i;
@@ -129,7 +129,7 @@ WRITE_HANDLER( bwing_scrollreg_w )
 }
 
 
-WRITE_HANDLER( bwing_paletteram_w )
+WRITE8_HANDLER( bwing_paletteram_w )
 {
 	const float rgb[4][3]={{0.85,0.95,1.00},{0.90,1.00,1.00},{0.80,1.00,1.00},{0.75,0.90,1.10}};
 	int r, g, b, i;

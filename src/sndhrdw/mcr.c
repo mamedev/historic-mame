@@ -151,12 +151,12 @@ void mcr_sound_init(void)
  *************************************/
 
 /********* internal interfaces ***********/
-static WRITE_HANDLER( ssio_status_w )
+static WRITE8_HANDLER( ssio_status_w )
 {
 	ssio_status = data;
 }
 
-static READ_HANDLER( ssio_data_r )
+static READ8_HANDLER( ssio_data_r )
 {
 	return ssio_data[offset];
 }
@@ -174,27 +174,27 @@ static void ssio_update_volumes(void)
 			AY8910_set_volume(chip, chan, (ssio_duty_cycle[chip][chan] ^ 15) * 100 / 15);
 }
 
-static WRITE_HANDLER( ssio_porta0_w )
+static WRITE8_HANDLER( ssio_porta0_w )
 {
 	ssio_duty_cycle[0][0] = data & 15;
 	ssio_duty_cycle[0][1] = data >> 4;
 	ssio_update_volumes();
 }
 
-static WRITE_HANDLER( ssio_portb0_w )
+static WRITE8_HANDLER( ssio_portb0_w )
 {
 	ssio_duty_cycle[0][2] = data & 15;
 	ssio_update_volumes();
 }
 
-static WRITE_HANDLER( ssio_porta1_w )
+static WRITE8_HANDLER( ssio_porta1_w )
 {
 	ssio_duty_cycle[1][0] = data & 15;
 	ssio_duty_cycle[1][1] = data >> 4;
 	ssio_update_volumes();
 }
 
-static WRITE_HANDLER( ssio_portb1_w )
+static WRITE8_HANDLER( ssio_portb1_w )
 {
 	ssio_duty_cycle[1][2] = data & 15;
 	mixer_sound_enable_global_w(!(data & 0x80));
@@ -202,12 +202,12 @@ static WRITE_HANDLER( ssio_portb1_w )
 }
 
 /********* external interfaces ***********/
-WRITE_HANDLER( ssio_data_w )
+WRITE8_HANDLER( ssio_data_w )
 {
 	timer_set(TIME_NOW, (offset << 8) | (data & 0xff), ssio_delayed_data_w);
 }
 
-READ_HANDLER( ssio_status_r )
+READ8_HANDLER( ssio_status_r )
 {
 	return ssio_status;
 }
@@ -219,7 +219,7 @@ void ssio_reset_w(int state)
 	{
 		int i;
 
-		cpu_set_reset_line(ssio_sound_cpu, ASSERT_LINE);
+		cpunum_set_input_line(ssio_sound_cpu, INPUT_LINE_RESET, ASSERT_LINE);
 
 		/* latches also get reset */
 		for (i = 0; i < 4; i++)
@@ -228,7 +228,7 @@ void ssio_reset_w(int state)
 	}
 	/* going low resets and reactivates the CPU */
 	else
-		cpu_set_reset_line(ssio_sound_cpu, CLEAR_LINE);
+		cpunum_set_input_line(ssio_sound_cpu, INPUT_LINE_RESET, CLEAR_LINE);
 }
 
 
@@ -290,13 +290,13 @@ MACHINE_DRIVER_END
  *************************************/
 
 /********* internal interfaces ***********/
-static WRITE_HANDLER( csdeluxe_porta_w )
+static WRITE8_HANDLER( csdeluxe_porta_w )
 {
 	dacval = (dacval & ~0x3fc) | (data << 2);
 	DAC_signed_data_16_w(csdeluxe_dac_index, dacval << 6);
 }
 
-static WRITE_HANDLER( csdeluxe_portb_w )
+static WRITE8_HANDLER( csdeluxe_portb_w )
 {
 	dacval = (dacval & ~0x003) | (data >> 6);
 	DAC_signed_data_16_w(csdeluxe_dac_index, dacval << 6);
@@ -304,7 +304,7 @@ static WRITE_HANDLER( csdeluxe_portb_w )
 
 static void csdeluxe_irq(int state)
 {
-  	cpu_set_irq_line(csdeluxe_sound_cpu, 4, state ? ASSERT_LINE : CLEAR_LINE);
+  	cpunum_set_input_line(csdeluxe_sound_cpu, 4, state ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static void csdeluxe_delayed_data_w(int param)
@@ -315,14 +315,14 @@ static void csdeluxe_delayed_data_w(int param)
 
 
 /********* external interfaces ***********/
-WRITE_HANDLER( csdeluxe_data_w )
+WRITE8_HANDLER( csdeluxe_data_w )
 {
 	timer_set(TIME_NOW, data, csdeluxe_delayed_data_w);
 }
 
 void csdeluxe_reset_w(int state)
 {
-	cpu_set_reset_line(csdeluxe_sound_cpu, state ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(csdeluxe_sound_cpu, INPUT_LINE_RESET, state ? ASSERT_LINE : CLEAR_LINE);
 }
 
 
@@ -383,13 +383,13 @@ MACHINE_DRIVER_END
  *************************************/
 
 /********* internal interfaces ***********/
-static WRITE_HANDLER( soundsgood_porta_w )
+static WRITE8_HANDLER( soundsgood_porta_w )
 {
 	dacval = (dacval & ~0x3fc) | (data << 2);
 	DAC_signed_data_16_w(soundsgood_dac_index, dacval << 6);
 }
 
-static WRITE_HANDLER( soundsgood_portb_w )
+static WRITE8_HANDLER( soundsgood_portb_w )
 {
 	dacval = (dacval & ~0x003) | (data >> 6);
 	DAC_signed_data_16_w(soundsgood_dac_index, dacval << 6);
@@ -398,7 +398,7 @@ static WRITE_HANDLER( soundsgood_portb_w )
 
 static void soundsgood_irq(int state)
 {
-  	cpu_set_irq_line(soundsgood_sound_cpu, 4, state ? ASSERT_LINE : CLEAR_LINE);
+  	cpunum_set_input_line(soundsgood_sound_cpu, 4, state ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static void soundsgood_delayed_data_w(int param)
@@ -409,19 +409,19 @@ static void soundsgood_delayed_data_w(int param)
 
 
 /********* external interfaces ***********/
-WRITE_HANDLER( soundsgood_data_w )
+WRITE8_HANDLER( soundsgood_data_w )
 {
 	timer_set(TIME_NOW, data, soundsgood_delayed_data_w);
 }
 
-READ_HANDLER( soundsgood_status_r )
+READ8_HANDLER( soundsgood_status_r )
 {
 	return soundsgood_status;
 }
 
 void soundsgood_reset_w(int state)
 {
-	cpu_set_reset_line(soundsgood_sound_cpu, state ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(soundsgood_sound_cpu, INPUT_LINE_RESET, state ? ASSERT_LINE : CLEAR_LINE);
 }
 
 
@@ -479,13 +479,13 @@ MACHINE_DRIVER_END
  *************************************/
 
 /********* internal interfaces ***********/
-static WRITE_HANDLER( turbocs_porta_w )
+static WRITE8_HANDLER( turbocs_porta_w )
 {
 	dacval = (dacval & ~0x3fc) | (data << 2);
 	DAC_signed_data_16_w(turbocs_dac_index, dacval << 6);
 }
 
-static WRITE_HANDLER( turbocs_portb_w )
+static WRITE8_HANDLER( turbocs_portb_w )
 {
 	dacval = (dacval & ~0x003) | (data >> 6);
 	DAC_signed_data_16_w(turbocs_dac_index, dacval << 6);
@@ -494,7 +494,7 @@ static WRITE_HANDLER( turbocs_portb_w )
 
 static void turbocs_irq(int state)
 {
-	cpu_set_irq_line(turbocs_sound_cpu, M6809_IRQ_LINE, state ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(turbocs_sound_cpu, M6809_IRQ_LINE, state ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static void turbocs_delayed_data_w(int param)
@@ -505,19 +505,19 @@ static void turbocs_delayed_data_w(int param)
 
 
 /********* external interfaces ***********/
-WRITE_HANDLER( turbocs_data_w )
+WRITE8_HANDLER( turbocs_data_w )
 {
 	timer_set(TIME_NOW, data, turbocs_delayed_data_w);
 }
 
-READ_HANDLER( turbocs_status_r )
+READ8_HANDLER( turbocs_status_r )
 {
 	return turbocs_status;
 }
 
 void turbocs_reset_w(int state)
 {
-	cpu_set_reset_line(turbocs_sound_cpu, state ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(turbocs_sound_cpu, INPUT_LINE_RESET, state ? ASSERT_LINE : CLEAR_LINE);
 }
 
 
@@ -575,17 +575,17 @@ MACHINE_DRIVER_END
  *************************************/
 
 /********* internal interfaces ***********/
-static WRITE_HANDLER( squawkntalk_porta1_w )
+static WRITE8_HANDLER( squawkntalk_porta1_w )
 {
 	logerror("Write to AY-8912\n");
 }
 
-static WRITE_HANDLER( squawkntalk_porta2_w )
+static WRITE8_HANDLER( squawkntalk_porta2_w )
 {
 	squawkntalk_tms_command = data;
 }
 
-static WRITE_HANDLER( squawkntalk_portb2_w )
+static WRITE8_HANDLER( squawkntalk_portb2_w )
 {
 	/* bits 0-1 select read/write strobes on the TMS5220 */
 	data &= 0x03;
@@ -616,7 +616,7 @@ static WRITE_HANDLER( squawkntalk_portb2_w )
 
 static void squawkntalk_irq(int state)
 {
-	cpu_set_irq_line(squawkntalk_sound_cpu, M6808_IRQ_LINE, state ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(squawkntalk_sound_cpu, M6808_IRQ_LINE, state ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static void squawkntalk_delayed_data_w(int param)
@@ -627,14 +627,14 @@ static void squawkntalk_delayed_data_w(int param)
 
 
 /********* external interfaces ***********/
-WRITE_HANDLER( squawkntalk_data_w )
+WRITE8_HANDLER( squawkntalk_data_w )
 {
 	timer_set(TIME_NOW, data, squawkntalk_delayed_data_w);
 }
 
 void squawkntalk_reset_w(int state)
 {
-	cpu_set_reset_line(squawkntalk_sound_cpu, state ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(squawkntalk_sound_cpu, INPUT_LINE_RESET, state ? ASSERT_LINE : CLEAR_LINE);
 }
 
 

@@ -1156,21 +1156,21 @@ ROM_END
 static DRIVER_INIT( kram )
 {
 	/* we need to override one PIA handler to prevent controls from getting disabled */
-	install_mem_write_handler(0, 0x9400, 0x97ff, zookeep_pia_0_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x9400, 0x97ff, 0, 0, zookeep_pia_0_w);
 }
 
 
 static DRIVER_INIT( zookeep )
 {
 	/* we need to override two PIA handlers to prevent controls from getting disabled */
-	install_mem_write_handler(0, 0x1400, 0x17ff, zookeep_pia_0_w);
-	install_mem_write_handler(0, 0x1c00, 0x1fff, zookeep_pia_2_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1400, 0x17ff, 0, 0, zookeep_pia_0_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1c00, 0x1fff, 0, 0, zookeep_pia_2_w);
 }
 
 
 static DRIVER_INIT( slither )
 {
-	install_mem_write_handler(1, 0x9401, 0x9401, slither_vram_mask_w);
+	memory_install_write8_handler(1, ADDRESS_SPACE_PROGRAM, 0x9401, 0x9401, 0, 0, slither_vram_mask_w);
 }
 
 

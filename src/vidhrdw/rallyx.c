@@ -369,7 +369,7 @@ WRITE8_HANDLER( rallyx_scrolly_w )
 	tilemap_set_scrolly(bg_tilemap,0,data);
 }
 
-WRITE_HANDLER( tactcian_starson_w )
+WRITE8_HANDLER( tactcian_starson_w )
 {
 	stars_enable = data & 1;
 }

@@ -202,15 +202,15 @@ static INTERRUPT_GEN(mystwarr_interrupt)
 	switch (cpu_getiloops())
 	{
 		case 0:
-			cpu_set_irq_line(0, MC68000_IRQ_2, HOLD_LINE);
+			cpunum_set_input_line(0, MC68000_IRQ_2, HOLD_LINE);
 		break;
 
 		case 1:
-			cpu_set_irq_line(0, MC68000_IRQ_4, HOLD_LINE);
+			cpunum_set_input_line(0, MC68000_IRQ_4, HOLD_LINE);
 		break;
 
 		case 2:
-			cpu_set_irq_line(0, MC68000_IRQ_6, HOLD_LINE);
+			cpunum_set_input_line(0, MC68000_IRQ_6, HOLD_LINE);
 		break;
 	}
 }
@@ -220,15 +220,15 @@ static INTERRUPT_GEN(metamrph_interrupt)
 	switch (cpu_getiloops())
 	{
 		case 0:
-			cpu_set_irq_line(0, MC68000_IRQ_4, HOLD_LINE);
+			cpunum_set_input_line(0, MC68000_IRQ_4, HOLD_LINE);
 		break;
 
 		case 15:
-			cpu_set_irq_line(0, MC68000_IRQ_6, HOLD_LINE);
+			cpunum_set_input_line(0, MC68000_IRQ_6, HOLD_LINE);
 		break;
 
 		case 39:
-			if (K053246_is_IRQ_enabled()) cpu_set_irq_line(0, MC68000_IRQ_5, HOLD_LINE);
+			if (K053246_is_IRQ_enabled()) cpunum_set_input_line(0, MC68000_IRQ_5, HOLD_LINE);
 		break;
 	}
 }
@@ -240,18 +240,18 @@ static INTERRUPT_GEN(mchamp_interrupt)
 	switch (cpu_getiloops())
 	{
 		case 0:
-			if (K053246_is_IRQ_enabled()) cpu_set_irq_line(0, MC68000_IRQ_6, HOLD_LINE);
+			if (K053246_is_IRQ_enabled()) cpunum_set_input_line(0, MC68000_IRQ_6, HOLD_LINE);
 		break;
 
 		case 1:
-			cpu_set_irq_line(0, MC68000_IRQ_2, HOLD_LINE);
+			cpunum_set_input_line(0, MC68000_IRQ_2, HOLD_LINE);
 		break;
 	}
 }
 
 static INTERRUPT_GEN(ddd_interrupt)
 {
-	cpu_set_irq_line(0, MC68000_IRQ_5, HOLD_LINE);
+	cpunum_set_input_line(0, MC68000_IRQ_5, HOLD_LINE);
 }
 
 
@@ -281,7 +281,7 @@ static WRITE16_HANDLER( sound_cmd2_msb_w )
 
 static WRITE16_HANDLER( sound_irq_w )
 {
-	cpu_set_irq_line(1, 0, HOLD_LINE);
+	cpunum_set_input_line(1, 0, HOLD_LINE);
 }
 
 static READ16_HANDLER( sound_status_r )
@@ -776,7 +776,7 @@ static void reset_sound_region(void)
 	cpu_setbank(2, memory_region(REGION_CPU2) + 0x10000 + cur_sound_region*0x4000);
 }
 
-static WRITE_HANDLER( sound_bankswitch_w )
+static WRITE8_HANDLER( sound_bankswitch_w )
 {
 	cur_sound_region = (data & 0xf);
 	reset_sound_region();

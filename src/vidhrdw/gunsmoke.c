@@ -108,7 +108,7 @@ VIDEO_START( gunsmoke )
 
 
 
-WRITE_HANDLER( gunsmoke_c804_w )
+WRITE8_HANDLER( gunsmoke_c804_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -133,7 +133,7 @@ WRITE_HANDLER( gunsmoke_c804_w )
 
 
 
-WRITE_HANDLER( gunsmoke_d806_w )
+WRITE8_HANDLER( gunsmoke_d806_w )
 {
 	/* bits 0-2 select the sprite 3 bank */
 	sprite3bank = data & 0x07;

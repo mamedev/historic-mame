@@ -123,7 +123,7 @@ int wow_sh_start(const struct MachineSound *msound)
 	return 0;
 }
 
-READ_HANDLER( wow_speech_r )
+READ8_HANDLER( wow_speech_r )
 {
 	int Phoneme,Intonation;
 	int i = 0;
@@ -199,7 +199,7 @@ int wow_status_r(void)
 
 /* Read from port 2 (0x12) returns speech status as 0x80 */
 
-READ_HANDLER( wow_port_2_r )
+READ8_HANDLER( wow_port_2_r )
 {
 	int Ans;
 

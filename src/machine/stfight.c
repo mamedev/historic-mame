@@ -12,7 +12,7 @@
 #include "cpu/z80/z80.h"
 
 // this prototype will move to the driver
-WRITE_HANDLER( stfight_bank_w );
+WRITE8_HANDLER( stfight_bank_w );
 
 
 /*
@@ -90,7 +90,7 @@ MACHINE_INIT( stfight )
 
 // It's entirely possible that this bank is never switched out
 // - in fact I don't even know how/where it's switched in!
-WRITE_HANDLER( stfight_bank_w )
+WRITE8_HANDLER( stfight_bank_w )
 {
 	unsigned char   *ROM2 = memory_region(REGION_CPU1) + 0x10000;
 
@@ -100,7 +100,7 @@ WRITE_HANDLER( stfight_bank_w )
 INTERRUPT_GEN( stfight_vb_interrupt )
 {
     // Do a RST10
-    cpu_set_irq_line_and_vector(0,0,HOLD_LINE,0xd7);
+    cpunum_set_input_line_and_vector(0,0,HOLD_LINE,0xd7);
 }
 
 /*
@@ -110,7 +110,7 @@ INTERRUPT_GEN( stfight_vb_interrupt )
 INTERRUPT_GEN( stfight_interrupt_1 )
 {
     // Do a RST08
-    cpu_set_irq_line_and_vector(0,0,HOLD_LINE,0xcf);
+    cpunum_set_input_line_and_vector(0,0,HOLD_LINE,0xcf);
 }
 
 /*
@@ -118,7 +118,7 @@ INTERRUPT_GEN( stfight_interrupt_1 )
  */
 
 // Perhaps define dipswitches as active low?
-READ_HANDLER( stfight_dsw_r )
+READ8_HANDLER( stfight_dsw_r )
 {
     return( ~readinputport( 3+offset ) );
 }
@@ -126,7 +126,7 @@ READ_HANDLER( stfight_dsw_r )
 static int stfight_coin_mech_query_active = 0;
 static int stfight_coin_mech_query;
 
-READ_HANDLER( stfight_coin_r )
+READ8_HANDLER( stfight_coin_r )
 {
     static int coin_mech_latch[2] = { 0x02, 0x01 };
 
@@ -161,7 +161,7 @@ READ_HANDLER( stfight_coin_r )
     return( coin_mech_data );
 }
 
-WRITE_HANDLER( stfight_coin_w )
+WRITE8_HANDLER( stfight_coin_w )
 {
     // interrogate coin mech
     stfight_coin_mech_query_active = 1;
@@ -208,7 +208,7 @@ void stfight_adpcm_int( int data )
 	toggle ^= 1;
 }
 
-WRITE_HANDLER( stfight_adpcm_control_w )
+WRITE8_HANDLER( stfight_adpcm_control_w )
 {
     if( data < 0x08 )
     {
@@ -219,7 +219,7 @@ WRITE_HANDLER( stfight_adpcm_control_w )
     MSM5205_reset_w( 0, data & 0x08 ? 1 : 0 );
 }
 
-WRITE_HANDLER( stfight_e800_w )
+WRITE8_HANDLER( stfight_e800_w )
 {
 }
 
@@ -229,13 +229,13 @@ WRITE_HANDLER( stfight_e800_w )
 
 static unsigned char fm_data;
 
-WRITE_HANDLER( stfight_fm_w )
+WRITE8_HANDLER( stfight_fm_w )
 {
     // the sound cpu ignores any fm data without bit 7 set
     fm_data = 0x80 | data;
 }
 
-READ_HANDLER( stfight_fm_r )
+READ8_HANDLER( stfight_fm_r )
 {
     int data = fm_data;
 

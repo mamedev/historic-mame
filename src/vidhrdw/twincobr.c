@@ -315,43 +315,43 @@ WRITE16_HANDLER( twincobr_exscroll_w )	/* Extra unused video layer */
 }
 
 /******************** Wardner interface to this hardware ********************/
-WRITE_HANDLER( wardner_txlayer_w )
+WRITE8_HANDLER( wardner_txlayer_w )
 {
 	int shift = 8 * (offset & 1);
 	twincobr_txoffs_w(offset / 2, data << shift, 0xff00 >> shift);
 }
 
-WRITE_HANDLER( wardner_bglayer_w )
+WRITE8_HANDLER( wardner_bglayer_w )
 {
 	int shift = 8 * (offset & 1);
 	twincobr_bgoffs_w(offset / 2, data << shift, 0xff00 >> shift);
 }
 
-WRITE_HANDLER( wardner_fglayer_w )
+WRITE8_HANDLER( wardner_fglayer_w )
 {
 	int shift = 8 * (offset & 1);
 	twincobr_fgoffs_w(offset / 2, data << shift, 0xff00 >> shift);
 }
 
-WRITE_HANDLER( wardner_txscroll_w )
+WRITE8_HANDLER( wardner_txscroll_w )
 {
 	int shift = 8 * (offset & 1);
 	twincobr_txscroll_w(offset / 2, data << shift, 0xff00 >> shift);
 }
 
-WRITE_HANDLER( wardner_bgscroll_w )
+WRITE8_HANDLER( wardner_bgscroll_w )
 {
 	int shift = 8 * (offset & 1);
 	twincobr_bgscroll_w(offset / 2, data << shift, 0xff00 >> shift);
 }
 
-WRITE_HANDLER( wardner_fgscroll_w )
+WRITE8_HANDLER( wardner_fgscroll_w )
 {
 	int shift = 8 * (offset & 1);
 	twincobr_fgscroll_w(offset / 2, data << shift, 0xff00 >> shift);
 }
 
-WRITE_HANDLER( wardner_exscroll_w )	/* Extra unused video layer */
+WRITE8_HANDLER( wardner_exscroll_w )	/* Extra unused video layer */
 {
 	switch (offset)
 	{
@@ -362,7 +362,7 @@ WRITE_HANDLER( wardner_exscroll_w )	/* Extra unused video layer */
 	}
 }
 
-READ_HANDLER( wardner_videoram_r )
+READ8_HANDLER( wardner_videoram_r )
 {
 	int shift = 8 * (offset & 1);
 	switch (offset/2) {
@@ -373,7 +373,7 @@ READ_HANDLER( wardner_videoram_r )
 	return 0;
 }
 
-WRITE_HANDLER( wardner_videoram_w )
+WRITE8_HANDLER( wardner_videoram_w )
 {
 	int shift = 8 * (offset & 1);
 	switch (offset/2) {
@@ -383,13 +383,13 @@ WRITE_HANDLER( wardner_videoram_w )
 	}
 }
 
-READ_HANDLER( wardner_sprite_r )
+READ8_HANDLER( wardner_sprite_r )
 {
 	int shift = (offset & 1) * 8;
 	return spriteram16[offset/2] >> shift;
 }
 
-WRITE_HANDLER( wardner_sprite_w )
+WRITE8_HANDLER( wardner_sprite_w )
 {
 	if (offset & 1)
 		spriteram16[offset/2] = (spriteram16[offset/2] & 0x00ff) | (data << 8);
@@ -397,12 +397,12 @@ WRITE_HANDLER( wardner_sprite_w )
 		spriteram16[offset/2] = (spriteram16[offset/2] & 0xff00) | data;
 }
 
-WRITE_HANDLER( wardner_CRTC_reg_sel_w )
+WRITE8_HANDLER( wardner_CRTC_reg_sel_w )
 {
 	crtc6845_address_w(offset, data);
 }
 
-WRITE_HANDLER( wardner_CRTC_data_w )
+WRITE8_HANDLER( wardner_CRTC_data_w )
 {
 	crtc6845_register_w(0, data);
 }
@@ -442,11 +442,11 @@ static void wardner_sprite_priority_hack(void)
 #ifdef MAME_DEBUG
 void twincobr_log_vram(void)
 {
-	if ( keyboard_pressed(KEYCODE_M) )
+	if ( code_pressed(KEYCODE_M) )
 	{
 		offs_t tile_voffs;
 		int tcode[3];
-		while (keyboard_pressed(KEYCODE_M)) ;
+		while (code_pressed(KEYCODE_M)) ;
 		logerror("Scrolls             BG-X BG-Y  FG-X FG-Y  TX-X  TX-Y\n");
 		logerror("------>             %04x %04x  %04x %04x  %04x  %04x\n",bgscrollx,bgscrolly,fgscrollx,fgscrolly,txscrollx,txscrolly);
 		for ( tile_voffs = 0; tile_voffs < (twincobr_txvideoram_size/2); tile_voffs++ )

@@ -24,7 +24,7 @@ void drmicro_flip_w( int flip )
 	flip_screen_set(flip);
 }
 
-WRITE_HANDLER( drmicro_videoram_w )
+WRITE8_HANDLER( drmicro_videoram_w )
 {
 	drmicro_videoram[offset] = data;
 
@@ -34,7 +34,7 @@ WRITE_HANDLER( drmicro_videoram_w )
 		tilemap_mark_tile_dirty(drmicro_bg1,(offset & 0x3ff));
 }
 
-READ_HANDLER( drmicro_videoram_r )
+READ8_HANDLER( drmicro_videoram_r )
 {
 	return drmicro_videoram[offset];
 }

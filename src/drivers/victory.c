@@ -110,13 +110,13 @@ static UINT8 sound_response_ack_clk;
 /* sound driver data & functions */
 int victory_sh_start(const struct MachineSound *msound);
 
-READ_HANDLER( exidy_shriot_r );
-READ_HANDLER( exidy_sh6840_r );
-READ_HANDLER( exidy_sh8253_r );
-WRITE_HANDLER( exidy_shriot_w );
-WRITE_HANDLER( exidy_sh6840_w );
-WRITE_HANDLER( exidy_sh8253_w );
-WRITE_HANDLER( exidy_sfxctrl_w );
+READ8_HANDLER( exidy_shriot_r );
+READ8_HANDLER( exidy_sh6840_r );
+READ8_HANDLER( exidy_sh8253_r );
+WRITE8_HANDLER( exidy_shriot_w );
+WRITE8_HANDLER( exidy_sh6840_w );
+WRITE8_HANDLER( exidy_sh8253_w );
+WRITE8_HANDLER( exidy_sfxctrl_w );
 
 
 /* video driver data & functions */
@@ -127,11 +127,11 @@ VIDEO_EOF( victory );
 VIDEO_UPDATE( victory );
 INTERRUPT_GEN( victory_vblank_interrupt );
 
-READ_HANDLER( victory_video_control_r );
-WRITE_HANDLER( victory_video_control_w );
-WRITE_HANDLER( victory_paletteram_w );
-WRITE_HANDLER( victory_videoram_w );
-WRITE_HANDLER( victory_charram_w );
+READ8_HANDLER( victory_video_control_r );
+WRITE8_HANDLER( victory_video_control_w );
+WRITE8_HANDLER( victory_paletteram_w );
+WRITE8_HANDLER( victory_videoram_w );
+WRITE8_HANDLER( victory_charram_w );
 
 
 
@@ -141,7 +141,7 @@ WRITE_HANDLER( victory_charram_w );
  *
  *************************************/
 
-static READ_HANDLER( sound_response_r )
+static READ8_HANDLER( sound_response_r )
 {
 	if (LOG_SOUND) logerror("%04X:!!!! Sound response read = %02X\n", activecpu_get_previouspc(), sound_response);
 	pia_0_cb1_w(0, 0);
@@ -149,7 +149,7 @@ static READ_HANDLER( sound_response_r )
 }
 
 
-static READ_HANDLER( sound_status_r )
+static READ8_HANDLER( sound_status_r )
 {
 	if (LOG_SOUND) logerror("%04X:!!!! Sound status read = %02X\n", activecpu_get_previouspc(), (pia_0_ca1_r(0) << 7) | (pia_0_cb1_r(0) << 6));
 	return (pia_0_ca1_r(0) << 7) | (pia_0_cb1_r(0) << 6);
@@ -163,27 +163,27 @@ static void delayed_command_w(int data)
 	if (LOG_SOUND) logerror("%04X:!!!! Sound command = %02X\n", activecpu_get_previouspc(), data);
 }
 
-static WRITE_HANDLER( sound_command_w )
+static WRITE8_HANDLER( sound_command_w )
 {
 	timer_set(TIME_NOW, data, delayed_command_w);
 }
 
 
-WRITE_HANDLER( victory_sound_response_w )
+WRITE8_HANDLER( victory_sound_response_w )
 {
 	sound_response = data;
 	if (LOG_SOUND) logerror("%04X:!!!! Sound response = %02X\n", activecpu_get_previouspc(), data);
 }
 
 
-WRITE_HANDLER( victory_sound_irq_clear_w )
+WRITE8_HANDLER( victory_sound_irq_clear_w )
 {
 	if (LOG_SOUND) logerror("%04X:!!!! Sound IRQ clear = %02X\n", activecpu_get_previouspc(), data);
 	if (!data) pia_0_ca1_w(0, 1);
 }
 
 
-WRITE_HANDLER( victory_main_ack_w )
+WRITE8_HANDLER( victory_main_ack_w )
 {
 	if (LOG_SOUND) logerror("%04X:!!!! Sound ack = %02X\n", activecpu_get_previouspc(), data);
 	if (sound_response_ack_clk && !data)
@@ -199,7 +199,7 @@ WRITE_HANDLER( victory_main_ack_w )
  *
  *************************************/
 
-static WRITE_HANDLER( lamp_control_w )
+static WRITE8_HANDLER( lamp_control_w )
 {
 	set_led_status(0,data & 0x80);
 	set_led_status(1,data & 0x40);

@@ -67,7 +67,7 @@ PALETTE_INIT( gotya )
 	}
 }
 
-WRITE_HANDLER( gotya_videoram_w )
+WRITE8_HANDLER( gotya_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -76,7 +76,7 @@ WRITE_HANDLER( gotya_videoram_w )
 	}
 }
 
-WRITE_HANDLER( gotya_colorram_w )
+WRITE8_HANDLER( gotya_colorram_w )
 {
 	if (colorram[offset] != data)
 	{
@@ -85,7 +85,7 @@ WRITE_HANDLER( gotya_colorram_w )
 	}
 }
 
-WRITE_HANDLER( gotya_video_control_w )
+WRITE8_HANDLER( gotya_video_control_w )
 {
 	/* bit 0 - scroll bit 8
 	   bit 1 - flip screen

@@ -47,10 +47,10 @@ same as Pooyan
 
 extern unsigned char *timeplt_videoram,*timeplt_colorram;
 
-READ_HANDLER( timeplt_scanline_r );
-WRITE_HANDLER( timeplt_videoram_w );
-WRITE_HANDLER( timeplt_colorram_w );
-WRITE_HANDLER( timeplt_flipscreen_w );
+READ8_HANDLER( timeplt_scanline_r );
+WRITE8_HANDLER( timeplt_videoram_w );
+WRITE8_HANDLER( timeplt_colorram_w );
+WRITE8_HANDLER( timeplt_flipscreen_w );
 VIDEO_START( timeplt );
 PALETTE_INIT( timeplt );
 VIDEO_UPDATE( timeplt );
@@ -58,12 +58,12 @@ INTERRUPT_GEN( timeplt_interrupt );
 
 
 
-static WRITE_HANDLER( timeplt_coin_counter_w )
+static WRITE8_HANDLER( timeplt_coin_counter_w )
 {
 	coin_counter_w(offset >> 1, data);
 }
 
-static READ_HANDLER( psurge_protection_r )
+static READ8_HANDLER( psurge_protection_r )
 {
 	return 0x80;
 }

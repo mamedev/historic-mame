@@ -174,7 +174,7 @@ VIDEO_START( mrdo )
 
 ***************************************************************************/
 
-WRITE_HANDLER( mrdo_bgvideoram_w )
+WRITE8_HANDLER( mrdo_bgvideoram_w )
 {
 	if (mrdo_bgvideoram[offset] != data)
 	{
@@ -183,7 +183,7 @@ WRITE_HANDLER( mrdo_bgvideoram_w )
 	}
 }
 
-WRITE_HANDLER( mrdo_fgvideoram_w )
+WRITE8_HANDLER( mrdo_fgvideoram_w )
 {
 	if (mrdo_fgvideoram[offset] != data)
 	{
@@ -193,12 +193,12 @@ WRITE_HANDLER( mrdo_fgvideoram_w )
 }
 
 
-WRITE_HANDLER( mrdo_scrollx_w )
+WRITE8_HANDLER( mrdo_scrollx_w )
 {
 	tilemap_set_scrollx(bg_tilemap,0,data);
 }
 
-WRITE_HANDLER( mrdo_scrolly_w )
+WRITE8_HANDLER( mrdo_scrolly_w )
 {
 	/* This is NOT affected by flipscreen (so stop it happening) */
 
@@ -207,7 +207,7 @@ WRITE_HANDLER( mrdo_scrolly_w )
 }
 
 
-WRITE_HANDLER( mrdo_flipscreen_w )
+WRITE8_HANDLER( mrdo_flipscreen_w )
 {
 	/* bits 1-3 control the playfield priority, but they are not used by */
 	/* Mr. Do! so we don't emulate them */

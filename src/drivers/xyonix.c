@@ -26,14 +26,14 @@ data8_t *xyonix_vidram;
 
 /* in vidhrdw/xyonix.c */
 PALETTE_INIT( xyonix );
-WRITE_HANDLER( xyonix_vidram_w );
+WRITE8_HANDLER( xyonix_vidram_w );
 VIDEO_START(xyonix);
 VIDEO_UPDATE(xyonix);
 
 
-static WRITE_HANDLER( xyonix_irqack_w )
+static WRITE8_HANDLER( xyonix_irqack_w )
 {
-	cpu_set_irq_line(0, 0, CLEAR_LINE);
+	cpunum_set_input_line(0, 0, CLEAR_LINE);
 }
 
 
@@ -79,7 +79,7 @@ void handle_coins(int coin)
 }
 
 
-READ_HANDLER ( xyonix_io_r )
+READ8_HANDLER ( xyonix_io_r )
 {
 	int regPC = activecpu_get_pc();
 
@@ -139,7 +139,7 @@ READ_HANDLER ( xyonix_io_r )
 	return 0xff;
 }
 
-WRITE_HANDLER ( xyonix_io_w )
+WRITE8_HANDLER ( xyonix_io_w )
 {
 //	logerror ("xyonix_port_e0_w %02x - PC = %04x\n", data, activecpu_get_pc());
 	e0_data = data;

@@ -56,6 +56,15 @@
 #define CALC_NZVC(s,d,r) CLR_FLAGS; CALC_N(r); CALC_Z(r); CALC_V(s,d,r); CALC_C(r)
 #define CALC_NZVC_SUB(s,d,r) CLR_FLAGS; CALC_N(r); CALC_Z(r); CALC_V(s,d,r); CALC_C_SUB(r)
 
+/* ADSP-218x constants */
+static const INT32 constants[] =
+{
+	0x0001, 0x0002, 0x0004, 0x0008, 0x0010, 0x0020, 0x0040, 0x0080,
+	0x0100, 0x0200, 0x0400, 0x0800, 0x1000, 0x2000, 0x4000, 0x8000,
+	0xfffe, 0xfffd, 0xfffb, 0xfff7, 0xffef, 0xffdf, 0xffbf, 0xff7f,
+	0xfeff, 0xfdff, 0xfbff, 0xf7ff, 0xefff, 0xdfff, 0xbfff, 0x7fff
+};
+
 
 
 /*===========================================================================
@@ -726,7 +735,6 @@ void alu_op_ar(int op)
 	INT32 yop = (op >> 11) & 3;
 	INT32 res;
 
-	//switch ((op >> 13) & 15)
 	switch (op & (15<<13))  /*JB*/
 	{
 		case 0x00<<13:
@@ -856,6 +864,132 @@ void alu_op_ar(int op)
 
 
 /*===========================================================================
+	ALU operations (result in AR, constant yop)
+===========================================================================*/
+
+void alu_op_ar_const(int op)
+{
+	INT32 xop = (op >> 8) & 7;
+	INT32 yop = constants[((op >> 5) & 0x07) | ((op >> 8) & 0x18)];
+	INT32 res;
+
+	switch (op & (15<<13))  /*JB*/
+	{
+		case 0x00<<13:
+			/* Y				Clear when y = 0 */
+			res = yop;
+			CALC_NZ(res);
+			break;
+		case 0x01<<13:
+			/* Y + 1			PASS 1 when y = 0 */
+			res = yop + 1;
+			CALC_NZ(res);
+			if (yop == 0x7fff) SET_V;
+			else if (yop == 0xffff) SET_C;
+			break;
+		case 0x02<<13:
+			/* X + Y + C */
+			xop = ALU_GETXREG_UNSIGNED(xop);
+			yop += GET_C >> 3;
+			res = xop + yop;
+			CALC_NZVC(xop, yop, res);
+			break;
+		case 0x03<<13:
+			/* X + Y			X when y = 0 */
+			xop = ALU_GETXREG_UNSIGNED(xop);
+			res = xop + yop;
+			CALC_NZVC(xop, yop, res);
+			break;
+		case 0x04<<13:
+			/* NOT Y */
+			res = yop ^ 0xffff;
+			CALC_NZ(res);
+			break;
+		case 0x05<<13:
+			/* -Y */
+			res = -yop;
+			CALC_NZ(res);
+			if (yop == 0x8000) SET_V;
+			if (yop == 0x0000) SET_C;
+			break;
+		case 0x06<<13:
+			/* X - Y + C - 1	X + C - 1 when y = 0 */
+			xop = ALU_GETXREG_UNSIGNED(xop);
+			res = xop - yop + (GET_C >> 3) - 1;
+			CALC_NZVC_SUB(xop, yop, res);
+			break;
+		case 0x07<<13:
+			/* X - Y */
+			xop = ALU_GETXREG_UNSIGNED(xop);
+			res = xop - yop;
+			CALC_NZVC_SUB(xop, yop, res);
+			break;
+		case 0x08<<13:
+			/* Y - 1			PASS -1 when y = 0 */
+			res = yop - 1;
+			CALC_NZ(res);
+			if (yop == 0x8000) SET_V;
+			else if (yop == 0x0000) SET_C;
+			break;
+		case 0x09<<13:
+			/* Y - X			-X when y = 0 */
+			xop = ALU_GETXREG_UNSIGNED(xop);
+			res = yop - xop;
+			CALC_NZVC_SUB(yop, xop, res);
+			break;
+		case 0x0a<<13:
+			/* Y - X + C - 1	-X + C - 1 when y = 0 */
+			xop = ALU_GETXREG_UNSIGNED(xop);
+			res = yop - xop + (GET_C >> 3) - 1;
+			CALC_NZVC_SUB(yop, xop, res);
+			break;
+		case 0x0b<<13:
+			/* NOT X */
+			res = ALU_GETXREG_UNSIGNED(xop) ^ 0xffff;
+			CALC_NZ(res);
+			break;
+		case 0x0c<<13:
+			/* X AND Y */
+			xop = ALU_GETXREG_UNSIGNED(xop);
+			res = xop & yop;
+			CALC_NZ(res);
+			break;
+		case 0x0d<<13:
+			/* X OR Y */
+			xop = ALU_GETXREG_UNSIGNED(xop);
+			res = xop | yop;
+			CALC_NZ(res);
+			break;
+		case 0x0e<<13:
+			/* X XOR Y */
+			xop = ALU_GETXREG_UNSIGNED(xop);
+			res = xop ^ yop;
+			CALC_NZ(res);
+			break;
+		case 0x0f<<13:
+			/* ABS X */
+			xop = ALU_GETXREG_UNSIGNED(xop);
+			res = (xop & 0x8000) ? -xop : xop;
+			if (xop == 0) SET_Z;
+			if (xop == 0x8000) SET_N, SET_V;
+			CLR_S;
+			if (xop & 0x8000) SET_S;
+			break;
+		default:
+			res = 0;	/* just to keep the compiler happy */
+			break;
+	}
+
+	/* saturate */
+	if ((adsp2100.mstat & MSTAT_SATURATE) && GET_V) res = GET_C ? -32768 : 32767;
+
+	/* set the final value */
+	adsp2100.core.ar.u = res;
+}
+
+
+
+/*===========================================================================
 	ALU operations (result in AF)
 ===========================================================================*/
 
@@ -865,7 +999,6 @@ void alu_op_af(int op)
 	INT32 yop = (op >> 11) & 3;
 	INT32 res;
 
-//	switch ((op >> 13) & 15)
 	switch (op & (15<<13))  /*JB*/
 	{
 		case 0x00<<13:
@@ -992,6 +1125,258 @@ void alu_op_af(int op)
 
 
 /*===========================================================================
+	ALU operations (result in AF, constant yop)
+===========================================================================*/
+
+void alu_op_af_const(int op)
+{
+	INT32 xop = (op >> 8) & 7;
+	INT32 yop = constants[((op >> 5) & 0x07) | ((op >> 8) & 0x18)];
+	INT32 res;
+
+	switch (op & (15<<13))  /*JB*/
+	{
+		case 0x00<<13:
+			/* Y				Clear when y = 0 */
+			res = yop;
+			CALC_NZ(res);
+			break;
+		case 0x01<<13:
+			/* Y + 1			PASS 1 when y = 0 */
+			res = yop + 1;
+			CALC_NZ(res);
+			if (yop == 0x7fff) SET_V;
+			else if (yop == 0xffff) SET_C;
+			break;
+		case 0x02<<13:
+			/* X + Y + C */
+			xop = ALU_GETXREG_UNSIGNED(xop);
+			yop += GET_C >> 3;
+			res = xop + yop;
+			CALC_NZVC(xop, yop, res);
+			break;
+		case 0x03<<13:
+			/* X + Y			X when y = 0 */
+			xop = ALU_GETXREG_UNSIGNED(xop);
+			res = xop + yop;
+			CALC_NZVC(xop, yop, res);
+			break;
+		case 0x04<<13:
+			/* NOT Y */
+			res = yop ^ 0xffff;
+			CALC_NZ(res);
+			break;
+		case 0x05<<13:
+			/* -Y */
+			res = -yop;
+			CALC_NZ(res);
+			if (yop == 0x8000) SET_V;
+			if (yop == 0x0000) SET_C;
+			break;
+		case 0x06<<13:
+			/* X - Y + C - 1	X + C - 1 when y = 0 */
+			xop = ALU_GETXREG_UNSIGNED(xop);
+			res = xop - yop + (GET_C >> 3) - 1;
+			CALC_NZVC_SUB(xop, yop, res);
+			break;
+		case 0x07<<13:
+			/* X - Y */
+			xop = ALU_GETXREG_UNSIGNED(xop);
+			res = xop - yop;
+			CALC_NZVC_SUB(xop, yop, res);
+			break;
+		case 0x08<<13:
+			/* Y - 1			PASS -1 when y = 0 */
+			res = yop - 1;
+			CALC_NZ(res);
+			if (yop == 0x8000) SET_V;
+			else if (yop == 0x0000) SET_C;
+			break;
+		case 0x09<<13:
+			/* Y - X			-X when y = 0 */
+			xop = ALU_GETXREG_UNSIGNED(xop);
+			res = yop - xop;
+			CALC_NZVC_SUB(yop, xop, res);
+			break;
+		case 0x0a<<13:
+			/* Y - X + C - 1	-X + C - 1 when y = 0 */
+			xop = ALU_GETXREG_UNSIGNED(xop);
+			res = yop - xop + (GET_C >> 3) - 1;
+			CALC_NZVC_SUB(yop, xop, res);
+			break;
+		case 0x0b<<13:
+			/* NOT X */
+			res = ALU_GETXREG_UNSIGNED(xop) ^ 0xffff;
+			CALC_NZ(res);
+			break;
+		case 0x0c<<13:
+			/* X AND Y */
+			xop = ALU_GETXREG_UNSIGNED(xop);
+			res = xop & yop;
+			CALC_NZ(res);
+			break;
+		case 0x0d<<13:
+			/* X OR Y */
+			xop = ALU_GETXREG_UNSIGNED(xop);
+			res = xop | yop;
+			CALC_NZ(res);
+			break;
+		case 0x0e<<13:
+			/* X XOR Y */
+			xop = ALU_GETXREG_UNSIGNED(xop);
+			res = xop ^ yop;
+			CALC_NZ(res);
+			break;
+		case 0x0f<<13:
+			/* ABS X */
+			xop = ALU_GETXREG_UNSIGNED(xop);
+			res = (xop & 0x8000) ? -xop : xop;
+			if (xop == 0) SET_Z;
+			if (xop == 0x8000) SET_N, SET_V;
+			CLR_S;
+			if (xop & 0x8000) SET_S;
+			break;
+		default:
+			res = 0;	/* just to keep the compiler happy */
+			break;
+	}
+
+	/* set the final value */
+	adsp2100.core.af.u = res;
+}
+
+
+
+/*===========================================================================
+	ALU operations (no result)
+===========================================================================*/
+
+void alu_op_none(int op)
+{
+	INT32 xop = (op >> 8) & 7;
+	INT32 yop = (op >> 11) & 3;
+	INT32 res;
+
+	switch (op & (15<<13))  /*JB*/
+	{
+		case 0x00<<13:
+			/* Y				Clear when y = 0 */
+			res = ALU_GETYREG_UNSIGNED(yop);
+			CALC_NZ(res);
+			break;
+		case 0x01<<13:
+			/* Y + 1			PASS 1 when y = 0 */
+			yop = ALU_GETYREG_UNSIGNED(yop);
+			res = yop + 1;
+			CALC_NZ(res);
+			if (yop == 0x7fff) SET_V;
+			else if (yop == 0xffff) SET_C;
+			break;
+		case 0x02<<13:
+			/* X + Y + C */
+			xop = ALU_GETXREG_UNSIGNED(xop);
+			yop = ALU_GETYREG_UNSIGNED(yop);
+			yop += GET_C >> 3;
+			res = xop + yop;
+			CALC_NZVC(xop, yop, res);
+			break;
+		case 0x03<<13:
+			/* X + Y			X when y = 0 */
+			xop = ALU_GETXREG_UNSIGNED(xop);
+			yop = ALU_GETYREG_UNSIGNED(yop);
+			res = xop + yop;
+			CALC_NZVC(xop, yop, res);
+			break;
+		case 0x04<<13:
+			/* NOT Y */
+			res = ALU_GETYREG_UNSIGNED(yop) ^ 0xffff;
+			CALC_NZ(res);
+			break;
+		case 0x05<<13:
+			/* -Y */
+			yop = ALU_GETYREG_UNSIGNED(yop);
+			res = -yop;
+			CALC_NZ(res);
+			if (yop == 0x8000) SET_V;
+			if (yop == 0x0000) SET_C;
+			break;
+		case 0x06<<13:
+			/* X - Y + C - 1	X + C - 1 when y = 0 */
+			xop = ALU_GETXREG_UNSIGNED(xop);
+			yop = ALU_GETYREG_UNSIGNED(yop);
+			res = xop - yop + (GET_C >> 3) - 1;
+			CALC_NZVC_SUB(xop, yop, res);
+			break;
+		case 0x07<<13:
+			/* X - Y */
+			xop = ALU_GETXREG_UNSIGNED(xop);
+			yop = ALU_GETYREG_UNSIGNED(yop);
+			res = xop - yop;
+			CALC_NZVC_SUB(xop, yop, res);
+			break;
+		case 0x08<<13:
+			/* Y - 1			PASS -1 when y = 0 */
+			yop = ALU_GETYREG_UNSIGNED(yop);
+			res = yop - 1;
+			CALC_NZ(res);
+			if (yop == 0x8000) SET_V;
+			else if (yop == 0x0000) SET_C;
+			break;
+		case 0x09<<13:
+			/* Y - X			-X when y = 0 */
+			xop = ALU_GETXREG_UNSIGNED(xop);
+			yop = ALU_GETYREG_UNSIGNED(yop);
+			res = yop - xop;
+			CALC_NZVC_SUB(yop, xop, res);
+			break;
+		case 0x0a<<13:
+			/* Y - X + C - 1	-X + C - 1 when y = 0 */
+			xop = ALU_GETXREG_UNSIGNED(xop);
+			yop = ALU_GETYREG_UNSIGNED(yop);
+			res = yop - xop + (GET_C >> 3) - 1;
+			CALC_NZVC_SUB(yop, xop, res);
+			break;
+		case 0x0b<<13:
+			/* NOT X */
+			res = ALU_GETXREG_UNSIGNED(xop) ^ 0xffff;
+			CALC_NZ(res);
+			break;
+		case 0x0c<<13:
+			/* X AND Y */
+			xop = ALU_GETXREG_UNSIGNED(xop);
+			yop = ALU_GETYREG_UNSIGNED(yop);
+			res = xop & yop;
+			CALC_NZ(res);
+			break;
+		case 0x0d<<13:
+			/* X OR Y */
+			xop = ALU_GETXREG_UNSIGNED(xop);
+			yop = ALU_GETYREG_UNSIGNED(yop);
+			res = xop | yop;
+			CALC_NZ(res);
+			break;
+		case 0x0e<<13:
+			/* X XOR Y */
+			xop = ALU_GETXREG_UNSIGNED(xop);
+			yop = ALU_GETYREG_UNSIGNED(yop);
+			res = xop ^ yop;
+			CALC_NZ(res);
+			break;
+		case 0x0f<<13:
+			/* ABS X */
+			xop = ALU_GETXREG_UNSIGNED(xop);
+			res = (xop & 0x8000) ? -xop : xop;
+			if (xop == 0) SET_Z;
+			if (xop == 0x8000) SET_N, SET_V;
+			CLR_S;
+			if (xop & 0x8000) SET_S;
+			break;
+	}
+}
+
+
+
+/*===========================================================================
 	MAC operations (result in MR)
 ===========================================================================*/
 
@@ -1003,7 +1388,6 @@ void mac_op_mr(int op)
 	INT32 temp;
 	INT64 res;
 
-//	switch ((op >> 13) & 15)
 	switch (op & (15<<13))	/*JB*/
 	{
 		case 0x00<<13:
@@ -1156,6 +1540,153 @@ void mac_op_mr(int op)
 
 
 /*===========================================================================
+	MAC operations (result in MR, yop == xop)
+===========================================================================*/
+
+void mac_op_mr_xop(int op)
+{
+	INT8 shift = ((adsp2100.mstat & MSTAT_INTEGER) >> 4) ^ 1;
+	INT32 xop = (op >> 8) & 7;
+	INT32 temp;
+	INT64 res;
+
+	switch (op & (15<<13))	/*JB*/
+	{
+		case 0x00<<13:
+			/* no-op */
+			return;
+		case 0x01<<13:
+			/* X * Y (RND) */
+			xop = MAC_GETXREG_SIGNED(xop);
+			temp = (xop * xop) << shift;
+			res = (INT64)temp;
+#if 0
+			if ((res & 0xffff) == 0x8000) res &= ~((UINT64)0x10000);
+			else res += (res & 0x8000) << 1;
+#else
+			temp &= 0xffff;
+			res += 0x8000;
+			if ( temp == 0x8000 )
+				res &= ~((UINT64)0x10000);
+#endif
+			break;
+		case 0x02<<13:
+			/* MR + X * Y (RND) */
+			xop = MAC_GETXREG_SIGNED(xop);
+			temp = (xop * xop) << shift;
+			res = adsp2100.core.mr.mr + (INT64)temp;
+#if 0
+			if ((res & 0xffff) == 0x8000) res &= ~((UINT64)0x10000);
+			else res += (res & 0x8000) << 1;
+#else
+			temp &= 0xffff;
+			res += 0x8000;
+			if ( temp == 0x8000 )
+				res &= ~((UINT64)0x10000);
+#endif
+			break;
+		case 0x03<<13:
+			/* MR - X * Y (RND) */
+			xop = MAC_GETXREG_SIGNED(xop);
+			temp = (xop * xop) << shift;
+			res = adsp2100.core.mr.mr - (INT64)temp;
+#if 0
+			if ((res & 0xffff) == 0x8000) res &= ~((UINT64)0x10000);
+			else res += (res & 0x8000) << 1;
+#else
+			temp &= 0xffff;
+			res += 0x8000;
+			if ( temp == 0x8000 )
+				res &= ~((UINT64)0x10000);
+#endif
+			break;
+		case 0x04<<13:
+			/* X * Y (SS)		Clear when y = 0 */
+			xop = MAC_GETXREG_SIGNED(xop);
+			temp = (xop * xop) << shift;
+			res = (INT64)temp;
+			break;
+		case 0x05<<13:
+			/* X * Y (SU) */
+			xop = MAC_GETXREG_SIGNED(xop);
+			temp = (xop * xop) << shift;
+			res = (INT64)temp;
+			break;
+		case 0x06<<13:
+			/* X * Y (US) */
+			xop = MAC_GETXREG_UNSIGNED(xop);
+			temp = (xop * xop) << shift;
+			res = (INT64)temp;
+			break;
+		case 0x07<<13:
+			/* X * Y (UU) */
+			xop = MAC_GETXREG_UNSIGNED(xop);
+			temp = (xop * xop) << shift;
+			res = (INT64)temp;
+			break;
+		case 0x08<<13:
+			/* MR + X * Y (SS) */
+			xop = MAC_GETXREG_SIGNED(xop);
+			temp = (xop * xop) << shift;
+			res = adsp2100.core.mr.mr + (INT64)temp;
+			break;
+		case 0x09<<13:
+			/* MR + X * Y (SU) */
+			xop = MAC_GETXREG_SIGNED(xop);
+			temp = (xop * xop) << shift;
+			res = adsp2100.core.mr.mr + (INT64)temp;
+			break;
+		case 0x0a<<13:
+			/* MR + X * Y (US) */
+			xop = MAC_GETXREG_UNSIGNED(xop);
+			temp = (xop * xop) << shift;
+			res = adsp2100.core.mr.mr + (INT64)temp;
+			break;
+		case 0x0b<<13:
+			/* MR + X * Y (UU) */
+			xop = MAC_GETXREG_UNSIGNED(xop);
+			temp = (xop * xop) << shift;
+			res = adsp2100.core.mr.mr + (INT64)temp;
+			break;
+		case 0x0c<<13:
+			/* MR - X * Y (SS) */
+			xop = MAC_GETXREG_SIGNED(xop);
+			temp = (xop * xop) << shift;
+			res = adsp2100.core.mr.mr - (INT64)temp;
+			break;
+		case 0x0d<<13:
+			/* MR - X * Y (SU) */
+			xop = MAC_GETXREG_SIGNED(xop);
+			temp = (xop * xop) << shift;
+			res = adsp2100.core.mr.mr - (INT64)temp;
+			break;
+		case 0x0e<<13:
+			/* MR - X * Y (US) */
+			xop = MAC_GETXREG_UNSIGNED(xop);
+			temp = (xop * xop) << shift;
+			res = adsp2100.core.mr.mr - (INT64)temp;
+			break;
+		case 0x0f<<13:
+			/* MR - X * Y (UU) */
+			xop = MAC_GETXREG_UNSIGNED(xop);
+			temp = (xop * xop) << shift;
+			res = adsp2100.core.mr.mr - (INT64)temp;
+			break;
+		default:
+			res = 0;	/* just to keep the compiler happy */
+			break;
+	}
+
+	/* set the final value */
+	temp = (res >> 31) & 0x1ff;
+	CLR_MV;
+	if (temp != 0x000 && temp != 0x1ff) SET_MV;
+	adsp2100.core.mr.mr = res;
+}
+
+
+
+/*===========================================================================
 	MAC operations (result in MF)
 ===========================================================================*/
 
@@ -1167,7 +1698,6 @@ void mac_op_mf(int op)
 	INT32 temp;
 	INT64 res;
 
-//	switch ((op >> 13) & 15)
 	switch (op & (15<<13))	/*JB*/
 	{
 		case 0x00<<13:
@@ -1317,6 +1847,150 @@ void mac_op_mf(int op)
 
 
 /*===========================================================================
+	MAC operations (result in MF, yop == xop)
+===========================================================================*/
+
+void mac_op_mf_xop(int op)
+{
+	INT8 shift = ((adsp2100.mstat & MSTAT_INTEGER) >> 4) ^ 1;
+	INT32 xop = (op >> 8) & 7;
+	INT32 temp;
+	INT64 res;
+
+	switch (op & (15<<13))	/*JB*/
+	{
+		case 0x00<<13:
+			/* no-op */
+			return;
+		case 0x01<<13:
+			/* X * Y (RND) */
+			xop = MAC_GETXREG_SIGNED(xop);
+			temp = (xop * xop) << shift;
+			res = (INT64)temp;
+#if 0
+			if ((res & 0xffff) == 0x8000) res &= ~((UINT64)0x10000);
+			else res += (res & 0x8000) << 1;
+#else
+			temp &= 0xffff;
+			res += 0x8000;
+			if ( temp == 0x8000 )
+				res &= ~((UINT64)0x10000);
+#endif
+			break;
+		case 0x02<<13:
+			/* MR + X * Y (RND) */
+			xop = MAC_GETXREG_SIGNED(xop);
+			temp = (xop * xop) << shift;
+			res = adsp2100.core.mr.mr + (INT64)temp;
+#if 0
+			if ((res & 0xffff) == 0x8000) res &= ~((UINT64)0x10000);
+			else res += (res & 0x8000) << 1;
+#else
+			temp &= 0xffff;
+			res += 0x8000;
+			if ( temp == 0x8000 )
+				res &= ~((UINT64)0x10000);
+#endif
+			break;
+		case 0x03<<13:
+			/* MR - X * Y (RND) */
+			xop = MAC_GETXREG_SIGNED(xop);
+			temp = (xop * xop) << shift;
+			res = adsp2100.core.mr.mr - (INT64)temp;
+#if 0
+			if ((res & 0xffff) == 0x8000) res &= ~((UINT64)0x10000);
+			else res += (res & 0x8000) << 1;
+#else
+			temp &= 0xffff;
+			res += 0x8000;
+			if ( temp == 0x8000 )
+				res &= ~((UINT64)0x10000);
+#endif
+			break;
+		case 0x04<<13:
+			/* X * Y (SS)		Clear when y = 0 */
+			xop = MAC_GETXREG_SIGNED(xop);
+			temp = (xop * xop) << shift;
+			res = (INT64)temp;
+			break;
+		case 0x05<<13:
+			/* X * Y (SU) */
+			xop = MAC_GETXREG_SIGNED(xop);
+			temp = (xop * xop) << shift;
+			res = (INT64)temp;
+			break;
+		case 0x06<<13:
+			/* X * Y (US) */
+			xop = MAC_GETXREG_UNSIGNED(xop);
+			temp = (xop * xop) << shift;
+			res = (INT64)temp;
+			break;
+		case 0x07<<13:
+			/* X * Y (UU) */
+			xop = MAC_GETXREG_UNSIGNED(xop);
+			temp = (xop * xop) << shift;
+			res = (INT64)temp;
+			break;
+		case 0x08<<13:
+			/* MR + X * Y (SS) */
+			xop = MAC_GETXREG_SIGNED(xop);
+			temp = (xop * xop) << shift;
+			res = adsp2100.core.mr.mr + (INT64)temp;
+			break;
+		case 0x09<<13:
+			/* MR + X * Y (SU) */
+			xop = MAC_GETXREG_SIGNED(xop);
+			temp = (xop * xop) << shift;
+			res = adsp2100.core.mr.mr + (INT64)temp;
+			break;
+		case 0x0a<<13:
+			/* MR + X * Y (US) */
+			xop = MAC_GETXREG_UNSIGNED(xop);
+			temp = (xop * xop) << shift;
+			res = adsp2100.core.mr.mr + (INT64)temp;
+			break;
+		case 0x0b<<13:
+			/* MR + X * Y (UU) */
+			xop = MAC_GETXREG_UNSIGNED(xop);
+			temp = (xop * xop) << shift;
+			res = adsp2100.core.mr.mr + (INT64)temp;
+			break;
+		case 0x0c<<13:
+			/* MR - X * Y (SS) */
+			xop = MAC_GETXREG_SIGNED(xop);
+			temp = (xop * xop) << shift;
+			res = adsp2100.core.mr.mr - (INT64)temp;
+			break;
+		case 0x0d<<13:
+			/* MR - X * Y (SU) */
+			xop = MAC_GETXREG_SIGNED(xop);
+			temp = (xop * xop) << shift;
+			res = adsp2100.core.mr.mr - (INT64)temp;
+			break;
+		case 0x0e<<13:
+			/* MR - X * Y (US) */
+			xop = MAC_GETXREG_UNSIGNED(xop);
+			temp = (xop * xop) << shift;
+			res = adsp2100.core.mr.mr - (INT64)temp;
+			break;
+		case 0x0f<<13:
+			/* MR - X * Y (UU) */
+			xop = MAC_GETXREG_UNSIGNED(xop);
+			temp = (xop * xop) << shift;
+			res = adsp2100.core.mr.mr - (INT64)temp;
+			break;
+		default:
+			res = 0;	/* just to keep the compiler happy */
+			break;
+	}
+
+	/* set the final value */
+	adsp2100.core.mf.u = (UINT32)res >> 16;
+}
+
+
+
+/*===========================================================================
 	SHIFT operations (result in SR/SE/SB)
 ===========================================================================*/
 
@@ -1326,7 +2000,6 @@ void shift_op(int op)
 	INT32 xop = (op >> 8) & 7;
 	UINT32 res;
 
-//	switch ((op >> 11) & 15)
 	switch (op & (15<<11))	/*JB*/
 	{
 		case 0x00<<11:
@@ -1509,7 +2182,6 @@ void shift_op_imm(int op)
 	INT32 xop = (op >> 8) & 7;
 	UINT32 res;
 
-//	switch ((op >> 11) & 15)
 	switch (op & (15<<11))	/*JB*/
 	{
 		case 0x00<<11:

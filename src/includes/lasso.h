@@ -12,13 +12,13 @@ extern size_t lasso_spriteram_size;
 extern data8_t *lasso_bitmap_ram;
 extern data8_t *wwjgtin_track_scroll;
 
-WRITE_HANDLER( lasso_videoram_w );
-WRITE_HANDLER( lasso_colorram_w );
-WRITE_HANDLER( lasso_backcolor_w );
-WRITE_HANDLER( lasso_video_control_w );
-WRITE_HANDLER( wwjgtin_video_control_w );
-WRITE_HANDLER( pinbo_video_control_w );
-WRITE_HANDLER( wwjgtin_lastcolor_w );
+WRITE8_HANDLER( lasso_videoram_w );
+WRITE8_HANDLER( lasso_colorram_w );
+WRITE8_HANDLER( lasso_backcolor_w );
+WRITE8_HANDLER( lasso_video_control_w );
+WRITE8_HANDLER( wwjgtin_video_control_w );
+WRITE8_HANDLER( pinbo_video_control_w );
+WRITE8_HANDLER( wwjgtin_lastcolor_w );
 
 PALETTE_INIT( lasso );
 PALETTE_INIT( wwjgtin );

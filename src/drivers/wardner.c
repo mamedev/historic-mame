@@ -133,7 +133,7 @@ out:
 
 
 
-static WRITE_HANDLER( wardner_ramrom_bank_sw )
+static WRITE8_HANDLER( wardner_ramrom_bank_sw )
 {
 	if (wardner_membank != data) {
 		int bankaddress = 0;
@@ -143,7 +143,7 @@ static WRITE_HANDLER( wardner_ramrom_bank_sw )
 		wardner_membank = data;
 
 		if (data) {
-			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xffff, 0, MRA8_BANK1);
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xffff, 0, 0, MRA8_BANK1);
 			switch (data) {
 				case 2:  bankaddress = 0x10000; break;
 				case 3:  bankaddress = 0x18000; break;
@@ -158,10 +158,10 @@ static WRITE_HANDLER( wardner_ramrom_bank_sw )
 		}
 		else {
 			cpu_setbank(1,&RAM[0x0000]);
-			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x8fff, 0, wardner_sprite_r);
-			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa000, 0xadff, 0, paletteram_r);
-			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xae00, 0xafff, 0, MRA8_RAM);
-			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xc7ff, 0, MRA8_RAM);
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x8fff, 0, 0, wardner_sprite_r);
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa000, 0xadff, 0, 0, paletteram_r);
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xae00, 0xafff, 0, 0, MRA8_RAM);
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xc7ff, 0, 0, MRA8_RAM);
 		}
 	}
 }
@@ -437,7 +437,7 @@ static struct GfxLayout spritelayout =
 /* handler called by the 3812 emulator when the internal timers cause an IRQ */
 static void irqhandler(int linestate)
 {
-	cpu_set_irq_line(1,0,linestate);
+	cpunum_set_input_line(1,0,linestate);
 }
 
 static struct YM3812interface ym3812_interface =

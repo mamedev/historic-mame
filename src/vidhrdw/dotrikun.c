@@ -17,7 +17,7 @@ Driver by Takahiro Nogi (nogi@kt.rim.or.jp) 1999/12/15 -
 	Palette Setting.
 
 *******************************************************************/
-WRITE_HANDLER( dotrikun_color_w )
+WRITE8_HANDLER( dotrikun_color_w )
 {
 	int r, g, b;
 
@@ -38,7 +38,7 @@ WRITE_HANDLER( dotrikun_color_w )
 	Draw Pixel.
 
 *******************************************************************/
-WRITE_HANDLER( dotrikun_videoram_w )
+WRITE8_HANDLER( dotrikun_videoram_w )
 {
 	int i;
 	int x, y;

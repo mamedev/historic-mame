@@ -106,31 +106,31 @@ VIDEO_START( slapfight )
 
 ***************************************************************************/
 
-WRITE_HANDLER( slapfight_videoram_w )
+WRITE8_HANDLER( slapfight_videoram_w )
 {
 	videoram[offset]=data;
 	tilemap_mark_tile_dirty(pf1_tilemap,offset);
 }
 
-WRITE_HANDLER( slapfight_colorram_w )
+WRITE8_HANDLER( slapfight_colorram_w )
 {
 	colorram[offset]=data;
 	tilemap_mark_tile_dirty(pf1_tilemap,offset);
 }
 
-WRITE_HANDLER( slapfight_fixram_w )
+WRITE8_HANDLER( slapfight_fixram_w )
 {
 	slapfight_videoram[offset]=data;
 	tilemap_mark_tile_dirty(fix_tilemap,offset);
 }
 
-WRITE_HANDLER( slapfight_fixcol_w )
+WRITE8_HANDLER( slapfight_fixcol_w )
 {
 	slapfight_colorram[offset]=data;
 	tilemap_mark_tile_dirty(fix_tilemap,offset);
 }
 
-WRITE_HANDLER( slapfight_flipscreen_w )
+WRITE8_HANDLER( slapfight_flipscreen_w )
 {
 	logerror("Writing %02x to flipscreen\n",offset);
 	if (offset==0) flipscreen=1; /* Port 0x2 is flipscreen */
@@ -140,7 +140,7 @@ WRITE_HANDLER( slapfight_flipscreen_w )
 #ifdef MAME_DEBUG
 void slapfght_log_vram(void)
 {
-	if ( keyboard_pressed_memory(KEYCODE_B) )
+	if ( code_pressed_memory(KEYCODE_B) )
 	{
 		int i;
 		for (i=0; i<0x800; i++)

@@ -55,9 +55,9 @@ static void update_irq_state(void)
 		irq_lines |= 5;
 
 	if (irq_lines)
-		cpu_set_irq_line(0, irq_lines, ASSERT_LINE);
+		cpunum_set_input_line(0, irq_lines, ASSERT_LINE);
 	else
-		cpu_set_irq_line(0, 7, CLEAR_LINE);
+		cpunum_set_input_line(0, 7, CLEAR_LINE);
 }
 
 
@@ -998,7 +998,7 @@ static DRIVER_INIT( ultennis )
 	protection_handler = ultennis_protection;
 
 	/* additional (protection?) hack */
-	install_mem_read16_handler(0, 0x300000, 0x300001, ultennis_hack_r);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x300000, 0x300001, 0, 0, ultennis_hack_r);
 }
 
 

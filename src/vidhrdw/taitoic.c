@@ -3082,7 +3082,7 @@ int TC0360PRI_vh_start(void)
 	return 0;
 }
 
-WRITE_HANDLER( TC0360PRI_w )
+WRITE8_HANDLER( TC0360PRI_w )
 {
 	TC0360PRI_regs[offset] = data;
 
@@ -4393,36 +4393,36 @@ void TC0150ROD_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect,
 	int road_B_address = y_offs * 4 + ((type == 2) ? 0 : 0x800);	/* Aquajack has road B in road A area */
 
 #ifdef MAME_DEBUG
-	if (keyboard_pressed_memory (KEYCODE_X))
+	if (code_pressed_memory (KEYCODE_X))
 	{
 		dislayer[0] ^= 1;
 		usrintf_showmessage("RoadA body: %01x",dislayer[0]);
 	}
 
-	if (keyboard_pressed_memory (KEYCODE_C))
+	if (code_pressed_memory (KEYCODE_C))
 	{
 		dislayer[1] ^= 1;
 		usrintf_showmessage("RoadA l-edge: %01x",dislayer[1]);
 	}
 
-	if (keyboard_pressed_memory (KEYCODE_V))
+	if (code_pressed_memory (KEYCODE_V))
 	{
 		dislayer[2] ^= 1;
 		usrintf_showmessage("RoadA r-edge: %01x",dislayer[2]);
 	}
 
-	if (keyboard_pressed_memory (KEYCODE_B))
+	if (code_pressed_memory (KEYCODE_B))
 	{
 		dislayer[3] ^= 1;
 		usrintf_showmessage("RoadB body: %01x",dislayer[3]);
 	}
 
-	if (keyboard_pressed_memory (KEYCODE_N))
+	if (code_pressed_memory (KEYCODE_N))
 	{
 		dislayer[4] ^= 1;
 		usrintf_showmessage("RoadB l-edge: %01x",dislayer[4]);
 	}
-	if (keyboard_pressed_memory (KEYCODE_M))
+	if (code_pressed_memory (KEYCODE_M))
 	{
 		dislayer[5] ^= 1;
 		usrintf_showmessage("RoadB r-edge: %01x",dislayer[5]);
@@ -5328,7 +5328,7 @@ logerror("PC %06x: warning - write %04x to TC0110PCR address %02x\n",activecpu_g
 static data8_t TC0220IOC_regs[8];
 static data8_t TC0220IOC_port;
 
-READ_HANDLER( TC0220IOC_r )
+READ8_HANDLER( TC0220IOC_r )
 {
 	switch (offset)
 	{
@@ -5356,7 +5356,7 @@ logerror("PC %06x: warning - read TC0220IOC address %02x\n",activecpu_get_pc(),o
 	}
 }
 
-WRITE_HANDLER( TC0220IOC_w )
+WRITE8_HANDLER( TC0220IOC_w )
 {
 	TC0220IOC_regs[offset] = data;
 
@@ -5383,22 +5383,22 @@ logerror("PC %06x: warning - write %02x to TC0220IOC address %02x\n",activecpu_g
 	}
 }
 
-READ_HANDLER( TC0220IOC_port_r )
+READ8_HANDLER( TC0220IOC_port_r )
 {
 	return TC0220IOC_port;
 }
 
-WRITE_HANDLER( TC0220IOC_port_w )
+WRITE8_HANDLER( TC0220IOC_port_w )
 {
 	TC0220IOC_port = data;
 }
 
-READ_HANDLER( TC0220IOC_portreg_r )
+READ8_HANDLER( TC0220IOC_portreg_r )
 {
 	return TC0220IOC_r(TC0220IOC_port);
 }
 
-WRITE_HANDLER( TC0220IOC_portreg_w )
+WRITE8_HANDLER( TC0220IOC_portreg_w )
 {
 	TC0220IOC_w(TC0220IOC_port, data);
 }
@@ -5489,7 +5489,7 @@ logerror("CPU #0 PC %06x: warning - write to LSB of TC0220IOC address %02x\n",ac
 
 static data8_t TC0510NIO_regs[8];
 
-READ_HANDLER( TC0510NIO_r )
+READ8_HANDLER( TC0510NIO_r )
 {
 	switch (offset)
 	{
@@ -5517,7 +5517,7 @@ logerror("PC %06x: warning - read TC0510NIO address %02x\n",activecpu_get_pc(),o
 	}
 }
 
-WRITE_HANDLER( TC0510NIO_w )
+WRITE8_HANDLER( TC0510NIO_w )
 {
 	TC0510NIO_regs[offset] = data;
 
@@ -5572,7 +5572,7 @@ WRITE16_HANDLER( TC0510NIO_halfword_wordswap_w )
 
 static data8_t TC0640FIO_regs[8];
 
-READ_HANDLER( TC0640FIO_r )
+READ8_HANDLER( TC0640FIO_r )
 {
 	switch (offset)
 	{
@@ -5600,7 +5600,7 @@ logerror("PC %06x: warning - read TC0640FIO address %02x\n",activecpu_get_pc(),o
 	}
 }
 
-WRITE_HANDLER( TC0640FIO_w )
+WRITE8_HANDLER( TC0640FIO_w )
 {
 	TC0640FIO_regs[offset] = data;
 

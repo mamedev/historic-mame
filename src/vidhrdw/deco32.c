@@ -1300,10 +1300,10 @@ VIDEO_UPDATE( fghthist )
 		fillbitmap(bitmap,Machine->pens[0x200],cliprect); //TODO - pf4 palette entry 0 is shown
 	else
 		tilemap_draw(bitmap,cliprect,pf4_tilemap,0,1);
-if (!keyboard_pressed(KEYCODE_Q))	tilemap_draw(bitmap,cliprect,pf3_tilemap,0,2);
-if (!keyboard_pressed(KEYCODE_W))	tilemap_draw(bitmap,cliprect,pf2_tilemap,0,16);
-if (!keyboard_pressed(KEYCODE_E))	tattass_drawsprites(bitmap,buffered_spriteram32,3,0);
-if (!keyboard_pressed(KEYCODE_R))	tilemap_draw(bitmap,cliprect,pf1_tilemap,0,0);
+if (!code_pressed(KEYCODE_Q))	tilemap_draw(bitmap,cliprect,pf3_tilemap,0,2);
+if (!code_pressed(KEYCODE_W))	tilemap_draw(bitmap,cliprect,pf2_tilemap,0,16);
+if (!code_pressed(KEYCODE_E))	tattass_drawsprites(bitmap,buffered_spriteram32,3,0);
+if (!code_pressed(KEYCODE_R))	tilemap_draw(bitmap,cliprect,pf1_tilemap,0,0);
 
 //	print_debug_info();
 }

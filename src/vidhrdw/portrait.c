@@ -12,7 +12,7 @@ extern int portrait_scrollx_hi, portrait_scrollx_lo;
 data8_t *portrait_bgvideoram, *portrait_fgvideoram, *portrait_spriteram;
 static struct tilemap *foreground, *background;
 
-WRITE_HANDLER( portrait_bgvideo_write )
+WRITE8_HANDLER( portrait_bgvideo_write )
 {
 	if (portrait_bgvideoram[offset] != data)
 	{
@@ -21,7 +21,7 @@ WRITE_HANDLER( portrait_bgvideo_write )
 	}
 }
 
-WRITE_HANDLER( portrait_fgvideo_write )
+WRITE8_HANDLER( portrait_fgvideo_write )
 {
 	if (portrait_fgvideoram[offset] != data)
 	{

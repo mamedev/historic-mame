@@ -90,7 +90,7 @@ PALETTE_INIT( irobot )
 }
 
 
-WRITE_HANDLER( irobot_paletteram_w )
+WRITE8_HANDLER( irobot_paletteram_w )
 {
     int r,g,b;
 	int bits,intensity;

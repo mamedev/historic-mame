@@ -18,7 +18,7 @@ Notes:
 
 static int K051316_readroms;
 
-static WRITE_HANDLER( k007232_extvolume_w );
+static WRITE8_HANDLER( k007232_extvolume_w );
 
 /* from vidhrdw/chqflag.c */
 VIDEO_START( chqflag );
@@ -30,16 +30,16 @@ static INTERRUPT_GEN( chqflag_interrupt )
 	if (cpu_getiloops() == 0)
 	{
 		if (K051960_is_IRQ_enabled())
-			cpu_set_irq_line(0, KONAMI_IRQ_LINE, HOLD_LINE);
+			cpunum_set_input_line(0, KONAMI_IRQ_LINE, HOLD_LINE);
 	}
 	else if (cpu_getiloops() % 2)
 	{
 		if (K051960_is_NMI_enabled())
-			cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+			cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 	}
 }
 
-static WRITE_HANDLER( chqflag_bankswitch_w )
+static WRITE8_HANDLER( chqflag_bankswitch_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -50,28 +50,28 @@ static WRITE_HANDLER( chqflag_bankswitch_w )
 
 	/* bit 5 = memory bank select */
 	if (data & 0x20){
-		install_mem_read_handler (0, 0x1800, 0x1fff, paletteram_r);							/* palette */
-		install_mem_write_handler (0, 0x1800, 0x1fff, paletteram_xBBBBBGGGGGRRRRR_swap_w);	/* palette */
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1800, 0x1fff, 0, 0, paletteram_r);							/* palette */
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1800, 0x1fff, 0, 0, paletteram_xBBBBBGGGGGRRRRR_swap_w);	/* palette */
 		if (K051316_readroms){
-			install_mem_read_handler (0, 0x1000, 0x17ff, K051316_rom_0_r);	/* 051316 #1 (ROM test) */
-			install_mem_write_handler (0, 0x1000, 0x17ff, K051316_0_w);		/* 051316 #1 */
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1000, 0x17ff, 0, 0, K051316_rom_0_r);	/* 051316 #1 (ROM test) */
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1000, 0x17ff, 0, 0, K051316_0_w);		/* 051316 #1 */
 		}
 		else{
-			install_mem_read_handler (0, 0x1000, 0x17ff, K051316_0_r);		/* 051316 #1 */
-			install_mem_write_handler (0, 0x1000, 0x17ff, K051316_0_w);		/* 051316 #1 */
+			memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1000, 0x17ff, 0, 0, K051316_0_r);		/* 051316 #1 */
+			memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1000, 0x17ff, 0, 0, K051316_0_w);		/* 051316 #1 */
 		}
 	}
 	else{
-		install_mem_read_handler (0, 0x1000, 0x17ff, MRA8_RAM);				/* RAM */
-		install_mem_write_handler (0, 0x1000, 0x17ff, MWA8_RAM);				/* RAM */
-		install_mem_read_handler (0, 0x1800, 0x1fff, MRA8_RAM);				/* RAM */
-		install_mem_write_handler (0, 0x1800, 0x1fff, MWA8_RAM);				/* RAM */
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1000, 0x17ff, 0, 0, MRA8_RAM);				/* RAM */
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1000, 0x17ff, 0, 0, MWA8_RAM);				/* RAM */
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1800, 0x1fff, 0, 0, MRA8_RAM);				/* RAM */
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1800, 0x1fff, 0, 0, MWA8_RAM);				/* RAM */
 	}
 
 	/* other bits unknown/unused */
 }
 
-static WRITE_HANDLER( chqflag_vreg_w )
+static WRITE8_HANDLER( chqflag_vreg_w )
 {
 	static int last;
 
@@ -81,10 +81,10 @@ static WRITE_HANDLER( chqflag_vreg_w )
 
 	/* bit 4 = enable rom reading thru K051316 #1 & #2 */
 	if ((K051316_readroms = (data & 0x10))){
-		install_mem_read_handler (0, 0x2800, 0x2fff, K051316_rom_1_r);	/* 051316 (ROM test) */
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x2800, 0x2fff, 0, 0, K051316_rom_1_r);	/* 051316 (ROM test) */
 	}
 	else{
-		install_mem_read_handler (0, 0x2800, 0x2fff, K051316_1_r);		/* 051316 */
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x2800, 0x2fff, 0, 0, K051316_1_r);		/* 051316 */
 	}
 
 	/* Bits 3-7 probably control palette dimming in a similar way to TMNT2/Saunset Riders, */
@@ -118,12 +118,12 @@ static WRITE_HANDLER( chqflag_vreg_w )
 
 static int analog_ctrl;
 
-static WRITE_HANDLER( select_analog_ctrl_w )
+static WRITE8_HANDLER( select_analog_ctrl_w )
 {
 	analog_ctrl = data;
 }
 
-static READ_HANDLER( analog_read_r )
+static READ8_HANDLER( analog_read_r )
 {
 	static int accel, wheel;
 
@@ -137,9 +137,9 @@ static READ_HANDLER( analog_read_r )
 	return 0xff;
 }
 
-WRITE_HANDLER( chqflag_sh_irqtrigger_w )
+WRITE8_HANDLER( chqflag_sh_irqtrigger_w )
 {
-	cpu_set_irq_line(1,0,HOLD_LINE);
+	cpunum_set_input_line(1,0,HOLD_LINE);
 }
 
 
@@ -194,7 +194,7 @@ static ADDRESS_MAP_START( chqflag_readmem_sound, ADDRESS_SPACE_PROGRAM, 8 )
 	//AM_RANGE(0xe000, 0xe000) AM_READ(MRA8_NOP)				/* ??? */
 ADDRESS_MAP_END
 
-static WRITE_HANDLER( k007232_bankswitch_w )
+static WRITE8_HANDLER( k007232_bankswitch_w )
 {
 	int bank_A, bank_B;
 
@@ -324,7 +324,7 @@ INPUT_PORTS_END
 
 static void chqflag_ym2151_irq_w(int data)
 {
-	cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
+	cpunum_set_input_line(1,INPUT_LINE_NMI,PULSE_LINE);
 }
 
 
@@ -343,7 +343,7 @@ static void volume_callback0(int v)
 	K007232_set_volume(0,1,0,(v >> 4)*0x11);
 }
 
-static WRITE_HANDLER( k007232_extvolume_w )
+static WRITE8_HANDLER( k007232_extvolume_w )
 {
 	K007232_set_volume(1,1,(data & 0x0f)*0x11/2,(data >> 4)*0x11/2);
 }

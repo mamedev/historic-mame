@@ -578,7 +578,7 @@ static WRITE16_HANDLER( math0_compare_w ){
 	COMBINE_DATA( &math0_context.compare[offset]);
 	if( offset==3 ){
 		soundlatch_w( 0,math0_context.compare[3]&0xff );
-		cpu_set_nmi_line(1, PULSE_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 	}
 }
 static READ16_HANDLER( math0_product_r ){
@@ -640,7 +640,7 @@ static WRITE16_HANDLER( math1_compare_w ){
 	COMBINE_DATA( &math1_context.compare[offset]);
 	if( offset==3 ){
 		soundlatch_w( 0,math1_context.compare[3]&0xff );
-		cpu_set_nmi_line(1, PULSE_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 	}
 }
 static READ16_HANDLER( math1_product_r ){

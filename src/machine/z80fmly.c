@@ -257,8 +257,8 @@ void z80ctc_w (int which, int offset, int data)
 	}
 }
 
-WRITE_HANDLER( z80ctc_0_w ) { z80ctc_w (0, offset, data); }
-WRITE_HANDLER( z80ctc_1_w ) { z80ctc_w (1, offset, data); }
+WRITE8_HANDLER( z80ctc_0_w ) { z80ctc_w (0, offset, data); }
+WRITE8_HANDLER( z80ctc_1_w ) { z80ctc_w (1, offset, data); }
 
 
 int z80ctc_r (int which, int ch)
@@ -289,8 +289,8 @@ logerror("CTC clock %f\n",1.0/clock);
 	}
 }
 
-READ_HANDLER( z80ctc_0_r ) { return z80ctc_r (0, offset); }
-READ_HANDLER( z80ctc_1_r ) { return z80ctc_r (1, offset); }
+READ8_HANDLER( z80ctc_0_r ) { return z80ctc_r (0, offset); }
+READ8_HANDLER( z80ctc_1_r ) { return z80ctc_r (1, offset); }
 
 
 int z80ctc_interrupt( int which )
@@ -410,14 +410,14 @@ logerror("CTC clock %f\n",1.0/clock);
 	}
 }
 
-WRITE_HANDLER( z80ctc_0_trg0_w ) { z80ctc_trg_w (0, 0, offset, data); }
-WRITE_HANDLER( z80ctc_0_trg1_w ) { z80ctc_trg_w (0, 1, offset, data); }
-WRITE_HANDLER( z80ctc_0_trg2_w ) { z80ctc_trg_w (0, 2, offset, data); }
-WRITE_HANDLER( z80ctc_0_trg3_w ) { z80ctc_trg_w (0, 3, offset, data); }
-WRITE_HANDLER( z80ctc_1_trg0_w ) { z80ctc_trg_w (1, 0, offset, data); }
-WRITE_HANDLER( z80ctc_1_trg1_w ) { z80ctc_trg_w (1, 1, offset, data); }
-WRITE_HANDLER( z80ctc_1_trg2_w ) { z80ctc_trg_w (1, 2, offset, data); }
-WRITE_HANDLER( z80ctc_1_trg3_w ) { z80ctc_trg_w (1, 3, offset, data); }
+WRITE8_HANDLER( z80ctc_0_trg0_w ) { z80ctc_trg_w (0, 0, offset, data); }
+WRITE8_HANDLER( z80ctc_0_trg1_w ) { z80ctc_trg_w (0, 1, offset, data); }
+WRITE8_HANDLER( z80ctc_0_trg2_w ) { z80ctc_trg_w (0, 2, offset, data); }
+WRITE8_HANDLER( z80ctc_0_trg3_w ) { z80ctc_trg_w (0, 3, offset, data); }
+WRITE8_HANDLER( z80ctc_1_trg0_w ) { z80ctc_trg_w (1, 0, offset, data); }
+WRITE8_HANDLER( z80ctc_1_trg1_w ) { z80ctc_trg_w (1, 1, offset, data); }
+WRITE8_HANDLER( z80ctc_1_trg2_w ) { z80ctc_trg_w (1, 2, offset, data); }
+WRITE8_HANDLER( z80ctc_1_trg3_w ) { z80ctc_trg_w (1, 3, offset, data); }
 
 
 /*---------------------- Z80 PIO ---------------------------------*/
@@ -746,21 +746,21 @@ int z80pio_p_r( int which , int ch )
 
 void z80pio_0_reset (void) { z80pio_reset (0); }
 
-WRITE_HANDLER( z80pio_0_w )
+WRITE8_HANDLER( z80pio_0_w )
 {
 	if(offset&1) z80pio_c_w(0,(offset/2)&1,data);
 	else         z80pio_d_w(0,(offset/2)&1,data);
 }
 
-READ_HANDLER( z80pio_0_r )
+READ8_HANDLER( z80pio_0_r )
 {
 	return (offset&1) ? z80pio_c_r(0,(offset/2)&1) : z80pio_d_r(0,(offset/2)&1);
 }
 
-WRITE_HANDLER( z80pioA_0_p_w ) { z80pio_p_w(0,0,data);   }
-WRITE_HANDLER( z80pioB_0_p_w ) { z80pio_p_w(0,1,data);   }
-READ_HANDLER( z80pioA_0_p_r )           { return z80pio_p_r(0,0); }
-READ_HANDLER( z80pioB_0_p_r )           { return z80pio_p_r(0,1); }
+WRITE8_HANDLER( z80pioA_0_p_w ) { z80pio_p_w(0,0,data);   }
+WRITE8_HANDLER( z80pioB_0_p_w ) { z80pio_p_w(0,1,data);   }
+READ8_HANDLER( z80pioA_0_p_r )           { return z80pio_p_r(0,0); }
+READ8_HANDLER( z80pioB_0_p_r )           { return z80pio_p_r(0,1); }
 
 static void z80pio_update_strobe(int which, int ch, int state)
 {

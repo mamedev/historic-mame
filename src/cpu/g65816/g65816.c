@@ -362,12 +362,12 @@ static void g65816_set_info(UINT32 state, union cpuinfo *info)
 	switch (state)
 	{
 		/* --- the following bits of info are set as 64-bit signed integers --- */
-		case CPUINFO_INT_IRQ_STATE + G65816_LINE_IRQ:	g65816_set_irq_line(G65816_LINE_IRQ, info->i); break;
-		case CPUINFO_INT_IRQ_STATE + G65816_LINE_NMI:	g65816_set_irq_line(G65816_LINE_NMI, info->i); break;
-		case CPUINFO_INT_IRQ_STATE + G65816_LINE_ABORT:	g65816_set_irq_line(G65816_LINE_ABORT, info->i); break;
-		case CPUINFO_INT_IRQ_STATE + G65816_LINE_SO:	g65816_set_irq_line(G65816_LINE_SO, info->i); break;
-		case CPUINFO_INT_IRQ_STATE + G65816_LINE_RDY:	g65816_set_irq_line(G65816_LINE_RDY, info->i); break;
-		case CPUINFO_INT_IRQ_STATE + G65816_LINE_RESET:	g65816_set_irq_line(G65816_LINE_RESET, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + G65816_LINE_IRQ:		g65816_set_irq_line(G65816_LINE_IRQ, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + G65816_LINE_NMI:		g65816_set_irq_line(G65816_LINE_NMI, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + G65816_LINE_ABORT:	g65816_set_irq_line(G65816_LINE_ABORT, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + G65816_LINE_SO:		g65816_set_irq_line(G65816_LINE_SO, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + G65816_LINE_RDY:		g65816_set_irq_line(G65816_LINE_RDY, info->i); break;
+		case CPUINFO_INT_INPUT_STATE + G65816_LINE_RESET:	g65816_set_irq_line(G65816_LINE_RESET, info->i); break;
 
 		case CPUINFO_INT_PC:							g65816_set_pc(info->i);					break;
 		case CPUINFO_INT_SP:							g65816_set_sp(info->i);					break;
@@ -402,7 +402,7 @@ void g65816_get_info(UINT32 state, union cpuinfo *info)
 	{
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
 		case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(g65816i_cpu);			break;
-		case CPUINFO_INT_IRQ_LINES:						info->i = 1;							break;
+		case CPUINFO_INT_INPUT_LINES:					info->i = 1;							break;
 		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
 		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_BE;					break;
 		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
@@ -421,12 +421,12 @@ void g65816_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 0;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
 
-		case CPUINFO_INT_IRQ_STATE + G65816_LINE_IRQ:	info->i = LINE_IRQ;						break;
-		case CPUINFO_INT_IRQ_STATE + G65816_LINE_NMI:	info->i = LINE_NMI;						break;
-		case CPUINFO_INT_IRQ_STATE + G65816_LINE_ABORT:	info->i = 0;							break;
-		case CPUINFO_INT_IRQ_STATE + G65816_LINE_SO:	info->i = 0;							break;
-		case CPUINFO_INT_IRQ_STATE + G65816_LINE_RDY:	info->i = 0;							break;
-		case CPUINFO_INT_IRQ_STATE + G65816_LINE_RESET:	info->i = 0;							break;
+		case CPUINFO_INT_INPUT_STATE + G65816_LINE_IRQ:		info->i = LINE_IRQ;						break;
+		case CPUINFO_INT_INPUT_STATE + G65816_LINE_NMI:		info->i = LINE_NMI;						break;
+		case CPUINFO_INT_INPUT_STATE + G65816_LINE_ABORT:	info->i = 0;							break;
+		case CPUINFO_INT_INPUT_STATE + G65816_LINE_SO:		info->i = 0;							break;
+		case CPUINFO_INT_INPUT_STATE + G65816_LINE_RDY:		info->i = 0;							break;
+		case CPUINFO_INT_INPUT_STATE + G65816_LINE_RESET:	info->i = 0;							break;
 
 		case CPUINFO_INT_PREVIOUSPC:					/* not supported */						break;
 

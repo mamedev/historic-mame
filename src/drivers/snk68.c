@@ -125,7 +125,7 @@ static WRITE16_HANDLER( protection_w )
 static WRITE16_HANDLER( sound_w )
 {
 	soundlatch_w(0,(data>>8)&0xff);
-	cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
+	cpunum_set_input_line(1,INPUT_LINE_NMI,PULSE_LINE);
 }
 
 /*******************************************************************************/
@@ -200,7 +200,7 @@ static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xf000, 0xf7ff) AM_WRITE(MWA8_RAM)
 ADDRESS_MAP_END
 
-static WRITE_HANDLER( D7759_write_port_0_w )
+static WRITE8_HANDLER( D7759_write_port_0_w )
 {
 	UPD7759_port_w(offset,data);
 	UPD7759_start_w (0,0);
@@ -787,7 +787,7 @@ static struct GfxDecodeInfo ikari3_gfxdecodeinfo[] =
 
 static void irqhandler(int irq)
 {
-	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM3812interface ym3812_interface =

@@ -155,17 +155,17 @@ Notes:
 /***************************************************************************/
 
 // 7751 emulation
-WRITE_HANDLER( sys16_7751_audio_8255_w );
- READ_HANDLER( sys16_7751_audio_8255_r );
- READ_HANDLER( sys16_7751_sh_rom_r );
- READ_HANDLER( sys16_7751_sh_t1_r );
- READ_HANDLER( sys16_7751_sh_command_r );
-WRITE_HANDLER( sys16_7751_sh_dac_w );
-WRITE_HANDLER( sys16_7751_sh_busy_w );
-WRITE_HANDLER( sys16_7751_sh_offset_a0_a3_w );
-WRITE_HANDLER( sys16_7751_sh_offset_a4_a7_w );
-WRITE_HANDLER( sys16_7751_sh_offset_a8_a11_w );
-WRITE_HANDLER( sys16_7751_sh_rom_select_w );
+WRITE8_HANDLER( sys16_7751_audio_8255_w );
+ READ8_HANDLER( sys16_7751_audio_8255_r );
+ READ8_HANDLER( sys16_7751_sh_rom_r );
+ READ8_HANDLER( sys16_7751_sh_t1_r );
+ READ8_HANDLER( sys16_7751_sh_command_r );
+WRITE8_HANDLER( sys16_7751_sh_dac_w );
+WRITE8_HANDLER( sys16_7751_sh_busy_w );
+WRITE8_HANDLER( sys16_7751_sh_offset_a0_a3_w );
+WRITE8_HANDLER( sys16_7751_sh_offset_a4_a7_w );
+WRITE8_HANDLER( sys16_7751_sh_offset_a8_a11_w );
+WRITE8_HANDLER( sys16_7751_sh_rom_select_w );
 
 /***************************************************************************/
 
@@ -192,7 +192,7 @@ static WRITE16_HANDLER( sys16_3d_coinctrl_w )
 static INTERRUPT_GEN( sys16_interrupt )
 {
 	if(sys16_custom_irq) sys16_custom_irq();
-	cpu_set_irq_line(0, 4, HOLD_LINE); /* Interrupt vector 4, used by VBlank */
+	cpunum_set_input_line(0, 4, HOLD_LINE); /* Interrupt vector 4, used by VBlank */
 }
 
 
@@ -230,7 +230,7 @@ static INTERRUPT_GEN( sys16_interrupt )
 static int sample_buffer = 0;
 static int sample_select = 0;
 
-static WRITE_HANDLER( tturfbl_msm5205_data_w )
+static WRITE8_HANDLER( tturfbl_msm5205_data_w )
 {
 	sample_buffer = data;
 }
@@ -241,7 +241,7 @@ static void tturfbl_msm5205_callback(int data)
 	sample_buffer <<= 4;
 	sample_select ^= 1;
 	if(sample_select == 0)
-		cpu_set_nmi_line(1, PULSE_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 }
 
 static struct MSM5205interface tturfbl_msm5205_interface =
@@ -256,13 +256,13 @@ static struct MSM5205interface tturfbl_msm5205_interface =
 
 UINT8 *tturfbl_soundbank_ptr = NULL;		/* Pointer to currently selected portion of ROM */
 
-static READ_HANDLER( tturfbl_soundbank_r )
+static READ8_HANDLER( tturfbl_soundbank_r )
 {
 	if(tturfbl_soundbank_ptr) return tturfbl_soundbank_ptr[offset & 0x3fff];
 	return 0x80;
 }
 
-static WRITE_HANDLER( tturfbl_soundbank_w )
+static WRITE8_HANDLER( tturfbl_soundbank_w )
 {
 	UINT8 *mem = memory_region(REGION_CPU2);
 
@@ -394,7 +394,7 @@ static ADDRESS_MAP_START( sound_readmem_7759, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 
-static WRITE_HANDLER( UPD7759_bank_w ) //*
+static WRITE8_HANDLER( UPD7759_bank_w ) //*
 {
 	int offs, size = memory_region_length(REGION_CPU2) - 0x10000;
 
@@ -416,14 +416,14 @@ ADDRESS_MAP_END
 static WRITE16_HANDLER( sound_command_w ){
 	if( ACCESSING_LSB ){
 		soundlatch_w( 0,data&0xff );
-		cpu_set_irq_line( 1, 0, HOLD_LINE );
+		cpunum_set_input_line( 1, 0, HOLD_LINE );
 	}
 }
 
 static WRITE16_HANDLER( sound_command_nmi_w ){
 	if( ACCESSING_LSB ){
 		soundlatch_w( 0,data&0xff );
-		cpu_set_nmi_line(1, PULSE_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 	}
 }
 
@@ -1366,8 +1366,8 @@ INPUT_PORTS_END
 static INTERRUPT_GEN( ap_interrupt )
 {
 	int intleft=cpu_getiloops();
-	if(intleft!=0) cpu_set_irq_line(0, 2, HOLD_LINE);
-	else cpu_set_irq_line(0, 4, HOLD_LINE);
+	if(intleft!=0) cpunum_set_input_line(0, 2, HOLD_LINE);
+	else cpunum_set_input_line(0, 4, HOLD_LINE);
 }
 
 
@@ -3088,7 +3088,7 @@ static WRITE16_HANDLER( ga_sound_command_w ){
 	COMBINE_DATA( &sys16_workingram[(0xecfc-0xc000)/2] );
 	if( ACCESSING_MSB ){
 		soundlatch_w( 0,data>>8 );
-		cpu_set_irq_line( 1, 0, HOLD_LINE );
+		cpunum_set_input_line( 1, 0, HOLD_LINE );
 	}
 }
 
@@ -5938,7 +5938,7 @@ static WRITE16_HANDLER( tturfu_mcu_sound_trigger_w )
 			code = (data >> 8) & 0xFF;
 
 		soundlatch_w(0, code);
-		cpu_set_irq_line(1, 0, HOLD_LINE);
+		cpunum_set_input_line(1, 0, HOLD_LINE);
 	}
 }
 static WRITE16_HANDLER( tturf_mcu_sound_trigger_w )
@@ -5955,7 +5955,7 @@ static WRITE16_HANDLER( tturf_mcu_sound_trigger_w )
 			code = (data >> 8) & 0xFF;
 
 		soundlatch_w(0, code);
-		cpu_set_irq_line(1, 0, HOLD_LINE);
+		cpunum_set_input_line(1, 0, HOLD_LINE);
 	}
 }
 
@@ -5974,7 +5974,7 @@ static MACHINE_INIT( tturf ){
 	sys16_obj_bank = bank;
 	sys16_update_proc = tturf_update_proc;
 
-	install_mem_write16_handler(0, 0x2001d6, 0x2001e5, tturf_mcu_sound_trigger_w );
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2001d6, 0x2001e5, 0, 0, tturf_mcu_sound_trigger_w );
 
 }
 
@@ -5987,7 +5987,7 @@ static MACHINE_INIT( tturfu ){
 	};
 	sys16_obj_bank = bank;
 	sys16_update_proc = tturf_update_proc;
-	install_mem_write16_handler(0, 0x2001d6, 0x2001e5, tturfu_mcu_sound_trigger_w );
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2001d6, 0x2001e5, 0, 0, tturfu_mcu_sound_trigger_w );
 }
 
 static DRIVER_INIT( tturf ){

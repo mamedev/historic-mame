@@ -6,7 +6,7 @@ static int charbank;
 
 
 
-WRITE_HANDLER( mexico86_bankswitch_w )
+WRITE8_HANDLER( mexico86_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 

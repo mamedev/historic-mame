@@ -24,17 +24,17 @@ void hc55516_clock_set_w(int num, int data);
 /* clears the clock state and sets the databit */
 void hc55516_digit_clock_clear_w(int num, int data);
 
-WRITE_HANDLER( hc55516_0_digit_w );
-WRITE_HANDLER( hc55516_0_clock_w );
-WRITE_HANDLER( hc55516_0_clock_clear_w );
-WRITE_HANDLER( hc55516_0_clock_set_w );
-WRITE_HANDLER( hc55516_0_digit_clock_clear_w );
+WRITE8_HANDLER( hc55516_0_digit_w );
+WRITE8_HANDLER( hc55516_0_clock_w );
+WRITE8_HANDLER( hc55516_0_clock_clear_w );
+WRITE8_HANDLER( hc55516_0_clock_set_w );
+WRITE8_HANDLER( hc55516_0_digit_clock_clear_w );
 
-WRITE_HANDLER( hc55516_1_digit_w );
-WRITE_HANDLER( hc55516_1_clock_w );
-WRITE_HANDLER( hc55516_1_clock_clear_w );
-WRITE_HANDLER( hc55516_1_clock_set_w );
-WRITE_HANDLER( hc55516_1_digit_clock_clear_w );
+WRITE8_HANDLER( hc55516_1_digit_w );
+WRITE8_HANDLER( hc55516_1_clock_w );
+WRITE8_HANDLER( hc55516_1_clock_clear_w );
+WRITE8_HANDLER( hc55516_1_clock_set_w );
+WRITE8_HANDLER( hc55516_1_digit_clock_clear_w );
 
 
 #endif

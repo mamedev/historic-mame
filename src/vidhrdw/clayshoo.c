@@ -29,7 +29,7 @@ PALETTE_INIT( clayshoo )
  *
  *************************************/
 
-WRITE_HANDLER( clayshoo_videoram_w )
+WRITE8_HANDLER( clayshoo_videoram_w )
 {
 	UINT8 x,y;
 	int i;

@@ -77,19 +77,19 @@ Dumped by Uki
 extern data8_t *sm_bgvram,*md_vram,*tx_vram,*fg_vram;
 static UINT8 sengokumj_mux_data;
 
-READ_HANDLER( sengoku_sm_bgvram_r );
-READ_HANDLER( sengoku_fg_vram_r );
-READ_HANDLER( sengoku_md_vram_r );
-READ_HANDLER( sengoku_tx_vram_r );
-WRITE_HANDLER( sengoku_sm_bgvram_w );
-WRITE_HANDLER( sengoku_fg_vram_w );
-WRITE_HANDLER( sengoku_md_vram_w );
-WRITE_HANDLER( sengoku_tx_vram_w );
+READ8_HANDLER( sengoku_sm_bgvram_r );
+READ8_HANDLER( sengoku_fg_vram_r );
+READ8_HANDLER( sengoku_md_vram_r );
+READ8_HANDLER( sengoku_tx_vram_r );
+WRITE8_HANDLER( sengoku_sm_bgvram_w );
+WRITE8_HANDLER( sengoku_fg_vram_w );
+WRITE8_HANDLER( sengoku_md_vram_w );
+WRITE8_HANDLER( sengoku_tx_vram_w );
 VIDEO_START( sengokmj );
 VIDEO_UPDATE( sengokmj );
 
 /*Multiplexer device for the mahjong panel*/
-READ_HANDLER( mahjong_panel_0_r )
+READ8_HANDLER( mahjong_panel_0_r )
 {
 	switch(sengokumj_mux_data)
 	{
@@ -104,12 +104,12 @@ READ_HANDLER( mahjong_panel_0_r )
 	return readinputport(3);
 }
 
-READ_HANDLER( mahjong_panel_1_r )
+READ8_HANDLER( mahjong_panel_1_r )
 {
 	return readinputport(9);
 }
 
-WRITE_HANDLER( mahjong_panel_w )
+WRITE8_HANDLER( mahjong_panel_w )
 {
 	if(offset == 1)	{ sengokumj_mux_data = data; }
 }
@@ -206,7 +206,7 @@ SEIBU_SOUND_SYSTEM_YM3812_HARDWARE(14318180/4,8000,REGION_SOUND1);
 
 static INTERRUPT_GEN( sengokmj_interrupt )
 {
-	cpu_set_irq_line_and_vector(0,0,HOLD_LINE,0xcb/4);
+	cpunum_set_input_line_and_vector(0,0,HOLD_LINE,0xcb/4);
 }
 
 /***************************************************************************************/

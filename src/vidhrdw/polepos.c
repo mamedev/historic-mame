@@ -224,12 +224,12 @@ WRITE16_HANDLER( polepos_sprite16_w )
 	COMBINE_DATA(&polepos_sprite16_memory[offset]);
 }
 
-READ_HANDLER( polepos_sprite_r )
+READ8_HANDLER( polepos_sprite_r )
 {
 	return polepos_sprite16_memory[offset] & 0xff;
 }
 
-WRITE_HANDLER( polepos_sprite_w )
+WRITE8_HANDLER( polepos_sprite_w )
 {
 	polepos_sprite16_memory[offset] = (polepos_sprite16_memory[offset] & 0xff00) | data;
 }
@@ -251,12 +251,12 @@ WRITE16_HANDLER( polepos_road16_w )
 	COMBINE_DATA(&polepos_road16_memory[offset]);
 }
 
-READ_HANDLER( polepos_road_r )
+READ8_HANDLER( polepos_road_r )
 {
 	return polepos_road16_memory[offset] & 0xff;
 }
 
-WRITE_HANDLER( polepos_road_w )
+WRITE8_HANDLER( polepos_road_w )
 {
 	polepos_road16_memory[offset] = (polepos_road16_memory[offset] & 0xff00) | data;
 }
@@ -289,12 +289,12 @@ WRITE16_HANDLER( polepos_view16_w )
 	}
 }
 
-READ_HANDLER( polepos_view_r )
+READ8_HANDLER( polepos_view_r )
 {
 	return polepos_view16_memory[offset] & 0xff;
 }
 
-WRITE_HANDLER( polepos_view_w )
+WRITE8_HANDLER( polepos_view_w )
 {
 	data16_t oldword = polepos_view16_memory[offset];
 	polepos_view16_memory[offset] = (polepos_view16_memory[offset] & 0xff00) | data;
@@ -313,7 +313,7 @@ WRITE16_HANDLER( polepos_view16_hscroll_w )
 	tilemap_set_scrollx(bg_tilemap,0,scroll);
 }
 
-WRITE_HANDLER( polepos_chacl_w )
+WRITE8_HANDLER( polepos_chacl_w )
 {
 	if (polepos_chacl != (data & 1))
 	{
@@ -344,12 +344,12 @@ WRITE16_HANDLER( polepos_alpha16_w )
 	}
 }
 
-READ_HANDLER( polepos_alpha_r )
+READ8_HANDLER( polepos_alpha_r )
 {
 	return polepos_alpha16_memory[offset] & 0xff;
 }
 
-WRITE_HANDLER( polepos_alpha_w )
+WRITE8_HANDLER( polepos_alpha_w )
 {
 	data16_t oldword = polepos_alpha16_memory[offset];
 	polepos_alpha16_memory[offset] = (polepos_alpha16_memory[offset] & 0xff00) | data;

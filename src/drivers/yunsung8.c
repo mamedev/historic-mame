@@ -38,12 +38,12 @@ extern int yunsung8_layers_ctrl;
 
 /* Functions defined in vidhrdw: */
 
-WRITE_HANDLER( yunsung8_videobank_w );
+WRITE8_HANDLER( yunsung8_videobank_w );
 
-READ_HANDLER ( yunsung8_videoram_r );
-WRITE_HANDLER( yunsung8_videoram_w );
+READ8_HANDLER ( yunsung8_videoram_r );
+WRITE8_HANDLER( yunsung8_videoram_w );
 
-WRITE_HANDLER( yunsung8_flipscreen_w );
+WRITE8_HANDLER( yunsung8_flipscreen_w );
 
 VIDEO_START( yunsung8 );
 VIDEO_UPDATE( yunsung8 );
@@ -69,7 +69,7 @@ MACHINE_INIT( yunsung8 )
 ***************************************************************************/
 
 
-WRITE_HANDLER( yunsung8_bankswitch_w )
+WRITE8_HANDLER( yunsung8_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -138,7 +138,7 @@ ADDRESS_MAP_END
 
 static int adpcm;
 
-WRITE_HANDLER( yunsung8_sound_bankswitch_w )
+WRITE8_HANDLER( yunsung8_sound_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU2);
 	int bank = data & 7;
@@ -153,7 +153,7 @@ WRITE_HANDLER( yunsung8_sound_bankswitch_w )
 	MSM5205_reset_w(0,data & 0x20);
 }
 
-WRITE_HANDLER( yunsung8_adpcm_w )
+WRITE8_HANDLER( yunsung8_adpcm_w )
 {
 	/* Swap the nibbles */
 	adpcm = ((data&0xf)<<4) | ((data >>4)&0xf);
@@ -425,7 +425,7 @@ static void yunsung8_adpcm_int(int irq)
 
 	toggle ^= 1;
 	if (toggle)
-		cpu_set_nmi_line(1,PULSE_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 }
 
 static struct YM3812interface yunsung8_ym3812_interface =

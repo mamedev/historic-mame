@@ -95,7 +95,7 @@ VIDEO_START( starshp1 )
 }
 
 
-READ_HANDLER( starshp1_rng_r )
+READ8_HANDLER( starshp1_rng_r )
 {
 	int x = cpu_gethorzbeampos();
 	int y = cpu_getscanline();
@@ -109,7 +109,7 @@ READ_HANDLER( starshp1_rng_r )
 }
 
 
-WRITE_HANDLER( starshp1_ssadd_w )
+WRITE8_HANDLER( starshp1_ssadd_w )
 {
 	/*
 	 * The range of sprite position values doesn't suffice to
@@ -125,7 +125,7 @@ WRITE_HANDLER( starshp1_ssadd_w )
 }
 
 
-WRITE_HANDLER( starshp1_sspic_w )
+WRITE8_HANDLER( starshp1_sspic_w )
 {
 	/*
 	 * Some mysterious game code at address $2CCE is causing
@@ -140,7 +140,7 @@ WRITE_HANDLER( starshp1_sspic_w )
 }
 
 
-WRITE_HANDLER( starshp1_playfield_w )
+WRITE8_HANDLER( starshp1_playfield_w )
 {
 	if (starshp1_mux != 0)
 	{

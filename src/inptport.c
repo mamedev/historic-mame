@@ -18,16 +18,6 @@ TODO:	remove the 1 analog device per port limitation
 #include "inputx.h"
 #endif
 
-/* MAMEnet support */
-#if defined MAME_NET || defined XMAME_NET
-#include "network.h"
-
-static unsigned short input_port_defaults[MAX_INPUT_PORTS];
-static int default_player;
-static int analog_player_port[MAX_INPUT_PORTS];
-#endif /* MAME_NET */
-
-
 
 /***************************************************************************
 
@@ -66,13 +56,6 @@ static int mouse_delta_axis[OSD_MAX_JOY_ANALOG][MAX_ANALOG_AXES];
 static int lightgun_delta_axis[OSD_MAX_JOY_ANALOG][MAX_ANALOG_AXES];
 static int analog_current_axis[OSD_MAX_JOY_ANALOG][MAX_ANALOG_AXES];
 static int analog_previous_axis[OSD_MAX_JOY_ANALOG][MAX_ANALOG_AXES];
-
-#if 0
-static int mouse_delta_x[OSD_MAX_JOY_ANALOG], mouse_delta_y[OSD_MAX_JOY_ANALOG];			/* replaced by mouse_delta_axis[][] */
-static int lightgun_delta_x[OSD_MAX_JOY_ANALOG], lightgun_delta_y[OSD_MAX_JOY_ANALOG];			/* replaced by lightgun_delta_axis[][] */
-static int analog_current_x[OSD_MAX_JOY_ANALOG], analog_current_y[OSD_MAX_JOY_ANALOG];		/* replaced by analog_current_axis[][] */
-static int analog_previous_x[OSD_MAX_JOY_ANALOG], analog_previous_y[OSD_MAX_JOY_ANALOG];	/* replaced by analog_previous_axis[][] */
-#endif
 
 /***************************************************************************
 
@@ -1501,40 +1484,6 @@ int num_ik = sizeof(input_keywords)/sizeof(struct ik);
 /***************************************************************************/
 /* Generic IO */
 
-static int readint(mame_file *f,UINT32 *num)
-{
-	unsigned i;
-
-	*num = 0;
-	for (i = 0;i < sizeof(UINT32);i++)
-	{
-		unsigned char c;
-
-
-		*num <<= 8;
-		if (mame_fread(f,&c,1) != 1)
-			return -1;
-		*num |= c;
-	}
-
-	return 0;
-}
-
-static void writeint(mame_file *f,UINT32 num)
-{
-	unsigned i;
-
-	for (i = 0;i < sizeof(UINT32);i++)
-	{
-		unsigned char c;
-
-
-		c = (num >> 8 * (sizeof(UINT32)-1)) & 0xff;
-		mame_fwrite(f,&c,1);
-		num <<= 8;
-	}
-}
-
 static int readword(mame_file *f,UINT16 *num)
 {
 	unsigned i;
@@ -1611,10 +1560,6 @@ int load_input_port_settings(void)
 	config_file *cfg;
 	int err;
 	struct mixer_config mixercfg;
-#ifdef MAME_NET
-    struct InputPort *in;
-    int port, player;
-#endif /* MAME_NET */
 
 
 	load_default_keys();
@@ -1646,126 +1591,6 @@ getout:
 		for (i = 0; i < MAX_INPUT_PORTS; i++)
 			input_analog_init[i] = 1;
 	}
-#ifdef MAME_NET
-	/* Find out what port is used by what player and swap regular inputs */
-	in = Machine->input_ports;
-
-//	if (in->type == IPT_END) return; 	/* nothing to do */
-
-	/* make sure the InputPort definition is correct */
-//	if (in->type != IPT_PORT)
-//	{
-//		logerror("Error in InputPort definition: expecting PORT_START\n");
-//		return;
-//	}
-//	else in++;
-	in++;
-
-	/* scan all the input ports */
-	port = 0;
-	while (in->type != IPT_END && port < MAX_INPUT_PORTS)
-	{
-		/* now check the input bits. */
-		while (in->type != IPT_END && in->type != IPT_PORT)
-		{
-			if ((in->type & ~IPF_MASK) != IPT_DIPSWITCH_SETTING &&	/* skip dipswitch definitions */
-#ifdef MESS
-				(in->type & ~IPF_MASK) != IPT_CONFIG_SETTING &&		/* skip config definitions */
-#endif
-				(in->type & ~IPF_MASK) != IPT_EXTENSION &&			/* skip analog extension fields */
-				(in->type & IPF_UNUSED) == 0 &&						/* skip unused bits */
-				!(!options.cheat && (in->type & IPF_CHEAT)) &&				/* skip cheats if cheats disabled */
-				(in->type & ~IPF_MASK) != IPT_VBLANK &&				/* skip vblank stuff */
-				((in->type & ~IPF_MASK) >= IPT_COIN1 &&				/* skip if coin input and it's locked out */
-				(in->type & ~IPF_MASK) <= IPT_COIN4 &&
-                 coinlockedout[(in->type & ~IPF_MASK) - IPT_COIN1]))
-			{
-				player = IP_GET_PLAYER(in);
-
-				if (((in->type & ~IPF_MASK) > IPT_ANALOG_START)
-					&& ((in->type & ~IPF_MASK) < IPT_ANALOG_END))
-				{
-					analog_player_port[port] = player;
-				}
-				if (((in->type & ~IPF_MASK) == IPT_BUTTON1) ||
-					((in->type & ~IPF_MASK) == IPT_BUTTON2) ||
-					((in->type & ~IPF_MASK) == IPT_BUTTON3) ||
-					((in->type & ~IPF_MASK) == IPT_BUTTON4) ||
-					((in->type & ~IPF_MASK) == IPT_JOYSTICK_UP) ||
-					((in->type & ~IPF_MASK) == IPT_JOYSTICK_DOWN) ||
-					((in->type & ~IPF_MASK) == IPT_JOYSTICK_LEFT) ||
-					((in->type & ~IPF_MASK) == IPT_JOYSTICK_RIGHT) ||
-					((in->type & ~IPF_MASK) == IPT_JOYSTICKRIGHT_UP) ||
-					((in->type & ~IPF_MASK) == IPT_JOYSTICKRIGHT_DOWN) ||
- 					((in->type & ~IPF_MASK) == IPT_JOYSTICKRIGHT_LEFT) ||
-					((in->type & ~IPF_MASK) == IPT_JOYSTICKRIGHT_RIGHT) ||
-					((in->type & ~IPF_MASK) == IPT_JOYSTICKLEFT_UP) ||
-					((in->type & ~IPF_MASK) == IPT_JOYSTICKLEFT_DOWN) ||
-					((in->type & ~IPF_MASK) == IPT_JOYSTICKLEFT_LEFT) ||
-					((in->type & ~IPF_MASK) == IPT_JOYSTICKLEFT_RIGHT) ||
-					((in->type & ~IPF_MASK) == IPT_PADDLE) ||
-					((in->type & ~IPF_MASK) == IPT_DIAL) ||
-					((in->type & ~IPF_MASK) == IPT_TRACKBALL_X) ||
-					((in->type & ~IPF_MASK) == IPT_TRACKBALL_Y) ||
-					((in->type & ~IPF_MASK) == IPT_LIGHTGUN_X) ||
-					((in->type & ~IPF_MASK) == IPT_LIGHTGUN_Y) ||
-					((in->type & ~IPF_MASK) == IPT_AD_STICK_X) ||
-					((in->type & ~IPF_MASK) == IPT_AD_STICK_Y) ||
-					((in->type & ~IPF_MASK) == IPT_AD_STICK_Z))
-				{
-					switch (default_player)
-					{
-						case 0:
-							/* do nothing */
-							break;
-						case 1:
-							if (player == 0)
-							{
-								in->type &= ~IPF_PLAYER1;
-								in->type |= IPF_PLAYER2;
-							}
-							else if (player == 1)
-							{
-								in->type &= ~IPF_PLAYER2;
-								in->type |= IPF_PLAYER1;
-							}
-							break;
-						case 2:
-							if (player == 0)
-							{
-								in->type &= ~IPF_PLAYER1;
-								in->type |= IPF_PLAYER3;
-							}
-							else if (player == 2)
-							{
-								in->type &= ~IPF_PLAYER3;
-								in->type |= IPF_PLAYER1;
-							}
-							break;
-						case 3:
-							if (player == 0)
-							{
-								in->type &= ~IPF_PLAYER1;
-								in->type |= IPF_PLAYER4;
-							}
-							else if (player == 3)
-							{
-								in->type &= ~IPF_PLAYER4;
-								in->type |= IPF_PLAYER1;
-							}
-							break;
-					}
-				}
-			}
-			in++;
-		}
-		port++;
-		if (in->type == IPT_PORT) in++;
-	}
-
-	/* TODO: at this point the games should initialize peers to same as server */
-
-#endif /* MAME_NET */
 
 	init_analog_seq();
 
@@ -1783,127 +1608,6 @@ void save_input_port_settings(void)
 {
 	config_file *cfg;
 	struct mixer_config mixercfg;
-#ifdef MAME_NET
-	struct InputPort *in;
-	int port, player;
-
-	/* Swap input port definitions back to defaults */
-	in = Machine->input_ports;
-
-	if (in->type == IPT_END) return; 	/* nothing to do */
-
-	/* make sure the InputPort definition is correct */
-	if (in->type != IPT_PORT)
-	{
-		logerror("Error in InputPort definition: expecting PORT_START\n");
-		return;
-	}
-	else in++;
-
-	/* scan all the input ports */
-	port = 0;
-	while (in->type != IPT_END && port < MAX_INPUT_PORTS)
-	{
-		/* now check the input bits. */
-		while (in->type != IPT_END && in->type != IPT_PORT)
-		{
-			if ((in->type & ~IPF_MASK) != IPT_DIPSWITCH_SETTING &&	/* skip dipswitch definitions */
-#ifdef MESS
-				(in->type & ~IPF_MASK) != IPT_CONFIG_SETTING &&		/* skip config definitions */
-#endif
-				(in->type & ~IPF_MASK) != IPT_EXTENSION &&			/* skip analog extension fields */
-				(in->type & IPF_UNUSED) == 0 &&						/* skip unused bits */
-				!(!options.cheat && (in->type & IPF_CHEAT)) &&				/* skip cheats if cheats disabled */
-				(in->type & ~IPF_MASK) != IPT_VBLANK &&				/* skip vblank stuff */
-				((in->type & ~IPF_MASK) >= IPT_COIN1 &&				/* skip if coin input and it's locked out */
-				(in->type & ~IPF_MASK) <= IPT_COIN4 &&
-                 coinlockedout[(in->type & ~IPF_MASK) - IPT_COIN1]))
-			{
-				player = IP_GET_PLAYER(in);
-
-				if (((in->type & ~IPF_MASK) == IPT_BUTTON1) ||
-					((in->type & ~IPF_MASK) == IPT_BUTTON2) ||
-					((in->type & ~IPF_MASK) == IPT_BUTTON3) ||
-					((in->type & ~IPF_MASK) == IPT_BUTTON4) ||
-					((in->type & ~IPF_MASK) == IPT_JOYSTICK_UP) ||
-					((in->type & ~IPF_MASK) == IPT_JOYSTICK_DOWN) ||
-					((in->type & ~IPF_MASK) == IPT_JOYSTICK_LEFT) ||
-					((in->type & ~IPF_MASK) == IPT_JOYSTICK_RIGHT) ||
-					((in->type & ~IPF_MASK) == IPT_JOYSTICKRIGHT_UP) ||
-					((in->type & ~IPF_MASK) == IPT_JOYSTICKRIGHT_DOWN) ||
-					((in->type & ~IPF_MASK) == IPT_JOYSTICKRIGHT_LEFT) ||
-					((in->type & ~IPF_MASK) == IPT_JOYSTICKRIGHT_RIGHT) ||
-					((in->type & ~IPF_MASK) == IPT_JOYSTICKLEFT_UP) ||
-					((in->type & ~IPF_MASK) == IPT_JOYSTICKLEFT_DOWN) ||
-					((in->type & ~IPF_MASK) == IPT_JOYSTICKLEFT_LEFT) ||
-					((in->type & ~IPF_MASK) == IPT_JOYSTICKLEFT_RIGHT) ||
-					((in->type & ~IPF_MASK) == IPT_PADDLE) ||
-					((in->type & ~IPF_MASK) == IPT_DIAL) ||
-					((in->type & ~IPF_MASK) == IPT_TRACKBALL_X) ||
-					((in->type & ~IPF_MASK) == IPT_TRACKBALL_Y) ||
-					((in->type & ~IPF_MASK) == IPT_LIGHTGUN_X) ||
-					((in->type & ~IPF_MASK) == IPT_LIGHTGUN_Y) ||
-					((in->type & ~IPF_MASK) == IPT_AD_STICK_X) ||
-					((in->type & ~IPF_MASK) == IPT_AD_STICK_Y) ||
-					((in->type & ~IPF_MASK) == IPT_AD_STICK_Z))
-				{
-					switch (default_player)
-					{
-						case 0:
-							/* do nothing */
-							analog_player_port[port] = player;
-							break;
-						case 1:
-							if (player == 0)
-							{
-								in->type &= ~IPF_PLAYER1;
-								in->type |= IPF_PLAYER2;
-								analog_player_port[port] = 1;
-							}
-							else if (player == 1)
-							{
-								in->type &= ~IPF_PLAYER2;
-								in->type |= IPF_PLAYER1;
-								analog_player_port[port] = 0;
-							}
-							break;
-						case 2:
-							if (player == 0)
-							{
-								in->type &= ~IPF_PLAYER1;
-								in->type |= IPF_PLAYER3;
-								analog_player_port[port] = 2;
-							}
-							else if (player == 2)
-							{
-								in->type &= ~IPF_PLAYER3;
-								in->type |= IPF_PLAYER1;
-								analog_player_port[port] = 0;
-							}
-							break;
-						case 3:
-							if (player == 0)
-							{
-								in->type &= ~IPF_PLAYER1;
-								in->type |= IPF_PLAYER4;
-								analog_player_port[port] = 3;
-							}
-							else if (player == 3)
-							{
-								in->type &= ~IPF_PLAYER4;
-								in->type |= IPF_PLAYER1;
-								analog_player_port[port] = 0;
-							}
-							break;
-					}
-				}
-			}
-			in++;
-		}
-		port++;
-		if (in->type == IPT_PORT) in++;
-	}
-#endif /* MAME_NET */
 
 	save_default_keys();
 
@@ -1925,25 +1629,24 @@ void save_input_port_settings(void)
 const char *input_port_name(const struct InputPort *in)
 {
 	int i;
-	unsigned type;
+	UINT32 type;
 
 	if (in->name != IP_NAME_DEFAULT) return in->name;
 
 	i = 0;
 
-	if ((in->type & ~IPF_MASK) == IPT_EXTENSION)
-		type = (in-1)->type & (~IPF_MASK | IPF_PLAYERMASK);
-	else
-		type = in->type & (~IPF_MASK | IPF_PLAYERMASK);
+ 	type = in->type | (in->player << 16);
 
 	while (inputport_defaults[i].type != IPT_END &&
 			inputport_defaults[i].type != type)
 		i++;
 
-	if ((in->type & ~IPF_MASK) == IPT_EXTENSION)
-		return inputport_defaults[i+1].name;
-	else
-		return inputport_defaults[i].name;
+	return inputport_defaults[i].name;
+}
+
+int input_port_active(const struct InputPort *in)
+{
+	return input_port_name(in) && !in->unused && !(!options.cheat && in->cheat);
 }
 
 InputSeq* input_port_type_seq(int type)
@@ -1959,48 +1662,45 @@ InputSeq* input_port_type_seq(int type)
 	return &inputport_defaults[i].seq;
 }
 
-InputSeq* input_port_seq(const struct InputPort *in)
+int input_port_seq_count(const struct InputPort *in)
 {
-	int i,type;
+	return ((in->type > IPT_ANALOG_START)
+		&& (in->type < IPT_ANALOG_END))
+		? 2 : 1;
+}
+
+InputSeq* input_port_seq(struct InputPort *in, int seq)
+{
+	int i;
+	UINT32 type;
 
 	static InputSeq ip_none = SEQ_DEF_1(CODE_NONE);
 
-	while (seq_get_1((InputSeq*)&in->seq) == CODE_PREVIOUS) in--;
+	while (seq > 0 && seq_get_1(&in->seq[seq]) == CODE_PREVIOUS)
+		in--;
 
-	if ((in->type & ~IPF_MASK) == IPT_EXTENSION)
-	{
-		type = (in-1)->type & (~IPF_MASK | IPF_PLAYERMASK);
-		/* if port is disabled, or cheat with cheats disabled, return no key */
-		if (((in-1)->type & IPF_UNUSED) || (!options.cheat && ((in-1)->type & IPF_CHEAT)))
-			return &ip_none;
-	}
-	else
-	{
-		type = in->type & (~IPF_MASK | IPF_PLAYERMASK);
-		/* if port is disabled, or cheat with cheats disabled, return no key */
-		if ((in->type & IPF_UNUSED) || (!options.cheat && (in->type & IPF_CHEAT)))
-			return &ip_none;
-	}
+	/* if port is disabled, or cheat with cheats disabled, return no key */
+	if (in->unused || (!options.cheat && in->cheat))
+		return &ip_none;
 
-	if (seq_get_1((InputSeq*)&in->seq) != CODE_DEFAULT)
-		return (InputSeq*)&in->seq;
+	/* does this override the default? */
+	if (seq_get_1(&in->seq[seq]) != CODE_DEFAULT)
+		return &in->seq[seq];
 
 	i = 0;
+	type = in->type | (in->player << 16);
 
 	while (inputport_defaults[i].type != IPT_END &&
 			inputport_defaults[i].type != type)
 		i++;
 
-	if ((in->type & ~IPF_MASK) == IPT_EXTENSION)
-		return &inputport_defaults[i+1].seq;
-	else
-		return &inputport_defaults[i].seq;
+	return &inputport_defaults[i + seq].seq;
 }
 
 void update_analog_port(int port)
 {
 	struct InputPort *in;
-	int current, delta, type, sensitivity, min, max, default_value;
+	int current, delta, sensitivity, min, max, default_value;
 	int axis, is_stick, is_gun, check_bounds;
 	InputSeq* incseq;
 	InputSeq* decseq;
@@ -2011,15 +1711,15 @@ void update_analog_port(int port)
 	in = input_analog[port];
 
 	/* if we're not cheating and this is a cheat-only port, bail */
-	if (!options.cheat && (in->type & IPF_CHEAT)) return;
-	type=(in->type & ~IPF_MASK);
+	if (!options.cheat && (in->cheat))
+		return;
 
-	decseq = input_port_seq(in);
-	incseq = input_port_seq(in+1);
+	decseq = input_port_seq(in, 0);
+	incseq = input_port_seq(in, 1);
 
-	keydelta = IP_GET_DELTA(in);
+	keydelta = in->u.analog.delta;
 
-	switch (type)
+	switch (in->type)
 	{
 		case IPT_PADDLE:
 			axis = X_AXIS; is_stick = 1; is_gun=0; check_bounds = 1; break;
@@ -2060,9 +1760,9 @@ void update_analog_port(int port)
 	}
 
 
-	sensitivity = IP_GET_SENSITIVITY(in);
-	min = IP_GET_MIN(in);
-	max = IP_GET_MAX(in);
+	sensitivity = in->u.analog.sensitivity;
+	min = in->u.analog.min;
+	max = in->u.analog.max;
 	default_value = in->default_value * 100 / sensitivity;
 	/* extremes can be either signed or unsigned */
 	if (min > max)
@@ -2073,22 +1773,22 @@ void update_analog_port(int port)
 
 	input_analog_previous_value[port] = input_analog_current_value[port];
 
-	/* if IPF_CENTER go back to the default position */
+	/* if centered go back to the default position */
 	/* sticks are handled later... */
-	if ((in->type & IPF_CENTER) && (!is_stick))
+	if ((in->u.analog.center) && !is_stick)
 		input_analog_current_value[port] = in->default_value * 100 / sensitivity;
 
 	current = input_analog_current_value[port];
 
 	delta = 0;
 
-	player = IP_GET_PLAYER(in);
+	player = in->player;
 
 	delta = mouse_delta_axis[player][axis];
 
 	if (seq_pressed(decseq)) delta -= keydelta;
 
-	if (type != IPT_PEDAL && type != IPT_PEDAL2)
+	if (in->type != IPT_PEDAL && in->type != IPT_PEDAL2)
 	{
 		if (seq_pressed(incseq)) delta += keydelta;
 	}
@@ -2099,7 +1799,8 @@ void update_analog_port(int port)
 		delta = -delta;
 	}
 
-	if (in->type & IPF_REVERSE) delta = -delta;
+	if (in->u.analog.reverse)
+		delta = -delta;
 
 	if (is_gun)
 	{
@@ -2140,7 +1841,7 @@ void update_analog_port(int port)
 		int new, prev;
 
 		/* center stick */
-		if ((delta == 0) && (in->type & IPF_CENTER))
+		if ((delta == 0) && (in->u.analog.center))
 		{
 			if (current > default_value)
 			delta = -100 / sensitivity;
@@ -2161,17 +1862,17 @@ void update_analog_port(int port)
 
 			/* for pedals, need to change to possitive number */
 			/* and, if needed, reverse pedal input */
-			if (type == IPT_PEDAL || type == IPT_PEDAL2)
+			if (in->type == IPT_PEDAL || in->type == IPT_PEDAL2)
 			{
 				new  = -new;
 				prev = -prev;
-				if (in->type & IPF_REVERSE)		// a reversed pedal is diff than normal reverse
+				if (in->u.analog.reverse)		// a reversed pedal is diff than normal reverse
 				{								// 128 = no gas, 0 = all gas
 					new  = 128-new;				// the default "new=-new" doesn't handle this
 					prev = 128-prev;
 				}
 			}
-			else if (in->type & IPF_REVERSE)
+			else if (in->u.analog.reverse)
 			{
 				new  = -new;
 				prev = -prev;
@@ -2244,7 +1945,7 @@ static void scale_analog_port(int port)
 
 profiler_mark(PROFILER_INPUT);
 	in = input_analog[port];
-	sensitivity = IP_GET_SENSITIVITY(in);
+	sensitivity = in->u.analog.sensitivity;
 
 	/* apply scaling fairly in both positive and negative directions */
 	delta = input_analog_current_value[port] - input_analog_previous_value[port];
@@ -2271,10 +1972,6 @@ profiler_mark(PROFILER_INPUT);
 		readword(playback,&input_port_value[port]);
 	if (record)
 		writeword(record,input_port_value[port]);
-#ifdef MAME_NET
-	if ( net_active() && (default_player != NET_SPECTATOR) )
-		net_analog_sync((unsigned char *) input_port_value, port, analog_player_port, default_player);
-#endif /* MAME_NET */
 profiler_mark(PROFILER_END);
 }
 
@@ -2308,21 +2005,24 @@ ScanJoysticks( struct InputPort *in )
 	{
 		while (in->type != IPT_END && in->type != IPT_PORT)
 		{
-			if ((in->type & ~IPF_MASK) >= IPT_JOYSTICK_UP &&
-				(in->type & ~IPF_MASK) <= IPT_JOYSTICKLEFT_RIGHT)
+			if ((in->type >= IPT_JOYSTICK_UP) &&
+				(in->type <= IPT_JOYSTICKLEFT_RIGHT))
 			{
-				InputSeq* seq;
-				seq = input_port_seq(in);
-				if( seq_pressed(seq) )
+				for (i = 0; i < input_port_seq_count(in); i++)
 				{
-					int joynum,joydir,player;
-					player = IP_GET_PLAYER(in);
+					InputSeq* seq;
+					seq = input_port_seq(in, i);
+					if( seq_pressed(seq) )
+					{
+						int joynum,joydir,player;
+						player = in->player;
 
-					joynum = player * MAX_JOYSTICKS +
-							 ((in->type & ~IPF_MASK) - IPT_JOYSTICK_UP) / 4;
-					joydir = ((in->type & ~IPF_MASK) - IPT_JOYSTICK_UP) % 4;
+						joynum = player * MAX_JOYSTICKS +
+								(in->type - IPT_JOYSTICK_UP) / 4;
+						joydir = (in->type - IPT_JOYSTICK_UP) % 4;
 
-					mJoyCurrent[joynum] |= 1<<joydir;
+						mJoyCurrent[joynum] |= 1<<joydir;
+					}
 				}
 			}
 			in++;
@@ -2401,10 +2101,6 @@ void update_input_ports(void)
 	static int waspressed[MAX_INPUT_BITS];
 	static int pbwaspressed[MAX_INPUT_BITS];
 
-#ifdef MAME_NET
-	int player;
-#endif /* MAME_NET */
-
 
 profiler_mark(PROFILER_INPUT);
 
@@ -2446,21 +2142,14 @@ profiler_mark(PROFILER_INPUT);
 		start = in;
 		while (in->type != IPT_END && in->type != IPT_PORT)
 		{
-			if ((in->type & ~IPF_MASK) != IPT_DIPSWITCH_SETTING &&	/* skip dipswitch definitions */
+			if (in->type != IPT_DIPSWITCH_SETTING	/* skip dipswitch definitions */
 #ifdef MESS
-				(in->type & ~IPF_MASK) != IPT_CONFIG_SETTING &&		/* skip config definitions */
+				&& in->type != IPT_CONFIG_SETTING		/* skip config definitions */
 #endif /* MESS */
-				(in->type & ~IPF_MASK) != IPT_EXTENSION)			/* skip analog extension fields */
+				)
 			{
 				input_port_value[port] =
 						(input_port_value[port] & ~in->mask) | (in->default_value & in->mask);
-#ifdef MAME_NET
-				if ( net_active() )
-					input_port_defaults[port] = input_port_value[port];
-#elif defined XMAME_NET
-				if ( osd_net_active() )
-					input_port_defaults[port] = input_port_value[port];
-#endif /* MAME_NET */
 			}
 
 			in++;
@@ -2471,16 +2160,13 @@ profiler_mark(PROFILER_INPUT);
 			 in->type != IPT_END && in->type != IPT_PORT;
 			 in++, ib++)
 		{
-#ifdef MAME_NET
-			player = IP_GET_PLAYER(in);
-#endif /* MAME_NET */
-			if ((in->type & ~IPF_MASK) != IPT_DIPSWITCH_SETTING &&	/* skip dipswitch definitions */
+			if (in->type != IPT_DIPSWITCH_SETTING	/* skip dipswitch definitions */
 #ifdef MESS
-				(in->type & ~IPF_MASK) != IPT_CONFIG_SETTING &&		/* skip config definitions */
-#endif
-					(in->type & ~IPF_MASK) != IPT_EXTENSION)		/* skip analog extension fields */
+				&& in->type != IPT_CONFIG_SETTING		/* skip config definitions */
+#endif /* MESS */
+				)
 			{
-				if ((in->type & ~IPF_MASK) == IPT_VBLANK)
+				if (in->type == IPT_VBLANK)
 				{
 					input_vblank[port] ^= in->mask;
 					input_port_value[port] ^= in->mask;
@@ -2488,8 +2174,8 @@ if (Machine->drv->vblank_duration == 0)
 	logerror("Warning: you are using IPT_VBLANK with vblank_duration = 0. You need to increase vblank_duration for IPT_VBLANK to work.\n");
 				}
 				/* If it's an analog control, handle it appropriately */
-				else if (((in->type & ~IPF_MASK) > IPT_ANALOG_START)
-					  && ((in->type & ~IPF_MASK) < IPT_ANALOG_END  )) /* LBO 120897 */
+				else if ((in->type > IPT_ANALOG_START)
+					  && (in->type < IPT_ANALOG_END  )) /* LBO 120897 */
 				{
 					input_analog[port]=in;
 					/* reset the analog port on first access */
@@ -2498,49 +2184,47 @@ if (Machine->drv->vblank_duration == 0)
 						input_analog_init[port] = 0;
 						input_analog_scale[port] = 1;
 						input_analog_current_value[port] = input_analog_previous_value[port]
-							= in->default_value * 100 / IP_GET_SENSITIVITY(in);
+							= in->default_value * 100 / in->u.analog.sensitivity;
 					}
 				}
 				else
 				{
 					InputSeq* seq;
-					seq = input_port_seq(in);
+					seq = input_port_seq(in, 0);
 					if (seq_pressed(seq))
 					{
 #ifdef MESS
-						if (((in->type & ~IPF_MASK) == IPT_KEYBOARD) && osd_keyboard_disabled())
+						if ((in->type == IPT_KEYBOARD) && osd_keyboard_disabled())
 							continue;
 #endif
 
 						/* skip if coin input and it's locked out */
-						if ((in->type & ~IPF_MASK) >= IPT_COIN1 &&
-							(in->type & ~IPF_MASK) <= IPT_COIN4 &&
-                            coinlockedout[(in->type & ~IPF_MASK) - IPT_COIN1])
+						if ((in->type >= IPT_COIN1) &&
+							(in->type <= IPT_COIN4) &&
+                            coinlockedout[in->type - IPT_COIN1])
 						{
 							continue;
 						}
-						if ((in->type & ~IPF_MASK) >= IPT_COIN5 &&
-							(in->type & ~IPF_MASK) <= IPT_COIN8 &&
-                            coinlockedout[(in->type & ~IPF_MASK) - IPT_COIN5 + 4])
+						if ((in->type >= IPT_COIN5) &&
+							(in->type <= IPT_COIN8) &&
+                            coinlockedout[in->type - IPT_COIN5 + 4])
 						{
 							continue;
 						}
 
 						/* if IPF_RESET set, reset the first CPU */
-						if ((in->type & IPF_RESETCPU) && waspressed[ib] == 0 && !playback)
+						if (in->reset_cpu && waspressed[ib] == 0 && !playback)
 						{
-							cpu_set_reset_line(0,PULSE_LINE);
+							cpunum_set_input_line(0, INPUT_LINE_RESET, PULSE_LINE);
 						}
 
-						if (in->type & IPF_IMPULSE)
+						if (in->impulse)
 						{
-if (IP_GET_IMPULSE(in) == 0)
-	logerror("error in input port definition: IPF_IMPULSE with length = 0\n");
 							if (waspressed[ib] == 0)
-								impulsecount[ib] = IP_GET_IMPULSE(in);
+								impulsecount[ib] = in->impulse;
 								/* the input bit will be toggled later */
 						}
-						else if (in->type & IPF_TOGGLE)
+						else if (in->toggle)
 						{
 							if (waspressed[ib] == 0)
 							{
@@ -2548,20 +2232,16 @@ if (IP_GET_IMPULSE(in) == 0)
 								input_port_value[port] ^= in->mask;
 							}
 						}
-						else if ((in->type & ~IPF_MASK) >= IPT_JOYSTICK_UP &&
-								(in->type & ~IPF_MASK) <= IPT_JOYSTICKLEFT_RIGHT)
+						else if (in->type >= IPT_JOYSTICK_UP &&
+								in->type <= IPT_JOYSTICKLEFT_RIGHT)
 						{
-#ifndef MAME_NET
 							int joynum,joydir,mask,player;
 
-							player = IP_GET_PLAYER(in);
-#else
-							int joynum,joydir,mask;
-#endif /* !MAME_NET */
+							player = in->player;
 							joynum = player * MAX_JOYSTICKS +
-									((in->type & ~IPF_MASK) - IPT_JOYSTICK_UP) / 4;
+									(in->type - IPT_JOYSTICK_UP) / 4;
 
-							joydir = ((in->type & ~IPF_MASK) - IPT_JOYSTICK_UP) % 4;
+							joydir = (in->type - IPT_JOYSTICK_UP) % 4;
 
 							mask = in->mask;
 
@@ -2593,7 +2273,7 @@ if (IP_GET_IMPULSE(in) == 0)
 					else
 						waspressed[ib] = 0;
 
-					if ((in->type & IPF_IMPULSE) && impulsecount[ib] > 0)
+					if (in->impulse && impulsecount[ib] > 0)
 					{
 						impulsecount[ib]--;
 						waspressed[ib] = 1;
@@ -2618,17 +2298,17 @@ if (IP_GET_IMPULSE(in) == 0)
 		{
 			readword(playback,&input_port_value[i]);
 
-			/* check if the input port includes an IPF_RESETCPU bit
+			/* check if the input port includes a reset_cpu bit
 			   and reset the CPU on first "press", no need to check
 			   the impulse count as this was done during recording */
 			for (; in->type != IPT_END && in->type != IPT_PORT; in++, ib++)
 			{
-				if (in->type & IPF_RESETCPU)
+				if (in->reset_cpu)
 				{
 					if((input_port_value[i] ^ in->default_value) & in->mask)
 					{
 						if (pbwaspressed[ib] == 0)
-							cpu_set_reset_line(0,PULSE_LINE);
+							cpunum_set_input_line(0, INPUT_LINE_RESET, PULSE_LINE);
 						pbwaspressed[ib] = 1;
 					}
 					else
@@ -2650,13 +2330,6 @@ if (IP_GET_IMPULSE(in) == 0)
 		for (i = 0; i < MAX_INPUT_PORTS; i ++)
 			writeword(record,input_port_value[i]);
 	}
-#ifdef MAME_NET
-	if ( net_active() && (default_player != NET_SPECTATOR) )
-		net_input_sync((unsigned char *) input_port_value, (unsigned char *) input_port_defaults, MAX_INPUT_PORTS);
-#elif defined XMAME_NET
-	if ( osd_net_active() )
-		osd_net_sync(input_port_value, input_port_defaults);
-#endif /* MAME_NET */
 
 profiler_mark(PROFILER_END);
 }
@@ -2728,36 +2401,60 @@ int readinputport(int port)
 	return input_port_value[port];
 }
 
-READ_HANDLER( input_port_0_r ) { return readinputport(0); }
-READ_HANDLER( input_port_1_r ) { return readinputport(1); }
-READ_HANDLER( input_port_2_r ) { return readinputport(2); }
-READ_HANDLER( input_port_3_r ) { return readinputport(3); }
-READ_HANDLER( input_port_4_r ) { return readinputport(4); }
-READ_HANDLER( input_port_5_r ) { return readinputport(5); }
-READ_HANDLER( input_port_6_r ) { return readinputport(6); }
-READ_HANDLER( input_port_7_r ) { return readinputport(7); }
-READ_HANDLER( input_port_8_r ) { return readinputport(8); }
-READ_HANDLER( input_port_9_r ) { return readinputport(9); }
-READ_HANDLER( input_port_10_r ) { return readinputport(10); }
-READ_HANDLER( input_port_11_r ) { return readinputport(11); }
-READ_HANDLER( input_port_12_r ) { return readinputport(12); }
-READ_HANDLER( input_port_13_r ) { return readinputport(13); }
-READ_HANDLER( input_port_14_r ) { return readinputport(14); }
-READ_HANDLER( input_port_15_r ) { return readinputport(15); }
-READ_HANDLER( input_port_16_r ) { return readinputport(16); }
-READ_HANDLER( input_port_17_r ) { return readinputport(17); }
-READ_HANDLER( input_port_18_r ) { return readinputport(18); }
-READ_HANDLER( input_port_19_r ) { return readinputport(19); }
-READ_HANDLER( input_port_20_r ) { return readinputport(20); }
-READ_HANDLER( input_port_21_r ) { return readinputport(21); }
-READ_HANDLER( input_port_22_r ) { return readinputport(22); }
-READ_HANDLER( input_port_23_r ) { return readinputport(23); }
-READ_HANDLER( input_port_24_r ) { return readinputport(24); }
-READ_HANDLER( input_port_25_r ) { return readinputport(25); }
-READ_HANDLER( input_port_26_r ) { return readinputport(26); }
-READ_HANDLER( input_port_27_r ) { return readinputport(27); }
-READ_HANDLER( input_port_28_r ) { return readinputport(28); }
-READ_HANDLER( input_port_29_r ) { return readinputport(29); }
+
+
+int readinputportbytag(const char *tag)
+{
+	struct InputPort *in;
+	int port = -1;
+	
+	in = Machine->input_ports;
+	while(in->type != IPT_END)
+	{
+		if (in->type == IPT_PORT)
+		{
+			port++;
+			if (in->u.start.tag && !strcmp(in->u.start.tag, tag))
+				return readinputport(port);
+		}
+		in++;
+	}
+	osd_die("Unable to locate input port '%s'", tag);
+	return -1;
+}
+
+
+
+READ8_HANDLER( input_port_0_r ) { return readinputport(0); }
+READ8_HANDLER( input_port_1_r ) { return readinputport(1); }
+READ8_HANDLER( input_port_2_r ) { return readinputport(2); }
+READ8_HANDLER( input_port_3_r ) { return readinputport(3); }
+READ8_HANDLER( input_port_4_r ) { return readinputport(4); }
+READ8_HANDLER( input_port_5_r ) { return readinputport(5); }
+READ8_HANDLER( input_port_6_r ) { return readinputport(6); }
+READ8_HANDLER( input_port_7_r ) { return readinputport(7); }
+READ8_HANDLER( input_port_8_r ) { return readinputport(8); }
+READ8_HANDLER( input_port_9_r ) { return readinputport(9); }
+READ8_HANDLER( input_port_10_r ) { return readinputport(10); }
+READ8_HANDLER( input_port_11_r ) { return readinputport(11); }
+READ8_HANDLER( input_port_12_r ) { return readinputport(12); }
+READ8_HANDLER( input_port_13_r ) { return readinputport(13); }
+READ8_HANDLER( input_port_14_r ) { return readinputport(14); }
+READ8_HANDLER( input_port_15_r ) { return readinputport(15); }
+READ8_HANDLER( input_port_16_r ) { return readinputport(16); }
+READ8_HANDLER( input_port_17_r ) { return readinputport(17); }
+READ8_HANDLER( input_port_18_r ) { return readinputport(18); }
+READ8_HANDLER( input_port_19_r ) { return readinputport(19); }
+READ8_HANDLER( input_port_20_r ) { return readinputport(20); }
+READ8_HANDLER( input_port_21_r ) { return readinputport(21); }
+READ8_HANDLER( input_port_22_r ) { return readinputport(22); }
+READ8_HANDLER( input_port_23_r ) { return readinputport(23); }
+READ8_HANDLER( input_port_24_r ) { return readinputport(24); }
+READ8_HANDLER( input_port_25_r ) { return readinputport(25); }
+READ8_HANDLER( input_port_26_r ) { return readinputport(26); }
+READ8_HANDLER( input_port_27_r ) { return readinputport(27); }
+READ8_HANDLER( input_port_28_r ) { return readinputport(28); }
+READ8_HANDLER( input_port_29_r ) { return readinputport(29); }
 
 READ16_HANDLER( input_port_0_word_r ) { return readinputport(0); }
 READ16_HANDLER( input_port_1_word_r ) { return readinputport(1); }
@@ -2790,98 +2487,101 @@ READ16_HANDLER( input_port_27_word_r ) { return readinputport(27); }
 READ16_HANDLER( input_port_28_word_r ) { return readinputport(28); }
 READ16_HANDLER( input_port_29_word_r ) { return readinputport(29); }
 
-#ifdef MAME_NET
-void set_default_player_controls(int player)
-{
-	if (player == NET_SPECTATOR)
-		default_player = NET_SPECTATOR;
-	else
-		default_player = player - 1;
-}
-#endif /* MAME_NET */
-
 /***************************************************************************/
 /* InputPort conversion */
 
-static unsigned input_port_count(const struct InputPortTiny *src)
+struct IptInitParams
 {
-	unsigned total;
+	struct InputPort *ports;
+	int max_ports;
+	int current_port;
+};
 
-	total = 0;
-	while (src->type != IPT_END)
+
+
+struct InputPort *input_port_initialize(void *param, UINT32 type)
+{
+	/* this function is used within an INPUT_PORT callback to set up a single
+	 * port.  Note that this function takes a 32-bit type; this is because it
+	 * knows how to interpret legacy type declarations (i.e. - with IPF_*
+	 * flags */
+	struct IptInitParams *iip;
+	struct InputPort *port;
+	int i;
+	InputCode code;
+	 
+	iip = (struct IptInitParams *) param;
+	if (iip->current_port >= iip->max_ports)
+		osd_die("Too many input ports");
+	port = &iip->ports[iip->current_port++];
+	
+	/* set up defaults */
+	memset(port, 0, sizeof(*port));
+	port->name = IP_NAME_DEFAULT;
+	port->type = (UINT8) type;
+	
+	/* read legacy IPF_* flags */
+	port->unused	= (type & IPF_UNUSED)	? 1 : 0;
+	port->cocktail	= (type & IPF_COCKTAIL)	? 1 : 0;
+	port->cheat		= (type & IPF_CHEAT)	? 1 : 0;
+	port->player	= (type >> 16) % 0x08;			
+	port->toggle	= (type & IPF_TOGGLE)	? 1 : 0;
+	port->reset_cpu = (type & IPF_RESETCPU)	? 1 : 0;
+	if (port->type > IPT_ANALOG_START && port->type < IPT_ANALOG_END)
+		port->u.analog.reverse = (type & IPF_REVERSE) ? 1 : 0;
+
+	/* sets up default port codes */
+	switch(port->type)
 	{
-		int type = src->type & ~IPF_MASK;
-		if (type > IPT_ANALOG_START && type < IPT_ANALOG_END)
-			total += 2;
-		else if (type != IPT_EXTENSION)
-			++total;
-		++src;
+		case IPT_DIPSWITCH_NAME:
+		case IPT_DIPSWITCH_SETTING:
+#ifdef MESS
+		case IPT_CONFIG_NAME:
+		case IPT_CONFIG_SETTING:
+			code = CODE_NONE;
+			break;
+#endif
+
+		default:
+			code = CODE_DEFAULT;
+			break;
 	}
+	for (i = 0; i < input_port_seq_count(port); i++)
+		seq_set_1(&port->seq[i], code);
 
-	++total; /* for IPT_END */
-
-	return total;
+	return port;
 }
 
-struct InputPort* input_port_allocate(const struct InputPortTiny *src)
+
+
+struct InputPort *input_port_allocate(void construct_ipt(void *param))
 {
-	struct InputPort* dst;
-	struct InputPort* base;
-	unsigned total;
+	struct InputPort *port;
+	unsigned max_ports = 512;
+	struct IptInitParams iip;
+	int i, j;
 
-	total = input_port_count(src);
-
-	base = (struct InputPort*) auto_malloc(total * sizeof(struct InputPort));
-	if (!base)
+	port = (struct InputPort*) auto_malloc(max_ports * sizeof(struct InputPort));
+	if (!port)
 		return NULL;
-	memset(base, 0, total * sizeof(struct InputPort));
+	memset(port, 0, max_ports * sizeof(struct InputPort));
+	
+ 	iip.ports = port;
+ 	iip.max_ports = max_ports;
+ 	iip.current_port = 0;
+ 	construct_ipt(&iip);
 
-	dst = base;
-
-	while (src->type != IPT_END)
+	i = 0;
+	do
 	{
-		int type = src->type & ~IPF_MASK;
-		const struct InputPortTiny *ext;
-		const struct InputPortTiny *src_end;
-		InputCode seq_default;
-
-		if (type > IPT_ANALOG_START && type < IPT_ANALOG_END)
-			src_end = src + 2;
-		else
-			src_end = src + 1;
-
-		switch (type)
+		InputCode or3;
+		
+		for (j = 0; j < input_port_seq_count(&port[i]); j++)
 		{
-			case IPT_END :
-			case IPT_PORT :
-			case IPT_DIPSWITCH_NAME :
-			case IPT_DIPSWITCH_SETTING :
-#ifdef MESS
-			case IPT_CONFIG_NAME :
-			case IPT_CONFIG_SETTING :
-#endif
-				seq_default = CODE_NONE;
-			break;
-			default:
-				seq_default = CODE_DEFAULT;
-				break;
-		}
-
-		ext = src_end;
-		while (src != src_end)
-		{
-			dst->type = src->type;
-			dst->mask = src->mask;
-			dst->default_value = src->default_value;
-			dst->name = src->name;
-
-  			if (ext->type == IPT_EXTENSION)
-  			{
-				InputCode or1 =	IP_GET_CODE_OR1(ext);
-				InputCode or2 =	IP_GET_CODE_OR2(ext);
-				InputCode or3;
-
-				switch(or2)
+			if (port[i].seq[0][0] != CODE_DEFAULT)
+			{
+				/* this port overridden the defaults; expand joycodes into mousecodes */
+				switch(port[i].seq[j][2])
 				{
 					case JOYCODE_1_BUTTON1:		or3 = JOYCODE_MOUSE_1_BUTTON1;	break;
 					case JOYCODE_1_BUTTON2:		or3 = JOYCODE_MOUSE_1_BUTTON2;	break;
@@ -2898,41 +2598,37 @@ struct InputPort* input_port_allocate(const struct InputPortTiny *src)
 					default:					or3 = CODE_NONE;				break;
 				}
 
-				if (or1 < __code_max)
+				if (or3 < __code_max)
+					seq_set_5(&port[i].seq[j], port[i].seq[j][0], CODE_OR, port[i].seq[j][2], CODE_OR, or3);
+			}
+			else
+			{
+				switch (port[i].type)
 				{
-					if (or3 < __code_max)
-						seq_set_5(&dst->seq, or1, CODE_OR, or2, CODE_OR, or3);
-					else if (or2 < __code_max)
-						seq_set_3(&dst->seq, or1, CODE_OR, or2);
-					else
-						seq_set_1(&dst->seq, or1);
-				} else {
-					if (or1 == CODE_NONE)
-						seq_set_1(&dst->seq, or2);
-					else
-						seq_set_1(&dst->seq, or1);
+					case IPT_END :
+					case IPT_PORT :
+					case IPT_DIPSWITCH_NAME :
+					case IPT_DIPSWITCH_SETTING :
+#ifdef MESS
+					case IPT_CONFIG_NAME :
+					case IPT_CONFIG_SETTING :
+					case IPT_CATEGORY_NAME :
+					case IPT_CATEGORY_SETTING :
+#endif /* MESS */
+						port[i].seq[j][0] = CODE_NONE;
+						break;
 				}
-
-  				++ext;
-  			} else {
-				seq_set_1(&dst->seq,seq_default);
-  			}
-
-			++src;
-			++dst;
+			}
 		}
 
 #ifdef MESS
-		while((ext->type & ~IPF_MASK) == IPT_UCHAR)
-			ext++;
-#endif
-
-		src = ext;
+		/* process MESS specific extensions to the port */
+		inputx_handle_mess_extensions(&port[i]);
+#endif /* MESS */
 	}
-
-	dst->type = IPT_END;
-
-	return base;
+	while(port[i++].type != IPT_END);
+  
+	return port;
 }
 
 
@@ -3044,77 +2740,81 @@ void init_analog_seq()
 
 	while (in->type != IPT_END)
 	{
-		if (in->type != IPT_PORT && ((in->type & ~IPF_MASK) > IPT_ANALOG_START)
-			&& ((in->type & ~IPF_MASK) < IPT_ANALOG_END))
+		if (in->type != IPT_PORT && ((in->type > IPT_ANALOG_START))
+			&& ((in->type < IPT_ANALOG_END)))
 		{
-			int j, invert;
+			int i, j, invert;
 			InputSeq *seq;
 			InputCode analog_seq;
 
-			seq = input_port_seq(in);
-			invert = 0;
-			analog_seq = CODE_NONE;
-
-			for(j=0; j<SEQ_MAX && analog_seq == CODE_NONE; ++j)
+			for (i = 0; i < input_port_seq_count(in); i++)
 			{
-				switch ((*seq)[j])
-				{
-					case CODE_NONE :
-						continue;
-					case CODE_NOT :
-						invert = !invert;
-						break;
-					case CODE_OR :
-						invert = 0;
-						break;
-					default:
-						if (!invert && is_joystick_axis_code((*seq)[j]) )
-						{
-							analog_seq = return_os_joycode((*seq)[j]);
-						}
-						invert = 0;
-						break;
-				}
-			}
-			if (analog_seq != CODE_NONE)
-			{
-				player = IP_GET_PLAYER(in);
+				seq = input_port_seq(in, i);
 
-				switch (in->type & ~IPF_MASK)
-				{
-					case IPT_DIAL:
-					case IPT_PADDLE:
-					case IPT_TRACKBALL_X:
-					case IPT_LIGHTGUN_X:
-					case IPT_AD_STICK_X:
-#ifdef MESS
-					case IPT_MOUSE_X:
-#endif
-						axis = X_AXIS;
-						break;
-					case IPT_DIAL_V:
-					case IPT_PADDLE_V:
-					case IPT_TRACKBALL_Y:
-					case IPT_LIGHTGUN_Y:
-					case IPT_AD_STICK_Y:
-#ifdef MESS
-					case IPT_MOUSE_Y:
-#endif
-						axis = Y_AXIS;
-						break;
-					case IPT_AD_STICK_Z:
-					case IPT_PEDAL2:
-						axis = Z_AXIS;
-						break;
-					case IPT_PEDAL:
-						axis = PEDAL_AXIS;
-						break;
-					default:
-						axis = 0;
-						break;
-				}
+				invert = 0;
+				analog_seq = CODE_NONE;
 
-				analogjoy_input[player][axis] = analog_seq;
+				for(j=0; j<SEQ_MAX && analog_seq == CODE_NONE; ++j)
+				{
+					switch ((*seq)[j])
+					{
+						case CODE_NONE :
+							continue;
+						case CODE_NOT :
+							invert = !invert;
+							break;
+						case CODE_OR :
+							invert = 0;
+							break;
+						default:
+							if (!invert && is_joystick_axis_code((*seq)[j]) )
+							{
+								analog_seq = return_os_joycode((*seq)[j]);
+							}
+							invert = 0;
+							break;
+					}
+				}
+				if (analog_seq != CODE_NONE)
+				{
+					player = in->player;
+  
+					switch (in->type)
+					{
+						case IPT_DIAL:
+						case IPT_PADDLE:
+						case IPT_TRACKBALL_X:
+						case IPT_LIGHTGUN_X:
+						case IPT_AD_STICK_X:
+#ifdef MESS
+						case IPT_MOUSE_X:
+#endif
+							axis = X_AXIS;
+							break;
+						case IPT_DIAL_V:
+						case IPT_PADDLE_V:
+						case IPT_TRACKBALL_Y:
+						case IPT_LIGHTGUN_Y:
+						case IPT_AD_STICK_Y:
+#ifdef MESS
+						case IPT_MOUSE_Y:
+#endif
+							axis = Y_AXIS;
+							break;
+						case IPT_AD_STICK_Z:
+						case IPT_PEDAL2:
+							axis = Z_AXIS;
+							break;
+						case IPT_PEDAL:
+							axis = PEDAL_AXIS;
+							break;
+						default:
+							axis = 0;
+							break;
+					}
+
+					analogjoy_input[player][axis] = analog_seq;
+				}
 			}
 		}
 

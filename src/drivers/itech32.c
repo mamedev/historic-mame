@@ -144,9 +144,9 @@ void itech32_update_interrupts(int vint, int xint, int qint)
 
 	/* update it */
 	if (level)
-		cpu_set_irq_line(0, level, ASSERT_LINE);
+		cpunum_set_input_line(0, level, ASSERT_LINE);
 	else
-		cpu_set_irq_line(0, 7, CLEAR_LINE);
+		cpunum_set_input_line(0, 7, CLEAR_LINE);
 }
 
 
@@ -190,8 +190,8 @@ static MACHINE_INIT( drivedge )
 {
 	machine_init_itech32();
 
-	cpu_set_reset_line(2, ASSERT_LINE);
-	cpu_set_reset_line(3, ASSERT_LINE);
+	cpunum_set_input_line(2, INPUT_LINE_RESET, ASSERT_LINE);
+	cpunum_set_input_line(3, INPUT_LINE_RESET, ASSERT_LINE);
 	STOP_TMS_SPINNING(0);
 	STOP_TMS_SPINNING(1);
 }
@@ -359,7 +359,7 @@ static READ32_HANDLER( itech020_prot_result_r )
  *
  *************************************/
 
-static WRITE_HANDLER( sound_bank_w )
+static WRITE8_HANDLER( sound_bank_w )
 {
 	cpu_setbank(1, &memory_region(REGION_CPU2)[0x10000 + data * 0x4000]);
 }
@@ -376,7 +376,7 @@ static void delayed_sound_data_w(int data)
 {
 	sound_data = data;
 	sound_int_state = 1;
-	cpu_set_irq_line(1, M6809_IRQ_LINE, ASSERT_LINE);
+	cpunum_set_input_line(1, M6809_IRQ_LINE, ASSERT_LINE);
 }
 
 
@@ -400,21 +400,21 @@ static WRITE32_HANDLER( sound_data32_w )
 }
 
 
-static READ_HANDLER( sound_data_r )
+static READ8_HANDLER( sound_data_r )
 {
-	cpu_set_irq_line(1, M6809_IRQ_LINE, CLEAR_LINE);
+	cpunum_set_input_line(1, M6809_IRQ_LINE, CLEAR_LINE);
 	sound_int_state = 0;
 	return sound_data;
 }
 
 
-static WRITE_HANDLER( sound_return_w )
+static WRITE8_HANDLER( sound_return_w )
 {
 	sound_return = data;
 }
 
 
-static READ_HANDLER( sound_data_buffer_r )
+static READ8_HANDLER( sound_data_buffer_r )
 {
 	return 0;
 }
@@ -427,7 +427,7 @@ static READ_HANDLER( sound_data_buffer_r )
  *
  *************************************/
 
-static WRITE_HANDLER( drivedge_portb_out )
+static WRITE8_HANDLER( drivedge_portb_out )
 {
 //	logerror("PIA port B write = %02x\n", data);
 
@@ -445,13 +445,13 @@ static WRITE_HANDLER( drivedge_portb_out )
 }
 
 
-static WRITE_HANDLER( drivedge_turbo_light )
+static WRITE8_HANDLER( drivedge_turbo_light )
 {
 	set_led_status(0, data);
 }
 
 
-static WRITE_HANDLER( pia_portb_out )
+static WRITE8_HANDLER( pia_portb_out )
 {
 //	logerror("PIA port B write = %02x\n", data);
 
@@ -473,9 +473,9 @@ static WRITE_HANDLER( pia_portb_out )
 static void via_irq(int state)
 {
 	if (state)
-		cpu_set_irq_line(1, M6809_FIRQ_LINE, ASSERT_LINE);
+		cpunum_set_input_line(1, M6809_FIRQ_LINE, ASSERT_LINE);
 	else
-		cpu_set_irq_line(1, M6809_FIRQ_LINE, CLEAR_LINE);
+		cpunum_set_input_line(1, M6809_FIRQ_LINE, CLEAR_LINE);
 }
 
 
@@ -504,9 +504,9 @@ static struct via6522_interface drivedge_via_interface =
  *
  *************************************/
 
-static WRITE_HANDLER( firq_clear_w )
+static WRITE8_HANDLER( firq_clear_w )
 {
-	cpu_set_irq_line(1, M6809_FIRQ_LINE, CLEAR_LINE);
+	cpunum_set_input_line(1, M6809_FIRQ_LINE, CLEAR_LINE);
 }
 
 
@@ -519,8 +519,8 @@ static WRITE_HANDLER( firq_clear_w )
 
 static WRITE32_HANDLER( tms_reset_assert_w )
 {
-	cpu_set_reset_line(2, ASSERT_LINE);
-	cpu_set_reset_line(3, ASSERT_LINE);
+	cpunum_set_input_line(2, INPUT_LINE_RESET, ASSERT_LINE);
+	cpunum_set_input_line(3, INPUT_LINE_RESET, ASSERT_LINE);
 }
 
 
@@ -529,12 +529,12 @@ static WRITE32_HANDLER( tms_reset_clear_w )
 	/* kludge to prevent crash on first boot */
 	if ((tms1_ram[0] & 0xff000000) == 0)
 	{
-		cpu_set_reset_line(2, CLEAR_LINE);
+		cpunum_set_input_line(2, INPUT_LINE_RESET, CLEAR_LINE);
 		STOP_TMS_SPINNING(0);
 	}
 	if ((tms2_ram[0] & 0xff000000) == 0)
 	{
-		cpu_set_reset_line(3, CLEAR_LINE);
+		cpunum_set_input_line(3, INPUT_LINE_RESET, CLEAR_LINE);
 		STOP_TMS_SPINNING(1);
 	}
 }
@@ -734,13 +734,11 @@ static ADDRESS_MAP_START( drivedge_tms1_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x000000, 0x001fff) AM_RAM AM_BASE(&tms1_boot)
 	AM_RANGE(0x008000, 0x0083ff) AM_MIRROR(0x400) AM_READWRITE(MRA32_RAM, tms1_trigger_w) AM_SHARE(1) AM_BASE(&tms1_ram)
 	AM_RANGE(0x080000, 0x0bffff) AM_RAM
-	AM_RANGE(0x809800, 0x809fff) AM_RAM
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( drivedge_tms2_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x008000, 0x0083ff) AM_MIRROR(0x8400) AM_READWRITE(MRA32_RAM, tms2_trigger_w) AM_SHARE(2) AM_BASE(&tms2_ram)
 	AM_RANGE(0x080000, 0x08ffff) AM_RAM
-	AM_RANGE(0x809800, 0x809fff) AM_RAM
 ADDRESS_MAP_END
 
 
@@ -2241,8 +2239,8 @@ static DRIVER_INIT( drivedge )
 	itech32_planes = 1;
 	is_drivedge = 1;
 
-	install_mem_read32_handler(2, 0x8382, 0x8382, drivedge_tms1_speedup_r);
-	install_mem_read32_handler(3, 0x8382, 0x8382, drivedge_tms2_speedup_r);
+	memory_install_read32_handler(2, ADDRESS_SPACE_PROGRAM, 0x8382, 0x8382, 0, 0, drivedge_tms1_speedup_r);
+	memory_install_read32_handler(3, ADDRESS_SPACE_PROGRAM, 0x8382, 0x8382, 0, 0, drivedge_tms2_speedup_r);
 }
 
 
@@ -2254,11 +2252,11 @@ static DRIVER_INIT( wcbowl )
 	itech32_vram_height = 1024;
 	itech32_planes = 1;
 
-	install_mem_read16_handler(0, 0x680000, 0x680001, trackball_r);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x680000, 0x680001, 0, 0, trackball_r);
 
-	install_mem_read16_handler(0, 0x578000, 0x57ffff, MRA16_NOP);
-	install_mem_read16_handler(0, 0x680080, 0x680081, wcbowl_prot_result_r);
-	install_mem_write16_handler(0, 0x680080, 0x680081, MWA16_NOP);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x578000, 0x57ffff, 0, 0, MRA16_NOP);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x680080, 0x680081, 0, 0, wcbowl_prot_result_r);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x680080, 0x680081, 0, 0, MWA16_NOP);
 }
 
 
@@ -2271,8 +2269,8 @@ static void init_sftm_common(int prot_addr)
 
 	itech020_prot_address = prot_addr;
 
-	install_mem_write32_handler(0, 0x300000, 0x300003, itech020_color2_w);
-	install_mem_write32_handler(0, 0x380000, 0x380003, itech020_color1_w);
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x300000, 0x300003, 0, 0, itech020_color2_w);
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x380000, 0x380003, 0, 0, itech020_color1_w);
 }
 
 
@@ -2297,10 +2295,10 @@ static DRIVER_INIT( shufshot )
 
 	itech020_prot_address = 0x111a;
 
-	install_mem_write32_handler(0, 0x300000, 0x300003, itech020_color2_w);
-	install_mem_write32_handler(0, 0x380000, 0x380003, itech020_color1_w);
-	install_mem_read32_handler(0, 0x180800, 0x180803, trackball32_4bit_r);
-	install_mem_read32_handler(0, 0x181000, 0x181003, trackball32_4bit_p2_r);
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x300000, 0x300003, 0, 0, itech020_color2_w);
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x380000, 0x380003, 0, 0, itech020_color1_w);
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x180800, 0x180803, 0, 0, trackball32_4bit_r);
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x181000, 0x181003, 0, 0, trackball32_4bit_p2_r);
 }
 
 
@@ -2314,10 +2312,10 @@ static DRIVER_INIT( wcbowln )	/* PIC 16C54 labeled as ITBWL-3 */
 
 	itech020_prot_address = 0x1116;
 
-	install_mem_write32_handler(0, 0x300000, 0x300003, itech020_color2_w);
-	install_mem_write32_handler(0, 0x380000, 0x380003, itech020_color1_w);
-	install_mem_read32_handler(0, 0x180800, 0x180803, trackball32_4bit_r);
-	install_mem_read32_handler(0, 0x181000, 0x181003, trackball32_4bit_p2_r);
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x300000, 0x300003, 0, 0, itech020_color2_w);
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x380000, 0x380003, 0, 0, itech020_color1_w);
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x180800, 0x180803, 0, 0, trackball32_4bit_r);
+	memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x181000, 0x181003, 0, 0, trackball32_4bit_p2_r);
 
 }
 

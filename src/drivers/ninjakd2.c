@@ -224,10 +224,10 @@ The first sprite data is located at fa0b,then fa1b and so on.
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-WRITE_HANDLER( ninjakd2_bgvideoram_w );
-WRITE_HANDLER( ninjakd2_fgvideoram_w );
-WRITE_HANDLER( ninjakd2_sprite_overdraw_w );
-WRITE_HANDLER( ninjakd2_background_enable_w );
+WRITE8_HANDLER( ninjakd2_bgvideoram_w );
+WRITE8_HANDLER( ninjakd2_fgvideoram_w );
+WRITE8_HANDLER( ninjakd2_sprite_overdraw_w );
+WRITE8_HANDLER( ninjakd2_background_enable_w );
 VIDEO_START( ninjakd2 );
 VIDEO_UPDATE( ninjakd2 );
 
@@ -278,15 +278,15 @@ int ninjakd2_init_samples(const struct MachineSound *msound)
 
 INTERRUPT_GEN( ninjakd2_interrupt )
 {
-	cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0xd7);	/* RST 10h */
+	cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, 0xd7);	/* RST 10h */
 }
 
-READ_HANDLER( ninjakd2_bankselect_r )
+READ8_HANDLER( ninjakd2_bankselect_r )
 {
 	return ninjakd2_bank_latch;
 }
 
-WRITE_HANDLER( ninjakd2_bankselect_w )
+WRITE8_HANDLER( ninjakd2_bankselect_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	int bankaddress;
@@ -300,7 +300,7 @@ WRITE_HANDLER( ninjakd2_bankselect_w )
 	}
 }
 
-WRITE_HANDLER( ninjakd2_pcm_play_w )
+WRITE8_HANDLER( ninjakd2_pcm_play_w )
 {
 	int i;
 	int sample_no[9] = { 0x00,0x0A,0x27,0x3E,0x53,0x5E,0x68,0x76,0xF0 };
@@ -505,7 +505,7 @@ static struct CustomSound_interface custom_interface =
 /* handler called by the 2203 emulator when the internal timers cause an IRQ */
 static void irqhandler(int irq)
 {
-	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2203interface ym2203_interface =

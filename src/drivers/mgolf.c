@@ -25,7 +25,7 @@ static void get_tile_info(int tile_index)
 }
 
 
-static WRITE_HANDLER( mgolf_vram_w )
+static WRITE8_HANDLER( mgolf_vram_w )
 {
 	if (mgolf_video_ram[offset] != data)
 	{
@@ -87,7 +87,7 @@ static void update_plunger(void)
 
 			if (!mask)
 			{
-				cpu_set_nmi_line(0, PULSE_LINE);
+				cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 			}
 		}
 		else
@@ -104,7 +104,7 @@ static void interrupt_callback(int scanline)
 {
 	update_plunger();
 
-	cpu_set_irq_line(0, 0, PULSE_LINE);
+	cpunum_set_input_line(0, 0, PULSE_LINE);
 
 	scanline = scanline + 32;
 
@@ -138,13 +138,13 @@ static PALETTE_INIT( mgolf )
 }
 
 
-static READ_HANDLER( mgolf_wram_r )
+static READ8_HANDLER( mgolf_wram_r )
 {
 	return mgolf_video_ram[0x380 + offset];
 }
 
 
-static READ_HANDLER( mgolf_dial_r )
+static READ8_HANDLER( mgolf_dial_r )
 {
 	UINT8 val = readinputport(1);
 
@@ -161,7 +161,7 @@ static READ_HANDLER( mgolf_dial_r )
 }
 
 
-static READ_HANDLER( mgolf_misc_r )
+static READ8_HANDLER( mgolf_misc_r )
 {
 	double plunger = calc_plunger_pos(); /* see Video Pinball */
 
@@ -180,7 +180,7 @@ static READ_HANDLER( mgolf_misc_r )
 }
 
 
-static WRITE_HANDLER( mgolf_wram_w )
+static WRITE8_HANDLER( mgolf_wram_w )
 {
 	mgolf_video_ram[0x380 + offset] = data;
 }

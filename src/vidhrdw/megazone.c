@@ -84,7 +84,7 @@ PALETTE_INIT( megazone )
 		COLOR(0,i) = (*(color_prom++) & 0x0f) + 0x10;
 }
 
-WRITE_HANDLER( megazone_flipscreen_w )
+WRITE8_HANDLER( megazone_flipscreen_w )
 {
 	if (flipscreen != (data & 1))
 	{

@@ -42,7 +42,7 @@ static void cpu_irq_clock(int param)
 		alpha_irq_clock++;
 		if ((alpha_irq_clock & 0x0c) == 0x0c)
 		{
-			cpu_set_irq_line(0, 0, ASSERT_LINE);
+			cpunum_set_input_line(0, 0, ASSERT_LINE);
 			alpha_irq_clock_enable = 0;
 		}
 	}
@@ -51,24 +51,24 @@ static void cpu_irq_clock(int param)
 	if (has_gamma_cpu)
 	{
 		gamma_irq_clock++;
-		cpu_set_irq_line(1, 0, (gamma_irq_clock & 0x08) ? ASSERT_LINE : CLEAR_LINE);
+		cpunum_set_input_line(1, 0, (gamma_irq_clock & 0x08) ? ASSERT_LINE : CLEAR_LINE);
 	}
 }
 
 
-WRITE_HANDLER( mhavoc_alpha_irq_ack_w )
+WRITE8_HANDLER( mhavoc_alpha_irq_ack_w )
 {
 	/* clear the line and reset the clock */
-	cpu_set_irq_line(0, 0, CLEAR_LINE);
+	cpunum_set_input_line(0, 0, CLEAR_LINE);
 	alpha_irq_clock = 0;
 	alpha_irq_clock_enable = 1;
 }
 
 
-WRITE_HANDLER( mhavoc_gamma_irq_ack_w )
+WRITE8_HANDLER( mhavoc_gamma_irq_ack_w )
 {
 	/* clear the line and reset the clock */
-	cpu_set_irq_line(1, 0, CLEAR_LINE);
+	cpunum_set_input_line(1, 0, CLEAR_LINE);
 	gamma_irq_clock = 0;
 }
 
@@ -128,21 +128,21 @@ static void delayed_gamma_w(int data)
 	alpha_data = data;
 
 	/* signal with an NMI pulse */
-	cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 
 	/* the sound CPU needs to reply in 250microseconds (according to Neil Bradley) */
 	timer_set(TIME_IN_USEC(250), 0, 0);
 }
 
 
-WRITE_HANDLER( mhavoc_gamma_w )
+WRITE8_HANDLER( mhavoc_gamma_w )
 {
 	logerror("  writing to gamma processor: %02x (%d %d)\n", data, gamma_rcvd, alpha_xmtd);
 	timer_set(TIME_NOW, data, delayed_gamma_w);
 }
 
 
-READ_HANDLER( mhavoc_alpha_r )
+READ8_HANDLER( mhavoc_alpha_r )
 {
 	logerror("\t\t\t\t\treading from alpha processor: %02x (%d %d)\n", alpha_data, gamma_rcvd, alpha_xmtd);
 	gamma_rcvd = 1;
@@ -158,7 +158,7 @@ READ_HANDLER( mhavoc_alpha_r )
  *
  *************************************/
 
-WRITE_HANDLER( mhavoc_alpha_w )
+WRITE8_HANDLER( mhavoc_alpha_w )
 {
 	logerror("\t\t\t\t\twriting to alpha processor: %02x %d %d\n", data, alpha_rcvd, gamma_xmtd);
 	alpha_rcvd = 0;
@@ -167,7 +167,7 @@ WRITE_HANDLER( mhavoc_alpha_w )
 }
 
 
-READ_HANDLER( mhavoc_gamma_r )
+READ8_HANDLER( mhavoc_gamma_r )
 {
 	logerror("  reading from gamma processor: %02x (%d %d)\n", gamma_data, alpha_rcvd, gamma_xmtd);
 	alpha_rcvd = 1;
@@ -183,7 +183,7 @@ READ_HANDLER( mhavoc_gamma_r )
  *
  *************************************/
 
-WRITE_HANDLER( mhavoc_ram_banksel_w )
+WRITE8_HANDLER( mhavoc_ram_banksel_w )
 {
 	static const offs_t bank[2] = { 0x20200, 0x20800 };
 
@@ -193,7 +193,7 @@ WRITE_HANDLER( mhavoc_ram_banksel_w )
 }
 
 
-WRITE_HANDLER( mhavoc_rom_banksel_w )
+WRITE8_HANDLER( mhavoc_rom_banksel_w )
 {
 	static const offs_t bank[4] = { 0x10000, 0x12000, 0x14000, 0x16000 };
 
@@ -210,7 +210,7 @@ WRITE_HANDLER( mhavoc_rom_banksel_w )
  *
  *************************************/
 
-READ_HANDLER( mhavoc_port_0_r )
+READ8_HANDLER( mhavoc_port_0_r )
 {
 	data8_t res;
 
@@ -241,7 +241,7 @@ READ_HANDLER( mhavoc_port_0_r )
 }
 
 
-READ_HANDLER( alphaone_port_0_r )
+READ8_HANDLER( alphaone_port_0_r )
 {
 	/* Bits 7-2 = common */
 	data8_t res = readinputport(0) & 0xfc;
@@ -258,7 +258,7 @@ READ_HANDLER( alphaone_port_0_r )
 }
 
 
-READ_HANDLER( mhavoc_port_1_r )
+READ8_HANDLER( mhavoc_port_1_r )
 {
 	/* Bits 7-2 = input switches */
 	data8_t res = readinputport(1) & 0xfc;
@@ -282,7 +282,7 @@ READ_HANDLER( mhavoc_port_1_r )
  *
  *************************************/
 
-WRITE_HANDLER( mhavoc_out_0_w )
+WRITE8_HANDLER( mhavoc_out_0_w )
 {
 	/* Bit 7 = Invert Y -- unemulated */
 	/* Bit 6 = Invert X -- unemulated */
@@ -291,7 +291,7 @@ WRITE_HANDLER( mhavoc_out_0_w )
 	player_1 = (data >> 5) & 1;
 
 	/* Bit 3 = Gamma reset */
-	cpu_set_reset_line(1, (data & 0x08) ? CLEAR_LINE : ASSERT_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_RESET, (data & 0x08) ? CLEAR_LINE : ASSERT_LINE);
 	if (!(data & 0x08))
 	{
 		logerror("\t\t\t\t*** resetting gamma processor. ***\n");
@@ -306,7 +306,7 @@ WRITE_HANDLER( mhavoc_out_0_w )
 }
 
 
-WRITE_HANDLER( alphaone_out_0_w )
+WRITE8_HANDLER( alphaone_out_0_w )
 {
 	/* Bit 5 = P2 lamp */
 	set_led_status(0, ~data & 0x20);
@@ -324,7 +324,7 @@ logerror("alphaone_out_0_w(%02X)\n", data);
 }
 
 
-WRITE_HANDLER( mhavoc_out_1_w )
+WRITE8_HANDLER( mhavoc_out_1_w )
 {
 	/* Bit 1 = left coin counter */
 	coin_counter_w(0, data & 0x02);

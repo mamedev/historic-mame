@@ -13,10 +13,10 @@ extern size_t jedi_backgroundram_size;
 VIDEO_START( jedi );
 VIDEO_UPDATE( jedi );
 
-WRITE_HANDLER( jedi_alpha_banksel_w );
-WRITE_HANDLER( jedi_paletteram_w );
-WRITE_HANDLER( jedi_backgroundram_w );
-WRITE_HANDLER( jedi_vscroll_w );
-WRITE_HANDLER( jedi_hscroll_w );
-WRITE_HANDLER( jedi_video_off_w );
-WRITE_HANDLER( jedi_PIXIRAM_w );
+WRITE8_HANDLER( jedi_alpha_banksel_w );
+WRITE8_HANDLER( jedi_paletteram_w );
+WRITE8_HANDLER( jedi_backgroundram_w );
+WRITE8_HANDLER( jedi_vscroll_w );
+WRITE8_HANDLER( jedi_hscroll_w );
+WRITE8_HANDLER( jedi_video_off_w );
+WRITE8_HANDLER( jedi_PIXIRAM_w );

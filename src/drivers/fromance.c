@@ -81,7 +81,7 @@ static MACHINE_INIT( fromance )
  *
  *************************************/
 
-static READ_HANDLER( fromance_commanddata_r )
+static READ8_HANDLER( fromance_commanddata_r )
 {
 	return fromance_commanddata;
 }
@@ -94,14 +94,14 @@ static void deferred_commanddata_w(int data)
 }
 
 
-static WRITE_HANDLER( fromance_commanddata_w )
+static WRITE8_HANDLER( fromance_commanddata_w )
 {
 	/* do this on a timer to let the slave CPU synchronize */
 	timer_set(TIME_NOW, data, deferred_commanddata_w);
 }
 
 
-static READ_HANDLER( fromance_busycheck_main_r )
+static READ8_HANDLER( fromance_busycheck_main_r )
 {
 	/* set a timer to force synchronization after the read */
 	timer_set(TIME_NOW, 0, NULL);
@@ -111,14 +111,14 @@ static READ_HANDLER( fromance_busycheck_main_r )
 }
 
 
-static READ_HANDLER( fromance_busycheck_sub_r )
+static READ8_HANDLER( fromance_busycheck_sub_r )
 {
 	if (fromance_directionflag) return 0xff;		// standby
 	else return 0x00;								// busy
 }
 
 
-static WRITE_HANDLER( fromance_busycheck_sub_w )
+static WRITE8_HANDLER( fromance_busycheck_sub_w )
 {
 	fromance_directionflag = 0;
 }
@@ -131,7 +131,7 @@ static WRITE_HANDLER( fromance_busycheck_sub_w )
  *
  *************************************/
 
-static WRITE_HANDLER( fromance_rombank_w )
+static WRITE8_HANDLER( fromance_rombank_w )
 {
 	unsigned char *ROM = memory_region(REGION_CPU2);
 
@@ -146,7 +146,7 @@ static WRITE_HANDLER( fromance_rombank_w )
  *
  *************************************/
 
-static WRITE_HANDLER( fromance_adpcm_reset_w )
+static WRITE8_HANDLER( fromance_adpcm_reset_w )
 {
 	fromance_adpcm_reset = (data & 0x01);
 	fromance_vclk_left = 0;
@@ -155,7 +155,7 @@ static WRITE_HANDLER( fromance_adpcm_reset_w )
 }
 
 
-static WRITE_HANDLER( fromance_adpcm_w )
+static WRITE8_HANDLER( fromance_adpcm_w )
 {
 	fromance_adpcm_data = data;
 	fromance_vclk_left = 2;
@@ -178,7 +178,7 @@ static void fromance_adpcm_int(int irq)
 
 	/* generate an NMI if we're out of data */
 	if (!fromance_vclk_left)
-		cpu_set_nmi_line(1, PULSE_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 }
 
 
@@ -189,13 +189,13 @@ static void fromance_adpcm_int(int irq)
  *
  *************************************/
 
-static WRITE_HANDLER( fromance_portselect_w )
+static WRITE8_HANDLER( fromance_portselect_w )
 {
 	fromance_portselect = data;
 }
 
 
-static READ_HANDLER( fromance_keymatrix_r )
+static READ8_HANDLER( fromance_keymatrix_r )
 {
 	int ret = 0xff;
 
@@ -221,7 +221,7 @@ static READ_HANDLER( fromance_keymatrix_r )
  *
  *************************************/
 
-static WRITE_HANDLER( fromance_coinctr_w )
+static WRITE8_HANDLER( fromance_coinctr_w )
 {
 	//
 }

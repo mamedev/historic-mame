@@ -135,7 +135,7 @@ VIDEO_START( cop01 )
 
 ***************************************************************************/
 
-WRITE_HANDLER( cop01_background_w )
+WRITE8_HANDLER( cop01_background_w )
 {
 	if (cop01_bgvideoram[offset] != data)
 	{
@@ -144,7 +144,7 @@ WRITE_HANDLER( cop01_background_w )
 	}
 }
 
-WRITE_HANDLER( cop01_foreground_w )
+WRITE8_HANDLER( cop01_foreground_w )
 {
 	if (cop01_fgvideoram[offset] != data)
 	{
@@ -153,7 +153,7 @@ WRITE_HANDLER( cop01_foreground_w )
 	}
 }
 
-WRITE_HANDLER( cop01_vreg_w )
+WRITE8_HANDLER( cop01_vreg_w )
 {
 	/*	0x40: --xx---- sprite bank, coin counters, flip screen
 	 *	      -----x-- flip screen

@@ -335,9 +335,9 @@ static void dcs_reset(void)
 	cpunum_set_info_ptr(dcs_cpunum, CPUINFO_PTR_ADSP2100_TX_HANDLER, (void *)sound_tx_callback);
 
 	/* clear all interrupts */
-	cpu_set_irq_line(dcs_cpunum, ADSP2105_IRQ0, CLEAR_LINE);
-	cpu_set_irq_line(dcs_cpunum, ADSP2105_IRQ1, CLEAR_LINE);
-	cpu_set_irq_line(dcs_cpunum, ADSP2105_IRQ2, CLEAR_LINE);
+	cpunum_set_input_line(dcs_cpunum, ADSP2105_IRQ0, CLEAR_LINE);
+	cpunum_set_input_line(dcs_cpunum, ADSP2105_IRQ1, CLEAR_LINE);
+	cpunum_set_input_line(dcs_cpunum, ADSP2105_IRQ2, CLEAR_LINE);
 
 	/* initialize the comm bits */
 	SET_INPUT_EMPTY();
@@ -418,7 +418,7 @@ void dcs2_init(offs_t polling_offset)
 
 	/* install the speedup handler */
 	if (polling_offset)
-		dcs_polling_base = memory_install_read16_handler(dcs_cpunum, ADDRESS_SPACE_DATA, polling_offset, polling_offset, 0, dcs_polling_r);
+		dcs_polling_base = memory_install_read16_handler(dcs_cpunum, ADDRESS_SPACE_DATA, polling_offset, polling_offset, 0, 0, dcs_polling_r);
 
 	/* allocate a watchdog timer for HLE transfers */
 	if (HLE_TRANSFERS)
@@ -546,12 +546,12 @@ void dcs_reset_w(int state)
 
 		/* just run through the init code again */
 		dcs_reset();
-		cpu_set_reset_line(dcs_cpunum, ASSERT_LINE);
+		cpunum_set_input_line(dcs_cpunum, INPUT_LINE_RESET, ASSERT_LINE);
 	}
 
 	/* going low resets and reactivates the CPU */
 	else
-		cpu_set_reset_line(dcs_cpunum, CLEAR_LINE);
+		cpunum_set_input_line(dcs_cpunum, INPUT_LINE_RESET, CLEAR_LINE);
 }
 
 
@@ -593,7 +593,7 @@ static void dcs_delayed_data_w(int data)
 	cpu_boost_interleave(TIME_IN_USEC(0.5), TIME_IN_USEC(5));
 
 	/* set the IRQ line on the ADSP */
-	cpu_set_irq_line(dcs_cpunum, ADSP2105_IRQ2, ASSERT_LINE);
+	cpunum_set_input_line(dcs_cpunum, ADSP2105_IRQ2, ASSERT_LINE);
 
 	/* indicate we are no longer empty */
 	if (dcs.last_input_empty && dcs.input_empty_cb)
@@ -624,7 +624,7 @@ static WRITE16_HANDLER( input_latch_ack_w )
 	if (!dcs.last_input_empty && dcs.input_empty_cb)
 		(*dcs.input_empty_cb)(dcs.last_input_empty = 1);
 	SET_INPUT_EMPTY();
-	cpu_set_irq_line(dcs_cpunum, ADSP2105_IRQ2, CLEAR_LINE);
+	cpunum_set_input_line(dcs_cpunum, ADSP2105_IRQ2, CLEAR_LINE);
 }
 
 
@@ -754,7 +754,7 @@ static WRITE16_HANDLER( dcs_control_w )
 			if (data & 0x0200)
 			{
 				/* boot force */
-				cpu_set_reset_line(dcs_cpunum, PULSE_LINE);
+				cpunum_set_input_line(dcs_cpunum, INPUT_LINE_RESET, PULSE_LINE);
 				dcs_boot();
 				dcs.control_regs[SYSCONTROL_REG] &= ~0x0200;
 			}
@@ -810,7 +810,7 @@ static void dcs_irq(int state)
 		reg = dcs.ireg_base;
 
 		/* generate the (internal, thats why the pulse) irq */
-		cpu_set_irq_line(dcs_cpunum, ADSP2105_IRQ1, PULSE_LINE);
+		cpunum_set_input_line(dcs_cpunum, ADSP2105_IRQ1, PULSE_LINE);
 	}
 
 	/* store it */
@@ -825,7 +825,7 @@ static void sport0_irq(int state)
 	/* register; if we don't interlock it, we will eventually lose sound (see CarnEvil) */
 	/* so we skip the SPORT interrupt if we read with output_control within the last 5 cycles */
 	if ((cpunum_gettotalcycles(dcs_cpunum) - dcs.output_control_cycles) > 5)
-		cpu_set_irq_line(dcs_cpunum, ADSP2115_SPORT0_RX, PULSE_LINE);
+		cpunum_set_input_line(dcs_cpunum, ADSP2115_SPORT0_RX, PULSE_LINE);
 }
 
 

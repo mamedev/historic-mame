@@ -25,40 +25,40 @@ VIDEO_START( bking2 );
 VIDEO_UPDATE( bking2 );
 VIDEO_EOF( bking2 );
 
-WRITE_HANDLER( bking2_xld1_w );
-WRITE_HANDLER( bking2_yld1_w );
-WRITE_HANDLER( bking2_xld2_w );
-WRITE_HANDLER( bking2_yld2_w );
-WRITE_HANDLER( bking2_xld3_w );
-WRITE_HANDLER( bking2_yld3_w );
-WRITE_HANDLER( bking2_msk_w );
-WRITE_HANDLER( bking2_cont1_w );
-WRITE_HANDLER( bking2_cont2_w );
-WRITE_HANDLER( bking2_cont3_w );
-WRITE_HANDLER( bking2_hitclr_w );
-WRITE_HANDLER( bking2_playfield_w );
+WRITE8_HANDLER( bking2_xld1_w );
+WRITE8_HANDLER( bking2_yld1_w );
+WRITE8_HANDLER( bking2_xld2_w );
+WRITE8_HANDLER( bking2_yld2_w );
+WRITE8_HANDLER( bking2_xld3_w );
+WRITE8_HANDLER( bking2_yld3_w );
+WRITE8_HANDLER( bking2_msk_w );
+WRITE8_HANDLER( bking2_cont1_w );
+WRITE8_HANDLER( bking2_cont2_w );
+WRITE8_HANDLER( bking2_cont3_w );
+WRITE8_HANDLER( bking2_hitclr_w );
+WRITE8_HANDLER( bking2_playfield_w );
 
-READ_HANDLER( bking2_input_port_5_r );
-READ_HANDLER( bking2_input_port_6_r );
-READ_HANDLER( bking2_pos_r );
+READ8_HANDLER( bking2_input_port_5_r );
+READ8_HANDLER( bking2_input_port_6_r );
+READ8_HANDLER( bking2_pos_r );
 
 UINT8* bking2_playfield_ram;
 
 
 static int sndnmi_enable = 1;
 
-static READ_HANDLER( bking2_sndnmi_disable_r )
+static READ8_HANDLER( bking2_sndnmi_disable_r )
 {
 	sndnmi_enable = 0;
 	return 0;
 }
 
-static WRITE_HANDLER( bking2_sndnmi_enable_w )
+static WRITE8_HANDLER( bking2_sndnmi_enable_w )
 {
 	sndnmi_enable = 1;
 }
 
-static WRITE_HANDLER( bking2_soundlatch_w )
+static WRITE8_HANDLER( bking2_soundlatch_w )
 {
 	int i,code;
 
@@ -67,29 +67,29 @@ static WRITE_HANDLER( bking2_soundlatch_w )
 		if (data & (1 << i)) code |= 0x80 >> i;
 
 	soundlatch_w(offset,code);
-	if (sndnmi_enable) cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);
+	if (sndnmi_enable) cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 }
 
 
 static int bk3_l, bk3_h;
 
-static WRITE_HANDLER( bk3_l_w)
+static WRITE8_HANDLER( bk3_l_w)
 {
 	bk3_l = data;
 }
 
-static WRITE_HANDLER( bk3_h_w)
+static WRITE8_HANDLER( bk3_h_w)
 {
 	bk3_h = data;
 }
 
-static READ_HANDLER( bk3_r )
+static READ8_HANDLER( bk3_r )
 {
 	unsigned char *rom = memory_region(REGION_USER2);
 	return rom[bk3_h*256+bk3_l];
 }
 
-static WRITE_HANDLER( unk_w )
+static WRITE8_HANDLER( unk_w )
 {
 /*
 	0 = finished reading extra rom
@@ -97,7 +97,7 @@ static WRITE_HANDLER( unk_w )
 */
 }
 
-static READ_HANDLER( mcu_status_r )
+static READ8_HANDLER( mcu_status_r )
 {
 	static int res = 3;
 
@@ -116,7 +116,7 @@ Todo:
 */
 static unsigned char mcu_val;
 
-static WRITE_HANDLER( mcu_data_w )
+static WRITE8_HANDLER( mcu_data_w )
 {
 #ifdef MAME_DEBUG
 	logerror("mcu_data_w = %x\n",data);
@@ -130,7 +130,7 @@ static WRITE_HANDLER( mcu_data_w )
 		mcu_val = 0x5e;
 }
 
-static READ_HANDLER( mcu_data_r )
+static READ8_HANDLER( mcu_data_r )
 {
 //	usrintf_showmessage("MCU-r1 PC = %04x %02x",activecpu_get_pc(),mcu_val);
 	switch(mcu_val)
@@ -141,7 +141,7 @@ static READ_HANDLER( mcu_data_r )
 	}
 }
 
-static READ_HANDLER( mcu_data_r2 )
+static READ8_HANDLER( mcu_data_r2 )
 {
 //	usrintf_showmessage("MCU-r2 PC = %04x %02x",activecpu_get_pc(),mcu_val);
 	return 0x31; //no "bad rom.", no "bad ext."
@@ -500,7 +500,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
-static WRITE_HANDLER( portb_w )
+static WRITE8_HANDLER( portb_w )
 {
 	/* don't know what this is... could be a filter */
 	if (data != 0x00) logerror("portB = %02x\n",data);

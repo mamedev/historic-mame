@@ -84,7 +84,7 @@ VIDEO_START( finalizr )
 
 
 
-WRITE_HANDLER( finalizr_videoctrl_w )
+WRITE8_HANDLER( finalizr_videoctrl_w )
 {
 	if (charbank != (data & 3))
 	{

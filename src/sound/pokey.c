@@ -959,27 +959,27 @@ int pokey_register_r(int chip, int offs)
     return data;
 }
 
-READ_HANDLER( pokey1_r )
+READ8_HANDLER( pokey1_r )
 {
 	return pokey_register_r(0, offset);
 }
 
-READ_HANDLER( pokey2_r )
+READ8_HANDLER( pokey2_r )
 {
 	return pokey_register_r(1, offset);
 }
 
-READ_HANDLER( pokey3_r )
+READ8_HANDLER( pokey3_r )
 {
 	return pokey_register_r(2, offset);
 }
 
-READ_HANDLER( pokey4_r )
+READ8_HANDLER( pokey4_r )
 {
 	return pokey_register_r(3, offset);
 }
 
-READ_HANDLER( quad_pokey_r )
+READ8_HANDLER( quad_pokey_r )
 {
 	int pokey_num = (offset >> 3) & ~0x04;
 	int control = (offset & 0x20) >> 2;
@@ -1372,27 +1372,27 @@ void pokey_register_w(int chip, int offs, int data)
     }
 }
 
-WRITE_HANDLER( pokey1_w )
+WRITE8_HANDLER( pokey1_w )
 {
 	pokey_register_w(0,offset,data);
 }
 
-WRITE_HANDLER( pokey2_w )
+WRITE8_HANDLER( pokey2_w )
 {
     pokey_register_w(1,offset,data);
 }
 
-WRITE_HANDLER( pokey3_w )
+WRITE8_HANDLER( pokey3_w )
 {
     pokey_register_w(2,offset,data);
 }
 
-WRITE_HANDLER( pokey4_w )
+WRITE8_HANDLER( pokey4_w )
 {
     pokey_register_w(3,offset,data);
 }
 
-WRITE_HANDLER( quad_pokey_w )
+WRITE8_HANDLER( quad_pokey_w )
 {
     int pokey_num = (offset >> 3) & ~0x04;
     int control = (offset & 0x20) >> 2;

@@ -14,9 +14,9 @@
 
 PALETTE_INIT( cheekyms );
 VIDEO_UPDATE( cheekyms );
-WRITE_HANDLER( cheekyms_sprite_w );
-WRITE_HANDLER( cheekyms_port_40_w );
-WRITE_HANDLER( cheekyms_port_80_w );
+WRITE8_HANDLER( cheekyms_sprite_w );
+WRITE8_HANDLER( cheekyms_port_40_w );
+WRITE8_HANDLER( cheekyms_port_80_w );
 
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )

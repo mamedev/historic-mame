@@ -75,10 +75,10 @@ write:
 static int p[8] = { 0,0xf0,0,0,0,0,0,0 };
 static int t[2] = { 0,0 };
 
-extern WRITE_HANDLER( mario_videoram_w );
-extern WRITE_HANDLER( mario_gfxbank_w );
-extern WRITE_HANDLER( mario_palettebank_w );
-extern WRITE_HANDLER( mario_scroll_w );
+extern WRITE8_HANDLER( mario_videoram_w );
+extern WRITE8_HANDLER( mario_gfxbank_w );
+extern WRITE8_HANDLER( mario_palettebank_w );
+extern WRITE8_HANDLER( mario_scroll_w );
 
 extern PALETTE_INIT( mario );
 extern VIDEO_START( mario );
@@ -87,41 +87,41 @@ extern VIDEO_UPDATE( mario );
 /*
  *  from sndhrdw/mario.c
  */
-extern WRITE_HANDLER( mario_sh_w );
-extern WRITE_HANDLER( mario_sh1_w );
-extern WRITE_HANDLER( mario_sh2_w );
-extern WRITE_HANDLER( mario_sh3_w );
+extern WRITE8_HANDLER( mario_sh_w );
+extern WRITE8_HANDLER( mario_sh1_w );
+extern WRITE8_HANDLER( mario_sh2_w );
+extern WRITE8_HANDLER( mario_sh3_w );
 
 
 #define ACTIVELOW_PORT_BIT(P,A,D)   ((P & (~(1 << A))) | ((D ^ 1) << A))
 #define ACTIVEHIGH_PORT_BIT(P,A,D)   ((P & (~(1 << A))) | (D << A))
 
 
-WRITE_HANDLER( mario_sh_getcoin_w )    { t[0] = data; }
-WRITE_HANDLER( mario_sh_crab_w )       { p[1] = ACTIVEHIGH_PORT_BIT(p[1],0,data); }
-WRITE_HANDLER( mario_sh_turtle_w )     { p[1] = ACTIVEHIGH_PORT_BIT(p[1],1,data); }
-WRITE_HANDLER( mario_sh_fly_w )        { p[1] = ACTIVEHIGH_PORT_BIT(p[1],2,data); }
-static WRITE_HANDLER( mario_sh_tuneselect_w ) { soundlatch_w(offset,data); }
+WRITE8_HANDLER( mario_sh_getcoin_w )    { t[0] = data; }
+WRITE8_HANDLER( mario_sh_crab_w )       { p[1] = ACTIVEHIGH_PORT_BIT(p[1],0,data); }
+WRITE8_HANDLER( mario_sh_turtle_w )     { p[1] = ACTIVEHIGH_PORT_BIT(p[1],1,data); }
+WRITE8_HANDLER( mario_sh_fly_w )        { p[1] = ACTIVEHIGH_PORT_BIT(p[1],2,data); }
+static WRITE8_HANDLER( mario_sh_tuneselect_w ) { soundlatch_w(offset,data); }
 
-static READ_HANDLER( mario_sh_p1_r )   { return p[1]; }
-static READ_HANDLER( mario_sh_p2_r )   { return p[2]; }
-static READ_HANDLER( mario_sh_t0_r )   { return t[0]; }
-static READ_HANDLER( mario_sh_t1_r )   { return t[1]; }
-static READ_HANDLER( mario_sh_tune_r ) { return soundlatch_r(offset); }
+static READ8_HANDLER( mario_sh_p1_r )   { return p[1]; }
+static READ8_HANDLER( mario_sh_p2_r )   { return p[2]; }
+static READ8_HANDLER( mario_sh_t0_r )   { return t[0]; }
+static READ8_HANDLER( mario_sh_t1_r )   { return t[1]; }
+static READ8_HANDLER( mario_sh_tune_r ) { return soundlatch_r(offset); }
 
-static WRITE_HANDLER( mario_sh_sound_w )
+static WRITE8_HANDLER( mario_sh_sound_w )
 {
 	DAC_data_w(0,data);
 }
-static WRITE_HANDLER( mario_sh_p1_w )
+static WRITE8_HANDLER( mario_sh_p1_w )
 {
 	p[1] = data;
 }
-static WRITE_HANDLER( mario_sh_p2_w )
+static WRITE8_HANDLER( mario_sh_p2_w )
 {
 	p[2] = data;
 }
-WRITE_HANDLER( masao_sh_irqtrigger_w )
+WRITE8_HANDLER( masao_sh_irqtrigger_w )
 {
 	static int last;
 
@@ -129,7 +129,7 @@ WRITE_HANDLER( masao_sh_irqtrigger_w )
 	if (last == 1 && data == 0)
 	{
 		/* setting bit 0 high then low triggers IRQ on the sound CPU */
-		cpu_set_irq_line_and_vector(1,0,HOLD_LINE,0xff);
+		cpunum_set_input_line_and_vector(1,0,HOLD_LINE,0xff);
 	}
 
 	last = data;

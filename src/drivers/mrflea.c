@@ -53,9 +53,9 @@ static int mrflea_select1;
 static int mrflea_select2;
 static int mrflea_select3;
 
-extern WRITE_HANDLER( mrflea_gfx_bank_w );
-extern WRITE_HANDLER( mrflea_videoram_w );
-extern WRITE_HANDLER( mrflea_spriteram_w );
+extern WRITE8_HANDLER( mrflea_gfx_bank_w );
+extern WRITE8_HANDLER( mrflea_videoram_w );
+extern WRITE8_HANDLER( mrflea_spriteram_w );
 extern VIDEO_START( mrflea );
 extern VIDEO_UPDATE( mrflea );
 
@@ -129,36 +129,36 @@ ADDRESS_MAP_END
 
 /*******************************************************/
 
-static WRITE_HANDLER( mrflea_main_w ){
+static WRITE8_HANDLER( mrflea_main_w ){
 	mrflea_status |= 0x01; // pending command to main CPU
 	mrflea_main = data;
 }
 
-static WRITE_HANDLER( mrflea_io_w ){
+static WRITE8_HANDLER( mrflea_io_w ){
 	mrflea_status |= 0x08; // pending command to IO CPU
 	mrflea_io = data;
-	cpu_set_irq_line( 1, 0, HOLD_LINE );
+	cpunum_set_input_line( 1, 0, HOLD_LINE );
 }
 
-static READ_HANDLER( mrflea_main_r ){
+static READ8_HANDLER( mrflea_main_r ){
 	mrflea_status &= ~0x01; // main CPU command read
 	return mrflea_main;
 }
 
-static READ_HANDLER( mrflea_io_r ){
+static READ8_HANDLER( mrflea_io_r ){
 	mrflea_status &= ~0x08; // IO CPU command read
 	return mrflea_io;
 }
 
 /*******************************************************/
 
-static READ_HANDLER( mrflea_main_status_r ){
+static READ8_HANDLER( mrflea_main_status_r ){
 	/*	0x01: main CPU command pending
 		0x08: io cpu ready */
 	return mrflea_status^0x08;
 }
 
-static READ_HANDLER( mrflea_io_status_r ){
+static READ8_HANDLER( mrflea_io_status_r ){
 	/*	0x08: IO CPU command pending
 		0x01: main cpu ready */
 	return mrflea_status^0x01;
@@ -166,10 +166,10 @@ static READ_HANDLER( mrflea_io_status_r ){
 
 INTERRUPT_GEN( mrflea_io_interrupt ){
 	if( cpu_getiloops()==0 || (mrflea_status&0x08) ) 
-		cpu_set_irq_line(1, 0, HOLD_LINE);
+		cpunum_set_input_line(1, 0, HOLD_LINE);
 }
 
-static READ_HANDLER( mrflea_interrupt_type_r ){
+static READ8_HANDLER( mrflea_interrupt_type_r ){
 /* there are two interrupt types:
 	1. triggered (in response to sound command)
 	2. heartbeat (for music timing)
@@ -194,41 +194,41 @@ ADDRESS_MAP_END
 
 /*******************************************************/
 
-static WRITE_HANDLER( mrflea_select0_w ){
+static WRITE8_HANDLER( mrflea_select0_w ){
 	mrflea_select0 = data;
 }
 
-static WRITE_HANDLER( mrflea_select1_w ){
+static WRITE8_HANDLER( mrflea_select1_w ){
 	mrflea_select1 = data;
 }
 
-static WRITE_HANDLER( mrflea_select2_w ){
+static WRITE8_HANDLER( mrflea_select2_w ){
 	mrflea_select2 = data;
 }
 
-static WRITE_HANDLER( mrflea_select3_w ){
+static WRITE8_HANDLER( mrflea_select3_w ){
 	mrflea_select3 = data;
 }
 
 /*******************************************************/
 
-static READ_HANDLER( mrflea_input0_r ){
+static READ8_HANDLER( mrflea_input0_r ){
 	if( mrflea_select0 == 0x0f ) return readinputport(0);
 	if( mrflea_select0 == 0x0e ) return readinputport(1);
 	return 0x00;
 }
 
-static READ_HANDLER( mrflea_input1_r ){
+static READ8_HANDLER( mrflea_input1_r ){
 	return 0x00;
 }
 
-static READ_HANDLER( mrflea_input2_r ){
+static READ8_HANDLER( mrflea_input2_r ){
 	if( mrflea_select2 == 0x0f ) return readinputport(2);
 	if( mrflea_select2 == 0x0e ) return readinputport(3);
 	return 0x00;
 }
 
-static READ_HANDLER( mrflea_input3_r ){
+static READ8_HANDLER( mrflea_input3_r ){
 	return 0x00;
 }
 
@@ -244,20 +244,20 @@ static ADDRESS_MAP_START( readport_io, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x46, 0x46) AM_READ(mrflea_input3_r)
 ADDRESS_MAP_END
 
-static WRITE_HANDLER( mrflea_data0_w ){
+static WRITE8_HANDLER( mrflea_data0_w ){
 	AY8910_control_port_0_w( offset, mrflea_select0 );
 	AY8910_write_port_0_w( offset, data );
 }
 
-static WRITE_HANDLER( mrflea_data1_w ){
+static WRITE8_HANDLER( mrflea_data1_w ){
 }
 
-static WRITE_HANDLER( mrflea_data2_w ){
+static WRITE8_HANDLER( mrflea_data2_w ){
 	AY8910_control_port_1_w( offset, mrflea_select2 );
 	AY8910_write_port_1_w( offset, data );
 }
 
-static WRITE_HANDLER( mrflea_data3_w ){
+static WRITE8_HANDLER( mrflea_data3_w ){
 	AY8910_control_port_2_w( offset, mrflea_select3 );
 	AY8910_write_port_2_w( offset, data );
 }

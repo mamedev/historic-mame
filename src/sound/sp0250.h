@@ -9,6 +9,6 @@ struct sp0250_interface {
 int  sp0250_sh_start( const struct MachineSound *msound );
 void sp0250_sh_stop( void );
 
-WRITE_HANDLER( sp0250_w );
+WRITE8_HANDLER( sp0250_w );
 
 #endif

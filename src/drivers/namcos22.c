@@ -301,7 +301,7 @@ InitMasterDSP( void )
 	pMem[pc++] = 0x203f; //lac  $3f,0h
 	pMem[pc++] = 0xCE25; //bacc
 
-	cpunum_set_halt_line(1,ASSERT_LINE); /* master DSP */
+	cpunum_set_input_line(1, INPUT_LINE_HALT, ASSERT_LINE); /* master DSP */
 }
 
 static void
@@ -391,7 +391,7 @@ InitSlaveDSP( void )
 //	pMem[pc++] = pc-1; /* GCC doesn't like this */
 	pMem[pc]=pc; pc++;
 
-	cpunum_set_halt_line(2,ASSERT_LINE);
+	cpunum_set_input_line(2, INPUT_LINE_HALT, ASSERT_LINE);
 }
 
 static void
@@ -844,13 +844,13 @@ static INTERRUPT_GEN( dsp_serial_pulse1 )
 	if( cpu_getiloops()==0 )
 	{
 		//rnew = nthbyte(namcos22_system_controller,0x1c);
-		cpu_set_irq_line(1, TMS32025_INT0, HOLD_LINE);
+		cpunum_set_input_line(1, TMS32025_INT0, HOLD_LINE);
 	}
 
-	cpu_set_irq_line(1, TMS32025_RINT, HOLD_LINE);
-	cpu_set_irq_line(1, TMS32025_XINT, HOLD_LINE);
-	cpu_set_irq_line(2, TMS32025_RINT, HOLD_LINE);
-	cpu_set_irq_line(2, TMS32025_XINT, HOLD_LINE);
+	cpunum_set_input_line(1, TMS32025_RINT, HOLD_LINE);
+	cpunum_set_input_line(1, TMS32025_XINT, HOLD_LINE);
+	cpunum_set_input_line(2, TMS32025_RINT, HOLD_LINE);
+	cpunum_set_input_line(2, TMS32025_XINT, HOLD_LINE);
 }
 
 /***************************************************************/
@@ -1574,7 +1574,7 @@ SimulateCyberCyclesMCU( void )
 {
 	data32_t data = 0;
 return;
-	if( keyboard_pressed(KEYCODE_SPACE) ) data |= 0x01000; // "view switch"
+	if( code_pressed(KEYCODE_SPACE) ) data |= 0x01000; // "view switch"
 	namcos22_shareram[0xbd00/4] = data;
 
 	data = 0; /* ? */
@@ -1608,16 +1608,16 @@ static INTERRUPT_GEN( namcos22s_interrupt )
 	switch( cpu_getiloops() )
 	{
 	case 0:
-		cpu_set_irq_line(0, 4, HOLD_LINE); /* vblank */
+		cpunum_set_input_line(0, 4, HOLD_LINE); /* vblank */
 		break;
 	case 1:
 		if( namcos22_gametype == NAMCOS22_CYBER_CYCLES )
 		{
-			cpu_set_irq_line(0, 2, HOLD_LINE); /* vblank */
+			cpunum_set_input_line(0, 2, HOLD_LINE); /* vblank */
 		}
 		else if( namcos22_gametype == NAMCOS22_AIR_COMBAT22 )
 		{
-			cpu_set_irq_line(0, 6, HOLD_LINE);
+			cpunum_set_input_line(0, 6, HOLD_LINE);
 		}
 		break;
 	}
@@ -1923,9 +1923,9 @@ static INTERRUPT_GEN( namcos22_interrupt )
 		int irqlevel = nthbyte(namcos22_system_controller,i);
 		if( (irqlevel&0xf8)==0x30 )
 		{
-			if( i==4 || keyboard_pressed(KEYCODE_I) )
+			if( i==4 || code_pressed(KEYCODE_I) )
 			{
-				cpu_set_irq_line(0,irqlevel&7,/*ASSERT_LINE*/HOLD_LINE);
+				cpunum_set_input_line(0,irqlevel&7,/*ASSERT_LINE*/HOLD_LINE);
 			}
 		}
 	}
@@ -1941,25 +1941,25 @@ static INTERRUPT_GEN( namcos22_interrupt )
 			data16_t flags = 0xffff;
 //			static int dir; /* unused */
 
-			if( keyboard_pressed(KEYCODE_5) ) flags ^= 0x1000; /* COIN1 */
-			if( keyboard_pressed(KEYCODE_6) ) flags ^= 0x0200; /* COIN2 */
-			if( keyboard_pressed(KEYCODE_9) ) flags ^= 0x0800; /* SERVICE */
+			if( code_pressed(KEYCODE_5) ) flags ^= 0x1000; /* COIN1 */
+			if( code_pressed(KEYCODE_6) ) flags ^= 0x0200; /* COIN2 */
+			if( code_pressed(KEYCODE_9) ) flags ^= 0x0800; /* SERVICE */
 
-			if( keyboard_pressed(KEYCODE_Q) ) flags ^= 0x0100; // CLUTCH
-			if( keyboard_pressed(KEYCODE_W) ) flags ^= 0x0080;
-			if( keyboard_pressed(KEYCODE_R) ) flags ^= 0x0040;
-			if( keyboard_pressed(KEYCODE_T) ) flags ^= 0x0020;
-			if( keyboard_pressed(KEYCODE_Y) ) flags ^= 0x0010;
+			if( code_pressed(KEYCODE_Q) ) flags ^= 0x0100; // CLUTCH
+			if( code_pressed(KEYCODE_W) ) flags ^= 0x0080;
+			if( code_pressed(KEYCODE_R) ) flags ^= 0x0040;
+			if( code_pressed(KEYCODE_T) ) flags ^= 0x0020;
+			if( code_pressed(KEYCODE_Y) ) flags ^= 0x0010;
 
-			if( keyboard_pressed(KEYCODE_A) ) flags ^= 0x0001; /* SWITCH1 */
-			if( keyboard_pressed(KEYCODE_S) ) flags ^= 0x0002; /* SWITCH2 */
-			if( keyboard_pressed(KEYCODE_D) ) flags ^= 0x0004; /* SWITCH3 */
-			if( keyboard_pressed(KEYCODE_F) ) flags ^= 0x0008; /* SWITCH4 */
+			if( code_pressed(KEYCODE_A) ) flags ^= 0x0001; /* SWITCH1 */
+			if( code_pressed(KEYCODE_S) ) flags ^= 0x0002; /* SWITCH2 */
+			if( code_pressed(KEYCODE_D) ) flags ^= 0x0004; /* SWITCH3 */
+			if( code_pressed(KEYCODE_F) ) flags ^= 0x0008; /* SWITCH4 */
 
-			if( keyboard_pressed(KEYCODE_LEFT) )  steer -= 0xf00;
-			if( keyboard_pressed(KEYCODE_RIGHT) ) steer += 0xf00;
-			if( keyboard_pressed(KEYCODE_SPACE) ) gas += 0xf00;
-			if( keyboard_pressed(KEYCODE_Z) )     brake += 0xf00;
+			if( code_pressed(KEYCODE_LEFT) )  steer -= 0xf00;
+			if( code_pressed(KEYCODE_RIGHT) ) steer += 0xf00;
+			if( code_pressed(KEYCODE_SPACE) ) gas += 0xf00;
+			if( code_pressed(KEYCODE_Z) )     brake += 0xf00;
 
 			namcos22_shareram[0x4030/4] = (flags<<16)|steer;
 			namcos22_shareram[0x4034/4] = (gas<<16)|brake;
@@ -2673,14 +2673,14 @@ ROM_START( ridgeraj )
 
 	ROM_REGION( 0x400, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_REGION( 0x200000*8, REGION_GFX2, 0 ) /* 16x16x8bpp texture tiles */
-	ROM_LOAD( "rr1cg0.bin", 0x200000*0x4, 0x200000, CRC(b557a795) )//,CRC(d1b0eec6) SHA1(f66922c324dfc3ff408db7556c587ef90ca64c3b) )
-	ROM_LOAD( "rr1cg1.bin", 0x200000*0x5, 0x200000, CRC(0fa212d9) )//,CRC(bb695d89) SHA1(557bac9d2718519c1f69e374d0ef9a86a43fe86c) )
-	ROM_LOAD( "rr1cg2.bin", 0x200000*0x6, 0x200000, CRC(18e2d2bd) )//,CRC(8f374c0a) SHA1(94ff8581de11a03ef86525155f8433bf5858b980) )
-	ROM_LOAD( "rr1cg3.bin", 0x200000*0x7, 0x200000, CRC(9564488b) )//,CRC(072a5c47) SHA1(86b8e973ae6b78197d685fe6d14722d8e2d0dfec) )
+	ROM_LOAD( "rr1cg0.bin", 0x200000*0x4, 0x200000, CRC(b557a795) SHA1(f345486ffbe797246ad80a55d3c4a332ed6e2888) )//,CRC(d1b0eec6) SHA1(f66922c324dfc3ff408db7556c587ef90ca64c3b) )
+	ROM_LOAD( "rr1cg1.bin", 0x200000*0x5, 0x200000, CRC(0fa212d9) SHA1(a1311de0a504e2d399044fa8ac32ec6c56ec965f) )//,CRC(bb695d89) SHA1(557bac9d2718519c1f69e374d0ef9a86a43fe86c) )
+	ROM_LOAD( "rr1cg2.bin", 0x200000*0x6, 0x200000, CRC(18e2d2bd) SHA1(69c2ea62eeb255f27d3c69373f6716b0a34683cc) )//,CRC(8f374c0a) SHA1(94ff8581de11a03ef86525155f8433bf5858b980) )
+	ROM_LOAD( "rr1cg3.bin", 0x200000*0x7, 0x200000, CRC(9564488b) SHA1(6b27d1aea75d6be747c62e165cfa49ecc5d9e767) )//,CRC(072a5c47) SHA1(86b8e973ae6b78197d685fe6d14722d8e2d0dfec) )
 
 	ROM_REGION( 0x280000, REGION_GFX3, 0 ) /* texture tilemap */
-	ROM_LOAD( "rr1ccrl.bin",0x000000, 0x200000, CRC(6092d181) )//,CRC(c15cb257) SHA1(0cb8f231c62ea37955be5d452a436a6e815af8e8) )
-	ROM_LOAD( "rr1ccrh.bin",0x200000, 0x080000, CRC(dd332fd5) )//,CRC(dd332fd5) SHA1(a7d9c1d6b5a8e3a937b525c1363880e404dcd147) )
+	ROM_LOAD( "rr1ccrl.bin",0x000000, 0x200000, CRC(6092d181) SHA1(52c0e3ac20aa23059a87d1a985d24ae641577310) )//,CRC(c15cb257) SHA1(0cb8f231c62ea37955be5d452a436a6e815af8e8) )
+	ROM_LOAD( "rr1ccrh.bin",0x200000, 0x080000, CRC(dd332fd5) SHA1(a7d9c1d6b5a8e3a937b525c1363880e404dcd147) )//,CRC(dd332fd5) SHA1(a7d9c1d6b5a8e3a937b525c1363880e404dcd147) )
 
 	ROM_REGION( 0x80000*6, REGION_GFX4, 0 ) /* 3d model data */
 	ROM_LOAD( "rr1potl0.5b", 0x80000*0, 0x80000,CRC(3ac193e3) SHA1(ff213766f15e34dc1b25187b57d94e17930090a3) )

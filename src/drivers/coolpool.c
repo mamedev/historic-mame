@@ -158,8 +158,8 @@ VIDEO_UPDATE( coolpool )
 /*
 {
 	static int temp;
-	if (keyboard_pressed(KEYCODE_J) && temp > 0) temp -= 2;
-	else if (keyboard_pressed(KEYCODE_K)) temp += 2;
+	if (code_pressed(KEYCODE_J) && temp > 0) temp -= 2;
+	else if (code_pressed(KEYCODE_K)) temp += 2;
 	offset = temp;
 }*/
 
@@ -198,13 +198,13 @@ WRITE16_HANDLER( amerdart_input_w )
 {
 	logerror("%08X:IOP write = %04X\n", activecpu_get_pc(), data);
 	COMBINE_DATA(&input_data);
-	cpu_set_irq_line(0, 1, ASSERT_LINE);
+	cpunum_set_input_line(0, 1, ASSERT_LINE);
 }
 
 READ16_HANDLER( amerdart_input_r )
 {
 	logerror("%08X:IOP read\n", activecpu_get_pc());
-	cpu_set_irq_line(0, 1, CLEAR_LINE);
+	cpunum_set_input_line(0, 1, CLEAR_LINE);
 
 	switch (input_data)
 	{
@@ -228,7 +228,7 @@ static WRITE16_HANDLER( coolpool_misc_w )
 	coin_counter_w(0,~data & 0x0001);
 	coin_counter_w(1,~data & 0x0002);
 
-	cpu_set_reset_line(1,(data & 0x0400) ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_RESET, (data & 0x0400) ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static int cmd_pending,iop_cmd,iop_answer;
@@ -238,7 +238,7 @@ static WRITE16_HANDLER( coolpool_iop_w )
 	logerror("%08x:IOP write %04x\n",activecpu_get_pc(),data);
 	iop_cmd = data;
 	cmd_pending = 1;
-	cpu_set_irq_line(1, 0, HOLD_LINE);	/* ???  I have no idea who should generate this! */
+	cpunum_set_input_line(1, 0, HOLD_LINE);	/* ???  I have no idea who should generate this! */
 										/* the DSP polls the status bit so it isn't strictly */
 										/* necessary to also have an IRQ */
 }
@@ -246,7 +246,7 @@ static WRITE16_HANDLER( coolpool_iop_w )
 static READ16_HANDLER( coolpool_iop_r )
 {
 //	logerror("%08x:IOP read %04x\n",activecpu_get_pc(),iop_answer);
-	cpu_set_irq_line(0, 1, CLEAR_LINE);
+	cpunum_set_input_line(0, 1, CLEAR_LINE);
 
 	return iop_answer;
 }
@@ -263,7 +263,7 @@ static WRITE16_HANDLER( dsp_answer_w )
 	logerror("%08x:IOP answer %04x\n",activecpu_get_pc(),data);
 //usrintf_showmessage("IOP answer %04x",data);
 	iop_answer = data;
-	cpu_set_irq_line(0, 1, ASSERT_LINE);
+	cpunum_set_input_line(0, 1, ASSERT_LINE);
 }
 
 static READ16_HANDLER( dsp_bio_line_r )

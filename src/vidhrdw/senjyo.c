@@ -164,7 +164,7 @@ VIDEO_START( senjyo )
 
 ***************************************************************************/
 
-WRITE_HANDLER( senjyo_fgvideoram_w )
+WRITE8_HANDLER( senjyo_fgvideoram_w )
 {
 	if (senjyo_fgvideoram[offset] != data)
 	{
@@ -172,7 +172,7 @@ WRITE_HANDLER( senjyo_fgvideoram_w )
 		tilemap_mark_tile_dirty(fg_tilemap,offset);
 	}
 }
-WRITE_HANDLER( senjyo_fgcolorram_w )
+WRITE8_HANDLER( senjyo_fgcolorram_w )
 {
 	if (senjyo_fgcolorram[offset] != data)
 	{
@@ -180,7 +180,7 @@ WRITE_HANDLER( senjyo_fgcolorram_w )
 		tilemap_mark_tile_dirty(fg_tilemap,offset);
 	}
 }
-WRITE_HANDLER( senjyo_bg1videoram_w )
+WRITE8_HANDLER( senjyo_bg1videoram_w )
 {
 	if (senjyo_bg1videoram[offset] != data)
 	{
@@ -188,7 +188,7 @@ WRITE_HANDLER( senjyo_bg1videoram_w )
 		tilemap_mark_tile_dirty(bg1_tilemap,offset);
 	}
 }
-WRITE_HANDLER( senjyo_bg2videoram_w )
+WRITE8_HANDLER( senjyo_bg2videoram_w )
 {
 	if (senjyo_bg2videoram[offset] != data)
 	{
@@ -196,7 +196,7 @@ WRITE_HANDLER( senjyo_bg2videoram_w )
 		tilemap_mark_tile_dirty(bg2_tilemap,offset);
 	}
 }
-WRITE_HANDLER( senjyo_bg3videoram_w )
+WRITE8_HANDLER( senjyo_bg3videoram_w )
 {
 	if (senjyo_bg3videoram[offset] != data)
 	{
@@ -205,7 +205,7 @@ WRITE_HANDLER( senjyo_bg3videoram_w )
 	}
 }
 
-WRITE_HANDLER( senjyo_bgstripes_w )
+WRITE8_HANDLER( senjyo_bgstripes_w )
 {
 	*senjyo_bgstripesram = data;
 	set_vh_global_attribute(&senjyo_bgstripes, data);

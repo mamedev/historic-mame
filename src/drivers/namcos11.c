@@ -145,6 +145,7 @@ GP-13  COH-110  S-XMB 1-660-276-11
 #include "state.h"
 #include "cpu/mips/psx.h"
 #include "includes/psx.h"
+#include "machine/at28c16.h"
 
 #define VERBOSE_LEVEL ( 0 )
 
@@ -546,7 +547,7 @@ static ADDRESS_MAP_START( namcos11_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x1f802040, 0x1f802043) AM_WRITENOP
 	AM_RANGE(0x1fa04000, 0x1fa0ffff) AM_READWRITE(sharedram_r, sharedram_w) AM_BASE(&namcos11_sharedram) /* shared ram */
 	AM_RANGE(0x1fa20000, 0x1fa2ffff) AM_WRITE(keycus_w) AM_BASE(&namcos11_keycus) AM_SIZE(&namcos11_keycus_size) /* keycus */
-	AM_RANGE(0x1fa30000, 0x1fa30fff) AM_RAM AM_BASE((data32_t **)&generic_nvram) AM_SIZE(&generic_nvram_size) /* flash */
+	AM_RANGE(0x1fa30000, 0x1fa30fff) AM_READWRITE( at28c16_0_32_lsb_r, at28c16_0_32_lsb_w ) /* eeprom */
 	AM_RANGE(0x1fb00000, 0x1fb00003) AM_WRITENOP /* ?? */
 	AM_RANGE(0x1fbf6000, 0x1fbf6003) AM_WRITENOP /* ?? */
 	AM_RANGE(0x1fc00000, 0x1fffffff) AM_ROM AM_SHARE(2) AM_REGION(REGION_USER1, 0) /* bios */
@@ -586,6 +587,9 @@ static DRIVER_INIT( namcos11 )
 {
 	int n_game;
 
+	psx_driver_init();
+	at28c16_init();
+
 	n_game = 0;
 	while( namcos11_config_table[ n_game ].s_name != NULL )
 	{
@@ -593,7 +597,7 @@ static DRIVER_INIT( namcos11 )
 		{
 			if( namcos11_config_table[ n_game ].keycus_r != NULL )
 			{
-				install_mem_read32_handler( 0, 0x1fa20000, 0x1fa2ffff, namcos11_config_table[ n_game ].keycus_r );
+				memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1fa20000, 0x1fa2ffff, 0, 0, namcos11_config_table[ n_game ].keycus_r );
 			}
 			if( namcos11_config_table[ n_game ].n_daughterboard != 0 )
 			{
@@ -608,13 +612,13 @@ static DRIVER_INIT( namcos11 )
 
 				if( namcos11_config_table[ n_game ].n_daughterboard == 32 )
 				{
-					install_mem_write32_handler( 0, 0x1fa10020, 0x1fa1002f, bankswitch_rom32_w );
+					memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1fa10020, 0x1fa1002f, 0, 0, bankswitch_rom32_w );
 				}
 				if( namcos11_config_table[ n_game ].n_daughterboard == 64 )
 				{
-					install_mem_write32_handler( 0, 0x1f080000, 0x1f080003, bankswitch_rom64_upper_w );
-					install_mem_write32_handler( 0, 0x1fa10020, 0x1fa1002f, bankswitch_rom64_w );
-					install_mem_read32_handler( 0, 0x1fa10020, 0x1fa1002f, MRA32_NOP );
+					memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1f080000, 0x1f080003, 0, 0, bankswitch_rom64_upper_w );
+					memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1fa10020, 0x1fa1002f, 0, 0, bankswitch_rom64_w );
+					memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1fa10020, 0x1fa1002f, 0, 0, MRA32_NOP );
 				}
 				state_save_register_UINT32( "namcos11", 0, "m_n_bankoffset", &m_n_bankoffset, 1 );
 				state_save_register_UINT32( "namcos11", 0, "m_p_n_bankoffset", &m_p_n_bankoffset[ 0 ], 8 );
@@ -622,14 +626,12 @@ static DRIVER_INIT( namcos11 )
 			}
 			else
 			{
-				install_mem_write32_handler( 0, 0x1fa10020, 0x1fa1002f, MWA32_NOP );
+				memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x1fa10020, 0x1fa1002f, 0, 0, MWA32_NOP );
 			}
 			break;
 		}
 		n_game++;
 	}
-
-	psx_driver_init();
 }
 
 MACHINE_INIT( namcos11 )
@@ -649,7 +651,7 @@ static MACHINE_DRIVER_START( coh100 )
 	MDRV_VBLANK_DURATION( 0 )
 
 	MDRV_MACHINE_INIT( namcos11 )
-	MDRV_NVRAM_HANDLER( generic_0fill )
+	MDRV_NVRAM_HANDLER( at28c16_0 )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )

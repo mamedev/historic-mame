@@ -67,13 +67,13 @@ static READ16_HANDLER( trackball_r )
 }
 
 
-static READ_HANDLER( input_1_r )
+static READ8_HANDLER( input_1_r )
 {
 	return (readinputport(1) << (7 - (offset - POT0_C))) & 0x80;
 }
 
 
-static READ_HANDLER( input_2_r )
+static READ8_HANDLER( input_2_r )
 {
 	return (readinputport(2) << (7 - (offset - POT0_C))) & 0x80;
 }

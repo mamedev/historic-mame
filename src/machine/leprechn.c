@@ -6,12 +6,12 @@
 
 static data8_t input_port_select;
 
-static WRITE_HANDLER( leprechn_input_port_select_w )
+static WRITE8_HANDLER( leprechn_input_port_select_w )
 {
     input_port_select = data;
 }
 
-static READ_HANDLER( leprechn_input_port_r )
+static READ8_HANDLER( leprechn_input_port_r )
 {
     switch (input_port_select)
     {
@@ -33,16 +33,16 @@ static READ_HANDLER( leprechn_input_port_r )
 }
 
 
-static WRITE_HANDLER( leprechn_coin_counter_w )
+static WRITE8_HANDLER( leprechn_coin_counter_w )
 {
 	coin_counter_w(offset, !data);
 }
 
 
-static WRITE_HANDLER( leprechn_sh_w )
+static WRITE8_HANDLER( leprechn_sh_w )
 {
     soundlatch_w(offset,data);
-    cpu_set_irq_line(1,M6502_IRQ_LINE,HOLD_LINE);
+    cpunum_set_input_line(1,M6502_IRQ_LINE,HOLD_LINE);
 }
 
 
@@ -82,7 +82,7 @@ DRIVER_INIT( leprechn )
 }
 
 
-READ_HANDLER( leprechn_sh_0805_r )
+READ8_HANDLER( leprechn_sh_0805_r )
 {
     return 0xc0;
 }

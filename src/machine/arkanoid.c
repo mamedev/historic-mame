@@ -25,7 +25,7 @@ MACHINE_INIT( arkanoid )
 	portA_in = portA_out = z80write = m68705write = 0;
 }
 
-READ_HANDLER( arkanoid_Z80_mcu_r )
+READ8_HANDLER( arkanoid_Z80_mcu_r )
 {
 	/* return the last value the 68705 wrote, and mark that we've read it */
 	m68705write = 0;
@@ -38,30 +38,30 @@ static void test(int param)
 	fromz80 = param;
 }
 
-WRITE_HANDLER( arkanoid_Z80_mcu_w )
+WRITE8_HANDLER( arkanoid_Z80_mcu_w )
 {
 	timer_set(TIME_NOW, data, test);
 	/* boost the interleave for a few usecs to make sure it is read successfully */
 	cpu_boost_interleave(0, TIME_IN_USEC(10));
 }
 
-READ_HANDLER( arkanoid_68705_portA_r )
+READ8_HANDLER( arkanoid_68705_portA_r )
 {
 	return (portA_out & ddrA) | (portA_in & ~ddrA);
 }
 
-WRITE_HANDLER( arkanoid_68705_portA_w )
+WRITE8_HANDLER( arkanoid_68705_portA_w )
 {
 	portA_out = data;
 }
 
-WRITE_HANDLER( arkanoid_68705_ddrA_w )
+WRITE8_HANDLER( arkanoid_68705_ddrA_w )
 {
 	ddrA = data;
 }
 
 
-READ_HANDLER( arkanoid_68705_portC_r )
+READ8_HANDLER( arkanoid_68705_portC_r )
 {
 	int res=0;
 
@@ -74,7 +74,7 @@ READ_HANDLER( arkanoid_68705_portC_r )
 	return (portC_out & ddrC) | (res & ~ddrC);
 }
 
-WRITE_HANDLER( arkanoid_68705_portC_w )
+WRITE8_HANDLER( arkanoid_68705_portC_w )
 {
 	if ((ddrC & 0x04) && (~data & 0x04) && (portC_out & 0x04))
 	{
@@ -92,14 +92,14 @@ WRITE_HANDLER( arkanoid_68705_portC_w )
 	portC_out = data;
 }
 
-WRITE_HANDLER( arkanoid_68705_ddrC_w )
+WRITE8_HANDLER( arkanoid_68705_ddrC_w )
 {
 	ddrC = data;
 }
 
 
 
-READ_HANDLER( arkanoid_68705_input_0_r )
+READ8_HANDLER( arkanoid_68705_input_0_r )
 {
 	int res = input_port_0_r(offset) & 0x3f;
 
@@ -112,7 +112,7 @@ READ_HANDLER( arkanoid_68705_input_0_r )
 	return res;
 }
 
-READ_HANDLER( arkanoid_input_2_r )
+READ8_HANDLER( arkanoid_input_2_r )
 {
 	if (arkanoid_paddle_select)
 	{
@@ -144,7 +144,7 @@ READ_HANDLER( arkanoid_input_2_r )
 
 static int paddle2_prot;
 
-READ_HANDLER( paddle2_prot_r )
+READ8_HANDLER( paddle2_prot_r )
 {
 	static UINT8 level_table_a[] =
 	{
@@ -188,13 +188,13 @@ READ_HANDLER( paddle2_prot_r )
 	}
 }
 
-WRITE_HANDLER( paddle2_prot_w )
+WRITE8_HANDLER( paddle2_prot_w )
 {
 	logerror("%04x: prot_w %02x\n",activecpu_get_pc(),data);
 	paddle2_prot = data;
 }
 
-READ_HANDLER( paddle2_track_kludge_r )
+READ8_HANDLER( paddle2_track_kludge_r )
 {
 	int track = readinputport(2);
 

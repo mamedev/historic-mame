@@ -13,7 +13,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-extern WRITE_HANDLER( n8080_video_control_w );
+extern WRITE8_HANDLER( n8080_video_control_w );
 
 extern PALETTE_INIT( n8080 );
 extern PALETTE_INIT( helifire );
@@ -30,24 +30,24 @@ extern MACHINE_DRIVER_EXTERN( spacefev_sound );
 extern MACHINE_DRIVER_EXTERN( sheriff_sound );
 extern MACHINE_DRIVER_EXTERN( helifire_sound );
 
-extern WRITE_HANDLER( n8080_sound_1_w );
-extern WRITE_HANDLER( n8080_sound_2_w );
+extern WRITE8_HANDLER( n8080_sound_1_w );
+extern WRITE8_HANDLER( n8080_sound_2_w );
 
 static unsigned shift_data;
 static unsigned shift_bits;
 
 
-static WRITE_HANDLER( n8080_shift_bits_w )
+static WRITE8_HANDLER( n8080_shift_bits_w )
 {
 	shift_bits = data & 7;
 }
-static WRITE_HANDLER( n8080_shift_data_w )
+static WRITE8_HANDLER( n8080_shift_data_w )
 {
 	shift_data = (shift_data >> 8) | (data << 8);
 }
 
 
-static READ_HANDLER( n8080_shift_r )
+static READ8_HANDLER( n8080_shift_r )
 {
 	return shift_data >> (8 - shift_bits);
 }
@@ -57,11 +57,11 @@ static INTERRUPT_GEN( interrupt )
 {
 	if (cpu_getvblank())
 	{
-		cpu_set_irq_line_and_vector(0, 0, PULSE_LINE, 0xcf);  /* RST $08 */
+		cpunum_set_input_line_and_vector(0, 0, PULSE_LINE, 0xcf);  /* RST $08 */
 	}
 	else
 	{
-		cpu_set_irq_line_and_vector(0, 0, PULSE_LINE, 0xd7);  /* RST $10 */
+		cpunum_set_input_line_and_vector(0, 0, PULSE_LINE, 0xd7);  /* RST $10 */
 	}
 }
 

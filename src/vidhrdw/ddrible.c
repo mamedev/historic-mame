@@ -35,7 +35,7 @@ PALETTE_INIT( ddrible )
 		COLOR(3,i) = (*(color_prom++) & 0x0f);
 }
 
-WRITE_HANDLER( K005885_0_w )
+WRITE8_HANDLER( K005885_0_w )
 {
 	switch (offset){
 		case 0x03:	/* char bank selection for set 1 */
@@ -52,7 +52,7 @@ WRITE_HANDLER( K005885_0_w )
 	ddribble_vregs[0][offset] = data;
 }
 
-WRITE_HANDLER( K005885_1_w )
+WRITE8_HANDLER( K005885_1_w )
 {
 	switch (offset){
 		case 0x03:	/* char bank selection for set 2 */
@@ -130,7 +130,7 @@ VIDEO_START( ddrible )
 
 ***************************************************************************/
 
-WRITE_HANDLER( ddrible_fg_videoram_w )
+WRITE8_HANDLER( ddrible_fg_videoram_w )
 {
 	if (ddrible_fg_videoram[offset] != data)
 	{
@@ -139,7 +139,7 @@ WRITE_HANDLER( ddrible_fg_videoram_w )
 	}
 }
 
-WRITE_HANDLER( ddrible_bg_videoram_w )
+WRITE8_HANDLER( ddrible_bg_videoram_w )
 {
 	if (ddrible_bg_videoram[offset] != data)
 	{

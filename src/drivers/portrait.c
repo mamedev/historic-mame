@@ -27,8 +27,8 @@ int portrait_scrollx_hi, portrait_scrollx_lo;
 PALETTE_INIT( portrait );
 VIDEO_START( portrait );
 VIDEO_UPDATE( portrait );
-WRITE_HANDLER( portrait_bgvideo_write );
-WRITE_HANDLER( portrait_fgvideo_write );
+WRITE8_HANDLER( portrait_bgvideo_write );
+WRITE8_HANDLER( portrait_fgvideo_write );
 
 static struct GfxLayout tile_layout =
 {
@@ -57,7 +57,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static READ_HANDLER(a000_r)
+static READ8_HANDLER(a000_r)
 {
 	switch( offset )
 	{
@@ -106,7 +106,7 @@ static READ_HANDLER(a000_r)
 	}
 }
 
-static WRITE_HANDLER(a000_w)
+static WRITE8_HANDLER(a000_w)
 {
 	switch( offset )
 	{

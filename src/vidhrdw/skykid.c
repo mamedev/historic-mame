@@ -152,12 +152,12 @@ VIDEO_START( skykid )
 
 ***************************************************************************/
 
-READ_HANDLER( skykid_videoram_r )
+READ8_HANDLER( skykid_videoram_r )
 {
 	return skykid_videoram[offset];
 }
 
-WRITE_HANDLER( skykid_videoram_w )
+WRITE8_HANDLER( skykid_videoram_w )
 {
 	if (skykid_videoram[offset] != data)
 	{
@@ -166,12 +166,12 @@ WRITE_HANDLER( skykid_videoram_w )
 	}
 }
 
-READ_HANDLER( skykid_textram_r )
+READ8_HANDLER( skykid_textram_r )
 {
 	return skykid_textram[offset];
 }
 
-WRITE_HANDLER( skykid_textram_w )
+WRITE8_HANDLER( skykid_textram_w )
 {
 	if (skykid_textram[offset] != data)
 	{
@@ -180,17 +180,17 @@ WRITE_HANDLER( skykid_textram_w )
 	}
 }
 
-WRITE_HANDLER( skykid_scroll_x_w )
+WRITE8_HANDLER( skykid_scroll_x_w )
 {
 	scroll_x = offset;
 }
 
-WRITE_HANDLER( skykid_scroll_y_w )
+WRITE8_HANDLER( skykid_scroll_y_w )
 {
 	scroll_y = offset;
 }
 
-WRITE_HANDLER( skykid_flipscreen_priority_w )
+WRITE8_HANDLER( skykid_flipscreen_priority_w )
 {
 	priority = data;
 	flip_screen_set(offset & 1);

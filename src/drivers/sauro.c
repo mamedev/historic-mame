@@ -82,14 +82,14 @@ extern UINT8 *tecfri_colorram;
 extern UINT8 *tecfri_videoram2;
 extern UINT8 *tecfri_colorram2;
 
-extern WRITE_HANDLER( tecfri_videoram_w );
-extern WRITE_HANDLER( tecfri_colorram_w );
-extern WRITE_HANDLER( tecfri_videoram2_w );
-extern WRITE_HANDLER( tecfri_colorram2_w );
-extern WRITE_HANDLER( tecfri_scroll_bg_w );
-extern WRITE_HANDLER( flip_screen_w );
-extern WRITE_HANDLER( sauro_scroll_fg_w );
-extern WRITE_HANDLER( trckydoc_spriteram_mirror_w );
+extern WRITE8_HANDLER( tecfri_videoram_w );
+extern WRITE8_HANDLER( tecfri_colorram_w );
+extern WRITE8_HANDLER( tecfri_videoram2_w );
+extern WRITE8_HANDLER( tecfri_colorram2_w );
+extern WRITE8_HANDLER( tecfri_scroll_bg_w );
+extern WRITE8_HANDLER( flip_screen_w );
+extern WRITE8_HANDLER( sauro_scroll_fg_w );
+extern WRITE8_HANDLER( trckydoc_spriteram_mirror_w );
 
 extern VIDEO_START( sauro );
 extern VIDEO_START( trckydoc );
@@ -98,26 +98,26 @@ extern VIDEO_UPDATE( sauro );
 extern VIDEO_UPDATE( trckydoc );
 
 
-static WRITE_HANDLER( sauro_sound_command_w )
+static WRITE8_HANDLER( sauro_sound_command_w )
 {
 	data |= 0x80;
 	soundlatch_w(offset, data);
 }
 
-static READ_HANDLER( sauro_sound_command_r )
+static READ8_HANDLER( sauro_sound_command_r )
 {
 	int ret	= soundlatch_r(offset);
 	soundlatch_clear_w(offset, 0);
 	return ret;
 }
 
-static WRITE_HANDLER( sauro_coin1_w )
+static WRITE8_HANDLER( sauro_coin1_w )
 {
 	coin_counter_w(0, data);
 	coin_counter_w(0, 0); // to get the coin counter working in sauro, as it doesn't write 0
 }
 
-static WRITE_HANDLER( sauro_coin2_w )
+static WRITE8_HANDLER( sauro_coin2_w )
 {
 	coin_counter_w(1, data);
 	coin_counter_w(1, 0); // to get the coin counter working in sauro, as it doesn't write 0
@@ -327,8 +327,8 @@ static struct GfxDecodeInfo trckydoc_gfxdecodeinfo[] =
 
 static INTERRUPT_GEN( sauro_interrupt )
 {
-	cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);
-	cpu_set_irq_line(1, 0, HOLD_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
+	cpunum_set_input_line(1, 0, HOLD_LINE);
 }
 
 static struct YM3526interface ym3812_interface =

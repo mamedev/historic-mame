@@ -50,7 +50,7 @@ static UINT8 *safarir_ram;
 static struct tilemap *bg_tilemap, *fg_tilemap;
 
 
-WRITE_HANDLER( safarir_ram_w )
+WRITE8_HANDLER( safarir_ram_w )
 {
 	if (safarir_ram[offset] != data)
 	{
@@ -67,17 +67,17 @@ WRITE_HANDLER( safarir_ram_w )
 	}
 }
 
-READ_HANDLER( safarir_ram_r )
+READ8_HANDLER( safarir_ram_r )
 {
 	return safarir_ram[offset];
 }
 
-WRITE_HANDLER( safarir_scroll_w )
+WRITE8_HANDLER( safarir_scroll_w )
 {
 	tilemap_set_scrollx(bg_tilemap, 0, data);
 }
 
-WRITE_HANDLER( safarir_ram_bank_w )
+WRITE8_HANDLER( safarir_ram_bank_w )
 {
 	safarir_ram = data ? safarir_ram1 : safarir_ram2;
 	tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);

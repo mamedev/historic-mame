@@ -72,7 +72,7 @@ VIDEO_UPDATE(hanaroku)
 	hanaroku_draw_sprites(bitmap, cliprect);
 }
 
-static WRITE_HANDLER( hanaroku_out_0_w )
+static WRITE8_HANDLER( hanaroku_out_0_w )
 {
 	/*
 		bit		description
@@ -94,7 +94,7 @@ static WRITE_HANDLER( hanaroku_out_0_w )
 	coin_counter_w(4, data & 0x80);
 }
 
-static WRITE_HANDLER( hanaroku_out_1_w )
+static WRITE8_HANDLER( hanaroku_out_1_w )
 {
 	/*
 		bit		description
@@ -110,7 +110,7 @@ static WRITE_HANDLER( hanaroku_out_1_w )
 	*/
 }
 
-static WRITE_HANDLER( hanaroku_out_2_w )
+static WRITE8_HANDLER( hanaroku_out_2_w )
 {
 	// unused
 }

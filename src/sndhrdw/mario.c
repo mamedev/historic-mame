@@ -3,17 +3,17 @@
 
 
 
-WRITE_HANDLER( mario_sh_w )
+WRITE8_HANDLER( mario_sh_w )
 {
 	if (data)
-		cpu_set_irq_line(1,0,ASSERT_LINE);
+		cpunum_set_input_line(1,0,ASSERT_LINE);
 	else
-		cpu_set_irq_line(1,0,CLEAR_LINE);
+		cpunum_set_input_line(1,0,CLEAR_LINE);
 }
 
 
 /* Mario running sample */
-WRITE_HANDLER( mario_sh1_w )
+WRITE8_HANDLER( mario_sh1_w )
 {
 	static int last;
 
@@ -25,7 +25,7 @@ WRITE_HANDLER( mario_sh1_w )
 }
 
 /* Luigi running sample */
-WRITE_HANDLER( mario_sh2_w )
+WRITE8_HANDLER( mario_sh2_w )
 {
 	static int last;
 
@@ -37,7 +37,7 @@ WRITE_HANDLER( mario_sh2_w )
 }
 
 /* Misc samples */
-WRITE_HANDLER( mario_sh3_w )
+WRITE8_HANDLER( mario_sh3_w )
 {
 	static int state[8];
 

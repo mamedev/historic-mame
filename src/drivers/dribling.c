@@ -56,7 +56,7 @@ static data8_t di;
 static INTERRUPT_GEN( dribling_irq_gen )
 {
 	if (di)
-		cpu_set_irq_line(0, 0, ASSERT_LINE);
+		cpunum_set_input_line(0, 0, ASSERT_LINE);
 }
 
 
@@ -67,14 +67,14 @@ static INTERRUPT_GEN( dribling_irq_gen )
  *
  *************************************/
 
-static READ_HANDLER( dsr_r )
+static READ8_HANDLER( dsr_r )
 {
 	/* return DSR0-7 */
 	return (ds << sh) | (dr >> (8 - sh));
 }
 
 
-static READ_HANDLER( input_mux0_r )
+static READ8_HANDLER( input_mux0_r )
 {
 	/* low value in the given bit selects */
 	if (!(input_mux & 0x01))
@@ -94,12 +94,12 @@ static READ_HANDLER( input_mux0_r )
  *
  *************************************/
 
-static WRITE_HANDLER( misc_w )
+static WRITE8_HANDLER( misc_w )
 {
 	/* bit 7 = di */
 	di = (data >> 7) & 1;
 	if (!di)
-		cpu_set_irq_line(0, 0, CLEAR_LINE);
+		cpunum_set_input_line(0, 0, CLEAR_LINE);
 
 	/* bit 6 = parata */
 
@@ -117,7 +117,7 @@ static WRITE_HANDLER( misc_w )
 }
 
 
-static WRITE_HANDLER( sound_w )
+static WRITE8_HANDLER( sound_w )
 {
 	/* bit 7 = stop palla */
 	/* bit 6 = contrasto */
@@ -131,14 +131,14 @@ static WRITE_HANDLER( sound_w )
 }
 
 
-static WRITE_HANDLER( pb_w )
+static WRITE8_HANDLER( pb_w )
 {
 	/* write PB0-7 */
 	logerror("%04X:pb_w(%02X)\n", activecpu_get_previouspc(), data);
 }
 
 
-static WRITE_HANDLER( shr_w )
+static WRITE8_HANDLER( shr_w )
 {
 	/* bit 3 = watchdog */
 	if (data & 0x08)
@@ -156,7 +156,7 @@ static WRITE_HANDLER( shr_w )
  *
  *************************************/
 
-static READ_HANDLER( ioread )
+static READ8_HANDLER( ioread )
 {
 	if (offset & 0x08)
 		return ppi8255_0_r(offset & 3);
@@ -166,7 +166,7 @@ static READ_HANDLER( ioread )
 }
 
 
-static WRITE_HANDLER( iowrite )
+static WRITE8_HANDLER( iowrite )
 {
 	if (offset & 0x08)
 		ppi8255_0_w(offset & 3, data);

@@ -51,12 +51,12 @@ Runs in interrupt mode 0, the interrupt vectors are 0xcf (RST 08h) and
 
 extern unsigned char *gundealr_bg_videoram,*gundealr_fg_videoram;
 
-WRITE_HANDLER( gundealr_paletteram_w );
-WRITE_HANDLER( gundealr_bg_videoram_w );
-WRITE_HANDLER( gundealr_fg_videoram_w );
-WRITE_HANDLER( gundealr_fg_scroll_w );
-WRITE_HANDLER( yamyam_fg_scroll_w );
-WRITE_HANDLER( gundealr_flipscreen_w );
+WRITE8_HANDLER( gundealr_paletteram_w );
+WRITE8_HANDLER( gundealr_bg_videoram_w );
+WRITE8_HANDLER( gundealr_fg_videoram_w );
+WRITE8_HANDLER( gundealr_fg_scroll_w );
+WRITE8_HANDLER( yamyam_fg_scroll_w );
+WRITE8_HANDLER( gundealr_flipscreen_w );
 VIDEO_UPDATE( gundealr );
 VIDEO_START( gundealr );
 
@@ -74,13 +74,13 @@ static INTERRUPT_GEN( yamyam_interrupt )
 			RAM[0xe005] = readinputport(3);	/* IN1 */
 			RAM[0xe006] = readinputport(2);	/* IN0 */
 		}
-		cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0xd7);	/* RST 10h vblank */
+		cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, 0xd7);	/* RST 10h vblank */
 	}
 	else if ((cpu_getiloops() & 1) == 1)
-		cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0xcf);	/* RST 08h sound (hand tuned) */
+		cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, 0xcf);	/* RST 08h sound (hand tuned) */
 }
 
-static WRITE_HANDLER( yamyam_bankswitch_w )
+static WRITE8_HANDLER( yamyam_bankswitch_w )
 {
  	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -89,7 +89,7 @@ static WRITE_HANDLER( yamyam_bankswitch_w )
 	cpu_setbank(1,&RAM[bankaddress]);
 }
 
-static WRITE_HANDLER( yamyam_protection_w )
+static WRITE8_HANDLER( yamyam_protection_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -584,7 +584,7 @@ static DRIVER_INIT( gundealr )
 static DRIVER_INIT( yamyam )
 {
 	input_ports_hack = 1;
-	install_mem_write_handler(0, 0xe000, 0xe000, yamyam_protection_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe000, 0xe000, 0, 0, yamyam_protection_w);
 }
 
 

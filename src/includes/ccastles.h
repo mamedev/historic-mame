@@ -13,10 +13,10 @@ extern unsigned char *ccastles_sprite_bank;
 extern unsigned char *ccastles_scrollx;
 extern unsigned char *ccastles_scrolly;
 
-WRITE_HANDLER( ccastles_paletteram_w );
+WRITE8_HANDLER( ccastles_paletteram_w );
 
 VIDEO_START( ccastles );
 VIDEO_UPDATE( ccastles );
 
-READ_HANDLER( ccastles_bitmode_r );
-WRITE_HANDLER( ccastles_bitmode_w );
+READ8_HANDLER( ccastles_bitmode_r );
+WRITE8_HANDLER( ccastles_bitmode_w );

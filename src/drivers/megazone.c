@@ -28,14 +28,14 @@ static int i8039_status;
 
 VIDEO_START( megazone );
 
-WRITE_HANDLER( megazone_flipscreen_w );
+WRITE8_HANDLER( megazone_flipscreen_w );
 PALETTE_INIT( megazone );
-WRITE_HANDLER( megazone_sprite_bank_select_w );
+WRITE8_HANDLER( megazone_sprite_bank_select_w );
 VIDEO_UPDATE( megazone );
 
 
 
-READ_HANDLER( megazone_portA_r )
+READ8_HANDLER( megazone_portA_r )
 {
 	int clock,timer;
 
@@ -55,7 +55,7 @@ READ_HANDLER( megazone_portA_r )
 	return (timer << 4) | i8039_status;
 }
 
-static WRITE_HANDLER( megazone_portB_w )
+static WRITE8_HANDLER( megazone_portB_w )
 {
 	int i;
 
@@ -73,7 +73,7 @@ static WRITE_HANDLER( megazone_portB_w )
 	}
 }
 
-WRITE_HANDLER( megazone_videoram2_w )
+WRITE8_HANDLER( megazone_videoram2_w )
 {
 	if (megazone_videoram2[offset] != data)
 	{
@@ -81,7 +81,7 @@ WRITE_HANDLER( megazone_videoram2_w )
 	}
 }
 
-WRITE_HANDLER( megazone_colorram2_w )
+WRITE8_HANDLER( megazone_colorram2_w )
 {
 	if (megazone_colorram2[offset] != data)
 	{
@@ -89,29 +89,29 @@ WRITE_HANDLER( megazone_colorram2_w )
 	}
 }
 
-READ_HANDLER( megazone_sharedram_r )
+READ8_HANDLER( megazone_sharedram_r )
 {
 	return(megazone_sharedram[offset]);
 }
 
-WRITE_HANDLER( megazone_sharedram_w )
+WRITE8_HANDLER( megazone_sharedram_w )
 {
 	megazone_sharedram[offset] = data;
 }
 
-static WRITE_HANDLER( megazone_i8039_irq_w )
+static WRITE8_HANDLER( megazone_i8039_irq_w )
 {
-	cpu_set_irq_line(2, 0, ASSERT_LINE);
+	cpunum_set_input_line(2, 0, ASSERT_LINE);
 }
 
-WRITE_HANDLER( i8039_irqen_and_status_w )
+WRITE8_HANDLER( i8039_irqen_and_status_w )
 {
 	if ((data & 0x80) == 0)
-		cpu_set_irq_line(2, 0, CLEAR_LINE);
+		cpunum_set_input_line(2, 0, CLEAR_LINE);
 	i8039_status = (data & 0x70) >> 4;
 }
 
-static WRITE_HANDLER( megazone_coin_counter_w )
+static WRITE8_HANDLER( megazone_coin_counter_w )
 {
 	coin_counter_w(1-offset,data);		/* 1-offset, because coin counters are in reversed order */
 }
@@ -442,12 +442,166 @@ ROM_START( megaznik )
 	ROM_LOAD( "319b15.e8",   0x0240, 0x020, CRC(31fd7ab9) SHA1(04d6e51b4930619c8ee12fb0d7b5f981e4d6d8d3) ) /* timing (not used) */
 ROM_END
 
+/* Info provided with these alt sets
+
+        MEGA ZONE   CHIP PLACEMENT
+
+USES 69A09EP, Z80 CPU'S & AY-3-8910 SOUND CHIP W/8039 CPU
+
+THERE ARE AT LEAST THREE VERSIONS OF MEGA ZONE, ALL THE ROMS ARE THE
+SAME EXCEPT POSITION 6,7,8,9,11H IN SETS 1,2
+ALL ROMS ARE 2764 EXCEPT H01 (E01) IS A 2732
+
+CHIP #     POSITION                         VERS 3
+-----------------------------------------------------
+VER-1                VER-2
+-----------------------------------------------------
+319-E08    2D        E08      REAR BOARD    8  SAME
+319-E09    2E        E09       "            9  SAME
+319-E10    3D        E10       "           10  SAME
+319-E11    3E        E11       "           11  SAME
+319-G12    8C        G12       "           12
+319-G13    10C       G13       "           13  SAME
+319-E02    6D        E02      CONN BOARD    2  SAME
+319-H03    6H        J03       "            3
+319-H04    7H        J04       "            4
+319-H05    8H        J05       "            5
+319-H06    9H        J06       "            6
+319-H07    11H       J07       "            7
+319-H01    3A        E01       "            1  SAME
+Z80        7E                                        IC#
+AY-3-8910  8B                               PROM     98     TBP18S030 (82S123)
+AO72       12F   KONAMI                     PROM     48       "
+K824-501   8D    KONAMI                     PROM     42       "
+8039       4B                               PROM     63     TBP24S10  (823126)
+                                            PROM     33       "
+                                            PAL16L8  63
+                                            PAL16L8A 67
+
+VERSION 3 IS ON THE SAME SIZE CONNECTOR BOARD, BUT THE BOTTOM
+BOARD IS ABOUT 1 1/4" LONGER AND WIDER
+
+THE CHIPS THAT HAVE THE DESIGNATION SCRATCHED OFF ON THE ORIGINAL
+BOARDS ARE      NAME          CHIP TYPE
+            ---------------------------
+CONN BOARD      IC3             TMP8039P-6
+ "              IC6             AY3-8910
+ "              IC26            Z-80
+ "              IC39            MC68A09EP (CUSTOM ON ORIGINAL)
+ "              IC27            N/U       (CUSTOM ON ORIGINAL)
+REAR BOARD      1C026           N/U       (CUSTOM ON ORIGINAL)
+
+*/
+
+ROM_START( megazona )
+	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )     /* 64k for code + 64k for decrypted opcodes */
+	ROM_LOAD( "7.12g",  0x6000, 0x2000, CRC(d42d67bf) SHA1(adac80d183ad26a9b1ec25a2da7ebbb33b441b63) )
+	ROM_LOAD( "6.10g",  0x8000, 0x2000, CRC(692398eb) SHA1(518001d738c2fb9417e52edfe9a7b74a074af3b0) )
+	ROM_LOAD( "5.9g",   0xa000, 0x2000, CRC(620ffec3) SHA1(e047beb29e0cda72126e8dcdd0b7504a202efba2) )
+	ROM_LOAD( "4.8g",   0xc000, 0x2000, CRC(28650971) SHA1(25e405fb9f648b7118e3c7c7b3ba59a7b7c29c42) )
+	ROM_LOAD( "3.6g",   0xe000, 0x2000, CRC(f264018f) SHA1(6ca0f7e26311799b0650a6c58567405bc2a7f922) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the audio CPU */
+	ROM_LOAD( "319-h02",   0x0000, 0x2000, CRC(d5d45edb) SHA1(3808d1b58fe152f8f5b49bf0aa40c53e9c9dd4bd) )
+
+	ROM_REGION( 0x1000, REGION_CPU3, 0 )     /* 4k for the 8039 DAC CPU */
+	ROM_LOAD( "319-h01",   0x0000, 0x1000, CRC(ed5725a0) SHA1(64f54621487291fbfe827fb4cecca299fd0db781) ) // same as e01?
+
+	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "319e12.bin",    0x0000, 0x2000, CRC(e0fb7835) SHA1(44ccaaf92bdb83323f45e08dbe118697720e9105) ) // 12.9c
+	ROM_LOAD( "319-g13",  0x2000, 0x2000, CRC(3d8f3743) SHA1(1f6fbf804dacfa44cd11b4cf41d0bedb7f2ff6b6) ) // same as e13?
+
+	ROM_REGION( 0x08000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "319e11.bin",    0x0000, 0x2000, CRC(965a7ff6) SHA1(210aae91a3838e5f7c78747d9b7419d266538ffc) )
+	ROM_LOAD( "319e09.bin",    0x2000, 0x2000, CRC(5eaa7f3e) SHA1(4c038e80d575988407252897a1f1bc6b76af597c) )
+	ROM_LOAD( "319e10.bin",    0x4000, 0x2000, CRC(7bb1aeee) SHA1(be2dd46cd0121cedad6dab90a22643798a3176ab) )
+	ROM_LOAD( "319e08.bin",    0x6000, 0x2000, CRC(6add71b1) SHA1(fc8c0ecd3b7f03d63b6c3143143986883345fa38) )
+
+	ROM_REGION( 0x0260, REGION_PROMS, 0 )
+	ROM_LOAD( "319b18.a16",  0x0000, 0x020, CRC(23cb02af) SHA1(aba459826a75ec07bc6d97580e934f58aa22f4f4) ) /* palette */
+	ROM_LOAD( "319b16.c6",   0x0020, 0x100, CRC(5748e933) SHA1(c1478c31533a11421cd4579ccfdbb430e193d17b) ) /* sprite lookup table */
+	ROM_LOAD( "319b17.a11",  0x0120, 0x100, CRC(1fbfce73) SHA1(1c58eb91982d5f10511d54a83070e859ac57d2f1) ) /* character lookup table */
+	ROM_LOAD( "319b14.e7",   0x0220, 0x020, CRC(55044268) SHA1(29cf4158314ed897daf045a7f07be865dd977663) ) /* timing (not used) */
+	ROM_LOAD( "319b15.e8",   0x0240, 0x020, CRC(31fd7ab9) SHA1(04d6e51b4930619c8ee12fb0d7b5f981e4d6d8d3) ) /* timing (not used) */
+ROM_END
+
+ROM_START( megazonb )
+	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )     /* 64k for code + 64k for decrypted opcodes */
+	ROM_LOAD( "319-j07",  0x6000, 0x2000,  CRC(5161a523) SHA1(90b456c30bccaaca96c75c2f421af3a2875b0b6b) )
+	ROM_LOAD( "319-j06",  0x8000, 0x2000,  CRC(7344c3de) SHA1(d3867738d4828afa50c8b43116d68cc6074d6cb5) )
+	ROM_LOAD( "319-j05",  0xa000, 0x2000,  CRC(affa492b) SHA1(ee6789f293902716d65d08a89ae12dd96c75c885) )
+	ROM_LOAD( "319-j04",  0xc000, 0x2000,  CRC(03544ab3) SHA1(efa034cc6976b47915601cf215758df23e308878) )
+	ROM_LOAD( "319-j03",  0xe000, 0x2000,  CRC(0d95cc0a) SHA1(9aadadf09a4826da451ee35c89ee0254ec552d80) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the audio CPU */
+	ROM_LOAD( "319-h02",   0x0000, 0x2000, CRC(d5d45edb) SHA1(3808d1b58fe152f8f5b49bf0aa40c53e9c9dd4bd) )
+
+	ROM_REGION( 0x1000, REGION_CPU3, 0 )     /* 4k for the 8039 DAC CPU */
+	ROM_LOAD( "319-h01",   0x0000, 0x1000, CRC(ed5725a0) SHA1(64f54621487291fbfe827fb4cecca299fd0db781) ) // same as e01?
+
+	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "319e12.bin",    0x0000, 0x2000, CRC(e0fb7835) SHA1(44ccaaf92bdb83323f45e08dbe118697720e9105) ) // 12.9c
+	ROM_LOAD( "319-g13",  0x2000, 0x2000, CRC(3d8f3743) SHA1(1f6fbf804dacfa44cd11b4cf41d0bedb7f2ff6b6) ) // same as e13?
+
+	ROM_REGION( 0x08000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "319e11.bin",    0x0000, 0x2000, CRC(965a7ff6) SHA1(210aae91a3838e5f7c78747d9b7419d266538ffc) )
+	ROM_LOAD( "319e09.bin",    0x2000, 0x2000, CRC(5eaa7f3e) SHA1(4c038e80d575988407252897a1f1bc6b76af597c) )
+	ROM_LOAD( "319e10.bin",    0x4000, 0x2000, CRC(7bb1aeee) SHA1(be2dd46cd0121cedad6dab90a22643798a3176ab) )
+	ROM_LOAD( "319e08.bin",    0x6000, 0x2000, CRC(6add71b1) SHA1(fc8c0ecd3b7f03d63b6c3143143986883345fa38) )
+
+	ROM_REGION( 0x0260, REGION_PROMS, 0 )
+	ROM_LOAD( "319b18.a16",  0x0000, 0x020, CRC(23cb02af) SHA1(aba459826a75ec07bc6d97580e934f58aa22f4f4) ) /* palette */
+	ROM_LOAD( "319b16.c6",   0x0020, 0x100, CRC(5748e933) SHA1(c1478c31533a11421cd4579ccfdbb430e193d17b) ) /* sprite lookup table */
+	ROM_LOAD( "319b17.a11",  0x0120, 0x100, CRC(1fbfce73) SHA1(1c58eb91982d5f10511d54a83070e859ac57d2f1) ) /* character lookup table */
+	ROM_LOAD( "319b14.e7",   0x0220, 0x020, CRC(55044268) SHA1(29cf4158314ed897daf045a7f07be865dd977663) ) /* timing (not used) */
+	ROM_LOAD( "319b15.e8",   0x0240, 0x020, CRC(31fd7ab9) SHA1(04d6e51b4930619c8ee12fb0d7b5f981e4d6d8d3) ) /* timing (not used) */
+ROM_END
+
+ROM_START( megazonc )
+	ROM_REGION( 2*0x10000, REGION_CPU1, 0 )     /* 64k for code + 64k for decrypted opcodes */
+	ROM_LOAD( "319-h07",  0x6000, 0x2000,  CRC(8ca47f64) SHA1(1a20db5ac504b9b004116cfa6992d63a86a04cc5) )
+	ROM_LOAD( "319-h06",  0x8000, 0x2000,  CRC(ed35b12e) SHA1(69e88c4801c838a24aba0a867af205a7169ad089) )
+	ROM_LOAD( "319-h05",  0xa000, 0x2000,  CRC(c3655ccd) SHA1(b86b58a12c6ced9a7e0a6d0cdb3881a28220a650) )
+	ROM_LOAD( "319-h04",  0xc000, 0x2000,  CRC(9e221177) SHA1(0c6fffd657d66090362108578aa78eb36bdcce6b) )
+	ROM_LOAD( "319-h03",  0xe000, 0x2000,  CRC(9048955b) SHA1(d8a7b46d984832f566298d3b417b3a34c9fea6c7) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )     /* 64k for the audio CPU */
+	ROM_LOAD( "319-h02",   0x0000, 0x2000, CRC(d5d45edb) SHA1(3808d1b58fe152f8f5b49bf0aa40c53e9c9dd4bd) )
+
+	ROM_REGION( 0x1000, REGION_CPU3, 0 )     /* 4k for the 8039 DAC CPU */
+	ROM_LOAD( "319-h01",   0x0000, 0x1000, CRC(ed5725a0) SHA1(64f54621487291fbfe827fb4cecca299fd0db781) ) // same as e01?
+
+	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "319e12.bin",    0x0000, 0x2000, CRC(e0fb7835) SHA1(44ccaaf92bdb83323f45e08dbe118697720e9105) ) // 12.9c
+	ROM_LOAD( "319-g13",  0x2000, 0x2000, CRC(3d8f3743) SHA1(1f6fbf804dacfa44cd11b4cf41d0bedb7f2ff6b6) ) // same as e13?
+
+	ROM_REGION( 0x08000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "319e11.bin",    0x0000, 0x2000, CRC(965a7ff6) SHA1(210aae91a3838e5f7c78747d9b7419d266538ffc) )
+	ROM_LOAD( "319e09.bin",    0x2000, 0x2000, CRC(5eaa7f3e) SHA1(4c038e80d575988407252897a1f1bc6b76af597c) )
+	ROM_LOAD( "319e10.bin",    0x4000, 0x2000, CRC(7bb1aeee) SHA1(be2dd46cd0121cedad6dab90a22643798a3176ab) )
+	ROM_LOAD( "319e08.bin",    0x6000, 0x2000, CRC(6add71b1) SHA1(fc8c0ecd3b7f03d63b6c3143143986883345fa38) )
+
+	ROM_REGION( 0x0260, REGION_PROMS, 0 )
+	ROM_LOAD( "319b18.a16",  0x0000, 0x020, CRC(23cb02af) SHA1(aba459826a75ec07bc6d97580e934f58aa22f4f4) ) /* palette */
+	ROM_LOAD( "319b16.c6",   0x0020, 0x100, CRC(5748e933) SHA1(c1478c31533a11421cd4579ccfdbb430e193d17b) ) /* sprite lookup table */
+	ROM_LOAD( "319b17.a11",  0x0120, 0x100, CRC(1fbfce73) SHA1(1c58eb91982d5f10511d54a83070e859ac57d2f1) ) /* character lookup table */
+	ROM_LOAD( "319b14.e7",   0x0220, 0x020, CRC(55044268) SHA1(29cf4158314ed897daf045a7f07be865dd977663) ) /* timing (not used) */
+	ROM_LOAD( "prom.48",     0x0240, 0x020, CRC(796dea94) SHA1(bab3c2a5466e1c07ec27cccf7b1a21e9de4ed982) ) /* timing (not used) */
+ROM_END
+
 
 static DRIVER_INIT( megazone )
 {
 	konami1_decode();
 }
 
+/* these just display a Konami copyright, no logo */
+GAME( 1983, megazone, 0,        megazone, megazone, megazone, ROT90, "Konami",                       "Mega Zone (Konami set 1)" )
+GAME( 1983, megazona, megazone, megazone, megazone, megazone, ROT90, "Konami",                       "Mega Zone (Konami set 2)" )
 
-GAME( 1983, megazone, 0,        megazone, megazone, megazone, ROT90, "Konami", "Mega Zone" )
-GAME( 1983, megaznik, megazone, megazone, megazone, megazone, ROT90, "Konami / Interlogic + Kosuka", "Mega Zone (Kosuka)" )
+/* these display Konami and Kosuka copyright, no logo */
+GAME( 1983, megazonb, megazone, megazone, megazone, megazone, ROT90, "Konami / Kosuka",              "Mega Zone (Kosuka set 1)" )
+GAME( 1983, megazonc, megazone, megazone, megazone, megazone, ROT90, "Konami / Kosuka",              "Mega Zone (Kosuka set 2)" )
+
+/* this displays Konami and Kosuka copyright with a Konami / Interlogic logo */
+GAME( 1983, megaznik, megazone, megazone, megazone, megazone, ROT90, "Konami / Interlogic + Kosuka", "Mega Zone (Interlogic + Kosuka)" )

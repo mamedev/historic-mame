@@ -100,7 +100,7 @@ static UINT8 grudge_last_steering[3];
 
 static void irq_off(int param)
 {
-	cpu_set_irq_line(0, M6809_IRQ_LINE, CLEAR_LINE);
+	cpunum_set_input_line(0, M6809_IRQ_LINE, CLEAR_LINE);
 }
 
 
@@ -113,7 +113,7 @@ static void interrupt_timer(int param)
 		timer_set(cpu_getscanlinetime(param + 64), param + 64, interrupt_timer);
 
 	/* IRQ starts on scanline 0, 64, 128, etc. */
-	cpu_set_irq_line(0, M6809_IRQ_LINE, ASSERT_LINE);
+	cpunum_set_input_line(0, M6809_IRQ_LINE, ASSERT_LINE);
 
 	/* it will turn off on the next HBLANK */
 	timer_set(cpu_getscanlineperiod() * 0.9, 0, irq_off);
@@ -265,13 +265,13 @@ void balsente_noise_gen(int chip, int count, short *buffer)
  *
  *************************************/
 
-WRITE_HANDLER( balsente_random_reset_w )
+WRITE8_HANDLER( balsente_random_reset_w )
 {
 	/* reset random number generator */
 }
 
 
-READ_HANDLER( balsente_random_num_r )
+READ8_HANDLER( balsente_random_num_r )
 {
 	unsigned int cc;
 
@@ -291,7 +291,7 @@ READ_HANDLER( balsente_random_num_r )
  *
  *************************************/
 
-WRITE_HANDLER( balsente_rombank_select_w )
+WRITE8_HANDLER( balsente_rombank_select_w )
 {
 	int bank_offset = 0x6000 * ((data >> 4) & 7);
 
@@ -301,7 +301,7 @@ WRITE_HANDLER( balsente_rombank_select_w )
 }
 
 
-WRITE_HANDLER( balsente_rombank2_select_w )
+WRITE8_HANDLER( balsente_rombank2_select_w )
 {
 	/* Night Stocker and Name that Tune only so far.... */
 	int bank = data & 7;
@@ -332,7 +332,7 @@ WRITE_HANDLER( balsente_rombank2_select_w )
  *
  *************************************/
 
-WRITE_HANDLER( balsente_misc_output_w )
+WRITE8_HANDLER( balsente_misc_output_w )
 {
 	offset = (offset / 4) % 8;
 	data >>= 7;
@@ -413,12 +413,12 @@ static void m6850_update_io(void)
 	/* apply the change */
 	if (new_state && !(m6850_status & 0x80))
 	{
-		cpu_set_irq_line(0, M6809_FIRQ_LINE, ASSERT_LINE);
+		cpunum_set_input_line(0, M6809_FIRQ_LINE, ASSERT_LINE);
 		m6850_status |= 0x80;
 	}
 	else if (!new_state && (m6850_status & 0x80))
 	{
-		cpu_set_irq_line(0, M6809_FIRQ_LINE, CLEAR_LINE);
+		cpunum_set_input_line(0, M6809_FIRQ_LINE, CLEAR_LINE);
 		m6850_status &= ~0x80;
 	}
 
@@ -431,12 +431,12 @@ static void m6850_update_io(void)
 	/* apply the change */
 	if (new_state && !(m6850_sound_status & 0x80))
 	{
-		cpu_set_nmi_line(1, ASSERT_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_NMI, ASSERT_LINE);
 		m6850_sound_status |= 0x80;
 	}
 	else if (!new_state && (m6850_sound_status & 0x80))
 	{
-		cpu_set_nmi_line(1, CLEAR_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_NMI, CLEAR_LINE);
 		m6850_sound_status &= ~0x80;
 	}
 }
@@ -449,7 +449,7 @@ static void m6850_update_io(void)
  *
  *************************************/
 
-READ_HANDLER( balsente_m6850_r )
+READ8_HANDLER( balsente_m6850_r )
 {
 	int result;
 
@@ -494,7 +494,7 @@ static void m6850_w_callback(int param)
 }
 
 
-WRITE_HANDLER( balsente_m6850_w )
+WRITE8_HANDLER( balsente_m6850_w )
 {
 	/* control register is at offset 0 */
 	if (offset == 0)
@@ -518,7 +518,7 @@ WRITE_HANDLER( balsente_m6850_w )
  *
  *************************************/
 
-READ_HANDLER( balsente_m6850_sound_r )
+READ8_HANDLER( balsente_m6850_sound_r )
 {
 	int result;
 
@@ -542,7 +542,7 @@ READ_HANDLER( balsente_m6850_sound_r )
 }
 
 
-WRITE_HANDLER( balsente_m6850_sound_w )
+WRITE8_HANDLER( balsente_m6850_sound_w )
 {
 	/* control register is at offset 0 */
 	if (offset == 0)
@@ -612,14 +612,14 @@ static void adc_finished(int which)
 }
 
 
-READ_HANDLER( balsente_adc_data_r )
+READ8_HANDLER( balsente_adc_data_r )
 {
 	/* just return the last value read */
 	return adc_value;
 }
 
 
-WRITE_HANDLER( balsente_adc_select_w )
+WRITE8_HANDLER( balsente_adc_select_w )
 {
 	/* set a timer to go off and read the value after 50us */
 	/* it's important that we do this for Mini Golf */
@@ -719,7 +719,7 @@ static void counter_set_out(int which, int out)
 {
 	/* OUT on counter 2 is hooked to the /INT line on the Z80 */
 	if (which == 2)
-		cpu_set_irq_line(1, 0, out ? ASSERT_LINE : CLEAR_LINE);
+		cpunum_set_input_line(1, 0, out ? ASSERT_LINE : CLEAR_LINE);
 
 	/* OUT on counter 0 is hooked to the GATE line on counter 1 */
 	else if (which == 0)
@@ -754,7 +754,7 @@ static void counter_callback(int param)
  *
  *************************************/
 
-READ_HANDLER( balsente_counter_8253_r )
+READ8_HANDLER( balsente_counter_8253_r )
 {
 	int which;
 
@@ -788,7 +788,7 @@ READ_HANDLER( balsente_counter_8253_r )
 }
 
 
-WRITE_HANDLER( balsente_counter_8253_w )
+WRITE8_HANDLER( balsente_counter_8253_w )
 {
 	int which;
 
@@ -932,7 +932,7 @@ static void update_counter_0_timer(void)
  *
  *************************************/
 
-READ_HANDLER( balsente_counter_state_r )
+READ8_HANDLER( balsente_counter_state_r )
 {
 	/* bit D0 is the inverse of the flip-flop state */
 	int result = !counter_0_ff;
@@ -944,7 +944,7 @@ READ_HANDLER( balsente_counter_state_r )
 }
 
 
-WRITE_HANDLER( balsente_counter_control_w )
+WRITE8_HANDLER( balsente_counter_control_w )
 {
 	UINT8 diff_counter_control = counter_control ^ data;
 
@@ -996,7 +996,7 @@ WRITE_HANDLER( balsente_counter_control_w )
  *
  *************************************/
 
-WRITE_HANDLER( balsente_chip_select_w )
+WRITE8_HANDLER( balsente_chip_select_w )
 {
 	static const UINT8 register_map[8] =
 	{
@@ -1056,7 +1056,7 @@ WRITE_HANDLER( balsente_chip_select_w )
 
 
 
-WRITE_HANDLER( balsente_dac_data_w )
+WRITE8_HANDLER( balsente_dac_data_w )
 {
 	/* LSB or MSB? */
 	if (offset & 1)
@@ -1074,7 +1074,7 @@ WRITE_HANDLER( balsente_dac_data_w )
 }
 
 
-WRITE_HANDLER( balsente_register_addr_w )
+WRITE8_HANDLER( balsente_register_addr_w )
 {
 	dac_register = data & 7;
 }
@@ -1087,13 +1087,13 @@ WRITE_HANDLER( balsente_register_addr_w )
  *
  *************************************/
 
-READ_HANDLER( nstocker_port2_r )
+READ8_HANDLER( nstocker_port2_r )
 {
 	return (readinputport(2) & 0xf0) | nstocker_bits;
 }
 
 
-WRITE_HANDLER( spiker_expand_w )
+WRITE8_HANDLER( spiker_expand_w )
 {
 	/* offset 0 is the bit pattern */
 	if (offset == 0)
@@ -1109,7 +1109,7 @@ WRITE_HANDLER( spiker_expand_w )
 }
 
 
-READ_HANDLER( spiker_expand_r )
+READ8_HANDLER( spiker_expand_r )
 {
 	UINT8 left, right;
 
@@ -1169,7 +1169,7 @@ static void update_grudge_steering(void)
 }
 
 
-READ_HANDLER( grudge_steering_r )
+READ8_HANDLER( grudge_steering_r )
 {
 	logerror("%04X:grudge_steering_r(@%d)\n", activecpu_get_pc(), cpu_getscanline());
 	grudge_steering_result |= 0x80;
@@ -1196,7 +1196,7 @@ WRITE16_HANDLER( shrike_shared_68k_w )
 }
 
 
-READ_HANDLER( shrike_shared_6809_r )
+READ8_HANDLER( shrike_shared_6809_r )
 {
 	if (offset == 0)
 		return 0;
@@ -1207,7 +1207,7 @@ logerror("6809 read %02x = %02x\n", offset, shrike_shared[offset] & 0xff);
 }
 
 
-WRITE_HANDLER( shrike_shared_6809_w )
+WRITE8_HANDLER( shrike_shared_6809_w )
 {
 if (offset != 0x0a || data != 0x55)
 logerror("6809 wrote %02x = %02x\n", offset, data);

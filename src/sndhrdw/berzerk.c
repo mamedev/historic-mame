@@ -108,7 +108,7 @@ static int berzerk_sh_start(const struct MachineSound *msound)
 	return 0;
 }
 
-WRITE_HANDLER( berzerk_sound_control_a_w )
+WRITE8_HANDLER( berzerk_sound_control_a_w )
 {
 	int noise = 0;
 	int voice = 0;
@@ -287,7 +287,7 @@ logerror("Trying death sound");
 	} /* End of berzerknoisemulate */
 }
 
-WRITE_HANDLER( berzerk_sound_control_b_w )
+WRITE8_HANDLER( berzerk_sound_control_b_w )
 {
 	logerror("B Data value %d and offset %d at %d\n", data, offset, lastfreq);
 }
@@ -300,7 +300,7 @@ static void berzerk_sh_update(void)
 }
 
 
-READ_HANDLER( berzerk_voiceboard_r )
+READ8_HANDLER( berzerk_voiceboard_r )
 {
    if (!voice_playing)
       return 0x00;

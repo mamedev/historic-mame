@@ -37,8 +37,8 @@ extern unsigned char *m90_video_data;
 
 VIDEO_UPDATE( m90 );
 VIDEO_UPDATE( m90_bootleg );
-WRITE_HANDLER( m90_video_control_w );
-WRITE_HANDLER( m90_video_w );
+WRITE8_HANDLER( m90_video_control_w );
+WRITE8_HANDLER( m90_video_w );
 VIDEO_START( m90 );
 
 /***************************************************************************/
@@ -55,7 +55,7 @@ static void set_m90_bank(void)
 
 /***************************************************************************/
 
-static WRITE_HANDLER( m90_coincounter_w )
+static WRITE8_HANDLER( m90_coincounter_w )
 {
 	if (offset==0)
 	{
@@ -66,7 +66,7 @@ static WRITE_HANDLER( m90_coincounter_w )
 	}
 }
 
-static WRITE_HANDLER( quizf1_bankswitch_w )
+static WRITE8_HANDLER( quizf1_bankswitch_w )
 {
 	if (offset == 0)
 	{
@@ -526,7 +526,7 @@ static struct DACinterface dac_interface =
 
 static INTERRUPT_GEN( m90_interrupt )
 {
-	cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0x60/4);
+	cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, 0x60/4);
 }
 
 
@@ -902,7 +902,7 @@ static DRIVER_INIT( bombrman )
 }
 
 /* Bomberman World executes encrypted code from RAM! */
-static WRITE_HANDLER (bbmanw_ram_write)
+static WRITE8_HANDLER (bbmanw_ram_write)
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	RAM[0x0a0c00+offset]=data;
@@ -913,7 +913,7 @@ static DRIVER_INIT( bbmanw )
 {
 	irem_cpu_decrypt(0,dynablaster_decryption_table);
 
-	install_mem_write_handler(0, 0xa0c00, 0xa0cff, bbmanw_ram_write);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa0c00, 0xa0cff, 0, 0, bbmanw_ram_write);
 }
 
 static DRIVER_INIT( quizf1 )

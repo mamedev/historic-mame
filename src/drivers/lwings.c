@@ -62,17 +62,17 @@ static int avengers_palette_pen;
 static data8_t *avengers_soundlatch2, avengers_soundstate=0;
 static data8_t avengers_adpcm;
 
-WRITE_HANDLER( avengers_adpcm_w )
+WRITE8_HANDLER( avengers_adpcm_w )
 {
 	avengers_adpcm = data;
 }
 
-READ_HANDLER( avengers_adpcm_r )
+READ8_HANDLER( avengers_adpcm_r )
 {
 	return avengers_adpcm;
 }
 
-static WRITE_HANDLER( lwings_bankswitch_w )
+static WRITE8_HANDLER( lwings_bankswitch_w )
 {
 	unsigned char *RAM;
 	int bank;
@@ -96,7 +96,7 @@ static WRITE_HANDLER( lwings_bankswitch_w )
 static INTERRUPT_GEN( lwings_interrupt )
 {
 	if (interrupt_enable_r(0))
-		cpu_set_irq_line_and_vector(0,0,HOLD_LINE,0xd7); /* RST 10h */
+		cpunum_set_input_line_and_vector(0,0,HOLD_LINE,0xd7); /* RST 10h */
 }
 
 static INTERRUPT_GEN( avengers_interrupt )
@@ -107,7 +107,7 @@ static INTERRUPT_GEN( avengers_interrupt )
 		nmi_line_pulse();
 }
 
-static WRITE_HANDLER( avengers_protection_w )
+static WRITE8_HANDLER( avengers_protection_w )
 {
 	int pc = activecpu_get_pc();
 
@@ -134,7 +134,7 @@ static WRITE_HANDLER( avengers_protection_w )
 	}
 }
 
-static WRITE_HANDLER( avengers_prot_bank_w )
+static WRITE8_HANDLER( avengers_prot_bank_w )
 {
 	avengers_palette_pen = data*64;
 }
@@ -221,7 +221,7 @@ static int avengers_fetch_paldata( void )
 	return result;
 }
 
-static READ_HANDLER( avengers_protection_r )
+static READ8_HANDLER( avengers_protection_r )
 {
 	const int xpos[8] = { 10, 7,  0, -7, -10, -7,   0,  7 };
 	const int ypos[8] = {  0, 7, 10,  7,   0, -7, -10, -7 };
@@ -257,14 +257,14 @@ static READ_HANDLER( avengers_protection_r )
 	return best_dir<<5;
 }
 
-static READ_HANDLER( avengers_soundlatch2_r )
+static READ8_HANDLER( avengers_soundlatch2_r )
 {
 	data8_t data = *avengers_soundlatch2 | avengers_soundstate;
 	avengers_soundstate = 0;
 	return(data);
 }
 
-static WRITE_HANDLER( msm5205_w )
+static WRITE8_HANDLER( msm5205_w )
 {
 	MSM5205_reset_w(offset,(data>>7)&1);
 	MSM5205_data_w(offset,data);

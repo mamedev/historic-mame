@@ -986,7 +986,7 @@ void toaplan2_scroll_reg_data_w(offs_t offset, data16_t data, UINT32 mem_mask, i
 						/* HACK! When tilted, sound CPU needs to be reset. */
 						if (Machine->drv->sound[0].sound_type == SOUND_YM3812)
 						{
-							cpu_set_reset_line(1,PULSE_LINE);
+							cpunum_set_input_line(1, INPUT_LINE_RESET, PULSE_LINE);
 							YM3812_sh_reset();
 						}
 					}
@@ -1003,31 +1003,31 @@ void toaplan2_scroll_reg_data_w(offs_t offset, data16_t data, UINT32 mem_mask, i
 		vid_controllers = 2;
 	}
 
-	if ( keyboard_pressed_memory(KEYCODE_W) )
+	if ( code_pressed_memory(KEYCODE_W) )
 	{
 		display_tx += 1;
 		display_tx &= 1;
 		if (toaplan2_txvideoram16 != 0)
 			tilemap_set_enable(tx_tilemap, display_tx);
 	}
-	if ( keyboard_pressed_memory(KEYCODE_L) )
+	if ( code_pressed_memory(KEYCODE_L) )
 	{
 		display_sp[0] += 1;
 		display_sp[0] &= 1;
 	}
-	if ( keyboard_pressed_memory(KEYCODE_K) )
+	if ( code_pressed_memory(KEYCODE_K) )
 	{
 		display_top[0] += 1;
 		display_top[0] &= 1;
 		tilemap_set_enable(top_tilemap[0], display_top[0]);
 	}
-	if ( keyboard_pressed_memory(KEYCODE_J) )
+	if ( code_pressed_memory(KEYCODE_J) )
 	{
 		display_fg[0] += 1;
 		display_fg[0] &= 1;
 		tilemap_set_enable(fg_tilemap[0], display_fg[0]);
 	}
-	if ( keyboard_pressed_memory(KEYCODE_H) )
+	if ( code_pressed_memory(KEYCODE_H) )
 	{
 		display_bg[0] += 1;
 		display_bg[0] &= 1;
@@ -1035,24 +1035,24 @@ void toaplan2_scroll_reg_data_w(offs_t offset, data16_t data, UINT32 mem_mask, i
 	}
 	if (vid_controllers == 2)
 	{
-		if ( keyboard_pressed_memory(KEYCODE_O) )
+		if ( code_pressed_memory(KEYCODE_O) )
 		{
 			display_sp[1] += 1;
 			display_sp[1] &= 1;
 		}
-		if ( keyboard_pressed_memory(KEYCODE_I) )
+		if ( code_pressed_memory(KEYCODE_I) )
 		{
 			display_top[1] += 1;
 			display_top[1] &= 1;
 			tilemap_set_enable(top_tilemap[1], display_top[1]);
 		}
-		if ( keyboard_pressed_memory(KEYCODE_U) )
+		if ( code_pressed_memory(KEYCODE_U) )
 		{
 			display_fg[1] += 1;
 			display_fg[1] &= 1;
 			tilemap_set_enable(fg_tilemap[1], display_fg[1]);
 		}
-		if ( keyboard_pressed_memory(KEYCODE_Y) )
+		if ( code_pressed_memory(KEYCODE_Y) )
 		{
 			display_bg[1] += 1;
 			display_bg[1] &= 1;
@@ -1136,7 +1136,7 @@ void toaplan2_log_vram(void)
 		vid_controllers = 2;
 	}
 
-	if ( keyboard_pressed_memory(KEYCODE_M) )
+	if ( code_pressed_memory(KEYCODE_M) )
 	{
 		data16_t *source_now0  = (data16_t *)(spriteram16_now[0]);
 		data16_t *source_new0  = (data16_t *)(spriteram16_new[0]);
@@ -1187,7 +1187,7 @@ void toaplan2_log_vram(void)
 			}
 		}
 	}
-	if ( keyboard_pressed_memory(KEYCODE_N) )
+	if ( code_pressed_memory(KEYCODE_N) )
 	{
 		int tchar[2], tattr[2];
 		logerror("Scrolls   BG-X  BG-Y   FG-X  FG-Y   TOP-X  TOP-Y   Sprite-X  Sprite-Y\n");
@@ -1212,7 +1212,7 @@ void toaplan2_log_vram(void)
 			}
 		}
 	}
-	if ( keyboard_pressed_memory(KEYCODE_B) )
+	if ( code_pressed_memory(KEYCODE_B) )
 	{
 		int tchar[2], tattr[2];
 		logerror("Scrolls   BG-X  BG-Y   FG-X  FG-Y   TOP-X  TOP-Y   Sprite-X  Sprite-Y\n");
@@ -1237,7 +1237,7 @@ void toaplan2_log_vram(void)
 			}
 		}
 	}
-	if ( keyboard_pressed_memory(KEYCODE_V) )
+	if ( code_pressed_memory(KEYCODE_V) )
 	{
 		int tchar[2], tattr[2];
 		logerror("Scrolls   BG-X  BG-Y   FG-X  FG-Y   TOP-X  TOP-Y   Sprite-X  Sprite-Y\n");
@@ -1263,10 +1263,10 @@ void toaplan2_log_vram(void)
 		}
 	}
 
-	if ( keyboard_pressed_memory(KEYCODE_C) )
+	if ( code_pressed_memory(KEYCODE_C) )
 		logerror("Mark here\n");
 
-	if ( keyboard_pressed_memory(KEYCODE_E) )
+	if ( code_pressed_memory(KEYCODE_E) )
 	{
 		displog += 1;
 		displog &= 1;
@@ -1647,5 +1647,5 @@ VIDEO_EOF( toaplan2_1 )
 
 VIDEO_EOF( batrider_0 )
 {
-	cpu_set_irq_line(0, MC68000_IRQ_4, HOLD_LINE);  /* Frame done */
+	cpunum_set_input_line(0, MC68000_IRQ_4, HOLD_LINE);  /* Frame done */
 }

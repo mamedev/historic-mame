@@ -18,5 +18,5 @@ PALETTE_INIT( arabian );
 VIDEO_START( arabian );
 VIDEO_UPDATE( arabian );
 
-WRITE_HANDLER( arabian_blitter_w );
-WRITE_HANDLER( arabian_videoram_w );
+WRITE8_HANDLER( arabian_blitter_w );
+WRITE8_HANDLER( arabian_videoram_w );

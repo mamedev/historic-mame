@@ -15,11 +15,11 @@
 extern UINT8 *videoram;
 INTERRUPT_GEN( beezer_interrupt );
 VIDEO_UPDATE( beezer );
-WRITE_HANDLER( beezer_ram_w );
+WRITE8_HANDLER( beezer_ram_w );
 
 /* from machine/beezer.c */
 DRIVER_INIT( beezer );
-WRITE_HANDLER( beezer_bankswitch_w );
+WRITE8_HANDLER( beezer_bankswitch_w );
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_RAM)

@@ -78,7 +78,7 @@ static void get_bg1_tile_info(int tile_index)
 
 static void crtc_interrupt_gen(int param)
 {
-	cpu_set_irq_line(0, 1, HOLD_LINE);
+	cpunum_set_input_line(0, 1, HOLD_LINE);
 	if (param != 0)
 		timer_adjust(crtc_timer, TIME_IN_HZ(Machine->drv->frames_per_second * param), 0, TIME_IN_HZ(Machine->drv->frames_per_second * param));
 }

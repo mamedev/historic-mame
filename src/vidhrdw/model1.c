@@ -1332,7 +1332,7 @@ static void tgp_render(struct mame_bitmap *bitmap, const struct rectangle *clipr
 static void tgp_scan(void)
 {
 #if 0
-	if (keyboard_pressed_memory(KEYCODE_F))
+	if (code_pressed_memory(KEYCODE_F))
         {
 			FILE *fp;
 			fp=fopen("tgp-ram.bin", "w+b");
@@ -1471,35 +1471,35 @@ VIDEO_UPDATE(model1)
 		double delta;
 		delta = 1;
 
-		if(keyboard_pressed(KEYCODE_F)) {
+		if(code_pressed(KEYCODE_F)) {
 			mod = 1;
 			vxx -= delta;
 		}
-		if(keyboard_pressed(KEYCODE_G)) {
+		if(code_pressed(KEYCODE_G)) {
 			mod = 1;
 			vxx += delta;
 		}
-		if(keyboard_pressed(KEYCODE_H)) {
+		if(code_pressed(KEYCODE_H)) {
 			mod = 1;
 			vyy -= delta;
 		}
-		if(keyboard_pressed(KEYCODE_J)) {
+		if(code_pressed(KEYCODE_J)) {
 			mod = 1;
 			vyy += delta;
 		}
-		if(keyboard_pressed(KEYCODE_K)) {
+		if(code_pressed(KEYCODE_K)) {
 			mod = 1;
 			vzz -= delta;
 		}
-		if(keyboard_pressed(KEYCODE_L)) {
+		if(code_pressed(KEYCODE_L)) {
 			mod = 1;
 			vzz += delta;
 		}
-		if(keyboard_pressed(KEYCODE_U)) {
+		if(code_pressed(KEYCODE_U)) {
 			mod = 1;
 			ayy -= 0.05;
 		}
-		if(keyboard_pressed(KEYCODE_I)) {
+		if(code_pressed(KEYCODE_I)) {
 			mod = 1;
 			ayy += 0.05;
 		}

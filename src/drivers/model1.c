@@ -71,7 +71,7 @@ static void irq_raise(int level)
 	//	logerror("irq: raising %d\n", level);
 	//	irq_status |= (1 << level);
 	last_irq = level;
-	cpu_set_irq_line(0, 0, HOLD_LINE);
+	cpunum_set_input_line(0, 0, HOLD_LINE);
 }
 
 static int irq_callback(int irqline)
@@ -94,7 +94,7 @@ static int irq_callback(int irqline)
 
 static void irq_init(void)
 {
-	cpu_set_irq_line(0, 0, CLEAR_LINE);
+	cpunum_set_input_line(0, 0, CLEAR_LINE);
 	cpu_set_irq_callback(0, irq_callback);
 }
 
@@ -223,7 +223,7 @@ static WRITE16_HANDLER( snd_latch_to_68k_w )
 
 	to_68k = data;
 	
-	cpu_set_irq_line(1, 2, HOLD_LINE);
+	cpunum_set_input_line(1, 2, HOLD_LINE);
 	// give the 68k time to reply
 	cpu_spinuntil_time(TIME_IN_USEC(40));
 }
@@ -674,17 +674,17 @@ ROM_START( wingwar )
 	ROM_LOAD16_BYTE( "16740.42", 0x1400001, 0x80000, CRC(44b31007) SHA1(4bb265fea25a7bbcbb8ab080fdcf09849b18f1de) )
 
 	ROM_REGION( 0xc0000, REGION_CPU2, 0 )  /* 68K code - missing */
-	ROM_LOAD16_WORD_SWAP("16751.epr", 0x000000, 0x20000, CRC(23ba5ebc) )
-	ROM_LOAD16_WORD_SWAP("16752.epr", 0x020000, 0x20000, CRC(6541c48f) )
+	ROM_LOAD16_WORD_SWAP("16751.epr", 0x000000, 0x20000, CRC(23ba5ebc) SHA1(b98aab546c5e980baeedbada4e7472eb4c588260) )
+	ROM_LOAD16_WORD_SWAP("16752.epr", 0x020000, 0x20000, CRC(6541c48f) SHA1(9341eff160e31a8574b9545fafc1c4059323fa0c) )
 	ROM_RELOAD(0x80000, 0x20000)
 
 	ROM_REGION( 0x400000, REGION_SOUND1, 0 ) /* Samples - missing */
-	ROM_LOAD("16753.mpr", 0x000000, 0x200000, CRC(324a8333) )
-	ROM_LOAD("16754.mpr", 0x200000, 0x200000, CRC(144f3cf5) )
+	ROM_LOAD("16753.mpr", 0x000000, 0x200000, CRC(324a8333) SHA1(960342e08db637c6f72615d49cffd9fb0889620b) )
+	ROM_LOAD("16754.mpr", 0x200000, 0x200000, CRC(144f3cf5) SHA1(d2f8cc9086affbbc5ef2195272200230f724e5d1) )
 
 	ROM_REGION( 0x400000, REGION_SOUND2, 0 ) /* Samples - missing */
-	ROM_LOAD("16755.mpr", 0x000000, 0x200000, CRC(4baaf878) )
-	ROM_LOAD("16756.mpr", 0x200000, 0x200000, CRC(d9c40672) )
+	ROM_LOAD("16755.mpr", 0x000000, 0x200000, CRC(4baaf878) SHA1(661d4ea9be6a4952852d0ef94becee7ed42bf4a1) )
+	ROM_LOAD("16756.mpr", 0x200000, 0x200000, CRC(d9c40672) SHA1(83e6f1156b30888d3a00103f079dc74f4fca8446) )
 
 	ROM_REGION32_LE( 0x1000000, REGION_USER1, 0 ) /* TGP model roms */
 	ROM_LOAD32_WORD( "16743.26", 0x000000, 0x200000, CRC(a710d33c) SHA1(1d0184545b34789ed511caaa25d57db3cd9a8e2f) )

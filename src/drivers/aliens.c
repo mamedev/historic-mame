@@ -28,10 +28,10 @@ static unsigned char *ram;
 static INTERRUPT_GEN( aliens_interrupt )
 {
 	if (K051960_is_IRQ_enabled())
-		cpu_set_irq_line(0, KONAMI_IRQ_LINE, HOLD_LINE);
+		cpunum_set_input_line(0, KONAMI_IRQ_LINE, HOLD_LINE);
 }
 
-static READ_HANDLER( bankedram_r )
+static READ8_HANDLER( bankedram_r )
 {
 	if (palette_selected)
 		return paletteram_r(offset);
@@ -39,7 +39,7 @@ static READ_HANDLER( bankedram_r )
 		return ram[offset];
 }
 
-static WRITE_HANDLER( bankedram_w )
+static WRITE8_HANDLER( bankedram_w )
 {
 	if (palette_selected)
 		paletteram_xBBBBBGGGGGRRRRR_swap_w(offset,data);
@@ -47,7 +47,7 @@ static WRITE_HANDLER( bankedram_w )
 		ram[offset] = data;
 }
 
-static WRITE_HANDLER( aliens_coin_counter_w )
+static WRITE8_HANDLER( aliens_coin_counter_w )
 {
 	/* bits 0-1 = coin counters */
 	coin_counter_w(0,data & 0x01);
@@ -69,13 +69,13 @@ static WRITE_HANDLER( aliens_coin_counter_w )
 #endif
 }
 
-WRITE_HANDLER( aliens_sh_irqtrigger_w )
+WRITE8_HANDLER( aliens_sh_irqtrigger_w )
 {
 	soundlatch_w(offset,data);
-	cpu_set_irq_line_and_vector(1, 0, HOLD_LINE, 0xff);
+	cpunum_set_input_line_and_vector(1, 0, HOLD_LINE, 0xff);
 }
 
-static WRITE_HANDLER( aliens_snd_bankswitch_w )
+static WRITE8_HANDLER( aliens_snd_bankswitch_w )
 {
 	/* b1: bank for chanel A */
 	/* b0: bank for chanel B */

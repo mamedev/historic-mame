@@ -66,9 +66,9 @@ static void update_interrupts(void)
 		newstate = 6;
 
 	if (newstate)
-		cpu_set_irq_line(0, newstate, ASSERT_LINE);
+		cpunum_set_input_line(0, newstate, ASSERT_LINE);
 	else
-		cpu_set_irq_line(0, 7, CLEAR_LINE);
+		cpunum_set_input_line(0, 7, CLEAR_LINE);
 }
 
 
@@ -1135,7 +1135,7 @@ static DRIVER_INIT( tmek )
 	protection_w = tmek_protection_w;
 
 	/* temp hack */
-	install_mem_write32_handler(0, 0xd72000, 0xd75fff, tmek_pf_w);
+	memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0xd72000, 0xd75fff, 0, 0, tmek_pf_w);
 }
 
 

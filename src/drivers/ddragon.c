@@ -53,8 +53,8 @@ extern unsigned char *ddragon_scrollx_lo;
 extern unsigned char *ddragon_scrolly_lo;
 VIDEO_START( ddragon );
 VIDEO_UPDATE( ddragon );
-WRITE_HANDLER( ddragon_bgvideoram_w );
-WRITE_HANDLER( ddragon_fgvideoram_w );
+WRITE8_HANDLER( ddragon_bgvideoram_w );
+WRITE8_HANDLER( ddragon_fgvideoram_w );
 extern unsigned char *ddragon_spriteram;
 extern int technos_video_hw;
 /* end of extern code & data */
@@ -69,7 +69,7 @@ static int VBLK;
 
 static MACHINE_INIT( ddragon )
 {
-	sprite_irq = IRQ_LINE_NMI;
+	sprite_irq = INPUT_LINE_NMI;
 	sound_irq = M6809_IRQ_LINE;
 	ym_irq = M6809_FIRQ_LINE;
 	technos_video_hw = 0;
@@ -90,7 +90,7 @@ static MACHINE_INIT( toffy )
 
 static MACHINE_INIT( ddragonb )
 {
-	sprite_irq = IRQ_LINE_NMI;
+	sprite_irq = INPUT_LINE_NMI;
 	sound_irq = M6809_IRQ_LINE;
 	ym_irq = M6809_FIRQ_LINE;
 	technos_video_hw = 0;
@@ -101,8 +101,8 @@ static MACHINE_INIT( ddragonb )
 
 static MACHINE_INIT( ddragon2 )
 {
-	sprite_irq = IRQ_LINE_NMI;
-	sound_irq = IRQ_LINE_NMI;
+	sprite_irq = INPUT_LINE_NMI;
+	sound_irq = INPUT_LINE_NMI;
 	ym_irq = 0;
 	technos_video_hw = 2;
 	dd_sub_cpu_busy = 0x10;
@@ -111,7 +111,7 @@ static MACHINE_INIT( ddragon2 )
 
 /*****************************************************************************/
 
-static WRITE_HANDLER( ddragon_bankswitch_w )
+static WRITE8_HANDLER( ddragon_bankswitch_w )
 {
 	data8_t *RAM = memory_region(REGION_CPU1);
 
@@ -125,12 +125,12 @@ static WRITE_HANDLER( ddragon_bankswitch_w )
 	if (data & 0x10)
 		dd_sub_cpu_busy = 0x00;
 	else if (dd_sub_cpu_busy == 0x00)
-		cpu_set_irq_line( 1, sprite_irq, (sprite_irq == IRQ_LINE_NMI) ? PULSE_LINE : HOLD_LINE );
+		cpunum_set_input_line( 1, sprite_irq, (sprite_irq == INPUT_LINE_NMI) ? PULSE_LINE : HOLD_LINE );
 
 	cpu_setbank( 1,&RAM[ 0x10000 + ( 0x4000 * ( ( data & 0xe0) >> 5 ) ) ] );
 }
 
-static WRITE_HANDLER( toffy_bankswitch_w )
+static WRITE8_HANDLER( toffy_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -149,7 +149,7 @@ static WRITE_HANDLER( toffy_bankswitch_w )
 
 static int darktowr_bank=0;
 
-static WRITE_HANDLER( darktowr_bankswitch_w )
+static WRITE8_HANDLER( darktowr_bankswitch_w )
 {
 	ddragon_scrolly_hi = ( ( data & 0x02 ) << 7 );
 	ddragon_scrollx_hi = ( ( data & 0x01 ) << 8 );
@@ -161,14 +161,14 @@ static WRITE_HANDLER( darktowr_bankswitch_w )
 	if (data & 0x10)
 		dd_sub_cpu_busy = 0x00;
 	else if (dd_sub_cpu_busy == 0x00)
-		cpu_set_irq_line( 1, sprite_irq, (sprite_irq == IRQ_LINE_NMI) ? PULSE_LINE : HOLD_LINE );
+		cpunum_set_input_line( 1, sprite_irq, (sprite_irq == INPUT_LINE_NMI) ? PULSE_LINE : HOLD_LINE );
 
 	darktowr_bank=(data & 0xe0) >> 5;
 //	cpu_setbank( 1,&RAM[ 0x10000 + ( 0x4000 * ( ( data & 0xe0) >> 5 ) ) ] );
 //	logerror("Bank %05x %02x %02x\n",activecpu_get_pc(),darktowr_bank,data);
 }
 
-static READ_HANDLER( darktowr_bank_r )
+static READ8_HANDLER( darktowr_bank_r )
 {
 	data8_t *RAM = memory_region(REGION_CPU1);
 
@@ -186,7 +186,7 @@ static READ_HANDLER( darktowr_bank_r )
 	return RAM[offset + 0x10000 + (0x4000*darktowr_bank)];
 }
 
-static WRITE_HANDLER( darktowr_bank_w )
+static WRITE8_HANDLER( darktowr_bank_w )
 {
 	if (darktowr_bank==4) {
 		logerror("BankWrite %05x %08x %08x\n",activecpu_get_pc(),offset,data);
@@ -205,12 +205,12 @@ static WRITE_HANDLER( darktowr_bank_w )
 	logerror("ROM write! %04x %02x\n",offset,data);
 }
 
-static READ_HANDLER( darktowr_mcu_r )
+static READ8_HANDLER( darktowr_mcu_r )
 {
 	return darktowr_mcu_ports[offset];
 }
 
-static WRITE_HANDLER( darktowr_mcu_w )
+static WRITE8_HANDLER( darktowr_mcu_w )
 {
 	logerror("McuWrite %05x %08x %08x\n",activecpu_get_pc(),offset,data);
 	darktowr_mcu_ports[offset]=data;
@@ -218,21 +218,21 @@ static WRITE_HANDLER( darktowr_mcu_w )
 
 /**************************************************************************/
 
-static WRITE_HANDLER( ddragon_interrupt_w )
+static WRITE8_HANDLER( ddragon_interrupt_w )
 {
 	switch (offset) {
 	case 0: /* 380b - NMI ack */
-		cpu_set_nmi_line(0,CLEAR_LINE);
+		cpunum_set_input_line(0, INPUT_LINE_NMI, CLEAR_LINE);
 		break;
 	case 1: /* 380c - FIRQ ack */
-		cpu_set_irq_line(0,M6809_FIRQ_LINE,CLEAR_LINE);
+		cpunum_set_input_line(0,M6809_FIRQ_LINE,CLEAR_LINE);
 		break;
 	case 2: /* 380d - IRQ ack */
-		cpu_set_irq_line(0,M6809_IRQ_LINE,CLEAR_LINE);
+		cpunum_set_input_line(0,M6809_IRQ_LINE,CLEAR_LINE);
 		break;
 	case 3: /* 380e - SND irq */
 		soundlatch_w( 0, data );
-		cpu_set_irq_line( snd_cpu, sound_irq, (sound_irq == IRQ_LINE_NMI) ? PULSE_LINE : HOLD_LINE );
+		cpunum_set_input_line( snd_cpu, sound_irq, (sound_irq == INPUT_LINE_NMI) ? PULSE_LINE : HOLD_LINE );
 		break;
 	case 4: /* 380f - ? */
 		/* Not sure what this is - almost certainly related to the sprite mcu */
@@ -240,13 +240,13 @@ static WRITE_HANDLER( ddragon_interrupt_w )
 	};
 }
 
-static READ_HANDLER( ddragon_hd63701_internal_registers_r )
+static READ8_HANDLER( ddragon_hd63701_internal_registers_r )
 {
 	logerror("%04x: read %d\n",activecpu_get_pc(),offset);
 	return 0;
 }
 
-static WRITE_HANDLER( ddragon_hd63701_internal_registers_w )
+static WRITE8_HANDLER( ddragon_hd63701_internal_registers_w )
 {
 	/* I don't know why port 0x17 is used..  Doesn't seem to be a standard MCU port */
 	if (offset==0x17) {
@@ -254,35 +254,35 @@ static WRITE_HANDLER( ddragon_hd63701_internal_registers_w )
 		I don't know what bit is the assert and what is the clear though (in comparison
 		it's quite obvious from the Double Dragon 2 code, below). */
 		if (data&3) {
-			cpu_set_irq_line(0,M6809_IRQ_LINE,ASSERT_LINE);
-			cpu_set_irq_line(1,sprite_irq, CLEAR_LINE );
+			cpunum_set_input_line(0,M6809_IRQ_LINE,ASSERT_LINE);
+			cpunum_set_input_line(1,sprite_irq, CLEAR_LINE );
 		}
 	}
 }
 
-static WRITE_HANDLER( ddragon2_sub_irq_ack_w )
+static WRITE8_HANDLER( ddragon2_sub_irq_ack_w )
 {
-	cpu_set_irq_line(1,sprite_irq, CLEAR_LINE );
+	cpunum_set_input_line(1,sprite_irq, CLEAR_LINE );
 }
 
-static WRITE_HANDLER( ddragon2_sub_irq_w )
+static WRITE8_HANDLER( ddragon2_sub_irq_w )
 {
-	cpu_set_irq_line(0,M6809_IRQ_LINE,ASSERT_LINE);
+	cpunum_set_input_line(0,M6809_IRQ_LINE,ASSERT_LINE);
 }
 
-static READ_HANDLER( port4_r )
+static READ8_HANDLER( port4_r )
 {
 	int port = readinputport( 4 );
 
 	return port | dd_sub_cpu_busy | VBLK;
 }
 
-static READ_HANDLER( ddragon_spriteram_r )
+static READ8_HANDLER( ddragon_spriteram_r )
 {
 	return ddragon_spriteram[offset];
 }
 
-static WRITE_HANDLER( ddragon_spriteram_w )
+static WRITE8_HANDLER( ddragon_spriteram_w )
 {
 	if ( cpu_getactivecpu() == 1 && offset == 0 )
 		dd_sub_cpu_busy = 0x10;
@@ -292,13 +292,13 @@ static WRITE_HANDLER( ddragon_spriteram_w )
 
 /*****************************************************************************/
 
-static WRITE_HANDLER( cpu_sound_command_w )
+static WRITE8_HANDLER( cpu_sound_command_w )
 {
 	soundlatch_w( offset, data );
-	cpu_set_irq_line( snd_cpu, sound_irq, (sound_irq == IRQ_LINE_NMI) ? PULSE_LINE : HOLD_LINE );
+	cpunum_set_input_line( snd_cpu, sound_irq, (sound_irq == INPUT_LINE_NMI) ? PULSE_LINE : HOLD_LINE );
 }
 
-static WRITE_HANDLER( dd_adpcm_w )
+static WRITE8_HANDLER( dd_adpcm_w )
 {
 	int chip = offset & 1;
 
@@ -347,7 +347,7 @@ static void dd_adpcm_int(int chip)
 	}
 }
 
-static READ_HANDLER( dd_adpcm_status_r )
+static READ8_HANDLER( dd_adpcm_status_r )
 {
 	return adpcm_idle[0] + (adpcm_idle[1] << 1);
 }
@@ -850,7 +850,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static void irq_handler(int irq)
 {
-	cpu_set_irq_line( snd_cpu, ym_irq , irq ? ASSERT_LINE : CLEAR_LINE );
+	cpunum_set_input_line( snd_cpu, ym_irq , irq ? ASSERT_LINE : CLEAR_LINE );
 }
 
 static struct YM2151interface ym2151_interface =
@@ -889,13 +889,13 @@ static INTERRUPT_GEN( ddragon_interrupt )
 
 	/* VBLK is raised on scanline 240 and NMI line is pulled high */
 	if (scanline==240) {
-		cpu_set_nmi_line(0,ASSERT_LINE);
+		cpunum_set_input_line(0, INPUT_LINE_NMI, ASSERT_LINE);
 		VBLK=0x8;
 	}
 
 	/* IMS is triggered every time VPOS line 3 is raised, as VPOS counter starts at 16, effectively every 16 scanlines */
 	if ((scanline%16)==0)
-		cpu_set_irq_line(0,M6809_FIRQ_LINE,ASSERT_LINE);
+		cpunum_set_input_line(0,M6809_FIRQ_LINE,ASSERT_LINE);
 }
 
 static MACHINE_DRIVER_START( ddragon )

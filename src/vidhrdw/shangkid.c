@@ -55,7 +55,7 @@ VIDEO_START( shangkid )
 	return background?0:1;
 }
 
-WRITE_HANDLER( shangkid_videoram_w )
+WRITE8_HANDLER( shangkid_videoram_w )
 {
 	if( videoram[offset]!=data ){
 		videoram[offset] = data;

@@ -92,13 +92,13 @@ VIDEO_START( pang )
 
 static int video_bank;
 
-WRITE_HANDLER( pang_video_bank_w )
+WRITE8_HANDLER( pang_video_bank_w )
 {
 	/* Bank handler (sets base pointers for video write) (doesn't apply to mgakuen) */
 	video_bank = data;
 }
 
-WRITE_HANDLER( mgakuen_videoram_w )
+WRITE8_HANDLER( mgakuen_videoram_w )
 {
 	if (pang_videoram[offset] != data)
 	{
@@ -107,28 +107,28 @@ WRITE_HANDLER( mgakuen_videoram_w )
 	}
 }
 
-READ_HANDLER( mgakuen_videoram_r )
+READ8_HANDLER( mgakuen_videoram_r )
 {
 	return pang_videoram[offset];
 }
 
-WRITE_HANDLER( mgakuen_objram_w )
+WRITE8_HANDLER( mgakuen_objram_w )
 {
 	pang_objram[offset]=data;
 }
 
-READ_HANDLER( mgakuen_objram_r )
+READ8_HANDLER( mgakuen_objram_r )
 {
 	return pang_objram[offset];
 }
 
-WRITE_HANDLER( pang_videoram_w )
+WRITE8_HANDLER( pang_videoram_w )
 {
 	if (video_bank) mgakuen_objram_w(offset,data);
 	else mgakuen_videoram_w(offset,data);
 }
 
-READ_HANDLER( pang_videoram_r )
+READ8_HANDLER( pang_videoram_r )
 {
 	if (video_bank) return mgakuen_objram_r(offset);
 	else return mgakuen_videoram_r(offset);
@@ -138,7 +138,7 @@ READ_HANDLER( pang_videoram_r )
   COLOUR RAM
 ****************************************************************************/
 
-WRITE_HANDLER( pang_colorram_w )
+WRITE8_HANDLER( pang_colorram_w )
 {
 	if (pang_colorram[offset] != data)
 	{
@@ -147,7 +147,7 @@ WRITE_HANDLER( pang_colorram_w )
 	}
 }
 
-READ_HANDLER( pang_colorram_r )
+READ8_HANDLER( pang_colorram_r )
 {
 	return pang_colorram[offset];
 }
@@ -158,7 +158,7 @@ READ_HANDLER( pang_colorram_r )
 
 static int paletteram_bank;
 
-WRITE_HANDLER( pang_gfxctrl_w )
+WRITE8_HANDLER( pang_gfxctrl_w )
 {
 logerror("PC %04x: pang_gfxctrl_w %02x\n",activecpu_get_pc(),data);
 {
@@ -193,24 +193,24 @@ logerror("PC %04x: pang_gfxctrl_w %02x\n",activecpu_get_pc(),data);
 	/* up marukin - you can see partially built up screens during attract mode. */
 }
 
-WRITE_HANDLER( pang_paletteram_w )
+WRITE8_HANDLER( pang_paletteram_w )
 {
 	if (paletteram_bank) paletteram_xxxxRRRRGGGGBBBB_w(offset + 0x800,data);
 	else paletteram_xxxxRRRRGGGGBBBB_w(offset,data);
 }
 
-READ_HANDLER( pang_paletteram_r )
+READ8_HANDLER( pang_paletteram_r )
 {
 	if (paletteram_bank) return paletteram_r(offset + 0x800);
 	return paletteram_r(offset);
 }
 
-WRITE_HANDLER( mgakuen_paletteram_w )
+WRITE8_HANDLER( mgakuen_paletteram_w )
 {
 	paletteram_xxxxRRRRGGGGBBBB_w(offset,data);
 }
 
-READ_HANDLER( mgakuen_paletteram_r )
+READ8_HANDLER( mgakuen_paletteram_r )
 {
 	return paletteram_r(offset);
 }

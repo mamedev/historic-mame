@@ -22,7 +22,7 @@ static struct tilemap *ojankohs_tilemap;
 static int ojankoc_screen_refresh;
 static struct mame_bitmap *ojankoc_tmpbitmap;
 
-WRITE_HANDLER( ojankoc_videoram_w );
+WRITE8_HANDLER( ojankoc_videoram_w );
 
 
 /******************************************************************************
@@ -61,12 +61,12 @@ PALETTE_INIT( ojankoy )
 	}
 }
 
-READ_HANDLER( ojankohs_palette_r )
+READ8_HANDLER( ojankohs_palette_r )
 {
 	return ojankohs_paletteram[offset];
 }
 
-WRITE_HANDLER( ojankohs_palette_w )
+WRITE8_HANDLER( ojankohs_palette_w )
 {
 	int r, g, b;
 
@@ -86,7 +86,7 @@ WRITE_HANDLER( ojankohs_palette_w )
 	palette_set_color(offset >> 1, r, g, b);
 }
 
-WRITE_HANDLER( ccasino_palette_w )
+WRITE8_HANDLER( ccasino_palette_w )
 {
 	int r, g, b;
 
@@ -109,7 +109,7 @@ WRITE_HANDLER( ccasino_palette_w )
 	palette_set_color(offset >> 1, r, g, b);
 }
 
-WRITE_HANDLER( ojankoc_palette_w )
+WRITE8_HANDLER( ojankoc_palette_w )
 {
 	int r, g, b, color;
 
@@ -138,12 +138,12 @@ WRITE_HANDLER( ojankoc_palette_w )
 
 ******************************************************************************/
 
-READ_HANDLER( ojankohs_videoram_r )
+READ8_HANDLER( ojankohs_videoram_r )
 {
 	return ojankohs_videoram[offset];
 }
 
-WRITE_HANDLER( ojankohs_videoram_w )
+WRITE8_HANDLER( ojankohs_videoram_w )
 {
 	if (ojankohs_videoram[offset] != data) {
 		ojankohs_videoram[offset] = data;
@@ -151,18 +151,18 @@ WRITE_HANDLER( ojankohs_videoram_w )
 	}
 }
 
-READ_HANDLER( ojankohs_colorram_r )
+READ8_HANDLER( ojankohs_colorram_r )
 {
 	return ojankohs_colorram[offset];
 }
 
-WRITE_HANDLER( ojankohs_colorram_w )
+WRITE8_HANDLER( ojankohs_colorram_w )
 {
 	ojankohs_colorram[offset] = data;
 	tilemap_mark_tile_dirty(ojankohs_tilemap, offset);
 }
 
-WRITE_HANDLER( ojankohs_gfxreg_w )
+WRITE8_HANDLER( ojankohs_gfxreg_w )
 {
 	if (ojankohs_gfxreg != data) {
 		ojankohs_gfxreg = data;
@@ -170,7 +170,7 @@ WRITE_HANDLER( ojankohs_gfxreg_w )
 	}
 }
 
-WRITE_HANDLER( ojankohs_flipscreen_w )
+WRITE8_HANDLER( ojankohs_flipscreen_w )
 {
 	if (ojankohs_flipscreen != (data & 0x01)) {
 
@@ -250,7 +250,7 @@ void ojankoc_flipscreen(int data)
 	ojankoc_flipscreen_old = ojankohs_flipscreen;
 }
 
-WRITE_HANDLER( ojankoc_videoram_w )
+WRITE8_HANDLER( ojankoc_videoram_w )
 {
 	int i;
 	UINT8 x, y, xx, px, py ;

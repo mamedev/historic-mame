@@ -245,22 +245,22 @@ extern data16_t *namcos2_68k_roz_ram;
 /* Sound CPU support handlers - 6809						  */
 /**************************************************************/
 
-WRITE_HANDLER( namcos2_sound_bankselect_w );
+WRITE8_HANDLER( namcos2_sound_bankselect_w );
 
 
 /**************************************************************/
 /* MCU Specific support handlers - HD63705					  */
 /**************************************************************/
 
-WRITE_HANDLER( namcos2_mcu_analog_ctrl_w );
-READ_HANDLER( namcos2_mcu_analog_ctrl_r );
+WRITE8_HANDLER( namcos2_mcu_analog_ctrl_w );
+READ8_HANDLER( namcos2_mcu_analog_ctrl_r );
 
-WRITE_HANDLER( namcos2_mcu_analog_port_w );
-READ_HANDLER( namcos2_mcu_analog_port_r );
+WRITE8_HANDLER( namcos2_mcu_analog_port_w );
+READ8_HANDLER( namcos2_mcu_analog_port_r );
 
-WRITE_HANDLER( namcos2_mcu_port_d_w );
-READ_HANDLER( namcos2_mcu_port_d_r );
+WRITE8_HANDLER( namcos2_mcu_port_d_w );
+READ8_HANDLER( namcos2_mcu_port_d_r );
 
-READ_HANDLER( namcos2_input_port_0_r );
-READ_HANDLER( namcos2_input_port_10_r );
-READ_HANDLER( namcos2_input_port_12_r );
+READ8_HANDLER( namcos2_input_port_0_r );
+READ8_HANDLER( namcos2_input_port_10_r );
+READ8_HANDLER( namcos2_input_port_12_r );

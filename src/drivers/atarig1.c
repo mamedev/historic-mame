@@ -58,9 +58,9 @@ static void update_interrupts(void)
 		newstate = 2;
 
 	if (newstate)
-		cpu_set_irq_line(0, newstate, ASSERT_LINE);
+		cpunum_set_input_line(0, newstate, ASSERT_LINE);
 	else
-		cpu_set_irq_line(0, 7, CLEAR_LINE);
+		cpunum_set_input_line(0, 7, CLEAR_LINE);
 }
 
 
@@ -185,7 +185,7 @@ static READ16_HANDLER( pitfighb_cheap_slapstic_r )
 static void pitfighb_cheap_slapstic_init(void)
 {
 	/* install a read handler */
-	bslapstic_base = install_mem_read16_handler(0, 0x038000, 0x03ffff, pitfighb_cheap_slapstic_r);
+	bslapstic_base = memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x038000, 0x03ffff, 0, 0, pitfighb_cheap_slapstic_r);
 
 	/* allocate memory for a copy of bank 0 */
 	bslapstic_bank0 = auto_malloc(0x2000);

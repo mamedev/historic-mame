@@ -71,7 +71,7 @@ static data16_t *hyperpac_ram;
 
 static INTERRUPT_GEN( snowbros_interrupt )
 {
-	cpu_set_irq_line(0, cpu_getiloops() + 2, HOLD_LINE);	/* IRQs 4, 3, and 2 */
+	cpunum_set_input_line(0, cpu_getiloops() + 2, HOLD_LINE);	/* IRQs 4, 3, and 2 */
 }
 
 
@@ -101,7 +101,7 @@ static WRITE16_HANDLER( snowbros_68000_sound_w )
 	if (ACCESSING_LSB)
 	{
 		soundlatch_w(offset,data & 0xff);
-		cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
+		cpunum_set_input_line(1,INPUT_LINE_NMI,PULSE_LINE);
 	}
 }
 
@@ -571,7 +571,7 @@ static struct GfxDecodeInfo hyperpac_gfxdecodeinfo[] =
 /* handler called by the 3812/2151 emulator when the internal timers cause an IRQ */
 static void irqhandler(int irq)
 {
-	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 /* SnowBros Sound */
@@ -889,7 +889,7 @@ static DRIVER_INIT( moremorp )
 //		hyperpac_ram[0xf000/2 + i] = PROTDATA[i];
 
 	/* explicit check in the code */
-	install_mem_read16_handler (0, 0x200000, 0x200001, moremorp_0a_read );
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x200000, 0x200001, 0, 0, moremorp_0a_read );
 }
 
 

@@ -31,7 +31,7 @@ static void sprite_callback(int *code,int *color)
 	*color = 0;
 }
 
-WRITE_HANDLER( battlnts_spritebank_w )
+WRITE8_HANDLER( battlnts_spritebank_w )
 {
 	spritebank = 1024 * (data & 1);
 }

@@ -106,8 +106,8 @@ VIDEO_START( vb );
 VIDEO_UPDATE( vb );
 extern void vb_bgprombank_w(int bank);
 extern void vb_spprombank_w(int bank);
-extern WRITE_HANDLER( vb_attrib_w );
-extern WRITE_HANDLER( vb_videoram_w );
+extern WRITE8_HANDLER( vb_attrib_w );
+extern WRITE8_HANDLER( vb_videoram_w );
 extern void vb_mark_all_dirty(void);
 
 INTERRUPT_GEN( vball_interrupt );
@@ -125,7 +125,7 @@ INTERRUPT_GEN( vball_interrupt );
    bit 6 = scroll y hi
    bit 7 = ?
 */
-static WRITE_HANDLER( vb_bankswitch_w )
+static WRITE8_HANDLER( vb_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	cpu_setbank( 1,&RAM[ 0x10000 + ( 0x4000 * ( data & 1 ) ) ] );
@@ -140,9 +140,9 @@ static WRITE_HANDLER( vb_bankswitch_w )
 /* The sound system comes all but verbatim from Double Dragon */
 
 
-WRITE_HANDLER( cpu_sound_command_w ) {
+WRITE8_HANDLER( cpu_sound_command_w ) {
 	soundlatch_w( offset, data );
-	cpu_set_irq_line( 1, IRQ_LINE_NMI, PULSE_LINE );
+	cpunum_set_input_line( 1, INPUT_LINE_NMI, PULSE_LINE );
 }
 
 
@@ -155,7 +155,7 @@ WRITE_HANDLER( cpu_sound_command_w ) {
    bit 6 = sp prom bank
    bit 7 = sp prom bank
 */
-WRITE_HANDLER( vb_scrollx_hi_w )
+WRITE8_HANDLER( vb_scrollx_hi_w )
 {
 	flip_screen_set(~data&1);
 	vb_scrollx_hi = (data & 0x02) << 7;
@@ -190,7 +190,7 @@ static ADDRESS_MAP_START( vball2pj_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)
 ADDRESS_MAP_END
 
-WRITE_HANDLER(vb_scrollx_lo_w)
+WRITE8_HANDLER(vb_scrollx_lo_w)
 {
 	vb_scrollx_lo = data;
 	//logerror("%04x: vb_scrollx_lo =%d\n",activecpu_get_previouspc(), vb_scrollx_lo);
@@ -389,7 +389,7 @@ static struct GfxDecodeInfo vb_gfxdecodeinfo[] =
 
 static void vball_irq_handler(int irq)
 {
-	cpu_set_irq_line( 1, 0 , irq ? ASSERT_LINE : CLEAR_LINE );
+	cpunum_set_input_line( 1, 0 , irq ? ASSERT_LINE : CLEAR_LINE );
 }
 
 static struct YM2151interface ym2151_interface =

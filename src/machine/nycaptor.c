@@ -15,19 +15,19 @@ static int mcu_sent = 0,main_sent = 0;
 
 static unsigned char portA_in,portA_out,ddrA;
 
-READ_HANDLER( nycaptor_68705_portA_r )
+READ8_HANDLER( nycaptor_68705_portA_r )
 {
 
 	return (portA_out & ddrA) | (portA_in & ~ddrA);
 }
 
-WRITE_HANDLER( nycaptor_68705_portA_w )
+WRITE8_HANDLER( nycaptor_68705_portA_w )
 {
 
 	portA_out = data;
 }
 
-WRITE_HANDLER( nycaptor_68705_ddrA_w )
+WRITE8_HANDLER( nycaptor_68705_ddrA_w )
 {
 	ddrA = data;
 }
@@ -43,19 +43,19 @@ WRITE_HANDLER( nycaptor_68705_ddrA_w )
 
 static unsigned char portB_in,portB_out,ddrB;
 
-READ_HANDLER( nycaptor_68705_portB_r )
+READ8_HANDLER( nycaptor_68705_portB_r )
 {
 	return (portB_out & ddrB) | (portB_in & ~ddrB);
 }
 
-WRITE_HANDLER( nycaptor_68705_portB_w )
+WRITE8_HANDLER( nycaptor_68705_portB_w )
 {
 
 
 	if ((ddrB & 0x02) && (~data & 0x02) && (portB_out & 0x02))
 	{
 		portA_in = from_main;
-		if (main_sent) cpu_set_irq_line(3,0,CLEAR_LINE);
+		if (main_sent) cpunum_set_input_line(3,0,CLEAR_LINE);
 		main_sent = 0;
 
 	}
@@ -69,7 +69,7 @@ WRITE_HANDLER( nycaptor_68705_portB_w )
 	portB_out = data;
 }
 
-WRITE_HANDLER( nycaptor_68705_ddrB_w )
+WRITE8_HANDLER( nycaptor_68705_ddrB_w )
 {
 	ddrB = data;
 }
@@ -77,7 +77,7 @@ WRITE_HANDLER( nycaptor_68705_ddrB_w )
 
 static unsigned char portC_in,portC_out,ddrC;
 
-READ_HANDLER( nycaptor_68705_portC_r )
+READ8_HANDLER( nycaptor_68705_portC_r )
 {
 	portC_in = 0;
 	if (main_sent) portC_in |= 0x01;
@@ -86,40 +86,40 @@ READ_HANDLER( nycaptor_68705_portC_r )
 	return (portC_out & ddrC) | (portC_in & ~ddrC);
 }
 
-WRITE_HANDLER( nycaptor_68705_portC_w )
+WRITE8_HANDLER( nycaptor_68705_portC_w )
 {
 
 	portC_out = data;
 }
 
-WRITE_HANDLER( nycaptor_68705_ddrC_w )
+WRITE8_HANDLER( nycaptor_68705_ddrC_w )
 {
 	ddrC = data;
 }
 
-WRITE_HANDLER( nycaptor_mcu_w )
+WRITE8_HANDLER( nycaptor_mcu_w )
 {
 
 	from_main = data;
 	main_sent = 1;
-	cpu_set_irq_line(3,0,ASSERT_LINE);
+	cpunum_set_input_line(3,0,ASSERT_LINE);
 }
 
-READ_HANDLER( nycaptor_mcu_r )
+READ8_HANDLER( nycaptor_mcu_r )
 {
 
 	mcu_sent = 0;
 	return from_mcu;
 }
 
-READ_HANDLER( nycaptor_mcu_status_r1 )
+READ8_HANDLER( nycaptor_mcu_status_r1 )
 {
 	/* bit 1 = when 1, mcu has sent data to the main cpu */
 
 	return mcu_sent?2:0;
 }
 
-READ_HANDLER( nycaptor_mcu_status_r2 )
+READ8_HANDLER( nycaptor_mcu_status_r2 )
 {
 	/* bit 0 = when 1, mcu is ready to receive data from main cpu */
   return main_sent?0:1;

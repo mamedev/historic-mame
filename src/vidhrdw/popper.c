@@ -39,7 +39,7 @@ PALETTE_INIT( popper )
 	}
 }
 
-WRITE_HANDLER( popper_ol_videoram_w )
+WRITE8_HANDLER( popper_ol_videoram_w )
 {
 	if (popper_ol_videoram[offset] != data)
 	{
@@ -49,7 +49,7 @@ WRITE_HANDLER( popper_ol_videoram_w )
 	}
 }
 
-WRITE_HANDLER( popper_videoram_w )
+WRITE8_HANDLER( popper_videoram_w )
 {
 	if (popper_videoram[offset] != data)
 	{
@@ -59,7 +59,7 @@ WRITE_HANDLER( popper_videoram_w )
 	}
 }
 
-WRITE_HANDLER( popper_ol_attribram_w )
+WRITE8_HANDLER( popper_ol_attribram_w )
 {
 	if (popper_ol_attribram[offset] != data)
 	{
@@ -69,7 +69,7 @@ WRITE_HANDLER( popper_ol_attribram_w )
 	}
 }
 
-WRITE_HANDLER( popper_attribram_w )
+WRITE8_HANDLER( popper_attribram_w )
 {
 	if (popper_attribram[offset] != data)
 	{
@@ -79,7 +79,7 @@ WRITE_HANDLER( popper_attribram_w )
 	}
 }
 
-WRITE_HANDLER( popper_flipscreen_w )
+WRITE8_HANDLER( popper_flipscreen_w )
 {
 	popper_flipscreen = data;
 	tilemap_set_flip( ALL_TILEMAPS,popper_flipscreen?(TILEMAP_FLIPX|TILEMAP_FLIPY):0 );
@@ -92,12 +92,12 @@ WRITE_HANDLER( popper_flipscreen_w )
 		tilemap_clip.max_x=15;
 }
 
-WRITE_HANDLER( popper_e002_w )
+WRITE8_HANDLER( popper_e002_w )
 {
 	popper_e002 = data;
 }
 
-WRITE_HANDLER( popper_gfx_bank_w )
+WRITE8_HANDLER( popper_gfx_bank_w )
 {
 	if (popper_gfx_bank != data)
 	{

@@ -34,7 +34,7 @@ PALETTE_INIT( battlex )
 	}
 }
 
-WRITE_HANDLER( battlex_palette_w )
+WRITE8_HANDLER( battlex_palette_w )
 {
 	int g = ((data & 1) >> 0) * 0xff;
 	int b = ((data & 2) >> 1) * 0xff;
@@ -43,17 +43,17 @@ WRITE_HANDLER( battlex_palette_w )
 	palette_set_color(16*8 + offset,r,g,b);
 }
 
-WRITE_HANDLER( battlex_scroll_x_lsb_w )
+WRITE8_HANDLER( battlex_scroll_x_lsb_w )
 {
 	battlex_scroll_lsb = data;
 }
 
-WRITE_HANDLER( battlex_scroll_x_msb_w )
+WRITE8_HANDLER( battlex_scroll_x_msb_w )
 {
 	battlex_scroll_msb = data;
 }
 
-WRITE_HANDLER( battlex_videoram_w )
+WRITE8_HANDLER( battlex_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -62,7 +62,7 @@ WRITE_HANDLER( battlex_videoram_w )
 	}
 }
 
-WRITE_HANDLER( battlex_flipscreen_w )
+WRITE8_HANDLER( battlex_flipscreen_w )
 {
 	/* bit 4 is used, but for what? */
 

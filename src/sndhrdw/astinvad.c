@@ -58,7 +58,7 @@ struct Samplesinterface astinvad_samples_interface =
 };
 
 
-WRITE_HANDLER( astinvad_sound1_w )
+WRITE8_HANDLER( astinvad_sound1_w )
 {
 	static int state;
 
@@ -82,7 +82,7 @@ WRITE_HANDLER( astinvad_sound1_w )
 }
 
 
-WRITE_HANDLER( astinvad_sound2_w )
+WRITE8_HANDLER( astinvad_sound2_w )
 {
 	static int state;
 
@@ -100,7 +100,7 @@ WRITE_HANDLER( astinvad_sound2_w )
 }
 
 
-WRITE_HANDLER( spaceint_sound1_w )
+WRITE8_HANDLER( spaceint_sound1_w )
 {
 	static int state;
 
@@ -125,7 +125,7 @@ WRITE_HANDLER( spaceint_sound1_w )
 }
 
 
-WRITE_HANDLER( spaceint_sound2_w )
+WRITE8_HANDLER( spaceint_sound2_w )
 {
 	static int state;
 

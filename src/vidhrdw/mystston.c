@@ -69,7 +69,7 @@ PALETTE_INIT( mystston )
 	}
 }
 
-WRITE_HANDLER( mystston_videoram_w )
+WRITE8_HANDLER( mystston_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -78,7 +78,7 @@ WRITE_HANDLER( mystston_videoram_w )
 	}
 }
 
-WRITE_HANDLER( mystston_videoram2_w )
+WRITE8_HANDLER( mystston_videoram2_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -87,12 +87,12 @@ WRITE_HANDLER( mystston_videoram2_w )
 	}
 }
 
-WRITE_HANDLER( mystston_scroll_w )
+WRITE8_HANDLER( mystston_scroll_w )
 {
 	tilemap_set_scrolly(bg_tilemap, 0, data);
 }
 
-WRITE_HANDLER( mystston_control_w )
+WRITE8_HANDLER( mystston_control_w )
 {
 	// bits 0 and 1 are foreground text color
 	if (mystston_fgcolor != ((data & 0x01) << 1) + ((data & 0x02) >> 1))

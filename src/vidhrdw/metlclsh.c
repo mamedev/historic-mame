@@ -32,7 +32,7 @@ data8_t *metlclsh_bgram, *metlclsh_fgram, *metlclsh_scrollx;
 
 /* Functions that driver has access to: */
 
-WRITE_HANDLER( metlclsh_rambank_w )
+WRITE8_HANDLER( metlclsh_rambank_w )
 {
 	if (data & 1)
 	{
@@ -47,7 +47,7 @@ WRITE_HANDLER( metlclsh_rambank_w )
 }
 
 static data8_t metlclsh_gfxbank;
-WRITE_HANDLER( metlclsh_gfxbank_w )
+WRITE8_HANDLER( metlclsh_gfxbank_w )
 {
 	if (!(data & 4) && (metlclsh_gfxbank != data))
 	{
@@ -83,7 +83,7 @@ static void get_bg_tile_info(int tile_index)
 	SET_TILE_INFO(1, metlclsh_bgram[tile_index] + (metlclsh_gfxbank << 7),0,0)
 }
 
-WRITE_HANDLER( metlclsh_bgram_w )
+WRITE8_HANDLER( metlclsh_bgram_w )
 {
 	/*	This ram is banked: it's either the tilemap (e401 = 1)
 		or bit n of another area (e401 = n << 1)? (that I don't understand) */
@@ -130,7 +130,7 @@ static void get_fg_tile_info(int tile_index)
 	tile_info.priority = ((attr & 0x80) ? 1 : 2);
 }
 
-WRITE_HANDLER( metlclsh_fgram_w )
+WRITE8_HANDLER( metlclsh_fgram_w )
 {
 	if (metlclsh_fgram[offset] != data)
 	{

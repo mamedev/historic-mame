@@ -66,31 +66,31 @@ K1000233A
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-WRITE_HANDLER (pitnrun_68705_portA_w);
-WRITE_HANDLER (pitnrun_68705_portB_w);
+WRITE8_HANDLER (pitnrun_68705_portA_w);
+WRITE8_HANDLER (pitnrun_68705_portB_w);
 
-READ_HANDLER (pitnrun_68705_portA_r);
-READ_HANDLER (pitnrun_68705_portB_r);
-READ_HANDLER (pitnrun_68705_portC_r);
+READ8_HANDLER (pitnrun_68705_portA_r);
+READ8_HANDLER (pitnrun_68705_portB_r);
+READ8_HANDLER (pitnrun_68705_portC_r);
 
 MACHINE_INIT( pitnrun );
 
-READ_HANDLER( pitnrun_mcu_data_r );
-READ_HANDLER( pitnrun_mcu_status_r );
-WRITE_HANDLER( pitnrun_mcu_data_w );
+READ8_HANDLER( pitnrun_mcu_data_r );
+READ8_HANDLER( pitnrun_mcu_status_r );
+WRITE8_HANDLER( pitnrun_mcu_data_w );
 
 extern UINT8* videoram2;
 
-WRITE_HANDLER( pitnrun_videoram_w );
-WRITE_HANDLER( pitnrun_videoram2_w );
-WRITE_HANDLER(pitnrun_ha_w);
-WRITE_HANDLER(pitnrun_h_heed_w);
-WRITE_HANDLER(pitnrun_v_heed_w);
-WRITE_HANDLER(pitnrun_color_select_w);
-WRITE_HANDLER( pitnrun_char_bank_select );
-WRITE_HANDLER( pitnrun_scroll_w );
-READ_HANDLER( pitnrun_videoram_r );
-READ_HANDLER( pitnrun_videoram2_r );
+WRITE8_HANDLER( pitnrun_videoram_w );
+WRITE8_HANDLER( pitnrun_videoram2_w );
+WRITE8_HANDLER(pitnrun_ha_w);
+WRITE8_HANDLER(pitnrun_h_heed_w);
+WRITE8_HANDLER(pitnrun_v_heed_w);
+WRITE8_HANDLER(pitnrun_color_select_w);
+WRITE8_HANDLER( pitnrun_char_bank_select );
+WRITE8_HANDLER( pitnrun_scroll_w );
+READ8_HANDLER( pitnrun_videoram_r );
+READ8_HANDLER( pitnrun_videoram2_r );
 
 PALETTE_INIT(pitnrun);
 VIDEO_START(pitnrun);
@@ -100,20 +100,20 @@ static int pitnrun_nmi;
 
 static INTERRUPT_GEN( pitnrun_nmi_source )
 {
-	 if(pitnrun_nmi) cpu_set_irq_line(0,IRQ_LINE_NMI, PULSE_LINE)	;
+	 if(pitnrun_nmi) cpunum_set_input_line(0,INPUT_LINE_NMI, PULSE_LINE)	;
 }
 
-static WRITE_HANDLER( nmi_enable_w )
+static WRITE8_HANDLER( nmi_enable_w )
 {
         pitnrun_nmi=data&1;
 }
 
-static WRITE_HANDLER(pitnrun_hflip_w)
+static WRITE8_HANDLER(pitnrun_hflip_w)
 {
 	flip_screen_x_set(data);
 }
 
-static WRITE_HANDLER(pitnrun_vflip_w)
+static WRITE8_HANDLER(pitnrun_vflip_w)
 {
 	flip_screen_y_set(data);
 }

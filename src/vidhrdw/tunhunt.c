@@ -49,7 +49,7 @@ static struct tilemap *fg_tilemap;
 
 /****************************************************************************************/
 
-WRITE_HANDLER( tunhunt_videoram_w )
+WRITE8_HANDLER( tunhunt_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -58,7 +58,7 @@ WRITE_HANDLER( tunhunt_videoram_w )
 	}
 }
 
-WRITE_HANDLER( tunhunt_mott_w )
+WRITE8_HANDLER( tunhunt_mott_w )
 {
 	if( spriteram[offset]!=data )
 	{

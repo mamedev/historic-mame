@@ -313,12 +313,12 @@ The first sprite data is located at f20b,then f21b and so on.
 #include "vidhrdw/generic.h"
 
 
-extern WRITE_HANDLER( psychic5_paged_ram_w );
-extern WRITE_HANDLER( psychic5_vram_page_select_w );
-extern WRITE_HANDLER( psychic5_title_screen_w );
+extern WRITE8_HANDLER( psychic5_paged_ram_w );
+extern WRITE8_HANDLER( psychic5_vram_page_select_w );
+extern WRITE8_HANDLER( psychic5_title_screen_w );
 
-extern READ_HANDLER( psychic5_paged_ram_r );
-extern READ_HANDLER( psychic5_vram_page_select_r );
+extern READ8_HANDLER( psychic5_paged_ram_r );
+extern READ8_HANDLER( psychic5_vram_page_select_r );
 
 extern MACHINE_INIT( psychic5 );
 
@@ -328,12 +328,12 @@ extern VIDEO_UPDATE( psychic5 );
 static int psychic5_bank_latch = 0x0;
 
 
-READ_HANDLER( psychic5_bankselect_r )
+READ8_HANDLER( psychic5_bankselect_r )
 {
 	return psychic5_bank_latch;
 }
 
-WRITE_HANDLER( psychic5_bankselect_w )
+WRITE8_HANDLER( psychic5_bankselect_w )
 {
 	UINT8 *RAM = memory_region(REGION_CPU1);
 	int bankaddress;
@@ -346,7 +346,7 @@ WRITE_HANDLER( psychic5_bankselect_w )
 	}
 }
 
-WRITE_HANDLER( psychic5_coin_counter_w )
+WRITE8_HANDLER( psychic5_coin_counter_w )
 {
 	coin_counter_w(0, data & 0x01);
 	coin_counter_w(1, data & 0x02);
@@ -361,9 +361,9 @@ WRITE_HANDLER( psychic5_coin_counter_w )
 INTERRUPT_GEN( psychic5_interrupt )
 {
 	if (cpu_getiloops() == 0)
-	   cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0xd7);		/* RST 10h */
+	   cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, 0xd7);		/* RST 10h */
 	else
-   	   cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0xcf);		/* RST 08h */
+   	   cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, 0xcf);		/* RST 08h */
 }
 
 
@@ -537,7 +537,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static void irqhandler(int irq)
 {
-	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2203interface ym2203_interface =

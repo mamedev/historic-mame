@@ -101,12 +101,12 @@ VIDEO_START( dogfgt )
 
 ***************************************************************************/
 
-WRITE_HANDLER( dogfgt_plane_select_w )
+WRITE8_HANDLER( dogfgt_plane_select_w )
 {
 	bm_plane = data;
 }
 
-READ_HANDLER( dogfgt_bitmapram_r )
+READ8_HANDLER( dogfgt_bitmapram_r )
 {
 	if (bm_plane > 2)
 	{
@@ -117,7 +117,7 @@ READ_HANDLER( dogfgt_bitmapram_r )
 	return bitmapram[offset + BITMAPRAM_SIZE/3 * bm_plane];
 }
 
-static WRITE_HANDLER( internal_bitmapram_w )
+static WRITE8_HANDLER( internal_bitmapram_w )
 {
 	int x,y,subx;
 
@@ -141,7 +141,7 @@ static WRITE_HANDLER( internal_bitmapram_w )
 	}
 }
 
-WRITE_HANDLER( dogfgt_bitmapram_w )
+WRITE8_HANDLER( dogfgt_bitmapram_w )
 {
 	if (bm_plane > 2)
 	{
@@ -152,13 +152,13 @@ WRITE_HANDLER( dogfgt_bitmapram_w )
 	internal_bitmapram_w(offset + BITMAPRAM_SIZE/3 * bm_plane,data);
 }
 
-WRITE_HANDLER( dogfgt_bgvideoram_w )
+WRITE8_HANDLER( dogfgt_bgvideoram_w )
 {
 	dogfgt_bgvideoram[offset] = data;
 	tilemap_mark_tile_dirty(bg_tilemap,offset & 0x3ff);
 }
 
-WRITE_HANDLER( dogfgt_scroll_w )
+WRITE8_HANDLER( dogfgt_scroll_w )
 {
 	static int scroll[4];
 
@@ -168,7 +168,7 @@ WRITE_HANDLER( dogfgt_scroll_w )
 	tilemap_set_scrolly(bg_tilemap,0,scroll[2] + 256 * scroll[3]);
 }
 
-WRITE_HANDLER( dogfgt_1800_w )
+WRITE8_HANDLER( dogfgt_1800_w )
 {
 	/* bits 0 and 1 are probably text color (not verified because PROM is missing) */
 	pixcolor = ((data & 0x01) << 1) | ((data & 0x02) >> 1);

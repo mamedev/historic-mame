@@ -79,9 +79,9 @@ PS / PD :  key matrix
 
 static UINT8 mux_data;
 
-extern WRITE_HANDLER( speedatk_videoram_w );
-extern WRITE_HANDLER( speedatk_colorram_w );
-extern WRITE_HANDLER( speedatk_flip_screen_w );
+extern WRITE8_HANDLER( speedatk_videoram_w );
+extern WRITE8_HANDLER( speedatk_colorram_w );
+extern WRITE8_HANDLER( speedatk_flip_screen_w );
 extern PALETTE_INIT( speedatk );
 extern VIDEO_START( speedatk );
 extern VIDEO_UPDATE( speedatk );
@@ -90,7 +90,7 @@ extern VIDEO_UPDATE( speedatk );
  * example pressing button A + button B it causes an output of button C.               *
  * This function converts the bit inputs of this game into the usual way MAME does,and *
  * it handles the multiplexer device between player one and two.                       */
-static READ_HANDLER( key_matrix_r )
+static READ8_HANDLER( key_matrix_r )
 {
 	switch(mux_data)
 	{
@@ -138,12 +138,12 @@ static READ_HANDLER( key_matrix_r )
 	return 0x00;
 }
 
-static WRITE_HANDLER( key_matrix_w )
+static WRITE8_HANDLER( key_matrix_w )
 {
 	mux_data = data;
 }
 
-static READ_HANDLER( read_8001 )
+static READ8_HANDLER( read_8001 )
 {
 	return 1;
 }

@@ -71,9 +71,9 @@ static void update_68k_interrupts(void)
 	if (irq68k) irqline = 3;
 
 	if (irqline)
-		cpu_set_irq_line(hdcpu_sound, irqline, ASSERT_LINE);
+		cpunum_set_input_line(hdcpu_sound, irqline, ASSERT_LINE);
 	else
-		cpu_set_irq_line(hdcpu_sound, 7, CLEAR_LINE);
+		cpunum_set_input_line(hdcpu_sound, 7, CLEAR_LINE);
 }
 
 
@@ -115,8 +115,8 @@ WRITE16_HANDLER( hd68k_snd_data_w )
 
 WRITE16_HANDLER( hd68k_snd_reset_w )
 {
-	cpu_set_reset_line(hdcpu_sound, ASSERT_LINE);
-	cpu_set_reset_line(hdcpu_sound, CLEAR_LINE);
+	cpunum_set_input_line(hdcpu_sound, INPUT_LINE_RESET, ASSERT_LINE);
+	cpunum_set_input_line(hdcpu_sound, INPUT_LINE_RESET, CLEAR_LINE);
 	mainflag = soundflag = 0;
 	update_68k_interrupts();
 	logerror("%06X:Reset sound\n", activecpu_get_previouspc());
@@ -219,7 +219,7 @@ WRITE16_HANDLER( hdsnd68k_latches_w )
 		case 4:	/* RES320 */
 			logerror("%06X:RES320=%d\n", activecpu_get_previouspc(), data);
 			if (hdcpu_sounddsp != -1)
-				cpu_set_halt_line(hdcpu_sounddsp, data ? CLEAR_LINE : ASSERT_LINE);
+				cpunum_set_input_line(hdcpu_sounddsp, INPUT_LINE_HALT, data ? CLEAR_LINE : ASSERT_LINE);
 			break;
 
 		case 7:	/* LED */

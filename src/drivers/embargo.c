@@ -21,7 +21,7 @@ static VIDEO_UPDATE( embargo )
 }
 
 
-static WRITE_HANDLER( embargo_videoram_w )
+static WRITE8_HANDLER( embargo_videoram_w )
 {
 	int col = offset % 32;
 	int row = offset / 32;
@@ -37,13 +37,13 @@ static WRITE_HANDLER( embargo_videoram_w )
 }
 
 
-static READ_HANDLER( embargo_input_r )
+static READ8_HANDLER( embargo_input_r )
 {
 	return (readinputport(1) << (7 - input_select)) & 0x80;
 }
 
 
-static READ_HANDLER( embargo_dial_r )
+static READ8_HANDLER( embargo_dial_r )
 {
 	UINT8 lo = 0;
 	UINT8 hi = 0;
@@ -91,17 +91,17 @@ static READ_HANDLER( embargo_dial_r )
 }
 
 
-static WRITE_HANDLER( embargo_port1_w )
+static WRITE8_HANDLER( embargo_port1_w )
 {
 	dial_enable_1 = data & 1; /* other bits unknown */
 }
-static WRITE_HANDLER( embargo_port2_w )
+static WRITE8_HANDLER( embargo_port2_w )
 {
 	dial_enable_2 = data & 1; /* other bits unknown */
 }
 
 
-static WRITE_HANDLER( embargo_input_w )
+static WRITE8_HANDLER( embargo_input_w )
 {
 	input_select = data & 7;
 }

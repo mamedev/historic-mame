@@ -93,8 +93,8 @@ extern UINT8* iremm15_chargen;
 
 VIDEO_UPDATE( skychut );
 VIDEO_UPDATE( iremm15 );
-WRITE_HANDLER( skychut_colorram_w );
-WRITE_HANDLER( skychut_ctrl_w );
+WRITE8_HANDLER( skychut_colorram_w );
+WRITE8_HANDLER( skychut_ctrl_w );
 
 static UINT8 *memory;
 
@@ -171,9 +171,9 @@ ADDRESS_MAP_END
 INTERRUPT_GEN( skychut_interrupt )
 {
 	if (readinputport(2) & 1)	/* Left Coin */
-        cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+        cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
     else
-    	cpu_set_irq_line(0, 0, HOLD_LINE);
+    	cpunum_set_input_line(0, 0, HOLD_LINE);
 }
 
 INPUT_PORTS_START( skychut )
@@ -314,7 +314,7 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( greenberet )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(M6502,11730000/10)
+	MDRV_CPU_ADD_TAG("main", M6502,11730000/10)
 	MDRV_CPU_PROGRAM_MAP(greenberet_readmem,greenberet_writemem)
 	MDRV_CPU_VBLANK_INT(skychut_interrupt,1)
 
@@ -333,6 +333,12 @@ static MACHINE_DRIVER_START( greenberet )
 	MDRV_VIDEO_UPDATE(iremm15)
 
 	/* sound hardware */
+MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( headoni )
+	MDRV_IMPORT_FROM(greenberet)
+	MDRV_CPU_REPLACE("main", M6502,11730000/16)
 MACHINE_DRIVER_END
 
 
@@ -433,5 +439,5 @@ GAMEX( 1979, andromed, 0, skychut,    skychut,   0, ROT270, "Irem", "Andromeda (
 GAMEX( 1979?,ipminvad, 0, skychut,    skychut,   0, ROT270, "Irem", "IPM Invader", GAME_NO_COCKTAIL | GAME_NO_SOUND | GAME_IMPERFECT_COLORS )
 GAMEX( 1980, skychut,  0, skychut,    skychut,   0, ROT270, "Irem", "Sky Chuter", GAME_NO_COCKTAIL | GAME_NO_SOUND | GAME_IMPERFECT_COLORS )
 GAMEX( 1979, spacbeam, 0, greenberet, spacebeam, 0, ROT270, "Irem", "Space Beam", GAME_NO_COCKTAIL | GAME_NO_SOUND | GAME_IMPERFECT_COLORS )
-GAMEX( 1979?,headoni,  0, greenberet, headoni,   0, ROT270, "Irem", "Head On (Irem, M-15 Hardware)", GAME_NO_COCKTAIL | GAME_NO_SOUND | GAME_IMPERFECT_COLORS )
+GAMEX( 1979?,headoni,  0, headoni,    headoni,   0, ROT270, "Irem", "Head On (Irem, M-15 Hardware)", GAME_NO_COCKTAIL | GAME_NO_SOUND | GAME_IMPERFECT_COLORS )
 GAMEX( 1980, greenber, 0, greenberet, spacebeam, 0, ROT270, "Irem", "Green Beret (Irem)", GAME_NO_COCKTAIL | GAME_NO_SOUND | GAME_IMPERFECT_COLORS | GAME_NOT_WORKING )

@@ -67,7 +67,7 @@ PALETTE_INIT( gberet )
 	}
 }
 
-WRITE_HANDLER( gberet_videoram_w )
+WRITE8_HANDLER( gberet_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -76,7 +76,7 @@ WRITE_HANDLER( gberet_videoram_w )
 	}
 }
 
-WRITE_HANDLER( gberet_colorram_w )
+WRITE8_HANDLER( gberet_colorram_w )
 {
 	if (colorram[offset] != data)
 	{
@@ -85,7 +85,7 @@ WRITE_HANDLER( gberet_colorram_w )
 	}
 }
 
-WRITE_HANDLER( gberet_scroll_w )
+WRITE8_HANDLER( gberet_scroll_w )
 {
 	int scroll;
 
@@ -95,7 +95,7 @@ WRITE_HANDLER( gberet_scroll_w )
 	tilemap_set_scrollx(bg_tilemap, offset & 0x1f, scroll);
 }
 
-WRITE_HANDLER( gberet_sprite_bank_w )
+WRITE8_HANDLER( gberet_sprite_bank_w )
 {
 	gberet_spritebank = data;
 }
@@ -172,7 +172,7 @@ VIDEO_UPDATE( gberet )
 
 /* Green Beret (bootleg) */
 
-WRITE_HANDLER( gberetb_scroll_w )
+WRITE8_HANDLER( gberetb_scroll_w )
 {
 	int scroll;
 

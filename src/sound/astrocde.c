@@ -300,12 +300,12 @@ void astrocade_sound_w(int num, int offset, int data)
 	}
 }
 
-WRITE_HANDLER( astrocade_sound1_w )
+WRITE8_HANDLER( astrocade_sound1_w )
 {
 	astrocade_sound_w(0, offset, data);
 }
 
-WRITE_HANDLER( astrocade_sound2_w )
+WRITE8_HANDLER( astrocade_sound2_w )
 {
 	astrocade_sound_w(1, offset, data);
 }

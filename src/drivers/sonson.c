@@ -51,23 +51,23 @@ TODO:
 #include "vidhrdw/generic.h"
 #include "cpu/m6809/m6809.h"
 
-extern WRITE_HANDLER( sonson_videoram_w );
-extern WRITE_HANDLER( sonson_colorram_w );
-extern WRITE_HANDLER( sonson_scroll_w );
-extern WRITE_HANDLER( sonson_flipscreen_w );
+extern WRITE8_HANDLER( sonson_videoram_w );
+extern WRITE8_HANDLER( sonson_colorram_w );
+extern WRITE8_HANDLER( sonson_scroll_w );
+extern WRITE8_HANDLER( sonson_flipscreen_w );
 
 extern PALETTE_INIT( sonson );
 extern VIDEO_START( sonson );
 extern VIDEO_UPDATE( sonson );
 
-WRITE_HANDLER( sonson_sh_irqtrigger_w )
+WRITE8_HANDLER( sonson_sh_irqtrigger_w )
 {
 	static int last;
 
 	if (last == 0 && data == 1)
 	{
 		/* setting bit 0 low then high triggers IRQ on the sound CPU */
-		cpu_set_irq_line(1,M6809_FIRQ_LINE,HOLD_LINE);
+		cpunum_set_input_line(1,M6809_FIRQ_LINE,HOLD_LINE);
 	}
 
 	last = data;

@@ -257,9 +257,9 @@ static void update_interrupts(void)
 
 	/* either set or clear the appropriate lines */
 	if (level)
-		cpu_set_irq_line(0, level, ASSERT_LINE);
+		cpunum_set_input_line(0, level, ASSERT_LINE);
 	else
-		cpu_set_irq_line(0, 7, CLEAR_LINE);
+		cpunum_set_input_line(0, 7, CLEAR_LINE);
 }
 
 
@@ -357,7 +357,7 @@ static MACHINE_INIT( genesis )
     genesis_z80_ram[0] = 0x76;
 	genesis_z80_ram[0x38] = 0x76;
 
-	cpu_set_halt_line(1, ASSERT_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_HALT, ASSERT_LINE);
 
 	z80running = 0;
 	logerror("Machine init\n");
@@ -1037,7 +1037,7 @@ WRITE16_HANDLER(genesis_ctrl_w)
 		if (data == 0x100)
 		{
 			z80running = 0;
-			cpu_set_halt_line(1, ASSERT_LINE);	/* halt Z80 */
+			cpunum_set_input_line(1, INPUT_LINE_HALT, ASSERT_LINE);	/* halt Z80 */
 			/* logerror("z80 stopped by 68k BusReq\n"); */
 		}
 		else
@@ -1045,7 +1045,7 @@ WRITE16_HANDLER(genesis_ctrl_w)
 			z80running = 1;
 			cpu_setbank(1, &genesis_z80_ram[0]);
 
-			cpu_set_halt_line(1, CLEAR_LINE);
+			cpunum_set_input_line(1, INPUT_LINE_HALT, CLEAR_LINE);
 			/* logerror("z80 started, BusReq ends\n"); */
 		}
 		return;
@@ -1053,10 +1053,10 @@ WRITE16_HANDLER(genesis_ctrl_w)
 	case 0x100:						/* Z80 CPU Reset */
 		if (data == 0x00)
 		{
-			cpu_set_halt_line(1, ASSERT_LINE);
-			cpu_set_reset_line(1, PULSE_LINE);
+			cpunum_set_input_line(1, INPUT_LINE_HALT, ASSERT_LINE);
+			cpunum_set_input_line(1, INPUT_LINE_RESET, PULSE_LINE);
 
-			cpu_set_halt_line(1, ASSERT_LINE);
+			cpunum_set_input_line(1, INPUT_LINE_HALT, ASSERT_LINE);
 			/* logerror("z80 reset, ram is %p\n", &genesis_z80_ram[0]); */
 			z80running = 0;
 			return;
@@ -1543,7 +1543,7 @@ ADDRESS_MAP_END
 
 
 
-static WRITE_HANDLER ( genesis_bank_select_w ) /* note value will be meaningless unless all bits are correctly set in */
+static WRITE8_HANDLER ( genesis_bank_select_w ) /* note value will be meaningless unless all bits are correctly set in */
 {
 	if (offset !=0 ) return;
 //	if (!z80running) logerror("undead Z80 latch write!\n");
@@ -1559,7 +1559,7 @@ static WRITE_HANDLER ( genesis_bank_select_w ) /* note value will be meaningless
 	}
 }
 
-static READ_HANDLER ( genesis_z80_r )
+static READ8_HANDLER ( genesis_z80_r )
 {
 	offset += 0x4000;
 
@@ -1596,7 +1596,7 @@ static READ_HANDLER ( genesis_z80_r )
 	return 0x00;
 }
 
-static WRITE_HANDLER ( genesis_z80_w )
+static WRITE8_HANDLER ( genesis_z80_w )
 {
 	offset += 0x4000;
 
@@ -1635,7 +1635,7 @@ static WRITE_HANDLER ( genesis_z80_w )
 	}
 }
 
-static READ_HANDLER ( genesis_z80_bank_r )
+static READ8_HANDLER ( genesis_z80_bank_r )
 {
 	int address = (z80_68000_latch) + (offset & 0x7fff);
 
@@ -1695,7 +1695,7 @@ ADDRESS_MAP_END
 
 UINT8 mt_ram;
 
-static READ_HANDLER( megatech_instr_r )
+static READ8_HANDLER( megatech_instr_r )
 {
 	data8_t* instr = memory_region(REGION_USER1);
 
@@ -1705,13 +1705,13 @@ static READ_HANDLER( megatech_instr_r )
 		return 0xff;
 }
 
-static WRITE_HANDLER( megatech_instr_w )
+static WRITE8_HANDLER( megatech_instr_w )
 {
 	mt_ram = data;
 }
 
 
-static READ_HANDLER( bios_ctrl_r )
+static READ8_HANDLER( bios_ctrl_r )
 {
 	if(offset == 0)
 		return 0;
@@ -1721,7 +1721,7 @@ static READ_HANDLER( bios_ctrl_r )
 	return bios_ctrl[offset];
 }
 
-static WRITE_HANDLER( bios_ctrl_w )
+static WRITE8_HANDLER( bios_ctrl_w )
 {
 	if(offset == 1)
 	{
@@ -1732,12 +1732,12 @@ static WRITE_HANDLER( bios_ctrl_w )
 
 /*MEGAPLAY specific*/
 
-static READ_HANDLER( megaplay_bios_banksel_r )
+static READ8_HANDLER( megaplay_bios_banksel_r )
 {
 	return bios_bank;
 }
 
-static WRITE_HANDLER( megaplay_bios_banksel_w )
+static WRITE8_HANDLER( megaplay_bios_banksel_w )
 {
 /*	Multi-slot note:
 	Bits 0 and 1 appear to determine the selected game slot.
@@ -1749,12 +1749,12 @@ static WRITE_HANDLER( megaplay_bios_banksel_w )
 //	logerror("BIOS: ROM bank %i selected [0x%02x]\n",bios_bank >> 6, data);
 }
 
-static READ_HANDLER( megaplay_bios_gamesel_r )
+static READ8_HANDLER( megaplay_bios_gamesel_r )
 {
 	return bios_6403;
 }
 
-static WRITE_HANDLER( megaplay_bios_gamesel_w )
+static WRITE8_HANDLER( megaplay_bios_gamesel_w )
 {
 	bios_6403 = data;
 
@@ -1763,7 +1763,7 @@ static WRITE_HANDLER( megaplay_bios_gamesel_w )
 }
 
 
-static READ_HANDLER( bank_r )
+static READ8_HANDLER( bank_r )
 {
 	data8_t* bank = memory_region(REGION_CPU3);
 	data8_t* game = memory_region(REGION_CPU1);
@@ -1799,7 +1799,7 @@ static READ_HANDLER( bank_r )
 	}
 }
 
-static WRITE_HANDLER ( bank_w )
+static WRITE8_HANDLER ( bank_w )
 {
 	if(game_banksel == 0x142) // Genesis I/O
 		genesis_io_w((offset/2) & 0x1f, data, 0xffff);
@@ -1813,42 +1813,42 @@ static WRITE_HANDLER ( bank_w )
 }
 
 
-static READ_HANDLER( megaplay_bios_6402_r )
+static READ8_HANDLER( megaplay_bios_6402_r )
 {
 	return genesis_io_ram[3];// & 0xfe;
 //	return bios_6402;// & 0xfe;
 }
 
-static WRITE_HANDLER( megaplay_bios_6402_w )
+static WRITE8_HANDLER( megaplay_bios_6402_w )
 {
 	genesis_io_ram[3] = (genesis_io_ram[3] & 0x07) | ((data & 0x70) >> 1);
 //	bios_6402 = (data >> 4) & 0x07;
 //	logerror("BIOS: 0x6402 write: 0x%02x\n",data);
 }
 
-static READ_HANDLER( megaplay_bios_6404_r )
+static READ8_HANDLER( megaplay_bios_6404_r )
 {
 //	logerror("BIOS: 0x6404 read: returned 0x%02x\n",bios_6404 | (bios_6403 & 0x10) >> 4);
 	return (bios_6404 & 0xfe) | ((bios_6403 & 0x10) >> 4);
 //	return bios_6404 | (bios_6403 & 0x10) >> 4;
 }
 
-static WRITE_HANDLER( megaplay_bios_6404_w )
+static WRITE8_HANDLER( megaplay_bios_6404_w )
 {
 	if(((bios_6404 & 0x0c) == 0x00) && ((data & 0x0c) == 0x0c))
-		cpu_set_reset_line(0,PULSE_LINE);
+		cpunum_set_input_line(0, INPUT_LINE_RESET, PULSE_LINE);
 	bios_6404 = data;
 
 //	logerror("BIOS: 0x6404 write: 0x%02x\n",data);
 }
 
-static READ_HANDLER( megaplay_bios_6204_r )
+static READ8_HANDLER( megaplay_bios_6204_r )
 {
 	return (genesis_io_ram[3]);
 //	return (bios_width & 0xf8) + (bios_6204 & 0x07);
 }
 
-static WRITE_HANDLER( megaplay_bios_width_w )
+static WRITE8_HANDLER( megaplay_bios_width_w )
 {
 	bios_width = data;
 	genesis_io_ram[3] = (genesis_io_ram[3] & 0x07) | ((data & 0xf8));
@@ -1856,7 +1856,7 @@ static WRITE_HANDLER( megaplay_bios_width_w )
 //	logerror("BIOS: 0x6204 - Width write: %02x\n",data);
 }
 
-static READ_HANDLER( megaplay_bios_6600_r )
+static READ8_HANDLER( megaplay_bios_6600_r )
 {
 /*	Multi-slot note:
 	0x6600 appears to be used to check for extra slots being used.
@@ -1867,13 +1867,13 @@ static READ_HANDLER( megaplay_bios_6600_r )
 	return bios_6600;// & 0xfe;
 }
 
-static WRITE_HANDLER( megaplay_bios_6600_w )
+static WRITE8_HANDLER( megaplay_bios_6600_w )
 {
 	bios_6600 = data;
 //	logerror("BIOS: 0x6600 write: 0x%02x\n",data);
 }
 
-static WRITE_HANDLER( megaplay_game_w )
+static WRITE8_HANDLER( megaplay_game_w )
 {
 	if(readpos == 1)
 		game_banksel = 0;
@@ -1960,7 +1960,7 @@ unsigned char segae_vdp_data_r ( UINT8 chip );
 void segae_vdp_ctrl_w ( UINT8 chip, UINT8 data );
 void segae_vdp_data_w ( UINT8 chip, UINT8 data );
 
-static READ_HANDLER (megatech_bios_port_be_bf_r)
+static READ8_HANDLER (megatech_bios_port_be_bf_r)
 {
 	UINT8 temp = 0;
 
@@ -1973,7 +1973,7 @@ static READ_HANDLER (megatech_bios_port_be_bf_r)
 	}
 	return temp;
 }
-static WRITE_HANDLER (megatech_bios_port_be_bf_w)
+static WRITE8_HANDLER (megatech_bios_port_be_bf_w)
 {
 	switch (offset)
 	{
@@ -1984,12 +1984,12 @@ static WRITE_HANDLER (megatech_bios_port_be_bf_w)
 	}
 }
 
-static WRITE_HANDLER (megatech_bios_port_ctrl_w)
+static WRITE8_HANDLER (megatech_bios_port_ctrl_w)
 {
 	bios_port_ctrl = data;
 }
 
-static READ_HANDLER (megatech_bios_port_dc_r)
+static READ8_HANDLER (megatech_bios_port_dc_r)
 {
 	if(bios_port_ctrl == 0x55)
 		return readinputport(12);
@@ -1997,7 +1997,7 @@ static READ_HANDLER (megatech_bios_port_dc_r)
 		return readinputport(9);
 }
 
-static READ_HANDLER (megatech_bios_port_dd_r)
+static READ8_HANDLER (megatech_bios_port_dd_r)
 {
 	if(bios_port_ctrl == 0x55)
 		return readinputport(12);
@@ -2005,7 +2005,7 @@ static READ_HANDLER (megatech_bios_port_dd_r)
 		return readinputport(8);
 }
 
-static WRITE_HANDLER (megatech_bios_port_7f_w)
+static WRITE8_HANDLER (megatech_bios_port_7f_w)
 {
 //	usrintf_showmessage("CPU #3: I/O port 0x7F write, data %02x",data);
 }
@@ -2062,7 +2062,7 @@ INTERRUPT_GEN (megatech_irq)
 			hintpending = 1;
 
 			if  ((segae_vdp_regs[0][0] & 0x10)) {
-				cpu_set_irq_line(2, 0, HOLD_LINE);
+				cpunum_set_input_line(2, 0, HOLD_LINE);
 				return;
 			}
 
@@ -2075,7 +2075,7 @@ INTERRUPT_GEN (megatech_irq)
 		hintcount = segae_vdp_regs[0][10];
 
 		if ( (sline<0xe0) && (vintpending) ) {
-			cpu_set_irq_line(2, 0, HOLD_LINE);
+			cpunum_set_input_line(2, 0, HOLD_LINE);
 		}
 	}
 
@@ -4484,7 +4484,7 @@ static DRIVER_INIT( tfrceac )
 static DRIVER_INIT( tfrceacb )
 {
 	/* disable the palette bank switching from the protection chip */
-	install_mem_write16_handler(0, 0x800000, 0x800001, MWA16_NOP);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x800000, 0x800001, 0, 0, MWA16_NOP);
 }
 
 static DRIVER_INIT( ribbit )
@@ -4505,12 +4505,12 @@ static DRIVER_INIT( ribbit )
 	init_saves();
 
 	/* kludge for protection */
-	install_mem_read16_handler(0, 0xffc166, 0xffc167, ribbit_prot_hack_r);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xffc166, 0xffc167, 0, 0, ribbit_prot_hack_r);
 
 	/* additional palette swizzling */
-	install_mem_read16_handler(0, 0x8c0000, 0x8c0fff, ribbit_palette_r);
-	install_mem_write16_handler(0, 0x8c0000, 0x8c0fff, ribbit_palette_w);
-	ribbit_palette_select = install_mem_read16_handler(0, 0x2000, 0x27ff, ribbit_palette_select_r);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x8c0000, 0x8c0fff, 0, 0, ribbit_palette_r);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x8c0000, 0x8c0fff, 0, 0, ribbit_palette_w);
+	ribbit_palette_select = memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x27ff, 0, 0, ribbit_palette_select_r);
 }
 
 static DRIVER_INIT( tantr )
@@ -4627,7 +4627,7 @@ static DRIVER_INIT( puyopuy2 )
 	prot_table = puyopuy2_table;
 	bloxeed_sound = 0;
 
-	install_mem_read16_handler(0, 0x800000, 0x800001, puyopuy2_prot_r);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x800000, 0x800001, 0, 0, puyopuy2_prot_r);
 	init_saves();
 }
 
@@ -4707,9 +4707,9 @@ static DRIVER_INIT( pclub )
 	bloxeed_sound = 0;
 	init_saves();
 
-	install_mem_read16_handler(0,  0x880120, 0x880121, printer_r );/*Print Club Vol.1*/
-	install_mem_read16_handler(0,  0x880124, 0x880125, printer_r );/*Print Club Vol.2*/
-	install_mem_write16_handler(0, 0x880124, 0x880125, print_club_camera_w);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x880120, 0x880121, 0, 0, printer_r );/*Print Club Vol.1*/
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x880124, 0x880125, 0, 0, printer_r );/*Print Club Vol.2*/
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x880124, 0x880125, 0, 0, print_club_camera_w);
 }
 
 /* Genie's Hardware (contains no real sega parts) */
@@ -4854,7 +4854,7 @@ static DRIVER_INIT (megaplay)
 {
 	UINT8 *src = memory_region(REGION_CPU3);
 
-	memcpy(src+0x10000,src+0x8000,0x18000);
+	memmove(src+0x10000,src+0x8000,0x18000);
 
 	init_segac2();
 

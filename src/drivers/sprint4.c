@@ -13,7 +13,7 @@ extern VIDEO_EOF( sprint4 );
 extern VIDEO_START( sprint4 );
 extern VIDEO_UPDATE( sprint4 );
 
-extern WRITE_HANDLER( sprint4_video_ram_w );
+extern WRITE8_HANDLER( sprint4_video_ram_w );
 
 extern UINT8* sprint4_video_ram;
 
@@ -93,7 +93,7 @@ static void nmi_callback(int scanline)
 
 	if (readinputport(2) & 0x40)
 	{
-		cpu_set_nmi_line(0, PULSE_LINE);
+		cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 	}
 
 	timer_set(cpu_getscanlinetime(scanline), scanline, nmi_callback);
@@ -108,13 +108,13 @@ static MACHINE_INIT( sprint4 )
 }
 
 
-static READ_HANDLER( sprint4_wram_r )
+static READ8_HANDLER( sprint4_wram_r )
 {
 	return sprint4_video_ram[0x380 + offset % 0x80];
 }
 
 
-static READ_HANDLER( sprint4_analog_r )
+static READ8_HANDLER( sprint4_analog_r )
 {
 	int n = (offset >> 1) & 3;
 
@@ -133,13 +133,13 @@ static READ_HANDLER( sprint4_analog_r )
 }
 
 
-static READ_HANDLER( sprint4_coin_r )
+static READ8_HANDLER( sprint4_coin_r )
 {
 	return (readinputport(1) << ((offset & 7) ^ 7)) & 0x80;
 }
 
 
-static READ_HANDLER( sprint4_gas_r )
+static READ8_HANDLER( sprint4_gas_r )
 {
 	UINT8 val = readinputport(0);
 
@@ -152,45 +152,45 @@ static READ_HANDLER( sprint4_gas_r )
 }
 
 
-static READ_HANDLER( sprint4_dip_r )
+static READ8_HANDLER( sprint4_dip_r )
 {
 	return (readinputport(4) >> (2 * (offset & 3))) & 3;
 }
 
 
-static WRITE_HANDLER( sprint4_wram_w )
+static WRITE8_HANDLER( sprint4_wram_w )
 {
 	sprint4_video_ram[0x380 + offset % 0x80] = data;
 }
 
 
-static WRITE_HANDLER( sprint4_collision_reset_w )
+static WRITE8_HANDLER( sprint4_collision_reset_w )
 {
 	sprint4_collision[(offset >> 1) & 3] = 0;
 }
 
 
-static WRITE_HANDLER( sprint4_analog_w )
+static WRITE8_HANDLER( sprint4_analog_w )
 {
 	analog = data & 15;
 }
 
 
-static WRITE_HANDLER( sprint4_lamp_w )
+static WRITE8_HANDLER( sprint4_lamp_w )
 {
 	set_led_status((offset >> 1) & 3, offset & 1);
 }
 
 
-static WRITE_HANDLER( sprint4_attract_w )
+static WRITE8_HANDLER( sprint4_attract_w )
 {
 	/* sound */
 }
-static WRITE_HANDLER( sprint4_crash_w )
+static WRITE8_HANDLER( sprint4_crash_w )
 {
 	/* sound */
 }
-static WRITE_HANDLER( sprint4_skid_w )
+static WRITE8_HANDLER( sprint4_skid_w )
 {
 	/* sound */
 }

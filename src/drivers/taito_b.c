@@ -201,7 +201,7 @@ READ16_HANDLER ( taitob_v_control_r );
 WRITE16_HANDLER( hitice_pixelram_w );
 WRITE16_HANDLER( hitice_pixel_scroll_w );
 
-static WRITE_HANDLER( bankswitch_w )
+static WRITE8_HANDLER( bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU2);
 	int banknum = (data - 1) & 3;
@@ -213,116 +213,116 @@ static WRITE_HANDLER( bankswitch_w )
 
 void rsaga2_interrupt2(int x)
 {
-	cpu_set_irq_line(0,2,HOLD_LINE);
+	cpunum_set_input_line(0,2,HOLD_LINE);
 }
 
 static INTERRUPT_GEN( rastansaga2_interrupt )
 {
 	timer_set(TIME_IN_CYCLES(5000,0),0,rsaga2_interrupt2);
-	cpu_set_irq_line(0, 4, HOLD_LINE);
+	cpunum_set_input_line(0, 4, HOLD_LINE);
 }
 
 
 void crimec_interrupt3(int x)
 {
-	cpu_set_irq_line(0,3,HOLD_LINE);
+	cpunum_set_input_line(0,3,HOLD_LINE);
 }
 
 static INTERRUPT_GEN( crimec_interrupt )
 {
 	timer_set(TIME_IN_CYCLES(5000,0),0,crimec_interrupt3);
-	cpu_set_irq_line(0, 5, HOLD_LINE);
+	cpunum_set_input_line(0, 5, HOLD_LINE);
 }
 
 
 void hitice_interrupt6(int x)
 {
-	cpu_set_irq_line(0,6,HOLD_LINE);
+	cpunum_set_input_line(0,6,HOLD_LINE);
 }
 
 static INTERRUPT_GEN( hitice_interrupt )
 {
 	timer_set(TIME_IN_CYCLES(5000,0),0,hitice_interrupt6);
-	cpu_set_irq_line(0, 4, HOLD_LINE);
+	cpunum_set_input_line(0, 4, HOLD_LINE);
 }
 
 
 void rambo3_interrupt1(int x)
 {
-	cpu_set_irq_line(0,1,HOLD_LINE);
+	cpunum_set_input_line(0,1,HOLD_LINE);
 }
 
 static INTERRUPT_GEN( rambo3_interrupt )
 {
 	timer_set(TIME_IN_CYCLES(5000,0),0,rambo3_interrupt1);
-	cpu_set_irq_line(0, 6, HOLD_LINE);
+	cpunum_set_input_line(0, 6, HOLD_LINE);
 }
 
 
 void pbobble_interrupt5(int x)
 {
-	cpu_set_irq_line(0,5,HOLD_LINE);
+	cpunum_set_input_line(0,5,HOLD_LINE);
 }
 
 static INTERRUPT_GEN( pbobble_interrupt )
 {
 	timer_set(TIME_IN_CYCLES(5000,0),0,pbobble_interrupt5);
-	cpu_set_irq_line(0, 3, HOLD_LINE);
+	cpunum_set_input_line(0, 3, HOLD_LINE);
 }
 
 void viofight_interrupt1(int x)
 {
-	cpu_set_irq_line(0,1,HOLD_LINE);
+	cpunum_set_input_line(0,1,HOLD_LINE);
 }
 
 static INTERRUPT_GEN( viofight_interrupt )
 {
 	timer_set(TIME_IN_CYCLES(5000,0),0,viofight_interrupt1);
-	cpu_set_irq_line(0, 4, HOLD_LINE);
+	cpunum_set_input_line(0, 4, HOLD_LINE);
 }
 
 void masterw_interrupt4(int x)
 {
-	cpu_set_irq_line(0,4,HOLD_LINE);
+	cpunum_set_input_line(0,4,HOLD_LINE);
 }
 
 static INTERRUPT_GEN( masterw_interrupt )
 {
 	timer_set(TIME_IN_CYCLES(5000,0),0,masterw_interrupt4);
-	cpu_set_irq_line(0, 5, HOLD_LINE);
+	cpunum_set_input_line(0, 5, HOLD_LINE);
 }
 
 void silentd_interrupt6(int x)
 {
-	cpu_set_irq_line(0,6,HOLD_LINE);
+	cpunum_set_input_line(0,6,HOLD_LINE);
 }
 
 static INTERRUPT_GEN( silentd_interrupt )
 {
 	timer_set(TIME_IN_CYCLES(5000,0),0,silentd_interrupt6);
-	cpu_set_irq_line(0, 4, HOLD_LINE);
+	cpunum_set_input_line(0, 4, HOLD_LINE);
 }
 
 void selfeena_interrupt4(int x)
 {
-	cpu_set_irq_line(0,4,HOLD_LINE);
+	cpunum_set_input_line(0,4,HOLD_LINE);
 }
 
 static INTERRUPT_GEN( selfeena_interrupt )
 {
 	timer_set(TIME_IN_CYCLES(5000,0),0,selfeena_interrupt4);
-	cpu_set_irq_line(0, 6, HOLD_LINE);
+	cpunum_set_input_line(0, 6, HOLD_LINE);
 }
 
 void sbm_interrupt5(int x)//4
 {
-	cpu_set_irq_line(0,5,HOLD_LINE);
+	cpunum_set_input_line(0,5,HOLD_LINE);
 }
 
 static INTERRUPT_GEN( sbm_interrupt )//5
 {
 	timer_set(TIME_IN_CYCLES(10000,0),0,sbm_interrupt5);
-	cpu_set_irq_line(0, 4, HOLD_LINE);
+	cpunum_set_input_line(0, 4, HOLD_LINE);
 }
 
 
@@ -2556,7 +2556,7 @@ static struct GfxDecodeInfo rambo3_gfxdecodeinfo[] =
 /* handler called by the YM2610 emulator when the internal timers cause an IRQ */
 static void irqhandler(int irq)
 {
-	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2610interface ym2610_interface_rsaga2 =

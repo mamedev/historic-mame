@@ -118,9 +118,9 @@ VIDEO_START( victory )
 void victory_update_irq(void)
 {
 	if (vblank_irq || fgcoll || (bgcoll && (video_control & 0x20)))
-		cpu_set_irq_line(0, 0, ASSERT_LINE);
+		cpunum_set_input_line(0, 0, ASSERT_LINE);
 	else
-		cpu_set_irq_line(0, 0, CLEAR_LINE);
+		cpunum_set_input_line(0, 0, CLEAR_LINE);
 }
 
 
@@ -139,7 +139,7 @@ INTERRUPT_GEN( victory_vblank_interrupt )
  *
  *************************************/
 
-WRITE_HANDLER( victory_videoram_w )
+WRITE8_HANDLER( victory_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -156,7 +156,7 @@ WRITE_HANDLER( victory_videoram_w )
  *
  *************************************/
 
-WRITE_HANDLER( victory_charram_w )
+WRITE8_HANDLER( victory_charram_w )
 {
 	if (victory_charram[offset] != data)
 	{
@@ -173,7 +173,7 @@ WRITE_HANDLER( victory_charram_w )
  *
  *************************************/
 
-WRITE_HANDLER( victory_paletteram_w )
+WRITE8_HANDLER( victory_paletteram_w )
 {
 	int red = ((offset & 0x80) >> 5) | ((data & 0xc0) >> 6);
 	int blue = (data & 0x38) >> 3;
@@ -196,7 +196,7 @@ WRITE_HANDLER( victory_paletteram_w )
  *
  *************************************/
 
-READ_HANDLER( victory_video_control_r )
+READ8_HANDLER( victory_video_control_r )
 {
 	int result = 0;
 
@@ -262,7 +262,7 @@ READ_HANDLER( victory_video_control_r )
  *
  *************************************/
 
-WRITE_HANDLER( victory_video_control_w )
+WRITE8_HANDLER( victory_video_control_w )
 {
 	switch (offset)
 	{

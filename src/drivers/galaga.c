@@ -679,7 +679,7 @@ static INTERRUPT_GEN( galaga_cpu3_nmi )
 		nmi_line_pulse();
 }
 
-static READ_HANDLER( bosco_dsw_r )
+static READ8_HANDLER( bosco_dsw_r )
 {
 	int bit0,bit1;
 
@@ -709,13 +709,13 @@ static WRITE8_HANDLER( bosco_latch_w )
 		case 0x00:	/* IRQ1 */
 			cpu_interrupt_enable(0,bit);
 			if (!bit)
-				cpu_set_irq_line(0, 0, CLEAR_LINE);
+				cpunum_set_input_line(0, 0, CLEAR_LINE);
 			break;
 
 		case 0x01:	/* IRQ2 */
 			cpu_interrupt_enable(1,bit);
 			if (!bit)
-				cpu_set_irq_line(1, 0, CLEAR_LINE);
+				cpunum_set_input_line(1, 0, CLEAR_LINE);
 			break;
 
 		case 0x02:	/* NMION */
@@ -723,8 +723,8 @@ static WRITE8_HANDLER( bosco_latch_w )
 			break;
 
 		case 0x03:	/* RESET */
-			cpu_set_reset_line(1,bit ? CLEAR_LINE : ASSERT_LINE);
-			cpu_set_reset_line(2,bit ? CLEAR_LINE : ASSERT_LINE);
+			cpunum_set_input_line(1, INPUT_LINE_RESET, bit ? CLEAR_LINE : ASSERT_LINE);
+			cpunum_set_input_line(2, INPUT_LINE_RESET, bit ? CLEAR_LINE : ASSERT_LINE);
 			break;
 
 		case 0x04:	/* n.c. */
@@ -3022,7 +3022,7 @@ static DRIVER_INIT (gatsbee)
 	init_galaga();
 
 	/* Gatsbee has a larger character ROM, we need a handler for banking */
-	install_mem_write_handler(0, 0x1000, 0x1000, gatsbee_bank_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1000, 0x1000, 0, 0, gatsbee_bank_w);
 }
 
 
@@ -3064,10 +3064,10 @@ static DRIVER_INIT( xevios )
 static DRIVER_INIT( battles )
 {
 	/* replace the Namco I/O handlers with interface to the 4th CPU */
-	install_mem_read_handler (0, 0x7000, 0x700f, battles_customio_data0_r );
-	install_mem_read_handler (0, 0x7100, 0x7100, battles_customio0_r );
-	install_mem_write_handler(0, 0x7000, 0x700f, battles_customio_data0_w );
-	install_mem_write_handler(0, 0x7100, 0x7100, battles_customio0_w );
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x7000, 0x700f, 0, 0, battles_customio_data0_r );
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x7100, 0x7100, 0, 0, battles_customio0_r );
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x7000, 0x700f, 0, 0, battles_customio_data0_w );
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x7100, 0x7100, 0, 0, battles_customio0_w );
 
 	init_xevious();
 }

@@ -7,20 +7,20 @@ Taito Super Speed Race driver
 #include "driver.h"
 #include "artwork.h"
 
-extern WRITE_HANDLER( sspeedr_driver_horz_w );
-extern WRITE_HANDLER( sspeedr_driver_horz_2_w );
-extern WRITE_HANDLER( sspeedr_driver_vert_w );
-extern WRITE_HANDLER( sspeedr_driver_pic_w );
+extern WRITE8_HANDLER( sspeedr_driver_horz_w );
+extern WRITE8_HANDLER( sspeedr_driver_horz_2_w );
+extern WRITE8_HANDLER( sspeedr_driver_vert_w );
+extern WRITE8_HANDLER( sspeedr_driver_pic_w );
 
-extern WRITE_HANDLER( sspeedr_drones_horz_w );
-extern WRITE_HANDLER( sspeedr_drones_horz_2_w );
-extern WRITE_HANDLER( sspeedr_drones_vert_w );
-extern WRITE_HANDLER( sspeedr_drones_mask_w );
+extern WRITE8_HANDLER( sspeedr_drones_horz_w );
+extern WRITE8_HANDLER( sspeedr_drones_horz_2_w );
+extern WRITE8_HANDLER( sspeedr_drones_vert_w );
+extern WRITE8_HANDLER( sspeedr_drones_mask_w );
 
-extern WRITE_HANDLER( sspeedr_track_horz_w );
-extern WRITE_HANDLER( sspeedr_track_horz_2_w );
-extern WRITE_HANDLER( sspeedr_track_vert_w );
-extern WRITE_HANDLER( sspeedr_track_ice_w );
+extern WRITE8_HANDLER( sspeedr_track_horz_w );
+extern WRITE8_HANDLER( sspeedr_track_horz_2_w );
+extern WRITE8_HANDLER( sspeedr_track_vert_w );
+extern WRITE8_HANDLER( sspeedr_track_ice_w );
 
 extern VIDEO_START( sspeedr );
 extern VIDEO_UPDATE( sspeedr );
@@ -52,7 +52,7 @@ static PALETTE_INIT( sspeedr )
 }
 
 
-static READ_HANDLER( sspeedr_steering_r )
+static READ8_HANDLER( sspeedr_steering_r )
 {
 	UINT8 val = readinputport(0);
 
@@ -60,13 +60,13 @@ static READ_HANDLER( sspeedr_steering_r )
 }
 
 
-static WRITE_HANDLER( sspeedr_int_ack_w )
+static WRITE8_HANDLER( sspeedr_int_ack_w )
 {
-	cpu_set_irq_line(0, 0, CLEAR_LINE);
+	cpunum_set_input_line(0, 0, CLEAR_LINE);
 }
 
 
-static WRITE_HANDLER( sspeedr_lamp_w )
+static WRITE8_HANDLER( sspeedr_lamp_w )
 {
 	artwork_show("lampGO",
 		data & 1);
@@ -77,7 +77,7 @@ static WRITE_HANDLER( sspeedr_lamp_w )
 }
 
 
-static WRITE_HANDLER( sspeedr_time_w )
+static WRITE8_HANDLER( sspeedr_time_w )
 {
 	UINT8 prev = led_TIME[offset];
 
@@ -96,7 +96,7 @@ static WRITE_HANDLER( sspeedr_time_w )
 }
 
 
-static WRITE_HANDLER( sspeedr_score_w )
+static WRITE8_HANDLER( sspeedr_score_w )
 {
 	UINT8 prev = led_SCORE[offset];
 
@@ -115,7 +115,7 @@ static WRITE_HANDLER( sspeedr_score_w )
 }
 
 
-static WRITE_HANDLER( sspeedr_sound_w )
+static WRITE8_HANDLER( sspeedr_sound_w )
 {
 	/* not implemented */
 }

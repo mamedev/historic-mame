@@ -222,31 +222,31 @@ Notes - Has jumper setting for 122HZ or 61HZ)
 #include "vidhrdw/generic.h"
 
 /* in machine/buggychl.c */
-READ_HANDLER( buggychl_68705_portA_r );
-WRITE_HANDLER( buggychl_68705_portA_w );
-WRITE_HANDLER( buggychl_68705_ddrA_w );
-READ_HANDLER( buggychl_68705_portB_r );
-WRITE_HANDLER( buggychl_68705_portB_w );
-WRITE_HANDLER( buggychl_68705_ddrB_w );
-READ_HANDLER( buggychl_68705_portC_r );
-WRITE_HANDLER( buggychl_68705_portC_w );
-WRITE_HANDLER( buggychl_68705_ddrC_w );
-WRITE_HANDLER( buggychl_mcu_w );
-READ_HANDLER( buggychl_mcu_r );
-READ_HANDLER( buggychl_mcu_status_r );
+READ8_HANDLER( buggychl_68705_portA_r );
+WRITE8_HANDLER( buggychl_68705_portA_w );
+WRITE8_HANDLER( buggychl_68705_ddrA_w );
+READ8_HANDLER( buggychl_68705_portB_r );
+WRITE8_HANDLER( buggychl_68705_portB_w );
+WRITE8_HANDLER( buggychl_68705_ddrB_w );
+READ8_HANDLER( buggychl_68705_portC_r );
+WRITE8_HANDLER( buggychl_68705_portC_w );
+WRITE8_HANDLER( buggychl_68705_ddrC_w );
+WRITE8_HANDLER( buggychl_mcu_w );
+READ8_HANDLER( buggychl_mcu_r );
+READ8_HANDLER( buggychl_mcu_status_r );
 
 
 extern VIDEO_START( fortyl );
 extern VIDEO_UPDATE( fortyl );
 extern PALETTE_INIT( fortyl );
 
-extern WRITE_HANDLER( fortyl_bg_videoram_w );
-extern WRITE_HANDLER( fortyl_bg_colorram_w );
-extern READ_HANDLER ( fortyl_bg_videoram_r );
-extern READ_HANDLER ( fortyl_bg_colorram_r );
-extern WRITE_HANDLER( fortyl_pixram_sel_w );
-extern READ_HANDLER( fortyl_pixram_r );
-extern WRITE_HANDLER( fortyl_pixram_w );
+extern WRITE8_HANDLER( fortyl_bg_videoram_w );
+extern WRITE8_HANDLER( fortyl_bg_colorram_w );
+extern READ8_HANDLER ( fortyl_bg_videoram_r );
+extern READ8_HANDLER ( fortyl_bg_colorram_r );
+extern WRITE8_HANDLER( fortyl_pixram_sel_w );
+extern READ8_HANDLER( fortyl_pixram_r );
+extern WRITE8_HANDLER( fortyl_pixram_w );
 
 extern unsigned char *fortyl_video_ctrl;
 extern int fortyl_pix_color[4];
@@ -256,27 +256,27 @@ static int sound_nmi_enable,pending_nmi;
 
 static void nmi_callback(int param)
 {
-	if (sound_nmi_enable) cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);
+	if (sound_nmi_enable) cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 	else pending_nmi = 1;
 }
 
-static WRITE_HANDLER( sound_command_w )
+static WRITE8_HANDLER( sound_command_w )
 {
 	soundlatch_w(0,data);
 	timer_set(TIME_NOW,data,nmi_callback);
 }
 
-static WRITE_HANDLER( nmi_disable_w )
+static WRITE8_HANDLER( nmi_disable_w )
 {
 	sound_nmi_enable = 0;
 }
 
-static WRITE_HANDLER( nmi_enable_w )
+static WRITE8_HANDLER( nmi_enable_w )
 {
 	sound_nmi_enable = 1;
 	if (pending_nmi)
 	{
-		cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 		pending_nmi = 0;
 	}
 }
@@ -284,31 +284,31 @@ static WRITE_HANDLER( nmi_enable_w )
 
 
 #if 0
-static WRITE_HANDLER( fortyl_coin_counter_w )
+static WRITE8_HANDLER( fortyl_coin_counter_w )
 {
 	coin_counter_w(offset,data);
 }
 #endif
 
 
-static READ_HANDLER( fortyl_mcu_r )
+static READ8_HANDLER( fortyl_mcu_r )
 {
 	return buggychl_mcu_r(offset);
 }
 
-static READ_HANDLER( fortyl_mcu_status_r )
+static READ8_HANDLER( fortyl_mcu_status_r )
 {
 	return buggychl_mcu_status_r(offset);
 }
 
-static WRITE_HANDLER( fortyl_mcu_w )
+static WRITE8_HANDLER( fortyl_mcu_w )
 {
 	buggychl_mcu_w(offset,data);
 }
 
 static int banknum = -1;
 
-static WRITE_HANDLER( bank_select_w )
+static WRITE8_HANDLER( bank_select_w )
 {
 
 	if ((data!=0x02) && (data!=0xfd))
@@ -325,14 +325,14 @@ static WRITE_HANDLER( bank_select_w )
 static UINT8 pix1;
 static UINT8 pix2[2];
 
-static WRITE_HANDLER( pix1_w )
+static WRITE8_HANDLER( pix1_w )
 {
 //	if ( data > 7 )
 //		logerror("pix1 = %2x\n",data);
 
 	pix1 = data;
 }
-static WRITE_HANDLER( pix2_w )
+static WRITE8_HANDLER( pix2_w )
 {
 //	if ( (data!=0x00) && (data!=0xff) )
 //		logerror("pix2 = %2x\n",data);
@@ -342,13 +342,13 @@ static WRITE_HANDLER( pix2_w )
 }
 
 #if 0
-static READ_HANDLER( pix1_r )
+static READ8_HANDLER( pix1_r )
 {
 	return pix1;
 }
 #endif
 
-static READ_HANDLER( pix2_r )
+static READ8_HANDLER( pix2_r )
 {
 	int res;
 	int d1 = pix1 & 7;
@@ -430,7 +430,7 @@ static const UINT8 mcu_data2[0x80] =
 };
 
 
-static WRITE_HANDLER( undoukai_mcu_w )
+static WRITE8_HANDLER( undoukai_mcu_w )
 {
 	data8_t *RAM = memory_region(REGION_CPU1);
 	UINT16 ram_adr = RAM[0xa1b5]*0x100 + RAM[0xa1b4];
@@ -589,7 +589,7 @@ static WRITE_HANDLER( undoukai_mcu_w )
 	}
 }
 
-static READ_HANDLER( undoukai_mcu_r )
+static READ8_HANDLER( undoukai_mcu_r )
 {
 
 //	logerror("mcu_r %02x\n",from_mcu);
@@ -597,7 +597,7 @@ static READ_HANDLER( undoukai_mcu_r )
 	return from_mcu;
 }
 
-static READ_HANDLER( undoukai_mcu_status_r )
+static READ8_HANDLER( undoukai_mcu_status_r )
 {
 	int res = 3;
 
@@ -642,18 +642,18 @@ static DRIVER_INIT( 40love )
 static UINT8 snd_data;
 static UINT8 snd_flag;
 
-static READ_HANDLER( from_snd_r )
+static READ8_HANDLER( from_snd_r )
 {
 	snd_flag = 0;
 	return snd_data;
 }
 
-static READ_HANDLER( snd_flag_r )
+static READ8_HANDLER( snd_flag_r )
 {
 	return snd_flag | 0xfd;
 }
 
-static WRITE_HANDLER( to_main_w )
+static WRITE8_HANDLER( to_main_w )
 {
 	snd_data = data;
 	snd_flag = 2;
@@ -817,7 +817,7 @@ static UINT8 snd_ctrl1=0;
 static UINT8 snd_ctrl2=0;
 static UINT8 snd_ctrl3=0;
 
-static WRITE_HANDLER( sound_control_0_w )
+static WRITE8_HANDLER( sound_control_0_w )
 {
 	snd_ctrl0 = data & 0xff;
 //	usrintf_showmessage("SND0 0=%02x 1=%02x 2=%02x 3=%02x", snd_ctrl0, snd_ctrl1, snd_ctrl2, snd_ctrl3);
@@ -826,14 +826,14 @@ static WRITE_HANDLER( sound_control_0_w )
 	mixer_set_volume (3, vol_ctrl[ (snd_ctrl0>>4) & 15 ]);	/* group1 from msm5232 */
 
 }
-static WRITE_HANDLER( sound_control_1_w )
+static WRITE8_HANDLER( sound_control_1_w )
 {
 	snd_ctrl1 = data & 0xff;
 //	usrintf_showmessage("SND1 0=%02x 1=%02x 2=%02x 3=%02x", snd_ctrl0, snd_ctrl1, snd_ctrl2, snd_ctrl3);
 	mixer_set_volume (4, vol_ctrl[ (snd_ctrl1>>4) & 15 ]);	/* group2 from msm5232 */
 }
 
-static WRITE_HANDLER( sound_control_2_w )
+static WRITE8_HANDLER( sound_control_2_w )
 {
 	int i;
 
@@ -844,7 +844,7 @@ static WRITE_HANDLER( sound_control_2_w )
 		mixer_set_volume (i, vol_ctrl[ (snd_ctrl2>>4) & 15 ]);	/* ym2149f all */
 }
 
-static WRITE_HANDLER( sound_control_3_w ) /* unknown */
+static WRITE8_HANDLER( sound_control_3_w ) /* unknown */
 {
 	snd_ctrl3 = data & 0xff;
 //	usrintf_showmessage("SND3 0=%02x 1=%02x 2=%02x 3=%02x", snd_ctrl0, snd_ctrl1, snd_ctrl2, snd_ctrl3);

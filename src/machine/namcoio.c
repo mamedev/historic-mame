@@ -1192,7 +1192,7 @@ void nmi_generate(int param)
 	logerror("NMI cpu %d\n",nmi_cpu[param]);
 #endif
 
-		cpu_set_irq_line(nmi_cpu[param], IRQ_LINE_NMI, PULSE_LINE);
+		cpunum_set_input_line(nmi_cpu[param], INPUT_LINE_NMI, PULSE_LINE);
 	}
 }
 
@@ -1347,11 +1347,11 @@ static void namco_06xx_ctrl_w(int chip,int data)
 
 
 
-READ_HANDLER( namco_06xx_0_data_r )		{ return namco_06xx_data_r(0,offset); }
-READ_HANDLER( namco_06xx_1_data_r )		{ return namco_06xx_data_r(1,offset); }
-WRITE_HANDLER( namco_06xx_0_data_w )	{ namco_06xx_data_w(0,offset,data); }
-WRITE_HANDLER( namco_06xx_1_data_w )	{ namco_06xx_data_w(1,offset,data); }
-READ_HANDLER( namco_06xx_0_ctrl_r )		{ return namco_06xx_ctrl_r(0); }
-READ_HANDLER( namco_06xx_1_ctrl_r )		{ return namco_06xx_ctrl_r(1); }
-WRITE_HANDLER( namco_06xx_0_ctrl_w )	{ namco_06xx_ctrl_w(0,data); }
-WRITE_HANDLER( namco_06xx_1_ctrl_w )	{ namco_06xx_ctrl_w(1,data); }
+READ8_HANDLER( namco_06xx_0_data_r )		{ return namco_06xx_data_r(0,offset); }
+READ8_HANDLER( namco_06xx_1_data_r )		{ return namco_06xx_data_r(1,offset); }
+WRITE8_HANDLER( namco_06xx_0_data_w )	{ namco_06xx_data_w(0,offset,data); }
+WRITE8_HANDLER( namco_06xx_1_data_w )	{ namco_06xx_data_w(1,offset,data); }
+READ8_HANDLER( namco_06xx_0_ctrl_r )		{ return namco_06xx_ctrl_r(0); }
+READ8_HANDLER( namco_06xx_1_ctrl_r )		{ return namco_06xx_ctrl_r(1); }
+WRITE8_HANDLER( namco_06xx_0_ctrl_w )	{ namco_06xx_ctrl_w(0,data); }
+WRITE8_HANDLER( namco_06xx_1_ctrl_w )	{ namco_06xx_ctrl_w(1,data); }

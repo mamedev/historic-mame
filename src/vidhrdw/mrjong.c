@@ -61,7 +61,7 @@ PALETTE_INIT( mrjong )
   Display control parameter.
 
 ***************************************************************************/
-WRITE_HANDLER( mrjong_videoram_w )
+WRITE8_HANDLER( mrjong_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -70,7 +70,7 @@ WRITE_HANDLER( mrjong_videoram_w )
 	}
 }
 
-WRITE_HANDLER( mrjong_colorram_w )
+WRITE8_HANDLER( mrjong_colorram_w )
 {
 	if (colorram[offset] != data)
 	{
@@ -79,7 +79,7 @@ WRITE_HANDLER( mrjong_colorram_w )
 	}
 }
 
-WRITE_HANDLER( mrjong_flipscreen_w )
+WRITE8_HANDLER( mrjong_flipscreen_w )
 {
 	if (flip_screen != (data & 0x01))
 	{

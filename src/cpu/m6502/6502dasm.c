@@ -882,7 +882,7 @@ static CPU_TYPE type_m65ce02 = {
 };
 #endif
 #if (HAS_M4510)
-static READ_HANDLER(m4510_readmem)
+static READ8_HANDLER(m4510_readmem)
 {
 	return program_read_byte_8( m4510_get_reg(M4510_MEM0+(offset>>13))+offset );
 }

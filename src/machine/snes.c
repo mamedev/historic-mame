@@ -88,7 +88,7 @@ MACHINE_INIT( snes )
 
 /* Handle reading of Mode 20 SRAM */
 /* 0x700000 - 0x77ffff */
-READ_HANDLER( snes_r_sram )
+READ8_HANDLER( snes_r_sram )
 {
 	UINT8 value = 0xff;
 
@@ -101,7 +101,7 @@ READ_HANDLER( snes_r_sram )
 }
 
 /* 0x000000 - 0x2fffff */
-READ_HANDLER( snes_r_bank1 )
+READ8_HANDLER( snes_r_bank1 )
 {
 	UINT16 address = offset & 0xffff;
 
@@ -123,7 +123,7 @@ READ_HANDLER( snes_r_bank1 )
 }
 
 /* 0x300000 - 0x3fffff */
-READ_HANDLER( snes_r_bank2 )
+READ8_HANDLER( snes_r_bank2 )
 {
 	UINT16 address = offset & 0xffff;
 
@@ -150,7 +150,7 @@ READ_HANDLER( snes_r_bank2 )
 }
 
 /* 0x400000 - 0x5fffff */
-READ_HANDLER( snes_r_bank3 )
+READ8_HANDLER( snes_r_bank3 )
 {
 	UINT16 address = offset & 0xffff;
 
@@ -170,7 +170,7 @@ READ_HANDLER( snes_r_bank3 )
 }
 
 /* 0x800000 - 0xffffff */
-READ_HANDLER( snes_r_bank4 )
+READ8_HANDLER( snes_r_bank4 )
 {
 	if( snes_cart.mode == SNES_MODE_20 )
 	{
@@ -191,7 +191,7 @@ READ_HANDLER( snes_r_bank4 )
 }
 
 /* 0x000000 - 0x2fffff */
-WRITE_HANDLER( snes_w_bank1 )
+WRITE8_HANDLER( snes_w_bank1 )
 {
 	UINT16 address = offset & 0xffff;
 
@@ -206,7 +206,7 @@ WRITE_HANDLER( snes_w_bank1 )
 }
 
 /* 0x300000 - 0x3fffff */
-WRITE_HANDLER( snes_w_bank2 )
+WRITE8_HANDLER( snes_w_bank2 )
 {
 	UINT16 address = offset & 0xffff;
 
@@ -226,7 +226,7 @@ WRITE_HANDLER( snes_w_bank2 )
 }
 
 /* 0x800000 - 0xffffff */
-WRITE_HANDLER( snes_w_bank4 )
+WRITE8_HANDLER( snes_w_bank4 )
 {
 	if( snes_cart.mode == SNES_MODE_20 )
 	{
@@ -252,7 +252,7 @@ WRITE_HANDLER( snes_w_bank4 )
  * mid  - This is the middle byte of a 24 bit value
  * high - This is the high byte of a 16 or 24 bit value
  */
-READ_HANDLER( snes_r_io )
+READ8_HANDLER( snes_r_io )
 {
 	UINT8 value = 0;
 
@@ -563,7 +563,7 @@ READ_HANDLER( snes_r_io )
  * mid  - This is the middle byte of a 24 bit value
  * high - This is the high byte of a 16 or 24 bit value
  */
-WRITE_HANDLER( snes_w_io )
+WRITE8_HANDLER( snes_w_io )
 {
 	/* offset is from 0x000000 */
 	switch( offset )
@@ -1156,7 +1156,7 @@ INTERRUPT_GEN(snes_scanline_interrupt)
 		snes_ram[RDNMI] |= 0x80;		/* Set NMI occured bit */
 		if( snes_ram[NMITIMEN] & 0x80 )	/* NMI only signaled if this bit set */
 		{
-			cpu_set_irq_line( 0, G65816_LINE_NMI, HOLD_LINE );
+			cpunum_set_input_line( 0, G65816_LINE_NMI, HOLD_LINE );
 		}
 	}
 
@@ -1191,7 +1191,7 @@ INTERRUPT_GEN(snes_scanline_interrupt)
 		if( snes_ppu.beam.current_vert == (((snes_ram[VTIMEH] << 8) | snes_ram[VTIMEL]) & 0x1ff) )
 		{
 			snes_ram[TIMEUP] = 0x80;	/* Indicate that irq occured */
-			cpu_set_irq_line( 0, G65816_LINE_IRQ, HOLD_LINE );
+			cpunum_set_input_line( 0, G65816_LINE_IRQ, HOLD_LINE );
 		}
 	}
 	/* Horizontal IRQ timer */
@@ -1201,7 +1201,7 @@ INTERRUPT_GEN(snes_scanline_interrupt)
 		if( (((snes_ram[HTIMEH] << 8) | snes_ram[HTIMEL]) & 0x1ff) )
 		{
 			snes_ram[TIMEUP] = 0x80;
-			cpu_set_irq_line( 0, G65816_LINE_IRQ, HOLD_LINE );
+			cpunum_set_input_line( 0, G65816_LINE_IRQ, HOLD_LINE );
 		}
 	} */
 
@@ -1213,7 +1213,7 @@ INTERRUPT_GEN(snes_scanline_interrupt)
 		program_write_byte(OAMADDH, snes_ppu.oam.address_high );
 		snes_ram[HVBJOY] &= 0x7f;		/* Clear vblank bit */
 		snes_ram[RDNMI]  &= 0x7f;		/* Clear nmi occured bit */
-		cpu_set_irq_line( 0, G65816_LINE_NMI, CLEAR_LINE );
+		cpunum_set_input_line( 0, G65816_LINE_NMI, CLEAR_LINE );
 	}
 }
 

@@ -114,35 +114,35 @@ VIDEO_UPDATE( butasan );
 static data8_t argus_bank_latch   = 0x00;
 static data8_t butasan_page_latch = 0x00;
 
-READ_HANDLER( argus_txram_r );
-READ_HANDLER( butasan_txram_r );
-READ_HANDLER( argus_bg1ram_r );
-READ_HANDLER( butasan_bg0ram_r );
-READ_HANDLER( butasan_bg1ram_r );
-READ_HANDLER( argus_paletteram_r );
-READ_HANDLER( butasan_txbackram_r );
-READ_HANDLER( butasan_bg0backram_r );
+READ8_HANDLER( argus_txram_r );
+READ8_HANDLER( butasan_txram_r );
+READ8_HANDLER( argus_bg1ram_r );
+READ8_HANDLER( butasan_bg0ram_r );
+READ8_HANDLER( butasan_bg1ram_r );
+READ8_HANDLER( argus_paletteram_r );
+READ8_HANDLER( butasan_txbackram_r );
+READ8_HANDLER( butasan_bg0backram_r );
 
-WRITE_HANDLER( argus_txram_w );
-WRITE_HANDLER( butasan_txram_w );
-WRITE_HANDLER( argus_bg1ram_w );
-WRITE_HANDLER( butasan_bg0ram_w );
-WRITE_HANDLER( butasan_bg1ram_w );
-WRITE_HANDLER( argus_bg0_scrollx_w );
-WRITE_HANDLER( argus_bg0_scrolly_w );
-WRITE_HANDLER( butasan_bg0_scrollx_w );
-WRITE_HANDLER( argus_bg1_scrollx_w );
-WRITE_HANDLER( argus_bg1_scrolly_w );
-WRITE_HANDLER( argus_bg_status_w );
-WRITE_HANDLER( valtric_bg_status_w );
-WRITE_HANDLER( butasan_bg0_status_w );
-WRITE_HANDLER( argus_flipscreen_w );
-WRITE_HANDLER( argus_paletteram_w );
-WRITE_HANDLER( valtric_paletteram_w );
-WRITE_HANDLER( butasan_paletteram_w );
-WRITE_HANDLER( butasan_txbackram_w );
-WRITE_HANDLER( butasan_bg0backram_w );
-WRITE_HANDLER( butasan_bg1_status_w );
+WRITE8_HANDLER( argus_txram_w );
+WRITE8_HANDLER( butasan_txram_w );
+WRITE8_HANDLER( argus_bg1ram_w );
+WRITE8_HANDLER( butasan_bg0ram_w );
+WRITE8_HANDLER( butasan_bg1ram_w );
+WRITE8_HANDLER( argus_bg0_scrollx_w );
+WRITE8_HANDLER( argus_bg0_scrolly_w );
+WRITE8_HANDLER( butasan_bg0_scrollx_w );
+WRITE8_HANDLER( argus_bg1_scrollx_w );
+WRITE8_HANDLER( argus_bg1_scrolly_w );
+WRITE8_HANDLER( argus_bg_status_w );
+WRITE8_HANDLER( valtric_bg_status_w );
+WRITE8_HANDLER( butasan_bg0_status_w );
+WRITE8_HANDLER( argus_flipscreen_w );
+WRITE8_HANDLER( argus_paletteram_w );
+WRITE8_HANDLER( valtric_paletteram_w );
+WRITE8_HANDLER( butasan_paletteram_w );
+WRITE8_HANDLER( butasan_txbackram_w );
+WRITE8_HANDLER( butasan_bg0backram_w );
+WRITE8_HANDLER( butasan_bg1_status_w );
 
 /***************************************************************************
 
@@ -153,15 +153,15 @@ WRITE_HANDLER( butasan_bg1_status_w );
 static INTERRUPT_GEN( argus_interrupt )
 {
 	if (cpu_getiloops() == 0)
-	   cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0xd7);	/* RST 10h */
+	   cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, 0xd7);	/* RST 10h */
 	else
-	   cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0xcf);	/* RST 08h */
+	   cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, 0xcf);	/* RST 08h */
 }
 
 /* Handler called by the YM2203 emulator when the internal timers cause an IRQ */
 static void irqhandler(int irq)
 {
-	cpu_set_irq_line(1, 0, irq ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1, 0, irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2203interface argus_ym2203_interface =
@@ -209,13 +209,13 @@ static struct YM2203interface butasan_ym2203_interface =
 ***************************************************************************/
 
 #if 0
-static READ_HANDLER( argus_bankselect_r )
+static READ8_HANDLER( argus_bankselect_r )
 {
 	return argus_bank_latch;
 }
 #endif
 
-static WRITE_HANDLER( argus_bankselect_w )
+static WRITE8_HANDLER( argus_bankselect_w )
 {
 	data8_t *RAM = memory_region(REGION_CPU1);
 	int bankaddress;
@@ -228,12 +228,12 @@ static WRITE_HANDLER( argus_bankselect_w )
 	}
 }
 
-static WRITE_HANDLER( butasan_pageselect_w )
+static WRITE8_HANDLER( butasan_pageselect_w )
 {
 	butasan_page_latch = data;
 }
 
-static READ_HANDLER( butasan_pagedram_r )
+static READ8_HANDLER( butasan_pagedram_r )
 {
 	if (!(butasan_page_latch & 0x01))
 	{
@@ -261,7 +261,7 @@ static READ_HANDLER( butasan_pagedram_r )
 	return 0;
 }
 
-static WRITE_HANDLER( butasan_pagedram_w )
+static WRITE8_HANDLER( butasan_pagedram_w )
 {
 	if (!(butasan_page_latch & 0x01))
 	{

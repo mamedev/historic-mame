@@ -12,7 +12,7 @@ int renegade_scrollx;
 static struct tilemap *bg_tilemap;
 static struct tilemap *fg_tilemap;
 
-WRITE_HANDLER( renegade_videoram_w )
+WRITE8_HANDLER( renegade_videoram_w )
 {
 	if( videoram[offset]!=data )
 	{
@@ -22,7 +22,7 @@ WRITE_HANDLER( renegade_videoram_w )
 	}
 }
 
-WRITE_HANDLER( renegade_videoram2_w )
+WRITE8_HANDLER( renegade_videoram2_w )
 {
 	if( renegade_videoram2[offset]!=data )
 	{
@@ -32,17 +32,17 @@ WRITE_HANDLER( renegade_videoram2_w )
 	}
 }
 
-WRITE_HANDLER( renegade_flipscreen_w )
+WRITE8_HANDLER( renegade_flipscreen_w )
 {
 	flip_screen_set(~data & 0x01);
 }
 
-WRITE_HANDLER( renegade_scroll0_w )
+WRITE8_HANDLER( renegade_scroll0_w )
 {
 	renegade_scrollx = (renegade_scrollx&0xff00)|data;
 }
 
-WRITE_HANDLER( renegade_scroll1_w )
+WRITE8_HANDLER( renegade_scroll1_w )
 {
 	renegade_scrollx = (renegade_scrollx&0xFF)|(data<<8);
 }

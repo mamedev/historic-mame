@@ -30,7 +30,7 @@ static UINT8* LFSR;
 static struct mame_bitmap* helper;
 
 
-WRITE_HANDLER( wolfpack_ship_size_w )
+WRITE8_HANDLER( wolfpack_ship_size_w )
 {
 	UINT8 color;
 
@@ -55,47 +55,47 @@ WRITE_HANDLER( wolfpack_ship_size_w )
 }
 
 
-WRITE_HANDLER( wolfpack_video_invert_w )
+WRITE8_HANDLER( wolfpack_video_invert_w )
 {
 	wolfpack_video_invert = data & 1;
 }
-WRITE_HANDLER( wolfpack_ship_reflect_w )
+WRITE8_HANDLER( wolfpack_ship_reflect_w )
 {
 	wolfpack_ship_reflect = data & 1;
 }
-WRITE_HANDLER( wolfpack_pt_pos_select_w )
+WRITE8_HANDLER( wolfpack_pt_pos_select_w )
 {
 	wolfpack_pt_pos_select = data & 1;
 }
-WRITE_HANDLER( wolfpack_pt_horz_w )
+WRITE8_HANDLER( wolfpack_pt_horz_w )
 {
 	wolfpack_pt_horz = data;
 }
-WRITE_HANDLER( wolfpack_pt_pic_w )
+WRITE8_HANDLER( wolfpack_pt_pic_w )
 {
 	wolfpack_pt_pic = data & 0x3f;
 }
-WRITE_HANDLER( wolfpack_ship_h_w )
+WRITE8_HANDLER( wolfpack_ship_h_w )
 {
 	wolfpack_ship_h = data;
 }
-WRITE_HANDLER( wolfpack_torpedo_pic_w )
+WRITE8_HANDLER( wolfpack_torpedo_pic_w )
 {
 	wolfpack_torpedo_pic = data;
 }
-WRITE_HANDLER( wolfpack_ship_h_precess_w )
+WRITE8_HANDLER( wolfpack_ship_h_precess_w )
 {
 	wolfpack_ship_h_precess = data & 0x3f;
 }
-WRITE_HANDLER( wolfpack_ship_pic_w )
+WRITE8_HANDLER( wolfpack_ship_pic_w )
 {
 	wolfpack_ship_pic = data & 0x0f;
 }
-WRITE_HANDLER( wolfpack_torpedo_h_w )
+WRITE8_HANDLER( wolfpack_torpedo_h_w )
 {
 	wolfpack_torpedo_h = data;
 }
-WRITE_HANDLER( wolfpack_torpedo_v_w )
+WRITE8_HANDLER( wolfpack_torpedo_v_w )
 {
 	wolfpack_torpedo_v = data;
 }

@@ -24,13 +24,13 @@ VIDEO_UPDATE( bottom9 );
 static INTERRUPT_GEN( bottom9_interrupt )
 {
 	if (K052109_is_IRQ_enabled())
-		cpu_set_irq_line(0, 0, HOLD_LINE);
+		cpunum_set_input_line(0, 0, HOLD_LINE);
 }
 
 
 static int zoomreadroms,K052109_selected;
 
-static READ_HANDLER( bottom9_bankedram1_r )
+static READ8_HANDLER( bottom9_bankedram1_r )
 {
 	if (K052109_selected)
 		return K052109_051960_r(offset);
@@ -43,25 +43,25 @@ static READ_HANDLER( bottom9_bankedram1_r )
 	}
 }
 
-static WRITE_HANDLER( bottom9_bankedram1_w )
+static WRITE8_HANDLER( bottom9_bankedram1_w )
 {
 	if (K052109_selected) K052109_051960_w(offset,data);
 	else K051316_0_w(offset,data);
 }
 
-static READ_HANDLER( bottom9_bankedram2_r )
+static READ8_HANDLER( bottom9_bankedram2_r )
 {
 	if (K052109_selected) return K052109_051960_r(offset + 0x2000);
 	else return paletteram_r(offset);
 }
 
-static WRITE_HANDLER( bottom9_bankedram2_w )
+static WRITE8_HANDLER( bottom9_bankedram2_w )
 {
 	if (K052109_selected) K052109_051960_w(offset + 0x2000,data);
 	else paletteram_xBBBBBGGGGGRRRRR_swap_w(offset,data);
 }
 
-static WRITE_HANDLER( bankswitch_w )
+static WRITE8_HANDLER( bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	int offs;
@@ -75,7 +75,7 @@ if ((data & 1) == 0) usrintf_showmessage("bankswitch RAM bank 0");
 	cpu_setbank(1,&RAM[offs]);
 }
 
-static WRITE_HANDLER( bottom9_1f90_w )
+static WRITE8_HANDLER( bottom9_1f90_w )
 {
 	/* bits 0/1 = coin counters */
 	coin_counter_w(0,data & 0x01);
@@ -94,9 +94,9 @@ static WRITE_HANDLER( bottom9_1f90_w )
 	K052109_selected = data & 0x20;
 }
 
-static WRITE_HANDLER( bottom9_sh_irqtrigger_w )
+static WRITE8_HANDLER( bottom9_sh_irqtrigger_w )
 {
-	cpu_set_irq_line_and_vector(1,0,HOLD_LINE,0xff);
+	cpunum_set_input_line_and_vector(1,0,HOLD_LINE,0xff);
 }
 
 static int nmienable;
@@ -104,15 +104,15 @@ static int nmienable;
 static INTERRUPT_GEN( bottom9_sound_interrupt )
 {
 	if (nmienable)
-		cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 }
 
-static WRITE_HANDLER( nmi_enable_w )
+static WRITE8_HANDLER( nmi_enable_w )
 {
 	nmienable = data;
 }
 
-static WRITE_HANDLER( sound_bank_w )
+static WRITE8_HANDLER( sound_bank_w )
 {
 	int bank_A,bank_B;
 

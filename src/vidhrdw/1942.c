@@ -150,20 +150,20 @@ VIDEO_START( 1942 )
 
 ***************************************************************************/
 
-WRITE_HANDLER( c1942_fgvideoram_w )
+WRITE8_HANDLER( c1942_fgvideoram_w )
 {
 	c1942_fgvideoram[offset] = data;
 	tilemap_mark_tile_dirty(fg_tilemap,offset & 0x3ff);
 }
 
-WRITE_HANDLER( c1942_bgvideoram_w )
+WRITE8_HANDLER( c1942_bgvideoram_w )
 {
 	c1942_bgvideoram[offset] = data;
 	tilemap_mark_tile_dirty(bg_tilemap,(offset & 0x0f) | ((offset >> 1) & 0x01f0));
 }
 
 
-WRITE_HANDLER( c1942_palette_bank_w )
+WRITE8_HANDLER( c1942_palette_bank_w )
 {
 	if (c1942_palette_bank != data)
 	{
@@ -172,7 +172,7 @@ WRITE_HANDLER( c1942_palette_bank_w )
 	}
 }
 
-WRITE_HANDLER( c1942_scroll_w )
+WRITE8_HANDLER( c1942_scroll_w )
 {
 	static unsigned char scroll[2];
 
@@ -181,7 +181,7 @@ WRITE_HANDLER( c1942_scroll_w )
 }
 
 
-WRITE_HANDLER( c1942_c804_w )
+WRITE8_HANDLER( c1942_c804_w )
 {
 	/* bit 7: flip screen
        bit 4: cpu B reset
@@ -189,7 +189,7 @@ WRITE_HANDLER( c1942_c804_w )
 
 	coin_counter_w(0,data & 0x01);
 
-	cpu_set_reset_line(1,(data & 0x10) ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_RESET, (data & 0x10) ? ASSERT_LINE : CLEAR_LINE);
 
 	flip_screen_set(data & 0x80);
 }

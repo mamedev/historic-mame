@@ -13,9 +13,9 @@ Todo:
 #include "vidhrdw/generic.h"
 extern int dorachan_ctrl;
 
-WRITE_HANDLER( dorachan_videoram_w );
+WRITE8_HANDLER( dorachan_videoram_w );
 
-static READ_HANDLER( dorachan_protection_r )
+static READ8_HANDLER( dorachan_protection_r )
 {
 
 	switch (activecpu_get_previouspc())
@@ -28,13 +28,13 @@ static READ_HANDLER( dorachan_protection_r )
 	return 0xff;
 }
 
-static READ_HANDLER( dorachan_status_r )
+static READ8_HANDLER( dorachan_status_r )
 {
 /* to avoid resetting (when player 2 starts) bit 0 need to be reversed when screen is flipped */
 	return ((cpu_getscanline()>100)?1:0)^(dorachan_ctrl>>6);
 }
 
-static WRITE_HANDLER(dorachan_ctrl_w)
+static WRITE8_HANDLER(dorachan_ctrl_w)
 {
 	dorachan_ctrl=data;
 }

@@ -162,7 +162,7 @@ WRITE16_HANDLER ( wwfsstar_scrollwrite )
 WRITE16_HANDLER ( wwfsstar_soundwrite )
 {
 	soundlatch_w(1,data & 0xff);
-	cpu_set_irq_line( 1, IRQ_LINE_NMI, PULSE_LINE );
+	cpunum_set_input_line( 1, INPUT_LINE_NMI, PULSE_LINE );
 }
 
 READ16_HANDLER( input_port_2_word_r_cust )
@@ -314,11 +314,11 @@ static INTERRUPT_GEN( wwfsstar_interrupt ) {
 
 	else if( cpu_getiloops() == 240 ){
 		vbl = 0;
-		cpu_set_irq_line(0, 5, HOLD_LINE);
+		cpunum_set_input_line(0, 5, HOLD_LINE);
 	}
 
 	else if( cpu_getiloops() == 250 ){
-		 cpu_set_irq_line(0, 6, HOLD_LINE);
+		 cpunum_set_input_line(0, 6, HOLD_LINE);
 	}
 }
 
@@ -330,7 +330,7 @@ static INTERRUPT_GEN( wwfsstar_interrupt ) {
 
 static void wwfsstar_ymirq_handler(int irq)
 {
-	cpu_set_irq_line( 1, 0 , irq ? ASSERT_LINE : CLEAR_LINE );
+	cpunum_set_input_line( 1, 0 , irq ? ASSERT_LINE : CLEAR_LINE );
 }
 
 static struct YM2151interface ym2151_interface =

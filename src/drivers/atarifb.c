@@ -897,9 +897,9 @@ static DRIVER_INIT( atarifb4 )
 	/* Tell the video code to draw the plays for this version */
 	atarifb_game = 2;
 
-	install_mem_read_handler(0, 0x4000, 0x4000, atarifb4_in0_r);
-	install_mem_read_handler(0, 0x4001, 0x4001, input_port_1_r);
-	install_mem_read_handler(0, 0x4002, 0x4002, atarifb4_in2_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4000, 0x4000, 0, 0, atarifb4_in0_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4001, 0x4001, 0, 0, input_port_1_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4002, 0x4002, 0, 0, atarifb4_in2_r);
 }
 
 

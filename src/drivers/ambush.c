@@ -44,13 +44,13 @@ PALETTE_INIT( ambush );
 VIDEO_UPDATE( ambush );
 
 
-static WRITE_HANDLER( ambush_coin_counter_w )
+static WRITE8_HANDLER( ambush_coin_counter_w )
 {
 	coin_counter_w(0, data & 0x01);
 	coin_counter_w(1, data & 0x02);
 }
 
-static WRITE_HANDLER( flip_screen_w )
+static WRITE8_HANDLER( flip_screen_w )
 {
 	flip_screen_set(data);
 }

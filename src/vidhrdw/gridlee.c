@@ -82,7 +82,7 @@ VIDEO_START( gridlee )
  *
  *************************************/
 
-WRITE_HANDLER( gridlee_cocktail_flip_w )
+WRITE8_HANDLER( gridlee_cocktail_flip_w )
 {
 	if (gridlee_cocktail_flip != (data & 1))
 	{
@@ -99,7 +99,7 @@ WRITE_HANDLER( gridlee_cocktail_flip_w )
  *
  *************************************/
 
-WRITE_HANDLER( gridlee_videoram_w )
+WRITE8_HANDLER( gridlee_videoram_w )
 {
 	videoram[offset] = data;
 
@@ -116,7 +116,7 @@ WRITE_HANDLER( gridlee_videoram_w )
  *
  *************************************/
 
-WRITE_HANDLER( gridlee_palette_select_w )
+WRITE8_HANDLER( gridlee_palette_select_w )
 {
 	/* update the scanline palette */
 	if (palettebank_vis != (data & 0x3f))

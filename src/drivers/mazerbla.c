@@ -164,44 +164,44 @@ VIDEO_UPDATE( test_vcu )
 		copybitmap(bitmap,tmpbitmaps[0],0,0,0,0,&Machine->visible_area,TRANSPARENCY_PEN, Machine->pens[color_base] );
 	fillbitmap(tmpbitmaps[0],Machine->pens[color_base],NULL);
 
-	if (keyboard_pressed_memory(KEYCODE_1))	/* plane 1 */
+	if (code_pressed_memory(KEYCODE_1))	/* plane 1 */
 	{
 		planes_enabled[0] ^= 1;
 	}
-	if (keyboard_pressed_memory(KEYCODE_2))	/* plane 2 */
+	if (code_pressed_memory(KEYCODE_2))	/* plane 2 */
 	{
 		planes_enabled[1] ^= 1;
 	}
-	if (keyboard_pressed_memory(KEYCODE_3))	/* plane 3 */
+	if (code_pressed_memory(KEYCODE_3))	/* plane 3 */
 	{
 		planes_enabled[2] ^= 1;
 	}
-	if (keyboard_pressed_memory(KEYCODE_4))	/* plane 4 */
+	if (code_pressed_memory(KEYCODE_4))	/* plane 4 */
 	{
 		planes_enabled[3] ^= 1;
 	}
 
-	if (keyboard_pressed_memory(KEYCODE_I))	/* show/hide debug info */
+	if (code_pressed_memory(KEYCODE_I))	/* show/hide debug info */
 	{
 		dbg_info = !dbg_info;
 	}
 
-	if (keyboard_pressed_memory(KEYCODE_G))	/* enable gfx area handling */
+	if (code_pressed_memory(KEYCODE_G))	/* enable gfx area handling */
 	{
 		dbg_gfx_e = !dbg_gfx_e;
 	}
 
-	if (keyboard_pressed_memory(KEYCODE_C))	/* enable color area handling */
+	if (code_pressed_memory(KEYCODE_C))	/* enable color area handling */
 	{
 		dbg_clr_e = !dbg_clr_e;
 	}
 
-	if (keyboard_pressed_memory(KEYCODE_V))	/* draw only when vbank==dbg_vbank */
+	if (code_pressed_memory(KEYCODE_V))	/* draw only when vbank==dbg_vbank */
 	{
 		dbg_vbank ^= 1;
 	}
 
-	if (keyboard_pressed_memory(KEYCODE_L))	/* showlookup ram */
+	if (code_pressed_memory(KEYCODE_L))	/* showlookup ram */
 	{
 		dbg_lookup = (dbg_lookup+1)%5;//0,1,2,3, 4-off
 	}
@@ -292,20 +292,20 @@ VIDEO_UPDATE( mazerbla )
 
 static UINT8 zpu_int_vector;
 
-static WRITE_HANDLER( cfb_zpu_int_req_set_w )
+static WRITE8_HANDLER( cfb_zpu_int_req_set_w )
 {
 	zpu_int_vector &= ~2;	/* clear D1 on INTA (interrupt acknowledge) */
 
-	cpu_set_irq_line(0, 0, ASSERT_LINE);	/* main cpu interrupt (comes from CFB (generated at the start of INT routine on CFB) - vblank?) */
+	cpunum_set_input_line(0, 0, ASSERT_LINE);	/* main cpu interrupt (comes from CFB (generated at the start of INT routine on CFB) - vblank?) */
 }
 
-static READ_HANDLER( cfb_zpu_int_req_clr )
+static READ8_HANDLER( cfb_zpu_int_req_clr )
 {
 	zpu_int_vector |= 2;
 
 	/* clear the INT line when there are no more interrupt requests */
 	if (zpu_int_vector==0xff)
-		cpu_set_irq_line(0, 0, CLEAR_LINE);
+		cpunum_set_input_line(0, 0, CLEAR_LINE);
 
 	return 0;
 }
@@ -331,11 +331,11 @@ note:
 
 
 static data8_t *cfb_zpu_sharedram;
-static WRITE_HANDLER ( sharedram_CFB_ZPU_w )
+static WRITE8_HANDLER ( sharedram_CFB_ZPU_w )
 {
 	cfb_zpu_sharedram[offset] = data;
 }
-static READ_HANDLER ( sharedram_CFB_ZPU_r )
+static READ8_HANDLER ( sharedram_CFB_ZPU_r )
 {
 	return cfb_zpu_sharedram[offset];
 }
@@ -345,7 +345,7 @@ static READ_HANDLER ( sharedram_CFB_ZPU_r )
 static UINT8 ls670_0[4];
 static UINT8 ls670_1[4];
 
-static READ_HANDLER( ls670_0_r )
+static READ8_HANDLER( ls670_0_r )
 {
 	/* set a timer to force synchronization after the read */
 	timer_set(TIME_NOW, 0, NULL);
@@ -361,7 +361,7 @@ static void deferred_ls670_0_w(int param )
 	ls670_0[offset] = data;
 }
 
-static WRITE_HANDLER( ls670_0_w )
+static WRITE8_HANDLER( ls670_0_w )
 {
 	/* do this on a timer to let the CPUs synchronize */
 	timer_set(TIME_NOW, (offset<<8) | data, deferred_ls670_0_w);
@@ -369,7 +369,7 @@ static WRITE_HANDLER( ls670_0_w )
 
 
 
-static READ_HANDLER( ls670_1_r )
+static READ8_HANDLER( ls670_1_r )
 {
 	/* set a timer to force synchronization after the read */
 	timer_set(TIME_NOW, 0, NULL);
@@ -385,7 +385,7 @@ static void deferred_ls670_1_w(int param )
 	ls670_1[offset] = data;
 }
 
-static WRITE_HANDLER( ls670_1_w )
+static WRITE8_HANDLER( ls670_1_w )
 {
 	/* do this on a timer to let the CPUs synchronize */
 	timer_set(TIME_NOW, (offset<<8) | data, deferred_ls670_1_w);
@@ -395,7 +395,7 @@ static WRITE_HANDLER( ls670_1_w )
 /* bcd decoder used a input select (a mux) for reads from port 0x62 */
 static UINT8 bcd_7445 = 0;
 
-static WRITE_HANDLER(zpu_bcd_decoder_w)
+static WRITE8_HANDLER(zpu_bcd_decoder_w)
 {
 
 /*
@@ -446,7 +446,7 @@ Vertical movement of gun is Strobe 9, Bits 0-7.
 	bcd_7445 = data & 15;
 }
 
-static READ_HANDLER( zpu_inputs_r )
+static READ8_HANDLER( zpu_inputs_r )
 {
 	UINT8 ret = 0;
 
@@ -461,13 +461,13 @@ static READ_HANDLER( zpu_inputs_r )
 
 
 
-static WRITE_HANDLER(zpu_led_w)
+static WRITE8_HANDLER(zpu_led_w)
 {
 	/* 0x6e - reset (offset = 0)*/
 	/* 0x6f - set */
 	set_led_status(0, offset&1 );
 }
-static WRITE_HANDLER(zpu_lamps_w)
+static WRITE8_HANDLER(zpu_lamps_w)
 {
 	/* bit 4 = /LAMP0 */
 	/* bit 5 = /LAMP1 */
@@ -476,7 +476,7 @@ static WRITE_HANDLER(zpu_lamps_w)
 	/*set_led_status(1, (data&0x20)>>4 );*/
 }
 
-static WRITE_HANDLER(zpu_coin_counter_w)
+static WRITE8_HANDLER(zpu_coin_counter_w)
 {
 	/* bit 6 = coin counter */
 	coin_counter_w(offset, (data&0x40)>>6 );
@@ -513,7 +513,7 @@ ADDRESS_MAP_END
 
 
 static UINT8 vsb_ls273;
-static WRITE_HANDLER( vsb_ls273_audio_control_w )
+static WRITE8_HANDLER( vsb_ls273_audio_control_w )
 {
 	vsb_ls273 = data;
 
@@ -548,17 +548,17 @@ ADDRESS_MAP_END
 
 
 /* Color Frame Buffer PCB */
-static WRITE_HANDLER ( cfb_ram_w )
+static WRITE8_HANDLER ( cfb_ram_w )
 {
 	cfb_ram[offset] = data;
 }
-static READ_HANDLER ( cfb_ram_r )
+static READ8_HANDLER ( cfb_ram_r )
 {
 	return cfb_ram[offset];
 }
 
 
-static WRITE_HANDLER(cfb_led_w)
+static WRITE8_HANDLER(cfb_led_w)
 {
 	/* bit 7 - led on */
 	set_led_status(2,(data&0x80)>>7);
@@ -566,7 +566,7 @@ static WRITE_HANDLER(cfb_led_w)
 
 
 static UINT8 bknd_col = 0xaa;
-static WRITE_HANDLER(cfb_backgnd_color_w)
+static WRITE8_HANDLER(cfb_backgnd_color_w)
 {
 
 	if (bknd_col != data)
@@ -598,7 +598,7 @@ static WRITE_HANDLER(cfb_backgnd_color_w)
 }
 
 
-static WRITE_HANDLER(cfb_vbank_w)
+static WRITE8_HANDLER(cfb_vbank_w)
 {
 	data = (data & 0x40)>>6;	/* only bit 6 connected */
 	if (vbank != data)
@@ -609,13 +609,13 @@ static WRITE_HANDLER(cfb_vbank_w)
 }
 
 
-static WRITE_HANDLER(cfb_rom_bank_sel_w)	/* mazer blazer */
+static WRITE8_HANDLER(cfb_rom_bank_sel_w)	/* mazer blazer */
 {
 	gfx_rom_bank = data;
 
 	cpu_setbank( 1, memory_region(REGION_CPU3) + (gfx_rom_bank * 0x2000) + 0x10000 );
 }
-static WRITE_HANDLER(cfb_rom_bank_sel_w_gg)	/* great guns */
+static WRITE8_HANDLER(cfb_rom_bank_sel_w_gg)	/* great guns */
 {
 	gfx_rom_bank = data>>1;
 
@@ -625,7 +625,7 @@ static WRITE_HANDLER(cfb_rom_bank_sel_w_gg)	/* great guns */
 
 /* ????????????? */
 static UINT8 port02_status = 0;
-static READ_HANDLER( cfb_port_02_r )
+static READ8_HANDLER( cfb_port_02_r )
 {
 	port02_status ^= 0xff;
 	return (port02_status);
@@ -656,7 +656,7 @@ ADDRESS_MAP_END
 
 
 static UINT8 VCU_video_reg[4];
-static WRITE_HANDLER( VCU_video_reg_w )
+static WRITE8_HANDLER( VCU_video_reg_w )
 {
 	if (VCU_video_reg[offset] != data)
 	{
@@ -666,7 +666,7 @@ static WRITE_HANDLER( VCU_video_reg_w )
 	}
 }
 
-static READ_HANDLER( VCU_set_cmd_param_r )
+static READ8_HANDLER( VCU_set_cmd_param_r )
 {
 	VCU_gfx_param_addr = offset;
 
@@ -685,7 +685,7 @@ static READ_HANDLER( VCU_set_cmd_param_r )
 }
 
 
-static READ_HANDLER( VCU_set_gfx_addr_r )
+static READ8_HANDLER( VCU_set_gfx_addr_r )
 {
 int offs;
 int x,y;
@@ -850,7 +850,7 @@ unsigned char * rom = memory_region(REGION_CPU3) + (gfx_rom_bank * 0x2000) + 0x1
 	return 0;
 }
 
-static READ_HANDLER( VCU_set_clr_addr_r )
+static READ8_HANDLER( VCU_set_clr_addr_r )
 {
 int offs;
 int x,y;
@@ -1074,7 +1074,7 @@ ADDRESS_MAP_END
 
 static UINT8 soundlatch;
 
-static READ_HANDLER( soundcommand_r )
+static READ8_HANDLER( soundcommand_r )
 {
 	return soundlatch;
 }
@@ -1084,11 +1084,11 @@ static void delayed_sound_w(int param)
 	soundlatch = param;
 
 	/* cause NMI on sound CPU */
-	cpu_set_nmi_line(1, ASSERT_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_NMI, ASSERT_LINE);
 }
 
 
-static WRITE_HANDLER( main_sound_w )
+static WRITE8_HANDLER( main_sound_w )
 {
 	timer_set(TIME_NOW, data & 0xff, delayed_sound_w);
 }
@@ -1112,19 +1112,19 @@ ADDRESS_MAP_END
 /* frequency is 14.318 MHz/16/16/16/16 */
 static INTERRUPT_GEN( sound_interrupt )
 {
-	cpu_set_irq_line(1, 0, ASSERT_LINE);
+	cpunum_set_input_line(1, 0, ASSERT_LINE);
 }
 
-static WRITE_HANDLER( sound_int_clear_w )
+static WRITE8_HANDLER( sound_int_clear_w )
 {
-	cpu_set_irq_line(1, 0, CLEAR_LINE);
+	cpunum_set_input_line(1, 0, CLEAR_LINE);
 }
-static WRITE_HANDLER( sound_nmi_clear_w )
+static WRITE8_HANDLER( sound_nmi_clear_w )
 {
-	cpu_set_nmi_line(1, CLEAR_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_NMI, CLEAR_LINE);
 }
 
-static WRITE_HANDLER( gg_led_ctrl_w )
+static WRITE8_HANDLER( gg_led_ctrl_w )
 {
 	/* bit 0, bit 1 - led on */
 	set_led_status(1,data&0x01);

@@ -825,9 +825,9 @@ static UINT8 vblank_irq;
 static void update_irq_state(void)
 {
 	if (vblank_irq || sprite_irq || unknown_irq)
-		cpu_set_irq_line(0, 1, ASSERT_LINE);
+		cpunum_set_input_line(0, 1, ASSERT_LINE);
 	else
-		cpu_set_irq_line(0, 1, CLEAR_LINE);
+		cpunum_set_input_line(0, 1, CLEAR_LINE);
 }
 
 
@@ -884,7 +884,7 @@ WRITE16_HANDLER( kaneko16_soundlatch_w )
 	if (ACCESSING_MSB)
 	{
 		soundlatch_w(0, (data & 0xff00) >> 8 );
-		cpu_set_nmi_line(1,PULSE_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 	}
 }
 
@@ -929,12 +929,12 @@ WRITE16_HANDLER( kaneko16_YM2149_1_w )
 
 ***************************************************************************/
 
-READ_HANDLER( kaneko16_eeprom_r )
+READ8_HANDLER( kaneko16_eeprom_r )
 {
 	return EEPROM_read_bit() & 1;
 }
 
-WRITE_HANDLER( kaneko16_eeprom_reset_w )
+WRITE8_HANDLER( kaneko16_eeprom_reset_w )
 {
 	// reset line asserted: reset.
 	EEPROM_set_cs_line((data & 0x01) ? CLEAR_LINE : ASSERT_LINE );
@@ -1486,7 +1486,7 @@ static WRITE16_HANDLER( sandscrp_soundlatch_word_w )
 	{
 		latch1_full = 1;
 		soundlatch_w(0, data & 0xff);
-		cpu_set_nmi_line(1,PULSE_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 		cpu_spinuntil_time(TIME_IN_USEC(100));	// Allow the other cpu to reply
 	}
 }
@@ -1600,7 +1600,7 @@ ADDRESS_MAP_END
 ***************************************************************************/
 
 #if 0
-static WRITE_HANDLER( blazeon_bankswitch_w )
+static WRITE8_HANDLER( blazeon_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	int bank = data & 7;
@@ -1631,7 +1631,7 @@ ADDRESS_MAP_END
 								Sand Scorpion
 ***************************************************************************/
 
-WRITE_HANDLER( sandscrp_bankswitch_w )
+WRITE8_HANDLER( sandscrp_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	int bank = data & 0x07;
@@ -1644,19 +1644,19 @@ WRITE_HANDLER( sandscrp_bankswitch_w )
 	cpu_setbank(1, RAM);
 }
 
-static READ_HANDLER( sandscrp_latchstatus_r )
+static READ8_HANDLER( sandscrp_latchstatus_r )
 {
 	return	(latch2_full ? 0x80 : 0) |	// swapped!?
 			(latch1_full ? 0x40 : 0) ;
 }
 
-static READ_HANDLER( sandscrp_soundlatch_r )
+static READ8_HANDLER( sandscrp_soundlatch_r )
 {
 	latch1_full = 0;
 	return soundlatch_r(0);
 }
 
-static WRITE_HANDLER( sandscrp_soundlatch_w )
+static WRITE8_HANDLER( sandscrp_soundlatch_w )
 {
 	latch2_full = 1;
 	soundlatch2_w(0,data);
@@ -2707,9 +2707,9 @@ INTERRUPT_GEN( kaneko16_interrupt )
 {
 	switch ( cpu_getiloops() )
 	{
-		case 2:  cpu_set_irq_line(0, 3, HOLD_LINE);	break;
-		case 1:  cpu_set_irq_line(0, 4, HOLD_LINE); break;
-		case 0:  cpu_set_irq_line(0, 5, HOLD_LINE); break;
+		case 2:  cpunum_set_input_line(0, 3, HOLD_LINE);	break;
+		case 1:  cpunum_set_input_line(0, 4, HOLD_LINE); break;
+		case 0:  cpunum_set_input_line(0, 5, HOLD_LINE); break;
 	}
 }
 
@@ -3018,7 +3018,7 @@ MACHINE_DRIVER_END
 
 static void irq_handler(int irq)
 {
-	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2203interface ym2203_intf_sandscrp =
@@ -3089,9 +3089,9 @@ INTERRUPT_GEN( shogwarr_interrupt )
 {
 	switch ( cpu_getiloops() )
 	{
-		case 2:  cpu_set_irq_line(0, 2, HOLD_LINE); break;
-		case 1:  cpu_set_irq_line(0, 3, HOLD_LINE); break;
-//		case 0:  cpu_set_irq_line(0, 4, HOLD_LINE); break;
+		case 2:  cpunum_set_input_line(0, 2, HOLD_LINE); break;
+		case 1:  cpunum_set_input_line(0, 3, HOLD_LINE); break;
+//		case 0:  cpunum_set_input_line(0, 4, HOLD_LINE); break;
 	}
 }
 

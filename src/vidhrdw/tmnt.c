@@ -173,9 +173,9 @@ static void lgtnfght_sprite_callback(int *code,int *color,int *priority_mask)
 static void detatwin_sprite_callback(int *code,int *color,int *priority_mask)
 {
 #if 0
-if (keyboard_pressed(KEYCODE_Q) && (*color & 0x20)) *color = rand();
-if (keyboard_pressed(KEYCODE_W) && (*color & 0x40)) *color = rand();
-if (keyboard_pressed(KEYCODE_E) && (*color & 0x80)) *color = rand();
+if (code_pressed(KEYCODE_Q) && (*color & 0x20)) *color = rand();
+if (code_pressed(KEYCODE_W) && (*color & 0x40)) *color = rand();
+if (code_pressed(KEYCODE_E) && (*color & 0x80)) *color = rand();
 #endif
 	int pri = 0x20 | ((*color & 0x60) >> 2);
 	if (pri <= layerpri[2])								*priority_mask = 0;
@@ -397,7 +397,7 @@ WRITE16_HANDLER( tmnt_0a0000_w )
 
 		/* bit 3 high then low triggers irq on sound CPU */
 		if (last == 0x08 && (data & 0x08) == 0)
-			cpu_set_irq_line_and_vector(1,0,HOLD_LINE,0xff);
+			cpunum_set_input_line_and_vector(1,0,HOLD_LINE,0xff);
 
 		last = data & 0x08;
 
@@ -423,7 +423,7 @@ WRITE16_HANDLER( punkshot_0a0020_w )
 
 		/* bit 2 = trigger irq on sound CPU */
 		if (last == 0x04 && (data & 0x04) == 0)
-			cpu_set_irq_line_and_vector(1,0,HOLD_LINE,0xff);
+			cpunum_set_input_line_and_vector(1,0,HOLD_LINE,0xff);
 
 		last = data & 0x04;
 
@@ -445,7 +445,7 @@ WRITE16_HANDLER( lgtnfght_0a0018_w )
 
 		/* bit 2 = trigger irq on sound CPU */
 		if (last == 0x00 && (data & 0x04) == 0x04)
-			cpu_set_irq_line_and_vector(1,0,HOLD_LINE,0xff);
+			cpunum_set_input_line_and_vector(1,0,HOLD_LINE,0xff);
 
 		last = data & 0x04;
 

@@ -66,13 +66,13 @@ VIDEO_START( victnine )
 	return video_start_generic();
 }
 
-WRITE_HANDLER( flstory_videoram_w )
+WRITE8_HANDLER( flstory_videoram_w )
 {
 	videoram[offset] = data;
 	tilemap_mark_tile_dirty(tilemap,offset/2);
 }
 
-WRITE_HANDLER( flstory_palette_w )
+WRITE8_HANDLER( flstory_palette_w )
 {
 	if (offset & 0x100)
 		paletteram_xxxxBBBBGGGGRRRR_split2_w((offset & 0xff) + (palette_bank << 8),data);
@@ -80,7 +80,7 @@ WRITE_HANDLER( flstory_palette_w )
 		paletteram_xxxxBBBBGGGGRRRR_split1_w((offset & 0xff) + (palette_bank << 8),data);
 }
 
-READ_HANDLER( flstory_palette_r )
+READ8_HANDLER( flstory_palette_r )
 {
 	if (offset & 0x100)
 		return paletteram_2[ (offset & 0xff) + (palette_bank << 8) ];
@@ -88,7 +88,7 @@ READ_HANDLER( flstory_palette_r )
 		return paletteram  [ (offset & 0xff) + (palette_bank << 8) ];
 }
 
-WRITE_HANDLER( flstory_gfxctrl_w )
+WRITE8_HANDLER( flstory_gfxctrl_w )
 {
 	if (gfxctrl == data)
 		return;
@@ -104,7 +104,7 @@ WRITE_HANDLER( flstory_gfxctrl_w )
 
 }
 
-WRITE_HANDLER( victnine_gfxctrl_w )
+WRITE8_HANDLER( victnine_gfxctrl_w )
 {
 	if (gfxctrl == data)
 		return;
@@ -122,12 +122,12 @@ WRITE_HANDLER( victnine_gfxctrl_w )
 
 }
 
-READ_HANDLER( flstory_scrlram_r )
+READ8_HANDLER( flstory_scrlram_r )
 {
 	return flstory_scrlram[offset];
 }
 
-WRITE_HANDLER( flstory_scrlram_w )
+WRITE8_HANDLER( flstory_scrlram_w )
 {
 	flstory_scrlram[offset] = data;
 	tilemap_set_scrolly(tilemap, offset, data );

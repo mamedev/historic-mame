@@ -34,7 +34,7 @@ PALETTE_INIT( hyhoo );
 VIDEO_UPDATE( hyhoo );
 VIDEO_START( hyhoo );
 
-WRITE_HANDLER( hyhoo_palette_w );
+WRITE8_HANDLER( hyhoo_palette_w );
 void hyhoo_radrx_w(int data);
 void hyhoo_radry_w(int data);
 void hyhoo_sizex_w(int data);
@@ -68,7 +68,7 @@ static ADDRESS_MAP_START( writemem_hyhoo, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 
-static READ_HANDLER( io_hyhoo_r )
+static READ8_HANDLER( io_hyhoo_r )
 {
 	offset = (((offset & 0xff00) >> 8) | ((offset & 0x00ff) << 8));
 
@@ -92,7 +92,7 @@ static ADDRESS_MAP_START( readport_hyhoo, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x0000, 0xffff) AM_READ(io_hyhoo_r)
 ADDRESS_MAP_END
 
-static WRITE_HANDLER( io_hyhoo_w )
+static WRITE8_HANDLER( io_hyhoo_w )
 {
 	offset = (((offset & 0xff00) >> 8) | ((offset & 0x00ff) << 8));
 

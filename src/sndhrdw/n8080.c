@@ -196,7 +196,7 @@ static void spacefev_sound_pins_changed(void)
 	}
 	if (changes & ((1 << 0x2) | (1 << 0x3) | (1 << 0x5)))
 	{
-		cpu_set_irq_line(1, 0, PULSE_LINE);
+		cpunum_set_input_line(1, 0, PULSE_LINE);
 	}
 }
 
@@ -219,7 +219,7 @@ static void sheriff_sound_pins_changed(void)
 	}
 	if (changes & ((1 << 0x2) | (1 << 0x3) | (1 << 0x5)))
 	{
-		cpu_set_irq_line(1, 0, PULSE_LINE);
+		cpunum_set_input_line(1, 0, PULSE_LINE);
 	}
 }
 
@@ -234,7 +234,7 @@ static void helifire_sound_pins_changed(void)
 
 	if (changes & (1 << 6))
 	{
-		cpu_set_irq_line(1, 0, PULSE_LINE);
+		cpunum_set_input_line(1, 0, PULSE_LINE);
 	}
 }
 
@@ -323,17 +323,17 @@ static void delayed_sound_2(int data)
 }
 
 
-WRITE_HANDLER( n8080_sound_1_w )
+WRITE8_HANDLER( n8080_sound_1_w )
 {
 	timer_set(TIME_NOW, data, delayed_sound_1); /* force CPUs to sync */
 }
-WRITE_HANDLER( n8080_sound_2_w )
+WRITE8_HANDLER( n8080_sound_2_w )
 {
 	timer_set(TIME_NOW, data, delayed_sound_2); /* force CPUs to sync */
 }
 
 
-static READ_HANDLER( n8080_8035_p1_r )
+static READ8_HANDLER( n8080_8035_p1_r )
 {
 	UINT8 val = 0;
 
@@ -350,27 +350,27 @@ static READ_HANDLER( n8080_8035_p1_r )
 }
 
 
-static READ_HANDLER( n8080_8035_t0_r )
+static READ8_HANDLER( n8080_8035_t0_r )
 {
 	return (curr_sound_pins >> 0x7) & 1;
 }
-static READ_HANDLER( n8080_8035_t1_r )
+static READ8_HANDLER( n8080_8035_t1_r )
 {
 	return (curr_sound_pins >> 0xC) & 1;
 }
 
 
-static READ_HANDLER( helifire_8035_t0_r )
+static READ8_HANDLER( helifire_8035_t0_r )
 {
 	return (curr_sound_pins >> 0x3) & 1;
 }
-static READ_HANDLER( helifire_8035_t1_r )
+static READ8_HANDLER( helifire_8035_t1_r )
 {
 	return (curr_sound_pins >> 0x4) & 1;
 }
 
 
-static READ_HANDLER( helifire_8035_external_ram_r )
+static READ8_HANDLER( helifire_8035_external_ram_r )
 {
 	UINT8 val = 0;
 
@@ -383,25 +383,25 @@ static READ_HANDLER( helifire_8035_external_ram_r )
 }
 
 
-static READ_HANDLER( helifire_8035_p2_r )
+static READ8_HANDLER( helifire_8035_p2_r )
 {
 	return ((curr_sound_pins >> 0xC) & 1) ? 0x10 : 0x00; /* not used */
 }
 
 
-static WRITE_HANDLER( n8080_dac_w )
+static WRITE8_HANDLER( n8080_dac_w )
 {
 	DAC_data_w(0, data & 0x80);
 }
 
 
-static WRITE_HANDLER( helifire_dac_w )
+static WRITE8_HANDLER( helifire_dac_w )
 {
 	DAC_data_w(0, data * helifire_dac_volume);
 }
 
 
-static WRITE_HANDLER( helifire_sound_ctrl_w )
+static WRITE8_HANDLER( helifire_sound_ctrl_w )
 {
 	helifire_dac_phase = data & 0x80;
 

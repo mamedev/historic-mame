@@ -28,10 +28,10 @@ static unsigned char *ram;
 static INTERRUPT_GEN( gbusters_interrupt )
 {
 	if (K052109_is_IRQ_enabled())
-		cpu_set_irq_line(0, KONAMI_IRQ_LINE, HOLD_LINE);
+		cpunum_set_input_line(0, KONAMI_IRQ_LINE, HOLD_LINE);
 }
 
-static READ_HANDLER( bankedram_r )
+static READ8_HANDLER( bankedram_r )
 {
 	if (palette_selected)
 		return paletteram_r(offset);
@@ -39,7 +39,7 @@ static READ_HANDLER( bankedram_r )
 		return ram[offset];
 }
 
-static WRITE_HANDLER( bankedram_w )
+static WRITE8_HANDLER( bankedram_w )
 {
 	if (palette_selected)
 		paletteram_xBBBBBGGGGGRRRRR_swap_w(offset,data);
@@ -47,7 +47,7 @@ static WRITE_HANDLER( bankedram_w )
 		ram[offset] = data;
 }
 
-static WRITE_HANDLER( gbusters_1f98_w )
+static WRITE8_HANDLER( gbusters_1f98_w )
 {
 
 	/* bit 0 = enable char ROM reading through the video RAM */
@@ -62,7 +62,7 @@ static WRITE_HANDLER( gbusters_1f98_w )
 	}
 }
 
-static WRITE_HANDLER( gbusters_coin_counter_w )
+static WRITE8_HANDLER( gbusters_coin_counter_w )
 {
 	/* bit 0 select palette RAM  or work RAM at 5800-5fff */
 	palette_selected = ~data & 0x01;
@@ -86,7 +86,7 @@ static WRITE_HANDLER( gbusters_coin_counter_w )
 	}
 }
 
-static WRITE_HANDLER( gbusters_unknown_w )
+static WRITE8_HANDLER( gbusters_unknown_w )
 {
 	logerror("%04x: write %02x to 0x1f9c\n",activecpu_get_pc(), data);
 
@@ -97,12 +97,12 @@ char baf[40];
 }
 }
 
-WRITE_HANDLER( gbusters_sh_irqtrigger_w )
+WRITE8_HANDLER( gbusters_sh_irqtrigger_w )
 {
-	cpu_set_irq_line_and_vector(1,0,HOLD_LINE,0xff);
+	cpunum_set_input_line_and_vector(1,0,HOLD_LINE,0xff);
 }
 
-static WRITE_HANDLER( gbusters_snd_bankswitch_w )
+static WRITE8_HANDLER( gbusters_snd_bankswitch_w )
 {
 	int bank_B = ((data >> 2) & 0x01);	/* ?? */
 	int bank_A = ((data) & 0x01);		/* ?? */

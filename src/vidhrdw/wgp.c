@@ -712,25 +712,25 @@ VIDEO_UPDATE( wgp )
 #endif
 
 #ifdef MAME_DEBUG
-	if (keyboard_pressed_memory (KEYCODE_V))
+	if (code_pressed_memory (KEYCODE_V))
 	{
 		dislayer[0] ^= 1;
 		usrintf_showmessage("piv0: %01x",dislayer[0]);
 	}
 
-	if (keyboard_pressed_memory (KEYCODE_B))
+	if (code_pressed_memory (KEYCODE_B))
 	{
 		dislayer[1] ^= 1;
 		usrintf_showmessage("piv1: %01x",dislayer[1]);
 	}
 
-	if (keyboard_pressed_memory (KEYCODE_N))
+	if (code_pressed_memory (KEYCODE_N))
 	{
 		dislayer[2] ^= 1;
 		usrintf_showmessage("piv2: %01x",dislayer[2]);
 	}
 
-	if (keyboard_pressed_memory (KEYCODE_M))
+	if (code_pressed_memory (KEYCODE_M))
 	{
 		dislayer[3] ^= 1;
 		usrintf_showmessage("TC0100SCN top bg layer: %01x",dislayer[3]);

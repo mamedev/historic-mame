@@ -28,7 +28,7 @@ static UINT16 *prehisle_ram16;
 static WRITE16_HANDLER( prehisle_sound16_w )
 {
 	soundlatch_w(0, data & 0xff);
-	cpu_set_nmi_line(1, PULSE_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 }
 
 /*******************************************************************************/
@@ -56,7 +56,7 @@ ADDRESS_MAP_END
 
 /******************************************************************************/
 
-static WRITE_HANDLER( D7759_write_port_0_w )
+static WRITE8_HANDLER( D7759_write_port_0_w )
 {
 	UPD7759_port_w(offset,data);
 	UPD7759_start_w (0,0);
@@ -215,7 +215,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static void irqhandler(int irq)
 {
-	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM3812interface ym3812_interface =
@@ -369,7 +369,7 @@ static READ16_HANDLER( world_cycle_r )
 
 static DRIVER_INIT( prehisle )
 {
-	install_mem_read16_handler(0, 0x70024, 0x70025, world_cycle_r);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x70024, 0x70025, 0, 0, world_cycle_r);
 }
 
 static READ16_HANDLER( usa_cycle_r )
@@ -386,7 +386,7 @@ static READ16_HANDLER( usa_cycle_r )
 
 static DRIVER_INIT( prehislu )
 {
-	install_mem_read16_handler(0, 0x70024, 0x70025, usa_cycle_r);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x70024, 0x70025, 0, 0, usa_cycle_r);
 }
 
 static READ16_HANDLER( jap_cycle_r )
@@ -403,7 +403,7 @@ static READ16_HANDLER( jap_cycle_r )
 
 static DRIVER_INIT( gensitou )
 {
-	install_mem_read16_handler(0, 0x70024, 0x70025, jap_cycle_r);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x70024, 0x70025, 0, 0, jap_cycle_r);
 }
 
 /******************************************************************************/

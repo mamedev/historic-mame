@@ -34,7 +34,7 @@ static int firq_enable;
 	(*)	The Coin Counters are handled by the Konami Custom 051550
 */
 
-static WRITE_HANDLER( ajax_bankswitch_w )
+static WRITE8_HANDLER( ajax_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	int bankaddress = 0;
@@ -78,7 +78,7 @@ static WRITE_HANDLER( ajax_bankswitch_w )
 		LS393		C20			Dual -ve edge trigger 4-bit Binary Ripple Counter with Resets
 */
 
-static WRITE_HANDLER( ajax_lamps_w )
+static WRITE8_HANDLER( ajax_lamps_w )
 {
 	set_led_status(1,data & 0x02);	/* super weapon lamp */
 	set_led_status(2,data & 0x04);	/* power up lamps */
@@ -107,7 +107,7 @@ static WRITE_HANDLER( ajax_lamps_w )
 	0x01c0	(r) MIO2			Enables DIPSW #3 reading
 */
 
-READ_HANDLER( ajax_ls138_f10_r )
+READ8_HANDLER( ajax_ls138_f10_r )
 {
 	int data = 0;
 
@@ -135,7 +135,7 @@ READ_HANDLER( ajax_ls138_f10_r )
 	return data;
 }
 
-WRITE_HANDLER( ajax_ls138_f10_w )
+WRITE8_HANDLER( ajax_ls138_f10_w )
 {
 	switch ((offset & 0x01c0) >> 6){
 		case 0x00:	/* NSFIRQ + AFR */
@@ -143,11 +143,11 @@ WRITE_HANDLER( ajax_ls138_f10_w )
 				watchdog_reset_w(0, data);
 			else{
 				if (firq_enable)	/* Cause interrupt on slave CPU */
-					cpu_set_irq_line(1, M6809_FIRQ_LINE, HOLD_LINE);
+					cpunum_set_input_line(1, M6809_FIRQ_LINE, HOLD_LINE);
 			}
 			break;
 		case 0x01:	/* Cause interrupt on audio CPU */
-			cpu_set_irq_line(2, 0, HOLD_LINE);
+			cpunum_set_input_line(2, 0, HOLD_LINE);
 			break;
 		case 0x02:	/* Sound command number */
 			soundlatch_w(offset,data);
@@ -165,12 +165,12 @@ WRITE_HANDLER( ajax_ls138_f10_w )
 }
 
 /* Shared RAM between the 052001 and the 6809 (6264SL at I8) */
-READ_HANDLER( ajax_sharedram_r )
+READ8_HANDLER( ajax_sharedram_r )
 {
 	return ajax_sharedram[offset];
 }
 
-WRITE_HANDLER( ajax_sharedram_w )
+WRITE8_HANDLER( ajax_sharedram_w )
 {
 	ajax_sharedram[offset] = data;
 }
@@ -190,7 +190,7 @@ WRITE_HANDLER( ajax_sharedram_w )
 	0	SRB0	/
 */
 
-WRITE_HANDLER( ajax_bankswitch_2_w )
+WRITE8_HANDLER( ajax_bankswitch_2_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU2);
 	int bankaddress;
@@ -218,5 +218,5 @@ MACHINE_INIT( ajax )
 INTERRUPT_GEN( ajax_interrupt )
 {
 	if (K051960_is_IRQ_enabled())
-		cpu_set_irq_line(0, KONAMI_IRQ_LINE, HOLD_LINE);
+		cpunum_set_input_line(0, KONAMI_IRQ_LINE, HOLD_LINE);
 }

@@ -10,14 +10,14 @@ Mr. F. Lea
 
 static int mrflea_gfx_bank;
 
-WRITE_HANDLER( mrflea_gfx_bank_w ){
+WRITE8_HANDLER( mrflea_gfx_bank_w ){
 	mrflea_gfx_bank = data;
 	if( data & ~0x14 ){
 		logerror( "unknown gfx bank: 0x%02x\n", data );
 	}
 }
 
-WRITE_HANDLER( mrflea_videoram_w ){
+WRITE8_HANDLER( mrflea_videoram_w ){
 	int bank = offset/0x400;
 	offset &= 0x3ff;
 	videoram[offset] = data;
@@ -27,7 +27,7 @@ WRITE_HANDLER( mrflea_videoram_w ){
 	*/
 }
 
-WRITE_HANDLER( mrflea_spriteram_w ){
+WRITE8_HANDLER( mrflea_spriteram_w ){
 	if( offset&2 ){ /* tile_number */
 		spriteram[offset|1] = offset&1;
 		offset &= ~1;

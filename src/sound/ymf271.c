@@ -2,7 +2,7 @@
 	Yamaha YMF271-F "OPX" emulator v0.1
 	By R. Belmont.  
 	Based in part on YMF278B emulator by R. Belmont and O. Galibert.
-
+	12June04 update by Toshiaki Nijiura
 	Copyright (c) 2003 R. Belmont.
 
 	This software is dual-licensed: it may be used in MAME and properly licensed
@@ -127,7 +127,7 @@ static void ymf271_pcm_update(int num, INT16 **outputs, int length)
 				*mixp++ += (sample * volume[slot->tl])>>16;
 				*mixp++ += (sample * volume[slot->tl])>>16;
 
-				slot->stepptr += slot->step;
+				slot->stepptr += slot->step << slot-> multiple;
 				if ((slot->stepptr>>16) > slot->endaddr)
 				{
 					// kill non-frac
@@ -185,7 +185,7 @@ static void ymf271_write_fm(YMF271Chip *chip, int grp, int adr, int data)
 					}
 
 					step = ((slot->fns/2) | 1024) << (oct + 7);
-					slot->step = (UINT32) ((((INT64)step)*(44100/4)) / Machine->sample_rate);
+					slot->step = (UINT32) ((((INT64)step)*(44100/4)) / (Machine->sample_rate  << slot->fs ) );
 
 //					logerror("step %x\n", slot->step);
 				}
@@ -383,10 +383,10 @@ static void ymf271_write_timer(int chipnum, int data)
 				chip->timerA |= data;
 				break;
 
-			case 0x11:
-				chip->timerA &= ~0x300;
-				chip->timerA |= (data & 0x3)<<8;
-				break;
+//			case 0x11:
+//				chip->timerA &= 0x00ff;
+//				chip->timerA |= (data & 0xff)<<8;
+//				break;
 
 			case 0x12:
 				chip->timerB = data;
@@ -418,7 +418,7 @@ static void ymf271_write_timer(int chipnum, int data)
 
 					if (chip->irq_callback) chip->irq_callback(0);
 
-					period = 384.0 * (1024.0 - (double)chip->timerAVal) / (double)CLOCK;
+					period = (double)(256.0 - chip->timerAVal ) * ( 384.0 * 4.0 / (double)CLOCK);
 
 					timer_adjust(chip->timA, TIME_IN_SEC(period), chipnum, TIME_IN_SEC(period));
 				}
@@ -542,22 +542,22 @@ void YMF271_sh_stop( void )
 {
 }
 
-READ_HANDLER( YMF271_0_r )
+READ8_HANDLER( YMF271_0_r )
 {
 	return ymf271_r(0, offset);
 }
 
-WRITE_HANDLER( YMF271_0_w )
+WRITE8_HANDLER( YMF271_0_w )
 {
 	ymf271_w(0, offset, data);
 }
 
-READ_HANDLER( YMF271_1_r )
+READ8_HANDLER( YMF271_1_r )
 {
 	return ymf271_r(1, offset);
 }
 
-WRITE_HANDLER( YMF271_1_w )
+WRITE8_HANDLER( YMF271_1_w )
 {
 	ymf271_w(1, offset, data);
 }

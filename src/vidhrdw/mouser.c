@@ -43,17 +43,17 @@ PALETTE_INIT( mouser )
 	}
 }
 
-WRITE_HANDLER( mouser_flip_screen_x_w )
+WRITE8_HANDLER( mouser_flip_screen_x_w )
 {
 	flip_screen_x_set(~data & 1);
 }
 
-WRITE_HANDLER( mouser_flip_screen_y_w )
+WRITE8_HANDLER( mouser_flip_screen_y_w )
 {
 	flip_screen_y_set(~data & 1);
 }
 
-WRITE_HANDLER( mouser_spriteram_w )
+WRITE8_HANDLER( mouser_spriteram_w )
 {
 	/* Mark the entire row as dirty if row scrollram is written */
 	/* Only used by the MOUSER logo */
@@ -68,7 +68,7 @@ WRITE_HANDLER( mouser_spriteram_w )
 	spriteram_w(offset, data);
 }
 
-WRITE_HANDLER( mouser_colorram_w )
+WRITE8_HANDLER( mouser_colorram_w )
 {
 	dirtybuffer[offset] = 1;
 	colorram_w(offset, data);

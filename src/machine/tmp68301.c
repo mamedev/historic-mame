@@ -46,7 +46,7 @@ void tmp68301_timer_callback(int i)
 		tmp68301_irq_vector[level]	=	IVNR & 0x00e0;
 		tmp68301_irq_vector[level]	+=	4+i;
 
-		cpu_set_irq_line(0,level,HOLD_LINE);
+		cpunum_set_input_line(0,level,HOLD_LINE);
 	}
 
 	if (TCR & 0x0080)	// N/1
@@ -146,7 +146,7 @@ static void update_irq_state(void)
 
 			tmp68301_IE[i] = 0;		// Interrupts are edge triggerred
 
-			cpu_set_irq_line(0,level,HOLD_LINE);
+			cpunum_set_input_line(0,level,HOLD_LINE);
 		}
 	}
 }

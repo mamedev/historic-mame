@@ -1175,7 +1175,7 @@ void uPD71054_update_timer( int no )
 ------------------------------*/
 void uPD71054_timer_callback( int no )
 {
-	cpu_set_irq_line( 0, 4, HOLD_LINE );
+	cpunum_set_input_line( 0, 4, HOLD_LINE );
 	uPD71054_update_timer( no );
 }
 
@@ -1278,7 +1278,7 @@ static struct x1_010_interface seta_sound_intf_16MHz2 =
 
 static void utoukond_ym3438_interrupt(int linestate)
 {
-	cpu_set_nmi_line(1,linestate);
+	cpunum_set_input_line(1, INPUT_LINE_NMI, linestate);
 }
 
 static struct YM2612interface utoukond_ym3438_intf =
@@ -1359,7 +1359,7 @@ static WRITE16_HANDLER( sub_ctrl_w )
 			if (ACCESSING_LSB)
 			{
 				if ( !(old_data&1) && (data&1) )
-					cpu_set_reset_line(1,PULSE_LINE);
+					cpunum_set_input_line(1, INPUT_LINE_RESET, PULSE_LINE);
 				old_data = data;
 			}
 			break;
@@ -1423,12 +1423,12 @@ static READ16_HANDLER( seta_dsw_r )
 
 /* DSW reading for 8 bit CPUs */
 
-static READ_HANDLER( dsw1_r )
+static READ8_HANDLER( dsw1_r )
 {
 	return (readinputport(3) >> 8) & 0xff;
 }
 
-static READ_HANDLER( dsw2_r )
+static READ8_HANDLER( dsw2_r )
 {
 	return (readinputport(3) >> 0) & 0xff;
 }
@@ -1575,7 +1575,7 @@ WRITE16_HANDLER( calibr50_soundlatch_w )
 	if (ACCESSING_LSB)
 	{
 		soundlatch_word_w(0,data,mem_mask);
-		cpu_set_nmi_line(1,PULSE_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 		cpu_spinuntil_time(TIME_IN_USEC(50));	// Allow the other cpu to reply
 	}
 }
@@ -2558,7 +2558,7 @@ ADDRESS_MAP_END
 
 static int wiggie_soundlatch;
 
-READ_HANDLER( wiggie_soundlatch_r )
+READ8_HANDLER( wiggie_soundlatch_r )
 {
 	return wiggie_soundlatch;
 }
@@ -2566,7 +2566,7 @@ READ_HANDLER( wiggie_soundlatch_r )
 static WRITE16_HANDLER( wiggie_soundlatch_w )
 {
 	wiggie_soundlatch = data >> 8;
-	cpu_set_irq_line(1,0, PULSE_LINE);
+	cpunum_set_input_line(1,0, PULSE_LINE);
 }
 
 
@@ -2624,7 +2624,7 @@ static WRITE16_HANDLER( utoukond_soundlatch_w )
 {
 	if (ACCESSING_LSB)
 	{
-		cpu_set_irq_line(1,0,HOLD_LINE);
+		cpunum_set_input_line(1,0,HOLD_LINE);
 		soundlatch_w(0,data & 0xff);
 	}
 }
@@ -2670,7 +2670,7 @@ ADDRESS_MAP_END
 
 ***************************************************************************/
 
-static WRITE_HANDLER( sub_bankswitch_w )
+static WRITE8_HANDLER( sub_bankswitch_w )
 {
 	data8_t *rom = memory_region(REGION_CPU2);
 	int bank = data >> 4;
@@ -2678,7 +2678,7 @@ static WRITE_HANDLER( sub_bankswitch_w )
 	cpu_setbank(1, &rom[bank * 0x4000 + 0xc000]);
 }
 
-static WRITE_HANDLER( sub_bankswitch_lockout_w )
+static WRITE8_HANDLER( sub_bankswitch_lockout_w )
 {
 	sub_bankswitch_w(offset,data);
 	seta_coin_lockout_w(data);
@@ -2689,7 +2689,7 @@ static WRITE_HANDLER( sub_bankswitch_lockout_w )
 								Thundercade
 ***************************************************************************/
 
-static READ_HANDLER( ff_r )	{return 0xff;}
+static READ8_HANDLER( ff_r )	{return 0xff;}
 
 static ADDRESS_MAP_START( tndrcade_sub_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x01ff) AM_READ(MRA8_RAM				)	// RAM
@@ -2747,7 +2747,7 @@ ADDRESS_MAP_END
 								DownTown
 ***************************************************************************/
 
-READ_HANDLER( downtown_ip_r )
+READ8_HANDLER( downtown_ip_r )
 {
 	int dir1 = readinputport(4);	// analog port
 	int dir2 = readinputport(5);	// analog port
@@ -2792,7 +2792,7 @@ ADDRESS_MAP_END
 						Caliber 50 / U.S. Classic
 ***************************************************************************/
 
-WRITE_HANDLER( calibr50_soundlatch2_w )
+WRITE8_HANDLER( calibr50_soundlatch2_w )
 {
 	soundlatch2_w(0,data);
 	cpu_spinuntil_time(TIME_IN_USEC(50));	// Allow the other cpu to reply
@@ -6159,8 +6159,8 @@ static INTERRUPT_GEN( seta_interrupt_1_and_2 )
 {
 	switch (cpu_getiloops())
 	{
-		case 0:		cpu_set_irq_line(0, 1, HOLD_LINE);	break;
-		case 1:		cpu_set_irq_line(0, 2, HOLD_LINE);	break;
+		case 0:		cpunum_set_input_line(0, 1, HOLD_LINE);	break;
+		case 1:		cpunum_set_input_line(0, 2, HOLD_LINE);	break;
 	}
 }
 
@@ -6168,8 +6168,8 @@ static INTERRUPT_GEN( seta_interrupt_2_and_4 )
 {
 	switch (cpu_getiloops())
 	{
-		case 0:		cpu_set_irq_line(0, 2, HOLD_LINE);	break;
-		case 1:		cpu_set_irq_line(0, 4, HOLD_LINE);	break;
+		case 0:		cpunum_set_input_line(0, 2, HOLD_LINE);	break;
+		case 1:		cpunum_set_input_line(0, 4, HOLD_LINE);	break;
 	}
 }
 
@@ -6180,8 +6180,8 @@ static INTERRUPT_GEN( seta_sub_interrupt )
 {
 	switch (cpu_getiloops())
 	{
-		case 0:		cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);	break;
-		case 1:		cpu_set_irq_line(1, 0, HOLD_LINE);				break;
+		case 0:		cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);	break;
+		case 1:		cpunum_set_input_line(1, 0, HOLD_LINE);				break;
 	}
 }
 
@@ -6215,9 +6215,9 @@ static struct YM3812interface ym3812_interface =
 static INTERRUPT_GEN( tndrcade_sub_interrupt )
 {
 	if (cpu_getiloops() & 1)
-		cpu_set_irq_line(1, 0, HOLD_LINE);
+		cpunum_set_input_line(1, 0, HOLD_LINE);
 	else if (cpu_getiloops() == 0)
-		cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 }
 
 static MACHINE_DRIVER_START( tndrcade )
@@ -6348,8 +6348,8 @@ INTERRUPT_GEN( calibr50_interrupt )
 		case 0:
 		case 1:
 		case 2:
-		case 3:		cpu_set_irq_line(0, 4, HOLD_LINE);	break;
-		case 4:		cpu_set_irq_line(0, 2, HOLD_LINE);	break;
+		case 3:		cpunum_set_input_line(0, 4, HOLD_LINE);	break;
+		case 4:		cpunum_set_input_line(0, 2, HOLD_LINE);	break;
 	}
 }
 
@@ -6761,7 +6761,7 @@ MACHINE_DRIVER_END
 #if __uPD71054_TIMER
 static INTERRUPT_GEN( wrofaero_interrupt )
 {
-	cpu_set_irq_line( 0, 2, HOLD_LINE );
+	cpunum_set_input_line( 0, 2, HOLD_LINE );
 }
 
 MACHINE_INIT( wrofaero ) { uPD71054_timer_init(); }
@@ -8404,11 +8404,11 @@ logerror("%04x: twineagl_200100_w %d = %02x\n",activecpu_get_pc(),offset,data);
 DRIVER_INIT( twineagl )
 {
 	/* debug? */
-	install_mem_read16_handler (0, 0x800000, 0x8000ff, twineagl_debug_r);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x800000, 0x8000ff, 0, 0, twineagl_debug_r);
 
 	/* This allows 2 simultaneous players and the use of the "Copyright" Dip Switch. */
-	install_mem_read16_handler (0, 0x200100, 0x20010f, twineagl_200100_r);
-	install_mem_write16_handler(0, 0x200100, 0x20010f, twineagl_200100_w);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x200100, 0x20010f, 0, 0, twineagl_200100_r);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x200100, 0x20010f, 0, 0, twineagl_200100_w);
 }
 
 
@@ -8438,8 +8438,8 @@ static WRITE16_HANDLER( downtown_protection_w )
 
 DRIVER_INIT( downtown )
 {
-	install_mem_read16_handler (0, 0x200000, 0x2001ff, downtown_protection_r);
-	install_mem_write16_handler(0, 0x200000, 0x2001ff, downtown_protection_w);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x200000, 0x2001ff, 0, 0, downtown_protection_r);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x200000, 0x2001ff, 0, 0, downtown_protection_w);
 }
 
 
@@ -8459,7 +8459,7 @@ READ16_HANDLER( arbalest_debug_r )
 
 DRIVER_INIT( arbalest )
 {
-	install_mem_read16_handler(0, 0x80000, 0x8000f, arbalest_debug_r);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x80000, 0x8000f, 0, 0, arbalest_debug_r);
 }
 
 
@@ -8468,8 +8468,8 @@ DRIVER_INIT( metafox )
 	data16_t *RAM = (data16_t *) memory_region(REGION_CPU1);
 
 	/* This game uses the 21c000-21ffff area for protection? */
-//	install_mem_read16_handler (0, 0x21c000, 0x21ffff, MRA16_NOP);
-//	install_mem_write16_handler(0, 0x21c000, 0x21ffff, MWA16_NOP);
+//	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x21c000, 0x21ffff, 0, 0, MRA16_NOP);
+//	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x21c000, 0x21ffff, 0, 0, MWA16_NOP);
 
 	RAM[0x8ab1c/2] = 0x4e71;	// patch protection test: "cp error"
 	RAM[0x8ab1e/2] = 0x4e71;
@@ -8515,14 +8515,14 @@ DRIVER_INIT ( blandia )
 
 DRIVER_INIT( eightfrc )
 {
-	install_mem_read16_handler(0, 0x500004, 0x500005, MRA16_NOP);	// watchdog??
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x500004, 0x500005, 0, 0, MRA16_NOP);	// watchdog??
 }
 
 
 DRIVER_INIT( zombraid )
 {
-	install_mem_read16_handler (0, 0xf00002, 0xf00003, zombraid_gun_r);
-	install_mem_write16_handler(0, 0xf00000, 0xf00001, zombraid_gun_w);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xf00002, 0xf00003, 0, 0, zombraid_gun_r);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xf00000, 0xf00001, 0, 0, zombraid_gun_w);
 }
 
 
@@ -8540,7 +8540,7 @@ DRIVER_INIT( kiwame )
 
 DRIVER_INIT( rezon )
 {
-	install_mem_read16_handler(0, 0x500006, 0x500007, MRA16_NOP);	// irq ack?
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x500006, 0x500007, 0, 0, MRA16_NOP);	// irq ack?
 }
 
 static DRIVER_INIT(wiggie)
@@ -8571,7 +8571,7 @@ static DRIVER_INIT(wiggie)
 
 	}
 
-	install_mem_write16_handler(0, 0xB00008, 0xB00009, wiggie_soundlatch_w);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xB00008, 0xB00009, 0, 0, wiggie_soundlatch_w);
 
 }
 

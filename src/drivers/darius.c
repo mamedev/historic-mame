@@ -171,7 +171,7 @@ void parse_control( void )	/* assumes Z80 sandwiched between 68Ks */
 	/* bit 0 enables cpu B */
 	/* however this fails when recovering from a save state
 	   if cpu B is disabled !! */
-	cpu_set_reset_line(2,(cpua_ctrl &0x1) ? CLEAR_LINE : ASSERT_LINE);
+	cpunum_set_input_line(2, INPUT_LINE_RESET, (cpua_ctrl &0x1) ? CLEAR_LINE : ASSERT_LINE);
 
 }
 
@@ -328,7 +328,7 @@ static void reset_sound_region(void)
 
 }
 
-static WRITE_HANDLER( sound_bankswitch_w )
+static WRITE8_HANDLER( sound_bankswitch_w )
 {
 		banknum = data &0x03;
 		reset_sound_region();
@@ -336,14 +336,14 @@ static WRITE_HANDLER( sound_bankswitch_w )
 //		reset_sound_region();
 }
 
-static WRITE_HANDLER( adpcm_command_w )
+static WRITE8_HANDLER( adpcm_command_w )
 {
 	adpcm_command = data;
 	/* logerror("#ADPCM command write =%2x\n",data); */
 }
 
 #if 0
-static WRITE_HANDLER( display_value )
+static WRITE8_HANDLER( display_value )
 {
 	usrintf_showmessage("d800=%x",data);
 }
@@ -401,19 +401,19 @@ static void update_da( void )
 	mixer_set_stereo_volume( 8, left, right );
 }
 
-static WRITE_HANDLER( darius_fm0_pan )
+static WRITE8_HANDLER( darius_fm0_pan )
 {
 	darius_pan[0] = data&0xff;  /* data 0x00:right 0xff:left */
 	update_fm0();
 }
 
-static WRITE_HANDLER( darius_fm1_pan )
+static WRITE8_HANDLER( darius_fm1_pan )
 {
 	darius_pan[1] = data&0xff;
 	update_fm1();
 }
 
-static WRITE_HANDLER( darius_psg0_pan )
+static WRITE8_HANDLER( darius_psg0_pan )
 {
 	darius_pan[2] = data&0xff;
 	update_psg0( 0 );
@@ -421,7 +421,7 @@ static WRITE_HANDLER( darius_psg0_pan )
 	update_psg0( 2 );
 }
 
-static WRITE_HANDLER( darius_psg1_pan )
+static WRITE8_HANDLER( darius_psg1_pan )
 {
 	darius_pan[3] = data&0xff;
 	update_psg1( 0 );
@@ -429,7 +429,7 @@ static WRITE_HANDLER( darius_psg1_pan )
 	update_psg1( 2 );
 }
 
-static WRITE_HANDLER( darius_da_pan )
+static WRITE8_HANDLER( darius_da_pan )
 {
 	darius_pan[4] = data&0xff;
 	update_da();
@@ -437,7 +437,7 @@ static WRITE_HANDLER( darius_da_pan )
 
 /**** Mixer Control ****/
 
-static WRITE_HANDLER( darius_write_portA0 )
+static WRITE8_HANDLER( darius_write_portA0 )
 {
 	// volume control FM #0 PSG #0 A
 	//usrintf_showmessage(" pan %02x %02x %02x %02x %02x", darius_pan[0], darius_pan[1], darius_pan[2], darius_pan[3], darius_pan[4] );
@@ -448,7 +448,7 @@ static WRITE_HANDLER( darius_write_portA0 )
 	update_psg0( 0 );
 }
 
-static WRITE_HANDLER( darius_write_portA1 )
+static WRITE8_HANDLER( darius_write_portA1 )
 {
 	// volume control FM #1 PSG #1 A
 	//usrintf_showmessage(" pan %02x %02x %02x %02x %02x", darius_pan[0], darius_pan[1], darius_pan[2], darius_pan[3], darius_pan[4] );
@@ -458,7 +458,7 @@ static WRITE_HANDLER( darius_write_portA1 )
 	update_psg1( 0 );
 }
 
-static WRITE_HANDLER( darius_write_portB0 )
+static WRITE8_HANDLER( darius_write_portB0 )
 {
 	// volume control PSG #0 B/C
 	//usrintf_showmessage(" pan %02x %02x %02x %02x %02x", darius_pan[0], darius_pan[1], darius_pan[2], darius_pan[3], darius_pan[4] );
@@ -468,7 +468,7 @@ static WRITE_HANDLER( darius_write_portB0 )
 	update_psg0( 2 );
 }
 
-static WRITE_HANDLER( darius_write_portB1 )
+static WRITE8_HANDLER( darius_write_portB1 )
 {
 	// volume control PSG #1 B/C
 	//usrintf_showmessage(" pan %02x %02x %02x %02x %02x", darius_pan[0], darius_pan[1], darius_pan[2], darius_pan[3], darius_pan[4] );
@@ -528,7 +528,7 @@ static void darius_adpcm_int (int data)
 {
 	if (nmi_enable)
 	{
-		cpu_set_nmi_line(3, PULSE_LINE);
+		cpunum_set_input_line(3, INPUT_LINE_NMI, PULSE_LINE);
 	}
 }
 
@@ -541,35 +541,35 @@ static struct MSM5205interface msm5205_interface =
 	{ 50 }			/* volume */
 };
 
-static READ_HANDLER( adpcm_command_read )
+static READ8_HANDLER( adpcm_command_read )
 {
 	/* logerror("read port 0: %02x  PC=%4x\n",adpcm_command, activecpu_get_pc() ); */
 	return adpcm_command;
 }
 
-static READ_HANDLER( readport2 )
+static READ8_HANDLER( readport2 )
 {
 	return 0;
 }
 
-static READ_HANDLER( readport3 )
+static READ8_HANDLER( readport3 )
 {
 	return 0;
 }
 
-static WRITE_HANDLER ( adpcm_nmi_disable )
+static WRITE8_HANDLER ( adpcm_nmi_disable )
 {
 	nmi_enable = 0;
 	/* logerror("write port 0: NMI DISABLE  PC=%4x\n", data, activecpu_get_pc() ); */
 }
 
-static WRITE_HANDLER ( adpcm_nmi_enable )
+static WRITE8_HANDLER ( adpcm_nmi_enable )
 {
 	nmi_enable = 1;
 	/* logerror("write port 1: NMI ENABLE   PC=%4x\n", activecpu_get_pc() ); */
 }
 
-static WRITE_HANDLER( adpcm_data_w )
+static WRITE8_HANDLER( adpcm_data_w )
 {
 	MSM5205_data_w (0,   data         );
 	MSM5205_reset_w(0, !(data & 0x20) );	/* my best guess, but it could be output enable as well */
@@ -817,7 +817,7 @@ static struct GfxDecodeInfo darius_gfxdecodeinfo[] =
 /* handler called by the YM2203 emulator when the internal timers cause an IRQ */
 static void irqhandler(int irq)	/* assumes Z80 sandwiched between 68Ks */
 {
-	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2203interface ym2203_interface =

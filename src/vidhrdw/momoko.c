@@ -25,45 +25,45 @@ data8_t momoko_flipscreen;
 
 /****************************************************************************/
 
-WRITE_HANDLER ( momoko_fg_scrollx_w )
+WRITE8_HANDLER ( momoko_fg_scrollx_w )
 {
 	momoko_fg_scrollx = data;
 }
-WRITE_HANDLER ( momoko_fg_scrolly_w )
+WRITE8_HANDLER ( momoko_fg_scrolly_w )
 {
 	momoko_fg_scrolly = data;
 }
-WRITE_HANDLER ( momoko_fg_select_w )
+WRITE8_HANDLER ( momoko_fg_select_w )
 {
 	momoko_fg_select = data & 0x0f;
 	momoko_fg_mask = data & 0x10;
 }
-WRITE_HANDLER ( momoko_text_scrolly_w )
+WRITE8_HANDLER ( momoko_text_scrolly_w )
 {
 	momoko_text_scrolly = data;
 }
-WRITE_HANDLER ( momoko_text_mode_w )
+WRITE8_HANDLER ( momoko_text_mode_w )
 {
 	momoko_text_mode = data;
 }
-WRITE_HANDLER ( momoko_bg_scrollx_w )
+WRITE8_HANDLER ( momoko_bg_scrollx_w )
 {
 	momoko_bg_scrollx[ offset ] = data;
 }
-WRITE_HANDLER ( momoko_bg_scrolly_w )
+WRITE8_HANDLER ( momoko_bg_scrolly_w )
 {
 	momoko_bg_scrolly[ offset ] = data;
 }
-WRITE_HANDLER( momoko_bg_select_w )
+WRITE8_HANDLER( momoko_bg_select_w )
 {
 	momoko_bg_select = data & 0x0f;
 	momoko_bg_mask = data & 0x10;
 }
-WRITE_HANDLER( momoko_bg_priority_w )
+WRITE8_HANDLER( momoko_bg_priority_w )
 {
 	momoko_bg_priority = data & 0x01;
 }
-WRITE_HANDLER( momoko_flipscreen_w )
+WRITE8_HANDLER( momoko_flipscreen_w )
 {
 	momoko_flipscreen = data & 0x01;
 }

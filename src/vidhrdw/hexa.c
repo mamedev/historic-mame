@@ -12,7 +12,7 @@
 static int charbank;
 static struct tilemap *bg_tilemap;
 
-WRITE_HANDLER( hexa_videoram_w )
+WRITE8_HANDLER( hexa_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -21,7 +21,7 @@ WRITE_HANDLER( hexa_videoram_w )
 	}
 }
 
-WRITE_HANDLER( hexa_d008_w )
+WRITE8_HANDLER( hexa_d008_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	int bankaddress;

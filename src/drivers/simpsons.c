@@ -16,17 +16,17 @@ someone@secureshell.com
 
 /* from vidhrdw */
 VIDEO_START( simpsons );
-WRITE_HANDLER( simpsons_priority_w );
+WRITE8_HANDLER( simpsons_priority_w );
 VIDEO_UPDATE( simpsons );
 
 /* from machine */
-READ_HANDLER( simpsons_eeprom_r );
-WRITE_HANDLER( simpsons_eeprom_w );
-WRITE_HANDLER( simpsons_coin_counter_w );
-READ_HANDLER( simpsons_sound_interrupt_r );
-READ_HANDLER( simpsons_sound_r );
-READ_HANDLER( simpsons_speedup1_r );
-READ_HANDLER( simpsons_speedup2_r );
+READ8_HANDLER( simpsons_eeprom_r );
+WRITE8_HANDLER( simpsons_eeprom_w );
+WRITE8_HANDLER( simpsons_coin_counter_w );
+READ8_HANDLER( simpsons_sound_interrupt_r );
+READ8_HANDLER( simpsons_sound_r );
+READ8_HANDLER( simpsons_speedup1_r );
+READ8_HANDLER( simpsons_speedup2_r );
 MACHINE_INIT( simpsons );
 NVRAM_HANDLER( simpsons );
 extern int simpsons_firq_enabled;
@@ -72,7 +72,7 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x8000, 0xffff) AM_WRITE(MWA8_ROM)
 ADDRESS_MAP_END
 
-static WRITE_HANDLER( z80_bankswitch_w )
+static WRITE8_HANDLER( z80_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU2);
 
@@ -86,7 +86,7 @@ static int nmi_enabled;
 
 static void sound_nmi_callback( int param )
 {
-	cpu_set_nmi_line( 1, ( nmi_enabled ) ? CLEAR_LINE : ASSERT_LINE );
+	cpunum_set_input_line(1, INPUT_LINE_NMI, ( nmi_enabled ) ? CLEAR_LINE : ASSERT_LINE );
 
 	nmi_enabled = 0;
 }
@@ -94,13 +94,13 @@ static void sound_nmi_callback( int param )
 
 static void nmi_callback(int param)
 {
-	cpu_set_nmi_line(1,ASSERT_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_NMI, ASSERT_LINE);
 }
 
-static WRITE_HANDLER( z80_arm_nmi_w )
+static WRITE8_HANDLER( z80_arm_nmi_w )
 {
 //	sound_nmi_enabled = 1;
-	cpu_set_nmi_line(1,CLEAR_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_NMI, CLEAR_LINE);
 	timer_set(TIME_IN_USEC(50),0,nmi_callback);	/* kludge until the K053260 is emulated correctly */
 }
 
@@ -292,7 +292,7 @@ static void simpsons_objdma(void)
 static void dmaend_callback(int data)
 {
 	if (simpsons_firq_enabled)
-		cpu_set_irq_line(0, KONAMI_FIRQ_LINE, HOLD_LINE);
+		cpunum_set_input_line(0, KONAMI_FIRQ_LINE, HOLD_LINE);
 }
 
 static INTERRUPT_GEN( simpsons_irq )
@@ -306,7 +306,7 @@ static INTERRUPT_GEN( simpsons_irq )
 	}
 
 	if (K052109_is_IRQ_enabled())
-		cpu_set_irq_line(0, KONAMI_IRQ_LINE, HOLD_LINE);
+		cpunum_set_input_line(0, KONAMI_IRQ_LINE, HOLD_LINE);
 }
 
 static MACHINE_DRIVER_START( simpsons )

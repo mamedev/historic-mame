@@ -1564,7 +1564,7 @@ VIDEO_UPDATE( system32 ) {
 
 		const pen_t *paldata = &gfx->colortable[0];
 
-//		if ( keyboard_pressed_memory(KEYCODE_C) )
+//		if ( code_pressed_memory(KEYCODE_C) )
 //		{
 //			ppp++;
 //

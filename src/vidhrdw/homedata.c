@@ -133,7 +133,7 @@ static void mrokumei_handleblit( int rom_base )
 	} /* for(;;) */
 
 finish:
-	cpu_set_irq_line(0,M6809_FIRQ_LINE,HOLD_LINE);
+	cpunum_set_input_line(0,M6809_FIRQ_LINE,HOLD_LINE);
 }
 
 static void reikaids_handleblit( int rom_base )
@@ -233,7 +233,7 @@ static void reikaids_handleblit( int rom_base )
 	}
 
 finish:
-	cpu_set_irq_line(0,M6809_FIRQ_LINE,HOLD_LINE);
+	cpunum_set_input_line(0,M6809_FIRQ_LINE,HOLD_LINE);
 }
 
 static void pteacher_handleblit( int rom_base )
@@ -321,7 +321,7 @@ static void pteacher_handleblit( int rom_base )
 	} /* for(;;) */
 
 finish:
-	cpu_set_irq_line(0,M6809_FIRQ_LINE,HOLD_LINE);
+	cpunum_set_input_line(0,M6809_FIRQ_LINE,HOLD_LINE);
 }
 
 
@@ -596,7 +596,7 @@ VIDEO_START( lemnangl )
 
 ***************************************************************************/
 
-WRITE_HANDLER( mrokumei_videoram_w )
+WRITE8_HANDLER( mrokumei_videoram_w )
 {
 	if( videoram[offset] != data )
 	{
@@ -605,7 +605,7 @@ WRITE_HANDLER( mrokumei_videoram_w )
 	}
 }
 
-WRITE_HANDLER( reikaids_videoram_w )
+WRITE8_HANDLER( reikaids_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -614,7 +614,7 @@ WRITE_HANDLER( reikaids_videoram_w )
 	}
 }
 
-WRITE_HANDLER( pteacher_videoram_w )
+WRITE8_HANDLER( pteacher_videoram_w )
 {
 	if( videoram[offset] != data )
 	{
@@ -623,7 +623,7 @@ WRITE_HANDLER( pteacher_videoram_w )
 	}
 }
 
-WRITE_HANDLER( reikaids_gfx_bank_w )
+WRITE8_HANDLER( reikaids_gfx_bank_w )
 {
 
 //logerror( "%04x: [setbank %02x]\n",activecpu_get_pc(),data);
@@ -637,7 +637,7 @@ WRITE_HANDLER( reikaids_gfx_bank_w )
 	reikaids_which ^= 1;
 }
 
-WRITE_HANDLER( pteacher_gfx_bank_w )
+WRITE8_HANDLER( pteacher_gfx_bank_w )
 {
 //	logerror( "%04x: gfxbank:=%02x\n", activecpu_get_pc(), data );
 	if (pteacher_gfx_bank != data)
@@ -647,7 +647,7 @@ WRITE_HANDLER( pteacher_gfx_bank_w )
 	}
 }
 
-WRITE_HANDLER( homedata_blitter_param_w )
+WRITE8_HANDLER( homedata_blitter_param_w )
 {
 //logerror("%04x: blitter_param_w %02x\n",activecpu_get_pc(),data);
 	blitter_param[blitter_param_count] = data;
@@ -655,7 +655,7 @@ WRITE_HANDLER( homedata_blitter_param_w )
 	blitter_param_count&=3;
 }
 
-WRITE_HANDLER( mrokumei_blitter_bank_w )
+WRITE8_HANDLER( mrokumei_blitter_bank_w )
 {
 	/* --xxx--- layer 1 gfx bank
 	   -----x-- blitter ROM bank
@@ -668,7 +668,7 @@ WRITE_HANDLER( mrokumei_blitter_bank_w )
 	blitter_bank = data;
 }
 
-WRITE_HANDLER( reikaids_blitter_bank_w )
+WRITE8_HANDLER( reikaids_blitter_bank_w )
 {
 	/* xxx----- priority control
 	   ----x--- target page? what's this for?
@@ -677,7 +677,7 @@ WRITE_HANDLER( reikaids_blitter_bank_w )
 	blitter_bank = data;
 }
 
-WRITE_HANDLER( pteacher_blitter_bank_w )
+WRITE8_HANDLER( pteacher_blitter_bank_w )
 {
 	/* xxx----- blitter ROM bank
 	   -----x-- pixel clock (normal/slow)
@@ -691,7 +691,7 @@ WRITE_HANDLER( pteacher_blitter_bank_w )
 	blitter_bank = data;
 }
 
-WRITE_HANDLER( mrokumei_blitter_start_w )
+WRITE8_HANDLER( mrokumei_blitter_start_w )
 {
 	if (data & 0x80) mrokumei_handleblit(((blitter_bank & 0x04) >> 2) * 0x10000);
 
@@ -699,12 +699,12 @@ WRITE_HANDLER( mrokumei_blitter_start_w )
 	   optional service mode ROM (not available in current dump) */
 }
 
-WRITE_HANDLER( reikaids_blitter_start_w )
+WRITE8_HANDLER( reikaids_blitter_start_w )
 {
 	reikaids_handleblit((blitter_bank & 3) * 0x10000);
 }
 
-WRITE_HANDLER( pteacher_blitter_start_w )
+WRITE8_HANDLER( pteacher_blitter_start_w )
 {
 	pteacher_handleblit((blitter_bank >> 5) * 0x10000 & (memory_region_length(REGION_USER1) - 1));
 }

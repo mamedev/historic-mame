@@ -49,34 +49,34 @@ static DRIVER_INIT( poolshrk )
 }
 
 
-static WRITE_HANDLER( poolshrk_scratch_sound_w )
+static WRITE8_HANDLER( poolshrk_scratch_sound_w )
 {
 	discrete_sound_w(1, offset & 1);
 }
 
-static WRITE_HANDLER( poolshrk_score_sound_w )
+static WRITE8_HANDLER( poolshrk_score_sound_w )
 {
 	discrete_sound_w(3, 1); /* this will trigger the sound code for 1 sample */
 }
 
-static WRITE_HANDLER( poolshrk_click_sound_w )
+static WRITE8_HANDLER( poolshrk_click_sound_w )
 {
 	discrete_sound_w(2, 1); /* this will trigger the sound code for 1 sample */
 }
 
-static WRITE_HANDLER( poolshrk_bump_sound_w )
+static WRITE8_HANDLER( poolshrk_bump_sound_w )
 {
 	discrete_sound_w(0, offset & 1);
 }
 
 
-static WRITE_HANDLER( poolshrk_da_latch_w )
+static WRITE8_HANDLER( poolshrk_da_latch_w )
 {
 	poolshrk_da_latch = data & 15;
 }
 
 
-static WRITE_HANDLER( poolshrk_led_w )
+static WRITE8_HANDLER( poolshrk_led_w )
 {
 	if (offset & 2)
 		set_led_status(0, offset & 1);
@@ -85,7 +85,7 @@ static WRITE_HANDLER( poolshrk_led_w )
 }
 
 
-static WRITE_HANDLER( poolshrk_watchdog_w )
+static WRITE8_HANDLER( poolshrk_watchdog_w )
 {
 	if ((offset & 3) == 3)
 	{
@@ -94,7 +94,7 @@ static WRITE_HANDLER( poolshrk_watchdog_w )
 }
 
 
-static READ_HANDLER( poolshrk_input_r )
+static READ8_HANDLER( poolshrk_input_r )
 {
 	UINT8 val = readinputport(offset & 3);
 
@@ -113,9 +113,9 @@ static READ_HANDLER( poolshrk_input_r )
 }
 
 
-static READ_HANDLER( poolshrk_irq_reset_r )
+static READ8_HANDLER( poolshrk_irq_reset_r )
 {
-	cpu_set_irq_line(0, 0, CLEAR_LINE);
+	cpunum_set_input_line(0, 0, CLEAR_LINE);
 
 	return 0;
 }

@@ -324,6 +324,9 @@ do { OP1(0x9F); } while(0);
 #define _sahf() \
 do { OP1(0x9E); } while(0);
 
+#define _bswap_r32(reg) \
+do { OP1(0x0F); OP1(0xC8+(reg)); } while (0)
+
 
 
 /*###################################################################################################
@@ -390,6 +393,23 @@ do { OP1(0x8b); MODRM_MBISD(dreg, base, indx, scale, disp); } while (0)
 
 
 
+#define _cmov_r32_r32(cond, dreg, sreg) \
+do { OP1(0x0f); OP1(0x40 + (cond)); MODRM_REG(dreg, sreg); } while (0)
+
+#define _cmov_r32_m32abs(cond, dreg, addr) \
+do { OP1(0x0f); OP1(0x40 + (cond)); MODRM_MABS(dreg, addr); } while (0)
+
+#define _cmov_r32_m32bd(cond, dreg, base, disp) \
+do { OP1(0x0f); OP1(0x40 + (cond)); MODRM_MBD(dreg, base, disp); } while (0)
+
+#define _cmov_r32_m32isd(cond, dreg, indx, scale, disp) \
+do { OP1(0x0f); OP1(0x40 + (cond)); MODRM_MBISD(dreg, NO_BASE, indx, scale, disp); } while (0)
+
+#define _cmov_r32_m32bisd(cond, dreg, base, indx, scale, disp) \
+do { OP1(0x0f); OP1(0x40 + (cond)); MODRM_MBISD(dreg, base, indx, scale, disp); } while (0)
+
+
+
 #define _mov_m8abs_imm(addr, imm) \
 do { OP1(0xc6); MODRM_MABS(0, addr); OP1(imm); } while (0)
 
@@ -415,6 +435,9 @@ do { OP1(0x66); OP1(0x89); MODRM_MABS(sreg, addr); } while (0)
 
 #define _mov_m16bd_r16(base, disp, sreg) \
 do { OP1(0x66); OP1(0x89); MODRM_MBD(sreg, base, disp); } while (0)
+
+#define _mov_m16bisd_r16(base, indx, scale, disp, sreg) \
+do { OP1(0x66); OP1(0x89); MODRM_MBISD(sreg, base, indx, scale, disp); } while (0)
 
 
 
@@ -485,6 +508,18 @@ do { OP1(0x0f); OP1(0xb6); MODRM_MBD(dreg, base, disp); } while (0)
 #define _movzx_r32_m16bd(dreg, base, disp) \
 do { OP1(0x0f); OP1(0xb7); MODRM_MBD(dreg, base, disp); } while (0)
 
+#define _movzx_r32_m8isd(dreg, indx, scale, disp) \
+do { OP1(0x0f); OP1(0xb6); MODRM_MBISD(dreg, NO_BASE, indx, scale, disp); } while (0)
+
+#define _movzx_r32_m16isd(dreg, indx, scale, disp) \
+do { OP1(0x0f); OP1(0xb7); MODRM_MBISD(dreg, NO_BASE, indx, scale, disp); } while (0)
+
+#define _movzx_r32_m8bisd(dreg, base, indx, scale, disp) \
+do { OP1(0x0f); OP1(0xb6); MODRM_MBISD(dreg, base, indx, scale, disp); } while (0)
+
+#define _movzx_r32_m16bisd(dreg, base, indx, scale, disp) \
+do { OP1(0x0f); OP1(0xb7); MODRM_MBISD(dreg, base, indx, scale, disp); } while (0)
+
 
 
 #define _lea_r32_m32bd(dest, base, disp) \
@@ -492,6 +527,9 @@ do { OP1(0x8d); MODRM_MBD(dest, base, disp); } while (0)
 
 #define _lea_r32_m32isd(dest, indx, scale, disp) \
 do { OP1(0x8d); MODRM_MBISD(dest, NO_BASE, indx, scale, disp); } while (0)
+
+#define _lea_r32_m32bisd(dest, base, indx, scale, disp) \
+do { OP1(0x8d); MODRM_MBISD(dest, base, indx, scale, disp); } while (0)
 
 
 
@@ -540,6 +578,14 @@ do { \
 
 
 
+#define _rol_m32abs_imm(addr, imm) \
+do { \
+	if ((imm) == 1) { OP1(0xd1); MODRM_MABS(0, addr); } \
+	else { OP1(0xc1); MODRM_MABS(0, addr); OP1(imm); } \
+} while (0)
+
+
+
 #define _shld_r32_r32_cl(dreg, sreg) \
 do { OP1(0x0f); OP1(0xa5); MODRM_REG(sreg, dreg); } while (0)
 
@@ -551,6 +597,15 @@ do { OP1(0x0f); OP1(0xad); MODRM_REG(sreg, dreg); } while (0)
 
 #define _shrd_r32_r32_imm(dreg, sreg, imm) \
 do { OP1(0x0f); OP1(0xac); MODRM_REG(sreg, dreg); OP1(imm); } while (0)
+
+
+
+#define _bt_m32bd_r32(base, disp, reg) \
+do { OP1(0x0f); OP1(0xa3); MODRM_MBD(reg, base, disp); } while (0)
+
+#define _bsr_r32_r32(dreg, sreg) \
+do { OP1(0x0f); OP1(0xbd); MODRM_REG(dreg, sreg); } while (0)
+
 
 
 
@@ -622,6 +677,11 @@ do { OP1(0x33); MODRM_MABS(dreg, addr); } while (0)
 
 
 
+#define _add_m32abs_r32(addr, sreg) \
+do { OP1(0x01); MODRM_MABS(sreg, addr); } while (0)
+
+
+
 #define _arith_r32_imm_common(reg, dreg, imm)		\
 do {												\
 	if ((INT8)(imm) == (INT32)(imm))				\
@@ -664,6 +724,8 @@ do { OP1(0xf7); MODRM_REG(0, dreg); OP4(imm); } while (0)
 #define _and_r32_r32(dreg, sreg) \
 do { OP1(0x23); MODRM_REG(dreg, sreg); } while (0)
 
+#define _imul_r32_r32(dreg, sreg) \
+do { OP1(0x0f); OP1(0xaf); MODRM_REG(dreg, sreg); } while (0)
 
 
 
@@ -816,6 +878,33 @@ do { _arith_m16abs_imm_common(7, addr, imm); } while (0)
 #define _test_m16abs_imm(addr, imm) \
 do { OP1(0xf7); MODRM_MABS(0, addr); OP2(imm); } while (0)
 
+#define _and_m16bd_r16(base, disp, sreg) \
+do { OP1(0x66); OP1(0x21); MODRM_MBD(sreg, base, disp); } while (0)
+
+#define _and_r16_m16abs(dreg, addr) \
+do { OP1(0x66); OP1(0x25); MODRM_MABS(dreg, addr); } while (0)
+
+#define _shl_r16_cl(dreg) \
+do { OP1(0x66); OP1(0xd3); MODRM_REG(4, dreg); } while (0)
+
+#define _shr_r16_cl(dreg) \
+do { OP1(0x66); OP1(0xd3); MODRM_REG(5, dreg); } while (0)
+
+#define _rol_r16_cl(reg) \
+do { OP1(0x66); OP1(0xd3); OP1(0xc0 | ((reg) & 7)); } while(0)
+
+#define _ror_r16_cl(reg) \
+do { OP1(0x66); OP1(0xd3); OP1(0xc8 | ((reg) & 7)); } while(0)
+
+#define _rcl_r16_cl(reg) \
+do { OP1(0x66); OP1(0xd3); OP1(0xd0 | ((reg) & 7)); } while(0)
+
+#define _rcr_r16_cl(reg) \
+do { OP1(0x66); OP1(0xd3);	OP1(0xd8 | ((reg) & 7)); } while(0)
+
+#define _cmp_r16_m16bisd(reg, base, indx, scale, disp) \
+do { OP1(0x66); OP1(0x3b);	MODRM_MBISD(reg, base, indx, scale, disp); } while(0)
+
 
 
 #define _arith_m8abs_imm_common(reg, addr, imm)		\
@@ -845,20 +934,11 @@ do { _arith_m8abs_imm_common(7, addr, imm); } while (0)
 #define _test_m8abs_imm(addr, imm) \
 do { OP1(0xf6); MODRM_MABS(0, addr); OP1(imm); } while (0)
 
-#define _and_m16bd_r16(base, disp, sreg) \
-do { OP1(0x66); OP1(0x21); MODRM_MBD(sreg, base, disp); } while (0)
+#define _test_r8_imm(reg, imm) \
+do { OP1(0xf6); MODRM_REG(0, reg); OP1(imm); } while (0)
 
 #define _and_m8bd_r8(base, disp, sreg) \
 do { OP1(0x20); MODRM_MBD(sreg, base, disp); } while (0)
-
-#define _and_r16_m16abs(dreg, addr) \
-do { OP1(0x66); OP1(0x25); MODRM_MABS(dreg, addr); } while (0)
-
-#define _shl_r16_cl(dreg) \
-do { OP1(0x66); OP1(0xd3); MODRM_REG(4, dreg); } while (0)
-
-#define _shr_r16_cl(dreg) \
-do { OP1(0x66); OP1(0xd3); MODRM_REG(5, dreg); } while (0)
 
 #define _shl_r8_cl(dreg) \
 do { OP1(0xd2); MODRM_REG(4, dreg); } while (0)
@@ -866,29 +946,18 @@ do { OP1(0xd2); MODRM_REG(4, dreg); } while (0)
 #define _shr_r8_cl(dreg) \
 do { OP1(0xd2); MODRM_REG(5, dreg); } while (0)
 
-#define _rol_r16_cl(reg) \
-do { OP1(0x66); OP1(0xd3); OP1(0xc0 | ((reg) & 7)); } while(0)
-
 #define _rol_r8_cl(reg) \
 do { OP1(0xd2);	OP1(0xc0 | ((reg) & 7)); } while(0)
-
-#define _ror_r16_cl(reg) \
-do { OP1(0x66); OP1(0xd3); OP1(0xc8 | ((reg) & 7)); } while(0)
 
 #define _ror_r8_cl(reg) \
 do { OP1(0xd2);	OP1(0xc8 | ((reg) & 7)); } while(0)
 
-#define _rcl_r16_cl(reg) \
-do { OP1(0x66); OP1(0xd3); OP1(0xd0 | ((reg) & 7)); } while(0)
-
 #define _rcl_r8_cl(reg) \
 do { OP1(0xd2);	OP1(0xd0 | ((reg) & 7)); } while(0)
 
-#define _rcr_r16_cl(reg) \
-do { OP1(0x66); OP1(0xd3);	OP1(0xd8 | ((reg) & 7)); } while(0)
-
 #define _rcr_r8_cl(reg) \
 do { OP1(0xd2);	OP1(0xd8 | ((reg) & 7)); } while(0)
+
 
 
 /*###################################################################################################
@@ -1020,7 +1089,7 @@ do { OP1(0xe9); OP4((UINT32)(target) - ((UINT32)drc->cache_top + 4)); } while (0
 
 
 #define _call(target) \
-do { if (drc->uses_fp) OP1(0xe8); OP4((UINT32)(target) - ((UINT32)drc->cache_top + 4)); } while (0)
+do { OP1(0xe8); OP4((UINT32)(target) - ((UINT32)drc->cache_top + 4)); } while (0)
 
 
 
@@ -1066,12 +1135,60 @@ do { OP1(0x0f); OP1(0xae); MODRM_MBISD(2, NO_BASE, indx, scale, disp); } while (
 do { OP1(0x0f); OP1(0xae); MODRM_MABS(3, addr); } while (0)
 
 
+#define _movd_r128_r32(r1, r2) \
+do { OP1(0x66); OP1(0x0f); OP1(0x6e); MODRM_REG(r1, r2); } while (0)
+
+#define _movd_r32_r128(r1, r2) \
+do { OP1(0x66); OP1(0x0f); OP1(0x7e); MODRM_REG(r2, r1); } while (0)
+
+#define _movd_r128_m32abs(reg, addr) \
+do { OP1(0x66); OP1(0x0f); OP1(0x6e); MODRM_MABS(reg, addr); } while (0)
+
+#define _movd_r128_m32isd(reg, indx, scale, disp) \
+do { OP1(0x66); OP1(0x0f); OP1(0x6e); MODRM_MBISD(reg, NO_BASE, indx, scale, disp); } while (0)
+
 
 #define _movq_r128_m64abs(reg, addr) \
 do { OP1(0xf3); OP1(0x0f); OP1(0x7e); MODRM_MABS(reg, addr); } while (0)
 
+#define _movq_r128_m64isd(reg, indx, scale, disp) \
+do { OP1(0xf3); OP1(0x0f); OP1(0x7e); MODRM_MBISD(reg, NO_BASE, indx, scale, disp); } while (0)
+
+#define _movq_r128_m64bisd(reg, base, indx, scale, disp) \
+do { OP1(0xf3); OP1(0x0f); OP1(0x7e); MODRM_MBISD(reg, base, indx, scale, disp); } while (0)
+
 #define _movq_m64abs_r128(addr, reg) \
 do { OP1(0x66); OP1(0x0f); OP1(0xd6); MODRM_MABS(reg, addr); } while (0)
+
+
+#define _movdqa_r128_r128(r1, r2) \
+do { OP1(0x66); OP1(0x0f); OP1(0x6f); MODRM_REG(r1, r2); } while (0)
+
+#define _movdqa_r128_m128abs(reg, addr) \
+do { OP1(0x66); OP1(0x0f); OP1(0x6f); MODRM_MABS(reg, addr); } while (0)
+
+#define _movdqa_m128abs_r128(addr, reg) \
+do { OP1(0x66); OP1(0x0f); OP1(0x7f); MODRM_MABS(reg, addr); } while (0)
+
+
+#define _movaps_r128_m128abs(reg, addr) \
+do { OP1(0x0f); OP1(0x28); MODRM_MABS(reg, addr); } while (0)
+
+#define _movaps_m128abs_r128(addr, reg) \
+do { OP1(0x0f); OP1(0x29); MODRM_MABS(reg, addr); } while (0)
+
+
+#define _movss_r128_m32abs(reg, addr) \
+do { OP1(0xf3); OP1(0x0f); OP1(0x10); MODRM_MABS(reg, addr); } while (0)
+
+#define _movss_r128_m32bd(reg, base, disp) \
+do { OP1(0xf3); OP1(0x0f); OP1(0x10); MODRM_MBD(reg, base, disp); } while (0)
+
+#define _movss_r128_r128(r1, r2) \
+do { OP1(0xf3); OP1(0x0f); OP1(0x10); MODRM_REG(r1, r2); } while (0)
+
+#define _movss_m32abs_r128(addr, reg) \
+do { OP1(0xf3); OP1(0x0f); OP1(0x11); MODRM_MABS(reg, addr); } while (0)
 
 
 #define _movsd_r128_m64abs(reg, addr) \
@@ -1084,19 +1201,15 @@ do { OP1(0xf2); OP1(0x0f); OP1(0x10); MODRM_REG(r1, r2); } while (0)
 do { OP1(0xf2); OP1(0x0f); OP1(0x11); MODRM_MABS(reg, addr); } while (0)
 
 
-#define _movss_r128_m32abs(reg, addr) \
-do { OP1(0xf3); OP1(0x0f); OP1(0x10); MODRM_MABS(reg, addr); } while (0)
 
-#define _movss_r128_r128(r1, r2) \
-do { OP1(0xf3); OP1(0x0f); OP1(0x10); MODRM_REG(r1, r2); } while (0)
-
-#define _movss_m32abs_r128(addr, reg) \
-do { OP1(0xf3); OP1(0x0f); OP1(0x11); MODRM_MABS(reg, addr); } while (0)
-
-
+#define _addps_r128_m128abs(reg, addr) \
+do { OP1(0x0f); OP1(0x58); MODRM_MABS(reg, addr); } while (0)
 
 #define _addss_r128_m32abs(reg, addr) \
 do { OP1(0xf3); OP1(0x0f); OP1(0x58); MODRM_MABS(reg, addr); } while (0)
+
+#define _addss_r128_m32bd(reg, base, disp) \
+do { OP1(0xf3); OP1(0x0f); OP1(0x58); MODRM_MBD(reg, base, disp); } while (0)
 
 #define _addsd_r128_m64abs(reg, addr) \
 do { OP1(0xf2); OP1(0x0f); OP1(0x58); MODRM_MABS(reg, addr); } while (0)
@@ -1113,6 +1226,9 @@ do { OP1(0x0f); OP1(0x2f); MODRM_MABS(reg, addr); } while (0)
 #define _comisd_r128_m64abs(reg, addr) \
 do { OP1(0x66); OP1(0x0f); OP1(0x2f); MODRM_MABS(reg, addr); } while (0)
 
+#define _cvtsi2ss_r128_m32abs(reg, addr) \
+do { OP1(0xf3); OP1(0x0f); OP1(0x2a); MODRM_MABS(reg, addr); } while (0)
+
 #define _cvttss2si_r32_m32abs(reg, addr) \
 do { OP1(0xf3); OP1(0x0f); OP1(0x2c); MODRM_MABS(reg, addr); } while (0)
 
@@ -1128,8 +1244,14 @@ do { OP1(0xf2); OP1(0x0f); OP1(0x5e); MODRM_MABS(reg, addr); } while (0)
 #define _mulss_r128_m32abs(reg, addr) \
 do { OP1(0xf3); OP1(0x0f); OP1(0x59); MODRM_MABS(reg, addr); } while (0)
 
+#define _mulss_r128_m32bd(reg, base, disp) \
+do { OP1(0xf3); OP1(0x0f); OP1(0x59); MODRM_MBD(reg, base, disp); } while (0)
+
 #define _mulsd_r128_m64abs(reg, addr) \
 do { OP1(0xf2); OP1(0x0f); OP1(0x59); MODRM_MABS(reg, addr); } while (0)
+
+#define _mulps_r128_m128abs(reg, addr) \
+do { OP1(0x0f); OP1(0x59); MODRM_MABS(reg, addr); } while (0)
 
 #define _orps_r128_m128abs(reg, addr) \
 do { OP1(0x0f); OP1(0x56); MODRM_MABS(reg, addr); } while (0)
@@ -1152,6 +1274,9 @@ do { OP1(0xf2); OP1(0x0f); OP1(0x51); MODRM_MABS(reg, addr); } while (0)
 #define _subss_r128_m32abs(reg, addr) \
 do { OP1(0xf3); OP1(0x0f); OP1(0x5c); MODRM_MABS(reg, addr); } while (0)
 
+#define _subss_r128_m32bd(reg, base, disp) \
+do { OP1(0xf3); OP1(0x0f); OP1(0x5c); MODRM_MBD(reg, base, disp); } while (0)
+
 #define _subsd_r128_m64abs(reg, addr) \
 do { OP1(0xf2); OP1(0x0f); OP1(0x5c); MODRM_MABS(reg, addr); } while (0)
 
@@ -1169,6 +1294,9 @@ do { OP1(0x66); OP1(0x0f); OP1(0x57); MODRM_MABS(reg, addr); } while (0)
 
 
 
+#define _addps_r128_r128(r1, r2) \
+do { OP1(0x0f); OP1(0x58); MODRM_REG(r1, r2); } while (0)
+
 #define _addss_r128_r128(r1, r2) \
 do { OP1(0xf3); OP1(0x0f); OP1(0x58); MODRM_REG(r1, r2); } while (0)
 
@@ -1181,8 +1309,14 @@ do { OP1(0x0f); OP1(0x54); MODRM_REG(r1, r2); } while (0)
 #define _andpd_r128_r128(r1, r2) \
 do { OP1(0x66); OP1(0x0f); OP1(0x54); MODRM_REG(r1, r2); } while (0)
 
+#define _cmpps_r128_r128(r1, r2, typ) \
+do { OP1(0x0f); OP1(0xc2); MODRM_REG(r1, r2); OP1(typ); } while (0)
+
 #define _comiss_r128_r128(r1, r2) \
 do { OP1(0x0f); OP1(0x2f); MODRM_REG(r1, r2); } while (0)
+
+#define _comiss_r128_m32bd(reg, base, disp) \
+do { OP1(0x0f); OP1(0x2f); MODRM_MBD(reg, base, disp); } while (0)
 
 #define _comisd_r128_r128(r1, r2) \
 do { OP1(0x66); OP1(0x0f); OP1(0x2f); MODRM_REG(r1, r2); } while (0)
@@ -1208,6 +1342,9 @@ do { OP1(0x0f); OP1(0x5a); MODRM_REG(r1, r2); } while (0)
 #define _cvtsd2ss_r128_r128(r1, r2) \
 do { OP1(0xf2); OP1(0x0f); OP1(0x5a); MODRM_REG(r1, r2); } while (0)
 
+#define _cvtsi2ss_r128_r32(r1, r2) \
+do { OP1(0xf3); OP1(0x0f); OP1(0x2a); MODRM_REG(r1, r2); } while (0)
+
 #define _cvtss2sd_r128_r128(r1, r2) \
 do { OP1(0xf3); OP1(0x0f); OP1(0x5a); MODRM_REG(r1, r2); } while (0)
 
@@ -1223,11 +1360,20 @@ do { OP1(0xf3); OP1(0x0f); OP1(0x2c); MODRM_REG(r1, r2); } while (0)
 #define _cvttsd2si_r32_r128(r1, r2) \
 do { OP1(0xf2); OP1(0x0f); OP1(0x2c); MODRM_REG(r1, r2); } while (0)
 
+#define _divps_r128_r128(r1, r2) \
+do { OP1(0x0f); OP1(0x5e); MODRM_REG(r1, r2); } while (0)
+
 #define _divss_r128_r128(r1, r2) \
 do { OP1(0xf3); OP1(0x0f); OP1(0x5e); MODRM_REG(r1, r2); } while (0)
 
 #define _divsd_r128_r128(r1, r2) \
 do { OP1(0xf2); OP1(0x0f); OP1(0x5e); MODRM_REG(r1, r2); } while (0)
+
+#define _maxss_r128_r128(r1, r2) \
+do { OP1(0xf3); OP1(0x0f); OP1(0x5f); MODRM_REG(r1, r2); } while (0)
+
+#define _mulps_r128_r128(r1, r2) \
+do { OP1(0x0f); OP1(0x59); MODRM_REG(r1, r2); } while (0)
 
 #define _mulss_r128_r128(r1, r2) \
 do { OP1(0xf3); OP1(0x0f); OP1(0x59); MODRM_REG(r1, r2); } while (0)
@@ -1241,11 +1387,17 @@ do { OP1(0x0f); OP1(0x56); MODRM_REG(r1, r2); } while (0)
 #define _orpd_r128_r128(r1, r2) \
 do { OP1(0x66); OP1(0x0f); OP1(0x56); MODRM_REG(r1, r2); } while (0)
 
+#define _rcpps_r128_r128(r1, r2) \
+do { OP1(0x0f); OP1(0x53); MODRM_REG(r1, r2); } while (0)
+
 #define _rcpss_r128_r128(r1, r2) \
 do { OP1(0xf3); OP1(0x0f); OP1(0x53); MODRM_REG(r1, r2); } while (0)
 
 #define _rsqrtss_r128_r128(r1, r2) \
 do { OP1(0xf3); OP1(0x0f); OP1(0x52); MODRM_REG(r1, r2); } while (0)
+
+#define _shufps_r128_r128(r1, r2, imm) \
+do { OP1(0x0f); OP1(0xc6); MODRM_REG(r1, r2); OP1(imm); } while (0)
 
 #define _sqrtss_r128_r128(r1, r2) \
 do { OP1(0xf3); OP1(0x0f); OP1(0x51); MODRM_REG(r1, r2); } while (0)
@@ -1265,6 +1417,9 @@ do { OP1(0x0f); OP1(0x2e); MODRM_REG(r1, r2); } while (0)
 #define _ucomisd_r128_r128(r1, r2) \
 do { OP1(0x66); OP1(0x0f); OP1(0x2e); MODRM_REG(r1, r2); } while (0)
 
+#define _unpcklps_r128_r128(r1, r2) \
+do { OP1(0x0f); OP1(0x14); MODRM_REG(r1, r2); } while (0)
+
 #define _xorps_r128_r128(r1, r2) \
 do { OP1(0x0f); OP1(0x57); MODRM_REG(r1, r2); } while (0)
 
@@ -1273,17 +1428,68 @@ do { OP1(0x66); OP1(0x0f); OP1(0x57); MODRM_REG(r1, r2); } while (0)
 
 
 
+#define _packuswb_r128_r128(r1, r2) \
+do { OP1(0x66); OP1(0x0f); OP1(0x67); MODRM_REG(r1, r2); } while (0)
+
+#define _paddw_r128_r128(r1, r2) \
+do { OP1(0x66); OP1(0x0f); OP1(0xfd); MODRM_REG(r1, r2); } while (0)
+
+#define _paddw_r128_m128abs(reg, addr) \
+do { OP1(0x66); OP1(0x0f); OP1(0xfd); MODRM_MABS(reg, addr); } while (0)
+
+#define _paddw_r128_m128bisd(reg, base, indx, scale, disp) \
+do { OP1(0x66); OP1(0x0f); OP1(0xfd); MODRM_MBISD(reg, base, indx, scale, disp); } while (0)
+
+#define _paddd_r128_m128abs(reg, addr) \
+do { OP1(0x66); OP1(0x0f); OP1(0xfe); MODRM_MABS(reg, addr); } while (0)
+
+#define _paddd_r128_m128bd(reg, base, disp) \
+do { OP1(0x66); OP1(0x0f); OP1(0xfe); MODRM_MBD(reg, base, disp); } while (0)
+
 #define _paddq_r128_r128(r1, r2) \
 do { OP1(0x66); OP1(0x0f); OP1(0xd4); MODRM_REG(r1, r2); } while (0)
 
 #define _pand_r128_r128(r1, r2) \
 do { OP1(0x66); OP1(0x0f); OP1(0xdb); MODRM_REG(r1, r2); } while (0)
 
+#define _pand_r128_m128abs(reg, addr) \
+do { OP1(0x66); OP1(0x0f); OP1(0xdb); MODRM_MABS(reg, addr); } while (0)
+
 #define _pandn_r128_r128(r1, r2) \
 do { OP1(0x66); OP1(0x0f); OP1(0xdf); MODRM_REG(r1, r2); } while (0)
 
+#define _packssdw_r128_r128(r1, r2) \
+do { OP1(0x66); OP1(0x0f); OP1(0x6b); MODRM_REG(r1, r2); } while (0)
+
+#define _pextrw_r32_r128(r1, r2, imm) \
+do { OP1(0x66); OP1(0x0f); OP1(0xc5); MODRM_REG(r1, r2); OP1(imm); } while (0)
+
+#define _pinsrw_r128_r32(r1, r2, imm) \
+do { OP1(0x66); OP1(0x0f); OP1(0xc4); MODRM_REG(r1, r2); OP1(imm); } while (0)
+
+#define _pmaxsw_r128_m128abs(reg, addr) \
+do { OP1(0x66); OP1(0x0f); OP1(0xee); MODRM_MABS(reg, addr); } while (0)
+
+#define _pminsw_r128_m128abs(reg, addr) \
+do { OP1(0x66); OP1(0x0f); OP1(0xea); MODRM_MABS(reg, addr); } while (0)
+
+#define _pmullw_r128_r128(r1, r2) \
+do { OP1(0x66); OP1(0x0f); OP1(0xd5); MODRM_REG(r1, r2); } while (0)
+
 #define _por_r128_r128(r1, r2) \
 do { OP1(0x66); OP1(0x0f); OP1(0xeb); MODRM_REG(r1, r2); } while (0)
+
+#define _pshufd_r128_r128(r1, r2, imm) \
+do { OP1(0x66); OP1(0x0f); OP1(0x70); MODRM_REG(r1, r2); OP1(imm); } while (0)
+
+#define _pshufhw_r128_r128(r1, r2, imm) \
+do { OP1(0xf3); OP1(0x0f); OP1(0x70); MODRM_REG(r1, r2); OP1(imm); } while (0)
+
+#define _pshuflw_r128_r128(r1, r2, imm) \
+do { OP1(0xf2); OP1(0x0f); OP1(0x70); MODRM_REG(r1, r2); OP1(imm); } while (0)
+
+#define _psllw_r128_imm(reg, imm) \
+do { OP1(0x66); OP1(0x0f); OP1(0x71); MODRM_REG(6, reg); OP1(imm); } while (0)
 
 #define _psllq_r128_imm(reg, imm) \
 do { OP1(0x66); OP1(0x0f); OP1(0x73); MODRM_REG(6, reg); OP1(imm); } while (0)
@@ -1291,22 +1497,56 @@ do { OP1(0x66); OP1(0x0f); OP1(0x73); MODRM_REG(6, reg); OP1(imm); } while (0)
 #define _psllq_r128_r128(r1, r2) \
 do { OP1(0x66); OP1(0x0f); OP1(0xf3); MODRM_REG(r1, r2); } while (0)
 
+#define _psrlw_r128_imm(reg, imm) \
+do { OP1(0x66); OP1(0x0f); OP1(0x71); MODRM_REG(2, reg); OP1(imm); } while (0)
+
+#define _psrld_r128_imm(reg, imm) \
+do { OP1(0x66); OP1(0x0f); OP1(0x72); MODRM_REG(2, reg); OP1(imm); } while (0)
+
 #define _psrlq_r128_imm(reg, imm) \
 do { OP1(0x66); OP1(0x0f); OP1(0x73); MODRM_REG(2, reg); OP1(imm); } while (0)
 
 #define _psrlq_r128_r128(r1, r2) \
 do { OP1(0x66); OP1(0x0f); OP1(0xd3); MODRM_REG(r1, r2); } while (0)
 
+#define _psrldq_r128_imm(reg, imm) \
+do { OP1(0x66); OP1(0x0f); OP1(0x73); MODRM_REG(3, reg); OP1(imm); } while (0)
+
+#define _psubw_r128_r128(r1, r2) \
+do { OP1(0x66); OP1(0x0f); OP1(0xf9); MODRM_REG(r1, r2); } while (0)
+
+#define _psubw_r128_m128abs(reg, addr) \
+do { OP1(0x66); OP1(0x0f); OP1(0xf9); MODRM_MABS(reg, addr); } while (0)
+
+#define _psubd_r128_r128(r1, r2) \
+do { OP1(0x66); OP1(0x0f); OP1(0xfa); MODRM_REG(r1, r2); } while (0)
+
+#define _psubd_r128_m128abs(reg, addr) \
+do { OP1(0x66); OP1(0x0f); OP1(0xfa); MODRM_MABS(reg, addr); } while (0)
+
+#define _psubd_r128_m128bd(reg, base, disp) \
+do { OP1(0x66); OP1(0x0f); OP1(0xfa); MODRM_MBD(reg, base, disp); } while (0)
+
 #define _psubq_r128_r128(r1, r2) \
 do { OP1(0x66); OP1(0x0f); OP1(0xfb); MODRM_REG(r1, r2); } while (0)
+
+#define _punpcklbw_r128_r128(r1, r2) \
+do { OP1(0x66); OP1(0x0f); OP1(0x60); MODRM_REG(r1, r2); } while (0)
+
+#define _punpcklbw_r128_m128abs(reg, addr) \
+do { OP1(0x66); OP1(0x0f); OP1(0x60); MODRM_MABS(reg, addr); } while (0)
+
+#define _punpckldq_r128_r128(r1, r2) \
+do { OP1(0x66); OP1(0x0f); OP1(0x62); MODRM_REG(r1, r2); } while (0)
+
+#define _punpcklqdq_r128_r128(r1, r2) \
+do { OP1(0x66); OP1(0x0f); OP1(0x6c); MODRM_REG(r1, r2); } while (0)
 
 #define _pxor_r128_r128(r1, r2) \
 do { OP1(0x66); OP1(0x0f); OP1(0xef); MODRM_REG(r1, r2); } while (0)
 
-
-
-#define _cmov_r32_r32(cond, dreg, sreg) \
-do { OP1(0x0f); OP1(0x40 + (cond)); MODRM_REG(dreg, sreg); } while (0)
+#define _pxor_r128_m128abs(reg, addr) \
+do { OP1(0x66); OP1(0x0f); OP1(0xef); MODRM_MABS(reg, addr); } while (0)
 
 
 

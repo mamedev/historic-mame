@@ -277,7 +277,7 @@ static void blit_area(UINT8 plane, UINT16 src, UINT8 x, UINT8 y, UINT8 sx, UINT8
  *
  *************************************/
 
-WRITE_HANDLER( arabian_blitter_w )
+WRITE8_HANDLER( arabian_blitter_w )
 {
 	/* write the data */
 	offset &= 7;
@@ -307,7 +307,7 @@ WRITE_HANDLER( arabian_blitter_w )
  *
  *************************************/
 
-WRITE_HANDLER( arabian_videoram_w )
+WRITE8_HANDLER( arabian_videoram_w )
 {
 	UINT8 *base;
 	UINT8 x, y;

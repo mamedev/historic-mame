@@ -34,31 +34,31 @@
 #include "vidhrdw/generic.h"
 #include "8080bw.h"
 
-static WRITE_HANDLER( invad2ct_sh_port1_w );
-static WRITE_HANDLER( invaders_sh_port3_w );
-static WRITE_HANDLER( invaders_sh_port5_w );
-static WRITE_HANDLER( invad2ct_sh_port7_w );
+static WRITE8_HANDLER( invad2ct_sh_port1_w );
+static WRITE8_HANDLER( invaders_sh_port3_w );
+static WRITE8_HANDLER( invaders_sh_port5_w );
+static WRITE8_HANDLER( invad2ct_sh_port7_w );
 
-static WRITE_HANDLER( ballbomb_sh_port3_w );
-static WRITE_HANDLER( ballbomb_sh_port5_w );
+static WRITE8_HANDLER( ballbomb_sh_port3_w );
+static WRITE8_HANDLER( ballbomb_sh_port5_w );
 
-static WRITE_HANDLER( boothill_sh_port3_w );
-static WRITE_HANDLER( boothill_sh_port5_w );
+static WRITE8_HANDLER( boothill_sh_port3_w );
+static WRITE8_HANDLER( boothill_sh_port5_w );
 
-static WRITE_HANDLER( clowns_sh_port7_w );
+static WRITE8_HANDLER( clowns_sh_port7_w );
 extern struct Samplesinterface circus_samples_interface;
 
-static WRITE_HANDLER( seawolf_sh_port5_w );
+static WRITE8_HANDLER( seawolf_sh_port5_w );
 
-static WRITE_HANDLER( schaser_sh_port3_w );
-static WRITE_HANDLER( schaser_sh_port5_w );
+static WRITE8_HANDLER( schaser_sh_port3_w );
+static WRITE8_HANDLER( schaser_sh_port5_w );
 static int  schaser_sh_start(const struct MachineSound *msound);
 static void schaser_sh_stop(void);
 static void schaser_sh_update(void);
 
-static WRITE_HANDLER( polaris_sh_port2_w );
-static WRITE_HANDLER( polaris_sh_port4_w );
-static WRITE_HANDLER( polaris_sh_port6_w );
+static WRITE8_HANDLER( polaris_sh_port2_w );
+static WRITE8_HANDLER( polaris_sh_port4_w );
+static WRITE8_HANDLER( polaris_sh_port6_w );
 
 
 struct SN76477interface invaders_sn76477_interface =
@@ -161,8 +161,8 @@ struct Samplesinterface invad2ct_samples_interface =
 
 MACHINE_INIT( invaders )
 {
-	install_port_write_handler(0, 0x03, 0x03, invaders_sh_port3_w);
-	install_port_write_handler(0, 0x05, 0x05, invaders_sh_port5_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x03, 0x03, 0, 0, invaders_sh_port3_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x05, 0x05, 0, 0, invaders_sh_port5_w);
 
 	SN76477_envelope_1_w(0, 1);
 	SN76477_envelope_2_w(0, 0);
@@ -174,8 +174,8 @@ MACHINE_INIT( invaders )
 
 MACHINE_INIT( sstrangr )
 {
-	install_port_write_handler(0, 0x42, 0x42, invaders_sh_port3_w);
-	install_port_write_handler(0, 0x44, 0x44, invaders_sh_port5_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x42, 0x42, 0, 0, invaders_sh_port3_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x44, 0x44, 0, 0, invaders_sh_port5_w);
 
 	SN76477_envelope_1_w(0, 1);
 	SN76477_envelope_2_w(0, 0);
@@ -189,8 +189,8 @@ MACHINE_INIT( invad2ct )
 {
 	machine_init_invaders();
 
-	install_port_write_handler(0, 0x01, 0x01, invad2ct_sh_port1_w);
-	install_port_write_handler(0, 0x07, 0x07, invad2ct_sh_port7_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x01, 0x01, 0, 0, invad2ct_sh_port1_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x07, 0x07, 0, 0, invad2ct_sh_port7_w);
 
 	SN76477_envelope_1_w(1, 1);
 	SN76477_envelope_2_w(1, 0);
@@ -265,28 +265,28 @@ static void invaders_sh_2_w(int board, int data, unsigned char *last)
 }
 
 
-static WRITE_HANDLER( invad2ct_sh_port1_w )
+static WRITE8_HANDLER( invad2ct_sh_port1_w )
 {
 	static unsigned char last = 0;
 
 	invaders_sh_1_w(1, data, &last);
 }
 
-static WRITE_HANDLER( invaders_sh_port3_w )
+static WRITE8_HANDLER( invaders_sh_port3_w )
 {
 	static unsigned char last = 0;
 
 	invaders_sh_1_w(0, data, &last);
 }
 
-static WRITE_HANDLER( invaders_sh_port5_w )
+static WRITE8_HANDLER( invaders_sh_port5_w )
 {
 	static unsigned char last = 0;
 
 	invaders_sh_2_w(0, data, &last);
 }
 
-static WRITE_HANDLER( invad2ct_sh_port7_w )
+static WRITE8_HANDLER( invad2ct_sh_port7_w )
 {
 	static unsigned char last = 0;
 
@@ -302,8 +302,8 @@ static WRITE_HANDLER( invad2ct_sh_port7_w )
 
 MACHINE_INIT( gunfight )
 {
-	install_port_read_handler(0, 0x00, 0x00, gunfight_port_0_r);
-	install_port_read_handler(0, 0x01, 0x01, gunfight_port_1_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x00, 0x00, 0, 0, gunfight_port_0_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x01, 0x01, 0, 0, gunfight_port_1_r);
 }
 
 
@@ -336,14 +336,14 @@ i dont know for sure... but that is my guess....... */
 
 MACHINE_INIT( boothill )
 {
-	install_port_read_handler (0, 0x00, 0x00, boothill_port_0_r);
-	install_port_read_handler (0, 0x01, 0x01, boothill_port_1_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x00, 0x00, 0, 0, boothill_port_0_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x01, 0x01, 0, 0, boothill_port_1_r);
 
-	install_port_write_handler(0, 0x03, 0x03, boothill_sh_port3_w);
-	install_port_write_handler(0, 0x05, 0x05, boothill_sh_port5_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x03, 0x03, 0, 0, boothill_sh_port3_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x05, 0x05, 0, 0, boothill_sh_port5_w);
 }
 
-static WRITE_HANDLER( boothill_sh_port3_w )
+static WRITE8_HANDLER( boothill_sh_port3_w )
 {
 	switch (data)
 	{
@@ -364,7 +364,7 @@ static WRITE_HANDLER( boothill_sh_port3_w )
 }
 
 /* HC 4/14/98 */
-static WRITE_HANDLER( boothill_sh_port5_w )
+static WRITE8_HANDLER( boothill_sh_port5_w )
 {
 	switch (data)
 	{
@@ -386,16 +386,16 @@ static WRITE_HANDLER( boothill_sh_port5_w )
 
 MACHINE_INIT( ballbomb )
 {
-	install_port_write_handler(0, 0x03, 0x03, ballbomb_sh_port3_w);
-	install_port_write_handler(0, 0x05, 0x05, ballbomb_sh_port5_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x03, 0x03, 0, 0, ballbomb_sh_port3_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x05, 0x05, 0, 0, ballbomb_sh_port5_w);
 }
 
-static WRITE_HANDLER( ballbomb_sh_port3_w )
+static WRITE8_HANDLER( ballbomb_sh_port3_w )
 {
 	c8080bw_screen_red_w(data & 0x04);
 }
 
-static WRITE_HANDLER( ballbomb_sh_port5_w )
+static WRITE8_HANDLER( ballbomb_sh_port5_w )
 {
 	c8080bw_flip_screen_w(data & 0x20);
 }
@@ -690,17 +690,17 @@ DISCRETE_SOUND_END
 
 MACHINE_INIT( polaris )
 {
-	install_port_write_handler(0, 0x02, 0x02, polaris_sh_port2_w);
-	install_port_write_handler(0, 0x04, 0x04, polaris_sh_port4_w);
-	install_port_write_handler(0, 0x06, 0x06, polaris_sh_port6_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x02, 0x02, 0, 0, polaris_sh_port2_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x04, 0x04, 0, 0, polaris_sh_port4_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x06, 0x06, 0, 0, polaris_sh_port6_w);
 }
 
-static WRITE_HANDLER( polaris_sh_port2_w )
+static WRITE8_HANDLER( polaris_sh_port2_w )
 {
 	discrete_sound_w(0, (~data) & 0xff);
 }
 
-static WRITE_HANDLER( polaris_sh_port4_w )
+static WRITE8_HANDLER( polaris_sh_port4_w )
 {
 	/* 0x01 - SX0 - Shot */
 	discrete_sound_w(1, data & 0x01);
@@ -720,7 +720,7 @@ static WRITE_HANDLER( polaris_sh_port4_w )
 	discrete_sound_w(5, (data & 0x20) >> 5);
 }
 
-static WRITE_HANDLER( polaris_sh_port6_w )
+static WRITE8_HANDLER( polaris_sh_port6_w )
 {
 	coin_lockout_global_w(data & 0x04);  /* SX8 */
 
@@ -748,7 +748,7 @@ static WRITE_HANDLER( polaris_sh_port6_w )
 
 MACHINE_INIT( phantom2 )
 {
-	install_port_write_handler(0, 0x04, 0x04, watchdog_reset_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x04, 0x04, 0, 0, watchdog_reset_w);
 }
 
 
@@ -760,8 +760,8 @@ MACHINE_INIT( phantom2 )
 
 MACHINE_INIT( bowler )
 {
-	install_port_write_handler(0, 0x04, 0x04, watchdog_reset_w);
-	install_port_write_handler(0, 0x07, 0x07, bowler_bonus_display_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x04, 0x04, 0, 0, watchdog_reset_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x07, 0x07, 0, 0, bowler_bonus_display_w);
 }
 
 
@@ -828,13 +828,13 @@ Port 2:
 
 */
 
-	install_port_read_handler (0, 0x01, 0x01, seawolf_port_1_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x01, 0x01, 0, 0, seawolf_port_1_r);
 
-	install_port_write_handler(0, 0x05, 0x05, seawolf_sh_port5_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x05, 0x05, 0, 0, seawolf_sh_port5_w);
 
 }
 
-static WRITE_HANDLER( seawolf_sh_port5_w )
+static WRITE8_HANDLER( seawolf_sh_port5_w )
 {
 	if (data & 0x01)
 		sample_start (0, 0, 0);  /* Ship Hit */
@@ -859,9 +859,9 @@ static WRITE_HANDLER( seawolf_sh_port5_w )
 
 MACHINE_INIT( desertgu )
 {
-	install_port_read_handler (0, 0x01, 0x01, desertgu_port_1_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x01, 0x01, 0, 0, desertgu_port_1_r);
 
-	install_port_write_handler(0, 0x07, 0x07, desertgu_controller_select_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x07, 0x07, 0, 0, desertgu_controller_select_w);
 }
 
 
@@ -933,8 +933,8 @@ static INT16 backgroundwave[32] =
 
 MACHINE_INIT( schaser )
 {
-	install_port_write_handler(0, 0x03, 0x03, schaser_sh_port3_w);
-	install_port_write_handler(0, 0x05, 0x05, schaser_sh_port5_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x03, 0x03, 0, 0, schaser_sh_port3_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x05, 0x05, 0, 0, schaser_sh_port5_w);
 
 	SN76477_mixer_a_w(0, 0);
 	SN76477_mixer_c_w(0, 0);
@@ -943,7 +943,7 @@ MACHINE_INIT( schaser )
 	SN76477_envelope_2_w(0, 0);
 }
 
-static WRITE_HANDLER( schaser_sh_port3_w )
+static WRITE8_HANDLER( schaser_sh_port3_w )
 {
 	int explosion;
 
@@ -980,7 +980,7 @@ static WRITE_HANDLER( schaser_sh_port3_w )
 	SN76477_mixer_b_w(0, explosion);
 }
 
-static WRITE_HANDLER( schaser_sh_port5_w )
+static WRITE8_HANDLER( schaser_sh_port5_w )
 {
 	/* bit 0 - Music (DAC) (SX6)
 	   bit 1 - Sound Enable (SX7)
@@ -1019,7 +1019,7 @@ static void schaser_sh_update(void)
 }
 
 
-static WRITE_HANDLER( clowns_sh_port7_w )
+static WRITE8_HANDLER( clowns_sh_port7_w )
 {
 /* bit 0x08 seems to always be enabled.  Possibly sound enable? */
 /* A new sample set needs to be made with 3 different balloon sounds,
@@ -1046,5 +1046,5 @@ MACHINE_INIT( clowns )
 	/* Ports 5 & 6 are probably the music channels. They change value when
 	 * a bonus is made. */
 
-	install_port_write_handler (0, 0x07, 0x07, clowns_sh_port7_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x07, 0x07, 0, 0, clowns_sh_port7_w);
 }

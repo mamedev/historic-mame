@@ -49,7 +49,7 @@ VIDEO_START( sprint4 )
 }
 
 
-WRITE_HANDLER( sprint4_video_ram_w )
+WRITE8_HANDLER( sprint4_video_ram_w )
 {
 	if (data != sprint4_video_ram[offset])
 	{

@@ -577,13 +577,13 @@ static WRITE8_HANDLER( superpac_latch_w )
 		case 0x00:	/* INT ON 2 */
 			cpu_interrupt_enable(1,bit);
 			if (!bit)
-				cpu_set_irq_line(1, 0, CLEAR_LINE);
+				cpunum_set_input_line(1, 0, CLEAR_LINE);
 			break;
 
 		case 0x02:	/* INT ON */
 			cpu_interrupt_enable(0,bit);
 			if (!bit)
-				cpu_set_irq_line(0, 0, CLEAR_LINE);
+				cpunum_set_input_line(0, 0, CLEAR_LINE);
 			break;
 
 		case 0x04:	/* n.c. */
@@ -599,7 +599,7 @@ static WRITE8_HANDLER( superpac_latch_w )
 			break;
 
 		case 0x0a:	/* SUB RESET */
-			cpu_set_reset_line(1, bit ? CLEAR_LINE : ASSERT_LINE);
+			cpunum_set_input_line(1, INPUT_LINE_RESET, bit ? CLEAR_LINE : ASSERT_LINE);
 			break;
 
 		case 0x0c:	/* n.c. */
@@ -619,19 +619,19 @@ static WRITE8_HANDLER( phozon_latch_w )
 		case 0x00:
 			cpu_interrupt_enable(1,bit);
 			if (!bit)
-				cpu_set_irq_line(1, 0, CLEAR_LINE);
+				cpunum_set_input_line(1, 0, CLEAR_LINE);
 			break;
 
 		case 0x02:
 			cpu_interrupt_enable(0,bit);
 			if (!bit)
-				cpu_set_irq_line(0, 0, CLEAR_LINE);
+				cpunum_set_input_line(0, 0, CLEAR_LINE);
 			break;
 
 		case 0x04:
 			cpu_interrupt_enable(2,bit);
 			if (!bit)
-				cpu_set_irq_line(2, 0, CLEAR_LINE);
+				cpunum_set_input_line(2, 0, CLEAR_LINE);
 			break;
 
 		case 0x06:
@@ -644,11 +644,11 @@ static WRITE8_HANDLER( phozon_latch_w )
 			break;
 
 		case 0x0a:
-			cpu_set_reset_line(1, bit ? CLEAR_LINE : ASSERT_LINE);
+			cpunum_set_input_line(1, INPUT_LINE_RESET, bit ? CLEAR_LINE : ASSERT_LINE);
 			break;
 
 		case 0x0c:
-			cpu_set_reset_line(2, bit ? CLEAR_LINE : ASSERT_LINE);
+			cpunum_set_input_line(2, INPUT_LINE_RESET, bit ? CLEAR_LINE : ASSERT_LINE);
 			break;
 
 		case 0x0e:
@@ -665,13 +665,13 @@ static WRITE8_HANDLER( mappy_latch_w )
 		case 0x00:	/* INT ON 2 */
 			cpu_interrupt_enable(1,bit);
 			if (!bit)
-				cpu_set_irq_line(1, 0, CLEAR_LINE);
+				cpunum_set_input_line(1, 0, CLEAR_LINE);
 			break;
 
 		case 0x02:	/* INT ON */
 			cpu_interrupt_enable(0,bit);
 			if (!bit)
-				cpu_set_irq_line(0, 0, CLEAR_LINE);
+				cpunum_set_input_line(0, 0, CLEAR_LINE);
 			break;
 
 		case 0x04:	/* FLIP */
@@ -688,7 +688,7 @@ static WRITE8_HANDLER( mappy_latch_w )
 			break;
 
 		case 0x0a:	/* SUB RESET */
-			cpu_set_reset_line(1, bit ? CLEAR_LINE : ASSERT_LINE);
+			cpunum_set_input_line(1, INPUT_LINE_RESET, bit ? CLEAR_LINE : ASSERT_LINE);
 			break;
 
 		case 0x0c:	/* n.c. */
@@ -729,7 +729,7 @@ static MACHINE_INIT( mappy )
 static INTERRUPT_GEN( mappy_interrupt_1 )
 {
 	irq0_line_assert();	// this also checks if irq is enabled - IMPORTANT!
-						// so don't replace with cpu_set_irq_line(0, 0, ASSERT_LINE);
+						// so don't replace with cpunum_set_input_line(0, 0, ASSERT_LINE);
 
 	namcoio_set_irq_line(0,PULSE_LINE);
 	namcoio_set_irq_line(1,PULSE_LINE);
@@ -940,11 +940,11 @@ INPUT_PORTS_START( superpac )
 	PORT_DIPSETTING(    0x28, "40k 120k" )
 	PORT_DIPSETTING(    0x20, "30k 100k 100k" )
 	PORT_DIPSETTING(    0x18, "40k 120k 120k" ) */
-	PORT_DIPNAME( 0xc0, 0xc8, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x88, "1" )
-	PORT_DIPSETTING(    0x48, "2" )
-	PORT_DIPSETTING(    0xc8, "3" )
-	PORT_DIPSETTING(    0x08, "5" )
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x80, "1" )
+	PORT_DIPSETTING(    0x40, "2" )
+	PORT_DIPSETTING(    0xc0, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
 INPUT_PORTS_END
 
 
@@ -2176,7 +2176,7 @@ static DRIVER_INIT( grobda )
 	   However, removing the 15XX from the board causes sound to disappear completely, so
 	   the DAC might be built-in after all.
 	  */
-	install_mem_write_handler(1, 0x0002, 0x0002, grobda_DAC_w );
+	memory_install_write8_handler(1, ADDRESS_SPACE_PROGRAM, 0x0002, 0x0002, 0, 0, grobda_DAC_w );
 
 	init_58_56();
 }

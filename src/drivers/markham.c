@@ -11,9 +11,9 @@ Markham (c) 1983 Sun Electronics
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-extern WRITE_HANDLER( markham_videoram_w );
-extern WRITE_HANDLER( markham_scroll_x_w );
-extern WRITE_HANDLER( markham_flipscreen_w );
+extern WRITE8_HANDLER( markham_videoram_w );
+extern WRITE8_HANDLER( markham_scroll_x_w );
+extern WRITE8_HANDLER( markham_flipscreen_w );
 
 extern PALETTE_INIT( markham );
 extern VIDEO_START( markham );
@@ -24,17 +24,17 @@ static UINT8 *markham_sharedram;
 /****************************************************************************/
 
 
-WRITE_HANDLER( markham_sharedram_w )
+WRITE8_HANDLER( markham_sharedram_w )
 {
 	markham_sharedram[offset] = data;
 }
 
-READ_HANDLER( markham_sharedram_r )
+READ8_HANDLER( markham_sharedram_r )
 {
 	return markham_sharedram[offset];
 }
 
-READ_HANDLER( markham_e004_r )
+READ8_HANDLER( markham_e004_r )
 {
 	return 0;
 }

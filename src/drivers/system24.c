@@ -424,10 +424,10 @@ static void reset_reset(void)
 	int changed = resetcontrol ^ prev_resetcontrol;
 	if(changed & 2) {
 		if(resetcontrol & 2) {
-			cpu_set_halt_line(1, CLEAR_LINE);
-			cpu_set_reset_line(1, PULSE_LINE);
+			cpunum_set_input_line(1, INPUT_LINE_HALT, CLEAR_LINE);
+			cpunum_set_input_line(1, INPUT_LINE_RESET, PULSE_LINE);
 		} else
-			cpu_set_halt_line(1, ASSERT_LINE);
+			cpunum_set_input_line(1, INPUT_LINE_HALT, ASSERT_LINE);
 	}
 	if(changed & 4)
 		YM2151ResetChip(0);
@@ -549,9 +549,9 @@ static void irq_timer_cb(int param)
 {
 	irq_timer_pend0 = irq_timer_pend1 = 1;
 	if(irq_allow0 & (1 << IRQ_TIMER))
-		cpu_set_irq_line(0, IRQ_TIMER+1, ASSERT_LINE);
+		cpunum_set_input_line(0, IRQ_TIMER+1, ASSERT_LINE);
 	if(irq_allow1 & (1 << IRQ_TIMER))
-		cpu_set_irq_line(1, IRQ_TIMER+1, ASSERT_LINE);
+		cpunum_set_input_line(1, IRQ_TIMER+1, ASSERT_LINE);
 }
 
 static void irq_init(void)
@@ -594,13 +594,13 @@ static WRITE16_HANDLER(irq_w)
 		break;
 	case 2:
 		irq_allow0 = data;
-		cpu_set_irq_line(0, IRQ_TIMER+1, irq_timer_pend0 && (irq_allow0 & (1 << IRQ_TIMER)) ? ASSERT_LINE : CLEAR_LINE);
-		cpu_set_irq_line(0, IRQ_YM2151+1, irq_yms && (irq_allow0 & (1 << IRQ_YM2151)) ? ASSERT_LINE : CLEAR_LINE);
+		cpunum_set_input_line(0, IRQ_TIMER+1, irq_timer_pend0 && (irq_allow0 & (1 << IRQ_TIMER)) ? ASSERT_LINE : CLEAR_LINE);
+		cpunum_set_input_line(0, IRQ_YM2151+1, irq_yms && (irq_allow0 & (1 << IRQ_YM2151)) ? ASSERT_LINE : CLEAR_LINE);
 		break;
 	case 3:
 		irq_allow1 = data;
-		cpu_set_irq_line(1, IRQ_TIMER+1, irq_timer_pend1 && (irq_allow1 & (1 << IRQ_TIMER)) ? ASSERT_LINE : CLEAR_LINE);
-		cpu_set_irq_line(1, IRQ_YM2151+1, irq_yms && (irq_allow1 & (1 << IRQ_YM2151)) ? ASSERT_LINE : CLEAR_LINE);
+		cpunum_set_input_line(1, IRQ_TIMER+1, irq_timer_pend1 && (irq_allow1 & (1 << IRQ_TIMER)) ? ASSERT_LINE : CLEAR_LINE);
+		cpunum_set_input_line(1, IRQ_YM2151+1, irq_yms && (irq_allow1 & (1 << IRQ_YM2151)) ? ASSERT_LINE : CLEAR_LINE);
 		break;
 	}
 }
@@ -610,11 +610,11 @@ static READ16_HANDLER(irq_r)
 	switch(offset) {
 	case 2:
 		irq_timer_pend0 = 0;
-		cpu_set_irq_line(0, IRQ_TIMER+1, CLEAR_LINE);
+		cpunum_set_input_line(0, IRQ_TIMER+1, CLEAR_LINE);
 		break;
 	case 3:
 		irq_timer_pend1 = 0;
-		cpu_set_irq_line(1, IRQ_TIMER+1, CLEAR_LINE);
+		cpunum_set_input_line(1, IRQ_TIMER+1, CLEAR_LINE);
 		break;
 	}
 	return 0xffff;
@@ -626,10 +626,10 @@ static INTERRUPT_GEN(irq_vbl)
 	int mask = 1 << irq;
 
 	if(irq_allow0 & mask)
-		cpu_set_irq_line(0, 1+irq, HOLD_LINE);
+		cpunum_set_input_line(0, 1+irq, HOLD_LINE);
 
 	if(irq_allow1 & mask)
-		cpu_set_irq_line(1, 1+irq, HOLD_LINE);
+		cpunum_set_input_line(1, 1+irq, HOLD_LINE);
 
 	if(!cpu_getiloops()) {
 		// Ensure one index pulse every 20 frames
@@ -644,8 +644,8 @@ static INTERRUPT_GEN(irq_vbl)
 static void irq_ym(int irq)
 {
 	irq_yms = irq;
-	cpu_set_irq_line(0, IRQ_YM2151+1, irq_yms && (irq_allow0 & (1 << IRQ_YM2151)) ? ASSERT_LINE : CLEAR_LINE);
-	cpu_set_irq_line(1, IRQ_YM2151+1, irq_yms && (irq_allow1 & (1 << IRQ_YM2151)) ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(0, IRQ_YM2151+1, irq_yms && (irq_allow0 & (1 << IRQ_YM2151)) ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1, IRQ_YM2151+1, irq_yms && (irq_allow1 & (1 << IRQ_YM2151)) ? ASSERT_LINE : CLEAR_LINE);
 }
 
 
@@ -860,7 +860,7 @@ static NVRAM_HANDLER(system24)
 
 static MACHINE_INIT(system24)
 {
-	cpu_set_halt_line(1, ASSERT_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_HALT, ASSERT_LINE);
 	prev_resetcontrol = resetcontrol = 0x06;
 	fdc_init();
 	curbank = 0;

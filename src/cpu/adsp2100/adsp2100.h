@@ -152,8 +152,28 @@ extern void adsp2105_load_boot_data(data8_t *srcdata, data32_t *dstdata);
 #define ADSP2115_SPORT0_RX	3		/* SPORT0 receive IRQ */
 #define ADSP2115_SPORT0_TX	4		/* SPORT0 transmit IRQ */
 
-extern void adsp2155_get_info(UINT32 state, union cpuinfo *info);
+extern void adsp2115_get_info(UINT32 state, union cpuinfo *info);
 extern void adsp2115_load_boot_data(data8_t *srcdata, data32_t *dstdata);
+#endif
+
+#if (HAS_ADSP2181)
+/**************************************************************************
+ * ADSP2181 section
+ **************************************************************************/
+
+#define ADSP2181_IRQ0		0		/* IRQ0 */
+#define ADSP2181_SPORT1_RX	0		/* SPORT1 receive IRQ */
+#define ADSP2181_IRQ1		1		/* IRQ1 */
+#define ADSP2181_SPORT1_TX	1		/* SPORT1 transmit IRQ */
+#define ADSP2181_IRQ2		2		/* IRQ2 */
+#define ADSP2181_SPORT0_RX	3		/* SPORT0 receive IRQ */
+#define ADSP2181_SPORT0_TX	4		/* SPORT0 transmit IRQ */
+
+extern void adsp2181_get_info(UINT32 state, union cpuinfo *info);
+extern void adsp2181_load_boot_data(data8_t *srcdata, data32_t *dstdata);
+extern void adsp2181_idma_addr_w(data16_t data);
+extern void adsp2181_idma_data_w(data16_t data);
+extern data16_t adsp2181_idma_data_r(data16_t data);
 #endif
 
 #endif /* _ADSP2100_H */

@@ -14,7 +14,7 @@ extern data8_t *st0016_charram;
 data8_t *st0016_sound_regs;
 static int st0016_vpos[8], st0016_frac[8], st0016_lponce[8];
 
-WRITE_HANDLER(st0016_snd_w)
+WRITE8_HANDLER(st0016_snd_w)
 {
 	int voice = offset/32;
 	int reg = offset & 0x1f;

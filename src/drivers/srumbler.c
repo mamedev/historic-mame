@@ -14,10 +14,10 @@
 
 extern unsigned char *srumbler_backgroundram,*srumbler_foregroundram;
 
-WRITE_HANDLER( srumbler_background_w );
-WRITE_HANDLER( srumbler_foreground_w );
-WRITE_HANDLER( srumbler_scroll_w );
-WRITE_HANDLER( srumbler_4009_w );
+WRITE8_HANDLER( srumbler_background_w );
+WRITE8_HANDLER( srumbler_foreground_w );
+WRITE8_HANDLER( srumbler_scroll_w );
+WRITE8_HANDLER( srumbler_4009_w );
 
 VIDEO_START( srumbler );
 VIDEO_UPDATE( srumbler );
@@ -25,7 +25,7 @@ VIDEO_EOF( srumbler );
 
 
 
-static WRITE_HANDLER( srumbler_bankswitch_w )
+static WRITE8_HANDLER( srumbler_bankswitch_w )
 {
 	/*
 	  banking is controlled by two PROMs. 0000-4fff is mapped to the same
@@ -59,11 +59,11 @@ static INTERRUPT_GEN( srumbler_interrupt )
 {
 	if (cpu_getiloops()==0)
 	{
-		cpu_set_irq_line(0,0,HOLD_LINE);
+		cpunum_set_input_line(0,0,HOLD_LINE);
 	}
 	else
 	{
-		cpu_set_irq_line(0,M6809_FIRQ_LINE,HOLD_LINE);
+		cpunum_set_input_line(0,M6809_FIRQ_LINE,HOLD_LINE);
 	}
 }
 

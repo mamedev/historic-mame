@@ -42,15 +42,15 @@
 #include "cpu/z80/z80.h"
 #include "sndhrdw/seibu.h"
 
-READ_HANDLER( raiden_background_r );
-READ_HANDLER( raiden_foreground_r );
-WRITE_HANDLER( raiden_background_w );
-WRITE_HANDLER( raiden_foreground_w );
-WRITE_HANDLER( raiden_text_w );
-WRITE_HANDLER( raidena_text_w );
+READ8_HANDLER( raiden_background_r );
+READ8_HANDLER( raiden_foreground_r );
+WRITE8_HANDLER( raiden_background_w );
+WRITE8_HANDLER( raiden_foreground_w );
+WRITE8_HANDLER( raiden_text_w );
+WRITE8_HANDLER( raidena_text_w );
 VIDEO_START( raiden );
 VIDEO_START( raidena );
-WRITE_HANDLER( raiden_control_w );
+WRITE8_HANDLER( raiden_control_w );
 VIDEO_UPDATE( raiden );
 
 static unsigned char *raiden_shared_ram;
@@ -58,8 +58,8 @@ extern unsigned char *raiden_back_data,*raiden_fore_data,*raiden_scroll_ram;
 
 /***************************************************************************/
 
-static READ_HANDLER( raiden_shared_r ) { return raiden_shared_ram[offset]; }
-static WRITE_HANDLER( raiden_shared_w ) { raiden_shared_ram[offset]=data; }
+static READ8_HANDLER( raiden_shared_r ) { return raiden_shared_ram[offset]; }
+static WRITE8_HANDLER( raiden_shared_w ) { raiden_shared_ram[offset]=data; }
 
 /******************************************************************************/
 
@@ -269,7 +269,7 @@ SEIBU_SOUND_SYSTEM_RAIDEN_YM3812_HARDWARE(14318180/4,8000,REGION_SOUND1);
 
 static INTERRUPT_GEN( raiden_interrupt )
 {
-	cpu_set_irq_line_and_vector(cpu_getactivecpu(), 0, HOLD_LINE, 0xc8/4);	/* VBL */
+	cpunum_set_input_line_and_vector(cpu_getactivecpu(), 0, HOLD_LINE, 0xc8/4);	/* VBL */
 }
 
 static VIDEO_EOF( raiden )
@@ -483,7 +483,7 @@ ROM_END
 /***************************************************************************/
 
 /* Spin the sub-cpu if it is waiting on the master cpu */
-static READ_HANDLER( sub_cpu_spin_r )
+static READ8_HANDLER( sub_cpu_spin_r )
 {
 	int pc=activecpu_get_pc();
 	int ret=raiden_shared_ram[0x8];
@@ -496,7 +496,7 @@ static READ_HANDLER( sub_cpu_spin_r )
 	return ret;
 }
 
-static READ_HANDLER( sub_cpu_spina_r )
+static READ8_HANDLER( sub_cpu_spina_r )
 {
 	int pc=activecpu_get_pc();
 	int ret=raiden_shared_ram[0x8];
@@ -511,12 +511,12 @@ static READ_HANDLER( sub_cpu_spina_r )
 
 static DRIVER_INIT( raiden )
 {
-	install_mem_read_handler(1, 0x4008, 0x4009, sub_cpu_spin_r);
+	memory_install_read8_handler(1, ADDRESS_SPACE_PROGRAM, 0x4008, 0x4009, 0, 0, sub_cpu_spin_r);
 }
 
 static void memory_patcha(void)
 {
-	install_mem_read_handler(1, 0x4008, 0x4009, sub_cpu_spina_r);
+	memory_install_read8_handler(1, ADDRESS_SPACE_PROGRAM, 0x4008, 0x4009, 0, 0, sub_cpu_spina_r);
 }
 
 /* This is based on code by Niclas Karlsson Mate, who figured out the

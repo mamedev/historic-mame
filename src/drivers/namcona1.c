@@ -974,7 +974,7 @@ INTERRUPT_GEN( namcona1_interrupt )
 	{
 		if( (namcona1_vreg[0x1a/2]&(1<<level))==0 )
 		{
-			cpu_set_irq_line(0, level+1, HOLD_LINE);
+			cpunum_set_input_line(0, level+1, HOLD_LINE);
 		}
 	}
 }

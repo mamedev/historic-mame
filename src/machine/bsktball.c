@@ -15,7 +15,7 @@ static unsigned int NMION = 0;
 /***************************************************************************
 bsktball_nmion_w
 ***************************************************************************/
-WRITE_HANDLER( bsktball_nmion_w )
+WRITE8_HANDLER( bsktball_nmion_w )
 {
 	NMION = offset & 0x01;
 }
@@ -32,21 +32,21 @@ INTERRUPT_GEN( bsktball_interrupt )
 	i256V=(i256V+1) % 8;
 
 	if (i256V==0)
-		cpu_set_irq_line(0, 0, HOLD_LINE);
+		cpunum_set_input_line(0, 0, HOLD_LINE);
 	else if (NMION)
-		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+		cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 }
 
 /***************************************************************************
 bsktball_ld_w
 ***************************************************************************/
 
-WRITE_HANDLER( bsktball_ld1_w )
+WRITE8_HANDLER( bsktball_ld1_w )
 {
 	LD1 = (offset & 0x01);
 }
 
-WRITE_HANDLER( bsktball_ld2_w )
+WRITE8_HANDLER( bsktball_ld2_w )
 {
 	LD2 = (offset & 0x01);
 }
@@ -56,7 +56,7 @@ WRITE_HANDLER( bsktball_ld2_w )
 bsktball_in0_r
 ***************************************************************************/
 
-READ_HANDLER( bsktball_in0_r )
+READ8_HANDLER( bsktball_in0_r )
 {
 	static int DR0=0;		/* PL2 H DIR */
 	static int DR1=0;		/* PL2 V DIR */
@@ -159,12 +159,12 @@ READ_HANDLER( bsktball_in0_r )
 /***************************************************************************
 bsktball_led_w
 ***************************************************************************/
-WRITE_HANDLER( bsktball_led1_w )
+WRITE8_HANDLER( bsktball_led1_w )
 {
 	set_led_status(0,offset & 0x01);
 }
 
-WRITE_HANDLER( bsktball_led2_w )
+WRITE8_HANDLER( bsktball_led2_w )
 {
 	set_led_status(1,offset & 0x01);
 }
@@ -173,18 +173,18 @@ WRITE_HANDLER( bsktball_led2_w )
 /***************************************************************************
 Sound handlers
 ***************************************************************************/
-WRITE_HANDLER( bsktball_bounce_w )
+WRITE8_HANDLER( bsktball_bounce_w )
 {
 	discrete_sound_w(1, data & 0x0f);	// Crowd
 	discrete_sound_w(2, (data & 0x10) ? 1 : 0);	// Bounce
 }
 
-WRITE_HANDLER( bsktball_note_w )
+WRITE8_HANDLER( bsktball_note_w )
 {
 	discrete_sound_w(0, (~data) & 0xff);	// Note
 }
 
-WRITE_HANDLER( bsktball_noise_reset_w )
+WRITE8_HANDLER( bsktball_noise_reset_w )
 {
 	discrete_sound_w(3,(~offset) & 0x01);
 }

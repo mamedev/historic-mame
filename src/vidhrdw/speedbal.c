@@ -112,13 +112,13 @@ VIDEO_START( speedbal )
  *				   *
  *************************************/
 
-WRITE_HANDLER( speedbal_foreground_videoram_w )
+WRITE8_HANDLER( speedbal_foreground_videoram_w )
 {
    ch_dirtybuffer[offset] = 1;
    speedbal_foreground_videoram[offset]=data;
 }
 
-READ_HANDLER( speedbal_foreground_videoram_r )
+READ8_HANDLER( speedbal_foreground_videoram_r )
 {
    return speedbal_foreground_videoram[offset];
 }
@@ -131,13 +131,13 @@ READ_HANDLER( speedbal_foreground_videoram_r )
  *				   *
  *************************************/
 
-WRITE_HANDLER( speedbal_background_videoram_w )
+WRITE8_HANDLER( speedbal_background_videoram_w )
 {
    bg_dirtybuffer[offset] = 1;
    speedbal_background_videoram[offset] = data;
 }
 
-READ_HANDLER( speedbal_background_videoram_r )
+READ8_HANDLER( speedbal_background_videoram_r )
 {
    return speedbal_background_videoram[offset];
 }

@@ -37,11 +37,11 @@ enum {
 void h6280_get_info(UINT32 state, union cpuinfo *info);
 
 
-READ_HANDLER( H6280_irq_status_r );
-WRITE_HANDLER( H6280_irq_status_w );
+READ8_HANDLER( H6280_irq_status_r );
+WRITE8_HANDLER( H6280_irq_status_w );
 
-READ_HANDLER( H6280_timer_r );
-WRITE_HANDLER( H6280_timer_w );
+READ8_HANDLER( H6280_timer_r );
+WRITE8_HANDLER( H6280_timer_w );
 
 #ifdef MAME_DEBUG
 extern int Dasm6280(char *buffer, int pc);

@@ -20,7 +20,7 @@ static int m6840_cr[3];
 
 static void cchasm_6840_irq(int state)
 {
-	cpu_set_irq_line(0, 4, state);
+	cpunum_set_input_line(0, 4, state);
 }
 
 static void timer_2_timeout(int dummy)

@@ -28,24 +28,24 @@ TODO:
 #include "vidhrdw/generic.h"
 #include "cpu/m6502/m6502.h"
 
-extern WRITE_HANDLER( tagteam_videoram_w );
-extern WRITE_HANDLER( tagteam_colorram_w );
-extern READ_HANDLER( tagteam_mirrorvideoram_r );
-extern WRITE_HANDLER( tagteam_mirrorvideoram_w );
-extern READ_HANDLER( tagteam_mirrorcolorram_r );
-extern WRITE_HANDLER( tagteam_mirrorcolorram_w );
-extern WRITE_HANDLER( tagteam_video_control_w );
-extern WRITE_HANDLER( tagteam_control_w );
-extern WRITE_HANDLER( tagteam_flipscreen_w );
+extern WRITE8_HANDLER( tagteam_videoram_w );
+extern WRITE8_HANDLER( tagteam_colorram_w );
+extern READ8_HANDLER( tagteam_mirrorvideoram_r );
+extern WRITE8_HANDLER( tagteam_mirrorvideoram_w );
+extern READ8_HANDLER( tagteam_mirrorcolorram_r );
+extern WRITE8_HANDLER( tagteam_mirrorcolorram_w );
+extern WRITE8_HANDLER( tagteam_video_control_w );
+extern WRITE8_HANDLER( tagteam_control_w );
+extern WRITE8_HANDLER( tagteam_flipscreen_w );
 
 extern PALETTE_INIT( tagteam );
 extern VIDEO_START( tagteam );
 extern VIDEO_UPDATE( tagteam );
 
-static WRITE_HANDLER( sound_command_w )
+static WRITE8_HANDLER( sound_command_w )
 {
 	soundlatch_w(offset,data);
-	cpu_set_irq_line(1,M6502_IRQ_LINE,HOLD_LINE);
+	cpunum_set_input_line(1,M6502_IRQ_LINE,HOLD_LINE);
 }
 
 
@@ -105,7 +105,7 @@ static INTERRUPT_GEN( tagteam_interrupt )
 		if (coin == 0)
 		{
 			coin = 1;
-			cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+			cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 		}
 	}
 	else coin = 0;

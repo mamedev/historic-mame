@@ -141,19 +141,19 @@ static void ds2404_writemem(UINT8 value)
 	}
 }
 
-WRITE_HANDLER( DS2404_1W_reset_w )
+WRITE8_HANDLER( DS2404_1W_reset_w )
 {
 	ds2404.state[0] = DS2404_STATE_IDLE;
 	ds2404.state_ptr = 0;
 }
 
-WRITE_HANDLER( DS2404_3W_reset_w )
+WRITE8_HANDLER( DS2404_3W_reset_w )
 {
 	ds2404.state[0] = DS2404_STATE_COMMAND;
 	ds2404.state_ptr = 0;
 }
 
-READ_HANDLER( DS2404_data_r )
+READ8_HANDLER( DS2404_data_r )
 {
 	UINT8 value;
 	switch( ds2404.state[ds2404.state_ptr] )
@@ -187,7 +187,7 @@ READ_HANDLER( DS2404_data_r )
 	return 0;
 }
 
-WRITE_HANDLER( DS2404_data_w )
+WRITE8_HANDLER( DS2404_data_w )
 {
 	int i;
 		
@@ -276,7 +276,7 @@ WRITE_HANDLER( DS2404_data_w )
 	}
 }
 
-WRITE_HANDLER( DS2404_clk_w )
+WRITE8_HANDLER( DS2404_clk_w )
 {
 	switch( ds2404.state[ds2404.state_ptr] )
 	{

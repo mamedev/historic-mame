@@ -90,7 +90,7 @@ static READ16_HANDLER( aquarium_coins_r )
 	return data;
 }
 
-static WRITE_HANDLER( aquarium_snd_ack_w )
+static WRITE8_HANDLER( aquarium_snd_ack_w )
 {
 	aquarium_snd_ack = 0x8000;
 }
@@ -100,10 +100,10 @@ static WRITE16_HANDLER( aquarium_sound_w )
 //	usrintf_showmessage("sound write %04x",data);
 
 	soundlatch_w(1,data&0xff);
-	cpu_set_irq_line( 1, IRQ_LINE_NMI, PULSE_LINE );
+	cpunum_set_input_line( 1, INPUT_LINE_NMI, PULSE_LINE );
 }
 
-static WRITE_HANDLER( aquarium_z80_bank_w )
+static WRITE8_HANDLER( aquarium_z80_bank_w )
 {
 	int soundbank = ((data & 0x7) + 1) * 0x8000;
 	data8_t *Z80 = (data8_t *)memory_region(REGION_CPU2);
@@ -127,12 +127,12 @@ static UINT8 aquarium_snd_bitswap(UINT8 scrambled_data)
 	return data;
 }
 
-static READ_HANDLER( aquarium_oki_r )
+static READ8_HANDLER( aquarium_oki_r )
 {
 	return (aquarium_snd_bitswap(OKIM6295_status_0_r(0)) );
 }
 
-static WRITE_HANDLER( aquarium_oki_w )
+static WRITE8_HANDLER( aquarium_oki_w )
 {
 	logerror("Z80-PC:%04x Writing %04x to the OKI M6295\n",activecpu_get_previouspc(),aquarium_snd_bitswap(data));
 	OKIM6295_data_0_w( 0, (aquarium_snd_bitswap(data)) );
@@ -363,7 +363,7 @@ struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static void irq_handler(int irq)
 {
-	cpu_set_irq_line( 1, 0 , irq ? ASSERT_LINE : CLEAR_LINE );
+	cpunum_set_input_line( 1, 0 , irq ? ASSERT_LINE : CLEAR_LINE );
 }
 
 static struct YM2151interface ym2151_interface =

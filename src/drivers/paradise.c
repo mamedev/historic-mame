@@ -67,7 +67,7 @@ Notes:
 
 ***************************************************************************/
 
-static WRITE_HANDLER( paradise_rombank_w )
+static WRITE8_HANDLER( paradise_rombank_w )
 {
 	int bank = data;
 	int bank_n = memory_region_length(REGION_CPU1)/0x4000 - 1;
@@ -81,7 +81,7 @@ static WRITE_HANDLER( paradise_rombank_w )
 	cpu_setbank(1, memory_region(REGION_CPU1) + bank * 0x4000);
 }
 
-static WRITE_HANDLER( paradise_okibank_w )
+static WRITE8_HANDLER( paradise_okibank_w )
 {
 	if (data & ~0x02)	logerror("CPU #0 - PC %04X: unknown oki bank bits %02X\n",activecpu_get_pc(),data);
 	OKIM6295_set_bank_base(1, (data & 0x02) ? 0x40000 : 0);
@@ -501,7 +501,7 @@ ROM_END
 DRIVER_INIT (tgtball)
 {
 	spriteram_size = 0x100;
-	install_port_write_handler(0, 0x2001, 0x2001, tgtball_flipscreen_w );
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x2001, 0x2001, 0, 0, tgtball_flipscreen_w );
 }
 
 

@@ -49,7 +49,7 @@ static MACHINE_INIT( tickee )
  *
  *************************************/
 
-static READ_HANDLER( port1_r )
+static READ8_HANDLER( port1_r )
 {
 	return input_port_1_r(offset) | (ticket_dispenser_0_r(0) >> 5) | (ticket_dispenser_1_r(0) >> 6);
 }

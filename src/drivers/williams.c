@@ -1487,6 +1487,39 @@ ROM_START( defndjeu )
 	ROM_LOAD( "s", 0xf800, 0x0800, CRC(cb79ae42) SHA1(d22bef68ef62aa012f1919338a33621138c2278b) )
 ROM_END
 
+ROM_START( tornado1 )
+	ROM_REGION( 0x15000, REGION_CPU1, 0 )
+	ROM_LOAD( "torna1.bin", 0x0d000, 0x1000, CRC(706a24bd) SHA1(60cef3d4f7204eff42de2c08244863e83bc842b4) ) // same as defndjeu 15
+	ROM_LOAD( "torna3.bin", 0x0e000, 0x1000, CRC(a79213b2) SHA1(ff9a59cb1d28af396a7b93df82a4bb825581bcce) )
+	ROM_LOAD( "torna4.bin", 0x0f000, 0x1000, CRC(f96d3d26) SHA1(42a1add3c39c1376aa3292c9b85346bb480d329d) )
+	/* bank 0 is the place for CMOS ram */
+	ROM_LOAD( "tornc4.bin", 0x10000, 0x1000, CRC(e30f4c00) SHA1(afdf1877ae52bc027c4cd4a31b861aa50321a094) )
+	ROM_LOAD( "tornb1.bin", 0x11000, 0x1000, CRC(f2bef850) SHA1(78e50c790e3a8ebc4b65f2d827be8bd375bf4ef4) )
+	ROM_LOAD( "tornb3.bin", 0x12000, 0x1000, CRC(0e3fef55) SHA1(d0350c36971b523aa490b29b64345f3777019a8d) )
+	ROM_LOAD( "tornb4.bin", 0x13000, 0x1000, CRC(e99d5679) SHA1(b4344a32aed6cc64284661c03993a59718289c82) ) // same as defndjeu 18
+	ROM_RELOAD(     0x14000, 0x1000 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
+	ROM_LOAD( "tornb6.bin", 0xf800, 0x0800, CRC(3685e033) SHA1(74d16675d9c16a6ea3af09cfbc20c3d6b0ab2311) )
+	ROM_CONTINUE ( 0x000, 0x800 ) // cut rom instead?
+ROM_END
+
+/* I suspect this one is a bad dump */
+ROM_START( tornado2 )
+	ROM_REGION( 0x15000, REGION_CPU1, 0 )
+	ROM_LOAD( "tto15.bin",0x0d000, 0x1000, CRC(910ac603) SHA1(33705b5ce4242a5865a8b4ecf27aa9e656067ea3) ) //  1ST AND 2ND HALF IDENTICAL
+	ROM_LOAD( "to16.bin", 0x0e000, 0x1000, CRC(46ccd582) SHA1(4f74edb2c48273fce0531b7de54fd7eb925bf3df) )
+	ROM_LOAD( "tto17.bin",0x0f000, 0x1000, CRC(faa3613c) SHA1(79014de2021cd73525ecfe0e8d3e7da25e9ee1f3) )
+	/* bank 0 is the place for CMOS ram */
+	ROM_LOAD( "to21.bin", 0x10000, 0x1000, CRC(e30f4c00) SHA1(afdf1877ae52bc027c4cd4a31b861aa50321a094) ) // same as tornado1 tornc4.bin
+	ROM_LOAD( "to19.bin", 0x11000, 0x1000, CRC(42885b4f) SHA1(759319f84ea2cec6808d744d190062a7105d7efc) )
+	ROM_LOAD( "to20.bin", 0x12000, 0x1000, CRC(e90bdcb2) SHA1(591fbad03bfaf371a865d81982c03402acdf0421) ) //  1ST AND 2ND HALF IDENTICAL
+	ROM_LOAD( "to18.bin", 0x13000, 0x1000, CRC(c15ffc03) SHA1(9093a8079b21484a999c965346accdbed91d0273) ) //  1ST AND 2ND HALF IDENTICAL
+	ROM_RELOAD(     0x14000, 0x1000 )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
+	ROM_LOAD( "to_s.bin", 0xf800, 0x0800, CRC(cb79ae42) SHA1(d22bef68ef62aa012f1919338a33621138c2278b) ) // same as defndjeu s
+ROM_END
 
 ROM_START( defcmnd )
 	ROM_REGION( 0x15000, REGION_CPU1, 0 )
@@ -2282,7 +2315,7 @@ static DRIVER_INIT( mayday )
 	CONFIGURE_PIAS(williams_pia_0_intf, williams_pia_1_intf, williams_snd_pia_intf);
 
 	/* install a handler to catch protection checks */
-	mayday_protection = install_mem_read_handler(0, 0xa190, 0xa191, mayday_protection_r);
+	mayday_protection = memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa190, 0xa191, 0, 0, mayday_protection_r);
 }
 
 
@@ -2348,12 +2381,12 @@ static DRIVER_INIT( spdball )
 	pia_config(3, PIA_STANDARD_ORDERING, &spdball_pia_3_intf);
 
 	/* install extra input handlers */
-	install_mem_read_handler (0, 0xc800, 0xc800, input_port_5_r);
-	install_mem_read_handler (0, 0xc801, 0xc801, input_port_6_r);
-	install_mem_read_handler (0, 0xc802, 0xc802, input_port_7_r);
-	install_mem_read_handler (0, 0xc803, 0xc803, input_port_8_r);
-	install_mem_read_handler (0, 0xc808, 0xc80b, pia_3_r);
-	install_mem_write_handler(0, 0xc808, 0xc80b, pia_3_w);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc800, 0xc800, 0, 0, input_port_5_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc801, 0xc801, 0, 0, input_port_6_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc802, 0xc802, 0, 0, input_port_7_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc803, 0xc803, 0, 0, input_port_8_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc808, 0xc80b, 0, 0, pia_3_r);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc808, 0xc80b, 0, 0, pia_3_w);
 }
 
 
@@ -2395,8 +2428,8 @@ static DRIVER_INIT( sinistar )
 	CONFIGURE_PIAS(williams_49way_pia_0_intf, williams_pia_1_intf, sinistar_snd_pia_intf);
 
 	/* install RAM instead of ROM in the Dxxx slot */
-	install_mem_read_handler (0, 0xd000, 0xdfff, MRA8_RAM);
-	install_mem_write_handler(0, 0xd000, 0xdfff, MWA8_RAM);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd000, 0xdfff, 0, 0, MRA8_RAM);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd000, 0xdfff, 0, 0, MWA8_RAM);
 }
 
 
@@ -2412,8 +2445,8 @@ static DRIVER_INIT( playball )
 	CONFIGURE_PIAS(williams_pia_0_intf, playball_pia_1_intf, sinistar_snd_pia_intf);
 
 	/* install RAM instead of ROM in the Dxxx slot */
-	install_mem_read_handler (0, 0xd000, 0xdfff, MRA8_RAM);
-	install_mem_write_handler(0, 0xd000, 0xdfff, MWA8_RAM);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd000, 0xdfff, 0, 0, MRA8_RAM);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd000, 0xdfff, 0, 0, MWA8_RAM);
 }
 
 
@@ -2471,8 +2504,8 @@ static DRIVER_INIT( mysticm )
 	CONFIGURE_PIAS(mysticm_pia_0_intf, williams2_pia_1_intf, williams2_snd_pia_intf);
 
 	/* install RAM instead of ROM in the Dxxx slot */
-	install_mem_read_handler (0, 0xd000, 0xdfff, MRA8_RAM);
-	install_mem_write_handler(0, 0xd000, 0xdfff, MWA8_RAM);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd000, 0xdfff, 0, 0, MRA8_RAM);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd000, 0xdfff, 0, 0, MWA8_RAM);
 }
 
 
@@ -2507,8 +2540,8 @@ static DRIVER_INIT( inferno )
 	CONFIGURE_PIAS(williams2_muxed_pia_0_intf, williams2_pia_1_intf, williams2_snd_pia_intf);
 
 	/* install RAM instead of ROM in the Dxxx slot */
-	install_mem_read_handler (0, 0xd000, 0xdfff, MRA8_RAM);
-	install_mem_write_handler(0, 0xd000, 0xdfff, MWA8_RAM);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd000, 0xdfff, 0, 0, MRA8_RAM);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd000, 0xdfff, 0, 0, MWA8_RAM);
 }
 
 
@@ -2547,6 +2580,8 @@ GAME( 1980, defender, 0,        defender, defender, defender, ROT0,   "Williams"
 GAME( 1980, defendg,  defender, defender, defender, defender, ROT0,   "Williams", "Defender (Green label)" )
 GAME( 1980, defendw,  defender, defender, defender, defender, ROT0,   "Williams", "Defender (White label)" )
 GAMEX(1980, defndjeu, defender, defender, defender, defndjeu, ROT0,   "Jeutel", "Defender ? (bootleg)", GAME_NOT_WORKING )
+GAMEX(1980, tornado1, defender, defender, defender, defndjeu, ROT0,   "Jeutel", "Tornado? (bootleg set 1)", GAME_NOT_WORKING )
+GAMEX(1980, tornado2, defender, defender, defender, defndjeu, ROT0,   "Jeutel", "Tornado? (bootleg set 2)", GAME_NOT_WORKING ) // bad dump?
 GAME( 1980, defcmnd,  defender, defender, defender, defender, ROT0,   "bootleg", "Defense Command (set 1)" )
 GAME( 1981, defence,  defender, defender, defender, defender, ROT0,   "Outer Limits", "Defence Command" )
 

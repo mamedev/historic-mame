@@ -26,38 +26,39 @@ struct flash_chip
 
 static struct flash_chip chips[FLASH_CHIPS_MAX];
 
-void intelflash_init(void)
+static void intelflash_init(int chip)
 {
-	int i;
-
-	for (i = 0; i < FLASH_CHIPS_MAX; i++)
-	{
-		chips[i].flash_mode = FM_NORMAL;
-		chips[i].flash_master_lock = 0;
-		chips[i].flash_memory = auto_malloc(2*1024*1024);	// 16Mbit
-		memset(chips[i].flash_memory, 0xff, 2*1024*1024);
-	}
+	chips[chip].flash_mode = FM_NORMAL;
+	chips[chip].flash_master_lock = 0;
+	chips[chip].flash_memory = auto_malloc(2*1024*1024);	// 16Mbit
+	memset(chips[chip].flash_memory, 0xff, 2*1024*1024);
 }
 
-void intelflash_save(int chip,mame_file *f)
+static void nvram_handler_at28c16(int chip,mame_file *file,int read_or_write)
 {
 	if( chip >= FLASH_CHIPS_MAX )
 	{
 		logerror( "intelfsh: invalid chip %d\n", chip );
 		return;
 	}
-	mame_fwrite(f,chips[chip].flash_memory,2*1024*1024);
+	if (read_or_write)
+	{
+		mame_fwrite(file,chips[chip].flash_memory,2*1024*1024);
+	}
+	else
+	{
+		intelflash_init(chip);
+		if (file)
+		{
+			mame_fread(file,chips[chip].flash_memory,2*1024*1024);
+		}
+	}
 }
 
-void intelflash_load(int chip,mame_file *f)
-{
-	if( chip >= FLASH_CHIPS_MAX )
-	{
-		logerror( "intelfsh: invalid chip %d\n", chip );
-		return;
-	}
-	mame_fread(f,chips[chip].flash_memory,2*1024*1024);
-}
+void nvram_handler_intelflash_0(mame_file *file,int read_or_write) { nvram_handler_at28c16( 0, file, read_or_write ); }
+void nvram_handler_intelflash_1(mame_file *file,int read_or_write) { nvram_handler_at28c16( 1, file, read_or_write ); }
+void nvram_handler_intelflash_2(mame_file *file,int read_or_write) { nvram_handler_at28c16( 2, file, read_or_write ); }
+void nvram_handler_intelflash_3(mame_file *file,int read_or_write) { nvram_handler_at28c16( 3, file, read_or_write ); }
 
 data8_t intelflash_read_byte(int chip, data32_t address)
 {

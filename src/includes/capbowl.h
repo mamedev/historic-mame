@@ -11,8 +11,8 @@ VIDEO_UPDATE( capbowl );
 
 extern UINT8 *capbowl_rowaddress;
 
-WRITE_HANDLER( bowlrama_blitter_w );
-READ_HANDLER( bowlrama_blitter_r );
+WRITE8_HANDLER( bowlrama_blitter_w );
+READ8_HANDLER( bowlrama_blitter_r );
 
-WRITE_HANDLER( capbowl_tms34061_w );
-READ_HANDLER( capbowl_tms34061_r );
+WRITE8_HANDLER( capbowl_tms34061_w );
+READ8_HANDLER( capbowl_tms34061_r );

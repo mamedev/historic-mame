@@ -142,7 +142,7 @@ PALETTE_INIT( ringking )
 	}
 }
 
-WRITE_HANDLER( kingofb_videoram_w )
+WRITE8_HANDLER( kingofb_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -151,7 +151,7 @@ WRITE_HANDLER( kingofb_videoram_w )
 	}
 }
 
-WRITE_HANDLER( kingofb_colorram_w )
+WRITE8_HANDLER( kingofb_colorram_w )
 {
 	if (colorram[offset] != data)
 	{
@@ -160,7 +160,7 @@ WRITE_HANDLER( kingofb_colorram_w )
 	}
 }
 
-WRITE_HANDLER( kingofb_videoram2_w )
+WRITE8_HANDLER( kingofb_videoram2_w )
 {
 	if (kingofb_videoram2[offset] != data)
 	{
@@ -169,7 +169,7 @@ WRITE_HANDLER( kingofb_videoram2_w )
 	}
 }
 
-WRITE_HANDLER( kingofb_colorram2_w )
+WRITE8_HANDLER( kingofb_colorram2_w )
 {
 	if (kingofb_colorram2[offset] != data)
 	{
@@ -178,7 +178,7 @@ WRITE_HANDLER( kingofb_colorram2_w )
 	}
 }
 
-WRITE_HANDLER( kingofb_f800_w )
+WRITE8_HANDLER( kingofb_f800_w )
 {
 	kingofb_nmi_enable = data & 0x20;
 

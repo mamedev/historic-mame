@@ -193,62 +193,62 @@ static ADDRESS_MAP_START( mimonkey_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 
-static READ_HANDLER( anteatg_ppi8255_0_reg0_r )
+static READ8_HANDLER( anteatg_ppi8255_0_reg0_r )
 {
 	return ppi8255_0_r(0);
 }
 
-static READ_HANDLER( anteatg_ppi8255_0_reg1_r )
+static READ8_HANDLER( anteatg_ppi8255_0_reg1_r )
 {
 	return ppi8255_0_r(1);
 }
 
-static READ_HANDLER( anteatg_ppi8255_0_reg2_r )
+static READ8_HANDLER( anteatg_ppi8255_0_reg2_r )
 {
 	return ppi8255_0_r(2);
 }
 
-static READ_HANDLER( anteatg_ppi8255_0_reg3_r )
+static READ8_HANDLER( anteatg_ppi8255_0_reg3_r )
 {
 	return ppi8255_0_r(3);
 }
 
-static WRITE_HANDLER( anteatg_ppi8255_0_reg0_w )
+static WRITE8_HANDLER( anteatg_ppi8255_0_reg0_w )
 {
 	ppi8255_0_w(0, data);
 }
 
-static WRITE_HANDLER( anteatg_ppi8255_0_reg1_w )
+static WRITE8_HANDLER( anteatg_ppi8255_0_reg1_w )
 {
 	ppi8255_0_w(1, data);
 }
 
-static WRITE_HANDLER( anteatg_ppi8255_0_reg2_w )
+static WRITE8_HANDLER( anteatg_ppi8255_0_reg2_w )
 {
 	ppi8255_0_w(2, data);
 }
 
-static WRITE_HANDLER( anteatg_ppi8255_0_reg3_w )
+static WRITE8_HANDLER( anteatg_ppi8255_0_reg3_w )
 {
 	ppi8255_0_w(3, data);
 }
 
-static WRITE_HANDLER( anteatg_ppi8255_1_reg0_w )
+static WRITE8_HANDLER( anteatg_ppi8255_1_reg0_w )
 {
 	ppi8255_1_w(0, data);
 }
 
-static WRITE_HANDLER( anteatg_ppi8255_1_reg1_w )
+static WRITE8_HANDLER( anteatg_ppi8255_1_reg1_w )
 {
 	ppi8255_1_w(1, data);
 }
 
-static WRITE_HANDLER( anteatg_ppi8255_1_reg2_w )
+static WRITE8_HANDLER( anteatg_ppi8255_1_reg2_w )
 {
 	ppi8255_1_w(2, data);
 }
 
-static WRITE_HANDLER( anteatg_ppi8255_1_reg3_w )
+static WRITE8_HANDLER( anteatg_ppi8255_1_reg3_w )
 {
 	ppi8255_1_w(3, data);
 }
@@ -300,12 +300,12 @@ ADDRESS_MAP_END
 
 static UINT8 *scobra_soundram;
 
-static READ_HANDLER(scobra_soundram_r)
+static READ8_HANDLER(scobra_soundram_r)
 {
 	return scobra_soundram[offset & 0x03ff];
 }
 
-static WRITE_HANDLER(scobra_soundram_w)
+static WRITE8_HANDLER(scobra_soundram_w)
 {
 	scobra_soundram[offset & 0x03ff] = data;
 }

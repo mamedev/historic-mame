@@ -280,13 +280,13 @@ static INTERRUPT_GEN(qdrmfgp_interrupt)
 	{
 		case 0:
 			if (control & 0x0001)
-				cpu_set_irq_line(0, 1, HOLD_LINE);
+				cpunum_set_input_line(0, 1, HOLD_LINE);
 			break;
 
 		case 1:
 			/* trigger V-blank interrupt */
 			if (control & 0x0004)
-				cpu_set_irq_line(0, 3, HOLD_LINE);
+				cpunum_set_input_line(0, 3, HOLD_LINE);
 			break;
 	}
 }
@@ -296,9 +296,9 @@ static void ide_interrupt(int state)
 	if (control & 0x0008)
 	{
 		if (state != CLEAR_LINE)
-			cpu_set_irq_line(0, 4, HOLD_LINE);
+			cpunum_set_input_line(0, 4, HOLD_LINE);
 		else
-			cpu_set_irq_line(0, 4, CLEAR_LINE);
+			cpunum_set_input_line(0, 4, CLEAR_LINE);
 	}
 }
 
@@ -307,14 +307,14 @@ static void ide_interrupt(int state)
 static void gp2_timer_callback(int dummy)
 {
 	if (control & 0x0004)
-		cpu_set_irq_line(0, 3, HOLD_LINE);
+		cpunum_set_input_line(0, 3, HOLD_LINE);
 }
 
 static INTERRUPT_GEN(qdrmfgp2_interrupt)
 {
 	/* trigger V-blank interrupt */
 	if (control & 0x0008)
-		cpu_set_irq_line(0, 4, HOLD_LINE);
+		cpunum_set_input_line(0, 4, HOLD_LINE);
 }
 
 static void gp2_ide_interrupt(int state)
@@ -326,9 +326,9 @@ static void gp2_ide_interrupt(int state)
 			if (gp2_irq_control)
 				gp2_irq_control = 0;
 			else
-				cpu_set_irq_line(0, 5, HOLD_LINE);
+				cpunum_set_input_line(0, 5, HOLD_LINE);
 		} else {
-			cpu_set_irq_line(0, 5, CLEAR_LINE);
+			cpunum_set_input_line(0, 5, CLEAR_LINE);
 		}
 	}
 }
@@ -614,7 +614,7 @@ static struct ide_interface gp2_ide_intf =
 static void sound_irq(void)
 {
 	if (control & 0x0001)
-		cpu_set_irq_line(0, 1, HOLD_LINE);
+		cpunum_set_input_line(0, 1, HOLD_LINE);
 }
 
 static struct K054539interface k054539_interface =
@@ -745,7 +745,7 @@ ROM_START( qdrmfgp )
 	ROM_LOAD( "gq_460_a06.12h", 0x080000, 0x80000, CRC(97ed5a77) SHA1(68600fd8d914451284cf181fb4bd5872860fb9ad) )
 
 	DISK_REGION( REGION_DISKS )			/* IDE HARD DRIVE */
-	DISK_IMAGE( "gq_460_a08", 0, MD5(b79eebad38782e6713ab0bd7560817a2) SHA1(0cae7769fbb603d3c3e3627dde84a6c5a9b1062d) )
+	DISK_IMAGE( "gq460a08", 0, MD5(b79eebad38782e6713ab0bd7560817a2) SHA1(0cae7769fbb603d3c3e3627dde84a6c5a9b1062d) )
 ROM_END
 
 ROM_START( qdrmfgp2 )
@@ -762,7 +762,7 @@ ROM_START( qdrmfgp2 )
 	ROM_LOAD( "ge_557_a08.19k", 0x080000, 0x80000, CRC(3da2b20c) SHA1(fdc2cdc27f3299f541944a78ce36ed33a7926056) )
 
 	DISK_REGION( REGION_DISKS )			/* IDE HARD DRIVE */
-	DISK_IMAGE( "ge_557_a09", 0, MD5(df5039dc4e9dbb1f02ec408d839a42db) SHA1(5e836dbace34c9c1b107cce6a50071a4205a1534) )
+	DISK_IMAGE( "ge557a09", 0, MD5(df5039dc4e9dbb1f02ec408d839a42db) SHA1(5e836dbace34c9c1b107cce6a50071a4205a1534) )
 ROM_END
 
 

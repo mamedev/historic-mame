@@ -168,15 +168,15 @@ static READ16_HANDLER( dassault_sub_control_r )
 static WRITE16_HANDLER( dassault_sound_w )
 {
 	soundlatch_w(0,data&0xff);
-	cpu_set_irq_line(2,0,HOLD_LINE); /* IRQ1 */
+	cpunum_set_input_line(2,0,HOLD_LINE); /* IRQ1 */
 }
 
 /* The CPU-CPU irq controller is overlaid onto the end of the shared memory */
 static READ16_HANDLER( dassault_irq_r )
 {
 	switch (offset) {
-		case 0: cpu_set_irq_line(0, 5, CLEAR_LINE); break;
-		case 1: cpu_set_irq_line(1, 6, CLEAR_LINE); break;
+		case 0: cpunum_set_input_line(0, 5, CLEAR_LINE); break;
+		case 1: cpunum_set_input_line(1, 6, CLEAR_LINE); break;
 	}
 	return shared_ram[(0xffc/2)+offset]; /* The values probably don't matter */
 }
@@ -184,8 +184,8 @@ static READ16_HANDLER( dassault_irq_r )
 static WRITE16_HANDLER( dassault_irq_w )
 {
 	switch (offset) {
-		case 0: cpu_set_irq_line(0, 5, ASSERT_LINE); break;
-		case 1: cpu_set_irq_line(1, 6, ASSERT_LINE); break;
+		case 0: cpunum_set_input_line(0, 5, ASSERT_LINE); break;
+		case 1: cpunum_set_input_line(1, 6, ASSERT_LINE); break;
 	}
 
 	COMBINE_DATA(&shared_ram[(0xffc/2)+offset]); /* The values probably don't matter */
@@ -575,10 +575,10 @@ static struct YM2203interface ym2203_interface =
 
 static void sound_irq(int state)
 {
-	cpu_set_irq_line(2,1,state);
+	cpunum_set_input_line(2,1,state);
 }
 
-WRITE_HANDLER( sound_bankswitch_w )
+WRITE8_HANDLER( sound_bankswitch_w )
 {
 	/* the second OKIM6295 ROM is bank switched */
 	OKIM6295_set_bank_base(1, (data & 1) * 0x40000);
@@ -848,7 +848,7 @@ static void init_dassault(void)
 	free(tmp);
 
 	/* Save time waiting on vblank bit */
-	install_mem_read16_handler(0, 0x3f8000, 0x3f8001, dassault_main_skip);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x3f8000, 0x3f8001, 0, 0, dassault_main_skip);
 }
 
 static void init_thndzone(void)
@@ -868,7 +868,7 @@ static void init_thndzone(void)
 	free(tmp);
 
 	/* Save time waiting on vblank bit */
-	install_mem_read16_handler(0, 0x3f8000, 0x3f8001, thndzone_main_skip);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x3f8000, 0x3f8001, 0, 0, thndzone_main_skip);
 }
 
 /**********************************************************************************/

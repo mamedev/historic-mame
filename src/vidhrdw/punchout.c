@@ -288,7 +288,7 @@ VIDEO_START( armwrest )
 
 
 
-WRITE_HANDLER( punchout_videoram2_w )
+WRITE8_HANDLER( punchout_videoram2_w )
 {
 	if (punchout_videoram2[offset] != data)
 	{
@@ -298,7 +298,7 @@ WRITE_HANDLER( punchout_videoram2_w )
 	}
 }
 
-WRITE_HANDLER( punchout_bigsprite1ram_w )
+WRITE8_HANDLER( punchout_bigsprite1ram_w )
 {
 	if (punchout_bigsprite1ram[offset] != data)
 	{
@@ -308,7 +308,7 @@ WRITE_HANDLER( punchout_bigsprite1ram_w )
 	}
 }
 
-WRITE_HANDLER( punchout_bigsprite2ram_w )
+WRITE8_HANDLER( punchout_bigsprite2ram_w )
 {
 	if (punchout_bigsprite2ram[offset] != data)
 	{
@@ -320,7 +320,7 @@ WRITE_HANDLER( punchout_bigsprite2ram_w )
 
 
 
-WRITE_HANDLER( punchout_palettebank_w )
+WRITE8_HANDLER( punchout_palettebank_w )
 {
 	*punchout_palettebank = data;
 

@@ -1418,7 +1418,7 @@ WRITE16_HANDLER( tms34010_io_register_w )
 			/* if the CPU is halting itself, stop execution right away */
 			if ((data & 0x8000) && !external_host_access)
 				tms34010_ICount = 0;
-			cpu_set_halt_line(cpunum, (data & 0x8000) ? ASSERT_LINE : CLEAR_LINE);
+			cpunum_set_input_line(cpunum, INPUT_LINE_HALT, (data & 0x8000) ? ASSERT_LINE : CLEAR_LINE);
 
 			/* NMI issued? */
 			if (data & 0x0100)
@@ -1583,7 +1583,7 @@ WRITE16_HANDLER( tms34020_io_register_w )
 			/* if the CPU is halting itself, stop execution right away */
 			if ((data & 0x8000) && !external_host_access)
 				tms34010_ICount = 0;
-			cpu_set_halt_line(cpunum, (data & 0x8000) ? ASSERT_LINE : CLEAR_LINE);
+			cpunum_set_input_line(cpunum, INPUT_LINE_HALT, (data & 0x8000) ? ASSERT_LINE : CLEAR_LINE);
 
 			/* NMI issued? */
 			if (data & 0x0100)
@@ -2017,8 +2017,8 @@ static void tms34010_set_info(UINT32 _state, union cpuinfo *info)
 	switch (_state)
 	{
 		/* --- the following bits of info are set as 64-bit signed integers --- */
-		case CPUINFO_INT_IRQ_STATE + 0:					set_irq_line(0, info->i);				break;
-		case CPUINFO_INT_IRQ_STATE + 1:					set_irq_line(1, info->i);				break;
+		case CPUINFO_INT_INPUT_STATE + 0:				set_irq_line(0, info->i);				break;
+		case CPUINFO_INT_INPUT_STATE + 1:				set_irq_line(1, info->i);				break;
 
 		case CPUINFO_INT_PC:       						PC = info->i; change_pc(TOBYTE(PC));	break;
 		case CPUINFO_INT_REGISTER + TMS34010_PC:		PC = info->i;							break;						
@@ -2073,7 +2073,7 @@ void tms34010_get_info(UINT32 _state, union cpuinfo *info)
 	{
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
 		case CPUINFO_INT_CONTEXT_SIZE:					info->i = TMS34010_STATE_SIZE;			break;
-		case CPUINFO_INT_IRQ_LINES:						info->i = 2;							break;
+		case CPUINFO_INT_INPUT_LINES:					info->i = 2;							break;
 		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
 		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_LE;					break;
 		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = TMS34010_CLOCK_DIVIDER;		break;
@@ -2092,8 +2092,8 @@ void tms34010_get_info(UINT32 _state, union cpuinfo *info)
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 0;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
 
-		case CPUINFO_INT_IRQ_STATE + 0:					info->i = (state.ext_irq_lines & 1) ? ASSERT_LINE : CLEAR_LINE; break;
-		case CPUINFO_INT_IRQ_STATE + 1:					info->i = (state.ext_irq_lines & 2) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_INPUT_STATE + 0:				info->i = (state.ext_irq_lines & 1) ? ASSERT_LINE : CLEAR_LINE; break;
+		case CPUINFO_INT_INPUT_STATE + 1:				info->i = (state.ext_irq_lines & 2) ? ASSERT_LINE : CLEAR_LINE; break;
 
 		case CPUINFO_INT_PREVIOUSPC:					/* not implemented */					break;
 

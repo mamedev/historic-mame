@@ -255,13 +255,13 @@ INLINE void get_crosshair_xy(int player, int *x, int *y)
 
 void jaguar_gpu_suspend(void)
 {
-	timer_suspendcpu(1, 1, SUSPEND_REASON_SPIN);
+	cpunum_suspend(1, SUSPEND_REASON_SPIN, 1);
 }
 
 
 void jaguar_gpu_resume(void)
 {
-	timer_suspendcpu(1, 0, SUSPEND_REASON_SPIN);
+	cpunum_resume(1, SUSPEND_REASON_SPIN);
 }
 
 
@@ -275,9 +275,9 @@ void jaguar_gpu_resume(void)
 static void update_cpu_irq(void)
 {
 	if (cpu_irq_state & gpu_regs[INT1] & 0x1f)
-		cpu_set_irq_line(0, cojag_is_r3000 ? R3000_IRQ4 : MC68000_IRQ_6, ASSERT_LINE);
+		cpunum_set_input_line(0, cojag_is_r3000 ? R3000_IRQ4 : MC68000_IRQ_6, ASSERT_LINE);
 	else
-		cpu_set_irq_line(0, cojag_is_r3000 ? R3000_IRQ4 : MC68000_IRQ_6, CLEAR_LINE);
+		cpunum_set_input_line(0, cojag_is_r3000 ? R3000_IRQ4 : MC68000_IRQ_6, CLEAR_LINE);
 }
 
 

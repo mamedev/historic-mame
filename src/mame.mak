@@ -72,6 +72,7 @@ CPUS+=ADSP2101@
 CPUS+=ADSP2104@
 CPUS+=ADSP2105@
 CPUS+=ADSP2115@
+CPUS+=ADSP2181@
 CPUS+=PSXCPU@
 CPUS+=ASAP@
 CPUS+=UPD7810@
@@ -448,7 +449,7 @@ $(OBJ)/capcom.a: \
 	$(OBJ)/vidhrdw/cbasebal.o $(OBJ)/drivers/cbasebal.o \
 	$(OBJ)/vidhrdw/cps1.o $(OBJ)/drivers/cps1.o $(OBJ)/drivers/cps2.o \
 	$(OBJ)/drivers/cps3.o \
-	$(OBJ)/drivers/zn.o $(OBJ)/machine/znsec.o \
+	$(OBJ)/machine/znsec.o $(OBJ)/machine/at28c16.o $(OBJ)/machine/mb3773.o $(OBJ)/drivers/zn.o \
 
 $(OBJ)/itech.a: \
 	$(OBJ)/vidhrdw/tms34061.o \
@@ -469,7 +470,7 @@ $(OBJ)/sega.a: \
 	$(OBJ)/vidhrdw/segar.o $(OBJ)/sndhrdw/segar.o $(OBJ)/machine/segar.o $(OBJ)/drivers/segar.o \
 	$(OBJ)/vidhrdw/tms9928a.o $(OBJ)/drivers/sg1000a.o \
 	$(OBJ)/vidhrdw/zaxxon.o $(OBJ)/sndhrdw/zaxxon.o $(OBJ)/drivers/zaxxon.o \
-	$(OBJ)/machine/turbo.o $(OBJ)/vidhrdw/turbo.o $(OBJ)/drivers/turbo.o \
+	$(OBJ)/machine/turbo.o $(OBJ)/sndhrdw/turbo.o $(OBJ)/vidhrdw/turbo.o $(OBJ)/drivers/turbo.o \
 	$(OBJ)/drivers/kopunch.o $(OBJ)/vidhrdw/kopunch.o \
 	$(OBJ)/vidhrdw/suprloco.o $(OBJ)/drivers/suprloco.o \
 	$(OBJ)/vidhrdw/dotrikun.o $(OBJ)/drivers/dotrikun.o \
@@ -530,6 +531,8 @@ $(OBJ)/dataeast.a: \
 	$(OBJ)/vidhrdw/lemmings.o $(OBJ)/drivers/lemmings.o \
 	$(OBJ)/vidhrdw/funkyjet.o $(OBJ)/drivers/funkyjet.o \
 	$(OBJ)/vidhrdw/deco32.o $(OBJ)/drivers/deco32.o \
+	$(OBJ)/drivers/deco102.o \
+	$(OBJ)/drivers/deco156.o \
 	$(OBJ)/vidhrdw/deco_mlc.o $(OBJ)/drivers/deco_mlc.o \
 	$(OBJ)/vidhrdw/sshangha.o $(OBJ)/drivers/sshangha.o \
 
@@ -745,6 +748,7 @@ $(OBJ)/alpha.a: \
 	$(OBJ)/drivers/shougi.o \
 	$(OBJ)/machine/equites.o $(OBJ)/vidhrdw/equites.o $(OBJ)/drivers/equites.o \
 	$(OBJ)/vidhrdw/alpha68k.o $(OBJ)/drivers/alpha68k.o \
+	$(OBJ)/drivers/meijinsn.o \
 	$(OBJ)/vidhrdw/champbas.o $(OBJ)/drivers/champbas.o \
 	$(OBJ)/machine/exctsccr.o $(OBJ)/vidhrdw/exctsccr.o $(OBJ)/drivers/exctsccr.o \
 	$(OBJ)/drivers/talbot.o \
@@ -906,6 +910,7 @@ $(OBJ)/kaneko.a: \
 	$(OBJ)/vidhrdw/djboy.o $(OBJ)/drivers/djboy.o \
 	$(OBJ)/vidhrdw/galpanic.o $(OBJ)/drivers/galpanic.o \
 	$(OBJ)/vidhrdw/galpani2.o $(OBJ)/drivers/galpani2.o \
+	$(OBJ)/drivers/galpani3.o \
 	$(OBJ)/drivers/jchan.o \
 	$(OBJ)/vidhrdw/kaneko16.o $(OBJ)/drivers/kaneko16.o \
 	$(OBJ)/vidhrdw/suprnova.o $(OBJ)/drivers/suprnova.o \
@@ -1147,6 +1152,7 @@ $(OBJ)/other.a: \
 	$(OBJ)/drivers/onetwo.o \
 	$(OBJ)/drivers/1945kiii.o \
 	$(OBJ)/drivers/pbchmp95.o \
+	$(OBJ)/drivers/bmcbowl.o \
 
 
 COREOBJS += $(OBJ)/driver.o $(OBJ)/cheat.o

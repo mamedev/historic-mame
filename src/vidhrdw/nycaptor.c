@@ -27,12 +27,12 @@ UINT8 *nycaptor_scrlram;
 
 UINT8 *nycaptor_spriteram;
 extern UINT8 *nycaptor_sharedram;
-WRITE_HANDLER(nycaptor_spriteram_w)
+WRITE8_HANDLER(nycaptor_spriteram_w)
 {
 	nycaptor_spriteram[offset]=data;
 }
 
-READ_HANDLER(nycaptor_spriteram_r)
+READ8_HANDLER(nycaptor_spriteram_r)
 {
 	return nycaptor_spriteram[offset];
 }
@@ -77,18 +77,18 @@ VIDEO_START( nycaptor )
 	return video_start_generic();
 }
 
-WRITE_HANDLER( nycaptor_videoram_w )
+WRITE8_HANDLER( nycaptor_videoram_w )
 {
 	videoram[offset] = data;
 	tilemap_mark_tile_dirty(tilemap,offset>>1);
 }
 
-READ_HANDLER( nycaptor_videoram_r )
+READ8_HANDLER( nycaptor_videoram_r )
 {
 	return videoram[offset];
 }
 
-WRITE_HANDLER( nycaptor_palette_w )
+WRITE8_HANDLER( nycaptor_palette_w )
 {
 	if (offset & 0x100)
 		paletteram_xxxxBBBBGGGGRRRR_split2_w((offset & 0xff) + (palette_bank << 8),data);
@@ -96,7 +96,7 @@ WRITE_HANDLER( nycaptor_palette_w )
 		paletteram_xxxxBBBBGGGGRRRR_split1_w((offset & 0xff) + (palette_bank << 8),data);
 }
 
-READ_HANDLER( nycaptor_palette_r )
+READ8_HANDLER( nycaptor_palette_r )
 {
 	if (offset & 0x100)
 		return paletteram_2[ (offset & 0xff) + (palette_bank << 8) ];
@@ -104,7 +104,7 @@ READ_HANDLER( nycaptor_palette_r )
 		return paletteram  [ (offset & 0xff) + (palette_bank << 8) ];
 }
 
-WRITE_HANDLER( nycaptor_gfxctrl_w )
+WRITE8_HANDLER( nycaptor_gfxctrl_w )
 {
 	if (gfxctrl == data)
 		return;
@@ -119,17 +119,17 @@ WRITE_HANDLER( nycaptor_gfxctrl_w )
 
 }
 
-READ_HANDLER( nycaptor_gfxctrl_r )
+READ8_HANDLER( nycaptor_gfxctrl_r )
 {
 		return 	gfxctrl;
 }
 
-READ_HANDLER( nycaptor_scrlram_r )
+READ8_HANDLER( nycaptor_scrlram_r )
 {
 	return nycaptor_scrlram[offset];
 }
 
-WRITE_HANDLER( nycaptor_scrlram_w )
+WRITE8_HANDLER( nycaptor_scrlram_w )
 {
 	nycaptor_scrlram[offset] = data;
 	tilemap_set_scrolly(tilemap, offset, data );
@@ -192,7 +192,7 @@ void nycaptor_draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *c
    x - no bg/sprite pri.
 */
 
-#define mKEY_MASK(x,y) if (keyboard_pressed_memory(x)){nycaptor_mask|=y;tilemap_mark_all_tiles_dirty( tilemap );}
+#define mKEY_MASK(x,y) if (code_pressed_memory(x)){nycaptor_mask|=y;tilemap_mark_all_tiles_dirty( tilemap );}
 
 void nycaptor_setmask(void)
 {
@@ -210,8 +210,8 @@ void nycaptor_setmask(void)
   mKEY_MASK(KEYCODE_J,0x400);
   mKEY_MASK(KEYCODE_K,0x800);
 
-  if (keyboard_pressed_memory(KEYCODE_Z)){nycaptor_mask=0;tilemap_mark_all_tiles_dirty( tilemap );} /* disable */
-  if (keyboard_pressed_memory(KEYCODE_X)){nycaptor_mask|=0x1000;tilemap_mark_all_tiles_dirty( tilemap );} /* no layers */
+  if (code_pressed_memory(KEYCODE_Z)){nycaptor_mask=0;tilemap_mark_all_tiles_dirty( tilemap );} /* disable */
+  if (code_pressed_memory(KEYCODE_X)){nycaptor_mask|=0x1000;tilemap_mark_all_tiles_dirty( tilemap );} /* no layers */
 }
 #endif
 

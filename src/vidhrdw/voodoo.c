@@ -1103,7 +1103,7 @@ VIDEO_UPDATE( voodoo )
 #endif
 
 	/* alternately, display the depth buffer in red (debug) */
-	if (DISPLAY_DEPTHBUF && keyboard_pressed(KEYCODE_D))
+	if (DISPLAY_DEPTHBUF && code_pressed(KEYCODE_D))
 	{
 		for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 		{
@@ -1115,9 +1115,9 @@ VIDEO_UPDATE( voodoo )
 	}
 
 	/* update statistics (debug) */
-	if (keyboard_pressed(KEYCODE_BACKSLASH))
+	if (code_pressed(KEYCODE_BACKSLASH))
 	{
-		while (keyboard_pressed(KEYCODE_BACKSLASH)) ;
+		while (code_pressed(KEYCODE_BACKSLASH)) ;
 		display_statistics = !display_statistics;
 	}
 	if (display_statistics)
@@ -1140,7 +1140,7 @@ VIDEO_UPDATE( voodoo )
 
 	/* note of if the LOD logging key is pressed (debug) */
 	if (TRACK_LOD)
-		loglod = keyboard_pressed(KEYCODE_L);
+		loglod = code_pressed(KEYCODE_L);
 }
 
 
@@ -1786,8 +1786,8 @@ static UINT32 execute_cmdfifo(void)
 			voodoo_regs[sSetupMode] = ((command >> 10) & 0xfff) | ((command >> 6) & 0xf0000);
 			for (i = 0; i < count; i++)
 			{
-				setup_pending.x = TRUNC_TO_INT(*(float *)src++ * 16. + 0.5) * (1. / 16.);
-				setup_pending.y = TRUNC_TO_INT(*(float *)src++ * 16. + 0.5) * (1. / 16.);
+				setup_pending.x = (INT16)TRUNC_TO_INT(*(float *)src++ * 16. + 0.5) * (1. / 16.);
+				setup_pending.y = (INT16)TRUNC_TO_INT(*(float *)src++ * 16. + 0.5) * (1. / 16.);
 
 				if (command & 0x10000000)
 				{

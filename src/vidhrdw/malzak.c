@@ -221,7 +221,7 @@ VIDEO_UPDATE( malzak )
 	Update_Bitmap(bitmap,s2636_2_ram,s2636_2_dirty,2,collision_bitmap);
 }
 
-WRITE_HANDLER( playfield_w )
+WRITE8_HANDLER( playfield_w )
 {
 	int tile = ((temp_x / 16) * 16) + (offset / 16);
 

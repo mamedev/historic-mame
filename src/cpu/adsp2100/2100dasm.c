@@ -8,7 +8,7 @@ static const char *mode_change[] = { "", "", "DIS %s ", "ENA %s " };
 
 static const char *alu_xop[] = { "AX0", "AX1", "AR", "MR0", "MR1", "MR2", "SR0", "SR1" };
 static const char *alu_yop[] = { "AY0", "AY1", "AF", "0" };
-static const char *alu_dst[] = { "AR", "AF" };
+static const char *alu_dst[] = { "AR", "AF", "NONE" };
 
 static const char *mac_xop[] = { "MX0", "MX1", "AR", "MR0", "MR1", "MR2", "SR0", "SR1" };
 static const char *mac_yop[] = { "MY0", "MY1", "MF", "0" };
@@ -143,6 +143,43 @@ static const char *shift_by_op[] =
 	"???"
 };
 
+static const char *constants[] =
+{
+	"$0001",
+	"$FFFE",
+	"$0002",
+	"$FFFD",
+	"$0004",
+	"$FFFB",
+	"$0008",
+	"$FFF7",
+	"$0010",
+	"$FFEF",
+	"$0020",
+	"$FFDF",
+	"$0040",
+	"$FFBF",
+	"$0080",
+	"$FF7F",
+	"$0100",
+	"$FEFF",
+	"$0200",
+	"$FDFF",
+	"$0400",
+	"$FBFF",
+	"$0800",
+	"$F7FF",
+	"$1000",
+	"$EFFF",
+	"$2000",
+	"$DFFF",
+	"$4000",
+	"$BFFF",
+	"$8000",
+	"$7FFF"
+};
+	
+
 
 
 int alumac(char *buffer, int dest, int op)
@@ -170,6 +207,31 @@ int alumac(char *buffer, int dest, int op)
 }
 
 
+int aluconst(char *buffer, int dest, int op)
+{
+	int opindex = (op >> 13) & 31;
+	const char *xop, *dst, *cval, *opstring;
+
+	if (opindex & 16)
+	{
+		xop = alu_xop[(op >> 8) & 7];
+		cval = constants[((op >> 5) & 0x07) | ((op >> 8) & 0x18)];
+		dst = alu_dst[dest];
+	}
+	else
+	{
+		xop = mac_xop[(op >> 8) & 7];
+		cval = xop;
+		dst = mac_dst[dest];
+	}
+	opstring = alumac_op[opindex][((op >> 11) & 3) == 3];
+	if (opstring[0] == '!')
+		return sprintf(buffer, opstring + 1, dst, cval, xop);
+	else
+		return sprintf(buffer, opstring, dst, xop, cval);
+}
+
+
 /* execute instructions on this CPU until icount expires */
 unsigned dasm2100(char *buffer, unsigned pc)
 {
@@ -181,6 +243,15 @@ unsigned dasm2100(char *buffer, unsigned pc)
 		case 0x00:
 			/* 00000000 00000000 00000000  NOP */
 			sprintf(buffer, "%s", "NOP");
+			break;
+		case 0x01:
+			/* 00000000 0xxxxxxx xxxxxxxx  dst = IO(x) */
+			/* 00000000 1xxxxxxx xxxxxxxx  IO(x) = dst */
+			/* ADSP-218x only */
+			if ((op & 0x008000) == 0x000000)
+				buffer += sprintf(buffer, "%s = IO($%X)", reg_grp[0][op & 15], (op >> 4) & 0x7ff);
+			else
+				buffer += sprintf(buffer, "IO($%X) = %s", (op >> 4) & 0x7ff, reg_grp[0][op & 15]);
 			break;
 		case 0x02:
 			/* 00000010 0000xxxx xxxxxxxx  modify flag out */
@@ -362,16 +433,30 @@ unsigned dasm2100(char *buffer, unsigned pc)
 		case 0x20: case 0x21: case 0x22: case 0x23: case 0x24: case 0x25: case 0x26: case 0x27:
 			/* 00100xxx xxxxxxxx xxxxxxxx  conditional ALU/MAC */
 			buffer += sprintf(buffer, "%s", condition[op & 15]);
-			buffer += alumac(buffer, (op >> 18) & 1, op);
+			if (!(op & 0x10))
+				buffer += alumac(buffer, (op >> 18) & 1, op);
+			else
+			{
+				/* ADSP-218x only */
+				buffer += aluconst(buffer, (op >> 18) & 1, op);
+			}
 			break;
 		case 0x28: case 0x29: case 0x2a: case 0x2b: case 0x2c: case 0x2d: case 0x2e: case 0x2f:
 			/* 00101xxx xxxxxxxx xxxxxxxx  ALU/MAC with internal data register move */
-			if ((op & 0x03e000) != 0)
+			if ((op & 0x0600ff) == 0x0200aa)
 			{
-				buffer += alumac(buffer, (op >> 18) & 1, op);
-				buffer += sprintf(buffer, ", ");
+				/* ADSP-218x only */
+				buffer += alumac(buffer, 2, op);
 			}
-			buffer += sprintf(buffer, "%s = %s", reg_grp[0][(op >> 4) & 15], reg_grp[0][op & 15]);
+			else
+			{
+				if ((op & 0x03e000) != 0)
+				{
+					buffer += alumac(buffer, (op >> 18) & 1, op);
+					buffer += sprintf(buffer, ", ");
+				}
+				buffer += sprintf(buffer, "%s = %s", reg_grp[0][(op >> 4) & 15], reg_grp[0][op & 15]);
+			}
 			break;
 		case 0x30: case 0x31: case 0x32: case 0x33: case 0x34: case 0x35: case 0x36: case 0x37:
 		case 0x38: case 0x39: case 0x3a: case 0x3b: case 0x3c: case 0x3d: case 0x3e: case 0x3f:

@@ -157,11 +157,11 @@ extern void equites_8404init(void);
 extern void equites_8404rule(unsigned pc, int offset, int data);
 
 extern READ16_HANDLER(equites_8404_r);
-extern WRITE_HANDLER(equites_5232_w);
-extern WRITE_HANDLER(equites_8910control_w);
-extern WRITE_HANDLER(equites_8910data_w);
-extern WRITE_HANDLER(equites_dac0_w);
-extern WRITE_HANDLER(equites_dac1_w);
+extern WRITE8_HANDLER(equites_5232_w);
+extern WRITE8_HANDLER(equites_8910control_w);
+extern WRITE8_HANDLER(equites_8910data_w);
+extern WRITE8_HANDLER(equites_dac0_w);
+extern WRITE8_HANDLER(equites_dac1_w);
 
 extern data16_t *equites_8404ram;
 extern struct MSM5232interface equites_5232intf;
@@ -245,18 +245,18 @@ int splndrbt_flip;
 static INTERRUPT_GEN( equites_interrupt )
 {
 	if (cpu_getiloops())
-		cpu_set_irq_line(0, 2, HOLD_LINE);
+		cpunum_set_input_line(0, 2, HOLD_LINE);
 	else
-		cpu_set_irq_line(0, 1, HOLD_LINE);
+		cpunum_set_input_line(0, 1, HOLD_LINE);
 }
 
 // Splendor Blast Hareware
 static INTERRUPT_GEN( splndrbt_interrupt )
 {
 	if (cpu_getiloops())
-		cpu_set_irq_line(0, 2, HOLD_LINE);
+		cpunum_set_input_line(0, 2, HOLD_LINE);
 	else
-		cpu_set_irq_line(0, 1, HOLD_LINE);
+		cpunum_set_input_line(0, 1, HOLD_LINE);
 }
 
 /******************************************************************************/
@@ -1244,7 +1244,7 @@ static DRIVER_INIT( hvoltage )
 	int i;
 
 #if HVOLTAGE_HACK
-	install_mem_read16_handler(0, 0x000038, 0x000039, hvoltage_debug_r);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x000038, 0x000039, 0, 0, hvoltage_debug_r);
 #endif
 
 	equites_id = 0x8511;

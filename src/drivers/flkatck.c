@@ -18,8 +18,8 @@ TO DO:
 /* from vidhrdw/flkatck.c */
 VIDEO_START( flkatck );
 VIDEO_UPDATE( flkatck );
-WRITE_HANDLER( flkatck_k007121_w );
-WRITE_HANDLER( flkatck_k007121_regs_w );
+WRITE8_HANDLER( flkatck_k007121_w );
+WRITE8_HANDLER( flkatck_k007121_regs_w );
 
 extern unsigned char *k007121_ram;
 extern int flkatck_irq_enabled;
@@ -34,10 +34,10 @@ static MACHINE_INIT( flkatck )
 static INTERRUPT_GEN( flkatck_interrupt )
 {
 	if (flkatck_irq_enabled)
-		cpu_set_irq_line(0, HD6309_IRQ_LINE, HOLD_LINE);
+		cpunum_set_input_line(0, HD6309_IRQ_LINE, HOLD_LINE);
 }
 
-static WRITE_HANDLER( flkatck_bankswitch_w )
+static WRITE8_HANDLER( flkatck_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	int bankaddress = 0;
@@ -52,7 +52,7 @@ static WRITE_HANDLER( flkatck_bankswitch_w )
 		cpu_setbank(1,&RAM[bankaddress]);
 }
 
-static READ_HANDLER( flkatck_ls138_r )
+static READ8_HANDLER( flkatck_ls138_r )
 {
 	int data = 0;
 
@@ -72,7 +72,7 @@ static READ_HANDLER( flkatck_ls138_r )
 	return data;
 }
 
-static WRITE_HANDLER( flkatck_ls138_w )
+static WRITE8_HANDLER( flkatck_ls138_w )
 {
 	switch ((offset & 0x1c) >> 2){
 		case 0x04:	/* bankswitch */
@@ -82,7 +82,7 @@ static WRITE_HANDLER( flkatck_ls138_w )
 			soundlatch_w(0, data);
 			break;
 		case 0x06:	/* Cause interrupt on audio CPU */
-			cpu_set_irq_line(1,0,HOLD_LINE);
+			cpunum_set_input_line(1,0,HOLD_LINE);
 			break;
 		case 0x07:	/* watchdog reset */
 			watchdog_reset_w(0, data);

@@ -69,56 +69,56 @@ static struct GfxDecodeInfo tnk3_gfxdecodeinfo[] =
 
 /************************************************************************/
 
-static READ_HANDLER( shared_ram_r )
+static READ8_HANDLER( shared_ram_r )
 {
 	return shared_ram[offset];
 }
-static WRITE_HANDLER( shared_ram_w )
+static WRITE8_HANDLER( shared_ram_w )
 {
 	shared_ram[offset] = data;
 }
 
-static READ_HANDLER( shared_ram2_r )
+static READ8_HANDLER( shared_ram2_r )
 {
 	return shared_ram2[offset];
 }
-static WRITE_HANDLER( shared_ram2_w )
+static WRITE8_HANDLER( shared_ram2_w )
 {
 	shared_ram2[offset] = data;
 }
 
 /************************************************************************/
 
-static WRITE_HANDLER( sgladiat_soundlatch_w )
+static WRITE8_HANDLER( sgladiat_soundlatch_w )
 {
 	snk_sound_busy_bit = 0x20;
 	soundlatch_w( offset, data );
 
 	/* trigger NMI on sound CPU */
-//	cpu_set_nmi_line(2, PULSE_LINE);
-	cpu_set_nmi_line(2, PULSE_LINE);	// safer because NMI can be lost in rare occations
+//	cpunum_set_input_line(2, INPUT_LINE_NMI, PULSE_LINE);
+	cpunum_set_input_line(2, INPUT_LINE_NMI, PULSE_LINE);	// safer because NMI can be lost in rare occations
 }
 
-static READ_HANDLER( sgladiat_soundlatch_r )
+static READ8_HANDLER( sgladiat_soundlatch_r )
 {
 	snk_sound_busy_bit = 0;
 	return(soundlatch_r(0));
 }
 
-static READ_HANDLER( sgladiat_sound_nmi_ack_r )
+static READ8_HANDLER( sgladiat_sound_nmi_ack_r )
 {
-//	cpu_set_nmi_line(2, CLEAR_LINE);
+//	cpunum_set_input_line(2, INPUT_LINE_NMI, CLEAR_LINE);
 	return 0;
 }
 
 /************************************************************************/
 
-static READ_HANDLER( sgladiat_inp0_r )
+static READ8_HANDLER( sgladiat_inp0_r )
 {
 	return(readinputport(0) | snk_sound_busy_bit);
 }
 
-static WRITE_HANDLER( sglatiat_flipscreen_w )
+static WRITE8_HANDLER( sglatiat_flipscreen_w )
 {
 	/* 0xa006 */
 	/* x-------	screen is flipped */

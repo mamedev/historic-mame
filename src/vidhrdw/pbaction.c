@@ -15,7 +15,7 @@ static int scroll;
 
 static struct tilemap *bg_tilemap, *fg_tilemap;
 
-WRITE_HANDLER( pbaction_videoram_w )
+WRITE8_HANDLER( pbaction_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -24,7 +24,7 @@ WRITE_HANDLER( pbaction_videoram_w )
 	}
 }
 
-WRITE_HANDLER( pbaction_colorram_w )
+WRITE8_HANDLER( pbaction_colorram_w )
 {
 	if (colorram[offset] != data)
 	{
@@ -33,7 +33,7 @@ WRITE_HANDLER( pbaction_colorram_w )
 	}
 }
 
-WRITE_HANDLER( pbaction_videoram2_w )
+WRITE8_HANDLER( pbaction_videoram2_w )
 {
 	if (pbaction_videoram2[offset] != data)
 	{
@@ -42,7 +42,7 @@ WRITE_HANDLER( pbaction_videoram2_w )
 	}
 }
 
-WRITE_HANDLER( pbaction_colorram2_w )
+WRITE8_HANDLER( pbaction_colorram2_w )
 {
 	if (pbaction_colorram2[offset] != data)
 	{
@@ -51,7 +51,7 @@ WRITE_HANDLER( pbaction_colorram2_w )
 	}
 }
 
-WRITE_HANDLER( pbaction_scroll_w )
+WRITE8_HANDLER( pbaction_scroll_w )
 {
 	scroll = data - 3;
 	if (flip_screen) scroll = -scroll;
@@ -59,7 +59,7 @@ WRITE_HANDLER( pbaction_scroll_w )
 	tilemap_set_scrollx(fg_tilemap, 0, scroll);
 }
 
-WRITE_HANDLER( pbaction_flipscreen_w )
+WRITE8_HANDLER( pbaction_flipscreen_w )
 {
 	flip_screen_set(data & 0x01);
 }

@@ -12,24 +12,24 @@ extern size_t ttmahjng_videoram_size;
 
 PALETTE_INIT( ttmahjng );
 VIDEO_START( ttmahjng );
-WRITE_HANDLER( ttmahjng_out0_w );
-WRITE_HANDLER( ttmahjng_out1_w );
-WRITE_HANDLER( ttmahjng_videoram1_w );
-WRITE_HANDLER( ttmahjng_videoram2_w );
-READ_HANDLER( ttmahjng_videoram1_r );
-READ_HANDLER( ttmahjng_videoram2_r );
-WRITE_HANDLER( ttmahjng_sharedram_w );
-READ_HANDLER( ttmahjng_sharedram_r );
+WRITE8_HANDLER( ttmahjng_out0_w );
+WRITE8_HANDLER( ttmahjng_out1_w );
+WRITE8_HANDLER( ttmahjng_videoram1_w );
+WRITE8_HANDLER( ttmahjng_videoram2_w );
+READ8_HANDLER( ttmahjng_videoram1_r );
+READ8_HANDLER( ttmahjng_videoram2_r );
+WRITE8_HANDLER( ttmahjng_sharedram_w );
+READ8_HANDLER( ttmahjng_sharedram_r );
 VIDEO_UPDATE( ttmahjng );
 
 
 static int psel;
-WRITE_HANDLER( input_port_matrix_w )
+WRITE8_HANDLER( input_port_matrix_w )
 {
 	psel = data;
 }
 
-READ_HANDLER( input_port_matrix_r )
+READ8_HANDLER( input_port_matrix_r )
 {
 	int	cdata;
 

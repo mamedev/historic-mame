@@ -35,7 +35,7 @@ Notes:  Support is complete with the exception of the square wave generator
 
 /* #define BLOCKADE_LOG 1 */
 
-extern WRITE_HANDLER( blockade_videoram_w );
+extern WRITE8_HANDLER( blockade_videoram_w );
 
 extern VIDEO_START( blockade );
 extern VIDEO_UPDATE( blockade );
@@ -108,16 +108,16 @@ DRIVER_INIT( comotion )
 
 INTERRUPT_GEN( blockade_interrupt )
 {
-	timer_suspendcpu(0, 0, SUSPEND_ANY_REASON);
+	cpunum_resume(0, SUSPEND_ANY_REASON);
 
 	if ((input_port_0_r(0) & 0x80) == 0)
 	{
 		just_been_reset = 1;
-		cpu_set_reset_line(0,PULSE_LINE);
+		cpunum_set_input_line(0, INPUT_LINE_RESET, PULSE_LINE);
 	}
 }
 
-READ_HANDLER( blockade_input_port_0_r )
+READ8_HANDLER( blockade_input_port_0_r )
 {
     /* coin latch is bit 7 */
 
@@ -125,7 +125,7 @@ READ_HANDLER( blockade_input_port_0_r )
     return (coin_latch<<7) | (temp);
 }
 
-WRITE_HANDLER( blockade_coin_latch_w )
+WRITE8_HANDLER( blockade_coin_latch_w )
 {
     if (data & 0x80)
     {
@@ -157,7 +157,7 @@ WRITE_HANDLER( blockade_coin_latch_w )
     return;
 }
 
-WRITE_HANDLER( blockade_sound_freq_w )
+WRITE8_HANDLER( blockade_sound_freq_w )
 {
 #ifdef BLOCKADE_LOG
     printf("Sound Freq Write: %d\n",data);
@@ -165,7 +165,7 @@ WRITE_HANDLER( blockade_sound_freq_w )
     return;
 }
 
-WRITE_HANDLER( blockade_env_on_w )
+WRITE8_HANDLER( blockade_env_on_w )
 {
 #ifdef BLOCKADE_LOG
     printf("Boom Start\n");
@@ -174,7 +174,7 @@ WRITE_HANDLER( blockade_env_on_w )
     return;
 }
 
-WRITE_HANDLER( blockade_env_off_w )
+WRITE8_HANDLER( blockade_env_off_w )
 {
 #ifdef BLOCKADE_LOG
     printf("Boom End\n");

@@ -37,13 +37,13 @@ PALETTE_INIT( carjmbre )
 	}
 }
 
-WRITE_HANDLER( carjmbre_flipscreen_w )
+WRITE8_HANDLER( carjmbre_flipscreen_w )
 {
 	carjmbre_flipscreen = data?(TILEMAP_FLIPX|TILEMAP_FLIPY):0;
 	tilemap_set_flip( ALL_TILEMAPS,carjmbre_flipscreen );
 }
 
-WRITE_HANDLER( carjmbre_bgcolor_w )
+WRITE8_HANDLER( carjmbre_bgcolor_w )
 {
 	int oldbg,i;
 
@@ -72,7 +72,7 @@ static void get_carjmbre_tile_info(int tile_index){
 			0)
 }
 
-WRITE_HANDLER( carjmbre_videoram_w ){
+WRITE8_HANDLER( carjmbre_videoram_w ){
 	videoram[offset] = data;
 	tilemap_mark_tile_dirty(carjmbre_tilemap,offset&0x3ff);
 }

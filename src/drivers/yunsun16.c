@@ -114,7 +114,7 @@ number 0 on each voice. That sample is 00000-00000.
 		if ((data&0xff)!=0x3a)
 		{
 		soundlatch_w(0,data & 0xff);
-		cpu_set_nmi_line(1,PULSE_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 		}
 	}
 }
@@ -122,7 +122,7 @@ number 0 on each voice. That sample is 00000-00000.
 DRIVER_INIT( magicbub )
 {
 //	remove_mem_write16_handler (0, 0x800180, 0x800181 );
-	install_mem_write16_handler(0, 0x800188, 0x800189, magicbub_sound_command_w);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x800188, 0x800189, 0, 0, magicbub_sound_command_w);
 }
 
 /***************************************************************************
@@ -396,7 +396,7 @@ static struct GfxDecodeInfo yunsun16_gfxdecodeinfo[] =
 
 static void soundirq(int state)
 {
-	cpu_set_irq_line(1, 0, state);
+	cpunum_set_input_line(1, 0, state);
 }
 
 static struct YM3812interface magicbub_ym3812_intf =

@@ -130,7 +130,7 @@ PALETTE_INIT( mjderngr )
 }
 
 
-WRITE_HANDLER( royalmah_videoram_w )
+WRITE8_HANDLER( royalmah_videoram_w )
 {
 	int i;
 	UINT8 x, y;
@@ -157,7 +157,7 @@ WRITE_HANDLER( royalmah_videoram_w )
 }
 
 
-WRITE_HANDLER( royalmah_palbank_w )
+WRITE8_HANDLER( royalmah_palbank_w )
 {
 	/* bit 1 = coin counter */
 	coin_counter_w(0,data & 2);
@@ -168,7 +168,7 @@ WRITE_HANDLER( royalmah_palbank_w )
 	set_vh_global_attribute(&palette_base,(data & 0x08) >> 3);
 }
 
-WRITE_HANDLER( mjderngr_coin_w )
+WRITE8_HANDLER( mjderngr_coin_w )
 {
 	/* bit 1 = coin counter */
 	coin_counter_w(0,data & 2);
@@ -176,7 +176,7 @@ WRITE_HANDLER( mjderngr_coin_w )
 	/* bit 2 always set? */
 }
 
-WRITE_HANDLER( mjderngr_palbank_w )
+WRITE8_HANDLER( mjderngr_palbank_w )
 {
 	set_vh_global_attribute(&palette_base,data);
 }
@@ -201,7 +201,7 @@ VIDEO_UPDATE( royalmah )
 
 
 
-static WRITE_HANDLER( royalmah_rom_w )
+static WRITE8_HANDLER( royalmah_rom_w )
 {
 	/* using this handler will avoid all the entries in the error log that are the result of
 	   the RLD and RRD instructions this games uses to print text on the screen */
@@ -211,12 +211,12 @@ static WRITE_HANDLER( royalmah_rom_w )
 static int royalmah_input_port_select;
 static int majs101b_dsw_select;
 
-static WRITE_HANDLER( royalmah_input_port_select_w )
+static WRITE8_HANDLER( royalmah_input_port_select_w )
 {
 	royalmah_input_port_select = data;
 }
 
-static READ_HANDLER( royalmah_player_1_port_r )
+static READ8_HANDLER( royalmah_player_1_port_r )
 {
 	int ret = (input_port_0_r(offset) & 0xc0) | 0x3f;
 
@@ -229,7 +229,7 @@ static READ_HANDLER( royalmah_player_1_port_r )
 	return ret;
 }
 
-static READ_HANDLER( royalmah_player_2_port_r )
+static READ8_HANDLER( royalmah_player_2_port_r )
 {
 	int ret = (input_port_5_r(offset) & 0xc0) | 0x3f;
 
@@ -244,7 +244,7 @@ static READ_HANDLER( royalmah_player_2_port_r )
 
 
 
-static READ_HANDLER ( majs101b_dsw_r )
+static READ8_HANDLER ( majs101b_dsw_r )
 {
 	switch (majs101b_dsw_select)
 	{
@@ -258,7 +258,7 @@ static READ_HANDLER ( majs101b_dsw_r )
 
 static data8_t suzume_bank;
 
-static READ_HANDLER ( suzume_dsw_r )
+static READ8_HANDLER ( suzume_dsw_r )
 {
 	if (suzume_bank & 0x40)
 	{
@@ -276,7 +276,7 @@ static READ_HANDLER ( suzume_dsw_r )
 	}
 }
 
-static WRITE_HANDLER ( suzume_bank_w )
+static WRITE8_HANDLER ( suzume_bank_w )
 {
 	data8_t *rom = memory_region(REGION_CPU1);
 	int address;
@@ -292,7 +292,7 @@ logerror("%04x: bank %02x\n",activecpu_get_pc(),data);
 }
 
 
-static WRITE_HANDLER ( tontonb_bank_w )
+static WRITE8_HANDLER ( tontonb_bank_w )
 {
 	data8_t *rom = memory_region(REGION_CPU1);
 	int address;
@@ -310,7 +310,7 @@ logerror("%04x: bank %02x\n",activecpu_get_pc(),data);
 
 
 /* bits 5 and 6 seem to affect which Dip Switch to read in 'majs101b' */
-static WRITE_HANDLER ( dynax_bank_w )
+static WRITE8_HANDLER ( dynax_bank_w )
 {
 	data8_t *rom = memory_region(REGION_CPU1);
 	int address;

@@ -137,7 +137,7 @@ VIDEO_START( timeplt )
 
 ***************************************************************************/
 
-WRITE_HANDLER( timeplt_videoram_w )
+WRITE8_HANDLER( timeplt_videoram_w )
 {
 	if (timeplt_videoram[offset] != data)
 	{
@@ -146,7 +146,7 @@ WRITE_HANDLER( timeplt_videoram_w )
 	}
 }
 
-WRITE_HANDLER( timeplt_colorram_w )
+WRITE8_HANDLER( timeplt_colorram_w )
 {
 	if (timeplt_colorram[offset] != data)
 	{
@@ -155,13 +155,13 @@ WRITE_HANDLER( timeplt_colorram_w )
 	}
 }
 
-WRITE_HANDLER( timeplt_flipscreen_w )
+WRITE8_HANDLER( timeplt_flipscreen_w )
 {
 	flip_screen_set(~data & 1);
 }
 
 /* Return the current video scan line */
-READ_HANDLER( timeplt_scanline_r )
+READ8_HANDLER( timeplt_scanline_r )
 {
 	return scanline;
 }

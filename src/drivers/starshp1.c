@@ -33,11 +33,11 @@ extern int starshp1_collision_latch;
 extern int starshp1_starfield_kill;
 extern int starshp1_mux;
 
-extern READ_HANDLER( starshp1_rng_r );
+extern READ8_HANDLER( starshp1_rng_r );
 
-extern WRITE_HANDLER( starshp1_sspic_w );
-extern WRITE_HANDLER( starshp1_ssadd_w );
-extern WRITE_HANDLER( starshp1_playfield_w );
+extern WRITE8_HANDLER( starshp1_sspic_w );
+extern WRITE8_HANDLER( starshp1_ssadd_w );
+extern WRITE8_HANDLER( starshp1_playfield_w );
 
 extern VIDEO_UPDATE( starshp1 );
 extern VIDEO_EOF( starshp1 );
@@ -50,7 +50,7 @@ static INTERRUPT_GEN( starshp1_interrupt )
 {
 	if ((readinputport(0) & 0x90) != 0x90)
 	{
-		cpu_set_irq_line(0, 0, PULSE_LINE);
+		cpunum_set_input_line(0, 0, PULSE_LINE);
 	}
 }
 
@@ -85,7 +85,7 @@ static PALETTE_INIT( starshp1 )
 }
 
 
-static WRITE_HANDLER( starshp1_audio_w )
+static WRITE8_HANDLER( starshp1_audio_w )
 {
 	data &= 1;
 
@@ -119,13 +119,13 @@ static WRITE_HANDLER( starshp1_audio_w )
 }
 
 
-static WRITE_HANDLER( starshp1_collision_reset_w )
+static WRITE8_HANDLER( starshp1_collision_reset_w )
 {
 	starshp1_collision_latch = 0;
 }
 
 
-static READ_HANDLER( starshp1_port_1_r )
+static READ8_HANDLER( starshp1_port_1_r )
 {
 	int val = 0;
 
@@ -149,25 +149,25 @@ static READ_HANDLER( starshp1_port_1_r )
 }
 
 
-static READ_HANDLER( starshp1_port_2_r )
+static READ8_HANDLER( starshp1_port_2_r )
 {
 	return readinputport(2) | (starshp1_collision_latch & 0x0f);
 }
 
 
-static READ_HANDLER( starshp1_zeropage_r )
+static READ8_HANDLER( starshp1_zeropage_r )
 {
 	return memory_region(REGION_CPU1)[offset & 0xff];
 }
 
 
-static WRITE_HANDLER( starshp1_analog_in_w )
+static WRITE8_HANDLER( starshp1_analog_in_w )
 {
 	starshp1_analog_in_select = offset & 3;
 }
 
 
-static WRITE_HANDLER( starshp1_analog_out_w )
+static WRITE8_HANDLER( starshp1_analog_out_w )
 {
 	switch (offset & 7)
 	{
@@ -196,7 +196,7 @@ static WRITE_HANDLER( starshp1_analog_out_w )
 }
 
 
-static WRITE_HANDLER( starshp1_misc_w )
+static WRITE8_HANDLER( starshp1_misc_w )
 {
 	data &= 1;
 
@@ -230,7 +230,7 @@ static WRITE_HANDLER( starshp1_misc_w )
 }
 
 
-static WRITE_HANDLER( starshp1_zeropage_w )
+static WRITE8_HANDLER( starshp1_zeropage_w )
 {
 	memory_region(REGION_CPU1)[offset & 0xff] = data;
 }

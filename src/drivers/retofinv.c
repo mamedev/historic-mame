@@ -11,32 +11,32 @@ the game was developed by UPL for Taito.
 #include "driver.h"
 
 /* in machine */
-READ_HANDLER( retofinv_68705_portA_r );
-WRITE_HANDLER( retofinv_68705_portA_w );
-WRITE_HANDLER( retofinv_68705_ddrA_w );
-READ_HANDLER( retofinv_68705_portB_r );
-WRITE_HANDLER( retofinv_68705_portB_w );
-WRITE_HANDLER( retofinv_68705_ddrB_w );
-READ_HANDLER( retofinv_68705_portC_r );
-WRITE_HANDLER( retofinv_68705_portC_w );
-WRITE_HANDLER( retofinv_68705_ddrC_w );
-WRITE_HANDLER( retofinv_mcu_w );
-READ_HANDLER( retofinv_mcu_r );
-READ_HANDLER( retofinv_mcu_status_r );
+READ8_HANDLER( retofinv_68705_portA_r );
+WRITE8_HANDLER( retofinv_68705_portA_w );
+WRITE8_HANDLER( retofinv_68705_ddrA_w );
+READ8_HANDLER( retofinv_68705_portB_r );
+WRITE8_HANDLER( retofinv_68705_portB_w );
+WRITE8_HANDLER( retofinv_68705_ddrB_w );
+READ8_HANDLER( retofinv_68705_portC_r );
+WRITE8_HANDLER( retofinv_68705_portC_w );
+WRITE8_HANDLER( retofinv_68705_ddrC_w );
+WRITE8_HANDLER( retofinv_mcu_w );
+READ8_HANDLER( retofinv_mcu_r );
+READ8_HANDLER( retofinv_mcu_status_r );
 
 /* in vidhrdw */
 VIDEO_START( retofinv );
 PALETTE_INIT( retofinv );
 VIDEO_UPDATE( retofinv );
-READ_HANDLER( retofinv_bg_videoram_r );
-READ_HANDLER( retofinv_fg_videoram_r );
-READ_HANDLER( retofinv_bg_colorram_r );
-READ_HANDLER( retofinv_fg_colorram_r );
-WRITE_HANDLER( retofinv_bg_videoram_w );
-WRITE_HANDLER( retofinv_fg_videoram_w );
-WRITE_HANDLER( retofinv_bg_colorram_w );
-WRITE_HANDLER( retofinv_fg_colorram_w );
-WRITE_HANDLER( retofinv_flip_screen_w );
+READ8_HANDLER( retofinv_bg_videoram_r );
+READ8_HANDLER( retofinv_fg_videoram_r );
+READ8_HANDLER( retofinv_bg_colorram_r );
+READ8_HANDLER( retofinv_fg_colorram_r );
+WRITE8_HANDLER( retofinv_bg_videoram_w );
+WRITE8_HANDLER( retofinv_fg_videoram_w );
+WRITE8_HANDLER( retofinv_bg_colorram_w );
+WRITE8_HANDLER( retofinv_fg_colorram_w );
+WRITE8_HANDLER( retofinv_flip_screen_w );
 
 extern size_t retofinv_videoram_size;
 extern unsigned char *retofinv_sprite_ram1;
@@ -60,47 +60,47 @@ static MACHINE_INIT( retofinv )
 
 static unsigned char *sharedram;
 
-static READ_HANDLER( retofinv_shared_ram_r )
+static READ8_HANDLER( retofinv_shared_ram_r )
 {
 	return sharedram[offset];
 }
 
-static WRITE_HANDLER( retofinv_shared_ram_w )
+static WRITE8_HANDLER( retofinv_shared_ram_w )
 {
 	sharedram[offset] = data;
 }
 
-static WRITE_HANDLER( reset_cpu2_w )
+static WRITE8_HANDLER( reset_cpu2_w )
 {
      if (data)
-	    cpu_set_reset_line(2,PULSE_LINE);
+	    cpunum_set_input_line(2, INPUT_LINE_RESET, PULSE_LINE);
 }
 
-static WRITE_HANDLER( reset_cpu1_w )
+static WRITE8_HANDLER( reset_cpu1_w )
 {
     if (data)
-	    cpu_set_reset_line(1,PULSE_LINE);
+	    cpunum_set_input_line(1, INPUT_LINE_RESET, PULSE_LINE);
 }
 
-static WRITE_HANDLER( cpu1_halt_w )
+static WRITE8_HANDLER( cpu1_halt_w )
 {
-	cpu_set_halt_line(1, data ? CLEAR_LINE : ASSERT_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_HALT, data ? CLEAR_LINE : ASSERT_LINE);
 }
 
-static WRITE_HANDLER( cpu2_m6000_w )
+static WRITE8_HANDLER( cpu2_m6000_w )
 {
 	cpu2_m6000 = data;
 }
 
-static READ_HANDLER( cpu0_mf800_r )
+static READ8_HANDLER( cpu0_mf800_r )
 {
 	return cpu2_m6000;
 }
 
-static WRITE_HANDLER( soundcommand_w )
+static WRITE8_HANDLER( soundcommand_w )
 {
       soundlatch_w(0, data);
-      cpu_set_irq_line(2, 0, HOLD_LINE);
+      cpunum_set_input_line(2, 0, HOLD_LINE);
 }
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )

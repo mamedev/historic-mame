@@ -127,9 +127,9 @@ static void update_interrupts(void)
 		newstate = 2;
 
 	if (newstate)
-		cpu_set_irq_line(0, newstate, ASSERT_LINE);
+		cpunum_set_input_line(0, newstate, ASSERT_LINE);
 	else
-		cpu_set_irq_line(0, 7, CLEAR_LINE);
+		cpunum_set_input_line(0, 7, CLEAR_LINE);
 }
 
 
@@ -214,7 +214,7 @@ static READ16_HANDLER( pedal_1_r )
  *
  *************************************/
 
-static READ_HANDLER( audio_io_r )
+static READ8_HANDLER( audio_io_r )
 {
 	int result = 0xff;
 
@@ -262,7 +262,7 @@ static READ_HANDLER( audio_io_r )
 }
 
 
-static WRITE_HANDLER( audio_io_w )
+static WRITE8_HANDLER( audio_io_w )
 {
 	switch (offset & 0x206)
 	{

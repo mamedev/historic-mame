@@ -75,8 +75,8 @@ static void timer_callback(int param)
 {
 	/* Only cause IRQ if the mask is set to allow it */
 	if (m68681_imr&8) {
-		cpu_irq_line_vector_w(1, 6, vector_reg);
-		cpu_set_irq_line(1, 6, ASSERT_LINE);
+		cpunum_set_input_line_vector(1, 6, vector_reg);
+		cpunum_set_input_line(1, 6, ASSERT_LINE);
 		imr_status|=0x8;
 	}
 }
@@ -99,7 +99,7 @@ READ16_HANDLER(f3_68681_r)
 
 	/* IRQ ack */
 	if (offset==0xf) {
-		cpu_set_irq_line(1, 6, CLEAR_LINE);
+		cpunum_set_input_line(1, 6, CLEAR_LINE);
 		return 0;
 	}
 

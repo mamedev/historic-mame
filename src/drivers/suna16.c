@@ -217,7 +217,7 @@ ADDRESS_MAP_END
 
 /* Bank Switching */
 
-static WRITE_HANDLER( bssoccer_pcm_1_bankswitch_w )
+static WRITE8_HANDLER( bssoccer_pcm_1_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU3);
 	int bank = data & 7;
@@ -225,7 +225,7 @@ static WRITE_HANDLER( bssoccer_pcm_1_bankswitch_w )
 	cpu_setbank(1, &RAM[bank * 0x10000 + 0x1000]);
 }
 
-static WRITE_HANDLER( bssoccer_pcm_2_bankswitch_w )
+static WRITE8_HANDLER( bssoccer_pcm_2_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU4);
 	int bank = data & 7;
@@ -258,12 +258,12 @@ ADDRESS_MAP_END
 
 /* 2 DACs per CPU - 4 bits per sample */
 
-static WRITE_HANDLER( bssoccer_DAC_1_w )
+static WRITE8_HANDLER( bssoccer_DAC_1_w )
 {
 	DAC_data_w( 0 + (offset & 1), (data & 0xf) * 0x11 );
 }
 
-static WRITE_HANDLER( bssoccer_DAC_2_w )
+static WRITE8_HANDLER( bssoccer_DAC_2_w )
 {
 	DAC_data_w( 2 + (offset & 1), (data & 0xf) * 0x11 );
 }
@@ -294,7 +294,7 @@ ADDRESS_MAP_END
 
 /* Bank Switching */
 
-static WRITE_HANDLER( uballoon_pcm_1_bankswitch_w )
+static WRITE8_HANDLER( uballoon_pcm_1_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU3);
 	int bank = data & 1;
@@ -583,8 +583,8 @@ INTERRUPT_GEN( bssoccer_interrupt )
 {
 	switch (cpu_getiloops())
 	{
-		case 0: 	cpu_set_irq_line(0, 1, HOLD_LINE);	break;
-		case 1: 	cpu_set_irq_line(0, 2, HOLD_LINE);	break;
+		case 0: 	cpunum_set_input_line(0, 1, HOLD_LINE);	break;
+		case 1: 	cpunum_set_input_line(0, 2, HOLD_LINE);	break;
 	}
 }
 

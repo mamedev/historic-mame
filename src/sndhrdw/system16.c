@@ -25,23 +25,23 @@ static void trigger_7751_sound(int data)
 
 	port_8255_c03 = (data>>5);
 
-	cpu_set_irq_line(2, 0, PULSE_LINE);
+	cpunum_set_input_line(2, 0, PULSE_LINE);
 }
 
 // I'm sure this must be wrong, but it seems to work for quartet music.
-WRITE_HANDLER( sys16_7751_audio_8255_w )
+WRITE8_HANDLER( sys16_7751_audio_8255_w )
 {
 	logerror("7751: %4x %4x\n",data,data^0xff);
 
 	if ((data & 0x0f) != 8)
 	{
-		cpu_set_reset_line(2,PULSE_LINE);
+		cpunum_set_input_line(2, INPUT_LINE_RESET, PULSE_LINE);
 		timer_set(TIME_IN_USEC(300), data, trigger_7751_sound);
 	}
 }
 
 
-READ_HANDLER( sys16_7751_audio_8255_r )
+READ8_HANDLER( sys16_7751_audio_8255_r )
 {
 	// Only PC4 is hooked up
 	/* 0x00 = BUSY, 0x10 = NOT BUSY */
@@ -49,7 +49,7 @@ READ_HANDLER( sys16_7751_audio_8255_r )
 }
 
 /* read from BUS */
-READ_HANDLER( sys16_7751_sh_rom_r )
+READ8_HANDLER( sys16_7751_sh_rom_r )
 {
 	unsigned char *sound_rom = memory_region(REGION_SOUND1);
 
@@ -57,27 +57,27 @@ READ_HANDLER( sys16_7751_sh_rom_r )
 }
 
 /* read from T1 */
-READ_HANDLER( sys16_7751_sh_t1_r )
+READ8_HANDLER( sys16_7751_sh_t1_r )
 {
 	// Labelled as "TEST", connected to ground
 	return 0;
 }
 
 /* read from P2 */
-READ_HANDLER( sys16_7751_sh_command_r )
+READ8_HANDLER( sys16_7751_sh_command_r )
 {
 	// 8255's PC0-2 connects to 7751's S0-2 (P24-P26 on an 8048)
 	return ((port_8255_c03 & 0x07) << 4) | port_7751_p27;
 }
 
 /* write to P1 */
-WRITE_HANDLER( sys16_7751_sh_dac_w )
+WRITE8_HANDLER( sys16_7751_sh_dac_w )
 {
 	DAC_data_w(0,data);
 }
 
 /* write to P2 */
-WRITE_HANDLER( sys16_7751_sh_busy_w )
+WRITE8_HANDLER( sys16_7751_sh_busy_w )
 {
 	port_8255_c03 = (data & 0x70) >> 4;
 	port_8255_c47 = (data & 0x80) >> 3;
@@ -86,25 +86,25 @@ WRITE_HANDLER( sys16_7751_sh_busy_w )
 }
 
 /* write to P4 */
-WRITE_HANDLER( sys16_7751_sh_offset_a0_a3_w )
+WRITE8_HANDLER( sys16_7751_sh_offset_a0_a3_w )
 {
 	rom_offset = (rom_offset & 0xFFF0) | (data & 0x0F);
 }
 
 /* write to P5 */
-WRITE_HANDLER( sys16_7751_sh_offset_a4_a7_w )
+WRITE8_HANDLER( sys16_7751_sh_offset_a4_a7_w )
 {
 	rom_offset = (rom_offset & 0xFF0F) | ((data & 0x0F) << 4);
 }
 
 /* write to P6 */
-WRITE_HANDLER( sys16_7751_sh_offset_a8_a11_w )
+WRITE8_HANDLER( sys16_7751_sh_offset_a8_a11_w )
 {
 	rom_offset = (rom_offset & 0xF0FF) | ((data & 0x0F) << 8);
 }
 
 /* write to P7 */
-WRITE_HANDLER( sys16_7751_sh_rom_select_w )
+WRITE8_HANDLER( sys16_7751_sh_rom_select_w )
 {
 	rom_offset = (rom_offset & 0x0FFF) | ((0x4000 + ((data&0xf) << 12)) & 0x3000);
 

@@ -60,21 +60,21 @@ Port I/O Write:
 
 extern unsigned char *thepit_attributesram;
 extern unsigned char *intrepid_sprite_bank_select;
-WRITE_HANDLER( thepit_attributes_w );
+WRITE8_HANDLER( thepit_attributes_w );
 
 PALETTE_INIT( thepit );
 PALETTE_INIT( suprmous );
 VIDEO_UPDATE( thepit );
-READ_HANDLER( thepit_input_port_0_r );
-WRITE_HANDLER( thepit_sound_enable_w );
-WRITE_HANDLER( intrepid_graphics_bank_select_w );
+READ8_HANDLER( thepit_input_port_0_r );
+WRITE8_HANDLER( thepit_sound_enable_w );
+WRITE8_HANDLER( intrepid_graphics_bank_select_w );
 
-static WRITE_HANDLER( flip_screen_x_w )
+static WRITE8_HANDLER( flip_screen_x_w )
 {
 	flip_screen_x_set(data);
 }
 
-static WRITE_HANDLER( flip_screen_y_w )
+static WRITE8_HANDLER( flip_screen_y_w )
 {
 	flip_screen_y_set(data);
 }

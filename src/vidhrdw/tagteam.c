@@ -43,7 +43,7 @@ PALETTE_INIT( tagteam )
 	}
 }
 
-WRITE_HANDLER( tagteam_videoram_w )
+WRITE8_HANDLER( tagteam_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -52,7 +52,7 @@ WRITE_HANDLER( tagteam_videoram_w )
 	}
 }
 
-WRITE_HANDLER( tagteam_colorram_w )
+WRITE8_HANDLER( tagteam_colorram_w )
 {
 	if (colorram[offset] != data)
 	{
@@ -61,7 +61,7 @@ WRITE_HANDLER( tagteam_colorram_w )
 	}
 }
 
-READ_HANDLER( tagteam_mirrorvideoram_r )
+READ8_HANDLER( tagteam_mirrorvideoram_r )
 {
 	int x,y;
 
@@ -73,7 +73,7 @@ READ_HANDLER( tagteam_mirrorvideoram_r )
 	return videoram_r(offset);
 }
 
-READ_HANDLER( tagteam_mirrorcolorram_r )
+READ8_HANDLER( tagteam_mirrorcolorram_r )
 {
 	int x,y;
 
@@ -85,7 +85,7 @@ READ_HANDLER( tagteam_mirrorcolorram_r )
 	return colorram_r(offset);
 }
 
-WRITE_HANDLER( tagteam_mirrorvideoram_w )
+WRITE8_HANDLER( tagteam_mirrorvideoram_w )
 {
 	int x,y;
 
@@ -97,7 +97,7 @@ WRITE_HANDLER( tagteam_mirrorvideoram_w )
 	tagteam_videoram_w(offset,data);
 }
 
-WRITE_HANDLER( tagteam_mirrorcolorram_w )
+WRITE8_HANDLER( tagteam_mirrorcolorram_w )
 {
 	int x,y;
 
@@ -109,7 +109,7 @@ WRITE_HANDLER( tagteam_mirrorcolorram_w )
 	tagteam_colorram_w(offset,data);
 }
 
-WRITE_HANDLER( tagteam_control_w )
+WRITE8_HANDLER( tagteam_control_w )
 {
 logerror("%04x: control = %02x\n",activecpu_get_pc(),data);
 
@@ -117,7 +117,7 @@ logerror("%04x: control = %02x\n",activecpu_get_pc(),data);
 	palettebank = (data & 0x80) >> 7;
 }
 
-WRITE_HANDLER( tagteam_flipscreen_w )
+WRITE8_HANDLER( tagteam_flipscreen_w )
 {
 	if (flip_screen != (data &0x01))
 	{

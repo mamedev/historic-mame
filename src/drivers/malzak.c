@@ -42,50 +42,50 @@ extern unsigned char s2636_2_dirty[4];
 // in vidhrdw/malzak.c
 VIDEO_START( malzak );
 VIDEO_UPDATE( malzak );
-WRITE_HANDLER( playfield_w );
+WRITE8_HANDLER( playfield_w );
 
-READ_HANDLER( malzak_s2636_1_r )
+READ8_HANDLER( malzak_s2636_1_r )
 {
 	return s2636_1_ram[offset];
 }
 
-READ_HANDLER( malzak_s2636_2_r )
+READ8_HANDLER( malzak_s2636_2_r )
 {
 	return s2636_2_ram[offset];
 }
 
-WRITE_HANDLER( malzak_s2636_1_w )
+WRITE8_HANDLER( malzak_s2636_1_w )
 {
 	s2636_w(s2636_1_ram,offset,data,s2636_1_dirty);
 }
 
-WRITE_HANDLER( malzak_s2636_2_w )
+WRITE8_HANDLER( malzak_s2636_2_w )
 {
 	s2636_w(s2636_2_ram,offset,data,s2636_2_dirty);
 }
 
 
-static READ_HANDLER( saa5050_r )
+static READ8_HANDLER( saa5050_r )
 {
 	return saa5050_vidram[offset];
 }
 
-static WRITE_HANDLER( saa5050_w )
+static WRITE8_HANDLER( saa5050_w )
 {
 	saa5050_vidram[offset] = data;
 }
 
-static READ_HANDLER( fake_VRLE_r )
+static READ8_HANDLER( fake_VRLE_r )
 {
 	return (s2636_1_ram[0xcb] & 0x3f) + (cpu_getvblank()*0x40);
 }
 
-static READ_HANDLER( ram_mirror_r )
+static READ8_HANDLER( ram_mirror_r )
 {
 	return program_read_byte(0x1000+offset);
 }
 
-static WRITE_HANDLER( ram_mirror_w )
+static WRITE8_HANDLER( ram_mirror_w )
 {
 	program_write_byte(0x1000+offset,data);
 }
@@ -130,13 +130,13 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 
 ADDRESS_MAP_END
 
-static READ_HANDLER( s2650_data_r )
+static READ8_HANDLER( s2650_data_r )
 {
 	usrintf_showmessage("S2650 data port read");
 	return 0xff;
 }
 
-static WRITE_HANDLER( port40_w )
+static WRITE8_HANDLER( port40_w )
 {
 //	usrintf_showmessage("S2650 [0x%04x]: port 0x40 write: 0x%02x",cpunum_get_pc_byte(0),data);
 //	if(data & 0x01)
@@ -145,17 +145,17 @@ static WRITE_HANDLER( port40_w )
 //		irqenable = 0;
 }
 
-static WRITE_HANDLER( port60_w )
+static WRITE8_HANDLER( port60_w )
 {
 	temp_x = data;
 }
 
-static WRITE_HANDLER( portc0_w )
+static WRITE8_HANDLER( portc0_w )
 {
 	temp_y = data;
 }
 
-static READ_HANDLER( collision_r )
+static READ8_HANDLER( collision_r )
 {
 	// High 4 bits seem to refer to the row affected.
 	static int counter;
@@ -335,7 +335,7 @@ static int val = -1;
 static INTERRUPT_GEN( malzak_interrupt )
 {
 //	if(irqenable != 0)
-//		cpu_set_irq_line_and_vector(0,0,HOLD_LINE,0x0300);
+//		cpunum_set_input_line_and_vector(0,0,HOLD_LINE,0x0300);
 }
 
 static PALETTE_INIT( malzak )

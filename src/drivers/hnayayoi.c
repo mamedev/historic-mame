@@ -39,16 +39,16 @@ VIDEO_START( hnayayoi );
 VIDEO_START( untoucha );
 VIDEO_UPDATE( hnayayoi );
 
-WRITE_HANDLER( dynax_blitter_rev1_param_w );
-WRITE_HANDLER( dynax_blitter_rev1_start_w );
-WRITE_HANDLER( dynax_blitter_rev1_clear_w );
-WRITE_HANDLER( hnayayoi_palbank_w );
+WRITE8_HANDLER( dynax_blitter_rev1_param_w );
+WRITE8_HANDLER( dynax_blitter_rev1_start_w );
+WRITE8_HANDLER( dynax_blitter_rev1_clear_w );
+WRITE8_HANDLER( hnayayoi_palbank_w );
 
 
 
 static int keyb;
 
-static READ_HANDLER( keyboard_0_r )
+static READ8_HANDLER( keyboard_0_r )
 {
 	int res = 0x3f;
 	int i;
@@ -59,34 +59,34 @@ static READ_HANDLER( keyboard_0_r )
 	return res;
 }
 
-static READ_HANDLER( keyboard_1_r )
+static READ8_HANDLER( keyboard_1_r )
 {
 	/* Player 2 not supported */
 	return 0x3f;
 }
 
-static WRITE_HANDLER( keyboard_w )
+static WRITE8_HANDLER( keyboard_w )
 {
 	keyb = data;
 }
 
 
-static WRITE_HANDLER( adpcm_data_w )
+static WRITE8_HANDLER( adpcm_data_w )
 {
 	MSM5205_data_w(0,data);
 }
 
-static WRITE_HANDLER( adpcm_vclk_w )
+static WRITE8_HANDLER( adpcm_vclk_w )
 {
 	MSM5205_vclk_w(0,data & 1);
 }
 
-static WRITE_HANDLER( adpcm_reset_w )
+static WRITE8_HANDLER( adpcm_reset_w )
 {
 	MSM5205_reset_w(0,data & 1);
 }
 
-static WRITE_HANDLER( adpcm_reset_inv_w )
+static WRITE8_HANDLER( adpcm_reset_inv_w )
 {
 	MSM5205_reset_w(0,~data & 1);
 }
@@ -590,7 +590,7 @@ INPUT_PORTS_END
 static void irqhandler(int irq)
 {
 usrintf_showmessage("irq");
-//	cpu_set_irq_line(2,0,irq ? ASSERT_LINE : CLEAR_LINE);
+//	cpunum_set_input_line(2,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 

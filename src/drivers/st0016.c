@@ -62,19 +62,19 @@ E51-00001-A
 #include "cpu/z80/z80.h" 
 #include "cpu/mips/r3000.h"
 
-WRITE_HANDLER (st0016_sprite_bank_w);
-WRITE_HANDLER (st0016_palette_bank_w);
-WRITE_HANDLER (st0016_character_bank_w);
-READ_HANDLER  (st0016_sprite_ram_r);
-WRITE_HANDLER (st0016_sprite_ram_w);
-READ_HANDLER  (st0016_sprite2_ram_r);
-WRITE_HANDLER (st0016_sprite2_ram_w);
-READ_HANDLER  (st0016_palette_ram_r);
-WRITE_HANDLER (st0016_palette_ram_w);
-READ_HANDLER  (st0016_character_ram_r);
-WRITE_HANDLER (st0016_character_ram_w);
-READ_HANDLER(st0016_vregs_r);
-WRITE_HANDLER(st0016_vregs_w);
+WRITE8_HANDLER (st0016_sprite_bank_w);
+WRITE8_HANDLER (st0016_palette_bank_w);
+WRITE8_HANDLER (st0016_character_bank_w);
+READ8_HANDLER  (st0016_sprite_ram_r);
+WRITE8_HANDLER (st0016_sprite_ram_w);
+READ8_HANDLER  (st0016_sprite2_ram_r);
+WRITE8_HANDLER (st0016_sprite2_ram_w);
+READ8_HANDLER  (st0016_palette_ram_r);
+WRITE8_HANDLER (st0016_palette_ram_w);
+READ8_HANDLER  (st0016_character_ram_r);
+WRITE8_HANDLER (st0016_character_ram_w);
+READ8_HANDLER(st0016_vregs_r);
+WRITE8_HANDLER(st0016_vregs_w);
 
 VIDEO_START(st0016);
 VIDEO_UPDATE(st0016);
@@ -97,7 +97,7 @@ static ADDRESS_MAP_START( st0016_mem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xf000, 0xffff) AM_RAM /* work ram */
 ADDRESS_MAP_END
 
-static READ_HANDLER(mux_r)
+static READ8_HANDLER(mux_r)
 {
 /* 
 	76543210
@@ -115,18 +115,18 @@ static READ_HANDLER(mux_r)
 	return retval;
 }
 
-static WRITE_HANDLER(mux_select_w)
+static WRITE8_HANDLER(mux_select_w)
 {
 	mux_port=data;
 }
 
-WRITE_HANDLER(st0016_rom_bank_w)
+WRITE8_HANDLER(st0016_rom_bank_w)
 {
 	cpu_setbank( 1, memory_region(REGION_CPU1) + (data* 0x4000) + 0x10000 );	
 	st0016_rom_bank=data;
 }
 
-READ_HANDLER(st0016_dma_r);
+READ8_HANDLER(st0016_dma_r);
 
 static ADDRESS_MAP_START( st0016_io, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x00, 0xbf) AM_READ(st0016_vregs_r) AM_WRITE(st0016_vregs_w) /* video/crt regs ? */
@@ -255,10 +255,10 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 INTERRUPT_GEN(st0016_int)
 {
 	if(!cpu_getiloops())
-		cpu_set_irq_line(0,0,HOLD_LINE);
+		cpunum_set_input_line(0,0,HOLD_LINE);
 	else
 		if(activecpu_get_reg(Z80_IFF1)) /* dirty hack ... */
-			cpu_set_nmi_line( 0, PULSE_LINE );
+			cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE );
 }
 
 static struct ST0016interface st0016_interface =
@@ -698,7 +698,7 @@ static DRIVER_INIT(mayjinsn)
 GAME( 1994, renju,     0,     	  st0016,   renju,     renju,    ROT0, "Visco", "Renju Kizoku")
 GAME( 1996, nratechu,  0,     	  st0016,   nratechu,  nratechu, ROT0, "Seta",  "Neratte Chu")
 /* Not working */
-GAMEX( 199x, srmp5,  	0,     	  srmp5,    srmp5,     srmp5,    ROT0, "Seta",  "Super Real Mahjong P5",GAME_NOT_WORKING)
+GAMEX( 199?, srmp5,  	0,     	  srmp5,    srmp5,     srmp5,    ROT0, "Seta",  "Super Real Mahjong P5",GAME_NOT_WORKING)
 GAMEX( 1994, speglsht,	0,     	  speglsht, speglsht,  speglsht, ROT0, "Seta",  "Super Eagle Shot (set 1)",GAME_NOT_WORKING)
 GAMEX( 1994, speglsha,	speglsht, speglsht, speglsht,  speglsht, ROT0, "Seta",  "Super Eagle Shot (set 2)",GAME_NOT_WORKING)
 GAMEX( 1994, mayjinsn,	0, 	  st0016,   mayjinsn,  mayjinsn, ROT0, "Seta",  "Mayjinsen",GAME_NOT_WORKING)

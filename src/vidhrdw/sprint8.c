@@ -69,7 +69,7 @@ static void get_tile_info2(int tile_index)
 }
 
 
-WRITE_HANDLER( sprint8_video_ram_w )
+WRITE8_HANDLER( sprint8_video_ram_w )
 {
 	if (data != sprint8_video_ram[offset])
 	{

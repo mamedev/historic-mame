@@ -51,7 +51,7 @@ static int main_data;   /* data for the main  cpu */
 static void snd_interrupt(int foo)
 {
 	irq_flag |= 0x80; /* set timer interrupt flag */
-	cpu_set_irq_line(1, M6809_IRQ_LINE, HOLD_LINE);
+	cpunum_set_input_line(1, M6809_IRQ_LINE, HOLD_LINE);
 }
 
 
@@ -62,7 +62,7 @@ static void snd_interrupt(int foo)
  *
  *************************************/
 
-READ_HANDLER( starwars_m6532_r )
+READ8_HANDLER( starwars_m6532_r )
 {
 	static int temp;
 
@@ -103,7 +103,7 @@ READ_HANDLER( starwars_m6532_r )
  *
  *************************************/
 
-WRITE_HANDLER( starwars_m6532_w )
+WRITE8_HANDLER( starwars_m6532_w )
 {
 	switch (offset)
 	{
@@ -173,7 +173,7 @@ WRITE_HANDLER( starwars_m6532_w )
  *
  *************************************/
 
-READ_HANDLER( starwars_sin_r )
+READ8_HANDLER( starwars_sin_r )
 {
 	int res;
 
@@ -184,7 +184,7 @@ READ_HANDLER( starwars_sin_r )
 }
 
 
-WRITE_HANDLER( starwars_sout_w )
+WRITE8_HANDLER( starwars_sout_w )
 {
 	port_A |= 0x40; /* result from sound cpu pending */
 	main_data = data;
@@ -199,7 +199,7 @@ WRITE_HANDLER( starwars_sout_w )
  *
  *************************************/
 
-READ_HANDLER( starwars_main_read_r )
+READ8_HANDLER( starwars_main_read_r )
 {
 	int res;
 
@@ -212,7 +212,7 @@ READ_HANDLER( starwars_main_read_r )
 }
 
 
-READ_HANDLER( starwars_main_ready_flag_r )
+READ8_HANDLER( starwars_main_ready_flag_r )
 {
 #if 0 /* correct, but doesn't work */
 	return (port_A & 0xc0); /* only upper two flag bits mapped */
@@ -222,20 +222,20 @@ READ_HANDLER( starwars_main_ready_flag_r )
 }
 
 
-WRITE_HANDLER( starwars_main_wr_w )
+WRITE8_HANDLER( starwars_main_wr_w )
 {
 	port_A |= 0x80;  /* command from main cpu pending */
 	sound_data = data;
 	if (PA7_irq)
-		cpu_set_irq_line(1, M6809_IRQ_LINE, HOLD_LINE);
+		cpunum_set_input_line(1, M6809_IRQ_LINE, HOLD_LINE);
 }
 
 
-WRITE_HANDLER( starwars_soundrst_w )
+WRITE8_HANDLER( starwars_soundrst_w )
 {
 	port_A &= 0x3f;
 
 	/* reset sound CPU here  */
-	cpu_set_reset_line(1, PULSE_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_RESET, PULSE_LINE);
 }
 

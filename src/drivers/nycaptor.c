@@ -159,81 +159,81 @@ static int generic_control_reg = 0;
 static int sound_nmi_enable=0,pending_nmi=0;
 
 
-WRITE_HANDLER( nycaptor_videoram_w );
-WRITE_HANDLER( nycaptor_spriteram_w );
-WRITE_HANDLER( nycaptor_palette_w );
-WRITE_HANDLER( nycaptor_gfxctrl_w );
-WRITE_HANDLER( nycaptor_scrlram_w );
-WRITE_HANDLER( nycaptor_68705_portA_w );
-WRITE_HANDLER( nycaptor_68705_portB_w );
-WRITE_HANDLER( nycaptor_68705_portC_w );
-WRITE_HANDLER( nycaptor_68705_ddrA_w );
-WRITE_HANDLER( nycaptor_68705_ddrB_w );
-WRITE_HANDLER( nycaptor_68705_ddrC_w );
-WRITE_HANDLER( nycaptor_mcu_w );
+WRITE8_HANDLER( nycaptor_videoram_w );
+WRITE8_HANDLER( nycaptor_spriteram_w );
+WRITE8_HANDLER( nycaptor_palette_w );
+WRITE8_HANDLER( nycaptor_gfxctrl_w );
+WRITE8_HANDLER( nycaptor_scrlram_w );
+WRITE8_HANDLER( nycaptor_68705_portA_w );
+WRITE8_HANDLER( nycaptor_68705_portB_w );
+WRITE8_HANDLER( nycaptor_68705_portC_w );
+WRITE8_HANDLER( nycaptor_68705_ddrA_w );
+WRITE8_HANDLER( nycaptor_68705_ddrB_w );
+WRITE8_HANDLER( nycaptor_68705_ddrC_w );
+WRITE8_HANDLER( nycaptor_mcu_w );
 
-READ_HANDLER( nycaptor_mcu_r );
-READ_HANDLER( nycaptor_mcu_status_r1 );
-READ_HANDLER( nycaptor_mcu_status_r2 );
-READ_HANDLER( nycaptor_spriteram_r );
-READ_HANDLER( nycaptor_palette_r );
-READ_HANDLER( nycaptor_gfxctrl_r );
-READ_HANDLER( nycaptor_scrlram_r );
-READ_HANDLER( nycaptor_68705_portC_r );
-READ_HANDLER( nycaptor_68705_portB_r );
-READ_HANDLER( nycaptor_68705_portA_r );
-READ_HANDLER( nycaptor_videoram_r );
+READ8_HANDLER( nycaptor_mcu_r );
+READ8_HANDLER( nycaptor_mcu_status_r1 );
+READ8_HANDLER( nycaptor_mcu_status_r2 );
+READ8_HANDLER( nycaptor_spriteram_r );
+READ8_HANDLER( nycaptor_palette_r );
+READ8_HANDLER( nycaptor_gfxctrl_r );
+READ8_HANDLER( nycaptor_scrlram_r );
+READ8_HANDLER( nycaptor_68705_portC_r );
+READ8_HANDLER( nycaptor_68705_portB_r );
+READ8_HANDLER( nycaptor_68705_portA_r );
+READ8_HANDLER( nycaptor_videoram_r );
 
 
 
-static WRITE_HANDLER( sub_cpu_halt_w )
+static WRITE8_HANDLER( sub_cpu_halt_w )
 {
-	cpu_set_halt_line(1, (data )? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_HALT, (data )? ASSERT_LINE : CLEAR_LINE);
 }
 
 static UINT8 snd_data;
 
-READ_HANDLER( from_snd_r )
+READ8_HANDLER( from_snd_r )
 {
 	return snd_data;
 }
 
-WRITE_HANDLER( to_main_w )
+WRITE8_HANDLER( to_main_w )
 {
 	snd_data = data;
 }
 
 
-READ_HANDLER(nycaptor_sharedram_r)
+READ8_HANDLER(nycaptor_sharedram_r)
 {
 	return nycaptor_sharedram[offset];
 }
 
-WRITE_HANDLER(nycaptor_sharedram_w)
+WRITE8_HANDLER(nycaptor_sharedram_w)
 {
 	nycaptor_sharedram[offset]=data;
 }
 
 
-static READ_HANDLER( nycaptor_b_r )
+static READ8_HANDLER( nycaptor_b_r )
 {
 		return 1;
 }
 
-static READ_HANDLER( nycaptor_by_r )
+static READ8_HANDLER( nycaptor_by_r )
 {
 		return readinputport(6)-8;
 }
 
-static READ_HANDLER( nycaptor_bx_r )
+static READ8_HANDLER( nycaptor_bx_r )
 {
 		return (readinputport(5)+0x27)|1;
 }
 
 
-static WRITE_HANDLER( sound_cpu_reset_w )
+static WRITE8_HANDLER( sound_cpu_reset_w )
 {
-	cpu_set_reset_line(2, (data&1 )? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(2, INPUT_LINE_RESET, (data&1 )? ASSERT_LINE : CLEAR_LINE);
 }
 
 static int vol_ctrl[16];
@@ -257,27 +257,27 @@ static MACHINE_INIT( ta7630 )
 
 static void nmi_callback(int param)
 {
-	if (sound_nmi_enable) cpu_set_irq_line(2,IRQ_LINE_NMI,PULSE_LINE);
+	if (sound_nmi_enable) cpunum_set_input_line(2,INPUT_LINE_NMI,PULSE_LINE);
 	else pending_nmi = 1;
 }
 
-static WRITE_HANDLER( sound_command_w )
+static WRITE8_HANDLER( sound_command_w )
 {
 	soundlatch_w(0,data);
 	timer_set(TIME_NOW,data,nmi_callback);
 }
 
-static WRITE_HANDLER( nmi_disable_w )
+static WRITE8_HANDLER( nmi_disable_w )
 {
 	sound_nmi_enable = 0;
 }
 
-static WRITE_HANDLER( nmi_enable_w )
+static WRITE8_HANDLER( nmi_enable_w )
 {
 	sound_nmi_enable = 1;
 	if (pending_nmi)
 	{
-		cpu_set_irq_line(2,IRQ_LINE_NMI,PULSE_LINE);
+		cpunum_set_input_line(2,INPUT_LINE_NMI,PULSE_LINE);
 		pending_nmi = 0;
 	}
 }
@@ -302,12 +302,12 @@ static struct MSM5232interface msm5232_interface =
 };
 
 
-static READ_HANDLER ( nycaptor_generic_control_r )
+static READ8_HANDLER ( nycaptor_generic_control_r )
 {
 	return generic_control_reg;
 }
 
-static WRITE_HANDLER( nycaptor_generic_control_w )
+static WRITE8_HANDLER( nycaptor_generic_control_w )
 {
 	generic_control_reg = data;
 	cpu_setbank(1, memory_region(REGION_CPU1) + 0x10000 + ((data&0x08)>>3)*0x4000 );
@@ -431,17 +431,17 @@ ADDRESS_MAP_END
 /* Cycle Shooting */
 
 
-static READ_HANDLER(cyclshtg_mcu_status_r)
+static READ8_HANDLER(cyclshtg_mcu_status_r)
 {
   return 0xff;
 }
 
-static READ_HANDLER(cyclshtg_mcu_r)
+static READ8_HANDLER(cyclshtg_mcu_r)
 {
   return 7;
 }
 
-static WRITE_HANDLER(cyclshtg_mcu_w){}
+static WRITE8_HANDLER(cyclshtg_mcu_w){}
 
 
 

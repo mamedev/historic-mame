@@ -125,19 +125,19 @@ DRIVER_INIT( cclimbrj );
 extern struct AY8910interface cclimber_ay8910_interface;
 extern struct AY8910interface swimmer_ay8910_interface;
 extern struct CustomSound_interface cclimber_custom_interface;
-WRITE_HANDLER( cclimber_sample_trigger_w );
-WRITE_HANDLER( cclimber_sample_rate_w );
-WRITE_HANDLER( cclimber_sample_volume_w );
+WRITE8_HANDLER( cclimber_sample_trigger_w );
+WRITE8_HANDLER( cclimber_sample_rate_w );
+WRITE8_HANDLER( cclimber_sample_volume_w );
 
 
 /* Send sound data to the sound cpu and cause an nmi */
-static WRITE_HANDLER( checkman_sound_command_w )
+static WRITE8_HANDLER( checkman_sound_command_w )
 {
 	soundlatch_w (0,data);
-	cpu_set_irq_line (1, IRQ_LINE_NMI, PULSE_LINE);
+	cpunum_set_input_line (1, INPUT_LINE_NMI, PULSE_LINE);
 }
 
-static READ_HANDLER( drivfrcg_port0_r )
+static READ8_HANDLER( drivfrcg_port0_r )
 {
 	switch (activecpu_get_pc())
 	{

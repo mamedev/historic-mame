@@ -171,7 +171,7 @@ VIDEO_START( pacman )
 
 
 
-WRITE_HANDLER( pengo_gfxbank_w )
+WRITE8_HANDLER( pengo_gfxbank_w )
 {
 	/* the Pengo hardware can set independently the palette bank, color lookup */
 	/* table, and chars/sprites. However the game always set them together (and */
@@ -184,7 +184,7 @@ WRITE_HANDLER( pengo_gfxbank_w )
 	}
 }
 
-WRITE_HANDLER( pengo_flipscreen_w )
+WRITE8_HANDLER( pengo_flipscreen_w )
 {
 	if (flipscreen != (data & 1))
 	{
@@ -310,7 +310,7 @@ VIDEO_UPDATE( pengo )
 }
 
 
-WRITE_HANDLER( vanvan_bgcolor_w )
+WRITE8_HANDLER( vanvan_bgcolor_w )
 {
 	if (data & 1) palette_set_color(0,0xaa,0xaa,0xaa);
 	else          palette_set_color(0,0x00,0x00,0x00);
@@ -415,13 +415,13 @@ static void get_tile_info(int tile_index)
 	SET_TILE_INFO(0,code,attr & 0x1f,0)
 }
 
-WRITE_HANDLER( s2650games_videoram_w )
+WRITE8_HANDLER( s2650games_videoram_w )
 {
 	videoram[offset] = data;
 	tilemap_mark_tile_dirty(tilemap,offset);
 }
 
-WRITE_HANDLER( s2650games_colorram_w )
+WRITE8_HANDLER( s2650games_colorram_w )
 {
 	int i;
 	colorram[offset & 0x1f] = data;
@@ -429,18 +429,18 @@ WRITE_HANDLER( s2650games_colorram_w )
 		tilemap_mark_tile_dirty(tilemap, i);
 }
 
-WRITE_HANDLER( s2650games_scroll_w )
+WRITE8_HANDLER( s2650games_scroll_w )
 {
 	tilemap_set_scrolly(tilemap, offset, data);
 }
 
-WRITE_HANDLER( s2650games_tilesbank_w )
+WRITE8_HANDLER( s2650games_tilesbank_w )
 {
 	tiles_bankram[offset] = data;
 	tilemap_mark_all_tiles_dirty(tilemap);
 }
 
-WRITE_HANDLER( s2650games_flipscreen_w )
+WRITE8_HANDLER( s2650games_flipscreen_w )
 {
 	flip_screen_set(data);
 }

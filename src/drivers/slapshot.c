@@ -181,14 +181,14 @@ static WRITE16_HANDLER( color_ram_word_w )
 
 void slapshot_interrupt6(int x)
 {
-	cpu_set_irq_line(0,6,HOLD_LINE);
+	cpunum_set_input_line(0,6,HOLD_LINE);
 }
 
 
 static INTERRUPT_GEN( slapshot_interrupt )
 {
 	timer_set(TIME_IN_CYCLES(200000-500,0),0, slapshot_interrupt6);
-	cpu_set_irq_line(0,5,HOLD_LINE);
+	cpunum_set_input_line(0,5,HOLD_LINE);
 }
 
 
@@ -230,7 +230,7 @@ static READ16_HANDLER( opwolf3_adc_r )
 static WRITE16_HANDLER( opwolf3_adc_req_w )
 {
 	/* 4 writes a frame - one for each analogue port */
-	cpu_set_irq_line(0,3,HOLD_LINE);
+	cpunum_set_input_line(0,3,HOLD_LINE);
 }
 
 /*****************************************************
@@ -244,7 +244,7 @@ static void reset_sound_region(void)
 	cpu_setbank( 10, memory_region(REGION_CPU2) + (banknum * 0x4000) + 0x10000 );
 }
 
-static WRITE_HANDLER( sound_bankswitch_w )
+static WRITE8_HANDLER( sound_bankswitch_w )
 {
 	banknum = (data - 1) & 7;
 	reset_sound_region();
@@ -537,7 +537,7 @@ static struct GfxDecodeInfo slapshot_gfxdecodeinfo[] =
 /* handler called by the YM2610 emulator when the internal timers cause an IRQ */
 static void irqhandler(int irq)
 {
-	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2610interface ym2610_interface =

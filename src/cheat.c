@@ -8401,7 +8401,7 @@ static void HandleLocalCommandCheat(UINT32 type, UINT32 address, UINT32 data, UI
 
 						overclock /= 65536.0;
 
-						timer_set_overclock(address, overclock);
+						cpunum_set_clockscale(address, overclock);
 					}
 				}
 				break;

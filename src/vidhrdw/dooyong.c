@@ -9,7 +9,7 @@ data16_t *rshark_scroll1,*rshark_scroll2,*rshark_scroll3,*rshark_scroll4;
 static int tx_pri;
 
 
-WRITE_HANDLER( lastday_ctrl_w )
+WRITE8_HANDLER( lastday_ctrl_w )
 {
 	/* bits 0 and 1 are coin counters */
 	coin_counter_w(0,data & 0x01);
@@ -23,7 +23,7 @@ WRITE_HANDLER( lastday_ctrl_w )
 	flip_screen_set(data & 0x40);
 }
 
-WRITE_HANDLER( pollux_ctrl_w )
+WRITE8_HANDLER( pollux_ctrl_w )
 {
 	/* bit 0 is flip screen */
 	flip_screen_set(data & 0x01);
@@ -37,7 +37,7 @@ WRITE_HANDLER( pollux_ctrl_w )
 	/* bit 2 is continuously toggled (unknown) */
 }
 
-WRITE_HANDLER( primella_ctrl_w )
+WRITE8_HANDLER( primella_ctrl_w )
 {
  	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);

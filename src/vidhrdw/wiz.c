@@ -96,7 +96,7 @@ PALETTE_INIT( wiz )
 	}
 }
 
-WRITE_HANDLER( wiz_attributes_w )
+WRITE8_HANDLER( wiz_attributes_w )
 {
 	if ((offset & 1) && wiz_attributesram[offset] != data)
 	{
@@ -112,7 +112,7 @@ WRITE_HANDLER( wiz_attributes_w )
 	wiz_attributesram[offset] = data;
 }
 
-WRITE_HANDLER( wiz_palettebank_w )
+WRITE8_HANDLER( wiz_palettebank_w )
 {
 	if (palbank[offset] != (data & 1))
 	{
@@ -123,12 +123,12 @@ WRITE_HANDLER( wiz_palettebank_w )
 	}
 }
 
-WRITE_HANDLER( wiz_bgcolor_w )
+WRITE8_HANDLER( wiz_bgcolor_w )
 {
 	bgpen = data;
 }
 
-WRITE_HANDLER( wiz_char_bank_select_w )
+WRITE8_HANDLER( wiz_char_bank_select_w )
 {
 	if (char_bank[offset] != (data & 1))
 	{
@@ -137,7 +137,7 @@ WRITE_HANDLER( wiz_char_bank_select_w )
 	}
 }
 
-WRITE_HANDLER( wiz_flipx_w )
+WRITE8_HANDLER( wiz_flipx_w )
 {
     if (flipx != data)
     {
@@ -148,7 +148,7 @@ WRITE_HANDLER( wiz_flipx_w )
 }
 
 
-WRITE_HANDLER( wiz_flipy_w )
+WRITE8_HANDLER( wiz_flipy_w )
 {
     if (flipy != data)
     {

@@ -32,32 +32,32 @@ ADDRESS_MAP_EXTERN(seibu3_sound_writemem);
 ADDRESS_MAP_EXTERN(seibu3_adpcm_sound_writemem);
 
 READ16_HANDLER( seibu_main_word_r );
-READ_HANDLER( seibu_main_v30_r );
+READ8_HANDLER( seibu_main_v30_r );
 WRITE16_HANDLER( seibu_main_word_w );
-WRITE_HANDLER( seibu_main_v30_w );
+WRITE8_HANDLER( seibu_main_v30_w );
 
 WRITE16_HANDLER( seibu_main_mustb_w );
 
-WRITE_HANDLER( seibu_irq_clear_w );
-WRITE_HANDLER( seibu_rst10_ack_w );
-WRITE_HANDLER( seibu_rst18_ack_w );
-WRITE_HANDLER( seibu_bank_w );
-WRITE_HANDLER( seibu_coin_w );
+WRITE8_HANDLER( seibu_irq_clear_w );
+WRITE8_HANDLER( seibu_rst10_ack_w );
+WRITE8_HANDLER( seibu_rst18_ack_w );
+WRITE8_HANDLER( seibu_bank_w );
+WRITE8_HANDLER( seibu_coin_w );
 void seibu_ym3812_irqhandler(int linestate);
 void seibu_ym2151_irqhandler(int linestate);
 void seibu_ym2203_irqhandler(int linestate);
-READ_HANDLER( seibu_soundlatch_r );
-READ_HANDLER( seibu_main_data_pending_r );
-WRITE_HANDLER( seibu_main_data_w );
+READ8_HANDLER( seibu_soundlatch_r );
+READ8_HANDLER( seibu_main_data_pending_r );
+WRITE8_HANDLER( seibu_main_data_w );
 MACHINE_INIT( seibu_sound_1 );
 MACHINE_INIT( seibu_sound_2 );
 void seibu_sound_decrypt(int cpu_region,int length);
 
 void seibu_adpcm_decrypt(int region);
-WRITE_HANDLER( seibu_adpcm_adr_1_w );
-WRITE_HANDLER( seibu_adpcm_ctl_1_w );
-WRITE_HANDLER( seibu_adpcm_adr_2_w );
-WRITE_HANDLER( seibu_adpcm_ctl_2_w );
+WRITE8_HANDLER( seibu_adpcm_adr_1_w );
+WRITE8_HANDLER( seibu_adpcm_ctl_1_w );
+WRITE8_HANDLER( seibu_adpcm_adr_2_w );
+WRITE8_HANDLER( seibu_adpcm_ctl_2_w );
 
 /**************************************************************************/
 

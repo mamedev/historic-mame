@@ -33,13 +33,13 @@ struct Y8950interface
 
 
 /* YM3812 */
-READ_HANDLER ( YM3812_status_port_0_r );
-WRITE_HANDLER( YM3812_control_port_0_w );
-WRITE_HANDLER( YM3812_write_port_0_w );
+READ8_HANDLER ( YM3812_status_port_0_r );
+WRITE8_HANDLER( YM3812_control_port_0_w );
+WRITE8_HANDLER( YM3812_write_port_0_w );
 
-READ_HANDLER ( YM3812_status_port_1_r );
-WRITE_HANDLER( YM3812_control_port_1_w );
-WRITE_HANDLER( YM3812_write_port_1_w );
+READ8_HANDLER ( YM3812_status_port_1_r );
+WRITE8_HANDLER( YM3812_control_port_1_w );
+WRITE8_HANDLER( YM3812_write_port_1_w );
 
 int YM3812_sh_start(const struct MachineSound *msound);
 void YM3812_sh_stop(void);
@@ -47,13 +47,13 @@ void YM3812_sh_reset(void);
 
 
 /* YM3526 */
-READ_HANDLER ( YM3526_status_port_0_r );
-WRITE_HANDLER( YM3526_control_port_0_w );
-WRITE_HANDLER( YM3526_write_port_0_w );
+READ8_HANDLER ( YM3526_status_port_0_r );
+WRITE8_HANDLER( YM3526_control_port_0_w );
+WRITE8_HANDLER( YM3526_write_port_0_w );
 
-READ_HANDLER ( YM3526_status_port_1_r );
-WRITE_HANDLER( YM3526_control_port_1_w );
-WRITE_HANDLER( YM3526_write_port_1_w );
+READ8_HANDLER ( YM3526_status_port_1_r );
+WRITE8_HANDLER( YM3526_control_port_1_w );
+WRITE8_HANDLER( YM3526_write_port_1_w );
 
 int YM3526_sh_start(const struct MachineSound *msound);
 void YM3526_sh_stop(void);
@@ -61,15 +61,15 @@ void YM3526_sh_reset(void);
 
 
 /* Y8950 */
-READ_HANDLER ( Y8950_status_port_0_r );
-WRITE_HANDLER( Y8950_control_port_0_w );
-READ_HANDLER ( Y8950_read_port_0_r );
-WRITE_HANDLER( Y8950_write_port_0_w );
+READ8_HANDLER ( Y8950_status_port_0_r );
+WRITE8_HANDLER( Y8950_control_port_0_w );
+READ8_HANDLER ( Y8950_read_port_0_r );
+WRITE8_HANDLER( Y8950_write_port_0_w );
 
-READ_HANDLER ( Y8950_status_port_1_r );
-WRITE_HANDLER( Y8950_control_port_1_w );
-READ_HANDLER ( Y8950_read_port_1_r );
-WRITE_HANDLER( Y8950_write_port_1_w );
+READ8_HANDLER ( Y8950_status_port_1_r );
+WRITE8_HANDLER( Y8950_control_port_1_w );
+READ8_HANDLER ( Y8950_read_port_1_r );
+WRITE8_HANDLER( Y8950_write_port_1_w );
 
 int Y8950_sh_start(const struct MachineSound *msound);
 void Y8950_sh_stop(void);

@@ -45,11 +45,11 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 //	static int ytlim = 1;
 //	static int xtlim = 1;
 
-//	if ( keyboard_pressed_memory(KEYCODE_Q) ) ytlim--;
-//	if ( keyboard_pressed_memory(KEYCODE_W) ) ytlim++;
+//	if ( code_pressed_memory(KEYCODE_Q) ) ytlim--;
+//	if ( code_pressed_memory(KEYCODE_W) ) ytlim++;
 
-//	if ( keyboard_pressed_memory(KEYCODE_A) ) xtlim--;
-//	if ( keyboard_pressed_memory(KEYCODE_S) ) xtlim++;
+//	if ( code_pressed_memory(KEYCODE_A) ) xtlim--;
+//	if ( code_pressed_memory(KEYCODE_S) ) xtlim++;
 
 
 	/*00 ???? ????  (colour / priority?)
@@ -132,25 +132,25 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 
 /* VIDEO RELATED WRITE HANDLERS (move to vidhrdw file) */
 
-WRITE_HANDLER ( raiden2_background_w )
+WRITE8_HANDLER ( raiden2_background_w )
 {
 	back_data[offset]=data;
 	tilemap_mark_tile_dirty( background_layer,offset/2 );
 }
 
-WRITE_HANDLER ( raiden2_midground_w )
+WRITE8_HANDLER ( raiden2_midground_w )
 {
 	mid_data[offset]=data;
 	tilemap_mark_tile_dirty( midground_layer,offset/2 );
 }
 
-WRITE_HANDLER ( raiden2_foreground_w )
+WRITE8_HANDLER ( raiden2_foreground_w )
 {
 	fore_data[offset]=data;
 	tilemap_mark_tile_dirty( foreground_layer,offset/2 );
 }
 
-WRITE_HANDLER ( raiden2_text_w )
+WRITE8_HANDLER ( raiden2_text_w )
 {
 	videoram[offset]=data;
 	tilemap_mark_tile_dirty( text_layer,offset/2 );
@@ -255,13 +255,13 @@ VIDEO_UPDATE (raiden2)
 		int mod = 0;
 		tick = 0;
 
-		if(keyboard_pressed(KEYCODE_O)) {
+		if(code_pressed(KEYCODE_O)) {
 			mod = 1;
 			tile_bank++;
 			if(tile_bank == 0x100)
 				tile_bank = 0;
 		}
-		if(keyboard_pressed(KEYCODE_I)) {
+		if(code_pressed(KEYCODE_I)) {
 			mod = 1;
 			if(tile_bank == 0)
 				tile_bank = 0x100;
@@ -282,17 +282,17 @@ VIDEO_UPDATE (raiden2)
 }
 
 
-static WRITE_HANDLER(sound_w)
+static WRITE8_HANDLER(sound_w)
 {
 }
 
 
-static READ_HANDLER(any_r)
+static READ8_HANDLER(any_r)
 {
 	return zz[offset];
 }
 
-static WRITE_HANDLER(any_w)
+static WRITE8_HANDLER(any_w)
 {
 	if(zz[offset] != data) {
 		switch(offset+0x400) {
@@ -319,7 +319,7 @@ static WRITE_HANDLER(any_w)
 enum {SZ=16};
 static UINT8 scroll[SZ];
 
-static WRITE_HANDLER(scroll_w)
+static WRITE8_HANDLER(scroll_w)
 {
 	int i;
 	scroll[offset] = data;
@@ -632,7 +632,7 @@ static struct GfxDecodeInfo raiden2_gfxdecodeinfo[] =
 
 static INTERRUPT_GEN( raiden2_interrupt )
 {
-	cpu_set_irq_line_and_vector(cpu_getactivecpu(), 0, HOLD_LINE, 0xc0/4);	/* VBL */
+	cpunum_set_input_line_and_vector(cpu_getactivecpu(), 0, HOLD_LINE, 0xc0/4);	/* VBL */
 }
 
 /* MACHINE DRIVERS */
@@ -1613,7 +1613,7 @@ static DRIVER_INIT (r2nocpu)
 	decrypt_sprites();
 
 	/* stop cpu, not the right cpu anyway */
-	cpu_set_reset_line(0, ASSERT_LINE);
+	cpunum_set_input_line(0, INPUT_LINE_RESET, ASSERT_LINE);
 
 }
 

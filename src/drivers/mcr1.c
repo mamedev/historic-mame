@@ -91,7 +91,7 @@ static const UINT8 *nvram_init;
  *
  *************************************/
 
-static READ_HANDLER( kick_dial_r )
+static READ8_HANDLER( kick_dial_r )
 {
 	return (readinputport(1) & 0x0f) | ((readinputport(6) << 4) & 0xf0);
 }
@@ -104,7 +104,7 @@ static READ_HANDLER( kick_dial_r )
  *
  *************************************/
 
-static READ_HANDLER( solarfox_input_0_r )
+static READ8_HANDLER( solarfox_input_0_r )
 {
 	/* This is a kludge; according to the wiring diagram, the player 2 */
 	/* controls are hooked up as documented below. If you go into test */
@@ -118,7 +118,7 @@ static READ_HANDLER( solarfox_input_0_r )
 }
 
 
-static READ_HANDLER( solarfox_input_1_r )
+static READ8_HANDLER( solarfox_input_1_r )
 {
 	/*  same deal as above */
 	if (mcr_cocktail_flip)
@@ -484,9 +484,9 @@ static DRIVER_INIT( solarfox )
 	nvram_init = hiscore_init;
 
 	MCR_CONFIGURE_SOUND(MCR_SSIO);
-	install_port_read_handler(0, 0x00, 0x00, solarfox_input_0_r);
-	install_port_read_handler(0, 0x01, 0x01, solarfox_input_1_r);
-	install_port_write_handler(0, 0x01, 0x01, mcr_control_port_w);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x00, 0x00, 0, 0, solarfox_input_0_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x01, 0x01, 0, 0, solarfox_input_1_r);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x01, 0x01, 0, 0, mcr_control_port_w);
 
 	mcr12_sprite_xoffs = 16;
 	mcr12_sprite_xoffs_flip = 0;
@@ -498,8 +498,8 @@ static DRIVER_INIT( kick )
 	nvram_init = NULL;
 
 	MCR_CONFIGURE_SOUND(MCR_SSIO);
-	install_port_read_handler(0, 0x01, 0x01, kick_dial_r);
-	install_port_write_handler(0, 0x03, 0x03, mcr_control_port_w);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0x01, 0x01, 0, 0, kick_dial_r);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x03, 0x03, 0, 0, mcr_control_port_w);
 
 	mcr12_sprite_xoffs = 0;
 	mcr12_sprite_xoffs_flip = 16;

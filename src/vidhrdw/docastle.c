@@ -140,7 +140,7 @@ PALETTE_INIT( dorunrun )
 	convert_color_prom(colortable,color_prom,1);
 }
 
-WRITE_HANDLER( docastle_videoram_w )
+WRITE8_HANDLER( docastle_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -150,7 +150,7 @@ WRITE_HANDLER( docastle_videoram_w )
 	}
 }
 
-WRITE_HANDLER( docastle_colorram_w )
+WRITE8_HANDLER( docastle_colorram_w )
 {
 	if (colorram[offset] != data)
 	{
@@ -160,27 +160,27 @@ WRITE_HANDLER( docastle_colorram_w )
 	}
 }
 
-READ_HANDLER( docastle_flipscreen_off_r )
+READ8_HANDLER( docastle_flipscreen_off_r )
 {
 	flip_screen_set(0);
 	tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
 	return 0;
 }
 
-READ_HANDLER( docastle_flipscreen_on_r )
+READ8_HANDLER( docastle_flipscreen_on_r )
 {
 	flip_screen_set(1);
 	tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
 	return 1;
 }
 
-WRITE_HANDLER( docastle_flipscreen_off_w )
+WRITE8_HANDLER( docastle_flipscreen_off_w )
 {
 	flip_screen_set(0);
 	tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
 }
 
-WRITE_HANDLER( docastle_flipscreen_on_w )
+WRITE8_HANDLER( docastle_flipscreen_on_w )
 {
 	flip_screen_set(1);
 	tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);

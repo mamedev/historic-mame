@@ -44,19 +44,19 @@ static PALETTE_INIT( skyraid )
 }
 
 
-static READ_HANDLER( skyraid_zeropage_r )
+static READ8_HANDLER( skyraid_zeropage_r )
 {
 	return memory_region(REGION_CPU1)[offset & 0xff];
 }
 
 
-static READ_HANDLER( skyraid_alpha_num_r)
+static READ8_HANDLER( skyraid_alpha_num_r)
 {
 	return skyraid_alpha_num_ram[offset & 0x7f];
 }
 
 
-static READ_HANDLER( skyraid_port_0_r )
+static READ8_HANDLER( skyraid_port_0_r )
 {
 	UINT8 val = readinputport(0);
 
@@ -69,19 +69,19 @@ static READ_HANDLER( skyraid_port_0_r )
 }
 
 
-static WRITE_HANDLER( skyraid_zeropage_w )
+static WRITE8_HANDLER( skyraid_zeropage_w )
 {
 	memory_region(REGION_CPU1)[offset & 0xff] = data;
 }
 
 
-static WRITE_HANDLER( skyraid_alpha_num_w )
+static WRITE8_HANDLER( skyraid_alpha_num_w )
 {
 	skyraid_alpha_num_ram[offset & 0x7f] = data;
 }
 
 
-static WRITE_HANDLER( skyraid_sound_w )
+static WRITE8_HANDLER( skyraid_sound_w )
 {
 	/* BIT0 => PLANE SWEEP */
 	/* BIT1 => MISSILE     */
@@ -94,19 +94,19 @@ static WRITE_HANDLER( skyraid_sound_w )
 }
 
 
-static WRITE_HANDLER( skyraid_range_w )
+static WRITE8_HANDLER( skyraid_range_w )
 {
 	analog_range = data & 0x3f;
 }
 
 
-static WRITE_HANDLER( skyraid_offset_w )
+static WRITE8_HANDLER( skyraid_offset_w )
 {
 	analog_offset = data & 0x3f;
 }
 
 
-static WRITE_HANDLER( skyraid_scroll_w )
+static WRITE8_HANDLER( skyraid_scroll_w )
 {
 	skyraid_scroll = data;
 }

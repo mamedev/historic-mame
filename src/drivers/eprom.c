@@ -52,14 +52,14 @@ static void update_interrupts(void)
 		newstate |= 6;
 
 	if (newstate)
-		cpu_set_irq_line(0, newstate, ASSERT_LINE);
+		cpunum_set_input_line(0, newstate, ASSERT_LINE);
 	else
-		cpu_set_irq_line(0, 7, CLEAR_LINE);
+		cpunum_set_input_line(0, 7, CLEAR_LINE);
 
 	if (newstate2)
-		cpu_set_irq_line(1, newstate2, ASSERT_LINE);
+		cpunum_set_input_line(1, newstate2, ASSERT_LINE);
 	else
-		cpu_set_irq_line(1, 7, CLEAR_LINE);
+		cpunum_set_input_line(1, 7, CLEAR_LINE);
 }
 
 
@@ -113,9 +113,9 @@ static WRITE16_HANDLER( eprom_latch_w )
 	if (ACCESSING_LSB)
 	{
 		if (data & 1)
-			cpu_set_reset_line(1, CLEAR_LINE);
+			cpunum_set_input_line(1, INPUT_LINE_RESET, CLEAR_LINE);
 		else
-			cpu_set_reset_line(1, ASSERT_LINE);
+			cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE);
 	}
 }
 
@@ -545,13 +545,12 @@ static DRIVER_INIT( eprom )
 {
 	atarigen_eeprom_default = NULL;
 	atarijsa_init(2, 6, 1, 0x0002);
-	atarigen_init_6502_speedup(2, 0x4158, 0x4170);
 
 	/* install CPU synchronization handlers */
-	sync_data = install_mem_read16_handler(0, 0x16cc00, 0x16cc01, sync_r);
-	sync_data = install_mem_read16_handler(1, 0x16cc00, 0x16cc01, sync_r);
-	sync_data = install_mem_write16_handler(0, 0x16cc00, 0x16cc01, sync_w);
-	sync_data = install_mem_write16_handler(1, 0x16cc00, 0x16cc01, sync_w);
+	sync_data = memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x16cc00, 0x16cc01, 0, 0, sync_r);
+	sync_data = memory_install_read16_handler(1, ADDRESS_SPACE_PROGRAM, 0x16cc00, 0x16cc01, 0, 0, sync_r);
+	sync_data = memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x16cc00, 0x16cc01, 0, 0, sync_w);
+	sync_data = memory_install_write16_handler(1, ADDRESS_SPACE_PROGRAM, 0x16cc00, 0x16cc01, 0, 0, sync_w);
 }
 
 
@@ -559,7 +558,6 @@ static DRIVER_INIT( klaxp )
 {
 	atarigen_eeprom_default = NULL;
 	atarijsa_init(1, 2, 1, 0x0002);
-	atarigen_init_6502_speedup(1, 0x4159, 0x4171);
 }
 
 

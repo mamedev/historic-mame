@@ -41,20 +41,20 @@ extern UINT8 *nitedrvr_ram;
 extern int nitedrvr_gear;
 extern int nitedrvr_track;
 
-extern READ_HANDLER( nitedrvr_in0_r );
-extern READ_HANDLER( nitedrvr_in1_r );
-extern READ_HANDLER( nitedrvr_ram_r );
-extern READ_HANDLER( nitedrvr_steering_reset_r );
-extern WRITE_HANDLER( nitedrvr_steering_reset_w );
-extern WRITE_HANDLER( nitedrvr_out0_w );
-extern WRITE_HANDLER( nitedrvr_out1_w );
-extern WRITE_HANDLER( nitedrvr_ram_w );
+extern READ8_HANDLER( nitedrvr_in0_r );
+extern READ8_HANDLER( nitedrvr_in1_r );
+extern READ8_HANDLER( nitedrvr_ram_r );
+extern READ8_HANDLER( nitedrvr_steering_reset_r );
+extern WRITE8_HANDLER( nitedrvr_steering_reset_w );
+extern WRITE8_HANDLER( nitedrvr_out0_w );
+extern WRITE8_HANDLER( nitedrvr_out1_w );
+extern WRITE8_HANDLER( nitedrvr_ram_w );
 extern void nitedrvr_crash_toggle(int dummy);
 
 extern UINT8 *nitedrvr_hvc;
 
-extern WRITE_HANDLER( nitedrvr_videoram_w );
-extern WRITE_HANDLER( nitedrvr_hvc_w );
+extern WRITE8_HANDLER( nitedrvr_videoram_w );
+extern WRITE8_HANDLER( nitedrvr_hvc_w );
 
 extern VIDEO_START( nitedrvr );
 extern VIDEO_UPDATE( nitedrvr );

@@ -1683,10 +1683,10 @@ static void i960_set_info(UINT32 state, union cpuinfo *info)
 	switch(state) {
 		// Interfacing
 	case CPUINFO_PTR_IRQ_CALLBACK:          i960.irq_cb = info->irqcallback;        break;
-	case CPUINFO_INT_IRQ_STATE + I960_IRQ0:	set_irq_line(I960_IRQ0, info->i);		break;
-	case CPUINFO_INT_IRQ_STATE + I960_IRQ1:	set_irq_line(I960_IRQ1, info->i);		break;
-	case CPUINFO_INT_IRQ_STATE + I960_IRQ2:	set_irq_line(I960_IRQ2, info->i);		break;
-	case CPUINFO_INT_IRQ_STATE + I960_IRQ3:	set_irq_line(I960_IRQ3, info->i);		break;
+	case CPUINFO_INT_INPUT_STATE + I960_IRQ0:set_irq_line(I960_IRQ0, info->i);		break;
+	case CPUINFO_INT_INPUT_STATE + I960_IRQ1:set_irq_line(I960_IRQ1, info->i);		break;
+	case CPUINFO_INT_INPUT_STATE + I960_IRQ2:set_irq_line(I960_IRQ2, info->i);		break;
+	case CPUINFO_INT_INPUT_STATE + I960_IRQ3:set_irq_line(I960_IRQ3, info->i);		break;
 
 	default:
 		osd_die("i960_set_info %x\n", state);
@@ -1824,7 +1824,7 @@ void i960_get_info(UINT32 state, union cpuinfo *info)
 	case CPUINFO_STR_CORE_FILE:          strcpy(info->s = cpuintrf_temp_str(), __FILE__); break;
 	case CPUINFO_STR_FLAGS:	    	     strcpy(info->s = cpuintrf_temp_str(), " ");      break;
 	case CPUINFO_INT_ENDIANNESS:         info->i = CPU_IS_LE;                             break;
-	case CPUINFO_INT_IRQ_LINES:          info->i = 4;                                     break;
+	case CPUINFO_INT_INPUT_LINES:        info->i = 4;                                     break;
 	case CPUINFO_INT_DEFAULT_IRQ_VECTOR: info->i = -1;                                    break;
 
 		// CPU main state

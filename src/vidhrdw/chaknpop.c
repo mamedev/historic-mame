@@ -96,12 +96,12 @@ static void tx_tilemap_mark_all_dirty(void)
 	tilemap_set_flip(tx_tilemap, flip_x | flip_y);
 }
 
-READ_HANDLER( chaknpop_gfxmode_r )
+READ8_HANDLER( chaknpop_gfxmode_r )
 {
 	return gfxmode;
 }
 
-WRITE_HANDLER( chaknpop_gfxmode_w )
+WRITE8_HANDLER( chaknpop_gfxmode_w )
 {
 	if (gfxmode != data)
 	{
@@ -127,7 +127,7 @@ WRITE_HANDLER( chaknpop_gfxmode_w )
 	}
 }
 
-WRITE_HANDLER( chaknpop_txram_w )
+WRITE8_HANDLER( chaknpop_txram_w )
 {
 	if (chaknpop_txram[offset] != data)
 	{
@@ -136,7 +136,7 @@ WRITE_HANDLER( chaknpop_txram_w )
 	}
 }
 
-WRITE_HANDLER( chaknpop_attrram_w )
+WRITE8_HANDLER( chaknpop_attrram_w )
 {
 	if (chaknpop_attrram[offset] != data)
 	{

@@ -18,7 +18,7 @@ MACHINE_INIT( pitnrun )
 {
 	zaccept = 1;
 	zready = 0;
-	cpu_set_irq_line(2,0,CLEAR_LINE);
+	cpunum_set_input_line(2,0,CLEAR_LINE);
 }
 
 void pitnrun_mcu_real_data_r(int param)
@@ -26,7 +26,7 @@ void pitnrun_mcu_real_data_r(int param)
 	zaccept = 1;
 }
 
-READ_HANDLER( pitnrun_mcu_data_r )
+READ8_HANDLER( pitnrun_mcu_data_r )
 {
 	timer_set(TIME_NOW,0,pitnrun_mcu_real_data_r);
 	return toz80;
@@ -35,16 +35,16 @@ READ_HANDLER( pitnrun_mcu_data_r )
 void pitnrun_mcu_real_data_w(int data)
 {
 	zready = 1;
-	cpu_set_irq_line(2,0,ASSERT_LINE);
+	cpunum_set_input_line(2,0,ASSERT_LINE);
 	fromz80 = data;
 }
 
-WRITE_HANDLER( pitnrun_mcu_data_w )
+WRITE8_HANDLER( pitnrun_mcu_data_w )
 {
 	timer_set(TIME_NOW,data,pitnrun_mcu_real_data_w);
 }
 
-READ_HANDLER( pitnrun_mcu_status_r )
+READ8_HANDLER( pitnrun_mcu_status_r )
 {
 	/* mcu synchronization */
 	cpu_yielduntil_time (TIME_IN_USEC(5));
@@ -55,12 +55,12 @@ READ_HANDLER( pitnrun_mcu_status_r )
 
 static unsigned char portA_in,portA_out;
 
-READ_HANDLER( pitnrun_68705_portA_r )
+READ8_HANDLER( pitnrun_68705_portA_r )
 {
 	return portA_in;
 }
 
-WRITE_HANDLER( pitnrun_68705_portA_w )
+WRITE8_HANDLER( pitnrun_68705_portA_w )
 {
 	portA_out = data;
 }
@@ -85,7 +85,7 @@ WRITE_HANDLER( pitnrun_68705_portA_w )
  *               the main Z80 memory location to access)
  */
 
-READ_HANDLER( pitnrun_68705_portB_r )
+READ8_HANDLER( pitnrun_68705_portB_r )
 {
 	return 0xff;
 }
@@ -103,13 +103,13 @@ void pitnrun_mcu_status_real_w(int data)
 	zaccept = 0;
 }
 
-WRITE_HANDLER( pitnrun_68705_portB_w )
+WRITE8_HANDLER( pitnrun_68705_portB_w )
 {
 	if (~data & 0x02)
 	{
 		/* 68705 is going to read data from the Z80 */
 		timer_set(TIME_NOW,0,pitnrun_mcu_data_real_r);
-		cpu_set_irq_line(2,0,CLEAR_LINE);
+		cpunum_set_input_line(2,0,CLEAR_LINE);
 		portA_in = fromz80;
 	}
 	if (~data & 0x04)
@@ -149,7 +149,7 @@ WRITE_HANDLER( pitnrun_68705_portB_w )
  *                  passes through)
  */
 
-READ_HANDLER( pitnrun_68705_portC_r )
+READ8_HANDLER( pitnrun_68705_portC_r )
 {
 	return (zready << 0) | (zaccept << 1);
 }

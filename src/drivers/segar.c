@@ -65,9 +65,9 @@
 static INTERRUPT_GEN( segar_interrupt )
 {
 	if (readinputport(5) & 1)       /* get status of the F2 key */
-		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);	/* trigger self test */
+		cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);	/* trigger self test */
 	else
-		cpu_set_irq_line(0, 0, HOLD_LINE);
+		cpunum_set_input_line(0, 0, HOLD_LINE);
 }
 
 
@@ -95,7 +95,7 @@ static INTERRUPT_GEN( segar_interrupt )
 
 ***************************************************************************/
 
-static READ_HANDLER( segar_ports_r )
+static READ8_HANDLER( segar_ports_r )
 {
 	int dip1, dip2;
 
@@ -131,17 +131,17 @@ static READ_HANDLER( segar_ports_r )
  *
  *************************************/
 
-static WRITE_HANDLER( sindbadm_soundport_w )
+static WRITE8_HANDLER( sindbadm_soundport_w )
 {
 	soundlatch_w(0,data);
-	cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 	/* spin for a while to let the Z80 read the command */
 	cpu_spinuntil_time(TIME_IN_USEC(50));
 }
 
 
 /* the data lines are flipped */
-static WRITE_HANDLER( sindbadm_SN76496_0_w )
+static WRITE8_HANDLER( sindbadm_SN76496_0_w )
 {
 	int flipped = ((data >> 7) & 0x01) | ((data >> 5) & 0x02) | ((data >> 3) & 0x04) | ((data >> 1) & 0x08) |
 			      ((data << 1) & 0x10) | ((data << 3) & 0x20) | ((data << 5) & 0x40) | ((data << 7) & 0x80);
@@ -149,7 +149,7 @@ static WRITE_HANDLER( sindbadm_SN76496_0_w )
 }
 
 
-static WRITE_HANDLER( sindbadm_SN76496_1_w )
+static WRITE8_HANDLER( sindbadm_SN76496_1_w )
 {
 	int flipped = ((data >> 7) & 0x01) | ((data >> 5) & 0x02) | ((data >> 3) & 0x04) | ((data >> 1) & 0x08) |
 			      ((data << 1) & 0x10) | ((data << 3) & 0x20) | ((data << 5) & 0x40) | ((data << 7) & 0x80);
@@ -1642,8 +1642,8 @@ static DRIVER_INIT( astrob )
 	/* This game uses the 315-0062 security chip */
 	sega_security(62);
 
-	install_port_write_handler(0, 0x38, 0x38, sega_sh_speechboard_w);
-	install_port_write_handler(0, 0x3e, 0x3f, astrob_audio_ports_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x38, 0x38, 0, 0, sega_sh_speechboard_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x3e, 0x3f, 0, 0, astrob_audio_ports_w);
 }
 
 
@@ -1659,8 +1659,8 @@ static DRIVER_INIT( monsterb )
 	/* This game uses the 315-0082 security chip */
 	sega_security(82);
 
-	install_port_write_handler(0, 0x0c, 0x0f, monsterb_audio_8255_w);
-	install_port_write_handler(0, 0xbc, 0xbc, monsterb_back_port_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x0c, 0x0f, 0, 0, monsterb_audio_8255_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0xbc, 0xbc, 0, 0, monsterb_back_port_w);
 }
 
 static DRIVER_INIT( monster2 )
@@ -1673,8 +1673,8 @@ static DRIVER_INIT( monster2 )
 	/* This game uses the 315-0082 security chip */
 	sega_security(82);
 
-	install_port_write_handler(0, 0x0c, 0x0f, monsterb_audio_8255_w);
-	install_port_write_handler(0, 0xbc, 0xbc, monsterb_back_port_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x0c, 0x0f, 0, 0, monsterb_audio_8255_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0xbc, 0xbc, 0, 0, monsterb_back_port_w);
 }
 
 
@@ -1683,12 +1683,12 @@ static DRIVER_INIT( spaceod )
 	/* This game uses the 315-0063 security chip */
 	sega_security(63);
 
-	install_port_write_handler(0, 0x08, 0x08, spaceod_back_port_w);
-	install_port_write_handler(0, 0x09, 0x09, spaceod_backshift_clear_w);
-	install_port_write_handler(0, 0x0a, 0x0a, spaceod_backshift_w);
-	install_port_write_handler(0, 0x0b, 0x0c, spaceod_nobackfill_w);
-	install_port_write_handler(0, 0x0d, 0x0d, spaceod_backfill_w);
-	install_port_write_handler(0, 0x0e, 0x0f, spaceod_audio_ports_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x08, 0x08, 0, 0, spaceod_back_port_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x09, 0x09, 0, 0, spaceod_backshift_clear_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x0a, 0x0a, 0, 0, spaceod_backshift_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x0b, 0x0c, 0, 0, spaceod_nobackfill_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x0d, 0x0d, 0, 0, spaceod_backfill_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x0e, 0x0f, 0, 0, spaceod_audio_ports_w);
 }
 
 
@@ -1697,9 +1697,9 @@ static DRIVER_INIT( pignewt )
 	/* This game uses the 315-0063? security chip */
 	sega_security(63);
 
-	install_port_write_handler(0, 0xb4, 0xb5, pignewt_back_color_w);  /* Just guessing */
-	install_port_write_handler(0, 0xb8, 0xbc, pignewt_back_ports_w);   /* Just guessing */
-	install_port_write_handler(0, 0xbe, 0xbe, MWA8_NOP);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0xb4, 0xb5, 0, 0, pignewt_back_color_w);  /* Just guessing */
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0xb8, 0xbc, 0, 0, pignewt_back_ports_w);   /* Just guessing */
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0xbe, 0xbe, 0, 0, MWA8_NOP);
 }
 
 

@@ -47,22 +47,22 @@ VIDEO_START(freekick);
 VIDEO_UPDATE(gigas);
 VIDEO_UPDATE(pbillrd);
 VIDEO_UPDATE(freekick);
-WRITE_HANDLER( freek_videoram_w );
+WRITE8_HANDLER( freek_videoram_w );
 
 static int oigas_inval,oigas_outval,oigas_cnt;//oigas
 static int romaddr;
 
-static WRITE_HANDLER( snd_rom_addr_l_w )
+static WRITE8_HANDLER( snd_rom_addr_l_w )
 {
 	romaddr = (romaddr & 0xff00) | data;
 }
 
-static WRITE_HANDLER( snd_rom_addr_h_w )
+static WRITE8_HANDLER( snd_rom_addr_h_w )
 {
 	romaddr = (romaddr & 0x00ff) | (data << 8);
 }
 
-static READ_HANDLER( snd_rom_r )
+static READ8_HANDLER( snd_rom_r )
 {
 	return memory_region(REGION_USER1)[romaddr & 0x7fff];
 }
@@ -84,7 +84,7 @@ MACHINE_INIT( freekckb )
 }
 
 
-static WRITE_HANDLER( flipscreen_w )
+static WRITE8_HANDLER( flipscreen_w )
 {
 	/* flip Y/X could be the other way round... */
 	if (offset)
@@ -93,7 +93,7 @@ static WRITE_HANDLER( flipscreen_w )
 		flip_screen_x_set(~data & 1);
 }
 
-static WRITE_HANDLER( coin_w )
+static WRITE8_HANDLER( coin_w )
 {
 	coin_counter_w(offset,~data & 1);
 }
@@ -101,24 +101,24 @@ static WRITE_HANDLER( coin_w )
 
 static int spinner;
 
-static WRITE_HANDLER( spinner_select_w )
+static WRITE8_HANDLER( spinner_select_w )
 {
 	spinner = data & 1;
 }
 
-static READ_HANDLER( spinner_r )
+static READ8_HANDLER( spinner_r )
 {
 	return readinputport(5 + spinner);
 }
 
-static READ_HANDLER( gigas_spinner_r )
+static READ8_HANDLER( gigas_spinner_r )
 {
 	return readinputport( spinner );
 }
 
 
 
-static WRITE_HANDLER( pbillrd_bankswitch_w )
+static WRITE8_HANDLER( pbillrd_bankswitch_w )
 {
 	cpu_setbank(1,memory_region(REGION_CPU1) + 0x10000 + 0x4000 * (data & 1));
 }
@@ -126,14 +126,14 @@ static WRITE_HANDLER( pbillrd_bankswitch_w )
 
 static int nmi_en;
 
-static WRITE_HANDLER( nmi_enable_w )
+static WRITE8_HANDLER( nmi_enable_w )
 {
 	nmi_en = data & 1;
 }
 
 static INTERRUPT_GEN( freekick_irqgen )
 {
-	if (nmi_en) cpu_set_irq_line(0,IRQ_LINE_NMI,PULSE_LINE);
+	if (nmi_en) cpunum_set_input_line(0,INPUT_LINE_NMI,PULSE_LINE);
 }
 
 static ADDRESS_MAP_START( gigas_readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -173,7 +173,7 @@ ADDRESS_MAP_END
 
 
 
-static WRITE_HANDLER(oigas_5_w)
+static WRITE8_HANDLER(oigas_5_w)
 {
 	if(data>0xc0&&data<0xe0)oigas_cnt=1;
 	switch(oigas_cnt)
@@ -183,7 +183,7 @@ static WRITE_HANDLER(oigas_5_w)
 	}
 }
 
-static READ_HANDLER(oigas_3_r)
+static READ8_HANDLER(oigas_3_r)
 {
 	switch(++oigas_cnt)
 	{
@@ -219,7 +219,7 @@ static READ_HANDLER(oigas_3_r)
 	return 0;
 }
 
-static READ_HANDLER(oigas_2_r)
+static READ8_HANDLER(oigas_2_r)
 {
 	return 1;
 }
@@ -298,12 +298,12 @@ ADDRESS_MAP_END
 
 static int ff_data;
 
-static READ_HANDLER (freekick_ff_r)
+static READ8_HANDLER (freekick_ff_r)
 {
 	return ff_data;
 }
 
-static WRITE_HANDLER (freekick_ff_w)
+static WRITE8_HANDLER (freekick_ff_w)
 {
 	ff_data = data;
 }

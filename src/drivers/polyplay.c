@@ -86,11 +86,11 @@ emulated now. ;)
 extern unsigned char *polyplay_characterram;
 PALETTE_INIT( polyplay );
 VIDEO_UPDATE( polyplay );
-READ_HANDLER( polyplay_characterram_r );
-WRITE_HANDLER( polyplay_characterram_w );
+READ8_HANDLER( polyplay_characterram_r );
+WRITE8_HANDLER( polyplay_characterram_w );
 
 /* I/O Port handling */
-static READ_HANDLER( polyplay_random_read );
+static READ8_HANDLER( polyplay_random_read );
 
 /* sound handling */
 void set_channel1(int active);
@@ -110,8 +110,8 @@ void polyplay_sh_update(void);
 /* timer handling */
 static void timer_callback(int param);
 static void* polyplay_timer;
-static WRITE_HANDLER( polyplay_start_timer2 );
-static WRITE_HANDLER( polyplay_sound_channel );
+static WRITE8_HANDLER( polyplay_start_timer2 );
+static WRITE8_HANDLER( polyplay_sound_channel );
 
 
 /* Polyplay Sound Interface */
@@ -141,7 +141,7 @@ static MACHINE_INIT( polyplay )
 
 static INTERRUPT_GEN( periodic_interrupt )
 {
-	cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0x4e);
+	cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, 0x4e);
 }
 
 
@@ -157,7 +157,7 @@ static INTERRUPT_GEN( coin_interrupt )
 	{
 		if (last == 0)    /* coin inserted */
 		{
-			cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0x50);
+			cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, 0x50);
 		}
 
 		last = 1;
@@ -209,7 +209,7 @@ INPUT_PORTS_START( polyplay )
 INPUT_PORTS_END
 
 
-static WRITE_HANDLER( polyplay_sound_channel )
+static WRITE8_HANDLER( polyplay_sound_channel )
 {
 	switch(offset) {
 	case 0x00:
@@ -257,7 +257,7 @@ static WRITE_HANDLER( polyplay_sound_channel )
 	}
 }
 
-static WRITE_HANDLER( polyplay_start_timer2 )
+static WRITE8_HANDLER( polyplay_start_timer2 )
 {
 	if (data == 0x03)
 		timer_adjust(polyplay_timer, TIME_NEVER, 0, 0);
@@ -266,7 +266,7 @@ static WRITE_HANDLER( polyplay_start_timer2 )
 		timer_adjust(polyplay_timer, TIME_IN_HZ(40), 0, TIME_IN_HZ(40));
 }
 
-static READ_HANDLER( polyplay_random_read )
+static READ8_HANDLER( polyplay_random_read )
 {
 	return rand() & 0xff;
 }
@@ -377,7 +377,7 @@ ROM_END
 
 static void timer_callback(int param)
 {
-	cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0x4c);
+	cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, 0x4c);
 }
 
 /* game driver */

@@ -99,17 +99,17 @@ VIDEO_UPDATE( generic_bitmapped )
 }
 
 
-READ_HANDLER( videoram_r )
+READ8_HANDLER( videoram_r )
 {
 	return videoram[offset];
 }
 
-READ_HANDLER( colorram_r )
+READ8_HANDLER( colorram_r )
 {
 	return colorram[offset];
 }
 
-WRITE_HANDLER( videoram_w )
+WRITE8_HANDLER( videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -119,7 +119,7 @@ WRITE_HANDLER( videoram_w )
 	}
 }
 
-WRITE_HANDLER( colorram_w )
+WRITE8_HANDLER( colorram_w )
 {
 	if (colorram[offset] != data)
 	{
@@ -131,12 +131,12 @@ WRITE_HANDLER( colorram_w )
 
 
 
-READ_HANDLER( spriteram_r )
+READ8_HANDLER( spriteram_r )
 {
 	return spriteram[offset];
 }
 
-WRITE_HANDLER( spriteram_w )
+WRITE8_HANDLER( spriteram_w )
 {
 	spriteram[offset] = data;
 }
@@ -151,12 +151,12 @@ WRITE16_HANDLER( spriteram16_w )
 	COMBINE_DATA(spriteram16+offset);
 }
 
-READ_HANDLER( spriteram_2_r )
+READ8_HANDLER( spriteram_2_r )
 {
 	return spriteram_2[offset];
 }
 
-WRITE_HANDLER( spriteram_2_w )
+WRITE8_HANDLER( spriteram_2_w )
 {
 	spriteram_2[offset] = data;
 }
@@ -204,7 +204,7 @@ more control is needed over what is buffered.
 
 */
 
-WRITE_HANDLER( buffer_spriteram_w )
+WRITE8_HANDLER( buffer_spriteram_w )
 {
 	memcpy(buffered_spriteram,spriteram,spriteram_size);
 }
@@ -219,7 +219,7 @@ WRITE32_HANDLER( buffer_spriteram32_w )
 	memcpy(buffered_spriteram32,spriteram32,spriteram_size);
 }
 
-WRITE_HANDLER( buffer_spriteram_2_w )
+WRITE8_HANDLER( buffer_spriteram_2_w )
 {
 	memcpy(buffered_spriteram_2,spriteram_2,spriteram_2_size);
 }

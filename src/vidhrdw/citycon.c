@@ -81,7 +81,7 @@ VIDEO_START( citycon )
 
 ***************************************************************************/
 
-WRITE_HANDLER( citycon_videoram_w )
+WRITE8_HANDLER( citycon_videoram_w )
 {
 	if (citycon_videoram[offset] != data)
 	{
@@ -91,13 +91,13 @@ WRITE_HANDLER( citycon_videoram_w )
 }
 
 
-WRITE_HANDLER( citycon_linecolor_w )
+WRITE8_HANDLER( citycon_linecolor_w )
 {
 	citycon_linecolor[offset] = data;
 }
 
 
-WRITE_HANDLER( citycon_background_w )
+WRITE8_HANDLER( citycon_background_w )
 {
 	/* bits 4-7 control the background image */
 	if (bg_image != (data >> 4))

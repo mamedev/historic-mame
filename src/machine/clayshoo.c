@@ -20,7 +20,7 @@ static data8_t analog_port_val;
  *
  *************************************/
 
-static WRITE_HANDLER( input_port_select_w )
+static WRITE8_HANDLER( input_port_select_w )
 {
 	input_port_select = data;
 }
@@ -44,7 +44,7 @@ static data8_t difficulty_input_port_r(int bit)
 }
 
 
-static READ_HANDLER( input_port_r )
+static READ8_HANDLER( input_port_r )
 {
 	data8_t ret = 0;
 
@@ -105,7 +105,7 @@ static double compute_duration(int analog_pos)
 }
 
 
-WRITE_HANDLER( clayshoo_analog_reset_w )
+WRITE8_HANDLER( clayshoo_analog_reset_w )
 {
 	/* reset the analog value, and start two times that will fire
 	   off in a short period proportional to the position of the
@@ -118,7 +118,7 @@ WRITE_HANDLER( clayshoo_analog_reset_w )
 }
 
 
-READ_HANDLER( clayshoo_analog_r )
+READ8_HANDLER( clayshoo_analog_r )
 {
 	return analog_port_val;
 }

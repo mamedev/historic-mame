@@ -166,19 +166,19 @@ extern unsigned char *wiz_attributesram;
 extern unsigned char *wiz_attributesram2;
 extern unsigned char *wiz_sprite_bank;
 
-WRITE_HANDLER( wiz_char_bank_select_w );
-WRITE_HANDLER( wiz_attributes_w );
-WRITE_HANDLER( wiz_palettebank_w );
-WRITE_HANDLER( wiz_bgcolor_w );
-WRITE_HANDLER( wiz_flipx_w );
-WRITE_HANDLER( wiz_flipy_w );
+WRITE8_HANDLER( wiz_char_bank_select_w );
+WRITE8_HANDLER( wiz_attributes_w );
+WRITE8_HANDLER( wiz_palettebank_w );
+WRITE8_HANDLER( wiz_bgcolor_w );
+WRITE8_HANDLER( wiz_flipx_w );
+WRITE8_HANDLER( wiz_flipy_w );
 VIDEO_START( wiz );
 PALETTE_INIT( wiz );
 VIDEO_UPDATE( wiz );
 VIDEO_UPDATE( stinger );
 VIDEO_UPDATE( kungfut );
 
-static WRITE_HANDLER( sound_command_w )
+static WRITE8_HANDLER( sound_command_w )
 {
 	static int dsc0=1, dsc1=1;
 
@@ -203,7 +203,7 @@ static WRITE_HANDLER( sound_command_w )
 	}
 }
 
-static READ_HANDLER( wiz_protection_r )
+static READ8_HANDLER( wiz_protection_r )
 {
 	switch (wiz_colorram2[0])
 	{
@@ -215,7 +215,7 @@ static READ_HANDLER( wiz_protection_r )
 	return wiz_colorram2[0];
 }
 
-static WRITE_HANDLER( wiz_coin_counter_w )
+static WRITE8_HANDLER( wiz_coin_counter_w )
 {
 	coin_counter_w(offset,data);
 }
@@ -1122,7 +1122,7 @@ static DRIVER_INIT( stinger )
 
 static DRIVER_INIT( wiz )
 {
-	install_mem_read_handler(0, 0xd400, 0xd400, wiz_protection_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd400, 0xd400, 0, 0, wiz_protection_r);
 }
 
 

@@ -104,61 +104,61 @@ PALETTE_INIT( ghostb )
 	}
 }
 
-WRITE_HANDLER( dec8_bac06_0_w )
+WRITE8_HANDLER( dec8_bac06_0_w )
 {
 	dec8_pf0_control[offset]=data;
 }
 
-WRITE_HANDLER( dec8_bac06_1_w )
+WRITE8_HANDLER( dec8_bac06_1_w )
 {
 	dec8_pf1_control[offset]=data;
 }
 
-WRITE_HANDLER( dec8_pf0_data_w )
+WRITE8_HANDLER( dec8_pf0_data_w )
 {
 	dec8_pf0_data[offset]=data;
 	tilemap_mark_tile_dirty(dec8_pf0_tilemap,offset/2);
 }
 
-WRITE_HANDLER( dec8_pf1_data_w )
+WRITE8_HANDLER( dec8_pf1_data_w )
 {
 	dec8_pf1_data[offset]=data;
 	tilemap_mark_tile_dirty(dec8_pf1_tilemap,offset/2);
 }
 
-READ_HANDLER( dec8_pf0_data_r )
+READ8_HANDLER( dec8_pf0_data_r )
 {
 	return dec8_pf0_data[offset];
 }
 
-READ_HANDLER( dec8_pf1_data_r )
+READ8_HANDLER( dec8_pf1_data_r )
 {
 	return dec8_pf1_data[offset];
 }
 
-WRITE_HANDLER( dec8_videoram_w )
+WRITE8_HANDLER( dec8_videoram_w )
 {
 	videoram[offset]=data;
 	tilemap_mark_tile_dirty( dec8_fix_tilemap,offset/2 );
 }
 
-WRITE_HANDLER( srdarwin_videoram_w )
+WRITE8_HANDLER( srdarwin_videoram_w )
 {
 	videoram[offset]=data;
 	tilemap_mark_tile_dirty( dec8_fix_tilemap,offset );
 }
 
-WRITE_HANDLER( dec8_scroll1_w )
+WRITE8_HANDLER( dec8_scroll1_w )
 {
 	scroll1[offset]=data;
 }
 
-WRITE_HANDLER( dec8_scroll2_w )
+WRITE8_HANDLER( dec8_scroll2_w )
 {
 	scroll2[offset]=data;
 }
 
-WRITE_HANDLER( srdarwin_control_w )
+WRITE8_HANDLER( srdarwin_control_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -176,7 +176,7 @@ WRITE_HANDLER( srdarwin_control_w )
     }
 }
 
-WRITE_HANDLER( lastmiss_control_w )
+WRITE8_HANDLER( lastmiss_control_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -193,12 +193,12 @@ WRITE_HANDLER( lastmiss_control_w )
 	scroll2[2]=(data>>6)&1;
 
 	if (data&0x80)
-		cpu_set_reset_line(1,CLEAR_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_RESET, CLEAR_LINE);
 	else
-		cpu_set_reset_line(1,ASSERT_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE);
 }
 
-WRITE_HANDLER( shackled_control_w )
+WRITE8_HANDLER( shackled_control_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -211,17 +211,17 @@ WRITE_HANDLER( shackled_control_w )
 	scroll2[2]=(data>>6)&1;
 }
 
-WRITE_HANDLER( lastmiss_scrollx_w )
+WRITE8_HANDLER( lastmiss_scrollx_w )
 {
 	scroll2[1]=data;
 }
 
-WRITE_HANDLER( lastmiss_scrolly_w )
+WRITE8_HANDLER( lastmiss_scrolly_w )
 {
 	scroll2[3]=data;
 }
 
-WRITE_HANDLER( gondo_scroll_w )
+WRITE8_HANDLER( gondo_scroll_w )
 {
 	switch (offset) {
 		case 0x0:

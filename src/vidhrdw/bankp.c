@@ -87,12 +87,12 @@ PALETTE_INIT( bankp )
 	/* the bottom half of the PROM seems to be not used */
 }
 
-WRITE_HANDLER( bankp_scroll_w )
+WRITE8_HANDLER( bankp_scroll_w )
 {
 	scroll_x = data;
 }
 
-WRITE_HANDLER( bankp_videoram_w )
+WRITE8_HANDLER( bankp_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -101,7 +101,7 @@ WRITE_HANDLER( bankp_videoram_w )
 	}
 }
 
-WRITE_HANDLER( bankp_colorram_w )
+WRITE8_HANDLER( bankp_colorram_w )
 {
 	if (colorram[offset] != data)
 	{
@@ -110,7 +110,7 @@ WRITE_HANDLER( bankp_colorram_w )
 	}
 }
 
-WRITE_HANDLER( bankp_videoram2_w )
+WRITE8_HANDLER( bankp_videoram2_w )
 {
 	if (bankp_videoram2[offset] != data)
 	{
@@ -119,7 +119,7 @@ WRITE_HANDLER( bankp_videoram2_w )
 	}
 }
 
-WRITE_HANDLER( bankp_colorram2_w )
+WRITE8_HANDLER( bankp_colorram2_w )
 {
 	if (bankp_colorram2[offset] != data)
 	{
@@ -128,7 +128,7 @@ WRITE_HANDLER( bankp_colorram2_w )
 	}
 }
 
-WRITE_HANDLER( bankp_out_w )
+WRITE8_HANDLER( bankp_out_w )
 {
 	/* bits 0-1 are playfield priority */
 	/* TODO: understand how this works */

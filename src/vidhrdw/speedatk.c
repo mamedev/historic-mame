@@ -64,7 +64,7 @@ PALETTE_INIT( speedatk )
 		colortable[i] = color_prom[i];	
 }
 
-WRITE_HANDLER( speedatk_videoram_w )
+WRITE8_HANDLER( speedatk_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -73,7 +73,7 @@ WRITE_HANDLER( speedatk_videoram_w )
 	}
 }
 
-WRITE_HANDLER( speedatk_colorram_w )
+WRITE8_HANDLER( speedatk_colorram_w )
 {
 	if (colorram[offset] != data)
 	{
@@ -82,7 +82,7 @@ WRITE_HANDLER( speedatk_colorram_w )
 	}
 }
 
-WRITE_HANDLER( speedatk_flip_screen_w )
+WRITE8_HANDLER( speedatk_flip_screen_w )
 {
 	flip_screen_set(data);
 }

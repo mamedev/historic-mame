@@ -152,31 +152,31 @@ VBlank duration: 1/VSYNC * (16/256) = 1017.6 us
 
 extern UINT8 *gottlieb_charram;
 
-extern WRITE_HANDLER( gottlieb_videoram_w );
-extern WRITE_HANDLER( gottlieb_charram_w );
-extern WRITE_HANDLER( gottlieb_video_outputs_w );
-extern WRITE_HANDLER( usvsthem_video_outputs_w );
-extern WRITE_HANDLER( gottlieb_paletteram_w );
+extern WRITE8_HANDLER( gottlieb_videoram_w );
+extern WRITE8_HANDLER( gottlieb_charram_w );
+extern WRITE8_HANDLER( gottlieb_video_outputs_w );
+extern WRITE8_HANDLER( usvsthem_video_outputs_w );
+extern WRITE8_HANDLER( gottlieb_paletteram_w );
 
 extern VIDEO_START( gottlieb );
 extern VIDEO_UPDATE( gottlieb );
 extern VIDEO_START( vidvince );
 
-extern WRITE_HANDLER( gottlieb_sh_w );
+extern WRITE8_HANDLER( gottlieb_sh_w );
 
 extern UINT8 *riot_ram;
-extern READ_HANDLER( riot_ram_r );
-extern READ_HANDLER( gottlieb_riot_r );
-extern WRITE_HANDLER( riot_ram_w );
-extern WRITE_HANDLER( gottlieb_riot_w );
-extern WRITE_HANDLER( gottlieb_speech_w );
-extern WRITE_HANDLER( gottlieb_speech_clock_DAC_w );
+extern READ8_HANDLER( riot_ram_r );
+extern READ8_HANDLER( gottlieb_riot_r );
+extern WRITE8_HANDLER( riot_ram_w );
+extern WRITE8_HANDLER( gottlieb_riot_w );
+extern WRITE8_HANDLER( gottlieb_speech_w );
+extern WRITE8_HANDLER( gottlieb_speech_clock_DAC_w );
 extern void gottlieb_sound_init(void);
-extern READ_HANDLER( stooges_sound_input_r );
-extern WRITE_HANDLER( stooges_8910_latch_w );
-extern WRITE_HANDLER( stooges_sound_control_w );
-extern WRITE_HANDLER( gottlieb_nmi_rate_w );
-extern WRITE_HANDLER( gottlieb_cause_dac_nmi_w );
+extern READ8_HANDLER( stooges_sound_input_r );
+extern WRITE8_HANDLER( stooges_8910_latch_w );
+extern WRITE8_HANDLER( stooges_sound_control_w );
+extern WRITE8_HANDLER( gottlieb_nmi_rate_w );
+extern WRITE8_HANDLER( gottlieb_cause_dac_nmi_w );
 
 
 static UINT8 *audiobuffer_region;
@@ -189,17 +189,17 @@ MACHINE_INIT( gottlieb )
 
 static int track[2];
 
-READ_HANDLER( gottlieb_track_0_r )
+READ8_HANDLER( gottlieb_track_0_r )
 {
 	return input_port_2_r(offset) - track[0];
 }
 
-READ_HANDLER( gottlieb_track_1_r )
+READ8_HANDLER( gottlieb_track_1_r )
 {
 	return input_port_3_r(offset) - track[1];
 }
 
-WRITE_HANDLER( gottlieb_track_reset_w )
+WRITE8_HANDLER( gottlieb_track_reset_w )
 {
 	/* reset the trackball counters */
 	track[0] = input_port_2_r(offset);
@@ -208,7 +208,7 @@ WRITE_HANDLER( gottlieb_track_reset_w )
 
 static int joympx;
 
-READ_HANDLER( stooges_IN4_r )
+READ8_HANDLER( stooges_IN4_r )
 {
 	int joy;
 
@@ -229,7 +229,7 @@ READ_HANDLER( stooges_IN4_r )
 	return joy | (readinputport(4) & 0xf0);
 }
 
-WRITE_HANDLER( reactor_output_w )
+WRITE8_HANDLER( reactor_output_w )
 {
 	set_led_status(0,data & 0x20);
 	set_led_status(1,data & 0x40);
@@ -237,7 +237,7 @@ WRITE_HANDLER( reactor_output_w )
 	gottlieb_video_outputs_w(offset,data);
 }
 
-WRITE_HANDLER( stooges_output_w )
+WRITE8_HANDLER( stooges_output_w )
 {
 	joympx = (data >> 5) & 0x03;
 	gottlieb_video_outputs_w(offset,data);
@@ -270,7 +270,7 @@ static int access_time;
  * This gives a total of 1+3+3+19*53=1014 bytes, the 10 last bytes are ignored
  */
 
-READ_HANDLER( gottlieb_laserdisc_status_r )
+READ8_HANDLER( gottlieb_laserdisc_status_r )
 {
 	int tmp;
 	switch (offset)
@@ -311,13 +311,13 @@ READ_HANDLER( gottlieb_laserdisc_status_r )
 	return 0;
 }
 
-WRITE_HANDLER( gottlieb_laserdisc_mpx_w )
+WRITE8_HANDLER( gottlieb_laserdisc_mpx_w )
 {
 	lasermpx = data & 1;
 	if (lasermpx==0) skipfirstbyte=1;	/* first byte of the 1K buffer (0x67) is not returned... */
 }
 
-WRITE_HANDLER( gottlieb_laserdisc_command_w )
+WRITE8_HANDLER( gottlieb_laserdisc_command_w )
 {
 	static int loop;
 	int cmd;
@@ -399,7 +399,7 @@ logerror("current frame : %d\n",current_frame);
 			else audioready = 0;
 		}
 	}
-	cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+	cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 }
 
 
@@ -1380,6 +1380,59 @@ INPUT_PORTS_START( argusg )
 	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( kngtmare )
+	PORT_START	/* Dips */
+	PORT_DIPNAME( 0x11, 0x11, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x11, DEF_STR( 1C_1C ) )
+//	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x20, "5" )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+
+	PORT_START	/* ? */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START	/* trackball H not used */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* trackball V not used */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* ? */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_RIGHT  | IPF_2WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_LEFT  | IPF_2WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_LEFT   | IPF_2WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START2 )
+INPUT_PORTS_END
+
 /* the games can store char gfx data in either a 4k RAM area (128 chars), or */
 /* a 8k ROM area (256 chars). */
 static struct GfxLayout charRAMlayout =
@@ -2232,21 +2285,40 @@ ROM_START( argusg )
 	ROM_LOAD( "arg_fg0_2764.k4",      0x6000, 0x2000, CRC(5b7bd588) SHA1(49ee6a747832f0d4d436c199db2022fd5dfb8d4a))
 ROM_END
 
+ROM_START( kngtmare )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for code */
+	ROM_LOAD( "gv112_rom3_2764.c14c15", 0x8000, 0x2000, CRC(47351270) SHA1(e6ca0b27b8f703cf73aad5f82d3b986823fbda88) )
+	ROM_LOAD( "gv112_rom2_2764.c13c14", 0xa000, 0x2000, CRC(53e01f97) SHA1(0fbb92789609ba1df6e4ae56b2fc77a004e3a4ea) )
+	ROM_LOAD( "gv112_rom1_2764.c12c13", 0xc000, 0x2000, CRC(5b340640) SHA1(8ccad017d5b9b748327baf22ff51d30ee96cb25e) )
+	ROM_LOAD( "gv112_rom0_2764.c11c12", 0xe000, 0x2000, CRC(620dc629) SHA1(0d94b7c50ef499eb9bb3f4986a8d29547181f7ea) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for sound cpu */
+	ROM_LOAD( "gv112_snd",              0xf000, 0x1000, NO_DUMP )
+
+	ROM_REGION( 0x8000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "gv112_fg3_2764.k7k8",    0x0000, 0x2000, CRC(d1886658) SHA1(2ba452acfb3548c02137c8732e1f7cf8f4c31275) )
+	ROM_LOAD( "gv112_fg2_2764.k6",      0x2000, 0x2000, CRC(e1c73f0c) SHA1(3e91d6184f94b06ab0342504da387ac41d1a83b3) )
+	ROM_LOAD( "gv112_fg1_2764.k5",      0x4000, 0x2000, CRC(724bc3ea) SHA1(305945e7224c3463083c7579a826ec7eba846067) )
+	ROM_LOAD( "gv112_fg0_2764.k4",      0x6000, 0x2000, CRC(0311bbd9) SHA1(0a4f8268dab696bcb25738a482add24fb1f5f09d) )
+
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "gv112_bg0_2732.e11e12",  0x0000, 0x1000, CRC(a74591fd) SHA1(e6916cfa44cbe4c0d58fb0307c70580a6fabfcf1) )
+	ROM_LOAD( "gv112_bg1_2732.e13",     0x1000, 0x1000, CRC(5a226e6a) SHA1(faf119a8db823f2fc57c0e789b5f3486bca1feb1) )
+ROM_END
+
 
 static DRIVER_INIT( gottlieb )
 {
 	gottlieb_sound_init();
 }
 
-
 static DRIVER_INIT( laserdsc )
 {
 	gottlieb_sound_init();
-	install_mem_write_handler(0, 0x05803, 0x05803, usvsthem_video_outputs_w);       /* OUT1 */
-	install_mem_write_handler(0, 0x05805, 0x05805, gottlieb_laserdisc_command_w);	/* command for the player */
-	install_mem_write_handler(0, 0x05806, 0x05806, gottlieb_laserdisc_mpx_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x05803, 0x05803, 0, 0, usvsthem_video_outputs_w);       /* OUT1 */
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x05805, 0x05805, 0, 0, gottlieb_laserdisc_command_w);	/* command for the player */
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x05806, 0x05806, 0, 0, gottlieb_laserdisc_mpx_w);
 }
-
 
 
 GAME( 1982, reactor,  0,        reactor,  reactor,  0,        ROT0,   "Gottlieb", "Reactor" )
@@ -2262,6 +2334,7 @@ GAME( 1984, argusg,   0,        krull,    argusg,   0,        ROT0,   "Gottlieb"
 GAME( 1983, mplanets, 0,        gottlieb, mplanets, 0,        ROT270, "Gottlieb", "Mad Planets" )
 GAME( 1983, mplanuk,  mplanets, gottlieb, mplanets, 0,        ROT270, "Gottlieb (Taitel license)", "Mad Planets (UK)" )
 GAME( 1983, krull,    0,        krull,    krull,    0,        ROT270, "Gottlieb", "Krull" )
+GAMEX(1983, kngtmare, 0,        gottlieb, kngtmare, 0,        ROT0,   "Gottlieb", "Knightmare (prototype)", GAME_NO_SOUND )
 GAME( 1983, sqbert,   0,        qbert,    qbert,    0,        ROT270, "Mylstar", "Faster, Harder, More Challenging Q*bert (prototype)" )
 GAMEX(1983, mach3,    0,        gottlieb2,mach3,    laserdsc, ROT0,   "Mylstar", "M.A.C.H. 3", GAME_NOT_WORKING )
 GAME( 1983, qbertqub, 0,        qbert,    qbertqub, 0,        ROT270, "Mylstar", "Q*bert's Qubes" )

@@ -45,7 +45,7 @@ static data8_t main_to_sound_data, sound_to_main_data;
  *
  *************************************/
 
-static WRITE_HANDLER( rom_bank_select_w )
+static WRITE8_HANDLER( rom_bank_select_w )
 {
 	UINT8 *region_base = memory_region(REGION_CPU1);
 	cpu_setbank(1, region_base + 0x10000 + (data & 15) * 0x2000);
@@ -65,19 +65,19 @@ static MACHINE_INIT( crgolf )
  *
  *************************************/
 
-static READ_HANDLER( switch_input_r )
+static READ8_HANDLER( switch_input_r )
 {
 	return readinputport(port_select);
 }
 
 
-static READ_HANDLER( analog_input_r )
+static READ8_HANDLER( analog_input_r )
 {
 	return ((readinputport(7) >> 4) | (readinputport(8) & 0xf0)) ^ 0x88;
 }
 
 
-static WRITE_HANDLER( switch_input_select_w )
+static WRITE8_HANDLER( switch_input_select_w )
 {
 	if (!(data & 0x40)) port_select = 6;
 	if (!(data & 0x20)) port_select = 5;
@@ -89,7 +89,7 @@ static WRITE_HANDLER( switch_input_select_w )
 }
 
 
-static WRITE_HANDLER( unknown_w )
+static WRITE8_HANDLER( unknown_w )
 {
 	logerror("%04X:unknown_w = %02X\n", activecpu_get_pc(), data);
 }
@@ -104,20 +104,20 @@ static WRITE_HANDLER( unknown_w )
 
 static void main_to_sound_callback(int param)
 {
-	cpu_set_irq_line(1, IRQ_LINE_NMI, ASSERT_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_NMI, ASSERT_LINE);
 	main_to_sound_data = param;
 }
 
 
-static WRITE_HANDLER( main_to_sound_w )
+static WRITE8_HANDLER( main_to_sound_w )
 {
 	timer_set(TIME_NOW, data, main_to_sound_callback);
 }
 
 
-static READ_HANDLER( main_to_sound_r )
+static READ8_HANDLER( main_to_sound_r )
 {
-	cpu_set_irq_line(1, IRQ_LINE_NMI, CLEAR_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_NMI, CLEAR_LINE);
 	return main_to_sound_data;
 }
 
@@ -131,20 +131,20 @@ static READ_HANDLER( main_to_sound_r )
 
 static void sound_to_main_callback(int param)
 {
-	cpu_set_irq_line(0, IRQ_LINE_NMI, ASSERT_LINE);
+	cpunum_set_input_line(0, INPUT_LINE_NMI, ASSERT_LINE);
 	sound_to_main_data = param;
 }
 
 
-static WRITE_HANDLER( sound_to_main_w )
+static WRITE8_HANDLER( sound_to_main_w )
 {
 	timer_set(TIME_NOW, data, sound_to_main_callback);
 }
 
 
-static READ_HANDLER( sound_to_main_r )
+static READ8_HANDLER( sound_to_main_r )
 {
-	cpu_set_irq_line(0, IRQ_LINE_NMI, CLEAR_LINE);
+	cpunum_set_input_line(0, INPUT_LINE_NMI, CLEAR_LINE);
 	return sound_to_main_data;
 }
 

@@ -1006,7 +1006,7 @@ VIDEO_UPDATE( buckrog )
 
 ***************************************************************************/
 
-WRITE_HANDLER( buckrog_bitmap_w )
+WRITE8_HANDLER( buckrog_bitmap_w )
 {
 	buckrog_bitmap_ram[offset] = data & 1;
 }

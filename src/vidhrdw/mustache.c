@@ -45,7 +45,7 @@ PALETTE_INIT(mustache)
   }
 }
 
-WRITE_HANDLER( mustache_videoram_w )
+WRITE8_HANDLER( mustache_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -54,7 +54,7 @@ WRITE_HANDLER( mustache_videoram_w )
 	}
 }
 
-WRITE_HANDLER (mustache_video_control_w)
+WRITE8_HANDLER (mustache_video_control_w)
 {
 	if (flip_screen != (data & 0x01))
 	{
@@ -71,7 +71,7 @@ WRITE_HANDLER (mustache_video_control_w)
 	}
 }
 
-WRITE_HANDLER( mustache_scroll_w )
+WRITE8_HANDLER( mustache_scroll_w )
 {
 	tilemap_set_scrollx(bg_tilemap, 0, 0x100 - data);
 	tilemap_set_scrollx(bg_tilemap, 1, 0x100 - data);

@@ -62,7 +62,7 @@ static WRITE16_HANDLER( dec0_control_w )
 			if (ACCESSING_LSB)
 			{
 				soundlatch_w(0,data & 0xff);
-				cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
+				cpunum_set_input_line(1,INPUT_LINE_NMI,PULSE_LINE);
 			}
 			break;
 
@@ -98,7 +98,7 @@ static WRITE16_HANDLER( slyspy_control_w )
 			if (ACCESSING_LSB)
 			{
 				soundlatch_w(0,data & 0xff);
-				cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
+				cpunum_set_input_line(1,INPUT_LINE_NMI,PULSE_LINE);
 			}
 			break;
 		case 2:
@@ -112,7 +112,7 @@ static WRITE16_HANDLER( midres_sound_w )
 	if (ACCESSING_LSB)
 	{
 		soundlatch_w(0,data & 0xff);
-		cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
+		cpunum_set_input_line(1,INPUT_LINE_NMI,PULSE_LINE);
 	}
 }
 
@@ -285,7 +285,7 @@ ADDRESS_MAP_END
 
 /******************************************************************************/
 
-static WRITE_HANDLER( YM3812_w )
+static WRITE8_HANDLER( YM3812_w )
 {
 	switch (offset) {
 	case 0:
@@ -297,7 +297,7 @@ static WRITE_HANDLER( YM3812_w )
 	}
 }
 
-static WRITE_HANDLER( YM2203_w )
+static WRITE8_HANDLER( YM2203_w )
 {
 	switch (offset) {
 	case 0:
@@ -831,12 +831,12 @@ static struct GfxDecodeInfo midres_gfxdecodeinfo[] =
 
 static void sound_irq(int linestate)
 {
-	cpu_set_irq_line(1,0,linestate); /* IRQ */
+	cpunum_set_input_line(1,0,linestate); /* IRQ */
 }
 
 static void sound_irq2(int linestate)
 {
-	cpu_set_irq_line(1,1,linestate); /* IRQ2 */
+	cpunum_set_input_line(1,1,linestate); /* IRQ2 */
 }
 
 static struct YM2203interface ym2203_interface =

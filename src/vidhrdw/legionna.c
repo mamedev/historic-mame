@@ -262,31 +262,31 @@ VIDEO_UPDATE( legionna )
 #endif
 
 #ifdef MAME_DEBUG
-	if (keyboard_pressed_memory (KEYCODE_Z))
+	if (code_pressed_memory (KEYCODE_Z))
 	{
 		dislayer[0] ^= 1;
 		usrintf_showmessage("bg0: %01x",dislayer[0]);
 	}
 
-	if (keyboard_pressed_memory (KEYCODE_X))
+	if (code_pressed_memory (KEYCODE_X))
 	{
 		dislayer[1] ^= 1;
 		usrintf_showmessage("bg1: %01x",dislayer[1]);
 	}
 
-	if (keyboard_pressed_memory (KEYCODE_C))
+	if (code_pressed_memory (KEYCODE_C))
 	{
 		dislayer[2] ^= 1;
 		usrintf_showmessage("bg2: %01x",dislayer[2]);
 	}
 
-	if (keyboard_pressed_memory (KEYCODE_V))
+	if (code_pressed_memory (KEYCODE_V))
 	{
 		dislayer[3] ^= 1;
 		usrintf_showmessage("sprites: %01x",dislayer[3]);
 	}
 
-	if (keyboard_pressed_memory (KEYCODE_B))
+	if (code_pressed_memory (KEYCODE_B))
 	{
 		dislayer[4] ^= 1;
 		usrintf_showmessage("text: %01x",dislayer[4]);

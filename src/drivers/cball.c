@@ -19,7 +19,7 @@ static void get_tile_info(int tile_index)
 }
 
 
-static WRITE_HANDLER( cball_vram_w )
+static WRITE8_HANDLER( cball_vram_w )
 {
 	if (cball_video_ram[offset] != data)
 	{
@@ -58,7 +58,7 @@ static VIDEO_UPDATE( cball )
 
 static void interrupt_callback(int scanline)
 {
-	cpu_set_irq_line(0, 0, PULSE_LINE);
+	cpunum_set_input_line(0, 0, PULSE_LINE);
 
 	scanline = scanline + 32;
 
@@ -88,13 +88,13 @@ static PALETTE_INIT( cball )
 }
 
 
-static READ_HANDLER( cball_wram_r )
+static READ8_HANDLER( cball_wram_r )
 {
 	return cball_video_ram[0x380 + offset];
 }
 
 
-static WRITE_HANDLER( cball_wram_w )
+static WRITE8_HANDLER( cball_wram_w )
 {
 	cball_video_ram[0x380 + offset] = data;
 }

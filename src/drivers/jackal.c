@@ -29,14 +29,14 @@ extern UINT8 *jackal_videoctrl;
 
 extern MACHINE_INIT( jackal );
 
-extern READ_HANDLER( jackal_zram_r );
-extern READ_HANDLER( jackal_voram_r );
-extern READ_HANDLER( jackal_spriteram_r );
+extern READ8_HANDLER( jackal_zram_r );
+extern READ8_HANDLER( jackal_voram_r );
+extern READ8_HANDLER( jackal_spriteram_r );
 
-extern WRITE_HANDLER( jackal_rambank_w );
-extern WRITE_HANDLER( jackal_zram_w );
-extern WRITE_HANDLER( jackal_voram_w );
-extern WRITE_HANDLER( jackal_spriteram_w );
+extern WRITE8_HANDLER( jackal_rambank_w );
+extern WRITE8_HANDLER( jackal_zram_w );
+extern WRITE8_HANDLER( jackal_voram_w );
+extern WRITE8_HANDLER( jackal_spriteram_w );
 
 extern PALETTE_INIT( jackal );
 extern VIDEO_START( jackal );
@@ -45,13 +45,13 @@ extern VIDEO_UPDATE( jackal );
 static int irq_enable;
 
 
-static READ_HANDLER( topgunbl_rotary_r )
+static READ8_HANDLER( topgunbl_rotary_r )
 {
 	return (1 << (readinputport(5 + offset) * 8 / 256)) ^ 0xff;
 }
 
 
-static WRITE_HANDLER( jackal_flipscreen_w )
+static WRITE8_HANDLER( jackal_flipscreen_w )
 {
 	irq_enable = data & 0x02;
 	flip_screen_set(data & 0x08);
@@ -60,7 +60,7 @@ static WRITE_HANDLER( jackal_flipscreen_w )
 INTERRUPT_GEN( jackal_interrupt )
 {
 	if (irq_enable)
-		cpu_set_irq_line(0, 0, HOLD_LINE);
+		cpunum_set_input_line(0, 0, HOLD_LINE);
 }
 
 

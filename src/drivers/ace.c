@@ -47,13 +47,13 @@ static unsigned char *ace_characterram;
 
 static int objpos[8];
 
-static WRITE_HANDLER( ace_objpos_w )
+static WRITE8_HANDLER( ace_objpos_w )
 {
 	objpos[offset]=data;
 }
 
 #if 0
-static READ_HANDLER( ace_objpos_r )
+static READ8_HANDLER( ace_objpos_r )
 {
 	return objpos[offset];
 }
@@ -116,12 +116,12 @@ static PALETTE_INIT( ace )
 }
 
 
-static READ_HANDLER( ace_characterram_r )
+static READ8_HANDLER( ace_characterram_r )
 {
 	return ace_characterram[offset];
 }
 
-static WRITE_HANDLER( ace_characterram_w )
+static WRITE8_HANDLER( ace_characterram_w )
 {
 	if (ace_characterram[offset] != data)
 	{
@@ -135,7 +135,7 @@ static WRITE_HANDLER( ace_characterram_w )
 }
 
 
-static READ_HANDLER( unk_r )
+static READ8_HANDLER( unk_r )
 {
 	return rand()&0xff;
 }

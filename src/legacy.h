@@ -370,65 +370,17 @@ static int seq_read_ver_7(mame_file *f, InputSeq* seq)
 
 static int input_port_read_ver_5(mame_file *f, struct InputPort *in)
 {
-	UINT32 i;
-	UINT16 w;
-	if (readint(f,&i) != 0)
-		return -1;
-	in->type = i;
-
-	if (readword(f,&w) != 0)
-		return -1;
-	in->mask = w;
-
-	if (readword(f,&w) != 0)
-		return -1;
-	in->default_value = w;
-
-	if (seq_read_ver_5(f,&in->seq) != 0)
-		return -1;
-	return 0;
+	return input_port_read_ver_X(f, in, seq_read_ver_5);
 }
 
 static int input_port_read_ver_6(mame_file *f, struct InputPort *in)
 {
-	UINT32 i;
-	UINT16 w;
-	if (readint(f,&i) != 0)
-		return -1;
-	in->type = i;
-
-	if (readword(f,&w) != 0)
-		return -1;
-	in->mask = w;
-
-	if (readword(f,&w) != 0)
-		return -1;
-	in->default_value = w;
-
-	if (seq_read_ver_6(f,&in->seq) != 0)
-		return -1;
-	return 0;
+	return input_port_read_ver_X(f, in, seq_read_ver_6);
 }
 
 static int input_port_read_ver_7(mame_file *f, struct InputPort *in)
 {
-	UINT32 i;
-	UINT16 w;
-	if (readint(f,&i) != 0)
-		return -1;
-	in->type = i;
-
-	if (readword(f,&w) != 0)
-		return -1;
-	in->mask = w;
-
-	if (readword(f,&w) != 0)
-		return -1;
-	in->default_value = w;
-
-	if (seq_read_ver_7(f,&in->seq) != 0)
-		return -1;
-	return 0;
+	return input_port_read_ver_X(f, in, seq_read_ver_7);
 }
 
 #endif

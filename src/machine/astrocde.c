@@ -9,7 +9,7 @@
 #include "driver.h"
 
 
-READ_HANDLER( gorf_timer_r )
+READ8_HANDLER( gorf_timer_r )
 {
 	static int Skip=0;
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -59,12 +59,12 @@ static const int ControllerTable[64] = {
 	36 , 37 , 39 , 38 , 34 , 35 , 33 , 32
 };
 
-READ_HANDLER( seawolf2_controller1_r )
+READ8_HANDLER( seawolf2_controller1_r )
 {
 	return (input_port_0_r(0) & 0xc0) + ControllerTable[input_port_0_r(0) & 0x3f];
 }
 
-READ_HANDLER( seawolf2_controller2_r )
+READ8_HANDLER( seawolf2_controller2_r )
 {
 	return (input_port_1_r(0) & 0xc0) + ControllerTable[input_port_1_r(0) & 0x3f];
 }
@@ -72,12 +72,12 @@ READ_HANDLER( seawolf2_controller2_r )
 
 static int ebases_trackball_select = 0;
 
-WRITE_HANDLER( ebases_trackball_select_w )
+WRITE8_HANDLER( ebases_trackball_select_w )
 {
 	ebases_trackball_select = data;
 }
 
-READ_HANDLER( ebases_trackball_r )
+READ8_HANDLER( ebases_trackball_r )
 {
 	int ret = readinputport(3 + ebases_trackball_select);
 	logerror("Port %d = %d\n", ebases_trackball_select, ret);

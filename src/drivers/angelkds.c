@@ -131,23 +131,23 @@ Dumped by Chackn
 #include "cpu/z80/z80.h"
 #include "machine/segacrpt.h"
 
-static READ_HANDLER( angelkds_sound_r );
-static WRITE_HANDLER( angelkds_sound_w );
+static READ8_HANDLER( angelkds_sound_r );
+static WRITE8_HANDLER( angelkds_sound_w );
 
 extern data8_t *angelkds_txvideoram, *angelkds_bgtopvideoram, *angelkds_bgbotvideoram;
 
-WRITE_HANDLER( angelkds_bgtopvideoram_w );
-WRITE_HANDLER( angelkds_bgbotvideoram_w );
-WRITE_HANDLER( angelkds_txvideoram_w );
+WRITE8_HANDLER( angelkds_bgtopvideoram_w );
+WRITE8_HANDLER( angelkds_bgbotvideoram_w );
+WRITE8_HANDLER( angelkds_txvideoram_w );
 
-WRITE_HANDLER( angelkds_bgtopbank_write );
-WRITE_HANDLER( angelkds_bgtopscroll_write );
-WRITE_HANDLER( angelkds_bgbotbank_write );
-WRITE_HANDLER( angelkds_bgbotscroll_write );
-WRITE_HANDLER( angelkds_txbank_write );
+WRITE8_HANDLER( angelkds_bgtopbank_write );
+WRITE8_HANDLER( angelkds_bgtopscroll_write );
+WRITE8_HANDLER( angelkds_bgbotbank_write );
+WRITE8_HANDLER( angelkds_bgbotscroll_write );
+WRITE8_HANDLER( angelkds_txbank_write );
 
-WRITE_HANDLER( angelkds_paletteram_w );
-WRITE_HANDLER( angelkds_layer_ctrl_write );
+WRITE8_HANDLER( angelkds_paletteram_w );
+WRITE8_HANDLER( angelkds_layer_ctrl_write );
 
 VIDEO_START( angelkds );
 VIDEO_UPDATE( angelkds );
@@ -156,7 +156,7 @@ VIDEO_UPDATE( angelkds );
 
 */
 
-static WRITE_HANDLER ( angelkds_cpu_bank_write )
+static WRITE8_HANDLER ( angelkds_cpu_bank_write )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_USER1);
@@ -176,7 +176,7 @@ these make the game a bit easier for testing purposes
 
 #if FAKEINPUTS
 
-static READ_HANDLER( angelkds_input_r )
+static READ8_HANDLER( angelkds_input_r )
 {
 	int fake = readinputport(6+offset);
 
@@ -185,7 +185,7 @@ static READ_HANDLER( angelkds_input_r )
 
 #else
 
-static READ_HANDLER( angelkds_input_r )
+static READ8_HANDLER( angelkds_input_r )
 {
 	return readinputport(4+offset);
 }
@@ -431,19 +431,19 @@ sound related ?
 
 static UINT8 angelkds_sound[4];
 
-static WRITE_HANDLER( angelkds_sound_w )
+static WRITE8_HANDLER( angelkds_sound_w )
 {
 	angelkds_sound[offset]=data;
 }
 
-static READ_HANDLER( angelkds_sound_r )
+static READ8_HANDLER( angelkds_sound_r )
 {
 	return angelkds_sound[offset];
 }
 
 static void irqhandler(int irq)
 {
-	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2203interface ym2203_interface =

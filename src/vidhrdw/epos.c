@@ -59,7 +59,7 @@ PALETTE_INIT( epos )
 }
 
 
-WRITE_HANDLER( epos_videoram_w )
+WRITE8_HANDLER( epos_videoram_w )
 {
 	int x,y;
 
@@ -73,7 +73,7 @@ WRITE_HANDLER( epos_videoram_w )
 }
 
 
-WRITE_HANDLER( epos_port_1_w )
+WRITE8_HANDLER( epos_port_1_w )
 {
 	/* D0 - start light #1
 	   D1 - start light #2

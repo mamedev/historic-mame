@@ -88,7 +88,7 @@ PALETTE_INIT( wilytowr )
 	}
 }
 
-static WRITE_HANDLER( wilytowr_videoram_w )
+static WRITE8_HANDLER( wilytowr_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -97,7 +97,7 @@ static WRITE_HANDLER( wilytowr_videoram_w )
 	}
 }
 
-static WRITE_HANDLER( wilytowr_colorram_w )
+static WRITE8_HANDLER( wilytowr_colorram_w )
 {
 	if (colorram[offset] != data)
 	{
@@ -106,7 +106,7 @@ static WRITE_HANDLER( wilytowr_colorram_w )
 	}
 }
 
-static WRITE_HANDLER( wilytowr_videoram2_w )
+static WRITE8_HANDLER( wilytowr_videoram2_w )
 {
 	if (wilytowr_videoram2[offset] != data)
 	{
@@ -115,7 +115,7 @@ static WRITE_HANDLER( wilytowr_videoram2_w )
 	}
 }
 
-static WRITE_HANDLER( wilytwr_palbank_w )
+static WRITE8_HANDLER( wilytwr_palbank_w )
 {
 	if (pal_bank != (data & 0x01))
 	{
@@ -124,7 +124,7 @@ static WRITE_HANDLER( wilytwr_palbank_w )
 	}
 }
 
-WRITE_HANDLER( wilytwr_flipscreen_w )
+WRITE8_HANDLER( wilytwr_flipscreen_w )
 {
 	if (flip_screen != (~data & 0x01))
 	{
@@ -212,21 +212,21 @@ VIDEO_UPDATE( wilytowr )
 }
 
 
-static WRITE_HANDLER( coin_w )
+static WRITE8_HANDLER( coin_w )
 {
 	coin_counter_w(offset, data & 0x01);
 }
 
 
-static WRITE_HANDLER( snd_irq_w )
+static WRITE8_HANDLER( snd_irq_w )
 {
-	cpu_set_irq_line(1, 0, PULSE_LINE);
+	cpunum_set_input_line(1, 0, PULSE_LINE);
 }
 
 
 static int p1,p2;
 
-static WRITE_HANDLER( snddata_w )
+static WRITE8_HANDLER( snddata_w )
 {
 	if ((p2 & 0xf0) == 0xe0)
 		AY8910_control_port_0_w(0,offset);
@@ -241,12 +241,12 @@ static WRITE_HANDLER( snddata_w )
 		logerror("%04x: snddata_w ctrl = %02x, p1 = %02x, p2 = %02x, data = %02x\n",activecpu_get_pc(),data,p1,p2,offset);
 }
 
-static WRITE_HANDLER( p1_w )
+static WRITE8_HANDLER( p1_w )
 {
 	p1 = data;
 }
 
-static WRITE_HANDLER( p2_w )
+static WRITE8_HANDLER( p2_w )
 {
 	p2 = data;
 }

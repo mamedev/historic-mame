@@ -14,11 +14,11 @@ driver by Mirko Buffoni
 extern UINT8 *ironhors_scroll;
 static UINT8 *ironhors_interrupt_enable;
 
-extern WRITE_HANDLER( ironhors_videoram_w );
-extern WRITE_HANDLER( ironhors_colorram_w );
-extern WRITE_HANDLER( ironhors_palettebank_w );
-extern WRITE_HANDLER( ironhors_charbank_w );
-extern WRITE_HANDLER( ironhors_flipscreen_w );
+extern WRITE8_HANDLER( ironhors_videoram_w );
+extern WRITE8_HANDLER( ironhors_colorram_w );
+extern WRITE8_HANDLER( ironhors_palettebank_w );
+extern WRITE8_HANDLER( ironhors_charbank_w );
+extern WRITE8_HANDLER( ironhors_flipscreen_w );
 
 extern PALETTE_INIT( ironhors );
 extern VIDEO_START( ironhors );
@@ -30,21 +30,21 @@ static INTERRUPT_GEN( ironhors_interrupt )
 	if (cpu_getiloops() == 0)
 	{
 		if (*ironhors_interrupt_enable & 4)
-			cpu_set_irq_line(0, M6809_FIRQ_LINE, HOLD_LINE);
+			cpunum_set_input_line(0, M6809_FIRQ_LINE, HOLD_LINE);
 	}
 	else if (cpu_getiloops() % 2)
 	{
 		if (*ironhors_interrupt_enable & 1)
-			cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+			cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 	}
 }
 
-static WRITE_HANDLER( ironhors_sh_irqtrigger_w )
+static WRITE8_HANDLER( ironhors_sh_irqtrigger_w )
 {
-	cpu_set_irq_line_and_vector(1,0,HOLD_LINE,0xff);
+	cpunum_set_input_line_and_vector(1,0,HOLD_LINE,0xff);
 }
 
-static WRITE_HANDLER( ironhors_filter_w )
+static WRITE8_HANDLER( ironhors_filter_w )
 {
 	set_RC_filter(0,1000,2200,1000,data & 0x04 ? 220000 : 0); /* YM2203-SSG-A */
 	set_RC_filter(1,1000,2200,1000,data & 0x02 ? 220000 : 0); /* YM2203-SSG-B */

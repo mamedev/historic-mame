@@ -9,11 +9,11 @@
 extern INTERRUPT_GEN( snk_irq_AB );
 extern INTERRUPT_GEN( snk_irq_BA );
 
-extern READ_HANDLER ( snk_cpuA_nmi_trigger_r );
-extern WRITE_HANDLER( snk_cpuA_nmi_ack_w );
+extern READ8_HANDLER ( snk_cpuA_nmi_trigger_r );
+extern WRITE8_HANDLER( snk_cpuA_nmi_ack_w );
 
-extern READ_HANDLER ( snk_cpuB_nmi_trigger_r );
-extern WRITE_HANDLER( snk_cpuB_nmi_ack_w );
+extern READ8_HANDLER ( snk_cpuB_nmi_trigger_r );
+extern WRITE8_HANDLER( snk_cpuB_nmi_ack_w );
 
 extern int snk_gamegroup;
 extern int snk_sound_busy_bit;

@@ -43,7 +43,7 @@ PALETTE_INIT( funkybee )
 	}
 }
 
-WRITE_HANDLER( funkybee_videoram_w )
+WRITE8_HANDLER( funkybee_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -52,7 +52,7 @@ WRITE_HANDLER( funkybee_videoram_w )
 	}
 }
 
-WRITE_HANDLER( funkybee_colorram_w )
+WRITE8_HANDLER( funkybee_colorram_w )
 {
 	if (colorram[offset] != data)
 	{
@@ -61,7 +61,7 @@ WRITE_HANDLER( funkybee_colorram_w )
 	}
 }
 
-WRITE_HANDLER( funkybee_gfx_bank_w )
+WRITE8_HANDLER( funkybee_gfx_bank_w )
 {
 	if (gfx_bank != (data & 0x01))
 	{
@@ -70,12 +70,12 @@ WRITE_HANDLER( funkybee_gfx_bank_w )
 	}
 }
 
-WRITE_HANDLER( funkybee_scroll_w )
+WRITE8_HANDLER( funkybee_scroll_w )
 {
 	tilemap_set_scrollx(bg_tilemap, 0, flip_screen ? -data : data);
 }
 
-WRITE_HANDLER( funkybee_flipscreen_w )
+WRITE8_HANDLER( funkybee_flipscreen_w )
 {
 	if (flip_screen != (data & 0x01))
 	{

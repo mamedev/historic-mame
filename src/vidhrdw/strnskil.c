@@ -43,7 +43,7 @@ PALETTE_INIT( strnskil )
 
 }
 
-WRITE_HANDLER( strnskil_videoram_w )
+WRITE8_HANDLER( strnskil_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -52,12 +52,12 @@ WRITE_HANDLER( strnskil_videoram_w )
 	}
 }
 
-WRITE_HANDLER( strnskil_scroll_x_w )
+WRITE8_HANDLER( strnskil_scroll_x_w )
 {
 	strnskil_xscroll[offset] = data;
 }
 
-WRITE_HANDLER( strnskil_scrl_ctrl_w )
+WRITE8_HANDLER( strnskil_scrl_ctrl_w )
 {
 	strnskil_scrl_ctrl = data >> 5;
 

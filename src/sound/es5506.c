@@ -1527,18 +1527,20 @@ static data8_t es5506_reg_read(struct ES5506Chip *chip, offs_t offset)
 	return chip->read_latch >> 24;
 }
 
+
+
 /**********************************************************************************************
 
      ES5506_data_0_r/ES5506_data_1_r -- handle a read from the status register
 
-***********************************************************************************************/
+**********************************************************************************************/
 
-READ_HANDLER( ES5506_data_0_r )
+READ8_HANDLER( ES5506_data_0_r )
 {
 	return es5506_reg_read(&es5506[0], offset);
 }
 
-READ_HANDLER( ES5506_data_1_r )
+READ8_HANDLER( ES5506_data_1_r )
 {
 	return es5506_reg_read(&es5506[1], offset);
 }
@@ -1561,12 +1563,12 @@ READ16_HANDLER( ES5506_data_1_word_r )
 
 ***********************************************************************************************/
 
-WRITE_HANDLER( ES5506_data_0_w )
+WRITE8_HANDLER( ES5506_data_0_w )
 {
 	es5506_reg_write(&es5506[0], offset, data);
 }
 
-WRITE_HANDLER( ES5506_data_1_w )
+WRITE8_HANDLER( ES5506_data_1_w )
 {
 	es5506_reg_write(&es5506[1], offset, data);
 }

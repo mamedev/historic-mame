@@ -239,7 +239,7 @@ void seta_sound_enable_w(int data)
 /* Use these for 8 bit CPUs */
 
 
-READ_HANDLER( seta_sound_r )
+READ8_HANDLER( seta_sound_r )
 {
 	offset ^= address;
 	return x1_010_reg[offset];
@@ -248,7 +248,7 @@ READ_HANDLER( seta_sound_r )
 
 
 
-WRITE_HANDLER( seta_sound_w )
+WRITE8_HANDLER( seta_sound_w )
 {
 	int channel, reg;
 	offset ^= address;

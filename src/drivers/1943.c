@@ -13,8 +13,8 @@ TODO: 1943 is almost identical to GunSmoke (one more scrolling playfield). We
 extern unsigned char *c1943_scrollx;
 extern unsigned char *c1943_scrolly;
 extern unsigned char *c1943_bgscrolly;
-WRITE_HANDLER( c1943_c804_w );	/* in vidhrdw/c1943.c */
-WRITE_HANDLER( c1943_d806_w );	/* in vidhrdw/c1943.c */
+WRITE8_HANDLER( c1943_c804_w );	/* in vidhrdw/c1943.c */
+WRITE8_HANDLER( c1943_d806_w );	/* in vidhrdw/c1943.c */
 PALETTE_INIT( 1943 );
 VIDEO_UPDATE( 1943 );
 VIDEO_START( 1943 );
@@ -23,7 +23,7 @@ VIDEO_START( 1943 );
 
 /* this is a protection check. The game crashes (thru a jump to 0x8000) */
 /* if a read from this address doesn't return the value it expects. */
-static READ_HANDLER( c1943_protection_r )
+static READ8_HANDLER( c1943_protection_r )
 {
 	int data = activecpu_get_reg(Z80_BC) >> 8;
 	logerror("protection read, PC: %04x Result:%02x\n",activecpu_get_pc(),data);

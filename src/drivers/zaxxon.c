@@ -164,8 +164,8 @@ extern UINT8 *zaxxon_background_position;
 extern UINT8 *zaxxon_background_color_bank;
 extern UINT8 *zaxxon_background_enable;
 
-extern WRITE_HANDLER( zaxxon_videoram_w );
-extern WRITE_HANDLER( congo_colorram_w );
+extern WRITE8_HANDLER( zaxxon_videoram_w );
+extern WRITE8_HANDLER( congo_colorram_w );
 
 extern PALETTE_INIT( zaxxon );
 
@@ -178,37 +178,37 @@ extern VIDEO_UPDATE( razmataz );
 extern VIDEO_UPDATE( congo );
 extern VIDEO_UPDATE( futspy );
 
-extern READ_HANDLER( zaxxon_IN2_r );
-extern WRITE_HANDLER( zaxxon_sound_w );
+extern READ8_HANDLER( zaxxon_IN2_r );
+extern WRITE8_HANDLER( zaxxon_sound_w );
 
 /* Read/Write Handlers */
 
-static WRITE_HANDLER( zaxxon_coin_counter_w )
+static WRITE8_HANDLER( zaxxon_coin_counter_w )
 {
 	coin_counter_w(offset, data & 0x01);
 }
 
-static WRITE_HANDLER( zaxxon_coin_lockout_w )
+static WRITE8_HANDLER( zaxxon_coin_lockout_w )
 {
 	coin_lockout_w(offset, ~data & 0x01);
 }
 
-static WRITE_HANDLER( zaxxon_flipscreen_w )
+static WRITE8_HANDLER( zaxxon_flipscreen_w )
 {
 	flip_screen_set(~data & 0x01);
 }
 
-static WRITE_HANDLER( razmataz_flipscreen_w )
+static WRITE8_HANDLER( razmataz_flipscreen_w )
 {
 	flip_screen_set(data & 0x01);
 }
 
-static READ_HANDLER( razmataz_unknown1_r )
+static READ8_HANDLER( razmataz_unknown1_r )
 {
 	return rand() & 0xff;
 }
 
-static READ_HANDLER( razmataz_unknown2_r )
+static READ8_HANDLER( razmataz_unknown2_r )
 {
 	return 0xff;
 }
@@ -236,17 +236,17 @@ static int razmataz_dial_r(int num)
 	return res;
 }
 
-static READ_HANDLER( razmataz_dial_0_r )
+static READ8_HANDLER( razmataz_dial_0_r )
 {
 	return razmataz_dial_r(0);
 }
 
-static READ_HANDLER( razmataz_dial_1_r )
+static READ8_HANDLER( razmataz_dial_1_r )
 {
 	return razmataz_dial_r(1);
 }
 
-static WRITE_HANDLER( congo_daio_w )
+static WRITE8_HANDLER( congo_daio_w )
 {
 	if (offset == 1)
 	{

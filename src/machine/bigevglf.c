@@ -18,33 +18,33 @@ static unsigned char portA_in,portA_out,ddrA;
 static unsigned char portB_in,portB_out,ddrB;
 static unsigned char portC_in,portC_out,ddrC;
 
-READ_HANDLER( bigevglf_68705_portA_r )
+READ8_HANDLER( bigevglf_68705_portA_r )
 {
 	return (portA_out & ddrA) | (portA_in & ~ddrA);
 }
 
-WRITE_HANDLER( bigevglf_68705_portA_w )
+WRITE8_HANDLER( bigevglf_68705_portA_w )
 {
 	portA_out = data;
 }
 
-WRITE_HANDLER( bigevglf_68705_ddrA_w )
+WRITE8_HANDLER( bigevglf_68705_ddrA_w )
 {
 	ddrA = data;
 	
 }
 
-READ_HANDLER( bigevglf_68705_portB_r )
+READ8_HANDLER( bigevglf_68705_portB_r )
 {
 	return (portB_out & ddrB) | (portB_in & ~ddrB);
 }
 
-WRITE_HANDLER( bigevglf_68705_portB_w )
+WRITE8_HANDLER( bigevglf_68705_portB_w )
 {
 
 	if ((ddrB & 0x02) && (~portB_out & 0x02) && (data & 0x02)) /* positive going transition of the clock */
 	{
-		cpu_set_irq_line(3,0,CLEAR_LINE);
+		cpunum_set_input_line(3,0,CLEAR_LINE);
 		main_sent = 0;
 
 	}
@@ -57,12 +57,12 @@ WRITE_HANDLER( bigevglf_68705_portB_w )
 	portB_out = data;
 }
 
-WRITE_HANDLER( bigevglf_68705_ddrB_w )
+WRITE8_HANDLER( bigevglf_68705_ddrB_w )
 {
 	ddrB = data;
 }
 
-READ_HANDLER( bigevglf_68705_portC_r )
+READ8_HANDLER( bigevglf_68705_portC_r )
 {
 	portC_in = 0;
 	if (main_sent) portC_in |= 0x01;
@@ -71,31 +71,31 @@ READ_HANDLER( bigevglf_68705_portC_r )
 	return (portC_out & ddrC) | (portC_in & ~ddrC);
 }
 
-WRITE_HANDLER( bigevglf_68705_portC_w )
+WRITE8_HANDLER( bigevglf_68705_portC_w )
 {
 	portC_out = data;
 }
 
-WRITE_HANDLER( bigevglf_68705_ddrC_w )
+WRITE8_HANDLER( bigevglf_68705_ddrC_w )
 {
 	ddrC = data;
 }
 
-WRITE_HANDLER( bigevglf_mcu_w )
+WRITE8_HANDLER( bigevglf_mcu_w )
 {
 	portA_in = data;
 	main_sent = 1;
-	cpu_set_irq_line(3,0,ASSERT_LINE);
+	cpunum_set_input_line(3,0,ASSERT_LINE);
 }
 
 
-READ_HANDLER( bigevglf_mcu_r )
+READ8_HANDLER( bigevglf_mcu_r )
 {
 	mcu_sent = 1;
 	return from_mcu;
 }
 
-READ_HANDLER( bigevglf_mcu_status_r )
+READ8_HANDLER( bigevglf_mcu_status_r )
 {
 	int res = 0;
 

@@ -30,7 +30,7 @@ static void galaxian_7474_9M_2_callback(void)
 static void galaxian_7474_9M_1_callback(void)
 {
 	/* Q goes to the NMI line */
-	cpu_set_irq_line(0, irq_line, TTL7474_output_r(1) ? CLEAR_LINE : ASSERT_LINE);
+	cpunum_set_input_line(0, irq_line, TTL7474_output_r(1) ? CLEAR_LINE : ASSERT_LINE);
 }
 
 static const struct TTL7474_interface galaxian_7474_9M_2_intf =
@@ -44,7 +44,7 @@ static const struct TTL7474_interface galaxian_7474_9M_1_intf =
 };
 
 
-WRITE_HANDLER( galaxian_nmi_enable_w )
+WRITE8_HANDLER( galaxian_nmi_enable_w )
 {
 	TTL7474_preset_w(1, data);
 	TTL7474_update(1);
@@ -87,7 +87,7 @@ static void machine_init_common( int line )
 
 MACHINE_INIT( galaxian )
 {
-	machine_init_common(IRQ_LINE_NMI);
+	machine_init_common(INPUT_LINE_NMI);
 }
 
 MACHINE_INIT( devilfsg )
@@ -120,35 +120,35 @@ MACHINE_INIT( explorer )
 	machine_init_scramble();
 }
 
-WRITE_HANDLER( galaxian_coin_lockout_w )
+WRITE8_HANDLER( galaxian_coin_lockout_w )
 {
 	coin_lockout_global_w(~data & 1);
 }
 
 
-WRITE_HANDLER( galaxian_coin_counter_w )
+WRITE8_HANDLER( galaxian_coin_counter_w )
 {
 	coin_counter_w(offset, data & 0x01);
 }
 
-WRITE_HANDLER( galaxian_coin_counter_1_w )
+WRITE8_HANDLER( galaxian_coin_counter_1_w )
 {
 	coin_counter_w(1, data & 0x01);
 }
 
-WRITE_HANDLER( galaxian_coin_counter_2_w )
+WRITE8_HANDLER( galaxian_coin_counter_2_w )
 {
 	coin_counter_w(2, data & 0x01);
 }
 
 
-WRITE_HANDLER( galaxian_leds_w )
+WRITE8_HANDLER( galaxian_leds_w )
 {
 	set_led_status(offset,data & 1);
 }
 
 
-static READ_HANDLER( scrambls_input_port_2_r )
+static READ8_HANDLER( scrambls_input_port_2_r )
 {
 	data8_t res;
 
@@ -163,12 +163,12 @@ static READ_HANDLER( scrambls_input_port_2_r )
 	return res;
 }
 
-static READ_HANDLER( ckongs_input_port_1_r )
+static READ8_HANDLER( ckongs_input_port_1_r )
 {
 	return (readinputport(1) & 0xfc) | ((readinputport(2) & 0x06) >> 1);
 }
 
-static READ_HANDLER( ckongs_input_port_2_r )
+static READ8_HANDLER( ckongs_input_port_2_r )
 {
 	return (readinputport(2) & 0xf9) | ((readinputport(1) & 0x03) << 1);
 }
@@ -176,12 +176,12 @@ static READ_HANDLER( ckongs_input_port_2_r )
 
 static data8_t moonwar_port_select;
 
-static WRITE_HANDLER( moonwar_port_select_w )
+static WRITE8_HANDLER( moonwar_port_select_w )
 {
 	moonwar_port_select = data & 0x10;
 }
 
-static READ_HANDLER( moonwar_input_port_0_r )
+static READ8_HANDLER( moonwar_input_port_0_r )
 {
 	data8_t sign;
 	data8_t delta;
@@ -196,18 +196,18 @@ static READ_HANDLER( moonwar_input_port_0_r )
 
 
 /* the coinage DIPs are spread accross two input ports */
-static READ_HANDLER( stratgyx_input_port_2_r )
+static READ8_HANDLER( stratgyx_input_port_2_r )
 {
 	return (readinputport(2) & ~0x06) | ((readinputport(4) << 1) & 0x06);
 }
 
-static READ_HANDLER( stratgyx_input_port_3_r )
+static READ8_HANDLER( stratgyx_input_port_3_r )
 {
 	return (readinputport(3) & ~0x03) | ((readinputport(4) >> 2) & 0x03);
 }
 
 
-static READ_HANDLER( darkplnt_input_port_1_r )
+static READ8_HANDLER( darkplnt_input_port_1_r )
 {
 	static data8_t remap[] = {0x03, 0x02, 0x00, 0x01, 0x21, 0x20, 0x22, 0x23,
 							  0x33, 0x32, 0x30, 0x31, 0x11, 0x10, 0x12, 0x13,
@@ -226,12 +226,12 @@ static READ_HANDLER( darkplnt_input_port_1_r )
 
 
 
-static WRITE_HANDLER( scramble_protection_w )
+static WRITE8_HANDLER( scramble_protection_w )
 {
 	/* nothing to do yet */
 }
 
-static READ_HANDLER( scramble_protection_r )
+static READ8_HANDLER( scramble_protection_r )
 {
 	switch (activecpu_get_pc())
 	{
@@ -249,7 +249,7 @@ static READ_HANDLER( scramble_protection_r )
 	}
 }
 
-static READ_HANDLER( scrambls_protection_r )
+static READ8_HANDLER( scrambls_protection_r )
 {
 	logerror("%04x: read protection\n",activecpu_get_pc());
 
@@ -257,7 +257,7 @@ static READ_HANDLER( scrambls_protection_r )
 }
 
 
-READ_HANDLER( scramblb_protection_1_r )
+READ8_HANDLER( scramblb_protection_1_r )
 {
 	switch (activecpu_get_pc())
 	{
@@ -269,7 +269,7 @@ READ_HANDLER( scramblb_protection_1_r )
 	}
 }
 
-READ_HANDLER( scramblb_protection_2_r )
+READ8_HANDLER( scramblb_protection_2_r )
 {
 	switch (activecpu_get_pc())
 	{
@@ -281,7 +281,7 @@ READ_HANDLER( scramblb_protection_2_r )
 }
 
 
-READ_HANDLER( jumpbug_protection_r )
+READ8_HANDLER( jumpbug_protection_r )
 {
 	switch (offset)
 	{
@@ -298,24 +298,24 @@ READ_HANDLER( jumpbug_protection_r )
 }
 
 
-static WRITE_HANDLER( theend_coin_counter_w )
+static WRITE8_HANDLER( theend_coin_counter_w )
 {
 	coin_counter_w(0, data & 0x80);
 }
 
 
-static READ_HANDLER( mariner_protection_1_r )
+static READ8_HANDLER( mariner_protection_1_r )
 {
 	return 7;
 }
 
-static READ_HANDLER( mariner_protection_2_r )
+static READ8_HANDLER( mariner_protection_2_r )
 {
 	return 3;
 }
 
 
-READ_HANDLER( triplep_pip_r )
+READ8_HANDLER( triplep_pip_r )
 {
 	logerror("PC %04x: triplep read port 2\n",activecpu_get_pc());
 	if (activecpu_get_pc() == 0x015a) return 0xff;
@@ -323,7 +323,7 @@ READ_HANDLER( triplep_pip_r )
 	else return 0;
 }
 
-READ_HANDLER( triplep_pap_r )
+READ8_HANDLER( triplep_pap_r )
 {
 	logerror("PC %04x: triplep read port 3\n",activecpu_get_pc());
 	if (activecpu_get_pc() == 0x015d) return 0x04;
@@ -331,7 +331,7 @@ READ_HANDLER( triplep_pap_r )
 }
 
 
-static READ_HANDLER( checkmaj_protection_r )
+static READ8_HANDLER( checkmaj_protection_r )
 {
 	switch (activecpu_get_pc())
 	{
@@ -350,7 +350,7 @@ static READ_HANDLER( checkmaj_protection_r )
 
 
 /* Zig Zag can swap ROMs 2 and 3 as a form of copy protection */
-WRITE_HANDLER( zigzag_sillyprotection_w )
+WRITE8_HANDLER( zigzag_sillyprotection_w )
 {
 	data8_t *RAM = memory_region(REGION_CPU1);
 
@@ -369,17 +369,17 @@ WRITE_HANDLER( zigzag_sillyprotection_w )
 }
 
 
-static READ_HANDLER( dingo_3000_r )
+static READ8_HANDLER( dingo_3000_r )
 {
 	return 0xaa;
 }
 
-static READ_HANDLER( dingo_3035_r )
+static READ8_HANDLER( dingo_3035_r )
 {
 	return 0x8c;
 }
 
-static READ_HANDLER( dingoe_3001_r )
+static READ8_HANDLER( dingoe_3001_r )
 {
 	return 0xaa;
 }
@@ -411,7 +411,7 @@ DRIVER_INIT( dingoe )
 			rom[i] = BITSWAP8(rom[i],7,6,5,0,3,2,1,4);
 	}
 
-	install_mem_read_handler(0, 0x3001, 0x3001, dingoe_3001_r);	/* Protection check */
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x3001, 0x3001, 0, 0, dingoe_3001_r);	/* Protection check */
 
 }
 
@@ -420,7 +420,7 @@ DRIVER_INIT( dingoe )
 static int kingball_speech_dip;
 
 /* Hack? If $b003 is high, we'll check our "fake" speech dipswitch (marked as SLAM) */
-static READ_HANDLER( kingball_IN0_r )
+static READ8_HANDLER( kingball_IN0_r )
 {
 	if (kingball_speech_dip)
 		return (readinputport(0) & ~0x40) | ((readinputport(3) & 0x01) << 6);
@@ -428,7 +428,7 @@ static READ_HANDLER( kingball_IN0_r )
 		return readinputport(0);
 }
 
-static READ_HANDLER( kingball_IN1_r )
+static READ8_HANDLER( kingball_IN1_r )
 {
 	/* bit 5 is the NOISE line from the sound circuit.  The code just verifies
 	   that it's working, doesn't actually use return value, so we can just use
@@ -437,19 +437,19 @@ static READ_HANDLER( kingball_IN1_r )
 	return (readinputport(1) & ~0x20) | (rand() & 0x20);
 }
 
-WRITE_HANDLER( kingball_speech_dip_w )
+WRITE8_HANDLER( kingball_speech_dip_w )
 {
 	kingball_speech_dip = data;
 }
 
 static int kingball_sound;
 
-WRITE_HANDLER( kingball_sound1_w )
+WRITE8_HANDLER( kingball_sound1_w )
 {
 	kingball_sound = (kingball_sound & ~0x01) | data;
 }
 
-WRITE_HANDLER( kingball_sound2_w )
+WRITE8_HANDLER( kingball_sound2_w )
 {
 	kingball_sound = (kingball_sound & ~0x02) | (data << 1);
 	soundlatch_w (0, kingball_sound | 0xf0);
@@ -457,12 +457,12 @@ WRITE_HANDLER( kingball_sound2_w )
 
 
 
-static READ_HANDLER( azurian_IN1_r )
+static READ8_HANDLER( azurian_IN1_r )
 {
 	return (readinputport(1) & ~0x40) | ((readinputport(3) & 0x01) << 6);
 }
 
-static READ_HANDLER( azurian_IN2_r )
+static READ8_HANDLER( azurian_IN2_r )
 {
 	return (readinputport(2) & ~0x04) | ((readinputport(3) & 0x02) << 1);
 }
@@ -470,7 +470,7 @@ static READ_HANDLER( azurian_IN2_r )
 
 static int _4in1_bank;
 
-WRITE_HANDLER( _4in1_bank_w )
+WRITE8_HANDLER( _4in1_bank_w )
 {
 	/* games are banked at 0x0000 - 0x3fff */
 	offs_t bankaddress;
@@ -484,12 +484,12 @@ WRITE_HANDLER( _4in1_bank_w )
 	galaxian_gfxbank_w(0, _4in1_bank);
 }
 
-READ_HANDLER( _4in1_input_port_1_r )
+READ8_HANDLER( _4in1_input_port_1_r )
 {
 	return (readinputport(1) & ~0xc0) | (readinputport(3+_4in1_bank) & 0xc0);
 }
 
-READ_HANDLER( _4in1_input_port_2_r )
+READ8_HANDLER( _4in1_input_port_2_r )
 {
 	return (readinputport(2) & 0x04) | (readinputport(3+_4in1_bank) & ~0xc4);
 }
@@ -511,17 +511,17 @@ static void gmgalax_select_game(int game)
 	galaxian_gfxbank_w(0, gmgalax_selected_game);
 }
 
-READ_HANDLER( gmgalax_input_port_0_r )
+READ8_HANDLER( gmgalax_input_port_0_r )
 {
 	return readinputport(gmgalax_selected_game ? 3 : 0);
 }
 
-READ_HANDLER( gmgalax_input_port_1_r )
+READ8_HANDLER( gmgalax_input_port_1_r )
 {
 	return readinputport(gmgalax_selected_game ? 4 : 1);
 }
 
-READ_HANDLER( gmgalax_input_port_2_r )
+READ8_HANDLER( gmgalax_input_port_2_r )
 {
 	return readinputport(gmgalax_selected_game ? 5 : 2);
 }
@@ -549,7 +549,7 @@ static void cavelon_banksw(void)
 	}
 }
 
-static READ_HANDLER( cavelon_banksw_r )
+static READ8_HANDLER( cavelon_banksw_r )
 {
 	cavelon_banksw();
 
@@ -561,7 +561,7 @@ static READ_HANDLER( cavelon_banksw_r )
 	return 0xff;
 }
 
-static WRITE_HANDLER( cavelon_banksw_w )
+static WRITE8_HANDLER( cavelon_banksw_w )
 {
 	cavelon_banksw();
 
@@ -572,117 +572,117 @@ static WRITE_HANDLER( cavelon_banksw_w )
 }
 
 
-READ_HANDLER( hunchbks_mirror_r )
+READ8_HANDLER( hunchbks_mirror_r )
 {
 	return program_read_byte(0x1000+offset);
 }
 
-WRITE_HANDLER( hunchbks_mirror_w )
+WRITE8_HANDLER( hunchbks_mirror_w )
 {
 	program_write_byte(0x1000+offset,data);
 }
 
 
-READ_HANDLER(frogger_ppi8255_0_r)
+READ8_HANDLER(frogger_ppi8255_0_r)
 {
 	return ppi8255_0_r(offset >> 1);
 }
 
-READ_HANDLER(frogger_ppi8255_1_r)
+READ8_HANDLER(frogger_ppi8255_1_r)
 {
 	return ppi8255_1_r(offset >> 1);
 }
 
-WRITE_HANDLER(frogger_ppi8255_0_w)
+WRITE8_HANDLER(frogger_ppi8255_0_w)
 {
 	ppi8255_0_w(offset >> 1, data);
 }
 
-WRITE_HANDLER(frogger_ppi8255_1_w)
+WRITE8_HANDLER(frogger_ppi8255_1_w)
 {
 	ppi8255_1_w(offset >> 1, data);
 }
 
 
-READ_HANDLER(scobra_type2_ppi8255_0_r)
+READ8_HANDLER(scobra_type2_ppi8255_0_r)
 {
 	return ppi8255_0_r(offset >> 2);
 }
 
-READ_HANDLER(scobra_type2_ppi8255_1_r)
+READ8_HANDLER(scobra_type2_ppi8255_1_r)
 {
 	return ppi8255_1_r(offset >> 2);
 }
 
-WRITE_HANDLER(scobra_type2_ppi8255_0_w)
+WRITE8_HANDLER(scobra_type2_ppi8255_0_w)
 {
 	ppi8255_0_w(offset >> 2, data);
 }
 
-WRITE_HANDLER(scobra_type2_ppi8255_1_w)
+WRITE8_HANDLER(scobra_type2_ppi8255_1_w)
 {
 	ppi8255_1_w(offset >> 2, data);
 }
 
 
-READ_HANDLER(hustler_ppi8255_0_r)
+READ8_HANDLER(hustler_ppi8255_0_r)
 {
 	return ppi8255_0_r(offset >> 3);
 }
 
-READ_HANDLER(hustler_ppi8255_1_r)
+READ8_HANDLER(hustler_ppi8255_1_r)
 {
 	return ppi8255_1_r(offset >> 3);
 }
 
-WRITE_HANDLER(hustler_ppi8255_0_w)
+WRITE8_HANDLER(hustler_ppi8255_0_w)
 {
 	ppi8255_0_w(offset >> 3, data);
 }
 
-WRITE_HANDLER(hustler_ppi8255_1_w)
+WRITE8_HANDLER(hustler_ppi8255_1_w)
 {
 	ppi8255_1_w(offset >> 3, data);
 }
 
 
-READ_HANDLER(amidar_ppi8255_0_r)
+READ8_HANDLER(amidar_ppi8255_0_r)
 {
 	return ppi8255_0_r(offset >> 4);
 }
 
-READ_HANDLER(amidar_ppi8255_1_r)
+READ8_HANDLER(amidar_ppi8255_1_r)
 {
 	return ppi8255_1_r(offset >> 4);
 }
 
-WRITE_HANDLER(amidar_ppi8255_0_w)
+WRITE8_HANDLER(amidar_ppi8255_0_w)
 {
 	ppi8255_0_w(offset >> 4, data);
 }
 
-WRITE_HANDLER(amidar_ppi8255_1_w)
+WRITE8_HANDLER(amidar_ppi8255_1_w)
 {
 	ppi8255_1_w(offset >> 4, data);
 }
 
 
-READ_HANDLER(mars_ppi8255_0_r)
+READ8_HANDLER(mars_ppi8255_0_r)
 {
 	return ppi8255_0_r(((offset >> 2) & 0x02) | ((offset >> 1) & 0x01));
 }
 
-READ_HANDLER(mars_ppi8255_1_r)
+READ8_HANDLER(mars_ppi8255_1_r)
 {
 	return ppi8255_1_r(((offset >> 2) & 0x02) | ((offset >> 1) & 0x01));
 }
 
-WRITE_HANDLER(mars_ppi8255_0_w)
+WRITE8_HANDLER(mars_ppi8255_0_w)
 {
 	ppi8255_0_w(((offset >> 2) & 0x02) | ((offset >> 1) & 0x01), data);
 }
 
-WRITE_HANDLER(mars_ppi8255_1_w)
+WRITE8_HANDLER(mars_ppi8255_1_w)
 {
 	ppi8255_1_w(((offset >> 2) & 0x02) | ((offset >> 1) & 0x01), data);
 }
@@ -715,25 +715,25 @@ static ppi8255_interface sfx_ppi8255_intf =
 DRIVER_INIT( pisces )
 {
 	/* the coin lockout was replaced */
-	install_mem_write_handler(0, 0x6002, 0x6002, galaxian_gfxbank_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6002, 0x6002, 0, 0, galaxian_gfxbank_w);
 }
 
 DRIVER_INIT( checkmaj )
 {
 	/* for the title screen */
-	install_mem_read_handler(0, 0x3800, 0x3800, checkmaj_protection_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x3800, 0x3800, 0, 0, checkmaj_protection_r);
 }
 
 DRIVER_INIT( dingo )
 {
-	install_mem_read_handler(0, 0x3000, 0x3000, dingo_3000_r);
-	install_mem_read_handler(0, 0x3035, 0x3035, dingo_3035_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x3000, 0x3000, 0, 0, dingo_3000_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x3035, 0x3035, 0, 0, dingo_3035_r);
 }
 
 DRIVER_INIT( kingball )
 {
-	install_mem_read_handler(0, 0xa000, 0xa000, kingball_IN0_r);
-	install_mem_read_handler(0, 0xa800, 0xa800, kingball_IN1_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa000, 0xa000, 0, 0, kingball_IN0_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa800, 0xa800, 0, 0, kingball_IN1_r);
 }
 
 
@@ -751,7 +751,7 @@ static data8_t decode_mooncrst(data8_t data,offs_t addr)
 
 DRIVER_INIT( mooncrsu )
 {
-	install_mem_write_handler(0, 0xa000, 0xa002, galaxian_gfxbank_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa000, 0xa002, 0, 0, galaxian_gfxbank_w);
 }
 
 DRIVER_INIT( mooncrst )
@@ -768,7 +768,7 @@ DRIVER_INIT( mooncrst )
 
 DRIVER_INIT( mooncrgx )
 {
-	install_mem_write_handler(0, 0x6000, 0x6002, galaxian_gfxbank_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6000, 0x6002, 0, 0, galaxian_gfxbank_w);
 }
 
 DRIVER_INIT( moonqsr )
@@ -853,16 +853,16 @@ DRIVER_INIT( gteikob2 )
 {
 	init_pisces();
 
-	install_mem_write_handler(0, 0x7006, 0x7006, gteikob2_flip_screen_x_w);
-	install_mem_write_handler(0, 0x7007, 0x7007, gteikob2_flip_screen_y_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x7006, 0x7006, 0, 0, gteikob2_flip_screen_x_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x7007, 0x7007, 0, 0, gteikob2_flip_screen_y_w);
 }
 
 DRIVER_INIT( azurian )
 {
 	init_pisces();
 
-	install_mem_read_handler(0, 0x6800, 0x6800, azurian_IN1_r);
-	install_mem_read_handler(0, 0x7000, 0x7000, azurian_IN2_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6800, 0x6800, 0, 0, azurian_IN1_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x7000, 0x7000, 0, 0, azurian_IN2_r);
 }
 
 DRIVER_INIT( 4in1 )
@@ -904,14 +904,14 @@ DRIVER_INIT( scobra )
 {
 	init_scramble_ppi();
 
-	install_mem_write_handler(0, 0xa803, 0xa803, scramble_background_enable_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa803, 0xa803, 0, 0, scramble_background_enable_w);
 }
 
 DRIVER_INIT( atlantis )
 {
 	init_scramble_ppi();
 
-	install_mem_write_handler(0, 0x6803, 0x6803, scramble_background_enable_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6803, 0x6803, 0, 0, scramble_background_enable_w);
 }
 
 DRIVER_INIT( scramble )
@@ -942,9 +942,9 @@ DRIVER_INIT( stratgyx )
 {
 	init_scramble_ppi();
 
-	install_mem_write_handler(0, 0xb000, 0xb000, scramble_background_green_w);
-	install_mem_write_handler(0, 0xb002, 0xb002, scramble_background_blue_w);
-	install_mem_write_handler(0, 0xb00a, 0xb00a, scramble_background_red_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb000, 0xb000, 0, 0, scramble_background_green_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb002, 0xb002, 0, 0, scramble_background_blue_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb00a, 0xb00a, 0, 0, scramble_background_red_w);
 
 	ppi8255_set_portCread(0, stratgyx_input_port_2_r);
 	ppi8255_set_portCread(1, stratgyx_input_port_3_r);
@@ -954,7 +954,7 @@ DRIVER_INIT( tazmani2 )
 {
 	init_scramble_ppi();
 
-	install_mem_write_handler(0, 0xb002, 0xb002, scramble_background_enable_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb002, 0xb002, 0, 0, scramble_background_enable_w);
 }
 
 DRIVER_INIT( amidar )
@@ -978,14 +978,14 @@ DRIVER_INIT( mariner )
 	init_scramble_ppi();
 
 	/* extra ROM */
-	install_mem_read_handler (0, 0x5800, 0x67ff, MRA8_ROM);
-	install_mem_write_handler(0, 0x5800, 0x67ff, MWA8_ROM);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x5800, 0x67ff, 0, 0, MRA8_ROM);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x5800, 0x67ff, 0, 0, MWA8_ROM);
 
-	install_mem_read_handler(0, 0x9008, 0x9008, mariner_protection_2_r);
-	install_mem_read_handler(0, 0xb401, 0xb401, mariner_protection_1_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x9008, 0x9008, 0, 0, mariner_protection_2_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb401, 0xb401, 0, 0, mariner_protection_1_r);
 
 	/* ??? (it's NOT a background enable) */
-	/*install_mem_write_handler(0, 0x6803, 0x6803, MWA8_NOP);*/
+	/*memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6803, 0x6803, 0, 0, MWA8_NOP);*/
 }
 
 DRIVER_INIT( frogger )
@@ -1075,15 +1075,15 @@ DRIVER_INIT( cavelon )
 	init_scramble_ppi();
 
 	/* banked ROM */
-	install_mem_read_handler(0, 0x0000, 0x3fff, MRA8_BANK1);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x0000, 0x3fff, 0, 0, MRA8_BANK1);
 	cavelon_banksw();
 
 	/* A15 switches memory banks */
-	install_mem_read_handler (0, 0x8000, 0xffff, cavelon_banksw_r);
-	install_mem_write_handler(0, 0x8000, 0xffff, cavelon_banksw_w);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xffff, 0, 0, cavelon_banksw_r);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0xffff, 0, 0, cavelon_banksw_w);
 
-	install_mem_write_handler(0, 0x2000, 0x2000, MWA8_NOP);	/* ??? */
-	install_mem_write_handler(0, 0x3800, 0x3801, MWA8_NOP);  /* looks suspicously like
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x2000, 0, 0, MWA8_NOP);	/* ??? */
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x3800, 0x3801, 0, 0, MWA8_NOP);  /* looks suspicously like
 															   an AY8910, but not sure */
 }
 
@@ -1103,7 +1103,7 @@ DRIVER_INIT( darkplnt )
 	/* special handler for the spinner */
 	ppi8255_set_portBread(0, darkplnt_input_port_1_r);
 
-	install_mem_write_handler(0, 0xb00a, 0xb00a, darkplnt_bullet_color_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb00a, 0xb00a, 0, 0, darkplnt_bullet_color_w);
 }
 
 DRIVER_INIT( mimonkey )
@@ -1141,21 +1141,21 @@ DRIVER_INIT( mimonkey )
 
 	init_scramble_ppi();
 
-	install_mem_write_handler(0, 0xa804, 0xa804, scramble_background_enable_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa804, 0xa804, 0, 0, scramble_background_enable_w);
 }
 
 DRIVER_INIT( mimonsco )
 {
 	init_scramble_ppi();
 
-	install_mem_write_handler(0, 0xa804, 0xa804, scramble_background_enable_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa804, 0xa804, 0, 0, scramble_background_enable_w);
 }
 
 DRIVER_INIT( mimonscr )
 {
 	init_scramble_ppi();
 
-	install_mem_write_handler(0, 0x6804, 0x6804, scramble_background_enable_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6804, 0x6804, 0, 0, scramble_background_enable_w);
 }
 
 
@@ -1444,7 +1444,7 @@ DRIVER_INIT( billiard )
 DRIVER_INIT( ladybugg )
 {
 /* Doesn't actually use the bank, but it mustn't have a coin lock! */
-install_mem_write_handler(0, 0x6002, 0x6002, galaxian_gfxbank_w);
+memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x6002, 0x6002, 0, 0, galaxian_gfxbank_w);
 }
 
 /************************************************************
@@ -1484,7 +1484,7 @@ DRIVER_INIT( gmgalax )
 
 INTERRUPT_GEN( hunchbks_vh_interrupt )
 {
-	cpu_set_irq_line_and_vector(0,0,PULSE_LINE,0x03);
+	cpunum_set_input_line_and_vector(0,0,PULSE_LINE,0x03);
 }
 
 INTERRUPT_GEN( gmgalax_vh_interrupt )
@@ -1499,6 +1499,6 @@ INTERRUPT_GEN( gmgalax_vh_interrupt )
 		/* Ghost Muncher never clears this */
 		galaxian_stars_enable_w(0, 0);
 
-		cpu_set_reset_line(0, ASSERT_LINE);
+		cpunum_set_input_line(0, INPUT_LINE_RESET, ASSERT_LINE);
 	}
 }

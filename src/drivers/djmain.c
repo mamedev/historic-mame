@@ -229,7 +229,7 @@ static WRITE32_HANDLER( v_ctrl_w )
 		if (pending_vb_int && !DISABLE_VB_INT)
 		{
 			pending_vb_int = 0;
-			cpu_set_irq_line(0, MC68000_IRQ_4, HOLD_LINE);
+			cpunum_set_input_line(0, MC68000_IRQ_4, HOLD_LINE);
 		}
 	}
 }
@@ -431,7 +431,7 @@ static INTERRUPT_GEN( vb_interrupt )
 	}
 
 	//logerror("V-Blank interrupt\n");
-	cpu_set_irq_line(0, MC68000_IRQ_4, HOLD_LINE);
+	cpunum_set_input_line(0, MC68000_IRQ_4, HOLD_LINE);
 }
 
 
@@ -440,12 +440,12 @@ static void ide_interrupt(int state)
 	if (state != CLEAR_LINE)
 	{
 		//logerror("IDE interrupt asserted\n");
-		cpu_set_irq_line(0, MC68000_IRQ_1, HOLD_LINE);
+		cpunum_set_input_line(0, MC68000_IRQ_1, HOLD_LINE);
 	}
 	else
 	{
 		//logerror("IDE interrupt cleared\n");
-		cpu_set_irq_line(0, MC68000_IRQ_1, CLEAR_LINE);
+		cpunum_set_input_line(0, MC68000_IRQ_1, CLEAR_LINE);
 	}
 }
 
@@ -1122,27 +1122,6 @@ ROM_START( bmcorerm )
 	DISK_IMAGE( "a05jaa11", 0, MD5(bf63321a1bb167f35f1a1111c02874b6) SHA1(95f8e5d29cc9f9af2b1c9397a26217f685f9d5a7) )	/* ver 1.00 JA */
 ROM_END
 
-ROM_START( bm6thmix )
-	ROM_REGION( 0x100000, REGION_CPU1, 0 )		/* MC68EC020FG25 MPU */
-	ROM_LOAD16_BYTE( "a21jaa01.6a", 0x000000, 0x80000, CRC(6D7CCBE3) SHA1(633c69c14dfd70866664b94095fa5f21087428d8) )
-	ROM_LOAD16_BYTE( "a21jaa02.8a", 0x000001, 0x80000, CRC(F10076FA) SHA1(ab9f3e75a36fdaccec411afd77f588f040db139d) )
-
-	ROM_REGION( 0x200000, REGION_GFX1, 0)		/* SPRITE */
-	ROM_LOAD16_BYTE( "a21jaa03.19a", 0x000000, 0x80000, CRC(CA806266) SHA1(6b5f9d5089a992347745ab6af4dadaac4e3b0742) )
-	ROM_LOAD16_BYTE( "a21jaa04.20a", 0x000001, 0x80000, CRC(71124E79) SHA1(d9fd8f662ac9c29daf25acd310fd0f27051dea0b) )
-	ROM_LOAD16_BYTE( "a21jaa05.22a", 0x100000, 0x80000, CRC(818E34E6) SHA1(8a9093b92392a065d0cf94d56195a6f3ca611044) )
-	ROM_LOAD16_BYTE( "a21jaa06.24a", 0x100001, 0x80000, CRC(36F2043B) SHA1(d2846cc10173662029da7c5d686cf89299be2be5) )
-
-	ROM_REGION( 0x200000, REGION_GFX2, 0 )		/* TILEMAP */
-	ROM_LOAD16_BYTE( "a21jaa07.22d", 0x000000, 0x80000, CRC(841D83E1) SHA1(c85962abcc955e8f11138e03002b16afd3791f0a) )
-	ROM_LOAD16_BYTE( "a21jaa08.23d", 0x000001, 0x80000, CRC(4E561919) SHA1(4b91560d9ba367c848d784db760f042d5d76e003) )
-	ROM_LOAD16_BYTE( "a21jaa09.25d", 0x100000, 0x80000, CRC(181E6F70) SHA1(82c7ca3068ace9a66b614ead4b90ea6fe4017d51) )
-	ROM_LOAD16_BYTE( "a21jaa10.27d", 0x100001, 0x80000, CRC(1AC33595) SHA1(3173bb8dc420487c4d427e779444a98aad37d51e) )
-
-	DISK_REGION( REGION_DISKS )			/* IDE HARD DRIVE */
-	DISK_IMAGE( "a21jaa11", 0, MD5(d7a02bd5db4f6fbefaceb1781d35d7a6) SHA1(9e9fb8000cfb53686d94060d7391fb2950265510) )	/* ver 1.00 JA */
-ROM_END
-
 /*************************************
  *
  *	Driver-specific init
@@ -1276,23 +1255,6 @@ static DRIVER_INIT( bmcorerm )
 	ide_set_user_password(0, bmcorerm_user_password);
 }
 
-static DRIVER_INIT( bm6thmix )
-{
-	static UINT8 bm6thmix_user_password[2 + 32] =
-	{
-		0x00, 0x00,
-		0x44, 0x42, 0x56, 0x4b, 0x3d, 0x4d, 0x4a, 0x23,
-		0x5a, 0x52, 0x0c, 0x3e, 0x6a, 0x04, 0x63, 0x65,
-		0x7e, 0x7f, 0x77, 0x77, 0x1f, 0x79, 0x04, 0x0f,
-		0x02, 0x06, 0x09, 0x0f, 0x7a, 0x74, 0x7d, 0x7a
-	};
-
-	init_beatmania();
-
-	ide_set_master_password(0, beatmania_master_password);
-	ide_set_user_password(0, bm6thmix_user_password);
-}
-
 /*************************************
  *
  *	Game drivers
@@ -1309,4 +1271,3 @@ GAME( 1999, bm5thmix, 0,        djmain,   beatmania, bm5thmix,  ROT0, "Konami", 
 GAME( 2000, hmcompm2, 0,        djmain,   hmcompm2,  hmcompm2,  ROT0, "Konami", "hiphopmania complete MIX 2 (ver UA-A)" )
 GAME( 2000, bmdct,    0,        djmain,   bmdct,     bmdct,     ROT0, "Konami", "beatmania f. Dreams Come True (ver JA-A)" )
 GAME( 2000, bmcorerm, 0,        djmain,   beatmania, bmcorerm,  ROT0, "Konami", "beatmania CORE REMIX (ver JA-A)" )
-GAME( 2001, bm6thmix, 0,        djmain,   beatmania, bm6thmix,  ROT0, "Konami", "beatmania 6th MIX (ver JA-A)" )

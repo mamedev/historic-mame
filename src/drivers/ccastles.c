@@ -93,20 +93,20 @@
  *
  *************************************/
 
-static WRITE_HANDLER( ccastles_led_w )
+static WRITE8_HANDLER( ccastles_led_w )
 {
 	set_led_status(offset,~data & 1);
 }
 
 
-static WRITE_HANDLER( ccastles_coin_counter_w )
+static WRITE8_HANDLER( ccastles_coin_counter_w )
 {
 	/* this is not working, haven't investigated why */
 	coin_counter_w(offset^1, ~data);
 }
 
 
-static WRITE_HANDLER( ccastles_bankswitch_w )
+static WRITE8_HANDLER( ccastles_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -116,7 +116,7 @@ static WRITE_HANDLER( ccastles_bankswitch_w )
 }
 
 
-static WRITE_HANDLER( flip_screen_w )
+static WRITE8_HANDLER( flip_screen_w )
 {
 	flip_screen_set(data);
 }

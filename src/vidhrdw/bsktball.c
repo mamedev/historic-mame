@@ -12,7 +12,7 @@ unsigned char *bsktball_motion;
 
 static struct tilemap *bg_tilemap;
 
-WRITE_HANDLER( bsktball_videoram_w )
+WRITE8_HANDLER( bsktball_videoram_w )
 {
 	if (videoram[offset] != data)
 	{

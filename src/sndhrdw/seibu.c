@@ -139,7 +139,7 @@ void seibu_adpcm_decrypt(int region)
 	}
 }
 
-WRITE_HANDLER( seibu_adpcm_adr_1_w )
+WRITE8_HANDLER( seibu_adpcm_adr_1_w )
 {
 	if (offset)
 	{
@@ -151,7 +151,7 @@ WRITE_HANDLER( seibu_adpcm_adr_1_w )
 	}
 }
 
-WRITE_HANDLER( seibu_adpcm_ctl_1_w )
+WRITE8_HANDLER( seibu_adpcm_ctl_1_w )
 {
 	// sequence is 00 02 01 each time.
 	switch (data)
@@ -168,7 +168,7 @@ WRITE_HANDLER( seibu_adpcm_ctl_1_w )
 	}
 }
 
-WRITE_HANDLER( seibu_adpcm_adr_2_w )
+WRITE8_HANDLER( seibu_adpcm_adr_2_w )
 {
 	if (offset)
 	{
@@ -180,7 +180,7 @@ WRITE_HANDLER( seibu_adpcm_adr_2_w )
 	}
 }
 
-WRITE_HANDLER( seibu_adpcm_ctl_2_w )
+WRITE8_HANDLER( seibu_adpcm_ctl_2_w )
 {
 	// sequence is 00 02 01 each time.
 	switch (data)
@@ -240,22 +240,22 @@ static void update_irq_lines(int param)
 	}
 
 	if ((irq1 & irq2) == 0xff)	/* no IRQs pending */
-		cpu_set_irq_line(sound_cpu,0,CLEAR_LINE);
+		cpunum_set_input_line(sound_cpu,0,CLEAR_LINE);
 	else	/* IRQ pending */
-		cpu_set_irq_line_and_vector(sound_cpu,0,ASSERT_LINE,irq1 & irq2);
+		cpunum_set_input_line_and_vector(sound_cpu,0,ASSERT_LINE,irq1 & irq2);
 }
 
-WRITE_HANDLER( seibu_irq_clear_w )
+WRITE8_HANDLER( seibu_irq_clear_w )
 {
 	update_irq_lines(VECTOR_INIT);
 }
 
-WRITE_HANDLER( seibu_rst10_ack_w )
+WRITE8_HANDLER( seibu_rst10_ack_w )
 {
 	/* Unused for now */
 }
 
-WRITE_HANDLER( seibu_rst18_ack_w )
+WRITE8_HANDLER( seibu_rst18_ack_w )
 {
 	update_irq_lines(RST18_CLEAR);
 }
@@ -296,35 +296,35 @@ MACHINE_INIT( seibu_sound_2 )
 static UINT8 main2sub[2],sub2main[2];
 static int main2sub_pending,sub2main_pending;
 
-WRITE_HANDLER( seibu_bank_w )
+WRITE8_HANDLER( seibu_bank_w )
 {
 	UINT8 *rom = memory_region(REGION_CPU1+sound_cpu);
 
 	cpu_setbank(1,rom + 0x10000 + 0x8000 * (data & 1));
 }
 
-WRITE_HANDLER( seibu_coin_w )
+WRITE8_HANDLER( seibu_coin_w )
 {
 	coin_counter_w(0,data & 1);
 	coin_counter_w(1,data & 2);
 }
 
-READ_HANDLER( seibu_soundlatch_r )
+READ8_HANDLER( seibu_soundlatch_r )
 {
 	return main2sub[offset];
 }
 
-READ_HANDLER( seibu_main_data_pending_r )
+READ8_HANDLER( seibu_main_data_pending_r )
 {
 	return sub2main_pending ? 1 : 0;
 }
 
-WRITE_HANDLER( seibu_main_data_w )
+WRITE8_HANDLER( seibu_main_data_w )
 {
 	sub2main[offset] = data;
 }
 
-WRITE_HANDLER( seibu_pending_w )
+WRITE8_HANDLER( seibu_pending_w )
 {
 	/* just a guess */
 	main2sub_pending = 0;
@@ -373,12 +373,12 @@ WRITE16_HANDLER( seibu_main_word_w )
 	}
 }
 
-READ_HANDLER( seibu_main_v30_r )
+READ8_HANDLER( seibu_main_v30_r )
 {
 	return seibu_main_word_r(offset/2,0) >> (8 * (offset & 1));
 }
 
-WRITE_HANDLER( seibu_main_v30_w )
+WRITE8_HANDLER( seibu_main_v30_w )
 {
 	seibu_main_word_w(offset/2,data << (8 * (offset & 1)),0xff00 >> (8 * (offset & 1)));
 }

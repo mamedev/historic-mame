@@ -137,7 +137,7 @@ VIDEO_START( slikshot )
  *
  *************************************/
 
-WRITE_HANDLER( itech8_palette_w )
+WRITE8_HANDLER( itech8_palette_w )
 {
 	tlc34076_w(offset/2, data);
 }
@@ -623,7 +623,7 @@ static void blitter_done(int param)
  *
  *************************************/
 
-READ_HANDLER( itech8_blitter_r )
+READ8_HANDLER( itech8_blitter_r )
 {
 	int result = blitter_data[offset / 2];
 
@@ -642,12 +642,16 @@ READ_HANDLER( itech8_blitter_r )
 		else
 			result &= 0x7f;
 	}
+	
+	/* a read from offsets 12-15 return input port values */
+	if (offset >= 12 && offset <= 15)
+		result = readinputport(3 + offset - 12);
 
 	return result;
 }
 
 
-WRITE_HANDLER( itech8_blitter_w )
+WRITE8_HANDLER( itech8_blitter_w )
 {
 	/* low bit seems to be ignored */
 	offset /= 2;
@@ -702,7 +706,7 @@ WRITE_HANDLER( itech8_blitter_w )
  *
  *************************************/
 
-WRITE_HANDLER( itech8_tms34061_w )
+WRITE8_HANDLER( itech8_tms34061_w )
 {
 	int func = (offset >> 9) & 7;
 	int col = offset & 0xff;
@@ -717,7 +721,7 @@ WRITE_HANDLER( itech8_tms34061_w )
 }
 
 
-READ_HANDLER( itech8_tms34061_r )
+READ8_HANDLER( itech8_tms34061_r )
 {
 	int func = (offset >> 9) & 7;
 	int col = offset & 0xff;

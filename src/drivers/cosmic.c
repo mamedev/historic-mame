@@ -27,8 +27,8 @@ VIDEO_UPDATE( devzone );
 VIDEO_UPDATE( cosmica );
 VIDEO_UPDATE( cosmicg );
 VIDEO_UPDATE( nomnlnd );
-WRITE_HANDLER( cosmic_color_register_w );
-WRITE_HANDLER( cosmic_background_enable_w );
+WRITE8_HANDLER( cosmic_color_register_w );
+WRITE8_HANDLER( cosmic_background_enable_w );
 
 
 static unsigned int pixel_clock = 0;
@@ -37,7 +37,7 @@ static unsigned int pixel_clock = 0;
 
 /* Schematics show 12 triggers for discrete sound circuits */
 
-static WRITE_HANDLER( panic_sound_output_w )
+static WRITE8_HANDLER( panic_sound_output_w )
 {
     static int sound_enabled=1;
 
@@ -108,12 +108,12 @@ static WRITE_HANDLER( panic_sound_output_w )
 	#endif
 }
 
-WRITE_HANDLER( panic_sound_output2_w )
+WRITE8_HANDLER( panic_sound_output2_w )
 {
 	panic_sound_output_w(offset+15, data);
 }
 
-WRITE_HANDLER( cosmicg_output_w )
+WRITE8_HANDLER( cosmicg_output_w )
 {
 	static int march_select;
     static int gun_die_select;
@@ -190,11 +190,11 @@ static INTERRUPT_GEN( panic_interrupt )
     	if ((input_port_3_r(0) & 0xc0) != 0xc0)
         	panic_sound_output_w(17,1);
 
-		cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0xcf);	/* RST 08h */
+		cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, 0xcf);	/* RST 08h */
     }
     else
     {
-        cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0xd7);	/* RST 10h */
+        cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, 0xd7);	/* RST 10h */
     }
 }
 
@@ -205,7 +205,7 @@ static INTERRUPT_GEN( cosmica_interrupt )
     if (pixel_clock == 0)
     {
 		if (readinputport(3) & 1)	/* Left Coin */
-			cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+			cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
     }
 }
 
@@ -221,11 +221,11 @@ static INTERRUPT_GEN( cosmicg_interrupt )
 	if ((readinputport(2) & 1)) /* Coin */
 	{
 		/* on tms9980, a 6 on the interrupt bus means level 4 interrupt */
-		cpu_set_irq_line_and_vector(0, 0, ASSERT_LINE, 6);
+		cpunum_set_input_line_and_vector(0, 0, ASSERT_LINE, 6);
 	}
 	else
 	{
-		cpu_set_irq_line(0, 0, CLEAR_LINE);
+		cpunum_set_input_line(0, 0, CLEAR_LINE);
 	}
 }
 
@@ -234,11 +234,11 @@ static INTERRUPT_GEN( magspot2_interrupt )
 	/* Coin 1 causes an IRQ, Coin 2 an NMI */
 	if (input_port_4_r(0) & 0x01)
 	{
-  		cpu_set_irq_line(0, 0, HOLD_LINE);
+  		cpunum_set_input_line(0, 0, HOLD_LINE);
 	}
 	else if (input_port_4_r(0) & 0x02)
 	{
-		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+		cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 	}
 }
 
@@ -247,25 +247,25 @@ static INTERRUPT_GEN( nomnlnd_interrupt )
 	/* Coin causes an NMI */
 	if (input_port_4_r(0) & 0x01)
 	{
-		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+		cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 	}
 }
 
 
 
-static READ_HANDLER( cosmica_pixel_clock_r )
+static READ8_HANDLER( cosmica_pixel_clock_r )
 {
 	return pixel_clock;
 }
 
-static READ_HANDLER( cosmicg_port_0_r )
+static READ8_HANDLER( cosmicg_port_0_r )
 {
 	/* The top four address lines from the CRTC are bits 0-3 */
 
 	return (input_port_0_r(0) & 0xf0) | ((cpu_getscanline() & 0xf0) >> 4);
 }
 
-static READ_HANDLER( magspot2_coinage_dip_r )
+static READ8_HANDLER( magspot2_coinage_dip_r )
 {
 	return (input_port_5_r(0) & (1 << (7 - offset))) ? 0 : 1;
 }
@@ -273,7 +273,7 @@ static READ_HANDLER( magspot2_coinage_dip_r )
 
 /* Has 8 way joystick, remap combinations to missing directions */
 
-static READ_HANDLER( nomnlnd_port_0_1_r )
+static READ8_HANDLER( nomnlnd_port_0_1_r )
 {
 	int control;
     int fire = input_port_3_r(0);
@@ -299,7 +299,7 @@ static READ_HANDLER( nomnlnd_port_0_1_r )
 
 
 
-static WRITE_HANDLER( flip_screen_w )
+static WRITE8_HANDLER( flip_screen_w )
 {
 	flip_screen_set(data&0x80);
 }
@@ -1494,15 +1494,15 @@ static DRIVER_INIT( cosmicg )
 
 static DRIVER_INIT( devzone )
 {
-	install_mem_write_handler(0, 0x4807, 0x4807, cosmic_background_enable_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4807, 0x4807, 0, 0, cosmic_background_enable_w);
 }
 
 
 static DRIVER_INIT( nomnlnd )
 {
-	install_mem_read_handler(0, 0x5000, 0x5001, nomnlnd_port_0_1_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x5000, 0x5001, 0, 0, nomnlnd_port_0_1_r);
 
-	install_mem_write_handler(0, 0x4807, 0x4807, cosmic_background_enable_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x4807, 0x4807, 0, 0, cosmic_background_enable_w);
 }
 
 

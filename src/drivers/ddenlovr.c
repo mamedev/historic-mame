@@ -284,7 +284,7 @@ static int blit_draw(int src,int sx,int flags)
 }
 
 
-static READ_HANDLER( rongrong_gfxrom_r )
+static READ8_HANDLER( rongrong_gfxrom_r )
 {
 	data8_t *rom	=	memory_region( REGION_GFX1 );
 	size_t size		=	memory_region_length( REGION_GFX1 );
@@ -562,7 +562,7 @@ usrintf_showmessage("unknown blitter command %02x",data);
 				if (irq_vector)
 				{
 					/* quizchq */
-					cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, irq_vector);
+					cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, irq_vector);
 				}
 				else
 				{
@@ -570,7 +570,7 @@ usrintf_showmessage("unknown blitter command %02x",data);
 					if (dynax_blitter_irq_enable)
 					{
 						dynax_blitter_irq_flag = 1;
-						cpu_set_irq_line(0,1,HOLD_LINE);
+						cpunum_set_input_line(0,1,HOLD_LINE);
 					}
 				}
 			}
@@ -585,7 +585,7 @@ logerror("%06x: Blitter %d reg %02x = %02x\n", activecpu_get_pc(), blitter, dyna
 profiler_mark(PROFILER_END);
 }
 
-static WRITE_HANDLER( rongrong_blitter_w )
+static WRITE8_HANDLER( rongrong_blitter_w )
 {
 	blitter_w(0,offset,data,0xf8);
 }
@@ -614,12 +614,12 @@ static WRITE16_HANDLER( ddenlovr_blitter_irq_ack_w )
 }
 
 
-static WRITE_HANDLER( dynax_bgcolor_w )
+static WRITE8_HANDLER( dynax_bgcolor_w )
 {
 	dynax_bgcolor = data;
 }
 
-static WRITE_HANDLER( dynax_bgcolor2_w )
+static WRITE8_HANDLER( dynax_bgcolor2_w )
 {
 	dynax_bgcolor2 = data;
 }
@@ -631,12 +631,12 @@ static WRITE16_HANDLER( ddenlovr_bgcolor_w )
 }
 
 
-static WRITE_HANDLER( dynax_priority_w )
+static WRITE8_HANDLER( dynax_priority_w )
 {
 	dynax_priority = data;
 }
 
-static WRITE_HANDLER( dynax_priority2_w )
+static WRITE8_HANDLER( dynax_priority2_w )
 {
 	dynax_priority2 = data;
 }
@@ -648,12 +648,12 @@ static WRITE16_HANDLER( ddenlovr_priority_w )
 }
 
 
-static WRITE_HANDLER( dynax_layer_enable_w )
+static WRITE8_HANDLER( dynax_layer_enable_w )
 {
 	dynax_layer_enable = data;
 }
 
-static WRITE_HANDLER( dynax_layer_enable2_w )
+static WRITE8_HANDLER( dynax_layer_enable2_w )
 {
 	dynax_layer_enable2 = data;
 }
@@ -709,14 +709,14 @@ VIDEO_UPDATE(ddenlovr)
 	dynax_blit_y = 5;
 	dynax_clip_ctrl = 0x0f;
 	next = blit_draw(base,0,0);
-if (keyboard_pressed(KEYCODE_Z))
+if (code_pressed(KEYCODE_Z))
 	usrintf_showmessage("%06x",base);
-	if (keyboard_pressed(KEYCODE_S)) base = next;
-	if (keyboard_pressed_memory(KEYCODE_X)) base = next;
-	if (keyboard_pressed(KEYCODE_C)) { base--; while ((memory_region(REGION_GFX1)[base] & 0xf0) != 0x30) base--; }
-	if (keyboard_pressed(KEYCODE_V)) { base++; while ((memory_region(REGION_GFX1)[base] & 0xf0) != 0x30) base++; }
-	if (keyboard_pressed_memory(KEYCODE_D)) { base--; while ((memory_region(REGION_GFX1)[base] & 0xf0) != 0x30) base--; }
-	if (keyboard_pressed_memory(KEYCODE_F)) { base++; while ((memory_region(REGION_GFX1)[base] & 0xf0) != 0x30) base++; }
+	if (code_pressed(KEYCODE_S)) base = next;
+	if (code_pressed_memory(KEYCODE_X)) base = next;
+	if (code_pressed(KEYCODE_C)) { base--; while ((memory_region(REGION_GFX1)[base] & 0xf0) != 0x30) base--; }
+	if (code_pressed(KEYCODE_V)) { base++; while ((memory_region(REGION_GFX1)[base] & 0xf0) != 0x30) base++; }
+	if (code_pressed_memory(KEYCODE_D)) { base--; while ((memory_region(REGION_GFX1)[base] & 0xf0) != 0x30) base--; }
+	if (code_pressed_memory(KEYCODE_F)) { base++; while ((memory_region(REGION_GFX1)[base] & 0xf0) != 0x30) base++; }
 #endif
 
 	copybitmap(bitmap,framebuffer,0,0,0,0,cliprect,TRANSPARENCY_NONE,0);
@@ -743,13 +743,13 @@ if (keyboard_pressed(KEYCODE_Z))
 		}
 		fillbitmap(framebuffer,dynax_bgcolor,&Machine->visible_area);
 
-//if (!keyboard_pressed(KEYCODE_Q))
+//if (!code_pressed(KEYCODE_Q))
 		copylayer(framebuffer,&Machine->visible_area,order[pri][0]);
-//if (!keyboard_pressed(KEYCODE_W))
+//if (!code_pressed(KEYCODE_W))
 		copylayer(framebuffer,&Machine->visible_area,order[pri][1]);
-//if (!keyboard_pressed(KEYCODE_E))
+//if (!code_pressed(KEYCODE_E))
 		copylayer(framebuffer,&Machine->visible_area,order[pri][2]);
-//if (!keyboard_pressed(KEYCODE_R))
+//if (!code_pressed(KEYCODE_R))
 		copylayer(framebuffer,&Machine->visible_area,order[pri][3]);
 
 		if (extra_layers)
@@ -761,13 +761,13 @@ if (keyboard_pressed(KEYCODE_Z))
 			usrintf_showmessage("priority2 = %02x",pri);
 			pri = 0;
 		}
-//if (!keyboard_pressed(KEYCODE_A))
+//if (!code_pressed(KEYCODE_A))
 		copylayer(framebuffer,&Machine->visible_area,order[pri][0]+4);
-//if (!keyboard_pressed(KEYCODE_S))
+//if (!code_pressed(KEYCODE_S))
 		copylayer(framebuffer,&Machine->visible_area,order[pri][1]+4);
-//if (!keyboard_pressed(KEYCODE_D))
+//if (!code_pressed(KEYCODE_D))
 		copylayer(framebuffer,&Machine->visible_area,order[pri][2]+4);
-//if (!keyboard_pressed(KEYCODE_F))
+//if (!code_pressed(KEYCODE_F))
 		copylayer(framebuffer,&Machine->visible_area,order[pri][3]+4);
 		}
 	}
@@ -796,7 +796,7 @@ static WRITE16_HANDLER( ddenlovr_coincounter_1_w )
 
 static data8_t palram[0x200];
 
-static WRITE_HANDLER( rongrong_palette_w )
+static WRITE8_HANDLER( rongrong_palette_w )
 {
 	int r,g,b,d1,d2,indx;
 
@@ -825,12 +825,12 @@ static WRITE16_HANDLER( ddenlovr_palette_w )
 }
 
 
-static WRITE_HANDLER( rongrong_palette_base_w )
+static WRITE8_HANDLER( rongrong_palette_base_w )
 {
 	dynax_palette_base[offset] = data;
 }
 
-static WRITE_HANDLER( dynax_palette_base2_w )
+static WRITE8_HANDLER( dynax_palette_base2_w )
 {
 	dynax_palette_base[offset+4] = data;
 }
@@ -843,7 +843,7 @@ static WRITE16_HANDLER( ddenlovr_palette_base_w )
 }
 
 
-static WRITE_HANDLER( quizchq_oki_bank_w )
+static WRITE8_HANDLER( quizchq_oki_bank_w )
 {
 	OKIM6295_set_bank_base(0, (data & 1) * 0x40000);
 }
@@ -879,7 +879,7 @@ static WRITE16_HANDLER( quiz365_oki_bank2_w )
 
 #include <time.h>
 
-static READ_HANDLER( rtc_r )
+static READ8_HANDLER( rtc_r )
 {
 	time_t ltime;
 	struct tm *today;
@@ -911,7 +911,7 @@ static READ16_HANDLER( rtc16_r )
 }
 
 
-static READ_HANDLER( unk_r )
+static READ8_HANDLER( unk_r )
 {
 	return 0x78;
 }
@@ -925,7 +925,7 @@ static READ16_HANDLER( unk16_r )
 
 static data8_t quiz365_select;
 
-READ_HANDLER( quiz365_input_r )
+READ8_HANDLER( quiz365_input_r )
 {
 	if (!(quiz365_select & 0x01))	return readinputport(3);
 	if (!(quiz365_select & 0x02))	return readinputport(4);
@@ -935,7 +935,7 @@ READ_HANDLER( quiz365_input_r )
 	return 0xff;
 }
 
-WRITE_HANDLER( quiz365_select_w )
+WRITE8_HANDLER( quiz365_select_w )
 {
 	quiz365_select = data;
 }
@@ -943,7 +943,7 @@ WRITE_HANDLER( quiz365_select_w )
 
 static data8_t rongrong_select2;
 
-READ_HANDLER( rongrong_input2_r )
+READ8_HANDLER( rongrong_input2_r )
 {
 //logerror("%04x: rongrong_input2_r offset %d select %x\n",activecpu_get_pc(),offset,rongrong_select2 );
 	/* 0 and 1 are read from offset 1, 2 from offset 0... */
@@ -956,7 +956,7 @@ READ_HANDLER( rongrong_input2_r )
 	return 0xff;
 }
 
-WRITE_HANDLER( rongrong_select2_w )
+WRITE8_HANDLER( rongrong_select2_w )
 {
 	rongrong_select2 = data;
 }
@@ -1187,7 +1187,7 @@ ADDRESS_MAP_END
 
 static data8_t rongrong_select;
 
-READ_HANDLER( rongrong_input_r )
+READ8_HANDLER( rongrong_input_r )
 {
 	if (!(rongrong_select & 0x01))	return readinputport(3);
 	if (!(rongrong_select & 0x02))	return readinputport(4);
@@ -1197,7 +1197,7 @@ READ_HANDLER( rongrong_input_r )
 	return 0xff;
 }
 
-WRITE_HANDLER( rongrong_select_w )
+WRITE8_HANDLER( rongrong_select_w )
 {
 	UINT8 *rom = memory_region(REGION_CPU1);
 
@@ -1307,35 +1307,35 @@ a0 input select,a2 input read (protection?)
 ***************************************************************************/
 
 
-static READ_HANDLER( magic_r )
+static READ8_HANDLER( magic_r )
 {
 	return 0x01;
 }
 
 static data8_t mmpanic_select;
-static WRITE_HANDLER( mmpanic_select_w )
+static WRITE8_HANDLER( mmpanic_select_w )
 {
 	mmpanic_select = data;
 }
 
-static WRITE_HANDLER( mmpanic_rombank_w )
+static WRITE8_HANDLER( mmpanic_rombank_w )
 {
 	UINT8 *rom = memory_region(REGION_CPU1);
 	cpu_setbank(1, &rom[0x10000 + 0x8000 * (data & 0x7)]);
 	/* Bit 4? */
 }
 
-static WRITE_HANDLER( mmpanic_soundlatch_w )
+static WRITE8_HANDLER( mmpanic_soundlatch_w )
 {
 	soundlatch_w(0,data);
-	cpu_set_nmi_line(1, PULSE_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 }
 
-static WRITE_HANDLER( mmpanic_blitter_w )
+static WRITE8_HANDLER( mmpanic_blitter_w )
 {
 	blitter_w(0,offset,data,0xdf);	// RST 18
 }
-static WRITE_HANDLER( mmpanic_blitter2_w )
+static WRITE8_HANDLER( mmpanic_blitter2_w )
 {
 	blitter_w(1,offset,data,0xdf);	// RST 18
 }
@@ -1349,20 +1349,20 @@ static void mmpanic_update_leds(void)
 }
 
 /* leds 1-8 */
-static WRITE_HANDLER( mmpanic_leds_w )
+static WRITE8_HANDLER( mmpanic_leds_w )
 {
 	mmpanic_leds = (mmpanic_leds & 0xff00) | data;
 	mmpanic_update_leds();
 }
 /* led 9 */
-static WRITE_HANDLER( mmpanic_leds2_w )
+static WRITE8_HANDLER( mmpanic_leds2_w )
 {
 	mmpanic_leds = (mmpanic_leds & 0xfeff) | (data ? 0x0100 : 0);
 	mmpanic_update_leds();
 }
 
 
-static WRITE_HANDLER( mmpanic_lockout_w )
+static WRITE8_HANDLER( mmpanic_lockout_w )
 {
 	if (mmpanic_select == 0x0c)
 	{
@@ -1372,7 +1372,7 @@ static WRITE_HANDLER( mmpanic_lockout_w )
 	}
 }
 
-static READ_HANDLER( mmpanic_link_r )	{ return 0xff; }
+static READ8_HANDLER( mmpanic_link_r )	{ return 0xff; }
 
 /* Main CPU */
 
@@ -2094,18 +2094,18 @@ static INTERRUPT_GEN( quizchq_irq )
 	/* I haven't found a irq ack register, so I need this kludge to
 	   make sure I don't lose any interrupt generated by the blitter,
 	   otherwise quizchq would lock up. */
-	if (cpunum_get_info_int(0,CPUINFO_INT_IRQ_STATE + 0))
+	if (cpunum_get_info_int(0,CPUINFO_INT_INPUT_STATE + 0))
 		return;
 
 	if ((++count % 60) == 0)
-		cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0xfc);
+		cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, 0xfc);
 	else
-		cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0xee);
+		cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, 0xee);
 }
 
 static INTERRUPT_GEN( rtc_irq )
 {
-//	cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0xfc);
+//	cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, 0xfc);
 }
 
 static MACHINE_DRIVER_START( quizchq )
@@ -2160,13 +2160,13 @@ static INTERRUPT_GEN( mmpanic_irq )
 	/* I haven't found a irq ack register, so I need this kludge to
 	   make sure I don't lose any interrupt generated by the blitter,
 	   otherwise the game would lock up. */
-	if (cpunum_get_info_int(0,CPUINFO_INT_IRQ_STATE + 0))
+	if (cpunum_get_info_int(0,CPUINFO_INT_INPUT_STATE + 0))
 		return;
 
 	if ((++count % 60) == 0)
-		cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0xe7);	// RST 20, clock
+		cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, 0xe7);	// RST 20, clock
 	else
-		cpu_set_irq_line_and_vector(0, 0, HOLD_LINE, 0xcf);	// RST 08, vblank
+		cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, 0xcf);	// RST 08, vblank
 }
 
 static MACHINE_DRIVER_START( mmpanic )
@@ -2507,7 +2507,7 @@ static DRIVER_INIT( rongrong )
 	   version of the game might be a bootleg with the protection
 	   patched.
 	 */
-	install_mem_read_handler(0, 0x60d4, 0x60d4, MRA8_NOP);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x60d4, 0x60d4, 0, 0, MRA8_NOP);
 }
 
 

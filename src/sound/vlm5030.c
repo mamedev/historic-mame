@@ -523,7 +523,7 @@ int VLM5030_BSY(void)
 }
 
 /* latch contoll data */
-WRITE_HANDLER( VLM5030_data_w )
+WRITE8_HANDLER( VLM5030_data_w )
 {
 	latch_data = (UINT8)data;
 }

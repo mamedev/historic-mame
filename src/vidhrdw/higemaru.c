@@ -3,7 +3,7 @@
 
 static struct tilemap *bg_tilemap;
 
-WRITE_HANDLER( higemaru_videoram_w )
+WRITE8_HANDLER( higemaru_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -12,7 +12,7 @@ WRITE_HANDLER( higemaru_videoram_w )
 	}
 }
 
-WRITE_HANDLER( higemaru_colorram_w )
+WRITE8_HANDLER( higemaru_colorram_w )
 {
 	if (colorram[offset] != data)
 	{
@@ -70,7 +70,7 @@ PALETTE_INIT( higemaru )
 		COLOR(1,i) = (*(color_prom++) & 0x0f) + 0x10;
 }
 
-WRITE_HANDLER( higemaru_c800_w )
+WRITE8_HANDLER( higemaru_c800_w )
 {
 	if (data & 0x7c) logerror("c800 = %02x\n",data);
 

@@ -196,45 +196,45 @@ VIDEO_UPDATE( slapfight );
 VIDEO_UPDATE( perfrman );
 VIDEO_START( slapfight );
 VIDEO_START( perfrman );
-WRITE_HANDLER( slapfight_flipscreen_w );
-WRITE_HANDLER( slapfight_fixram_w );
-WRITE_HANDLER( slapfight_fixcol_w );
-WRITE_HANDLER( slapfight_videoram_w );
-WRITE_HANDLER( slapfight_colorram_w );
+WRITE8_HANDLER( slapfight_flipscreen_w );
+WRITE8_HANDLER( slapfight_fixram_w );
+WRITE8_HANDLER( slapfight_fixcol_w );
+WRITE8_HANDLER( slapfight_videoram_w );
+WRITE8_HANDLER( slapfight_colorram_w );
 
 /* MACHINE */
 MACHINE_INIT( slapfight );
 extern unsigned char *slapfight_dpram;
 extern size_t slapfight_dpram_size;
-WRITE_HANDLER( slapfight_dpram_w );
-READ_HANDLER( slapfight_dpram_r );
+WRITE8_HANDLER( slapfight_dpram_w );
+READ8_HANDLER( slapfight_dpram_r );
 
-READ_HANDLER( slapfight_port_00_r );
-WRITE_HANDLER( slapfight_port_00_w );
-WRITE_HANDLER( slapfight_port_01_w );
-WRITE_HANDLER( getstar_port_04_w );
-WRITE_HANDLER( slapfight_port_06_w );
-WRITE_HANDLER( slapfight_port_07_w );
-WRITE_HANDLER( slapfight_port_08_w );
-WRITE_HANDLER( slapfight_port_09_w );
+READ8_HANDLER( slapfight_port_00_r );
+WRITE8_HANDLER( slapfight_port_00_w );
+WRITE8_HANDLER( slapfight_port_01_w );
+WRITE8_HANDLER( getstar_port_04_w );
+WRITE8_HANDLER( slapfight_port_06_w );
+WRITE8_HANDLER( slapfight_port_07_w );
+WRITE8_HANDLER( slapfight_port_08_w );
+WRITE8_HANDLER( slapfight_port_09_w );
 
 /* MCU */
-READ_HANDLER( getstar_e803_r );
+READ8_HANDLER( getstar_e803_r );
 
-READ_HANDLER ( tigerh_68705_portA_r );
-WRITE_HANDLER( tigerh_68705_portA_w );
-READ_HANDLER ( tigerh_68705_portB_r );
-WRITE_HANDLER( tigerh_68705_portB_w );
-READ_HANDLER ( tigerh_68705_portC_r );
-WRITE_HANDLER( tigerh_68705_portC_w );
-WRITE_HANDLER( tigerh_68705_ddrA_w );
-WRITE_HANDLER( tigerh_68705_ddrB_w );
-WRITE_HANDLER( tigerh_68705_ddrC_w );
-WRITE_HANDLER( tigerh_mcu_w );
-READ_HANDLER ( tigerh_mcu_r );
-READ_HANDLER ( tigerh_mcu_status_r );
+READ8_HANDLER ( tigerh_68705_portA_r );
+WRITE8_HANDLER( tigerh_68705_portA_w );
+READ8_HANDLER ( tigerh_68705_portB_r );
+WRITE8_HANDLER( tigerh_68705_portB_w );
+READ8_HANDLER ( tigerh_68705_portC_r );
+WRITE8_HANDLER( tigerh_68705_portC_w );
+WRITE8_HANDLER( tigerh_68705_ddrA_w );
+WRITE8_HANDLER( tigerh_68705_ddrB_w );
+WRITE8_HANDLER( tigerh_68705_ddrC_w );
+WRITE8_HANDLER( tigerh_mcu_w );
+READ8_HANDLER ( tigerh_mcu_r );
+READ8_HANDLER ( tigerh_mcu_status_r );
 
-WRITE_HANDLER( getstar_sh_intenable_w );
+WRITE8_HANDLER( getstar_sh_intenable_w );
 INTERRUPT_GEN( getstar_interrupt );
 
 
@@ -318,7 +318,7 @@ static ADDRESS_MAP_START( readport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x00, 0x00) AM_READ(slapfight_port_00_r)	/* status register */
 ADDRESS_MAP_END
 
-static READ_HANDLER(tigerh_status_r)
+static READ8_HANDLER(tigerh_status_r)
 {
 	return (slapfight_port_00_r(0)&0xf9)| ((tigerh_mcu_status_r(0)));
 }
@@ -1409,8 +1409,8 @@ ROM_END
 
 static DRIVER_INIT( tigerh )
 {
-	install_mem_read_handler(0,  0xe803, 0xe803, tigerh_mcu_r );
-	install_mem_write_handler(0, 0xe803, 0xe803, tigerh_mcu_w  );
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe803, 0xe803, 0, 0, tigerh_mcu_r );
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe803, 0xe803, 0, 0, tigerh_mcu_w  );
 
 }
 

@@ -138,8 +138,8 @@ static UINT8 nvram_enabled;
 static void generate_interrupt(int scanline)
 {
 	/* IRQ is set by /32V */
-	cpu_set_irq_line(0, M6502_IRQ_LINE, (scanline & 32) ? CLEAR_LINE : ASSERT_LINE);
-	cpu_set_irq_line(1, M6502_IRQ_LINE, (scanline & 32) ? CLEAR_LINE : ASSERT_LINE);
+	cpunum_set_input_line(0, M6502_IRQ_LINE, (scanline & 32) ? CLEAR_LINE : ASSERT_LINE);
+	cpunum_set_input_line(1, M6502_IRQ_LINE, (scanline & 32) ? CLEAR_LINE : ASSERT_LINE);
 
 	/* set up for the next */
 	scanline += 32;
@@ -149,15 +149,15 @@ static void generate_interrupt(int scanline)
 }
 
 
-static WRITE_HANDLER( main_irq_ack_w )
+static WRITE8_HANDLER( main_irq_ack_w )
 {
-	cpu_set_irq_line(0, M6502_IRQ_LINE, CLEAR_LINE);
+	cpunum_set_input_line(0, M6502_IRQ_LINE, CLEAR_LINE);
 }
 
 
-static WRITE_HANDLER( sound_irq_ack_w )
+static WRITE8_HANDLER( sound_irq_ack_w )
 {
-	cpu_set_irq_line(1, M6502_IRQ_LINE, CLEAR_LINE);
+	cpunum_set_input_line(1, M6502_IRQ_LINE, CLEAR_LINE);
 }
 
 
@@ -184,7 +184,7 @@ static MACHINE_INIT( jedi )
  *
  *************************************/
 
-static WRITE_HANDLER( rom_banksel_w )
+static WRITE8_HANDLER( rom_banksel_w )
 {
 	UINT8 *RAM = memory_region(REGION_CPU1);
 
@@ -201,9 +201,9 @@ static WRITE_HANDLER( rom_banksel_w )
  *
  *************************************/
 
-static WRITE_HANDLER( sound_reset_w )
+static WRITE8_HANDLER( sound_reset_w )
 {
-	cpu_set_reset_line(1, (data & 1) ? CLEAR_LINE : ASSERT_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_RESET, (data & 1) ? CLEAR_LINE : ASSERT_LINE);
 }
 
 
@@ -214,13 +214,13 @@ static void delayed_sound_latch_w(int data)
 }
 
 
-static WRITE_HANDLER( sound_latch_w )
+static WRITE8_HANDLER( sound_latch_w )
 {
 	timer_set(TIME_NOW, data, delayed_sound_latch_w);
 }
 
 
-static READ_HANDLER( sound_latch_r )
+static READ8_HANDLER( sound_latch_r )
 {
     sound_comm_stat &= ~0x80;
     return sound_latch;
@@ -234,14 +234,14 @@ static READ_HANDLER( sound_latch_r )
  *
  *************************************/
 
-static READ_HANDLER( sound_ack_latch_r )
+static READ8_HANDLER( sound_ack_latch_r )
 {
     sound_comm_stat &= ~0x40;
     return sound_ack_latch;
 }
 
 
-static WRITE_HANDLER( sound_ack_latch_w )
+static WRITE8_HANDLER( sound_ack_latch_w )
 {
     sound_ack_latch = data;
     sound_comm_stat |= 0x40;
@@ -255,7 +255,7 @@ static WRITE_HANDLER( sound_ack_latch_w )
  *
  *************************************/
 
-static READ_HANDLER( a2d_data_r )
+static READ8_HANDLER( a2d_data_r )
 {
 	switch (control_num)
 	{
@@ -267,25 +267,25 @@ static READ_HANDLER( a2d_data_r )
 }
 
 
-static READ_HANDLER( special_port1_r )
+static READ8_HANDLER( special_port1_r )
 {
 	return readinputport(1) ^ ((sound_comm_stat >> 1) & 0x60);
 }
 
 
-static WRITE_HANDLER( a2d_select_w )
+static WRITE8_HANDLER( a2d_select_w )
 {
     control_num = offset;
 }
 
 
-static READ_HANDLER( soundstat_r )
+static READ8_HANDLER( soundstat_r )
 {
     return sound_comm_stat;
 }
 
 
-static WRITE_HANDLER( jedi_coin_counter_w )
+static WRITE8_HANDLER( jedi_coin_counter_w )
 {
 	coin_counter_w(offset, data >> 7);
 }
@@ -298,13 +298,13 @@ static WRITE_HANDLER( jedi_coin_counter_w )
  *
  *************************************/
 
-static WRITE_HANDLER( speech_data_w )
+static WRITE8_HANDLER( speech_data_w )
 {
 	speech_write_buffer = data;
 }
 
 
-static WRITE_HANDLER( speech_strobe_w )
+static WRITE8_HANDLER( speech_strobe_w )
 {
 	int state = (~offset >> 8) & 1;
 
@@ -314,7 +314,7 @@ static WRITE_HANDLER( speech_strobe_w )
 }
 
 
-static READ_HANDLER( speech_ready_r )
+static READ8_HANDLER( speech_ready_r )
 {
     return (!tms5220_ready_r()) << 7;
 }
@@ -327,14 +327,14 @@ static READ_HANDLER( speech_ready_r )
  *
  *************************************/
 
-static WRITE_HANDLER( nvram_data_w )
+static WRITE8_HANDLER( nvram_data_w )
 {
 	if (nvram_enabled)
 		generic_nvram[offset] = data;
 }
 
 
-static WRITE_HANDLER( nvram_enable_w )
+static WRITE8_HANDLER( nvram_enable_w )
 {
 	nvram_enabled = ~offset & 1;
 }

@@ -18,7 +18,7 @@ void astinvad_set_flash(int data)
 }
 
 
-WRITE_HANDLER( spaceint_color_w )
+WRITE8_HANDLER( spaceint_color_w )
 {
 	spaceint_color = data & 15;
 }
@@ -77,7 +77,7 @@ static void astinvad_refresh(int offset)
 }
 
 
-WRITE_HANDLER( spaceint_videoram_w )
+WRITE8_HANDLER( spaceint_videoram_w )
 {
 	videoram[offset] = data;
 	colorram[offset] = spaceint_color;
@@ -86,7 +86,7 @@ WRITE_HANDLER( spaceint_videoram_w )
 }
 
 
-WRITE_HANDLER( astinvad_videoram_w )
+WRITE8_HANDLER( astinvad_videoram_w )
 {
 	videoram[offset] = data;
 

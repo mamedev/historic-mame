@@ -30,7 +30,7 @@ static void get_tx_tile_info(int tile_index)
 	SET_TILE_INFO(0,tileno,0,0)
 }
 
-WRITE_HANDLER( angelkds_txvideoram_w )
+WRITE8_HANDLER( angelkds_txvideoram_w )
 {
 	if (angelkds_txvideoram[offset] != data)
 	{
@@ -39,7 +39,7 @@ WRITE_HANDLER( angelkds_txvideoram_w )
 	}
 }
 
-WRITE_HANDLER( angelkds_txbank_write )
+WRITE8_HANDLER( angelkds_txbank_write )
 {
 
 if (angelkds_txbank != data)
@@ -67,7 +67,7 @@ static void get_bgtop_tile_info(int tile_index)
 	SET_TILE_INFO(1,tileno,0,0)
 }
 
-WRITE_HANDLER( angelkds_bgtopvideoram_w )
+WRITE8_HANDLER( angelkds_bgtopvideoram_w )
 {
 	if (angelkds_bgtopvideoram[offset] != data)
 	{
@@ -76,7 +76,7 @@ WRITE_HANDLER( angelkds_bgtopvideoram_w )
 	}
 }
 
-WRITE_HANDLER( angelkds_bgtopbank_write )
+WRITE8_HANDLER( angelkds_bgtopbank_write )
 {
 
 if (angelkds_bgtopbank != data)
@@ -87,7 +87,7 @@ if (angelkds_bgtopbank != data)
 
 }
 
-WRITE_HANDLER( angelkds_bgtopscroll_write )
+WRITE8_HANDLER( angelkds_bgtopscroll_write )
 {
 	tilemap_set_scrollx(bgtop_tilemap, 0, data );
 }
@@ -108,7 +108,7 @@ static void get_bgbot_tile_info(int tile_index)
 	SET_TILE_INFO(1,tileno,1,0)
 }
 
-WRITE_HANDLER( angelkds_bgbotvideoram_w )
+WRITE8_HANDLER( angelkds_bgbotvideoram_w )
 {
 	if (angelkds_bgbotvideoram[offset] != data)
 	{
@@ -118,7 +118,7 @@ WRITE_HANDLER( angelkds_bgbotvideoram_w )
 }
 
 
-WRITE_HANDLER( angelkds_bgbotbank_write )
+WRITE8_HANDLER( angelkds_bgbotbank_write )
 {
 
 if (angelkds_bgbotbank != data)
@@ -129,14 +129,14 @@ if (angelkds_bgbotbank != data)
 
 }
 
-WRITE_HANDLER( angelkds_bgbotscroll_write )
+WRITE8_HANDLER( angelkds_bgbotscroll_write )
 {
 	tilemap_set_scrollx(bgbot_tilemap, 0, data );
 }
 
 UINT8 angelkds_layer_ctrl;
 
-WRITE_HANDLER( angelkds_layer_ctrl_write )
+WRITE8_HANDLER( angelkds_layer_ctrl_write )
 {
 	angelkds_layer_ctrl = data;
 }
@@ -255,7 +255,7 @@ static void draw_sprites( struct mame_bitmap *bitmap, const struct rectangle *cl
 
 */
 
-WRITE_HANDLER( angelkds_paletteram_w )
+WRITE8_HANDLER( angelkds_paletteram_w )
 {
 	int no, r,g,b;
 

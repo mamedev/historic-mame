@@ -450,12 +450,12 @@ static void argus_change_bg_palette(int color, int data)
   Memory handler
 ***************************************************************************/
 
-READ_HANDLER( argus_txram_r )
+READ8_HANDLER( argus_txram_r )
 {
 	return argus_txram[ offset ];
 }
 
-WRITE_HANDLER( argus_txram_w )
+WRITE8_HANDLER( argus_txram_w )
 {
 	if (argus_txram[ offset ] != data)
 	{
@@ -464,12 +464,12 @@ WRITE_HANDLER( argus_txram_w )
 	}
 }
 
-READ_HANDLER( butasan_txram_r )
+READ8_HANDLER( butasan_txram_r )
 {
 	return butasan_txram[ offset ];
 }
 
-WRITE_HANDLER( butasan_txram_w )
+WRITE8_HANDLER( butasan_txram_w )
 {
 	if (butasan_txram[ offset ] != data)
 	{
@@ -478,12 +478,12 @@ WRITE_HANDLER( butasan_txram_w )
 	}
 }
 
-READ_HANDLER( argus_bg1ram_r )
+READ8_HANDLER( argus_bg1ram_r )
 {
 	return argus_bg1ram[ offset ];
 }
 
-WRITE_HANDLER( argus_bg1ram_w )
+WRITE8_HANDLER( argus_bg1ram_w )
 {
 	if (argus_bg1ram[ offset ] != data)
 	{
@@ -492,12 +492,12 @@ WRITE_HANDLER( argus_bg1ram_w )
 	}
 }
 
-READ_HANDLER( butasan_bg0ram_r )
+READ8_HANDLER( butasan_bg0ram_r )
 {
 	return butasan_bg0ram[ offset ];
 }
 
-WRITE_HANDLER( butasan_bg0ram_w )
+WRITE8_HANDLER( butasan_bg0ram_w )
 {
 	if (butasan_bg0ram[ offset ] != data)
 	{
@@ -512,12 +512,12 @@ WRITE_HANDLER( butasan_bg0ram_w )
 	}
 }
 
-READ_HANDLER( butasan_bg1ram_r )
+READ8_HANDLER( butasan_bg1ram_r )
 {
 	return butasan_bg1ram[ offset ];
 }
 
-WRITE_HANDLER( butasan_bg1ram_w )
+WRITE8_HANDLER( butasan_bg1ram_w )
 {
 	if (butasan_bg1ram[ offset ] != data)
 	{
@@ -532,7 +532,7 @@ WRITE_HANDLER( butasan_bg1ram_w )
 	}
 }
 
-WRITE_HANDLER ( argus_bg0_scrollx_w )
+WRITE8_HANDLER ( argus_bg0_scrollx_w )
 {
 	if (argus_bg0_scrollx[ offset ] != data)
 	{
@@ -540,7 +540,7 @@ WRITE_HANDLER ( argus_bg0_scrollx_w )
 	}
 }
 
-WRITE_HANDLER( argus_bg0_scrolly_w )
+WRITE8_HANDLER( argus_bg0_scrolly_w )
 {
 	if (argus_bg0_scrolly[ offset ] != data)
 	{
@@ -554,7 +554,7 @@ WRITE_HANDLER( argus_bg0_scrolly_w )
 	}
 }
 
-WRITE_HANDLER( butasan_bg0_scrollx_w )
+WRITE8_HANDLER( butasan_bg0_scrollx_w )
 {
 	if (argus_bg0_scrollx[ offset ] != data)
 	{
@@ -568,7 +568,7 @@ WRITE_HANDLER( butasan_bg0_scrollx_w )
 	}
 }
 
-WRITE_HANDLER( argus_bg1_scrollx_w )
+WRITE8_HANDLER( argus_bg1_scrollx_w )
 {
 	if (argus_bg1_scrollx[ offset ] != data)
 	{
@@ -582,7 +582,7 @@ WRITE_HANDLER( argus_bg1_scrollx_w )
 	}
 }
 
-WRITE_HANDLER( argus_bg1_scrolly_w )
+WRITE8_HANDLER( argus_bg1_scrolly_w )
 {
 	if (argus_bg1_scrolly[ offset ] != data)
 	{
@@ -596,7 +596,7 @@ WRITE_HANDLER( argus_bg1_scrolly_w )
 	}
 }
 
-WRITE_HANDLER( argus_bg_status_w )
+WRITE8_HANDLER( argus_bg_status_w )
 {
 	if (argus_bg_status != data)
 	{
@@ -619,7 +619,7 @@ WRITE_HANDLER( argus_bg_status_w )
 	}
 }
 
-WRITE_HANDLER( valtric_bg_status_w )
+WRITE8_HANDLER( valtric_bg_status_w )
 {
 	if (argus_bg_status != data)
 	{
@@ -642,7 +642,7 @@ WRITE_HANDLER( valtric_bg_status_w )
 	}
 }
 
-WRITE_HANDLER( butasan_bg0_status_w )
+WRITE8_HANDLER( butasan_bg0_status_w )
 {
 	if (argus_bg_status != data)
 	{
@@ -653,7 +653,7 @@ WRITE_HANDLER( butasan_bg0_status_w )
 	}
 }
 
-WRITE_HANDLER( argus_flipscreen_w )
+WRITE8_HANDLER( argus_flipscreen_w )
 {
 	if (argus_flipscreen != (data >> 7))
 	{
@@ -698,12 +698,12 @@ WRITE_HANDLER( argus_flipscreen_w )
 	}
 }
 
-READ_HANDLER( argus_paletteram_r )
+READ8_HANDLER( argus_paletteram_r )
 {
 	return argus_paletteram[ offset ];
 }
 
-WRITE_HANDLER( argus_paletteram_w )
+WRITE8_HANDLER( argus_paletteram_w )
 {
 	int offs;
 
@@ -764,7 +764,7 @@ WRITE_HANDLER( argus_paletteram_w )
 	}
 }
 
-WRITE_HANDLER( valtric_paletteram_w )
+WRITE8_HANDLER( valtric_paletteram_w )
 {
 	int offs;
 
@@ -802,7 +802,7 @@ WRITE_HANDLER( valtric_paletteram_w )
 	}
 }
 
-WRITE_HANDLER( butasan_paletteram_w )
+WRITE8_HANDLER( butasan_paletteram_w )
 {
 	argus_paletteram[ offset ] = data;
 
@@ -836,12 +836,12 @@ WRITE_HANDLER( butasan_paletteram_w )
 	}
 }
 
-READ_HANDLER( butasan_txbackram_r )
+READ8_HANDLER( butasan_txbackram_r )
 {
 	return butasan_txbackram[ offset ];
 }
 
-WRITE_HANDLER( butasan_txbackram_w )
+WRITE8_HANDLER( butasan_txbackram_w )
 {
 	if (butasan_txbackram[ offset ] != data)
 	{
@@ -849,12 +849,12 @@ WRITE_HANDLER( butasan_txbackram_w )
 	}
 }
 
-READ_HANDLER( butasan_bg0backram_r )
+READ8_HANDLER( butasan_bg0backram_r )
 {
 	return butasan_bg0backram[ offset ];
 }
 
-WRITE_HANDLER( butasan_bg0backram_w )
+WRITE8_HANDLER( butasan_bg0backram_w )
 {
 	if (butasan_bg0backram[ offset ] != data)
 	{
@@ -862,7 +862,7 @@ WRITE_HANDLER( butasan_bg0backram_w )
 	}
 }
 
-WRITE_HANDLER( butasan_bg1_status_w )
+WRITE8_HANDLER( butasan_bg1_status_w )
 {
 	if (butasan_bg1_status != data)
 	{
@@ -1287,7 +1287,7 @@ static void butasan_log_vram(void)
 {
 	int offs;
 
-	if ( keyboard_pressed(KEYCODE_M) )
+	if ( code_pressed(KEYCODE_M) )
 	{
 		int i;
 		logerror("\nSprite RAM\n");

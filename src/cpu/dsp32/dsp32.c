@@ -761,8 +761,8 @@ static void dsp32c_set_info(UINT32 state, union cpuinfo *info)
 	switch (state)
 	{
 		/* --- the following bits of info are set as 64-bit signed integers --- */
-		case CPUINFO_INT_IRQ_STATE + DSP32_IRQ0:	set_irq_line(DSP32_IRQ0, info->i);			break;
-		case CPUINFO_INT_IRQ_STATE + DSP32_IRQ1:	set_irq_line(DSP32_IRQ1, info->i);			break;
+		case CPUINFO_INT_INPUT_STATE + DSP32_IRQ0:	set_irq_line(DSP32_IRQ0, info->i);			break;
+		case CPUINFO_INT_INPUT_STATE + DSP32_IRQ1:	set_irq_line(DSP32_IRQ1, info->i);			break;
 
 		/* CAU */
 		case CPUINFO_INT_PC:
@@ -833,7 +833,7 @@ void dsp32c_get_info(UINT32 state, union cpuinfo *info)
 	{
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
 		case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(dsp32);				break;
-		case CPUINFO_INT_IRQ_LINES:						info->i = 2;							break;
+		case CPUINFO_INT_INPUT_LINES:					info->i = 2;							break;
 		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
 		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_LE;					break;
 		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
@@ -852,8 +852,8 @@ void dsp32c_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 0;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
 
-		case CPUINFO_INT_IRQ_STATE + DSP32_IRQ0:		info->i = 0;							break;
-		case CPUINFO_INT_IRQ_STATE + DSP32_IRQ1:		info->i = 0;							break;
+		case CPUINFO_INT_INPUT_STATE + DSP32_IRQ0:		info->i = 0;							break;
+		case CPUINFO_INT_INPUT_STATE + DSP32_IRQ1:		info->i = 0;							break;
 
 		case CPUINFO_INT_PREVIOUSPC:					info->i = dsp32.ppc;					break;
 

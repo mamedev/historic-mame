@@ -70,9 +70,9 @@ MACHINE_INIT( starwars )
  *
  *************************************/
 
-static WRITE_HANDLER( irq_ack_w )
+static WRITE8_HANDLER( irq_ack_w )
 {
-	cpu_set_irq_line(0, M6809_IRQ_LINE, CLEAR_LINE);
+	cpunum_set_input_line(0, M6809_IRQ_LINE, CLEAR_LINE);
 }
 
 
@@ -83,7 +83,7 @@ static WRITE_HANDLER( irq_ack_w )
  *
  *************************************/
 
-READ_HANDLER( esb_slapstic_r )
+READ8_HANDLER( esb_slapstic_r )
 {
 	int result = slapstic_base[offset];
 	int new_bank = slapstic_tweak(offset);
@@ -98,7 +98,7 @@ READ_HANDLER( esb_slapstic_r )
 }
 
 
-WRITE_HANDLER( esb_slapstic_w )
+WRITE8_HANDLER( esb_slapstic_w )
 {
 	int new_bank = slapstic_tweak(offset);
 
@@ -573,11 +573,11 @@ static DRIVER_INIT( esb )
 	memory_set_opbase_handler(0, esb_setopbase);
 
 	/* install read/write handlers for it */
-	install_mem_read_handler(0, 0x8000, 0x9fff, esb_slapstic_r);
-	install_mem_write_handler(0, 0x8000, 0x9fff, esb_slapstic_w);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x9fff, 0, 0, esb_slapstic_r);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x8000, 0x9fff, 0, 0, esb_slapstic_w);
 
 	/* install additional banking */
-	install_mem_read_handler(0, 0xa000, 0xffff, MRA8_BANK2);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xa000, 0xffff, 0, 0, MRA8_BANK2);
 
 	/* prepare the mathbox */
 	starwars_is_esb = 1;

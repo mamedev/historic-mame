@@ -26,7 +26,7 @@ VIDEO_START(freekick)
 
 
 
-WRITE_HANDLER( freek_videoram_w )
+WRITE8_HANDLER( freek_videoram_w )
 {
 	freek_videoram[offset] = data;
 	tilemap_mark_tile_dirty(freek_tilemap,offset&0x3ff);

@@ -20,12 +20,12 @@ struct K007232_interface
 
 int K007232_sh_start(const struct MachineSound *msound);
 
-WRITE_HANDLER( K007232_write_port_0_w );
-WRITE_HANDLER( K007232_write_port_1_w );
-WRITE_HANDLER( K007232_write_port_2_w );
-READ_HANDLER( K007232_read_port_0_r );
-READ_HANDLER( K007232_read_port_1_r );
-READ_HANDLER( K007232_read_port_2_r );
+WRITE8_HANDLER( K007232_write_port_0_w );
+WRITE8_HANDLER( K007232_write_port_1_w );
+WRITE8_HANDLER( K007232_write_port_2_w );
+READ8_HANDLER( K007232_read_port_0_r );
+READ8_HANDLER( K007232_read_port_1_r );
+READ8_HANDLER( K007232_read_port_2_r );
 
 void K007232_set_bank( int chip, int chABank, int chBBank );
 

@@ -314,7 +314,7 @@ static void reset_sound_region(void)
 	cpu_setbank( 2, memory_region(REGION_CPU2) + (banknum * 0x4000) + 0x10000 );
 }
 
-static WRITE_HANDLER( sound_bankswitch_w )
+static WRITE8_HANDLER( sound_bankswitch_w )
 {
 	banknum = (data - 1) & 3;
 	reset_sound_region();
@@ -1026,7 +1026,7 @@ static struct GfxDecodeInfo ballbros_gfxdecodeinfo[] =
 /* handler called by the YM2610 emulator when the internal timers cause an IRQ */
 static void irqhandler(int irq)
 {
-	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2610interface ym2610_interface =
@@ -1351,7 +1351,7 @@ DRIVER_INIT( taitox )
 DRIVER_INIT( kyustrkr )
 {
 	init_taitox();
-	install_mem_write16_handler (0, 0x900000, 0x90000f, kyustrkr_input_w);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x900000, 0x90000f, 0, 0, kyustrkr_input_w);
 }
 
 GAME( 1988, superman, 0,        superman, superman, taitox,   ROT0,   "Taito Corporation", "Superman" )

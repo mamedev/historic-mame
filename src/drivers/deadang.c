@@ -22,26 +22,26 @@
 static UINT8 *deadang_shared_ram;
 extern UINT8 *deadang_video_data, *deadang_scroll_ram;
 
-extern WRITE_HANDLER( deadang_foreground_w );
-extern WRITE_HANDLER( deadang_text_w );
-extern WRITE_HANDLER( deadang_bank_w );
+extern WRITE8_HANDLER( deadang_foreground_w );
+extern WRITE8_HANDLER( deadang_text_w );
+extern WRITE8_HANDLER( deadang_bank_w );
 
 extern VIDEO_START( deadang );
 extern VIDEO_UPDATE( deadang );
 
 /* Read/Write Handlers */
 
-static READ_HANDLER( deadang_shared_r )
+static READ8_HANDLER( deadang_shared_r )
 {
 	return deadang_shared_ram[offset];
 }
 
-static WRITE_HANDLER( deadang_shared_w )
+static WRITE8_HANDLER( deadang_shared_w )
 {
 	deadang_shared_ram[offset] = data;
 }
 
-READ_HANDLER( ghunter_trackball_low_r )
+READ8_HANDLER( ghunter_trackball_low_r )
 {
 	switch (offset)
 	{
@@ -51,7 +51,7 @@ READ_HANDLER( ghunter_trackball_low_r )
 
 	return 0;
 }
-READ_HANDLER( ghunter_trackball_high_r )
+READ8_HANDLER( ghunter_trackball_high_r )
 {
 	switch (offset)
 	{
@@ -303,9 +303,9 @@ SEIBU_SOUND_SYSTEM_ADPCM_HARDWARE
 static INTERRUPT_GEN( deadang_interrupt )
 {
 	if (cpu_getiloops())
-		cpu_set_irq_line_and_vector(cpu_getactivecpu(), 0, HOLD_LINE, 0xc8/4);	/* VBL */
+		cpunum_set_input_line_and_vector(cpu_getactivecpu(), 0, HOLD_LINE, 0xc8/4);	/* VBL */
 	else
-		cpu_set_irq_line_and_vector(cpu_getactivecpu(), 0, HOLD_LINE, 0xc4/4);	/* VBL */
+		cpunum_set_input_line_and_vector(cpu_getactivecpu(), 0, HOLD_LINE, 0xc4/4);	/* VBL */
 }
 
 /* Machine Drivers */
@@ -449,8 +449,8 @@ static DRIVER_INIT( ghunter )
 	seibu_sound_decrypt(REGION_CPU3, 0x2000);
 	seibu_adpcm_decrypt(REGION_SOUND1);
 
-	install_mem_read_handler(0, 0x80000, 0x80001, ghunter_trackball_low_r);
-	install_mem_read_handler(0, 0xb0000, 0xb0001, ghunter_trackball_high_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x80000, 0x80001, 0, 0, ghunter_trackball_low_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xb0000, 0xb0001, 0, 0, ghunter_trackball_high_r);
 }
 
 /* Game Drivers */

@@ -18,10 +18,10 @@ Sound:	YM2151
 
 /* Variables & functions defined in vidhrdw: */
 
-WRITE_HANDLER( amspdwy_videoram_w );
-WRITE_HANDLER( amspdwy_colorram_w );
-WRITE_HANDLER( amspdwy_paletteram_w );
-WRITE_HANDLER( amspdwy_flipscreen_w );
+WRITE8_HANDLER( amspdwy_videoram_w );
+WRITE8_HANDLER( amspdwy_colorram_w );
+WRITE8_HANDLER( amspdwy_paletteram_w );
+WRITE8_HANDLER( amspdwy_flipscreen_w );
 
 VIDEO_START( amspdwy );
 VIDEO_UPDATE( amspdwy );
@@ -43,7 +43,7 @@ VIDEO_UPDATE( amspdwy );
 	Or last value when wheel delta = 0
 */
 #define AMSPDWY_WHEEL_R( _n_ ) \
-READ_HANDLER( amspdwy_wheel_##_n_##_r ) \
+READ8_HANDLER( amspdwy_wheel_##_n_##_r ) \
 { \
 	static data8_t wheel_old, ret; \
 	data8_t wheel = readinputport(5 + _n_); \
@@ -60,15 +60,15 @@ AMSPDWY_WHEEL_R( 0 )
 AMSPDWY_WHEEL_R( 1 )
 
 
-READ_HANDLER( amspdwy_sound_r )
+READ8_HANDLER( amspdwy_sound_r )
 {
 	return (YM2151_status_port_0_r(0) & ~ 0x30) | readinputport(4);
 }
 
-WRITE_HANDLER( amspdwy_sound_w )
+WRITE8_HANDLER( amspdwy_sound_w )
 {
 	soundlatch_w(0,data);
-	cpu_set_nmi_line(1,PULSE_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 }
 
 static ADDRESS_MAP_START( amspdwy_readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -103,7 +103,7 @@ static ADDRESS_MAP_START( amspdwy_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 
-READ_HANDLER( amspdwy_port_r )
+READ8_HANDLER( amspdwy_port_r )
 {
 	data8_t *Tracks = memory_region(REGION_CPU1)+0x10000;
 	return Tracks[offset];
@@ -246,7 +246,7 @@ static struct GfxDecodeInfo amspdwy_gfxdecodeinfo[] =
 
 static void irq_handler(int irq)
 {
-	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2151interface amspdwy_ym2151_interface =

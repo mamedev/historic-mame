@@ -129,18 +129,18 @@ more sprite tiles, it also has a MSM5205 chip for sample playback.
 #include "vidhrdw/generic.h"
 
 
-extern READ_HANDLER( docastle_shared0_r );
-extern READ_HANDLER( docastle_shared1_r );
-extern WRITE_HANDLER( docastle_shared0_w );
-extern WRITE_HANDLER( docastle_shared1_w );
-extern WRITE_HANDLER( docastle_nmitrigger_w );
+extern READ8_HANDLER( docastle_shared0_r );
+extern READ8_HANDLER( docastle_shared1_r );
+extern WRITE8_HANDLER( docastle_shared0_w );
+extern WRITE8_HANDLER( docastle_shared1_w );
+extern WRITE8_HANDLER( docastle_nmitrigger_w );
 
-extern WRITE_HANDLER( docastle_videoram_w );
-extern WRITE_HANDLER( docastle_colorram_w );
-extern READ_HANDLER( docastle_flipscreen_off_r );
-extern READ_HANDLER( docastle_flipscreen_on_r );
-extern WRITE_HANDLER( docastle_flipscreen_off_w );
-extern WRITE_HANDLER( docastle_flipscreen_on_w );
+extern WRITE8_HANDLER( docastle_videoram_w );
+extern WRITE8_HANDLER( docastle_colorram_w );
+extern READ8_HANDLER( docastle_flipscreen_off_r );
+extern READ8_HANDLER( docastle_flipscreen_on_r );
+extern WRITE8_HANDLER( docastle_flipscreen_off_w );
+extern WRITE8_HANDLER( docastle_flipscreen_on_w );
 
 extern PALETTE_INIT( docastle );
 extern PALETTE_INIT( dorunrun );
@@ -173,7 +173,7 @@ static void idsoccer_adpcm_int(int chip)
 	}
 }
 
-static READ_HANDLER( idsoccer_adpcm_status_r )
+static READ8_HANDLER( idsoccer_adpcm_status_r )
 {
 	// this is wrong, but the samples work anyway!!
 	static int i;
@@ -181,7 +181,7 @@ static READ_HANDLER( idsoccer_adpcm_status_r )
 	return i;
 }
 
-static WRITE_HANDLER( idsoccer_adpcm_w )
+static WRITE8_HANDLER( idsoccer_adpcm_w )
 {
 	if (data & 0x80)
 	{

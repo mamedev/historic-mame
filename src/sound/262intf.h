@@ -26,18 +26,18 @@ struct YMF262interface
 
 
 /* YMF262 */
-READ_HANDLER ( YMF262_status_0_r );
-WRITE_HANDLER( YMF262_register_A_0_w );
-WRITE_HANDLER( YMF262_register_B_0_w );
-WRITE_HANDLER( YMF262_data_A_0_w );
-WRITE_HANDLER( YMF262_data_B_0_w );
+READ8_HANDLER ( YMF262_status_0_r );
+WRITE8_HANDLER( YMF262_register_A_0_w );
+WRITE8_HANDLER( YMF262_register_B_0_w );
+WRITE8_HANDLER( YMF262_data_A_0_w );
+WRITE8_HANDLER( YMF262_data_B_0_w );
 
 
-READ_HANDLER ( YMF262_status_1_r );
-WRITE_HANDLER( YMF262_register_A_1_w );
-WRITE_HANDLER( YMF262_register_B_1_w );
-WRITE_HANDLER( YMF262_data_A_1_w );
-WRITE_HANDLER( YMF262_data_B_1_w );
+READ8_HANDLER ( YMF262_status_1_r );
+WRITE8_HANDLER( YMF262_register_A_1_w );
+WRITE8_HANDLER( YMF262_register_B_1_w );
+WRITE8_HANDLER( YMF262_data_A_1_w );
+WRITE8_HANDLER( YMF262_data_B_1_w );
 
 int YMF262_sh_start(const struct MachineSound *msound);
 void YMF262_sh_stop(void);

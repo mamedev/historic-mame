@@ -1323,7 +1323,7 @@ static DRIVER_INIT( speedfrk )
 	ccpu_Config(0, CCPU_MEMSIZE_8K, CCPU_MONITOR_BILEV);
 	cinemat_sound_handler = 0;
 
-	install_port_read16_handler(0, CCPU_PORT_IOINPUTS, CCPU_PORT_IOINPUTS+1, speedfrk_input_port_1_r);
+	memory_install_read16_handler(0, ADDRESS_SPACE_IO, CCPU_PORT_IOINPUTS, CCPU_PORT_IOINPUTS+1, 0, 0, speedfrk_input_port_1_r);
 }
 
 
@@ -1333,7 +1333,7 @@ static DRIVER_INIT( sundance )
 	cinemat_sound_handler = sundance_sound_w;
 	artwork_set_overlay(sundance_overlay);
 
-	install_port_read16_handler(0, CCPU_PORT_IOINPUTS, CCPU_PORT_IOINPUTS+1, sundance_input_port_1_r);
+	memory_install_read16_handler(0, ADDRESS_SPACE_IO, CCPU_PORT_IOINPUTS, CCPU_PORT_IOINPUTS+1, 0, 0, sundance_input_port_1_r);
 }
 
 
@@ -1396,7 +1396,7 @@ static DRIVER_INIT( boxingb )
 	ccpu_Config(1, CCPU_MEMSIZE_32K, CCPU_MONITOR_WOWCOL);
 	cinemat_sound_handler = 0;
 
-	install_port_read16_handler(0, CCPU_PORT_IOINPUTS, CCPU_PORT_IOINPUTS+1, boxingb_input_port_1_r);
+	memory_install_read16_handler(0, ADDRESS_SPACE_IO, CCPU_PORT_IOINPUTS, CCPU_PORT_IOINPUTS+1, 0, 0, boxingb_input_port_1_r);
 }
 
 

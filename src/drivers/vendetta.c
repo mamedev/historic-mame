@@ -140,7 +140,7 @@ static NVRAM_HANDLER( vendetta )
 	}
 }
 
-static READ_HANDLER( vendetta_eeprom_r )
+static READ8_HANDLER( vendetta_eeprom_r )
 {
 	int res;
 
@@ -160,7 +160,7 @@ static READ_HANDLER( vendetta_eeprom_r )
 
 static int irq_enabled;
 
-static WRITE_HANDLER( vendetta_eeprom_w )
+static WRITE8_HANDLER( vendetta_eeprom_w )
 {
 	/* bit 0 - VOC0 - Video banking related */
 	/* bit 1 - VOC1 - Video banking related */
@@ -186,9 +186,9 @@ static WRITE_HANDLER( vendetta_eeprom_w )
 
 /********************************************/
 
-static READ_HANDLER( vendetta_K052109_r ) { return K052109_r( offset + 0x2000 ); }
-//static WRITE_HANDLER( vendetta_K052109_w ) { K052109_w( offset + 0x2000, data ); }
-static WRITE_HANDLER( vendetta_K052109_w ) {
+static READ8_HANDLER( vendetta_K052109_r ) { return K052109_r( offset + 0x2000 ); }
+//static WRITE8_HANDLER( vendetta_K052109_w ) { K052109_w( offset + 0x2000, data ); }
+static WRITE8_HANDLER( vendetta_K052109_w ) {
 	// *************************************************************************************
 	// *  Escape Kids uses 052109's mirrored Tilemap ROM bank selector, but only during    *
 	// *  Tilemap MASK-ROM Test       (0x1d80<->0x3d80, 0x1e00<->0x3e00, 0x1f00<->0x3f00)  *
@@ -203,21 +203,21 @@ static void vendetta_video_banking( int select )
 {
 	if ( select & 1 )
 	{
-		install_mem_read_handler ( 0, video_banking_base + 0x2000, video_banking_base + 0x2fff, paletteram_r );
-		install_mem_write_handler( 0, video_banking_base + 0x2000, video_banking_base + 0x2fff, paletteram_xBBBBBGGGGGRRRRR_swap_w );
-		install_mem_read_handler ( 0, video_banking_base + 0x0000, video_banking_base + 0x0fff, K053247_r );
-		install_mem_write_handler( 0, video_banking_base + 0x0000, video_banking_base + 0x0fff, K053247_w );
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, video_banking_base + 0x2000, video_banking_base + 0x2fff, 0, 0, paletteram_r );
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, video_banking_base + 0x2000, video_banking_base + 0x2fff, 0, 0, paletteram_xBBBBBGGGGGRRRRR_swap_w );
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, video_banking_base + 0x0000, video_banking_base + 0x0fff, 0, 0, K053247_r );
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, video_banking_base + 0x0000, video_banking_base + 0x0fff, 0, 0, K053247_w );
 	}
 	else
 	{
-		install_mem_read_handler ( 0, video_banking_base + 0x2000, video_banking_base + 0x2fff, vendetta_K052109_r );
-		install_mem_write_handler( 0, video_banking_base + 0x2000, video_banking_base + 0x2fff, vendetta_K052109_w );
-		install_mem_read_handler ( 0, video_banking_base + 0x0000, video_banking_base + 0x0fff, K052109_r );
-		install_mem_write_handler( 0, video_banking_base + 0x0000, video_banking_base + 0x0fff, K052109_w );
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, video_banking_base + 0x2000, video_banking_base + 0x2fff, 0, 0, vendetta_K052109_r );
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, video_banking_base + 0x2000, video_banking_base + 0x2fff, 0, 0, vendetta_K052109_w );
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, video_banking_base + 0x0000, video_banking_base + 0x0fff, 0, 0, K052109_r );
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, video_banking_base + 0x0000, video_banking_base + 0x0fff, 0, 0, K052109_w );
 	}
 }
 
-static WRITE_HANDLER( vendetta_5fe0_w )
+static WRITE8_HANDLER( vendetta_5fe0_w )
 {
 	/* bit 0,1 coin counters */
 	coin_counter_w(0,data & 0x01);
@@ -236,28 +236,28 @@ static WRITE_HANDLER( vendetta_5fe0_w )
 
 static void z80_nmi_callback( int param )
 {
-	cpu_set_nmi_line( 1, ASSERT_LINE );
+	cpunum_set_input_line(1, INPUT_LINE_NMI, ASSERT_LINE );
 }
 
-static WRITE_HANDLER( z80_arm_nmi_w )
+static WRITE8_HANDLER( z80_arm_nmi_w )
 {
-	cpu_set_nmi_line( 1, CLEAR_LINE );
+	cpunum_set_input_line(1, INPUT_LINE_NMI, CLEAR_LINE );
 
 	timer_set( TIME_IN_USEC( 50 ), 0, z80_nmi_callback );
 }
 
-static WRITE_HANDLER( z80_irq_w )
+static WRITE8_HANDLER( z80_irq_w )
 {
-	cpu_set_irq_line_and_vector( 1, 0, HOLD_LINE, 0xff );
+	cpunum_set_input_line_and_vector( 1, 0, HOLD_LINE, 0xff );
 }
 
-READ_HANDLER( vendetta_sound_interrupt_r )
+READ8_HANDLER( vendetta_sound_interrupt_r )
 {
-	cpu_set_irq_line_and_vector( 1, 0, HOLD_LINE, 0xff );
+	cpunum_set_input_line_and_vector( 1, 0, HOLD_LINE, 0xff );
 	return 0x00;
 }
 
-READ_HANDLER( vendetta_sound_r )
+READ8_HANDLER( vendetta_sound_r )
 {
 	/* If the sound CPU is running, read the status, otherwise
 	   just make it pass the test */
@@ -555,7 +555,7 @@ static struct K053260_interface k053260_interface =
 static INTERRUPT_GEN( vendetta_irq )
 {
 	if (irq_enabled)
-		cpu_set_irq_line(0, KONAMI_IRQ_LINE, HOLD_LINE);
+		cpunum_set_input_line(0, KONAMI_IRQ_LINE, HOLD_LINE);
 }
 
 static MACHINE_DRIVER_START( vendetta )

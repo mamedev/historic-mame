@@ -22,7 +22,7 @@ static int nitedrvr_crash_data_en = 0x00;	// IC D8
 /***************************************************************************
 nitedrvr_ram_r
 ***************************************************************************/
-READ_HANDLER( nitedrvr_ram_r )
+READ8_HANDLER( nitedrvr_ram_r )
 {
 	return nitedrvr_ram[offset];
 }
@@ -30,7 +30,7 @@ READ_HANDLER( nitedrvr_ram_r )
 /***************************************************************************
 nitedrvr_ram_w
 ***************************************************************************/
-WRITE_HANDLER( nitedrvr_ram_w )
+WRITE8_HANDLER( nitedrvr_ram_w )
 {
 	nitedrvr_ram[offset]=data;
 }
@@ -80,13 +80,13 @@ static int nitedrvr_steering(void)
 /***************************************************************************
 nitedrvr_steering_reset
 ***************************************************************************/
-READ_HANDLER( nitedrvr_steering_reset_r )
+READ8_HANDLER( nitedrvr_steering_reset_r )
 {
 	nitedrvr_steering_val=0x00;
 	return 0;
 }
 
-WRITE_HANDLER( nitedrvr_steering_reset_w )
+WRITE8_HANDLER( nitedrvr_steering_reset_w )
 {
 	nitedrvr_steering_val=0x00;
 }
@@ -120,7 +120,7 @@ Night Driver looks for the following:
 Fill in the steering and gear bits in a special way.
 ***************************************************************************/
 
-READ_HANDLER( nitedrvr_in0_r )
+READ8_HANDLER( nitedrvr_in0_r )
 {
 	int gear;
 
@@ -180,7 +180,7 @@ Night Driver looks for the following:
 Fill in the track difficulty switch and special signal in a special way.
 ***************************************************************************/
 
-READ_HANDLER( nitedrvr_in1_r )
+READ8_HANDLER( nitedrvr_in1_r )
 {
 	static int ac_line=0x00;
 	int port;
@@ -228,7 +228,7 @@ D3 = !SPEED4
 D4 = SKID1
 D5 = SKID2
 ***************************************************************************/
-WRITE_HANDLER( nitedrvr_out0_w )
+WRITE8_HANDLER( nitedrvr_out0_w )
 {
 	discrete_sound_w(3, (~data) & 0x0f);		// Motor freq data*
 	discrete_sound_w(1, (data & 0x10) ? 1 : 0);	// Skid1 enable
@@ -245,7 +245,7 @@ D3 = Not used?
 D4 = LED START
 D5 = Spare (Not used)
 ***************************************************************************/
-WRITE_HANDLER( nitedrvr_out1_w )
+WRITE8_HANDLER( nitedrvr_out1_w )
 {
 	set_led_status(0,data & 0x10);
 

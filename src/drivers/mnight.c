@@ -11,10 +11,10 @@ TODO:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-WRITE_HANDLER( mnight_bgvideoram_w );
-WRITE_HANDLER( mnight_fgvideoram_w );
-WRITE_HANDLER( mnight_sprite_overdraw_w );
-WRITE_HANDLER( mnight_background_enable_w );
+WRITE8_HANDLER( mnight_bgvideoram_w );
+WRITE8_HANDLER( mnight_fgvideoram_w );
+WRITE8_HANDLER( mnight_sprite_overdraw_w );
+WRITE8_HANDLER( mnight_background_enable_w );
 VIDEO_START( mnight );
 VIDEO_UPDATE( mnight );
 
@@ -36,15 +36,15 @@ MACHINE_INIT( mnight )
 
 INTERRUPT_GEN( mnight_interrupt )
 {
-	cpu_set_irq_line_and_vector(0,0,HOLD_LINE,0xd7);	/* RST 10h */
+	cpunum_set_input_line_and_vector(0,0,HOLD_LINE,0xd7);	/* RST 10h */
 }
 
-READ_HANDLER( mnight_bankselect_r )
+READ8_HANDLER( mnight_bankselect_r )
 {
 	return mnight_bank_latch;
 }
 
-WRITE_HANDLER( mnight_bankselect_w )
+WRITE8_HANDLER( mnight_bankselect_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1+main_cpu_num);
 	int bankaddress;

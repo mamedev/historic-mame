@@ -45,26 +45,26 @@ void battles_nmi_generate(int param)
 
 	if( battles_customio_command & 0x10 ){
 		if( battles_customio_command_count == 0 ){
-			cpu_set_irq_line(3, IRQ_LINE_NMI, PULSE_LINE);
+			cpunum_set_input_line(3, INPUT_LINE_NMI, PULSE_LINE);
 		}else{
-			cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
-			cpu_set_irq_line(3, IRQ_LINE_NMI, PULSE_LINE);
+			cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
+			cpunum_set_input_line(3, INPUT_LINE_NMI, PULSE_LINE);
 		}
 	}else{
-		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
-		cpu_set_irq_line(3, IRQ_LINE_NMI, PULSE_LINE);
+		cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
+		cpunum_set_input_line(3, INPUT_LINE_NMI, PULSE_LINE);
 	}
 	battles_customio_command_count++;
 }
 
 
-READ_HANDLER( battles_customio0_r )
+READ8_HANDLER( battles_customio0_r )
 {
 	logerror("CPU0 %04x: custom I/O Read = %02x\n",activecpu_get_pc(),battles_customio_command);
 	return battles_customio_command;
 }
 
-READ_HANDLER( battles_customio3_r )
+READ8_HANDLER( battles_customio3_r )
 {
 	int	return_data;
 
@@ -84,7 +84,7 @@ READ_HANDLER( battles_customio3_r )
 }
 
 
-WRITE_HANDLER( battles_customio0_w )
+WRITE8_HANDLER( battles_customio0_w )
 {
 	logerror("CPU0 %04x: custom I/O Write = %02x\n",activecpu_get_pc(),data);
 
@@ -101,7 +101,7 @@ WRITE_HANDLER( battles_customio0_w )
 
 }
 
-WRITE_HANDLER( battles_customio3_w )
+WRITE8_HANDLER( battles_customio3_w )
 {
 	logerror("CPU3 %04x: custom I/O Write = %02x\n",activecpu_get_pc(),data);
 
@@ -110,34 +110,34 @@ WRITE_HANDLER( battles_customio3_w )
 
 
 
-READ_HANDLER( battles_customio_data0_r )
+READ8_HANDLER( battles_customio_data0_r )
 {
 	logerror("CPU0 %04x: custom I/O parameter %02x Read = %02x\n",activecpu_get_pc(),offset,battles_customio_data);
 
 	return battles_customio_data;
 }
 
-READ_HANDLER( battles_customio_data3_r )
+READ8_HANDLER( battles_customio_data3_r )
 {
 	logerror("CPU3 %04x: custom I/O parameter %02x Read = %02x\n",activecpu_get_pc(),offset,battles_customio_data);
 	return battles_customio_data;
 }
 
 
-WRITE_HANDLER( battles_customio_data0_w )
+WRITE8_HANDLER( battles_customio_data0_w )
 {
 	logerror("CPU0 %04x: custom I/O parameter %02x Write = %02x\n",activecpu_get_pc(),offset,data);
 	battles_customio_data = data;
 }
 
-WRITE_HANDLER( battles_customio_data3_w )
+WRITE8_HANDLER( battles_customio_data3_w )
 {
 	logerror("CPU3 %04x: custom I/O parameter %02x Write = %02x\n",activecpu_get_pc(),offset,data);
 	battles_customio_data = data;
 }
 
 
-WRITE_HANDLER( battles_CPU4_coin_w )
+WRITE8_HANDLER( battles_CPU4_coin_w )
 {
 	set_led_status(0,data & 0x02);	// Start 1
 	set_led_status(1,data & 0x01);	// Start 2
@@ -148,7 +148,7 @@ WRITE_HANDLER( battles_CPU4_coin_w )
 }
 
 
-WRITE_HANDLER( battles_noise_sound_w )
+WRITE8_HANDLER( battles_noise_sound_w )
 {
 	logerror("CPU3 %04x: 50%02x Write = %02x\n",activecpu_get_pc(),offset,data);
 	if( (battles_sound_played == 0) && (data == 0xFF) ){
@@ -163,7 +163,7 @@ WRITE_HANDLER( battles_noise_sound_w )
 }
 
 
-READ_HANDLER( battles_input_port_r )
+READ8_HANDLER( battles_input_port_r )
 {
 	switch ( offset )
 	{
@@ -178,6 +178,6 @@ READ_HANDLER( battles_input_port_r )
 
 INTERRUPT_GEN( battles_interrupt_4 )
 {
-	cpu_set_irq_line(3, 0, HOLD_LINE);
+	cpunum_set_input_line(3, 0, HOLD_LINE);
 }
 

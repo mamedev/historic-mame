@@ -677,27 +677,7 @@ void memory_set_bankptr(int banknum, void *base)
 	read handler for X-bit case
 -------------------------------------------------*/
 
-data8_t *memory_install_read8_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, read8_handler handler)
-{
-	return memory_install_read8_handler_mirror(cpunum, spacenum, start, end, mask, 0, handler);
-}
-
-data16_t *memory_install_read16_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, read16_handler handler)
-{
-	return memory_install_read16_handler_mirror(cpunum, spacenum, start, end, mask, 0, handler);
-}
-
-data32_t *memory_install_read32_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, read32_handler handler)
-{
-	return memory_install_read32_handler_mirror(cpunum, spacenum, start, end, mask, 0, handler);
-}
-
-data64_t *memory_install_read64_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, read64_handler handler)
-{
-	return memory_install_read64_handler_mirror(cpunum, spacenum, start, end, mask, 0, handler);
-}
-
-data8_t *memory_install_read8_handler_mirror(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, read8_handler handler)
+data8_t *memory_install_read8_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, read8_handler handler)
 {
 	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
 	install_mem_handler(space, 0, 8, 0, start, end, mask, mirror, (void *)handler, 0);
@@ -705,7 +685,7 @@ data8_t *memory_install_read8_handler_mirror(int cpunum, int spacenum, offs_t st
 	return memory_find_base(cpunum, spacenum, 0, SPACE_SHIFT(space, start));
 }
 
-data16_t *memory_install_read16_handler_mirror(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, read16_handler handler)
+data16_t *memory_install_read16_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, read16_handler handler)
 {
 	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
 	install_mem_handler(space, 0, 16, 0, start, end, mask, mirror, (void *)handler, 0);
@@ -713,7 +693,7 @@ data16_t *memory_install_read16_handler_mirror(int cpunum, int spacenum, offs_t 
 	return memory_find_base(cpunum, spacenum, 0, SPACE_SHIFT(space, start));
 }
 
-data32_t *memory_install_read32_handler_mirror(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, read32_handler handler)
+data32_t *memory_install_read32_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, read32_handler handler)
 {
 	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
 	install_mem_handler(space, 0, 32, 0, start, end, mask, mirror, (void *)handler, 0);
@@ -721,7 +701,7 @@ data32_t *memory_install_read32_handler_mirror(int cpunum, int spacenum, offs_t 
 	return memory_find_base(cpunum, spacenum, 0, SPACE_SHIFT(space, start));
 }
 
-data64_t *memory_install_read64_handler_mirror(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, read64_handler handler)
+data64_t *memory_install_read64_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, read64_handler handler)
 {
 	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
 	install_mem_handler(space, 0, 64, 0, start, end, mask, mirror, (void *)handler, 0);
@@ -735,27 +715,7 @@ data64_t *memory_install_read64_handler_mirror(int cpunum, int spacenum, offs_t 
 	write handler for X-bit case
 -------------------------------------------------*/
 
-data8_t *memory_install_write8_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, write8_handler handler)
-{
-	return memory_install_write8_handler_mirror(cpunum, spacenum, start, end, mask, 0, handler);
-}
-
-data16_t *memory_install_write16_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, write16_handler handler)
-{
-	return memory_install_write16_handler_mirror(cpunum, spacenum, start, end, mask, 0, handler);
-}
-
-data32_t *memory_install_write32_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, write32_handler handler)
-{
-	return memory_install_write32_handler_mirror(cpunum, spacenum, start, end, mask, 0, handler);
-}
-
-data64_t *memory_install_write64_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, write64_handler handler)
-{
-	return memory_install_write64_handler_mirror(cpunum, spacenum, start, end, mask, 0, handler);
-}
-
-data8_t *memory_install_write8_handler_mirror(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, write8_handler handler)
+data8_t *memory_install_write8_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, write8_handler handler)
 {
 	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
 	install_mem_handler(space, 1, 8, 0, start, end, mask, mirror, (void *)handler, 0);
@@ -763,7 +723,7 @@ data8_t *memory_install_write8_handler_mirror(int cpunum, int spacenum, offs_t s
 	return memory_find_base(cpunum, spacenum, 1, SPACE_SHIFT(space, start));
 }
 
-data16_t *memory_install_write16_handler_mirror(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, write16_handler handler)
+data16_t *memory_install_write16_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, write16_handler handler)
 {
 	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
 	install_mem_handler(space, 1, 16, 0, start, end, mask, mirror, (void *)handler, 0);
@@ -771,7 +731,7 @@ data16_t *memory_install_write16_handler_mirror(int cpunum, int spacenum, offs_t
 	return memory_find_base(cpunum, spacenum, 1, SPACE_SHIFT(space, start));
 }
 
-data32_t *memory_install_write32_handler_mirror(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, write32_handler handler)
+data32_t *memory_install_write32_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, write32_handler handler)
 {
 	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
 	install_mem_handler(space, 1, 32, 0, start, end, mask, mirror, (void *)handler, 0);
@@ -779,7 +739,7 @@ data32_t *memory_install_write32_handler_mirror(int cpunum, int spacenum, offs_t
 	return memory_find_base(cpunum, spacenum, 1, SPACE_SHIFT(space, start));
 }
 
-data64_t *memory_install_write64_handler_mirror(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, write64_handler handler)
+data64_t *memory_install_write64_handler(int cpunum, int spacenum, offs_t start, offs_t end, offs_t mask, offs_t mirror, write64_handler handler)
 {
 	struct addrspace_data_t *space = &cpudata[cpunum].space[spacenum];
 	install_mem_handler(space, 1, 64, 0, start, end, mask, mirror, (void *)handler, 0);
@@ -2477,7 +2437,7 @@ data64_t cpu_readop_arg64_safe(offs_t offset)
 	unmapped memory handlers
 -------------------------------------------------*/
 
-static READ_HANDLER( mrh8_unmap_program )
+static READ8_HANDLER( mrh8_unmap_program )
 {
 	logerror("cpu #%d (PC=%08X): unmapped program memory byte read from %08X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_PROGRAM], offset));
 	return cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_PROGRAM].unmap;
@@ -2498,7 +2458,7 @@ static READ64_HANDLER( mrh64_unmap_program )
 	return cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_PROGRAM].unmap;
 }
 
-static WRITE_HANDLER( mwh8_unmap_program )
+static WRITE8_HANDLER( mwh8_unmap_program )
 {
 	logerror("cpu #%d (PC=%08X): unmapped program memory byte write to %08X = %02X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_PROGRAM], offset), data);
 }
@@ -2515,7 +2475,7 @@ static WRITE64_HANDLER( mwh64_unmap_program )
 	logerror("cpu #%d (PC=%08X): unmapped program memory qword write to %08X = %08X%08X & %08X%08X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_PROGRAM], offset*8), (int)(data >> 32), (int)(data & 0xffffffff), (int)(mem_mask >> 32) ^ 0xffffffff, (int)(mem_mask & 0xffffffff) ^ 0xffffffff);
 }
 
-static READ_HANDLER( mrh8_unmap_data )
+static READ8_HANDLER( mrh8_unmap_data )
 {
 	logerror("cpu #%d (PC=%08X): unmapped data memory byte read from %08X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_DATA], offset));
 	return cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_DATA].unmap;
@@ -2536,7 +2496,7 @@ static READ64_HANDLER( mrh64_unmap_data )
 	return cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_DATA].unmap;
 }
 
-static WRITE_HANDLER( mwh8_unmap_data )
+static WRITE8_HANDLER( mwh8_unmap_data )
 {
 	logerror("cpu #%d (PC=%08X): unmapped data memory byte write to %08X = %02X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_DATA], offset), data);
 }
@@ -2553,7 +2513,7 @@ static WRITE64_HANDLER( mwh64_unmap_data )
 	logerror("cpu #%d (PC=%08X): unmapped data memory qword write to %08X = %08X%08X & %08X%08X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_DATA], offset*8), (int)(data >> 32), (int)(data & 0xffffffff), (int)(mem_mask >> 32) ^ 0xffffffff, (int)(mem_mask & 0xffffffff) ^ 0xffffffff);
 }
 
-static READ_HANDLER( mrh8_unmap_io )
+static READ8_HANDLER( mrh8_unmap_io )
 {
 	logerror("cpu #%d (PC=%08X): unmapped I/O byte read from %08X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_IO], offset));
 	return cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_IO].unmap;
@@ -2574,7 +2534,7 @@ static READ64_HANDLER( mrh64_unmap_io )
 	return cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_IO].unmap;
 }
 
-static WRITE_HANDLER( mwh8_unmap_io )
+static WRITE8_HANDLER( mwh8_unmap_io )
 {
 	logerror("cpu #%d (PC=%08X): unmapped I/O byte write to %08X = %02X\n", cpu_getactivecpu(), activecpu_get_pc(), INV_SPACE_SHIFT(&cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_IO], offset), data);
 }
@@ -2596,22 +2556,22 @@ static WRITE64_HANDLER( mwh64_unmap_io )
 	no-op memory handlers
 -------------------------------------------------*/
 
-static READ_HANDLER( mrh8_nop_program )    { return cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_PROGRAM].unmap; }
+static READ8_HANDLER( mrh8_nop_program )    { return cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_PROGRAM].unmap; }
 static READ16_HANDLER( mrh16_nop_program ) { return cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_PROGRAM].unmap; }
 static READ32_HANDLER( mrh32_nop_program ) { return cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_PROGRAM].unmap; }
 static READ64_HANDLER( mrh64_nop_program ) { return cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_PROGRAM].unmap; }
 
-static READ_HANDLER( mrh8_nop_data )       { return cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_DATA].unmap; }
+static READ8_HANDLER( mrh8_nop_data )       { return cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_DATA].unmap; }
 static READ16_HANDLER( mrh16_nop_data )    { return cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_DATA].unmap; }
 static READ32_HANDLER( mrh32_nop_data )    { return cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_DATA].unmap; }
 static READ64_HANDLER( mrh64_nop_data )    { return cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_DATA].unmap; }
 
-static READ_HANDLER( mrh8_nop_io )         { return cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_IO].unmap; }
+static READ8_HANDLER( mrh8_nop_io )         { return cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_IO].unmap; }
 static READ16_HANDLER( mrh16_nop_io )      { return cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_IO].unmap; }
 static READ32_HANDLER( mrh32_nop_io )      { return cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_IO].unmap; }
 static READ64_HANDLER( mrh64_nop_io )      { return cpudata[cpu_getactivecpu()].space[ADDRESS_SPACE_IO].unmap; }
 
-static WRITE_HANDLER( mwh8_nop )           {  }
+static WRITE8_HANDLER( mwh8_nop )           {  }
 static WRITE16_HANDLER( mwh16_nop )        {  }
 static WRITE32_HANDLER( mwh32_nop )        {  }
 static WRITE64_HANDLER( mwh64_nop )        {  }
@@ -2621,7 +2581,7 @@ static WRITE64_HANDLER( mwh64_nop )        {  }
 	other static handlers
 -------------------------------------------------*/
 
-static WRITE_HANDLER( mwh8_ramrom )    { bank_ptr[STATIC_RAM][offset] = bank_ptr[STATIC_RAM][offset + (opcode_base - opcode_arg_base)] = data; }
+static WRITE8_HANDLER( mwh8_ramrom )    { bank_ptr[STATIC_RAM][offset] = bank_ptr[STATIC_RAM][offset + (opcode_base - opcode_arg_base)] = data; }
 static WRITE16_HANDLER( mwh16_ramrom ) { COMBINE_DATA(&bank_ptr[STATIC_RAM][offset*2]); COMBINE_DATA(&bank_ptr[0][offset*2 + (opcode_base - opcode_arg_base)]); }
 static WRITE32_HANDLER( mwh32_ramrom ) { COMBINE_DATA(&bank_ptr[STATIC_RAM][offset*4]); COMBINE_DATA(&bank_ptr[0][offset*4 + (opcode_base - opcode_arg_base)]); }
 static WRITE64_HANDLER( mwh64_ramrom ) { COMBINE_DATA(&bank_ptr[STATIC_RAM][offset*8]); COMBINE_DATA(&bank_ptr[0][offset*8 + (opcode_base - opcode_arg_base)]); }

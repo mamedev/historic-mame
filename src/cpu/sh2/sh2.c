@@ -2899,7 +2899,7 @@ void sh2_set_frt_input(int cpunum, int state)
 
 static void set_irq_line(int irqline, int state)
 {
-	if (irqline == IRQ_LINE_NMI)
+	if (irqline == INPUT_LINE_NMI)
     {
 		if (sh2.nmi_line_state == state)
 			return;
@@ -3004,24 +3004,24 @@ static void sh2_set_info(UINT32 state, union cpuinfo *info)
 	switch (state)
 	{
 		/* --- the following bits of info are set as 64-bit signed integers --- */
-		case CPUINFO_INT_IRQ_STATE + SH2_INT_VBLIN:		set_irq_line(SH2_INT_VBLIN, info->i);	break;
-		case CPUINFO_INT_IRQ_STATE + SH2_INT_VBLOUT:	set_irq_line(SH2_INT_VBLOUT, info->i);	break;
-		case CPUINFO_INT_IRQ_STATE + SH2_INT_HBLIN:		set_irq_line(SH2_INT_HBLIN, info->i);	break;
-		case CPUINFO_INT_IRQ_STATE + SH2_INT_TIMER0:	set_irq_line(SH2_INT_TIMER0, info->i);	break;
-		case CPUINFO_INT_IRQ_STATE + SH2_INT_TIMER1:	set_irq_line(SH2_INT_TIMER1, info->i);	break;
-		case CPUINFO_INT_IRQ_STATE + SH2_INT_DSP:		set_irq_line(SH2_INT_DSP, info->i);	break;
-		case CPUINFO_INT_IRQ_STATE + SH2_INT_SOUND:		set_irq_line(SH2_INT_SOUND, info->i);	break;
-		case CPUINFO_INT_IRQ_STATE + SH2_INT_SMPC:		set_irq_line(SH2_INT_SMPC, info->i);	break;
-		case CPUINFO_INT_IRQ_STATE + SH2_INT_PAD:		set_irq_line(SH2_INT_PAD, info->i);		break;
-		case CPUINFO_INT_IRQ_STATE + SH2_INT_DMA2:		set_irq_line(SH2_INT_DMA2, info->i);	break;
-		case CPUINFO_INT_IRQ_STATE + SH2_INT_DMA1:		set_irq_line(SH2_INT_DMA1, info->i);	break;
-		case CPUINFO_INT_IRQ_STATE + SH2_INT_DMA0:		set_irq_line(SH2_INT_DMA0, info->i);	break;
-		case CPUINFO_INT_IRQ_STATE + SH2_INT_DMAILL:	set_irq_line(SH2_INT_DMAILL, info->i);	break;
-		case CPUINFO_INT_IRQ_STATE + SH2_INT_SPRITE:	set_irq_line(SH2_INT_SPRITE, info->i);	break;
-		case CPUINFO_INT_IRQ_STATE + SH2_INT_14:		set_irq_line(SH2_INT_14, info->i);		break;
-		case CPUINFO_INT_IRQ_STATE + SH2_INT_15:		set_irq_line(SH2_INT_15, info->i);		break;
-		case CPUINFO_INT_IRQ_STATE + SH2_INT_ABUS:		set_irq_line(SH2_INT_ABUS, info->i);	break;
-		case CPUINFO_INT_IRQ_STATE + IRQ_LINE_NMI:		set_irq_line(IRQ_LINE_NMI, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + SH2_INT_VBLIN:	set_irq_line(SH2_INT_VBLIN, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + SH2_INT_VBLOUT:	set_irq_line(SH2_INT_VBLOUT, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + SH2_INT_HBLIN:	set_irq_line(SH2_INT_HBLIN, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + SH2_INT_TIMER0:	set_irq_line(SH2_INT_TIMER0, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + SH2_INT_TIMER1:	set_irq_line(SH2_INT_TIMER1, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + SH2_INT_DSP:		set_irq_line(SH2_INT_DSP, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + SH2_INT_SOUND:	set_irq_line(SH2_INT_SOUND, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + SH2_INT_SMPC:	set_irq_line(SH2_INT_SMPC, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + SH2_INT_PAD:		set_irq_line(SH2_INT_PAD, info->i);		break;
+		case CPUINFO_INT_INPUT_STATE + SH2_INT_DMA2:	set_irq_line(SH2_INT_DMA2, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + SH2_INT_DMA1:	set_irq_line(SH2_INT_DMA1, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + SH2_INT_DMA0:	set_irq_line(SH2_INT_DMA0, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + SH2_INT_DMAILL:	set_irq_line(SH2_INT_DMAILL, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + SH2_INT_SPRITE:	set_irq_line(SH2_INT_SPRITE, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + SH2_INT_14:		set_irq_line(SH2_INT_14, info->i);		break;
+		case CPUINFO_INT_INPUT_STATE + SH2_INT_15:		set_irq_line(SH2_INT_15, info->i);		break;
+		case CPUINFO_INT_INPUT_STATE + SH2_INT_ABUS:	set_irq_line(SH2_INT_ABUS, info->i);	break;
+		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:	set_irq_line(INPUT_LINE_NMI, info->i);	break;
 
 		case CPUINFO_INT_REGISTER + SH2_PC:
 		case CPUINFO_INT_PC:							sh2.pc = info->i; sh2.delay = 0;		break;
@@ -3069,7 +3069,7 @@ void sh2_get_info(UINT32 state, union cpuinfo *info)
 	{
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
 		case CPUINFO_INT_CONTEXT_SIZE:					info->i = sizeof(sh2);					break;
-		case CPUINFO_INT_IRQ_LINES:						info->i = 16;							break;
+		case CPUINFO_INT_INPUT_LINES:					info->i = 16;							break;
 		case CPUINFO_INT_DEFAULT_IRQ_VECTOR:			info->i = 0;							break;
 		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_BE;					break;
 		case CPUINFO_INT_CLOCK_DIVIDER:					info->i = 1;							break;
@@ -3088,24 +3088,24 @@ void sh2_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_IO: 		info->i = 0;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_IO: 		info->i = 0;					break;
 
-		case CPUINFO_INT_IRQ_STATE + SH2_INT_VBLIN:		info->i = sh2.irq_line_state[SH2_INT_VBLIN]; break;
-		case CPUINFO_INT_IRQ_STATE + SH2_INT_VBLOUT:	info->i = sh2.irq_line_state[SH2_INT_VBLOUT]; break;
-		case CPUINFO_INT_IRQ_STATE + SH2_INT_HBLIN:		info->i = sh2.irq_line_state[SH2_INT_HBLIN]; break;
-		case CPUINFO_INT_IRQ_STATE + SH2_INT_TIMER0:	info->i = sh2.irq_line_state[SH2_INT_TIMER0]; break;
-		case CPUINFO_INT_IRQ_STATE + SH2_INT_TIMER1:	info->i = sh2.irq_line_state[SH2_INT_TIMER1]; break;
-		case CPUINFO_INT_IRQ_STATE + SH2_INT_DSP:		info->i = sh2.irq_line_state[SH2_INT_DSP]; break;
-		case CPUINFO_INT_IRQ_STATE + SH2_INT_SOUND:		info->i = sh2.irq_line_state[SH2_INT_SOUND]; break;
-		case CPUINFO_INT_IRQ_STATE + SH2_INT_SMPC:		info->i = sh2.irq_line_state[SH2_INT_SMPC];	break;
-		case CPUINFO_INT_IRQ_STATE + SH2_INT_PAD:		info->i = sh2.irq_line_state[SH2_INT_PAD]; break;
-		case CPUINFO_INT_IRQ_STATE + SH2_INT_DMA2:		info->i = sh2.irq_line_state[SH2_INT_DMA2];	break;
-		case CPUINFO_INT_IRQ_STATE + SH2_INT_DMA1:		info->i = sh2.irq_line_state[SH2_INT_DMA1];	break;
-		case CPUINFO_INT_IRQ_STATE + SH2_INT_DMA0:		info->i = sh2.irq_line_state[SH2_INT_DMA0];	break;
-		case CPUINFO_INT_IRQ_STATE + SH2_INT_DMAILL:	info->i = sh2.irq_line_state[SH2_INT_DMAILL]; break;
-		case CPUINFO_INT_IRQ_STATE + SH2_INT_SPRITE:	info->i = sh2.irq_line_state[SH2_INT_SPRITE]; break;
-		case CPUINFO_INT_IRQ_STATE + SH2_INT_14:		info->i = sh2.irq_line_state[SH2_INT_14]; break;
-		case CPUINFO_INT_IRQ_STATE + SH2_INT_15:		info->i = sh2.irq_line_state[SH2_INT_15]; break;
-		case CPUINFO_INT_IRQ_STATE + SH2_INT_ABUS:		info->i = sh2.irq_line_state[SH2_INT_ABUS];	break;
-		case CPUINFO_INT_IRQ_STATE + IRQ_LINE_NMI:		info->i = sh2.nmi_line_state;			break;
+		case CPUINFO_INT_INPUT_STATE + SH2_INT_VBLIN:	info->i = sh2.irq_line_state[SH2_INT_VBLIN]; break;
+		case CPUINFO_INT_INPUT_STATE + SH2_INT_VBLOUT:	info->i = sh2.irq_line_state[SH2_INT_VBLOUT]; break;
+		case CPUINFO_INT_INPUT_STATE + SH2_INT_HBLIN:	info->i = sh2.irq_line_state[SH2_INT_HBLIN]; break;
+		case CPUINFO_INT_INPUT_STATE + SH2_INT_TIMER0:	info->i = sh2.irq_line_state[SH2_INT_TIMER0]; break;
+		case CPUINFO_INT_INPUT_STATE + SH2_INT_TIMER1:	info->i = sh2.irq_line_state[SH2_INT_TIMER1]; break;
+		case CPUINFO_INT_INPUT_STATE + SH2_INT_DSP:		info->i = sh2.irq_line_state[SH2_INT_DSP]; break;
+		case CPUINFO_INT_INPUT_STATE + SH2_INT_SOUND:	info->i = sh2.irq_line_state[SH2_INT_SOUND]; break;
+		case CPUINFO_INT_INPUT_STATE + SH2_INT_SMPC:	info->i = sh2.irq_line_state[SH2_INT_SMPC];	break;
+		case CPUINFO_INT_INPUT_STATE + SH2_INT_PAD:		info->i = sh2.irq_line_state[SH2_INT_PAD]; break;
+		case CPUINFO_INT_INPUT_STATE + SH2_INT_DMA2:	info->i = sh2.irq_line_state[SH2_INT_DMA2];	break;
+		case CPUINFO_INT_INPUT_STATE + SH2_INT_DMA1:	info->i = sh2.irq_line_state[SH2_INT_DMA1];	break;
+		case CPUINFO_INT_INPUT_STATE + SH2_INT_DMA0:	info->i = sh2.irq_line_state[SH2_INT_DMA0];	break;
+		case CPUINFO_INT_INPUT_STATE + SH2_INT_DMAILL:	info->i = sh2.irq_line_state[SH2_INT_DMAILL]; break;
+		case CPUINFO_INT_INPUT_STATE + SH2_INT_SPRITE:	info->i = sh2.irq_line_state[SH2_INT_SPRITE]; break;
+		case CPUINFO_INT_INPUT_STATE + SH2_INT_14:		info->i = sh2.irq_line_state[SH2_INT_14]; break;
+		case CPUINFO_INT_INPUT_STATE + SH2_INT_15:		info->i = sh2.irq_line_state[SH2_INT_15]; break;
+		case CPUINFO_INT_INPUT_STATE + SH2_INT_ABUS:	info->i = sh2.irq_line_state[SH2_INT_ABUS];	break;
+		case CPUINFO_INT_INPUT_STATE + INPUT_LINE_NMI:	info->i = sh2.nmi_line_state;			break;
 
 		case CPUINFO_INT_PREVIOUSPC:					info->i = sh2.ppc;						break;
 

@@ -45,7 +45,7 @@ READ16_HANDLER( SYS16_CPU3ROM16_r ){
 	return pMem[offset];
 }
 READ16_HANDLER( SYS16_CPU2_RESET_HACK ){
-	cpu_set_reset_line(2,PULSE_LINE);
+	cpunum_set_input_line(2, INPUT_LINE_RESET, PULSE_LINE);
 	return 0;
 }
 
@@ -2142,7 +2142,7 @@ void aurail_decode_opcode2(data16_t *dest,data16_t *source,int size)
 
 static void sound_cause_nmi( int chip ){
 	/* upd7759 callback */
-	cpu_set_nmi_line(1, PULSE_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 }
 
 struct SEGAPCMinterface sys16_segapcm_interface_15k = {

@@ -38,8 +38,8 @@ NOTES:
 
 VIDEO_START( hexa );
 VIDEO_UPDATE( hexa );
-WRITE_HANDLER( hexa_videoram_w );
-WRITE_HANDLER( hexa_d008_w );
+WRITE8_HANDLER( hexa_videoram_w );
+WRITE8_HANDLER( hexa_d008_w );
 
 
 

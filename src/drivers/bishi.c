@@ -37,11 +37,11 @@ static INTERRUPT_GEN(bishi_interrupt)
 	switch (cpu_getiloops())
 	{
 		case 0:
-			cpu_set_irq_line(0, MC68000_IRQ_3, HOLD_LINE);
+			cpunum_set_input_line(0, MC68000_IRQ_3, HOLD_LINE);
 			break;
 
 		case 1:
-			cpu_set_irq_line(0, MC68000_IRQ_4, HOLD_LINE);
+			cpunum_set_input_line(0, MC68000_IRQ_4, HOLD_LINE);
 			break;
 	}
 }
@@ -212,9 +212,9 @@ static MACHINE_INIT( bishi )
 static void sound_irq_gen(int state)
 {
 	if (state)
-		cpu_set_irq_line(0, MC68000_IRQ_1, ASSERT_LINE);
+		cpunum_set_input_line(0, MC68000_IRQ_1, ASSERT_LINE);
 	else
-		cpu_set_irq_line(0, MC68000_IRQ_1, CLEAR_LINE);
+		cpunum_set_input_line(0, MC68000_IRQ_1, CLEAR_LINE);
 }
 
 static struct YMZ280Binterface ymz280b_intf =

@@ -24,13 +24,13 @@ extern PALETTE_INIT( tceptor );
 extern VIDEO_START( tceptor );
 extern VIDEO_UPDATE( tceptor );
 
-extern READ_HANDLER( tceptor_tile_ram_r );
-extern WRITE_HANDLER( tceptor_tile_ram_w );
-extern READ_HANDLER( tceptor_tile_attr_r );
-extern WRITE_HANDLER( tceptor_tile_attr_w );
-extern READ_HANDLER( tceptor_bg_ram_r );
-extern WRITE_HANDLER( tceptor_bg_ram_w );
-extern WRITE_HANDLER( tceptor_bg_scroll_w );
+extern READ8_HANDLER( tceptor_tile_ram_r );
+extern WRITE8_HANDLER( tceptor_tile_ram_w );
+extern READ8_HANDLER( tceptor_tile_attr_r );
+extern WRITE8_HANDLER( tceptor_tile_attr_w );
+extern READ8_HANDLER( tceptor_bg_ram_r );
+extern WRITE8_HANDLER( tceptor_bg_ram_w );
+extern WRITE8_HANDLER( tceptor_bg_scroll_w );
 
 extern data8_t *tceptor_tile_ram;
 extern data8_t *tceptor_tile_attr;
@@ -52,33 +52,33 @@ static int mcu_irq_enable;
 
 /*******************************************************************/
 
-static READ_HANDLER( m6502_a_shared_r )
+static READ8_HANDLER( m6502_a_shared_r )
 {
 	return m6502_a_shared_ram[offset];
 }
 
-static WRITE_HANDLER( m6502_a_shared_w )
+static WRITE8_HANDLER( m6502_a_shared_w )
 {
 	m6502_a_shared_ram[offset] = data;
 }
 
-static READ_HANDLER( m6502_b_shared_r )
+static READ8_HANDLER( m6502_b_shared_r )
 {
 	return m6502_b_shared_ram[offset];
 }
 
-static WRITE_HANDLER( m6502_b_shared_w )
+static WRITE8_HANDLER( m6502_b_shared_w )
 {
 	m6502_b_shared_ram[offset] = data;
 }
 
 
-static READ_HANDLER( m68k_shared_r )
+static READ8_HANDLER( m68k_shared_r )
 {
 	return m68k_shared_ram[offset];
 }
 
-static WRITE_HANDLER( m68k_shared_w )
+static WRITE8_HANDLER( m68k_shared_w )
 {
 	m68k_shared_ram[offset] = data;
 }
@@ -95,12 +95,12 @@ static WRITE16_HANDLER( m68k_shared_word_w )
 }
 
 
-static READ_HANDLER( mcu_shared_r )
+static READ8_HANDLER( mcu_shared_r )
 {
 	return mcu_shared_ram[offset];
 }
 
-static WRITE_HANDLER( mcu_shared_w )
+static WRITE8_HANDLER( mcu_shared_w )
 {
 	mcu_shared_ram[offset] = data;
 }
@@ -111,17 +111,17 @@ static WRITE_HANDLER( mcu_shared_w )
 static INTERRUPT_GEN( m6809_vb_interrupt )
 {
 	if (m6809_irq_enable)
-		cpu_set_irq_line(0, 0, HOLD_LINE);
+		cpunum_set_input_line(0, 0, HOLD_LINE);
 	else
 		m6809_irq_enable = 1;
 }
 
-static WRITE_HANDLER( m6809_irq_enable_w )
+static WRITE8_HANDLER( m6809_irq_enable_w )
 {
 	m6809_irq_enable = 1;
 }
 
-static WRITE_HANDLER( m6809_irq_disable_w )
+static WRITE8_HANDLER( m6809_irq_disable_w )
 {
 	m6809_irq_enable = 0;
 }
@@ -130,7 +130,7 @@ static WRITE_HANDLER( m6809_irq_disable_w )
 static INTERRUPT_GEN( m68k_vb_interrupt )
 {
 	if (m68k_irq_enable)
-		cpu_set_irq_line(3, MC68000_IRQ_1, HOLD_LINE);
+		cpunum_set_input_line(3, MC68000_IRQ_1, HOLD_LINE);
 }
 
 static WRITE16_HANDLER( m68k_irq_enable_w )
@@ -142,23 +142,23 @@ static WRITE16_HANDLER( m68k_irq_enable_w )
 static INTERRUPT_GEN( mcu_vb_interrupt )
 {
 	if (mcu_irq_enable)
-		cpu_set_irq_line(4, 0, HOLD_LINE);
+		cpunum_set_input_line(4, 0, HOLD_LINE);
 	else
 		mcu_irq_enable = 1;
 }
 
-static WRITE_HANDLER( mcu_irq_enable_w )
+static WRITE8_HANDLER( mcu_irq_enable_w )
 {
 	mcu_irq_enable = 1;
 }
 
-static WRITE_HANDLER( mcu_irq_disable_w )
+static WRITE8_HANDLER( mcu_irq_disable_w )
 {
 	mcu_irq_enable = 0;
 }
 
 
-static WRITE_HANDLER( voice_w )
+static WRITE8_HANDLER( voice_w )
 {
 	DAC_signed_data_16_w(0, data ? (data + 1) * 0x100 : 0x8000);
 }
@@ -197,27 +197,27 @@ static data8_t fix_input1(data8_t in1, data8_t in2)
 	return r;
 }
 
-static READ_HANDLER( dsw0_r )
+static READ8_HANDLER( dsw0_r )
 {
 	return fix_input0(readinputport(0), readinputport(1));
 }
 
-static READ_HANDLER( dsw1_r )
+static READ8_HANDLER( dsw1_r )
 {
 	return fix_input1(readinputport(0), readinputport(1));
 }
 
-static READ_HANDLER( input0_r )
+static READ8_HANDLER( input0_r )
 {
 	return fix_input0(readinputport(2), readinputport(3));
 }
 
-static READ_HANDLER( input1_r )
+static READ8_HANDLER( input1_r )
 {
 	return fix_input1(readinputport(2), readinputport(3));
 }
 
-static READ_HANDLER( readFF )
+static READ8_HANDLER( readFF )
 {
 	return 0xff;
 }

@@ -141,26 +141,26 @@ VIDEO_UPDATE( flower )
 	tilemap_draw(bitmap,&myclip,flower_text_right_tilemap,0,0);
 }
 
-WRITE_HANDLER( flower_textram_w )
+WRITE8_HANDLER( flower_textram_w )
 {
 	flower_textram[offset] = data;
 	tilemap_mark_tile_dirty(flower_text_tilemap, offset);
 	tilemap_mark_all_tiles_dirty(flower_text_right_tilemap);
 }
 
-WRITE_HANDLER( flower_bg0ram_w )
+WRITE8_HANDLER( flower_bg0ram_w )
 {
 	flower_bg0ram[offset] = data;
 	tilemap_mark_tile_dirty(flower_bg0_tilemap, offset & 0x1ff);
 }
 
-WRITE_HANDLER( flower_bg1ram_w )
+WRITE8_HANDLER( flower_bg1ram_w )
 {
 	flower_bg1ram[offset] = data;
 	tilemap_mark_tile_dirty(flower_bg1_tilemap, offset & 0x1ff);
 }
 
-WRITE_HANDLER( flower_flipscreen_w )
+WRITE8_HANDLER( flower_flipscreen_w )
 {
 	flip_screen_set(data);
 }

@@ -19,10 +19,10 @@ Notes:
 
 extern UINT8 *mystston_videoram2;
 
-extern WRITE_HANDLER( mystston_videoram_w );
-extern WRITE_HANDLER( mystston_videoram2_w );
-extern WRITE_HANDLER( mystston_scroll_w );
-extern WRITE_HANDLER( mystston_control_w );
+extern WRITE8_HANDLER( mystston_videoram_w );
+extern WRITE8_HANDLER( mystston_videoram2_w );
+extern WRITE8_HANDLER( mystston_scroll_w );
+extern WRITE8_HANDLER( mystston_control_w );
 
 extern PALETTE_INIT( mystston );
 extern VIDEO_START( mystston );
@@ -33,12 +33,12 @@ static int VBLK = 0x80;
 static int soundlatch;
 
 
-static WRITE_HANDLER( mystston_soundlatch_w )
+static WRITE8_HANDLER( mystston_soundlatch_w )
 {
 	soundlatch = data;
 }
 
-static WRITE_HANDLER( mystston_soundcontrol_w )
+static WRITE8_HANDLER( mystston_soundcontrol_w )
 {
 	static int last;
 
@@ -64,16 +64,16 @@ static WRITE_HANDLER( mystston_soundcontrol_w )
 	last = data;
 }
 
-static READ_HANDLER( port3_r )
+static READ8_HANDLER( port3_r )
 {
 	int port = readinputport(3);
 
 	return port | VBLK;
 }
 
-static WRITE_HANDLER( mystston_irq_reset_w )
+static WRITE8_HANDLER( mystston_irq_reset_w )
 {
-	cpu_set_irq_line(0, 0, CLEAR_LINE);
+	cpunum_set_input_line(0, 0, CLEAR_LINE);
 }
 
 
@@ -234,7 +234,7 @@ static INTERRUPT_GEN( mystston_interrupt )
 	/* IMS is triggered every time VLOC line 3 is raised,
 	   as VLOC counter starts at 16, effectively every 16 scanlines */
 	if ((scanline % 16) == 0)
-		cpu_set_irq_line(0, 0, HOLD_LINE);
+		cpunum_set_input_line(0, 0, HOLD_LINE);
 }
 
 

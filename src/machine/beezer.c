@@ -2,22 +2,22 @@
 #include "cpu/m6809/m6809.h"
 #include "machine/6522via.h"
 
-WRITE_HANDLER( beezer_map_w );
-READ_HANDLER( beezer_line_r );
+WRITE8_HANDLER( beezer_map_w );
+READ8_HANDLER( beezer_line_r );
 
 static int pbus;
 
-static READ_HANDLER( b_via_0_pb_r );
-static WRITE_HANDLER( b_via_0_pa_w );
-static WRITE_HANDLER( b_via_0_pb_w );
-static READ_HANDLER( b_via_0_ca2_r );
-static WRITE_HANDLER( b_via_0_ca2_w );
+static READ8_HANDLER( b_via_0_pb_r );
+static WRITE8_HANDLER( b_via_0_pa_w );
+static WRITE8_HANDLER( b_via_0_pb_w );
+static READ8_HANDLER( b_via_0_ca2_r );
+static WRITE8_HANDLER( b_via_0_ca2_w );
 static void b_via_0_irq (int level);
 
-static READ_HANDLER( b_via_1_pa_r );
-static READ_HANDLER( b_via_1_pb_r );
-static WRITE_HANDLER( b_via_1_pa_w );
-static WRITE_HANDLER( b_via_1_pb_w );
+static READ8_HANDLER( b_via_1_pa_r );
+static READ8_HANDLER( b_via_1_pb_r );
+static WRITE8_HANDLER( b_via_1_pa_w );
+static WRITE8_HANDLER( b_via_1_pb_w );
 static void b_via_1_irq (int level);
 
 static struct via6522_interface b_via_0_interface =
@@ -36,31 +36,31 @@ static struct via6522_interface b_via_1_interface =
 	/*irq                  */ b_via_1_irq
 };
 
-static READ_HANDLER( b_via_0_ca2_r )
+static READ8_HANDLER( b_via_0_ca2_r )
 {
 	return 0;
 }
 
-static WRITE_HANDLER( b_via_0_ca2_w )
+static WRITE8_HANDLER( b_via_0_ca2_w )
 {
 }
 
 static void b_via_0_irq (int level)
 {
-	cpu_set_irq_line(0, M6809_IRQ_LINE, level);
+	cpunum_set_input_line(0, M6809_IRQ_LINE, level);
 }
 
-static READ_HANDLER( b_via_0_pb_r )
+static READ8_HANDLER( b_via_0_pb_r )
 {
 	return pbus;
 }
 
-static WRITE_HANDLER( b_via_0_pa_w )
+static WRITE8_HANDLER( b_via_0_pa_w )
 {
 	if ((data & 0x08) == 0)
-		cpu_set_reset_line(1, ASSERT_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE);
 	else
-		cpu_set_reset_line(1, CLEAR_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_RESET, CLEAR_LINE);
 
 	if ((data & 0x04) == 0)
 	{
@@ -82,32 +82,32 @@ static WRITE_HANDLER( b_via_0_pa_w )
 	}
 }
 
-static WRITE_HANDLER( b_via_0_pb_w )
+static WRITE8_HANDLER( b_via_0_pb_w )
 {
 	pbus = data;
 }
 
 static void b_via_1_irq (int level)
 {
-	cpu_set_irq_line(1, M6809_IRQ_LINE, level);
+	cpunum_set_input_line(1, M6809_IRQ_LINE, level);
 }
 
-static READ_HANDLER( b_via_1_pa_r )
+static READ8_HANDLER( b_via_1_pa_r )
 {
 	return pbus;
 }
 
-static READ_HANDLER( b_via_1_pb_r )
+static READ8_HANDLER( b_via_1_pb_r )
 {
 	return 0xff;
 }
 
-static WRITE_HANDLER( b_via_1_pa_w )
+static WRITE8_HANDLER( b_via_1_pa_w )
 {
 	pbus = data;
 }
 
-static WRITE_HANDLER( b_via_1_pb_w )
+static WRITE8_HANDLER( b_via_1_pb_w )
 {
 }
 
@@ -119,21 +119,21 @@ DRIVER_INIT( beezer )
 	pbus = 0;
 }
 
-WRITE_HANDLER( beezer_bankswitch_w )
+WRITE8_HANDLER( beezer_bankswitch_w )
 {
 	if ((data & 0x07) == 0)
 	{
-		install_mem_write_handler(0, 0xc600, 0xc7ff, watchdog_reset_w);
-		install_mem_write_handler(0, 0xc800, 0xc9ff, beezer_map_w);
-		install_mem_read_handler(0, 0xca00, 0xcbff, beezer_line_r);
-		install_mem_read_handler(0, 0xce00, 0xcfff, via_0_r);
-		install_mem_write_handler(0, 0xce00, 0xcfff, via_0_w);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc600, 0xc7ff, 0, 0, watchdog_reset_w);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc800, 0xc9ff, 0, 0, beezer_map_w);
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xca00, 0xcbff, 0, 0, beezer_line_r);
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xce00, 0xcfff, 0, 0, via_0_r);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xce00, 0xcfff, 0, 0, via_0_w);
 	}
 	else
 	{
 		UINT8 *rom = memory_region(REGION_CPU1) + 0x10000;
-		install_mem_read_handler(0, 0xc000, 0xcfff, MRA8_BANK1);
-		install_mem_write_handler(0, 0xc000, 0xcfff, MWA8_BANK1);
+		memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xcfff, 0, 0, MRA8_BANK1);
+		memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc000, 0xcfff, 0, 0, MWA8_BANK1);
 		cpu_setbank(1, rom + (data & 0x07) * 0x2000 + ((data & 0x08) ? 0x1000: 0));
 	}
 }

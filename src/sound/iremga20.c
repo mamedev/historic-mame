@@ -119,7 +119,7 @@ void IremGA20_update( int param, INT16 **buffer, int length )
 }
 //ZT
 
-WRITE_HANDLER( IremGA20_w )
+WRITE8_HANDLER( IremGA20_w )
 {
 	int channel;
 
@@ -167,7 +167,7 @@ WRITE_HANDLER( IremGA20_w )
 	}
 }
 
-READ_HANDLER( IremGA20_r )
+READ8_HANDLER( IremGA20_r )
 {
 	int channel;
 

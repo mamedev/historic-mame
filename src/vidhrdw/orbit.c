@@ -14,7 +14,7 @@ static struct tilemap* tilemap;
 static int orbit_flip_screen;
 
 
-WRITE_HANDLER( orbit_playfield_w )
+WRITE8_HANDLER( orbit_playfield_w )
 {
 	tilemap_mark_tile_dirty(tilemap, offset);
 
@@ -22,7 +22,7 @@ WRITE_HANDLER( orbit_playfield_w )
 }
 
 
-WRITE_HANDLER( orbit_sprite_w )
+WRITE8_HANDLER( orbit_sprite_w )
 {
 	orbit_sprite_ram[offset] = data;
 }

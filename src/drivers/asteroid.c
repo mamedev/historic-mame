@@ -153,7 +153,7 @@
  *
  *************************************/
 
-static WRITE_HANDLER( astdelux_coin_counter_w )
+static WRITE8_HANDLER( astdelux_coin_counter_w )
 {
 	coin_counter_w(offset,data);
 }
@@ -166,7 +166,7 @@ static WRITE_HANDLER( astdelux_coin_counter_w )
  *
  *************************************/
 
-static WRITE_HANDLER( llander_led_w )
+static WRITE8_HANDLER( llander_led_w )
 {
 	static const char *lampname[] =
 	{
@@ -793,15 +793,15 @@ ROM_END
 
 static DRIVER_INIT( asteroib )
 {
-	install_mem_read_handler(0, 0x2000, 0x2000, asteroib_IN0_r);
-	install_mem_read_handler(0, 0x2003, 0x2003, input_port_3_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x2000, 0, 0, asteroib_IN0_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x2003, 0x2003, 0, 0, input_port_3_r);
 }
 
 
 static DRIVER_INIT( asterock )
 {
 
-	install_mem_read_handler(0, 0x2000, 0x2007, asterock_IN0_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x2000, 0x2007, 0, 0, asterock_IN0_r);
 }
 
 

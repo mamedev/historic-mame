@@ -31,12 +31,12 @@ static struct rectangle flip_spritevisiblearea =
 };
 
 
-WRITE_HANDLER( mermaid_flip_screen_x_w )
+WRITE8_HANDLER( mermaid_flip_screen_x_w )
 {
 	flip_screen_x_set(data & 0x01);
 }
 
-WRITE_HANDLER( mermaid_flip_screen_y_w )
+WRITE8_HANDLER( mermaid_flip_screen_y_w )
 {
 	flip_screen_y_set(data & 0x01);
 }

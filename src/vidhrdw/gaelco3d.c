@@ -146,7 +146,7 @@ static int render_poly(UINT32 *polydata)
 	(void)xorigin;
 	(void)yorigin;
 	
-	if (LOG_POLYGONS && keyboard_pressed(KEYCODE_LSHIFT))
+	if (LOG_POLYGONS && code_pressed(KEYCODE_LSHIFT))
 	{
 		int t;
 		printf("poly: %12.2f %12.2f %12.2f %12.2f %12.2f %12.2f %12.2f %12.2f %12.2f %12.2f %08X %08X (%4d,%4d) %08X",
@@ -498,19 +498,19 @@ VIDEO_UPDATE( gaelco3d )
 {
 	int x, y;
 
-	if (DISPLAY_TEXTURE && keyboard_pressed(KEYCODE_Z))
+	if (DISPLAY_TEXTURE && code_pressed(KEYCODE_Z))
 	{
 		static int xv = 0, yv = 0x1000;
 		UINT8 *base = memory_region(REGION_USER3);
 		
-		if (keyboard_pressed(KEYCODE_LEFT) && xv >= 4)
+		if (code_pressed(KEYCODE_LEFT) && xv >= 4)
 			xv -= 4;
-		if (keyboard_pressed(KEYCODE_RIGHT) && xv < 4096 - 4)
+		if (code_pressed(KEYCODE_RIGHT) && xv < 4096 - 4)
 			xv += 4;
 		
-		if (keyboard_pressed(KEYCODE_UP) && yv >= 4)
+		if (code_pressed(KEYCODE_UP) && yv >= 4)
 			yv -= 4;
-		if (keyboard_pressed(KEYCODE_DOWN) && yv < 0x40000)
+		if (code_pressed(KEYCODE_DOWN) && yv < 0x40000)
 			yv += 4;
 		
 		for (y = cliprect->min_y; y <= cliprect->max_y; y++)

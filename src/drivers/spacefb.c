@@ -128,35 +128,35 @@ red flash effect when you die.
 VIDEO_UPDATE( spacefb );
 PALETTE_INIT( spacefb );
 
-WRITE_HANDLER( spacefb_video_control_w );
-WRITE_HANDLER( spacefb_port_2_w );
+WRITE8_HANDLER( spacefb_video_control_w );
+WRITE8_HANDLER( spacefb_port_2_w );
 
 
 static INTERRUPT_GEN( spacefb_interrupt )
 {
-	if (cpu_getiloops() != 0) cpu_set_irq_line_and_vector(0,0,HOLD_LINE,0xcf);		/* RST 08h */
-	else cpu_set_irq_line_and_vector(0,0,HOLD_LINE,0xd7);		/* RST 10h */
+	if (cpu_getiloops() != 0) cpunum_set_input_line_and_vector(0,0,HOLD_LINE,0xcf);		/* RST 08h */
+	else cpunum_set_input_line_and_vector(0,0,HOLD_LINE,0xd7);		/* RST 10h */
 }
 
 
 unsigned char spacefb_sound_latch;
 
-static READ_HANDLER( spacefb_sh_p2_r )
+static READ8_HANDLER( spacefb_sh_p2_r )
 {
 	return ((spacefb_sound_latch & 0x18) << 1);
 }
 
-static READ_HANDLER( spacefb_sh_t0_r )
+static READ8_HANDLER( spacefb_sh_t0_r )
 {
 	return spacefb_sound_latch & 0x20;
 }
 
-static READ_HANDLER( spacefb_sh_t1_r )
+static READ8_HANDLER( spacefb_sh_t1_r )
 {
 	return spacefb_sound_latch & 0x04;
 }
 
-static WRITE_HANDLER( spacefb_port_1_w )
+static WRITE8_HANDLER( spacefb_port_1_w )
 {
 	static int bit0 = 0;
 	static int bit6 = 0;
@@ -165,7 +165,7 @@ static WRITE_HANDLER( spacefb_port_1_w )
 	int bit;
 
 	spacefb_sound_latch = data;
-	cpu_set_irq_line(1, 0, (!(data & 0x02)) ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1, 0, (!(data & 0x02)) ? ASSERT_LINE : CLEAR_LINE);
 
 /* Enemy killed */
 	bit = 1-(data & 1);

@@ -54,12 +54,12 @@ MACHINE_INIT( pc10 )
  *	BIOS ports handling
  *
  *************************************/
-READ_HANDLER( pc10_port_0_r )
+READ8_HANDLER( pc10_port_0_r )
 {
 	return readinputport( 0 ) | ( ( ~pc10_int_detect & 1 ) << 3 );
 }
 
-WRITE_HANDLER( pc10_SDCS_w )
+WRITE8_HANDLER( pc10_SDCS_w )
 {
 	/*
 		Hooked to CLR on LS194A - Sheet 2, bottom left.
@@ -70,55 +70,55 @@ WRITE_HANDLER( pc10_SDCS_w )
 	pc10_sdcs = ~data & 1;
 }
 
-WRITE_HANDLER( pc10_CNTRLMASK_w )
+WRITE8_HANDLER( pc10_CNTRLMASK_w )
 {
 	cntrl_mask = ~data & 1;
 }
 
-WRITE_HANDLER( pc10_DISPMASK_w )
+WRITE8_HANDLER( pc10_DISPMASK_w )
 {
 	pc10_dispmask = ~data & 1;
 }
 
-WRITE_HANDLER( pc10_SOUNDMASK_w )
+WRITE8_HANDLER( pc10_SOUNDMASK_w )
 {
 	/* should mute the APU - unimplemented yet */
 }
 
-WRITE_HANDLER( pc10_NMIENABLE_w )
+WRITE8_HANDLER( pc10_NMIENABLE_w )
 {
 	pc10_nmi_enable = data & 1;
 }
 
-WRITE_HANDLER( pc10_DOGDI_w )
+WRITE8_HANDLER( pc10_DOGDI_w )
 {
 	pc10_dog_di = data & 1;
 }
 
-WRITE_HANDLER( pc10_GAMERES_w )
+WRITE8_HANDLER( pc10_GAMERES_w )
 {
-	cpu_set_reset_line( 1, ( data & 1 ) ? CLEAR_LINE : ASSERT_LINE );
+	cpunum_set_input_line(1, INPUT_LINE_RESET, ( data & 1 ) ? CLEAR_LINE : ASSERT_LINE );
 }
 
-WRITE_HANDLER( pc10_GAMESTOP_w )
+WRITE8_HANDLER( pc10_GAMESTOP_w )
 {
-	cpu_set_halt_line( 1, ( data & 1 ) ? CLEAR_LINE : ASSERT_LINE );
+	cpunum_set_input_line(1, INPUT_LINE_HALT, ( data & 1 ) ? CLEAR_LINE : ASSERT_LINE );
 }
 
-WRITE_HANDLER( pc10_PPURES_w )
+WRITE8_HANDLER( pc10_PPURES_w )
 {
 	if ( data & 1 )
 		ppu2c03b_reset( 0, /* cpu_getscanlineperiod() * */ 2 );
 }
 
-READ_HANDLER( pc10_detectclr_r )
+READ8_HANDLER( pc10_detectclr_r )
 {
 	pc10_int_detect = 0;
 
 	return 0;
 }
 
-WRITE_HANDLER( pc10_CARTSEL_w )
+WRITE8_HANDLER( pc10_CARTSEL_w )
 {
 	cart_sel &= ~( 1 << offset );
 	cart_sel |= ( data & 1 ) << offset;
@@ -130,7 +130,7 @@ WRITE_HANDLER( pc10_CARTSEL_w )
  *	RP5H01 handling
  *
  *************************************/
-READ_HANDLER( pc10_prot_r )
+READ8_HANDLER( pc10_prot_r )
 {
 	int data = 0xe7;
 
@@ -145,7 +145,7 @@ READ_HANDLER( pc10_prot_r )
 	return data;
 }
 
-WRITE_HANDLER( pc10_prot_w )
+WRITE8_HANDLER( pc10_prot_w )
 {
 	/* we only support a single cart connected at slot 0 */
 	if ( cart_sel == 0 )
@@ -171,7 +171,7 @@ WRITE_HANDLER( pc10_prot_w )
  *	Input Ports
  *
  *************************************/
-WRITE_HANDLER( pc10_in0_w )
+WRITE8_HANDLER( pc10_in0_w )
 {
 	/* Toggling bit 0 high then low resets both controllers */
 	if ( data & 1 )
@@ -189,7 +189,7 @@ WRITE_HANDLER( pc10_in0_w )
 	}
 }
 
-READ_HANDLER( pc10_in0_r )
+READ8_HANDLER( pc10_in0_r )
 {
 	int ret = ( input_latch[0] ) & 1;
 
@@ -203,7 +203,7 @@ READ_HANDLER( pc10_in0_r )
 	return ret;
 }
 
-READ_HANDLER( pc10_in1_r )
+READ8_HANDLER( pc10_in1_r )
 {
 	int ret = ( input_latch[1] ) & 1;
 
@@ -312,7 +312,7 @@ static int mmc1_shiftreg;
 static int mmc1_shiftcount;
 static int mmc1_rom_mask;
 
-static WRITE_HANDLER( mmc1_rom_switch_w )
+static WRITE8_HANDLER( mmc1_rom_switch_w )
 {
 	/* basically, a MMC1 mapper from the nes */
 	static int size16k, switchlow, vrom4k;
@@ -423,7 +423,7 @@ static WRITE_HANDLER( mmc1_rom_switch_w )
 
 /* A Board games (Track & Field, Gradius) */
 
-static WRITE_HANDLER( aboard_vrom_switch_w )
+static WRITE8_HANDLER( aboard_vrom_switch_w )
 {
 	ppu2c03b_set_videorom_bank( 0, 0, 8, ( data & 3 ), 512 );
 }
@@ -431,7 +431,7 @@ static WRITE_HANDLER( aboard_vrom_switch_w )
 DRIVER_INIT( pcaboard )
 {
 	/* switches vrom with writes to the $803e-$8041 area */
-	install_mem_write_handler( 1, 0x8000, 0x8fff, aboard_vrom_switch_w );
+	memory_install_write8_handler(1, ADDRESS_SPACE_PROGRAM, 0x8000, 0x8fff, 0, 0, aboard_vrom_switch_w );
 
 	/* common init */
 	init_playch10();
@@ -444,7 +444,7 @@ DRIVER_INIT( pcaboard )
 
 /* B Board games (Contra, Rush N' Attach, Pro Wrestling) */
 
-static WRITE_HANDLER( bboard_rom_switch_w )
+static WRITE8_HANDLER( bboard_rom_switch_w )
 {
 	int bankoffset = 0x10000 + ( ( data & 7 ) * 0x4000 );
 
@@ -458,7 +458,7 @@ DRIVER_INIT( pcbboard )
 	memcpy( &memory_region( REGION_CPU2 )[0x08000], &memory_region( REGION_CPU2 )[0x28000], 0x8000 );
 
 	/* Roms are banked at $8000 to $bfff */
-	install_mem_write_handler( 1, 0x8000, 0xffff, bboard_rom_switch_w );
+	memory_install_write8_handler(1, ADDRESS_SPACE_PROGRAM, 0x8000, 0xffff, 0, 0, bboard_rom_switch_w );
 
 	/* common init */
 	init_playch10();
@@ -471,7 +471,7 @@ DRIVER_INIT( pcbboard )
 
 /* C Board games (The Goonies) */
 
-static WRITE_HANDLER( cboard_vrom_switch_w )
+static WRITE8_HANDLER( cboard_vrom_switch_w )
 {
 	ppu2c03b_set_videorom_bank( 0, 0, 8, ( ( data >> 1 ) & 1 ), 512 );
 }
@@ -479,7 +479,7 @@ static WRITE_HANDLER( cboard_vrom_switch_w )
 DRIVER_INIT( pccboard )
 {
 	/* switches vrom with writes to $6000 */
-	install_mem_write_handler( 1, 0x6000, 0x6000, cboard_vrom_switch_w );
+	memory_install_write8_handler(1, ADDRESS_SPACE_PROGRAM, 0x6000, 0x6000, 0, 0, cboard_vrom_switch_w );
 
 	/* common init */
 	init_playch10();
@@ -498,7 +498,7 @@ DRIVER_INIT( pcdboard )
 	mmc1_rom_mask = 0x07;
 
 	/* MMC mapper at writes to $8000-$ffff */
-	install_mem_write_handler( 1, 0x8000, 0xffff, mmc1_rom_switch_w );
+	memory_install_write8_handler(1, ADDRESS_SPACE_PROGRAM, 0x8000, 0xffff, 0, 0, mmc1_rom_switch_w );
 
 	/* common init */
 	init_playch10();
@@ -533,7 +533,7 @@ static void mapper9_latch( offs_t offset )
 	}
 }
 
-static WRITE_HANDLER( eboard_rom_switch_w )
+static WRITE8_HANDLER( eboard_rom_switch_w )
 {
 	/* a variation of mapper 9 on a nes */
 	switch( offset & 0x7000 )
@@ -583,14 +583,14 @@ DRIVER_INIT( pceboard )
 	memcpy( &memory_region( REGION_CPU2 )[0x08000], &memory_region( REGION_CPU2 )[0x28000], 0x8000 );
 
 	/* basically a mapper 9 on a nes */
-	install_mem_write_handler( 1, 0x8000, 0xffff, eboard_rom_switch_w );
+	memory_install_write8_handler(1, ADDRESS_SPACE_PROGRAM, 0x8000, 0xffff, 0, 0, eboard_rom_switch_w );
 
 	/* ppu_latch callback */
 	ppu_latch = mapper9_latch;
 
 	/* nvram at $6000-$6fff */
-	install_mem_read_handler( 1, 0x6000, 0x6fff, MRA8_RAM );
-	install_mem_write_handler( 1, 0x6000, 0x6fff, MWA8_RAM );
+	memory_install_read8_handler(1, ADDRESS_SPACE_PROGRAM, 0x6000, 0x6fff, 0, 0, MRA8_RAM );
+	memory_install_write8_handler(1, ADDRESS_SPACE_PROGRAM, 0x6000, 0x6fff, 0, 0, MWA8_RAM );
 
 	/* common init */
 	init_playch10();
@@ -609,7 +609,7 @@ DRIVER_INIT( pcfboard )
 	mmc1_rom_mask = 0x07;
 
 	/* MMC mapper at writes to $8000-$ffff */
-	install_mem_write_handler( 1, 0x8000, 0xffff, mmc1_rom_switch_w );
+	memory_install_write8_handler(1, ADDRESS_SPACE_PROGRAM, 0x8000, 0xffff, 0, 0, mmc1_rom_switch_w );
 
 	/* common init */
 	init_playch10();
@@ -631,12 +631,12 @@ static void gboard_scanline_cb( int num, int scanline, int vblank, int blanked )
 		if ( --gboard_scanline_counter == -1 )
 		{
 			gboard_scanline_counter = gboard_scanline_latch;
-			cpu_set_irq_line( 1, 0, PULSE_LINE );
+			cpunum_set_input_line( 1, 0, PULSE_LINE );
 		}
 	}
 }
 
-static WRITE_HANDLER( gboard_rom_switch_w )
+static WRITE8_HANDLER( gboard_rom_switch_w )
 {
 	/* basically, a MMC3 mapper from the nes */
 	static int last_bank = 0xff;
@@ -774,11 +774,11 @@ DRIVER_INIT( pcgboard )
 	memcpy( &memory_region( REGION_CPU2 )[0x0c000], &memory_region( REGION_CPU2 )[0x4c000], 0x4000 );
 
 	/* MMC3 mapper at writes to $8000-$ffff */
-	install_mem_write_handler( 1, 0x8000, 0xffff, gboard_rom_switch_w );
+	memory_install_write8_handler(1, ADDRESS_SPACE_PROGRAM, 0x8000, 0xffff, 0, 0, gboard_rom_switch_w );
 
 	/* extra ram at $6000-$7fff */
-	install_mem_read_handler( 1, 0x6000, 0x7fff, MRA8_RAM );
-	install_mem_write_handler( 1, 0x6000, 0x7fff, MWA8_RAM );
+	memory_install_read8_handler(1, ADDRESS_SPACE_PROGRAM, 0x6000, 0x7fff, 0, 0, MRA8_RAM );
+	memory_install_write8_handler(1, ADDRESS_SPACE_PROGRAM, 0x6000, 0x7fff, 0, 0, MWA8_RAM );
 
 	gboard_banks[0] = 0x1e;
 	gboard_banks[1] = 0x1f;
@@ -803,7 +803,7 @@ DRIVER_INIT( pcgboard_type2 )
 
 /* i Board games (Captain Sky Hawk, Solar Jetman) */
 
-static WRITE_HANDLER( iboard_rom_switch_w )
+static WRITE8_HANDLER( iboard_rom_switch_w )
 {
 	int bank = data & 7;
 
@@ -822,7 +822,7 @@ DRIVER_INIT( pciboard )
 	memcpy( &memory_region( REGION_CPU2 )[0x08000], &memory_region( REGION_CPU2 )[0x10000], 0x8000 );
 
 	/* Roms are banked at $8000 to $bfff */
-	install_mem_write_handler( 1, 0x8000, 0xffff, iboard_rom_switch_w );
+	memory_install_write8_handler(1, ADDRESS_SPACE_PROGRAM, 0x8000, 0xffff, 0, 0, iboard_rom_switch_w );
 
 	/* common init */
 	init_playch10();
@@ -838,11 +838,11 @@ DRIVER_INIT( pchboard )
 	memcpy( &memory_region( REGION_CPU2 )[0x0c000], &memory_region( REGION_CPU2 )[0x4c000], 0x4000 );
 
 	/* Roms are banked at $8000 to $bfff */
-	install_mem_write_handler( 1, 0x8000, 0xffff, gboard_rom_switch_w );
+	memory_install_write8_handler(1, ADDRESS_SPACE_PROGRAM, 0x8000, 0xffff, 0, 0, gboard_rom_switch_w );
 
 	/* extra ram at $6000-$7fff */
-	install_mem_read_handler( 1, 0x6000, 0x7fff, MRA8_RAM );
-	install_mem_write_handler( 1, 0x6000, 0x7fff, MWA8_RAM );
+	memory_install_read8_handler(1, ADDRESS_SPACE_PROGRAM, 0x6000, 0x7fff, 0, 0, MRA8_RAM );
+	memory_install_write8_handler(1, ADDRESS_SPACE_PROGRAM, 0x6000, 0x7fff, 0, 0, MWA8_RAM );
 
 	gboard_banks[0] = 0x1e;
 	gboard_banks[1] = 0x1f;
@@ -866,7 +866,7 @@ DRIVER_INIT( pckboard )
 	mmc1_rom_mask = 0x0f;
 
 	/* Roms are banked at $8000 to $bfff */
-	install_mem_write_handler( 1, 0x8000, 0xffff, mmc1_rom_switch_w );
+	memory_install_write8_handler(1, ADDRESS_SPACE_PROGRAM, 0x8000, 0xffff, 0, 0, mmc1_rom_switch_w );
 
 	/* common init */
 	init_playch10();

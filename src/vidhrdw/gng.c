@@ -74,27 +74,27 @@ VIDEO_START( gng )
 
 ***************************************************************************/
 
-WRITE_HANDLER( gng_fgvideoram_w )
+WRITE8_HANDLER( gng_fgvideoram_w )
 {
 	gng_fgvideoram[offset] = data;
 	tilemap_mark_tile_dirty(fg_tilemap,offset & 0x3ff);
 }
 
-WRITE_HANDLER( gng_bgvideoram_w )
+WRITE8_HANDLER( gng_bgvideoram_w )
 {
 	gng_bgvideoram[offset] = data;
 	tilemap_mark_tile_dirty(bg_tilemap,offset & 0x3ff);
 }
 
 
-WRITE_HANDLER( gng_bgscrollx_w )
+WRITE8_HANDLER( gng_bgscrollx_w )
 {
 	static unsigned char scrollx[2];
 	scrollx[offset] = data;
 	tilemap_set_scrollx( bg_tilemap, 0, scrollx[0] + 256 * scrollx[1] );
 }
 
-WRITE_HANDLER( gng_bgscrolly_w )
+WRITE8_HANDLER( gng_bgscrolly_w )
 {
 	static unsigned char scrolly[2];
 	scrolly[offset] = data;
@@ -102,7 +102,7 @@ WRITE_HANDLER( gng_bgscrolly_w )
 }
 
 
-WRITE_HANDLER( gng_flipscreen_w )
+WRITE8_HANDLER( gng_flipscreen_w )
 {
 	flip_screen_set(~data & 1);
 }

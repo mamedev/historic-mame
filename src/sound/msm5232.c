@@ -784,13 +784,13 @@ void MSM5232_sh_reset (void)
 {
 }
 
-WRITE_HANDLER ( MSM5232_0_w )
+WRITE8_HANDLER ( MSM5232_0_w )
 {
 	stream_update (stream[0], 0);
 	msm5232_write(0, offset, data);
 }
 
-WRITE_HANDLER ( MSM5232_1_w )
+WRITE8_HANDLER ( MSM5232_1_w )
 {
 	stream_update (stream[1], 0);
 	msm5232_write(1, offset, data);

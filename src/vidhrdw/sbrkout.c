@@ -13,7 +13,7 @@ UINT8 *sbrkout_vert_ram;
 
 static struct tilemap *bg_tilemap;
 
-WRITE_HANDLER( sbrkout_videoram_w )
+WRITE8_HANDLER( sbrkout_videoram_w )
 {
 	if (videoram[offset] != data)
 	{

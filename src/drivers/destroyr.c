@@ -35,7 +35,7 @@ static void destroyr_dial_callback(int dial)
 
 	if (destroyr_potmask[dial])
 	{
-		cpu_set_nmi_line(0, PULSE_LINE);
+		cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 	}
 }
 
@@ -57,7 +57,7 @@ static MACHINE_INIT( destroyr )
 }
 
 
-WRITE_HANDLER( destroyr_misc_w )
+WRITE8_HANDLER( destroyr_misc_w )
 {
 	/* bits 0 to 2 connect to the sound circuits */
 
@@ -73,7 +73,7 @@ WRITE_HANDLER( destroyr_misc_w )
 }
 
 
-WRITE_HANDLER( destroyr_cursor_load_w )
+WRITE8_HANDLER( destroyr_cursor_load_w )
 {
 	destroyr_cursor = data;
 
@@ -81,13 +81,13 @@ WRITE_HANDLER( destroyr_cursor_load_w )
 }
 
 
-WRITE_HANDLER( destroyr_interrupt_ack_w )
+WRITE8_HANDLER( destroyr_interrupt_ack_w )
 {
-	cpu_set_irq_line(0, 0, CLEAR_LINE);
+	cpunum_set_input_line(0, 0, CLEAR_LINE);
 }
 
 
-WRITE_HANDLER( destroyr_output_w )
+WRITE8_HANDLER( destroyr_output_w )
 {
 	offset &= 15;
 
@@ -127,7 +127,7 @@ WRITE_HANDLER( destroyr_output_w )
 }
 
 
-READ_HANDLER( destroyr_input_r )
+READ8_HANDLER( destroyr_input_r )
 {
 	offset &= 15;
 
@@ -154,7 +154,7 @@ READ_HANDLER( destroyr_input_r )
 }
 
 
-READ_HANDLER( destroyr_scanline_r )
+READ8_HANDLER( destroyr_scanline_r )
 {
 	return cpu_getscanline();
 }

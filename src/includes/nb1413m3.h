@@ -205,26 +205,26 @@ enum {
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 MACHINE_INIT( nb1413m3 );
-WRITE_HANDLER( nb1413m3_nmi_clock_w );
+WRITE8_HANDLER( nb1413m3_nmi_clock_w );
 INTERRUPT_GEN( nb1413m3_interrupt );
 NVRAM_HANDLER( nb1413m3 );
 int nb1413m3_sndrom_r(int offset);
-WRITE_HANDLER( nb1413m3_sndrombank1_w );
-WRITE_HANDLER( nb1413m3_sndrombank2_w );
+WRITE8_HANDLER( nb1413m3_sndrombank1_w );
+WRITE8_HANDLER( nb1413m3_sndrombank2_w );
 int nb1413m3_gfxrom_r(int offset);
 void nb1413m3_gfxrombank_w(int data);
 void nb1413m3_gfxradr_l_w(int data);
 void nb1413m3_gfxradr_h_w(int data);
-WRITE_HANDLER( nb1413m3_inputportsel_w );
-READ_HANDLER( nb1413m3_inputport0_r );
-READ_HANDLER( nb1413m3_inputport1_r );
-READ_HANDLER( nb1413m3_inputport2_r );
-READ_HANDLER( nb1413m3_inputport3_r );
-READ_HANDLER( nb1413m3_dipsw1_r );
-READ_HANDLER( nb1413m3_dipsw2_r );
+WRITE8_HANDLER( nb1413m3_inputportsel_w );
+READ8_HANDLER( nb1413m3_inputport0_r );
+READ8_HANDLER( nb1413m3_inputport1_r );
+READ8_HANDLER( nb1413m3_inputport2_r );
+READ8_HANDLER( nb1413m3_inputport3_r );
+READ8_HANDLER( nb1413m3_dipsw1_r );
+READ8_HANDLER( nb1413m3_dipsw2_r );
 int nb1413m3_dipsw3_l_r(void);
 int nb1413m3_dipsw3_h_r(void);
-WRITE_HANDLER( nb1413m3_outcoin_w );
+WRITE8_HANDLER( nb1413m3_outcoin_w );
 void nb1413m3_vcrctrl_w(int data);
 
 extern int nb1413m3_type;

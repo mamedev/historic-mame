@@ -37,7 +37,7 @@ dy_6.bin (near Z80)
 static struct tilemap *bg_tilemap,*top_tilemap;
 static int ay_data;
 
-WRITE_HANDLER( dynadice_videoram_w )
+WRITE8_HANDLER( dynadice_videoram_w )
 {
 	if( videoram[offset] != data )
 	{
@@ -47,12 +47,12 @@ WRITE_HANDLER( dynadice_videoram_w )
 	}
 }
 
-static WRITE_HANDLER( sound_data_w )
+static WRITE8_HANDLER( sound_data_w )
 {
 	ay_data = data;
 }
 
-static WRITE_HANDLER( sound_control_w )
+static WRITE8_HANDLER( sound_control_w )
 {
 /*
 	AY 3-8910 :

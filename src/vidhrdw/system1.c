@@ -63,7 +63,7 @@ PALETTE_INIT( system1 )
 	system1_color_prom = color_prom;
 }
 
-WRITE_HANDLER( system1_paletteram_w )
+WRITE8_HANDLER( system1_paletteram_w )
 {
 	int val,r,g,b;
 
@@ -131,7 +131,7 @@ VIDEO_START( system1 )
 	return 0;
 }
 
-WRITE_HANDLER( system1_videomode_w )
+WRITE8_HANDLER( system1_videomode_w )
 {
 if (data & 0x6e) logerror("videomode = %02x\n",data);
 
@@ -145,7 +145,7 @@ if (data & 0x6e) logerror("videomode = %02x\n",data);
 	flip_screen_set(data & 0x80);
 }
 
-READ_HANDLER( system1_videomode_r )
+READ8_HANDLER( system1_videomode_r )
 {
 	return system1_video_mode;
 }
@@ -213,14 +213,14 @@ INLINE void draw_pixel(struct mame_bitmap *bitmap,
 	/* (TeddyBoy Blues, head of the tiger in girl bonus round) */
 }
 
-WRITE_HANDLER( system1_background_collisionram_w )
+WRITE8_HANDLER( system1_background_collisionram_w )
 {
 	/* to do the RAM check, Mister Viking writes 0xff and immediately */
 	/* reads it back, expecting bit 0 to be NOT set. */
 	system1_background_collisionram[offset] = 0x7e;
 }
 
-WRITE_HANDLER( system1_sprites_collisionram_w )
+WRITE8_HANDLER( system1_sprites_collisionram_w )
 {
 	/* to do the RAM check, Mister Viking write 0xff and immediately */
 	/* reads it back, expecting bit 0 to be NOT set. */
@@ -340,7 +340,7 @@ static void draw_sprites(struct mame_bitmap *bitmap)
 
 
 
-WRITE_HANDLER( system1_backgroundram_w )
+WRITE8_HANDLER( system1_backgroundram_w )
 {
 	system1_backgroundram[offset] = data;
 	bg_dirtybuffer[offset>>1] = 1;
@@ -532,7 +532,7 @@ VIDEO_UPDATE( system1 )
 
 
 
-WRITE_HANDLER( choplifter_scroll_x_w )
+WRITE8_HANDLER( choplifter_scroll_x_w )
 {
 	system1_scrollx_ram[offset] = data;
 
@@ -665,7 +665,7 @@ VIDEO_UPDATE( choplifter )
 
 
 #ifdef MAME_DEBUG
-	if (keyboard_pressed(KEYCODE_SPACE))		// goto next level
+	if (code_pressed(KEYCODE_SPACE))		// goto next level
 	{
 		memory_region(REGION_CPU1)[0xC085]=33;
 	}
@@ -674,23 +674,23 @@ VIDEO_UPDATE( choplifter )
 
 
 
-READ_HANDLER( wbml_videoram_bank_latch_r )
+READ8_HANDLER( wbml_videoram_bank_latch_r )
 {
 	return wbml_videoram_bank_latch;
 }
 
-WRITE_HANDLER( wbml_videoram_bank_latch_w )
+WRITE8_HANDLER( wbml_videoram_bank_latch_w )
 {
 	wbml_videoram_bank_latch = data;
 	wbml_videoram_bank = (data >> 1) & 0x03;	/* Select 4 banks of 4k, bit 2,1 */
 }
 
-READ_HANDLER( wbml_paged_videoram_r )
+READ8_HANDLER( wbml_paged_videoram_r )
 {
 	return wbml_paged_videoram[0x1000*wbml_videoram_bank + offset];
 }
 
-WRITE_HANDLER( wbml_paged_videoram_w )
+WRITE8_HANDLER( wbml_paged_videoram_w )
 {
 	wbml_paged_videoram[0x1000*wbml_videoram_bank + offset] = data;
 }

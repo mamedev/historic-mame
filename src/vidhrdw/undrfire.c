@@ -245,36 +245,36 @@ VIDEO_UPDATE( undrfire )
 #endif
 
 #ifdef MAME_DEBUG
-	if (keyboard_pressed_memory (KEYCODE_X))
+	if (code_pressed_memory (KEYCODE_X))
 	{
 		dislayer[5] ^= 1;
 		usrintf_showmessage("piv text: %01x",dislayer[5]);
 	}
-	if (keyboard_pressed_memory (KEYCODE_C))
+	if (code_pressed_memory (KEYCODE_C))
 	{
 		dislayer[0] ^= 1;
 		usrintf_showmessage("bg0: %01x",dislayer[0]);
 	}
 
-	if (keyboard_pressed_memory (KEYCODE_V))
+	if (code_pressed_memory (KEYCODE_V))
 	{
 		dislayer[1] ^= 1;
 		usrintf_showmessage("bg1: %01x",dislayer[1]);
 	}
 
-	if (keyboard_pressed_memory (KEYCODE_B))
+	if (code_pressed_memory (KEYCODE_B))
 	{
 		dislayer[2] ^= 1;
 		usrintf_showmessage("bg2: %01x",dislayer[2]);
 	}
 
-	if (keyboard_pressed_memory (KEYCODE_N))
+	if (code_pressed_memory (KEYCODE_N))
 	{
 		dislayer[3] ^= 1;
 		usrintf_showmessage("bg3: %01x",dislayer[3]);
 	}
 
-	if (keyboard_pressed_memory (KEYCODE_M))
+	if (code_pressed_memory (KEYCODE_M))
 	{
 		dislayer[4] ^= 1;
 		usrintf_showmessage("sprites: %01x",dislayer[4]);

@@ -239,12 +239,12 @@ VIDEO_UPDATE( superchs )
 	   sprites as pdrawgfx cannot yet cope with more than 4 layers */
 
 #ifdef MAME_DEBUG
-	if (!keyboard_pressed (KEYCODE_Z)) TC0480SCP_tilemap_draw(bitmap,cliprect,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);
-	if (!keyboard_pressed (KEYCODE_X)) TC0480SCP_tilemap_draw(bitmap,cliprect,layer[1],0,1);
-	if (!keyboard_pressed (KEYCODE_C)) TC0480SCP_tilemap_draw(bitmap,cliprect,layer[2],0,2);
-	if (!keyboard_pressed (KEYCODE_V)) TC0480SCP_tilemap_draw(bitmap,cliprect,layer[3],0,4);
-	if (!keyboard_pressed (KEYCODE_B)) TC0480SCP_tilemap_draw(bitmap,cliprect,layer[4],0,8);
-	if (!keyboard_pressed (KEYCODE_N)) superchs_draw_sprites_16x16(bitmap,cliprect,primasks,48,-116);
+	if (!code_pressed (KEYCODE_Z)) TC0480SCP_tilemap_draw(bitmap,cliprect,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);
+	if (!code_pressed (KEYCODE_X)) TC0480SCP_tilemap_draw(bitmap,cliprect,layer[1],0,1);
+	if (!code_pressed (KEYCODE_C)) TC0480SCP_tilemap_draw(bitmap,cliprect,layer[2],0,2);
+	if (!code_pressed (KEYCODE_V)) TC0480SCP_tilemap_draw(bitmap,cliprect,layer[3],0,4);
+	if (!code_pressed (KEYCODE_B)) TC0480SCP_tilemap_draw(bitmap,cliprect,layer[4],0,8);
+	if (!code_pressed (KEYCODE_N)) superchs_draw_sprites_16x16(bitmap,cliprect,primasks,48,-116);
 #else
 	TC0480SCP_tilemap_draw(bitmap,cliprect,layer[0],TILEMAP_IGNORE_TRANSPARENCY,0);
 	TC0480SCP_tilemap_draw(bitmap,cliprect,layer[1],0,1);

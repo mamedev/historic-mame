@@ -23,8 +23,8 @@ extern int skyfox_bg_pos, skyfox_bg_ctrl;
 
 /* Functions defined in vidhrdw: */
 
-READ_HANDLER( skyfox_vregs_r );
-WRITE_HANDLER( skyfox_vregs_w );
+READ8_HANDLER( skyfox_vregs_r );
+WRITE8_HANDLER( skyfox_vregs_w );
 
 PALETTE_INIT( skyfox );
 
@@ -250,7 +250,7 @@ static INTERRUPT_GEN( skyfox_interrupt )
 	skyfox_bg_pos += (skyfox_bg_ctrl >> 1) & 0x7;	// maybe..
 
 	/* Check coin 1 & 2 */
-	if ((readinputport(4) & 3) != 3) cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+	if ((readinputport(4) & 3) != 3) cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 }
 
 static struct YM2203interface skyfox_ym2203_interface =

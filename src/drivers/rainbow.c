@@ -231,7 +231,7 @@ static WRITE16_HANDLER( jumping_sound_w )
 	if (ACCESSING_LSB)
 	{
 		jumping_latch = data & 0xff; /*M68000 writes .b to $400007*/
-		cpu_set_irq_line(1,0,HOLD_LINE);
+		cpunum_set_input_line(1,0,HOLD_LINE);
 	}
 }
 
@@ -315,12 +315,12 @@ ADDRESS_MAP_END
               Jumping uses two YM2203's
 ***********************************************************/
 
-static WRITE_HANDLER( bankswitch_w )
+static WRITE8_HANDLER( bankswitch_w )
 {
 	cpu_setbank(5, memory_region(REGION_CPU2) + ((data - 1) & 3) * 0x4000 + 0x10000);
 }
 
-static READ_HANDLER( jumping_latch_r )
+static READ8_HANDLER( jumping_latch_r )
 {
 	return jumping_latch;
 }
@@ -578,7 +578,7 @@ static struct GfxDecodeInfo jumping_gfxdecodeinfo[] =
 
 static void irqhandler(int irq)
 {
-	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2151interface ym2151_interface =

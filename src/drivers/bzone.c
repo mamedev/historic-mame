@@ -221,7 +221,7 @@ UINT8 rb_input_select;
 static INTERRUPT_GEN( bzone_interrupt )
 {
 	if (readinputport(0) & 0x10)
-		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+		cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 }
 
 
@@ -232,7 +232,7 @@ static INTERRUPT_GEN( bzone_interrupt )
  *
  *************************************/
 
-READ_HANDLER( bzone_IN0_r )
+READ8_HANDLER( bzone_IN0_r )
 {
 	int res;
 
@@ -259,7 +259,7 @@ static UINT8 one_joy_trans[] =
 	0x09,0x08,0x04,0x00,0x00,0x00,0x00,0x00
 };
 
-static READ_HANDLER( bzone_IN3_r )
+static READ8_HANDLER( bzone_IN3_r )
 {
 	int res,res1;
 
@@ -272,7 +272,7 @@ static READ_HANDLER( bzone_IN3_r )
 }
 
 
-static WRITE_HANDLER( bzone_coin_counter_w )
+static WRITE8_HANDLER( bzone_coin_counter_w )
 {
 	coin_counter_w(offset,data);
 }
@@ -285,7 +285,7 @@ static WRITE_HANDLER( bzone_coin_counter_w )
  *
  *************************************/
 
-static READ_HANDLER( redbaron_joy_r )
+static READ8_HANDLER( redbaron_joy_r )
 {
 	return readinputport(rb_input_select ? 5 : 6);
 }
@@ -833,13 +833,13 @@ ROM_END
 
 static UINT8 analog_data;
 
-static READ_HANDLER( analog_data_r )
+static READ8_HANDLER( analog_data_r )
 {
 	return analog_data;
 }
 
 
-static WRITE_HANDLER( analog_select_w )
+static WRITE8_HANDLER( analog_select_w )
 {
 	if (offset <= 2)
 		analog_data = readinputport(6 + offset);
@@ -854,13 +854,13 @@ static DRIVER_INIT( bzone )
 
 static DRIVER_INIT( bradley )
 {
-	install_mem_read_handler(0, 0x400, 0x7ff, MRA8_RAM);
-	install_mem_write_handler(0, 0x400, 0x7ff, MWA8_RAM);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x400, 0x7ff, 0, 0, MRA8_RAM);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x400, 0x7ff, 0, 0, MWA8_RAM);
 
-	install_mem_read_handler(0, 0x1808, 0x1808, input_port_4_r);
-	install_mem_read_handler(0, 0x1809, 0x1809, input_port_5_r);
-	install_mem_read_handler(0, 0x180a, 0x180a, analog_data_r);
-	install_mem_write_handler(0, 0x1848, 0x1850, analog_select_w);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1808, 0x1808, 0, 0, input_port_4_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1809, 0x1809, 0, 0, input_port_5_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0x180a, 0x180a, 0, 0, analog_data_r);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x1848, 0x1850, 0, 0, analog_select_w);
 }
 
 

@@ -12,6 +12,8 @@
 #include "cpu/mips/psx.h"
 #include "cpu/z80/z80.h"
 #include "includes/psx.h"
+#include "machine/at28c16.h"
+#include "machine/mb3773.h"
 #include "machine/znsec.h"
 #include "machine/idectrl.h"
 #include "sndhrdw/taitosnd.h"
@@ -40,12 +42,12 @@ INLINE void verboselog( int n_level, const char *s_fmt, ... )
 
 INLINE UINT8 psxreadbyte( UINT32 n_address )
 {
-	return *( (UINT8 *)g_p_n_psxram + BYTE_XOR_LE( n_address ) );
+	return *( (UINT8 *)g_p_n_psxram + BYTE4_XOR_LE( n_address ) );
 }
 
 INLINE void psxwritebyte( UINT32 n_address, UINT8 n_data )
 {
-	*( (UINT8 *)g_p_n_psxram + BYTE_XOR_LE( n_address ) ) = n_data;
+	*( (UINT8 *)g_p_n_psxram + BYTE4_XOR_LE( n_address ) ) = n_data;
 }
 
 static const unsigned char ac01[ 8 ] = { 0x80, 0x1c, 0xe2, 0xfa, 0xf9, 0xf1, 0x30, 0xc0 };
@@ -139,6 +141,7 @@ static struct
 	{ "sfchampj", tt01, tt02 }, /* stuck in test mode */
 	{ "psyforce", tt01, tt03 }, /* OK */
 	{ "psyforcj", tt01, tt03 }, /* OK */
+	{ "psyfrcex", tt01, tt03 }, /* OK */
 	{ "raystorm", tt01, tt04 }, /* OK */
 	{ "ftimpcta", tt01, tt05 }, /* OK, geometry issues */
 	{ "mgcldate", tt01, tt06 }, /* stuck in test mode */
@@ -146,7 +149,7 @@ static struct
 	{ "gdarius",  tt01, tt07 }, /* OK */
 	{ "gdarius2", tt01, tt07 }, /* OK */
 	{ "taitogn",  tt10, tt16 }, /* error B930 */
-	{ "sncwgltd", kn01, kn02 }, /* OK ( enters test mode on boot ) */
+	{ "sncwgltd", kn01, kn02 }, /* OK */
 	{ NULL, NULL, NULL }
 };
 
@@ -253,16 +256,6 @@ static WRITE32_HANDLER( znsecsel_w )
 	verboselog( 2, "znsecsel_w( %08x, %08x, %08x )\n", offset, data, mem_mask );
 }
 
-static WRITE_HANDLER( qsound_bankswitch_w )
-{
-	cpu_setbank( 10, memory_region( REGION_CPU2 ) + 0x10000 + ( ( data & 0x0f ) * 0x4000 ) );
-}
-
-static WRITE_HANDLER( fx1a_sound_bankswitch_w )
-{
-	cpu_setbank( 10, memory_region( REGION_CPU2 ) + 0x10000 + ( ( ( data - 1 ) & 0x07 ) * 0x4000 ) );
-}
-
 static READ32_HANDLER( jamma_0_r )
 {
 	return readinputport( 0 );
@@ -302,12 +295,6 @@ static READ32_HANDLER( unknown_r )
 {
 	verboselog( 0, "unknown_r( %08x, %08x )\n", offset, mem_mask );
 	return 0xffffffff;
-}
-
-static WRITE32_HANDLER( zn_qsound_w )
-{
-	soundlatch_w(0, data);
-	cpu_set_irq_line(1, IRQ_LINE_NMI, PULSE_LINE);
 }
 
 static WRITE32_HANDLER( coin_w )
@@ -357,7 +344,7 @@ static ADDRESS_MAP_START( zn_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x1fa30000, 0x1fa30003) AM_NOP /* ?? */
 	AM_RANGE(0x1fa40000, 0x1fa40003) AM_READNOP /* ?? */
 	AM_RANGE(0x1fa60000, 0x1fa60003) AM_READNOP /* ?? */
-	AM_RANGE(0x1faf0000, 0x1faf07ff) AM_RAM AM_BASE((data32_t **)&generic_nvram) AM_SIZE(&generic_nvram_size) /* eeprom */
+	AM_RANGE(0x1faf0000, 0x1faf07ff) AM_READWRITE( at28c16_0_32_r, at28c16_0_32_w ) /* eeprom */
 	AM_RANGE(0x1fb20000, 0x1fb20007) AM_READ(unknown_r)
 	AM_RANGE(0x1fc00000, 0x1fc7ffff) AM_ROM AM_SHARE(2) AM_REGION(REGION_USER1, 0) /* bios */
 	AM_RANGE(0x80000000, 0x803fffff) AM_RAM AM_SHARE(1) /* ram mirror */
@@ -368,64 +355,18 @@ static ADDRESS_MAP_START( zn_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0xfffe0130, 0xfffe0133) AM_WRITENOP
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( qsound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK10)	/* banked (contains music data) */
-	AM_RANGE(0xd007, 0xd007) AM_READ(qsound_status_r)
-	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_RAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( qsound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xd000, 0xd000) AM_WRITE(qsound_data_h_w)
-	AM_RANGE(0xd001, 0xd001) AM_WRITE(qsound_data_l_w)
-	AM_RANGE(0xd002, 0xd002) AM_WRITE(qsound_cmd_w)
-	AM_RANGE(0xd003, 0xd003) AM_WRITE(qsound_bankswitch_w)
-	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_RAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( qsound_readport, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x00, 0x00) AM_READ(soundlatch_r)
-ADDRESS_MAP_END
-
 static ADDRESS_MAP_START( link_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( link_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( fx1a_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK10)
-	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xe000, 0xe000) AM_READ(YM2610_status_port_0_A_r)
-	AM_RANGE(0xe001, 0xe001) AM_READ(YM2610_read_port_0_r)
-	AM_RANGE(0xe002, 0xe002) AM_READ(YM2610_status_port_0_B_r)
-	AM_RANGE(0xe200, 0xe200) AM_READ(MRA8_NOP)
-	AM_RANGE(0xe201, 0xe201) AM_READ(taitosound_slave_comm_r)
-	AM_RANGE(0xea00, 0xea00) AM_READ(MRA8_NOP)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( fx1a_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xe000, 0xe000) AM_WRITE(YM2610_control_port_0_A_w)
-	AM_RANGE(0xe001, 0xe001) AM_WRITE(YM2610_data_port_0_A_w)
-	AM_RANGE(0xe002, 0xe002) AM_WRITE(YM2610_control_port_0_B_w)
-	AM_RANGE(0xe003, 0xe003) AM_WRITE(YM2610_data_port_0_B_w)
-	AM_RANGE(0xe200, 0xe200) AM_WRITE(taitosound_slave_port_w)
-	AM_RANGE(0xe201, 0xe201) AM_WRITE(taitosound_slave_comm_w)
-	AM_RANGE(0xe400, 0xe403) AM_WRITE(MWA8_NOP) /* pan */
-	AM_RANGE(0xee00, 0xee00) AM_WRITE(MWA8_NOP) /* ? */
-	AM_RANGE(0xf000, 0xf000) AM_WRITE(MWA8_NOP) /* ? */
-	AM_RANGE(0xf200, 0xf200) AM_WRITE(fx1a_sound_bankswitch_w)
-ADDRESS_MAP_END
-
-static void init_znsec( void )
+static void zn_driver_init( void )
 {
 	int n_game;
 
 	psx_driver_init();
+	at28c16_init();
 
 	n_game = 0;
 	while( zn_config_table[ n_game ].s_name != NULL )
@@ -439,17 +380,7 @@ static void init_znsec( void )
 		}
 		n_game++;
 	}
-
-	if( strcmp( Machine->gamedrv->name, "glpracr" ) == 0 ||
-		strcmp( Machine->gamedrv->name, "glprac2l" ) == 0 )
-	{
-		/* disable:
-			the QSound CPU for glpracr as it doesn't have any roms &
-			the link cpu for glprac2l as the h/w is not emulated yet. */
-		timer_suspendcpu( 1, 1, SUSPEND_REASON_DISABLE );
-	}
 }
-
 
 static struct PSXSPUinterface psxspu_interface =
 {
@@ -509,7 +440,7 @@ Notes:
       CN654 - Connector for optional memory card
       SW1   - Slide switch for stereo or mono sound output
       DSW   - Dip switch (4 position, defaults all OFF)
-      
+
       BIOS           - COH1000C.353, Capcom ZN1 BIOS, 4MBit MaskROM type M534002 (SOP40)
       AT28C16        - Atmel AT28C16 2K x8 EEPROM (SOP24)
       814260-70      - 256K x16 (4MBit) DRAM (SOJ40)
@@ -572,7 +503,7 @@ Notes:
       CAPCOM-Q1 - Q-Sound chip also stamped DL-1425 45570 9420S 40 (C)92 AT&T (PLCC84)
       C.P.S.2-B - RF5C320 CAPCOM C.P.S.2-B DL-3129 (QFP208)
       Z80 clock - 4.000MHz
-      
+
       Unpopulated sockets - 1.3B, 2.2E, 3.3E, 8.2K, 9.3K, 10.4K, 11.5K, 12.6K & 13.7K
 */
 
@@ -588,17 +519,42 @@ static WRITE32_HANDLER( bank_coh1000c_w )
 	cpu_setbank( 2, memory_region( REGION_USER2 ) + 0x400000 + ( data * 0x400000 ) );
 }
 
+static WRITE8_HANDLER( qsound_bankswitch_w )
+{
+	cpu_setbank( 10, memory_region( REGION_CPU2 ) + 0x10000 + ( ( data & 0x0f ) * 0x4000 ) );
+}
+
+static INTERRUPT_GEN( qsound_interrupt )
+{
+	cpunum_set_input_line(1, 0, HOLD_LINE);
+}
+
+static WRITE32_HANDLER( zn_qsound_w )
+{
+	soundlatch_w(0, data);
+	cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
+}
+
 DRIVER_INIT( coh1000c )
 {
-	install_mem_read32_handler ( 0, 0x1f000000, 0x1f3fffff, MRA32_BANK1 );     /* fixed game rom */
-	install_mem_read32_handler ( 0, 0x1f400000, 0x1f7fffff, MRA32_BANK2 );     /* banked game rom */
-	install_mem_write32_handler( 0, 0x1fb00000, 0x1fb00003, bank_coh1000c_w ); /* bankswitch */
-	install_mem_read32_handler ( 0, 0x1fb40010, 0x1fb40013, capcom_kickharness_r );
-	install_mem_read32_handler ( 0, 0x1fb40020, 0x1fb40023, capcom_kickharness_r );
-	install_mem_read32_handler ( 0, 0x1fb80000, 0x1fbfffff, MRA32_BANK3 );     /* country rom */
-	install_mem_write32_handler( 0, 0x1fb60000, 0x1fb60003, zn_qsound_w );
+	memory_install_read32_handler ( 0, ADDRESS_SPACE_PROGRAM, 0x1f000000, 0x1f3fffff, 0, 0, MRA32_BANK1 );     /* fixed game rom */
+	memory_install_read32_handler ( 0, ADDRESS_SPACE_PROGRAM, 0x1f400000, 0x1f7fffff, 0, 0, MRA32_BANK2 );     /* banked game rom */
+	memory_install_write32_handler( 0, ADDRESS_SPACE_PROGRAM, 0x1fb00000, 0x1fb00003, 0, 0, bank_coh1000c_w ); /* bankswitch */
+	memory_install_read32_handler ( 0, ADDRESS_SPACE_PROGRAM, 0x1fb40010, 0x1fb40013, 0, 0, capcom_kickharness_r );
+	memory_install_read32_handler ( 0, ADDRESS_SPACE_PROGRAM, 0x1fb40020, 0x1fb40023, 0, 0, capcom_kickharness_r );
+	memory_install_read32_handler ( 0, ADDRESS_SPACE_PROGRAM, 0x1fb80000, 0x1fbfffff, 0, 0, MRA32_BANK3 );     /* country rom */
+	memory_install_write32_handler( 0, ADDRESS_SPACE_PROGRAM, 0x1fb60000, 0x1fb60003, 0, 0, zn_qsound_w );
 
-	init_znsec();
+	zn_driver_init();
+
+	if( strcmp( Machine->gamedrv->name, "glpracr" ) == 0 ||
+		strcmp( Machine->gamedrv->name, "glprac2l" ) == 0 )
+	{
+		/* disable:
+			the QSound CPU for glpracr as it doesn't have any roms &
+			the link cpu for glprac2l as the h/w is not emulated yet. */
+		cpunum_suspend( 1, SUSPEND_REASON_DISABLE, 1 );
+	}
 }
 
 MACHINE_INIT( coh1000c )
@@ -608,6 +564,26 @@ MACHINE_INIT( coh1000c )
 	cpu_setbank( 3, memory_region( REGION_USER3 ) ); /* country rom */
 	zn_machine_init();
 }
+
+static ADDRESS_MAP_START( qsound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x8000, 0xbfff) AM_READ(MRA8_BANK10)	/* banked (contains music data) */
+	AM_RANGE(0xd007, 0xd007) AM_READ(qsound_status_r)
+	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_RAM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( qsound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xd000, 0xd000) AM_WRITE(qsound_data_h_w)
+	AM_RANGE(0xd001, 0xd001) AM_WRITE(qsound_data_l_w)
+	AM_RANGE(0xd002, 0xd002) AM_WRITE(qsound_cmd_w)
+	AM_RANGE(0xd003, 0xd003) AM_WRITE(qsound_bankswitch_w)
+	AM_RANGE(0xf000, 0xffff) AM_WRITE(MWA8_RAM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( qsound_readport, ADDRESS_SPACE_IO, 8 )
+	AM_RANGE(0x00, 0x00) AM_READ(soundlatch_r)
+ADDRESS_MAP_END
 
 static struct QSound_interface qsound_interface =
 {
@@ -626,12 +602,13 @@ static MACHINE_DRIVER_START( coh1000c )
 	MDRV_CPU_FLAGS( CPU_AUDIO_CPU )  /* 8MHz ?? */
 	MDRV_CPU_PROGRAM_MAP( qsound_readmem, qsound_writemem )
 	MDRV_CPU_IO_MAP( qsound_readport, 0 )
+	MDRV_CPU_VBLANK_INT( qsound_interrupt, 4 ) /* 4 interrupts per frame ?? */
 
 	MDRV_FRAMES_PER_SECOND( 60 )
 	MDRV_VBLANK_DURATION( 0 )
 
 	MDRV_MACHINE_INIT( coh1000c )
-	MDRV_NVRAM_HANDLER(generic_0fill)
+	MDRV_NVRAM_HANDLER( at28c16_0 )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
@@ -660,12 +637,13 @@ static MACHINE_DRIVER_START( coh1002c )
 	MDRV_CPU_FLAGS( CPU_AUDIO_CPU )  /* 8MHz ?? */
 	MDRV_CPU_PROGRAM_MAP( qsound_readmem, qsound_writemem )
 	MDRV_CPU_IO_MAP( qsound_readport, 0 )
+	MDRV_CPU_VBLANK_INT( qsound_interrupt, 4 ) /* 4 interrupts per frame ?? */
 
 	MDRV_FRAMES_PER_SECOND( 60 )
 	MDRV_VBLANK_DURATION( 0 )
 
 	MDRV_MACHINE_INIT( coh1000c )
-	MDRV_NVRAM_HANDLER(generic_0fill)
+	MDRV_NVRAM_HANDLER( at28c16_0 )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
@@ -734,10 +712,10 @@ Notes:
       CN654 - Connector for optional memory card
       S301  - Slide switch for stereo or mono sound output
       S551  - Dip switch (4 position, defaults all OFF)
-      
+
       BIOS           - COH-3002C.353, Capcom ZN2 BIOS 4MBit MaskROM type M534002 (SOP40)
       AT28C16        - Atmel AT28C16 2K x8 EEPROM
-      814260-70      - 256K x16 (4MBit) DRAM 
+      814260-70      - 256K x16 (4MBit) DRAM
       KM4132G271BQ-8 - 128K x 32Bit x 2 Banks SGRAM
       KM416V1204BT-L5- 1M x16 EDO DRAM
       EPM7064        - Altera EPM7064QC100 CPLD (QFP100)
@@ -745,7 +723,7 @@ Notes:
       *              - Unpopulated position for additional KM416V1204BT-L5 RAMs
 
 
-Game board 
+Game board
 (This covers at least Rival Schools and Street Fighter EX2, but likely all Capcom ZN2 games)
 
 97695-1
@@ -780,7 +758,7 @@ Game board
 |--------------------------------------|
 Notes:
       CN2    - Standard 34 pin CAPCOM connector for extra player controls.
-      CAT702 - protection chip 
+      CAT702 - protection chip
                                SFEX2 labelled 'CP08' (DIP20)
                                Rival Schools labelled 'CP06' (DIP20)
       PAL1   - PAL16L8 stamped "CS1CNT"
@@ -795,7 +773,7 @@ Notes:
       CAPCOM-Q1 - Q-Sound chip also stamped DL-1425 11008 9741T 74 (C)92 LUCENT (PLCC84)
       C.P.S.2-B - RF5C320 CAPCOM C.P.S.2-B DL-3129 (QFP208)
       Z80 clock - 4.000MHz
-      ROMs      - 
+      ROMs      -
                   SFEX2
                        1.3A   - uPD23C32020CZ 32MBit DIP42 MaskROM labelled 'EX2-01M'
                        2.2E   - 27C1001 DIP32 EPROM labelled 'EX2_02'
@@ -831,15 +809,15 @@ static WRITE32_HANDLER( bank_coh3002c_w )
 
 DRIVER_INIT( coh3002c )
 {
-	install_mem_read32_handler ( 0, 0x1f000000, 0x1f3fffff, MRA32_BANK1 );     /* fixed game rom */
-	install_mem_read32_handler ( 0, 0x1f400000, 0x1f7fffff, MRA32_BANK2 );     /* banked game rom */
-	install_mem_read32_handler ( 0, 0x1fb40010, 0x1fb40013, capcom_kickharness_r );
-	install_mem_read32_handler ( 0, 0x1fb40020, 0x1fb40023, capcom_kickharness_r );
-	install_mem_write32_handler( 0, 0x1fb00000, 0x1fb00003, bank_coh3002c_w ); /* bankswitch */
-	install_mem_read32_handler ( 0, 0x1fb80000, 0x1fbfffff, MRA32_BANK3 );     /* country rom */
-	install_mem_write32_handler( 0, 0x1fb60000, 0x1fb60003, zn_qsound_w );
+	memory_install_read32_handler ( 0, ADDRESS_SPACE_PROGRAM, 0x1f000000, 0x1f3fffff, 0, 0, MRA32_BANK1 );     /* fixed game rom */
+	memory_install_read32_handler ( 0, ADDRESS_SPACE_PROGRAM, 0x1f400000, 0x1f7fffff, 0, 0, MRA32_BANK2 );     /* banked game rom */
+	memory_install_read32_handler ( 0, ADDRESS_SPACE_PROGRAM, 0x1fb40010, 0x1fb40013, 0, 0, capcom_kickharness_r );
+	memory_install_read32_handler ( 0, ADDRESS_SPACE_PROGRAM, 0x1fb40020, 0x1fb40023, 0, 0, capcom_kickharness_r );
+	memory_install_write32_handler( 0, ADDRESS_SPACE_PROGRAM, 0x1fb00000, 0x1fb00003, 0, 0, bank_coh3002c_w ); /* bankswitch */
+	memory_install_read32_handler ( 0, ADDRESS_SPACE_PROGRAM, 0x1fb80000, 0x1fbfffff, 0, 0, MRA32_BANK3 );     /* country rom */
+	memory_install_write32_handler( 0, ADDRESS_SPACE_PROGRAM, 0x1fb60000, 0x1fb60003, 0, 0, zn_qsound_w );
 
-	init_znsec();
+	zn_driver_init();
 }
 
 MACHINE_INIT( coh3002c )
@@ -860,12 +838,13 @@ static MACHINE_DRIVER_START( coh3002c )
 	MDRV_CPU_FLAGS( CPU_AUDIO_CPU )  /* 8MHz ?? */
 	MDRV_CPU_PROGRAM_MAP( qsound_readmem, qsound_writemem )
 	MDRV_CPU_IO_MAP( qsound_readport, 0 )
+	MDRV_CPU_VBLANK_INT( qsound_interrupt, 4 ) /* 4 interrupts per frame ?? */
 
 	MDRV_FRAMES_PER_SECOND( 60 )
 	MDRV_VBLANK_DURATION( 0 )
 
 	MDRV_MACHINE_INIT( coh3002c )
-	MDRV_NVRAM_HANDLER(generic_0fill)
+	MDRV_NVRAM_HANDLER( at28c16_0 )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
@@ -928,7 +907,7 @@ Notes:
       CN654 - Connector for optional memory card
       SW1   - Slide switch for stereo or mono sound output
       DSW   - Dip switch (4 position, defaults all OFF)
-      
+
       BIOS           - COH1000T.353, Taito ZN1 BIOS, 4MBit MaskROM type M534002 (SOP40)
       AT28C16        - Atmel AT28C16 2K x8 EEPROM (SOP24)
       814260-70      - 256K x16 (4MBit) DRAM (SOJ40)
@@ -1034,7 +1013,7 @@ Notes:
       CN654 - Connector for optional memory card
       SW1   - Slide switch for stereo or mono sound output
       DSW   - Dip switch (4 position, defaults all OFF)
-      
+
       BIOS           - COH1000T.353, Taito ZN1 BIOS, 4MBit MaskROM type M534002 (SOP40)
       AT28C16        - Atmel AT28C16 2K x8 EEPROM (SOP24)
       814260-70      - 256K x16 (4MBit) DRAM (SOJ40)
@@ -1097,7 +1076,7 @@ Notes:
       TMS57002DPHA   - Texas Instruments TMS57002DPHA sound DSP (QFP80)
       M66220FP       - 256 x8bit Mail-Box Inter-MPU data transfer
       CAT702         - Protection chip labelled 'TT04' (DIP20)
-      MB3771         - Power Supply Monitor with Watch Dog Timer (i.e. Reset IC)
+      MB3773         - Power Supply Monitor with Watch Dog Timer (i.e. Reset IC)
       MB87078        - Electronic Volume Control IC
       FM1208S        - RAMTRON 4096bit Nonvolatile Ferroelectric RAM (512w x 8b)
 */
@@ -1109,58 +1088,9 @@ static data8_t *taitofx1_eeprom2 = NULL;
 
 static WRITE32_HANDLER( bank_coh1000t_w )
 {
-	watchdog_reset_w( 0, 0 ); /* unconfirmed */
+	mb3773_set_ck( ( data & 0x20 ) >> 5 );
 	verboselog( 1, "bank_coh1000t_w( %08x, %08x, %08x )\n", offset, data, mem_mask );
 	cpu_setbank( 1, memory_region( REGION_USER2 ) + ( ( data & 3 ) * 0x800000 ) );
-}
-
-static NVRAM_HANDLER( coh1000t )
-{
-	if (read_or_write)
-	{
-		if( generic_nvram != NULL )
-		{
-			mame_fwrite(file, generic_nvram, generic_nvram_size);
-		}
-		if( taitofx1_eeprom1 != NULL )
-		{
-			mame_fwrite(file, taitofx1_eeprom1, taitofx1_eeprom_size1);
-		}
-		if( taitofx1_eeprom2 != NULL )
-		{
-			mame_fwrite(file, taitofx1_eeprom2, taitofx1_eeprom_size2);
-		}
-	}
-	else if (file)
-	{
-		if( generic_nvram != NULL )
-		{
-			mame_fread(file, generic_nvram, generic_nvram_size);
-		}
-		if( taitofx1_eeprom1 != NULL )
-		{
-			mame_fread(file, taitofx1_eeprom1, taitofx1_eeprom_size1);
-		}
-		if( taitofx1_eeprom2 != NULL )
-		{
-			mame_fread(file, taitofx1_eeprom2, taitofx1_eeprom_size2);
-		}
-	}
-	else
-	{
-		if( generic_nvram != NULL )
-		{
-			memset(generic_nvram, 0, generic_nvram_size);
-		}
-		if( taitofx1_eeprom1 != NULL )
-		{
-			memset(taitofx1_eeprom1, 0, taitofx1_eeprom_size1);
-		}
-		if( taitofx1_eeprom2 != NULL )
-		{
-			memset(taitofx1_eeprom2, 0, taitofx1_eeprom_size2);
-		}
-	}
 }
 
 INTERRUPT_GEN( coh1000t_vblank )
@@ -1197,28 +1127,9 @@ INTERRUPT_GEN( coh1000t_vblank )
 	psx_vblank();
 }
 
-MACHINE_INIT( coh1000t )
+static WRITE8_HANDLER( fx1a_sound_bankswitch_w )
 {
-	cpu_setbank( 1, memory_region( REGION_USER2 ) ); /* banked game rom */
-	if( taitofx1_eeprom1 != NULL )
-	{
-		cpu_setbank( 2, taitofx1_eeprom1 );
-	}
-	if( taitofx1_eeprom2 != NULL )
-	{
-		cpu_setbank( 3, taitofx1_eeprom2 );
-	}
-	zn_machine_init();
-
-	// patch to make psyforce boot
-	if ((!strcmp(Machine->gamedrv->name, "psyforce")) || 
-	    (!strcmp(Machine->gamedrv->name, "psyforcj")))
-	{
-		// note: these values can be anything non-zero
-		// perhaps Taito expects RAM to be initialized to 0xff on power-up?
-		psxwritebyte(0x3fffda, 0xb5);
-		psxwritebyte(0x3fffdb, 0x6b);
-	}
+	cpu_setbank( 10, memory_region( REGION_CPU2 ) + 0x10000 + ( ( ( data - 1 ) & 0x07 ) * 0x4000 ) );
 }
 
 static READ32_HANDLER( taitofx1a_ymsound_r )
@@ -1238,10 +1149,87 @@ static WRITE32_HANDLER( taitofx1a_ymsound_w )
 	}
 }
 
+DRIVER_INIT( coh1000ta )
+{
+	taitofx1_eeprom_size1 = 0x200; taitofx1_eeprom1 = auto_malloc( taitofx1_eeprom_size1 );
+
+	memory_install_read32_handler ( 0, ADDRESS_SPACE_PROGRAM, 0x1f000000, 0x1f7fffff, 0, 0, MRA32_BANK1 );     /* banked game rom */
+	memory_install_write32_handler( 0, ADDRESS_SPACE_PROGRAM, 0x1fb40000, 0x1fb40003, 0, 0, bank_coh1000t_w ); /* bankswitch */
+	memory_install_read32_handler ( 0, ADDRESS_SPACE_PROGRAM, 0x1fb80000, 0x1fb80003, 0, 0, taitofx1a_ymsound_r );
+	memory_install_write32_handler( 0, ADDRESS_SPACE_PROGRAM, 0x1fb80000, 0x1fb80003, 0, 0, taitofx1a_ymsound_w );
+	memory_install_read32_handler ( 0, ADDRESS_SPACE_PROGRAM, 0x1fbe0000, 0x1fbe0000 + ( taitofx1_eeprom_size1 - 1 ), 0, 0, MRA32_BANK2 );
+	memory_install_write32_handler( 0, ADDRESS_SPACE_PROGRAM, 0x1fbe0000, 0x1fbe0000 + ( taitofx1_eeprom_size1 - 1 ), 0, 0, MWA32_BANK2 );
+
+	zn_driver_init();
+	mb3773_init();
+}
+
+MACHINE_INIT( coh1000ta )
+{
+	cpu_setbank( 1, memory_region( REGION_USER2 ) ); /* banked game rom */
+	cpu_setbank( 2, taitofx1_eeprom1 );
+	zn_machine_init();
+
+	// patch to make psyforce boot
+	if ((!strcmp(Machine->gamedrv->name, "psyforce")) ||
+	    (!strcmp(Machine->gamedrv->name, "psyforcj")) ||
+	    (!strcmp(Machine->gamedrv->name, "psyfrcex")))
+	{
+		// note: these values can be anything non-zero
+		// perhaps Taito expects RAM to be initialized to 0xff on power-up?
+		psxwritebyte(0x3fffda, 0xb5);
+		psxwritebyte(0x3fffdb, 0x6b);
+	}
+}
+
+static NVRAM_HANDLER( coh1000ta )
+{
+	nvram_handler_at28c16_0( file, read_or_write );
+	if (read_or_write)
+	{
+		mame_fwrite(file, taitofx1_eeprom1, taitofx1_eeprom_size1);
+	}
+	else if (file)
+	{
+		mame_fread(file, taitofx1_eeprom1, taitofx1_eeprom_size1);
+	}
+	else
+	{
+		memset(taitofx1_eeprom1, 0, taitofx1_eeprom_size1);
+	}
+}
+
+static ADDRESS_MAP_START( fx1a_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
+	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK10)
+	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
+	AM_RANGE(0xe000, 0xe000) AM_READ(YM2610_status_port_0_A_r)
+	AM_RANGE(0xe001, 0xe001) AM_READ(YM2610_read_port_0_r)
+	AM_RANGE(0xe002, 0xe002) AM_READ(YM2610_status_port_0_B_r)
+	AM_RANGE(0xe200, 0xe200) AM_READ(MRA8_NOP)
+	AM_RANGE(0xe201, 0xe201) AM_READ(taitosound_slave_comm_r)
+	AM_RANGE(0xea00, 0xea00) AM_READ(MRA8_NOP)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( fx1a_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
+	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_RAM)
+	AM_RANGE(0xe000, 0xe000) AM_WRITE(YM2610_control_port_0_A_w)
+	AM_RANGE(0xe001, 0xe001) AM_WRITE(YM2610_data_port_0_A_w)
+	AM_RANGE(0xe002, 0xe002) AM_WRITE(YM2610_control_port_0_B_w)
+	AM_RANGE(0xe003, 0xe003) AM_WRITE(YM2610_data_port_0_B_w)
+	AM_RANGE(0xe200, 0xe200) AM_WRITE(taitosound_slave_port_w)
+	AM_RANGE(0xe201, 0xe201) AM_WRITE(taitosound_slave_comm_w)
+	AM_RANGE(0xe400, 0xe403) AM_WRITE(MWA8_NOP) /* pan */
+	AM_RANGE(0xee00, 0xee00) AM_WRITE(MWA8_NOP) /* ? */
+	AM_RANGE(0xf000, 0xf000) AM_WRITE(MWA8_NOP) /* ? */
+	AM_RANGE(0xf200, 0xf200) AM_WRITE(fx1a_sound_bankswitch_w)
+ADDRESS_MAP_END
+
 /* handler called by the YM2610 emulator when the internal timers cause an IRQ */
 static void irq_handler(int irq)
 {
-	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2610interface ym2610_interface =
@@ -1259,20 +1247,6 @@ static struct YM2610interface ym2610_interface =
 	{ YM3012_VOL(100,MIXER_PAN_LEFT,100,MIXER_PAN_RIGHT) }
 };
 
-DRIVER_INIT( coh1000ta )
-{
-	taitofx1_eeprom_size1 = 0x200; taitofx1_eeprom1 = auto_malloc( taitofx1_eeprom_size1 );
-
-	install_mem_read32_handler ( 0, 0x1f000000, 0x1f7fffff, MRA32_BANK1 );     /* banked game rom */
-	install_mem_write32_handler( 0, 0x1fb40000, 0x1fb40003, bank_coh1000t_w ); /* bankswitch */
-	install_mem_read32_handler ( 0, 0x1fb80000, 0x1fb80003, taitofx1a_ymsound_r );
-	install_mem_write32_handler( 0, 0x1fb80000, 0x1fb80003, taitofx1a_ymsound_w );
-	install_mem_read32_handler ( 0, 0x1fbe0000, 0x1fbe0000 + ( taitofx1_eeprom_size1 - 1 ), MRA32_BANK2 );
-	install_mem_write32_handler( 0, 0x1fbe0000, 0x1fbe0000 + ( taitofx1_eeprom_size1 - 1 ), MWA32_BANK2 );
-
-	init_znsec();
-}
-
 static MACHINE_DRIVER_START( coh1000ta )
 	/* basic machine hardware */
 	MDRV_CPU_ADD( PSXCPU, 33868800 / 2 ) /* 33MHz ?? */
@@ -1286,8 +1260,8 @@ static MACHINE_DRIVER_START( coh1000ta )
 	MDRV_FRAMES_PER_SECOND( 60 )
 	MDRV_VBLANK_DURATION( 0 )
 
-	MDRV_MACHINE_INIT( coh1000t )
-	MDRV_NVRAM_HANDLER( coh1000t )
+	MDRV_MACHINE_INIT( coh1000ta )
+	MDRV_NVRAM_HANDLER( coh1000ta )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
@@ -1328,17 +1302,46 @@ DRIVER_INIT( coh1000tb )
 	taitofx1_eeprom_size1 = 0x400; taitofx1_eeprom1 = auto_malloc( taitofx1_eeprom_size1 );
 	taitofx1_eeprom_size2 = 0x200; taitofx1_eeprom2 = auto_malloc( taitofx1_eeprom_size2 );
 
-	install_mem_read32_handler ( 0, 0x1f000000, 0x1f7fffff, MRA32_BANK1 ); /* banked game rom */
-	install_mem_read32_handler ( 0, 0x1fb00000, 0x1fb00000 + ( taitofx1_eeprom_size1 - 1 ), MRA32_BANK2 );
-	install_mem_write32_handler( 0, 0x1fb00000, 0x1fb00000 + ( taitofx1_eeprom_size1 - 1 ), MWA32_BANK2 );
-	install_mem_write32_handler( 0, 0x1fb40000, 0x1fb40003, bank_coh1000t_w ); /* bankswitch */
-	install_mem_write32_handler( 0, 0x1fb80000, 0x1fb80003, taitofx1b_volume_w );
-	install_mem_write32_handler( 0, 0x1fba0000, 0x1fba0003, taitofx1b_sound_w );
-	install_mem_read32_handler ( 0, 0x1fbc0000, 0x1fbc0003, taitofx1b_sound_r );
-	install_mem_read32_handler ( 0, 0x1fbe0000, 0x1fbe0000 + ( taitofx1_eeprom_size2 - 1 ), MRA32_BANK3 );
-	install_mem_write32_handler( 0, 0x1fbe0000, 0x1fbe0000 + ( taitofx1_eeprom_size2 - 1 ), MWA32_BANK3 );
+	memory_install_read32_handler ( 0, ADDRESS_SPACE_PROGRAM, 0x1f000000, 0x1f7fffff, 0, 0, MRA32_BANK1 ); /* banked game rom */
+	memory_install_read32_handler ( 0, ADDRESS_SPACE_PROGRAM, 0x1fb00000, 0x1fb00000 + ( taitofx1_eeprom_size1 - 1 ), 0, 0, MRA32_BANK2 );
+	memory_install_write32_handler( 0, ADDRESS_SPACE_PROGRAM, 0x1fb00000, 0x1fb00000 + ( taitofx1_eeprom_size1 - 1 ), 0, 0, MWA32_BANK2 );
+	memory_install_write32_handler( 0, ADDRESS_SPACE_PROGRAM, 0x1fb40000, 0x1fb40003, 0, 0, bank_coh1000t_w ); /* bankswitch */
+	memory_install_write32_handler( 0, ADDRESS_SPACE_PROGRAM, 0x1fb80000, 0x1fb80003, 0, 0, taitofx1b_volume_w );
+	memory_install_write32_handler( 0, ADDRESS_SPACE_PROGRAM, 0x1fba0000, 0x1fba0003, 0, 0, taitofx1b_sound_w );
+	memory_install_read32_handler ( 0, ADDRESS_SPACE_PROGRAM, 0x1fbc0000, 0x1fbc0003, 0, 0, taitofx1b_sound_r );
+	memory_install_read32_handler ( 0, ADDRESS_SPACE_PROGRAM, 0x1fbe0000, 0x1fbe0000 + ( taitofx1_eeprom_size2 - 1 ), 0, 0, MRA32_BANK3 );
+	memory_install_write32_handler( 0, ADDRESS_SPACE_PROGRAM, 0x1fbe0000, 0x1fbe0000 + ( taitofx1_eeprom_size2 - 1 ), 0, 0, MWA32_BANK3 );
 
-	init_znsec();
+	zn_driver_init();
+	mb3773_init();
+}
+
+MACHINE_INIT( coh1000tb )
+{
+	cpu_setbank( 1, memory_region( REGION_USER2 ) ); /* banked game rom */
+	cpu_setbank( 2, taitofx1_eeprom1 );
+	cpu_setbank( 3, taitofx1_eeprom2 );
+	zn_machine_init();
+}
+
+static NVRAM_HANDLER( coh1000tb )
+{
+	nvram_handler_at28c16_0( file, read_or_write );
+	if (read_or_write)
+	{
+		mame_fwrite(file, taitofx1_eeprom1, taitofx1_eeprom_size1);
+		mame_fwrite(file, taitofx1_eeprom2, taitofx1_eeprom_size2);
+	}
+	else if (file)
+	{
+		mame_fread(file, taitofx1_eeprom1, taitofx1_eeprom_size1);
+		mame_fread(file, taitofx1_eeprom2, taitofx1_eeprom_size2);
+	}
+	else
+	{
+		memset(taitofx1_eeprom1, 0, taitofx1_eeprom_size1);
+		memset(taitofx1_eeprom2, 0, taitofx1_eeprom_size2);
+	}
 }
 
 static MACHINE_DRIVER_START( coh1000tb )
@@ -1350,8 +1353,8 @@ static MACHINE_DRIVER_START( coh1000tb )
 	MDRV_FRAMES_PER_SECOND( 60 )
 	MDRV_VBLANK_DURATION( 0 )
 
-	MDRV_MACHINE_INIT( coh1000t )
-	MDRV_NVRAM_HANDLER( coh1000t )
+	MDRV_MACHINE_INIT( coh1000tb )
+	MDRV_NVRAM_HANDLER( coh1000tb )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
@@ -1383,8 +1386,8 @@ Also available are...
 - Optional Communication Interface PCB
 - Optional Save PCB
 
-On power-up, the system checks for a PCMCIA cart. If the cart matches the contents of the FLASHRAMs, 
-the game boots immediately with no delay. If the cart doesn't match, it re-flashes the FLASHROMs with _some_ 
+On power-up, the system checks for a PCMCIA cart. If the cart matches the contents of the FLASHRAMs,
+the game boots immediately with no delay. If the cart doesn't match, it re-flashes the FLASHROMs with _some_
 of the information contained in the cart, which takes approximately 2-3 minutes. The game then boots up.
 
 If no cart is present on power-up, the Taito GNET logo is displayed, then a message 'SYSTEM ERROR'
@@ -1434,10 +1437,10 @@ Notes:
       CN654 - Connector for optional memory card
       S301  - Slide switch for stereo or mono sound output
       S551  - Dip switch (4 position, defaults all OFF)
-      
+
       COH3002T.353   - GNET BIOS 4MBit MaskROM type M534002 (SOP40)
       AT28C16        - Atmel AT28C16 2K x8 EEPROM
-      814260-70      - 256K x16 (4MBit) DRAM 
+      814260-70      - 256K x16 (4MBit) DRAM
       KM4132G271BQ-8 - 128K x 32Bit x 2 Banks SGRAM
       KM416V1204BT-L5- 1M x16 EDO DRAM
       EPM7064        - Altera EPM7064QC100 CPLD (QFP100)
@@ -1490,7 +1493,7 @@ Notes:
       M66220FP     - 256 x8bit Mail-Box (Inter-MPU data transfer)
       CAT702       - Protection chip labelled 'TT16' (DIP20)
       *            - These parts located under the PCB
-      
+
       Note! FLASHROMs are not dumped, but can be _IF_ required.
             They shouldn't be needed though, as the devices are
             flashed (with data from the cart) by the hardware.
@@ -1498,9 +1501,9 @@ Notes:
 
 DRIVER_INIT( coh3002t )
 {
-	install_mem_read32_handler( 0, 0x1f000000, 0x1f7fffff, MRA32_BANK1 );
+	memory_install_read32_handler( 0, ADDRESS_SPACE_PROGRAM, 0x1f000000, 0x1f7fffff, 0, 0, MRA32_BANK1 );
 
-	init_znsec();
+	zn_driver_init();
 }
 
 MACHINE_INIT( coh3002t )
@@ -1519,7 +1522,7 @@ static MACHINE_DRIVER_START( coh3002t )
 	MDRV_VBLANK_DURATION( 0 )
 
 	MDRV_MACHINE_INIT( coh3002t )
-	MDRV_NVRAM_HANDLER(generic_0fill)
+	MDRV_NVRAM_HANDLER( at28c16_0 )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
@@ -1591,7 +1594,7 @@ Notes:
       CN654 - Connector for optional memory card
       SW1   - Slide switch for stereo or mono sound output
       DSW   - Dip switch (4 position, defaults all OFF)
-      
+
       BIOS           - COH1000W.353, Atari ZN1 BIOS, 4MBit MaskROM type M534002 (SOP40)
       AT28C16        - Atmel AT28C16 2K x8 EEPROM (SOP24)
       814260-70      - 256K x16 (4MBit) DRAM (SOJ40)
@@ -1694,19 +1697,19 @@ static void atpsx_dma_write( UINT32 n_address, INT32 n_size )
 
 DRIVER_INIT( coh1000w )
 {
-	install_mem_read32_handler ( 0, 0x1f000000, 0x1f1fffff, MRA32_BANK1 );
-	install_mem_write32_handler( 0, 0x1f000000, 0x1f000003, MWA32_NOP );
-	install_mem_read32_handler ( 0, 0x1f7e4000, 0x1f7e4fff, ide_controller32_0_r );
-	install_mem_write32_handler( 0, 0x1f7e4000, 0x1f7e4fff, ide_controller32_0_w );
-	install_mem_write32_handler( 0, 0x1f7e8000, 0x1f7e8003, MWA32_NOP );
-	install_mem_read32_handler ( 0, 0x1f7e8000, 0x1f7e8003, MRA32_NOP );
-	install_mem_read32_handler ( 0, 0x1f7f4000, 0x1f7f4fff, ide_controller32_0_r );
-	install_mem_write32_handler( 0, 0x1f7f4000, 0x1f7f4fff, ide_controller32_0_w );
+	memory_install_read32_handler ( 0, ADDRESS_SPACE_PROGRAM, 0x1f000000, 0x1f1fffff, 0, 0, MRA32_BANK1 );
+	memory_install_write32_handler( 0, ADDRESS_SPACE_PROGRAM, 0x1f000000, 0x1f000003, 0, 0, MWA32_NOP );
+	memory_install_read32_handler ( 0, ADDRESS_SPACE_PROGRAM, 0x1f7e4000, 0x1f7e4fff, 0, 0, ide_controller32_0_r );
+	memory_install_write32_handler( 0, ADDRESS_SPACE_PROGRAM, 0x1f7e4000, 0x1f7e4fff, 0, 0, ide_controller32_0_w );
+	memory_install_write32_handler( 0, ADDRESS_SPACE_PROGRAM, 0x1f7e8000, 0x1f7e8003, 0, 0, MWA32_NOP );
+	memory_install_read32_handler ( 0, ADDRESS_SPACE_PROGRAM, 0x1f7e8000, 0x1f7e8003, 0, 0, MRA32_NOP );
+	memory_install_read32_handler ( 0, ADDRESS_SPACE_PROGRAM, 0x1f7f4000, 0x1f7f4fff, 0, 0, ide_controller32_0_r );
+	memory_install_write32_handler( 0, ADDRESS_SPACE_PROGRAM, 0x1f7f4000, 0x1f7f4fff, 0, 0, ide_controller32_0_w );
 
 	// init hard disk
 	ide_controller_init(0, &atpsx_intf);
 
-	init_znsec();
+	zn_driver_init();
 }
 
 MACHINE_INIT( coh1000w )
@@ -1729,7 +1732,7 @@ static MACHINE_DRIVER_START( coh1000w )
 	MDRV_VBLANK_DURATION( 0 )
 
 	MDRV_MACHINE_INIT( coh1000w )
-	MDRV_NVRAM_HANDLER(generic_0fill)
+	MDRV_NVRAM_HANDLER( at28c16_0 )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
@@ -1792,7 +1795,7 @@ Notes:
       CN654 - Connector for optional memory card
       SW1   - Slide switch for stereo or mono sound output
       DSW   - Dip switch (4 position, defaults all OFF)
-      
+
       BIOS           - COH1002E.353, Raizing/8ing ZN1 BIOS, 4MBit MaskROM type M53402CZ (SOP40)
       AT28C16        - Atmel AT28C16 2K x8 EEPROM (SOP24)
       814260-70      - 256K x16 (4MBit) DRAM (SOJ40)
@@ -1845,7 +1848,7 @@ Notes:
       68000 clock         - 12MHz
       YMF271-F clock      - 16.93MHz
 
-	  
+
 Brave Blade / Bloody Roar 2 Game board
 
 PS9805
@@ -1891,7 +1894,7 @@ Notes:
       68000 clock         - 12MHz
       YMF271-F clock      - 16.93MHz
 
-	  
+
 */
 
 static WRITE32_HANDLER( coh1002e_bank_w )
@@ -1905,7 +1908,7 @@ static WRITE32_HANDLER( coh1002e_latch_w )
 {
 	if (offset)
 	{
-		cpu_set_irq_line(1, 2, HOLD_LINE);	// irq 2 on the 68k
+		cpunum_set_input_line(1, 2, HOLD_LINE);	// irq 2 on the 68k
 	}
 	else
 	{
@@ -1915,11 +1918,11 @@ static WRITE32_HANDLER( coh1002e_latch_w )
 
 DRIVER_INIT( coh1002e )
 {
-	install_mem_read32_handler( 0, 0x1f000000, 0x1f7fffff, MRA32_BANK1 );
-	install_mem_write32_handler( 0, 0x1fa10300, 0x1fa10303, coh1002e_bank_w );
-	install_mem_write32_handler( 0, 0x1fb00000, 0x1fb00007, coh1002e_latch_w );
+	memory_install_read32_handler ( 0, ADDRESS_SPACE_PROGRAM, 0x1f000000, 0x1f7fffff, 0, 0, MRA32_BANK1 );
+	memory_install_write32_handler( 0, ADDRESS_SPACE_PROGRAM, 0x1fa10300, 0x1fa10303, 0, 0, coh1002e_bank_w );
+	memory_install_write32_handler( 0, ADDRESS_SPACE_PROGRAM, 0x1fb00000, 0x1fb00007, 0, 0, coh1002e_latch_w );
 
-	init_znsec();
+	zn_driver_init();
 }
 
 MACHINE_INIT( coh1002e )
@@ -1973,7 +1976,7 @@ static MACHINE_DRIVER_START( coh1002e )
 	MDRV_VBLANK_DURATION( 0 )
 
 	MDRV_MACHINE_INIT( coh1002e )
-	MDRV_NVRAM_HANDLER(generic_0fill)
+	MDRV_NVRAM_HANDLER( at28c16_0 )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
@@ -1998,10 +2001,10 @@ Judge Dread
 
 light-gun type shooting game
 
-Uses the Capcom/Sony  ZN-1 hardware with Rom board and 
+Uses the Capcom/Sony  ZN-1 hardware with Rom board and
 Hard disk Drive
 
-U35 and U36 eproms are 27c1001 are believed to be the bios 
+U35 and U36 eproms are 27c1001 are believed to be the bios
 data.
 
 Disk Drive is a Quantum ????2.1 GB??
@@ -2059,7 +2062,7 @@ Notes:
       CN654 - Connector for optional memory card
       SW1   - Slide switch for stereo or mono sound output
       DSW   - Dip switch (4 position, defaults all OFF)
-      
+
       BIOS           - COH1000A.353, Acclaim ZN1 BIOS, 4MBit MaskROM type M534002 (SOP40)
       AT28C16        - Atmel AT28C16 2K x8 EEPROM (SOP24)
       TC51V4260BJ-80 - 256K x16 (4MBit) DRAM (SOJ40)
@@ -2155,7 +2158,7 @@ Notes:
       LMC6484   - CMOS Quad Rail-to-Rail Input and Output Operational Amplifier
       MACH111   - AMD MACH111 CPLD (PLCC44, labelled '360 PLD-A1 CS=0794')
       ADSP-2181 - Analog Devices DSP (QFP128, 16Bit, 40 MIPs, 5V, 2 serial ports, 16Bit internal DMA
-                  port, a byte DMA port, programmable timer, 80K on-chip memory configured as 
+                  port, a byte DMA port, programmable timer, 80K on-chip memory configured as
                   16K words (24 Bit) RAM and 16K data (16Bit) RAM
       U48, U49  - 32MBit DIP42 MaskROM
       U52       - 27C040 DIP32 EPROM labelled '360-SND-A1 IC110345 CS = 7D5A'
@@ -2254,19 +2257,19 @@ static READ32_HANDLER( nbajamex_80_r )
 
 DRIVER_INIT( coh1000a )
 {
-	install_mem_read32_handler( 0, 0x1f000000, 0x1f1fffff, MRA32_BANK1 );
-	install_mem_write32_handler( 0, 0x1fbfff00, 0x1fbfff03, acpsx_00_w );
-	install_mem_write32_handler( 0, 0x1fbfff10, 0x1fbfff13, acpsx_10_w );
+	memory_install_read32_handler ( 0, ADDRESS_SPACE_PROGRAM, 0x1f000000, 0x1f1fffff, 0, 0, MRA32_BANK1 );
+	memory_install_write32_handler( 0, ADDRESS_SPACE_PROGRAM, 0x1fbfff00, 0x1fbfff03, 0, 0, acpsx_00_w );
+	memory_install_write32_handler( 0, ADDRESS_SPACE_PROGRAM, 0x1fbfff10, 0x1fbfff13, 0, 0, acpsx_10_w );
 
 	if( strcmp( Machine->gamedrv->name, "nbajamex" ) == 0 )
 	{
 		nbajamex_eeprom_size = 0x8000; nbajamex_eeprom = auto_malloc( nbajamex_eeprom_size );
 
-		install_mem_read32_handler ( 0, 0x1f200000, 0x1f200000 + ( nbajamex_eeprom_size - 1 ), MRA32_BANK2 );
-		install_mem_write32_handler( 0, 0x1f200000, 0x1f200000 + ( nbajamex_eeprom_size - 1 ), MWA32_BANK2 );
-		install_mem_write32_handler( 0, 0x1fbfff80, 0x1fbfff83, nbajamex_80_w );
-		install_mem_read32_handler ( 0, 0x1fbfff08, 0x1fbfff0b, nbajamex_08_r );
-		install_mem_read32_handler ( 0, 0x1fbfff80, 0x1fbfff83, nbajamex_80_r );
+		memory_install_read32_handler ( 0, ADDRESS_SPACE_PROGRAM, 0x1f200000, 0x1f200000 + ( nbajamex_eeprom_size - 1 ), 0, 0, MRA32_BANK2 );
+		memory_install_write32_handler( 0, ADDRESS_SPACE_PROGRAM, 0x1f200000, 0x1f200000 + ( nbajamex_eeprom_size - 1 ), 0, 0, MWA32_BANK2 );
+		memory_install_write32_handler( 0, ADDRESS_SPACE_PROGRAM, 0x1fbfff80, 0x1fbfff83, 0, 0, nbajamex_80_w );
+		memory_install_read32_handler ( 0, ADDRESS_SPACE_PROGRAM, 0x1fbfff08, 0x1fbfff0b, 0, 0, nbajamex_08_r );
+		memory_install_read32_handler ( 0, ADDRESS_SPACE_PROGRAM, 0x1fbfff80, 0x1fbfff83, 0, 0, nbajamex_80_r );
 
 		cpu_setbank( 2, nbajamex_eeprom ); /* ram/eeprom/?? */
 	}
@@ -2274,15 +2277,15 @@ DRIVER_INIT( coh1000a )
 	if( ( !strcmp( Machine->gamedrv->name, "jdredd" ) ) ||
 		( !strcmp( Machine->gamedrv->name, "jdreddb" ) ) )
 	{
-		install_mem_read32_handler ( 0, 0x1fbfff8c, 0x1fbfff8f, jdredd_idestat_r );
-		install_mem_write32_handler( 0, 0x1fbfff8c, 0x1fbfff8f, MWA32_NOP );
-		install_mem_read32_handler ( 0, 0x1fbfff90, 0x1fbfff9f, jdredd_ide_r );
-		install_mem_write32_handler( 0, 0x1fbfff90, 0x1fbfff9f, jdredd_ide_w );
+		memory_install_read32_handler ( 0, ADDRESS_SPACE_PROGRAM, 0x1fbfff8c, 0x1fbfff8f, 0, 0, jdredd_idestat_r );
+		memory_install_write32_handler( 0, ADDRESS_SPACE_PROGRAM, 0x1fbfff8c, 0x1fbfff8f, 0, 0, MWA32_NOP );
+		memory_install_read32_handler ( 0, ADDRESS_SPACE_PROGRAM, 0x1fbfff90, 0x1fbfff9f, 0, 0, jdredd_ide_r );
+		memory_install_write32_handler( 0, ADDRESS_SPACE_PROGRAM, 0x1fbfff90, 0x1fbfff9f, 0, 0, jdredd_ide_w );
 
 		ide_controller_init( 0, &jdredd_ide_intf );
 	}
 
-	init_znsec();
+	zn_driver_init();
 }
 
 MACHINE_INIT( coh1000a )
@@ -2306,7 +2309,7 @@ static MACHINE_DRIVER_START( coh1000a )
 	MDRV_VBLANK_DURATION( 0 )
 
 	MDRV_MACHINE_INIT( coh1000a )
-	MDRV_NVRAM_HANDLER(generic_0fill)
+	MDRV_NVRAM_HANDLER( at28c16_0 )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
@@ -2369,7 +2372,7 @@ Notes:
       CN654 - Connector for optional memory card
       SW1   - Slide switch for stereo or mono sound output
       DSW   - Dip switch (4 position, defaults all OFF)
-      
+
       BIOS           - coh1001l.353, Atlus ZN1 BIOS, 4MBit MaskROM type M534002 (SOP40)
       AT28C16        - Atmel AT28C16 2K x8 EEPROM
       814260         - 256K x16 (4MBit) DRAM
@@ -2419,22 +2422,22 @@ Notes:
       PAL(3)  - labelled 'ROM3'
       CAT702  - Protection chip labelled 'AT02' (DIP20)
       62256   - 32K x8 SRAM
-      
+
       ATHG-01B.18   - Main program (27C040 EPROM)
       ATHG-02B.17   /
-      
+
       ATHG-03.22    - Sound program (27C010 EPROM)
       ATHG-04.21    /
-      
+
       ATHG-05.4136  - Sound data (16MBit DIP42 MASKROM)
       ATHG-06.4134  /
-      
+
       ATHG-07.027   - Graphics data (32MBit DIP42 MASKROM)
       ATHG-08.028   /
       ATHG-09.210   /
       ATHG-10.029   /
       ATHG-11.215   /
-      
+
       68000 clock  - 10.000MHz
       YMZ280 clock - 16.9344MHz
       VSync        - 60Hz
@@ -2447,10 +2450,10 @@ static WRITE32_HANDLER( coh1001l_bnk_w )
 
 DRIVER_INIT( coh1001l )
 {
-	install_mem_read32_handler ( 0, 0x1f000000, 0x1f7fffff, MRA32_BANK1 ); /* banked rom */
-	install_mem_write32_handler( 0, 0x1fb00000, 0x1fb00003, coh1001l_bnk_w );
+	memory_install_read32_handler ( 0, ADDRESS_SPACE_PROGRAM, 0x1f000000, 0x1f7fffff, 0, 0, MRA32_BANK1 ); /* banked rom */
+	memory_install_write32_handler( 0, ADDRESS_SPACE_PROGRAM, 0x1fb00000, 0x1fb00003, 0, 0, coh1001l_bnk_w );
 
-	init_znsec();
+	zn_driver_init();
 }
 
 MACHINE_INIT( coh1001l )
@@ -2473,7 +2476,7 @@ static MACHINE_DRIVER_START( coh1001l )
 	MDRV_VBLANK_DURATION( 0 )
 
 	MDRV_MACHINE_INIT( coh1001l )
-	MDRV_NVRAM_HANDLER(generic_0fill)
+	MDRV_NVRAM_HANDLER( at28c16_0 )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
@@ -2507,36 +2510,53 @@ Key:	Mother    KN01
 
 static WRITE32_HANDLER( coh1002v_bnk_w )
 {
-	cpu_setbank( 2, memory_region( REGION_USER2 ) + 0x280000 + (data * 0x100000));
+	cpu_setbank( 2, memory_region( REGION_USER3 ) + ( data * 0x100000 ) );
 }
 
 DRIVER_INIT( coh1002v )
 {
-	install_mem_read32_handler( 0, 0x1f000000, 0x1f7fffff, MRA32_BANK1 );
-	install_mem_read32_handler( 0, 0x1fb00000, 0x1fbfffff, MRA32_BANK2 );
-	install_mem_write32_handler( 0, 0x1fb00000, 0x1fb00003, coh1002v_bnk_w );
+	memory_install_read32_handler ( 0, ADDRESS_SPACE_PROGRAM, 0x1f000000, 0x1f27ffff, 0, 0, MRA32_BANK1 );
+	memory_install_read32_handler ( 0, ADDRESS_SPACE_PROGRAM, 0x1fb00000, 0x1fbfffff, 0, 0, MRA32_BANK2 );
+	memory_install_write32_handler( 0, ADDRESS_SPACE_PROGRAM, 0x1fb00000, 0x1fb00003, 0, 0, coh1002v_bnk_w );
 
-	init_znsec();
+	zn_driver_init();
 }
 
 MACHINE_INIT( coh1002v )
 {
 	cpu_setbank( 1, memory_region( REGION_USER2 ) ); /* fixed game rom */
-	cpu_setbank( 2, memory_region( REGION_USER2 ) + 0x280000); /* banked rom */
+	cpu_setbank( 2, memory_region( REGION_USER3 ) ); /* banked rom */
 	zn_machine_init();
+}
+
+INTERRUPT_GEN( coh1002v_vblank )
+{
+	/* kludge: to stop dropping into test mode on bootup */
+	if(strcmp( Machine->gamedrv->name, "sncwgltd" ) == 0 )
+	{
+		if (psxreadbyte(0x0db422) == 0)
+		{
+			psxwritebyte(0x0db422, 1);
+		}
+		if (psxreadbyte(0x0db423) == 0)
+		{
+			psxwritebyte(0x0db423, 1);
+		}
+	}
+	psx_vblank();
 }
 
 static MACHINE_DRIVER_START( coh1002v )
 	/* basic machine hardware */
 	MDRV_CPU_ADD( PSXCPU, 33868800 / 2 ) /* 33MHz ?? */
 	MDRV_CPU_PROGRAM_MAP( zn_map, 0 )
-	MDRV_CPU_VBLANK_INT( psx_vblank, 1 )
+	MDRV_CPU_VBLANK_INT( coh1002v_vblank, 1 )
 
 	MDRV_FRAMES_PER_SECOND( 60 )
 	MDRV_VBLANK_DURATION( 0 )
 
 	MDRV_MACHINE_INIT( coh1002v )
-	MDRV_NVRAM_HANDLER(generic_0fill)
+	MDRV_NVRAM_HANDLER( at28c16_0 )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
@@ -2599,7 +2619,7 @@ Notes:
       CN654 - Connector for optional memory card
       SW1   - Slide switch for stereo or mono sound output
       DSW   - Dip switch (4 position, defaults all OFF)
-      
+
       BIOS           - COH1002M.353, Tecmo ZN1 BIOS, 4MBit MaskROM type M534002 (SOP40)
       AT28C16        - Atmel AT28C16 2K x8 EEPROM
       M5M44260       - 256K x16 (4MBit) DRAM
@@ -2648,7 +2668,7 @@ Notes:
       1 unpopulated position for uPD72103AG near the D43001 RAM
       2 unpopulated positions for 2 connectors near the Z80 ROM possibly for a network link?
       1 unpopulated position for a PAL16V8 near ROM 'CBAJ2'
-      
+
       This board contains....
       PAL16V8B(1) labelled 'SOPROM1'
       PAL16V8B(2) labelled 'SOPROM3'
@@ -2664,7 +2684,7 @@ Notes:
       2x 32MBit smt SOP44 MASKROMs labelled 'CB-SE' and 'CB-V0' (connected to the YMZ280B)
       LH540202 - CMOS 1024 x 9 Asyncronous FIFO (PLCC32)
       D43001   - 32K x8 SRAM, equivalent to 62256 SRAM
-      
+
       Z80 clock: 4.000MHz
       VSync    : 60Hz
 
@@ -2737,12 +2757,12 @@ static WRITE32_HANDLER( cbaj_z80_w )
 
 DRIVER_INIT( coh1002m )
 {
-	install_mem_read32_handler( 0, 0x1f000000, 0x1f7fffff, MRA32_BANK1 );
-	install_mem_read32_handler( 0, 0x1fb00000, 0x1fb00003, cbaj_z80_r );
-	install_mem_write32_handler( 0, 0x1fb00000, 0x1fb00003, cbaj_z80_w );
-	install_mem_write32_handler( 0, 0x1fb00004, 0x1fb00007, coh1002m_bank_w );
+	memory_install_read32_handler ( 0, ADDRESS_SPACE_PROGRAM, 0x1f000000, 0x1f7fffff, 0, 0, MRA32_BANK1 );
+	memory_install_read32_handler ( 0, ADDRESS_SPACE_PROGRAM, 0x1fb00000, 0x1fb00003, 0, 0, cbaj_z80_r );
+	memory_install_write32_handler( 0, ADDRESS_SPACE_PROGRAM, 0x1fb00000, 0x1fb00003, 0, 0, cbaj_z80_w );
+	memory_install_write32_handler( 0, ADDRESS_SPACE_PROGRAM, 0x1fb00004, 0x1fb00007, 0, 0, coh1002m_bank_w );
 
-	init_znsec();
+	zn_driver_init();
 }
 
 MACHINE_INIT( coh1002m )
@@ -2751,19 +2771,19 @@ MACHINE_INIT( coh1002m )
 	zn_machine_init();
 }
 
-static READ_HANDLER( cbaj_z80_latch_r )
+static READ8_HANDLER( cbaj_z80_latch_r )
 {
 	cbaj_to_z80 &= ~2;
 	return latch_to_z80;
 }
 
-static WRITE_HANDLER( cbaj_z80_latch_w )
+static WRITE8_HANDLER( cbaj_z80_latch_w )
 {
 	cbaj_to_r3k |= 2;
 	soundlatch2_w(0, data);
 }
 
-static READ_HANDLER( cbaj_z80_ready_r )
+static READ8_HANDLER( cbaj_z80_ready_r )
 {
 	int ret = cbaj_to_z80;
 
@@ -2803,7 +2823,7 @@ static MACHINE_DRIVER_START( coh1002m )
 	MDRV_VBLANK_DURATION( 0 )
 
 	MDRV_MACHINE_INIT( coh1002m )
-	MDRV_NVRAM_HANDLER(generic_0fill)
+	MDRV_NVRAM_HANDLER( at28c16_0 )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
@@ -2836,7 +2856,7 @@ static MACHINE_DRIVER_START( coh1002msnd )
 	MDRV_VBLANK_DURATION( 0 )
 
 	MDRV_MACHINE_INIT( coh1002m )
-	MDRV_NVRAM_HANDLER(generic_0fill)
+	MDRV_NVRAM_HANDLER( at28c16_0 )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
@@ -2868,7 +2888,7 @@ static MACHINE_DRIVER_START( coh1002ml )
 	MDRV_VBLANK_DURATION( 0 )
 
 	MDRV_MACHINE_INIT( coh1002m )
-	MDRV_NVRAM_HANDLER(generic_0fill)
+	MDRV_NVRAM_HANDLER( at28c16_0 )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )
@@ -3586,18 +3606,20 @@ ROM_END
 ROM_START( sncwgltd )
 	KN_BIOS
 
-	ROM_REGION32_LE( 0x01a80000, REGION_USER2, 0 )
+	ROM_REGION32_LE( 0x0280000, REGION_USER2, 0 )
 	ROM_LOAD( "ic5.bin",      0x0000000, 0x080000, CRC(458f14aa) SHA1(b4e50be60ffb9b7911561dd35b6a7e0df3432a3a) )
 	ROM_LOAD( "ic6.bin",      0x0080000, 0x080000, CRC(8233dd1e) SHA1(1422b4530d671e3b8b471ec16c20ef7c819ab762) )
 	ROM_LOAD( "ic7.bin",      0x0100000, 0x080000, CRC(df5ba2f7) SHA1(19153084e7cff632380b67a2fff800644a2fbf7d) )
 	ROM_LOAD( "ic8.bin",      0x0180000, 0x080000, CRC(e8145f2b) SHA1(3a1cb189426998856dfeda47267fde64be34c6ec) )
 	ROM_LOAD( "ic9.bin",      0x0200000, 0x080000, CRC(605c9370) SHA1(9734549cae3028c089f4c9f2336ee374b3f950f8) )
-	ROM_LOAD( "ic11.bin",     0x0280000, 0x400000, CRC(a93f6fee) SHA1(6f079643b50833f8fb497c49945ad23326cc9170) )
-	ROM_LOAD( "ic12.bin",     0x0680000, 0x400000, CRC(9f584ef7) SHA1(12c04e198f17d1915f58e83aff45ca2e76773df8) )
-	ROM_LOAD( "ic13.bin",     0x0a80000, 0x400000, CRC(652e9c78) SHA1(a929b2944de72606338acb822c1031463e2b1cc5) )
-	ROM_LOAD( "ic14.bin",     0x0e80000, 0x400000, CRC(c4ef1424) SHA1(1734a6ee6d0be94d24afefcf2a125b74747f53d0) )
-	ROM_LOAD( "ic15.bin",     0x1280000, 0x400000, CRC(2551d816) SHA1(e1500d4bfa8cc55220c366a5852263ac2070da82) )
-	ROM_LOAD( "ic16.bin",     0x1680000, 0x400000, CRC(21b401bc) SHA1(89374b80453c474aa1dd3a219422f557f95a262c) )
+
+	ROM_REGION32_LE( 0x1800000, REGION_USER3, 0 )
+	ROM_LOAD( "ic11.bin",     0x0000000, 0x400000, CRC(a93f6fee) SHA1(6f079643b50833f8fb497c49945ad23326cc9170) )
+	ROM_LOAD( "ic12.bin",     0x0400000, 0x400000, CRC(9f584ef7) SHA1(12c04e198f17d1915f58e83aff45ca2e76773df8) )
+	ROM_LOAD( "ic13.bin",     0x0800000, 0x400000, CRC(652e9c78) SHA1(a929b2944de72606338acb822c1031463e2b1cc5) )
+	ROM_LOAD( "ic14.bin",     0x0c00000, 0x400000, CRC(c4ef1424) SHA1(1734a6ee6d0be94d24afefcf2a125b74747f53d0) )
+	ROM_LOAD( "ic15.bin",     0x1000000, 0x400000, CRC(2551d816) SHA1(e1500d4bfa8cc55220c366a5852263ac2070da82) )
+	ROM_LOAD( "ic16.bin",     0x1400000, 0x400000, CRC(21b401bc) SHA1(89374b80453c474aa1dd3a219422f557f95a262c) )
 ROM_END
 
 
@@ -3734,6 +3756,25 @@ ROM_START( psyforcj )
 	ROM_REGION( 0x200000, REGION_SOUND1, ROMREGION_SOUNDONLY )
 	ROM_LOAD( "e22-01.15",           0x000000,  0x200000, CRC(808b8340) SHA1(d8bde850dd9b5b71e94ea707d2d728754f907977) )
 ROM_END
+
+ROM_START( psyfrcex )
+	TAITOFX1_BIOS
+
+	ROM_REGION32_LE( 0x00e00000, REGION_USER2, 0 )
+	ROM_LOAD16_BYTE( "e22-11.2",     0x0000001, 0x080000, CRC(a263b41f) SHA1(a797f1eb74a7ba7aeefabd9f5d55e6eec2df46e2) )
+	ROM_LOAD16_BYTE( "e22-12.7",     0x0000000, 0x080000, CRC(7426ffc5) SHA1(24b0132241e2e49109e585b082bf4ab67f86b294) )
+	ROM_LOAD( "e22-02.16",           0x0800000, 0x200000, CRC(03b50064) SHA1(0259537e86b266b3f34308c4fc0bcc04c037da71) )
+	ROM_LOAD( "e22-03.19",           0x0a00000, 0x200000, CRC(8372f839) SHA1(646b3919b6be63412c11850ec1524685abececc0) )
+	ROM_LOAD( "e22-04.21",           0x0c00000, 0x200000, CRC(397b71aa) SHA1(48743c362503c1d2dbeb3c8be4cb2aaaae015b88) )
+
+	ROM_REGION( 0x2c000, REGION_CPU2, 0 )     /* 64k for Z80 code */
+	ROM_LOAD( "e22-07.22",           0x0000000, 0x004000, CRC(739af589) SHA1(dbb4d1c6d824a99ccf27168e2c21644e19811523) )
+	ROM_CONTINUE(                    0x0010000, 0x01c000 ) /* banked stuff */
+
+	ROM_REGION( 0x200000, REGION_SOUND1, ROMREGION_SOUNDONLY )
+	ROM_LOAD( "e22-01.15",           0x000000,  0x200000, CRC(808b8340) SHA1(d8bde850dd9b5b71e94ea707d2d728754f907977) )
+ROM_END
+
 
 ROM_START( raystorm )
 	TAITOFX1_BIOS
@@ -3993,8 +4034,8 @@ ROM_START( hvnsgate )
 	ROM_CONTINUE( 0x1100000, 0x200000 )
 
 	ROM_REGION( 0x040000, REGION_CPU2, 0 )
-	ROM_LOAD( "athg-03.22",   0x000000, 0x020000, CRC(7eef7e68) SHA1(65b8ae18ef4ff636c548326a360b481aeb316869) ) 
-	ROM_LOAD( "athg-04.21",   0x020000, 0x020000, CRC(18523e85) SHA1(0ecc2116760f05fca8e5366b0a97dfe26fa9bc0c) ) 
+	ROM_LOAD( "athg-03.22",   0x000000, 0x020000, CRC(7eef7e68) SHA1(65b8ae18ef4ff636c548326a360b481aeb316869) )
+	ROM_LOAD( "athg-04.21",   0x020000, 0x020000, CRC(18523e85) SHA1(0ecc2116760f05fca8e5366b0a97dfe26fa9bc0c) )
 
 	ROM_REGION( 0x400000, REGION_SOUND1, ROMREGION_SOUNDONLY ) /* YMZ280B Sound Samples */
 	ROM_LOAD( "athg-05.4136", 0x000000, 0x200000, CRC(74469a15) SHA1(0faa883900d7fd2e5240f486db33b3d868f1f05f) )
@@ -4008,8 +4049,8 @@ ROM_END
 /* it in every zip file */
 GAMEX( 1995, cpzn1,    0,        coh1000c, zn, coh1000c, ROT0, "Sony/Capcom", "ZN1", NOT_A_DRIVER )
 
-GAMEX( 1995, ts2,      cpzn1,    coh1000c, zn, coh1000c, ROT0, "Capcom/Takara", "Battle Arena Toshinden 2 (USA 951124)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) 
-GAMEX( 1995, ts2j,     ts2,      coh1000c, zn, coh1000c, ROT0, "Capcom/Takara", "Battle Arena Toshinden 2 (JAPAN 951124)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND ) 
+GAMEX( 1995, ts2,      cpzn1,    coh1000c, zn, coh1000c, ROT0, "Capcom/Takara", "Battle Arena Toshinden 2 (USA 951124)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1995, ts2j,     ts2,      coh1000c, zn, coh1000c, ROT0, "Capcom/Takara", "Battle Arena Toshinden 2 (JAPAN 951124)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1996, starglad, cpzn1,    coh1000c, zn, coh1000c, ROT0, "Capcom", "Star Gladiator (USA 960627)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1996, sfex,     cpzn1,    coh1002c, zn, coh1000c, ROT0, "Capcom/Arika", "Street Fighter EX (USA 961219)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1996, sfexa,    sfex,     coh1002c, zn, coh1000c, ROT0, "Capcom/Arika", "Street Fighter EX (ASIA 961219)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
@@ -4030,7 +4071,7 @@ GAMEX( 1997, jgakuen,  rvschool, coh3002c, zn, coh3002c, ROT0, "Capcom", "Justic
 GAMEX( 1998, sfex2,    cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom/Arika", "Street Fighter EX 2 (JAPAN 980312)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1998, plsmaswd, cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom", "Plasma Sword (USA 980316)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1998, stargld2, plsmaswd, coh3002c, zn, coh3002c, ROT0, "Capcom", "Star Gladiator 2 (JAPAN 980316)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAMEX( 1998, tgmj,     cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom/Akira", "Tetris The Grand Master (JAPAN 980710)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1998, tgmj,     cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom/Arika", "Tetris The Grand Master (JAPAN 980710)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1998, techromn, cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom", "Tech Romancer (USA 980914)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1998, kikaioh,  techromn, coh3002c, zn, coh3002c, ROT0, "Capcom", "Kikaioh (JAPAN 980914)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1999, sfex2p,   cpzn2,    coh3002c, zn, coh3002c, ROT0, "Capcom/Arika", "Street Fighter EX 2 Plus (ASIA 990611)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
@@ -4086,13 +4127,14 @@ GAMEX( 1996, sncwgltd, 0,        coh1002v, zn, coh1002v, ROT270, "Video System",
 GAMEX( 1995, taitofx1, 0,        coh1000ta,zn, coh1000ta, ROT0, "Sony/Taito", "Taito FX1", NOT_A_DRIVER )
 
 GAMEX( 1995, sfchamp,  taitofx1, coh1000ta,zn, coh1000ta, ROT0, "Taito", "Super Football Champ (Ver 2.5O)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
-GAMEX( 1995, sfchampj, taitofx1, coh1000ta,zn, coh1000ta, ROT0, "Taito", "Super Football Champ (Ver 2.4J)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAMEX( 1995, sfchampj, sfchamp,  coh1000ta,zn, coh1000ta, ROT0, "Taito", "Super Football Champ (Ver 2.4J)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 GAMEX( 1995, psyforce, taitofx1, coh1000ta,zn, coh1000ta, ROT0, "Taito", "Psychic Force (Ver 2.4O)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1995, psyforcj, psyforce, coh1000ta,zn, coh1000ta, ROT0, "Taito", "Psychic Force (Ver 2.4J)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
-GAMEX( 1996, mgcldate, mgcldtex, coh1000ta,zn, coh1000ta, ROT0, "Taito", "Magical Date (Ver 2.02J)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
+GAMEX( 1995, psyfrcex, psyforce, coh1000ta,zn, coh1000ta, ROT0, "Taito", "Psychic Force EX (Ver 2.0J)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1996, mgcldate, mgcldtex, coh1000ta,zn, coh1000ta, ROT0, "Taito", "Magical Date / Magical Date - dokidoki kokuhaku daisakusen (Ver 2.02J)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
 GAMEX( 1996, raystorm, taitofx1, coh1000tb,zn, coh1000tb, ROT0, "Taito", "Ray Storm (Ver 2.05J)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1996, ftimpcta, taitofx1, coh1000tb,zn, coh1000tb, ROT0, "Taito", "Fighters' Impact A (Ver 2.00J)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING )
-GAMEX( 1997, mgcldtex, taitofx1, coh1000ta,zn, coh1000ta, ROT0, "Taito", "Magical Date EX (Ver 2.01J)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1997, mgcldtex, taitofx1, coh1000ta,zn, coh1000ta, ROT0, "Taito", "Magical Date EX / Magical Date - sotsugyou kokuhaku daisakusen (Ver 2.01J)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1997, gdarius,  taitofx1, coh1000tb,zn, coh1000tb, ROT0, "Taito", "G-Darius (Ver 2.01J)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX( 1997, gdarius2, gdarius,  coh1000tb,zn, coh1000tb, ROT0, "Taito", "G-Darius Ver.2 (Ver 2.03J)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 
@@ -4120,4 +4162,4 @@ GAMEX( 2000, brvblade, tps,      coh1002e, zn, coh1002e, ROT270, "Eighting/Raizi
 /* it in every zip file */
 GAMEX( 1996, atluspsx,  0,       coh1001l, zn, coh1001l, ROT0, "Sony/Atlus", "Atlus PSX", NOT_A_DRIVER )
 
-GAMEX( 1996, hvnsgate, atluspsx, coh1001l, zn, coh1001l, ROT0, "Atlus", "Heavens Gate", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
+GAMEX( 1996, hvnsgate, atluspsx, coh1001l, zn, coh1001l, ROT0, "Atlus/RACDYM", "Heaven's Gate", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )

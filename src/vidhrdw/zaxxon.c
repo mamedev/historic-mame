@@ -91,7 +91,7 @@ PALETTE_INIT( zaxxon )
 		COLOR(0,i) = i;
 }
 
-WRITE_HANDLER( zaxxon_videoram_w )
+WRITE8_HANDLER( zaxxon_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -100,7 +100,7 @@ WRITE_HANDLER( zaxxon_videoram_w )
 	}
 }
 
-WRITE_HANDLER( congo_colorram_w )
+WRITE8_HANDLER( congo_colorram_w )
 {
 	if (colorram[offset] != data)
 	{

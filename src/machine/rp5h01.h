@@ -19,11 +19,11 @@ int RP5H01_counter_r( int which );						/* COUNTER OUT */
 int RP5H01_data_r( int which );							/* DATA */
 
 /* direct-access stubs */
-WRITE_HANDLER( RP5H01_0_enable_w );
-WRITE_HANDLER( RP5H01_0_reset_w );
-WRITE_HANDLER( RP5H01_0_clock_w );
-WRITE_HANDLER( RP5H01_0_test_w );
-READ_HANDLER( RP5H01_0_counter_r );
-READ_HANDLER( RP5H01_0_data_r );
+WRITE8_HANDLER( RP5H01_0_enable_w );
+WRITE8_HANDLER( RP5H01_0_reset_w );
+WRITE8_HANDLER( RP5H01_0_clock_w );
+WRITE8_HANDLER( RP5H01_0_test_w );
+READ8_HANDLER( RP5H01_0_counter_r );
+READ8_HANDLER( RP5H01_0_data_r );
 
 #endif /* __RP5H01_H__ */

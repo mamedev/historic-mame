@@ -189,7 +189,7 @@ static void set_background_palette(int bank)
 	}
 }
 
-WRITE_HANDLER( popeye_videoram_w )
+WRITE8_HANDLER( popeye_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -198,7 +198,7 @@ WRITE_HANDLER( popeye_videoram_w )
 	}
 }
 
-WRITE_HANDLER( popeye_colorram_w )
+WRITE8_HANDLER( popeye_colorram_w )
 {
 	if (colorram[offset] != data)
 	{
@@ -207,7 +207,7 @@ WRITE_HANDLER( popeye_colorram_w )
 	}
 }
 
-WRITE_HANDLER( popeye_bitmap_w )
+WRITE8_HANDLER( popeye_bitmap_w )
 {
 	int sx,sy,x,y,colour;
 
@@ -249,7 +249,7 @@ WRITE_HANDLER( popeye_bitmap_w )
 	}
 }
 
-WRITE_HANDLER( skyskipr_bitmap_w )
+WRITE8_HANDLER( skyskipr_bitmap_w )
 {
 	offset = ((offset & 0xfc0) << 1) | (offset & 0x03f);
 	if (data & 0x80)

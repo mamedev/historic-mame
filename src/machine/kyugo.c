@@ -25,9 +25,9 @@ MACHINE_INIT( kyugo )
 }
 
 
-WRITE_HANDLER( kyugo_sub_cpu_control_w )
+WRITE8_HANDLER( kyugo_sub_cpu_control_w )
 {
-	cpu_set_halt_line(1, data ? CLEAR_LINE : ASSERT_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_HALT, data ? CLEAR_LINE : ASSERT_LINE);
 }
 
 
@@ -37,13 +37,13 @@ WRITE_HANDLER( kyugo_sub_cpu_control_w )
  *
  *************************************/
 
-WRITE_HANDLER( kyugo_sharedram_w )
+WRITE8_HANDLER( kyugo_sharedram_w )
 {
 	kyugo_sharedram[offset] = data;
 }
 
 
-READ_HANDLER( kyugo_sharedram_r )
+READ8_HANDLER( kyugo_sharedram_r )
 {
 	return kyugo_sharedram[offset];
 }

@@ -15,25 +15,25 @@ static UINT8 *strnskil_sharedram;
 
 /****************************************************************************/
 
-extern WRITE_HANDLER( strnskil_videoram_w );
-extern WRITE_HANDLER( strnskil_scroll_x_w );
-extern WRITE_HANDLER( strnskil_scrl_ctrl_w );
+extern WRITE8_HANDLER( strnskil_videoram_w );
+extern WRITE8_HANDLER( strnskil_scroll_x_w );
+extern WRITE8_HANDLER( strnskil_scrl_ctrl_w );
 
 extern PALETTE_INIT( strnskil );
 extern VIDEO_START( strnskil );
 extern VIDEO_UPDATE( strnskil );
 
-WRITE_HANDLER( strnskil_sharedram_w )
+WRITE8_HANDLER( strnskil_sharedram_w )
 {
 	strnskil_sharedram[offset] = data;
 }
 
-READ_HANDLER( strnskil_sharedram_r )
+READ8_HANDLER( strnskil_sharedram_r )
 {
 	return strnskil_sharedram[offset];
 }
 
-READ_HANDLER( strnskil_d800_r )
+READ8_HANDLER( strnskil_d800_r )
 {
 /* bit0: interrupt type?, bit1: CPU2 busack? */
 
@@ -44,7 +44,7 @@ READ_HANDLER( strnskil_d800_r )
 
 /****************************************************************************/
 
-static READ_HANDLER( protection_r )
+static READ8_HANDLER( protection_r )
 {
 	int res;
 
@@ -63,7 +63,7 @@ static READ_HANDLER( protection_r )
 	return res;
 }
 
-static WRITE_HANDLER( protection_w )
+static WRITE8_HANDLER( protection_w )
 {
 	logerror("%04x: protection_w %02x\n",activecpu_get_pc(),data);
 }

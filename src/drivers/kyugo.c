@@ -1163,18 +1163,18 @@ ROM_END
 static DRIVER_INIT( gyrodine )
 {
 	/* add watchdog */
-	install_mem_write_handler(0, 0xe000, 0xe000, watchdog_reset_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe000, 0xe000, 0, 0, watchdog_reset_w);
 }
 
 static DRIVER_INIT( srdmissn )
 {
 	/* shared RAM is mapped at 0xe000 as well  */
-	install_mem_read_handler (0, 0xe000, 0xe7ff, kyugo_sharedram_r);
-	install_mem_write_handler(0, 0xe000, 0xe7ff, kyugo_sharedram_w);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe000, 0xe7ff, 0, 0, kyugo_sharedram_r);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xe000, 0xe7ff, 0, 0, kyugo_sharedram_w);
 
 	/* extra RAM on sub CPU  */
-	install_mem_read_handler (1, 0x8800, 0x8fff, MRA8_RAM);
-	install_mem_write_handler(1, 0x8800, 0x8fff, MWA8_RAM);
+	memory_install_read8_handler(1, ADDRESS_SPACE_PROGRAM, 0x8800, 0x8fff, 0, 0, MRA8_RAM);
+	memory_install_write8_handler(1, ADDRESS_SPACE_PROGRAM, 0x8800, 0x8fff, 0, 0, MWA8_RAM);
 }
 
 

@@ -10,7 +10,7 @@ static int back_enable,fore_enable,sprite_enable;
 
 /******************************************************************************/
 
-WRITE_HANDLER( dynduke_paletteram_w )
+WRITE8_HANDLER( dynduke_paletteram_w )
 {
 	int r,g,b;
 	int color;
@@ -36,29 +36,29 @@ WRITE_HANDLER( dynduke_paletteram_w )
 	}
 }
 
-READ_HANDLER( dynduke_background_r )
+READ8_HANDLER( dynduke_background_r )
 {
 	return dynduke_back_data[offset];
 }
 
-READ_HANDLER( dynduke_foreground_r )
+READ8_HANDLER( dynduke_foreground_r )
 {
 	return dynduke_fore_data[offset];
 }
 
-WRITE_HANDLER( dynduke_background_w )
+WRITE8_HANDLER( dynduke_background_w )
 {
 	dynduke_back_data[offset]=data;
 	tilemap_mark_tile_dirty(bg_layer,offset/2);
 }
 
-WRITE_HANDLER( dynduke_foreground_w )
+WRITE8_HANDLER( dynduke_foreground_w )
 {
 	dynduke_fore_data[offset]=data;
 	tilemap_mark_tile_dirty(fg_layer,offset/2);
 }
 
-WRITE_HANDLER( dynduke_text_w )
+WRITE8_HANDLER( dynduke_text_w )
 {
 	videoram[offset]=data;
 	tilemap_mark_tile_dirty(tx_layer,offset/2);
@@ -118,7 +118,7 @@ VIDEO_START( dynduke )
 	return 0;
 }
 
-WRITE_HANDLER( dynduke_gfxbank_w )
+WRITE8_HANDLER( dynduke_gfxbank_w )
 {
 	static int old_back,old_fore;
 
@@ -134,7 +134,7 @@ WRITE_HANDLER( dynduke_gfxbank_w )
 	old_fore=fore_bankbase;
 }
 
-WRITE_HANDLER( dynduke_control_w )
+WRITE8_HANDLER( dynduke_control_w )
 {
 	static int old_bpal;
 

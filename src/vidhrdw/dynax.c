@@ -86,26 +86,26 @@ static UINT8 *dynax_pixmap[8][2];
 
 
 
-WRITE_HANDLER( dynax_extra_scrollx_w )
+WRITE8_HANDLER( dynax_extra_scrollx_w )
 {
 	extra_scroll_x = data;
 }
 
-WRITE_HANDLER( dynax_extra_scrolly_w )
+WRITE8_HANDLER( dynax_extra_scrolly_w )
 {
 	extra_scroll_y = data;
 }
 
 
 /* Destination Pen */
-WRITE_HANDLER( dynax_blit_pen_w )
+WRITE8_HANDLER( dynax_blit_pen_w )
 {
 	dynax_blit_pen = data;
 #if VERBOSE
 	logerror("P=%02X ",data);
 #endif
 }
-WRITE_HANDLER( dynax_blit2_pen_w )
+WRITE8_HANDLER( dynax_blit2_pen_w )
 {
 	dynax_blit2_pen = data;
 #if VERBOSE
@@ -114,7 +114,7 @@ WRITE_HANDLER( dynax_blit2_pen_w )
 }
 
 /* Destination Layers */
-WRITE_HANDLER( dynax_blit_dest_w )
+WRITE8_HANDLER( dynax_blit_dest_w )
 {
 	dynax_blit_dest = data;
 	if (layer_layout == LAYOUT_HNORIDUR)
@@ -124,7 +124,7 @@ WRITE_HANDLER( dynax_blit_dest_w )
 	logerror("D=%02X ",data);
 #endif
 }
-WRITE_HANDLER( dynax_blit2_dest_w )
+WRITE8_HANDLER( dynax_blit2_dest_w )
 {
 	dynax_blit2_dest = data;
 #if VERBOSE
@@ -133,7 +133,7 @@ WRITE_HANDLER( dynax_blit2_dest_w )
 }
 
 /* Background Color */
-WRITE_HANDLER( dynax_blit_backpen_w )
+WRITE8_HANDLER( dynax_blit_backpen_w )
 {
 	dynax_blit_backpen = data;
 #if VERBOSE
@@ -142,7 +142,7 @@ WRITE_HANDLER( dynax_blit_backpen_w )
 }
 
 /* Layers 0&1 Palettes (Low Bits) */
-WRITE_HANDLER( dynax_blit_palette01_w )
+WRITE8_HANDLER( dynax_blit_palette01_w )
 {
 	if (layer_layout == LAYOUT_HNORIDUR)
 		dynax_blit_palettes = (dynax_blit_palettes & 0x00ff) | ((data&0x0f)<<12) | ((data&0xf0)<<4);
@@ -153,7 +153,7 @@ WRITE_HANDLER( dynax_blit_palette01_w )
 #endif
 }
 /* Layers 4&5 Palettes (Low Bits) */
-WRITE_HANDLER( dynax_blit_palette45_w )
+WRITE8_HANDLER( dynax_blit_palette45_w )
 {
 	if (layer_layout == LAYOUT_HNORIDUR)
 		dynax_blit2_palettes = (dynax_blit2_palettes & 0x00ff) | ((data&0x0f)<<12) | ((data&0xf0)<<4);
@@ -165,7 +165,7 @@ WRITE_HANDLER( dynax_blit_palette45_w )
 }
 
 /* Layer 2&3 Palettes (Low Bits) */
-WRITE_HANDLER( dynax_blit_palette23_w )
+WRITE8_HANDLER( dynax_blit_palette23_w )
 {
 	if (layer_layout == LAYOUT_HNORIDUR)
 		dynax_blit_palettes = (dynax_blit_palettes & 0xff00) | ((data&0x0f)<<4) | ((data&0xf0)>>4);
@@ -176,7 +176,7 @@ WRITE_HANDLER( dynax_blit_palette23_w )
 #endif
 }
 /* Layer 6&7 Palettes (Low Bits) */
-WRITE_HANDLER( dynax_blit_palette67_w )
+WRITE8_HANDLER( dynax_blit_palette67_w )
 {
 	if (layer_layout == LAYOUT_HNORIDUR)
 		dynax_blit2_palettes = (dynax_blit2_palettes & 0xff00) | ((data&0x0f)<<4) | ((data&0xf0)>>4);
@@ -190,14 +190,14 @@ WRITE_HANDLER( dynax_blit_palette67_w )
 
 
 /* Layers Palettes (High Bits) */
-WRITE_HANDLER( dynax_blit_palbank_w )
+WRITE8_HANDLER( dynax_blit_palbank_w )
 {
 	dynax_blit_palbank = data;
 #if VERBOSE
 	logerror("PB=%02X ",data);
 #endif
 }
-WRITE_HANDLER( dynax_blit2_palbank_w )
+WRITE8_HANDLER( dynax_blit2_palbank_w )
 {
 	dynax_blit2_palbank = data;
 #if VERBOSE
@@ -206,7 +206,7 @@ WRITE_HANDLER( dynax_blit2_palbank_w )
 }
 
 /* Which half of the layers to write two (interleaved games only) */
-WRITE_HANDLER( hanamai_layer_half_w )
+WRITE8_HANDLER( hanamai_layer_half_w )
 {
 	hanamai_layer_half = data & 1;
 #if VERBOSE
@@ -215,7 +215,7 @@ WRITE_HANDLER( hanamai_layer_half_w )
 }
 
 /* Write to both halves of the layers (interleaved games only) */
-WRITE_HANDLER( hnoridur_layer_half2_w )
+WRITE8_HANDLER( hnoridur_layer_half2_w )
 {
 	hnoridur_layer_half2 = (~data) & 1;
 #if VERBOSE
@@ -223,7 +223,7 @@ WRITE_HANDLER( hnoridur_layer_half2_w )
 #endif
 }
 
-WRITE_HANDLER( mjdialq2_blit_dest_w )
+WRITE8_HANDLER( mjdialq2_blit_dest_w )
 {
 	int mask = (2 >> offset);	/* 1 or 2 */
 
@@ -232,7 +232,7 @@ WRITE_HANDLER( mjdialq2_blit_dest_w )
 }
 
 /* Layers Enable */
-WRITE_HANDLER( dynax_layer_enable_w )
+WRITE8_HANDLER( dynax_layer_enable_w )
 {
 	dynax_layer_enable = data;
 #if VERBOSE
@@ -240,14 +240,14 @@ WRITE_HANDLER( dynax_layer_enable_w )
 #endif
 }
 
-WRITE_HANDLER( jantouki_layer_enable_w )
+WRITE8_HANDLER( jantouki_layer_enable_w )
 {
 	int mask = 1 << (7-offset);
 	dynax_layer_enable = (dynax_layer_enable & ~mask) | ((data & 1) ? mask : 0);
 	dynax_layer_enable |= 1;
 }
 
-WRITE_HANDLER( mjdialq2_layer_enable_w )
+WRITE8_HANDLER( mjdialq2_layer_enable_w )
 {
 	int mask = (2 >> offset);	/* 1 or 2 */
 
@@ -256,7 +256,7 @@ WRITE_HANDLER( mjdialq2_layer_enable_w )
 }
 
 
-WRITE_HANDLER( dynax_flipscreen_w )
+WRITE8_HANDLER( dynax_flipscreen_w )
 {
 	flipscreen = data & 1;
 	if (data & ~1)
@@ -592,7 +592,7 @@ static void jantouki_blitter2_start(int flags)
 
 
 
-WRITE_HANDLER( dynax_blit_scroll_w )
+WRITE8_HANDLER( dynax_blit_scroll_w )
 {
 	switch( blit_src & 0xc00000 )
 	{
@@ -615,7 +615,7 @@ WRITE_HANDLER( dynax_blit_scroll_w )
 	}
 }
 
-WRITE_HANDLER( dynax_blit2_scroll_w )
+WRITE8_HANDLER( dynax_blit2_scroll_w )
 {
 	switch( blit2_src & 0xc00000 )
 	{
@@ -640,7 +640,7 @@ WRITE_HANDLER( dynax_blit2_scroll_w )
 
 
 
-WRITE_HANDLER( dynax_blitter_rev2_w )
+WRITE8_HANDLER( dynax_blitter_rev2_w )
 {
 	switch (offset)
 	{
@@ -655,7 +655,7 @@ WRITE_HANDLER( dynax_blitter_rev2_w )
 }
 
 
-WRITE_HANDLER( jantouki_blitter_rev2_w )
+WRITE8_HANDLER( jantouki_blitter_rev2_w )
 {
 	switch (offset)
 	{
@@ -669,7 +669,7 @@ WRITE_HANDLER( jantouki_blitter_rev2_w )
 	}
 }
 
-WRITE_HANDLER( jantouki_blitter2_rev2_w )
+WRITE8_HANDLER( jantouki_blitter2_rev2_w )
 {
 	switch (offset)
 	{
@@ -1022,7 +1022,7 @@ void mjdialq2_copylayer(struct mame_bitmap *bitmap,const struct rectangle *clipr
 
 static int hanamai_priority;
 
-WRITE_HANDLER( hanamai_priority_w )
+WRITE8_HANDLER( hanamai_priority_w )
 {
 	hanamai_priority = data;
 }
@@ -1032,16 +1032,16 @@ static int debug_mask(void)
 {
 #ifdef MAME_DEBUG
 	int msk = 0;
-	if (keyboard_pressed(KEYCODE_Z))
+	if (code_pressed(KEYCODE_Z))
 	{
-		if (keyboard_pressed(KEYCODE_Q))	msk |= 0x01;	// layer 0
-		if (keyboard_pressed(KEYCODE_W))	msk |= 0x02;	// layer 1
-		if (keyboard_pressed(KEYCODE_E))	msk |= 0x04;	// layer 2
-		if (keyboard_pressed(KEYCODE_R))	msk |= 0x08;	// layer 3
-		if (keyboard_pressed(KEYCODE_A))	msk |= 0x10;	// layer 4
-		if (keyboard_pressed(KEYCODE_S))	msk |= 0x20;	// layer 5
-		if (keyboard_pressed(KEYCODE_D))	msk |= 0x40;	// layer 6
-		if (keyboard_pressed(KEYCODE_F))	msk |= 0x80;	// layer 7
+		if (code_pressed(KEYCODE_Q))	msk |= 0x01;	// layer 0
+		if (code_pressed(KEYCODE_W))	msk |= 0x02;	// layer 1
+		if (code_pressed(KEYCODE_E))	msk |= 0x04;	// layer 2
+		if (code_pressed(KEYCODE_R))	msk |= 0x08;	// layer 3
+		if (code_pressed(KEYCODE_A))	msk |= 0x10;	// layer 4
+		if (code_pressed(KEYCODE_S))	msk |= 0x20;	// layer 5
+		if (code_pressed(KEYCODE_D))	msk |= 0x40;	// layer 6
+		if (code_pressed(KEYCODE_F))	msk |= 0x80;	// layer 7
 		if (msk != 0)	return msk;
 	}
 #endif
@@ -1058,18 +1058,18 @@ static int debug_viewer(struct mame_bitmap *bitmap,const struct rectangle *clipr
 {
 #ifdef MAME_DEBUG
 	static int toggle;
-	if (keyboard_pressed_memory(KEYCODE_T))	toggle = 1-toggle;
+	if (code_pressed_memory(KEYCODE_T))	toggle = 1-toggle;
 	if (toggle)	{
 		data8_t *RAM	=	memory_region( REGION_GFX1 );
 		size_t size		=	memory_region_length( REGION_GFX1 );
 		static int i = 0, c = 0, r = 0;
 
-		if (keyboard_pressed_memory(KEYCODE_I))	c = (c-1) & 0x1f;
-		if (keyboard_pressed_memory(KEYCODE_O))	c = (c+1) & 0x1f;
-		if (keyboard_pressed_memory(KEYCODE_R))	{ r = (r+1) & 0x7;	i = size/8 * r; }
-		if (keyboard_pressed(KEYCODE_M) | keyboard_pressed_memory(KEYCODE_K))	{
+		if (code_pressed_memory(KEYCODE_I))	c = (c-1) & 0x1f;
+		if (code_pressed_memory(KEYCODE_O))	c = (c+1) & 0x1f;
+		if (code_pressed_memory(KEYCODE_R))	{ r = (r+1) & 0x7;	i = size/8 * r; }
+		if (code_pressed(KEYCODE_M) | code_pressed_memory(KEYCODE_K))	{
 			while( i < size && RAM[i] ) i++;		while( i < size && !RAM[i] ) i++;	}
-		if (keyboard_pressed(KEYCODE_N) | keyboard_pressed_memory(KEYCODE_J))	{
+		if (code_pressed(KEYCODE_N) | code_pressed_memory(KEYCODE_J))	{
 			if (i >= 2) i-=2;	while( i > 0 && RAM[i] ) i--;	i++;	}
 
 		dynax_blit_palettes = (c & 0xf) * 0x111;

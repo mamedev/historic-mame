@@ -68,7 +68,7 @@ PALETTE_INIT( scotrsht )
 	}
 }
 
-WRITE_HANDLER( scotrsht_videoram_w )
+WRITE8_HANDLER( scotrsht_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -77,7 +77,7 @@ WRITE_HANDLER( scotrsht_videoram_w )
 	}
 }
 
-WRITE_HANDLER( scotrsht_colorram_w )
+WRITE8_HANDLER( scotrsht_colorram_w )
 {
 	if (colorram[offset] != data)
 	{
@@ -86,7 +86,7 @@ WRITE_HANDLER( scotrsht_colorram_w )
 	}
 }
 
-WRITE_HANDLER( scotrsht_charbank_w )
+WRITE8_HANDLER( scotrsht_charbank_w )
 {
 	if (scotrsht_charbank != (data & 0x01))
 	{

@@ -36,7 +36,7 @@ static void get_hitme_tile_info(int tile_index)
 }
 
 
-WRITE_HANDLER( hitme_vidram_w )
+WRITE8_HANDLER( hitme_vidram_w )
 {
 	/* mark this tile dirty */
 	hitme_vidram[offset] = data;
@@ -142,25 +142,25 @@ static data8_t read_port_and_t0_and_hblank(int port)
 }
 
 
-static READ_HANDLER( hitme_port_0_r )
+static READ8_HANDLER( hitme_port_0_r )
 {
 	return read_port_and_t0_and_hblank(0);
 }
 
 
-static READ_HANDLER( hitme_port_1_r )
+static READ8_HANDLER( hitme_port_1_r )
 {
 	return read_port_and_t0(1);
 }
 
 
-static READ_HANDLER( hitme_port_2_r )
+static READ8_HANDLER( hitme_port_2_r )
 {
 	return read_port_and_t0_and_hblank(2);
 }
 
 
-static READ_HANDLER( hitme_port_3_r )
+static READ8_HANDLER( hitme_port_3_r )
 {
 	return read_port_and_t0(3);
 }
@@ -173,7 +173,7 @@ static READ_HANDLER( hitme_port_3_r )
  *
  *************************************/
 
-static WRITE_HANDLER( output_port_0_w )
+static WRITE8_HANDLER( output_port_0_w )
 {
 	/* 
 		Note: We compute the timeout time on a write here. Unfortunately, the situation is
@@ -191,7 +191,7 @@ static WRITE_HANDLER( output_port_0_w )
 }
 
 
-static WRITE_HANDLER( output_port_1_w )
+static WRITE8_HANDLER( output_port_1_w )
 {
 	discrete_sound_w(2, data);
 	discrete_sound_w(3, 1);

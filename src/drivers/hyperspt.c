@@ -13,9 +13,9 @@ extern void konami1_decode(void);
 
 extern UINT8 *hyperspt_scroll;
 
-extern WRITE_HANDLER( hyperspt_videoram_w );
-extern WRITE_HANDLER( hyperspt_colorram_w );
-extern WRITE_HANDLER( hyperspt_flipscreen_w );
+extern WRITE8_HANDLER( hyperspt_videoram_w );
+extern WRITE8_HANDLER( hyperspt_colorram_w );
+extern WRITE8_HANDLER( hyperspt_flipscreen_w );
 
 extern PALETTE_INIT( hyperspt );
 extern VIDEO_START( hyperspt );
@@ -23,25 +23,25 @@ extern VIDEO_UPDATE( hyperspt );
 extern VIDEO_START( roadf );
 extern VIDEO_UPDATE( roadf );
 
-extern WRITE_HANDLER( konami_sh_irqtrigger_w );
-extern READ_HANDLER( hyperspt_sh_timer_r );
-extern WRITE_HANDLER( hyperspt_sound_w );
+extern WRITE8_HANDLER( konami_sh_irqtrigger_w );
+extern READ8_HANDLER( hyperspt_sh_timer_r );
+extern WRITE8_HANDLER( hyperspt_sound_w );
 
 /* these routines lurk in sndhrdw/trackfld.c */
 extern struct VLM5030interface konami_vlm5030_interface;
 extern struct SN76496interface konami_sn76496_interface;
 extern struct DACinterface konami_dac_interface;
-extern WRITE_HANDLER( konami_SN76496_latch_w );
-extern WRITE_HANDLER( konami_SN76496_0_w );
+extern WRITE8_HANDLER( konami_SN76496_latch_w );
+extern WRITE8_HANDLER( konami_SN76496_0_w );
 
 
-static WRITE_HANDLER( hyperspt_coin_counter_w )
+static WRITE8_HANDLER( hyperspt_coin_counter_w )
 {
 	coin_counter_w(offset,data);
 }
 
 /* handle fake button for speed cheat */
-static READ_HANDLER( konami_IN1_r )
+static READ8_HANDLER( konami_IN1_r )
 {
 	int res;
 	static int cheat = 0;

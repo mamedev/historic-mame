@@ -97,7 +97,7 @@ struct GfxDecodeInfo yumefuda_gfxdecodeinfo[] =
 };
 
 
-static WRITE_HANDLER( yumefuda_vram_w )
+static WRITE8_HANDLER( yumefuda_vram_w )
 {
 	if(videoram[offset] != data)
 	{
@@ -109,32 +109,32 @@ static WRITE_HANDLER( yumefuda_vram_w )
 static UINT8 *cus_ram;
 static UINT8 prot_lock,nvram_lock;
 /*Custom RAM (Protection)*/
-static READ_HANDLER( custom_ram_r )
+static READ8_HANDLER( custom_ram_r )
 {
 	logerror("Custom RAM read at %02x PC = %x\n",offset+0xaf80,activecpu_get_pc());
 	return cus_ram[offset];// ^ 0x55;
 }
 
-static WRITE_HANDLER( custom_ram_w )
+static WRITE8_HANDLER( custom_ram_w )
 {
 //	logerror("Custom RAM write at %02x : %02x PC = %x\n",offset+0xaf80,data,activecpu_get_pc());
 	if(prot_lock)	{ cus_ram[offset] = data; }
 }
 
 /*this might be used as NVRAM commands btw*/
-static WRITE_HANDLER( prot_lock_w )
+static WRITE8_HANDLER( prot_lock_w )
 {
 //	logerror("PC %04x Prot lock value written %02x\n",activecpu_get_pc(),data);
 	prot_lock = data;
 }
 
-static WRITE_HANDLER( nvram_lock_w )
+static WRITE8_HANDLER( nvram_lock_w )
 {
 	logerror("PC %04x Nvram lock value written %02x\n",activecpu_get_pc(),data);
 	nvram_lock = data;
 }
 
-static WRITE_HANDLER( port_c0_w )
+static WRITE8_HANDLER( port_c0_w )
 {
 }
 

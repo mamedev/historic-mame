@@ -137,7 +137,7 @@ PALETTE_INIT( mbmj8688_16bit )
 
 
 
-WRITE_HANDLER( nbmj8688_color_lookup_w )
+WRITE8_HANDLER( nbmj8688_color_lookup_w )
 {
 	nbmj8688_color_lookup[offset] = (data ^ 0xff);
 }
@@ -147,7 +147,7 @@ WRITE_HANDLER( nbmj8688_color_lookup_w )
 
 ******************************************************************************/
 
-WRITE_HANDLER( nbmj8688_blitter_w )
+WRITE8_HANDLER( nbmj8688_blitter_w )
 {
 	switch (offset)
 	{
@@ -163,7 +163,7 @@ WRITE_HANDLER( nbmj8688_blitter_w )
 	}
 }
 
-WRITE_HANDLER( mjsikaku_gfxflag1_w )
+WRITE8_HANDLER( mjsikaku_gfxflag1_w )
 {
 	static int mjsikaku_flipscreen_old = -1;
 
@@ -182,7 +182,7 @@ WRITE_HANDLER( mjsikaku_gfxflag1_w )
 	}
 }
 
-WRITE_HANDLER( mjsikaku_gfxflag2_w )
+WRITE8_HANDLER( mjsikaku_gfxflag2_w )
 {
 	mjsikaku_gfxflag2 = data;
 
@@ -191,17 +191,17 @@ WRITE_HANDLER( mjsikaku_gfxflag2_w )
 		mjsikaku_gfxflag2 ^= 0x20;
 }
 
-WRITE_HANDLER( mjsikaku_gfxflag3_w )
+WRITE8_HANDLER( mjsikaku_gfxflag3_w )
 {
 	mjsikaku_gfxflag3 = (data & 0xe0);
 }
 
-WRITE_HANDLER( mjsikaku_scrolly_w )
+WRITE8_HANDLER( mjsikaku_scrolly_w )
 {
 	mjsikaku_scrolly = data;
 }
 
-WRITE_HANDLER( mjsikaku_romsel_w )
+WRITE8_HANDLER( mjsikaku_romsel_w )
 {
 	mjsikaku_gfxrom = (data & 0x07);
 
@@ -214,7 +214,7 @@ WRITE_HANDLER( mjsikaku_romsel_w )
 	}
 }
 
-WRITE_HANDLER( secolove_romsel_w )
+WRITE8_HANDLER( secolove_romsel_w )
 {
 	mjsikaku_gfxrom = ((data & 0xc0) >> 4) + (data & 0x03);
 	mjsikaku_gfxflag2_w(0,data);
@@ -228,7 +228,7 @@ WRITE_HANDLER( secolove_romsel_w )
 	}
 }
 
-WRITE_HANDLER( crystal2_romsel_w )
+WRITE8_HANDLER( crystal2_romsel_w )
 {
 	mjsikaku_gfxrom = (data & 0x03);
 	mjsikaku_gfxflag2_w(0,data);
@@ -242,7 +242,7 @@ WRITE_HANDLER( crystal2_romsel_w )
 	}
 }
 
-WRITE_HANDLER( seiha_romsel_w )
+WRITE8_HANDLER( seiha_romsel_w )
 {
 	mjsikaku_gfxrom = (data & 0x1f);
 	mjsikaku_gfxflag3_w(0,data);
@@ -640,33 +640,33 @@ logerror("HD61830B unsupported instruction %02x %02x\n",HD61830B_instr[chip],dat
 	}
 }
 
-WRITE_HANDLER( nbmj8688_HD61830B_0_instr_w )
+WRITE8_HANDLER( nbmj8688_HD61830B_0_instr_w )
 {
 	nbmj8688_HD61830B_instr_w(0,offset,data);
 }
 
-WRITE_HANDLER( nbmj8688_HD61830B_1_instr_w )
+WRITE8_HANDLER( nbmj8688_HD61830B_1_instr_w )
 {
 	nbmj8688_HD61830B_instr_w(1,offset,data);
 }
 
-WRITE_HANDLER( nbmj8688_HD61830B_both_instr_w )
+WRITE8_HANDLER( nbmj8688_HD61830B_both_instr_w )
 {
 	nbmj8688_HD61830B_instr_w(0,offset,data);
 	nbmj8688_HD61830B_instr_w(1,offset,data);
 }
 
-WRITE_HANDLER( nbmj8688_HD61830B_0_data_w )
+WRITE8_HANDLER( nbmj8688_HD61830B_0_data_w )
 {
 	nbmj8688_HD61830B_data_w(0,offset,data);
 }
 
-WRITE_HANDLER( nbmj8688_HD61830B_1_data_w )
+WRITE8_HANDLER( nbmj8688_HD61830B_1_data_w )
 {
 	nbmj8688_HD61830B_data_w(1,offset,data);
 }
 
-WRITE_HANDLER( nbmj8688_HD61830B_both_data_w )
+WRITE8_HANDLER( nbmj8688_HD61830B_both_data_w )
 {
 	nbmj8688_HD61830B_data_w(0,offset,data);
 	nbmj8688_HD61830B_data_w(1,offset,data);

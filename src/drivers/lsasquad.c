@@ -33,28 +33,28 @@ VIDEO_UPDATE( lsasquad );
 
 /* in machine/lsasquad.c */
 extern int lsasquad_invertcoin;
-WRITE_HANDLER( lsasquad_sh_nmi_disable_w );
-WRITE_HANDLER( lsasquad_sh_nmi_enable_w );
-WRITE_HANDLER( lsasquad_sound_command_w );
-READ_HANDLER( lsasquad_sh_sound_command_r );
-WRITE_HANDLER( lsasquad_sh_result_w );
-READ_HANDLER( lsasquad_sound_result_r );
-READ_HANDLER( lsasquad_sound_status_r );
+WRITE8_HANDLER( lsasquad_sh_nmi_disable_w );
+WRITE8_HANDLER( lsasquad_sh_nmi_enable_w );
+WRITE8_HANDLER( lsasquad_sound_command_w );
+READ8_HANDLER( lsasquad_sh_sound_command_r );
+WRITE8_HANDLER( lsasquad_sh_result_w );
+READ8_HANDLER( lsasquad_sound_result_r );
+READ8_HANDLER( lsasquad_sound_status_r );
 
-READ_HANDLER( lsasquad_68705_portA_r );
-WRITE_HANDLER( lsasquad_68705_portA_w );
-WRITE_HANDLER( lsasquad_68705_ddrA_w );
-READ_HANDLER( lsasquad_68705_portB_r );
-WRITE_HANDLER( lsasquad_68705_portB_w );
-WRITE_HANDLER( lsasquad_68705_ddrB_w );
-WRITE_HANDLER( lsasquad_mcu_w );
-READ_HANDLER( lsasquad_mcu_r );
-READ_HANDLER( lsasquad_mcu_status_r );
-
-
+READ8_HANDLER( lsasquad_68705_portA_r );
+WRITE8_HANDLER( lsasquad_68705_portA_w );
+WRITE8_HANDLER( lsasquad_68705_ddrA_w );
+READ8_HANDLER( lsasquad_68705_portB_r );
+WRITE8_HANDLER( lsasquad_68705_portB_w );
+WRITE8_HANDLER( lsasquad_68705_ddrB_w );
+WRITE8_HANDLER( lsasquad_mcu_w );
+READ8_HANDLER( lsasquad_mcu_r );
+READ8_HANDLER( lsasquad_mcu_status_r );
 
 
-WRITE_HANDLER( lsasquad_bankswitch_w )
+
+
+WRITE8_HANDLER( lsasquad_bankswitch_w )
 {
 	unsigned char *ROM = memory_region(REGION_CPU1);
 
@@ -167,12 +167,11 @@ INPUT_PORTS_START( lsasquad )
 	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
 
 	PORT_START	/* DSWB */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x02, "Easy" )
+	PORT_DIPSETTING(    0x03, "Medium" )
+	PORT_DIPSETTING(    0x01, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
 	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x08, "50000 100000" )
 	PORT_DIPSETTING(    0x0c, "80000 150000" )
@@ -304,10 +303,10 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static void irqhandler(int irq)
 {
-	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
-static WRITE_HANDLER( unk )
+static WRITE8_HANDLER( unk )
 {
 
 }

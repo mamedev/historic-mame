@@ -172,12 +172,12 @@ void pd4990a_increment_month(void)
 	}
 }
 
-READ_HANDLER( pd4990a_testbit_r )
+READ8_HANDLER( pd4990a_testbit_r )
 {
 	return (testbit);
 }
 
-READ_HANDLER( pd4990a_databit_r )
+READ8_HANDLER( pd4990a_databit_r )
 {
 	return (outputbit);
 }

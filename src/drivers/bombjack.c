@@ -71,10 +71,10 @@ NMI interrupts for music timing
 #include "state.h"
 
 
-extern WRITE_HANDLER( bombjack_videoram_w );
-extern WRITE_HANDLER( bombjack_colorram_w );
-extern WRITE_HANDLER( bombjack_background_w );
-extern WRITE_HANDLER( bombjack_flipscreen_w );
+extern WRITE8_HANDLER( bombjack_videoram_w );
+extern WRITE8_HANDLER( bombjack_colorram_w );
+extern WRITE8_HANDLER( bombjack_background_w );
+extern WRITE8_HANDLER( bombjack_flipscreen_w );
 
 extern VIDEO_START( bombjack );
 extern VIDEO_UPDATE( bombjack );
@@ -87,13 +87,13 @@ static void soundlatch_callback(int param)
 	latch = param;
 }
 
-WRITE_HANDLER( bombjack_soundlatch_w )
+WRITE8_HANDLER( bombjack_soundlatch_w )
 {
 	/* make all the CPUs synchronize, and only AFTER that write the new command to the latch */
 	timer_set(TIME_NOW,data,soundlatch_callback);
 }
 
-READ_HANDLER( bombjack_soundlatch_r )
+READ8_HANDLER( bombjack_soundlatch_r )
 {
 	int res;
 

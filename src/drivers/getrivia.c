@@ -35,7 +35,7 @@ RAM: 6117on ROM board and (24) MCM4517s on main board
 
 static data8_t *drawctrl;
 
-static WRITE_HANDLER( getrivia_bitmap_w )
+static WRITE8_HANDLER( getrivia_bitmap_w )
 {
 	int sx,sy;
 	int fg,bg,mask,bits;
@@ -69,7 +69,7 @@ static WRITE_HANDLER( getrivia_bitmap_w )
 	if (mask & 0x01) plot_pixel(tmpbitmap,sx+7,sy,(bits & 0x01) ? fg : bg);
 }
 
-static WRITE_HANDLER( lamps_w )
+static WRITE8_HANDLER( lamps_w )
 {
 	set_led_status(0,data & 0x01);
 	set_led_status(1,data & 0x02);
@@ -78,7 +78,7 @@ static WRITE_HANDLER( lamps_w )
 	set_led_status(4,data & 0x10);
 }
 
-static WRITE_HANDLER( sound_w )
+static WRITE8_HANDLER( sound_w )
 {
 	/* bit 3 used but unknown */
 
@@ -92,43 +92,43 @@ static WRITE_HANDLER( sound_w )
 //	usrintf_showmessage("%02x",data);
 }
 
-static WRITE_HANDLER( banksel_1_1_w )
+static WRITE8_HANDLER( banksel_1_1_w )
 {
 	cpu_setbank(1,memory_region(REGION_CPU1) + 0x10000);
 }
-static WRITE_HANDLER( banksel_2_1_w )
+static WRITE8_HANDLER( banksel_2_1_w )
 {
 	cpu_setbank(1,memory_region(REGION_CPU1) + 0x14000);
 }
-static WRITE_HANDLER( banksel_3_1_w )
+static WRITE8_HANDLER( banksel_3_1_w )
 {
 	cpu_setbank(1,memory_region(REGION_CPU1) + 0x18000);
 }
-static WRITE_HANDLER( banksel_4_1_w )
+static WRITE8_HANDLER( banksel_4_1_w )
 {
 	cpu_setbank(1,memory_region(REGION_CPU1) + 0x1c000);
 }
-static WRITE_HANDLER( banksel_5_1_w )
+static WRITE8_HANDLER( banksel_5_1_w )
 {
 	cpu_setbank(1,memory_region(REGION_CPU1) + 0x20000);
 }
-static WRITE_HANDLER( banksel_1_2_w )
+static WRITE8_HANDLER( banksel_1_2_w )
 {
 	cpu_setbank(1,memory_region(REGION_CPU1) + 0x12000);
 }
-static WRITE_HANDLER( banksel_2_2_w )
+static WRITE8_HANDLER( banksel_2_2_w )
 {
 	cpu_setbank(1,memory_region(REGION_CPU1) + 0x16000);
 }
-static WRITE_HANDLER( banksel_3_2_w )
+static WRITE8_HANDLER( banksel_3_2_w )
 {
 	cpu_setbank(1,memory_region(REGION_CPU1) + 0x1a000);
 }
-static WRITE_HANDLER( banksel_4_2_w )
+static WRITE8_HANDLER( banksel_4_2_w )
 {
 	cpu_setbank(1,memory_region(REGION_CPU1) + 0x1e000);
 }
-static WRITE_HANDLER( banksel_5_2_w )
+static WRITE8_HANDLER( banksel_5_2_w )
 {
 	cpu_setbank(1,memory_region(REGION_CPU1) + 0x22000);
 }
@@ -225,7 +225,7 @@ static MACHINE_INIT( getrivia )
 }
 
 static MACHINE_DRIVER_START( getrivia )
-	MDRV_CPU_ADD(Z80,4000000) /* 4 MHz ?????? (affects sound pitch) */
+	MDRV_CPU_ADD(Z80,4000000) /* 4 MHz */
 	MDRV_CPU_PROGRAM_MAP(getrivia_map,0)
 	MDRV_CPU_VBLANK_INT(nmi_line_pulse,1)
 
@@ -248,16 +248,90 @@ static MACHINE_DRIVER_START( getrivia )
 	MDRV_SOUND_ADD(DAC, dac_interface)
 MACHINE_DRIVER_END
 
-ROM_START( getrivia )
+ROM_START( gt102c )
+	ROM_REGION( 0x24000, REGION_CPU1, 0 )
+	ROM_LOAD( "prog2_right", 0x00000, 0x2000, CRC(76fdc3a3) SHA1(212e09644b9cab334aad22ec5860e8638c6ba3fa) )
+	ROM_LOAD( "prog2_left",  0x0a000, 0x2000, CRC(901fb2f9) SHA1(98e49c74d89c4911a1f4d5ccf3e6cf3226c6a178) )
+	/* Question roms */
+	ROM_LOAD( "star_trek",   0x10000, 0x4000, CRC(19764e00) SHA1(d7ed577dba02776ac58e8f34b833ed07679c0af1) )
+	ROM_LOAD( "television",  0x14000, 0x4000, CRC(413f34c8) SHA1(318f6b464449bf3f0c43c4210a667190c774eb67) )
+	ROM_LOAD( "tv_soaps",    0x18000, 0x4000, CRC(26914f3a) SHA1(aec380cea14d6acb71986f3d65c7620b16c174ae) )
+	ROM_LOAD( "tv_mash",     0x1c000, 0x4000, CRC(a86990fc) SHA1(6a11b038d48bb97feb4857546349ed93ea1f9273) )
+	ROM_LOAD( "movies-tv",   0x20000, 0x4000, CRC(e9a55dad) SHA1(c87682e72bad3507b24eb6a52b4e430e0bfcdab6) )
+ROM_END
+
+ROM_START( gt102b )
 	ROM_REGION( 0x24000, REGION_CPU1, 0 )
 	ROM_LOAD( "trivb2.bin",   0x00000, 0x2000, CRC(e8391f71) SHA1(a955eff87d622d4fcfd25f6d888c48ff82556879) )
 	ROM_LOAD( "trivb1.bin",   0x0a000, 0x2000, CRC(cc7b45a7) SHA1(c708f56feb36c1241358a42bb7dce25b799f1f0b) )
 	/* Question roms */
-	ROM_LOAD( "comc2_9.bin",  0x10000, 0x4000, CRC(8c5cd561) SHA1(1ca566acf72ce636b1b34ee6b7cafb9584340bcc) )
-	ROM_LOAD( "entr2_9.bin",  0x14000, 0x4000, CRC(b670b9e8) SHA1(0d2246fcc6c753694bc9bd1fc05ac439f24059ef) )
-	ROM_LOAD( "general5.bin", 0x18000, 0x4000, CRC(81bf07c7) SHA1(a53f050b4ef8ffc0499b50224d4bbed4af0ca09c) )
-	ROM_LOAD( "hcky5_9.bin",  0x1c000, 0x4000, CRC(4874a431) SHA1(f3c11dfbf71d101aa1a6cd3622b282a4ebe4664b) )
-	ROM_LOAD( "sprt1_9.bin",  0x20000, 0x4000, CRC(9b4a17b6) SHA1(1b5358b5bc83c2817ecfa4e277fa351a679d5023) )
+	ROM_LOAD( "comics_#1",     0x10000, 0x4000, CRC(8c5cd561) SHA1(1ca566acf72ce636b1b34ee6b7cafb9584340bcc) )
+	ROM_LOAD( "entertainment", 0x14000, 0x4000, CRC(b670b9e8) SHA1(0d2246fcc6c753694bc9bd1fc05ac439f24059ef) )
+	ROM_LOAD( "general_5",     0x18000, 0x4000, CRC(81bf07c7) SHA1(a53f050b4ef8ffc0499b50224d4bbed4af0ca09c) )
+	ROM_LOAD( "hockey",        0x1c000, 0x4000, CRC(4874a431) SHA1(f3c11dfbf71d101aa1a6cd3622b282a4ebe4664b) )
+	ROM_LOAD( "sports",        0x20000, 0x4000, CRC(9b4a17b6) SHA1(1b5358b5bc83c2817ecfa4e277fa351a679d5023) )
 ROM_END
 
-GAMEX( 1985, getrivia, 0, getrivia, getrivia, 0, ROT0, "Greyhound Electronics", "Trivia (V. 1.02B)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+ROM_START( gt102c1 )
+	ROM_REGION( 0x24000, REGION_CPU1, 0 )
+	ROM_LOAD( "prog2_right", 0x00000, 0x2000, CRC(76fdc3a3) SHA1(212e09644b9cab334aad22ec5860e8638c6ba3fa) )
+	ROM_LOAD( "prog2_left",  0x0a000, 0x2000, CRC(901fb2f9) SHA1(98e49c74d89c4911a1f4d5ccf3e6cf3226c6a178) )
+	/* Question roms */
+	ROM_LOAD( "entertainment_#1", 0x10000, 0x4000, CRC(cd3ce4c7) SHA1(4bd121fa5899a96b015605f84179ed82be0a25f3) )
+	ROM_LOAD( "sports_2",         0x14000, 0x4000, CRC(e8f8e168) SHA1(d2bc57dc0799dd8817b15857f17c4d7ee4d9f932) )
+	ROM_LOAD( "sports_2_#2",      0x18000, 0x4000, CRC(fb632622) SHA1(c14d8178f5cfc5994e2ab4f829e353fa75b57304) )
+	ROM_LOAD( "sports_3",         0x1c000, 0x4000, CRC(5986996c) SHA1(56432c15a3b0204ed527c18e24716f17bb52dc4e) )
+	ROM_LOAD( "sports_#1",        0x20000, 0x4000, CRC(cb1744f5) SHA1(ea3f7bfcecf5c58c26aa0f34908ba5d54f7279ec) )
+ROM_END
+
+ROM_START( gt102c2 )
+	ROM_REGION( 0x24000, REGION_CPU1, 0 )
+	ROM_LOAD( "prog2_right", 0x00000, 0x2000, CRC(76fdc3a3) SHA1(212e09644b9cab334aad22ec5860e8638c6ba3fa) )
+	ROM_LOAD( "prog2_left",  0x0a000, 0x2000, CRC(901fb2f9) SHA1(98e49c74d89c4911a1f4d5ccf3e6cf3226c6a178) )
+	/* Question roms */
+	ROM_LOAD( "comics",       0x10000, 0x4000, CRC(7efdfe8f) SHA1(ec255777c61677ca32c49b9da5e85e07c0647e5f) )
+	ROM_LOAD( "history-geog", 0x14000, 0x4000, CRC(76d6b026) SHA1(613809b247cb27773631a1bb34af485c2b1bd486) )
+	ROM_LOAD( "science",      0x18000, 0x4000, CRC(68259e09) SHA1(29e848b4744b767c51ff81a756fba7bf96daefec) ) 
+	ROM_LOAD( "music_#1",     0x1c000, 0x4000, CRC(1b546857) SHA1(31e04bb5016e8ef6dc48f9b3ddaeab5fe04f91c2) )
+ROM_END
+
+ROM_START( gt102c3 )
+	ROM_REGION( 0x24000, REGION_CPU1, 0 )
+	ROM_LOAD( "prog2_right", 0x00000, 0x2000, CRC(76fdc3a3) SHA1(212e09644b9cab334aad22ec5860e8638c6ba3fa) )
+	ROM_LOAD( "prog2_left",  0x0a000, 0x2000, CRC(901fb2f9) SHA1(98e49c74d89c4911a1f4d5ccf3e6cf3226c6a178) )
+	/* Question roms */
+	ROM_LOAD( "facts_of_life", 0x10000, 0x4000, CRC(1668c7bf) SHA1(6bf43de26f8a626560579ab75fd0890fe00f99dd) )
+	ROM_LOAD( "general_#1",    0x14000, 0x4000, CRC(25a0ef9d) SHA1(793abd779cc237e14933933747bbf27bbcbfcd32) )
+	ROM_LOAD( "general_2",     0x18000, 0x4000, CRC(5798f2b3) SHA1(0636017969d9b1eac5d33cfb18cb36f7cf4cba88) )
+	ROM_LOAD( "general_3",     0x1c000, 0x4000, CRC(a60f17a4) SHA1(0d79be9e2e49b9817e94d410e25bb6dcda10aa9e) )
+ROM_END
+
+ROM_START( sextriv1 )
+	ROM_REGION( 0x24000, REGION_CPU1, 0 )
+	ROM_LOAD( "prog1_right",   0x00000, 0x2000, CRC(73abcd12) SHA1(3b985f25a11507878cef6d11420e215065fb0906) )
+	ROM_LOAD( "prog1_left",    0x0a000, 0x2000, CRC(04ee6ecd) SHA1(28342fcdcf36b34fa93f1a985163ca5aab03defe) )
+	/* Question roms */
+	ROM_LOAD( "adult_sex",    0x10000, 0x4000, CRC(509a8183) SHA1(635c784860e423b22aaea94abc53c1d9477cb1df) )
+	ROM_LOAD( "arousing_sex", 0x14000, 0x4000, CRC(1dbf4578) SHA1(51a548d5fe59739e62b5f0e9e6ebc7deb8656210) )
+	ROM_LOAD( "intimate_sex", 0x18000, 0x4000, CRC(1f46b626) SHA1(04aa5306c69d130e0f84fa390a773e73c06e5e9b) )
+	ROM_LOAD( "sizzling_sex", 0x1c000, 0x4000, CRC(c718833d) SHA1(02ea341e56554dd9302fe95f45dcf446a2978917) )
+ROM_END
+
+ROM_START( sextriv2 )
+	ROM_REGION( 0x24000, REGION_CPU1, 0 )
+	ROM_LOAD( "prog1_right",     0x00000, 0x2000, CRC(73abcd12) SHA1(3b985f25a11507878cef6d11420e215065fb0906) )
+	ROM_LOAD( "prog1_left",      0x0a000, 0x2000, CRC(04ee6ecd) SHA1(28342fcdcf36b34fa93f1a985163ca5aab03defe) )
+	/* Question roms */
+	ROM_LOAD( "general_sex",     0x10000, 0x4000, CRC(36fed946) SHA1(25d445ab6cb4b6f41a1dd7104ee1141e597b2e9e) )
+	ROM_LOAD( "educational_sex", 0x14000, 0x4000, CRC(281cbe03) SHA1(9c3900cd2535f942a5cbae7edd46ac0170e04c52) )
+	ROM_LOAD( "novelty_sex",     0x18000, 0x4000, CRC(26603979) SHA1(78061741e5224b3162be51e637a2fbb9a48962a3) )
+ROM_END
+
+GAMEX( 1984, gt102c,   0,        getrivia, getrivia, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.02C)",                 GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAMEX( 1984, gt102b,   0,        getrivia, getrivia, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.02B)",                 GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAMEX( 1985, gt102c1,  gt102c, getrivia, getrivia, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.02C Alt questions 1)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAMEX( 1985, gt102c2,  gt102c, getrivia, getrivia, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.02C Alt questions 2)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAMEX( 1985, gt102c3,  gt102c, getrivia, getrivia, 0, ROT0, "Greyhound Electronics", "Trivia (Version 1.02C Alt questions 3)", GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+
+GAMEX( 1985, sextriv1, 0,        getrivia, getrivia, 0, ROT0, "Kinky Kit and Game Co.", "Sexual Trivia (Version 1.02SB set 1)",  GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )
+GAMEX( 1985, sextriv2, sextriv1, getrivia, getrivia, 0, ROT0, "Kinky Kit and Game Co.", "Sexual Trivia (Version 1.02SB set 2)",  GAME_WRONG_COLORS | GAME_IMPERFECT_SOUND )

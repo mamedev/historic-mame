@@ -95,8 +95,8 @@ extern void m6803_get_info(UINT32 state, union cpuinfo *info);
 
 #define M6803_PORT1 0x100
 #define M6803_PORT2 0x101
-READ_HANDLER( m6803_internal_registers_r );
-WRITE_HANDLER( m6803_internal_registers_w );
+READ8_HANDLER( m6803_internal_registers_r );
+WRITE8_HANDLER( m6803_internal_registers_w );
 #endif
 
 /****************************************************************************
@@ -148,8 +148,8 @@ void hd63701_trap_pc(void);
 #define HD63701_PORT1 M6803_PORT1
 #define HD63701_PORT2 M6803_PORT2
 
-READ_HANDLER( hd63701_internal_registers_r );
-WRITE_HANDLER( hd63701_internal_registers_w );
+READ8_HANDLER( hd63701_internal_registers_r );
+WRITE8_HANDLER( hd63701_internal_registers_w );
 
 #endif
 

@@ -66,15 +66,15 @@ SRAM:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-WRITE_HANDLER( ksayakyu_videoram_w );
-WRITE_HANDLER( ksayakyu_videoctrl_w );
+WRITE8_HANDLER( ksayakyu_videoram_w );
+WRITE8_HANDLER( ksayakyu_videoctrl_w );
 PALETTE_INIT( ksayakyu );
 VIDEO_START( ksayakyu );
 VIDEO_UPDATE( ksayakyu );
 
 static int sound_status=0xff;
 
-static WRITE_HANDLER( bank_select_w )
+static WRITE8_HANDLER( bank_select_w )
 {
 	/* 
 		bits:
@@ -86,18 +86,18 @@ static WRITE_HANDLER( bank_select_w )
 	cpu_setbank( 1, memory_region(REGION_CPU1) + ((data&1) * 0x4000) + 0x10000 );
 }
 
-static WRITE_HANDLER( latch_w )
+static WRITE8_HANDLER( latch_w )
 {
 	sound_status&=~0x80; 
 	soundlatch_w(0,data|0x80);
 }
 
-static READ_HANDLER (sound_status_r)
+static READ8_HANDLER (sound_status_r)
 {
 	return sound_status|4;  
 }
 
-static WRITE_HANDLER(tomaincpu_w)
+static WRITE8_HANDLER(tomaincpu_w)
 {
 	sound_status|=0x80;  
 }
@@ -173,7 +173,7 @@ INPUT_PORTS_START( ksayakyu )
 	  PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 )
 INPUT_PORTS_END
 
-static WRITE_HANDLER(dummy_w)
+static WRITE8_HANDLER(dummy_w)
 {
 	//DAC ? communication with main cpu ?
 }

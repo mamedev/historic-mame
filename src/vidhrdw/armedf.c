@@ -304,8 +304,8 @@ VIDEO_UPDATE( armedf )
 	tilemap_draw( bitmap, cliprect, tx_tilemap, 0, 0);
 	if( sprite_enable ) draw_sprites( bitmap, cliprect, 0 );
 
-	if( keyboard_pressed(KEYCODE_1 ) ||
-		keyboard_pressed(KEYCODE_2 ) )
+	if( code_pressed(KEYCODE_1 ) ||
+		code_pressed(KEYCODE_2 ) )
 	{ /* HACK! wipe the text layer */
 		unsigned i;
 		for( i=0; i<0x800; i++ )

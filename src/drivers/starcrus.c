@@ -14,19 +14,19 @@ palazzol@home.com
 #include "cpu/i8085/i8085.h"
 
 /* included from vidhrdw/starcrus.c */
-WRITE_HANDLER( starcrus_s1_x_w );
-WRITE_HANDLER( starcrus_s1_y_w );
-WRITE_HANDLER( starcrus_s2_x_w );
-WRITE_HANDLER( starcrus_s2_y_w );
-WRITE_HANDLER( starcrus_p1_x_w );
-WRITE_HANDLER( starcrus_p1_y_w );
-WRITE_HANDLER( starcrus_p2_x_w );
-WRITE_HANDLER( starcrus_p2_y_w );
-WRITE_HANDLER( starcrus_ship_parm_1_w );
-WRITE_HANDLER( starcrus_ship_parm_2_w );
-WRITE_HANDLER( starcrus_proj_parm_1_w );
-WRITE_HANDLER( starcrus_proj_parm_2_w );
-READ_HANDLER( starcrus_coll_det_r );
+WRITE8_HANDLER( starcrus_s1_x_w );
+WRITE8_HANDLER( starcrus_s1_y_w );
+WRITE8_HANDLER( starcrus_s2_x_w );
+WRITE8_HANDLER( starcrus_s2_y_w );
+WRITE8_HANDLER( starcrus_p1_x_w );
+WRITE8_HANDLER( starcrus_p1_y_w );
+WRITE8_HANDLER( starcrus_p2_x_w );
+WRITE8_HANDLER( starcrus_p2_y_w );
+WRITE8_HANDLER( starcrus_ship_parm_1_w );
+WRITE8_HANDLER( starcrus_ship_parm_2_w );
+WRITE8_HANDLER( starcrus_proj_parm_1_w );
+WRITE8_HANDLER( starcrus_proj_parm_2_w );
+READ8_HANDLER( starcrus_coll_det_r );
 extern VIDEO_START( starcrus );
 extern VIDEO_UPDATE( starcrus );
 extern int p1_sprite;

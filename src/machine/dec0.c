@@ -251,7 +251,7 @@ WRITE16_HANDLER( slyspy_24e000_w )
 static int share[0xff];
 static int hippodrm_msb,hippodrm_lsb;
 
-READ_HANDLER( hippodrm_prot_r )
+READ8_HANDLER( hippodrm_prot_r )
 {
 //logerror("6280 PC %06x - Read %06x\n",cpu_getpc(),offset+0x1d0000);
 	if (hippodrm_lsb==0x45) return 0x4e;
@@ -259,7 +259,7 @@ READ_HANDLER( hippodrm_prot_r )
 	return 0;
 }
 
-WRITE_HANDLER( hippodrm_prot_w )
+WRITE8_HANDLER( hippodrm_prot_w )
 {
 	switch (offset) {
 		case 4:	hippodrm_msb=data; break;
@@ -268,12 +268,12 @@ WRITE_HANDLER( hippodrm_prot_w )
 //logerror("6280 PC %06x - Wrote %06x to %04x\n",cpu_getpc(),data,offset+0x1d0000);
 }
 
-READ_HANDLER( hippodrm_shared_r )
+READ8_HANDLER( hippodrm_shared_r )
 {
 	return share[offset];
 }
 
-WRITE_HANDLER( hippodrm_shared_w )
+WRITE8_HANDLER( hippodrm_shared_w )
 {
 	share[offset]=data;
 }
@@ -462,7 +462,7 @@ static void *i8751_timer;
 static void i8751_callback(int param)
 {
 	/* Signal main cpu microcontroller task is complete */
-	cpu_set_irq_line(0,5,HOLD_LINE);
+	cpunum_set_input_line(0,5,HOLD_LINE);
 	i8751_timer=NULL;
 
 	logerror("i8751:  Timer called!!!\n");
@@ -475,7 +475,7 @@ void dec0_i8751_write(int data)
 	if (GAME==2) baddudes_i8751_write(data);
 	if (GAME==3) birdtry_i8751_write(data);
 
-	cpu_set_irq_line(0,5,HOLD_LINE);
+	cpunum_set_input_line(0,5,HOLD_LINE);
 
 	/* Simulate the processing time of the i8751, time value is guessed
 	if (i8751_timer)
@@ -525,7 +525,7 @@ static WRITE16_HANDLER( robocop_68000_share_w )
 	robocop_shared_ram[offset]=data&0xff;
 
 	if (offset==0x7ff) /* A control address - not standard ram */
-		cpu_set_irq_line(2,0,HOLD_LINE);
+		cpunum_set_input_line(2,0,HOLD_LINE);
 }
 
 /******************************************************************************/
@@ -544,9 +544,9 @@ DRIVER_INIT( hippodrm )
 {
 	unsigned char *RAM = memory_region(REGION_CPU3);
 
-	install_mem_read16_handler(0, 0x180000, 0x180fff, hippodrm_68000_share_r);
-	install_mem_write16_handler(0, 0x180000, 0x180fff, hippodrm_68000_share_w);
-	install_mem_write16_handler(0, 0xffc800, 0xffcfff, sprite_mirror_w);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x180000, 0x180fff, 0, 0, hippodrm_68000_share_r);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x180000, 0x180fff, 0, 0, hippodrm_68000_share_w);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xffc800, 0xffcfff, 0, 0, sprite_mirror_w);
 
 	h6280_decrypt(REGION_CPU3);
 
@@ -570,8 +570,8 @@ DRIVER_INIT( slyspy )
 
 DRIVER_INIT( robocop )
 {
-	install_mem_read16_handler( 0, 0x180000, 0x180fff, robocop_68000_share_r);
-	install_mem_write16_handler(0, 0x180000, 0x180fff, robocop_68000_share_w);
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0x180000, 0x180fff, 0, 0, robocop_68000_share_r);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x180000, 0x180fff, 0, 0, robocop_68000_share_w);
 }
 
 DRIVER_INIT( baddudes )

@@ -228,7 +228,7 @@ void midxunit_dcs_output_full(int state)
 {
 	/* only signal if not in loopback state */
 	if (uart[1] != 0x66)
-		cpu_set_irq_line(1, 1, state ? ASSERT_LINE : CLEAR_LINE);
+		cpunum_set_input_line(1, 1, state ? ASSERT_LINE : CLEAR_LINE);
 }
 
 
@@ -495,7 +495,7 @@ DRIVER_INIT( wwfmania )
 	init_wunit_generic();
 
 	/* enable I/O shuffling */
-	install_mem_write16_handler(0, 0x01800000, 0x0180000f, wwfmania_io_0_w);
+	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x01800000, 0x0180000f, 0, 0, wwfmania_io_0_w);
 
 	/* serial prefixes 430, 528 */
 	midway_serial_pic_init(528);

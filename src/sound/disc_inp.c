@@ -30,7 +30,7 @@ struct dss_adjustment_context
 };
 
 
-READ_HANDLER(discrete_sound_r)
+READ8_HANDLER(discrete_sound_r)
 {
 	int data=0;
 
@@ -47,7 +47,7 @@ READ_HANDLER(discrete_sound_r)
     return data;
 }
 
-WRITE_HANDLER(discrete_sound_w)
+WRITE8_HANDLER(discrete_sound_w)
 {
 	if (!Machine->sample_rate) return;
 

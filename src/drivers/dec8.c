@@ -59,24 +59,24 @@ VIDEO_START( srdarwin );
 VIDEO_START( gondo );
 VIDEO_START( garyoret );
 
-WRITE_HANDLER( dec8_bac06_0_w );
-WRITE_HANDLER( dec8_bac06_1_w );
-WRITE_HANDLER( dec8_pf0_data_w );
-WRITE_HANDLER( dec8_pf1_data_w );
-READ_HANDLER( dec8_pf0_data_r );
-READ_HANDLER( dec8_pf1_data_r );
-WRITE_HANDLER( srdarwin_videoram_w );
-WRITE_HANDLER( dec8_scroll1_w );
-WRITE_HANDLER( dec8_scroll2_w );
-WRITE_HANDLER( srdarwin_control_w );
-WRITE_HANDLER( gondo_scroll_w );
-WRITE_HANDLER( shackled_control_w );
-WRITE_HANDLER( lastmiss_control_w );
-WRITE_HANDLER( lastmiss_scrollx_w );
-WRITE_HANDLER( lastmiss_scrolly_w );
-WRITE_HANDLER( dec8_bac06_0_w );
-WRITE_HANDLER( dec8_bac06_1_w );
-WRITE_HANDLER( dec8_videoram_w );
+WRITE8_HANDLER( dec8_bac06_0_w );
+WRITE8_HANDLER( dec8_bac06_1_w );
+WRITE8_HANDLER( dec8_pf0_data_w );
+WRITE8_HANDLER( dec8_pf1_data_w );
+READ8_HANDLER( dec8_pf0_data_r );
+READ8_HANDLER( dec8_pf1_data_r );
+WRITE8_HANDLER( srdarwin_videoram_w );
+WRITE8_HANDLER( dec8_scroll1_w );
+WRITE8_HANDLER( dec8_scroll2_w );
+WRITE8_HANDLER( srdarwin_control_w );
+WRITE8_HANDLER( gondo_scroll_w );
+WRITE8_HANDLER( shackled_control_w );
+WRITE8_HANDLER( lastmiss_control_w );
+WRITE8_HANDLER( lastmiss_scrollx_w );
+WRITE8_HANDLER( lastmiss_scrolly_w );
+WRITE8_HANDLER( dec8_bac06_0_w );
+WRITE8_HANDLER( dec8_bac06_1_w );
+WRITE8_HANDLER( dec8_videoram_w );
 
 /******************************************************************************/
 
@@ -95,24 +95,24 @@ static VIDEO_EOF( dec8 )
 	buffer_spriteram_w(0,0);
 }
 
-static READ_HANDLER( i8751_h_r )
+static READ8_HANDLER( i8751_h_r )
 {
 	return i8751_return>>8; /* MSB */
 }
 
-static READ_HANDLER( i8751_l_r )
+static READ8_HANDLER( i8751_l_r )
 {
 	return i8751_return&0xff; /* LSB */
 }
 
-static WRITE_HANDLER( i8751_reset_w )
+static WRITE8_HANDLER( i8751_reset_w )
 {
 	i8751_return=0;
 }
 
 /******************************************************************************/
 
-static READ_HANDLER( gondo_player_1_r )
+static READ8_HANDLER( gondo_player_1_r )
 {
 	switch (offset) {
 		case 0: /* Rotary low byte */
@@ -123,7 +123,7 @@ static READ_HANDLER( gondo_player_1_r )
 	return 0xff;
 }
 
-static READ_HANDLER( gondo_player_2_r )
+static READ8_HANDLER( gondo_player_2_r )
 {
 	switch (offset) {
 		case 0: /* Rotary low byte */
@@ -136,7 +136,7 @@ static READ_HANDLER( gondo_player_2_r )
 
 /******************************************************************************/
 
-static WRITE_HANDLER( ghostb_i8751_w )
+static WRITE8_HANDLER( ghostb_i8751_w )
 {
 	i8751_return=0;
 
@@ -154,7 +154,7 @@ static WRITE_HANDLER( ghostb_i8751_w )
 	if (i8751_value==0x021b) i8751_return=0x6e4; /* Meikyuu Hunter G ID */
 }
 
-static WRITE_HANDLER( srdarwin_i8751_w )
+static WRITE8_HANDLER( srdarwin_i8751_w )
 {
 	static int coins,latch;
 	i8751_return=0;
@@ -227,7 +227,7 @@ bb63           = Square things again
 	if (i8751_value==0x800a) i8751_return=0xf580 + 42; /* End Game(bad address?) */
 }
 
-static WRITE_HANDLER( gondo_i8751_w )
+static WRITE8_HANDLER( gondo_i8751_w )
 {
 	static int coin1,coin2,latch,snd;
 	i8751_return=0;
@@ -235,7 +235,7 @@ static WRITE_HANDLER( gondo_i8751_w )
 	switch (offset) {
 	case 0: /* High byte */
 		i8751_value=(i8751_value&0xff) | (data<<8);
-		if (int_enable) cpu_set_irq_line (0, M6809_IRQ_LINE, HOLD_LINE); /* IRQ on *high* byte only */
+		if (int_enable) cpunum_set_input_line (0, M6809_IRQ_LINE, HOLD_LINE); /* IRQ on *high* byte only */
 		break;
 	case 1: /* Low byte */
 		i8751_value=(i8751_value&0xff00) | data;
@@ -260,7 +260,7 @@ static WRITE_HANDLER( gondo_i8751_w )
 	if ((i8751_value>>8)==0x0a) {i8751_return=0xa00 | snd; if (snd) snd=0; }
 }
 
-static WRITE_HANDLER( shackled_i8751_w )
+static WRITE8_HANDLER( shackled_i8751_w )
 {
 	static int coin1,coin2,latch=0;
 	i8751_return=0;
@@ -268,7 +268,7 @@ static WRITE_HANDLER( shackled_i8751_w )
 	switch (offset) {
 	case 0: /* High byte */
 		i8751_value=(i8751_value&0xff) | (data<<8);
-		cpu_set_irq_line (1, M6809_FIRQ_LINE, HOLD_LINE); /* Signal main cpu */
+		cpunum_set_input_line (1, M6809_FIRQ_LINE, HOLD_LINE); /* Signal main cpu */
 		break;
 	case 1: /* Low byte */
 		i8751_value=(i8751_value&0xff00) | data;
@@ -288,7 +288,7 @@ static WRITE_HANDLER( shackled_i8751_w )
 			((((coin1 / 10) << 4) | (coin1 % 10))<<8); /* Coins */
 }
 
-static WRITE_HANDLER( lastmiss_i8751_w )
+static WRITE8_HANDLER( lastmiss_i8751_w )
 {
 	static int coin,latch=0,snd;
 	i8751_return=0;
@@ -296,7 +296,7 @@ static WRITE_HANDLER( lastmiss_i8751_w )
 	switch (offset) {
 	case 0: /* High byte */
 		i8751_value=(i8751_value&0xff) | (data<<8);
-		cpu_set_irq_line (0, M6809_FIRQ_LINE, HOLD_LINE); /* Signal main cpu */
+		cpunum_set_input_line (0, M6809_FIRQ_LINE, HOLD_LINE); /* Signal main cpu */
 		break;
 	case 1: /* Low byte */
 		i8751_value=(i8751_value&0xff00) | data;
@@ -316,7 +316,7 @@ static WRITE_HANDLER( lastmiss_i8751_w )
 	if ((i8751_value>>8)==0x03) {i8751_return=0; coin--; } /* Coin clear */
 }
 
-static WRITE_HANDLER( csilver_i8751_w )
+static WRITE8_HANDLER( csilver_i8751_w )
 {
 	static int coin,latch=0,snd;
 	i8751_return=0;
@@ -324,7 +324,7 @@ static WRITE_HANDLER( csilver_i8751_w )
 	switch (offset) {
 	case 0: /* High byte */
 		i8751_value=(i8751_value&0xff) | (data<<8);
-		cpu_set_irq_line (0, M6809_FIRQ_LINE, HOLD_LINE); /* Signal main cpu */
+		cpunum_set_input_line (0, M6809_FIRQ_LINE, HOLD_LINE); /* Signal main cpu */
 		break;
 	case 1: /* Low byte */
 		i8751_value=(i8751_value&0xff00) | data;
@@ -341,7 +341,7 @@ static WRITE_HANDLER( csilver_i8751_w )
 	if (i8751_value==0x0003 && coin) {i8751_return=0; coin--;} /* Coin Clear */
 }
 
-static WRITE_HANDLER( garyoret_i8751_w )
+static WRITE8_HANDLER( garyoret_i8751_w )
 {
 	static int coin1,coin2,latch;
 	i8751_return=0;
@@ -370,7 +370,7 @@ static WRITE_HANDLER( garyoret_i8751_w )
 
 /******************************************************************************/
 
-static WRITE_HANDLER( dec8_bank_w )
+static WRITE8_HANDLER( dec8_bank_w )
 {
  	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -380,7 +380,7 @@ static WRITE_HANDLER( dec8_bank_w )
 }
 
 /* Used by Ghostbusters, Meikyuu Hunter G & Gondomania */
-static WRITE_HANDLER( ghostb_bank_w )
+static WRITE8_HANDLER( ghostb_bank_w )
 {
  	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -400,7 +400,7 @@ static WRITE_HANDLER( ghostb_bank_w )
 	flip_screen_set(data & 0x08);
 }
 
-WRITE_HANDLER( csilver_control_w )
+WRITE8_HANDLER( csilver_control_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -414,16 +414,16 @@ WRITE_HANDLER( csilver_control_w )
 	cpu_setbank(1,&RAM[0x10000 + (data & 0x0f) * 0x4000]);
 }
 
-static WRITE_HANDLER( dec8_sound_w )
+static WRITE8_HANDLER( dec8_sound_w )
 {
  	soundlatch_w(0,data);
-	cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
+	cpunum_set_input_line(1,INPUT_LINE_NMI,PULSE_LINE);
 }
 
-static WRITE_HANDLER( oscar_sound_w )
+static WRITE8_HANDLER( oscar_sound_w )
 {
  	soundlatch_w(0,data);
-	cpu_set_irq_line(2,IRQ_LINE_NMI,PULSE_LINE);
+	cpunum_set_input_line(2,INPUT_LINE_NMI,PULSE_LINE);
 }
 
 static void csilver_adpcm_int(int data)
@@ -432,24 +432,24 @@ static void csilver_adpcm_int(int data)
 
 	toggle ^= 1;
 	if (toggle)
-		cpu_set_irq_line(2,M6502_IRQ_LINE,HOLD_LINE);
+		cpunum_set_input_line(2,M6502_IRQ_LINE,HOLD_LINE);
 
 	MSM5205_data_w (0,msm5205next>>4);
 	msm5205next<<=4;
 }
 
-static READ_HANDLER( csilver_adpcm_reset_r )
+static READ8_HANDLER( csilver_adpcm_reset_r )
 {
 	MSM5205_reset_w(0,0);
 	return 0;
 }
 
-static WRITE_HANDLER( csilver_adpcm_data_w )
+static WRITE8_HANDLER( csilver_adpcm_data_w )
 {
 	msm5205next = data;
 }
 
-static WRITE_HANDLER( csilver_sound_bank_w )
+static WRITE8_HANDLER( csilver_sound_bank_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU3);
 
@@ -459,27 +459,27 @@ static WRITE_HANDLER( csilver_sound_bank_w )
 
 /******************************************************************************/
 
-static WRITE_HANDLER( oscar_int_w )
+static WRITE8_HANDLER( oscar_int_w )
 {
 	/* Deal with interrupts, coins also generate NMI to CPU 0 */
 	switch (offset) {
 		case 0: /* IRQ2 */
-			cpu_set_irq_line(1,M6809_IRQ_LINE,ASSERT_LINE);
+			cpunum_set_input_line(1,M6809_IRQ_LINE,ASSERT_LINE);
 			return;
 		case 1: /* IRC 1 */
-			cpu_set_irq_line(0,M6809_IRQ_LINE,CLEAR_LINE);
+			cpunum_set_input_line(0,M6809_IRQ_LINE,CLEAR_LINE);
 			return;
 		case 2: /* IRQ 1 */
-			cpu_set_irq_line(0,M6809_IRQ_LINE,ASSERT_LINE);
+			cpunum_set_input_line(0,M6809_IRQ_LINE,ASSERT_LINE);
 			return;
 		case 3: /* IRC 2 */
-			cpu_set_irq_line(1,M6809_IRQ_LINE,CLEAR_LINE);
+			cpunum_set_input_line(1,M6809_IRQ_LINE,CLEAR_LINE);
 			return;
 	}
 }
 
 /* Used by Shackled, Last Mission, Captain Silver */
-static WRITE_HANDLER( shackled_int_w )
+static WRITE8_HANDLER( shackled_int_w )
 {
 #if 0
 /* This is correct, but the cpus in Shackled need an interleave of about 5000!
@@ -487,18 +487,18 @@ static WRITE_HANDLER( shackled_int_w )
 	(The last interrupt has not finished and been ack'd when the new one occurs */
 	switch (offset) {
 		case 0: /* CPU 2 - IRQ acknowledge */
-			cpu_set_irq_line(1,M6809_IRQ_LINE,CLEAR_LINE);
+			cpunum_set_input_line(1,M6809_IRQ_LINE,CLEAR_LINE);
             return;
         case 1: /* CPU 1 - IRQ acknowledge */
-			cpu_set_irq_line(0,M6809_IRQ_LINE,CLEAR_LINE);
+			cpunum_set_input_line(0,M6809_IRQ_LINE,CLEAR_LINE);
         	return;
         case 2: /* i8751 - FIRQ acknowledge */
             return;
         case 3: /* IRQ 1 */
-			cpu_set_irq_line(0,M6809_IRQ_LINE,ASSERT_LINE);
+			cpunum_set_input_line(0,M6809_IRQ_LINE,ASSERT_LINE);
 			return;
         case 4: /* IRQ 2 */
-            cpu_set_irq_line(1,M6809_IRQ_LINE,ASSERT_LINE);
+            cpunum_set_input_line(1,M6809_IRQ_LINE,ASSERT_LINE);
             return;
 	}
 #endif
@@ -511,23 +511,23 @@ static WRITE_HANDLER( shackled_int_w )
         case 2: /* i8751 - FIRQ acknowledge */
             return;
         case 3: /* IRQ 1 */
-			cpu_set_irq_line (0, M6809_IRQ_LINE, HOLD_LINE);
+			cpunum_set_input_line (0, M6809_IRQ_LINE, HOLD_LINE);
 			return;
         case 4: /* IRQ 2 */
-            cpu_set_irq_line (1, M6809_IRQ_LINE, HOLD_LINE);
+            cpunum_set_input_line (1, M6809_IRQ_LINE, HOLD_LINE);
             return;
 	}
 }
 
 /******************************************************************************/
 
-static READ_HANDLER( dec8_share_r ) { return dec8_shared_ram[offset]; }
-static READ_HANDLER( dec8_share2_r ) { return dec8_shared2_ram[offset]; }
-static WRITE_HANDLER( dec8_share_w ) { dec8_shared_ram[offset]=data; }
-static WRITE_HANDLER( dec8_share2_w ) { dec8_shared2_ram[offset]=data; }
-static READ_HANDLER( shackled_sprite_r ) { return spriteram[offset]; }
-static WRITE_HANDLER( shackled_sprite_w ) { spriteram[offset]=data; }
-static WRITE_HANDLER( flip_screen_w ) {	flip_screen_set(data); }
+static READ8_HANDLER( dec8_share_r ) { return dec8_shared_ram[offset]; }
+static READ8_HANDLER( dec8_share2_r ) { return dec8_shared2_ram[offset]; }
+static WRITE8_HANDLER( dec8_share_w ) { dec8_shared_ram[offset]=data; }
+static WRITE8_HANDLER( dec8_share2_w ) { dec8_shared2_ram[offset]=data; }
+static READ8_HANDLER( shackled_sprite_r ) { return spriteram[offset]; }
+static WRITE8_HANDLER( shackled_sprite_w ) { spriteram[offset]=data; }
+static WRITE8_HANDLER( flip_screen_w ) {	flip_screen_set(data); }
 
 /******************************************************************************/
 
@@ -2012,12 +2012,12 @@ static struct YM2203interface ym2203_interface =
 /* handler called by the 3812 emulator when the internal timers cause an IRQ */
 static void irqhandler(int linestate)
 {
-	cpu_set_irq_line(1,0,linestate); /* M6502_IRQ_LINE */
+	cpunum_set_input_line(1,0,linestate); /* M6502_IRQ_LINE */
 }
 
 static void oscar_irqhandler(int linestate)
 {
-	cpu_set_irq_line(2,0,linestate); /* M6502_IRQ_LINE */
+	cpunum_set_input_line(2,0,linestate); /* M6502_IRQ_LINE */
 }
 
 static struct YM3526interface ym3526_interface =
@@ -2066,18 +2066,18 @@ static INTERRUPT_GEN( ghostb_interrupt )
 	if ((i8751_out & 0x2) == 0x2) latch[2]=1;
 	if ((i8751_out & 0x1) == 0x1) latch[3]=1;
 
-	if (((i8751_out & 0x8) != 0x8) && latch[0]) {latch[0]=0; cpu_set_irq_line(0,M6809_IRQ_LINE,HOLD_LINE); i8751_return=0x8001; } /* Player 1 coin */
-	if (((i8751_out & 0x4) != 0x4) && latch[1]) {latch[1]=0; cpu_set_irq_line(0,M6809_IRQ_LINE,HOLD_LINE); i8751_return=0x4001; } /* Player 2 coin */
-	if (((i8751_out & 0x2) != 0x2) && latch[2]) {latch[2]=0; cpu_set_irq_line(0,M6809_IRQ_LINE,HOLD_LINE); i8751_return=0x2001; } /* Player 3 coin */
-	if (((i8751_out & 0x1) != 0x1) && latch[3]) {latch[3]=0; cpu_set_irq_line(0,M6809_IRQ_LINE,HOLD_LINE); i8751_return=0x1001; } /* Service */
+	if (((i8751_out & 0x8) != 0x8) && latch[0]) {latch[0]=0; cpunum_set_input_line(0,M6809_IRQ_LINE,HOLD_LINE); i8751_return=0x8001; } /* Player 1 coin */
+	if (((i8751_out & 0x4) != 0x4) && latch[1]) {latch[1]=0; cpunum_set_input_line(0,M6809_IRQ_LINE,HOLD_LINE); i8751_return=0x4001; } /* Player 2 coin */
+	if (((i8751_out & 0x2) != 0x2) && latch[2]) {latch[2]=0; cpunum_set_input_line(0,M6809_IRQ_LINE,HOLD_LINE); i8751_return=0x2001; } /* Player 3 coin */
+	if (((i8751_out & 0x1) != 0x1) && latch[3]) {latch[3]=0; cpunum_set_input_line(0,M6809_IRQ_LINE,HOLD_LINE); i8751_return=0x1001; } /* Service */
 
-	if (nmi_enable) cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE); /* VBL */
+	if (nmi_enable) cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE); /* VBL */
 }
 
 static INTERRUPT_GEN( gondo_interrupt )
 {
 	if (nmi_enable)
-		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE); /* VBL */
+		cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE); /* VBL */
 }
 
 /* Coins generate NMI's */
@@ -2088,7 +2088,7 @@ static INTERRUPT_GEN( oscar_interrupt )
 	if ((readinputport(2) & 0x7) == 0x7) latch=1;
 	if (latch && (readinputport(2) & 0x7) != 0x7) {
 		latch=0;
-    	cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+    	cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
     }
 }
 

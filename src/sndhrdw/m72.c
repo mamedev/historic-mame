@@ -97,11 +97,11 @@ static void setvector_callback(int param)
 	if (irqvector == 0)
 		logerror("You didn't call m72_init_sound()\n");
 
-	cpu_irq_line_vector_w(1,0,irqvector);
+	cpunum_set_input_line_vector(1,0,irqvector);
 	if (irqvector == 0xff)	/* no IRQs pending */
-		cpu_set_irq_line(1,0,CLEAR_LINE);
+		cpunum_set_input_line(1,0,CLEAR_LINE);
 	else	/* IRQ pending */
-		cpu_set_irq_line(1,0,ASSERT_LINE);
+		cpunum_set_input_line(1,0,ASSERT_LINE);
 }
 
 MACHINE_INIT( m72_sound )
@@ -120,7 +120,7 @@ void m72_ym2151_irq_handler(int irq)
 		timer_set(TIME_NOW,YM2151_CLEAR,setvector_callback);
 }
 
-WRITE_HANDLER( m72_sound_command_w )
+WRITE8_HANDLER( m72_sound_command_w )
 {
 	if (offset == 0)
 	{
@@ -129,7 +129,7 @@ WRITE_HANDLER( m72_sound_command_w )
 	}
 }
 
-WRITE_HANDLER( m72_sound_irq_ack_w )
+WRITE8_HANDLER( m72_sound_irq_ack_w )
 {
 	timer_set(TIME_NOW,Z80_CLEAR,setvector_callback);
 }
@@ -141,7 +141,7 @@ void m72_set_sample_start(int start)
 	sample_addr = start;
 }
 
-WRITE_HANDLER( vigilant_sample_addr_w )
+WRITE8_HANDLER( vigilant_sample_addr_w )
 {
 	if (offset == 1)
 		sample_addr = (sample_addr & 0x00ff) | ((data << 8) & 0xff00);
@@ -149,7 +149,7 @@ WRITE_HANDLER( vigilant_sample_addr_w )
 		sample_addr = (sample_addr & 0xff00) | ((data << 0) & 0x00ff);
 }
 
-WRITE_HANDLER( shisen_sample_addr_w )
+WRITE8_HANDLER( shisen_sample_addr_w )
 {
 	sample_addr >>= 2;
 
@@ -161,7 +161,7 @@ WRITE_HANDLER( shisen_sample_addr_w )
 	sample_addr <<= 2;
 }
 
-WRITE_HANDLER( rtype2_sample_addr_w )
+WRITE8_HANDLER( rtype2_sample_addr_w )
 {
 	sample_addr >>= 5;
 
@@ -173,7 +173,7 @@ WRITE_HANDLER( rtype2_sample_addr_w )
 	sample_addr <<= 5;
 }
 
-WRITE_HANDLER( poundfor_sample_addr_w )
+WRITE8_HANDLER( poundfor_sample_addr_w )
 {
 	/* poundfor writes both sample start and sample END - a first for Irem...
 	   we don't handle the end written here, 00 marks the sample end as usual. */
@@ -189,12 +189,12 @@ WRITE_HANDLER( poundfor_sample_addr_w )
 	sample_addr <<= 4;
 }
 
-READ_HANDLER( m72_sample_r )
+READ8_HANDLER( m72_sample_r )
 {
 	return memory_region(REGION_SOUND1)[sample_addr];
 }
 
-WRITE_HANDLER( m72_sample_w )
+WRITE8_HANDLER( m72_sample_w )
 {
 	DAC_signed_data_w(0,data);
 	sample_addr = (sample_addr + 1) & (memory_region_length(REGION_SOUND1) - 1);

@@ -74,7 +74,7 @@ WRITE16_HANDLER( bigkarnk_sound_command_w )
 {
 	if (ACCESSING_LSB){
 		soundlatch_w(0,data & 0xff);
-		cpu_set_irq_line(1,M6809_FIRQ_LINE,HOLD_LINE);
+		cpunum_set_input_line(1,M6809_FIRQ_LINE,HOLD_LINE);
 	}
 }
 
@@ -292,6 +292,7 @@ VIDEO_UPDATE( maniacsq );
 static ADDRESS_MAP_START( maniacsq_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)			/* ROM */
 	AM_RANGE(0x100000, 0x101fff) AM_READ(MRA16_RAM)			/* Video RAM */
+	AM_RANGE(0x102000, 0x103fff) AM_READ(MRA16_RAM)			/* Screen RAM */
 	AM_RANGE(0x200000, 0x2007ff) AM_READ(MRA16_RAM)			/* Palette */
 	AM_RANGE(0x440000, 0x440fff) AM_READ(MRA16_RAM)			/* Sprite RAM */
 	AM_RANGE(0x700000, 0x700001) AM_READ(input_port_0_word_r)/* DIPSW #2 */
@@ -314,6 +315,7 @@ static WRITE16_HANDLER( OKIM6295_bankswitch_w )
 static ADDRESS_MAP_START( maniacsq_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)								/* ROM */
 	AM_RANGE(0x100000, 0x101fff) AM_WRITE(gaelco_vram_w) AM_BASE(&gaelco_videoram)		/* Video RAM */
+	AM_RANGE(0x102000, 0x103fff) AM_WRITE(MWA16_RAM)								/* Screen RAM */
 	AM_RANGE(0x108000, 0x108007) AM_WRITE(MWA16_RAM) AM_BASE(&gaelco_vregs)				/* Video Registers */
 //	AM_RANGE(0x10800c, 0x10800d) AM_WRITE(watchdog_reset_w)						/* INT 6 ACK/Watchdog timer */
 	AM_RANGE(0x200000, 0x2007ff) AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)/* Palette */
@@ -324,7 +326,7 @@ static ADDRESS_MAP_START( maniacsq_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 ADDRESS_MAP_END
 
 
-INPUT_PORTS_START( maniacsq )
+static INPUT_PORTS_START( maniacsq )
 
 PORT_START	/* DSW #2 */
 	PORT_SERVICE( 0x01, IP_ACTIVE_LOW )
@@ -399,7 +401,7 @@ PORT_START	/* 2P INPUTS & STARTSW */
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( biomtoy )
+static INPUT_PORTS_START( biomtoy )
 	PORT_START	/* DSW #2 */
 	PORT_SERVICE( 0x01, IP_ACTIVE_LOW )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
@@ -563,8 +565,75 @@ ROM_START( biomtoy )
 	ROM_LOAD( "c3",	0x0c0000, 0x080000, CRC(914e4bbc) SHA1(ca82b7481621a119f05992ed093b963da70d748a) )
 ROM_END
 
+/*============================================================================
+					SQUASH & THUNDER HOOP
+============================================================================*/
 
+static MACHINE_DRIVER_START( squash )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 12000000)	/* MC68000P12, 12 MHz */
+	MDRV_CPU_PROGRAM_MAP(maniacsq_readmem,maniacsq_writemem)
+	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(10)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(32*16, 32*16)
+	MDRV_VISIBLE_AREA(0, 320-1, 16, 256-1)
+	MDRV_GFXDECODE(gfxdecodeinfo_0x100000)
+	MDRV_PALETTE_LENGTH(1024)
+
+	MDRV_VIDEO_START(bigkarnk)
+	MDRV_VIDEO_UPDATE(bigkarnk)
+
+	/* sound hardware */
+	MDRV_SOUND_ADD(OKIM6295, bigkarnk_okim6295_interface)
+MACHINE_DRIVER_END
+
+/* missing DS5002FP code and encrypted video ram */
+ROM_START( squash )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )	/* 68000 code */
+	ROM_LOAD16_BYTE( "squash.d18", 0x000000, 0x20000, CRC(ce7aae96) SHA1(4fe8666ae571bffc5a08fa68346c0623282989eb) )
+	ROM_LOAD16_BYTE( "squash.d16", 0x000001, 0x20000, CRC(8ffaedd7) SHA1(f4aada17ba67dd8b6c5a395e832bcbba2764c59d) )
+
+	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "squash.c09", 0x000000, 0x80000, CRC(0bb91c69) SHA1(8be945049ab411a4d49bd64bd3937542ec9ef9fb) )
+	ROM_RELOAD(		        0x080000, 0x080000 )
+	ROM_LOAD( "squash.c10", 0x100000, 0x80000, CRC(892a035c) SHA1(d0156ceb9aa6639a1124c17fb12389be319bb51f) )
+	ROM_RELOAD(		        0x180000, 0x080000 )
+	ROM_LOAD( "squash.c11", 0x200000, 0x80000, CRC(9e19694d) SHA1(1df4646f3147719fef516a37aa361ae26d9b23a2) )
+	ROM_RELOAD(		        0x280000, 0x080000 )
+	ROM_LOAD( "squash.c12", 0x300000, 0x80000, CRC(5c440645) SHA1(4f2fc1647ffc549fa079f2dc0aaaceb447afdf44) )
+	ROM_RELOAD(		        0x380000, 0x080000 )
+
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* ADPCM samples - sound chip is OKIM6295 */
+	ROM_LOAD( "squash.d01",   0x000000, 0x80000, CRC(a1b9651b) SHA1(a396ba94889f70ea06d6330e3606b0f2497ff6ce) )
+ROM_END
+
+/* missing DS5002FP code and encrypted video ram */
+ROM_START( thoop )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )	/* 68000 code */
+	//does it need to be half the size?
+	ROM_LOAD16_BYTE( "th18dea1.040", 0x000000, 0x80000, CRC(59bad625) SHA1(28e058b2290bc5f7130b801014d026432f9e7fd5) ) 
+	ROM_LOAD16_BYTE( "th161eb4.020", 0x000001, 0x40000, CRC(6add61ed) SHA1(0e789d9a0ac19b6143044fbc04ab2227735b2a8f) ) 
+	
+
+	ROM_REGION( 0x400000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "c09", 0x000000, 0x100000, CRC(06f0edbf) SHA1(3cf2e5c29cd00b43d49a106084076f2ac0dbad98) )
+	ROM_LOAD( "c10", 0x100000, 0x100000, CRC(2d227085) SHA1(b224efd59ec83bb786fa92a23ef2d27ed36cab6c) )
+	ROM_LOAD( "c11", 0x200000, 0x100000, CRC(7403ef7e) SHA1(52a737816e25a07ada070ed3a5f40bbbd22ac8e0) )
+	ROM_LOAD( "c12", 0x300000, 0x100000, CRC(29a5ca36) SHA1(fdcfdefb3b02bfe34781fdd0295640caabe2a5fb) )
+	
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* ADPCM samples - sound chip is OKIM6295 */
+	ROM_LOAD( "sound", 0x000000, 0x100000, CRC(99f80961) SHA1(de3a514a8f46dffd5f762e52aac1f4c3b08e2e18) )
+ROM_END
 
 GAME( 1991, bigkarnk, 0,        bigkarnk, bigkarnk, 0, ROT0, "Gaelco", "Big Karnak" )
 GAME( 1995, biomtoy,  0,        maniacsq, biomtoy,  0, ROT0, "Gaelco", "Biomechanical Toy (unprotected)" )
 GAME( 1996, maniacsp, maniacsq, maniacsq, maniacsq, 0, ROT0, "Gaelco", "Maniac Square (prototype)" )
+GAMEX(1992, squash,   0,		squash,   bigkarnk, 0, ROT0, "Gaelco", "Squash (Ver. 1.0)", GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION )
+GAMEX(1992, thoop,    0,		squash,   bigkarnk, 0, ROT0, "Gaelco", "Thunder Hoop",      GAME_NOT_WORKING | GAME_UNEMULATED_PROTECTION )

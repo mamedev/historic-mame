@@ -25,7 +25,7 @@ static struct mame_bitmap *screen_bitmap;
         0x01    = Scroll MSB
 */
 
-WRITE_HANDLER( battlane_palette_w )
+WRITE8_HANDLER( battlane_palette_w )
 {
 	int r, g, b;
 	int bit0, bit1, bit2;
@@ -54,17 +54,17 @@ WRITE_HANDLER( battlane_palette_w )
 	palette_set_color(offset, r, g, b);
 }
 
-WRITE_HANDLER( battlane_scrollx_w )
+WRITE8_HANDLER( battlane_scrollx_w )
 {
 	tilemap_set_scrollx(bg_tilemap, 0, ((battlane_video_ctrl & 0x01) << 8) + data);
 }
 
-WRITE_HANDLER( battlane_scrolly_w )
+WRITE8_HANDLER( battlane_scrolly_w )
 {
 	tilemap_set_scrolly(bg_tilemap, 0, ((battlane_cpu_control & 0x01) << 8) + data);
 }
 
-WRITE_HANDLER( battlane_tileram_w )
+WRITE8_HANDLER( battlane_tileram_w )
 {
 	if (battlane_tileram[offset] != data)
 	{
@@ -73,12 +73,12 @@ WRITE_HANDLER( battlane_tileram_w )
 	}
 }
 
-WRITE_HANDLER( battlane_spriteram_w )
+WRITE8_HANDLER( battlane_spriteram_w )
 {
     battlane_spriteram[offset] = data;
 }
 
-WRITE_HANDLER( battlane_bitmap_w )
+WRITE8_HANDLER( battlane_bitmap_w )
 {
 	int i, orval;
 
@@ -100,7 +100,7 @@ WRITE_HANDLER( battlane_bitmap_w )
 	}
 }
 
-WRITE_HANDLER( battlane_video_ctrl_w )
+WRITE8_HANDLER( battlane_video_ctrl_w )
 {
 	battlane_video_ctrl = data;
 }

@@ -29,25 +29,25 @@ MACHINE_INIT( jackal )
 
 
 
-READ_HANDLER( jackal_zram_r )
+READ8_HANDLER( jackal_zram_r )
 {
 	return jackal_rambank[0x0020+offset];
 }
 
 
-READ_HANDLER( jackal_voram_r )
+READ8_HANDLER( jackal_voram_r )
 {
 	return jackal_rambank[0x2000+offset];
 }
 
 
-READ_HANDLER( jackal_spriteram_r )
+READ8_HANDLER( jackal_spriteram_r )
 {
 	return jackal_spritebank[0x3000+offset];
 }
 
 
-WRITE_HANDLER( jackal_rambank_w )
+WRITE8_HANDLER( jackal_rambank_w )
 {
 if (data & 0xc4) usrintf_showmessage("jackal_rambank_w %02x",data);
 	coin_counter_w(0,data & 0x01);
@@ -58,13 +58,13 @@ if (data & 0xc4) usrintf_showmessage("jackal_rambank_w %02x",data);
 }
 
 
-WRITE_HANDLER( jackal_zram_w )
+WRITE8_HANDLER( jackal_zram_w )
 {
 	jackal_rambank[0x0020+offset] = data;
 }
 
 
-WRITE_HANDLER( jackal_voram_w )
+WRITE8_HANDLER( jackal_voram_w )
 {
 	if ((offset & 0xF800) == 0)
 	{
@@ -74,7 +74,7 @@ WRITE_HANDLER( jackal_voram_w )
 }
 
 
-WRITE_HANDLER( jackal_spriteram_w )
+WRITE8_HANDLER( jackal_spriteram_w )
 {
 	jackal_spritebank[0x3000+offset] = data;
 }

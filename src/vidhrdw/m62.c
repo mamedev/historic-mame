@@ -238,7 +238,7 @@ static void register_savestate(void)
 	state_save_register_UINT8("video", 0, "irem_textram",            irem_textram,   irem_textram_size);
 }
 
-WRITE_HANDLER( m62_flipscreen_w )
+WRITE8_HANDLER( m62_flipscreen_w )
 {
 	/* screen flip is handled both by software and hardware */
 	data ^= ~readinputport(4) & 1;
@@ -253,33 +253,33 @@ WRITE_HANDLER( m62_flipscreen_w )
 	coin_counter_w(1,data & 4);
 }
 
-WRITE_HANDLER( m62_hscroll_low_w )
+WRITE8_HANDLER( m62_hscroll_low_w )
 {
 	m62_background_hscroll = ( m62_background_hscroll & 0xff00 ) | data;
 }
 
-WRITE_HANDLER( m62_hscroll_high_w )
+WRITE8_HANDLER( m62_hscroll_high_w )
 {
 	m62_background_hscroll = ( m62_background_hscroll & 0xff ) | ( data << 8 );
 }
 
-WRITE_HANDLER( m62_vscroll_low_w )
+WRITE8_HANDLER( m62_vscroll_low_w )
 {
 	m62_background_vscroll = ( m62_background_vscroll & 0xff00 ) | data;
 }
 
-WRITE_HANDLER( m62_vscroll_high_w )
+WRITE8_HANDLER( m62_vscroll_high_w )
 {
 	m62_background_vscroll = ( m62_background_vscroll & 0xff ) | ( data << 8 );
 }
 
-WRITE_HANDLER( m62_tileram_w )
+WRITE8_HANDLER( m62_tileram_w )
 {
 	m62_tileram[ offset ] = data;
 	tilemap_mark_tile_dirty( m62_background, offset >> 1 );
 }
 
-WRITE_HANDLER( m62_textram_w )
+WRITE8_HANDLER( m62_textram_w )
 {
 	m62_textram[ offset ] = data;
 	tilemap_mark_tile_dirty( m62_foreground, offset >> 1 );
@@ -396,7 +396,7 @@ int m62_textlayer( void (*tile_get_info)( int memory_offset ), int rows, int col
 	return 0;
 }
 
-WRITE_HANDLER( kungfum_tileram_w )
+WRITE8_HANDLER( kungfum_tileram_w )
 {
 	m62_tileram[ offset ] = data;
 	tilemap_mark_tile_dirty( m62_background, offset & 0x7ff );
@@ -612,17 +612,17 @@ VIDEO_START( lotlot )
 }
 
 
-WRITE_HANDLER( kidniki_text_vscroll_low_w )
+WRITE8_HANDLER( kidniki_text_vscroll_low_w )
 {
 	kidniki_text_vscroll = (kidniki_text_vscroll & 0xff00) | data;
 }
 
-WRITE_HANDLER( kidniki_text_vscroll_high_w )
+WRITE8_HANDLER( kidniki_text_vscroll_high_w )
 {
 	kidniki_text_vscroll = (kidniki_text_vscroll & 0xff) | (data << 8);
 }
 
-WRITE_HANDLER( kidniki_background_bank_w )
+WRITE8_HANDLER( kidniki_background_bank_w )
 {
 	if (kidniki_background_bank != (data & 1))
 	{
@@ -668,7 +668,7 @@ VIDEO_START( kidniki )
 }
 
 
-WRITE_HANDLER( spelunkr_palbank_w )
+WRITE8_HANDLER( spelunkr_palbank_w )
 {
 	if (spelunkr_palbank != (data & 0x01))
 	{
@@ -715,7 +715,7 @@ VIDEO_START( spelunkr )
 }
 
 
-WRITE_HANDLER( spelunk2_gfxport_w )
+WRITE8_HANDLER( spelunk2_gfxport_w )
 {
 	m62_hscroll_high_w(0,(data&2)>>1);
 	m62_vscroll_high_w(0,(data&1));
@@ -801,7 +801,7 @@ VIDEO_START( youjyudn )
 }
 
 
-WRITE_HANDLER( horizon_scrollram_w )
+WRITE8_HANDLER( horizon_scrollram_w )
 {
 	horizon_scrollram[ offset ] = data;
 }

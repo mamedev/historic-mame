@@ -99,13 +99,13 @@ static offs_t speedup_pc;
 
 static void irq5_gen(int param)
 {
-	cpu_set_irq_line(0, R3000_IRQ5, ASSERT_LINE);
+	cpunum_set_input_line(0, R3000_IRQ5, ASSERT_LINE);
 }
 
 
 static INTERRUPT_GEN( irq4_gen )
 {
-	cpu_set_irq_line(0, R3000_IRQ4, ASSERT_LINE);
+	cpunum_set_input_line(0, R3000_IRQ4, ASSERT_LINE);
 	timer_set(cpu_getscanlinetime(0), 0, irq5_gen);
 }
 
@@ -580,7 +580,7 @@ ROM_END
 
 static DRIVER_INIT( policetr )
 {
-	speedup_data = install_mem_write32_handler(0, 0x00000fc8, 0x00000fcb, speedup_w);
+	speedup_data = memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00000fc8, 0x00000fcb, 0, 0, speedup_w);
 	speedup_pc = 0x1fc028ac;
 
 	memcpy(rom_base, memory_region(REGION_USER1), memory_region_length(REGION_USER1));
@@ -589,7 +589,7 @@ static DRIVER_INIT( policetr )
 
 static DRIVER_INIT( sshooter )
 {
-	speedup_data = install_mem_write32_handler(0, 0x00018fd8, 0x00018fdb, speedup_w);
+	speedup_data = memory_install_write32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00018fd8, 0x00018fdb, 0, 0, speedup_w);
 	speedup_pc = 0x1fc03470;
 
 	memcpy(rom_base, memory_region(REGION_USER1), memory_region_length(REGION_USER1));

@@ -38,7 +38,7 @@ PALETTE_INIT( bogeyman )
 	}
 }
 
-WRITE_HANDLER( bogeyman_videoram_w )
+WRITE8_HANDLER( bogeyman_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -47,7 +47,7 @@ WRITE_HANDLER( bogeyman_videoram_w )
 	}
 }
 
-WRITE_HANDLER( bogeyman_colorram_w )
+WRITE8_HANDLER( bogeyman_colorram_w )
 {
 	if (colorram[offset] != data)
 	{
@@ -56,7 +56,7 @@ WRITE_HANDLER( bogeyman_colorram_w )
 	}
 }
 
-WRITE_HANDLER( bogeyman_videoram2_w )
+WRITE8_HANDLER( bogeyman_videoram2_w )
 {
 	if (bogeyman_videoram2[offset] != data)
 	{
@@ -65,7 +65,7 @@ WRITE_HANDLER( bogeyman_videoram2_w )
 	}
 }
 
-WRITE_HANDLER( bogeyman_colorram2_w )
+WRITE8_HANDLER( bogeyman_colorram2_w )
 {
 	if (bogeyman_colorram2[offset] != data)
 	{
@@ -74,7 +74,7 @@ WRITE_HANDLER( bogeyman_colorram2_w )
 	}
 }
 
-WRITE_HANDLER( bogeyman_paletteram_w )
+WRITE8_HANDLER( bogeyman_paletteram_w )
 {
 	/* RGB output is inverted */
 	paletteram_BBGGGRRR_w(offset, ~data);

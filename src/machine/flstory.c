@@ -26,19 +26,19 @@ static int mcu_sent = 0,main_sent = 0;
 
 static unsigned char portA_in,portA_out,ddrA;
 
-READ_HANDLER( flstory_68705_portA_r )
+READ8_HANDLER( flstory_68705_portA_r )
 {
 //logerror("%04x: 68705 port A read %02x\n",activecpu_get_pc(),portA_in);
 	return (portA_out & ddrA) | (portA_in & ~ddrA);
 }
 
-WRITE_HANDLER( flstory_68705_portA_w )
+WRITE8_HANDLER( flstory_68705_portA_w )
 {
 //logerror("%04x: 68705 port A write %02x\n",activecpu_get_pc(),data);
 	portA_out = data;
 }
 
-WRITE_HANDLER( flstory_68705_ddrA_w )
+WRITE8_HANDLER( flstory_68705_ddrA_w )
 {
 	ddrA = data;
 }
@@ -56,19 +56,19 @@ WRITE_HANDLER( flstory_68705_ddrA_w )
 
 static unsigned char portB_in,portB_out,ddrB;
 
-READ_HANDLER( flstory_68705_portB_r )
+READ8_HANDLER( flstory_68705_portB_r )
 {
 	return (portB_out & ddrB) | (portB_in & ~ddrB);
 }
 
-WRITE_HANDLER( flstory_68705_portB_w )
+WRITE8_HANDLER( flstory_68705_portB_w )
 {
 //logerror("%04x: 68705 port B write %02x\n",activecpu_get_pc(),data);
 
 	if ((ddrB & 0x02) && (~data & 0x02) && (portB_out & 0x02))
 	{
 		portA_in = from_main;
-		if (main_sent) cpu_set_irq_line(2,0,CLEAR_LINE);
+		if (main_sent) cpunum_set_input_line(2,0,CLEAR_LINE);
 		main_sent = 0;
 logerror("read command %02x from main cpu\n",portA_in);
 	}
@@ -82,7 +82,7 @@ logerror("send command %02x to main cpu\n",portA_out);
 	portB_out = data;
 }
 
-WRITE_HANDLER( flstory_68705_ddrB_w )
+WRITE8_HANDLER( flstory_68705_ddrB_w )
 {
 	ddrB = data;
 }
@@ -90,7 +90,7 @@ WRITE_HANDLER( flstory_68705_ddrB_w )
 
 static unsigned char portC_in,portC_out,ddrC;
 
-READ_HANDLER( flstory_68705_portC_r )
+READ8_HANDLER( flstory_68705_portC_r )
 {
 	portC_in = 0;
 	if (main_sent) portC_in |= 0x01;
@@ -99,33 +99,33 @@ READ_HANDLER( flstory_68705_portC_r )
 	return (portC_out & ddrC) | (portC_in & ~ddrC);
 }
 
-WRITE_HANDLER( flstory_68705_portC_w )
+WRITE8_HANDLER( flstory_68705_portC_w )
 {
 logerror("%04x: 68705 port C write %02x\n",activecpu_get_pc(),data);
 	portC_out = data;
 }
 
-WRITE_HANDLER( flstory_68705_ddrC_w )
+WRITE8_HANDLER( flstory_68705_ddrC_w )
 {
 	ddrC = data;
 }
 
-WRITE_HANDLER( flstory_mcu_w )
+WRITE8_HANDLER( flstory_mcu_w )
 {
 logerror("%04x: mcu_w %02x\n",activecpu_get_pc(),data);
 	from_main = data;
 	main_sent = 1;
-	cpu_set_irq_line(2,0,ASSERT_LINE);
+	cpunum_set_input_line(2,0,ASSERT_LINE);
 }
 
-READ_HANDLER( flstory_mcu_r )
+READ8_HANDLER( flstory_mcu_r )
 {
 logerror("%04x: mcu_r %02x\n",activecpu_get_pc(),from_mcu);
 	mcu_sent = 0;
 	return from_mcu;
 }
 
-READ_HANDLER( flstory_mcu_status_r )
+READ8_HANDLER( flstory_mcu_status_r )
 {
 	int res = 0;
 
@@ -138,7 +138,7 @@ READ_HANDLER( flstory_mcu_status_r )
 	return res;
 }
 
-WRITE_HANDLER( onna34ro_mcu_w )
+WRITE8_HANDLER( onna34ro_mcu_w )
 {
 	data8_t *RAM = memory_region(REGION_CPU1);
 	UINT16 score_adr = RAM[0xe29e]*0x100 + RAM[0xe29d];
@@ -165,12 +165,12 @@ WRITE_HANDLER( onna34ro_mcu_w )
 	}
 }
 
-READ_HANDLER( onna34ro_mcu_r )
+READ8_HANDLER( onna34ro_mcu_r )
 {
 	return from_mcu;
 }
 
-READ_HANDLER( onna34ro_mcu_status_r )
+READ8_HANDLER( onna34ro_mcu_status_r )
 {
 	int res = 3;
 
@@ -218,7 +218,7 @@ static data8_t victnine_mcu_data[0x100] =
 
 static int mcu_select = 0;
 
-WRITE_HANDLER( victnine_mcu_w )
+WRITE8_HANDLER( victnine_mcu_w )
 {
 	data8_t seed = VICTNINE_MCU_SEED;
 
@@ -256,14 +256,14 @@ WRITE_HANDLER( victnine_mcu_w )
 	}
 }
 
-READ_HANDLER( victnine_mcu_r )
+READ8_HANDLER( victnine_mcu_r )
 {
 	//logerror("%04x: mcu read (0x%02x)\n", activecpu_get_previouspc(), from_mcu);
 
 	return from_mcu - VICTNINE_MCU_SEED;
 }
 
-READ_HANDLER( victnine_mcu_status_r )
+READ8_HANDLER( victnine_mcu_status_r )
 {
 	int res = 3;
 

@@ -69,25 +69,25 @@ extern data8_t *wc90_scroll2ylo, *wc90_scroll2yhi;
 
 VIDEO_START( wc90 );
 VIDEO_START( wc90t );
-WRITE_HANDLER( wc90_fgvideoram_w );
-WRITE_HANDLER( wc90_bgvideoram_w );
-WRITE_HANDLER( wc90_txvideoram_w );
+WRITE8_HANDLER( wc90_fgvideoram_w );
+WRITE8_HANDLER( wc90_bgvideoram_w );
+WRITE8_HANDLER( wc90_txvideoram_w );
 VIDEO_UPDATE( wc90 );
 
 
 static data8_t *wc90_shared;
 
-static READ_HANDLER( wc90_shared_r )
+static READ8_HANDLER( wc90_shared_r )
 {
 	return wc90_shared[offset];
 }
 
-static WRITE_HANDLER( wc90_shared_w )
+static WRITE8_HANDLER( wc90_shared_w )
 {
 	wc90_shared[offset] = data;
 }
 
-static WRITE_HANDLER( wc90_bankswitch_w )
+static WRITE8_HANDLER( wc90_bankswitch_w )
 {
 	int bankaddress;
 	data8_t *RAM = memory_region(REGION_CPU1);
@@ -97,7 +97,7 @@ static WRITE_HANDLER( wc90_bankswitch_w )
 	cpu_setbank( 1,&RAM[bankaddress] );
 }
 
-static WRITE_HANDLER( wc90_bankswitch1_w )
+static WRITE8_HANDLER( wc90_bankswitch1_w )
 {
 	int bankaddress;
 	data8_t *RAM = memory_region(REGION_CPU2);
@@ -107,10 +107,10 @@ static WRITE_HANDLER( wc90_bankswitch1_w )
 	cpu_setbank( 2,&RAM[bankaddress] );
 }
 
-static WRITE_HANDLER( wc90_sound_command_w )
+static WRITE8_HANDLER( wc90_sound_command_w )
 {
 	soundlatch_w(offset,data);
-	cpu_set_irq_line(2,IRQ_LINE_NMI,PULSE_LINE);
+	cpunum_set_input_line(2,INPUT_LINE_NMI,PULSE_LINE);
 }
 
 
@@ -337,7 +337,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 /* handler called by the 2608 emulator when the internal timers cause an IRQ */
 static void irqhandler(int irq)
 {
-	cpu_set_irq_line(2,0,irq ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(2,0,irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2608interface ym2608_interface =

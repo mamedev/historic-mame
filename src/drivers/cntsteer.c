@@ -160,7 +160,7 @@ VIDEO_UPDATE( zerotrgt )
 static int rot2=0,zoom=0;
 static int scroll=0;
 
-	if (keyboard_pressed_memory(KEYCODE_Q))
+	if (code_pressed_memory(KEYCODE_Q))
 	{
 		colo++;
 		printf("colo = %X\n",colo);
@@ -168,7 +168,7 @@ static int scroll=0;
 		tilemap_mark_all_tiles_dirty(fg_tilemap);
 	}
 
-	if (keyboard_pressed_memory(KEYCODE_W))
+	if (code_pressed_memory(KEYCODE_W))
 	{
 		colo--;
 		printf("colo = %X\n",colo);
@@ -177,56 +177,56 @@ static int scroll=0;
 	}
 
 
-	if (keyboard_pressed_memory(KEYCODE_E))
+	if (code_pressed_memory(KEYCODE_E))
 	{
 		rot2++;
 		printf("rot2 = %X\n",rot2);
 	}
 
-	if (keyboard_pressed_memory(KEYCODE_R))
+	if (code_pressed_memory(KEYCODE_R))
 	{
 		rot2--;
 		printf("rot2 = %X\n",rot2);
 	}
 
-	if (keyboard_pressed_memory(KEYCODE_T))
+	if (code_pressed_memory(KEYCODE_T))
 	{
 		zoom+=0x100;
 		printf("zoom= %X\n",zoom);
 	}
 
-	if (keyboard_pressed_memory(KEYCODE_Y))
+	if (code_pressed_memory(KEYCODE_Y))
 	{
 		zoom-=0x100;
 		printf("zoom= %X\n",zoom);
 	}
 
-	if (keyboard_pressed_memory(KEYCODE_A))
+	if (code_pressed_memory(KEYCODE_A))
 	{
 		scroll+=0x10;
 		printf("scroll = %d\n",scroll);
 	}
 
-	if (keyboard_pressed_memory(KEYCODE_S))
+	if (code_pressed_memory(KEYCODE_S))
 	{
 		scroll-=0x10;
 		printf("scroll = %d\n",scroll);
 	}
 
 
-	if (keyboard_pressed_memory(KEYCODE_I))
+	if (code_pressed_memory(KEYCODE_I))
 	{
 		scrollx+=0x10;
 		printf("scrollx = %d\n",scrollx);
 	}
 
-	if (keyboard_pressed_memory(KEYCODE_O))
+	if (code_pressed_memory(KEYCODE_O))
 	{
 		scrollx-=0x10;
 		printf("scrollx = %d\n",scrollx);
 	}
 
-//	if (keyboard_pressed(KEYCODE_A)) cpu_cause_interrupt(0,M6809_INT_IRQ);
+//	if (code_pressed(KEYCODE_A)) cpu_cause_interrupt(0,M6809_INT_IRQ);
 
 
 //	spriteram=batwings_ram+0x100;
@@ -279,7 +279,7 @@ for (i = 0;i < 8;i+=2)
 }
 
 
-WRITE_HANDLER( cntsteer_foreground_w )
+WRITE8_HANDLER( cntsteer_foreground_w )
 {
 	if( videoram[offset] != data )
 	{
@@ -288,7 +288,7 @@ WRITE_HANDLER( cntsteer_foreground_w )
 	}
 }
 
-WRITE_HANDLER( cntsteer_background_w )
+WRITE8_HANDLER( cntsteer_background_w )
 {
 	if( videoram2[offset] != data )
 	{
@@ -297,49 +297,49 @@ WRITE_HANDLER( cntsteer_background_w )
 	}
 }
 
-static WRITE_HANDLER( gekitsui_int_w )
+static WRITE8_HANDLER( gekitsui_int_w )
 {
 //	if (errorlog) fprintf(errorlog,"%04x: CPU 2 causes NMI\n",cpu_get_pc());
-	cpu_set_nmi_line(0, ASSERT_LINE);
+	cpunum_set_input_line(0, INPUT_LINE_NMI, ASSERT_LINE);
 }
-static WRITE_HANDLER( gekitsui_int2_w ) // not used..
+static WRITE8_HANDLER( gekitsui_int2_w ) // not used..
 {
 //	if (errorlog) fprintf(errorlog,"%04x: CPU 1 causes IRQ\n",cpu_get_pc());
-	cpu_set_irq_line(1, M6809_IRQ_LINE, ASSERT_LINE);
+	cpunum_set_input_line(1, M6809_IRQ_LINE, ASSERT_LINE);
 }
 
-static WRITE_HANDLER( gekitsui_sub_irq_ack )
+static WRITE8_HANDLER( gekitsui_sub_irq_ack )
 {
-	cpu_set_irq_line(1, M6809_IRQ_LINE, CLEAR_LINE);
+	cpunum_set_input_line(1, M6809_IRQ_LINE, CLEAR_LINE);
 }
 
-static WRITE_HANDLER( cntsteer_int_w )
+static WRITE8_HANDLER( cntsteer_int_w )
 {
-	cpu_set_irq_line(0, M6809_IRQ_LINE, ASSERT_LINE);
+	cpunum_set_input_line(0, M6809_IRQ_LINE, ASSERT_LINE);
 }
 
-static WRITE_HANDLER( cntsteer_sound_w )
+static WRITE8_HANDLER( cntsteer_sound_w )
 {
  	soundlatch_w(0,data);
 }
 
-static WRITE_HANDLER( zerotrgt_ctrl_w )
+static WRITE8_HANDLER( zerotrgt_ctrl_w )
 {
 	logerror("CTRL: %04x: %04x: %04x\n",activecpu_get_pc(),offset,data);
-//	if (offset==0) cpu_set_reset_line(1, ASSERT_LINE);
+//	if (offset==0) cpunum_set_input_line(1, INPUT_LINE_RESET, ASSERT_LINE);
 
 	// Wrong - bits 0 & 1 used on this
-	if (offset==1) cpu_set_irq_line(1, M6809_IRQ_LINE, ASSERT_LINE);
-//	if (offset==2) cpu_set_reset_line(1, CLEAR_LINE);
+	if (offset==1) cpunum_set_input_line(1, M6809_IRQ_LINE, ASSERT_LINE);
+//	if (offset==2) cpunum_set_input_line(1, INPUT_LINE_RESET, CLEAR_LINE);
 }
 
-static WRITE_HANDLER( cntsteer_halt_cpu0_w )
+static WRITE8_HANDLER( cntsteer_halt_cpu0_w )
 {
 //	if (errorlog) fprintf(errorlog,"%04x: CPU halt %02x\n",cpu_get_pc(),data);
 //	cpu_halt(0,0); /* Halt cpu */
 }
 
-static WRITE_HANDLER( cntsteer_restart_cpu0_w )
+static WRITE8_HANDLER( cntsteer_restart_cpu0_w )
 {
 //	if (errorlog) fprintf(errorlog,"%04x: CPU restart %02x\n",cpu_get_pc(),data);
 //if (data&0x4)	cpu_halt(0,1); /* Restart cpu */
@@ -395,7 +395,7 @@ static ADDRESS_MAP_START( gekitsui_cpu1_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x8000, 0xffff) AM_ROM
 ADDRESS_MAP_END
 
-static WRITE_HANDLER(scrivi)
+static WRITE8_HANDLER(scrivi)
 {
 	static int newdata[5] = {-1,-1,-1,-1,-1};
 	if(offset == 0)
@@ -479,9 +479,9 @@ ADDRESS_MAP_END
 /***************************************************************************/
 
 static int nmimask;
-static WRITE_HANDLER( nmimask_w ) { nmimask = data & 0x80; }
+static WRITE8_HANDLER( nmimask_w ) { nmimask = data & 0x80; }
 
-static INTERRUPT_GEN ( sound_interrupt ) { if (!nmimask) cpu_set_nmi_line(2, PULSE_LINE); }
+static INTERRUPT_GEN ( sound_interrupt ) { if (!nmimask) cpunum_set_input_line(2, INPUT_LINE_NMI, PULSE_LINE); }
 
 static ADDRESS_MAP_START( sound_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x01ff) AM_RAM
@@ -892,40 +892,40 @@ ROM_END
 
 ROM_START( gekitsui )
 	ROM_REGION( 0x10000, REGION_CPU1, 0 )
- 	ROM_LOAD( "ct01", 0x8000, 0x8000, CRC(d3d82d8d) )
+ 	ROM_LOAD( "ct01", 0x8000, 0x8000, CRC(d3d82d8d) SHA1(c175c626d4cb89a2d82740c04892092db6faf616) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )
-	ROM_LOAD( "ct08.16a",  0x4000, 0x4000,  CRC(7e8db408) )
-	ROM_LOAD( "cty07.14a", 0x8000, 0x4000,  CRC(119b6211) )
-	ROM_LOAD( "ct06.13a",  0xc000, 0x4000,  CRC(bce5adad) )
+	ROM_LOAD( "ct08.16a",  0x4000, 0x4000,  CRC(7e8db408) SHA1(2ae407d15645753a2a0d691c9f1cf1eb383d3e8a) )
+	ROM_LOAD( "cty07.14a", 0x8000, 0x4000,  CRC(119b6211) SHA1(2042f06387d34fad6b63bcb8ac6f9b06377f634d) )
+	ROM_LOAD( "ct06.13a",  0xc000, 0x4000,  CRC(bce5adad) SHA1(86c4eef0d68679a24bab6460b49640a498f32ecd) )
 
 	ROM_REGION( 0x10000, REGION_CPU3, 0 )
-	ROM_LOAD( "ct00.1c",  0xe000, 0x2000,  CRC(ae091b6c) )
+	ROM_LOAD( "ct00.1c",  0xe000, 0x2000,  CRC(ae091b6c) SHA1(8b3a1c0acbfa56f05bcf65677f85d70c8c9640d6) )
 
 	ROM_REGION( 0x04000, REGION_GFX1, ROMREGION_DISPOSE )
-	ROM_LOAD( "ct05", 0x00000, 0x4000, CRC(b9e997a1) )	/* Characters */
+	ROM_LOAD( "ct05", 0x00000, 0x4000, CRC(b9e997a1) SHA1(5891cb0984bf4a1ccd80ef338c47e3d5705a1331) )	/* Characters */
 
 	ROM_REGION( 0x18000, REGION_GFX2, ROMREGION_DISPOSE ) /* Sprites */
-	ROM_LOAD( "ct02.14c", 0x00000, 0x8000, CRC(d2a0bb72) )
-	ROM_LOAD( "ct03.15c", 0x08000, 0x8000, CRC(79f2be20) )
-	ROM_LOAD( "ct04.17c", 0x10000, 0x8000, CRC(1037cce8) )
+	ROM_LOAD( "ct02.14c", 0x00000, 0x8000, CRC(d2a0bb72) SHA1(ee060f8db0b1fa1ba1034bf94cf44ff6820660bd) )
+	ROM_LOAD( "ct03.15c", 0x08000, 0x8000, CRC(79f2be20) SHA1(62cf55d9163d522b7cb0e760f0d5662c529a22e9) )
+	ROM_LOAD( "ct04.17c", 0x10000, 0x8000, CRC(1037cce8) SHA1(11e49e29f9b60fbf36a301a566f233eb6150d519) )
 
 	ROM_REGION( 0x80000, REGION_GFX3, ROMREGION_DISPOSE ) /* Tiles */
-	ROM_LOAD( "ct09.4j",  0x00000, 0x4000, CRC(8c859d41) )
-	ROM_LOAD( "ct11.7j",  0x10000, 0x4000, CRC(5da2d9d8) )
-	ROM_LOAD( "ct13.10j", 0x20000, 0x4000, CRC(b004cedd) )
-	ROM_LOAD( "ct15.13j", 0x30000, 0x4000, CRC(4473fe66) )
+	ROM_LOAD( "ct09.4j",  0x00000, 0x4000, CRC(8c859d41) SHA1(8095e83de81d2c9f270a303322ddf84568e3d37a) )
+	ROM_LOAD( "ct11.7j",  0x10000, 0x4000, CRC(5da2d9d8) SHA1(d2cfdbf892bce3667545568998aa03bfd03155c5) )
+	ROM_LOAD( "ct13.10j", 0x20000, 0x4000, CRC(b004cedd) SHA1(2a503ea14c66805b37f25096ecfec19a07cdc387) )
+	ROM_LOAD( "ct15.13j", 0x30000, 0x4000, CRC(4473fe66) SHA1(0accbcb801f58df410af305a87a960e526f8a25a) )
 	/* roms from REGION_GFX4 are expanded here */
 
 	ROM_REGION( 0x40000, REGION_GFX4, ROMREGION_DISPOSE ) /* Tiles */
-	ROM_LOAD( "ct10.6j",  0x00000, 0x2000, CRC(16073975) )
-	ROM_LOAD( "ct12.9j",  0x10000, 0x2000, CRC(9776974e) )
-	ROM_LOAD( "ct14.12j", 0x20000, 0x2000, CRC(5f77e84d) )
-	ROM_LOAD( "ct16.15j", 0x30000, 0x2000, CRC(ebed04d3) )
+	ROM_LOAD( "ct10.6j",  0x00000, 0x2000, CRC(16073975) SHA1(124128db649116d675503b03310ebbd919d5a837) )
+	ROM_LOAD( "ct12.9j",  0x10000, 0x2000, CRC(9776974e) SHA1(7e944379c3ff3211c84bd4b48cebbd52c586ff88) )
+	ROM_LOAD( "ct14.12j", 0x20000, 0x2000, CRC(5f77e84d) SHA1(ef7a53ad40ef5d3b7ceecb174099b8f2adfda92e) )
+	ROM_LOAD( "ct16.15j", 0x30000, 0x2000, CRC(ebed04d3) SHA1(df5484ab44ddf91fddbb895606875b6733b03a51) )
 
 	ROM_REGION( 0x200, REGION_PROMS, 0 )
-	ROM_LOAD( "mb7118h.7k",  0x0000, 0x100,  CRC(4a7c187a) )
-	ROM_LOAD( "mb7052.6k",   0x0100, 0x100,  CRC(cc9c7d43) )
+	ROM_LOAD( "mb7118h.7k",  0x0000, 0x100, CRC(4a7c187a) SHA1(2463ed582b77252a798b946cc831c4edd6e6b31f) )
+	ROM_LOAD( "mb7052.6k",   0x0100, 0x100, CRC(cc9c7d43) SHA1(707fcc9579bae4233903142efa7dfee7d463ae9a) )
 ROM_END
 
 /***************************************************************************/

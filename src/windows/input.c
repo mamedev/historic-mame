@@ -1967,7 +1967,7 @@ void osd_customize_inputport_defaults(struct ipd *defaults)
 	// if a custom controller has been selected
 	if (ctrlrtype && *ctrlrtype != 0 && (stricmp(ctrlrtype,"Standard") != 0))
 	{
-		const struct InputPortTiny* input = Machine->gamedrv->input_ports;
+		const struct InputPort* input = Machine->input_ports;
 		int paddle = 0, dial = 0, trackball = 0, adstick = 0, pedal = 0, lightgun = 0;
 
 		// process the controller-specific default file

@@ -23,7 +23,7 @@ static int xcenter, ycenter;
 
 static void cchasm_refresh_end (int dummy)
 {
-    cpu_set_irq_line (0, 2, ASSERT_LINE);
+    cpunum_set_input_line (0, 2, ASSERT_LINE);
 }
 
 static void cchasm_refresh (void)
@@ -114,7 +114,7 @@ WRITE16_HANDLER( cchasm_refresh_control_w )
 			cchasm_refresh();
 			break;
 		case 0xf7:
-			cpu_set_irq_line (0, 2, CLEAR_LINE);
+			cpunum_set_input_line (0, 2, CLEAR_LINE);
 			break;
 		}
 	}

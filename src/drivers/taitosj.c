@@ -129,22 +129,22 @@ Kickstart Wheelie King :
 
 
 MACHINE_INIT( taitosj );
-WRITE_HANDLER( taitosj_bankswitch_w );
-READ_HANDLER( taitosj_fake_data_r );
-READ_HANDLER( taitosj_fake_status_r );
-WRITE_HANDLER( taitosj_fake_data_w );
-READ_HANDLER( taitosj_mcu_data_r );
-READ_HANDLER( taitosj_mcu_status_r );
-WRITE_HANDLER( taitosj_mcu_data_w );
-READ_HANDLER( taitosj_68705_portA_r );
-READ_HANDLER( taitosj_68705_portB_r );
-READ_HANDLER( taitosj_68705_portC_r );
-WRITE_HANDLER( taitosj_68705_portA_w );
-WRITE_HANDLER( taitosj_68705_portB_w );
+WRITE8_HANDLER( taitosj_bankswitch_w );
+READ8_HANDLER( taitosj_fake_data_r );
+READ8_HANDLER( taitosj_fake_status_r );
+WRITE8_HANDLER( taitosj_fake_data_w );
+READ8_HANDLER( taitosj_mcu_data_r );
+READ8_HANDLER( taitosj_mcu_status_r );
+WRITE8_HANDLER( taitosj_mcu_data_w );
+READ8_HANDLER( taitosj_68705_portA_r );
+READ8_HANDLER( taitosj_68705_portB_r );
+READ8_HANDLER( taitosj_68705_portC_r );
+WRITE8_HANDLER( taitosj_68705_portA_w );
+WRITE8_HANDLER( taitosj_68705_portB_w );
 
-WRITE_HANDLER( alpine_protection_w );
-WRITE_HANDLER( alpinea_bankswitch_w );
-READ_HANDLER( alpine_port_2_r );
+WRITE8_HANDLER( alpine_protection_w );
+WRITE8_HANDLER( alpinea_bankswitch_w );
+READ8_HANDLER( alpine_port_2_r );
 
 extern unsigned char *taitosj_videoram2,*taitosj_videoram3;
 extern unsigned char *taitosj_characterram;
@@ -154,31 +154,31 @@ extern unsigned char *taitosj_gfxpointer;
 extern unsigned char *taitosj_colorbank,*taitosj_video_priority;
 extern unsigned char *kikstart_scrollram;
 PALETTE_INIT( taitosj );
-READ_HANDLER( taitosj_gfxrom_r );
-WRITE_HANDLER( taitosj_videoram2_w );
-WRITE_HANDLER( taitosj_videoram3_w );
-WRITE_HANDLER( taitosj_paletteram_w );
-WRITE_HANDLER( taitosj_colorbank_w );
-WRITE_HANDLER( taitosj_videoenable_w );
-WRITE_HANDLER( taitosj_characterram_w );
-WRITE_HANDLER( junglhbr_characterram_w );
-READ_HANDLER( taitosj_collision_reg_r );
-WRITE_HANDLER( taitosj_collision_reg_clear_w );
+READ8_HANDLER( taitosj_gfxrom_r );
+WRITE8_HANDLER( taitosj_videoram2_w );
+WRITE8_HANDLER( taitosj_videoram3_w );
+WRITE8_HANDLER( taitosj_paletteram_w );
+WRITE8_HANDLER( taitosj_colorbank_w );
+WRITE8_HANDLER( taitosj_videoenable_w );
+WRITE8_HANDLER( taitosj_characterram_w );
+WRITE8_HANDLER( junglhbr_characterram_w );
+READ8_HANDLER( taitosj_collision_reg_r );
+WRITE8_HANDLER( taitosj_collision_reg_clear_w );
 VIDEO_START( taitosj );
 VIDEO_UPDATE( taitosj );
 
 
 static int sndnmi_disable = 1;
 
-static WRITE_HANDLER( taitosj_sndnmi_msk_w )
+static WRITE8_HANDLER( taitosj_sndnmi_msk_w )
 {
 	sndnmi_disable = data & 0x01;
 }
 
-static WRITE_HANDLER( taitosj_soundcommand_w )
+static WRITE8_HANDLER( taitosj_soundcommand_w )
 {
 	soundlatch_w(offset,data);
-	if (!sndnmi_disable) cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
+	if (!sndnmi_disable) cpunum_set_input_line(1,INPUT_LINE_NMI,PULSE_LINE);
 }
 
 
@@ -277,7 +277,7 @@ ADDRESS_MAP_END
 /* seems the most logical way to do the gears */
 static int kikstart_gear;
 
-static READ_HANDLER ( kikstart_gears_read )
+static READ8_HANDLER ( kikstart_gears_read )
 {
 	/* gear MUST be 1, 2 or 3 */
 
@@ -2714,21 +2714,21 @@ ROM_END
 static DRIVER_INIT( alpine )
 {
 	/* install protection handlers */
-	install_mem_read_handler (0, 0xd40b, 0xd40b, alpine_port_2_r);
-	install_mem_write_handler(0, 0xd50f, 0xd50f, alpine_protection_w);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd40b, 0xd40b, 0, 0, alpine_port_2_r);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd50f, 0xd50f, 0, 0, alpine_protection_w);
 }
 
 static DRIVER_INIT( alpinea )
 {
 	/* install protection handlers */
-	install_mem_read_handler (0, 0xd40b, 0xd40b, alpine_port_2_r);
-	install_mem_write_handler(0, 0xd50e, 0xd50e, alpinea_bankswitch_w);
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd40b, 0xd40b, 0, 0, alpine_port_2_r);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xd50e, 0xd50e, 0, 0, alpinea_bankswitch_w);
 }
 
 static DRIVER_INIT( junglhbr )
 {
 	/* inverter on bits 0 and 1 */
-	install_mem_write_handler (0, 0x9000, 0xbfff, junglhbr_characterram_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0x9000, 0xbfff, 0, 0, junglhbr_characterram_w);
 }
 
 static DRIVER_INIT( kikstart )

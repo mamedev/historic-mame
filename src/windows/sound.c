@@ -21,7 +21,7 @@
 #include "window.h"
 #include "video.h"
 #include "rc.h"
-
+#include "sound/wavwrite.h"
 
 
 //============================================================
@@ -113,12 +113,16 @@ static int					is_enabled = 1;
 static FILE *				sound_log;
 #endif
 
+static char *				wavwrite;
+static void *				wavptr;
+
 // sound options (none at this time)
 struct rc_option sound_opts[] =
 {
 	// name, shortname, type, dest, deflt, min, max, func, help
 	{ "Windows sound options", NULL, rc_seperator, NULL, NULL, 0, 0, NULL, NULL },
 	{ "audio_latency", NULL, rc_int, &audio_latency, "1", 1, 4, NULL, "set audio latency (increase to reduce glitches)" },
+	{ "wavwrite", NULL, rc_string, &wavwrite, NULL, 0, 0, NULL, "save sound in wav file" },
 	{ NULL,	NULL, rc_end, NULL, NULL, 0, 0,	NULL, NULL }
 };
 
@@ -182,6 +186,16 @@ int osd_start_audio_stream(int stereo)
 	samples_this_frame = (UINT32)samples_left_over;
 	samples_left_over -= (double)samples_this_frame;
 
+	// create wav file
+	if( wavwrite != NULL )
+	{
+		wavptr = wav_open( wavwrite, Machine->sample_rate, (Machine->drv->sound_attributes & SOUND_SUPPORTS_STEREO) ? 2 : 1 );
+	}
+	else
+	{
+		wavptr = NULL;
+	}
+
 	// return the samples to play the first frame
 	return samples_this_frame;
 }
@@ -208,6 +222,12 @@ void osd_stop_audio_stream(void)
 	// if nothing to do, don't do it
 	if (Machine->sample_rate == 0)
 		return;
+
+	if( wavptr != NULL )
+	{
+		wav_close( wavptr );
+		wavptr = NULL;
+	}
 
 	// kill the buffers and dsound
 	dsound_destroy_buffers();
@@ -370,6 +390,16 @@ int osd_update_audio_stream(INT16 *buffer)
 		final_bytes = bytes_in_stream_buffer();
 		if (final_bytes < original_bytes)
 			buffer_overflows++;
+	}
+
+	if( Machine->sample_rate != 0 && wavptr != NULL )
+	{
+		int samples = samples_this_frame;
+		if( ( Machine->drv->sound_attributes & SOUND_SUPPORTS_STEREO ) != 0 )
+		{
+			samples *= 2;
+		}
+		wav_add_data_16( wavptr, buffer, samples );
 	}
 
 	// reset underflow/overflow tracking

@@ -133,7 +133,7 @@ VIDEO_UPDATE(pturn)
 }
 
 
-WRITE_HANDLER( pturn_videoram_w )
+WRITE8_HANDLER( pturn_videoram_w )
 {
 	videoram[offset]=data;
 	tilemap_mark_tile_dirty(pturn_tilemap,offset);
@@ -141,12 +141,12 @@ WRITE_HANDLER( pturn_videoram_w )
 
 static int nmi_main, nmi_sub;
 
-static WRITE_HANDLER( nmi_main_enable_w )
+static WRITE8_HANDLER( nmi_main_enable_w )
 {
 	nmi_main = data;
 }
 
-static WRITE_HANDLER( nmi_sub_enable_w )
+static WRITE8_HANDLER( nmi_sub_enable_w )
 {
 	nmi_sub = data;
 }
@@ -154,7 +154,7 @@ static WRITE_HANDLER( nmi_sub_enable_w )
 static INTERRUPT_GEN( pturn_main_intgen )
 {
 	if (nmi_main)
-		cpu_set_irq_line(0,IRQ_LINE_NMI,PULSE_LINE);
+		cpunum_set_input_line(0,INPUT_LINE_NMI,PULSE_LINE);
 }
 
 static struct AY8910interface ay8910_interface =
@@ -175,10 +175,10 @@ INPUT_PORTS_START( pturn )
 INPUT_PORTS_END
 
 
-static WRITE_HANDLER(sound_w)
+static WRITE8_HANDLER(sound_w)
 {
 	soundlatch_w(0,data);
-	cpu_set_irq_line(1,IRQ_LINE_NMI,PULSE_LINE);
+	cpunum_set_input_line(1,INPUT_LINE_NMI,PULSE_LINE);
 }
 
 static ADDRESS_MAP_START( main_map, ADDRESS_SPACE_PROGRAM, 8 )
@@ -318,14 +318,14 @@ ROM_START( pturn )
 ROM_END
 
 
-READ_HANDLER (pturn_hack_r)
+READ8_HANDLER (pturn_hack_r)
 {
 	return 0x66;
 }
 
 static DRIVER_INIT(pturn)
 {
-	install_mem_read_handler( 0, 0xc0dd, 0xc0dd, pturn_hack_r); /* initial protection check */
+	memory_install_read8_handler(0, ADDRESS_SPACE_PROGRAM, 0xc0dd, 0xc0dd, 0, 0, pturn_hack_r); /* initial protection check */
 }
 
 GAMEX( 1984, pturn,  0, pturn,  pturn,  pturn, ROT90,   "Jaleco", "Parallel Turn",GAME_NOT_WORKING )

@@ -128,21 +128,21 @@ Interrupts: VBlank causes an IRQ. Coin insertion causes a NMI.
 extern UINT8 *rockola_videoram2;
 extern UINT8 *rockola_charram;
 
-extern WRITE_HANDLER( rockola_videoram_w );
-extern WRITE_HANDLER( rockola_videoram2_w );
-extern WRITE_HANDLER( rockola_colorram_w );
-extern WRITE_HANDLER( rockola_charram_w );
-extern WRITE_HANDLER( rockola_flipscreen_w );
-extern WRITE_HANDLER( rockola_scrollx_w );
-extern WRITE_HANDLER( rockola_scrolly_w );
+extern WRITE8_HANDLER( rockola_videoram_w );
+extern WRITE8_HANDLER( rockola_videoram2_w );
+extern WRITE8_HANDLER( rockola_colorram_w );
+extern WRITE8_HANDLER( rockola_charram_w );
+extern WRITE8_HANDLER( rockola_flipscreen_w );
+extern WRITE8_HANDLER( rockola_scrollx_w );
+extern WRITE8_HANDLER( rockola_scrolly_w );
 
 extern PALETTE_INIT( rockola );
 extern VIDEO_START( rockola );
 extern VIDEO_UPDATE( rockola );
 
-extern WRITE_HANDLER( satansat_charram_w );
-extern WRITE_HANDLER( satansat_b002_w );
-extern WRITE_HANDLER( satansat_backcolor_w );
+extern WRITE8_HANDLER( satansat_charram_w );
+extern WRITE8_HANDLER( satansat_b002_w );
+extern WRITE8_HANDLER( satansat_backcolor_w );
 
 extern PALETTE_INIT( satansat );
 extern VIDEO_START( satansat );
@@ -151,10 +151,10 @@ extern VIDEO_START( satansat );
 
 extern const char *vanguard_sample_names[];
 
-extern WRITE_HANDLER( sasuke_sound_w );
-extern WRITE_HANDLER( satansat_sound_w );
-extern WRITE_HANDLER( vanguard_sound_w );
-extern WRITE_HANDLER( fantasy_sound_w );
+extern WRITE8_HANDLER( sasuke_sound_w );
+extern WRITE8_HANDLER( satansat_sound_w );
+extern WRITE8_HANDLER( vanguard_sound_w );
+extern WRITE8_HANDLER( fantasy_sound_w );
 
 int rockola_sh_start(const struct MachineSound *msound);
 void rockola_sh_update(void);
@@ -755,10 +755,10 @@ static INTERRUPT_GEN( satansat_interrupt )
 	{
 		/* user asks to insert coin: generate a NMI interrupt. */
 		if (readinputport(3) & 0x01)
-			cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+			cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 	}
 	else
-		cpu_set_irq_line(0, 0, HOLD_LINE);	/* one IRQ per frame */
+		cpunum_set_input_line(0, 0, HOLD_LINE);	/* one IRQ per frame */
 }
 
 static INTERRUPT_GEN( rockola_interrupt )
@@ -767,10 +767,10 @@ static INTERRUPT_GEN( rockola_interrupt )
 	{
 		/* user asks to insert coin: generate a NMI interrupt. */
 		if (readinputport(3) & 0x03)
-			cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+			cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 	}
 	else
-		cpu_set_irq_line(0, 0, HOLD_LINE);	/* one IRQ per frame */
+		cpunum_set_input_line(0, 0, HOLD_LINE);	/* one IRQ per frame */
 }
 
 /* Machine Initialization */

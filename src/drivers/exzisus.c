@@ -50,14 +50,14 @@ extern UINT8 *exzisus_objectram1;
 extern size_t  exzisus_objectram_size0;
 extern size_t  exzisus_objectram_size1;
 
-READ_HANDLER ( exzisus_videoram_0_r );
-READ_HANDLER ( exzisus_videoram_1_r );
-READ_HANDLER ( exzisus_objectram_0_r );
-READ_HANDLER ( exzisus_objectram_1_r );
-WRITE_HANDLER( exzisus_videoram_0_w );
-WRITE_HANDLER( exzisus_videoram_1_w );
-WRITE_HANDLER( exzisus_objectram_0_w );
-WRITE_HANDLER( exzisus_objectram_1_w );
+READ8_HANDLER ( exzisus_videoram_0_r );
+READ8_HANDLER ( exzisus_videoram_1_r );
+READ8_HANDLER ( exzisus_objectram_0_r );
+READ8_HANDLER ( exzisus_objectram_1_r );
+WRITE8_HANDLER( exzisus_videoram_0_w );
+WRITE8_HANDLER( exzisus_videoram_1_w );
+WRITE8_HANDLER( exzisus_objectram_0_w );
+WRITE8_HANDLER( exzisus_objectram_1_w );
 
 VIDEO_UPDATE( exzisus );
 
@@ -68,7 +68,7 @@ VIDEO_UPDATE( exzisus );
 
 ***************************************************************************/
 
-static WRITE_HANDLER( exzisus_cpua_bankswitch_w )
+static WRITE8_HANDLER( exzisus_cpua_bankswitch_w )
 {
 	UINT8 *RAM = memory_region(REGION_CPU1);
 
@@ -84,7 +84,7 @@ static WRITE_HANDLER( exzisus_cpua_bankswitch_w )
 	flip_screen_set(data & 0x40);
 }
 
-static WRITE_HANDLER( exzisus_cpub_bankswitch_w )
+static WRITE8_HANDLER( exzisus_cpub_bankswitch_w )
 {
 	UINT8 *RAM = memory_region(REGION_CPU4);
 
@@ -100,7 +100,7 @@ static WRITE_HANDLER( exzisus_cpub_bankswitch_w )
 	flip_screen_set(data & 0x40);
 }
 
-static WRITE_HANDLER( exzisus_coincounter_w )
+static WRITE8_HANDLER( exzisus_coincounter_w )
 {
 	coin_lockout_w(0,~data & 0x01);
 	coin_lockout_w(1,~data & 0x02);
@@ -108,22 +108,22 @@ static WRITE_HANDLER( exzisus_coincounter_w )
 	coin_counter_w(1,data & 0x08);
 }
 
-static READ_HANDLER( exzisus_sharedram_ac_r )
+static READ8_HANDLER( exzisus_sharedram_ac_r )
 {
 	return exzisus_sharedram_ac[offset];
 }
 
-static READ_HANDLER( exzisus_sharedram_bc_r )
+static READ8_HANDLER( exzisus_sharedram_bc_r )
 {
 	return exzisus_sharedram_bc[offset];
 }
 
-static WRITE_HANDLER( exzisus_sharedram_ac_w )
+static WRITE8_HANDLER( exzisus_sharedram_ac_w )
 {
 	exzisus_sharedram_ac[offset] = data;
 }
 
-static WRITE_HANDLER( exzisus_sharedram_bc_w )
+static WRITE8_HANDLER( exzisus_sharedram_bc_w )
 {
 	exzisus_sharedram_bc[offset] = data;
 }
@@ -148,7 +148,7 @@ static DRIVER_INIT( exzisus )
 
 static void irqhandler(int irq)
 {
-	cpu_set_irq_line(1, 0, irq ? ASSERT_LINE : CLEAR_LINE);
+	cpunum_set_input_line(1, 0, irq ? ASSERT_LINE : CLEAR_LINE);
 }
 
 static struct YM2151interface ym2151_interface =

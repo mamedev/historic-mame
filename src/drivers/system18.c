@@ -154,7 +154,7 @@ static void set_bg2_page( int data ){
 static int sample_buffer = 0;
 static int sample_select = 0;
 
-static WRITE_HANDLER( shdancbl_msm5205_data_w )
+static WRITE8_HANDLER( shdancbl_msm5205_data_w )
 {
 	sample_buffer = data;
 }
@@ -165,7 +165,7 @@ static void shdancbl_msm5205_callback(int data)
 	sample_buffer >>= 4;
 	sample_select ^= 1;
 	if(sample_select == 0)
-		cpu_set_nmi_line(1, PULSE_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 }
 
 static struct MSM5205interface shdancbl_msm5205_interface =
@@ -182,17 +182,17 @@ UINT8* shdancbl_soundbank_ptr = NULL;		/* Pointer to currently selected portion 
 static WRITE16_HANDLER( sound_command_irq_w ){
 	if( ACCESSING_LSB ){
 		soundlatch_w( 0,data&0xff );
-		cpu_set_irq_line( 1, 0, HOLD_LINE );
+		cpunum_set_input_line( 1, 0, HOLD_LINE );
 	}
 }
 
-static READ_HANDLER( shdancbl_soundbank_r )
+static READ8_HANDLER( shdancbl_soundbank_r )
 {
 	if(shdancbl_soundbank_ptr) return shdancbl_soundbank_ptr[offset & 0x3FFF];
 	return 0xFF;
 }
 
-static WRITE_HANDLER( shdancbl_bankctrl_w )
+static WRITE8_HANDLER( shdancbl_bankctrl_w )
 {
 	UINT8 *mem = memory_region(REGION_CPU2);
 
@@ -263,7 +263,7 @@ ADDRESS_MAP_END
 
 static UINT8 *sys18_SoundMemBank;
 
-static READ_HANDLER( system18_bank_r )
+static READ8_HANDLER( system18_bank_r )
 {
 	if(sys18_SoundMemBank)
 		return sys18_SoundMemBank[offset];
@@ -287,7 +287,7 @@ static ADDRESS_MAP_START( sound_writemem_18, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 
-static WRITE_HANDLER( sys18_soundbank_w )
+static WRITE8_HANDLER( sys18_soundbank_w )
 {
 	UINT8 *mem = memory_region(REGION_CPU2);
 	int rom = (data >> 6) & 3;
@@ -322,7 +322,7 @@ ADDRESS_MAP_END
 static WRITE16_HANDLER( sound_command_nmi_w ){
 	if( ACCESSING_LSB ){
 		soundlatch_w( 0,data&0xff );
-		cpu_set_nmi_line(1, PULSE_LINE);
+		cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 	}
 }
 
@@ -728,7 +728,7 @@ static DRIVER_INIT( shdancer ){
 	sys18_splittab_fg_x=&sys16_textram[0x0f80/2];
 	sys18_splittab_bg_x=&sys16_textram[0x0fc0/2];
 	sys16_MaxShadowColors=0;
-	install_mem_read16_handler(0, 0xffc000, 0xffc001, shdancer_skip_r );
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xffc000, 0xffc001, 0, 0, shdancer_skip_r );
 
 	memcpy(sys18_sound_info, shdancer_sound_info, sizeof(sys18_sound_info));
 	memcpy(RAM,&RAM[0x10000],0xa000);
@@ -764,7 +764,7 @@ static DRIVER_INIT( shdancrj ){
 	sys18_splittab_fg_x=&sys16_textram[0x0f80/2];
 	sys18_splittab_bg_x=&sys16_textram[0x0fc0/2];
 	sys16_MaxShadowColors=0;
-	install_mem_read16_handler(0, 0xffc000, 0xffc001, shdancrj_skip_r );
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xffc000, 0xffc001, 0, 0, shdancrj_skip_r );
 
 	memcpy(sys18_sound_info, shdancrj_sound_info, sizeof(sys18_sound_info));
 	memcpy(RAM,&RAM[0x10000],0xa000);
@@ -805,7 +805,7 @@ static DRIVER_INIT( shdancrb ){
 	sys18_splittab_fg_x=&sys16_textram[0x0f80/2];
 	sys18_splittab_bg_x=&sys16_textram[0x0fc0/2];
 	sys16_MaxShadowColors=0;
-	install_mem_read16_handler(0, 0xffc000, 0xffc001, shdancrb_skip_r );
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xffc000, 0xffc001, 0, 0, shdancrb_skip_r );
 
 	memcpy(sys18_sound_info, shdancrb_sound_info, sizeof(sys18_sound_info));
 	memcpy(RAM,&RAM[0x10000],0xa000);
@@ -936,7 +936,7 @@ static DRIVER_INIT( shdancbl )
 		mem[i] ^= 0xFF;
 
 	machine_init_sys16_onetime();
-	install_mem_read16_handler(0, 0xffc000, 0xffc001, shdancbl_skip_r );
+	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xffc000, 0xffc001, 0, 0, shdancbl_skip_r );
 
 	sys18_splittab_fg_x=&sys16_textram[0x0f80/2];
 	sys18_splittab_bg_x=&sys16_textram[0x0fc0/2];

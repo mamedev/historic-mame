@@ -106,18 +106,18 @@ INTERRUPT_GEN( spdodgeb_interrupt )
 	if (iloop > 1 && iloop < 32)
 	{
 		scrollx[31-iloop] = lastscroll;
-		cpu_set_irq_line(0, M6502_IRQ_LINE, HOLD_LINE);
+		cpunum_set_input_line(0, M6502_IRQ_LINE, HOLD_LINE);
 	}
 	else if (!iloop)
-		cpu_set_irq_line(0, IRQ_LINE_NMI, PULSE_LINE);
+		cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
 }
 
-WRITE_HANDLER( spdodgeb_scrollx_lo_w )
+WRITE8_HANDLER( spdodgeb_scrollx_lo_w )
 {
 	lastscroll = (lastscroll & 0x100) | data;
 }
 
-WRITE_HANDLER( spdodgeb_ctrl_w )
+WRITE8_HANDLER( spdodgeb_ctrl_w )
 {
 	UINT8 *rom = memory_region(REGION_CPU1);
 
@@ -141,7 +141,7 @@ WRITE_HANDLER( spdodgeb_ctrl_w )
 	sprite_palbank = (data & 0xc0) >> 6;
 }
 
-WRITE_HANDLER( spdodgeb_videoram_w )
+WRITE8_HANDLER( spdodgeb_videoram_w )
 {
 	if (spdodgeb_videoram[offset] != data)
 	{

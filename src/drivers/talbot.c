@@ -16,7 +16,7 @@ static UINT8 *talbot_mcu_ram;
 static int mcu_control_1 = -1;
 static int mcu_control_2 = -1;
 
-static WRITE_HANDLER( talbot_videoram_w )
+static WRITE8_HANDLER( talbot_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -25,7 +25,7 @@ static WRITE_HANDLER( talbot_videoram_w )
 	}
 }
 
-static WRITE_HANDLER( talbot_colorram_w )
+static WRITE8_HANDLER( talbot_colorram_w )
 {
 	if (colorram[offset] != data)
 	{

@@ -60,12 +60,12 @@ static UINT8 oki6295_volume;
 
 static void update_all_volumes(void);
 
-static READ_HANDLER( jsa1_io_r );
-static WRITE_HANDLER( jsa1_io_w );
-static READ_HANDLER( jsa2_io_r );
-static WRITE_HANDLER( jsa2_io_w );
-static READ_HANDLER( jsa3_io_r );
-static WRITE_HANDLER( jsa3_io_w );
+static READ8_HANDLER( jsa1_io_r );
+static WRITE8_HANDLER( jsa1_io_w );
+static READ8_HANDLER( jsa2_io_r );
+static WRITE8_HANDLER( jsa2_io_w );
+static READ8_HANDLER( jsa3_io_r );
+static WRITE8_HANDLER( jsa3_io_w );
 
 
 /*************************************
@@ -112,8 +112,8 @@ void atarijsa_init(int cpunum, int inputport, int testport, int testmask)
 	/* install POKEY memory handlers */
 	if (has_pokey)
 	{
-		install_mem_read_handler(cpunum, 0x2c00, 0x2c0f, pokey1_r);
-		install_mem_write_handler(cpunum, 0x2c00, 0x2c0f, pokey1_w);
+		memory_install_read8_handler(cpunum, ADDRESS_SPACE_PROGRAM, 0x2c00, 0x2c0f, 0, 0, pokey1_r);
+		memory_install_write8_handler(cpunum, ADDRESS_SPACE_PROGRAM, 0x2c00, 0x2c0f, 0, 0, pokey1_w);
 	}
 
 	atarijsa_reset();
@@ -165,7 +165,7 @@ void atarijsa_reset(void)
  *
  *************************************/
 
-static READ_HANDLER( jsa1_io_r )
+static READ8_HANDLER( jsa1_io_r )
 {
 	int result = 0xff;
 
@@ -213,7 +213,7 @@ static READ_HANDLER( jsa1_io_r )
 }
 
 
-static WRITE_HANDLER( jsa1_io_w )
+static WRITE8_HANDLER( jsa1_io_w )
 {
 	switch (offset & 0x206)
 	{
@@ -289,7 +289,7 @@ static WRITE_HANDLER( jsa1_io_w )
  *
  *************************************/
 
-static READ_HANDLER( jsa2_io_r )
+static READ8_HANDLER( jsa2_io_r )
 {
 	int result = 0xff;
 
@@ -339,7 +339,7 @@ static READ_HANDLER( jsa2_io_r )
 }
 
 
-static WRITE_HANDLER( jsa2_io_w )
+static WRITE8_HANDLER( jsa2_io_w )
 {
 	switch (offset & 0x206)
 	{
@@ -410,7 +410,7 @@ static WRITE_HANDLER( jsa2_io_w )
  *
  *************************************/
 
-static READ_HANDLER( jsa3_io_r )
+static READ8_HANDLER( jsa3_io_r )
 {
 	int result = 0xff;
 
@@ -458,7 +458,7 @@ static READ_HANDLER( jsa3_io_r )
 }
 
 
-static WRITE_HANDLER( jsa3_io_w )
+static WRITE8_HANDLER( jsa3_io_w )
 {
 	switch (offset & 0x206)
 	{
@@ -541,7 +541,7 @@ static WRITE_HANDLER( jsa3_io_w )
  *
  *************************************/
 
-static READ_HANDLER( jsa3s_io_r )
+static READ8_HANDLER( jsa3s_io_r )
 {
 	int result = 0xff;
 
@@ -594,7 +594,7 @@ static READ_HANDLER( jsa3s_io_r )
 }
 
 
-static WRITE_HANDLER( jsa3s_io_w )
+static WRITE8_HANDLER( jsa3s_io_w )
 {
 	switch (offset & 0x206)
 	{

@@ -186,11 +186,11 @@ Sound board: uses the same board as Pooyan.
 
 extern unsigned char *tutankhm_scrollx;
 
-WRITE_HANDLER( tutankhm_videoram_w );
+WRITE8_HANDLER( tutankhm_videoram_w );
 VIDEO_UPDATE( tutankhm );
 
 
-static WRITE_HANDLER( tutankhm_bankselect_w )
+static WRITE8_HANDLER( tutankhm_bankselect_w )
 {
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -200,17 +200,17 @@ static WRITE_HANDLER( tutankhm_bankselect_w )
 	cpu_setbank(1,&RAM[bankaddress]);
 }
 
-static WRITE_HANDLER( tutankhm_coin_counter_w )
+static WRITE8_HANDLER( tutankhm_coin_counter_w )
 {
 	coin_counter_w(offset ^ 1, data);
 }
 
-static WRITE_HANDLER( flip_screen_x_w )
+static WRITE8_HANDLER( flip_screen_x_w )
 {
 	flip_screen_x_set(data);
 }
 
-static WRITE_HANDLER( flip_screen_y_w )
+static WRITE8_HANDLER( flip_screen_y_w )
 {
 	flip_screen_y_set(data);
 }

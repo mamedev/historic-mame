@@ -4,23 +4,23 @@
 
 
 
-WRITE_HANDLER( irem_sound_cmd_w )
+WRITE8_HANDLER( irem_sound_cmd_w )
 {
 	if ((data & 0x80) == 0)
 		soundlatch_w(0,data & 0x7f);
 	else
-		cpu_set_irq_line(1,0,HOLD_LINE);
+		cpunum_set_input_line(1,0,HOLD_LINE);
 }
 
 
 static int port1,port2;
 
-static WRITE_HANDLER( irem_port1_w )
+static WRITE8_HANDLER( irem_port1_w )
 {
 	port1 = data;
 }
 
-static WRITE_HANDLER( irem_port2_w )
+static WRITE8_HANDLER( irem_port2_w )
 {
 	/* write latch */
 	if ((port2 & 0x01) && !(data & 0x01))
@@ -47,7 +47,7 @@ static WRITE_HANDLER( irem_port2_w )
 }
 
 
-static READ_HANDLER( irem_port1_r )
+static READ8_HANDLER( irem_port1_r )
 {
 	/* PSG 0 or 1? */
 	if (port2 & 0x08)
@@ -57,14 +57,14 @@ static READ_HANDLER( irem_port1_r )
 	return 0xff;
 }
 
-static READ_HANDLER( irem_port2_r )
+static READ8_HANDLER( irem_port2_r )
 {
 	return 0;
 }
 
 
 
-static WRITE_HANDLER( irem_msm5205_w )
+static WRITE8_HANDLER( irem_msm5205_w )
 {
 	/* bits 2-4 select MSM5205 clock & 3b/4b playback mode */
 	MSM5205_playmode_w(0,(data >> 2) & 7);
@@ -75,21 +75,21 @@ static WRITE_HANDLER( irem_msm5205_w )
 	MSM5205_reset_w(1,data & 2);
 }
 
-static WRITE_HANDLER( irem_adpcm_w )
+static WRITE8_HANDLER( irem_adpcm_w )
 {
 	MSM5205_data_w(offset,data);
 }
 
 static void irem_adpcm_int(int data)
 {
-	cpu_set_nmi_line(1,PULSE_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 
 	/* the first MSM5205 clocks the second */
 	MSM5205_vclk_w(1,1);
 	MSM5205_vclk_w(1,0);
 }
 
-static WRITE_HANDLER( irem_analog_w )
+static WRITE8_HANDLER( irem_analog_w )
 {
 #ifdef MAME_DEBUG
 if (data&0x0f) usrintf_showmessage("analog sound %x",data&0x0f);

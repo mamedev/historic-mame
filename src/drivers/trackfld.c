@@ -28,20 +28,20 @@ extern void konami1_decode(void);
 extern UINT8 *trackfld_scroll;
 extern UINT8 *trackfld_scroll2;
 
-extern WRITE_HANDLER( trackfld_videoram_w );
-extern WRITE_HANDLER( trackfld_colorram_w );
-extern WRITE_HANDLER( trackfld_flipscreen_w );
+extern WRITE8_HANDLER( trackfld_videoram_w );
+extern WRITE8_HANDLER( trackfld_colorram_w );
+extern WRITE8_HANDLER( trackfld_flipscreen_w );
 
 extern PALETTE_INIT( trackfld );
 extern VIDEO_START( trackfld );
 extern VIDEO_UPDATE( trackfld );
 
-extern WRITE_HANDLER( konami_sh_irqtrigger_w );
-extern READ_HANDLER( trackfld_sh_timer_r );
-extern READ_HANDLER( trackfld_speech_r );
-extern WRITE_HANDLER( trackfld_sound_w );
-extern READ_HANDLER( hyprolyb_speech_r );
-extern WRITE_HANDLER( hyprolyb_ADPCM_data_w );
+extern WRITE8_HANDLER( konami_sh_irqtrigger_w );
+extern READ8_HANDLER( trackfld_sh_timer_r );
+extern READ8_HANDLER( trackfld_speech_r );
+extern WRITE8_HANDLER( trackfld_sound_w );
+extern READ8_HANDLER( hyprolyb_speech_r );
+extern WRITE8_HANDLER( hyprolyb_ADPCM_data_w );
 
 extern struct SN76496interface konami_sn76496_interface;
 extern struct DACinterface konami_dac_interface;
@@ -49,7 +49,7 @@ extern struct ADPCMinterface hyprolyb_adpcm_interface;
 
 
 /* handle fake button for speed cheat */
-static READ_HANDLER( konami_IN1_r )
+static READ8_HANDLER( konami_IN1_r )
 {
 	int res;
 	static int cheat = 0;
@@ -149,7 +149,7 @@ static NVRAM_HANDLER( mastkin )
 	}
 }
 
-static WRITE_HANDLER( coin_w )
+static WRITE8_HANDLER( coin_w )
 {
 	coin_counter_w(offset,data & 1);
 }

@@ -107,7 +107,7 @@ VIDEO_START( taitol )
 
 ***************************************************************************/
 
-WRITE_HANDLER( horshoes_bankg_w )
+WRITE8_HANDLER( horshoes_bankg_w )
 {
 	if (horshoes_gfxbank != data)
 	{
@@ -118,7 +118,7 @@ WRITE_HANDLER( horshoes_bankg_w )
 	}
 }
 
-WRITE_HANDLER( taitol_bankc_w )
+WRITE8_HANDLER( taitol_bankc_w )
 {
 	if (bankc[offset] != data)
 	{
@@ -130,13 +130,13 @@ WRITE_HANDLER( taitol_bankc_w )
 	}
 }
 
-READ_HANDLER( taitol_bankc_r )
+READ8_HANDLER( taitol_bankc_r )
 {
 	return bankc[offset];
 }
 
 
-WRITE_HANDLER( taitol_control_w )
+WRITE8_HANDLER( taitol_control_w )
 {
 //	logerror("Control Write %02x (%04x)\n", data, activecpu_get_pc());
 
@@ -156,7 +156,7 @@ WRITE_HANDLER( taitol_control_w )
 	/* bit 5 display enable - handled in vh_screenrefresh() */
 }
 
-READ_HANDLER( taitol_control_r )
+READ8_HANDLER( taitol_control_r )
 {
 //	logerror("Control Read %02x (%04x)\n", cur_ctrl, activecpu_get_pc());
 	return cur_ctrl;

@@ -237,12 +237,12 @@ static WRITE16_HANDLER( namcos2_68k_dualportram_word_w )
 	}
 }
 
-static READ_HANDLER( namcos2_dualportram_byte_r )
+static READ8_HANDLER( namcos2_dualportram_byte_r )
 {
 	return mpDualPortRAM[offset];
 }
 
-static WRITE_HANDLER( namcos2_dualportram_byte_w )
+static WRITE8_HANDLER( namcos2_dualportram_byte_w )
 {
 	mpDualPortRAM[offset] = data;
 }
@@ -441,7 +441,7 @@ static WRITE16_HANDLER( gpu_c148_w )
 
 static INTERRUPT_GEN( namcos2_gpu_vblank )
 {
-	cpu_set_irq_line(CPU_GPU, gpu_vblank_irq_level, HOLD_LINE);
+	cpunum_set_input_line(CPU_GPU, gpu_vblank_irq_level, HOLD_LINE);
 }
 
 static READ16_HANDLER( gpu_data_r )
@@ -1102,7 +1102,7 @@ DRIVER_INIT( solvalou )
 /*															 */
 /*************************************************************/
 
-INPUT_PORTS_START( default )
+static INPUT_PORTS_START( default )
 	PORT_START		/* 63B05Z0 - PORT B */
 	PORT_BIT( 0x3f, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
@@ -1179,7 +1179,7 @@ INPUT_PORTS_START( default )
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( cybsled )
+static INPUT_PORTS_START( cybsled )
 	PORT_START		/* 63B05Z0 - PORT B */
 	PORT_BIT( 0x3f, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
@@ -1256,7 +1256,7 @@ INPUT_PORTS_START( cybsled )
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( aircombt )
+static INPUT_PORTS_START( aircombt )
 	PORT_START		/* IN#0: 63B05Z0 - PORT B */
 	PORT_BIT( 0x3f, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )

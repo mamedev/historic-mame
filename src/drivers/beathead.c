@@ -143,7 +143,7 @@ static void scanline_callback(int scanline)
 
 	/* on scanline zero, clear any halt condition */
 	if (scanline == 0)
-		cpu_set_halt_line(0, CLEAR_LINE);
+		cpunum_set_input_line(0, INPUT_LINE_HALT, CLEAR_LINE);
 
 	/* wrap around at 262 */
 	scanline++;
@@ -203,7 +203,7 @@ static void update_interrupts(void)
 	{
 		irq_line_state = gen_int;
 //		if (irq_line_state != CLEAR_LINE)
-			cpu_set_irq_line(0, ASAP_IRQ0, irq_line_state);
+			cpunum_set_input_line(0, ASAP_IRQ0, irq_line_state);
 //		else
 //			asap_set_irq_line(ASAP_IRQ0, irq_line_state);
 	}
@@ -316,7 +316,7 @@ static WRITE32_HANDLER( sound_data_w )
 static WRITE32_HANDLER( sound_reset_w )
 {
 	logerror("Sound reset = %d\n", !offset);
-	cpu_set_reset_line(1, offset ? CLEAR_LINE : ASSERT_LINE);
+	cpunum_set_input_line(1, INPUT_LINE_RESET, offset ? CLEAR_LINE : ASSERT_LINE);
 }
 
 
@@ -531,11 +531,10 @@ static DRIVER_INIT( beathead )
 	atarigen_eeprom_default = NULL;
 	atarijsa_init(1, 4, 2, 0x0040);
 	atarijsa3_init_adpcm(REGION_SOUND1);
-	atarigen_init_6502_speedup(1, 0x4321, 0x4339);
 
 	/* prepare the speedups */
-	speedup_data = install_mem_read32_handler(0, 0x00000ae8, 0x00000aeb, speedup_r);
-	movie_speedup_data = install_mem_read32_handler(0, 0x00000804, 0x00000807, movie_speedup_r);
+	speedup_data = memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00000ae8, 0x00000aeb, 0, 0, speedup_r);
+	movie_speedup_data = memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, 0x00000804, 0x00000807, 0, 0, movie_speedup_r);
 }
 
 

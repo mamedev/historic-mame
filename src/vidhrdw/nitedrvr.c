@@ -11,7 +11,7 @@ UINT8 *nitedrvr_hvc;
 
 static struct tilemap *bg_tilemap;
 
-WRITE_HANDLER( nitedrvr_videoram_w )
+WRITE8_HANDLER( nitedrvr_videoram_w )
 {
 	if (videoram[offset] != data)
 	{
@@ -20,7 +20,7 @@ WRITE_HANDLER( nitedrvr_videoram_w )
 	}
 }
 
-WRITE_HANDLER( nitedrvr_hvc_w )
+WRITE8_HANDLER( nitedrvr_hvc_w )
 {
 	nitedrvr_hvc[offset & 0x3f] = data;
 

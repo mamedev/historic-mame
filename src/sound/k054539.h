@@ -20,10 +20,10 @@ struct K054539interface {
 
 int K054539_sh_start( const struct MachineSound *msound );
 void K054539_sh_stop( void );
-WRITE_HANDLER( K054539_0_w );
-READ_HANDLER( K054539_0_r );
-WRITE_HANDLER( K054539_1_w );
-READ_HANDLER( K054539_1_r );
+WRITE8_HANDLER( K054539_0_w );
+READ8_HANDLER( K054539_0_r );
+WRITE8_HANDLER( K054539_1_w );
+READ8_HANDLER( K054539_1_r );
 
 //* control flags, may be set at DRIVER_INIT().
 #define K054539_RESET_FLAGS     0

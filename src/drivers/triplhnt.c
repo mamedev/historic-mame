@@ -38,7 +38,7 @@ void triplhnt_hit_callback(int code)
 {
 	triplhnt_hit_code = code;
 
-	cpu_set_irq_line(0, 0, HOLD_LINE);
+	cpunum_set_input_line(0, 0, HOLD_LINE);
 }
 
 
@@ -83,25 +83,25 @@ static void triplhnt_update_misc(int offset)
 }
 
 
-WRITE_HANDLER( triplhnt_misc_w )
+WRITE8_HANDLER( triplhnt_misc_w )
 {
 	triplhnt_update_misc(offset);
 }
 
 
-WRITE_HANDLER( triplhnt_zeropage_w )
+WRITE8_HANDLER( triplhnt_zeropage_w )
 {
 	memory_region(REGION_CPU1)[offset & 0xff] = data;
 }
 
 
-READ_HANDLER( triplhnt_zeropage_r )
+READ8_HANDLER( triplhnt_zeropage_r )
 {
 	return memory_region(REGION_CPU1)[offset & 0xff];
 }
 
 
-READ_HANDLER( triplhnt_cmos_r )
+READ8_HANDLER( triplhnt_cmos_r )
 {
 	triplhnt_cmos_latch = offset;
 
@@ -109,7 +109,7 @@ READ_HANDLER( triplhnt_cmos_r )
 }
 
 
-READ_HANDLER( triplhnt_input_port_4_r )
+READ8_HANDLER( triplhnt_input_port_4_r )
 {
 	watchdog_reset_w(0, 0);
 
@@ -117,7 +117,7 @@ READ_HANDLER( triplhnt_input_port_4_r )
 }
 
 
-READ_HANDLER( triplhnt_misc_r )
+READ8_HANDLER( triplhnt_misc_r )
 {
 	triplhnt_update_misc(offset);
 
@@ -125,7 +125,7 @@ READ_HANDLER( triplhnt_misc_r )
 }
 
 
-READ_HANDLER( triplhnt_da_latch_r )
+READ8_HANDLER( triplhnt_da_latch_r )
 {
 	int cross_x = readinputport(8);
 	int cross_y = readinputport(9);

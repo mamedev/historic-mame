@@ -21,8 +21,8 @@ Notes:
 #include "vidhrdw/generic.h"
 
 VIDEO_START( goindol );
-WRITE_HANDLER( goindol_fg_videoram_w );
-WRITE_HANDLER( goindol_bg_videoram_w );
+WRITE8_HANDLER( goindol_fg_videoram_w );
+WRITE8_HANDLER( goindol_bg_videoram_w );
 VIDEO_UPDATE( goindol );
 
 extern UINT8 *goindol_fg_scrollx;
@@ -36,7 +36,7 @@ extern size_t goindol_bg_videoram_size;
 extern int goindol_char_bank;
 
 
-WRITE_HANDLER( goindol_bankswitch_w )
+WRITE8_HANDLER( goindol_bankswitch_w )
 {
 	int bankaddress;
 	UINT8 *RAM = memory_region(REGION_CPU1);
@@ -55,7 +55,7 @@ WRITE_HANDLER( goindol_bankswitch_w )
 
 
 
-static READ_HANDLER( prot_f422_r )
+static READ8_HANDLER( prot_f422_r )
 {
 	static int toggle;
 
@@ -68,7 +68,7 @@ static READ_HANDLER( prot_f422_r )
 
 static UINT8 *ram;
 
-static WRITE_HANDLER( prot_fc44_w )
+static WRITE8_HANDLER( prot_fc44_w )
 {
 logerror("%04x: prot_fc44_w(%02x)\n",activecpu_get_pc(),data);
 	ram[0x0419] = 0x5b;
@@ -76,19 +76,19 @@ logerror("%04x: prot_fc44_w(%02x)\n",activecpu_get_pc(),data);
 	ram[0x041b] = 0x6d;
 }
 
-static WRITE_HANDLER( prot_fd99_w )
+static WRITE8_HANDLER( prot_fd99_w )
 {
 logerror("%04x: prot_fd99_w(%02x)\n",activecpu_get_pc(),data);
 	ram[0x0421] = 0x3f;
 }
 
-static WRITE_HANDLER( prot_fc66_w )
+static WRITE8_HANDLER( prot_fc66_w )
 {
 logerror("%04x: prot_fc66_w(%02x)\n",activecpu_get_pc(),data);
 	ram[0x0423] = 0x06;
 }
 
-static WRITE_HANDLER( prot_fcb0_w )
+static WRITE8_HANDLER( prot_fcb0_w )
 {
 logerror("%04x: prot_fcb0_w(%02x)\n",activecpu_get_pc(),data);
 	ram[0x0425] = 0x06;

@@ -39,10 +39,10 @@ static int rombank;
 static INTERRUPT_GEN( blockhl_interrupt )
 {
 	if (K052109_is_IRQ_enabled() && rombank == 0)	/* kludge to prevent crashes */
-		cpu_set_irq_line(0, KONAMI_IRQ_LINE, HOLD_LINE);
+		cpunum_set_input_line(0, KONAMI_IRQ_LINE, HOLD_LINE);
 }
 
-static READ_HANDLER( bankedram_r )
+static READ8_HANDLER( bankedram_r )
 {
 	if (palette_selected)
 		return paletteram_r(offset);
@@ -50,7 +50,7 @@ static READ_HANDLER( bankedram_r )
 		return ram[offset];
 }
 
-static WRITE_HANDLER( bankedram_w )
+static WRITE8_HANDLER( bankedram_w )
 {
 	if (palette_selected)
 		paletteram_xBBBBBGGGGGRRRRR_swap_w(offset,data);
@@ -58,9 +58,9 @@ static WRITE_HANDLER( bankedram_w )
 		ram[offset] = data;
 }
 
-WRITE_HANDLER( blockhl_sh_irqtrigger_w )
+WRITE8_HANDLER( blockhl_sh_irqtrigger_w )
 {
-	cpu_set_irq_line_and_vector(1, 0, HOLD_LINE, 0xff);
+	cpunum_set_input_line_and_vector(1, 0, HOLD_LINE, 0xff);
 }
 
 

@@ -165,9 +165,9 @@ static void update_interrupts(void)
 
 	/* set the new state of the IRQ lines */
 	if (newstate)
-		cpu_set_irq_line(0, newstate, ASSERT_LINE);
+		cpunum_set_input_line(0, newstate, ASSERT_LINE);
 	else
-		cpu_set_irq_line(0, 7, CLEAR_LINE);
+		cpunum_set_input_line(0, 7, CLEAR_LINE);
 }
 
 
@@ -310,7 +310,7 @@ static READ16_HANDLER( port4_r )
  *
  *************************************/
 
-static READ_HANDLER( switch_6502_r )
+static READ8_HANDLER( switch_6502_r )
 {
 	int temp = readinputport(5);
 
@@ -344,19 +344,19 @@ static READ_HANDLER( switch_6502_r )
  *	        D5 = 	LED (out)
  */
 
-static WRITE_HANDLER( via_pa_w )
+static WRITE8_HANDLER( via_pa_w )
 {
 	tms5220_out_data = data;
 }
 
 
-static READ_HANDLER( via_pa_r )
+static READ8_HANDLER( via_pa_r )
 {
 	return tms5220_in_data;
 }
 
 
-static WRITE_HANDLER( via_pb_w )
+static WRITE8_HANDLER( via_pb_w )
 {
 	data8_t old = tms5220_ctl;
 	tms5220_ctl = data;
@@ -375,7 +375,7 @@ static WRITE_HANDLER( via_pb_w )
 }
 
 
-static READ_HANDLER( via_pb_r )
+static READ8_HANDLER( via_pb_r )
 {
 	return (!tms5220_ready_r() << 2) | (!tms5220_int_r() << 3);
 }
@@ -397,7 +397,7 @@ static struct via6522_interface via_interface =
  *
  *************************************/
 
-static WRITE_HANDLER( led_w )
+static WRITE8_HANDLER( led_w )
 {
 	set_led_status(offset, ~data & 1);
 }

@@ -285,7 +285,7 @@ static void afega_draw_sprites(struct mame_bitmap *bitmap,const struct rectangle
 
 #ifdef MAME_DEBUG
 #if 1
-if (keyboard_pressed(KEYCODE_X))
+if (code_pressed(KEYCODE_X))
 {	/* Display some info on each sprite */
 	struct DisplayText dt[2];	char buf[10];
 	sprintf(buf, "%X",(spriteram16[offs + 0x0/2]&6)/2);
@@ -323,11 +323,11 @@ VIDEO_UPDATE( afega )
 	tilemap_set_scrollx(tilemap_1, 0, afega_scroll_1[1]);
 
 #ifdef MAME_DEBUG
-if ( keyboard_pressed(KEYCODE_Z) || keyboard_pressed(KEYCODE_X) )
+if ( code_pressed(KEYCODE_Z) || code_pressed(KEYCODE_X) )
 {	int msk = 0;
-	if (keyboard_pressed(KEYCODE_Q))	msk |= 1;
-	if (keyboard_pressed(KEYCODE_W))	msk |= 2;
-	if (keyboard_pressed(KEYCODE_E))	msk |= 4;
+	if (code_pressed(KEYCODE_Q))	msk |= 1;
+	if (code_pressed(KEYCODE_W))	msk |= 2;
+	if (code_pressed(KEYCODE_E))	msk |= 4;
 	if (msk != 0) layers_ctrl &= msk;	}
 #endif
 
@@ -358,11 +358,11 @@ VIDEO_UPDATE( bubl2000 )
 	tilemap_set_scrollx(tilemap_1, 0, afega_scroll_1[1]);
 
 #ifdef MAME_DEBUG
-if ( keyboard_pressed(KEYCODE_Z) || keyboard_pressed(KEYCODE_X) )
+if ( code_pressed(KEYCODE_Z) || code_pressed(KEYCODE_X) )
 {	int msk = 0;
-	if (keyboard_pressed(KEYCODE_Q))	msk |= 1;
-	if (keyboard_pressed(KEYCODE_W))	msk |= 2;
-	if (keyboard_pressed(KEYCODE_E))	msk |= 4;
+	if (code_pressed(KEYCODE_Q))	msk |= 1;
+	if (code_pressed(KEYCODE_W))	msk |= 2;
+	if (code_pressed(KEYCODE_E))	msk |= 4;
 	if (msk != 0) layers_ctrl &= msk;	}
 #endif
 

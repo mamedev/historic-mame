@@ -159,7 +159,7 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 												/* here only to initialize the pointer */
 ADDRESS_MAP_END
 
-static READ_HANDLER( sega_sh_r )
+static READ8_HANDLER( sega_sh_r )
 {
 	/* 0x80 = universal sound board ready */
 	/* 0x01 = speech ready, theorically, but the schematics show it unconnected */
@@ -1148,12 +1148,12 @@ DRIVER_INIT( spacfury )
 	/* This game uses the 315-0064 security chip */
 	sega_security(64);
 
-	install_port_read_handler(0, 0xfc, 0xfc, input_port_8_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xfc, 0xfc, 0, 0, input_port_8_r);
 
-	install_port_write_handler(0, 0x38, 0x38, sega_sh_speechboard_w);
-	install_port_write_handler(0, 0x3e, 0x3e, spacfury1_sh_w);
-	install_port_write_handler(0, 0x3f, 0x3f, spacfury2_sh_w);
-	install_port_write_handler(0, 0xf8, 0xf8, MWA8_NOP);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x38, 0x38, 0, 0, sega_sh_speechboard_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x3e, 0x3e, 0, 0, spacfury1_sh_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x3f, 0x3f, 0, 0, spacfury2_sh_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0xf8, 0xf8, 0, 0, MWA8_NOP);
 }
 
 
@@ -1162,11 +1162,11 @@ DRIVER_INIT( zektor )
 	/* This game uses the 315-0082 security chip */
 	sega_security(82);
 
-	install_port_read_handler(0, 0xfc, 0xfc, sega_IN4_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xfc, 0xfc, 0, 0, sega_IN4_r);
 
-	install_port_write_handler(0, 0x38, 0x38, sega_sh_speechboard_w);
-	install_port_write_handler(0, 0x3e, 0x3e, zektor1_sh_w);
-	install_port_write_handler(0, 0x3f, 0x3f, zektor2_sh_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x38, 0x38, 0, 0, sega_sh_speechboard_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x3e, 0x3e, 0, 0, zektor1_sh_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x3f, 0x3f, 0, 0, zektor2_sh_w);
 }
 
 
@@ -1175,10 +1175,10 @@ DRIVER_INIT( elim2 )
 	/* This game uses the 315-0070 security chip */
 	sega_security(70);
 
-	install_port_read_handler(0, 0xfc, 0xfc, input_port_4_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xfc, 0xfc, 0, 0, input_port_4_r);
 
-	install_port_write_handler(0, 0x3e, 0x3e, elim1_sh_w);
-	install_port_write_handler(0, 0x3f, 0x3f, elim2_sh_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x3e, 0x3e, 0, 0, elim1_sh_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x3f, 0x3f, 0, 0, elim2_sh_w);
 }
 
 
@@ -1187,10 +1187,10 @@ DRIVER_INIT( elim4 )
 	/* This game uses the 315-0076 security chip */
 	sega_security(76);
 
-	install_port_read_handler(0, 0xfc, 0xfc, elim4_IN4_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xfc, 0xfc, 0, 0, elim4_IN4_r);
 
-	install_port_write_handler(0, 0x3e, 0x3e, elim1_sh_w);
-	install_port_write_handler(0, 0x3f, 0x3f, elim2_sh_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x3e, 0x3e, 0, 0, elim1_sh_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x3f, 0x3f, 0, 0, elim2_sh_w);
 }
 
 
@@ -1199,10 +1199,10 @@ DRIVER_INIT( startrek )
 	/* This game uses the 315-0064 security chip */
 	sega_security(64);
 
-	install_port_read_handler(0, 0xfc, 0xfc, sega_IN4_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xfc, 0xfc, 0, 0, sega_IN4_r);
 
-	install_port_write_handler(0, 0x38, 0x38, sega_sh_speechboard_w);
-	install_port_write_handler(0, 0x3f, 0x3f, startrek_sh_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x38, 0x38, 0, 0, sega_sh_speechboard_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x3f, 0x3f, 0, 0, startrek_sh_w);
 }
 
 
@@ -1211,9 +1211,9 @@ DRIVER_INIT( tacscan )
 	/* This game uses the 315-0076 security chip */
 	sega_security(76);
 
-	install_port_read_handler(0, 0xfc, 0xfc, sega_IN4_r);
+	memory_install_read8_handler(0, ADDRESS_SPACE_IO, 0xfc, 0xfc, 0, 0, sega_IN4_r);
 
-	install_port_write_handler(0, 0x3f, 0x3f, tacscan_sh_w);
+	memory_install_write8_handler(0, ADDRESS_SPACE_IO, 0x3f, 0x3f, 0, 0, tacscan_sh_w);
 }
 
 
