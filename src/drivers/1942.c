@@ -352,7 +352,7 @@ WWW.SPIES.COM contains DIP switch settings.
 
 
 extern unsigned char *c1942_backgroundram;
-extern int c1942_backgroundram_size;
+extern size_t c1942_backgroundram_size;
 extern unsigned char *c1942_scroll;
 extern unsigned char *c1942_palette_bank;
 int c1942_vh_start(void);

@@ -1620,7 +1620,7 @@ static const char *name_rom( const char *type, int region, unsigned *base, unsig
     const struct RomModule *romp = Machine->gamedrv->rom;
 	unsigned offset = *base;
 
-    while( romp->name || romp->offset || romp->length )
+    while( romp && (romp->name || romp->offset || romp->length ) )
     {
 		romp++; /* skip memory region definition */
 

@@ -39,7 +39,7 @@ static void timer_callback_2610(int param)
 	int n=param&0x7f;
 	int c=param>>7;
 
-//	if(errorlog) fprintf(errorlog,"2610 TimerOver %d\n",c);
+//	logerror("2610 TimerOver %d\n",c);
 	Timer[n][c] = 0;
 	YM2610TimerOver(n,c);
 }
@@ -51,7 +51,7 @@ static void TimerHandler(int n,int c,int count,double stepTime)
 	{	/* Reset FM Timer */
 		if( Timer[n][c] )
 		{
-//			if(errorlog) fprintf(errorlog,"2610 TimerReset %d\n",c);
+//			logerror("2610 TimerReset %d\n",c);
 	 		timer_remove (Timer[n][c]);
 			Timer[n][c] = 0;
 		}
@@ -203,13 +203,13 @@ void YM2610_sh_reset(void)
 /************************************************/
 READ_HANDLER( YM2610_status_port_0_A_r )
 {
-//if(errorlog) fprintf(errorlog,"PC %04x: 2610 S0A=%02X\n",cpu_get_pc(),YM2610Read(0,0));
+//logerror("PC %04x: 2610 S0A=%02X\n",cpu_get_pc(),YM2610Read(0,0));
 	return YM2610Read(0,0);
 }
 
 READ_HANDLER( YM2610_status_port_0_B_r )
 {
-//if(errorlog) fprintf(errorlog,"PC %04x: 2610 S0B=%02X\n",cpu_get_pc(),YM2610Read(0,2));
+//logerror("PC %04x: 2610 S0B=%02X\n",cpu_get_pc(),YM2610Read(0,2));
 	return YM2610Read(0,2);
 }
 
@@ -244,13 +244,13 @@ READ_HANDLER( YM2610_read_port_1_r ){
 /************************************************/
 WRITE_HANDLER( YM2610_control_port_0_A_w )
 {
-//if(errorlog) fprintf(errorlog,"PC %04x: 2610 Reg A %02X",cpu_get_pc(),data);
+//logerror("PC %04x: 2610 Reg A %02X",cpu_get_pc(),data);
 	YM2610Write(0,0,data);
 }
 
 WRITE_HANDLER( YM2610_control_port_0_B_w )
 {
-//if(errorlog) fprintf(errorlog,"PC %04x: 2610 Reg B %02X",cpu_get_pc(),data);
+//logerror("PC %04x: 2610 Reg B %02X",cpu_get_pc(),data);
 	YM2610Write(0,2,data);
 }
 
@@ -272,13 +272,13 @@ WRITE_HANDLER( YM2610_control_port_1_B_w ){
 /************************************************/
 WRITE_HANDLER( YM2610_data_port_0_A_w )
 {
-//if(errorlog) fprintf(errorlog," =%02X\n",data);
+//logerror(" =%02X\n",data);
 	YM2610Write(0,1,data);
 }
 
 WRITE_HANDLER( YM2610_data_port_0_B_w )
 {
-//if(errorlog) fprintf(errorlog," =%02X\n",data);
+//logerror(" =%02X\n",data);
 	YM2610Write(0,3,data);
 }
 

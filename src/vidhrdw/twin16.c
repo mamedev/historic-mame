@@ -58,7 +58,7 @@ WRITE_HANDLER( twin16_video_register_w ){
 		case 0xc: COMBINE_WORD_MEM( &scrolly[2], data ); break;
 
 		case 0xe:
-		if( errorlog ) fprintf( errorlog, "unknown video_register write:%d", data );
+		logerror("unknown video_register write:%d", data );
 		break;
 	}
 }

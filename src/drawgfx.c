@@ -1298,9 +1298,13 @@ INLINE void common_drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElem
 
 	pri_mask |= (1<<31);
 
-	/* only support TRANSPARENCY_PEN and TRANSPARENCY_COLOR */
-	if (transparency != TRANSPARENCY_PEN && transparency != TRANSPARENCY_COLOR)
+	/* only support TRANSPARENCY_PEN, TRANSPARENCY_PENS and TRANSPARENCY_COLOR */
+	if (transparency != TRANSPARENCY_PEN && transparency != TRANSPARENCY_PENS &&
+			transparency != TRANSPARENCY_COLOR)
+	{
+		usrintf_showmessage("drawgfxzoom unsupported trans %02x",transparency);
 		return;
+	}
 
 	if (transparency == TRANSPARENCY_COLOR)
 		transparent_color = Machine->pens[transparent_color];
@@ -1519,7 +1523,55 @@ INLINE void common_drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElem
 					}
 				}
 
-				/* case 2: TRANSPARENCY_COLOR */
+				/* case 2: TRANSPARENCY_PENS */
+				if (transparency == TRANSPARENCY_PENS)
+				{
+					if (pri_buffer)
+					{
+						for( y=sy; y<ey; y++ )
+						{
+							unsigned char *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+							unsigned char *dest = dest_bmp->line[y];
+							unsigned char *pri = pri_buffer->line[y];
+
+							int x, x_index = x_index_base;
+							for( x=sx; x<ex; x++ )
+							{
+								int c = source[x_index>>16];
+								if (((1 << c) & transparent_color) == 0)
+								{
+									if (((1 << pri[x]) & pri_mask) == 0)
+										dest[x] = pal[c];
+									pri[x] = 31;
+								}
+								x_index += dx;
+							}
+
+							y_index += dy;
+						}
+					}
+					else
+					{
+						for( y=sy; y<ey; y++ )
+						{
+							unsigned char *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+							unsigned char *dest = dest_bmp->line[y];
+
+							int x, x_index = x_index_base;
+							for( x=sx; x<ex; x++ )
+							{
+								int c = source[x_index>>16];
+								if (((1 << c) & transparent_color) == 0)
+									dest[x] = pal[c];
+								x_index += dx;
+							}
+
+							y_index += dy;
+						}
+					}
+				}
+
+				/* case 3: TRANSPARENCY_COLOR */
 				else if (transparency == TRANSPARENCY_COLOR)
 				{
 					if (pri_buffer)
@@ -1645,40 +1697,142 @@ INLINE void common_drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElem
 				/* case 1: TRANSPARENCY_PEN */
 				if (transparency == TRANSPARENCY_PEN)
 				{
-					for( y=sy; y<ey; y++ )
+					if (pri_buffer)
 					{
-						unsigned char *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
-						unsigned short *dest = (unsigned short *)dest_bmp->line[y];
-
-						int x, x_index = x_index_base;
-						for( x=sx; x<ex; x++ )
+						for( y=sy; y<ey; y++ )
 						{
-							int c = source[x_index>>16];
-							if( c != transparent_color ) dest[x] = pal[c];
-							x_index += dx;
-						}
+							unsigned char *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+							unsigned short *dest = (unsigned short *)dest_bmp->line[y];
+							unsigned char *pri = pri_buffer->line[y];
 
-						y_index += dy;
+							int x, x_index = x_index_base;
+							for( x=sx; x<ex; x++ )
+							{
+								int c = source[x_index>>16];
+								if( c != transparent_color )
+								{
+									if (((1 << pri[x]) & pri_mask) == 0)
+										dest[x] = pal[c];
+									pri[x] = 31;
+								}
+								x_index += dx;
+							}
+
+							y_index += dy;
+						}
+					}
+					else
+					{
+						for( y=sy; y<ey; y++ )
+						{
+							unsigned char *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+							unsigned short *dest = (unsigned short *)dest_bmp->line[y];
+
+							int x, x_index = x_index_base;
+							for( x=sx; x<ex; x++ )
+							{
+								int c = source[x_index>>16];
+								if( c != transparent_color ) dest[x] = pal[c];
+								x_index += dx;
+							}
+
+							y_index += dy;
+						}
 					}
 				}
 
-				/* case 2: TRANSPARENCY_COLOR */
+				/* case 2: TRANSPARENCY_PEN */
+				if (transparency == TRANSPARENCY_PEN)
+				{
+					if (pri_buffer)
+					{
+						for( y=sy; y<ey; y++ )
+						{
+							unsigned char *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+							unsigned short *dest = (unsigned short *)dest_bmp->line[y];
+							unsigned char *pri = pri_buffer->line[y];
+
+							int x, x_index = x_index_base;
+							for( x=sx; x<ex; x++ )
+							{
+								int c = source[x_index>>16];
+								if (((1 << c) & transparent_color) == 0)
+								{
+									if (((1 << pri[x]) & pri_mask) == 0)
+										dest[x] = pal[c];
+									pri[x] = 31;
+								}
+								x_index += dx;
+							}
+
+							y_index += dy;
+						}
+					}
+					else
+					{
+						for( y=sy; y<ey; y++ )
+						{
+							unsigned char *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+							unsigned short *dest = (unsigned short *)dest_bmp->line[y];
+
+							int x, x_index = x_index_base;
+							for( x=sx; x<ex; x++ )
+							{
+								int c = source[x_index>>16];
+								if (((1 << c) & transparent_color) == 0)
+									dest[x] = pal[c];
+								x_index += dx;
+							}
+
+							y_index += dy;
+						}
+					}
+				}
+
+				/* case 3: TRANSPARENCY_COLOR */
 				else if (transparency == TRANSPARENCY_COLOR)
 				{
-					for( y=sy; y<ey; y++ )
+					if (pri_buffer)
 					{
-						unsigned char *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
-						unsigned short *dest = (unsigned short *)dest_bmp->line[y];
-
-						int x, x_index = x_index_base;
-						for( x=sx; x<ex; x++ )
+						for( y=sy; y<ey; y++ )
 						{
-							int c = pal[source[x_index>>16]];
-							if( c != transparent_color ) dest[x] = c;
-							x_index += dx;
-						}
+							unsigned char *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+							unsigned short *dest = (unsigned short *)dest_bmp->line[y];
+							unsigned char *pri = pri_buffer->line[y];
 
-						y_index += dy;
+							int x, x_index = x_index_base;
+							for( x=sx; x<ex; x++ )
+							{
+								int c = pal[source[x_index>>16]];
+								if( c != transparent_color )
+								{
+									if (((1 << pri[x]) & pri_mask) == 0)
+										dest[x] = c;
+									pri[x] = 31;
+								}
+								x_index += dx;
+							}
+
+							y_index += dy;
+						}
+					}
+					else
+					{
+						for( y=sy; y<ey; y++ )
+						{
+							unsigned char *source = gfx->gfxdata + (source_base+(y_index>>16)) * gfx->line_modulo;
+							unsigned short *dest = (unsigned short *)dest_bmp->line[y];
+
+							int x, x_index = x_index_base;
+							for( x=sx; x<ex; x++ )
+							{
+								int c = pal[source[x_index>>16]];
+								if( c != transparent_color ) dest[x] = c;
+								x_index += dx;
+							}
+
+							y_index += dy;
+						}
 					}
 				}
 			}

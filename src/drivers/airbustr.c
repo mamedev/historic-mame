@@ -290,7 +290,7 @@ unsigned char *RAM = memory_region(REGION_CPU1);
 	else					RAM = &RAM[0x10000 + 0x4000 * ((data & 7)-3)];
 
 	cpu_setbank(1,RAM);
-//	if (errorlog && (data > 7))	fprintf(errorlog, "CPU #0 - suspicious bank: %d ! - PC = %04X\n", data, cpu_get_pc());
+//	if (data > 7)	logerror("CPU #0 - suspicious bank: %d ! - PC = %04X\n", data, cpu_get_pc());
 
 	u1 = data & 0xf8;
 }
@@ -373,7 +373,7 @@ unsigned char *RAM = memory_region(REGION_CPU2);
 	else					RAM = &RAM[0x10000 + 0x4000 * ((data & 7)-3)];
 
 	cpu_setbank(2,RAM);
-//	if (errorlog && (data > 7))	fprintf(errorlog, "CPU #1 - suspicious bank: %d ! - PC = %04X\n", data, cpu_get_pc());
+//	if (data > 7)	logerror("CPU #1 - suspicious bank: %d ! - PC = %04X\n", data, cpu_get_pc());
 
 	flipscreen = data & 0x10;	// probably..
 	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
@@ -516,7 +516,7 @@ unsigned char *RAM = memory_region(REGION_CPU3);
 	else					RAM = &RAM[0x10000 + 0x4000 * ((data & 7)-3)];
 
 	cpu_setbank(3,RAM);
-//	if (errorlog && (data > 7))	fprintf(errorlog, "CPU #2 - suspicious bank: %d ! - PC = %04X\n", data, cpu_get_pc());
+//	if (data > 7)	logerror("CPU #2 - suspicious bank: %d ! - PC = %04X\n", data, cpu_get_pc());
 
 	u3 = data & 0xf8;
 }

@@ -11,7 +11,7 @@
 
 
 unsigned char *terrac_videoram;
-int terrac_videoram_size;
+size_t terrac_videoram_size;
 unsigned char terrac_scrolly[2];
 
 static struct osd_bitmap *tmpbitmap2;

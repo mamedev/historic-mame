@@ -43,11 +43,11 @@ READ_HANDLER( dec0_controls_r )
 			return (readinputport(3) + (readinputport(4) << 8));
 
 		case 8: /* Intel 8751 mc, Bad Dudes & Heavy Barrel only */
-			//if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - read unmapped memory address %06x\n",cpu_get_pc(),0x30c000+offset);
+			//logerror("CPU #0 PC %06x: warning - read unmapped memory address %06x\n",cpu_get_pc(),0x30c000+offset);
 			return i8751_return;
 	}
 
-	if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - read unmapped memory address %06x\n",cpu_get_pc(),0x30c000+offset);
+	logerror("CPU #0 PC %06x: warning - read unmapped memory address %06x\n",cpu_get_pc(),0x30c000+offset);
 	return 0xffff;
 }
 
@@ -64,7 +64,7 @@ READ_HANDLER( dec0_rotary_r )
 			return ~(1 << (readinputport(6) * 12 / 256));
 
 		default:
-			if (errorlog) fprintf(errorlog,"Unknown rotary read at 300000 %02x\n",offset);
+			logerror("Unknown rotary read at 300000 %02x\n",offset);
 	}
 
 	return 0;
@@ -95,7 +95,7 @@ READ_HANDLER( midres_controls_r )
 			return 0;	/* ?? watchdog ?? */
 	}
 
-	if (errorlog) fprintf(errorlog,"PC %06x unknown control read at %02x\n",cpu_get_pc(),0x180000+offset);
+	logerror("PC %06x unknown control read at %02x\n",cpu_get_pc(),0x180000+offset);
 	return 0xffff;
 }
 
@@ -115,7 +115,7 @@ READ_HANDLER( slyspy_controls_r )
 			return readinputport(2);
 	}
 
-	if (errorlog) fprintf(errorlog,"Unknown control read at 30c000 %d\n",offset);
+	logerror("Unknown control read at 30c000 %d\n",offset);
 	return 0xffff;
 }
 
@@ -129,7 +129,7 @@ READ_HANDLER( slyspy_protection_r )
 		case 6:		return 0x2;
 	}
 
-	if (errorlog) fprintf(errorlog,"%04x, Unknown protection read at 30c000 %d\n",cpu_get_pc(),offset);
+	logerror("%04x, Unknown protection read at 30c000 %d\n",cpu_get_pc(),offset);
 	return 0;
 }
 
@@ -192,7 +192,7 @@ WRITE_HANDLER( slyspy_240000_w )
 			else if (offset<0x20) dec0_pf2_control_1_w(offset-0x10,data);
 			return;
 	}
-	if (errorlog) fprintf(errorlog,"Wrote to 240000 %02x at %04x %04x (Trap %02x)\n",offset,cpu_get_pc(),data,slyspy_state);
+	logerror("Wrote to 240000 %02x at %04x %04x (Trap %02x)\n",offset,cpu_get_pc(),data,slyspy_state);
 }
 
 WRITE_HANDLER( slyspy_242000_w )
@@ -206,7 +206,7 @@ WRITE_HANDLER( slyspy_242000_w )
 			else if (offset<0x600) dec0_pf2_rowscroll_w(offset-0x400,data);
 			return;
 	}
-	if (errorlog) fprintf(errorlog,"Wrote to 242000 %02x at %04x %04x (Trap %02x)\n",offset,cpu_get_pc(),data,slyspy_state);
+	logerror("Wrote to 242000 %02x at %04x %04x (Trap %02x)\n",offset,cpu_get_pc(),data,slyspy_state);
 }
 
 WRITE_HANDLER( slyspy_246000_w )
@@ -216,7 +216,7 @@ WRITE_HANDLER( slyspy_246000_w )
 			dec0_pf2_data_w(offset,data);
 			return;
 	}
-	if (errorlog) fprintf(errorlog,"Wrote to 246000 %02x at %04x %04x (Trap %02x)\n",offset,cpu_get_pc(),data,slyspy_state);
+	logerror("Wrote to 246000 %02x at %04x %04x (Trap %02x)\n",offset,cpu_get_pc(),data,slyspy_state);
 }
 
 WRITE_HANDLER( slyspy_248000_w )
@@ -233,7 +233,7 @@ WRITE_HANDLER( slyspy_248000_w )
 			else if (offset<0x20) dec0_pf1_control_1_w(offset-0x10,data);
 			return;
 	}
-	if (errorlog) fprintf(errorlog,"Wrote to 248000 %02x at %04x %04x (Trap %02x)\n",offset,cpu_get_pc(),data,slyspy_state);
+	logerror("Wrote to 248000 %02x at %04x %04x (Trap %02x)\n",offset,cpu_get_pc(),data,slyspy_state);
 }
 
 WRITE_HANDLER( slyspy_24c000_w )
@@ -247,7 +247,7 @@ WRITE_HANDLER( slyspy_24c000_w )
 			else if (offset<0x600) dec0_pf1_rowscroll_w(offset-0x400,data);
 			return;
 	}
-	if (errorlog) fprintf(errorlog,"Wrote to 24c000 %02x at %04x %04x (Trap %02x)\n",offset,cpu_get_pc(),data,slyspy_state);
+	logerror("Wrote to 24c000 %02x at %04x %04x (Trap %02x)\n",offset,cpu_get_pc(),data,slyspy_state);
 }
 
 WRITE_HANDLER( slyspy_24e000_w )
@@ -258,7 +258,7 @@ WRITE_HANDLER( slyspy_24e000_w )
 			dec0_pf1_data_w(offset,data);
 			return;
 	}
-	if (errorlog) fprintf(errorlog,"Wrote to 24e000 %02x at %04x %04x (Trap %02x)\n",offset,cpu_get_pc(),data,slyspy_state);
+	logerror("Wrote to 24e000 %02x at %04x %04x (Trap %02x)\n",offset,cpu_get_pc(),data,slyspy_state);
 }
 
 /******************************************************************************/
@@ -268,7 +268,7 @@ static int hippodrm_msb,hippodrm_lsb;
 
 READ_HANDLER( hippodrm_prot_r )
 {
-//if (errorlog) fprintf(errorlog,"6280 PC %06x - Read %06x\n",cpu_getpc(),offset+0x1d0000);
+//logerror("6280 PC %06x - Read %06x\n",cpu_getpc(),offset+0x1d0000);
 	if (hippodrm_lsb==0x45) return 0x4e;
 	if (hippodrm_lsb==0x92) return 0x15;
 	return 0;
@@ -280,7 +280,7 @@ WRITE_HANDLER( hippodrm_prot_w )
 		case 4:	hippodrm_msb=data; break;
 		case 5:	hippodrm_lsb=data; break;
 	}
-//if (errorlog) fprintf(errorlog,"6280 PC %06x - Wrote %06x to %04x\n",cpu_getpc(),data,offset+0x1d0000);
+//logerror("6280 PC %06x - Wrote %06x to %04x\n",cpu_getpc(),data,offset+0x1d0000);
 }
 
 READ_HANDLER( hippodrm_shared_r )
@@ -346,7 +346,7 @@ static void hbarrel_i8751_write(int data)
 			break;
 		case 0x06:	/* Controls appearance & placement of special weapons */
 			i8751_return=weapons_table[level][data&0x1f];
-			//if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - write %02x to i8751, returning %04x\n",cpu_get_pc(),data,i8751_return);
+			//logerror("CPU #0 PC %06x: warning - write %02x to i8751, returning %04x\n",cpu_get_pc(),data,i8751_return);
 			break;
 		case 0xb:	/* Initialise the variables? */
 			i8751_return=0;
@@ -373,7 +373,7 @@ static void hbarrel_i8751_write(int data)
 		/* We have to use a state as the microcontroller remembers previous commands */
 	}
 
-//if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - write %02x to i8751\n",cpu_get_pc(),data);
+//logerror("CPU #0 PC %06x: warning - write %02x to i8751\n",cpu_get_pc(),data);
 }
 
 static void baddudes_i8751_write(int data)
@@ -399,14 +399,14 @@ static void baddudes_i8751_write(int data)
 		case 0x75b: i8751_return=0x70f; break;
 	}
 
-	if (errorlog && !i8751_return) fprintf(errorlog,"%04x: warning - write unknown command %02x to 8571\n",cpu_get_pc(),data);
+	if (!i8751_return) logerror("%04x: warning - write unknown command %02x to 8571\n",cpu_get_pc(),data);
 }
 
 static void birdtry_i8751_write(int data)
 {
 	i8751_return=0;
 
-	if (errorlog) fprintf(errorlog,"%04x: warning - write unknown command %02x to 8571\n",cpu_get_pc(),data);
+	logerror("%04x: warning - write unknown command %02x to 8571\n",cpu_get_pc(),data);
 
 if ((data&0xff00)==0x200) i8751_return=0x300;
 if ((data&0xff00)==0x300) i8751_return=0x200;
@@ -434,7 +434,7 @@ if ((data&0xff00)==0x300) i8751_return=0x200;
 		case 0x75b: i8751_return=0x70f; break;
 	}
 
-	if (errorlog && !i8751_return) fprintf(errorlog,"%04x: warning - write unknown command %02x to 8571\n",cpu_get_pc(),data);
+	if (!i8751_return) logerror("%04x: warning - write unknown command %02x to 8571\n",cpu_get_pc(),data);
 */
 }
 
@@ -449,7 +449,7 @@ static void i8751_callback(int param)
 	i8751_timer=NULL;
 
 
-if (errorlog) fprintf(errorlog,"i8751:  Timer called!!!\n");
+logerror("i8751:  Timer called!!!\n");
 
 }
 
@@ -464,7 +464,7 @@ void dec0_i8751_write(int data)
 
 	/* Simulate the processing time of the i8751, time value is guessed
 	if (i8751_timer) {
-		if (errorlog) fprintf(errorlog,"i8751:  Missed a timer!!!\n");
+		logerror("i8751:  Missed a timer!!!\n");
 	}
 	else
 		i8751_timer = timer_set(TIME_NOW, 0, i8751_callback);*/
@@ -478,7 +478,7 @@ See the code about 0xb60 (USA version)
 
 */
 
-if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - write %02x to i8751\n",cpu_get_pc(),data);
+logerror("CPU #0 PC %06x: warning - write %02x to i8751\n",cpu_get_pc(),data);
 
 
 }

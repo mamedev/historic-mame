@@ -41,10 +41,10 @@ static UINT8 *gfxrombackup;
 extern UINT16 *wms_videoram;
 
        UINT8 *wms_cmos_ram;
-       INT32  wms_bank2_size;
+       size_t wms_bank2_size;
 extern INT32  wms_videoram_size;
-       int    wms_code_rom_size;
-       int    wms_gfx_rom_size;
+       size_t wms_code_rom_size;
+       size_t wms_gfx_rom_size;
        UINT8  wms_rom_loaded;
 static UINT32 wms_cmos_page = 0;
        INT32  wms_objpalram_select = 0;
@@ -113,7 +113,7 @@ static READ_HANDLER( narc_input_r )
 /*		ans = (input_port_9_r (offset) << 8) + (input_port_8_r (offset)); */
 /*		break; */
 	default:
-		if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: warning - read from unmapped bit address %x\n", cpu_get_pc(), (offset<<3));
+		logerror("CPU #0 PC %08x: warning - read from unmapped bit address %x\n", cpu_get_pc(), (offset<<3));
 	}
 	return ans;
 }
@@ -138,7 +138,7 @@ READ_HANDLER( wms_input_r )
 		ans = (input_port_9_r (offset) << 8) + (input_port_8_r (offset));
 		break;
 	default:
-		if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: warning - read from unmapped bit address %x\n", cpu_get_pc(), (offset<<3));
+		logerror("CPU #0 PC %08x: warning - read from unmapped bit address %x\n", cpu_get_pc(), (offset<<3));
 	}
 	return ans;
 }
@@ -170,7 +170,7 @@ static READ_HANDLER( term2_input_r )
 		ans = (input_port_9_r (offset) << 8) + (input_port_8_r (offset));
 		break;
 	default:
-		if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: warning - read from unmapped bit address %x\n", cpu_get_pc(), (offset<<3));
+		logerror("CPU #0 PC %08x: warning - read from unmapped bit address %x\n", cpu_get_pc(), (offset<<3));
 	}
 	return ans;
 }
@@ -190,7 +190,7 @@ static READ_HANDLER( term2_input_lo_r )
 /*		ans = (input_port_9_r (offset) << 8) + (input_port_8_r (offset)); */
 /*		break; */
 	default:
-		if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: warning - read from unmapped bit address %x\n", cpu_get_pc(), (offset<<3));
+		logerror("CPU #0 PC %08x: warning - read from unmapped bit address %x\n", cpu_get_pc(), (offset<<3));
 	}
 	return ans;
 }
@@ -262,7 +262,7 @@ READ_HANDLER( wms_dma_r )
 		break;
 
 		default:
-/*			if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: read hi dma\n", cpu_get_pc()); */
+/*			logerror("CPU #0 PC %08x: read hi dma\n", cpu_get_pc()); */
 			break;
 		}
 	}
@@ -337,8 +337,8 @@ WRITE_HANDLER( wms_dma_w )
 		rda = &(GFX_ROM[wms_dma_bank+wms_dma_subbank]);
 		wms_dma_stat = data;
 
-		if (errorlog) fprintf(errorlog, "\nCPU #0 PC %08x: DMA command %04x:\n",cpu_get_pc(), data);
-		if (errorlog) fprintf(errorlog, "%04x %04x x%04x y%04x  c%04x r%04x p%04x c%04x\n",wms_dma_subbank, wms_dma_bank, wms_dma_x, wms_dma_y, wms_dma_cols, wms_dma_rows, wms_dma_pal, wms_dma_fgcol );
+		logerror("\nCPU #0 PC %08x: DMA command %04x:\n",cpu_get_pc(), data);
+		logerror("%04x %04x x%04x y%04x  c%04x r%04x p%04x c%04x\n",wms_dma_subbank, wms_dma_bank, wms_dma_x, wms_dma_y, wms_dma_cols, wms_dma_rows, wms_dma_pal, wms_dma_fgcol );
 		/*
 		 * DMA registers
 		 * ------------------
@@ -423,8 +423,8 @@ WRITE_HANDLER( wms_dma_w )
 			DMA_DRAW_NONZERO_BYTES(write_data,--);
 			break;
 		default:
-			if (errorlog) fprintf(errorlog, "\nCPU #0 PC %08x: unhandled DMA command %04x:\n",cpu_get_pc(), data);
-			if (errorlog) fprintf(errorlog, "%04x %04x x%04x y%04x  c%04x r%04x p%04x c%04x\n",wms_dma_subbank, wms_dma_bank, wms_dma_x, wms_dma_y, wms_dma_cols, wms_dma_rows, wms_dma_pal, wms_dma_fgcol );
+			logerror("\nCPU #0 PC %08x: unhandled DMA command %04x:\n",cpu_get_pc(), data);
+			logerror("%04x %04x x%04x y%04x  c%04x r%04x p%04x c%04x\n",wms_dma_subbank, wms_dma_bank, wms_dma_x, wms_dma_y, wms_dma_cols, wms_dma_rows, wms_dma_pal, wms_dma_fgcol );
 			break;
 		}
 		/*
@@ -899,8 +899,8 @@ WRITE_HANDLER( wms_dma2_w )
 
 		if (0)
 		{
-			if (errorlog) fprintf(errorlog, "\nCPU #0 PC %08x: DMA command %04x: (offs%02x) unk2=%04x sr%04x\n",cpu_get_pc(), data, wms_dma_8pos, wms_unk2, wms_sysreg2);
-			if (errorlog) fprintf(errorlog, "%08x x%04x y%04x c%04x r%04x p%04x c%04x  %04x %04x %04x %04x %04x %04x\n",wms_dma_subbank+wms_dma_bank+0x400000, wms_dma_x, wms_dma_y, wms_dma_cols, wms_dma_rows, wms_dma_pal, wms_dma_fgcol, wms_dma_14, wms_dma_16, wms_dma_tclip, wms_dma_bclip, wms_dma_1c, wms_dma_1e );
+			logerror("\nCPU #0 PC %08x: DMA command %04x: (offs%02x) unk2=%04x sr%04x\n",cpu_get_pc(), data, wms_dma_8pos, wms_unk2, wms_sysreg2);
+			logerror("%08x x%04x y%04x c%04x r%04x p%04x c%04x  %04x %04x %04x %04x %04x %04x\n",wms_dma_subbank+wms_dma_bank+0x400000, wms_dma_x, wms_dma_y, wms_dma_cols, wms_dma_rows, wms_dma_pal, wms_dma_fgcol, wms_dma_14, wms_dma_16, wms_dma_tclip, wms_dma_bclip, wms_dma_1c, wms_dma_1e );
 		}
 		/*
 		 * DMA registers
@@ -973,7 +973,7 @@ WRITE_HANDLER( wms_dma2_w )
 		case 0x8003: /* draw all pixels */
 			dma_skip = ((wms_dma_cols + wms_dma_woffset)) - wms_dma_cols;
 			DMA_DRAW_ALL_BYTES(*BYTE_XOR_LE(rda++));
-			if (errorlog&&((data&0x0080)||(wms_dma_8pos&0x07))) fprintf(errorlog, "\nCPU #0 PC %08x: unhandled DMA command %04x:  (off%x)\n",cpu_get_pc(), data, wms_dma_8pos&0x07);
+			if ((data&0x0080)||(wms_dma_8pos&0x07)) logerror("\nCPU #0 PC %08x: unhandled DMA command %04x:  (off%x)\n",cpu_get_pc(), data, wms_dma_8pos&0x07);
 			break;
 		case 0x8008: /* draw nonzero pixels as color (8bpp) */
 			DMA2_DRAW(8, +, +, write_data, wms_dma_fgcol, ++);
@@ -990,7 +990,7 @@ WRITE_HANDLER( wms_dma2_w )
 		case 0x8009: /* draw nonzero pixels as color, zero as zero */
 			dma_skip = ((wms_dma_cols + wms_dma_woffset)) - wms_dma_cols;
 			DMA_DRAW_ALL_BYTES((*BYTE_XOR_LE(rda++)?wms_dma_fgcol:0));
-			if (errorlog&&((data&0x0080)||(wms_dma_8pos&0x07))) fprintf(errorlog, "\nCPU #0 PC %08x: unhandled DMA command %04x:  (off%x)\n",cpu_get_pc(), data, wms_dma_8pos&0x07);
+			if ((data&0x0080)||(wms_dma_8pos&0x07)) logerror("\nCPU #0 PC %08x: unhandled DMA command %04x:  (off%x)\n",cpu_get_pc(), data, wms_dma_8pos&0x07);
 			break;
 		case 0xe00c: /* draw all pixels as color (fill) */
 		case 0xd00c: /* draw all pixels as color (fill) */
@@ -1018,7 +1018,7 @@ WRITE_HANDLER( wms_dma2_w )
 		case 0x8013: /* draw all pixels x-flipped (8bpp) */
 			dma_skip = ((wms_dma_woffset - wms_dma_cols)) + wms_dma_cols;
 			DMA_DRAW_ALL_BYTES(*BYTE_XOR_LE(rda--));
-			if (errorlog&&((data&0x0080)||(wms_dma_8pos&0x07))) fprintf(errorlog, "\nCPU #0 PC %08x: unhandled DMA command %04x:  (off%x)\n",cpu_get_pc(), data, wms_dma_8pos&0x07);
+			if ((data&0x0080)||(wms_dma_8pos&0x07)) logerror("\nCPU #0 PC %08x: unhandled DMA command %04x:  (off%x)\n",cpu_get_pc(), data, wms_dma_8pos&0x07);
 			break;
 		case 0x8018: /* draw nonzero pixels as color x-flipped (8bpp)*/
 			DMA2_DRAW(8, -, +, write_data, wms_dma_fgcol, --);
@@ -1039,8 +1039,8 @@ WRITE_HANDLER( wms_dma2_w )
 			DMA2_DRAW(6, -, -, write_data, write_data, --);
 			break;
 		default:
-			if (errorlog) fprintf(errorlog, "\nCPU #0 PC %08x: unhandled DMA command %04x:\n",cpu_get_pc(), data);
-			if (errorlog) fprintf(errorlog, "%08x x%04x y%04x c%04x r%04x p%04x c%04x  %04x %04x %04x %04x %04x %04x\n",wms_dma_subbank+wms_dma_bank+0x400000, wms_dma_x, wms_dma_y, wms_dma_cols, wms_dma_rows, wms_dma_pal, wms_dma_fgcol, wms_dma_14, wms_dma_16, wms_dma_tclip, wms_dma_bclip, wms_dma_1c, wms_dma_1e );
+			logerror("\nCPU #0 PC %08x: unhandled DMA command %04x:\n",cpu_get_pc(), data);
+			logerror("%08x x%04x y%04x c%04x r%04x p%04x c%04x  %04x %04x %04x %04x %04x %04x\n",wms_dma_subbank+wms_dma_bank+0x400000, wms_dma_x, wms_dma_y, wms_dma_cols, wms_dma_rows, wms_dma_pal, wms_dma_fgcol, wms_dma_14, wms_dma_16, wms_dma_tclip, wms_dma_bclip, wms_dma_1c, wms_dma_1e );
 			break;
 		}
 		if (FAST_DMA)
@@ -1095,7 +1095,7 @@ WRITE_HANDLER( wms_dma2_w )
 		wms_dma_1e = data;
 		break;
 	default:
-		if (errorlog) fprintf(errorlog,"dma offset %x: %x\n",offset, data);
+		logerror("dma offset %x: %x\n",offset, data);
 		break;
 	}
 }
@@ -1115,15 +1115,15 @@ WRITE_HANDLER( wms_01c00060_w ) /* protection and more */
 	if ((data&0xfdff) == 0x0000) /* enable CMOS write */
 	{
 		smashtv_cmos_w_enable = 1;
-/*		if (errorlog) fprintf(errorlog, "Enable CMOS writes\n"); */
+/*		logerror("Enable CMOS writes\n"); */
 	}
 	else if ((data&0xfdff) == 0x0100) /* disable CMOS write */
 	{
 /*		smashtv_cmos_w_enable = 0; */
-/*		if (errorlog) fprintf(errorlog, "Disable CMOS writes\n"); */
+/*		logerror("Disable CMOS writes\n"); */
 	}
 	else
-	if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: warning - write %x to protection chip\n", cpu_get_pc(), data);
+	logerror("CPU #0 PC %08x: warning - write %x to protection chip\n", cpu_get_pc(), data);
 }
 READ_HANDLER( wms_01c00060_r ) /* protection and more */
 {
@@ -1132,7 +1132,7 @@ READ_HANDLER( wms_01c00060_r ) /* protection and more */
 		cpu_set_pc(wms_protect_d); /* skip it! */
 		return 0xffffffff;
 	}
-	if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: warning - unhandled read from protection chip\n",cpu_get_pc());
+	logerror("CPU #0 PC %08x: warning - unhandled read from protection chip\n",cpu_get_pc());
 	return 0xffffffff;
 }
 
@@ -1248,7 +1248,7 @@ WRITE_HANDLER( wms_unk1_w )
 /*		wms_autoerase_start  = cpu_getscanline(); */
 /*	} */
 
-/*	if (errorlog) fprintf(errorlog, "wms_unk1:       %04x\n", data); */
+/*	logerror("wms_unk1:       %04x\n", data); */
 /*#ifdef MAME_DEBUG */
 /*	sprintf(buf,"write: 0x%04x",data); */
 /*	usrintf_showmessage(buf); */
@@ -1268,7 +1268,7 @@ WRITE_HANDLER( wms_unk2_w )
 /*#endif */
 	}
 /*	if (offset == 2) debug_key_pressed = 1; */
-	if (errorlog&&(offset!=6)) fprintf(errorlog, "wms_unk2(%04x): %04x\n", offset<<3, data);
+	if (offset != 6) logerror("wms_unk2(%04x): %04x\n", offset<<3, data);
 }
 
 static READ_HANDLER( narc_unknown_r )
@@ -1284,7 +1284,7 @@ WRITE_HANDLER( wms_cmos_w )
 		COMBINE_WORD_MEM(&wms_cmos_ram[(offset)+wms_cmos_page], data);
 	}
 	else
-	if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: warning - write %x to disabled CMOS address %x\n", cpu_get_pc(), data, offset);
+	logerror("CPU #0 PC %08x: warning - write %x to disabled CMOS address %x\n", cpu_get_pc(), data, offset);
 
 }
 READ_HANDLER( wms_cmos_r )
@@ -2643,22 +2643,22 @@ void nbajam_init_machine(void)
 
 static WRITE_HANDLER( cvsd_sound_w )
 {
-	if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: ", cpu_get_pc());
-	if (errorlog) fprintf(errorlog, "sound write %x\n", data);
+	logerror("CPU #0 PC %08x: ", cpu_get_pc());
+	logerror("sound write %x\n", data);
 	williams_cvsd_data_w(0, (data & 0xff) | ((data & 0x200) >> 1));
 }
 
 static WRITE_HANDLER( adpcm_sound_w )
 {
-/*	if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: ", cpu_get_pc()); */
-/*	if (errorlog) fprintf(errorlog, "sound write %x\n", data); */
+/*	logerror("CPU #0 PC %08x: ", cpu_get_pc()); */
+/*	logerror("sound write %x\n", data); */
 	williams_adpcm_data_w(0, data);
 }
 
 static WRITE_HANDLER( narc_sound_w )
 {
-/*	if (errorlog) fprintf(errorlog, "CPU #0 PC %08x: ", cpu_get_pc()); */
-/*	if (errorlog) fprintf(errorlog, "sound write %x\n", data); */
+/*	logerror("CPU #0 PC %08x: ", cpu_get_pc()); */
+/*	logerror("sound write %x\n", data); */
 	williams_narc_data_w(0, data);
 }
 

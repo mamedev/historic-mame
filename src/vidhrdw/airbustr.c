@@ -127,7 +127,7 @@ int xoffs, yoffs;
 		case 0x06:	bg_scrollx =  data;	break;
 		case 0x08:	highbits   = ~data;	break;	// complemented high bits
 
-		default:	if (errorlog) fprintf(errorlog, "CPU #2 - port %02X written with %02X - PC = %04X\n", offset, data, cpu_get_pc());
+		default:	logerror("CPU #2 - port %02X written with %02X - PC = %04X\n", offset, data, cpu_get_pc());
 	}
 
 	tilemap_set_scrollx(bg_tilemap, 0, ((highbits << 6) & 0x100) + bg_scrollx + xoffs );

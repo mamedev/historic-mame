@@ -34,7 +34,7 @@
 #include "vidhrdw/generic.h"
 
 unsigned char *nova2001_videoram,*nova2001_colorram;
-int nova2001_videoram_size;
+size_t nova2001_videoram_size;
 
 static int nova2001_xscroll;
 static int nova2001_yscroll;

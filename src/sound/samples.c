@@ -15,18 +15,18 @@ void sample_start(int channel,int samplenum,int loop)
 	if (Machine->samples->sample[samplenum] == 0) return;
 	if (channel >= numchannels)
 	{
-		if (errorlog) fprintf(errorlog,"error: sample_start() called with channel = %d, but only %d channels allocated\n",channel,numchannels);
+		logerror("error: sample_start() called with channel = %d, but only %d channels allocated\n",channel,numchannels);
 		return;
 	}
 	if (samplenum >= Machine->samples->total)
 	{
-		if (errorlog) fprintf(errorlog,"error: sample_start() called with samplenum = %d, but only %d samples available\n",samplenum,Machine->samples->total);
+		logerror("error: sample_start() called with samplenum = %d, but only %d samples available\n",samplenum,Machine->samples->total);
 		return;
 	}
 
 	if ( Machine->samples->sample[samplenum]->resolution == 8 )
 	{
-		if (errorlog) fprintf(errorlog,"play 8 bit sample %d, channel %d\n",samplenum,channel);
+		logerror("play 8 bit sample %d, channel %d\n",samplenum,channel);
 		mixer_play_sample(firstchannel + channel,
 				Machine->samples->sample[samplenum]->data,
 				Machine->samples->sample[samplenum]->length,
@@ -35,7 +35,7 @@ void sample_start(int channel,int samplenum,int loop)
 	}
 	else
 	{
-		if (errorlog) fprintf(errorlog,"play 16 bit sample %d, channel %d\n",samplenum,channel);
+		logerror("play 16 bit sample %d, channel %d\n",samplenum,channel);
 		mixer_play_sample_16(firstchannel + channel,
 				(short *) Machine->samples->sample[samplenum]->data,
 				Machine->samples->sample[samplenum]->length,
@@ -50,7 +50,7 @@ void sample_set_freq(int channel,int freq)
 	if (Machine->samples == 0) return;
 	if (channel >= numchannels)
 	{
-		if (errorlog) fprintf(errorlog,"error: sample_adjust() called with channel = %d, but only %d channels allocated\n",channel,numchannels);
+		logerror("error: sample_adjust() called with channel = %d, but only %d channels allocated\n",channel,numchannels);
 		return;
 	}
 
@@ -63,7 +63,7 @@ void sample_set_volume(int channel,int volume)
 	if (Machine->samples == 0) return;
 	if (channel >= numchannels)
 	{
-		if (errorlog) fprintf(errorlog,"error: sample_adjust() called with channel = %d, but only %d channels allocated\n",channel,numchannels);
+		logerror("error: sample_adjust() called with channel = %d, but only %d channels allocated\n",channel,numchannels);
 		return;
 	}
 
@@ -75,7 +75,7 @@ void sample_stop(int channel)
 	if (Machine->sample_rate == 0) return;
 	if (channel >= numchannels)
 	{
-		if (errorlog) fprintf(errorlog,"error: sample_stop() called with channel = %d, but only %d channels allocated\n",channel,numchannels);
+		logerror("error: sample_stop() called with channel = %d, but only %d channels allocated\n",channel,numchannels);
 		return;
 	}
 
@@ -87,7 +87,7 @@ int sample_playing(int channel)
 	if (Machine->sample_rate == 0) return 0;
 	if (channel >= numchannels)
 	{
-		if (errorlog) fprintf(errorlog,"error: sample_playing() called with channel = %d, but only %d channels allocated\n",channel,numchannels);
+		logerror("error: sample_playing() called with channel = %d, but only %d channels allocated\n",channel,numchannels);
 		return 0;
 	}
 

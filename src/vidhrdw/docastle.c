@@ -150,7 +150,7 @@ static void convert_color_prom(unsigned char *palette, unsigned short *colortabl
 			}
 
 			if (sprite_transparency[i])
-if (errorlog) fprintf(errorlog,"sprite %i has transparency.\n",i);
+logerror("sprite %i has transparency.\n",i);
 		}
 	}
 }
@@ -211,14 +211,16 @@ static void setflip(int flip)
 	}
 }
 
-void docastle_flipscreen_off_r(int offset)
+READ_HANDLER( docastle_flipscreen_off_r )
 {
 	setflip(0);
+	return 0;
 }
 
-void docastle_flipscreen_on_r(int offset)
+READ_HANDLER( docastle_flipscreen_on_r )
 {
 	setflip(1);
+	return 0;
 }
 
 WRITE_HANDLER( docastle_flipscreen_off_w )

@@ -1,4 +1,5 @@
 #include "unzip.h"
+#include "mame.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -9,7 +10,6 @@
 /* public globals */
 int	gUnzipQuiet = 0;		/* flag controls error messages */
 
-extern FILE *errorlog;
 
 #define ERROR_CORRUPT "The zipfile seems to be corrupt, please check it"
 #define ERROR_FILESYSTEM "Your filesystem seems to be corrupt, please check it"
@@ -26,8 +26,7 @@ void errormsg(const char* extmsg, const char* usermsg, const char* zipname) {
 	if (!gUnzipQuiet)
 		printf("Error in zipfile %s\n%s\n", zipname, usermsg);
 	/* Output to log file with all informations */
-	if (errorlog)
-		fprintf(errorlog,"Error in zipfile %s: %s\n", zipname, extmsg);
+	logerror("Error in zipfile %s: %s\n", zipname, extmsg);
 }
 
 /* -------------------------------------------------------------------------
@@ -120,8 +119,7 @@ static int ecd_read(ZIP* zip) {
 			/* double buffer */
 			buf_length = 2*buf_length;
 
-			if (errorlog)
-				fprintf(errorlog,"Retry reading of zip ecd for %d bytes\n",buf_length);
+			logerror("Retry reading of zip ecd for %d bytes\n",buf_length);
 
 		} else {
 			return -1;
@@ -480,8 +478,7 @@ static int inflate_file(FILE* in_file, unsigned in_size, unsigned char* out_data
 	 */
     if (err != Z_OK)
 	{
-		if (errorlog)
-			fprintf(errorlog, "inflateInit error: %d\n", err);
+		logerror("inflateInit error: %d\n", err);
         return -1;
 	}
 
@@ -493,8 +490,7 @@ static int inflate_file(FILE* in_file, unsigned in_size, unsigned char* out_data
 	{
 		if (in_size <= 0)
 		{
-			if (errorlog)
-				fprintf(errorlog, "inflate error: compressed size too small\n");
+			logerror("inflate error: compressed size too small\n");
 			free (in_buffer);
 			return -1;
 		}
@@ -509,8 +505,7 @@ static int inflate_file(FILE* in_file, unsigned in_size, unsigned char* out_data
 			break;
 		if (err != Z_OK)
 		{
-			if (errorlog)
-				fprintf(errorlog, "inflate error: %d\n", err);
+			logerror("inflate error: %d\n", err);
 			free (in_buffer);
 			return -1;
 		}
@@ -519,8 +514,7 @@ static int inflate_file(FILE* in_file, unsigned in_size, unsigned char* out_data
     err = inflateEnd(&d_stream);
 	if (err != Z_OK)
 	{
-		if (errorlog)
-			fprintf(errorlog, "inflateEnd error: %d\n", err);
+		logerror("inflateEnd error: %d\n", err);
 		free (in_buffer);
 		return -1;
 	}
@@ -529,8 +523,7 @@ static int inflate_file(FILE* in_file, unsigned in_size, unsigned char* out_data
 
 	if ((d_stream.avail_out > 0) || (in_size > 0))
 	{
-		if (errorlog)
-			fprintf(errorlog, "zip size mismatch. %i\n", in_size);
+		logerror("zip size mismatch. %i\n", in_size);
 		return -1;
 	}
 
@@ -640,8 +633,7 @@ static ZIP* cache_openzip(const char* zipfile) {
 			unsigned j;
 
 /*
-			if (errorlog)
-				fprintf(errorlog,"Zip cache HIT  for %s\n", zipfile);
+			logerror("Zip cache HIT  for %s\n", zipfile);
 */
 
 			/* reset the zip directory */
@@ -663,8 +655,7 @@ static ZIP* cache_openzip(const char* zipfile) {
 	/* not found */
 
 /*
-	if (errorlog)
-		fprintf(errorlog,"Zip cache FAIL for %s\n", zipfile);
+	logerror("Zip cache FAIL for %s\n", zipfile);
 */
 
 	/* open the zip */

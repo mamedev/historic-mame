@@ -32,7 +32,7 @@
 
 /* From vidhrdw/nova2001.c */
 extern unsigned char *nova2001_videoram,*nova2001_colorram;
-extern int nova2001_videoram_size;
+extern size_t nova2001_videoram_size;
 
 void nova2001_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 WRITE_HANDLER( nova2001_scroll_x_w );

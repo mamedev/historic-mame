@@ -18,9 +18,9 @@ extern unsigned char *speedbal_background_videoram;
 extern unsigned char *speedbal_foreground_videoram;
 extern unsigned char *speedbal_sprites_dataram;
 
-extern int speedbal_background_videoram_size;
-extern int speedbal_foreground_videoram_size;
-extern int speedbal_sprites_dataram_size;
+extern size_t speedbal_background_videoram_size;
+extern size_t speedbal_foreground_videoram_size;
+extern size_t speedbal_sprites_dataram_size;
 
 static unsigned char *bg_dirtybuffer;	  /* background tiles */
 static unsigned char *ch_dirtybuffer;	  /* foreground char  */

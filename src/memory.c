@@ -166,19 +166,19 @@ static mem_read_handler bank_read_handler[] =
 
 READ_HANDLER(mrh_error)
 {
-	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - read %02x from unmapped memory address %04x\n",cpu_getactivecpu(),cpu_get_pc(),cpu_bankbase[0][offset],offset);
+	logerror("CPU #%d PC %04x: warning - read %02x from unmapped memory address %04x\n",cpu_getactivecpu(),cpu_get_pc(),cpu_bankbase[0][offset],offset);
 	return cpu_bankbase[0][offset];
 }
 
 READ_HANDLER(mrh_error_sparse)
 {
-	if (errorlog) fprintf(errorlog,"CPU #%d PC %08x: warning - read unmapped memory address %08x\n",cpu_getactivecpu(),cpu_get_pc(),offset);
+	logerror("CPU #%d PC %08x: warning - read unmapped memory address %08x\n",cpu_getactivecpu(),cpu_get_pc(),offset);
 	return 0;
 }
 
 READ_HANDLER(mrh_error_sparse_bit)
 {
-	if (errorlog) fprintf(errorlog,"CPU #%d PC %08x: warning - read unmapped memory bit addr %08x (byte addr %08x)\n",cpu_getactivecpu(),cpu_get_pc(),offset<<3, offset);
+	logerror("CPU #%d PC %08x: warning - read unmapped memory bit addr %08x (byte addr %08x)\n",cpu_getactivecpu(),cpu_get_pc(),offset<<3, offset);
 	return 0;
 }
 
@@ -220,23 +220,23 @@ static mem_write_handler bank_write_handler[] =
 
 WRITE_HANDLER(mwh_error)
 {
-	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to unmapped memory address %04x\n",cpu_getactivecpu(),cpu_get_pc(),data,offset);
+	logerror("CPU #%d PC %04x: warning - write %02x to unmapped memory address %04x\n",cpu_getactivecpu(),cpu_get_pc(),data,offset);
 	cpu_bankbase[0][offset] = data;
 }
 
 WRITE_HANDLER(mwh_error_sparse)
 {
-	if (errorlog) fprintf(errorlog,"CPU #%d PC %08x: warning - write %02x to unmapped memory address %08x\n",cpu_getactivecpu(),cpu_get_pc(),data,offset);
+	logerror("CPU #%d PC %08x: warning - write %02x to unmapped memory address %08x\n",cpu_getactivecpu(),cpu_get_pc(),data,offset);
 }
 
 WRITE_HANDLER(mwh_error_sparse_bit)
 {
-	if (errorlog) fprintf(errorlog,"CPU #%d PC %08x: warning - write %02x to unmapped memory bit addr %08x\n",cpu_getactivecpu(),cpu_get_pc(),data,offset<<3);
+	logerror("CPU #%d PC %08x: warning - write %02x to unmapped memory bit addr %08x\n",cpu_getactivecpu(),cpu_get_pc(),data,offset<<3);
 }
 
 WRITE_HANDLER(mwh_rom)
 {
-	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to ROM address %04x\n",cpu_getactivecpu(),cpu_get_pc(),data,offset);
+	logerror("CPU #%d PC %04x: warning - write %02x to ROM address %04x\n",cpu_getactivecpu(),cpu_get_pc(),data,offset);
 }
 
 WRITE_HANDLER(mwh_ramrom)
@@ -268,14 +268,14 @@ static MHELE *get_element( MHELE *element , int ad , int elemask ,
 	/* create new element block */
 	if( (*ele_max)+banks > MH_ELEMAX )
 	{
-		if (errorlog) fprintf(errorlog,"memory element size over \n");
+		logerror("memory element size over \n");
 		return 0;
 	}
 	/* get new element nunber */
 	ele = *ele_max;
 	(*ele_max)+=banks;
 #ifdef MEM_DUMP
-	if (errorlog) fprintf(errorlog,"create element %2d(%2d)\n",ele,banks);
+	logerror("create element %2d(%2d)\n",ele,banks);
 #endif
 	/* set link mark to current element */
 	element[ad] = ele + MH_HARDMAX;
@@ -299,7 +299,7 @@ static void set_element( int cpu , MHELE *celement , int sp , int ep , MHELE typ
 	int ss,sb,eb,ee;
 
 #ifdef MEM_DUMP
-	if (errorlog) fprintf(errorlog,"set_element %8X-%8X = %2X\n",sp,ep,type);
+	logerror("set_element %8X-%8X = %2X\n",sp,ep,type);
 #endif
 	if( (unsigned int) sp > (unsigned int) ep ) return;
 	do{
@@ -685,8 +685,7 @@ int memory_init(void)
 					/* create newer hardware handler */
 					if( rdhard_max == MH_HARDMAX )
 					{
-						if (errorlog)
-						 fprintf(errorlog,"read memory hardware pattern over !\n");
+						logerror("read memory hardware pattern over !\n");
 						hardware = 0;
 					}
 					else
@@ -764,8 +763,7 @@ int memory_init(void)
 				default:
 					/* create newer hardware handler */
 					if( wrhard_max == MH_HARDMAX ){
-						if (errorlog)
-						 fprintf(errorlog,"write memory hardware pattern over !\n");
+						logerror("write memory hardware pattern over !\n");
 						hardware = 0;
 					}else{
 						/* regist hardware function */
@@ -788,12 +786,11 @@ int memory_init(void)
 		}
     }
 
-	if (errorlog){
-		fprintf(errorlog,"used read  elements %d/%d , functions %d/%d\n"
+	logerror("used read  elements %d/%d , functions %d/%d\n"
 		    ,rdelement_max,MH_ELEMAX , rdhard_max,MH_HARDMAX );
-		fprintf(errorlog,"used write elements %d/%d , functions %d/%d\n"
+	logerror("used write elements %d/%d , functions %d/%d\n"
 		    ,wrelement_max,MH_ELEMAX , wrhard_max,MH_HARDMAX );
-	}
+
 #ifdef MEM_DUMP
 	mem_dump();
 #endif
@@ -886,7 +883,7 @@ void memory_shutdown(void)
 
 /* generic byte-sized read handler */
 #define READBYTE(name,type,abits)														\
-int name(offs_t address)																\
+data_t name(offs_t address)																\
 {																						\
 	MHELE hw;																			\
 																						\
@@ -940,7 +937,7 @@ int name(offs_t address)																\
 
 /* generic word-sized read handler (16-bit aligned only!) */
 #define READWORD(name,type,abits,align)													\
-int name##_word(offs_t address)															\
+data_t name##_word(offs_t address)														\
 {																						\
 	MHELE hw;																			\
 																						\
@@ -984,7 +981,7 @@ int name##_word(offs_t address)															\
 
 /* generic dword-sized read handler (16-bit aligned only!) */
 #define READLONG(name,type,abits,align)													\
-int name##_dword(offs_t address)														\
+data_t name##_dword(offs_t address)														\
 {																						\
 	UINT16 word1, word2;																\
 	MHELE hw1, hw2;																		\
@@ -1321,9 +1318,8 @@ void name(int pc)																		\
 	}																					\
 																						\
 	/* do not support on callback memory region */										\
-	if (errorlog)																		\
-		fprintf(errorlog, "CPU #%d PC %04x: warning - op-code execute on mapped i/o\n",	\
-					cpu_getactivecpu(),cpu_get_pc());									\
+	logerror("CPU #%d PC %04x: warning - op-code execute on mapped i/o\n",				\
+				cpu_getactivecpu(),cpu_get_pc());										\
 }
 
 
@@ -1366,7 +1362,7 @@ int cpu_readport(int port)
 		iorp++;
 	}
 
-	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - read unmapped I/O port %02x\n",cpu_getactivecpu(),cpu_get_pc(),port);
+	logerror("CPU #%d PC %04x: warning - read unmapped I/O port %02x\n",cpu_getactivecpu(),cpu_get_pc(),port);
 	return 0;
 }
 
@@ -1401,7 +1397,7 @@ void cpu_writeport(int port, int value)
 		iowp++;
 	}
 
-	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to unmapped I/O port %02x\n",cpu_getactivecpu(),cpu_get_pc(),value,port);
+	logerror("CPU #%d PC %04x: warning - write %02x to unmapped I/O port %02x\n",cpu_getactivecpu(),cpu_get_pc(),value,port);
 }
 
 
@@ -1510,14 +1506,14 @@ void *install_mem_read_handler(int cpu, int start, int end, mem_read_handler han
 	MHELE hardware = 0;
 	int abitsmin;
 	int i, hw_set;
-	if (errorlog) fprintf(errorlog, "Install new memory read handler:\n");
-	if (errorlog) fprintf(errorlog, "             cpu: %d\n", cpu);
-	if (errorlog) fprintf(errorlog, "           start: 0x%08x\n", start);
-	if (errorlog) fprintf(errorlog, "             end: 0x%08x\n", end);
+	logerror("Install new memory read handler:\n");
+	logerror("             cpu: %d\n", cpu);
+	logerror("           start: 0x%08x\n", start);
+	logerror("             end: 0x%08x\n", end);
 #ifdef __LP64__
-	if (errorlog) fprintf(errorlog, " handler address: 0x%016lx\n", (unsigned long) handler);
+	logerror(" handler address: 0x%016lx\n", (unsigned long) handler);
 #else
-	if (errorlog) fprintf(errorlog, " handler address: 0x%08x\n", (unsigned int) handler);
+	logerror(" handler address: 0x%08x\n", (unsigned int) handler);
 #endif
 	abitsmin = ABITSMIN (cpu);
 
@@ -1529,7 +1525,7 @@ void *install_mem_read_handler(int cpu, int start, int end, mem_read_handler han
 		if (( memoryreadhandler[i] == handler ) &&
 			(  memoryreadoffset[i] == start))
 		{
-			if (errorlog) fprintf(errorlog,"handler match - use old one\n");
+			logerror("handler match - use old one\n");
 			hardware = i;
 			hw_set = 1;
 		}
@@ -1572,8 +1568,8 @@ void *install_mem_read_handler(int cpu, int start, int end, mem_read_handler han
 		/* create newer hardware handler */
 		if( rdhard_max == MH_HARDMAX )
 		{
-			if (errorlog) fprintf(errorlog, "read memory hardware pattern over !\n");
-			if (errorlog) fprintf(errorlog, "Failed to install new memory handler.\n");
+			logerror("read memory hardware pattern over !\n");
+			logerror("Failed to install new memory handler.\n");
 			return memory_find_base(cpu, start);
 		}
 		else
@@ -1589,11 +1585,9 @@ void *install_mem_read_handler(int cpu, int start, int end, mem_read_handler han
 		(((unsigned int) start) >> abitsmin) ,
 		(((unsigned int) end) >> abitsmin) ,
 		hardware , readhardware , &rdelement_max );
-	if (errorlog) fprintf(errorlog, "Done installing new memory handler.\n");
-	if (errorlog){
-		fprintf(errorlog,"used read  elements %d/%d , functions %d/%d\n"
+	logerror("Done installing new memory handler.\n");
+	logerror("used read  elements %d/%d , functions %d/%d\n"
 		    ,rdelement_max,MH_ELEMAX , rdhard_max,MH_HARDMAX );
-	}
 	return memory_find_base(cpu, start);
 }
 
@@ -1602,14 +1596,14 @@ void *install_mem_write_handler(int cpu, int start, int end, mem_write_handler h
 	MHELE hardware = 0;
 	int abitsmin;
 	int i, hw_set;
-	if (errorlog) fprintf(errorlog, "Install new memory write handler:\n");
-	if (errorlog) fprintf(errorlog, "             cpu: %d\n", cpu);
-	if (errorlog) fprintf(errorlog, "           start: 0x%08x\n", start);
-	if (errorlog) fprintf(errorlog, "             end: 0x%08x\n", end);
+	logerror("Install new memory write handler:\n");
+	logerror("             cpu: %d\n", cpu);
+	logerror("           start: 0x%08x\n", start);
+	logerror("             end: 0x%08x\n", end);
 #ifdef __LP64__
-	if (errorlog) fprintf(errorlog, " handler address: 0x%016lx\n", (unsigned long) handler);
+	logerror(" handler address: 0x%016lx\n", (unsigned long) handler);
 #else
-	if (errorlog) fprintf(errorlog, " handler address: 0x%08x\n", (unsigned int) handler);
+	logerror(" handler address: 0x%08x\n", (unsigned int) handler);
 #endif
 	abitsmin = ABITSMIN (cpu);
 
@@ -1621,7 +1615,7 @@ void *install_mem_write_handler(int cpu, int start, int end, mem_write_handler h
 		if (( memorywritehandler[i] == handler ) &&
 			(  memorywriteoffset[i] == start))
 		{
-			if (errorlog) fprintf(errorlog,"handler match - use old one\n");
+			logerror("handler match - use old one\n");
 			hardware = i;
 			hw_set = 1;
 		}
@@ -1672,8 +1666,8 @@ void *install_mem_write_handler(int cpu, int start, int end, mem_write_handler h
 		/* create newer hardware handler */
 		if( wrhard_max == MH_HARDMAX )
 		{
-			if (errorlog) fprintf(errorlog, "write memory hardware pattern over !\n");
-			if (errorlog) fprintf(errorlog, "Failed to install new memory handler.\n");
+			logerror("write memory hardware pattern over !\n");
+			logerror("Failed to install new memory handler.\n");
 
 			return memory_find_base(cpu, start);
 		}
@@ -1690,11 +1684,9 @@ void *install_mem_write_handler(int cpu, int start, int end, mem_write_handler h
 		(((unsigned int) start) >> abitsmin) ,
 		(((unsigned int) end) >> abitsmin) ,
 		hardware , writehardware , &wrelement_max );
-	if (errorlog) fprintf(errorlog, "Done installing new memory handler.\n");
-	if (errorlog){
-		fprintf(errorlog,"used write elements %d/%d , functions %d/%d\n"
+	logerror("Done installing new memory handler.\n");
+	logerror("used write elements %d/%d , functions %d/%d\n"
 		    ,wrelement_max,MH_ELEMAX , wrhard_max,MH_HARDMAX );
-	}
 	return memory_find_base(cpu, start);
 }
 
@@ -1743,7 +1735,7 @@ static void *install_port_read_handler_common(int cpu, int start, int end,
 	}
 
 #ifdef MEM_DUMP
-	if (errorlog) fprintf(errorlog, "Installing port read handler: cpu %d  slot %X  start %X  end %X\n", cpu, i, start, end);
+	logerror("Installing port read handler: cpu %d  slot %X  start %X  end %X\n", cpu, i, start, end);
 #endif
 
 	readport[cpu][i].start = start;
@@ -1788,7 +1780,7 @@ static void *install_port_write_handler_common(int cpu, int start, int end,
 	}
 
 #ifdef MEM_DUMP
-	if (errorlog) fprintf(errorlog, "Installing port write handler: cpu %d  slot %X  start %X  end %X\n", cpu, i, start, end);
+	logerror("Installing port write handler: cpu %d  slot %X  start %X  end %X\n", cpu, i, start, end);
 #endif
 
 	writeport[cpu][i].start = start;

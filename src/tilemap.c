@@ -107,12 +107,10 @@ static void mappings_update( struct tilemap *tilemap ){
 		tilemap->memory_offset_to_cached_index[logical_index] = -1;
 	}
 
-if( errorlog ){
-	fprintf( errorlog, "log size(%dx%d); cach size(%dx%d)\n",
-		num_logical_cols,num_logical_rows,
-		num_cached_cols,num_cached_rows
-	);
-}
+	logerror("log size(%dx%d); cach size(%dx%d)\n",
+			num_logical_cols,num_logical_rows,
+			num_cached_cols,num_cached_rows);
+
 	for( logical_index=0; logical_index<tilemap->num_tiles; logical_index++ ){
 		UINT32 logical_col = logical_index%num_logical_cols;
 		UINT32 logical_row = logical_index/num_logical_cols;
@@ -385,7 +383,7 @@ struct tilemap *tilemap_create(
 		tilemap->num_logical_cols = num_cols;
 		tilemap->num_logical_rows = num_rows;
 		if( Machine->orientation & ORIENTATION_SWAP_XY ){
-		if( errorlog ) fprintf( errorlog, "swap!!\n" );
+		logerror("swap!!\n" );
 			SWAP( tile_width, tile_height )
 			SWAP( num_cols,num_rows )
 		}
@@ -577,7 +575,7 @@ void tilemap_set_clip( struct tilemap *tilemap, const struct rectangle *clip ){
 	tilemap->clip_right = right;
 	tilemap->clip_top = top;
 	tilemap->clip_bottom = bottom;
-//	if( errorlog ) fprintf( errorlog, "clip: %d,%d,%d,%d\n", left,top,right,bottom );
+//	logerror("clip: %d,%d,%d,%d\n", left,top,right,bottom );
 }
 
 /***********************************************************************************/
@@ -872,6 +870,68 @@ static int draw_color_mask(
 	return TILE_MASKED;
 }
 
+static int draw_pen_mask(
+	struct osd_bitmap *mask,
+	UINT32 col, UINT32 row,
+	UINT32 tile_width, UINT32 tile_height,
+	const UINT8 *pendata,
+	int transparent_pen,
+	UINT32 flags )
+{
+	int is_opaque = 1, is_transparent = 1;
+
+	int x,bit,sx = tile_width*col;
+	int sy,y1,y2,dy;
+
+	if( flags&TILE_FLIPY ){
+		y1 = tile_height*row+tile_height-1;
+		y2 = y1-tile_height;
+ 		dy = -1;
+ 	}
+ 	else {
+		y1 = tile_height*row;
+		y2 = y1+tile_height;
+ 		dy = 1;
+ 	}
+
+	if( flags&TILE_FLIPX ){
+		tile_width--;
+		for( sy=y1; sy!=y2; sy+=dy ){
+			UINT8 *mask_dest  = mask->line[sy]+sx/8;
+			for( x=tile_width/8; x>=0; x-- ){
+				UINT32 data = 0;
+				for( bit=0; bit<8; bit++ ){
+					UINT32 pen = *pendata++;
+					data = data>>1;
+					if( pen!=transparent_pen ) data |=0x80;
+				}
+				if( data!=0x00 ) is_transparent = 0;
+				if( data!=0xff ) is_opaque = 0;
+				mask_dest[x] = data;
+			}
+		}
+	}
+	else {
+		for( sy=y1; sy!=y2; sy+=dy ){
+			UINT8 *mask_dest  = mask->line[sy]+sx/8;
+			for( x=0; x<tile_width/8; x++ ){
+				UINT32 data = 0;
+				for( bit=0; bit<8; bit++ ){
+					UINT32 pen = *pendata++;
+					data = data<<1;
+					if( pen!=transparent_pen ) data |=0x01;
+				}
+				if( data!=0x00 ) is_transparent = 0;
+				if( data!=0xff ) is_opaque = 0;
+				mask_dest[x] = data;
+			}
+		}
+	}
+	if( is_transparent ) return TILE_TRANSPARENT;
+	if( is_opaque ) return TILE_OPAQUE;
+	return TILE_MASKED;
+}
+
 static void draw_mask(
 	struct osd_bitmap *mask,
 	UINT32 col, UINT32 row,
@@ -993,19 +1053,31 @@ static void render_mask( struct tilemap *tilemap, UINT32 cached_index ){
 		}
 	}
 	else if( type==TILEMAP_TRANSPARENT ){
-		UINT32 fg_transmask = 1 << transparent_pen;
-	 	if( flags&TILE_IGNORE_TRANSPARENCY ) fg_transmask = 0;
-		if( pen_usage == fg_transmask ){
-			tilemap->foreground->data_row[row][col] = TILE_TRANSPARENT;
-		}
-		else if( pen_usage & fg_transmask ){
-			draw_mask( tilemap->foreground->bitmask,
-				col, row, tile_width, tile_height,
-				pen_data, fg_transmask, flags );
-			tilemap->foreground->data_row[row][col] = TILE_MASKED;
+		if( pen_usage ){
+			UINT32 fg_transmask = 1 << transparent_pen;
+		 	if( flags&TILE_IGNORE_TRANSPARENCY ) fg_transmask = 0;
+			if( pen_usage == fg_transmask ){
+				tilemap->foreground->data_row[row][col] = TILE_TRANSPARENT;
+			}
+			else if( pen_usage & fg_transmask ){
+				draw_mask( tilemap->foreground->bitmask,
+					col, row, tile_width, tile_height,
+					pen_data, fg_transmask, flags );
+				tilemap->foreground->data_row[row][col] = TILE_MASKED;
+			}
+			else {
+				tilemap->foreground->data_row[row][col] = TILE_OPAQUE;
+			}
 		}
 		else {
-			tilemap->foreground->data_row[row][col] = TILE_OPAQUE;
+			tilemap->foreground->data_row[row][col] =
+				draw_pen_mask(
+					tilemap->foreground->bitmask,
+					col, row, tile_width, tile_height,
+					pen_data,
+					transparent_pen,
+					flags
+				);
 		}
 	}
 	else if( type==TILEMAP_TRANSPARENT_COLOR ){

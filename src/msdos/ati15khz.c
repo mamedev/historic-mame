@@ -116,8 +116,7 @@ int detectati(void)
 	if (inportl (scratch_reg) != 0x55555555)
 	{
 		outportl (scratch_reg, old);
-		if (errorlog)
-			fprintf (errorlog, "15.75KHz: Not Mach64 Chipset\n");
+		logerror("15.75KHz: Not Mach64 Chipset\n");
 		return 0;
 	}
 
@@ -125,8 +124,7 @@ int detectati(void)
 	if (inportl (scratch_reg) != 0xAAAAAAAA)
 	{
 		outportl (scratch_reg, old);
-		if (errorlog)
-			fprintf (errorlog, "15.75KHz: Not Mach64 Chipset\n");
+		logerror("15.75KHz: Not Mach64 Chipset\n");
 		return 0;
 	}
 
@@ -143,15 +141,12 @@ int detectati(void)
 	MinFreq = sbios_data[(Freq_Table_Ptr >> 1) + 1];
 	MaxFreq = sbios_data[(Freq_Table_Ptr >> 1) + 2];
 	VRAMMemClk = sbios_data[(Freq_Table_Ptr >> 1) + 9];
-	if (errorlog)
-	{
-		fprintf (errorlog, "15.75KHz: type of MACH64 clk: %s (%d)\n", mach64ClockTypeTable[Clock_Type], Clock_Type);
-		fprintf (errorlog, "15.75KHz: MACH64 ref Freq:%d\n", RefFreq);
-		fprintf (errorlog, "15.75KHz: MACH64 ref Div:%d\n", RefDivider);
-		fprintf (errorlog, "15.75KHz: MACH64 min Freq:%d\n", MinFreq);
-		fprintf (errorlog, "15.75KHz: MACH64 max Freq:%d\n", MaxFreq);
-		fprintf (errorlog, "15.75KHz: MACH64 Mem Clk %d\n", VRAMMemClk);
-	}
+	logerror("15.75KHz: type of MACH64 clk: %s (%d)\n", mach64ClockTypeTable[Clock_Type], Clock_Type);
+	logerror("15.75KHz: MACH64 ref Freq:%d\n", RefFreq);
+	logerror("15.75KHz: MACH64 ref Div:%d\n", RefDivider);
+	logerror("15.75KHz: MACH64 min Freq:%d\n", MinFreq);
+	logerror("15.75KHz: MACH64 max Freq:%d\n", MaxFreq);
+	logerror("15.75KHz: MACH64 Mem Clk %d\n", VRAMMemClk);
 
 
 /*Get some useful registers while we're here  */
@@ -333,11 +328,9 @@ bit  0-15  Cfg_Chip_Type. Product Type Code. 0D7h for the 88800GX,
 	ChipID = (int)(old & CFG_CHIP_TYPE);
 	ChipRev = (int)((old & CFG_CHIP_REV) >> 24);
 
-	if (errorlog)
-	{
-		fprintf (errorlog, "15.75KHz: Chip ID :%d\n", ChipID);
-		fprintf (errorlog, "15.75KHz: Chip Rev :%d\n", ChipRev);
-	}
+	logerror("15.75KHz: Chip ID :%d\n", ChipID);
+	logerror("15.75KHz: Chip Rev :%d\n", ChipRev);
+
 	switch (ChipID)
 	{
 		case MACH64_GX_ID:
@@ -367,8 +360,7 @@ bit  0-15  Cfg_Chip_Type. Product Type Code. 0D7h for the 88800GX,
 			ChipType=MACH64_UNKNOWN;
 	}
 
-	if (errorlog)
-		fprintf (errorlog, "15.75KHz: Chip Type :%d\n", ChipType);
+	logerror("15.75KHz: Chip Type :%d\n", ChipType);
 /* and the memory on the card  */
 	old = inportl (_mach64_mem_cntl);
 	switch (old & MEM_SIZE_ALIAS_GTB)
@@ -392,13 +384,11 @@ bit  0-15  Cfg_Chip_Type. Product Type Code. 0D7h for the 88800GX,
 		default:
 			MemSize=MEM_SIZE_1M;
 	}
-	if (errorlog)
-		fprintf (errorlog, "15.75KHz: Video Memory %d\n", MemSize);
+	logerror("15.75KHz: Video Memory %d\n", MemSize);
 /* and the type of memory  */
 	old = inportl(_mach64_config_stat0);
 	MemType = old & CFG_MEM_TYPE_xT;
-	if(errorlog)
-		fprintf(errorlog,"15.75KHz: Video Memory  Type %d\n",MemType);
+	logerror("15.75KHz: Video Memory  Type %d\n",MemType);
 
 #ifdef ATI_PROGRAM_CLOCK
 /* only bail out here if the clock's wrong  */
@@ -406,16 +396,14 @@ bit  0-15  Cfg_Chip_Type. Product Type Code. 0D7h for the 88800GX,
 /* - just in case I ever feel like adding RAMDAC support  */
 	if (Clock_Type != CLK_INTERNAL)
 	{
-		if(errorlog)
-			fprintf(errorlog,"15.75KHz: Clock type not supported, only internal clocks implemented\n");
+		logerror("15.75KHz: Clock type not supported, only internal clocks implemented\n");
 		return 0;
 	}
 #endif
 
 	DSPSet=0;
 
-	if(errorlog)
-		fprintf(errorlog,"15.75KHz: Found Mach64 based card with internal clock\n");
+	logerror("15.75KHz: Found Mach64 based card with internal clock\n");
 	return 1;
 }
 
@@ -466,8 +454,7 @@ int setati15KHz(int vdouble,int width, int height)
 
 	if (!calc_mach64_scanline (&nHzTotal, &nHzDisplay, &nHzSyncOffset, &n, &P, &extdiv, &nActualMHz))
 		return 0;
-	if (errorlog)
-		fprintf (errorlog, "15.75KHz: Offset:%d ,Interlace:%d ,Dis. Double:%d\n", nOffSet, interlace, dispdouble);
+	logerror("15.75KHz: Offset:%d ,Interlace:%d ,Dis. Double:%d\n", nOffSet, interlace, dispdouble);
 
 	gen = inportl(_mach64_gen_cntrl);
 
@@ -480,8 +467,7 @@ int setati15KHz(int vdouble,int width, int height)
 /* when we change the clock speed */
 	if (((ChipType == MACH64_VT || ChipType == MACH64_GT)&&(ChipRev & 0x07)))
 	{
-		if (errorlog)
-			fprintf (errorlog, "15.75KHz: Programming the DSP\n");
+		logerror("15.75KHz: Programming the DSP\n");
 		if (!setmach64DSP(0))
 		{
 			outportl (_mach64_gen_cntrl, gen);
@@ -490,8 +476,7 @@ int setati15KHz(int vdouble,int width, int height)
 	}
 	else
 	{
-		if (errorlog)
-			fprintf (errorlog, "15.75KHz: Decided NOT to program the DSP\n");
+		logerror("15.75KHz: Decided NOT to program the DSP\n");
 	}
 
 /* now we can program the clock */
@@ -529,11 +514,8 @@ int setati15KHz(int vdouble,int width, int height)
 	inportb (_mach64_dac_cntl);
 #endif
 
-	if (errorlog)
-	{
-		fprintf (errorlog, "15.75KHz: H total %d, H display %d, H sync offset %d\n",nHzTotal,nHzDisplay,nHzSyncOffset);
-		fprintf (errorlog, "15.75KHz: V total %d, V display %d, V sync offset %d\n",vTotal,lastvisline,nVSyncOffset);
-	}
+	logerror("15.75KHz: H total %d, H display %d, H sync offset %d\n",nHzTotal,nHzDisplay,nHzSyncOffset);
+	logerror("15.75KHz: V total %d, V display %d, V sync offset %d\n",vTotal,lastvisline,nVSyncOffset);
 
 /* now setup the CRTC timings */
 
@@ -625,8 +607,7 @@ int calc_mach64_height(int vdouble,int *nOffSet,int *interlace,int *dispdouble,i
 			*nVSyncOffset = 2;
 			if (vdouble)
 			{
-				if (errorlog)
-					fprintf (errorlog, "15.75KHz: Mode is using software doubling, disabling interlace and halfing y res\n");
+				logerror("15.75KHz: Mode is using software doubling, disabling interlace and halfing y res\n");
 				*interlace = 0;
 /* only draw every other line */
 				*nOffSet <<= 1;
@@ -637,16 +618,14 @@ int calc_mach64_height(int vdouble,int *nOffSet,int *interlace,int *dispdouble,i
 				lport = inportl(_mach64_gen_cntrl);
 				if (lport & CRTC_Enable_Doubling)
 				{
-					if (errorlog)
-						fprintf (errorlog, "15.75KHz: Mode is using hardware doubling, disabling interlace, disabling hardware doubling\n");
+					logerror("15.75KHz: Mode is using hardware doubling, disabling interlace, disabling hardware doubling\n");
 					*interlace = 0;
 					*dispdouble = 1;
 				}
 			}
 			break;
 		default:    /* unhandled resolution */
-			if (errorlog)
-				fprintf (errorlog, "15.75KHz: Unsupported SVGA 15.75KHz height (%d)\n", nVtDispTotal+1);
+			logerror("15.75KHz: Unsupported SVGA 15.75KHz height (%d)\n", nVtDispTotal+1);
 			return 0;
 
 	}
@@ -668,15 +647,13 @@ int calc_mach64_scanline(int *nHzTotal,int *nHzDispTotal,int *nHzSyncOffset,int 
 	switch (*nHzDispTotal)
 	{
 		case 79: /* 640x480 */
-			if (errorlog)
-				fprintf (errorlog, "15.75KHz: 640x480 mode Attempting to use 14MHz Clock\n");
+			logerror("15.75KHz: 640x480 mode Attempting to use 14MHz Clock\n");
 			nTargetMHz = 1400;
 			nTargetHzTotal = tw640x480arc_h - 83;
 			*nHzSyncOffset = 6;
 			break;
 		default: /* unhandled res, return error */
-			if (errorlog)
-				fprintf (errorlog, "15.75KHz: Unsupported SVGA 15.75KHz mode (%d chars)\n", *nHzDispTotal);
+			logerror("15.75KHz: Unsupported SVGA 15.75KHz mode (%d chars)\n", *nHzDispTotal);
 
 			return 0;
 	}
@@ -685,8 +662,7 @@ int calc_mach64_scanline(int *nHzTotal,int *nHzDispTotal,int *nHzSyncOffset,int 
 	*nActualMHz = calc_mach64_clock (nTargetMHz, N, P, externaldiv);
 /* adjust the horizontal total */
 	nActualHzTotal = (int)(((float)nTargetHzTotal / (float)nTargetMHz) * (float)*nActualMHz);
-	if (errorlog)
-		fprintf (errorlog, "15.75KHz: tgt MHz:%d, act MHz:%d, tgt HzTot:%d, act HzTot:%d\n",
+	logerror("15.75KHz: tgt MHz:%d, act MHz:%d, tgt HzTot:%d, act HzTot:%d\n",
 				nTargetMHz, *nActualMHz, nTargetHzTotal, nActualHzTotal);
 #else
 /* not programming the clock, so setup a double width scan line */
@@ -694,8 +670,7 @@ int calc_mach64_scanline(int *nHzTotal,int *nHzDispTotal,int *nHzSyncOffset,int 
 	nActualHzTotal = tw640x480arc_h + 5;
 	*nHzDispTotal = (*nHzDispTotal * 2) + 1;
 	*nHzSyncOffset = 0;
-	if (errorlog)
-		fprintf (errorlog, "15.75KHz: HzTot:%d\n", nActualHzTotal);
+	logerror("15.75KHz: HzTot:%d\n", nActualHzTotal);
 
 #endif
 
@@ -723,14 +698,12 @@ int calc_mach64_clock(int nTargetMHz,int *N,int *P,int *externaldiv)
 
 
 	Q = (nActualMHz * RefDivider)/(2.0 * RefFreq);
-	if (errorlog)
-		fprintf (errorlog, "15.75KHz: Q:%d\n", (int)Q);
+	logerror("15.75KHz: Q:%d\n", (int)Q);
 	*externaldiv = 0;
 
 	if (Q > 255)
 	{
-		if (errorlog)
-			fprintf (errorlog, "15.75KHz: Q too big\n");
+		logerror("15.75KHz: Q too big\n");
 		Q = 255;
 		*P = 0;
 		postDiv = 1;
@@ -784,12 +757,10 @@ int calc_mach64_clock(int nTargetMHz,int *N,int *P,int *externaldiv)
 	nActualMHz = ((2 * RefFreq * (*N)) / (RefDivider * postDiv));
 
 
-	if (errorlog)
-	{
-		fprintf (errorlog, "15.75KHz: MACH64 N val:%d\n", *N);
-		fprintf (errorlog, "15.75KHz: MACH64 Post Div val:%d\n", *P);
-		fprintf (errorlog, "15.75KHz: MACH64 external div:%d\n", *externaldiv);
-	}
+	logerror("15.75KHz: MACH64 N val:%d\n", *N);
+	logerror("15.75KHz: MACH64 Post Div val:%d\n", *P);
+	logerror("15.75KHz: MACH64 external div:%d\n", *externaldiv);
+
 	return nActualMHz;
 }
 
@@ -839,8 +810,7 @@ int setmach64DSP(int nAdd)
 				default:
                     dsp_xclks_per_qw = 2189+offset;
 			}
-            if (errorlog)
-                fprintf(errorlog,"DSP value %d (8bit)\n",dsp_xclks_per_qw);
+            logerror("DSP value %d (8bit)\n",dsp_xclks_per_qw);
 
 			break;
 		case  3: /* 16 bit colour */
@@ -855,13 +825,11 @@ int setmach64DSP(int nAdd)
 				default:
 					dsp_xclks_per_qw = 3679+offset;
 			}
-            if (errorlog)
-                fprintf(errorlog,"DSP value %d (16bit)\n",dsp_xclks_per_qw);
+            logerror("DSP value %d (16bit)\n",dsp_xclks_per_qw);
 
 			break;
 		default: /* any other colour depth */
-			if (errorlog)
-				fprintf (errorlog, "15.75KHz: Unsupported colour depth for ATI driver (%d)\n",(int)inportb (_mach64_gen_cntrl+1));
+			logerror("15.75KHz: Unsupported colour depth for ATI driver (%d)\n",(int)inportb (_mach64_gen_cntrl+1));
 			return 0;
 	}
 
@@ -886,8 +854,7 @@ int setmach64DSP(int nAdd)
 	dsp_off = 206;
 	dsp_prec = 5;
 
-	if (errorlog)
-		fprintf (errorlog, "15.75KHz: DSP on:%d DSP off:%d DSP clks :%d  DSP prec:%d  latency :%d\n", (int)dsp_on, (int)dsp_off,
+	logerror("15.75KHz: DSP on:%d DSP off:%d DSP clks :%d  DSP prec:%d  latency :%d\n", (int)dsp_on, (int)dsp_off,
 				(int)dsp_xclks_per_qw, (int)dsp_prec, (int)loop_latency);
 /* save whats there */
 	SaveDSPOnOff = inportw (_mach64_dsp_on_off);

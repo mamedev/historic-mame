@@ -85,7 +85,7 @@ READ_HANDLER( rastan_a001_r )
 
 	if (transmit == 0)
 	{
-		if (errorlog) fprintf(errorlog,"Slave unexpected receiving! (PC = %04x)\n", cpu_get_pc() );
+		logerror("Slave unexpected receiving! (PC = %04x)\n", cpu_get_pc() );
 	}
 	else
 	{
@@ -93,7 +93,7 @@ READ_HANDLER( rastan_a001_r )
 		{
 			pom = SlaveContrStat;
 #ifdef REPORT_SLAVE_MODE_READ_ITSELF
-			if (errorlog) fprintf(errorlog,"Slave has read status of itself %02x (PC = %04x)\n",pom, cpu_get_pc() );
+			logerror("Slave has read status of itself %02x (PC = %04x)\n",pom, cpu_get_pc() );
 #endif
 		}
 		else
@@ -102,14 +102,14 @@ READ_HANDLER( rastan_a001_r )
 			{
 				pom = soundcommand & 0x0f;
 #ifdef REPORT_DATA_FLOW
-				if (errorlog) fprintf(errorlog,"Slave has read pom1=%02x (PC = %04x)\n",pom, cpu_get_pc() );
+				logerror("Slave has read pom1=%02x (PC = %04x)\n",pom, cpu_get_pc() );
 #endif
 			}
 			else
 			{
 				pom = (soundcommand & 0xf0) >> 4;
 #ifdef REPORT_DATA_FLOW
-				if (errorlog) fprintf(errorlog,"Slave has read pom2=%02x (PC = %04x)\n",pom,cpu_get_pc() );
+				logerror("Slave has read pom2=%02x (PC = %04x)\n",pom,cpu_get_pc() );
 #endif
 				SlaveContrStat &= 0xfe; /* Ready to receive new commands */;
 			}
@@ -128,10 +128,10 @@ WRITE_HANDLER( rastan_a000_w )
 	int pom;
 
 	if (transmit != 0)
-		if (errorlog) fprintf(errorlog,"Slave mode changed while expecting to transmit! (PC = %04x) \n", cpu_get_pc() );
+		logerror("Slave mode changed while expecting to transmit! (PC = %04x) \n", cpu_get_pc() );
 
 #ifdef REPORT_SLAVE_MODE_CHANGE
-	if (errorlog) fprintf(errorlog,"Slave changing its mode to %02x (PC = %04x) \n",data, cpu_get_pc());
+	logerror("Slave changing its mode to %02x (PC = %04x) \n",data, cpu_get_pc());
 #endif
 
 	pom = (data >> 2 ) & 0x01;
@@ -149,7 +149,7 @@ WRITE_HANDLER( rastan_a000_w )
 	}
 
 	if (pom == 0x03)
-		if (errorlog) fprintf(errorlog,"Int mode = 3! (PC = %04x)\n", cpu_get_pc() );
+		logerror("Int mode = 3! (PC = %04x)\n", cpu_get_pc() );
 }
 
 WRITE_HANDLER( rastan_a001_w )
@@ -158,7 +158,7 @@ WRITE_HANDLER( rastan_a001_w )
 
 	if (transmit == 0)
 	{
-		if (errorlog) fprintf(errorlog,"Slave unexpected transmission! (PC = %04x)\n", cpu_get_pc() );
+		logerror("Slave unexpected transmission! (PC = %04x)\n", cpu_get_pc() );
 	}
 	else
 	{
@@ -173,13 +173,13 @@ WRITE_HANDLER( rastan_a001_w )
 				SlaveContrStat |= 4; /* report data pending on main */
 				cpu_spin(); /* writing should take longer than emulated, so spin */
 #ifdef REPORT_DATA_FLOW
-				if (errorlog) fprintf(errorlog,"Slave sent double %02x (PC = %04x)\n",lasthalf+(data<<4), cpu_get_pc() );
+				logerror("Slave sent double %02x (PC = %04x)\n",lasthalf+(data<<4), cpu_get_pc() );
 #endif
 			}
 			else
 			{
 #ifdef REPORT_DATA_FLOW
-				if (errorlog) fprintf(errorlog,"Slave issued control value %02x (PC = %04x)\n",data, cpu_get_pc() );
+				logerror("Slave issued control value %02x (PC = %04x)\n",data, cpu_get_pc() );
 #endif
 			}
 		}
@@ -218,7 +218,7 @@ WRITE_HANDLER( rastan_sound_comm_w )
 
 	if (m_transmit == 0)
 	{
-		if (errorlog) fprintf(errorlog,"Main unexpected transmission! (PC = %08x)\n", cpu_get_pc() );
+		logerror("Main unexpected transmission! (PC = %08x)\n", cpu_get_pc() );
 	}
 	else
 	{
@@ -236,13 +236,13 @@ WRITE_HANDLER( rastan_sound_comm_w )
 				NMI_req = 1;
 
 #ifdef REPORT_DATA_FLOW
-				if (errorlog) fprintf(errorlog,"Main sent double %02x (PC = %08x) \n",m_lasthalf+(data<<4), cpu_get_pc() );
+				logerror("Main sent double %02x (PC = %08x) \n",m_lasthalf+(data<<4), cpu_get_pc() );
 #endif
 			}
 			else
 			{
 #ifdef REPORT_DATA_FLOW
-				if (errorlog) fprintf(errorlog,"Main issued control value %02x (PC = %08x) \n",data, cpu_get_pc() );
+				logerror("Main issued control value %02x (PC = %08x) \n",data, cpu_get_pc() );
 #endif
 				/* this does a hi-lo transition to reset the sound cpu */
 				if (data)
@@ -265,7 +265,7 @@ READ_HANDLER( rastan_sound_comm_r )
 	if (m_tr_mode==2)
 	{
 #ifdef REPORT_DATA_FLOW
-		if (errorlog) fprintf(errorlog,"Main read double %02x (PC = %08x)\n",soundboarddata, cpu_get_pc() );
+		logerror("Main read double %02x (PC = %08x)\n",soundboarddata, cpu_get_pc() );
 #endif
 		SlaveContrStat &= 0xfb; /* clear pending data for main bit */
 
@@ -278,7 +278,7 @@ READ_HANDLER( rastan_sound_comm_r )
 	else
 	{
 #ifdef REPORT_MAIN_MODE_READ_SLAVE
-		if (errorlog) fprintf(errorlog,"Main read status of Slave %02x (PC = %08x)\n",SlaveContrStat, cpu_get_pc() );
+		logerror("Main read status of Slave %02x (PC = %08x)\n",SlaveContrStat, cpu_get_pc() );
 #endif
 		m_transmit++;
 		return SlaveContrStat;

@@ -209,15 +209,7 @@ static INT32 feedback2;		/* connect for SLOT 2 */
 
 #define LOG_LEVEL LOG_INF
 
-static void Log(int level,char *format,...)
-{
-	va_list argptr;
-
-	if( level < LOG_LEVEL ) return;
-	va_start(argptr,format);
-	/* */
-	if (errorlog) vfprintf( errorlog, format , argptr);
-}
+#define LOG(n,x) if( (n)>=LOG_LEVEL ) logerror x
 
 /* --------------------- subroutines  --------------------- */
 
@@ -580,9 +572,9 @@ static void init_timetables( FM_OPL *OPL , int ARRATE , int DRRATE )
 	}
 #if 0
 	for (i = 0;i < 64 ;i++){	/* make for overflow area */
-		Log(LOG_WAR,"rate %2d , ar %f ms , dr %f ms \n",i,
+		LOG(LOG_WAR,("rate %2d , ar %f ms , dr %f ms \n",i,
 			((double)(EG_ENT<<ENV_BITS) / OPL->AR_TABLE[i]) * (1000.0 / OPL->rate),
-			((double)(EG_ENT<<ENV_BITS) / OPL->DR_TABLE[i]) * (1000.0 / OPL->rate) );
+			((double)(EG_ENT<<ENV_BITS) / OPL->DR_TABLE[i]) * (1000.0 / OPL->rate) ));
 	}
 #endif
 }
@@ -621,7 +613,7 @@ static int OPLOpenTable( void )
 		rate = ((1<<TL_BITS)-1)/pow(10,EG_STEP*t/20);	/* dB -> voltage */
 		TL_TABLE[       t] =  (int)rate;
 		TL_TABLE[TL_MAX+t] = -TL_TABLE[t];
-/*		Log(LOG_INF,"TotalLevel(%3d) = %x\n",t,TL_TABLE[t]);*/
+/*		LOG(LOG_INF,("TotalLevel(%3d) = %x\n",t,TL_TABLE[t]));*/
 	}
 	/* fill volume off area */
 	for ( t = EG_ENT-1; t < TL_MAX ;t++){
@@ -640,7 +632,7 @@ static int OPLOpenTable( void )
 		SIN_TABLE[          s] = SIN_TABLE[SIN_ENT/2-s] = &TL_TABLE[j];
         /* degree 180 - 270    , degree 360 - 270 : minus section */
 		SIN_TABLE[SIN_ENT/2+s] = SIN_TABLE[SIN_ENT  -s] = &TL_TABLE[TL_MAX+j];
-/*		Log(LOG_INF,"sin(%3d) = %f:%f db\n",s,pom,(double)j * EG_STEP);*/
+/*		LOG(LOG_INF,("sin(%3d) = %f:%f db\n",s,pom,(double)j * EG_STEP));*/
 	}
 	for (s = 0;s < SIN_ENT;s++)
 	{
@@ -675,7 +667,7 @@ static int OPLOpenTable( void )
 		pom = (double)VIB_RATE*0.06*sin(2*PI*i/VIB_ENT); /* +-100sect step */
 		VIB_TABLE[i]         = VIB_RATE + (pom*0.07); /* +- 7cent */
 		VIB_TABLE[VIB_ENT+i] = VIB_RATE + (pom*0.14); /* +-14cent */
-		/* Log(LOG_INF,"vib %d=%d\n",i,VIB_TABLE[VIB_ENT+i]); */
+		/* LOG(LOG_INF,("vib %d=%d\n",i,VIB_TABLE[VIB_ENT+i])); */
 	}
 	return 1;
 }
@@ -797,7 +789,7 @@ static void OPLWriteReg(FM_OPL *OPL, int r, int v)
 				if(OPL->keyboardhandler_w)
 					OPL->keyboardhandler_w(OPL->keyboard_param,v);
 				else
-					Log(LOG_WAR,"OPL:write unmapped KEYBOARD port\n");
+					LOG(LOG_WAR,("OPL:write unmapped KEYBOARD port\n"));
 			}
 			return;
 		case 0x07:	/* DELTA-T controll : START,REC,MEMDATA,REPT,SPOFF,x,x,RST */
@@ -978,7 +970,7 @@ static void OPLWriteReg(FM_OPL *OPL, int r, int v)
 		CH = &OPL->P_CH[slot/2];
 		if(OPL->wavesel)
 		{
-			/* Log(LOG_INF,"OPL SLOT %d wave select %d\n",slot,v&3); */
+			/* LOG(LOG_INF,("OPL SLOT %d wave select %d\n",slot,v&3)); */
 			CH->SLOT[slot&1].wavetable = &SIN_TABLE[(v&0x03)*SIN_ENT];
 		}
 		return;
@@ -1280,7 +1272,7 @@ unsigned char OPLRead(FM_OPL *OPL,int a)
 			if(OPL->keyboardhandler_r)
 				return OPL->keyboardhandler_r(OPL->keyboard_param);
 			else
-				Log(LOG_WAR,"OPL:read unmapped KEYBOARD port\n");
+				LOG(LOG_WAR,("OPL:read unmapped KEYBOARD port\n"));
 		}
 		return 0;
 #if 0
@@ -1293,7 +1285,7 @@ unsigned char OPLRead(FM_OPL *OPL,int a)
 			if(OPL->porthandler_r)
 				return OPL->porthandler_r(OPL->port_param);
 			else
-				Log(LOG_WAR,"OPL:read unmapped I/O port\n");
+				LOG(LOG_WAR,("OPL:read unmapped I/O port\n"));
 		}
 		return 0;
 	case 0x1a: /* PCM-DATA    */

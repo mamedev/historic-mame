@@ -53,7 +53,7 @@ struct artwork_element sundance_overlay[]=
 struct artwork_element solarq_overlay[]=
 {
 	{{0, 400-1, 0, 300-1}, 0, 6, 25, 64},
-	{{ 0,  399, 0,    19},31, 0, 12, 64},
+	{{ 0,  399, 0,    29},31, 0, 12, 64},
 	{{ 200, 12, 150,  -1},31, 31, 0, 64},
 	{{-1,-1,-1,-1},0,0,0,0}
 };
@@ -140,7 +140,8 @@ void cinemat_init_colors (unsigned char *palette, unsigned short *colortable,con
 				if ((backdrop=artwork_load(filename, nextcol, Machine->drv->total_colors-nextcol))!=NULL)
                 {
 					memcpy (palette+3*backdrop->start_pen, backdrop->orig_palette, 3*backdrop->num_pens_used);
-                    nextcol += backdrop->num_pens_used;
+					if (Machine->scrbitmap->depth == 8)
+						nextcol += backdrop->num_pens_used;
                 }
 			}
 			/* Attempt to load overlay if requested */
@@ -160,8 +161,8 @@ void cinemat_init_colors (unsigned char *palette, unsigned short *colortable,con
 										   Machine->drv->total_colors-nextcol);
 				}
 
-				if (overlay != NULL)
-                        overlay_set_palette (overlay, palette, Machine->drv->total_colors-nextcol);
+				if ((overlay != 0) && ((Machine->scrbitmap->depth == 8) || (backdrop == 0)))
+					overlay_set_palette (overlay, palette, (Machine->drv->total_colors > 256 ? 256 : Machine->drv->total_colors) - nextcol);
 			}
 			break;
 
@@ -201,7 +202,7 @@ void cinemat_init_colors (unsigned char *palette, unsigned short *colortable,con
 
 void spacewar_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
-	int width, height, i;
+	int width, height, i, nextcol;
 
     color_display = FALSE;
 
@@ -220,9 +221,14 @@ void spacewar_init_colors (unsigned char *palette, unsigned short *colortable,co
 	width = Machine->scrbitmap->width;
 	height = 0.16 * width;
 
-	if ((spacewar_panel = artwork_load_size("spacewr1.png", 24, 230, width, height))!=NULL)
+	nextcol = 24;
+
+	if ((spacewar_panel = artwork_load_size("spacewr1.png", nextcol, Machine->drv->total_colors - nextcol, width, height))!=NULL)
 	{
-		if ((spacewar_pressed_panel = artwork_load_size("spacewr2.png", 24 + spacewar_panel->num_pens_used, 230 - spacewar_panel->num_pens_used, width, height))==NULL)
+		if (Machine->scrbitmap->depth == 8)
+			nextcol += spacewar_panel->num_pens_used;
+
+		if ((spacewar_pressed_panel = artwork_load_size("spacewr2.png", nextcol, Machine->drv->total_colors - nextcol, width, height))==NULL)
 		{
 			artwork_free (spacewar_panel);
 			spacewar_panel = NULL;
@@ -234,8 +240,10 @@ void spacewar_init_colors (unsigned char *palette, unsigned short *colortable,co
 
 	memcpy (palette+3*spacewar_panel->start_pen, spacewar_panel->orig_palette,
 			3*spacewar_panel->num_pens_used);
-	memcpy (palette+3*spacewar_pressed_panel->start_pen, spacewar_pressed_panel->orig_palette,
-			3*spacewar_pressed_panel->num_pens_used);
+
+	if (Machine->scrbitmap->depth == 8)
+		memcpy (palette+3*spacewar_pressed_panel->start_pen, spacewar_pressed_panel->orig_palette,
+				3*spacewar_pressed_panel->num_pens_used);
 }
 
 /***************************************************************************
@@ -335,7 +343,11 @@ void spacewar_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh)
 
 	scale = pwidth/1024.0;
 
-    sw_option = input_port_2_r(0) | ((input_port_1_r(0) << 6) & 0x300);
+    sw_option = input_port_1_r(0);
+
+    /* move bits 10-11 to position 8-9, so we can just use a simple 'for' loop */
+    sw_option = (sw_option & 0xff) | ((sw_option >> 2) & 0x0300);
+
     sw_option_change ^= sw_option;
 
 	for (i = 0; i < 10; i++)

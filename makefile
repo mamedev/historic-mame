@@ -24,8 +24,8 @@ endif
 
 # uncomment next line to do a smaller compile including only one driver
 # TINY_COMPILE = 1
-TINY_NAME = driver_spinlbrk
-TINY_OBJS = obj/drivers/aerofgt.o obj/vidhrdw/aerofgt.o
+TINY_NAME = driver_flstory
+TINY_OBJS = obj/drivers/flstory.o obj/vidhrdw/flstory.o obj/machine/flstory.o
 
 # uncomment one of the two next lines to not compile the NeoGeo games or to
 # compile only the NeoGeo games
@@ -59,9 +59,16 @@ CPUS+=M65C02@
 #CPUS+=M65CE02@
 #CPUS+=M6509@
 CPUS+=M6510@
+#CPUS+=M6510T@
+#CPUS+=M7501@
+#CPUS+=M8502@
 CPUS+=N2A03@
 CPUS+=H6280@
 CPUS+=I86@
+#CPUS+=I88@
+#CPUS+=I186@
+#CPUS+=I188@
+#CPUS+=I288@
 CPUS+=V20@
 CPUS+=V30@
 CPUS+=V33@
@@ -247,6 +254,27 @@ CPUOBJS += obj/cpu/m6502/m6502.o
 DBGOBJS += obj/cpu/m6502/6502dasm.o
 endif
 
+CPU=$(strip $(findstring M6510T@,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_M6510=1 -DHAS_M6510T=1
+CPUOBJS += obj/cpu/m6502/m6502.o
+DBGOBJS += obj/cpu/m6502/6502dasm.o
+endif
+
+CPU=$(strip $(findstring M7501T@,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_M6510=1 -DHAS_M7501=1
+CPUOBJS += obj/cpu/m6502/m6502.o
+DBGOBJS += obj/cpu/m6502/6502dasm.o
+endif
+
+CPU=$(strip $(findstring M8502T@,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_M6510=1 -DHAS_M8502=1
+CPUOBJS += obj/cpu/m6502/m6502.o
+DBGOBJS += obj/cpu/m6502/6502dasm.o
+endif
+
 CPU=$(strip $(findstring N2A03@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_N2A03=1
@@ -265,6 +293,34 @@ CPU=$(strip $(findstring I86@,$(CPUS)))
 ifneq ($(CPU),)
 CPUDEFS += -DHAS_I86=1
 CPUOBJS += obj/cpu/i86/i86.o
+DBGOBJS += obj/cpu/i86/i86dasm.o
+endif
+
+CPU=$(strip $(findstring I88@,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_I88=1
+CPUOBJS += obj/cpu/i86/i86.o
+DBGOBJS += obj/cpu/i86/i86dasm.o
+endif
+
+CPU=$(strip $(findstring I186@,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_I186=1
+CPUOBJS += obj/cpu/i86/i86.o
+DBGOBJS += obj/cpu/i86/i86dasm.o
+endif
+
+CPU=$(strip $(findstring I188@,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_I188=1
+CPUOBJS += obj/cpu/i86/i86.o
+DBGOBJS += obj/cpu/i86/i86dasm.o
+endif
+
+CPU=$(strip $(findstring I286@,$(CPUS)))
+ifneq ($(CPU),)
+CPUDEFS += -DHAS_I286=1
+CPUOBJS += obj/cpu/i86/i286.o
 DBGOBJS += obj/cpu/i86/i86dasm.o
 endif
 
@@ -874,7 +930,7 @@ endif
 LIBS = -lalleg -laudio -lz \
 
 COREOBJS = obj/version.o obj/driver.o obj/mame.o \
-	obj/drawgfx.o obj/common.o obj/usrintrf.o \
+	obj/drawgfx.o obj/common.o obj/usrintrf.o obj/ui_text.o \
 	obj/cpuintrf.o obj/memory.o obj/timer.o obj/palette.o \
 	obj/input.o obj/inptport.o obj/cheat.o obj/unzip.o \
 	obj/audit.o obj/info.o obj/png.o obj/artwork.o \
@@ -906,7 +962,7 @@ DRVLIBS = obj/pacman.a \
 	obj/berzerk.a obj/gameplan.a obj/stratvox.a obj/zaccaria.a \
 	obj/upl.a obj/tms.a obj/cinemar.a obj/cinemav.a obj/thepit.a \
 	obj/valadon.a obj/seibu.a obj/tad.a obj/jaleco.a obj/vsystem.a \
-	obj/orca.a obj/gaelco.a obj/kaneko.a obj/seta.a obj/other.a \
+	obj/orca.a obj/gaelco.a obj/kaneko.a obj/seta.a obj/cave.a obj/other.a \
 
 NEOLIBS = obj/neogeo.a \
 
@@ -933,7 +989,7 @@ else
 	endif
 endif
 
-all: $(EMULATOR_EXE) romcmp.exe
+all: $(EMULATOR_EXE) gamelist.txt romcmp.exe
 
 $(EMULATOR_EXE):  $(COREOBJS) $(MSDOSOBJS) $(OBJS) $(LIBS)
 # always recompile the version string
@@ -942,10 +998,13 @@ $(EMULATOR_EXE):  $(COREOBJS) $(MSDOSOBJS) $(OBJS) $(LIBS)
 	$(LD) $(LDFLAGS) $(COREOBJS) $(MSDOSOBJS) $(OBJS) $(LIBS) -o $@
 ifndef DEBUG
 	upx $(EMULATOR_EXE)
-	$(EMULATOR_EXE) -gamelistheader -noclones > gamelist.txt
-	$(EMULATOR_EXE) -gamelist -noclones | sort >> gamelist.txt
-	$(EMULATOR_EXE) -gamelistfooter >> gamelist.txt
 endif
+
+gamelist.txt: $(EMULATOR_EXE)
+	@echo Generating $@...
+	@$(EMULATOR_EXE) -gamelistheader -noclones > gamelist.txt
+	@$(EMULATOR_EXE) -gamelist -noclones | sort >> gamelist.txt
+	@$(EMULATOR_EXE) -gamelistfooter >> gamelist.txt
 
 romcmp.exe: obj/romcmp.o obj/unzip.o
 	@echo Linking $@...
@@ -1067,7 +1126,7 @@ obj/midway.a: \
 	obj/machine/astrocde.o obj/vidhrdw/astrocde.o \
 	obj/sndhrdw/astrocde.o obj/sndhrdw/gorf.o obj/drivers/astrocde.o \
 	obj/machine/mcr.o obj/sndhrdw/mcr.o \
-	obj/vidhrdw/mcr1.o obj/vidhrdw/mcr2.o obj/vidhrdw/mcr3.o \
+	obj/vidhrdw/mcr12.o obj/vidhrdw/mcr3.o \
 	obj/drivers/mcr1.o obj/drivers/mcr2.o obj/drivers/mcr3.o \
 	obj/vidhrdw/mcr68.o obj/drivers/mcr68.o \
 	obj/vidhrdw/balsente.o obj/drivers/balsente.o \
@@ -1189,6 +1248,7 @@ obj/dataeast.a: \
 	obj/vidhrdw/sidepckt.o obj/drivers/sidepckt.o \
 	obj/vidhrdw/exprraid.o obj/drivers/exprraid.o \
 	obj/vidhrdw/pcktgal.o obj/drivers/pcktgal.o \
+	obj/vidhrdw/battlera.o obj/drivers/battlera.o \
 	obj/vidhrdw/actfancr.o obj/drivers/actfancr.o \
 	obj/vidhrdw/dec8.o obj/drivers/dec8.o \
 	obj/vidhrdw/karnov.o obj/drivers/karnov.o \
@@ -1432,6 +1492,8 @@ obj/jaleco.a: \
 
 obj/vsystem.a: \
 	obj/vidhrdw/rpunch.o obj/drivers/rpunch.o \
+	obj/vidhrdw/tail2nos.o obj/drivers/tail2nos.o \
+	obj/vidhrdw/pipedrm.o obj/drivers/pipedrm.o \
 	obj/vidhrdw/aerofgt.o obj/drivers/aerofgt.o \
 
 obj/leland.a: \
@@ -1458,6 +1520,9 @@ obj/neogeo.a: \
 
 obj/seta.a: \
 	obj/vidhrdw/seta.o obj/sndhrdw/seta.o obj/drivers/seta.o \
+
+obj/cave.a: \
+	obj/vidhrdw/cave.o obj/drivers/cave.o \
 
 obj/other.a: \
 	obj/vidhrdw/spacefb.o obj/drivers/spacefb.o \
@@ -1488,6 +1553,8 @@ obj/other.a: \
 	obj/vidhrdw/mole.o obj/drivers/mole.o \
 	obj/vidhrdw/gotya.o obj/sndhrdw/gotya.o obj/drivers/gotya.o \
 	obj/vidhrdw/mrjong.o obj/drivers/mrjong.o \
+	obj/vidhrdw/polyplay.o obj/sndhrdw/polyplay.o obj/drivers/polyplay.o \
+	obj/vidhrdw/mermaid.o obj/drivers/mermaid.o \
 
 # dependencies
 obj/cpu/z80/z80.o: z80.c z80.h z80daa.h

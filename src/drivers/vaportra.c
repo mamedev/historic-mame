@@ -1,9 +1,8 @@
 /***************************************************************************
 
+  Vapor Trail (World version)  (c) 1989 Data East Corporation
   Vapor Trail (USA version)    (c) 1989 Data East USA
   Kuhga (Japanese version)     (c) 1989 Data East Corporation
-
-  A 'World' version of Vapor Trail also exists but isn't yet dumped.
 
   Emulation by Bryan McPhail, mish@tendril.co.uk
 
@@ -57,7 +56,7 @@ static READ_HANDLER( vaportra_control_r )
 			return (readinputport(0) + (readinputport(1) << 8));
 	}
 
-	if (errorlog) fprintf(errorlog,"Unknown control read at %d\n",offset);
+	logerror("Unknown control read at %d\n",offset);
 	return 0xffff;
 }
 
@@ -306,7 +305,7 @@ static struct OKIM6295interface okim6295_interface =
 	2,              /* 2 chips */
 	{ 7757, 15514 },/* Frequency */
 	{ REGION_SOUND1, REGION_SOUND2 },	/* memory regions */
-	{ 50, 25 }		/* Note!  Keep chip 1 (voices) louder than chip 2 */
+	{ 75, 50 }		/* Note!  Keep chip 1 (voices) louder than chip 2 */
 };
 
 static struct YM2203interface ym2203_interface =
@@ -388,6 +387,34 @@ static struct MachineDriver machine_driver_vaportra =
 /******************************************************************************/
 
 ROM_START( vaportra )
+	ROM_REGION( 0x80000, REGION_CPU1 ) /* 68000 code */
+  	ROM_LOAD_EVEN( "fl_02-1.bin", 0x00000, 0x20000, 0x9ae36095 )
+  	ROM_LOAD_ODD ( "fl_00-1.bin", 0x00000, 0x20000, 0xc08cc048 )
+	ROM_LOAD_EVEN( "fl_03.bin",   0x40000, 0x20000, 0x80bd2844 )
+ 	ROM_LOAD_ODD ( "fl_01.bin",   0x40000, 0x20000, 0x9474b085 )
+
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound CPU */
+	ROM_LOAD( "fj04",    0x00000, 0x10000, 0xe9aedf9b )
+
+	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "vtmaa00.bin",   0x000000, 0x80000, 0x0330e13b ) /* chars & tiles */
+
+	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+  	ROM_LOAD( "vtmaa01.bin",   0x000000, 0x80000, 0xc217a31b ) /* tiles 2 */
+	ROM_LOAD( "vtmaa02.bin",   0x080000, 0x80000, 0x091ff98e ) /* tiles 3 */
+
+	ROM_REGION( 0x100000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+  	ROM_LOAD( "vtmaa03.bin",   0x000000, 0x80000, 0x1a30bf81 ) /* sprites */
+  	ROM_LOAD( "vtmaa04.bin",   0x080000, 0x80000, 0xb713e9cc )
+
+	ROM_REGION( 0x20000, REGION_SOUND1 )	/* ADPCM samples */
+	ROM_LOAD( "fj06",    0x00000, 0x20000, 0x6e98a235 )
+
+	ROM_REGION( 0x20000, REGION_SOUND2 )	/* ADPCM samples */
+	ROM_LOAD( "fj05",    0x00000, 0x20000, 0x39cda2b5 )
+ROM_END
+
+ROM_START( vaportru )
 	ROM_REGION( 0x80000, REGION_CPU1 ) /* 68000 code */
   	ROM_LOAD_EVEN( "fj02",   0x00000, 0x20000, 0xa2affb73 )
   	ROM_LOAD_ODD ( "fj00",   0x00000, 0x20000, 0xef05e07b )
@@ -474,5 +501,6 @@ static void init_vaportra(void)
 
 /******************************************************************************/
 
-GAME( 1989, vaportra, 0,        vaportra, vaportra, vaportra, ROT270, "Data East USA", "Vapor Trail - Hyper Offence Formation (US)" )
+GAME( 1989, vaportra, 0,        vaportra, vaportra, vaportra, ROT270, "Data East Corporation", "Vapor Trail - Hyper Offence Formation (World revision 1)" )
+GAME( 1989, vaportru, vaportra, vaportra, vaportra, vaportra, ROT270, "Data East USA", "Vapor Trail - Hyper Offence Formation (US)" )
 GAME( 1989, kuhga,    vaportra, vaportra, vaportra, vaportra, ROT270, "Data East Corporation", "Kuhga - Operation Code 'Vapor Trail' (Japan revision 3)" )

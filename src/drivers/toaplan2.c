@@ -146,19 +146,19 @@ static WRITE_HANDLER( toaplan2_coin_w )
 		case 0x00:	coin_lockout_global_w(0,1); break;	/* Lock all coin slots */
 		case 0x0c:	coin_lockout_global_w(0,0); break;	/* Unlock all coin slots */
 		case 0x0d:	coin_counter_w(0,1); coin_counter_w(0,0);	/* Count slot A */
-					if (errorlog) fprintf(errorlog,"Count coin slot A\n"); break;
+					logerror("Count coin slot A\n"); break;
 		case 0x0e:	coin_counter_w(1,1); coin_counter_w(1,0);	/* Count slot B */
-					if (errorlog) fprintf(errorlog,"Count coin slot B\n"); break;
+					logerror("Count coin slot B\n"); break;
 	/* The following are coin counts after coin-lock active (faulty coin-lock ?) */
 		case 0x01:	coin_counter_w(0,1); coin_counter_w(0,0); coin_lockout_w(0,1); break;
 		case 0x02:	coin_counter_w(1,1); coin_counter_w(1,0); coin_lockout_global_w(0,1); break;
 
-		default:	if (errorlog) fprintf(errorlog,"Writing unknown command (%04x) to coin control\n",data);
+		default:	logerror("Writing unknown command (%04x) to coin control\n",data);
 					break;
 	}
 	if (data > 0xf)
 	{
-		if (errorlog) fprintf(errorlog,"Writing unknown upper bits command (%04x) to coin control\n",data);
+		logerror("Writing unknown upper bits command (%04x) to coin control\n",data);
 	}
 }
 
@@ -189,7 +189,7 @@ static WRITE_HANDLER( toaplan2_hd647180_cpu_w )
 	else									/* Teki Paki */
 	{
 		mcu_data = data;
-		if (errorlog) fprintf(errorlog,"PC:%08x Writing command (%04x) to secondary CPU shared port\n",cpu_getpreviouspc(),mcu_data);
+		logerror("PC:%08x Writing command (%04x) to secondary CPU shared port\n",cpu_getpreviouspc(),mcu_data);
 	}
 }
 
@@ -278,7 +278,7 @@ static WRITE_HANDLER( ghox_mcu_w )
 	}
 	else
 	{
-		if (errorlog) fprintf(errorlog,"PC:%08x Writing %08x to HD647180 cpu shared ram status port\n",cpu_getpreviouspc(),mcu_data);
+		logerror("PC:%08x Writing %08x to HD647180 cpu shared ram status port\n",cpu_getpreviouspc(),mcu_data);
 	}
 	WRITE_WORD (&toaplan2_shared_ram[0x56],0x4e);	/* Return a RTS instruction */
 	WRITE_WORD (&toaplan2_shared_ram[0x58],0x75);
@@ -344,7 +344,7 @@ static READ_HANDLER( kbash_sub_cpu_r )
 
 static WRITE_HANDLER( kbash_sub_cpu_w )
 {
-	if (errorlog) fprintf(errorlog,"PC:%08x writing %04x to Zx80 secondary CPU status port %02x\n",cpu_getpreviouspc(),mcu_data,offset/2);
+	logerror("PC:%08x writing %04x to Zx80 secondary CPU status port %02x\n",cpu_getpreviouspc(),mcu_data,offset/2);
 }
 
 static READ_HANDLER( shared_ram_r )
@@ -366,7 +366,7 @@ static WRITE_HANDLER( shared_ram_w )
 	if (offset == 0xff8)
 	{
 		WRITE_WORD (&toaplan2_shared_ram[offset + 2],data);
-		if (errorlog) fprintf(errorlog,"PC:%08x Writing  (%04x) to secondary CPU\n",cpu_getpreviouspc(),data);
+		logerror("PC:%08x Writing  (%04x) to secondary CPU\n",cpu_getpreviouspc(),data);
 		if ((data & 0xffff) == 0x81) data = 0x01;
 	}
 	WRITE_WORD (&toaplan2_shared_ram[offset],data);
@@ -385,14 +385,14 @@ static READ_HANDLER( Zx80_status_port_r )
 	if (mcu_data == 0xffaa) mcu_data = 0x8000ffaa;		/* fixeight */
 	if (mcu_data == 0xff00) mcu_data = 0xffaa;			/* fixeight */
 
-	if (errorlog) fprintf(errorlog,"PC:%08x reading %08x from Zx80 secondary CPU command/status port\n",cpu_getpreviouspc(),mcu_data);
+	logerror("PC:%08x reading %08x from Zx80 secondary CPU command/status port\n",cpu_getpreviouspc(),mcu_data);
 	data = mcu_data & 0x0000ffff;
 	return data;
 }
 static WRITE_HANDLER( Zx80_command_port_w )
 {
 	mcu_data = data;
-	if (errorlog) fprintf(errorlog,"PC:%08x Writing command (%04x) to Zx80 secondary CPU command/status port\n",cpu_getpreviouspc(),mcu_data);
+	logerror("PC:%08x Writing command (%04x) to Zx80 secondary CPU command/status port\n",cpu_getpreviouspc(),mcu_data);
 }
 
 READ_HANDLER( Zx80_sharedram_r )
@@ -2310,6 +2310,22 @@ ROM_START( vfive )
 	ROM_LOAD( "tp027_03.bin", 0x100000, 0x100000, 0xb1fc6362 )
 ROM_END
 
+ROM_START( grindstm )
+	ROM_REGION( 0x080000, REGION_CPU1 )			/* Main 68K code */
+	ROM_LOAD_WIDE( "01.bin", 0x000000, 0x080000, 0x99af8749 )
+
+#if Zx80
+	ROM_REGION( 0x10000, REGION_CPU2 )			/* Sound CPU code */
+	/* Secondary CPU is a Toaplan marked chip, (TS-007-Spy  TOA PLAN) */
+	/* Its a Z?80 of some sort - 94 pin chip. */
+//	ROM_LOAD( "tp027.mcu", 0x8000, 0x8000, 0x00000000 )
+#endif
+
+	ROM_REGION( 0x200000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "tp027_02.bin", 0x000000, 0x100000, 0x877b45e8 )
+	ROM_LOAD( "tp027_03.bin", 0x100000, 0x100000, 0xb1fc6362 )
+ROM_END
+
 ROM_START( batsugun )
 	ROM_REGION( 0x080000, REGION_CPU1 )			/* Main 68K code */
 	ROM_LOAD_WIDE( "tp030_1.bin", 0x000000, 0x080000, 0xe0cd772b )
@@ -2365,7 +2381,8 @@ GAME ( 1991, pipibibs, 0,        pipibibs, pipibibs, pipibibs, ROT0,         "To
 GAMEX( 1991, pipibibi, pipibibs, pipibibs, pipibibs, pipibibs, ROT0,         "bootleg?", "Pipi & Bibis / Whoopee (Japan) [bootleg ?]", GAME_NOT_WORKING )
 GAME ( 1991, whoopee,  pipibibs, whoopee,  whoopee,  pipibibs, ROT0,         "Toaplan", "Whoopee (Japan) / Pipi & Bibis (World)" )
 GAMEX( 1992, fixeight, 0,        fixeight, vfive,    toaplan3, ROT270,       "Toaplan", "FixEight", GAME_NOT_WORKING )
-GAMEX( 1993, vfive,    0,        vfive,    vfive,    toaplan3, ROT270,       "Toaplan", "V-Five", GAME_NO_SOUND )
+GAMEX( 1993, vfive,    0,        vfive,    vfive,    toaplan3, ROT270,       "Toaplan", "V-Five (Japan)", GAME_NO_SOUND )
+GAMEX( 1993, grindstm, vfive,    vfive,    vfive,    toaplan3, ROT270,       "Toaplan (Unite Trading license)", "Grind Stormer (Korea)", GAME_NO_SOUND )
 GAMEX( 1993, batsugun, 0,        batsugun, batsugun, toaplan3, ROT270_16BIT, "Toaplan", "Batsugun", GAME_NO_SOUND )
 GAME ( 1994, snowbro2, 0,        snowbro2, snowbro2, snowbro2, ROT0_16BIT,   "[Toaplan] Hanafram", "Snow Bros. 2 - With New Elves" )
 

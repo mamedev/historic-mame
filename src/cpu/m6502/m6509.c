@@ -44,16 +44,16 @@ addresses take place.
 #include "m6509.h"
 
 #include "ops02.h"
+#include "ops02ill.h"
 #include "ops09.h"
 
 #define CORE_M6509
 
-extern FILE * errorlog;
 
 #define VERBOSE 0
 
 #if VERBOSE
-#define LOG(x)	if( errorlog ) fprintf x
+#define LOG(x)	logerror x
 #else
 #define LOG(x)
 #endif
@@ -107,26 +107,26 @@ static m6509_Regs m6509;
 
 #include "t6509.c"
 
-int m6509_read_00000(int offset)
+READ_HANDLER ( m6509_read_00000 )
 {
 	return m6509.pc_bank.b.h2;
 }
 
-int m6509_read_00001(int offset)
+READ_HANDLER ( m6509_read_00001 )
 {
 	return m6509.ind_bank.b.h2;
 }
 
-void m6509_write_00000(int offset, int value)
+WRITE_HANDLER ( m6509_write_00000 )
 {
-	m6509.pc_bank.b.h2=value&0xf;
+	m6509.pc_bank.b.h2=data&0xf;
 	m6509.pc.w.h=m6509.pc_bank.w.h;
 	change_pc(PCD);
 }
 
-void m6509_write_00001(int offset, int value)
+WRITE_HANDLER ( m6509_write_00001 )
 {
-	m6509.ind_bank.b.h2=value&0xf;
+	m6509.ind_bank.b.h2=data&0xf;
 }
 
 void m6509_reset (void *param)
@@ -142,7 +142,7 @@ void m6509_reset (void *param)
 	PCH = RDMEM((M6509_RST_VEC+1)|PB);
 
 	m6509.sp.d = 0x01ff;
-	m6509.p = F_T|F_I|F_Z;	/* set T, I and Z flags */
+	m6509.p = F_T|F_B|F_I|F_Z|(P&F_D);	/* set T, I and Z flags */
 	m6509.pending_irq = 0;	/* nonzero if an IRQ is pending */
 	m6509.after_cli = 0;	/* pending IRQ and last insn cleared I */
 	m6509.irq_callback = NULL;
@@ -262,10 +262,10 @@ INLINE void m6509_take_irq(void)
 		PUSH(PCH);
 		PUSH(PCL);
 		PUSH(P & ~F_B);
-		P = (P & ~F_D) | F_I;		/* knock out D and set I flag */
+		P |= F_I;		/* knock out D and set I flag */
 		PCL = RDMEM(EAD);
 		PCH = RDMEM(EAD+1);
-		LOG((errorlog,"M6509#%d takes IRQ ($%04x)\n", cpu_getactivecpu(), PCD));
+		LOG(("M6509#%d takes IRQ ($%04x)\n", cpu_getactivecpu(), PCD));
 		/* call back the cpuintrf to let it clear the line */
 		if (m6509.irq_callback) (*m6509.irq_callback)(0);
 		change_pc20(PCD);
@@ -286,26 +286,26 @@ int m6509_execute(int cycles)
 
 		CALL_MAME_DEBUG;
 
-		op = RDOP();
 		/* if an irq is pending, take it now */
-		if( m6509.pending_irq && op == 0x78 )
+		if( m6509.pending_irq )
 			m6509_take_irq();
 
+		op = RDOP();
 		(*m6509.insn[op])();
 
 		/* check if the I flag was just reset (interrupts enabled) */
 		if( m6509.after_cli )
 		{
-			LOG((errorlog,"M6509#%d after_cli was >0", cpu_getactivecpu()));
+			LOG(("M6509#%d after_cli was >0", cpu_getactivecpu()));
 			m6509.after_cli = 0;
 			if (m6509.irq_state != CLEAR_LINE)
 			{
-				LOG((errorlog,": irq line is asserted: set pending IRQ\n"));
+				LOG((": irq line is asserted: set pending IRQ\n"));
 				m6509.pending_irq = 1;
 			}
 			else
 			{
-				LOG((errorlog,": irq line is clear\n"));
+				LOG((": irq line is clear\n"));
 			}
 		}
 		else
@@ -323,17 +323,17 @@ void m6509_set_nmi_line(int state)
 	m6509.nmi_state = state;
 	if( state != CLEAR_LINE )
 	{
-		LOG((errorlog, "M6509#%d set_nmi_line(ASSERT)\n", cpu_getactivecpu()));
+		LOG(( "M6509#%d set_nmi_line(ASSERT)\n", cpu_getactivecpu()));
 		EAD = M6509_NMI_VEC;
 		EAWH = PBWH;
 		m6509_ICount -= 7;
 		PUSH(PCH);
 		PUSH(PCL);
 		PUSH(P & ~F_B);
-		P = (P & ~F_D) | F_I;		/* knock out D and set I flag */
+		P |= F_I;		/* knock out D and set I flag */
 		PCL = RDMEM(EAD);
 		PCH = RDMEM(EAD+1);
-		LOG((errorlog,"M6509#%d takes NMI ($%04x)\n", cpu_getactivecpu(), PCD));
+		LOG(("M6509#%d takes NMI ($%04x)\n", cpu_getactivecpu(), PCD));
 		change_pc20(PCD);
 	}
 }
@@ -344,7 +344,7 @@ void m6509_set_irq_line(int irqline, int state)
 	{
 		if( m6509.so_state && !state )
 		{
-			LOG((errorlog, "M6509#%d set overflow\n", cpu_getactivecpu()));
+			LOG(( "M6509#%d set overflow\n", cpu_getactivecpu()));
 			P|=F_V;
 		}
 		m6509.so_state=state;
@@ -353,7 +353,7 @@ void m6509_set_irq_line(int irqline, int state)
 	m6509.irq_state = state;
 	if( state != CLEAR_LINE )
 	{
-		LOG((errorlog, "M6509#%d set_irq_line(ASSERT)\n", cpu_getactivecpu()));
+		LOG(( "M6509#%d set_irq_line(ASSERT)\n", cpu_getactivecpu()));
 		m6509.pending_irq = 1;
 	}
 }

@@ -17,16 +17,14 @@
 #include "cpu/h6280/h6280.h"
 
 int  tumblep_vh_start(void);
-void tumblep_vh_stop(void);
 void tumblep_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void tumblepb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
+WRITE_HANDLER( tumblep_pf1_data_w );
 WRITE_HANDLER( tumblep_pf2_data_w );
-WRITE_HANDLER( tumblep_pf3_data_w );
-
 WRITE_HANDLER( tumblep_control_0_w );
 
-extern unsigned char *tumblep_pf2_data,*tumblep_pf3_data;
+extern unsigned char *tumblep_pf1_data,*tumblep_pf2_data;
 
 /******************************************************************************/
 
@@ -45,7 +43,6 @@ static WRITE_HANDLER( tumblep_sound_w )
 {
 	soundlatch_w(0,data & 0xff);
 	cpu_cause_interrupt(1,H6280_INT_IRQ1);
-	if ((data&0xff)==1) cpu_spin(); /* Helper */
 }
 
 /******************************************************************************/
@@ -60,17 +57,16 @@ static READ_HANDLER( tumblepop_controls_r )
 			return (readinputport(3) + (readinputport(4) << 8));
 		case 8: /* Credits */
 			return readinputport(2);
-		case 10: /* Looks like remains of protection... */
+		case 10: /* ? */
 		case 12:
         	return 0;
 	}
 
-	if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - read unmapped control address %06x\n",cpu_get_pc(),offset);
 	return 0xffff;
 }
 
+static READ_HANDLER( tumblep_pf1_data_r ) { return READ_WORD(&tumblep_pf1_data[offset]); }
 static READ_HANDLER( tumblep_pf2_data_r ) { return READ_WORD(&tumblep_pf2_data[offset]); }
-static READ_HANDLER( tumblep_pf3_data_r ) { return READ_WORD(&tumblep_pf3_data[offset]); }
 
 /******************************************************************************/
 
@@ -81,7 +77,7 @@ static struct MemoryReadAddress tumblepop_readmem[] =
 	{ 0x140000, 0x1407ff, paletteram_word_r },
 	{ 0x180000, 0x18000f, tumblepop_controls_r },
 	{ 0x1a0000, 0x1a07ff, MRA_BANK2 },
-	{ 0x320000, 0x320fff, tumblep_pf3_data_r },
+	{ 0x320000, 0x320fff, tumblep_pf1_data_r },
 	{ 0x322000, 0x322fff, tumblep_pf2_data_r },
 	{ -1 }  /* end of table */
 };
@@ -94,9 +90,8 @@ static struct MemoryWriteAddress tumblepop_writemem[] =
 	{ 0x140000, 0x1407ff, paletteram_xxxxBBBBGGGGRRRR_word_w, &paletteram },
 	{ 0x18000c, 0x18000d, MWA_NOP },
 	{ 0x1a0000, 0x1a07ff, MWA_BANK2, &spriteram },
-
 	{ 0x300000, 0x30000f, tumblep_control_0_w },
-	{ 0x320000, 0x320fff, tumblep_pf3_data_w, &tumblep_pf3_data },
+	{ 0x320000, 0x320fff, tumblep_pf1_data_w, &tumblep_pf1_data },
 	{ 0x322000, 0x322fff, tumblep_pf2_data_w, &tumblep_pf2_data },
 	{ 0x340000, 0x3401ff, MWA_NOP }, /* Unused row scroll */
 	{ 0x340400, 0x34047f, MWA_NOP }, /* Unused col scroll */
@@ -124,11 +119,10 @@ static struct MemoryWriteAddress tumblepopb_writemem[] =
 	{ 0x120000, 0x123fff, MWA_BANK1 },
 	{ 0x140000, 0x1407ff, paletteram_xxxxBBBBGGGGRRRR_word_w, &paletteram },
 	{ 0x160000, 0x160807, MWA_BANK5, &spriteram }, /* Bootleg sprite buffer */
-	{ 0x18000c, 0x18000d, MWA_NOP }, /* Looks like remains of protection */
+	{ 0x18000c, 0x18000d, MWA_NOP },
 	{ 0x1a0000, 0x1a07ff, MWA_BANK2 },
-
 	{ 0x300000, 0x30000f, tumblep_control_0_w },
-	{ 0x320000, 0x320fff, tumblep_pf3_data_w, &tumblep_pf3_data },
+	{ 0x320000, 0x320fff, tumblep_pf1_data_w, &tumblep_pf1_data },
 	{ 0x322000, 0x322fff, tumblep_pf2_data_w, &tumblep_pf2_data },
 	{ 0x340000, 0x3401ff, MWA_NOP }, /* Unused row scroll */
 	{ 0x340400, 0x34047f, MWA_NOP }, /* Unused col scroll */
@@ -211,21 +205,6 @@ INPUT_PORTS_START( tumblep )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* Dip switch bank 1 */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x1c, 0x1c, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0x1c, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(    0x14, DEF_STR( 1C_3C ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( 1C_4C ) )
-	PORT_DIPSETTING(    0x18, DEF_STR( 1C_5C ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( 1C_6C ) )
 	PORT_DIPNAME( 0xe0, 0xe0, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( 2C_1C ) )
@@ -235,30 +214,45 @@ INPUT_PORTS_START( tumblep )
 	PORT_DIPSETTING(    0x20, DEF_STR( 1C_4C ) )
 	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_5C ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( 1C_6C ) )
-
-	PORT_START	/* Dip switch bank 2 */
-	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPNAME( 0x1c, 0x1c, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x1c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x14, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x18, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_6C ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, "Allow Continue" )
-	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x10, "Easy" )
-	PORT_DIPSETTING(    0x30, "Normal" )
-	PORT_DIPSETTING(    0x20, "Hard" )
-	PORT_DIPSETTING(    0x00, "Hardest" )
+
+	PORT_START	/* Dip switch bank 2 */
 	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x80, "1" )
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPSETTING(    0xc0, "3" )
 	PORT_DIPSETTING(    0x40, "4" )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x10, "Easy" )
+	PORT_DIPSETTING(    0x30, "Normal" )
+	PORT_DIPSETTING(    0x20, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x02, "Allow Continue" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 /******************************************************************************/
@@ -304,9 +298,9 @@ static struct GfxLayout tlayout3 =
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &tcharlayout,  256, 16 },	/* Characters 8x8 */
-	{ REGION_GFX1, 0, &tlayout3,     512, 16 }, 	/* Tiles 16x16 */
+	{ REGION_GFX1, 0, &tlayout3,     512, 16 },	/* Tiles 16x16 */
 	{ REGION_GFX1, 0, &tlayout3,     256, 16 },	/* Tiles 16x16 */
-	{ REGION_GFX2, 0, &tlayout,    	0, 16 },	/* Sprites 16x16 */
+	{ REGION_GFX2, 0, &tlayout,        0, 16 },	/* Sprites 16x16 */
 	{ -1 } /* end of array */
 };
 
@@ -372,7 +366,7 @@ static struct MachineDriver machine_driver_tumblepop =
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	tumblep_vh_start,
-	tumblep_vh_stop,
+	0,
 	tumblep_vh_screenrefresh,
 
 	/* sound hardware */
@@ -414,7 +408,7 @@ static struct MachineDriver machine_driver_tumblepb =
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
 	tumblep_vh_start,
-	tumblep_vh_stop,
+	0,
 	tumblepb_vh_screenrefresh,
 
 	/* sound hardware */

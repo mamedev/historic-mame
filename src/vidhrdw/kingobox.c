@@ -3,7 +3,7 @@
 
 unsigned char *kingobox_videoram1;
 unsigned char *kingobox_colorram1;
-int kingobox_videoram1_size;
+size_t kingobox_videoram1_size;
 unsigned char *kingobox_scroll_y;
 
 extern int kingofb_nmi_enable;

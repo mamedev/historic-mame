@@ -69,7 +69,7 @@ WRITE_HANDLER( m92_spritecontrol_w )
 
 	/* The games using this sprite chip can autoclear spriteram */
 	if (offset==8 && m92_spritechip==1) {
-//		if (errorlog) fprintf(errorlog,"%04x: cleared spriteram\n",cpu_get_pc());
+//		logerror("%04x: cleared spriteram\n",cpu_get_pc());
 		buffer_spriteram_w(0,0);
 		memset(spriteram,0,0x800);
 		m92_sprite_interrupt();
@@ -78,7 +78,7 @@ WRITE_HANDLER( m92_spritecontrol_w )
 
 WRITE_HANDLER( m92_spritebuffer_w )
 {
-//	if (errorlog) fprintf(errorlog,"%04x: buffered spriteram %d %d\n",cpu_get_pc(),offset,data);
+//	logerror("%04x: buffered spriteram %d %d\n",cpu_get_pc(),offset,data);
 	if (m92_spritechip==0 && offset==0) {
 		buffer_spriteram_w(0,0);
 		m92_sprite_interrupt();
@@ -419,10 +419,6 @@ int m92_vh_start(void)
 	return 0;
 }
 
-void m92_vh_stop(void)
-{
-	/* Nothing */
-}
 
 /*****************************************************************************/
 

@@ -305,7 +305,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static WRITE_HANDLER( portb_w )
 {
 	/* don't know what this is... could be a filter */
-	if (errorlog) if (data != 0x00) fprintf(errorlog,"portB = %02x\n",data);
+	if (data != 0x00) logerror("portB = %02x\n",data);
 }
 
 static struct AY8910interface ay8910_interface =

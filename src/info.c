@@ -280,13 +280,15 @@ static void print_game_rom(FILE* out, const struct GameDriver* game) {
 	}
 
 	while (rom->name || rom->offset || rom->length) {
+		int region = rom->crc;
 		rom++;
 
 		while (rom->length) {
 			char name[100];
-			int length,crc,in_parent;
+			int offset, length, crc, in_parent;
 
 			sprintf(name,rom->name,game->name);
+			offset = rom->offset;
 			crc = rom->crc;
 
 			in_parent = 0;
@@ -318,12 +320,63 @@ static void print_game_rom(FILE* out, const struct GameDriver* game) {
 
 			fprintf(out, L1P "rom" L2B);
 			if (*name)
-				fprintf(out, L2P "name %s" L2N, name );
+				fprintf(out, L2P "name %s" L2N, name);
 			if(in_parent && p_rom && p_rom->name)
 				fprintf(out, L2P "merge %s" L2N, p_rom->name);
-			fprintf(out, L2P "size %d" L2N, length );
-			fprintf(out, L2P "crc %08x" L2N, crc );
-			fprintf(out, L2E L1N);
+			fprintf(out, L2P "size %d" L2N, length);
+			fprintf(out, L2P "crc %08x" L2N, crc);
+			switch (region & ~REGIONFLAG_MASK)
+			{
+			case REGION_CPU1: fprintf(out, L2P "region cpu1" L2N); break;
+			case REGION_CPU2: fprintf(out, L2P "region cpu2" L2N); break;
+			case REGION_CPU3: fprintf(out, L2P "region cpu3" L2N); break;
+			case REGION_CPU4: fprintf(out, L2P "region cpu4" L2N); break;
+			case REGION_CPU5: fprintf(out, L2P "region cpu5" L2N); break;
+			case REGION_CPU6: fprintf(out, L2P "region cpu6" L2N); break;
+			case REGION_CPU7: fprintf(out, L2P "region cpu7" L2N); break;
+			case REGION_CPU8: fprintf(out, L2P "region cpu8" L2N); break;
+			case REGION_GFX1: fprintf(out, L2P "region gfx1" L2N); break;
+			case REGION_GFX2: fprintf(out, L2P "region gfx2" L2N); break;
+			case REGION_GFX3: fprintf(out, L2P "region gfx3" L2N); break;
+			case REGION_GFX4: fprintf(out, L2P "region gfx4" L2N); break;
+			case REGION_GFX5: fprintf(out, L2P "region gfx5" L2N); break;
+			case REGION_GFX6: fprintf(out, L2P "region gfx6" L2N); break;
+			case REGION_GFX7: fprintf(out, L2P "region gfx7" L2N); break;
+			case REGION_GFX8: fprintf(out, L2P "region gfx8" L2N); break;
+			case REGION_PROMS: fprintf(out, L2P "region proms" L2N); break;
+			case REGION_SOUND1: fprintf(out, L2P "region sound1" L2N); break;
+			case REGION_SOUND2: fprintf(out, L2P "region sound2" L2N); break;
+			case REGION_SOUND3: fprintf(out, L2P "region sound3" L2N); break;
+			case REGION_SOUND4: fprintf(out, L2P "region sound4" L2N); break;
+			case REGION_SOUND5: fprintf(out, L2P "region sound5" L2N); break;
+			case REGION_SOUND6: fprintf(out, L2P "region sound6" L2N); break;
+			case REGION_SOUND7: fprintf(out, L2P "region sound7" L2N); break;
+			case REGION_SOUND8: fprintf(out, L2P "region sound8" L2N); break;
+			case REGION_USER1: fprintf(out, L2P "region user1" L2N); break;
+			case REGION_USER2: fprintf(out, L2P "region user2" L2N); break;
+			case REGION_USER3: fprintf(out, L2P "region user3" L2N); break;
+			case REGION_USER4: fprintf(out, L2P "region user4" L2N); break;
+			case REGION_USER5: fprintf(out, L2P "region user5" L2N); break;
+			case REGION_USER6: fprintf(out, L2P "region user6" L2N); break;
+			case REGION_USER7: fprintf(out, L2P "region user7" L2N); break;
+			case REGION_USER8: fprintf(out, L2P "region user8" L2N); break;
+			default: fprintf(out, L2P "region 0x%x" L2N, region & ~REGIONFLAG_MASK);
+            }
+			switch (region & REGIONFLAG_MASK)
+			{
+			case 0:
+				break;
+			case REGIONFLAG_SOUNDONLY:
+				fprintf(out, L2P "flags soundonly" L2N);
+                break;
+			case REGIONFLAG_DISPOSE:
+				fprintf(out, L2P "flags dispose" L2N);
+				break;
+			default:
+				fprintf(out, L2P "flags 0x%x" L2N, region & REGIONFLAG_MASK);
+            }
+			fprintf(out, L2P "offs %x", offset);
+            fprintf(out, L2E L1N);
 		}
 	}
 }

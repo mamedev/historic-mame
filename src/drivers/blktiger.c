@@ -17,7 +17,7 @@
 
 extern unsigned char *blktiger_backgroundram;
 extern unsigned char *blktiger_backgroundattribram;
-extern int blktiger_backgroundram_size;
+extern size_t blktiger_backgroundram_size;
 extern unsigned char *blktiger_palette_bank;
 extern unsigned char *blktiger_screen_layout;
 
@@ -45,7 +45,7 @@ void blktiger_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 static READ_HANDLER( blktiger_protection_r )
 {
 	int data = cpu_get_reg(Z80_DE) >> 8;
-	if (errorlog) fprintf(errorlog,"protection read, PC: %04x Result:%02x\n",cpu_get_pc(),data);
+	logerror("protection read, PC: %04x Result:%02x\n",cpu_get_pc(),data);
 	return data;
 }
 

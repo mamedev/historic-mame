@@ -344,13 +344,8 @@ void panic_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			bank = panic_remap_sprite_code[(spriteram[offs] & 0x3F)][1];
 			flipy = spriteram[offs] & 0x40;
 
-            if(errorlog)
-            {
-            	if((code==0) && (bank==0))
-                {
-                	fprintf(errorlog,"remap failure %2x\n",(spriteram[offs] & 0x3F));
-                }
-            }
+			if((code==0) && (bank==0))
+				logerror("remap failure %2x\n",(spriteram[offs] & 0x3F));
 
 			/* Switch Bank */
 

@@ -451,10 +451,10 @@ static WRITE_HANDLER( m72_port02_w )
 {
 	if (offset != 0)
 	{
-if (errorlog && data) fprintf(errorlog,"write %02x to port 03\n",data);
+		if (data) logerror("write %02x to port 03\n",data);
 		return;
 	}
-if (errorlog && (data & 0xec)) fprintf(errorlog,"write %02x to port 02\n",data);
+	if (data & 0xec) logerror("write %02x to port 02\n",data);
 
 	/* bits 0/1 are coin counters */
 	coin_counter_w(0,data & 0x01);
@@ -475,10 +475,10 @@ static WRITE_HANDLER( rtype2_port02_w )
 {
 	if (offset != 0)
 	{
-if (errorlog && data) fprintf(errorlog,"write %02x to port 03\n",data);
+		if (data) logerror("write %02x to port 03\n",data);
 		return;
 	}
-if (errorlog && (data & 0xfc)) fprintf(errorlog,"write %02x to port 02\n",data);
+	if (data & 0xfc) logerror("write %02x to port 02\n",data);
 
 	/* bits 0/1 are coin counters */
 	coin_counter_w(0,data & 0x01);
@@ -1712,7 +1712,7 @@ INPUT_PORTS_START( poundfor )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
@@ -1727,21 +1727,50 @@ INPUT_PORTS_START( poundfor )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, "Coin Mode" )
+	PORT_DIPSETTING(    0x08, "Mode 1" )
+	PORT_DIPSETTING(    0x00, "Mode 2" )
+
+	/* Coin Mode 1 */
+	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 6C_1C ) )
+	PORT_DIPSETTING(    0xb0, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0xd0, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x10, "1 Coin 1 Credit, 1 to continue" )
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x90, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x50, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+
+	/* Coin mode 2, not supported yet
+
+	0xc0		A (5C_1C)	B (1C_2C)
+	0x80		A (5C_1C)	B (1C_3C)
+	0x40		A (5C_1C)	B (1C_5C)
+	0x00		A (5C_1C)	B (1C_6C)
+
+	0xd0		A (3C_1C)	B (1C_2C)
+	0x90		A (3C_1C)	B (1C_3C)
+	0x50		A (3C_1C)	B (1C_5C)
+	0x10		A (3C_1C)	B (1C_6C)
+
+	0xe0		A (2C_1C)	B (1C_2C)
+	0xa0		A (2C_1C)	B (1C_3C)
+	0x60		A (2C_1C)	B (1C_5C)
+	0x20		A (2C_1C)	B (1C_6C)
+
+	0xf0		A (1C_1C)	B (1C_2C)
+	0xb0		A (1C_1C)	B (1C_3C)
+	0x70		A (1C_1C)	B (1C_5C)
+	0x30		A (1C_1C)	B (1C_6C) */
 
 	PORT_START
 	PORT_BIT( 0x1f, IP_ACTIVE_HIGH, IPT_SPECIAL )	/* high bits of trackball X */
@@ -1797,31 +1826,29 @@ INPUT_PORTS_START( airduel )
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x02, "2" )
+	PORT_DIPSETTING(    0x03, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x00, "Easy" )
+	PORT_DIPSETTING(    0x08, "Easy" )
+	PORT_DIPSETTING(    0x0c, "Normal" )
+	PORT_DIPSETTING(    0x04, "Hard" )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
 	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
@@ -1830,21 +1857,50 @@ INPUT_PORTS_START( airduel )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, "Coin Mode" )
+	PORT_DIPSETTING(    0x08, "Mode 1" )
+	PORT_DIPSETTING(    0x00, "Mode 2" )
+
+	/* Coin Mode 1 */
+	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 6C_1C ) )
+	PORT_DIPSETTING(    0xb0, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0xd0, DEF_STR( 3C_1C ) )
+//	PORT_DIPSETTING(    0x10, DEF_STR( Free-Play ) )  /* another free play */
+	PORT_DIPSETTING(    0xe0, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x90, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x50, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+
+	/* Coin mode 2, not supported yet
+
+	0xc0		A (5C_1C)	B (1C_2C)
+	0x80		A (5C_1C)	B (1C_3C)
+	0x40		A (5C_1C)	B (1C_5C)
+	0x00		A (5C_1C)	B (1C_6C)
+
+	0xd0		A (3C_1C)	B (1C_2C)
+	0x90		A (3C_1C)	B (1C_3C)
+	0x50		A (3C_1C)	B (1C_5C)
+	0x10		A (3C_1C)	B (1C_6C)
+
+	0xe0		A (2C_1C)	B (1C_2C)
+	0xa0		A (2C_1C)	B (1C_3C)
+	0x60		A (2C_1C)	B (1C_5C)
+	0x20		A (2C_1C)	B (1C_6C)
+
+	0xf0		A (1C_1C)	B (1C_2C)
+	0xb0		A (1C_1C)	B (1C_3C)
+	0x70		A (1C_1C)	B (1C_5C)
+	0x30		A (1C_1C)	B (1C_6C) */
 INPUT_PORTS_END
 
 INPUT_PORTS_START( gallop )

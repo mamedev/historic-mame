@@ -42,7 +42,7 @@ void spelunkr_vh_screenrefresh(struct osd_bitmap *bitmap,int fullrefresh);
 void spelunk2_vh_screenrefresh(struct osd_bitmap *bitmap,int fullrefresh);
 
 extern unsigned char *irem_textram;
-extern int irem_textram_size;
+extern size_t irem_textram_size;
 
 
 
@@ -89,7 +89,7 @@ WRITE_HANDLER( ldrun2_bankswitch_w )
 	{
 		if (data < 1 || data > 30)
 		{
-if (errorlog) fprintf(errorlog,"unknown bank select %02x\n",data);
+logerror("unknown bank select %02x\n",data);
 			return;
 		}
 		bankaddress = 0x10000 + (banks[data-1] * 0x2000);

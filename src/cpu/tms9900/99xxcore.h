@@ -261,7 +261,6 @@ static void field_interrupt(void);
 /* Mame Interface Routines */
 /***************************/
 
-extern FILE *errorlog;
 
 static UINT8 tms9900_reg_layout[] = {
 	TMS9900_PC, TMS9900_WP, TMS9900_STATUS, TMS9900_IR
@@ -782,10 +781,7 @@ int TMS99XX_EXECUTE(int cycles)
 				I.FR[15] = READREG(R15);
 
 				#if 0		/* Trace */
-				if (errorlog)
-				{
-					fprintf(errorlog,"> PC %4.4x :%4.4x %4.4x : R=%4.4x %4.4x %4.4x %4.4x %4.4x %4.4x %4.4x %4.4x %4.4x %4.4x%4.4x %4.4x %4.4x %4.4x %4.4x %4.4x :T=%d\n",I.PC,I.STATUS,I.WP,I.FR[0],I.FR[1],I.FR[2],I.FR[3],I.FR[4],I.FR[5],I.FR[6],I.FR[7],I.FR[8],I.FR[9],I.FR[10],I.FR[11],I.FR[12],I.FR[13],I.FR[14],I.FR[15],TMS99XX_ICOUNT);
-				}
+				logerror("> PC %4.4x :%4.4x %4.4x : R=%4.4x %4.4x %4.4x %4.4x %4.4x %4.4x %4.4x %4.4x %4.4x %4.4x%4.4x %4.4x %4.4x %4.4x %4.4x %4.4x :T=%d\n",I.PC,I.STATUS,I.WP,I.FR[0],I.FR[1],I.FR[2],I.FR[3],I.FR[4],I.FR[5],I.FR[6],I.FR[7],I.FR[8],I.FR[9],I.FR[10],I.FR[11],I.FR[12],I.FR[13],I.FR[14],I.FR[15],TMS99XX_ICOUNT);
 				#endif
 
 				MAME_Debug();
@@ -903,8 +899,7 @@ int TMS99XX_EXECUTE(int cycles)
 				if (I.interrupt_pending)  /* we may have just cleared this */
 #endif
 				{
-					if (errorlog)
-						fprintf(errorlog,"tms9900.c : the interrupt_pending flag was set incorrectly\n");
+					logerror("tms9900.c : the interrupt_pending flag was set incorrectly\n");
 					I.interrupt_pending = 0;
 				}
 			}
@@ -1492,7 +1487,7 @@ static void writeCRU(int CRUAddr, int Number, UINT16 Value)
 
 	int count;
 
-	if (errorlog) fprintf(errorlog,"PC %4.4x Write CRU %x for %x =%x\n",I.PC,CRUAddr,Number,Value);
+	logerror("PC %4.4x Write CRU %x for %x =%x\n",I.PC,CRUAddr,Number,Value);
 
 	CRUAddr &= wCRUAddrMask;
 
@@ -1571,13 +1566,11 @@ static void external_instruction_notify(int ext_op_ID)
 			break;
 		case 0:
 			/* normal CRU write !!! */
-			if (errorlog)
-				fprintf(errorlog,"PC %4.4x : external_instruction_notify : wrong ext_op_ID",I.PC);
+			logerror("PC %4.4x : external_instruction_notify : wrong ext_op_ID",I.PC);
 			break;
 		default:
 			/* unknown address */
-			if (errorlog)
-				fprintf(errorlog,"PC %4.4x : external_instruction_notify : unknown ext_op_ID",I.PC);
+			logerror("PC %4.4x : external_instruction_notify : unknown ext_op_ID",I.PC);
 			break;
 	}
 #endif
@@ -1639,7 +1632,7 @@ static UINT16 readCRU(int CRUAddr, int Number)
 
 	int Offset,Location,Value;
 
-	if (errorlog) fprintf(errorlog,"Read CRU %x for %x\n",CRUAddr,Number);
+	logerror("Read CRU %x for %x\n",CRUAddr,Number);
 
 	Location = CRUAddr >> 3;
 	Offset   = CRUAddr & 07;

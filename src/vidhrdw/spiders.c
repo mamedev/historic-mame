@@ -71,7 +71,7 @@ void spiders_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int loop,data0,data1,data2,col;
 
-	int crtc6845_mem_size;
+	size_t crtc6845_mem_size;
 	int video_addr,increment;
 
 	unsigned char *RAM = memory_region(REGION_CPU1);

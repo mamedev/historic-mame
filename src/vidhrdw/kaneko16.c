@@ -176,7 +176,7 @@ WRITE_HANDLER( kaneko16_screen_regs_w )
 		case 0x00:	flipsprites = new_data & 3;	break;
 	}
 
-	if (errorlog) fprintf(errorlog, "CPU #0 PC %06X : Warning, screen reg %04X <- %04X\n",cpu_get_pc(),offset,data);
+	logerror("CPU #0 PC %06X : Warning, screen reg %04X <- %04X\n",cpu_get_pc(),offset,data);
 }
 
 

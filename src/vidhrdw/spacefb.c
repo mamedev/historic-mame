@@ -70,7 +70,7 @@ WRITE_HANDLER( spacefb_video_control_w )
 
 WRITE_HANDLER( spacefb_port_2_w )
 {
-if (errorlog) fprintf(errorlog,"Port #2 = %02d\n",data);
+logerror("Port #2 = %02d\n",data);
 }
 
 

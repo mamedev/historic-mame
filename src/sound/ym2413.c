@@ -303,8 +303,7 @@ WRITE_HANDLER( YM2413_data_port_0_w )
 				break;
 
 		default:
-				if ( errorlog )
-					fprintf(errorlog,"YM2413: Write to register %02x\n", pending);
+				logerror("YM2413: Write to register %02x\n", pending);
 				break;
 	}
 }

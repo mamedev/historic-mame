@@ -14,7 +14,7 @@
 static int trojan_vh_type;
 unsigned char *lwings_backgroundram;
 unsigned char *lwings_backgroundattribram;
-int lwings_backgroundram_size;
+size_t lwings_backgroundram_size;
 unsigned char *lwings_scrolly;
 unsigned char *lwings_scrollx;
 

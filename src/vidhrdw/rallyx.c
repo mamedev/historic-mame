@@ -13,7 +13,7 @@
 
 unsigned char *rallyx_videoram2,*rallyx_colorram2;
 unsigned char *rallyx_radarx,*rallyx_radary,*rallyx_radarattr;
-int rallyx_radarram_size;
+size_t rallyx_radarram_size;
 unsigned char *rallyx_scrollx,*rallyx_scrolly;
 static unsigned char *dirtybuffer2;	/* keep track of modified portions of the screen */
 											/* to speed up video refresh */

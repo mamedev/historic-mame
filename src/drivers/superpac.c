@@ -13,7 +13,7 @@ CPU #1:
 1780-17ff sprite data 2 (x, y position)
 1800-1f7f RAM
 1f80-1fff sprite data 3 (high bit of y, flip flags, double-size flags)
-2000      watchdog timer?
+2000      flip screen
 4040-43ff RAM shared with CPU #2
 4800-480f custom I/O chip #1
 4810-481f custom I/O chip #2
@@ -38,6 +38,7 @@ CPU #2 uses no interrupts
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+
 extern unsigned char *mappy_soundregs;
 WRITE_HANDLER( mappy_sound_enable_w );
 WRITE_HANDLER( mappy_sound_w );
@@ -47,102 +48,98 @@ extern unsigned char *superpac_customio_1,*superpac_customio_2;
 READ_HANDLER( superpac_customio_r );
 READ_HANDLER( superpac_sharedram_r );
 WRITE_HANDLER( superpac_sharedram_w );
-WRITE_HANDLER( superpac_customio_1_w );
-WRITE_HANDLER( superpac_customio_2_w );
 READ_HANDLER( superpac_customio_1_r );
 READ_HANDLER( superpac_customio_2_r );
-WRITE_HANDLER( superpac_interrupt_enable_1_w );
+WRITE_HANDLER( superpac_interrupt_enable_w );
 WRITE_HANDLER( superpac_cpu_enable_w );
-int superpac_interrupt_1(void);
 WRITE_HANDLER( superpac_reset_2_w );
-
-int pacnpal_interrupt_2(void);
-WRITE_HANDLER( pacnpal_interrupt_enable_2_w );
 
 int superpac_vh_start(void);
 void superpac_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void superpac_init_machine(void);
 void superpac_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+READ_HANDLER( superpac_flipscreen_r );
+WRITE_HANDLER( superpac_flipscreen_w );
 
 
 /* CPU 1 read addresses */
 static struct MemoryReadAddress readmem_cpu1[] =
 {
-	{ 0x0000, 0x1fff, MRA_RAM },                                       /* general RAM */
-	{ 0x4040, 0x43ff, superpac_sharedram_r },     /* shared RAM */
-	{ 0x4800, 0x480f, superpac_customio_1_r },   /* custom I/O chip #1 interface */
-	{ 0x4810, 0x481f, superpac_customio_2_r },   /* custom I/O chip #2 interface */
-	{ 0xa000, 0xffff, MRA_ROM },						/* SPC-2.1C at 0xc000, SPC-1.1B at 0xe000 */
-	{ -1 }                                              /* end of table */
+	{ 0x0000, 0x1fff, MRA_RAM },
+	{ 0x2000, 0x2000, superpac_flipscreen_r },
+	{ 0x4040, 0x43ff, superpac_sharedram_r },	/* Pac'n Pal only */
+	{ 0x4800, 0x480f, superpac_customio_1_r },
+	{ 0x4810, 0x481f, superpac_customio_2_r },
+	{ 0xa000, 0xffff, MRA_ROM },
+	{ -1 }	/* end of table */
 };
 
 
 /* CPU 1 write addresses */
 static struct MemoryWriteAddress writemem_cpu1[] =
 {
-	{ 0x0000, 0x03ff, videoram_w, &videoram, &videoram_size },          /* video RAM */
-	{ 0x0400, 0x07ff, colorram_w, &colorram },          /* color RAM */
-	{ 0x0800, 0x0f7f, MWA_RAM },                        /* RAM */
-	{ 0x0f80, 0x0fff, MWA_RAM, &spriteram, &spriteram_size },            /* sprite RAM, area 1 */
-	{ 0x1000, 0x177f, MWA_RAM },                        /* RAM */
-	{ 0x1780, 0x17ff, MWA_RAM, &spriteram_2 },          /* sprite RAM, area 2 */
-	{ 0x1800, 0x1f7f, MWA_RAM },                        /* RAM */
-	{ 0x1f80, 0x1fff, MWA_RAM, &spriteram_3 },          /* sprite RAM, area 3 */
-	{ 0x2000, 0x2000, MWA_NOP },                        /* watchdog timer */
-	{ 0x4040, 0x43ff, superpac_sharedram_w, &superpac_sharedram },	/* shared RAM */
-	{ 0x4800, 0x480f, superpac_customio_1_w, &superpac_customio_1 },	/* custom I/O chip #1 interface */
-	{ 0x4810, 0x481f, superpac_customio_1_w, &superpac_customio_2 },	/* custom I/O chip #2 interface */
-	{ 0x5000, 0x5000, superpac_reset_2_w },				/* reset CPU #2 */
-	{ 0x5002, 0x5003, superpac_interrupt_enable_1_w },  /* interrupt enable */
-	{ 0x5008, 0x5009, mappy_sound_enable_w },           /* sound enable */
-	{ 0x500a, 0x500b, superpac_cpu_enable_w },          /* interrupt enable */
-	{ 0x8000, 0x8000, MWA_NOP },                        /* watchdog timer */
-	{ 0xa000, 0xffff, MWA_ROM },                        /* SPC-2.1C at 0xc000, SPC-1.1B at 0xe000 */
-	{ -1 }                                              /* end of table */
+	{ 0x0000, 0x03ff, videoram_w, &videoram, &videoram_size },
+	{ 0x0400, 0x07ff, colorram_w, &colorram },
+	{ 0x0800, 0x0f7f, MWA_RAM },
+	{ 0x0f80, 0x0fff, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x1000, 0x177f, MWA_RAM },
+	{ 0x1780, 0x17ff, MWA_RAM, &spriteram_2 },
+	{ 0x1800, 0x1f7f, MWA_RAM },
+	{ 0x1f80, 0x1fff, MWA_RAM, &spriteram_3 },
+	{ 0x2000, 0x2000, superpac_flipscreen_w },
+	{ 0x4040, 0x43ff, superpac_sharedram_w, &superpac_sharedram },
+	{ 0x4800, 0x480f, MWA_RAM, &superpac_customio_1 },
+	{ 0x4810, 0x481f, MWA_RAM, &superpac_customio_2 },
+	{ 0x5000, 0x5000, superpac_reset_2_w },
+	{ 0x5002, 0x5003, superpac_interrupt_enable_w },
+	{ 0x5008, 0x5009, mappy_sound_enable_w },
+	{ 0x500a, 0x500b, superpac_cpu_enable_w },
+	{ 0x8000, 0x8000, watchdog_reset_w },
+	{ 0xa000, 0xffff, MWA_ROM },
+	{ -1 }	/* end of table */
 };
 
 
 /* CPU 2 read addresses */
 static struct MemoryReadAddress superpac_readmem_cpu2[] =
 {
-	{ 0xf000, 0xffff, MRA_ROM },                        /* ROM code */
-	{ 0x0040, 0x03ff, superpac_sharedram_r },          /* shared RAM with the main CPU */
-	{ -1 }                                              /* end of table */
+	{ 0x0040, 0x03ff, superpac_sharedram_r },
+	{ 0xf000, 0xffff, MRA_ROM },
+	{ -1 }	/* end of table */
 };
 
 
 /* CPU 2 write addresses */
 static struct MemoryWriteAddress superpac_writemem_cpu2[] =
 {
-	{ 0x0040, 0x03ff, superpac_sharedram_w },           /* shared RAM with the main CPU */
-	{ 0x0000, 0x003f, mappy_sound_w, &mappy_soundregs },/* sound control registers */
-	{ 0xf000, 0xffff, MWA_ROM },                        /* ROM code */
-	{ -1 }                                              /* end of table */
+	{ 0x0000, 0x003f, mappy_sound_w, &mappy_soundregs },
+	{ 0x0040, 0x03ff, superpac_sharedram_w },
+	{ 0xf000, 0xffff, MWA_ROM },
+	{ -1 }	/* end of table */
 };
 
 
 /* CPU 2 read addresses */
 static struct MemoryReadAddress pacnpal_readmem_cpu2[] =
 {
-	{ 0xf000, 0xffff, MRA_ROM },                        /* ROM code */
-	{ 0x0040, 0x03ff, superpac_sharedram_r },           /* shared RAM with the main CPU */
-	{ -1 }                                              /* end of table */
+	{ 0x0040, 0x03ff, superpac_sharedram_r },
+	{ 0xf000, 0xffff, MRA_ROM },
+	{ -1 }	/* end of table */
 };
 
 
 /* CPU 2 write addresses */
 static struct MemoryWriteAddress pacnpal_writemem_cpu2[] =
 {
-	{ 0x0040, 0x03ff, superpac_sharedram_w },           /* shared RAM with the main CPU */
-	{ 0x0000, 0x003f, mappy_sound_w, &mappy_soundregs },/* sound control registers */
-	{ 0x2000, 0x2001, pacnpal_interrupt_enable_2_w },   /* interrupt enable */
-	{ 0x2006, 0x2007, mappy_sound_enable_w },           /* sound enable */
-	{ 0xf000, 0xffff, MWA_ROM },                        /* ROM code */
-	{ -1 }                                              /* end of table */
+	{ 0x0000, 0x003f, mappy_sound_w, &mappy_soundregs },
+	{ 0x0040, 0x03ff, superpac_sharedram_w },
+	{ 0x2000, 0x2001, superpac_interrupt_enable_w },
+	{ 0x2006, 0x2007, mappy_sound_enable_w },
+	{ 0xf000, 0xffff, MWA_ROM },
+	{ -1 }	/* end of table */
 };
 
 
-/* input from the outside world */
 INPUT_PORTS_START( superpac )
 	PORT_START	/* DSW0 */
 	PORT_DIPNAME( 0x0f, 0x00, DEF_STR( Difficulty ) )
@@ -230,6 +227,15 @@ INPUT_PORTS_START( superpac )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
 	PORT_SERVICE( 0x80, IP_ACTIVE_HIGH )
+
+	PORT_START	/* FAKE */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT_IMPULSE( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL, 1 )
+	PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL, 0, IP_KEY_PREVIOUS, IP_JOY_PREVIOUS )
+	PORT_BIT( 0xc0, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
 
@@ -290,7 +296,7 @@ INPUT_PORTS_START( pacnpal )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY )
 	PORT_BIT_IMPULSE( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1, 2 )
-	PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_BUTTON1, 0, IP_KEY_PREVIOUS, IP_JOY_PREVIOUS )
+	PORT_BIT_IMPULSE( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL, 2 )
 	PORT_BIT( 0xc0, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START	/* FAKE */
@@ -303,10 +309,16 @@ INPUT_PORTS_START( pacnpal )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ) )
 	PORT_SERVICE( 0x80, IP_ACTIVE_HIGH )
+
+	PORT_START	/* FAKE */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
 
-/* SUPERPAC -- ROM SPV-1.3C (4K) */
 static struct GfxLayout charlayout =
 {
 	8,8,                                           /* 8*8 characters */
@@ -319,7 +331,6 @@ static struct GfxLayout charlayout =
 };
 
 
-/* SUPERPAC -- ROM SPV-2.3F (8K) */
 static struct GfxLayout spritelayout =
 {
 	16,16,                                         /* 16*16 sprites */
@@ -359,42 +370,32 @@ static struct MachineDriver machine_driver_superpac =
 		{
 			CPU_M6809,
 			1100000,             /* 1.1 Mhz */
-			readmem_cpu1,        /* MemoryReadAddress */
-			writemem_cpu1,       /* MemoryWriteAddress */
-			0,                   /* IOReadPort */
-			0,                   /* IOWritePort */
-			interrupt,           /* interrupt routine */
-			1                    /* interrupts per frame */
+			readmem_cpu1,writemem_cpu1,0,0,
+			interrupt,1
 		},
 		{
 			CPU_M6809,
 			1100000,             /* 1.1 Mhz */
-			superpac_readmem_cpu2,/* MemoryReadAddress */
-			superpac_writemem_cpu2,/* MemoryWriteAddress */
-			0,                   /* IOReadPort */
-			0,                   /* IOWritePort */
-			ignore_interrupt,    /* interrupt routine */
-			1                    /* interrupts per frame */
+			superpac_readmem_cpu2,superpac_writemem_cpu2,0,0,
+			ignore_interrupt,1
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	100,	/* 100 CPU slices per frame - an high value to ensure proper */
 			/* synchronization of the CPUs */
-	superpac_init_machine,     /* init machine routine */
+	superpac_init_machine,
 
 	/* video hardware */
-	36*8, 28*8,                /* screen_width, screen_height */
-	{ 0*8, 36*8-1, 0*8, 28*8-1 },/* struct rectangle visible_area */
-	gfxdecodeinfo,             /* GfxDecodeInfo * */
-	32,                        /* total colors */
-	4*(64+64),                 /* color table length */
-	superpac_vh_convert_color_prom, /* convert color prom routine */
+	36*8, 28*8,	{ 0*8, 36*8-1, 0*8, 28*8-1 },
+	gfxdecodeinfo,
+	32,	4*(64+64),
+	superpac_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
-	0,                         /* vh_init routine */
-	generic_vh_start,          /* vh_start routine */
-	generic_vh_stop,           /* vh_stop routine */
-	superpac_vh_screenrefresh, /* vh_update routine */
+	0,
+	generic_vh_start,
+	generic_vh_stop,
+	superpac_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -413,42 +414,32 @@ static struct MachineDriver machine_driver_pacnpal =
 		{
 			CPU_M6809,
 			1100000,             /* 1.1 Mhz */
-			readmem_cpu1,        /* MemoryReadAddress */
-			writemem_cpu1,       /* MemoryWriteAddress */
-			0,                   /* IOReadPort */
-			0,                   /* IOWritePort */
-			interrupt,           /* interrupt routine */
-			1                    /* interrupts per frame */
+			readmem_cpu1,writemem_cpu1,0,0,
+			interrupt,1
 		},
 		{
 			CPU_M6809,
 			1100000,             /* 1.1 Mhz */
-			pacnpal_readmem_cpu2,/* MemoryReadAddress */
-			pacnpal_writemem_cpu2,/* MemoryWriteAddress */
-			0,                   /* IOReadPort */
-			0,                   /* IOWritePort */
-			pacnpal_interrupt_2, /* interrupt routine */
-			1                    /* interrupts per frame */
+			pacnpal_readmem_cpu2,pacnpal_writemem_cpu2,0,0,
+			interrupt,1
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	100,	/* 100 CPU slices per frame - an high value to ensure proper */
 			/* synchronization of the CPUs */
-	superpac_init_machine,     /* init machine routine */
+	superpac_init_machine,
 
 	/* video hardware */
-	36*8, 28*8,                /* screen_width, screen_height */
-	{ 0*8, 36*8-1, 0*8, 28*8-1 },/* struct rectangle visible_area */
-	gfxdecodeinfo,             /* GfxDecodeInfo * */
-	32,                        /* total colors */
-	4*(64+64),                 /* color table length */
-	superpac_vh_convert_color_prom, /* convert color prom routine */
+	36*8, 28*8,	{ 0*8, 36*8-1, 0*8, 28*8-1 },
+	gfxdecodeinfo,
+	32,	4*(64+64),
+	superpac_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
-	0,                         /* vh_init routine */
-	generic_vh_start,          /* vh_start routine */
-	generic_vh_stop,           /* vh_stop routine */
-	superpac_vh_screenrefresh, /* vh_update routine */
+	0,
+	generic_vh_start,
+	generic_vh_stop,
+	superpac_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -459,8 +450,6 @@ static struct MachineDriver machine_driver_pacnpal =
 		}
 	}
 };
-
-
 
 
 ROM_START( superpac )
@@ -559,7 +548,7 @@ ROM_END
 
 
 
-GAMEX( 1982, superpac, 0,        superpac, superpac, 0, ROT90, "Namco", "Super Pac-Man", GAME_NO_COCKTAIL )
-GAMEX( 1982, superpcm, superpac, superpac, superpac, 0, ROT90, "[Namco] (Bally Midway license)", "Super Pac-Man (Midway)", GAME_NO_COCKTAIL )
-GAMEX( 1983, pacnpal,  0,        pacnpal,  pacnpal,  0, ROT90, "Namco", "Pac & Pal", GAME_NO_COCKTAIL )
-GAMEX( 1983, pacnchmp, pacnpal,  pacnpal,  pacnpal,  0, ROT90, "Namco", "Pac-Man & Chomp Chomp", GAME_NO_COCKTAIL )
+GAME( 1982, superpac, 0,        superpac, superpac, 0, ROT90, "Namco", "Super Pac-Man" )
+GAME( 1982, superpcm, superpac, superpac, superpac, 0, ROT90, "[Namco] (Bally Midway license)", "Super Pac-Man (Midway)" )
+GAME( 1983, pacnpal,  0,        pacnpal,  pacnpal,  0, ROT90, "Namco", "Pac & Pal" )
+GAMEX(1983, pacnchmp, pacnpal,  pacnpal,  pacnpal,  0, ROT90, "Namco", "Pac-Man & Chomp Chomp", GAME_IMPERFECT_COLORS )

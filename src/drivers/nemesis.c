@@ -26,7 +26,7 @@ extern unsigned char *nemesis_videoram1;
 extern unsigned char *nemesis_videoram2;
 extern unsigned char *nemesis_characterram;
 extern unsigned char *nemesis_xscroll1,*nemesis_xscroll2, *nemesis_yscroll;
-extern int  nemesis_characterram_size;
+extern size_t nemesis_characterram_size;
 
 READ_HANDLER( nemesis_videoram1_r );
 WRITE_HANDLER( nemesis_videoram1_w );
@@ -85,7 +85,7 @@ WRITE_HANDLER( salamand_soundlatch_w )
 	soundlatch_w(offset,data & 0xff);
 	cpu_cause_interrupt(1,Z80_IRQ_INT);
 
-//if (errorlog) fprintf(errorlog,"z80 data write\n");
+//logerror("z80 data write\n");
 
 //cpu_cause_interrupt(1,Z80_NMI_INT);
 }
@@ -128,7 +128,7 @@ WRITE_HANDLER( gx400_irq1_enable_w )
 	if ((data & 0x00ff0000) == 0)
 		irq1_on = data & 0x0001;
 /*	else
-if (errorlog) fprintf(errorlog,"irq1en = %08x\n",data);*/
+logerror("irq1en = %08x\n",data);*/
 }
 
 WRITE_HANDLER( gx400_irq2_enable_w )
@@ -136,7 +136,7 @@ WRITE_HANDLER( gx400_irq2_enable_w )
 	if ((data & 0x00ff0000) == 0)
 		irq2_on = data & 0x0001;
 /*	else
-if (errorlog) fprintf(errorlog,"irq2en = %08x\n",data);*/
+logerror("irq2en = %08x\n",data);*/
 }
 
 WRITE_HANDLER( gx400_irq4_enable_w )
@@ -144,7 +144,7 @@ WRITE_HANDLER( gx400_irq4_enable_w )
 	if ((data & 0xff000000) == 0)
 		irq4_on = data & 0x0100;
 /*	else
-if (errorlog) fprintf(errorlog,"irq4en = %08x\n",data);*/
+logerror("irq4en = %08x\n",data);*/
 }
 
 static unsigned char *gx400_shared_ram;

@@ -52,7 +52,7 @@ READ_HANDLER( blockout_input_r )
 		case 8:
 			return input_port_4_r(offset);
 		default:
-if (errorlog) fprintf(errorlog,"PC %06x - read input port %06x\n",cpu_get_pc(),0x100000+offset);
+logerror("PC %06x - read input port %06x\n",cpu_get_pc(),0x100000+offset);
 			return 0;
 	}
 }

@@ -24,6 +24,7 @@ struct artwork
 {
 	/* Publically accessible */
 	struct osd_bitmap *artwork;
+	struct osd_bitmap *alpha;
 
 	/* Private - don't touch! */
 	struct osd_bitmap *orig_artwork;	/* needed for palette recalcs */
@@ -44,12 +45,19 @@ struct artwork_element
 	unsigned char red,green,blue,alpha;
 };
 
+#ifndef MIN
+#define MIN(x,y) ((x)<(y)?(x):(y))
+#endif
+#ifndef MAX
+#define MAX(x,y) ((x)>(y)?(x):(y))
+#endif
+
 /*********************************************************************
   functions that apply to backdrops AND overlays
 *********************************************************************/
-struct artwork *artwork_load(const char *filename, int start_pen, int max_pens);
-struct artwork *artwork_load_size(const char *filename, int start_pen, int max_pens, int width, int height);
-struct artwork *artwork_create(const struct artwork_element *ae, int start_pen, int max_pens);
+struct artwork *artwork_load(const char *filename, unsigned int start_pen, unsigned int max_pens);
+struct artwork *artwork_load_size(const char *filename, unsigned int start_pen, unsigned int max_pens, int width, int height);
+struct artwork *artwork_create(const struct artwork_element *ae, unsigned int start_pen, unsigned int max_pens);
 void artwork_elements_scale(struct artwork_element *ae, int width, int height);
 void artwork_free(struct artwork *a);
 

@@ -257,7 +257,8 @@ int wecleman_selected_ip, wecleman_irqctrl;
 /* Variables defined in vidhrdw: */
 
 extern unsigned char *wecleman_pageram, *wecleman_txtram, *wecleman_roadram, *wecleman_unknown;
-extern int wecleman_roadram_size, wecleman_bgpage[4], wecleman_fgpage[4], *wecleman_gfx_bank;
+extern size_t wecleman_roadram_size;
+extern int wecleman_bgpage[4], wecleman_fgpage[4], *wecleman_gfx_bank;
 
 
 /* Functions defined in vidhrdw: */
@@ -342,7 +343,7 @@ void hotchase_vh_stop(void);
 static WRITE_HANDLER( irqctrl_w )
 {
 
-//	if (errorlog) fprintf(errorlog, "CPU #0 - PC = %06X - $140005 <- %02X (old value: %02X)\n",cpu_get_pc(), data&0xFF, old_data&0xFF);
+//	logerror("CPU #0 - PC = %06X - $140005 <- %02X (old value: %02X)\n",cpu_get_pc(), data&0xFF, old_data&0xFF);
 
 //	Bit 0 : SUBINT
 	if ( (wecleman_irqctrl & 1) && (!(data & 1)) )	// 1->0 transition
@@ -369,7 +370,7 @@ static WRITE_HANDLER( irqctrl_w )
 
 
 
-static int read_accelerator(int offset)
+static READ_HANDLER( accelerator_r )
 {
 #define MAX_ACCEL 0x80
 
@@ -420,7 +421,7 @@ static READ_HANDLER( selected_ip_r )
 {
 	switch ( (wecleman_selected_ip >> 5) & 3 )
 	{													// From WEC Le Mans Schems:
-		case 0: 	return read_accelerator(offset);	// Accel - Schems: Accelevr
+		case 0: 	return accelerator_r(offset);		// Accel - Schems: Accelevr
 		case 1: 	return 0xffff;						// ????? - Schems: Not Used
 		case 2:		return input_port_5_r(offset);		// Wheel - Schems: Handlevr
 		case 3:		return 0xffff;						// Table - Schems: Turnvr
@@ -505,11 +506,12 @@ static WRITE_HANDLER( blitter_w )
 		int size =	(READ_WORD(&blitter_regs[0x10]))&0x00FF;
 
 #if 0
-		if (errorlog)	{
+		{
 			int i;
-			fprintf(errorlog,"Blitter (PC = %06X): ",cpu_get_pc());
-			for (i=0;i<0x12;i+=2) fprintf(errorlog,"%04X ",READ_WORD(&blitter_regs[i]) );
-			fprintf(errorlog,"\n");		}
+			logerror("Blitter (PC = %06X): ",cpu_get_pc());
+			for (i=0;i<0x12;i+=2) logerror("%04X ",READ_WORD(&blitter_regs[i]) );
+			logerror("\n");
+		}
 #endif
 
 		/* Word aligned transfers only */

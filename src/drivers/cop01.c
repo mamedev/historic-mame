@@ -37,7 +37,7 @@ int cop01_vh_start(void);
 void cop01_vh_stop(void);
 
 extern unsigned char *cop01_videoram;
-extern int cop01_videoram_size;
+extern size_t cop01_videoram_size;
 
 
 

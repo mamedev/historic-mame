@@ -1,7 +1,7 @@
 /*****************************************************************************
  *
  *	 tbl6510.c
- *	 6510 opcode functions and function pointer table
+ *   6510 opcode functions and function pointer table
  *
  *	 Copyright (c) 1998,1999,2000 Juergen Buchmueller, all rights reserved.
  *
@@ -69,23 +69,23 @@ OP(80) {		  m6502_ICount -= 2;		 DOP;		  } /* 2 DOP */
 #define m6510_d1 m6502_d1									/* 5 CMP IDY */
 #define m6510_f1 m6502_f1									/* 5 SBC IDY */
 
-#define m6510_02 m6502_02									/* 2 ILL */
-#define m6510_22 m6502_22									/* 2 ILL */
-#define m6510_42 m6502_42									/* 2 ILL */
-#define m6510_62 m6502_62									/* 2 ILL */
+OP(02) {		  m6502_ICount -= 2;		 KIL;		  } /* 2 KIL */
+OP(22) {		  m6502_ICount -= 2;		 KIL;		  } /* 2 KIL */
+OP(42) {		  m6502_ICount -= 2;		 KIL;		  } /* 2 KIL */
+OP(62) {		  m6502_ICount -= 2;		 KIL;		  } /* 2 KIL */
 OP(82) {		  m6502_ICount -= 2;		 DOP;		  } /* 2 DOP */
 #define m6510_a2 m6502_a2									/* 2 LDX IMM */
 OP(c2) {		  m6502_ICount -= 2;		 DOP;		  } /* 2 DOP */
 OP(e2) {		  m6502_ICount -= 2;		 DOP;		  } /* 2 DOP */
 
-#define m6510_12 m6502_12									/* 2 ILL */
-#define m6510_32 m6502_32									/* 2 ILL */
-#define m6510_52 m6502_52									/* 2 ILL */
-#define m6510_72 m6502_72									/* 2 ILL */
-#define m6510_92 m6502_92									/* 2 ILL */
-#define m6510_b2 m6502_b2									/* 2 ILL */
-#define m6510_d2 m6502_d2									/* 2 ILL */
-#define m6510_f2 m6502_f2									/* 2 ILL */
+OP(12) {		  m6502_ICount -= 2;		 KIL;		  } /* 2 KIL */
+OP(32) {		  m6502_ICount -= 2;		 KIL;		  } /* 2 KIL */
+OP(52) {		  m6502_ICount -= 2;		 KIL;		  } /* 2 KIL */
+OP(72) {		  m6502_ICount -= 2;		 KIL;		  } /* 2 KIL */
+OP(92) {		  m6502_ICount -= 2;		 KIL;		  } /* 2 KIL */
+OP(b2) {		  m6502_ICount -= 2;		 KIL;		  } /* 2 KIL */
+OP(d2) {		  m6502_ICount -= 2;		 KIL;		  } /* 2 KIL */
+OP(f2) {		  m6502_ICount -= 2;		 KIL;		  } /* 2 KIL */
 
 OP(03) { int tmp; m6502_ICount -= 7; RD_IDX; SLO; WB_EA;  } /* 6 SLO IDX */
 OP(23) { int tmp; m6502_ICount -= 7; RD_IDX; RLA; WB_EA;  } /* 6 RLA IDX */
@@ -100,7 +100,7 @@ OP(13) { int tmp; m6502_ICount -= 6; RD_IDY; SLO; WB_EA;  } /* 5 SLO IDY */
 OP(33) { int tmp; m6502_ICount -= 6; RD_IDY; RLA; WB_EA;  } /* 5 RLA IDY */
 OP(53) { int tmp; m6502_ICount -= 6; RD_IDY; SRE; WB_EA;  } /* 5 SRE IDY */
 OP(73) { int tmp; m6502_ICount -= 6; RD_IDY; RRA; WB_EA;  } /* 5 RRA IDY */
-OP(93) { int tmp; m6502_ICount -= 5;		 SAX; WR_IDY; } /* 5 SAH IDY */
+OP(93) { int tmp; m6502_ICount -= 5; EA_IDY; SAH; WB_EA;  } /* 5 SAH IDY */
 OP(b3) { int tmp; m6502_ICount -= 5; RD_IDY; LAX;		  } /* 5 LAX IDY */
 OP(d3) { int tmp; m6502_ICount -= 6; RD_IDY; DCP; WB_EA;  } /* 6 DCP IDY */
 OP(f3) { int tmp; m6502_ICount -= 6; RD_IDY; ISB; WB_EA;  } /* 6 ISB IDY */
@@ -172,8 +172,8 @@ OP(17) { int tmp; m6502_ICount -= 6; RD_ZPX; SLO; WB_EA;  } /* 4 SLO ZPX */
 OP(37) { int tmp; m6502_ICount -= 6; RD_ZPX; RLA; WB_EA;  } /* 4 RLA ZPX */
 OP(57) { int tmp; m6502_ICount -= 6; RD_ZPX; SRE; WB_EA;  } /* 4 SRE ZPX */
 OP(77) { int tmp; m6502_ICount -= 6; RD_ZPX; RRA; WB_EA;  } /* 4 RRA ZPX */
-OP(97) { int tmp; m6502_ICount -= 4;		 SAX; WR_ZPX; } /* 4 SAX ZPY */
-OP(b7) { int tmp; m6502_ICount -= 4; RD_ZPX; LAX;		  } /* 4 LAX ZPY */
+OP(97) { int tmp; m6502_ICount -= 4;		 SAX; WR_ZPY; } /* 4 SAX ZPY */
+OP(b7) { int tmp; m6502_ICount -= 4; RD_ZPY; LAX;		  } /* 4 LAX ZPY */
 OP(d7) { int tmp; m6502_ICount -= 6; RD_ZPX; DCP; WB_EA;  } /* 6 DCP ZPX */
 OP(f7) { int tmp; m6502_ICount -= 6; RD_ZPX; ISB; WB_EA;  } /* 6 ISB ZPX */
 
@@ -233,18 +233,18 @@ OP(fa) {		  m6502_ICount -= 2;		 NOP;		  } /* 2 NOP */
 
 OP(0b) { int tmp; m6502_ICount -= 2; RD_IMM; ANC;		  } /* 2 ANC IMM */
 OP(2b) { int tmp; m6502_ICount -= 2; RD_IMM; ANC;		  } /* 2 ANC IMM */
-OP(4b) { int tmp; m6502_ICount -= 2; RD_IMM; ASR; WB_EA;  } /* 2 ASR IMM */
-OP(6b) { int tmp; m6502_ICount -= 2; RD_IMM; ARR; WB_EA;  } /* 2 ARR IMM */
-OP(8b) { int tmp; m6502_ICount -= 2; RD_IMM; AXA; WB_EA;  } /* 2 AXA IMM */
-OP(ab) { int tmp; m6502_ICount -= 2; RD_IMM; LAX;		  } /* 2 LAX IMM */
+OP(4b) { int tmp; m6502_ICount -= 2; RD_IMM; ASR; WB_ACC; } /* 2 ASR IMM */
+OP(6b) { int tmp; m6502_ICount -= 2; RD_IMM; ARR; WB_ACC; } /* 2 ARR IMM */
+OP(8b) { int tmp; m6502_ICount -= 2; RD_IMM; AXA;         } /* 2 AXA IMM */
+OP(ab) { int tmp; m6502_ICount -= 2; RD_IMM; OAL;         } /* 2 OAL IMM */
 OP(cb) { int tmp; m6502_ICount -= 2; RD_IMM; ASX;		  } /* 2 ASX IMM */
 OP(eb) { int tmp; m6502_ICount -= 2; RD_IMM; SBC;		  } /* 2 SBC IMM */
 
-OP(1b) { int tmp; m6502_ICount -= 4; RD_ABY; SLO;		  } /* 4 SLO ABY */
-OP(3b) { int tmp; m6502_ICount -= 4; RD_ABY; RLA;		  } /* 4 RLA ABY */
-OP(5b) { int tmp; m6502_ICount -= 4; RD_ABY; SRE;		  } /* 4 SRE ABY */
-OP(7b) { int tmp; m6502_ICount -= 4; RD_ABY; RRA;		  } /* 4 RRA ABY */
-OP(9b) { int tmp; m6502_ICount -= 5;		 SSH; WR_ABY; } /* 5 SSH ABY */
+OP(1b) { int tmp; m6502_ICount -= 4; RD_ABY; SLO; WB_EA;  } /* 4 SLO ABY */
+OP(3b) { int tmp; m6502_ICount -= 4; RD_ABY; RLA; WB_EA;  } /* 4 RLA ABY */
+OP(5b) { int tmp; m6502_ICount -= 4; RD_ABY; SRE; WB_EA;  } /* 4 SRE ABY */
+OP(7b) { int tmp; m6502_ICount -= 4; RD_ABY; RRA; WB_EA;  } /* 4 RRA ABY */
+OP(9b) { int tmp; m6502_ICount -= 5; EA_ABY; SSH; WB_EA;  } /* 5 SSH ABY */
 OP(bb) { int tmp; m6502_ICount -= 4; RD_ABY; AST;		  } /* 4 AST ABY */
 OP(db) { int tmp; m6502_ICount -= 6; RD_ABY; DCP; WB_EA;  } /* 6 DCP ABY */
 OP(fb) { int tmp; m6502_ICount -= 6; RD_ABY; ISB; WB_EA;  } /* 6 ISB ABY */
@@ -262,7 +262,7 @@ OP(1c) {		  m6502_ICount -= 2;		 TOP;		  } /* 2 TOP */
 OP(3c) {		  m6502_ICount -= 2;		 TOP;		  } /* 2 TOP */
 OP(5c) {		  m6502_ICount -= 2;		 TOP;		  } /* 2 TOP */
 OP(7c) {		  m6502_ICount -= 2;		 TOP;		  } /* 2 TOP */
-OP(9c) { int tmp; m6502_ICount -= 5;		 SYH; WR_ABX; } /* 5 SYH ABX */
+OP(9c) { int tmp; m6502_ICount -= 5; EA_ABX; SYH; WB_EA;  } /* 5 SYH ABX */
 #define m6510_bc m6502_bc									/* 4 LDY ABX */
 OP(dc) {		  m6502_ICount -= 2;		 TOP;		  } /* 2 TOP */
 OP(fc) {		  m6502_ICount -= 2;		 TOP;		  } /* 2 TOP */
@@ -298,7 +298,7 @@ OP(fc) {		  m6502_ICount -= 2;		 TOP;		  } /* 2 TOP */
 #define m6510_3e m6502_3e									/* 7 ROL ABX */
 #define m6510_5e m6502_5e									/* 7 LSR ABX */
 #define m6510_7e m6502_7e									/* 7 ROR ABX */
-#define m6510_9e m6502_9e									/* 2 SXH ABY */
+OP(9e) { int tmp; m6502_ICount -= 2; EA_ABY; SXH; WB_EA;  } /* 2 SXH ABY */
 #define m6510_be m6502_be									/* 4 LDX ABY */
 #define m6510_de m6502_de									/* 7 DEC ABX */
 #define m6510_fe m6502_fe									/* 7 INC ABX */
@@ -316,7 +316,7 @@ OP(1f) { int tmp; m6502_ICount -= 4; RD_ABX; SLO; WB_EA;  } /* 4 SLO ABX */
 OP(3f) { int tmp; m6502_ICount -= 4; RD_ABX; RLA; WB_EA;  } /* 4 RLA ABX */
 OP(5f) { int tmp; m6502_ICount -= 4; RD_ABX; SRE; WB_EA;  } /* 4 SRE ABX */
 OP(7f) { int tmp; m6502_ICount -= 4; RD_ABX; RRA; WB_EA;  } /* 4 RRA ABX */
-OP(9f) { int tmp; m6502_ICount -= 6;		 SAH; WR_ABY; } /* 5 SAH ABY */
+OP(9f) { int tmp; m6502_ICount -= 6; EA_ABY; SAH; WB_EA;  } /* 5 SAH ABY */
 OP(bf) { int tmp; m6502_ICount -= 6; RD_ABY; LAX;		  } /* 4 LAX ABY */
 OP(df) { int tmp; m6502_ICount -= 7; RD_ABX; DCP; WB_EA;  } /* 7 DCP ABX */
 OP(ff) { int tmp; m6502_ICount -= 7; RD_ABX; ISB; WB_EA;  } /* 7 ISB ABX */

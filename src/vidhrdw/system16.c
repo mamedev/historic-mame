@@ -682,10 +682,10 @@ static void get_sprite_info( void ){
 
 #ifdef SYS16_DEBUG
 	int dump_spritedata=0;
-	if(errorlog && keyboard_pressed_memory(KEYCODE_W))
+	if(keyboard_pressed_memory(KEYCODE_W))
 	{
 		dump_spritedata=1;
-		fprintf(errorlog,"sprites\n");
+		logerror("sprites\n");
 	}
 #endif
 	switch( sys16_spritesystem  ){
@@ -723,7 +723,7 @@ static void get_sprite_info( void ){
 				int gfx = source[3]*4;
 
 #ifdef SYS16_DEBUG
-				if(dump_spritedata) fprintf(errorlog,"0:%4x  1:%4x  2:%4x  3:%4x  4:%4x  5:%4x  6:%4x  7:%4x\n",
+				if(dump_spritedata) logerror("0:%4x  1:%4x  2:%4x  3:%4x  4:%4x  5:%4x  6:%4x  7:%4x\n",
 						source[0],source[1],source[2],source[3],source[4],source[5],source[6],source[7]);
 #endif
 
@@ -806,7 +806,7 @@ static void get_sprite_info( void ){
 				int xpos = source[0] + sys16_sprxoffset;
 
 #ifdef SYS16_DEBUG
-				if(dump_spritedata) fprintf(errorlog,"0:%4x  1:%4x  2:%4x  3:%4x  4:%4x  5:%4x  6:%4x  7:%4x\n",
+				if(dump_spritedata) logerror("0:%4x  1:%4x  2:%4x  3:%4x  4:%4x  5:%4x  6:%4x  7:%4x\n",
 						source[0],source[1],source[2],source[3],source[4],source[5],source[6],source[7]);
 #endif
 				sprite->priority = 3-((attributes>>14)&0x3);
@@ -906,7 +906,7 @@ static void get_sprite_info( void ){
 				int gfx = source[3]*4;
 
 #ifdef SYS16_DEBUG
-				if(dump_spritedata) fprintf(errorlog,"0:%4x  1:%4x  2:%4x  3:%4x  4:%4x  5:%4x  6:%4x  7:%4x\n",
+				if(dump_spritedata) logerror("0:%4x  1:%4x  2:%4x  3:%4x  4:%4x  5:%4x  6:%4x  7:%4x\n",
 						source[0],source[1],source[2],source[3],source[4],source[5],source[6],source[7]);
 #endif
 
@@ -976,7 +976,7 @@ static void get_sprite_info( void ){
 					sprite->flags = 0;
 
 #ifdef SYS16_DEBUG
-					if(dump_spritedata) fprintf(errorlog,"0:%4x  1:%4x  2:%4x  3:%4x  4:%4x  5:%4x  6:%4x  7:%4x\n",
+					if(dump_spritedata) logerror("0:%4x  1:%4x  2:%4x  3:%4x  4:%4x  5:%4x  6:%4x  7:%4x\n",
 							source[0],source[1],source[2],source[3],source[4],source[5],source[6],source[7]);
 #endif
 #ifdef TRANSPARENT_SHADOWS
@@ -1090,7 +1090,7 @@ static void get_sprite_info( void ){
 				int gfx;
 
 #ifdef SYS16_DEBUG
-				if(dump_spritedata) fprintf(errorlog,"0:%4x  1:%4x  2:%4x  3:%4x  4:%4x  5:%4x  6:%4x  7:%4x\n",
+				if(dump_spritedata) logerror("0:%4x  1:%4x  2:%4x  3:%4x  4:%4x  5:%4x  6:%4x  7:%4x\n",
 						source[0],source[1],source[2],source[3],source[4],source[5],source[6],source[7]);
 #endif
 
@@ -1190,7 +1190,7 @@ static void get_sprite_info( void ){
 				int zoomx,zoomy;
 
 #ifdef SYS16_DEBUG
-				if(dump_spritedata) fprintf(errorlog,"0:%4x  1:%4x  2:%4x  3:%4x  4:%4x  5:%4x  6:%4x  7:%4x\n",
+				if(dump_spritedata) logerror("0:%4x  1:%4x  2:%4x  3:%4x  4:%4x  5:%4x  6:%4x  7:%4x\n",
 						source[0],source[1],source[2],source[3],source[4],source[5],source[6],source[7]);
 #endif
 
@@ -1290,7 +1290,7 @@ static void get_sprite_info( void ){
 				int zoomx,zoomy;
 
 #ifdef SYS16_DEBUG
-				if(dump_spritedata) fprintf(errorlog,"0:%4x  1:%4x  2:%4x  3:%4x  4:%4x  5:%4x  6:%4x  7:%4x\n",
+				if(dump_spritedata) logerror("0:%4x  1:%4x  2:%4x  3:%4x  4:%4x  5:%4x  6:%4x  7:%4x\n",
 						source[0],source[1],source[2],source[3],source[4],source[5],source[6],source[7]);
 #endif
 
@@ -1428,7 +1428,7 @@ static void get_sprite_info( void ){
 							offset/=2;
 							for (i=0; i<len_pattern; i++,p++) *p = offset;
 
-						    if(errorlog) fprintf(errorlog,"addr=%04x offset=%4x bank=%02x offset=%d height=%d zoomy=%04x len_pattern=%d width=%d offset_addr=%04x\n", addr, offset, bank, offset, height, zoomy,  len_pattern, width2, offset_addr);
+						    logerror("addr=%04x offset=%4x bank=%02x offset=%d height=%d zoomy=%04x len_pattern=%d width=%d offset_addr=%04x\n", addr, offset, bank, offset, height, zoomy,  len_pattern, width2, offset_addr);
 						}
 					}
 				}
@@ -1462,7 +1462,7 @@ static void get_sprite_info( void ){
 				int x;
 
 #ifdef SYS16_DEBUG
-				if(dump_spritedata) fprintf(errorlog,"0:%4x  1:%4x  2:%4x  3:%4x  4:%4x  5:%4x  6:%4x  7:%4x\n",
+				if(dump_spritedata) logerror("0:%4x  1:%4x  2:%4x  3:%4x  4:%4x  5:%4x  6:%4x  7:%4x\n",
 						source[0],source[1],source[2],source[3],source[4],source[5],source[6],source[7]);
 #endif
 
@@ -2980,9 +2980,9 @@ void dump_tilemap(void)
 	int row,col,r,c;
 	int data;
 
-	if(!keyboard_pressed_memory(KEYCODE_Y) || !errorlog) return;
+	if(!keyboard_pressed_memory(KEYCODE_Y)) return;
 
-	fprintf(errorlog,"Back %2x %2x %2x %2x\n",sys16_bg_page[0],sys16_bg_page[1],sys16_bg_page[2],sys16_bg_page[3]);
+	logerror("Back %2x %2x %2x %2x\n",sys16_bg_page[0],sys16_bg_page[1],sys16_bg_page[2],sys16_bg_page[3]);
 	for(r=0;r<64;r++)
 	{
 		for(c=0;c<128;c++)
@@ -3009,12 +3009,12 @@ void dump_tilemap(void)
 			col = col%64;
 
 			data = source[row*64+col];
-			fprintf(errorlog,"%4x ",data);
+			logerror("%4x ",data);
 		}
-		fprintf(errorlog,"\n");
+		logerror("\n");
 	}
 
-	fprintf(errorlog,"Front %2x %2x %2x %2x\n",sys16_fg_page[0],sys16_fg_page[1],sys16_fg_page[2],sys16_fg_page[3]);
+	logerror("Front %2x %2x %2x %2x\n",sys16_fg_page[0],sys16_fg_page[1],sys16_fg_page[2],sys16_fg_page[3]);
 	for(r=0;r<64;r++)
 	{
 		for(c=0;c<128;c++)
@@ -3041,21 +3041,21 @@ void dump_tilemap(void)
 			col = col%64;
 
 			data = source[row*64+col];
-			fprintf(errorlog,"%4x ",data);
+			logerror("%4x ",data);
 		}
-		fprintf(errorlog,"\n");
+		logerror("\n");
 	}
 
-	fprintf(errorlog,"Text\n");
+	logerror("Text\n");
 	for(r=0;r<28;r++)
 	{
 		for(c=0;c<64;c++)
 		{
 			source = (const UINT16 *)sys16_textram;
 			data = source[r*64+c];
-			fprintf(errorlog,"%4x ",data);
+			logerror("%4x ",data);
 		}
-		fprintf(errorlog,"\n");
+		logerror("\n");
 	}
 }
 #endif

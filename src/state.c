@@ -9,8 +9,8 @@
 #include "mamedbg.h"
 #include "osdepend.h"
 #include "state.h"
+#include "mame.h"
 
-extern FILE *errorlog;
 
 /* A forward linked list of the contents of a section */
 typedef struct tag_state_var {
@@ -150,8 +150,7 @@ static void CLIB_DECL emit(void *s, const char *fmt, ...)
 
 	if( osd_fwrite(state->file, buffer, length) != length )
 	{
-		if( errorlog )
-			fprintf (errorlog, "emit: Error while saving state '%s'\n", buffer);
+		logerror("emit: Error while saving state '%s'\n", buffer);
 	}
 }
 
@@ -323,8 +322,7 @@ void state_load_section( void *s, const char *module, int instance )
 		{
 			if( rewind_file )
 			{
-				if( errorlog )
-					fprintf (errorlog, "state_load_section: Section '%s' not found\n", section);
+				logerror("state_load_section: Section '%s' not found\n", section);
 				return;
 			}
 
@@ -333,8 +331,7 @@ void state_load_section( void *s, const char *module, int instance )
 			length = osd_fread(state->file, buffer, sizeof(buffer) - 1);
 			if( length <= 0 )
 			{
-				if( errorlog )
-					fprintf (errorlog, "state_load_section: Truncated state while loading state '%s'\n", section);
+				logerror("state_load_section: Truncated state while loading state '%s'\n", section);
 				return;
 			}
 		}
@@ -366,8 +363,7 @@ void state_load_section( void *s, const char *module, int instance )
 				if( !p ) p = strchr(buffer, '\r');
 				if( !p )
 				{
-					if( errorlog )
-						fprintf (errorlog, "state_load_section: Line to long in section '%s'\n", section);
+					logerror("state_load_section: Line to long in section '%s'\n", section);
 					return;
 				}
 
@@ -390,8 +386,7 @@ void state_load_section( void *s, const char *module, int instance )
 				p = strchr(buffer, '=');
 				if( !p )
 				{
-					if( errorlog )
-						fprintf (errorlog, "state_load_section: Line contains no '=' character\n");
+					logerror("state_load_section: Line contains no '=' character\n");
 					return;
 				}
 
@@ -412,8 +407,7 @@ void state_load_section( void *s, const char *module, int instance )
 							v = v->next;
 						if( !v )
 						{
-							if( errorlog )
-								fprintf (errorlog, "state_load_section: Invalid variable continuation found '%s.%04X'\n", buffer, offs);
+							logerror("state_load_section: Invalid variable continuation found '%s.%04X'\n", buffer, offs);
 							return;
 						}
 					}
@@ -439,15 +433,13 @@ void state_load_section( void *s, const char *module, int instance )
 				}
 				if( !v )
 				{
-					if( errorlog )
-						fprintf (errorlog, "state_load_section: Out of memory while reading '%s'\n", section);
+					logerror("state_load_section: Out of memory while reading '%s'\n", section);
 					return;
 				}
 				v->name = malloc(strlen(buffer) + 1);
 				if( !v->name )
 				{
-					if( errorlog )
-						fprintf (errorlog, "state_load_section: Out of memory while reading '%s'\n", section);
+					logerror("state_load_section: Out of memory while reading '%s'\n", section);
 					return;
 				}
 				strcpy(v->name, buffer);
@@ -471,8 +463,7 @@ void state_load_section( void *s, const char *module, int instance )
 					/* check if the (re-)allocation failed */
 					if( !v->data )
 					{
-						if( errorlog )
-							fprintf (errorlog, "state_load_section: Out of memory while reading '%s'\n", section);
+						logerror("state_load_section: Out of memory while reading '%s'\n", section);
 						return;
 					}
 					/* store element */
@@ -513,7 +504,7 @@ void state_load_UINT8( void *s, const char *module, int instance,
 	}
 	else
 	{
-		if( errorlog ) fprintf (errorlog, "state_load_UINT8: variable '%s' not found in section [%s.%d]\n", name, module, instance);
+		logerror("state_load_UINT8: variable '%s' not found in section [%s.%d]\n", name, module, instance);
 		memset(val, 0, size);
 	}
 }
@@ -537,7 +528,7 @@ void state_load_INT8( void *s, const char *module, int instance,
 	}
 	else
 	{
-		if( errorlog ) fprintf (errorlog, "state_load_INT8: variable '%s' not found in section [%s.%d]\n", name, module, instance);
+		logerror("state_load_INT8: variable '%s' not found in section [%s.%d]\n", name, module, instance);
 		memset(val, 0, size);
     }
 }
@@ -561,7 +552,7 @@ void state_load_UINT16( void *s, const char *module, int instance,
 	}
 	else
 	{
-		if( errorlog ) fprintf (errorlog, "state_load_UINT16: variable '%s' not found in section [%s.%d]\n", name, module, instance);
+		logerror("state_load_UINT16: variable '%s' not found in section [%s.%d]\n", name, module, instance);
 		memset(val, 0, size * 2);
     }
 }
@@ -585,7 +576,7 @@ void state_load_INT16( void *s, const char *module, int instance,
 	}
 	else
 	{
-		if( errorlog ) fprintf (errorlog, "state_load_INT16: variable '%s' not found in section [%s.%d]\n", name, module, instance);
+		logerror("state_load_INT16: variable '%s' not found in section [%s.%d]\n", name, module, instance);
 		memset(val, 0, size * 2);
     }
 }
@@ -609,7 +600,7 @@ void state_load_UINT32( void *s, const char *module, int instance,
 	}
 	else
 	{
-		if( errorlog ) fprintf (errorlog, "state_load_UINT32: variable'%s' not found in section [%s.%d]\n", name, module, instance);
+		logerror("state_load_UINT32: variable'%s' not found in section [%s.%d]\n", name, module, instance);
 		memset(val, 0, size * 4);
     }
 }
@@ -633,7 +624,7 @@ void state_load_INT32( void *s, const char *module, int instance,
 	}
 	else
 	{
-		if( errorlog ) fprintf (errorlog, "state_load_INT32: variable'%s' not found in section [%s.%d]\n", name, module, instance);
+		logerror("state_load_INT32: variable'%s' not found in section [%s.%d]\n", name, module, instance);
 		memset(val, 0, size * 4);
     }
 }

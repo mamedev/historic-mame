@@ -194,8 +194,7 @@ static void simpsons_banking( int lines )
 		break;
 
 		default:
-			if ( errorlog )
-				fprintf( errorlog, "PC = %04x : Unknown bank selected (%02x)\n", cpu_get_pc(), lines );
+			logerror("PC = %04x : Unknown bank selected (%02x)\n", cpu_get_pc(), lines );
 		break;
 	}
 

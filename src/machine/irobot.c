@@ -27,7 +27,7 @@
 #define DISASSEMBLE_MB_ROM		0		/* generate a disassembly of the mathbox ROMs */
 
 #define IR_CPU_STATE \
-	if (errorlog) fprintf (errorlog, \
+	logerror(\
 			"pc: %4x, scanline: %d\n", cpu_getpreviouspc(), cpu_getscanline())
 
 
@@ -102,19 +102,15 @@ WRITE_HANDLER( irobot_sharedmem_w )
 
 static void irvg_done_callback (int param)
 {
-	if (errorlog)
-		fprintf (errorlog, "vg done. ");
+	logerror("vg done. ");
 	IR_CPU_STATE;
 	irvg_running = 0;
 }
 
 WRITE_HANDLER( irobot_statwr_w )
 {
-	if (errorlog)
-	{
-		fprintf (errorlog, "write %2x ", data);
-		IR_CPU_STATE;
-	}
+	logerror("write %2x ", data);
+	IR_CPU_STATE;
 
 	irobot_combase = comRAM[data >> 7];
 	irobot_combase_mb = comRAM[(data >> 7) ^ 1];
@@ -130,13 +126,13 @@ WRITE_HANDLER( irobot_statwr_w )
 #if IR_TIMING
 		if (irvg_running == 0)
 		{
-			if (errorlog) fprintf(errorlog,"vg start ");
+			logerror("vg start ");
 			IR_CPU_STATE;
 			irvg_timer = timer_set (TIME_IN_MSEC(10), 0, irvg_done_callback);
 		}
 		else
 		{
-			if (errorlog) fprintf (errorlog, "vg start [busy!] ");
+			logerror("vg start [busy!] ");
 			IR_CPU_STATE;
 			timer_reset (irvg_timer , TIME_IN_MSEC(10));
 		}
@@ -203,7 +199,7 @@ static void scanline_callback(int scanline)
 {
     if (scanline == 0) irvg_vblank=0;
     if (scanline == 224) irvg_vblank=1;
-    if (errorlog) fprintf(errorlog,"SCANLINE CALLBACK %d\n",scanline);
+    logerror("SCANLINE CALLBACK %d\n",scanline);
     /* set the IRQ line state based on the 32V line state */
     cpu_set_irq_line(0, M6809_IRQ_LINE, (scanline & 32) ? ASSERT_LINE : CLEAR_LINE);
 
@@ -260,11 +256,8 @@ READ_HANDLER( irobot_status_r )
 {
 	int d=0;
 
-	if (errorlog)
-	{
-		fprintf (errorlog, "status read. ");
-		IR_CPU_STATE;
-	}
+	logerror("status read. ");
+	IR_CPU_STATE;
 
 	if (!irmb_running) d |= 0x20;
 	if (irvg_running) d |= 0x40;
@@ -481,8 +474,7 @@ void init_irobot(void)
 
 static void irmb_done_callback (int param)
 {
-    if (errorlog)
-		fprintf (errorlog, "mb done. ");
+    logerror("mb done. ");
 	IR_CPU_STATE;
 	irmb_running = 0;
 	cpu_set_irq_line(0, M6809_FIRQ_LINE, ASSERT_LINE);
@@ -872,24 +864,19 @@ default:	case 0x3f:	IXOR(irmb_din(curop), 0);							break;
 	}
 	profiler_mark(PROFILER_END);
 
-	if (errorlog)
-	{
-		fprintf (errorlog, "%d instructions for Mathbox \n", icount);
-	}
+	logerror("%d instructions for Mathbox \n", icount);
 
 
 #if IR_TIMING
 	if (irmb_running == 0)
 	{
 		irmb_timer = timer_set (TIME_IN_HZ(12000000) * icount, 0, irmb_done_callback);
-		if (errorlog)
-			fprintf (errorlog, "mb start ");
+		logerror("mb start ");
 		IR_CPU_STATE;
 	}
 	else
 	{
-		if (errorlog)
-			fprintf (errorlog, "mb start [busy!] ");
+		logerror("mb start [busy!] ");
 		IR_CPU_STATE;
 		timer_reset (irmb_timer, TIME_IN_NSEC(200) * icount);
 	}
@@ -907,14 +894,11 @@ void disassemble_instruction(irmb_ops *op)
 {
 	int lp;
 
-	if (!errorlog)
-		return;
-
 	if (i==0)
-		fprintf(errorlog," Address  a b func stor: Q :Y, R, S RDCSAESM da m rs\n");
-	fprintf(errorlog,"%04X    : ",i);
-	fprintf(errorlog,"%X ",op->areg);
-	fprintf(errorlog,"%X ",op->breg);
+		logerror(" Address  a b func stor: Q :Y, R, S RDCSAESM da m rs\n");
+	logerror("%04X    : ",i);
+	logerror("%X ",op->areg);
+	logerror("%X ",op->breg);
 
 	lp=(op->func & 0x38)>>3;
 	if ((lp&1)==0)
@@ -922,61 +906,61 @@ void disassemble_instruction(irmb_ops *op)
 	else if((op->flags & FL_DIV) != 0)
 		lp&=6;
 	else
-		fprintf(errorlog,"*");
+		logerror("*");
 
 	switch (lp)
 	{
 		case 0:
-			fprintf(errorlog,"ADD  ");
+			logerror("ADD  ");
 			break;
 		case 1:
-			fprintf(errorlog,"SUBR ");
+			logerror("SUBR ");
 			break;
 		case 2:
-			fprintf(errorlog,"SUB  ");
+			logerror("SUB  ");
 			break;
 		case 3:
-			fprintf(errorlog,"OR   ");
+			logerror("OR   ");
 			break;
 		case 4:
-			fprintf(errorlog,"AND  ");
+			logerror("AND  ");
 			break;
 		case 5:
-			fprintf(errorlog,"AND  ");
+			logerror("AND  ");
 			break;
 		case 6:
-			fprintf(errorlog,"XOR  ");
+			logerror("XOR  ");
 			break;
 		case 7:
-			fprintf(errorlog,"XNOR ");
+			logerror("XNOR ");
 			break;
 	}
 
 	switch ((op->func & 0x1c0)>>6)
 	{
 		case 0:
-			fprintf(errorlog,"  - : Q :F,");
+			logerror("  - : Q :F,");
 			break;
 		case 1:
-			fprintf(errorlog,"  - : - :F,");
+			logerror("  - : - :F,");
 			break;
 		case 2:
-			fprintf(errorlog,"  R%x: - :A,",op->breg);
+			logerror("  R%x: - :A,",op->breg);
 			break;
 		case 3:
-			fprintf(errorlog,"  R%x: - :F,",op->breg);
+			logerror("  R%x: - :F,",op->breg);
 			break;
 		case 4:
-			fprintf(errorlog,">>R%x:>>Q:F,",op->breg);
+			logerror(">>R%x:>>Q:F,",op->breg);
 			break;
 		case 5:
-			fprintf(errorlog,">>R%x: - :F,",op->breg);
+			logerror(">>R%x: - :F,",op->breg);
 			break;
 		case 6:
-			fprintf(errorlog,"<<R%x:<<Q:F,",op->breg);
+			logerror("<<R%x:<<Q:F,",op->breg);
 			break;
 		case 7:
-			fprintf(errorlog,"<<R%x: - :F,",op->breg);
+			logerror("<<R%x: - :F,",op->breg);
 			break;
 	}
 
@@ -986,73 +970,73 @@ void disassemble_instruction(irmb_ops *op)
 	else if((op->flags & FL_MULT) == 0)
 		lp&=5;
 	else
-		fprintf(errorlog,"*");
+		logerror("*");
 
 	switch (lp)
 	{
 		case 0:
-			fprintf(errorlog,"R%x, Q ",op->areg);
+			logerror("R%x, Q ",op->areg);
 			break;
 		case 1:
-			fprintf(errorlog,"R%x,R%x ",op->areg,op->breg);
+			logerror("R%x,R%x ",op->areg,op->breg);
 			break;
 		case 2:
-			fprintf(errorlog,"00, Q ");
+			logerror("00, Q ");
 			break;
 		case 3:
-			fprintf(errorlog,"00,R%x ",op->breg);
+			logerror("00,R%x ",op->breg);
 			break;
 		case 4:
-			fprintf(errorlog,"00,R%x ",op->areg);
+			logerror("00,R%x ",op->areg);
 			break;
 		case 5:
-			fprintf(errorlog," D,R%x ",op->areg);
+			logerror(" D,R%x ",op->areg);
 			break;
 		case 6:
-			fprintf(errorlog," D, Q ");
+			logerror(" D, Q ");
 			break;
 		case 7:
-			fprintf(errorlog," D,00 ");
+			logerror(" D,00 ");
 			break;
 	}
 
 	for (lp=0;lp<8;lp++)
 		if (op->flags & (0x80>>lp))
-			fprintf(errorlog,"1");
+			logerror("1");
 		else
-			fprintf(errorlog,"0");
+			logerror("0");
 
-	fprintf(errorlog," %02X ",op->diradd);
-	fprintf(errorlog,"%X\n",op->ramsel);
+	logerror(" %02X ",op->diradd);
+	logerror("%X\n",op->ramsel);
 	if (op->jtype)
 	{
-		fprintf(errorlog,"              ");
+		logerror("              ");
 		switch (op->jtype)
 		{
 			case 1:
-				fprintf(errorlog,"BO ");
+				logerror("BO ");
 				break;
 			case 2:
-				fprintf(errorlog,"BZ ");
+				logerror("BZ ");
 				break;
 			case 3:
-				fprintf(errorlog,"BH ");
+				logerror("BH ");
 				break;
 			case 4:
-				fprintf(errorlog,"BL ");
+				logerror("BL ");
 				break;
 			case 5:
-				fprintf(errorlog,"B  ");
+				logerror("B  ");
 				break;
 			case 6:
-				fprintf(errorlog,"Cl ");
+				logerror("Cl ");
 				break;
 			case 7:
-				fprintf(errorlog,"Return\n\n");
+				logerror("Return\n\n");
 				break;
 		}
-		if (op->jtype != 7) fprintf(errorlog,"  %04X    \n",op->nxtadd);
-		if (op->jtype == 5) fprintf(errorlog,"\n");
+		if (op->jtype != 7) logerror("  %04X    \n",op->nxtadd);
+		if (op->jtype == 5) logerror("\n");
 		}
 	}
 }

@@ -148,13 +148,12 @@ void missile_video_mult_w (int address, int data)
 
 
 /********************************************************************************************/
-void missile_video_3rd_bit_w(int address, int data)
+WRITE_HANDLER( missile_video_3rd_bit_w )
 {
 	int i;
 	unsigned char *RAM = memory_region(REGION_CPU1);
+	int address = offset + 0x400;
 
-
-	address += 0x400;
 	/* This is needed to make the scrolling text work properly */
 	RAM[address] = data;
 

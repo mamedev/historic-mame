@@ -91,18 +91,18 @@ int wms_vh_start(void)
 {
 	if ((wms_cmos_ram = malloc(0x8000)) == 0)
 	{
-		if (errorlog) fprintf(errorlog, "smashtv.c: Couldn't Alloc CMOS RAM\n");
+		logerror("smashtv.c: Couldn't Alloc CMOS RAM\n");
 		return 1;
 	}
 	if ((paletteram = malloc(0x4000)) == 0)
 	{
-		if (errorlog) fprintf(errorlog, "smashtv.c: Couldn't Alloc color RAM\n");
+		logerror("smashtv.c: Couldn't Alloc color RAM\n");
 		free(wms_cmos_ram);
 		return 1;
 	}
 	if ((wms_videoram = malloc(wms_videoram_size)) == 0)
 	{
-		if (errorlog) fprintf(errorlog, "smashtv.c: Couldn't Alloc video RAM\n");
+		logerror("smashtv.c: Couldn't Alloc video RAM\n");
 		free(wms_cmos_ram);
 		free(paletteram);
 		return 1;
@@ -116,18 +116,18 @@ int wms_t_vh_start(void)
 {
 	if ((wms_cmos_ram = malloc(0x10000)) == 0)
 	{
-		if (errorlog) fprintf(errorlog, "smashtv.c: Couldn't Alloc CMOS RAM\n");
+		logerror("smashtv.c: Couldn't Alloc CMOS RAM\n");
 		return 1;
 	}
 	if ((paletteram = malloc(0x20000)) == 0)
 	{
-		if (errorlog) fprintf(errorlog, "smashtv.c: Couldn't Alloc color RAM\n");
+		logerror("smashtv.c: Couldn't Alloc color RAM\n");
 		free(wms_cmos_ram);
 		return 1;
 	}
 	if ((wms_videoram = malloc(0x100000)) == 0)
 	{
-		if (errorlog) fprintf(errorlog, "smashtv.c: Couldn't Alloc video RAM\n");
+		logerror("smashtv.c: Couldn't Alloc video RAM\n");
 		free(wms_cmos_ram);
 		free(paletteram);
 		return 1;
@@ -272,6 +272,6 @@ void wms_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	//if (keyboard_pressed(KEYCODE_Q)) wms_statesave();
 	//if (keyboard_pressed(KEYCODE_W)) wms_stateload();
 
-	if (keyboard_pressed(KEYCODE_E)&&errorlog) fprintf(errorlog, "log spot\n");
-	//if (keyboard_pressed(KEYCODE_R)&&errorlog) fprintf(errorlog, "adpcm: okay\n");
+	if (keyboard_pressed(KEYCODE_E)) logerror("log spot\n");
+	//if (keyboard_pressed(KEYCODE_R)) logerror("adpcm: okay\n");
 }

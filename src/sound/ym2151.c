@@ -11,7 +11,6 @@
 
 /*#define FM_EMU*/
 #ifdef FM_EMU
-	FILE *errorlog = NULL;
 	#define INLINE static __inline__
 	#ifdef USE_MAME_TIMERS
 		#undef USE_MAME_TIMERS
@@ -318,16 +317,13 @@ static void init_tables(void)
 			TL_TAB[ x*2+1 + i*2*TL_RES_LEN ] = -TL_TAB[ x*2+0 + i*2*TL_RES_LEN ];
 		}
 	#if 0
-		if (errorlog)
-		{
-			fprintf(errorlog,"tl %04i", x);
-			for (i=0; i<13; i++)
-				fprintf(errorlog,", [%02i] %4i", i*2, TL_TAB[ x*2+1 + i*2*TL_RES_LEN ]);
-			fprintf(errorlog,"\n");
-		}
+		logerror("tl %04i", x);
+		for (i=0; i<13; i++)
+			logerror(", [%02i] %4i", i*2, TL_TAB[ x*2+1 + i*2*TL_RES_LEN ]);
+		logerror("\n");
 	#endif
 	}
-	/*if (errorlog) fprintf(errorlog,"TL_TAB_LEN = %i (%i bytes)\n",TL_TAB_LEN, (int)sizeof(TL_TAB));*/
+	/*logerror("TL_TAB_LEN = %i (%i bytes)\n",TL_TAB_LEN, (int)sizeof(TL_TAB));*/
 
 
 	for (i=0; i<SIN_LEN; i++)
@@ -351,10 +347,10 @@ static void init_tables(void)
 			n = n>>1;
 
 		sin_tab[ i ] = n*2 + (m>=0.0? 0: 1 );
-		/*if (errorlog) fprintf(errorlog,"sin offs %04i= %i\n", i, sin_tab[i]);*/
+		/*logerror("sin offs %04i= %i\n", i, sin_tab[i]);*/
 	}
 
-	/*if (errorlog) fprintf(errorlog,"ENV_QUIET= %08x\n",ENV_QUIET );*/
+	/*logerror("ENV_QUIET= %08x\n",ENV_QUIET );*/
 
 
 	/* calculate LFO AM waveforms*/
@@ -404,7 +400,7 @@ static void init_tables(void)
 			n = n>>1;
 
 		lfo_tab[ x*LFO_LEN*2 + i*2 ] = n*2 + (m>=0.0? 0: 1 );
-		/*if (errorlog) fprintf(errorlog,"lfo am waveofs[%i] %04i = %i\n", x, i*2, lfo_tab[ x*LFO_LEN*2 + i*2 ] );*/
+		/*logerror("lfo am waveofs[%i] %04i = %i\n", x, i*2, lfo_tab[ x*LFO_LEN*2 + i*2 ] );*/
 	    }
 	}
 	for (i=0; i<128; i++)
@@ -427,7 +423,7 @@ static void init_tables(void)
 			n = n>>1;
 
 		lfo_md_tab[ i ] = n*2;
-		/*if (errorlog) fprintf(errorlog,"lfo_md_tab[%i](%i) = ofs %i shr by %i\n", i, i*2, (lfo_md_tab[i]>>1)&255, lfo_md_tab[i]>>9 );*/
+		/*logerror("lfo_md_tab[%i](%i) = ofs %i shr by %i\n", i, i*2, (lfo_md_tab[i]>>1)&255, lfo_md_tab[i]>>9 );*/
 	}
 
 	/* calculate LFO PM waveforms*/
@@ -486,7 +482,7 @@ static void init_tables(void)
 			n = n>>1;
 
 		lfo_tab[ x*LFO_LEN*2 + i*2 + 1 ] = n*2 + (m>=0.0? 0: 1 );
-		/*if (errorlog) fprintf(errorlog,"lfo pm waveofs[%i] %04i = %i\n", x, i*2+1, lfo_tab[ x*LFO_LEN*2 + i*2 + 1 ] );*/
+		/*logerror("lfo pm waveofs[%i] %04i = %i\n", x, i*2+1, lfo_tab[ x*LFO_LEN*2 + i*2 + 1 ] );*/
 	    }
 	}
 
@@ -496,7 +492,7 @@ static void init_tables(void)
 	{
 		m = (i<15?i:i+16) * (4.0/ENV_STEP);   /*every 3 'dB' except for all bits = 1 = 45dB+48dB*/
 		D1L_tab[i] = m * (1<<ENV_SH);
-		/*if (errorlog) fprintf(errorlog,"D1L_tab[%04x]=%08x\n",i,D1L_tab[i] );*/
+		/*logerror("D1L_tab[%04x]=%08x\n",i,D1L_tab[i] );*/
 	}
 
 	/* calculate KC_TO_INDEX table */
@@ -506,7 +502,7 @@ static void init_tables(void)
 		KC_TO_INDEX[i]=((i>>4)*12*64) + x*64 + 12*64;
 		if ((i&0x03) != 0x03) x++;	/* change note code */
 		if ((i&0x0f) == 0x0f) x=0;	/* new octave */
-		/*if (errorlog) fprintf(errorlog,"KC_TO_INDEX[%02i] Note=%02i\n",i,KC_TO_INDEX[i]);*/
+		/*logerror("KC_TO_INDEX[%02i] Note=%02i\n",i,KC_TO_INDEX[i]);*/
 	}
 
 #ifdef SAVE_SAMPLE
@@ -554,12 +550,9 @@ static void init_chip_tables(YM2151 *chip)
 			chip->freq[i+j*12*64] = chip->freq[i]*(1<<j);
 		}
 	#if 0
-		if (errorlog)
-		{
-			pom = (double)chip->freq[i] / mult;
-			pom = pom * (double)chip->sampfreq / (double)SIN_LEN;
-			fprintf(errorlog,"freq[%04i][%08x]= real %20.15f Hz  emul %20.15f Hz\n", i, chip->freq[i], Hz, pom);
-		}
+		pom = (double)chip->freq[i] / mult;
+		pom = pom * (double)chip->sampfreq / (double)SIN_LEN;
+		logerror("freq[%04i][%08x]= real %20.15f Hz  emul %20.15f Hz\n", i, chip->freq[i], Hz, pom);
 	#endif
 	}
 
@@ -591,16 +584,13 @@ static void init_chip_tables(YM2151 *chip)
 				chip->DT1freq[ y + i ] = -chip->DT1freq[ x + i ];
 			}
 		#if 0
-			if (errorlog)
+			for (mul=0; mul<16; mul++)
 			{
-				for (mul=0; mul<16; mul++)
-				{
-					x = j*16*32 + mul*32 + i;
-					pom = (double)chip->DT1freq[x] / mult;
-					pom = pom * (double)chip->sampfreq / (double)SIN_LEN;
-					fprintf(errorlog,"DT1(%03i)[%02i %02i mul=%02i][%08x]= real %19.15f Hz  emul %19.15f Hz\n",
-							 x, j, i, mul, chip->DT1freq[x], Hz*((mul>0)?mul*2:1), pom);
-				}
+				x = j*16*32 + mul*32 + i;
+				pom = (double)chip->DT1freq[x] / mult;
+				pom = pom * (double)chip->sampfreq / (double)SIN_LEN;
+				logerror("DT1(%03i)[%02i %02i mul=%02i][%08x]= real %19.15f Hz  emul %19.15f Hz\n",
+						 x, j, i, mul, chip->DT1freq[x], Hz*((mul>0)?mul*2:1), pom);
 			}
 		#endif
 		}
@@ -615,7 +605,7 @@ static void init_chip_tables(YM2151 *chip)
 
 		/*calculate phase increment*/
 		chip->LFOfreq[0xff-i] = ( (pom*LFO_LEN) / (double)chip->sampfreq ) * mult; /*fixed point*/
-		/*if (errorlog) fprintf(errorlog, "LFO[%02x] (%08x)= real %20.15f Hz  emul %20.15f Hz\n",0xff-i, chip->LFOfreq[0xff-i], pom,
+		/*logerror("LFO[%02x] (%08x)= real %20.15f Hz  emul %20.15f Hz\n",0xff-i, chip->LFOfreq[0xff-i], pom,
 			(((double)chip->LFOfreq[0xff-i] / mult) * (double)chip->sampfreq ) / (double)LFO_LEN );*/
 	}
 
@@ -631,8 +621,7 @@ static void init_chip_tables(YM2151 *chip)
 		pom2 *= (double)(1<<ENV_SH);
 		chip->EG_tab[32+i] = pom2;
 	#if 0
-		if (errorlog)
-			fprintf(errorlog,"Rate %2i %1i  Decay [real %11.4f ms][emul %11.4f ms][d=%08x]\n",i>>2, i&3,
+		logerror("Rate %2i %1i  Decay [real %11.4f ms][emul %11.4f ms][d=%08x]\n",i>>2, i&3,
 			( ((double)(ENV_LEN<<ENV_SH)) / pom2 )                       * (1000.0 / (double)chip->sampfreq),
 			( ((double)(ENV_LEN<<ENV_SH)) / (double)chip->EG_tab[32+i] ) * (1000.0 / (double)chip->sampfreq), chip->EG_tab[32+i] );
 	#endif
@@ -966,7 +955,7 @@ void YM2151WriteReg(int n, int r, int v)
 				char t[80];
 				sprintf(t,"YM2151 noise mode = %02x",v);
 				usrintf_showmessage(t);
-				if (errorlog) fprintf(errorlog,"YM2151 noise (%02x)\n",v);
+				logerror("YM2151 noise (%02x)\n",v);
 			}
 			#endif
 			break;
@@ -1100,7 +1089,7 @@ void YM2151WriteReg(int n, int r, int v)
 			break;
 
 		default:
-			if (errorlog) fprintf(errorlog,"YM2151 Write %02x to undocumented register #%02x\n",v,r);
+			logerror("YM2151 Write %02x to undocumented register #%02x\n",v,r);
 			break;
 		}
 		break;
@@ -1298,10 +1287,6 @@ int YM2151Init(int num, int clock, int rate)
 	}
 #endif
 
-#ifdef FM_EMU
-	errorlog=fopen("errorlog.txt","wb");
-#endif
-
 	init_tables();
 	for (i=0 ; i<YMNumChips; i++)
 	{
@@ -1312,7 +1297,7 @@ int YM2151Init(int num, int clock, int rate)
 		YMPSG[i].porthandler = NULL;				/*port write handler*/
 		init_chip_tables(&YMPSG[i]);
 		YM2151ResetChip(i);
-		/*if (errorlog) fprintf(errorlog,"YM2151[init] clock=%i sampfreq=%i\n", YMPSG[i].clock, YMPSG[i].sampfreq);*/
+		/*logerror("YM2151[init] clock=%i sampfreq=%i\n", YMPSG[i].clock, YMPSG[i].sampfreq);*/
 	}
 
 #ifdef LOG_CYM_FILE
@@ -1320,7 +1305,7 @@ int YM2151Init(int num, int clock, int rate)
 	if (cymfile)
 		cymfiletimer = timer_pulse ( TIME_IN_HZ(110), 0, cymfile_callback); /*110 Hz pulse timer*/
 	else
-    		if (errorlog) fprintf(errorlog,"Could not create file 2151_.cym\n");
+    		logerror("Could not create file 2151_.cym\n");
 #endif
 
 	return(0);
@@ -1338,11 +1323,6 @@ void YM2151Shutdown()
 		free(TL_TAB);
 		TL_TAB=NULL;
 	}
-#endif
-
-#ifdef FM_EMU
-	fclose(errorlog);
-	errorlog = NULL;
 #endif
 
 #ifdef LOG_CYM_FILE
@@ -1505,11 +1485,11 @@ INLINE signed int op_calc1(OscilRec * OP, unsigned int env, signed int pm)
 
 	i = (OP->phase & ~FREQ_MASK) + pm;
 
-/*if (errorlog) fprintf(errorlog,"i=%08x (i>>16)&511=%8i phase=%i [pm=%08x] ",i, (i>>16)&511, OP->phase>>FREQ_SH, pm);*/
+/*logerror("i=%08x (i>>16)&511=%8i phase=%i [pm=%08x] ",i, (i>>16)&511, OP->phase>>FREQ_SH, pm);*/
 
 	p = (env<<3) + sin_tab[ (i>>FREQ_SH) & SIN_MASK];
 
-/*if (errorlog) fprintf(errorlog," (p&255=%i p>>8=%i) out= %i\n", p&255,p>>8, TL_TAB[p&255]>>(p>>8) );*/
+/*logerror(" (p&255=%i p>>8=%i) out= %i\n", p&255,p>>8, TL_TAB[p&255]>>(p>>8) );*/
 
 	if (p >= TL_TAB_LEN)
 		return 0;

@@ -23,7 +23,6 @@
 #include "network.h"
 #endif /* MAME_NET */
 
-
 struct MachineCPU
 {
 	int cpu_type;	/* see #defines below. */
@@ -76,6 +75,15 @@ enum
 #if (HAS_M6510)
 	CPU_M6510,
 #endif
+#if (HAS_M6510T)
+	CPU_M6510T,
+#endif
+#if (HAS_M7501)
+	CPU_M7501,
+#endif
+#if (HAS_M8502)
+	CPU_M8502,
+#endif
 #if (HAS_N2A03)
 	CPU_N2A03,
 #endif
@@ -84,6 +92,18 @@ enum
 #endif
 #if (HAS_I86)
 	CPU_I86,
+#endif
+#if (HAS_I88)
+	CPU_I88,
+#endif
+#if (HAS_I186)
+	CPU_I186,
+#endif
+#if (HAS_I188)
+	CPU_I188,
+#endif
+#if (HAS_I286)
+	CPU_I286,
 #endif
 #if (HAS_V20)
 	CPU_V20,

@@ -31,7 +31,7 @@ WRITE_HANDLER( mhavoc_ram_banksel_w )
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
 	data&=0x01;
-	if (errorlog) fprintf (errorlog, "Alpha RAM select: %02x\n",data);
+	logerror("Alpha RAM select: %02x\n",data);
 	cpu_setbank (1, &RAM[bank[data]]);
 }
 
@@ -43,7 +43,7 @@ WRITE_HANDLER( mhavoc_rom_banksel_w )
 
 	data &= 0x03;
 
-	if (errorlog) fprintf (errorlog, "Alpha ROM select: %02x\n",data);
+	logerror("Alpha ROM select: %02x\n",data);
 	cpu_setbank (2, &RAM[bank[data]]);
 }
 
@@ -68,8 +68,7 @@ void mhavoc_init_machine (void)
 /* Read from the gamma processor */
 READ_HANDLER( mhavoc_gamma_r )
 {
-	if (errorlog)
-		fprintf (errorlog, "  reading from gamma processor: %02x (%d %d)\n", gamma_data, alpha_rcvd, gamma_xmtd);
+	logerror("  reading from gamma processor: %02x (%d %d)\n", gamma_data, alpha_rcvd, gamma_xmtd);
 	alpha_rcvd=1;
 	gamma_xmtd=0;
 	return gamma_data;
@@ -78,8 +77,7 @@ READ_HANDLER( mhavoc_gamma_r )
 /* Read from the alpha processor */
 READ_HANDLER( mhavoc_alpha_r )
 {
-	if (errorlog)
-		fprintf (errorlog, "\t\t\t\t\treading from alpha processor: %02x (%d %d)\n", alpha_data, gamma_rcvd, alpha_xmtd);
+	logerror("\t\t\t\t\treading from alpha processor: %02x (%d %d)\n", alpha_data, gamma_rcvd, alpha_xmtd);
 	gamma_rcvd=1;
 	alpha_xmtd=0;
 	return alpha_data;
@@ -88,8 +86,7 @@ READ_HANDLER( mhavoc_alpha_r )
 /* Write to the gamma processor */
 WRITE_HANDLER( mhavoc_gamma_w )
 {
-	if (errorlog)
-		fprintf (errorlog, "  writing to gamma processor: %02x (%d %d)\n", data, gamma_rcvd, alpha_xmtd);
+	logerror("  writing to gamma processor: %02x (%d %d)\n", data, gamma_rcvd, alpha_xmtd);
 	gamma_rcvd=0;
 	alpha_xmtd=1;
 	alpha_data = data;
@@ -102,8 +99,7 @@ WRITE_HANDLER( mhavoc_gamma_w )
 /* Write to the alpha processor */
 WRITE_HANDLER( mhavoc_alpha_w )
 {
-	if (errorlog)
-		fprintf (errorlog, "\t\t\t\t\twriting to alpha processor: %02x %d %d\n", data, alpha_rcvd, gamma_xmtd);
+	logerror("\t\t\t\t\twriting to alpha processor: %02x %d %d\n", data, alpha_rcvd, gamma_xmtd);
 	alpha_rcvd=0;
 	gamma_xmtd=1;
 	gamma_data = data;
@@ -165,8 +161,7 @@ WRITE_HANDLER( mhavoc_out_0_w )
 {
 	if (!(data & 0x08))
 	{
-		if (errorlog)
-			fprintf (errorlog, "\t\t\t\t*** resetting gamma processor. ***\n");
+		logerror("\t\t\t\t*** resetting gamma processor. ***\n");
 		cpu_set_reset_line(1,PULSE_LINE);
 		alpha_rcvd=0;
 		alpha_xmtd=0;

@@ -23,7 +23,7 @@ NOTES:
 
 
 extern unsigned char *tehkanwc_videoram1;
-extern int tehkanwc_videoram1_size;
+extern size_t tehkanwc_videoram1_size;
 
 /* from vidhrdw */
 int tehkanwc_vh_start(void);

@@ -142,12 +142,9 @@ WRITE_HANDLER( leland_gfx_port_w )
                 leland_bk_yhigh_w(0, data);
                 break;
         default:
-            if (errorlog)
-            {
-                fprintf(errorlog, "CPU #%d %04x Warning: Unknown video port %02x write (%02x)\n",
-                        cpu_getactivecpu(),cpu_get_pc(), offset,
-                        data);
-            }
+				logerror("CPU #%d %04x Warning: Unknown video port %02x write (%02x)\n",
+						cpu_getactivecpu(),cpu_get_pc(), offset,
+						data);
     }
 }
 
@@ -225,13 +222,8 @@ void leland_vram_planar_w(int data, int num)
     addr+=(leland_video_plane_count[num])>>1;
     leland_video_ram[addr]=data;
     leland_video_plane_count[num]++;
-/*
-    if (errorlog)
-    {
-        fprintf(errorlog, "WRITE [%04x]=%02x\n", addr, data);
-    }
- */
 
+//	logerror("WRITE [%04x]=%02x\n", addr, data);
 }
 
 void leland_vram_planar_masked_w(int data, int num)
@@ -271,11 +263,8 @@ int leland_vram_planar_r(int num)
     ret= leland_video_ram[addr];
     leland_video_plane_count[num]++;
 
-/*    if (errorlog)
-    {
-        fprintf(errorlog, "READ [%04x] (%02x)\n", addr, ret);
-    }
- */
+//	logerror("READ [%04x] (%02x)\n", addr, ret);
+
     return ret;
 }
 
@@ -324,19 +313,16 @@ int leland_vram_port_r(int offset, int num)
             break;
 
         default:
-            if (errorlog)
-            {
-                fprintf(errorlog, "CPU #%d %04x Warning: Unknown video port %02x read (address=%04x)\n",
-                        cpu_getactivecpu(),cpu_get_pc(), offset,
-                        leland_video_addr[num]);
-            }
+			logerror("CPU #%d %04x Warning: Unknown video port %02x read (address=%04x)\n",
+					cpu_getactivecpu(),cpu_get_pc(), offset,
+					leland_video_addr[num]);
             return 0;
     }
 
 #ifdef NOISY_VIDEO
-    if (errorlog && NOISE_FILTER)
+    if (NOISE_FILTER)
     {
-        fprintf(errorlog, "CPU #%d %04x video port %02x read (address=%04x value=%02x)\n",
+        logerror("CPU #%d %04x video port %02x read (address=%04x value=%02x)\n",
                    cpu_getactivecpu(),cpu_get_pc(), offset,
                    leland_video_addr[num], ret);
     }
@@ -402,20 +388,17 @@ void leland_vram_port_w(int offset, int data, int num)
             break;
 
         default:
-            if (errorlog)
-            {
-                fprintf(errorlog, "CPU #%d %04x Warning: Unknown video port %02x write (address=%04x value=%02x)\n",
-                        cpu_getactivecpu(),cpu_get_pc(), offset,
-                        leland_video_addr[num], data);
-            }
+			logerror("CPU #%d %04x Warning: Unknown video port %02x write (address=%04x value=%02x)\n",
+					cpu_getactivecpu(),cpu_get_pc(), offset,
+					leland_video_addr[num], data);
             return;
     }
 
 
 #ifdef NOISY_VIDEO
-    if (errorlog && NOISE_FILTER)
+    if (NOISE_FILTER)
     {
-        fprintf(errorlog, "CPU #%d %04x video port %02x write (address=%04x value=%02x)\n",
+        logerror("CPU #%d %04x video port %02x write (address=%04x value=%02x)\n",
                    cpu_getactivecpu(),cpu_get_pc(), offset,
                    leland_video_addr[num], data);
     }
@@ -762,7 +745,7 @@ void leland_sh_update(void)
 ***************************************************************************/
 
 unsigned char * ataxx_tram;         /* Temporay RAM (TRAM) */
-int ataxx_tram_size;
+size_t ataxx_tram_size;
 const int ataxx_qram_size=0x8000;   /* 2 banks of 0x4000 */
 unsigned char * ataxx_qram1;        /* Background RAM # 1 - chars */
 unsigned char * ataxx_qram2;        /* Background RAM # 2 - attrib */
@@ -796,19 +779,16 @@ int ataxx_vram_port_r(int offset, int num)
             break;
 
         default:
-            if (errorlog)
-            {
-                fprintf(errorlog, "CPU #%d %04x Warning: Unknown video port %02x read (address=%04x)\n",
-                        cpu_getactivecpu(),cpu_get_pc(), offset,
-                        leland_video_addr[num]);
-            }
+			logerror("CPU #%d %04x Warning: Unknown video port %02x read (address=%04x)\n",
+					cpu_getactivecpu(),cpu_get_pc(), offset,
+					leland_video_addr[num]);
             return 0;
     }
 
 #ifdef NOISY_VIDEO
-    if (errorlog && offset != 0x07)
+    if (offset != 0x07)
     {
-        fprintf(errorlog, "CPU #%d %04x video port %02x read (address=%04x value=%02x)\n",
+        logerror("CPU #%d %04x video port %02x read (address=%04x value=%02x)\n",
                    cpu_getactivecpu(),cpu_get_pc(), offset,
                    leland_video_addr[num], ret);
     }
@@ -861,19 +841,16 @@ void ataxx_vram_port_w(int offset, int data, int num)
             break;
 
         default:
-            if (errorlog)
-            {
-                fprintf(errorlog, "CPU #%d %04x Warning: Unknown video port %02x write (address=%04x value=%02x)\n",
-                        cpu_getactivecpu(),cpu_get_pc(), offset,
-                        leland_video_addr[num], data);
-            }
+			logerror("CPU #%d %04x Warning: Unknown video port %02x write (address=%04x value=%02x)\n",
+					cpu_getactivecpu(),cpu_get_pc(), offset,
+					leland_video_addr[num], data);
             return;
     }
 
 #ifdef NOISY_VIDEO
-    if (errorlog && offset != 0x07)
+    if (offset != 0x07)
     {
-        fprintf(errorlog, "CPU #%d %04x video port %02x write (address=%04x value=%02x)\n",
+        logerror("CPU #%d %04x video port %02x write (address=%04x value=%02x)\n",
                    cpu_getactivecpu(),cpu_get_pc(), offset,
                    leland_video_addr[num], data);
     }

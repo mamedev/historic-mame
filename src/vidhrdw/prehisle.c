@@ -265,7 +265,7 @@ READ_HANDLER( prehisle_control_r )
 			return readinputport(4);
 
 		default:
-			if (errorlog) fprintf(errorlog,"%06x: read unknown control %02x\n",cpu_get_pc(),offset);
+			logerror("%06x: read unknown control %02x\n",cpu_get_pc(),offset);
 			return 0;
 	}
 }
@@ -304,7 +304,7 @@ WRITE_HANDLER( prehisle_control_w )
 			break;
 
 		default:
-			if (errorlog) fprintf(errorlog,"%06x: write unknown control %02x\n",cpu_get_pc(),offset);
+			logerror("%06x: write unknown control %02x\n",cpu_get_pc(),offset);
 			break;
 	}
 }

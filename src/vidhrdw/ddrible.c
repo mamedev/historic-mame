@@ -9,8 +9,8 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-int int_enable_0;
-int int_enable_1;
+extern int ddrible_int_enable_0;
+extern int ddrible_int_enable_1;
 
 unsigned char *ddrible_fg_videoram;
 unsigned char *ddrible_bg_videoram;
@@ -44,7 +44,7 @@ WRITE_HANDLER( K005885_0_w )
 			}
 			break;
 		case 0x04:	/* IRQ control, flipscreen */
-			int_enable_0 = data & 0x02;
+			ddrible_int_enable_0 = data & 0x02;
 			ddribble_vregs[0][4] = data;
 			break;
 		default:	/* 0x00: scrolly, 0x01-0x02: scrollx */
@@ -62,7 +62,7 @@ WRITE_HANDLER( K005885_1_w )
 			}
 			break;
 		case 0x04:	/* IRQ control, flipscreen */
-			int_enable_1 = data & 0x02;
+			ddrible_int_enable_1 = data & 0x02;
 			ddribble_vregs[1][4] = data;
 			break;
 		default:	/* 0x00: scrolly, 0x01-0x02: scrollx */

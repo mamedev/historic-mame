@@ -13,7 +13,7 @@ unsigned char *nemesis_videoram2;
 
 unsigned char *nemesis_characterram;
 unsigned char *nemesis_characterram_gfx;
-int nemesis_characterram_size;
+size_t nemesis_characterram_size;
 unsigned char *nemesis_xscroll1,*nemesis_xscroll2,*nemesis_yscroll;
 unsigned char *nemesis_yscroll1,*nemesis_yscroll2;
 
@@ -1029,7 +1029,7 @@ static void setup_palette(void)
 					}
 					break;
 				default:
-					if(errorlog) fprintf(errorlog,"UN-SUPPORTED SPRITE SIZE %-4x\n",size&0x38);
+					logerror("UN-SUPPORTED SPRITE SIZE %-4x\n",size&0x38);
 				case 0x38:
 					/* sprite 16x16 */
 					char_type=1;

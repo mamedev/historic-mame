@@ -28,10 +28,8 @@ Various Data East 8 bit games:
 	Emulation by Bryan McPhail, mish@tendril.co.uk
 
 To do:
-	Slight graphics glitches in Captain Silver, Breywood, Shackled.
 	Weird cpu race condition in Last Mission.
 	Support coinage options for all i8751 emulations.
-	Cobra Command may have some unimplemented sprite/playfield priorities
 	Dips needed to be worked on several games
 	Super Real Darwin 'Double' sprites appearing from the top of the screen are clipped
 	Strangely coloured butterfly on Garyo Retsuden water levels!
@@ -45,21 +43,33 @@ To do:
 #include "cpu/m6809/m6809.h"
 #include "cpu/m6502/m6502.h"
 
-READ_HANDLER( dec8_video_r );
-WRITE_HANDLER( dec8_video_w );
-WRITE_HANDLER( dec8_pf1_w );
-WRITE_HANDLER( dec8_pf2_w );
-WRITE_HANDLER( dec8_scroll1_w );
-WRITE_HANDLER( dec8_scroll2_w );
-void dec8_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void ghostb_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void cobracom_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 void ghostb_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 void srdarwin_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 void gondo_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 void garyoret_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 void lastmiss_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+void shackled_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 void oscar_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
-int dec8_vh_start(void);
-void dec8_vh_stop(void);
+int cobracom_vh_start(void);
+int oscar_vh_start(void);
+int ghostb_vh_start(void);
+int lastmiss_vh_start(void);
+int shackled_vh_start(void);
+int srdarwin_vh_start(void);
+int gondo_vh_start(void);
+int garyoret_vh_start(void);
+
+WRITE_HANDLER( dec8_bac06_0_w );
+WRITE_HANDLER( dec8_bac06_1_w );
+WRITE_HANDLER( dec8_pf0_data_w );
+WRITE_HANDLER( dec8_pf1_data_w );
+READ_HANDLER( dec8_pf0_data_r );
+READ_HANDLER( dec8_pf1_data_r );
+WRITE_HANDLER( srdarwin_videoram_w );
+WRITE_HANDLER( dec8_scroll1_w );
+WRITE_HANDLER( dec8_scroll2_w );
 WRITE_HANDLER( srdarwin_control_w );
 WRITE_HANDLER( gondo_scroll_w );
 WRITE_HANDLER( lastmiss_control_w );
@@ -67,24 +77,13 @@ WRITE_HANDLER( lastmiss_scrollx_w );
 WRITE_HANDLER( lastmiss_scrolly_w );
 WRITE_HANDLER( dec8_bac06_0_w );
 WRITE_HANDLER( dec8_bac06_1_w );
-void ghostb_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-
-int srdarwin_vh_start(void);
-READ_HANDLER( srdarwin_video_r );
-WRITE_HANDLER( srdarwin_video_w );
-
 WRITE_HANDLER( dec8_flipscreen_w );
-
-/* Only used by ghostb, gondo, garyoret, other games can control buffering */
-static void dec8_eof_callback(void)
-{
-	buffer_spriteram_w(0,0);
-}
+WRITE_HANDLER( dec8_videoram_w );
 
 /******************************************************************************/
 
 static unsigned char *dec8_shared_ram,*dec8_shared2_ram;
-extern unsigned char *dec8_row,*srdarwin_tileram;
+extern unsigned char *dec8_pf0_data,*dec8_pf1_data,*dec8_row;
 
 static int nmi_enable,int_enable;
 static int i8751_return, i8751_value;
@@ -92,13 +91,19 @@ static int msm5205next;
 
 /******************************************************************************/
 
+/* Only used by ghostb, gondo, garyoret, other games can control buffering */
+static void dec8_eof_callback(void)
+{
+	buffer_spriteram_w(0,0);
+}
+
 static READ_HANDLER( i8751_h_r )
-{//if (errorlog && cpu_get_pc()!=0xecde && cpu_get_pc()!=0xecd5 && cpu_get_pc()!=0xecd8) fprintf(errorlog,"PC %06x - Read from 8751 high\n",cpu_get_pc());
+{
 	return i8751_return>>8; /* MSB */
 }
 
 static READ_HANDLER( i8751_l_r )
-{//if (errorlog && cpu_get_pc()!=0xecde && cpu_get_pc()!=0xecd5 && cpu_get_pc()!=0xecd8) fprintf(errorlog,"PC %06x - Read from 8751 low\n",cpu_get_pc());
+{
 	return i8751_return&0xff; /* LSB */
 }
 
@@ -270,8 +275,6 @@ static WRITE_HANDLER( shackled_i8751_w )
 		break;
 	}
 
-//if (errorlog) fprintf(errorlog,"PC %06x - Write %02x to 8751 %d\n",cpu_get_pc(),data,offset);
-
 	/* Coins are controlled by the i8751 */
  	if (/*(readinputport(2)&3)==3*/!latch) {latch=1;coin1=coin2=0;}
  	if ((readinputport(2)&1)!=1 && latch) {coin1=1; latch=0;}
@@ -344,7 +347,6 @@ static WRITE_HANDLER( garyoret_i8751_w )
 
 	switch (offset) {
 	case 0: /* High byte */
-if (errorlog && data!=5) fprintf(errorlog,"PC %06x - Write %02x to 8751 %d\n",cpu_get_pc(),data,offset);
 		i8751_value=(i8751_value&0xff) | (data<<8);
 		break;
 	case 1: /* Low byte */
@@ -385,7 +387,7 @@ static WRITE_HANDLER( ghostb_bank_w )
 	/* Bit 0: Interrupt enable/disable (I think..)
 	   Bit 1: NMI enable/disable
 	   Bit 2: ??
-	   Bit 3: Screen flip (not supported)
+	   Bit 3: Screen flip
 	   Bits 4-7: Bank switch
 	*/
 
@@ -394,8 +396,7 @@ static WRITE_HANDLER( ghostb_bank_w )
 
 	if (data&1) int_enable=1; else int_enable=0;
 	if (data&2) nmi_enable=1; else nmi_enable=0;
-
-//if (errorlog) fprintf(errorlog,"PC %06x - Bank switch %02x (%02x)\n",cpu_get_pc(),data&0x7,data);
+	if (data&8) dec8_flipscreen_w(0,1); else dec8_flipscreen_w(0,0);
 }
 
 WRITE_HANDLER( csilver_control_w )
@@ -408,7 +409,7 @@ WRITE_HANDLER( csilver_control_w )
 	cpu_setbank(1,&RAM[bankaddress]);
 
 	/* There are unknown bits in the top half of the byte! */
- //if (errorlog) fprintf(errorlog,"PC %06x - Write %02x to %04x\n",cpu_get_pc(),data,offset+0x1802);
+ //logerror("PC %06x - Write %02x to %04x\n",cpu_get_pc(),data,offset+0x1802);
 }
 
 static WRITE_HANDLER( dec8_sound_w )
@@ -500,15 +501,14 @@ static WRITE_HANDLER( dec8_share_w ) { dec8_shared_ram[offset]=data; }
 static WRITE_HANDLER( dec8_share2_w ) { dec8_shared2_ram[offset]=data; }
 static READ_HANDLER( shackled_sprite_r ) { return spriteram[offset]; }
 static WRITE_HANDLER( shackled_sprite_w ) { spriteram[offset]=data; }
-static WRITE_HANDLER( shackled_video_w ) { videoram[offset]=data; }
-static READ_HANDLER( shackled_video_r ) { return videoram[offset]; }
 
 /******************************************************************************/
 
 static struct MemoryReadAddress cobra_readmem[] =
 {
 	{ 0x0000, 0x07ff, MRA_RAM },
-	{ 0x0800, 0x17ff, dec8_video_r },
+	{ 0x0800, 0x0fff, dec8_pf0_data_r },
+	{ 0x1000, 0x17ff, dec8_pf1_data_r },
 	{ 0x1800, 0x2fff, MRA_RAM },
 	{ 0x3000, 0x31ff, paletteram_r },
 	{ 0x3800, 0x3800, input_port_0_r }, /* Player 1 */
@@ -524,12 +524,13 @@ static struct MemoryReadAddress cobra_readmem[] =
 static struct MemoryWriteAddress cobra_writemem[] =
 {
 	{ 0x0000, 0x07ff, MWA_RAM },
-	{ 0x0800, 0x17ff, dec8_video_w },
+	{ 0x0800, 0x0fff, dec8_pf0_data_w, &dec8_pf0_data },
+	{ 0x1000, 0x17ff, dec8_pf1_data_w, &dec8_pf1_data },
 	{ 0x1800, 0x1fff, MWA_RAM },
-	{ 0x2000, 0x27ff, MWA_RAM, &videoram, &videoram_size },
+	{ 0x2000, 0x27ff, dec8_videoram_w, &videoram, &videoram_size },
 	{ 0x2800, 0x2fff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x3000, 0x31ff, paletteram_xxxxBBBBGGGGRRRR_swap_w, &paletteram },
-	{ 0x3200, 0x37ff, MWA_RAM }, /* Unknown, seemingly unused */
+	{ 0x3200, 0x37ff, MWA_RAM }, /* Unused */
 	{ 0x3800, 0x381f, dec8_bac06_0_w },
 	{ 0x3a00, 0x3a1f, dec8_bac06_1_w },
 	{ 0x3c00, 0x3c00, dec8_bank_w },
@@ -542,7 +543,8 @@ static struct MemoryWriteAddress cobra_writemem[] =
 static struct MemoryReadAddress ghostb_readmem[] =
 {
 	{ 0x0000, 0x1fff, MRA_RAM },
-	{ 0x2000, 0x27ff, dec8_video_r },
+	{ 0x1800, 0x1fff, videoram_r },
+	{ 0x2000, 0x27ff, dec8_pf0_data_r },
 	{ 0x2800, 0x2dff, MRA_RAM },
 	{ 0x3000, 0x37ff, MRA_RAM },
 	{ 0x3800, 0x3800, input_port_0_r }, /* Player 1 */
@@ -561,15 +563,14 @@ static struct MemoryWriteAddress ghostb_writemem[] =
 {
 	{ 0x0000, 0x0fff, MWA_RAM },
 	{ 0x1000, 0x17ff, MWA_RAM },
-	{ 0x1800, 0x1fff, MWA_RAM, &videoram },
-	{ 0x2000, 0x27ff, dec8_video_w },
+	{ 0x1800, 0x1fff, dec8_videoram_w, &videoram, &videoram_size },
+	{ 0x2000, 0x27ff, dec8_pf0_data_w, &dec8_pf0_data },
 	{ 0x2800, 0x2bff, MWA_RAM }, /* Scratch ram for rowscroll? */
 	{ 0x2c00, 0x2dff, MWA_RAM, &dec8_row },
 	{ 0x2e00, 0x2fff, MWA_RAM }, /* Unused */
 	{ 0x3000, 0x37ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x3800, 0x3800, dec8_sound_w },
-	{ 0x3820, 0x3827, dec8_pf2_w },
-	{ 0x3830, 0x3833, dec8_scroll2_w },
+	{ 0x3820, 0x383f, dec8_bac06_0_w },
 	{ 0x3840, 0x3840, ghostb_bank_w },
 	{ 0x3860, 0x3861, ghostb_i8751_w },
 	{ 0x4000, 0xffff, MWA_ROM },
@@ -579,7 +580,7 @@ static struct MemoryWriteAddress ghostb_writemem[] =
 static struct MemoryReadAddress srdarwin_readmem[] =
 {
 	{ 0x0000, 0x13ff, MRA_RAM },
-	{ 0x1400, 0x17ff, srdarwin_video_r },
+	{ 0x1400, 0x17ff, dec8_pf0_data_r },
 	{ 0x2000, 0x2000, i8751_h_r },
 	{ 0x2001, 0x2001, i8751_l_r },
 	{ 0x3800, 0x3800, input_port_2_r }, /* Dip 1 */
@@ -595,9 +596,9 @@ static struct MemoryWriteAddress srdarwin_writemem[] =
 {
 	{ 0x0000, 0x05ff, MWA_RAM },
 	{ 0x0600, 0x07ff, MWA_RAM, &spriteram },
-	{ 0x0800, 0x0fff, MWA_RAM, &videoram, &spriteram_size },
+	{ 0x0800, 0x0fff, srdarwin_videoram_w, &videoram, &spriteram_size },
 	{ 0x1000, 0x13ff, MWA_RAM },
-	{ 0x1400, 0x17ff, srdarwin_video_w, &srdarwin_tileram },
+	{ 0x1400, 0x17ff, dec8_pf0_data_w, &dec8_pf0_data },
 	{ 0x1800, 0x1801, srdarwin_i8751_w },
 	{ 0x1802, 0x1802, i8751_reset_w },		/* Maybe.. */
 	{ 0x1803, 0x1803, MWA_NOP },            /* NMI ack */
@@ -613,8 +614,9 @@ static struct MemoryWriteAddress srdarwin_writemem[] =
 
 static struct MemoryReadAddress gondo_readmem[] =
 {
-	{ 0x0000, 0x1fff, MRA_RAM },
-	{ 0x2000, 0x27ff, dec8_video_r },
+	{ 0x0000, 0x17ff, MRA_RAM },
+	{ 0x1800, 0x1fff, videoram_r },
+	{ 0x2000, 0x27ff, dec8_pf0_data_r },
 	{ 0x2800, 0x2bff, paletteram_r },
 	{ 0x2c00, 0x2fff, paletteram_2_r },
 	{ 0x3000, 0x37ff, MRA_RAM },          /* Sprites */
@@ -634,8 +636,8 @@ static struct MemoryReadAddress gondo_readmem[] =
 static struct MemoryWriteAddress gondo_writemem[] =
 {
 	{ 0x0000, 0x17ff, MWA_RAM },
-	{ 0x1800, 0x1fff, MWA_RAM, &videoram, &videoram_size },
-	{ 0x2000, 0x27ff, dec8_video_w },
+	{ 0x1800, 0x1fff, dec8_videoram_w, &videoram, &videoram_size },
+	{ 0x2000, 0x27ff, dec8_pf0_data_w, &dec8_pf0_data },
 	{ 0x2800, 0x2bff, paletteram_xxxxBBBBGGGGRRRR_split1_w, &paletteram },
 	{ 0x2c00, 0x2fff, paletteram_xxxxBBBBGGGGRRRR_split2_w, &paletteram_2 },
 	{ 0x3000, 0x37ff, MWA_RAM, &spriteram, &spriteram_size },
@@ -652,8 +654,8 @@ static struct MemoryReadAddress oscar_readmem[] =
 	{ 0x0000, 0x0eff, dec8_share_r },
 	{ 0x0f00, 0x0fff, MRA_RAM },
 	{ 0x1000, 0x1fff, dec8_share2_r },
-	{ 0x2000, 0x27ff, MRA_RAM },
-	{ 0x2800, 0x2fff, dec8_video_r },
+	{ 0x2000, 0x27ff, videoram_r },
+	{ 0x2800, 0x2fff, dec8_pf0_data_r },
 	{ 0x3000, 0x37ff, MRA_RAM }, /* Sprites */
 	{ 0x3800, 0x3bff, paletteram_r },
 	{ 0x3c00, 0x3c00, input_port_0_r },
@@ -671,11 +673,11 @@ static struct MemoryWriteAddress oscar_writemem[] =
 	{ 0x0000, 0x0eff, dec8_share_w, &dec8_shared_ram },
 	{ 0x0f00, 0x0fff, MWA_RAM },
 	{ 0x1000, 0x1fff, dec8_share2_w, &dec8_shared2_ram },
-	{ 0x2000, 0x27ff, MWA_RAM, &videoram, &videoram_size },
-	{ 0x2800, 0x2fff, dec8_video_w },
+	{ 0x2000, 0x27ff, dec8_videoram_w, &videoram, &videoram_size },
+	{ 0x2800, 0x2fff, dec8_pf0_data_w, &dec8_pf0_data },
 	{ 0x3000, 0x37ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x3800, 0x3bff, paletteram_xxxxBBBBGGGGRRRR_swap_w, &paletteram },
-	{ 0x3c10, 0x3c13, dec8_scroll2_w },
+	{ 0x3c00, 0x3c1f, dec8_bac06_0_w },
 	{ 0x3c80, 0x3c80, buffer_spriteram_w },	/* DMA */
 	{ 0x3d00, 0x3d00, dec8_bank_w },   		/* BNKS */
 	{ 0x3d80, 0x3d80, oscar_sound_w }, 		/* SOUN */
@@ -716,10 +718,10 @@ static struct MemoryReadAddress lastmiss_readmem[] =
 	{ 0x1804, 0x1804, input_port_4_r }, /* Dip 2 */
 	{ 0x1806, 0x1806, i8751_h_r },
 	{ 0x1807, 0x1807, i8751_l_r },
-	{ 0x2000, 0x27ff, MRA_RAM },
+	{ 0x2000, 0x27ff, videoram_r },
 	{ 0x2800, 0x2fff, MRA_RAM },
 	{ 0x3000, 0x37ff, dec8_share2_r },
-	{ 0x3800, 0x3fff, dec8_video_r },
+	{ 0x3800, 0x3fff, dec8_pf0_data_r },
 	{ 0x4000, 0x7fff, MRA_BANK1 },
 	{ 0x8000, 0xffff, MRA_ROM },
 	{ -1 }  /* end of table */
@@ -732,16 +734,16 @@ static struct MemoryWriteAddress lastmiss_writemem[] =
 	{ 0x1400, 0x17ff, paletteram_xxxxBBBBGGGGRRRR_split2_w, &paletteram_2 },
 	{ 0x1800, 0x1804, shackled_int_w },
 	{ 0x1805, 0x1805, buffer_spriteram_w }, /* DMA */
-	{ 0x1807, 0x1807, MWA_NOP }, /* Flipscreen */
+	{ 0x1807, 0x1807, dec8_flipscreen_w },
 	{ 0x1809, 0x1809, lastmiss_scrollx_w }, /* Scroll LSB */
 	{ 0x180b, 0x180b, lastmiss_scrolly_w }, /* Scroll LSB */
 	{ 0x180c, 0x180c, oscar_sound_w },
 	{ 0x180d, 0x180d, lastmiss_control_w }, /* Bank switch + Scroll MSB */
 	{ 0x180e, 0x180f, lastmiss_i8751_w },
-	{ 0x2000, 0x27ff, MWA_RAM, &videoram, &videoram_size },
+	{ 0x2000, 0x27ff, dec8_videoram_w, &videoram, &videoram_size },
 	{ 0x2800, 0x2fff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x3000, 0x37ff, dec8_share2_w, &dec8_shared2_ram },
-	{ 0x3800, 0x3fff, dec8_video_w },
+	{ 0x3800, 0x3fff, dec8_pf0_data_w, &dec8_pf0_data },
 	{ 0x4000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -756,8 +758,9 @@ static struct MemoryReadAddress lastmiss_sub_readmem[] =
 	{ 0x1802, 0x1802, input_port_2_r },
 	{ 0x1803, 0x1803, input_port_3_r }, /* Dip 1 */
 	{ 0x1804, 0x1804, input_port_4_r }, /* Dip 2 */
+	{ 0x2000, 0x27ff, videoram_r },
 	{ 0x3000, 0x37ff, dec8_share2_r },
-	{ 0x3800, 0x3fff, dec8_video_r },
+	{ 0x3800, 0x3fff, dec8_pf0_data_r },
 	{ 0x4000, 0xffff, MRA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -769,12 +772,12 @@ static struct MemoryWriteAddress lastmiss_sub_writemem[] =
 	{ 0x1400, 0x17ff, paletteram_xxxxBBBBGGGGRRRR_split2_w },
 	{ 0x1800, 0x1804, shackled_int_w },
 	{ 0x1805, 0x1805, buffer_spriteram_w }, /* DMA */
-	{ 0x1807, 0x1807, MWA_NOP }, /* Flipscreen */
+	{ 0x1807, 0x1807, dec8_flipscreen_w },
 	{ 0x180c, 0x180c, oscar_sound_w },
-	{ 0x2000, 0x27ff, shackled_video_w },
+	{ 0x2000, 0x27ff, dec8_videoram_w },
 	{ 0x2800, 0x2fff, shackled_sprite_w },
 	{ 0x3000, 0x37ff, dec8_share2_w },
-	{ 0x3800, 0x3fff, dec8_video_w },
+	{ 0x3800, 0x3fff, dec8_pf0_data_w },
 	{ 0x4000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -789,10 +792,10 @@ static struct MemoryReadAddress shackled_readmem[] =
 	{ 0x1802, 0x1802, input_port_2_r },
 	{ 0x1803, 0x1803, input_port_3_r },
 	{ 0x1804, 0x1804, input_port_4_r },
-	{ 0x2000, 0x27ff, shackled_video_r },
+	{ 0x2000, 0x27ff, videoram_r },
 	{ 0x2800, 0x2fff, shackled_sprite_r },
 	{ 0x3000, 0x37ff, dec8_share2_r },
-	{ 0x3800, 0x3fff, dec8_video_r },
+	{ 0x3800, 0x3fff, dec8_pf0_data_r },
 	{ 0x4000, 0x7fff, MRA_BANK1 },
 	{ 0x8000, 0xffff, MRA_ROM },
 	{ -1 }  /* end of table */
@@ -805,14 +808,15 @@ static struct MemoryWriteAddress shackled_writemem[] =
 	{ 0x1400, 0x17ff, paletteram_xxxxBBBBGGGGRRRR_split2_w, &paletteram_2 },
 	{ 0x1800, 0x1804, shackled_int_w },
 	{ 0x1805, 0x1805, buffer_spriteram_w }, /* DMA */
+	{ 0x1807, 0x1807, dec8_flipscreen_w },
 	{ 0x1809, 0x1809, lastmiss_scrollx_w }, /* Scroll LSB */
 	{ 0x180b, 0x180b, lastmiss_scrolly_w }, /* Scroll LSB */
 	{ 0x180c, 0x180c, oscar_sound_w },
 	{ 0x180d, 0x180d, lastmiss_control_w }, /* Bank switch + Scroll MSB */
-	{ 0x2000, 0x27ff, shackled_video_w },
+	{ 0x2000, 0x27ff, dec8_videoram_w },
 	{ 0x2800, 0x2fff, shackled_sprite_w },
 	{ 0x3000, 0x37ff, dec8_share2_w, &dec8_shared2_ram },
-	{ 0x3800, 0x3fff, dec8_video_w },
+	{ 0x3800, 0x3fff, dec8_pf0_data_w, &dec8_pf0_data },
 	{ 0x4000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -829,10 +833,10 @@ static struct MemoryReadAddress shackled_sub_readmem[] =
 	{ 0x1804, 0x1804, input_port_4_r },
 	{ 0x1806, 0x1806, i8751_h_r },
 	{ 0x1807, 0x1807, i8751_l_r },
-	{ 0x2000, 0x27ff, MRA_RAM },
+	{ 0x2000, 0x27ff, videoram_r },
 	{ 0x2800, 0x2fff, MRA_RAM },
 	{ 0x3000, 0x37ff, dec8_share2_r },
-	{ 0x3800, 0x3fff, dec8_video_r },
+	{ 0x3800, 0x3fff, dec8_pf0_data_r },
 	{ 0x4000, 0xffff, MRA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -844,15 +848,16 @@ static struct MemoryWriteAddress shackled_sub_writemem[] =
 	{ 0x1400, 0x17ff, paletteram_xxxxBBBBGGGGRRRR_split2_w },
 	{ 0x1800, 0x1804, shackled_int_w },
 	{ 0x1805, 0x1805, buffer_spriteram_w }, /* DMA */
+	{ 0x1807, 0x1807, dec8_flipscreen_w },
 	{ 0x1809, 0x1809, lastmiss_scrollx_w }, /* Scroll LSB */
 	{ 0x180b, 0x180b, lastmiss_scrolly_w }, /* Scroll LSB */
 	{ 0x180c, 0x180c, oscar_sound_w },
 	{ 0x180d, 0x180d, lastmiss_control_w }, /* Bank switch + Scroll MSB */
 	{ 0x180e, 0x180f, shackled_i8751_w },
-	{ 0x2000, 0x27ff, MWA_RAM, &videoram, &videoram_size },
+	{ 0x2000, 0x27ff, dec8_videoram_w, &videoram, &videoram_size },
 	{ 0x2800, 0x2fff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x3000, 0x37ff, dec8_share2_w },
-	{ 0x3800, 0x3fff, dec8_video_w },
+	{ 0x3800, 0x3fff, dec8_pf0_data_w },
 	{ 0x4000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -869,10 +874,10 @@ static struct MemoryReadAddress csilver_readmem[] =
 	{ 0x1805, 0x1805, input_port_3_r }, /* Dip 1 */
 	{ 0x1c00, 0x1c00, i8751_h_r },
 	{ 0x1e00, 0x1e00, i8751_l_r },
-	{ 0x2000, 0x27ff, shackled_video_r },
+	{ 0x2000, 0x27ff, videoram_r },
 	{ 0x2800, 0x2fff, shackled_sprite_r },
 	{ 0x3000, 0x37ff, dec8_share2_r },
-	{ 0x3800, 0x3fff, dec8_video_r },
+	{ 0x3800, 0x3fff, dec8_pf0_data_r },
 	{ 0x4000, 0x7fff, MRA_BANK1 },
 	{ 0x8000, 0xffff, MRA_ROM },
 	{ -1 }  /* end of table */
@@ -885,15 +890,15 @@ static struct MemoryWriteAddress csilver_writemem[] =
 	{ 0x1400, 0x17ff, paletteram_xxxxBBBBGGGGRRRR_split2_w, &paletteram_2 },
 	{ 0x1800, 0x1804, shackled_int_w },
 	{ 0x1805, 0x1805, buffer_spriteram_w }, /* DMA */
-	{ 0x1807, 0x1807, MWA_NOP }, /* Flipscreen */
+	{ 0x1807, 0x1807, dec8_flipscreen_w },
 	{ 0x1808, 0x180b, dec8_scroll2_w },
 	{ 0x180c, 0x180c, oscar_sound_w },
 	{ 0x180d, 0x180d, csilver_control_w },
 	{ 0x180e, 0x180f, csilver_i8751_w },
-	{ 0x2000, 0x27ff, shackled_video_w },
+	{ 0x2000, 0x27ff, dec8_videoram_w },
 	{ 0x2800, 0x2fff, shackled_sprite_w },
 	{ 0x3000, 0x37ff, dec8_share2_w, &dec8_shared2_ram },
-	{ 0x3800, 0x3fff, dec8_video_w },
+	{ 0x3800, 0x3fff, dec8_pf0_data_w, &dec8_pf0_data },
 	{ 0x4000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -908,11 +913,10 @@ static struct MemoryReadAddress csilver_sub_readmem[] =
 	{ 0x1803, 0x1803, input_port_2_r },
 	{ 0x1804, 0x1804, input_port_4_r },
 	{ 0x1805, 0x1805, input_port_3_r },
-
-	{ 0x2000, 0x27ff, MRA_RAM },
+	{ 0x2000, 0x27ff, videoram_r },
 	{ 0x2800, 0x2fff, MRA_RAM },
 	{ 0x3000, 0x37ff, dec8_share2_r },
-	{ 0x3800, 0x3fff, dec8_video_r },
+	{ 0x3800, 0x3fff, dec8_pf0_data_r },
 	{ 0x4000, 0xffff, MRA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -926,18 +930,19 @@ static struct MemoryWriteAddress csilver_sub_writemem[] =
 	{ 0x1805, 0x1805, buffer_spriteram_w }, /* DMA */
 	{ 0x180c, 0x180c, oscar_sound_w },
 	{ 0x180d, 0x180d, lastmiss_control_w }, /* Bank switch + Scroll MSB */
-	{ 0x2000, 0x27ff, MWA_RAM, &videoram, &videoram_size },
+	{ 0x2000, 0x27ff, dec8_videoram_w, &videoram, &videoram_size },
 	{ 0x2800, 0x2fff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x3000, 0x37ff, dec8_share2_w },
-	{ 0x3800, 0x3fff, dec8_video_w },
+	{ 0x3800, 0x3fff, dec8_pf0_data_w },
 	{ 0x4000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
 
 static struct MemoryReadAddress garyoret_readmem[] =
 {
-	{ 0x0000, 0x1fff, MRA_RAM },
-	{ 0x2000, 0x27ff, dec8_video_r },
+	{ 0x0000, 0x17ff, MRA_RAM },
+	{ 0x1800, 0x1fff, videoram_r },
+	{ 0x2000, 0x27ff, dec8_pf0_data_r },
 	{ 0x2800, 0x2bff, paletteram_r },
 	{ 0x2c00, 0x2fff, paletteram_2_r },
 	{ 0x3000, 0x37ff, MRA_RAM },          /* Sprites */
@@ -956,8 +961,8 @@ static struct MemoryReadAddress garyoret_readmem[] =
 static struct MemoryWriteAddress garyoret_writemem[] =
 {
 	{ 0x0000, 0x17ff, MWA_RAM },
-	{ 0x1800, 0x1fff, MWA_RAM, &videoram, &videoram_size },
-  	{ 0x2000, 0x27ff, dec8_video_w },
+	{ 0x1800, 0x1fff, dec8_videoram_w, &videoram, &videoram_size },
+	{ 0x2000, 0x27ff, dec8_pf0_data_w, &dec8_pf0_data },
 	{ 0x2800, 0x2bff, paletteram_xxxxBBBBGGGGRRRR_split1_w, &paletteram },
 	{ 0x2c00, 0x2fff, paletteram_xxxxBBBBGGGGRRRR_split2_w, &paletteram_2 },
 	{ 0x3000, 0x37ff, MWA_RAM, &spriteram, &spriteram_size },
@@ -1005,7 +1010,7 @@ static struct MemoryWriteAddress ym3526_s_writemem[] =
 	{ 0x0000, 0x05ff, MWA_RAM},
 	{ 0x0800, 0x0800, YM2203_control_port_0_w }, /* OPN */
 	{ 0x0801, 0x0801, YM2203_write_port_0_w },
-	{ 0x1000, 0x1000, YM3526_control_port_0_w }, /* ? */
+	{ 0x1000, 0x1000, YM3526_control_port_0_w }, /* OPL? */
 	{ 0x1001, 0x1001, YM3526_write_port_0_w },
 	{ 0x8000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
@@ -1085,9 +1090,9 @@ INPUT_PORTS_START( cobracom )
 	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
-	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
@@ -1112,15 +1117,15 @@ INPUT_PORTS_START( cobracom )
 	PORT_DIPNAME( 0x10, 0x10, "Allow Continue" )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( ghostb )
@@ -1153,9 +1158,9 @@ INPUT_PORTS_START( ghostb )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START3 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
@@ -1163,8 +1168,8 @@ INPUT_PORTS_START( ghostb )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* Dummy input for i8751 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN4 )
@@ -1195,7 +1200,6 @@ INPUT_PORTS_START( ghostb )
 	PORT_DIPSETTING(    0x00, "Up 1.5%" )
 	PORT_DIPSETTING(    0x80, "Normal" )
 INPUT_PORTS_END
-
 
 INPUT_PORTS_START( meikyuh )
 	PORT_START	/* Player 1 controls */
@@ -1257,9 +1261,9 @@ INPUT_PORTS_START( meikyuh )
 	PORT_DIPSETTING(    0x0c, "Normal" )
 	PORT_DIPSETTING(    0x08, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
-	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x00, "Allow Continue" )
 	PORT_DIPSETTING(    0x40, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
@@ -1290,11 +1294,19 @@ INPUT_PORTS_START( srdarwin )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START
-	/* The bottom bits of this dip (coinage) are for the i8751 */
-	PORT_BIT( 0x0f, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
@@ -1373,19 +1385,28 @@ INPUT_PORTS_START( gondo )
 	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_REVERSE | IPF_PLAYER2, 25, 10, 0, 0, KEYCODE_N, KEYCODE_M, 0, 0 )
 
 	PORT_START	/* Dip switch bank 1 */
-	/* Coinage not currently supported */
-	PORT_DIPNAME( 0x10, 0x10, "Unknown" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, "Unknown" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
 	PORT_START	/* Dip switch bank 2 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
@@ -1401,15 +1422,15 @@ INPUT_PORTS_START( gondo )
 	PORT_DIPNAME( 0x10, 0x10, "Allow Continue" )
 	PORT_DIPSETTING(    0x10, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( oscar )
@@ -1422,9 +1443,9 @@ INPUT_PORTS_START( oscar )
 
  	PORT_START	/* Player 2 controls */
 	PLAYER2_JOYSTICK
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_COCKTAIL )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
 	PORT_START	/* IN1 */
@@ -1477,9 +1498,9 @@ INPUT_PORTS_START( oscar )
 	PORT_DIPSETTING(    0x20, "Every 60000" )
 	PORT_DIPSETTING(    0x10, "Every 90000" )
 	PORT_DIPSETTING(    0x00, "50000 only" )
-	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) ) //invincible?
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x80, 0x80, "Allow Continue" )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Yes ) )
@@ -1495,9 +1516,9 @@ INPUT_PORTS_START( lastmiss )
 
  	PORT_START	/* Player 2 controls */
 	PLAYER2_JOYSTICK
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_COCKTAIL )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* IN1 */
@@ -1511,13 +1532,22 @@ INPUT_PORTS_START( lastmiss )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
 
 	PORT_START	/* Dip switch bank 1 */
-	/* Coinage options not supported (controlled by the i8751) */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
 	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BITX( 0x40,    0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1539,15 +1569,15 @@ INPUT_PORTS_START( lastmiss )
 	PORT_DIPNAME( 0x10, 0x10, "Allow Continue?" )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( shackled )
@@ -1576,7 +1606,16 @@ INPUT_PORTS_START( shackled )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
 
 	PORT_START	/* Dip switch bank 1 */
-	/* Coinage not supported */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )	/* game doesn't boot when this is On */
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1604,15 +1643,15 @@ INPUT_PORTS_START( shackled )
 	PORT_DIPNAME( 0x10, 0x10, "Allow Continue" )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( csilver )
@@ -1625,8 +1664,8 @@ INPUT_PORTS_START( csilver )
 
  	PORT_START	/* Player 2 controls */
 	PLAYER2_JOYSTICK
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
@@ -1641,10 +1680,19 @@ INPUT_PORTS_START( csilver )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
 
 	PORT_START	/* Dip switch bank 1 */
-	/* Coinage not supported */
-	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
@@ -1669,15 +1717,15 @@ INPUT_PORTS_START( csilver )
 	PORT_DIPNAME( 0x10, 0x10, "Allow Continue" )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Yes ) )
-	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( garyoret )
@@ -1700,7 +1748,16 @@ INPUT_PORTS_START( garyoret )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START	/* Dip switch bank 1 */
-	/* Coinage not supported */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -2025,9 +2082,9 @@ static struct MachineDriver machine_driver_cobracom =
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM,
 	0,
-	dec8_vh_start,
-	dec8_vh_stop,
-	dec8_vh_screenrefresh,
+	cobracom_vh_start,
+	0,
+	cobracom_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -2061,7 +2118,7 @@ static struct MachineDriver machine_driver_ghostb =
 								/* NMIs are caused by the main CPU */
 		}
 	},
-	58, 529, /* 58Hz, 529ms Vblank duration */
+	58, 2500, /* 58Hz, 529ms Vblank duration */
 	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,	/* init machine */
 
@@ -2074,8 +2131,8 @@ static struct MachineDriver machine_driver_ghostb =
 
 	VIDEO_TYPE_RASTER | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM,
 	dec8_eof_callback,
-	dec8_vh_start,
-	dec8_vh_stop,
+	ghostb_vh_start,
+	0,
 	ghostb_vh_screenrefresh,
 
 	/* sound hardware */
@@ -2172,8 +2229,8 @@ static struct MachineDriver machine_driver_gondo =
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM,
 	dec8_eof_callback,
-	dec8_vh_start,
-	dec8_vh_stop,
+	gondo_vh_start,
+	0,
 	gondo_vh_screenrefresh,
 
 	/* sound hardware */
@@ -2214,7 +2271,7 @@ static struct MachineDriver machine_driver_oscar =
 								/* NMIs are caused by the main CPU */
 		}
 	},
-	58, 529, /* 58Hz, 529ms Vblank duration */
+	58, 2500, /* 58Hz, 529ms Vblank duration */
 	40, /* 40 CPU slices per frame */
 	0,	/* init machine */
 
@@ -2227,8 +2284,8 @@ static struct MachineDriver machine_driver_oscar =
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM,
 	0,
-	dec8_vh_start,
-	dec8_vh_stop,
+	oscar_vh_start,
+	0,
 	oscar_vh_screenrefresh,
 
 	/* sound hardware */
@@ -2269,7 +2326,7 @@ static struct MachineDriver machine_driver_lastmiss =
 								/* NMIs are caused by the main CPU */
 		}
 	},
-	58, 529, /* 58Hz, 529ms Vblank duration */
+	58, 2500, /* 58Hz, 529ms Vblank duration */
 	200,
 	0,	/* init machine */
 
@@ -2282,8 +2339,8 @@ static struct MachineDriver machine_driver_lastmiss =
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM,
 	0,
-	dec8_vh_start,
-	dec8_vh_stop,
+	lastmiss_vh_start,
+	0,
 	lastmiss_vh_screenrefresh,
 
 	/* sound hardware */
@@ -2324,7 +2381,7 @@ static struct MachineDriver machine_driver_shackled =
 								/* NMIs are caused by the main CPU */
 		}
 	},
-	58, 529, /* 58Hz, 529ms Vblank duration */
+	58, 2500, /* 58Hz, 529ms Vblank duration */
 	80,
 	0,	/* init machine */
 
@@ -2337,9 +2394,9 @@ static struct MachineDriver machine_driver_shackled =
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM,
 	0,
-	dec8_vh_start,
-	dec8_vh_stop,
-	lastmiss_vh_screenrefresh,
+	shackled_vh_start,
+	0,
+	shackled_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -2392,8 +2449,8 @@ static struct MachineDriver machine_driver_csilver =
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_AFTER_VBLANK | VIDEO_BUFFERS_SPRITERAM,
 	0,
-	dec8_vh_start,
-	dec8_vh_stop,
+	lastmiss_vh_start,
+	0,
 	lastmiss_vh_screenrefresh,
 
 	/* sound hardware */
@@ -2445,8 +2502,8 @@ static struct MachineDriver machine_driver_garyoret =
 
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM,
 	dec8_eof_callback,
-	dec8_vh_start,
-	dec8_vh_stop,
+	garyoret_vh_start,
+	0,
 	garyoret_vh_screenrefresh,
 
 	/* sound hardware */
@@ -2765,9 +2822,63 @@ ROM_START( oscar )
 	ROM_LOAD( "ed02", 0x60000, 0x10000, 0x7ddc5651 )
 ROM_END
 
-ROM_START( oscarj )
+ROM_START( oscarj0 )
 	ROM_REGION( 0x20000, REGION_CPU1 )
 	ROM_LOAD( "du10", 0x08000, 0x08000, 0x120040d8 )
+	ROM_LOAD( "ed09", 0x10000, 0x10000, 0xe2d4bba9 )
+
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* CPU 2, 1st 16k is empty */
+	ROM_LOAD( "du11", 0x0000, 0x10000, 0xff45c440 )
+
+	ROM_REGION( 2*0x10000, REGION_CPU3 )	/* 64K for sound CPU + 64k for decrypted opcodes */
+	ROM_LOAD( "ed12", 0x8000, 0x8000, 0x432031c5 )
+
+	ROM_REGION( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* characters */
+	ROM_LOAD( "ed08", 0x00000, 0x04000, 0x308ac264 )
+
+	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_LOAD( "ed04", 0x00000, 0x10000, 0x416a791b )
+	ROM_LOAD( "ed05", 0x20000, 0x10000, 0xfcdba431 )
+	ROM_LOAD( "ed06", 0x40000, 0x10000, 0x7d50bebc )
+	ROM_LOAD( "ed07", 0x60000, 0x10000, 0x8fdf0fa5 )
+
+	ROM_REGION( 0x80000, REGION_GFX3 | REGIONFLAG_DISPOSE )	/* tiles */
+	ROM_LOAD( "ed01", 0x00000, 0x10000, 0xd3a58e9e )
+	ROM_LOAD( "ed03", 0x20000, 0x10000, 0x4fc4fb0f )
+	ROM_LOAD( "ed00", 0x40000, 0x10000, 0xac201f2d )
+	ROM_LOAD( "ed02", 0x60000, 0x10000, 0x7ddc5651 )
+ROM_END
+
+ROM_START( oscarj1 )
+	ROM_REGION( 0x20000, REGION_CPU1 )
+	ROM_LOAD( "oscr10-1.bin", 0x08000, 0x08000, 0x4ebc9f7a ) /* DU10-1 */
+	ROM_LOAD( "ed09", 0x10000, 0x10000, 0xe2d4bba9 )
+
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* CPU 2, 1st 16k is empty */
+	ROM_LOAD( "du11", 0x0000, 0x10000, 0xff45c440 )
+
+	ROM_REGION( 2*0x10000, REGION_CPU3 )	/* 64K for sound CPU + 64k for decrypted opcodes */
+	ROM_LOAD( "ed12", 0x8000, 0x8000, 0x432031c5 )
+
+	ROM_REGION( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )	/* characters */
+	ROM_LOAD( "ed08", 0x00000, 0x04000, 0x308ac264 )
+
+	ROM_REGION( 0x80000, REGION_GFX2 | REGIONFLAG_DISPOSE )	/* sprites */
+	ROM_LOAD( "ed04", 0x00000, 0x10000, 0x416a791b )
+	ROM_LOAD( "ed05", 0x20000, 0x10000, 0xfcdba431 )
+	ROM_LOAD( "ed06", 0x40000, 0x10000, 0x7d50bebc )
+	ROM_LOAD( "ed07", 0x60000, 0x10000, 0x8fdf0fa5 )
+
+	ROM_REGION( 0x80000, REGION_GFX3 | REGIONFLAG_DISPOSE )	/* tiles */
+	ROM_LOAD( "ed01", 0x00000, 0x10000, 0xd3a58e9e )
+	ROM_LOAD( "ed03", 0x20000, 0x10000, 0x4fc4fb0f )
+	ROM_LOAD( "ed00", 0x40000, 0x10000, 0xac201f2d )
+	ROM_LOAD( "ed02", 0x60000, 0x10000, 0x7ddc5651 )
+ROM_END
+
+ROM_START( oscarj )
+	ROM_REGION( 0x20000, REGION_CPU1 )
+	ROM_LOAD( "oscr10-2.bin", 0x08000, 0x08000, 0x114e898d ) /* DU10-2 */
 	ROM_LOAD( "ed09", 0x10000, 0x10000, 0xe2d4bba9 )
 
 	ROM_REGION( 0x10000, REGION_CPU2 )	/* CPU 2, 1st 16k is empty */
@@ -3005,10 +3116,8 @@ ROM_END
 /* Ghostbusters, Darwin, Oscar use a "Deco 222" custom 6502 for sound. */
 static void init_deco222(void)
 {
-	int A,sound_cpu;
+	int A,sound_cpu,diff;
 	unsigned char *rom;
-	int diff;
-
 
 	sound_cpu = 1;
 	/* Oscar has three CPUs */
@@ -3026,7 +3135,7 @@ static void init_deco222(void)
 
 static void init_meikyuh(void)
 {
-	/* Blank out garbage in colour prom to avoid colour overflow */
+	/* Blank out unused garbage in colour prom to avoid colour overflow */
 	unsigned char *RAM = memory_region(REGION_PROMS);
 	memset(RAM+0x20,0,0xe0);
 }
@@ -3039,19 +3148,21 @@ static void init_ghostb(void)
 
 /******************************************************************************/
 
-GAMEX(1988, cobracom, 0,        cobracom, cobracom, 0,       ROT0,   "Data East Corporation", "Cobra-Command (World revision 5)", GAME_NO_COCKTAIL )
-GAMEX(1988, cobracmj, cobracom, cobracom, cobracom, 0,       ROT0,   "Data East Corporation", "Cobra-Command (Japan)", GAME_NO_COCKTAIL )
-GAMEX(1987, ghostb,   0,        ghostb,   ghostb,   ghostb,  ROT0,   "Data East USA", "The Real Ghostbusters (US 2 Players)", GAME_NO_COCKTAIL )
-GAMEX(1987, ghostb3,  ghostb,   ghostb,   ghostb,   ghostb,  ROT0,   "Data East USA", "The Real Ghostbusters (US 3 Players)", GAME_NO_COCKTAIL )
-GAMEX(1987, meikyuh,  ghostb,   ghostb,   meikyuh,  meikyuh, ROT0,   "Data East Corporation", "Meikyuu Hunter G (Japan)", GAME_NO_COCKTAIL )
-GAME( 1987, srdarwin, 0,        srdarwin, srdarwin, deco222, ROT270, "Data East Corporation", "Super Real Darwin (Japan)" )
-GAMEX(1987, gondo,    0,        gondo,    gondo,    0,       ROT270, "Data East USA", "Gondomania (US)", GAME_NO_COCKTAIL )
-GAMEX(1987, makyosen, gondo,    gondo,    gondo,    0,       ROT270, "Data East Corporation", "Makyou Senshi (Japan)", GAME_NO_COCKTAIL )
-GAMEX(1988, oscar,    0,        oscar,    oscar,    deco222, ROT0,   "Data East USA", "Psycho-Nics Oscar (US)", GAME_NO_COCKTAIL )
-GAMEX(1987, oscarj,   oscar,    oscar,    oscar,    deco222, ROT0,   "Data East Corporation", "Psycho-Nics Oscar (Japan)", GAME_NO_COCKTAIL )
-GAMEX(1986, lastmiss, 0,        lastmiss, lastmiss, 0,       ROT270, "Data East USA", "Last Mission (US revision 6)", GAME_NO_COCKTAIL )
-GAMEX(1986, lastmss2, lastmiss, lastmiss, lastmiss, 0,       ROT270, "Data East USA", "Last Mission (US revision 5)", GAME_NO_COCKTAIL )
-GAMEX(1986, shackled, 0,        shackled, shackled, 0,       ROT0,   "Data East USA", "Shackled (US)", GAME_NO_COCKTAIL )
-GAMEX(1986, breywood, shackled, shackled, shackled, 0,       ROT0,   "Data East Corporation", "Breywood (Japan revision 2)", GAME_NO_COCKTAIL )
-GAMEX(1987, csilver,  0,        csilver,  csilver,  0,       ROT0,   "Data East Corporation", "Captain Silver (Japan)", GAME_NO_COCKTAIL )
-GAMEX(1987, garyoret, 0,        garyoret, garyoret, 0,       ROT0,   "Data East Corporation", "Garyo Retsuden (Japan)", GAME_NO_COCKTAIL )
+GAME(1988, cobracom, 0,        cobracom, cobracom, 0,       ROT0,   "Data East Corporation", "Cobra-Command (World revision 5)" )
+GAME(1988, cobracmj, cobracom, cobracom, cobracom, 0,       ROT0,   "Data East Corporation", "Cobra-Command (Japan)" )
+GAME(1987, ghostb,   0,        ghostb,   ghostb,   ghostb,  ROT0,   "Data East USA", "The Real Ghostbusters (US 2 Players)" )
+GAME(1987, ghostb3,  ghostb,   ghostb,   ghostb,   ghostb,  ROT0,   "Data East USA", "The Real Ghostbusters (US 3 Players)" )
+GAME(1987, meikyuh,  ghostb,   ghostb,   meikyuh,  meikyuh, ROT0,   "Data East Corporation", "Meikyuu Hunter G (Japan)" )
+GAME(1987, srdarwin, 0,        srdarwin, srdarwin, deco222, ROT270, "Data East Corporation", "Super Real Darwin (Japan)" )
+GAME(1987, gondo,    0,        gondo,    gondo,    0,       ROT270, "Data East USA", "Gondomania (US)" )
+GAME(1987, makyosen, gondo,    gondo,    gondo,    0,       ROT270, "Data East Corporation", "Makyou Senshi (Japan)" )
+GAME(1988, oscar,    0,        oscar,    oscar,    deco222, ROT0,   "Data East USA", "Psycho-Nics Oscar (US)" )
+GAME(1987, oscarj,   oscar,    oscar,    oscar,    deco222, ROT0,   "Data East Corporation", "Psycho-Nics Oscar (Japan revision 2)" )
+GAME(1987, oscarj1,  oscar,    oscar,    oscar,    deco222, ROT0,   "Data East Corporation", "Psycho-Nics Oscar (Japan revision 1)" )
+GAME(1987, oscarj0,  oscar,    oscar,    oscar,    deco222, ROT0,   "Data East Corporation", "Psycho-Nics Oscar (Japan revision 0)" )
+GAME(1986, lastmiss, 0,        lastmiss, lastmiss, 0,       ROT270, "Data East USA", "Last Mission (US revision 6)" )
+GAME(1986, lastmss2, lastmiss, lastmiss, lastmiss, 0,       ROT270, "Data East USA", "Last Mission (US revision 5)" )
+GAME(1986, shackled, 0,        shackled, shackled, 0,       ROT0,   "Data East USA", "Shackled (US)" )
+GAME(1986, breywood, shackled, shackled, shackled, 0,       ROT0,   "Data East Corporation", "Breywood (Japan revision 2)" )
+GAME(1987, csilver,  0,        csilver,  csilver,  0,       ROT0,   "Data East Corporation", "Captain Silver (Japan)" )
+GAME(1987, garyoret, 0,        garyoret, garyoret, 0,       ROT0,   "Data East Corporation", "Garyo Retsuden (Japan)" )

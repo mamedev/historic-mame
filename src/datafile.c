@@ -6,11 +6,8 @@
  *	Modifications and higher-level functions by John Butler
  ****************************************************************************/
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <ctype.h>
 #include <assert.h>
+#include <ctype.h>
 #include "osd_cpu.h"
 #include "driver.h"
 #include "datafile.h"
@@ -56,11 +53,10 @@ char *history_filename = "history.dat";
 char *mameinfo_filename = "mameinfo.dat";
 
 
-
 /****************************************************************************
  *	private data for parsing functions
  ****************************************************************************/
-static FILE *fp;							/* Our file pointer */
+static void *fp;							/* Our file pointer */
 static long dwFilePos;						/* file position */
 static UINT8 bToken[MAX_TOKEN_LENGTH];		/* Our current token */
 
@@ -89,11 +85,11 @@ static UINT32 GetNextToken(UINT8 **ppszTokenText, long *pdwPosition)
 
 	while (1)
 	{
-		bData = fgetc(fp);					/* Get next character */
+		bData = osd_fgetc(fp);					/* Get next character */
 
 		/* If we're at the end of the file, bail out */
 
-		if (feof(fp))
+		if (osd_feof(fp))
 			return(TOKEN_INVALID);
 
 		/* If it's not whitespace, then let's start eating characters */
@@ -133,22 +129,22 @@ static UINT32 GetNextToken(UINT8 **ppszTokenText, long *pdwPosition)
 						 bData != '\t' &&
 						 bData != '\n' &&
 						 bData != '\r' &&
-						 feof(fp) == 0)
+						 osd_feof(fp) == 0)
 				{
 					++dwFilePos;
 					*pbTokenPtr++ = bData;	/* Store our byte */
 					++dwLength;
 					assert(dwLength < MAX_TOKEN_LENGTH);
-					bData = fgetc(fp);
+					bData = osd_fgetc(fp);
 				}
 
 				/* If it's not the end of the file, put the last received byte */
 				/* back. We don't want to touch the file position, though if */
 				/* we're past the end of the file. Otherwise, adjust it. */
 
-				if (0 == feof(fp))
+				if (0 == osd_feof(fp))
 				{
-					ungetc(bData, fp);
+					osd_ungetc(bData, fp);
 				}
 
 				/* Null terminate the token */
@@ -170,8 +166,8 @@ static UINT32 GetNextToken(UINT8 **ppszTokenText, long *pdwPosition)
 			{
 				/* Unix style perhaps? */
 
-				bData = fgetc(fp);		/* Peek ahead */
-				ungetc(bData, fp);		/* Force a retrigger if subsequent LF's */
+				bData = osd_fgetc(fp);		/* Peek ahead */
+				osd_ungetc(bData, fp);		/* Force a retrigger if subsequent LF's */
 
 				if (LF == bData)		/* Two LF's in a row - it's a UNIX hard CR */
 				{
@@ -190,7 +186,7 @@ static UINT32 GetNextToken(UINT8 **ppszTokenText, long *pdwPosition)
 				/* Figure out if it's Mac or MSDOS format */
 
 				++dwFilePos;
-				bData = fgetc(fp);		/* Peek ahead */
+				bData = osd_fgetc(fp);		/* Peek ahead */
 
 				/* We don't need to bother with EOF checking. It will be 0xff if */
 				/* it's the end of the file and will be caught by the outer loop. */
@@ -202,7 +198,7 @@ static UINT32 GetNextToken(UINT8 **ppszTokenText, long *pdwPosition)
 
 					/* Stuff our character back upstream for successive CR's */
 
-					ungetc(bData, fp);
+					osd_ungetc(bData, fp);
 
 					*pbTokenPtr++ = bData;	/* A real carriage return (hard) */
 					*pbTokenPtr = '\0';
@@ -216,15 +212,15 @@ static UINT32 GetNextToken(UINT8 **ppszTokenText, long *pdwPosition)
 
 					/* Look for a followup CR/LF */
 
-					bData = fgetc(fp);	/* Get the next byte */
+					bData = osd_fgetc(fp);	/* Get the next byte */
 
 					if (CR == bData)	/* CR! Good! */
 					{
-						bData = fgetc(fp);	/* Get the next byte */
+						bData = osd_fgetc(fp);	/* Get the next byte */
 
 						/* We need to do this to pick up subsequent CR/LF sequences */
 
-						fseek(fp, dwPos, SEEK_SET);
+						osd_fseek(fp, dwPos, SEEK_SET);
 
 						if (pdwPosition)
 							*pdwPosition = dwPos;
@@ -241,13 +237,13 @@ static UINT32 GetNextToken(UINT8 **ppszTokenText, long *pdwPosition)
 					else
 					{
 						--dwFilePos;
-						ungetc(bData, fp);	/* Put the character back. No good */
+						osd_ungetc(bData, fp);	/* Put the character back. No good */
 					}
 				}
 				else
 				{
 					--dwFilePos;
-					ungetc(bData, fp);	/* Put the character back. No good */
+					osd_ungetc(bData, fp);	/* Put the character back. No good */
 				}
 
 				/* Otherwise, fall through and keep parsing */
@@ -268,7 +264,7 @@ static void ParseClose(void)
 
 	if (fp)
 	{
-		fclose(fp);
+		osd_fclose(fp);
 	}
 
 	fp = NULL;
@@ -282,7 +278,7 @@ static UINT8 ParseOpen(const char *pszFilename)
 {
 	/* Open file up in binary mode */
 
-	fp = fopen(pszFilename, "rb");
+	fp = osd_fopen (NULL, pszFilename, OSD_FILETYPE_HISTORY, 0);
 
 	/* If this is NULL, return FALSE. We can't open it */
 
@@ -303,11 +299,11 @@ static UINT8 ParseOpen(const char *pszFilename)
  ****************************************************************************/
 static UINT8 ParseSeek(long offset, int whence)
 {
-	int result = fseek(fp, offset, whence);
+	int result = osd_fseek(fp, offset, whence);
 
 	if (0 == result)
 	{
-		dwFilePos = ftell(fp);
+		dwFilePos = osd_ftell(fp);
 	}
 	return (UINT8)result;
 }

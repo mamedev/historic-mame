@@ -20,7 +20,7 @@ WRITE_HANDLER( atarifb_out1_w )
 {
 	CTRLD = data;
 	/* we also need to handle the whistle, hit, and kicker sound lines */
-//	if (errorlog) fprintf (errorlog, "out1_w: %02x\n", data);
+//	logerror("out1_w: %02x\n", data);
 }
 
 WRITE_HANDLER( atarifb4_out1_w )
@@ -28,7 +28,7 @@ WRITE_HANDLER( atarifb4_out1_w )
 	CTRLD = data;
 	coin_counter_w (0, data & 0x80);
 	/* we also need to handle the whistle, hit, and kicker sound lines */
-//	if (errorlog) fprintf (errorlog, "out1_w: %02x\n", data);
+//	logerror("out1_w: %02x\n", data);
 }
 
 WRITE_HANDLER( soccer_out1_w )

@@ -38,7 +38,7 @@ extern void ataxx_vh_stop(void);
 extern void ataxx_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 extern unsigned char *ataxx_bk_ram;
 extern unsigned char *ataxx_tram;
-extern int ataxx_tram_size;
+extern size_t ataxx_tram_size;
 extern unsigned char *ataxx_qram1;
 extern unsigned char *ataxx_qram2;
 extern int  ataxx_vram_port_r(int offset, int num);
@@ -169,10 +169,7 @@ READ_HANDLER( ataxx_eeprom_r )
 #endif
 
 #if NOISY_EEPROM
-	if (errorlog)
-	{
-		fprintf(errorlog, "PC=%04x EEPROM read\n", cpu_get_pc());
-	}
+	logerror("PC=%04x EEPROM read\n", cpu_get_pc());
 #endif
 
     /* World Soccer Finals uses bit 0x04 for the service switch */
@@ -197,11 +194,7 @@ WRITE_HANDLER( ataxx_eeprom_w )
 #endif
 
 #if NOISY_EEPROM
-	if (errorlog)
-	{
-		fprintf(errorlog, "PC=%04x EEPROM write = %02x\n",
-			cpu_get_pc(), data);
-	}
+	logerror("PC=%04x EEPROM write = %02x\n",cpu_get_pc(), data);
 #endif
 }
 
@@ -257,16 +250,12 @@ static void nvram_handler(void *file,int read_or_write)
 #ifdef MAME_DEBUG
 void ataxx_debug_dump_driver(void)
 {
-    if (keyboard_pressed(KEYCODE_M))
+    if (keyboard_pressed_memory(KEYCODE_M))
 	{
 		static int marker=1;
-        while (keyboard_pressed(KEYCODE_M))       ;
 
-		if (errorlog)
-		{
-			fprintf(errorlog, "Marker %d\n", marker);
-			marker++;
-		}
+		logerror("Marker %d\n", marker);
+		marker++;
 	}
     if (keyboard_pressed(KEYCODE_F))
 	{
@@ -467,11 +456,7 @@ WRITE_HANDLER( ataxx_sound_control_w )
 	intnum|=(data&0x08)>>2;  /* Int 1 */
 
 #ifdef NOISY_SOUND_CPU
-	if (errorlog)
-	{
-		 fprintf(errorlog, "PC=%04x Sound CPU intnum=%02x\n",
-			cpu_get_pc(), intnum);
-	}
+	logerror("PC=%04x Sound CPU intnum=%02x\n",cpu_get_pc(), intnum);
 #endif
 }
 
@@ -523,11 +508,7 @@ WRITE_HANDLER( ataxx_slave_banksw_w )
     }
     cpu_setbank(3, &RAM[bankaddress]);
 
-/*    if (errorlog)
-    {
-        fprintf(errorlog, "BANK=%02x\n", data );
-    }
- */
+//	logerror("BANK=%02x\n", data );
 }
 
 READ_HANDLER( ataxx_raster_r )
@@ -629,12 +610,8 @@ WRITE_HANDLER( ataxx_banksw_w )
 	{
 		ataxx_palette_bank=0;
 	}
-    /*
-    if (errorlog)
-    {
-        fprintf(errorlog, "MASTER BANK=%02x\n", data);
-    }
-    */
+
+//	logerror("MASTER BANK=%02x\n", data);
 }
 
 WRITE_HANDLER( ataxx_master_video_addr_w )
@@ -673,10 +650,7 @@ READ_HANDLER( ataxx_xrom1_data_r )
     {
         unsigned char *XROM = memory_region(REGION_USER1);
         int ret=XROM[ataxx_xrom_address];
-        if (errorlog)
-        {
-            fprintf(errorlog, "XROM1 READ %04x=%02x\n",  ataxx_xrom_address, ret);
-        }
+        logerror("XROM1 READ %04x=%02x\n",  ataxx_xrom_address, ret);
         ataxx_xrom_address++;
         ataxx_xrom_address&=0x1ffff;
         return ret;
@@ -694,10 +668,7 @@ READ_HANDLER( ataxx_xrom2_data_r )
     {
         unsigned char *XROM = memory_region(REGION_USER1);
         int ret=XROM[0x20000+ataxx_xrom_address];
-        if (errorlog)
-        {
-            fprintf(errorlog, "XROM2 READ %04x=%02x\n",  ataxx_xrom_address, ret);
-        }
+        logerror("XROM2 READ %04x=%02x\n",  ataxx_xrom_address, ret);
         ataxx_xrom_address++;
         ataxx_xrom_address&=0x1ffff;
         return ret;
@@ -722,10 +693,7 @@ WRITE_HANDLER( ataxx_xrom_addr_w )
             ataxx_xrom_address=(ataxx_xrom_address&0x00ff)|(data<<8);
         }
 
-        if (errorlog)
-        {
-            fprintf(errorlog, "XROM ADDRESS = %04x\n", data);
-        }
+        logerror("XROM ADDRESS = %04x\n", data);
     }
 }
 

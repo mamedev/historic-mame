@@ -61,7 +61,7 @@ void votrax_w(int data)
     Phoneme = data & 0x3F;
     Intonation = data >> 6;
 
-  	if(errorlog) fprintf(errorlog,"Speech : %s at intonation %d\n",VotraxTable[Phoneme],Intonation);
+  	logerror("Speech : %s at intonation %d\n",VotraxTable[Phoneme],Intonation);
 
     if(Phoneme==63)
    		mixer_stop_sample(VotraxChannel);

@@ -448,6 +448,32 @@ ROM_START( junofrst )
 	ROM_LOAD( "jfs5_e7.bin",  0x04000, 0x2000, 0x1eb87a6e )
 ROM_END
 
+ROM_START( junofstg )
+	ROM_REGION( 2*0x1c000, REGION_CPU1 )	/* code + space for decrypted opcodes */
+	ROM_LOAD( "jfg_a.9b",     0x0a000, 0x2000, 0x8f77d1c5 ) /* program ROMs */
+	ROM_LOAD( "jfg_b.10b",    0x0c000, 0x2000, 0xcd645673 )
+	ROM_LOAD( "jfg_c.10a",    0x0e000, 0x2000, 0x47852761 )
+
+	ROM_LOAD( "jfgc1.4a",     0x10000, 0x2000, 0x90a05ae6 ) /* graphic and code ROMs (banked) */
+	ROM_LOAD( "jfc2_a5.bin",  0x12000, 0x2000, 0xcb372372 )
+	ROM_LOAD( "jfc3_a6.bin",  0x14000, 0x2000, 0x879d194b )
+	ROM_LOAD( "jfgc4.7a",     0x16000, 0x2000, 0xe8864a43 )
+	ROM_LOAD( "jfc5_a8.bin",  0x18000, 0x2000, 0x0539f328 )
+	ROM_LOAD( "jfc6_a9.bin",  0x1a000, 0x2000, 0x1da2ad6e )
+
+	ROM_REGION(  0x10000 , REGION_CPU2 ) /* 64k for Z80 sound CPU code */
+	ROM_LOAD( "jfs1_j3.bin",  0x0000, 0x1000, 0x235a2893 )
+
+	ROM_REGION( 0x1000, REGION_CPU3 )	/* 8039 */
+	ROM_LOAD( "jfs2_p4.bin",  0x0000, 0x1000, 0xd0fa5d5f )
+
+	ROM_REGION( 0x6000, REGION_GFX1 )	/* BLTROM, used at runtime */
+	ROM_LOAD( "jfs3_c7.bin",  0x00000, 0x2000, 0xaeacf6db )
+	ROM_LOAD( "jfs4_d7.bin",  0x02000, 0x2000, 0x206d954c )
+	ROM_LOAD( "jfs5_e7.bin",  0x04000, 0x2000, 0x1eb87a6e )
+ROM_END
+
+
 
 static void init_junofrst(void)
 {
@@ -455,4 +481,5 @@ static void init_junofrst(void)
 }
 
 
-GAME( 1983, junofrst, 0, junofrst, junofrst, junofrst, ROT90, "Konami", "Juno First" )
+GAME( 1983, junofrst, 0,        junofrst, junofrst, junofrst, ROT90, "Konami", "Juno First" )
+GAME( 1983, junofstg, junofrst, junofrst, junofrst, junofrst, ROT90, "Konami (Gottlieb license)", "Juno First (Gottlieb)" )

@@ -81,7 +81,7 @@ WRITE_HANDLER( sega_mult2_w )
 WRITE_HANDLER( sega_switch_w ) {
 
 	ioSwitch = data;
-/*	if (errorlog) fprintf (errorlog,"ioSwitch: %02x\n",ioSwitch); */
+/*	logerror("ioSwitch: %02x\n",ioSwitch); */
 	}
 
 READ_HANDLER( sega_mult_r )

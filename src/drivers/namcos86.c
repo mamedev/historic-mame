@@ -70,7 +70,7 @@ static int rt_decode_sample(const struct MachineSound *msound)
 	else
 		rt_decode_mode = 0;
 
-	if ( errorlog ) fprintf( errorlog, "pcm decode mode:%d\n", rt_decode_mode );
+	logerror("pcm decode mode:%d\n", rt_decode_mode );
 	if (rt_decode_mode != 0) {
 		decode_mode = 6;
 	} else {
@@ -82,7 +82,7 @@ static int rt_decode_sample(const struct MachineSound *msound)
 		src = memory_region(REGION_SOUND1)+ ( j * 0x10000 );
 		rt_totalsamples[j] = ( ( src[0] << 8 ) + src[1] ) / 2;
 		n += rt_totalsamples[j];
-		if ( errorlog ) fprintf( errorlog, "rt_totalsamples[%d]:%d\n", j, rt_totalsamples[j] );
+		logerror("rt_totalsamples[%d]:%d\n", j, rt_totalsamples[j] );
 	}
 
 	/* calculate the amount of headers needed */
@@ -203,8 +203,7 @@ static WRITE_HANDLER( namco_voice1_play_w ) {
 /* select voice sample (Modified and Added by Takahiro Nogi. 1999/09/26) */
 static void namco_voice_select( int offset, int data, int ch ) {
 
-	if ( errorlog )
-		fprintf( errorlog, "Voice %d mode: %d select: %02x\n", ch, rt_decode_mode, data );
+	logerror("Voice %d mode: %d select: %02x\n", ch, rt_decode_mode, data );
 
 	if ( data == 0 )
 		sample_stop( ch );
@@ -1627,7 +1626,7 @@ ROM_START( wndrmomo )
 	/* 12d empty */
 
 	ROM_REGION( 0x0c000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "wm1-6.7r", 0x00000, 0x08000, 0x42d0b513 )	/* plane 1,2 */
+	ROM_LOAD( "wm1-6.7r", 0x00000, 0x08000, 0x93955fbb )	/* plane 1,2 */
 	ROM_LOAD( "wm1-7.7s", 0x08000, 0x04000, 0x7d662527 )	/* plane 3 */
 
 	ROM_REGION( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )

@@ -69,7 +69,7 @@
  *************************************/
 
 UINT8 *eprom_playfieldpalram;
-int eprom_playfieldpalram_size;
+size_t eprom_playfieldpalram_size;
 
 
 

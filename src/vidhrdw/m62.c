@@ -19,7 +19,7 @@ static int kidniki_text_vscroll;
 static int spelunk2_palbank;
 
 unsigned char *irem_textram;
-int irem_textram_size;
+size_t irem_textram_size;
 
 
 static const struct rectangle kungfum_spritevisiblearea =

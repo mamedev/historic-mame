@@ -60,8 +60,8 @@ driver by Zsolt Vasvari and Alex Pasadyn
 #include "cpu/tms34010/tms34010.h"
 
 static unsigned char *eeprom;
-static int eeprom_size;
-static int code_rom_size;
+static size_t eeprom_size;
+static size_t code_rom_size;
 unsigned char *exterm_code_rom;
 
 extern unsigned char *exterm_master_speedup, *exterm_slave_speedup;

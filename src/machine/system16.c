@@ -33,8 +33,8 @@ void system16_decode(unsigned char *dest,unsigned char *source,int size,unsigned
 
 		data^= decrypt_data[mask*256+decode_offset];
 
-//		if(errorlog && decrypt_data[mask*256+decode_offset] == 0xffff)
-//			fprintf(errorlog,"Decrypt Error: Offset=%5x\n",offset);
+//		if(decrypt_data[mask*256+decode_offset] == 0xffff)
+//			logerror("Decrypt Error: Offset=%5x\n",offset);
 
 		WRITE_WORD(&dest[offset],data);
 	}

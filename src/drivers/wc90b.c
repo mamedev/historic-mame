@@ -86,8 +86,8 @@ extern unsigned char *wc90b_scroll2xlo, *wc90b_scroll2xhi;
 extern unsigned char *wc90b_scroll1ylo, *wc90b_scroll1yhi;
 extern unsigned char *wc90b_scroll2ylo, *wc90b_scroll2yhi;
 
-extern int wc90b_tile_videoram_size;
-extern int wc90b_tile_videoram_size2;
+extern size_t wc90b_tile_videoram_size;
+extern size_t wc90b_tile_videoram_size2;
 
 int wc90b_vh_start( void );
 void wc90b_vh_stop ( void );

@@ -13,7 +13,7 @@ Driver by Takahiro Nogi (nogi@kt.rim.or.jp) 1999/10/04
 #include "cpu/m6809/m6809.h"
 
 extern unsigned char *ssozumo_videoram2, *ssozumo_colorram2;
-extern int ssozumo_videoram2_size;
+extern size_t ssozumo_videoram2_size;
 extern unsigned char *ssozumo_scroll;
 
 WRITE_HANDLER( ssozumo_paletteram_w );

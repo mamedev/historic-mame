@@ -43,7 +43,7 @@ extern unsigned char *bloodbro_scroll;
 /***************************************************************************/
 
 static READ_HANDLER( bloodbro_ports_r ) {
-     //if( errorlog ) fprintf( errorlog, "INPUT e000[%x] \n", offset);
+     //logerror("INPUT e000[%x] \n", offset);
      switch (offset) {
        case 0x0: /* DIPSW 1&2 */
                  return readinputport(4) + readinputport(5)*256;

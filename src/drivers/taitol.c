@@ -151,7 +151,7 @@ static void palette_notifier(int addr)
 	//	addr &= 0x1ff;
 
 	if(addr > 0x200) {
-if(errorlog) fprintf(errorlog, "Large palette ? %03x (%04x)\n", addr, cpu_get_pc());
+logerror("Large palette ? %03x (%04x)\n", addr, cpu_get_pc());
 	} else {
 		//		r = g = b = ((addr & 0x1e) != 0)*255;
 		palette_change_color(addr/2, r, g, b);
@@ -292,7 +292,7 @@ static int vbl_interrupt(void)
 
 static WRITE_HANDLER( irq_adr_w )
 {
-//if (errorlog) fprintf(errorlog,"irq_adr_table[%d] = %02x\n",offset,data);
+//logerror("irq_adr_table[%d] = %02x\n",offset,data);
 	irq_adr_table[offset] = data;
 }
 
@@ -318,12 +318,10 @@ static WRITE_HANDLER( rombankswitch_w )
 	if(cur_rombank != data) {
 		if(data>high) {
 			high = data;
-			if(errorlog)
-				fprintf(errorlog, "New rom size : %x\n", (high+1)*0x2000);
+			logerror("New rom size : %x\n", (high+1)*0x2000);
 		}
 
-		if(0 && errorlog)
-			fprintf(errorlog, "robs %d, %02x (%04x)\n", offset, data, cpu_get_pc());
+//		logerror("robs %d, %02x (%04x)\n", offset, data, cpu_get_pc());
 		cur_rombank = data;
 		cpu_setbank(1, memory_region(REGION_CPU1)+0x10000+0x2000*cur_rombank);
 	}
@@ -338,12 +336,10 @@ static WRITE_HANDLER( rombank2switch_w )
 	if(cur_rombank2 != data) {
 		if(data>high) {
 			high = data;
-			if(errorlog)
-				fprintf(errorlog, "New rom2 size : %x\n", (high+1)*0x4000);
+			logerror("New rom2 size : %x\n", (high+1)*0x4000);
 		}
 
-		if(0 && errorlog)
-			fprintf(errorlog, "robs2 %02x (%04x)\n", data, cpu_get_pc());
+//		logerror("robs2 %02x (%04x)\n", data, cpu_get_pc());
 
 		cur_rombank2 = data;
 		cpu_setbank(6, memory_region(REGION_CPU2)+0x10000+0x4000*cur_rombank2);
@@ -365,7 +361,7 @@ static WRITE_HANDLER( rambankswitch_w )
 	if(cur_rambank[offset]!=data)
 	{
 		cur_rambank[offset]=data;
-//if(errorlog) fprintf(errorlog, "rabs %d, %02x (%04x)\n", offset, data, cpu_get_pc());
+//logerror("rabs %d, %02x (%04x)\n", offset, data, cpu_get_pc());
 		if(data>=0x14 && data<=0x1f)
 		{
 			data -= 0x14;
@@ -378,7 +374,7 @@ static WRITE_HANDLER( rambankswitch_w )
 		}
 		else
 		{
-if(errorlog) fprintf(errorlog, "unknown rambankswitch %d, %02x (%04x)\n", offset, data, cpu_get_pc());
+logerror("unknown rambankswitch %d, %02x (%04x)\n", offset, data, cpu_get_pc());
 			current_notifier[offset] = 0;
 			current_base[offset] = empty_ram;
 		}
@@ -467,8 +463,7 @@ static WRITE_HANDLER( mcu_data_w )
 {
 	last_data = data;
 	last_data_adr = cpu_get_pc();
-	if(0 && errorlog)
-		fprintf(errorlog, "mcu write %02x (%04x)\n", data, cpu_get_pc());
+//	logerror("mcu write %02x (%04x)\n", data, cpu_get_pc());
 	switch(data) {
 	case 0x43:
 		mcu_pos = 0;
@@ -480,14 +475,12 @@ static WRITE_HANDLER( mcu_data_w )
 
 static WRITE_HANDLER( mcu_control_w )
 {
-	if(0 && errorlog)
-		fprintf(errorlog, "mcu control %02x (%04x)\n", data, cpu_get_pc());
+//	logerror("mcu control %02x (%04x)\n", data, cpu_get_pc());
 }
 
 static READ_HANDLER( mcu_data_r )
 {
-	if(0 && errorlog)
-		fprintf(errorlog, "mcu read (%04x) [%02x, %04x]\n", cpu_get_pc(), last_data, last_data_adr);
+//	logerror("mcu read (%04x) [%02x, %04x]\n", cpu_get_pc(), last_data, last_data_adr);
 	if(mcu_pos==mcu_reply_len)
 		return 0;
 
@@ -496,15 +489,13 @@ static READ_HANDLER( mcu_data_r )
 
 static READ_HANDLER( mcu_control_r )
 {
-	if(0 && errorlog)
-		fprintf(errorlog, "mcu control read (%04x)\n", cpu_get_pc());
+//	logerror("mcu control read (%04x)\n", cpu_get_pc());
 	return 0x1;
 }
 
 static WRITE_HANDLER( sound_w )
 {
-	if(errorlog)
-		fprintf(errorlog, "Sound_w %02x (%04x)\n", data, cpu_get_pc());
+	logerror("Sound_w %02x (%04x)\n", data, cpu_get_pc());
 }
 
 static READ_HANDLER( shared_r )
@@ -533,8 +524,7 @@ static READ_HANDLER( mux_r )
 	case 7:
 		return input_port_4_r(0);
 	default:
-		if(errorlog)
-			fprintf(errorlog, "Mux read from unknown port %d (%04x)\n", mux_ctrl, cpu_get_pc());
+		logerror("Mux read from unknown port %d (%04x)\n", mux_ctrl, cpu_get_pc());
 		return 0xff;
 	}
 }
@@ -546,8 +536,7 @@ static WRITE_HANDLER( mux_w )
 		control2_w(0, data);
 		break;
 	default:
-		if(errorlog)
-			fprintf(errorlog, "Mux read to unknown port %d, %02x (%04x)\n", mux_ctrl, data, cpu_get_pc());
+		logerror("Mux read to unknown port %d, %02x (%04x)\n", mux_ctrl, data, cpu_get_pc());
 	}
 }
 

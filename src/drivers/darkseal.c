@@ -6,11 +6,6 @@
 	Gate Of Doom (Rev 4) (c) 1990 Data East Corporation (USA version)
 	Gate of Doom (Rev 1) (c) 1990 Data East Corporation (USA version)
 
-
-	Sound works correctly only with YM2151_ALT, not with YM2151. You will hear
-	the difference on the music that plays as the game starts, the lead
-	instrument is missing.
-
 	Emulation by Bryan McPhail, mish@tendril.co.uk
 
 ***************************************************************************/
@@ -20,7 +15,6 @@
 #include "cpu/h6280/h6280.h"
 
 int  darkseal_vh_start(void);
-void darkseal_vh_stop(void);
 void darkseal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 WRITE_HANDLER( darkseal_pf1_data_w );
@@ -34,6 +28,7 @@ WRITE_HANDLER( darkseal_palette_24bit_b_w );
 READ_HANDLER( darkseal_palette_24bit_rg_r );
 READ_HANDLER( darkseal_palette_24bit_b_r );
 extern unsigned char *darkseal_pf12_row, *darkseal_pf34_row;
+extern unsigned char *darkseal_pf1_data,*darkseal_pf2_data,*darkseal_pf3_data;
 static unsigned char *darkseal_ram;
 
 /******************************************************************************/
@@ -51,7 +46,6 @@ static WRITE_HANDLER( darkseal_control_w )
   	case 0xa: /* IRQ Ack (VBL) */
 		return;
 	}
-	if (errorlog) fprintf(errorlog,"Warning - %02x written to control %02x\n",data,offset);
 }
 
 static READ_HANDLER( darkseal_control_r )
@@ -68,7 +62,6 @@ static READ_HANDLER( darkseal_control_r )
 			return readinputport(2);
 	}
 
-	if (errorlog) fprintf(errorlog,"Unknown control read at %d\n",offset);
 	return 0xffff;
 }
 
@@ -96,12 +89,12 @@ static struct MemoryWriteAddress darkseal_writemem[] =
 	{ 0x141000, 0x141fff, darkseal_palette_24bit_b_w, &paletteram_2 },
 	{ 0x180000, 0x18000f, darkseal_control_w },
  	{ 0x200000, 0x200fff, darkseal_pf3b_data_w }, /* 2nd half of pf3, only used on last level */
-	{ 0x202000, 0x203fff, darkseal_pf3_data_w },
+	{ 0x202000, 0x203fff, darkseal_pf3_data_w, &darkseal_pf3_data },
 	{ 0x220000, 0x220fff, MWA_BANK3, &darkseal_pf12_row },
 	{ 0x222000, 0x222fff, MWA_BANK4, &darkseal_pf34_row },
 	{ 0x240000, 0x24000f, darkseal_control_0_w },
-	{ 0x260000, 0x261fff, darkseal_pf2_data_w },
-	{ 0x262000, 0x263fff, darkseal_pf1_data_w },
+	{ 0x260000, 0x261fff, darkseal_pf2_data_w, &darkseal_pf2_data },
+	{ 0x262000, 0x263fff, darkseal_pf1_data_w, &darkseal_pf1_data },
 	{ 0x2a0000, 0x2a000f, darkseal_control_1_w },
 	{ -1 }  /* end of table */
 };
@@ -269,7 +262,7 @@ static struct GfxLayout seallayout =
 static struct GfxLayout seallayout2 =
 {
 	16,16,
-	4096*2,  /* A lotta sprites.. */
+	4096*2,
 	4,
 	{ 8, 0, 0x80000*8+8, 0x80000*8 },
 	{ 32*8+0, 32*8+1, 32*8+2, 32*8+3, 32*8+4, 32*8+5, 32*8+6, 32*8+7,
@@ -353,7 +346,7 @@ static struct MachineDriver machine_driver_darkseal =
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	darkseal_vh_start,
-	darkseal_vh_stop,
+	0,
 	darkseal_vh_screenrefresh,
 
 	/* sound hardware */
@@ -572,8 +565,8 @@ static void init_darkseal(void)
 
 /******************************************************************************/
 
-GAMEX( 1990, darkseal, 0,        darkseal, darkseal, darkseal, ROT0, "Data East Corporation", "Dark Seal (World revision 3)", GAME_NO_COCKTAIL )
-GAMEX( 1990, darksea1, darkseal, darkseal, darkseal, darkseal, ROT0, "Data East Corporation", "Dark Seal (World revision 1)", GAME_NO_COCKTAIL )
-GAMEX( 1990, darkseaj, darkseal, darkseal, darkseal, darkseal, ROT0, "Data East Corporation", "Dark Seal (Japan)", GAME_NO_COCKTAIL )
-GAMEX( 1990, gatedoom, darkseal, darkseal, darkseal, darkseal, ROT0, "Data East Corporation", "Gate of Doom (US revision 4)", GAME_NO_COCKTAIL )
-GAMEX( 1990, gatedom1, darkseal, darkseal, darkseal, darkseal, ROT0, "Data East Corporation", "Gate of Doom (US revision 1)", GAME_NO_COCKTAIL )
+GAME( 1990, darkseal, 0,        darkseal, darkseal, darkseal, ROT0, "Data East Corporation", "Dark Seal (World revision 3)" )
+GAME( 1990, darksea1, darkseal, darkseal, darkseal, darkseal, ROT0, "Data East Corporation", "Dark Seal (World revision 1)" )
+GAME( 1990, darkseaj, darkseal, darkseal, darkseal, darkseal, ROT0, "Data East Corporation", "Dark Seal (Japan)" )
+GAME( 1990, gatedoom, darkseal, darkseal, darkseal, darkseal, ROT0, "Data East Corporation", "Gate of Doom (US revision 4)" )
+GAME( 1990, gatedom1, darkseal, darkseal, darkseal, darkseal, ROT0, "Data East Corporation", "Gate of Doom (US revision 1)" )

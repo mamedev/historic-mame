@@ -867,7 +867,7 @@ if ( (debugsprites) && ( ((attr & 0x0300)>>8) != (debugsprites-1) ) ) 	{ continu
 			char buf[40],buf1[40];
 
 			dt[0].text = buf;	dt[1].text = buf1;	dt[2].text = 0;
-			dt[0].color = dt[1].color = DT_COLOR_WHITE;
+			dt[0].color = dt[1].color = UI_COLOR_NORMAL;
 			dt[0].x = sx / 0x10000;	dt[1].x = dt[0].x;
 			dt[0].y = sy / 0x10000;	dt[1].y = dt[0].y + 8;
 

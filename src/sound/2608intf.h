@@ -16,12 +16,12 @@
 struct YM2608interface{
 	int num;	/* total number of 8910 in the machine */
 	int baseclock;
-	int volumeSSG[MAX_2608]; /* for SSG sound */
-	int ( *portAread[MAX_2608] )( int offset );
-	int ( *portBread[MAX_2608] )( int offset );
-	void ( *portAwrite[MAX_2608] )( int offset, int data );
-	void ( *portBwrite[MAX_2608] )( int offset, int data );
-	void ( *handler[MAX_2608] )( int irq );	/* IRQ handler for the YM2608 */
+	int volumeSSG[MAX_8910]; /* for SSG sound */
+	mem_read_handler portAread[MAX_8910];
+	mem_read_handler portBread[MAX_8910];
+	mem_write_handler portAwrite[MAX_8910];
+	mem_write_handler portBwrite[MAX_8910];
+	void ( *handler[MAX_8910] )( int irq );	/* IRQ handler for the YM2608 */
 	int pcmrom[MAX_2608];		/* Delta-T memory region ram/rom */
 	int volumeFM[MAX_2608];		/* use YM3012_VOL macro */
 };

@@ -3,7 +3,7 @@
 
 
 unsigned char *kyugo_videoram;
-int kyugo_videoram_size;
+size_t kyugo_videoram_size;
 unsigned char *kyugo_back_scrollY_lo;
 unsigned char *kyugo_back_scrollX;
 

@@ -50,7 +50,7 @@ WRITE_HANDLER( terrac_videoram2_w );
 READ_HANDLER( terrac_videoram2_r );
 
 extern unsigned char *terrac_videoram;
-extern int terrac_videoram_size;
+extern size_t terrac_videoram_size;
 extern unsigned char terrac_scrolly[];
 
 
@@ -76,7 +76,7 @@ WRITE_HANDLER( terracre_misc_w )
 //			break;
 	}
 
-	if( errorlog ) fprintf( errorlog, "OUTPUT [%x] <- %08x\n", offset,data );
+	logerror("OUTPUT [%x] <- %08x\n", offset,data );
 }
 
 static READ_HANDLER( terracre_ports_r )

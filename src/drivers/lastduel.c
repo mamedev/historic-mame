@@ -1,13 +1,8 @@
 /**************************************************************************
 
-  Last Duel (USA set 1)           - Capcom, 1988
-  Last Duel (USA set 2)           - Capcom, 1988
-  Last Duel (Bootleg set)         - Capcom, 1988
-  LED Storm (USA set)             - Capcom, 1988
-  Mad Gear (World? set)           - Capcom, 1989
-
-  Mad Gear (Japan set) has rom code MDJ and is not dumped yet, presumably
-  other versions of Last Duel exist too.
+  Last Duel 			          - Capcom, 1988
+  LED Storm 			          - Capcom, 1988
+  Mad Gear                        - Capcom, 1989
 
   Emulation by Bryan McPhail, mish@tendril.co.uk
 
@@ -42,7 +37,6 @@ static unsigned char *lastduel_ram;
 
 static READ_HANDLER( lastduel_inputs_r )
 {
-
   switch (offset) {
   	case 0: /* Player 1 & Player 2 controls */
     	return(readinputport(0)<<8)+readinputport(1);
@@ -56,8 +50,6 @@ static READ_HANDLER( lastduel_inputs_r )
     case 6: /* Dips, flip */
       return readinputport(5);
   }
-
-  if (errorlog) fprintf(errorlog,"Unknown read\n" );
   return 0xffff;
 }
 
@@ -76,8 +68,6 @@ static READ_HANDLER( madgear_inputs_r )
     case 6: /* Start + coins */
     	return readinputport(2)<<8;
 	}
-
-	if (errorlog) fprintf(errorlog,"Unknown read\n" );
 	return 0xffff;
 }
 
@@ -337,16 +327,16 @@ static void irqhandler(int irq)
 static struct OKIM6295interface okim6295_interface =
 {
 	1,              	/* 1 chip */
-	{ 8000 },           /* 8000Hz frequency */
+	{ 7759 },           /* 7759Hz frequency */
 	{ REGION_SOUND1 },	/* memory region 3 */
-	{ 90 }
+	{ 98 }
 };
 
 static struct YM2203interface ym2203_interface =
 {
 	2,			/* 2 chips */
 	3579545, /* Accurate */
-	{ YM2203_VOL(30,30), YM2203_VOL(30,30) },
+	{ YM2203_VOL(40,40), YM2203_VOL(40,40) },
 	{ 0 },
 	{ 0 },
 	{ 0 },

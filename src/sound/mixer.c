@@ -280,8 +280,7 @@ int mixer_allocate_channels(int channels, const int *default_mixing_levels)
 	/* make sure we didn't overrun the number of available channels */
 	if (first_free_channel + channels > MIXER_MAX_CHANNELS)
 	{
-		if (errorlog)
-			fprintf(errorlog, "Too many mixer channels (requested %d, available %d)\n", first_free_channel + channels, MIXER_MAX_CHANNELS);
+		logerror("Too many mixer channels (requested %d, available %d)\n", first_free_channel + channels, MIXER_MAX_CHANNELS);
 		exit(1);
 	}
 

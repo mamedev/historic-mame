@@ -106,7 +106,7 @@ extern void cloak_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 static unsigned char *nvram;
-static int nvram_size;
+static size_t nvram_size;
 
 static void nvram_handler(void *file, int read_or_write)
 {

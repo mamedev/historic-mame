@@ -5,8 +5,8 @@
 						   /					\
 					[ 1] ENV SEL 1			ENV SEL 2 [28]
 					[ 2] GND				  MIXER C [27] \
-  SN76477_noise_w() [ 3] NOISE EXT OSC		  MIXER B [26]	> SN76477_mixer_w()
-		  noise_res [ 4] RES NOISE OSC		  MIXER A [25] /
+  SN76477_noise_w() [ 3] NOISE EXT OSC		  MIXER A [26]	> SN76477_mixer_w()
+		  noise_res [ 4] RES NOISE OSC		  MIXER B [25] /
 		 filter_res [ 5] NOISE FILTER RES	  O/S RES [24] oneshot_res
 		 filter_cap [ 6] NOISE FILTER CAP	  O/S CAP [23] oneshot_cap
 		  decay_res [ 7] DECAY RES			  VCO SEL [22] SN76477_vco_w()
@@ -92,6 +92,8 @@ void SN76477_set_amplitude_res(int chip, double res);
 void SN76477_set_feedback_res(int chip, double res);
 void SN76477_set_slf_res(int chip, double res);
 void SN76477_set_slf_cap(int chip, double cap);
+void SN76477_set_oneshot_res(int chip, double res);
+void SN76477_set_oneshot_cap(int chip, double cap);
 void SN76477_set_vco_res(int chip, double res);
 void SN76477_set_vco_cap(int chip, double cap);
 void SN76477_set_pitch_voltage(int chip, double voltage);

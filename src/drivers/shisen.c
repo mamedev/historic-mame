@@ -37,7 +37,7 @@ static READ_HANDLER( sichuan2_dsw1_r )
 
 static WRITE_HANDLER( sichuan2_coin_w )
 {
-if (errorlog && (data & 0xf9) != 0x01) fprintf(errorlog,"coin ctrl = %02x\n",data);
+	if ((data & 0xf9) != 0x01) logerror("coin ctrl = %02x\n",data);
 
 	coin_counter_w(0,data & 2);
 	coin_counter_w(1,data & 4);

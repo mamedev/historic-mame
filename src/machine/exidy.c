@@ -151,8 +151,7 @@ WRITE_HANDLER( fax_bank_select_w )
 
 	if ((data & 0x1F)>0x17)
 	{
-		if (errorlog)
-			fprintf(errorlog,"Banking to unpopulated ROM bank %02X!\n",data & 0x1F);
+		logerror("Banking to unpopulated ROM bank %02X!\n",data & 0x1F);
 	}
 }
 

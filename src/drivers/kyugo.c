@@ -26,7 +26,7 @@ Notes:
 
 /* from vidhrdw */
 extern unsigned char *kyugo_videoram;
-extern int kyugo_videoram_size;
+extern size_t kyugo_videoram_size;
 extern unsigned char *kyugo_back_scrollY_lo;
 extern unsigned char *kyugo_back_scrollX;
 WRITE_HANDLER( kyugo_gfxctrl_w );

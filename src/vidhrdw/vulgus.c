@@ -12,7 +12,7 @@
 
 
 unsigned char *vulgus_bgvideoram,*vulgus_bgcolorram;
-int vulgus_bgvideoram_size;
+size_t vulgus_bgvideoram_size;
 unsigned char *vulgus_scrolllow,*vulgus_scrollhigh;
 unsigned char *vulgus_palette_bank;
 static unsigned char *dirtybuffer2;

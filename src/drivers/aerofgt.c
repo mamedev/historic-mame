@@ -1,6 +1,10 @@
 /***************************************************************************
 
-Various Video System games using the C7-01 VS8803 VS8904 VS8905 video chips.
+Various Video System Co. games using the C7-01 VS8803 VS8904 VS8905 video
+chips.
+I'm not sure, but I think 8904/8905 handle sprites and c7-01/8803 tilemaps.
+tail2nos doesn't have the 8904/8905, and indeed it has a different sprite
+system.
 
 Driver by Nicola Salmoria
 
@@ -24,6 +28,9 @@ karatblz  57 63 69 71 1f 00  77 79 7b 7f 1f 00
 turbofrc  57 63 69 71 1f 00  77 79 7b 7f 1f 00
 spinlbrk  57 68 6f 75 ff 01  77 78 7b 7f ff 00
 aerofgtb  4f 5d 63 71 1f 00  6f 70 72 7c 1f 02
+tail2nos  4f 5e 64 71 1f 09  7a 7c 7e 7f 1f 02
+
+I think that bit 1 of register 0d is flip screen.
 
 ***************************************************************************/
 
@@ -35,7 +42,7 @@ aerofgtb  4f 5d 63 71 1f 00  6f 70 72 7c 1f 02
 extern unsigned char *aerofgt_rasterram;
 extern unsigned char *aerofgt_bg1videoram,*aerofgt_bg2videoram;
 extern unsigned char *aerofgt_spriteram1,*aerofgt_spriteram2;
-extern int aerofgt_spriteram1_size,aerofgt_spriteram2_size;
+extern size_t aerofgt_spriteram1_size,aerofgt_spriteram2_size;
 
 READ_HANDLER( aerofgt_rasterram_r );
 WRITE_HANDLER( aerofgt_rasterram_w );
@@ -1035,30 +1042,6 @@ static struct GfxDecodeInfo aerofgt_gfxdecodeinfo[] =
 
 
 
-static struct GfxLayout unkvsys_spritelayout =
-{
-	16,16,	/* 16*16 sprites */
-	4096,	/* 4096 sprites */
-	4,	/* 4 bits per pixel */
-	{ 0, 1, 2, 3 },
-	{ 10*4, 11*4, 8*4, 9*4, 14*4, 15*4, 12*4, 13*4,
-			2*4, 3*4, 0*4, 1*4, 6*4, 7*4, 4*4, 5*4 },
-	{ 0*64, 1*64, 2*64, 3*64, 4*64, 5*64, 6*64, 7*64,
-			8*64, 9*64, 10*64, 11*64, 12*64, 13*64, 14*64, 15*64 },
-	128*8	/* every sprite takes 128 consecutive bytes */
-};
-
-static struct GfxDecodeInfo unkvsys_gfxdecodeinfo[] =
-{
-	{ REGION_GFX1, 0, &pspikes_charlayout,   0, 32 },
-	{ REGION_GFX2, 0, &pspikes_charlayout,   0, 32 },
-	{ REGION_GFX3, 0, &pspikes_spritelayout, 0, 32 },
-	{ REGION_GFX4, 0, &unkvsys_spritelayout, 0, 32 },
-	{ -1 } /* end of array */
-};
-
-
-
 static void irqhandler(int irq)
 {
 	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
@@ -1347,50 +1330,6 @@ static struct MachineDriver machine_driver_aerofgt =
 	}
 };
 
-static struct MachineDriver machine_driver_unkvsys =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_M68000,
-			20000000/2,	/* 10 MHz (?) */
-			aerofgt_readmem,aerofgt_writemem,0,0,
-			m68_level1_irq,1	/* all irq vectors are the same */
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			8000000/2,	/* 4 Mhz ??? */
-			sound_readmem,sound_writemem,aerofgt_sound_readport,aerofgt_sound_writeport,
-			ignore_interrupt,0	/* NMIs are triggered by the main CPU */
-								/* IRQs are triggered by the YM2610 */
-		}
-	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
-	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
-	0,
-
-	/* video hardware */
-	64*8, 32*8, { 0*8, 40*8-1, 0*8, 28*8-1 },
-	unkvsys_gfxdecodeinfo,
-	1024, 1024,
-	0,
-
-	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
-	0,
-	turbofrc_vh_start,
-	0,
-	aerofgt_vh_screenrefresh,
-
-	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
-	{
-		{
-			SOUND_YM2610,
-			&ym2610_interface,
-		}
-	}
-};
-
 
 
 /***************************************************************************
@@ -1465,13 +1404,55 @@ ROM_START( spinlbrk )
 
 	ROM_REGION( 0x100000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ic12",         0x000000, 0x80000, 0xd63fac4e )
-	ROM_LOAD( "ic18",         0x080000, 0x80000, 0x00000000 )	//FIXED BITS (xxxxxxx1xxxxxxxx)
+	ROM_LOAD( "ic18",         0x080000, 0x80000, 0x5a60444b )
 
 	ROM_REGION( 0x200000, REGION_GFX4 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ic14",         0x000000, 0x80000, 0x1befd0f3 )
 	ROM_LOAD( "ic20",         0x080000, 0x80000, 0xc2f84a61 )
 	ROM_LOAD( "ic35",         0x100000, 0x80000, 0xeba8e1a3 )
-	ROM_LOAD( "ic40",         0x180000, 0x80000, 0x00000000 )	//FIXED BITS (11111111)
+	ROM_LOAD( "ic40",         0x180000, 0x80000, 0x5ef5aa7e )
+
+	ROM_REGION( 0x24000, REGION_GFX5 )	/* hardcoded sprite maps */
+	ROM_LOAD_EVEN( "ic19",    0x00000, 0x10000, 0xdb24eeaa )
+	ROM_LOAD_ODD ( "ic13",    0x00000, 0x10000, 0x97025bf4 )
+	/* 20000-23fff empty space, filled in vh_startup */
+
+	ROM_REGION( 0x80000, REGION_SOUND1 ) /* sound samples */
+	ROM_LOAD( "ic166",        0x000000, 0x80000, 0x6e0d063a )
+
+	ROM_REGION( 0x80000, REGION_SOUND2 ) /* sound samples */
+	ROM_LOAD( "ic163",        0x000000, 0x80000, 0xe6621dfb )	//FIRST AND SECOND HALF IDENTICAL
+ROM_END
+
+ROM_START( spinlbru )
+	ROM_REGION( 0x60000, REGION_CPU1 )	/* 68000 code */
+	ROM_LOAD_EVEN( "ic98.u5", 0x00000, 0x10000, 0x3a0f7667 )
+	ROM_LOAD_ODD ( "ic104.u6",0x00000, 0x10000, 0xa0e0af31 )
+	ROM_LOAD_EVEN( "ic93.u4", 0x20000, 0x10000, 0x0cf73029 )
+	ROM_LOAD_ODD ( "ic94.u3", 0x20000, 0x10000, 0x5cf7c426 )
+
+	ROM_REGION( 0x30000, REGION_CPU2 )	/* 64k for the audio CPU + banks */
+	ROM_LOAD( "ic117",        0x00000, 0x08000, 0x625ada41 )
+	ROM_LOAD( "ic118",        0x10000, 0x10000, 0x1025f024 )
+
+	ROM_REGION( 0x100000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ic15",         0x000000, 0x80000, 0xe318cf3a )
+	ROM_LOAD( "ic9",          0x080000, 0x80000, 0xe071f674 )
+
+	ROM_REGION( 0x200000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ic17",         0x000000, 0x80000, 0xa63d5a55 )
+	ROM_LOAD( "ic11",         0x080000, 0x80000, 0x7dcc913d )
+	ROM_LOAD( "ic16",         0x100000, 0x80000, 0x0d84af7f )	//FIRST AND SECOND HALF IDENTICAL
+
+	ROM_REGION( 0x100000, REGION_GFX3 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ic12",         0x000000, 0x80000, 0xd63fac4e )
+	ROM_LOAD( "ic18",         0x080000, 0x80000, 0x5a60444b )
+
+	ROM_REGION( 0x200000, REGION_GFX4 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "ic14",         0x000000, 0x80000, 0x1befd0f3 )
+	ROM_LOAD( "ic20",         0x080000, 0x80000, 0xc2f84a61 )
+	ROM_LOAD( "ic35",         0x100000, 0x80000, 0xeba8e1a3 )
+	ROM_LOAD( "ic40",         0x180000, 0x80000, 0x5ef5aa7e )
 
 	ROM_REGION( 0x24000, REGION_GFX5 )	/* hardcoded sprite maps */
 	ROM_LOAD_EVEN( "ic19",    0x00000, 0x10000, 0xdb24eeaa )
@@ -1507,13 +1488,13 @@ ROM_START( spinlbrj )
 
 	ROM_REGION( 0x100000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ic12",         0x000000, 0x80000, 0xd63fac4e )
-	ROM_LOAD( "ic18",         0x080000, 0x80000, 0x00000000 )	//FIXED BITS (xxxxxxx1xxxxxxxx)
+	ROM_LOAD( "ic18",         0x080000, 0x80000, 0x5a60444b )
 
 	ROM_REGION( 0x200000, REGION_GFX4 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ic14",         0x000000, 0x80000, 0x1befd0f3 )
 	ROM_LOAD( "ic20",         0x080000, 0x80000, 0xc2f84a61 )
 	ROM_LOAD( "ic35",         0x100000, 0x80000, 0xeba8e1a3 )
-	ROM_LOAD( "ic40",         0x180000, 0x80000, 0x00000000 )	//FIXED BITS (11111111)
+	ROM_LOAD( "ic40",         0x180000, 0x80000, 0x5ef5aa7e )
 
 	ROM_REGION( 0x24000, REGION_GFX5 )	/* hardcoded sprite maps */
 	ROM_LOAD_EVEN( "ic19",    0x00000, 0x10000, 0xdb24eeaa )
@@ -1712,48 +1693,16 @@ ROM_START( aerofgtc )
 	ROM_LOAD( "it-19-06",     0x000000, 0x100000, 0xcdbbdb1d )
 ROM_END
 
-ROM_START( unkvsys )
-	ROM_REGION( 0x60000, REGION_CPU1 )	/* 68000 code */
-	ROM_LOAD_EVEN( "v4",           0x00000, 0x10000, 0x1d4240c2 )
-	ROM_LOAD_ODD ( "v7",           0x00000, 0x10000, 0x0fb70066 )
-	ROM_LOAD_EVEN( "v5",           0x20000, 0x10000, 0xa9fe15a1 )	/* not sure */
-	ROM_LOAD_ODD ( "v8",           0x20000, 0x10000, 0x4fb6a43e )	/* not sure */
-	ROM_LOAD_EVEN( "v3",           0x40000, 0x10000, 0xe2e0abad )	/* not sure */
-	ROM_LOAD_ODD ( "v6",           0x40000, 0x10000, 0x069817a7 )	/* not sure */
-
-	ROM_REGION( 0x30000, REGION_CPU2 )	/* 64k for the audio CPU + banks */
-	ROM_LOAD( "v2",           0x00000, 0x08000, 0x920d8920 )
-	ROM_LOAD( "v1",           0x10000, 0x10000, 0xbf35c1a4 )	/* not sure */
-
-	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "a24",          0x000000, 0x80000, 0xb1e9de43 )
-
-	ROM_REGION( 0x040000, REGION_GFX2 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "o1s",          0x000000, 0x40000, 0xe27a8eb4 )
-
-	ROM_REGION( 0x080000, REGION_GFX3 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "oj1",          0x000000, 0x40000, 0x39c36b35 )
-	ROM_LOAD( "oj2",          0x040000, 0x40000, 0x77ccaea2 )
-
-	ROM_REGION( 0x080000, REGION_GFX4 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "a23",          0x000000, 0x80000, 0xd851cf04 )
-
-	ROM_REGION( 0x20000, REGION_SOUND1 ) /* sound samples */
-	ROM_LOAD( "osb",          0x00000, 0x20000, 0xd49ab2f5 )
-ROM_END
-
 
 
 GAMEX( 1991, pspikes,  0,        pspikes,  pspikes,  0, ROT0,   "Video System Co.", "Power Spikes (Korea)", GAME_NO_COCKTAIL )
 GAMEX( 1991, svolly91, pspikes,  pspikes,  pspikes,  0, ROT0,   "Video System Co.", "Super Volley '91 (Japan)", GAME_NO_COCKTAIL )
 GAMEX( 1991, karatblz, 0,        karatblz, karatblz, 0, ROT0,   "Video System Co.", "Karate Blazers (World?)", GAME_NO_COCKTAIL )
 GAMEX( 1991, karatblu, karatblz, karatblz, karatblz, 0, ROT0,   "Video System Co.", "Karate Blazers (US)", GAME_NO_COCKTAIL )
-GAMEX( 1991, spinlbrk, 0,        spinlbrk, spinlbrk, 0, ROT0,   "Video System Co.", "Spinal Breakers (US)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
-GAMEX( 1991, spinlbrj, spinlbrk, spinlbrk, spinlbrk, 0, ROT0,   "Video System Co.", "Spinal Breakers (Japan)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
+GAMEX( 1990, spinlbrk, 0,        spinlbrk, spinlbrk, 0, ROT0,   "V-System Co.", "Spinal Breakers (World)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
+GAMEX( 1990, spinlbru, spinlbrk, spinlbrk, spinlbrk, 0, ROT0,   "V-System Co.", "Spinal Breakers (US)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
+GAMEX( 1990, spinlbrj, spinlbrk, spinlbrk, spinlbrk, 0, ROT0,   "V-System Co.", "Spinal Breakers (Japan)", GAME_IMPERFECT_SOUND | GAME_NO_COCKTAIL )
 GAMEX( 1991, turbofrc, 0,        turbofrc, turbofrc, 0, ROT270, "Video System Co.", "Turbo Force", GAME_NO_COCKTAIL )
 GAMEX( 1992, aerofgt,  0,        aerofgt,  aerofgt,  0, ROT270, "Video System Co.", "Aero Fighters", GAME_NO_COCKTAIL )
 GAMEX( 1992, aerofgtb, aerofgt,  aerofgtb, aerofgtb, 0, ROT270, "Video System Co.", "Aero Fighters (Turbo Force hardware set 1)", GAME_NO_COCKTAIL )
 GAMEX( 1992, aerofgtc, aerofgt,  aerofgtb, aerofgtb, 0, ROT270, "Video System Co.", "Aero Fighters (Turbo Force hardware set 2)", GAME_NO_COCKTAIL )
-
-/* note: this one has a 2608, not a 2610 */
-GAMEX( ????, unkvsys,  0,        unkvsys,  aerofgt,  0, ROT90,  "Video System Co.", "unknown", GAME_NO_COCKTAIL )

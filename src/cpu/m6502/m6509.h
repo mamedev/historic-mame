@@ -65,14 +65,14 @@ extern void m6509_state_load(void *file);
 extern const char *m6509_info(void *context, int regnum);
 extern unsigned m6509_dasm(char *buffer, unsigned pc);
 
-extern int m6509_read_00000(int offset);
-extern int m6509_read_00001(int offset);
+extern READ_HANDLER ( m6509_read_00000 );
+extern READ_HANDLER ( m6509_read_00001 );
 
-extern void m6509_write_00000(int offset, int value);
-extern void m6509_write_00001(int offset, int value);
+extern WRITE_HANDLER ( m6509_write_00000 );
+extern WRITE_HANDLER ( m6509_write_00001 );
 
 #ifdef MAME_DEBUG
-extern unsigned Dasm6509( char *dst, unsigned pc );
+extern unsigned int Dasm6509( char *dst, unsigned pc );
 #endif
 
 #endif /* _M6509_H */

@@ -216,7 +216,139 @@ extern void m6510_state_save(void *file);
 extern void m6510_state_load(void *file);
 extern const char *m6510_info(void *context, int regnum);
 extern unsigned m6510_dasm(char *buffer, unsigned pc);
+
+#ifdef MAME_DEBUG
+extern unsigned int Dasm6510( char *dst, unsigned pc );
 #endif
+
+#endif
+
+#ifdef HAS_M6510T
+#define M6510T_A						M6502_A
+#define M6510T_X						M6502_X
+#define M6510T_Y						M6502_Y
+#define M6510T_S						M6502_S
+#define M6510T_PC						M6502_PC
+#define M6510T_P						M6502_P
+#define M6510T_EA						M6502_EA
+#define M6510T_ZP						M6502_ZP
+#define M6510T_NMI_STATE				M6502_NMI_STATE
+#define M6510T_IRQ_STATE				M6502_IRQ_STATE
+
+#define M6510T_INT_NONE 				M6502_INT_NONE
+#define M6510T_INT_IRQ					M6502_INT_IRQ
+#define M6510T_INT_NMI					M6502_INT_NMI
+
+#define M6510T_NMI_VEC					M6502_NMI_VEC
+#define M6510T_RST_VEC					M6502_RST_VEC
+#define M6510T_IRQ_VEC					M6502_IRQ_VEC
+
+#define m6510t_ICount                   m6502_ICount
+
+#define m6510t_reset m6510_reset
+#define m6510t_exit m6510_exit
+#define m6510t_execute m6510_execute
+#define m6510t_get_context m6510_get_context
+#define m6510t_set_context m6510_set_context
+#define m6510t_get_pc m6510_get_pc
+#define m6510t_set_pc m6510_set_pc
+#define m6510t_get_sp m6510_get_sp
+#define m6510t_set_sp m6510_set_sp
+#define m6510t_get_reg m6510_get_reg
+#define m6510t_set_reg m6510_set_reg
+#define m6510t_set_nmi_line m6510_set_nmi_line
+#define m6510t_set_irq_line m6510_set_irq_line
+#define m6510t_set_irq_callback m6510_set_irq_callback
+#define m6510t_state_save m6510_state_save
+#define m6510t_state_load m6510_state_load
+extern const char *m6510t_info(void *context, int regnum);
+#define m6510t_dasm m6510_dasm
+#endif
+
+#ifdef HAS_M7501
+#define M7501_A 						M6502_A
+#define M7501_X 						M6502_X
+#define M7501_Y 						M6502_Y
+#define M7501_S 						M6502_S
+#define M7501_PC						M6502_PC
+#define M7501_P 						M6502_P
+#define M7501_EA						M6502_EA
+#define M7501_ZP						M6502_ZP
+#define M7501_NMI_STATE 				M6502_NMI_STATE
+#define M7501_IRQ_STATE 				M6502_IRQ_STATE
+
+#define M7501_INT_NONE					M6502_INT_NONE
+#define M7501_INT_IRQ					M6502_INT_IRQ
+#define M7501_INT_NMI					M6502_INT_NMI
+
+#define M7501_NMI_VEC					M6502_NMI_VEC
+#define M7501_RST_VEC					M6502_RST_VEC
+#define M7501_IRQ_VEC					M6502_IRQ_VEC
+
+#define m7501_ICount                    m6502_ICount
+
+#define m7501_reset m6510_reset
+#define m7501_exit m6510_exit
+#define m7501_execute m6510_execute
+#define m7501_get_context m6510_get_context
+#define m7501_set_context m6510_set_context
+#define m7501_get_pc m6510_get_pc
+#define m7501_set_pc m6510_set_pc
+#define m7501_get_sp m6510_get_sp
+#define m7501_set_sp m6510_set_sp
+#define m7501_get_reg m6510_get_reg
+#define m7501_set_reg m6510_set_reg
+#define m7501_set_nmi_line m6510_set_nmi_line
+#define m7501_set_irq_line m6510_set_irq_line
+#define m7501_set_irq_callback m6510_set_irq_callback
+#define m7501_state_save m6510_state_save
+#define m7501_state_load m6510_state_load
+extern const char *m7501_info(void *context, int regnum);
+#define m7501_dasm m6510_dasm
+#endif
+
+#ifdef HAS_M8502
+#define M8502_A 						M6502_A
+#define M8502_X 						M6502_X
+#define M8502_Y 						M6502_Y
+#define M8502_S 						M6502_S
+#define M8502_PC						M6502_PC
+#define M8502_P 						M6502_P
+#define M8502_EA						M6502_EA
+#define M8502_ZP						M6502_ZP
+#define M8502_NMI_STATE 				M6502_NMI_STATE
+#define M8502_IRQ_STATE 				M6502_IRQ_STATE
+
+#define M8502_INT_NONE					M6502_INT_NONE
+#define M8502_INT_IRQ					M6502_INT_IRQ
+#define M8502_INT_NMI					M6502_INT_NMI
+
+#define M8502_NMI_VEC					M6502_NMI_VEC
+#define M8502_RST_VEC					M6502_RST_VEC
+#define M8502_IRQ_VEC					M6502_IRQ_VEC
+
+#define m8502_ICount                    m6502_ICount
+
+#define m8502_reset m6510_reset
+#define m8502_exit m6510_exit
+#define m8502_execute m6510_execute
+#define m8502_get_context m6510_get_context
+#define m8502_set_context m6510_set_context
+#define m8502_get_pc m6510_get_pc
+#define m8502_set_pc m6510_set_pc
+#define m8502_get_sp m6510_get_sp
+#define m8502_set_sp m6510_set_sp
+#define m8502_get_reg m6510_get_reg
+#define m8502_set_reg m6510_set_reg
+#define m8502_set_nmi_line m6510_set_nmi_line
+#define m8502_set_irq_line m6510_set_irq_line
+#define m8502_set_irq_callback m6510_set_irq_callback
+#define m8502_state_save m6510_state_save
+#define m8502_state_load m6510_state_load
+extern const char *m8502_info(void *context, int regnum);
+#define m8502_dasm m6510_dasm
+#endif
+
 
 /****************************************************************************
  * The 2A03 (NES 6502 without decimal mode ADC/SBC)

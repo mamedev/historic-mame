@@ -142,7 +142,7 @@ READ_HANDLER( skydiver_input_3_r )
 
 WRITE_HANDLER( skydiver_nmion_w )
 {
-//	if (errorlog) fprintf (errorlog, "nmi_on: %02x:%02x\n", offset, data);
+//	logerror("nmi_on: %02x:%02x\n", offset, data);
 	skydiver_nmion = offset;
 }
 

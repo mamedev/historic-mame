@@ -55,7 +55,7 @@ write:
 
 extern unsigned char *rallyx_videoram2,*rallyx_colorram2;
 extern unsigned char *rallyx_radarx,*rallyx_radary,*rallyx_radarattr;
-extern int rallyx_radarram_size;
+extern size_t rallyx_radarram_size;
 extern unsigned char *rallyx_scrollx,*rallyx_scrolly;
 WRITE_HANDLER( rallyx_videoram2_w );
 WRITE_HANDLER( rallyx_colorram2_w );

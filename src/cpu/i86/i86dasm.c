@@ -65,6 +65,11 @@ Any comments/updates/bug reports to:
 #ifdef MAME_DEBUG
 #include "host.h"
 
+#include "i86intrf.h"
+#if HAS_I286
+#include "i286intr.h"
+#endif
+
 /* Little endian uint read */
 #define	le_uint8(ptr) (*(UINT8*)ptr)
 INLINE UINT16 le_uint16(const void* ptr) {
@@ -83,10 +88,12 @@ INLINE UINT32 le_uint32(const void* ptr) {
 
 #define fp_segment(dw) ((dw >> 16) & 0xFFFFU)
 #define fp_offset(dw) (dw & 0xFFFFU)
+#define fp_addr(seg, off) ( (seg<<4)+off )
 
 static UINT8 must_do_size;   /* used with size of operand */
 static int wordop;           /* dealing with word or byte operand */
 static int instruction_offset;
+static UINT16 instruction_segment;
 
 static char* ubufs;           /* start of buffer */
 static char* ubufp;           /* last position of buffer */
@@ -98,6 +105,9 @@ static int modrmv;            /* flag for getting modrm byte */
 static int sibv;              /* flag for getting sib byte   */
 static int opsize;            /* just like it says ...       */
 static int addrsize;
+static int addr20bit=0;
+static int addr24bit=0;
+static int addr32bit=0;
 
 /* some defines for extracting instruction bit fields from bytes */
 
@@ -156,6 +166,365 @@ static int addrsize;
 */
 
 /* watch out for aad && aam with odd operands */
+
+static char *op86map1[256] = {
+/* 0 */
+  "add %Eb,%Gb",      "add %Ev,%Gv",     "add %Gb,%Eb",    "add %Gv,%Ev",
+  "add al,%Ib",       "add %eax,%Iv",    "push es",        "pop es",
+  "or %Eb,%Gb",       "or %Ev,%Gv",      "or %Gb,%Eb",     "or %Gv,%Ev",
+  "or al,%Ib",        "or %eax,%Iv",     "push cs",        NULL,
+/* 1 */
+  "adc %Eb,%Gb",      "adc %Ev,%Gv",     "adc %Gb,%Eb",    "adc %Gv,%Ev",
+  "adc al,%Ib",       "adc %eax,%Iv",    "push ss",        "pop ss",
+  "sbb %Eb,%Gb",      "sbb %Ev,%Gv",     "sbb %Gb,%Eb",    "sbb %Gv,%Ev",
+  "sbb al,%Ib",       "sbb %eax,%Iv",    "push ds",        "pop ds",
+/* 2 */
+  "and %Eb,%Gb",      "and %Ev,%Gv",     "and %Gb,%Eb",    "and %Gv,%Ev",
+  "and al,%Ib",       "and %eax,%Iv",    "%pe",            "daa",
+  "sub %Eb,%Gb",      "sub %Ev,%Gv",     "sub %Gb,%Eb",    "sub %Gv,%Ev",
+  "sub al,%Ib",       "sub %eax,%Iv",    "%pc",            "das",
+/* 3 */
+  "xor %Eb,%Gb",      "xor %Ev,%Gv",     "xor %Gb,%Eb",    "xor %Gv,%Ev",
+  "xor al,%Ib",       "xor %eax,%Iv",    "%ps",            "aaa",
+  "cmp %Eb,%Gb",      "cmp %Ev,%Gv",     "cmp %Gb,%Eb",    "cmp %Gv,%Ev",
+  "cmp al,%Ib",       "cmp %eax,%Iv",    "%pd",            "aas",
+/* 4 */
+  "inc %eax",         "inc %ecx",        "inc %edx",       "inc %ebx",
+  "inc %esp",         "inc %ebp",        "inc %esi",       "inc %edi",
+  "dec %eax",         "dec %ecx",        "dec %edx",       "dec %ebx",
+  "dec %esp",         "dec %ebp",        "dec %esi",       "dec %edi",
+/* 5 */
+  "push %eax",        "push %ecx",       "push %edx",      "push %ebx",
+  "push %esp",        "push %ebp",       "push %esi",      "push %edi",
+  "pop %eax",         "pop %ecx",        "pop %edx",       "pop %ebx",
+  "pop %esp",         "pop %ebp",        "pop %esi",       "pop %edi",
+/* 6 */
+  NULL,				  NULL,		         NULL,			   NULL,
+  NULL,               NULL,              NULL,             NULL,
+  NULL,               NULL,              NULL,             NULL,
+  NULL,               NULL,              NULL,             NULL,
+/* 7 */
+  "jo %Jb",           "jno %Jb",         "jc %Jb",         "jnc %Jb",
+  "je %Jb",           "jne %Jb",         "jbe %Jb",        "ja %Jb",
+  "js %Jb",           "jns %Jb",         "jpe %Jb",        "jpo %Jb",
+  "jl %Jb",           "jge %Jb",         "jle %Jb",        "jg %Jb",
+/* 8 */
+/*  "%g0 %Eb,%Ib",      "%g0 %Ev,%Iv",     "%g0 %Ev,%Ib",    "%g0 %Ev,%Ib", */
+  "%g0 %Eb,%Ib",      "%g0 %Ev,%Iv",     "%g0 %Ev,%Ix",    "%g0 %Ev,%Ix",
+  "test %Eb,%Gb",     "test %Ev,%Gv",    "xchg %Eb,%Gb",   "xchg %Ev,%Gv",
+  "mov %Eb,%Gb",      "mov %Ev,%Gv",     "mov %Gb,%Eb",    "mov %Gv,%Ev",
+  "mov %Ew,%Sw",      "lea %Gv,%M ",     "mov %Sw,%Ew",    "pop %Ev",
+/* 9 */
+  "nop",              "xchg %ecx,%eax",  "xchg %edx,%eax", "xchg %ebx,%eax",
+  "xchg %esp,%eax",   "xchg %ebp,%eax",  "xchg %esi,%eax", "xchg %edi,%eax",
+  "cbw",              "cwd",             "call %Ap",       "fwait",
+  "pushf%d ",         "popf%d ",         "sahf",           "lahf",
+/* a */
+  "mov al,%Oc",       "mov %eax,%Ov",    "mov %Oc,al",     "mov %Ov,%eax",
+  "%P movsb",         "%P movs%w",       "%P cmpsb",       "%P cmps%w ",
+  "test al,%Ib",      "test %eax,%Iv",   "%P stosb",       "%P stos%w ",
+  "%P lodsb",         "%P lods%w ",      "%P scasb",       "%P scas%w ",
+/* b */
+  "mov al,%Ib",       "mov cl,%Ib",      "mov dl,%Ib",     "mov bl,%Ib",
+  "mov ah,%Ib",       "mov ch,%Ib",      "mov dh,%Ib",     "mov bh,%Ib",
+  "mov %eax,%Iv",     "mov %ecx,%Iv",    "mov %edx,%Iv",   "mov %ebx,%Iv",
+  "mov %esp,%Iv",     "mov %ebp,%Iv",    "mov %esi,%Iv",   "mov %edi,%Iv",
+/* c */
+  NULL,               NULL,              "ret %Iw",        "ret",
+  "les %Gv,%Mp",      "lds %Gv,%Mp",     "mov %Eb,%Ib",    "mov %Ev,%Iv",
+  NULL,               NULL,              "retf %Iw",       "retf",
+  "int 03",           "int %Ib",         "into",           "iret",
+/* d */
+  "%g1 %Eb,1",        "%g1 %Ev,1",       "%g1 %Eb,cl",     "%g1 %Ev,cl",
+  "aam ; %Ib",        "aad ; %Ib",       NULL,             "xlat",
+#if 0
+  "esc 0,%Ib",        "esc 1,%Ib",       "esc 2,%Ib",      "esc 3,%Ib",
+  "esc 4,%Ib",        "esc 5,%Ib",       "esc 6,%Ib",      "esc 7,%Ib",
+#else
+  "%f0",              "%f1",             "%f2",            "%f3",
+  "%f4",              "%f5",             "%f6",            "%f7",
+#endif
+/* e */
+  "loopne %Jb",       "loope %Jb",       "loop %Jb",       "j%j cxz %Jb",
+  "in al,%Ib",        "in %eax,%Ib",     "out %Ib,al",     "out %Ib,%eax",
+  "call %Jv",         "jmp %Jv",         "jmp %Ap",        "jmp %Ks%Jb",
+  "in al,dx",         "in %eax,dx",      "out dx,al",      "out dx,%eax",
+/* f */
+  "lock %p ",         0,                 "repne %p ",      "repe %p ",
+  "hlt",              "cmc",             "%g2",            "%g2",
+  "clc",              "stc",             "cli",            "sti",
+  "cld",              "std",             "%g3",            "%g4"
+};
+
+static char *op186map1[256] = {
+/* 0 */
+  "add %Eb,%Gb",      "add %Ev,%Gv",     "add %Gb,%Eb",    "add %Gv,%Ev",
+  "add al,%Ib",       "add %eax,%Iv",    "push es",        "pop es",
+  "or %Eb,%Gb",       "or %Ev,%Gv",      "or %Gb,%Eb",     "or %Gv,%Ev",
+  "or al,%Ib",        "or %eax,%Iv",     "push cs",        NULL,
+/* 1 */
+  "adc %Eb,%Gb",      "adc %Ev,%Gv",     "adc %Gb,%Eb",    "adc %Gv,%Ev",
+  "adc al,%Ib",       "adc %eax,%Iv",    "push ss",        "pop ss",
+  "sbb %Eb,%Gb",      "sbb %Ev,%Gv",     "sbb %Gb,%Eb",    "sbb %Gv,%Ev",
+  "sbb al,%Ib",       "sbb %eax,%Iv",    "push ds",        "pop ds",
+/* 2 */
+  "and %Eb,%Gb",      "and %Ev,%Gv",     "and %Gb,%Eb",    "and %Gv,%Ev",
+  "and al,%Ib",       "and %eax,%Iv",    "%pe",            "daa",
+  "sub %Eb,%Gb",      "sub %Ev,%Gv",     "sub %Gb,%Eb",    "sub %Gv,%Ev",
+  "sub al,%Ib",       "sub %eax,%Iv",    "%pc",            "das",
+/* 3 */
+  "xor %Eb,%Gb",      "xor %Ev,%Gv",     "xor %Gb,%Eb",    "xor %Gv,%Ev",
+  "xor al,%Ib",       "xor %eax,%Iv",    "%ps",            "aaa",
+  "cmp %Eb,%Gb",      "cmp %Ev,%Gv",     "cmp %Gb,%Eb",    "cmp %Gv,%Ev",
+  "cmp al,%Ib",       "cmp %eax,%Iv",    "%pd",            "aas",
+/* 4 */
+  "inc %eax",         "inc %ecx",        "inc %edx",       "inc %ebx",
+  "inc %esp",         "inc %ebp",        "inc %esi",       "inc %edi",
+  "dec %eax",         "dec %ecx",        "dec %edx",       "dec %ebx",
+  "dec %esp",         "dec %ebp",        "dec %esi",       "dec %edi",
+/* 5 */
+  "push %eax",        "push %ecx",       "push %edx",      "push %ebx",
+  "push %esp",        "push %ebp",       "push %esi",      "push %edi",
+  "pop %eax",         "pop %ecx",        "pop %edx",       "pop %ebx",
+  "pop %esp",         "pop %ebp",        "pop %esi",       "pop %edi",
+/* 6 */
+  "pusha%d ",         "popa%d ",         "bound %Gv,%Ma",  NULL,
+  NULL,               NULL,              NULL,             NULL,
+  "push %Iv",         "imul %Gv,%Ev,%Iv","push %Ix",       "imul %Gv,%Ev,%Ib",
+  "insb",             "ins%ew",          "outsb",          "outs%ew",
+/* 7 */
+  "jo %Jb",           "jno %Jb",         "jc %Jb",         "jnc %Jb",
+  "je %Jb",           "jne %Jb",         "jbe %Jb",        "ja %Jb",
+  "js %Jb",           "jns %Jb",         "jpe %Jb",        "jpo %Jb",
+  "jl %Jb",           "jge %Jb",         "jle %Jb",        "jg %Jb",
+/* 8 */
+/*  "%g0 %Eb,%Ib",      "%g0 %Ev,%Iv",     "%g0 %Ev,%Ib",    "%g0 %Ev,%Ib", */
+  "%g0 %Eb,%Ib",      "%g0 %Ev,%Iv",     "%g0 %Ev,%Ix",    "%g0 %Ev,%Ix",
+  "test %Eb,%Gb",     "test %Ev,%Gv",    "xchg %Eb,%Gb",   "xchg %Ev,%Gv",
+  "mov %Eb,%Gb",      "mov %Ev,%Gv",     "mov %Gb,%Eb",    "mov %Gv,%Ev",
+  "mov %Ew,%Sw",      "lea %Gv,%M ",     "mov %Sw,%Ew",    "pop %Ev",
+/* 9 */
+  "nop",              "xchg %ecx,%eax",  "xchg %edx,%eax", "xchg %ebx,%eax",
+  "xchg %esp,%eax",   "xchg %ebp,%eax",  "xchg %esi,%eax", "xchg %edi,%eax",
+  "cbw",              "cwd",             "call %Ap",       "fwait",
+  "pushf%d ",         "popf%d ",         "sahf",           "lahf",
+/* a */
+  "mov al,%Oc",       "mov %eax,%Ov",    "mov %Oc,al",     "mov %Ov,%eax",
+  "%P movsb",         "%P movs%w",       "%P cmpsb",       "%P cmps%w ",
+  "test al,%Ib",      "test %eax,%Iv",   "%P stosb",       "%P stos%w ",
+  "%P lodsb",         "%P lods%w ",      "%P scasb",       "%P scas%w ",
+/* b */
+  "mov al,%Ib",       "mov cl,%Ib",      "mov dl,%Ib",     "mov bl,%Ib",
+  "mov ah,%Ib",       "mov ch,%Ib",      "mov dh,%Ib",     "mov bh,%Ib",
+  "mov %eax,%Iv",     "mov %ecx,%Iv",    "mov %edx,%Iv",   "mov %ebx,%Iv",
+  "mov %esp,%Iv",     "mov %ebp,%Iv",    "mov %esi,%Iv",   "mov %edi,%Iv",
+/* c */
+  "%g1 %Eb,%Ib",      "%g1 %Ev,%Ib",     "ret %Iw",        "ret",
+  "les %Gv,%Mp",      "lds %Gv,%Mp",     "mov %Eb,%Ib",    "mov %Ev,%Iv",
+  "enter %Iw,%Ib",    "leave",           "retf %Iw",       "retf",
+  "int 03",           "int %Ib",         "into",           "iret",
+/* d */
+  "%g1 %Eb,1",        "%g1 %Ev,1",       "%g1 %Eb,cl",     "%g1 %Ev,cl",
+  "aam ; %Ib",        "aad ; %Ib",       NULL,             "xlat",
+#if 0
+  "esc 0,%Ib",        "esc 1,%Ib",       "esc 2,%Ib",      "esc 3,%Ib",
+  "esc 4,%Ib",        "esc 5,%Ib",       "esc 6,%Ib",      "esc 7,%Ib",
+#else
+  "%f0",              "%f1",             "%f2",            "%f3",
+  "%f4",              "%f5",             "%f6",            "%f7",
+#endif
+/* e */
+  "loopne %Jb",       "loope %Jb",       "loop %Jb",       "j%j cxz %Jb",
+  "in al,%Ib",        "in %eax,%Ib",     "out %Ib,al",     "out %Ib,%eax",
+  "call %Jv",         "jmp %Jv",         "jmp %Ap",        "jmp %Ks%Jb",
+  "in al,dx",         "in %eax,dx",      "out dx,al",      "out dx,%eax",
+/* f */
+  "lock %p ",         0,                 "repne %p ",      "repe %p ",
+  "hlt",              "cmc",             "%g2",            "%g2",
+  "clc",              "stc",             "cli",            "sti",
+  "cld",              "std",             "%g3",            "%g4"
+};
+
+static char *opv30map1[256] = {
+/* 0 */
+  "add %Eb,%Gb",      "add %Ev,%Gv",     "add %Gb,%Eb",    "add %Gv,%Ev",
+  "add al,%Ib",       "add %eax,%Iv",    "push es",        "pop es",
+  "or %Eb,%Gb",       "or %Ev,%Gv",      "or %Gb,%Eb",     "or %Gv,%Ev",
+  "or al,%Ib",        "or %eax,%Iv",     "push cs",        "%2"/*?*/,
+/* 1 */
+  "adc %Eb,%Gb",      "adc %Ev,%Gv",     "adc %Gb,%Eb",    "adc %Gv,%Ev",
+  "adc al,%Ib",       "adc %eax,%Iv",    "push ss",        "pop ss",
+  "sbb %Eb,%Gb",      "sbb %Ev,%Gv",     "sbb %Gb,%Eb",    "sbb %Gv,%Ev",
+  "sbb al,%Ib",       "sbb %eax,%Iv",    "push ds",        "pop ds",
+/* 2 */
+  "and %Eb,%Gb",      "and %Ev,%Gv",     "and %Gb,%Eb",    "and %Gv,%Ev",
+  "and al,%Ib",       "and %eax,%Iv",    "%pe",            "daa",
+  "sub %Eb,%Gb",      "sub %Ev,%Gv",     "sub %Gb,%Eb",    "sub %Gv,%Ev",
+  "sub al,%Ib",       "sub %eax,%Iv",    "%pc",            "das",
+/* 3 */
+  "xor %Eb,%Gb",      "xor %Ev,%Gv",     "xor %Gb,%Eb",    "xor %Gv,%Ev",
+  "xor al,%Ib",       "xor %eax,%Iv",    "%ps",            "aaa",
+  "cmp %Eb,%Gb",      "cmp %Ev,%Gv",     "cmp %Gb,%Eb",    "cmp %Gv,%Ev",
+  "cmp al,%Ib",       "cmp %eax,%Iv",    "%pd",            "aas",
+/* 4 */
+  "inc %eax",         "inc %ecx",        "inc %edx",       "inc %ebx",
+  "inc %esp",         "inc %ebp",        "inc %esi",       "inc %edi",
+  "dec %eax",         "dec %ecx",        "dec %edx",       "dec %ebx",
+  "dec %esp",         "dec %ebp",        "dec %esi",       "dec %edi",
+/* 5 */
+  "push %eax",        "push %ecx",       "push %edx",      "push %ebx",
+  "push %esp",        "push %ebp",       "push %esi",      "push %edi",
+  "pop %eax",         "pop %ecx",        "pop %edx",       "pop %ebx",
+  "pop %esp",         "pop %ebp",        "pop %esi",       "pop %edi",
+/* 6 */
+  "pusha%d ",         "popa%d ",         "bound %Gv,%Ma",  NULL,
+  "repnc %p",         "repc %p",         NULL,             NULL,
+  "push %Iv",         "imul %Gv,%Ev,%Iv","push %Ix",       "imul %Gv,%Ev,%Ib",
+  "insb",             "ins%ew",          "outsb",          "outs%ew",
+/* 7 */
+  "jo %Jb",           "jno %Jb",         "jc %Jb",         "jnc %Jb",
+  "je %Jb",           "jne %Jb",         "jbe %Jb",        "ja %Jb",
+  "js %Jb",           "jns %Jb",         "jpe %Jb",        "jpo %Jb",
+  "jl %Jb",           "jge %Jb",         "jle %Jb",        "jg %Jb",
+/* 8 */
+/*  "%g0 %Eb,%Ib",      "%g0 %Ev,%Iv",     "%g0 %Ev,%Ib",    "%g0 %Ev,%Ib", */
+  "%g0 %Eb,%Ib",      "%g0 %Ev,%Iv",     "%g0 %Ev,%Ix",    "%g0 %Ev,%Ix",
+  "test %Eb,%Gb",     "test %Ev,%Gv",    "xchg %Eb,%Gb",   "xchg %Ev,%Gv",
+  "mov %Eb,%Gb",      "mov %Ev,%Gv",     "mov %Gb,%Eb",    "mov %Gv,%Ev",
+  "mov %Ew,%Sw",      "lea %Gv,%M ",     "mov %Sw,%Ew",    "pop %Ev",
+/* 9 */
+  "nop",              "xchg %ecx,%eax",  "xchg %edx,%eax", "xchg %ebx,%eax",
+  "xchg %esp,%eax",   "xchg %ebp,%eax",  "xchg %esi,%eax", "xchg %edi,%eax",
+  "cbw",              "cwd",             "call %Ap",       "fwait",
+  "pushf%d ",         "popf%d ",         "sahf",           "lahf",
+/* a */
+  "mov al,%Oc",       "mov %eax,%Ov",    "mov %Oc,al",     "mov %Ov,%eax",
+  "%P movsb",         "%P movs%w",       "%P cmpsb",       "%P cmps%w ",
+  "test al,%Ib",      "test %eax,%Iv",   "%P stosb",       "%P stos%w ",
+  "%P lodsb",         "%P lods%w ",      "%P scasb",       "%P scas%w ",
+/* b */
+  "mov al,%Ib",       "mov cl,%Ib",      "mov dl,%Ib",     "mov bl,%Ib",
+  "mov ah,%Ib",       "mov ch,%Ib",      "mov dh,%Ib",     "mov bh,%Ib",
+  "mov %eax,%Iv",     "mov %ecx,%Iv",    "mov %edx,%Iv",   "mov %ebx,%Iv",
+  "mov %esp,%Iv",     "mov %ebp,%Iv",    "mov %esi,%Iv",   "mov %edi,%Iv",
+/* c */
+  "%g1 %Eb,%Ib",      "%g1 %Ev,%Ib",     "ret %Iw",        "ret",
+  "les %Gv,%Mp",      "lds %Gv,%Mp",     "mov %Eb,%Ib",    "mov %Ev,%Iv",
+  "enter %Iw,%Ib",    "leave",           "retf %Iw",       "retf",
+  "int 03",           "int %Ib",         "into",           "iret",
+/* d */
+  "%g1 %Eb,1",        "%g1 %Ev,1",       "%g1 %Eb,cl",     "%g1 %Ev,cl",
+  "aam ; %Ib",        "aad ; %Ib",       NULL,             "xlat",
+#if 0
+  "esc 0,%Ib",        "esc 1,%Ib",       "esc 2,%Ib",      "esc 3,%Ib",
+  "esc 4,%Ib",        "esc 5,%Ib",       "esc 6,%Ib",      "esc 7,%Ib",
+#else
+  "%f0",              "%f1",             "%f2",            "%f3",
+  "%f4",              "%f5",             "%f6",            "%f7",
+#endif
+/* e */
+  "loopne %Jb",       "loope %Jb",       "loop %Jb",       "j%j cxz %Jb",
+  "in al,%Ib",        "in %eax,%Ib",     "out %Ib,al",     "out %Ib,%eax",
+  "call %Jv",         "jmp %Jv",         "jmp %Ap",        "jmp %Ks%Jb",
+  "in al,dx",         "in %eax,dx",      "out dx,al",      "out dx,%eax",
+/* f */
+  "lock %p ",         0,                 "repne %p ",      "repe %p ",
+  "hlt",              "cmc",             "%g2",            "%g2",
+  "clc",              "stc",             "cli",            "sti",
+  "cld",              "std",             "%g3",            "%g4"
+};
+
+
+#if HAS_I286
+static char *op286map1[256] = {
+/* 0 */
+  "add %Eb,%Gb",      "add %Ev,%Gv",     "add %Gb,%Eb",    "add %Gv,%Ev",
+  "add al,%Ib",       "add %eax,%Iv",    "push es",        "pop es",
+  "or %Eb,%Gb",       "or %Ev,%Gv",      "or %Gb,%Eb",     "or %Gv,%Ev",
+  "or al,%Ib",        "or %eax,%Iv",     "push cs",        NULL,
+/* 1 */
+  "adc %Eb,%Gb",      "adc %Ev,%Gv",     "adc %Gb,%Eb",    "adc %Gv,%Ev",
+  "adc al,%Ib",       "adc %eax,%Iv",    "push ss",        "pop ss",
+  "sbb %Eb,%Gb",      "sbb %Ev,%Gv",     "sbb %Gb,%Eb",    "sbb %Gv,%Ev",
+  "sbb al,%Ib",       "sbb %eax,%Iv",    "push ds",        "pop ds",
+/* 2 */
+  "and %Eb,%Gb",      "and %Ev,%Gv",     "and %Gb,%Eb",    "and %Gv,%Ev",
+  "and al,%Ib",       "and %eax,%Iv",    "%pe",            "daa",
+  "sub %Eb,%Gb",      "sub %Ev,%Gv",     "sub %Gb,%Eb",    "sub %Gv,%Ev",
+  "sub al,%Ib",       "sub %eax,%Iv",    "%pc",            "das",
+/* 3 */
+  "xor %Eb,%Gb",      "xor %Ev,%Gv",     "xor %Gb,%Eb",    "xor %Gv,%Ev",
+  "xor al,%Ib",       "xor %eax,%Iv",    "%ps",            "aaa",
+  "cmp %Eb,%Gb",      "cmp %Ev,%Gv",     "cmp %Gb,%Eb",    "cmp %Gv,%Ev",
+  "cmp al,%Ib",       "cmp %eax,%Iv",    "%pd",            "aas",
+/* 4 */
+  "inc %eax",         "inc %ecx",        "inc %edx",       "inc %ebx",
+  "inc %esp",         "inc %ebp",        "inc %esi",       "inc %edi",
+  "dec %eax",         "dec %ecx",        "dec %edx",       "dec %ebx",
+  "dec %esp",         "dec %ebp",        "dec %esi",       "dec %edi",
+/* 5 */
+  "push %eax",        "push %ecx",       "push %edx",      "push %ebx",
+  "push %esp",        "push %ebp",       "push %esi",      "push %edi",
+  "pop %eax",         "pop %ecx",        "pop %edx",       "pop %ebx",
+  "pop %esp",         "pop %ebp",        "pop %esi",       "pop %edi",
+/* 6 */
+  "pusha%d ",         "popa%d ",         "bound %Gv,%Ma",  NULL,
+  NULL,               NULL,              NULL,             NULL,
+  "push %Iv",         "imul %Gv,%Ev,%Iv","push %Ix",       "imul %Gv,%Ev,%Ib",
+  "insb",             "ins%ew",          "outsb",          "outs%ew",
+/* 7 */
+  "jo %Jb",           "jno %Jb",         "jc %Jb",         "jnc %Jb",
+  "je %Jb",           "jne %Jb",         "jbe %Jb",        "ja %Jb",
+  "js %Jb",           "jns %Jb",         "jpe %Jb",        "jpo %Jb",
+  "jl %Jb",           "jge %Jb",         "jle %Jb",        "jg %Jb",
+/* 8 */
+/*  "%g0 %Eb,%Ib",      "%g0 %Ev,%Iv",     "%g0 %Ev,%Ib",    "%g0 %Ev,%Ib", */
+  "%g0 %Eb,%Ib",      "%g0 %Ev,%Iv",     "%g0 %Ev,%Ix",    "%g0 %Ev,%Ix",
+  "test %Eb,%Gb",     "test %Ev,%Gv",    "xchg %Eb,%Gb",   "xchg %Ev,%Gv",
+  "mov %Eb,%Gb",      "mov %Ev,%Gv",     "mov %Gb,%Eb",    "mov %Gv,%Ev",
+  "mov %Ew,%Sw",      "lea %Gv,%M ",     "mov %Sw,%Ew",    "pop %Ev",
+/* 9 */
+  "nop",              "xchg %ecx,%eax",  "xchg %edx,%eax", "xchg %ebx,%eax",
+  "xchg %esp,%eax",   "xchg %ebp,%eax",  "xchg %esi,%eax", "xchg %edi,%eax",
+  "cbw",              "cwd",             "call %Ap",       "fwait",
+  "pushf%d ",         "popf%d ",         "sahf",           "lahf",
+/* a */
+  "mov al,%Oc",       "mov %eax,%Ov",    "mov %Oc,al",     "mov %Ov,%eax",
+  "%P movsb",         "%P movs%w",       "%P cmpsb",       "%P cmps%w ",
+  "test al,%Ib",      "test %eax,%Iv",   "%P stosb",       "%P stos%w ",
+  "%P lodsb",         "%P lods%w ",      "%P scasb",       "%P scas%w ",
+/* b */
+  "mov al,%Ib",       "mov cl,%Ib",      "mov dl,%Ib",     "mov bl,%Ib",
+  "mov ah,%Ib",       "mov ch,%Ib",      "mov dh,%Ib",     "mov bh,%Ib",
+  "mov %eax,%Iv",     "mov %ecx,%Iv",    "mov %edx,%Iv",   "mov %ebx,%Iv",
+  "mov %esp,%Iv",     "mov %ebp,%Iv",    "mov %esi,%Iv",   "mov %edi,%Iv",
+/* c */
+  "%g1 %Eb,%Ib",      "%g1 %Ev,%Ib",     "ret %Iw",        "ret",
+  "les %Gv,%Mp",      "lds %Gv,%Mp",     "mov %Eb,%Ib",    "mov %Ev,%Iv",
+  "enter %Iw,%Ib",    "leave",           "retf %Iw",       "retf",
+  "int 03",           "int %Ib",         "into",           "iret",
+/* d */
+  "%g1 %Eb,1",        "%g1 %Ev,1",       "%g1 %Eb,cl",     "%g1 %Ev,cl",
+  "aam ; %Ib",        "aad ; %Ib",       NULL,             "xlat",
+#if 0
+  "esc 0,%Ib",        "esc 1,%Ib",       "esc 2,%Ib",      "esc 3,%Ib",
+  "esc 4,%Ib",        "esc 5,%Ib",       "esc 6,%Ib",      "esc 7,%Ib",
+#else
+  "%f0",              "%f1",             "%f2",            "%f3",
+  "%f4",              "%f5",             "%f6",            "%f7",
+#endif
+/* e */
+  "loopne %Jb",       "loope %Jb",       "loop %Jb",       "j%j cxz %Jb",
+  "in al,%Ib",        "in %eax,%Ib",     "out %Ib,al",     "out %Ib,%eax",
+  "call %Jv",         "jmp %Jv",         "jmp %Ap",        "jmp %Ks%Jb",
+  "in al,dx",         "in %eax,dx",      "out dx,al",      "out dx,%eax",
+/* f */
+  "lock %p ",         0,                 "repne %p ",      "repe %p ",
+  "hlt",              "cmc",             "%g2",            "%g2",
+  "clc",              "stc",             "cli",            "sti",
+  "cld",              "std",             "%g3",            "%g4"
+};
+#endif
 
 static char *opmap1[256] = {
 /* 0 */
@@ -246,7 +615,6 @@ static char *opmap1[256] = {
   "cld",              "std",             "%g3",            "%g4"
 };
 
-
 static char *second[] = {
 /* 0 */
   "%g5",              "%g6",             "lar %Gv,%Ew",    "lsl %Gv,%Ew",
@@ -322,7 +690,7 @@ static char *groups[][8] = {   /* group 0 is group 3 for %Ev set */
   { "rol",            "ror",             "rcl",            "rcr",
     "shl",            "shr",             "shl",            "sar"           },
 /* 2 */  /* v   v*/
-  { "test %Eq,%Iq",   "test %Eq,%Iq",    "not %Ev",        "neg %Ev",
+  { "test %Eq,%Iq",   "test %Eq,%Iq",    "not %Ec"/*"not %Ev"*/,        "neg %Ev",
     "mul %Ec",        "imul %Ec",        "div %Ec",        "idiv %Ec" },
 /* 3 */
   { "inc %Eb",        "dec %Eb",         0,                0,
@@ -414,10 +782,21 @@ static char *addr_to_hex(UINT32 addr, int splitup) {
     else
       sprintf(buffer, "%04X:%04X", (unsigned)fp_segment(addr), (unsigned)fp_offset(addr) );
   } else {
+#if 0
+	  /* Pet outcommented, reducing address size to 4
+		 when segment is 0 or 0xffff */
     if (fp_segment(addr)==0 || fp_segment(addr)==0xffff) /* 'coz of wraparound */
       sprintf(buffer, "%04X", (unsigned)fp_offset(addr) );
     else
-      sprintf(buffer, "%08lX", (unsigned long)addr );
+#endif
+
+		if (addr20bit) {
+			sprintf(buffer, "%05X", addr&0xfffff );
+		} else if (addr24bit) {
+			sprintf(buffer, "%06X", addr&0xffffff );
+		} else if (addr32bit) {
+			sprintf(buffer, "%08X", addr );
+		}
   }
 
   return buffer;
@@ -570,11 +949,11 @@ static void outhex(char subtype, int extend, int optional, int defsize, int sign
       } else
         signchar = '+';
       if (delta || !optional)
-		uprintf("%c$%0*lX", (char)signchar, (int)(extend), (long)delta);
+		uprintf("%c%0*lX", (char)signchar, (int)(extend), (long)delta);
     } else {
       if (extend==2)
         delta = (UINT16)delta;
-	  uprintf("$%0.*lX", (int)(2*extend), (long)delta );
+	  uprintf("%0.*lX", (int)(2*extend), (long)delta );
     }
     return;
   }
@@ -591,9 +970,9 @@ static void outhex(char subtype, int extend, int optional, int defsize, int sign
        } else
          signchar = '+';
        if (sign)
-		 uprintf("%c$%02lX", (char)signchar, delta & 0xFFL);
+		 uprintf("%c%02lX", (char)signchar, delta & 0xFFL);
        else
-		 uprintf("$%02lX", delta & 0xFFL);
+		 uprintf("%02lX", delta & 0xFFL);
        break;
 
   case 2:
@@ -603,9 +982,9 @@ static void outhex(char subtype, int extend, int optional, int defsize, int sign
        } else
          signchar = '+';
        if (sign)
-		 uprintf("%c$%04lX", (char)signchar, delta & 0xFFFFL);
+		 uprintf("%c%04lX", (char)signchar, delta & 0xFFFFL);
        else
-		 uprintf("$%04lX", delta & 0xFFFFL);
+		 uprintf("%04lX", delta & 0xFFFFL);
        break;
 
   case 4:
@@ -615,9 +994,9 @@ static void outhex(char subtype, int extend, int optional, int defsize, int sign
        } else
          signchar = '+';
        if (sign)
-		 uprintf("%c$%08lX", (char)signchar, delta & 0xFFFFFFFFL);
+		 uprintf("%c%08lX", (char)signchar, delta & 0xFFFFFFFFL);
        else
-		 uprintf("$%08lX", delta & 0xFFFFFFFFL);
+		 uprintf("%08lX", delta & 0xFFFFFFFFL);
        break;
   }
 }
@@ -770,8 +1149,8 @@ static void floating_point(int e1)
 {
   int esc = e1*8 + REG(modrm());
 
-  if (MOD(modrm()) == 3) {
-    if (fspecial[esc]) {
+  if ((MOD(modrm()) == 3)&&fspecial[esc]) {
+    if (fspecial[esc][0]) {
       if (fspecial[esc][0][0] == '*') {
         ua_str(fspecial[esc][0]+1);
       } else {
@@ -794,7 +1173,7 @@ static void floating_point(int e1)
 static void percent(char type, char subtype)
 {
   INT32 vofs = 0;
-  char *name;
+  char *name=NULL;
   int extend = (addrsize == 32) ? 4 : 2;
   UINT8 c;
 
@@ -833,21 +1212,29 @@ static void percent(char type, char subtype)
        switch (bytes(subtype)) {              /* sizeof offset value */
        case 1:
             vofs = (INT8)getbyte();
+			name = addr_to_hex(vofs+instruction_offset,0);
             break;
        case 2:
             vofs = getbyte();
             vofs += getbyte()<<8;
             vofs = (INT16)vofs;
+			name = addr_to_hex(vofs+instruction_offset,0);
             break;
+#if 0
+			/* i386 */
        case 4:
             vofs = (UINT32)getbyte();           /* yuk! */
             vofs |= (UINT32)getbyte() << 8;
             vofs |= (UINT32)getbyte() << 16;
             vofs |= (UINT32)getbyte() << 24;
+			name = addr_to_hex(vofs+instruction_offset,1);
             break;
+#endif
        }
-       name = addr_to_hex(vofs+instruction_offset,1);
-	   uprintf("$%s ($%+d)", name, vofs);
+	   if (vofs<0)
+		   uprintf("%s ($-%x)", name, -vofs);
+	   else
+		   uprintf("%s ($+%x)", name, vofs);
        break;
 
   case 'K':
@@ -1035,6 +1422,7 @@ unsigned DasmI86(char* buffer, unsigned pc)
   	unsigned c;
 
 	instruction_offset = pc;
+	instruction_segment = i86_get_reg(I86_CS);
 
 	/* input buffer */
 	getbyte_map = &OP_ROM[pc];
@@ -1044,6 +1432,163 @@ unsigned DasmI86(char* buffer, unsigned pc)
 	ubufs = buffer;
 	ubufp = buffer;
 	first_space = 1;
+
+	addr20bit=1; addr24bit=addr32bit=0;
+
+	prefix = 0;
+	modrmv = sibv = -1;     /* set modrm and sib flags */
+	opsize = addrsize = 16;
+	c = getbyte();
+	wordop = c & 1;
+	must_do_size = 1;
+	invalid_opcode = 0;
+	ua_str(op86map1[c]);
+
+  	if (invalid_opcode) {
+		/* restart output buffer */
+		ubufp = buffer;
+		/* invalid instruction, use db xx */
+    		uprintf("db %02X", (unsigned)c);
+		return 1;
+	}
+
+	return instruction_offset-pc;
+}
+
+unsigned DasmI186(char* buffer, unsigned pc)
+{
+  	unsigned c;
+
+	instruction_offset = pc;
+	instruction_segment = i86_get_reg(I86_CS);
+
+	/* input buffer */
+	getbyte_map = &OP_ROM[pc];
+	getbyte_mac = 0;
+
+	/* output buffer */
+	ubufs = buffer;
+	ubufp = buffer;
+	first_space = 1;
+
+	addr20bit=1; addr24bit=addr32bit=0;
+
+	prefix = 0;
+	modrmv = sibv = -1;     /* set modrm and sib flags */
+	opsize = addrsize = 16;
+	c = getbyte();
+	wordop = c & 1;
+	must_do_size = 1;
+	invalid_opcode = 0;
+	ua_str(op186map1[c]);
+
+  	if (invalid_opcode) {
+		/* restart output buffer */
+		ubufp = buffer;
+		/* invalid instruction, use db xx */
+    		uprintf("db %02X", (unsigned)c);
+		return 1;
+	}
+
+	return instruction_offset-pc;
+}
+
+unsigned DasmV30(char* buffer, unsigned pc)
+{
+  	unsigned c;
+
+	instruction_offset = pc;
+	instruction_segment = i86_get_reg(I86_CS);
+
+	/* input buffer */
+	getbyte_map = &OP_ROM[pc];
+	getbyte_mac = 0;
+
+	/* output buffer */
+	ubufs = buffer;
+	ubufp = buffer;
+	first_space = 1;
+
+	addr20bit=1; addr24bit=addr32bit=0;
+
+	prefix = 0;
+	modrmv = sibv = -1;     /* set modrm and sib flags */
+	opsize = addrsize = 16;
+	c = getbyte();
+	wordop = c & 1;
+	must_do_size = 1;
+	invalid_opcode = 0;
+	ua_str(opv30map1[c]);
+
+  	if (invalid_opcode) {
+		/* restart output buffer */
+		ubufp = buffer;
+		/* invalid instruction, use db xx */
+    		uprintf("db %02X", (unsigned)c);
+		return 1;
+	}
+
+	return instruction_offset-pc;
+}
+
+#if HAS_I286
+unsigned DasmI286(char* buffer, unsigned pc)
+{
+  	unsigned c;
+
+	instruction_offset = pc;
+	instruction_segment = i286_get_reg(I286_CS);
+
+	/* input buffer */
+	getbyte_map = &OP_ROM[pc];
+	getbyte_mac = 0;
+
+	/* output buffer */
+	ubufs = buffer;
+	ubufp = buffer;
+	first_space = 1;
+
+	addr24bit=1; addr20bit=addr32bit=0;
+
+	prefix = 0;
+	modrmv = sibv = -1;     /* set modrm and sib flags */
+	opsize = addrsize = 16;
+	c = getbyte();
+	wordop = c & 1;
+	must_do_size = 1;
+	invalid_opcode = 0;
+	ua_str(op286map1[c]);
+
+  	if (invalid_opcode) {
+		/* restart output buffer */
+		ubufp = buffer;
+		/* invalid instruction, use db xx */
+    		uprintf("db %02X", (unsigned)c);
+		return 1;
+	}
+
+	return instruction_offset-pc;
+}
+#endif
+
+unsigned DasmI386(char* buffer, unsigned pc)
+{
+  	unsigned c;
+
+	instruction_offset = pc;
+	instruction_segment = i86_get_reg(I86_CS);
+
+
+	/* input buffer */
+	getbyte_map = &OP_ROM[pc];
+	getbyte_mac = 0;
+
+	/* output buffer */
+	ubufs = buffer;
+	ubufp = buffer;
+	first_space = 1;
+
+	addr32bit=1; addr20bit=addr24bit=0;
 
 	prefix = 0;
 	modrmv = sibv = -1;     /* set modrm and sib flags */
@@ -1058,11 +1603,11 @@ unsigned DasmI86(char* buffer, unsigned pc)
 		/* restart output buffer */
 		ubufp = buffer;
 		/* invalid instruction, use db xx */
-    		uprintf("db %02Xh", (unsigned)c);
+    		uprintf("db %02X", (unsigned)c);
 		return 1;
 	}
 
-  	return instruction_offset - pc;
+	return instruction_offset-pc;
 }
 
 #endif	/* MAME_DEBUG */

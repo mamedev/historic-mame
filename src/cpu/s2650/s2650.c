@@ -19,7 +19,7 @@
 
 #if VERBOSE
 #include <stdio.h>
-#define LOG(x) if( errorlog ) fprintf x
+#define LOG(x) logerror x
 #else
 #define LOG(x)
 #endif
@@ -121,7 +121,7 @@ static	UINT8 ccc[0x200] = {
 				if (!(++addr & PMSK)) addr -= PLEN; 			\
 				S.ea = (S.ea + RDMEM(addr)) & AMSK; 			\
 			}													\
-			LOG((errorlog, "S2650 interrupt to $%04x\n", S.ea));\
+			LOG(("S2650 interrupt to $%04x\n", S.ea));\
 			S.psu  = (S.psu & ~SP) | ((S.psu + 1) & SP) | II;	\
 			S.ras[S.psu & SP] = S.page + S.iar;					\
 			S.page = S.ea & PAGE;								\
@@ -205,6 +205,25 @@ static	int 	S2650_relative[0x100] =
 	UINT8 hr = ARG();	/* get 'holding register' */            \
 	/* build effective address within current 8K page */		\
 	S.ea = page + ((S.iar + S2650_relative[hr]) & PMSK);		\
+	if (hr & 0x80) { /* indirect bit set ? */					\
+		int addr = S.ea;										\
+		s2650_ICount -= 2;										\
+		/* build indirect 32K address */						\
+		S.ea = RDMEM(addr) << 8;								\
+		if( (++addr & PMSK) == 0 ) addr -= PLEN; /* page wrap */\
+		S.ea = (S.ea + RDMEM(addr)) & AMSK; 					\
+	}															\
+}
+
+/***************************************************************
+ * _REL_ZERO
+ * build effective address with zero relative addressing
+ ***************************************************************/
+#define _REL_ZERO(page)											\
+{																\
+	UINT8 hr = ARG();	/* get 'holding register' */            \
+	/* build effective address from 0 */						\
+	S.ea = (S2650_relative[hr] & PMSK);							\
 	if (hr & 0x80) { /* indirect bit set ? */					\
 		int addr = S.ea;										\
 		s2650_ICount -= 2;										\
@@ -319,7 +338,7 @@ static	int 	S2650_relative[0x100] =
  ***************************************************************/
 #define M_ZBRR()												\
 {																\
-	REL_EA( 0x0000 );											\
+	REL_ZERO( 0 );												\
 	S.page = S.ea & PAGE;										\
 	S.iar  = S.ea & PMSK;										\
 	change_pc(S.ea);											\
@@ -376,7 +395,7 @@ static	int 	S2650_relative[0x100] =
  ***************************************************************/
 #define M_ZBSR()												\
 {																\
-	REL_EA(0x0000); 											\
+	REL_ZERO(0); 											    \
 	S.psu  = (S.psu & ~SP) | ((S.psu + 1) & SP);				\
 	S.ras[S.psu & SP] = S.page + S.iar;							\
 	S.page = S.ea & PAGE;										\
@@ -527,7 +546,7 @@ static	int 	S2650_relative[0x100] =
 	dest = dest - source - ((S.psl >> 3) & (S.psl ^ C) & C);	\
 	S.psl &= ~(C | OVF | IDC);									\
 	if( dest <= before ) S.psl |= C;							\
-	if( (dest & 15) > (before & 15) ) S.psl |= IDC; 			\
+	if( (dest & 15) < (before & 15) ) S.psl |= IDC; 			\
 	SET_CC_OVF(dest,before);									\
 }
 
@@ -712,10 +731,12 @@ static	int 	S2650_relative[0x100] =
 
 #if INLINE_EA
 #define REL_EA(page) _REL_EA(page)
+#define REL_ZERO(page) _REL_ZERO(page)
 #define ABS_EA() _ABS_EA()
 #define BRA_EA() _BRA_EA()
 #else
 static void REL_EA(unsigned short page) _REL_EA(page)
+static void REL_ZERO(unsigned short page) _REL_ZERO(page)
 static void ABS_EA(void) _ABS_EA()
 static void BRA_EA(void) _BRA_EA()
 #endif

@@ -2,7 +2,7 @@
 
 	h6280.c - Portable HuC6280 emulator
 
-	Copyright (c) 1999 Bryan McPhail, mish@tendril.co.uk
+	Copyright (c) 1999, 2000 Bryan McPhail, mish@tendril.co.uk
 
 	This source code is based (with permission!) on the 6502 emulator by
 	Juergen Buchmueller.  It is released as part of the Mame emulator project.
@@ -48,6 +48,10 @@
 		Assumed CSH & CSL to take 2 cycles each.
 
 		Todo:  Performance could be improved by precalculating timer fire position.
+
+	Changelog, version 1.06, 4/5/00 - last opcode bug found?
+		JMP indirect was doing a EAL++; instead of EAD++; - Obviously causing
+		a corrupt read when L = 0xff!  This fixes Bloody Wolf and Trio The Punch!
 
 ******************************************************************************/
 
@@ -411,9 +415,9 @@ const char *h6280_info(void *context, int regnum)
 			break;
 		case CPU_INFO_NAME: return "HuC6280";
 		case CPU_INFO_FAMILY: return "Hudsonsoft 6280";
-		case CPU_INFO_VERSION: return "1.05";
+		case CPU_INFO_VERSION: return "1.06";
 		case CPU_INFO_FILE: return __FILE__;
-		case CPU_INFO_CREDITS: return "Copyright (c) 1999 Bryan McPhail, mish@tendril.co.uk";
+		case CPU_INFO_CREDITS: return "Copyright (c) 1999, 2000 Bryan McPhail, mish@tendril.co.uk";
 		case CPU_INFO_REG_LAYOUT: return (const char*)reg_layout;
 		case CPU_INFO_WIN_LAYOUT: return (const char*)win_layout;
     }

@@ -211,15 +211,6 @@ extern	UINT8	*RAM;
 	EAH = RDMEM(EAD);											\
 	EAL = tmp
 
-/***************************************************************
- *	EA = indirect plus x (only used by 65c02 JMP)
- ***************************************************************/
-#define EA_IAX													\
-	EA_IND; 													\
-	if (EAL + X > 0xff) /* assumption; probably wrong ? */		\
-		m6502_ICount--; 										\
-	EAW += X
-
 /* read a value into tmp */
 #define RD_IMM	tmp = RDOPARG()
 #define RD_ACC	tmp = A
@@ -273,12 +264,14 @@ extern	UINT8	*RAM;
 	int c = (P & F_C);											\
 	int lo = (A & 0x0f) + (tmp & 0x0f) + c; 					\
 	int hi = (A & 0xf0) + (tmp & 0xf0); 						\
-		P &= ~(F_V | F_C);										\
+		P &= ~(F_V | F_C|F_N|F_Z);								\
+        if (!((lo+hi)&0xff)) P|=F_Z; \
 		if (lo > 0x09)											\
 		{														\
 			hi += 0x10; 										\
 			lo += 0x06; 										\
 		}														\
+		if (hi&0x80) P|=F_N; \
 		if (~(A^tmp) & (A^hi) & F_N)							\
 			P |= F_V;											\
 		if (hi > 0x90)											\
@@ -297,8 +290,8 @@ extern	UINT8	*RAM;
 		if (sum & 0xff00)										\
 			P |= F_C;											\
 		A = (UINT8) sum;										\
-	}															\
-	SET_NZ(A)
+		SET_NZ(A); \
+	}
 
 /* 6502 ********************************************************
  *	AND Logical and
@@ -357,14 +350,14 @@ extern	UINT8	*RAM;
 /* 6502 ********************************************************
  *	BRK Break
  *	increment PC, push PC hi, PC lo, flags (with B bit set),
- *	set I flag, reset D flag and jump via IRQ vector
+ *	set I flag, jump via IRQ vector
  ***************************************************************/
 #define BRK 													\
 	PCW++;														\
 	PUSH(PCH);													\
 	PUSH(PCL);													\
 	PUSH(P | F_B);												\
-	P = (P | F_I) & ~F_D;										\
+	P = (P | F_I);										\
 	PCL = RDMEM(M6502_IRQ_VEC); 								\
 	PCH = RDMEM(M6502_IRQ_VEC+1);								\
 	change_pc16(PCD)
@@ -396,7 +389,7 @@ extern	UINT8	*RAM;
  ***************************************************************/
 #define CLI 													\
 	if ((m6502.irq_state != CLEAR_LINE) && (P & F_I)) { 		\
-		LOG((errorlog, "M6502#%d CLI sets after_cli\n",cpu_getactivecpu())); \
+		LOG(( "M6502#%d CLI sets after_cli\n",cpu_getactivecpu())); \
 		m6502.after_cli = 1;									\
 	}															\
 	P &= ~F_I
@@ -466,8 +459,7 @@ extern	UINT8	*RAM;
  *	ILL Illegal opcode
  ***************************************************************/
 #define ILL 													\
-	if (errorlog)												\
-		fprintf(errorlog, "M6502 illegal opcode %04x: %02x\n",  \
+	logerror("M6502 illegal opcode %04x: %02x\n",  \
 			(PCW-1)&0xffff, cpu_readop((PCW-1)&0xffff))
 
 /* 6502 ********************************************************
@@ -583,13 +575,13 @@ extern	UINT8	*RAM;
 	if ( P & F_I ) {											\
 		PULL(P);												\
 		if ((m6502.irq_state != CLEAR_LINE) && !(P & F_I)) {	\
-			LOG((errorlog, "M6502#%d PLP sets after_cli\n",cpu_getactivecpu())); \
+			LOG(( "M6502#%d PLP sets after_cli\n",cpu_getactivecpu())); \
 			m6502.after_cli = 1;								\
 		}														\
 	} else {													\
 		PULL(P);												\
 	}															\
-	P |= F_T
+	P |= (F_T|F_B);
 
 /* 6502 ********************************************************
  * ROL	Rotate left
@@ -620,10 +612,10 @@ extern	UINT8	*RAM;
 	PULL(P);													\
 	PULL(PCL);													\
 	PULL(PCH);													\
-	P |= F_T;													\
+	P |= F_T|F_B;													\
 	if( (m6502.irq_state != CLEAR_LINE) && !(P & F_I) ) 		\
 	{															\
-		LOG((errorlog, "M6502#%d RTI sets after_cli\n",cpu_getactivecpu())); \
+		LOG(( "M6502#%d RTI sets after_cli\n",cpu_getactivecpu())); \
 		m6502.after_cli = 1;									\
 	}															\
 	change_pc16(PCD)
@@ -648,18 +640,17 @@ extern	UINT8	*RAM;
 	int sum = A - tmp - c;										\
 	int lo = (A & 0x0f) - (tmp & 0x0f) - c; 					\
 	int hi = (A & 0xf0) - (tmp & 0xf0); 						\
-		P &= ~(F_V | F_C);										\
+		if (lo & 0x10) { lo-=6; hi--; }\
+		P &= ~(F_V | F_C|F_Z|F_N);								\
 		if ((A^tmp) & (A^sum) & F_N)							\
 			P |= F_V;											\
-		if (lo & 0xf0)											\
-			lo -= 6;											\
-		if (lo & 0x80)											\
-			hi -= 0x10; 										\
-		if (hi & 0x0f00)										\
+		if (hi & 0x0100)										\
 			hi -= 0x60; 										\
 		if ((sum & 0xff00) == 0)								\
 			P |= F_C;											\
-		A = (lo & 0x0f) + (hi & 0xf0);							\
+        if (!((A-tmp-c)&0xff)) P|=F_Z; \
+        if ((A-tmp-c)&0x80) P|=F_N; \
+		A = (lo & 0x0f) | (hi & 0xf0);							\
 	}															\
 	else														\
 	{															\
@@ -671,8 +662,8 @@ extern	UINT8	*RAM;
 		if ((sum & 0xff00) == 0)								\
 			P |= F_C;											\
 		A = (UINT8) sum;										\
-	}															\
-	SET_NZ(A)
+		SET_NZ(A); \
+	}
 
 /* 6502 ********************************************************
  *	SEC Set carry flag
@@ -751,309 +742,4 @@ extern	UINT8	*RAM;
 #define TYA 													\
 	A = Y;														\
 	SET_NZ(A)
-
-/***************************************************************
- ***************************************************************
- *			Macros to emulate the 65C02 opcodes
- ***************************************************************
- ***************************************************************/
-
-/* 65C02 *******************************************************
- *	BBR Branch if bit is reset
- ***************************************************************/
-#define BBR(bit)												\
-	BRA(!(tmp & (1<<bit)))
-
-/* 65C02 *******************************************************
- *	BBS Branch if bit is set
- ***************************************************************/
-#define BBS(bit)												\
-	BRA(tmp & (1<<bit))
-
-/* 65C02 *******************************************************
- *	DEA Decrement accumulator
- ***************************************************************/
-#define DEA 													\
-	A = (UINT8)--A; 											\
-	SET_NZ(A)
-
-/* 65C02 *******************************************************
- *	INA Increment accumulator
- ***************************************************************/
-#define INA 													\
-	A = (UINT8)++A; 											\
-	SET_NZ(A)
-
-/* 65C02 *******************************************************
- *	PHX Push index X
- ***************************************************************/
-#define PHX 													\
-	PUSH(X)
-
-/* 65C02 *******************************************************
- *	PHY Push index Y
- ***************************************************************/
-#define PHY 													\
-	PUSH(Y)
-
-/* 65C02 *******************************************************
- *	PLX Pull index X
- ***************************************************************/
-#define PLX 													\
-	PULL(X)
-
-/* 65C02 *******************************************************
- *	PLY Pull index Y
- ***************************************************************/
-#define PLY 													\
-	PULL(Y)
-
-/* 65C02 *******************************************************
- *	RMB Reset memory bit
- ***************************************************************/
-#define RMB(bit)												\
-	tmp &= ~(1<<bit)
-
-/* 65C02 *******************************************************
- *	SMB Set memory bit
- ***************************************************************/
-#define SMB(bit)												\
-	tmp |= (1<<bit)
-
-/* 65C02 *******************************************************
- * STZ	Store zero
- ***************************************************************/
-#define STZ 													\
-	tmp = 0
-
-/* 65C02 *******************************************************
- * TRB	Test and reset bits
- ***************************************************************/
-#define TRB 													\
-	SET_Z(tmp&A);												\
-	tmp &= ~A
-
-/* 65C02 *******************************************************
- * TSB	Test and set bits
- ***************************************************************/
-#define TSB 													\
-	SET_Z(tmp&A);												\
-	tmp |= A
-
-/***************************************************************
- ***************************************************************
- *			Macros to emulate the 6510 opcodes
- ***************************************************************
- ***************************************************************/
-
-/* 6510 ********************************************************
- *	ANC logical and, set carry from bit of A
- ***************************************************************/
-#define ANC 													\
-	P &= ~F_C;													\
-	A = (UINT8)(A & tmp);										\
-	if (A & 0x80)												\
-		P |= F_C;												\
-	SET_NZ(A)
-
-/* 6510 ********************************************************
- *	ASR logical and, logical shift right
- ***************************************************************/
-#define ASR 													\
-	tmp = (UINT8)(A & tmp); 									\
-	LSR
-
-/* 6510 ********************************************************
- * AST	and stack; transfer to accumulator and index X
- * logical and stack (LSB) with data, transfer result to S
- * transfer result to accumulator and index X also
- ***************************************************************/
-#define AST 													\
-	S &= tmp;													\
-	A = X = S;													\
-	SET_NZ(A)
-
-/* 6510 ********************************************************
- *	ARR logical and, rotate right
- ***************************************************************/
-#define ARR 													\
-	tmp = (UINT8)(A & tmp); 									\
-	ROR
-
-/* 6510 ********************************************************
- *	ASX logical and X w/ A, subtract data from X
- ***************************************************************/
-#define ASX 													\
-	P &= ~F_C;													\
-	X &= A; 													\
-	if (X >= tmp)												\
-		P |= F_C;												\
-	X = (UINT8)(X - tmp);										\
-	SET_NZ(X)
-
-/* 6510 ********************************************************
- *	AXA transfer index X to accumulator, logical and
- ***************************************************************/
-#define AXA 													\
-	tmp = (UINT8)(X & tmp); 									\
-	SET_NZ(tmp)
-
-/* 6510 ********************************************************
- *	DCP decrement data and compare
- ***************************************************************/
-#define DCP 													\
-	tmp = (UINT8)--tmp; 										\
-	P &= ~F_C;													\
-	if (A >= tmp)												\
-		P |= F_C;												\
-	SET_NZ((UINT8)(A - tmp))
-
-/* 6502 ********************************************************
- *	DOP double no operation
- ***************************************************************/
-#define DOP 													\
-	PCW++
-
-/* 6510 ********************************************************
- *	ISB increment and subtract with carry
- ***************************************************************/
-#define ISB 													\
-	tmp = (UINT8)++tmp; 										\
-	SBC
-
-/* 6510 ********************************************************
- *	LAX load accumulator and index X
- ***************************************************************/
-#define LAX 													\
-	A = X = (UINT8)tmp; 										\
-	SET_NZ(A)
-
-/* 6510 ********************************************************
- * RLA	rotate left and logical and accumulator
- *	new C <- [7][6][5][4][3][2][1][0] <- C
- ***************************************************************/
-#define RLA 													\
-	tmp = (tmp << 1) | (P & F_C);								\
-	P = (P & ~F_C) | ((tmp >> 8) & F_C);						\
-	tmp = (UINT8)tmp;											\
-	A &= tmp;													\
-	SET_NZ(A)
-
-/* 6510 ********************************************************
- * RRA	rotate right and add with carry
- *	C -> [7][6][5][4][3][2][1][0] -> C
- ***************************************************************/
-#define RRA 													\
-	tmp |= (P & F_C) << 8;										\
-	P = (P & ~F_C) | (tmp & F_C);								\
-	tmp = (UINT8)(tmp >> 1);									\
-	ADC
-
-/* 6510 ********************************************************
- * SAX	logical and accumulator with index X and store
- ***************************************************************/
-#define SAX 													\
-	tmp = A & X;												\
-	SET_NZ(tmp)
-
-/* 6510 ********************************************************
- *	SLO shift left and logical or
- ***************************************************************/
-#define SLO 													\
-	P = (P & ~F_C) | ((tmp >> 7) & F_C);						\
-	tmp = (UINT8)(tmp << 1);									\
-	A |= tmp;													\
-	SET_NZ(A)
-
-/* 6510 ********************************************************
- *	SRE logical shift right and logical exclusive or
- *	0 -> [7][6][5][4][3][2][1][0] -> C
- ***************************************************************/
-#define SRE 													\
-	P = (P & ~F_C) | (tmp & F_C);								\
-	tmp = (UINT8)tmp >> 1;										\
-	A ^= tmp;													\
-	SET_NZ(A)
-
-/* 6510 ********************************************************
- * SAH	store accumulator and index X and high + 1
- * result = accumulator and index X and memory [PC+1] + 1
- ***************************************************************/
-#define SAH 													\
-	tmp = A & X;												\
-	tmp &= (cpu_readop_arg((PCW + 1) & 0xffff) + 1)
-
-/* 6510 ********************************************************
- * SSH	store stack high
- * logical and accumulator with index X, transfer result to S
- * logical and result with memory [PC+1] + 1
- ***************************************************************/
-#define SSH 													\
-	tmp = S = A & X;											\
-	tmp &= (UINT8)(cpu_readop_arg((PCW + 1) & 0xffff) + 1)
-
-/* 6510 ********************************************************
- * SXH	store index X high
- * logical and index X with memory[PC+1] and store the result
- ***************************************************************/
-#define SXH 													\
-	tmp = X & (UINT8)(cpu_readop_arg((PCW + 1) & 0xffff)
-
-/* 6510 ********************************************************
- * SYH	store index Y and (high + 1)
- * logical and index Y with memory[PC+1] + 1 and store the result
- ***************************************************************/
-#define SYH 													\
-	tmp = Y & (UINT8)(cpu_readop_arg((PCW + 1) & 0xffff) + 1)
-
-/* 6510 ********************************************************
- *	TOP triple no operation
- ***************************************************************/
-#define TOP 													\
-	PCW += 2
-
-/* 2203 ********************************************************
- *	ADC Add with carry - no decimal mode
- ***************************************************************/
-#define ADC_NES 												\
-	{															\
-		int c = (P & F_C);										\
-		int sum = A + tmp + c;									\
-		P &= ~(F_V | F_C);										\
-		if (~(A^tmp) & (A^sum) & F_N)							\
-			P |= F_V;											\
-		if (sum & 0xff00)										\
-			P |= F_C;											\
-		A = (UINT8) sum;										\
-	}															\
-	SET_NZ(A)
-
-/* 2203 ********************************************************
- *	SBC Subtract with carry - no decimal mode
- ***************************************************************/
-#define SBC_NES 												\
-	{															\
-		int c = (P & F_C) ^ F_C;								\
-		int sum = A - tmp - c;									\
-		P &= ~(F_V | F_C);										\
-		if ((A^tmp) & (A^sum) & F_N)							\
-			P |= F_V;											\
-		if ((sum & 0xff00) == 0)								\
-			P |= F_C;											\
-		A = (UINT8) sum;										\
-	}															\
-	SET_NZ(A)
-
-/* 65sc02 ********************************************************
- *	BSR Branch to subroutine
- ***************************************************************/
-#define BSR 													\
-	EAL = RDOPARG();											\
-	PUSH(PCH);													\
-	PUSH(PCL);													\
-	EAH = RDOPARG();											\
-	EAW = PCW + (short)(EAW-1); 								\
-	PCD = EAD;													\
-	change_pc16(PCD)
-
 

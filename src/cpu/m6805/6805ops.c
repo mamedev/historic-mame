@@ -15,7 +15,7 @@ HNZC
 
 static void illegal( void )
 {
-	if(errorlog)fprintf(errorlog, "M6805: illegal opcode\n");
+	logerror("M6805: illegal opcode\n");
 }
 
 #if macintosh

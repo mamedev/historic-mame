@@ -309,13 +309,13 @@ static unsigned char portC_in,portC_out,ddrC;
 
 READ_HANDLER( sdungeon_68705_portA_r )
 {
-//if (errorlog) fprintf(errorlog,"PC: %x MCU PORTA R = %x\n",cpu_get_pc(),portA_in);
+//logerror("PC: %x MCU PORTA R = %x\n",cpu_get_pc(),portA_in);
 	return (portA_out & ddrA) | (portA_in & ~ddrA);
 }
 
 WRITE_HANDLER( sdungeon_68705_portA_w )
 {
-//if (errorlog) fprintf(errorlog,"PC: %x SD COINTOMAIN W: %x\n",cpu_get_pc(),data);
+//logerror("PC: %x SD COINTOMAIN W: %x\n",cpu_get_pc(),data);
 	portA_out = data;
 }
 
@@ -329,14 +329,14 @@ READ_HANDLER( sdungeon_68705_portB_r )
 {
 	portB_in = input_port_1_r(0) & 0x0F;
 	portB_in = portB_in | ((input_port_1_r(0) & 0x80) >> 3);
-//if (errorlog) fprintf(errorlog,"PC: %x MCU PORTB R = %x\n",cpu_get_pc(),portB_in);
+//logerror("PC: %x MCU PORTB R = %x\n",cpu_get_pc(),portB_in);
 
 	return (portB_out & ddrB) | (portB_in & ~ddrB);
 }
 
 WRITE_HANDLER( sdungeon_68705_portB_w )
 {
-//if (errorlog) fprintf(errorlog,"PC: %x port B write %x\n",cpu_get_pc(),data);
+//logerror("PC: %x port B write %x\n",cpu_get_pc(),data);
 	portB_out = data;
 }
 
@@ -349,14 +349,14 @@ WRITE_HANDLER( sdungeon_68705_ddrB_w )
 READ_HANDLER( sdungeon_68705_portC_r )
 {
 	portC_in = (~sdungeon_coinctrl & 0x08) | ((input_port_1_r(0) & 0x70) >> 4);
-//if (errorlog) fprintf(errorlog,"PC: %x MCU PORTC R = %x\n",cpu_get_pc(),portC_in);
+//logerror("PC: %x MCU PORTC R = %x\n",cpu_get_pc(),portC_in);
 
 	return (portC_out & ddrC) | (portC_in & ~ddrC);
 }
 
 WRITE_HANDLER( sdungeon_68705_portC_w )
 {
-//if (errorlog) fprintf(errorlog,"PC: %x port C write %x\n",cpu_get_pc(),data);
+//logerror("PC: %x port C write %x\n",cpu_get_pc(),data);
 	portC_out = data;
 }
 
@@ -374,7 +374,7 @@ READ_HANDLER( sdungeon_coin_r )
 
 static WRITE_HANDLER( sdungeon_coin_w )
 {
-//if (errorlog) fprintf(errorlog,"PC: %x COIN COMMAND W: %x\n",cpu_get_pc(),data);
+//logerror("PC: %x COIN COMMAND W: %x\n",cpu_get_pc(),data);
 	/* this is a callback called by pia_0_w(), so I don't need to synchronize */
 	/* the CPUs - they have already been synchronized by sdungeon_pia_0_w() */
 	portA_in = data;
@@ -382,7 +382,7 @@ static WRITE_HANDLER( sdungeon_coin_w )
 
 static WRITE_HANDLER( sdungeon_coinctrl_w )
 {
-//if (errorlog) fprintf(errorlog,"PC: %x COIN CTRL W: %x\n",cpu_get_pc(),data);
+//logerror("PC: %x COIN CTRL W: %x\n",cpu_get_pc(),data);
 	if (data & 0x04)
 	{
 		cpu_set_irq_line(3,M6809_IRQ_LINE,ASSERT_LINE);
@@ -405,7 +405,7 @@ static void pia_0_w_callback(int param)
 
 WRITE_HANDLER( sdungeon_pia_0_w )
 {
-//if (errorlog) fprintf(errorlog,"%04x: PIA 1 write offset %02x data %02x\n",cpu_get_pc(),offset,data);
+//logerror("%04x: PIA 1 write offset %02x data %02x\n",cpu_get_pc(),offset,data);
 
 	/* Hack: Kram and Zoo Keeper for some reason (protection?) leave the port A */
 	/* DDR set to 0xff, so they cannot read the player 1 controls. Here I force */

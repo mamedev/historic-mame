@@ -28,13 +28,13 @@
 #include "mamedbg.h"
 #include "m6502.h"
 #include "ops02.h"
+#include "ill02.h"
 
-extern FILE * errorlog;
 
 #define VERBOSE 0
 
 #if VERBOSE
-#define LOG(x)	if( errorlog ) fprintf x
+#define LOG(x)	logerror x
 #else
 #define LOG(x)
 #endif
@@ -87,16 +87,18 @@ static m6502_Regs m6502;
  ***************************************************************/
 #include "t6502.c"
 
+#if HAS_M6510
+#include "t6510.c"
+#endif
+
+#include "opsc02.h"
+
 #if HAS_M65C02
 #include "t65c02.c"
 #endif
 
 #if HAS_M65SC02
 #include "t65sc02.c"
-#endif
-
-#if HAS_M6510
-#include "t6510.c"
 #endif
 
 #if HAS_N2A03
@@ -120,7 +122,7 @@ void m6502_reset(void *param)
 	PCH = RDMEM(M6502_RST_VEC+1);
 
 	m6502.sp.d = 0x01ff;	/* stack pointer starts at page 1 offset FF */
-	m6502.p = F_T|F_I|F_Z;	/* set T, I and Z flags */
+	m6502.p = F_T|F_I|F_Z|F_B|(P&F_D);	/* set T, I and Z flags */
 	m6502.pending_irq = 0;	/* nonzero if an IRQ is pending */
 	m6502.after_cli = 0;	/* pending IRQ and last insn cleared I */
 	m6502.irq_callback = NULL;
@@ -226,7 +228,7 @@ void m6502_set_reg (int regnum, unsigned val)
 	}
 }
 
-INLINE void take_irq(void)
+INLINE void m6502_take_irq(void)
 {
 	if( !(P & F_I) )
 	{
@@ -235,10 +237,10 @@ INLINE void take_irq(void)
 		PUSH(PCH);
 		PUSH(PCL);
 		PUSH(P & ~F_B);
-		P = (P & ~F_D) | F_I;		/* knock out D and set I flag */
+		P |= F_I;		/* set I flag */
 		PCL = RDMEM(EAD);
 		PCH = RDMEM(EAD+1);
-		LOG((errorlog,"M6502#%d takes IRQ ($%04x)\n", cpu_getactivecpu(), PCD));
+		LOG(("M6502#%d takes IRQ ($%04x)\n", cpu_getactivecpu(), PCD));
 		/* call back the cpuintrf to let it clear the line */
 		if (m6502.irq_callback) (*m6502.irq_callback)(0);
 		change_pc16(PCD);
@@ -259,31 +261,43 @@ int m6502_execute(int cycles)
 
 		CALL_MAME_DEBUG;
 
-		op = RDOP();
+#if 1
 		/* if an irq is pending, take it now */
-		if( m6502.pending_irq && op == 0x78 )
-			take_irq();
+		if( m6502.pending_irq )
+			m6502_take_irq();
+
+		op = RDOP();
+		(*m6502.insn[op])();
+#else
+		/* thought as irq request while executing sei */
+        /* sei sets I flag on the stack*/
+		op = RDOP();
+
+		/* if an irq is pending, take it now */
+		if( m6502.pending_irq && (op == 0x78) )
+			m6502_take_irq();
 
 		(*m6502.insn[op])();
+#endif
 
 		/* check if the I flag was just reset (interrupts enabled) */
 		if( m6502.after_cli )
 		{
-			LOG((errorlog,"M6502#%d after_cli was >0", cpu_getactivecpu()));
+			LOG(("M6502#%d after_cli was >0", cpu_getactivecpu()));
 			m6502.after_cli = 0;
 			if (m6502.irq_state != CLEAR_LINE)
 			{
-				LOG((errorlog,": irq line is asserted: set pending IRQ\n"));
+				LOG((": irq line is asserted: set pending IRQ\n"));
 				m6502.pending_irq = 1;
 			}
 			else
 			{
-				LOG((errorlog,": irq line is clear\n"));
+				LOG((": irq line is clear\n"));
 			}
 		}
 		else
 		if( m6502.pending_irq )
-			take_irq();
+			m6502_take_irq();
 
 	} while (m6502_ICount > 0);
 
@@ -296,16 +310,16 @@ void m6502_set_nmi_line(int state)
 	m6502.nmi_state = state;
 	if( state != CLEAR_LINE )
 	{
-		LOG((errorlog, "M6502#%d set_nmi_line(ASSERT)\n", cpu_getactivecpu()));
+		LOG(( "M6502#%d set_nmi_line(ASSERT)\n", cpu_getactivecpu()));
 		EAD = M6502_NMI_VEC;
 		m6502_ICount -= 7;
 		PUSH(PCH);
 		PUSH(PCL);
 		PUSH(P & ~F_B);
-		P = (P & ~F_D) | F_I;		/* knock out D and set I flag */
+		P |= F_I;		/* set I flag */
 		PCL = RDMEM(EAD);
 		PCH = RDMEM(EAD+1);
-		LOG((errorlog,"M6502#%d takes NMI ($%04x)\n", cpu_getactivecpu(), PCD));
+		LOG(("M6502#%d takes NMI ($%04x)\n", cpu_getactivecpu(), PCD));
 		change_pc16(PCD);
 	}
 }
@@ -316,7 +330,7 @@ void m6502_set_irq_line(int irqline, int state)
 	{
 		if( m6502.so_state && !state )
 		{
-			LOG((errorlog, "M6502#%d set overflow\n", cpu_getactivecpu()));
+			LOG(( "M6502#%d set overflow\n", cpu_getactivecpu()));
 			P|=F_V;
 		}
 		m6502.so_state=state;
@@ -325,7 +339,7 @@ void m6502_set_irq_line(int irqline, int state)
 	m6502.irq_state = state;
 	if( state != CLEAR_LINE )
 	{
-		LOG((errorlog, "M6502#%d set_irq_line(ASSERT)\n", cpu_getactivecpu()));
+		LOG(( "M6502#%d set_irq_line(ASSERT)\n", cpu_getactivecpu()));
 		m6502.pending_irq = 1;
 	}
 }
@@ -455,6 +469,7 @@ unsigned m6502_dasm(char *buffer, unsigned pc)
  * 65C02 section
  ****************************************************************************/
 #if HAS_M65C02
+
 /* Layout of the registers in the debugger */
 static UINT8 m65c02_reg_layout[] = {
 	M65C02_A,M65C02_X,M65C02_Y,M65C02_S,M65C02_PC,M65C02_P, -1,
@@ -474,11 +489,78 @@ static UINT8 m65c02_win_layout[] = {
 void m65c02_reset (void *param)
 {
 	m6502_reset(param);
+	P &=~F_D;
 	m6502.subtype = SUBTYPE_65C02;
 	m6502.insn = insn65c02;
 }
+
 void m65c02_exit  (void) { m6502_exit(); }
-int  m65c02_execute(int cycles) { return m6502_execute(cycles); }
+
+INLINE void m65c02_take_irq(void)
+{
+	if( !(P & F_I) )
+	{
+		EAD = M6502_IRQ_VEC;
+		m6502_ICount -= 7;
+		PUSH(PCH);
+		PUSH(PCL);
+		PUSH(P & ~F_B);
+		P = (P & ~F_D) | F_I;		/* knock out D and set I flag */
+		PCL = RDMEM(EAD);
+		PCH = RDMEM(EAD+1);
+		LOG(("M65c02#%d takes IRQ ($%04x)\n", cpu_getactivecpu(), PCD));
+		/* call back the cpuintrf to let it clear the line */
+		if (m6502.irq_callback) (*m6502.irq_callback)(0);
+		change_pc16(PCD);
+	}
+	m6502.pending_irq = 0;
+}
+
+int m65c02_execute(int cycles)
+{
+	m6502_ICount = cycles;
+
+	change_pc16(PCD);
+
+	do
+	{
+		UINT8 op;
+		PPC = PCD;
+
+		CALL_MAME_DEBUG;
+
+		op = RDOP();
+		(*m6502.insn[op])();
+
+		/* if an irq is pending, take it now */
+		if( m6502.pending_irq )
+			m65c02_take_irq();
+
+
+		/* check if the I flag was just reset (interrupts enabled) */
+		if( m6502.after_cli )
+		{
+			LOG(("M6502#%d after_cli was >0", cpu_getactivecpu()));
+			m6502.after_cli = 0;
+			if (m6502.irq_state != CLEAR_LINE)
+			{
+				LOG((": irq line is asserted: set pending IRQ\n"));
+				m6502.pending_irq = 1;
+			}
+			else
+			{
+				LOG((": irq line is clear\n"));
+			}
+		}
+		else
+		if( m6502.pending_irq )
+			m65c02_take_irq();
+
+	} while (m6502_ICount > 0);
+
+	return cycles - m6502_ICount;
+}
+
 unsigned m65c02_get_context (void *dst) { return m6502_get_context(dst); }
 void m65c02_set_context (void *src) { m6502_set_context(src); }
 unsigned m65c02_get_pc (void) { return m6502_get_pc(); }
@@ -487,7 +569,27 @@ unsigned m65c02_get_sp (void) { return m6502_get_sp(); }
 void m65c02_set_sp (unsigned val) { m6502_set_sp(val); }
 unsigned m65c02_get_reg (int regnum) { return m6502_get_reg(regnum); }
 void m65c02_set_reg (int regnum, unsigned val) { m6502_set_reg(regnum,val); }
-void m65c02_set_nmi_line(int state) { m6502_set_nmi_line(state); }
+
+void m65c02_set_nmi_line(int state)
+{
+	if (m6502.nmi_state == state) return;
+	m6502.nmi_state = state;
+	if( state != CLEAR_LINE )
+	{
+		LOG(( "M6502#%d set_nmi_line(ASSERT)\n", cpu_getactivecpu()));
+		EAD = M6502_NMI_VEC;
+		m6502_ICount -= 7;
+		PUSH(PCH);
+		PUSH(PCL);
+		PUSH(P & ~F_B);
+		P = (P & ~F_D) | F_I;		/* knock out D and set I flag */
+		PCL = RDMEM(EAD);
+		PCH = RDMEM(EAD+1);
+		LOG(("M6502#%d takes NMI ($%04x)\n", cpu_getactivecpu(), PCD));
+		change_pc16(PCD);
+	}
+}
+
 void m65c02_set_irq_line(int irqline, int state) { m6502_set_irq_line(irqline,state); }
 void m65c02_set_irq_callback(int (*callback)(int irqline)) { m6502_set_irq_callback(callback); }
 void m65c02_state_save(void *file) { m6502_state_save(file); }
@@ -542,7 +644,7 @@ void m65sc02_reset (void *param)
 	m6502.insn = insn65sc02;
 }
 void m65sc02_exit  (void) { m6502_exit(); }
-int  m65sc02_execute(int cycles) { return m6502_execute(cycles); }
+int  m65sc02_execute(int cycles) { return m65c02_execute(cycles); }
 unsigned m65sc02_get_context (void *dst) { return m6502_get_context(dst); }
 void m65sc02_set_context (void *src) { m6502_set_context(src); }
 unsigned m65sc02_get_pc (void) { return m6502_get_pc(); }
@@ -582,6 +684,78 @@ unsigned m65sc02_dasm(char *buffer, unsigned pc)
 #endif
 }
 
+#endif
+
+/****************************************************************************
+ * 2A03 section
+ ****************************************************************************/
+#if HAS_N2A03
+/* Layout of the registers in the debugger */
+static UINT8 n2a03_reg_layout[] = {
+	N2A03_A,N2A03_X,N2A03_Y,N2A03_S,N2A03_PC,N2A03_P, -1,
+	N2A03_EA,N2A03_ZP,N2A03_NMI_STATE,N2A03_IRQ_STATE, 0
+};
+
+/* Layout of the debugger windows x,y,w,h */
+static UINT8 n2a03_win_layout[] = {
+	25, 0,55, 2,	/* register window (top, right rows) */
+	 0, 0,24,22,	/* disassembler window (left colums) */
+	25, 3,55, 9,	/* memory #1 window (right, upper middle) */
+	25,13,55, 9,	/* memory #2 window (right, lower middle) */
+	 0,23,80, 1,	/* command line window (bottom rows) */
+};
+
+void n2a03_reset (void *param)
+{
+	m6502_reset(param);
+	m6502.subtype = SUBTYPE_2A03;
+	m6502.insn = insn2a03;
+}
+void n2a03_exit  (void) { m6502_exit(); }
+int  n2a03_execute(int cycles) { return m65c02_execute(cycles); }
+unsigned n2a03_get_context (void *dst) { return m6502_get_context(dst); }
+void n2a03_set_context (void *src) { m6502_set_context(src); }
+unsigned n2a03_get_pc (void) { return m6502_get_pc(); }
+void n2a03_set_pc (unsigned val) { m6502_set_pc(val); }
+unsigned n2a03_get_sp (void) { return m6502_get_sp(); }
+void n2a03_set_sp (unsigned val) { m6502_set_sp(val); }
+unsigned n2a03_get_reg (int regnum) { return m6502_get_reg(regnum); }
+void n2a03_set_reg (int regnum, unsigned val) { m6502_set_reg(regnum,val); }
+void n2a03_set_nmi_line(int state) { m6502_set_nmi_line(state); }
+void n2a03_set_irq_line(int irqline, int state) { m6502_set_irq_line(irqline,state); }
+void n2a03_set_irq_callback(int (*callback)(int irqline)) { m6502_set_irq_callback(callback); }
+void n2a03_state_save(void *file) { m6502_state_save(file); }
+void n2a03_state_load(void *file) { m6502_state_load(file); }
+const char *n2a03_info(void *context, int regnum)
+{
+	switch( regnum )
+	{
+		case CPU_INFO_NAME: return "N2A03";
+		case CPU_INFO_VERSION: return "1.0";
+		case CPU_INFO_REG_LAYOUT: return (const char*)n2a03_reg_layout;
+		case CPU_INFO_WIN_LAYOUT: return (const char*)n2a03_win_layout;
+	}
+	return m6502_info(context,regnum);
+}
+
+/* The N2A03 is integrally tied to its PSG (they're on the same die).
+   Bit 7 of address $4011 (the PSG's DPCM control register), when set,
+   causes an IRQ to be generated.  This function allows the IRQ to be called
+   from the PSG core when such an occasion arises. */
+void n2a03_irq(void)
+{
+  m65c02_take_irq();
+}
+
+unsigned n2a03_dasm(char *buffer, unsigned pc)
+{
+#ifdef MAME_DEBUG
+	return Dasm6502( buffer, pc );
+#else
+	sprintf( buffer, "$%02X", cpu_readop(pc) );
+	return 1;
+#endif
+}
 #endif
 
 /****************************************************************************
@@ -639,7 +813,7 @@ const char *m6510_info(void *context, int regnum)
 unsigned m6510_dasm(char *buffer, unsigned pc)
 {
 #ifdef MAME_DEBUG
-	return Dasm6502( buffer, pc );
+	return Dasm6510( buffer, pc );
 #else
 	sprintf( buffer, "$%02X", cpu_readop(pc) );
 	return 1;
@@ -647,75 +821,35 @@ unsigned m6510_dasm(char *buffer, unsigned pc)
 }
 #endif
 
-/****************************************************************************
- * 2A03 section
- ****************************************************************************/
-#if HAS_N2A03
-/* Layout of the registers in the debugger */
-static UINT8 n2a03_reg_layout[] = {
-	N2A03_A,N2A03_X,N2A03_Y,N2A03_S,N2A03_PC,N2A03_P, -1,
-	N2A03_EA,N2A03_ZP,N2A03_NMI_STATE,N2A03_IRQ_STATE, 0
-};
-
-/* Layout of the debugger windows x,y,w,h */
-static UINT8 n2a03_win_layout[] = {
-	25, 0,55, 2,	/* register window (top, right rows) */
-	 0, 0,24,22,	/* disassembler window (left colums) */
-	25, 3,55, 9,	/* memory #1 window (right, upper middle) */
-	25,13,55, 9,	/* memory #2 window (right, lower middle) */
-	 0,23,80, 1,	/* command line window (bottom rows) */
-};
-
-void n2a03_reset (void *param)
-{
-	m6502_reset(param);
-	m6502.subtype = SUBTYPE_2A03;
-	m6502.insn = insn2a03;
-}
-void n2a03_exit  (void) { m6502_exit(); }
-int  n2a03_execute(int cycles) { return m6502_execute(cycles); }
-unsigned n2a03_get_context (void *dst) { return m6502_get_context(dst); }
-void n2a03_set_context (void *src) { m6502_set_context(src); }
-unsigned n2a03_get_pc (void) { return m6502_get_pc(); }
-void n2a03_set_pc (unsigned val) { m6502_set_pc(val); }
-unsigned n2a03_get_sp (void) { return m6502_get_sp(); }
-void n2a03_set_sp (unsigned val) { m6502_set_sp(val); }
-unsigned n2a03_get_reg (int regnum) { return m6502_get_reg(regnum); }
-void n2a03_set_reg (int regnum, unsigned val) { m6502_set_reg(regnum,val); }
-void n2a03_set_nmi_line(int state) { m6502_set_nmi_line(state); }
-void n2a03_set_irq_line(int irqline, int state) { m6502_set_irq_line(irqline,state); }
-void n2a03_set_irq_callback(int (*callback)(int irqline)) { m6502_set_irq_callback(callback); }
-void n2a03_state_save(void *file) { m6502_state_save(file); }
-void n2a03_state_load(void *file) { m6502_state_load(file); }
-const char *n2a03_info(void *context, int regnum)
+#ifdef HAS_M6510T
+const char *m6510t_info(void *context, int regnum)
 {
 	switch( regnum )
 	{
-		case CPU_INFO_NAME: return "N2A03";
-		case CPU_INFO_VERSION: return "1.0";
-		case CPU_INFO_REG_LAYOUT: return (const char*)n2a03_reg_layout;
-		case CPU_INFO_WIN_LAYOUT: return (const char*)n2a03_win_layout;
+		case CPU_INFO_NAME: return "M6510T";
 	}
-	return m6502_info(context,regnum);
-}
-
-/* The N2A03 is integrally tied to its PSG (they're on the same die).
-   Bit 7 of address $4011 (the PSG's DPCM control register), when set,
-   causes an IRQ to be generated.  This function allows the IRQ to be called
-   from the PSG core when such an occasion arises. */
-void n2a03_irq(void)
-{
-  take_irq();
-}
-
-unsigned n2a03_dasm(char *buffer, unsigned pc)
-{
-#ifdef MAME_DEBUG
-	return Dasm6502( buffer, pc );
-#else
-	sprintf( buffer, "$%02X", cpu_readop(pc) );
-	return 1;
-#endif
+	return m6510_info(context,regnum);
 }
 #endif
 
+#ifdef HAS_M7501
+const char *m7501_info(void *context, int regnum)
+{
+	switch( regnum )
+	{
+		case CPU_INFO_NAME: return "M7501";
+	}
+	return m6510_info(context,regnum);
+}
+#endif
+
+#ifdef HAS_M8502
+const char *m8502_info(void *context, int regnum)
+{
+	switch( regnum )
+	{
+		case CPU_INFO_NAME: return "M8502";
+	}
+	return m6510_info(context,regnum);
+}
+#endif

@@ -4,7 +4,6 @@
 
 #include "machine/8254pit.h"
 
-//extern void *errorlog;
 
 
 void pit8254_init (pit8254_interface *intf)
@@ -14,78 +13,51 @@ void pit8254_init (pit8254_interface *intf)
 
 void pit8254_w (int which, int offset, int data)
 {
-    switch (offset)
-    {
-        case 0:
-            if (errorlog)
-            {
-                fprintf(errorlog, "PIT8254#%d write %d to timer1\n",
-                    which, data);
-            }
+	switch (offset)
+	{
+		case 0:
+			logerror("PIT8254#%d write %d to timer1\n",which, data);
+			break;
+		case 1:
+			logerror("PIT8254#%d write %d to timer2\n",which, data);
+			break;
+		case 2:
+			logerror("PIT8254#%d write %d to timer3\n",which, data);
+			break;
+		case 3:
+			{
+				int sc=(data>>6)&3;
+				int rw=(data>>4)&3;
+				int mode=(data>>1)&0x07;
+				int bcd=data&0x01;
+				logerror("PIT8254#%d write %02x to control : ", which, data);
+				logerror("*** SC=%d RW=%d MODE=%d BCD=%d\n",sc, rw, mode, bcd);
+			}
 
-            break;
-        case 1:
-            if (errorlog)
-            {
-                fprintf(errorlog, "PIT8254#%d write %d to timer2\n",
-                    which, data);
-            }
-            break;
-        case 2:
-            if (errorlog)
-            {
-                fprintf(errorlog, "PIT8254#%d write %d to timer3\n",
-                    which, data);
-            }
-            break;
-        case 3:
-            if (errorlog)
-            {
-                int sc=(data>>6)&3;
-                int rw=(data>>4)&3;
-                int mode=(data>>1)&0x07;
-                int bcd=data&0x01;
-                fprintf(errorlog, "PIT8254#%d write %02x to control : ", which, data);
-                fprintf(errorlog, "*** SC=%d RW=%d MODE=%d BCD=%d\n",
-                    sc, rw, mode, bcd);
-            }
-
-            break;
-    }
+			break;
+	}
 }
 
 int pit8254_r (int which, int offset)
 {
-    switch (offset)
-    {
-        case 0:
-            if (errorlog)
-            {
-                fprintf(errorlog, "PIT8254#%d read from timer1\n", which);
-            }
+	switch (offset)
+	{
+		case 0:
+			logerror("PIT8254#%d read from timer1\n", which);
 
-            break;
-        case 1:
-            if (errorlog)
-            {
-                fprintf(errorlog, "PIT8254#%d read from timer2\n", which);
-            }
-            break;
-        case 2:
-            if (errorlog)
-            {
-               fprintf(errorlog, "PIT8254#%d read from timer3\n", which);
-            }
-            break;
-        case 3:
-            if (errorlog)
-            {
-               fprintf(errorlog, "PIT8254#%d read from control\n", which);
-            }
-            break;
-    }
+			break;
+		case 1:
+			logerror("PIT8254#%d read from timer2\n", which);
+			break;
+		case 2:
+			logerror("PIT8254#%d read from timer3\n", which);
+			break;
+		case 3:
+			logerror("PIT8254#%d read from control\n", which);
+			break;
+	}
 
-    return 0;
+	return 0;
 }
 
 /*

@@ -90,26 +90,26 @@ static WRITE_HANDLER( bladestl_sh_irqtrigger_w )
 {
 	soundlatch_w(offset, data);
 	cpu_cause_interrupt(1,M6809_INT_IRQ);
-	//if (errorlog) fprintf(errorlog,"(sound) write %02x\n", data);
+	//logerror("(sound) write %02x\n", data);
 }
 
 static WRITE_HANDLER( bladestl_port_A_w ){
 	/* bits 0-4 = uPD7759 sample number (chip 0) */
 	//UPD7759_message_w( 0, data);
 	//if (data)
-	//	if (errorlog) fprintf(errorlog,"%04x: (port A) write %02x\n",cpu_get_pc(), data);
+	//	logerror("%04x: (port A) write %02x\n",cpu_get_pc(), data);
 }
 
 static WRITE_HANDLER( bladestl_port_B_w ){
 	/* unknown */
 	//if (data)
-	//	if (errorlog) fprintf(errorlog,"%04x: (port B) write %02x\n",cpu_get_pc(), data);
+	//	logerror("%04x: (port B) write %02x\n",cpu_get_pc(), data);
 }
 
 static WRITE_HANDLER( bladestl_speech_ctrl_w ){
 	/* not understood yet */
 	//if (data)
-	//	if (errorlog) fprintf(errorlog,"%04x: (speech_ctrl) write %02x\n",cpu_get_pc(), data);
+	//	logerror("%04x: (speech_ctrl) write %02x\n",cpu_get_pc(), data);
 }
 
 static struct MemoryReadAddress bladestl_readmem[] =

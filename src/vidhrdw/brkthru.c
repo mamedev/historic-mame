@@ -10,7 +10,7 @@
 
 unsigned char *brkthru_scroll;
 unsigned char *brkthru_videoram;
-int brkthru_videoram_size;
+size_t brkthru_videoram_size;
 static int bgscroll;
 static int bgbasecolor;
 static int flipscreen;

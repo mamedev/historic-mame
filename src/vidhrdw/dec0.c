@@ -408,7 +408,7 @@ static void dec0_pf1_update(void)
 			}
 			break;
 		default:
-			if (errorlog) fprintf(errorlog,"error: pf1_update with unknown shape %04x\n",READ_WORD(&dec0_pf1_control_0[6]));
+			logerror("error: pf1_update with unknown shape %04x\n",READ_WORD(&dec0_pf1_control_0[6]));
 			return;
 	}
 
@@ -515,7 +515,7 @@ static void dec0_pf2_update(int transparent, int special)
 			}
 			break;
 		default:
-			if (errorlog) fprintf(errorlog,"error: pf2_update with unknown shape %04x\n",READ_WORD(&dec0_pf2_control_0[6]));
+			logerror("error: pf2_update with unknown shape %04x\n",READ_WORD(&dec0_pf2_control_0[6]));
 			return;
 	}
 
@@ -641,7 +641,7 @@ static void dec0_pf3_update(int transparent, int special)
 			}
 			break;
 		default:
-			if (errorlog) fprintf(errorlog,"error: pf3_update with unknown shape %04x\n",READ_WORD(&dec0_pf3_control_0[6]));
+			logerror("error: pf3_update with unknown shape %04x\n",READ_WORD(&dec0_pf3_control_0[6]));
 			return;
 	}
 

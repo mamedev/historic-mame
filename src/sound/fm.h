@@ -14,14 +14,18 @@
 #define BUILD_YM2151  (HAS_YM2151)		/* build YM2151(OPM)   emulator */
 
 /* --- system optimize --- */
-/* select stereo output buffer : mixing / separate */
-//#define FM_STEREO_MIX
-/* select output size : 8bit or 16bit */
+/* select stereo output buffer : 1=mixing / 0=separate */
+#define FM_STEREO_MIX 0
+/* select bit size of output : 8 or 16 */
 #define FM_OUTPUT_BIT 16
+/* select timer system internal or external */
+#define FM_INTERNAL_TIMER 0
 
-/* --- speed optimize --- */
-#define FM_LFO_SUPPORT 1 	/* support LFO unit */
-#define FM_SEG_SUPPORT 0	/* OPN SSG type envelope support   */
+/* --- speedup optimize --- */
+/* support LFO unit */
+#define FM_LFO_SUPPORT 1
+/* support OPN SSG type envelope mode */
+#define FM_SEG_SUPPORT 0
 
 /* --- external SSG(YM2149/AY-3-8910)emulator interface port */
 /* used by YM2203,YM2608,and YM2610 */
@@ -81,8 +85,7 @@ typedef signed int		INT32;   /* signed 32bit   */
 #endif
 
 #define YM2203_NUMBUF 1
-
-#ifdef FM_STEREO_MIX
+#if FM_STEREO_MIX
   #define YM2151_NUMBUF 1
   #define YM2608_NUMBUF 1
   #define YM2612_NUMBUF 1
@@ -219,7 +222,10 @@ void OPMResetChip(int num);
 void OPMUpdateOne(int num, INT16 **buffer, int length );
 /* ---- set callback hander when port CT0/1 write ----- */
 /* CT.bit0 = CT0 , CT.bit1 = CT1 */
-void OPMSetPortHander(int n,void (*PortWrite)(int offset,int CT) );
+/*
+typedef void (*mem_write_handler)(int offset,int data);
+*/
+void OPMSetPortHander(int n,mem_write_handler PortWrite);
 /* JB 981119  - so it will match MAME's memory write functions scheme*/
 
 int YM2151Write(int n,int a,unsigned char v);

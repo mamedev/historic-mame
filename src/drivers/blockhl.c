@@ -365,7 +365,7 @@ static void blockhl_banking( int lines )
 
 	/* other bits unknown */
 
-if (errorlog && (lines & 0x84) != 0x80) fprintf(errorlog,"%04x: setlines %02x\n",cpu_get_pc(),lines);
+	if ((lines & 0x84) != 0x80) logerror("%04x: setlines %02x\n",cpu_get_pc(),lines);
 }
 
 static void blockhl_init_machine( void )

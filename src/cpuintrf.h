@@ -88,6 +88,15 @@ enum {
 #ifndef HAS_M6510
 #define HAS_M6510		0
 #endif
+#ifndef HAS_M6510T
+#define HAS_M6510T		0
+#endif
+#ifndef HAS_M7501
+#define HAS_M7501		0
+#endif
+#ifndef HAS_M8502
+#define HAS_M8502		0
+#endif
 #ifndef HAS_N2A03
 #define HAS_N2A03		0
 #endif
@@ -96,6 +105,18 @@ enum {
 #endif
 #ifndef HAS_I86
 #define HAS_I86 		0
+#endif
+#ifndef HAS_I88
+#define HAS_I88 		0
+#endif
+#ifndef HAS_I186
+#define HAS_I186		0
+#endif
+#ifndef HAS_I188
+#define HAS_I188		0
+#endif
+#ifndef HAS_I286
+#define HAS_I286		0
 #endif
 #ifndef HAS_V20
 #define HAS_V20 		0

@@ -2,11 +2,11 @@
 
 
 extern unsigned char *spriteram_2;
-extern int spriteram_2_size;
+extern size_t spriteram_2_size;
 unsigned char *aerofgt_rasterram;
 unsigned char *aerofgt_bg1videoram,*aerofgt_bg2videoram;
 unsigned char *aerofgt_spriteram1,*aerofgt_spriteram2;
-int aerofgt_spriteram1_size,aerofgt_spriteram2_size;
+size_t aerofgt_spriteram1_size,aerofgt_spriteram2_size;
 
 static unsigned char gfxbank[8];
 static unsigned char bg1scrollx[2],bg1scrolly[2],bg2scrollx[2],bg2scrolly[2];

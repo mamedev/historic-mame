@@ -280,7 +280,7 @@ static struct GfxLayout _name_ =\
 	char buf[80];\
 	sprintf(buf,_format_,_offset_);\
 	usrintf_showmessage(buf);\
-	if (errorlog) fprintf(errorlog, "CPU #0 PC %06X : Warning, %s\n",cpu_get_pc(), buf); \
+	logerror("CPU #0 PC %06X : Warning, %s\n",cpu_get_pc(), buf); \
 }
 
 #define SHOW_WRITE_ERROR(_format_,_offset_,_data_)\
@@ -288,7 +288,7 @@ static struct GfxLayout _name_ =\
 	char buf[80];\
 	sprintf(buf,_format_,_offset_,_data_);\
 	usrintf_showmessage(buf);\
-	if (errorlog) fprintf(errorlog, "CPU #0 PC %06X : Warning, %s\n",cpu_get_pc(), buf); \
+	logerror("CPU #0 PC %06X : Warning, %s\n",cpu_get_pc(), buf); \
 }
 
 #else
@@ -296,21 +296,15 @@ static struct GfxLayout _name_ =\
 #define SHOW_READ_ERROR(_format_,_offset_)\
 {\
 	char buf[80];\
-	if (errorlog)\
-	{ \
-		sprintf(buf,_format_,_offset_);\
-		if (errorlog) fprintf(errorlog, "CPU #0 PC %06X : Warning, %s\n",cpu_get_pc(), buf);\
-	} \
+	sprintf(buf,_format_,_offset_);\
+	logerror("CPU #0 PC %06X : Warning, %s\n",cpu_get_pc(), buf);\
 }
 
 #define SHOW_WRITE_ERROR(_format_,_offset_,_data_)\
 {\
 	char buf[80];\
-	if (errorlog)\
-	{ \
-		sprintf(buf,_format_,_offset_,_data_); \
-		fprintf(errorlog, "CPU #0 PC %06X : Warning, %s\n",cpu_get_pc(), buf); \
-	} \
+	sprintf(buf,_format_,_offset_,_data_); \
+	logerror("CPU #0 PC %06X : Warning, %s\n",cpu_get_pc(), buf); \
 }
 
 #endif

@@ -9,7 +9,7 @@
 
 
 /* Globals */
-int pang_videoram_size;
+size_t pang_videoram_size;
 unsigned char *pang_videoram;
 unsigned char *pang_colorram;
 
@@ -174,7 +174,7 @@ static int paletteram_bank;
 
 WRITE_HANDLER( pang_gfxctrl_w )
 {
-if (errorlog) fprintf(errorlog,"PC %04x: pang_gfxctrl_w %02x\n",cpu_get_pc(),data);
+logerror("PC %04x: pang_gfxctrl_w %02x\n",cpu_get_pc(),data);
 {
 	char baf[40];
 	sprintf(baf,"%02x",data);

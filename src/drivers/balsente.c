@@ -233,7 +233,7 @@ static UINT8 spiker_expand_bits;
 
 
 static unsigned char *nvram;
-static int nvram_size;
+static size_t nvram_size;
 
 static void nvram_handler(void *file, int read_or_write)
 {
@@ -448,7 +448,7 @@ static WRITE_HANDLER( rombank_select_w )
 {
 	int bank_offset = 0x6000 * ((data >> 4) & 7);
 
-if (errorlog) fprintf(errorlog, "%04X:rombank_select_w(%02X)\n", cpu_getpreviouspc(), data);
+logerror("%04X:rombank_select_w(%02X)\n", cpu_getpreviouspc(), data);
 
 	/* the bank number comes from bits 4-6 */
 	cpu_setbank(1, &memory_region(REGION_CPU1)[0x10000 + bank_offset]);
@@ -464,7 +464,7 @@ static WRITE_HANDLER( rombank2_select_w )
 	/* top bit controls which half of the ROMs to use (Name that Tune only) */
 	if (memory_region_length(REGION_CPU1) > 0x40000) bank |= (data >> 4) & 8;
 
-//if (errorlog) fprintf(errorlog, "%04X:rombank2_select_w(%02X)\n", cpu_getpreviouspc(), data);
+//logerror("%04X:rombank2_select_w(%02X)\n", cpu_getpreviouspc(), data);
 
 	/* when they set the AB bank, it appears as though the CD bank is reset */
 	if (data & 0x20)
@@ -498,7 +498,7 @@ static WRITE_HANDLER( misc_output_w )
 	/* special case is offset 7, which recalls the NVRAM data */
 	if (offset == 7)
 	{
-		if (errorlog) fprintf(errorlog, "nvrecall_w=%d\n", data);
+		logerror("nvrecall_w=%d\n", data);
 	}
 	else
 	{
@@ -1230,14 +1230,14 @@ static WRITE_HANDLER( chip_select_w )
 			double temp = 0;
 
 			/* remember the previous value */
-			if (errorlog) temp = cem3394_get_parameter(i, reg);
+			temp = cem3394_get_parameter(i, reg);
 
 			/* set the voltage */
 			cem3394_set_voltage(i, reg, voltage);
 
 			/* only log changes */
-			if (errorlog && temp != cem3394_get_parameter(i, reg))
-				fprintf(errorlog, "s%04X:   CEM#%d:%s=%f\n", cpu_getpreviouspc(), i, names[dac_register], voltage);
+			if (temp != cem3394_get_parameter(i, reg))
+				logerror("s%04X:   CEM#%d:%s=%f\n", cpu_getpreviouspc(), i, names[dac_register], voltage);
 		}
 
 	/* if a timer for counter 0 is running, recompute */

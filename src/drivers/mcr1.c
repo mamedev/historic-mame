@@ -78,9 +78,80 @@
 
 
 /* video driver data & functions */
-extern INT16 mcr1_spriteoffset;
+extern INT8 mcr12_sprite_xoffs;
+extern INT8 mcr12_sprite_xoffs_flip;
 
+int mcr12_vh_start(void);
+void mcr12_vh_stop(void);
 void mcr1_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
+
+WRITE_HANDLER( mcr1_videoram_w );
+
+
+static const UINT8 *nvram_init;
+
+
+/*************************************
+ *
+ *	Kick input ports
+ *
+ *************************************/
+
+static READ_HANDLER( kick_dial_r )
+{
+	return (readinputport(1) & 0x0f) | ((readinputport(6) << 4) & 0xf0);
+}
+
+
+
+/*************************************
+ *
+ *	Solar Fox input ports
+ *
+ *************************************/
+
+static READ_HANDLER( solarfox_input_0_r )
+{
+	/* This is a kludge; according to the wiring diagram, the player 2 */
+	/* controls are hooked up as documented below. If you go into test */
+	/* mode, they will respond. However, if you try it in a 2-player   */
+	/* game in cocktail mode, they don't work at all. So we fake-mux   */
+	/* the controls through player 1's ports */
+	if (mcr_cocktail_flip)
+		return readinputport(0) | 0x08;
+	else
+		return ((readinputport(0) & ~0x14) | 0x08) | ((readinputport(0) & 0x08) >> 1) | ((readinputport(2) & 0x01) << 4);
+}
+
+
+static READ_HANDLER( solarfox_input_1_r )
+{
+	/*  same deal as above */
+	if (mcr_cocktail_flip)
+		return readinputport(1) | 0xf0;
+	else
+		return (readinputport(1) >> 4) | 0xf0;
+}
+
+
+
+/*************************************
+ *
+ *	NVRAM save/load
+ *
+ *************************************/
+
+static void mcr1_nvram_handler(void *file, int read_or_write)
+{
+	unsigned char *ram = memory_region(REGION_CPU1);
+
+	if (read_or_write)
+		osd_fwrite(file, &ram[0x7000], 0x800);
+	else if (file)
+		osd_fread(file, &ram[0x7000], 0x800);
+	else if (nvram_init)
+		memcpy(&ram[0x7000], nvram_init, 16);
+}
 
 
 
@@ -107,16 +178,20 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xf000, 0xf1ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xf400, 0xf41f, paletteram_xxxxRRRRBBBBGGGG_split1_w, &paletteram },
 	{ 0xf800, 0xf81f, paletteram_xxxxRRRRBBBBGGGG_split2_w, &paletteram_2 },
-	{ 0xfc00, 0xffff, videoram_w, &videoram, &videoram_size },
+	{ 0xfc00, 0xffff, mcr1_videoram_w, &videoram, &videoram_size },
 	{ -1 }  /* end of table */
 };
 
 
 static struct IOReadPort readport[] =
 {
-	{ 0x00, 0x04, mcr_port_04_dispatch_r },
+	{ 0x00, 0x00, input_port_0_r },
+	{ 0x01, 0x01, input_port_1_r },
+	{ 0x02, 0x02, input_port_2_r },
+	{ 0x03, 0x03, input_port_3_r },
+	{ 0x04, 0x04, input_port_4_r },
 	{ 0x07, 0x07, ssio_status_r },
-	{ 0x10, 0x10, mcr_port_04_dispatch_r },
+	{ 0x10, 0x10, input_port_0_r },
 	{ 0xf0, 0xf3, z80ctc_0_r },
 	{ -1 }
 };
@@ -124,8 +199,6 @@ static struct IOReadPort readport[] =
 
 static struct IOWritePort writeport[] =
 {
-	{ 0x00, 0x01, mcr_port_01_w },
-	{ 0x04, 0x07, mcr_port_47_dispatch_w },
 	{ 0x1c, 0x1f, ssio_data_w },
 	{ 0xe0, 0xe0, watchdog_reset_w },
 	{ 0xe8, 0xe8, MWA_NOP },
@@ -146,10 +219,10 @@ INPUT_PORTS_START( solarfox )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_TILT )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN3 )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
 	PORT_START	/* IN1 */
@@ -157,13 +230,31 @@ INPUT_PORTS_START( solarfox )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
-	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
 
 	PORT_START	/* IN2 */
-	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0xfe, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* IN3 -- dipswitches */
-	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x03, 0x03, "Bonus" )
+	PORT_DIPSETTING(    0x02, "None" )
+	PORT_DIPSETTING(    0x03, "After 10 racks" )
+	PORT_DIPSETTING(    0x01, "After 20 racks" )
+	PORT_BIT( 0x0c, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Demo_Sounds ))
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x40, 0x40, "Ignore Hardware Failure" )
+	PORT_DIPSETTING(    0x40, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Cabinet ))
+	PORT_DIPSETTING(    0x80, DEF_STR( Upright ))
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ))
 
 	PORT_START	/* IN4 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -192,8 +283,8 @@ INPUT_PORTS_START( kick )
 
 	PORT_START	/* IN3 -- dipswitches */
 	PORT_DIPNAME( 0x01, 0x00, "Music" )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
 	PORT_BIT( 0xfe, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* IN4 */
@@ -202,6 +293,47 @@ INPUT_PORTS_START( kick )
 	PORT_START	/* AIN0 */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
+	PORT_START	/* (fake) player 2 dial */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( kicka )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
+
+	PORT_START	/* IN1 -- this is the Kick spinner input.  */
+	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 3, 50, 0, 0 )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0xfe, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* IN3 -- dipswitches */
+	PORT_DIPNAME( 0x01, 0x00, "Music" )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ))
+	PORT_DIPSETTING(    0x00, DEF_STR( On ))
+	PORT_BIT( 0x3e, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Cabinet ))
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ))
+	PORT_DIPSETTING(    0x40, DEF_STR( Cocktail ))
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN4 */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* AIN0 */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* (fake) player 2 dial */
+	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_REVERSE | IPF_COCKTAIL, 3, 50, 0, 0 )
 INPUT_PORTS_END
 
 
@@ -212,13 +344,10 @@ INPUT_PORTS_END
  *
  *************************************/
 
-MCR_CHAR_LAYOUT(charlayout, 256);
-MCR_SPRITE_LAYOUT(spritelayout, 64);
-
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &charlayout,    0, 1 },	/* colors 0-15 */
-	{ REGION_GFX2, 0, &spritelayout, 16, 1 },	/* colors 16-31 */
+	{ REGION_GFX1, 0, &mcr_bg_layout,     0, 1 },	/* colors 0-15 */
+	{ REGION_GFX2, 0, &mcr_sprite_layout, 16, 1 },	/* colors 16-31 */
 	{ -1 } /* end of array */
 };
 
@@ -248,15 +377,15 @@ static struct MachineDriver machine_driver_mcr1 =
 	mcr_init_machine,
 
 	/* video hardware */
-	32*16, 32*16, { 0, 32*16-1, 0, 30*16-1 },
+	32*16, 30*16, { 0*16, 32*16-1, 0*16, 30*16-1 },
 	gfxdecodeinfo,
 	32,32,
 	0,
 
 	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
-	generic_vh_start,
-	generic_vh_stop,
+	mcr12_vh_start,
+	mcr12_vh_stop,
 	mcr1_vh_screenrefresh,
 
 	/* sound hardware */
@@ -264,8 +393,7 @@ static struct MachineDriver machine_driver_mcr1 =
 	{
 		SOUND_SSIO
 	},
-
-	mcr_nvram_handler
+	mcr1_nvram_handler
 };
 
 
@@ -278,23 +406,29 @@ static struct MachineDriver machine_driver_mcr1 =
 
 static void init_solarfox(void)
 {
-	static const UINT8 hiscore_init[] = { 0,0,1,1,1,1,1,3,3,3,7,0,0,0,0,0 };
+	static const UINT8 hiscore_init[] = { 0,0,1,1,1,1,1,3,3,3,7 };
+	nvram_init = hiscore_init;
 
-	MCR_CONFIGURE_HISCORE(0x7000, 0x800, hiscore_init);
 	MCR_CONFIGURE_SOUND(MCR_SSIO);
-	MCR_CONFIGURE_DEFAULT_PORTS;
+	install_port_read_handler(0, 0x00, 0x00, solarfox_input_0_r);
+	install_port_read_handler(0, 0x01, 0x01, solarfox_input_1_r);
+	install_port_write_handler(0, 0x01, 0x01, mcr_control_port_w);
 
-	mcr1_spriteoffset = 3;
+	mcr12_sprite_xoffs = 16;
+	mcr12_sprite_xoffs_flip = 0;
 }
 
 
 static void init_kick(void)
 {
-	MCR_CONFIGURE_HISCORE(0x7000, 0x800, NULL);
-	MCR_CONFIGURE_SOUND(MCR_SSIO);
-	MCR_CONFIGURE_DEFAULT_PORTS;
+	nvram_init = NULL;
 
-	mcr1_spriteoffset = -3;
+	MCR_CONFIGURE_SOUND(MCR_SSIO);
+	install_port_read_handler(0, 0x01, 0x01, kick_dial_r);
+	install_port_write_handler(0, 0x03, 0x03, mcr_control_port_w);
+
+	mcr12_sprite_xoffs = 0;
+	mcr12_sprite_xoffs_flip = 16;
 }
 
 
@@ -393,6 +527,6 @@ ROM_END
  *
  *************************************/
 
-GAME( 1981, solarfox, 0,    mcr1, solarfox, solarfox, ORIENTATION_SWAP_XY, "Bally Midway", "Solar Fox" )
-GAME( 1981, kick,     0,    mcr1, kick,     kick,     ORIENTATION_SWAP_XY, "Midway", "Kick (mirror version)" )
-GAME( 1981, kicka,    kick, mcr1, kick,     kick,     ROT90,               "bootleg?", "Kick (upright version)" )
+GAME( 1981, solarfox, 0,    mcr1, solarfox, solarfox, ROT90 ^ ORIENTATION_FLIP_Y, "Bally Midway", "Solar Fox" )
+GAME( 1981, kick,     0,    mcr1, kick,     kick,     ORIENTATION_SWAP_XY,        "Midway", "Kick (upright)" )
+GAME( 1981, kicka,    kick, mcr1, kicka,    kick,     ROT90,                      "Midway", "Kick (cocktail)" )

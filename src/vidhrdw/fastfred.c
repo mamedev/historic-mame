@@ -117,7 +117,7 @@ WRITE_HANDLER( fastfred_character_bank_select_w )
         character_bank[offset] = data & 1;
         memset(dirtybuffer, 1, videoram_size);
 
-		//if (errorlog && offset==1) fprintf(errorlog, "CharBank = %02X\n", (character_bank[1] << 1) | character_bank[0]);
+		//if (offset==1) logerror("CharBank = %02X\n", (character_bank[1] << 1) | character_bank[0]);
     }
 }
 
@@ -129,7 +129,7 @@ WRITE_HANDLER( fastfred_color_bank_select_w )
         color_bank[offset] = data & 1;
         memset(dirtybuffer, 1, videoram_size);
 
-		//if (errorlog && offset==1) fprintf(errorlog, "ColorBank = %02X\n", (color_bank[1] << 1) | color_bank[0]);
+		//if (offset==1) logerror("ColorBank = %02X\n", (color_bank[1] << 1) | color_bank[0]);
     }
 }
 
@@ -138,7 +138,7 @@ WRITE_HANDLER( fastfred_background_color_w )
 {
 	int r,g,b;
 
-	//if (errorlog) fprintf(errorlog, "Background color = %02X\n", data);
+	//logerror("Background color = %02X\n", data);
 
 	convert_color(data, &r, &g, &b);
 

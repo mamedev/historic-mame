@@ -11,7 +11,7 @@ Driver by Takahiro Nogi (nogi@kt.rim.or.jp) 1999/10/04
 #include "vidhrdw/generic.h"
 
 unsigned char *ssozumo_videoram2, *ssozumo_colorram2;
-int ssozumo_videoram2_size;
+size_t ssozumo_videoram2_size;
 unsigned char *ssozumo_scroll;
 
 #define TOTAL_COLORS(gfxn)	(Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)

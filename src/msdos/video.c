@@ -584,7 +584,7 @@ void osd_mark_dirty(int _x1, int _y1, int _x2, int _y2, int ui)
 	{
 		int x, y;
 
-//        if (errorlog) fprintf(errorlog, "mark_dirty %3d,%3d - %3d,%3d\n", _x1,_y1, _x2,_y2);
+//        logerror("mark_dirty %3d,%3d - %3d,%3d\n", _x1,_y1, _x2,_y2);
 
 		_x1 -= skipcolumns;
 		_x2 -= skipcolumns;
@@ -671,8 +671,7 @@ static void select_display_mode(int depth)
 	/* 16 bit color is supported only by VESA modes */
 	if (depth == 16)
 	{
-		if (errorlog)
-			fprintf (errorlog, "Game needs 16-bit colors. Using VESA\n");
+		logerror("Game needs 16-bit colors. Using VESA\n");
 		use_tweaked = 0;
 		/* only one 15.75KHz VESA mode, so force that */
 		if (scanrate15KHz == 1)
@@ -686,20 +685,17 @@ static void select_display_mode(int depth)
   /* Check for special 15.75KHz mode (req. for 15.75KHz Arcade Modes) */
 	if (scanrate15KHz == 1)
 	{
-		if (errorlog)
+		switch (monitor_type)
 		{
-			switch (monitor_type)
-			{
-				case MONITOR_TYPE_NTSC:
-					fprintf (errorlog, "Using special NTSC video mode.\n");
-					break;
-				case MONITOR_TYPE_PAL:
-					fprintf (errorlog, "Using special PAL video mode.\n");
-					break;
-				case MONITOR_TYPE_ARCADE:
-					fprintf (errorlog, "Using special arcade monitor mode.\n");
-					break;
-			}
+			case MONITOR_TYPE_NTSC:
+				logerror("Using special NTSC video mode.\n");
+				break;
+			case MONITOR_TYPE_PAL:
+				logerror("Using special PAL video mode.\n");
+				break;
+			case MONITOR_TYPE_ARCADE:
+				logerror("Using special arcade monitor mode.\n");
+				break;
 		}
 		scanlines = 0;
 		/* if no width/height specified, pick one from our tweaked list */
@@ -795,8 +791,7 @@ if (gfx_width == 320 && gfx_height == 240 && scanlines == 0)
 		/* If we didn't find a tweaked VGA mode, use VESA */
 		if (gfx_width == 0)
 		{
-			if (errorlog)
-				fprintf (errorlog, "Did not find a tweaked VGA mode. Using VESA.\n");
+			logerror("Did not find a tweaked VGA mode. Using VESA.\n");
 			use_vesa = 1;
 		}
 	}
@@ -1083,9 +1078,7 @@ static void adjust_display(int xmin, int ymin, int xmax, int ymax, int depth)
 	if (skipcolumns > skipcolumnsmax)
 		skipcolumns = skipcolumnsmax;
 
-	if (errorlog)
-		fprintf(errorlog,
-				"gfx_width = %d gfx_height = %d\n"
+	logerror("gfx_width = %d gfx_height = %d\n"
 				"gfx_xoffset = %d gfx_yoffset = %d\n"
 				"xmin %d ymin %d xmax %d ymax %d\n"
 				"skiplines %d skipcolumns %d\n"
@@ -1112,8 +1105,7 @@ int game_attributes;
 /* Return a osd_bitmap pointer or 0 in case of error. */
 struct osd_bitmap *osd_create_display(int width,int height,int depth,int attributes)
 {
-	if (errorlog)
-		fprintf (errorlog, "width %d, height %d\n", width,height);
+	logerror("width %d, height %d\n", width,height);
 
 	brightness = 100;
 	brightness_paused_adjust = 1.0;
@@ -1191,8 +1183,7 @@ struct osd_bitmap *osd_create_display(int width,int height,int depth,int attribu
 			printf ("\nUnable to find 15.75KHz SVGA driver for %dx%d\n", gfx_width, gfx_height);
 			return 0;
 		}
-		if(errorlog)
-			fprintf (errorlog, "Using %s 15.75KHz SVGA driver\n", SVGA15KHzdriver->name);
+		logerror("Using %s 15.75KHz SVGA driver\n", SVGA15KHzdriver->name);
 		/*and try to set the mode */
 		if (!SVGA15KHzdriver->setSVGA15KHzmode (dbl, gfx_width, gfx_height))
 		{
@@ -1293,8 +1284,7 @@ int osd_set_display(int width,int height, int attributes)
 				/* all 15.75KHz VGA modes are unchained */
 				unchained = !use_vesa;
 
-				if (errorlog)
-					fprintf (errorlog, "15.75KHz mode (%dx%d) vesa:%d half:%d unchained:%d\n",
+				logerror("15.75KHz mode (%dx%d) vesa:%d half:%d unchained:%d\n",
 										gfx_width, gfx_height, use_vesa, half_yres, unchained);
 				/* always use the freq from the structure */
 				videofreq = arcade_tweaked[i].syncvgafreq;
@@ -1414,20 +1404,17 @@ int osd_set_display(int width,int height, int attributes)
 					err = set_gfx_mode(mode,gfx_width,gfx_height,0,0);
 			}
 
-			if (errorlog)
-			{
-				fprintf (errorlog,"Trying ");
-				if      (mode == GFX_VESA1)
-					fprintf (errorlog, "VESA1");
-				else if (mode == GFX_VESA2B)
-					fprintf (errorlog, "VESA2B");
-				else if (mode == GFX_VESA2L)
-				    fprintf (errorlog, "VESA2L");
-				else if (mode == GFX_VESA3)
-					fprintf (errorlog, "VESA3");
-			    fprintf (errorlog, "  %dx%d, %d bit\n",
-						gfx_width, gfx_height, bits);
-			}
+			logerror("Trying ");
+			if      (mode == GFX_VESA1)
+				logerror("VESA1");
+			else if (mode == GFX_VESA2B)
+				logerror("VESA2B");
+			else if (mode == GFX_VESA2L)
+				logerror("VESA2L");
+			else if (mode == GFX_VESA3)
+				logerror("VESA3");
+			logerror("  %dx%d, %d bit\n",
+					gfx_width, gfx_height, bits);
 
 			if (err == 0)
 			{
@@ -1436,8 +1423,7 @@ int osd_set_display(int width,int height, int attributes)
 				gfx_mode = mode;
 				continue;
 			}
-			else if (errorlog)
-				fprintf (errorlog,"%s\n",allegro_error);
+			else logerror("%s\n",allegro_error);
 
 			/* Now adjust parameters for the next loop */
 
@@ -1543,17 +1529,14 @@ int osd_set_display(int width,int height, int attributes)
 		}
 		else
 		{
-			if (errorlog)
-				fprintf (errorlog, "Found matching %s mode\n", gfx_driver->desc);
+			logerror("Found matching %s mode\n", gfx_driver->desc);
 			gfx_mode = mode;
 			/* disable triple buffering if the screen is not large enough */
-			if (errorlog)
-				fprintf (errorlog, "Virtual screen size %dx%d\n",VIRTUAL_W,VIRTUAL_H);
+			logerror("Virtual screen size %dx%d\n",VIRTUAL_W,VIRTUAL_H);
 			if (VIRTUAL_W < 3*triplebuf_page_width)
 			{
 				use_triplebuf = 0;
-				if (errorlog)
-					fprintf (errorlog, "Triple buffer disabled\n");
+				logerror("Triple buffer disabled\n");
 			}
 
 			/* if triple buffering is enabled, turn off vsync */
@@ -1581,8 +1564,7 @@ int osd_set_display(int width,int height, int attributes)
 			if ((vga_page_size * 3) > 0x40000)
 			{
 				/* too big */
-				if (errorlog)
-					fprintf(errorlog,"tweaked mode %dx%d is too large to triple buffer\ntriple buffering disabled\n",gfx_width,gfx_height);
+				logerror("tweaked mode %dx%d is too large to triple buffer\ntriple buffering disabled\n",gfx_width,gfx_height);
 				use_triplebuf = 0;
 			}
 			else
@@ -1590,8 +1572,7 @@ int osd_set_display(int width,int height, int attributes)
 				/* it fits, so set up the 3 pages */
 				no_xpages = 3;
 				xpage_size = vga_page_size / 4;
-				if (errorlog)
-					fprintf(errorlog,"unchained VGA triple buffering page size :%d\n",xpage_size);
+				logerror("unchained VGA triple buffering page size :%d\n",xpage_size);
 				/* and make sure the mode's unchained */
 				unchain_vga (reg);
 				/* triple buffering is enabled, turn off vsync */
@@ -1634,15 +1615,12 @@ int osd_set_display(int width,int height, int attributes)
 		if (set_gfx_mode(GFX_VGA,320,200,0,0) != 0)
 			return 0;
 
-		if (errorlog)
+		logerror("Generated Tweak Values :-\n");
+		for (i=0; i<reglen; i++)
 		{
-			fprintf(errorlog,"Generated Tweak Values :-\n");
-			for (i=0; i<reglen; i++)
-			{
-				fprintf(errorlog,"{ 0x%02x, 0x%02x, 0x%02x},",reg[i].port,reg[i].index,reg[i].value);
-				if (!((i+1)%3))
-					fprintf(errorlog,"\n");
-			}
+			logerror("{ 0x%02x, 0x%02x, 0x%02x},",reg[i].port,reg[i].index,reg[i].value);
+			if (!((i+1)%3))
+				logerror("\n");
 		}
 
 		/* tweak the mode */
@@ -1686,8 +1664,7 @@ int osd_set_display(int width,int height, int attributes)
 
 		rate = ((float)TICKS_PER_SEC)/(b-a);
 
-		if (errorlog)
-			fprintf(errorlog,"target frame rate = %ffps, video frame rate = %3.2fHz\n",Machine->drv->frames_per_second,rate);
+		logerror("target frame rate = %ffps, video frame rate = %3.2fHz\n",Machine->drv->frames_per_second,rate);
 
 		/* don't allow more than 8% difference between target and actual frame rate */
 		while (rate > Machine->drv->frames_per_second * 108 / 100)
@@ -1696,20 +1673,19 @@ int osd_set_display(int width,int height, int attributes)
 		if (rate < Machine->drv->frames_per_second * 92 / 100)
 		{
 			osd_close_display();
-			if (errorlog) fprintf(errorlog,"-vsync option cannot be used with this display mode:\n"
+			logerror("-vsync option cannot be used with this display mode:\n"
 						"video refresh frequency = %dHz, target frame rate = %ffps\n",
 						(int)(TICKS_PER_SEC/(b-a)),Machine->drv->frames_per_second);
 			return 0;
 		}
 
-		if (errorlog) fprintf(errorlog,"adjusted video frame rate = %3.2fHz\n",rate);
+		logerror("adjusted video frame rate = %3.2fHz\n",rate);
 			vsync_frame_rate = rate;
 
 		if (Machine->sample_rate)
 		{
 			Machine->sample_rate = Machine->sample_rate * Machine->drv->frames_per_second / rate;
-			if (errorlog)
-				fprintf(errorlog,"sample rate adjusted to match video freq: %d\n",Machine->sample_rate);
+			logerror("sample rate adjusted to match video freq: %d\n",Machine->sample_rate);
 		}
 	}
 
@@ -1868,12 +1844,12 @@ int osd_allocate_colors(unsigned int totalcolors,const unsigned char *palette,un
 			if (unchained)
 			{
 				update_screen = blitscreen_dirty1_unchained_vga;
-				if (errorlog) fprintf (errorlog, "blitscreen_dirty1_unchained_vga\n");
+				logerror("blitscreen_dirty1_unchained_vga\n");
 			}
 			else
 			{
 				update_screen = blitscreen_dirty1_vga;
-				if (errorlog) fprintf (errorlog, "blitscreen_dirty1_vga\n");
+				logerror("blitscreen_dirty1_vga\n");
 			}
 		}
 		else
@@ -1882,12 +1858,12 @@ int osd_allocate_colors(unsigned int totalcolors,const unsigned char *palette,un
 			if (unchained)
 			{
 				update_screen = blitscreen_dirty0_unchained_vga;
-				if (errorlog) fprintf (errorlog, "blitscreen_dirty0_unchained_vga\n");
+				logerror("blitscreen_dirty0_unchained_vga\n");
 			}
 			else
 			{
 				update_screen = blitscreen_dirty0_vga;
-				if (errorlog) fprintf (errorlog, "blitscreen_dirty0_vga\n");
+				logerror("blitscreen_dirty0_vga\n");
 			}
 		}
 	}
@@ -1930,7 +1906,7 @@ void osd_modify_pen(int pen,unsigned char red, unsigned char green, unsigned cha
 {
 	if (modifiable_palette == 0)
 	{
-		if (errorlog) fprintf(errorlog,"error: osd_modify_pen() called with modifiable_palette == 0\n");
+		logerror("error: osd_modify_pen() called with modifiable_palette == 0\n");
 		return;
 	}
 
@@ -1970,8 +1946,7 @@ void osd_get_pen(int pen,unsigned char *red, unsigned char *green, unsigned char
 
 void update_screen_dummy(void)
 {
-	if (errorlog)
-		fprintf(errorlog, "msdos/video.c: undefined update_screen() function for %d x %d!\n",xmultiply,ymultiply);
+	logerror("msdos/video.c: undefined update_screen() function for %d x %d!\n",xmultiply,ymultiply);
 }
 
 INLINE void pan_display(void)
@@ -2063,7 +2038,7 @@ void osd_update_video_and_audio(void)
 	static TICKER prev_measure,this_frame_base,prev;
 	static int speed = 100;
 	static int vups,vfcount;
-	int need_to_clear_bitmap = 0;
+	int have_to_clear_bitmap = 0;
 	int already_synced;
 
 
@@ -2103,7 +2078,7 @@ void osd_update_video_and_audio(void)
 			showfpstemp--;
 			if (showfps == 0 && showfpstemp == 0)
 			{
-				need_to_clear_bitmap = 1;
+				have_to_clear_bitmap = 1;
 			}
 		}
 
@@ -2113,14 +2088,14 @@ void osd_update_video_and_audio(void)
 			if (showfpstemp)
 			{
 				showfpstemp = 0;
-				need_to_clear_bitmap = 1;
+				have_to_clear_bitmap = 1;
 			}
 			else
 			{
 				showfps ^= 1;
 				if (showfps == 0)
 				{
-					need_to_clear_bitmap = 1;
+					have_to_clear_bitmap = 1;
 				}
 			}
 		}
@@ -2316,7 +2291,7 @@ void osd_update_video_and_audio(void)
 		interlace_sync();
 
 
-		if (need_to_clear_bitmap)
+		if (have_to_clear_bitmap)
 			osd_clearbitmap(scrbitmap);
 
 		if (use_dirty)
@@ -2326,7 +2301,7 @@ void osd_update_video_and_audio(void)
 			init_dirty(0);
 		}
 
-		if (need_to_clear_bitmap)
+		if (have_to_clear_bitmap)
 			osd_clearbitmap(scrbitmap);
 
 

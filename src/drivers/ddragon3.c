@@ -71,7 +71,7 @@ static READ_HANDLER( ddragon3_io_r )
 		case 0x6: return readinputport(3);
 
 		default:
-		if( errorlog ) fprintf( errorlog, "INPUT 1800[%02x] \n", offset);
+		logerror("INPUT 1800[%02x] \n", offset);
 		return 0xffff;
 	}
 }
@@ -119,7 +119,7 @@ static WRITE_HANDLER( ddragon3_io_w ){
 		break;
 
 		default:
-		if( errorlog ) fprintf( errorlog, "OUTPUT 1400[%02x] %08x, pc=%06x \n", offset,(unsigned)data, cpu_get_pc() );
+		logerror("OUTPUT 1400[%02x] %08x, pc=%06x \n", offset,(unsigned)data, cpu_get_pc() );
 		break;
 	}
 }

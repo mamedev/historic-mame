@@ -192,13 +192,13 @@ static void KDAC_A_make_fncode( void ){
   }
  #if 0
  	for( i = 0; i < 0x200; i++ )
-  if (errorlog) fprintf( errorlog,"fncode[%04x] = %.2f\n", i, fncode[i] );
+  logerror("fncode[%04x] = %.2f\n", i, fncode[i] );
  #endif
 
 #else
   for( i = 0; i < 0x200; i++ ){
     fncode[i] = (0x200 * 55) / (0x200 - i);
-//    if (errorlog) fprintf( errorlog,"2 : fncode[%04x] = %.2f\n", i, fncode[i] );
+//    logerror("2 : fncode[%04x] = %.2f\n", i, fncode[i] );
   }
 
 #endif
@@ -382,7 +382,7 @@ static void K007232_WriteReg( int r, int v, int chip )
 				data = (((((unsigned int)kpcm[chip].wreg[reg_port*0x06 + 0x01])<<8)&0x0100) | (((unsigned int)kpcm[chip].wreg[reg_port*0x06 + 0x00])&0x00ff));
 				#if 0
 				if( !reg_port && r == 1 )
-				if (errorlog) fprintf( errorlog, "%04x\n" ,data );
+				logerror("%04x\n" ,data );
 				#endif
 
 				kpcm[chip].step[reg_port] =

@@ -131,7 +131,7 @@ TODO:
 
 
 extern unsigned char *cclimber_bsvideoram;
-extern int cclimber_bsvideoram_size;
+extern size_t cclimber_bsvideoram_size;
 extern unsigned char *cclimber_bigspriteram;
 extern unsigned char *cclimber_column_scroll;
 WRITE_HANDLER( cclimber_flipscreen_w );

@@ -296,6 +296,14 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 						!(spriteram[offs + 2] & 0x80),!(spriteram[offs + 1] & 0x80),
 						x,y,
 						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+
+				/* draw with wrap around - this fixes the 'beheading' bug */
+				drawgfx(bitmap,Machine->gfx[1],
+						(spriteram[offs + 1] & 0x7f) + 2 * (spriteram[offs + 2] & 0x40),
+						(spriteram[offs + 2] & 0x0f) + 16 * palette_bank,
+						(spriteram[offs + 2] & 0x80),(spriteram[offs + 1] & 0x80),
+						x-256,y,
+						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 			}
 			else
 			{
@@ -304,6 +312,14 @@ static void draw_sprites(struct osd_bitmap *bitmap)
 						(spriteram[offs + 2] & 0x0f) + 16 * palette_bank,
 						(spriteram[offs + 2] & 0x80),(spriteram[offs + 1] & 0x80),
 						x,y,
+						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+
+				/* draw with wrap around - this fixes the 'beheading' bug */
+				drawgfx(bitmap,Machine->gfx[1],
+						(spriteram[offs + 1] & 0x7f) + 2 * (spriteram[offs + 2] & 0x40),
+						(spriteram[offs + 2] & 0x0f) + 16 * palette_bank,
+						(spriteram[offs + 2] & 0x80),(spriteram[offs + 1] & 0x80),
+						x+256,y,
 						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 			}
 		}

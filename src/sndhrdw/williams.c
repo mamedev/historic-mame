@@ -728,11 +728,11 @@ static void locate_audio_hotspot(UINT8 *base, UINT16 start)
 		{
 			counter.hotspot_start = i;
 			counter.hotspot_stop = i + 12;
-			if (errorlog) fprintf(errorlog, "Found hotspot @ %04X", i);
+			logerror("Found hotspot @ %04X", i);
 			return;
 		}
 	}
-	if (errorlog) fprintf(errorlog, "Found no hotspot!");
+	logerror("Found no hotspot!");
 }
 
 

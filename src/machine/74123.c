@@ -42,14 +42,6 @@
 #include "driver.h"
 #include "machine/74123.h"
 
-#define VERBOSE 0
-
-#if VERBOSE
-#define LOG(x) if( errorlog ) fprintf x
-#else
-#define LOG(x)
-#endif
-
 struct TTL74123 {
 	const struct TTL74123_interface *intf;
 	int trigger;			/* pin 2/10 */
@@ -72,7 +64,9 @@ static void set_output(int which, int data)
 void TTL74123_config(int which, const struct TTL74123_interface *intf)
 {
 	if (which >= MAX_TTL74123) return;
+
 	chip[which].intf = intf;
+
 	/* all inputs are open first */
     chip[which].trigger = 1;
 	chip[which].trigger_comp = 1;
@@ -103,19 +97,27 @@ static void clear_callback(int which)
 }
 
 
-#define CHECK_TRIGGER(TRIG) 												\
-	if (TRIG)																\
-	{																		\
-		double duration = TIME_IN_SEC(0.68 * c->intf->res * c->intf->cap);	\
-																			\
-		if (c->timer)														\
-			timer_reset(c->timer, duration);								\
-		else																\
-		{																	\
-			set_output(which, 1);											\
-			c->timer = timer_set(duration, which, clear_callback);			\
-		}																	\
+#define CHECK_TRIGGER(COND) 													\
+	{																			\
+		if (COND)																\
+		{																		\
+			double duration = TIME_IN_SEC(0.68 * c->intf->res * c->intf->cap);	\
+																				\
+			if (c->timer)														\
+				timer_reset(c->timer, duration);								\
+			else																\
+			{																	\
+				set_output(which, 1);											\
+				c->timer = timer_set(duration, which, clear_callback);			\
+			}																	\
+		}																		\
 	}
+
+#define RESET																	\
+	if (c->timer)																\
+    {																			\
+		timer_reset(c->timer, TIME_NOW);										\
+    }
 
 
 void TTL74123_trigger_w(int which, int data)
@@ -123,7 +125,10 @@ void TTL74123_trigger_w(int which, int data)
 	struct TTL74123 *c = chip + which;
 
 	/* trigger_comp=lo and rising edge on trigger (while reset_comp is hi) */
-	CHECK_TRIGGER(!c->trigger_comp && data && !c->trigger && c->reset_comp)
+	if (data)
+		CHECK_TRIGGER(!c->trigger_comp && !c->trigger && c->reset_comp)
+	else
+		RESET
 
 	c->trigger = data;
 }
@@ -134,7 +139,10 @@ void TTL74123_trigger_comp_w(int which, int data)
 	struct TTL74123 *c = chip + which;
 
 	/* trigger=hi and falling edge on trigger_comp (while reset_comp is hi) */
-	CHECK_TRIGGER(c->trigger && !data && c->trigger_comp && c->reset_comp)
+	if (!data)
+		CHECK_TRIGGER(c->trigger && c->trigger_comp && c->reset_comp)
+	else
+		RESET
 
 	c->trigger_comp = data;
 }
@@ -145,13 +153,10 @@ void TTL74123_reset_comp_w(int which, int data)
 	struct TTL74123 *c = chip + which;
 
 	/* trigger=hi, trigger_comp=lo and rising edge on reset_comp */
-    CHECK_TRIGGER(c->trigger && !c->trigger_comp && data && !c->reset_comp)
-
-	/* reset_comp=lo and timer running */
-	if (!data && c->timer)
-    {
-		timer_reset(c->timer, TIME_NOW);
-    }
+	if (data)
+    	CHECK_TRIGGER(c->trigger && !c->trigger_comp && !c->reset_comp)
+	else
+		RESET
 
 	c->reset_comp = data;
 }

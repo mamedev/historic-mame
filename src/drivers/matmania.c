@@ -26,9 +26,9 @@ MAIN BOARD:
 #include "cpu/m6809/m6809.h"
 
 extern unsigned char *matmania_videoram2,*matmania_colorram2;
-extern int matmania_videoram2_size;
+extern size_t matmania_videoram2_size;
 extern unsigned char *matmania_videoram3,*matmania_colorram3;
-extern int matmania_videoram3_size;
+extern size_t matmania_videoram3_size;
 extern unsigned char *matmania_scroll;
 extern unsigned char *matmania_pageselect;
 

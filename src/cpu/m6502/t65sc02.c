@@ -260,7 +260,7 @@ OP(63) {		  m6502_ICount -= 6;		 BSR;		  } /* ? BSR */
 #define m65sc02_0c m65c02_0c								/* 4 TSB ABS */
 #define m65sc02_2c m6502_2c 								/* 4 BIT ABS */
 #define m65sc02_4c m6502_4c 								/* 3 JMP ABS */
-#define m65sc02_6c m6502_6c 								/* 5 JMP IND */
+#define m65sc02_6c m65c02_6c 								/* 5 JMP IND */
 #define m65sc02_8c m6502_8c 								/* 4 STY ABS */
 #define m65sc02_ac m6502_ac 								/* 4 LDY ABS */
 #define m65sc02_cc m6502_cc 								/* 4 CPY ABS */

@@ -5,7 +5,7 @@
 #define VERBOSE 0
 
 #if VERBOSE
-#define LOG(x)	if (errorlog) { fprintf x; fflush(errorlog); }
+#define LOG(x)	logerror x
 #else
 #define LOG(x)
 #endif
@@ -100,7 +100,7 @@ WRITE_HANDLER( polepos_z8002_nvi_enable_w )
 			z8002_2_nvi_enabled = data & 1;
 		if ((data & 1) == 0) cpu_set_irq_line(which, 0, CLEAR_LINE);
 	}
-	LOG((errorlog,"Z8K#%d cpu%d_nvi_enable_w $%02x\n", cpu_getactivecpu(), which, data));
+	LOG(("Z8K#%d cpu%d_nvi_enable_w $%02x\n", cpu_getactivecpu(), which, data));
 }
 
 int polepos_z8002_1_interrupt(void)
@@ -152,7 +152,7 @@ READ_HANDLER( polepos_adc_r )
 			break;
 
 		default:
-			LOG((errorlog, "Unknown ADC Input select (%02x)!\n", adc_input));
+			LOG(("Unknown ADC Input select (%02x)!\n", adc_input));
 			break;
 	}
 
@@ -193,7 +193,7 @@ READ_HANDLER( polepos2_ic25_r )
 		ic25_last_result = (INT8)ic25_last_signed * (UINT8)ic25_last_unsigned;
 	}
 
-	if (errorlog) fprintf(errorlog, "%04X: read IC25 @ %04X = %02X\n", cpu_get_pc(), offset, result);
+	logerror("%04X: read IC25 @ %04X = %02X\n", cpu_get_pc(), offset, result);
 
 	return result | (result << 8);
 }
@@ -234,7 +234,7 @@ READ_HANDLER( polepos_mcu_control_r )
 
 WRITE_HANDLER( polepos_mcu_control_w )
 {
-	LOG((errorlog, "polepos_mcu_control_w: %d, $%02x\n", offset, data));
+	LOG(("polepos_mcu_control_w: %d, $%02x\n", offset, data));
 
     if (polepos_mcu.enabled)
     {
@@ -263,7 +263,7 @@ READ_HANDLER( polepos_mcu_data_r )
 {
 	if (polepos_mcu.enabled)
 	{
-		LOG((errorlog, "MCU read: PC = %04x, transfer mode = %02x, offset = %02x\n", cpu_get_pc(), polepos_mcu.transfer_id & 0xff, offset ));
+		LOG(("MCU read: PC = %04x, transfer mode = %02x, offset = %02x\n", cpu_get_pc(), polepos_mcu.transfer_id & 0xff, offset ));
 
 		switch(polepos_mcu.transfer_id)
 		{
@@ -347,7 +347,7 @@ READ_HANDLER( polepos_mcu_data_r )
 				break;
 
 			default:
-				if (errorlog) fprintf(errorlog, "Unknwon MCU transfer mode: %02x\n", polepos_mcu.transfer_id);
+				logerror("Unknwon MCU transfer mode: %02x\n", polepos_mcu.transfer_id);
 				break;
 		}
 	}
@@ -359,7 +359,7 @@ WRITE_HANDLER( polepos_mcu_data_w )
 {
 	if (polepos_mcu.enabled)
 	{
-		LOG((errorlog, "MCU write: PC = %04x, transfer mode = %02x, offset = %02x, data = %02x\n", cpu_get_pc(), polepos_mcu.transfer_id & 0xff, offset, data ));
+		LOG(("MCU write: PC = %04x, transfer mode = %02x, offset = %02x, data = %02x\n", cpu_get_pc(), polepos_mcu.transfer_id & 0xff, offset, data ));
 
 		if ( polepos_mcu.transfer_id == 0xa1 ) { /* setup coins/credits, etc ( 8 bytes ) */
 			switch( offset ) {
@@ -403,8 +403,7 @@ WRITE_HANDLER( polepos_mcu_data_w )
 					break;
 
 					default:
-						if ( errorlog )
-							fprintf( errorlog, "Unknown sample triggered (%d)\n", data );
+						logerror("Unknown sample triggered (%d)\n", data );
 					break;
 				}
 			}

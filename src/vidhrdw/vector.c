@@ -42,7 +42,7 @@
 #define VCLIP   2
 
 unsigned char *vectorram;
-int vectorram_size;
+size_t vectorram_size;
 
 int antialias;                            /* flag for anti-aliasing */
 int beam;                                 /* size of vector beam    */
@@ -230,7 +230,7 @@ int vector_vh_start (void)
 	beam = options.beam;
 
 	pens = Machine->pens;
-	total_colors = Machine->drv->total_colors;
+	total_colors = MIN(256, Machine->drv->total_colors);
 
 	if (Machine->color_depth == 8)
 	{
@@ -435,8 +435,7 @@ void vector_draw_to (int x2, int y2, int col, int intensity, int dirty)
 	int xx,yy;
 
 #if 0
-	if (errorlog)
-		fprintf(errorlog,"line:%d,%d nach %d,%d color %d\n",x1,yy1,x2,y2,col);
+	logerror("line:%d,%d nach %d,%d color %d\n",x1,yy1,x2,y2,col);
 #endif
 
 	/* [1] scale coordinates to display */
@@ -622,8 +621,7 @@ void vector_add_point (int x, int y, int color, int intensity)
 	if (new_index >= MAX_POINTS)
 	{
 		new_index--;
-		if (errorlog)
-			fprintf (errorlog, "*** Warning! Vector list overflow!\n");
+		logerror("*** Warning! Vector list overflow!\n");
 	}
 }
 
@@ -645,8 +643,7 @@ void vector_add_clip (int x1, int yy1, int x2, int y2)
 	if (new_index >= MAX_POINTS)
 	{
 		new_index--;
-		if (errorlog)
-			fprintf (errorlog, "*** Warning! Vector list overflow!\n");
+		logerror("*** Warning! Vector list overflow!\n");
 	}
 }
 
@@ -662,8 +659,7 @@ void vector_set_clip (int x1, int yy1, int x2, int y2)
 	/* failsafe */
 	if ((x1 >= x2) || (yy1 >= y2))
 	{
-		if (errorlog)
-			fprintf (errorlog, "Error in clipping parameters.\n");
+		logerror("Error in clipping parameters.\n");
 		xmin = 0;
 		ymin = 0;
 		xmax = vecwidth;
@@ -922,16 +918,17 @@ void vector_vh_update_backdrop(struct osd_bitmap *bitmap, struct artwork *a, int
 {
 	int i, x, y;
 	unsigned int coords;
-	unsigned short newcol;
+	int newcol, bdcol;
+	UINT8 r, g, b, rb, gb, bb;
 	struct osd_bitmap *vb = a->vector_bitmap;
 	struct osd_bitmap *ob = a->orig_artwork;
 	struct osd_bitmap *ab = a->artwork;
-	unsigned char *tab = a->pTable;
-	unsigned char *brightness = a->brightness;
+	UINT8 *tab = a->pTable;
+	UINT8 *brightness = a->brightness;
 	vector_restore_artwork(bitmap, a, full_refresh);
 	vector_vh_update(vb, full_refresh);
 
-	if (translucency)
+	if (bitmap->depth == 8)
 		for (i = p_index - 1; i >= 0; i--)
 		{
 			coords = pixel[i];
@@ -947,8 +944,15 @@ void vector_vh_update_backdrop(struct osd_bitmap *bitmap, struct artwork *a, int
 			coords = pixel[i];
 			x = coords >> 16;
 			y = coords & 0x0000ffff;
-			newcol = vector_rp(vb, x, y);
-			if (brightness[newcol] > brightness[vector_rp(ab, x, y)])
+
+			osd_get_pen (vector_rp(vb, x, y), &r, &g, &b);
+			bdcol = vector_rp(ab, x, y);
+			osd_get_pen (bdcol, &rb, &gb, &bb);
+			r = MIN (255, r + rb / 4);
+			g = MIN (255, g + gb / 4);
+			b = MIN (255, b + bb / 4);
+			newcol = Machine->pens[(((r & 0xf8) << 7) | ((g & 0xf8) << 2) | (b >> 3)) + a->start_pen];
+			if (brightness[newcol] > brightness[bdcol])
 				vector_pp (bitmap, x, y, newcol);
 		}
 }
@@ -966,10 +970,13 @@ void vector_vh_update_overlay(struct osd_bitmap *bitmap, struct artwork *a, int 
 {
 	int i, x, y, pen;
 	unsigned int coords;
+	UINT8 r, g, b;
+	int v, vn, alpha;
 
 	struct osd_bitmap *ob = a->orig_artwork;
 	struct osd_bitmap *vb = a->vector_bitmap;
 	int npt = a->num_pens_trans;
+	int start_pen = a->start_pen;
 	unsigned char *bright = a->brightness;
 	unsigned char *tab = a->pTable;
 
@@ -979,18 +986,44 @@ void vector_vh_update_overlay(struct osd_bitmap *bitmap, struct artwork *a, int 
 	/* Now we alpha blend the overlay with the vector bitmap.
 	 * (just the modified pixels) */
 
-	for (i = p_index - 1; i >= 0; i--)
+	if (bitmap->depth == 8)
 	{
-		coords = pixel[i];
-		x = coords >> 16;
-		y = coords & 0x0000ffff;
-		pen = vector_rp(ob, x, y);
+		for (i = p_index - 1; i >= 0; i--)
+		{
+			coords = pixel[i];
+			x = coords >> 16;
+			y = coords & 0x0000ffff;
+			pen = vector_rp(ob, x, y);
 
-		if (pen < npt)
-			vector_pp (bitmap, x, y, pens[tab[pen * 256 + bright[vector_rp(vb, x, y)]]]);
+			if (pen < npt)
+				vector_pp (bitmap, x, y, pens[tab[pen * 256 + bright[vector_rp(vb, x, y)]]]);
+		}
+	}
+	else
+	{
+		for (i = p_index - 1; i >= 0; i--)
+		{
+			coords = pixel[i];
+			x = coords >> 16;
+			y = coords & 0x0000ffff;
+			pen = vector_rp(ob, x, y);
+			alpha = vector_rp(a->alpha, x, y);
+
+			if (alpha < 255)
+			{
+				osd_get_pen (Machine->pens[pen + start_pen], &r, &g, &b);
+				v = vn = MAX(1, MAX(r, MAX(g, b)));
+				vn = (vn * alpha) / 255;
+				vn += ((255 - vn) * bright[vector_rp(vb, x, y)]) / 255;
+				r = (r * vn) / v;
+				g = (g * vn) / v;
+				b = (b * vn) / v;
+
+				vector_pp (bitmap, x, y, Machine->pens[(((r & 0xf8) << 7) | ((g & 0xf8) << 2) | (b >> 3)) + start_pen]);
+			}
+		}
 	}
 }
-
 /*********************************************************************
   vector_vh_update_artwork
 
@@ -1000,43 +1033,78 @@ void vector_vh_update_overlay(struct osd_bitmap *bitmap, struct artwork *a, int 
   is recalculated with vector_vh_update. The changed pixels are
   then merged with the overlay and backdrop.
  *********************************************************************/
-void vector_vh_update_artwork(struct osd_bitmap *bitmap, struct artwork *o, struct artwork *b,  int full_refresh)
+void vector_vh_update_artwork(struct osd_bitmap *bitmap, struct artwork *overlay, struct artwork *backdrop,  int full_refresh)
 {
 	int i, x, y, pen;
 	unsigned int coords;
+	UINT8 r, g, b;
+	int v, vn, alpha;
 
-	struct osd_bitmap *oab = o->artwork;
-	struct osd_bitmap *oob = o->orig_artwork;
-	struct osd_bitmap *ovb = o->vector_bitmap;
-	struct osd_bitmap *bab = b->artwork;
-	int npt = o->num_pens_trans;
-	unsigned char *bright = o->brightness;
-	unsigned char *tab = o->pTable;
+	struct osd_bitmap *oab = overlay->artwork;
+	struct osd_bitmap *oob = overlay->orig_artwork;
+	struct osd_bitmap *ovb = overlay->vector_bitmap;
+	struct osd_bitmap *bab = backdrop->artwork;
+	int npt = overlay->num_pens_trans;
+	int start_pen = overlay->start_pen;
+	unsigned char *bright = overlay->brightness;
+	unsigned char *tab = overlay->pTable;
 
 	if (pixel && !full_refresh)
 	{
-		for (i=p_index-1; i>=0; i--)
+		if (bitmap->depth == 8)
 		{
-			x = pixel[i] >> 16;
-			y = pixel[i] & 0x0000ffff;
-			if (vector_rp(oob, x, y) < npt)
-				vector_pp (bitmap, x, y, vector_rp(bab, x, y));
-			else
-				vector_pp (bitmap, x, y, vector_rp(oab, x, y));
+			for (i=p_index-1; i>=0; i--)
+			{
+				x = pixel[i] >> 16;
+				y = pixel[i] & 0x0000ffff;
+				if (vector_rp(oob, x, y) < npt)
+					vector_pp (bitmap, x, y, vector_rp(bab, x, y));
+				else
+					vector_pp (bitmap, x, y, vector_rp(oab, x, y));
+			}
+		}
+		else
+		{
+			for (i=p_index-1; i>=0; i--)
+			{
+				x = pixel[i] >> 16;
+				y = pixel[i] & 0x0000ffff;
+				alpha = vector_rp(overlay->alpha, x, y);
+				if (alpha < 255)
+					vector_pp (bitmap, x, y, vector_rp(bab, x, y));
+				else
+					vector_pp (bitmap, x, y, vector_rp(oab, x, y));
+			}
 		}
 	}
 	/* When this is called for the first time we have to copy the whole bitmap. */
 	/* We don't care for different levels of transparency, just opaque or not. */
 	else
 	{
-		for (y = 0; y < bitmap->height; y++)
-			for (x = 0; x < bitmap->width; x++)
-				if (vector_rp(oob, x, y) < npt)
-					vector_pp (bitmap, x, y, vector_rp(bab, x, y));
-				else
-					vector_pp (bitmap, x, y, vector_rp(oab, x, y));
+		if (bitmap->depth == 8)
+		{
+			for (y = 0; y < bitmap->height; y++)
+				for (x = 0; x < bitmap->width; x++)
+					if (vector_rp(oob, x, y) < npt)
+						vector_pp (bitmap, x, y, vector_rp(bab, x, y));
+					else
+						vector_pp (bitmap, x, y, vector_rp(oab, x, y));
 
-		osd_mark_dirty (0, 0, bitmap->width, bitmap->height, 0);
+			osd_mark_dirty (0, 0, bitmap->width, bitmap->height, 0);
+		}
+		else
+		{
+			for (y = 0; y < bitmap->height; y++)
+				for (x = 0; x < bitmap->width; x++)
+				{
+					alpha = vector_rp(overlay->alpha, x, y);
+					if (alpha < 255)
+						vector_pp (bitmap, x, y, vector_rp(bab, x, y));
+					else
+						vector_pp (bitmap, x, y, vector_rp(oab, x, y));
+				}
+			osd_mark_dirty (0, 0, bitmap->width, bitmap->height, 0);
+		}
 	}
 
 	vector_vh_update(ovb, full_refresh);
@@ -1044,15 +1112,42 @@ void vector_vh_update_artwork(struct osd_bitmap *bitmap, struct artwork *o, stru
 	/* Now we alpha blend the overlay with the vector bitmap.
 	 * (just the modified pixels) */
 
-	for (i = p_index - 1; i >= 0; i--)
+	if (bitmap->depth == 8)
 	{
-		coords = pixel[i];
-		x = coords >> 16;
-		y = coords & 0x0000ffff;
-		pen = oob->line[y][x];
+		for (i = p_index - 1; i >= 0; i--)
+		{
+			coords = pixel[i];
+			x = coords >> 16;
+			y = coords & 0x0000ffff;
+			pen = vector_rp(oob, x, y);
 
-		if (pen < npt)
-			vector_pp (bitmap, x, y, pens[tab[pen * 256 + bright[vector_rp(ovb, x, y)]]]);
+			if (pen < npt)
+				vector_pp (bitmap, x, y, pens[tab[pen * 256 + bright[vector_rp(ovb, x, y)]]]);
+		}
+	}
+	else
+	{
+		for (i = p_index - 1; i >= 0; i--)
+		{
+			coords = pixel[i];
+			x = coords >> 16;
+			y = coords & 0x0000ffff;
+			pen = vector_rp(oob, x, y);
+			alpha = vector_rp(overlay->alpha, x, y);
+
+			if (alpha < 255)
+			{
+				osd_get_pen (Machine->pens[pen + start_pen], &r, &g, &b);
+				v = vn = MAX(1, MAX(r, MAX(g, b)));
+				vn = (vn * alpha) / 255;
+				vn += ((255 - vn) * bright[vector_rp(ovb, x, y)]) / 255;
+				r = (r * vn) / v;
+				g = (g * vn) / v;
+				b = (b * vn) / v;
+
+				vector_pp (bitmap, x, y, Machine->pens[(((r & 0xf8) << 7) | ((g & 0xf8) << 2) | (b >> 3)) + start_pen]);
+			}
+		}
 	}
 }
 

@@ -78,7 +78,7 @@ int readroms(void)
 
 		/* Mish:  An 'optional' rom region, only loaded if sound emulation is turned on */
 		if (Machine->sample_rate==0 && (romp->crc & REGIONFLAG_SOUNDONLY)) {
-			if (errorlog) fprintf(errorlog,"readroms():  Ignoring rom region %d\n",region);
+			logerror("readroms():  Ignoring rom region %d\n",region);
 			Machine->memory_region_type[region] = romp->crc;
 			region++;
 

@@ -12,7 +12,7 @@
 unsigned char *route16_sharedram;
 unsigned char *route16_videoram1;
 unsigned char *route16_videoram2;
-int route16_videoram_size;
+size_t route16_videoram_size;
 
 static struct osd_bitmap *tmpbitmap1;
 static struct osd_bitmap *tmpbitmap2;

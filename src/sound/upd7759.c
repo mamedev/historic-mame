@@ -89,7 +89,7 @@ Changes:
 #define VERBOSE 0
 
 #if VERBOSE
-#define LOG(n,x)  if( (n>=VERBOSE) && errorlog ) fprintf x
+#define LOG(n,x)  if((n)>=VERBOSE) logerror x
 #else
 #define LOG(n,x)
 #endif
@@ -197,7 +197,7 @@ static void ComputeTables (void)
 	{
         /* compute the step value */
 		int stepval = 6 * (step+1) * (step+1);
-		LOG(1,(errorlog, "step %2d:", step));
+		LOG(1,("step %2d:", step));
 		/* loop over all nibbles and compute the difference */
 		for (nib = 0; nib < 16; nib++)
 		{
@@ -206,9 +206,9 @@ static void ComputeTables (void)
 				 stepval/2 * nbl2bit[nib][2] +
 				 stepval/4 * nbl2bit[nib][3] +
 				 stepval/8);
-			LOG(1,(errorlog, " %+6d", diff_lookup[step*16 + nib]));
+			LOG(1,(" %+6d", diff_lookup[step*16 + nib]));
         }
-		LOG(1,(errorlog, "\n"));
+		LOG(1,("\n"));
     }
 }
 
@@ -230,14 +230,14 @@ static int find_sample(int num, int sample_num,struct UPD7759sample *sample)
 
 	if (memcmp (header, "\x5A\xA5\x69\x55",4) == 0)
 	{
-		LOG(1,(errorlog,"uPD7759 header verified\n"));
+		LOG(1,("uPD7759 header verified\n"));
 	}
 	else
 	{
-		LOG(1,(errorlog,"uPD7759 header verification failed\n"));
+		LOG(1,("uPD7759 header verification failed\n"));
 	}
 
-	LOG(1,(errorlog,"Number of samples in UPD7759 rom = %d\n",numsam));
+	LOG(1,("Number of samples in UPD7759 rom = %d\n",numsam));
 
 	/* move the header pointer to the start of the sample offsets */
 	header = &(memrom[5]);
@@ -283,16 +283,13 @@ static int find_sample(int num, int sample_num,struct UPD7759sample *sample)
 		sample->length = ((((unsigned int)(header[nextoff+2]))<<8)+(header[nextoff+3]))*2 -
 							((((unsigned int)(header[nextoff]))<<8)+(header[nextoff+1]))*2;
 
-if (errorlog)
-{
 	data = &memory_region(upd7759_intf->region[num])[sample->offset];
-	fprintf( errorlog,"play sample %3d, offset $%06x, length %5d, freq = %4d [data $%02x $%02x $%02x]\n",
+	logerror("play sample %3d, offset $%06x, length %5d, freq = %4d [data $%02x $%02x $%02x]\n",
 		sample_num,
 		sample->offset,
 		sample->length,
 		sample->freq,
 		data[0],data[1],data[2]);
-}
 
 	return 1;
 }
@@ -363,7 +360,7 @@ static void UPD7759_update (int chip, INT16 *buffer, int left)
 	int i;
 
 	/* see if there's actually any need to generate samples */
-	LOG(3,(errorlog,"UPD7759_update %d (%d)\n", left, voice->available));
+	LOG(3,("UPD7759_update %d (%d)\n", left, voice->available));
 
     if (left > 0)
 	{
@@ -468,7 +465,7 @@ void UPD7759_message_w (int num, int data)
 	/* range check the numbers */
 	if( num >= upd7759_intf->num )
 	{
-		LOG(1,(errorlog,"error: UPD7759_SNDSELECT() called with channel = %d, but only %d channels allocated\n", num, upd7759_intf->num));
+		LOG(1,("error: UPD7759_SNDSELECT() called with channel = %d, but only %d channels allocated\n", num, upd7759_intf->num));
 		return;
 	}
 
@@ -476,8 +473,8 @@ void UPD7759_message_w (int num, int data)
 	{
 		int offset = -1;
 
-		//LOG(1,(errorlog,"upd7759_message_w $%02x\n", data));
-		if (errorlog) fprintf(errorlog,"upd7759_message_w $%2x\n",data);
+		//LOG(1,("upd7759_message_w $%02x\n", data));
+		logerror("upd7759_message_w $%2x\n",data);
 
         switch (data) {
 
@@ -516,8 +513,8 @@ void UPD7759_message_w (int num, int data)
 
 			default:
 
-				//LOG(1,(errorlog, "upd7759_message_w unhandled $%02x\n", data));
-				if (errorlog) fprintf (errorlog, "upd7759_message_w unhandled $%02x\n", data);
+				//LOG(1,("upd7759_message_w unhandled $%02x\n", data));
+				logerror("upd7759_message_w unhandled $%02x\n", data);
 				if ((data & 0xc0) == 0xc0)
 				{
 					if (voice->timer)
@@ -531,15 +528,14 @@ void UPD7759_message_w (int num, int data)
 		if (offset > 0)
 		{
 			voice->base = &memory_region(upd7759_intf->region[num])[offset];
-			//LOG(1,(errorlog, "upd7759_message_w set base $%08x\n", offset));
-			if (errorlog)
-				fprintf(errorlog, "upd7759_message_w set base $%08x\n", offset);
+			//LOG(1,("upd7759_message_w set base $%08x\n", offset));
+			logerror("upd7759_message_w set base $%08x\n", offset);
         }
 	}
 	else
 	{
 
-		LOG(1,(errorlog,"uPD7759 calling sample : %d\n", data));
+		LOG(1,("uPD7759 calling sample : %d\n", data));
 		sampnum[num] = data;
 
     }
@@ -561,7 +557,7 @@ static void UPD7759_dac(int num)
 	dac_msb ^= 1;
 	if( dac_msb )
 	{
-		LOG(3,(errorlog,"UPD7759_dac:    $%x ", voice->sample & 15));
+		LOG(3,("UPD7759_dac:    $%x ", voice->sample & 15));
         /* convert lower nibble */
 		voice->step = FALL_OFF(voice->step) + index_shift[voice->sample & (INDEX_SHIFT_MAX-1)];
         if (voice->step > STEP_MAX) voice->step = STEP_MAX;
@@ -569,7 +565,7 @@ static void UPD7759_dac(int num)
 		voice->signal = FALL_OFF(voice->signal) + diff_lookup[voice->step * 16 + (voice->sample & 15)];
 		if (voice->signal > SIGNAL_MAX) voice->signal = SIGNAL_MAX;
 		else if (voice->signal < SIGNAL_MIN) voice->signal = SIGNAL_MIN;
-		LOG(3,(errorlog,"step: %3d signal: %+5d\n", voice->step, voice->signal));
+		LOG(3,("step: %3d signal: %+5d\n", voice->step, voice->signal));
 		voice->head = (voice->head + 1) % DATA_MAX;
 		voice->data[voice->head] = voice->signal;
 		voice->available++;
@@ -603,7 +599,7 @@ void UPD7759_start_w (int num, int data)
 	/* range check the numbers */
 	if( num >= upd7759_intf->num )
 	{
-		LOG(1,(errorlog,"error: UPD7759_play_stop() called with channel = %d, but only %d channels allocated\n", num, upd7759_intf->num));
+		LOG(1,("error: UPD7759_play_stop() called with channel = %d, but only %d channels allocated\n", num, upd7759_intf->num));
 		return;
 	}
 
@@ -614,7 +610,7 @@ void UPD7759_start_w (int num, int data)
 		{
             /* if the chip is busy this should be the ADPCM data */
 			data &= 0xff;	/* be sure to use 8 bits value only */
-			LOG(3,(errorlog,"UPD7759_data_w: $%x ", (data >> 4) & 15));
+			LOG(3,("UPD7759_data_w: $%x ", (data >> 4) & 15));
 
             /* detect end of a sample by inspection of the last 5 bytes */
 			/* FF 00 00 00 00 is the start of the next sample */
@@ -642,14 +638,14 @@ void UPD7759_start_w (int num, int data)
 			voice->signal = FALL_OFF(voice->signal) + diff_lookup[voice->step * 16 + ((voice->sample >> 4) & 15)];
             if (voice->signal > SIGNAL_MAX) voice->signal = SIGNAL_MAX;
             else if (voice->signal < SIGNAL_MIN) voice->signal = SIGNAL_MIN;
-			LOG(3,(errorlog,"step: %3d signal: %+5d\n", voice->step, voice->signal));
+			LOG(3,("step: %3d signal: %+5d\n", voice->step, voice->signal));
 			voice->head = (voice->head + 1) % DATA_MAX;
 			voice->data[voice->head] = voice->signal;
 			voice->available++;
 		}
 		else
 		{
-			LOG(2,(errorlog,"UPD7759_start_w: $%02x\n", data));
+			LOG(2,("UPD7759_start_w: $%02x\n", data));
             /* remove an old timer */
 			if (voice->timer)
 			{
@@ -681,7 +677,7 @@ void UPD7759_start_w (int num, int data)
 		if (voice->playing)
 			return;
 
-		LOG(2,(errorlog,"UPD7759_start_w: %d\n", data));
+		LOG(2,("UPD7759_start_w: %d\n", data));
 
 		/* find a match */
 		if (find_sample(num,sampnum[num],&sample))
@@ -703,7 +699,7 @@ void UPD7759_start_w (int num, int data)
 			return;
 		}
 
-		LOG(1,(errorlog,"warning: UPD7759_playing_w() called with invalid number = %08x\n",data));
+		LOG(1,("warning: UPD7759_playing_w() called with invalid number = %08x\n",data));
 	}
 }
 
@@ -726,18 +722,18 @@ int UPD7759_data_r(int num, int offs)
     /* range check the numbers */
 	if( num >= upd7759_intf->num )
 	{
-		LOG(1,(errorlog,"error: UPD7759_data_r() called with channel = %d, but only %d channels allocated\n", num, upd7759_intf->num));
+		LOG(1,("error: UPD7759_data_r() called with channel = %d, but only %d channels allocated\n", num, upd7759_intf->num));
 		return 0x00;
     }
 
 	if ( voice->base == NULL )
 	{
-		LOG(1,(errorlog,"error: UPD7759_data_r() called with channel = %d, but updadpcm[%d].base == NULL\n", num, num));
+		LOG(1,("error: UPD7759_data_r() called with channel = %d, but updadpcm[%d].base == NULL\n", num, num));
 		return 0x00;
 	}
 
 #if VERBOSE
-    if (!(offs&0xff)) LOG(1, (errorlog,"UPD7759#%d sample offset = $%04x\n", num, offs));
+    if (!(offs&0xff)) LOG(1, ("UPD7759#%d sample offset = $%04x\n", num, offs));
 #endif
 
 	return voice->base[offs];
@@ -765,7 +761,7 @@ int UPD7759_busy_r (int num)
 	/* range check the numbers */
 	if( num >= upd7759_intf->num )
 	{
-		LOG(1,(errorlog,"error: UPD7759_busy_r() called with channel = %d, but only %d channels allocated\n", num, upd7759_intf->num));
+		LOG(1,("error: UPD7759_busy_r() called with channel = %d, but only %d channels allocated\n", num, upd7759_intf->num));
 		return 1;
 	}
 
@@ -774,12 +770,12 @@ int UPD7759_busy_r (int num)
 
 	if ( voice->playing == 0 )
 	{
-		LOG(1,(errorlog,"uPD7759 not busy\n"));
+		LOG(1,("uPD7759 not busy\n"));
 		return 1;
 	}
 	else
 	{
-		LOG(1,(errorlog,"uPD7759 busy\n"));
+		LOG(1,("uPD7759 busy\n"));
 		return 0;
 	}
 
@@ -809,7 +805,7 @@ void UPD7759_reset_w (int num, int data)
 	/* range check the numbers */
 	if( num >= upd7759_intf->num )
 	{
-		LOG(1,(errorlog,"error: UPD7759_reset_w() called with channel = %d, but only %d channels allocated\n", num, upd7759_intf->num));
+		LOG(1,("error: UPD7759_reset_w() called with channel = %d, but only %d channels allocated\n", num, upd7759_intf->num));
 		return;
 	}
 

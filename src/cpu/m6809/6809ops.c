@@ -18,8 +18,7 @@ static void illegal( void )
 INLINE void illegal( void )
 #endif
 {
-	if( errorlog )
-		fprintf(errorlog, "M6809: illegal opcode at %04x\n",PC);
+	logerror("M6809: illegal opcode at %04x\n",PC);
 }
 
 #if macintosh

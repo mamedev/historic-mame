@@ -447,6 +447,8 @@ memory map:
                    aliens sets it just after checking bit 0, and before copying
                    the sprite data
            bit 5 = enable gfx ROM reading
+001     W  Devastators sets bit 1, function unknown, could it be a global shadow enable?
+           None of the other games I tested seem to set this register to other than 0.
 002-003 W  selects the portion of the gfx ROMs to be read.
 004     W  Aliens uses this to select the ROM bank to be read, but Punk Shot
            and TMNT don't, they use another bit of the registers above. Many
@@ -946,7 +948,7 @@ if (keyboard_pressed(KEYCODE_D))
 				case 0x00: width = height = 2; number &= (~3); break;
 				case 0x08: width = height = 4; number &= (~3); break;
 				default: width = 1; height = 1;
-//					if (errorlog) fprintf(errorlog,"Unknown sprite size %02x\n",attr&0xe);
+//					logerror("Unknown sprite size %02x\n",attr&0xe);
 //					usrintf_showmessage("Unknown sprite size %02x\n",attr&0xe);
 			}
 
@@ -1405,7 +1407,7 @@ void K007420_sprites_draw(struct osd_bitmap *bitmap)
 			case 0x00: w = h = 2; code &= (~3); break;
 			case 0x40: w = h = 4; code &= (~3); break;
 			default: w = 1; h = 1;
-//if (errorlog) fprintf(errorlog,"Unknown sprite size %02x\n",(K007420_ram[offs+4] & 0x70)>>4);
+//logerror("Unknown sprite size %02x\n",(K007420_ram[offs+4] & 0x70)>>4);
 		}
 
 		if (K007342_flipscreen)
@@ -1696,7 +1698,7 @@ READ_HANDLER( K052109_r )
 			else if (offset >= 0x3a00 && offset < 0x3c00)
 			{	/* B x scroll */	}
 			else
-if (errorlog) fprintf(errorlog,"%04x: read from unknown 052109 address %04x\n",cpu_get_pc(),offset);
+logerror("%04x: read from unknown 052109 address %04x\n",cpu_get_pc(),offset);
 		}
 
 		return K052109_ram[offset];
@@ -1749,14 +1751,14 @@ if (K052109_scrollctrl != data)
 #if 0
 usrintf_showmessage("scrollcontrol = %02x",data);
 #endif
-if (errorlog) fprintf(errorlog,"%04x: rowscrollcontrol = %02x\n",cpu_get_pc(),data);
+logerror("%04x: rowscrollcontrol = %02x\n",cpu_get_pc(),data);
 			K052109_scrollctrl = data;
 }
 		}
 		else if (offset == 0x1d00)
 		{
 #if VERBOSE
-if (errorlog) fprintf(errorlog,"%04x: 052109 register 1d00 = %02x\n",cpu_get_pc(),data);
+logerror("%04x: 052109 register 1d00 = %02x\n",cpu_get_pc(),data);
 #endif
 			/* bit 2 = irq enable */
 			/* the custom chip can also generate NMI and FIRQ, for use with a 6809 */
@@ -1787,12 +1789,12 @@ if (errorlog) fprintf(errorlog,"%04x: 052109 register 1d00 = %02x\n",cpu_get_pc(
 		}
 		else if (offset == 0x1e00)
 		{
-if (errorlog) fprintf(errorlog,"%04x: 052109 register 1e00 = %02x\n",cpu_get_pc(),data);
+logerror("%04x: 052109 register 1e00 = %02x\n",cpu_get_pc(),data);
 			K052109_romsubbank = data;
 		}
 		else if (offset == 0x1e80)
 		{
-if (errorlog && (data & 0xfe)) fprintf(errorlog,"%04x: 052109 register 1e80 = %02x\n",cpu_get_pc(),data);
+if ((data & 0xfe)) logerror("%04x: 052109 register 1e80 = %02x\n",cpu_get_pc(),data);
 			tilemap_set_flip(K052109_tilemap[0],(data & 1) ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 			tilemap_set_flip(K052109_tilemap[1],(data & 1) ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 			tilemap_set_flip(K052109_tilemap[2],(data & 1) ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
@@ -1831,7 +1833,7 @@ if (errorlog && (data & 0xfe)) fprintf(errorlog,"%04x: 052109 register 1e80 = %0
 		else if (offset >= 0x3a00 && offset < 0x3c00)
 		{	/* B x scroll */	}
 		else
-if (errorlog) fprintf(errorlog,"%04x: write %02x to unknown 052109 address %04x\n",cpu_get_pc(),data,offset);
+logerror("%04x: write %02x to unknown 052109 address %04x\n",cpu_get_pc(),data,offset);
 	}
 }
 
@@ -2032,7 +2034,7 @@ static int K051960_memory_region;
 static struct GfxElement *K051960_gfx;
 static void (*K051960_callback)(int *code,int *color,int *priority);
 static int K051960_romoffset;
-static int K051960_spriteflip,K051960_readroms;
+static int K051960_spriteflip,K051960_readroms,K051960_force_shadows;
 static unsigned char K051960_spriterombank[3];
 static unsigned char *K051960_ram;
 static int K051960_irq_enabled, K051960_nmi_enabled;
@@ -2084,8 +2086,8 @@ int K051960_vh_start(int gfx_memory_region,int plane0,int plane1,int plane2,int 
 	K051960_callback = callback;
 	K051960_ram = malloc(0x400);
 	if (!K051960_ram) return 1;
-
 	memset(K051960_ram,0,0x400);
+	K051960_force_shadows = 0;
 
 	return 0;
 }
@@ -2165,7 +2167,7 @@ READ_HANDLER( K051937_r )
 			/* some games need bit 0 to pulse */
 			return (counter++) & 1;
 		}
-if (errorlog) fprintf(errorlog,"%04x: read unknown 051937 address %x\n",cpu_get_pc(),offset);
+logerror("%04x: read unknown 051937 address %x\n",cpu_get_pc(),offset);
 		return 0;
 	}
 }
@@ -2194,8 +2196,16 @@ if (data & 0xc6)
 		/* bit 5 = enable gfx ROM reading */
 		K051960_readroms = data & 0x20;
 #if VERBOSE
-if (errorlog) fprintf(errorlog,"%04x: write %02x to 051937 address %x\n",cpu_get_pc(),data,offset);
+logerror("%04x: write %02x to 051937 address %x\n",cpu_get_pc(),data,offset);
 #endif
+	}
+	else if (offset == 1)
+	{
+#if 0
+	usrintf_showmessage("%04x: write %02x to 051937 address %x",cpu_get_pc(),data,offset);
+#endif
+logerror("%04x: write %02x to unknown 051937 address %x\n",cpu_get_pc(),data,offset);
+		K051960_force_shadows = data & 0x02;
 	}
 	else if (offset >= 2 && offset < 5)
 	{
@@ -2206,7 +2216,7 @@ if (errorlog) fprintf(errorlog,"%04x: write %02x to 051937 address %x\n",cpu_get
 #if 0
 	usrintf_showmessage("%04x: write %02x to 051937 address %x",cpu_get_pc(),data,offset);
 #endif
-if (errorlog) fprintf(errorlog,"%04x: write %02x to unknown 051937 address %x\n",cpu_get_pc(),data,offset);
+logerror("%04x: write %02x to unknown 051937 address %x\n",cpu_get_pc(),data,offset);
 	}
 }
 
@@ -2355,7 +2365,7 @@ void K051960_sprites_draw(struct osd_bitmap *bitmap,int min_priority,int max_pri
 					else c += yoffset[y];
 
 					/* hack to simulate shadow */
-					if (K051960_ram[offs+3] & 0x80)
+					if (K051960_force_shadows || (K051960_ram[offs+3] & 0x80))
 					{
 						int o = K051960_gfx->colortable[16*color+15];
 						K051960_gfx->colortable[16*color+15] = palette_transparent_pen;
@@ -2415,22 +2425,48 @@ void K051960_sprites_draw(struct osd_bitmap *bitmap,int min_priority,int max_pri
 					if (flipy) c += yoffset[(h-1-y)];
 					else c += yoffset[y];
 
-					if (max_priority == -1)
-						pdrawgfxzoom(bitmap,K051960_gfx,
-								c,
-								color,
-								flipx,flipy,
-								sx & 0x1ff,sy,
-								&Machine->drv->visible_area,TRANSPARENCY_PEN,0,
-								(zw << 16) / 16,(zh << 16) / 16,pri);
+					/* hack to simulate shadow */
+					if (K051960_force_shadows || (K051960_ram[offs+3] & 0x80))
+					{
+						int o = K051960_gfx->colortable[16*color+15];
+						K051960_gfx->colortable[16*color+15] = palette_transparent_pen;
+						if (max_priority == -1)
+							pdrawgfxzoom(bitmap,K051960_gfx,
+									c,
+									color,
+									flipx,flipy,
+									sx & 0x1ff,sy,
+									&Machine->drv->visible_area,TRANSPARENCY_PENS,(cpu_getcurrentframe() & 1) ? 0x8001 : 0x0001,
+									(zw << 16) / 16,(zh << 16) / 16,pri);
+						else
+							drawgfxzoom(bitmap,K051960_gfx,
+									c,
+									color,
+									flipx,flipy,
+									sx & 0x1ff,sy,
+									&Machine->drv->visible_area,TRANSPARENCY_PENS,(cpu_getcurrentframe() & 1) ? 0x8001 : 0x0001,
+									(zw << 16) / 16,(zh << 16) / 16);
+						K051960_gfx->colortable[16*color+15] = o;
+					}
 					else
-						drawgfxzoom(bitmap,K051960_gfx,
-								c,
-								color,
-								flipx,flipy,
-								sx & 0x1ff,sy,
-								&Machine->drv->visible_area,TRANSPARENCY_PEN,0,
-								(zw << 16) / 16,(zh << 16) / 16);
+					{
+						if (max_priority == -1)
+							pdrawgfxzoom(bitmap,K051960_gfx,
+									c,
+									color,
+									flipx,flipy,
+									sx & 0x1ff,sy,
+									&Machine->drv->visible_area,TRANSPARENCY_PEN,0,
+									(zw << 16) / 16,(zh << 16) / 16,pri);
+						else
+							drawgfxzoom(bitmap,K051960_gfx,
+									c,
+									color,
+									flipx,flipy,
+									sx & 0x1ff,sy,
+									&Machine->drv->visible_area,TRANSPARENCY_PEN,0,
+									(zw << 16) / 16,(zh << 16) / 16);
+					}
 				}
 			}
 		}
@@ -2637,7 +2673,7 @@ READ_HANDLER( K053244_r )
 	}
 	else
 	{
-if (errorlog) fprintf(errorlog,"%04x: read from unknown 053244 address %x\n",cpu_get_pc(),offset);
+logerror("%04x: read from unknown 053244 address %x\n",cpu_get_pc(),offset);
 		return 0;
 	}
 }
@@ -2669,7 +2705,7 @@ if (data & 0xc8)
 
 		/* bit 5 = unknown, Rollergames uses it */
 #if VERBOSE
-if (errorlog) fprintf(errorlog,"%04x: write %02x to 053244 address 5\n",cpu_get_pc(),data);
+logerror("%04x: write %02x to 053244 address 5\n",cpu_get_pc(),data);
 #endif
 	}
 	else if (offset >= 0x08 && offset < 0x0c)
@@ -2679,7 +2715,7 @@ if (errorlog) fprintf(errorlog,"%04x: write %02x to 053244 address 5\n",cpu_get_
 		return;
 	}
 	else
-if (errorlog) fprintf(errorlog,"%04x: write %02x to unknown 053244 address %x\n",cpu_get_pc(),data,offset);
+logerror("%04x: write %02x to unknown 053244 address %x\n",cpu_get_pc(),data,offset);
 }
 
 void K053244_bankselect(int bank)   /* used by TMNT2 for ROM testing */
@@ -2915,13 +2951,30 @@ else zoomx = zoomy; /* workaround for TMNT2 */
 				}
 				else
 				{
-					pdrawgfxzoom(bitmap,K053245_gfx,
-							c,
-							color,
-							fx,fy,
-							sx,sy,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0,
-							(zw << 16) / 16,(zh << 16) / 16,pri);
+					/* hack to simulate shadow */
+					if (READ_WORD(&K053245_ram[offs+0x0c]) & 0x0080)
+					{
+						int o = K053245_gfx->colortable[16*color+15];
+						K053245_gfx->colortable[16*color+15] = palette_transparent_pen;
+						pdrawgfxzoom(bitmap,K053245_gfx,
+								c,
+								color,
+								fx,fy,
+								sx,sy,
+								&Machine->drv->visible_area,TRANSPARENCY_PENS,(cpu_getcurrentframe() & 1) ? 0x8001 : 0x0001,
+								(zw << 16) / 16,(zh << 16) / 16,pri);
+						K053245_gfx->colortable[16*color+15] = o;
+					}
+					else
+					{
+						pdrawgfxzoom(bitmap,K053245_gfx,
+								c,
+								color,
+								fx,fy,
+								sx,sy,
+								&Machine->drv->visible_area,TRANSPARENCY_PEN,0,
+								(zw << 16) / 16,(zh << 16) / 16,pri);
+					}
 				}
 			}
 		}
@@ -3094,7 +3147,7 @@ READ_HANDLER( K053246_r )
 	}
 	else
 	{
-if (errorlog) fprintf(errorlog,"%04x: read from unknown 053244 address %x\n",cpu_get_pc(),offset);
+logerror("%04x: read from unknown 053244 address %x\n",cpu_get_pc(),offset);
 		return 0;
 	}
 }
@@ -3126,7 +3179,7 @@ if (data & 0xc8)
 
 		/* bit 5 = unknown */
 
-if (errorlog) fprintf(errorlog,"%04x: write %02x to 053246 address 5\n",cpu_get_pc(),data);
+logerror("%04x: write %02x to 053246 address 5\n",cpu_get_pc(),data);
 	}
 	else if (offset >= 0x04 && offset < 0x08)   /* only 4,6,7 - 5 is handled above */
 	{
@@ -3135,7 +3188,7 @@ if (errorlog) fprintf(errorlog,"%04x: write %02x to 053246 address 5\n",cpu_get_
 		return;
 	}
 	else
-if (errorlog) fprintf(errorlog,"%04x: write %02x to unknown 053246 address %x\n",cpu_get_pc(),data,offset);
+logerror("%04x: write %02x to unknown 053246 address %x\n",cpu_get_pc(),data,offset);
 }
 
 READ_HANDLER( K053246_word_r )
@@ -3419,13 +3472,30 @@ switch (K053247_spriteoffsY)
 				}
 				else
 				{
-					pdrawgfxzoom(bitmap,K053247_gfx,
-							c,
-							color,
-							fx,fy,
-							sx,sy,
-							&Machine->drv->visible_area,TRANSPARENCY_PEN,0,
-							(zw << 16) / 16,(zh << 16) / 16,pri);
+					/* hack to simulate shadow */
+					if (READ_WORD(&K053247_ram[offs+0x0c]) & 0x0400)
+					{
+						int o = K053247_gfx->colortable[16*color+15];
+						K053247_gfx->colortable[16*color+15] = palette_transparent_pen;
+						pdrawgfxzoom(bitmap,K053247_gfx,
+								c,
+								color,
+								fx,fy,
+								sx,sy,
+								&Machine->drv->visible_area,TRANSPARENCY_PENS,(cpu_getcurrentframe() & 1) ? 0x8001 : 0x0001,
+								(zw << 16) / 16,(zh << 16) / 16,pri);
+						K053247_gfx->colortable[16*color+15] = o;
+					}
+					else
+					{
+						pdrawgfxzoom(bitmap,K053247_gfx,
+								c,
+								color,
+								fx,fy,
+								sx,sy,
+								&Machine->drv->visible_area,TRANSPARENCY_PEN,0,
+								(zw << 16) / 16,(zh << 16) / 16,pri);
+					}
 				}
 
 				if (mirrory && h == 1)  /* Simpsons shadows */
@@ -3457,13 +3527,30 @@ switch (K053247_spriteoffsY)
 					}
 					else
 					{
-						pdrawgfxzoom(bitmap,K053247_gfx,
-								c,
-								color,
-								fx,!fy,
-								sx,sy,
-								&Machine->drv->visible_area,TRANSPARENCY_PEN,0,
-								(zw << 16) / 16,(zh << 16) / 16,pri);
+						/* hack to simulate shadow */
+						if (READ_WORD(&K053247_ram[offs+0x0c]) & 0x0400)
+						{
+							int o = K053247_gfx->colortable[16*color+15];
+							K053247_gfx->colortable[16*color+15] = palette_transparent_pen;
+							pdrawgfxzoom(bitmap,K053247_gfx,
+									c,
+									color,
+									fx,!fy,
+									sx,sy,
+									&Machine->drv->visible_area,TRANSPARENCY_PENS,(cpu_getcurrentframe() & 1) ? 0x8001 : 0x0001,
+									(zw << 16) / 16,(zh << 16) / 16,pri);
+							K053247_gfx->colortable[16*color+15] = o;
+						}
+						else
+						{
+							pdrawgfxzoom(bitmap,K053247_gfx,
+									c,
+									color,
+									fx,!fy,
+									sx,sy,
+									&Machine->drv->visible_area,TRANSPARENCY_PEN,0,
+									(zw << 16) / 16,(zh << 16) / 16,pri);
+						}
 					}
 				}
 			}
@@ -3623,7 +3710,7 @@ int K051316_vh_start(int chip, int gfx_memory_region,int bpp,
 	}
 	else
 	{
-if (errorlog) fprintf(errorlog,"K051316_vh_start supports only 4 or 7 bpp\n");
+logerror("K051316_vh_start supports only 4 or 7 bpp\n");
 		return 1;
 	}
 
@@ -3760,7 +3847,7 @@ int K051316_rom_r(int chip, int offset)
 	}
 	else
 	{
-if (errorlog) fprintf(errorlog,"%04x: read 051316 ROM offset %04x but reg 0x0c bit 0 not clear\n",cpu_get_pc(),offset);
+logerror("%04x: read 051316 ROM offset %04x but reg 0x0c bit 0 not clear\n",cpu_get_pc(),offset);
 		return 0;
 	}
 }
@@ -3785,7 +3872,7 @@ READ_HANDLER( K051316_rom_2_r )
 void K051316_ctrl_w(int chip,int offset,int data)
 {
 	K051316_ctrlram[chip][offset] = data;
-if (errorlog && offset >= 0x0c) fprintf(errorlog,"%04x: write %02x to 051316 reg %x\n",cpu_get_pc(),data,offset);
+if (offset >= 0x0c) logerror("%04x: write %02x to 051316 reg %x\n",cpu_get_pc(),data,offset);
 }
 
 WRITE_HANDLER( K051316_ctrl_0_w )
@@ -4345,8 +4432,7 @@ WRITE_HANDLER( K053251_w )
 #if 0
 else
 {
-if (errorlog)
-fprintf(errorlog,"%04x: write %02x to K053251 register %04x\n",cpu_get_pc(),data&0xff,offset);
+logerror("%04x: write %02x to K053251 register %04x\n",cpu_get_pc(),data&0xff,offset);
 usrintf_showmessage("pri = %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x %02x%02x%02x%02x",
 	K053251_ram[0],K053251_ram[1],K053251_ram[2],K053251_ram[3],
 	K053251_ram[4],K053251_ram[5],K053251_ram[6],K053251_ram[7],
@@ -4379,7 +4465,7 @@ static WRITE_HANDLER( collision_w )
 WRITE_HANDLER( K054000_w )
 {
 #if VERBOSE
-if (errorlog) fprintf(errorlog,"%04x: write %02x to 054000 address %02x\n",cpu_get_pc(),data,offset);
+logerror("%04x: write %02x to 054000 address %02x\n",cpu_get_pc(),data,offset);
 #endif
 
 	K054000_ram[offset] = data;
@@ -4392,7 +4478,7 @@ READ_HANDLER( K054000_r )
 
 
 #if VERBOSE
-if (errorlog) fprintf(errorlog,"%04x: read 054000 address %02x\n",cpu_get_pc(),offset);
+logerror("%04x: read 054000 address %02x\n",cpu_get_pc(),offset);
 #endif
 
 	if (offset != 0x18) return 0;
@@ -4431,7 +4517,7 @@ static unsigned char K051733_ram[0x20];
 WRITE_HANDLER( K051733_w )
 {
 #if VERBOSE
-if (errorlog) fprintf(errorlog,"%04x: write %02x to 051733 address %02x\n",cpu_get_pc(),data,offset);
+logerror("%04x: write %02x to 051733 address %02x\n",cpu_get_pc(),data,offset);
 #endif
 
 	K051733_ram[offset] = data;
@@ -4449,7 +4535,7 @@ READ_HANDLER( K051733_r )
 	int xobj2c = (K051733_ram[0x0e] << 8) | K051733_ram[0x0f];
 
 #if VERBOSE
-if (errorlog) fprintf(errorlog,"%04x: read 051733 address %02x\n",cpu_get_pc(),offset);
+logerror("%04x: read 051733 address %02x\n",cpu_get_pc(),offset);
 #endif
 
 	switch(offset){

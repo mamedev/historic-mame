@@ -119,14 +119,14 @@ K1100573A, K1100574A).
 extern unsigned char *taitof2_scrollx;
 extern unsigned char *taitof2_scrolly;
 extern unsigned char *f2_backgroundram;
-extern int f2_backgroundram_size;
+extern size_t f2_backgroundram_size;
 extern unsigned char *f2_foregroundram;
-extern int f2_foregroundram_size;
+extern size_t f2_foregroundram_size;
 extern unsigned char *f2_textram;
-extern int f2_textram_size;
+extern size_t f2_textram_size;
 extern unsigned char *taitof2_characterram;
-extern int f2_characterram_size;
-extern int f2_paletteram_size;
+extern size_t f2_characterram_size;
+extern size_t f2_paletteram_size;
 
 int taitof2_vh_start (void);
 void taitof2_vh_stop (void);
@@ -189,7 +189,7 @@ static READ_HANDLER( taitof2_input_r )
               return readinputport(2); /* IN2 */
     }
 
-if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - read unmapped memory address %06x\n",cpu_get_pc(),0x100000+offset);
+logerror("CPU #0 PC %06x: warning - read unmapped memory address %06x\n",cpu_get_pc(),0x100000+offset);
 
 	return 0xff;
 }
@@ -205,7 +205,7 @@ static READ_HANDLER( growl_dsw_r )
               return readinputport(4); /* DSW B */
     }
 
-if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - read unmapped memory address %06x\n",cpu_get_pc(),0x100000+offset);
+logerror("CPU #0 PC %06x: warning - read unmapped memory address %06x\n",cpu_get_pc(),0x100000+offset);
 
 	return 0xff;
 }
@@ -225,7 +225,7 @@ static READ_HANDLER( growl_input_r )
 
     }
 
-if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - read unmapped memory address %06x\n",cpu_get_pc(),0x100000+offset);
+logerror("CPU #0 PC %06x: warning - read unmapped memory address %06x\n",cpu_get_pc(),0x100000+offset);
 
 	return 0xff;
 }
@@ -243,7 +243,7 @@ READ_HANDLER( megab_input_r )
 		case 0x06:
 			return readinputport (3);
 		default:
-			if (errorlog) fprintf (errorlog, "megab_input_r offset: %04x\n", offset);
+			logerror("megab_input_r offset: %04x\n", offset);
 			return 0xff;
 	}
 }

@@ -21,7 +21,7 @@ Main CPU:
 /* from vidhrdw */
 extern unsigned char *kingobox_videoram1;
 extern unsigned char *kingobox_colorram1;
-extern int kingobox_videoram1_size;
+extern size_t kingobox_videoram1_size;
 extern unsigned char *kingobox_scroll_y;
 WRITE_HANDLER( kingofb_f800_w );
 void kingobox_vh_convert_color_prom(unsigned char *palette,unsigned short *colortable,const unsigned char *color_prom);

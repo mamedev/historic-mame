@@ -56,7 +56,7 @@ static READ_HANDLER( konami_IN1_r )
  Track'n'Field has 1k of battery backed RAM which can be erased by setting a dipswitch
 */
 static unsigned char *nvram;
-static int nvram_size;
+static size_t nvram_size;
 static int we_flipped_the_switch;
 
 static void nvram_handler(void *file,int read_or_write)

@@ -56,7 +56,7 @@ static READ_HANDLER( madmotor_control_r )
 			return readinputport(2);
 	}
 
-	if (errorlog) fprintf(errorlog,"Unknown control read at %d\n",offset);
+	logerror("Unknown control read at %d\n",offset);
 	return 0xffff;
 }
 

@@ -158,8 +158,7 @@ static void astrob_queue_speech(int sound)
 		if (newPtr == speechQueuePtr)
 		{
 			 /* The queue has overflowed. Oops. */
-			if (errorlog)
-				fprintf (errorlog, "*** Speech queue overflow!\n");
+			logerror("*** Speech queue overflow!\n");
 			return;
 		}
 	}
@@ -451,8 +450,8 @@ WRITE_HANDLER( monsterb_audio_8255_w )
 	/* Write to 8255 control port, this should be 0x80 for "simple mode" */
 	else
 	{
-		if ((errorlog) && (data != 0x80))
-			fprintf(errorlog,"8255 Control Port Write = %02X\n",data);
+		if (data != 0x80)
+			logerror("8255 Control Port Write = %02X\n",data);
 	}
 }
 

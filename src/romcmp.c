@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include "unzip.h"
+#include "osdepend.h"	/* for CLIB_DECL */
+#include <stdarg.h>
 #ifdef macintosh	/* JB 981117 */
 #	include "mac_dos.h"
 #	include "stat.h"
@@ -10,6 +12,7 @@
 #include <sys/stat.h>
 #include <sys/errno.h>
 #endif
+
 
 #define MAX_FILES 100
 
@@ -22,7 +25,12 @@ static int errno = 0;
 #define MAX_FILENAME_LEN 12	/* increase this if you are using a real OS... */
 #endif
 
-FILE *errorlog = 0;
+
+/* for unzip.c */
+void CLIB_DECL logerror(const char *text,...)
+{
+}
+
 
 /* compare modes when one file is twice as long as the other */
 /* A = All file */

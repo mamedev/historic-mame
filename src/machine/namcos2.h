@@ -114,7 +114,7 @@ void	namcos2_nvram_handler(void *file, int read_or_write);
 WRITE_HANDLER( 	namcos2_68k_eeprom_w );
 READ_HANDLER( 	namcos2_68k_eeprom_r );
 extern unsigned char *namcos2_eeprom;
-extern int namcos2_eeprom_size;
+extern size_t namcos2_eeprom_size;
 
 /**************************************************************/
 /*	Shared video memory function handlers					  */
@@ -122,7 +122,7 @@ extern int namcos2_eeprom_size;
 WRITE_HANDLER( namcos2_68k_vram_w );
 READ_HANDLER( namcos2_68k_vram_r );
 
-extern int namcos2_68k_vram_size;
+extern size_t namcos2_68k_vram_size;
 
 READ_HANDLER( namcos2_68k_vram_ctrl_r );
 WRITE_HANDLER( namcos2_68k_vram_ctrl_w );
@@ -151,7 +151,7 @@ WRITE_HANDLER( namcos2_68k_video_palette_w );
 
 #define NAMCOS2_COLOUR_CODES	0x20
 extern unsigned char *namcos2_68k_palette_ram;
-extern int namcos2_68k_palette_size;
+extern size_t namcos2_68k_palette_size;
 
 
 /**************************************************************/
@@ -245,7 +245,7 @@ extern unsigned char namcos2_68k_roz_ctrl[];
 
 WRITE_HANDLER( namcos2_68k_roz_ram_w );
 READ_HANDLER( namcos2_68k_roz_ram_r );
-extern int namcos2_68k_roz_ram_size;
+extern size_t namcos2_68k_roz_ram_size;
 extern unsigned char *namcos2_68k_roz_ram;
 
 
@@ -256,12 +256,12 @@ extern unsigned char *namcos2_68k_roz_ram;
 WRITE_HANDLER( namcos2_68k_roadtile_ram_w );
 READ_HANDLER( namcos2_68k_roadtile_ram_r );
 extern unsigned char *namcos2_68k_roadtile_ram;
-extern int namcos2_68k_roadtile_ram_size;
+extern size_t namcos2_68k_roadtile_ram_size;
 
 WRITE_HANDLER( namcos2_68k_roadgfx_ram_w );
 READ_HANDLER( namcos2_68k_roadgfx_ram_r );
 extern unsigned char *namcos2_68k_roadgfx_ram;
-extern int namcos2_68k_roadgfx_ram_size;
+extern size_t namcos2_68k_roadgfx_ram_size;
 
 WRITE_HANDLER( namcos2_68k_road_ctrl_w );
 READ_HANDLER( namcos2_68k_road_ctrl_r );

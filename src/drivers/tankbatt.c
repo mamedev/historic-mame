@@ -60,7 +60,7 @@ Known issues:
 #include "cpu/m6502/m6502.h"
 
 extern unsigned char *tankbatt_bulletsram;
-extern int tankbatt_bulletsram_size;
+extern size_t tankbatt_bulletsram_size;
 
 static int tankbatt_nmi_enable; /* No need to init this - the game will set it on reset */
 static int tankbatt_sound_enable;

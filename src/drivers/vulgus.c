@@ -47,7 +47,7 @@ c001      YM2203 #2 write
 int c1942_interrupt(void);
 
 extern unsigned char *vulgus_bgvideoram,*vulgus_bgcolorram;
-extern int vulgus_bgvideoram_size;
+extern size_t vulgus_bgvideoram_size;
 extern unsigned char *vulgus_scrolllow,*vulgus_scrollhigh;
 extern unsigned char *vulgus_palette_bank;
 WRITE_HANDLER( vulgus_bgvideoram_w );

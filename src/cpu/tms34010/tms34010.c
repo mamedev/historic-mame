@@ -21,7 +21,7 @@ extern int debug_key_pressed;
 #define VERBOSE 0
 
 #if VERBOSE
-#define LOG(x)	if( errorlog ) fprintf x
+#define LOG(x)	logerror x
 #else
 #define LOG(x)
 #endif
@@ -620,7 +620,7 @@ static UINT32 write_pixel_shiftreg (UINT32 address, UINT32 value)
 	if (state.config->from_shiftreg)
 		state.config->from_shiftreg(address, &state.shiftreg[0]);
 	else
-		if (errorlog) fprintf(errorlog, "From ShiftReg function not set. PC = %08X\n", PC);
+		logerror("From ShiftReg function not set. PC = %08X\n", PC);
 	return 1;
 }
 
@@ -629,7 +629,7 @@ static UINT32 read_pixel_shiftreg (UINT32 address)
 	if (state.config->to_shiftreg)
 		state.config->to_shiftreg(address, &state.shiftreg[0]);
 	else
-		if (errorlog) fprintf(errorlog, "To ShiftReg function not set. PC = %08X\n", PC);
+		logerror("To ShiftReg function not set. PC = %08X\n", PC);
 	return state.shiftreg[0];
 }
 
@@ -777,7 +777,7 @@ void tms34010_reset(void *param)
 
 	/* set up the speedy stack (this gets us into trouble later, though!) */
 	if (stackbase[cpunum] == 0)
-		if (errorlog) fprintf(errorlog, "Stack Base not set on CPU #%d\n", cpunum);
+		logerror("Stack Base not set on CPU #%d\n", cpunum);
 	state.stackbase = stackbase[cpunum] - stackoffs[cpunum];
 
 	/* HALT the CPU if requested, and remember to re-read the starting PC */
@@ -984,7 +984,7 @@ void tms34010_set_nmi_line(int linestate)
  ****************************************************************************/
 void tms34010_set_irq_line(int irqline, int linestate)
 {
-	LOG((errorlog, "TMS34010#%d set irq line %d state %d\n", cpu_getactivecpu(), irqline, linestate));
+	LOG(("TMS34010#%d set irq line %d state %d\n", cpu_getactivecpu(), irqline, linestate));
 	if (linestate != CLEAR_LINE)
 	{
 		/* set the pending interrupt */
@@ -1009,7 +1009,7 @@ void tms34010_set_irq_callback(int (*callback)(int irqline))
 
 void tms34010_internal_interrupt(int type)
 {
-	LOG((errorlog, "TMS34010#%d set internal interrupt $%04x\n", cpu_getactivecpu(), type));
+	LOG(("TMS34010#%d set internal interrupt $%04x\n", cpu_getactivecpu(), type));
 	IOREG(REG_INTPEND) |= type;
 	check_interrupt();
 }
@@ -1029,7 +1029,7 @@ static void check_interrupt(void)
 
 	if (IOREG(REG_INTPEND) & TMS34010_NMI)
 	{
-		LOG((errorlog, "TMS34010#%d takes NMI\n", cpu_getactivecpu()));
+		LOG(("TMS34010#%d takes NMI\n", cpu_getactivecpu()));
 		IOREG(REG_INTPEND) &= ~TMS34010_NMI;
 
 		if (!(IOREG(REG_HSTCTLH) & 0x0200))  /* NMI mode bit */
@@ -1052,28 +1052,28 @@ static void check_interrupt(void)
 		if ((IOREG(REG_INTPEND) & TMS34010_HI) &&
 			(IOREG(REG_INTENB)  & TMS34010_HI))
 		{
-			LOG((errorlog, "TMS34010#%d takes HI\n", cpu_getactivecpu()));
+			LOG(("TMS34010#%d takes HI\n", cpu_getactivecpu()));
 			vector = 0xfffffec0;
 		}
 		else
 		if ((IOREG(REG_INTPEND) & TMS34010_DI) &&
 			(IOREG(REG_INTENB)  & TMS34010_DI))
 		{
-			LOG((errorlog, "TMS34010#%d takes DI\n", cpu_getactivecpu()));
+			LOG(("TMS34010#%d takes DI\n", cpu_getactivecpu()));
 			vector = 0xfffffea0;
 		}
 		else
 		if ((IOREG(REG_INTPEND) & TMS34010_WV) &&
 			(IOREG(REG_INTENB)  & TMS34010_WV))
 		{
-			LOG((errorlog, "TMS34010#%d takes WV\n", cpu_getactivecpu()));
+			LOG(("TMS34010#%d takes WV\n", cpu_getactivecpu()));
 			vector = 0xfffffe80;
 		}
 		else
 		if ((IOREG(REG_INTPEND) & TMS34010_INT1) &&
 			(IOREG(REG_INTENB)	& TMS34010_INT1))
 		{
-			LOG((errorlog, "TMS34010#%d takes INT1\n", cpu_getactivecpu()));
+			LOG(("TMS34010#%d takes INT1\n", cpu_getactivecpu()));
 			vector = 0xffffffc0;
 			irqline = 0;
 		}
@@ -1081,7 +1081,7 @@ static void check_interrupt(void)
 		if ((IOREG(REG_INTPEND) & TMS34010_INT2) &&
 			(IOREG(REG_INTENB)  & TMS34010_INT2))
 		{
-			LOG((errorlog, "TMS34010#%d takes INT2\n", cpu_getactivecpu()));
+			LOG(("TMS34010#%d takes INT2\n", cpu_getactivecpu()));
 			vector = 0xffffffa0;
 			irqline = 1;
 		}
@@ -1520,7 +1520,7 @@ static void common_io_register_w(int cpunum, TMS34010_Regs *context, int reg, in
 			break;
 
 		case REG_PMASK:
-			if (data && errorlog) fprintf(errorlog, "Plane masking not supported. PC=%08X\n", cpu_get_pc());
+			if (data) logerror("Plane masking not supported. PC=%08X\n", cpu_get_pc());
 			break;
 
 		case REG_DPYCTL:
@@ -1579,13 +1579,13 @@ static void common_io_register_w(int cpunum, TMS34010_Regs *context, int reg, in
 			/* output interrupt? */
 			if (!(oldreg & 0x0080) && (newreg & 0x0080))
 			{
-				if (errorlog) fprintf(errorlog, "CPU#%d Output int = 1\n", cpunum);
+				logerror("CPU#%d Output int = 1\n", cpunum);
 				if (context->config->output_int)
 					(*context->config->output_int)(1);
 			}
 			else if ((oldreg & 0x0080) && !(newreg & 0x0080))
 			{
-				if (errorlog) fprintf(errorlog, "CPU#%d Output int = 0\n", cpunum);
+				logerror("CPU#%d Output int = 0\n", cpunum);
 				if (context->config->output_int)
 					(*context->config->output_int)(0);
 			}
@@ -1593,12 +1593,12 @@ static void common_io_register_w(int cpunum, TMS34010_Regs *context, int reg, in
 			/* input interrupt? (should really be state-based, but the functions don't exist!) */
 			if (!(oldreg & 0x0008) && (newreg & 0x0008))
 			{
-				if (errorlog) fprintf(errorlog, "CPU#%d Input int = 1\n", cpunum);
+				logerror("CPU#%d Input int = 1\n", cpunum);
 				cpu_generate_internal_interrupt(cpunum, TMS34010_HI);
 			}
 			else if ((oldreg & 0x0008) && !(newreg & 0x0008))
 			{
-				if (errorlog) fprintf(errorlog, "CPU#%d Input int = 0\n", cpunum);
+				logerror("CPU#%d Input int = 0\n", cpunum);
 				CONTEXT_IOREG(context, REG_INTPEND) &= ~TMS34010_HI;
 			}
 			break;
@@ -1613,8 +1613,7 @@ static void common_io_register_w(int cpunum, TMS34010_Regs *context, int reg, in
 			break;
 	}
 
-	if (errorlog)
-		fprintf(errorlog, "CPU#%d: %s = %04X (%d)\n", cpunum, ioreg_name[reg], CONTEXT_IOREG(context, reg), cpu_getscanline());
+	logerror("CPU#%d: %s = %04X (%d)\n", cpunum, ioreg_name[reg], CONTEXT_IOREG(context, reg), cpu_getscanline());
 }
 
 WRITE_HANDLER( TMS34010_io_register_w )
@@ -1635,8 +1634,7 @@ static int common_io_register_r(int cpunum, TMS34010_Regs *context, int reg)
 	int result, total;
 
 	reg >>= 1;
-	if (errorlog)
-		fprintf(errorlog, "CPU#%d: read %s\n", cpunum, ioreg_name[reg]);
+	logerror("CPU#%d: read %s\n", cpunum, ioreg_name[reg]);
 
 	switch (reg)
 	{
@@ -1794,7 +1792,7 @@ void tms34010_host_w(int cpunum, int reg, int data)
 
 		/* error case */
 		default:
-			if (errorlog) fprintf(errorlog, "tms34010_host_control_w called on invalid register %d\n", reg);
+			logerror("tms34010_host_control_w called on invalid register %d\n", reg);
 			break;
 	}
 }
@@ -1856,6 +1854,6 @@ int tms34010_host_r(int cpunum, int reg)
 	}
 
 	/* error case */
-	if (errorlog) fprintf(errorlog, "tms34010_host_control_r called on invalid register %d\n", reg);
+	logerror("tms34010_host_control_r called on invalid register %d\n", reg);
 	return 0;
 }

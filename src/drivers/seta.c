@@ -48,7 +48,7 @@ extern unsigned char *seta_vram_0, *seta_vram_1, *seta_vctrl_0;
 extern unsigned char *seta_vram_2, *seta_vram_3, *seta_vctrl_2;
 extern unsigned char *seta_vregs;
 
-int seta_tiles_offset;
+extern int seta_tiles_offset;
 
 WRITE_HANDLER( seta_vram_0_w );
 WRITE_HANDLER( seta_vram_1_w );

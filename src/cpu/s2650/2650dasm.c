@@ -151,7 +151,7 @@ static char *REL0(int pc)
 {
 static char buff[32];
 int o = cpu_readop_arg(pc);
-	sprintf(buff, "%s%s", (o&0x80)?"*":"", SYM((pc+1+rel[o]) & 0x1fff));
+	sprintf(buff, "%s%s", (o&0x80)?"*":"", SYM((rel[o]) & 0x1fff));
 	return buff;
 }
 

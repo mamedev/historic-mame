@@ -12,7 +12,7 @@
 
 unsigned char *snowbros_spriteram;
 
-int snowbros_spriteram_size;
+size_t snowbros_spriteram_size;
 
 
 /* Put in case screen can be optimised later */

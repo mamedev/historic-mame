@@ -121,7 +121,7 @@ void rpunch_vh_stop(void);
 void rpunch_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 
 extern UINT8 *rpunch_bitmapram;
-extern int rpunch_bitmapram_size;
+extern size_t rpunch_bitmapram_size;
 extern int rpunch_sprite_palette;
 
 static UINT8 sound_data;

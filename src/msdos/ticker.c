@@ -76,7 +76,7 @@ void init_ticker(void)
 		end = ticker();
 		ticks_per_sec = (end - start)*4;
 
-if (errorlog) fprintf(errorlog,"using RDTSC for timing, CPU speed = %d.%06d MHz\n",
+logerror("using RDTSC for timing, CPU speed = %d.%06d MHz\n",
 		(int)(ticks_per_sec/1000000),(int)(ticks_per_sec%1000000));
 	}
 	else
@@ -84,6 +84,6 @@ if (errorlog) fprintf(errorlog,"using RDTSC for timing, CPU speed = %d.%06d MHz\
 		use_rdtsc = 0;
 		ticks_per_sec = UCLOCKS_PER_SEC;
 
-if (errorlog) fprintf(errorlog,"using uclock() for timing\n");
+logerror("using uclock() for timing\n");
 	}
 }

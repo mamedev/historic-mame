@@ -18,6 +18,7 @@
 	The Irem Skins Game (USA Set 1)	M92-F	(c) 1992 Irem America Corp
 	The Irem Skins Game (USA Set 2)	M92-F	(c) 1992 Irem America Corp
 	In The Hunt	(World)				M92-E	(c) 1993 Irem Corp
+	In The Hunt	(USA)				M92-E	(c) 1993 Irem Corp
 	Kaitei Daisensou (Japan)		M92-E	(c) 1993 Irem Corp
 	Ninja Baseball Batman (USA)				(c) 1993 Irem America Corp
 	Yakyuu Kakutou League-Man (Japan)		(c) 1993 Irem Corp
@@ -51,12 +52,11 @@ Glitch list!
 	R-Type Leo:
 		Title screen is incorrect, it uses mask sprites but I can't find
 		how the effect is turned on/off
-		Colour flicker on level 2
 		Crashes fixed via a kludge - cpu bug.
 
 	Irem Skins:
 		Mask sprite on title screen?
-		Sprites & tiles written with bad colour values.
+		Sprites & tiles written with bad colour values - cpu bug?
 		Eeprom load/save not yet implemented - when done, MT2EEP should
 		  be removed from the ROM definition.
 
@@ -117,7 +117,6 @@ WRITE_HANDLER( m92_pf2_control_w );
 WRITE_HANDLER( m92_pf3_control_w );
 WRITE_HANDLER( m92_master_control_w );
 int m92_vh_start(void);
-void m92_vh_stop(void);
 void m92_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void m92_vh_raster_partial_refresh(struct osd_bitmap *bitmap,int start_line,int end_line);
 
@@ -130,7 +129,7 @@ extern int m92_game_kludge;
 
 static READ_HANDLER( status_port_r )
 {
-//if (errorlog) fprintf(errorlog,"%06x: status %04x\n",cpu_get_pc(),offset);
+//logerror("%06x: status %04x\n",cpu_get_pc(),offset);
 
 /*
 
@@ -154,7 +153,7 @@ static READ_HANDLER( status_port_r )
 static READ_HANDLER( m92_eeprom_r )
 {
 	unsigned char *RAM = memory_region(REGION_USER1);
-//	if (errorlog) fprintf(errorlog,"%05x: EEPROM RE %04x\n",cpu_get_pc(),offset);
+//	logerror("%05x: EEPROM RE %04x\n",cpu_get_pc(),offset);
 
 	return RAM[offset/2];
 }
@@ -162,7 +161,7 @@ static READ_HANDLER( m92_eeprom_r )
 static WRITE_HANDLER( m92_eeprom_w )
 {
 	unsigned char *RAM = memory_region(REGION_USER1);
-//	if (errorlog) fprintf(errorlog,"%05x: EEPROM WR %04x\n",cpu_get_pc(),offset);
+//	logerror("%05x: EEPROM WR %04x\n",cpu_get_pc(),offset);
 	RAM[offset/2]=data;
 }
 
@@ -185,7 +184,7 @@ static WRITE_HANDLER( m92_coincounter_w )
 		/* Bit 0x40 set in Blade Master test mode input check */
 	}
 #if 0
-	if (offset==0 && data!=0) {
+	if (/*offset==0 &&*/ data!=0) {
 		char t[16];
 		sprintf(t,"%02x",data);
 		usrintf_showmessage(t);
@@ -198,7 +197,7 @@ static WRITE_HANDLER( m92_unknown_w )
 #if 0
 	static int d[2];
 	d[offset]=data;
-	if (offset==1) {
+	if (1/*offset==1*/) {
 		char t[16];
 		sprintf(t,"%02x",d[0] | (d[1]<<8));
 		usrintf_showmessage(t);
@@ -210,7 +209,7 @@ static WRITE_HANDLER( m92_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
-//	if (errorlog) fprintf(errorlog,"%04x: Bank %04x\n",cpu_get_pc(),data);
+	logerror("%04x: Bank %04x (%02x)\n",cpu_get_pc(),data,offset);
 	if (offset==1) return; /* Unused top byte */
 
 	cpu_setbank(1,&RAM[0x100000 + ((data&0x7)*0x10000)]);
@@ -1097,7 +1096,7 @@ static struct MachineDriver machine_driver_raster =
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	m92_vh_start,
-	m92_vh_stop,
+	0,
 	m92_vh_screenrefresh,
 
 	/* sound hardware */
@@ -1145,7 +1144,7 @@ static struct MachineDriver machine_driver_nonraster =
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	m92_vh_start,
-	m92_vh_stop,
+	0,
 	m92_vh_screenrefresh,
 
 	/* sound hardware */
@@ -1193,7 +1192,7 @@ static struct MachineDriver machine_driver_lethalth =
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	m92_vh_start,
-	m92_vh_stop,
+	0,
 	m92_vh_screenrefresh,
 
 	/* sound hardware */
@@ -1241,7 +1240,7 @@ static struct MachineDriver machine_driver_psoldier =
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_BUFFERS_SPRITERAM,
 	0,
 	m92_vh_start,
-	m92_vh_stop,
+	0,
 	m92_vh_screenrefresh,
 
 	/* sound hardware */
@@ -1435,6 +1434,33 @@ ROM_START( inthunt )
 	ROM_LOAD_V20_ODD ( "ith-l0-d.rom",0x000000, 0x040000, 0x5db79eb7 )
 	ROM_LOAD_V20_EVEN( "ith-h1-b.rom",0x080000, 0x020000, 0xfc2899df )
 	ROM_LOAD_V20_ODD ( "ith-l1-b.rom",0x080000, 0x020000, 0x955a605a )
+
+	ROM_REGION( 0x100000, REGION_CPU2 )	/* Irem D8000011A1 */
+	ROM_LOAD_V20_EVEN( "ith-sh0.rom",0x000000, 0x010000, 0x209c8b7f )
+	ROM_LOAD_V20_ODD ( "ith-sl0.rom",0x000000, 0x010000, 0x18472d65 )
+
+	ROM_REGION( 0x200000, REGION_GFX1 | REGIONFLAG_DISPOSE ) /* Tiles */
+	ROM_LOAD( "ith_ic26.rom",0x000000, 0x080000, 0x4c1818cf )
+	ROM_LOAD( "ith_ic25.rom",0x080000, 0x080000, 0x91145bae )
+	ROM_LOAD( "ith_ic24.rom",0x100000, 0x080000, 0xfc03fe3b )
+	ROM_LOAD( "ith_ic23.rom",0x180000, 0x080000, 0xee156a0a )
+
+	ROM_REGION( 0x400000, REGION_GFX2 | REGIONFLAG_DISPOSE ) /* Sprites */
+	ROM_LOAD( "ith_ic34.rom",0x000000, 0x100000, 0xa019766e )
+	ROM_LOAD( "ith_ic35.rom",0x100000, 0x100000, 0x3fca3073 )
+	ROM_LOAD( "ith_ic36.rom",0x200000, 0x100000, 0x20d1b28b )
+	ROM_LOAD( "ith_ic37.rom",0x300000, 0x100000, 0x90b6fd4b )
+
+	ROM_REGION( 0x80000, REGION_SOUND1 | REGIONFLAG_SOUNDONLY )
+	ROM_LOAD( "ith_ic9.rom" ,0x000000, 0x080000, 0x318ee71a )
+ROM_END
+
+ROM_START( inthuntu )
+	ROM_REGION( 0x100000, REGION_CPU1 )
+	ROM_LOAD_V20_EVEN( "ithhoc.bin",0x000000, 0x040000, 0x563dcec0 )
+	ROM_LOAD_V20_ODD ( "ithloc.bin",0x000000, 0x040000, 0x1638c705 )
+	ROM_LOAD_V20_EVEN( "ithh1a.bin",0x080000, 0x020000, 0x0253065f )
+	ROM_LOAD_V20_ODD ( "ithl1a.bin",0x080000, 0x020000, 0xa57d688d )
 
 	ROM_REGION( 0x100000, REGION_CPU2 )	/* Irem D8000011A1 */
 	ROM_LOAD_V20_EVEN( "ith-sh0.rom",0x000000, 0x010000, 0x209c8b7f )
@@ -1850,7 +1876,7 @@ static READ_HANDLER( inthunt_cycle_r )
 	if (d>159 && d<0xf0000000 && line<247) {
 		if (cpu_get_pc()==0x858 && m92_ram[0x25f]==0 && offset==1) {
 			/* Adjust in-game counter, based on cycles left to run */
-			int old;//,c=cycles_left_to_run();
+			int old;
 
 			old=m92_ram[0xb892]+(m92_ram[0xb893]<<8);
 			old=(old+d/82)&0xffff; /* 82 cycles per increment */
@@ -1915,6 +1941,8 @@ static READ_HANDLER( gunforce_cycle_r )
 	return m92_ram[0x61d0 + offset];
 }
 
+/***************************************************************************/
+
 static void m92_startup(void)
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -1929,58 +1957,21 @@ static void m92_startup(void)
 	RAM = memory_region(REGION_CPU2);
 	memcpy(RAM+0xffff0,RAM+0x1fff0,0x10); /* Sound cpu Start vector */
 
-	/* These games use M92-A-B motherboard, others are M92-A-A */
-	if (!strcmp(Machine->gamedrv->name,"rtypeleo")
-		|| !strcmp(Machine->gamedrv->name,"psoldier")
-		|| !strcmp(Machine->gamedrv->name,"lethalth")
-		|| !strcmp(Machine->gamedrv->name,"thndblst"))
-		m92_irq_vectorbase=0x20;
-	else
-		m92_irq_vectorbase=0x80;
-
-	/* This game sets the raster IRQ position, but the interrupt routine
-		is just an iret, no need to emulate it */
-	if (!strcmp(Machine->gamedrv->name,"lethalth")
-	    || !strcmp(Machine->gamedrv->name,"thndblst"))
-		m92_raster_enable=0;
-	else
-		m92_raster_enable=1;
-
-	/* These games seem to have a different sprite chip */
-	if (!strcmp(Machine->gamedrv->name,"rtypeleo")
-		|| !strcmp(Machine->gamedrv->name,"psoldier")
-		|| !strcmp(Machine->gamedrv->name,"lethalth")
-		|| !strcmp(Machine->gamedrv->name,"thndblst")
-		|| !strcmp(Machine->gamedrv->name,"uccops")
-		|| !strcmp(Machine->gamedrv->name,"uccopsj")
-		|| !strcmp(Machine->gamedrv->name,"nbbatman")
-		|| !strcmp(Machine->gamedrv->name,"leaguemn")
-		|| !strcmp(Machine->gamedrv->name,"mysticri")
-		|| !strcmp(Machine->gamedrv->name,"gunhohki"))
-		m92_spritechip=1;
-	else
-		m92_spritechip=0;
-
-	/* Very bad.. */
-	if (!strcmp(Machine->gamedrv->name,"nbbatman")
-		|| !strcmp(Machine->gamedrv->name,"leaguemn"))
-		m92_game_kludge=2;
-	else if (!strcmp(Machine->gamedrv->name,"rtypeleo"))
-		m92_game_kludge=1;
-	else
-		m92_game_kludge=0;
+	m92_irq_vectorbase=0x80;
+	m92_raster_enable=1;
+	m92_spritechip=0;
+	m92_game_kludge=0;
 }
-
-static void m92_sound_decrypt(void)
-{
-	m92_startup();
-	/* Not decrypted yet */
-}
-
 
 static void init_m92(void)
 {
-	m92_sound_decrypt();
+/*	m92_sound_decrypt();*/	/* Someday.. */
+	m92_startup();
+}
+
+static void init_bmaster(void)
+{
+	init_m92();
 }
 
 static void init_gunforce(void)
@@ -1995,15 +1986,30 @@ static void init_hook(void)
 	init_m92();
 }
 
+static void init_mysticri(void)
+{
+	init_m92();
+	m92_spritechip=1;
+}
+
 static void init_uccops(void)
 {
 	install_mem_read_handler(0, 0xe3a02, 0xe3a03, uccops_cycle_r);
 	init_m92();
+	m92_spritechip=1;
 }
 
 static void init_rtypeleo(void)
 {
 	install_mem_read_handler(0, 0xe0032, 0xe0033, rtypeleo_cycle_r);
+	init_m92();
+	m92_game_kludge=1;
+	m92_spritechip=1;
+	m92_irq_vectorbase=0x20; /* M92-A-B motherboard */
+}
+
+static void init_majtitl2(void)
+{
 	init_m92();
 }
 
@@ -2017,34 +2023,50 @@ static void init_lethalth(void)
 {
 	install_mem_read_handler(0, 0xe001e, 0xe001f, lethalth_cycle_r);
 	init_m92();
+	m92_spritechip=1;
+	m92_irq_vectorbase=0x20; /* M92-A-B motherboard */
+
+	/* This game sets the raster IRQ position, but the interrupt routine
+		is just an iret, no need to emulate it */
+	m92_raster_enable=0;
+}
+
+static void init_nbbatman(void)
+{
+	init_m92();
+	m92_game_kludge=2;
+	m92_spritechip=1;
 }
 
 static void init_psoldier(void)
 {
 	install_mem_read_handler(0, 0xe1aec, 0xe1aed, psoldier_cycle_r);
 	init_m92();
+	m92_spritechip=1;
+	m92_irq_vectorbase=0x20; /* M92-A-B motherboard */
 }
 
 /***************************************************************************/
 
 /* The 'nonraster' machine is for games that don't use the raster interrupt feature - slightly faster to emulate */
-GAMEX( 1991, bmaster,  0,        nonraster, bmaster,  m92,      ROT0,       "Irem",         "Blade Master (World)", GAME_NO_SOUND | GAME_NO_COCKTAIL )
+GAMEX( 1991, bmaster,  0,        nonraster, bmaster,  bmaster,  ROT0,       "Irem",         "Blade Master (World)", GAME_NO_SOUND | GAME_NO_COCKTAIL )
 GAMEX( 1991, lethalth, 0,        lethalth,  lethalth, lethalth, ROT270,     "Irem",         "Lethal Thunder (World)", GAME_NO_SOUND | GAME_NO_COCKTAIL )
 GAMEX( 1991, thndblst, lethalth, lethalth,  lethalth, lethalth, ROT270,     "Irem",         "Thunder Blaster (Japan)", GAME_NO_SOUND | GAME_NO_COCKTAIL )
 GAMEX( 1991, gunforce, 0,        raster,    gunforce, gunforce, ROT0,       "Irem",         "Gunforce - Battle Fire Engulfed Terror Island (World)", GAME_NO_SOUND | GAME_NO_COCKTAIL )
 GAMEX( 1991, gunforcu, gunforce, raster,    gunforce, gunforce, ROT0,       "Irem America", "Gunforce - Battle Fire Engulfed Terror Island (US)", GAME_NO_SOUND | GAME_NO_COCKTAIL )
 GAMEX( 1992, hook,     0,        nonraster, hook,     hook,     ROT0,       "Irem",         "Hook (World)", GAME_NO_SOUND | GAME_NO_COCKTAIL )
 GAMEX( 1992, hooku,    hook,     nonraster, hook,     hook,     ROT0,       "Irem America", "Hook (US)", GAME_NO_SOUND | GAME_NO_COCKTAIL )
-GAMEX( 1992, mysticri, 0,        nonraster, mysticri, m92,      ROT0,       "Irem",         "Mystic Riders (World)", GAME_NO_SOUND | GAME_NO_COCKTAIL )
-GAMEX( 1992, gunhohki, mysticri, nonraster, mysticri, m92,      ROT0,       "Irem",         "Gun Hohki (Japan)", GAME_NO_SOUND | GAME_NO_COCKTAIL )
+GAMEX( 1992, mysticri, 0,        nonraster, mysticri, mysticri, ROT0,       "Irem",         "Mystic Riders (World)", GAME_NO_SOUND | GAME_NO_COCKTAIL )
+GAMEX( 1992, gunhohki, mysticri, nonraster, mysticri, mysticri, ROT0,       "Irem",         "Gun Hohki (Japan)", GAME_NO_SOUND | GAME_NO_COCKTAIL )
 GAMEX( 1992, uccops,   0,        raster,    uccops,   uccops,   ROT0_16BIT, "Irem",         "Undercover Cops (World)", GAME_NO_SOUND | GAME_NO_COCKTAIL )
 GAMEX( 1992, uccopsj,  uccops,   raster,    uccops,   uccops,   ROT0_16BIT, "Irem",         "Undercover Cops (Japan)", GAME_NO_SOUND | GAME_NO_COCKTAIL )
 GAMEX( 1992, rtypeleo, 0,        raster,    rtypeleo, rtypeleo, ROT0_16BIT, "Irem",         "R-Type Leo (Japan)", GAME_NO_SOUND | GAME_NO_COCKTAIL )
-GAMEX( 1992, majtitl2, 0,        raster,    majtitl2, m92,      ROT0,       "Irem",         "Major Title 2 (World)", GAME_NO_SOUND | GAME_IMPERFECT_COLORS | GAME_NO_COCKTAIL )
-GAMEX( 1992, skingame, majtitl2, raster,    majtitl2, m92,      ROT0,       "Irem America", "The Irem Skins Game (US set 1)", GAME_NO_SOUND | GAME_NO_COCKTAIL )
-GAMEX( 1992, skingam2, majtitl2, raster,    majtitl2, m92,      ROT0,       "Irem America", "The Irem Skins Game (US set 2)", GAME_NO_SOUND | GAME_NO_COCKTAIL )
+GAMEX( 1992, majtitl2, 0,        raster,    majtitl2, majtitl2, ROT0_16BIT, "Irem",         "Major Title 2 (World)", GAME_NO_SOUND | GAME_IMPERFECT_COLORS | GAME_NO_COCKTAIL )
+GAMEX( 1992, skingame, majtitl2, raster,    majtitl2, majtitl2, ROT0_16BIT, "Irem America", "The Irem Skins Game (US set 1)", GAME_NO_SOUND | GAME_NO_COCKTAIL )
+GAMEX( 1992, skingam2, majtitl2, raster,    majtitl2, majtitl2, ROT0_16BIT, "Irem America", "The Irem Skins Game (US set 2)", GAME_NO_SOUND | GAME_NO_COCKTAIL )
 GAMEX( 1993, inthunt,  0,        raster,    inthunt,  inthunt,  ROT0_16BIT, "Irem",         "In The Hunt (World)", GAME_NO_SOUND | GAME_NO_COCKTAIL )
+GAMEX( 1993, inthuntu, inthunt,  raster,    inthunt,  inthunt,  ROT0_16BIT, "Irem America", "In The Hunt (US)", GAME_NO_SOUND | GAME_NO_COCKTAIL )
 GAMEX( 1993, kaiteids, inthunt,  raster,    inthunt,  inthunt,  ROT0_16BIT, "Irem",         "Kaitei Daisensou (Japan)", GAME_NO_SOUND | GAME_NO_COCKTAIL )
-GAMEX( 1993, nbbatman, 0,        raster,    nbbatman, m92,      ROT0,       "Irem America", "Ninja Baseball Batman (US)", GAME_NO_SOUND | GAME_NOT_WORKING | GAME_NO_COCKTAIL )
-GAMEX( 1993, leaguemn, nbbatman, raster,    nbbatman, m92,      ROT0,       "Irem",         "Yakyuu Kakutou League-Man (Japan)", GAME_NO_SOUND | GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAMEX( 1993, nbbatman, 0,        raster,    nbbatman, nbbatman, ROT0,       "Irem America", "Ninja Baseball Batman (US)", GAME_NO_SOUND | GAME_NOT_WORKING | GAME_NO_COCKTAIL )
+GAMEX( 1993, leaguemn, nbbatman, raster,    nbbatman, nbbatman, ROT0,       "Irem",         "Yakyuu Kakutou League-Man (Japan)", GAME_NO_SOUND | GAME_NOT_WORKING | GAME_NO_COCKTAIL )
 GAMEX( 1993, psoldier, 0,        psoldier,  psoldier, psoldier, ROT0_16BIT, "Irem",         "Perfect Soldiers (Japan)", GAME_NO_SOUND | GAME_NO_COCKTAIL )

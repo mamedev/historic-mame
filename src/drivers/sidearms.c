@@ -91,7 +91,7 @@ static struct MemoryWriteAddress writemem[] =
 };
 
 #ifdef THIRD_CPU
-static void pop(int offset,int data)
+static WRITE_HANDLER( pop )
 {
 RAM[0xa000] = 0xc3;
 RAM[0xa001] = 0x00;

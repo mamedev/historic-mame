@@ -123,7 +123,7 @@ int m68000_execute(int cycles)
 
             skiptrace++;
 
-            if ((skiptrace > 0) && (errorlog))
+            if (skiptrace > 0)
             {
 			    int mycount, areg, dreg;
 
@@ -134,8 +134,8 @@ int m68000_execute(int cycles)
                     dreg = dreg + regs.d[mycount];
                 }
 
-           	    fprintf(errorlog,"=> %8x %8x ",areg,dreg);
-			    fprintf(errorlog,"%6x %4x %d\n",regs.pc,regs.sr & 0x271F,m68000_ICount);
+           	    logerror("=> %8x %8x ",areg,dreg);
+			    logerror("%6x %4x %d\n",regs.pc,regs.sr & 0x271F,m68000_ICount);
             }
             #endif
 

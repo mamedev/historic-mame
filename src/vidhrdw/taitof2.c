@@ -4,18 +4,18 @@
 unsigned char *taitof2_scrollx;
 unsigned char *taitof2_scrolly;
 unsigned char *f2_backgroundram;
-int f2_backgroundram_size;
+size_t f2_backgroundram_size;
 unsigned char *f2_foregroundram;
-int f2_foregroundram_size;
+size_t f2_foregroundram_size;
 unsigned char *f2_textram;
-int f2_textram_size;
+size_t f2_textram_size;
 unsigned char *taitof2_characterram;
 unsigned char *char_dirty;	/* 256 chars */
-int f2_characterram_size;
+size_t f2_characterram_size;
 unsigned char *text_dirty;
 unsigned char *bg_dirty;
 unsigned char *fg_dirty;
-int f2_paletteram_size;
+size_t f2_paletteram_size;
 
 static struct osd_bitmap *tmpbitmap2;
 static struct osd_bitmap *tmpbitmap3;
@@ -200,7 +200,7 @@ WRITE_HANDLER( taitof2_foreground_w )
 
 WRITE_HANDLER( taitof2_spritebank_w )
 {
-	if (errorlog) fprintf (errorlog, "bank %d, new value: %04x\n", offset >> 1, data << 10);
+	logerror("bank %d, new value: %04x\n", offset >> 1, data << 10);
 	if ((offset >> 1) < 4) return;
 //	if (data == 0) data = (offset >> 1) * 0x400;
 	spritebank[offset >> 1] = data << 10;

@@ -63,8 +63,8 @@ int val06,val08,val0a;
 
 static void crbaloon_machine_init(void)
 {
-	/* MIXER B = 0, MIXER C = 1 */
-	SN76477_mixer_b_w(0, 0);
+	/* MIXER A = 0, MIXER C = 1 */
+	SN76477_mixer_a_w(0, 0);
 	SN76477_mixer_c_w(0, 1);
 	/* ENVELOPE is constant: pin1 = hi, pin 28 = lo */
 	SN76477_envelope_w(0, 1);
@@ -106,12 +106,12 @@ WRITE_HANDLER( crbaloon_06_w )
 
 		if( data & 0x20 )
 		{
-			/* APPEAR is connected to MIXER A */
-			SN76477_mixer_a_w(0, 1);
+			/* APPEAR is connected to MIXER B */
+			SN76477_mixer_b_w(0, 1);
 		}
 		else
 		{
-			SN76477_mixer_a_w(0, 4);
+			SN76477_mixer_b_w(0, 4);
 		}
 
 		/* constant: pin1 = hi, pin 28 = lo */
@@ -143,12 +143,12 @@ READ_HANDLER( crbaloon_IN2_r )
 	/* the following is needed for the game to boot up */
 	if (val06 & 0x80)
 	{
-if (errorlog) fprintf(errorlog,"PC %04x: %02x high\n",cpu_get_pc(),offset);
+logerror("PC %04x: %02x high\n",cpu_get_pc(),offset);
 		return (input_port_2_r(0) & 0xf0) | 0x07;
 	}
 	else
 	{
-if (errorlog) fprintf(errorlog,"PC %04x: %02x low\n",cpu_get_pc(),offset);
+logerror("PC %04x: %02x low\n",cpu_get_pc(),offset);
 		return (input_port_2_r(0) & 0xf0) | 0x07;
 	}
 }
@@ -162,12 +162,12 @@ READ_HANDLER( crbaloon_IN3_r )
 	/* the following is needed for the game to boot up */
 	if (val0a & 0x01)
 	{
-if (errorlog) fprintf(errorlog,"PC %04x: 03 high\n",cpu_get_pc());
+logerror("PC %04x: 03 high\n",cpu_get_pc());
 		return (input_port_3_r(0) & 0x0f) | 0x00;
 	}
 	else
 	{
-if (errorlog) fprintf(errorlog,"PC %04x: 03 low\n",cpu_get_pc());
+logerror("PC %04x: 03 low\n",cpu_get_pc());
 		return (input_port_3_r(0) & 0x0f) | 0x00;
 	}
 }

@@ -40,7 +40,7 @@ static READ_HANDLER( stadhero_control_r )
 			return (readinputport(3) + (readinputport(4) << 8));
 	}
 
-	if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - read unmapped memory address %06x\n",cpu_get_pc(),0x30c000+offset);
+	logerror("CPU #0 PC %06x: warning - read unmapped memory address %06x\n",cpu_get_pc(),0x30c000+offset);
 	return 0xffff;
 }
 
@@ -55,7 +55,7 @@ static WRITE_HANDLER( stadhero_control_w )
 			cpu_cause_interrupt(1,M6502_INT_NMI);
 			break;
 		default:
-			if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - write %02x to unmapped memory address %06x\n",cpu_get_pc(),data,0x30c010+offset);
+			logerror("CPU #0 PC %06x: warning - write %02x to unmapped memory address %06x\n",cpu_get_pc(),data,0x30c010+offset);
 			break;
 	}
 }

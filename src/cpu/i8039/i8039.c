@@ -14,7 +14,6 @@
 #include "mamedbg.h"
 #include "i8039.h"
 
-extern FILE *errorlog;
 
 /* Layout of the registers in the debugger */
 static UINT8 i8039_reg_layout[] = {
@@ -194,14 +193,12 @@ INLINE void M_XCHD(UINT8 addr)
 
 INLINE void M_ILLEGAL(void)
 {
-	if (errorlog)
-	  fprintf(errorlog, "I8039:  PC = %04x,  Illegal opcode = %02x\n", R.PC.w.l-1, M_RDMEM(R.PC.w.l-1));
+	logerror("I8039:  PC = %04x,  Illegal opcode = %02x\n", R.PC.w.l-1, M_RDMEM(R.PC.w.l-1));
 }
 
 INLINE void M_UNDEFINED(void)
 {
-	if (errorlog)
-	  fprintf(errorlog, "I8039:  PC = %04x,  Unimplemented opcode = %02x\n", R.PC.w.l-1, M_RDMEM(R.PC.w.l-1));
+	logerror("I8039:  PC = %04x,  Unimplemented opcode = %02x\n", R.PC.w.l-1, M_RDMEM(R.PC.w.l-1));
 }
 
 
@@ -572,7 +569,7 @@ static int Timer_IRQ(void)
 {
 	if (R.tirq_en && !R.irq_executing)
 	{
-		if (errorlog) fprintf(errorlog, "I8039:  TIMER INTERRUPT\n");
+		logerror("I8039:  TIMER INTERRUPT\n");
 		R.irq_executing = I8039_TIMER_INT;
 		push(R.PC.b.l);
 		push((R.PC.b.h & 0x0f) | (R.PSW & 0xf0));
@@ -590,7 +587,7 @@ static int Timer_IRQ(void)
 static int Ext_IRQ(void)
 {
 	if (R.xirq_en) {
-//if (errorlog) fprintf(errorlog, "I8039:  EXT INTERRUPT\n");
+//logerror("I8039:  EXT INTERRUPT\n");
 		R.irq_executing = I8039_EXT_INT;
 		push(R.PC.b.l);
 		push((R.PC.b.h & 0x0f) | (R.PSW & 0xf0));
@@ -672,7 +669,7 @@ int i8039_execute(int cycles)
 
 		opcode=M_RDOP(R.PC.w.l);
 
-/*      if (errorlog) fprintf(errorlog, "I8039:  PC = %04x,  opcode = %02x\n", R.PC.w.l, opcode); */
+/*      logerror("I8039:  PC = %04x,  opcode = %02x\n", R.PC.w.l, opcode); */
 
         R.PC.w.l++;
 		i8039_ICount -= opcode_main[opcode].cycles;

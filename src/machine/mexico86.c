@@ -29,13 +29,13 @@ static unsigned char portA_in,portA_out,ddrA;
 
 READ_HANDLER( mexico86_68705_portA_r )
 {
-//if (errorlog) fprintf(errorlog,"%04x: 68705 port A read %02x\n",cpu_get_pc(),portA_in);
+//logerror("%04x: 68705 port A read %02x\n",cpu_get_pc(),portA_in);
 	return (portA_out & ddrA) | (portA_in & ~ddrA);
 }
 
 WRITE_HANDLER( mexico86_68705_portA_w )
 {
-//if (errorlog) fprintf(errorlog,"%04x: 68705 port A write %02x\n",cpu_get_pc(),data);
+//logerror("%04x: 68705 port A write %02x\n",cpu_get_pc(),data);
 	portA_out = data;
 }
 
@@ -73,7 +73,7 @@ static int address,latch;
 
 WRITE_HANDLER( mexico86_68705_portB_w )
 {
-//if (errorlog) fprintf(errorlog,"%04x: 68705 port B write %02x\n",cpu_get_pc(),data);
+//logerror("%04x: 68705 port B write %02x\n",cpu_get_pc(),data);
 
 	if ((ddrB & 0x01) && (~data & 0x01) && (portB_out & 0x01))
 	{
@@ -82,7 +82,7 @@ WRITE_HANDLER( mexico86_68705_portB_w )
 	if ((ddrB & 0x02) && (data & 0x02) && (~portB_out & 0x02)) /* positive edge trigger */
 	{
 		address = portA_out;
-//if (errorlog && address >= 0x80) fprintf(errorlog,"%04x: 68705 address %02x\n",cpu_get_pc(),portA_out);
+//if (address >= 0x80) logerror("%04x: 68705 address %02x\n",cpu_get_pc(),portA_out);
 	}
 	if ((ddrB & 0x08) && (~data & 0x08) && (portB_out & 0x08))
 	{
@@ -90,18 +90,18 @@ WRITE_HANDLER( mexico86_68705_portB_w )
 		{
 			if (data & 0x04)
 			{
-//if (errorlog) fprintf(errorlog,"%04x: 68705 read %02x from address %04x\n",cpu_get_pc(),shared[0x800+address],address);
+//logerror("%04x: 68705 read %02x from address %04x\n",cpu_get_pc(),shared[0x800+address],address);
 				latch = mexico86_protection_ram[address];
 			}
 			else
 			{
-//if (errorlog) fprintf(errorlog,"%04x: 68705 read input port %04x\n",cpu_get_pc(),address);
+//logerror("%04x: 68705 read input port %04x\n",cpu_get_pc(),address);
 				latch = readinputport((address & 1) + 1);
 			}
 		}
 		else	/* write */
 		{
-//if (errorlog) fprintf(errorlog,"%04x: 68705 write %02x to address %04x\n",cpu_get_pc(),portA_out,address);
+//logerror("%04x: 68705 write %02x to address %04x\n",cpu_get_pc(),portA_out,address);
 				mexico86_protection_ram[address] = portA_out;
 		}
 	}
@@ -113,11 +113,11 @@ WRITE_HANDLER( mexico86_68705_portB_w )
 	}
 	if ((ddrB & 0x40) && (~data & 0x40) && (portB_out & 0x40))
 	{
-if (errorlog) fprintf(errorlog,"%04x: 68705 unknown port B bit %02x\n",cpu_get_pc(),data);
+logerror("%04x: 68705 unknown port B bit %02x\n",cpu_get_pc(),data);
 	}
 	if ((ddrB & 0x80) && (~data & 0x80) && (portB_out & 0x80))
 	{
-if (errorlog) fprintf(errorlog,"%04x: 68705 unknown port B bit %02x\n",cpu_get_pc(),data);
+logerror("%04x: 68705 unknown port B bit %02x\n",cpu_get_pc(),data);
 	}
 
 	portB_out = data;

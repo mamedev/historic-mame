@@ -165,7 +165,7 @@ static void calculate_collisions( void ) {
 
 static WRITE_HANDLER( thunderx_1f98_w )
 {
-//if (errorlog) fprintf(errorlog,"%04x: write %02x to 1f98\n",cpu_get_pc(),data);
+//logerror("%04x: write %02x to 1f98\n",cpu_get_pc(),data);
 	/* bit 0 = enable char ROM reading through the video RAM */
 	K052109_set_RMRD_line((data & 0x01) ? ASSERT_LINE : CLEAR_LINE);
 
@@ -179,7 +179,7 @@ WRITE_HANDLER( scontra_bankswitch_w )
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	int offs;
 
-//if (errorlog) fprintf(errorlog,"%04x: bank switch %02x\n",cpu_get_pc(),data);
+//logerror("%04x: bank switch %02x\n",cpu_get_pc(),data);
 
 	/* bits 0-3 ROM bank */
 	offs = 0x10000 + (data & 0x0f)*0x2000;
@@ -198,7 +198,7 @@ WRITE_HANDLER( scontra_bankswitch_w )
 
 static WRITE_HANDLER( thunderx_videobank_w )
 {
-//if (errorlog) fprintf(errorlog,"%04x: select video ram bank %02x\n",cpu_get_pc(),data);
+//logerror("%04x: select video ram bank %02x\n",cpu_get_pc(),data);
 	/* 0x01 = work RAM at 4000-5fff */
 	/* 0x00 = palette at 5800-5fff */
 	/* 0x10 = unknown RAM at 5800-5fff */
@@ -858,8 +858,7 @@ static void thunderx_banking( int lines )
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	int offs;
 
-//	if ( errorlog )
-//		fprintf( errorlog, "thunderx %04x: bank select %02x\n", cpu_get_pc(), lines );
+//	logerror("thunderx %04x: bank select %02x\n", cpu_get_pc(), lines );
 
 	offs = 0x10000 + (((lines & 0x0f) ^ 0x08) * 0x2000);
 	if (offs >= 0x28000) offs -= 0x20000;

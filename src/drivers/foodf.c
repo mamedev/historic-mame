@@ -57,8 +57,8 @@ Audio 2                            AC0000-AC001F  R/W  D0-D7
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-extern int foodf_playfieldram_size;
-extern int foodf_spriteram_size;
+extern size_t foodf_playfieldram_size;
+extern size_t foodf_spriteram_size;
 
 extern unsigned char *foodf_spriteram;
 extern unsigned char *foodf_playfieldram;

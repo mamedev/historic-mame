@@ -43,7 +43,7 @@ write:
 
 
 extern unsigned char *commando_bgvideoram,*commando_bgcolorram;
-extern int commando_bgvideoram_size;
+extern size_t commando_bgvideoram_size;
 extern unsigned char *commando_scrollx,*commando_scrolly;
 WRITE_HANDLER( commando_bgvideoram_w );
 WRITE_HANDLER( commando_bgcolorram_w );

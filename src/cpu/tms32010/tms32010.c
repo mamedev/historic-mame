@@ -179,7 +179,7 @@ INLINE void putdata_sst(UINT16 data)
 
 void M_ILLEGAL(void)
 {
-	if (errorlog) fprintf(errorlog, "TMS320C10:  PC = %04x,  Illegal opcode = %04x\n", (R.PC-1), opcode);
+	logerror("TMS320C10:  PC = %04x,  Illegal opcode = %04x\n", (R.PC-1), opcode);
 }
 
 
@@ -649,7 +649,7 @@ static int Ext_IRQ(void)
 {
 	if (INTM == 0)
 	{
-		if (errorlog) fprintf(errorlog, "TMS320C10:  EXT INTERRUPT\n");
+		logerror("TMS320C10:  EXT INTERRUPT\n");
 		SET(INTM_FLAG);
 		R.STACK[0] = R.STACK[1];
 		R.STACK[1] = R.STACK[2];

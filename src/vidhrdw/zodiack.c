@@ -14,7 +14,7 @@ unsigned char *zodiack_videoram2;
 
 extern unsigned char *galaxian_attributesram;
 extern unsigned char *galaxian_bulletsram;
-extern int galaxian_bulletsram_size;
+extern size_t galaxian_bulletsram_size;
 extern int percuss_hardware;
 
 static int flipscreen;

@@ -16,6 +16,8 @@ Bugs: Sometimes the death explosion (small explosion) does not trigger.
 ***************************************************************************/
 
 #include "driver.h"
+#include "machine/z80fmly.h"
+
 
 static UINT32 current_shift = 0;
 static UINT32 last_shift = 0;
@@ -23,8 +25,35 @@ static UINT32 last_shift16= 0;
 static UINT32 current_pitch = 0x20000;
 static UINT32 last_frame = 0;
 
-void cinemat_sound_init (void)
+static int cinemat_outputs = 0xff;
+
+
+typedef void (*cinemat_sound_handler_proc)(UINT8, UINT8);
+
+static cinemat_sound_handler_proc cinemat_sound_handler;
+
+READ_HANDLER( cinemat_output_port_r )
 {
+	return cinemat_outputs;
+}
+
+WRITE_HANDLER( cinemat_output_port_w )
+{
+	if ((cinemat_outputs ^ data) & 0x9f)
+	{
+		if (cinemat_sound_handler)
+			cinemat_sound_handler (data & 0x9f, (cinemat_outputs ^ data) & 0x9f);
+	}
+
+	cinemat_outputs = data;
+}
+
+
+
+void cinemat_set_sound_handler(cinemat_sound_handler_proc sound_handler)
+{
+	cinemat_sound_handler = sound_handler;
+
     current_shift = 0xffff;
     last_shift = 0xffff;
     last_shift16 = 0xffff;
@@ -47,7 +76,35 @@ static void cinemat_shift (UINT8 sound_val, UINT8 bits_changed, UINT8 A1, UINT8 
 	}
 }
 
-void starcas_sound(UINT8 sound_val, UINT8 bits_changed)
+
+/***************************************************************************
+
+  Star Castle
+
+***************************************************************************/
+
+static const char *starcas_sample_names[] =
+{
+	"*starcas",
+	"lexplode.wav",
+	"sexplode.wav",
+	"cfire.wav",
+	"pfire.wav",
+	"drone.wav",
+	"shield.wav",
+	"star.wav",
+	"thrust.wav",
+    0	/* end of array */
+};
+
+struct Samplesinterface starcas_samples_interface =
+{
+	8,	/* 8 channels */
+	25,	/* volume */
+	starcas_sample_names
+};
+
+void starcas_sound_w(UINT8 sound_val, UINT8 bits_changed)
 {
     UINT32 target_pitch;
 	UINT8 shift_diff;
@@ -125,12 +182,75 @@ void starcas_sound(UINT8 sound_val, UINT8 bits_changed)
 	if ((bits_changed & 0x04) && (0 == (sound_val & 0x04)))
 		sample_start(1, 1, 0);			// Soft explosion
 
-	if ((bits_changed & 0x02) && (0 == (sound_val & 0x04)))
+	if ((bits_changed & 0x02) && (0 == (sound_val & 0x02)))
 		sample_start(0, 0, 0);			// Loud explosion
 
 }
 
-void armora_sound(UINT8 sound_val, UINT8 bits_changed)
+
+/***************************************************************************
+
+  Warrior
+
+***************************************************************************/
+
+static const char *warrior_sample_names[] =
+{
+	"*warrior",
+	"appear.wav",
+	"bgmhum1.wav",
+	"bgmhum2.wav",
+	"fall.wav",
+	"killed.wav",
+    0	/* end of array */
+};
+
+struct Samplesinterface warrior_samples_interface =
+{
+	5,	/* 8 channels */
+	25,	/* volume */
+	warrior_sample_names
+};
+
+void warrior_sound_w(UINT8 sound_val, UINT8 bits_changed)
+{
+
+	if ((bits_changed & 0x10) && (0 == (sound_val & 0x10)))
+	{
+		sample_start(0, 0, 0);			// appear
+	}
+
+	if ((bits_changed & 0x08) && (0 == (sound_val & 0x08)))
+		sample_start(3, 3, 0);			// fall
+
+	if ((bits_changed & 0x04) && (0 == (sound_val & 0x04)))
+		sample_start(4, 4, 0);			// explosion (kill)
+
+	if (bits_changed & 0x02)
+	{
+		if ((sound_val & 0x02) == 0)
+			sample_start(2, 2, 1);			// hi level
+		else
+			sample_stop(2);
+	}
+
+	if (bits_changed & 0x01)
+	{
+		if ((sound_val & 0x01) == 0)
+			sample_start(1, 1, 1);			// normal level
+		else
+			sample_stop(1);
+	}
+}
+
+
+/***************************************************************************
+
+  Armor Attack
+
+***************************************************************************/
+
+void armora_sound_w(UINT8 sound_val, UINT8 bits_changed)
 {
 	UINT8 shift_diff;
 
@@ -183,7 +303,40 @@ void armora_sound(UINT8 sound_val, UINT8 bits_changed)
     }
 }
 
-void ripoff_sound(UINT8 sound_val, UINT8 bits_changed)
+
+/***************************************************************************
+
+  Ripoff
+
+***************************************************************************/
+
+static const char *ripoff_sample_names[] =
+{
+	"*ripoff",
+    "efire.wav",
+	"eattack.wav",
+	"bonuslvl.wav",
+	"explosn.wav",
+	"shipfire.wav",
+	"bg1.wav",
+	"bg2.wav",
+	"bg3.wav",
+	"bg4.wav",
+	"bg5.wav",
+	"bg6.wav",
+	"bg7.wav",
+	"bg8.wav",
+    0	/* end of array */
+};
+
+struct Samplesinterface ripoff_samples_interface =
+{
+	8,	/* 8 channels */
+	25,	/* volume */
+	ripoff_sample_names
+};
+
+void ripoff_sound_w(UINT8 sound_val, UINT8 bits_changed)
 {
 	UINT8 shift_diff, current_bg_sound;
     static UINT8 last_bg_sound;
@@ -239,7 +392,39 @@ void ripoff_sound(UINT8 sound_val, UINT8 bits_changed)
 
 }
 
-void solarq_sound(UINT8 sound_val, UINT8 bits_changed)
+
+/***************************************************************************
+
+  Solar Quest
+
+***************************************************************************/
+
+static const char *solarq_sample_names[] =
+{
+	"*solarq",
+    "bigexpl.wav",
+	"smexpl.wav",
+	"lthrust.wav",
+	"slaser.wav",
+	"pickup.wav",
+	"nuke1.wav",
+	"nuke2.wav",
+	"hypersp.wav",
+    "extra.wav",
+    "phase.wav",
+    "efire.wav",
+    0	/* end of array */
+};
+
+struct Samplesinterface solarq_samples_interface =
+{
+	8,	/* 8 channels */
+	25,	/* volume */
+	solarq_sample_names
+};
+
+
+void solarq_sound_w(UINT8 sound_val, UINT8 bits_changed)
 {
 	UINT32 shift_diff, shift_diff16;
     static int target_volume, current_volume;
@@ -267,8 +452,7 @@ void solarq_sound(UINT8 sound_val, UINT8 bits_changed)
                 sample_start(7, 10, 0);	// Enemy fire
                 break;
             default:
-                if (errorlog)
-                    fprintf (errorlog, "Unknown sound starting with: %x\n", current_shift & 0xffff);
+                logerror("Unknown sound starting with: %x\n", current_shift & 0xffff);
                 break;
             }
         }
@@ -336,7 +520,35 @@ void solarq_sound(UINT8 sound_val, UINT8 bits_changed)
 	}
 }
 
-void spacewar_sound(UINT8 sound_val, UINT8 bits_changed)
+
+/***************************************************************************
+
+  Spacewar
+
+***************************************************************************/
+
+static const char *spacewar_sample_names[] =
+{
+	"*spacewar",
+	"explode1.wav",
+	"fire1.wav",
+	"idle.wav",
+	"thrust1.wav",
+	"thrust2.wav",
+	"pop.wav",
+	"explode2.wav",
+	"fire2.wav",
+    0	/* end of array */
+};
+
+struct Samplesinterface spacewar_samples_interface =
+{
+	8,	/* 8 channels */
+	25,	/* volume */
+	spacewar_sample_names
+};
+
+void spacewar_sound_w(UINT8 sound_val, UINT8 bits_changed)
 {
 
 	// Explosion
@@ -404,3 +616,118 @@ void spacewar_sound(UINT8 sound_val, UINT8 bits_changed)
 	}
 }
 
+
+/***************************************************************************
+
+  Demon
+
+***************************************************************************/
+
+
+/* circular queue with read and write pointers */
+#define QUEUE_ENTRY_COUNT  10
+static int sound_latch_rp = 0;
+static int sound_latch_wp = 0;
+static int sound_latch[QUEUE_ENTRY_COUNT];
+
+void demon_sound_w(UINT8 sound_val, UINT8 bits_changed)
+{
+	int pc = cpu_get_pc();
+
+	if (pc == 0x0fbc ||
+		pc == 0x1fed ||
+		pc == 0x2ff1 ||
+		pc == 0x3fd3)
+	{
+		sound_latch[sound_latch_wp] = ((sound_val & 0x07) << 3);
+	}
+	if (pc == 0x0fc8 ||
+		pc == 0x1ff9 ||
+		pc == 0x2ffd ||
+		pc == 0x3fdf)
+	{
+		sound_latch[sound_latch_wp] |= (sound_val & 0x07);
+
+		//logerror("Writing Sound Latch %04X = %02X\n", pc, sound_latch[sound_latch_wp]);
+
+		sound_latch_wp++;
+		if (sound_latch_wp == QUEUE_ENTRY_COUNT)  sound_latch_wp = 0;
+	}
+}
+
+static READ_HANDLER(demon_sound_r)
+{
+	int ret;
+
+	if (sound_latch_rp == sound_latch_wp)	return 0x80;	/* no data in queue */
+
+	ret = sound_latch[sound_latch_rp];
+
+	sound_latch_rp++;
+	if (sound_latch_rp == QUEUE_ENTRY_COUNT)  sound_latch_rp = 0;
+
+	//logerror("Reading Sound Latch %04X = %02X\n", cpu_get_pc(), ret);
+
+	return ret;
+}
+
+
+struct AY8910interface demon_ay8910_interface =
+{
+	3,	/* 3 chips */
+	3579545,	/* 3.579545 Mhz */
+	{ 25, 25, 25 },
+	{ demon_sound_r },
+	{ 0 },	/* there are sound enable bits in here, but don't know what is what */
+	{ 0 },
+	{ 0 }
+};
+
+
+static void ctc_interrupt (int state)
+{
+	cpu_cause_interrupt (1, Z80_VECTOR(0,state) );
+}
+
+z80ctc_interface demon_z80ctc_interface =
+{
+	1,                   /* 1 chip */
+	{ 0 },               /* clock (filled in from the CPU clock) */
+	{ 0 },               /* timer disables */
+	{ ctc_interrupt },   /* interrupt handler */
+	{ 0 },               /* ZC/TO0 callback */
+	{ 0 },               /* ZC/TO1 callback */
+	{ 0 }                /* ZC/TO2 callback */
+};
+
+
+struct MemoryReadAddress demon_sound_readmem[] =
+{
+	{ 0x0000, 0x0fff, MRA_ROM },
+	{ 0x3000, 0x33ff, MRA_RAM },
+	{ 0x4001, 0x4001, AY8910_read_port_0_r },
+	{ 0x5001, 0x5001, AY8910_read_port_1_r },
+	{ 0x6001, 0x6001, AY8910_read_port_2_r },
+	{ -1 }  /* end of table */
+};
+
+struct  MemoryWriteAddress demon_sound_writemem[] =
+{
+	{ 0x0000, 0x0fff, MWA_ROM },
+	{ 0x3000, 0x33ff, MWA_RAM },
+	{ 0x4002, 0x4002, AY8910_write_port_0_w },
+	{ 0x4003, 0x4003, AY8910_control_port_0_w },
+	{ 0x5002, 0x5002, AY8910_write_port_1_w },
+	{ 0x5003, 0x5003, AY8910_control_port_1_w },
+	{ 0x6002, 0x6002, AY8910_write_port_2_w },
+	{ 0x6003, 0x6003, AY8910_control_port_2_w },
+	{ 0x7000, 0x7000, MWA_NOP },  /* watchdog? */
+	{ -1 }  /* end of table */
+};
+
+struct IOWritePort demon_sound_writeport[] =
+{
+	{ 0x00, 0x03, z80ctc_0_w },
+	{ 0x1c, 0x1f, z80ctc_0_w },
+	{ -1 }	/* end of table */
+};

@@ -6,8 +6,17 @@
 Emulation by Bryan McPhail, mish@tendril.co.uk
 
 Notes:
-* Schematics show a palette/work RAM bank selector, but this doesn't seem
+- Schematics show a palette/work RAM bank selector, but this doesn't seem
   to be used?
+
+- In Devastators, shadows don't work. Bit 7 of the sprite attribute is always 0,
+  could there be a global enable flag in the 051960?
+  This is particularly evident in level 2 where plane shadows cover other sprites.
+  The priority/shadow encoder PROM is quite complex, however bits 5-7 of the sprite
+  attribute don't seem to be used, at least not in the first two levels, so the
+  PROM just maps to the fixed priority order currently implemented.
+
+- In Devastators, sprite zooming for the planes in level 2 is particularly bad.
 
 ***************************************************************************/
 
@@ -43,12 +52,6 @@ static int dv_interrupt(void)
 {
 	if (nmi_enable) return M6809_INT_NMI;
 	else return ignore_interrupt();
-}
-
-
-static int zero_ret(int offset)
-{
-	return 0xff;
 }
 
 
@@ -113,7 +116,7 @@ WRITE_HANDLER( mainevt_sh_bankswitch_w )
 	unsigned char *RAM = memory_region(REGION_SOUND1);
 	int bank_A,bank_B;
 
-//if (errorlog) fprintf(errorlog,"CPU #1 PC: %04x bank switch = %02x\n",cpu_get_pc(),data);
+//logerror("CPU #1 PC: %04x bank switch = %02x\n",cpu_get_pc(),data);
 
 	/* bits 0-3 select the 007232 banks */
 	bank_A=0x20000 * (data&0x3);
@@ -131,7 +134,7 @@ WRITE_HANDLER( dv_sh_bankswitch_w )
 	unsigned char *RAM = memory_region(REGION_SOUND1);
 	int bank_A,bank_B;
 
-//if (errorlog) fprintf(errorlog,"CPU #1 PC: %04x bank switch = %02x\n",cpu_get_pc(),data);
+//logerror("CPU #1 PC: %04x bank switch = %02x\n",cpu_get_pc(),data);
 
 	/* bits 0-3 select the 007232 banks */
 	bank_A=0x20000 * (data&0x3);

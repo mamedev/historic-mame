@@ -134,7 +134,7 @@ WRITE_HANDLER( zaccaria_dsw_sel_w )
 
 		default:
 			break;
-if (errorlog) fprintf(errorlog,"PC %04x: portsel = %02x\n",cpu_get_pc(),data);
+logerror("PC %04x: portsel = %02x\n",cpu_get_pc(),data);
 	}
 }
 

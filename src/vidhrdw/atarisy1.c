@@ -420,7 +420,7 @@ WRITE_HANDLER( atarisys1_spriteram_w )
 			/* if the timer is in the active bank, update the display list */
 			if ((offset >> 9) == ((READ_WORD(&atarisys1_bankselect[0]) >> 3) & 7))
 			{
-				if (errorlog) fprintf(errorlog, "Caught timer mod!\n");
+				logerror("Caught timer mod!\n");
 				atarisys1_scanline_update(cpu_getscanline());
 			}
 		}

@@ -88,10 +88,10 @@ extern INT32   wms_videoram_size;
 
 /* Variables in machine/smashtv.c */
 extern UINT8 *wms_cmos_ram;
-extern INT32  wms_bank2_size;
-static int    wms_bank4_size;
-extern int    wms_code_rom_size;
-extern int    wms_gfx_rom_size;
+extern size_t wms_bank2_size;
+static size_t wms_bank4_size;
+extern size_t wms_code_rom_size;
+extern size_t wms_gfx_rom_size;
 
 /* Functions in vidhrdw/smashtv.c */
 int wms_vh_start(void);
@@ -1498,14 +1498,14 @@ void wms_stateload(void)
 	void *f;
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_STATE,0)) != 0)
 	{
-		if (errorlog) fprintf(errorlog,"Loading State...\n");
+		logerror("Loading State...\n");
 		TMS34010_State_Load(0,f);
 		osd_fread(f,wms_videoram,wms_videoram_size);
 		osd_fread(f,cpu_bankbase[2],wms_bank2_size);
 		//osd_fread(f,cpu_bankbase[4],wms_bank4_size);
 		osd_fread(f,wms_cmos_ram,0x8000);
 		osd_fread(f,cpu_bankbase[8],wms_gfx_rom_size);
-		if (errorlog) fprintf(errorlog,"State loaded\n");
+		logerror("State loaded\n");
 		osd_fclose(f);
 	}
 }
@@ -1515,14 +1515,14 @@ void wms_statesave(void)
 	void *f;
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_STATE,1))!= 0)
 	{
-		if (errorlog) fprintf(errorlog,"Saving State...\n");
+		logerror("Saving State...\n");
 		TMS34010_State_Save(0,f);
 		osd_fwrite(f,wms_videoram,wms_videoram_size);
 		osd_fwrite(f,cpu_bankbase[2],wms_bank2_size);
 		//osd_fwrite(f,cpu_bankbase[4],wms_bank4_size);
 		osd_fwrite(f,wms_cmos_ram,0x8000);
 		osd_fwrite(f,cpu_bankbase[8],wms_gfx_rom_size);
-		if (errorlog) fprintf(errorlog,"State saved\n");
+		logerror("State saved\n");
 		osd_fclose(f);
 	}
 }

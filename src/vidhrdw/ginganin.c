@@ -186,7 +186,7 @@ WRITE_HANDLER( ginganin_vregs_w )
 					 cpu_cause_interrupt(1,M6809_INT_NMI);
 				   } break;
 
-		default  : {if (errorlog) fprintf(errorlog, "CPU #0 PC %06X : Warning, videoreg %04X <- %04X\n",cpu_get_pc(),offset,data);}
+		default  : {logerror("CPU #0 PC %06X : Warning, videoreg %04X <- %04X\n",cpu_get_pc(),offset,data);}
 	}
 }
 

@@ -149,115 +149,9 @@ void lastduel_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int i,offs,color,code;
 	int colmask[16];
 	unsigned int *pen_usage; /* Save some struct derefs */
-	static int last_flip;
-
-	if (flipscreen!=last_flip)
-		tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
-	last_flip=flipscreen;
 
 	/* Update tilemaps */
-	tilemap_set_scrollx( bg_tilemap,0, scroll[6] );
-	tilemap_set_scrolly( bg_tilemap,0, scroll[4] );
-	tilemap_set_scrollx( fg_tilemap,0, scroll[2] );
-	tilemap_set_scrolly( fg_tilemap,0, scroll[0] );
-
-	gfx_bank=2;
-	gfx_base=lastduel_scroll2;
-	tilemap_update(bg_tilemap);
-
-	gfx_bank=3;
-	gfx_base=lastduel_scroll1;
-	tilemap_update(fg_tilemap);
-	tilemap_update(tx_tilemap);
-
-	/* Build the dynamic palette */
-	palette_init_used_colors();
-
-	pen_usage= Machine->gfx[0]->pen_usage;
-	for (color = 0;color < 16;color++) colmask[color] = 0;
-	for(offs=0x500-8;offs>-1;offs-=8)
-	{
-		int attributes = READ_WORD(&buffered_spriteram[offs+2]);
-		code=READ_WORD(&buffered_spriteram[offs]) & 0xfff;
-		color = attributes&0xf;
-
-		colmask[color] |= pen_usage[code];
-	}
-	for (color = 0;color < 16;color++)
-	{
-		if (colmask[color] & (1 << 0))
-			palette_used_colors[32*16 + 16 * color +15] = PALETTE_COLOR_TRANSPARENT;
-		for (i = 0;i < 15;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[32*16 + 16 * color + i] = PALETTE_COLOR_USED;
-		}
-	}
-
-	/* Check for complete remap and redirty if needed */
-	if (palette_recalc())
-		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-
-	/* Draw playfields */
-	tilemap_render(ALL_TILEMAPS);
-
-	tilemap_draw(bitmap,bg_tilemap,0);
-
-	tilemap_draw(bitmap,fg_tilemap,TILEMAP_BACK | 0);
-	tilemap_draw(bitmap,fg_tilemap,TILEMAP_BACK | 1);
-	tilemap_draw(bitmap,fg_tilemap,TILEMAP_FRONT | 0);
-
-	/* Sprites */
-	for(offs=0x500-8;offs>=0;offs-=8)
-	{
-		int attributes,sy,sx,flipx,flipy;
-		code=READ_WORD(&buffered_spriteram[offs]);
-		if (!code) continue;
-
-		attributes = READ_WORD(&buffered_spriteram[offs+2]);
-		sy = READ_WORD(&buffered_spriteram[offs+4]) & 0x1ff;
-		sx = READ_WORD(&buffered_spriteram[offs+6]) & 0x1ff;
-
-		flipx = attributes&0x20;
-		flipy = attributes&0x40;
-		color = attributes&0xf;
-
-		if( sy>0x100 )
-			sy -= 0x200;
-
-		if (flipscreen) {
-			sx=384+128-16-sx;
-			sy=240-sy;
-			if (flipx) flipx=0; else flipx=1;
-			if (flipy) flipy=0; else flipy=1;
-		}
-
-		drawgfx(bitmap,Machine->gfx[0],
-			code,
-			color,
-			flipx,flipy,
-			sx,sy,
-			&Machine->drv->visible_area,
-			TRANSPARENCY_PEN,15);
-	}
-
-	tilemap_draw(bitmap,fg_tilemap,TILEMAP_FRONT | 1);
-
-	tilemap_draw(bitmap,tx_tilemap,0);
-}
-
-void ledstorm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
-{
-	int i,offs,color,code;
-	int colmask[16];
-	unsigned int *pen_usage; /* Save some struct derefs */
-	static int last_flip;
-
-	if (flipscreen!=last_flip)
-		tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
-	last_flip=flipscreen;
-
-	/* Update tilemaps */
+	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 	tilemap_set_scrollx( bg_tilemap,0, scroll[6] );
 	tilemap_set_scrolly( bg_tilemap,0, scroll[4] );
 	tilemap_set_scrollx( fg_tilemap,0, scroll[2] );
@@ -302,9 +196,7 @@ void ledstorm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	/* Draw playfields */
 	tilemap_render(ALL_TILEMAPS);
-
 	tilemap_draw(bitmap,bg_tilemap,0);
-
 	tilemap_draw(bitmap,fg_tilemap,TILEMAP_BACK | 0);
 	tilemap_draw(bitmap,fg_tilemap,TILEMAP_BACK | 1);
 	tilemap_draw(bitmap,fg_tilemap,TILEMAP_FRONT | 0);
@@ -313,15 +205,15 @@ void ledstorm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	for(offs=0x800-8;offs>=0;offs-=8)
 	{
 		int attributes,sy,sx,flipx,flipy;
-		sy = READ_WORD(&buffered_spriteram[offs+4]) & 0x1ff;
-		if (sy==0x180) continue;
-
 		code=READ_WORD(&buffered_spriteram[offs]);
+		if (!code) continue;
+
 		attributes = READ_WORD(&buffered_spriteram[offs+2]);
+		sy = READ_WORD(&buffered_spriteram[offs+4]) & 0x1ff;
 		sx = READ_WORD(&buffered_spriteram[offs+6]) & 0x1ff;
 
 		flipx = attributes&0x20;
-		flipy = attributes&0x80; /* Different from Last Duel */
+		flipy = attributes&0x40;
 		color = attributes&0xf;
 
 		if( sy>0x100 )
@@ -344,7 +236,108 @@ void ledstorm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 
 	tilemap_draw(bitmap,fg_tilemap,TILEMAP_FRONT | 1);
+	tilemap_draw(bitmap,tx_tilemap,0);
+}
 
+static void ledstorm_sprites(struct osd_bitmap *bitmap, int pri)
+{
+	int offs;
+
+	for(offs=0x800-8;offs>=0;offs-=8)
+	{
+		int attributes,sy,sx,flipx,flipy,color,code;
+		sy = READ_WORD(&buffered_spriteram[offs+4]) & 0x1ff;
+		if (sy==0x180) continue;
+
+		code=READ_WORD(&buffered_spriteram[offs]);
+		attributes = READ_WORD(&buffered_spriteram[offs+2]);
+		sx = READ_WORD(&buffered_spriteram[offs+6]) & 0x1ff;
+
+		flipx = attributes&0x20;
+		flipy = attributes&0x80; /* Different from Last Duel */
+		color = attributes&0xf;
+		if (pri==1 && (attributes&0x10)) continue;
+		if (pri==0 && !(attributes&0x10)) continue;
+
+		if( sy>0x100 )
+			sy -= 0x200;
+
+		if (flipscreen) {
+			sx=384+128-16-sx;
+			sy=240-sy;
+			if (flipx) flipx=0; else flipx=1;
+			if (flipy) flipy=0; else flipy=1;
+		}
+
+		drawgfx(bitmap,Machine->gfx[0],
+			code,
+			color,
+			flipx,flipy,
+			sx,sy,
+			&Machine->drv->visible_area,
+			TRANSPARENCY_PEN,15);
+	}
+}
+
+void ledstorm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	int i,offs,color,code;
+	int colmask[16];
+	unsigned int *pen_usage; /* Save some struct derefs */
+
+	/* Update tilemaps */
+	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
+	tilemap_set_scrollx( bg_tilemap,0, scroll[6] );
+	tilemap_set_scrolly( bg_tilemap,0, scroll[4] );
+	tilemap_set_scrollx( fg_tilemap,0, scroll[2] );
+	tilemap_set_scrolly( fg_tilemap,0, scroll[0] );
+
+	gfx_bank=2;
+	gfx_base=lastduel_scroll2;
+	tilemap_update(bg_tilemap);
+
+	gfx_bank=3;
+	gfx_base=lastduel_scroll1;
+	tilemap_update(fg_tilemap);
+	tilemap_update(tx_tilemap);
+
+	/* Build the dynamic palette */
+	palette_init_used_colors();
+
+	pen_usage= Machine->gfx[0]->pen_usage;
+	for (color = 0;color < 16;color++) colmask[color] = 0;
+	for(offs=0x800-8;offs>-1;offs-=8)
+	{
+		int attributes = READ_WORD(&buffered_spriteram[offs+2]);
+		code=READ_WORD(&buffered_spriteram[offs]) & 0xfff;
+		color = attributes&0xf;
+
+		colmask[color] |= pen_usage[code];
+	}
+	for (color = 0;color < 16;color++)
+	{
+		if (colmask[color] & (1 << 0))
+			palette_used_colors[32*16 + 16 * color +15] = PALETTE_COLOR_TRANSPARENT;
+		for (i = 0;i < 15;i++)
+		{
+			if (colmask[color] & (1 << i))
+				palette_used_colors[32*16 + 16 * color + i] = PALETTE_COLOR_USED;
+		}
+	}
+
+	/* Check for complete remap and redirty if needed */
+	if (palette_recalc())
+		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+
+	/* Draw playfields */
+	tilemap_render(ALL_TILEMAPS);
+	tilemap_draw(bitmap,bg_tilemap,0);
+	tilemap_draw(bitmap,fg_tilemap,TILEMAP_BACK | 0);
+	tilemap_draw(bitmap,fg_tilemap,TILEMAP_BACK | 1);
+	tilemap_draw(bitmap,fg_tilemap,TILEMAP_FRONT | 0);
+	ledstorm_sprites(bitmap,0);
+	tilemap_draw(bitmap,fg_tilemap,TILEMAP_FRONT | 1);
+	ledstorm_sprites(bitmap,1);
 	tilemap_draw(bitmap,tx_tilemap,0);
 }
 

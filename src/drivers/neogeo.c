@@ -141,11 +141,6 @@ READ_HANDLER( mish_vid_r );
 WRITE_HANDLER( mish_vid_w );
 /* end debug */
 
-void neo_unknown1(int offset, int data);
-void neo_unknown2(int offset, int data);
-void neo_unknown3(int offset, int data);
-void neo_unknown4(int offset, int data);
-
 
 /* from machine/neogeo.c */
 void neogeo_init_machine(void);
@@ -216,7 +211,7 @@ static int raster_enable=1;
 			neogeo_vh_raster_partial_refresh(Machine->scrbitmap,line-RASTER_VBLANK_END+FIRST_VISIBLE_LINE-1);
 
 		/* return a standard vblank interrupt */
-//if (errorlog) fprintf(errorlog,"trigger IRQ1\n");
+//logerror("trigger IRQ1\n");
 		return 1;      /* vertical blank */
 	}
 
@@ -224,7 +219,7 @@ static int raster_enable=1;
 	{
 		if (line == irq2start || line == lastirq2line + irq2repeat)
 		{
-//			if (errorlog) fprintf(errorlog,"trigger IRQ2 at raster line %d (screen line %d)\n",line,line-RASTER_VBLANK_END+FIRST_VISIBLE_LINE);
+//			logerror("trigger IRQ2 at raster line %d (screen line %d)\n",line,line-RASTER_VBLANK_END+FIRST_VISIBLE_LINE);
 			if (raster_enable && osd_skip_this_frame()==0)
 				neogeo_vh_raster_partial_refresh(Machine->scrbitmap,line-RASTER_VBLANK_END+FIRST_VISIBLE_LINE-1);
 
@@ -250,7 +245,7 @@ static READ_HANDLER( timer_r )
 	int coinflip = read_4990_testbit();
 	int databit = read_4990_databit();
 
-//	if (errorlog) fprintf(errorlog,"CPU %04x - Read timer\n",cpu_get_pc());
+//	logerror("CPU %04x - Read timer\n",cpu_get_pc());
 
 	res = readinputport(4) ^ (coinflip << 6) ^ (databit << 7);
 
@@ -335,7 +330,7 @@ static WRITE_HANDLER( neo_bankswitch_w )
 
 	if (memory_region_length(REGION_CPU1) <= 0x100000)
 	{
-if (errorlog) fprintf(errorlog,"warning: bankswitch to %02x but no banks available\n",data);
+logerror("warning: bankswitch to %02x but no banks available\n",data);
 		return;
 	}
 
@@ -343,7 +338,7 @@ if (errorlog) fprintf(errorlog,"warning: bankswitch to %02x but no banks availab
 	bankaddress = (data+1)*0x100000;
 	if (bankaddress >= memory_region_length(REGION_CPU1))
 	{
-if (errorlog) fprintf(errorlog,"PC %06x: warning: bankswitch to empty bank %02x\n",cpu_get_pc(),data);
+logerror("PC %06x: warning: bankswitch to empty bank %02x\n",cpu_get_pc(),data);
 		bankaddress = 0x100000;
 	}
 
@@ -382,7 +377,7 @@ static READ_HANDLER( neo_control_r )
 		D is unknown (counter of some kind, used in a couple of places).
 		  in blazstar, this controls the background speed in level 2.
 	*/
-//if (errorlog) fprintf(errorlog,"PC %06x: neo_control_r\n",cpu_get_pc());
+//logerror("PC %06x: neo_control_r\n",cpu_get_pc());
 
 	line = RASTER_LINES - cpu_getiloops();
 	irq_bit = (irq2enable && (line == irq2start || line == lastirq2line + irq2repeat)) ||
@@ -393,7 +388,7 @@ static READ_HANDLER( neo_control_r )
 			| (neogeo_frame_counter & 0x0007);		/* frame counter */
 
 #if 0
-if (errorlog) fprintf(errorlog,"PC %06x: read 0x3c0006\n",cpu_get_pc());
+logerror("PC %06x: read 0x3c0006\n",cpu_get_pc());
 	switch(neogeo_game_fix)
 	{
 		case 0:
@@ -662,7 +657,7 @@ static READ_HANDLER( z80_port_r )
 			}
 
 		default:
-if (errorlog) fprintf(errorlog,"CPU #1 PC %04x: read unmapped port %02x\n",cpu_get_pc(),offset&0xff);
+logerror("CPU #1 PC %04x: read unmapped port %02x\n",cpu_get_pc(),offset&0xff);
 			return 0;
 			break;
 	}
@@ -701,7 +696,7 @@ static WRITE_HANDLER( z80_port_w )
 			break;
 
 		default:
-if (errorlog) fprintf(errorlog,"CPU #1 PC %04x: write %02x to unmapped port %02x\n",cpu_get_pc(),data,offset&0xff);
+logerror("CPU #1 PC %04x: write %02x to unmapped port %02x\n",cpu_get_pc(),data,offset&0xff);
 			break;
 	}
 }

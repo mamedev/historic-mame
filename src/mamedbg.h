@@ -1,6 +1,8 @@
 #ifndef _MAMEDBG_H
 #define _MAMEDBG_H
 
+#include "mame.h"
+
 #ifndef DECL_SPEC
 #define DECL_SPEC
 #endif

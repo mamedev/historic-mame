@@ -75,7 +75,7 @@ void run_mbox(void)
 
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
-if (errorlog) fprintf(errorlog, "Running Mathbox...\n");
+logerror("Running Mathbox...\n");
 
 	while (M_STOP>0)
 	{
@@ -106,7 +106,7 @@ printf("(BIC: %x), A: %x, B: %x, C: %x, ACC: %x\n",BIC,A,B,C,ACC);
 
 		RAMWORD=( (RAM[MA_byte+1]&0x00ff) | ((RAM[MA_byte]&0x00ff)<<8) );
 
-if (errorlog) fprintf(errorlog, "MATH ADDR: %x, CPU ADDR: %x, RAMWORD: %x\n", MA, MA_byte, RAMWORD);
+logerror("MATH ADDR: %x, CPU ADDR: %x, RAMWORD: %x\n", MA, MA_byte, RAMWORD);
 
 		/*
 		 * RAMWORD is the sixteen bit Math RAM value for the selected address

@@ -24,7 +24,7 @@
 unsigned char *blktiger_backgroundram;
 static unsigned char blktiger_video_control;
 unsigned char *blktiger_screen_layout;
-int blktiger_backgroundram_size;
+size_t blktiger_backgroundram_size;
 WRITE_HANDLER( blktiger_scrollx_w );
 WRITE_HANDLER( blktiger_scrolly_w );
 WRITE_HANDLER( blktiger_scrollbank_w );

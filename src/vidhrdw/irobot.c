@@ -318,7 +318,7 @@ void run_video(void)
 	int shp;
 	INT32 word1,word2;
 
-	if (errorlog) fprintf(errorlog,"Starting Polygon Generator, Clear=%d\n",irvg_clear);
+	logerror("Starting Polygon Generator, Clear=%d\n",irvg_clear);
 
 	if (irobot_bufsel)
 		polybitmap = polybitmap2;
@@ -453,7 +453,7 @@ void irobot_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int x, y, offs;
 
-	if (errorlog) fprintf(errorlog,"Screen Refresh\n");
+	logerror("Screen Refresh\n");
 
 	palette_recalc();
 

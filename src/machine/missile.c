@@ -46,15 +46,13 @@ void missile_init_machine(void)
 
 
 /********************************************************************************************/
-void missile_w(int address, int data)
+WRITE_HANDLER( missile_w )
 {
 	int pc, opcode;
-
+	int address = offset + 0x640;
 
 	pc = cpu_getpreviouspc();
 	opcode = cpu_readop(pc);
-
-	address += 0x640;
 
 	/* 3 different ways to write to video ram - the third is caught by the core memory handler */
 	if (opcode == 0x81)
@@ -119,7 +117,7 @@ void missile_w(int address, int data)
 		return;
 	}
 
-	if (errorlog) fprintf (errorlog, "possible unmapped write, offset: %04x, data: %02x\n", address, data);
+	logerror("possible unmapped write, offset: %04x, data: %02x\n", address, data);
 }
 
 
@@ -127,15 +125,13 @@ void missile_w(int address, int data)
 
 unsigned char *missile_video2ram;
 
-int missile_r (int address)
+READ_HANDLER( missile_r )
 {
 	int pc, opcode;
-
+	int address = offset + 0x1900;
 
 	pc = cpu_getpreviouspc();
 	opcode = cpu_readop(pc);
-
-	address += 0x1900;
 
 	if (opcode == 0xa1)
 	{
@@ -156,6 +152,6 @@ int missile_r (int address)
 	if ((address >= 0x4000) && (address <= 0x400f))
 		return (pokey1_r (address & 0x0f));
 
-	if (errorlog) fprintf (errorlog, "possible unmapped read, offset: %04x\n", address);
+	logerror("possible unmapped read, offset: %04x\n", address);
 	return 0;
 }

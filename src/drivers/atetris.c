@@ -39,7 +39,7 @@ READ_HANDLER( atetris_slapstic_r );
 
 
 static unsigned char *nvram;
-static int nvram_size;
+static size_t nvram_size;
 
 static void nvram_handler(void *file,int read_or_write)
 {

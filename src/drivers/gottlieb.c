@@ -1,8 +1,22 @@
 /***************************************************************************
 
-Gottlieb driver : dedicated to Warren Davis, Jeff Lee & David Thiel
+Gottlieb driver : dedicated to Warren Davis, Jeff Lee, Tim Skelly & David Thiel
 
 driver by Fabrice Frances
+
+Notes:
+There was a bug in the hardware of the GG1 and GG2 boards, which is not
+emulated. The bug seems to have disappeared with the later revision of the
+board, e.g the board used by 3Stooges and Mach3 don't seem to have it).
+The bug was affecting the first character column (on horizontal games):
+screen memory could be used, but whatever was stored in this column, always
+the same character was displayed.
+This led to two consequences:
+- the image on the monitor had to be stretched so that the column was not
+  visible
+- game designers were not using the first column. In fact, when the first
+  column was ejected from the screen, the last one was usually out too,
+  so it wasn't used either...
 
 ****************************************************************************
 
@@ -273,7 +287,7 @@ WRITE_HANDLER( gottlieb_laserdisc_command_w )
 
 	if ((data & 0xe0) != 0x20)
 	{
-if (errorlog) fprintf(errorlog,"error: laserdisc command %02x\n",data);
+logerror("error: laserdisc command %02x\n",data);
 		return;
 	}
 
@@ -283,7 +297,7 @@ if (errorlog) fprintf(errorlog,"error: laserdisc command %02x\n",data);
 			((data & 0x02) << 2) |
 			((data & 0x01) << 4);
 
-if (errorlog) fprintf(errorlog,"laserdisc command %02x -> %02x\n",data,cmd);
+logerror("laserdisc command %02x -> %02x\n",data,cmd);
 	if (lastcmd == 0x0b && (cmd & 0x10))	/* seek frame # */
 	{
 		current_frame = (current_frame << 4) | (cmd & 0x0f);
@@ -311,7 +325,7 @@ int gottlieb_interrupt(void)
 
 
 static unsigned char *nvram;
-static int nvram_size;
+static size_t nvram_size;
 
 static void nvram_handler(void *file,int read_or_write)
 {
@@ -1024,6 +1038,112 @@ PORT_DIPSETTING(    0xc2, DEF_STR( Free_Play ) ) */
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( screwloo )
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, "Demo mode" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, "1st Bonus Atom at" )
+	PORT_DIPSETTING(    0x00, "5000" )
+	PORT_DIPSETTING(    0x04, "20000" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x50, 0x40, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_2C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x50, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x20, 0x00, "1st Bonus Hand at" )
+	PORT_DIPSETTING(    0x00, "25000" )
+	PORT_DIPSETTING(    0x20, "50000" )
+	PORT_DIPNAME( 0x80, 0x00, "Hands" )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x80, "5" )
+
+	PORT_START      /* IN0 */
+	PORT_SERVICE( 0x01, IP_ACTIVE_LOW )
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_SERVICE, "Select in Service Mode", KEYCODE_F1, IP_JOY_NONE )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_UP    | IPF_8WAY )
+
+	PORT_START	/* trackball H not used */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* trackball V not used */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START      /* IN3 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_UP    | IPF_8WAY )
+	PORT_BITX(0x10, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER1, "Start 2P", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1, "Start 1P", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( insector )
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "25000" )
+	PORT_DIPSETTING(    0x01, "30000" )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, "Demo mode" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x08, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x50, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x50, DEF_STR( 2C_2C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 1C_2C ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Free_Play ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
+
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_SERVICE( 0x40, IP_ACTIVE_LOW )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START	/* trackball H not used */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* trackball V not used */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START      /* IN3 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+INPUT_PORTS_END
+
 
 
 /* the games can store char gfx data in either a 4k RAM area (128 chars), or */
@@ -1356,21 +1476,21 @@ ROM_START( reactor )
 
 	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "snd1",         0xf000, 0x800, 0xd958a0fd )
-	ROM_RELOAD(               0x7000, 0x800) /* A15 is not decoded */
+	ROM_RELOAD(               0x7000, 0x800 ) /* A15 is not decoded */
 	ROM_LOAD( "snd2",         0xf800, 0x800, 0x5dc86942 )
-	ROM_RELOAD(               0x7800, 0x800) /* A15 is not decoded */
+	ROM_RELOAD(               0x7800, 0x800 ) /* A15 is not decoded */
 
 	/* no gfx1 (RAM is used) */
 
 	ROM_REGION( 0x8000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	/* 0000-0fff empty */
-	ROM_LOAD( "fg0",          0x1000, 0x1000, 0xd1f20e15 )	/* sprites */
+	ROM_LOAD( "fg3",          0x1000, 0x1000, 0x8416ad53 )	/* sprites */
 	/* 2000-2fff empty */
-	ROM_LOAD( "fg1",          0x3000, 0x1000, 0x18396c57 )
+	ROM_LOAD( "fg2",          0x3000, 0x1000, 0x5489605a )
 	/* 4000-4fff empty */
-	ROM_LOAD( "fg2",          0x5000, 0x1000, 0x5489605a )
+	ROM_LOAD( "fg1",          0x5000, 0x1000, 0x18396c57 )
 	/* 6000-6fff empty */
-	ROM_LOAD( "fg3",          0x7000, 0x1000, 0x8416ad53 )
+	ROM_LOAD( "fg0",          0x7000, 0x1000, 0xd1f20e15 )
 ROM_END
 
 ROM_START( mplanets )
@@ -1383,9 +1503,9 @@ ROM_START( mplanets )
 
 	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "snd1",         0xf000, 0x800, 0x453193a1 )
-	ROM_RELOAD(               0x7000, 0x800) /* A15 is not decoded */
+	ROM_RELOAD(               0x7000, 0x800 ) /* A15 is not decoded */
 	ROM_LOAD( "snd2",         0xf800, 0x800, 0xf5ffc98f )
-	ROM_RELOAD(               0x7800, 0x800) /* A15 is not decoded */
+	ROM_RELOAD(               0x7800, 0x800 ) /* A15 is not decoded */
 
 	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "bg0",          0x0000, 0x1000, 0x709aa24c )	/* chars */
@@ -1406,9 +1526,9 @@ ROM_START( qbert )
 
 	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "qb-snd1.bin",  0xf000, 0x800, 0x15787c07 )
-	ROM_RELOAD(               0x7000, 0x800) /* A15 is not decoded */
+	ROM_RELOAD(               0x7000, 0x800 ) /* A15 is not decoded */
 	ROM_LOAD( "qb-snd2.bin",  0xf800, 0x800, 0x58437508 )
-	ROM_RELOAD(               0x7800, 0x800) /* A15 is not decoded */
+	ROM_RELOAD(               0x7800, 0x800 ) /* A15 is not decoded */
 
 	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "qb-bg0.bin",   0x0000, 0x1000, 0x7a9ba824 )	/* chars */
@@ -1429,9 +1549,9 @@ ROM_START( qbertjp )
 
 	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "qb-snd1.bin",  0xf000, 0x800, 0x15787c07 )
-	ROM_RELOAD(               0x7000, 0x800) /* A15 is not decoded */
+	ROM_RELOAD(               0x7000, 0x800 ) /* A15 is not decoded */
 	ROM_LOAD( "qb-snd2.bin",  0xf800, 0x800, 0x58437508 )
-	ROM_RELOAD(               0x7800, 0x800) /* A15 is not decoded */
+	ROM_RELOAD(               0x7800, 0x800 ) /* A15 is not decoded */
 
 	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "qb-bg0.bin",   0x0000, 0x1000, 0x7a9ba824 )	/* chars */
@@ -1444,6 +1564,49 @@ ROM_START( qbertjp )
 	ROM_LOAD( "qb-fg0.bin",   0x6000, 0x2000, 0x2f695b85 )
 ROM_END
 
+ROM_START( insector )
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_LOAD( "rom3",         0x8000, 0x2000, 0x640881fd )
+	ROM_LOAD( "rom2",         0xa000, 0x2000, 0x456bc3f4 )
+	ROM_LOAD( "rom1",         0xc000, 0x2000, 0x706962af )
+	ROM_LOAD( "rom0",         0xe000, 0x2000, 0x31cee24b )
+
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
+	ROM_LOAD( "sound",        0xf000, 0x1000, 0x00000000 )
+
+	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "bg0",          0x0000, 0x1000, 0x0dc2037e )	/* chars */
+	ROM_LOAD( "bg1",          0x1000, 0x1000, 0x3dd73b94 )
+
+	ROM_REGION( 0x8000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "fg3",          0x0000, 0x2000, 0x9bbf5b6b )	/* sprites */
+	ROM_LOAD( "fg2",          0x2000, 0x2000, 0x5adf9986 )
+	ROM_LOAD( "fg1",          0x4000, 0x2000, 0x4bb16111 )
+	ROM_LOAD( "fg0",          0x6000, 0x2000, 0x965f6b76 )
+ROM_END
+
+ROM_START( screwloo )
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_LOAD( "rom4",         0x6000, 0x2000, 0x744a2513 )
+	ROM_LOAD( "rom3",         0x8000, 0x2000, 0xffde5b5d )
+	ROM_LOAD( "rom2",         0xa000, 0x2000, 0x97932b05 )
+	ROM_LOAD( "rom1",         0xc000, 0x2000, 0x571b65ca )
+	ROM_LOAD( "rom0",         0xe000, 0x2000, 0x6447fe54 )
+
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
+	ROM_LOAD( "sound",        0xf000, 0x1000, 0x00000000 )
+
+	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "bg0",          0x0000, 0x1000, 0x1fd5b649 )	/* chars */
+	ROM_LOAD( "bg1",          0x1000, 0x1000, 0xc8ddb8ba )
+
+	ROM_REGION( 0x8000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "fg3",          0x0000, 0x2000, 0x97d4e63b )	/* sprites */
+	ROM_LOAD( "fg2",          0x2000, 0x2000, 0xf76e56ca )
+	ROM_LOAD( "fg1",          0x4000, 0x2000, 0x698c395f )
+	ROM_LOAD( "fg0",          0x6000, 0x2000, 0xf23269fb )
+ROM_END
+
 ROM_START( sqbert )
 	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "qb-rom2.bin",  0xa000, 0x2000, 0x1e3d4038 )
@@ -1452,9 +1615,9 @@ ROM_START( sqbert )
 
 	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "qb-snd1.bin",  0xf000, 0x800, 0x15787c07 )
-	ROM_RELOAD(               0x7000, 0x800) /* A15 is not decoded */
+	ROM_RELOAD(               0x7000, 0x800 ) /* A15 is not decoded */
 	ROM_LOAD( "qb-snd2.bin",  0xf800, 0x800, 0x58437508 )
-	ROM_RELOAD(               0x7800, 0x800) /* A15 is not decoded */
+	ROM_RELOAD(               0x7800, 0x800 ) /* A15 is not decoded */
 
 	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "qb-bg0.bin",   0x0000, 0x1000, 0xc3118eef )	/* chars */
@@ -1476,9 +1639,9 @@ ROM_START( qbertqub )
 
 	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "qb-snd1.bin",  0xf000, 0x800, 0x15787c07 )
-	ROM_RELOAD(               0x7000, 0x800) /* A15 is not decoded */
+	ROM_RELOAD(               0x7000, 0x800 ) /* A15 is not decoded */
 	ROM_LOAD( "qb-snd2.bin",  0xf800, 0x800, 0x58437508 )
-	ROM_RELOAD(               0x7800, 0x800) /* A15 is not decoded */
+	ROM_RELOAD(               0x7800, 0x800 ) /* A15 is not decoded */
 
 	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "qq-bg0.bin",   0x0000, 0x1000, 0x050badde )	/* chars */
@@ -1503,9 +1666,9 @@ ROM_START( krull )
 
 	ROM_REGION( 0x10000, REGION_CPU2 )	/* 64k for sound cpu */
 	ROM_LOAD( "snd1.bin",     0xe000, 0x1000, 0xdd2b30b4 )
-	ROM_RELOAD(               0x6000, 0x1000) /* A15 is not decoded */
+	ROM_RELOAD(               0x6000, 0x1000 ) /* A15 is not decoded */
 	ROM_LOAD( "snd2.bin",     0xf000, 0x1000, 0x8cab901b )
-	ROM_RELOAD(               0x7000, 0x1000) /* A15 is not decoded */
+	ROM_RELOAD(               0x7000, 0x1000 ) /* A15 is not decoded */
 
 	/* no gfx1 (RAM is used) */
 
@@ -1634,7 +1797,9 @@ GAME( 1982, reactor,  0,     reactor,  reactor,  reactor,  ROT0,   "Gottlieb", "
 GAME( 1983, mplanets, 0,     gottlieb, mplanets, 0,        ROT270, "Gottlieb", "Mad Planets" )
 GAME( 1982, qbert,    0,     gottlieb, qbert,    qbert,    ROT270, "Gottlieb", "Q*bert (US)" )
 GAME( 1982, qbertjp,  qbert, gottlieb, qbert,    qbert,    ROT270, "Gottlieb (Konami license)", "Q*bert (Japan)" )
-GAME( 1983, sqbert,   0,     gottlieb, qbert,    qbert,    ROT270, "Mylstar", "Faster, Harder, More Challenging Q*bert" )
+GAMEX(1982, insector, 0,     gottlieb, insector, 0,        ROT0,   "Gottlieb", "Insector (prototype)", GAME_NO_SOUND )
+GAMEX(1983, screwloo, 0,     gottlieb, screwloo, 0,        ROT0,   "Mylstar", "Screw Loose (prototype)", GAME_NO_SOUND )
+GAME( 1983, sqbert,   0,     gottlieb, qbert,    qbert,    ROT270, "Mylstar", "Faster, Harder, More Challenging Q*bert (prototype)" )
 GAME( 1983, qbertqub, 0,     qbertqub, qbertqub, qbert,    ROT270, "Mylstar", "Q*bert's Qubes" )
 GAME( 1983, krull,    0,     krull,    krull,    0,        ROT270, "Gottlieb", "Krull" )
 GAMEX(1983, mach3,    0,     mach3,    mach3,    gottlieb, ROT0,   "Mylstar", "M.A.C.H. 3", GAME_NOT_WORKING )

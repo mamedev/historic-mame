@@ -147,7 +147,7 @@ static void f1dream_protection_w(void)
 
 static WRITE_HANDLER( f1dream_control_w )
 {
-	if (errorlog) fprintf(errorlog,"protection write, PC: %04x  FFE1 Value:%01x\n",cpu_get_pc(), ram[0x3fe1]);
+	logerror("protection write, PC: %04x  FFE1 Value:%01x\n",cpu_get_pc(), ram[0x3fe1]);
 	f1dream_protection_w();
 }
 

@@ -170,7 +170,7 @@ INLINE void z80gb_ProcessInterrupts (void)
 		if (irq)
 		{
 			int irqline = 0;
-			if (errorlog) fprintf(errorlog, "Z80GB Interrupt IRQ $%02X\n", irq);
+			logerror("Z80GB Interrupt IRQ $%02X\n", irq);
 
 			while( irqline < 5 )
 			{
@@ -189,7 +189,7 @@ INLINE void z80gb_ProcessInterrupts (void)
 					Regs.w.SP -= 2;
 					mem_WriteWord (Regs.w.SP, Regs.w.PC);
 					Regs.w.PC = 0x40 + irqline * 8;
-					if(errorlog) fprintf(errorlog,"Z80GB Interrupt PC $%04X\n", Regs.w.PC );
+					logerror("Z80GB Interrupt PC $%04X\n", Regs.w.PC );
 					return;
 				}
 				irqline++;
@@ -331,14 +331,14 @@ void z80gb_set_irq_line (int irqline, int state)
 	{
 		IFLAGS |= 0x01 << irqline;
 		CheckInterrupts = 1;
-		if(errorlog) fprintf(errorlog, "Z80GB assert irq line %d ($%02X)\n", irqline, IFLAGS);
+		logerror("Z80GB assert irq line %d ($%02X)\n", irqline, IFLAGS);
 	}
 	else
 	{
 		IFLAGS &= ~(0x01 << irqline);
 		if( IFLAGS == 0 )
 			CheckInterrupts = 0;
-		if(errorlog) fprintf(errorlog, "Z80GB clear irq line %d ($%02X)\n", irqline, IFLAGS);
+		logerror("Z80GB clear irq line %d ($%02X)\n", irqline, IFLAGS);
     }
 }
 

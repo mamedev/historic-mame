@@ -15,7 +15,7 @@ static int flipscreen;
 
 unsigned char *megazone_videoram2;
 unsigned char *megazone_colorram2;
-int megazone_videoram2_size;
+size_t megazone_videoram2_size;
 
 /***************************************************************************
 

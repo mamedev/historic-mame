@@ -18,7 +18,7 @@
 
 
 unsigned char *mystston_videoram2,*mystston_colorram2;
-int mystston_videoram2_size;
+size_t mystston_videoram2_size;
 unsigned char *mystston_scroll;
 static int textcolor;
 static int flipscreen;
@@ -119,7 +119,7 @@ WRITE_HANDLER( mystston_2000_w )
 	}
 
 	/* other bits unused? */
-if (errorlog) fprintf(errorlog,"PC %04x: 2000 = %02x\n",cpu_get_pc(),data);
+logerror("PC %04x: 2000 = %02x\n",cpu_get_pc(),data);
 }
 
 

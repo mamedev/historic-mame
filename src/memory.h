@@ -2,6 +2,7 @@
 #define MEMORY_H
 
 #include "osd_cpu.h"
+#include <sys/types.h>
 
 
 #define MAX_BANKS		16
@@ -14,18 +15,18 @@
 typedef UINT32 offs_t;
 typedef UINT32 data_t;
 
-typedef int (*mem_read_handler)(offs_t offset);
+typedef data_t (*mem_read_handler)(offs_t offset);
 typedef void (*mem_write_handler)(offs_t offset,data_t data);
-typedef int (*opbase_handler)(offs_t address);
+typedef offs_t (*opbase_handler)(offs_t address);
 
 #ifdef DJGPP
-#define READ_HANDLER(name)		int name(offs_t __attribute__ ((unused)) offset)
+#define READ_HANDLER(name)		data_t name(offs_t __attribute__ ((unused)) offset)
 #define WRITE_HANDLER(name)		void name(offs_t __attribute__ ((unused)) offset,data_t __attribute__ ((unused)) data)
-#define OPBASE_HANDLER(name)	int name(offs_t __attribute__ ((unused)) address)
+#define OPBASE_HANDLER(name)	offs_t name(offs_t __attribute__ ((unused)) address)
 #else
-#define READ_HANDLER(name)		int name(offs_t offset)
+#define READ_HANDLER(name)		data_t name(offs_t offset)
 #define WRITE_HANDLER(name)		void name(offs_t offset,data_t data)
-#define OPBASE_HANDLER(name)	int name(offs_t address)
+#define OPBASE_HANDLER(name)	offs_t name(offs_t address)
 #endif
 
 
@@ -45,7 +46,7 @@ will be set to the length of the memory area processed by the handler.
 
 struct MemoryReadAddress
 {
-	int start, end;
+	offs_t start, end;
 	mem_read_handler handler;				/* see special values below */
 };
 
@@ -71,10 +72,10 @@ struct MemoryReadAddress
 
 struct MemoryWriteAddress
 {
-	int start, end;
+	offs_t start, end;
 	mem_write_handler handler;				/* see special values below */
 	unsigned char **base;					/* optional (see explanation above) */
-	int *size;								/* optional (see explanation above) */
+	size_t *size;							/* optional (see explanation above) */
 };
 
 #define MWA_NOP 0							/* do nothing */

@@ -18,9 +18,9 @@
 
 
 unsigned char *matmania_videoram2,*matmania_colorram2;
-int matmania_videoram2_size;
+size_t matmania_videoram2_size;
 unsigned char *matmania_videoram3,*matmania_colorram3;
-int matmania_videoram3_size;
+size_t matmania_videoram3_size;
 unsigned char *matmania_scroll;
 static struct osd_bitmap *tmpbitmap2;
 static unsigned char *dirtybuffer2;

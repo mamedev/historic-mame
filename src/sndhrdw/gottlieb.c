@@ -122,7 +122,7 @@ WRITE_HANDLER( gottlieb_speech_w )
 
 	data ^= 255;
 
-if (errorlog) fprintf(errorlog,"Votrax: intonation %d, phoneme %02x %s\n",data >> 6,data & 0x3f,PhonemeTable[data & 0x3f]);
+logerror("Votrax: intonation %d, phoneme %02x %s\n",data >> 6,data & 0x3f,PhonemeTable[data & 0x3f]);
 
 	queue[pos++] = data & 0x3f;
 

@@ -15,7 +15,7 @@ static int skydiver_width = 0;
 WRITE_HANDLER( skydiver_width_w )
 {
 	skydiver_width = offset;
-	if (errorlog) fprintf (errorlog, "width: %02x\n", data);
+	logerror("width: %02x\n", data);
 }
 
 WRITE_HANDLER( skydiver_sk_lamps_w )

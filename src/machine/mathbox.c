@@ -42,7 +42,7 @@ WRITE_HANDLER( mb_go_w )
   int msb;
 
 #ifdef MB_TEST
-  if (errorlog) fprintf (errorlog, "math box command %02x data %02x  ", offset, data);
+  logerror("math box command %02x data %02x  ", offset, data);
 #endif
 
   switch (offset)
@@ -148,7 +148,7 @@ WRITE_HANDLER( mb_go_w )
 
     case 0x13:
 #ifdef MB_TEST
-      if (errorlog) fprintf (errorlog, "\nR7: %04x  R8: %04x  R9: %04x\n", REG7, REG8, REG9);
+      logerror("\nR7: %04x  R8: %04x  R9: %04x\n", REG7, REG8, REG9);
 #endif
 
       REGc = REG9;
@@ -251,13 +251,13 @@ WRITE_HANDLER( mb_go_w )
       break;
 
     case 0x1f:
-      if (errorlog) fprintf (errorlog, "math box function 0x1f\n");
+      logerror("math box function 0x1f\n");
       /* $$$ do some computation here (selftest? signature analysis? */
       break;
     }
 
 #ifdef MB_TEST
-  if (errorlog) fprintf (errorlog, "  result %04x\n", mb_result & 0xffff);
+  logerror("  result %04x\n", mb_result & 0xffff);
 #endif
 }
 

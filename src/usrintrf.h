@@ -17,10 +17,15 @@ struct DisplayText
 	int y;
 };
 
-#define DT_COLOR_WHITE 0
-#define DT_COLOR_YELLOW 1
-#define DT_COLOR_RED 2
+#define UI_COLOR_NORMAL 0	/* white on black text */
+#define UI_COLOR_INVERSE 1	/* black on white text */
 
+#define SEL_BITS 12		/* main menu selection mask */
+#define SEL_BITS2 4		/* submenu selection masks */
+#define SEL_MASK ((1<<SEL_BITS)-1)
+#define SEL_MASK2 ((1<<SEL_BITS2)-1)
+
+extern int need_to_clear_bitmap;	/* used to tell updatescreen() to clear the bitmap */
 
 struct GfxElement *builduifont(void);
 void pick_uifont_colors(void);

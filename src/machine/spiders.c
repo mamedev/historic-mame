@@ -155,7 +155,7 @@ READ_HANDLER( spiders_vrom_r )
 	if(vrom_ctrl_mode)
 	{
 		retval=RAM[vrom_address];
-//	        if (errorlog) fprintf(errorlog,"VIDEO : Read data %02x from Port address %04x\n",retval,vrom_address);
+//	        logerror("VIDEO : Read data %02x from Port address %04x\n",retval,vrom_address);
 		vrom_address++;
 	}
 	else
@@ -182,7 +182,7 @@ READ_HANDLER( spiders_vrom_r )
 				break;
 		}
 		retval=0;
-//	        if (errorlog) fprintf(errorlog,"VIDEO : Port address set to %04x\n",vrom_address);
+//	        logerror("VIDEO : Port address set to %04x\n",vrom_address);
 	}
 	return retval;
 }

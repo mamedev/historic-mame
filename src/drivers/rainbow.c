@@ -12,7 +12,7 @@
   Video Hardware - Uses similar engine to Rastan
 ***************************************************************************/
 
-extern int rastan_videoram_size;
+extern size_t rastan_videoram_size;
 
 extern unsigned char *rastan_ram;
 extern unsigned char *rastan_videoram1,*rastan_videoram3;
@@ -33,6 +33,7 @@ void rastan_vh_stop(void);
 WRITE_HANDLER( rastan_scrollY_w );
 WRITE_HANDLER( rastan_scrollX_w );
 WRITE_HANDLER( rastan_videocontrol_w );
+WRITE_HANDLER( rastan_flipscreen_w );
 
 int  rastan_s_interrupt(void);
 READ_HANDLER( rastan_sound_r );
@@ -103,7 +104,7 @@ void rainbow_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 /* Almost the same as Rastan, it just writes a '1' to the sound port */
 /* before sending the second byte of any 2 byte commands - ignored!  */
 
-WRITE_HANDLER( rainbow_sound_w )
+static WRITE_HANDLER( rainbow_sound_w )
 {
 	if (offset == 0)
     {
@@ -143,6 +144,7 @@ static struct MemoryWriteAddress rainbow_writemem[] =
 	{ 0xc0c000, 0xc0ffff, MWA_BANK3 },
 	{ 0xc20000, 0xc20003, rastan_scrollY_w, &rastan_scrolly },  /* scroll Y  1st.w plane1  2nd.w plane2 */
 	{ 0xc40000, 0xc40003, rastan_scrollX_w, &rastan_scrollx },  /* scroll X  1st.w plane1  2nd.w plane2 */
+	{ 0xc50000, 0xc50003, rastan_flipscreen_w }, /* bit 0  flipscreen */
 	{ 0xd00000, 0xd0ffff, MWA_BANK4, &rastan_spriteram },
 	{ 0x3e0000, 0x3e0003, rainbow_sound_w },
 	{ 0x3a0000, 0x3a0003, MWA_NOP },
@@ -599,6 +601,6 @@ static void init_jumping(void)
 
 
 
-GAMEX( 1987, rainbow,  0,       rainbow, rainbow, 0,       ROT0, "Taito Corporation", "Rainbow Islands", GAME_NO_COCKTAIL )
-GAMEX( 1988, rainbowe, rainbow, rainbow, rainbow, 0,       ROT0, "Taito Corporation", "Rainbow Islands (Extra)", GAME_NOT_WORKING | GAME_NO_COCKTAIL )
-GAMEX( 1989, jumping,  rainbow, jumping, jumping, jumping, ROT0, "bootleg", "Jumping", GAME_NO_SOUND | GAME_NO_COCKTAIL )
+GAME( 1987, rainbow,  0,       rainbow, rainbow, 0,       ROT0, "Taito Corporation", "Rainbow Islands" )
+GAMEX(1988, rainbowe, rainbow, rainbow, rainbow, 0,       ROT0, "Taito Corporation", "Rainbow Islands (Extra)", GAME_NOT_WORKING )
+GAMEX(1989, jumping,  rainbow, jumping, jumping, jumping, ROT0, "bootleg", "Jumping", GAME_NO_SOUND )

@@ -41,7 +41,7 @@ static void timer_callback_2612(int param)
 	int n=param&0x7f;
 	int c=param>>7;
 
-//	if(errorlog) fprintf(errorlog,"2612 TimerOver %d\n",c);
+//	logerror("2612 TimerOver %d\n",c);
 	Timer[n][c] = 0;
 	lastfired[n][c] = timer_get_time();
 	YM2612TimerOver(n,c);
@@ -54,7 +54,7 @@ static void TimerHandler(int n,int c,int count,double stepTime)
 	{	/* Reset FM Timer */
 		if( Timer[n][c] )
 		{
-//			if(errorlog) fprintf(errorlog,"2612 TimerReset %d\n",c);
+//			logerror("2612 TimerReset %d\n",c);
 	 		timer_remove (Timer[n][c]);
 			Timer[n][c] = 0;
 		}
@@ -72,7 +72,7 @@ static void TimerHandler(int n,int c,int count,double stepTime)
 			/* breaking sonicwi2 command 0x35 */
 			if (slack < 0.000050) slack = 0;
 
-//			if(errorlog) fprintf(errorlog,"2612 TimerSet %d %f slack %f\n",c,timeSec,slack);
+//			logerror("2612 TimerSet %d %f slack %f\n",c,timeSec,slack);
 
 			Timer[n][c] = timer_set (timeSec - slack, (c<<7)|n, timer_callback_2612 );
 		}

@@ -22,6 +22,9 @@
 extern char *crcdir;
 static char crcfilename[256] = "";
 const char *crcfile = crcfilename;
+extern char *pcrcdir;
+static char pcrcfilename[256] = "";
+const char *pcrcfile = pcrcfilename;
 #endif
 
 
@@ -45,7 +48,7 @@ char **__crt0_glob_function(void)
 
 static void signal_handler(int num)
 {
-	if (errorlog) fflush(errorlog);
+	if (options.errorlog) fflush(options.errorlog);
 
 	osd_exit();
 	allegro_exit();
@@ -119,9 +122,11 @@ int main (int argc, char **argv)
 	int res, i, j = 0, game_index;
     char *playbackname = NULL;
 
+	memset(&options,0,sizeof(options));
+
 	/* these two are not available in mame.cfg */
 	ignorecfg = 0;
-	errorlog = options.errorlog = 0;
+	options.errorlog = 0;
 
 	game_index = -1;
 
@@ -129,7 +134,7 @@ int main (int argc, char **argv)
 	{
 		if (stricmp(argv[i],"-ignorecfg") == 0) ignorecfg = 1;
 		if (stricmp(argv[i],"-log") == 0)
-			errorlog = options.errorlog = fopen("error.log","wa");
+			options.errorlog = fopen("error.log","wa");
         if (stricmp(argv[i],"-playback") == 0)
 		{
 			i++;
@@ -338,6 +343,10 @@ int main (int argc, char **argv)
 	#ifdef MESS
 	/* Build the CRC database filename */
 	sprintf(crcfilename, "%s/%s.crc", crcdir, drivers[game_index]->name);
+	if (drivers[game_index]->clone_of->name)
+		sprintf (pcrcfilename, "%s/%s.crc", crcdir, drivers[game_index]->clone_of->name);
+	else
+		pcrcfilename[0] = 0;
     #endif
 
     /* go for it */
@@ -347,6 +356,7 @@ int main (int argc, char **argv)
 	if (options.errorlog) fclose (options.errorlog);
 	if (options.playback) osd_fclose (options.playback);
 	if (options.record)   osd_fclose (options.record);
+	if (options.language_file) osd_fclose (options.language_file);
 
 	exit (res);
 }

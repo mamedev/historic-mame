@@ -979,8 +979,7 @@ void megasys1_convert_prom(unsigned char *palette, unsigned short *colortable,co
 	{
 		memcpy (megasys1_layers_order, priorities[i].priorities, 16 * sizeof(int));
 
-		if (errorlog) fprintf(errorlog,
-			"WARNING: using an hand-crafted priorities scheme\n");
+		logerror("WARNING: using an hand-crafted priorities scheme\n");
 
 		return;
 	}
@@ -1031,8 +1030,7 @@ void megasys1_convert_prom(unsigned char *palette, unsigned short *colortable,co
 
 				if (result & 1)
 				{
-					if (errorlog) fprintf(errorlog,
-					 "WARNING, pri $%X split %d - layer %d's opaque pens not totally opaque\n",pri_code,offset,top);
+					logerror("WARNING, pri $%X split %d - layer %d's opaque pens not totally opaque\n",pri_code,offset,top);
 
 					layers_order[offset] = 0xfffff;
 					break;
@@ -1040,8 +1038,7 @@ void megasys1_convert_prom(unsigned char *palette, unsigned short *colortable,co
 
 				if  ((result & 6) == 6)
 				{
-					if (errorlog) fprintf(errorlog,
-					 "WARNING, pri $%X split %d - layer %d's transparent pens aren't always transparent nor always opaque\n",pri_code,offset,top);
+					logerror("WARNING, pri $%X split %d - layer %d's transparent pens aren't always transparent nor always opaque\n",pri_code,offset,top);
 
 					layers_order[offset] = 0xfffff;
 					break;
@@ -1075,8 +1072,7 @@ void megasys1_convert_prom(unsigned char *palette, unsigned short *colortable,co
 					layer = layer0;
 					if (layer0 != layer1)
 					{
-						if (errorlog) fprintf(errorlog,
-							"WARNING, pri $%X - 'sprite splitting' does not simply split sprites\n",pri_code);
+						logerror("WARNING, pri $%X - 'sprite splitting' does not simply split sprites\n",pri_code);
 
 						order = 0xfffff;
 						break;
@@ -1118,8 +1114,7 @@ void megasys1_convert_prom(unsigned char *palette, unsigned short *colortable,co
 #if 0
 	/* log the priority schemes */
 	for (i = 0; i < 16; i++)
-		if (errorlog) fprintf(errorlog,
-			"PROM %X] %05x\n", i, megasys1_layers_order[i]);
+		logerror("PROM %X] %05x\n", i, megasys1_layers_order[i]);
 #endif
 
 

@@ -15,7 +15,7 @@ driver by Zsolt Vasvari
 
 
 extern unsigned char *spriteram;
-extern int spriteram_size;
+extern size_t spriteram_size;
 
 extern unsigned char *suprloco_videoram;
 

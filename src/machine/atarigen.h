@@ -83,7 +83,7 @@ WRITE_HANDLER( atarigen_video_int_ack_w );
 --------------------------------------------------------------------------*/
 extern const UINT16 *atarigen_eeprom_default;
 extern UINT8 *atarigen_eeprom;
-extern int atarigen_eeprom_size;
+extern size_t atarigen_eeprom_size;
 
 void atarigen_eeprom_reset(void);
 
@@ -121,7 +121,7 @@ READ_HANDLER( atarigen_slapstic_r );
 void slapstic_init(int chip);
 void slapstic_reset(void);
 int slapstic_bank(void);
-int slapstic_tweak(int offset);
+int slapstic_tweak(offs_t offset);
 
 
 
@@ -216,10 +216,10 @@ extern UINT8 *atarigen_alpharam;
 extern UINT8 *atarigen_vscroll;
 extern UINT8 *atarigen_hscroll;
 
-extern int atarigen_playfieldram_size;
-extern int atarigen_playfield2ram_size;
-extern int atarigen_spriteram_size;
-extern int atarigen_alpharam_size;
+extern size_t atarigen_playfieldram_size;
+extern size_t atarigen_playfield2ram_size;
+extern size_t atarigen_spriteram_size;
+extern size_t atarigen_alpharam_size;
 
 
 /*--------------------------------------------------------------------------

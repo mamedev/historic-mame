@@ -468,7 +468,7 @@ INLINE void unchain_byte_blit(unsigned long *src,short seg,unsigned long address
 {
 	UNCHAIN_BLIT_START
 /* get the extra byte at end of the row */
-	"movb   %%ds:(%%ebx),%%eax \n"
+	"movb   %%ds:(%%ebx),%%al \n"
 /* write the thing to video */
 	"stosb \n"
 	UNCHAIN_BLIT_END

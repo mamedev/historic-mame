@@ -261,7 +261,7 @@
 #define EA_IND													\
 	EA_ABS; 													\
 	tmp = RDMEM(EAD);											\
-	EAL++; 														\
+	EAD++; 														\
 	EAH = RDMEM(EAD);											\
 	EAL = tmp
 
@@ -272,7 +272,7 @@
 	EA_ABS;														\
 	EAD+=X;														\
 	tmp = RDMEM(EAD);											\
-	EAL++; 														\
+	EAD++; 	 													\
 	EAH = RDMEM(EAD);											\
 	EAL = tmp
 
@@ -456,7 +456,7 @@
  *	set I flag, reset D flag and jump via IRQ vector
  ***************************************************************/
 #define BRK 													\
-	if (errorlog) fprintf(errorlog,"BRK %04x\n",cpu_get_pc());	\
+	logerror("BRK %04x\n",cpu_get_pc());	\
 	PCW++;														\
 	PUSH(PCH);													\
 	PUSH(PCL);													\
@@ -598,7 +598,7 @@
  ***************************************************************/
 #define ILL 													\
 	h6280_ICount -= 2; /* (assumed) */							\
-	if (errorlog) fprintf(errorlog,"%04x: WARNING - h6280 illegal opcode\n",cpu_get_pc())
+	logerror("%04x: WARNING - h6280 illegal opcode\n",cpu_get_pc())
 
 /* 6280 ********************************************************
  *  INA Increment accumulator
@@ -882,7 +882,7 @@
  ***************************************************************/
 #define SET 													\
 	P |= _fT;													\
-	if (errorlog) fprintf(errorlog,"%04x: WARNING H6280 SET\n",cpu_get_pc())
+	logerror("%04x: WARNING H6280 SET\n",cpu_get_pc())
 
 /* 6280 ********************************************************
  *  SMB Set memory bit

@@ -60,8 +60,8 @@ unsigned char *toaplan1_buffered_videoram2;
 unsigned char *toaplan1_colorram1;
 unsigned char *toaplan1_colorram2;
 
-int colorram1_size;
-int colorram2_size;
+size_t colorram1_size;
+size_t colorram2_size;
 
 unsigned int scrollregs[8];
 unsigned int vblank;
@@ -106,7 +106,7 @@ int rallybik_vh_start(void)
 		return 1;
 	}
 
-	if (errorlog) fprintf (errorlog, "colorram_size: %08x\n", colorram1_size + colorram2_size);
+	logerror("colorram_size: %08x\n", colorram1_size + colorram2_size);
 	if ((paletteram = calloc(colorram1_size + colorram2_size, 1)) == 0)
 	{
 		free(toaplan1_videoram3);
@@ -165,7 +165,7 @@ void rallybik_vh_stop(void)
 	for (i=16; i>=0; i--)
 	{
 		free(tile_list[i]);
-		if (errorlog) fprintf (errorlog, "max_list_size[%d]=%08x\n",i,max_list_size[i]);
+		logerror("max_list_size[%d]=%08x\n",i,max_list_size[i]);
 	}
 
 	for (i=3; i>=0; i--)
@@ -293,7 +293,7 @@ WRITE_HANDLER( toaplan1_videoram1_w )
 #ifdef DEBUG
 	if (2*video_ofs >= VIDEORAM1_SIZE)
 	{
-		if (errorlog) fprintf (errorlog, "videoram1_w, %08x\n", 2*video_ofs);
+		logerror("videoram1_w, %08x\n", 2*video_ofs);
 		return;
 	}
 #endif
@@ -315,7 +315,7 @@ WRITE_HANDLER( toaplan1_videoram2_w )
 #ifdef DEBUG
 	if (2*video_ofs >= VIDEORAM2_SIZE)
 	{
-		if (errorlog) fprintf (errorlog, "videoram2_w, %08x\n", 2*video_ofs);
+		logerror("videoram2_w, %08x\n", 2*video_ofs);
 		return;
 	}
 #endif
@@ -361,7 +361,7 @@ WRITE_HANDLER( toaplan1_videoram3_w )
 #ifdef DEBUG
 	if ((video_ofs3 & (VIDEORAM3_SIZE-1))*4 + offset >= VIDEORAM3_SIZE*4)
 	{
-		if (errorlog) fprintf (errorlog, "videoram3_w, %08x\n", 2*video_ofs3);
+		logerror("videoram3_w, %08x\n", 2*video_ofs3);
 		return;
 	}
 #endif
@@ -419,10 +419,10 @@ WRITE_HANDLER( layers_offset_w )
 			break ;
 	}
 
-	if (errorlog) fprintf (errorlog, "layers_offset[0]:%08x\n",layers_offset[0]);
-	if (errorlog) fprintf (errorlog, "layers_offset[1]:%08x\n",layers_offset[1]);
-	if (errorlog) fprintf (errorlog, "layers_offset[2]:%08x\n",layers_offset[2]);
-	if (errorlog) fprintf (errorlog, "layers_offset[3]:%08x\n",layers_offset[3]);
+	logerror("layers_offset[0]:%08x\n",layers_offset[0]);
+	logerror("layers_offset[1]:%08x\n",layers_offset[1]);
+	logerror("layers_offset[2]:%08x\n",layers_offset[2]);
+	logerror("layers_offset[3]:%08x\n",layers_offset[3]);
 
 }
 
@@ -675,7 +675,7 @@ static void toaplan1_find_sprites (void)
 			int tattr,tchar;
 			tchar = READ_WORD (&s_info[0]) & 0xffff;
 			tattr = READ_WORD (&s_info[2]);
-			if (errorlog) fprintf (errorlog, "%08x: %04x %04x\n", sprite, tattr, tchar);
+			logerror("%08x: %04x %04x\n", sprite, tattr, tchar);
 			s_info += 8 ;
 		}
 	}

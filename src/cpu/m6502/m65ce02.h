@@ -45,6 +45,10 @@ timer
 6510/8500 (used in some designs)
 6 io pins (p0 bis p5)
 
+6510T (used in commodore C1551 floppy)
+8 io pins
+integrated clock generation?
+
 7501/8501 (c16, c116, c232, c264, plus4, c364)
 7 io pins (no p5)
 no nmi
@@ -88,6 +92,15 @@ z register
 b bank register, highbyte of all zerozape addressing
 register for stack high byte
 additional command (some from the 65816)
+
+Commodore C65 CPU (4510)
+65ce02 compatible
+integrated memory management (not in standard m65ce02!)
+
+Set Overflow Pin
+in 6502 and pin compatibles (65C02 65SC02 65SC802 65CE02), M6509
+no SO pin 6510/7501/8500/8501/8502/65sc816
+6510T ?
 */
 
 #ifndef _M65CE02_H
@@ -133,7 +146,7 @@ extern const char *m65ce02_info(void *context, int regnum);
 extern unsigned m65ce02_dasm(char *buffer, unsigned pc);
 
 #ifdef MAME_DEBUG
-extern unsigned Dasm65ce02( char *dst, unsigned pc );
+extern unsigned int Dasm65ce02( char *dst, unsigned pc );
 #endif
 
 #endif /* _M65CE02_H */

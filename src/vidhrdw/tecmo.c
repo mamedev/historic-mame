@@ -10,7 +10,7 @@
 unsigned char *tecmo_videoram,*tecmo_colorram;
 unsigned char *tecmo_videoram2,*tecmo_colorram2;
 unsigned char *tecmo_scroll;
-int tecmo_videoram2_size;
+size_t tecmo_videoram2_size;
 
 static unsigned char *dirtybuffer2;
 static struct osd_bitmap *tmpbitmap2,*tmpbitmap3;

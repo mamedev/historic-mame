@@ -52,7 +52,7 @@ can take. Should the game reset????
 
 extern unsigned char *lnc_charbank;
 extern unsigned char *bnj_backgroundram;
-extern int bnj_backgroundram_size;
+extern size_t bnj_backgroundram_size;
 extern unsigned char *zoar_scrollram;
 extern unsigned char *deco_charram;
 
@@ -150,7 +150,7 @@ static WRITE_HANDLER( lnc_w )
 	else if (offset == 0x9000)                     { return; }  /* MWA_NOP */
 	else if (offset == 0x9002)                     { sound_command_w(0,data); return; }
 	else if (offset >= 0xb000 && offset <= 0xb1ff)   ;
-	else if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to unmapped memory address %04x\n",cpu_getactivecpu(),cpu_get_pc(),data,offset);
+	else logerror("CPU #%d PC %04x: warning - write %02x to unmapped memory address %04x\n",cpu_getactivecpu(),cpu_get_pc(),data,offset);
 
 	rom[offset] = data;
 
@@ -171,7 +171,7 @@ static WRITE_HANDLER( mmonkey_w )
 	else if (offset == 0x9000)                     { return; }  /* MWA_NOP */
 	else if (offset == 0x9002)                     { sound_command_w(0,data); return; }
 	else if (offset >= 0xb000 && offset <= 0xbfff) { mmonkey_protection_w(offset - 0xb000, data); return; }
-	else if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to unmapped memory address %04x\n",cpu_getactivecpu(),cpu_get_pc(),data,offset);
+	else logerror("CPU #%d PC %04x: warning - write %02x to unmapped memory address %04x\n",cpu_getactivecpu(),cpu_get_pc(),data,offset);
 
 	rom[offset] = data;
 
@@ -192,7 +192,7 @@ static WRITE_HANDLER( btime_w )
 	else if (offset == 0x4002)                     btime_video_control_w(0,data);
 	else if (offset == 0x4003)                     sound_command_w(0,data);
 	else if (offset == 0x4004)                     bnj_scroll1_w(0,data);
-	else if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to unmapped memory address %04x\n",cpu_getactivecpu(),cpu_get_pc(),data,offset);
+	else logerror("CPU #%d PC %04x: warning - write %02x to unmapped memory address %04x\n",cpu_getactivecpu(),cpu_get_pc(),data,offset);
 
 	btime_decrypt();
 }
@@ -211,7 +211,7 @@ static WRITE_HANDLER( zoar_w )
 	else if (offset == 0x9804)                     bnj_scroll2_w(0,data);
 	else if (offset == 0x9805)                     bnj_scroll1_w(0,data);
 	else if (offset == 0x9806)                     sound_command_w(0,data);
-	else if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to unmapped memory address %04x\n",cpu_getactivecpu(),cpu_get_pc(),data,offset);
+	else logerror("CPU #%d PC %04x: warning - write %02x to unmapped memory address %04x\n",cpu_getactivecpu(),cpu_get_pc(),data,offset);
 
 	btime_decrypt();
 
@@ -228,7 +228,7 @@ static WRITE_HANDLER( disco_w )
 	else if (offset >= 0x8800 && offset <= 0x881f) RAM[offset] = data;
 	else if (offset == 0x9a00)                     sound_command_w(0,data);
 	else if (offset == 0x9c00)                     disco_video_control_w(0,data);
-	else if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - write %02x to unmapped memory address %04x\n",cpu_getactivecpu(),cpu_get_pc(),data,offset);
+	else logerror("CPU #%d PC %04x: warning - write %02x to unmapped memory address %04x\n",cpu_getactivecpu(),cpu_get_pc(),data,offset);
 
 	btime_decrypt();
 }

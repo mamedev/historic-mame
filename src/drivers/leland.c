@@ -154,10 +154,7 @@ READ_HANDLER( leland_eeprom_r )
 	static int s;
 	s=s^0x01;
 #if 0
-	if (errorlog)
-	{
-		fprintf(errorlog, "PC=%04x EEPROM read\n", cpu_get_pc());
-	}
+	logerror("PC=%04x EEPROM read\n", cpu_get_pc());
 #endif
 /*
     s&=(~0x04);
@@ -172,11 +169,7 @@ READ_HANDLER( leland_eeprom_r )
 WRITE_HANDLER( leland_eeprom_w )
 {
 #if 0
-	if (errorlog)
-	{
-		fprintf(errorlog, "PC=%04x EEPROM write = %02x\n",
-			cpu_get_pc(), data);
-	}
+	logerror("PC=%04x EEPROM write = %02x\n", cpu_get_pc(), data);
 #endif
 }
 
@@ -225,16 +218,12 @@ static void nvram_handler(void *file,int read_or_write)
 #ifdef MAME_DEBUG
 void leland_debug_dump_driver(void)
 {
-    if (keyboard_pressed(KEYCODE_M))
+    if (keyboard_pressed_memory(KEYCODE_M))
 	{
 		static int marker=1;
-	while (keyboard_pressed(KEYCODE_M))       ;
 
-		if (errorlog)
-		{
-			fprintf(errorlog, "Marker %d\n", marker);
-			marker++;
-		}
+		logerror("Marker %d\n", marker);
+		marker++;
 	}
     if (keyboard_pressed(KEYCODE_F))
 	{
@@ -484,11 +473,7 @@ void leland_sound_cpu_control_w(int data)
 	intnum|=(data&0x08)>>2;  /* Int 1 */
 
 #ifdef NOISY_SOUND_CPU
-	if (errorlog)
-	{
-		 fprintf(errorlog, "PC=%04x Sound CPU intnum=%02x\n",
-			cpu_get_pc(), intnum);
-	}
+	logerror("PC=%04x Sound CPU intnum=%02x\n",cpu_get_pc(), intnum);
 #endif
 }
 
@@ -723,13 +708,10 @@ int leland_master_interrupt(void)
 WRITE_HANDLER( leland_slave_cmd_w )
 {
 #if 0
-	if (errorlog)
-	{
-		fprintf(errorlog, "SLAVECMD=%02x RES=%d NMI=%d IRQ=%d\n", data,
-			data&0x01,
-			data&0x04,
-			data&0x08);
-	}
+	logerror("SLAVECMD=%02x RES=%d NMI=%d IRQ=%d\n", data,
+		data&0x01,
+		data&0x04,
+		data&0x08);
 #endif
 
 	cpu_set_reset_line(1, data&0x01  ? CLEAR_LINE : ASSERT_LINE);
@@ -786,20 +768,14 @@ WRITE_HANDLER( leland_analog_w )
 	/* Set the current analog port number */
 	leland_current_analog=data&0x0f;
 #ifdef NOISY_CONTROLS
-	if (errorlog)
-	{
-		fprintf(errorlog, "Analog joystick %02x (device#%d)\n", data, leland_current_analog);
-	}
+	logerror("Analog joystick %02x (device#%d)\n", data, leland_current_analog);
 #endif
 }
 
 READ_HANDLER( leland_analog_r )
 {
 #ifdef NOISY_CONTROLS
-	if (errorlog)
-	{
-		fprintf(errorlog, "Analog joystick (device#%d)\n", leland_current_analog);
-	}
+	logerror("Analog joystick (device#%d)\n", leland_current_analog);
 #endif
 	return readinputport(leland_current_analog+4+offset);
 }
@@ -825,11 +801,7 @@ WRITE_HANDLER( leland_slave_banksw_w )
 	cpu_setbank(3, &RAM[bankaddress]);
 
 #ifdef NOISY_CPU
-	if (errorlog)
-	{
-		fprintf(errorlog, "CPU #1 %04x BANK SWITCH %02x\n",
-			cpu_get_pc(), data);
-	}
+	logerror("CPU #1 %04x BANK SWITCH %02x\n",cpu_get_pc(), data);
 #endif
 }
 
@@ -840,11 +812,7 @@ WRITE_HANDLER( leland_slave_large_banksw_w )
 	cpu_setbank(3, &RAM[bankaddress]);
 
 #ifdef NOISY_CPU
-	if (errorlog)
-	{
-		fprintf(errorlog, "CPU #1 %04x BIG BANK SWITCH %02x\n",
-			cpu_get_pc(), data);
-	}
+	logerror("CPU #1 %04x BIG BANK SWITCH %02x\n",cpu_get_pc(), data);
 #endif
 }
 
@@ -871,11 +839,8 @@ void leland_rearrange_bank_swap(int cpu, int startaddr)
 		unsigned char *p=malloc(0x8000);
 		if (p)
 		{
-			if (errorlog)
-			{
-				fprintf(errorlog, "Region %d Swapping %d banks (start=0x%04x)\n",
+			logerror("Region %d Swapping %d banks (start=0x%04x)\n",
 					region, banks, startaddr);
-			}
 
 			for (i=0; i<banks;i++)
 			{
@@ -2055,10 +2020,7 @@ WRITE_HANDLER( dangerz_banksw_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	int bankaddress=(data&0x01)*0x10000;
-	if (errorlog)
-	{
-		fprintf(errorlog, "DANGERZ BANK=%02x\n", data);
-	}
+	logerror("DANGERZ BANK=%02x\n", data);
 	cpu_setbank(1, &RAM[0x02000+bankaddress]);
 	cpu_setbank(2, &RAM[0x0a000+bankaddress]);
 }
@@ -2145,10 +2107,7 @@ WRITE_HANDLER( viper_banksw_w )
 
 	bank=data&0x07;
 #ifdef NOISY_CPU
-	if (errorlog)
-	{
-		fprintf(errorlog, "BANK=%02x\n", bank);
-	}
+	logerror("BANK=%02x\n", bank);
 #endif
 	if (!bank)
 	{

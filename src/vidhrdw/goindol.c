@@ -18,9 +18,9 @@ static struct osd_bitmap *bitmap_fg;
 static unsigned char 	 *fg_dirtybuffer;
 static unsigned char 	 *bg_dirtybuffer;
 
-int 	 		 goindol_fg_videoram_size;
-int 	 		 goindol_bg_videoram_size;
-int 	 		 goindol_spriteram_size;
+size_t goindol_fg_videoram_size;
+size_t goindol_bg_videoram_size;
+size_t goindol_spriteram_size;
 int 	 		 goindol_char_bank;
 
 

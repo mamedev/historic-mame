@@ -147,7 +147,7 @@ READ_HANDLER( cloud9_bitmap_regs_r )
 		/* Indirect Addressing - pixel value at (X,Y) */
 		if (y < 0x0c)
 		{
-			if (errorlog) fprintf(errorlog,"Unexpected read from top of bitmap!\n");
+			logerror("Unexpected read from top of bitmap!\n");
 			return 0;
 		}
 

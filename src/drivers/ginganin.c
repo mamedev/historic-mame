@@ -137,7 +137,7 @@ static WRITE_HANDLER( MC6840_control_port_0_w )
 	} else {
 		MC6809_FLAG = 0;
 	}
-//	if (errorlog) fprintf(errorlog, "MC6840 Write:(0x%02X)0x%02X\n", MC6840_register0_index, data);
+//	logerror("MC6840 Write:(0x%02X)0x%02X\n", MC6840_register0_index, data);
 }
 
 static WRITE_HANDLER( MC6840_control_port_1_w )

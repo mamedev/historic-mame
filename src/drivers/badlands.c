@@ -148,7 +148,7 @@ static READ_HANDLER( audio_io_r )
 	switch (offset & 0x206)
 	{
 		case 0x000:		/* n/c */
-			if (errorlog) fprintf(errorlog, "audio_io_r: Unknown read at %04X\n", offset & 0x206);
+			logerror("audio_io_r: Unknown read at %04X\n", offset & 0x206);
 			break;
 
 		case 0x002:		/* /RDP */
@@ -181,7 +181,7 @@ static READ_HANDLER( audio_io_r )
 		case 0x202:		/* /WRP */
 		case 0x204:		/* /WRIO */
 		case 0x206:		/* /MIX */
-			if (errorlog) fprintf(errorlog, "audio_io_r: Unknown read at %04X\n", offset & 0x206);
+			logerror("audio_io_r: Unknown read at %04X\n", offset & 0x206);
 			break;
 	}
 
@@ -196,7 +196,7 @@ static WRITE_HANDLER( audio_io_w )
 		case 0x000:		/* n/c */
 		case 0x002:		/* /RDP */
 		case 0x004:		/* /RDIO */
-			if (errorlog) fprintf(errorlog, "audio_io_w: Unknown write (%02X) at %04X\n", data & 0xff, offset & 0x206);
+			logerror("audio_io_w: Unknown write (%02X) at %04X\n", data & 0xff, offset & 0x206);
 			break;
 
 		case 0x006:		/* /IRQACK */

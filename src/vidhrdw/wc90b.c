@@ -10,8 +10,8 @@ unsigned char *wc90b_scroll2xlo, *wc90b_scroll2xhi;
 unsigned char *wc90b_scroll1ylo, *wc90b_scroll1yhi;
 unsigned char *wc90b_scroll2ylo, *wc90b_scroll2yhi;
 
-int wc90b_tile_videoram_size;
-int wc90b_tile_videoram_size2;
+size_t wc90b_tile_videoram_size;
+size_t wc90b_tile_videoram_size2;
 
 static unsigned char *dirtybuffer1 = 0, *dirtybuffer2 = 0;
 static struct osd_bitmap *tmpbitmap1 = 0,*tmpbitmap2 = 0;

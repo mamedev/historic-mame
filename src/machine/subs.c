@@ -180,12 +180,12 @@ WRITE_HANDLER( subs_lamp1_w )
 	if ((offset & 0x01) == 1)
 	{
 		osd_led_w(0,0);
-		if (errorlog) fprintf(errorlog,"LED 0 OFF\n");
+		logerror("LED 0 OFF\n");
 	}
 	else
 	{
 		osd_led_w(0,1);
-		if (errorlog) fprintf(errorlog,"LED 0 ON\n");
+		logerror("LED 0 ON\n");
 	}
 }
 
@@ -197,12 +197,12 @@ WRITE_HANDLER( subs_lamp2_w )
 	if ((offset & 0x01) == 1)
 	{
 		osd_led_w(1,0);
-		if (errorlog) fprintf(errorlog,"LED 1 OFF\n");
+		logerror("LED 1 OFF\n");
 	}
 	else
 	{
 		osd_led_w(1,1);
-		if (errorlog) fprintf(errorlog,"LED 1 ON\n");
+		logerror("LED 1 ON\n");
 	}
 }
 

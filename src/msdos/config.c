@@ -449,8 +449,12 @@ void parse_cmdline (int argc, char **argv, int game_index)
 	stadir     = get_string ("directory", "sta",     NULL, "STA");
 	artworkdir = get_string ("directory", "artwork", NULL, "ARTWORK");
  	#ifdef MESS
- 		crcdir = get_string ("directory", "crc", NULL, "CRC");
+		crcdir = get_string ("directory", "crc", NULL, "CRC");
  	#endif
+
+	tmpstr = get_string ("config", "language", NULL, "english");
+	options.language_file = osd_fopen(0,tmpstr,OSD_FILETYPE_LANGUAGE,0);
+
 
 	/* get tweaked modes info */
 	tw224x288_h			= get_int ("tweaked", "224x288_h",              NULL, 0x5f);
@@ -547,8 +551,7 @@ void parse_cmdline (int argc, char **argv, int game_index)
 		gfx_mode = GFX_VESA3;
 	else
 	{
-		if (errorlog)
-			fprintf (errorlog, "%s is not a valid entry for vesamode\n",
+		logerror("%s is not a valid entry for vesamode\n",
 					vesamode);
 		gfx_mode = GFX_VESA3; /* default to VESA2L */
 	}
@@ -583,8 +586,7 @@ void parse_cmdline (int argc, char **argv, int game_index)
 		if (stricmp (joy_table[i].name, joyname) == 0)
 		{
 			joystick = joy_table[i].id;
-			if (errorlog)
-				fprintf (errorlog, "using joystick %s = %08x\n",
+			logerror("using joystick %s = %08x\n",
 						joyname,joy_table[i].id);
 			break;
 		}
@@ -592,8 +594,7 @@ void parse_cmdline (int argc, char **argv, int game_index)
 
 	if (joystick == -2)
 	{
-		if (errorlog)
-			fprintf (errorlog, "%s is not a valid entry for a joystick\n",
+		logerror("%s is not a valid entry for a joystick\n",
 					joyname);
 		joystick = JOY_TYPE_NONE;
 	}

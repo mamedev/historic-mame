@@ -136,7 +136,7 @@ typedef struct dpcm_s
    boolean enabled;
    boolean irq_occurred;
    uint8 *cpu_mem;
-   char vol;
+   signed char vol;
 } dpcm_t;
 
 /* APU type */

@@ -52,14 +52,12 @@ int ppi8255_r( int which, int offset ) {
 
 	/* Some bounds checking */
 	if ( which > intf->num ) {
-		if ( errorlog )
-			fprintf( errorlog, "Attempting to read an unmapped 8255 chip\n" );
+		logerror("Attempting to read an unmapped 8255 chip\n" );
 		return 0;
 	}
 
 	if ( offset > 3 ) {
-		if ( errorlog )
-			fprintf( errorlog, "Attempting to read an invalid 8255 register\n" );
+		logerror("Attempting to read an invalid 8255 register\n" );
 		return 0;
 	}
 
@@ -116,8 +114,7 @@ int ppi8255_r( int which, int offset ) {
 		break;
 	}
 
-	if ( errorlog )
-		fprintf( errorlog, "8255 chip %d: Port %c is being read but has no handler", which, 'A' + offset );
+	logerror("8255 chip %d: Port %c is being read but has no handler", which, 'A' + offset );
 
 	return 0x00;
 }
@@ -160,14 +157,12 @@ void ppi8255_w( int which, int offset, int data ) {
 
 	/* Some bounds checking */
 	if ( which > intf->num ) {
-		if ( errorlog )
-			fprintf( errorlog, "Attempting to write an unmapped 8255 chip\n" );
+		logerror("Attempting to write an unmapped 8255 chip\n" );
 		return;
 	}
 
 	if ( offset > 3 ) {
-		if ( errorlog )
-			fprintf( errorlog, "Attempting to write an invalid 8255 register\n" );
+		logerror("Attempting to write an invalid 8255 register\n" );
 		return;
 	}
 
@@ -201,8 +196,7 @@ void ppi8255_w( int which, int offset, int data ) {
                         chip->groupB_mode = ( data >> 2 ) & 1;
 
                         if ( chip->groupA_mode != 0 || chip->groupB_mode != 0 ) {
-                                if ( errorlog )
-                                        fprintf( errorlog, "8255 chip %d: Setting an unsupported mode!\n", which );
+                                logerror("8255 chip %d: Setting an unsupported mode!\n", which );
                         }
 
                         /* Port A direction */
@@ -268,8 +262,7 @@ void ppi8255_w( int which, int offset, int data ) {
 		break;
 	}
 
-	if ( errorlog )
-		fprintf( errorlog, "8255 chip %d: Port %c is being written to but has no handler", which, 'A' + offset );
+	logerror("8255 chip %d: Port %c is being written to but has no handler", which, 'A' + offset );
 }
 
 /* Helpers */

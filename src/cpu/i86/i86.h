@@ -3,6 +3,11 @@
 /*           (initial work based on David Hedley's pcemu)                   */
 /*                                                                          */
 /****************************************************************************/
+#ifndef __I86_H_
+#define __I86_H_
+
+/* compile with V20,V30,V33 when configured (HAS_V20,...) */
+//#define INCLUDE_V20
 
 typedef enum { ES, CS, SS, DS } SREGS;
 typedef enum { AX, CX, DX, BX, SP, BP, SI, DI } WREGS;
@@ -74,6 +79,7 @@ typedef enum { AH,AL,CH,CL,DH,DL,BH,BL,SPH,SPL,BPH,BPL,SIH,SIL,DIH,DIL } BREGS;
 #define PutMemB(Seg,Off,x) { i86_ICount-=7; cpu_writemem20((DefaultBase(Seg)+(Off))&I.amask,(x)); }
 #define PutMemW(Seg,Off,x) { i86_ICount-=11; PutMemB(Seg,Off,(BYTE)(x)); PutMemB(Seg,(Off)+1,(BYTE)((x)>>8)); }
 
+#define PEEKBYTE(ea) ((BYTE)cpu_readmem20((ea)&I.amask))
 #define ReadByte(ea) (i86_ICount-=6,(BYTE)cpu_readmem20((ea)&I.amask))
 #define ReadWord(ea) (i86_ICount-=10,cpu_readmem20((ea)&I.amask)+(cpu_readmem20(((ea)+1)&I.amask)<<8))
 #define WriteByte(ea,val) { i86_ICount-=7; cpu_writemem20((ea)&I.amask,val); }
@@ -86,7 +92,9 @@ typedef enum { AH,AL,CH,CL,DH,DL,BH,BL,SPH,SPL,BPH,BPL,SIH,SIL,DIH,DIL } BREGS;
 /* ASG 971222 -- PUSH/POP now use the standard mechanisms; opcode reading is the same */
 #define FETCH ((BYTE)cpu_readop_arg((I.base[CS]+I.ip++)&I.amask))
 #define FETCHOP ((BYTE)cpu_readop((I.base[CS]+I.ip++)&I.amask))
+#define PEEKOP(addr) ((BYTE)cpu_readop(addr)) 
 #define FETCHWORD(var) { var=cpu_readop_arg(((I.base[CS]+I.ip)&I.amask))+(cpu_readop_arg(((I.base[CS]+I.ip+1)&I.amask))<<8); I.ip+=2; }
+#define CHANGE_PC(addr) change_pc20(addr)
 #define PUSH(val) { I.regs.w[SP]-=2; WriteWord(((I.base[SS]+I.regs.w[SP])&I.amask),val); }
 #define POP(var) { var = ReadWord(((I.base[SS]+I.regs.w[SP])&I.amask)); I.regs.w[SP]+=2; }
 /************************************************************************/
@@ -106,3 +114,5 @@ typedef enum { AH,AL,CH,CL,DH,DL,BH,BL,SPH,SPL,BPH,BPL,SIH,SIL,DIH,DIL } BREGS;
 	  I.DF = ((f) & 1024) == 1024; \
 	  I.OverVal = (f) & 2048; \
 }
+#endif
+

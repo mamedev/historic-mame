@@ -14,11 +14,8 @@ unsigned char *wc90_scroll0ylo, *wc90_scroll0yhi;
 unsigned char *wc90_scroll1ylo, *wc90_scroll1yhi;
 unsigned char *wc90_scroll2ylo, *wc90_scroll2yhi;
 
-int wc90_tile_videoram_size;
-int wc90_tile_videoram_size2;
-
-static int last_tile1 = -1;
-static int last_tile2 = -1;
+size_t wc90_tile_videoram_size;
+size_t wc90_tile_videoram_size2;
 
 static unsigned char *dirtybuffer1 = 0, *dirtybuffer2 = 0;
 static struct osd_bitmap *tmpbitmap1 = 0,*tmpbitmap2 = 0;
@@ -70,9 +67,6 @@ int wc90_vh_start( void ) {
 		return 1;
 	}
 
-	last_tile1 = wc90_tile_videoram_size;
-	last_tile2 = wc90_tile_videoram_size2;
-
 	return 0;
 }
 
@@ -92,8 +86,6 @@ WRITE_HANDLER( wc90_tile_videoram_w ) {
 	if ( wc90_tile_videoram[offset] != data ) {
 		dirtybuffer1[offset] = 1;
 		wc90_tile_videoram[offset] = data;
-		if ( offset > last_tile1 )
-			last_tile1 = offset;
 	}
 }
 
@@ -105,8 +97,6 @@ WRITE_HANDLER( wc90_tile_colorram_w ) {
 	if ( wc90_tile_colorram[offset] != data ) {
 		dirtybuffer1[offset] = 1;
 		wc90_tile_colorram[offset] = data;
-		if ( offset > last_tile1 )
-			last_tile1 = offset;
 	}
 }
 
@@ -118,8 +108,6 @@ WRITE_HANDLER( wc90_tile_videoram2_w ) {
 	if ( wc90_tile_videoram2[offset] != data ) {
 		dirtybuffer2[offset] = 1;
 		wc90_tile_videoram2[offset] = data;
-		if ( offset > last_tile2 )
-			last_tile2 = offset;
 	}
 }
 
@@ -131,8 +119,6 @@ WRITE_HANDLER( wc90_tile_colorram2_w ) {
 	if ( wc90_tile_colorram2[offset] != data ) {
 		dirtybuffer2[offset] = 1;
 		wc90_tile_colorram2[offset] = data;
-		if ( offset > last_tile2 )
-			last_tile2 = offset;
 	}
 }
 
@@ -217,7 +203,7 @@ void wc90_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	wc90_draw_sprites( bitmap, 3 );
 */
 
-	for ( offs = last_tile2; offs >= 0; offs-- ) {
+	for ( offs = wc90_tile_videoram_size2-1; offs >= 0; offs-- ) {
 		int sx, sy, tile;
 
 		if ( dirtybuffer2[offs] ) {
@@ -239,8 +225,6 @@ void wc90_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		}
 	}
 
-	last_tile2 = -1;
-
 	scrollx = -wc90_scroll2xlo[0] - 256 * ( wc90_scroll2xhi[0] & 3 );
 	scrolly = -wc90_scroll2ylo[0] - 256 * ( wc90_scroll2yhi[0] & 1 );
 
@@ -248,7 +232,7 @@ void wc90_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	wc90_draw_sprites( bitmap, 2 );
 
-	for ( offs = last_tile1; offs >= 0; offs-- ) {
+	for ( offs = wc90_tile_videoram_size-1; offs >= 0; offs-- ) {
 		int sx, sy, tile;
 
 		if ( dirtybuffer1[offs] ) {
@@ -269,8 +253,6 @@ void wc90_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 					0,TRANSPARENCY_NONE,0);
 		}
 	}
-
-	last_tile1 = -1;
 
 	scrollx = -wc90_scroll1xlo[0] - 256 * ( wc90_scroll1xhi[0] & 3 );
 	scrolly = -wc90_scroll1ylo[0] - 256 * ( wc90_scroll1yhi[0] & 1 );
@@ -481,8 +463,7 @@ static void drawsprite_64x64( struct osd_bitmap *bitmap, int code,
 
 static void drawsprite_invalid( struct osd_bitmap *bitmap, int code,
 											int sx, int sy, int bank, int flags ) {
-	if ( errorlog )
-		fprintf( errorlog, "8 pixel sprite size not supported\n" );
+	logerror("8 pixel sprite size not supported\n" );
 }
 
 typedef void (*drawsprites_procdef)( struct osd_bitmap *, int, int, int, int, int );

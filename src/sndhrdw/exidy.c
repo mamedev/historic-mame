@@ -203,7 +203,7 @@ WRITE_HANDLER( exidy_shriot_w )
         riot_state = RIOT_COUNTUP;
 		return;
 	default:
-	    if (errorlog) fprintf(errorlog,"Undeclared RIOT write: %x=%x\n",offset,data);
+	    logerror("Undeclared RIOT write: %x=%x\n",offset,data);
 	    return;
 	}
 	return; /* will never execute this */
@@ -234,7 +234,7 @@ READ_HANDLER( exidy_shriot_r )
 			return timer_timeleft(timer)/(TIME_IN_USEC((riot_divider*BASE_TIME)));
 		}
 	default:
-	    if (errorlog) fprintf(errorlog,"Undeclared RIOT read: %x  PC:%x\n",offset,cpu_get_pc());
+	    logerror("Undeclared RIOT read: %x  PC:%x\n",offset,cpu_get_pc());
   	    return 0xff;
 	}
 	return 0;
@@ -294,7 +294,7 @@ WRITE_HANDLER( exidy_sh8253_w )
 
 READ_HANDLER( exidy_sh8253_r )
 {
-    if (errorlog) fprintf(errorlog,"8253(R): %x\n",offset);
+    logerror("8253(R): %x\n",offset);
 	return 0;
 }
 
@@ -303,7 +303,7 @@ READ_HANDLER( exidy_sh8253_r )
 ***************************************************************************/
 
 READ_HANDLER( exidy_sh6840_r ) {
-    if (errorlog) fprintf(errorlog,"6840R %x\n",offset);
+    logerror("6840R %x\n",offset);
     return 0;
 }
 

@@ -32,7 +32,7 @@ WRITE_HANDLER( mexico86_68705_ddrB_w );
 
 /* in vidhrdw/mexico86.c */
 extern unsigned char *mexico86_videoram,*mexico86_objectram;
-extern int mexico86_objectram_size;
+extern size_t mexico86_objectram_size;
 void mexico86_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 WRITE_HANDLER( mexico86_bankswitch_w );
 void mexico86_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);

@@ -24,7 +24,7 @@
  *************************************/
 
 UINT8 *rpunch_bitmapram;
-int rpunch_bitmapram_size;
+size_t rpunch_bitmapram_size;
 static UINT32 *rpunch_bitmapsum;
 
 int rpunch_sprite_palette;
@@ -226,7 +226,7 @@ WRITE_HANDLER(rpunch_crtc_data_w)
 				break;
 
 			default:
-				if (errorlog) fprintf(errorlog, "CRTC register %02X = %02X\n", crtc_register, data & 0xff);
+				logerror("CRTC register %02X = %02X\n", crtc_register, data & 0xff);
 				break;
 		}
 	}
@@ -247,12 +247,12 @@ WRITE_HANDLER(rpunch_ins_w)
 		if (offset == 0)
 		{
 			gins = data & 0x3f;
-			if (errorlog) fprintf(errorlog, "GINS = %02X\n", data & 0x3f);
+			logerror("GINS = %02X\n", data & 0x3f);
 		}
 		else
 		{
 			bins = data & 0x3f;
-			if (errorlog) fprintf(errorlog, "BINS = %02X\n", data & 0x3f);
+			logerror("BINS = %02X\n", data & 0x3f);
 		}
 	}
 }

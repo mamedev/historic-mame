@@ -31,7 +31,7 @@ static void trigger_7751_sound(int data)
 // I'm sure this must be wrong, but it seems to work for quartet music.
 WRITE_HANDLER( sys16_7751_audio_8255_w )
 {
-	if(errorlog) fprintf(errorlog,"7751: %4x %4x\n",data,data^0xff);
+	logerror("7751: %4x %4x\n",data,data^0xff);
 
 	if ((data & 0x0f) != 8)
 	{

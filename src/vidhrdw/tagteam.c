@@ -94,7 +94,7 @@ WRITE_HANDLER( tagteam_mirrorcolorram_w )
 
 WRITE_HANDLER( tagteam_control_w )
 {
-if (errorlog) fprintf(errorlog,"%04x: control = %02x\n",cpu_get_pc(),data);
+logerror("%04x: control = %02x\n",cpu_get_pc(),data);
 
 	/* bit 7 is the palette bank */
 	palettebank = (data & 0x80) >> 7;

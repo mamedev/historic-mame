@@ -103,8 +103,8 @@ TODO:
 #include "vidhrdw/generic.h"
 
 /* vidhrdw/atarifb.c */
-extern int atarifb_alphap1_vram_size;
-extern int atarifb_alphap2_vram_size;
+extern size_t atarifb_alphap1_vram_size;
+extern size_t atarifb_alphap2_vram_size;
 extern unsigned char *atarifb_alphap1_vram;
 extern unsigned char *atarifb_alphap2_vram;
 extern unsigned char *atarifb_scroll_register;
@@ -174,7 +174,7 @@ static WRITE_HANDLER( atarifb_out2_w )
 	noise_timer_set=1;
 
 	coin_counter_w (0, data & 0x10);
-//	if (errorlog) fprintf (errorlog, "out2_w: %02x\n", data & ~0x0f);
+//	logerror("out2_w: %02x\n", data & ~0x0f);
 }
 
 static WRITE_HANDLER( soccer_out2_w )
@@ -193,7 +193,7 @@ static WRITE_HANDLER( soccer_out2_w )
 	coin_counter_w (0, data & 0x40);
 	coin_counter_w (1, data & 0x20);
 	coin_counter_w (2, data & 0x10);
-//	if (errorlog) fprintf (errorlog, "out2_w: %02x\n", data & ~0x0f);
+//	logerror("out2_w: %02x\n", data & ~0x0f);
 }
 
 static WRITE_HANDLER( atarifb_out3_w )
@@ -215,7 +215,7 @@ static WRITE_HANDLER( atarifb_out3_w )
 		case 0x03:
 			break;
 	}
-//	if (errorlog) fprintf (errorlog, "out3_w, %02x:%02x\n", loop, data);
+//	logerror("out3_w, %02x:%02x\n", loop, data);
 }
 
 static struct MemoryReadAddress readmem[] =

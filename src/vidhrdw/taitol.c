@@ -110,8 +110,7 @@ WRITE_HANDLER( taitol_bankc_w )
 	if (bankc[offset] != data + cur_bankg*4)
 	{
 		bankc[offset] = data + cur_bankg*4;
-		if (0 && errorlog)
-			fprintf(errorlog, "Bankc %d, %02x (%04x)\n", offset, data, cpu_get_pc());
+//		logerror("Bankc %d, %02x (%04x)\n", offset, data, cpu_get_pc());
 
 		tilemap_mark_all_tiles_dirty(bg18_tilemap);
 		tilemap_mark_all_tiles_dirty(bg19_tilemap);
@@ -127,8 +126,7 @@ READ_HANDLER( taitol_bankc_r )
 WRITE_HANDLER( taitol_control_w )
 {
 	if (cur_ctrl != data) {
-		if (0 && errorlog)
-			fprintf(errorlog, "Control Write %02x (%04x)\n", data, cpu_get_pc());
+//		logerror("Control Write %02x (%04x)\n", data, cpu_get_pc());
 
 		cur_ctrl = data;
 	}
@@ -136,8 +134,7 @@ WRITE_HANDLER( taitol_control_w )
 
 READ_HANDLER( taitol_control_r )
 {
-	if (0 && errorlog)
-		fprintf(errorlog, "Control Read %02x (%04x)\n", cur_ctrl, cpu_get_pc());
+//	logerror("Control Read %02x (%04x)\n", cur_ctrl, cpu_get_pc());
 	return cur_ctrl;
 }
 

@@ -163,9 +163,9 @@ static void pixt_ri_b(void) { PIXT_RI(B); }
 
 #define PIXT_RIXY(R)		                        \
 {													\
-	if (state.window_checking != 0 && state.window_checking != 3 && errorlog)			\
+	if (state.window_checking != 0 && state.window_checking != 3)			\
 	{												\
-		fprintf(errorlog, "PIXT R,XY  %08X - Window Checking Mode %d not supported\n", PC, state.window_checking);	\
+		logerror("PIXT R,XY  %08X - Window Checking Mode %d not supported\n", PC, state.window_checking);	\
 	}												\
 													\
 	if (state.window_checking != 3 ||						\
@@ -216,9 +216,9 @@ static void pixt_ixyixy_b(void) { PIXT_IXYIXY(B); }
 
 #define DRAV(R)			              			      		\
 {															\
-	if (state.window_checking && errorlog)					\
+	if (state.window_checking)					\
 	{														\
-		fprintf(errorlog, "DRAV  %08X - Window Checking Mode %d not supported\n", PC, state.window_checking);	\
+		logerror("DRAV  %08X - Window Checking Mode %d not supported\n", PC, state.window_checking);	\
 	}														\
 															\
 	WPIXEL(XYTOL(R##REG_XY(R##DSTREG)),COLOR1);				\

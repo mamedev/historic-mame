@@ -169,6 +169,11 @@ int AuditRomSet (int game, tAuditRecord **audit)
 		}
 	}
 
+        #ifdef MESS
+        if (!count)
+                return -1;
+        else
+        #endif
 	return count;
 }
 
@@ -187,7 +192,7 @@ int VerifyRomSet (int game, verify_printf_proc verify_printf)
 
 	if (count == -1) return CORRECT;
 
-	if (gamedrv->clone_of)
+        if (gamedrv->clone_of)
 	{
 		int i;
 		int cloneRomsFound = 0;
@@ -198,8 +203,11 @@ int VerifyRomSet (int game, verify_printf_proc verify_printf)
 				if (!RomInSet (gamedrv->clone_of, aud[i].expchecksum))
 					cloneRomsFound++;
 
+                #ifndef MESS
+                /* Different MESS systems can use the same ROMs */
 		if (cloneRomsFound == 0)
 			return CLONE_NOTFOUND;
+                #endif
 	}
 
 	while (count--)

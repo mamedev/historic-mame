@@ -11,11 +11,11 @@ unsigned char 	*ninjakd2_scrollx_ram;
 unsigned char 	*ninjakd2_bgenable_ram;
 unsigned char 	*ninjakd2_spoverdraw_ram;
 unsigned char 	*ninjakd2_spriteram;
-int 	ninjakd2_spriteram_size;
+size_t ninjakd2_spriteram_size;
 unsigned char 	*ninjakd2_background_videoram;
-int	ninjakd2_backgroundram_size;
+size_t ninjakd2_backgroundram_size;
 unsigned char 	*ninjakd2_foreground_videoram;
-int 	ninjakd2_foregroundram_size;
+size_t ninjakd2_foregroundram_size;
 
 static struct osd_bitmap *bitmap_bg;
 static struct osd_bitmap *bitmap_sp;

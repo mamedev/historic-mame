@@ -11,7 +11,7 @@ driver by Jarek Burczynski
 
 unsigned char *rastan_ram;
 extern unsigned char *rastan_videoram1,*rastan_videoram3;
-extern int rastan_videoram_size;
+extern size_t rastan_videoram_size;
 extern unsigned char *rastan_spriteram;
 extern unsigned char *rastan_scrollx;
 extern unsigned char *rastan_scrolly;
@@ -27,6 +27,7 @@ WRITE_HANDLER( rastan_scrollY_w );
 WRITE_HANDLER( rastan_scrollX_w );
 
 WRITE_HANDLER( rastan_videocontrol_w );
+WRITE_HANDLER( rastan_flipscreen_w );
 
 int rastan_interrupt(void);
 int rastan_s_interrupt(void);
@@ -57,7 +58,7 @@ int rastan_interrupt(void)
 	return 5;  /*Interrupt vector 5*/
 }
 
-READ_HANDLER( rastan_input_r )
+static READ_HANDLER( rastan_input_r )
 {
 	switch (offset)
 	{
@@ -117,7 +118,7 @@ static struct MemoryWriteAddress rastan_writemem[] =
 	{ 0xc0c000, 0xc0ffff, MWA_BANK3 },
 	{ 0xc20000, 0xc20003, rastan_scrollY_w, &rastan_scrolly },  /* scroll Y  1st.w plane1  2nd.w plane2 */
 	{ 0xc40000, 0xc40003, rastan_scrollX_w, &rastan_scrollx },  /* scroll X  1st.w plane1  2nd.w plane2 */
-//	{ 0xc50000, 0xc50003, MWA_NOP },     /* 0 only (rarely)*/
+	{ 0xc50000, 0xc50003, rastan_flipscreen_w },     /* bit 0  flipscreen*/
 	{ 0xd00000, 0xd0ffff, MWA_BANK4, &rastan_spriteram },
 	{ -1 }  /* end of table */
 };
@@ -562,8 +563,8 @@ ROM_END
 
 
 
-GAMEX( 1987, rastan,   0,      rastan, rastan,   0, ROT0, "Taito Corporation Japan", "Rastan (World)", GAME_NO_COCKTAIL )
-/* IDENTICAL to rastan, only differennce is copyright notice and Coin B coinage */
-GAMEX( 1987, rastanu,  rastan, rastan, rastsaga, 0, ROT0, "Taito America Corporation", "Rastan (US set 1)", GAME_NO_COCKTAIL )
-GAMEX( 1987, rastanu2, rastan, rastan, rastsaga, 0, ROT0, "Taito America Corporation", "Rastan (US set 2)", GAME_NO_COCKTAIL )
-GAMEX( 1987, rastsaga, rastan, rastan, rastsaga, 0, ROT0, "Taito Corporation", "Rastan Saga (Japan)", GAME_NO_COCKTAIL )
+GAME( 1987, rastan,   0,      rastan, rastan,   0, ROT0, "Taito Corporation Japan", "Rastan (World)")
+/* IDENTICAL to rastan, only difference is copyright notice and Coin B coinage */
+GAME( 1987, rastanu,  rastan, rastan, rastsaga, 0, ROT0, "Taito America Corporation", "Rastan (US set 1)")
+GAME( 1987, rastanu2, rastan, rastan, rastsaga, 0, ROT0, "Taito America Corporation", "Rastan (US set 2)")
+GAME( 1987, rastsaga, rastan, rastan, rastsaga, 0, ROT0, "Taito Corporation", "Rastan Saga (Japan)")

@@ -44,12 +44,11 @@
 #define VERBOSE 0
 
 #if VERBOSE
-#define LOG(x)	if( errorlog )	fprintf x
+#define LOG(x)	logerror x
 #else
 #define LOG(x)
 #endif
 
-extern FILE *errorlog;
 
 static UINT8 konami_reg_layout[] = {
 	KONAMI_PC, KONAMI_S, KONAMI_CC, KONAMI_A, KONAMI_B, KONAMI_X, -1,
@@ -335,7 +334,7 @@ CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N
 	case 3: val = Y;	break; 			\
 	case 4: val = S; 	break; /* ? */	\
 	case 5: val = U;	break;			\
-	default: val = 0xff; if ( errorlog ) fprintf( errorlog, "Unknown TFR/EXG idx at PC:%04x\n", PC ); break; \
+	default: val = 0xff; logerror("Unknown TFR/EXG idx at PC:%04x\n", PC ); break; \
 }
 
 #define SETREG(val,reg) 				\
@@ -346,7 +345,7 @@ CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N,CC_N
 	case 3: Y = val;	break;			\
 	case 4: S = val;	break; /* ? */	\
 	case 5: U = val; 	break;			\
-	default: if ( errorlog ) fprintf( errorlog, "Unknown TFR/EXG idx at PC:%04x\n", PC ); break; \
+	default: logerror("Unknown TFR/EXG idx at PC:%04x\n", PC ); break; \
 }
 
 /* opcode timings */
@@ -540,7 +539,7 @@ void konami_set_nmi_line(int state)
 {
 	if (konami.nmi_state == state) return;
 	konami.nmi_state = state;
-	LOG((errorlog, "KONAMI#%d set_nmi_line %d\n", cpu_getactivecpu(), state));
+	LOG(("KONAMI#%d set_nmi_line %d\n", cpu_getactivecpu(), state));
 	if( state == CLEAR_LINE ) return;
 
 	/* if the stack was not yet initialized */
@@ -576,7 +575,7 @@ void konami_set_nmi_line(int state)
  ****************************************************************************/
 void konami_set_irq_line(int irqline, int state)
 {
-    LOG((errorlog, "KONAMI#%d set_irq_line %d, %d\n", cpu_getactivecpu(), irqline, state));
+    LOG(("KONAMI#%d set_irq_line %d, %d\n", cpu_getactivecpu(), irqline, state));
 	konami.irq_state[irqline] = state;
 	if (state == CLEAR_LINE) return;
 	CHECK_IRQ_LINES;

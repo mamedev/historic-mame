@@ -398,7 +398,7 @@ WRITE_HANDLER( hunchbkd_data_w )
 
 READ_HANDLER( hunchbkd_port0_r )
 {
-	if(errorlog) fprintf(errorlog, "port 0 : pc = %4x\n",s2650_get_pc());
+	logerror("port 0 : pc = %4x\n",s2650_get_pc());
 
 	switch (s2650_get_pc())
 	{

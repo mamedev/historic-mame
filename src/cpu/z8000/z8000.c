@@ -30,7 +30,7 @@
 
 
 #if VERBOSE
-#define LOG(x)	if( errorlog ) fprintf x
+#define LOG(x)	logerror x
 #else
 #define LOG(x)
 #endif
@@ -343,11 +343,11 @@ INLINE void set_irq(int type)
             IRQ_REQ = type;
             break;
         case Z8000_SYSCALL >> 8:
-            LOG((errorlog, "Z8K#%d SYSCALL $%02x\n", cpu_getactivecpu(), type & 0xff));
+            LOG(("Z8K#%d SYSCALL $%02x\n", cpu_getactivecpu(), type & 0xff));
             IRQ_REQ = type;
             break;
         default:
-            if (errorlog) fprintf(errorlog, "Z8000 invalid Cause_Interrupt %04x\n", type);
+            logerror("Z8000 invalid Cause_Interrupt %04x\n", type);
             return;
     }
     /* set interrupt request flag, reset HALT flag */
@@ -381,7 +381,7 @@ INLINE void Interrupt(void)
         IRQ_SRV = IRQ_REQ;
         IRQ_REQ &= ~Z8000_TRAP;
         PC = TRAP;
-        LOG((errorlog, "Z8K#%d trap $%04x\n", cpu_getactivecpu(), PC ));
+        LOG(("Z8K#%d trap $%04x\n", cpu_getactivecpu(), PC ));
    }
    else
    if ( IRQ_REQ & Z8000_SYSCALL )
@@ -393,7 +393,7 @@ INLINE void Interrupt(void)
         IRQ_SRV = IRQ_REQ;
         IRQ_REQ &= ~Z8000_SYSCALL;
         PC = SYSCALL;
-        LOG((errorlog, "Z8K#%d syscall $%04x\n", cpu_getactivecpu(), PC ));
+        LOG(("Z8K#%d syscall $%04x\n", cpu_getactivecpu(), PC ));
    }
    else
    if ( IRQ_REQ & Z8000_SEGTRAP )
@@ -405,7 +405,7 @@ INLINE void Interrupt(void)
         IRQ_SRV = IRQ_REQ;
         IRQ_REQ &= ~Z8000_SEGTRAP;
         PC = SEGTRAP;
-        LOG((errorlog, "Z8K#%d segtrap $%04x\n", cpu_getactivecpu(), PC ));
+        LOG(("Z8K#%d segtrap $%04x\n", cpu_getactivecpu(), PC ));
    }
    else
    if ( IRQ_REQ & Z8000_NMI )
@@ -420,7 +420,7 @@ INLINE void Interrupt(void)
         IRQ_REQ &= ~Z8000_NMI;
         CHANGE_FCW(fcw);
         PC = NMI;
-        LOG((errorlog, "Z8K#%d NMI $%04x\n", cpu_getactivecpu(), PC ));
+        LOG(("Z8K#%d NMI $%04x\n", cpu_getactivecpu(), PC ));
     }
     else
     if ( (IRQ_REQ & Z8000_NVI) && (FCW & F_NVIE) )
@@ -434,7 +434,7 @@ INLINE void Interrupt(void)
         PC = RDMEM_W( NVI + 2 );
         IRQ_REQ &= ~Z8000_NVI;
         CHANGE_FCW(fcw);
-        LOG((errorlog, "Z8K#%d NVI $%04x\n", cpu_getactivecpu(), PC ));
+        LOG(("Z8K#%d NVI $%04x\n", cpu_getactivecpu(), PC ));
     }
     else
     if ( (IRQ_REQ & Z8000_VI) && (FCW & F_VIE) )
@@ -448,7 +448,7 @@ INLINE void Interrupt(void)
         PC = RDMEM_W( VEC00 + 2 * (IRQ_REQ & 0xff) );
         IRQ_REQ &= ~Z8000_VI;
         CHANGE_FCW(fcw);
-        LOG((errorlog, "Z8K#%d VI [$%04x/$%04x] fcw $%04x, pc $%04x\n", cpu_getactivecpu(), IRQ_VEC, VEC00 + VEC00 + 2 * (IRQ_REQ & 0xff), FCW, PC ));
+        LOG(("Z8K#%d VI [$%04x/$%04x] fcw $%04x, pc $%04x\n", cpu_getactivecpu(), IRQ_VEC, VEC00 + VEC00 + 2 * (IRQ_REQ & 0xff), FCW, PC ));
     }
 }
 

@@ -129,7 +129,7 @@ READ_HANDLER( ajax_ls138_f10_r )
 			break;
 
 		default:
-			if (errorlog) fprintf(errorlog,"%04x: (ls138_f10) read from an unknown address %02x\n",cpu_get_pc(), offset);
+			logerror("%04x: (ls138_f10) read from an unknown address %02x\n",cpu_get_pc(), offset);
 	}
 
 	return data;
@@ -160,7 +160,7 @@ WRITE_HANDLER( ajax_ls138_f10_w )
 			break;
 
 		default:
-			if (errorlog) fprintf(errorlog,"%04x: (ls138_f10) write %02x to an unknown address %02x\n",cpu_get_pc(), data, offset);
+			logerror("%04x: (ls138_f10) write %02x to an unknown address %02x\n",cpu_get_pc(), data, offset);
 	}
 }
 

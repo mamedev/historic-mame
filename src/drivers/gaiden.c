@@ -116,7 +116,7 @@ WRITE_HANDLER( tknight_protection_w )
 
 	data = (data >> 8) & 0xff;
 
-//if (errorlog) fprintf(errorlog,"PC %06x: prot = %02x\n",cpu_get_pc(),data);
+//logerror("PC %06x: prot = %02x\n",cpu_get_pc(),data);
 
 	switch (data & 0xf0)
 	{
@@ -131,7 +131,7 @@ WRITE_HANDLER( tknight_protection_w )
 			jumpcode |= data & 0x0f;
 			if (jumpcode > 16)
 			{
-if (errorlog) fprintf(errorlog,"unknown jumpcode %02x\n",jumpcode);
+logerror("unknown jumpcode %02x\n",jumpcode);
 				jumpcode = 0;
 			}
 			prot = 0x20;
@@ -153,7 +153,7 @@ if (errorlog) fprintf(errorlog,"unknown jumpcode %02x\n",jumpcode);
 
 READ_HANDLER( tknight_protection_r )
 {
-//if (errorlog) fprintf(errorlog,"PC %06x: read prot %02x\n",cpu_get_pc(),prot);
+//logerror("PC %06x: read prot %02x\n",cpu_get_pc(),prot);
 	return prot;
 }
 
@@ -458,7 +458,7 @@ static struct YM2203interface ym2203_interface =
 static struct OKIM6295interface okim6295_interface =
 {
 	1,                  /* 1 chip */
-	{ 8000 },           /* 8000Hz frequency */
+	{ 7576 },			/* 7576Hz frequency */
 	{ REGION_SOUND1 },	/* memory region */
 	{ 20 }
 };

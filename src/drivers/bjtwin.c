@@ -83,7 +83,7 @@ extern unsigned char *bjtwin_workram;
 extern unsigned char *bjtwin_spriteram;
 extern unsigned char *bjtwin_txvideoram;
 extern unsigned char *bjtwin_videocontrol;
-extern int bjtwin_txvideoram_size;
+extern size_t bjtwin_txvideoram_size;
 
 
 READ_HANDLER( bjtwin_txvideoram_r );

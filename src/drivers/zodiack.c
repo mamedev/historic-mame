@@ -25,7 +25,7 @@ TODO:
 extern unsigned char *zodiack_videoram2;
 extern unsigned char *galaxian_attributesram;
 extern unsigned char *galaxian_bulletsram;
-extern int galaxian_bulletsram_size;
+extern size_t galaxian_bulletsram_size;
 
 int percuss_hardware;
 
@@ -561,9 +561,33 @@ ROM_START( percuss )
 	ROM_LOAD( "percus2b.prm", 0x0020, 0x0020, 0xe561b029 )
 ROM_END
 
+ROM_START( bounty )
+	ROM_REGION( 0x10000, REGION_CPU1 )       /* 64k for code */
+	/* first 256 bytes are missing due to protection - they are replaced */
+	/* with stub code that draws the Orca logo on screen */
+	ROM_LOAD( "1.4f",      0x0000, 0x1000, BADCRC( 0xb3776ecb ) )
+	ROM_LOAD( "3.4k",      0x1000, 0x1000, 0xfa3086c3 )
+	ROM_LOAD( "2.4h",      0x2000, 0x1000, 0x52ab5314 )
+	ROM_LOAD( "4.4m",      0x3000, 0x1000, 0x5c9d3f07 )
+
+	ROM_REGION( 0x10000, REGION_CPU2 ) /* 64k for the audio CPU */
+	ROM_LOAD( "7.4n",      0x0000, 0x1000, 0x45e369b8 )
+	ROM_LOAD( "8.4r",      0x1000, 0x1000, 0x4f52c87d )
+
+	ROM_REGION( 0x2800, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "9.4r",      0x0000, 0x0800, 0x4b4acde5 )
+	ROM_LOAD( "5.7m",      0x0800, 0x1000, 0xa5ce2a24 )
+	ROM_LOAD( "6.7p",      0x1800, 0x1000, 0x43183301 )
+
+	ROM_REGION( 0x0040, REGION_PROMS )
+	ROM_LOAD( "mb7051.2a",   0x0000, 0x0020, 0x0de11a46 )
+	ROM_LOAD( "mb7051.2b",   0x0020, 0x0020, 0x465e31d4 )
+ROM_END
+
 
 
 GAMEX(1983, zodiack,  0, zodiack, zodiac,   0, ROT270, "Orca (Esco Trading Co, Inc)", "Zodiack", GAME_IMPERFECT_COLORS )	/* bullet color needs to be verified */
 GAMEX(1983, dogfight, 0, zodiack, dogfight, 0, ROT270, "[Orca] Thunderbolt", "Dog Fight", GAME_IMPERFECT_COLORS )	/* bullet color needs to be verified */
 GAMEX(1982, moguchan, 0, zodiack, moguchan, 0, ROT270, "Orca (Eastern Commerce Inc. license) (bootleg?)",  /* this is in the ROM at $0b5c */ "Moguchan", GAME_WRONG_COLORS )
 GAME( 1981, percuss,  0, percuss, percuss,  0, ROT270, "Orca", "The Percussor" )
+GAMEX(1982, bounty,   0, zodiack, percuss,  0, ROT0,   "Orca", "The Bounty", GAME_NOT_WORKING )

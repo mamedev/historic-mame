@@ -186,7 +186,7 @@ b73	checks lives. If zero, writes 0 to port 04 then jp 0000h.
 
 extern unsigned char *slapfight_videoram;
 extern unsigned char *slapfight_colorram;
-extern int slapfight_videoram_size;
+extern size_t slapfight_videoram_size;
 extern unsigned char *slapfight_scrollx_lo,*slapfight_scrollx_hi,*slapfight_scrolly;
 void slapfight_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void slapfight_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
@@ -196,7 +196,7 @@ void slapfight_vh_convert_color_prom(unsigned char *palette, unsigned short *col
 void slapfight_init_machine(void);
 
 extern unsigned char *slapfight_dpram;
-extern int slapfight_dpram_size;
+extern size_t slapfight_dpram_size;
 WRITE_HANDLER( slapfight_dpram_w );
 READ_HANDLER( slapfight_dpram_r );
 

@@ -415,8 +415,7 @@ void toaplan2_voffs_w(int offset, int data, int controller)
 		case 0x1400:
 		case 0x1000:	top_offs[controller] = (data & 0x7ff) * 2; break;
 		case 0x1800:	sprite_offs[controller] = (data & 0x3ff) * 2; break;
-		default:		if (errorlog)
-							fprintf(errorlog,"Hmmm, unknown video controller %01x layer being selected (%08x)\n",controller,data);
+		default:		logerror("Hmmm, unknown video controller %01x layer being selected (%08x)\n",controller,data);
 						data &= 0x1800;
 						if ((data & 0x1800) == 0x0000)
 							bg_offs[controller] = (data & 0x7ff) * 2;
@@ -452,8 +451,7 @@ int toaplan2_videoram_r(int offset, int controller)
 				bg_offs[controller] += 2;
 				if (bg_offs[controller] > TOAPLAN2_BG_VRAM_SIZE)
 				{
-					if (errorlog)
-						fprintf(errorlog,"Reading %04x from out of range BG Layer address (%08x)  Video controller %01x  !!!\n",video_data,bg_offs[controller],controller);
+					logerror("Reading %04x from out of range BG Layer address (%08x)  Video controller %01x  !!!\n",video_data,bg_offs[controller],controller);
 				}
 				break;
 		case 0x0c00:
@@ -463,8 +461,7 @@ int toaplan2_videoram_r(int offset, int controller)
 				fg_offs[controller] += 2;
 				if (fg_offs[controller] > TOAPLAN2_FG_VRAM_SIZE)
 				{
-					if (errorlog)
-						fprintf(errorlog,"Reading %04x from out of range FG Layer address (%08x)  Video controller %01x  !!!\n",video_data,fg_offs[controller],controller);
+					logerror("Reading %04x from out of range FG Layer address (%08x)  Video controller %01x  !!!\n",video_data,fg_offs[controller],controller);
 				}
 				break;
 		case 0x1400:
@@ -474,8 +471,7 @@ int toaplan2_videoram_r(int offset, int controller)
 				top_offs[controller] += 2;
 				if (top_offs[controller] > TOAPLAN2_TOP_VRAM_SIZE)
 				{
-					if (errorlog)
-						fprintf(errorlog,"Reading %04x from out of range TOP Layer address (%08x)  Video controller %01x  !!!\n",video_data,top_offs[controller],controller);
+					logerror("Reading %04x from out of range TOP Layer address (%08x)  Video controller %01x  !!!\n",video_data,top_offs[controller],controller);
 				}
 				break;
 		case 0x1800:
@@ -484,14 +480,12 @@ int toaplan2_videoram_r(int offset, int controller)
 				sprite_offs[controller] += 2;
 				if (sprite_offs[controller] > TOAPLAN2_SPRITERAM_SIZE)
 				{
-					if (errorlog)
-						fprintf(errorlog,"Reading %04x from out of range Sprite address (%08x)  Video controller %01x  !!!\n",video_data,sprite_offs[controller],controller);
+					logerror("Reading %04x from out of range Sprite address (%08x)  Video controller %01x  !!!\n",video_data,sprite_offs[controller],controller);
 				}
 				break;
 		default:
 				video_data = toaplan2_unk_vram;
-				if (errorlog)
-					fprintf(errorlog,"Hmmm, reading %04x from unknown video layer (%08x)  Video controller %01x  !!!\n",video_data,toaplan2_voffs[controller],controller);
+				logerror("Hmmm, reading %04x from unknown video layer (%08x)  Video controller %01x  !!!\n",video_data,toaplan2_voffs[controller],controller);
 				break;
 	}
 	return video_data;
@@ -526,8 +520,7 @@ void toaplan2_videoram_w(int offset, int data, int controller)
 				bg_offs[controller] += 2;
 				if (bg_offs[controller] > TOAPLAN2_BG_VRAM_SIZE)
 				{
-					if (errorlog)
-						fprintf(errorlog,"Writing %04x to out of range BG Layer address (%08x)  Video controller %01x  !!!\n",data,bg_offs[controller],controller);
+					logerror("Writing %04x to out of range BG Layer address (%08x)  Video controller %01x  !!!\n",data,bg_offs[controller],controller);
 				}
 				break;
 		case 0x0c00:
@@ -543,8 +536,7 @@ void toaplan2_videoram_w(int offset, int data, int controller)
 				fg_offs[controller] += 2;
 				if (fg_offs[controller] > TOAPLAN2_FG_VRAM_SIZE)
 				{
-					if (errorlog)
-						fprintf(errorlog,"Writing %04x to out of range FG Layer address (%08x)  Video controller %01x  !!!\n",data,fg_offs[controller],controller);
+					logerror("Writing %04x to out of range FG Layer address (%08x)  Video controller %01x  !!!\n",data,fg_offs[controller],controller);
 				}
 				break;
 		case 0x1400:
@@ -560,8 +552,7 @@ void toaplan2_videoram_w(int offset, int data, int controller)
 				top_offs[controller] += 2;
 				if (top_offs[controller] > TOAPLAN2_TOP_VRAM_SIZE)
 				{
-					if (errorlog)
-						fprintf(errorlog,"Writing %04x to out of range TOP Layer address (%08x)  Video controller %01x  !!!\n",data,top_offs[controller],controller);
+					logerror("Writing %04x to out of range TOP Layer address (%08x)  Video controller %01x  !!!\n",data,top_offs[controller],controller);
 				}
 				break;
 		case 0x1800:
@@ -570,14 +561,12 @@ void toaplan2_videoram_w(int offset, int data, int controller)
 				sprite_offs[controller] += 2;
 				if (sprite_offs[controller] > TOAPLAN2_SPRITERAM_SIZE)
 				{
-					if (errorlog)
-						fprintf(errorlog,"Writing %04x to out of range Sprite address (%08x)  Video controller %01x  !!!\n",data,sprite_offs[controller],controller);
+					logerror("Writing %04x to out of range Sprite address (%08x)  Video controller %01x  !!!\n",data,sprite_offs[controller],controller);
 				}
 				break;
 		default:
 				toaplan2_unk_vram = data;
-				if (errorlog)
-					fprintf(errorlog,"Hmmm, writing %04x to unknown video layer (%08x)  Video controller %01x  \n",toaplan2_unk_vram,toaplan2_voffs[controller],controller);
+				logerror("Hmmm, writing %04x to unknown video layer (%08x)  Video controller %01x  \n",toaplan2_unk_vram,toaplan2_voffs[controller],controller);
 				break;
 	}
 }
@@ -596,7 +585,7 @@ void toaplan2_scroll_reg_select_w(int offset, int data, int controller)
 	toaplan2_scroll_reg[controller] = data;
 	if (toaplan2_scroll_reg[controller] & 0xffffff70)
 	{
-		if (errorlog) fprintf(errorlog,"Hmmm, unknown video control register selected (%08x)  Video controller %01x  \n",toaplan2_scroll_reg[controller],controller);
+		logerror("Hmmm, unknown video control register selected (%08x)  Video controller %01x  \n",toaplan2_scroll_reg[controller],controller);
 	}
 }
 WRITE_HANDLER( toaplan2_0_scroll_reg_select_w )
@@ -709,8 +698,7 @@ void toaplan2_scroll_reg_data_w(int offset, int data, int controller)
 						cpu_set_reset_line(1,PULSE_LINE);
 						YM3812_sh_reset();
 					}
-		default:	if (errorlog)
-						fprintf(errorlog,"Hmmm, writing %08x to unknown video control register (%08x)  Video controller %01x  !!!\n",data ,toaplan2_scroll_reg[controller],controller);
+		default:	logerror("Hmmm, writing %08x to unknown video control register (%08x)  Video controller %01x  !!!\n",data ,toaplan2_scroll_reg[controller],controller);
 					break;
 	}
 
@@ -821,11 +809,11 @@ void toaplan2_log_vram(void)
 		}
 
 		while (keyboard_pressed(KEYCODE_M)) ;
-		if (errorlog) fprintf (errorlog, "Scrolls   BG-X  BG-Y   FG-X  FG-Y   TOP-X  TOP-Y   Sprite-X  Sprite-Y\n");
-		if (errorlog) fprintf (errorlog, "---0-->   %04x  %04x   %04x  %04x    %04x  %04x       %04x    %04x\n", bg_scrollx[0],bg_scrolly[0],fg_scrollx[0],fg_scrolly[0],top_scrollx[0],top_scrolly[0],sprite_scrollx[0], sprite_scrolly[0]);
+		logerror("Scrolls   BG-X  BG-Y   FG-X  FG-Y   TOP-X  TOP-Y   Sprite-X  Sprite-Y\n");
+		logerror("---0-->   %04x  %04x   %04x  %04x    %04x  %04x       %04x    %04x\n", bg_scrollx[0],bg_scrolly[0],fg_scrollx[0],fg_scrolly[0],top_scrollx[0],top_scrolly[0],sprite_scrollx[0], sprite_scrolly[0]);
 		if (vid_controllers == 2)
 		{
-			if (errorlog) fprintf (errorlog, "---1-->   %04x  %04x   %04x  %04x    %04x  %04x       %04x    %04x\n", bg_scrollx[1],bg_scrolly[1],fg_scrollx[1],fg_scrolly[1],top_scrollx[1],top_scrolly[1],sprite_scrollx[1], sprite_scrolly[1]);
+			logerror("---1-->   %04x  %04x   %04x  %04x    %04x  %04x       %04x    %04x\n", bg_scrollx[1],bg_scrolly[1],fg_scrollx[1],fg_scrolly[1],top_scrollx[1],top_scrolly[1],sprite_scrollx[1], sprite_scrolly[1]);
 		}
 		for ( sprite_voffs = 0; sprite_voffs < (TOAPLAN2_SPRITERAM_SIZE/2); sprite_voffs+=4 )
 		{
@@ -841,8 +829,8 @@ void toaplan2_log_vram(void)
 			schar[2] = source_new0[sprite_voffs + 1];
 			sxpos[2] = source_new0[sprite_voffs + 2];
 			sypos[2] = source_new0[sprite_voffs + 3];
-			if (errorlog) fprintf (errorlog, "SPoffs     Sprt Attr Xpos Ypos     Sprt Attr Xpos Ypos     Sprt Attr Xpos Ypos\n");
-			if (errorlog) fprintf (errorlog, "0:%03x now:%04x %04x %04x %04x nxt:%04x %04x %04x %04x new:%04x %04x %04x %04x\n",sprite_voffs,
+			logerror("SPoffs     Sprt Attr Xpos Ypos     Sprt Attr Xpos Ypos     Sprt Attr Xpos Ypos\n");
+			logerror("0:%03x now:%04x %04x %04x %04x nxt:%04x %04x %04x %04x new:%04x %04x %04x %04x\n",sprite_voffs,
 						 						schar[0], sattr[0],sxpos[0], sypos[0],
 						 						schar[1], sattr[1],sxpos[1], sypos[1],
 						 						schar[2], sattr[2],sxpos[2], sypos[2]);
@@ -860,7 +848,7 @@ void toaplan2_log_vram(void)
 				schar[2] = source_new1[sprite_voffs + 1];
 				sxpos[2] = source_new1[sprite_voffs + 2];
 				sypos[2] = source_new1[sprite_voffs + 3];
-				if (errorlog) fprintf (errorlog, "1:%03x now:%04x %04x %04x %04x nxt:%04x %04x %04x %04x new:%04x %04x %04x %04x\n",sprite_voffs,
+				logerror("1:%03x now:%04x %04x %04x %04x nxt:%04x %04x %04x %04x new:%04x %04x %04x %04x\n",sprite_voffs,
 							 					schar[0], sattr[0],sxpos[0], sypos[0],
 							 					schar[1], sattr[1],sxpos[1], sypos[1],
 							 					schar[2], sattr[2],sxpos[2], sypos[2]);
@@ -871,11 +859,11 @@ void toaplan2_log_vram(void)
 	{
 		int tchar[2], tattr[2];
 		while (keyboard_pressed(KEYCODE_N)) ;
-		if (errorlog) fprintf (errorlog, "Scrolls   BG-X  BG-Y   FG-X  FG-Y   TOP-X  TOP-Y   Sprite-X  Sprite-Y\n");
-		if (errorlog) fprintf (errorlog, "---0-->   %04x  %04x   %04x  %04x    %04x  %04x       %04x    %04x\n", bg_scrollx[0],bg_scrolly[0],fg_scrollx[0],fg_scrolly[0],top_scrollx[0],top_scrolly[0],sprite_scrollx[0], sprite_scrolly[0]);
+		logerror("Scrolls   BG-X  BG-Y   FG-X  FG-Y   TOP-X  TOP-Y   Sprite-X  Sprite-Y\n");
+		logerror("---0-->   %04x  %04x   %04x  %04x    %04x  %04x       %04x    %04x\n", bg_scrollx[0],bg_scrolly[0],fg_scrollx[0],fg_scrolly[0],top_scrollx[0],top_scrolly[0],sprite_scrollx[0], sprite_scrolly[0]);
 		if (vid_controllers == 2)
 		{
-			if (errorlog) fprintf (errorlog, "---1-->   %04x  %04x   %04x  %04x    %04x  %04x       %04x    %04x\n", bg_scrollx[1],bg_scrolly[1],fg_scrollx[1],fg_scrolly[1],top_scrollx[1],top_scrolly[1],sprite_scrollx[1], sprite_scrolly[1]);
+			logerror("---1-->   %04x  %04x   %04x  %04x    %04x  %04x       %04x    %04x\n", bg_scrollx[1],bg_scrolly[1],fg_scrollx[1],fg_scrolly[1],top_scrollx[1],top_scrolly[1],sprite_scrollx[1], sprite_scrolly[1]);
 		}
 		for ( tile_voffs = 0; tile_voffs < TOAPLAN2_TOP_VRAM_SIZE; tile_voffs+=4 )
 		{
@@ -885,11 +873,11 @@ void toaplan2_log_vram(void)
 			{
 				tchar[1] = READ_WORD (&topvideoram[1][tile_voffs + 2]);
 				tattr[1] = READ_WORD (&topvideoram[1][tile_voffs]);
-				if (errorlog) fprintf (errorlog, "TXoffs:%04x   Tile0:%04x  Attr0:%04x    Tile1:%04x  Attr1:%04x\n", tile_voffs/2, tchar[0], tattr[0], tchar[1], tattr[1]);
+				logerror("TXoffs:%04x   Tile0:%04x  Attr0:%04x    Tile1:%04x  Attr1:%04x\n", tile_voffs/2, tchar[0], tattr[0], tchar[1], tattr[1]);
 			}
 			else
 			{
-				if (errorlog) fprintf (errorlog, "TXoffs:%04x   Tile0:%04x  Attr0:%04x\n", tile_voffs/2, tchar[0], tattr[0]);
+				logerror("TXoffs:%04x   Tile0:%04x  Attr0:%04x\n", tile_voffs/2, tchar[0], tattr[0]);
 			}
 		}
 	}
@@ -897,11 +885,11 @@ void toaplan2_log_vram(void)
 	{
 		int tchar[2], tattr[2];
 		while (keyboard_pressed(KEYCODE_B)) ;
-		if (errorlog) fprintf (errorlog, "Scrolls   BG-X  BG-Y   FG-X  FG-Y   TOP-X  TOP-Y   Sprite-X  Sprite-Y\n");
-		if (errorlog) fprintf (errorlog, "---0-->   %04x  %04x   %04x  %04x    %04x  %04x       %04x    %04x\n", bg_scrollx[0],bg_scrolly[0],fg_scrollx[0],fg_scrolly[0],top_scrollx[0],top_scrolly[0],sprite_scrollx[0], sprite_scrolly[0]);
+		logerror("Scrolls   BG-X  BG-Y   FG-X  FG-Y   TOP-X  TOP-Y   Sprite-X  Sprite-Y\n");
+		logerror("---0-->   %04x  %04x   %04x  %04x    %04x  %04x       %04x    %04x\n", bg_scrollx[0],bg_scrolly[0],fg_scrollx[0],fg_scrolly[0],top_scrollx[0],top_scrolly[0],sprite_scrollx[0], sprite_scrolly[0]);
 		if (vid_controllers == 2)
 		{
-			if (errorlog) fprintf (errorlog, "---1-->   %04x  %04x   %04x  %04x    %04x  %04x       %04x    %04x\n", bg_scrollx[1],bg_scrolly[1],fg_scrollx[1],fg_scrolly[1],top_scrollx[1],top_scrolly[1],sprite_scrollx[1], sprite_scrolly[1]);
+			logerror("---1-->   %04x  %04x   %04x  %04x    %04x  %04x       %04x    %04x\n", bg_scrollx[1],bg_scrolly[1],fg_scrollx[1],fg_scrolly[1],top_scrollx[1],top_scrolly[1],sprite_scrollx[1], sprite_scrolly[1]);
 		}
 		for ( tile_voffs = 0; tile_voffs < TOAPLAN2_FG_VRAM_SIZE; tile_voffs+=4 )
 		{
@@ -911,11 +899,11 @@ void toaplan2_log_vram(void)
 			{
 				tchar[1] = READ_WORD (&fgvideoram[1][tile_voffs + 2]);
 				tattr[1] = READ_WORD (&fgvideoram[1][tile_voffs]);
-				if (errorlog) fprintf (errorlog, "FGoffs:%04x   Tile0:%04x  Attr0:%04x    Tile1:%04x  Attr1:%04x\n", tile_voffs/2, tchar[0], tattr[0], tchar[1], tattr[1]);
+				logerror("FGoffs:%04x   Tile0:%04x  Attr0:%04x    Tile1:%04x  Attr1:%04x\n", tile_voffs/2, tchar[0], tattr[0], tchar[1], tattr[1]);
 			}
 			else
 			{
-				if (errorlog) fprintf (errorlog, "FGoffs:%04x   Tile0:%04x  Attr0:%04x\n", tile_voffs/2, tchar[0], tattr[0]);
+				logerror("FGoffs:%04x   Tile0:%04x  Attr0:%04x\n", tile_voffs/2, tchar[0], tattr[0]);
 			}
 		}
 	}
@@ -923,11 +911,11 @@ void toaplan2_log_vram(void)
 	{
 		int tchar[2], tattr[2];
 		while (keyboard_pressed(KEYCODE_V)) ;
-		if (errorlog) fprintf (errorlog, "Scrolls   BG-X  BG-Y   FG-X  FG-Y   TOP-X  TOP-Y   Sprite-X  Sprite-Y\n");
-		if (errorlog) fprintf (errorlog, "---0-->   %04x  %04x   %04x  %04x    %04x  %04x       %04x    %04x\n", bg_scrollx[0],bg_scrolly[0],fg_scrollx[0],fg_scrolly[0],top_scrollx[0],top_scrolly[0],sprite_scrollx[0], sprite_scrolly[0]);
+		logerror("Scrolls   BG-X  BG-Y   FG-X  FG-Y   TOP-X  TOP-Y   Sprite-X  Sprite-Y\n");
+		logerror("---0-->   %04x  %04x   %04x  %04x    %04x  %04x       %04x    %04x\n", bg_scrollx[0],bg_scrolly[0],fg_scrollx[0],fg_scrolly[0],top_scrollx[0],top_scrolly[0],sprite_scrollx[0], sprite_scrolly[0]);
 		if (vid_controllers == 2)
 		{
-			if (errorlog) fprintf (errorlog, "---1-->   %04x  %04x   %04x  %04x    %04x  %04x       %04x    %04x\n", bg_scrollx[1],bg_scrolly[1],fg_scrollx[1],fg_scrolly[1],top_scrollx[1],top_scrolly[1],sprite_scrollx[1], sprite_scrolly[1]);
+			logerror("---1-->   %04x  %04x   %04x  %04x    %04x  %04x       %04x    %04x\n", bg_scrollx[1],bg_scrolly[1],fg_scrollx[1],fg_scrolly[1],top_scrollx[1],top_scrolly[1],sprite_scrollx[1], sprite_scrolly[1]);
 		}
 		for ( tile_voffs = 0; tile_voffs < TOAPLAN2_BG_VRAM_SIZE; tile_voffs+=4 )
 		{
@@ -937,11 +925,11 @@ void toaplan2_log_vram(void)
 			{
 				tchar[1] = READ_WORD (&bgvideoram[1][tile_voffs + 2]);
 				tattr[1] = READ_WORD (&bgvideoram[1][tile_voffs]);
-				if (errorlog) fprintf (errorlog, "BGoffs:%04x   Tile0:%04x  Attr0:%04x    Tile1:%04x  Attr1:%04x\n", tile_voffs/2, tchar[0], tattr[0], tchar[1], tattr[1]);
+				logerror("BGoffs:%04x   Tile0:%04x  Attr0:%04x    Tile1:%04x  Attr1:%04x\n", tile_voffs/2, tchar[0], tattr[0], tchar[1], tattr[1]);
 			}
 			else
 			{
-				if (errorlog) fprintf (errorlog, "BGoffs:%04x   Tile0:%04x  Attr0:%04x\n", tile_voffs/2, tchar[0], tattr[0]);
+				logerror("BGoffs:%04x   Tile0:%04x  Attr0:%04x\n", tile_voffs/2, tchar[0], tattr[0]);
 			}
 		}
 	}
@@ -949,7 +937,7 @@ void toaplan2_log_vram(void)
 	if ( keyboard_pressed(KEYCODE_C) )
 	{
 		while (keyboard_pressed(KEYCODE_C)) ;
-		if (errorlog) fprintf (errorlog, "Mark here\n");
+		logerror("Mark here\n");
 	}
 	if ( keyboard_pressed(KEYCODE_G) )
 	{
@@ -959,11 +947,11 @@ void toaplan2_log_vram(void)
 	}
 	if (displog)
 	{
-		if (errorlog) fprintf (errorlog, "Scrolls   BG-X  BG-Y   FG-X  FG-Y   TOP-X  TOP-Y   Sprite-X  Sprite-Y\n");
-		if (errorlog) fprintf (errorlog, "---0-->   %04x  %04x   %04x  %04x    %04x  %04x       %04x    %04x\n", bg_scrollx[0],bg_scrolly[0],fg_scrollx[0],fg_scrolly[0],top_scrollx[0],top_scrolly[0],sprite_scrollx[0], sprite_scrolly[0]);
+		logerror("Scrolls   BG-X  BG-Y   FG-X  FG-Y   TOP-X  TOP-Y   Sprite-X  Sprite-Y\n");
+		logerror("---0-->   %04x  %04x   %04x  %04x    %04x  %04x       %04x    %04x\n", bg_scrollx[0],bg_scrolly[0],fg_scrollx[0],fg_scrolly[0],top_scrollx[0],top_scrolly[0],sprite_scrollx[0], sprite_scrolly[0]);
 		if (vid_controllers == 2)
 		{
-			if (errorlog) fprintf (errorlog, "---1-->   %04x  %04x   %04x  %04x    %04x  %04x       %04x    %04x\n", bg_scrollx[1],bg_scrolly[1],fg_scrollx[1],fg_scrolly[1],top_scrollx[1],top_scrolly[1],sprite_scrollx[1], sprite_scrolly[1]);
+			logerror("---1-->   %04x  %04x   %04x  %04x    %04x  %04x       %04x    %04x\n", bg_scrollx[1],bg_scrolly[1],fg_scrollx[1],fg_scrolly[1],top_scrollx[1],top_scrolly[1],sprite_scrollx[1], sprite_scrolly[1]);
 		}
 	}
 }
@@ -1126,7 +1114,7 @@ void toaplan2_0_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		sprite_priority[0][priority] = 0;		/* Clear priorities used list */
 
 #if TOAPLAN2_DEBUG
-	if (errorlog) toaplan2_log_vram();
+	toaplan2_log_vram();
 #endif
 
 	tilemap_update(ALL_TILEMAPS);
@@ -1160,7 +1148,7 @@ void toaplan2_1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 
 #if TOAPLAN2_DEBUG
-	if (errorlog) toaplan2_log_vram();
+	toaplan2_log_vram();
 #endif
 
 	tilemap_update(ALL_TILEMAPS);
@@ -1203,7 +1191,7 @@ void batsugun_1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 
 #if TOAPLAN2_DEBUG
-	if (errorlog) toaplan2_log_vram();
+	toaplan2_log_vram();
 #endif
 
 	tilemap_update(ALL_TILEMAPS);

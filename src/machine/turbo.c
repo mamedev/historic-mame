@@ -140,7 +140,7 @@ static void portB_w(int chip, int data)
 				if (!sample_playing(7))
 					sample_start(7, 8, 0);
 				else
-					if (errorlog) fprintf(errorlog, "ambu didnt start\n");
+					logerror("ambu didnt start\n");
 			}
 			else
 				sample_stop(7);
@@ -227,7 +227,7 @@ READ_HANDLER( turbo_8279_r )
 		return readinputport(1);  /* DSW 1 */
 	else
 	{
-		if (errorlog) fprintf(errorlog, "read 0xfc%02x\n", offset);
+		logerror("read 0xfc%02x\n", offset);
 		return 0x10;
 	}
 }

@@ -131,7 +131,7 @@ WRITE_HANDLER( footchmp_spriteram_w ) {
 }
 
 WRITE_HANDLER( footchmp_spritebank_w ) {
-	if (errorlog) fprintf (errorlog, "PC = %06x: bank %d, new value: %04x\n", cpu_get_pc(), offset >> 1, ( data & 0x0f ) << 10);
+	logerror("PC = %06x: bank %d, new value: %04x\n", cpu_get_pc(), offset >> 1, ( data & 0x0f ) << 10);
 //	if ( ( offset >> 1 ) < 2 ) return;
 //	if ( data == 0 ) data = ( ( offset >> 1 ) * 0x400 ) >> 10;
 	spritebank[offset >> 1] = data & 0x0f;

@@ -3,7 +3,7 @@
 
 #define VERBOSE 0
 
-#define SERIAL_BUFFER_LENGTH 30
+#define SERIAL_BUFFER_LENGTH 40
 
 static struct EEPROM_interface *intf;
 
@@ -11,6 +11,8 @@ static int serial_count;
 static char serial_buffer[SERIAL_BUFFER_LENGTH];
 static unsigned char eeprom_data[256];
 static int eeprom_data_bits;
+static int eeprom_read_address;
+static int eeprom_clock_count;
 static int latch,reset_line,clock_line,sending;
 static int locked;
 
@@ -32,12 +34,12 @@ void EEPROM_init(struct EEPROM_interface *interface)
 static void EEPROM_write(int bit)
 {
 #if VERBOSE
-if (errorlog) fprintf(errorlog,"EEPROM write bit %d\n",bit);
+logerror("EEPROM write bit %d\n",bit);
 #endif
 
 	if (serial_count >= SERIAL_BUFFER_LENGTH-1)
 	{
-if (errorlog) fprintf(errorlog,"error: EEPROM serial buffer overflow\n");
+logerror("error: EEPROM serial buffer overflow\n");
 		return;
 	}
 
@@ -59,9 +61,11 @@ if (errorlog) fprintf(errorlog,"error: EEPROM serial buffer overflow\n");
 			eeprom_data_bits = (eeprom_data[2*address+0] << 8) + eeprom_data[2*address+1];
 		else
 			eeprom_data_bits = eeprom_data[address];
+		eeprom_read_address = address;
+		eeprom_clock_count = 0;
 		sending = 1;
 		serial_count = 0;
-if (errorlog) fprintf(errorlog,"EEPROM read %04x from address %02x\n",eeprom_data_bits,address);
+logerror("EEPROM read %04x from address %02x\n",eeprom_data_bits,address);
 	}
 	else if (intf->cmd_erase && serial_count == (strlen(intf->cmd_erase) + intf->address_bits) &&
 			!strncmp(serial_buffer,intf->cmd_erase,strlen(intf->cmd_erase)))
@@ -74,7 +78,7 @@ if (errorlog) fprintf(errorlog,"EEPROM read %04x from address %02x\n",eeprom_dat
 			address <<= 1;
 			if (serial_buffer[i + strlen(intf->cmd_erase)] == '1') address |= 1;
 		}
-if (errorlog) fprintf(errorlog,"EEPROM erase address %02x\n",address);
+logerror("EEPROM erase address %02x\n",address);
 		if (locked == 0)
 		{
 			if (intf->data_bits == 16)
@@ -86,7 +90,7 @@ if (errorlog) fprintf(errorlog,"EEPROM erase address %02x\n",address);
 				eeprom_data[address] = 0x00;
 		}
 		else
-if (errorlog) fprintf(errorlog,"Error: EEPROM is locked\n");
+logerror("Error: EEPROM is locked\n");
 		serial_count = 0;
 	}
 	else if (intf->cmd_write && serial_count == (strlen(intf->cmd_write) + intf->address_bits + intf->data_bits) &&
@@ -106,7 +110,7 @@ if (errorlog) fprintf(errorlog,"Error: EEPROM is locked\n");
 			data <<= 1;
 			if (serial_buffer[i + strlen(intf->cmd_write) + intf->address_bits] == '1') data |= 1;
 		}
-if (errorlog) fprintf(errorlog,"EEPROM write %04x to address %02x\n",data,address);
+logerror("EEPROM write %04x to address %02x\n",data,address);
 		if (locked == 0)
 		{
 			if (intf->data_bits == 16)
@@ -118,20 +122,20 @@ if (errorlog) fprintf(errorlog,"EEPROM write %04x to address %02x\n",data,addres
 				eeprom_data[address] = data;
 		}
 		else
-if (errorlog) fprintf(errorlog,"Error: EEPROM is locked\n");
+logerror("Error: EEPROM is locked\n");
 		serial_count = 0;
 	}
 	else if (intf->cmd_lock && serial_count == strlen(intf->cmd_lock) &&
 			!strncmp(serial_buffer,intf->cmd_lock,strlen(intf->cmd_lock)))
 	{
-if (errorlog) fprintf(errorlog,"EEPROM lock\n");
+logerror("EEPROM lock\n");
 		locked = 1;
 		serial_count = 0;
 	}
 	else if (intf->cmd_unlock && serial_count == strlen(intf->cmd_unlock) &&
 			!strncmp(serial_buffer,intf->cmd_unlock,strlen(intf->cmd_unlock)))
 	{
-if (errorlog) fprintf(errorlog,"EEPROM unlock\n");
+logerror("EEPROM unlock\n");
 		locked = 0;
 		serial_count = 0;
 	}
@@ -139,8 +143,8 @@ if (errorlog) fprintf(errorlog,"EEPROM unlock\n");
 
 static void EEPROM_reset(void)
 {
-if (errorlog && serial_count)
-	fprintf(errorlog,"EEPROM reset, buffer = %s\n",serial_buffer);
+if (serial_count)
+	logerror("EEPROM reset, buffer = %s\n",serial_buffer);
 
 	serial_count = 0;
 	sending = 0;
@@ -150,7 +154,7 @@ if (errorlog && serial_count)
 void EEPROM_write_bit(int bit)
 {
 #if VERBOSE
-if (errorlog) fprintf(errorlog,"write bit %d\n",bit);
+logerror("write bit %d\n",bit);
 #endif
 	latch = bit;
 }
@@ -164,7 +168,7 @@ int EEPROM_read_bit(void)
 	else res = 1;
 
 #if VERBOSE
-if (errorlog) fprintf(errorlog,"read bit %d\n",res);
+logerror("read bit %d\n",res);
 #endif
 
 	return res;
@@ -173,7 +177,7 @@ if (errorlog) fprintf(errorlog,"read bit %d\n",res);
 void EEPROM_set_cs_line(int state)
 {
 #if VERBOSE
-if (errorlog) fprintf(errorlog,"set reset line %d\n",state);
+logerror("set reset line %d\n",state);
 #endif
 	reset_line = state;
 
@@ -184,14 +188,27 @@ if (errorlog) fprintf(errorlog,"set reset line %d\n",state);
 void EEPROM_set_clock_line(int state)
 {
 #if VERBOSE
-if (errorlog) fprintf(errorlog,"set clock line %d\n",state);
+logerror("set clock line %d\n",state);
 #endif
 	if (state == PULSE_LINE || (clock_line == CLEAR_LINE && state != CLEAR_LINE))
 	{
 		if (reset_line == CLEAR_LINE)
 		{
 			if (sending)
+			{
+				if (eeprom_clock_count == intf->data_bits && intf->enable_multi_read)
+				{
+					eeprom_read_address = (eeprom_read_address + 1) & ((1 << intf->address_bits) - 1);
+					if (intf->data_bits == 16)
+						eeprom_data_bits = (eeprom_data[2*eeprom_read_address+0] << 8) + eeprom_data[2*eeprom_read_address+1];
+					else
+						eeprom_data_bits = eeprom_data[eeprom_read_address];
+					eeprom_clock_count = 0;
+logerror("EEPROM read %04x from address %02x\n",eeprom_data_bits,eeprom_read_address);
+				}
 				eeprom_data_bits = (eeprom_data_bits << 1) | 1;
+				eeprom_clock_count++;
+			}
 			else
 				EEPROM_write(latch);
 		}
@@ -209,4 +226,9 @@ void EEPROM_load(void *f)
 void EEPROM_save(void *f)
 {
 	osd_fwrite(f,eeprom_data,(1 << intf->address_bits) * intf->data_bits / 8);
+}
+
+void EEPROM_set_data(UINT8 *data, int length)
+{
+	memcpy(eeprom_data, data, length);
 }

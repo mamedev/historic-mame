@@ -70,8 +70,8 @@ extern unsigned char *firetrap_bg1videoram,*firetrap_bg2videoram;
 extern unsigned char *firetrap_videoram,*firetrap_colorram;
 extern unsigned char *firetrap_scroll1x,*firetrap_scroll1y;
 extern unsigned char *firetrap_scroll2x,*firetrap_scroll2y;
-extern int firetrap_bgvideoram_size;
-extern int firetrap_videoram_size;
+extern size_t firetrap_bgvideoram_size;
+extern size_t firetrap_videoram_size;
 WRITE_HANDLER( firetrap_bg1videoram_w );
 WRITE_HANDLER( firetrap_bg2videoram_w );
 WRITE_HANDLER( firetrap_flipscreen_w );
@@ -100,7 +100,7 @@ WRITE_HANDLER( firetrap_bankselect_w )
 
 READ_HANDLER( firetrap_8751_r )
 {
-//if (errorlog) fprintf(errorlog,"PC:%04x read from 8751\n",cpu_get_pc());
+//logerror("PC:%04x read from 8751\n",cpu_get_pc());
 
 	/* Check for coin insertion */
 	/* the following only works in the bootleg version, which doesn't have an */
@@ -111,7 +111,7 @@ READ_HANDLER( firetrap_8751_r )
 
 WRITE_HANDLER( firetrap_8751_w )
 {
-if (errorlog) fprintf(errorlog,"PC:%04x write %02x to 8751\n",cpu_get_pc(),data);
+logerror("PC:%04x write %02x to 8751\n",cpu_get_pc(),data);
 	cpu_cause_interrupt(0,0xff);
 }
 

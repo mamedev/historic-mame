@@ -84,7 +84,7 @@ WRITE_HANDLER( segar_w )
 	}
 	else
 	{
-		if (errorlog) fprintf(errorlog, "unmapped write at %04X:%02X\n",off,data);
+		logerror("unmapped write at %04X:%02X\n",off,data);
 	}
 }
 

@@ -249,7 +249,7 @@ static INT8 current_bank;
 static UINT8 version;
 
 #if LOG_SLAPSTIC
-	static void slapstic_log(int offset);
+	static void slapstic_log(offs_t offset);
 	static FILE *slapsticlog;
 #else
 	#define slapstic_log(o)
@@ -276,7 +276,7 @@ void slapstic_init(int chip)
 	/* reset the chip */
 	state = ENABLED;
 	next_bank = extra_bank = -1;
-	
+
 	/* the 111 and later chips seem to reset to bank 0 */
 	if (chip < 111)
 		current_bank = 3;
@@ -311,7 +311,7 @@ int slapstic_bank(void)
  *
  *************************************/
 
-int slapstic_tweak(int offset)
+int slapstic_tweak(offs_t offset)
 {
 	/* switch banks now if one is pending */
 	if (next_bank != -1)
@@ -456,7 +456,7 @@ int slapstic_tweak(int offset)
  *************************************/
 
 #if LOG_SLAPSTIC
-static void slapstic_log(int offset)
+static void slapstic_log(offs_t offset)
 {
 	if (!slapsticlog)
 		slapsticlog = fopen("slapstic.log", "w");

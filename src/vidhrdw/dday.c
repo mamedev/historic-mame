@@ -328,7 +328,7 @@ WRITE_HANDLER( dday_searchlight_w )
 
 WRITE_HANDLER( dday_control_w )
 {
-	//fprintf(errorlog,"Control = %02X\n", data);
+	//logerror("Control = %02X\n", data);
 
 	/* Bit 0 is coin counter 1 */
 	coin_counter_w(0, data & 0x01);

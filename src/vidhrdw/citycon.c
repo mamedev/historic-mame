@@ -98,7 +98,7 @@ WRITE_HANDLER( citycon_background_w )
 	}
 
 	/* bits 1-3 are unknown */
-if (errorlog && (data & 0x0e) != 0) fprintf(errorlog,"background register = %02x\n",data);
+	if ((data & 0x0e) != 0) logerror("background register = %02x\n",data);
 }
 
 READ_HANDLER( citycon_in_r )

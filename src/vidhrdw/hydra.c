@@ -238,7 +238,7 @@ WRITE_HANDLER( hydra_playfieldram_w )
 
 WRITE_HANDLER( hydra_mo_control_w )
 {
-	if (errorlog) fprintf(errorlog, "MOCONT = %d (scan = %d)\n", data, cpu_getscanline());
+	logerror("MOCONT = %d (scan = %d)\n", data, cpu_getscanline());
 
 	/* set the control value */
 	current_control = data;
@@ -250,7 +250,7 @@ void hydra_scanline_update(int scanline)
 	UINT16 *base = (UINT16 *)&atarigen_alpharam[((scanline / 8) * 64 + 47) * 2];
 	int i;
 
-if (scanline == 0 && errorlog) fprintf(errorlog, "-------\n");
+	if (scanline == 0) logerror("-------\n");
 
 	/* keep in range */
 	if ((UINT8 *)base >= &atarigen_alpharam[atarigen_alpharam_size])
@@ -320,7 +320,7 @@ void hydra_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 				break;
 		if (x == 5)
 		{
-			if (errorlog) fprintf(errorlog, "Wrote checksums\n");
+			logerror("Wrote checksums\n");
 			for (x = 0; x < 16; x++)
 				WRITE_WORD(&atarigen_spriteram[x * 2], mo_checksum[x]);
 		}

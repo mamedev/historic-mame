@@ -60,7 +60,7 @@ static void cchasm_refresh (void)
             break;
         case JUMP:
             pc = data - 0xb00;
-            if (errorlog) fprintf (errorlog, "JUMP to %x\n", data);
+            logerror("JUMP to %x\n", data);
             break;
         case COLOR:
             data = data ^ 0xfff;
@@ -98,7 +98,7 @@ static void cchasm_refresh (void)
                 move = 1;
             break;
         default:
-            if (errorlog) fprintf (errorlog,"Unknown refresh proc opcode %x with data %x at pc = %x\n", opcode, data, pc-2);
+            logerror("Unknown refresh proc opcode %x with data %x at pc = %x\n", opcode, data, pc-2);
             done = 1;
             break;
 		}

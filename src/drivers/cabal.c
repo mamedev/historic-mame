@@ -120,7 +120,7 @@ static READ_HANDLER( cabal_coin_r ) {
 }
 
 static READ_HANDLER( cabal_io_r ) {
-	// if( errorlog ) fprintf( errorlog, "INPUT a000[%02x] \n", offset);
+	// logerror("INPUT a000[%02x] \n", offset);
 	switch (offset){
 		case 0x0: return readinputport(4) + (readinputport(5)<<8); /* DIPSW */
 		case 0x8: return 0xff + (readinputport(0)<<8);/* IN0 */

@@ -1,6 +1,7 @@
 #include "driver.h"
 #include <ctype.h>
-
+#include <stdarg.h>
+#include "ui_text.h" /* LBO 042400 */
 
 static struct RunningMachine machine;
 struct RunningMachine *Machine = &machine;
@@ -10,7 +11,6 @@ static const struct MachineDriver *drv;
 /* Variables to hold the status of various game options */
 struct GameOptions	options;
 
-FILE *errorlog;
 void *record;   /* for -record */
 void *playback; /* for -playback */
 int mame_debug; /* !0 when -debug option is specified */
@@ -320,7 +320,6 @@ int run_game(int game)
 
 
 	/* copy some settings into easier-to-handle variables */
-	errorlog   = options.errorlog;
 	record     = options.record;
 	playback   = options.playback;
 	mame_debug = options.mame_debug;
@@ -438,6 +437,11 @@ int init_machine(void)
 {
 	int i;
 
+	/* LBO 042400 start */
+	if (uistring_init (options.language_file) != 0)
+		goto out;
+	/* LBO 042400 end */
+
 	if (code_init() != 0)
 		goto out;
 
@@ -465,7 +469,7 @@ int init_machine(void)
     #ifdef MESS
 	if (!gamedrv->rom)
 	{
-		if(errorlog) fprintf(errorlog, "Going to load_next tag\n");
+		logerror("Going to load_next tag\n");
 		goto load_next;
 	}
     #endif
@@ -537,6 +541,8 @@ void shutdown_machine(void)
 	Machine->input_ports_default = 0;
 
 	code_close();
+
+	uistring_shutdown (); /* LBO 042400 */
 }
 
 
@@ -624,6 +630,10 @@ static int vh_open(void)
 					&glcopy)) == 0)
 			{
 				vh_close();
+
+				bailing = 1;
+				printf("Out of memory decoding gfx\n");
+
 				return 1;
 			}
 			if (Machine->remapped_colortable)
@@ -651,7 +661,7 @@ static int vh_open(void)
 			if (spriteram_2_size!=0) buffered_spriteram_2 = malloc(spriteram_2_size);
 			if (spriteram_2_size && !buffered_spriteram_2) { vh_close(); return 1; }
 		} else {
-			if (errorlog) fprintf(errorlog,"vh_open():  Video buffers spriteram but spriteram_size is 0\n");
+			logerror("vh_open():  Video buffers spriteram but spriteram_size is 0\n");
 			buffered_spriteram=NULL;
 			buffered_spriteram_2=NULL;
 		}
@@ -841,7 +851,7 @@ userquit:
 	else if (!bailing)
 	{
 		bailing = 1;
-		printf("Unable to initialize display\n");
+		printf("Unable to start video emulation\n");
 	}
 
 	return res;
@@ -864,4 +874,14 @@ int mame_highscore_enabled(void)
 #endif /* MAME_NET */
 
 	return 1;
+}
+
+
+void CLIB_DECL logerror(const char *text,...)
+{
+	va_list arg;
+	va_start(arg,text);
+	if (options.errorlog)
+		vfprintf(options.errorlog,text,arg);
+	va_end(arg);
 }

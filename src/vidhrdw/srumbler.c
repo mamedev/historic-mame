@@ -9,7 +9,7 @@
 #include "driver.h"
 
 extern unsigned char *spriteram;
-extern int spriteram_size;
+extern size_t spriteram_size;
 
 unsigned char *srumbler_backgroundram,*srumbler_foregroundram;
 static struct tilemap *bg_tilemap,*fg_tilemap;

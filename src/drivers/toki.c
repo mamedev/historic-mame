@@ -17,10 +17,10 @@ extern unsigned char *toki_background2_videoram;
 extern unsigned char *toki_sprites_dataram;
 extern unsigned char *toki_scrollram;
 
-extern int toki_foreground_videoram_size;
-extern int toki_background1_videoram_size;
-extern int toki_background2_videoram_size;
-extern int toki_sprites_dataram_size;
+extern size_t toki_foreground_videoram_size;
+extern size_t toki_background1_videoram_size;
+extern size_t toki_background2_videoram_size;
+extern size_t toki_sprites_dataram_size;
 
 int toki_interrupt(void);
 int  toki_vh_start(void);

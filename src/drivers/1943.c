@@ -27,7 +27,7 @@ void c1943_vh_stop(void);
 static READ_HANDLER( c1943_protection_r )
 {
 	int data = cpu_get_reg(Z80_BC) >> 8;
-	if (errorlog) fprintf(errorlog,"protection read, PC: %04x Result:%02x\n",cpu_get_pc(),data);
+	logerror("protection read, PC: %04x Result:%02x\n",cpu_get_pc(),data);
 	return data;
 }
 

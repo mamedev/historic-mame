@@ -17,15 +17,13 @@ static char earom[EAROM_SIZE];
 
 READ_HANDLER( atari_vg_earom_r )
 {
-	if (errorlog)
-		fprintf (errorlog, "read earom: %02x(%02x):%02x\n", earom_offset, offset, earom_data);
+	logerror("read earom: %02x(%02x):%02x\n", earom_offset, offset, earom_data);
 	return (earom_data);
 }
 
 WRITE_HANDLER( atari_vg_earom_w )
 {
-	if (errorlog)
-		fprintf (errorlog, "write earom: %02x:%02x\n", offset, data);
+	logerror("write earom: %02x:%02x\n", offset, data);
 	earom_offset = offset;
 	earom_data = data;
 }
@@ -35,8 +33,7 @@ WRITE_HANDLER( atari_vg_earom_w )
  */
 WRITE_HANDLER( atari_vg_earom_ctrl_w )
 {
-	if (errorlog)
-		fprintf (errorlog, "earom ctrl: %02x:%02x\n",offset, data);
+	logerror("earom ctrl: %02x:%02x\n",offset, data);
 	/*
 		0x01 = clock
 		0x02 = set data latch? - writes only (not always)
@@ -48,8 +45,7 @@ WRITE_HANDLER( atari_vg_earom_ctrl_w )
 	if ((data & 0x0c) == 0x0c)
 	{
 		earom[earom_offset]=earom_data;
-		if (errorlog)
-			fprintf (errorlog, "    written %02x:%02x\n", earom_offset, earom_data);
+		logerror("    written %02x:%02x\n", earom_offset, earom_data);
 	}
 }
 

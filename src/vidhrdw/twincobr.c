@@ -28,7 +28,7 @@ extern int toaplan_main_cpu;	/* Main CPU type.  0 = 68000, 1 = Z80 */
 #define READ_WORD_Z80(x) (*(unsigned char *)(x) + (*(unsigned char *)(x+1) << 8))
 #define WRITE_WORD_Z80(a, d) (*(unsigned char *)(a) = d & 0xff, (*(unsigned char *)(a+1) = (d>>8) & 0xff))
 
-static int twincobr_bgvideoram_size,twincobr_fgvideoram_size;
+static size_t twincobr_bgvideoram_size,twincobr_fgvideoram_size;
 static int txscrollx = 0;
 static int txscrolly = 0;
 static int fgscrollx = 0;
@@ -207,10 +207,8 @@ WRITE_HANDLER( twincobr_fgscroll_w )
 
 WRITE_HANDLER( twincobr_exscroll_w )	/* Extra unused video layer */
 {
-	if (errorlog) {
-		if (offset == 0) fprintf(errorlog,"PC - write %04x to extra video layer Y scroll register\n",data);
-		else fprintf(errorlog,"PC - write %04x to extra video layer scroll X register\n",data);
-	}
+	if (offset == 0) logerror("PC - write %04x to extra video layer Y scroll register\n",data);
+	else logerror("PC - write %04x to extra video layer scroll X register\n",data);
 }
 
 /******************** Wardner interface to this hardware ********************/

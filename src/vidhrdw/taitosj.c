@@ -327,7 +327,7 @@ WRITE_HANDLER( taitosj_colorbank_w )
 {
 	if (taitosj_colorbank[offset] != data)
 	{
-if (errorlog) fprintf(errorlog,"colorbank %d = %02x\n",offset,data);
+logerror("colorbank %d = %02x\n",offset,data);
 		memset(dirtybuffer,1,videoram_size);
 		memset(dirtybuffer2,1,videoram_size);
 		memset(dirtybuffer3,1,videoram_size);
@@ -342,7 +342,7 @@ WRITE_HANDLER( taitosj_videoenable_w )
 {
 	if (taitosj_video_enable != data)
 	{
-if (errorlog) fprintf(errorlog,"videoenable = %02x\n",data);
+logerror("videoenable = %02x\n",data);
 
 		if ((taitosj_video_enable & 3) != (data & 3))
 		{

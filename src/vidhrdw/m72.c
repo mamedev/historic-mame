@@ -11,7 +11,7 @@ static struct tilemap *fg_tilemap,*bg_tilemap;
 static int xadjust;
 static int scrollx1[256],scrolly1[256],scrollx2[256],scrolly2[256];
 extern unsigned char *spriteram,*spriteram_2;
-extern int spriteram_size;
+extern size_t spriteram_size;
 
 static int irq1,irq2;
 
@@ -410,7 +410,7 @@ WRITE_HANDLER( m72_scrolly2_w )
 
 WRITE_HANDLER( m72_spritectrl_w )
 {
-//if (errorlog) fprintf(errorlog,"%04x: write %02x to sprite ctrl+%d\n",cpu_get_pc(),data,offset);
+//logerror("%04x: write %02x to sprite ctrl+%d\n",cpu_get_pc(),data,offset);
 	/* TODO: this is ok for R-Type, but might be wrong for others */
 	if (offset == 1)
 	{
@@ -423,7 +423,7 @@ WRITE_HANDLER( m72_spritectrl_w )
 
 WRITE_HANDLER( hharry_spritectrl_w )
 {
-//if (errorlog) fprintf(errorlog,"%04x: write %02x to sprite ctrl+%d\n",cpu_get_pc(),data,offset);
+//logerror("%04x: write %02x to sprite ctrl+%d\n",cpu_get_pc(),data,offset);
 	if (offset == 0)
 	{
 		memcpy(m72_spriteram,spriteram,spriteram_size);
@@ -433,7 +433,7 @@ WRITE_HANDLER( hharry_spritectrl_w )
 
 WRITE_HANDLER( hharryu_spritectrl_w )
 {
-//if (errorlog) fprintf(errorlog,"%04x: write %02x to sprite ctrl+%d\n",cpu_get_pc(),data,offset);
+//logerror("%04x: write %02x to sprite ctrl+%d\n",cpu_get_pc(),data,offset);
 	if (offset == 1)
 	{
 		memcpy(m72_spriteram,spriteram,spriteram_size);

@@ -233,7 +233,7 @@ WRITE_HANDLER( sega_sh_speech_w )
 			if (newPtr == queuePtr)
 		   	{
 				/* The queue has overflowed. Oops. */
-				if (errorlog) fprintf (errorlog, "*** Queue overflow! queuePtr: %02d\n", queuePtr);
+				logerror("*** Queue overflow! queuePtr: %02d\n", queuePtr);
 				return;
 			}
 		}

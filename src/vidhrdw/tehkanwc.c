@@ -15,7 +15,7 @@ robbiex@rocketmail.com
 #include "vidhrdw/generic.h"
 
 unsigned char *tehkanwc_videoram1;
-int tehkanwc_videoram1_size;
+size_t tehkanwc_videoram1_size;
 static struct osd_bitmap *tmpbitmap1 = 0;
 static unsigned char *dirtybuffer1;
 static unsigned char scroll_x[2],scroll_y;
@@ -147,7 +147,7 @@ static void gridiron_drawled(struct osd_bitmap *bitmap,unsigned char led,int pla
 					0,16,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
-else if (errorlog) fprintf(errorlog,"unknown LED %02x for player %d\n",led,player);
+else logerror("unknown LED %02x for player %d\n",led,player);
 }
 
 

@@ -24,8 +24,16 @@ TODO:
 - attempt Pig Newton, 005 sound
 - fix transparency issues (Pig Newton, Sindbad Mystery)
 - fix Space Odyssey background
+- figure out why Astro Blaster version 1 ends the game right away
 
 - Mike Balfour (mab22@po.cwru.edu)
+
+***************************************************************************
+
+26/3/2000:	** Darren Hatton (UKVAC) / Adrian Purser (UKVAC) **
+			Added a 3rd Astro Blaster ROM set (ASTROB2).
+			Updated Dip Switches to be correct for the Astro Blaster sets.
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -63,14 +71,14 @@ extern const char *spaceod_sample_names[];
 
 /* machine/segar.c */
 
-extern void sega_security(int chip);
+void sega_security(int chip);
 WRITE_HANDLER( segar_w );
 
 extern unsigned char *segar_mem;
 
 /* machine/segacrpt.c */
 
-extern void sindbadm_decode(void);
+void sindbadm_decode(void);
 
 /* vidhrdw/segar.c */
 
@@ -83,31 +91,29 @@ WRITE_HANDLER( segar_characterram_w );
 WRITE_HANDLER( segar_characterram2_w );
 WRITE_HANDLER( segar_colortable_w );
 WRITE_HANDLER( segar_bcolortable_w );
-extern void segar_init_colors(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+void segar_init_colors(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 WRITE_HANDLER( segar_video_port_w );
-extern int  segar_vh_start(void);
-extern void segar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+int  segar_vh_start(void);
+void segar_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 WRITE_HANDLER( monsterb_back_port_w );
-extern int  monsterb_vh_start(void);
-extern void monsterb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+int  monsterb_vh_start(void);
+void monsterb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-extern int  spaceod_vh_start(void);
-extern void spaceod_vh_stop(void);
+int  spaceod_vh_start(void);
+void spaceod_vh_stop(void);
 WRITE_HANDLER( spaceod_back_port_w );
 WRITE_HANDLER( spaceod_backshift_w );
 WRITE_HANDLER( spaceod_backshift_clear_w );
 WRITE_HANDLER( spaceod_backfill_w );
 WRITE_HANDLER( spaceod_nobackfill_w );
-extern void spaceod_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+void spaceod_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 WRITE_HANDLER( pignewt_back_color_w );
 WRITE_HANDLER( pignewt_back_ports_w );
 
 WRITE_HANDLER( sindbadm_back_port_w );
-extern void sindbadm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-
-
+void sindbadm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 /***************************************************************************
 
@@ -164,8 +170,6 @@ static READ_HANDLER( segar_ports_r )
 
 	return 0;
 }
-
-
 
 
 /***************************************************************************
@@ -384,8 +388,6 @@ static struct MemoryWriteAddress sindbadm_sound_writemem[] =
 {
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
-	//{ 0xa000, 0xa003, SN76496_0_w },    /* the four addresses are written */
-	//{ 0xc000, 0xc003, SN76496_1_w },    /* in sequence */
 	{ 0xa000, 0xa003, sindbadm_SN76496_0_w },    /* the four addresses are written */
 	{ 0xc000, 0xc003, sindbadm_SN76496_1_w },    /* in sequence */
 	{ -1 }  /* end of table */
@@ -438,7 +440,7 @@ Input Ports
 INPUT_PORTS_START( astrob )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_LOW, IPT_COIN2, 3 )
 	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 3 )
 
@@ -476,31 +478,99 @@ INPUT_PORTS_START( astrob )
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 
 	PORT_START      /* FAKE */
-	/* This fake input port is used for DIP Switch 1 */
-	PORT_DIPNAME( 0x01, 0x00, "Unknown 1" )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x00, "Unknown 2" )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x00, "Unknown 3" )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x00, "Unknown 4" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Demo_Sounds ) )
+	PORT_DIPNAME( 0x10, 0x00, "Demo Speech" )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x40, 0x00, "Unknown 5" )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Lives ) )
+	PORT_DIPNAME( 0xc0, 0x80, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPSETTING(    0x80, "3" )
+	PORT_DIPSETTING(    0x40, "4" )
+	PORT_DIPSETTING(    0xc0, "5" )
+
+	COINAGE
+
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( astrob2 )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE1 )
+	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_LOW, IPT_COIN2, 3 )
+	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 3 )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN2 */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN3 */
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_BUTTON2, "Warp", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_BUTTON1, "Fire", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN4 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BITX(0x10, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL, "Warp", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL, "Fire", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY | IPF_COCKTAIL)
+
+	PORT_START      /* FAKE */
+	/* This fake input port is used to get the status of the F2 key, */
+	/* and activate the test mode, which is triggered by a NMI */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
+
+	PORT_START      /* FAKE */
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x00, "Demo Speech" )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0xc0, 0x80, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x80, "3" )
+  //PORT_DIPSETTING(    0x40, "3" )
+  //PORT_DIPSETTING(    0xc0, "3" )
 
 	COINAGE
 
@@ -510,7 +580,7 @@ INPUT_PORTS_END
 INPUT_PORTS_START( astrob1 )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_LOW, IPT_COIN2, 3 )
 	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 3 )
 
@@ -548,31 +618,29 @@ INPUT_PORTS_START( astrob1 )
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 
 	PORT_START      /* FAKE */
-	/* This fake input port is used for DIP Switch 1 */
-	PORT_DIPNAME( 0x01, 0x00, "Unknown 1" )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x00, "Unknown 2" )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x00, "Unknown 3" )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x00, "Unknown 4" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x00, "Unknown 5" )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( Upright ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x40, 0x00, "Unknown 6" )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, "Unknown 7" )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0xc0, 0x80, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x80, "3" )
+	PORT_DIPSETTING(    0x40, "4" )
+	PORT_DIPSETTING(    0xc0, "5" )
 
 	COINAGE
 
@@ -582,7 +650,7 @@ INPUT_PORTS_END
 INPUT_PORTS_START( 005 )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_LOW, IPT_COIN2, 3 )
 	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 3 )
 
@@ -622,19 +690,19 @@ INPUT_PORTS_START( 005 )
 
 	PORT_START      /* FAKE */
 	/* This fake input port is used for DIP Switch 1 */
-	PORT_DIPNAME( 0x01, 0x00, "Unknown 1" )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x00, "Unknown 2" )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x00, "Unknown 3" )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x00, "Unknown 4" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x00, "Unknown 5" )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Cabinet ) )
@@ -654,7 +722,7 @@ INPUT_PORTS_END
 INPUT_PORTS_START( monsterb )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_LOW, IPT_COIN2, 3 )
 	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 3 )
 
@@ -722,7 +790,7 @@ INPUT_PORTS_END
 INPUT_PORTS_START( spaceod )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_LOW, IPT_COIN2, 3 )
 	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 3 )
 
@@ -764,10 +832,10 @@ INPUT_PORTS_START( spaceod )
 	PORT_BITX( 0x01,    0x01, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Infinite Lives", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x00, "Unknown 1" )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x00, "Unknown 2" )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x18, 0x00, DEF_STR( Bonus_Life ) )
@@ -792,7 +860,7 @@ INPUT_PORTS_END
 INPUT_PORTS_START( pignewt )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_LOW, IPT_COIN2, 3 )
 	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 3 )
 
@@ -831,16 +899,16 @@ INPUT_PORTS_START( pignewt )
 
 	PORT_START      /* FAKE */
 	/* This fake input port is used for DIP Switch 1 */
-	PORT_DIPNAME( 0x01, 0x00, "Unknown 1" )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x00, "Unknown 2" )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x00, "Unknown 3" )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x00, "Unknown 4" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Lives ) )
@@ -848,10 +916,10 @@ INPUT_PORTS_START( pignewt )
 	PORT_DIPSETTING(    0x10, "4" )
 	PORT_DIPSETTING(    0x20, "5" )
 	PORT_DIPSETTING(    0x30, "6" )
-	PORT_DIPNAME( 0x40, 0x00, "Unknown 5" )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, "Unknown 6" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -863,7 +931,7 @@ INPUT_PORTS_END
 INPUT_PORTS_START( pignewta )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_LOW, IPT_COIN2, 3 )
 	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 3 )
 
@@ -899,16 +967,16 @@ INPUT_PORTS_START( pignewta )
 
 	PORT_START      /* FAKE */
 	/* This fake input port is used for DIP Switch 1 */
-	PORT_DIPNAME( 0x01, 0x00, "Unknown 1" )
+	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x00, "Unknown 2" )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x00, "Unknown 3" )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x00, "Unknown 4" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x30, 0x00, DEF_STR( Lives ) )
@@ -916,10 +984,10 @@ INPUT_PORTS_START( pignewta )
 	PORT_DIPSETTING(    0x10, "4" )
 	PORT_DIPSETTING(    0x20, "5" )
 	PORT_DIPSETTING(    0x30, "6" )
-	PORT_DIPNAME( 0x40, 0x00, "Unknown 5" )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x00, "Unknown 6" )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -932,7 +1000,7 @@ INPUT_PORTS_END
 INPUT_PORTS_START( sindbadm )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT_IMPULSE( 0x40, IP_ACTIVE_LOW, IPT_COIN2, 3 )
 	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 3 )
 
@@ -967,16 +1035,16 @@ INPUT_PORTS_START( sindbadm )
 	PORT_BITX( 0x01,    0x01, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Infinite Lives", IP_KEY_NONE, IP_JOY_NONE )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x00, "Unknown 1" )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x00, "Unknown 2" )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x00, "Unknown 3" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x00, "Unknown 4" )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Cabinet ) )
@@ -1062,7 +1130,7 @@ static struct GfxLayout backlayout =
 	8*8     /* every char takes 8 consecutive bytes */
 };
 
-static struct GfxLayout spacelayout =
+static struct GfxLayout spaceod_layout =
 {
 	8,8,   /* 16*8 characters */
 	256,    /* 256 characters */
@@ -1076,25 +1144,25 @@ static struct GfxLayout spacelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_CPU1, 0xe800, &charlayout, 0x01, 0x10 }, /* offset into colors, # of colors */
+	{ REGION_CPU1, 0xe800, &charlayout, 0x01, 0x10 },
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo monsterb_gfxdecodeinfo[] =
 {
-	{ REGION_CPU1, 0xe800, &charlayout, 0x01, 0x10 }, /* offset into colors, # of colors */
-	{ REGION_GFX1, 0x0000, &backlayout, 0x41, 0x10 }, /* offset into colors, # of colors */
-	{ REGION_GFX1, 0x0800, &backlayout, 0x41, 0x10 }, /* offset into colors, # of colors */
-	{ REGION_GFX1, 0x1000, &backlayout, 0x41, 0x10 }, /* offset into colors, # of colors */
-	{ REGION_GFX1, 0x1800, &backlayout, 0x41, 0x10 }, /* offset into colors, # of colors */
+	{ REGION_CPU1, 0xe800, &charlayout, 0x01, 0x10 },
+	{ REGION_GFX1, 0x0000, &backlayout, 0x41, 0x10 },
+	{ REGION_GFX1, 0x0800, &backlayout, 0x41, 0x10 },
+	{ REGION_GFX1, 0x1000, &backlayout, 0x41, 0x10 },
+	{ REGION_GFX1, 0x1800, &backlayout, 0x41, 0x10 },
 	{ -1 } /* end of array */
 };
 
 static struct GfxDecodeInfo spaceod_gfxdecodeinfo[] =
 {
-	{ REGION_CPU1, 0xe800, &charlayout,   0x01, 0x10 }, /* offset into colors, # of colors */
-	{ REGION_GFX1, 0x0000, &spacelayout,  0x41, 1 }, /* offset into colors, # of colors */
-	{ REGION_GFX1, 0x0800, &spacelayout,  0x41, 1 }, /* offset into colors, # of colors */
+	{ REGION_CPU1, 0xe800, &charlayout,     0x01, 0x10 },
+	{ REGION_GFX1, 0x0000, &spaceod_layout, 0x41, 1 },
+	{ REGION_GFX1, 0x0800, &spaceod_layout, 0x41, 1 },
 	{ -1 } /* end of array */
 };
 
@@ -1411,6 +1479,37 @@ static struct MachineDriver machine_driver_sindbadm =
 
 ROM_START( astrob )
 	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
+	ROM_LOAD( "829b",	  0x0000, 0x0800, 0x14ae953c ) /* U25 */
+	ROM_LOAD( "907a",     0x0800, 0x0800, 0xa9aaaf38 ) /* U1 */
+	ROM_LOAD( "908a",     0x1000, 0x0800, 0x897f2b87 ) /* U2 */
+	ROM_LOAD( "909a",     0x1800, 0x0800, 0x55a339e6 ) /* U3 */
+	ROM_LOAD( "910a",     0x2000, 0x0800, 0x7972b60a ) /* U4 */
+	ROM_LOAD( "911a",     0x2800, 0x0800, 0xaf87520f ) /* U5 */
+	ROM_LOAD( "912a",     0x3000, 0x0800, 0xb656f929 ) /* U6 */
+	ROM_LOAD( "913a",     0x3800, 0x0800, 0x321074b3 ) /* U7 */
+	ROM_LOAD( "914a",     0x4000, 0x0800, 0x90d2493e ) /* U8 */
+	ROM_LOAD( "915a",     0x4800, 0x0800, 0xaaf828d1 ) /* U9 */
+	ROM_LOAD( "916a",     0x5000, 0x0800, 0x56d92ab9 ) /* U10 */
+	ROM_LOAD( "917a",     0x5800, 0x0800, 0x9dcdaf2d ) /* U11 */
+	ROM_LOAD( "918a",     0x6000, 0x0800, 0xc9d09655 ) /* U12 */
+	ROM_LOAD( "919a",     0x6800, 0x0800, 0x448bd318 ) /* U13 */
+	ROM_LOAD( "920a",     0x7000, 0x0800, 0x3524a383 ) /* U14 */
+	ROM_LOAD( "921a",     0x7800, 0x0800, 0x98c14834 ) /* U15 */
+	ROM_LOAD( "922a",     0x8000, 0x0800, 0x4311513c ) /* U16 */
+	ROM_LOAD( "923a",     0x8800, 0x0800, 0x50f0462c ) /* U17 */
+	ROM_LOAD( "924a",     0x9000, 0x0800, 0x120a39c7 ) /* U18 */
+	ROM_LOAD( "925a",     0x9800, 0x0800, 0x790a7f4e ) /* U19 */
+
+	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for speech code */
+	ROM_LOAD( "808b",     0x0000, 0x0800, 0x5988c767 ) /* U7 */
+	ROM_LOAD( "809a",     0x0800, 0x0800, 0x893f228d ) /* U6 */
+	ROM_LOAD( "810",      0x1000, 0x0800, 0xff0163c5 ) /* U5 */
+	ROM_LOAD( "811",      0x1800, 0x0800, 0x219f3978 ) /* U4 */
+	ROM_LOAD( "812a",     0x2000, 0x0800, 0x410ad0d2 ) /* U3 */
+ROM_END
+
+ROM_START( astrob2 )
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for code */
 	ROM_LOAD( "829b",     0x0000, 0x0800, 0x14ae953c ) /* U25 */
 	ROM_LOAD( "888",      0x0800, 0x0800, 0x42601744 ) /* U1 */
 	ROM_LOAD( "889",      0x1000, 0x0800, 0xdd9ab173 ) /* U2 */
@@ -1428,9 +1527,9 @@ ROM_START( astrob )
 	ROM_LOAD( "901",      0x7000, 0x0800, 0x9ed11c61 ) /* U14 */
 	ROM_LOAD( "902",      0x7800, 0x0800, 0xb4d6c330 ) /* U15 */
 	ROM_LOAD( "903",      0x8000, 0x0800, 0x84acc38c ) /* U16 */
-	ROM_LOAD( "904",      0x8800, 0x0800, 0x5eba3097 ) /* U16 */
-	ROM_LOAD( "905",      0x9000, 0x0800, 0x4f08f9f4 ) /* U16 */
-	ROM_LOAD( "906",      0x9800, 0x0800, 0x58149df1 ) /* U16 */
+	ROM_LOAD( "904",      0x8800, 0x0800, 0x5eba3097 ) /* U17 */
+	ROM_LOAD( "905",      0x9000, 0x0800, 0x4f08f9f4 ) /* U18 */
+	ROM_LOAD( "906",      0x9800, 0x0800, 0x58149df1 ) /* U19 */
 
 	ROM_REGION( 0x10000, REGION_CPU2 )     /* 64k for speech code */
 	ROM_LOAD( "808b",     0x0000, 0x0800, 0x5988c767 ) /* U7 */
@@ -1719,12 +1818,12 @@ static void init_sindbadm(void)
 }
 
 
-
-GAME( 1981, astrob,   0,       astrob,   astrob,   astrob,   ROT270, "Sega", "Astro Blaster (version 2)" )
+GAME( 1981, astrob,   0,       astrob,   astrob,   astrob,   ROT270, "Sega", "Astro Blaster (version 3)" )
+GAME( 1981, astrob2,  astrob,  astrob,   astrob2,  astrob,   ROT270, "Sega", "Astro Blaster (version 2)" )
 GAMEX(1981, astrob1,  astrob,  astrob,   astrob1,  astrob,   ROT270, "Sega", "Astro Blaster (version 1)", GAME_NOT_WORKING )
 GAMEX(1981, 005,      0,       005,      005,      005,      ROT270, "Sega", "005", GAME_NO_SOUND )
 GAME( 1982, monsterb, 0,       monsterb, monsterb, monsterb, ROT270, "Sega", "Monster Bash" )
 GAME( 1981, spaceod,  0,       spaceod,  spaceod,  spaceod,  ROT270, "Sega", "Space Odyssey" )
-GAMEX(1983, pignewt,  0,       pignewt,  pignewt,  pignewt,  ROT270, "Sega", "Pig Newton (Revision C)", GAME_NO_SOUND )
-GAMEX(1983, pignewta, pignewt, pignewt,  pignewta, pignewt,  ROT270, "Sega", "Pig Newton (Revision A)", GAME_NO_SOUND )
+GAMEX(1983, pignewt,  0,       pignewt,  pignewt,  pignewt,  ROT270, "Sega", "Pig Newton (version C)", GAME_NO_SOUND )
+GAMEX(1983, pignewta, pignewt, pignewt,  pignewta, pignewt,  ROT270, "Sega", "Pig Newton (version A)", GAME_NO_SOUND )
 GAME( 1983, sindbadm, 0,       sindbadm, sindbadm, sindbadm, ROT270, "Sega", "Sindbad Mystery" )

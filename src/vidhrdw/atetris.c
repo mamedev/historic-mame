@@ -65,7 +65,7 @@ READ_HANDLER( atetris_slapstic_r )
                 {
                     slapstic_nextbank = BANK0;
 #ifdef LOG_SLAPSTICK
-                    if (errorlog) fprintf(errorlog, "Selecting Bank 0 at %04X\n", cpu_get_pc());
+                    logerror("Selecting Bank 0 at %04X\n", cpu_get_pc());
 #endif
                 }
                 break;
@@ -76,14 +76,14 @@ READ_HANDLER( atetris_slapstic_r )
                 {
                     slapstic_nextbank = BANK1;
 #ifdef LOG_SLAPSTICK
-                    if (errorlog) fprintf(errorlog, "Selecting Bank 1 at %04X\n", cpu_get_pc());
+                    logerror("Selecting Bank 1 at %04X\n", cpu_get_pc());
 #endif
                 }
                 else
                 {
                     slapstic_nextbank = BANK0;
 #ifdef LOG_SLAPSTICK
-                    if (errorlog) fprintf(errorlog, "Selecting Bank 0 at %04X\n", cpu_get_pc());
+                    logerror("Selecting Bank 0 at %04X\n", cpu_get_pc());
 #endif
                 }
                 break;
@@ -93,14 +93,14 @@ READ_HANDLER( atetris_slapstic_r )
                 {
                     slapstic_nextbank = BANK1;
 #ifdef LOG_SLAPSTICK
-                    if (errorlog) fprintf(errorlog, "Selecting Bank 1 at %04X\n", cpu_get_pc());
+                    logerror("Selecting Bank 1 at %04X\n", cpu_get_pc());
 #endif
                 }
                 else
                 {
                     slapstic_nextbank = BANK0;
 #ifdef LOG_SLAPSTICK
-                    if (errorlog) fprintf(errorlog, "Selecting Bank 0 at %04X\n", cpu_get_pc());
+                    logerror("Selecting Bank 0 at %04X\n", cpu_get_pc());
 #endif
                 }
                 break;
@@ -111,14 +111,14 @@ READ_HANDLER( atetris_slapstic_r )
                 {
                     slapstic_nextbank = BANK1;
 #ifdef LOG_SLAPSTICK
-                    if (errorlog) fprintf(errorlog, "Selecting Bank 1 at %04X\n", cpu_get_pc());
+                    logerror("Selecting Bank 1 at %04X\n", cpu_get_pc());
 #endif
                 }
                 else
                 {
                     slapstic_nextbank = BANK0;
 #ifdef LOG_SLAPSTICK
-                    if (errorlog) fprintf(errorlog, "Selecting Bank 0 at %04X\n", cpu_get_pc());
+                    logerror("Selecting Bank 0 at %04X\n", cpu_get_pc());
 #endif
                 }
                 break;

@@ -91,16 +91,13 @@
 
 
 /* external video code and data */
-extern UINT16 mcr3_char_code_mask;
-extern UINT16 mcr3_sprite_code_mask;
-
 extern UINT8 spyhunt_sprite_color_mask;
 extern INT16 spyhunt_scroll_offset;
 extern UINT8 spyhunt_draw_lamps;
 extern UINT8 spyhunt_lamp[8];
 
 extern UINT8 *spyhunt_alpharam;
-extern int spyhunt_alpharam_size;
+extern size_t spyhunt_alpharam_size;
 
 WRITE_HANDLER( mcr3_videoram_w );
 WRITE_HANDLER( mcr3_paletteram_w );
@@ -387,6 +384,35 @@ static READ_HANDLER( turbotag_kludge_r )
 
 /*************************************
  *
+ *	NVRAM save/load
+ *
+ *************************************/
+
+static void mcr3_nvram_handler(void *file, int read_or_write)
+{
+	unsigned char *ram = memory_region(REGION_CPU1);
+
+	if (read_or_write)
+		osd_fwrite(file, &ram[0xe000], 0x800);
+	else if (file)
+		osd_fread(file, &ram[0xe000], 0x800);
+}
+
+
+static void spyhunt_nvram_handler(void *file, int read_or_write)
+{
+	unsigned char *ram = memory_region(REGION_CPU1);
+
+	if (read_or_write)
+		osd_fwrite(file, &ram[0xf000], 0x800);
+	else if (file)
+		osd_fread(file, &ram[0xf000], 0x800);
+}
+
+
+
+/*************************************
+ *
  *	Main CPU memory handlers
  *
  *************************************/
@@ -413,9 +439,13 @@ static struct MemoryWriteAddress writemem[] =
 
 static struct IOReadPort readport[] =
 {
-	{ 0x00, 0x04, mcr_port_04_dispatch_r },
+	{ 0x00, 0x00, input_port_0_r },
+	{ 0x01, 0x01, input_port_1_r },
+	{ 0x02, 0x02, input_port_2_r },
+	{ 0x03, 0x03, input_port_3_r },
+	{ 0x04, 0x04, input_port_4_r },
 	{ 0x07, 0x07, ssio_status_r },
-	{ 0x10, 0x10, mcr_port_04_dispatch_r },
+	{ 0x10, 0x10, input_port_0_r },
 	{ 0xf0, 0xf3, z80ctc_0_r },
 	{ -1 }
 };
@@ -423,8 +453,7 @@ static struct IOReadPort readport[] =
 
 static struct IOWritePort writeport[] =
 {
-	{ 0x00, 0x01, mcr_port_01_w },
-	{ 0x04, 0x07, mcr_port_47_dispatch_w },
+	{ 0x00, 0x00, mcr_control_port_w },
 	{ 0x1c, 0x1f, ssio_data_w },
 	{ 0x84, 0x86, mcr_scroll_value_w },
 	{ 0xe0, 0xe0, watchdog_reset_w },
@@ -1039,15 +1068,12 @@ INPUT_PORTS_END
  *
  *************************************/
 
-MCR_CHAR_LAYOUT(charlayout, 1024);
-MCR_SPRITE_LAYOUT(spritelayout, 512);
-
 static struct GfxLayout spyhunt_charlayout =
 {
 	64,32,
-	128,
+	RGN_FRAC(1,2),
 	4,
-	{ 128*1024, 128*1024+1, 0, 1 },
+	{ RGN_FRAC(1,2), RGN_FRAC(1,2)+1, 0, 1 },
 	{  0,  0,  2,  2,  4,  4,  6,  6,  8,  8, 10, 10, 12, 12, 14, 14,
 	  16, 16, 18, 18, 20, 20, 22, 22, 24, 24, 26, 26, 28, 28, 30, 30,
 	  32, 32, 34, 34, 36, 36, 38, 38, 40, 40, 42, 42, 44, 44, 46, 46,
@@ -1063,7 +1089,7 @@ static struct GfxLayout spyhunt_charlayout =
 static struct GfxLayout spyhunt_alphalayout =
 {
 	16,16,
-	256,
+	RGN_FRAC(1,1),
 	2,
 	{ 0, 1 },
 	{ 0, 0, 2, 2, 4, 4, 6, 6, 8, 8, 10, 10, 12, 12, 14, 14 },
@@ -1074,8 +1100,8 @@ static struct GfxLayout spyhunt_alphalayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ REGION_GFX1, 0, &charlayout,    0, 4 },
-	{ REGION_GFX2, 0, &spritelayout,  0, 4 },
+	{ REGION_GFX1, 0, &mcr_bg_layout,     0, 4 },
+	{ REGION_GFX2, 0, &mcr_sprite_layout, 0, 4 },
 	{ -1 } /* end of array */
 };
 
@@ -1083,7 +1109,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct GfxDecodeInfo spyhunt_gfxdecodeinfo[] =
 {
 	{ REGION_GFX1, 0, &spyhunt_charlayout,  1*16, 1 },
-	{ REGION_GFX2, 0, &spritelayout,        0*16, 4 },
+	{ REGION_GFX2, 0, &mcr_sprite_layout,   0*16, 4 },
 	{ REGION_GFX3, 0, &spyhunt_alphalayout, 8*16, 1 },
 	{ -1 } /* end of array */
 };
@@ -1138,7 +1164,7 @@ static struct MachineDriver machine_driver_mcr3 =
 	mcr_init_machine,
 
 	/* video hardware */
-	32*16, 30*16, { 0, 32*16-1, 0, 30*16-1 },
+	32*16, 30*16, { 0*16, 32*16-1, 0*16, 30*16-1 },
 	gfxdecodeinfo,
 	8*16, 8*16,
 	0,
@@ -1154,8 +1180,7 @@ static struct MachineDriver machine_driver_mcr3 =
 	{
 		SOUND_SSIO
 	},
-
-	mcr_nvram_handler
+	mcr3_nvram_handler
 };
 
 
@@ -1190,8 +1215,7 @@ static struct MachineDriver machine_driver_dotron =
 		SOUND_SSIO,
 		SOUND_SQUAWK_N_TALK,
 	},
-
-	mcr_nvram_handler
+	mcr3_nvram_handler
 };
 
 
@@ -1208,7 +1232,7 @@ static struct MachineDriver machine_driver_destderb =
 	mcr_init_machine,
 
 	/* video hardware */
-	32*16, 30*16, { 0, 32*16-1, 0, 30*16-1 },
+	32*16, 30*16, { 0*16, 32*16-1, 0*16, 30*16-1 },
 	gfxdecodeinfo,
 	8*16, 8*16,
 	0,
@@ -1224,8 +1248,7 @@ static struct MachineDriver machine_driver_destderb =
 	{
 		SOUND_TURBO_CHIP_SQUEAK
 	},
-
-	mcr_nvram_handler
+	mcr3_nvram_handler
 };
 
 
@@ -1243,7 +1266,7 @@ static struct MachineDriver machine_driver_sarge =
 	mcr_init_machine,
 
 	/* video hardware */
-	32*16, 30*16, { 0, 32*16-1, 0, 30*16-1 },
+	32*16, 30*16, { 0*16, 32*16-1, 0*16, 30*16-1 },
 	gfxdecodeinfo,
 	8*16, 8*16,
 	0,
@@ -1259,8 +1282,7 @@ static struct MachineDriver machine_driver_sarge =
 	{
 		SOUND_TURBO_CHIP_SQUEAK
 	},
-
-	mcr_nvram_handler
+	0
 };
 
 
@@ -1277,7 +1299,7 @@ static struct MachineDriver machine_driver_rampage =
 	mcr_init_machine,
 
 	/* video hardware */
-	32*16, 30*16, { 0, 32*16-1, 0, 30*16-1 },
+	32*16, 30*16, { 0*16, 32*16-1, 0*16, 30*16-1 },
 	gfxdecodeinfo,
 	8*16, 8*16,
 	0,
@@ -1293,8 +1315,7 @@ static struct MachineDriver machine_driver_rampage =
 	{
 		SOUND_SOUNDS_GOOD
 	},
-
-	mcr_nvram_handler
+	0
 };
 
 
@@ -1317,7 +1338,7 @@ static struct MachineDriver machine_driver_powerdrv =
 	mcr_init_machine,
 
 	/* video hardware */
-	32*16, 30*16, { 0, 32*16-1, 0, 30*16-1 },
+	32*16, 30*16, { 0*16, 32*16-1, 0*16, 30*16-1 },
 	gfxdecodeinfo,
 	8*16, 8*16,
 	0,
@@ -1333,8 +1354,7 @@ static struct MachineDriver machine_driver_powerdrv =
 	{
 		SOUND_SOUNDS_GOOD
 	},
-
-	mcr_nvram_handler
+	0
 };
 
 
@@ -1369,8 +1389,7 @@ static struct MachineDriver machine_driver_spyhunt =
 		SOUND_SSIO,
 		SOUND_CHIP_SQUEAK_DELUXE
 	},
-
-	mcr_nvram_handler
+	spyhunt_nvram_handler
 };
 
 
@@ -1403,8 +1422,7 @@ static struct MachineDriver machine_driver_turbotag =
 	{
 		SOUND_CHIP_SQUEAK_DELUXE
 	},
-
-	mcr_nvram_handler
+	spyhunt_nvram_handler
 };
 
 
@@ -1437,8 +1455,7 @@ static struct MachineDriver machine_driver_crater =
 	{
 		SOUND_SSIO
 	},
-
-	mcr_nvram_handler
+	spyhunt_nvram_handler
 };
 
 
@@ -1466,15 +1483,15 @@ ROM_START( tapper )
 	ROM_LOAD( "tapbg1.bin",   0x00000, 0x4000, 0x2a30238c )
 	ROM_LOAD( "tapbg0.bin",   0x04000, 0x4000, 0x394ab576 )
 
-	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "tapfg1.bin",   0x00000, 0x4000, 0x32509011 )
 	ROM_LOAD( "tapfg0.bin",   0x04000, 0x4000, 0x8412c808 )
-	ROM_LOAD( "tapfg3.bin",   0x10000, 0x4000, 0x818fffd4 )
-	ROM_LOAD( "tapfg2.bin",   0x14000, 0x4000, 0x67e37690 )
-	ROM_LOAD( "tapfg5.bin",   0x20000, 0x4000, 0x800f7c8a )
-	ROM_LOAD( "tapfg4.bin",   0x24000, 0x4000, 0x32674ee6 )
-	ROM_LOAD( "tapfg7.bin",   0x30000, 0x4000, 0x070b4c81 )
-	ROM_LOAD( "tapfg6.bin",   0x34000, 0x4000, 0xa37aef36 )
+	ROM_LOAD( "tapfg3.bin",   0x08000, 0x4000, 0x818fffd4 )
+	ROM_LOAD( "tapfg2.bin",   0x0c000, 0x4000, 0x67e37690 )
+	ROM_LOAD( "tapfg5.bin",   0x10000, 0x4000, 0x800f7c8a )
+	ROM_LOAD( "tapfg4.bin",   0x14000, 0x4000, 0x32674ee6 )
+	ROM_LOAD( "tapfg7.bin",   0x18000, 0x4000, 0x070b4c81 )
+	ROM_LOAD( "tapfg6.bin",   0x1c000, 0x4000, 0xa37aef36 )
 ROM_END
 
 
@@ -1495,15 +1512,15 @@ ROM_START( tappera )
 	ROM_LOAD( "tapbg1.bin",   0x00000, 0x4000, 0x2a30238c )
 	ROM_LOAD( "tapbg0.bin",   0x04000, 0x4000, 0x394ab576 )
 
-	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "fg1_a7.128",   0x00000, 0x4000, 0xbac70b69 )
 	ROM_LOAD( "fg0_a8.128",   0x04000, 0x4000, 0xc300925d )
-	ROM_LOAD( "fg3_a5.128",   0x10000, 0x4000, 0xecff6c23 )
-	ROM_LOAD( "fg2_a6.128",   0x14000, 0x4000, 0xa4f2d1be )
-	ROM_LOAD( "fg5_a3.128",   0x20000, 0x4000, 0x16ce38cb )
-	ROM_LOAD( "fg4_a4.128",   0x24000, 0x4000, 0x082a4059 )
-	ROM_LOAD( "fg7_a1.128",   0x30000, 0x4000, 0x3b476abe )
-	ROM_LOAD( "fg6_a2.128",   0x34000, 0x4000, 0x6717264c )
+	ROM_LOAD( "fg3_a5.128",   0x08000, 0x4000, 0xecff6c23 )
+	ROM_LOAD( "fg2_a6.128",   0x0c000, 0x4000, 0xa4f2d1be )
+	ROM_LOAD( "fg5_a3.128",   0x10000, 0x4000, 0x16ce38cb )
+	ROM_LOAD( "fg4_a4.128",   0x14000, 0x4000, 0x082a4059 )
+	ROM_LOAD( "fg7_a1.128",   0x18000, 0x4000, 0x3b476abe )
+	ROM_LOAD( "fg6_a2.128",   0x1c000, 0x4000, 0x6717264c )
 ROM_END
 
 
@@ -1524,15 +1541,15 @@ ROM_START( sutapper )
 	ROM_LOAD( "5790",         0x00000, 0x4000, 0xac1558c1 )
 	ROM_LOAD( "5789",         0x04000, 0x4000, 0xfa66cab5 )
 
-	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "5795",         0x00000, 0x4000, 0x5d987c92 )
 	ROM_LOAD( "5796",         0x04000, 0x4000, 0xde5700b4 )
-	ROM_LOAD( "5797",         0x10000, 0x4000, 0xf10a1d05 )
-	ROM_LOAD( "5798",         0x14000, 0x4000, 0x614990cd )
-	ROM_LOAD( "5799",         0x20000, 0x4000, 0x02c69432 )
-	ROM_LOAD( "5800",         0x24000, 0x4000, 0xebf1f948 )
-	ROM_LOAD( "5801",         0x30000, 0x4000, 0xd70defa7 )
-	ROM_LOAD( "5802",         0x34000, 0x4000, 0xd4f114b9 )
+	ROM_LOAD( "5797",         0x08000, 0x4000, 0xf10a1d05 )
+	ROM_LOAD( "5798",         0x0c000, 0x4000, 0x614990cd )
+	ROM_LOAD( "5799",         0x10000, 0x4000, 0x02c69432 )
+	ROM_LOAD( "5800",         0x14000, 0x4000, 0xebf1f948 )
+	ROM_LOAD( "5801",         0x18000, 0x4000, 0xd70defa7 )
+	ROM_LOAD( "5802",         0x1c000, 0x4000, 0xd4f114b9 )
 ROM_END
 
 
@@ -1553,15 +1570,15 @@ ROM_START( rbtapper )
 	ROM_LOAD( "rbtbg1.bin",   0x00000, 0x4000, 0x44dfa483 )
 	ROM_LOAD( "rbtbg0.bin",   0x04000, 0x4000, 0x510b13de )
 
-	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "rbtfg1.bin",   0x00000, 0x4000, 0x1c0b8791 )
 	ROM_LOAD( "rbtfg0.bin",   0x04000, 0x4000, 0xe99f6018 )
-	ROM_LOAD( "rbtfg3.bin",   0x10000, 0x4000, 0x3e725e77 )
-	ROM_LOAD( "rbtfg2.bin",   0x14000, 0x4000, 0x4ee8b624 )
-	ROM_LOAD( "rbtfg5.bin",   0x20000, 0x4000, 0x9eeca46e )
-	ROM_LOAD( "rbtfg4.bin",   0x24000, 0x4000, 0x8c79e7d7 )
-	ROM_LOAD( "rbtfg7.bin",   0x30000, 0x4000, 0x8dbf0c36 )
-	ROM_LOAD( "rbtfg6.bin",   0x34000, 0x4000, 0x441201a0 )
+	ROM_LOAD( "rbtfg3.bin",   0x08000, 0x4000, 0x3e725e77 )
+	ROM_LOAD( "rbtfg2.bin",   0x0c000, 0x4000, 0x4ee8b624 )
+	ROM_LOAD( "rbtfg5.bin",   0x10000, 0x4000, 0x9eeca46e )
+	ROM_LOAD( "rbtfg4.bin",   0x14000, 0x4000, 0x8c79e7d7 )
+	ROM_LOAD( "rbtfg7.bin",   0x18000, 0x4000, 0x8dbf0c36 )
+	ROM_LOAD( "rbtfg6.bin",   0x1c000, 0x4000, 0x441201a0 )
 ROM_END
 
 
@@ -1581,15 +1598,15 @@ ROM_START( timber )
 	ROM_LOAD( "timbg1.bin",   0x00000, 0x4000, 0xb1cb2651 )
 	ROM_LOAD( "timbg0.bin",   0x04000, 0x4000, 0x2ae352c4 )
 
-	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "timfg1.bin",   0x00000, 0x4000, 0x81de4a73 )
 	ROM_LOAD( "timfg0.bin",   0x04000, 0x4000, 0x7f3a4f59 )
-	ROM_LOAD( "timfg3.bin",   0x10000, 0x4000, 0x37c03272 )
-	ROM_LOAD( "timfg2.bin",   0x14000, 0x4000, 0xe2c2885c )
-	ROM_LOAD( "timfg5.bin",   0x20000, 0x4000, 0xeb636216 )
-	ROM_LOAD( "timfg4.bin",   0x24000, 0x4000, 0xb7105eb7 )
-	ROM_LOAD( "timfg7.bin",   0x30000, 0x4000, 0xd9c27475 )
-	ROM_LOAD( "timfg6.bin",   0x34000, 0x4000, 0x244778e8 )
+	ROM_LOAD( "timfg3.bin",   0x08000, 0x4000, 0x37c03272 )
+	ROM_LOAD( "timfg2.bin",   0x0c000, 0x4000, 0xe2c2885c )
+	ROM_LOAD( "timfg5.bin",   0x10000, 0x4000, 0xeb636216 )
+	ROM_LOAD( "timfg4.bin",   0x14000, 0x4000, 0xb7105eb7 )
+	ROM_LOAD( "timfg7.bin",   0x18000, 0x4000, 0xd9c27475 )
+	ROM_LOAD( "timfg6.bin",   0x1c000, 0x4000, 0x244778e8 )
 ROM_END
 
 
@@ -1611,19 +1628,19 @@ ROM_START( dotron )
 	ROM_LOAD( "pre.u4",       0x0e000, 0x1000, 0x7ca79b43 )
 	ROM_LOAD( "pre.u5",       0x0f000, 0x1000, 0x24e9618e )
 
-	ROM_REGION( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "loc-bg2.6f",   0x00000, 0x2000, 0x40167124 )
-	ROM_LOAD( "loc-bg1.5f",   0x04000, 0x2000, 0xbb2d7a5d )
+	ROM_LOAD( "loc-bg1.5f",   0x02000, 0x2000, 0xbb2d7a5d )
 
-	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "loc-g.cp4",    0x00000, 0x2000, 0x57a2b1ff )
 	ROM_LOAD( "loc-h.cp3",    0x02000, 0x2000, 0x3bb4d475 )
-	ROM_LOAD( "loc-e.cp6",    0x10000, 0x2000, 0xce957f1a )
-	ROM_LOAD( "loc-f.cp5",    0x12000, 0x2000, 0xd26053ce )
-	ROM_LOAD( "loc-c.cp8",    0x20000, 0x2000, 0xef45d146 )
-	ROM_LOAD( "loc-d.cp7",    0x22000, 0x2000, 0x5e8a3ef3 )
-	ROM_LOAD( "loc-a.cp0",    0x30000, 0x2000, 0xb35f5374 )
-	ROM_LOAD( "loc-b.cp9",    0x32000, 0x2000, 0x565a5c48 )
+	ROM_LOAD( "loc-e.cp6",    0x04000, 0x2000, 0xce957f1a )
+	ROM_LOAD( "loc-f.cp5",    0x06000, 0x2000, 0xd26053ce )
+	ROM_LOAD( "loc-c.cp8",    0x08000, 0x2000, 0xef45d146 )
+	ROM_LOAD( "loc-d.cp7",    0x0a000, 0x2000, 0x5e8a3ef3 )
+	ROM_LOAD( "loc-a.cp0",    0x0c000, 0x2000, 0xb35f5374 )
+	ROM_LOAD( "loc-b.cp9",    0x0e000, 0x2000, 0x565a5c48 )
 ROM_END
 
 
@@ -1645,19 +1662,19 @@ ROM_START( dotrone )
 	ROM_LOAD( "pre.u4",       0x0e000, 0x1000, 0x7ca79b43 )
 	ROM_LOAD( "pre.u5",       0x0f000, 0x1000, 0x24e9618e )
 
-	ROM_REGION( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "loc-bg2.6f",   0x00000, 0x2000, 0x40167124 )
-	ROM_LOAD( "loc-bg1.5f",   0x04000, 0x2000, 0xbb2d7a5d )
+	ROM_LOAD( "loc-bg1.5f",   0x02000, 0x2000, 0xbb2d7a5d )
 
-	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x10000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "loc-g.cp4",    0x00000, 0x2000, 0x57a2b1ff )
 	ROM_LOAD( "loc-h.cp3",    0x02000, 0x2000, 0x3bb4d475 )
-	ROM_LOAD( "loc-e.cp6",    0x10000, 0x2000, 0xce957f1a )
-	ROM_LOAD( "loc-f.cp5",    0x12000, 0x2000, 0xd26053ce )
-	ROM_LOAD( "loc-c.cp8",    0x20000, 0x2000, 0xef45d146 )
-	ROM_LOAD( "loc-d.cp7",    0x22000, 0x2000, 0x5e8a3ef3 )
-	ROM_LOAD( "loc-a.cp0",    0x30000, 0x2000, 0xb35f5374 )
-	ROM_LOAD( "loc-b.cp9",    0x32000, 0x2000, 0x565a5c48 )
+	ROM_LOAD( "loc-e.cp6",    0x04000, 0x2000, 0xce957f1a )
+	ROM_LOAD( "loc-f.cp5",    0x06000, 0x2000, 0xd26053ce )
+	ROM_LOAD( "loc-c.cp8",    0x08000, 0x2000, 0xef45d146 )
+	ROM_LOAD( "loc-d.cp7",    0x0a000, 0x2000, 0x5e8a3ef3 )
+	ROM_LOAD( "loc-a.cp0",    0x0c000, 0x2000, 0xb35f5374 )
+	ROM_LOAD( "loc-b.cp9",    0x0e000, 0x2000, 0x565a5c48 )
 ROM_END
 
 
@@ -1671,19 +1688,19 @@ ROM_START( destderb )
 	ROM_LOAD( "tcs_u5.bin",   0x0c000, 0x2000, 0xeca33b2c )
 	ROM_LOAD( "tcs_u4.bin",   0x0e000, 0x2000, 0x3490289a )
 
-	ROM_REGION( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "dd_bg0.6f",    0x00000, 0x2000, 0xcf80be19 )
-	ROM_LOAD( "dd_bg1.5f",    0x04000, 0x2000, 0x4e173e52 )
+	ROM_LOAD( "dd_bg1.5f",    0x02000, 0x2000, 0x4e173e52 )
 
-	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "dd_fg-0.a4",   0x00000, 0x4000, 0xe57a4de6 )
 	ROM_LOAD( "dd_fg-4.a3",   0x04000, 0x4000, 0x55aa667f )
-	ROM_LOAD( "dd_fg-1.a6",   0x10000, 0x4000, 0x70259651 )
-	ROM_LOAD( "dd_fg-5.a5",   0x14000, 0x4000, 0x5fe99007 )
-	ROM_LOAD( "dd_fg-2.a8",   0x20000, 0x4000, 0x6cab7b95 )
-	ROM_LOAD( "dd_fg-6.a7",   0x24000, 0x4000, 0xabfb9a8b )
-	ROM_LOAD( "dd_fg-3.a10",  0x30000, 0x4000, 0x801d9b86 )
-	ROM_LOAD( "dd_fg-7.a9",   0x34000, 0x4000, 0x0ec3f60a )
+	ROM_LOAD( "dd_fg-1.a6",   0x08000, 0x4000, 0x70259651 )
+	ROM_LOAD( "dd_fg-5.a5",   0x0c000, 0x4000, 0x5fe99007 )
+	ROM_LOAD( "dd_fg-2.a8",   0x10000, 0x4000, 0x6cab7b95 )
+	ROM_LOAD( "dd_fg-6.a7",   0x14000, 0x4000, 0xabfb9a8b )
+	ROM_LOAD( "dd_fg-3.a10",  0x18000, 0x4000, 0x801d9b86 )
+	ROM_LOAD( "dd_fg-7.a9",   0x1c000, 0x4000, 0x0ec3f60a )
 ROM_END
 
 
@@ -1696,19 +1713,19 @@ ROM_START( destderm )
 	ROM_LOAD( "tcs_u5.bin",   0x0c000, 0x2000, 0xeca33b2c )
 	ROM_LOAD( "tcs_u4.bin",   0x0e000, 0x2000, 0x3490289a )
 
-	ROM_REGION( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "bg0.15a",      0x00000, 0x2000, 0xa35d13b8 )
-	ROM_LOAD( "bg1.14b",      0x04000, 0x2000, 0x22ca93f3 )
+	ROM_LOAD( "bg1.14b",      0x02000, 0x2000, 0x22ca93f3 )
 
-	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "dd_fg-0.a4",   0x00000, 0x4000, 0xe57a4de6 )
 	ROM_LOAD( "dd_fg-4.a3",   0x04000, 0x4000, 0x55aa667f )
-	ROM_LOAD( "dd_fg-1.a6",   0x10000, 0x4000, 0x70259651 )
-	ROM_LOAD( "dd_fg-5.a5",   0x14000, 0x4000, 0x5fe99007 )
-	ROM_LOAD( "dd_fg-2.a8",   0x20000, 0x4000, 0x6cab7b95 )
-	ROM_LOAD( "dd_fg-6.a7",   0x24000, 0x4000, 0xabfb9a8b )
-	ROM_LOAD( "dd_fg-3.a10",  0x30000, 0x4000, 0x801d9b86 )
-	ROM_LOAD( "dd_fg-7.a9",   0x34000, 0x4000, 0x0ec3f60a )
+	ROM_LOAD( "dd_fg-1.a6",   0x08000, 0x4000, 0x70259651 )
+	ROM_LOAD( "dd_fg-5.a5",   0x0c000, 0x4000, 0x5fe99007 )
+	ROM_LOAD( "dd_fg-2.a8",   0x10000, 0x4000, 0x6cab7b95 )
+	ROM_LOAD( "dd_fg-6.a7",   0x14000, 0x4000, 0xabfb9a8b )
+	ROM_LOAD( "dd_fg-3.a10",  0x18000, 0x4000, 0x801d9b86 )
+	ROM_LOAD( "dd_fg-7.a9",   0x1c000, 0x4000, 0x0ec3f60a )
 ROM_END
 
 
@@ -1721,15 +1738,15 @@ ROM_START( sarge )
 	ROM_LOAD( "tcs_u5.bin",   0xc000, 0x2000, 0xa894ef8a )
 	ROM_LOAD( "tcs_u4.bin",   0xe000, 0x2000, 0x6ca6faf3 )
 
-	ROM_REGION( 0x08000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x04000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "til_15a.bin",  0x00000, 0x2000, 0x685001b8 )
-	ROM_LOAD( "til_14b.bin",  0x04000, 0x2000, 0x8449eb45 )
+	ROM_LOAD( "til_14b.bin",  0x02000, 0x2000, 0x8449eb45 )
 
-	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "spr_8e.bin",   0x00000, 0x8000, 0x93fac29d )
-	ROM_LOAD( "spr_6e.bin",   0x10000, 0x8000, 0x7cc6fb28 )
-	ROM_LOAD( "spr_5e.bin",   0x20000, 0x8000, 0xc832375c )
-	ROM_LOAD( "spr_4e.bin",   0x30000, 0x8000, 0xc382267d )
+	ROM_LOAD( "spr_6e.bin",   0x08000, 0x8000, 0x7cc6fb28 )
+	ROM_LOAD( "spr_5e.bin",   0x10000, 0x8000, 0xc832375c )
+	ROM_LOAD( "spr_4e.bin",   0x18000, 0x8000, 0xc382267d )
 ROM_END
 
 
@@ -1817,11 +1834,11 @@ ROM_START( maxrpm )
 	ROM_LOAD( "bg-0",         0x00000, 0x4000, 0xe3fb693a )
 	ROM_LOAD( "bg-1",         0x04000, 0x4000, 0x50d1db6c )
 
-	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "fg-0",         0x00000, 0x8000, 0x1d1435c1 )
-	ROM_LOAD( "fg-1",         0x10000, 0x8000, 0xe54b7f2a )
-	ROM_LOAD( "fg-2",         0x20000, 0x8000, 0x38be8505 )
-	ROM_LOAD( "fg-3",         0x30000, 0x8000, 0x9ae3eb52 )
+	ROM_LOAD( "fg-1",         0x08000, 0x8000, 0xe54b7f2a )
+	ROM_LOAD( "fg-2",         0x10000, 0x8000, 0x38be8505 )
+	ROM_LOAD( "fg-3",         0x18000, 0x8000, 0x9ae3eb52 )
 ROM_END
 
 
@@ -1850,15 +1867,15 @@ ROM_START( spyhunt )
 	ROM_LOAD( "cpu_bg2.5a",   0x04000, 0x2000, 0xba0fd626 )
 	ROM_LOAD( "cpu_bg3.6a",   0x06000, 0x2000, 0x7b482d61 )
 
-	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "vid_0fg.a8",   0x00000, 0x4000, 0x292c5466 )
 	ROM_LOAD( "vid_1fg.a7",   0x04000, 0x4000, 0x9fe286ec )
-	ROM_LOAD( "vid_2fg.a6",   0x10000, 0x4000, 0x62c8bfa5 )
-	ROM_LOAD( "vid_3fg.a5",   0x14000, 0x4000, 0xb894934d )
-	ROM_LOAD( "vid_4fg.a4",   0x20000, 0x4000, 0x7ca4941b )
-	ROM_LOAD( "vid_5fg.a3",   0x24000, 0x4000, 0x2d9fbcec )
-	ROM_LOAD( "vid_6fg.a2",   0x30000, 0x4000, 0x8cb8a066 )
-	ROM_LOAD( "vid_7fg.a1",   0x34000, 0x4000, 0x940fe17e )
+	ROM_LOAD( "vid_2fg.a6",   0x08000, 0x4000, 0x62c8bfa5 )
+	ROM_LOAD( "vid_3fg.a5",   0x0c000, 0x4000, 0xb894934d )
+	ROM_LOAD( "vid_4fg.a4",   0x10000, 0x4000, 0x7ca4941b )
+	ROM_LOAD( "vid_5fg.a3",   0x14000, 0x4000, 0x2d9fbcec )
+	ROM_LOAD( "vid_6fg.a2",   0x18000, 0x4000, 0x8cb8a066 )
+	ROM_LOAD( "vid_7fg.a1",   0x1c000, 0x4000, 0x940fe17e )
 
 	ROM_REGION( 0x01000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "cpu_alph.10g", 0x00000, 0x1000, 0x936dc87f )
@@ -1887,15 +1904,15 @@ ROM_START( turbotag )
 	ROM_LOAD( "ttbg2.bin",    0x04000, 0x2000, 0xda9d47d2 )
 	ROM_LOAD( "ttbg3.bin",    0x06000, 0x2000, 0x367e06a5 )
 
-	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ttfg0.bin",    0x00000, 0x4000, 0xed69e1a8 )
 	ROM_LOAD( "ttfg1.bin",    0x04000, 0x4000, 0x9d7e6ebc )
-	ROM_LOAD( "ttfg2.bin",    0x10000, 0x4000, 0x037ec6fc )
-	ROM_LOAD( "ttfg3.bin",    0x14000, 0x4000, 0x74e21c1c )
-	ROM_LOAD( "ttfg4.bin",    0x20000, 0x4000, 0x6fdb0c13 )
-	ROM_LOAD( "ttfg5.bin",    0x24000, 0x4000, 0x8b718879 )
-	ROM_LOAD( "ttfg6.bin",    0x30000, 0x4000, 0x4094e996 )
-	ROM_LOAD( "ttfg7.bin",    0x34000, 0x4000, 0x212019dc )
+	ROM_LOAD( "ttfg2.bin",    0x08000, 0x4000, 0x037ec6fc )
+	ROM_LOAD( "ttfg3.bin",    0x0c000, 0x4000, 0x74e21c1c )
+	ROM_LOAD( "ttfg4.bin",    0x10000, 0x4000, 0x6fdb0c13 )
+	ROM_LOAD( "ttfg5.bin",    0x14000, 0x4000, 0x8b718879 )
+	ROM_LOAD( "ttfg6.bin",    0x18000, 0x4000, 0x4094e996 )
+	ROM_LOAD( "ttfg7.bin",    0x1c000, 0x4000, 0x212019dc )
 
 	ROM_REGION( 0x01000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ttan.bin",     0x00000, 0x1000, 0xaa0b1471 )
@@ -1922,15 +1939,15 @@ ROM_START( crater )
 	ROM_LOAD( "crcpu.5a",     0x04000, 0x2000, 0x2fe4a6e1 )
 	ROM_LOAD( "crcpu.6a",     0x06000, 0x2000, 0xd0659042 )
 
-	ROM_REGION( 0x40000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+	ROM_REGION( 0x20000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "crvid.a3",     0x00000, 0x4000, 0x2c2f5b29 )
 	ROM_LOAD( "crvid.a4",     0x04000, 0x4000, 0x579a8e36 )
-	ROM_LOAD( "crvid.a5",     0x10000, 0x4000, 0x9bdec312 )
-	ROM_LOAD( "crvid.a6",     0x14000, 0x4000, 0x5bf954e0 )
-	ROM_LOAD( "crvid.a7",     0x20000, 0x4000, 0x9fa307d5 )
-	ROM_LOAD( "crvid.a8",     0x24000, 0x4000, 0x4b913498 )
-	ROM_LOAD( "crvid.a9",     0x30000, 0x4000, 0x811f152d )
-	ROM_LOAD( "crvid.a10",    0x34000, 0x4000, 0x7a22d6bc )
+	ROM_LOAD( "crvid.a5",     0x08000, 0x4000, 0x9bdec312 )
+	ROM_LOAD( "crvid.a6",     0x0c000, 0x4000, 0x5bf954e0 )
+	ROM_LOAD( "crvid.a7",     0x10000, 0x4000, 0x9fa307d5 )
+	ROM_LOAD( "crvid.a8",     0x14000, 0x4000, 0x4b913498 )
+	ROM_LOAD( "crvid.a9",     0x18000, 0x4000, 0x811f152d )
+	ROM_LOAD( "crvid.a10",    0x1c000, 0x4000, 0x7a22d6bc )
 
 	ROM_REGION( 0x01000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "crcpu.10g",    0x00000, 0x1000, 0x6fe53c8d )
@@ -1976,23 +1993,13 @@ static void spyhunt_decode(void)
 
 static void init_tapper(void)
 {
-	MCR_CONFIGURE_HISCORE(0xe000, 0x800, NULL);
 	MCR_CONFIGURE_SOUND(MCR_SSIO);
-	MCR_CONFIGURE_DEFAULT_PORTS;
-
-	mcr3_char_code_mask = 0x3ff;
-	mcr3_sprite_code_mask = 0x0ff;
 }
 
 
 static void init_timber(void)
 {
-	MCR_CONFIGURE_HISCORE(0xe000, 0x800, NULL);
 	MCR_CONFIGURE_SOUND(MCR_SSIO);
-	MCR_CONFIGURE_DEFAULT_PORTS;
-
-	mcr3_char_code_mask = 0x3ff;
-	mcr3_sprite_code_mask = 0x0ff;
 
 	/* Timber uses a modified SSIO with RAM in place of one of the ROMs */
 	install_mem_read_handler(1, 0x3000, 0x3fff, MRA_RAM);
@@ -2002,101 +2009,71 @@ static void init_timber(void)
 
 static void init_dotron(void)
 {
-	MCR_CONFIGURE_HISCORE(0xe000, 0x800, NULL);
 	MCR_CONFIGURE_SOUND(MCR_SSIO | MCR_SQUAWK_N_TALK);
-	MCR_CONFIGURE_PORT_04_READS(NULL, NULL, dotron_port_2_r, NULL, NULL);
-	MCR_CONFIGURE_PORT_47_WRITES(dotron_port_4_w, NULL, NULL, NULL);
-
-	mcr3_char_code_mask = 0x1ff;
-	mcr3_sprite_code_mask = 0x07f;
+	install_port_read_handler(0, 0x02, 0x02, dotron_port_2_r);
+	install_port_write_handler(0, 0x04, 0x04, dotron_port_4_w);
 }
 
 
 static void init_destderb(void)
 {
-	MCR_CONFIGURE_HISCORE(0xe000, 0x800, NULL);
 	MCR_CONFIGURE_SOUND(MCR_TURBO_CHIP_SQUEAK);
-	MCR_CONFIGURE_PORT_04_READS(NULL, NULL, NULL, NULL, NULL);
-	MCR_CONFIGURE_PORT_47_WRITES(turbocs_data_w, NULL, NULL, NULL);
+	install_port_write_handler(0, 0x04, 0x04, turbocs_data_w);
+}
 
-	mcr3_char_code_mask = 0x1ff;
-	mcr3_sprite_code_mask = 0x0ff;
 
-	/* need to invert the graphics for the monoboard version only */
-	if (memory_region(REGION_GFX1)[0] == 0xff)
-	{
-		MCR_CONFIGURE_NO_HISCORE;
-		MCR_CONFIGURE_PORT_47_WRITES(NULL, NULL, turbocs_data_w, NULL);
-		mcrmono_decode();
-	}
+static void init_destderm(void)
+{
+	MCR_CONFIGURE_SOUND(MCR_TURBO_CHIP_SQUEAK);
+	install_port_write_handler(0, 0x06, 0x06, turbocs_data_w);
+	mcrmono_decode();
 }
 
 
 static void init_sarge(void)
 {
-	MCR_CONFIGURE_NO_HISCORE;
 	MCR_CONFIGURE_SOUND(MCR_TURBO_CHIP_SQUEAK);
-	MCR_CONFIGURE_PORT_04_READS(NULL, sarge_port_1_r, sarge_port_2_r, NULL, NULL);
-	MCR_CONFIGURE_PORT_47_WRITES(NULL, NULL, turbocs_data_w, NULL);
-
-	mcr3_char_code_mask = 0x1ff;
-	mcr3_sprite_code_mask = 0x0ff;
-
+	install_port_read_handler(0, 0x01, 0x01, sarge_port_1_r);
+	install_port_read_handler(0, 0x02, 0x02, sarge_port_2_r);
+	install_port_write_handler(0, 0x06, 0x06, turbocs_data_w);
 	mcrmono_decode();
 }
 
 
 static void init_rampage(void)
 {
-	MCR_CONFIGURE_HISCORE(0xe631, 0x3f, NULL);	/* no actual NVRAM here, though */
 	MCR_CONFIGURE_SOUND(MCR_SOUNDS_GOOD);
-	MCR_CONFIGURE_PORT_04_READS(NULL, NULL, NULL, NULL, NULL);
-	MCR_CONFIGURE_PORT_47_WRITES(NULL, NULL, soundsgood_data_w, NULL);
-
-	mcr3_char_code_mask = 0x3ff;
-	mcr3_sprite_code_mask = 0x1ff;
-
+	install_port_write_handler(0, 0x06, 0x06, soundsgood_data_w);
 	mcrmono_decode();
 }
 
 
 static void init_powerdrv(void)
 {
-	MCR_CONFIGURE_NO_HISCORE;
 	MCR_CONFIGURE_SOUND(MCR_SOUNDS_GOOD);
-	MCR_CONFIGURE_PORT_04_READS(NULL, NULL, powerdrv_port_2_r, NULL, NULL);
-	MCR_CONFIGURE_PORT_47_WRITES(NULL, NULL, soundsgood_data_w, powerdrv_port_7_w);
-
-	mcr3_char_code_mask = 0x3ff;
-	mcr3_sprite_code_mask = 0x1ff;
-
+	install_port_read_handler(0, 0x02, 0x02, powerdrv_port_2_r);
+	install_port_write_handler(0, 0x06, 0x06, soundsgood_data_w);
+	install_port_write_handler(0, 0x07, 0x07, powerdrv_port_7_w);
 	mcrmono_decode();
 }
 
 
 static void init_maxrpm(void)
 {
-	MCR_CONFIGURE_NO_HISCORE;
 	MCR_CONFIGURE_SOUND(MCR_TURBO_CHIP_SQUEAK);
-	MCR_CONFIGURE_PORT_04_READS(NULL, maxrpm_port_1_r, maxrpm_port_2_r, NULL, NULL);
-	MCR_CONFIGURE_PORT_47_WRITES(NULL, maxrpm_mux_w, turbocs_data_w, NULL);
-
-	mcr3_char_code_mask = 0x3ff;
-	mcr3_sprite_code_mask = 0x1ff;
-
+	install_port_read_handler(0, 0x01, 0x01, maxrpm_port_1_r);
+	install_port_read_handler(0, 0x02, 0x02, maxrpm_port_2_r);
+	install_port_write_handler(0, 0x05, 0x05, maxrpm_mux_w);
+	install_port_write_handler(0, 0x06, 0x06, turbocs_data_w);
 	mcrmono_decode();
 }
 
 
 static void init_spyhunt(void)
 {
-	MCR_CONFIGURE_HISCORE(0xf000, 0x800, NULL);
 	MCR_CONFIGURE_SOUND(MCR_SSIO | MCR_CHIP_SQUEAK_DELUXE);
-	MCR_CONFIGURE_PORT_04_READS(NULL, NULL, spyhunt_port_2_r, NULL, NULL);
-	MCR_CONFIGURE_PORT_47_WRITES(spyhunt_port_4_w, NULL, NULL, NULL);
-
-	mcr3_char_code_mask = 0x07f;
-	mcr3_sprite_code_mask = 0x0ff;
+	install_port_read_handler(0, 0x02, 0x02, spyhunt_port_2_r);
+	install_port_write_handler(0, 0x04, 0x04, spyhunt_port_4_w);
 
 	spyhunt_sprite_color_mask = 0x00;
 	spyhunt_scroll_offset = -16;
@@ -2108,13 +2085,9 @@ static void init_spyhunt(void)
 
 static void init_turbotag(void)
 {
-	MCR_CONFIGURE_HISCORE(0xf000, 0x800, NULL);
 	MCR_CONFIGURE_SOUND(MCR_CHIP_SQUEAK_DELUXE);
-	MCR_CONFIGURE_PORT_04_READS(NULL, NULL, spyhunt_port_2_r, NULL, NULL);
-	MCR_CONFIGURE_PORT_47_WRITES(spyhunt_port_4_w, NULL, NULL, NULL);
-
-	mcr3_char_code_mask = 0x07f;
-	mcr3_sprite_code_mask = 0x0ff;
+	install_port_read_handler(0, 0x02, 0x02, spyhunt_port_2_r);
+	install_port_write_handler(0, 0x04, 0x04, spyhunt_port_4_w);
 
 	spyhunt_sprite_color_mask = 0x00;
 	spyhunt_scroll_offset = -88;
@@ -2127,12 +2100,7 @@ static void init_turbotag(void)
 
 static void init_crater(void)
 {
-	MCR_CONFIGURE_HISCORE(0xf000, 0x800, NULL);
 	MCR_CONFIGURE_SOUND(MCR_SSIO);
-	MCR_CONFIGURE_DEFAULT_PORTS;
-
-	mcr3_char_code_mask = 0x07f;
-	mcr3_sprite_code_mask = 0x0ff;
 
 	spyhunt_sprite_color_mask = 0x03;
 	spyhunt_scroll_offset = -96;
@@ -2141,7 +2109,11 @@ static void init_crater(void)
 
 
 
-
+/*************************************
+ *
+ *	Game drivers
+ *
+ *************************************/
 
 GAME( 1983, tapper,   0,        mcr3,     tapper,   tapper,   ROT0,  "Bally Midway", "Tapper (Budweiser)" )
 GAME( 1983, tappera,  tapper,   mcr3,     tapper,   tapper,   ROT0,  "Bally Midway", "Tapper (alternate)" )
@@ -2151,7 +2123,7 @@ GAME( 1984, timber,   0,        mcr3,     timber,   timber,   ROT0,  "Bally Midw
 GAME( 1983, dotron,   0,        dotron,   dotron,   dotron,   ORIENTATION_FLIP_X, "Bally Midway", "Discs of Tron (Upright)" )
 GAME( 1983, dotrone,  dotron,   dotron,   dotron,   dotron,   ORIENTATION_FLIP_X, "Bally Midway", "Discs of Tron (Environmental)" )
 GAME( 1984, destderb, 0,        destderb, destderb, destderb, ROT0,  "Bally Midway", "Demolition Derby" )
-GAME( 1984, destderm, destderb, sarge,    destderb, destderb, ROT0,  "Bally Midway", "Demolition Derby (2-Player Mono Board Version)" )
+GAME( 1984, destderm, destderb, sarge,    destderb, destderm, ROT0,  "Bally Midway", "Demolition Derby (2-Player Mono Board Version)" )
 GAME( 1985, sarge,    0,        sarge,    sarge,    sarge,    ROT0,  "Bally Midway", "Sarge" )
 GAME( 1986, rampage,  0,        rampage,  rampage,  rampage,  ROT0,  "Bally Midway", "Rampage (revision 3)" )
 GAME( 1986, rampage2, rampage,  rampage,  rampage,  rampage,  ROT0,  "Bally Midway", "Rampage (revision 2)" )

@@ -205,7 +205,7 @@ WRITE_HANDLER( berzerk_sound_control_a_w )
 				sample_start(1,30,0);
 				break;
 			case 70 : /* baddie laser */
-if (errorlog) fprintf(errorlog,"Trying death sound");
+logerror("Trying death sound");
 				switch(deathsound)
 				{
 				case 1 :
@@ -251,7 +251,7 @@ if (errorlog) fprintf(errorlog,"Trying death sound");
 
 WRITE_HANDLER( berzerk_sound_control_b_w )
 {
-	if (errorlog)  fprintf(errorlog, "B Data value %d and offset %d at %d\n", data, offset, lastfreq);
+	logerror("B Data value %d and offset %d at %d\n", data, offset, lastfreq);
 }
 
 void berzerk_sh_update(void)

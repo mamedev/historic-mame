@@ -8,7 +8,7 @@
 
 #include "driver.h"
 
-unsigned int retofinv_videoram_size;
+size_t retofinv_videoram_size;
 unsigned char *retofinv_sprite_ram1;
 unsigned char *retofinv_sprite_ram2;
 unsigned char *retofinv_sprite_ram3;

@@ -46,7 +46,7 @@ void seicross_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 static unsigned char *nvram;
-static int nvram_size;
+static size_t nvram_size;
 
 
 static void nvram_handler(void *file,int read_or_write)
@@ -86,7 +86,7 @@ static READ_HANDLER( friskyt_portB_r )
 
 static WRITE_HANDLER( friskyt_portB_w )
 {
-//if (errorlog) fprintf(errorlog,"PC %04x: 8910 port B = %02x\n",cpu_get_pc(),data);
+//logerror("PC %04x: 8910 port B = %02x\n",cpu_get_pc(),data);
 	/* bit 0 is IRQ enable */
 	interrupt_enable_w(0,data & 1);
 

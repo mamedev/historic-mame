@@ -13,7 +13,7 @@ unsigned char *xevious_fg_videoram,*xevious_fg_colorram;
 unsigned char *xevious_bg_videoram,*xevious_bg_colorram;
 
 extern unsigned char *spriteram,*spriteram_2,*spriteram_3;
-extern int spriteram_size;
+extern size_t spriteram_size;
 
 static struct tilemap *fg_tilemap,*bg_tilemap;
 
@@ -229,8 +229,7 @@ WRITE_HANDLER( xevious_vh_latch_w )
 		tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 		break;
    default:
-		   if (errorlog)
-			   fprintf(errorlog,"CRTC WRITE REG: %x  Data: %03x\n",reg, data);
+		   logerror("CRTC WRITE REG: %x  Data: %03x\n",reg, data);
 		   break;
 	}
 }

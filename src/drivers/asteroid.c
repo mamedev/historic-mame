@@ -172,8 +172,6 @@ READ_HANDLER( asteroid_IN1_r );
 READ_HANDLER( asteroid_DSW1_r );
 READ_HANDLER( llander_IN0_r );
 
-int asteroid_catch_busyloop(int offset);
-
 void llander_init_colors (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int llander_start(void);
 void llander_stop(void);

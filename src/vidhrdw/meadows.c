@@ -199,7 +199,7 @@ int     x, y;
 		}
 	}
 
-//	if (errorlog) fprintf(errorlog, "sprite_dirty(%d) %d %d\n", n, sprite_horz[n], sprite_vert[n]);
+//	logerror("sprite_dirty(%d) %d %d\n", n, sprite_horz[n], sprite_vert[n]);
 }
 
 /*************************************************************/

@@ -501,7 +501,7 @@ WRITE_HANDLER( namcos1_sound_w )
 	/* verify the offset */
 	if (offset > 63)
 	{
-		if (errorlog) fprintf(errorlog, "NAMCOS1 sound: Attempting to write past the 64 registers segment\n");
+		logerror("NAMCOS1 sound: Attempting to write past the 64 registers segment\n");
 		return;
 	}
 

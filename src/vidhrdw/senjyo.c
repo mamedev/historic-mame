@@ -13,7 +13,7 @@ void suprloco_decode(void);
 
 
 extern unsigned char *spriteram;
-extern int spriteram_size;
+extern size_t spriteram_size;
 
 unsigned char *senjyo_fgscroll;
 unsigned char *senjyo_bgstripes;

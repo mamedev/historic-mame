@@ -40,7 +40,7 @@ static struct rectangle* spritevisibleareaflipx;
 unsigned char *galaxian_attributesram;
 unsigned char *galaxian_bulletsram;
 
-int galaxian_bulletsram_size;
+size_t galaxian_bulletsram_size;
 static int stars_on,stars_blink;
 static int stars_type;		/* -1 = no stars */
 							/*  0 = Galaxian stars */
@@ -86,8 +86,7 @@ static void  jumpbug_modify_spritecode(int *spritecode,int *flipx,int *flipy,int
 
   Convert the color PROMs into a more useable format.
 
-  Moon Cresta has one 32 bytes palette PROM, connected to the RGB output
-  this way:
+  Galaxian has one 32 bytes palette PROM, connected to the RGB output this way:
 
   bit 7 -- 220 ohm resistor  -- BLUE
         -- 470 ohm resistor  -- BLUE
@@ -253,22 +252,29 @@ void mariner_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 {
 	int i;
 
-
     galaxian_vh_convert_color_prom(palette, colortable, color_prom);
 
 	/* set up background colors */
 
-   	/* nine shades of blue */
+   	/* 16 shades of blue - the 4 bits are connected to the following resistors
 
-	palette[96*3 + 0] = 0;
-	palette[96*3 + 1] = 0;
-	palette[96*3 + 2] = 0;
+  		bit 0 -- 4.7 kohm resistor
+        	  -- 2.2 kohm resistor
+        	  -- 1   kohm resistor
+  		bit 0 -- .47 kohm resistor */
 
-   	for (i = 1; i < 10; i++)
+   	for (i = 0; i < 16; i++)
     {
+		int bit0,bit1,bit2,bit3;
+
+		bit0 = (i >> 0) & 0x01;
+		bit1 = (i >> 1) & 0x01;
+		bit2 = (i >> 2) & 0x01;
+		bit3 = (i >> 3) & 0x01;
+
 		palette[96*3 + i*3 + 0] = 0;
        	palette[96*3 + i*3 + 1] = 0;
-       	palette[96*3 + i*3 + 2] = 0xea - 0x15 * (i - 1);
+       	palette[96*3 + i*3 + 2] = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
     }
 }
 
@@ -529,25 +535,32 @@ int calipso_vh_start(void)
 int mariner_vh_start(void)
 {
 	int x;
+	unsigned char *background_prom;
+
 
 	int ret = common_vh_start();
 
 	stars_type = 3;
 	modify_charcode = mariner_modify_charcode;
 
-    /* Setup background color array (blue water) */
 
-    for (x=0;  x<63; x++) backcolor[x] = 0;
-    for (x=63; x<71; x++) backcolor[x] = 1;
-    for (x=71; x<79; x++) backcolor[x] = 2;
-    for (x=79; x<87; x++) backcolor[x] = 3;
-    for (x=87; x<95; x++) backcolor[x] = 4;
-    for (x=95; x<111;x++) backcolor[x] = 5;
-    for (x=111;x<135;x++) backcolor[x] = 6;
-    for (x=135;x<167;x++) backcolor[x] = 7;
-    for (x=167;x<207;x++) backcolor[x] = 8;
-    for (x=207;x<247;x++) backcolor[x] = 9;
-    for (x=247;x<256;x++) backcolor[x] = 0;
+    /* setup background color array (blue water).
+       The 2nd 32 bytes of the PROM is for the flipped screen,
+       it's emulated indirectly */
+
+	background_prom = memory_region(REGION_USER1);
+
+	for (x = 1; x < 32; x++)
+	{
+		int i;
+
+		for (i = 0; i < 8; i++)
+		{
+			backcolor[(x-1)*8+i] = background_prom[x];
+		}
+	}
+
+    for (x=248;x<256;x++) backcolor[x] = 0;
 
     decode_background();
 

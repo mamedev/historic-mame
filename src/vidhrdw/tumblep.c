@@ -16,95 +16,21 @@ to switch between 8*8 tiles and 16*16 tiles.
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-#define TILERAM_SIZE	0x1000
-
-unsigned char *tumblep_pf2_data,*tumblep_pf3_data;
-static unsigned char *tumblep_pf3_dirty,*tumblep_pf2_dirty;
-static struct osd_bitmap *tumblep_pf1_bitmap;
-static struct osd_bitmap *tumblep_pf2_bitmap;
-static struct osd_bitmap *tumblep_pf3_bitmap;
-
 static unsigned char tumblep_control_0[16];
-static int offsetx[4],offsety[4];
-static int pf_bank;
+unsigned char *tumblep_pf1_data,*tumblep_pf2_data;
+static struct tilemap *pf1_tilemap,*pf1_alt_tilemap,*pf2_tilemap;
+static unsigned char *gfx_base;
+static int gfx_bank,flipscreen;
 
 /******************************************************************************/
 
-static void tumblep_update_palette(void)
+static void tumblep_mark_sprite_colours(void)
 {
-	int offs,color,code,i,pal_base;
-	int colmask[16];
+	int offs,color,i,pal_base,colmask[16];
     unsigned int *pen_usage;
 
 	palette_init_used_colors();
 
-	pen_usage=Machine->gfx[1]->pen_usage;
-	pal_base = Machine->drv->gfxdecodeinfo[1].color_codes_start;
-	for (color = 0;color < 16;color++) colmask[color] = 0;
-	for (offs = 0; offs < TILERAM_SIZE;offs += 2)
-	{
-		code = READ_WORD(&tumblep_pf2_data[offs]);
-		color = (code & 0xf000) >> 12;
-		code &= 0x0fff;
-		colmask[color] |= pen_usage[code];
-	}
-
-	for (color = 0;color < 16;color++)
-	{
-		if (colmask[color] & (1 << 0))
-			palette_used_colors[pal_base + 16 * color] = PALETTE_COLOR_TRANSPARENT;
-		for (i = 1;i < 16;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
-		}
-	}
-
-	pen_usage=Machine->gfx[0]->pen_usage;
-	pal_base = Machine->drv->gfxdecodeinfo[2].color_codes_start;
-	for (color = 0;color < 16;color++) colmask[color] = 0;
-	for (offs = 0; offs < TILERAM_SIZE;offs += 2)
-	{
-		code = READ_WORD(&tumblep_pf3_data[offs]);
-		color = (code & 0xf000) >> 12;
-		code &= 0x0fff;
-		colmask[color] |= pen_usage[code];
-	}
-
-	for (color = 0;color < 16;color++)
-	{
-		if (colmask[color] & (1 << 0))
-			palette_used_colors[pal_base + 16 * color] = PALETTE_COLOR_TRANSPARENT;
-		for (i = 1;i < 16;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
-		}
-	}
-
-	pen_usage=Machine->gfx[2]->pen_usage;
-	pal_base = Machine->drv->gfxdecodeinfo[2].color_codes_start;
-	for (color = 0;color < 16;color++) colmask[color] = 0;
-	for (offs = 0; offs < TILERAM_SIZE;offs += 2)
-	{
-		code = READ_WORD(&tumblep_pf3_data[offs]);
-		color = (code & 0xf000) >> 12;
-		code &= 0x0fff;
-		colmask[color] |= pen_usage[code];
-	}
-
-	for (color = 0;color < 16;color++)
-	{
-		if (colmask[color] & (1 << 0))
-			palette_used_colors[pal_base + 16 * color] = PALETTE_COLOR_TRANSPARENT;
-		for (i = 1;i < 16;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
-		}
-	}
-
-	/* Sprites */
 	pen_usage=Machine->gfx[3]->pen_usage;
 	pal_base = Machine->drv->gfxdecodeinfo[3].color_codes_start;
 	for (color = 0;color < 16;color++) colmask[color] = 0;
@@ -141,10 +67,7 @@ static void tumblep_update_palette(void)
 	}
 
 	if (palette_recalc())
-	{
-		memset(tumblep_pf2_dirty,1,TILERAM_SIZE);
-		memset(tumblep_pf3_dirty,1,TILERAM_SIZE);
-	}
+		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
 }
 
 static void tumblep_drawsprites(struct osd_bitmap *bitmap)
@@ -153,7 +76,7 @@ static void tumblep_drawsprites(struct osd_bitmap *bitmap)
 
 	for (offs = 0;offs < 0x800;offs += 8)
 	{
-		int x,y,sprite,colour,multi,fx,fy,inc,flash;
+		int x,y,sprite,colour,multi,fx,fy,inc,flash,mult;
 
 		sprite = READ_WORD (&spriteram[offs+2]) & 0x3fff;
 		if (!sprite) continue;
@@ -185,13 +108,23 @@ static void tumblep_drawsprites(struct osd_bitmap *bitmap)
 			inc = 1;
 		}
 
+		if (flipscreen)
+		{
+			y=240-y;
+			x=304-x;
+			if (fx) fx=0; else fx=1;
+			if (fy) fy=0; else fy=1;
+			mult=16;
+		}
+		else mult=-16;
+
 		while (multi >= 0)
 		{
 			drawgfx(bitmap,Machine->gfx[3],
 					sprite - multi * inc,
 					colour,
 					fx,fy,
-					x,y - 16 * multi,
+					x,y + mult * multi,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 
 			multi--;
@@ -199,293 +132,136 @@ static void tumblep_drawsprites(struct osd_bitmap *bitmap)
 	}
 }
 
-static void tumblep_pf2_update(void)
+/******************************************************************************/
+
+WRITE_HANDLER( tumblep_pf1_data_w )
 {
-	int offs,mx,my,color,tile,quarter;
-
-	for (quarter = 0;quarter < 4;quarter++)
-	{
-		mx = -1;
-		my = 0;
-
-  		for (offs = 0x400 * quarter; offs < 0x400 * quarter + 0x400;offs += 2)
-		{
-			mx++;
-			if (mx == 32)
-			{
-				mx = 0;
-				my++;
-			}
-
-			if (tumblep_pf2_dirty[offs])
-			{
-				tumblep_pf2_dirty[offs] = 0;
-				tile = READ_WORD(&tumblep_pf2_data[offs]);
-				color = (tile & 0xf000) >> 12;
-
-				drawgfx(tumblep_pf2_bitmap,Machine->gfx[1],
-						tile & 0x0fff,
-						color,
-						0,0,
-						16*mx + offsetx[quarter],16*my + offsety[quarter],
-						0,TRANSPARENCY_NONE,0);
-			}
-		}
-	}
+	COMBINE_WORD_MEM(&tumblep_pf1_data[offset],data);
+	tilemap_mark_tile_dirty(pf1_tilemap,offset/2);
+	tilemap_mark_tile_dirty(pf1_alt_tilemap,offset/2);
 }
 
-static void tumblep_pf3_update(void)
+WRITE_HANDLER( tumblep_pf2_data_w )
 {
-	int offs,mx,my,color,tile,quarter;
+	COMBINE_WORD_MEM(&tumblep_pf2_data[offset],data);
+	tilemap_mark_tile_dirty(pf2_tilemap,offset/2);
+}
 
-	for (quarter = 0;quarter < 4;quarter++)
-	{
-		mx = -1;
-		my = 0;
+WRITE_HANDLER( tumblep_control_0_w )
+{
+	COMBINE_WORD_MEM(&tumblep_control_0[offset],data);
+}
 
-   		for (offs = 0x400 * quarter; offs < 0x400 * quarter + 0x400;offs += 2)
-		{
-			mx++;
-			if (mx == 32)
-			{
-				mx = 0;
-				my++;
-			}
+/******************************************************************************/
 
-			if (tumblep_pf3_dirty[offs])
-			{
-				tumblep_pf3_dirty[offs] = 0;
-				tile = READ_WORD(&tumblep_pf3_data[offs]);
-				color = (tile & 0xf000) >> 12;
+static UINT32 tumblep_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
+{
+	/* logical (col,row) -> memory offset */
+	return (col & 0x1f) + ((row & 0x1f) << 5) + ((col & 0x20) << 5);
+}
 
-				drawgfx(tumblep_pf3_bitmap,Machine->gfx[2],
-						tile & 0x0fff,
-						color,
-						0,0,
-						16*mx + offsetx[quarter],16*my + offsety[quarter],
-						0,TRANSPARENCY_NONE,0);
-			}
-		}
-	}
+static void get_bg_tile_info(int tile_index)
+{
+	int tile,color;
+
+	tile=READ_WORD(&gfx_base[2*tile_index]);
+	color=tile >> 12;
+	tile=tile&0xfff;
+
+	SET_TILE_INFO(gfx_bank,tile,color)
+}
+
+static void get_fg_tile_info(int tile_index)
+{
+	int tile=READ_WORD(&tumblep_pf1_data[2*tile_index]);
+	int color=tile >> 12;
+
+	tile=tile&0xfff;
+	SET_TILE_INFO(0,tile,color)
+}
+
+int tumblep_vh_start(void)
+{
+	pf1_tilemap =     tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,32);
+	pf1_alt_tilemap = tilemap_create(get_bg_tile_info,tumblep_scan,TILEMAP_TRANSPARENT,16,16,64,32);
+	pf2_tilemap =     tilemap_create(get_bg_tile_info,tumblep_scan,TILEMAP_OPAQUE,     16,16,64,32);
+
+	if (!pf1_tilemap || !pf1_alt_tilemap || !pf2_tilemap)
+		return 1;
+
+	pf1_tilemap->transparent_pen = 0;
+	pf1_alt_tilemap->transparent_pen = 0;
+
+	return 0;
 }
 
 /******************************************************************************/
 
 void tumblep_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int scrollx,scrolly;
-	int mx,my,offs,tile,color;
+	int offs;
 
-	tumblep_update_palette();
+	flipscreen=(READ_WORD(&tumblep_control_0[0])&0x80);
+	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
+	if (flipscreen) offs=1; else offs=-1;
 
-	tumblep_pf2_update();
-	if (!pf_bank)
-		tumblep_pf3_update();
+	tilemap_set_scrollx( pf1_tilemap,0, READ_WORD(&tumblep_control_0[2])+offs );
+	tilemap_set_scrolly( pf1_tilemap,0, READ_WORD(&tumblep_control_0[4]) );
+	tilemap_set_scrollx( pf1_alt_tilemap,0, READ_WORD(&tumblep_control_0[2])+offs );
+	tilemap_set_scrolly( pf1_alt_tilemap,0, READ_WORD(&tumblep_control_0[4]) );
+	tilemap_set_scrollx( pf2_tilemap,0, READ_WORD(&tumblep_control_0[6])+offs );
+	tilemap_set_scrolly( pf2_tilemap,0, READ_WORD(&tumblep_control_0[8]) );
 
-	/* Background */
-	scrollx=-READ_WORD (&tumblep_control_0[6]);
-	scrolly=-READ_WORD (&tumblep_control_0[8]);
- 	copyscrollbitmap(bitmap,tumblep_pf2_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	gfx_bank=1;
+	gfx_base=tumblep_pf2_data;
+	tilemap_update(pf2_tilemap);
+	gfx_bank=2;
+	gfx_base=tumblep_pf1_data;
+	tilemap_update(pf1_alt_tilemap);
+	tilemap_update(pf1_tilemap);
 
-	/* Foreground */
-	scrollx=-READ_WORD (&tumblep_control_0[2]);
-	scrolly=-READ_WORD (&tumblep_control_0[4]);
+	tumblep_mark_sprite_colours();
+	tilemap_render(ALL_TILEMAPS);
 
-	/* Draw 16*16 background */
-	if (!pf_bank)
-		copyscrollbitmap(bitmap,tumblep_pf3_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
-
-	/* Sprites */
+	tilemap_draw(bitmap,pf2_tilemap,0);
+	if (READ_WORD(&tumblep_control_0[0xc])&0x80)
+		tilemap_draw(bitmap,pf1_tilemap,0);
+	else
+		tilemap_draw(bitmap,pf1_alt_tilemap,0);
 	tumblep_drawsprites(bitmap);
-
-	/* Draw 8*8 background */
-	if (pf_bank) {
-		mx = -1;
-		my = 0;
-		for (offs = 0; offs < 0x1000 ;offs += 2)
-		{
-			mx++;
-			if (mx == 64)
-			{
-				mx = 0;
-				my++;
-			}
-
-			if (tumblep_pf3_dirty[offs])
-			{
-				tumblep_pf3_dirty[offs] = 0;
-				tile = READ_WORD(&tumblep_pf3_data[offs]);
-				color = (tile & 0xf000) >> 12;
-
-				drawgfx(tumblep_pf1_bitmap,Machine->gfx[0],
-						tile & 0x0fff,
-						color,
-						0,0,
-						8*mx,8*my,
-						0,TRANSPARENCY_NONE,0);
-			}
-		}
-
-		scrollx=-READ_WORD (&tumblep_control_0[2]);
-		scrolly=-READ_WORD (&tumblep_control_0[4]);
-		copyscrollbitmap(bitmap,tumblep_pf1_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
-	}
 }
 
 void tumblepb_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int scrollx,scrolly;
-	int mx,my,offs,tile,color;
+	int offs,offs2;
 
-	tumblep_update_palette();
+	flipscreen=(READ_WORD(&tumblep_control_0[0])&0x80);
+	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
+	if (flipscreen) offs=1; else offs=-1;
+	if (flipscreen) offs2=-3; else offs2=-5;
 
-	tumblep_pf2_update();
-	if (!pf_bank)
-		tumblep_pf3_update();
+	tilemap_set_scrollx( pf1_tilemap,0, READ_WORD(&tumblep_control_0[2])+offs2 );
+	tilemap_set_scrolly( pf1_tilemap,0, READ_WORD(&tumblep_control_0[4]) );
+	tilemap_set_scrollx( pf1_alt_tilemap,0, READ_WORD(&tumblep_control_0[2])+offs2 );
+	tilemap_set_scrolly( pf1_alt_tilemap,0, READ_WORD(&tumblep_control_0[4]) );
+	tilemap_set_scrollx( pf2_tilemap,0, READ_WORD(&tumblep_control_0[6])+offs );
+	tilemap_set_scrolly( pf2_tilemap,0, READ_WORD(&tumblep_control_0[8]) );
 
-	/* Background */
-	scrollx=-READ_WORD (&tumblep_control_0[6])+1;
-	scrolly=-READ_WORD (&tumblep_control_0[8]);
- 	copyscrollbitmap(bitmap,tumblep_pf2_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	gfx_bank=1;
+	gfx_base=tumblep_pf2_data;
+	tilemap_update(pf2_tilemap);
+	gfx_bank=2;
+	gfx_base=tumblep_pf1_data;
+	tilemap_update(pf1_tilemap);
+	tilemap_update(pf1_alt_tilemap);
 
-	/* Foreground */
-	scrollx=-READ_WORD (&tumblep_control_0[2])+5;
-	scrolly=-READ_WORD (&tumblep_control_0[4]);
+	tumblep_mark_sprite_colours();
+	tilemap_render(ALL_TILEMAPS);
 
-	/* Draw 16*16 background */
-	if (!pf_bank)
-		copyscrollbitmap(bitmap,tumblep_pf3_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
-
-	/* Sprites */
+	tilemap_draw(bitmap,pf2_tilemap,0);
+	if (READ_WORD(&tumblep_control_0[0xc])&0x80)
+		tilemap_draw(bitmap,pf1_tilemap,0);
+	else
+		tilemap_draw(bitmap,pf1_alt_tilemap,0);
 	tumblep_drawsprites(bitmap);
-
-	/* Draw 8*8 background */
-	if (pf_bank) {
-		mx = -1;
-		my = 0;
-		for (offs = 0; offs < 0x1000 ;offs += 2)
-		{
-			mx++;
-			if (mx == 64)
-			{
-				mx = 0;
-				my++;
-			}
-
-			if (tumblep_pf3_dirty[offs])
-			{
-				tumblep_pf3_dirty[offs] = 0;
-				tile = READ_WORD(&tumblep_pf3_data[offs]);
-				color = (tile & 0xf000) >> 12;
-
-				drawgfx(tumblep_pf1_bitmap,Machine->gfx[0],
-						tile & 0x0fff,
-						color,
-						0,0,
-						8*mx,8*my,
-						0,TRANSPARENCY_NONE,0);
-			}
-		}
-
-		scrollx=-READ_WORD (&tumblep_control_0[2])+5;
-		scrolly=-READ_WORD (&tumblep_control_0[4]);
-		copyscrollbitmap(bitmap,tumblep_pf1_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
-	}
-}
-
-/******************************************************************************/
-
-WRITE_HANDLER( tumblep_pf2_data_w )
-{
-	int oldword = READ_WORD(&tumblep_pf2_data[offset]);
-	int newword = COMBINE_WORD(oldword,data);
-
-	if (oldword != newword)
-	{
-		WRITE_WORD(&tumblep_pf2_data[offset],newword);
-		tumblep_pf2_dirty[offset] = 1;
-	}
-}
-
-WRITE_HANDLER( tumblep_pf3_data_w )
-{
-	int oldword = READ_WORD(&tumblep_pf3_data[offset]);
-	int newword = COMBINE_WORD(oldword,data);
-
-	if (oldword != newword)
-	{
-		WRITE_WORD(&tumblep_pf3_data[offset],newword);
-		tumblep_pf3_dirty[offset] = 1;
-	}
-}
-
-WRITE_HANDLER( tumblep_control_0_w )
-{
-	static int last=0;
-
-	COMBINE_WORD_MEM(&tumblep_control_0[offset],data);
-
-    /* Check for playfield 'bankswitch' */
-	if (offset==0xc) {
-		if ((data&0xff)==0x80) {
-			if (!last) {
-				last=1;
-				memset(tumblep_pf3_dirty,1,TILERAM_SIZE);
-            }
-			pf_bank=1;
-        }
-		else {
-			if (last) {
-				last=0;
-				memset(tumblep_pf3_dirty,1,TILERAM_SIZE);
-            }
-        	pf_bank=0;
-        }
-	}
-}
-
-/******************************************************************************/
-
-void tumblep_vh_stop (void)
-{
-	osd_free_bitmap(tumblep_pf2_bitmap);
-	osd_free_bitmap(tumblep_pf3_bitmap);
-	osd_free_bitmap(tumblep_pf1_bitmap);
-	free(tumblep_pf3_dirty);
-	free(tumblep_pf2_dirty);
-}
-
-int tumblep_vh_start(void)
-{
-	/* Allocate bitmaps */
-	if ((tumblep_pf1_bitmap = osd_create_bitmap(512,256)) == 0) {
-		tumblep_vh_stop ();
-		return 1;
-	}
-
-	if ((tumblep_pf2_bitmap = osd_create_bitmap(1024,512)) == 0) {
-		tumblep_vh_stop ();
-		return 1;
-	}
-
-	if ((tumblep_pf3_bitmap = osd_create_bitmap(1024,512)) == 0) {
-		tumblep_vh_stop ();
-		return 1;
-	}
-
-	tumblep_pf3_dirty = malloc(TILERAM_SIZE);
-	tumblep_pf2_dirty = malloc(TILERAM_SIZE);
-	memset(tumblep_pf2_dirty,1,TILERAM_SIZE);
-	memset(tumblep_pf3_dirty,1,TILERAM_SIZE);
-
-	offsetx[0] = 0;
-	offsetx[1] = 0;
-	offsetx[2] = 512;
-	offsetx[3] = 512;
-	offsety[0] = 0;
-	offsety[1] = 256;
-	offsety[2] = 0;
-	offsety[3] = 256;
-
-	return 0;
 }

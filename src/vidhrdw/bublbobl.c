@@ -12,7 +12,7 @@
 
 
 unsigned char *bublbobl_objectram;
-int bublbobl_objectram_size;
+size_t bublbobl_objectram_size;
 
 
 

@@ -29,6 +29,7 @@ static void (*plot_pixel_p)(int x, int y, int col);
 static WRITE_HANDLER( bw_videoram_w );
 static WRITE_HANDLER( schaser_videoram_w );
 static WRITE_HANDLER( lupin3_videoram_w );
+static WRITE_HANDLER( polaris_videoram_w );
 static WRITE_HANDLER( invadpt2_videoram_w );
 static WRITE_HANDLER( astinvad_videoram_w );
 static WRITE_HANDLER( spaceint_videoram_w );
@@ -152,6 +153,12 @@ void init_rollingc(void)
 	init_8080bw();
 	videoram_w_p = schaser_videoram_w;
 	background_color = 0;	/* black */
+}
+
+void init_polaris(void)
+{
+	init_8080bw();
+	videoram_w_p = polaris_videoram_w;
 }
 
 void init_lupin3(void)
@@ -385,6 +392,33 @@ static WRITE_HANDLER( lupin3_videoram_w )
 	}
 }
 
+static WRITE_HANDLER( polaris_videoram_w )
+{
+	int i,x,y,back_color,foreground_color;
+
+	videoram[offset] = data;
+
+	y = offset / 32;
+	x = 8 * (offset % 32);
+
+	/* for the background color, bit 0 if the map PROM is connected to blue gun.
+	   red is 0 */
+
+	back_color = (memory_region(REGION_PROMS)[(((y+32)/8)*32) + (x/8)] & 1) ? 6 : 4;
+	foreground_color = ~colorram[offset & 0x1f1f] & 0x07;
+
+	for (i = 0; i < 8; i++)
+	{
+		if (data & 0x01)
+			plot_pixel_p (x, y, foreground_color);
+		else
+			plot_pixel_p (x, y, back_color);
+
+		x ++;
+		data >>= 1;
+	}
+}
+
 WRITE_HANDLER( schaser_colorram_w )
 {
 	int i;
@@ -399,6 +433,11 @@ WRITE_HANDLER( schaser_colorram_w )
 	{
 		videoram_w_p(offset, videoram[offset]);
 	}
+}
+
+READ_HANDLER( schaser_colorram_r )
+{
+	return colorram[offset & 0x1f1f];
 }
 
 

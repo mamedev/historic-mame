@@ -126,7 +126,7 @@ int msdos_init_sound(void)
 	}
 
 	AGetAudioDevCaps(info.nDeviceId,&caps);
-	if (errorlog) fprintf(errorlog,"Using %s at %d-bit %s %u Hz\n",
+	logerror("Using %s at %d-bit %s %u Hz\n",
 			caps.szProductName,
 			info.wFormat & AUDIO_FORMAT_16BITS ? 16 : 8,
 			info.wFormat & AUDIO_FORMAT_STEREO ? "stereo" : "mono",
@@ -152,7 +152,7 @@ int msdos_init_sound(void)
 	/* update the Machine structure to reflect the actual sample rate */
 	Machine->sample_rate = info.nSampleRate;
 
-	if (errorlog) fprintf(errorlog,"set sample rate: %d\n",Machine->sample_rate);
+	logerror("set sample rate: %d\n",Machine->sample_rate);
 
 	{
 		TICKER a,b;
@@ -208,7 +208,7 @@ int msdos_init_sound(void)
 
 		nominal_sample_rate = Machine->sample_rate;
 		Machine->sample_rate = end - start;
-		if (errorlog) fprintf(errorlog,"actual sample rate: %d\n",Machine->sample_rate);
+		logerror("actual sample rate: %d\n",Machine->sample_rate);
 
 		AStopVoice(hVoice[0]);
 		ADestroyAudioData(lpWave[0]);
@@ -247,7 +247,7 @@ int msdos_init_sound(void)
 	reserve_voices(1,0);
 	if (install_sound(DIGI_AUTODETECT,MIDI_NONE,0) != 0)
 	{
-		if (errorlog) fprintf(errorlog,"Allegro install_sound error: %s\n",allegro_error);
+		logerror("Allegro install_sound error: %s\n",allegro_error);
 		return 1;
 	}
 

@@ -117,12 +117,6 @@ extern struct DACinterface mcr_dual_dac_interface;
 
 #define SOUND_SOUNDS_GOOD SOUND_CHIP_SQUEAK_DELUXE
 
-#define SOUND_TURBO_CHIP_SQUEAK_PLUS_SOUNDSGOOD		\
-	{												\
-		SOUND_DAC,									\
-		&mcr_dual_dac_interface						\
-	}
-
 
 
 /************ Turbo Chip Squeak CPU and sound definitions ***************/
@@ -139,6 +133,16 @@ extern struct MemoryWriteAddress turbocs_writemem[];
 	}
 
 #define SOUND_TURBO_CHIP_SQUEAK SOUND_CHIP_SQUEAK_DELUXE
+
+#define SOUND_CPU_TURBO_CHIP_SQUEAK_PLUS_SOUNDS_GOOD \
+	SOUND_CPU_TURBO_CHIP_SQUEAK,					\
+	SOUND_CPU_SOUNDS_GOOD
+
+#define SOUND_TURBO_CHIP_SQUEAK_PLUS_SOUNDS_GOOD	\
+	{												\
+		SOUND_DAC,									\
+		&mcr_dual_dac_interface						\
+	}
 
 
 

@@ -65,7 +65,7 @@ READ_HANDLER( pang_paletteram_r );
 extern unsigned char *pang_videoram;
 extern unsigned char *pang_colorram;
 
-extern int pang_videoram_size;
+extern size_t pang_videoram_size;
 
 
 
@@ -97,7 +97,7 @@ static struct EEPROM_interface eeprom_interface =
 };
 
 static unsigned char *nvram;
-static int nvram_size;
+static size_t nvram_size;
 static int init_eeprom_count;
 
 static void nvram_handler(void *file,int read_or_write)
@@ -279,7 +279,7 @@ static WRITE_HANDLER( input_w )
 	{
 		case 0:
 		default:
-if (errorlog) fprintf(errorlog,"PC %04x: write %02x to port 01\n",cpu_get_pc(),data);
+logerror("PC %04x: write %02x to port 01\n",cpu_get_pc(),data);
 			break;
 		case 1:
 			mahjong_input_select_w(offset,data);

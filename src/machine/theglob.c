@@ -211,7 +211,7 @@ static void theglob_decrypt_rom_B(void)
 }
 
 
-int theglob_decrypt_rom(int offset)
+READ_HANDLER( theglob_decrypt_rom )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
@@ -233,7 +233,7 @@ int theglob_decrypt_rom(int offset)
 		case 0x0A:	cpu_setbank (1, &RAM[0x18000]);		break;
 		case 0x0B:	cpu_setbank (1, &RAM[0x1C000]);		break;
 		default:
-			if (errorlog) fprintf(errorlog,"Invalid counter = %02X\n",counter);
+			logerror("Invalid counter = %02X\n",counter);
 			break;
 	}
 

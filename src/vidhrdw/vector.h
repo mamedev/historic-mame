@@ -24,7 +24,7 @@
 extern int translucency;  /* translucent vectors  */
 
 extern unsigned char *vectorram;
-extern int vectorram_size;
+extern size_t vectorram_size;
 
 int  vector_vh_start (void);
 void vector_vh_stop (void);

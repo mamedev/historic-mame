@@ -98,13 +98,13 @@ static WRITE_HANDLER( xain_irqB_clear_w )
 
 static READ_HANDLER( xain_68705_r )
 {
-//	if (errorlog) fprintf(errorlog,"read 68705\n");
+//	logerror("read 68705\n");
 	return 0x4d;	/* fake P5 checksum test pass */
 }
 
 static WRITE_HANDLER( xain_68705_w )
 {
-//	if (errorlog) fprintf(errorlog,"write %02x to 68705\n",data);
+//	logerror("write %02x to 68705\n",data);
 }
 
 static int xainA_interrupt(void)

@@ -52,7 +52,7 @@
 extern unsigned char *route16_sharedram;
 extern unsigned char *route16_videoram1;
 extern unsigned char *route16_videoram2;
-extern int route16_videoram_size;
+extern size_t route16_videoram_size;
 
 void init_route16(void);
 void init_route16b(void);

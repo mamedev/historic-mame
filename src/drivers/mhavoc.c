@@ -190,7 +190,7 @@ WRITE_HANDLER( tempest_colorram_w );
 
 
 static unsigned char *nvram;
-static int nvram_size;
+static size_t nvram_size;
 
 static void nvram_handler(void *file, int read_or_write)
 {

@@ -239,9 +239,9 @@ extern unsigned char 	*ninjakd2_spoverdraw_ram;
 extern unsigned char 	*ninjakd2_spriteram;
 extern unsigned char 	*ninjakd2_background_videoram;
 extern unsigned char 	*ninjakd2_foreground_videoram;
-extern int 	ninjakd2_spriteram_size;
-extern int	ninjakd2_backgroundram_size;
-extern int 	ninjakd2_foregroundram_size;
+extern size_t ninjakd2_spriteram_size;
+extern size_t ninjakd2_backgroundram_size;
+extern size_t ninjakd2_foregroundram_size;
 
 static int ninjakd2_bank_latch = 255;
 

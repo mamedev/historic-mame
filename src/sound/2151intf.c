@@ -66,15 +66,11 @@ static void TimerHandler(int n,int c,int count,double stepTime)
 
 #endif
 
-#if (HAS_YM2151_ALT)
-
 /* update request from fm.c */
 void YM2151UpdateRequest(int chip)
 {
 	stream_update(stream[chip],0);
 }
-
-#endif
 
 static int my_YM2151_sh_start(const struct MachineSound *msound,int mode)
 {

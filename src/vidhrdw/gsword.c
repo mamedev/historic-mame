@@ -7,8 +7,8 @@
 
 #include "driver.h"
 
-unsigned int gs_videoram_size;
-unsigned int gs_spritexy_size;
+size_t gs_videoram_size;
+size_t gs_spritexy_size;
 
 unsigned char *gs_videoram;
 unsigned char *gs_scrolly_ram;

@@ -59,8 +59,7 @@ to read all kinds of bogus memory locations.
 
 To Do:
 
-- Mariner seems to have discrete sound circuits connected to the 8910's
-  output ports
+- Mariner has discrete sound circuits connected to the 8910's output ports
 
 
 Notes:
@@ -76,7 +75,7 @@ Notes:
 
 extern unsigned char *galaxian_attributesram;
 extern unsigned char *galaxian_bulletsram;
-extern int galaxian_bulletsram_size;
+extern size_t galaxian_bulletsram_size;
 void galaxian_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void mariner_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 WRITE_HANDLER( galaxian_flipx_w );
@@ -1337,7 +1336,7 @@ static struct MachineDriver machine_driver_mariner =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	mariner_gfxdecodeinfo,
-	32+64+10,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 10 for background */
+	32+64+16,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 16 for background */
 	mariner_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER,
@@ -1623,19 +1622,48 @@ ROM_END
 
 ROM_START( mariner )
 	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for main CPU */
-	ROM_LOAD( "tp1",          0x0000, 0x1000, 0xdac1dfd0 )
-	ROM_LOAD( "tm2",          0x1000, 0x1000, 0xefe7ca28 )
-	ROM_LOAD( "tm3",          0x2000, 0x1000, 0x027881a6 )
-	ROM_LOAD( "tm4",          0x3000, 0x1000, 0xa0fde7dc )
-	ROM_LOAD( "tm5",          0x6000, 0x0800, 0xd7ebcb8e )
+	ROM_LOAD( "tp1.2h",       0x0000, 0x1000, 0xdac1dfd0 )
+	ROM_LOAD( "tm2.2k",       0x1000, 0x1000, 0xefe7ca28 )
+	ROM_LOAD( "tm3.2l",       0x2000, 0x1000, 0x027881a6 )
+	ROM_LOAD( "tm4.2m",       0x3000, 0x1000, 0xa0fde7dc )
+	ROM_LOAD( "tm5.2p",       0x6000, 0x0800, 0xd7ebcb8e )
 	ROM_CONTINUE(             0x5800, 0x0800             )
 
 	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
-	ROM_LOAD( "tm8",          0x0000, 0x1000, 0x70ae611f )
-	ROM_LOAD( "tm9",          0x1000, 0x1000, 0x8e4e999e )
+	ROM_LOAD( "tm8.5f",       0x0000, 0x1000, 0x70ae611f )
+	ROM_LOAD( "tm9.5h",       0x1000, 0x1000, 0x8e4e999e )
 
 	ROM_REGION( 0x0020, REGION_PROMS )
-	ROM_LOAD( "tm.t4",        0x0000, 0x0020, 0xca42b6dd )
+	ROM_LOAD( "t4.6e",        0x0000, 0x0020, 0xca42b6dd )
+
+	ROM_REGION( 0x0100, REGION_USER1 )
+	ROM_LOAD( "t6.6p",        0x0000, 0x0100, 0xad208ccc )	/* background color prom */
+
+	ROM_REGION( 0x0020, REGION_USER2 )
+	ROM_LOAD( "t5.7p",        0x0000, 0x0020, 0x1bd88cff )	/* star placement (not emulated) */
+ROM_END
+
+ROM_START( 800fath )
+	ROM_REGION( 0x10000, REGION_CPU1 )     /* 64k for main CPU */
+	ROM_LOAD( "tu1.2h",       0x0000, 0x1000, 0x5dd3d42f )
+	ROM_LOAD( "tm2.2k",       0x1000, 0x1000, 0xefe7ca28 )
+	ROM_LOAD( "tm3.2l",       0x2000, 0x1000, 0x027881a6 )
+	ROM_LOAD( "tm4.2m",       0x3000, 0x1000, 0xa0fde7dc )
+	ROM_LOAD( "tu5.2p",       0x6000, 0x0800, 0xf864a8a6 )
+	ROM_CONTINUE(             0x5800, 0x0800             )
+
+	ROM_REGION( 0x2000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "tm8.5f",       0x0000, 0x1000, 0x70ae611f )
+	ROM_LOAD( "tm9.5h",       0x1000, 0x1000, 0x8e4e999e )
+
+	ROM_REGION( 0x0020, REGION_PROMS )
+	ROM_LOAD( "t4.6e",        0x0000, 0x0020, 0xca42b6dd )
+
+	ROM_REGION( 0x0100, REGION_USER1 )
+	ROM_LOAD( "t6.6p",        0x0000, 0x0100, 0xad208ccc )	/* background color prom */
+
+	ROM_REGION( 0x0020, REGION_USER2 )
+	ROM_LOAD( "t5.7p",        0x0000, 0x0020, 0x1bd88cff )	/* star placement (not emulated) */
 ROM_END
 
 ROM_START( ckongs )
@@ -1765,7 +1793,7 @@ ROM_START( hunchbks )
 	ROM_LOAD( "5h_hb10.bin",           0x0800, 0x0800, 0x3977650e )
 
 	ROM_REGION( 0x0020, REGION_PROMS )
-	ROM_LOAD( "6e_prom.bin",           0x0000, 0x0020, 0x4e3caeab )
+	ROM_LOAD( "6e_prom.bin",           0x0000, 0x0020, 0x01004d3f )
 ROM_END
 
 
@@ -1841,9 +1869,10 @@ GAME( 1982, amidars,  amidar,   scramble, amidars,  0,        ROT90, "Konami", "
 GAME( 1982, triplep,  0,        triplep,  triplep,  0,        ROT90, "KKI", "Triple Punch" )
 GAME( 1982, knockout, triplep,  triplep,  triplep,  0,        ROT90, "KKK", "Knock Out !!" )
 GAME( 1981, mariner,  0,        mariner,  scramble, 0,        ROT90, "Amenip", "Mariner" )
+GAME( 1981, 800fath,  mariner,  mariner,  scramble, 0,        ROT90, "Amenip (US Billiards Inc. license)", "800 Fathoms" )
 GAME( 1981, ckongs,   ckong,    ckongs,   ckongs,   0,        ROT90, "bootleg", "Crazy Kong (Scramble hardware)" )
 GAME( 1981, mars,     0,        mars,     mars,     mars,     ROT90, "Artic", "Mars" )
 GAME( 1982, devilfsh, 0,        devilfsh, devilfsh, mars,     ROT90, "Artic", "Devil Fish" )
 GAMEX(1983, newsin7,  0,        newsin7,  newsin7,  mars,     ROT90, "ATW USA, Inc.", "New Sinbad 7", GAME_IMPERFECT_COLORS )
 GAME( 1982, hotshock, 0,        hotshock, hotshock, hotshock, ROT90, "E.G. Felaco", "Hot Shocker" )
-GAME( 1983, hunchbks, hunchbkd, hunchbks, hunchbks, 0,        ROT90, "Century", "Hunchback (Scramble conversion)" )
+GAME( 1983, hunchbks, hunchbkd, hunchbks, hunchbks, 0,        ROT90, "Century", "Hunchback (Scramble hardware)" )

@@ -4,7 +4,7 @@
 
 
 #if LOG_GRAPHICS_OPS
-#define LOGGFX(x) if (errorlog) fprintf x
+#define LOGGFX(x) logerror x
 #else
 #define LOGGFX(x)
 #endif
@@ -16,14 +16,14 @@ static void line(void)
 {
 	if (!P_FLAG)
 	{
-		if (state.window_checking != 0 && state.window_checking != 3 && errorlog)
+		if (state.window_checking != 0 && state.window_checking != 3)
 		{
-			fprintf(errorlog, "LINE XY  %08X - Window Checking Mode %d not supported\n", PC, state.window_checking);
+			logerror("LINE XY  %08X - Window Checking Mode %d not supported\n", PC, state.window_checking);
 		}
 
 		P_FLAG = 1;
 		TEMP = (state.op & 0x80) ? 1 : 0;  /* boundary value depends on the algorithm */
-		LOGGFX((errorlog, "%08X:LINE (%d,%d)-(%d,%d)\n", PC, DADDR_X, DADDR_Y, DADDR_X + DYDX_X, DADDR_Y + DYDX_Y));
+		LOGGFX(("%08X:LINE (%d,%d)-(%d,%d)\n", PC, DADDR_X, DADDR_Y, DADDR_X + DYDX_X, DADDR_Y + DYDX_Y));
 	}
 
 	if (COUNT > 0)
@@ -82,7 +82,7 @@ static int apply_window(int srcbpp, int src_is_linear)
 		int diff, cycles = 3;
 
 		if (state.window_checking == 1 || state.window_checking == 2)
-			if (errorlog) fprintf(errorlog, "Window mode %d not supported!\n", state.window_checking);
+			logerror("Window mode %d not supported!\n", state.window_checking);
 
 		/* clear the V flag by default */
 		CLR_V;
@@ -207,7 +207,7 @@ static WRITE_HANDLER( shiftreg_w )
 	if (state.config->from_shiftreg)
 		(*state.config->from_shiftreg)((UINT32)(offset << 3) & ~15, &state.shiftreg[0]);
 	else
-		if (errorlog) fprintf(errorlog, "From ShiftReg function not set. PC = %08X\n", PC);
+		logerror("From ShiftReg function not set. PC = %08X\n", PC);
 }
 
 static READ_HANDLER( shiftreg_r )
@@ -215,7 +215,7 @@ static READ_HANDLER( shiftreg_r )
 	if (state.config->to_shiftreg)
 		(*state.config->to_shiftreg)((UINT32)(offset << 3) & ~15, &state.shiftreg[0]);
 	else
-		if (errorlog) fprintf(errorlog, "To ShiftReg function not set. PC = %08X\n", PC);
+		logerror("To ShiftReg function not set. PC = %08X\n", PC);
 	return state.shiftreg[0];
 }
 
@@ -904,7 +904,7 @@ static void pixblt_b_l(void)
 	int trans = (IOREG(REG_CONTROL) & 0x20) >> 5;
 	int rop = (IOREG(REG_CONTROL) >> 10) & 0x1f;
 	int ix = trans | (rop << 1) | (psize << 6);
-	if (!P_FLAG) LOGGFX((errorlog, "%08X:PIXBLT B,L (%dx%d)\n", PC, DYDX_X, DYDX_Y));
+	if (!P_FLAG) LOGGFX(("%08X:PIXBLT B,L (%dx%d)\n", PC, DYDX_X, DYDX_Y));
 	pixel_op = pixel_op_table[rop];
 	pixel_op_timing = pixel_op_timing_table[rop];
 	(*pixblt_b_op_table[ix])(1);
@@ -916,7 +916,7 @@ static void pixblt_b_xy(void)
 	int trans = (IOREG(REG_CONTROL) & 0x20) >> 5;
 	int rop = (IOREG(REG_CONTROL) >> 10) & 0x1f;
 	int ix = trans | (rop << 1) | (psize << 6);
-	if (!P_FLAG) LOGGFX((errorlog, "%08X:PIXBLT B,XY (%dx%d)\n", PC, DYDX_X, DYDX_Y));
+	if (!P_FLAG) LOGGFX(("%08X:PIXBLT B,XY (%dx%d)\n", PC, DYDX_X, DYDX_Y));
 	pixel_op = pixel_op_table[rop];
 	pixel_op_timing = pixel_op_timing_table[rop];
 	(*pixblt_b_op_table[ix])(0);
@@ -929,7 +929,7 @@ static void pixblt_l_l(void)
 	int rop = (IOREG(REG_CONTROL) >> 10) & 0x1f;
 	int pbh = (IOREG(REG_CONTROL) >> 8) & 1;
 	int ix = trans | (rop << 1) | (psize << 6);
-	if (!P_FLAG) LOGGFX((errorlog, "%08X:PIXBLT L,L (%dx%d)\n", PC, DYDX_X, DYDX_Y));
+	if (!P_FLAG) LOGGFX(("%08X:PIXBLT L,L (%dx%d)\n", PC, DYDX_X, DYDX_Y));
 	pixel_op = pixel_op_table[rop];
 	pixel_op_timing = pixel_op_timing_table[rop];
 	if (!pbh)
@@ -945,7 +945,7 @@ static void pixblt_l_xy(void)
 	int rop = (IOREG(REG_CONTROL) >> 10) & 0x1f;
 	int pbh = (IOREG(REG_CONTROL) >> 8) & 1;
 	int ix = trans | (rop << 1) | (psize << 6);
-	if (!P_FLAG) LOGGFX((errorlog, "%08X:PIXBLT L,XY (%dx%d)\n", PC, DYDX_X, DYDX_Y));
+	if (!P_FLAG) LOGGFX(("%08X:PIXBLT L,XY (%dx%d)\n", PC, DYDX_X, DYDX_Y));
 	pixel_op = pixel_op_table[rop];
 	pixel_op_timing = pixel_op_timing_table[rop];
 	if (!pbh)
@@ -961,7 +961,7 @@ static void pixblt_xy_l(void)
 	int rop = (IOREG(REG_CONTROL) >> 10) & 0x1f;
 	int pbh = (IOREG(REG_CONTROL) >> 8) & 1;
 	int ix = trans | (rop << 1) | (psize << 6);
-	if (!P_FLAG) LOGGFX((errorlog, "%08X:PIXBLT XY,L (%dx%d)\n", PC, DYDX_X, DYDX_Y));
+	if (!P_FLAG) LOGGFX(("%08X:PIXBLT XY,L (%dx%d)\n", PC, DYDX_X, DYDX_Y));
 	pixel_op = pixel_op_table[rop];
 	pixel_op_timing = pixel_op_timing_table[rop];
 	if (!pbh)
@@ -977,7 +977,7 @@ static void pixblt_xy_xy(void)
 	int rop = (IOREG(REG_CONTROL) >> 10) & 0x1f;
 	int pbh = (IOREG(REG_CONTROL) >> 8) & 1;
 	int ix = trans | (rop << 1) | (psize << 6);
-	if (!P_FLAG) LOGGFX((errorlog, "%08X:PIXBLT XY,XY (%dx%d)\n", PC, DYDX_X, DYDX_Y));
+	if (!P_FLAG) LOGGFX(("%08X:PIXBLT XY,XY (%dx%d)\n", PC, DYDX_X, DYDX_Y));
 	pixel_op = pixel_op_table[rop];
 	pixel_op_timing = pixel_op_timing_table[rop];
 	if (!pbh)
@@ -992,7 +992,7 @@ static void fill_l(void)
 	int trans = (IOREG(REG_CONTROL) & 0x20) >> 5;
 	int rop = (IOREG(REG_CONTROL) >> 10) & 0x1f;
 	int ix = trans | (rop << 1) | (psize << 6);
-	if (!P_FLAG) LOGGFX((errorlog, "%08X:FILL L (%dx%d)\n", PC, DYDX_X, DYDX_Y));
+	if (!P_FLAG) LOGGFX(("%08X:FILL L (%dx%d)\n", PC, DYDX_X, DYDX_Y));
 	pixel_op = pixel_op_table[rop];
 	pixel_op_timing = pixel_op_timing_table[rop];
 	(*fill_op_table[ix])(1);
@@ -1004,7 +1004,7 @@ static void fill_xy(void)
 	int trans = (IOREG(REG_CONTROL) & 0x20) >> 5;
 	int rop = (IOREG(REG_CONTROL) >> 10) & 0x1f;
 	int ix = trans | (rop << 1) | (psize << 6);
-	if (!P_FLAG) LOGGFX((errorlog, "%08X:FILL XY (%dx%d)\n", PC, DYDX_X, DYDX_Y));
+	if (!P_FLAG) LOGGFX(("%08X:FILL XY (%dx%d)\n", PC, DYDX_X, DYDX_Y));
 	pixel_op = pixel_op_table[rop];
 	pixel_op_timing = pixel_op_timing_table[rop];
 	(*fill_op_table[ix])(0);

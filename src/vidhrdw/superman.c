@@ -8,8 +8,8 @@
 
 #include "driver.h"
 
-int supes_videoram_size;
-int supes_attribram_size;
+size_t supes_videoram_size;
+size_t supes_attribram_size;
 
 unsigned char *supes_videoram;
 unsigned char *supes_attribram;

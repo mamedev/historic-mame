@@ -26,9 +26,9 @@ extern unsigned char    *mnight_spoverdraw_ram;
 extern unsigned char    *mnight_spriteram;
 extern unsigned char    *mnight_background_videoram;
 extern unsigned char    *mnight_foreground_videoram;
-extern int      mnight_spriteram_size;
-extern int      mnight_backgroundram_size;
-extern int      mnight_foregroundram_size;
+extern size_t mnight_spriteram_size;
+extern size_t mnight_backgroundram_size;
+extern size_t mnight_foregroundram_size;
 
 static int mnight_bank_latch = 255, main_cpu_num;
 

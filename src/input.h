@@ -95,6 +95,7 @@ int code_pressed_memory(InputCode code);
 int code_pressed_memory_repeat(InputCode code, int speed);
 InputCode code_read_async(void);
 InputCode code_read_sync(void);
+INT8 code_read_hex_async(void);
 
 INLINE const char* keyboard_name(int code)
 {

@@ -250,7 +250,7 @@ OP(fa) {		  m6502_ICount -= 4;		 PLX;		  } /* 4 PLX */
 OP(0c) { int tmp; m6502_ICount -= 2; RD_ABS; TSB; WB_EA;  } /* 4 TSB ABS */
 #define m65c02_2c m6502_2c									/* 4 BIT ABS */
 #define m65c02_4c m6502_4c									/* 3 JMP ABS */
-#define m65c02_6c m6502_6c									/* 5 JMP IND */
+OP(6c) { int tmp; m6502_ICount -= 5; EA_IND; JMP;		  } /* 5 JMP IND */
 #define m65c02_8c m6502_8c									/* 4 STY ABS */
 #define m65c02_ac m6502_ac									/* 4 LDY ABS */
 #define m65c02_cc m6502_cc									/* 4 CPY ABS */

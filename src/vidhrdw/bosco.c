@@ -34,7 +34,7 @@ static int total_stars;
 
 unsigned char *bosco_videoram2,*bosco_colorram2;
 unsigned char *bosco_radarx,*bosco_radary,*bosco_radarattr;
-int bosco_radarram_size;
+size_t bosco_radarram_size;
 											/* to speed up video refresh */
 static unsigned char *dirtybuffer2;	/* keep track of modified portions of the screen */
 											/* to speed up video refresh */

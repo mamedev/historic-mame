@@ -109,7 +109,7 @@ Write sound processor   360030          W    D0-D7
 
 
 extern UINT8 *eprom_playfieldpalram;
-extern int eprom_playfieldpalram_size;
+extern size_t eprom_playfieldpalram_size;
 
 WRITE_HANDLER( eprom_latch_w );
 WRITE_HANDLER( eprom_playfieldram_w );

@@ -89,7 +89,7 @@ int gradius3_vh_start(void)
 		return 1;
 	}
 
-	/* re-decode the sprites because the ROMs are corrected to the custom IC differently
+	/* re-decode the sprites because the ROMs are connected to the custom IC differently
 	   from how they are connected to the CPU. */
 	for (i = 0;i < TOTAL_SPRITES;i++)
 		decodechar(Machine->gfx[1],i,memory_region(REGION_GFX2),&spritelayout);
@@ -110,6 +110,8 @@ void gradius3_vh_stop(void)
 {
 	K052109_vh_stop();
 	K051960_vh_stop();
+	free(dirtychar);
+	dirtychar = 0;
 }
 
 

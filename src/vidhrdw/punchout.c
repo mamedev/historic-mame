@@ -19,11 +19,11 @@
 #define ARMWREST_BIGSPRITE_HEIGHT 128
 
 unsigned char *punchout_videoram2;
-int punchout_videoram2_size;
+size_t punchout_videoram2_size;
 unsigned char *punchout_bigsprite1ram;
-int punchout_bigsprite1ram_size;
+size_t punchout_bigsprite1ram_size;
 unsigned char *punchout_bigsprite2ram;
-int punchout_bigsprite2ram_size;
+size_t punchout_bigsprite2ram_size;
 unsigned char *punchout_scroll;
 unsigned char *punchout_bigsprite1;
 unsigned char *punchout_bigsprite2;

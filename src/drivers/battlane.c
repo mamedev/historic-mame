@@ -19,7 +19,7 @@ extern void battlane_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh
 extern void battlane_vh_convert_color_prom (unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 extern unsigned char *battlane_bitmap;
-extern int battlane_bitmap_size;
+extern size_t battlane_bitmap_size;
 WRITE_HANDLER( battlane_spriteram_w );
 READ_HANDLER( battlane_spriteram_r );
 WRITE_HANDLER( battlane_tileram_w );

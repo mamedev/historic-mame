@@ -193,15 +193,15 @@ void _AYWriteReg(int n, int r, int v)
 		break;
 	case AY_PORTA:
 		if ((PSG->Regs[AY_ENABLE] & 0x40) == 0)
-if (errorlog) fprintf(errorlog,"warning: write to 8910 #%d Port A set as input\n",n);
+logerror("warning: write to 8910 #%d Port A set as input\n",n);
 if (PSG->PortAwrite) (*PSG->PortAwrite)(0,v);
-else if (errorlog) fprintf(errorlog,"PC %04x: warning - write %02x to 8910 #%d Port A\n",cpu_get_pc(),v,n);
+else logerror("PC %04x: warning - write %02x to 8910 #%d Port A\n",cpu_get_pc(),v,n);
 		break;
 	case AY_PORTB:
 		if ((PSG->Regs[AY_ENABLE] & 0x80) == 0)
-if (errorlog) fprintf(errorlog,"warning: write to 8910 #%d Port B set as input\n",n);
+logerror("warning: write to 8910 #%d Port B set as input\n",n);
 if (PSG->PortBwrite) (*PSG->PortBwrite)(0,v);
-else if (errorlog) fprintf(errorlog,"PC %04x: warning - write %02x to 8910 #%d Port B\n",cpu_get_pc(),v,n);
+else logerror("PC %04x: warning - write %02x to 8910 #%d Port B\n",cpu_get_pc(),v,n);
 		break;
 	}
 }
@@ -239,15 +239,15 @@ unsigned char AYReadReg(int n, int r)
 	{
 	case AY_PORTA:
 		if ((PSG->Regs[AY_ENABLE] & 0x40) != 0)
-if (errorlog) fprintf(errorlog,"warning: read from 8910 #%d Port A set as output\n",n);
+logerror("warning: read from 8910 #%d Port A set as output\n",n);
 if (PSG->PortAread) PSG->Regs[AY_PORTA] = (*PSG->PortAread)(0);
-else if (errorlog) fprintf(errorlog,"PC %04x: warning - read 8910 #%d Port A\n",cpu_get_pc(),n);
+else logerror("PC %04x: warning - read 8910 #%d Port A\n",cpu_get_pc(),n);
 		break;
 	case AY_PORTB:
 		if ((PSG->Regs[AY_ENABLE] & 0x80) != 0)
-if (errorlog) fprintf(errorlog,"warning: read from 8910 #%d Port B set as output\n",n);
+logerror("warning: read from 8910 #%d Port B set as output\n",n);
 if (PSG->PortBread) PSG->Regs[AY_PORTB] = (*PSG->PortBread)(0);
-else if (errorlog) fprintf(errorlog,"PC %04x: warning - read 8910 #%d Port B\n",cpu_get_pc(),n);
+else logerror("PC %04x: warning - read 8910 #%d Port B\n",cpu_get_pc(),n);
 		break;
 	}
 	return PSG->Regs[r];

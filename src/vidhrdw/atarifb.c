@@ -10,8 +10,8 @@
 #include "vidhrdw/generic.h"
 
 /* local */
-int atarifb_alphap1_vram_size;
-int atarifb_alphap2_vram_size;
+size_t atarifb_alphap1_vram_size;
+size_t atarifb_alphap2_vram_size;
 unsigned char *atarifb_alphap1_vram;
 unsigned char *atarifb_alphap2_vram;
 unsigned char *atarifb_scroll_register;
@@ -410,9 +410,9 @@ extern int atarifb_lamp1, atarifb_lamp2;
 			break;
 	}
 	for (x = 0;x < 20;x++)
-			drawgfx(bitmap,Machine->uifont,buf1[x],DT_COLOR_WHITE,0,0,6*x + 24*8,0,0,TRANSPARENCY_NONE,0);
+			drawgfx(bitmap,Machine->uifont,buf1[x],UI_COLOR_NORMAL,0,0,6*x + 24*8,0,0,TRANSPARENCY_NONE,0);
 
 	for (x = 0;x < 20;x++)
-			drawgfx(bitmap,Machine->uifont,buf2[x],DT_COLOR_WHITE,0,0,6*x,0,0,TRANSPARENCY_NONE,0);
+			drawgfx(bitmap,Machine->uifont,buf2[x],UI_COLOR_NORMAL,0,0,6*x,0,0,TRANSPARENCY_NONE,0);
 }
 }

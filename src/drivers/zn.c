@@ -84,11 +84,11 @@ static void zn_vh_screenrefresh( struct osd_bitmap *bitmap, int full_refresh )
         char text1[ 256 ];
         sprintf( text1, "QSOUND CODE=%02x/%02x", qcode >> 8, qcode & 0xff );
         dt[ 0 ].text = text1;
-        dt[ 0 ].color = DT_COLOR_RED;
+        dt[ 0 ].color = UI_COLOR_INVERSE;
         dt[ 0 ].x = ( Machine->uiwidth - Machine->uifontwidth * strlen( text1 ) ) / 2;
         dt[ 0 ].y = 8*23;
         dt[ 1 ].text = instructions;
-        dt[ 1 ].color = DT_COLOR_WHITE;
+        dt[ 1 ].color = UI_COLOR_NORMAL;
         dt[ 1 ].x = ( Machine->uiwidth - Machine->uifontwidth * strlen( instructions ) ) / 2;
         dt[ 1 ].y = dt[ 0 ].y + 2 * Machine->uifontheight;
 

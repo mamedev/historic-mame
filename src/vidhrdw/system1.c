@@ -18,8 +18,8 @@ unsigned char 	*system1_backgroundram;
 unsigned char 	*system1_sprites_collisionram;
 unsigned char 	*system1_background_collisionram;
 unsigned char 	*system1_scrollx_ram;
-int 	system1_videoram_size;
-int 	system1_backgroundram_size;
+size_t system1_videoram_size;
+size_t system1_backgroundram_size;
 
 static unsigned char	*bg_ram;
 static unsigned char 	*bg_dirtybuffer;
@@ -189,7 +189,7 @@ void system1_vh_stop(void)
 
 WRITE_HANDLER( system1_videomode_w )
 {
-if (errorlog && (data & 0xef)) fprintf(errorlog,"videomode = %02x\n",data);
+if (data & 0xef) logerror("videomode = %02x\n",data);
 
 	/* bit 0 is coin counter */
 

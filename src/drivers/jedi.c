@@ -97,7 +97,7 @@ WRITE_HANDLER( jedi_hscroll_w );
 
 extern unsigned char *jedi_PIXIRAM;
 extern unsigned char *jedi_backgroundram;
-extern int jedi_backgroundram_size;
+extern size_t jedi_backgroundram_size;
 
 WRITE_HANDLER( jedi_soundlatch_w );
 WRITE_HANDLER( jedi_soundacklatch_w );
@@ -114,7 +114,7 @@ WRITE_HANDLER( jedi_rom_banksel_w );
 
 
 static unsigned char *nvram;
-static int nvram_size;
+static size_t nvram_size;
 
 static void nvram_handler(void *file, int read_or_write)
 {

@@ -43,15 +43,12 @@ sprites.
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static unsigned char *pf_video,*pf_dirty;
-static int scroll1[4],scroll2[4],pf1_attr[8],pf2_attr[8];
-static struct osd_bitmap *pf1_bitmap,*pf2_bitmap,*tf2_bitmap;
-unsigned char *dec8_row,*srdarwin_tileram;
-
-static int blank_tile,shackled_priority,flipscreen;
-
-/* Tilemap.. Only used by Super Real Darwin for now */
-static struct tilemap *background_layer;
+static int scroll1[4],scroll2[4];
+static struct tilemap *dec8_pf0_tilemap,*dec8_pf1_tilemap,*dec8_fix_tilemap;
+static int dec8_pf0_control[0x20],dec8_pf1_control[0x20];
+static int gfx_bank,gfx_mask,game_uses_priority,flipscreen;
+static unsigned char *gfx_base;
+unsigned char *dec8_pf0_data,*dec8_pf1_data,*dec8_row;
 
 /***************************************************************************
 
@@ -108,68 +105,54 @@ void ghostb_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 	}
 }
 
-WRITE_HANDLER( dec8_pf1_w )
+WRITE_HANDLER( dec8_flipscreen_w )
 {
-	switch (offset)
-	{
-  	case 0:
-    case 2:
-    case 4:
-    case 6:
-      pf1_attr[offset]=data;
-  }
-  if (errorlog) fprintf(errorlog,"Write %d to playfield 1 register %d\n",data,offset);
-}
-
-WRITE_HANDLER( dec8_pf2_w )
-{
-	switch (offset)
-	{
-		case 0:
-		case 2:
-		case 4:
-		case 6:
-			pf2_attr[offset]=data;
-  }
-  if (errorlog) fprintf(errorlog,"Write %d to playfield 2 register %d\n",data,offset);
+	flipscreen=data;
+	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 }
 
 WRITE_HANDLER( dec8_bac06_0_w )
 {
-	switch (offset) {
-	case 0:
-	case 2:
-	case 4:
-	case 6:
-		pf1_attr[offset]=data;
-		break;
-
-	case 0x10: /* Scroll registers */
-	case 0x11:
-	case 0x12:
-	case 0x13:
-		scroll1[offset-0x10]=data;
-		break;
-	}
+	dec8_pf0_control[offset]=data;
 }
 
 WRITE_HANDLER( dec8_bac06_1_w )
 {
-	switch (offset) {
-	case 0:
-	case 2:
-	case 4:
-	case 6:
-		pf2_attr[offset]=data;
-		break;
+	dec8_pf1_control[offset]=data;
+}
 
-	case 0x10: /* Scroll registers */
-	case 0x11:
-	case 0x12:
-	case 0x13:
-		scroll2[offset-0x10]=data;
-		break;
-	}
+WRITE_HANDLER( dec8_pf0_data_w )
+{
+	dec8_pf0_data[offset]=data;
+	tilemap_mark_tile_dirty(dec8_pf0_tilemap,offset/2);
+}
+
+WRITE_HANDLER( dec8_pf1_data_w )
+{
+	dec8_pf1_data[offset]=data;
+	tilemap_mark_tile_dirty(dec8_pf1_tilemap,offset/2);
+}
+
+READ_HANDLER( dec8_pf0_data_r )
+{
+	return dec8_pf0_data[offset];
+}
+
+READ_HANDLER( dec8_pf1_data_r )
+{
+	return dec8_pf1_data[offset];
+}
+
+WRITE_HANDLER( dec8_videoram_w )
+{
+	videoram[offset]=data;
+	tilemap_mark_tile_dirty( dec8_fix_tilemap,offset/2 );
+}
+
+WRITE_HANDLER( srdarwin_videoram_w )
+{
+	videoram[offset]=data;
+	tilemap_mark_tile_dirty( dec8_fix_tilemap,offset );
 }
 
 WRITE_HANDLER( dec8_scroll1_w )
@@ -215,7 +198,7 @@ WRITE_HANDLER( lastmiss_control_w )
 if (cpu_get_pc()==0xfa51) cpu_set_reset_line(1,PULSE_LINE); /* No way this can be right... */
 if (cpu_get_pc()==0xf9d2) cpu_set_reset_line(1,PULSE_LINE); /* No way this can be right... */
 
-//if (errorlog) fprintf(errorlog,"PC %06x - Write %02x to %04x\n",cpu_get_pc(),data,offset+0x1802);
+//logerror("PC %06x - Write %02x to %04x\n",cpu_get_pc(),data,offset+0x1802);
 }
 
 WRITE_HANDLER( lastmiss_scrollx_w )
@@ -280,13 +263,21 @@ static void draw_sprites1(struct osd_bitmap *bitmap, int priority)
 		y=(y+16)%0x200;
 		x=256 - x;
 		y=256 - y;
+		if (flipscreen) {
+			y=240-y;
+			x=240-x;
+			if (fx) fx=0; else fx=1;
+			if (fy) fy=0; else fy=1;
+			if (extra) y=y-16;
+		}
 
 		/* Y Flip determines order of multi-sprite */
 		if (extra && fy) {
 			sprite2=sprite;
 			sprite++;
 		}
-		else sprite2=sprite+1;
+		else
+			sprite2=sprite+1;
 
 		drawgfx(bitmap,Machine->gfx[1],
 				sprite,
@@ -305,13 +296,11 @@ static void draw_sprites1(struct osd_bitmap *bitmap, int priority)
 /* 'Dec0' sprites, used by Cobra Command, Oscar */
 static void draw_sprites2(struct osd_bitmap *bitmap, int priority)
 {
-	int offs;
+	int offs,x,y,sprite,colour,multi,fx,fy,inc,flash,mult;
 
 	/* Sprites */
 	for (offs = 0;offs < 0x800;offs += 8)
 	{
-		int x,y,sprite,colour,multi,fx,fy,inc,flash;
-
 		y =buffered_spriteram[offs+1]+(buffered_spriteram[offs]<<8);
  		if ((y&0x8000) == 0) continue;
 		x = buffered_spriteram[offs+5]+(buffered_spriteram[offs+4]<<8);
@@ -346,13 +335,22 @@ static void draw_sprites2(struct osd_bitmap *bitmap, int priority)
 			inc = 1;
 		}
 
+		if (flipscreen) {
+			y=240-y;
+			x=240-x;
+			if (fx) fx=0; else fx=1;
+			if (fy) fy=0; else fy=1;
+			mult=16;
+		}
+		else mult=-16;
+
 		while (multi >= 0)
 		{
 			drawgfx(bitmap,Machine->gfx[1],
 					sprite - multi * inc,
 					colour,
 					fx,fy,
-					x,y - 16 * multi,
+					x,y + mult * multi,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 			multi--;
 		}
@@ -427,659 +425,307 @@ static void draw_characters(struct osd_bitmap *bitmap, int mask, int shift)
 
 /******************************************************************************/
 
-void dec8_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+void cobracom_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	int my,mx,offs,color,tile;
-	int scrollx,scrolly;
+	tilemap_set_scrollx( dec8_pf0_tilemap,0, (dec8_pf0_control[0x10]<<8)+dec8_pf0_control[0x11] );
+	tilemap_set_scrolly( dec8_pf0_tilemap,0, (dec8_pf0_control[0x12]<<8)+dec8_pf0_control[0x13] );
+	tilemap_set_scrollx( dec8_pf1_tilemap,0, (dec8_pf1_control[0x10]<<8)+dec8_pf1_control[0x11] );
+	tilemap_set_scrolly( dec8_pf1_tilemap,0, (dec8_pf1_control[0x12]<<8)+dec8_pf1_control[0x13] );
+	dec8_flipscreen_w(0,dec8_pf0_control[0]>>7);
 
-	memset(palette_used_colors,PALETTE_COLOR_USED,256);
-	palette_used_colors[64]=PALETTE_COLOR_TRANSPARENT;
-	palette_used_colors[192]=PALETTE_COLOR_TRANSPARENT;
-	palette_used_colors[192+16]=PALETTE_COLOR_TRANSPARENT;
-	palette_used_colors[192+32]=PALETTE_COLOR_TRANSPARENT;
-	palette_used_colors[192+48]=PALETTE_COLOR_TRANSPARENT;
+	gfx_mask=3;
+	gfx_bank=3;
+	gfx_base=dec8_pf0_data;
+	tilemap_update(dec8_pf0_tilemap);
+
+	gfx_bank=2;
+	gfx_base=dec8_pf1_data;
+	tilemap_update(dec8_pf1_tilemap);
+	tilemap_update(dec8_fix_tilemap);
 
 	if (palette_recalc())
-    	memset(pf_dirty,1,0x800);
+		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	tilemap_render(ALL_TILEMAPS);
 
-	/* Playfield 2 - Foreground */
-	mx=-1; my=0;
-	for (offs = 0x800;offs < 0xc00; offs += 2) {
-		mx++;
-		if (mx==16) {mx=0; my++;}
-		if (!pf_dirty[offs/2]) continue; else pf_dirty[offs/2]=0;
-		tile=pf_video[offs+1]+(pf_video[offs]<<8);
-		color = ((tile & 0xf000) >> 12);
-        tile=tile&0xfff;
-		drawgfx(pf2_bitmap,Machine->gfx[2],tile,
-			color, 0,0, 16*mx,16*my,
-		 	0,TRANSPARENCY_NONE,0);
-	}
-
-	mx=-1; my=0;
-	for (offs = 0xc00;offs < 0x1000; offs += 2) {
-	    mx++;
-	    if (mx==16) {mx=0; my++;}
-	    if (!pf_dirty[offs/2]) continue; else pf_dirty[offs/2]=0;
-	    tile=pf_video[offs+1]+(pf_video[offs]<<8);
-	    color = ((tile & 0xf000) >> 12);
-	    tile=tile&0xfff;
-		drawgfx(pf2_bitmap,Machine->gfx[2],tile,
-			color, 0,0, (16*mx)+256,16*my,
-		 	0,TRANSPARENCY_NONE,0);
-	}
-
-  /* Playfield 1 */
-  mx=-1; my=0;
-  for (offs = 0x000;offs < 0x400; offs += 2) {
-    mx++;
-    if (mx==16) {mx=0; my++;}
-    if (!pf_dirty[offs/2]) continue; else pf_dirty[offs/2]=0;
-    tile=pf_video[offs+1]+(pf_video[offs]<<8);
-    color = ((tile & 0xf000) >> 12);
-    tile=tile&0xfff;
-		drawgfx(pf1_bitmap,Machine->gfx[3],tile,
-			color, 0,0, 16*mx,16*my,
-		 	0,TRANSPARENCY_NONE,0);
-	}
-
-  mx=-1; my=0;
-  for (offs = 0x400;offs < 0x800; offs += 2) {
-    mx++;
-    if (mx==16) {mx=0; my++;}
-    if (!pf_dirty[offs/2]) continue; else pf_dirty[offs/2]=0;
-    tile=pf_video[offs+1]+(pf_video[offs]<<8);
-    color = ((tile & 0xf000) >> 12);
-    tile=tile&0xfff;
-		drawgfx(pf1_bitmap,Machine->gfx[3],tile,
-			color, 0,0, (16*mx)+256,16*my,
-		 	0,TRANSPARENCY_NONE,0);
-	}
-
-	scrolly=-((scroll1[2]<<8)+scroll1[3]);
-	scrollx=-((scroll1[0]<<8)+scroll1[1]);
-	copyscrollbitmap(bitmap,pf1_bitmap,1,&scrollx,1,&scrolly,0,TRANSPARENCY_NONE,0);
-
+	tilemap_draw(bitmap,dec8_pf0_tilemap,0);
 	draw_sprites2(bitmap,1);
-
-	scrolly=-((scroll2[2]<<8)+scroll2[3]);
-	scrollx=-(((scroll2[0]&1)<<8)+scroll2[1]);
-	copyscrollbitmap(bitmap,pf2_bitmap,1,&scrollx,1,&scrolly,0,TRANSPARENCY_PEN,palette_transparent_pen);
-
+	tilemap_draw(bitmap,dec8_pf1_tilemap,0);
 	draw_sprites2(bitmap,2);
+	tilemap_draw(bitmap,dec8_fix_tilemap,0);
+}
 
-	draw_characters(bitmap,0xe0,5);
+/******************************************************************************/
+
+static void get_bac0_tile_info( int tile_index )
+{
+	int tile,color,offs=tile_index<<1;
+
+	tile=(gfx_base[offs]<<8) | gfx_base[offs+1];
+	color=tile >> 12;
+	if (color>7 && game_uses_priority) tile_info.priority=1; else tile_info.priority=0;
+
+	SET_TILE_INFO(gfx_bank,tile&0xfff,color&gfx_mask)
+}
+
+static UINT32 bac0_scan_rows(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
+{
+	/* logical (col,row) -> memory offset */
+	return ((col & 0x0f) + ((row & 0x0f) << 4)) + ((col & 0x10) << 5) + ((row & 0x10) << 4);
+}
+
+static void get_cobracom_fix_tile_info( int tile_index )
+{
+	int offs=tile_index<<1;
+	int tile=videoram[offs+1]+(videoram[offs]<<8);
+	int color=(tile&0xe000) >> 13;
+
+	SET_TILE_INFO(0,tile&0xfff,color)
+}
+
+int cobracom_vh_start(void)
+{
+	game_uses_priority=0;
+	dec8_pf0_tilemap = tilemap_create(get_bac0_tile_info,bac0_scan_rows,0,16,16,32,32);
+	dec8_pf1_tilemap = tilemap_create(get_bac0_tile_info,bac0_scan_rows,TILEMAP_TRANSPARENT,16,16,32,32);
+	dec8_fix_tilemap = tilemap_create(get_cobracom_fix_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
+
+	if (!dec8_pf0_tilemap || !dec8_pf1_tilemap || !dec8_fix_tilemap)
+		return 1;
+
+	dec8_pf1_tilemap->transparent_pen = 0;
+	dec8_fix_tilemap->transparent_pen = 0;
+
+	return 0;
 }
 
 /******************************************************************************/
 
 void ghostb_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	int my,mx,offs,color,tile,scrollx,scrolly;
+   if (dec8_pf0_control[0]&0x4) { /* Rowscroll */
+ 		int offs;
 
-	/* Playfield */
-	mx=-1; my=0;
-	for (offs = 0x000;offs < 0x400; offs += 2) {
-		mx++;
-    	if (mx==16) {mx=0; my++;}
-		if (!pf_dirty[offs/2]) continue; else pf_dirty[offs/2]=0;
-
-    	tile=pf_video[offs+1]+(pf_video[offs]<<8);
-    	color = ((tile & 0xf000) >> 12);
-    	tile=tile&0xfff;
-		drawgfx(pf2_bitmap,Machine->gfx[2],tile,
-			color, 0, 0, 16*mx,16*my,
-		 	0,TRANSPARENCY_NONE,0);
-	}
-
-	mx=-1; my=0;
-	for (offs = 0x400;offs < 0x800; offs += 2) {
-    	mx++;
-    	if (mx==16) {mx=0; my++;}
-    	if (!pf_dirty[offs/2]) continue; else pf_dirty[offs/2]=0;
-
-	    tile=pf_video[offs+1]+(pf_video[offs]<<8);
-	    color = ((tile & 0xf000) >> 12);
-	    tile=tile&0xfff;
-       drawgfx(pf2_bitmap,Machine->gfx[2],tile,
-			color, 0, 0, (16*mx)+256,16*my,
-		 	0,TRANSPARENCY_NONE,0);
-	}
-
-    /* Rowscroll */
-    if (pf2_attr[0]&0x4) {
-    	int rscroll[256];
-
-		scrolly=-((scroll2[2]<<8)+scroll2[3]);
-
+		tilemap_set_scroll_rows(dec8_pf0_tilemap,512);
 		for (offs = 0;offs < 512;offs+=2)
-			rscroll[offs/2] = -( (dec8_row[offs]<<8) + dec8_row[offs+1] ) -((scroll2[0]<<8)+scroll2[1]);
+			tilemap_set_scrollx( dec8_pf0_tilemap,offs/2, (dec8_pf0_control[0x10]<<8)+dec8_pf0_control[0x11] + (dec8_row[offs]<<8)+dec8_row[offs+1] );
+	} else {
+		tilemap_set_scroll_rows(dec8_pf0_tilemap,1);
+		tilemap_set_scrollx( dec8_pf0_tilemap,0, (dec8_pf0_control[0x10]<<8)+dec8_pf0_control[0x11] );
+	}
+	tilemap_set_scrolly( dec8_pf0_tilemap,0, (dec8_pf0_control[0x12]<<8)+dec8_pf0_control[0x13] );
 
-		copyscrollbitmap(bitmap,pf2_bitmap,256,rscroll,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-    } else {
-		scrolly=-((scroll2[2]<<8)+scroll2[3]);
-		scrollx=-((scroll2[0]<<8)+scroll2[1]);
-		copyscrollbitmap(bitmap,pf2_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-    }
-
-
-	draw_sprites1(bitmap,0);
-
-	/* Top layer */
-	draw_characters(bitmap,0xc,2);
-}
-
-/******************************************************************************/
-
-void srdarwin_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
-{
-	int my,mx,offs,color,tile;
-
-	tilemap_set_scrollx( background_layer,0, (scroll2[0]<<8)+scroll2[1] );
 	tilemap_update(ALL_TILEMAPS);
-
 	if (palette_recalc())
 		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
-
 	tilemap_render(ALL_TILEMAPS);
 
-	/* Bottom portion of tilemap */
-	tilemap_draw(bitmap,background_layer,TILEMAP_BACK);
-
-	/* Low priority sprites */
-	srdarwin_drawsprites(bitmap,0);
-
-	/* Top portion of tilemap */
-	tilemap_draw(bitmap,background_layer,TILEMAP_FRONT);
-
-	/* High priority sprites */
-	srdarwin_drawsprites(bitmap,1);
-
-	/* Draw character tiles */
-	for (offs = 0;offs < 0x400; offs ++)
-	{
-		mx=offs%32;
-		my=offs/32;
-		if (flipscreen) {mx=31-mx; my=31-my;}
-        tile=videoram[offs];
-		if (!tile) continue;
-        color=0;      /* Not correct! */
-       	drawgfx(bitmap,Machine->gfx[0],
-				tile,color,flipscreen,flipscreen,8*mx,8*my,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-    }
-}
-
-/******************************************************************************/
-
-void gondo_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
-{
-	int my,mx,offs,color,tile;
-	int scrollx,scrolly;
-
-	/* Palette stuff */
-	int code,i;
-	int colmask[16];
-	int pal_base;
-
-	palette_init_used_colors();
-
-	pal_base = Machine->drv->gfxdecodeinfo[0].color_codes_start;
-	for (color = 0;color < 8;color++) colmask[color] = 0;
-	for (offs = 0; offs < 0x800; offs += 2)
-	{
-		code = videoram[offs+1]+((videoram[offs]&0xF)<<8);
-		color = (videoram[offs]&0x70)>>4;
-		code &= 0x0fff;
-		colmask[color] |= Machine->gfx[0]->pen_usage[code];
-	}
-
-	for (color = 0;color < 8;color++)
-	{
-		if (colmask[color] & (1 << 0))
-			palette_used_colors[pal_base + 8 * color] = PALETTE_COLOR_TRANSPARENT;
-		for (i = 1;i < 8;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 8 * color + i] = PALETTE_COLOR_USED;
-		}
-	}
-
-	pal_base = Machine->drv->gfxdecodeinfo[2].color_codes_start;
-	for (color = 0;color < 16;color++) colmask[color] = 0;
-	for (offs = 0; offs < 0x800; offs += 2)
-	{
-		code = pf_video[offs+1]+((pf_video[offs]&0xF)<<8);
-		color = pf_video[offs] >> 4;
-		code &= 0x0fff;
-		colmask[color] |= Machine->gfx[2]->pen_usage[code];
-	}
-
-	for (color = 0;color < 16;color++) //maybe 8?
-	{
-		for (i = 0;i < 16;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
-		}
-	}
-
-	memset(palette_used_colors+256,PALETTE_COLOR_USED,256);
-	palette_used_colors[256]=PALETTE_COLOR_TRANSPARENT;
-
-	if (palette_recalc())
-    	memset(pf_dirty,1,0x800);
-
-	/* Playfield 2 - Foreground */
-	mx=-1; my=0;
-	for (offs = 0x000;offs < 0x800; offs += 2) {
-		mx++;
-		if (mx==32) {mx=0; my++;}
-		if (!pf_dirty[offs/2]) continue; else pf_dirty[offs/2]=0;
-		tile=pf_video[offs+1]+(pf_video[offs]<<8);
-		color = ((tile & 0xf000) >> 12);
-        tile=tile&0xfff;
-		drawgfx(pf2_bitmap,Machine->gfx[2],tile,
-			color, 0,0, 16*mx,16*my,
-		 	0,TRANSPARENCY_NONE,0);
-
-		/* Render masked playfield */
-		drawgfx(pf1_bitmap,Machine->gfx[1],0,
-				0,0,0, 16*mx,16*my,
-			 	0,TRANSPARENCY_NONE,0);
-		drawgfx(pf1_bitmap,Machine->gfx[2],tile,
-				color, 0,0, 16*mx,16*my,
-				0,TRANSPARENCY_PENS,0xff);
-	}
-
-	/* Bottom tiles */
-	scrolly=-((scroll2[2]<<8)+scroll2[3]);
-	scrollx=-((scroll2[0]<<8)+scroll2[1]);
-	copyscrollbitmap(bitmap,pf2_bitmap,1,&scrollx,1,&scrolly,0,TRANSPARENCY_NONE,0);
-
-	/* Sprites underneath tiles */
-	draw_sprites1(bitmap,2);
-
-	/* Top tiles */
-	scrolly=-((scroll2[2]<<8)+scroll2[3]);
-	scrollx=-((scroll2[0]<<8)+scroll2[1]);
-	copyscrollbitmap(bitmap,pf1_bitmap,1,&scrollx,1,&scrolly,0,TRANSPARENCY_PEN,palette_transparent_pen);
-
-	/* Sprites with priority over all tiles */
-	draw_sprites1(bitmap,1);
-
-	/* Top layer */
-	draw_characters(bitmap,0x70,4);
-}
-
-/******************************************************************************/
-
-void garyoret_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
-{
-	int my,mx,offs,color,tile;
-	int scrollx,scrolly;
-
-	/* Palette stuff */
-	int code,i;
-	int colmask[16];
-	int pal_base;
-
-	palette_init_used_colors();
-
-	pal_base = Machine->drv->gfxdecodeinfo[0].color_codes_start;
-	for (color = 0;color < 8;color++) colmask[color] = 0;
-	for (offs = 0; offs < 0x800; offs += 2)
-	{
-		code = videoram[offs+1]+((videoram[offs]&0xF)<<8);
-		color = (videoram[offs]&0x70)>>4;
-		code &= 0x0fff;
-		colmask[color] |= Machine->gfx[0]->pen_usage[code];
-	}
-
-	for (color = 0;color < 8;color++)
-	{
-		if (colmask[color] & (1 << 0))
-			palette_used_colors[pal_base + 8 * color] = PALETTE_COLOR_TRANSPARENT;
-		for (i = 1;i < 8;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 8 * color + i] = PALETTE_COLOR_USED;
-		}
-	}
-
-	pal_base = Machine->drv->gfxdecodeinfo[2].color_codes_start;
-	for (color = 0;color < 16;color++) colmask[color] = 0;
-	for (offs = 0; offs < 0x800; offs += 2)
-	{
-		code = pf_video[offs+1]+((pf_video[offs]&0xF)<<8);
-		color = pf_video[offs] >> 4;
-		code &= 0x0fff;
-		colmask[color] |= Machine->gfx[2]->pen_usage[code];
-	}
-
-	for (color = 0;color < 16;color++)
-	{
-		for (i = 0;i < 16;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
-		}
-	}
-
-	memset(palette_used_colors+256,PALETTE_COLOR_USED,256);
-	palette_used_colors[256]=PALETTE_COLOR_TRANSPARENT;
-
-	if (palette_recalc())
-    	memset(pf_dirty,1,0x800);
-
-
-	/* Playfield 2 - Foreground */
-	mx=-1; my=0;
-	for (offs = 0x000;offs < 0x800; offs += 2) {
-		mx++;
-		if (mx==32) {mx=0; my++;}
-		if (!pf_dirty[offs/2]) continue; else pf_dirty[offs/2]=0;
-		tile=pf_video[offs+1]+(pf_video[offs]<<8);
-		color = ((tile & 0xf000) >> 12);
-        tile=tile&0xfff;
-		drawgfx(pf2_bitmap,Machine->gfx[2],tile,
-			color, 0,0, 16*mx,16*my,
-		 	0,TRANSPARENCY_NONE,0);
-
-		/* Render masked playfield
-		drawgfx(pf1_bitmap,Machine->gfx[1],0,
-				0,0,0, 16*mx,16*my,
-			 	0,TRANSPARENCY_NONE,0);
-		drawgfx(pf1_bitmap,Machine->gfx[2],tile,
-				color, 0,0, 16*mx,16*my,
-				0,TRANSPARENCY_PENS,0xff);*/
-	}
-
-	/* Bottom tiles */
-	scrolly=-((scroll2[2]<<8)+scroll2[3]);
-	scrollx=-((scroll2[0]<<8)+scroll2[1]);
-	copyscrollbitmap(bitmap,pf2_bitmap,1,&scrollx,1,&scrolly,0,TRANSPARENCY_NONE,0);
-
-	/* Sprites underneath tiles */
-//	draw_sprites1(bitmap,2);
-
-	/* Priority isn't confirmed yet - different from Gondomania anyway */
-
-	/* Top tiles */
-	scrolly=-((scroll2[2]<<8)+scroll2[3]);
-	scrollx=-((scroll2[0]<<8)+scroll2[1]);
-//	copyscrollbitmap(bitmap,pf1_bitmap,1,&scrollx,1,&scrolly,0,TRANSPARENCY_PEN,palette_transparent_pen);
-
-	/* Sprites with priority over all tiles */
+	tilemap_draw(bitmap,dec8_pf0_tilemap,0);
 	draw_sprites1(bitmap,0);
+	tilemap_draw(bitmap,dec8_fix_tilemap,0);
+}
 
-	/* Top layer */
-	draw_characters(bitmap,0x70,4);
+static void get_ghostb_fix_tile_info( int tile_index )
+{
+	int offs=tile_index<<1;
+	int tile=videoram[offs+1]+(videoram[offs]<<8);
+	int color=(tile&0xc00) >> 10;
+
+	SET_TILE_INFO(0,tile&0x3ff,color)
+}
+
+int ghostb_vh_start(void)
+{
+	dec8_pf0_tilemap = tilemap_create(get_bac0_tile_info,bac0_scan_rows,0,16,16,32,32);
+	dec8_fix_tilemap = tilemap_create(get_ghostb_fix_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
+	dec8_fix_tilemap->transparent_pen = 0;
+
+	if (!dec8_pf0_tilemap || !dec8_fix_tilemap)
+		return 1;
+
+	gfx_bank=2;
+	gfx_mask=0xf;
+	gfx_base=dec8_pf0_data;
+
+	return 0;
 }
 
 /******************************************************************************/
 
 void oscar_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	int my,mx,offs,color,tile;
-	int scrollx,scrolly;
+	tilemap_set_scrollx( dec8_pf0_tilemap,0, (dec8_pf0_control[0x10]<<8)+dec8_pf0_control[0x11] );
+	tilemap_set_scrolly( dec8_pf0_tilemap,0, (dec8_pf0_control[0x12]<<8)+dec8_pf0_control[0x13] );
+	dec8_flipscreen_w(0,dec8_pf0_control[1]>>7);
 
-	/* Palette stuff */
-	memset(palette_used_colors,PALETTE_COLOR_USED,512);
-	palette_used_colors[0]=PALETTE_COLOR_TRANSPARENT;
+	tilemap_update(ALL_TILEMAPS);
 	if (palette_recalc())
-    	memset(pf_dirty,1,0x800);
+		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	tilemap_render(ALL_TILEMAPS);
 
-	/* Playfield */
-	mx=-1; my=0;
-	for (offs = 0x000;offs < 0x400; offs += 2) {
-		mx++;
-		if (mx==16) {mx=0; my++;}
-		if (!pf_dirty[offs/2]) continue; else pf_dirty[offs/2]=0;
-		tile=pf_video[offs+1]+(pf_video[offs]<<8);
-		color = ((tile & 0xf000) >> 12);
-        tile=tile&0xfff;
-
-		drawgfx(pf2_bitmap,Machine->gfx[2],tile,
-			color&7, 0,0, 16*mx,16*my,
-		 	0,TRANSPARENCY_NONE,0);
-
-		/* Render masked playfield */
-		drawgfx(pf1_bitmap,Machine->gfx[1],1,
-				0,0,0, 16*mx,16*my,
-			 	0,TRANSPARENCY_NONE,0);
-		if (color>7)
-			drawgfx(pf1_bitmap,Machine->gfx[2],tile,
-					color&7, 0,0, 16*mx,16*my,
-					0,TRANSPARENCY_PENS,0xff);
-	}
-
-	mx=-1; my=0;
-	for (offs = 0x400;offs < 0x800; offs += 2) {
-	    mx++;
-	    if (mx==16) {mx=0; my++;}
-	    if (!pf_dirty[offs/2]) continue; else pf_dirty[offs/2]=0;
-	    tile=pf_video[offs+1]+(pf_video[offs]<<8);
-	    color = ((tile & 0xf000) >> 12);
-	    tile=tile&0xfff;
-		drawgfx(pf2_bitmap,Machine->gfx[2],tile,
-			color&7, 0,0, (16*mx)+256,16*my,
-		 	0,TRANSPARENCY_NONE,0);
-
-		/* Render masked playfield */
-		drawgfx(pf1_bitmap,Machine->gfx[1],1,
-				0,0,0, (16*mx)+256,16*my,
-			 	0,TRANSPARENCY_NONE,0);
-		if (color>7)
-			drawgfx(pf1_bitmap,Machine->gfx[2],tile,
-					color&7, 0,0, (16*mx)+256,16*my,
-					0,TRANSPARENCY_PENS,0xff);
-	}
-
-	/* Render playfield */
-	scrolly=-((scroll2[2]<<8)+scroll2[3]);
-	scrollx=-((scroll2[0]<<8)+scroll2[1]);
-	copyscrollbitmap(bitmap,pf2_bitmap,1,&scrollx,1,&scrolly,0,TRANSPARENCY_NONE,0);
-
-	/* Sprites */
+	tilemap_draw(bitmap,dec8_pf0_tilemap,TILEMAP_BACK | 0);
+	tilemap_draw(bitmap,dec8_pf0_tilemap,TILEMAP_BACK | 1);
+	tilemap_draw(bitmap,dec8_pf0_tilemap,TILEMAP_FRONT | 0);
 	draw_sprites2(bitmap,0);
-
-	/* Top pens of playfield */
-	copyscrollbitmap(bitmap,pf1_bitmap,1,&scrollx,1,&scrolly,0,TRANSPARENCY_PEN,palette_transparent_pen);
-
-	/* Top layer */
-	draw_characters(bitmap,0xf0,6);
+	tilemap_draw(bitmap,dec8_pf0_tilemap,TILEMAP_FRONT | 1);
+	tilemap_draw(bitmap,dec8_fix_tilemap,0);
 }
 
-void lastmiss_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+static void get_oscar_fix_tile_info( int tile_index )
 {
-	int my,mx,offs,color,tile;
-	int scrollx,scrolly,i;
-	int offsetx[4],offsety[4],quarter;
+	int offs=tile_index<<1;
+	int tile=videoram[offs+1]+(videoram[offs]<<8);
+	int color=(tile&0xf000) >> 14;
 
-	/* Palette stuff */
-	int code;
-	int colmask[16];
-	int pal_base;
-
-	palette_init_used_colors();
-
-	pal_base = Machine->drv->gfxdecodeinfo[0].color_codes_start;
-	for (color = 0;color < 8;color++) colmask[color] = 0;
-	for (offs = 0; offs < 0x800; offs += 2)
-	{
-		code = videoram[offs+1]+((videoram[offs]&0xF)<<8);
-		color = videoram[offs] >> 6;
-		code &= 0x03ff;
-		colmask[color] |= Machine->gfx[0]->pen_usage[code];
-	}
-
-	for (color = 0;color < 8;color++) //maybe 8?
-	{
-		if (colmask[color] & (1 << 0))
-			palette_used_colors[pal_base + 16 * color] = PALETTE_COLOR_TRANSPARENT;
-		for (i = 1;i < 8;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 8 * color + i] = PALETTE_COLOR_USED;
-		}
-	}
-
-	pal_base = Machine->drv->gfxdecodeinfo[2].color_codes_start;
-	for (color = 0;color < 16;color++) colmask[color] = 0;
-	for (offs = 0; offs < 0x800; offs += 2)
-	{
-		code = pf_video[offs+1]+((pf_video[offs]&0xF)<<8);
-		color = pf_video[offs] >> 4;
-		code &= 0x0fff;
-		colmask[color] |= Machine->gfx[2]->pen_usage[code];
-	}
-
-	for (color = 0;color < 16;color++) //maybe 8?
-	{
-		for (i = 0;i < 16;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
-		}
-	}
-
-	memset(palette_used_colors+256,PALETTE_COLOR_USED,256);
-	palette_used_colors[256]=PALETTE_COLOR_TRANSPARENT;
-
-	if (palette_recalc())
-    	memset(pf_dirty,1,0x800);
-
-
-	offsetx[0]=0;   offsety[0]=0;
-	offsetx[1]=256; offsety[1]=0;
-	offsetx[2]=0;   offsety[2]=256;
-	offsetx[3]=256; offsety[3]=256;
-
-	/* Draw the playfield */
-	for (quarter=0; quarter < 4;quarter++) {
-		mx=-1; my=0;
-		for (offs = 0x200*quarter;offs < 0x200*quarter + 0x200; offs += 2) {
-			mx++;
-			if (mx==16) {mx=0; my++;}
-			if (!pf_dirty[offs/2]) continue; else pf_dirty[offs/2]=0;
-			tile=pf_video[offs+1]+(pf_video[offs]<<8);
-			color = ((tile & 0xf000) >> 12);
-	        tile=tile&0xfff;
-
-			drawgfx(pf2_bitmap,Machine->gfx[2],tile,
-				color, 0,0, 16*mx+ offsetx[quarter],16*my+ offsety[quarter],
-			 	0,TRANSPARENCY_NONE,0);
-			drawgfx(pf1_bitmap,Machine->gfx[1],blank_tile,
-					0,0,0, 16*mx+ offsetx[quarter],16*my+ offsety[quarter],
-				 	0,TRANSPARENCY_NONE,0);
-			if (color>7)
-				drawgfx(pf1_bitmap,Machine->gfx[2],tile,
-					color, 0,0, 16*mx+ offsetx[quarter],16*my+ offsety[quarter],
-				 0,TRANSPARENCY_PENS,0xf);
-		}
-	}
-
-	/* Render playfield (bottom part) */
-	scrollx=-(scroll2[0]<<8)-scroll2[1];
-	scrolly=-(scroll2[2]<<8)-scroll2[3];
-	copyscrollbitmap(bitmap,pf2_bitmap,1,&scrollx,1,&scrolly,0,TRANSPARENCY_NONE,0);
-
-	/* Sprites */
-	draw_sprites1(bitmap,0);
-
-	/* Render parts of playfield with priority over sprites */
-	if (shackled_priority)
-		copyscrollbitmap(bitmap,pf1_bitmap,1,&scrollx,1,&scrolly,0,TRANSPARENCY_PEN,palette_transparent_pen);
-
-	//draw_sprites1(bitmap,2);
-
-	/* Top layer */
-	draw_characters(bitmap,0xf0,6);
+	SET_TILE_INFO(0,tile&0xfff,color)
 }
 
-
-/******************************************************************************/
-
-READ_HANDLER( dec8_video_r )
+int oscar_vh_start(void)
 {
-	return pf_video[offset];
-}
+	dec8_pf0_tilemap = tilemap_create(get_bac0_tile_info,bac0_scan_rows,TILEMAP_SPLIT,16,16,32,32);
+	dec8_fix_tilemap = tilemap_create(get_oscar_fix_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
 
-WRITE_HANDLER( dec8_video_w )
-{
-	if (pf_video[offset]!=data)
-	{
-		pf_video[offset]=data;
-		pf_dirty[offset/2] = 1;
-	}
-}
+	if (!dec8_pf0_tilemap || !dec8_fix_tilemap)
+		return 1;
 
-int dec8_vh_start (void)
-{
-	int i;
-	unsigned int *pen_usage=Machine->gfx[1]->pen_usage;
-
-	pf1_bitmap=osd_create_bitmap(512,512);
-	pf2_bitmap=osd_create_bitmap(512,512);
-	tf2_bitmap=osd_create_bitmap(512,512);
-
-	pf_video=malloc(0x1000);
-	pf_dirty=malloc(0x800);
-	memset(pf_dirty,1,0x800);
-
-	/* Kludge: Find a blank tile */
-	blank_tile=0;
-	for (i=0; i<0xfff; i++)
-		if((pen_usage[i] & ~ 1) == 0) {
-			blank_tile=i;
-			i=0x1000;
-		}
-
-	/* Stupid kludge - fix it later :) */
-	shackled_priority=0;
-	if (!strcmp(Machine->gamedrv->name,"breywood")) shackled_priority=1;
-	if (!strcmp(Machine->gamedrv->name,"shackled")) shackled_priority=1;
+	dec8_fix_tilemap->transparent_pen = 0;
+	dec8_pf0_tilemap->transmask[0] = 0x00ff; /* Bottom 8 pens */
+	dec8_pf0_tilemap->transmask[1] = 0xff00; /* Top 8 pens */
+	game_uses_priority=1;
+	gfx_bank=2;
+	gfx_mask=0x7;
+	gfx_base=dec8_pf0_data;
 
 	return 0;
 }
 
-void dec8_vh_stop (void)
+/******************************************************************************/
+
+void lastmiss_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	osd_free_bitmap(pf1_bitmap);
-	osd_free_bitmap(pf2_bitmap);
-	osd_free_bitmap(tf2_bitmap);
-	free(pf_video);
-	free(pf_dirty);
+	tilemap_set_scrollx( dec8_pf0_tilemap,0, ((scroll2[0]<<8)+scroll2[1]) );
+	tilemap_set_scrolly( dec8_pf0_tilemap,0, ((scroll2[2]<<8)+scroll2[3]) );
+	tilemap_update(ALL_TILEMAPS);
+
+	palette_init_used_colors();
+	memset(palette_used_colors+256,PALETTE_COLOR_USED,256);
+	if (palette_recalc())
+		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	tilemap_render(ALL_TILEMAPS);
+
+	tilemap_draw(bitmap,dec8_pf0_tilemap,0);
+	draw_sprites1(bitmap,0);
+	tilemap_draw(bitmap,dec8_fix_tilemap,0);
 }
 
-/* Only use with tilemap games (SRDARWIN) for now */
-WRITE_HANDLER( dec8_flipscreen_w )
+void shackled_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	static int old;
+	tilemap_set_scrollx( dec8_pf0_tilemap,0, ((scroll2[0]<<8)+scroll2[1]) );
+	tilemap_set_scrolly( dec8_pf0_tilemap,0, ((scroll2[2]<<8)+scroll2[3]) );
+	tilemap_update(ALL_TILEMAPS);
 
-	flipscreen=data;
-	if (flipscreen!=old)
-		tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
-	old=data;
+	palette_init_used_colors();
+	memset(palette_used_colors+256,PALETTE_COLOR_USED,256);
+	if (palette_recalc())
+		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	tilemap_render(ALL_TILEMAPS);
+
+	tilemap_draw(bitmap,dec8_pf0_tilemap,TILEMAP_BACK | 0);
+	tilemap_draw(bitmap,dec8_pf0_tilemap,TILEMAP_BACK | 1);
+	tilemap_draw(bitmap,dec8_pf0_tilemap,TILEMAP_FRONT | 0);
+	draw_sprites1(bitmap,0);
+	tilemap_draw(bitmap,dec8_pf0_tilemap,TILEMAP_FRONT | 1);
+	tilemap_draw(bitmap,dec8_fix_tilemap,0);
+}
+
+static UINT32 lastmiss_scan_rows(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
+{
+	/* logical (col,row) -> memory offset */
+	return ((col & 0x0f) + ((row & 0x0f) << 4)) + ((col & 0x10) << 4) + ((row & 0x10) << 5);
+}
+
+static void get_lastmiss_tile_info( int tile_index )
+{
+	int offs=tile_index*2;
+	int tile=dec8_pf0_data[offs+1]+(dec8_pf0_data[offs]<<8);
+	int color=tile >> 12;
+
+	if (color>7 && game_uses_priority) tile_info.priority=1; else tile_info.priority=0;
+
+	SET_TILE_INFO(2,tile&0xfff,color)
+}
+
+static void get_lastmiss_fix_tile_info( int tile_index )
+{
+	int offs=tile_index<<1;
+	int tile=videoram[offs+1]+(videoram[offs]<<8);
+	int color=(tile&0xc000) >> 14;
+
+	SET_TILE_INFO(0,tile&0xfff,color)
+}
+
+int lastmiss_vh_start(void)
+{
+	dec8_pf0_tilemap = tilemap_create(get_lastmiss_tile_info,lastmiss_scan_rows,0,16,16,32,32);
+	dec8_fix_tilemap = tilemap_create(get_lastmiss_fix_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
+
+	if (!dec8_pf0_tilemap || !dec8_fix_tilemap)
+		return 1;
+
+	dec8_fix_tilemap->transparent_pen = 0;
+	game_uses_priority=0;
+
+	return 0;
+}
+
+int shackled_vh_start(void)
+{
+	dec8_pf0_tilemap = tilemap_create(get_lastmiss_tile_info,lastmiss_scan_rows,TILEMAP_SPLIT,16,16,32,32);
+	dec8_fix_tilemap = tilemap_create(get_lastmiss_fix_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
+
+	if (!dec8_pf0_tilemap || !dec8_fix_tilemap)
+		return 1;
+
+	dec8_fix_tilemap->transparent_pen = 0;
+	dec8_pf0_tilemap->transmask[0] = 0x000f; /* Bottom 12 pens */
+	dec8_pf0_tilemap->transmask[1] = 0xfff0; /* Top 4 pens */
+	game_uses_priority=1;
+
+	return 0;
 }
 
 /******************************************************************************/
 
-READ_HANDLER( srdarwin_video_r )
+void srdarwin_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
-	return srdarwin_tileram[offset];
+	tilemap_set_scrollx( dec8_pf0_tilemap,0, (scroll2[0]<<8)+scroll2[1] );
+	tilemap_update(ALL_TILEMAPS);
+
+	if (palette_recalc())
+		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+
+	tilemap_render(ALL_TILEMAPS);
+	tilemap_draw(bitmap,dec8_pf0_tilemap,TILEMAP_BACK | 1);
+	tilemap_draw(bitmap,dec8_pf0_tilemap,TILEMAP_BACK | 0);
+	tilemap_draw(bitmap,dec8_pf0_tilemap,TILEMAP_FRONT | 1);
+	srdarwin_drawsprites(bitmap,0); /* Priority may not be right on later levels */
+	tilemap_draw(bitmap,dec8_pf0_tilemap,TILEMAP_FRONT | 0);
+	srdarwin_drawsprites(bitmap,1);
+	tilemap_draw(bitmap,dec8_fix_tilemap,0);
 }
 
-WRITE_HANDLER( srdarwin_video_w )
+static void get_srdarwin_fix_tile_info( int tile_index )
 {
-	srdarwin_tileram[offset]=data;
-	tilemap_mark_tile_dirty( background_layer,offset/2);
+	int tile=videoram[tile_index];
+	int color=0; /* ? */
+
+	if (color>1) tile_info.priority=1; else tile_info.priority=0;
+
+	SET_TILE_INFO(0,tile,color)
 }
 
 static void get_srdarwin_tile_info(int tile_index)
 {
-	int tile=srdarwin_tileram[2*tile_index+1]+(srdarwin_tileram[2*tile_index]<<8);
+	int tile=dec8_pf0_data[2*tile_index+1]+(dec8_pf0_data[2*tile_index]<<8);
 	int color=tile >> 12;
 	int bank;
 
@@ -1091,15 +737,106 @@ static void get_srdarwin_tile_info(int tile_index)
 
 int srdarwin_vh_start(void)
 {
-	background_layer = tilemap_create(get_srdarwin_tile_info,tilemap_scan_rows,TILEMAP_SPLIT,16,16,32,16);
+	dec8_pf0_tilemap = tilemap_create(get_srdarwin_tile_info,tilemap_scan_rows,TILEMAP_SPLIT,16,16,32,16);
+	dec8_fix_tilemap = tilemap_create(get_srdarwin_fix_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
 
-	if (background_layer)
-	{
-		background_layer->transmask[0] = 0x00ff; /* Bottom 8 pens */
-		background_layer->transmask[1] = 0xff00; /* Top 8 pens */
+	if (!dec8_pf0_tilemap || !dec8_fix_tilemap)
+		return 1;
 
-		return 0;
-	}
+	dec8_fix_tilemap->transparent_pen = 0;
+	dec8_pf0_tilemap->transmask[0] = 0x00ff; /* Bottom 8 pens */
+	dec8_pf0_tilemap->transmask[1] = 0xff00; /* Top 8 pens */
 
-	return 1;
+	return 0;
 }
+
+/******************************************************************************/
+
+void gondo_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+{
+	tilemap_set_scrollx( dec8_pf0_tilemap,0, ((scroll2[0]<<8)+scroll2[1]) );
+	tilemap_set_scrolly( dec8_pf0_tilemap,0, ((scroll2[2]<<8)+scroll2[3]) );
+	tilemap_update(ALL_TILEMAPS);
+
+	palette_init_used_colors();
+	memset(palette_used_colors+256,PALETTE_COLOR_USED,256);
+	if (palette_recalc())
+		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	tilemap_render(ALL_TILEMAPS);
+
+	tilemap_draw(bitmap,dec8_pf0_tilemap,TILEMAP_BACK);
+	draw_sprites1(bitmap,2);
+	tilemap_draw(bitmap,dec8_pf0_tilemap,TILEMAP_FRONT);
+	draw_sprites1(bitmap,1);
+	tilemap_draw(bitmap,dec8_fix_tilemap,0);
+}
+
+void garyoret_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
+{
+	tilemap_set_scrollx( dec8_pf0_tilemap,0, ((scroll2[0]<<8)+scroll2[1]) );
+	tilemap_set_scrolly( dec8_pf0_tilemap,0, ((scroll2[2]<<8)+scroll2[3]) );
+	tilemap_update(ALL_TILEMAPS);
+
+	palette_init_used_colors();
+	memset(palette_used_colors+256,PALETTE_COLOR_USED,256);
+	if (palette_recalc())
+		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
+	tilemap_render(ALL_TILEMAPS);
+
+	tilemap_draw(bitmap,dec8_pf0_tilemap,0);
+	draw_sprites1(bitmap,0);
+	tilemap_draw(bitmap,dec8_pf0_tilemap,1);
+	tilemap_draw(bitmap,dec8_fix_tilemap,0);
+}
+
+static void get_gondo_fix_tile_info( int tile_index )
+{
+	int offs=tile_index*2;
+	int tile=videoram[offs+1]+(videoram[offs]<<8);
+	int color=(tile&0x7000) >> 12;
+
+	SET_TILE_INFO(0,tile&0xfff,color)
+}
+
+static void get_gondo_tile_info( int tile_index )
+{
+	int offs=tile_index*2;
+	int tile=dec8_pf0_data[offs+1]+(dec8_pf0_data[offs]<<8);
+	int color=tile>> 12;
+
+	if (color>7 && game_uses_priority) tile_info.priority=1; else tile_info.priority=0;
+
+	SET_TILE_INFO(2,tile&0xfff,color)
+}
+
+int gondo_vh_start(void)
+{
+	dec8_fix_tilemap=tilemap_create(get_gondo_fix_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
+	dec8_pf0_tilemap=tilemap_create(get_gondo_tile_info,tilemap_scan_rows,TILEMAP_SPLIT,16,16,32,32);
+
+	if (!dec8_fix_tilemap || !dec8_pf0_tilemap)
+		return 1;
+
+	dec8_fix_tilemap->transparent_pen = 0;
+	dec8_pf0_tilemap->transmask[0] = 0x00ff; /* Bottom 8 pens */
+	dec8_pf0_tilemap->transmask[1] = 0xff00; /* Top 8 pens */
+	game_uses_priority=0;
+
+	return 0;
+}
+
+int garyoret_vh_start(void)
+{
+	dec8_fix_tilemap=tilemap_create(get_gondo_fix_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
+	dec8_pf0_tilemap=tilemap_create(get_gondo_tile_info,tilemap_scan_rows,TILEMAP_SPLIT,16,16,32,32);
+
+	if (!dec8_fix_tilemap || !dec8_pf0_tilemap)
+		return 1;
+
+	dec8_fix_tilemap->transparent_pen = 0;
+	game_uses_priority=1;
+
+	return 0;
+}
+
+/******************************************************************************/

@@ -100,11 +100,11 @@ write:
 
 
 extern unsigned char *punchout_videoram2;
-extern int punchout_videoram2_size;
+extern size_t punchout_videoram2_size;
 extern unsigned char *punchout_bigsprite1ram;
-extern int punchout_bigsprite1ram_size;
+extern size_t punchout_bigsprite1ram_size;
 extern unsigned char *punchout_bigsprite2ram;
-extern int punchout_bigsprite2ram_size;
+extern size_t punchout_bigsprite2ram_size;
 extern unsigned char *punchout_scroll;
 extern unsigned char *punchout_bigsprite1;
 extern unsigned char *punchout_bigsprite2;
@@ -129,7 +129,7 @@ void init_armwrest(void);
 
 
 static unsigned char *nvram;
-static int nvram_size;
+static size_t nvram_size;
 
 static void nvram_handler(void *file,int read_or_write)
 {
@@ -251,8 +251,7 @@ static READ_HANDLER( spunchout_prot_r ) {
 		break;
 	}
 
-	if ( errorlog )
-		fprintf( errorlog, "Read from unknown protection? port %02x ( selector = %02x )\n", offset, prot_mode_sel );
+	logerror("Read from unknown protection? port %02x ( selector = %02x )\n", offset, prot_mode_sel );
 
 	return prot_mem[offset];
 }
@@ -312,8 +311,7 @@ static WRITE_HANDLER( spunchout_prot_w ) {
 			return;
 	}
 
-	if ( errorlog )
-		fprintf( errorlog, "Wrote to unknown protection? port %02x ( %02x )\n", offset, data );
+	logerror("Wrote to unknown protection? port %02x ( %02x )\n", offset, data );
 
 	prot_mem[offset] = data;
 }

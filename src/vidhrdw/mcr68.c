@@ -16,8 +16,6 @@
 #define LOW_BYTE(x) (READ_WORD(x) & 0xff)
 
 
-UINT16 mcr68_char_code_mask;
-UINT16 mcr68_sprite_code_mask;
 UINT8 mcr68_sprite_clip;
 INT8 mcr68_sprite_xoffset;
 
@@ -107,12 +105,10 @@ static void mcr68_update_background(struct osd_bitmap *bitmap, int overrender)
 			int color = (attr & 0x30) >> 4;
 			int code = LOW_BYTE(&videoram[offs]) + 256 * (attr & 0x03) + 1024 * ((attr >> 6) & 0x03);
 
-			code &= mcr68_char_code_mask;
-
 			if (!overrender)
 				drawgfx(bitmap, Machine->gfx[0], code, color ^ 3, attr & 0x04, attr & 0x08,
 						16 * mx, 16 * my, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
-			else if (mcr68_char_code_mask < 0xfff && (attr & 0x80))
+			else if (Machine->gfx[0]->total_elements < 0x1000 && (attr & 0x80))
 				drawgfx(bitmap, Machine->gfx[0], code, color ^ 3, attr & 0x04, attr & 0x08,
 						16 * mx, 16 * my, &Machine->drv->visible_area, TRANSPARENCY_PEN, 0);
 			else
@@ -148,7 +144,6 @@ static void mcr68_update_sprites(struct osd_bitmap *bitmap, int priority)
 
 		flags = LOW_BYTE(&spriteram[offs + 2]);
 		code = LOW_BYTE(&spriteram[offs + 4]) + 256 * ((flags >> 3) & 0x01) + 512 * ((flags >> 6) & 0x03);
-		code &= mcr68_sprite_code_mask;
 
 		/* skip if zero */
 		if (code == 0)

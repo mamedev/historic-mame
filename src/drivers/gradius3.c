@@ -50,7 +50,7 @@ static WRITE_HANDLER( K052109_halfword_w )
 	/* is this a bug in the game or something else? */
 	if ((data & 0x00ff0000) == 0x00ff0000)
 		K052109_w(offset >> 1,(data >> 8) & 0xff);
-//		if (errorlog) fprintf(errorlog,"%06x half %04x = %04x\n",cpu_get_pc(),offset,data);
+//		logerror("%06x half %04x = %04x\n",cpu_get_pc(),offset,data);
 }
 
 static READ_HANDLER( K051937_halfword_r )
@@ -120,7 +120,7 @@ static WRITE_HANDLER( cpuA_ctrl_w )
 		irqAen = data & 0x20;
 
 		/* other bits unknown */
-//if (errorlog) fprintf(errorlog,"%06x: write %04x to c0000\n",cpu_get_pc(),data);
+//logerror("%06x: write %04x to c0000\n",cpu_get_pc(),data);
 	}
 }
 
@@ -153,11 +153,11 @@ static WRITE_HANDLER( cpuB_irqtrigger_w )
 {
 	if (irqBmask & 4)
 	{
-if (errorlog) fprintf(errorlog,"%04x trigger cpu B irq 4 %02x\n",cpu_get_pc(),data);
+logerror("%04x trigger cpu B irq 4 %02x\n",cpu_get_pc(),data);
 		cpu_cause_interrupt(1,4);
 	}
 	else
-if (errorlog) fprintf(errorlog,"%04x MISSED cpu B irq 4 %02x\n",cpu_get_pc(),data);
+logerror("%04x MISSED cpu B irq 4 %02x\n",cpu_get_pc(),data);
 }
 
 static WRITE_HANDLER( sound_command_w )

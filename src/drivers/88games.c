@@ -24,7 +24,7 @@ void k88games_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 
 static unsigned char *nvram;
-static int nvram_size;
+static size_t nvram_size;
 
 static void nvram_handler(void *file,int read_or_write)
 {
@@ -539,7 +539,7 @@ static void k88games_banking( int lines )
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	int offs;
 
-if (errorlog) fprintf(errorlog,"%04x: bank select %02x\n",cpu_get_pc(),lines);
+logerror("%04x: bank select %02x\n",cpu_get_pc(),lines);
 
 	/* bits 0-2 select ROM bank for 0000-1fff */
 	/* bit 3: when 1, palette RAM at 1000-1fff */

@@ -15,7 +15,7 @@
 #define BIGSPRITE_HEIGHT 128
 
 unsigned char *cclimber_bsvideoram;
-int cclimber_bsvideoram_size;
+size_t cclimber_bsvideoram_size;
 unsigned char *cclimber_bigspriteram;
 unsigned char *cclimber_column_scroll;
 static unsigned char *bsdirtybuffer;

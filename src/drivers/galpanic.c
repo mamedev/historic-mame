@@ -21,7 +21,7 @@ the board, and no piggybacked ROMs. Board number is MDK 321 V-0    EXPRO-02
 
 
 extern unsigned char *galpanic_bgvideoram,*galpanic_fgvideoram;
-extern int galpanic_fgvideoram_size;
+extern size_t galpanic_fgvideoram_size;
 
 void galpanic_init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom);
 READ_HANDLER( galpanic_bgvideoram_r );

@@ -2,7 +2,7 @@
 
 	6280dasm.c Hudsonsoft Hu6280 (HuC6280/Hu6280a) disassembler
 
-	Copyright (c) 1999 Bryan McPhail, mish@tendril.co.uk
+	Copyright (c) 1999, 2000 Bryan McPhail, mish@tendril.co.uk
 
 	This source code is based (with permission!) on the 6502 emulator by
 	Juergen Buchmueller.  It is released as part of the Mame emulator project.
@@ -111,7 +111,7 @@ static const unsigned char op6280[512]=
   _brk,_imp, _ora,_idx, _sxy,_imp, _st0,_imm, _tsb,_zpg, _ora,_zpg, _asl,_zpg, _rm0,_zpg, /* 00 */
   _php,_imp, _ora,_imm, _asl,_acc, _ill,_non, _tsb,_abs, _ora,_abs, _asl,_abs, _br0,_zrl,
   _bpl,_rel, _ora,_idy, _ora,_zpi, _st1,_imm, _trb,_zpg, _ora,_zpx, _asl,_zpx, _rm1,_zpg, /* 10 */
-  _clc,_imp, _ora,_aby, _ina,_imp, _ill,_non, _tsb,_abs, _ora,_abx, _asl,_abx, _br1,_zrl,
+  _clc,_imp, _ora,_aby, _ina,_imp, _ill,_non, _trb,_abs, _ora,_abx, _asl,_abx, _br1,_zrl,
   _jsr,_abs, _and,_idx, _sax,_imp, _st2,_imm, _bit,_zpg, _and,_zpg, _rol,_zpg, _rm2,_zpg, /* 20 */
   _plp,_imp, _and,_imm, _rol,_acc, _ill,_non, _bit,_abs, _and,_abs, _rol,_abs, _br2,_zrl,
   _bmi,_rel, _and,_idy, _and,_zpi, _ill,_non, _bit,_zpx, _and,_zpx, _rol,_zpx, _rm3,_zpg, /* 30 */

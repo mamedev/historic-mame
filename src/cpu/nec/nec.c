@@ -256,8 +256,7 @@ static void nec_interrupt(unsigned int_num,BOOLEAN md_flag)
     unsigned dest_seg, dest_off;
 
 #if 0
-	if (errorlog)
-		fprintf(errorlog,"PC=%06x : NEC Interrupt %02d",cpu_get_pc(),int_num);
+	logerror("PC=%06x : NEC Interrupt %02d",cpu_get_pc(),int_num);
 #endif
 
     i_pushf();
@@ -267,7 +266,7 @@ static void nec_interrupt(unsigned int_num,BOOLEAN md_flag)
 	if (int_num == -1)
 	{
 		int_num = (*I.irq_callback)(0);
-//		if (errorlog) fprintf(errorlog," (indirect ->%02d) ",int_num);
+//		logerror(" (indirect ->%02d) ",int_num);
 	}
 
     dest_off = ReadWord(int_num*4);
@@ -279,8 +278,7 @@ static void nec_interrupt(unsigned int_num,BOOLEAN md_flag)
 	I.sregs[CS] = (WORD)dest_seg;
 	I.base[CS] = SegBase(CS);
 	change_pc20((I.base[CS]+I.ip));
-//	if (errorlog)
-//		fprintf(errorlog,"=%06x\n",cpu_get_pc());
+//	logerror("=%06x\n",cpu_get_pc());
 }
 
 
@@ -681,24 +679,24 @@ static void i_pre_nec(void) /* Opcode 0x0f */
 			PutbackRMByte(ModRM,tmp);
 			break;
 		case 0x1D : // 0F 1D C6 - SET1 si,cl
-			//if (errorlog) fprintf(errorlog,"PC=%06x : Set1 ",cpu_get_pc()-2);
+			//logerror("PC=%06x : Set1 ",cpu_get_pc()-2);
 			ModRM = FETCH;
 		    if (ModRM >= 0xc0) {
 				tmp=I.regs.w[Mod_RM.RM.w[ModRM]];
 				nec_ICount-=5;
-				//if (errorlog) fprintf(errorlog,"reg=%04x ->",tmp);
+				//logerror("reg=%04x ->",tmp);
 			}
 			else {
 				int old=nec_ICount;
 				(*GetEA[ModRM])();	// calculate EA
 				tmp=ReadWord(EA);	// read from EA
 				nec_ICount=old-14;
-				//if (errorlog) fprintf(errorlog,"[%04x]=%04x ->",EA,tmp);
+				//logerror("[%04x]=%04x ->",EA,tmp);
 			}
 			tmp2 = FETCH;
 			tmp2 &= 0xF;
 			tmp |= (bytes[tmp2]);
-			//if (errorlog) fprintf(errorlog,"%04x",tmp);
+			//logerror("%04x",tmp);
 			PutbackRMWord(ModRM,tmp);
 			break;
 		case 0x1e : // 0F 1e C6 - NOT1 si,07
@@ -829,7 +827,7 @@ static void i_pre_nec(void) /* Opcode 0x0f */
 
 			Clocks:	 16
 			*/
-			if (errorlog) fprintf(errorlog,"PC=%06x : MOVSPA\n",cpu_get_pc()-2);
+			logerror("PC=%06x : MOVSPA\n",cpu_get_pc()-2);
 			nec_ICount-=16;
 			break;
 		case 0x26 : { // 0F 22 59 - cmp4s
@@ -904,7 +902,7 @@ static void i_pre_nec(void) /* Opcode 0x0f */
 			tmp &= 0xffff;
 			PutbackRMWord(ModRM,tmp);
 			*/
-			if (errorlog) fprintf(errorlog,"PC=%06x : ROL4 %02x\n",cpu_get_pc()-3,ModRM);
+			logerror("PC=%06x : ROL4 %02x\n",cpu_get_pc()-3,ModRM);
 			break;
 
 		case 0x2A : // 0F 2a c2 - ROR4 bh
@@ -946,7 +944,7 @@ static void i_pre_nec(void) /* Opcode 0x0f */
 			tmp = tmp2 | (tmp>>4);
 			PutbackRMWord(ModRM,tmp);
 			*/
-			if (errorlog) fprintf(errorlog,"PC=%06x : ROR4 %02x\n",cpu_get_pc()-3,ModRM);
+			logerror("PC=%06x : ROR4 %02x\n",cpu_get_pc()-3,ModRM);
 			break;
 		case 0x2D : // 0Fh 2Dh <1111 1RRR>
 			/* OPCODE BRKCS  -	 Break with Contex Switch
@@ -1012,24 +1010,24 @@ static void i_pre_nec(void) /* Opcode 0x0f */
 			Flags Affected:	 None
 			*/
 			ModRM = FETCH;
-			if (errorlog) fprintf(errorlog,"PC=%06x : BRKCS %02x\n",cpu_get_pc()-3,ModRM);
+			logerror("PC=%06x : BRKCS %02x\n",cpu_get_pc()-3,ModRM);
 			nec_ICount-=15;// checked !
 			break;
 
 		case 0x31: // 0F 31 [mod:reg:r/m] - INS reg8,reg8 or INS reg8,imm4
 
 			ModRM = FETCH;
-			if (errorlog) fprintf(errorlog,"PC=%06x : INS ",cpu_get_pc()-2);
+			logerror("PC=%06x : INS ",cpu_get_pc()-2);
 		   	if (ModRM >= 0xc0) {
 		    	tmp=I.regs.b[Mod_RM.RM.b[ModRM]];
-		        if (errorlog) fprintf(errorlog,"ModRM=%04x \n",ModRM);
+		        logerror("ModRM=%04x \n",ModRM);
 		    	nec_ICount-=29;
 		    }
 		    else {
 		    	int old=nec_ICount;
 		    	(*GetEA[ModRM])();;
 		    	tmp=ReadByte(EA);
-		    	if (errorlog) fprintf(errorlog,"ModRM=%04x  Byte=%04x\n",EA,tmp);
+		    	logerror("ModRM=%04x  Byte=%04x\n",EA,tmp);
    				nec_ICount=old-33;
    			}
 
@@ -1071,17 +1069,17 @@ static void i_pre_nec(void) /* Opcode 0x0f */
 		case 0x33: // 0F 33 [mod:reg:r/m] - EXT reg8,reg8 or EXT reg8,imm4
 
 			ModRM = FETCH;
-			if (errorlog) fprintf(errorlog,"PC=%06x : EXT ",cpu_get_pc()-2);
+			logerror("PC=%06x : EXT ",cpu_get_pc()-2);
 		   	if (ModRM >= 0xc0) {
 		    	tmp=I.regs.b[Mod_RM.RM.b[ModRM]];
-		        if (errorlog) fprintf(errorlog,"ModRM=%04x \n",ModRM);
+		        logerror("ModRM=%04x \n",ModRM);
 		    	nec_ICount-=29;
 		    }
 		    else {
 		    	int old=nec_ICount;
 		    	(*GetEA[ModRM])();;
 		    	tmp=ReadByte(EA);
-		    	if (errorlog) fprintf(errorlog,"ModRM=%04x  Byte=%04x\n",EA,tmp);
+		    	logerror("ModRM=%04x  Byte=%04x\n",EA,tmp);
    				nec_ICount=old-33;
    			}
 			/*2do: the rest is silence....yet */
@@ -1149,7 +1147,7 @@ static void i_pre_nec(void) /* Opcode 0x0f */
 
 			Clocks:	 12
 			*/
-			if (errorlog) fprintf(errorlog,"PC=%06x : RETRBI\n",cpu_get_pc()-2);
+			logerror("PC=%06x : RETRBI\n",cpu_get_pc()-2);
 			nec_ICount-=12;
 			break;
 
@@ -1182,7 +1180,7 @@ static void i_pre_nec(void) /* Opcode 0x0f */
 			*/
 			ModRM = FETCH;
 
-			if (errorlog) fprintf(errorlog,"PC=%06x : TSCSW %02x\n",cpu_get_pc()-3,ModRM);
+			logerror("PC=%06x : TSCSW %02x\n",cpu_get_pc()-3,ModRM);
 			nec_ICount-=11;
 			break;
 		case 0x95:
@@ -1214,7 +1212,7 @@ static void i_pre_nec(void) /* Opcode 0x0f */
 			Clocks:	 11
 			*/
 			ModRM = FETCH;
-			if (errorlog) fprintf(errorlog,"PC=%06x : MOVSPB %02x\n",cpu_get_pc()-3,ModRM);
+			logerror("PC=%06x : MOVSPB %02x\n",cpu_get_pc()-3,ModRM);
 			nec_ICount-=11;
 			break;
 		case 0xbe:
@@ -1241,7 +1239,7 @@ static void i_pre_nec(void) /* Opcode 0x0f */
 
 			Clocks:	 N/A
 			*/
-			if (errorlog) fprintf(errorlog,"PC=%06x : STOP\n",cpu_get_pc()-2);
+			logerror("PC=%06x : STOP\n",cpu_get_pc()-2);
 			nec_ICount-=2; /* of course this is crap */
 			break;
 		case 0xe0:
@@ -1313,7 +1311,7 @@ static void i_pre_nec(void) /* Opcode 0x0f */
 			*/
 
 			ModRM = FETCH;
-			if (errorlog) fprintf(errorlog,"PC=%06x : BRKXA %02x\n",cpu_get_pc()-3,ModRM);
+			logerror("PC=%06x : BRKXA %02x\n",cpu_get_pc()-3,ModRM);
 			nec_ICount-=12;
 			break;
 		case 0xf0:
@@ -1349,7 +1347,7 @@ static void i_pre_nec(void) /* Opcode 0x0f */
 			Clocks:	 12
 			*/
 			ModRM = FETCH;
-			if (errorlog) fprintf(errorlog,"PC=%06x : RETXA %02x\n",cpu_get_pc()-3,ModRM);
+			logerror("PC=%06x : RETXA %02x\n",cpu_get_pc()-3,ModRM);
 			nec_ICount-=12;
 			break;
 		case 0xff: /* 0F ff imm8 - BRKEM */
@@ -1378,7 +1376,7 @@ static void i_pre_nec(void) /* Opcode 0x0f */
 			*/
 			ModRM=FETCH;
 			nec_ICount-=38;
-			if (errorlog) fprintf(errorlog,"PC=%06x : BRKEM %02x\n",cpu_get_pc()-3,ModRM);
+			logerror("PC=%06x : BRKEM %02x\n",cpu_get_pc()-3,ModRM);
 			nec_interrupt(ModRM,1);
 			break;
 		default :
@@ -2099,7 +2097,7 @@ static void i_brkn(void)	/* Opcode 0x63 BRKN -  Break to Native Mode */
 	//nec_ICount-=56;
 	unsigned int_vector;
 	int_vector = FETCH;
-	if (errorlog) fprintf(errorlog,"PC=%06x : BRKN %02x\n",cpu_get_pc()-2,int_vector);
+	logerror("PC=%06x : BRKN %02x\n",cpu_get_pc()-2,int_vector);
 }
 
 
@@ -2284,7 +2282,7 @@ static void i_insw(void)    /* Opcode 0x6d */
 {
 	PutMemB(ES,I.regs.w[IY],read_port(I.regs.w[DW]));
 	PutMemB(ES,I.regs.w[IY]+1,read_port(I.regs.w[DW]+1));
-//if (errorlog) fprintf(errorlog,"%04x:  insw\n",cpu_get_pc());
+//logerror("%04x:  insw\n",cpu_get_pc());
 	I.regs.w[IY]+= -4 * I.DF + 2;
 	nec_ICount-=8;
 }
@@ -3679,7 +3677,7 @@ static void i_setalc(void)  /* Opcode 0xd6 */
 	*/
 	I.regs.b[AL] = (CF)?0xff:0x00;
 	nec_ICount-=3;	// V30
-	if (errorlog) fprintf(errorlog,"PC=%06x : SETALC\n",cpu_get_pc()-1);
+	logerror("PC=%06x : SETALC\n",cpu_get_pc()-1);
 }
 
 static void i_xlat(void)    /* Opcode 0xd7 */
@@ -3892,7 +3890,7 @@ static void i_brks(void) 	/* Opcode 0xf1 - Break to Security Mode */
 */
 	unsigned int_vector;
 	int_vector=FETCH;
-	if (errorlog) fprintf(errorlog,"PC=%06x : BRKS %02x\n",cpu_get_pc()-2,int_vector);
+	logerror("PC=%06x : BRKS %02x\n",cpu_get_pc()-2,int_vector);
 }
 
 
@@ -4443,8 +4441,7 @@ static void i_invalid(void)
 	/*	{ extern int debug_key_pressed; debug_key_pressed = 1; } */
 	I.ip--;
 	nec_ICount-=10;
-	if (errorlog)
-		fprintf(errorlog,"PC=%06x : Invalid Opcode %02x\n",cpu_get_pc(),(BYTE)cpu_readop((I.base[CS]+I.ip)));
+	logerror("PC=%06x : Invalid Opcode %02x\n",cpu_get_pc(),(BYTE)cpu_readop((I.base[CS]+I.ip)));
 }
 
 /* ASG 971222 -- added these interface functions */
@@ -4886,7 +4883,7 @@ printf("[%04x:%04x]=%02x\tAW=%04x\tBW=%04x\tCW=%04x\tDW=%04x\n",sregs[CS],I.ip,G
 	nec_instruction[FETCHOP]();
 #endif
 
-//if (errorlog && cpu_get_pc()>0xc0000) fprintf(errorlog,"CPU %05x\n",cpu_get_pc());
+//if (cpu_get_pc()>0xc0000) logerror("CPU %05x\n",cpu_get_pc());
 
     }
 	return cycles - nec_ICount;

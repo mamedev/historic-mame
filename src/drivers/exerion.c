@@ -81,7 +81,7 @@ static WRITE_HANDLER( exerion_portb_w )
 	porta = memory_region(REGION_CPU1)[0x5f76];
 	portb = data;
 
-	if (errorlog) fprintf(errorlog, "Port B = %02X\n", data);
+	logerror("Port B = %02X\n", data);
 }
 
 static READ_HANDLER( exerion_protection_r )

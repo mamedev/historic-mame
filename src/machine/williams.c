@@ -24,7 +24,6 @@ void williams_vh_update(int counter);
 WRITE_HANDLER( williams_videoram_w );
 READ_HANDLER( williams_video_counter_r );
 void williams2_vh_update(int counter);
-int williams2_palette_w(int offset, int data);
 
 
 /* banking addresses set by the drivers */
@@ -607,8 +606,7 @@ WRITE_HANDLER( williams2_7segment_w )
 	else
 		sprintf(buffer, "[%d%c]\n", n, dot);
 
-	if (errorlog)
-		fputs(buffer, errorlog);
+	logerror(buffer);
 }
 
 
@@ -836,8 +834,7 @@ static READ_HANDLER( tshoot_input_port_0_3_r )
 static WRITE_HANDLER( tshoot_maxvol_w )
 {
 	/* something to do with the sound volume */
-	if (errorlog)
-		fprintf(errorlog, "tshoot maxvol = %d (pc:%x)\n", data, cpu_get_pc());
+	logerror("tshoot maxvol = %d (pc:%x)\n", data, cpu_get_pc());
 }
 
 

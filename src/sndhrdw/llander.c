@@ -65,7 +65,7 @@ int llander_sh_start(const struct MachineSound *msound)
 
 	multiplier=(multiplier<<16)+fraction;
 
-//	if (errorlog) fprintf (errorlog, "LANDER: Multiplier=%lx remainder=%lx fraction=%lx rate=%x\n",multiplier,remainder,fraction,emulation_rate);
+//	logerror("LANDER: Multiplier=%lx remainder=%lx fraction=%lx rate=%x\n",multiplier,remainder,fraction,emulation_rate);
 
 	/* Generate the LFSR lookup table for the lander white noise generator */
 
@@ -87,7 +87,7 @@ int llander_sh_start(const struct MachineSound *msound)
 
 		lfsr_buffer[loop]=lfsrtmp;
 
-//		if (errorlog) fprintf (errorlog, "LFSR Buffer: %04x    Next=%04x\n",loop, lfsr_buffer[loop]);
+//		logerror("LFSR Buffer: %04x    Next=%04x\n",loop, lfsr_buffer[loop]);
 	}
 
 	/* Allocate channel and buffer */
@@ -187,7 +187,7 @@ void llander_process(INT16 *buffer,int start, int n)
 	{
 		oversampnum=(long)(sampnum*multiplier)>>16;
 
-//		if (errorlog) fprintf (errorlog, "LANDER: sampnum=%x oversampnum=%lx\n",sampnum, oversampnum);
+//		logerror("LANDER: sampnum=%x oversampnum=%lx\n",sampnum, oversampnum);
 
 		/* Pick up new noise target value whenever 12khz changes */
 

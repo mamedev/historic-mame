@@ -10,7 +10,7 @@
 
 
 extern unsigned char *spriteram;
-extern int spriteram_size;
+extern size_t spriteram_size;
 
 unsigned char *suprloco_videoram;
 
@@ -145,12 +145,12 @@ WRITE_HANDLER( suprloco_control_w )
 
 	if ((control & 0x10) != (data & 0x10))
 	{
-		/*if (errorlog) fprintf(errorlog,"Bit 4 = %d\n", (data >> 4) & 1); */
+		/*logerror("Bit 4 = %d\n", (data >> 4) & 1); */
 	}
 
 	if ((control & 0x20) != (data & 0x20))
 	{
-		/*if (errorlog) fprintf(errorlog,"Bit 5 = %d\n", (data >> 5) & 1); */
+		/*logerror("Bit 5 = %d\n", (data >> 5) & 1); */
 	}
 
 	coin_counter_w(0, data & 0x01);

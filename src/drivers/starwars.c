@@ -41,7 +41,7 @@ int  starwars_interrupt (void);
 
 
 static unsigned char *nvram;
-static int nvram_size;
+static size_t nvram_size;
 
 static void nvram_handler(void *file, int read_or_write)
 {
@@ -77,7 +77,7 @@ WRITE_HANDLER( starwars_out_w )
 			osd_led_w (1, data >> 7);
 			break;
 		case 4:
-//			if (errorlog) fprintf (errorlog, "bank_switch_w, %02x\n", data);
+//			logerror("bank_switch_w, %02x\n", data);
 			if (data & 0x80)
 			{
 				cpu_setbank(1,&RAM[0x10000])
@@ -96,7 +96,7 @@ WRITE_HANDLER( starwars_out_w )
 			osd_led_w (0, data >> 7);
 			break;	/* LED 1 */
 		case 7:
-			if (errorlog) fprintf (errorlog, "recall\n"); /* what's that? */
+			logerror("recall\n"); /* what's that? */
 			break;
 	}
 }
@@ -104,14 +104,14 @@ WRITE_HANDLER( starwars_out_w )
 /* machine/slapstic.c */
 void slapstic_init (int chip);
 int slapstic_bank (void);
-int slapstic_tweak (int offset);
+int slapstic_tweak (offs_t offset);
 
 static unsigned char *slapstic_base;	/* ASG - made static */
 static unsigned char *slapstic_area;
 
 /* ASG - added this (including the function) */
 static int last_bank;
-static int esb_slapstic_tweak(int offset)
+static int esb_slapstic_tweak(offs_t offset)
 {
 	int bank = slapstic_tweak(offset);
 	if (bank != last_bank)
@@ -147,7 +147,7 @@ static OPBASE_HANDLER( esb_setopbase )
 
 	if ((address & 0xe000) == 0x8000)
 	{
-//		if (errorlog) fprintf (errorlog, "      new pc inside of slapstic region: %04x (prev = %04x)\n", pc, prevpc);
+//		logerror("      new pc inside of slapstic region: %04x (prev = %04x)\n", pc, prevpc);
 		bank = esb_slapstic_tweak ((address) & 0x1fff);	/* ASG - switched to ESB version */
 		/* catching every branch during slapstic area */
 		catch_nextBranch();
@@ -155,7 +155,7 @@ static OPBASE_HANDLER( esb_setopbase )
 	}
 	else if ((prevpc & 0xe000) == 0x8000)
  {
-//  if (errorlog) fprintf (errorlog, "      old pc inside of slapstic region: %04x (new = %04x)\n", prevpc, pc);
+//  logerror("      old pc inside of slapstic region: %04x (new = %04x)\n", prevpc, pc);
 if (prevpc != 0x8080 && prevpc != 0x8090 && prevpc != 0x80a0 && prevpc !=0x80b0)
   bank = esb_slapstic_tweak ((prevpc) & 0x1fff);	/* ASG - switched to ESB version */
  }
@@ -189,14 +189,14 @@ READ_HANDLER( esb_slapstic_r )
 
 	int bank = (esb_slapstic_tweak (offset) * 0x2000);	/* ASG - switched to ESB version */
 	val = slapstic_base[bank + (offset & 0x1fff)];
-//	if (errorlog) fprintf (errorlog, "slapstic_r, %04x: %02x\n", 0x8000 + offset, val);
+//	logerror("slapstic_r, %04x: %02x\n", 0x8000 + offset, val);
 	return val;
 }
 
 
 WRITE_HANDLER( esb_slapstic_w )
 {
-//	if (errorlog) fprintf (errorlog, "esb slapstic tweak via write\n");
+//	logerror("esb slapstic tweak via write\n");
 	esb_slapstic_tweak (offset);	/* ASG - switched to ESB version */
 }
 

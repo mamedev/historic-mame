@@ -810,13 +810,13 @@ static READ_HANDLER( sound2_shared_ram_r ) { return sound_shared_ram[offset]; }
 static WRITE_HANDLER( sound2_shared_ram_w ) { sound_shared_ram[offset] = data; }
 
 static WRITE_HANDLER( sound_command_w ){
-	if( errorlog ) fprintf( errorlog, "SOUND COMMAND %04x <- %02x\n", offset, data&0xff );
+	logerror("SOUND COMMAND %04x <- %02x\n", offset, data&0xff );
 	soundlatch_w( 0,data&0xff );
 	cpu_cause_interrupt( 1, 0 );
 }
 
 static WRITE_HANDLER( sound_command_nmi_w ){
-	if( errorlog ) fprintf( errorlog, "SOUND COMMAND %04x <- %02x\n", offset, data&0xff );
+	logerror("SOUND COMMAND %04x <- %02x\n", offset, data&0xff );
 	soundlatch_w( 0,data&0xff );
 	cpu_set_nmi_line(1, PULSE_LINE);
 }

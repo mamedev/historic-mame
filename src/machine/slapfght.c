@@ -11,7 +11,7 @@
 
 
 unsigned char *slapfight_dpram;
-int slapfight_dpram_size;
+size_t slapfight_dpram_size;
 
 int slapfight_status;
 int getstar_sequence_index;
@@ -42,7 +42,7 @@ WRITE_HANDLER( slapfight_dpram_w )
 {
     slapfight_dpram[offset]=data;
 
-//	if (errorlog) fprintf(errorlog,"SLAPFIGHT MAIN  CPU : Write to   $c8%02x = %02x\n",offset,slapfight_dpram[offset]);
+//	logerror("SLAPFIGHT MAIN  CPU : Write to   $c8%02x = %02x\n",offset,slapfight_dpram[offset]);
 
 
 /*
@@ -150,7 +150,7 @@ unsigned char val;
 WRITE_HANDLER( getstar_sh_intenable_w )
 {
 	getstar_sh_intenabled = 1;
-	if (errorlog) fprintf(errorlog,"cpu #1 PC=%d: %d written to a0e0\n",cpu_get_pc(),data);
+	logerror("cpu #1 PC=%d: %d written to a0e0\n",cpu_get_pc(),data);
 }
 
 

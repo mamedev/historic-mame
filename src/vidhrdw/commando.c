@@ -12,7 +12,7 @@
 
 
 unsigned char *commando_bgvideoram,*commando_bgcolorram;
-int commando_bgvideoram_size;
+size_t commando_bgvideoram_size;
 unsigned char *commando_scrollx,*commando_scrolly;
 static unsigned char *dirtybuffer2;
 static struct osd_bitmap *tmpbitmap2;
@@ -136,15 +136,15 @@ WRITE_HANDLER( commando_bgcolorram_w )
 
 WRITE_HANDLER( commando_spriteram_w )
 {
-if (errorlog && data != spriteram[offset] && offset % 4 == 2)
-	fprintf(errorlog,"%04x: sprite %d X offset (old = %d new = %d) scanline %d\n",
-			cpu_get_pc(),offset/4,spriteram[offset],data,255 - (cpu_getfcount() * 256 / cpu_getfperiod()));
-if (errorlog && data != spriteram[offset] && offset % 4 == 3)
-	fprintf(errorlog,"%04x: sprite %d Y offset (old = %d new = %d) scanline %d\n",
-			cpu_get_pc(),offset/4,spriteram[offset],data,255 - (cpu_getfcount() * 256 / cpu_getfperiod()));
-if (errorlog && data != spriteram[offset] && offset % 4 == 0)
-	fprintf(errorlog,"%04x: sprite %d code (old = %d new = %d) scanline %d\n",
-			cpu_get_pc(),offset/4,spriteram[offset],data,255 - (cpu_getfcount() * 256 / cpu_getfperiod()));
+	if (data != spriteram[offset] && offset % 4 == 2)
+		logerror("%04x: sprite %d X offset (old = %d new = %d) scanline %d\n",
+				cpu_get_pc(),offset/4,spriteram[offset],data,255 - (cpu_getfcount() * 256 / cpu_getfperiod()));
+	if (data != spriteram[offset] && offset % 4 == 3)
+		logerror("%04x: sprite %d Y offset (old = %d new = %d) scanline %d\n",
+				cpu_get_pc(),offset/4,spriteram[offset],data,255 - (cpu_getfcount() * 256 / cpu_getfperiod()));
+	if (data != spriteram[offset] && offset % 4 == 0)
+		logerror("%04x: sprite %d code (old = %d new = %d) scanline %d\n",
+				cpu_get_pc(),offset/4,spriteram[offset],data,255 - (cpu_getfcount() * 256 / cpu_getfperiod()));
 
 	spriteram[offset] = data;
 }

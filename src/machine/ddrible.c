@@ -12,11 +12,11 @@
 
 unsigned char *ddrible_sharedram;
 unsigned char *ddrible_snd_sharedram;
-int int_enable_0, int_enable_1;
+int ddrible_int_enable_0, ddrible_int_enable_1;
 
 void ddrible_init_machine( void )
 {
-	int_enable_0 = int_enable_1 = 0;
+	ddrible_int_enable_0 = ddrible_int_enable_1 = 0;
 }
 
 WRITE_HANDLER( ddrible_bankswitch_w )
@@ -30,14 +30,14 @@ WRITE_HANDLER( ddrible_bankswitch_w )
 
 int ddrible_interrupt_0( void )
 {
-	if (int_enable_0)
+	if (ddrible_int_enable_0)
 		return M6809_INT_FIRQ;
 	return ignore_interrupt();
 }
 
 int ddrible_interrupt_1( void )
 {
-	if (int_enable_1)
+	if (ddrible_int_enable_1)
 		return M6809_INT_FIRQ;
 	return ignore_interrupt();
 }
@@ -45,17 +45,17 @@ int ddrible_interrupt_1( void )
 WRITE_HANDLER( int_0_w )
 {
 	if (data & 0x02)
-		int_enable_0 = 1;
+		ddrible_int_enable_0 = 1;
 	else
-		int_enable_0 = 0;
+		ddrible_int_enable_0 = 0;
 }
 
 WRITE_HANDLER( int_1_w )
 {
 	if (data & 0x02)
-		int_enable_1 = 1;
+		ddrible_int_enable_1 = 1;
 	else
-		int_enable_1 = 0;
+		ddrible_int_enable_1 = 0;
 }
 
 READ_HANDLER( ddrible_sharedram_r )

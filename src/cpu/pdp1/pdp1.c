@@ -520,17 +520,14 @@ int pdp1_execute (int cycles)
 
 		word18 = READ_PDP_18BIT (PC++);
 /*
-		if (errorlog)
-		{
-			fprintf(errorlog, "PC:0%06o ",PC-1);
-			fprintf(errorlog, "I:0%06o  ",word18);
-			fprintf(errorlog, "1:%i "    ,FLAG[1]);
-			fprintf(errorlog, "2:%i "    ,FLAG[2]);
-			fprintf(errorlog, "3:%i "    ,FLAG[3]);
-			fprintf(errorlog, "4:%i "    ,FLAG[4]);
-			fprintf(errorlog, "5:%i "    ,FLAG[5]);
-			fprintf(errorlog, "6:%i \n"  ,FLAG[6]);
-		}
+		logerror("PC:0%06o ",PC-1);
+		logerror("I:0%06o  ",word18);
+		logerror("1:%i "    ,FLAG[1]);
+		logerror("2:%i "    ,FLAG[2]);
+		logerror("3:%i "    ,FLAG[3]);
+		logerror("4:%i "    ,FLAG[4]);
+		logerror("5:%i "    ,FLAG[5]);
+		logerror("6:%i \n"  ,FLAG[6]);
 */
 		pdp1_ICount -= execute_instruction (word18);
 
@@ -563,11 +560,8 @@ INLINE void ea (void)
 		Y = READ_PDP_18BIT (Y) & 07777;
 		if (etime > 100)
 		{
-			if (errorlog)
-			{
-				fprintf (errorlog, "Massive indirection (>20), assuming emulator fault... bye at:\n");
-				fprintf (errorlog, "PC:0%06o Y=0%06o\n", PC - 1, Y);
-			}
+			logerror("Massive indirection (>20), assuming emulator fault... bye at:\n");
+			logerror("PC:0%06o Y=0%06o\n", PC - 1, Y);
 			exit (1);
 		}
 	}
@@ -914,12 +908,9 @@ int execute_instruction (int md)
 				}
 				break;
 			default:
-				if (errorlog)
-				{
-					fprintf (errorlog, "Undefined shift: ");
-					fprintf (errorlog, "0%06o at ", md);
-					fprintf (errorlog, "0%06o\n", PC - 1);
-				}
+				logerror("Undefined shift: ");
+				logerror("0%06o at ", md);
+				logerror("0%06o\n", PC - 1);
 				exit (1);
 			}
 			etime += 5;
@@ -947,15 +938,12 @@ int execute_instruction (int md)
 				AC ^= 0777777;
 			if ((Y & 0400) == 0400)
 			{
-				if (errorlog)
-				{
-					/* ignored till I emulate the extention switches... with
-					 * continue...
-					 */
-					fprintf (errorlog, "PDP1 Program executed HALT: at ");
-					fprintf (errorlog, "0%06o\n", PC - 1);
-					fprintf (errorlog, "HALT ignored...\n");
-				}
+				/* ignored till I emulate the extention switches... with
+				 * continue...
+				 */
+				logerror("PDP1 Program executed HALT: at ");
+				logerror("0%06o\n", PC - 1);
+				logerror("HALT ignored...\n");
 				/* exit(1); */
 			}
 			nflag = Y & 7;
@@ -979,12 +967,9 @@ int execute_instruction (int md)
 			break;
 		}
 	default:
-		if (errorlog)
-		{
-			fprintf (errorlog, "Undefined instruction: ");
-			fprintf (errorlog, "0%06o at ", md);
-			fprintf (errorlog, "0%06o\n", PC - 1);
-		}
+		logerror("Undefined instruction: ");
+		logerror("0%06o at ", md);
+		logerror("0%06o\n", PC - 1);
 		exit (1);
 	}
 	return etime;
@@ -992,7 +977,6 @@ int execute_instruction (int md)
 
 int intern_iot (int *iio, int md)
 {
-	if (errorlog)
-		fprintf (errorlog, "No external IOT function given (IO=0%06o) -> EXIT(1) invoked in PDP1\\PDP1.C\n", *iio);
+	logerror("No external IOT function given (IO=0%06o) -> EXIT(1) invoked in PDP1\\PDP1.C\n", *iio);
 	exit (1);
 }

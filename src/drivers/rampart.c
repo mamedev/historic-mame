@@ -121,7 +121,7 @@ static OPBASE_HANDLER( opbase_override )
 		/* return -1 so that the standard routine doesn't do anything more */
 		address = -1;
 
-		if (errorlog) fprintf(errorlog, "Slapstic op override at %06X\n", address);
+		logerror("Slapstic op override at %06X\n", address);
 	}
 
 	return address;
@@ -218,7 +218,7 @@ static WRITE_HANDLER( latch_w )
 	if (!(data & 0xff000000))
 	{
 		if (data & 0x1000)
-			if (errorlog) fprintf(errorlog, "Color bank set to 1!\n");
+			logerror("Color bank set to 1!\n");
 	}
 
 	/* lower byte being modified? */

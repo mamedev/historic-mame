@@ -21,10 +21,10 @@ struct Y8950interface
 	void (*handler[MAX_8950])(int linestate);
 	/* Y8950 */
 	int rom_region[MAX_8950]; /* delta-T ADPCM ROM region */
-	int (*keyboardread[MAX_8950])(int offset);
-	void (*keyboardwrite[MAX_8950])(int offset,int data);
-	int (*portread[MAX_8950])(int offset);
-	void (*portwrite[MAX_8950])(int offset,int data);
+	mem_read_handler keyboardread[MAX_8950];
+	mem_write_handler keyboardwrite[MAX_8950];
+	mem_read_handler portread[MAX_8950];
+	mem_write_handler portwrite[MAX_8950];
 };
 
 #define YM3526interface YM3812interface

@@ -154,7 +154,7 @@ static READ_HANDLER( jsa1_io_r )
 	switch (offset & 0x206)
 	{
 		case 0x000:		/* n/c */
-			if (errorlog) fprintf(errorlog, "atarijsa: Unknown read at %04X\n", offset & 0x206);
+			logerror("atarijsa: Unknown read at %04X\n", offset & 0x206);
 			break;
 
 		case 0x002:		/* /RDP */
@@ -187,7 +187,7 @@ static READ_HANDLER( jsa1_io_r )
 		case 0x202:		/* /WRP */
 		case 0x204:		/* /WRIO */
 		case 0x206:		/* /MIX */
-			if (errorlog) fprintf(errorlog, "atarijsa: Unknown read at %04X\n", offset & 0x206);
+			logerror("atarijsa: Unknown read at %04X\n", offset & 0x206);
 			break;
 	}
 
@@ -202,7 +202,7 @@ static WRITE_HANDLER( jsa1_io_w )
 		case 0x000:		/* n/c */
 		case 0x002:		/* /RDP */
 		case 0x004:		/* /RDIO */
-			if (errorlog) fprintf(errorlog, "atarijsa: Unknown write (%02X) at %04X\n", data & 0xff, offset & 0x206);
+			logerror("atarijsa: Unknown write (%02X) at %04X\n", data & 0xff, offset & 0x206);
 			break;
 
 		case 0x006:		/* /IRQACK */
@@ -277,7 +277,7 @@ static READ_HANDLER( jsa2_io_r )
 			if (has_oki6295)
 				result = OKIM6295_status_0_r(offset);
 			else
-				if (errorlog) fprintf(errorlog, "atarijsa: Unknown read at %04X\n", offset & 0x206);
+				logerror("atarijsa: Unknown read at %04X\n", offset & 0x206);
 			break;
 
 		case 0x002:		/* /RDP */
@@ -309,7 +309,7 @@ static READ_HANDLER( jsa2_io_r )
 		case 0x202:		/* /WRP */
 		case 0x204:		/* /WRIO */
 		case 0x206:		/* /MIX */
-			if (errorlog) fprintf(errorlog, "atarijsa: Unknown read at %04X\n", offset & 0x206);
+			logerror("atarijsa: Unknown read at %04X\n", offset & 0x206);
 			break;
 	}
 
@@ -324,7 +324,7 @@ static WRITE_HANDLER( jsa2_io_w )
 		case 0x000:		/* /RDV */
 		case 0x002:		/* /RDP */
 		case 0x004:		/* /RDIO */
-			if (errorlog) fprintf(errorlog, "atarijsa: Unknown write (%02X) at %04X\n", data & 0xff, offset & 0x206);
+			logerror("atarijsa: Unknown write (%02X) at %04X\n", data & 0xff, offset & 0x206);
 			break;
 
 		case 0x006:		/* /IRQACK */
@@ -335,7 +335,7 @@ static WRITE_HANDLER( jsa2_io_w )
 			if (has_oki6295)
 				OKIM6295_data_0_w(offset, data);
 			else
-				if (errorlog) fprintf(errorlog, "atarijsa: Unknown write (%02X) at %04X\n", data & 0xff, offset & 0x206);
+				logerror("atarijsa: Unknown write (%02X) at %04X\n", data & 0xff, offset & 0x206);
 			break;
 
 		case 0x202:		/* /WRP */
@@ -424,7 +424,7 @@ static READ_HANDLER( jsa3_io_r )
 		case 0x202:		/* /WRP */
 		case 0x204:		/* /WRIO */
 		case 0x206:		/* /MIX */
-			if (errorlog) fprintf(errorlog, "atarijsa: Unknown read at %04X\n", offset & 0x206);
+			logerror("atarijsa: Unknown read at %04X\n", offset & 0x206);
 			break;
 	}
 
@@ -443,7 +443,7 @@ static WRITE_HANDLER( jsa3_io_w )
 
 		case 0x002:		/* /RDP */
 		case 0x004:		/* /RDIO */
-			if (errorlog) fprintf(errorlog, "atarijsa: Unknown write (%02X) at %04X\n", data & 0xff, offset & 0x206);
+			logerror("atarijsa: Unknown write (%02X) at %04X\n", data & 0xff, offset & 0x206);
 			break;
 
 		case 0x006:		/* /IRQACK */
@@ -556,7 +556,7 @@ static READ_HANDLER( jsa3s_io_r )
 		case 0x202:		/* /WRP */
 		case 0x204:		/* /WRIO */
 		case 0x206:		/* /MIX */
-			if (errorlog) fprintf(errorlog, "atarijsa: Unknown read at %04X\n", offset & 0x206);
+			logerror("atarijsa: Unknown read at %04X\n", offset & 0x206);
 			break;
 	}
 
@@ -575,7 +575,7 @@ static WRITE_HANDLER( jsa3s_io_w )
 
 		case 0x002:		/* /RDP */
 		case 0x004:		/* /RDIO */
-			if (errorlog) fprintf(errorlog, "atarijsa: Unknown write (%02X) at %04X\n", data & 0xff, offset & 0x206);
+			logerror("atarijsa: Unknown write (%02X) at %04X\n", data & 0xff, offset & 0x206);
 			break;
 
 		case 0x006:		/* /IRQACK */

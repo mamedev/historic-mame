@@ -28,8 +28,8 @@ extern unsigned char 	*system1_backgroundram;
 extern unsigned char 	*system1_sprites_collisionram;
 extern unsigned char 	*system1_background_collisionram;
 extern unsigned char 	*system1_scrollx_ram;
-extern int 	system1_videoram_size;
-extern int 	system1_backgroundram_size;
+extern size_t system1_videoram_size;
+extern size_t system1_backgroundram_size;
 
 
 int  system1_vh_start(void);

@@ -4,7 +4,7 @@
 
 
 unsigned char *galpanic_bgvideoram,*galpanic_fgvideoram;
-int galpanic_fgvideoram_size;
+size_t galpanic_fgvideoram_size;
 
 
 

@@ -10,6 +10,7 @@ struct EEPROM_interface
 	char *cmd_erase;	/* erase command string, or 0 if n/a */
 	char *cmd_lock;		/* lock command string, or 0 if n/a */
 	char *cmd_unlock;	/* unlock command string, or 0 if n/a */
+	int enable_multi_read;/* set to 1 to enable multiple values to be read from one read command */
 };
 
 
@@ -22,5 +23,7 @@ void EEPROM_set_clock_line(int state);
 
 void EEPROM_load(void *file);
 void EEPROM_save(void *file);
+
+void EEPROM_set_data(UINT8 *data, int length);
 
 #endif

@@ -3,7 +3,8 @@
  *	 m65ce02.c
  *	 Portable 65ce02 emulator V1.0beta2
  *
- *	 Copyright (c) 2000 Peter Trauner, all rights reserved.
+ *	 Copyright (c) 2000 Peter Trauner, all rights reserved
+ *   documentation preliminary databook
  *	 documentation by michael steil mist@c64.org
  *	 available at ftp://ftp.funet.fi/pub/cbm/c65
  *
@@ -23,6 +24,7 @@
 /* 4. February 2000 PeT fixed relative word operand */
 /* 4. February 2000 PeT jsr (absolut) jsr (absolut,x) inw dew */
 /* 17.February 2000 PeT phw */
+/* 16.March 2000 PeT fixed some instructions accordingly to databook */
 
 /*
   chapter3.txt lines about 5400
@@ -30,25 +32,14 @@
 
 * neg is now simple 2er komplement negation with set of N and Z
 
-* asw is arithmetic (signed) shift left
-* row is rotate left
-
-* inw has zeropage address operand! (not absolute) (c65 dos at 0xba1a)
-
-* row, asw has absolute adressing
-
 * phw push low order byte, push high order byte!
 
-* cle/see
-  maybe extended stack flag (real 16 bit stack pointer inc/dec)
-  usage of high order byte?
-  tys txs not interruptable ??
+* tys txs not interruptable, not implemented
 
 * map
   jmp/jsr bank lda # ldy #0 ldx #$e0 or bank&0xf ldy #$f0 or bank&0xf
 
 
-   notes (differences to michael steil document)
    sequences in c65
 
    0xc800 (interface code) (system init)
@@ -61,14 +52,6 @@
    (the values in the register are not used in the following code)
 	i think, map configures memory management!
 	e flag set maybe means not the c64 compatible mode
-
-   ldx #$ff
-   ldy #$01
-   txs
-   tys
-*	makes me feel, we have a real 16bit stackpointer !
-	and the tys and tsy mnemonics access the highbyte!
-*	having a real stackpointer high byte makes me feel
 
    irq handler
    pha phx phy phz tsy tsx phy phx ldy #$05 lda ($01,x),y
@@ -186,14 +169,14 @@ jsr entry:
 #include "m65ce02.h"
 
 #include "ops02.h"
+#include "opsc02.h"
 #include "opsce02.h"
 
-extern FILE * errorlog;
 
 #define VERBOSE 0
 
 #if VERBOSE
-#define LOG(x)	if( errorlog ) fprintf x
+#define LOG(x)	logerror x
 #else
 #define LOG(x)
 #endif
@@ -258,8 +241,11 @@ void m65ce02_reset (void *param)
 	PCL = RDMEM(M65CE02_RST_VEC);
 	PCH = RDMEM(M65CE02_RST_VEC+1);
 
-	m65ce02.sp.d = 0x01ff;
-	m65ce02.p = F_T|F_I|F_Z;	/* set T, I and Z flags */
+	/* after reset in 6502 compatibility mode */
+	m65ce02.sp.d = 0x01ff; /* high byte descriped in databook */
+	m65ce02.z = 0;
+	B = 0;
+	m65ce02.p = F_E|F_B|F_I|F_Z;	/* set E, I and Z flags */
 	m65ce02.pending_irq = 0;	/* nonzero if an IRQ is pending */
 	m65ce02.after_cli = 0;		/* pending IRQ and last insn cleared I */
 	m65ce02.irq_callback = NULL;
@@ -378,7 +364,7 @@ INLINE void m65ce02_take_irq(void)
 		P = (P & ~F_D) | F_I;		/* knock out D and set I flag */
 		PCL = RDMEM(EAD);
 		PCH = RDMEM(EAD+1);
-		LOG((errorlog,"M65ce02#%d takes IRQ ($%04x)\n", cpu_getactivecpu(), PCD));
+		LOG(("M65ce02#%d takes IRQ ($%04x)\n", cpu_getactivecpu(), PCD));
 		/* call back the cpuintrf to let it clear the line */
 		if (m65ce02.irq_callback) (*m65ce02.irq_callback)(0);
 		change_pc16(PCD);
@@ -399,26 +385,26 @@ int m65ce02_execute(int cycles)
 
 		CALL_MAME_DEBUG;
 
-		op = RDOP();
 		/* if an irq is pending, take it now */
-		if( m65ce02.pending_irq && op == 0x78 )
+		if( m65ce02.pending_irq )
 			m65ce02_take_irq();
 
+		op = RDOP();
 		(*m65ce02.insn[op])();
 
 		/* check if the I flag was just reset (interrupts enabled) */
 		if( m65ce02.after_cli )
 		{
-			LOG((errorlog,"M65ce02#%d after_cli was >0", cpu_getactivecpu()));
+			LOG(("M65ce02#%d after_cli was >0", cpu_getactivecpu()));
 			m65ce02.after_cli = 0;
 			if (m65ce02.irq_state != CLEAR_LINE)
 			{
-				LOG((errorlog,": irq line is asserted: set pending IRQ\n"));
+				LOG((": irq line is asserted: set pending IRQ\n"));
 				m65ce02.pending_irq = 1;
 			}
 			else
 			{
-				LOG((errorlog,": irq line is clear\n"));
+				LOG((": irq line is clear\n"));
 			}
 		}
 		else
@@ -436,7 +422,7 @@ void m65ce02_set_nmi_line(int state)
 	m65ce02.nmi_state = state;
 	if( state != CLEAR_LINE )
 	{
-		LOG((errorlog, "M65ce02#%d set_nmi_line(ASSERT)\n", cpu_getactivecpu()));
+		LOG(( "M65ce02#%d set_nmi_line(ASSERT)\n", cpu_getactivecpu()));
 		EAD = M65CE02_NMI_VEC;
 		m65ce02_ICount -= 7;
 		PUSH(PCH);
@@ -445,7 +431,7 @@ void m65ce02_set_nmi_line(int state)
 		P = (P & ~F_D) | F_I;		/* knock out D and set I flag */
 		PCL = RDMEM(EAD);
 		PCH = RDMEM(EAD+1);
-		LOG((errorlog,"M65ce02#%d takes NMI ($%04x)\n", cpu_getactivecpu(), PCD));
+		LOG(("M65ce02#%d takes NMI ($%04x)\n", cpu_getactivecpu(), PCD));
 		change_pc16(PCD);
 	}
 }
@@ -455,7 +441,7 @@ void m65ce02_set_irq_line(int irqline, int state)
 	m65ce02.irq_state = state;
 	if( state != CLEAR_LINE )
 	{
-		LOG((errorlog, "M65ce02#%d set_irq_line(ASSERT)\n", cpu_getactivecpu()));
+		LOG(( "M65ce02#%d set_irq_line(ASSERT)\n", cpu_getactivecpu()));
 		m65ce02.pending_irq = 1;
 	}
 }
@@ -533,15 +519,15 @@ const char *m65ce02_info(void *context, int regnum)
 			sprintf(buffer[which], "%c%c%c%c%c%c%c%c",
 				r->p & 0x80 ? 'N':'.',
 				r->p & 0x40 ? 'V':'.',
-				r->p & 0x20 ? 'R':'.',
+				r->p & 0x20 ? 'E':'.',
 				r->p & 0x10 ? 'B':'.',
 				r->p & 0x08 ? 'D':'.',
 				r->p & 0x04 ? 'I':'.',
 				r->p & 0x02 ? 'Z':'.',
 				r->p & 0x01 ? 'C':'.');
 			break;
-		case CPU_INFO_NAME: return "M65ce02";
-		case CPU_INFO_FAMILY: return "CBM Semiconductor Group CSG 65ce02";
+		case CPU_INFO_NAME: return "M65CE02";
+		case CPU_INFO_FAMILY: return "CBM Semiconductor Group CSG 65CE02";
 		case CPU_INFO_VERSION: return "1.0beta";
 		case CPU_INFO_CREDITS:
 			return "Copyright (c) 1998 Juergen Buchmueller\n"

@@ -223,7 +223,7 @@ static void scanline_interrupt_callback(int param)
 /* globals */
 const UINT16 *atarigen_eeprom_default;
 UINT8 *atarigen_eeprom;
-int atarigen_eeprom_size;
+size_t atarigen_eeprom_size;
 
 /* statics */
 static UINT8 unlocked;
@@ -763,7 +763,7 @@ static void delayed_sound_w(int param)
 {
 	/* warn if we missed something */
 	if (atarigen_cpu_to_sound_ready)
-		if (errorlog) fprintf(errorlog, "Missed command from 68010\n");
+		logerror("Missed command from 68010\n");
 
 	/* set up the states and signal an NMI to the sound CPU */
 	atarigen_cpu_to_sound = param;
@@ -787,7 +787,7 @@ static void delayed_6502_sound_w(int param)
 {
 	/* warn if we missed something */
 	if (atarigen_sound_to_cpu_ready)
-		if (errorlog) fprintf(errorlog, "Missed result from 6502\n");
+		logerror("Missed result from 6502\n");
 
 	/* set up the states and signal the sound interrupt to the main CPU */
 	atarigen_sound_to_cpu = param;
@@ -836,14 +836,14 @@ void atarigen_init_6502_speedup(int cpunum, int compare_pc1, int compare_pc2)
 	address_low = memory[compare_pc1 + 1] | (memory[compare_pc1 + 2] << 8);
 	address_high = memory[compare_pc1 + 4] | (memory[compare_pc1 + 5] << 8);
 	if (address_low != address_high - 1)
-		if (errorlog) fprintf(errorlog, "Error: address %04X does not point to a speedup location!", compare_pc1);
+		logerror("Error: address %04X does not point to a speedup location!", compare_pc1);
 	speed_a = &memory[address_low];
 
 	/* determine the pointer to the second speed check location */
 	address_low = memory[compare_pc2 + 1] | (memory[compare_pc2 + 2] << 8);
 	address_high = memory[compare_pc2 + 4] | (memory[compare_pc2 + 5] << 8);
 	if (address_low != address_high - 1)
-		if (errorlog) fprintf(errorlog, "Error: address %04X does not point to a speedup location!", compare_pc2);
+		logerror("Error: address %04X does not point to a speedup location!", compare_pc2);
 	speed_b = &memory[address_low];
 
 	/* install a handler on the second address */
@@ -990,10 +990,10 @@ UINT8 *atarigen_alpharam;
 UINT8 *atarigen_vscroll;
 UINT8 *atarigen_hscroll;
 
-int atarigen_playfieldram_size;
-int atarigen_playfield2ram_size;
-int atarigen_spriteram_size;
-int atarigen_alpharam_size;
+size_t atarigen_playfieldram_size;
+size_t atarigen_playfield2ram_size;
+size_t atarigen_spriteram_size;
+size_t atarigen_alpharam_size;
 
 
 
@@ -1257,8 +1257,7 @@ WRITE_HANDLER( atarigen_video_control_w )
 		case 0x00:
 		default:
 			if (oldword != newword)
-				if (errorlog)
-					fprintf(errorlog, "video_control_w(%02X, %04X) ** [prev=%04X]\n", offset, newword, oldword);
+				logerror("video_control_w(%02X, %04X) ** [prev=%04X]\n", offset, newword, oldword);
 			break;
 	}
 }
@@ -1273,7 +1272,7 @@ WRITE_HANDLER( atarigen_video_control_w )
 
 READ_HANDLER( atarigen_video_control_r )
 {
-	if (errorlog) fprintf(errorlog, "video_control_r(%02X)\n", offset);
+	logerror("video_control_r(%02X)\n", offset);
 
 	/* a read from offset 0 returns the current scanline */
 	/* also sets bit 0x4000 if we're in VBLANK */
@@ -1416,7 +1415,7 @@ void atarigen_mo_update(const UINT8 *base, int link, int scanline)
 		/* bounds checking */
 		if (data >= molist_upper_bound)
 		{
-			if (errorlog) fprintf(errorlog, "Motion object list exceeded maximum\n");
+			logerror("Motion object list exceeded maximum\n");
 			break;
 		}
 

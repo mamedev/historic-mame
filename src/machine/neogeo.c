@@ -95,12 +95,12 @@ void init_neogeo(void)
 
 	if (memory_region(REGION_SOUND2))
 	{
-		if (errorlog) fprintf(errorlog,"using memory region %d for Delta T samples\n",REGION_SOUND2);
+		logerror("using memory region %d for Delta T samples\n",REGION_SOUND2);
 		neogeo_ym2610_interface.pcmromb[0] = REGION_SOUND2;
 	}
 	else
 	{
-		if (errorlog) fprintf(errorlog,"using memory region %d for Delta T samples\n",REGION_SOUND1);
+		logerror("using memory region %d for Delta T samples\n",REGION_SOUND1);
 		neogeo_ym2610_interface.pcmromb[0] = REGION_SOUND1;
 	}
 
@@ -491,7 +491,7 @@ static READ_HANDLER( fatfury2_protection_r )
 			return ((res & 0xf0) >> 4) | ((res & 0x0f) << 4);
 
 		default:
-if (errorlog) fprintf(errorlog,"unknown protection read at pc %06x, offset %08x\n",cpu_get_pc(),offset);
+logerror("unknown protection read at pc %06x, offset %08x\n",cpu_get_pc(),offset);
 			return 0;
 	}
 }
@@ -523,7 +523,7 @@ static WRITE_HANDLER( fatfury2_protection_w )
 			break;
 
 		default:
-if (errorlog) fprintf(errorlog,"unknown protection write at pc %06x, offset %08x, data %02x\n",cpu_get_pc(),offset,data);
+logerror("unknown protection write at pc %06x, offset %08x, data %02x\n",cpu_get_pc(),offset,data);
 			break;
 	}
 }
@@ -807,7 +807,7 @@ WRITE_HANDLER( neogeo_sram_w )
 {
 	if (sram_locked)
 	{
-if (errorlog) fprintf(errorlog,"PC %06x: warning: write %02x to SRAM %04x while it was protected\n",cpu_get_pc(),data,offset);
+logerror("PC %06x: warning: write %02x to SRAM %04x while it was protected\n",cpu_get_pc(),data,offset);
 	}
 	else
 	{

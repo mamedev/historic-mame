@@ -80,11 +80,6 @@ static char dda_y_skip[17];
 static char full_y_skip[16]={0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
 
 #ifdef NEO_DEBUG
-int neo_unknown[32];
-void neo_unknown1(int offset, int data) {WRITE_WORD(&neo_unknown[0],data);}
-void neo_unknown2(int offset, int data) {WRITE_WORD(&neo_unknown[2],data);}
-void neo_unknown3(int offset, int data) {WRITE_WORD(&neo_unknown[4],data);}
-void neo_unknown4(int offset, int data) {if (cpu_get_pc()!=0x4a44) WRITE_WORD(&neo_unknown[6],data>>7);}
 
 int dotiles = 0;
 int screen_offs = 0x0000;
@@ -1154,7 +1149,7 @@ if (!dotiles) { 					/* debug */
 	int j;
 	sprintf(buf,"%04X",screen_offs+4*screen_yoffs);
 	for (j = 0;j < 4;j++)
-		drawgfx(bitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8+8*j,8*2,0,TRANSPARENCY_NONE,0);
+		drawgfx(bitmap,Machine->uifont,buf[j],UI_COLOR_NORMAL,0,0,3*8+8*j,8*2,0,TRANSPARENCY_NONE,0);
 }
 if (keyboard_pressed(KEYCODE_D))
 {
@@ -1181,38 +1176,31 @@ if (keyboard_pressed(KEYCODE_D))
 
 
 
-for (i = 0;i < 8;i+=2)
-{
-	sprintf(buf,"%04X",READ_WORD(&neo_unknown[i]));
-	for (j = 0;j < 4;j++)
-		drawgfx(bitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j,8*5,0,TRANSPARENCY_NONE,0);
-}
-
   /*
 for (i = 0;i < 8;i+=2)
 {
 	sprintf(mybuf,"%04X",READ_WORD(&vidram[0x100a0+i]));
 	for (j = 0;j < 4;j++)
-		drawgfx(mybitmap,Machine->uifont,mybuf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j,8*5,0,TRANSPARENCY_NONE,0);
+		drawgfx(mybitmap,Machine->uifont,mybuf[j],UI_COLOR_NORMAL,0,0,3*8*i+8*j,8*5,0,TRANSPARENCY_NONE,0);
 }
 
 
 	sprintf(mybuf,"%04X",READ_WORD(&vidram[0x10002]));
 	for (j = 0;j < 4;j++)
-		drawgfx(mybitmap,Machine->uifont,mybuf[j],DT_COLOR_WHITE,0,0,8*j+4*8,8*7,0,TRANSPARENCY_NONE,0);
+		drawgfx(mybitmap,Machine->uifont,mybuf[j],UI_COLOR_NORMAL,0,0,8*j+4*8,8*7,0,TRANSPARENCY_NONE,0);
 	sprintf(mybuf,"%04X",0x200-(READ_WORD(&vidram[0x10402])>>7));
 	for (j = 0;j < 4;j++)
-		drawgfx(mybitmap,Machine->uifont,mybuf[j],DT_COLOR_WHITE,0,0,8*j+10*8,8*7,0,TRANSPARENCY_NONE,0);
+		drawgfx(mybitmap,Machine->uifont,mybuf[j],UI_COLOR_NORMAL,0,0,8*j+10*8,8*7,0,TRANSPARENCY_NONE,0);
 	sprintf(mybuf,"%04X",READ_WORD(&vidram[0x10802])>> 7);
 	for (j = 0;j < 4;j++)
-		drawgfx(mybitmap,Machine->uifont,mybuf[j],DT_COLOR_WHITE,0,0,8*j+16*8,8*7,0,TRANSPARENCY_NONE,0);
+		drawgfx(mybitmap,Machine->uifont,mybuf[j],UI_COLOR_NORMAL,0,0,8*j+16*8,8*7,0,TRANSPARENCY_NONE,0);
 
 */
 
 
-//		fprintf(errorlog,"X: %04x Y: %04x Video: %04x\n",READ_WORD(&vidram[0x1089c]),READ_WORD(&vidram[0x1049c]),READ_WORD(&vidram[0x1009c]));
+//		logerror("X: %04x Y: %04x Video: %04x\n",READ_WORD(&vidram[0x1089c]),READ_WORD(&vidram[0x1049c]),READ_WORD(&vidram[0x1009c]));
 
-//fprintf(errorlog,"X: %04x Y: %04x Video: %04x\n",READ_WORD(&vidram[0x10930]),READ_WORD(&vidram[0x10530]),READ_WORD(&vidram[0x10130]));
+//logerror("X: %04x Y: %04x Video: %04x\n",READ_WORD(&vidram[0x10930]),READ_WORD(&vidram[0x10530]),READ_WORD(&vidram[0x10130]));
 
 
 }
@@ -1245,7 +1233,7 @@ void neogeo_vh_raster_partial_refresh(struct osd_bitmap *bitmap,int current_line
 
 	if (clip.max_y >= clip.min_y)
 	{
-//if (errorlog) fprintf(errorlog,"refresh %d-%d\n",clip.min_y,clip.max_y);
+//logerror("refresh %d-%d\n",clip.min_y,clip.max_y);
 		screenrefresh(bitmap,&clip);
 	}
 

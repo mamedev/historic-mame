@@ -462,25 +462,25 @@ static int sound_interrupt(void)
 WRITE_HANDLER( ms_YM2151_register_port_0_w )
 {
 	if ((data & 0x00ff0000) == 0)	YM2151_register_port_0_w(0,data & 0xff);
-	else							if (errorlog) fprintf(errorlog,"%06x: write %02x to YM2151_register_port_0_w\n",cpu_get_pc(),data);
+	else							logerror("%06x: write %02x to YM2151_register_port_0_w\n",cpu_get_pc(),data);
 }
 
 WRITE_HANDLER( ms_YM2151_data_port_0_w )
 {
 	if ((data & 0x00ff0000) == 0)	YM2151_data_port_0_w(0,data & 0xff);
-	else							if (errorlog) fprintf(errorlog,"%06x: write %02x to YM2151_data_port_0_w\n",cpu_get_pc(),data);
+	else							logerror("%06x: write %02x to YM2151_data_port_0_w\n",cpu_get_pc(),data);
 }
 
 WRITE_HANDLER( ms_OKIM6295_data_0_w )
 {
 	if ((data & 0x00ff0000) == 0)	OKIM6295_data_0_w(0,data & 0xff);
-	else							if (errorlog) fprintf(errorlog,"%06x: write %02x to OKIM6295_data_0_w\n",cpu_get_pc(),data);
+	else							logerror("%06x: write %02x to OKIM6295_data_0_w\n",cpu_get_pc(),data);
 }
 
 WRITE_HANDLER( ms_OKIM6295_data_1_w )
 {
 	if ((data & 0x00ff0000) == 0)	OKIM6295_data_1_w(0,data & 0xff);
-	else							if (errorlog) fprintf(errorlog,"%06x: write %02x to OKIM6295_data_1_w\n",cpu_get_pc(),data);
+	else							logerror("%06x: write %02x to OKIM6295_data_1_w\n",cpu_get_pc(),data);
 }
 
 

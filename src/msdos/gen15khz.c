@@ -147,8 +147,7 @@ int setgeneric15KHz(int vdouble, int width, int height)
 			scr640x480_15KHz[V_TOTAL_INDEX].value = tw640x480arc_v;
 			break;
 		default:
-			if (errorlog)
-				fprintf(errorlog, "15.75KHz: Unsupported %dx%d mode (%d char. clocks)\n", width, height, hcount);
+			logerror("15.75KHz: Unsupported %dx%d mode (%d char. clocks)\n", width, height, hcount);
 			return 0;
 	}
 /* setup our adjusted memory offset */
@@ -250,8 +249,7 @@ int sup_15Khz_res(int width,int height)
 	if(width==800&&height==600)
 		return 1;
 */
-	if (errorlog)
-		fprintf (errorlog, "15.75KHz: Unsupported %dx%d mode\n", width, height);
+	logerror("15.75KHz: Unsupported %dx%d mode\n", width, height);
 	return 0;
 }
 

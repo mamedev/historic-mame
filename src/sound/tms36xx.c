@@ -3,7 +3,7 @@
 #define VERBOSE 1
 
 #if VERBOSE
-#define LOG(x) if( errorlog ) fprintf x
+#define LOG(x) logerror x
 #else
 #define LOG(x)
 #endif
@@ -413,7 +413,7 @@ void mm6221aa_tune_w(int chip, int tune)
     if( tune == tms->tune_num )
         return;
 
-	LOG((errorlog,"%s tune:%X\n", tms->subtype, tune));
+	LOG(("%s tune:%X\n", tms->subtype, tune));
 
     /* update the stream before changing the tune */
     stream_update(tms->channel,0);
@@ -433,7 +433,7 @@ void tms36xx_note_w(int chip, int octave, int note)
 	if (note > 12)
         return;
 
-	LOG((errorlog,"%s octave:%X note:%X\n", tms->subtype, octave, note));
+	LOG(("%s octave:%X note:%X\n", tms->subtype, octave, note));
 
 	/* update the stream before changing the tune */
     stream_update(tms->channel,0);
@@ -459,7 +459,7 @@ void tms3617_enable_w(int chip, int enable)
     /* update the stream before changing the tune */
     stream_update(tms->channel,0);
 
-	LOG((errorlog, "%s enable voices", tms->subtype));
+	LOG(("%s enable voices", tms->subtype));
     for (i = 0; i < 6; i++)
 	{
 		if (enable & (1 << i))
@@ -468,12 +468,12 @@ void tms3617_enable_w(int chip, int enable)
 #if VERBOSE
 			switch (i)
 			{
-			case 0: LOG((errorlog," 16'")); break;
-			case 1: LOG((errorlog," 8'")); break;
-			case 2: LOG((errorlog," 5 1/3'")); break;
-			case 3: LOG((errorlog," 4'")); break;
-			case 4: LOG((errorlog," 2 2/3'")); break;
-			case 5: LOG((errorlog," 2'")); break;
+			case 0: LOG((" 16'")); break;
+			case 1: LOG((" 8'")); break;
+			case 2: LOG((" 5 1/3'")); break;
+			case 3: LOG((" 4'")); break;
+			case 4: LOG((" 2 2/3'")); break;
+			case 5: LOG((" 2'")); break;
 			}
 #endif
         }
@@ -481,7 +481,7 @@ void tms3617_enable_w(int chip, int enable)
 	/* set the enable mask and number of active voices */
 	tms->enable = enable;
     tms->voices = bits;
-	LOG((errorlog, "%s\n", bits ? "" : " none"));
+	LOG(("%s\n", bits ? "" : " none"));
 }
 
 int tms36xx_sh_start(const struct MachineSound *msound)
@@ -502,7 +502,7 @@ int tms36xx_sh_start(const struct MachineSound *msound)
 		tms36xx[i] = malloc(sizeof(struct TMS36XX));
 		if( !tms36xx[i] )
 		{
-			if( errorlog ) fprintf(errorlog, "%s failed to malloc struct TMS36XX\n", name);
+			logerror("%s failed to malloc struct TMS36XX\n", name);
             return 1;
         }
 		tms = tms36xx[i];
@@ -514,7 +514,7 @@ int tms36xx_sh_start(const struct MachineSound *msound)
 
         if( tms->channel == -1 )
 		{
-			if( errorlog ) fprintf(errorlog, "%s stream_init failed\n", name);
+			logerror("%s stream_init failed\n", name);
 			return 1;
 		}
 		tms->samplerate = Machine->sample_rate ? Machine->sample_rate : 1;
@@ -531,12 +531,12 @@ int tms36xx_sh_start(const struct MachineSound *msound)
 		tms->speed = (intf->speed[i] > 0) ? VMAX / intf->speed[i] : VMAX;
 		tms3617_enable_w(i,enable);
 
-        LOG((errorlog, "%s samplerate    %d\n", name, tms->samplerate));
-		LOG((errorlog, "%s basefreq      %d\n", name, tms->basefreq));
-		LOG((errorlog, "%s decay         %d,%d,%d,%d,%d,%d\n", name,
+        LOG(("%s samplerate    %d\n", name, tms->samplerate));
+		LOG(("%s basefreq      %d\n", name, tms->basefreq));
+		LOG(("%s decay         %d,%d,%d,%d,%d,%d\n", name,
 			tms->decay[0], tms->decay[1], tms->decay[2],
 			tms->decay[3], tms->decay[4], tms->decay[5]));
-        LOG((errorlog, "%s speed         %d\n", name, tms->speed));
+        LOG(("%s speed         %d\n", name, tms->speed));
     }
     return 0;
 }

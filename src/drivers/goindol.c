@@ -19,9 +19,9 @@ extern unsigned char 	*goindol_fg_videoram;
 extern unsigned char 	*goindol_bg_videoram;
 extern unsigned char 	*goindol_spriteram1;
 extern unsigned char 	*goindol_spriteram2;
-extern int 	 	goindol_spriteram_size;
-extern int 	 	goindol_fg_videoram_size;
-extern int 	 	goindol_bg_videoram_size;
+extern size_t goindol_spriteram_size;
+extern size_t goindol_fg_videoram_size;
+extern size_t goindol_bg_videoram_size;
 extern int 	 	goindol_char_bank;
 
 

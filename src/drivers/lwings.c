@@ -26,7 +26,7 @@ WRITE_HANDLER( avengers_protection_w );
 
 extern unsigned char *lwings_backgroundram;
 extern unsigned char *lwings_backgroundattribram;
-extern int lwings_backgroundram_size;
+extern size_t lwings_backgroundram_size;
 extern unsigned char *lwings_scrolly;
 extern unsigned char *lwings_scrollx;
 extern unsigned char *lwings_palette_bank;
@@ -60,10 +60,7 @@ WRITE_HANDLER( trojan_sound_cmd_w )
 	}
 
 #if 0
-	if (errorlog)
-	{
-	       fprintf(errorlog, "Sound Code=%02x\n", data);
-	}
+	logerror("Sound Code=%02x\n", data);
 #endif
 }
 

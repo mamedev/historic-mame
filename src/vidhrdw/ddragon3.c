@@ -46,7 +46,7 @@ WRITE_HANDLER( ddragon3_scroll_w ){
 		return;
 
 		default:  /* Unknown */
-		if( errorlog ) fprintf( errorlog, "OUTPUT c00[%02x] %02x \n", offset,data);
+		logerror("OUTPUT c00[%02x] %02x \n", offset,data);
 		break;
 	}
 }

@@ -69,31 +69,31 @@
 #define VERBOSE_RAND	0
 
 #if VERBOSE
-#define LOG(x) if( errorlog ) fprintf x
+#define LOG(x) logerror x
 #else
 #define LOG(x)
 #endif
 
 #if VERBOSE_SOUND
-#define LOG_SOUND(x) if( errorlog ) fprintf x
+#define LOG_SOUND(x) logerror x
 #else
 #define LOG_SOUND(x)
 #endif
 
 #if VERBOSE_TIMER
-#define LOG_TIMER(x) if( errorlog ) fprintf x
+#define LOG_TIMER(x) logerror x
 #else
 #define LOG_TIMER(x)
 #endif
 
 #if VERBOSE_POLY
-#define LOG_POLY(x) if( errorlog ) fprintf x
+#define LOG_POLY(x) logerror x
 #else
 #define LOG_POLY(x)
 #endif
 
 #if VERBOSE_RAND
-#define LOG_RAND(x) if( errorlog ) fprintf x
+#define LOG_RAND(x) logerror x
 #else
 #define LOG_RAND(x)
 #endif
@@ -543,11 +543,11 @@ static void poly_init(UINT8 *poly, int size, int left, int right, int add)
 	int mask = (1 << size) - 1;
     int i, x = 0;
 
-	LOG_POLY((errorlog,"poly %d\n", size));
+	LOG_POLY(("poly %d\n", size));
 	for( i = 0; i < mask; i++ )
 	{
 		*poly++ = x & 1;
-		LOG_POLY((errorlog,"%05x: %d\n", x, x&1));
+		LOG_POLY(("%05x: %d\n", x, x&1));
         /* calculate next bit */
 		x = ((x << left) + (x >> right) + add) & mask;
 	}
@@ -558,11 +558,11 @@ static void rand_init(UINT8 *rng, int size, int left, int right, int add)
     int mask = (1 << size) - 1;
     int i, x = 0;
 
-	LOG_RAND((errorlog,"rand %d\n", size));
+	LOG_RAND(("rand %d\n", size));
     for( i = 0; i < mask; i++ )
 	{
 		*rng = x >> (size - 8);   /* use the upper 8 bits */
-		LOG_RAND((errorlog, "%05x: %02x\n", x, *rng));
+		LOG_RAND(("%05x: %02x\n", x, *rng));
         rng++;
         /* calculate next bit */
 		x = ((x << left) + (x >> right) + add) & mask;
@@ -630,7 +630,7 @@ int pokey_sh_start(const struct MachineSound *msound)
 
 		if( p->channel == -1 )
 		{
-			perror("failed to initialize sound channel");
+			logerror("failed to initialize sound channel\n");
             return 1;
 		}
 	}
@@ -656,7 +656,7 @@ static void pokey_timer_expire(int param)
 	int timers = param & 7;
 	struct POKEYregisters *p = &pokey[chip];
 
-	LOG_TIMER((errorlog, "POKEY #%d timer %d with IRQEN $%02x\n", chip, param, p->IRQEN));
+	LOG_TIMER(("POKEY #%d timer %d with IRQEN $%02x\n", chip, param, p->IRQEN));
 
     /* check if some of the requested timer interrupts are enabled */
 	timers &= p->IRQEN;
@@ -764,7 +764,7 @@ static void pokey_pot_trigger(int param)
     int pot = param & 7;
 	struct POKEYregisters *p = &pokey[chip];
 
-	LOG((errorlog, "POKEY #%d POT%d triggers after %dus\n", chip, pot, (int)(1000000ul*timer_timeelapsed(p->ptimer[pot]))));
+	LOG(("POKEY #%d POT%d triggers after %dus\n", chip, pot, (int)(1000000ul*timer_timeelapsed(p->ptimer[pot]))));
 	p->ptimer[pot] = NULL;
 	p->ALLPOT &= ~(1 << pot);	/* set the enabled timer irq status bits */
 }
@@ -783,7 +783,7 @@ static void pokey_potgo(int chip)
 	struct POKEYregisters *p = &pokey[chip];
     int pot;
 
-	LOG((errorlog, "POKEY #%d pokey_potgo\n", chip));
+	LOG(("POKEY #%d pokey_potgo\n", chip));
 
     p->ALLPOT = 0xff;
 
@@ -798,7 +798,7 @@ static void pokey_potgo(int chip)
 		if( p->pot_r[pot] )
 		{
 			int r = (*p->pot_r[pot])(pot);
-			LOG((errorlog, "POKEY #%d pot_r(%d) returned $%02x\n", chip, pot, r));
+			LOG(("POKEY #%d pot_r(%d) returned $%02x\n", chip, pot, r));
 			if( r != -1 )
 			{
 				if (r > 228)
@@ -819,7 +819,7 @@ int pokey_register_r(int chip, int offs)
 #ifdef MAME_DEBUG
 	if( chip >= intf.num )
 	{
-		if( errorlog ) fprintf(errorlog, "POKEY #%d is >= number of Pokeys!\n", chip);
+		logerror("POKEY #%d is >= number of Pokeys!\n", chip);
 		return data;
 	}
 #endif
@@ -839,29 +839,28 @@ int pokey_register_r(int chip, int offs)
 			if( p->ALLPOT & (1 << pot) )
 			{
 				data = (UINT8)(timer_timeelapsed(p->ptimer[pot]) / AD_TIME);
-				LOG((errorlog,"POKEY #%d read POT%d (interpolated) $%02x\n", chip, pot, data));
+				LOG(("POKEY #%d read POT%d (interpolated) $%02x\n", chip, pot, data));
             }
 			else
 			{
 				data = p->POTx[pot];
-				LOG((errorlog,"POKEY #%d read POT%d (final value)  $%02x\n", chip, pot, data));
+				LOG(("POKEY #%d read POT%d (final value)  $%02x\n", chip, pot, data));
 			}
 		}
 		else
-		if (errorlog)
-			fprintf(errorlog,"PC %04x: warning - read p[chip] #%d POT%d\n", cpu_get_pc(), chip, pot);
+		logerror("PC %04x: warning - read p[chip] #%d POT%d\n", cpu_get_pc(), chip, pot);
 		break;
 
     case ALLPOT_C:
 		if( p->allpot_r )
 		{
 			data = (*p->allpot_r)(offs);
-			LOG((errorlog,"POKEY #%d ALLPOT callback $%02x\n", chip, data));
+			LOG(("POKEY #%d ALLPOT callback $%02x\n", chip, data));
 		}
 		else
 		{
 			data = p->ALLPOT;
-			LOG((errorlog,"POKEY #%d ALLPOT internal $%02x\n", chip, data));
+			LOG(("POKEY #%d ALLPOT internal $%02x\n", chip, data));
 		}
 		break;
 
@@ -886,17 +885,17 @@ int pokey_register_r(int chip, int offs)
 			if( p->AUDCTL & POLY9 )
 			{
 				p->RANDOM = rand9[p->r9];
-				LOG_RAND((errorlog, "POKEY #%d adjust %u rand9[$%05x]: $%02x\n", chip, adjust, p->r9, p->RANDOM));
+				LOG_RAND(("POKEY #%d adjust %u rand9[$%05x]: $%02x\n", chip, adjust, p->r9, p->RANDOM));
 			}
             else
 			{
 				p->RANDOM = rand17[p->r17];
-				LOG_RAND((errorlog, "POKEY #%d adjust %u rand17[$%05x]: $%02x\n", chip, adjust, p->r17, p->RANDOM));
+				LOG_RAND(("POKEY #%d adjust %u rand17[$%05x]: $%02x\n", chip, adjust, p->r17, p->RANDOM));
 			}
 		}
 		else
 		{
-			LOG_RAND((errorlog, "POKEY #%d rand17 freezed (SKCTL): $%02x\n", chip, p->RANDOM));
+			LOG_RAND(("POKEY #%d rand17 freezed (SKCTL): $%02x\n", chip, p->RANDOM));
 		}
 		timer_reset(p->rtimer, TIME_NEVER);
 		data = p->RANDOM;
@@ -906,24 +905,24 @@ int pokey_register_r(int chip, int offs)
 		if( p->serin_r )
 			p->SERIN = (*p->serin_r)(offs);
 		data = p->SERIN;
-		LOG((errorlog, "POKEY #%d SERIN  $%02x\n", chip, data));
+		LOG(("POKEY #%d SERIN  $%02x\n", chip, data));
 		break;
 
 	case IRQST_C:
 		/* IRQST is an active low input port; we keep it active high */
 		/* internally to ease the (un-)masking of bits */
 		data = p->IRQST ^ 0xff;
-		LOG((errorlog, "POKEY #%d IRQST  $%02x\n", chip, data));
+		LOG(("POKEY #%d IRQST  $%02x\n", chip, data));
 		break;
 
 	case SKSTAT_C:
 		/* SKSTAT is also an active low input port */
 		data = p->SKSTAT ^ 0xff;
-		LOG((errorlog, "POKEY #%d SKSTAT $%02x\n", chip, data));
+		LOG(("POKEY #%d SKSTAT $%02x\n", chip, data));
 		break;
 
 	default:
-		LOG((errorlog, "POKEY #%d register $%02x\n", chip, offs));
+		LOG(("POKEY #%d register $%02x\n", chip, offs));
         break;
     }
     return data;
@@ -967,7 +966,7 @@ void pokey_register_w(int chip, int offs, int data)
 #ifdef MAME_DEBUG
 	if( chip >= intf.num )
 	{
-		if( errorlog ) fprintf(errorlog, "POKEY #%d is >= number of Pokeys!\n", chip);
+		logerror("POKEY #%d is >= number of Pokeys!\n", chip);
 		return;
 	}
 #endif
@@ -979,7 +978,7 @@ void pokey_register_w(int chip, int offs, int data)
     case AUDF1_C:
 		if( data == p->AUDF[CHAN1] )
             return;
-		LOG_SOUND((errorlog, "POKEY #%d AUDF1  $%02x\n", chip, data));
+		LOG_SOUND(("POKEY #%d AUDF1  $%02x\n", chip, data));
 		p->AUDF[CHAN1] = data;
         ch_mask = 1 << CHAN1;
 		if( p->AUDCTL & CH12_JOINED )		/* if ch 1&2 tied together */
@@ -989,7 +988,7 @@ void pokey_register_w(int chip, int offs, int data)
     case AUDC1_C:
 		if( data == p->AUDC[CHAN1] )
             return;
-		LOG_SOUND((errorlog, "POKEY #%d AUDC1  $%02x (%s)\n", chip, data, audc2str(data)));
+		LOG_SOUND(("POKEY #%d AUDC1  $%02x (%s)\n", chip, data, audc2str(data)));
 		p->AUDC[CHAN1] = data;
         ch_mask = 1 << CHAN1;
         break;
@@ -997,7 +996,7 @@ void pokey_register_w(int chip, int offs, int data)
     case AUDF2_C:
 		if( data == p->AUDF[CHAN2] )
             return;
-		LOG_SOUND((errorlog, "POKEY #%d AUDF2  $%02x\n", chip, data));
+		LOG_SOUND(("POKEY #%d AUDF2  $%02x\n", chip, data));
 		p->AUDF[CHAN2] = data;
         ch_mask = 1 << CHAN2;
         break;
@@ -1005,7 +1004,7 @@ void pokey_register_w(int chip, int offs, int data)
     case AUDC2_C:
 		if( data == p->AUDC[CHAN2] )
             return;
-		LOG_SOUND((errorlog, "POKEY #%d AUDC2  $%02x (%s)\n", chip, data, audc2str(data)));
+		LOG_SOUND(("POKEY #%d AUDC2  $%02x (%s)\n", chip, data, audc2str(data)));
 		p->AUDC[CHAN2] = data;
         ch_mask = 1 << CHAN2;
         break;
@@ -1013,7 +1012,7 @@ void pokey_register_w(int chip, int offs, int data)
     case AUDF3_C:
 		if( data == p->AUDF[CHAN3] )
             return;
-		LOG_SOUND((errorlog, "POKEY #%d AUDF3  $%02x\n", chip, data));
+		LOG_SOUND(("POKEY #%d AUDF3  $%02x\n", chip, data));
 		p->AUDF[CHAN3] = data;
         ch_mask = 1 << CHAN3;
 
@@ -1024,7 +1023,7 @@ void pokey_register_w(int chip, int offs, int data)
     case AUDC3_C:
 		if( data == p->AUDC[CHAN3] )
             return;
-		LOG_SOUND((errorlog, "POKEY #%d AUDC3  $%02x (%s)\n", chip, data, audc2str(data)));
+		LOG_SOUND(("POKEY #%d AUDC3  $%02x (%s)\n", chip, data, audc2str(data)));
 		p->AUDC[CHAN3] = data;
         ch_mask = 1 << CHAN3;
         break;
@@ -1032,7 +1031,7 @@ void pokey_register_w(int chip, int offs, int data)
     case AUDF4_C:
 		if( data == p->AUDF[CHAN4] )
             return;
-		LOG_SOUND((errorlog, "POKEY #%d AUDF4  $%02x\n", chip, data));
+		LOG_SOUND(("POKEY #%d AUDF4  $%02x\n", chip, data));
 		p->AUDF[CHAN4] = data;
         ch_mask = 1 << CHAN4;
         break;
@@ -1040,7 +1039,7 @@ void pokey_register_w(int chip, int offs, int data)
     case AUDC4_C:
 		if( data == p->AUDC[CHAN4] )
             return;
-		LOG_SOUND((errorlog, "POKEY #%d AUDC4  $%02x (%s)\n", chip, data, audc2str(data)));
+		LOG_SOUND(("POKEY #%d AUDC4  $%02x (%s)\n", chip, data, audc2str(data)));
 		p->AUDC[CHAN4] = data;
         ch_mask = 1 << CHAN4;
         break;
@@ -1048,7 +1047,7 @@ void pokey_register_w(int chip, int offs, int data)
     case AUDCTL_C:
 		if( data == p->AUDCTL )
             return;
-		LOG_SOUND((errorlog, "POKEY #%d AUDCTL $%02x (%s)\n", chip, data, audctl2str(data)));
+		LOG_SOUND(("POKEY #%d AUDCTL $%02x (%s)\n", chip, data, audctl2str(data)));
 		p->AUDCTL = data;
         ch_mask = 15;       /* all channels */
         /* determine the base multiplier for the 'div by n' calculations */
@@ -1057,7 +1056,7 @@ void pokey_register_w(int chip, int offs, int data)
 
     case STIMER_C:
         /* first remove any existing timers */
-		LOG_TIMER((errorlog, "POKEY #%d STIMER $%02x\n", chip, data));
+		LOG_TIMER(("POKEY #%d STIMER $%02x\n", chip, data));
 		if( p->timer[TIMER1] )
 			timer_remove(p->timer[TIMER1]);
 		if( p->timer[TIMER2] )
@@ -1080,7 +1079,7 @@ void pokey_register_w(int chip, int offs, int data)
         {
 			if( p->divisor[CHAN2] > 4 )
 			{
-				LOG_TIMER((errorlog, "POKEY #%d timer1+2 after %d clocks\n", chip, p->divisor[CHAN2]));
+				LOG_TIMER(("POKEY #%d timer1+2 after %d clocks\n", chip, p->divisor[CHAN2]));
 				/* set timer #1 _and_ #2 event after timer_div clocks of joined CHAN1+CHAN2 */
 				p->timer[TIMER2] =
 					timer_pulse(1.0 * p->divisor[CHAN2] / intf.baseclock,
@@ -1091,7 +1090,7 @@ void pokey_register_w(int chip, int offs, int data)
         {
 			if( p->divisor[CHAN1] > 4 )
 			{
-				LOG_TIMER((errorlog, "POKEY #%d timer1 after %d clocks\n", chip, p->divisor[CHAN1]));
+				LOG_TIMER(("POKEY #%d timer1 after %d clocks\n", chip, p->divisor[CHAN1]));
 				/* set timer #1 event after timer_div clocks of CHAN1 */
 				p->timer[TIMER1] =
 					timer_pulse(1.0 * p->divisor[CHAN1] / intf.baseclock,
@@ -1100,7 +1099,7 @@ void pokey_register_w(int chip, int offs, int data)
 
 			if( p->divisor[CHAN2] > 4 )
 			{
-				LOG_TIMER((errorlog, "POKEY #%d timer2 after %d clocks\n", chip, p->divisor[CHAN2]));
+				LOG_TIMER(("POKEY #%d timer2 after %d clocks\n", chip, p->divisor[CHAN2]));
 				/* set timer #2 event after timer_div clocks of CHAN2 */
 				p->timer[TIMER2] =
 					timer_pulse(1.0 * p->divisor[CHAN2] / intf.baseclock,
@@ -1117,7 +1116,7 @@ void pokey_register_w(int chip, int offs, int data)
             {
 				if( p->divisor[CHAN4] > 4 )
 				{
-					LOG_TIMER((errorlog, "POKEY #%d timer4 after %d clocks\n", chip, p->divisor[CHAN4]));
+					LOG_TIMER(("POKEY #%d timer4 after %d clocks\n", chip, p->divisor[CHAN4]));
 					/* set timer #4 event after timer_div clocks of CHAN4 */
 					p->timer[TIMER4] =
 						timer_pulse(1.0 * p->divisor[CHAN4] / intf.baseclock,
@@ -1129,7 +1128,7 @@ void pokey_register_w(int chip, int offs, int data)
         {
 			if( p->divisor[CHAN4] > 4 )
 			{
-				LOG_TIMER((errorlog, "POKEY #%d timer4 after %d clocks\n", chip, p->divisor[CHAN4]));
+				LOG_TIMER(("POKEY #%d timer4 after %d clocks\n", chip, p->divisor[CHAN4]));
 				/* set timer #4 event after timer_div clocks of CHAN4 */
 				p->timer[TIMER4] =
 					timer_pulse(1.0 * p->divisor[CHAN4] / intf.baseclock,
@@ -1146,17 +1145,17 @@ void pokey_register_w(int chip, int offs, int data)
 
     case SKREST_C:
         /* reset SKSTAT */
-		LOG((errorlog, "POKEY #%d SKREST $%02x\n", chip, data));
+		LOG(("POKEY #%d SKREST $%02x\n", chip, data));
 		p->SKSTAT &= ~(SK_FRAME|SK_OVERRUN|SK_KBERR);
         break;
 
     case POTGO_C:
-		LOG((errorlog, "POKEY #%d POTGO  $%02x\n", chip, data));
+		LOG(("POKEY #%d POTGO  $%02x\n", chip, data));
 		pokey_potgo(chip);
         break;
 
     case SEROUT_C:
-		LOG((errorlog, "POKEY #%d SEROUT $%02x\n", chip, data));
+		LOG(("POKEY #%d SEROUT $%02x\n", chip, data));
 		if (p->serout_w)
 			(*p->serout_w)(offs, data);
 		p->SKSTAT |= SK_SEROUT;
@@ -1171,7 +1170,7 @@ void pokey_register_w(int chip, int offs, int data)
         break;
 
     case IRQEN_C:
-		LOG((errorlog, "POKEY #%d IRQEN  $%02x\n", chip, data));
+		LOG(("POKEY #%d IRQEN  $%02x\n", chip, data));
 
         /* acknowledge one or more IRQST bits ? */
 		if( p->IRQST & ~data )
@@ -1197,7 +1196,7 @@ void pokey_register_w(int chip, int offs, int data)
     case SKCTL_C:
 		if( data == p->SKCTL )
             return;
-		LOG((errorlog, "POKEY #%d SKCTL  $%02x\n", chip, data));
+		LOG(("POKEY #%d SKCTL  $%02x\n", chip, data));
 		p->SKCTL = data;
         if( !(data & SK_RESET) )
         {
@@ -1225,7 +1224,7 @@ void pokey_register_w(int chip, int offs, int data)
         else
 			new_val = (p->AUDF[CHAN1] + DIVADD_LOCLK) * p->clockmult;
 
-		LOG_SOUND((errorlog, "POKEY #%d chan1 %d\n", chip, new_val));
+		LOG_SOUND(("POKEY #%d chan1 %d\n", chip, new_val));
 
 		p->volume[CHAN1] = (p->AUDC[CHAN1] & VOLUME_MASK) * POKEY_DEFAULT_GAIN;
         p->divisor[CHAN1] = new_val;
@@ -1255,12 +1254,12 @@ void pokey_register_w(int chip, int offs, int data)
 				new_val = p->AUDF[CHAN2] * 256 + p->AUDF[CHAN1] + DIVADD_HICLK_JOINED;
             else
 				new_val = (p->AUDF[CHAN2] * 256 + p->AUDF[CHAN1] + DIVADD_LOCLK) * p->clockmult;
-			LOG_SOUND((errorlog, "POKEY #%d chan1+2 %d\n", chip, new_val));
+			LOG_SOUND(("POKEY #%d chan1+2 %d\n", chip, new_val));
         }
         else
 		{
 			new_val = (p->AUDF[CHAN2] + DIVADD_LOCLK) * p->clockmult;
-			LOG_SOUND((errorlog, "POKEY #%d chan2 %d\n", chip, new_val));
+			LOG_SOUND(("POKEY #%d chan2 %d\n", chip, new_val));
 		}
 
 		p->volume[CHAN2] = (p->AUDC[CHAN2] & VOLUME_MASK) * POKEY_DEFAULT_GAIN;
@@ -1290,7 +1289,7 @@ void pokey_register_w(int chip, int offs, int data)
         else
 			new_val = (p->AUDF[CHAN3] + DIVADD_LOCLK) * p->clockmult;
 
-		LOG_SOUND((errorlog, "POKEY #%d chan3 %d\n", chip, new_val));
+		LOG_SOUND(("POKEY #%d chan3 %d\n", chip, new_val));
 
 		p->volume[CHAN3] = (p->AUDC[CHAN3] & VOLUME_MASK) * POKEY_DEFAULT_GAIN;
 		p->divisor[CHAN3] = new_val;
@@ -1320,12 +1319,12 @@ void pokey_register_w(int chip, int offs, int data)
 				new_val = p->AUDF[CHAN4] * 256 + p->AUDF[CHAN3] + DIVADD_HICLK_JOINED;
             else
 				new_val = (p->AUDF[CHAN4] * 256 + p->AUDF[CHAN3] + DIVADD_LOCLK) * p->clockmult;
-			LOG_SOUND((errorlog, "POKEY #%d chan3+4 %d\n", chip, new_val));
+			LOG_SOUND(("POKEY #%d chan3+4 %d\n", chip, new_val));
         }
         else
 		{
 			new_val = (p->AUDF[CHAN4] + DIVADD_LOCLK) * p->clockmult;
-			LOG_SOUND((errorlog, "POKEY #%d chan4 %d\n", chip, new_val));
+			LOG_SOUND(("POKEY #%d chan4 %d\n", chip, new_val));
 		}
 
 		p->volume[CHAN4] = (p->AUDC[CHAN4] & VOLUME_MASK) * POKEY_DEFAULT_GAIN;

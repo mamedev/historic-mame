@@ -32,7 +32,7 @@ static READ_HANDLER( aeroboto_201_r )
 	/* serie of values to be returned from 3004, and display "PASS 201" if it is */
 	int res[4] = { 0xff,0x9f,0x1b,0x03};
 	static int count;
-	if (errorlog) fprintf(errorlog,"PC %04x: read 3004\n",cpu_get_pc());
+	logerror("PC %04x: read 3004\n",cpu_get_pc());
 	return res[(count++)&3];
 }
 
@@ -45,11 +45,6 @@ static WRITE_HANDLER( aeroboto_3000_w )
 	aeroboto_charbank = (data & 0x02) >> 1;
 
 	/* there's probably a flip screen here as well */
-}
-
-static int pip(int offset)
-{
-	return rand() & 0xff;
 }
 
 static struct MemoryReadAddress readmem[] =

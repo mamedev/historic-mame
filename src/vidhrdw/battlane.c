@@ -12,7 +12,7 @@
 
 static struct osd_bitmap *screen_bitmap;
 
-int battlane_bitmap_size;
+size_t battlane_bitmap_size;
 unsigned char *battlane_bitmap;
 static int battlane_video_ctrl;
 

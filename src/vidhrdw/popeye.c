@@ -12,7 +12,7 @@
 
 
 unsigned char *popeye_videoram;
-int popeye_videoram_size;
+size_t popeye_videoram_size;
 unsigned char *popeye_background_pos,*popeye_palette_bank;
 static unsigned char *dirtybuffer2;
 static struct osd_bitmap *tmpbitmap2;

@@ -7,8 +7,13 @@ of a YM2203 and a 2nd Oki chip but the board does _not_ have them.  The sound
 program is simply the 'generic' Data East sound program unmodified for this cut
 down hardware (it doesn't write any good sound data btw, mostly zeros).
 
-  Some sprites clip at the edges of the screen..
-  Some burgers (from crushing an enemy) appear with wrong colour - 68k bug?!
+  This game has a few bugs:
+
+  Some sprites clip at the edges of the screen.
+  Some burgers (from crushing an enemy) appear with wrong colour.
+  Colour cycle on title screen doesn't work first time around.
+
+  These are NOT driver bugs!  They all exist in the original game.
 
   Same hardware as Tumblepop, the two drivers can be joined at a later date.
 
@@ -21,7 +26,6 @@ down hardware (it doesn't write any good sound data btw, mostly zeros).
 #include "cpu/h6280/h6280.h"
 
 int  supbtime_vh_start(void);
-void supbtime_vh_stop(void);
 void supbtime_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 WRITE_HANDLER( supbtime_pf2_data_w );
@@ -51,7 +55,7 @@ static READ_HANDLER( supbtime_controls_r )
 			return 0;
 	}
 
-	if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - read unmapped control address %06x\n",cpu_get_pc(),offset);
+	logerror("CPU #0 PC %06x: warning - read unmapped control address %06x\n",cpu_get_pc(),offset);
 	return 0xffff;
 }
 
@@ -59,7 +63,6 @@ static WRITE_HANDLER( sound_w )
 {
 	soundlatch_w(0,data & 0xff);
 	cpu_cause_interrupt(1,H6280_INT_IRQ1);
-	if ((data&0xff)==1) cpu_spin(); /* Helper */
 }
 
 /******************************************************************************/
@@ -67,7 +70,7 @@ static WRITE_HANDLER( sound_w )
 static struct MemoryReadAddress supbtime_readmem[] =
 {
 	{ 0x000000, 0x03ffff, MRA_ROM },
-	{ 0x100000, 0x13ffff, MRA_BANK1 },
+	{ 0x100000, 0x103fff, MRA_BANK1 },
 	{ 0x120000, 0x1207ff, MRA_BANK2 },
 	{ 0x140000, 0x1407ff, paletteram_word_r },
 	{ 0x180000, 0x18000f, supbtime_controls_r },
@@ -323,11 +326,11 @@ static struct MachineDriver machine_driver_supbtime =
 	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_UPDATE_BEFORE_VBLANK,
 	0,
 	supbtime_vh_start,
-	supbtime_vh_stop,
+	0,
 	supbtime_vh_screenrefresh,
 
 	/* sound hardware */
-	SOUND_SUPPORTS_STEREO,0,0,0,
+	0,0,0,0,
   	{
 		{
 			SOUND_YM2151,
@@ -343,6 +346,25 @@ static struct MachineDriver machine_driver_supbtime =
 /******************************************************************************/
 
 ROM_START( supbtime )
+	ROM_REGION( 0x40000, REGION_CPU1 ) /* 68000 code */
+	ROM_LOAD_EVEN( "gk03", 0x00000, 0x20000, 0xaeaeed61 )
+	ROM_LOAD_ODD ( "gk04", 0x00000, 0x20000, 0x2bc5a4eb )
+
+	ROM_REGION( 0x10000, REGION_CPU2 )	/* Sound CPU */
+	ROM_LOAD( "gc06.bin",    0x00000, 0x10000, 0xe0e6c0f4 )
+
+	ROM_REGION( 0x080000, REGION_GFX1 | REGIONFLAG_DISPOSE )
+	ROM_LOAD( "mae02.bin", 0x000000, 0x80000, 0xa715cca0 ) /* chars */
+
+	ROM_REGION( 0x100000, REGION_GFX2 | REGIONFLAG_DISPOSE )
+  	ROM_LOAD( "mae00.bin", 0x000000, 0x80000, 0x30043094 ) /* sprites */
+	ROM_LOAD( "mae01.bin", 0x080000, 0x80000, 0x434af3fb )
+
+	ROM_REGION( 0x20000, REGION_SOUND1 )	/* ADPCM samples */
+  	ROM_LOAD( "gc05.bin",    0x00000, 0x20000, 0x2f2246ff )
+ROM_END
+
+ROM_START( supbtimj )
 	ROM_REGION( 0x40000, REGION_CPU1 ) /* 68000 code */
 	ROM_LOAD_EVEN( "gc03.bin", 0x00000, 0x20000, 0xb5621f6a )
 	ROM_LOAD_ODD ( "gc04.bin", 0x00000, 0x20000, 0x551b2a0c )
@@ -377,4 +399,5 @@ static void init_supbtime(void)
 
 /******************************************************************************/
 
-GAMEX( 1990, supbtime, 0, supbtime, supbtime, supbtime, ROT0, "Data East Corporation", "Super Burger Time (Japan)", GAME_NO_COCKTAIL )
+GAME( 1990, supbtime, 0,        supbtime, supbtime, supbtime, ROT0, "Data East Corporation", "Super Burger Time (World)" )
+GAME( 1990, supbtimj, supbtime, supbtime, supbtime, supbtime, ROT0, "Data East Corporation", "Super Burger Time (Japan)" )

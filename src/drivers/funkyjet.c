@@ -40,8 +40,8 @@ static WRITE_HANDLER( funkyjet_protection_w )
 {
 	WRITE_WORD(&loopback[offset],data);
 
-	if (errorlog && offset!=0x502 && offset!=0x700 && offset!=0x70e && offset!=0x78e)
-		fprintf(errorlog,"CPU #0 PC %06x: warning - write unmapped control address %06x %04x\n",cpu_get_pc(),offset,data);
+	if (offset!=0x502 && offset!=0x700 && offset!=0x70e && offset!=0x78e)
+		logerror("CPU #0 PC %06x: warning - write unmapped control address %06x %04x\n",cpu_get_pc(),offset,data);
 
 	if (offset==0x10a) {
 		soundlatch_w(0,data&0xff);
@@ -80,7 +80,7 @@ static READ_HANDLER( funkyjet_protection_r )
 
 	}
 
-	if (errorlog && offset!=0x778) fprintf(errorlog,"CPU #0 PC %06x: warning - read unmapped control address %06x\n",cpu_get_pc(),offset);
+	if (offset!=0x778) logerror("CPU #0 PC %06x: warning - read unmapped control address %06x\n",cpu_get_pc(),offset);
 
 /*
 

@@ -79,7 +79,7 @@ int preset, amp;
 		if (preset)
 			freq1 = BASE_CTR1 / (preset + 1);
 		else amp = 0;
-		if (errorlog) fprintf(errorlog, "meadows ctr1 channel #%d preset:%3d freq:%5d amp:%d\n", channel, preset, freq1, amp);
+		logerror("meadows ctr1 channel #%d preset:%3d freq:%5d amp:%d\n", channel, preset, freq1, amp);
 		mixer_set_sample_frequency(channel, freq1 * sizeof(waveform));
 		mixer_set_volume(channel,amp*100/255);
     }
@@ -97,7 +97,7 @@ int preset, amp;
 				freq2 >>= 1;
 		}
 		else amp = 0;
-		if (errorlog) fprintf(errorlog, "meadows ctr2 channel #%d preset:%3d freq:%5d amp:%d\n", channel+1, preset, freq2, amp);
+		logerror("meadows ctr2 channel #%d preset:%3d freq:%5d amp:%d\n", channel+1, preset, freq2, amp);
 		mixer_set_sample_frequency(channel+1, freq2 * sizeof(waveform));
 		mixer_set_volume(channel+1,amp*100/255);
     }

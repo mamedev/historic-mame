@@ -14,7 +14,7 @@ J Clegg
 #include "driver.h"
 
 extern unsigned char *spriteram;
-extern int spriteram_size;
+extern size_t spriteram_size;
 
 unsigned char *travrusa_videoram;
 

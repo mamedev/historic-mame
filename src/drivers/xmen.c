@@ -77,7 +77,7 @@ static READ_HANDLER( eeprom_r )
 {
 	int res;
 
-if (errorlog) fprintf(errorlog,"%06x eeprom_r\n",cpu_get_pc());
+logerror("%06x eeprom_r\n",cpu_get_pc());
 	/* bit 6 is EEPROM data */
 	/* bit 7 is EEPROM ready */
 	/* bit 14 is service button */
@@ -92,7 +92,7 @@ if (errorlog) fprintf(errorlog,"%06x eeprom_r\n",cpu_get_pc());
 
 static WRITE_HANDLER( eeprom_w )
 {
-if (errorlog) fprintf(errorlog,"%06x: write %04x to 108000\n",cpu_get_pc(),data);
+logerror("%06x: write %04x to 108000\n",cpu_get_pc(),data);
 	if ((data & 0x00ff0000) == 0)
 	{
 		/* bit 0 = coin counter */

@@ -63,12 +63,12 @@ static int wave_read(int id)
 	offset += osd_fread(w->file, buf, 4);
 	if( offset < 4 )
 	{
-		if( errorlog ) fprintf(errorlog, "WAVE read error at offs %d\n", offset);
+		logerror("WAVE read error at offs %d\n", offset);
 		return WAVE_ERR;
 	}
 	if( memcmp (&buf[0], "RIFF", 4) != 0 )
 	{
-		if( errorlog ) fprintf(errorlog, "WAVE header not 'RIFF'\n");
+		logerror("WAVE header not 'RIFF'\n");
 		return WAVE_FMT;
     }
 
@@ -76,22 +76,22 @@ static int wave_read(int id)
 	offset += osd_fread(w->file, &temp32, 4);
 	if( offset < 8 )
 	{
-		if( errorlog ) fprintf(errorlog, "WAVE read error at offs %d\n", offset);
+		logerror("WAVE read error at offs %d\n", offset);
 		return WAVE_ERR;
 	}
 	filesize = intelLong(temp32);
-	if( errorlog ) fprintf(errorlog,"WAVE filesize %u bytes\n", filesize);
+	logerror("WAVE filesize %u bytes\n", filesize);
 
 	/* read the RIFF file type and make sure it's a WAVE file */
 	offset += osd_fread(w->file, buf, 4);
 	if( offset < 12 )
 	{
-		if( errorlog ) fprintf(errorlog, "WAVE read error at offs %d\n", offset);
+		logerror("WAVE read error at offs %d\n", offset);
 		return WAVE_ERR;
 	}
 	if( memcmp (&buf[0], "WAVE", 4) != 0 )
 	{
-		if( errorlog ) fprintf(errorlog, "WAVE RIFF type not 'WAVE'\n");
+		logerror("WAVE RIFF type not 'WAVE'\n");
 		return WAVE_FMT;
 	}
 
@@ -109,7 +109,7 @@ static int wave_read(int id)
 		offset += w->length;
 		if( offset >= filesize )
 		{
-			if( errorlog ) fprintf(errorlog, "WAVE no 'fmt ' tag found\n");
+			logerror("WAVE no 'fmt ' tag found\n");
 			return WAVE_ERR;
         }
 	}
@@ -118,24 +118,24 @@ static int wave_read(int id)
 	offset += osd_fread_lsbfirst(w->file, &temp16, 2);
 	if( temp16 != 1 )
 	{
-		if( errorlog ) fprintf(errorlog, "WAVE format %d not supported (not = 1 PCM)\n", temp16);
+		logerror("WAVE format %d not supported (not = 1 PCM)\n", temp16);
 			return WAVE_ERR;
     }
-	if( errorlog ) fprintf(errorlog,"WAVE format %d (PCM)\n", temp16);
+	logerror("WAVE format %d (PCM)\n", temp16);
 
 	/* number of channels -- only mono is supported */
 	offset += osd_fread_lsbfirst(w->file, &channels, 2);
 	if( channels != 1 && channels != 2 )
 	{
-		if( errorlog ) fprintf(errorlog, "WAVE channels %d not supported (only 1 mono or 2 stereo)\n", channels);
+		logerror("WAVE channels %d not supported (only 1 mono or 2 stereo)\n", channels);
 		return WAVE_ERR;
     }
-	if( errorlog ) fprintf(errorlog,"WAVE channels %d\n", channels);
+	logerror("WAVE channels %d\n", channels);
 
 	/* sample rate */
 	offset += osd_fread(w->file, &temp32, 4);
 	w->smpfreq = intelLong(temp32);
-	if( errorlog ) fprintf(errorlog,"WAVE sample rate %d Hz\n", w->smpfreq);
+	logerror("WAVE sample rate %d Hz\n", w->smpfreq);
 
 	/* bytes/second and block alignment are ignored */
 	offset += osd_fread(w->file, buf, 6);
@@ -144,10 +144,10 @@ static int wave_read(int id)
 	offset += osd_fread_lsbfirst(w->file, &bits, 2);
 	if( bits != 8 && bits != 16 )
 	{
-		if( errorlog ) fprintf(errorlog, "WAVE %d bits/sample not supported (only 8/16)\n", bits);
+		logerror("WAVE %d bits/sample not supported (only 8/16)\n", bits);
 		return WAVE_ERR;
     }
-	if( errorlog ) fprintf(errorlog,"WAVE bits/sample %d\n", bits);
+	logerror("WAVE bits/sample %d\n", bits);
 	w->resolution = bits;
 
 	/* seek past any extra data */
@@ -168,7 +168,7 @@ static int wave_read(int id)
 		offset += w->length;
 		if( offset >= filesize )
 		{
-			if( errorlog ) fprintf(errorlog, "WAVE not 'data' tag found\n");
+			logerror("WAVE not 'data' tag found\n");
 			return WAVE_ERR;
         }
 	}
@@ -178,7 +178,7 @@ static int wave_read(int id)
 
 	if( w->data == NULL )
 	{
-		if( errorlog ) fprintf(errorlog, "WAVE failed to malloc %d bytes\n", w->length);
+		logerror("WAVE failed to malloc %d bytes\n", w->length);
 		return WAVE_ERR;
     }
 
@@ -187,7 +187,7 @@ static int wave_read(int id)
 	{
 		if( osd_fread(w->file, w->data, w->length) != w->length )
 		{
-			if( errorlog ) fprintf(errorlog, "WAVE failed read %d data bytes\n", w->length);
+			logerror("WAVE failed read %d data bytes\n", w->length);
 			free(w->data);
 			return WAVE_ERR;
 		}
@@ -195,7 +195,7 @@ static int wave_read(int id)
 		{
 			UINT8 *src = w->data;
 			INT8 *dst = w->data;
-			if( errorlog ) fprintf(errorlog, "WAVE mixing 8-bit unsigned stereo to 8-bit signed mono\n");
+			logerror("WAVE mixing 8-bit unsigned stereo to 8-bit signed mono\n");
             /* convert stereo 8-bit data to mono signed samples */
 			for( temp32 = 0; temp32 < w->length/2; temp32++ )
 			{
@@ -207,7 +207,7 @@ static int wave_read(int id)
             w->data = realloc(w->data, w->length);
 			if( w->data == NULL )
 			{
-				if( errorlog ) fprintf(errorlog, "WAVE failed to malloc %d bytes\n", w->length);
+				logerror("WAVE failed to malloc %d bytes\n", w->length);
 				return WAVE_ERR;
 			}
         }
@@ -215,7 +215,7 @@ static int wave_read(int id)
 		{
 			UINT8 *src = w->data;
 			INT8 *dst = w->data;
-            if( errorlog ) fprintf(errorlog, "WAVE converting 8-bit unsigned to 8-bit signed\n");
+            logerror("WAVE converting 8-bit unsigned to 8-bit signed\n");
             /* convert 8-bit data to signed samples */
 			for( temp32 = 0; temp32 < w->length; temp32++ )
 				*dst++ = *src++ ^ 0x80;
@@ -226,7 +226,7 @@ static int wave_read(int id)
 		/* 16-bit data is fine as-is */
 		if( osd_fread_lsbfirst(w->file, w->data, w->length) != w->length )
 		{
-			if( errorlog ) fprintf(errorlog, "WAVE failed read %d data bytes\n", w->length);
+			logerror("WAVE failed read %d data bytes\n", w->length);
 			free(w->data);
 			return WAVE_ERR;
         }
@@ -234,7 +234,7 @@ static int wave_read(int id)
         {
 			INT16 *src = w->data;
 			INT16 *dst = w->data;
-            if( errorlog ) fprintf(errorlog, "WAVE mixing 16-bit stereo to 16-bit mono\n");
+            logerror("WAVE mixing 16-bit stereo to 16-bit mono\n");
             /* convert stereo 16-bit data to mono */
 			for( temp32 = 0; temp32 < w->length/2; temp32++ )
 			{
@@ -246,18 +246,17 @@ static int wave_read(int id)
 			w->data = realloc(w->data, w->length);
 			if( w->data == NULL )
 			{
-				if( errorlog ) fprintf(errorlog, "WAVE failed to malloc %d bytes\n", w->length);
+				logerror("WAVE failed to malloc %d bytes\n", w->length);
 				return WAVE_ERR;
             }
         }
 		else
 		{
-			if( errorlog ) fprintf(errorlog, "WAVE using 16-bit signed samples as is\n");
+			logerror("WAVE using 16-bit signed samples as is\n");
         }
 	}
 	w->samples = w->length * 8 / w->resolution;
-	if( errorlog )
-		fprintf(errorlog,"WAVE %d samples - %d:%02d\n", w->samples, (w->samples/w->smpfreq)/60, (w->samples/w->smpfreq)%60);
+	logerror("WAVE %d samples - %d:%02d\n", w->samples, (w->samples/w->smpfreq)/60, (w->samples/w->smpfreq)%60);
 
 	return WAVE_OK;
 }
@@ -280,9 +279,8 @@ static int wave_write(int id)
     filesize =
 		4 + 	/* 'RIFF' */
 		4 + 	/* size of entire file */
-		4 + 	/* 'WAVE' */
-		4 + 	/* size of WAVE tag */
-		16 +	/* WAVE tag (including 'fmt ' tag) */
+		8 + 	/* 'WAVEfmt ' */
+		20 +	/* WAVE tag  (including size -- 0x10 in dword) */
 		4 + 	/* 'data' */
 		4 + 	/* size of data */
 		w->length;
@@ -291,18 +289,18 @@ static int wave_write(int id)
 	offset += osd_fwrite(w->file, "RIFF", 4);
     if( offset < 4 )
     {
-		if( errorlog ) fprintf(errorlog, "WAVE write error at offs %d\n", offset);
+		logerror("WAVE write error at offs %d\n", offset);
 		return WAVE_ERR;
     }
 
-	temp32 = intelLong(filesize);
+	temp32 = intelLong(filesize) - 8;
 	offset += osd_fwrite(w->file, &temp32, 4);
 
 	/* read the RIFF file type and make sure it's a WAVE file */
 	offset += osd_fwrite(w->file, "WAVE", 4);
 	if( offset < 12 )
 	{
-		if( errorlog ) fprintf(errorlog, "WAVE write error at offs %d\n", offset);
+		logerror("WAVE write error at offs %d\n", offset);
 		return WAVE_ERR;
 	}
 
@@ -310,14 +308,14 @@ static int wave_write(int id)
 	offset += osd_fwrite(w->file, "fmt ", 4);
     if( offset < 12 )
 	{
-		if( errorlog ) fprintf(errorlog, "WAVE write error at offs %d\n", offset);
+		logerror("WAVE write error at offs %d\n", offset);
 		return WAVE_ERR;
     }
     /* size of the following 'fmt ' fields */
     offset += osd_fwrite(w->file, "\x10\x00\x00\x00", 4);
 	if( offset < 16 )
 	{
-		if( errorlog ) fprintf(errorlog, "WAVE write error at offs %d\n", offset);
+		logerror("WAVE write error at offs %d\n", offset);
 		return WAVE_ERR;
     }
 
@@ -326,7 +324,7 @@ static int wave_write(int id)
 	offset += osd_fwrite_lsbfirst(w->file, &temp16, 2);
 	if( offset < 18 )
 	{
-		if( errorlog ) fprintf(errorlog, "WAVE write error at offs %d\n", offset);
+		logerror("WAVE write error at offs %d\n", offset);
 		return WAVE_ERR;
     }
 
@@ -335,7 +333,7 @@ static int wave_write(int id)
     offset += osd_fwrite_lsbfirst(w->file, &temp16, 2);
 	if( offset < 20 )
 	{
-		if( errorlog ) fprintf(errorlog, "WAVE write error at offs %d\n", offset);
+		logerror("WAVE write error at offs %d\n", offset);
 		return WAVE_ERR;
     }
 
@@ -344,7 +342,7 @@ static int wave_write(int id)
 	offset += osd_fwrite(w->file, &temp32, 4);
 	if( offset < 24 )
 	{
-		if( errorlog ) fprintf(errorlog, "WAVE write error at offs %d\n", offset);
+		logerror("WAVE write error at offs %d\n", offset);
 		return WAVE_ERR;
     }
 
@@ -353,16 +351,16 @@ static int wave_write(int id)
 	offset += osd_fwrite(w->file, &temp32, 4);
 	if( offset < 28 )
 	{
-		if( errorlog ) fprintf(errorlog, "WAVE write error at offs %d\n", offset);
+		logerror("WAVE write error at offs %d\n", offset);
 		return WAVE_ERR;
     }
 
-	/* block align */
-	temp16 = 1;
+	/* block align (size of one `sample') */
+	temp16 = w->resolution / 8;
 	offset += osd_fwrite_lsbfirst(w->file, &temp16, 2);
 	if( offset < 30 )
 	{
-		if( errorlog ) fprintf(errorlog, "WAVE write error at offs %d\n", offset);
+		logerror("WAVE write error at offs %d\n", offset);
 		return WAVE_ERR;
     }
 
@@ -371,7 +369,7 @@ static int wave_write(int id)
 	offset += osd_fwrite_lsbfirst(w->file, &temp16, 2);
 	if( offset < 32 )
 	{
-		if( errorlog ) fprintf(errorlog, "WAVE write error at offs %d\n", offset);
+		logerror("WAVE write error at offs %d\n", offset);
 		return WAVE_ERR;
     }
 
@@ -379,7 +377,7 @@ static int wave_write(int id)
 	offset += osd_fwrite(w->file, "data", 4);
 	if( offset < 36 )
 	{
-		if( errorlog ) fprintf(errorlog, "WAVE write error at offs %d\n", offset);
+		logerror("WAVE write error at offs %d\n", offset);
 		return WAVE_ERR;
     }
 
@@ -388,13 +386,13 @@ static int wave_write(int id)
 	offset += osd_fwrite(w->file, &temp32, 4);
 	if( offset < 40 )
 	{
-		if( errorlog ) fprintf(errorlog, "WAVE write error at offs %d\n", offset);
+		logerror("WAVE write error at offs %d\n", offset);
 		return WAVE_ERR;
     }
 
 	if( osd_fwrite_lsbfirst(w->file, w->data, w->length) != w->length )
 	{
-		if( errorlog ) fprintf(errorlog, "WAVE write error at offs %d\n", offset);
+		logerror("WAVE write error at offs %d\n", offset);
 		return WAVE_ERR;
     }
 
@@ -451,7 +449,7 @@ static void wave_sound_update(int id, INT16 *buffer, int length)
 						w->data = realloc(w->data, w->length);
 						if( !w->data )
 						{
-							if( errorlog ) fprintf(errorlog, "WAVE realloc(%d) failed\n", w->length);
+							logerror("WAVE realloc(%d) failed\n", w->length);
 							timer_remove(w->timer);
 							memset(w, 0, sizeof(struct wave_file));
 						}
@@ -477,7 +475,7 @@ static void wave_sound_update(int id, INT16 *buffer, int length)
 						w->data = realloc(w->data, w->length);
 						if( !w->data )
 						{
-							if( errorlog ) fprintf(errorlog, "WAVE realloc(%d) failed\n", w->length);
+							logerror("WAVE realloc(%d) failed\n", w->length);
 							timer_remove(w->timer);
 							memset(w, 0, sizeof(struct wave_file));
 						}
@@ -660,7 +658,7 @@ int wave_open(int id, int mode, void *args)
 		w->data = malloc(w->length);
 		if( !w->data )
 		{
-			if( errorlog ) fprintf(errorlog, "WAVE malloc(%d) failed\n", w->length);
+			logerror("WAVE malloc(%d) failed\n", w->length);
 			memset(w, 0, sizeof(struct wave_file));
 			return WAVE_ERR;
 		}
@@ -685,22 +683,22 @@ int wave_open(int id, int mode, void *args)
 			/* User supplied fill_wave function? */
 			if( w->fill_wave == NULL )
 			{
-				if( errorlog ) fprintf(errorlog, "WAVE no fill_wave callback, failing now\n");
+				logerror("WAVE no fill_wave callback, failing now\n");
 				return WAVE_ERR;
 			}
 
-			if( errorlog ) fprintf(errorlog, "WAVE creating wave using fill_wave() callback\n");
+			logerror("WAVE creating wave using fill_wave() callback\n");
 
 			/* sanity check: default chunk size is one byte */
 			if( wa->chunk_size == 0 )
 			{
 				wa->chunk_size = 1;
-				if( errorlog ) fprintf(errorlog, "WAVE chunk_size defaults to %d\n", wa->chunk_size);
+				logerror("WAVE chunk_size defaults to %d\n", wa->chunk_size);
 			}
 			if( wa->smpfreq == 0 )
 			{
 				wa->smpfreq = 11025;
-				if( errorlog ) fprintf(errorlog, "WAVE smpfreq defaults to %d\n", w->smpfreq);
+				logerror("WAVE smpfreq defaults to %d\n", w->smpfreq);
 			}
 
 			/* allocate a buffer for the binary data */
@@ -727,12 +725,12 @@ int wave_open(int id, int mode, void *args)
 			w->data = malloc(w->length);
 			if( !w->data )
 			{
-				if( errorlog ) fprintf(errorlog, "WAVE failed to malloc %d bytes\n", w->length);
+				logerror("WAVE failed to malloc %d bytes\n", w->length);
 				/* zap the wave structure */
 				memset(&wave[id], 0, sizeof(struct wave_file));
 				return WAVE_ERR;
 			}
-			if( errorlog ) fprintf(errorlog, "WAVE creating max %d:%02d samples (%d) at %d Hz\n", (w->samples/w->smpfreq)/60, (w->samples/w->smpfreq)%60, w->samples, w->smpfreq);
+			logerror("WAVE creating max %d:%02d samples (%d) at %d Hz\n", (w->samples/w->smpfreq)/60, (w->samples/w->smpfreq)%60, w->samples, w->smpfreq);
 
 			pos = 0;
 			/* if there has to be a header */
@@ -741,13 +739,13 @@ int wave_open(int id, int mode, void *args)
 				length = (*w->fill_wave)((INT16 *)w->data + pos, w->samples - pos, CODE_HEADER);
 				if( length < 0 )
 				{
-					if( errorlog ) fprintf(errorlog, "WAVE conversion aborted at header\n");
+					logerror("WAVE conversion aborted at header\n");
 					free(w->data);
 					/* zap the wave structure */
 					memset(&wave[id], 0, sizeof(struct wave_file));
 					return WAVE_ERR;
 				}
-				if( errorlog ) fprintf(errorlog, "WAVE header %d samples\n", length);
+				logerror("WAVE header %d samples\n", length);
 				pos += length;
 			}
 
@@ -763,7 +761,7 @@ int wave_open(int id, int mode, void *args)
 				length = (*w->fill_wave)((INT16 *)w->data + pos, w->samples - pos, data);
 				if( length < 0 )
 				{
-					if( errorlog ) fprintf(errorlog, "WAVE conversion aborted at %d bytes (%d samples)\n", bytes, pos);
+					logerror("WAVE conversion aborted at %d bytes (%d samples)\n", bytes, pos);
 					free(w->data);
 					/* zap the wave structure */
 					memset(&wave[id], 0, sizeof(struct wave_file));
@@ -771,7 +769,7 @@ int wave_open(int id, int mode, void *args)
 				}
 				pos += length;
 			}
-			if( errorlog ) fprintf(errorlog, "WAVE converted %d data bytes to %d samples\n", bytes, pos);
+			logerror("WAVE converted %d data bytes to %d samples\n", bytes, pos);
 
 			/* if there has to be a trailer */
 			if( wa->trailer_samples )
@@ -781,13 +779,13 @@ int wave_open(int id, int mode, void *args)
 					length = (*w->fill_wave)((INT16 *)w->data + pos, w->samples - pos, CODE_TRAILER);
 					if( length < 0 )
 					{
-						if( errorlog ) fprintf(errorlog, "WAVE conversion aborted at trailer\n");
+						logerror("WAVE conversion aborted at trailer\n");
 						free(w->data);
 						/* zap the wave structure */
 						memset(&wave[id], 0, sizeof(struct wave_file));
 						return WAVE_ERR;
 					}
-					if( errorlog ) fprintf(errorlog, "WAVE trailer %d samples\n", length);
+					logerror("WAVE trailer %d samples\n", length);
 					pos += length;
 				}
 			}
@@ -801,14 +799,13 @@ int wave_open(int id, int mode, void *args)
 				/* failure in the last step? how sad... */
 				if( !w->data )
 				{
-					if( errorlog ) fprintf(errorlog, "WAVE realloc(%d) failed\n", w->length);
+					logerror("WAVE realloc(%d) failed\n", w->length);
 					/* zap the wave structure */
 					memset(&wave[id], 0, sizeof(struct wave_file));
 					return WAVE_ERR;
 				}
 			}
-			if( errorlog )
-				fprintf(errorlog,"WAVE %d samples - %d:%02d\n", w->samples, (w->samples/w->smpfreq)/60, (w->samples/w->smpfreq)%60);
+			logerror("WAVE %d samples - %d:%02d\n", w->samples, (w->samples/w->smpfreq)/60, (w->samples/w->smpfreq)%60);
 			/* hooray! :-) */
 			return INIT_OK;
 		}
@@ -957,7 +954,7 @@ void wave_output(int id, int data)
             w->data = realloc(w->data, w->length);
             if( !w->data )
             {
-                if( errorlog ) fprintf(errorlog, "WAVE realloc(%d) failed\n", w->length);
+                logerror("WAVE realloc(%d) failed\n", w->length);
                 memset(w, 0, sizeof(struct wave_file));
                 return;
             }
@@ -1027,7 +1024,7 @@ int wave_output_chunk(int id, void *src, int count)
 		w->data = realloc(w->data, w->length);
 		if( !w->data )
 		{
-			if( errorlog ) fprintf(errorlog, "WAVE realloc(%d) failed\n", w->length);
+			logerror("WAVE realloc(%d) failed\n", w->length);
 			memset(w, 0, sizeof(struct wave_file));
 			return 0;
 		}

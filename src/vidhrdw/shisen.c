@@ -9,7 +9,7 @@ WRITE_HANDLER( sichuan2_bankswitch_w )
 	int bankaddress;
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
-if (errorlog && (data & 0xc0)) fprintf(errorlog,"bank switch %02x\n",data);
+if (data & 0xc0) logerror("bank switch %02x\n",data);
 
 
 	/* bits 0-2 select ROM bank */

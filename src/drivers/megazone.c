@@ -20,7 +20,7 @@ static unsigned char *megazone_sharedram;
 
 extern unsigned char *megazone_videoram2;
 extern unsigned char *megazone_colorram2;
-extern int megazone_videoram2_size;
+extern size_t megazone_videoram2_size;
 
 static int i8039_irqenable;
 static int i8039_status;

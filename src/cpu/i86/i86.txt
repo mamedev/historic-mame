@@ -1,0 +1,80 @@
+8086 remarks:
+20 bit address bus
+16 bit databus
+6 byte instruction prefetch buffer
+memory cycle in min 4 cycles
+
+8086/8088 errors:
+
+
+Differences between NEC V20 and 8088:
+pin compatible (for the V20 and V30 i am sure) and changable
+faster operation
+additional operations
+(ins,ext insert, remove bitfield)
+(add4s, sub4s, cmp4s add, substract, compare packed decimal string)
+(rol4, ror4 rotate one bcd digit left, right)
+(test1, not1, clr1, set1 test, invert, clear or set one bit)
+(repc,repnc repeat next operation until carry set, cleared)
+(fpo2 call mathematic coprocessor)
+all 80286 realmode operations (other mnemonic, same opcode and behaviour)
+8080 emulation mode
+V20 much like the 8088
+V30 much like the 8086
+V40 much like the 80188
+V50 much like the 80186
+
+Differences between 8086 and 8088:
+8 bit databus
+
+Differences between 8086/8088 and 80186/80188:
+??memory access in 2 cycles
+additional operations
+(pusha, popa: push or pop all register)
+(enter, leave: create or remove procedure frame on stack)
+(ins, outs: input or output of string)
+(bound: )
+(shl, shr: shift left, right register n times)
+(rol, ror: rotate left, right register n times)
+(rolc, rorc: rotate left, right through carry flag n times)
+(push: push immediate value)
+(mul multiply reg or memory with immediate value)
+some integrated peripherals (timer?,...)
+
+Differences between 8086 and 80286:
+memory access in min 2 cycles
+additional 80186 instructions
+24 bit address bus
+faster operation
+protected mode
+
+Difference between 80286 and 80386:
+faster operation
+32 bit address bus
+32 bit databus
+32 bit mode
+additional segment register fs, gs
+additional flags
+additional addressing modes
+paging unit
+additional operations
+(movzx, movsx mov with zero, sign extension)
+(bt, btc, btr, bts test bit, test bit and complement, reset, set)
+(jexcz jump on ecx zero)
+(bsf, bsr bit scan forward, reverse)
+(setb, setbe, sete, setne, setnb, setae, seta,
+ set byte on below, below or equal, equal, not equal, above or equal, above)
+(setl, setle, setge, setg
+ set byte on less, less or equal, greater or equal, greater)
+(seto, setno, setp, setnp, sets, setns 
+ set byte on overflow, parity, sign set or not set)
+(shld, shrd shift left, right double)
+(lfs, lgs, lss)
+(clts)
+8086 emulation mode (v86 mode)
+
+Difference between 80386 and 80386sx:
+24 bit address bus
+16 bis data bus
+
+the other are more and more complex and not so interesting here

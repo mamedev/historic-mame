@@ -85,12 +85,11 @@
 #define VERBOSE 0
 
 #if VERBOSE
-#define LOG(x)	if( errorlog )	fprintf x
+#define LOG(x)	logerror x
 #else
 #define LOG(x)
 #endif
 
-extern FILE *errorlog;
 
 static UINT8 m6809_reg_layout[] = {
 	M6809_PC, M6809_S, M6809_CC, M6809_A, M6809_B, M6809_X, -1,
@@ -573,7 +572,7 @@ void m6809_set_nmi_line(int state)
 {
 	if (m6809.nmi_state == state) return;
 	m6809.nmi_state = state;
-	LOG((errorlog, "M6809#%d set_nmi_line %d\n", cpu_getactivecpu(), state));
+	LOG(("M6809#%d set_nmi_line %d\n", cpu_getactivecpu(), state));
 	if( state == CLEAR_LINE ) return;
 
 	/* if the stack was not yet initialized */
@@ -609,7 +608,7 @@ void m6809_set_nmi_line(int state)
  ****************************************************************************/
 void m6809_set_irq_line(int irqline, int state)
 {
-    LOG((errorlog, "M6809#%d set_irq_line %d, %d\n", cpu_getactivecpu(), irqline, state));
+    LOG(("M6809#%d set_irq_line %d, %d\n", cpu_getactivecpu(), irqline, state));
 	m6809.irq_state[irqline] = state;
 	if (state == CLEAR_LINE) return;
 	CHECK_IRQ_LINES;

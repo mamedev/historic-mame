@@ -50,8 +50,8 @@ void superman_vh_screenrefresh (struct osd_bitmap *bitmap, int full_refresh);
 int superman_vh_start (void);
 void superman_vh_stop (void);
 
-extern int supes_videoram_size;
-extern int supes_attribram_size;
+extern size_t supes_videoram_size;
+extern size_t supes_attribram_size;
 
 extern unsigned char *supes_videoram;
 extern unsigned char *supes_attribram;
@@ -83,7 +83,7 @@ READ_HANDLER( superman_input_r )
 		case 0x06:
 			return readinputport (3);
 		default:
-			if (errorlog) fprintf (errorlog, "superman_input_r offset: %04x\n", offset);
+			logerror("superman_input_r offset: %04x\n", offset);
 			return 0xff;
 	}
 }

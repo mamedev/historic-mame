@@ -184,7 +184,7 @@ static WRITE_HANDLER( panic_sound_output_w )
     }
 
     #ifdef MAME_DEBUG
- 	if(errorlog) fprintf(errorlog,"Sound output %x=%x\n",offset,data);
+ 	logerror("Sound output %x=%x\n",offset,data);
 	#endif
 }
 
@@ -254,8 +254,7 @@ WRITE_HANDLER( cosmicg_output_w )
     }
 
 	#ifdef MAME_DEBUG
- 	if((errorlog) && (offset != 11))
-		fprintf(errorlog,"Output %x=%x\n",offset,data);
+ 	if (offset != 11) logerror("Output %x=%x\n",offset,data);
     #endif
 }
 

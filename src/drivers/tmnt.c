@@ -113,8 +113,8 @@ static WRITE_HANDLER( K053245_scattered_word_w )
 	else
 	{
 		offset = ((offset & 0x001c) >> 1) | ((offset & 0x3f80) >> 3);
-//if (errorlog && (offset&0xf) == 0)
-//	fprintf(errorlog,"%04x: write %02x to spriteram %04x\n",cpu_get_pc(),data,offset);
+//if ((offset&0xf) == 0)
+//	logerror("%04x: write %02x to spriteram %04x\n",cpu_get_pc(),data,offset);
 		K053245_word_w(offset,data);
 	}
 }
@@ -345,7 +345,7 @@ static READ_HANDLER( ssriders_kludge_r )
 {
     int data = cpu_readmem24_word(0x105a0a);
 
-    if (errorlog) fprintf(errorlog,"%06x: read 1c0800 (D7=%02x 105a0a=%02x)\n",cpu_get_pc(),cpu_get_reg(M68K_D7),data);
+    logerror("%06x: read 1c0800 (D7=%02x 105a0a=%02x)\n",cpu_get_pc(),cpu_get_reg(M68K_D7),data);
 
     if (data == 0x075c) data = 0x0064;
 
@@ -835,7 +835,7 @@ WRITE_HANDLER( tmnt2_1c0800_w )
 			y += READ_WORD( &sunset_104000[CellVar + 0x10] );
 		cpu_writemem24_word(dst+0x08,y);
 #if 0
-if (errorlog) fprintf(errorlog,"copy command %04x sprite %08x data %08x: %04x%04x %04x%04x  modifiers %08x:%04x%04x %04x%04x %04x%04x %04x%04x %04x%04x %04x%04x %04x%04x %04x%04x %04x%04x %04x%04x %04x%04x %04x%04x\n",
+logerror("copy command %04x sprite %08x data %08x: %04x%04x %04x%04x  modifiers %08x:%04x%04x %04x%04x %04x%04x %04x%04x %04x%04x %04x%04x %04x%04x %04x%04x %04x%04x %04x%04x %04x%04x %04x%04x\n",
 	READ_WORD( &tmnt2_1c0800[0x10] ),
 	CellDest,CellSrc,
 	READ_WORD(src+0),READ_WORD(src+2),READ_WORD(src+4),READ_WORD(src+6),

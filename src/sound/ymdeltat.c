@@ -74,20 +74,20 @@ void YM_DELTAT_ADPCM_Write(YM_DELTAT *DELTAT,int r,int v)
 				//Log(LOG_ERR,"YM Delta-T ADPCM rom not mapped\n");
 				DELTAT->flag = 0;
 				DELTAT->portstate = 0x00;
-				//if(errorlog) fprintf(errorlog,"DELTAT memory 0\n");
+				//logerror("DELTAT memory 0\n");
 			}else{
 				if( DELTAT->end >= DELTAT->memory_size )
 				{		// Check End in Range
 					//Log(LOG_ERR,"YM Delta-T ADPCM end out of range: $%08x\n",DELTAT->end);
 					DELTAT->end = DELTAT->memory_size - 1;
-					//if(errorlog) fprintf(errorlog,"DELTAT end over\n");
+					//logerror("DELTAT end over\n");
 				}
 				if( DELTAT->start >= DELTAT->memory_size )
 				{		// Check Start in Range
 					//Log(LOG_ERR,"YM Delta-T ADPCM start out of range: $%08x\n",DELTAT->start);
 					DELTAT->flag = 0;
 					DELTAT->portstate = 0x00;
-					//if(errorlog) fprintf(errorlog,"DELTAT start under\n");
+					//logerror("DELTAT start under\n");
 				}
 			}
 		} else if( v&0x01 ){

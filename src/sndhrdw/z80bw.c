@@ -136,7 +136,7 @@ WRITE_HANDLER( astinvad_sh_port_4_w )
 	if ( bitsGoneHigh & OUT_PORT_4_INVADERHIT )  PLAY( SND_INVADERHIT, 0 );
 	if ( bitsGoneLow  & OUT_PORT_4_INVADERHIT )  STOP( SND_INVADERHIT );
 
-	if ((bitsChanged & OUT_PORT_4_UNUSED) && errorlog)  fprintf(errorlog, "Snd Port 4 = %02X\n", data & OUT_PORT_4_UNUSED);
+	if ( bitsChanged & OUT_PORT_4_UNUSED ) logerror("Snd Port 4 = %02X\n", data & OUT_PORT_4_UNUSED);
 }
 
 
@@ -170,6 +170,6 @@ WRITE_HANDLER( astinvad_sh_port_5_w )
 
 	if ( bitsChanged  & OUT_PORT_5_FLIP )  invaders_flipscreen_w(data & 0x20);
 
-	if ((bitsChanged  & OUT_PORT_5_UNUSED) && errorlog)  fprintf(errorlog, "Snd Port 5 = %02X\n", data & OUT_PORT_5_UNUSED);
+	if ( bitsChanged  & OUT_PORT_5_UNUSED ) logerror("Snd Port 5 = %02X\n", data & OUT_PORT_5_UNUSED);
 }
 

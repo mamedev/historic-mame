@@ -51,9 +51,9 @@ unsigned char *speedbal_foreground_videoram;
 unsigned char *speedbal_background_videoram;
 unsigned char *speedbal_sprites_dataram;
 
-int speedbal_foreground_videoram_size;
-int speedbal_background_videoram_size;
-int speedbal_sprites_dataram_size;
+size_t speedbal_foreground_videoram_size;
+size_t speedbal_background_videoram_size;
+size_t speedbal_sprites_dataram_size;
 
 int  speedbal_vh_start(void);
 void speedbal_vh_stop(void);

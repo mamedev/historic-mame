@@ -10,8 +10,8 @@ Driver by Manuel Abadia <manu@teleline.es>
 #include "cpu/m6809/m6809.h"
 #include "vidhrdw/generic.h"
 
-extern int int_enable_0;
-extern int int_enable_1;
+extern int ddrible_int_enable_0;
+extern int ddrible_int_enable_1;
 
 static unsigned char *ddrible_sharedram;
 static unsigned char *ddrible_snd_sharedram;
@@ -35,14 +35,14 @@ WRITE_HANDLER( K005885_1_w );
 
 static int ddrible_interrupt_0( void )
 {
-	if (int_enable_0)
+	if (ddrible_int_enable_0)
 		return M6809_INT_FIRQ;
 	return ignore_interrupt();
 }
 
 static int ddrible_interrupt_1( void )
 {
-	if (int_enable_1)
+	if (ddrible_int_enable_1)
 		return M6809_INT_FIRQ;
 	return ignore_interrupt();
 }

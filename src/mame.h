@@ -1,6 +1,7 @@
 #ifndef MACHINE_H
 #define MACHINE_H
 
+#include "osdepend.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -10,7 +11,6 @@
 #endif
 
 extern char build_version[];
-extern FILE *errorlog;
 
 #define MAX_GFX_ELEMENTS 32
 #define MAX_MEMORY_REGIONS 32
@@ -70,6 +70,8 @@ struct GameOptions {
 	FILE *errorlog;
 	void *record;
 	void *playback;
+	void *language_file; /* LBO 042400 */
+
 	int mame_debug;
 	int cheat;
 	int gui_host;
@@ -103,5 +105,7 @@ int run_game (int game);
 int updatescreen(void);
 /* osd_fopen() must use this to know if high score files can be used */
 int mame_highscore_enabled(void);
+
+void CLIB_DECL logerror(const char *text,...);
 
 #endif

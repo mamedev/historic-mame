@@ -180,9 +180,7 @@ static int snk_input_port_r( int which ){
 		case SNK_INP10: return input_port_10_r(0);
 
 		default:
-		if( errorlog ){
-			fprintf( errorlog, "read from unmapped input port:%d\n", which );
-		}
+		logerror("read from unmapped input port:%d\n", which );
 		break;
 	}
 	return 0;

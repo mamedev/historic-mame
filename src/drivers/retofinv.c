@@ -22,7 +22,7 @@ WRITE_HANDLER( retofinv_bg_colorram_w );
 WRITE_HANDLER( retofinv_fg_colorram_w );
 WRITE_HANDLER( retofinv_flip_screen_w );
 
-extern int retofinv_videoram_size;
+extern size_t retofinv_videoram_size;
 extern unsigned char *retofinv_sprite_ram1;
 extern unsigned char *retofinv_sprite_ram2;
 extern unsigned char *retofinv_sprite_ram3;

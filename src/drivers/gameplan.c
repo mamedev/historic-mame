@@ -26,11 +26,7 @@ static int gameplan_current_port;
 static WRITE_HANDLER( gameplan_port_select_w )
 {
 #ifdef VERY_VERBOSE
-	if (errorlog)
-	{
-		fprintf(errorlog, "VIA 2: PC %04x: %x -> reg%X\n",
-				cpu_get_pc(), data, offset);
-	}
+	logerror("VIA 2: PC %04x: %x -> reg%X\n",cpu_get_pc(), data, offset);
 #endif /* VERY_VERBOSE */
 
 	switch (offset)
@@ -47,50 +43,41 @@ static WRITE_HANDLER( gameplan_port_select_w )
 
 				default:
 #ifdef VERBOSE
-					if (errorlog)
-						fprintf(errorlog, "  VIA 2: strange port request byte: %02x\n", data);
+					logerror("  VIA 2: strange port request byte: %02x\n", data);
 #endif
 					return;
 			}
 
 #ifdef VERBOSE
-			if (errorlog) fprintf(errorlog, "  VIA 2: selected port %d\n", gameplan_current_port);
+			logerror("  VIA 2: selected port %d\n", gameplan_current_port);
 #endif
 			break;
 
 		case 0x02:
 #ifdef VERBOSE
-			if (errorlog) fprintf(errorlog, "  VIA 2: wrote %02x to Data Direction Register B\n", data);
+			logerror("  VIA 2: wrote %02x to Data Direction Register B\n", data);
 #endif
 			break;
 
 		case 0x03:
 #ifdef VERBOSE
-			if (errorlog) fprintf(errorlog, "  VIA 2: wrote %02x to Data Direction Register A\n", data);
+			logerror("  VIA 2: wrote %02x to Data Direction Register A\n", data);
 #endif
 			break;
 
 		case 0x0c:
-			if (errorlog)
+			if (data == 0xec || data == 0xcc)
 			{
-				if (data == 0xec || data == 0xcc)
-				{
 #ifdef VERBOSE
-					fprintf(errorlog,
-							"  VIA 2: initialised Peripheral Control Register to 0x%02x for VIA 2\n",
-							data);
+				logerror("  VIA 2: initialised Peripheral Control Register to 0x%02x for VIA 2\n",data);
 #endif
-				}
-				else
-					fprintf(errorlog,
-							"  VIA 2: unusual Peripheral Control Register value 0x%02x for VIA 2\n",
-							data);
 			}
+			else
+				logerror("  VIA 2: unusual Peripheral Control Register value 0x%02x for VIA 2\n",data);
 			break;
 
 		default:
-			if (errorlog)
-				fprintf(errorlog, "  VIA 2: unexpected register written to in VIA 2: %02x -> %02x\n",
+			logerror("  VIA 2: unexpected register written to in VIA 2: %02x -> %02x\n",
 						data, offset);
 			break;
 	}

@@ -24,7 +24,7 @@
 #if (HAS_8080 || HAS_8085A)
 #include "cpu/i8085/i8085.h"
 #endif
-#if (HAS_M6502 || HAS_M65C02 || HAS_M65SC02 || HAS_M6510 || HAS_N2A03)
+#if (HAS_M6502 || HAS_M65C02 || HAS_M65SC02 || HAS_M6510 || HAS_M6510T || HAS_M7501 || HAS_M8502 || HAS_N2A03)
 #include "cpu/m6502/m6502.h"
 #endif
 #if (HAS_M65CE02)
@@ -37,7 +37,19 @@
 #include "cpu/h6280/h6280.h"
 #endif
 #if (HAS_I86)
-#include "cpu/i86/i86intrf.h"
+#include "cpu/i86/i86intf.h"
+#endif
+#if (HAS_I88)
+#include "cpu/i86/i88intf.h"
+#endif
+#if (HAS_I186)
+#include "cpu/i86/i186intf.h"
+#endif
+#if (HAS_I188)
+#include "cpu/i86/i188intf.h"
+#endif
+#if (HAS_I286)
+#include "cpu/i86/i286intf.h"
 #endif
 #if (HAS_V20 || HAS_V30 || HAS_V33)
 #include "cpu/nec/necintrf.h"
@@ -98,9 +110,8 @@
 #define VERBOSE 0
 
 #define SAVE_STATE_TEST 0
-
 #if VERBOSE
-#define LOG(x)	if( errorlog ) fprintf x
+#define LOG(x)	logerror x
 #else
 #define LOG(x)
 #endif
@@ -338,6 +349,15 @@ struct cpu_interface cpuintf[] =
 #if (HAS_M6510)
 	CPU0(M6510,    m6510,	 1,  0,1.00,M6510_INT_NONE,    M6510_INT_IRQ,  M6510_INT_NMI,  16,	  0,16,LE,1, 3,16	),
 #endif
+#if (HAS_M6510T)
+	CPU0(M6510T,   m6510t,	 1,  0,1.00,M6510T_INT_NONE,   M6510T_INT_IRQ, M6510T_INT_NMI, 16,	  0,16,LE,1, 3,16	),
+#endif
+#if (HAS_M7501)
+	CPU0(M7501,    m7501,	 1,  0,1.00,M7501_INT_NONE,    M7501_INT_IRQ,  M7501_INT_NMI,  16,	  0,16,LE,1, 3,16	),
+#endif
+#if (HAS_M8502)
+	CPU0(M8502,    m8502,	 1,  0,1.00,M8502_INT_NONE,    M8502_INT_IRQ,  M8502_INT_NMI,  16,	  0,16,LE,1, 3,16	),
+#endif
 #if (HAS_N2A03)
 	CPU0(N2A03,    n2a03,	 1,  0,1.00,N2A03_INT_NONE,    N2A03_INT_IRQ,  N2A03_INT_NMI,  16,	  0,16,LE,1, 3,16	),
 #endif
@@ -347,6 +367,18 @@ struct cpu_interface cpuintf[] =
 #if (HAS_I86)
 	CPU0(I86,	   i86, 	 1,  0,1.00,I86_INT_NONE,	   -1000,		   I86_NMI_INT,    20,	  0,20,LE,1, 5,20	),
 #endif
+#if (HAS_I88)
+	CPU0(I88,	   i88, 	 1,  0,1.00,I88_INT_NONE,	   -1000,		   I88_NMI_INT,    20,	  0,20,LE,1, 5,20	),
+#endif
+#if (HAS_I186)
+	CPU0(I186,	   i186,	 1,  0,1.00,I186_INT_NONE,	   -1000,		   I186_NMI_INT,   20,	  0,20,LE,1, 5,20	),
+#endif
+#if (HAS_I188)
+	CPU0(I188,	   i188,	 1,  0,1.00,I188_INT_NONE,	   -1000,		   I188_NMI_INT,   20,	  0,20,LE,1, 5,20	),
+#endif
+#if (HAS_I286)
+	CPU0(I286,	   i286,	 1,  0,1.00,I286_INT_NONE,	   -1000,		   I286_NMI_INT,   24,	  0,24,LE,1, 5,24	),
+#endif
 #if (HAS_V20)
 	CPU0(V20,	   v20, 	 1,  0,1.00,NEC_INT_NONE,	   -1000,		   NEC_NMI_INT,    20,	  0,20,LE,1, 5,20	),
 #endif
@@ -354,7 +386,7 @@ struct cpu_interface cpuintf[] =
 	CPU0(V30,	   v30, 	 1,  0,1.00,NEC_INT_NONE,	   -1000,		   NEC_NMI_INT,    20,	  0,20,LE,1, 5,20	),
 #endif
 #if (HAS_V33)
-	CPU0(V33,	   v33, 	 1,  0,1.05,NEC_INT_NONE,	   -1000,		   NEC_NMI_INT,    20,	  0,20,LE,1, 5,20	),
+	CPU0(V33,	   v33, 	 1,  0,1.20,NEC_INT_NONE,	   -1000,		   NEC_NMI_INT,    20,	  0,20,LE,1, 5,20	),
 #endif
 #if (HAS_I8035)
 	CPU0(I8035,    i8035,	 1,  0,1.00,I8035_IGNORE_INT,  I8035_EXT_INT,  -1,			   16,	  0,16,LE,1, 2,16	),
@@ -480,7 +512,7 @@ void cpu_init(void)
 	{
 		if( cpuintf[i].cpu_num != i )
 		{
-if (errorlog) fprintf( errorlog, "CPU #%d [%s] wrong ID %d: check enum CPU_... in src/driver.h!\n", i, cputype_name(i), cpuintf[i].cpu_num);
+logerror("CPU #%d [%s] wrong ID %d: check enum CPU_... in src/driver.h!\n", i, cputype_name(i), cpuintf[i].cpu_num);
 			exit(1);
 		}
 	}
@@ -520,7 +552,7 @@ void cpu_run(void)
 		if( size == 0 )
 		{
 			/* That can't really be true */
-if (errorlog) fprintf( errorlog, "CPU #%d claims to need no context buffer!\n", i);
+logerror("CPU #%d claims to need no context buffer!\n", i);
 			raise( SIGABRT );
 		}
 
@@ -528,7 +560,7 @@ if (errorlog) fprintf( errorlog, "CPU #%d claims to need no context buffer!\n", 
 		if( cpu[i].context == NULL )
 		{
 			/* That's really bad :( */
-if (errorlog) fprintf( errorlog, "CPU #%d failed to allocate context buffer (%d bytes)!\n", i, size);
+logerror("CPU #%d failed to allocate context buffer (%d bytes)!\n", i, size);
 			raise( SIGABRT );
 		}
 
@@ -595,7 +627,7 @@ reset:
 	have_to_reset = 0;
 	vblank = 0;
 
-if (errorlog) fprintf(errorlog,"Machine reset\n");
+logerror("Machine reset\n");
 
 	/* start with interrupts enabled, so the generic routine will work even if */
 	/* the machine doesn't have an interrupt enable port */
@@ -1079,7 +1111,7 @@ static int cpu_0_irq_callback(int irqline)
 		SETIRQLINE(0, irqline, CLEAR_LINE);
 		irq_line_state[0 * MAX_IRQ_LINES + irqline] = CLEAR_LINE;
 	}
-	LOG((errorlog, "cpu_0_irq_callback(%d) $%04x\n", irqline, irq_line_vector[0 * MAX_IRQ_LINES + irqline]));
+	LOG(("cpu_0_irq_callback(%d) $%04x\n", irqline, irq_line_vector[0 * MAX_IRQ_LINES + irqline]));
 	return irq_line_vector[0 * MAX_IRQ_LINES + irqline];
 }
 
@@ -1090,7 +1122,7 @@ static int cpu_1_irq_callback(int irqline)
 		SETIRQLINE(1, irqline, CLEAR_LINE);
 		irq_line_state[1 * MAX_IRQ_LINES + irqline] = CLEAR_LINE;
 	}
-	LOG((errorlog, "cpu_1_irq_callback(%d) $%04x\n", irqline, irq_line_vector[1 * MAX_IRQ_LINES + irqline]));
+	LOG(("cpu_1_irq_callback(%d) $%04x\n", irqline, irq_line_vector[1 * MAX_IRQ_LINES + irqline]));
 	return irq_line_vector[1 * MAX_IRQ_LINES + irqline];
 }
 
@@ -1101,7 +1133,7 @@ static int cpu_2_irq_callback(int irqline)
 		SETIRQLINE(2, irqline, CLEAR_LINE);
 		irq_line_state[2 * MAX_IRQ_LINES + irqline] = CLEAR_LINE;
 	}
-	LOG((errorlog, "cpu_2_irq_callback(%d) $%04x\n", irqline, irq_line_vector[2 * MAX_IRQ_LINES + irqline]));
+	LOG(("cpu_2_irq_callback(%d) $%04x\n", irqline, irq_line_vector[2 * MAX_IRQ_LINES + irqline]));
 	return irq_line_vector[2 * MAX_IRQ_LINES + irqline];
 }
 
@@ -1112,7 +1144,7 @@ static int cpu_3_irq_callback(int irqline)
 		SETIRQLINE(3, irqline, CLEAR_LINE);
 		irq_line_state[3 * MAX_IRQ_LINES + irqline] = CLEAR_LINE;
 	}
-	LOG((errorlog, "cpu_3_irq_callback(%d) $%04x\n", irqline, irq_line_vector[2 * MAX_IRQ_LINES + irqline]));
+	LOG(("cpu_3_irq_callback(%d) $%04x\n", irqline, irq_line_vector[2 * MAX_IRQ_LINES + irqline]));
 	return irq_line_vector[3 * MAX_IRQ_LINES + irqline];
 }
 
@@ -1138,11 +1170,11 @@ void cpu_irq_line_vector_w(int cpunum, int irqline, int vector)
 	irqline &= (MAX_IRQ_LINES - 1);
 	if( irqline < cpu[cpunum].intf->num_irqs )
 	{
-		LOG((errorlog,"cpu_irq_line_vector_w(%d,%d,$%04x)\n",cpunum,irqline,vector));
+		LOG(("cpu_irq_line_vector_w(%d,%d,$%04x)\n",cpunum,irqline,vector));
 		irq_line_vector[cpunum * MAX_IRQ_LINES + irqline] = vector;
 		return;
 	}
-	LOG((errorlog, "cpu_irq_line_vector_w CPU#%d irqline %d > max irq lines\n", cpunum, irqline));
+	LOG(("cpu_irq_line_vector_w CPU#%d irqline %d > max irq lines\n", cpunum, irqline));
 }
 
 /***************************************************************************
@@ -1170,7 +1202,7 @@ void cpu_set_nmi_line(int cpunum, int state)
 	/* don't trigger interrupts on suspended CPUs */
 	if (cpu_getstatus(cpunum) == 0) return;
 
-	LOG((errorlog,"cpu_set_nmi_line(%d,%d)\n",cpunum,state));
+	LOG(("cpu_set_nmi_line(%d,%d)\n",cpunum,state));
 	timer_set(TIME_NOW, (cpunum & 7) | (state << 3), cpu_manualnmicallback);
 }
 
@@ -1185,7 +1217,7 @@ void cpu_set_irq_line(int cpunum, int irqline, int state)
 	/* don't trigger interrupts on suspended CPUs */
 	if (cpu_getstatus(cpunum) == 0) return;
 
-	LOG((errorlog,"cpu_set_irq_line(%d,%d,%d)\n",cpunum,irqline,state));
+	LOG(("cpu_set_irq_line(%d,%d,%d)\n",cpunum,irqline,state));
 	timer_set(TIME_NOW, (irqline & 7) | ((cpunum & 7) << 3) | (state << 6), cpu_manualirqcallback);
 }
 
@@ -1228,7 +1260,7 @@ WRITE_HANDLER( interrupt_vector_w )
 	int cpunum = (activecpu < 0) ? 0 : activecpu;
 	if (interrupt_vector[cpunum] != data)
 	{
-		LOG((errorlog,"CPU#%d interrupt_vector_w $%02x\n", cpunum, data));
+		LOG(("CPU#%d interrupt_vector_w $%02x\n", cpunum, data));
 		interrupt_vector[cpunum] = data;
 
 		/* make sure there are no queued interrupts */
@@ -1434,7 +1466,7 @@ static void cpu_manualnmicallback(int param)
 	memorycontextswap(activecpu);
 	if (cpu[activecpu].save_context) SETCONTEXT(activecpu, cpu[activecpu].context);
 
-	LOG((errorlog,"cpu_manualnmicallback %d,%d\n",cpunum,state));
+	LOG(("cpu_manualnmicallback %d,%d\n",cpunum,state));
 
 	switch (state)
 	{
@@ -1450,7 +1482,7 @@ static void cpu_manualnmicallback(int param)
 			SETNMILINE(cpunum,CLEAR_LINE);
 			break;
 		default:
-			if( errorlog ) fprintf( errorlog, "cpu_manualnmicallback cpu #%d unknown state %d\n", cpunum, state);
+			logerror("cpu_manualnmicallback cpu #%d unknown state %d\n", cpunum, state);
 	}
 	/* update the CPU's context */
 	if (cpu[activecpu].save_context) GETCONTEXT(activecpu, cpu[activecpu].context);
@@ -1476,7 +1508,7 @@ static void cpu_manualirqcallback(int param)
 	memorycontextswap(activecpu);
 	if (cpu[activecpu].save_context) SETCONTEXT(activecpu, cpu[activecpu].context);
 
-	LOG((errorlog,"cpu_manualirqcallback %d,%d,%d\n",cpunum,irqline,state));
+	LOG(("cpu_manualirqcallback %d,%d,%d\n",cpunum,irqline,state));
 
 	irq_line_state[cpunum * MAX_IRQ_LINES + irqline] = state;
 	switch (state)
@@ -1493,7 +1525,7 @@ static void cpu_manualirqcallback(int param)
 			SETIRQLINE(cpunum,irqline,CLEAR_LINE);
 			break;
 		default:
-			if( errorlog ) fprintf( errorlog, "cpu_manualirqcallback cpu #%d, line %d, unknown state %d\n", cpunum, irqline, state);
+			logerror("cpu_manualirqcallback cpu #%d, line %d, unknown state %d\n", cpunum, irqline, state);
 	}
 
 	/* update the CPU's context */
@@ -1531,7 +1563,7 @@ static void cpu_internalintcallback(int param)
 	int type = param >> 3;
 	int cpunum = param & 7;
 
-	LOG((errorlog,"CPU#%d internal interrupt type $%04x\n", cpunum, type));
+	LOG(("CPU#%d internal interrupt type $%04x\n", cpunum, type));
 	/* generate the interrupt */
 	cpu_internal_interrupt(cpunum, type);
 }
@@ -1554,12 +1586,12 @@ static void cpu_generate_interrupt(int cpunum, int (*func)(void), int num)
 	/* wrapper for the new interrupt system */
 	if (num != INT_TYPE_NONE(cpunum))
 	{
-		LOG((errorlog,"CPU#%d interrupt type $%04x: ", cpunum, num));
+		LOG(("CPU#%d interrupt type $%04x: ", cpunum, num));
 		/* is it the NMI type interrupt of that CPU? */
 		if (num == INT_TYPE_NMI(cpunum))
 		{
 
-			LOG((errorlog,"NMI\n"));
+			LOG(("NMI\n"));
 			cpu_manualnmicallback(cpunum | (PULSE_LINE << 3) );
 
 		}
@@ -1570,14 +1602,14 @@ static void cpu_generate_interrupt(int cpunum, int (*func)(void), int num)
 			switch (CPU_TYPE(cpunum))
 			{
 #if (HAS_Z80)
-			case CPU_Z80:				irq_line = 0; LOG((errorlog,"Z80 IRQ\n")); break;
+			case CPU_Z80:				irq_line = 0; LOG(("Z80 IRQ\n")); break;
 #endif
 #if (HAS_8080)
 			case CPU_8080:
 				switch (num)
 				{
-				case I8080_INTR:		irq_line = 0; LOG((errorlog,"I8080 INTR\n")); break;
-				default:				irq_line = 0; LOG((errorlog,"I8080 unknown\n"));
+				case I8080_INTR:		irq_line = 0; LOG(("I8080 INTR\n")); break;
+				default:				irq_line = 0; LOG(("I8080 unknown\n"));
 				}
 				break;
 #endif
@@ -1585,104 +1617,125 @@ static void cpu_generate_interrupt(int cpunum, int (*func)(void), int num)
 			case CPU_8085A:
 				switch (num)
 				{
-				case I8085_INTR:		irq_line = 0; LOG((errorlog,"I8085 INTR\n")); break;
-				case I8085_RST55:		irq_line = 1; LOG((errorlog,"I8085 RST55\n")); break;
-				case I8085_RST65:		irq_line = 2; LOG((errorlog,"I8085 RST65\n")); break;
-				case I8085_RST75:		irq_line = 3; LOG((errorlog,"I8085 RST75\n")); break;
-				default:				irq_line = 0; LOG((errorlog,"I8085 unknown\n"));
+				case I8085_INTR:		irq_line = 0; LOG(("I8085 INTR\n")); break;
+				case I8085_RST55:		irq_line = 1; LOG(("I8085 RST55\n")); break;
+				case I8085_RST65:		irq_line = 2; LOG(("I8085 RST65\n")); break;
+				case I8085_RST75:		irq_line = 3; LOG(("I8085 RST75\n")); break;
+				default:				irq_line = 0; LOG(("I8085 unknown\n"));
 				}
 				break;
 #endif
 #if (HAS_M6502)
-			case CPU_M6502: 			irq_line = 0; LOG((errorlog,"M6502 IRQ\n")); break;
+			case CPU_M6502: 			irq_line = 0; LOG(("M6502 IRQ\n")); break;
 #endif
 #if (HAS_M65C02)
-			case CPU_M65C02:			irq_line = 0; LOG((errorlog,"M65C02 IRQ\n")); break;
+			case CPU_M65C02:			irq_line = 0; LOG(("M65C02 IRQ\n")); break;
 #endif
 #if (HAS_M65SC02)
-			case CPU_M65SC02:			irq_line = 0; LOG((errorlog,"M65SC02 IRQ\n")); break;
+			case CPU_M65SC02:			irq_line = 0; LOG(("M65SC02 IRQ\n")); break;
 #endif
 #if (HAS_M65CE02)
-			case CPU_M65CE02:			irq_line = 0; LOG((errorlog,"M65CE02 IRQ\n")); break;
+			case CPU_M65CE02:			irq_line = 0; LOG(("M65CE02 IRQ\n")); break;
 #endif
 #if (HAS_M6509)
-			case CPU_M6509: 			irq_line = 0; LOG((errorlog,"M6509 IRQ\n")); break;
+			case CPU_M6509: 			irq_line = 0; LOG(("M6509 IRQ\n")); break;
 #endif
 #if (HAS_M6510)
-			case CPU_M6510: 			irq_line = 0; LOG((errorlog,"M6510 IRQ\n")); break;
+			case CPU_M6510: 			irq_line = 0; LOG(("M6510 IRQ\n")); break;
+#endif
+#if (HAS_M6510T)
+			case CPU_M6510T:			irq_line = 0; LOG(("M6510T IRQ\n")); break;
+#endif
+#if (HAS_M7501)
+			case CPU_M7501: 			irq_line = 0; LOG(("M7501 IRQ\n")); break;
+#endif
+#if (HAS_M8502)
+			case CPU_M8502: 			irq_line = 0; LOG(("M8502 IRQ\n")); break;
 #endif
 #if (HAS_N2A03)
-			case CPU_N2A03: 			irq_line = 0; LOG((errorlog,"N2A03 IRQ\n")); break;
+			case CPU_N2A03: 			irq_line = 0; LOG(("N2A03 IRQ\n")); break;
 #endif
 #if (HAS_H6280)
 			case CPU_H6280:
 				switch (num)
 				{
-				case H6280_INT_IRQ1:	irq_line = 0; LOG((errorlog,"H6280 INT 1\n")); break;
-				case H6280_INT_IRQ2:	irq_line = 1; LOG((errorlog,"H6280 INT 2\n")); break;
-				case H6280_INT_TIMER:	irq_line = 2; LOG((errorlog,"H6280 TIMER INT\n")); break;
-				default:				irq_line = 0; LOG((errorlog,"H6280 unknown\n"));
+				case H6280_INT_IRQ1:	irq_line = 0; LOG(("H6280 INT 1\n")); break;
+				case H6280_INT_IRQ2:	irq_line = 1; LOG(("H6280 INT 2\n")); break;
+				case H6280_INT_TIMER:	irq_line = 2; LOG(("H6280 TIMER INT\n")); break;
+				default:				irq_line = 0; LOG(("H6280 unknown\n"));
 				}
 				break;
 #endif
 #if (HAS_I86)
-			case CPU_I86:				irq_line = 0; LOG((errorlog,"I86 IRQ\n")); break;
+			case CPU_I86:				irq_line = 0; LOG(("I86 IRQ\n")); break;
+#endif
+#if (HAS_I88)
+			case CPU_I88:				irq_line = 0; LOG(("I88 IRQ\n")); break;
+#endif
+#if (HAS_I186)
+			case CPU_I186:				irq_line = 0; LOG(("I186 IRQ\n")); break;
+#endif
+#if (HAS_I188)
+			case CPU_I188:				irq_line = 0; LOG(("I188 IRQ\n")); break;
+#endif
+#if (HAS_I286)
+			case CPU_I286:				irq_line = 0; LOG(("I286 IRQ\n")); break;
 #endif
 #if (HAS_V20)
-			case CPU_V20:				irq_line = 0; LOG((errorlog,"V20 IRQ\n")); break;
+			case CPU_V20:				irq_line = 0; LOG(("V20 IRQ\n")); break;
 #endif
 #if (HAS_V30)
-			case CPU_V30:				irq_line = 0; LOG((errorlog,"V30 IRQ\n")); break;
+			case CPU_V30:				irq_line = 0; LOG(("V30 IRQ\n")); break;
 #endif
 #if (HAS_V33)
-			case CPU_V33:				irq_line = 0; LOG((errorlog,"V33 IRQ\n")); break;
+			case CPU_V33:				irq_line = 0; LOG(("V33 IRQ\n")); break;
 #endif
 #if (HAS_I8035)
-			case CPU_I8035: 			irq_line = 0; LOG((errorlog,"I8035 IRQ\n")); break;
+			case CPU_I8035: 			irq_line = 0; LOG(("I8035 IRQ\n")); break;
 #endif
 #if (HAS_I8039)
-			case CPU_I8039: 			irq_line = 0; LOG((errorlog,"I8039 IRQ\n")); break;
+			case CPU_I8039: 			irq_line = 0; LOG(("I8039 IRQ\n")); break;
 #endif
 #if (HAS_I8048)
-			case CPU_I8048: 			irq_line = 0; LOG((errorlog,"I8048 IRQ\n")); break;
+			case CPU_I8048: 			irq_line = 0; LOG(("I8048 IRQ\n")); break;
 #endif
 #if (HAS_N7751)
-			case CPU_N7751: 			irq_line = 0; LOG((errorlog,"N7751 IRQ\n")); break;
+			case CPU_N7751: 			irq_line = 0; LOG(("N7751 IRQ\n")); break;
 #endif
 #if (HAS_M6800)
-			case CPU_M6800: 			irq_line = 0; LOG((errorlog,"M6800 IRQ\n")); break;
+			case CPU_M6800: 			irq_line = 0; LOG(("M6800 IRQ\n")); break;
 #endif
 #if (HAS_M6801)
-			case CPU_M6801: 			irq_line = 0; LOG((errorlog,"M6801 IRQ\n")); break;
+			case CPU_M6801: 			irq_line = 0; LOG(("M6801 IRQ\n")); break;
 #endif
 #if (HAS_M6802)
-			case CPU_M6802: 			irq_line = 0; LOG((errorlog,"M6802 IRQ\n")); break;
+			case CPU_M6802: 			irq_line = 0; LOG(("M6802 IRQ\n")); break;
 #endif
 #if (HAS_M6803)
-			case CPU_M6803: 			irq_line = 0; LOG((errorlog,"M6803 IRQ\n")); break;
+			case CPU_M6803: 			irq_line = 0; LOG(("M6803 IRQ\n")); break;
 #endif
 #if (HAS_M6808)
-			case CPU_M6808: 			irq_line = 0; LOG((errorlog,"M6808 IRQ\n")); break;
+			case CPU_M6808: 			irq_line = 0; LOG(("M6808 IRQ\n")); break;
 #endif
 #if (HAS_HD63701)
-			case CPU_HD63701:			irq_line = 0; LOG((errorlog,"HD63701 IRQ\n")); break;
+			case CPU_HD63701:			irq_line = 0; LOG(("HD63701 IRQ\n")); break;
 #endif
 #if (HAS_M6805)
-			case CPU_M6805: 			irq_line = 0; LOG((errorlog,"M6805 IRQ\n")); break;
+			case CPU_M6805: 			irq_line = 0; LOG(("M6805 IRQ\n")); break;
 #endif
 #if (HAS_M68705)
-			case CPU_M68705:			irq_line = 0; LOG((errorlog,"M68705 IRQ\n")); break;
+			case CPU_M68705:			irq_line = 0; LOG(("M68705 IRQ\n")); break;
 #endif
 #if (HAS_HD63705)
-			case CPU_HD63705:			irq_line = 0; LOG((errorlog,"HD68705 IRQ\n")); break;
+			case CPU_HD63705:			irq_line = 0; LOG(("HD68705 IRQ\n")); break;
 #endif
 #if (HAS_HD6309)
 			case CPU_HD6309:
 				switch (num)
 				{
-				case HD6309_INT_IRQ:	irq_line = 0; LOG((errorlog,"M6309 IRQ\n")); break;
-				case HD6309_INT_FIRQ:	irq_line = 1; LOG((errorlog,"M6309 FIRQ\n")); break;
-				default:				irq_line = 0; LOG((errorlog,"M6309 unknown\n"));
+				case HD6309_INT_IRQ:	irq_line = 0; LOG(("M6309 IRQ\n")); break;
+				case HD6309_INT_FIRQ:	irq_line = 1; LOG(("M6309 FIRQ\n")); break;
+				default:				irq_line = 0; LOG(("M6309 unknown\n"));
 				}
 				break;
 #endif
@@ -1690,9 +1743,9 @@ static void cpu_generate_interrupt(int cpunum, int (*func)(void), int num)
 			case CPU_M6809:
 				switch (num)
 				{
-				case M6809_INT_IRQ: 	irq_line = 0; LOG((errorlog,"M6809 IRQ\n")); break;
-				case M6809_INT_FIRQ:	irq_line = 1; LOG((errorlog,"M6809 FIRQ\n")); break;
-				default:				irq_line = 0; LOG((errorlog,"M6809 unknown\n"));
+				case M6809_INT_IRQ: 	irq_line = 0; LOG(("M6809 IRQ\n")); break;
+				case M6809_INT_FIRQ:	irq_line = 1; LOG(("M6809 FIRQ\n")); break;
+				default:				irq_line = 0; LOG(("M6809 unknown\n"));
 				}
 				break;
 #endif
@@ -1700,9 +1753,9 @@ static void cpu_generate_interrupt(int cpunum, int (*func)(void), int num)
 				case CPU_KONAMI:
 				switch (num)
 				{
-				case KONAMI_INT_IRQ:	irq_line = 0; LOG((errorlog,"KONAMI IRQ\n")); break;
-				case KONAMI_INT_FIRQ:	irq_line = 1; LOG((errorlog,"KONAMI FIRQ\n")); break;
-				default:				irq_line = 0; LOG((errorlog,"KONAMI unknown\n"));
+				case KONAMI_INT_IRQ:	irq_line = 0; LOG(("KONAMI IRQ\n")); break;
+				case KONAMI_INT_FIRQ:	irq_line = 1; LOG(("KONAMI FIRQ\n")); break;
+				default:				irq_line = 0; LOG(("KONAMI unknown\n"));
 				}
 				break;
 #endif
@@ -1710,14 +1763,14 @@ static void cpu_generate_interrupt(int cpunum, int (*func)(void), int num)
 			case CPU_M68000:
 				switch (num)
 				{
-				case MC68000_IRQ_1: 	irq_line = 1; LOG((errorlog,"M68K IRQ1\n")); break;
-				case MC68000_IRQ_2: 	irq_line = 2; LOG((errorlog,"M68K IRQ2\n")); break;
-				case MC68000_IRQ_3: 	irq_line = 3; LOG((errorlog,"M68K IRQ3\n")); break;
-				case MC68000_IRQ_4: 	irq_line = 4; LOG((errorlog,"M68K IRQ4\n")); break;
-				case MC68000_IRQ_5: 	irq_line = 5; LOG((errorlog,"M68K IRQ5\n")); break;
-				case MC68000_IRQ_6: 	irq_line = 6; LOG((errorlog,"M68K IRQ6\n")); break;
-				case MC68000_IRQ_7: 	irq_line = 7; LOG((errorlog,"M68K IRQ7\n")); break;
-				default:				irq_line = 0; LOG((errorlog,"M68K unknown\n"));
+				case MC68000_IRQ_1: 	irq_line = 1; LOG(("M68K IRQ1\n")); break;
+				case MC68000_IRQ_2: 	irq_line = 2; LOG(("M68K IRQ2\n")); break;
+				case MC68000_IRQ_3: 	irq_line = 3; LOG(("M68K IRQ3\n")); break;
+				case MC68000_IRQ_4: 	irq_line = 4; LOG(("M68K IRQ4\n")); break;
+				case MC68000_IRQ_5: 	irq_line = 5; LOG(("M68K IRQ5\n")); break;
+				case MC68000_IRQ_6: 	irq_line = 6; LOG(("M68K IRQ6\n")); break;
+				case MC68000_IRQ_7: 	irq_line = 7; LOG(("M68K IRQ7\n")); break;
+				default:				irq_line = 0; LOG(("M68K unknown\n"));
 				}
 				/* until now only auto vector interrupts supported */
 				num = MC68000_INT_ACK_AUTOVECTOR;
@@ -1727,14 +1780,14 @@ static void cpu_generate_interrupt(int cpunum, int (*func)(void), int num)
 			case CPU_M68010:
 				switch (num)
 				{
-				case MC68010_IRQ_1: 	irq_line = 1; LOG((errorlog,"M68010 IRQ1\n")); break;
-				case MC68010_IRQ_2: 	irq_line = 2; LOG((errorlog,"M68010 IRQ2\n")); break;
-				case MC68010_IRQ_3: 	irq_line = 3; LOG((errorlog,"M68010 IRQ3\n")); break;
-				case MC68010_IRQ_4: 	irq_line = 4; LOG((errorlog,"M68010 IRQ4\n")); break;
-				case MC68010_IRQ_5: 	irq_line = 5; LOG((errorlog,"M68010 IRQ5\n")); break;
-				case MC68010_IRQ_6: 	irq_line = 6; LOG((errorlog,"M68010 IRQ6\n")); break;
-				case MC68010_IRQ_7: 	irq_line = 7; LOG((errorlog,"M68010 IRQ7\n")); break;
-				default:				irq_line = 0; LOG((errorlog,"M68010 unknown\n"));
+				case MC68010_IRQ_1: 	irq_line = 1; LOG(("M68010 IRQ1\n")); break;
+				case MC68010_IRQ_2: 	irq_line = 2; LOG(("M68010 IRQ2\n")); break;
+				case MC68010_IRQ_3: 	irq_line = 3; LOG(("M68010 IRQ3\n")); break;
+				case MC68010_IRQ_4: 	irq_line = 4; LOG(("M68010 IRQ4\n")); break;
+				case MC68010_IRQ_5: 	irq_line = 5; LOG(("M68010 IRQ5\n")); break;
+				case MC68010_IRQ_6: 	irq_line = 6; LOG(("M68010 IRQ6\n")); break;
+				case MC68010_IRQ_7: 	irq_line = 7; LOG(("M68010 IRQ7\n")); break;
+				default:				irq_line = 0; LOG(("M68010 unknown\n"));
 				}
 				/* until now only auto vector interrupts supported */
 				num = MC68000_INT_ACK_AUTOVECTOR;
@@ -1744,14 +1797,14 @@ static void cpu_generate_interrupt(int cpunum, int (*func)(void), int num)
 			case CPU_M68020:
 				switch (num)
 				{
-				case MC68020_IRQ_1: 	irq_line = 1; LOG((errorlog,"M68020 IRQ1\n")); break;
-				case MC68020_IRQ_2: 	irq_line = 2; LOG((errorlog,"M68020 IRQ2\n")); break;
-				case MC68020_IRQ_3: 	irq_line = 3; LOG((errorlog,"M68020 IRQ3\n")); break;
-				case MC68020_IRQ_4: 	irq_line = 4; LOG((errorlog,"M68020 IRQ4\n")); break;
-				case MC68020_IRQ_5: 	irq_line = 5; LOG((errorlog,"M68020 IRQ5\n")); break;
-				case MC68020_IRQ_6: 	irq_line = 6; LOG((errorlog,"M68020 IRQ6\n")); break;
-				case MC68020_IRQ_7: 	irq_line = 7; LOG((errorlog,"M68020 IRQ7\n")); break;
-				default:				irq_line = 0; LOG((errorlog,"M68020 unknown\n"));
+				case MC68020_IRQ_1: 	irq_line = 1; LOG(("M68020 IRQ1\n")); break;
+				case MC68020_IRQ_2: 	irq_line = 2; LOG(("M68020 IRQ2\n")); break;
+				case MC68020_IRQ_3: 	irq_line = 3; LOG(("M68020 IRQ3\n")); break;
+				case MC68020_IRQ_4: 	irq_line = 4; LOG(("M68020 IRQ4\n")); break;
+				case MC68020_IRQ_5: 	irq_line = 5; LOG(("M68020 IRQ5\n")); break;
+				case MC68020_IRQ_6: 	irq_line = 6; LOG(("M68020 IRQ6\n")); break;
+				case MC68020_IRQ_7: 	irq_line = 7; LOG(("M68020 IRQ7\n")); break;
+				default:				irq_line = 0; LOG(("M68020 unknown\n"));
 				}
 				/* until now only auto vector interrupts supported */
 				num = MC68000_INT_ACK_AUTOVECTOR;
@@ -1761,14 +1814,14 @@ static void cpu_generate_interrupt(int cpunum, int (*func)(void), int num)
 			case CPU_M68EC020:
 				switch (num)
 				{
-				case MC68EC020_IRQ_1:	irq_line = 1; LOG((errorlog,"M68EC020 IRQ1\n")); break;
-				case MC68EC020_IRQ_2:	irq_line = 2; LOG((errorlog,"M68EC020 IRQ2\n")); break;
-				case MC68EC020_IRQ_3:	irq_line = 3; LOG((errorlog,"M68EC020 IRQ3\n")); break;
-				case MC68EC020_IRQ_4:	irq_line = 4; LOG((errorlog,"M68EC020 IRQ4\n")); break;
-				case MC68EC020_IRQ_5:	irq_line = 5; LOG((errorlog,"M68EC020 IRQ5\n")); break;
-				case MC68EC020_IRQ_6:	irq_line = 6; LOG((errorlog,"M68EC020 IRQ6\n")); break;
-				case MC68EC020_IRQ_7:	irq_line = 7; LOG((errorlog,"M68EC020 IRQ7\n")); break;
-				default:				irq_line = 0; LOG((errorlog,"M68EC020 unknown\n"));
+				case MC68EC020_IRQ_1:	irq_line = 1; LOG(("M68EC020 IRQ1\n")); break;
+				case MC68EC020_IRQ_2:	irq_line = 2; LOG(("M68EC020 IRQ2\n")); break;
+				case MC68EC020_IRQ_3:	irq_line = 3; LOG(("M68EC020 IRQ3\n")); break;
+				case MC68EC020_IRQ_4:	irq_line = 4; LOG(("M68EC020 IRQ4\n")); break;
+				case MC68EC020_IRQ_5:	irq_line = 5; LOG(("M68EC020 IRQ5\n")); break;
+				case MC68EC020_IRQ_6:	irq_line = 6; LOG(("M68EC020 IRQ6\n")); break;
+				case MC68EC020_IRQ_7:	irq_line = 7; LOG(("M68EC020 IRQ7\n")); break;
+				default:				irq_line = 0; LOG(("M68EC020 unknown\n"));
 				}
 				/* until now only auto vector interrupts supported */
 				num = MC68000_INT_ACK_AUTOVECTOR;
@@ -1778,29 +1831,29 @@ static void cpu_generate_interrupt(int cpunum, int (*func)(void), int num)
 			case CPU_T11:
 				switch (num)
 				{
-				case T11_IRQ0:			irq_line = 0; LOG((errorlog,"T11 IRQ0\n")); break;
-				case T11_IRQ1:			irq_line = 1; LOG((errorlog,"T11 IRQ1\n")); break;
-				case T11_IRQ2:			irq_line = 2; LOG((errorlog,"T11 IRQ2\n")); break;
-				case T11_IRQ3:			irq_line = 3; LOG((errorlog,"T11 IRQ3\n")); break;
-				default:				irq_line = 0; LOG((errorlog,"T11 unknown\n"));
+				case T11_IRQ0:			irq_line = 0; LOG(("T11 IRQ0\n")); break;
+				case T11_IRQ1:			irq_line = 1; LOG(("T11 IRQ1\n")); break;
+				case T11_IRQ2:			irq_line = 2; LOG(("T11 IRQ2\n")); break;
+				case T11_IRQ3:			irq_line = 3; LOG(("T11 IRQ3\n")); break;
+				default:				irq_line = 0; LOG(("T11 unknown\n"));
 				}
 				break;
 #endif
 #if HAS_S2650
-			case CPU_S2650: 			irq_line = 0; LOG((errorlog,"S2650 IRQ\n")); break;
+			case CPU_S2650: 			irq_line = 0; LOG(("S2650 IRQ\n")); break;
 #endif
 #if HAS_TMS34010
 			case CPU_TMS34010:
 				switch (num)
 				{
-				case TMS34010_INT1: 	irq_line = 0; LOG((errorlog,"TMS34010 INT1\n")); break;
-				case TMS34010_INT2: 	irq_line = 1; LOG((errorlog,"TMS34010 INT2\n")); break;
-				default:				irq_line = 0; LOG((errorlog,"TMS34010 unknown\n"));
+				case TMS34010_INT1: 	irq_line = 0; LOG(("TMS34010 INT1\n")); break;
+				case TMS34010_INT2: 	irq_line = 1; LOG(("TMS34010 INT2\n")); break;
+				default:				irq_line = 0; LOG(("TMS34010 unknown\n"));
 				}
 				break;
 #endif
 /*#if HAS_TMS9900
-			case CPU_TMS9900:	irq_line = 0; LOG((errorlog,"TMS9900 IRQ\n")); break;
+			case CPU_TMS9900:	irq_line = 0; LOG(("TMS9900 IRQ\n")); break;
 #endif*/
 #if (HAS_TMS9900) || (HAS_TMS9940) || (HAS_TMS9980) || (HAS_TMS9985) \
 	|| (HAS_TMS9989) || (HAS_TMS9995) || (HAS_TMS99105A) || (HAS_TMS99110A)
@@ -1828,7 +1881,7 @@ static void cpu_generate_interrupt(int cpunum, int (*func)(void), int num)
 	#if (HAS_TMS99110A)
 			case CPU_TMS99110A:
 	#endif
-				LOG((errorlog,"Please use the new interrupt scheme for your new developments !\n"));
+				LOG(("Please use the new interrupt scheme for your new developments !\n"));
 				irq_line = 0;
 				break;
 #endif
@@ -1836,9 +1889,9 @@ static void cpu_generate_interrupt(int cpunum, int (*func)(void), int num)
 			case CPU_Z8000:
 				switch (num)
 				{
-				case Z8000_NVI: 		irq_line = 0; LOG((errorlog,"Z8000 NVI\n")); break;
-				case Z8000_VI:			irq_line = 1; LOG((errorlog,"Z8000 VI\n")); break;
-				default:				irq_line = 0; LOG((errorlog,"Z8000 unknown\n"));
+				case Z8000_NVI: 		irq_line = 0; LOG(("Z8000 NVI\n")); break;
+				case Z8000_VI:			irq_line = 1; LOG(("Z8000 VI\n")); break;
+				default:				irq_line = 0; LOG(("Z8000 unknown\n"));
 				}
 				break;
 #endif
@@ -1846,9 +1899,9 @@ static void cpu_generate_interrupt(int cpunum, int (*func)(void), int num)
 			case CPU_TMS320C10:
 				switch (num)
 				{
-				case TMS320C10_ACTIVE_INT:	irq_line = 0; LOG((errorlog,"TMS32010 INT\n")); break;
-				case TMS320C10_ACTIVE_BIO:	irq_line = 1; LOG((errorlog,"TMS32010 BIO\n")); break;
-				default:					irq_line = 0; LOG((errorlog,"TMS32010 unknown\n"));
+				case TMS320C10_ACTIVE_INT:	irq_line = 0; LOG(("TMS32010 INT\n")); break;
+				case TMS320C10_ACTIVE_BIO:	irq_line = 1; LOG(("TMS32010 BIO\n")); break;
+				default:					irq_line = 0; LOG(("TMS32010 unknown\n"));
 				}
 				break;
 #endif
@@ -1856,18 +1909,18 @@ static void cpu_generate_interrupt(int cpunum, int (*func)(void), int num)
 			case CPU_ADSP2100:
 				switch (num)
 				{
-				case ADSP2100_IRQ0: 		irq_line = 0; LOG((errorlog,"ADSP2100 IRQ0\n")); break;
-				case ADSP2100_IRQ1: 		irq_line = 1; LOG((errorlog,"ADSP2100 IRQ1\n")); break;
-				case ADSP2100_IRQ2: 		irq_line = 2; LOG((errorlog,"ADSP2100 IRQ1\n")); break;
-				case ADSP2100_IRQ3: 		irq_line = 3; LOG((errorlog,"ADSP2100 IRQ1\n")); break;
-				default:					irq_line = 0; LOG((errorlog,"ADSP2100 unknown\n"));
+				case ADSP2100_IRQ0: 		irq_line = 0; LOG(("ADSP2100 IRQ0\n")); break;
+				case ADSP2100_IRQ1: 		irq_line = 1; LOG(("ADSP2100 IRQ1\n")); break;
+				case ADSP2100_IRQ2: 		irq_line = 2; LOG(("ADSP2100 IRQ1\n")); break;
+				case ADSP2100_IRQ3: 		irq_line = 3; LOG(("ADSP2100 IRQ1\n")); break;
+				default:					irq_line = 0; LOG(("ADSP2100 unknown\n"));
 				}
 				break;
 #endif
 			default:
 				irq_line = 0;
 				/* else it should be an IRQ type; assume line 0 and store vector */
-				LOG((errorlog,"unknown IRQ\n"));
+				LOG(("unknown IRQ\n"));
 			}
 			cpu_irq_line_vector_w(cpunum, irq_line, num);
 			cpu_manualirqcallback(irq_line | (cpunum << 3) | (HOLD_LINE << 6) );
@@ -2019,9 +2072,7 @@ static void cpu_vblankreset(void)
 	int i;
 
 	/* read hi scores from disk */
-profiler_mark(PROFILER_HISCORE);
 	hs_update();
-profiler_mark(PROFILER_END);
 
 	/* read keyboard & update the status of the input ports */
 	update_input_ports();
@@ -2119,7 +2170,7 @@ static void cpu_updatecallback(int param)
 	{
 		if (--watchdog_counter == 0)
 		{
-if (errorlog) fprintf(errorlog,"reset caused by the watchdog\n");
+logerror("reset caused by the watchdog\n");
 			machine_reset();
 		}
 	}
@@ -2821,6 +2872,8 @@ unsigned cpunum_get_reg(int cpunum, int regnum)
 		return cpu_get_reg( regnum );
 
 	/* swap to the CPU's context */
+	if (activecpu >= 0)
+		if (cpu[activecpu].save_context) GETCONTEXT(activecpu, cpu[activecpu].context);
 	oldactive = activecpu;
 	activecpu = cpunum;
 	memorycontextswap(activecpu);
@@ -2831,7 +2884,11 @@ unsigned cpunum_get_reg(int cpunum, int regnum)
 	/* update the CPU's context */
 	if (cpu[activecpu].save_context) GETCONTEXT(activecpu, cpu[activecpu].context);
 	activecpu = oldactive;
-	if (activecpu >= 0) memorycontextswap(activecpu);
+	if (activecpu >= 0)
+	{
+		memorycontextswap(activecpu);
+		if (cpu[activecpu].save_context) SETCONTEXT(activecpu, cpu[activecpu].context);
+	}
 
 	return val;
 }
@@ -2850,6 +2907,8 @@ void cpunum_set_reg(int cpunum, int regnum, unsigned val)
 	}
 
 	/* swap to the CPU's context */
+	if (activecpu >= 0)
+		if (cpu[activecpu].save_context) GETCONTEXT(activecpu, cpu[activecpu].context);
 	oldactive = activecpu;
 	activecpu = cpunum;
 	memorycontextswap(activecpu);
@@ -2860,7 +2919,11 @@ void cpunum_set_reg(int cpunum, int regnum, unsigned val)
 	/* update the CPU's context */
 	if (cpu[activecpu].save_context) GETCONTEXT(activecpu, cpu[activecpu].context);
 	activecpu = oldactive;
-	if (activecpu >= 0) memorycontextswap(activecpu);
+	if (activecpu >= 0)
+	{
+		memorycontextswap(activecpu);
+		if (cpu[activecpu].save_context) SETCONTEXT(activecpu, cpu[activecpu].context);
+	}
 }
 
 /***************************************************************************
@@ -2875,6 +2938,8 @@ unsigned cpunum_dasm(int cpunum,char *buffer,unsigned pc)
 		return cpu_dasm(buffer,pc);
 
 	/* swap to the CPU's context */
+	if (activecpu >= 0)
+		if (cpu[activecpu].save_context) GETCONTEXT(activecpu, cpu[activecpu].context);
 	oldactive = activecpu;
 	activecpu = cpunum;
 	memorycontextswap(activecpu);
@@ -2885,7 +2950,11 @@ unsigned cpunum_dasm(int cpunum,char *buffer,unsigned pc)
 	/* update the CPU's context */
 	if (cpu[activecpu].save_context) GETCONTEXT(activecpu, cpu[activecpu].context);
 	activecpu = oldactive;
-	if (activecpu >= 0) memorycontextswap(activecpu);
+	if (activecpu >= 0)
+	{
+		memorycontextswap(activecpu);
+		if (cpu[activecpu].save_context) SETCONTEXT(activecpu, cpu[activecpu].context);
+	}
 
 	return result;
 }
@@ -2902,6 +2971,8 @@ const char *cpunum_flags(int cpunum)
 		return cpu_flags();
 
 	/* swap to the CPU's context */
+	if (activecpu >= 0)
+		if (cpu[activecpu].save_context) GETCONTEXT(activecpu, cpu[activecpu].context);
 	oldactive = activecpu;
 	activecpu = cpunum;
 	memorycontextswap(activecpu);
@@ -2912,7 +2983,11 @@ const char *cpunum_flags(int cpunum)
 	/* update the CPU's context */
 	if (cpu[activecpu].save_context) GETCONTEXT(activecpu, cpu[activecpu].context);
 	activecpu = oldactive;
-	if (activecpu >= 0) memorycontextswap(activecpu);
+	if (activecpu >= 0)
+	{
+		memorycontextswap(activecpu);
+		if (cpu[activecpu].save_context) SETCONTEXT(activecpu, cpu[activecpu].context);
+	}
 
 	return result;
 }
@@ -2929,6 +3004,8 @@ const char *cpunum_dump_reg(int cpunum, int regnum)
 		return cpu_dump_reg(regnum);
 
 	/* swap to the CPU's context */
+	if (activecpu >= 0)
+		if (cpu[activecpu].save_context) GETCONTEXT(activecpu, cpu[activecpu].context);
 	oldactive = activecpu;
 	activecpu = cpunum;
 	memorycontextswap(activecpu);
@@ -2939,7 +3016,11 @@ const char *cpunum_dump_reg(int cpunum, int regnum)
 	/* update the CPU's context */
 	if (cpu[activecpu].save_context) GETCONTEXT(activecpu, cpu[activecpu].context);
 	activecpu = oldactive;
-	if (activecpu >= 0) memorycontextswap(activecpu);
+	if (activecpu >= 0)
+	{
+		memorycontextswap(activecpu);
+		if (cpu[activecpu].save_context) SETCONTEXT(activecpu, cpu[activecpu].context);
+	}
 
 	return result;
 }
@@ -2953,6 +3034,8 @@ const char *cpunum_dump_state(int cpunum)
 	int oldactive;
 
 	/* swap to the CPU's context */
+	if (activecpu >= 0)
+		if (cpu[activecpu].save_context) GETCONTEXT(activecpu, cpu[activecpu].context);
 	oldactive = activecpu;
 	activecpu = cpunum;
 	memorycontextswap(activecpu);
@@ -2963,7 +3046,11 @@ const char *cpunum_dump_state(int cpunum)
 	/* update the CPU's context */
 	if (cpu[activecpu].save_context) GETCONTEXT(activecpu, cpu[activecpu].context);
 	activecpu = oldactive;
-	if (activecpu >= 0) memorycontextswap(activecpu);
+	if (activecpu >= 0)
+	{
+		memorycontextswap(activecpu);
+		if (cpu[activecpu].save_context) SETCONTEXT(activecpu, cpu[activecpu].context);
+	}
 
 	return buffer;
 }

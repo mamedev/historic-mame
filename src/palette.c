@@ -345,7 +345,7 @@ int palette_init(void)
 				int j,used;
 
 
-if (errorlog) fprintf(errorlog,"shrinking %d colors palette...\n",Machine->drv->total_colors);
+logerror("shrinking %d colors palette...\n",Machine->drv->total_colors);
 
 				/* shrink palette to fit */
 				used = 0;
@@ -370,7 +370,7 @@ if (errorlog) fprintf(errorlog,"shrinking %d colors palette...\n",Machine->drv->
 							used = total_shrinked_pens;
 							palette_map[i] = total_shrinked_pens-1;
 							usrintf_showmessage("cannot shrink static palette");
-if (errorlog) fprintf(errorlog,"error: ran out of free pens to shrink the palette.\n");
+logerror("error: ran out of free pens to shrink the palette.\n");
 						}
 						else
 						{
@@ -381,7 +381,7 @@ if (errorlog) fprintf(errorlog,"error: ran out of free pens to shrink the palett
 					}
 				}
 
-if (errorlog) fprintf(errorlog,"shrinked palette uses %d colors\n",used);
+logerror("shrinked palette uses %d colors\n",used);
 
 				if (osd_allocate_colors(used,shrinked_palette,shrinked_pens,0))
 					return 1;
@@ -591,13 +591,13 @@ void palette_change_color(int color,unsigned char red,unsigned char green,unsign
 {
 	if ((Machine->drv->video_attributes & VIDEO_MODIFIES_PALETTE) == 0)
 	{
-if (errorlog) fprintf(errorlog,"Error: palette_change_color() called, but VIDEO_MODIFIES_PALETTE not set.\n");
+logerror("Error: palette_change_color() called, but VIDEO_MODIFIES_PALETTE not set.\n");
 		return;
 	}
 
 	if (color >= Machine->drv->total_colors)
 	{
-if (errorlog) fprintf(errorlog,"error: palette_change_color() called with color %d, but only %d allocated.\n",color,Machine->drv->total_colors);
+logerror("error: palette_change_color() called with color %d, but only %d allocated.\n",color,Machine->drv->total_colors);
 		return;
 	}
 
@@ -791,7 +791,6 @@ static int compress_palette(void)
 	}
 
 #if VERBOSE
-if (errorlog)
 {
 	int subcount[8];
 
@@ -802,14 +801,14 @@ if (errorlog)
 	for (i = 0;i < Machine->drv->total_colors;i++)
 		subcount[palette_used_colors[i]]++;
 
-	fprintf(errorlog,"Ran out of pens! %d colors used (%d unused, %d visible %d cached %d visible+cached, %d transparent)\n",
+	logerror("Ran out of pens! %d colors used (%d unused, %d visible %d cached %d visible+cached, %d transparent)\n",
 			subcount[PALETTE_COLOR_VISIBLE]+subcount[PALETTE_COLOR_CACHED]+subcount[PALETTE_COLOR_VISIBLE|PALETTE_COLOR_CACHED]+subcount[PALETTE_COLOR_TRANSPARENT],
 			subcount[PALETTE_COLOR_UNUSED],
 			subcount[PALETTE_COLOR_VISIBLE],
 			subcount[PALETTE_COLOR_CACHED],
 			subcount[PALETTE_COLOR_VISIBLE|PALETTE_COLOR_CACHED],
 			subcount[PALETTE_COLOR_TRANSPARENT]);
-	fprintf(errorlog,"Compressed the palette, saving %d pens\n",saved);
+	logerror("Compressed the palette, saving %d pens\n",saved);
 }
 #endif
 
@@ -1049,7 +1048,7 @@ static const unsigned char *palette_recalc_8(void)
 		if (need > avail)
 		{
 #if VERBOSE
-if (errorlog) fprintf(errorlog,"Need %d new pens; %d available. I'll reuse some pens.\n",need,avail);
+logerror("Need %d new pens; %d available. I'll reuse some pens.\n",need,avail);
 #endif
 			reuse_pens = 1;
 			build_rgb_to_pen();
@@ -1214,9 +1213,9 @@ retry:
 		sprintf(buf,"Error: Palette overflow -%d",ran_out-1);
 		usrintf_showmessage(buf);
 #endif
-if (errorlog) fprintf(errorlog,"Error: no way to shrink the palette to 256 colors, left out %d colors.\n",ran_out-1);
+logerror("Error: no way to shrink the palette to 256 colors, left out %d colors.\n",ran_out-1);
 #if 0
-fprintf(errorlog,"color list:\n");
+logerror("color list:\n");
 for (color = 0;color < Machine->drv->total_colors;color++)
 {
 	int r,g,b;
@@ -1224,7 +1223,7 @@ for (color = 0;color < Machine->drv->total_colors;color++)
 	g = game_palette[3*color + 1];
 	b = game_palette[3*color + 2];
 	if (palette_used_colors[color] & PALETTE_COLOR_VISIBLE)
-		fprintf(errorlog,"%02x %02x %02x\n",r,g,b);
+		logerror("%02x %02x %02x\n",r,g,b);
 }
 #endif
 	}
@@ -1269,21 +1268,18 @@ for (color = 0;color < Machine->drv->total_colors;color++)
 
 	if (need_refresh)
 	{
-		if (errorlog)
-		{
-			int used;
-
-			used = 0;
-			for (i = 0;i < DYNAMIC_MAX_PENS;i++)
-			{
-				if (pen_usage_count[i] > 0)
-					used++;
-			}
-
 #if VERBOSE
-			fprintf(errorlog,"Did a palette remap, need a full screen redraw (%d pens used).\n",used);
-#endif
+		int used;
+
+		used = 0;
+		for (i = 0;i < DYNAMIC_MAX_PENS;i++)
+		{
+			if (pen_usage_count[i] > 0)
+				used++;
 		}
+		logerror("Did a palette remap, need a full screen redraw (%d pens used).\n",used);
+#endif
+
 		return just_remapped;
 	}
 	else return 0;
@@ -1750,6 +1746,33 @@ WRITE_HANDLER( paletteram_xRRRRRGGGGGBBBBB_word_w )
 
 	WRITE_WORD(&paletteram[offset],newword);
 	changecolor_xRRRRRGGGGGBBBBB(offset / 2,newword);
+}
+
+
+INLINE void changecolor_xGGGGGRRRRRBBBBB(int color,int data)
+{
+	int r,g,b;
+
+
+	r = (data >>  5) & 0x1f;
+	g = (data >> 10) & 0x1f;
+	b = (data >>  0) & 0x1f;
+
+	r = (r << 3) | (r >> 2);
+	g = (g << 3) | (g >> 2);
+	b = (b << 3) | (b >> 2);
+
+	palette_change_color(color,r,g,b);
+}
+
+WRITE_HANDLER( paletteram_xGGGGGRRRRRBBBBB_word_w )
+{
+	int oldword = READ_WORD(&paletteram[offset]);
+	int newword = COMBINE_WORD(oldword,data);
+
+
+	WRITE_WORD(&paletteram[offset],newword);
+	changecolor_xGGGGGRRRRRBBBBB(offset / 2,newword);
 }
 
 

@@ -1101,7 +1101,7 @@ INLINE UINT32 SRLL(UINT32 dest, UINT8 count)
  ******************************************/
 static void  zinvalid(void)
 {
-	if (errorlog) fprintf(errorlog, "Z8000 invalid opcode %04x: %04x\n", PC, Z.op[0]);
+	logerror("Z8000 invalid opcode %04x: %04x\n", PC, Z.op[0]);
 }
 
 /******************************************
@@ -1532,7 +1532,7 @@ static void Z0D_ddN0_1001_imm16(void)
 static void Z0E_imm8(void)
 {
 	GET_IMM8(0);
-	LOG((errorlog, "Z8K#%d %04x: ext0e  $%02x\n", cpu_getactivecpu(), PC, imm8));
+	LOG(("Z8K#%d %04x: ext0e  $%02x\n", cpu_getactivecpu(), PC, imm8));
     if (FCW & F_EPU) {
 		/* Z8001 EPU code goes here */
 		(void)imm8;
@@ -1546,7 +1546,7 @@ static void Z0E_imm8(void)
 static void Z0F_imm8(void)
 {
 	GET_IMM8(0);
-	LOG((errorlog, "Z8K#%d %04x: ext0f  $%02x\n", cpu_getactivecpu(), PC, imm8));
+	LOG(("Z8K#%d %04x: ext0f  $%02x\n", cpu_getactivecpu(), PC, imm8));
     if (FCW & F_EPU) {
 		/* Z8001 EPU code goes here */
 		(void)imm8;
@@ -2276,7 +2276,7 @@ static void Z36_0000_0000(void)
 static void Z36_imm8(void)
 {
 	GET_IMM8(0);
-	LOG((errorlog, "Z8K#%d %04x: rsvd36 $%02x\n", cpu_getactivecpu(), PC, imm8));
+	LOG(("Z8K#%d %04x: rsvd36 $%02x\n", cpu_getactivecpu(), PC, imm8));
     if (FCW & F_EPU) {
 		/* Z8001 EPU code goes here */
 		(void)imm8;
@@ -2314,7 +2314,7 @@ static void Z37_ddN0_ssss_imm16(void)
 static void Z38_imm8(void)
 {
 	GET_IMM8(0);
-	LOG((errorlog, "Z8K#%d %04x: rsvd38 $%02x\n", cpu_getactivecpu(), PC, imm8));
+	LOG(("Z8K#%d %04x: rsvd38 $%02x\n", cpu_getactivecpu(), PC, imm8));
     if (FCW & F_EPU) {
 		/* Z8001 EPU code goes here */
 		(void)imm8;
@@ -4356,7 +4356,7 @@ static void Z77_ddN0_ssss_0000_xxxx_0000_0000(void)
 static void Z78_imm8(void)
 {
 	GET_IMM8(0);
-	LOG((errorlog, "Z8K#%d %04x: rsvd78 $%02x\n", cpu_getactivecpu(), PC, imm8));
+	LOG(("Z8K#%d %04x: rsvd78 $%02x\n", cpu_getactivecpu(), PC, imm8));
     if (FCW & F_EPU) {
 		/* Z8001 EPU code goes here */
 		(void)imm8;
@@ -4416,7 +4416,7 @@ static void Z7B_0000_0000(void)
     IRQ_SRV &= ~tag;    /* remove IRQ serviced flag */
 	CHANGE_FCW(fcw);		 /* check for user/system mode change */
     change_pc16bew(PC);
-	LOG((errorlog, "Z8K#%d IRET tag $%04x, fcw $%04x, pc $%04x\n", cpu_getactivecpu(), tag, fcw, PC));
+	LOG(("Z8K#%d IRET tag $%04x, fcw $%04x, pc $%04x\n", cpu_getactivecpu(), tag, fcw, PC));
 }
 
 /******************************************
@@ -4501,7 +4501,7 @@ static void Z7D_dddd_0ccc(void)
 			RW(dst) = NSP;
 			break;
 		default:
-			LOG((errorlog, "Z8K#%d LDCTL R%d,%d\n", cpu_getactivecpu(), dst, imm3));
+			LOG(("Z8K#%d LDCTL R%d,%d\n", cpu_getactivecpu(), dst, imm3));
     }
 }
 
@@ -4531,7 +4531,7 @@ static void Z7D_ssss_1ccc(void)
 			NSP = RW(src);
 			break;
 		default:
-			LOG((errorlog, "Z8K#%d LDCTL %d,R%d\n", cpu_getactivecpu(), imm3, src));
+			LOG(("Z8K#%d LDCTL %d,R%d\n", cpu_getactivecpu(), imm3, src));
     }
 }
 
@@ -4542,7 +4542,7 @@ static void Z7D_ssss_1ccc(void)
 static void Z7E_imm8(void)
 {
 	GET_IMM8(0);
-	LOG((errorlog, "Z8K#%d %04x: rsvd7e $%02x\n", cpu_getactivecpu(), PC, imm8));
+	LOG(("Z8K#%d %04x: rsvd7e $%02x\n", cpu_getactivecpu(), PC, imm8));
     if (FCW & F_EPU) {
 		/* Z8001 EPU code goes here */
 		(void)imm8;
@@ -4838,7 +4838,7 @@ static void Z8D_imm4_0101(void)
 static void Z8E_imm8(void)
 {
 	GET_IMM8(0);
-	LOG((errorlog, "Z8K#%d %04x: ext8e  $%02x\n", cpu_getactivecpu(), PC, imm8));
+	LOG(("Z8K#%d %04x: ext8e  $%02x\n", cpu_getactivecpu(), PC, imm8));
     if (FCW & F_EPU) {
 		/* Z8001 EPU code goes here */
 		(void)imm8;
@@ -4852,7 +4852,7 @@ static void Z8E_imm8(void)
 static void Z8F_imm8(void)
 {
 	GET_IMM8(0);
-	LOG((errorlog, "Z8K#%d %04x: ext8f  $%02x\n", cpu_getactivecpu(), PC, imm8));
+	LOG(("Z8K#%d %04x: ext8f  $%02x\n", cpu_getactivecpu(), PC, imm8));
     if (FCW & F_EPU) {
 		/* Z8001 EPU code goes here */
 		(void)imm8;
@@ -5010,7 +5010,7 @@ static void Z9C_dddd_1000(void)
 static void Z9D_imm8(void)
 {
 	GET_IMM8(0);
-	LOG((errorlog, "Z8K#%d %04x: rsvd9d $%02x\n", cpu_getactivecpu(), PC, imm8));
+	LOG(("Z8K#%d %04x: rsvd9d $%02x\n", cpu_getactivecpu(), PC, imm8));
     if (FCW & F_EPU) {
 		/* Z8001 EPU code goes here */
 		(void)imm8;
@@ -5052,7 +5052,7 @@ static void Z9E_0000_cccc(void)
 static void Z9F_imm8(void)
 {
 	GET_IMM8(0);
-	LOG((errorlog, "Z8K#%d %04x: rsvd9f $%02x\n", cpu_getactivecpu(), PC, imm8));
+	LOG(("Z8K#%d %04x: rsvd9f $%02x\n", cpu_getactivecpu(), PC, imm8));
     if (FCW & F_EPU) {
 		/* Z8001 EPU code goes here */
 		(void)imm8;
@@ -5753,7 +5753,7 @@ static void ZB8_ddN0_1100_0000_rrrr_ssN0_0000(void)
 static void ZB9_imm8(void)
 {
 	GET_IMM8(0);
-	LOG((errorlog, "Z8K#%d %04x: rsvdb9 $%02x\n", cpu_getactivecpu(), PC, imm8));
+	LOG(("Z8K#%d %04x: rsvdb9 $%02x\n", cpu_getactivecpu(), PC, imm8));
     if (FCW & F_EPU) {
 		/* Z8001 EPU code goes here */
 		(void)imm8;
@@ -6411,7 +6411,7 @@ static void ZBE_aaaa_bbbb(void)
 static void ZBF_imm8(void)
 {
 	GET_IMM8(0);
-	LOG((errorlog, "Z8K#%d %04x: rsvdbf $%02x\n", cpu_getactivecpu(), PC, imm8));
+	LOG(("Z8K#%d %04x: rsvdbf $%02x\n", cpu_getactivecpu(), PC, imm8));
     if (FCW & F_EPU) {
 		/* Z8001 EPU code goes here */
 		(void)imm8;

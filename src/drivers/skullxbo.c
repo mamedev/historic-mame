@@ -151,7 +151,7 @@ static READ_HANDLER( special_port1_r )
 
 static WRITE_HANDLER( skullxbo_mobwr_w )
 {
-	if (errorlog) fprintf(errorlog, "MOBWR[%02X] = %04X\n", offset, data);
+	logerror("MOBWR[%02X] = %04X\n", offset, data);
 }
 
 

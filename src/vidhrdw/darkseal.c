@@ -88,21 +88,44 @@ Sprites - Data East custom chip 52
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-#define TEXTRAM_SIZE	0x2000	/* Size of text layer */
-#define TILERAM_SIZE	0x2000	/* Size of background and foreground */
-
-unsigned char *darkseal_pf12_row, *darkseal_pf34_row;
-static unsigned char *darkseal_pf1_data,*darkseal_pf2_data,*darkseal_pf3_data;
-static unsigned char *darkseal_pf1_dirty,*darkseal_pf3_dirty,*darkseal_pf2_dirty;
-static struct osd_bitmap *darkseal_pf1_bitmap;
-static struct osd_bitmap *darkseal_pf2_bitmap;
-static struct osd_bitmap *darkseal_pf3_bitmap;
+unsigned char *darkseal_pf12_row,*darkseal_pf34_row;
+unsigned char *darkseal_pf1_data,*darkseal_pf2_data,*darkseal_pf3_data;
 
 static unsigned char darkseal_control_0[16];
 static unsigned char darkseal_control_1[16];
 
-static int darkseal_pf1_static,darkseal_pf2_static,darkseal_pf3_static;
-static int offsetx[4],offsety[4];
+static struct tilemap *pf1_tilemap,*pf2_tilemap,*pf3_tilemap;
+static unsigned char *gfx_base;
+static int gfx_bank,flipscreen;
+
+/***************************************************************************/
+
+/* Function for all 16x16 1024x1024 layers */
+static UINT32 darkseal_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
+{
+	/* logical (col,row) -> memory offset */
+	return (col & 0x1f) + ((row & 0x1f) << 5) + ((col & 0x20) << 5) + ((row & 0x20) << 6);
+}
+
+static void get_bg_tile_info(int tile_index)
+{
+	int tile,color;
+
+	tile=READ_WORD(&gfx_base[2*tile_index]);
+	color=tile >> 12;
+	tile=tile&0xfff;
+
+	SET_TILE_INFO(gfx_bank,tile,color)
+}
+
+static void get_fg_tile_info(int tile_index)
+{
+	int tile=READ_WORD(&darkseal_pf1_data[2*tile_index]);
+	int color=tile >> 12;
+
+	tile=tile&0xfff;
+	SET_TILE_INFO(0,tile,color)
+}
 
 /******************************************************************************/
 
@@ -147,80 +170,12 @@ READ_HANDLER( darkseal_palette_24bit_b_r )
 
 /******************************************************************************/
 
-static void darkseal_update_palette(void)
+static void darkseal_mark_sprite_colours(void)
 {
-	int offs,color,code,i,pal_base;
-	int colmask[32];
+	int offs,color,i,pal_base,colmask[32];
 
 	palette_init_used_colors();
 
-	pal_base = Machine->drv->gfxdecodeinfo[0].color_codes_start;
-
-	for (color = 0;color < 16;color++) colmask[color] = 0;
-
-	for (offs = 0; offs < TEXTRAM_SIZE;offs += 2)
-	{
-		code = READ_WORD(&darkseal_pf1_data[offs]);
-		color = (code & 0xf000) >> 12;
-		code &= 0x0fff;
-		colmask[color] |= Machine->gfx[0]->pen_usage[code];
-	}
-
-	for (color = 0;color < 16;color++)
-	{
-		if (colmask[color] & (1 << 0))
-			palette_used_colors[pal_base + 16 * color] = PALETTE_COLOR_TRANSPARENT;
-		for (i = 1;i < 16;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
-		}
-	}
-
-
-	pal_base = Machine->drv->gfxdecodeinfo[1].color_codes_start;
-	for (color = 0;color < 16;color++) colmask[color] = 0;
-	for (offs = 0; offs < TILERAM_SIZE;offs += 2)
-	{
-		code = READ_WORD(&darkseal_pf2_data[offs]);
-		color = (code & 0xf000) >> 12;
-		code &= 0x0fff;
-		colmask[color] |= Machine->gfx[1]->pen_usage[code];
-	}
-
-	for (color = 0;color < 16;color++)
-	{
-		if (colmask[color] & (1 << 0))
-			palette_used_colors[pal_base + 16 * color] = PALETTE_COLOR_TRANSPARENT;
-		for (i = 1;i < 16;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
-		}
-	}
-
-	pal_base = Machine->drv->gfxdecodeinfo[2].color_codes_start;
-	for (color = 0;color < 16;color++) colmask[color] = 0;
-	for (offs = 0; offs < TILERAM_SIZE;offs += 2)
-	{
-		code = READ_WORD(&darkseal_pf3_data[offs]);
-		color = (code & 0xf000) >> 12;
-		code &= 0x0fff;
-		colmask[color] |= Machine->gfx[2]->pen_usage[code];
-	}
-
-	for (color = 0;color < 16;color++)
-	{
-		if (colmask[color] & (1 << 0))
-			palette_used_colors[pal_base + 16 * color] = PALETTE_COLOR_TRANSPARENT;
-		for (i = 1;i < 16;i++)
-		{
-			if (colmask[color] & (1 << i))
-				palette_used_colors[pal_base + 16 * color + i] = PALETTE_COLOR_USED;
-		}
-	}
-
-	/* Sprites */
 	pal_base = Machine->drv->gfxdecodeinfo[3].color_codes_start;
 	for (color = 0;color < 32;color++) colmask[color] = 0;
 	for (offs = 0;offs < 0x800;offs += 8)
@@ -260,14 +215,7 @@ static void darkseal_update_palette(void)
 	}
 
 	if (palette_recalc())
-	{
-		memset(darkseal_pf1_dirty,1,TEXTRAM_SIZE);
-		memset(darkseal_pf2_dirty,1,TILERAM_SIZE);
-		memset(darkseal_pf3_dirty,1,TILERAM_SIZE);
-		darkseal_pf1_static=1;
-		darkseal_pf2_static=1;
-		darkseal_pf3_static=1;
-	}
+		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
 }
 
 static void darkseal_drawsprites(struct osd_bitmap *bitmap)
@@ -276,7 +224,7 @@ static void darkseal_drawsprites(struct osd_bitmap *bitmap)
 
 	for (offs = 0;offs < 0x800;offs += 8)
 	{
-		int x,y,sprite,colour,multi,fx,fy,inc,flash;
+		int x,y,sprite,colour,multi,fx,fy,inc,flash,mult;
 
 		sprite = READ_WORD (&buffered_spriteram[offs+2]) & 0x1fff;
 		if (!sprite) continue;
@@ -288,10 +236,6 @@ static void darkseal_drawsprites(struct osd_bitmap *bitmap)
 		if (flash && (cpu_getcurrentframe() & 1)) continue;
 
 		colour = (x >> 9) &0x1f;
-
-//if (errorlog && x&0x8000) fprintf(errorlog,"New sprite pri 08\n");
-//if (errorlog && x&0x2000) fprintf(errorlog,"New sprite pri 02\n");
-//if (errorlog && x&0x4000) fprintf(errorlog,"Sprite went behind background!!!\n");
 
 		fx = y & 0x2000;
 		fy = y & 0x4000;
@@ -315,13 +259,23 @@ static void darkseal_drawsprites(struct osd_bitmap *bitmap)
 			inc = 1;
 		}
 
+		if (flipscreen)
+		{
+			y=240-y;
+			x=240-x;
+			if (fx) fx=0; else fx=1;
+			if (fy) fy=0; else fy=1;
+			mult=16;
+		}
+		else mult=-16;
+
 		while (multi >= 0)
 		{
 			drawgfx(bitmap,Machine->gfx[3],
 					sprite - multi * inc,
 					colour,
 					fx,fy,
-					x,y - 16 * multi,
+					x,y + mult * multi,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 
 			multi--;
@@ -329,205 +283,29 @@ static void darkseal_drawsprites(struct osd_bitmap *bitmap)
 	}
 }
 
-static void darkseal_pf2_update(void)
-{
-	int offs,mx,my,color,tile,quarter;
-
-	darkseal_pf2_static=0;
-	for (quarter = 0;quarter < 4;quarter++)
-	{
-		mx = -1;
-		my = 0;
-
-		for (offs = 0x800 * quarter; offs < 0x800 * quarter + 0x800;offs += 2)
-		{
-			mx++;
-			if (mx == 32)
-			{
-				mx = 0;
-				my++;
-			}
-
-			if (darkseal_pf2_dirty[offs])
-			{
-				darkseal_pf2_dirty[offs] = 0;
-				tile = READ_WORD(&darkseal_pf2_data[offs]);
-				color = (tile & 0xf000) >> 12;
-
-				drawgfx(darkseal_pf2_bitmap,Machine->gfx[1],
-						tile & 0x0fff,
-						color,
-						0,0,
-						16*mx + offsetx[quarter],16*my + offsety[quarter],
-						0,TRANSPARENCY_NONE,0);
-			}
-		}
-	}
-}
-
-static void darkseal_pf3_update(void)
-{
-	int offs,mx,my,color,tile,quarter;
-
-	darkseal_pf3_static=0;
-	for (quarter = 0;quarter < 4;quarter++)
-	{
-		mx = -1;
-		my = 0;
-
-		for (offs = 0x800 * quarter; offs < 0x800 * quarter + 0x800;offs += 2)
-		{
-			mx++;
-			if (mx == 32)
-			{
-				mx = 0;
-				my++;
-			}
-
-			if (darkseal_pf3_dirty[offs])
-			{
-				darkseal_pf3_dirty[offs] = 0;
-				tile = READ_WORD(&darkseal_pf3_data[offs]);
-				color = (tile & 0xf000) >> 12;
-
-				drawgfx(darkseal_pf3_bitmap,Machine->gfx[2],
-						tile & 0x0fff,
-						color,
-						0,0,
-						16*mx + offsetx[quarter],16*my + offsety[quarter],
-						0,TRANSPARENCY_NONE,0);
-			}
-		}
-	}
-}
-
-/******************************************************************************/
-
-void darkseal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
-{
-	int scrollx,scrolly;
-	int mx,my,offs,tile,color;
-
-	darkseal_update_palette();
-
-	/* Draw playfields if needed */
-	if (darkseal_pf2_static)
-		darkseal_pf2_update();
-	if (darkseal_pf3_static)
-		darkseal_pf3_update();
-
-	/* Background */
-	scrollx=-READ_WORD (&darkseal_control_0[6]);
-	scrolly=-READ_WORD (&darkseal_control_0[8]);
-	if (READ_WORD(&darkseal_control_0[0xc])&0x4000) { /* Rowscroll enable */
-		int rscrollx[512];
-
-		/* Bitmap height is 512 */
-		for (offs = 0;offs < 512;offs++)
-			rscrollx[offs] = scrollx - READ_WORD(&darkseal_pf34_row[(offs<<1)+0x80]);
-		copyscrollbitmap(bitmap,darkseal_pf3_bitmap,512,rscrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-	}
-	else
-		copyscrollbitmap(bitmap,darkseal_pf3_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-
-	/* Foreground */
-	scrollx=-READ_WORD (&darkseal_control_1[2]);
-	scrolly=-READ_WORD (&darkseal_control_1[4]);
-	copyscrollbitmap(bitmap,darkseal_pf2_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
-
-	/* Sprites */
-	darkseal_drawsprites(bitmap);
-
-	/* Playfield 1 - 8 * 8 Text */
-	if (!darkseal_pf1_static) goto PF1_STATIC;
-	darkseal_pf1_static=0;
-
-	mx = -1;
-	my = 0;
-
-	for (offs = 0; offs < 0x2000 ;offs += 2)
-	{
-		mx++;
-		if (mx == 64)
-		{
-			mx = 0;
-			my++;
-		}
-
-		if (darkseal_pf1_dirty[offs])
-		{
-			darkseal_pf1_dirty[offs] = 0;
-			tile = READ_WORD(&darkseal_pf1_data[offs]);
-			color = (tile & 0xf000) >> 12;
-
-			drawgfx(darkseal_pf1_bitmap,Machine->gfx[0],
-					tile & 0x0fff,
-					color,
-					0,0,
-					8*mx,8*my,
-					0,TRANSPARENCY_NONE,0);
-		}
-	}
-
-  PF1_STATIC:
-
-	scrollx = -READ_WORD(&darkseal_control_1[6]);
-	scrolly = -READ_WORD(&darkseal_control_1[8]);
-	copyscrollbitmap(bitmap,darkseal_pf1_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
-}
-
 /******************************************************************************/
 
 WRITE_HANDLER( darkseal_pf1_data_w )
 {
-	int oldword = READ_WORD(&darkseal_pf1_data[offset]);
-	int newword = COMBINE_WORD(oldword,data);
-
-	if (oldword != newword)
-	{
-		WRITE_WORD(&darkseal_pf1_data[offset],newword);
-		darkseal_pf1_dirty[offset] = 1;
-		darkseal_pf1_static=1;
-	}
+	COMBINE_WORD_MEM(&darkseal_pf1_data[offset],data);
+	tilemap_mark_tile_dirty(pf1_tilemap,offset/2);
 }
 
 WRITE_HANDLER( darkseal_pf2_data_w )
 {
-	int oldword = READ_WORD(&darkseal_pf2_data[offset]);
-	int newword = COMBINE_WORD(oldword,data);
-
-	if (oldword != newword)
-	{
-		WRITE_WORD(&darkseal_pf2_data[offset],newword);
-		darkseal_pf2_dirty[offset] = 1;
-		darkseal_pf2_static=1;
-	}
+	COMBINE_WORD_MEM(&darkseal_pf2_data[offset],data);
+	tilemap_mark_tile_dirty(pf2_tilemap,offset/2);
 }
 
 WRITE_HANDLER( darkseal_pf3_data_w )
 {
-	int oldword = READ_WORD(&darkseal_pf3_data[offset]);
-	int newword = COMBINE_WORD(oldword,data);
-
-	if (oldword != newword)
-	{
-		WRITE_WORD(&darkseal_pf3_data[offset],newword);
-		darkseal_pf3_dirty[offset] = 1;
-		darkseal_pf3_static=1;
-	}
+	COMBINE_WORD_MEM(&darkseal_pf3_data[offset],data);
+	tilemap_mark_tile_dirty(pf3_tilemap,offset/2);
 }
 
-WRITE_HANDLER( darkseal_pf3b_data_w )
+WRITE_HANDLER( darkseal_pf3b_data_w ) /* Mirror */
 {
-	int oldword = READ_WORD(&darkseal_pf3_data[offset+0x1000]);
-	int newword = COMBINE_WORD(oldword,data);
-
-	if (oldword != newword)
-	{
-		WRITE_WORD(&darkseal_pf3_data[offset+0x1000],newword);
-		darkseal_pf3_dirty[offset+0x1000] = 1;
-		darkseal_pf3_static=1;
-	}
+	darkseal_pf3_data_w(offset+0x1000,data);
 }
 
 WRITE_HANDLER( darkseal_control_0_w )
@@ -542,62 +320,61 @@ WRITE_HANDLER( darkseal_control_1_w )
 
 /******************************************************************************/
 
-void darkseal_vh_stop (void)
-{
-	osd_free_bitmap(darkseal_pf2_bitmap);
-	osd_free_bitmap(darkseal_pf3_bitmap);
-	osd_free_bitmap(darkseal_pf1_bitmap);
-	free(darkseal_pf3_data);
-	free(darkseal_pf2_data);
-	free(darkseal_pf1_data);
-	free(darkseal_pf3_dirty);
-	free(darkseal_pf2_dirty);
-	free(darkseal_pf1_dirty);
-}
-
 int darkseal_vh_start(void)
 {
-	/* Allocate bitmaps */
-	if ((darkseal_pf1_bitmap = osd_create_bitmap(512,512)) == 0) {
-		darkseal_vh_stop ();
+	pf1_tilemap = tilemap_create(get_fg_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT, 8, 8,64,64);
+	pf2_tilemap = tilemap_create(get_bg_tile_info,darkseal_scan,    TILEMAP_TRANSPARENT,16,16,64,64);
+	pf3_tilemap = tilemap_create(get_bg_tile_info,darkseal_scan,    TILEMAP_OPAQUE,     16,16,64,64);
+
+	if (!pf1_tilemap || !pf2_tilemap || !pf3_tilemap)
 		return 1;
-	}
 
-	if ((darkseal_pf2_bitmap = osd_create_bitmap(1024,1024)) == 0) {
-		darkseal_vh_stop ();
-		return 1;
-	}
-
-	if ((darkseal_pf3_bitmap = osd_create_bitmap(1024,1024)) == 0) {
-		darkseal_vh_stop ();
-		return 1;
-	}
-
-	darkseal_pf1_data = malloc(TEXTRAM_SIZE);
-	darkseal_pf1_dirty = malloc(TEXTRAM_SIZE);
-	darkseal_pf3_data = malloc(TILERAM_SIZE);
-	darkseal_pf3_dirty = malloc(TILERAM_SIZE);
-	darkseal_pf2_data = malloc(TILERAM_SIZE);
-	darkseal_pf2_dirty = malloc(TILERAM_SIZE);
-
-	darkseal_pf1_static=1;
-	darkseal_pf2_static=1;
-	darkseal_pf3_static=1;
-
-	memset(darkseal_pf1_dirty,1,TEXTRAM_SIZE);
-	memset(darkseal_pf2_dirty,1,TILERAM_SIZE);
-	memset(darkseal_pf3_dirty,1,TILERAM_SIZE);
-
-	offsetx[0] = 0;
-	offsetx[1] = 512;
-	offsetx[2] = 0;
-	offsetx[3] = 512;
-	offsety[0] = 0;
-	offsety[1] = 0;
-	offsety[2] = 512;
-	offsety[3] = 512;
+	pf1_tilemap->transparent_pen = 0;
+	pf2_tilemap->transparent_pen = 0;
 
 	return 0;
+}
+
+/******************************************************************************/
+
+void darkseal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	flipscreen=!(READ_WORD(&darkseal_control_0[0])&0x80);
+	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
+
+	/* Update scroll registers */
+	tilemap_set_scrollx( pf1_tilemap,0, READ_WORD(&darkseal_control_1[6]) );
+	tilemap_set_scrolly( pf1_tilemap,0, READ_WORD(&darkseal_control_1[8]) );
+	tilemap_set_scrollx( pf2_tilemap,0, READ_WORD(&darkseal_control_1[2]) );
+	tilemap_set_scrolly( pf2_tilemap,0, READ_WORD(&darkseal_control_1[4]) );
+
+	if (READ_WORD(&darkseal_control_0[0xc])&0x4000) { /* Rowscroll enable */
+		int offs,scrollx=READ_WORD(&darkseal_control_0[6]);
+
+		tilemap_set_scroll_rows(pf3_tilemap,512);
+		for (offs = 0;offs < 512;offs++)
+			tilemap_set_scrollx( pf3_tilemap,offs, scrollx + READ_WORD(&darkseal_pf34_row[(offs<<1)+0x80]) );
+	}
+	else {
+		tilemap_set_scroll_rows(pf3_tilemap,1);
+		tilemap_set_scrollx( pf3_tilemap,0, READ_WORD(&darkseal_control_0[6]) );
+	}
+	tilemap_set_scrolly( pf3_tilemap,0, READ_WORD(&darkseal_control_0[8]) );
+
+	gfx_bank=1;
+	gfx_base=darkseal_pf2_data;
+	tilemap_update(pf2_tilemap);
+	gfx_bank=2;
+	gfx_base=darkseal_pf3_data;
+	tilemap_update(pf3_tilemap);
+	tilemap_update(pf1_tilemap);
+	darkseal_mark_sprite_colours();
+	tilemap_render(ALL_TILEMAPS);
+
+	tilemap_draw(bitmap,pf3_tilemap,0);
+	tilemap_draw(bitmap,pf2_tilemap,0);
+	darkseal_drawsprites(bitmap);
+	tilemap_draw(bitmap,pf1_tilemap,0);
 }
 
 /******************************************************************************/

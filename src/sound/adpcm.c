@@ -357,7 +357,7 @@ void ADPCM_trigger(int num, int which)
 	/* range check the numbers */
 	if (num >= num_voices)
 	{
-		if (errorlog) fprintf(errorlog,"error: ADPCM_trigger() called with channel = %d, but only %d channels allocated\n", num, num_voices);
+		logerror("error: ADPCM_trigger() called with channel = %d, but only %d channels allocated\n", num, num_voices);
 		return;
 	}
 
@@ -380,7 +380,7 @@ void ADPCM_trigger(int num, int which)
 			return;
 		}
 
-	if (errorlog) fprintf(errorlog,"warning: ADPCM_trigger() called with unknown trigger = %08x\n",which);
+	logerror("warning: ADPCM_trigger() called with unknown trigger = %08x\n",which);
 }
 
 
@@ -402,7 +402,7 @@ void ADPCM_play(int num, int offset, int length)
 	/* range check the numbers */
 	if (num >= num_voices)
 	{
-		if (errorlog) fprintf(errorlog,"error: ADPCM_trigger() called with channel = %d, but only %d channels allocated\n", num, num_voices);
+		logerror("error: ADPCM_trigger() called with channel = %d, but only %d channels allocated\n", num, num_voices);
 		return;
 	}
 
@@ -439,7 +439,7 @@ void ADPCM_stop(int num)
 	/* range check the numbers */
 	if (num >= num_voices)
 	{
-		if (errorlog) fprintf(errorlog,"error: ADPCM_stop() called with channel = %d, but only %d channels allocated\n", num, num_voices);
+		logerror("error: ADPCM_stop() called with channel = %d, but only %d channels allocated\n", num, num_voices);
 		return;
 	}
 
@@ -469,7 +469,7 @@ void ADPCM_setvol(int num, int vol)
 	/* range check the numbers */
 	if (num >= num_voices)
 	{
-		if (errorlog) fprintf(errorlog,"error: ADPCM_setvol() called with channel = %d, but only %d channels allocated\n", num, num_voices);
+		logerror("error: ADPCM_setvol() called with channel = %d, but only %d channels allocated\n", num, num_voices);
 		return;
 	}
 
@@ -497,7 +497,7 @@ int ADPCM_playing(int num)
 	/* range check the numbers */
 	if (num >= num_voices)
 	{
-		if (errorlog) fprintf(errorlog,"error: ADPCM_playing() called with channel = %d, but only %d channels allocated\n", num, num_voices);
+		logerror("error: ADPCM_playing() called with channel = %d, but only %d channels allocated\n", num, num_voices);
 		return 0;
 	}
 
@@ -669,7 +669,7 @@ static int OKIM6295_status_r(int num)
 	/* range check the numbers */
 	if (num >= num_voices / MAX_OKIM6295_VOICES)
 	{
-		if (errorlog) fprintf(errorlog,"error: OKIM6295_status_r() called with chip = %d, but only %d chips allocated\n",num, num_voices / MAX_OKIM6295_VOICES);
+		logerror("error: OKIM6295_status_r() called with chip = %d, but only %d chips allocated\n",num, num_voices / MAX_OKIM6295_VOICES);
 		return 0x0f;
 	}
 
@@ -703,7 +703,7 @@ static void OKIM6295_data_w(int num, int data)
 	/* range check the numbers */
 	if (num >= num_voices / MAX_OKIM6295_VOICES)
 	{
-		if (errorlog) fprintf(errorlog,"error: OKIM6295_data_w() called with chip = %d, but only %d chips allocated\n", num, num_voices / MAX_OKIM6295_VOICES);
+		logerror("error: OKIM6295_data_w() called with chip = %d, but only %d chips allocated\n", num, num_voices / MAX_OKIM6295_VOICES);
 		return;
 	}
 
@@ -744,7 +744,7 @@ static void OKIM6295_data_w(int num, int data)
 				/* invalid samples go here */
 				else
 				{
-					if (errorlog) fprintf(errorlog,"OKIM6295: requested to play invalid sample %02x\n",okim6295_command[num]);
+					logerror("OKIM6295: requested to play invalid sample %02x\n",okim6295_command[num]);
 					voice->playing = 0;
 				}
 			}

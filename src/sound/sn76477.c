@@ -5,8 +5,8 @@
 							   /					\
 					   [ 1] ENV SEL 1			ENV SEL 2 [28]
 					   [ 2] GND 				  MIXER C [27] \
- SN76477_noise_clock_w [ 3] NOISE EXT OSC		  MIXER B [26]	> SN76477_mixer_w()
-		  noise_res    [ 4] RES NOISE OSC		  MIXER A [25] /
+ SN76477_noise_clock_w [ 3] NOISE EXT OSC		  MIXER A [26]	> SN76477_mixer_w()
+		  noise_res    [ 4] RES NOISE OSC		  MIXER B [25] /
 		 filter_res    [ 5] NOISE FILTER RES	  O/S RES [24] oneshot_res
 		 filter_cap    [ 6] NOISE FILTER CAP	  O/S CAP [23] oneshot_cap
 		  decay_res    [ 7] DECAY RES			  VCO SEL [22] SN76477_vco_w()
@@ -29,24 +29,24 @@
 
 #define VERBOSE 1
 
-#if VERBOSE
-#define LOG(x) if( errorlog ) fprintf x
+#if VERBOSE >= 0
+#define LOG(n,x) if( VERBOSE >= (n) ) logerror x
 #else
-#define LOG(x)
+#define LOG(n,x)
 #endif
 
 #if MAME_DEBUG
 #define CHECK_CHIP_NUM						\
 	if( chip >= intf->num ) 				\
 	{										\
-		if( errorlog ) fprintf(errorlog, "SN76477 #%d: fatal, only %d chips defined in interface!\n", chip, intf->num); \
+		LOG(0,("SN76477 #%d: fatal, only %d chips defined in interface!\n", chip, intf->num)); \
 		return; 							\
 	}
 
 #define CHECK_CHIP_NUM_AND_RANGE(BITS,FUNC) \
 	CHECK_CHIP_NUM; 						\
 	if( data != (data & BITS) ) 			\
-		if( errorlog ) fprintf(errorlog, "SN76477 #%d: warning %s called with data = $%02X!\n", chip, #FUNC, data); \
+		LOG(0,("SN76477 #%d: warning %s called with data = $%02X!\n", chip, #FUNC, data)); \
 	data &= BITS;
 #else
 #define CHECK_CHIP_NUM
@@ -127,16 +127,16 @@ static void attack_decay(int param)
 		/* start ATTACK */
 		sn->vol_rate = ( sn->attack_time > 0 ) ? VMAX / sn->attack_time : VMAX;
 		sn->vol_step = +1;
-		LOG((errorlog,"SN76477 #%d: ATTACK rate %d/%d = %d/sec\n", param, sn->vol_rate, sn->samplerate, sn->vol_rate/sn->samplerate));
-	}
+		LOG(2,("SN76477 #%d: ATTACK rate %d/%d = %d/sec\n", param, sn->vol_rate, sn->samplerate, sn->vol_rate/sn->samplerate));
+    }
 	else
 	{
 		/* start DECAY */
 		sn->vol = VMAX; /* just in case... */
 		sn->vol_rate = ( sn->decay_time > 0 ) ? VMAX / sn->decay_time : VMAX;
 		sn->vol_step = -1;
-		LOG((errorlog,"SN76477 #%d: DECAY rate %d/%d = %d/sec\n", param, sn->vol_rate, sn->samplerate, sn->vol_rate/sn->samplerate));
-	}
+		LOG(2,("SN76477 #%d: DECAY rate %d/%d = %d/sec\n", param, sn->vol_rate, sn->samplerate, sn->vol_rate/sn->samplerate));
+    }
 }
 
 static void vco_envelope_cb(int param)
@@ -177,7 +177,7 @@ void SN76477_mixer_w(int chip, int data)
 		return;
 	stream_update(sn->channel, 0);
 	sn->mixer = data;
-	LOG((errorlog,"SN76477 #%d: MIXER mode %d [%s]\n", chip, sn->mixer, mixer_mode[sn->mixer]));
+	LOG(1,("SN76477 #%d: MIXER mode %d [%s]\n", chip, sn->mixer, mixer_mode[sn->mixer]));
 }
 
 void SN76477_mixer_a_w(int chip, int data)
@@ -186,11 +186,12 @@ void SN76477_mixer_a_w(int chip, int data)
 
 	CHECK_CHIP_NUM_AND_RANGE(1,SN76477_mixer_a_w);
 
-	if( data == (sn->mixer & 1) )
+	data = data ? 1 : 0;
+    if( data == (sn->mixer & 1) )
 		return;
 	stream_update(sn->channel, 0);
 	sn->mixer = (sn->mixer & ~1) | data;
-	LOG((errorlog,"SN76477 #%d: MIXER mode %d [%s]\n", chip, sn->mixer, mixer_mode[sn->mixer]));
+	LOG(1,("SN76477 #%d: MIXER mode %d [%s]\n", chip, sn->mixer, mixer_mode[sn->mixer]));
 }
 
 void SN76477_mixer_b_w(int chip, int data)
@@ -199,13 +200,12 @@ void SN76477_mixer_b_w(int chip, int data)
 
 	CHECK_CHIP_NUM_AND_RANGE(1,SN76477_mixer_b_w);
 
-	data <<= 1;
-
-	if( data == (sn->mixer & 2) )
+	data = data ? 2 : 0;
+    if( data == (sn->mixer & 2) )
 		return;
 	stream_update(sn->channel, 0);
 	sn->mixer = (sn->mixer & ~2) | data;
-	LOG((errorlog,"SN76477 #%d: MIXER mode %d [%s]\n", chip, sn->mixer, mixer_mode[sn->mixer]));
+	LOG(1,("SN76477 #%d: MIXER mode %d [%s]\n", chip, sn->mixer, mixer_mode[sn->mixer]));
 }
 
 void SN76477_mixer_c_w(int chip, int data)
@@ -214,13 +214,12 @@ void SN76477_mixer_c_w(int chip, int data)
 
 	CHECK_CHIP_NUM_AND_RANGE(1,SN76477_mixer_c_w);
 
-	data <<= 2;
-
-	if( data == (sn->mixer & 4) )
+	data = data ? 4 : 0;
+    if( data == (sn->mixer & 4) )
 		return;
 	stream_update(sn->channel, 0);
 	sn->mixer = (sn->mixer & ~4) | data;
-	LOG((errorlog,"SN76477 #%d: MIXER mode %d [%s]\n", chip, sn->mixer, mixer_mode[sn->mixer]));
+	LOG(1,("SN76477 #%d: MIXER mode %d [%s]\n", chip, sn->mixer, mixer_mode[sn->mixer]));
 }
 
 #if VERBOSE
@@ -245,7 +244,7 @@ void SN76477_envelope_w(int chip, int data)
 		return;
 	stream_update(sn->channel, 0);
 	sn->envelope = data;
-	LOG((errorlog,"SN76477 #%d: ENVELOPE mode %d [%s]\n", chip, sn->envelope, envelope_mode[sn->envelope]));
+	LOG(1,("SN76477 #%d: ENVELOPE mode %d [%s]\n", chip, sn->envelope, envelope_mode[sn->envelope]));
 }
 
 void SN76477_envelope_1_w(int chip, int data)
@@ -258,7 +257,7 @@ void SN76477_envelope_1_w(int chip, int data)
 		return;
 	stream_update(sn->channel, 0);
 	sn->envelope = (sn->envelope & ~1) | data;
-	LOG((errorlog,"SN76477 #%d: ENVELOPE mode %d [%s]\n", chip, sn->envelope, envelope_mode[sn->envelope]));
+	LOG(1,("SN76477 #%d: ENVELOPE mode %d [%s]\n", chip, sn->envelope, envelope_mode[sn->envelope]));
 }
 
 void SN76477_envelope_2_w(int chip, int data)
@@ -273,7 +272,7 @@ void SN76477_envelope_2_w(int chip, int data)
 		return;
 	stream_update(sn->channel, 0);
 	sn->envelope = (sn->envelope & ~2) | data;
-	LOG((errorlog,"SN76477 #%d: ENVELOPE mode %d [%s]\n", chip, sn->envelope, envelope_mode[sn->envelope]));
+	LOG(1,("SN76477 #%d: ENVELOPE mode %d [%s]\n", chip, sn->envelope, envelope_mode[sn->envelope]));
 }
 
 /*****************************************************************************
@@ -289,7 +288,7 @@ void SN76477_vco_w(int chip, int data)
 		return;
 	stream_update(sn->channel, 0);
 	sn->vco_select = data;
-	LOG((errorlog,"SN76477 #%d: VCO select %d [%s]\n", chip, sn->vco_select, sn->vco_select ? "Internal (SLF)" : "External (Pin 16)"));
+	LOG(1,("SN76477 #%d: VCO select %d [%s]\n", chip, sn->vco_select, sn->vco_select ? "Internal (SLF)" : "External (Pin 16)"));
 }
 
 /*****************************************************************************
@@ -364,7 +363,7 @@ void SN76477_enable_w(int chip, int data)
 			break;
 		}
 	}
-	LOG((errorlog,"SN76477 #%d: ENABLE line %d [%s]\n", chip, sn->enable, sn->enable ? "Inhibited" : "Enabled" ));
+	LOG(1,("SN76477 #%d: ENABLE line %d [%s]\n", chip, sn->enable, sn->enable ? "Inhibited" : "Enabled" ));
 }
 
 /*****************************************************************************
@@ -414,7 +413,7 @@ void SN76477_set_filter_res(int chip, double res)
 	if( sn->filter_res > 0 && sn->filter_cap > 0 )
 	{
 		sn->noise_freq = (int)(1.28 / (sn->filter_res * sn->filter_cap));
-		if( errorlog ) fprintf(errorlog, "SN76477 #%d: NOISE FILTER freqency %d\n", chip, sn->noise_freq);
+		LOG(1,("SN76477 #%d: NOISE FILTER freqency %d\n", chip, sn->noise_freq));
 	}
 	else
 		sn->noise_freq = sn->samplerate;
@@ -436,7 +435,7 @@ void SN76477_set_filter_cap(int chip, double cap)
 	if( sn->filter_res > 0 && sn->filter_cap > 0 )
 	{
 		sn->noise_freq = (int)(1.28 / (sn->filter_res * sn->filter_cap));
-		if( errorlog ) fprintf(errorlog, "SN76477 #%d: NOISE FILTER freqency %d\n", chip, sn->noise_freq);
+		LOG(1,("SN76477 #%d: NOISE FILTER freqency %d\n", chip, sn->noise_freq));
 	}
 	else
 		sn->noise_freq = sn->samplerate;
@@ -456,7 +455,7 @@ void SN76477_set_decay_res(int chip, double res)
 	stream_update(sn->channel, 0);
 	sn->decay_res = res;
 	sn->decay_time = sn->decay_res * sn->attack_decay_cap;
-	LOG((errorlog, "SN76477 #%d: DECAY time is %fs\n", chip, sn->decay_time));
+	LOG(1,("SN76477 #%d: DECAY time is %fs\n", chip, sn->decay_time));
 }
 
 /*****************************************************************************
@@ -474,8 +473,8 @@ void SN76477_set_attack_decay_cap(int chip, double cap)
 	sn->attack_decay_cap = cap;
 	sn->decay_time = sn->decay_res * sn->attack_decay_cap;
 	sn->attack_time = sn->attack_res * sn->attack_decay_cap;
-	LOG((errorlog, "SN76477 #%d: ATTACK time is %fs\n", chip, sn->attack_time));
-	LOG((errorlog, "SN76477 #%d: DECAY time is %fs\n", chip, sn->decay_time));
+	LOG(1,("SN76477 #%d: ATTACK time is %fs\n", chip, sn->attack_time));
+	LOG(1,("SN76477 #%d: DECAY time is %fs\n", chip, sn->decay_time));
 }
 
 /*****************************************************************************
@@ -492,7 +491,7 @@ void SN76477_set_attack_res(int chip, double res)
 	stream_update(sn->channel, 0);
 	sn->attack_res = res;
 	sn->attack_time = sn->attack_res * sn->attack_decay_cap;
-	LOG((errorlog, "SN76477 #%d: ATTACK time is %fs\n", chip, sn->attack_time));
+	LOG(1,("SN76477 #%d: ATTACK time is %fs\n", chip, sn->attack_time));
 }
 
 /*****************************************************************************
@@ -518,12 +517,14 @@ void SN76477_set_amplitude_res(int chip, double res)
 		{
 			int vol = (int)((3.4 * sn->feedback_res / sn->amplitude_res) * 32767 * i / (VMAX+1));
 #if VERBOSE
-			if( vol > 32767 && !clip ) clip = i;
+			if( vol > 32767 && !clip )
+				clip = i;
+			LOG(3,("%d\n", vol));
 #endif
 			if( vol > 32767 ) vol = 32767;
 			sn->vol_lookup[i] = vol * intf->mixing_level[chip] / 100;
 		}
-		LOG((errorlog,"SN76477 #%d: volume range from -%d to +%d (clip at %d%%)\n", chip, sn->vol_lookup[VMAX-VMIN], sn->vol_lookup[VMAX-VMIN], clip * 100 / 256));
+		LOG(1,("SN76477 #%d: volume range from -%d to +%d (clip at %d%%)\n", chip, sn->vol_lookup[VMAX-VMIN], sn->vol_lookup[VMAX-VMIN], clip * 100 / 256));
 	}
 	else
 	{
@@ -559,7 +560,7 @@ void SN76477_set_feedback_res(int chip, double res)
 			if( vol > 32767 ) vol = 32767;
 			sn->vol_lookup[i] = vol * intf->mixing_level[chip] / 100;
 		}
-		LOG((errorlog,"SN76477 #%d: volume range from -%d to +%d (clip at %d%%)\n", chip, sn->vol_lookup[VMAX-VMIN], sn->vol_lookup[VMAX-VMIN], clip * 100 / 256));
+		LOG(1,("SN76477 #%d: volume range from -%d to +%d (clip at %d%%)\n", chip, sn->vol_lookup[VMAX-VMIN], sn->vol_lookup[VMAX-VMIN], clip * 100 / 256));
 	}
 	else
 	{
@@ -581,7 +582,7 @@ void SN76477_set_pitch_voltage(int chip, double voltage)
 		return;
 	stream_update(sn->channel, 0);
 	sn->pitch_voltage = voltage;
-	LOG((errorlog, "SN76477 #%d: VCO pitch voltage %f (%d%% duty cycle)\n", chip, sn->pitch_voltage, 0));
+	LOG(1,("SN76477 #%d: VCO pitch voltage %f (%d%% duty cycle)\n", chip, sn->pitch_voltage, 0));
 }
 
 /*****************************************************************************
@@ -600,7 +601,7 @@ void SN76477_set_vco_res(int chip, double res)
 	if( sn->vco_res > 0 && sn->vco_cap > 0 )
 	{
 		sn->vco_freq = 0.64 / (sn->vco_res * sn->vco_cap);
-		LOG((errorlog, "SN76477 #%d: VCO freqency %f\n", chip, sn->vco_freq));
+		LOG(1,("SN76477 #%d: VCO freqency %f\n", chip, sn->vco_freq));
 	}
 	else
 		sn->vco_freq = 0;
@@ -622,7 +623,7 @@ void SN76477_set_vco_cap(int chip, double cap)
 	if( sn->vco_res > 0 && sn->vco_cap > 0 )
 	{
 		sn->vco_freq = 0.64 / (sn->vco_res * sn->vco_cap);
-		LOG((errorlog, "SN76477 #%d: VCO freqency %f\n", chip, sn->vco_freq));
+		LOG(1,("SN76477 #%d: VCO freqency %f\n", chip, sn->vco_freq));
 	}
 	else
 		sn->vco_freq = 0;
@@ -641,7 +642,7 @@ void SN76477_set_vco_voltage(int chip, double voltage)
 		return;
 	stream_update(sn->channel, 0);
 	sn->vco_voltage = voltage;
-	LOG((errorlog, "SN76477 #%d: VCO ext. voltage %f (%f * %f = %f Hz)\n", chip,
+	LOG(1,("SN76477 #%d: VCO ext. voltage %f (%f * %f = %f Hz)\n", chip,
 		sn->vco_voltage,
 		sn->vco_freq,
 		10.0 * (5.0 - sn->vco_voltage) / 5.0,
@@ -664,7 +665,7 @@ void SN76477_set_slf_res(int chip, double res)
 	if( sn->slf_res > 0 && sn->slf_cap > 0 )
 	{
 		sn->slf_freq = 0.64 / (sn->slf_res * sn->slf_cap);
-		LOG((errorlog, "SN76477 #%d: SLF freqency %f\n", chip, sn->slf_freq));
+		LOG(1,("SN76477 #%d: SLF freqency %f\n", chip, sn->slf_freq));
 	}
 	else
 		sn->slf_freq = 0;
@@ -686,28 +687,29 @@ void SN76477_set_slf_cap(int chip, double cap)
 	if( sn->slf_res > 0 && sn->slf_cap > 0 )
 	{
 		sn->slf_freq = 0.64 / (sn->slf_res * sn->slf_cap);
-		LOG((errorlog, "SN76477 #%d: SLF freqency %f\n", chip, sn->slf_freq));
+		LOG(1,("SN76477 #%d: SLF freqency %f\n", chip, sn->slf_freq));
 	}
 	else
 		sn->slf_freq = 0;
 }
 
 /*****************************************************************************
- * set ONESHOT resistor (pin 20)
+ * set ONESHOT resistor (pin 24)
  *****************************************************************************/
 void SN76477_set_oneshot_res(int chip, double res)
 {
 	struct SN76477 *sn = sn76477[chip];
 
 	CHECK_CHIP_NUM;
-
+	if( res == sn->oneshot_res )
+		return;
 	sn->oneshot_res = res;
 	sn->oneshot_time = 0.8 * sn->oneshot_res * sn->oneshot_cap;
-	LOG((errorlog, "SN76477 #%d: ONE-SHOT time %fs\n", chip, sn->oneshot_time));
+	LOG(1,("SN76477 #%d: ONE-SHOT time %fs\n", chip, sn->oneshot_time));
 }
 
 /*****************************************************************************
- * set ONESHOT capacitor (pin 21)
+ * set ONESHOT capacitor (pin 23)
  *****************************************************************************/
 void SN76477_set_oneshot_cap(int chip, double cap)
 {
@@ -715,9 +717,11 @@ void SN76477_set_oneshot_cap(int chip, double cap)
 
 	CHECK_CHIP_NUM;
 
-	sn->oneshot_cap = cap;
+	if( cap == sn->oneshot_cap )
+        return;
+    sn->oneshot_cap = cap;
 	sn->oneshot_time = 0.8 * sn->oneshot_res * sn->oneshot_cap;
-	LOG((errorlog, "SN76477 #%d: ONE-SHOT time %fs\n", chip, sn->oneshot_time));
+	LOG(1,("SN76477 #%d: ONE-SHOT time %fs\n", chip, sn->oneshot_time));
 }
 
 #define UPDATE_SLF															\
@@ -803,8 +807,9 @@ void SN76477_set_oneshot_cap(int chip, double cap)
 		sn->vol += n * sn->vol_step;										\
 		if( sn->vol < VMIN ) sn->vol = VMIN;								\
 		if( sn->vol > VMAX ) sn->vol = VMAX;								\
-		LOG((errorlog,"SN76477 #%d: vol = $%04X\n", chip, sn->vol));        \
+		LOG(3,("SN76477 #%d: vol = $%04X\n", chip, sn->vol));      \
 	}
+
 
 /*****************************************************************************
  * mixer select 0 0 0 : VCO
@@ -969,7 +974,7 @@ int SN76477_sh_start(const struct MachineSound *msound)
 		sn76477[i] = malloc(sizeof(struct SN76477));
 		if( !sn76477[i] )
 		{
-			if( errorlog ) fprintf(errorlog, "%s failed to malloc struct SN76477\n", name);
+			LOG(0,("%s failed to malloc struct SN76477\n", name));
 			return 1;
 		}
 		memset(sn76477[i], 0, sizeof(struct SN76477));
@@ -978,7 +983,7 @@ int SN76477_sh_start(const struct MachineSound *msound)
 		sn76477[i]->channel = stream_init(name, intf->mixing_level[i], Machine->sample_rate, i, SN76477_sound_update);
 		if( sn76477[i]->channel == -1 )
 		{
-			if( errorlog ) fprintf(errorlog, "%s stream_init failed\n", name);
+			LOG(0,("%s stream_init failed\n", name));
 			return 1;
 		}
 		sn76477[i]->samplerate = Machine->sample_rate ? Machine->sample_rate : 1;

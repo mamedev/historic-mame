@@ -456,7 +456,7 @@ void ccpu_SetInputs(int inputs, int switches)
 #ifdef macintosh
 #define UNFINISHED(x)  { SysBeep (0); }
 #else
-#define UNFINISHED(x)  { if (errorlog) fprintf (errorlog, "UNFINISHED: %s\n", x); }
+#define UNFINISHED(x)  { logerror("UNFINISHED: %s\n", x); }
 #endif
 
 /* Handy new operators ... */
@@ -1990,7 +1990,7 @@ CINESTATE opJNC_A_B (int opcode)
 CINESTATE opJDR_A_B (int opcode)
 {
 	/* register_PC++; */
-	fprintf (stderr, "The hell? No PC incrementing?\n");
+	logerror("The hell? No PC incrementing?\n");
 	return state_B;
 }
 
@@ -2179,7 +2179,7 @@ CINESTATE tJPP_A_B (int opcode)
 		case CCPU_MEMSIZE_32K:
 			return opJPP32_A_B (opcode);
 	}
-	fprintf (stderr, "Out of range JPP!\n");
+	logerror("Out of range JPP!\n");
 	return opJPP32_A_B (opcode);
 }
 
@@ -2196,7 +2196,7 @@ CINESTATE tJPP_B_BB (int opcode)
 		case CCPU_MEMSIZE_32K:
 			return opJPP32_B_BB (opcode);
 	}
-	fprintf (stderr, "Out of range JPP!\n");
+	logerror("Out of range JPP!\n");
 	return state;
 }
 

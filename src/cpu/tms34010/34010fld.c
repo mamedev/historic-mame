@@ -90,105 +90,105 @@ void wfield_16(UINT32 bitaddr, UINT32 data)
 }
 void wfield_17(UINT32 bitaddr, UINT32 data)
 {
-	if (errorlog) fprintf(errorlog,"17-bit fields are not implemented!\n");
+	logerror("17-bit fields are not implemented!\n");
 #ifdef MAME_DEBUG
 	debug_key_pressed=1;
 #endif
 }
 void wfield_18(UINT32 bitaddr, UINT32 data)
 {
-	if (errorlog) fprintf(errorlog,"18-bit fields are not implemented!\n");
+	logerror("18-bit fields are not implemented!\n");
 #ifdef MAME_DEBUG
 	debug_key_pressed=1;
 #endif
 }
 void wfield_19(UINT32 bitaddr, UINT32 data)
 {
-	if (errorlog) fprintf(errorlog,"19-bit fields are not implemented!\n");
+	logerror("19-bit fields are not implemented!\n");
 #ifdef MAME_DEBUG
 	debug_key_pressed=1;
 #endif
 }
 void wfield_20(UINT32 bitaddr, UINT32 data)
 {
-	if (errorlog) fprintf(errorlog,"20-bit fields are not implemented!\n");
+	logerror("20-bit fields are not implemented!\n");
 #ifdef MAME_DEBUG
 	debug_key_pressed=1;
 #endif
 }
 void wfield_21(UINT32 bitaddr, UINT32 data)
 {
-	if (errorlog) fprintf(errorlog,"21-bit fields are not implemented!\n");
+	logerror("21-bit fields are not implemented!\n");
 #ifdef MAME_DEBUG
 	debug_key_pressed=1;
 #endif
 }
 void wfield_22(UINT32 bitaddr, UINT32 data)
 {
-	if (errorlog) fprintf(errorlog,"22-bit fields are not implemented!\n");
+	logerror("22-bit fields are not implemented!\n");
 #ifdef MAME_DEBUG
 	debug_key_pressed=1;
 #endif
 }
 void wfield_23(UINT32 bitaddr, UINT32 data)
 {
-	if (errorlog) fprintf(errorlog,"23-bit fields are not implemented!\n");
+	logerror("23-bit fields are not implemented!\n");
 #ifdef MAME_DEBUG
 	debug_key_pressed=1;
 #endif
 }
 void wfield_24(UINT32 bitaddr, UINT32 data)
 {
-	if (errorlog) fprintf(errorlog,"24-bit fields are not implemented!\n");
+	logerror("24-bit fields are not implemented!\n");
 #ifdef MAME_DEBUG
 	debug_key_pressed=1;
 #endif
 }
 void wfield_25(UINT32 bitaddr, UINT32 data)
 {
-	if (errorlog) fprintf(errorlog,"25-bit fields are not implemented!\n");
+	logerror("25-bit fields are not implemented!\n");
 #ifdef MAME_DEBUG
 	debug_key_pressed=1;
 #endif
 }
 void wfield_26(UINT32 bitaddr, UINT32 data)
 {
-	if (errorlog) fprintf(errorlog,"26-bit fields are not implemented!\n");
+	logerror("26-bit fields are not implemented!\n");
 #ifdef MAME_DEBUG
 	debug_key_pressed=1;
 #endif
 }
 void wfield_27(UINT32 bitaddr, UINT32 data)
 {
-	if (errorlog) fprintf(errorlog,"27-bit fields are not implemented!\n");
+	logerror("27-bit fields are not implemented!\n");
 #ifdef MAME_DEBUG
 	debug_key_pressed=1;
 #endif
 }
 void wfield_28(UINT32 bitaddr, UINT32 data)
 {
-	if (errorlog) fprintf(errorlog,"28-bit fields are not implemented!\n");
+	logerror("28-bit fields are not implemented!\n");
 #ifdef MAME_DEBUG
 	debug_key_pressed=1;
 #endif
 }
 void wfield_29(UINT32 bitaddr, UINT32 data)
 {
-	if (errorlog) fprintf(errorlog,"29-bit fields are not implemented!\n");
+	logerror("29-bit fields are not implemented!\n");
 #ifdef MAME_DEBUG
 	debug_key_pressed=1;
 #endif
 }
 void wfield_30(UINT32 bitaddr, UINT32 data)
 {
-	if (errorlog) fprintf(errorlog,"30-bit fields are not implemented!\n");
+	logerror("30-bit fields are not implemented!\n");
 #ifdef MAME_DEBUG
 	debug_key_pressed=1;
 #endif
 }
 void wfield_31(UINT32 bitaddr, UINT32 data)
 {
-	if (errorlog) fprintf(errorlog,"31-bit fields are not implemented!\n");
+	logerror("31-bit fields are not implemented!\n");
 #ifdef MAME_DEBUG
 	debug_key_pressed=1;
 #endif
@@ -274,7 +274,7 @@ INT32 rfield_z_16(UINT32 bitaddr)
 }
 INT32 rfield_z_17(UINT32 bitaddr)
 {
-	if (errorlog) fprintf(errorlog,"17-bit fields are not implemented!\n");
+	logerror("17-bit fields are not implemented!\n");
 #ifdef MAME_DEBUG
 	debug_key_pressed=1;
 #endif
@@ -282,7 +282,7 @@ INT32 rfield_z_17(UINT32 bitaddr)
 }
 INT32 rfield_z_18(UINT32 bitaddr)
 {
-	if (errorlog) fprintf(errorlog,"18-bit fields are not implemented!\n");
+	logerror("18-bit fields are not implemented!\n");
 #ifdef MAME_DEBUG
 	debug_key_pressed=1;
 #endif
@@ -290,7 +290,7 @@ INT32 rfield_z_18(UINT32 bitaddr)
 }
 INT32 rfield_z_19(UINT32 bitaddr)
 {
-	if (errorlog) fprintf(errorlog,"19-bit fields are not implemented!\n");
+	logerror("19-bit fields are not implemented!\n");
 #ifdef MAME_DEBUG
 	debug_key_pressed=1;
 #endif
@@ -298,7 +298,7 @@ INT32 rfield_z_19(UINT32 bitaddr)
 }
 INT32 rfield_z_20(UINT32 bitaddr)
 {
-	if (errorlog) fprintf(errorlog,"20-bit fields are not implemented!\n");
+	logerror("20-bit fields are not implemented!\n");
 #ifdef MAME_DEBUG
 	debug_key_pressed=1;
 #endif
@@ -306,7 +306,7 @@ INT32 rfield_z_20(UINT32 bitaddr)
 }
 INT32 rfield_z_21(UINT32 bitaddr)
 {
-	if (errorlog) fprintf(errorlog,"21-bit fields are not implemented!\n");
+	logerror("21-bit fields are not implemented!\n");
 #ifdef MAME_DEBUG
 	debug_key_pressed=1;
 #endif
@@ -314,7 +314,7 @@ INT32 rfield_z_21(UINT32 bitaddr)
 }
 INT32 rfield_z_22(UINT32 bitaddr)
 {
-	if (errorlog) fprintf(errorlog,"22-bit fields are not implemented!\n");
+	logerror("22-bit fields are not implemented!\n");
 #ifdef MAME_DEBUG
 	debug_key_pressed=1;
 #endif
@@ -322,7 +322,7 @@ INT32 rfield_z_22(UINT32 bitaddr)
 }
 INT32 rfield_z_23(UINT32 bitaddr)
 {
-	if (errorlog) fprintf(errorlog,"23-bit fields are not implemented!\n");
+	logerror("23-bit fields are not implemented!\n");
 #ifdef MAME_DEBUG
 	debug_key_pressed=1;
 #endif
@@ -330,7 +330,7 @@ INT32 rfield_z_23(UINT32 bitaddr)
 }
 INT32 rfield_z_24(UINT32 bitaddr)
 {
-	if (errorlog) fprintf(errorlog,"24-bit fields are not implemented!\n");
+	logerror("24-bit fields are not implemented!\n");
 #ifdef MAME_DEBUG
 	debug_key_pressed=1;
 #endif
@@ -338,7 +338,7 @@ INT32 rfield_z_24(UINT32 bitaddr)
 }
 INT32 rfield_z_25(UINT32 bitaddr)
 {
-	if (errorlog) fprintf(errorlog,"25-bit fields are not implemented!\n");
+	logerror("25-bit fields are not implemented!\n");
 #ifdef MAME_DEBUG
 	debug_key_pressed=1;
 #endif
@@ -346,7 +346,7 @@ INT32 rfield_z_25(UINT32 bitaddr)
 }
 INT32 rfield_z_26(UINT32 bitaddr)
 {
-	if (errorlog) fprintf(errorlog,"26-bit fields are not implemented!\n");
+	logerror("26-bit fields are not implemented!\n");
 #ifdef MAME_DEBUG
 	debug_key_pressed=1;
 #endif
@@ -354,7 +354,7 @@ INT32 rfield_z_26(UINT32 bitaddr)
 }
 INT32 rfield_z_27(UINT32 bitaddr)
 {
-	if (errorlog) fprintf(errorlog,"27-bit fields are not implemented!\n");
+	logerror("27-bit fields are not implemented!\n");
 #ifdef MAME_DEBUG
 	debug_key_pressed=1;
 #endif
@@ -362,7 +362,7 @@ INT32 rfield_z_27(UINT32 bitaddr)
 }
 INT32 rfield_z_28(UINT32 bitaddr)
 {
-	if (errorlog) fprintf(errorlog,"28-bit fields are not implemented!\n");
+	logerror("28-bit fields are not implemented!\n");
 #ifdef MAME_DEBUG
 	debug_key_pressed=1;
 #endif
@@ -370,7 +370,7 @@ INT32 rfield_z_28(UINT32 bitaddr)
 }
 INT32 rfield_z_29(UINT32 bitaddr)
 {
-	if (errorlog) fprintf(errorlog,"29-bit fields are not implemented!\n");
+	logerror("29-bit fields are not implemented!\n");
 #ifdef MAME_DEBUG
 	debug_key_pressed=1;
 #endif
@@ -378,7 +378,7 @@ INT32 rfield_z_29(UINT32 bitaddr)
 }
 INT32 rfield_z_30(UINT32 bitaddr)
 {
-	if (errorlog) fprintf(errorlog,"30-bit fields are not implemented!\n");
+	logerror("30-bit fields are not implemented!\n");
 #ifdef MAME_DEBUG
 	debug_key_pressed=1;
 #endif
@@ -386,7 +386,7 @@ INT32 rfield_z_30(UINT32 bitaddr)
 }
 INT32 rfield_z_31(UINT32 bitaddr)
 {
-	if (errorlog) fprintf(errorlog,"31-bit fields are not implemented!\n");
+	logerror("31-bit fields are not implemented!\n");
 #ifdef MAME_DEBUG
 	debug_key_pressed=1;
 #endif
@@ -512,7 +512,7 @@ INT32 rfield_s_16(UINT32 bitaddr)
 }
 INT32 rfield_s_17(UINT32 bitaddr)
 {
-	if (errorlog) fprintf(errorlog,"17-bit fields are not implemented!\n");
+	logerror("17-bit fields are not implemented!\n");
 #ifdef MAME_DEBUG
 	debug_key_pressed=1;
 #endif
@@ -520,7 +520,7 @@ INT32 rfield_s_17(UINT32 bitaddr)
 }
 INT32 rfield_s_18(UINT32 bitaddr)
 {
-	if (errorlog) fprintf(errorlog,"18-bit fields are not implemented!\n");
+	logerror("18-bit fields are not implemented!\n");
 #ifdef MAME_DEBUG
 	debug_key_pressed=1;
 #endif
@@ -528,7 +528,7 @@ INT32 rfield_s_18(UINT32 bitaddr)
 }
 INT32 rfield_s_19(UINT32 bitaddr)
 {
-	if (errorlog) fprintf(errorlog,"19-bit fields are not implemented!\n");
+	logerror("19-bit fields are not implemented!\n");
 #ifdef MAME_DEBUG
 	debug_key_pressed=1;
 #endif
@@ -536,7 +536,7 @@ INT32 rfield_s_19(UINT32 bitaddr)
 }
 INT32 rfield_s_20(UINT32 bitaddr)
 {
-	if (errorlog) fprintf(errorlog,"20-bit fields are not implemented!\n");
+	logerror("20-bit fields are not implemented!\n");
 #ifdef MAME_DEBUG
 	debug_key_pressed=1;
 #endif
@@ -544,7 +544,7 @@ INT32 rfield_s_20(UINT32 bitaddr)
 }
 INT32 rfield_s_21(UINT32 bitaddr)
 {
-	if (errorlog) fprintf(errorlog,"21-bit fields are not implemented!\n");
+	logerror("21-bit fields are not implemented!\n");
 #ifdef MAME_DEBUG
 	debug_key_pressed=1;
 #endif
@@ -552,7 +552,7 @@ INT32 rfield_s_21(UINT32 bitaddr)
 }
 INT32 rfield_s_22(UINT32 bitaddr)
 {
-	if (errorlog) fprintf(errorlog,"22-bit fields are not implemented!\n");
+	logerror("22-bit fields are not implemented!\n");
 #ifdef MAME_DEBUG
 	debug_key_pressed=1;
 #endif
@@ -560,7 +560,7 @@ INT32 rfield_s_22(UINT32 bitaddr)
 }
 INT32 rfield_s_23(UINT32 bitaddr)
 {
-	if (errorlog) fprintf(errorlog,"23-bit fields are not implemented!\n");
+	logerror("23-bit fields are not implemented!\n");
 #ifdef MAME_DEBUG
 	debug_key_pressed=1;
 #endif
@@ -568,7 +568,7 @@ INT32 rfield_s_23(UINT32 bitaddr)
 }
 INT32 rfield_s_24(UINT32 bitaddr)
 {
-	if (errorlog) fprintf(errorlog,"24-bit fields are not implemented!\n");
+	logerror("24-bit fields are not implemented!\n");
 #ifdef MAME_DEBUG
 	debug_key_pressed=1;
 #endif
@@ -576,7 +576,7 @@ INT32 rfield_s_24(UINT32 bitaddr)
 }
 INT32 rfield_s_25(UINT32 bitaddr)
 {
-	if (errorlog) fprintf(errorlog,"25-bit fields are not implemented!\n");
+	logerror("25-bit fields are not implemented!\n");
 #ifdef MAME_DEBUG
 	debug_key_pressed=1;
 #endif
@@ -584,7 +584,7 @@ INT32 rfield_s_25(UINT32 bitaddr)
 }
 INT32 rfield_s_26(UINT32 bitaddr)
 {
-	if (errorlog) fprintf(errorlog,"26-bit fields are not implemented!\n");
+	logerror("26-bit fields are not implemented!\n");
 #ifdef MAME_DEBUG
 	debug_key_pressed=1;
 #endif
@@ -592,7 +592,7 @@ INT32 rfield_s_26(UINT32 bitaddr)
 }
 INT32 rfield_s_27(UINT32 bitaddr)
 {
-	if (errorlog) fprintf(errorlog,"27-bit fields are not implemented!\n");
+	logerror("27-bit fields are not implemented!\n");
 #ifdef MAME_DEBUG
 	debug_key_pressed=1;
 #endif
@@ -600,7 +600,7 @@ INT32 rfield_s_27(UINT32 bitaddr)
 }
 INT32 rfield_s_28(UINT32 bitaddr)
 {
-	if (errorlog) fprintf(errorlog,"28-bit fields are not implemented!\n");
+	logerror("28-bit fields are not implemented!\n");
 #ifdef MAME_DEBUG
 	debug_key_pressed=1;
 #endif
@@ -608,7 +608,7 @@ INT32 rfield_s_28(UINT32 bitaddr)
 }
 INT32 rfield_s_29(UINT32 bitaddr)
 {
-	if (errorlog) fprintf(errorlog,"29-bit fields are not implemented!\n");
+	logerror("29-bit fields are not implemented!\n");
 #ifdef MAME_DEBUG
 	debug_key_pressed=1;
 #endif
@@ -616,7 +616,7 @@ INT32 rfield_s_29(UINT32 bitaddr)
 }
 INT32 rfield_s_30(UINT32 bitaddr)
 {
-	if (errorlog) fprintf(errorlog,"30-bit fields are not implemented!\n");
+	logerror("30-bit fields are not implemented!\n");
 #ifdef MAME_DEBUG
 	debug_key_pressed=1;
 #endif
@@ -624,7 +624,7 @@ INT32 rfield_s_30(UINT32 bitaddr)
 }
 INT32 rfield_s_31(UINT32 bitaddr)
 {
-	if (errorlog) fprintf(errorlog,"31-bit fields are not implemented!\n");
+	logerror("31-bit fields are not implemented!\n");
 #ifdef MAME_DEBUG
 	debug_key_pressed=1;
 #endif

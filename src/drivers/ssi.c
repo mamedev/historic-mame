@@ -55,7 +55,7 @@ static READ_HANDLER( ssi_input_r )
               return readinputport(2); /* IN2 */
     }
 
-if (errorlog) fprintf(errorlog,"CPU #0 PC %06x: warning - read unmapped memory address %06x\n",cpu_get_pc(),0x100000+offset);
+logerror("CPU #0 PC %06x: warning - read unmapped memory address %06x\n",cpu_get_pc(),0x100000+offset);
 
 	return 0xff;
 }

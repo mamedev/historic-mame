@@ -1,7 +1,7 @@
 #include "driver.h"
 
 unsigned char *mexico86_videoram,*mexico86_objectram;
-int mexico86_objectram_size;
+size_t mexico86_objectram_size;
 static int charbank;
 
 

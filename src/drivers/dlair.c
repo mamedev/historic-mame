@@ -163,12 +163,12 @@ static struct MemoryWriteAddress writemem[] =
 static unsigned char pip[4];
 static READ_HANDLER( pip_r )
 {
-if (errorlog) fprintf(errorlog,"PC %04x: read I/O port %02x\n",cpu_get_pc(),offset);
+logerror("PC %04x: read I/O port %02x\n",cpu_get_pc(),offset);
 	return pip[offset];
 }
 static WRITE_HANDLER( pip_w )
 {
-if (errorlog) fprintf(errorlog,"PC %04x: write %02x to I/O port %02x\n",cpu_get_pc(),data,offset);
+logerror("PC %04x: write %02x to I/O port %02x\n",cpu_get_pc(),data,offset);
 	pip[offset] = data;
 z80ctc_0_w(offset,data);
 }

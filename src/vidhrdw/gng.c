@@ -9,7 +9,7 @@
 #include "driver.h"
 
 extern unsigned char *spriteram;
-extern int spriteram_size;
+extern size_t spriteram_size;
 
 unsigned char *gng_fgvideoram,*gng_fgcolorram;
 unsigned char *gng_bgvideoram,*gng_bgcolorram;

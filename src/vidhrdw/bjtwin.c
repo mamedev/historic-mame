@@ -5,7 +5,7 @@ unsigned char *bjtwin_workram;
 unsigned char *bjtwin_spriteram;
 unsigned char *bjtwin_txvideoram;
 unsigned char *bjtwin_videocontrol;
-int bjtwin_txvideoram_size;
+size_t bjtwin_txvideoram_size;
 
 static unsigned char * dirtybuffer;
 static struct osd_bitmap *tmpbitmap;

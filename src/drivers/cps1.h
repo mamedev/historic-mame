@@ -3,8 +3,8 @@
 
 extern unsigned char * cps1_gfxram;     /* Video RAM */
 extern unsigned char * cps1_output;     /* Output ports */
-extern int cps1_gfxram_size;
-extern int cps1_output_size;
+extern size_t cps1_gfxram_size;
+extern size_t cps1_output_size;
 
 READ_HANDLER( cps1_eeprom_port_r );
 WRITE_HANDLER( cps1_eeprom_port_w );

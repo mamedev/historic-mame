@@ -52,7 +52,7 @@ Sound: YM2203 and YM3526 driven by 6809.  Sound added by Bryan McPhail, 1/4/98.
 
 unsigned char *brkthru_nmi_enable; /* needs to be tracked down */
 extern unsigned char *brkthru_videoram;
-extern int brkthru_videoram_size;
+extern size_t brkthru_videoram_size;
 
 WRITE_HANDLER( brkthru_1800_w );
 int brkthru_vh_start(void);
@@ -74,7 +74,7 @@ WRITE_HANDLER( darwin_0803_w )
 {
 	/* bit 0 = NMI enable */
 	/*nmi_enable = ~data & 1;*/
-	if(errorlog) fprintf(errorlog,"0803 %02X\n",data);
+	logerror("0803 %02X\n",data);
         nmi_enable = data;
 	/* bit 1 = ? maybe IRQ acknowledge */
 }
@@ -105,7 +105,7 @@ static struct MemoryReadAddress readmem[] =
 
 static struct MemoryWriteAddress writemem[] =
 {
-	{ 0x0000, 0x03ff, MWA_RAM, &brkthru_videoram, (int *)&brkthru_videoram_size },
+	{ 0x0000, 0x03ff, MWA_RAM, &brkthru_videoram, &brkthru_videoram_size },
 	{ 0x0400, 0x0bff, MWA_RAM },
 	{ 0x0c00, 0x0fff, videoram_w, &videoram, &videoram_size },
 	{ 0x1000, 0x10ff, MWA_RAM, &spriteram, &spriteram_size },

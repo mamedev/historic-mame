@@ -11,11 +11,11 @@ unsigned char   *mnight_scrollx_ram;
 unsigned char   *mnight_bgenable_ram;
 unsigned char   *mnight_spoverdraw_ram;
 unsigned char   *mnight_spriteram;
-int				 mnight_spriteram_size;
+size_t mnight_spriteram_size;
 unsigned char   *mnight_background_videoram;
-int				 mnight_backgroundram_size;
+size_t mnight_backgroundram_size;
 unsigned char   *mnight_foreground_videoram;
-int				 mnight_foregroundram_size;
+size_t mnight_foregroundram_size;
 
 static struct osd_bitmap *bitmap_bg;
 static struct osd_bitmap *bitmap_sp;

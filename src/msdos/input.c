@@ -160,6 +160,14 @@ int osd_wait_keypress(void)
 }
 
 
+int osd_readkey_unicode(int flush)
+{
+	if (flush) clear_keybuf();
+	if (keypressed())
+		return ureadkey(NULL);
+	else
+		return 0;
+}
 
 
 /*
@@ -611,8 +619,7 @@ void msdos_init_input (void)
 		/* valid calibration? */
 		if (err)
 		{
-			if (errorlog)
-					fprintf (errorlog, "No calibration data found\n");
+			logerror("No calibration data found\n");
 			if (install_joystick (joystick) != 0)
 			{
 				printf ("Joystick not found.\n");
@@ -621,8 +628,7 @@ void msdos_init_input (void)
 		}
 		else if (joystick != joy_type)
 		{
-			if (errorlog)
-				fprintf (errorlog, "Calibration data is from different joystick\n");
+			logerror("Calibration data is from different joystick\n");
 			remove_joystick();
 			if (install_joystick (joystick) != 0)
 			{
@@ -631,14 +637,11 @@ void msdos_init_input (void)
 			}
 		}
 
-		if (errorlog)
-		{
-			if (joystick == JOY_TYPE_NONE)
-				fprintf (errorlog, "Joystick not found\n");
-			else
-				fprintf (errorlog, "Installed %s %s\n",
-						joystick_driver->name, joystick_driver->desc);
-		}
+		if (joystick == JOY_TYPE_NONE)
+			logerror("Joystick not found\n");
+		else
+			logerror("Installed %s %s\n",
+					joystick_driver->name, joystick_driver->desc);
 	}
 
 	init_joy_list();

@@ -49,7 +49,6 @@
 /*
 #include <stdio.h>
 #include "driver.h"
-extern  FILE* errorlog;
 #define M68K_LOG errorlog
 #define M68K_LOG_EMULATED_INSTRUCTIONS 1
 */

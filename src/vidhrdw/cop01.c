@@ -10,7 +10,7 @@
 #include "vidhrdw/generic.h"
 
 unsigned char *cop01_videoram;
-int cop01_videoram_size;
+size_t cop01_videoram_size;
 
 static unsigned char cop01_scrollx[1];
 static unsigned char spritebank = 0;
@@ -124,7 +124,7 @@ WRITE_HANDLER( cop01_gfxbank_w )
 	/* bits 4 and 5 select sprite bank */
 	spritebank = (data & 0x30) >> 4;
 
-if (errorlog) fprintf(errorlog,"gfxbank = %02x\n",data);
+logerror("gfxbank = %02x\n",data);
 }
 
 

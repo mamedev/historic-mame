@@ -97,6 +97,8 @@ INLINE int limit( int val, int max, int min ) {
 #define MINOUT -0x8000
 
 void K053260_update( int param, INT16 **buffer, int length ) {
+	static long dpcmcnv[] = { 0, 1, 4, 9, 16, 25, 36, 49, -64, -49, -36, -25, -16, -9, -4, -1 };
+
 	int i, j, lvol[4], rvol[4], play[4], loop[4], ppcm_data[4], ppcm[4];
 	unsigned char *rom[4];
 	unsigned long delta[4], end[4], pos[4];
@@ -154,17 +156,24 @@ void K053260_update( int param, INT16 **buffer, int length ) {
 						/* we only update the signal if we're starting or a real sound sample has gone by */
 						/* this is all due to the dynamic sample rate convertion */
 						if ( pos[i] == 0 || ( ( pos[i] ^ ( pos[i] - delta[i] ) ) & 0x8000 ) == 0x8000 ) {
+							int newdata;
 							if ( pos[i] & 0x8000 )
-								ppcm_data[i] = rom[i][pos[i] >> BASE_SHIFT] & 0x0f;
+								newdata = rom[i][pos[i] >> BASE_SHIFT] & 0x0f;
 							else
-								ppcm_data[i] = ( ( rom[i][pos[i] >> BASE_SHIFT] ) >> 4 ) & 0x0f;
+								newdata = ( ( rom[i][pos[i] >> BASE_SHIFT] ) >> 4 ) & 0x0f;
 
-							ppcm_data[i] *= 0x11;
+							ppcm_data[i] = ( ( ppcm_data[i] * 62 ) >> 6 ) + dpcmcnv[newdata];
+
+							if ( ppcm_data[i] > 127 )
+								ppcm_data[i] = 127;
+							else
+								if ( ppcm_data[i] < -128 )
+									ppcm_data[i] = -128;
 						}
 
 						d = ppcm_data[i];
 
-						d /= 2;
+//						d /= 2;
 
 #if INTERPOLATE_SAMPLES
 						if ( steps[i] ) {
@@ -292,8 +301,7 @@ INLINE void check_bounds( int channel ) {
 	int channel_end = channel_start + K053260_channel[channel].size - 1;
 
 	if ( channel_start > K053260_chip.rom_size ) {
-		if ( errorlog )
-			fprintf( errorlog, "K53260: Attempting to start playing past the end of the rom ( start = %06x, end = %06x ).\n", channel_start, channel_end );
+		logerror("K53260: Attempting to start playing past the end of the rom ( start = %06x, end = %06x ).\n", channel_start, channel_end );
 
 		K053260_channel[channel].play = 0;
 
@@ -301,14 +309,12 @@ INLINE void check_bounds( int channel ) {
 	}
 
 	if ( channel_end > K053260_chip.rom_size ) {
-		if ( errorlog )
-			fprintf( errorlog, "K53260: Attempting to play past the end of the rom ( start = %06x, end = %06x ).\n", channel_start, channel_end );
+		logerror("K53260: Attempting to play past the end of the rom ( start = %06x, end = %06x ).\n", channel_start, channel_end );
 
 		K053260_channel[channel].size = K053260_chip.rom_size - channel_start;
 	}
 #if LOG
-	if ( errorlog )
-		fprintf( errorlog, "K053260: Sample Start = %06x, Sample End = %06x, Sample rate = %04lx, PPCM = %s\n", channel_start, channel_end, K053260_channel[channel].rate, K053260_channel[channel].ppcm ? "yes" : "no" );
+	logerror("K053260: Sample Start = %06x, Sample End = %06x, Sample rate = %04lx, PPCM = %s\n", channel_start, channel_end, K053260_channel[channel].rate, K053260_channel[channel].ppcm ? "yes" : "no" );
 #endif
 }
 
@@ -319,8 +325,7 @@ WRITE_HANDLER( K053260_w )
 	int v = data;
 
 	if ( r > 0x2f ) {
-		if ( errorlog )
-			fprintf( errorlog, "K053260: Writing past registers\n" );
+		logerror("K053260: Writing past registers\n" );
 		return;
 	}
 
@@ -457,8 +462,7 @@ READ_HANDLER( K053260_r )
 				K053260_channel[0].pos += ( 1 << 16 );
 
 				if ( offs > K053260_chip.rom_size ) {
-					if ( errorlog )
-						fprintf( errorlog, "K53260: Attempting to read past rom size on rom Read Mode.\n" );
+					logerror("K53260: Attempting to read past rom size on rom Read Mode.\n" );
 
 					return 0;
 				}

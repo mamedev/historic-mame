@@ -221,39 +221,36 @@ void astrocade_sound_w(int num, int offset, int data)
 	{
 		case 0:  /* Master Oscillator */
 #ifdef VERBOSE
-			if (errorlog) fprintf(errorlog,"Master Osc Write: %02x\n",data);
+			logerror("Master Osc Write: %02x\n",data);
 #endif
 			master_osc[num] = data+1;
 		break;
 
 		case 1:  /* Tone A Frequency */
 #ifdef VERBOSE
-			if (errorlog) fprintf(errorlog,"Tone A Write:        %02x\n",data);
+			logerror("Tone A Write:        %02x\n",data);
 #endif
 			freq_A[num] = data+1;
 		break;
 
 		case 2:  /* Tone B Frequency */
 #ifdef VERBOSE
-			if (errorlog) fprintf(errorlog,"Tone B Write:           %02x\n",data);
+			logerror("Tone B Write:           %02x\n",data);
 #endif
 			freq_B[num] = data+1;
 		break;
 
 		case 3:  /* Tone C Frequency */
 #ifdef VERBOSE
-			if (errorlog) fprintf(errorlog,"Tone C Write:              %02x\n",data);
+			logerror("Tone C Write:              %02x\n",data);
 #endif
 			freq_C[num] = data+1;
 		break;
 
 		case 4:  /* Vibrato Register */
 #ifdef VERBOSE
-			if (errorlog)
-			{
-				fprintf(errorlog,"Vibrato Depth:                %02x\n",data&0x3f);
-				fprintf(errorlog,"Vibrato Speed:                %02x\n",data>>6);
-			}
+			logerror("Vibrato Depth:                %02x\n",data&0x3f);
+			logerror("Vibrato Speed:                %02x\n",data>>6);
 #endif
 			vibrato[num] = data & 0x3f;
 
@@ -269,12 +266,9 @@ void astrocade_sound_w(int num, int offset, int data)
 			mux[num] = (data>>4) & 0x01;
 			noise_am[num] = (data>>5) & 0x01;
 #ifdef VERBOSE
-			if (errorlog)
-			{
-				fprintf(errorlog,"Tone C Vol:                      %02x\n",vol_C[num]);
-				fprintf(errorlog,"Mux Source:                      %02x\n",mux[num]);
-				fprintf(errorlog,"Noise Am:                        %02x\n",noise_am[num]);
-			}
+			logerror("Tone C Vol:                      %02x\n",vol_C[num]);
+			logerror("Mux Source:                      %02x\n",mux[num]);
+			logerror("Noise Am:                        %02x\n",noise_am[num]);
 #endif
 		break;
 
@@ -282,11 +276,8 @@ void astrocade_sound_w(int num, int offset, int data)
 			vol_B[num] = (data>>4) & 0x0f;
 			vol_A[num] = data & 0x0f;
 #ifdef VERBOSE
-			if (errorlog)
-			{
-				fprintf(errorlog,"Tone A Vol:                         %02x\n",vol_A[num]);
-				fprintf(errorlog,"Tone B Vol:                         %02x\n",vol_B[num]);
-			}
+			logerror("Tone A Vol:                         %02x\n",vol_A[num]);
+			logerror("Tone B Vol:                         %02x\n",vol_B[num]);
 #endif
 		break;
 
@@ -294,11 +285,8 @@ void astrocade_sound_w(int num, int offset, int data)
 			vol_noise8[num] = data;
 			vol_noise4[num] = (data>>4) & 0x0f;
 #ifdef VERBOSE
-			if (errorlog)
-			{
-				fprintf(errorlog,"Noise Vol:                             %02x\n",vol_noise8[num]);
-				fprintf(errorlog,"Noise Vol (4):                         %02x\n",vol_noise4[num]);
-			}
+			logerror("Noise Vol:                             %02x\n",vol_noise8[num]);
+			logerror("Noise Vol (4):                         %02x\n",vol_noise4[num]);
 #endif
 		break;
 

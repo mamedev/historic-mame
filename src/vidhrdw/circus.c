@@ -111,7 +111,7 @@ WRITE_HANDLER( circus_clown_z_w )
 
 	/* Bit 7 enables amplifier (1 = on) */
 
-//	if(errorlog) fprintf(errorlog,"clown Z = %02x\n",data);
+//	logerror("clown Z = %02x\n",data);
 }
 
 static void draw_line(struct osd_bitmap *bitmap, int x1, int y1, int x2, int y2, int dotted)

@@ -74,7 +74,7 @@ static void karnov_i8751_w(int data)
 	if (data==0x401) i8751_return=0x4138; /* ^Whistling wind */
 	if (data==0x408) i8751_return=0x4276; /* ^Heavy Gates */
 
-//	if (errorlog && !i8751_return && data!=0x300) fprintf(errorlog,"CPU %04x - Unknown Write %02x intel\n",cpu_get_pc(),data);
+//	if (!i8751_return && data!=0x300) logerror("CPU %04x - Unknown Write %02x intel\n",cpu_get_pc(),data);
 
 	cpu_cause_interrupt(0,6); /* Signal main cpu task is complete */
 }
@@ -92,7 +92,7 @@ static void wndrplnt_i8751_w(int data)
 	if (data==0x300) i8751_return=0x17; /* Copyright text on title screen */
 //	if (data==0x300) i8751_return=0x1; /* (USA) Copyright text on title screen */
 
-if (errorlog && data!=0x600) fprintf(errorlog,"CPU %04x - Unknown Write %02x intel\n",cpu_get_pc(),data);
+	if (data!=0x600) logerror("CPU %04x - Unknown Write %02x intel\n",cpu_get_pc(),data);
 
 	cpu_cause_interrupt(0,6); /* Signal main cpu task is complete */
 }
@@ -192,7 +192,7 @@ static void chelnov_i8751_w(int data)
 		}
 	}
 
-//	if (errorlog && !i8751_return) fprintf(errorlog,"CPU %04x - Unknown Write %02x intel\n",cpu_get_pc(),data);
+//	if (!i8751_return) logerror("CPU %04x - Unknown Write %02x intel\n",cpu_get_pc(),data);
 
 	cpu_cause_interrupt(0,6); /* Signal main cpu task is complete */
 }
@@ -230,7 +230,7 @@ static WRITE_HANDLER( karnov_control_w )
 			break;
 
 		case 0xc: /* SECR (Reset i8751) */
-			if (errorlog) fprintf(errorlog,"Reset i8751\n");
+			logerror("Reset i8751\n");
 			i8751_return=0;
 			break;
 

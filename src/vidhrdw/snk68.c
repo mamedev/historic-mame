@@ -18,8 +18,6 @@ Notes:
 static int sprite_flip,flipscreen;
 static struct tilemap *fix_tilemap;
 
-
-
 /***************************************************************************
 
   Callbacks for the TileMap code
@@ -31,7 +29,7 @@ static void get_pow_tile_info(int tile_index)
 	int tile=READ_WORD(&videoram[4*tile_index])&0xff;
 	int color=READ_WORD(&videoram[4*tile_index+2]);
 
-	tile=((color&0xf000)>>4) | tile;
+	tile=((color&0xf0)<<4) | tile;
 	color&=0xf;
 
 	SET_TILE_INFO(0,tile,color)
@@ -47,7 +45,20 @@ static void get_sar_tile_info(int tile_index)
 	SET_TILE_INFO(0,tile,color)
 }
 
+static void get_ikari3_tile_info(int tile_index)
+{
+	int tile=READ_WORD(&videoram[4*tile_index]);
+	int color=tile >> 12;
 
+	/* Kludge - Tile 0x80ff is meant to be opaque black, but isn't.  This fixes it */
+	if (tile==0x80ff) {
+		tile=0x2ca;
+		color=7;
+	} else
+		tile=tile&0xfff;
+
+	SET_TILE_INFO(0,tile,color)
+}
 
 /***************************************************************************
 
@@ -79,6 +90,17 @@ int searchar_vh_start(void)
 	return 0;
 }
 
+int ikari3_vh_start(void)
+{
+	fix_tilemap = tilemap_create(get_ikari3_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,32,32);
+
+	if (!fix_tilemap)
+		return 1;
+
+	fix_tilemap->transparent_pen = 0;
+
+	return 0;
+}
 
 /***************************************************************************
 
@@ -113,7 +135,11 @@ WRITE_HANDLER( pow_paletteram_w )
 
 WRITE_HANDLER( pow_video_w )
 {
-	COMBINE_WORD_MEM(&videoram[offset],data);
+	if ((data>>16)==0xff)
+		WRITE_WORD(&videoram[offset],(data>>8)&0xff);
+	else
+		WRITE_WORD(&videoram[offset],data);
+
 	tilemap_mark_tile_dirty(fix_tilemap,offset/4);
 }
 
@@ -135,12 +161,16 @@ static void draw_sprites(struct osd_bitmap *bitmap, int j,int pos)
 		mx=mx+(my>>12);
 		mx=((mx+16)&0x1ff)-16;
 
-		mx=(mx+0x100)&0x1ff;
-		my=(my+0x100)&0x1ff;
-		mx-=0x100;
-		my-=0x100;
+		mx=((mx+0x100)&0x1ff)-0x100;
+		my=((my+0x100)&0x1ff)-0x100;
+
 		my=0x200 - my;
 		my-=0x200;
+
+		if (flipscreen) {
+			mx=240-mx;
+			my=240-my;
+		}
 
 		for (i=0; i<0x80; i+=4) {
 			color=READ_WORD(&spriteram[offs+i+(0x1000*j)+0x1000])&0x7f;
@@ -151,6 +181,11 @@ static void draw_sprites(struct osd_bitmap *bitmap, int j,int pos)
 				fx=tile&0x4000;
 				tile&=0x3fff;
 
+				if (flipscreen) {
+					if (fx) fx=0; else fx=1;
+					if (fy) fy=0; else fy=1;
+				}
+
 				drawgfx(bitmap,Machine->gfx[1],
 					tile,
 					color,
@@ -159,8 +194,14 @@ static void draw_sprites(struct osd_bitmap *bitmap, int j,int pos)
 					0,TRANSPARENCY_PEN,0);
 			}
 
-			my+=16;
-			if (my > 0x100) my-=0x200;
+			if (flipscreen) {
+				my-=16;
+				if (my < -0x100) my+=0x200;
+			}
+			else {
+				my+=16;
+				if (my > 0x100) my-=0x200;
+			}
 		}
 	}
 }
@@ -170,6 +211,8 @@ void pow_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	int offs,color,i;
 	int colmask[0x80],code,pal_base;
+
+	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 
 	/* Update fix chars */
 	tilemap_update(fix_tilemap);
@@ -235,6 +278,11 @@ static void draw_sprites2(struct osd_bitmap *bitmap, int j, int z, int pos)
 		my=0x200 - my;
 		my-=0x200;
 
+		if (flipscreen) {
+			mx=240-mx;
+			my=240-my;
+		}
+
 		for (i=0; i<0x80; i+=4) {
 			color=READ_WORD(&spriteram[offs+i+z])&0x7f;
 			if (color) {
@@ -247,6 +295,11 @@ static void draw_sprites2(struct osd_bitmap *bitmap, int j, int z, int pos)
 					fx=tile&0x8000;
 				}
 
+				if (flipscreen) {
+					if (fx) fx=0; else fx=1;
+					if (fy) fy=0; else fy=1;
+				}
+
 				tile&=0x7fff;
 				if (tile>0x5fff) break;
 
@@ -257,8 +310,14 @@ static void draw_sprites2(struct osd_bitmap *bitmap, int j, int z, int pos)
 					mx,my,
 					0,TRANSPARENCY_PEN,0);
 			}
-			my+=16;
-			if (my > 0x100) my-=0x200;
+			if (flipscreen) {
+				my-=16;
+				if (my < -0x100) my+=0x200;
+			}
+			else {
+				my+=16;
+				if (my > 0x100) my-=0x200;
+			}
 		}
 	}
 }
@@ -268,6 +327,8 @@ void searchar_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 {
 	int offs,color,i;
 	int colmask[0x80],code,pal_base;
+
+	tilemap_set_flip(ALL_TILEMAPS,flipscreen ? (TILEMAP_FLIPY | TILEMAP_FLIPX) : 0);
 
 	/* Update fix chars */
 	tilemap_update(fix_tilemap);

@@ -9,7 +9,7 @@
 
 unsigned char *zerozone_videoram;
 
-extern int videoram_size;
+extern size_t videoram_size;
 static unsigned char *video_dirty;
 
 

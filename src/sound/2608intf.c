@@ -57,7 +57,7 @@ static void timer_callback_2608(int param)
 	int n=param&0x7f;
 	int c=param>>7;
 
-//	if(errorlog) fprintf(errorlog,"2608 TimerOver %d\n",c);
+//	logerror("2608 TimerOver %d\n",c);
 	Timer[n][c] = 0;
 	YM2608TimerOver(n,c);
 }
@@ -69,7 +69,7 @@ static void TimerHandler(int n,int c,int count,double stepTime)
 	{	/* Reset FM Timer */
 		if( Timer[n][c] )
 		{
-//			if(errorlog) fprintf(errorlog,"2608 TimerReset %d\n",c);
+//			logerror("2608 TimerReset %d\n",c);
 	 		timer_remove (Timer[n][c]);
 			Timer[n][c] = 0;
 		}
@@ -230,13 +230,13 @@ void YM2608_sh_reset(void)
 /************************************************/
 READ_HANDLER( YM2608_status_port_0_A_r )
 {
-//if(errorlog) fprintf(errorlog,"PC %04x: 2608 S0A=%02X\n",cpu_get_pc(),YM2608Read(0,0));
+//logerror("PC %04x: 2608 S0A=%02X\n",cpu_get_pc(),YM2608Read(0,0));
 	return YM2608Read(0,0);
 }
 
 READ_HANDLER( YM2608_status_port_0_B_r )
 {
-//if(errorlog) fprintf(errorlog,"PC %04x: 2608 S0B=%02X\n",cpu_get_pc(),YM2608Read(0,2));
+//logerror("PC %04x: 2608 S0B=%02X\n",cpu_get_pc(),YM2608Read(0,2));
 	return YM2608Read(0,2);
 }
 

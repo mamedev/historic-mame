@@ -56,17 +56,14 @@ static int cb2 = -1;
 READ_HANDLER( gameplan_sound_r )
 {
 #ifdef VERBOSE
-	if (errorlog)  fprintf(errorlog, "GAME:  read reg%X at PC %04x\n", offset, cpu_get_pc());
+	logerror("GAME:  read reg%X at PC %04x\n", offset, cpu_get_pc());
 #endif
 
 	if (offset == 0)
 	{
 #ifdef VERBOSE
-		if (errorlog)
-		{
-			if (finished_sound)  fprintf(errorlog, "[GAME: checking sound request ack: OK (%d)]\n", finished_sound);
-			else  fprintf(errorlog, "[GAME: checking sound request ack: BAD (%d)]\n", finished_sound);
-		}
+		if (finished_sound)  logerror("[GAME: checking sound request ack: OK (%d)]\n", finished_sound);
+		else  logerror("[GAME: checking sound request ack: BAD (%d)]\n", finished_sound);
 #endif
 
 		return finished_sound;
@@ -78,13 +75,13 @@ READ_HANDLER( gameplan_sound_r )
 WRITE_HANDLER( gameplan_sound_w )
 {
 #ifdef VERBOSE
-	if (errorlog)  fprintf(errorlog, "GAME: write reg%X with %02x at PC %04x\n", offset, data, cpu_get_pc());
+	logerror("GAME: write reg%X with %02x at PC %04x\n", offset, data, cpu_get_pc());
 #endif
 
 	if (offset == 1)
 	{
 #ifdef VERBOSE
-		if (errorlog) fprintf(errorlog, "[GAME: request sound number %d]\n", data);
+		logerror("[GAME: request sound number %d]\n", data);
 #endif
 
 		if (cb2 == 0)
@@ -119,14 +116,14 @@ WRITE_HANDLER( gameplan_sound_w )
 READ_HANDLER( gameplan_via5_r )
 {
 #ifdef VERBOSE
-	if (errorlog)  fprintf(errorlog, "SOUND:  read reg%X at PC %04x\n", offset, cpu_get_pc());
+	logerror("SOUND:  read reg%X at PC %04x\n", offset, cpu_get_pc());
 #endif
 
 	if (offset == 0)
 	{
 		new_request = 0;
 #ifdef VERBOSE
-		if (errorlog) fprintf(errorlog, "[SOUND: received sound request %d]\n", port_b);
+		logerror("[SOUND: received sound request %d]\n", port_b);
 #endif
 		return port_b;
 	}
@@ -136,14 +133,14 @@ READ_HANDLER( gameplan_via5_r )
 		if (new_request == 1)
 		{
 #ifdef VERBOSE
-			if (errorlog) fprintf(errorlog, "[SOUND: checking for new request - found]\n");
+			logerror("[SOUND: checking for new request - found]\n");
 #endif
 			return 0x40;
 		}
 		else
 		{
 #ifdef VERBOSE
-			if (errorlog) fprintf(errorlog, "[SOUND: checking for new request - none]\n");
+			logerror("[SOUND: checking for new request - none]\n");
 #endif
 			return 0;
 		}
@@ -155,13 +152,13 @@ READ_HANDLER( gameplan_via5_r )
 WRITE_HANDLER( gameplan_via5_w )
 {
 #ifdef VERBOSE
-	if (errorlog)  fprintf(errorlog, "SOUND: write reg%X with %02x at PC %04x\n", offset, data, cpu_get_pc());
+	logerror("SOUND: write reg%X with %02x at PC %04x\n", offset, data, cpu_get_pc());
 #endif
 
 	if (offset == 2)
 	{
 #ifdef VERBOSE
-		if (errorlog) fprintf(errorlog, "[SOUND: ack received request %d]\n", data);
+		logerror("[SOUND: ack received request %d]\n", data);
 #endif
 		finished_sound = data;
 	}
@@ -172,7 +169,7 @@ READ_HANDLER( gameplan_video_r )
 	static int x;
 	x++;
 #if 0
-	if (errorlog) fprintf(errorlog, "%04x: reading %d from 200d\n", cpu_get_pc(), x);
+	logerror("%04x: reading %d from 200d\n", cpu_get_pc(), x);
 #endif
 	return x;
 }
@@ -183,14 +180,14 @@ WRITE_HANDLER( gameplan_video_w )
 	static unsigned char xpos, ypos, colour = 7;
 
 #ifdef VERBOSE
-	if (errorlog)  fprintf(errorlog, "VIA 1: PC %04x: %x -> reg%X\n", cpu_get_pc(), data, offset);
+	logerror("VIA 1: PC %04x: %x -> reg%X\n", cpu_get_pc(), data, offset);
 #endif
 
 	if (offset == 0)			/* write to 2000 */
 	{
 		r0 = data;
 #ifdef VERBOSE
-		if (errorlog) fprintf(errorlog, "  mode = %d\n", data);
+		logerror("  mode = %d\n", data);
 #endif
 	}
 	else if (offset == 1)		/* write to 2001 */
@@ -202,20 +199,16 @@ WRITE_HANDLER( gameplan_video_w )
 			else if (data & 0x0f)
 			{
 #ifdef VERBOSE
-				if (errorlog) fprintf(errorlog, "  !movement command %02x unknown\n", data);
+				logerror("  !movement command %02x unknown\n", data);
 #endif
 			}
 
 #ifdef VERBOSE_VIDEO
-			if (errorlog)
-			{
 #ifdef SHOW_CHARS
-				fprintf(errorlog, "%c", colour_names[colour][0]);
+			logerror("%c", colour_names[colour][0]);
 #else
-				fprintf(errorlog, "  line command %02x at (%d, %d) col %d (%s)\n", data, xpos, ypos, colour, colour_names[colour]);
+			logerror("  line command %02x at (%d, %d) col %d (%s)\n", data, xpos, ypos, colour, colour_names[colour]);
 #endif
-				fflush(errorlog);
-			}
 #endif
 
 			if (data & 0x20)
@@ -239,11 +232,10 @@ WRITE_HANDLER( gameplan_video_w )
 		{
 			xpos = data;
 #ifdef VERBOSE_VIDEO
-			if (errorlog)
 #ifdef SHOW_CHARS
-				fprintf(errorlog, "\n");
+			logerror("\n");
 #else
-				fprintf(errorlog, "  X = %d\n", xpos);
+			logerror("  X = %d\n", xpos);
 #endif
 #endif
 		}
@@ -252,7 +244,7 @@ WRITE_HANDLER( gameplan_video_w )
 			ypos = data;
 #ifdef VERBOSE_VIDEO
 #ifndef SHOW_CHARS
-			if (errorlog) fprintf(errorlog, "  Y = %d\n", ypos);
+			logerror("  Y = %d\n", ypos);
 #endif
 #endif
 		}
@@ -261,18 +253,18 @@ WRITE_HANDLER( gameplan_video_w )
 			if (offset == 1 && data == 0)
 			{
 #ifdef VERBOSE_VIDEO
-				if (errorlog) fprintf(errorlog, "  clear screen\n");
+				logerror("  clear screen\n");
 #endif
 				gameplan_clear_screen();
 			}
 #ifdef VERBOSE
-			else if (errorlog)  fprintf(errorlog, "  !not clear screen: offset = %d, data = %d\n", offset, data);
+			else logerror("  !not clear screen: offset = %d, data = %d\n", offset, data);
 #endif
 		}
 #ifdef VERBOSE
 		else
 		{
-			if (errorlog)  fprintf(errorlog, "  !offset = %d, data = %02x\n", offset, data);
+			logerror("  !offset = %d, data = %02x\n", offset, data);
 		}
 #endif
 	}
@@ -287,18 +279,15 @@ WRITE_HANDLER( gameplan_video_w )
 			if (!gameplan_this_is_megatack || fix_clear_to_colour == -1)
 				clear_to_colour = colour;
 #ifdef VERBOSE_VIDEO
-			if (errorlog)
-			{
-				if (fix_clear_to_colour == -1)
-					fprintf(errorlog, "  clear screen colour = %d (%s)\n", colour, colour_names[colour]);
-				else
-					fprintf(errorlog, "  clear req colour %d hidden by fixed colour %d\n", colour, fix_clear_to_colour);
-			}
+			if (fix_clear_to_colour == -1)
+				logerror("  clear screen colour = %d (%s)\n", colour, colour_names[colour]);
+			else
+				logerror("  clear req colour %d hidden by fixed colour %d\n", colour, fix_clear_to_colour);
 #endif
 		}
 #ifdef VERBOSE
 		else
-			if (errorlog)  fprintf(errorlog, "  !offset = %d, data = %02x\n", offset, data);
+			logerror("  !offset = %d, data = %02x\n", offset, data);
 #endif
 	}
 	else if (offset == 3)
@@ -306,13 +295,13 @@ WRITE_HANDLER( gameplan_video_w )
 		if (r0 == 0)
 		{
 #ifdef VERBOSE
-			if (errorlog && (data & 0xf8) != 0xf8)  fprintf(errorlog, "  !unknown data (%02x) written for pixel (%3d, %3d)\n", data, xpos, ypos);
+			if ((data & 0xf8) != 0xf8)  logerror("  !unknown data (%02x) written for pixel (%3d, %3d)\n", data, xpos, ypos);
 #endif
 
 			colour = data & 7;
 #ifdef VERBOSE_VIDEO
 #ifndef SHOW_CHARS
-			if (errorlog)  fprintf(errorlog, "  colour %d, move to (%d, %d)\n", colour, xpos, ypos);
+			logerror("  colour %d, move to (%d, %d)\n", colour, xpos, ypos);
 #endif
 #endif
 		}
@@ -320,17 +309,17 @@ WRITE_HANDLER( gameplan_video_w )
 		{
 			clear_to_colour = fix_clear_to_colour = data & 0x07;
 #ifdef VERBOSE
-			if (errorlog) fprintf(errorlog, "  unusual colour request %d\n", data & 7);
+			logerror("  unusual colour request %d\n", data & 7);
 #endif
 		}
 #ifdef VERBOSE
 		else
-			if (errorlog) fprintf(errorlog, "  !offset = %d, data = %02x\n", offset, data);
+			logerror("  !offset = %d, data = %02x\n", offset, data);
 #endif
 	}
 #ifdef VERBOSE
 	else
-		if (errorlog)  fprintf(errorlog, "  !offset = %d, data = %02x\n", offset, data);
+		logerror("  !offset = %d, data = %02x\n", offset, data);
 #endif
 }
 
@@ -347,7 +336,7 @@ WRITE_HANDLER( gameplan_video_w )
 void gameplan_clear_screen(void)
 {
 #ifdef VERBOSE_VIDEO
-	if (errorlog)  fprintf(errorlog, "  clearing the screen to colour %d (%s)\n", clear_to_colour, colour_names[clear_to_colour]);
+	logerror("  clearing the screen to colour %d (%s)\n", clear_to_colour, colour_names[clear_to_colour]);
 #endif
 
 	fillbitmap(tmpbitmap, Machine->pens[clear_to_colour], 0);

@@ -287,13 +287,10 @@ static void internal_code_update(void)
 void code_close(void)
 {
 #if 0
-	if (errorlog)
-	{
-		int i;
-		fprintf(errorlog,"List of OS dependant input codes:\n");
-		for(i=__code_max;i<code_mac;++i)
-			fprintf(errorlog,"\tcode %d, oscode %d, %s, %s\n",i,code_map[i].oscode,code_map[i].type == CODE_TYPE_KEYBOARD ? "keyboard" : "joystick", internal_code_name(i));
-	}
+	int i;
+	logerror("List of OS dependant input codes:\n");
+	for(i=__code_max;i<code_mac;++i)
+		logerror("\tcode %d, oscode %d, %s, %s\n",i,code_map[i].oscode,code_map[i].type == CODE_TYPE_KEYBOARD ? "keyboard" : "joystick", internal_code_name(i));
 #endif
 
 	code_mac = 0;
@@ -522,6 +519,32 @@ InputCode code_read_sync(void)
 		code = code_read_async();
 
 	return code;
+}
+
+/* returns the numerical value of a typed hex digit, or -1 if none */
+INT8 code_read_hex_async(void)
+{
+	unsigned i;
+
+	profiler_mark(PROFILER_INPUT);
+
+	/* update the table */
+	internal_code_update();
+
+	for(i=0;i<code_mac;++i)
+		if (code_pressed_memory(i))
+		{
+			if ((i >= KEYCODE_A) && (i <= KEYCODE_F))
+				return i - KEYCODE_A + 10;
+			else if ((i >= KEYCODE_0) && (i <= KEYCODE_9))
+				return i - KEYCODE_0;
+			else
+				return -1;
+		}
+
+	profiler_mark(PROFILER_END);
+
+	return -1;
 }
 
 /***************************************************************************/

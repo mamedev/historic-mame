@@ -64,14 +64,6 @@ track selection.
 #include "cpu/z8000/z8000.h"
 #include "vidhrdw/generic.h"
 
-#define VERBOSE 0
-
-#if VERBOSE
-#define LOG(x)	if (errorlog) { fprintf x; fflush(errorlog); }
-#else
-#define LOG(x)
-#endif
-
 
 /* from machine */
 void polepos_init_machine(void);
@@ -133,7 +125,7 @@ WRITE_HANDLER( polepos_road_vscroll_w );
 
 
 static unsigned char *nvram;
-static int nvram_size;
+static size_t nvram_size;
 
 static void nvram_handler(void *file, int read_or_write)
 {

@@ -172,17 +172,21 @@
 	EAL++;	/* booby trap: stay in same page! ;-) */			\
 	EAH = RDMEM(EAD);											\
 	EAL = tmp;
-//    EAWH = PBWH
+/*    EAWH = PBWH */
 
 /***************************************************************
- *	EA = indirect plus x (only used by 65c02 JMP)
+ *  EA = indirect plus x (only used by 65c02 JMP)
  ***************************************************************/
-#undef EA_IAX
 #define EA_IAX                                                  \
-	EA_IND; 													\
-	if (EAL + X > 0xff) /* assumption; probably wrong ? */		\
-		m6509_ICount--; 										\
-    EAW += X
+	EA_ABS;                                                     \
+	if (EAL + X > 0xff) /* assumption; probably wrong ? */      \
+		m6502_ICount--;                                         \
+	EAW += X;                                                   \
+	tmp = RDMEM(EAD);                                           \
+	if (EAL==0xff) m6502_ICount++;                              \
+	EAD++;                                                      \
+	EAH = RDMEM(EAD);                                           \
+	EAL = tmp
 
 #define RD_IDY_6509	EA_IDY_6509; tmp = RDMEM(EAD)
 #define WR_IDY_6509	EA_IDY_6509; WRMEM(EAD, tmp)
@@ -218,7 +222,7 @@
 	PUSH(PCH);													\
 	PUSH(PCL);													\
 	PUSH(P | F_B);												\
-	P = (P | F_I) & ~F_D;										\
+	P = (P | F_I);										\
 	PCL = RDMEM(M6509_IRQ_VEC); 								\
 	PCH = RDMEM(M6509_IRQ_VEC+1);								\
 	change_pc20(PCD)
@@ -229,8 +233,7 @@
  ***************************************************************/
 #undef ILL
 #define ILL 													\
-	if (errorlog)												\
-		fprintf(errorlog, "M6509 illegal opcode %05x: %02x\n",  \
+	logerror("M6509 illegal opcode %05x: %02x\n",  				\
 			((PCW-1)&0xffff)|PB, cpu_readop((PCW-1)&0xffff)|PB)
 
 /* 6502 ********************************************************
@@ -269,10 +272,10 @@
 	PULL(P);													\
 	PULL(PCL);													\
     PULL(PCH);                                                  \
-	P |= F_T;													\
+	P |= F_T|F_B;													\
 	if( (m6509.irq_state != CLEAR_LINE) && !(P & F_I) ) 		\
 	{															\
-		LOG((errorlog, "M6509#%d RTI sets after_cli\n",cpu_getactivecpu())); \
+		LOG(( "M6509#%d RTI sets after_cli\n",cpu_getactivecpu())); \
 		m6509.after_cli = 1;									\
 	}															\
     change_pc20(PCD)
@@ -289,39 +292,15 @@
 	change_pc20(PCD)
 
 /* 6510 ********************************************************
- * SAH	store accumulator and index X and high + 1
- * result = accumulator and index X and memory [PC+1] + 1
+ *	KIL Illegal opcode
+ * processor haltet, no hardware interrupt will help
+ * only reset
  ***************************************************************/
-#undef SAH
-#define SAH 													\
-	tmp = A & X;												\
-	tmp &= (cpu_readop_arg(((PCW + 1) & 0xffff)|PB) + 1)
-
-/* 6510 ********************************************************
- * SSH	store stack high
- * logical and accumulator with index X, transfer result to S
- * logical and result with memory [PC+1] + 1
- ***************************************************************/
-#undef SSH
-#define SSH 													\
-	tmp = S = A & X;											\
-	tmp &= (UINT8)(cpu_readop_arg(((PCW + 1) & 0xffff)|PB) + 1)
-
-/* 6510 ********************************************************
- * SXH	store index X high
- * logical and index X with memory[PC+1] and store the result
- ***************************************************************/
-#undef SXH
-#define SXH 													\
-	tmp = X & (UINT8)(cpu_readop_arg(((PCW + 1) & 0xffff)|PB)
-
-/* 6510 ********************************************************
- * SYH	store index Y and (high + 1)
- * logical and index Y with memory[PC+1] + 1 and store the result
- ***************************************************************/
-#undef SYH
-#define SYH 													\
-	tmp = Y & (UINT8)(cpu_readop_arg(((PCW + 1) & 0xffff)|PB) + 1)
+#undef KIL
+#define KIL 													\
+    PCW--; \
+	logerror("M6510 KILL opcode %04x: %02x\n",  \
+				PCW, cpu_readop(PCW)|PB)
 
 
 

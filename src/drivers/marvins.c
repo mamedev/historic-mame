@@ -103,7 +103,7 @@ static void init_sound( int busy_bit ){
 
 static WRITE_HANDLER( sound_command_w ){
 	if( sound_fetched==0 ){
-		if( errorlog ) fprintf( errorlog, "missed sound command: %02x\n", sound_command );
+		logerror("missed sound command: %02x\n", sound_command );
 	}
 
 	sound_fetched = 0;

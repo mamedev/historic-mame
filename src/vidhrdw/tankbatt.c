@@ -10,7 +10,7 @@
 #include "vidhrdw/generic.h"
 
 unsigned char *tankbatt_bulletsram;
-int tankbatt_bulletsram_size;
+size_t tankbatt_bulletsram_size;
 
 /***************************************************************************
 

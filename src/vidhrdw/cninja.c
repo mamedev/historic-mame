@@ -113,10 +113,6 @@ static unsigned char cninja_control_1[16];
 static int cninja_pf2_bank,cninja_pf3_bank;
 static int bootleg,spritemask,color_base,flipscreen;
 
-static unsigned char *cninja_spriteram;
-
-
-
 
 /* Function for all 16x16 1024x512 layers */
 static UINT32 back_scan(UINT32 col,UINT32 row,UINT32 num_cols,UINT32 num_rows)
@@ -149,25 +145,8 @@ static void get_fore_tile_info(int tile_index)
 
 /******************************************************************************/
 
-void cninja_vh_stop (void)
+static int common_vh_start(void)
 {
-	free(cninja_spriteram);
-}
-
-int cninja_vh_start(void)
-{
-	/* The bootleg has some broken scroll registers... */
-	if (!strcmp(Machine->gamedrv->name,"stoneage"))
-		bootleg=1;
-	else
-		bootleg=0;
-
-	if (!strcmp(Machine->gamedrv->name,"edrandy")
-		|| !strcmp(Machine->gamedrv->name,"edrandyj"))
-		spritemask=0xffff;
-	else
-		spritemask=0x3fff;
-
 	cninja_pf2_bank=1;
 	cninja_pf3_bank=2;
 
@@ -185,59 +164,54 @@ int cninja_vh_start(void)
 	pf4_tilemap->transmask[0] = 0x00ff;
 	pf4_tilemap->transmask[1] = 0xff00;
 
-	cninja_spriteram = malloc(0x800);
-
 	return 0;
+}
+
+int cninja_vh_start(void)
+{
+	spritemask=0x3fff;
+	bootleg=0;
+	return common_vh_start();
+}
+
+int stoneage_vh_start(void)
+{
+	spritemask=0x3fff;
+	bootleg=1; /* The bootleg has broken scroll registers */
+	return common_vh_start();
+}
+
+int edrandy_vh_start(void)
+{
+	spritemask=0xffff;
+	bootleg=0;
+	return common_vh_start();
 }
 
 /******************************************************************************/
 
 WRITE_HANDLER( cninja_pf1_data_w )
 {
-	int oldword = READ_WORD(&cninja_pf1_data[offset]);
-	int newword = COMBINE_WORD(oldword,data);
-
-	if (oldword != newword)
-	{
-		WRITE_WORD(&cninja_pf1_data[offset],newword);
-		tilemap_mark_tile_dirty(pf1_tilemap,offset/2);
-	}
+	COMBINE_WORD_MEM(&cninja_pf1_data[offset],data);
+	tilemap_mark_tile_dirty(pf1_tilemap,offset/2);
 }
 
 WRITE_HANDLER( cninja_pf2_data_w )
 {
-	int oldword = READ_WORD(&cninja_pf2_data[offset]);
-	int newword = COMBINE_WORD(oldword,data);
-
-	if (oldword != newword)
-	{
-		WRITE_WORD(&cninja_pf2_data[offset],newword);
-		tilemap_mark_tile_dirty(pf2_tilemap,offset/2);
-	}
+	COMBINE_WORD_MEM(&cninja_pf2_data[offset],data);
+	tilemap_mark_tile_dirty(pf2_tilemap,offset/2);
 }
 
 WRITE_HANDLER( cninja_pf3_data_w )
 {
-	int oldword = READ_WORD(&cninja_pf3_data[offset]);
-	int newword = COMBINE_WORD(oldword,data);
-
-	if (oldword != newword)
-	{
-		WRITE_WORD(&cninja_pf3_data[offset],newword);
-		tilemap_mark_tile_dirty(pf3_tilemap,offset/2);
-	}
+	COMBINE_WORD_MEM(&cninja_pf3_data[offset],data);
+	tilemap_mark_tile_dirty(pf3_tilemap,offset/2);
 }
 
 WRITE_HANDLER( cninja_pf4_data_w )
 {
-	int oldword = READ_WORD(&cninja_pf4_data[offset]);
-	int newword = COMBINE_WORD(oldword,data);
-
-	if (oldword != newword)
-	{
-		WRITE_WORD(&cninja_pf4_data[offset],newword);
-		tilemap_mark_tile_dirty(pf4_tilemap,offset/2);
-	}
+	COMBINE_WORD_MEM(&cninja_pf4_data[offset],data);
+	tilemap_mark_tile_dirty(pf4_tilemap,offset/2);
 }
 
 WRITE_HANDLER( cninja_control_0_w )
@@ -296,15 +270,11 @@ WRITE_HANDLER( cninja_pf4_rowscroll_w )
 
 /******************************************************************************/
 
-WRITE_HANDLER( cninja_update_sprites_w )
-{
-	memcpy(cninja_spriteram,spriteram,0x800);
-}
-
-static void update_24bitcol(int offset)
+WRITE_HANDLER( cninja_palette_24bit_w )
 {
 	int r,g,b;
 
+	COMBINE_WORD_MEM(&paletteram[offset],data);
 	if (offset%4) offset-=2;
 
 	b = (READ_WORD(&paletteram[offset]) >> 0) & 0xff;
@@ -312,12 +282,6 @@ static void update_24bitcol(int offset)
 	r = (READ_WORD(&paletteram[offset+2]) >> 0) & 0xff;
 
 	palette_change_color(offset / 4,r,g,b);
-}
-
-WRITE_HANDLER( cninja_palette_24bit_w )
-{
-	COMBINE_WORD_MEM(&paletteram[offset],data);
-	update_24bitcol(offset);
 }
 
 /******************************************************************************/
@@ -337,11 +301,11 @@ static void mark_sprites_colors(void)
 	{
 		int x,y,sprite,multi;
 
-		sprite = READ_WORD (&cninja_spriteram[offs+2]) & spritemask;
+		sprite = READ_WORD (&buffered_spriteram[offs+2]) & spritemask;
 		if (!sprite) continue;
 
-		x = READ_WORD(&cninja_spriteram[offs+4]);
-		y = READ_WORD(&cninja_spriteram[offs]);
+		x = READ_WORD(&buffered_spriteram[offs+4]);
+		y = READ_WORD(&buffered_spriteram[offs]);
 
 		color = (x >> 9) &0xf;
 		multi = (1 << ((y & 0x0600) >> 9)) - 1;
@@ -378,16 +342,16 @@ static void cninja_drawsprites(struct osd_bitmap *bitmap, int pri)
 	for (offs = 0;offs < 0x800;offs += 8)
 	{
 		int x,y,sprite,colour,multi,fx,fy,inc,flash,mult;
-		sprite = READ_WORD (&cninja_spriteram[offs+2]) & spritemask;
+		sprite = READ_WORD (&buffered_spriteram[offs+2]) & spritemask;
 		if (!sprite) continue;
 
-		x = READ_WORD(&cninja_spriteram[offs+4]);
+		x = READ_WORD(&buffered_spriteram[offs+4]);
 
 		/* Sprite/playfield priority */
 		if ((x&0x4000) && pri==1) continue;
 		if (!(x&0x4000) && pri==0) continue;
 
-		y = READ_WORD(&cninja_spriteram[offs]);
+		y = READ_WORD(&buffered_spriteram[offs]);
 		flash=y&0x1000;
 		if (flash && (cpu_getcurrentframe() & 1)) continue;
 		colour = (x >> 9) &0xf;

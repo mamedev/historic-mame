@@ -154,13 +154,13 @@ WRITE_HANDLER( astrocde_interrupt_enable_w )
 		}
 
 #ifdef MAME_DEBUG
-		if (errorlog) fprintf(errorlog,"Gorf Delay set to %02x\n",GorfDelay);
+		logerror("Gorf Delay set to %02x\n",GorfDelay);
 #endif
 
 	}
 
 #ifdef MAME_DEBUG
-	if (errorlog) fprintf(errorlog,"Interrupt Flag set to %02x\n",InterruptFlag);
+	logerror("Interrupt Flag set to %02x\n",InterruptFlag);
 #endif
 }
 
@@ -169,7 +169,7 @@ WRITE_HANDLER( astrocde_interrupt_w )
 	/* A write to 0F triggers an interrupt at that scanline */
 
 #ifdef MAME_DEBUG
-	if (errorlog) fprintf(errorlog,"Scanline interrupt set to %02x\n",data);
+	logerror("Scanline interrupt set to %02x\n",data);
 #endif
 
 	NextScanInt = data;
@@ -277,7 +277,7 @@ WRITE_HANDLER( astrocde_colour_register_w )
 	colors[CurrentScan][offset] = data;
 
 #ifdef MAME_DEBUG
-	if (errorlog) fprintf(errorlog,"colors %01x set to %02x\n",offset,data);
+	logerror("colors %01x set to %02x\n",offset,data);
 #endif
 }
 
@@ -303,7 +303,7 @@ WRITE_HANDLER( wow_videoram_w )
 WRITE_HANDLER( astrocde_magic_expand_color_w )
 {
 #ifdef MAME_DEBUG
-//	if (errorlog) fprintf(errorlog,"%04x: magic_expand_color = %02x\n",cpu_get_pc(),data);
+//	logerror("%04x: magic_expand_color = %02x\n",cpu_get_pc(),data);
 #endif
 
 	magic_expand_color = data;
@@ -313,7 +313,7 @@ WRITE_HANDLER( astrocde_magic_expand_color_w )
 WRITE_HANDLER( astrocde_magic_control_w )
 {
 #ifdef MAME_DEBUG
-//	if (errorlog) fprintf(errorlog,"%04x: magic_control = %02x\n",cpu_get_pc(),data);
+//	logerror("%04x: magic_control = %02x\n",cpu_get_pc(),data);
 #endif
 
 	magic_control = data;
@@ -459,7 +459,7 @@ WRITE_HANDLER( astrocde_pattern_board_w )
 		int i,j;
 
 #ifdef MAME_DEBUG
-//		if (errorlog) fprintf(errorlog,"%04x: blit src %04x mode %02x skip %d dest %04x length %d loops %d\n",
+//		logerror("%04x: blit src %04x mode %02x skip %d dest %04x length %d loops %d\n",
 //			cpu_get_pc(),src,mode,skip,dest,length,loops);
 #endif
 
@@ -633,7 +633,7 @@ READ_HANDLER( gorf_io_r )
 	}
 
 #ifdef MAME_DEBUG
-	if (errorlog) fprintf(errorlog,"%04x: Latch IO %02x set to %d\n",cpu_get_pc(),offset,data);
+	logerror("%04x: Latch IO %02x set to %d\n",cpu_get_pc(),offset,data);
 #endif
 
 	return 0;
@@ -680,7 +680,7 @@ READ_HANDLER( wow_io_r )
 	}
 
 #ifdef MAME_DEBUG
-	if (errorlog) fprintf(errorlog,"%04x: Latch IO %02x set to %d\n",cpu_get_pc(),offset,data);
+	logerror("%04x: Latch IO %02x set to %d\n",cpu_get_pc(),offset,data);
 #endif
 
 	return 0;

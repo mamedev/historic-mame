@@ -100,8 +100,8 @@ void rallybik_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 extern unsigned char *toaplan1_colorram1;
 extern unsigned char *toaplan1_colorram2;
-extern int colorram1_size;
-extern int colorram2_size;
+extern size_t colorram1_size;
+extern size_t colorram2_size;
 
 
 

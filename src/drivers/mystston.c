@@ -56,7 +56,7 @@ Known problems:
 
 
 extern unsigned char *mystston_videoram2,*mystston_colorram2;
-extern int mystston_videoram2_size;
+extern size_t mystston_videoram2_size;
 extern unsigned char *mystston_scroll;
 
 void mystston_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);

@@ -16,7 +16,7 @@ unsigned char *lnc_charbank;
 unsigned char *bnj_backgroundram;
 unsigned char *zoar_scrollram;
 unsigned char *deco_charram;
-int bnj_backgroundram_size;
+size_t bnj_backgroundram_size;
 
 static int sprite_dirty[256];
 static int char_dirty[1024];

@@ -33,8 +33,7 @@
 #if VERBOSE
 #include <stdio.h>
 #include "driver.h"
-extern  FILE * errorlog;
-#define LOG(x) if( errorlog ) fprintf x
+#define LOG(x) logerror x
 #else
 #define LOG(x)
 #endif
@@ -113,7 +112,7 @@ static  void illegal(void)
 {
 #if VERBOSE
 	UINT16 pc = I.PC.w.l - 1;
-	LOG((errorlog, "i8085 illegal instruction %04X $%02X\n", pc, cpu_readop(pc)));
+	LOG(("i8085 illegal instruction %04X $%02X\n", pc, cpu_readop(pc)));
 #endif
 }
 
@@ -968,7 +967,7 @@ INLINE void execute_one(int opcode)
 			I.ISRV = 0;
 			if( I.irq_state[0] != CLEAR_LINE )
 			{
-				LOG((errorlog, "i8085 EI sets INTR\n"));
+				LOG(("i8085 EI sets INTR\n"));
 				I.IREQ |= IM_INTR;
 				I.INTR = I8085_INTR;
 			}
@@ -976,17 +975,17 @@ INLINE void execute_one(int opcode)
 			{
 				if( I.irq_state[1] != CLEAR_LINE )
 				{
-					LOG((errorlog, "i8085 EI sets RST5.5\n"));
+					LOG(("i8085 EI sets RST5.5\n"));
 					I.IREQ |= IM_RST55;
 				}
 				if( I.irq_state[2] != CLEAR_LINE )
 				{
-					LOG((errorlog, "i8085 EI sets RST6.5\n"));
+					LOG(("i8085 EI sets RST6.5\n"));
 					I.IREQ |= IM_RST65;
 				}
 				if( I.irq_state[3] != CLEAR_LINE )
 				{
-					LOG((errorlog, "i8085 EI sets RST7.5\n"));
+					LOG(("i8085 EI sets RST7.5\n"));
 					I.IREQ |= IM_RST75;
 				}
 				/* find highest priority IREQ flag with
@@ -1052,7 +1051,7 @@ static void Interrupt(void)
 
     if( I.ISRV == IM_INTR )
 	{
-		LOG((errorlog,"Interrupt get INTR vector\n"));
+		LOG(("Interrupt get INTR vector\n"));
 		I.IRQ1 = (I.irq_callback)(0);
 	}
 
@@ -1060,19 +1059,19 @@ static void Interrupt(void)
 	{
 		if( I.ISRV == IM_RST55 )
 		{
-			LOG((errorlog,"Interrupt get RST5.5 vector\n"));
+			LOG(("Interrupt get RST5.5 vector\n"));
 			I.IRQ1 = (I.irq_callback)(1);
 		}
 
 		if( I.ISRV == IM_RST65	)
 		{
-			LOG((errorlog,"Interrupt get RST6.5 vector\n"));
+			LOG(("Interrupt get RST6.5 vector\n"));
 			I.IRQ1 = (I.irq_callback)(2);
 		}
 
 		if( I.ISRV == IM_RST75 )
 		{
-			LOG((errorlog,"Interrupt get RST7.5 vector\n"));
+			LOG(("Interrupt get RST7.5 vector\n"));
 			I.IRQ1 = (I.irq_callback)(3);
 		}
 	}
@@ -1102,7 +1101,7 @@ static void Interrupt(void)
 					change_pc16(I.PC.d);
 					break;
 				default:
-					LOG((errorlog, "i8085 take int $%02x\n", I.IRQ1));
+					LOG(("i8085 take int $%02x\n", I.IRQ1));
 					execute_one(I.IRQ1 & 0xff);
 			}
 	}
@@ -1310,7 +1309,7 @@ void i8085_set_reg(int regnum, unsigned val)
 /****************************************************************************/
 void i8085_set_SID(int state)
 {
-	LOG((errorlog, "i8085: SID %d\n", state));
+	LOG(("i8085: SID %d\n", state));
     if (state)
 		I.IM |= IM_SID;
 	else
@@ -1330,7 +1329,7 @@ void i8085_set_sod_callback(void (*callback)(int state))
 /****************************************************************************/
 void i8085_set_TRAP(int state)
 {
-	LOG((errorlog, "i8085: TRAP %d\n", state));
+	LOG(("i8085: TRAP %d\n", state));
 	if (state)
 	{
 		I.IREQ |= IM_TRAP;
@@ -1349,7 +1348,7 @@ void i8085_set_TRAP(int state)
 /****************************************************************************/
 void i8085_set_RST75(int state)
 {
-	LOG((errorlog, "i8085: RST7.5 %d\n", state));
+	LOG(("i8085: RST7.5 %d\n", state));
 	if( state )
 	{
 
@@ -1369,7 +1368,7 @@ void i8085_set_RST75(int state)
 /****************************************************************************/
 void i8085_set_RST65(int state)
 {
-	LOG((errorlog, "i8085: RST6.5 %d\n", state));
+	LOG(("i8085: RST6.5 %d\n", state));
 	if( state )
 	{
 		I.IREQ |= IM_RST65; 			/* request RST6.5 */
@@ -1391,7 +1390,7 @@ void i8085_set_RST65(int state)
 /****************************************************************************/
 void i8085_set_RST55(int state)
 {
-	LOG((errorlog, "i8085: RST5.5 %d\n", state));
+	LOG(("i8085: RST5.5 %d\n", state));
 	if( state )
 	{
 		I.IREQ |= IM_RST55; 			/* request RST5.5 */
@@ -1413,7 +1412,7 @@ void i8085_set_RST55(int state)
 /****************************************************************************/
 void i8085_set_INTR(int state)
 {
-	LOG((errorlog, "i8085: INTR %d\n", state));
+	LOG(("i8085: INTR %d\n", state));
 	if( state )
 	{
 		I.IREQ |= IM_INTR;				/* request INTR */

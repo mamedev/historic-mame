@@ -122,11 +122,6 @@ struct IOReadPort irem_sound_readport[] =
 	{ -1 }	/* end of table */
 };
 
-static void pip2(int offset,int data)
-{
-if (errorlog) fprintf(errorlog,"%04x: write %02x to port 2 ddr %02x\n",cpu_get_pc(),data,m6803_internal_registers_r(M6803_DDR2));
-}
-
 struct IOWritePort irem_sound_writeport[] =
 {
 	{ M6803_PORT1, M6803_PORT1, irem_port1_w },

@@ -26,10 +26,10 @@ unsigned char *toki_sprites_dataram;
 unsigned char *toki_scrollram;
 signed char toki_linescroll[256];
 
-int toki_foreground_videoram_size;
-int toki_background1_videoram_size;
-int toki_background2_videoram_size;
-int toki_sprites_dataram_size;
+size_t toki_foreground_videoram_size;
+size_t toki_background1_videoram_size;
+size_t toki_background2_videoram_size;
+size_t toki_sprites_dataram_size;
 
 static unsigned char *frg_dirtybuffer;		/* foreground */
 static unsigned char *bg1_dirtybuffer;		/* background 1 */

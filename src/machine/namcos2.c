@@ -15,15 +15,11 @@ Namco System II
 #include "machine/namcos2.h"
 #include "vidhrdw/generic.h"
 
-#define tilemap_create(a,b,c,d,e,f) 0
-#define tilemap_mark_tile_dirty(a,b,c)
-
 unsigned char *namcos2_68k_master_ram=NULL;
 unsigned char *namcos2_68k_slave_ram=NULL;
 unsigned char *namcos2_68k_mystery_ram=NULL;
 
 int namcos2_gametype=0;
-
 
 /*************************************************************/
 /* Perform basic machine initialisation 					 */
@@ -67,14 +63,12 @@ void namcos2_init_machine(void)
 //	for(loop=0;loop<0x10;loop+=2) namcos2_68k_road_ctrl_w(loop,0);
 }
 
-
-
 /*************************************************************/
 /* EEPROM Load/Save and read/write handling 				 */
 /*************************************************************/
 
 unsigned char *namcos2_eeprom;
-int namcos2_eeprom_size;
+size_t namcos2_eeprom_size;
 
 void namcos2_nvram_handler(void *file,int read_or_write)
 {
@@ -116,12 +110,12 @@ READ_HANDLER( namcos2_68k_data_rom_r )
 /* 68000 Shared memory area - Video RAM control 			 */
 /*************************************************************/
 
-int namcos2_68k_vram_size=0;
+size_t namcos2_68k_vram_size;
 
 WRITE_HANDLER( namcos2_68k_vram_w )
 {
-	int col=(offset>>1)&0x3f;
-	int row=(offset>>7)&0x3f;
+//	int col=(offset>>1)&0x3f;
+//	int row=(offset>>7)&0x3f;
 
 	COMBINE_WORD_MEM(&videoram[offset],data);
 
@@ -133,47 +127,53 @@ WRITE_HANDLER( namcos2_68k_vram_w )
 		switch(offset&0xe000)
 		{
 			case 0x0000:
-				if(namcos2_tilemap0_flip&TILEMAP_FLIPX) col=63-col;
-				if(namcos2_tilemap0_flip&TILEMAP_FLIPY) row=63-row;
-				tilemap_mark_tile_dirty(namcos2_tilemap0,col,row);
+//				if(namcos2_tilemap0_flip&TILEMAP_FLIPX) col=63-col;
+//				if(namcos2_tilemap0_flip&TILEMAP_FLIPY) row=63-row;
+//				tilemap_mark_tile_dirty(namcos2_tilemap0,col,row);
+				tilemap_mark_tile_dirty(namcos2_tilemap0,(offset>>1)&0xfff);
 				break;
 
 			case 0x2000:
-				if(namcos2_tilemap1_flip&TILEMAP_FLIPX) col=63-col;
-				if(namcos2_tilemap1_flip&TILEMAP_FLIPY) row=63-row;
-				tilemap_mark_tile_dirty(namcos2_tilemap1,col,row);
+//				if(namcos2_tilemap1_flip&TILEMAP_FLIPX) col=63-col;
+//				if(namcos2_tilemap1_flip&TILEMAP_FLIPY) row=63-row;
+//				tilemap_mark_tile_dirty(namcos2_tilemap1,col,row);
+				tilemap_mark_tile_dirty(namcos2_tilemap1,(offset>>1)&0xfff);
 				break;
 
 			case 0x4000:
-				if(namcos2_tilemap2_flip&TILEMAP_FLIPX) col=63-col;
-				if(namcos2_tilemap2_flip&TILEMAP_FLIPY) row=63-row;
-				tilemap_mark_tile_dirty(namcos2_tilemap2,col,row);
+//				if(namcos2_tilemap2_flip&TILEMAP_FLIPX) col=63-col;
+//				if(namcos2_tilemap2_flip&TILEMAP_FLIPY) row=63-row;
+//				tilemap_mark_tile_dirty(namcos2_tilemap2,col,row);
+				tilemap_mark_tile_dirty(namcos2_tilemap2,(offset>>1)&0xfff);
 				break;
 
 			case 0x6000:
-				if(namcos2_tilemap3_flip&TILEMAP_FLIPX) col=63-col;
-				if(namcos2_tilemap3_flip&TILEMAP_FLIPY) row=63-row;
-				tilemap_mark_tile_dirty(namcos2_tilemap3,col,row);
+//				if(namcos2_tilemap3_flip&TILEMAP_FLIPX) col=63-col;
+//				if(namcos2_tilemap3_flip&TILEMAP_FLIPY) row=63-row;
+//				tilemap_mark_tile_dirty(namcos2_tilemap3,col,row);
+				tilemap_mark_tile_dirty(namcos2_tilemap3,(offset>>1)&0xfff);
 				break;
 
 			case 0x8000:
 				if(offset>=0x8010 && offset<0x87f0)
 				{
 					offset-=0x10;	/* Fixed plane offsets */
-					row=((offset&0x7ff)>>1)/36;
-					col=((offset&0x7ff)>>1)%36;
-					if(namcos2_tilemap4_flip&TILEMAP_FLIPX) col=35-col;
-					if(namcos2_tilemap4_flip&TILEMAP_FLIPY) row=27-row;
-					tilemap_mark_tile_dirty(namcos2_tilemap4,col,row);
+//					row=((offset&0x7ff)>>1)/36;
+//					col=((offset&0x7ff)>>1)%36;
+//					if(namcos2_tilemap4_flip&TILEMAP_FLIPX) col=35-col;
+//					if(namcos2_tilemap4_flip&TILEMAP_FLIPY) row=27-row;
+//					tilemap_mark_tile_dirty(namcos2_tilemap4,col,row);
+					tilemap_mark_tile_dirty(namcos2_tilemap4,(offset&0x7ff)>>1);
 				}
 				else if(offset>=0x8810 && offset<0x8ff0)
 				{
 					offset-=0x10;	/* Fixed plane offsets */
-					row=((offset&0x7ff)>>1)/36;
-					col=((offset&0x7ff)>>1)%36;
-					if(namcos2_tilemap5_flip&TILEMAP_FLIPX) col=35-col;
-					if(namcos2_tilemap5_flip&TILEMAP_FLIPY) row=27-row;
-					tilemap_mark_tile_dirty(namcos2_tilemap5,col,row);
+//					row=((offset&0x7ff)>>1)/36;
+//					col=((offset&0x7ff)>>1)%36;
+//					if(namcos2_tilemap5_flip&TILEMAP_FLIPX) col=35-col;
+//					if(namcos2_tilemap5_flip&TILEMAP_FLIPY) row=27-row;
+//					tilemap_mark_tile_dirty(namcos2_tilemap5,col,row);
+					tilemap_mark_tile_dirty(namcos2_tilemap5,(offset&0x7ff)>>1);
 				}
 				break;
 
@@ -208,12 +208,15 @@ WRITE_HANDLER( namcos2_68k_vram_ctrl_w )
 			/* All planes are flipped X+Y from D15 of this word */
 			flip=(namcos2_68k_vram_ctrl_r(0x02)&0x8000)?(TILEMAP_FLIPX|TILEMAP_FLIPY):0;
 			if(namcos2_tilemap0_flip!=flip) tilemap_mark_all_tiles_dirty(ALL_TILEMAPS);
-			namcos2_tilemap0_flip=flip;
-			namcos2_tilemap1_flip=flip;
-			namcos2_tilemap2_flip=flip;
-			namcos2_tilemap3_flip=flip;
-			namcos2_tilemap4_flip=flip;
-			namcos2_tilemap5_flip=flip;
+
+			tilemap_set_flip( ALL_TILEMAPS, flip );
+//			namcos2_tilemap0_flip=flip;
+//			namcos2_tilemap1_flip=flip;
+//			namcos2_tilemap2_flip=flip;
+//			namcos2_tilemap3_flip=flip;
+//			namcos2_tilemap4_flip=flip;
+//			namcos2_tilemap5_flip=flip;
+
 			tilemap_set_scrollx( namcos2_tilemap0, 0, (data+44+4)&0x1ff );
 			break;
 		case 0x06:
@@ -277,7 +280,7 @@ READ_HANDLER( namcos2_68k_vram_ctrl_r )
 /*************************************************************/
 
 unsigned char *namcos2_68k_palette_ram;
-int namcos2_68k_palette_size;
+size_t namcos2_68k_palette_size;
 
 READ_HANDLER( namcos2_68k_video_palette_r )
 {
@@ -360,14 +363,14 @@ unsigned char *namcos2_68k_serial_comms_ram=NULL;
 
 READ_HANDLER( namcos2_68k_serial_comms_ram_r )
 {
-	if (errorlog) fprintf(errorlog,"Serial Comms read  Addr=%08x\n",offset);
+	logerror("Serial Comms read  Addr=%08x\n",offset);
 	return READ_WORD(&namcos2_68k_serial_comms_ram[offset&0x3fff]);
 }
 
 WRITE_HANDLER( namcos2_68k_serial_comms_ram_w )
 {
 	COMBINE_WORD_MEM(&namcos2_68k_serial_comms_ram[offset&0x3fff],data&0x1ff);
-	if (errorlog) fprintf(errorlog,"Serial Comms write Addr=%08x, Data=%04x\n",offset,data);
+	logerror("Serial Comms write Addr=%08x, Data=%04x\n",offset,data);
 }
 
 
@@ -383,7 +386,7 @@ READ_HANDLER( namcos2_68k_serial_comms_ctrl_r )
 		default:
 			break;
 	}
-//	if (errorlog) fprintf(errorlog,"Serial Comms read  Addr=%08x\n",offset);
+//	logerror("Serial Comms read  Addr=%08x\n",offset);
 
 	return retval;
 }
@@ -391,7 +394,7 @@ READ_HANDLER( namcos2_68k_serial_comms_ctrl_r )
 WRITE_HANDLER( namcos2_68k_serial_comms_ctrl_w )
 {
 	COMBINE_WORD_MEM(&namcos2_68k_serial_comms_ctrl[offset&0x0f],data);
-//	if (errorlog) fprintf(errorlog,"Serial Comms write Addr=%08x, Data=%04x\n",offset,data);
+//	logerror("Serial Comms write Addr=%08x, Data=%04x\n",offset,data);
 }
 
 
@@ -479,7 +482,7 @@ WRITE_HANDLER( namcos2_68k_key_w )
 /**************************************************************/
 
 unsigned char namcos2_68k_roz_ctrl[0x10];
-int  namcos2_68k_roz_ram_size=0;
+size_t namcos2_68k_roz_ram_size;
 unsigned char *namcos2_68k_roz_ram=NULL;
 
 WRITE_HANDLER( namcos2_68k_roz_ctrl_w )
@@ -512,8 +515,8 @@ READ_HANDLER( namcos2_68k_roz_ram_r )
 
 unsigned char *namcos2_68k_roadtile_ram=NULL;
 unsigned char *namcos2_68k_roadgfx_ram=NULL;
-int namcos2_68k_roadtile_ram_size=0;
-int namcos2_68k_roadgfx_ram_size=0;
+size_t namcos2_68k_roadtile_ram_size;
+size_t namcos2_68k_roadgfx_ram_size;
 
 WRITE_HANDLER( namcos2_68k_roadtile_ram_w )
 {

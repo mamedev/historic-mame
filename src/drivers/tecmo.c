@@ -112,7 +112,7 @@ static WRITE_HANDLER( tecmo_adpcm_trigger_w )
 extern unsigned char *tecmo_videoram,*tecmo_colorram;
 extern unsigned char *tecmo_videoram2,*tecmo_colorram2;
 extern unsigned char *tecmo_scroll;
-extern int tecmo_videoram2_size;
+extern size_t tecmo_videoram2_size;
 
 WRITE_HANDLER( tecmo_videoram_w );
 WRITE_HANDLER( tecmo_colorram_w );

@@ -166,10 +166,8 @@ static WRITE_HANDLER( protection_w )
 		}
 	default:
 		{
-			if(errorlog) {
-				fprintf(errorlog, "Write protection at %06x (%04x)\n", cpu_get_pc(), data&0xffff);
-				fprintf(errorlog, "*** Unknown protection %d\n", cpu_readmem24(0xffc684));
-			}
+			logerror("Write protection at %06x (%04x)\n", cpu_get_pc(), data&0xffff);
+			logerror("*** Unknown protection %d\n", cpu_readmem24(0xffc684));
 			break;
 		}
 	}

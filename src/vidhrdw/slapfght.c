@@ -11,7 +11,7 @@
 
 unsigned char *slapfight_videoram;
 unsigned char *slapfight_colorram;
-int slapfight_videoram_size;
+size_t slapfight_videoram_size;
 unsigned char *slapfight_scrollx_lo,*slapfight_scrollx_hi,*slapfight_scrolly;
 
 

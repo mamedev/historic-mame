@@ -56,7 +56,7 @@ I/O 2  ;bit 0 Coin in 1
 
 
 extern unsigned char *popeye_videoram;
-extern int popeye_videoram_size;
+extern size_t popeye_videoram_size;
 extern unsigned char *popeye_background_pos,*popeye_palette_bank;
 WRITE_HANDLER( popeye_backgroundram_w );
 WRITE_HANDLER( popeye_videoram_w );

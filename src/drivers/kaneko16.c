@@ -192,8 +192,7 @@ void gtmr_mcu_run(void)
 	int mcu_offset	=	READ_WORD(&mcu_ram[0x0012]);
 	int mcu_data	=	READ_WORD(&mcu_ram[0x0014]);
 
-	if (errorlog) fprintf(errorlog,
-	 "CPU #0 PC %06X : MCU executed command: %04X %04X %04X\n",cpu_get_pc(),mcu_command,mcu_offset,mcu_data);
+	logerror("CPU #0 PC %06X : MCU executed command: %04X %04X %04X\n",cpu_get_pc(),mcu_command,mcu_offset,mcu_data);
 
 	switch (mcu_command >> 8)
 	{
@@ -298,8 +297,7 @@ void shogwarr_mcu_run(void)
 
 	if (!mcu_command) return;
 
-	if (errorlog) fprintf(errorlog,
-	 "CPU #0 PC %06X : MCU executed command at %04X: %04X\n",
+	logerror("CPU #0 PC %06X : MCU executed command at %04X: %04X\n",
 	 	cpu_get_pc(),shogwarr_mcu_command_offset,mcu_command);
 
 	switch (mcu_command)
@@ -522,13 +520,13 @@ WRITE_HANDLER( gtmr_oki_0_bank_w )
 {
 	OKIM6295_set_bank_base(0, ALL_VOICES, 0x10000 * (data & 0xF) );
 	bank0 = (data & 0xF);
-//	if (errorlog) fprintf(errorlog, "CPU #0 PC %06X : OKI0 bank %08X\n",cpu_get_pc(),data);
+//	logerror("CPU #0 PC %06X : OKI0 bank %08X\n",cpu_get_pc(),data);
 }
 
 WRITE_HANDLER( gtmr_oki_1_bank_w )
 {
 	OKIM6295_set_bank_base(1, ALL_VOICES, 0x40000 * (data & 0x1) );
-//	if (errorlog) fprintf(errorlog, "CPU #0 PC %06X : OKI1 bank %08X\n",cpu_get_pc(),data);
+//	logerror("CPU #0 PC %06X : OKI1 bank %08X\n",cpu_get_pc(),data);
 }
 
 /*
@@ -557,7 +555,7 @@ WRITE_HANDLER( gtmr_oki_0_data_w )
 			if (samp < 0x20)
 			{
 				OKIM6295_set_bank_base(0, ALL_VOICES, 0);
-//				if (errorlog) fprintf(errorlog, "Setting OKI0 bank to zero\n");
+//				logerror("Setting OKI0 bank to zero\n");
 			}
 			else
 				OKIM6295_set_bank_base(0, ALL_VOICES, 0x10000 * bank0 );
@@ -565,13 +563,13 @@ WRITE_HANDLER( gtmr_oki_0_data_w )
 	}
 
 	OKIM6295_data_0_w(offset,data);
-//	if (errorlog) fprintf(errorlog, "CPU #0 PC %06X : OKI0 <- %08X\n",cpu_get_pc(),data);
+//	logerror("CPU #0 PC %06X : OKI0 <- %08X\n",cpu_get_pc(),data);
 }
 
 WRITE_HANDLER( gtmr_oki_1_data_w )
 {
 	OKIM6295_data_1_w(offset,data);
-//	if (errorlog) fprintf(errorlog, "CPU #0 PC %06X : OKI1 <- %08X\n",cpu_get_pc(),data);
+//	logerror("CPU #0 PC %06X : OKI1 <- %08X\n",cpu_get_pc(),data);
 }
 
 

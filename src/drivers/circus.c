@@ -44,7 +44,7 @@ static int circus_interrupt;
 static READ_HANDLER( ripcord_IN2_r )
 {
 	circus_interrupt ++;
-	if (errorlog) fprintf (errorlog, "circus_int: %02x\n", circus_interrupt);
+	logerror("circus_int: %02x\n", circus_interrupt);
 	return readinputport (2);
 }
 

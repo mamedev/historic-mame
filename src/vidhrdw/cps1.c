@@ -307,7 +307,7 @@ INLINE unsigned char * cps1_base(int offset,int boundary)
 READ_HANDLER( cps1_output_r )
 {
 #if VERBOSE
-if (errorlog && offset >= 0x18) fprintf(errorlog,"PC %06x: read output port %02x\n",cpu_get_pc(),offset);
+if (offset >= 0x18) logerror("PC %06x: read output port %02x\n",cpu_get_pc(),offset);
 #endif
 
 	/* Some games interrogate a couple of registers on bootup. */
@@ -336,14 +336,14 @@ if (errorlog && offset >= 0x18) fprintf(errorlog,"PC %06x: read output port %02x
 WRITE_HANDLER( cps1_output_w )
 {
 #if VERBOSE
-if (errorlog && offset >= 0x18 && //offset != 0x22 &&
+if (offset >= 0x18 && //offset != 0x22 &&
 		offset != cps1_game_config->layer_control &&
 		offset != cps1_game_config->priority0 &&
 		offset != cps1_game_config->priority1 &&
 		offset != cps1_game_config->priority2 &&
 		offset != cps1_game_config->priority3 &&
 		offset != cps1_game_config->control_reg)
-	fprintf(errorlog,"PC %06x: write %02x to output port %02x\n",cpu_get_pc(),data,offset);
+	logerror("PC %06x: write %02x to output port %02x\n",cpu_get_pc(),data,offset);
 
 #ifdef MAME_DEBUG
 if (offset == 0x22 && (data & ~0x8001) != 0x0e)
@@ -384,8 +384,8 @@ unsigned char *cps1_gfxram;
 unsigned char *cps1_output;
 
 
-int cps1_gfxram_size;
-int cps1_output_size;
+size_t cps1_gfxram_size;
+size_t cps1_output_size;
 
 /* Private */
 
@@ -1001,10 +1001,7 @@ int cps1_vh_start(void)
 
 	if (!cps1_game_config)
 	{
-		if (errorlog)
-		{
-			fprintf(errorlog, "cps1_game_config hasn't been set up yet");
-		}
+		logerror("cps1_game_config hasn't been set up yet");
 		return -1;
 	}
 

@@ -18,8 +18,8 @@
 
 /* From dec8.c - rename it to dec8_color prom later.. used by many games.. */
 void ghostb_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
-
 void pcktgal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+WRITE_HANDLER( pcktgal_flipscreen_w );
 
 /***************************************************************************/
 
@@ -92,7 +92,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0000, 0x07ff, MWA_RAM },
 	{ 0x0800, 0x0fff, videoram_w, &videoram, &videoram_size },
 	{ 0x1000, 0x11ff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x1801, 0x1801, MWA_NOP },	/* bit 7 = flip screen, other bits unknown */
+	{ 0x1801, 0x1801, pcktgal_flipscreen_w },
 	/* 1800 - 0x181f are unused BAC-06 registers, see vidhrdw/dec0.c */
 	{ 0x1a00, 0x1a00, pcktgal_sound_w },
 	{ 0x1c00, 0x1c00, pcktgal_bank_w },
@@ -239,7 +239,7 @@ static struct GfxDecodeInfo bootleg_gfxdecodeinfo[] =
 static struct YM2203interface ym2203_interface =
 {
 	1,	  /* 1 chip */
-	4000000,		/* 4.0 MHz ??? */
+	1500000,		/* 1.5 MHz */
 	{ YM2203_VOL(60,60) },
 	{ 0 },
 	{ 0 },
@@ -250,7 +250,7 @@ static struct YM2203interface ym2203_interface =
 static struct YM3812interface ym3812_interface =
 {
 	1,			/* 1 chip (no more supported) */
-	3000000,		/* 3 MHz? (hand tuned) */
+	3000000,	/* 3 MHz */
 	{ 50 }
 };
 
@@ -277,7 +277,7 @@ static struct MachineDriver machine_driver_pcktgal =
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
-			2000000,
+			1500000,
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0
 							/* IRQs are caused by the ADPCM chip */
@@ -330,7 +330,7 @@ static struct MachineDriver machine_driver_bootleg =
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
-			2000000,
+			1500000,
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,0
 							/* IRQs are caused by the ADPCM chip */

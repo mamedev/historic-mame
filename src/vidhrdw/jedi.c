@@ -12,7 +12,7 @@
 #include "vidhrdw/generic.h"
 
 unsigned char *jedi_backgroundram;
-int jedi_backgroundram_size;
+size_t jedi_backgroundram_size;
 unsigned char *jedi_PIXIRAM;
 static unsigned int jedi_vscroll;
 static unsigned int jedi_hscroll;

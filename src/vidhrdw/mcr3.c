@@ -29,10 +29,6 @@
  *
  *************************************/
 
-/* masks for character and sprite drawing */
-UINT16 mcr3_char_code_mask;
-UINT16 mcr3_sprite_code_mask;
-
 /* Spy Hunter hardware extras */
 UINT8 spyhunt_sprite_color_mask;
 INT16 spyhunt_scrollx, spyhunt_scrolly;
@@ -41,7 +37,7 @@ UINT8 spyhunt_draw_lamps;
 UINT8 spyhunt_lamp[8];
 
 UINT8 *spyhunt_alpharam;
-int spyhunt_alpharam_size;
+size_t spyhunt_alpharam_size;
 
 
 
@@ -130,8 +126,6 @@ static void mcr3_update_background(struct osd_bitmap *bitmap, UINT8 color_xor)
 			int color = ((attr & 0x30) >> 4) ^ color_xor;
 			int code = videoram[offs] + 256 * (attr & 0x03);
 
-			code &= mcr3_char_code_mask;
-
 			if (!mcr_cocktail_flip)
 				drawgfx(bitmap, Machine->gfx[0], code, color, attr & 0x04, attr & 0x08,
 						16 * mx, 16 * my, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
@@ -175,7 +169,6 @@ void mcr3_update_sprites(struct osd_bitmap *bitmap, int color_mask, int code_xor
 		sy = (241 - spriteram[offs]) * 2;
 
 		code ^= code_xor;
-		code &= mcr3_sprite_code_mask;
 
 		sx += dx;
 		sy += dy;
@@ -356,7 +349,6 @@ void spyhunt_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 			int my = (offs & 0x0f) | ((offs >> 6) & 0x10);
 
 			code = (code & 0x3f) | ((code & 0x80) >> 1);
-			code &= mcr3_char_code_mask;
 
 			drawgfx(spyhunt_backbitmap, Machine->gfx[0], code, 0, 0, vflip,
 					64 * mx, 32 * my, NULL, TRANSPARENCY_NONE, 0);
@@ -449,7 +441,7 @@ int dotron_vh_start(void)
 			dotron_palettes[2][i * 3 + 2] = MIN(dotron_backdrop->orig_palette[i * 3 + 2] * 3, 255);
 		}
 
-		if (errorlog) fprintf(errorlog, "Backdrop loaded.\n");
+		logerror("Backdrop loaded.\n");
 	}
 
 	return 0;
@@ -554,8 +546,6 @@ void dotron_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 			int color = (attr & 0x30) >> 4;
 			int mx = ((offs / 2) % 32) * 16;
 			int my = ((offs / 2) / 32) * 16;
-
-			code &= mcr3_char_code_mask;
 
 			/* center for the backdrop */
 			mx += DOTRON_X_START;

@@ -193,7 +193,7 @@ WRITE_HANDLER( paletteram_BBGGRRII_w );
 /* _swap_w  most significant byte first */
 /* _split_w least and most significant bytes are not consecutive */
 /* _word_w  use with 16 bit CPU */
-/*              MSB          LSB */
+/*                        MSB          LSB */
 WRITE_HANDLER( paletteram_xxxxBBBBGGGGRRRR_w );
 WRITE_HANDLER( paletteram_xxxxBBBBGGGGRRRR_swap_w );
 WRITE_HANDLER( paletteram_xxxxBBBBGGGGRRRR_split1_w );	/* uses paletteram[] */
@@ -220,6 +220,7 @@ WRITE_HANDLER( paletteram_xBBBBBGGGGGRRRRR_swap_w );
 WRITE_HANDLER( paletteram_xBBBBBGGGGGRRRRR_word_w );
 WRITE_HANDLER( paletteram_xRRRRRGGGGGBBBBB_w );
 WRITE_HANDLER( paletteram_xRRRRRGGGGGBBBBB_word_w );
+WRITE_HANDLER( paletteram_xGGGGGRRRRRBBBBB_word_w );
 WRITE_HANDLER( paletteram_IIIIRRRRGGGGBBBB_word_w );
 WRITE_HANDLER( paletteram_RRRRGGGGBBBBIIII_word_w );
 

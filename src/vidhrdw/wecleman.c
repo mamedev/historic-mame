@@ -87,7 +87,8 @@ static struct sprite_list *sprite_list;
 /* Variables that driver has acces to: */
 
 unsigned char *wecleman_pageram, *wecleman_txtram, *wecleman_roadram, *wecleman_unknown;
-int wecleman_roadram_size, wecleman_bgpage[4], wecleman_fgpage[4], *wecleman_gfx_bank;
+size_t wecleman_roadram_size;
+int wecleman_bgpage[4], wecleman_fgpage[4], *wecleman_gfx_bank;
 
 
 

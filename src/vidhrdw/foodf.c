@@ -15,8 +15,8 @@
  *		Globals we own
  */
 
-int foodf_playfieldram_size;
-int foodf_spriteram_size;
+size_t foodf_playfieldram_size;
+size_t foodf_spriteram_size;
 
 unsigned char *foodf_playfieldram;
 unsigned char *foodf_spriteram;

@@ -60,10 +60,8 @@ static WRITE_HANDLER( gbusters_1f98_w )
 
 	/* other bits unused/unknown */
 	if (data & 0xfe){
-		//if (errorlog)
-		//	fprintf(errorlog,"%04x: (1f98) write %02x\n",cpu_get_pc(), data);
-		//sprintf(baf,"$1f98 = %02x", data);
-		//usrintf_showmessage(baf);
+		//logerror("%04x: (1f98) write %02x\n",cpu_get_pc(), data);
+		//usrintf_showmessage("$1f98 = %02x", data);
 	}
 }
 
@@ -85,8 +83,7 @@ static WRITE_HANDLER( gbusters_coin_counter_w )
 	if (data & 0xf8)
 	{
 		char baf[40];
-		if (errorlog)
-			fprintf(errorlog,"%04x: (ccount) write %02x\n",cpu_get_pc(), data);
+		logerror("%04x: (ccount) write %02x\n",cpu_get_pc(), data);
 		sprintf(baf,"ccnt = %02x", data);
 //		usrintf_showmessage(baf);
 	}
@@ -94,8 +91,7 @@ static WRITE_HANDLER( gbusters_coin_counter_w )
 
 static WRITE_HANDLER( gbusters_unknown_w )
 {
-	if (errorlog)
-		fprintf(errorlog,"%04x: (???) write %02x\n",cpu_get_pc(), data);
+	logerror("%04x: (???) write %02x\n",cpu_get_pc(), data);
 
 {
 char baf[40];
@@ -434,10 +430,8 @@ static void gbusters_banking( int lines )
 	cpu_setbank( 1, &RAM[offs] );
 
 	if (lines & 0xf0){
-		//if (errorlog)
-		//	fprintf(errorlog,"%04x: (lines) write %02x\n",cpu_get_pc(), lines);
-		//sprintf(baf,"lines = %02x", lines);
-		//usrintf_showmessage(baf);
+		//logerror("%04x: (lines) write %02x\n",cpu_get_pc(), lines);
+		//usrintf_showmessage("lines = %02x", lines);
 	}
 
 	/* other bits unknown */

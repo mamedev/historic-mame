@@ -73,6 +73,11 @@
  * 10.03.00  MJC  - as did btst,cmpm and nbcd
  * 22.03.00  MJC  - Divide by zero should not decrement PC by 2 before push
  *                  Move memory banking into exception routine
+ * 14.04.00 Dave  - BTST missing Opcode
+ *                  ASL.L > 31 shift
+ * 20.04.00  MJC  - TST.B Also missing A7 specific routine
+ *                - Extra Define A7ROUTINE to switch between having seperate
+ *                  routines for +-(A7) address modes.
  *---------------------------------------------------------------
  * Known Problems / Bugs
  *
@@ -109,8 +114,8 @@
 #define SAVEPPC			/* Save Previous PC */
 #undef  ENCRYPTED		/* Allows OP_ROM <> OP_RAM */
 #define ASMBANK         /* Memory banking algorithm to use */
+#define A7ROUTINE       /* Define to use separate routines for -(a7)/(a7)+ */
 #define ALIGNMENT 4		/* Alignment to use for branches */
-
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -141,7 +146,7 @@ int 		DisOp;
  *
  */
 
-#define VERSION 	"0.18"
+#define VERSION 	"0.20"
 
 #define TRUE -1
 #define FALSE 0
@@ -661,9 +666,21 @@ void IncrementEDI(int Size,int Rreg)
 	{
         case 66:
 
+			#ifdef  A7ROUTINE
+
         	/* Always does Byte Increment - A7 uses special routine */
 
             fprintf(fp, "\t\t inc   dword [%s+%s*4]\n",REG_ADD,regnameslong[Rreg]);
+
+            #else
+
+        	/* A7 uses same routines, so inc by 2 if A7 */
+
+            fprintf(fp, "\t\t cmp   %s,7\n",regnamesshort[Rreg]);
+            fprintf(fp, "\t\t cmc\n");
+            fprintf(fp, "\t\t adc   dword [%s+%s*4],byte 1\n",REG_ADD,regnameslong[Rreg]);
+
+            #endif
             break;
 
         case 87:
@@ -684,9 +701,21 @@ void DecrementEDI(int Size,int Rreg)
 	{
         case 66:
 
-        	/* Always does Byte Decrement - A7 uses special routine */
+			#ifdef  A7ROUTINE
+
+        	/* Always does Byte Increment - A7 uses special routine */
 
             fprintf(fp, "\t\t dec   EDI\n");
+
+            #else
+
+        	/* A7 uses same routines, so dec by 2 if A7 */
+
+            fprintf(fp, "\t\t cmp   %s,7\n",regnamesshort[Rreg]);
+            fprintf(fp, "\t\t cmc\n");
+            fprintf(fp, "\t\t sbb   dword edi,byte 1\n");
+
+            #endif
             break;
 
         case 87:
@@ -1997,10 +2026,12 @@ void dump_imm( int type, int leng, int mode, int sreg )
 
 	if ( mode == 7 ) BaseCode |= sreg ;
 
+    #ifdef A7ROUTINE
 	if ( (leng == 0) && (sreg == 7) && (mode > 2) && (mode < 5) )
 	{
 		BaseCode |= sreg ;
 	}
+    #endif
 
     if (type != 4) 	/* Not Valid (for this routine) */
     {
@@ -2179,8 +2210,9 @@ void dump_bit_dynamic( int sreg, int type, int mode, int dreg )
 
     if (type == 0)
     {
-        allow[9] = '9';
-    	allow[10] = 'a';
+        allow[9]  = '9';
+       	allow[10] = 'a';
+		allow[11] = 'b'; // dave fix to nhl
     }
 
 	Opcode = 0x0100 | (sreg << 9) | (type<<6) | (mode<<3) | dreg ;
@@ -2191,10 +2223,12 @@ void dump_bit_dynamic( int sreg, int type, int mode, int dreg )
 
     // A7+, A7-
 
+	#ifdef  A7ROUTINE
 	if ((dreg == 7) && (mode > 2) && (mode < 5))
 	{
 		BaseCode |= dreg;
 	}
+    #endif
 
     Dest = EAtoAMN(Opcode, FALSE);
 
@@ -2613,6 +2647,7 @@ void movecodes(int allowfrom[],int allowto[],int Start,char Size)	/* MJC */
         /* If mode = 3 or 4 and Size = byte and register = A7 */
         /* then make it a separate code                       */
 
+		#ifdef  A7ROUTINE
         if (Size == 'B')
         {
         	if (((Opcode & 0x3F) == 0x1F) || ((Opcode & 0x3F) == 0x27))
@@ -2625,6 +2660,7 @@ void movecodes(int allowfrom[],int allowto[],int Start,char Size)	/* MJC */
             	BaseCode |= 0x0E00;
             }
         }
+        #endif
 
         /* If Source = Data or Address register - combine into same routine */
 
@@ -2768,10 +2804,12 @@ void opcode5(void)
         	/* If mode = 3 or 4 and register = A7 */
 	        /* then make it a separate code       */
 
+			#ifdef  A7ROUTINE
        		if (((Opcode & 0x3F) == 0x1F) || ((Opcode & 0x3F) == 0x27))
            	{
            		BaseCode |= 0x07;
            	}
+            #endif
 
             if (OpcodeArray[BaseCode] == -2)
             {
@@ -2891,6 +2929,7 @@ void opcode5(void)
         	/* If mode = 3 or 4 and Size = byte and register = A7 */
 	        /* then make it a separate code                       */
 
+			#ifdef  A7ROUTINE
         	if ((Opcode & 0xC0) == 0)
 	        {
         		if (((Opcode & 0x3F) == 0x1F) || ((Opcode & 0x3F) == 0x27))
@@ -2898,6 +2937,7 @@ void opcode5(void)
             		BaseCode |= 0x07;
             	}
         	}
+            #endif
 
             if (OpcodeArray[BaseCode] == -2)
             {
@@ -3449,8 +3489,10 @@ void dumpx( int start, int reg, int type, char * Op, int dir, int leng, int mode
 
 	if ( mode == 7 ) BaseCode |= sreg ;
 
+    #ifdef A7ROUTINE
 	if ( (mode == 3 || mode == 4) && ( leng == 0 ) && (sreg == 7 ) )
 		BaseCode |= sreg ;
+    #endif
 
     /* If Source = Data or Address register - combine into same routine */
 
@@ -3760,10 +3802,12 @@ void not(void)
 
         // A7+, A7-
 
+		#ifdef  A7ROUTINE
 		if ( (leng == 0) && (sreg == 7) && (mode > 2) && (mode < 5) )
 		{
 			BaseCode |= sreg ;
 		}
+        #endif
 
         Dest = EAtoAMN(Opcode, FALSE);
 
@@ -4066,10 +4110,12 @@ void nbcd(void)
 
     	// A7+, A7-
 
+		#ifdef  A7ROUTINE
 		if ((sreg == 7) && (mode > 2) && (mode < 5))
 		{
 			BaseCode |= sreg;
 		}
+        #endif
 
 		Dest = EAtoAMN(BaseCode, FALSE);
 
@@ -4253,6 +4299,15 @@ void tst(void)
 		{
 			BaseCode |= sreg ;
 		}
+
+        // A7+, A7-
+
+		#ifdef  A7ROUTINE
+		if ( (leng == 0) && (sreg == 7) && (mode > 2) && (mode < 5) )
+		{
+			BaseCode |= sreg ;
+		}
+        #endif
 
         Dest = EAtoAMN(Opcode, FALSE);
 
@@ -5035,11 +5090,13 @@ void cmpm(void)
 		Opcode = 0xb108 | (regx<<9) | (leng<<6) | regy ;
 		BaseCode = Opcode & 0xb1c8 ;
 
+        #ifdef A7ROUTINE
         if(leng==0)
         {
         	if(regx==7) BaseCode |= (regx<<9);
         	if(regy==7) BaseCode |= regy;
         }
+        #endif
 
       	switch (leng)
     	{
@@ -6094,6 +6151,15 @@ void asl_asr(void)
                 fprintf(fp,"\t\t xor   edx,edx\n");
 
                 fprintf(fp,"%s_OV:\n",Label);
+
+                /* more than 31 shifts and long */
+
+                if((ir==1) && (leng==2))
+                {
+                	fprintf(fp,"\t\t test  cl,0e0h\n");
+                    fprintf(fp,"\t\t jnz   short %s_32\n\n",Label);
+                }
+
                 fprintf(fp,"\t\t mov   eax,edi\t\t; Restore It\n");
 
 				fprintf(fp, "\t\t sal   %s,cl\n",Regname);
@@ -6122,6 +6188,18 @@ void asl_asr(void)
                     fprintf(fp, "\t\t and   ebx,byte 1\n");
                     SetFlags(Size,EAX,TRUE,FALSE,FALSE);
                     fprintf(fp, "\t\t or    edx,ebx\n");
+
+                    if (leng==2)
+                    {
+					    Completed();
+
+                        /* > 31 Shifts */
+
+                        fprintf(fp, "%s_32:\n",Label);
+                        fprintf(fp, "\t\t mov   dl,40h\n");		// Zero flag
+                        fprintf(fp, "\t\t xor   eax,eax\n");
+                	    EffectiveAddressWrite(0,Size,EBX,EAX,"----S-B",TRUE);
+                    }
             	}
 
 				Completed();

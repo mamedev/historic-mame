@@ -12,7 +12,7 @@
 
 
 unsigned char *c1942_backgroundram;
-int c1942_backgroundram_size;
+size_t c1942_backgroundram_size;
 unsigned char *c1942_scroll;
 unsigned char *c1942_palette_bank;
 static unsigned char *dirtybuffer2;

@@ -12,16 +12,16 @@
 
 
 unsigned char *videoram;
-int videoram_size;
+size_t videoram_size;
 unsigned char *colorram;
 unsigned char *spriteram;	/* not used in this module... */
 unsigned char *spriteram_2;	/* ... */
 unsigned char *spriteram_3;	/* ... */
 unsigned char *buffered_spriteram;	/* not used in this module... */
 unsigned char *buffered_spriteram_2;	/* ... */
-int spriteram_size;	/* ... here just for convenience */
-int spriteram_2_size;	/* ... here just for convenience */
-int spriteram_3_size;	/* ... here just for convenience */
+size_t spriteram_size;	/* ... here just for convenience */
+size_t spriteram_2_size;	/* ... here just for convenience */
+size_t spriteram_3_size;	/* ... here just for convenience */
 unsigned char *flip_screen;	/* ... */
 unsigned char *flip_screen_x;	/* ... */
 unsigned char *flip_screen_y;	/* ... */
@@ -42,7 +42,7 @@ int generic_vh_start(void)
 
 	if (videoram_size == 0)
 	{
-if (errorlog) fprintf(errorlog,"Error: generic_vh_start() called but videoram_size not initialized\n");
+logerror("Error: generic_vh_start() called but videoram_size not initialized\n");
 		return 1;
 	}
 
