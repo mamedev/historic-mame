@@ -341,6 +341,7 @@ struct GameDriver invaders_driver =
 	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nValerio Verrando\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	invaders_rom,
 	0, 0,
@@ -541,6 +542,7 @@ struct GameDriver invadpt2_driver =
 	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nValerio Verrando\nLee Taylor\nMarco Cassili",
 	0,
 	&invadpt2_machine_driver,
+	0,
 
 	invaders2_rom,
 	0, 0,
@@ -609,6 +611,7 @@ struct GameDriver earthinv_driver =
 	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	earthinv_rom,
 	0, 0,
@@ -676,6 +679,7 @@ struct GameDriver spaceatt_driver =
 	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nValerio Verrando\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	spaceatt_rom,
 	0, 0,
@@ -826,6 +830,7 @@ struct GameDriver invrvnge_driver =
 	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nMarco Cassili (high score save)",
 	0,
 	&invrvnge_machine_driver,
+	0,
 
 	invrvnge_rom,
 	0, 0,
@@ -997,6 +1002,7 @@ struct GameDriver invdelux_driver =
 	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nValerio Verrando\nMarco Cassili",
 	0,
 	&invdelux_machine_driver,
+	0,
 
 	invdelux_rom,
 	0, 0,
@@ -1037,6 +1043,7 @@ struct GameDriver astlaser_driver =
 	"The Space Invaders Team",
 	0,
 	&invdelux_machine_driver,
+	0,
 
 	astlaser_rom,
 	0, 0,
@@ -1076,6 +1083,7 @@ struct GameDriver intruder_driver =
 	"The Space Invaders Team",
 	0,
 	&invdelux_machine_driver,
+	0,
 
 	intruder_rom,
 	0, 0,
@@ -1180,6 +1188,7 @@ struct GameDriver galxwars_driver =
 	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nValerio Verrando\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	galxwars_rom,
 	0, 0,
@@ -1342,6 +1351,7 @@ struct GameDriver lrescue_driver =
 	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nValerio Verrando\nMarco Cassili",
 	0,
 	&lrescue_machine_driver,
+	0,
 
 	lrescue_rom,
 	0, 0,
@@ -1438,6 +1448,7 @@ struct GameDriver desterth_driver =
 	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nValerio Verrando\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	desterth_rom,
 	0, 0,
@@ -1508,6 +1519,7 @@ struct GameDriver cosmicmo_driver =
 	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nValerio Verrando\nLee Taylor\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	cosmicmo_rom,
 	0, 0,
@@ -1585,6 +1597,7 @@ struct GameDriver spaceph_driver =
 	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nValerio Verrando\nLee Taylor\nPaul Swan\nMarco Cassili",
 	0,
 	&lrescue_machine_driver,
+	0,
 
 	spaceph_rom,
 	0, 0,
@@ -1751,6 +1764,7 @@ struct GameDriver rollingc_driver =
 	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nValerio Verrando\nLee Taylor\nPaul Swan",    /*L.T */
 	0,
 	&rollingc_machine_driver,
+	0,
 
 	rollingc_rom,
 	0, 0,
@@ -1916,6 +1930,7 @@ struct GameDriver bandido_driver =                                              
 	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nMirko Buffoni\nValerio Verrando\nMike Coates\n",
 	0,
 	&bandido_machine_driver,
+	0,
 
 	bandido_rom,
 	0, 0,
@@ -2069,6 +2084,7 @@ struct GameDriver boothill_driver =                                             
 	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nValerio Verrando\nMarco Cassili\nMike Balfour\nMike Coates\n\n(added samples)\n Howie Cohen \n Douglas Silfen \n Eric Lundquist",
 	0,
 	&boothill_machine_driver,
+	0,
 
 	boothill_rom,
 	0, 0,
@@ -2150,6 +2166,7 @@ struct GameDriver schaser_driver =
 	"Lee Taylor\n",
 	0,
 	&lrescue_machine_driver,
+	0,
 
 	schaser_rom,
 	0, 0,
@@ -2282,6 +2299,7 @@ struct GameDriver spcenctr_driver =
 	"Space Invaders Team\nLee Taylor\n",
 	0,
 	&spcenctr_machine_driver,
+	0,
 
 	spcenctr_rom,
 	0, 0,
@@ -2403,6 +2421,7 @@ struct GameDriver clowns_driver =
 	"Space Invaders Team\nLee Taylor\n",
 	0,
 	&clowns_machine_driver,
+	0,
 
 	clowns_rom,
 	0, 0,
@@ -2483,6 +2502,7 @@ struct GameDriver gmissile_driver =
 	"Lee Taylor\n",
 	0,
 	&boothill_machine_driver,
+	0,
 
 	gmissile_rom,
 	0, 0,
@@ -2611,6 +2631,7 @@ struct GameDriver seawolf_driver =
 	"Lee Taylor\n",
 	0,
 	&seawolf_machine_driver,
+	0,
 
 	seawolf_rom,
 	0, 0,
@@ -2758,6 +2779,7 @@ struct GameDriver gunfight_driver =
 	"Lee Taylor\n",
 	0,
 	&gunfight_machine_driver,
+	0,
 
 	gunfight_rom,
 	0, 0,
@@ -2878,6 +2900,7 @@ struct GameDriver zzzap_driver =
 	"Space Invaders Team\nLee Taylor\n",
 	0,
 	&zzzap_machine_driver,
+	0,
 
 	zzzap_rom,
 	0, 0,
@@ -3008,6 +3031,7 @@ struct GameDriver lupin3_driver =
 	"Space Invaders Team\nLee Taylor\n",
 	0,
 	&lupin3_machine_driver,
+	0,
 
 	lupin3_rom,
 	0, 0,
@@ -3111,6 +3135,7 @@ struct GameDriver helifire_driver =
 	"The Space Invaders Team",
 	0,
 	&bandido_machine_driver,
+	0,
 
 	helifire_rom,
 	0, 0,
@@ -3195,6 +3220,7 @@ struct GameDriver spacefev_driver =
 	"The Space Invaders Team",
 	0,
 	&bandido_machine_driver,
+	0,
 
 	spacefev_rom,
 	0, 0,
@@ -3345,6 +3371,7 @@ struct GameDriver polaris_driver =
 	"Space Invaders Team",
 	0,
 	&polaris_machine_driver,
+	0,
 
 	polaris_rom,
 	0, 0,
@@ -3422,6 +3449,7 @@ struct GameDriver lagunar_driver =
 	"The Space Invaders Team",
 	0,
 	&zzzap_machine_driver,
+	0,
 
 	lagunar_rom,
 	0, 0,
@@ -3547,6 +3575,7 @@ struct GameDriver m4_driver =
 	"The Space Invaders Team",
 	0,
 	&m4_machine_driver,
+	0,
 
 	m4_rom,
 	0, 0,
@@ -3667,6 +3696,7 @@ struct GameDriver phantom2_driver =
 	"The Space Invaders Team",
 	0,
 	&phantom2_machine_driver,
+	0,
 
 	phantom2_rom,
 	0, 0,
@@ -3802,6 +3832,7 @@ struct GameDriver dogpatch_driver =
 	"The Space Invaders Team",
 	0,
 	&dogpatch_machine_driver,
+	0,
 
 	dogpatch_rom,
 	0, 0,
@@ -3927,6 +3958,7 @@ struct GameDriver midwbowl_driver =
 	"The Space Invaders Team",
 	0,
 	&midwbowl_machine_driver,
+	0,
 
 	midwbowl_rom,
 	0, 0,
@@ -4033,6 +4065,7 @@ struct GameDriver blueshrk_driver =
 	"The Space Invaders Team",
 	0,
 	&blueshrk_machine_driver,
+	0,
 
 	blueshrk_rom,
 	0, 0,
@@ -4112,6 +4145,7 @@ struct GameDriver einnings_driver =
 	"The Space Invaders Team",
 	0,
 	&boothill_machine_driver,
+	0,
 
 	einnings_rom,
 	0, 0,
@@ -4153,6 +4187,7 @@ struct GameDriver dplay_driver =
 	"The Space Invaders Team",
 	0,
 	&boothill_machine_driver,
+	0,
 
 	dplay_rom,
 	0, 0,
@@ -4269,6 +4304,7 @@ struct GameDriver maze_driver =
 	"Space Invaders Team\nLee Taylor\n",
 	0,
 	&maze_machine_driver,
+	0,
 
 	maze_rom,
 	0, 0,
@@ -4385,6 +4421,7 @@ struct GameDriver tornbase_driver =
 	"Lee Taylor\n",
 	0,
 	&tornbase_machine_driver,
+	0,
 
 	tornbase_rom,
 	0, 0,

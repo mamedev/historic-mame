@@ -40,8 +40,6 @@ extern int matmania_videoram3_size;
 extern unsigned char *matmania_scroll;
 extern unsigned char *matmania_pageselect;
 
-int mystston_interrupt(void);
-
 void matmania_paletteram_w(int offset,int data);
 void matmania_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 void matmania_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -185,71 +183,71 @@ static struct MemoryWriteAddress maniach_sound_writemem[] =
 
 INPUT_PORTS_START( matmania_input_ports )
 	PORT_START	/* IN0 */
-	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
-	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
-	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
-	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
-	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_COIN2 | IPF_IMPULSE, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+	PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
 
 	PORT_START	/* IN1 */
-	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT ( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
-	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
 	PORT_START	/* DSW1 */
 	PORT_DIPNAME (0x03, 0x03, "Difficulty", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x03, "Easy" )
-	PORT_DIPSETTING (   0x02, "Medium" )
-	PORT_DIPSETTING (   0x01, "Hard" )
-	PORT_DIPSETTING (   0x00, "Hardest" )
+	PORT_DIPSETTING(    0x03, "Easy" )
+	PORT_DIPSETTING(    0x02, "Medium" )
+	PORT_DIPSETTING(    0x01, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
 	PORT_DIPNAME (0x04, 0x04, "Unknown 1", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x04, "Off" )
-	PORT_DIPSETTING (   0x00, "On" )
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 	PORT_DIPNAME (0x08, 0x08, "Unknown 2", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x08, "Off" )
-	PORT_DIPSETTING (   0x00, "On" )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 	PORT_DIPNAME (0x10, 0x10, "Unknown 3", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x10, "Off" )
-	PORT_DIPSETTING (   0x00, "On" )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 	PORT_DIPNAME (0x20, 0x20, "Unknown 4", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x20, "Off" )
-	PORT_DIPSETTING (   0x00, "On" )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 	PORT_DIPNAME (0x40, 0x40, "Unknown 5", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x40, "Off" )
-	PORT_DIPSETTING (   0x00, "On" )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 	PORT_DIPNAME (0x80, 0x80, "Unknown 6", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x80, "Off" )
-	PORT_DIPSETTING (   0x00, "On" )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 
 	PORT_START	/* DSW2 */
 	PORT_DIPNAME (0x03, 0x03, "Coin A", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x00, "2 Coins/1 Credit" )
-	PORT_DIPSETTING (   0x03, "1 Coin/1 Credits" )
-	PORT_DIPSETTING (   0x02, "1 Coin/2 Credits" )
-	PORT_DIPSETTING (   0x01, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x03, "1 Coin/1 Credits" )
+	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x01, "1 Coin/3 Credits" )
 	PORT_DIPNAME (0x0c, 0x0c, "Coin B", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x00, "2 Coins/1 Credit" )
-	PORT_DIPSETTING (   0x0c, "1 Coin/1 Credits" )
-	PORT_DIPSETTING (   0x08, "1 Coin/2 Credits" )
-	PORT_DIPSETTING (   0x04, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0c, "1 Coin/1 Credits" )
+	PORT_DIPSETTING(    0x08, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x04, "1 Coin/3 Credits" )
 	PORT_DIPNAME (0x10, 0x10, "Demo Sounds", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x00, "Off" )
-	PORT_DIPSETTING (   0x10, "On" )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x10, "On" )
 	PORT_DIPNAME (0x20, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x00, "Upright" )
-	PORT_DIPSETTING (   0x20, "Cocktail" )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x20, "Cocktail" )
 	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
 	PORT_DIPSETTING(    0x40, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
 INPUT_PORTS_END
 
 static struct GfxLayout charlayout =
@@ -376,7 +374,7 @@ static struct MachineDriver matmania_machine_driver =
 			1500000,	/* 1.5 Mhz ???? */
 			0,
 			matmania_readmem,matmania_writemem,0,0,
-			mystston_interrupt,1
+			interrupt,1
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
@@ -425,7 +423,7 @@ static struct MachineDriver maniach_machine_driver =
 			1500000,	/* 1.5 Mhz ???? */
 			0,
 			matmania_readmem,maniach_writemem,0,0,
-			mystston_interrupt,1
+			interrupt,1
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
@@ -679,6 +677,7 @@ struct GameDriver matmania_driver =
 	"Brad Oliver (MAME driver)\nTim Lindquist (color info)",
 	0,
 	&matmania_machine_driver,
+	0,
 
 	matmania_rom,
 	0, 0,
@@ -705,6 +704,7 @@ struct GameDriver excthour_driver =
 	"Brad Oliver (MAME driver)\nTim Lindquist (color info)",
 	0,
 	&matmania_machine_driver,
+	0,
 
 	excthour_rom,
 	0, 0,
@@ -730,6 +730,7 @@ struct GameDriver maniach_driver =
 	"Brad Oliver (MAME driver)\nTim Lindquist (color info)",
 	GAME_NOT_WORKING | GAME_WRONG_COLORS,
 	&maniach_machine_driver,
+	0,
 
 	maniach_rom,
 	0, 0,

@@ -420,6 +420,7 @@ struct GameDriver travrusa_driver =
 	"Lee Taylor (Driver Code)\nJohn Clegg (Graphics Code)\nAaron Giles (sound)\nThierry Lescot (color info)",
 	0,
 	&machine_driver,
+	0,
 
 	travrusa_rom,
 	0, 0,
@@ -445,6 +446,7 @@ struct GameDriver motorace_driver =
 	"Lee Taylor (Driver Code)\nJohn Clegg (Graphics Code)\nAaron Giles (sound)\nThierry Lescot (color info)\nGerald Vanderick (color info)",
 	0,
 	&machine_driver,
+	0,
 
 	motorace_rom,
 	motorace_decode, 0,

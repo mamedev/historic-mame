@@ -364,6 +364,29 @@ ROM_START( blktiger_rom )
 	ROM_LOAD( "blktiger.1l",  0x0000, 0x8000, 0x2cf54274 )
 ROM_END
 
+ROM_START( bktigerb_rom )
+	ROM_REGION(0x50000)	/* 64k for code + banked ROMs images */
+	ROM_LOAD( "btiger1.f6",   0x00000, 0x08000, 0x9d8464e8 )	/* CODE */
+	ROM_LOAD( "blktiger.6e",  0x10000, 0x10000, 0x7bef96e8 )	/* 0+1 */
+	ROM_LOAD( "btiger3.j6",   0x20000, 0x10000, 0x52c56ed1 )	/* 2+3 */
+	ROM_LOAD( "blktiger.9e",  0x30000, 0x10000, 0xed6af6ec )	/* 4+5 */
+	ROM_LOAD( "blktiger.10e", 0x40000, 0x10000, 0xae59b72e )	/* 6+7 */
+
+	ROM_REGION_DISPOSE(0x90000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "blktiger.2n",  0x00000, 0x08000, 0x70175d78 )	/* characters */
+	ROM_LOAD( "blktiger.5b",  0x10000, 0x10000, 0xc4524993 )	/* tiles */
+	ROM_LOAD( "blktiger.4b",  0x20000, 0x10000, 0x7932c86f )
+	ROM_LOAD( "blktiger.9b",  0x30000, 0x10000, 0xdc49593a )
+	ROM_LOAD( "blktiger.8b",  0x40000, 0x10000, 0x7ed7a122 )
+	ROM_LOAD( "blktiger.5a",  0x50000, 0x10000, 0xe2f17438 )	/* sprites */
+	ROM_LOAD( "blktiger.4a",  0x60000, 0x10000, 0x5fccbd27 )
+	ROM_LOAD( "blktiger.9a",  0x70000, 0x10000, 0xfc33ccc6 )
+	ROM_LOAD( "blktiger.8a",  0x80000, 0x10000, 0xf449de01 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "blktiger.1l",  0x0000, 0x8000, 0x2cf54274 )
+ROM_END
+
 ROM_START( blkdrgon_rom )
 	ROM_REGION(0x50000)	/* 64k for code + banked ROMs images */
 	ROM_LOAD( "blkdrgon.5e",  0x00000, 0x08000, 0x27ccdfbc )	/* CODE */
@@ -439,8 +462,35 @@ struct GameDriver blktiger_driver =
 	"Paul Leaman (MAME driver)\nIshmair\nJuan Carlos Lorente (high score save)\nDani Portillo (protection)",
 	0,
 	&machine_driver,
+	0,
 
 	blktiger_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
+
+	NULL, 0, 0,
+
+	ORIENTATION_DEFAULT,
+	hiload, hisave
+};
+
+struct GameDriver bktigerb_driver =
+{
+	__FILE__,
+	&blktiger_driver,
+	"bktigerb",
+	"Black Tiger (bootleg)",
+	"1987",
+	"bootleg",
+	"Paul Leaman (MAME driver)\nIshmair\nJuan Carlos Lorente (high score save)\nDani Portillo (protection)",
+	0,
+	&machine_driver,
+	0,
+
+	bktigerb_rom,
 	0, 0,
 	0,
 	0,	/* sound_prom */
@@ -464,6 +514,7 @@ struct GameDriver blkdrgon_driver =
 	"Paul Leaman (MAME driver)\nIshmair\nJuan Carlos Lorente (high score save)\nDani Portillo (protection)",
 	0,
 	&machine_driver,
+	0,
 
 	blkdrgon_rom,
 	0, 0,

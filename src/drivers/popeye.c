@@ -433,6 +433,7 @@ struct GameDriver popeye_driver =
 	"Marc Lafontaine\nNicola Salmoria\nMarco Cassili",
 	GAME_NOT_WORKING,
 	&machine_driver,
+	0,
 
 	popeye_rom,
 	0, 0,
@@ -458,6 +459,7 @@ struct GameDriver popeyebl_driver =
 	"Marc Lafontaine\nNicola Salmoria\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	popeyebl_rom,
 	0, 0,

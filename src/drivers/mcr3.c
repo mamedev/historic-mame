@@ -1722,6 +1722,7 @@ struct GameDriver tapper_driver =
 	"Christopher Kirmse\nAaron Giles\nNicola Salmoria",
 	0,
 	&tapper_machine_driver,
+	0,
 
 	tapper_rom,
 	0, 0,
@@ -1747,6 +1748,7 @@ struct GameDriver sutapper_driver =
 	"Christopher Kirmse\nAaron Giles\nNicola Salmoria",
 	0,
 	&tapper_machine_driver,
+	0,
 
 	sutapper_rom,
 	0, 0,
@@ -1772,6 +1774,7 @@ struct GameDriver rbtapper_driver =
 	"Christopher Kirmse\nAaron Giles\nNicola Salmoria",
 	0,
 	&tapper_machine_driver,
+	0,
 
 	rbtapper_rom,
 	0, 0,
@@ -1861,6 +1864,7 @@ struct GameDriver dotron_driver =
 	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nAlan J. McCormick (speech info)\nMathis Rosenhauer(backdrop support)\nMike Balfour(backdrop support)\nBrandon Kirkpatrick (backdrop)",
 	0,
 	&dotron_machine_driver,
+	0,
 
 	dotron_rom,
 	0, 0,
@@ -1886,6 +1890,7 @@ struct GameDriver dotrone_driver =
 	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nAlan J. McCormick (speech info)\nMathis Rosenhauer(backdrop support)\nMike Balfour(backdrop support)\nBrandon Kirkpatrick (backdrop)",
 	0,
 	&dotron_machine_driver,
+	0,
 
 	dotrone_rom,
 	0, 0,
@@ -1936,6 +1941,7 @@ struct GameDriver destderb_driver =
 	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nBrad Oliver",
 	0,
 	&destderb_machine_driver,
+	0,
 
 	destderb_rom,
 	0, 0,
@@ -1987,6 +1993,7 @@ struct GameDriver timber_driver =
 	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nBrad Oliver",
 	0,
 	&timber_machine_driver,
+	0,
 
 	timber_rom,
 	0, 0,
@@ -2042,6 +2049,7 @@ struct GameDriver rampage_driver =
 	"Aaron Giles\nChristopher Kirmse\nNicola Salmoria\nBrad Oliver",
 	0,
 	&rampage_machine_driver,
+	0,
 
 	rampage_rom,
 	rampage_rom_decode, 0,
@@ -2082,6 +2090,7 @@ struct GameDriver maxrpm_driver =
 	"Aaron Giles\nChristopher Kirmse\nNicola Salmoria\nBrad Oliver",
 	0,
 	&maxrpm_machine_driver,
+	0,
 
 	maxrpm_rom,
 	rampage_rom_decode, 0,
@@ -2135,6 +2144,7 @@ struct GameDriver sarge_driver =
 	"Aaron Giles\nChristopher Kirmse\nNicola Salmoria\nBrad Oliver",
 	0,
 	&sarge_machine_driver,
+	0,
 
 	sarge_rom,
 	sarge_rom_decode, 0,
@@ -2197,6 +2207,7 @@ struct GameDriver spyhunt_driver =
 	"Aaron Giles\nChristopher Kirmse\nNicola Salmoria\nBrad Oliver\nLawnmower Man",
 	0,
 	&spyhunt_machine_driver,
+	0,
 
 	spyhunt_rom,
 	spyhunt_decode, 0,
@@ -2254,6 +2265,7 @@ struct GameDriver crater_driver =
 	"Aaron Giles\nChristopher Kirmse\nNicola Salmoria\nBrad Oliver\nLawnmower Man",
 	0,
 	&crater_machine_driver,
+	0,
 
 	crater_rom,
 	0, 0,

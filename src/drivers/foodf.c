@@ -348,6 +348,7 @@ struct GameDriver foodf_driver =
 	"Aaron Giles (MAME driver)\nMike Balfour (Hardware info)\nAlan J. McCormick (Sound info)",
 	0,
 	&machine_driver,
+	0,
 
 	foodf_rom,
 	0, 0,

@@ -1073,6 +1073,7 @@ struct GameDriver mappy_driver =
 	"Aaron Giles\nMirko Buffoni\nJROK",
 	0,
 	&mappy_machine_driver,
+	0,
 
 	mappy_rom,
 	0, 0,
@@ -1098,6 +1099,7 @@ struct GameDriver mappyjp_driver =
 	"Aaron Giles\nMirko Buffoni\nJROK",
 	0,
 	&mappy_machine_driver,
+	0,
 
 	mappyjp_rom,
 	0, 0,
@@ -1123,6 +1125,7 @@ struct GameDriver digdug2_driver =
 	"Aaron Giles\nMirko Buffoni\nJROK",
 	0,
 	&digdug2_machine_driver,
+	0,
 
 	digdug2_rom,
 	0, 0,
@@ -1148,6 +1151,7 @@ struct GameDriver motos_driver =
 	"Aaron Giles\nMirko Buffoni\nJROK\nValerio Verrando",
 	0,
 	&motos_machine_driver,
+	0,
 
 	motos_rom,
 	0, 0,
@@ -1173,6 +1177,7 @@ struct GameDriver todruaga_driver =
 	"Aaron Giles\nMirko Buffoni\nJROK\nValerio Verrando",
 	0,
 	&todruaga_machine_driver,
+	0,
 
 	todruaga_rom,
 	0, 0,

@@ -199,7 +199,7 @@ int mrh_error_sparse(int address)
 }
 int mrh_error_sparse_bit(int address)
 {
-	if (errorlog) fprintf(errorlog,"CPU #%d PC %08x: warning - read unmapped memory bit addr %08x\n",cpu_getactivecpu(),cpu_getpc(),address<<3);
+	if (errorlog) fprintf(errorlog,"CPU #%d PC %08x: warning - read unmapped memory bit addr %08x (byte addr %08x)\n",cpu_getactivecpu(),cpu_getpc(),address<<3, address);
 	return 0;
 }
 int mrh_nop(int address)
@@ -428,6 +428,12 @@ unsigned char *memory_find_base (int cpu, int offset)
 	return ramptr[cpu] + offset;
 }
 
+/* make these static so they can be used in a callback by game drivers */
+
+static int rdelement_max = 0;
+static int wrelement_max = 0;
+static int rdhard_max = HT_USER;
+static int wrhard_max = HT_USER;
 
 /* return = FALSE:can't allocate element memory */
 int initmemoryhandlers(void)
@@ -437,12 +443,12 @@ int initmemoryhandlers(void)
 	const struct MemoryWriteAddress *memorywrite;
 	const struct MemoryReadAddress *mra;
 	const struct MemoryWriteAddress *mwa;
-	int rdelement_max = 0;
-	int wrelement_max = 0;
-	int rdhard_max = HT_USER;
-	int wrhard_max = HT_USER;
 	MHELE hardware;
 	int abits1,abits2,abits3,abitsmin;
+	rdelement_max = 0;
+	wrelement_max = 0;
+	rdhard_max = HT_USER;
+	wrhard_max = HT_USER;
 
 	for( cpu = 0 ; cpu < MAX_CPU ; cpu++ )
 		cur_mr_element[cpu] = cur_mw_element[cpu] = 0;
@@ -964,7 +970,9 @@ int cpu_readmem24_dword (int address)
 	{
 		/* 1st element link */
 		hw = cur_mrhard[address >> (ABITS2_24 + ABITS_MIN_24)];
-		if (hw <= HT_BANKMAX)
+        if (hw != cur_mrhard[(address + 2) >> (ABITS2_24 + ABITS_MIN_24)])
+			return (((cpu_readmem24_word(address)) << 16) + ((cpu_readmem24_word(address + 2))&0xffff));
+        if (hw <= HT_BANKMAX)
 		{
 		  	#ifdef ACORN /* GSL 980224 misaligned dword load case */
 			if (address & 3)
@@ -987,9 +995,14 @@ int cpu_readmem24_dword (int address)
 		}
 		if (hw >= MH_HARDMAX)
 		{
+			MHELE hw2;
 			/* 2nd element link */
-			hw = readhardware[((hw - MH_HARDMAX) << MH_SBITS) + ((address >> ABITS_MIN_24) & MHMASK(ABITS2_24))];
-			if (hw <= HT_BANKMAX)
+			hw -= MH_HARDMAX;
+			hw2 = readhardware[(hw << MH_SBITS) + ((address >> ABITS_MIN_24) & MHMASK(ABITS2_24))];
+			if (hw2 != readhardware[(hw << MH_SBITS) + (((address + 2) >> ABITS_MIN_24) & MHMASK(ABITS2_24))])
+				return (((cpu_readmem24_word(address)) << 16) + ((cpu_readmem24_word(address + 2))&0xffff));
+			hw = hw2;
+			if (hw < HT_BANKMAX)
 			{
 			  	#ifdef ACORN
 				if (address & 3)
@@ -1013,9 +1026,9 @@ int cpu_readmem24_dword (int address)
 		}
 
 		/* fallback to handler */
-		address -= memoryreadoffset[hw];
+        address -= memoryreadoffset[hw];
 		return (memoryreadhandler[hw](address) << 16) + (memoryreadhandler[hw](address + 2) & 0xffff);
-	}
+    }
 	else
 	{
 		return (((cpu_readmem24_word(address)) << 16) + ((cpu_readmem24_word(address + 2))&0xffff));
@@ -1333,7 +1346,13 @@ void cpu_writemem24_dword (int address, int data)
 	{
 		/* 1st element link */
 		hw = cur_mwhard[address >> (ABITS2_24 + ABITS_MIN_24)];
-		if (hw <= HT_BANKMAX)
+        if (hw != cur_mwhard[(address + 2) >> (ABITS2_24 + ABITS_MIN_24)])
+		{
+			cpu_writemem24_word(address, (data >> 16) & 0xffff);
+			cpu_writemem24_word(address + 2, data & 0xffff);
+			return;
+		}
+        if (hw <= HT_BANKMAX)
 		{
 		  	#ifdef ACORN /* GSL 980224 misaligned dword store case */
 			if (address & 3)
@@ -1362,8 +1381,17 @@ void cpu_writemem24_dword (int address, int data)
 		}
 		if (hw >= MH_HARDMAX)
 		{
+			MHELE hw2;
 			/* 2nd element link */
-			hw = writehardware[((hw - MH_HARDMAX) << MH_SBITS) + ((address >> ABITS_MIN_24) & MHMASK(ABITS2_24))];
+			hw -= MH_HARDMAX;
+			hw2 = writehardware[(hw << MH_SBITS) + ((address >> ABITS_MIN_24) & MHMASK(ABITS2_24))];
+			if (hw2 != writehardware[(hw << MH_SBITS) + (((address + 2) >> ABITS_MIN_24) & MHMASK(ABITS2_24))])
+			{
+				cpu_writemem24_word(address, (data >> 16) &0xffff);
+				cpu_writemem24_word(address + 2, data & 0xffff);
+				return;
+			}
+            hw = hw2;
 			if (hw <= HT_BANKMAX)
 			{
 			  	#ifdef ACORN
@@ -1395,9 +1423,9 @@ void cpu_writemem24_dword (int address, int data)
 
 		/* fallback to handler */
 		address -= memorywriteoffset[hw];
-		memorywritehandler[hw](address, (data >> 16) & 0xffff);
+        memorywritehandler[hw](address, (data >> 16) & 0xffff);
 		memorywritehandler[hw](address + 2, data & 0xffff);
-	}
+    }
 	else
 	{
 		cpu_writemem24_word(address, (data >> 16) &0xffff);
@@ -1970,6 +1998,209 @@ void cpu_setOPbase29 (int pc)    /* AJP 980803 */
 	if (errorlog) fprintf(errorlog,"CPU #%d PC %04x: warning - op-code execute on mapped i/o\n",cpu_getactivecpu(),cpu_getpc());
 }
 
+void install_mem_read_handler(int cpu, int start, int end, int (*handler)(int))
+{
+	MHELE hardware = 0;
+	int abitsmin;
+	int i, hw_set;
+	if (errorlog) fprintf(errorlog, "Install new memory read handler:\n");
+	if (errorlog) fprintf(errorlog, "             cpu: %d\n", cpu);
+	if (errorlog) fprintf(errorlog, "           start: 0x%08x\n", start);
+	if (errorlog) fprintf(errorlog, "             end: 0x%08x\n", end);
+	if (errorlog) fprintf(errorlog, " handler address: 0x%08x\n", (unsigned int) handler);
+	abitsmin = ABITSMIN (cpu);
+
+	/* see if this function is already registered */
+	hw_set = 0;
+	for ( i = 0 ; i < MH_HARDMAX ; i++)
+	{
+		/* record it if it matches */
+		if (( memoryreadhandler[i] == handler ) &&
+			(  memoryreadoffset[i] == start))
+		{
+			if (errorlog) fprintf(errorlog,"handler match - use old one\n");
+			hardware = i;
+			hw_set = 1;
+		}
+	}
+	switch ((FPTR)handler)
+	{
+		case (FPTR)MRA_RAM:
+		case (FPTR)MRA_ROM:
+			hardware = HT_RAM;	/* sprcial case ram read */
+			hw_set = 1;
+			break;
+		case (FPTR)MRA_BANK1:
+			hardware = HT_BANK1;
+			hw_set = 1;
+			break;
+		case (FPTR)MRA_BANK2:
+			hardware = HT_BANK2;
+			hw_set = 1;
+			break;
+		case (FPTR)MRA_BANK3:
+			hardware = HT_BANK3;
+			hw_set = 1;
+			break;
+		case (FPTR)MRA_BANK4:
+			hardware = HT_BANK4;
+			hw_set = 1;
+			break;
+		case (FPTR)MRA_BANK5:
+			hardware = HT_BANK5;
+			hw_set = 1;
+			break;
+		case (FPTR)MRA_BANK6:
+			hardware = HT_BANK6;
+			hw_set = 1;
+			break;
+		case (FPTR)MRA_BANK7:
+			hardware = HT_BANK7;
+			hw_set = 1;
+			break;
+		case (FPTR)MRA_BANK8:
+			hardware = HT_BANK8;
+			hw_set = 1;
+			break;
+		case (FPTR)MRA_NOP:
+			hardware = HT_NOP;
+			hw_set = 1;
+			break;
+	}
+	if (!hw_set)  /* no match */
+	{
+		/* create newer hardware handler */
+		if( rdhard_max == MH_HARDMAX )
+		{
+			if (errorlog) fprintf(errorlog, "read memory hardware pattern over !\n");
+			if (errorlog) fprintf(errorlog, "Failed to install new memory handler.\n");
+			return;
+		}
+		else
+		{
+			/* register hardware function */
+			hardware = rdhard_max++;
+			memoryreadhandler[hardware] = handler;
+			memoryreadoffset[hardware] = start;
+		}
+	}
+	/* set hardware element table entry */
+	set_element( cpu , cur_mr_element[cpu] ,
+		(((unsigned int) start) >> abitsmin) ,
+		(((unsigned int) end) >> abitsmin) ,
+		hardware , readhardware , &rdelement_max );
+	if (errorlog) fprintf(errorlog, "Done installing new memory handler.\n");
+	if (errorlog){
+		fprintf(errorlog,"used read  elements %d/%d , functions %d/%d\n"
+		    ,rdelement_max,MH_ELEMAX , rdhard_max,MH_HARDMAX );
+	}
+}
+void install_mem_write_handler(int cpu, int start, int end, void (*handler)(int, int))
+{
+	MHELE hardware = 0;
+	int abitsmin;
+	int i, hw_set;
+	if (errorlog) fprintf(errorlog, "Install new memory write handler:\n");
+	if (errorlog) fprintf(errorlog, "             cpu: %d\n", cpu);
+	if (errorlog) fprintf(errorlog, "           start: 0x%08x\n", start);
+	if (errorlog) fprintf(errorlog, "             end: 0x%08x\n", end);
+	if (errorlog) fprintf(errorlog, " handler address: 0x%08x\n", (unsigned int) handler);
+	abitsmin = ABITSMIN (cpu);
+
+	/* see if this function is already registered */
+	hw_set = 0;
+	for ( i = 0 ; i < MH_HARDMAX ; i++)
+	{
+		/* record it if it matches */
+		if (( memorywritehandler[i] == handler ) &&
+			(  memorywriteoffset[i] == start))
+		{
+			if (errorlog) fprintf(errorlog,"handler match - use old one\n");
+			hardware = i;
+			hw_set = 1;
+		}
+	}
+
+	switch( (FPTR)handler )
+	{
+		case (FPTR)MWA_RAM:
+			hardware = HT_RAM;	/* sprcial case ram write */
+			hw_set = 1;
+			break;
+		case (FPTR)MWA_BANK1:
+			hardware = HT_BANK1;
+			hw_set = 1;
+			break;
+		case (FPTR)MWA_BANK2:
+			hardware = HT_BANK2;
+			hw_set = 1;
+			break;
+		case (FPTR)MWA_BANK3:
+			hardware = HT_BANK3;
+			hw_set = 1;
+			break;
+		case (FPTR)MWA_BANK4:
+			hardware = HT_BANK4;
+			hw_set = 1;
+			break;
+		case (FPTR)MWA_BANK5:
+			hardware = HT_BANK5;
+			hw_set = 1;
+			break;
+		case (FPTR)MWA_BANK6:
+			hardware = HT_BANK6;
+			hw_set = 1;
+			break;
+		case (FPTR)MWA_BANK7:
+			hardware = HT_BANK7;
+			hw_set = 1;
+			break;
+		case (FPTR)MWA_BANK8:
+			hardware = HT_BANK8;
+			hw_set = 1;
+			break;
+		case (FPTR)MWA_NOP:
+			hardware = HT_NOP;
+			hw_set = 1;
+			break;
+		case (FPTR)MWA_RAMROM:
+			hardware = HT_RAMROM;
+			hw_set = 1;
+			break;
+		case (FPTR)MWA_ROM:
+			hardware = HT_ROM;
+			hw_set = 1;
+			break;
+	}
+	if (!hw_set)  /* no match */
+	{
+		/* create newer hardware handler */
+		if( wrhard_max == MH_HARDMAX )
+		{
+			if (errorlog) fprintf(errorlog, "write memory hardware pattern over !\n");
+			if (errorlog) fprintf(errorlog, "Failed to install new memory handler.\n");
+
+			return;
+		}
+		else
+		{
+			/* register hardware function */
+			hardware = wrhard_max++;
+			memorywritehandler[hardware] = handler;
+			memorywriteoffset[hardware] = start;
+		}
+	}
+	/* set hardware element table entry */
+	set_element( cpu , cur_mw_element[cpu] ,
+		(((unsigned int) start) >> abitsmin) ,
+		(((unsigned int) end) >> abitsmin) ,
+		hardware , writehardware , &wrelement_max );
+	if (errorlog) fprintf(errorlog, "Done installing new memory handler.\n");
+	if (errorlog){
+		fprintf(errorlog,"used write elements %d/%d , functions %d/%d\n"
+		    ,wrelement_max,MH_ELEMAX , wrhard_max,MH_HARDMAX );
+	}
+}
 
 #ifdef MEM_DUMP
 static void mem_dump( void )

@@ -502,6 +502,7 @@ struct GameDriver lazercmd_driver =
 	"Juergen Buchmueller\nMalcolm (Markers tech. info)\n",
 	0,
 	&lazercmd_machine_driver,
+	0,
 
 	lazercmd_rom,
 	lazercmd_rom_decode,

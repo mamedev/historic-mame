@@ -712,6 +712,7 @@ struct GameDriver locomotn_driver =
 	"Nicola Salmoria\nMike Balfour (high score save)\nKevin Klopp (color info)",
 	0,
 	&locomotn_machine_driver,
+	0,
 
 	locomotn_rom,
 	0, 0,
@@ -737,6 +738,7 @@ struct GameDriver jungler_driver =
 	"Nicola Salmoria",
 	GAME_WRONG_COLORS,
 	&jungler_machine_driver,
+	0,
 
 	jungler_rom,
 	0, 0,
@@ -762,6 +764,7 @@ struct GameDriver commsega_driver =
 	"Nicola Salmoria\nBrad Oliver",
 	GAME_WRONG_COLORS,
 	&commsega_machine_driver,
+	0,
 
 	commsega_rom,
 	0, 0,

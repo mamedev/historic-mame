@@ -474,6 +474,7 @@ struct GameDriver toobin_driver =
 	"Aaron Giles (MAME driver)\nTim Lindquist (hardware info)",
 	0,
 	&toobin_machine_driver,
+	0,
 
 	toobin_rom,
 	0,

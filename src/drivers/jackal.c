@@ -173,7 +173,6 @@ static struct MemoryWriteAddress jackal_writemem[] =
 
 static struct MemoryReadAddress jackal_sound_readmem[] =
 {
-	{ 0x0000, 0x001f, MRA_RAM },		/* WORK RAM? */
 	{ 0x2001, 0x2001, YM2151_status_port_0_r },
 	{ 0x4000, 0x43ff, MRA_RAM },		/* COLOR RAM (Self test only check 0x4000-0x423f */
 	{ 0x6000, 0x605f, MRA_RAM },		/* SOUND RAM (Self test check 0x6000-605f, 0x7c00-0x7fff */
@@ -184,7 +183,6 @@ static struct MemoryReadAddress jackal_sound_readmem[] =
 
 static struct MemoryWriteAddress jackal_sound_writemem[] =
 {
-	{ 0x0000, 0x001f, MWA_RAM },
 	{ 0x2000, 0x2000, YM2151_register_port_0_w },
 	{ 0x2001, 0x2001, YM2151_data_port_0_w },
 	{ 0x4000, 0x43ff, paletteram_xBBBBBGGGGGRRRRR_w, &paletteram },
@@ -339,6 +337,40 @@ static struct GfxLayout spritelayout8 =
 	16*8	/* every char takes 16 consecutive bytes */
 };
 
+static struct GfxLayout topgunbl_charlayout =
+{
+	8,8,	/* 8*8 characters */
+	4096,	/* 4096 characters */
+	8,	/* 8 bits per pixel (!) */
+	{ 0, 1, 2, 3, 0x20000*8+0, 0x20000*8+1, 0x20000*8+2, 0x20000*8+3 },
+	{ 2*4, 3*4, 0*4, 1*4, 6*4, 7*4, 4*4, 5*4 },
+	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 },
+	32*8	/* every char takes 32 consecutive bytes */
+};
+
+static struct GfxLayout topgunbl_spritelayout =
+{
+	16,16,	/* 16*16 sprites */
+	1024,	/* 1024 sprites */
+	4,	/* 4 bits per pixel */
+	{ 0, 1, 2, 3 },
+	{ 2*4, 3*4, 0*4, 1*4, 6*4, 7*4, 4*4, 5*4,
+			32*8+2*4, 32*8+3*4, 32*8+0*4, 32*8+1*4, 32*8+6*4, 32*8+7*4, 32*8+4*4, 32*8+5*4 },
+	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
+			16*32, 17*32, 18*32, 19*32, 20*32, 21*32, 22*32, 23*32 },
+	128*8	/* every char takes 32 consecutive bytes */
+};
+
+static struct GfxLayout topgunbl_spritelayout8 =
+{
+	8,8,	/* 8*8 characters */
+	4096,	/* 4096 characters */
+	4,	/* 4 bits per pixel */
+	{ 0, 1, 2, 3 },
+	{ 2*4, 3*4, 0*4, 1*4, 6*4, 7*4, 4*4, 5*4 },
+	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 },
+	32*8	/* every char takes 32 consecutive bytes */
+};
 
 static struct GfxDecodeInfo jackal_gfxdecodeinfo[] =
 {
@@ -347,6 +379,16 @@ static struct GfxDecodeInfo jackal_gfxdecodeinfo[] =
 	{ 1, 0x30000, &spritelayout,  16, 1 },	/* colors   0- 15 */
 	{ 1, 0x10000, &spritelayout8,  0, 1 },  /* to handle 8x8 sprites */
 	{ 1, 0x30000, &spritelayout8, 16, 1 },  /* to handle 8x8 sprites */
+	{ -1 } /* end of array */
+};
+
+static struct GfxDecodeInfo topgunbl_gfxdecodeinfo[] =
+{
+	{ 1, 0x00000, &topgunbl_charlayout,   256, 1 },	/* colors 256-511 */
+	{ 1, 0x40000, &topgunbl_spritelayout,   0, 1 },	/* colors  16- 31 */
+	{ 1, 0x60000, &topgunbl_spritelayout,  16, 1 },	/* colors   0- 15 */
+	{ 1, 0x40000, &topgunbl_spritelayout8,  0, 1 },  /* to handle 8x8 sprites */
+	{ 1, 0x60000, &topgunbl_spritelayout8, 16, 1 },  /* to handle 8x8 sprites */
 	{ -1 } /* end of array */
 };
 
@@ -367,14 +409,14 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_M6809,
-			3580000/2,	/* 1.79 MHz? */
+			2000000,	/* 2 MHz???? */
 			0,
 			jackal_readmem,jackal_writemem,0,0,
 			jackal_interrupt,1
 		},
 		{
 			CPU_M6809,
-			3580000/2,	/* 1.79 MHz? */
+			2000000,	/* 2 MHz???? */
 			2,		/* memory region #2 */
 			jackal_sound_readmem,jackal_sound_writemem,0,0,
 			ignore_interrupt,1
@@ -405,6 +447,53 @@ static struct MachineDriver machine_driver =
 		}
 	}
 };
+
+/* identical but different gfxdecode */
+static struct MachineDriver topgunbl_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M6809,
+			2000000,	/* 2 MHz???? */
+			0,
+			jackal_readmem,jackal_writemem,0,0,
+			jackal_interrupt,1
+		},
+		{
+			CPU_M6809,
+			2000000,	/* 2 MHz???? */
+			2,		/* memory region #2 */
+			jackal_sound_readmem,jackal_sound_writemem,0,0,
+			ignore_interrupt,1
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	10,	/* 10 CPU slices per frame - seems enough to keep the CPUs in sync */
+	jackal_init_machine,
+
+	/* video hardware */
+	32*8, 32*8, { 1*8, 31*8-1, 2*8, 30*8-1 },
+	topgunbl_gfxdecodeinfo,
+	512, 512,
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	0,
+	jackal_vh_start,
+	jackal_vh_stop,
+	jackal_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_YM2151,
+			&ym2151_interface
+		}
+	}
+};
+
 
 
 static int hiload(void)
@@ -472,9 +561,8 @@ static void hisave(void)
 ROM_START( jackal_rom )
 	ROM_REGION(0x20000)	/* Banked 64k for 1st CPU */
 	ROM_LOAD( "j-v02.rom",    0x04000, 0x8000, 0x0b7e0584 )
-	ROM_CONTINUE(          0x14000, 0x8000 )
+	ROM_CONTINUE(             0x14000, 0x8000 )
 	ROM_LOAD( "j-v03.rom",    0x0c000, 0x4000, 0x3e0dfb83 )
-	ROM_RELOAD(            0x1c000, 0x4000 )
 
 	ROM_REGION_DISPOSE(0x80000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "j-t04.rom",    0x00000, 0x20000, 0x57d3d00c )
@@ -488,10 +576,9 @@ ROM_END
 
 ROM_START( topgunr_rom )
 	ROM_REGION(0x20000)	/* Banked 64k for 1st CPU */
-	ROM_LOAD( "tgnr15d.bin",  0x04000, 0x8000, 0xd4a120f3 )
-	ROM_CONTINUE(            0x14000, 0x8000 )
+	ROM_LOAD( "tgnr15d.bin",  0x04000, 0x8000, 0xf7e28426 )
+	ROM_CONTINUE(             0x14000, 0x8000 )
 	ROM_LOAD( "tgnr16d.bin",  0x0c000, 0x4000, 0xc086844e )
-	ROM_RELOAD(              0x1c000, 0x4000 )
 
 	ROM_REGION_DISPOSE(0x80000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "tgnr7h.bin",   0x00000, 0x20000, 0x50122a12 )
@@ -500,7 +587,35 @@ ROM_START( topgunr_rom )
 	ROM_LOAD( "tgnr13h.bin",  0x60000, 0x20000, 0x22effcc8 )
 
 	ROM_REGION(0x10000)     /* 64k for 2nd cpu (Graphics & Sound)*/
-	ROM_LOAD( "tgnr11d.bin",  0x8000, 0x8000, 0xb189af6a )
+	ROM_LOAD( "j-t01.rom",    0x8000, 0x8000, 0xb189af6a )
+ROM_END
+
+ROM_START( topgunbl_rom )
+	ROM_REGION(0x20000)	/* Banked 64k for 1st CPU */
+	ROM_LOAD( "t-3.c5",       0x04000, 0x8000, 0x7826ad38 )
+	ROM_LOAD( "t-4.c4",       0x14000, 0x8000, 0x976c8431 )
+	ROM_LOAD( "t-2.c6",       0x0c000, 0x4000, 0xd53172e5 )
+
+	ROM_REGION_DISPOSE(0x80000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "t-17.n12",     0x00000, 0x08000, 0xe8875110 )
+	ROM_LOAD( "t-18.n13",     0x08000, 0x08000, 0xcf14471d )
+	ROM_LOAD( "t-19.n14",     0x10000, 0x08000, 0x46ee5dd2 )
+	ROM_LOAD( "t-20.n15",     0x18000, 0x08000, 0x3f472344 )
+	ROM_LOAD( "t-13.n8",      0x20000, 0x08000, 0x5d669abb )
+	ROM_LOAD( "t-14.n9",      0x28000, 0x08000, 0xf349369b )
+	ROM_LOAD( "t-15.n10",     0x30000, 0x08000, 0x7c5a91dd )
+	ROM_LOAD( "t-16.n11",     0x38000, 0x08000, 0x5ec46d8e )
+	ROM_LOAD( "t-6.n1",       0x40000, 0x08000, 0x539cc48c )
+	ROM_LOAD( "t-5.m1",       0x48000, 0x08000, 0x2dd9a5e9 )
+	ROM_LOAD( "t-7.n2",       0x50000, 0x08000, 0x0ecd31b1 )
+	ROM_LOAD( "t-8.n3",       0x58000, 0x08000, 0xf946ada7 )
+	ROM_LOAD( "t-9.n4",       0x60000, 0x08000, 0x8269caca )
+	ROM_LOAD( "t-10.n5",      0x68000, 0x08000, 0x25393e4f )
+	ROM_LOAD( "t-11.n6",      0x70000, 0x08000, 0x7895c22d )
+	ROM_LOAD( "t-12.n7",      0x78000, 0x08000, 0x15606dfc )
+
+	ROM_REGION(0x10000)     /* 64k for 2nd cpu (Graphics & Sound)*/
+	ROM_LOAD( "t-1.c14",      0x8000, 0x8000, 0x54aa2d29 )
 ROM_END
 
 
@@ -516,6 +631,7 @@ struct GameDriver jackal_driver =
 	"Kenneth Lin (MAME driver)\n'cas' (dip switch settings)\nNoah Davis, Chris Hardy (test and debug)",
 	0,
 	&machine_driver,
+	0,
 
 	jackal_rom,
 	0, 0,
@@ -539,10 +655,37 @@ struct GameDriver topgunr_driver =
 	"1986",
 	"Konami",
 	"Kenneth Lin (MAME driver)\n'cas' (dip switch settings)\nNoah Davis, Chris Hardy (test and debug)",
-	GAME_NOT_WORKING,
+	0,
 	&machine_driver,
+	0,
 
 	topgunr_rom,
+	0, 0,
+	0,
+	0,
+
+	jackal_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	hiload, hisave
+};
+
+struct GameDriver topgunbl_driver =
+{
+	__FILE__,
+	&jackal_driver,
+	"topgunbl",
+	"Top Gunner (bootleg)",
+	"1987",
+	"bootleg",
+	"Kenneth Lin (MAME driver)\n'cas' (dip switch settings)\nNoah Davis, Chris Hardy (test and debug)",
+	0,
+	&topgunbl_machine_driver,
+	0,
+
+	topgunbl_rom,
 	0, 0,
 	0,
 	0,

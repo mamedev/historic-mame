@@ -342,6 +342,7 @@ struct GameDriver stinger_driver =
 	"Nicola Salmoria",
 	GAME_WRONG_COLORS,
 	&machine_driver,
+	0,
 
 	stinger_rom,
 	0, stinger_decode,

@@ -220,10 +220,13 @@ void AYWriteReg(int chip, int r, int v)
 	if (r > 15) return;
 	if (r < 14)
 	{
-		/* update the output buffer before changing the registers */
-		stream_update(PSG->Channel[0]);
-		stream_update(PSG->Channel[1]);
-		stream_update(PSG->Channel[2]);
+		if (r == AY_ESHAPE || PSG->Regs[r] != v)
+		{
+			/* update the output buffer before changing the register */
+			stream_update(PSG->Channel[0]);
+			stream_update(PSG->Channel[1]);
+			stream_update(PSG->Channel[2]);
+		}
 	}
 
 	_AYWriteReg(chip,r,v);
@@ -439,8 +442,12 @@ static int AY8910_init(int chip,int clock,int sample_rate,int sample_bits,
 	PSG->PortBwrite = portBwrite;
 	for (i = 0;i < 3;i++)
 	{
+		char name[40];
+
+
+		sprintf(name,"AY8910 #%d Ch %c",chip,'A'+i);
 		PSG->Channel[i] = stream_init(
-				sample_rate,sample_bits,
+				name,sample_rate,sample_bits,
 				3*chip+i,(sample_bits == 16) ? AY8910Update_16 : AY8910Update_8);
 
 		if (PSG->Channel[i] == -1)

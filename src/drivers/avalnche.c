@@ -258,6 +258,7 @@ struct GameDriver avalnche_driver =
 	"Mike Balfour",
 	0,
 	&machine_driver,
+	0,
 
 	avalnche_rom,
 	avalnche_rom_init, 0,

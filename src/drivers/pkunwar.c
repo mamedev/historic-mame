@@ -272,6 +272,7 @@ struct GameDriver pkunwar_driver =
 	"Allard van der Bas\nNicola Salmoria",
 	0,
 	&machine_driver,
+	0,
 
 	pkunwar_rom,
 	0, 0,
@@ -297,6 +298,7 @@ struct GameDriver pkunwarj_driver =
 	"Allard van der Bas\nNicola Salmoria",
 	0,
 	&machine_driver,
+	0,
 
 	pkunwarj_rom,
 	0, 0,

@@ -214,6 +214,10 @@ int sound_start(void)
 				if (YM3812_sh_start(Machine->drv->sound[totalsound].sound_interface) != 0)
 					goto getout;
 				break;
+			case SOUND_YM2413:
+				if (YM2413_sh_start(Machine->drv->sound[totalsound].sound_interface) != 0)
+					goto getout;
+				break;
 			case SOUND_SN76496:
 				if (SN76496_sh_start(Machine->drv->sound[totalsound].sound_interface) != 0)
 					goto getout;
@@ -307,6 +311,9 @@ void sound_stop(void)
 			case SOUND_YM3812:
 				YM3812_sh_stop();
 				break;
+			case SOUND_YM2413:
+				YM2413_sh_stop();
+				break;
 			case SOUND_SN76496:
 				SN76496_sh_stop();
 				break;
@@ -389,6 +396,9 @@ void sound_update(void)
 				break;
 			case SOUND_YM3812:
 				YM3812_sh_update();
+				break;
+			case SOUND_YM2413:
+				YM2413_sh_update();
 				break;
 			case SOUND_SN76496:
 				SN76496_sh_update();

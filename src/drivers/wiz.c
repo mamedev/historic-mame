@@ -425,6 +425,7 @@ struct GameDriver wiz_driver =
 	"Zsolt Vasvari",
 	0,
 	&machine_driver,
+	0,
 
 	wiz_rom,
 	0, 0,

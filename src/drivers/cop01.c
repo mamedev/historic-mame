@@ -410,6 +410,7 @@ struct GameDriver cop01_driver =
 	"Carlos A. Lozano\n",
 	GAME_IMPERFECT_COLORS,
 	&cop01_machine_driver,
+	0,
 
 	cop01_rom,
 	0, 0,
@@ -435,6 +436,7 @@ struct GameDriver cop01a_driver =
 	"Carlos A. Lozano\n",
 	GAME_IMPERFECT_COLORS,
 	&cop01_machine_driver,
+	0,
 
 	cop01a_rom,
 	0, 0,

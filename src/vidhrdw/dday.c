@@ -128,15 +128,4 @@ void dday_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			8*sx,8*sy,
 			&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
-
-    // Uncomment if you want the video control register displayed
-    /*{
-	char buf[80];
-	int l,i;
-	sprintf(buf, "7800=%02X", control);
-
-	l = strlen(buf);
-	for (i = 0;i < l;i++)
-	    drawgfx(Machine->scrbitmap,Machine->uifont,buf[l-i-1],DT_COLOR_WHITE,0,0,Machine->scrbitmap->width-(l-i)*Machine->uifont->width,20,0,TRANSPARENCY_NONE,0);
-    }*/
 }

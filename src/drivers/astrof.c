@@ -386,6 +386,7 @@ struct GameDriver astrof_driver =
 	CREDITS,
 	0,
 	&astrof_machine_driver,
+	0,
 
 	astrof_rom,
 	0, 0,
@@ -411,6 +412,7 @@ struct GameDriver astrof2_driver =
 	CREDITS,
 	0,
 	&astrof_machine_driver,
+	0,
 
 	astrof2_rom,
 	0, 0,
@@ -436,6 +438,7 @@ struct GameDriver astrof3_driver =
 	CREDITS,
 	0,
 	&astrof_machine_driver,
+	0,
 
 	astrof3_rom,
 	0, 0,
@@ -461,6 +464,7 @@ struct GameDriver tomahawk_driver =
 	CREDITS,
 	0,
 	&tomahawk_machine_driver,
+	0,
 
 	tomahawk_rom,
 	0, 0,
@@ -487,6 +491,7 @@ struct GameDriver tomahaw5_driver =
 	CREDITS,
 	0,
 	&tomahawk_machine_driver,
+	0,
 
 	tomahaw5_rom,
 	0, 0,

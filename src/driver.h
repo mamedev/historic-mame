@@ -230,17 +230,18 @@ struct MachineSound
 #define SOUND_YM2151_ALT 7
 #define SOUND_YM3812     8
 #define SOUND_YM3526    SOUND_YM3812	/* 100% compatible, less features */
-#define SOUND_SN76496    9
-#define SOUND_POKEY     10
-#define SOUND_NAMCO     11
-#define SOUND_NES       12
-#define SOUND_TMS5220   13
-#define SOUND_VLM5030   14
-#define SOUND_ADPCM     15
-#define SOUND_OKIM6295  16	/* ROM-based ADPCM system */
-#define SOUND_MSM5205   17	/* CPU-based ADPCM system */
-#define SOUND_HC55516   18	/* Harris family of CVSD CODECs */
-#define SOUND_ASTROCADE 19	/* Custom I/O chip from Bally/Midway */
+#define SOUND_YM2413     9
+#define SOUND_SN76496   10
+#define SOUND_POKEY     11
+#define SOUND_NAMCO     12
+#define SOUND_NES       13
+#define SOUND_TMS5220   14
+#define SOUND_VLM5030   15
+#define SOUND_ADPCM     16
+#define SOUND_OKIM6295  17	/* ROM-based ADPCM system */
+#define SOUND_MSM5205   18	/* CPU-based ADPCM system */
+#define SOUND_HC55516   19	/* Harris family of CVSD CODECs */
+#define SOUND_ASTROCADE 20	/* Custom I/O chip from Bally/Midway */
 
 #define MAX_SOUND 4	/* MAX_SOUND is the maximum number of sound subsystems */
 					/* which can run at the same time. Currently, 4 is enough. */
@@ -344,6 +345,9 @@ struct GameDriver
 	const char *credits;
 	int flags;	/* see defines below */
 	const struct MachineDriver *drv;
+	void (*driver_init)(void);	/* optional function to be called during initialization */
+								/* This is called ONCE, unlike Machine->init_machine */
+								/* which is called every time the game is reset. */
 
 	const struct RomModule *rom;
 	void (*rom_decode)(void);		/* used to decrypt the ROMs after loading them */
@@ -353,7 +357,7 @@ struct GameDriver
 						/* drivers can retrieve them in Machine->samples */
 	const unsigned char *sound_prom;
 
-	struct InputPort *new_input_ports;
+	struct InputPort *input_ports;
 
 	/* if they are available, provide a dump of the color proms, or even */
 	/* better load them from disk like the other ROMs. */

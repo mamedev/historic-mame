@@ -583,6 +583,7 @@ struct GameDriver jack_driver =
 	"Brad Oliver",
 	0,
 	&machine_driver,
+	0,
 
 	jack_rom,
 	0, 0,
@@ -608,6 +609,7 @@ struct GameDriver zzyzzyxx_driver =
 	"Brad Oliver",
 	0,
 	&zzyzzyxx_machine_driver,
+	0,
 
 	zzyzzyxx_rom,
 	0, 0,
@@ -633,6 +635,7 @@ struct GameDriver brix_driver =
 	"Brad Oliver",
 	0,
 	&zzyzzyxx_machine_driver,
+	0,
 
 	brix_rom,
 	0, 0,

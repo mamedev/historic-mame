@@ -740,6 +740,7 @@ struct GameDriver alexkidd_driver =
 	SYS16_CREDITS,
 	GAME_NOT_WORKING,
 	&alexkidd_machine_driver,
+	0,
 	alexkidd_rom,
 	alexkidd_sprite_decode, 0,
 	0,
@@ -886,6 +887,7 @@ struct GameDriver aliensyn_driver =
 	SYS16_CREDITS,
 	0,
 	&aliensyn_machine_driver,
+	0,
 	aliensyn_rom,
 	aliensyn_sprite_decode, 0,
 	0,
@@ -930,6 +932,14 @@ ROM_END
 
 /***************************************************************************/
 
+
+static int altbeast_skip(int offset)
+{
+	if (cpu_getpc()==0x3994) cpu_spinuntil_int();
+
+	return READ_WORD(&sys16_workingram[0xf01c]);
+}
+
 static struct MemoryReadAddress altbeast_readmem[] =
 {
 	{ 0xc41002, 0xc41003, io_player1_r },
@@ -943,6 +953,9 @@ static struct MemoryReadAddress altbeast_readmem[] =
 	{ 0x440000, 0x440fff, MRA_SPRITERAM },
 	{ 0x840000, 0x840fff, MRA_PALETTERAM },
 	{ 0xc40000, 0xc40fff, MRA_EXTRAM },
+
+  { 0xfff01c, 0xfff01d, altbeast_skip },
+
 	{ 0xff0000, 0xffffff, MRA_WORKINGRAM },
 	{ 0x000000, 0x03ffff, MRA_ROM },
 	{-1}
@@ -1033,6 +1046,7 @@ struct GameDriver altbeast_driver =
 	SYS16_CREDITS,
 	0,
 	&altbeast_machine_driver,
+	0,
 	altbeast_rom,
 	altbeast_sprite_decode, 0,
 	0,
@@ -1218,6 +1232,7 @@ struct GameDriver astormbl_driver =
 	SYS16_CREDITS,
 	GAME_NOT_WORKING,
 	&astormbl_machine_driver,
+	0,
 	astormbl_rom,
 	astormbl_sprite_decode, 0,
 	0,
@@ -1375,6 +1390,7 @@ struct GameDriver aurail_driver =
 	SYS16_CREDITS,
 	GAME_NOT_WORKING,
 	&aurail_machine_driver,
+	0,
 	aurail_rom,
 	aurail_sprite_decode, 0,
 	0,
@@ -1526,6 +1542,7 @@ struct GameDriver dduxbl_driver =
 	SYS16_CREDITS,
 	0,
 	&dduxbl_machine_driver,
+	0,
 	dduxbl_rom,
 	dduxbl_sprite_decode, 0,
 	0,
@@ -1665,6 +1682,7 @@ struct GameDriver eswatbl_driver =
 	SYS16_CREDITS,
 	GAME_NOT_WORKING,
 	&eswatbl_machine_driver,
+	0,
 	eswatbl_rom,
 	eswatbl_sprite_decode, 0,
 	0,
@@ -1792,6 +1810,7 @@ struct GameDriver fantzone_driver =
 	SYS16_CREDITS,
 	GAME_NOT_WORKING,
 	&fantzone_machine_driver,
+	0,
 	fantzone_rom,
 	fantzone_sprite_decode, 0,
 	0,
@@ -1946,6 +1965,7 @@ struct GameDriver fpointbl_driver =
 	SYS16_CREDITS,
 	0,
 	&fpointbl_machine_driver,
+	0,
 	fpointbl_rom,
 	fpointbl_sprite_decode, 0,
 	0,
@@ -2101,6 +2121,7 @@ struct GameDriver goldnaxe_driver =
 	SYS16_CREDITS,
 	0,
 	&goldnaxe_machine_driver,
+	0,
 	goldnaxe_rom,
 	goldnaxe_sprite_decode, 0,
 	0,
@@ -2227,6 +2248,7 @@ struct GameDriver hwchamp_driver =
 	SYS16_CREDITS,
 	GAME_NOT_WORKING,
 	&hwchamp_machine_driver,
+	0,
 	hwchamp_rom,
 	hwchamp_sprite_decode, 0,
 	0,
@@ -2362,6 +2384,7 @@ struct GameDriver mjleague_driver =
 	SYS16_CREDITS,
 	GAME_NOT_WORKING,
 	&mjleague_machine_driver,
+	0,
 	mjleague_rom,
 	mjleague_sprite_decode, 0,
 	0,
@@ -2504,6 +2527,7 @@ struct GameDriver passshtb_driver =
 	SYS16_CREDITS,
 	0,
 	&passshtb_machine_driver,
+	0,
 	passshtb_rom,
 	passshtb_sprite_decode, 0,
 	0,
@@ -2635,6 +2659,7 @@ struct GameDriver quartet2_driver =
 	SYS16_CREDITS,
 	GAME_NOT_WORKING,
 	&quartet2_machine_driver,
+	0,
 	quartet2_rom,
 	quartet2_sprite_decode, 0,
 	0,
@@ -2760,6 +2785,7 @@ struct GameDriver sdi_driver =
 	SYS16_CREDITS,
 	0,
 	&sdi_machine_driver,
+	0,
 	sdi_rom,
 	sdi_sprite_decode, 0,
 	0,
@@ -2800,6 +2826,14 @@ ROM_END
 
 /***************************************************************************/
 
+static int shinobi_skip(int offset)
+{
+	if (cpu_getpc()==0x32e0) cpu_spinuntil_int();
+
+	return READ_WORD(&sys16_workingram[0xf01c]);
+}
+
+
 static struct MemoryReadAddress shinobi_readmem[] =
 {
 	{ 0xc41002, 0xc41003, io_player1_r },
@@ -2812,6 +2846,9 @@ static struct MemoryReadAddress shinobi_readmem[] =
 	{ 0x400000, 0x40ffff, MRA_TILERAM },
 	{ 0x440000, 0x440fff, MRA_SPRITERAM },
 	{ 0x840000, 0x840fff, MRA_PALETTERAM },
+
+	{ 0xfff01c, 0xfff01d, shinobi_skip },
+
 	{ 0xff0000, 0xffffff, MRA_WORKINGRAM },
 	{ 0x000000, 0x03ffff, MRA_ROM },
 	{-1}
@@ -2891,6 +2928,7 @@ struct GameDriver shinobi_driver =
 	SYS16_CREDITS,
 	0,
 	&shinobi_machine_driver,
+	0,
 	shinobi_rom,
 	shinobi_sprite_decode, 0,
 	0,
@@ -3029,6 +3067,7 @@ struct GameDriver tetrisbl_driver =
 	SYS16_CREDITS,
 	0,
 	&tetrisbl_machine_driver,
+	0,
 	tetrisbl_rom,
 	tetrisbl_sprite_decode, 0,
 	0,
@@ -3152,6 +3191,7 @@ struct GameDriver timescan_driver =
 	SYS16_CREDITS,
 	0,
 	&timescan_machine_driver,
+	0,
 	timescan_rom,
 	timescan_sprite_decode, 0,
 	0,
@@ -3291,6 +3331,7 @@ struct GameDriver tturfbl_driver =
 	SYS16_CREDITS,
 	GAME_NOT_WORKING,
 	&tturfbl_machine_driver,
+	0,
 	tturfbl_rom,
 	tturfbl_sprite_decode, 0,
 	0,
@@ -3445,6 +3486,7 @@ struct GameDriver wb3bl_driver =
 	SYS16_CREDITS,
 	0,
 	&wb3bl_machine_driver,
+	0,
 	wb3bl_rom,
 	wb3bl_sprite_decode, 0,
 	0,
@@ -3596,6 +3638,7 @@ struct GameDriver wrestwar_driver =
 	SYS16_CREDITS,
 	0,
 	&wrestwar_machine_driver,
+	0,
 	wrestwar_rom,
 	wrestwar_sprite_decode, 0,
 	0,

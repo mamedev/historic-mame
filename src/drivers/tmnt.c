@@ -848,7 +848,10 @@ static struct MachineDriver punkshot_machine_driver =
 			3579545,	/* 3.579545 MHz */
 			3,
 			punkshot_s_readmem,punkshot_s_writemem,0,0,
-			ignore_interrupt,0	/* IRQs are triggered by the main CPU */
+			nmi_interrupt,1	/* IRQs are triggered by the main CPU */
+							/* I don't know who generates NMIs, probably a sound chip */
+							/* because the code requires them to get out from HALT (the. */
+							/* NMI handler is just RETN) */
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
@@ -1042,6 +1045,7 @@ struct GameDriver tmnt_driver =
 	"Nicola Salmoria (MAME driver)\nAlex Pasadyn (MAME driver)\nJeff Slutter (hardware info)\nHowie Cohen (hardware info)\nDan Boris (hardware info)",
 	0,
 	&tmnt_machine_driver,
+	0,
 
 	tmnt_rom,
 	0, 0,
@@ -1067,6 +1071,7 @@ struct GameDriver tmntj_driver =
 	"Nicola Salmoria (MAME driver)\nAlex Pasadyn (MAME driver)\nJeff Slutter (hardware info)\nHowie Cohen (hardware info)\nDan Boris (hardware info)",
 	0,
 	&tmnt_machine_driver,
+	0,
 
 	tmntj_rom,
 	0, 0,
@@ -1092,6 +1097,7 @@ struct GameDriver tmht2p_driver =
 	"Nicola Salmoria (MAME driver)\nAlex Pasadyn (MAME driver)\nJeff Slutter (hardware info)\nHowie Cohen (hardware info)\nDan Boris (hardware info)\nAlex Simmons (2 player version)",
 	0,
 	&tmnt_machine_driver,
+	0,
 
 	tmht2p_rom,
 	0, 0,
@@ -1117,6 +1123,7 @@ struct GameDriver tmnt2pj_driver =
 	"Nicola Salmoria (MAME driver)\nAlex Pasadyn (MAME driver)\nJeff Slutter (hardware info)\nHowie Cohen (hardware info)\nDan Boris (hardware info)\nAlex Simmons (2 player version)",
 	0,
 	&tmnt_machine_driver,
+	0,
 
 	tmnt2pj_rom,
 	0, 0,
@@ -1142,6 +1149,7 @@ struct GameDriver punkshot_driver =
 	"Nicola Salmoria (MAME driver)\nAlex Pasadyn (MAME driver)\nJeff Slutter (hardware info)\nHowie Cohen (hardware info)\nDan Boris (hardware info)",
 	0,
 	&punkshot_machine_driver,
+	0,
 
 	punkshot_rom,
 	0, 0,

@@ -440,6 +440,7 @@ struct GameDriver maketrax_driver =
 	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nJohn Bowes(info)\nMike Balfour\nValerio Verrando (high score saving)",
 	0,
 	&maketrax_machine_driver,
+	0,
 
 	maketrax_rom,
 	0, maketrax_rom_decode,

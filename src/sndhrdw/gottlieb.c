@@ -250,10 +250,15 @@ void gottlieb_nmi_rate_w(int offset, int data)
 	nmi_rate = data;
 }
 
-void gottlieb_cause_dac_nmi_w(int offset, int data)
+static void cause_dac_nmi_callback(int param)
 {
 	cpu_cause_interrupt(cpu_gettotalcpu()-2, M6502_INT_NMI);
-	cpu_yield();
+}
+
+void gottlieb_cause_dac_nmi_w(int offset, int data)
+{
+	/* make all the CPUs synchronize, and only AFTER that cause the NMI */
+	timer_set(TIME_NOW,0,cause_dac_nmi_callback);
 }
 
 int gottlieb_cause_dac_nmi_r(int offset)

@@ -389,6 +389,7 @@ struct GameDriver capbowl_driver =
 	"Zsolt Vasvari\nMirko Buffoni\nNicola Salmoria\nMichael Appolo",
 	0,
 	&capbowl_machine_driver,
+	0,
 
 	capbowl_rom,
 	0, 0,
@@ -414,6 +415,7 @@ struct GameDriver clbowl_driver =
 	"Zsolt Vasvari\nMirko Buffoni\nNicola Salmoria\nMichael Appolo",
 	0,
 	&capbowl_machine_driver,
+	0,
 
 	clbowl_rom,
 	0, 0,
@@ -439,6 +441,7 @@ struct GameDriver bowlrama_driver =
 	"Michael Appolo\nZsolt Vasvari\nMirko Buffoni\nNicola Salmoria",
 	0,
 	&bowlrama_machine_driver,
+	0,
 
 	bowlrama_rom,
 	0, 0,

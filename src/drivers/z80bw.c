@@ -215,6 +215,7 @@ struct GameDriver astinvad_driver =
 	"Lee Taylor\n",
 	0,
 	&astinvad_machine_driver,
+	0,
 
 	astinvad_rom,
 	0, 0,
@@ -241,6 +242,7 @@ struct GameDriver kamikaze_driver =
 	"Lee Taylor\n",
 	0,
 	&astinvad_machine_driver,
+	0,
 
 	kamikaze_rom,
 	0, 0,

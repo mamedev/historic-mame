@@ -685,6 +685,7 @@ struct GameDriver zaxxon_driver =
 	"Mirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nAlex Judd (sound)\nGerald Vanderick (color info)\nFrank Palazzolo (sound info)\nRiek Gladys (sound info)\nJohn Butler (video)",
 	0,
 	&zaxxon_machine_driver,
+	0,
 
 	zaxxon_rom,
 	0, 0,
@@ -710,6 +711,7 @@ struct GameDriver szaxxon_driver =
 	"Mirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nAlex Judd (sound)\nTim Lindquist (encryption and color info)\nFrank Palazzolo (sound info)\nRiek Gladys (sound info)",
 	0,
 	&zaxxon_machine_driver,
+	0,
 
 	szaxxon_rom,
 	0, szaxxon_decode,
@@ -735,6 +737,7 @@ struct GameDriver futspy_driver =
 	"Nicola Salmoria",
 	0,
 	&futspy_machine_driver,
+	0,
 
 	futspy_rom,
 	0, futspy_decode,

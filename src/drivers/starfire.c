@@ -233,6 +233,7 @@ struct GameDriver starfire_driver =
 	"Daniel Boris\n",
 	GAME_NOT_WORKING,
 	&machine_driver,
+	0,
 
 	starfire_rom,
 	0, 0,

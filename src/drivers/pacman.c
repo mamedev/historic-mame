@@ -1028,7 +1028,7 @@ ROM_START( theglob_rom )
 	ROM_LOAD( "glob.5e",      0x0000, 0x1000, 0x53688260 )
 	ROM_LOAD( "glob.5f",      0x1000, 0x1000, 0x051f59c7 )
 
-	ROM_REGION(0x0110)	/* color PROMs */
+	ROM_REGION(0x0120)	/* color PROMs */
 	ROM_LOAD( "glob.7f",      0x0000, 0x0020, 0x1f617527 )
 	ROM_LOAD( "glob.4a",      0x0020, 0x0100, 0x28faa769 )
 
@@ -1435,6 +1435,7 @@ struct GameDriver pacman_driver =
 	BASE_CREDITS,
 	0,
 	&machine_driver,
+	0,
 
 	pacman_rom,
 	0, 0,
@@ -1460,6 +1461,7 @@ struct GameDriver namcopac_driver =
 	BASE_CREDITS,
 	0,
 	&machine_driver,
+	0,
 
 	namcopac_rom,
 	0, 0,
@@ -1485,6 +1487,7 @@ struct GameDriver pacmanjp_driver =
 	BASE_CREDITS,
 	0,
 	&machine_driver,
+	0,
 
 	pacmanjp_rom,
 	0, 0,
@@ -1510,6 +1513,7 @@ struct GameDriver pacmod_driver =
 	BASE_CREDITS,
 	0,
 	&machine_driver,
+	0,
 
 	pacmod_rom,
 	0, 0,
@@ -1535,6 +1539,7 @@ struct GameDriver hangly_driver =
 	BASE_CREDITS,
 	0,
 	&machine_driver,
+	0,
 
 	hangly_rom,
 	0, 0,
@@ -1560,6 +1565,7 @@ struct GameDriver puckman_driver =
 	BASE_CREDITS,
 	0,
 	&machine_driver,
+	0,
 
 	puckman_rom,
 	0, 0,
@@ -1585,6 +1591,7 @@ struct GameDriver piranha_driver =
 	BASE_CREDITS,
 	0,
 	&machine_driver,
+	0,
 
 	piranha_rom,
 	0, 0,
@@ -1610,6 +1617,7 @@ struct GameDriver pacplus_driver =
 	BASE_CREDITS"\nClay Cowgill (information)\nMike Balfour (information)",
 	0,
 	&machine_driver,
+	0,
 
 	pacplus_rom,
 	pacplus_decode, 0,
@@ -1635,6 +1643,7 @@ struct GameDriver mspacman_driver =
 	BASE_CREDITS,
 	0,
 	&machine_driver,
+	0,
 
 	mspacman_rom,
 	0, 0,
@@ -1660,6 +1669,7 @@ struct GameDriver mspacatk_driver =
 	BASE_CREDITS,
 	0,
 	&machine_driver,
+	0,
 
 	mspacatk_rom,
 	0, 0,
@@ -1686,6 +1696,7 @@ struct GameDriver crush_driver =
 	BASE_CREDITS"\nGary Walton (color info)\nSimon Walls (color info)",
 	0,
 	&machine_driver,
+	0,
 
 	crush_rom,
 	0, 0,
@@ -1711,6 +1722,7 @@ struct GameDriver ponpoko_driver =
 	BASE_CREDITS,
 	0,
 	&machine_driver,
+	0,
 
 	ponpoko_rom,
 	ponpoko_decode, 0,
@@ -1736,6 +1748,7 @@ struct GameDriver eyes_driver =
 	"Zsolt Vasvari\n"BASE_CREDITS,
 	GAME_WRONG_COLORS,
 	&machine_driver,
+	0,
 
 	eyes_rom,
 	eyes_decode, 0,
@@ -1761,6 +1774,7 @@ struct GameDriver mrtnt_driver =
 	"Zsolt Vasvari\n"BASE_CREDITS,
 	GAME_WRONG_COLORS,
 	&machine_driver,
+	0,
 
 	mrtnt_rom,
 	eyes_decode, 0,
@@ -1786,6 +1800,7 @@ struct GameDriver lizwiz_driver =
 	BASE_CREDITS,
 	0,
 	&machine_driver,
+	0,
 
 	lizwiz_rom,
 	0, 0,
@@ -1811,6 +1826,7 @@ struct GameDriver theglob_driver =
 	BASE_CREDITS"\nClay Cowgill (information)\nMike Balfour (information)",
 	0,
 	&theglob_machine_driver,
+	0,
 
 	theglob_rom,
 	0, 0,
@@ -1836,6 +1852,7 @@ struct GameDriver beastf_driver =
 	BASE_CREDITS"\nClay Cowgill (information)\nMike Balfour (information)",
 	0,
 	&theglob_machine_driver,
+	0,
 
 	beastf_rom,
 	0, 0,

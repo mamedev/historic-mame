@@ -652,6 +652,7 @@ struct GameDriver strider_driver =
         CPS1_CREDITS("Paul Leaman (Game Driver)\nMarco Cassili (dip switches)"),
         0,
         &strider_machine_driver,
+		0,
 
         strider_rom,
         0,
@@ -676,6 +677,7 @@ struct GameDriver striderj_driver =
         CPS1_CREDITS ("Marco Cassili (Game Driver)"),
         0,
         &strider_machine_driver,
+		0,
 
         striderj_rom,
         0,
@@ -901,6 +903,7 @@ struct GameDriver willow_driver =
         CPS1_CREDITS("Paul Leaman (Game Driver)\nMarco Cassili (dip switches)"),
         0,
         &willow_machine_driver,
+		0,
 
         willow_rom,
         0,
@@ -925,6 +928,7 @@ struct GameDriver willowj_driver =
         CPS1_CREDITS ("Marco Cassili (Game Driver)"),
         0,
         &willow_machine_driver,
+		0,
 
         willowj_rom,
         0,
@@ -1143,6 +1147,7 @@ struct GameDriver ffight_driver =
         CPS1_CREDITS("Paul Leaman (Game Driver)\nMarco Cassili (dip switches)"),
         0,
         &ffight_machine_driver,
+		0,
 
         ffight_rom,
         0,
@@ -1167,6 +1172,7 @@ struct GameDriver ffightj_driver =
         CPS1_CREDITS("Marco Cassili (Game Driver)"),
         0,
         &ffight_machine_driver,
+		0,
 
         ffightj_rom,
         0,
@@ -1357,6 +1363,7 @@ struct GameDriver unsquad_driver =
         CPS1_CREDITS("Paul Leaman (Game Driver)\nMarco Cassili (dip switches)"),
         0,
         &unsquad_machine_driver,
+		0,
 
         unsquad_rom,
         0,
@@ -1378,9 +1385,10 @@ struct GameDriver area88_driver =
         "Area 88",
         "1989",
         "Capcom",
-        CPS1_CREDITS("Paul Leaman (Game Driver)\nMarco Cassili (dip switches)"),
+        CPS1_CREDITS("Santeri Saarimaa (Game Driver)\nMarco Cassili (dip switches)"),
         0,
         &unsquad_machine_driver,
+		0,
 
         area88_rom,
         0,
@@ -1589,6 +1597,7 @@ struct GameDriver mtwins_driver =
         CPS1_CREDITS("Paul Leaman (Game Driver)\nMarco Cassili (dip switches)"),
         0,
         &mtwins_machine_driver,
+		0,
 
         mtwins_rom,
         0,
@@ -1613,6 +1622,7 @@ struct GameDriver chikij_driver =
         CPS1_CREDITS("Marco Cassili (Game Driver)"),
         0,
         &mtwins_machine_driver,
+		0,
 
         chikij_rom,
         0,
@@ -1820,6 +1830,7 @@ struct GameDriver nemo_driver =
         CPS1_CREDITS("Darren Olafson (Game Driver)\nMarco Cassili (Dip Switches)\nPaul Leaman"),
         0,
         &nemo_machine_driver,
+		0,
 
         nemo_rom,
         0,
@@ -1844,6 +1855,7 @@ struct GameDriver nemoj_driver =
         CPS1_CREDITS("Sawat Pontree (Game Driver)\nMarco Cassili (dip switches)\nPaul Leman"),
         0,
         &nemo_machine_driver,
+		0,
 
         nemoj_rom,
         0,
@@ -2051,6 +2063,7 @@ struct GameDriver c1941_driver =
         CPS1_CREDITS("Darren Olafson (Game Driver)\nMarco Cassili (Dip Switches)\nPaul Leaman"),
         0,
         &c1941_machine_driver,
+		0,
 
         c1941_rom,
         0,
@@ -2075,6 +2088,7 @@ struct GameDriver c1941j_driver =
         CPS1_CREDITS("Marco Cassili (Game Driver)\nPaul Leaman"),
         0,
         &c1941_machine_driver,
+		0,
 
         c1941j_rom,
         0,
@@ -2241,6 +2255,7 @@ struct GameDriver dynwarsj_driver =
         CPS1_CREDITS("Paul Leaman"),
         0,
         &dynwars_machine_driver,
+		0,
 
         dynwarsj_rom,
         0,
@@ -2449,6 +2464,7 @@ struct GameDriver msword_driver =
         CPS1_CREDITS("Paul Leaman (Game Driver)\nMarco Cassili (dip switches)"),
         0,
         &msword_machine_driver,
+		0,
 
         msword_rom,
         0,
@@ -2473,6 +2489,7 @@ struct GameDriver mswordj_driver =
         CPS1_CREDITS("Paul Leaman (Game Driver)\nMarco Cassili (dip switches)"),
         0,
         &msword_machine_driver,
+		0,
 
         mswordj_rom,
         0,
@@ -2617,6 +2634,7 @@ struct GameDriver mercs_driver =
         CPS1_CREDITS("Paul Leaman\n"),
         GAME_NOT_WORKING,
         &mercs_machine_driver,
+		0,
 
         mercs_rom,
         0,
@@ -2819,6 +2837,7 @@ struct GameDriver pnickj_driver =
         CPS1_CREDITS("Paul Leaman (Game Driver)\nMarco Cassili (dip switches)"),
         0,
         &pnickj_machine_driver,
+		0,
 
         pnickj_rom,
         0,
@@ -3010,6 +3029,7 @@ struct GameDriver knights_driver =
         CPS1_CREDITS("Paul Leaman (Game Driver)\nMarco Cassili (dip switches)"),
         GAME_NOT_WORKING,
         &knights_machine_driver,
+		0,
 
         knights_rom,
         0,
@@ -3267,6 +3287,7 @@ struct GameDriver ghouls_driver =
         CPS1_CREDITS("Paul Leaman\nMarco Cassili (dip switches)"),
         0,
         &ghouls_machine_driver,
+		0,
 
         ghouls_rom,
         0,
@@ -3291,6 +3312,7 @@ struct GameDriver ghoulsj_driver =
         CPS1_CREDITS("Paul Leaman\nMarco Cassili (dip switches)"),
         0,
         &ghouls_machine_driver,
+		0,
 
         ghoulsj_rom,
         0,
@@ -3497,6 +3519,7 @@ struct GameDriver cawingj_driver =
         CPS1_CREDITS("Paul Leaman (Game Driver)\nMarco Cassili (dip switches)"),
         GAME_NOT_WORKING,
         &cawingj_machine_driver,
+		0,
 
         cawingj_rom,
         0,
@@ -3632,6 +3655,7 @@ struct GameDriver sf2_driver =
         CPS1_CREDITS("Paul Leaman"),
         GAME_NOT_WORKING,
         &sf2_machine_driver,
+		0,
 
         sf2_rom,
         0,0,0,0,
@@ -3687,6 +3711,7 @@ struct GameDriver sf2ce_driver =
         CPS1_CREDITS("Paul Leaman"),
                 GAME_NOT_WORKING,
         &sf2_machine_driver,
+		0,
 
                 sf2ce_rom,
         0,0,0,0,
@@ -3741,6 +3766,7 @@ struct GameDriver sf2cej_driver =
         CPS1_CREDITS("Paul Leaman"),
                 GAME_NOT_WORKING,
         &sf2_machine_driver,
+		0,
 
                 sf2cej_rom,
         0,0,0,0,
@@ -3928,9 +3954,10 @@ struct GameDriver rockmanj_driver =
 	"Rockman - The Power Battle (Japan)",
 	"1995",
 	"Capcom",
-	CPS1_CREDITS("Paul Leaman\nT.J. Grant\nMarco Cassili (dip switches)"),
+	CPS1_CREDITS("Paul Leaman\nTJ Grant\nMarco Cassili (dip switches)"),
 	0,
 	&rockman_machine_driver,
+	0,
 
 	rockmanj_rom,
 	0,
@@ -4120,6 +4147,7 @@ struct GameDriver captcomm_driver =
 	CPS1_CREDITS("Paul Leaman\nMarco Cassili (dip switches)"),
 	0,
 	&captcomm_machine_driver,
+	0,
 
 	captcomm_rom,
 	0,0,0,0,
@@ -4252,6 +4280,7 @@ struct GameDriver c3wonders_driver =
         CPS1_CREDITS("Paul Leaman"),
         GAME_NOT_WORKING,
         &c3wonders_machine_driver,
+		0,
 
         c3wonders_rom,
         0,0,0,0,
@@ -4382,6 +4411,7 @@ struct GameDriver kod_driver =
         CPS1_CREDITS("Paul Leaman"),
         GAME_NOT_WORKING,
         &kod_machine_driver,
+		0,
 
         kod_rom,
         0,0,0,0,
@@ -4555,7 +4585,7 @@ ROM_END
 struct GameDriver varth_driver =
 {
         __FILE__,
-        &varth_driver,
+        0,
         "varth",
         "Varth (World)",
         "1992",
@@ -4563,6 +4593,7 @@ struct GameDriver varth_driver =
         CPS1_CREDITS("Paul Leaman\nMarco Cassili (dip switches)"),
         0,
         &varth_machine_driver,
+		0,
 
         varth_rom,
         0,

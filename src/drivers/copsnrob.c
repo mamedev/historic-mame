@@ -280,6 +280,7 @@ struct GameDriver copsnrob_driver =
 	"Zsolt Vasvari",
 	0,
 	&machine_driver,
+	0,
 
 	copsnrob_rom,
 	0, 0,

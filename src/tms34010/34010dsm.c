@@ -826,7 +826,7 @@ int Dasm34010 (unsigned char *pBase, char *buff, int _pc)
 
 
 	case 0x5800:
-		sprintf (buffer, "DIVS ? ");
+		sprintf (buffer, "DIVS   ");
 		print_src_des_reg();
 		break;
 

@@ -532,6 +532,7 @@ struct GameDriver firetrap_driver =
 	"Nicola Salmoria (MAME driver)\nTim Lindquist (color and hardware info)\nDani Portillo (high score save)",
 	GAME_NOT_WORKING,
 	&machine_driver,
+	0,
 
 	firetrap_rom,
 	0, 0,
@@ -557,6 +558,7 @@ struct GameDriver firetpbl_driver =
 	"Nicola Salmoria (MAME driver)\nTim Lindquist (color and hardware info)\nDani Portillo (high score save)",
 	0,
 	&machine_driver,
+	0,
 
 	firetpbl_rom,
 	0, 0,

@@ -270,6 +270,7 @@ struct GameDriver circus_driver =
 	"Mike Coates (MAME driver)\nValerio Verrando (high score save)",
 	0,
 	&machine_driver,
+	0,
 
 	circus_rom,
 	0, 0,
@@ -415,6 +416,7 @@ struct GameDriver robotbwl_driver =
 	"Mike Coates",
 	0,
 	&robotbowl_machine_driver,
+	0,
 
 	robotbowl_rom,
 	robotbowl_decode, 0,
@@ -568,6 +570,7 @@ struct GameDriver crash_driver =
 	"Mike Coates",
 	0,
 	&crash_machine_driver,
+	0,
 
 	crash_rom,
 	0, 0,
@@ -696,6 +699,7 @@ struct GameDriver ripcord_driver =
 	"Mike Coates (MAME driver)\nValerio Verrando (high score save)",
 	GAME_NOT_WORKING,
 	&ripcord_machine_driver,
+	0,
 
 	ripcord_rom,
 	0, 0,

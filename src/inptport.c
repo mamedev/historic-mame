@@ -128,7 +128,7 @@ int load_input_port_settings(void)
 		int i;
 
 
-		in = Machine->gamedrv->new_input_ports;
+		in = Machine->gamedrv->input_ports;
 
 		/* calculate the size of the array */
 		total = 0;
@@ -151,7 +151,7 @@ int load_input_port_settings(void)
 			goto getout;	/* different size */
 
 		/* read the original settings and compare them with the ones defined in the driver */
-		in = Machine->gamedrv->new_input_ports;
+		in = Machine->gamedrv->input_ports;
 		while (in->type != IPT_END)
 		{
 			struct InputPort saved;
@@ -227,7 +227,7 @@ void save_input_port_settings(void)
 		int i;
 
 
-		in = Machine->gamedrv->new_input_ports;
+		in = Machine->gamedrv->input_ports;
 
 		/* calculate the size of the array */
 		total = 0;
@@ -242,7 +242,7 @@ void save_input_port_settings(void)
 		/* write array size */
 		writeint(f,total);
 		/* write the original settings as defined in the driver */
-		in = Machine->gamedrv->new_input_ports;
+		in = Machine->gamedrv->input_ports;
 		while (in->type != IPT_END)
 		{
 			writeip(f,in);

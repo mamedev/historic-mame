@@ -363,6 +363,7 @@ struct GameDriver ccastles_driver =
 	"Pat Lawrence\nChris Hardy\nSteve Clynes\nNicola Salmoria\nBrad Oliver",
 	0,
 	&machine_driver,
+	0,
 
 	ccastles_rom,
 	0, 0,
@@ -388,6 +389,7 @@ struct GameDriver ccastle2_driver =
 	"Pat Lawrence\nChris Hardy\nSteve Clynes\nNicola Salmoria\nBrad Oliver",
 	0,
 	&machine_driver,
+	0,
 
 	ccastle2_rom,
 	0, 0,

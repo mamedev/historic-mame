@@ -47,6 +47,7 @@ void darkseal_palette_24bit_b(int offset,int data);
 int darkseal_palette_24bit_rg_r(int offset);
 int darkseal_palette_24bit_b_r(int offset);
 extern unsigned char *darkseal_sprite;
+static unsigned char *darkseal_ram;
 
 /* System prototypes - from machine/dec0.c */
 int slyspy_controls_read(int offset);
@@ -72,11 +73,19 @@ static void darkseal_control_w(int offset,int data)
   if (errorlog) fprintf(errorlog,"Warning - %02x written to control %02x\n",data,offset);
 }
 
+static int darkseal_cycle_r(int offset)
+{
+	if (cpu_getpc()==0x1610) cpu_spinuntil_int();
+
+	return READ_WORD(&darkseal_ram[6]);
+}
+
 /******************************************************************************/
 
 static struct MemoryReadAddress darkseal_readmem[] =
 {
 	{ 0x000000, 0x07ffff, MRA_ROM },
+	{ 0x100006, 0x100007, darkseal_cycle_r },
 	{ 0x100000, 0x103fff, MRA_BANK1 },
 	{ 0x120000, 0x1207ff, MRA_BANK2 },
 	{ 0x140000, 0x140fff, darkseal_palette_24bit_rg_r },
@@ -90,7 +99,7 @@ static struct MemoryReadAddress darkseal_readmem[] =
 static struct MemoryWriteAddress darkseal_writemem[] =
 {
 	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x100000, 0x103fff, MWA_BANK1 },
+	{ 0x100000, 0x103fff, MWA_BANK1, &darkseal_ram },
 	{ 0x120000, 0x1207ff, MWA_BANK2, &darkseal_sprite },
 	{ 0x140000, 0x140fff, darkseal_palette_24bit_rg, &paletteram },
 	{ 0x141000, 0x141fff, darkseal_palette_24bit_b, &paletteram_2 },
@@ -434,6 +443,7 @@ struct GameDriver darkseal_driver =
 	"Bryan McPhail",
 	0,
 	&darkseal_machine_driver,
+	0,
 
 	darkseal_rom,
 	0, darkseal_decrypt,
@@ -458,6 +468,7 @@ struct GameDriver gatedoom_driver =
 	"Bryan McPhail",
 	0,
 	&darkseal_machine_driver,
+	0,
 
 	gatedoom_rom,
 	0, darkseal_decrypt,

@@ -293,6 +293,7 @@ struct GameDriver warpwarp_driver =
 	"Chris Hardy (MAME driver)\nJuan Carlos Lorente (high score)\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	warpwarp_rom,
 	0, 0,

@@ -458,6 +458,7 @@ struct GameDriver arkanoid_driver =
 	"Brad Oliver (MAME driver)\nNicola Salmoria (MAME driver)\nAaron Giles (68705 emulation)\nChris Moore (high score save)",
 	0,
 	&machine_driver,
+	0,
 
 	arkanoid_rom,
 	0, 0,
@@ -483,6 +484,7 @@ struct GameDriver arknoidu_driver =
 	"Brad Oliver (MAME driver)\nNicola Salmoria (MAME driver)\nAaron Giles (68705 emulation)\nChris Moore (high score save)",
 	0,
 	&machine_driver,
+	0,
 
 	arknoidu_rom,
 	0, 0,
@@ -508,6 +510,7 @@ struct GameDriver arkbl2_driver =
 	"Brad Oliver (MAME driver)\nNicola Salmoria (MAME driver)\nAaron Giles (68705 emulation)\nChris Moore (high score save)",
 	GAME_NOT_WORKING,
 	&machine_driver,
+	0,
 
 	arkbl2_rom,
 	0, 0,
@@ -533,6 +536,7 @@ struct GameDriver arkatayt_driver =
 	"Brad Oliver (MAME driver)\nNicola Salmoria (MAME driver)\nChris Moore (high score save)",
 	0,
 	&bootleg_machine_driver,
+	0,
 
 	arkatayt_rom,
 	0, 0,

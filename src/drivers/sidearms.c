@@ -481,6 +481,7 @@ struct GameDriver sidearms_driver =
 	"Paul Leaman (MAME driver)\nNicola Salmoria (additional code)\nGerrit Van Goethem (high score save)",
 	0,
 	&sidearms_machine_driver,
+	0,
 
 	sidearms_rom,
 	0,0,
@@ -505,6 +506,7 @@ struct GameDriver sidearjp_driver =
 	"Paul Leaman (MAME driver)\nNicola Salmoria (additional code)\nGerrit Van Goethem (high score save)",
 	0,
 	&sidearms_machine_driver,
+	0,
 
 	sidearjp_rom,
 	0,0,

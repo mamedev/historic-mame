@@ -597,6 +597,7 @@ struct GameDriver c1943_driver =
 	"Mirko Buffoni (MAME driver)\nPaul Leaman (MAME driver)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nJeff Johnson (high score save)",
 	0,
 	&machine_driver,
+	0,
 
 	c1943_rom,
 	0, 0,
@@ -622,6 +623,7 @@ struct GameDriver c1943jap_driver =
 	"Mirko Buffoni (MAME driver)\nPaul Leaman (MAME driver)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nJeff Johnson (high score save)",
 	0,
 	&machine_driver,
+	0,
 
 	c1943jap_rom,
 	0, 0,
@@ -647,6 +649,7 @@ struct GameDriver c1943kai_driver =
 	"Mirko Buffoni (MAME driver)\nPaul Leaman (MAME driver)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nJeff Johnson (high score save)\nGerrit Van Goethem (high score fix)",
 	0,
 	&machine_driver,
+	0,
 
 	c1943kai_rom,
 	0, 0,

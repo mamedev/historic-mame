@@ -382,6 +382,7 @@ struct GameDriver tankbatt_driver =
 	"Brad Oliver",
 	0,
 	&machine_driver,
+	0,
 
 	tankbatt_rom,
 	0, 0,

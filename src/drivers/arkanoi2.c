@@ -33,12 +33,11 @@
   case. What's more, the tiles must be drawn from f400 to f5ff (the opposite
   order of tnzs). Bits 1&2, seem to have a function also.
 
-- The game doesn't write to f800-fbff (static palette?)
+- The game doesn't write to f800-fbff (static palette)
 
 					To be done
 					----------
 
-- Colors are completely wrong, probably we just need a missing color prom.
 - Test mode 2 (press start2 when test dsw L) doesn't work\display well.
 - What do writes at f400 and f381 do ?
 - Why the game zeros the fd00 area ?
@@ -122,39 +121,19 @@ d23f=input port 1 value
 /* prototypes for functions in ../machine/tnzs.c */
 extern unsigned char *tnzs_objram, *tnzs_workram;
 extern unsigned char *tnzs_vdcram, *tnzs_scrollram;
-extern unsigned char *tnzs_cpu2ram;
-extern int tnzs_objram_size;
-void init_tnzs(void);
-int tnzs_objram_r(int offset);
 
-int tnzs_cpu2ram_r(int offset);
-int tnzs_workram_r(int offset);
-int tnzs_vdcram_r(int offset);
+void tnzs_init_machine (void);
+int tnzs_workram_r (int offset);
+void tnzs_workram_w (int offset, int data);
 
-void tnzs_objram_w(int offset, int data);
-void tnzs_inputport_w(int offset, int data);
-void tnzs_cpu2ram_w(int offset, int data);
-void tnzs_workram_w(int offset, int data);
-void tnzs_vdcram_w(int offset, int data);
-void tnzs_scrollram_w(int offset, int data);
-
-unsigned char *banked_ram_0, *banked_ram_1;
-unsigned char *banked_rom_0, *banked_rom_1, *banked_rom_2, *banked_rom_3;
-
-
-int current_inputport;	/* reads of c000 (sound cpu) expect a sequence of values */
-int current_dipswitch1;	/* reads of 2203 portA&B (sound cpu) expect a sequence of values */
-int current_dipswitch2;
-int number_of_credits;
-
+extern int current_inputport;	/* reads of c000 (sound cpu) expect a sequence of values */
+extern int number_of_credits;
 
 /* prototypes for functions in ../vidhrdw/tnzs.c */
-void tnzs_videoram_w(int offset,int data);
-void tnzs_objectram_w(int offset,int data);
 int tnzs_vh_start(void);
 void tnzs_vh_stop(void);
 void arkanoi2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-
+void arkanoi2_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 
 
 
@@ -169,19 +148,19 @@ void arkanoi2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x9fff, MRA_ROM },		/* Code ROM */
-	{ 0xc000, 0xdfff, tnzs_objram_r },
+	{ 0xc000, 0xdfff, MRA_RAM },
 	{ 0xe000, 0xefff, tnzs_workram_r },	/* WORK RAM (shared by the 2 z80's */
-	{ 0xf000, 0xf1ff, tnzs_vdcram_r },	/* VDC RAM */
+	{ 0xf000, 0xf1ff, MRA_RAM },	/* VDC RAM */
 	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x9fff, MWA_ROM },	/* Code ROM */
-	{ 0xc000, 0xdfff, tnzs_objram_w, &tnzs_objram, &tnzs_objram_size },
+	{ 0xc000, 0xdfff, MWA_RAM, &tnzs_objram },
 	{ 0xe000, 0xefff, tnzs_workram_w, &tnzs_workram },
-	{ 0xf000, 0xf1ff, tnzs_vdcram_w, &tnzs_vdcram },
-	{ 0xf200, 0xf3ff, tnzs_scrollram_w, &tnzs_scrollram }, /* scrolling info */
+	{ 0xf000, 0xf1ff, MWA_RAM, &tnzs_vdcram },
+	{ 0xf200, 0xf3ff, MWA_RAM, &tnzs_scrollram }, /* scrolling info */
 	{ -1 }  /* end of table */
 };
 
@@ -262,9 +241,9 @@ static struct MemoryReadAddress sound_readmem[] =
 
 	{ 0xb000, 0xb000, YM2203_status_port_0_r  },
 	{ 0xb001, 0xb001, YM2203_read_port_0_r  },
-	{ 0xc000, 0xc001, arkanoi2_inputport_r},	/* returns coins,input port, etc. */
+	{ 0xc000, 0xc001, arkanoi2_inputport_r },	/* returns coins,input port, etc. */
 
-	{ 0xd000, 0xdfff, tnzs_cpu2ram_r },
+	{ 0xd000, 0xdfff, MRA_RAM },
 	{ 0xe000, 0xefff, tnzs_workram_r },
 
 	{ 0xf000, 0xf001, arkanoi2_sh_f000_r },	/* IN0 paddle */
@@ -281,7 +260,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0xb001, 0xb001, YM2203_write_port_0_w },	/* YM data write */
 	{ 0xc000, 0xc001, arkanoi2_inputport_w },	/* sub coins, reset input port */
 
-	{ 0xd000, 0xdfff, tnzs_cpu2ram_w, &tnzs_cpu2ram },
+	{ 0xd000, 0xdfff, MWA_RAM },
 	{ 0xe000, 0xefff, tnzs_workram_w },
 
 	{ -1 }  /* end of table */
@@ -299,61 +278,53 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
 	PORT_START	/* DSW1 - IN2 */
-	PORT_DIPNAME( 0x01, 0x01, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x01, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x02, 0x02, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x02, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x04, 0x04, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x04, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x08, 0x08, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x08, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x10, 0x10, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x10, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x20, 0x20, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x20, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x40, 0x40, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x40, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x01, 0x01, "Game Style", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "Table")
+	PORT_DIPSETTING(    0x00, "Upright")
+	PORT_DIPNAME( 0x02, 0x02, "Monitor", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "Normal")
+	PORT_DIPSETTING(    0x00, "Invert")
+	PORT_DIPNAME( 0x04, 0x04, "Test", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "Normal Game")
+	PORT_DIPSETTING(    0x00, "Test Mode")
+	PORT_DIPNAME( 0x08, 0x08, "Attract Sound", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "On")
+	PORT_DIPSETTING(    0x00, "Off")
+	PORT_DIPNAME( 0x30, 0x30, "Coin 1", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x30, "1 Coin/1 Play")
+	PORT_DIPSETTING(    0x20, "1 Coin/2 Play")
+	PORT_DIPSETTING(    0x10, "2 Coin/1 Play")
+	PORT_DIPSETTING(    0x00, "2 Coin/3 Play")
+	PORT_DIPNAME( 0xc0, 0xc0, "Coin 2", IP_KEY_NONE )
+	PORT_DIPSETTING(    0xc0, "1 Coin/1 Play")
+	PORT_DIPSETTING(    0x80, "1 Coin/2 Play")
+	PORT_DIPSETTING(    0x40, "2 Coin/1 Play")
+	PORT_DIPSETTING(    0x00, "2 Coin/3 Play")
 
 	PORT_START	/* DSW2 - IN3 */
-	PORT_DIPNAME( 0x01, 0x01, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x01, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x02, 0x02, "Flip Screen", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x02, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_BITX ( 0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING ( 0x04, "Off" )
-	PORT_DIPSETTING ( 0x00, "On" )
-	PORT_DIPNAME( 0x08, 0x08, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x08, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x10, 0x10, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x10, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x20, 0x20, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x20, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x40, 0x40, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x40, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x03, 0x03, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "Easy")
+	PORT_DIPSETTING(    0x03, "Normal")
+	PORT_DIPSETTING(    0x01, "Hard")
+	PORT_DIPSETTING(    0x00, "Very Hard")
+	PORT_DIPNAME( 0x0c, 0x0c, "Bonus", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x0c, "100K/200K")
+	PORT_DIPSETTING(    0x08, "100K Only")
+	PORT_DIPSETTING(    0x04, "50K Only")
+	PORT_DIPSETTING(    0x00, "50K/150K")
+	PORT_DIPNAME( 0x30, 0x30, "Number of VAUS", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x30, "3")
+	PORT_DIPSETTING(    0x20, "2")
+	PORT_DIPSETTING(    0x10, "4")
+	PORT_DIPSETTING(    0x00, "5")
+	PORT_DIPNAME( 0x80, 0x80, "Continue", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off")
+	PORT_DIPSETTING(    0x00, "On")
 
 	PORT_START      /* IN4 */
-	PORT_BIT(0x10, IP_ACTIVE_LOW, IPT_COIN2 | IPF_IMPULSE)
-	PORT_BIT(0x20, IP_ACTIVE_HIGH, IPT_SERVICE)
-	PORT_BIT(0x40, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE)
+	PORT_BITX(0x10, IP_ACTIVE_LOW, IPT_COIN2 | IPF_IMPULSE, "Coin[2]", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 2)
+	PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_SERVICE, "Service?", OSD_KEY_F2, IP_JOY_DEFAULT, 0)
+	PORT_BITX(0x40, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE, "Coin[1]", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 2)
 INPUT_PORTS_END
 
 
@@ -397,8 +368,8 @@ static struct YM2203interface ym2203_interface =
 	1,					/* chips */
 	1500000,				/* ?? Mhz */
 	{ YM2203_VOL(0xff,0xff) },	/* gain,volume */
-	{ input_port_3_r 	},		/* DSW1 connected to port A */
-	{ input_port_4_r	},		/* DSW2 connected to port B */
+	{ input_port_2_r 	},		/* DSW1 connected to port A */
+	{ input_port_3_r	},		/* DSW2 connected to port B */
 	{ 0 },
 	{ 0 }
 };
@@ -410,7 +381,7 @@ static struct MachineDriver arkanoi2_machine_driver =
 	{
 		{
 			CPU_Z80,			/* main cpu */
-			2000000,			/* ?? Hz (only crystal is 12MHz) */
+			4000000,			/* ?? Hz (only crystal is 12MHz) */
 			0,				/* memory region */
 			readmem,writemem,0,0,
 			interrupt,1			/* interrupts rtn, # per frame */
@@ -418,7 +389,7 @@ static struct MachineDriver arkanoi2_machine_driver =
 
 		{
 			CPU_Z80,					/* sound cpu */
-			4000000,					/* ?? Hz */
+			6000000,					/* ?? Hz */
 			2,						/* memory region */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,1					/* interrupts rtn, # per frame */
@@ -426,15 +397,15 @@ static struct MachineDriver arkanoi2_machine_driver =
 	},
 	60,DEFAULT_60HZ_VBLANK_DURATION,		/* video frequency (Hz), duration */
 	100,							/* cpu slices */
-	init_tnzs,					/* called at startup */
+	tnzs_init_machine,					/* called at startup */
 
 	/* video hardware */
 	16*16, 14*16,			/* screen dimx, dimy (pixels) */
 	{ 0, 16*16-1, 0, 14*16-1 },	/* visible rectangle (pixels) */
 	gfxdecodeinfo,
 	512, 512,
-	0,			/* convert color p-roms */
-	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
+	arkanoi2_vh_convert_color_prom,		/* convert color p-roms */
+	VIDEO_TYPE_RASTER,
 	0,
 	tnzs_vh_start,
 	tnzs_vh_stop,
@@ -461,20 +432,39 @@ static struct MachineDriver arkanoi2_machine_driver =
 
 
 ROM_START( arkanoi2_rom )
-    ROM_REGION(0x28000)	/* 64k+64k for the first CPU */
-
-/*	ROM_REGION(0x10000)*/		/* Region 0 - main cpu */
+	ROM_REGION(0x10000)				/* Region 0 - main cpu */
 	ROM_LOAD( "a2-05.rom", 0x00000, 0x10000, 0x136edf9d )
 
-	ROM_REGION(0x20000*4)		/* Region 1 - temporary for gfx roms */
-	ROM_LOAD( "a2-m01.rom", 0x00000, 0x20000, 0x70cc559d )	/* btp 0 */
-	ROM_LOAD( "a2-m02.rom", 0x20000, 0x20000, 0x056a985f )	/* btp 1 */
-	ROM_LOAD( "a2-m03.rom", 0x40000, 0x20000, 0x49a21c5e )	/* btp 2 */
-	ROM_LOAD( "a2-m04.rom", 0x60000, 0x20000, 0x548117c6 )	/* btp 3 */
+	ROM_REGION_DISPOSE(0x20000*4)	/* Region 1 - temporary for gfx roms */
+	ROM_LOAD( "a2-m04.rom", 0x00000, 0x20000, 0x548117c6 )	/* btp 0 */
+	ROM_LOAD( "a2-m03.rom", 0x20000, 0x20000, 0x49a21c5e )	/* btp 1 */
+	ROM_LOAD( "a2-m02.bin", 0x40000, 0x20000, 0x056a985f )	/* btp 2 */
+	ROM_LOAD( "a2-m01.rom", 0x60000, 0x20000, 0x70cc559d )	/* btp 3 */
 
-	ROM_REGION(0x10000)		/* Region 2 - sound cpu */
+	ROM_REGION(0x10000)				/* Region 2 - sound cpu */
 	ROM_LOAD( "a2-13.rom", 0x00000, 0x10000, 0xe8035ef1 )
 
+	ROM_REGION(0x400)				/* Region 3 - color proms */
+	ROM_LOAD( "b08-08.bin", 0x00000, 0x200, 0xa4f7ebd9 )	/* hi bytes */
+	ROM_LOAD( "b08-07.bin", 0x00200, 0x200, 0xea34d9f7 )	/* lo bytes */
+ROM_END
+
+ROM_START( ark2us_rom )
+	ROM_REGION(0x10000)				/* Region 0 - main cpu */
+	ROM_LOAD( "b08-11.bin", 0x00000, 0x10000, 0x99555231 )
+
+	ROM_REGION_DISPOSE(0x20000*4)	/* Region 1 - temporary for gfx roms */
+	ROM_LOAD( "a2-m04.bin", 0x00000, 0x20000, 0x9754f703 )	/* btp 0 */
+	ROM_LOAD( "a2-m03.bin", 0x20000, 0x20000, 0x274a795f )	/* btp 1 */
+	ROM_LOAD( "a2-m02.bin", 0x40000, 0x20000, 0x056a985f )	/* btp 2 */
+	ROM_LOAD( "a2-m01.bin", 0x60000, 0x20000, 0x2ccc86b4 )	/* btp 3 */
+
+	ROM_REGION(0x10000)				/* Region 2 - sound cpu */
+	ROM_LOAD( "b08-12.bin", 0x00000, 0x10000, 0xdc84e27d )
+
+	ROM_REGION(0x400)				/* Region 3 - color proms */
+	ROM_LOAD( "b08-08.bin", 0x00000, 0x200, 0xa4f7ebd9 )	/* hi bytes */
+	ROM_LOAD( "b08-07.bin", 0x00200, 0x200, 0xea34d9f7 )	/* lo bytes */
 ROM_END
 
 
@@ -489,7 +479,7 @@ static int arkanoi2_hiload(void)
 
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-            	osd_fread(f, &RAM[0xec81], 8*5);
+			osd_fread(f, &RAM[0xec81], 8*5);
 			osd_fclose(f);
 		}
 
@@ -511,18 +501,18 @@ static void arkanoi2_hisave(void)
 }
 
 
-
 struct GameDriver arkanoi2_driver =
 {
 	__FILE__,
 	0,
 	"arkanoi2",
-	"Arkanoid 2 - Revenge of DOH!",
+	"Arkanoid 2 - Revenge of DOH",
 	"1987",
 	"Taito",
 	"Luca Elia\nMirko Buffoni",
-	GAME_WRONG_COLORS,
+	0,
 	&arkanoi2_machine_driver,
+	0,
 
 	arkanoi2_rom,
 	0, 0,
@@ -531,10 +521,35 @@ struct GameDriver arkanoi2_driver =
 
 	input_ports,
 
-	0, 0, 0,
+	PROM_MEMORY_REGION(3), 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	arkanoi2_hiload, arkanoi2_hisave
 };
 
 
+struct GameDriver ark2us_driver =
+{
+	__FILE__,
+	&arkanoi2_driver,
+	"ark2us",
+	"Arkanoid 2 - Revenge of DOH (Romstar)",
+	"1987",
+	"Taito (Romstar license)",
+	"Luca Elia\nMirko Buffoni",
+	0,
+	&arkanoi2_machine_driver,
+	0,
+
+	ark2us_rom,
+	0, 0,
+	0,
+	0,
+
+	input_ports,
+
+	PROM_MEMORY_REGION(3), 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	arkanoi2_hiload, arkanoi2_hisave
+};

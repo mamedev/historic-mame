@@ -4,7 +4,7 @@
 **
 ** Copyright (C) 1998 Tatsuyuki Satoh , MultiArcadeMachineEmurator development
 **
-** Version 0.34a
+** Version 0.34d
 **
 */
 
@@ -55,7 +55,9 @@
 #endif
 
 /* ------------------------------------------------------------------ */
-/*#define INTERNAL_TIMER 			   use internal timer   */
+#if 0
+#define INTERNAL_TIMER 			/* use internal timer */
+#endif
 /* -------------------- speed up optimize switch -------------------- */
 /* ---------- Enable ---------- */
 #define MIN_UPDATE 11		/* minimum update step (use SELF_UPDATE ) */
@@ -96,11 +98,12 @@
 #define SIN_ENT 2048
 
 /* output level entries (envelope,sinwave) */
-
-#define ENV_BITS 16			/* envelope lower bits      */
+/* envelope counter lower bits */
+#define ENV_BITS 16
+/* envelope output entries */
+#define EG_ENT   4096
 /* used dynamic memory = EG_ENT*4*4(byte)or EG_ENT*6*4(byte) */
 /* used static  memory = EG_ENT*4 (byte)                     */
-#define EG_ENT   4096
 
 #ifdef SEG_SUPPORT
 #define EG_OFF   ((3*EG_ENT)<<ENV_BITS)  /* OFF          */
@@ -129,7 +132,7 @@
 #endif
 
 /* number of maximum envelope counter */
-/*#define ENV_OFF ((EG_ENT<<ENV_BITS)-1)*/
+/* #define ENV_OFF ((EG_ENT<<ENV_BITS)-1) */
 
 /* register number to channel number , slot offset */
 #define OPN_CHAN(N) (N&3)
@@ -206,13 +209,15 @@ typedef struct fm_slot {
 
 typedef struct fm_chan {
 	FM_SLOT	SLOT[4];
-	unsigned char PAN;			/* PAN 0=off,3=center                  */
+	unsigned char PAN;			/* PAN NONE,LEFT,RIGHT or CENTER       */
+	unsigned char ALGO;			/* algorythm                           */
 	unsigned char FB;			/* feed back       :&FB_TABLE[FB<<8]   */
 	int op1_out;				/* op1 output foe beedback             */
 	/* algorythm state */
 	int *connect1;				/* operator 1 connection pointer       */
 	int *connect2;				/* operator 2 connection pointer       */
 	int *connect3;				/* operator 3 connection pointer       */
+	int *connect4;				/* operator 4 connection pointer       */
 	/* phase generator state */
 	unsigned int  fc;			/* fnum,blk        :calcrated          */
 	unsigned char fn_h;			/* freq latch      :                   */
@@ -379,6 +384,7 @@ static int *TL_TABLE;
 /* pointers to TL_TABLE with sinwave output offset */
 static signed int *SIN_TABLE[SIN_ENT];
 
+/* envelope output curve table */
 #ifdef SEG_SUPPORT
 /* attack + decay + SSG upside + OFF */
 static int ENV_CURVE[3*EG_ENT+1];
@@ -386,6 +392,7 @@ static int ENV_CURVE[3*EG_ENT+1];
 /* attack + decay + OFF */
 static int ENV_CURVE[2*EG_ENT+1];
 #endif
+/* envelope counter conversion table when change Decay to Attack phase */
 static int DRAR_TABLE[EG_ENT];
 
 #define OPM_DTTABLE OPN_DTTABLE
@@ -460,36 +467,33 @@ static unsigned char sample_16bit;/* output bits    */
 static void *cur_chip = 0;	/* current chip point */
 
 /* currenct chip state */
-FM_ST            *State;
+static FM_ST     *State;
 static FMSAMPLE  *bufL,*bufR;
 static FM_CH     *chA,*chB,*chC,*chD,*chE,*chF,*chG,*chH;
-static int *pan[8];			/* pointer to outd[0-3]; */
-static int outd[4];			/*0=off,1=left,2=right,3=center */
+static signed int outd[4];
 
-/* operator connection work area */
+/* operator connection work */
 static int feedback2;		/* connect for operator 2 */
 static int feedback3;		/* connect for operator 3 */
 static int feedback4;		/* connect for operator 4 */
-static int carrier;			/* connect for carrier    */
 
 /* -------------------- External TimerHandler --------------------*/
 /* EXTimerHandler : Stop or Start timer    */
 /* int n       = chip number               */
 /* int c       = Channel 0=TimerA,1=TimerB */
 /* int timeSec = Timer overflow time       */
-void (* EXTimerHandler)(int n,int c,double timeSec) = 0;
+static void (* EXTimerHandler)(int n,int c,double timeSec) = 0;
 /* EXIRQHandler : IRQ level are changed    */
 /* int n       = chip number               */
 /* int irq     = IRQ level 0=OFF,1=ON      */
-void (* EXIRQHandler)(int n,int irq) = 0;
-
+static void (* EXIRQHandler)(int n,int irq) = 0;
 
 /* --------------- Customize External interface port (SSG,Timer,etc) ---------------*/
 #include "fmext.c"
 
 /* --------------------- subroutines  --------------------- */
 /* ----- key on  ----- */
-INLINE void FM_KEYON(FM_CH *CH , int s )
+static inline void FM_KEYON(FM_CH *CH , int s )
 {
 	FM_SLOT *SLOT = &CH->SLOT[s];
 	if( SLOT->evm<= ENV_MOD_RR)
@@ -506,12 +510,19 @@ INLINE void FM_KEYON(FM_CH *CH , int s )
 #endif
 		SLOT->evm = ENV_MOD_AR;
 		SLOT->evs = SLOT->evsa;
+#if 0
+		/* convert decay count to attack count */
+		/* --- This caused the problem by credit sound of paper boy. --- */
 		SLOT->evc = EG_AST + DRAR_TABLE[ENV_CURVE[SLOT->evc>>ENV_BITS]];/* + SLOT->evs;*/
+#else
+		/* reset attack counter */
+		SLOT->evc = EG_AST;
+#endif
 		SLOT->eve = EG_AED;
 	}
 }
 /* ----- key off ----- */
-INLINE void FM_KEYOFF(FM_CH *CH , int s )
+static inline void FM_KEYOFF(FM_CH *CH , int s )
 {
 	FM_SLOT *SLOT = &CH->SLOT[s];
 	if( SLOT->evm > ENV_MOD_RR)
@@ -526,13 +537,12 @@ INLINE void FM_KEYOFF(FM_CH *CH , int s )
 }
 
 /* ---------- calcrate Envelope Generator & Phase Generator ---------- */
-/* return == -1:envelope silent */
-/*        >=  0:envelope output */
-INLINE signed int FM_CALC_SLOT( FM_SLOT *SLOT )
+/* return : envelope output */
+static inline signed int FM_CALC_SLOT( FM_SLOT *SLOT )
 {
 	/* calcrate phage generator */
 	SLOT->Cnt += SLOT->Incr;
-
+	/* calcrate envelope generator */
 	if( (SLOT->evc+=SLOT->evs) >= SLOT->eve )
 	{
 		switch( SLOT->evm ){
@@ -613,13 +623,13 @@ INLINE signed int FM_CALC_SLOT( FM_SLOT *SLOT )
 #endif
 }
 
-/* set algorythm and self feedback */
-/* b0-2 : algorythm                */
-/* b3-5 : self feedback            */
-static void set_algorythm( FM_CH *CH , int algo_fb )
+/* set algorythm connection */
+static void set_algorythm( FM_CH *CH )
 {
+	signed int *carrier = &outd[CH->PAN];
+
 	/* setup connect algorythm */
-	switch( algo_fb & 7 ){
+	switch( CH->ALGO ){
 	case 0:
 		/*  PG---S1---S2---S3---S4---OUT */
 		CH->connect1 = &feedback2;
@@ -651,7 +661,7 @@ static void set_algorythm( FM_CH *CH , int algo_fb )
 		/* PG---S1---S2-+--OUT */
 		/* PG---S3---S4-+      */
 		CH->connect1 = &feedback2;
-		CH->connect2 = &carrier;
+		CH->connect2 = carrier;
 		CH->connect3 = &feedback4;
 		break;
 	case 5:
@@ -659,34 +669,31 @@ static void set_algorythm( FM_CH *CH , int algo_fb )
 		/* PG---S1-+-S3-+-OUT */
 		/*         +-S4-+     */
 		CH->connect1 = 0;	/* special mark */
-		CH->connect2 = &carrier;
-		CH->connect3 = &carrier;
+		CH->connect2 = carrier;
+		CH->connect3 = carrier;
 		break;
 	case 6:
 		/* PG---S1---S2-+     */
 		/* PG--------S3-+-OUT */
 		/* PG--------S4-+     */
 		CH->connect1 = &feedback2;
-		CH->connect2 = &carrier;
-		CH->connect3 = &carrier;
+		CH->connect2 = carrier;
+		CH->connect3 = carrier;
 		break;
 	case 7:
 		/* PG---S1-+     */
 		/* PG---S2-+-OUT */
 		/* PG---S3-+     */
 		/* PG---S4-+     */
-		CH->connect1 = &carrier;
-		CH->connect2 = &carrier;
-		CH->connect3 = &carrier;
+		CH->connect1 = carrier;
+		CH->connect2 = carrier;
+		CH->connect3 = carrier;
 	}
-	/* self feedback */
-	algo_fb = (algo_fb>>3) & 7;
-	CH->FB = algo_fb ? 8 - algo_fb : 0;
-	CH->op1_out = 0;
+	CH->connect4 = carrier;
 }
 
 /* set detune & multiple */
-INLINE void set_det_mul(FM_ST *ST,FM_CH *CH,FM_SLOT *SLOT,int v)
+static inline void set_det_mul(FM_ST *ST,FM_CH *CH,FM_SLOT *SLOT,int v)
 {
 	SLOT->mul = MUL_TABLE[v&0x0f];
 	SLOT->DT  = ST->DT_TABLE[(v>>4)&7];
@@ -694,7 +701,7 @@ INLINE void set_det_mul(FM_ST *ST,FM_CH *CH,FM_SLOT *SLOT,int v)
 }
 
 /* set total level */
-INLINE void set_tl(FM_CH *CH,FM_SLOT *SLOT , int v,int csmflag)
+static inline void set_tl(FM_CH *CH,FM_SLOT *SLOT , int v,int csmflag)
 {
 	v &= 0x7f;
 	v = (v<<7)|v; /* 7bit -> 14bit */
@@ -706,7 +713,7 @@ INLINE void set_tl(FM_CH *CH,FM_SLOT *SLOT , int v,int csmflag)
 }
 
 /* set attack rate & key scale  */
-INLINE void set_ar_ksr(FM_CH *CH,FM_SLOT *SLOT,int v,signed int *ar_table)
+static inline void set_ar_ksr(FM_CH *CH,FM_SLOT *SLOT,int v,signed int *ar_table)
 {
 	SLOT->KSR  = 3-(v>>6);
 	SLOT->AR   = (v&=0x1f) ? &ar_table[v<<1] : RATE_0;
@@ -715,21 +722,21 @@ INLINE void set_ar_ksr(FM_CH *CH,FM_SLOT *SLOT,int v,signed int *ar_table)
 	CH->SLOT[SLOT1].Incr=-1;
 }
 /* set decay rate */
-INLINE void set_dr(FM_SLOT *SLOT,int v,signed int *dr_table)
+static inline void set_dr(FM_SLOT *SLOT,int v,signed int *dr_table)
 {
 	SLOT->DR = (v&=0x1f) ? &dr_table[v<<1] : RATE_0;
 	SLOT->evsd = SLOT->DR[SLOT->ksr];
 	if( SLOT->evm == ENV_MOD_DR ) SLOT->evs = SLOT->evsd;
 }
 /* set sustain rate */
-INLINE void set_sr(FM_SLOT *SLOT,int v,signed int *dr_table)
+static inline void set_sr(FM_SLOT *SLOT,int v,signed int *dr_table)
 {
 	SLOT->SR = (v&=0x1f) ? &dr_table[v<<1] : RATE_0;
 	SLOT->evss = SLOT->SR[SLOT->ksr];
 	if( SLOT->evm == ENV_MOD_SR ) SLOT->evs = SLOT->evss;
 }
 /* set release rate */
-INLINE void set_sl_rr(FM_SLOT *SLOT,int v,signed int *dr_table)
+static inline void set_sl_rr(FM_SLOT *SLOT,int v,signed int *dr_table)
 {
 	SLOT->SL = SL_TABLE[(v>>4)];
 	SLOT->RR = &dr_table[((v&0x0f)<<2)|2];
@@ -738,68 +745,64 @@ INLINE void set_sl_rr(FM_SLOT *SLOT,int v,signed int *dr_table)
 }
 
 /* operator output calcrator */
-#define OP_OUT(slot,env,con)   SIN_TABLE[((slot->Cnt+con)/(0x1000000/SIN_ENT))&(SIN_ENT-1)][env]
+#define OP_OUT(slot,env,con)   SIN_TABLE[((slot.Cnt+con)/(0x1000000/SIN_ENT))&(SIN_ENT-1)][env]
 /* ---------- calcrate one of channel ---------- */
-INLINE int FM_CALC_CH( FM_CH *CH )
+static inline void FM_CALC_CH( FM_CH *CH )
 {
 	int op_out;
 	int env_out;
-	FM_SLOT *SLOT;
+
+	feedback2 = feedback3 = feedback4 = 0;
 
 	/* SLOT 1 */
-	SLOT = &CH->SLOT[SLOT1];
-	env_out=FM_CALC_SLOT(SLOT);
-
-	feedback2 = feedback3 = feedback4 = carrier = 0;
+	env_out=FM_CALC_SLOT(&CH->SLOT[SLOT1]);
 	if( env_out < EG_ENT-1 )
 	{
 		if( CH->FB ){
 			/* with self feed back */
 			op_out = CH->op1_out;
-			CH->op1_out = OP_OUT(SLOT,env_out,(CH->op1_out>>CH->FB) /* +LFOOut[SLOT->AMS]*/ );
+			CH->op1_out = OP_OUT(CH->SLOT[SLOT1],env_out,(CH->op1_out>>CH->FB) /* +LFOOut[SLOT->AMS]*/ );
 			op_out = (op_out + CH->op1_out)/2;
 		}else{
 			/* without self feed back */
-			op_out = OP_OUT(SLOT,env_out,0 /* +LFOOut[SLOT->AMS]*/ );
+			op_out = OP_OUT(CH->SLOT[SLOT1],env_out,0 /* +LFOOut[SLOT->AMS]*/ );
 		}
+		/* output slot1 */
 		if( !CH->connect1 )
 		{
 			/* algorythm 5  */
 			feedback2 = feedback3 = feedback4 = op_out;
 		}else{
 			/* other algorythm */
-			*CH->connect1 = op_out;
+			*CH->connect1 += op_out;
 		}
 	}
 	/* SLOT 2 */
-	SLOT = &CH->SLOT[SLOT2];
-	env_out=FM_CALC_SLOT(SLOT);
+	env_out=FM_CALC_SLOT(&CH->SLOT[SLOT2]);
 	if( env_out < EG_ENT-1 )
-		*CH->connect2 += OP_OUT(SLOT,env_out, feedback2 /* +LFOOut[SLOT->AMS]*/  );
+		*CH->connect2 += OP_OUT(CH->SLOT[SLOT2],env_out, feedback2 /* +LFOOut[SLOT->AMS]*/  );
 	/* SLOT 3 */
-	SLOT = &CH->SLOT[SLOT3];
-	env_out=FM_CALC_SLOT(SLOT);
+	env_out=FM_CALC_SLOT(&CH->SLOT[SLOT3]);
 	if( env_out < EG_ENT-1 )
-		*CH->connect3 += OP_OUT(SLOT,env_out, feedback3  /* +LFOOut[SLOT->AMS]*/ );
+		*CH->connect3 += OP_OUT(CH->SLOT[SLOT3],env_out, feedback3  /* +LFOOut[SLOT->AMS]*/ );
 	/* SLOT 4 */
-	SLOT = &CH->SLOT[SLOT4];
-	env_out=FM_CALC_SLOT(SLOT);
+	env_out=FM_CALC_SLOT(&CH->SLOT[SLOT4]);
 	if( env_out < EG_ENT-1 )
-		carrier       += OP_OUT(SLOT,env_out, feedback4  /* +LFOOut[SLOT->AMS]*/ );
-	return carrier;
+		*CH->connect4 += OP_OUT(CH->SLOT[SLOT4],env_out, feedback4  /* +LFOOut[SLOT->AMS]*/ );
 }
 /* ---------- frequency counter for operater update ---------- */
-INLINE void CALC_FCSLOT(FM_SLOT *SLOT , int fc , int kc )
+static inline void CALC_FCSLOT(FM_SLOT *SLOT , int fc , int kc )
 {
 	int ksr;
 
+	/* frequency step counter */
 	SLOT->Incr= (fc * SLOT->mul) + SLOT->DT[kc];
 
 	ksr = kc >> SLOT->KSR;
 	if( SLOT->ksr != ksr )
 	{
 		SLOT->ksr = ksr;
-		/* attack . decay rate recalcration */
+		/* attack , decay rate recalcration */
 		SLOT->evsa = SLOT->AR[ksr];
 		SLOT->evsd = SLOT->DR[ksr];
 		SLOT->evss = SLOT->SR[ksr];
@@ -809,7 +812,7 @@ INLINE void CALC_FCSLOT(FM_SLOT *SLOT , int fc , int kc )
 }
 
 /* ---------- frequency counter  ---------- */
-INLINE void CALC_FCOUNT(FM_CH *CH )
+static inline void CALC_FCOUNT(FM_CH *CH )
 {
 	if( CH->SLOT[SLOT1].Incr==-1){
 		int fc = CH->fc;
@@ -822,7 +825,7 @@ INLINE void CALC_FCOUNT(FM_CH *CH )
 }
 
 /* ---------- frequency counter  ---------- */
-INLINE void OPM_CALC_FCOUNT(YM2151 *OPM , FM_CH *CH )
+static inline void OPM_CALC_FCOUNT(YM2151 *OPM , FM_CH *CH )
 {
 	if( CH->SLOT[SLOT1].Incr==-1)
 	{
@@ -896,7 +899,7 @@ static void reset_channel( FM_ST *ST , FM_CH *ch , int chan )
 	for( c = 0 ; c < chan ; c++ )
 	{
 		ch[c].fc = 0;
-		ch[c].PAN = 3;
+		ch[c].PAN = OPN_CENTER; /* or OPM_CENTER */
 		for(s = 0 ; s < 4 ; s++ )
 		{
 			ch[c].SLOT[s].SEG = 0;
@@ -982,7 +985,7 @@ static void FMCloseTable( void )
 }
 
 /* OPN/OPM Mode  Register Write */
-INLINE void FMSetMode( FM_ST *ST ,int n,int v )
+static inline void FMSetMode( FM_ST *ST ,int n,int v )
 {
 	/* b7 = CSM MODE */
 	/* b6 = 3 slot mode */
@@ -1048,7 +1051,7 @@ INLINE void FMSetMode( FM_ST *ST ,int n,int v )
 
 
 /* Timer A Overflow */
-INLINE void TimerAOver(int n,FM_ST *ST)
+static inline void TimerAOver(int n,FM_ST *ST)
 {
 	if(ST->mode & 0x04)
 	{
@@ -1065,7 +1068,7 @@ INLINE void TimerAOver(int n,FM_ST *ST)
 	ST->TAC = 0;
 }
 /* Timer B Overflow */
-INLINE void TimerBOver(int n,FM_ST *ST)
+static inline void TimerBOver(int n,FM_ST *ST)
 {
 	if(ST->mode & 0x08)
 	{
@@ -1082,7 +1085,7 @@ INLINE void TimerBOver(int n,FM_ST *ST)
 	ST->TBC = 0;
 }
 /* CSM Key Controll */
-INLINE void CSMKeyControll(FM_CH *CH)
+static inline void CSMKeyControll(FM_CH *CH)
 {
 	int ksl = KSL[CH->kcode];
 	/* all key off */
@@ -1104,7 +1107,7 @@ INLINE void CSMKeyControll(FM_CH *CH)
 
 #ifdef INTERNAL_TIMER
 /* ---------- calcrate timer A ---------- */
-INLINE void CALC_TIMER_A(FM_ST *ST , FM_CH *CSM_CH )
+static inline void CALC_TIMER_A(FM_ST *ST , FM_CH *CSM_CH )
 {
 	if( ST->TAC &&  (EXTimerHandler==0) )
 	{
@@ -1117,7 +1120,7 @@ INLINE void CALC_TIMER_A(FM_ST *ST , FM_CH *CSM_CH )
 	}
 }
 /* ---------- calcrate timer B ---------- */
-INLINE void CALC_TIMER_B(FM_ST *ST,int step)
+static inline void CALC_TIMER_B(FM_ST *ST,int step)
 {
 	if( ST->TBC && (EXTimerHandler==0) )
 		if( (ST->TBC -= ST->freqbase*step) <= 0 )
@@ -1299,18 +1302,23 @@ static void OPNWriteReg(int n, int r, int v,FM_CH *EXCH)
 	case 0xb0:
 		switch( OPN_SLOT(r) ){
 		case 0:		/* 0xb0-0xb2 : FB,ALGO */
-			set_algorythm( CH , v );
-			/*if(errorlog) fprintf(errorlog,"OPN %d,%d : AL %d FB %d\n",n,c,v&7,(v>>3)&7);*/
+			{
+				int feedback = (v>>3)&7;
+				CH->ALGO = v&7;
+				CH->FB   = feedback ? 8 - feedback : 0;
+				set_algorythm( CH );
+			}
 			break;
-		case 1:	/* L , R , AMS , PMS (YM2612/YM2608) */
+		case 1:		/* 0xb4-0xb6 : L , R , AMS , PMS (YM2612/YM2608) */
 			/* b0-2 PMS */
 			/* 0,3.4,6.7,10,14,20,40,80(cent) */
 			SLOT->pms = (v>>4) & 0x07;
 			/* b4-5 AMS */
 			/* 0,1.4,5.9,11.8(dB) */
 			SLOT->ams = v & 0x03;
+			/* PAN */
 			CH->PAN = (v>>6)&0x03; /* PAN : b6 = R , b7 = L */
-			cur_chip = NULL;
+			set_algorythm( CH );
 			/* if(errorlog) fprintf(errorlog,"OPN %d,%d : PAN %d\n",n,c,CH->PAN);*/
 			break;
 		}
@@ -1334,7 +1342,7 @@ void YM2203ResetChip(int num)
 	OPNWriteMode(num,0x27,0x30,0); /* mode 0 , timer reset */
 	reset_channel( &OPN->ST , &OPN->CH[0] , 3 );
 	/* reset OPerator paramater */
-	for(i = 0xb6 ; i >= 0xb4 ; i-- ) OPNWriteReg(num,i,0xc0,0);
+	for(i = 0xb6 ; i >= 0xb4 ; i-- ) OPNWriteReg(num,i,0xc0,0); /* PAN RESET */
 	for(i = 0xb2 ; i >= 0x30 ; i-- ) OPNWriteReg(num,i,0,0);
 	for(i = 0x26 ; i >= 0x20 ; i-- ) OPNWriteReg(num,i,0,0);
 }
@@ -1452,13 +1460,16 @@ void YM2203UpdateOne(int num, int endp)
     for( i=State->bufp; i < endp ; ++i )
 	{
 		/*            channel A         channel B         channel C      */
-		opn_data  = FM_CALC_CH(chA) + FM_CALC_CH(chB) + FM_CALC_CH(chC);
+		outd[OPN_CENTER] = 0;
+		FM_CALC_CH(chA);
+		FM_CALC_CH(chB);
+		FM_CALC_CH(chC);
 		/* limit check */
-		if( opn_data > OPN_MAXOUT )      opn_data = OPN_MAXOUT;
-		else if( opn_data < OPN_MINOUT ) opn_data = OPN_MINOUT;
+		if( outd[OPN_CENTER]> OPN_MAXOUT ) outd[OPN_CENTER] = OPN_MAXOUT;
+		else if( outd[OPN_CENTER] < OPN_MINOUT ) outd[OPN_CENTER] = OPN_MINOUT;
 		/* store to sound buffer */
-		if( sample_16bit ) ((unsigned short *)buffer)[i] = opn_data >> OPN_OUTSB;
-		else           ((unsigned char  *)buffer)[i] = opn_data >> OPN_OUTSB_8;
+		if( sample_16bit ) ((unsigned short *)buffer)[i] = outd[OPN_CENTER] >> OPN_OUTSB;
+		else           ((unsigned char  *)buffer)[i]     = outd[OPN_CENTER] >> OPN_OUTSB_8;
 #ifdef INTERNAL_TIMER
 		/* timer controll */
 		CALC_TIMER_A( State , chC );
@@ -1480,7 +1491,6 @@ void YM2203Update(void)
 		FMOPN[i].ST.bufp = 0;
     }
 }
-
 
 /* ---------- return the buffer ---------- */
 FMSAMPLE *YM2203Buffer(int n)
@@ -1521,6 +1531,7 @@ int YM2203Write(int n,int a,int v)
 			 OPNWriteMode(n,addr,v,0);
 			break;
 		default:	/* 0x30-0xff : OPN section */
+			if( (addr & 0xfc)==0xb4 ) break;
 #ifdef SELF_UPDATE
 			/* update chip */
 			pos = FMUpdatePos();
@@ -1585,13 +1596,13 @@ int YM2203TimerOver(int n,int c)
 /*******************************************************************************/
 
 /* Get next pcm data */
-INLINE int YM2608ReadADPCM(int n)
+static inline int YM2608ReadADPCM(int n)
 {
 	YM2203 *F2203 = &(FMOPN[n]);
 	YM2608 *F2608 = &(FM2608[n]);
 	if( F2608->ADMode & 0x20 )
 	{	/* buffer memory */
-		/*F2203->ST.status |= 0x04;*/
+		/* F2203->ST.status |= 0x04; */
 		return 0;
 
 	}
@@ -1609,7 +1620,7 @@ INLINE int YM2608ReadADPCM(int n)
 }
 
 /* Put decoded data */
-INLINE void YM2608WriteADPCM(int n,int v)
+static inline void YM2608WriteADPCM(int n,int v)
 {
 	YM2203 *F2203 = &(FMOPN[n]);
 	YM2608 *F2608 = &(FM2608[n]);
@@ -1631,7 +1642,7 @@ INLINE void YM2608WriteADPCM(int n,int v)
 }
 
 /* ---------- ADPCM Register Write 0x100-0x10f ---------- */
-INLINE void YM2608ADPCMWrite(int n,int r,int v)
+static inline void YM2608ADPCMWrite(int n,int r,int v)
 {
 	YM2203 *F2203 = &(FMOPN[n]);
 	YM2608 *F2608 = &(FM2608[n]);
@@ -1708,7 +1719,7 @@ INLINE void YM2608ADPCMWrite(int n,int r,int v)
 }
 
 /* ---------- Rhythm Register Write 0x10-0x1f ---------- */
-INLINE void YM2608RhythmWrite(int n,int r,int v)
+static inline void YM2608RhythmWrite(int n,int r,int v)
 {
 	YM2608 *F2608 = &(FM2608[n]);
 	int c;
@@ -1752,7 +1763,7 @@ INLINE void YM2608RhythmWrite(int n,int r,int v)
 }
 
 /* ---------- IRQ flag Controll Write 0x110 ---------- */
-INLINE void YM2608IRQFlagWrite(FM_ST *ST,int n,int v)
+static inline void YM2608IRQFlagWrite(FM_ST *ST,int n,int v)
 {
 	if( v & 0x80 )
 	{	/* Reset IRQ flag */
@@ -1814,12 +1825,6 @@ void YM2608UpdateOne(int num, int endp)
 		chD   = &F2608->CH[0];
 		chE   = &F2608->CH[1];
 		chF   = &F2608->CH[2];
-		pan[0] = &outd[chA->PAN];
-		pan[1] = &outd[chB->PAN];
-		pan[2] = &outd[chC->PAN];
-		pan[3] = &outd[chD->PAN];
-		pan[4] = &outd[chE->PAN];
-		pan[5] = &outd[chF->PAN];
 	}
 	/* update frequency counter */
 	CALC_FCOUNT( chA );
@@ -1843,12 +1848,12 @@ void YM2608UpdateOne(int num, int endp)
 		/* clear output acc. */
 		outd[OPN_LEFT] = outd[OPN_RIGHT]= outd[OPN_CENTER] = 0;
 		/* calcrate channel output */
-		*pan[0] += FM_CALC_CH( chA );
-		*pan[1] += FM_CALC_CH( chB );
-		*pan[2] += FM_CALC_CH( chC );
-		*pan[3] += FM_CALC_CH( chD );
-		*pan[4] += FM_CALC_CH( chE );
-		*pan[5] += FM_CALC_CH( chF );
+		FM_CALC_CH( chA );
+		FM_CALC_CH( chB );
+		FM_CALC_CH( chC );
+		FM_CALC_CH( chD );
+		FM_CALC_CH( chE );
+		FM_CALC_CH( chF );
 		/* get left & right output */
 		dataL = outd[OPN_CENTER] + outd[OPN_LEFT];
 		dataR = outd[OPN_CENTER] + outd[OPN_RIGHT];
@@ -1862,7 +1867,7 @@ void YM2608UpdateOne(int num, int endp)
 		{
 #ifdef FM_STEREO_MIX		/* stereo mixing */
 			/* stereo mix */
-			((unsigned long *)bufL)[i] = ((dataL>>OPN_OUTSB)<<16)(dataR>>OPN_OUTSB);
+			((unsigned long *)bufL)[i] = ((dataL>>OPN_OUTSB)<<16)|(dataR>>OPN_OUTSB);
 #else
 			/* stereo separate */
 			((unsigned short *)bufL)[i] = dataL>>OPN_OUTSB;
@@ -1873,7 +1878,7 @@ void YM2608UpdateOne(int num, int endp)
 		{
 #ifdef FM_STEREO_MIX		/* stereo mixing */
 			/* stereo mix */
-			((unsigned shart *)bufL)[i] = ((dataL>>OPN_OUTSB_8)<<8)(dataR>>OPN_OUTSB_8);
+			((unsigned shart *)bufL)[i] = ((dataL>>OPN_OUTSB_8)<<8)|(dataR>>OPN_OUTSB_8);
 #else
 			/* stereo separate */
 			((unsigned char *)bufL)[i] = dataL>>OPN_OUTSB_8;
@@ -2168,12 +2173,6 @@ void YM2612UpdateOne(int num, int endp)
 		chD   = &F2612->CH[0];
 		chE   = &F2612->CH[1];
 		chF   = &F2612->CH[2];
-		pan[0] = &outd[chA->PAN];
-		pan[1] = &outd[chB->PAN];
-		pan[2] = &outd[chC->PAN];
-		pan[3] = &outd[chD->PAN];
-		pan[4] = &outd[chE->PAN];
-		pan[5] = &outd[chF->PAN];
 	}
 	/* update frequency counter */
 	CALC_FCOUNT( chA );
@@ -2197,12 +2196,14 @@ void YM2612UpdateOne(int num, int endp)
 		/* clear output acc. */
 		outd[OPN_LEFT] = outd[OPN_RIGHT]= outd[OPN_CENTER] = 0;
 		/* calcrate channel output */
-		*pan[0] += FM_CALC_CH( chA );
-		*pan[1] += FM_CALC_CH( chB );
-		*pan[2] += FM_CALC_CH( chC );
-		*pan[3] += FM_CALC_CH( chD );
-		*pan[4] += FM_CALC_CH( chE );
-		*pan[5] += dacen ?  dacout : FM_CALC_CH( chF );
+		FM_CALC_CH( chA );
+		FM_CALC_CH( chB );
+		FM_CALC_CH( chC );
+		FM_CALC_CH( chD );
+		FM_CALC_CH( chE );
+		*
+		if( dacen )  *CH->connect4 += dacout
+		else         FM_CALC_CH( chF );
 		/* get left & right output */
 		dataL = outd[OPN_CENTER] + outd[OPN_LEFT];
 		dataR = outd[OPN_CENTER] + outd[OPN_RIGHT];
@@ -2216,7 +2217,7 @@ void YM2612UpdateOne(int num, int endp)
 		{
 #ifdef FM_STEREO_MIX		/* stereo mixing */
 			/* stereo mix */
-			((unsigned long *)bufL)[i] = ((dataL>>OPN_OUTSB)<<16)(dataR>>OPN_OUTSB);
+			((unsigned long *)bufL)[i] = ((dataL>>OPN_OUTSB)<<16)|(dataR>>OPN_OUTSB);
 #else
 			/* stereo separate */
 			((unsigned short *)bufL)[i] = dataL>>OPN_OUTSB;
@@ -2227,7 +2228,7 @@ void YM2612UpdateOne(int num, int endp)
 		{
 #ifdef FM_STEREO_MIX		/* stereo mixing */
 			/* stereo mix */
-			((unsigned shart *)bufL)[i] = ((dataL>>OPN_OUTSB_8)<<8)(dataR>>OPN_OUTSB_8);
+			((unsigned shart *)bufL)[i] = ((dataL>>OPN_OUTSB_8)<<8)|(dataR>>OPN_OUTSB_8);
 #else
 			/* stereo separate */
 			((unsigned char *)bufL)[i] = dataL>>OPN_OUTSB_8;
@@ -2641,10 +2642,13 @@ void OPMWriteReg(int n, int r, int v)
 	case 0x20:	/* 20-3f */
 		switch( OPM_SLOT(r) ){
 		case 0: /* 0x20-0x27 : RL,FB,CON */
-			set_algorythm( CH , v );
-			/* b0 = left , b1 = right */
-			CH->PAN = ((v>>6)&0x03);
-			if( cur_chip == OPM ) pan[c] = &outd[CH->PAN];
+			{
+				int feedback = (v>>3)&7;
+				CH->ALGO = v&7;
+				CH->FB  = feedback ? 8 - feedback : 0;
+				CH->PAN = ((v>>6)&0x03);
+				set_algorythm( CH );
+			}
 			break;
 		case 1: /* 0x28-0x2f : Keycode */
 			{
@@ -2761,14 +2765,6 @@ void OPMUpdateOne(int num , int endp)
 		chF = &OPM->CH[5];
 		chG = &OPM->CH[6];
 		chH = &OPM->CH[7];
-		pan[0] = &outd[chA->PAN];
-		pan[1] = &outd[chB->PAN];
-		pan[2] = &outd[chC->PAN];
-		pan[3] = &outd[chD->PAN];
-		pan[4] = &outd[chE->PAN];
-		pan[5] = &outd[chF->PAN];
-		pan[6] = &outd[chG->PAN];
-		pan[7] = &outd[chH->PAN];
 	}
 	OPM_CALC_FCOUNT( OPM , chA );
 	OPM_CALC_FCOUNT( OPM , chB );
@@ -2785,14 +2781,14 @@ void OPMUpdateOne(int num , int endp)
 		/* clear output acc. */
 		outd[OPM_LEFT] = outd[OPM_RIGHT]= outd[OPM_CENTER] = 0;
 		/* calcrate channel output */
-		*pan[0] += FM_CALC_CH( chA );
-		*pan[1] += FM_CALC_CH( chB );
-		*pan[2] += FM_CALC_CH( chC );
-		*pan[3] += FM_CALC_CH( chD );
-		*pan[4] += FM_CALC_CH( chE );
-		*pan[5] += FM_CALC_CH( chF );
-		*pan[6] += FM_CALC_CH( chG );
-		*pan[7] += FM_CALC_CH( chH );
+		FM_CALC_CH( chA );
+		FM_CALC_CH( chB );
+		FM_CALC_CH( chC );
+		FM_CALC_CH( chD );
+		FM_CALC_CH( chE );
+		FM_CALC_CH( chF );
+		FM_CALC_CH( chG );
+		FM_CALC_CH( chH );
 		/* get left & right output */
 		dataL = outd[OPM_CENTER] + outd[OPM_LEFT];
 		dataR = outd[OPM_CENTER] + outd[OPM_RIGHT];
@@ -2806,7 +2802,7 @@ void OPMUpdateOne(int num , int endp)
 		{
 #ifdef FM_STEREO_MIX		/* stereo mixing */
 			/* stereo mix */
-			((unsigned long *)bufL)[i] = ((dataL>>OPM_OUTSB)<<16)(dataR>>OPM_OUTSB);
+			((unsigned long *)bufL)[i] = ((dataL>>OPM_OUTSB)<<16)|(dataR>>OPM_OUTSB);
 #else
 			/* stereo separate */
 			((unsigned short *)bufL)[i] = dataL>>OPM_OUTSB;
@@ -2817,7 +2813,7 @@ void OPMUpdateOne(int num , int endp)
 		{
 #ifdef FM_STEREO_MIX		/* stereo mixing */
 			/* stereo mix */
-			((unsigned shart *)bufL)[i] = ((dataL>>OPM_OUTSB_8)<<8)(dataR>>OPM_OUTSB_8);
+			((unsigned shart *)bufL)[i] = ((dataL>>OPM_OUTSB_8)<<8)|(dataR>>OPM_OUTSB_8);
 #else
 			/* stereo separate */
 			((unsigned char *)bufL)[i] = dataL>>OPM_OUTSB_8;

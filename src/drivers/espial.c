@@ -389,6 +389,7 @@ struct GameDriver espial_driver =
 	"Brad Oliver\nNicola Salmoria\nTim Lindquist (color info)\nJuan Carlos Lorente (high score save)",
 	0,
 	&machine_driver,
+	0,
 
 	espial_rom,
 	0, 0,
@@ -414,6 +415,7 @@ struct GameDriver espiale_driver =
 	"Brad Oliver\nNicola Salmoria\nTim Lindquist (color info)\nJuan Carlos Lorente (high score save)",
 	0,
 	&machine_driver,
+	0,
 
 	espiale_rom,
 	0, 0,

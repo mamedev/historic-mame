@@ -400,6 +400,7 @@ struct GameDriver friskyt_driver =
 	"Mirko Buffoni\nNicola Salmoria",
 	GAME_NOT_WORKING,
 	&machine_driver,
+	0,
 
 	friskyt_rom,
 	0, 0,
@@ -425,6 +426,7 @@ struct GameDriver seicross_driver =
 	"Mirko Buffoni\nNicola Salmoria",
 	GAME_NOT_WORKING,
 	&machine_driver,
+	0,
 
 	seicross_rom,
 	0, 0,

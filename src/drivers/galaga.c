@@ -668,6 +668,7 @@ struct GameDriver galaga_driver =
 	"Martin Scragg (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (additional code)\nValerio Verrando (high score fix)",
 	0,
 	&machine_driver,
+	0,
 
 	galaga_rom,
 	0, 0,
@@ -693,6 +694,7 @@ struct GameDriver galagamw_driver =
 	"Martin Scragg (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (additional code)\nValerio Verrando (high score fix)",
 	0,
 	&machine_driver,
+	0,
 
 	galagamw_rom,
 	0, 0,
@@ -718,6 +720,7 @@ struct GameDriver galagads_driver =
 	"Martin Scragg (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (additional code)\nValerio Verrando (high score fix)",
 	0,
 	&machine_driver,
+	0,
 
 	galagads_rom,
 	0, 0,
@@ -743,6 +746,7 @@ struct GameDriver gallag_driver =
 	"Martin Scragg (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (additional code)\nValerio Verrando (high score fix)",
 	0,
 	&machine_driver,
+	0,
 
 	gallag_rom,
 	0, 0,
@@ -768,6 +772,7 @@ struct GameDriver galagab2_driver =
 	"Martin Scragg (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (additional code)\nValerio Verrando (high score fix)",
 	0,
 	&machine_driver,
+	0,
 
 	galagab2_rom,
 	0, 0,

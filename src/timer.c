@@ -452,7 +452,11 @@ int timer_schedule_cpu (int *cpu, int *cycles)
 
 		/* call the callback */
 		if (timer->callback)
+		{
+			osd_profiler(OSD_PROFILE_TIMER_CALLBACK);
 			(*timer->callback)(timer->callback_param);
+			osd_profiler(OSD_PROFILE_END);
+		}
 
 		/* reset or remove the timer */
 		if (timer->period)

@@ -319,6 +319,7 @@ struct GameDriver sidepckt_driver =
     "Ernesto Corvi\nMarc Vergoossen (hardware info)",
 	0,
     &machine_driver,
+	0,
 
     sidepckt_rom,
     0, 0,

@@ -610,6 +610,7 @@ struct GameDriver wow_driver =
 	"Nicola Salmoria (MAME driver)\nSteve Scavone (info and code)\nJim Hernandez (hardware info)\nMike Coates (additional code)\nMike Balfour (high score save)\nKevin Estep (samples)\nAlex Judd (sound programming)\nFrank Palazzolo",
 	0,
 	&wow_machine_driver,
+	0,
 
 	wow_rom,
 	0, 0,
@@ -813,6 +814,7 @@ struct GameDriver robby_driver =
 	"Nicola Salmoria (MAME driver)\nSteve Scavone (info and code)\nMike Coates (additional code)\nMike Balfour (high score save)\nFrank Palazzolo",
 	0,
 	&robby_machine_driver,
+	0,
 
 	robby_rom,
 	0, 0,
@@ -1075,6 +1077,7 @@ struct GameDriver gorf_driver =
     "Nicola Salmoria (MAME driver)\nSteve Scavone (info and code)\nMike Coates (game support)\nMike Balfour (high score save)\nKevin Estep (samples)\nAlex Judd (word sound driver)\nFrank Palazzolo",
 	0,
 	&gorf_machine_driver,
+	0,
 
 	gorf_rom,
 	0, 0,
@@ -1100,6 +1103,7 @@ struct GameDriver gorfpgm1_driver =
     "Nicola Salmoria (MAME driver)\nSteve Scavone (info and code)\nMike Coates (game support)\nMike Balfour (high score save)\nKevin Estep (samples)\nAlex Judd (word sound driver)\nFrank Palazzolo",
 	0,
 	&gorf_machine_driver,
+	0,
 
 	gorfpgm1_rom,
 	0, 0,
@@ -1271,6 +1275,7 @@ struct GameDriver spacezap_driver =
 	"Nicola Salmoria (MAME driver)\nSteve Scavone (info and code)\nMike Coates (game support)\nMike Balfour (high score save)\nFrank Palazzolo",
 	0,
 	&spacezap_machine_driver,
+	0,
 
 	spacezap_rom,
 	0, 0,
@@ -1478,6 +1483,7 @@ struct GameDriver seawolf2_driver =
 	"Nicola Salmoria (MAME driver)\nSteve Scavone (info and code)\nMike Coates (game support)\nMike Balfour (high score support)",
 	0,
 	&seawolf_machine_driver,
+	0,
 
 	seawolf2_rom,
 	0, 0,
@@ -1649,6 +1655,7 @@ struct GameDriver ebases_driver =
 	"Alex Judd (MAME driver)\nSteve Scavone (info and code)\nMike Coates (game support)\nMike Balfour (high score support)\nFrank Palazzolo",
 	GAME_NOT_WORKING,
 	&ebases_machine_driver,
+	0,
 
 	ebases_rom,
 	0, 0,

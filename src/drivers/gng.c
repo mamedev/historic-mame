@@ -857,6 +857,7 @@ struct GameDriver gng_driver =
 	"Roberto Ventura\nMirko Buffoni\nNicola Salmoria\nGabrio Secco\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	gng_rom,
 	0, 0,
@@ -882,6 +883,7 @@ struct GameDriver gngt_driver =
 	"Roberto Ventura\nMirko Buffoni\nNicola Salmoria\nGabrio Secco\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	gngt_rom,
 	0, 0,
@@ -907,6 +909,7 @@ struct GameDriver gngcross_driver =
 	"Roberto Ventura\nMirko Buffoni\nNicola Salmoria\nGabrio Secco\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	gngcross_rom,
 	0, 0,
@@ -932,6 +935,7 @@ struct GameDriver gngjap_driver =
 	"Roberto Ventura\nMirko Buffoni\nNicola Salmoria\nGabrio Secco\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	gngjap_rom,
 	0, 0,
@@ -957,6 +961,7 @@ struct GameDriver diamond_driver =
 	"Roberto Ventura\nMirko Buffoni\nNicola Salmoria\nMike Balfour",
 	0,
 	&machine_driver,
+	0,
 
 	diamond_rom,
 	0, 0,

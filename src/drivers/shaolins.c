@@ -373,6 +373,7 @@ struct GameDriver kicker_driver =
 	"Allard Van Der Bas (MAME driver)\nMirko Buffoni (additional code)\nPhil Stroffolino (additional code)\nGerrit Van Goethem (high score save)\nGerald Vanderick (color info)",
 	0,
 	&shaolins_machine_driver,
+	0,
 
 	kicker_rom,
 	0, 0,
@@ -398,6 +399,7 @@ struct GameDriver shaolins_driver =
 	"Allard Van Der Bas (MAME driver)\nMirko Buffoni (additional code)\nPhil Stroffolino (additional code)\nGerrit Van Goethem (high score save)\nGerald Vanderick (color info)",
 	0,
 	&shaolins_machine_driver,
+	0,
 
 	shaolins_rom,
 	0, 0,

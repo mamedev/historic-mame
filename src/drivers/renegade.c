@@ -657,6 +657,7 @@ struct GameDriver renegade_driver =
 	"Phil Stroffolino\nCarlos A. Lozano\nRob Rosenbrock",
 	GAME_NOT_WORKING,
 	&renegade_machine_driver,
+	0,
 
 	renegade_rom,
 	0, 0,
@@ -682,6 +683,7 @@ struct GameDriver kuniokub_driver =
 	"Phil Stroffolino\nCarlos A. Lozano\nRob Rosenbrock",
 	0,
 	&renegade_machine_driver,
+	0,
 
 	kuniokun_rom,
 	0, 0,

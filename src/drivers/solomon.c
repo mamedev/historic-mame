@@ -330,6 +330,7 @@ struct GameDriver solomon_driver =
 	"Mirko Buffoni",
 	0,
 	&solomon_machine_driver,
+	0,
 
 	solomon_rom,
 	0, 0,

@@ -51,6 +51,7 @@ int Dasm6809 (char *buffer, int pc);
 int Dasm68000 (unsigned char *pBase, char *buffer, int pc);
 int DasmT11 (unsigned char *pBase, char *buffer, int pc);	/* ASG 030598 */
 int Dasm34010 (unsigned char *pBase, char *buffer, int pc);
+int DasmI86 (unsigned char *pBase, char *buffer, int pc); /* AM 980925 */
 
 /* JB 980214 */
 void asg_2650Trace(unsigned char *RAM, int PC);
@@ -67,6 +68,7 @@ void asg_8085Trace(unsigned char *RAM, int PC);
 void asg_8039Trace(unsigned char *RAM, int PC);
 void asg_T11Trace(unsigned char *RAM, int PC);	/* ASG 030598 */
 void asg_34010Trace(unsigned char *RAM, int PC); /* AJP 080298 */
+void asg_I86Trace(unsigned char *RAM, int PC); /* AM 980925 */
 extern int traceon;
 
 extern int CurrentVolume;
@@ -105,13 +107,14 @@ void DummyTrace(int PC){;}	/* JB 980214 */
 int TempDasm6808 (char *buffer, int pc) { return (Dasm6808 (&ROM[pc], buffer, pc)); }
 int TempDasm6805 (char *buffer, int pc) { return (Dasm6805 (&ROM[pc], buffer, pc)); }
 int TempDasm6809 (char *buffer, int pc) { return (Dasm6809 (buffer, pc)); }
-int TempDasm68000 (char *buffer, int pc){ return (Dasm68000 (&ROM[pc], buffer, pc));}
+int TempDasm68000 (char *buffer, int pc){ return (Dasm68000 (&OP_ROM[pc], buffer, pc));}
 int TempDasm8085 (char *buffer, int pc)  { return (Dasm8085 (buffer, pc)); }
 int TempDasm8039 (char *buffer, int pc)  { return (Dasm8039 (buffer, &ROM[pc])); }
 int TempDasmT11 (char *buffer, int pc){ return (DasmT11 (&ROM[pc], buffer, pc));}	/* ASG 030598 */
 int TempDasmZ80 (char *buffer, int pc)  { return (DasmZ80 (buffer, pc)); }
 int TempDasm2650 (char *buffer, int pc) { return (Dasm2650 (buffer, pc)); }
 int TempDasm34010 (char *buffer, int pc){ return (Dasm34010 (&OP_ROM[((unsigned int) pc)>>3], buffer, pc));}
+int TempDasmI86 (char *buffer, int pc) { return (DasmI86 (&OP_ROM[pc], buffer, pc));}	/* AM 980925 */
 
 /* JB 980214 */
 void TempZ80Trace (int PC) { asg_Z80Trace (ROM, PC); }
@@ -125,6 +128,7 @@ void Temp2650Trace (int PC) { asg_2650Trace (ROM, PC); } /* HJB 110698 */
 void Temp8039Trace (int PC) { asg_8039Trace (ROM, PC); } /* AM 200698 */
 void TempT11Trace (int PC) { asg_T11Trace (ROM, PC); }  /* ASG 030598 */
 void Temp34010Trace (int PC) { asg_34010Trace (OP_ROM, PC); }  /* AJP 080298 */
+void TempI86Trace (int PC) { asg_I86Trace (ROM, PC); }  /* AM 980925 */
 
 /* Commands functions */
 static int ModifyRegisters(char *param);
@@ -529,8 +533,8 @@ static tDebugCpuInfo DebugInfo[] =
 	{
 		"I86", 21,
 		DrawDebugScreen16,
-		DummyDasm, DummyTrace, 20, 10,
-		"................", (int *)&((i86_Regs *)rgs)->flags, 16,
+		TempDasmI86, TempI86Trace,  20, 10,
+		"....ODITSZ.A.P.C", (int *)&((i86_Regs *)rgs)->flags, 16,
 		"%06X:     ", 0xffffff,
 		32, 40, 62, 8,
 		5, 1,					/* CM 980428 */

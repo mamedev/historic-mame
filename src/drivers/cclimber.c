@@ -637,12 +637,12 @@ ROM_START( ccboot_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "m11.bin",      0x0000, 0x1000, 0x5efbe180 )
 	ROM_LOAD( "m10.bin",      0x1000, 0x1000, 0xbe2748c7 )
-	ROM_LOAD( "m09.bin",      0x2000, 0x1000, 0x26489069 )
+	ROM_LOAD( "cc09j.bin",    0x2000, 0x1000, 0x26489069 )
 	ROM_LOAD( "m08.bin",      0x3000, 0x1000, 0xe3c542d6 )
-	ROM_LOAD( "m07.bin",      0x4000, 0x1000, 0xfbc9626c )
+	ROM_LOAD( "cc07j.bin",    0x4000, 0x1000, 0xfbc9626c )
 
 	ROM_REGION_DISPOSE(0x5000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "m06.bin",      0x0000, 0x0800, 0x481b64cc )
+	ROM_LOAD( "cc06",         0x0000, 0x0800, 0x481b64cc )
 	/* empty hole - Crazy Kong has an additional ROM here */
 	ROM_LOAD( "m04.bin",      0x1000, 0x0800, 0x6fb80538 )
 	/* empty hole - Crazy Kong has an additional ROM here */
@@ -659,8 +659,8 @@ ROM_START( ccboot_rom )
 	ROM_LOAD( "cclimber.pr3", 0x0040, 0x20, 0x71317756 )
 
 	ROM_REGION(0x2000)      /* samples */
-	ROM_LOAD( "m13.bin",      0x0000, 0x1000, 0x5f0bcdfb )
-	ROM_LOAD( "m12.bin",      0x1000, 0x1000, 0x9003ffbd )
+	ROM_LOAD( "cc13j.bin",    0x0000, 0x1000, 0x5f0bcdfb )
+	ROM_LOAD( "cc12j.bin",    0x1000, 0x1000, 0x9003ffbd )
 ROM_END
 
 static void ccjap_decode(void)
@@ -1072,6 +1072,7 @@ struct GameDriver cclimber_driver =
 	"Lionel Theunissen (hardware info and ROM decryption)\nNicola Salmoria (MAME driver)",
 	0,
 	&machine_driver,
+	0,
 
 	cclimber_rom,
 	0, cclimber_decode,
@@ -1097,6 +1098,7 @@ struct GameDriver ccjap_driver =
 	"Lionel Theunissen (hardware info and ROM decryption)\nNicola Salmoria (MAME driver)",
 	0,
 	&machine_driver,
+	0,
 
 	ccjap_rom,
 	0, ccjap_decode,
@@ -1122,6 +1124,7 @@ struct GameDriver ccboot_driver =
 	"Lionel Theunissen (hardware info and ROM decryption)\nNicola Salmoria (MAME driver)",
 	0,
 	&machine_driver,
+	0,
 
 	ccboot_rom,
 	0, ccjap_decode,
@@ -1149,6 +1152,7 @@ struct GameDriver ckong_driver =
 	"Nicola Salmoria (MAME driver)\nVille Laitinen (adaptation from Crazy Climber)\nDoug Jefferys (color info)\nTim Lindquist (color info)",
 	0,
 	&machine_driver,
+	0,
 
 	ckong_rom,
 	0, 0,
@@ -1174,6 +1178,7 @@ struct GameDriver ckonga_driver =
 	"Nicola Salmoria (MAME driver)\nVille Laitinen (adaptation from Crazy Climber)\nDoug Jefferys (color info)\nTim Lindquist (color info)",
 	0,
 	&machine_driver,
+	0,
 
 	ckonga_rom,
 	0, 0,
@@ -1199,6 +1204,7 @@ struct GameDriver ckongjeu_driver =
 	"Nicola Salmoria (MAME driver)\nVille Laitinen (adaptation from Crazy Climber)\nDoug Jefferys (color info)\nTim Lindquist (color info)",
 	0,
 	&machine_driver,
+	0,
 
 	ckongjeu_rom,
 	0, 0,
@@ -1224,6 +1230,7 @@ struct GameDriver ckongalc_driver =
 	"Nicola Salmoria (MAME driver)\nVille Laitinen (adaptation from Crazy Climber)\nDoug Jefferys (color info)\nTim Lindquist (color info)\nLee Taylor",
 	0,
 	&machine_driver,
+	0,
 
 	ckongalc_rom,
 	0, 0,
@@ -1249,6 +1256,7 @@ struct GameDriver monkeyd_driver =
 	"Nicola Salmoria (MAME driver)\nVille Laitinen (adaptation from Crazy Climber)\nDoug Jefferys (color info)\nTim Lindquist (color info)\nLee Taylor",
 	GAME_WRONG_COLORS,
 	&machine_driver,
+	0,
 
 	monkeyd_rom,
 	0, 0,
@@ -1274,6 +1282,7 @@ struct GameDriver rpatrolb_driver =
 	"Zsolt Vasvari",
 	0,
 	&machine_driver,
+	0,
 
 	rpatrolb_rom,
 	0, 0,
@@ -1299,6 +1308,7 @@ struct GameDriver silvland_driver =
 	"Zsolt Vasvari",
 	0,
 	&machine_driver,
+	0,
 
     silvland_rom,
 	0, 0,
@@ -1825,6 +1835,7 @@ struct GameDriver swimmer_driver =
 	"Brad Oliver",
 	GAME_IMPERFECT_COLORS,
 	&swimmer_machine_driver,
+	0,
 
 	swimmer_rom,
 	0, 0,
@@ -1850,6 +1861,7 @@ struct GameDriver swimmera_driver =
 	"Brad Oliver",
 	GAME_IMPERFECT_COLORS,
 	&swimmer_machine_driver,
+	0,
 
 	swimmera_rom,
 	0, 0,
@@ -1875,6 +1887,7 @@ struct GameDriver guzzler_driver =
 	"Mirko Buffoni (MAME driver)\nGerald Vanderick (color info)\nAUC-L (SM) Valerio Verrando\n(high score save)",
 	0,
 	&swimmer_machine_driver,
+	0,
 
 	guzzler_rom,
 	0, 0,

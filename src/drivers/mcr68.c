@@ -571,6 +571,7 @@ struct GameDriver xenophob_driver =
 	"Bryan McPhail\n",
 	0,
 	&mcr68_machine_driver,
+	0,
 
 	xenophob_rom,
 	0, 0,
@@ -596,6 +597,7 @@ struct GameDriver spyhunt2_driver =
 	"Bryan McPhail\n",
 	0,
 	&mcr68_machine_driver,
+	0,
 
 	spyhunt2_rom,
 	0, 0,
@@ -621,6 +623,7 @@ struct GameDriver blasted_driver =
 	"Bryan McPhail\n",
 	0,
 	&mcr68_machine_driver,
+	0,
 
 	blasted_rom,
 	0, 0,
@@ -646,6 +649,7 @@ struct GameDriver zwackery_driver =
 	"Bryan McPhail\n",
 	0,
 	&zwackery_machine_driver,
+	0,
 
 	zwackery_rom,
 	0, 0,

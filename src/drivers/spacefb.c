@@ -463,6 +463,7 @@ struct GameDriver spacefb_driver =
 	"Chris Hardy\nAndy Clark\nPaul Johnson\nChris Moore (high score save)\nMarco Cassili\nDan Boris (sound)",
 	GAME_IMPERFECT_COLORS,
 	&machine_driver,
+	0,
 
 	spacefb_rom,
 	0, 0,

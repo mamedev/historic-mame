@@ -430,6 +430,7 @@ struct GameDriver centiped_driver =
 	"Ivan Mackintosh (hardware info)\nEdward Massey (MageX emulator)\nPete Rittwage (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (MAME driver)\nBrad Oliver (additional code)",
 	0,
 	&machine_driver,
+	0,
 
 	centiped_rom,
 	0, 0,
@@ -455,6 +456,7 @@ struct GameDriver centipd2_driver =
 	"Ivan Mackintosh (hardware info)\nEdward Massey (MageX emulator)\nPete Rittwage (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (MAME driver)\nBrad Oliver (additional code)",
 	GAME_NOT_WORKING,
 	&machine_driver,
+	0,
 
 	centipd2_rom,
 	0, 0,

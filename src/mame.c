@@ -1,7 +1,7 @@
 #include "driver.h"
 
 
-char mameversion[] = "0.34 ("__DATE__")";
+char mameversion[] = "0.34 BETA 5 ("__DATE__")";
 
 static struct RunningMachine machine;
 struct RunningMachine *Machine = &machine;
@@ -13,7 +13,6 @@ int mame_debug; /* !0 when -debug option is specified */
 
 int frameskip;
 int VolumePTR = 0;
-int CurrentVolume = 100;
 static int settingsloaded;
 
 int bitmap_dirty;	/* set by layer_mark_full_screen_dirty() */
@@ -109,13 +108,13 @@ int run_game(int game, struct GameOptions *options)
 ***************************************************************************/
 int init_machine(void)
 {
-	if (gamedrv->new_input_ports)
+	if (gamedrv->input_ports)
 	{
 		int total;
 		const struct InputPort *from;
 		struct InputPort *to;
 
-		from = gamedrv->new_input_ports;
+		from = gamedrv->input_ports;
 
 		total = 0;
 		do
@@ -126,7 +125,7 @@ int init_machine(void)
 		if ((Machine->input_ports = malloc(total * sizeof(struct InputPort))) == 0)
 			return 1;
 
-		from = gamedrv->new_input_ports;
+		from = gamedrv->input_ports;
 		to = Machine->input_ports;
 
 		do
@@ -195,6 +194,8 @@ int init_machine(void)
 		free(Machine->input_ports);
 		return 1;
 	}
+
+	if (gamedrv->driver_init) (*gamedrv->driver_init)();
 
 	if (Machine->drv->sh_init && (*Machine->drv->sh_init)(gamedrv->name) != 0)
 		/* TODO: should also free the resources allocated before */
@@ -284,13 +285,6 @@ static int vh_open(void)
 		}
 	}
 
-	/* build our private user interface font */
-	if ((Machine->uifont = builduifont()) == 0)
-	{
-		vh_close();
-		return 1;
-	}
-
 
 	/* if the GfxLayer system is enabled, create the dirty map needed by the */
 	/* OS dependant code to selectively refresh the screen. */
@@ -323,6 +317,17 @@ static int vh_open(void)
 		return 1;
 	}
 
+	/* build our private user interface font */
+	/* This must be done AFTER osd_create_display() so the function knows the */
+	/* resolution we are running at and can pick a different font depending on it. */
+	/* It must be done BEFORE palette_init() because that will also initialize */
+	/* (through osd_allocate_colors()) the uifont colortable. */
+	if ((Machine->uifont = builduifont()) == 0)
+	{
+		vh_close();
+		return 1;
+	}
+
 	/* initialize the palette - must be done after osd_create_display() */
 	palette_init();
 
@@ -341,123 +346,8 @@ static int vh_open(void)
 int updatescreen(void)
 {
 	static int framecount = 0;
-	static int need_to_clear_bitmap;
-	static int vol_update;
-#ifdef BETA_VERSION
-	static int beta_count;
-#endif
-
 	int skipme = 1;
 
-
-	/* if the user pressed ESC, stop the emulation */
-	if (osd_key_pressed(OSD_KEY_FAST_EXIT))
-	{
-#ifdef BETA_VERSION
-		beta_count = 0;
-#endif
-		return 1;
-	}
-
-
-	/* if the user pressed F3, reset the emulation */
-	if (osd_key_pressed(OSD_KEY_RESET_MACHINE))
-	{
-		while (osd_key_pressed(OSD_KEY_RESET_MACHINE)) ;
-		machine_reset();
-	}
-
-
-	if (osd_key_pressed(OSD_KEY_VOLUME_DOWN) || osd_key_pressed(OSD_KEY_VOLUME_UP))
-	{
-		if (osd_key_pressed(OSD_KEY_VOLUME_DOWN)) vol_update -= 1;
-		if (osd_key_pressed(OSD_KEY_VOLUME_UP)) vol_update += 1;
-
-		if (vol_update <= -5)
-		{
-			vol_update = 0;
-			CurrentVolume -= 5;
-		}
-		if (vol_update >= 5)
-		{
-			vol_update = 0;
-			CurrentVolume += 5;
-		}
-
-		if (CurrentVolume < 0) CurrentVolume = 0;
-		if (CurrentVolume > 100) CurrentVolume = 100;
-
-		osd_set_mastervolume(CurrentVolume);
-
-		osd_on_screen_display("VOL",100 * CurrentVolume / 100);
-	}
-	else
-		vol_update = 0;
-
-	if (osd_key_pressed(OSD_KEY_PAUSE)) /* pause the game */
-	{
-		struct DisplayText dt[2];
-		int count = 0;
-
-
-		dt[0].text = "PAUSED";
-		dt[0].color = DT_COLOR_RED;
-		dt[0].x = (Machine->uiwidth - Machine->uifont->width * strlen(dt[0].text)) / 2;
-		dt[0].y = (Machine->uiheight - Machine->uifont->height) / 2;
-		dt[1].text = 0;
-
-		osd_set_mastervolume(0);
-
-		while (osd_key_pressed(OSD_KEY_PAUSE))
-			osd_update_audio();     /* give time to the sound hardware to apply the volume change */
-
-		while (osd_key_pressed(OSD_KEY_PAUSE) == 0 && osd_key_pressed(OSD_KEY_UNPAUSE) == 0)
-		{
-			if (osd_key_pressed(OSD_KEY_CONFIGURE)) setup_menu(); /* call the configuration menu */
-
-			osd_clearbitmap(Machine->scrbitmap);
-			(*drv->vh_update)(Machine->scrbitmap,1);  /* redraw screen */
-
-			if (count < Machine->drv->frames_per_second / 2)
-				displaytext(dt,0);      /* make PAUSED blink */
-			else
-				osd_update_display();
-
-			count = (count + 1) % (Machine->drv->frames_per_second / 1);
-		}
-
-		while (osd_key_pressed(OSD_KEY_UNPAUSE)) ;   /* wait for key release */
-		while (osd_key_pressed(OSD_KEY_PAUSE)) ;     /* ditto */
-
-		osd_set_mastervolume(CurrentVolume);
-		osd_clearbitmap(Machine->scrbitmap);
-	}
-
-	/* if the user pressed TAB, go to the setup menu */
-	if (osd_key_pressed(OSD_KEY_CONFIGURE))
-	{
-		osd_set_mastervolume(0);
-
-		while (osd_key_pressed(OSD_KEY_CONFIGURE))
-			osd_update_audio();     /* give time to the sound hardware to apply the volume change */
-
-		if (setup_menu()) return 1;
-
-		osd_set_mastervolume(CurrentVolume);
-	}
-
-	/* if the user pressed F4, show the character set */
-	if (osd_key_pressed(OSD_KEY_SHOW_GFX))
-	{
-		osd_set_mastervolume(0);
-
-		while (osd_key_pressed(OSD_KEY_SHOW_GFX))
-			osd_update_audio();     /* give time to the sound hardware to apply the volume change */
-
-		if (showcharset()) return 1;
-
-		osd_set_mastervolume(CurrentVolume);
-	}
 
 	/* see if we recomend skipping this frame */
 	if (++framecount > frameskip)
@@ -465,59 +355,27 @@ int updatescreen(void)
 		framecount = 0;
 		skipme = 0;
 	}
-	skipme = osd_skip_this_frame (skipme);
+	skipme = osd_skip_this_frame(skipme);
 
 	/* if not, go for it */
 	if (!skipme)
 	{
-		if (need_to_clear_bitmap)
-		{
-			osd_clearbitmap(Machine->scrbitmap);
-			need_to_clear_bitmap = 0;
-		}
-
 		osd_profiler(OSD_PROFILE_VIDEO);
 		(*drv->vh_update)(Machine->scrbitmap,bitmap_dirty);  /* update screen */
 		osd_profiler(OSD_PROFILE_END);
 
 		bitmap_dirty = 0;
-
-		/* This call is for the cheat, it must be called at least each frames */
-		if (nocheat == 0) DoCheat(CurrentVolume);
-
-#ifdef BETA_VERSION
-		if (beta_count < 5 * Machine->drv->frames_per_second)
-		{
-			beta_count += frameskip+1;
-
-			if (beta_count < 5 * Machine->drv->frames_per_second)
-			{
-				int trueorientation;
-				int i,x;
-				char volstr[25];
-
-
-				pick_uifont_colors();
-
-				trueorientation = Machine->orientation;
-				Machine->orientation = ORIENTATION_DEFAULT;
-
-				x = (Machine->uiwidth - 12*Machine->uifont->width)/2;
-				strcpy(volstr,"BETA VERSION");
-
-				for (i = 0;i < 12;i++)
-					drawgfx(Machine->scrbitmap,Machine->uifont,(unsigned int)volstr[i],DT_COLOR_RED,
-						0,0,x+(i+1)*Machine->uifont->width+Machine->uixmin,Machine->uiheight/2+Machine->uiymin,0,TRANSPARENCY_NONE,0);
-
-				Machine->orientation = trueorientation;
-			}
-			else
-				need_to_clear_bitmap = 1;
-		}
-#endif
-
-		osd_update_display();
 	}
+
+	/* the user interface must be called between vh_update() and update_display(), */
+	/* to allow it to overlay things on the game display. We must call it even */
+	/* if the frame is skipped, to keep a consistent timing. */
+	if (handle_user_interface())
+		/* quit if the user asked to */
+		return 1;
+
+	if (!skipme)
+		osd_update_display();
 
 	return 0;
 }

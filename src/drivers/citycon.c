@@ -330,6 +330,7 @@ struct GameDriver citycon_driver =
 	"Mirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)",
 	0,
 	&machine_driver,
+	0,
 
 	citycon_rom,
 	0, 0,

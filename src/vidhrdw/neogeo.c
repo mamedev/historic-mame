@@ -357,9 +357,12 @@ int vidram_data_r (int offset) {
 	return (READ_WORD(&vidram[where]));
 }
 
-void vidram_data_w(int offset,int data) {
-    COMBINE_WORD_MEM ( &vidram[ where ],data);
-	where += modulo;
+void vidram_data_w (int offset,int data)
+{
+ if (where >= 0x10c00)
+ return;
+ COMBINE_WORD_MEM (&vidram[where], data);
+ where += modulo;
 }
 
 /* Modulo can become negative , Puzzle Bobble Super Sidekicks and a lot */
@@ -635,7 +638,7 @@ void neogeo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			tileno  = READ_WORD(&vidram[offs + 4*y]);
 			tileatr = READ_WORD(&vidram[offs + 4*y+2]);
             if (high_tile && tileatr&0x10) tileno+=0x10000;
-//            if (high_tile && tileatr&0x20) tileno+=0x20000;
+            if (high_tile && tileatr&0x20) tileno+=0x20000;
 
             /* Calculate fine tune for y zoom */
             if (zz==0xf)
@@ -734,7 +737,7 @@ void neogeo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		dt[0].x = 0;
 		dt[0].y = 0;
 		dt[1].text = 0;
-		displaytext(dt,0);
+		displaytext(dt,0,1);
 	}	/* debug */
 
 
@@ -752,21 +755,6 @@ void neogeo_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 */
 
 
-  /*
-for (i = 0;i < 8;i+=2)
-{
-	sprintf(buf,"%04X",READ_WORD(&neo_unknown[i]));
-	for (j = 0;j < 4;j++)
-		drawgfx(bitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j,8*5,0,TRANSPARENCY_NONE,0);
-}
-
-for (i = 0;i < 8;i+=2)
-{
-	sprintf(mybuf,"%04X",READ_WORD(&vidram[0x100a0+i]));
-	for (j = 0;j < 4;j++)
-		drawgfx(mybitmap,Machine->uifont,mybuf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j,8*5,0,TRANSPARENCY_NONE,0);
-}
- */
 
 //        fprintf(errorlog,"X: %04x Y: %04x Video: %04x\n",READ_WORD(&vidram[0x1089c]),READ_WORD(&vidram[0x1049c]),READ_WORD(&vidram[0x1009c]));
 

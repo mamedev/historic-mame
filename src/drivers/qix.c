@@ -552,7 +552,7 @@ static struct MachineDriver machine_driver =
 	}
 };
 
-static struct MachineDriver machine_withmcu_driver =
+static struct MachineDriver mcu_machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -1003,6 +1003,7 @@ struct GameDriver qix_driver =
 	"John Butler\nEd Mueller\nAaron Giles\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	qix_rom,
 	0, 0,   /* ROM decode and opcode decode functions */
@@ -1028,6 +1029,7 @@ struct GameDriver qix2_driver =
 	"John Butler\nEd Mueller\nAaron Giles\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	qix2_rom,
 	0, 0,   /* ROM decode and opcode decode functions */
@@ -1052,7 +1054,8 @@ struct GameDriver sdungeon_driver =
 	"Taito America",
 	"John Butler\nEd Mueller\nAaron Giles\nMarco Cassili\nDan Boris",
 	0,
-        &machine_driver,
+	&machine_driver,
+	0,
 
 	sdungeon_rom,
 	0, 0,   /* ROM decode and opcode decode functions */
@@ -1078,6 +1081,7 @@ struct GameDriver zookeep_driver =
 	"John Butler\nEd. Mueller\nAaron Giles",
 	0,
 	&zoo_machine_driver,
+	0,
 
     zookeep_rom,
 	0, 0,   /* ROM decode and opcode decode functions */
@@ -1103,6 +1107,7 @@ struct GameDriver zookeepa_driver =
 	"John Butler\nEd. Mueller\nAaron Giles",
 	0,
 	&zoo_machine_driver,
+	0,
 
     zookeepa_rom,
 	0, 0,   /* ROM decode and opcode decode functions */
@@ -1127,7 +1132,8 @@ struct GameDriver elecyoyo_driver =
 	"Taito",
 	"John Butler\nEd Mueller\nAaron Giles\nCallan Hendricks",
 	GAME_NOT_WORKING,
-	&machine_withmcu_driver,
+	&mcu_machine_driver,
+	0,
 
 	elecyoyo_rom,
 	0, 0,   /* ROM decode and opcode decode functions */
@@ -1152,7 +1158,8 @@ struct GameDriver elecyoy2_driver =
 	"Taito",
 	"John Butler\nEd Mueller\nAaron Giles\nCallan Hendricks",
 	GAME_NOT_WORKING,
-	&machine_withmcu_driver,
+	&mcu_machine_driver,
+	0,
 
 	elecyoy2_rom,
 	0, 0,   /* ROM decode and opcode decode functions */
@@ -1178,6 +1185,7 @@ struct GameDriver kram_driver =
 	"John Butler\nEd Mueller\nAaron Giles",
 	GAME_NOT_WORKING,
 	&machine_driver,
+	0,
 
 	kram_rom,
 	0, 0,   /* ROM decode and opcode decode functions */
@@ -1203,6 +1211,7 @@ struct GameDriver kram2_driver =
 	"John Butler\nEd Mueller\nAaron Giles",
 	GAME_NOT_WORKING,
 	&machine_driver,
+	0,
 
 	kram2_rom,
 	0, 0,   /* ROM decode and opcode decode functions */

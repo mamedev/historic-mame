@@ -446,6 +446,7 @@ struct GameDriver mikie_driver =
 	"Allard Van Der Bas (MAME driver)\nMirko Buffoni (MAME driver)\nStefano Mozzi (MAME driver)\nMarco Cassili (dip switches)\nAl Kossow (color info)\nGerrit Van Goethem (high score save)",
 	0,
 	&mikie_machine_driver,
+	0,
 
 	mikie_rom,
 	0, 0,
@@ -471,6 +472,7 @@ struct GameDriver mikiej_driver =
 	"Allard Van Der Bas (MAME driver)\nMirko Buffoni (MAME driver)\nStefano Mozzi (MAME driver)\nMarco Cassili (dip switches)\nAl Kossow (color info)\nGerrit Van Goethem (high score save)",
 	0,
 	&mikie_machine_driver,
+	0,
 
 	mikiej_rom,
 	0, 0,
@@ -496,6 +498,7 @@ struct GameDriver mikiehs_driver =
 	"Allard Van Der Bas (MAME driver)\nMirko Buffoni (MAME driver)\nStefano Mozzi (MAME driver)\nMarco Cassili (dip switches)\nAl Kossow (color info)\nGerrit Van Goethem (high score save)",
 	0,
 	&mikie_machine_driver,
+	0,
 
 	mikiehs_rom,
 	0, 0,

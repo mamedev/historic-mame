@@ -660,6 +660,7 @@ struct GameDriver turbo_driver =
 	"Alex Pasadyn\nHowie Cohen\nFrank Palazzolo",
 	GAME_NOT_WORKING,
 	&turbo_machine_driver,
+	0,
 
 	turbo_rom,
 	0, 0,	/* rom decode and opcode decode functions */
@@ -685,6 +686,7 @@ struct GameDriver turboa_driver =
 	"Alex Pasadyn\nHowie Cohen\nFrank Palazzolo",
 	GAME_NOT_WORKING,
 	&turbo_machine_driver,
+	0,
 
 	turboa_rom,
 	turbo_decode, 0,	/* rom decode and opcode decode functions */
@@ -710,6 +712,7 @@ struct GameDriver turbob_driver =
 	"Alex Pasadyn\nHowie Cohen\nFrank Palazzolo",
 	GAME_NOT_WORKING,
 	&turbo_machine_driver,
+	0,
 
 	turbob_rom,
 	turbo_decode, 0,	/* rom decode and opcode decode functions */

@@ -653,6 +653,8 @@ struct GameDriver psychic5_driver =
 	"Jarek Parchanski\nRoberto Ventura",
 	0,
 	&machine_driver,
+	0,
+
 	psychic5_rom,
 	0, 0,
 	0,

@@ -316,6 +316,7 @@ struct GameDriver bankp_driver =
 	"Nicola Salmoria (MAME driver)\nAlan J. McCormick (color info)",
 	0,
 	&machine_driver,
+	0,
 
 	bankp_rom,
 	0, 0,

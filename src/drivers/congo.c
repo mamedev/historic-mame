@@ -480,6 +480,7 @@ struct GameDriver congo_driver =
 	"Ville Laitinen (MAME driver)\nNicola Salmoria (Zaxxon driver)\nTim Lindquist (color & sound info)",
 	0,
 	&machine_driver,
+	0,
 
 	congo_rom,
 	0, 0,
@@ -505,6 +506,7 @@ struct GameDriver tiptop_driver =
 	"Ville Laitinen (MAME driver)\nNicola Salmoria (Zaxxon driver)\nTim Lindquist (color & sound info)",
 	0,
 	&machine_driver,
+	0,
 
 	tiptop_rom,
 	0, 0,

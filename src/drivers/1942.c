@@ -864,6 +864,7 @@ struct GameDriver c1942_driver =
 	"Paul Leaman (hardware info)\nNicola Salmoria (MAME driver)",
 	0,
 	&machine_driver,
+	0,
 
 	c1942_rom,
 	0, 0,
@@ -889,6 +890,7 @@ struct GameDriver c1942a_driver =
 	"Paul Leaman (hardware info)\nNicola Salmoria (MAME driver)",
 	0,
 	&machine_driver,
+	0,
 
 	c1942a_rom,
 	0, 0,
@@ -914,6 +916,7 @@ struct GameDriver c1942b_driver =
 	"Paul Leaman (hardware info)\nNicola Salmoria (MAME driver)",
 	0,
 	&machine_driver,
+	0,
 
 	c1942b_rom,
 	0, 0,

@@ -213,34 +213,4 @@ void bublbobl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			}
 		}
 	}
-
-
-
-#if 0
-{
-	int fps,i,j;
-static int base;
-if (osd_key_pressed(OSD_KEY_Z))
-{
-	while (osd_key_pressed(OSD_KEY_Z));
-	base--;
-}
-if (osd_key_pressed(OSD_KEY_X))
-{
-	while (osd_key_pressed(OSD_KEY_X));
-	base++;
-}
-
-for (j = 0;j < 16*2;j++)
-{
-for (i = 0;i < 8;i++)
-{
-	fps = bublbobl_objectram[i+8*j + 0x100*base];
-	drawgfx(bitmap,Machine->uifont,(fps%1000)/100+'0',DT_COLOR_WHITE,0,0,32*i,8*j,0,TRANSPARENCY_NONE,0);
-	drawgfx(bitmap,Machine->uifont,(fps%100)/10+'0',DT_COLOR_WHITE,0,0,32*i+Machine->uifont->width,8*j,0,TRANSPARENCY_NONE,0);
-	drawgfx(bitmap,Machine->uifont,fps%10+'0',DT_COLOR_WHITE,0,0,32*i+2*Machine->uifont->width,8*j,0,TRANSPARENCY_NONE,0);
-}
-}
-}
-#endif
 }

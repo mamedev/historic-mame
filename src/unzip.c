@@ -765,7 +765,7 @@ int /* error */ checksum_zipped_file (const char *zipfile, const char *filename,
 	while (ent) {
 		/* NS981003: support for "load by CRC" */
 		if (equal_filename(ent->name, filename) ||
-				ent->crc32 == *sum)
+				(*sum && ent->crc32 == *sum))
 		{
 			*length = ent->uncompressed_size;
 			*sum = ent->crc32;

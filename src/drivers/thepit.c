@@ -803,6 +803,7 @@ struct GameDriver thepit_driver =
 	"Zsolt Vasvari",
 	0,
 	&thepit_machine_driver,
+	0,
 
 	thepit_rom,
 	0, 0,
@@ -829,6 +830,7 @@ struct GameDriver roundup_driver =
 	"Zsolt Vasvari",
 	0,
 	&thepit_machine_driver,
+	0,
 
 	roundup_rom,
 	0, 0,
@@ -855,6 +857,7 @@ struct GameDriver intrepid_driver =
 	"Zsolt Vasvari",
 	0,
 	&intrepid_machine_driver,
+	0,
 
 	intrepid_rom,
 	0, 0,
@@ -881,6 +884,7 @@ struct GameDriver suprmous_driver =
 	"Brad Oliver",
 	GAME_WRONG_COLORS,
 	&suprmous_machine_driver,
+	0,
 
 	suprmous_rom,
 	0, 0,

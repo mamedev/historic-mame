@@ -677,6 +677,7 @@ struct GameDriver superpac_driver =
 	"Aaron Giles (MAME driver)\nKevin Brisley (hardware info)\nLawnmower Man (hardware info)",
 	0,
 	&superpac_machine_driver, /* MachineDriver */
+	0,
 
 	superpac_rom,             /* RomModule */
 	0, 0,                     /* ROM decrypt routines */
@@ -704,6 +705,7 @@ struct GameDriver superpcn_driver =
 	"Aaron Giles (MAME driver)\nKevin Brisley (Replay emulator)\nLawnmower Man (hardware info)",
 	0,
 	&superpac_machine_driver, /* MachineDriver */
+	0,
 
 	superpcn_rom,             /* RomModule */
 	0, 0,                     /* ROM decrypt routines */
@@ -731,6 +733,7 @@ struct GameDriver pacnpal_driver =
 	"Aaron Giles\nKevin Brisley\nLawnmower Man",
 	0,
 	&pacnpal_machine_driver,  /* MachineDriver */
+	0,
 
 	pacnpal_rom,              /* RomModule */
 	0, 0,                     /* ROM decrypt routines */

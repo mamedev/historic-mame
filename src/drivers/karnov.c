@@ -858,6 +858,7 @@ struct GameDriver karnov_driver =
 	"Bryan McPhail",
 	0,
 	&karnov_machine_driver,
+	0,
 
 	karnov_rom,
 	karnov_patch,
@@ -883,6 +884,7 @@ struct GameDriver karnovj_driver =
 	"Bryan McPhail",
 	0,
 	&karnov_machine_driver,
+	0,
 
 	karnovj_rom,
 	karnovj_patch,
@@ -908,6 +910,7 @@ struct GameDriver chelnov_driver =
 	"Bryan McPhail",
 	GAME_NOT_WORKING,
 	&chelnov_machine_driver,
+	0,
 
 	chelnov_rom,
 	chelnov_patch,
@@ -933,6 +936,7 @@ struct GameDriver chelnovj_driver =
 	"Bryan McPhail",
 	GAME_NOT_WORKING,
 	&chelnov_machine_driver,
+	0,
 
 	chelnovj_rom,
 	chelnovj_patch,

@@ -425,6 +425,7 @@ struct GameDriver blueprnt_driver =
 	"Nicola Salmoria (MAME driver)\nMike Balfour (high score save)",
 	GAME_WRONG_COLORS,
 	&machine_driver,
+	0,
 
 	blueprnt_rom,
 	0, 0,

@@ -3,16 +3,11 @@
 	Copyright (C) Alex Pasadyn/Zsolt Vasvari 1998
 	 Parts based on code by Aaron Giles
 
-	System dependencies:	int/long must be at least 32 bits
-	                        word must be 16 bit unsigned int
-							byte must be 8 bit unsigned int
-							arrays up to 65536 bytes must be supported
-							machine must be twos complement
-
 *****************************************************************************/
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "osd_cpu.h"
 #include "osd_dbg.h"
 #include "tms34010.h"
 #include "34010ops.h"
@@ -30,7 +25,7 @@ static TMS34010_Regs state;
 static int *TMS34010_timer[MAX_CPU] = {0,0,0,0}; /* Display interrupt timer */
 static void TMS34010_io_intcallback(int param);
 
-static void (*WFIELD_functions[32]) (unsigned int bitaddr, unsigned int data) =
+static void (*WFIELD_functions[32]) (UINT32 bitaddr, UINT32 data) =
 {
 	WFIELD_32, WFIELD_01, WFIELD_02, WFIELD_03, WFIELD_04, WFIELD_05,
 	WFIELD_06, WFIELD_07, WFIELD_08, WFIELD_09, WFIELD_10, WFIELD_11,
@@ -39,7 +34,7 @@ static void (*WFIELD_functions[32]) (unsigned int bitaddr, unsigned int data) =
 	WFIELD_24, WFIELD_25, WFIELD_26, WFIELD_27, WFIELD_28, WFIELD_29,
 	WFIELD_30, WFIELD_31
 };
-static int (*RFIELD_functions[32]) (unsigned int bitaddr) =
+static INT32 (*RFIELD_functions[32]) (UINT32 bitaddr) =
 {
 	RFIELD_32, RFIELD_01, RFIELD_02, RFIELD_03, RFIELD_04, RFIELD_05,
 	RFIELD_06, RFIELD_07, RFIELD_08, RFIELD_09, RFIELD_10, RFIELD_11,
@@ -121,7 +116,7 @@ INLINE void RESET_ST(void)
 }
 
 /* Combine indiviual flags into the Status Register */
-INLINE unsigned int GET_ST(void)
+INLINE UINT32 GET_ST(void)
 {
 	return (N_FLAG    ? 0x80000000 : 0) |
 		   (C_FLAG    ? 0x40000000 : 0) |
@@ -136,7 +131,7 @@ INLINE unsigned int GET_ST(void)
 }
 
 /* Break up Status Register into indiviual flags */
-INLINE void SET_ST(unsigned int st)
+INLINE void SET_ST(UINT32 st)
 {
 	N_FLAG    =    st & 0x80000000;
 	C_FLAG    =    st & 0x40000000;
@@ -152,56 +147,56 @@ INLINE void SET_ST(unsigned int st)
 }
 
 /* shortcuts for reading opcodes */
-INLINE int ROPCODE (void)
+INLINE UINT32 ROPCODE (void)
 {
-	int pc = PC>>3;
+	UINT32 pc = PC>>3;
 	PC += (2<<3);
 	return cpu_readop16(pc);
 }
-INLINE int ROPARG (void)
+INLINE INT32 ROPARG (void)
 {
-	int pc = PC>>3;
+	UINT32 pc = PC>>3;
 	PC += (2<<3);
 	return cpu_readop_arg16(pc);
 }
-INLINE int PARAM_LONG (void)
+INLINE INT32 PARAM_LONG (void)
 {
-	int lo = ROPARG();
+	INT32 lo = ROPARG();
 	return lo | (ROPARG() << 16);
 }
 /* read memory byte */
-INLINE int RBYTE (int bitaddr)
+INLINE INT32 RBYTE (UINT32 bitaddr)
 {
 	return RFIELD_08 (bitaddr);
 }
 
 /* write memory byte */
-INLINE void WBYTE (int bitaddr, int data)
+INLINE void WBYTE (UINT32 bitaddr, UINT32 data)
 {
 	WFIELD_08 (bitaddr,data);
 }
 
 //* read memory long */
-INLINE int RLONG (int bitaddr)
+INLINE INT32 RLONG (UINT32 bitaddr)
 {
 	return RFIELD_32 (bitaddr);
 }
 /* write memory long */
-INLINE void WLONG (int bitaddr,int data)
+INLINE void WLONG (UINT32 bitaddr, UINT32 data)
 {
 	WFIELD_32 (bitaddr,data);
 }
 
 
 /* pushes/pops a value from the stack */
-INLINE void PUSH (int val)
+INLINE void PUSH (UINT32 val)
 {
 	SP -= 0x20;
 	WLONG (SP, val);
 	COPY_ASP;
 }
 
-INLINE int POP (void)
+INLINE INT32 POP (void)
 {
 	int result = RLONG (SP);
 	SP += 0x20;
@@ -212,9 +207,9 @@ INLINE int POP (void)
 
 /* No Raster Op + No Transparency */
 #define WP(m1,m2)  																		\
-	int boundary = 0;	 																\
-	int a = (address&0xfffffff0)>>3;													\
-	int shiftcount = (address&m1);														\
+	UINT32 boundary = 0;	 															\
+	UINT32 a = (address&0xfffffff0)>>3;													\
+	UINT32 shiftcount = (address&m1);													\
 	if (state.lastpixaddr != a)															\
 	{																					\
 		if (state.lastpixaddr != INVALID_PIX_ADDRESS)									\
@@ -236,8 +231,8 @@ INLINE int POP (void)
 
 /* No Raster Op + Transparency */
 #define WP_T(m1,m2)  																	\
-	int boundary = 0;	 																\
-	int a = (address&0xfffffff0)>>3;													\
+	UINT32 boundary = 0;	 															\
+	UINT32 a = (address&0xfffffff0)>>3;													\
 	if (state.lastpixaddr != a)															\
 	{																					\
 		if (state.lastpixaddr != INVALID_PIX_ADDRESS)									\
@@ -258,7 +253,7 @@ INLINE int POP (void)
 	value &= m2;																		\
 	if (value)																			\
 	{																					\
-		int shiftcount = (address&m1);													\
+		UINT32 shiftcount = (address&m1);												\
 		state.lastpixword = (state.lastpixword & ~(m2<<shiftcount)) | (value<<shiftcount);	\
 		state.lastpixwordchanged = 1;													\
 	}						  															\
@@ -268,10 +263,10 @@ INLINE int POP (void)
 
 /* Raster Op + No Transparency */
 #define WP_R(m1,m2)  																	\
-	int oldpix;																			\
-	int boundary = 0;	 																\
-	int a = (address&0xfffffff0)>>3;													\
-	int shiftcount = (address&m1);														\
+	UINT32 oldpix;																		\
+	UINT32 boundary = 0;	 															\
+	UINT32 a = (address&0xfffffff0)>>3;													\
+	UINT32 shiftcount = (address&m1);													\
 	if (state.lastpixaddr != a)															\
 	{																					\
 		if (state.lastpixaddr != INVALID_PIX_ADDRESS)									\
@@ -295,10 +290,10 @@ INLINE int POP (void)
 
 /* Raster Op + Transparency */
 #define WP_R_T(m1,m2)  																	\
-	int oldpix;																			\
-	int boundary = 0;	 																\
-	int a = (address&0xfffffff0)>>3;													\
-	int shiftcount = (address&m1);														\
+	UINT32 oldpix;																		\
+	UINT32 boundary = 0;	 															\
+	UINT32 a = (address&0xfffffff0)>>3;													\
+	UINT32 shiftcount = (address&m1);													\
 	if (state.lastpixaddr != a)															\
 	{																					\
 		if (state.lastpixaddr != INVALID_PIX_ADDRESS)									\
@@ -331,11 +326,11 @@ INLINE int POP (void)
 /* These functions return 'true' on word boundary, 'false' otherwise */
 
 /* No Raster Op + No Transparency */
-static int write_pixel_1 (unsigned int address, unsigned int value) { WP(0x0f,0x01); }
-static int write_pixel_2 (unsigned int address, unsigned int value) { WP(0x0e,0x03); }
-static int write_pixel_4 (unsigned int address, unsigned int value) { WP(0x0c,0x0f); }
-static int write_pixel_8 (unsigned int address, unsigned int value) { WP(0x08,0xff); }
-static int write_pixel_16(unsigned int address, unsigned int value)
+static UINT32 write_pixel_1 (UINT32 address, UINT32 value) { WP(0x0f,0x01); }
+static UINT32 write_pixel_2 (UINT32 address, UINT32 value) { WP(0x0e,0x03); }
+static UINT32 write_pixel_4 (UINT32 address, UINT32 value) { WP(0x0c,0x0f); }
+static UINT32 write_pixel_8 (UINT32 address, UINT32 value) { WP(0x08,0xff); }
+static UINT32 write_pixel_16(UINT32 address, UINT32 value)
 {
 	// TODO: plane masking
 
@@ -345,11 +340,11 @@ static int write_pixel_16(unsigned int address, unsigned int value)
 
 
 /* No Raster Op + Transparency */
-static int write_pixel_t_1 (unsigned int address, unsigned int value) { WP_T(0x0f,0x01); }
-static int write_pixel_t_2 (unsigned int address, unsigned int value) { WP_T(0x0e,0x03); }
-static int write_pixel_t_4 (unsigned int address, unsigned int value) { WP_T(0x0c,0x0f); }
-static int write_pixel_t_8 (unsigned int address, unsigned int value) { WP_T(0x08,0xff); }
-static int write_pixel_t_16(unsigned int address, unsigned int value)
+static UINT32 write_pixel_t_1 (UINT32 address, UINT32 value) { WP_T(0x0f,0x01); }
+static UINT32 write_pixel_t_2 (UINT32 address, UINT32 value) { WP_T(0x0e,0x03); }
+static UINT32 write_pixel_t_4 (UINT32 address, UINT32 value) { WP_T(0x0c,0x0f); }
+static UINT32 write_pixel_t_8 (UINT32 address, UINT32 value) { WP_T(0x08,0xff); }
+static UINT32 write_pixel_t_16(UINT32 address, UINT32 value)
 {
 	// TODO: plane masking
 
@@ -364,15 +359,15 @@ static int write_pixel_t_16(unsigned int address, unsigned int value)
 
 
 /* Raster Op + No Transparency */
-static int write_pixel_r_1 (unsigned int address, unsigned int value) { WP_R(0x0f,0x01); }
-static int write_pixel_r_2 (unsigned int address, unsigned int value) { WP_R(0x0e,0x03); }
-static int write_pixel_r_4 (unsigned int address, unsigned int value) { WP_R(0x0c,0x0f); }
-static int write_pixel_r_8 (unsigned int address, unsigned int value) { WP_R(0x08,0xff); }
-static int write_pixel_r_16(unsigned int address, unsigned int value)
+static UINT32 write_pixel_r_1 (UINT32 address, UINT32 value) { WP_R(0x0f,0x01); }
+static UINT32 write_pixel_r_2 (UINT32 address, UINT32 value) { WP_R(0x0e,0x03); }
+static UINT32 write_pixel_r_4 (UINT32 address, UINT32 value) { WP_R(0x0c,0x0f); }
+static UINT32 write_pixel_r_8 (UINT32 address, UINT32 value) { WP_R(0x08,0xff); }
+static UINT32 write_pixel_r_16(UINT32 address, UINT32 value)
 {
 	// TODO: plane masking
 
-	int a = (address&0xfffffff0)>>3;
+	UINT32 a = (address&0xfffffff0)>>3;
 
 	TMS34010_WRMEM_WORD(a, state.raster_op(value, TMS34010_RDMEM_WORD(a)));
 
@@ -381,15 +376,15 @@ static int write_pixel_r_16(unsigned int address, unsigned int value)
 
 
 /* Raster Op + Transparency */
-static int write_pixel_r_t_1 (unsigned int address, unsigned int value) { WP_R_T(0x0f,0x01); }
-static int write_pixel_r_t_2 (unsigned int address, unsigned int value) { WP_R_T(0x0e,0x03); }
-static int write_pixel_r_t_4 (unsigned int address, unsigned int value) { WP_R_T(0x0c,0x0f); }
-static int write_pixel_r_t_8 (unsigned int address, unsigned int value) { WP_R_T(0x08,0xff); }
-static int write_pixel_r_t_16(unsigned int address, unsigned int value)
+static UINT32 write_pixel_r_t_1 (UINT32 address, UINT32 value) { WP_R_T(0x0f,0x01); }
+static UINT32 write_pixel_r_t_2 (UINT32 address, UINT32 value) { WP_R_T(0x0e,0x03); }
+static UINT32 write_pixel_r_t_4 (UINT32 address, UINT32 value) { WP_R_T(0x0c,0x0f); }
+static UINT32 write_pixel_r_t_8 (UINT32 address, UINT32 value) { WP_R_T(0x08,0xff); }
+static UINT32 write_pixel_r_t_16(UINT32 address, UINT32 value)
 {
 	// TODO: plane masking
 
-	int a = (address&0xfffffff0)>>3;
+	UINT32 a = (address&0xfffffff0)>>3;
 	value = state.raster_op(value, TMS34010_RDMEM_WORD(a));
 
 	// Transparency checking
@@ -407,11 +402,11 @@ static int write_pixel_r_t_16(unsigned int address, unsigned int value)
 	/* TODO: Plane masking */								\
 	return (TMS34010_RDMEM_WORD((address&0xfffffff0)>>3) >> (address&m1)) & m2;
 
-static int read_pixel_1 (unsigned int address) { RP(0x0f,0x01) }
-static int read_pixel_2 (unsigned int address) { RP(0x0e,0x03) }
-static int read_pixel_4 (unsigned int address) { RP(0x0c,0x0f) }
-static int read_pixel_8 (unsigned int address) { RP(0x08,0xff) }
-static int read_pixel_16(unsigned int address)
+static UINT32 read_pixel_1 (UINT32 address) { RP(0x0f,0x01) }
+static UINT32 read_pixel_2 (UINT32 address) { RP(0x0e,0x03) }
+static UINT32 read_pixel_4 (UINT32 address) { RP(0x0c,0x0f) }
+static UINT32 read_pixel_8 (UINT32 address) { RP(0x08,0xff) }
+static UINT32 read_pixel_16(UINT32 address)
 {
 	// TODO: Plane masking
 	return TMS34010_RDMEM_WORD((address&0xfffffff0)>>3);	
@@ -427,7 +422,7 @@ static int read_pixel_16(unsigned int address)
 	P_FLAG = 0;
 
 
-static int write_pixel_shiftreg (unsigned int address, unsigned int value)
+static UINT32 write_pixel_shiftreg (UINT32 address, UINT32 value)
 {
 	if (state.from_shiftreg)
 	{
@@ -443,7 +438,7 @@ static int write_pixel_shiftreg (unsigned int address, unsigned int value)
 	return 1;
 }
 
-static int read_pixel_shiftreg (unsigned int address)
+static UINT32 read_pixel_shiftreg (UINT32 address)
 {
 	if (state.to_shiftreg)
 	{
@@ -467,111 +462,111 @@ static int read_pixel_shiftreg (unsigned int address)
 
 
 /* Raster operations */
-static int raster_op_1(int newpix, int oldpix)
+static INT32 raster_op_1(INT32 newpix, INT32 oldpix)
 {
 	/*  S AND D -> D */
 	return newpix & oldpix;
 }
-static int raster_op_2(int newpix, int oldpix)
+static INT32 raster_op_2(INT32 newpix, INT32 oldpix)
 {
 	/*  S AND ~D -> D */
 	return newpix & ~oldpix;
 }
-static int raster_op_3(int newpix, int oldpix)
+static INT32 raster_op_3(INT32 newpix, INT32 oldpix)
 {
 	/*  0 -> D */
 	return 0;
 }
-static int raster_op_4(int newpix, int oldpix)
+static INT32 raster_op_4(INT32 newpix, INT32 oldpix)
 {
 	/*  S OR ~D -> D */
 	return newpix | ~oldpix;
 }
-static int raster_op_5(int newpix, int oldpix)
+static INT32 raster_op_5(INT32 newpix, INT32 oldpix)
 {
 	/* FIXME!!! Not sure about this one? */
 	/*  S XNOR D -> D */
 	return ~(newpix ^ oldpix);
 }
-static int raster_op_6(int newpix, int oldpix)
+static INT32 raster_op_6(INT32 newpix, INT32 oldpix)
 {
 	/*  ~D -> D */
 	return ~oldpix;
 }
-static int raster_op_7(int newpix, int oldpix)
+static INT32 raster_op_7(INT32 newpix, INT32 oldpix)
 {
 	/*  S NOR D -> D */
 	return ~(newpix | oldpix);
 }
-static int raster_op_8(int newpix, int oldpix)
+static INT32 raster_op_8(INT32 newpix, INT32 oldpix)
 {
 	/*  S OR D -> D */
 	return newpix | oldpix;
 }
-static int raster_op_9(int newpix, int oldpix)
+static INT32 raster_op_9(INT32 newpix, INT32 oldpix)
 {
 	/*  D -> D */
 	return oldpix;
 }
-static int raster_op_10(int newpix, int oldpix)
+static INT32 raster_op_10(INT32 newpix, INT32 oldpix)
 {
 	/*  S XOR D -> D */
 	return newpix ^ oldpix;
 }
-static int raster_op_11(int newpix, int oldpix)
+static INT32 raster_op_11(INT32 newpix, INT32 oldpix)
 {
 	/*  ~S AND D -> D */
 	return ~newpix & oldpix;
 }
-static int raster_op_12(int newpix, int oldpix)
+static INT32 raster_op_12(INT32 newpix, INT32 oldpix)
 {
 	/*  1 -> D */
 	return 0xffff;
 }
-static int raster_op_13(int newpix, int oldpix)
+static INT32 raster_op_13(INT32 newpix, INT32 oldpix)
 {
 	/*  ~S OR D -> D */
 	return ~newpix | oldpix;
 }
-static int raster_op_14(int newpix, int oldpix)
+static INT32 raster_op_14(INT32 newpix, INT32 oldpix)
 {
 	/*  S NAND D -> D */
 	return ~(newpix & oldpix);
 }
-static int raster_op_15(int newpix, int oldpix)
+static INT32 raster_op_15(INT32 newpix, INT32 oldpix)
 {
 	/*  ~S -> D */
 	return ~newpix;
 }
-static int raster_op_16(int newpix, int oldpix)
+static INT32 raster_op_16(INT32 newpix, INT32 oldpix)
 {
 	/*  S + D -> D */
 	return newpix + oldpix;
 }
-static int raster_op_17(int newpix, int oldpix)
+static INT32 raster_op_17(INT32 newpix, INT32 oldpix)
 {
 	/*  S + D -> D with Saturation*/
-	int max = (unsigned int)0xffffffff>>(32-IOREG(REG_PSIZE));
-	int res = newpix + oldpix;
+	INT32 max = (UINT32)0xffffffff>>(32-IOREG(REG_PSIZE));
+	INT32 res = newpix + oldpix;
 	return (res > max) ? max : res;
 }
-static int raster_op_18(int newpix, int oldpix)
+static INT32 raster_op_18(INT32 newpix, INT32 oldpix)
 {
 	/*  D - S -> D */
 	return oldpix - newpix;
 }
-static int raster_op_19(int newpix, int oldpix)
+static INT32 raster_op_19(INT32 newpix, INT32 oldpix)
 {
 	/*  D - S -> D with Saturation */
-	int res = oldpix - newpix;
+	INT32 res = oldpix - newpix;
 	return (res < 0) ? 0 : res;
 }
-static int raster_op_20(int newpix, int oldpix)
+static INT32 raster_op_20(INT32 newpix, INT32 oldpix)
 {
 	/*  MAX(S,D) -> D */
 	return ((oldpix > newpix) ? oldpix : newpix);
 }
-static int raster_op_21(int newpix, int oldpix)
+static INT32 raster_op_21(INT32 newpix, INT32 oldpix)
 {
 	/*  MIN(S,D) -> D */
 	return ((oldpix > newpix) ? newpix : oldpix);
@@ -721,10 +716,12 @@ int TMS34010_Execute(int cycles)
 	{
 		/* Quickly reject the cases when there are no pending interrupts
 		   or they are disabled (as in an interrupt service routine) */
-		if (IOREG(REG_INTPEND) &&
-			(IE_FLAG || (IOREG(REG_INTPEND) & TMS34010_NMI)))
+		if (IOREG(REG_INTPEND))
 		{
-			Interrupt();			
+			if ((IE_FLAG || (IOREG(REG_INTPEND) & TMS34010_NMI)))
+			{
+				Interrupt();			
+			}
 		}
 
 #ifdef	MAME_DEBUG
@@ -740,7 +737,7 @@ int TMS34010_Execute(int cycles)
 		state.op = ROPCODE ();
 		(*opcode_table[state.op >> 4])();
 
-		TMS34010_ICount -= 5;
+		TMS34010_ICount -= TMS34010_AVGCYCLES;
 
 	} while (TMS34010_ICount > 0);
 
@@ -752,7 +749,7 @@ int TMS34010_Execute(int cycles)
 /* I/O Function prototypes 									*/
 /****************************************************************************/
 
-static int (*pixel_write_ops[4][5])(unsigned int, unsigned int)	=
+static UINT32 (*pixel_write_ops[4][5])(UINT32, UINT32)	=
 {
 	{write_pixel_1,     write_pixel_2,     write_pixel_4,     write_pixel_8,     write_pixel_16},
 	{write_pixel_r_1,   write_pixel_r_2,   write_pixel_r_4,   write_pixel_r_8,   write_pixel_r_16},
@@ -760,7 +757,7 @@ static int (*pixel_write_ops[4][5])(unsigned int, unsigned int)	=
 	{write_pixel_r_t_1, write_pixel_r_t_2, write_pixel_r_t_4, write_pixel_r_t_8, write_pixel_r_t_16}
 };
 
-static int (*pixel_read_ops[5])(unsigned int address) =
+static UINT32 (*pixel_read_ops[5])(UINT32 address) =
 {
 	read_pixel_1, read_pixel_2, read_pixel_4, read_pixel_8, read_pixel_16
 };
@@ -768,7 +765,7 @@ static int (*pixel_read_ops[5])(unsigned int address) =
 
 static void set_pixel_function(void)
 {
-	int i1,i2;
+	UINT32 i1,i2;
 
 	if (IOREG(REG_DPYCTL) & 0x0800)
 	{
@@ -816,7 +813,7 @@ static void set_pixel_function(void)
 }
 
 
-static int (*raster_ops[32]) (int newpix, int oldpix) =
+static INT32 (*raster_ops[32]) (INT32 newpix, INT32 oldpix) =
 {
 	           0, raster_op_1 , raster_op_2 , raster_op_3,
 	raster_op_4 , raster_op_5 , raster_op_6 , raster_op_7,
@@ -925,8 +922,8 @@ int TMS34010_io_register_r(int reg)
 }
 
 void TMS34010_set_shiftreg_functions(int cpu,
-									 void (*to_shiftreg  )(unsigned int, unsigned short*),
-									 void (*from_shiftreg)(unsigned int, unsigned short*))
+									 void (*to_shiftreg  )(UINT32, UINT16*),
+									 void (*from_shiftreg)(UINT32, UINT16*))
 {
 	TMS34010_Regs* context = cpu_getcontext(cpu);
 	context->to_shiftreg   = to_shiftreg;		
@@ -964,7 +961,7 @@ static void TMS34010_io_intcallback(int param)
 void TMS34010_State_Save(int cpunum, void *f)
 {
 	osd_fwrite(f,cpu_getcontext(cpunum),sizeof(state));
-	osd_fwrite(f,&TMS34010_ICount,sizeof(int));
+	osd_fwrite(f,&TMS34010_ICount,sizeof(TMS34010_ICount));
 	osd_fwrite(f,state.shiftreg,sizeof(SHIFTREG_SIZE));
 }
 
@@ -972,11 +969,11 @@ void TMS34010_State_Load(int cpunum, void *f)
 {
 	/* Don't reload the following */
 	unsigned short* shiftreg_save = state.shiftreg;
-	void (*to_shiftreg_save)  (unsigned int, unsigned short*) = state.to_shiftreg;
-	void (*from_shiftreg_save)(unsigned int, unsigned short*) = state.from_shiftreg;
+	void (*to_shiftreg_save)  (UINT32, UINT16*) = state.to_shiftreg;
+	void (*from_shiftreg_save)(UINT32, UINT16*) = state.from_shiftreg;
 
 	osd_fread(f,cpu_getcontext(cpunum),sizeof(state));
-	osd_fread(f,&TMS34010_ICount,sizeof(int));
+	osd_fread(f,&TMS34010_ICount,sizeof(TMS34010_ICount));
 	change_pc29(PC);
 	SET_FW();
 	TMS34010_io_register_w(REG_DPYINT<<1,IOREG(REG_DPYINT));

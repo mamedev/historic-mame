@@ -522,6 +522,7 @@ struct GameDriver digdug_driver =
 	"Aaron Giles\nMartin Scragg\nNicola Salmoria\nMirko Buffoni\nAlan J McCormick",
 	0,
 	&machine_driver,
+	0,
 
 	digdug_rom,
 	0, 0,
@@ -547,6 +548,7 @@ struct GameDriver digdugnm_driver =
 	"Aaron Giles\nMartin Scragg\nNicola Salmoria\nMirko Buffoni\nAlan J McCormick",
 	0,
 	&machine_driver,
+	0,
 
 	digdugnm_rom,
 	0, 0,

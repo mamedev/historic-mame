@@ -46,10 +46,19 @@ void r_wr_d000(int offset,int data);
 
 void rastan_irq_handler(void);
 
+static int rastan_cycle_r(int offset)
+{
+	if (cpu_getpc()==0x3b088) cpu_spinuntil_int();
+
+	return READ_WORD(&rastan_ram[0x1c10]);
+}
+
+
 static struct MemoryReadAddress rastan_readmem[] =
 {
 	{ 0x000000, 0x05ffff, MRA_ROM },
 //	{ 0x10dc10, 0x10dc13, rastan_speedup_r },
+{ 0x10dc10, 0x10dc11, rastan_cycle_r },
 	{ 0x10c000, 0x10ffff, MRA_BANK1 },	/* RAM */
 	{ 0x200000, 0x20ffff, paletteram_word_r },
 	{ 0x3e0000, 0x3e0003, rastan_sound_r },
@@ -553,6 +562,7 @@ struct GameDriver rastan_driver =
 	"Jarek Burczynski\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	rastan_rom,
 	0, 0,
@@ -577,6 +587,7 @@ struct GameDriver rastsaga_driver =
 	"Jarek Burczynski\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	rastsaga_rom,
 	0, 0,

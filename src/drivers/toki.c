@@ -477,6 +477,7 @@ struct GameDriver toki_driver =
 	"Jarek Parchanski (MAME driver)\nRichard Bush (hardware info)", //Game authors:\n\nKitahara Haruki\nNishizawa Takashi\nSakuma Akira\nAoki Tsukasa\nKakiuchi Hiroyuki",
 	0,
 	&machine_driver,
+	0,
 
 	toki_rom,
 	toki_rom_decode, 0,

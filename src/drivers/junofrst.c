@@ -563,6 +563,7 @@ struct GameDriver junofrst_driver =
 	"Chris Hardy (MAME driver) Mirko Buffoni (Tutankham driver)\nDavid Dahl (hardware info)\nAaron Giles\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	junofrst_rom,
 	0, junofrst_decode,   /* ROM decode and opcode decode functions */

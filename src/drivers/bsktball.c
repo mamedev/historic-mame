@@ -424,6 +424,7 @@ struct GameDriver bsktball_driver =
 	"Mike Balfour",
 	0,
 	&machine_driver,
+	0,
 
 	bsktball_rom,
 	0, 0,

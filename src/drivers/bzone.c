@@ -667,6 +667,7 @@ struct GameDriver bzone_driver =
 	"Brad Oliver (MAME driver)\n"VECTOR_TEAM"Mauro Minenna (one-stick mode)",
 	0,
 	&bzone_machine_driver,
+	0,
 
 	bzone_rom,
 	0, 0,
@@ -692,6 +693,7 @@ struct GameDriver bzone2_driver =
 	"Brad Oliver (MAME driver)\n"VECTOR_TEAM"Mauro Minenna (one-stick mode)",
 	0,
 	&bzone_machine_driver,
+	0,
 
 	bzone2_rom,
 	0, 0,
@@ -817,6 +819,7 @@ struct GameDriver redbaron_driver =
 	"Brad Oliver (MAME driver)\n"VECTOR_TEAM"Baloo (stick support)",
 	0,
 	&redbaron_machine_driver,
+	0,
 
 	redbaron_rom,
 	0, 0,

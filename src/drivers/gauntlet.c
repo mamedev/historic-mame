@@ -780,6 +780,7 @@ struct GameDriver gauntlet_driver =
 	"Aaron Giles (MAME driver)\nMike Balfour (graphics info)\nFrank Palazzolo (Slapstic decoding)",
 	0,
 	&gauntlet_machine_driver,
+	0,
 
 	gauntlet_rom,
 	gauntlet_rom_decode,
@@ -806,6 +807,7 @@ struct GameDriver gauntir1_driver =
 	"Aaron Giles (MAME driver)\nMike Balfour (graphics info)\nFrank Palazzolo (Slapstic decoding)",
 	0,
 	&gauntlet_machine_driver,
+	0,
 
 	gauntir1_rom,
 	gauntlet_rom_decode,
@@ -832,6 +834,7 @@ struct GameDriver gauntir2_driver =
 	"Aaron Giles (MAME driver)\nMike Balfour (graphics info)\nFrank Palazzolo (Slapstic decoding)",
 	0,
 	&gauntlet_machine_driver,
+	0,
 
 	gauntir2_rom,
 	gauntlet_rom_decode,
@@ -858,6 +861,7 @@ struct GameDriver gaunt2p_driver =
 	"Aaron Giles (MAME driver)\nMike Balfour (graphics info)\nFrank Palazzolo (Slapstic decoding)",
 	0,
 	&gaunt2p_machine_driver,
+	0,
 
 	gaunt2p_rom,
 	gauntlet_rom_decode,
@@ -884,6 +888,7 @@ struct GameDriver gaunt2_driver =
 	"Aaron Giles (MAME driver)\nMike Balfour (graphics info)\nFrank Palazzolo (Slapstic decoding)",
 	0,
 	&gauntlet2_machine_driver,
+	0,
 
 	gaunt2_rom,
 	gauntlet_rom_decode,

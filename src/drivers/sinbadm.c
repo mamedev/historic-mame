@@ -147,6 +147,7 @@ struct GameDriver sinbadm_driver =
 	"Nicola Salmoria",
 	GAME_NOT_WORKING,
 	&machine_driver,
+	0,
 
 	sinbadm_rom,
 	0, sinbadm_decode,

@@ -19,6 +19,7 @@ int  msdos_init_seal (void);
 int  msdos_init_sound(void);
 void msdos_init_input(void);
 void msdos_shutdown_sound(void);
+void msdos_shutdown_input(void);
 int  frontend_help (int argc, char **argv);
 void parse_cmdline (int argc, char **argv, struct GameOptions *options, int game);
 
@@ -48,7 +49,6 @@ int osd_init(void)
 	if (msdos_init_sound())
 		return 1;
 	msdos_init_input();
-	install_keyboard();
 	return 0;
 }
 
@@ -57,7 +57,7 @@ int osd_init(void)
 void osd_exit(void)
 {
 	msdos_shutdown_sound();
-	remove_keyboard();
+	msdos_shutdown_input();
 }
 
 /* fuzzy string compare, compare short string against long string */

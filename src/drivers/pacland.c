@@ -474,6 +474,7 @@ struct GameDriver pacland_driver =
 	"Ernesto Corvi\nMirko Buffoni\nNicola Salmoria",
 	0,
 	&machine_driver,
+	0,
 
 	pacland_rom,
 	0, 0,
@@ -499,6 +500,7 @@ struct GameDriver paclandn_driver =
 	"Ernesto Corvi\nMirko Buffoni\nNicola Salmoria",
 	0,
 	&machine_driver,
+	0,
 
 	paclandn_rom,
 	0, 0,
@@ -524,6 +526,7 @@ struct GameDriver paclanda_driver =
 	"Ernesto Corvi\nMirko Buffoni\nNicola Salmoria",
 	0,
 	&machine_driver,
+	0,
 
 	paclanda_rom,
 	0, 0,

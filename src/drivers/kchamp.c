@@ -829,6 +829,7 @@ struct GameDriver kchamp_driver =
         "Ernesto Corvi\nGareth Hall\nCarlos Lozano\nHowie Cohen\nFrank Palazzolo",
         0,
         &kchamp_machine_driver,
+	0,
 
         kchamp_rom,
         0, 0,
@@ -854,6 +855,7 @@ struct GameDriver kchampvs_driver =
         "Ernesto Corvi\nGareth Hall\nCarlos Lozano\nHowie Cohen\nFrank Palazzolo",
         0,
         &kchampvs_machine_driver,
+	0,
 
         kchampvs_rom,
         0, kchampvs_decode,
@@ -879,6 +881,7 @@ struct GameDriver karatedo_driver =
         "Ernesto Corvi\nGareth Hall\nCarlos Lozano\nHowie Cohen\nFrank Palazzolo",
         0,
         &kchampvs_machine_driver,
+	0,
 
         karatedo_rom,
         0, karatedo_decode,

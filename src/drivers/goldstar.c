@@ -141,14 +141,14 @@ INPUT_PORTS_START( input_ports )
 
 	PORT_START	/* DSW 2 */
 	PORT_DIPNAME( 0x07, 0x00, "Main Game Pay Rate", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x07, "75 %" )
-	PORT_DIPSETTING(    0x06, "70 %" )
-	PORT_DIPSETTING(    0x05, "65 %" )
-	PORT_DIPSETTING(    0x04, "60 %" )
-	PORT_DIPSETTING(    0x03, "55 %" )
-	PORT_DIPSETTING(    0x02, "50 %" )
-	PORT_DIPSETTING(    0x01, "45 %" )
-	PORT_DIPSETTING(    0x00, "40 %" )
+	PORT_DIPSETTING(    0x00, "75 %" )
+	PORT_DIPSETTING(    0x01, "70 %" )
+	PORT_DIPSETTING(    0x02, "65 %" )
+	PORT_DIPSETTING(    0x03, "60 %" )
+	PORT_DIPSETTING(    0x04, "55 %" )
+	PORT_DIPSETTING(    0x05, "50 %" )
+	PORT_DIPSETTING(    0x06, "45 %" )
+	PORT_DIPSETTING(    0x07, "40 %" )
 	PORT_DIPNAME( 0x18, 0x00, "Hopper Limit", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x18, "300" )
 	PORT_DIPSETTING(    0x10, "500" )
@@ -397,6 +397,7 @@ struct GameDriver goldstar_driver =
 	"Mirko Buffoni\nNicola Salmoria",
 	0,
 	&machine_driver,
+	0,
 
 	goldstar_rom,
 	goldstar_decode, 0,

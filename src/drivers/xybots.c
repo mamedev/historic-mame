@@ -475,6 +475,7 @@ struct GameDriver xybots_driver =
 	"Aaron Giles (MAME driver)\nAlan J. McCormick (hardware info)\nFrank Palazzolo (Slapstic decoding)",
 	0,
 	&xybots_machine_driver,
+	0,
 
 	xybots_rom,
 	0,

@@ -1333,6 +1333,7 @@ struct GameDriver galaxian_driver =
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	0,
 	&galaxian_machine_driver,
+	0,
 
 	galaxian_rom,
 	0, 0,
@@ -1358,6 +1359,7 @@ struct GameDriver galmidw_driver =
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	0,
 	&galaxian_machine_driver,
+	0,
 
 	galmidw_rom,
 	0, 0,
@@ -1383,6 +1385,7 @@ struct GameDriver galnamco_driver =
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	0,
 	&galaxian_machine_driver,
+	0,
 
 	galnamco_rom,
 	0, 0,
@@ -1408,6 +1411,7 @@ struct GameDriver superg_driver =
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	0,
 	&galaxian_machine_driver,
+	0,
 
 	superg_rom,
 	0, 0,
@@ -1433,6 +1437,7 @@ struct GameDriver galapx_driver =
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	0,
 	&galaxian_machine_driver,
+	0,
 
 	galapx_rom,
 	0, 0,
@@ -1458,6 +1463,7 @@ struct GameDriver galap1_driver =
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	0,
 	&galaxian_machine_driver,
+	0,
 
 	galap1_rom,
 	0, 0,
@@ -1483,6 +1489,7 @@ struct GameDriver galap4_driver =
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	0,
 	&galaxian_machine_driver,
+	0,
 
 	galap4_rom,
 	0, 0,
@@ -1508,6 +1515,7 @@ struct GameDriver galturbo_driver =
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	0,
 	&galaxian_machine_driver,
+	0,
 
 	galturbo_rom,
 	0, 0,
@@ -1533,6 +1541,7 @@ struct GameDriver pisces_driver =
 	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMike Balfour\nMarco Cassili",
 	0,
 	&pisces_machine_driver,
+	0,
 
 	pisces_rom,
 	0, 0,
@@ -1558,6 +1567,7 @@ struct GameDriver japirem_driver =
 	"Nicola Salmoria\nLionel Theunissen\nRobert Anschuetz\nAndrew Scott\nMarco Cassili",
 	0,
 	&pisces_machine_driver,
+	0,
 
 	japirem_rom,
 	0, 0,
@@ -1583,6 +1593,7 @@ struct GameDriver uniwars_driver =
 	"Nicola Salmoria\nGary Walton\nRobert Anschuetz\nAndrew Scott\nMarco Cassili",
 	0,
 	&pisces_machine_driver,
+	0,
 
 	uniwars_rom,
 	0, 0,
@@ -1608,6 +1619,7 @@ struct GameDriver warofbug_driver =
 	"Robert Aanchuetz\nNicola Salmoria\nAndrew Scott\nMike Balfour\nTim Lindquist (color info)\nMarco Cassili",
 	0,
 	&galaxian_machine_driver,
+	0,
 
 	warofbug_rom,
 	0, 0,
@@ -1633,6 +1645,7 @@ struct GameDriver redufo_driver =
 	"Robert Aanchuetz\nNicola Salmoria\nAndrew Scott\nValerio Verrando (high score save)\nMarco Cassili",
 	0,
 	&galaxian_machine_driver,
+	0,
 
 	redufo_rom,
 	0, 0,
@@ -1659,6 +1672,7 @@ struct GameDriver pacmanbl_driver =
 	"Robert Aanchuetz\nNicola Salmoria\nAndrew Scott\nValerio Verrando (high score save)\nMarco Cassili",
 	0,
 	&pacmanbl_machine_driver,
+	0,
 
 	pacmanbl_rom,
 	0, 0,
@@ -1684,6 +1698,7 @@ struct GameDriver zigzag_driver =
 	"Nicola Salmoria",
 	0,
 	&zigzag_machine_driver,
+	0,
 
 	zigzag_rom,
 	0, 0,
@@ -1709,6 +1724,7 @@ struct GameDriver zigzag2_driver =
 	"Nicola Salmoria",
 	0,
 	&zigzag_machine_driver,
+	0,
 
 	zigzag2_rom,
 	0, 0,
@@ -1735,6 +1751,7 @@ struct GameDriver mooncrgx_driver =
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nAndrew Scott",
 	0,
 	&pisces_machine_driver,
+	0,
 
 	mooncrgx_rom,
 	0, 0,

@@ -361,6 +361,7 @@ struct GameDriver tagteam_driver =
 	"Steve Ellenoff\nBrad Oliver\nCamilty (hardware info)",
 	0,
 	&machine_driver,
+	0,
 
 	tagteam_rom,
 	0, 0,

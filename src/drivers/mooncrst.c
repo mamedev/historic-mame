@@ -1322,6 +1322,7 @@ struct GameDriver mooncrst_driver =
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nAndrew Scott",
 	0,
 	&mooncrst_machine_driver,
+	0,
 
 	mooncrst_rom,
 	mooncrst_decode, 0,
@@ -1347,6 +1348,7 @@ struct GameDriver mooncrsg_driver =
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nAndrew Scott",
 	0,
 	&mooncrst_machine_driver,
+	0,
 
 	mooncrsg_rom,
 	0, 0,
@@ -1372,6 +1374,7 @@ struct GameDriver mooncrsb_driver =
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nAndrew Scott",
 	0,
 	&mooncrst_machine_driver,
+	0,
 
 	mooncrsb_rom,
 	0, 0,
@@ -1397,6 +1400,7 @@ struct GameDriver fantazia_driver =
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nAndrew Scott",
 	GAME_IMPERFECT_COLORS,
 	&mooncrst_machine_driver,
+	0,
 
 	fantazia_rom,
 	0, 0,
@@ -1422,6 +1426,7 @@ struct GameDriver eagle_driver =
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nAndrew Scott",
 	0,
 	&mooncrst_machine_driver,
+	0,
 
 	eagle_rom,
 	0, 0,
@@ -1447,6 +1452,7 @@ struct GameDriver moonqsr_driver =
 	"Robert Anschuetz (Arcade emulator)\nMike Coates (decryption info)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nAndrew Scott\nMarco Cassili",
 	0,
 	&moonqsr_machine_driver,
+	0,
 
 	moonqsr_rom,
 	0, moonqsr_decode,
@@ -1472,6 +1478,7 @@ struct GameDriver checkman_driver =
 	"Brad Oliver (MAME driver)\nMalcolm Lear (hardware & encryption info)",
 	0,
 	&checkman_machine_driver,
+	0,
 
 	checkman_rom,
 	checkman_decode, 0,
@@ -1497,6 +1504,7 @@ struct GameDriver moonal2_driver =
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAndrew Scott",
 	0,
 	&moonal2_machine_driver,
+	0,
 
 	moonal2_rom,
 	0, 0,
@@ -1522,6 +1530,7 @@ struct GameDriver moonal2b_driver =
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAndrew Scott",
 	0,
 	&moonal2_machine_driver,
+	0,
 
 	moonal2b_rom,
 	0, 0,
@@ -1547,6 +1556,7 @@ struct GameDriver kingball_driver =
 	"Brad Oliver",
 	0,
 	&kingball_machine_driver,
+	0,
 
 	kingball_rom,
 	0, 0,

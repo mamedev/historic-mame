@@ -476,6 +476,7 @@ struct GameDriver sprint1_driver =
 	"Mike Balfour",
 	0,
 	&sprint1_machine_driver,
+	0,
 
 	sprint1_rom,
 	0, 0,
@@ -500,6 +501,7 @@ struct GameDriver sprint2_driver =
 	"Mike Balfour",
 	0,
 	&machine_driver,
+	0,
 
 	sprint2_rom,
 	0, 0,

@@ -542,6 +542,7 @@ struct GameDriver xsleena_driver =
 	"Carlos A. Lozano\nRob Rosenbrock\nPhil Stroffolino\n",
 	0,
 	&machine_driver,
+	0,
 
 	xain_rom,
 	0, 0,
@@ -567,6 +568,7 @@ struct GameDriver solarwar_driver =
 	"Carlos A. Lozano\nRob Rosenbrock\nPhil Stroffolino\n",
 	0,
 	&machine_driver,
+	0,
 
 	solarwar_rom,
 	0, 0,

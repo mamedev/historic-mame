@@ -464,6 +464,7 @@ struct GameDriver bionicc_driver =
 	"Steven Frew\nPhil Stroffolino\nPaul Leaman",
 	0,
 	&machine_driver,
+	0,
 
 	bionicc_rom,
 	0,
@@ -488,6 +489,7 @@ struct GameDriver bionicc2_driver =
 	"Steven Frew\nPhil Stroffolino\nPaul Leaman",
 	0,
 	&machine_driver,
+	0,
 
 	bionicc2_rom,
 	0,

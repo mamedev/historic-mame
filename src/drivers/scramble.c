@@ -962,6 +962,7 @@ struct GameDriver scramble_driver =
 	"Nicola Salmoria (MAME driver)\nMike Balfour (high score save)",
 	0,
 	&scramble_machine_driver,
+	0,
 
 	scramble_rom,
 	0, 0,
@@ -987,6 +988,7 @@ struct GameDriver atlantis_driver =
 	"Nicola Salmoria\nMike Balfour",
 	0,
 	&scramble_machine_driver,
+	0,
 
 	atlantis_rom,
 	0, 0,
@@ -1012,6 +1014,7 @@ struct GameDriver theend_driver =
 	"Nicola Salmoria\nVille Laitinen\nMike Balfour",
 	0,
 	&theend_machine_driver,
+	0,
 
 	theend_rom,
 	0, 0,
@@ -1038,6 +1041,7 @@ struct GameDriver froggers_driver =
 	"Nicola Salmoria",
 	0,
 	&froggers_machine_driver,
+	0,
 
 	froggers_rom,
 	froggers_decode, 0,
@@ -1064,6 +1068,7 @@ struct GameDriver amidars_driver =
 	"Nicola Salmoria\nMike Coates",
 	0,
 	&scramble_machine_driver,
+	0,
 
 	amidars_rom,
 	0, 0,
@@ -1271,6 +1276,7 @@ struct GameDriver triplep_driver =
 	"Nicola Salmoria",
 	0,
 	&triplep_machine_driver,
+	0,
 
 	triplep_rom,
 	0, 0,

@@ -418,6 +418,7 @@ struct GameDriver spiders_driver =
 	"Keith Wilkins",
 	0,
 	&machine_driver,
+	0,
 
 	spiders_rom,
 	0, 0,

@@ -394,6 +394,7 @@ struct GameDriver sonson_driver =
 	"Mirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info=",
 	0,
 	&machine_driver,
+	0,
 
 	sonson_rom,
 	0, 0,

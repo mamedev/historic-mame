@@ -390,6 +390,7 @@ struct GameDriver leprechn_driver =
 	"Zsolt Vasvari",
 	0,
 	&leprechn_machine_driver,
+	0,
 
 	leprechn_rom,
 	0, 0,
@@ -416,6 +417,7 @@ struct GameDriver potogold_driver =
 	"Zsolt Vasvari",
 	0,
 	&leprechn_machine_driver,
+	0,
 
 	potogold_rom,
 	0, 0,

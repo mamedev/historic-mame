@@ -1771,6 +1771,7 @@ struct GameDriver ghostb_driver =
 	"bm",
 	0,
 	&ghostb_machine_driver,
+	0,
 
 	ghostb_rom,
 	0, 0,
@@ -1796,6 +1797,7 @@ struct GameDriver srdarwin_driver =
 	"bm",
 	0,
 	&ghostb_machine_driver,
+	0,
 
 	srdarwin_rom,
 	0, 0,
@@ -1821,6 +1823,7 @@ struct GameDriver cobracom_driver =
 	"Bryan McPhail",
 	0,
 	&cobra_machine_driver,
+	0,
 
 	cobracom_rom,
 	0, 0,
@@ -1846,6 +1849,7 @@ struct GameDriver gondo_driver =
 	"Bm",
 	0,
 	&gondo_machine_driver,
+	0,
 
 	gondo_rom,
 	0, 0,
@@ -1871,6 +1875,7 @@ struct GameDriver oscar_driver =
 	"Bm",
 	0,
 	&oscar_machine_driver,
+	0,
 
 	oscar_rom,
 	0, 0,
@@ -1896,6 +1901,7 @@ struct GameDriver lastmiss_driver =
 	"Bm",
 	0,
 	&lastmiss_machine_driver,
+	0,
 
 	lastmiss_rom,
 	0, 0,
@@ -1921,6 +1927,7 @@ struct GameDriver shackled_driver =
 	"Bm",
 	0,
 	&lastmiss_machine_driver,
+	0,
 
 	shackled_rom,
 	0, 0,
@@ -1946,6 +1953,7 @@ struct GameDriver mazeh_driver =
 	"Bm",
 	0,
 	&ghostb_machine_driver,
+	0,
 
 	mazeh_rom,
 	0, 0,

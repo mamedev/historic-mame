@@ -298,7 +298,10 @@ int readroms(void)
 							"WARNING: the game might not run correctly.\n"
 							"Name         Expected  Found\n");
 				checksumwarning++;
-				printf("%-12s %08x %08x\n", name, expchecksum, osd_fcrc (f));
+				if (expchecksum)
+					printf("%-12s %08x %08x\n", name, expchecksum, osd_fcrc (f));
+				else
+					printf("%-12s NO GOOD DUMP EXISTS\n",name);
 				#endif
 			}
 

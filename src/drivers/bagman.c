@@ -438,6 +438,7 @@ struct GameDriver bagman_driver =
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nJarek Burczynski (additional code)\nTim Lindquist (color info)\nJuan Carlos Lorente (high score save)\nAndrew Deschenes (protection info)",
 	0,
 	&machine_driver,
+	0,
 
 	bagman_rom,
 	0, 0,
@@ -463,6 +464,7 @@ struct GameDriver bagmans_driver =
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nJarek Burczynski (additional code)\nTim Lindquist (color info)\nJuan Carlos Lorente (high score save)\nAndrew Deschenes (protection info)",
 	0,
 	&machine_driver,
+	0,
 
 	bagmans_rom,
 	0, 0,
@@ -488,6 +490,7 @@ struct GameDriver sbagman_driver =
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (Bagman driver)\nJarek Burczynski (MAME driver)\nTim Lindquist (color info)\nJuan Carlos Lorente (high score save)\nAndrew Deschenes (protection info)",
 	0,
 	&machine_driver,
+	0,
 
 	sbagman_rom,
 	0, 0,

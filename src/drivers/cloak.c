@@ -375,6 +375,7 @@ struct GameDriver cloak_driver =
 	"Dan Boris        (hardware info)\nMirko Buffoni      (MAME driver)",
 	0,
 	&machine_driver,
+	0,
 
 	cloak_rom,
 	0, 0,

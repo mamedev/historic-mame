@@ -21,7 +21,18 @@ extern int  MC68000_GetPC(void);                      /* ASG 971105 */
 
 extern void MC68000_disasm(CPTR, CPTR*, int);
 
+#ifdef A68KEM
+
+extern regstruct regs;
+
+#define MC68000_ICount regs.Icount
+
+#else
+
 extern int MC68000_ICount;                            /* ASG 971105 */
+
+#endif
+
 
 /* ASG 971105 */
 #define MC68000_INT_NONE 0

@@ -465,6 +465,7 @@ struct GameDriver jrpacman_driver =
 	"David Caldwell\nNicola Salmoria\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	jrpacman_rom,
 	jrpacman_decode, 0,

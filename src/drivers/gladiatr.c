@@ -30,6 +30,7 @@ Issues:
 - Flipscreen not implemented
 - Scrolling issues in Test mode!
 - Sample @ 5500 Hz being used because Mame core doesn't yet support multiple sample rates.
+- The four 8741 ROMs are available but not used.
 
 Preliminary Gladiator Memory Map
 
@@ -1067,6 +1068,7 @@ struct GameDriver gladiatr_driver =
 	"Victor Trucco\nSteve Ellenoff\nPhil Stroffolino\nNicola Salmoria\nTatsuyuki Satoh\n",
 	0,
 	&machine_driver,
+	0,
 
 	gladiatr_rom,
 	gladiatr_decode,
@@ -1094,6 +1096,7 @@ struct GameDriver ogonsiro_driver =
 	"Victor Trucco\nSteve Ellenoff\nPhil Stroffolino\nNicola Salmoria\nTatsuyuki Satoh\n",
 	0,
 	&machine_driver,
+	0,
 
 	ogonsiro_rom,
 	gladiatr_decode,
@@ -1121,6 +1124,7 @@ struct GameDriver gcastle_driver =
 	"Victor Trucco\nSteve Ellenoff\nPhil Stroffolino\nNicola Salmoria\nTatsuyuki Satoh\n",
 	0,
 	&machine_driver,
+	0,
 
 	gcastle_rom,
 	gladiatr_decode,

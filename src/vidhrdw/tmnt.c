@@ -576,6 +576,12 @@ static void punkshot_drawsprites(struct osd_bitmap *bitmap,int pri)
 					((READ_WORD(&spriteram[offs]) & 0x1f) << 8) +
 					(((READ_WORD(&spriteram[offs+2]) & 0x10) >> 4) << 13);
 
+			/* I'm not sure the following is correct, but some sort of alignment */
+			/* is certainly needed to fix the score table. */
+			if (w == 2) code &= ~1;
+			if (w == 4) code &= ~7;
+			if (w == 8) code &= ~31;
+
 			col = sprite_colorbase + (READ_WORD(&spriteram[offs+2]) & 0x0f);
 
 			sx = READ_WORD(&spriteram[offs+6]) & 0x01ff;

@@ -297,16 +297,16 @@ static struct MemoryWriteAddress atarisys1_sound_writemem[] =
 
 INPUT_PORTS_START( marble_ports )
 	PORT_START      /* IN0 */
-	PORT_ANALOG ( 0xff, 0, IPT_TRACKBALL_X | IPF_REVERSE | IPF_CENTER | IPF_PLAYER1, 100, 0x7f, 0, 0 )
+    PORT_ANALOGX ( 0xff, 0, IPT_TRACKBALL_X | IPF_REVERSE | IPF_CENTER | IPF_PLAYER1, 100, 0x7f, 0, 0, OSD_KEY_LEFT, OSD_KEY_RIGHT, OSD_JOY_LEFT, OSD_JOY_RIGHT, 32 )
 
 	PORT_START      /* IN1 */
-	PORT_ANALOG ( 0xff, 0, IPT_TRACKBALL_Y | IPF_CENTER | IPF_PLAYER1, 100, 0x7f, 0,0)
+    PORT_ANALOGX ( 0xff, 0, IPT_TRACKBALL_Y | IPF_CENTER | IPF_PLAYER1, 100, 0x7f, 0, 0, OSD_KEY_UP, OSD_KEY_DOWN, OSD_JOY_UP, OSD_JOY_DOWN, 32 )
 
 	PORT_START      /* IN2 */
-	PORT_ANALOG ( 0xff, 0, IPT_TRACKBALL_X | IPF_CENTER | IPF_REVERSE | IPF_PLAYER2, 100, 0x7f, 0, 0 )
+    PORT_ANALOGX ( 0xff, 0, IPT_TRACKBALL_X | IPF_CENTER | IPF_REVERSE | IPF_PLAYER2, 100, 0x7f, 0, 0, OSD_KEY_D, OSD_KEY_G, 0, 0, 32 )
 
 	PORT_START      /* IN3 */
-	PORT_ANALOG ( 0xff, 0, IPT_TRACKBALL_Y | IPF_CENTER | IPF_PLAYER2, 100, 0x7f, 0,0)
+    PORT_ANALOGX ( 0xff, 0, IPT_TRACKBALL_Y | IPF_CENTER | IPF_PLAYER2, 100, 0x7f, 0, 0, OSD_KEY_R, OSD_KEY_F, 0, 0, 32 )
 
 	PORT_START	/* IN4 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -967,6 +967,17 @@ static void roadblst_rom_decode (void)
 {
 	int i;
 
+	/* ROMs 39+40 load the lower half at 10000 and the upper half at 50000 */
+	/* ROMs 55+56 load the lower half at 20000 and the upper half at 60000 */
+	/* However, we load 39+40 into 10000 and 20000, and 55+56 into 50000+60000 */
+	/* We need to swap the memory at 20000 and 50000 */
+	for (i = 0; i < 0x10000; i++)
+	{
+		int temp = Machine->memory_region[0][0x20000 + i];
+		Machine->memory_region[0][0x20000 + i] = Machine->memory_region[0][0x50000 + i];
+		Machine->memory_region[0][0x50000 + i] = temp;
+	}
+
 	/* invert the graphics bits on the playfield and motion objects */
 	for (i = 0; i < 0xf0000; i++)
 		Machine->memory_region[1][i] ^= 0xff;
@@ -1213,11 +1224,6 @@ ROM_START( roadblst_rom )
 	ROM_LOAD_ODD ( "136032.206",   0x00000, 0x04000, 0x3c79ef05 )
 	ROM_LOAD_EVEN( "048-1139.rom", 0x10000, 0x10000, 0xb73c1bd5 )
 	ROM_LOAD_ODD ( "048-1140.rom", 0x10000, 0x10000, 0x6305429b )
-	ROM_LOAD_EVEN( "048-1155.rom", 0x20000, 0x10000, 0xe95fc7d2 )
-	ROM_LOAD_ODD ( "048-1156.rom", 0x20000, 0x10000, 0x727510f9 )
-	/* this is strange because we need to load the top halves of these ROMs higher */
-	ROM_LOAD_EVEN( "048-1139.rom", 0x40000, 0x10000, 0xb73c1bd5 )
-	ROM_LOAD_ODD ( "048-1140.rom", 0x40000, 0x10000, 0x6305429b )
 	ROM_LOAD_EVEN( "048-1155.rom", 0x50000, 0x10000, 0xe95fc7d2 )
 	ROM_LOAD_ODD ( "048-1156.rom", 0x50000, 0x10000, 0x727510f9 )
 	ROM_LOAD_EVEN( "048-1167.rom", 0x70000, 0x08000, 0xc6d30d6f )
@@ -1283,6 +1289,7 @@ struct GameDriver marble_driver =
 	"Aaron Giles (MAME driver)\nFrank Palazzolo (Slapstic decoding)\nTim Lindquist (Hardware Info)",
 	0,
 	&marble_machine_driver,
+	0,
 
 	marble_rom,
 	marble_rom_decode,
@@ -1309,6 +1316,7 @@ struct GameDriver marble2_driver =
 	"Aaron Giles (MAME driver)\nFrank Palazzolo (Slapstic decoding)\nTim Lindquist (Hardware Info)",
 	0,
 	&marble_machine_driver,
+	0,
 
 	marble2_rom,
 	marble_rom_decode,
@@ -1335,6 +1343,7 @@ struct GameDriver marblea_driver =
 	"Aaron Giles (MAME driver)\nFrank Palazzolo (Slapstic decoding)\nTim Lindquist (Hardware Info)",
 	0,
 	&marble_machine_driver,
+	0,
 
 	marblea_rom,
 	marble_rom_decode,
@@ -1361,6 +1370,7 @@ struct GameDriver peterpak_driver =
 	"Aaron Giles (MAME driver)\nFrank Palazzolo (Slapstic decoding)\nTim Lindquist (Hardware Info)",
 	0,
 	&peterpak_machine_driver,
+	0,
 
 	peterpak_rom,
 	peterpak_rom_decode,
@@ -1387,6 +1397,7 @@ struct GameDriver indytemp_driver =
 	"Aaron Giles (MAME driver)\nFrank Palazzolo (Slapstic decoding)\nTim Lindquist (Hardware Info)",
 	0,
 	&indytemp_machine_driver,
+	0,
 
 	indytemp_rom,
 	indytemp_rom_decode,
@@ -1413,6 +1424,7 @@ struct GameDriver roadrunn_driver =
 	"Aaron Giles (MAME driver)\nFrank Palazzolo (Slapstic decoding)\nTim Lindquist (Hardware Info)",
 	0,
 	&roadrunn_machine_driver,
+	0,
 
 	roadrunn_rom,
 	roadrunn_rom_decode,
@@ -1439,6 +1451,7 @@ struct GameDriver roadblst_driver =
 	"Aaron Giles (MAME driver)\nFrank Palazzolo (Slapstic decoding)\nTim Lindquist (Hardware Info)",
 	0,
 	&roadblst_machine_driver,
+	0,
 
 	roadblst_rom,
 	roadblst_rom_decode,

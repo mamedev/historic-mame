@@ -572,6 +572,7 @@ struct GameDriver tigeroad_driver =
 	"Phil Stroffolino (MAME driver)\nTim Lindquist",
 	0,
 	&machine_driver,
+	0,
 
 	tigeroad_rom,
 	0,0,0,0,
@@ -595,6 +596,7 @@ struct GameDriver f1dream_driver =
 	"Paul Leaman\nPhil Stroffolino (MAME driver)\nTim Lindquist",
 	GAME_NOT_WORKING,
 	&machine_driver,
+	0,
 
 	f1dream_rom,
 	0,0,0,0,
@@ -617,6 +619,7 @@ struct GameDriver f1dreamb_driver =
 	"Paul Leaman\nPhil Stroffolino (MAME driver)\nTim Lindquist",
 	0,
 	&machine_driver,
+	0,
 
 	f1dreamb_rom,
 	0,0,0,0,

@@ -476,9 +476,10 @@ struct GameDriver route16_driver =
 	"Zsolt Vasvari\nMike Balfour",
 	0,
 	&route16_machine_driver,
+	route16_set_machine_type,
 
 	route16_rom,
-	route16_set_machine_type, 0,
+	0, 0,
 	0,
 	0,	/* sound_prom */
 
@@ -501,9 +502,10 @@ struct GameDriver stratvox_driver =
 	"Darren Olafson\nZsolt Vasvari\nMike Balfour",
 	0,
 	&stratvox_machine_driver,
+	stratvox_set_machine_type,
 
 	stratvox_rom,
-	stratvox_set_machine_type, 0,
+	0, 0,
 	stratvox_sample_names,
 	0,	/* sound_prom */
 
@@ -526,9 +528,10 @@ struct GameDriver speakres_driver =
 	"Darren Olafson\nZsolt Vasvari\nMike Balfour",
 	0,
 	&stratvox_machine_driver,
+	stratvox_set_machine_type,
 
 	speakres_rom,
-	stratvox_set_machine_type, 0,
+	0, 0,
 	stratvox_sample_names,
 	0,	/* sound_prom */
 

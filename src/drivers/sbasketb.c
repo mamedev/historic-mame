@@ -383,6 +383,7 @@ struct GameDriver sbasketb_driver =
 	"Zsolt Vasvari\nTim Linquist (color info)\nMarco Cassili\nTatsuyuki Satoh(speech sound)",
 	0,
 	&machine_driver,
+	0,
 
 	sbasketb_rom,
 	0, 0,

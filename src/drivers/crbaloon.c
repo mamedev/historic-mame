@@ -364,6 +364,7 @@ struct GameDriver crbaloon_driver =
 	"Nicola Salmoria",
 	0,
 	&machine_driver,
+	0,
 
 	crbaloon_rom,
 	0, 0,
@@ -389,6 +390,7 @@ struct GameDriver crbalon2_driver =
 	"Nicola Salmoria",
 	0,
 	&machine_driver,
+	0,
 
 	crbalon2_rom,
 	0, 0,

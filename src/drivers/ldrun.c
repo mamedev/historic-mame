@@ -587,6 +587,7 @@ struct GameDriver ldrun_driver =
 	"Lee Taylor\nJohn Clegg\nAaron Giles (sound)",
 	0,
 	&machine_driver,
+	0,
 
 	ldrun_rom,
 	0, 0,
@@ -612,6 +613,7 @@ struct GameDriver ldruna_driver =
 	"Lee Taylor\nJohn Clegg\nAaron Giles (sound)",
 	0,
 	&machine_driver,
+	0,
 
 	ldruna_rom,
 	0, 0,
@@ -637,6 +639,7 @@ struct GameDriver ldrun2p_driver =
 	"Lee Taylor\nJohn Clegg\nAaron Giles (sound)\nNicola Salmoria",
 	0,
 	&ldrun2p_machine_driver,
+	0,
 
 	ldrun2p_rom,
 	0, 0,

@@ -330,6 +330,7 @@ struct GameDriver panic_driver =
 	"Mike Coates (MAME driver)\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	panic_rom,
 	0, 0,
@@ -355,6 +356,7 @@ struct GameDriver panica_driver =
 	"Mike Coates (MAME driver)\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	panica_rom,
 	0, 0,

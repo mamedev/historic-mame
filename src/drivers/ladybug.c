@@ -690,6 +690,7 @@ struct GameDriver ladybug_driver =
 	"Nicola Salmoria",
 	0,
 	&machine_driver,
+	0,
 
 	ladybug_rom,
 	0, 0,
@@ -715,6 +716,7 @@ struct GameDriver ladybugb_driver =
 	"Nicola Salmoria",
 	0,
 	&machine_driver,
+	0,
 
 	ladybugb_rom,
 	0, 0,
@@ -740,6 +742,7 @@ struct GameDriver snapjack_driver =
 	"Nicola Salmoria (MAME driver)\nMike Balfour (high score save)",
 	0,
 	&machine_driver,
+	0,
 
 	snapjack_rom,
 	0, 0,
@@ -765,6 +768,7 @@ struct GameDriver cavenger_driver =
 	"Nicola Salmoria (MAME driver)\nMike Balfour (high score save)",
 	0,
 	&machine_driver,
+	0,
 
 	cavenger_rom,
 	0, 0,

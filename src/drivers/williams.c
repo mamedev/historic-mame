@@ -1929,6 +1929,7 @@ struct GameDriver robotron_driver =
 	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles",
 	0,
 	&robotron_machine_driver,       /* MachineDriver * */
+	0,
 
 	robotron_rom,                   /* RomModule * */
 	0, 0,                           /* ROM decrypt routines */
@@ -1955,6 +1956,7 @@ struct GameDriver robotryo_driver =
 	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles\nValerio Verrando",
 	0,
 	&robotron_machine_driver,       /* MachineDriver * */
+	0,
 
 	robotryo_rom,                   /* RomModule * */
 	0, 0,                           /* ROM decrypt routines */
@@ -2056,6 +2058,7 @@ struct GameDriver joust_driver =
 	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles\nValerio Verrando",
 	0,
 	&joust_machine_driver,          /* MachineDriver * */
+	0,
 
 	joust_rom,                      /* White/Green version, latest */
 	0, 0,                           /* ROM decrypt routines */
@@ -2081,6 +2084,7 @@ struct GameDriver joustr_driver =
 	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles",
 	0,
 	&joust_machine_driver,          /* MachineDriver * */
+	0,
 
 	joustr_rom,                     /* Solid Red version, has pterodactyl bug */
 	0, 0,                           /* ROM decrypt routines */
@@ -2106,6 +2110,7 @@ struct GameDriver joustwr_driver =
 	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles",
 	0,
 	&joust_machine_driver,          /* MachineDriver * */
+	0,
 
 	joustwr_rom,
 	0, 0,                           /* ROM decrypt routines */
@@ -2197,6 +2202,7 @@ struct GameDriver sinistar_driver =
 	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles\nHowie Cohen\nSean Riddle\nPat Lawrence",
 	0,
 	&sinistar_machine_driver,       /* MachineDriver * */
+	0,
 
 	sinistar_rom,                   /* RomModule * */
 	0, 0,                           /* ROM decrypt routines */
@@ -2222,6 +2228,7 @@ struct GameDriver oldsin_driver =
 	"\nSinistar team:\nMarc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles\nHowie Cohen\nSean Riddle\nPat Lawrence\nBrian Deuel (prototype driver)\n\nSpecial thanks to Peter Freeman",
 	0,
 	&sinistar_machine_driver, /* MachineDriver * */
+	0,
 
 	oldsin_rom, /* RomModule * */
 	0, 0, /* ROM decrypt routines; not sure if these are needed here */
@@ -2301,6 +2308,7 @@ struct GameDriver bubbles_driver =
 	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles",
 	0,
 	&bubbles_machine_driver,        /* MachineDriver * */
+	0,
 
 	bubbles_rom,                    /* RomModule * */
 	0, 0,                           /* ROM decrypt routines */
@@ -2327,6 +2335,7 @@ struct GameDriver bubblesr_driver =
 	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles\nValerio Verrando",
 	0,
 	&bubbles_machine_driver,        /* MachineDriver * */
+	0,
 
 	bubblesr_rom,                   /* RomModule * */
 	0, 0,                           /* ROM decrypt routines */
@@ -2382,6 +2391,7 @@ struct GameDriver stargate_driver =
 	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles",
 	0,
 	&stargate_machine_driver,       /* MachineDriver * */
+	0,
 
 	stargate_rom,                   /* RomModule * */
 	0, 0,                           /* ROM decrypt routines */
@@ -2438,6 +2448,7 @@ struct GameDriver defender_driver =
 	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles",
 	0,
 	&defender_machine_driver,       /* MachineDriver * */
+	0,
 
 	defender_rom,                   /* RomModule * */
 	0, 0,                           /* ROM decrypt routines */
@@ -2494,6 +2505,7 @@ struct GameDriver splat_driver =
 	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles",
 	0,
 	&splat_machine_driver,          /* MachineDriver * */
+	0,
 
 	splat_rom,                      /* RomModule * */
 	0, 0,                           /* ROM decrypt routines */
@@ -2556,6 +2568,7 @@ struct GameDriver blaster_driver =
 	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles",
 	0,
 	&blaster_machine_driver,        /* MachineDriver * */
+	0,
 
 	blaster_rom,                    /* RomModule * */
 	0, 0,                           /* ROM decrypt routines */
@@ -2630,6 +2643,7 @@ struct GameDriver colony7_driver =
 	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles\nMike Balfour",
 	0,
 	&colony7_machine_driver,       /* MachineDriver * */
+	0,
 
 	colony7_rom,                   /* RomModule * */
 	0, 0,                           /* ROM decrypt routines */
@@ -2655,6 +2669,7 @@ struct GameDriver colony7a_driver =
 	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles\nMike Balfour",
 	0,
 	&colony7_machine_driver,       /* MachineDriver * */
+	0,
 
 	colony7a_rom,                   /* RomModule * */
 	0, 0,                           /* ROM decrypt routines */
@@ -2712,6 +2727,7 @@ struct GameDriver lottofun_driver =
 	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles\nMike Balfour (Ticket Dispenser)",
 	0,
 	&lottofun_machine_driver,		/* MachineDriver * */
+	0,
 
 	lottofun_rom,					 /* RomModule * */
 	0, 0,							/* ROM decrypt routines */

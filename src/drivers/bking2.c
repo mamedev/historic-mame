@@ -336,6 +336,7 @@ struct GameDriver bking2_driver =
 	"Ed. Mueller\nMike Balfour",
 	GAME_NOT_WORKING,
 	&machine_driver,
+	0,
 
 	bking2_rom,
 	0, 0,

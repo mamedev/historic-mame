@@ -391,6 +391,7 @@ struct GameDriver klax_driver =
 	"Aaron Giles (MAME driver)\nMike Cuddy (additional information)",
 	0,
 	&klax_machine_driver,
+	0,
 
 	klax_rom,
 	0,
@@ -416,6 +417,7 @@ struct GameDriver klax2_driver =
 	"Aaron Giles (MAME driver)\nMike Cuddy (additional information)",
 	0,
 	&klax_machine_driver,
+	0,
 
 	klax2_rom,
 	0,
@@ -441,6 +443,7 @@ struct GameDriver klax3_driver =
 	"Aaron Giles (MAME driver)\nMike Cuddy (additional information)",
 	0,
 	&klax_machine_driver,
+	0,
 
 	klax3_rom,
 	0,

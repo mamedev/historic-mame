@@ -26,8 +26,8 @@ The list doesn't include variants of the same game.
 | Anteater             |  Yes   |   No   |  Yes   |  Yes   |   No   | anteater |
 | Arabian              |  Yes   | Close  |  Yes   |  Yes   |   No   | arabian  |
 | Arkanoid             |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | arkanoid |
-| Arkanoid 2           |  Yes   |   No   |  Yes   |  Yes   |   No   | arkanoi2 |
-| Arm Wrestling        |  Yes   | Close  |  Yes   |  Yes   |  n/a   | armwrest |
+| Arkanoid 2           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | arkanoi2 |
+| Arm Wrestling        |  Yes   | Close  |  Bad   |  Yes   |  n/a   | armwrest |
 | Armored Car          |  Yes   |   No   |  Yes   |  Yes   |   No   | armorcar |
 | Asteroids            |  Yes   |  Yes   | Yes(1) |  Yes   |   No   | asteroid |
 | Asteroids Deluxe     |  Yes   |  Yes   |  Yes   |  Yes   |   No   | astdelux |
@@ -45,6 +45,7 @@ The list doesn't include variants of the same game.
 | Battle Zone          |  Yes   |Overlay | Yes(1) |  Yes   |   No   | bzone    |
 | Battle of Atlantis   |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | atlantis |
 | Berzerk              |  Yes   |  Yes   | Yes(1) |  Yes   |   No   | berzerk  |
+| Bio Attack           |   No   |  Yes   |  Yes   |   No   |  Yes   | bioatack |
 | Bionic Commando      |  Yes   |  Yes   |  Yes   |   No   |   No   | bionicc  |
 | Birdie King 2        |   No   |   No   |   No   |   No   |   No   | bking2   |
 | Black Tiger          |  Yes   |  Yes   |  Yes   |  Yes   |   No   | blktiger |
@@ -74,7 +75,7 @@ The list doesn't include variants of the same game.
 | Carrier Air Wing     |   No   |  Yes   |  Yes   |   No   |   No   | cawingj  |
 | Centipede            |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | centiped |
 | Challenger           |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | challeng |
-| Champion Baseball    |  Yes   |  Yes?  |  Yes   |   No   |   No   | champbas |
+| Champion Baseball    |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | champbas |
 | Championship Sprint  |  Yes   |  Yes   |  Yes   |  Yes   |   No   | csprint  |
 | Checkman             |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | checkman |
 | Chelnov              |Partial |  Yes   |  Yes   |  Yes   |   No   | chelnov  |
@@ -201,7 +202,7 @@ The list doesn't include variants of the same game.
 | Joust                |  Yes   |  Yes   |  Yes   |  Yes   |   No   | joust    |
 | Jr. Pacman           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | jrpacman |
 | Jump Bug             |  Yes   |   No   |  Yes   |  Yes   |   No   | jumpbug  |
-| Jump Coaster         |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | jumpcoas |
+| Jump Coaster         |  Yes   |  Yes?  |  Yes   |  Yes   |  Yes   | jumpcoas |
 | Jumping Jack         |  Yes   |  Yes   |  Yes   |  Yes   |   No   | jjack    |
 | Jungle King          |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | junglek  |
 | Jungler              |  Yes   |   No   |  Yes   |  Yes   |  Yes   | jungler  |
@@ -216,6 +217,7 @@ The list doesn't include variants of the same game.
 | Kicker               |  Yes   |  Yes   |  Yes   |  Yes   |   No   | kicker   |
 | Killer Comet         |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | killcom  |
 | King & Balloon       |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | kingball |
+| King of Boxer        |  Yes   |  Yes?  |  Yes   |   No   |   No   | kingofb  |
 | Klax                 |  Yes   |  Yes   |  Yes   |  Yes   |   No   | klax     |
 | Knights of the Round |   No   |  Yes   |  Yes   |   No   |   No   | knights  |
 | Konami GT            |   No   |  Yes   |   No   |   No   |   No   | konamigt |
@@ -311,11 +313,11 @@ The list doesn't include variants of the same game.
 | Psychic 5            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | psychic5 |
 | Pulsar               |  Yes   |  Yes   |   No   |   No   |   No   | pulsar   |
 | Punch Out            |  Yes   |  Yes   |Partial |  Yes   |  n/a   | punchout |
-| Punk Shot            |  Yes   |  Yes   |   No   |   No   |   No   | punkshot |
+| Punk Shot            |  Yes   |  Yes   |Partial |   No   |   No   | punkshot |
 | Q*Bert               |  Yes   |  Yes   | Yes(1) |  Yes   |  Yes   | qbert    |
 | Q*Bert Qubes         |  Yes   |  Yes   | Yes(1) |  Yes   |   No   | qbertqub |
 | Qix                  |  Yes   |  Yes   |  Yes   |  Yes   |   No   | qix      |
-| Quantum              |  Yes   |   No   |  Yes   |   No   |   No   | quantum  |
+| Quantum              |  Yes   |   No   |  Yes   |  Yes   |   No   | quantum  |
 | Quartet II           |   No   |  Yes   |   No   |   No   |   No   | quartet2 |
 | Radar Scope          |  Yes   |  Yes?  |Partial |   No   |   No   | radarscp |
 | Rainbow Islands      |Partial.|  Yes   |   No   |   No   |   No   | rainbow  |
@@ -350,6 +352,7 @@ The list doesn't include variants of the same game.
 | Satan's Hollow       |  Yes   |  Yes   |  Yes   |  Yes   |   No   | shollow  |
 | Scramble             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | scramble |
 | SDI                  |   No   |  Yes   |   No   |   No   |   No   | sdi      |
+| Sea Fighter Poseidon |   No   |  Yes   |  Yes   |   No   |  Yes   | sfposeid |
 | Sea Wolf ][          |  Yes   |   No   |   No   |  Yes   |  n/a   | seawolf2 |
 | Section Z            |  Yes   |  Yes   | Yes(2) |  Yes   |   No   | sectionz |
 | Sega Ninja           |  Yes   |  Yes   |  Yes   |  Yes   |   No   | seganinj |
@@ -442,6 +445,7 @@ The list doesn't include variants of the same game.
 | Time Pilot           |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | timeplt  |
 | Time Pilot 84        |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | tp84     |
 | Time Scanner         |  Yes   |  Yes   |  Yes   |   No   |   No   | timescan |
+| Time Tunnel          |  Yes   |  Yes   |  Yes   |   No   |  Yes   | timetunl |
 | Toki                 |  Yes   |  Yes   |  Yes   |  Yes   |   No   | toki     |
 | Toki no Senshi       |  Yes   |  Yes   |  Yes   |   No   |   No   | tokisens |
 | Tokio                |  Yes   |  Yes   |   No   |   No   |   No   | tokio    |
@@ -623,6 +627,13 @@ Known issues:
 
 
 
+Arkanoid 2 ("arkanoi2")
+=======================
+Clones supported:
+  Romstar license ("ark2us")
+
+
+
 Armored Car ("armorcar")
 ========================
 Press the second player button #2 (default: S) + F3 to enter test mode
@@ -706,6 +717,13 @@ Clones supported:
 
 
 
+Bio Attack("bioatack")
+======================
+Known issues:
+- Collision detection doesn't work.
+
+
+
 Bionic Commando ("bionicc")
 ===========================
 Clones supported:
@@ -717,6 +735,7 @@ Black Tiger ("blktiger")
 ========================
 Clones supported:
   Black Dragon ("blkdrgon")
+  bootleg version ("bktigerb")
 
 
 
@@ -775,6 +794,7 @@ Brain ("brain")
 ===============
 Known issues:
 - This could be a bootleg. The ROM checksum test fails.
+- The color PROMs are missing.
 
 
 
@@ -1181,6 +1201,7 @@ Clones supported:
 Exerion ("exerion")
 ===================
 Clones supported:
+  Taito license ("exeriont")
   alternate version (bootleg?) ("exerionb")
 
 Known issues:
@@ -1194,6 +1215,9 @@ Express Raider ("exprraid")
 ===========================
 Clones supported:
   bootleg version ("exprraib")
+
+Known issues:
+- Some flickering graphics.
 
 
 
@@ -1520,13 +1544,14 @@ Jackal ("jackal")
 =================
 Clones supported:
   Top Gunner ("topgunr")
+  bootleg Top Gunner ("topgunbl")
 
 Known issues:
 - The high score table colors are probably not correct (all lines are white).
 - Sprites disappear at the border of the screen and are not in sync with the
   scroll.
-- At the beginning of a game, part of the screen remains black.
-- Top Gunner doesn't work, ROM 16D doesn't pass the self test.
+- The Jackal gfx ROMs have some bad bits (look at the '0', for example)
+- One of the bootleg Top Gunner gfx ROMs seems to be bad as well.
 
 
 
@@ -1637,6 +1662,20 @@ Clones supported:
 Known issues:
 - Sometimes there is a blinking sprite in the bottom left corner of the high
   score entry screen.
+
+
+
+King of Boxer ("kingofb")
+=========================
+Clones supported:
+  version with Japanese (?) text ("kingofbj")
+  Ring King ("ringking")
+  Ring King on King of Boxer hardware ("ringkin2")
+
+Known issues:
+- Due to a missing color PROM, ringking colors are wrong. ringkin2 uses the
+  King of Boxer PROMs, but they are probably wrong.
+- One of the ringkin2 gfx ROMs is bad.
 
 
 
@@ -1960,7 +1999,7 @@ Mr. Do! Run Run ("dorunrun")
 CTRL+F3 Test mode
 
 Clones supported:
-  the Japanese version of Super Piero, a follow-up with improved graphics
+  the Japanese version of Super Pierrot, a follow-up with improved graphics
     ("spiero")
 
 
@@ -2116,10 +2155,21 @@ Amstar copyright
 
 Clones supported:
   Taito copyright ("phoenixt")
-  bootleg ("phoenix3")
+  bootleg by T.P.N. ("phoenix3")
+  bootleg (?) by IRECSA ("phoenixc")
 
 Known issues:
 - The startup tune is missing.
+
+
+
+Pinball Action ("pbaction")
+===========================
+Clones supported:
+  alternate version ("pbactio2")
+
+Known issues:
+- The alternate set has code for a third Z80, whose function is unknown.
 
 
 
@@ -2295,6 +2345,13 @@ Red Baron ("redbaron")
 ======================
 - Red Baron tries to calibrate its analog joystick at the start, so you'll
   have to move the "joystick" a bit before you can fly in all four directions.
+
+
+
+Regulus ("regulus")
+===================
+Clones supported:
+  not encrypted version ("regulusu")
 
 
 
@@ -2575,6 +2632,13 @@ Space Panic ("panic")
 =====================
 Clones supported:
   alternate version ("panica")
+
+
+
+Space Trek ("spacetrk")
+=======================
+Clones supported:
+  cocktail version ("sptrekct")
 
 
 

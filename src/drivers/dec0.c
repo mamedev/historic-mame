@@ -181,6 +181,34 @@ static void midres_sound_w(int offset, int data)
 
 /******************************************************************************/
 
+static int dude_skip(int offset)
+{
+	cpu_spinuntil_int();
+	return READ_WORD(&ram_gen[0x212]);
+}
+
+static int robocop_skip(int offset)
+{
+	int p=cpu_getpc();
+
+	if (p==0x17c0 || p==0x17ee) cpu_spinuntil_int();
+	return READ_WORD(&ram_robo[0x8]);
+}
+
+static int robocop_skip2(int offset)
+{
+	if (cpu_getpc()==0x17c0) cpu_spinuntil_int();
+	return READ_WORD(&ram_robo[0x8]);
+}
+
+static int midres_skip(int offset)
+{
+	cpu_spinuntil_int();
+	return READ_WORD(&ram_midres[0x207c]);
+}
+
+/******************************************************************************/
+
 static struct MemoryReadAddress dec0_readmem[] =
 {
 	{ 0x000000, 0x05ffff, MRA_ROM },
@@ -188,6 +216,9 @@ static struct MemoryReadAddress dec0_readmem[] =
 	{ 0x24c800, 0x24c87f, dec0_pf3_colscroll_r },
 	{ 0x300000, 0x30001f, dec0_rotary_read },
 	{ 0x30c000, 0x30c00b, dec0_controls_read },
+
+{ 0xff8212, 0xff8213, dude_skip },
+
 	{ 0xff8000, 0xffbfff, MRA_BANK1, &ram_gen }, /* Main ram */
 	{ 0xffc000, 0xffcfff, MRA_BANK2 }, /* Sprites */
 	{ -1 }  /* end of table */
@@ -229,6 +260,8 @@ static struct MemoryReadAddress robocop_readmem[] =
 	{ 0x242800, 0x243fff, MRA_BANK3 }, /* Used for attract mode, pictures at beginning & ending */
 	{ 0x244000, 0x245fff, dec0_pf1_data_r },
 	{ 0x30c000, 0x30c00b, dec0_controls_read },
+
+{ 0xff8008, 0xff8009, robocop_skip },
 	{ 0xff8000, 0xffbfff, MRA_BANK1, &ram_robo }, /* Main ram */
 	{ 0xffc000, 0xffcfff, MRA_BANK2 }, /* Sprites */
 	{ -1 }  /* end of table */
@@ -358,6 +391,7 @@ static struct MemoryWriteAddress slyspy_writemem[] =
 static struct MemoryReadAddress midres_readmem[] =
 {
 	{ 0x000000, 0x07ffff, MRA_ROM },
+{ 0x10207c, 0x10207d, midres_skip },
 	{ 0x100000, 0x103fff, MRA_BANK1, &ram_midres },
 	{ 0x120000, 0x1207ff, MRA_BANK2 },
 	{ 0x180000, 0x18000f, midres_controls_read },
@@ -2175,6 +2209,7 @@ struct GameDriver hbarrel_driver =
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
 	&hbarrel_machine_driver,
+	0,
 
 	hbarrel_rom,
 	hbarrel_patch, 0,
@@ -2199,6 +2234,7 @@ struct GameDriver hbarrelj_driver =
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
 	&hbarrel_machine_driver,
+	0,
 
 	hbarrelj_rom,
 	hbarrelj_patch, 0,
@@ -2223,6 +2259,7 @@ struct GameDriver baddudes_driver =
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
 	&baddudes_machine_driver,
+	0,
 
 	baddudes_rom,
 	baddudes_patch, 0,
@@ -2247,6 +2284,7 @@ struct GameDriver drgninja_driver =
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
 	&baddudes_machine_driver,
+	0,
 
 	drgninja_rom,
 	drgninja_patch, 0,
@@ -2271,6 +2309,7 @@ struct GameDriver robocopp_driver =
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
 	&robocop_machine_driver,
+	0,
 
 	robocopp_rom,
 	0, 0,
@@ -2295,6 +2334,7 @@ struct GameDriver hippodrm_driver =
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	GAME_NOT_WORKING,
 	&hippodrm_machine_driver,
+	0,
 
 	hippodrm_rom,
 	hippo_decode, 0,
@@ -2319,6 +2359,7 @@ struct GameDriver ffantasy_driver =
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	GAME_NOT_WORKING,
 	&hippodrm_machine_driver,
+	0,
 
 	ffantasy_rom,
 	hippo_decode, 0,
@@ -2343,6 +2384,7 @@ struct GameDriver slyspy_driver =
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
 	&slyspy_machine_driver,
+	0,
 
 	slyspy_rom,
 	slyspy_patch, 0,
@@ -2367,6 +2409,7 @@ struct GameDriver midres_driver =
 	"Bryan McPhail (MAME driver)\nNicola Salmoria (additional code)",
 	0,
 	&midres_machine_driver,
+	0,
 
 	midres_rom,
 	0, 0,

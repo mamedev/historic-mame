@@ -57,11 +57,6 @@
 #include "driver.h"
 #include "TMS34010/tms34010.h"
 
-/* Uncomment this if you want the drums emulated. This slows down the game
-   a lot becuase it requires a high CPU interleaving factor */
-
-/* #define EMULATE_DRUMS */
-
 static unsigned char *eeprom;
 static int eeprom_size;
 
@@ -178,11 +173,7 @@ static struct MemoryReadAddress sound_ym2151_readmem[] =
 	{ 0x02b6, 0x02b6, exterm_sound_ym2151_speedup_r },
 	{ 0x0000, 0x07ff, MRA_RAM },
 	{ 0x6800, 0x6800, soundlatch_r },
-#ifdef EMULATE_DRUMS
 	{ 0x7000, 0x7000, gottlieb_cause_dac_nmi_r },
-#else
-	{ 0x7000, 0x7000, MRA_NOP },
-#endif
 	{ 0x8000, 0xffff, MRA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -312,11 +303,7 @@ static struct MachineDriver machine_driver =
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-#ifdef EMULATE_DRUMS
-	200,	/* High interleaving factor for the drums */
-#else
 	1,
-#endif
 	exterm_init_machine,
 
 	/* video hardware, the reason for 263 is that the VCOUNT register is
@@ -434,6 +421,7 @@ struct GameDriver exterm_driver =
 	"Zsolt Vasvari\nAlex Pasadyn",
 	0,
 	&machine_driver,
+	0,
 
 	exterm_rom,
 	0, 0,

@@ -649,6 +649,7 @@ struct GameDriver gaiden_driver =
 	"Alex Pasadyn",
 	0,
 	&machine_driver,
+	0,
 
 	gaiden_rom,
 	0, 0,
@@ -673,6 +674,7 @@ struct GameDriver shadoww_driver =
 	"Alex Pasadyn",
 	0,
 	&machine_driver,
+	0,
 
 	shadoww_rom,
 	0, 0,
@@ -697,6 +699,7 @@ struct GameDriver tknight_driver =
 	"Alex Pasadyn\nNicola Salmoria",
 	0,
 	&machine_driver,
+	0,
 
 	tknight_rom,
 	0, 0,

@@ -1252,6 +1252,7 @@ struct GameDriver radarscp_driver =
 	"Andy White (protection workaround)\nGary Shepherdson (Kong emulator)\nBrad Thomas (hardware info)\nEdward Massey (MageX emulator)\nNicola Salmoria (MAME driver)\nMarco Cassili\nAndy White (color info)\nTim Lindquist (color info)",
 	0,
 	&dkong_machine_driver,
+	0,
 
 	radarscp_rom,
 	radarscp_unprotect, 0,
@@ -1277,6 +1278,7 @@ struct GameDriver dkong_driver =
 	"Gary Shepherdson (Kong emulator)\nBrad Thomas (hardware info)\nEdward Massey (MageX emulator)\nNicola Salmoria (MAME driver)\nRon Fries (sound)\nGary Walton (color info)\nSimon Walls (color info)\nMarco Cassili",
 	0,
 	&dkong_machine_driver,
+	0,
 
 	dkong_rom,
 	0, 0,
@@ -1302,6 +1304,7 @@ struct GameDriver dkongjp_driver =
 	"Gary Shepherdson (Kong emulator)\nBrad Thomas (hardware info)\nEdward Massey (MageX emulator)\nNicola Salmoria (MAME driver)\nRon Fries (sound)\nGary Walton (color info)\nSimon Walls (color info)\nMarco Cassili",
 	0,
 	&dkong_machine_driver,
+	0,
 
 	dkongjp_rom,
 	0, 0,
@@ -1327,6 +1330,7 @@ struct GameDriver dkongjr_driver =
 	"Gary Shepherdson (Kong emulator)\nBrad Thomas (hardware info)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili",
 	0,
 	&dkongjr_machine_driver,
+	0,
 
 	dkongjr_rom,
 	0, 0,
@@ -1352,6 +1356,7 @@ struct GameDriver dkngjrjp_driver =
 	"Gary Shepherdson (Kong emulator)\nBrad Thomas (hardware info)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili",
 	0,
 	&dkongjr_machine_driver,
+	0,
 
 	dkngjrjp_rom,
 	0, 0,
@@ -1377,6 +1382,7 @@ struct GameDriver dkjrjp_driver =
 	"Gary Shepherdson (Kong emulator)\nBrad Thomas (hardware info)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili",
 	0,
 	&dkongjr_machine_driver,
+	0,
 
 	dkjrjp_rom,
 	0, 0,
@@ -1402,6 +1408,7 @@ struct GameDriver dkjrbl_driver =
 	"Gary Shepherdson (Kong emulator)\nBrad Thomas (hardware info)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili",
 	0,
 	&dkongjr_machine_driver,
+	0,
 
 	dkjrbl_rom,
 	0, 0,
@@ -1427,6 +1434,7 @@ struct GameDriver dkong3_driver =
 	"Mirko Buffoni (MAME driver)\nNicola Salmoria (additional code)\nTim Lindquist (color info)\nMarco Cassili",
 	0,
 	&dkong3_machine_driver,
+	0,
 
 	dkong3_rom,
 	0, 0,
@@ -1455,6 +1463,7 @@ struct GameDriver hunchy_driver =
 	"Nicola Salmoria (MAME driver)\nTim Lindquist (color info)",
 	0,
 	&dkongjr_machine_driver,
+	0,
 
 	hunchy_rom,
 	0, 0,

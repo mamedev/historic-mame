@@ -14,6 +14,39 @@
 unsigned char *jackal_scrollram,*jackal_videoctrl;
 
 
+
+int jackal_vh_start(void)
+{
+	videoram_size = 0x400;
+
+	dirtybuffer = 0;
+	tmpbitmap = 0;
+
+	if ((dirtybuffer = malloc(videoram_size)) == 0)
+	{
+		return 1;
+	}
+	memset(dirtybuffer,1,videoram_size);
+	if ((tmpbitmap = osd_new_bitmap(Machine->drv->screen_width,Machine->drv->screen_height,Machine->scrbitmap->depth)) == 0)
+	{
+		free(dirtybuffer);
+		return 1;
+	}
+	return 0;
+}
+
+
+void jackal_vh_stop(void)
+{
+	free(dirtybuffer);
+	osd_free_bitmap(tmpbitmap);
+
+	dirtybuffer = 0;
+	tmpbitmap = 0;
+}
+
+
+
 /***************************************************************************
 
   Draw the game screen in the given osd_bitmap.
@@ -64,7 +97,7 @@ void jackal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			sy = offs / 32;
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
-				videoram[offs] + 0x40 * (colorram[offs] & 0x30) + 4 * (colorram[offs] & 0xc0),
+				videoram[offs] + ((colorram[offs] & 0xc0) << 2) + ((colorram[offs] & 0x30) << 6),
 				0,//colorram[offs] & 0x0f, there must be a PROM like in Contra
 				colorram[offs] & 0x10,colorram[offs] & 0x20,
 				8*sx,8*sy,

@@ -436,6 +436,7 @@ struct GameDriver dday_driver =
 	"Zsolt Vasvari\nHowie Cohen\nChris Moore\nBrad Oliver",
 	0,
 	&machine_driver,
+	0,
 
 	dday_rom,
 	0, 0,

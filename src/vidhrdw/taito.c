@@ -371,13 +371,13 @@ static void drawsprites(struct osd_bitmap *bitmap)
 			int sx,sy,flipx,flipy;
 
 
-			sx = ((spriteram[offs] + 13) & 0xff) - 15;	/* ?? */
+			sx = ((spriteram[offs] + 13) & 0xff) - 14;	/* ?? */
 			sy = 240 - spriteram[offs + 1];
 			flipx = spriteram[offs + 2] & 1;
 			flipy = spriteram[offs + 2] & 2;
 			if (flipscreen[0])
 			{
-				sx = 237 - sx;
+				sx = 238 - sx;
 				flipx = !flipx;
 			}
 			if (flipscreen[1])
@@ -404,10 +404,11 @@ static void drawplayfield1(struct osd_bitmap *bitmap)
 		int i,scrollx,scrolly[32];
 
 
+		scrollx = *taito_scrollx1;
 		if (flipscreen[0])
-			scrollx = *taito_scrollx1 + 2;
+			scrollx = (scrollx & 0xf8) + ((scrollx) & 7) + 3;
 		else
-			scrollx = -*taito_scrollx1 + 14;
+			scrollx = -(scrollx & 0xf8) + ((scrollx) & 7) + 3;
 
 		if (flipscreen[1])
 		{
@@ -434,9 +435,9 @@ static void drawplayfield2(struct osd_bitmap *bitmap)
 
 		scrollx = *taito_scrollx2;
 		if (flipscreen[0])
-			scrollx = ((scrollx & 0xf8) | ((scrollx+1) & 7)) + 10;
+			scrollx = (scrollx & 0xf8) + ((scrollx+1) & 7) + 10;
 		else
-			scrollx = -((scrollx & 0xf8) | (7 - ((scrollx+1) & 7))) + 16;
+			scrollx = -(scrollx & 0xf8) + ((scrollx+1) & 7) + 10;
 
 		if (flipscreen[1])
 		{
@@ -463,9 +464,9 @@ static void drawplayfield3(struct osd_bitmap *bitmap)
 
 		scrollx = *taito_scrollx3;
 		if (flipscreen[0])
-			scrollx = ((scrollx & 0xf8) | ((scrollx-1) & 7)) + 12;
+			scrollx = (scrollx & 0xf8) + ((scrollx-1) & 7) + 12;
 		else
-			scrollx = -((scrollx & 0xf8) | (7 - ((scrollx-1) & 7))) + 18;
+			scrollx = -(scrollx & 0xf8) + ((scrollx-1) & 7) + 12;
 
 		if (flipscreen[1])
 		{

@@ -1175,6 +1175,7 @@ struct GameDriver rygar_driver =
 	"Nicola Salmoria\nErnesto Corvi (ADPCM sound)",
 	0,
 	&rygar_machine_driver,
+	0,
 
 	rygar_rom,
 	0, 0,
@@ -1200,6 +1201,7 @@ struct GameDriver rygarj_driver =
 	"Nicola Salmoria\nErnesto Corvi (ADPCM sound)",
 	0,
 	&rygar_machine_driver,
+	0,
 
 	rygarj_rom,
 	0, 0,
@@ -1225,6 +1227,7 @@ struct GameDriver gemini_driver =
     "Nicola Salmoria (MAME driver)\nMirko Buffoni (additional code)\nMartin Binder (dip switches)",
 	0,
 	&gemini_machine_driver,
+	0,
 
 	gemini_rom,
 	0, 0,
@@ -1250,6 +1253,7 @@ struct GameDriver silkworm_driver =
 	"Nicola Salmoria",
 	0,
 	&silkworm_machine_driver,
+	0,
 
 	silkworm_rom,
 	0, 0,
@@ -1275,6 +1279,7 @@ struct GameDriver silkwrm2_driver =
 	"Nicola Salmoria",
 	0,
 	&silkworm_machine_driver,
+	0,
 
 	silkwrm2_rom,
 	0, 0,

@@ -596,6 +596,7 @@ struct GameDriver twincobr_driver =
 	"Quench\nNicola Salmoria",
 	GAME_NOT_WORKING,
 	&machine_driver,
+	0,
 
 	twincobr_rom,
 	0, 0,
@@ -620,6 +621,7 @@ struct GameDriver twincobu_driver =
 	"Quench\nNicola Salmoria",
 	GAME_NOT_WORKING,
 	&machine_driver,
+	0,
 
 	twincobu_rom,
 	0, 0,
@@ -645,6 +647,7 @@ struct GameDriver ktiger_driver =
 	"Quench\nNicola Salmoria",
 	GAME_NOT_WORKING,
 	&machine_driver,
+	0,
 
 	ktiger_rom,
 	0, 0,
@@ -669,6 +672,7 @@ struct GameDriver fshark_driver =
 	"Quench\nNicola Salmoria",
 	0,
 	&machine_driver,
+	0,
 
 	fshark_rom,
 	0, 0,

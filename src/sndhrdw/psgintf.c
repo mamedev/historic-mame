@@ -141,7 +141,7 @@ void YM2203_sh_stop(void)
 	int i;
 
 	AY8910_sh_stop();
-	if( FMMode == CHIP_YM2203_DAC )
+///////	if( FMMode == CHIP_YM2203_DAC )
 	{
 		YM2203Shutdown();
 		for (i = 0;i < intf->num;i++){

@@ -300,6 +300,7 @@ struct GameDriver atetris_driver =
 	"Zsolt Vasvari",
 	0,
 	&machine_driver,
+	0,
 
 	atetris_rom,
 	atetris_rom_move,
@@ -325,6 +326,7 @@ struct GameDriver atetrisa_driver =
 	"Zsolt Vasvari",
 	0,
 	&machine_driver,
+	0,
 
 	atetrisa_rom,
 	atetris_rom_move,
@@ -350,6 +352,7 @@ struct GameDriver atetrisb_driver =
 	"Zsolt Vasvari",
 	0,
 	&machine_driver,
+	0,
 
 	atetrisb_rom,
 	atetris_rom_move,
@@ -375,6 +378,7 @@ struct GameDriver atetcktl_driver =
 	"Zsolt Vasvari",
 	0,
 	&machine_driver,
+	0,
 
 	atetcktl_rom,
 	atetris_rom_move,

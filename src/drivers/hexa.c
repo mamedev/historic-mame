@@ -253,6 +253,7 @@ struct GameDriver hexa_driver =
 	"Howie Cohen (driver)\nThierry Lescot (Technical Info) ",
 	0,
 	&machine_driver,
+	0,
 
 	hexa_rom,
 	0, 0,   				/* ROM decode and opcode decode functions */

@@ -610,6 +610,7 @@ struct GameDriver vindictr_driver =
 	"Aaron Giles (MAME driver)\nNeil Bradley (hardware information)",
 	0,
 	&vindictr_machine_driver,
+	0,
 
 	vindictr_rom,
 	vindictr_rom_decode,

@@ -122,8 +122,6 @@
            Ninja Princess (bootleg)
   ???-???? Water Match            not available yet
   315-5061 Future Spy
-  315-5062 \ PALs in Pitfall II
-  315-5063 / don't know if they are related to the encryption
   315-5065 Bull Fight
   315-5093 Pitfall II
   315-5098 Ninja Princess         used Sega Ninja for k.p.a.

@@ -958,6 +958,7 @@ struct GameDriver tigerh_driver =
 	"Keith Wilkins\nCarlos Baides\nNicola Salmoria",
 	GAME_NOT_WORKING,
 	&tigerh_machine_driver,
+	0,
 
 	tigerh_rom,
 	0, 0,
@@ -983,6 +984,7 @@ struct GameDriver tigerh2_driver =
 	"Keith Wilkins\nCarlos Baides\nNicola Salmoria",
 	GAME_NOT_WORKING,
 	&tigerh_machine_driver,
+	0,
 
 	tigerh2_rom,
 	0, 0,
@@ -1008,6 +1010,7 @@ struct GameDriver tigerhb1_driver =
 	"Keith Wilkins\nCarlos Baides\nNicola Salmoria",
 	0,
 	&tigerh_machine_driver,
+	0,
 
 	tigerhb1_rom,
 	0, 0,
@@ -1033,6 +1036,7 @@ struct GameDriver tigerhb2_driver =
 	"Keith Wilkins\nCarlos Baides\nNicola Salmoria",
 	0,
 	&tigerh_machine_driver,
+	0,
 
 	tigerhb2_rom,
 	0, 0,
@@ -1058,6 +1062,7 @@ struct GameDriver slapfigh_driver =
 	"Keith Wilkins\nCarlos Baides\nNicola Salmoria",
 	GAME_NOT_WORKING,
 	&slapfigh_machine_driver,
+	0,
 
 	slapfigh_rom,
 	0, 0,
@@ -1083,6 +1088,7 @@ struct GameDriver slapbtjp_driver =
 	"Keith Wilkins\nCarlos Baides\nNicola Salmoria",
 	0,
 	&slapfigh_machine_driver,
+	0,
 
 	slapbtjp_rom,
 	0, 0,
@@ -1108,6 +1114,7 @@ struct GameDriver slapbtuk_driver =
 	"Keith Wilkins\nCarlos Baides\nNicola Salmoria",
 	0,
 	&slapbtuk_machine_driver,
+	0,
 
 	slapbtuk_rom,
 	0, 0,

@@ -449,6 +449,7 @@ struct GameDriver exedexes_driver =
 	"Richard Davies\nPaul Leaman\nNicola Salmoria\nMirko Buffoni\nPaul Swan (color info)\nMike Balfour (high score save)",
 	0,
 	&machine_driver,
+	0,
 
 	exedexes_rom,
 	0, 0,
@@ -474,6 +475,7 @@ struct GameDriver savgbees_driver =
 	"Richard Davies\nPaul Leaman\nNicola Salmoria\nMirko Buffoni\nPaul Swan (color info)\nMike Balfour (high score save)",
 	0,
 	&machine_driver,
+	0,
 
 	savgbees_rom,
 	0, 0,

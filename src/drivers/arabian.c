@@ -408,6 +408,7 @@ struct GameDriver arabian_driver =
 	"Jarek Burczynski (MAME driver)\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	arabian_rom,
 	0, 0,

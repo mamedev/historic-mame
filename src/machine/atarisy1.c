@@ -283,8 +283,18 @@ int atarisys1_trakball_r (int offset)
 		/* when reading the even ports, do a real analog port update */
 		if (which == 0)
 		{
-			int dx = (signed char)input_port_0_r (offset);
-			int dy = (signed char)input_port_1_r (offset);
+			int dx,dy;
+
+			if(player == 0)
+			{
+				dx = (signed char)input_port_0_r (offset);
+				dy = (signed char)input_port_1_r (offset);
+			}
+			else
+			{
+				dx = (signed char)input_port_2_r (offset);
+				dy = (signed char)input_port_3_r (offset);
+			}
 
 			cur[player][0] += dx + dy;
 			cur[player][1] += dx - dy;

@@ -491,6 +491,7 @@ struct GameDriver vigilant_driver =
 	"Mike Balfour\nPhil Stroffolino\nNicola Salmoria",
 	0,
 	&machine_driver,
+	0,
 
 	vigilant_rom,
 	0,0,
@@ -515,6 +516,7 @@ struct GameDriver vigilntj_driver =
 	"Mike Balfour\nPhil Stroffolino\nNicola Salmoria",
 	0,
 	&machine_driver,
+	0,
 
 	vigilntj_rom,
 	0,0,

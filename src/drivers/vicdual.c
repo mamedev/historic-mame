@@ -565,7 +565,7 @@ INPUT_PORTS_START ( spacetrk_input_ports )
 	PORT_DIPNAME( 0x04, 0x04, "Lives", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x04, "3" )
 	PORT_DIPSETTING(    0x00, "4" )
-	PORT_DIPNAME( 0x08, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x08, 0x00, "Unused", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x08, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
@@ -596,6 +596,54 @@ INPUT_PORTS_START ( spacetrk_input_ports )
 
 	PORT_START	/* IN3 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* unknown, but could be used */
+	PORT_DIPNAME( 0x04, 0x00, "Unused", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX(0x08, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE | IPF_RESETCPU, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 30 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+INPUT_PORTS_END
+
+INPUT_PORTS_START ( sptrekct_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_DIPNAME( 0x04, 0x04, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "3" )
+	PORT_DIPSETTING(    0x00, "4" )
+	PORT_DIPNAME( 0x08, 0x00, "Unused", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_DIPNAME( 0x04, 0x00, "Unknown", IP_KEY_NONE )	/* unknown, but used */
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_VBLANK )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* unknown, but could be used */
+	PORT_DIPNAME( 0x04, 0x00, "Unknown", IP_KEY_NONE )	/* unknown, but used */
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* timer - unused */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* IN3 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* unknown, but could be used */
 	PORT_DIPNAME( 0x04, 0x00, "Unused", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x04, "Off" )
@@ -1010,7 +1058,7 @@ ROM_END
 ROM_START( spacetrk_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "u33.bin",      0x0000, 0x0400, 0x9033fe50 )
-	ROM_RELOAD(           0x4000, 0x0400 )
+	ROM_RELOAD(               0x4000, 0x0400 )
 	ROM_LOAD( "u32.bin",      0x4400, 0x0400, 0x08f61f0d )
 	ROM_LOAD( "u31.bin",      0x4800, 0x0400, 0x1088a8c4 )
 	ROM_LOAD( "u30.bin",      0x4c00, 0x0400, 0x55560cc8 )
@@ -1026,6 +1074,27 @@ ROM_START( spacetrk_rom )
 	ROM_LOAD( "u3.bin",       0x7400, 0x0400, 0x03ca1d70 )
 	ROM_LOAD( "u2.bin",       0x7800, 0x0400, 0xa968584b )
 	ROM_LOAD( "u1.bin",       0x7C00, 0x0400, 0xe6e300e8 )
+ROM_END
+
+ROM_START( sptrekct_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "u33c.bin",     0x0000, 0x0400, 0xb056b928 )
+	ROM_RELOAD(               0x4000, 0x0400 )
+	ROM_LOAD( "u32c.bin",     0x4400, 0x0400, 0xdffb11d9 )
+	ROM_LOAD( "u31c.bin",     0x4800, 0x0400, 0x9b25d46f )
+	ROM_LOAD( "u30c.bin",     0x4c00, 0x0400, 0x3a612bfe )
+	ROM_LOAD( "u29c.bin",     0x5000, 0x0400, 0xd8bb6e0c )
+	ROM_LOAD( "u28c.bin",     0x5400, 0x0400, 0x0e367740 )
+	ROM_LOAD( "u27c.bin",     0x5800, 0x0400, 0xd59fec86 )
+	ROM_LOAD( "u26c.bin",     0x5c00, 0x0400, 0x9deefa0f )
+	ROM_LOAD( "u8c.bin",      0x6000, 0x0400, 0x613116c5 )
+	ROM_LOAD( "u7c.bin",      0x6400, 0x0400, 0x3bdf2464 )
+	ROM_LOAD( "u6c.bin",      0x6800, 0x0400, 0x039d73fa )
+	ROM_LOAD( "u5c.bin",      0x6c00, 0x0400, 0x1638344f )
+	ROM_LOAD( "u4c.bin",      0x7000, 0x0400, 0xe34443cd )
+	ROM_LOAD( "u3c.bin",      0x7400, 0x0400, 0x6f16cbd7 )
+	ROM_LOAD( "u2c.bin",      0x7800, 0x0400, 0x94da3cdc )
+	ROM_LOAD( "u1c.bin",      0x7C00, 0x0400, 0x2a228bf4 )
 ROM_END
 
 ROM_START( carnival_rom )
@@ -1243,6 +1312,7 @@ struct GameDriver depthch_driver =
 	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
 	0,
 	&vicdual_2Aports_machine_driver,
+	0,
 
 	depthch_rom,
 	0, 0,
@@ -1269,6 +1339,7 @@ struct GameDriver safari_driver =
 	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
 	0,
 	&vicdual_2Bports_machine_driver,
+	0,
 
 	safari_rom,
 	0, 0,
@@ -1295,6 +1366,7 @@ struct GameDriver frogs_driver =
 	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
 	0,
 	&vicdual_2Aports_machine_driver,
+	0,
 
 	frogs_rom,
 	0, 0,
@@ -1321,6 +1393,7 @@ struct GameDriver sspaceat_driver =
 	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
 	0,
 	&vicdual_3ports_machine_driver,
+	0,
 
 	sspaceat_rom,
 	0, 0,
@@ -1347,6 +1420,7 @@ struct GameDriver headon_driver =
 	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
 	0,
 	&vicdual_2Aports_machine_driver,
+	0,
 
 	headon_rom,
 	0, 0,
@@ -1376,6 +1450,7 @@ struct GameDriver invho2_driver =
 	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
 	0,
 	&vicdual_4ports_machine_driver,
+	0,
 
 	invho2_rom,
 	0, 0,
@@ -1402,6 +1477,7 @@ struct GameDriver samurai_driver =
 	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
 	0,
 	&samurai_machine_driver,
+	0,
 
 	samurai_rom,
 	0, 0,
@@ -1428,6 +1504,7 @@ struct GameDriver invinco_driver =
 	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
 	0,
 	&vicdual_3ports_machine_driver,
+	0,
 
 	invinco_rom,
 	0, 0,
@@ -1454,6 +1531,7 @@ struct GameDriver invds_driver =
 	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
 	0,
 	&vicdual_4ports_machine_driver,
+	0,
 
 	invds_rom,
 	0, 0,
@@ -1480,6 +1558,7 @@ struct GameDriver tranqgun_driver =
 	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
 	0,
 	&vicdual_4ports_machine_driver,
+	0,
 
 	tranqgun_rom,
 	0, 0,
@@ -1500,12 +1579,13 @@ struct GameDriver spacetrk_driver =
 	__FILE__,
 	0,
 	"spacetrk",
-	"Space Trek",
+	"Space Trek (Upright)",
 	"1980",
 	"Sega",
 	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
 	0,
 	&vicdual_4ports_machine_driver,
+	0,
 
 	spacetrk_rom,
 	0, 0,
@@ -1513,6 +1593,33 @@ struct GameDriver spacetrk_driver =
 	0,	/* sound_prom */
 
 	spacetrk_input_ports,
+
+	spacetrk_color_prom, 0, 0,
+
+	ORIENTATION_ROTATE_270,
+
+	0, 0
+};
+
+struct GameDriver sptrekct_driver =
+{
+	__FILE__,
+	&spacetrk_driver,
+	"sptrekct",
+	"Space Trek (Cocktail)",
+	"1980",
+	"Sega",
+	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
+	0,
+	&vicdual_4ports_machine_driver,
+	0,
+
+	sptrekct_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	sptrekct_input_ports,
 
 	spacetrk_color_prom, 0, 0,
 
@@ -1532,6 +1639,7 @@ struct GameDriver carnival_driver =
 	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari\nPeter Clare (sound)\nAlan J McCormick (sound)",
 	0,
 	&carnival_machine_driver,
+	0,
 
 	carnival_rom,
 	0, 0,
@@ -1558,6 +1666,7 @@ struct GameDriver pulsar_driver =
 	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
 	0,
 	&vicdual_4ports_machine_driver,
+	0,
 
 	pulsar_rom,
 	0, 0,

@@ -833,6 +833,7 @@ struct GameDriver bwidow_driver =
 	"Brad Oliver (MAME driver)\n"VECTOR_TEAM,
 	0,
 	&bwidow_machine_driver,
+	0,
 
 	bwidow_rom,
 	0, 0,
@@ -889,6 +890,7 @@ struct GameDriver gravitar_driver =
 	"Brad Oliver (MAME driver)\n"VECTOR_TEAM,
 	0,
 	&gravitar_machine_driver,
+	0,
 
 	gravitar_rom,
 	0, 0,
@@ -945,6 +947,7 @@ struct GameDriver spacduel_driver =
 	"Brad Oliver (MAME driver)\n"VECTOR_TEAM,
 	0,
 	&spacduel_machine_driver,
+	0,
 
 	spacduel_rom,
 	0, 0,

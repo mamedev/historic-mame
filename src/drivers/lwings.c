@@ -612,6 +612,7 @@ struct GameDriver lwings_driver =
 	"Paul Leaman\nMarco Cassili (dip switches)",
 	0,
 	&machine_driver,
+	0,
 
 	lwings_rom,
 	0, 0,
@@ -636,6 +637,7 @@ struct GameDriver lwingsjp_driver =
 	"Paul Leaman\nMarco Cassili (dip switches)",
 	0,
 	&machine_driver,
+	0,
 
 	lwingsjp_rom,
 	0, 0,
@@ -696,6 +698,7 @@ struct GameDriver sectionz_driver =
 	"Paul Leaman\nMarco Cassili (dip switches)",
 	0,
 	&machine_driver,
+	0,
 
 	sectionz_rom,
 	0, 0,
@@ -968,6 +971,7 @@ struct GameDriver trojan_driver =
 	"Paul Leaman\nPhil Stroffolino\nMarco Cassili (dip switches)",
 	0,
 	&trojan_machine_driver,
+	0,
 
 	trojan_rom,
 	0, 0,
@@ -992,6 +996,7 @@ struct GameDriver trojanj_driver =
 	"Paul Leaman\nPhil Stroffolino\nMarco Cassili (dip switches)",
 	0,
 	&trojan_machine_driver,
+	0,
 
 	trojanj_rom,
 	0, 0,
@@ -1246,6 +1251,7 @@ struct GameDriver avengers_driver =
 	"Paul Leaman\nPhil Stroffolino",
 	GAME_NOT_WORKING,
 	&avengers_machine_driver,
+	0,
 
 	avengers_rom,
 	0, 0,
@@ -1270,6 +1276,7 @@ struct GameDriver avenger2_driver =
 	"Paul Leaman\nPhil Stroffolino",
 	GAME_NOT_WORKING,
 	&avengers_machine_driver,
+	0,
 
 	avenger2_rom,
 	0, 0,

@@ -360,6 +360,7 @@ struct GameDriver warlord_driver =
 	"Lee Taylor\nJohn Clegg\nBrad Oliver (additional code)\nZsolt Vasvari",
 	0,
 	&machine_driver,
+	0,
 
 	warlord_rom,
 	0, 0,

@@ -217,6 +217,7 @@ struct GameDriver m79amb_driver =
 	"Space Invaders Team\n",
 	0,
 	&machine_driver,
+	0,
 
 	m79_rom,
 	m79_init,

@@ -960,6 +960,7 @@ ROM_END
 
 static const char *vanguard_sample_names[] =
 {
+	"*vanguard",
 	"fire.sam",
 	"explsion.sam",
 	0
@@ -1208,6 +1209,7 @@ struct GameDriver sasuke_driver =
 	"Dan Boris\nTheo Philips",
 	GAME_WRONG_COLORS,
 	&satansat_machine_driver,
+	0,
 
 	sasuke_rom,
 	0, 0,
@@ -1233,6 +1235,7 @@ struct GameDriver satansat_driver =
 	"Dan Boris\nTheo Philips",
 	0,
 	&satansat_machine_driver,
+	0,
 
 	satansat_rom,
 	0, 0,
@@ -1258,6 +1261,7 @@ struct GameDriver zarzon_driver =
 	"Dan Boris\nTheo Philips",
 	0,
 	&satansat_machine_driver,
+	0,
 
 	zarzon_rom,
 	0, 0,
@@ -1283,6 +1287,7 @@ struct GameDriver vanguard_driver =
 	"Brian Levine (Vanguard emulator)\nBrad Oliver (MAME driver)\nMirko Buffoni (MAME driver)\nAndrew Scott\nValerio Verrando (high score save)",
 	0,
 	&vanguard_machine_driver,
+	0,
 
 	vanguard_rom,
 	0, 0,
@@ -1308,6 +1313,7 @@ struct GameDriver vangrdce_driver =
 	"Brian Levine (Vanguard emulator)\nBrad Oliver (MAME driver)\nMirko Buffoni (MAME driver)\nAndrew Scott\nValerio Verrando (high score save)",
 	0,
 	&vanguard_machine_driver,
+	0,
 
 	vangrdce_rom,
 	0, 0,
@@ -1333,6 +1339,7 @@ struct GameDriver fantasy_driver =
 	"Nicola Salmoria\nBrian Levine\nMirko Buffoni\nDani Portillo (high score save)",
 	0,
 	&fantasy_machine_driver,
+	0,
 
 	fantasy_rom,
 	0, 0,
@@ -1358,6 +1365,7 @@ struct GameDriver pballoon_driver =
 	"Nicola Salmoria\nBrian Levine\nMirko Buffoni",
 	0,
 	&pballoon_machine_driver,
+	0,
 
 	pballoon_rom,
 	0, 0,
@@ -1383,6 +1391,7 @@ struct GameDriver nibbler_driver =
 	"Nicola Salmoria\nBrian Levine\nMirko Buffoni\nMarco Cassili",
 	0,
 	&fantasy_machine_driver,
+	0,
 
 	nibbler_rom,
 	0, 0,
@@ -1408,6 +1417,7 @@ struct GameDriver nibblera_driver =
 	"Nicola Salmoria\nBrian Levine\nMirko Buffoni\nMarco Cassili",
 	0,
 	&fantasy_machine_driver,
+	0,
 
 	nibblera_rom,
 	0, 0,

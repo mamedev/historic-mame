@@ -8,6 +8,7 @@
 #include "I86.h"
 #include "I86intrf.h"
 #include "memory.h"
+#include "osd_dbg.h"
 
 /***************************************************************************/
 /* cpu state                                                               */
@@ -3036,6 +3037,14 @@ printf("[%04x:%04x]=%02x\tAX=%04x\tBX=%04x\tCX=%04x\tDX=%04x\n",sregs[CS],ip,Get
 #endif
 
 	if (int86_pending) external_int();      /* ASG 971222 */
+
+#ifdef MAME_DEBUG
+	{
+	  extern int mame_debug;
+	  if (mame_debug) MAME_Debug();
+	}
+#endif
+
 	seg_prefix=FALSE;
 #if defined(BIGCASE) && !defined(RS6000)
   /* Some compilers cannot handle large case statements */

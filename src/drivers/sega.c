@@ -1298,6 +1298,7 @@ struct GameDriver spacfury_driver =
 	"Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\nMike Balfour (high score saving)\n"VECTOR_TEAM,
 	0,
 	&spacfury_machine_driver,
+	0,
 
 	spacfury_rom,
 	spacfury_decode, 0,
@@ -1323,6 +1324,7 @@ struct GameDriver spacfura_driver =
 	"Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\nMike Balfour (high score saving)\n"VECTOR_TEAM,
 	0,
 	&spacfury_machine_driver,
+	0,
 
 	spacfura_rom,
 	spacfury_decode, 0,
@@ -1429,6 +1431,7 @@ struct GameDriver zektor_driver =
 	"Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\nMike Balfour (high score saving)\n"VECTOR_TEAM,
 	0,
 	&zektor_machine_driver,
+	0,
 
 	zektor_rom,
 	zektor_decode, 0,
@@ -1527,6 +1530,7 @@ struct GameDriver tacscan_driver =
 	"Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\nValerio Verrando (high score saving)\n"VECTOR_TEAM,
 	0,
 	&tacscan_machine_driver,
+	0,
 
 	tacscan_rom,
 	tacscan_decode, 0,
@@ -1625,6 +1629,7 @@ struct GameDriver elim2_driver =
 	"Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\nMike Balfour (high score saving)\n"VECTOR_TEAM,
 	0,
 	&elim2_machine_driver,
+	0,
 
 	elim2_rom,
 	elim2_decode, 0,
@@ -1693,6 +1698,7 @@ struct GameDriver elim4_driver =
 	"Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\nMike Balfour (high score saving)\n"VECTOR_TEAM,
 	0,
 	&elim4_machine_driver,
+	0,
 
 	elim4_rom,
 	elim4_decode, 0,
@@ -1831,6 +1837,7 @@ struct GameDriver startrek_driver =
 	"Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\nValerio Verrando (high score saving)\n"VECTOR_TEAM,
 	0,
 	&startrek_machine_driver,
+	0,
 
 	startrek_rom,
 	startrek_decode, 0,

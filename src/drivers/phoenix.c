@@ -440,6 +440,28 @@ ROM_START( phoenix3_rom )
 	ROM_LOAD( "ic41_a.bin",   0x0100, 0x0100, 0xe176b768 )	/* palette high bits */
 ROM_END
 
+ROM_START( phoenixc_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "phoenix.45",   0x0000, 0x0800, 0x5b8c55a8 )
+	ROM_LOAD( "phoenix.46",   0x0800, 0x0800, 0xdbc942fa )
+	ROM_LOAD( "phoenix.47",   0x1000, 0x0800, 0xcbbb8839 )
+	ROM_LOAD( "phoenixc.48",  0x1800, 0x0800, 0x5ae0b215 )
+	ROM_LOAD( "phoenixc.49",  0x2000, 0x0800, 0x1a1ce0d0 )
+	ROM_LOAD( "ic50",         0x2800, 0x0800, 0xac5e9ec1 )
+	ROM_LOAD( "ic51",         0x3000, 0x0800, 0x2eab35b4 )
+	ROM_LOAD( "phoenixc.52",  0x3800, 0x0800, 0x8424d7c4 )
+
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ic23",         0x0000, 0x0800, 0x3c7e623f )
+	ROM_LOAD( "ic24",         0x0800, 0x0800, 0x59916d3b )
+	ROM_LOAD( "phoenixc.39",  0x1000, 0x0800, 0xbb0525ed )
+	ROM_LOAD( "phoenixc.40",  0x1800, 0x0800, 0x4178aa4f )
+
+	ROM_REGION(0x0200)	/* color PROMs */
+	ROM_LOAD( "ic40_b.bin",   0x0000, 0x0100, 0x79350b25 )	/* palette low bits */
+	ROM_LOAD( "ic41_a.bin",   0x0100, 0x0100, 0xe176b768 )	/* palette high bits */
+ROM_END
+
 ROM_START( pleiads_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "ic45.bin",     0x0000, 0x0800, 0x93fc2958 )
@@ -560,6 +582,7 @@ struct GameDriver phoenix_driver =
 	"Richard Davies\nBrad Oliver\nMirko Buffoni\nNicola Salmoria\nShaun Stephenson\nAndrew Scott\nTim Lindquist (color info)\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	phoenix_rom,
 	0, 0,
@@ -585,6 +608,7 @@ struct GameDriver phoenixt_driver =
 	"Richard Davies\nBrad Oliver\nMirko Buffoni\nNicola Salmoria\nShaun Stephenson\nAndrew Scott\nTim Lindquist (color info)\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	phoenixt_rom,
 	0, 0,
@@ -610,6 +634,7 @@ struct GameDriver phoenix3_driver =
 	"Richard Davies\nBrad Oliver\nMirko Buffoni\nNicola Salmoria\nShaun Stephenson\nAndrew Scott\nTim Lindquist (color info)\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	phoenix3_rom,
 	0, 0,
@@ -624,6 +649,33 @@ struct GameDriver phoenix3_driver =
 	hiload, hisave
 };
 
+struct GameDriver phoenixc_driver =
+{
+	__FILE__,
+	&phoenix_driver,
+	"phoenixc",
+	"Phoenix (IRECSA, G.G.I Corp)",
+	"1981",
+	"bootleg?",
+	"Richard Davies\nBrad Oliver\nMirko Buffoni\nNicola Salmoria\nShaun Stephenson\nAndrew Scott\nTim Lindquist (color info)\nMarco Cassili",
+	0,
+	&machine_driver,
+	0,
+
+	phoenixc_rom,
+	0, 0,
+	phoenix_sample_names,
+	0,	/* sound_prom */
+
+	phoenixt_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	hiload, hisave
+};
+
+
 struct GameDriver pleiads_driver =
 {
 	__FILE__,
@@ -635,6 +687,7 @@ struct GameDriver pleiads_driver =
 	"Richard Davies\nBrad Oliver\nMirko Buffoni\nNicola Salmoria\nShaun Stephenson\nAndrew Scott\nMarco Cassili",
 	0,
 	&pleiads_machine_driver,
+	0,
 
 	pleiads_rom,
 	0, 0,
@@ -660,6 +713,7 @@ struct GameDriver pleiadce_driver =
 	"Richard Davies\nBrad Oliver\nMirko Buffoni\nNicola Salmoria\nShaun Stephenson\nAndrew Scott\nMarco Cassili",
 	0,
 	&pleiads_machine_driver,
+	0,
 
 	pleiadce_rom,
 	0, 0,

@@ -146,24 +146,21 @@ struct osd_bitmap
  * HJB 980812: added some more names and used higher values because
  * there were some clashes with Allegro's scancodes (see above)
  */
-#define OSD_KEY_FAST_EXIT		128
-#define OSD_KEY_RESET_MACHINE	129
-#define OSD_KEY_VOLUME_DOWN 	130
-#define OSD_KEY_VOLUME_UP		131
-#define OSD_KEY_GAMMA_DOWN		132
-#define OSD_KEY_GAMMA_UP		133
-#define OSD_KEY_PAUSE			134
-#define OSD_KEY_UNPAUSE 		135
-#define OSD_KEY_CONFIGURE		136
-#define OSD_KEY_SHOW_GFX		137
-#define OSD_KEY_JOY_CALIBRATE	138
-#define OSD_KEY_FRAMESKIP		139
-#define OSD_KEY_THROTTLE		140
-#define OSD_KEY_SHOW_FPS		141
-#define OSD_KEY_SHOW_PROFILE	142
-#define OSD_KEY_SNAPSHOT		143
+#define OSD_KEY_FAST_EXIT			128
+#define OSD_KEY_RESET_MACHINE		129
+#define OSD_KEY_PAUSE				130
+#define OSD_KEY_UNPAUSE 			131
+#define OSD_KEY_CONFIGURE			132
+#define OSD_KEY_ON_SCREEN_DISPLAY	133
+#define OSD_KEY_SHOW_GFX			134
+#define OSD_KEY_JOY_CALIBRATE		135
+#define OSD_KEY_FRAMESKIP			136
+#define OSD_KEY_THROTTLE			137
+#define OSD_KEY_SHOW_FPS			138
+#define OSD_KEY_SHOW_PROFILE		139
+#define OSD_KEY_SNAPSHOT			140
 
-#define OSD_MAX_PSEUDO			143
+#define OSD_MAX_PSEUDO				140
 
 #define OSD_JOY_LEFT    1
 #define OSD_JOY_RIGHT   2
@@ -258,7 +255,11 @@ void osd_get_pen(int pen,unsigned char *red, unsigned char *green, unsigned char
 void osd_mark_dirty(int xmin, int ymin, int xmax, int ymax, int ui);    /* ASG 971011 */
 int osd_skip_this_frame(int recommend);
 void osd_update_display(void);
-void osd_on_screen_display(const char *text,int percentage);
+void osd_set_gamma(float _gamma);
+float osd_get_gamma(void);
+void osd_set_brightness(int brightness);
+int osd_get_brightness(void);
+void osd_save_snapshot(void);
 
 void osd_update_audio(void);
 void osd_play_sample(int channel,signed char *data,int len,int freq,int volume,int loop);
@@ -273,11 +274,18 @@ void osd_ym2203_write(int n, int r, int v);
 void osd_ym2203_update(void);
 void osd_ym3812_control(int reg);
 void osd_ym3812_write(int data);
-void osd_set_mastervolume(int volume);
+void osd_set_mastervolume(int attenuation);
+int osd_get_mastervolume(void);
+void osd_sound_enable(int enable);
+
 int osd_key_pressed(int keycode);
+int osd_key_pressed_memory(int keycode);
+int osd_key_pressed_memory_repeat(int keycode,int speed);
+int osd_read_key_immediate(void);
 /* the following two should return pseudo key codes if translate != 0 */
 int osd_read_key(int translate);
 int osd_read_keyrepeat(int translate);
+int key_to_pseudo_code(int k);
 const char *osd_joy_name(int joycode);
 const char *osd_key_name(int keycode);
 void osd_poll_joystick(void);
@@ -330,10 +338,17 @@ enum {
 	OSD_PROFILE_CPU4,
 	OSD_PROFILE_VIDEO,
 	OSD_PROFILE_BLIT,
-	OSD_PROFILE_VIDEO_SYNC,
 	OSD_PROFILE_SOUND,
-	OSD_PROFILE_SOUND_MIX,
-	OSD_PROFILE_SOUND_SYNC,
+	OSD_PROFILE_TIMER_CALLBACK,
+	OSD_PROFILE_EXTRA,
+	/* the USER types are available to driver writes to profile */
+	/* custom sections of the code */
+	OSD_PROFILE_USER1,
+	OSD_PROFILE_USER2,
+	OSD_PROFILE_USER3,
+	OSD_PROFILE_USER4,
+	OSD_PROFILE_PROFILER,
+	OSD_PROFILE_IDLE,
 	OSD_TOTAL_PROFILES
 };
 

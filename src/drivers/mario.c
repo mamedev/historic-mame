@@ -571,6 +571,7 @@ struct GameDriver mario_driver =
 	"Mirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nDan Boris (8039 info)\nRon Fries (Audio Info)\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	mario_rom,
 	0, 0,
@@ -596,6 +597,7 @@ struct GameDriver masao_driver =
 	"Hugh McLenaghan (MAME driver)\nMirko Buffoni (sound info)",
 	0,
 	&masao_machine_driver,
+	0,
 
 	masao_rom,
 	0, 0,

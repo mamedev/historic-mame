@@ -518,6 +518,7 @@ struct GameDriver starforc_driver =
 	"Mirko Buffoni\nNicola Salmoria\nTatsuyuki Satoh\nJuan Carlos Lorente\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	starforc_rom,
 	0, 0,
@@ -543,6 +544,7 @@ struct GameDriver megaforc_driver =
 	"Mirko Buffoni\nNicola Salmoria\nTatsuyuki Satoh\nJuan Carlos Lorente\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	megaforc_rom,
 	0, 0,

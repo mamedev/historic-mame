@@ -158,6 +158,7 @@ POKEY emulator by Ron Fries (rfries@aol.com).
 Many thanks to Eric Smith, Hedley Rainnie and Sean Trowbridge for information
    on the Pokey random number generator.
 NES sound hardware info by Jeremy Chadwick and Hedley Rainne.
+Background art by Peter Hirschberg (PeterH@cronuscom.com).
 
 Allegro library by Shawn Hargreaves, 1994/97
 SEAL Synthetic Audio Library API Interface Copyright (C) 1995, 1996

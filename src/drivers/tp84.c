@@ -487,6 +487,7 @@ struct GameDriver tp84_driver =
 	"Marc Lafontaine (MAME driver)\nJuan Carlos Lorente (high score)\nMarco Cassili",
 	0,
 	&machine_driver,	/* MachineDriver */
+	0,
 
 	tp84_rom,			/* RomModule */
 	0, 0,				/* ROM decrypt routines */

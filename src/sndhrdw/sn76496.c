@@ -240,10 +240,12 @@ static int SN76496_init(int chip,int clock,int sample_rate,int sample_bits)
 {
 	int i;
 	struct SN76496 *R = &sn[chip];
+	char name[40];
 
 
+	sprintf(name,"SN76496 #%d",chip);
 	R->Channel = stream_init(
-			sample_rate,sample_bits,
+			name,sample_rate,sample_bits,
 			chip,(sample_bits == 16) ? SN76496Update_16 : SN76496Update_8);
 
 	if (R->Channel == -1)

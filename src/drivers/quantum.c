@@ -7,32 +7,6 @@
   and restrictions from MAME
 */
 
-#include "driver.h"
-#include "inptport.h"
-#include "vidhrdw/generic.h"
-#include "vidhrdw/vector.h"
-#include "vidhrdw/avgdvg.h"
-
-
-int quantum_avg_start(void);
-int quantum_interrupt(void);
-void quantum_led_write(int, int);
-void quantum_vram_write(int, int);
-int quantum_vram_read(int);
-void quantum_nvram_write(int, int);
-int quantum_nvram_read(int);
-void quantum_snd_write(int, int);
-int quantum_snd_read(int);
-int quantum_trackball_r(int);
-int quantum_nvram_load(void);
-void quantum_nvram_save(void);
-int quantum_switches_r(int);
-int quantum_input_1_r(int);
-int quantum_input_2_r(int);
-
-extern unsigned char *quantum_ram;
-extern unsigned char *quantum_nvram;
-
 
 /*
 	QUANTUM MEMORY MAP (per schem):
@@ -62,110 +36,125 @@ extern unsigned char *quantum_nvram;
 
 */
 
+
+#include "driver.h"
+#include "vidhrdw/vector.h"
+#include "vidhrdw/avgdvg.h"
+
+
+
+int quantum_interrupt(void);
+int quantum_switches_r(int offset);
+void quantum_led_write(int offset,int data);
+void quantum_snd_write(int offset,int data);
+int quantum_snd_read(int offset);
+int quantum_trackball_r (int offset);
+int quantum_input_1_r(int offset);
+int quantum_input_2_r(int offset);
+
+
+static unsigned char *quantum_nvram;
+static int quantum_nvram_size;
+
+
+
 struct MemoryReadAddress quantum_read[] =
 {
 	{ 0x000000, 0x013fff, MRA_ROM },
-	{ 0x018000, 0x01cfff, MRA_BANK1, &quantum_ram },
-	{ 0x800000, 0x801fff, MRA_BANK2, &vectorram, &vectorram_size },
-	{ 0x840000, 0x8400ff, quantum_snd_read },
-	{ 0x900000, 0x9001ff, quantum_nvram_read, &quantum_nvram },
-	{ 0x940000, 0x947fff, quantum_trackball_r }, /* trackball */
-	{ 0x948000, 0x94ffff, quantum_switches_r },
-	{ 0x950000, 0x957fff, MRA_NOP }, /* color RAM isn't readable */
-	{ 0x958000, 0x95ffff, MRA_NOP }, /* LS273 latch isn't even selected on read */
-	{ 0x960000, 0x9601ff, quantum_nvram_read },
-	{ -1 }
+	{ 0x018000, 0x01cfff, MRA_BANK1 },
+	{ 0x800000, 0x801fff, MRA_BANK2 },
+	{ 0x840000, 0x84003f, quantum_snd_read },
+	{ 0x900000, 0x9001ff, MRA_BANK3 },
+	{ 0x940000, 0x940001, quantum_trackball_r }, /* trackball */
+	{ 0x948000, 0x948001, quantum_switches_r },
+	{ 0x978000, 0x978001, MRA_NOP },	/* ??? */
+	{ -1 }	/* end of table */
 };
 
 struct MemoryWriteAddress quantum_write[] =
 {
 	{ 0x000000, 0x013fff, MWA_ROM },
 	{ 0x018000, 0x01cfff, MWA_BANK1 },
-	{ 0x800000, 0x801fff, MWA_BANK2 },
-	{ 0x840000, 0x8400ff, quantum_snd_write },
-	{ 0x900000, 0x9001ff, quantum_nvram_write },
-	{ 0x948000, 0x94ffff, MWA_NOP }, /* switches */
-	{ 0x950000, 0x957fff, quantum_colorram_w },
-	{ 0x958000, 0x95ffff, quantum_led_write },
-	{ 0x960000, 0x9601ff, quantum_nvram_write },
-	{ 0x968000, 0x96ffff, avgdvg_reset },
-	{ 0x970000, 0x977fff, avgdvg_go },
-	{ 0x978000, 0x9fffff, MWA_NOP },
-	{ -1 }
+	{ 0x800000, 0x801fff, MWA_BANK2, &vectorram, &vectorram_size },
+	{ 0x840000, 0x84003f, quantum_snd_write },
+	{ 0x900000, 0x9001ff, MWA_BANK3, &quantum_nvram, &quantum_nvram_size },
+	{ 0x950000, 0x95001f, quantum_colorram_w },
+	{ 0x958000, 0x958001, quantum_led_write },
+	{ 0x960000, 0x960001, MWA_NOP },	/* enable NVRAM? */
+	{ 0x968000, 0x968001, avgdvg_reset },
+//	{ 0x970000, 0x970001, avgdvg_go },
+//	{ 0x978000, 0x978001, watchdog_reset_w },
+	/* the following is wrong, but it's the only way I found to fix the service mode */
+	{ 0x978000, 0x978001, avgdvg_go },
+	{ -1 }	/* end of table */
 };
 
 
 
 INPUT_PORTS_START( quantum_input_ports )
 	PORT_START	/* IN0 */
-
 	/* YHALT here MUST BE ALWAYS 0  */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH,IPT_UNKNOWN )	/* vg YHALT */
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN3  )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN3 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN2  )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1  )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED )
-	PORT_BITX(	0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0)
-	PORT_DIPSETTING(      0x00, "On" )
-	PORT_DIPSETTING(      0x80, "Off" )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0)
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 
 /* first POKEY is SW2, second is SW1 -- more confusion! */
 	PORT_START /* DSW0 */
-	PORT_DIPNAME(   0xc0, 0x00, "Coinage",             IP_KEY_NONE )
-	PORT_DIPSETTING(      0x40, "Free Play"            )
-	PORT_DIPSETTING(      0xc0, "1 Coin/2 Credit"      )
-	PORT_DIPSETTING(      0x00, "1 Coin/1 Credit"      )
-	PORT_DIPSETTING(      0x80, "2 Coin/1 Credit"      )
-
-	PORT_DIPNAME(   0x30, 0x00, "Right Coin mech",     IP_KEY_NONE)
-	PORT_DIPSETTING(      0x00, "Right coin mech x1"   )
-	PORT_DIPSETTING(      0x20, "Right coin mech x4"   )
-	PORT_DIPSETTING(      0x10, "Right coin mech x5"   )
-	PORT_DIPSETTING(      0x30, "Right coin mech x6"   )
-
-	PORT_DIPNAME(   0x08, 0x00, "Left Coin mech",      IP_KEY_NONE)
-	PORT_DIPSETTING(      0x00, "Left coin mech x1"    )
-	PORT_DIPSETTING(      0x08, "Left coin mech x2"    )
-
-	PORT_DIPNAME(   0x07, 0x00, "Bonus Coins",         IP_KEY_NONE)
-	PORT_DIPSETTING(      0x00, "No bonus coins"       )
-	PORT_DIPSETTING(      0x02, "1 bonus coin for 4"   )
-	PORT_DIPSETTING(      0x06, "2 bonus coin for 4"   )
-	PORT_DIPSETTING(      0x01, "1 bonus coin for 5"   )
-	PORT_DIPSETTING(      0x05, "1 bonus coin for 3"   )
+	PORT_DIPNAME( 0xc0, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0xc0, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x40, "Free Play" )
+	PORT_DIPNAME( 0x30, 0x00, "Right Coin", IP_KEY_NONE)
+	PORT_DIPSETTING(    0x00, "*1" )
+	PORT_DIPSETTING(    0x20, "*4" )
+	PORT_DIPSETTING(    0x10, "*5" )
+	PORT_DIPSETTING(    0x30, "*6" )
+	PORT_DIPNAME( 0x08, 0x00, "Left Coin", IP_KEY_NONE)
+	PORT_DIPSETTING(    0x00, "*1" )
+	PORT_DIPSETTING(    0x08, "*2" )
+	PORT_DIPNAME( 0x07, 0x00, "Bonus Coins", IP_KEY_NONE)
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPSETTING(    0x01, "1 each 5" )
+	PORT_DIPSETTING(    0x02, "1 each 4" )
+	PORT_DIPSETTING(    0x05, "1 each 3" )
+	PORT_DIPSETTING(    0x06, "2 each 4" )
 
 	PORT_START /* DSW1 */
-	PORT_DIPNAME(   0xff, 0x00, "Unknown",             IP_KEY_NONE )
-	PORT_DIPSETTING(      0x00, "Factory Settings"     )
+	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START      /* IN2 */
-	PORT_ANALOG ( 0x0f, 0, IPT_TRACKBALL_Y | IPF_REVERSE, 20, 7, 0,0)
+	PORT_ANALOG( 0x0f, 0, IPT_TRACKBALL_Y | IPF_REVERSE, 20, 7, 0,0)
 
 	PORT_START      /* IN3 */
-	PORT_ANALOG ( 0x0f, 0, IPT_TRACKBALL_X, 20, 7, 0, 0 )
+	PORT_ANALOG( 0x0f, 0, IPT_TRACKBALL_X, 20, 7, 0, 0 )
 INPUT_PORTS_END
+
 
 
 static struct GfxLayout fakelayout =
 {
-	1,1,
-	0,
-	1,
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	0
+        1,1,
+        0,
+        1,
+        { 0 },
+        { 0 },
+        { 0 },
+        0
 };
-
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 0, 0,      &fakelayout,     0, 256 },
-	{ -1 } /* end of array */
+        { 0, 0,      &fakelayout,     0, 256 },
+        { -1 } /* end of array */
 };
-
 
 static unsigned char color_prom[] = { VEC_PAL_COLOR };
 
@@ -262,6 +251,41 @@ ROM_START( quantum_rom )
 ROM_END
 
 
+
+/* we are saving 512 bytes, but the NVRAM data is actually only accessed */
+/* at even addresses and 4 bits at a time, si it just contains 128 bytes. */
+static int nvram_load(void)
+{
+	void *f;
+
+
+	/* Try loading static RAM */
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+	{
+		/* just load in everything, the game will overwrite what it doesn't want */
+		osd_fread(f,quantum_nvram,quantum_nvram_size);
+		osd_fclose(f);
+	}
+	/* Invalidate the static RAM to force reset to factory settings */
+	else memset(quantum_nvram,0xff,quantum_nvram_size);
+
+	return 1;
+}
+
+static void nvram_save(void)
+{
+	void *f;
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,quantum_nvram,quantum_nvram_size);
+		osd_fclose(f);
+	}
+}
+
+
+
 struct GameDriver quantum_driver =
 {
 	__FILE__,
@@ -273,6 +297,7 @@ struct GameDriver quantum_driver =
 	"Paul Forgey (MAME driver)\nAaron Giles (MAME driver)\n"VECTOR_TEAM,
 	0,
 	&machine_driver,
+	0,
 
 	quantum_rom,
 	NULL, NULL,
@@ -285,7 +310,7 @@ struct GameDriver quantum_driver =
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	quantum_nvram_load, quantum_nvram_save
+	nvram_load, nvram_save
 };
 
 struct GameDriver quantum1_driver =
@@ -299,6 +324,7 @@ struct GameDriver quantum1_driver =
 	"Paul Forgey (MAME driver)\nAaron Giles (MAME driver)\n"VECTOR_TEAM,
 	0,
 	&machine_driver,
+	0,
 
 	quantum1_rom,
 	NULL, NULL,
@@ -311,5 +337,5 @@ struct GameDriver quantum1_driver =
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	quantum_nvram_load, quantum_nvram_save
+	nvram_load, nvram_save
 };

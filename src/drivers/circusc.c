@@ -439,6 +439,7 @@ struct GameDriver circusc_driver =
 	"Chris Hardy (MAME driver)\nValerio Verrando (high score save)\nPaul Swan (color info)",
 	0,
 	&machine_driver,
+	0,
 
 	circusc_rom,
 	0, circusc_decode,
@@ -464,6 +465,7 @@ struct GameDriver circusc2_driver =
 	"Chris Hardy (MAME driver)\nValerio Verrando (high score save)\nPaul Swan (color info)",
 	0,
 	&machine_driver,
+	0,
 
 	circusc2_rom,
 	0, circusc_decode,

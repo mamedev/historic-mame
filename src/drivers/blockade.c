@@ -707,6 +707,7 @@ struct GameDriver blockade_driver =
     "Frank Palazzolo",
 	0,
     &blockade_machine_driver,
+	0,
 
     blockade_rom,
     blockade_init,
@@ -733,6 +734,7 @@ struct GameDriver comotion_driver =
     "Frank Palazzolo",
 	0,
     &comotion_machine_driver,
+	0,
 
     comotion_rom,
     comotion_init,
@@ -759,6 +761,7 @@ struct GameDriver blasto_driver =
     "Frank Palazzolo\nJuergen Buchmueller",
 	0,
     &blasto_machine_driver,
+	0,
 
     blasto_rom,
     comotion_init,
@@ -785,6 +788,7 @@ struct GameDriver hustle_driver =
     "Frank Palazzolo",
 	0,
     &hustle_machine_driver,
+	0,
 
     hustle_rom,
     comotion_init,

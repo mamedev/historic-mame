@@ -14,15 +14,11 @@
 extern unsigned char *tnzs_objram;
 extern unsigned char *tnzs_vdcram;
 extern unsigned char *tnzs_scrollram;
-int tnzs_objram_size;
-extern unsigned char *banked_ram_0, *banked_ram_1;
 
 
-unsigned char *tnzs_objectram;
-int tnzs_objectram_size;
 static struct osd_bitmap *tnzs_column[16];
 static int tnzs_dirty_map[32][16];
-static int tnzs_screenflip, tnzs_insertcoin;
+static int tnzs_screenflip, old_tnzs_screenflip, tnzs_insertcoin;
 
 /***************************************************************************
 
@@ -33,6 +29,28 @@ static int tnzs_screenflip, tnzs_insertcoin;
   different color codes.
 
 ***************************************************************************/
+
+
+/***************************************************************************
+
+  Convert the color PROMs into a more useable format.
+
+  Arkanoid has a two 512x8 palette PROMs. The two bytes joined together
+  form 512 xRRRRRGGGGGBBBBB color values.
+
+***************************************************************************/
+void arkanoi2_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
+{
+	int i,col;
+
+	for (i = 0;i < Machine->drv->total_colors;i++)
+	{
+		col = (color_prom[i]<<8)+color_prom[i+512];
+		*(palette++) =  (col & 0x7c00)>>7;	/* Red */
+		*(palette++) =  (col & 0x03e0)>>2;	/* Green */
+		*(palette++) =  (col & 0x001f)<<3;	/* Blue */
+	}
+}
 
 
 
@@ -82,22 +100,6 @@ void tnzs_vh_stop(void)
     for (column=0;column<16;column++)
         osd_free_bitmap(tnzs_column[column]);
 }
-
-
-
-void tnzs_videoram_w(int offset,int data)
-{
-    videoram[offset] = data;
-}
-
-
-
-void tnzs_objectram_w(int offset,int data)
-{
-    tnzs_objectram[offset] = data;
-}
-
-
 
 void tnzs_vh_draw_background(struct osd_bitmap *bitmap,
 					  unsigned char *m)
@@ -262,6 +264,18 @@ void tnzs_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
     /* If the byte at f300 has bit 6 set, flip the screen
        (I'm not 100% sure about this) */
     tnzs_screenflip = (tnzs_scrollram[0x100] & 0x40) >> 6;
+    if (old_tnzs_screenflip != tnzs_screenflip)
+    {
+        for (x=0;x<32;x++)
+        {
+            for (y=0;y<16;y++)
+            {
+                tnzs_dirty_map[x][y] = -1;
+            }
+        }
+    }
+    old_tnzs_screenflip = tnzs_screenflip;
+
 
     /* Remap dynamic palette */
     memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * sizeof(unsigned char));
@@ -332,7 +346,7 @@ void tnzs_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 /***************************************************************************
 
 THIS IS tnzs.c WITH SOME SLIGHT NECESSARY CHANGES, LIKE SPRITES DRAWN
-IN REVERSE ORDER.
+IN REVERSE ORDER, FLIPY SUPPORT AND STATIC PALETTE.
 
 ***************************************************************************/
 
@@ -342,11 +356,13 @@ void arkanoi2_vh_draw_background(struct osd_bitmap *bitmap,
     int i, b,c,tile,color, x,y, column;
     int scrollx, scrolly;
     unsigned int upperbits;
+    int column_blanks[16];
 
     /* The screen is split into 16 columns.
        So first, update the tiles. */
     for (i=0,column=0;column<16;column++)
     {
+	  column_blanks[column] = 0;
         for (y=0;y<16;y++)
         {
             for (x=0;x<2;x++,i++)
@@ -357,6 +373,7 @@ void arkanoi2_vh_draw_background(struct osd_bitmap *bitmap,
 
                 /* Construct unique identifier for this tile/color */
                 tile = (color << 16) + (b << 8) + c;
+		    if (((b << 8) + c) == 0)	column_blanks[column]++;
 
                 if (tnzs_dirty_map[column*2+x][y] != tile)
                 {
@@ -372,13 +389,13 @@ void arkanoi2_vh_draw_background(struct osd_bitmap *bitmap,
                         0, TRANSPARENCY_NONE, 0);   /* other stuff */
                 }
             }
-    	}
-	}
+    	  }
+    }
 
     /* If the byte at f301 has bit 0 clear, then don't draw the
-       background tiles */
+       background tiles - WRONG -*/
 
-				/*    if ((tnzs_scrollram[0x101] & 1) == 0) return;*/
+			/*    if ((tnzs_scrollram[0x101] & 1) == 0) return;*/
 
     /* The byte at f200 is the y-scroll value for the first column.
        The byte at f204 is the LSB of x-scroll value for the first column.
@@ -426,6 +443,8 @@ void arkanoi2_vh_draw_background(struct osd_bitmap *bitmap,
 
     for (;column >= 8;column--)
     {
+	if (column_blanks[column-8]!=32)
+	{
         scrollx = tnzs_scrollram[column*16+4]
                 - ((upperbits & /*0x80*/ 1) * 256);
         scrolly = -15 - tnzs_scrollram[column*16];
@@ -436,7 +455,7 @@ void arkanoi2_vh_draw_background(struct osd_bitmap *bitmap,
         copybitmap(bitmap,tnzs_column[column-8], 0,0, scrollx,scrolly+(16*16),
                    &Machine->drv->visible_area,
                    TRANSPARENCY_COLOR,0);
-
+	}
         upperbits /*<<*/ >>= 1;
     }
 }
@@ -448,26 +467,30 @@ void arkanoi2_vh_draw_foreground(struct osd_bitmap *bitmap,
 							 unsigned char *ctrl_pointer,
                              unsigned char *color_pointer)
 {
-    int i, c, flipscreen;
+    int i, flipscreen;
 
     flipscreen = tnzs_screenflip << 7;
 
     /* Draw all 512 sprites */
     for (i=0x1ff;i >= 0;i--)
 	{
-		c = char_pointer[i];
-        if (y_pointer[i] < 0xf8) /* f8-ff is off-screen, so don't draw it */
-		{
-            drawgfx(bitmap,
+       int code = (ctrl_pointer[i] & 31) * 0x100 + char_pointer[i];      /* code */
+       int ypos = 14*16 + 2 - y_pointer[i];
+
+ /* if sprite is on screen and not null, draw it */
+        if ((ypos<=(14*16-1))&&(code!=0))
+        {
+
+          drawgfx(bitmap,
                     Machine->gfx[0],
-                    (ctrl_pointer[i] & 31) * 0x100 + c,      /* code */
+                    code,
                     color_pointer[i] >> 3,                   /* color */
 
                     (ctrl_pointer[i] & 0x80) ^ flipscreen,
                     (ctrl_pointer[i] & 0x40),                /* flipx, flipy */
 
                     x_pointer[i] - (color_pointer[i]&1)*256, /* x */
-                    14*16 + 2 - y_pointer[i],                /* y */
+                    ypos,			                /* y */
                     0,                  /* clip */
                     TRANSPARENCY_PEN,   /* transparency */
                     0);                 /* transparent_color */
@@ -484,8 +507,7 @@ void arkanoi2_vh_draw_foreground(struct osd_bitmap *bitmap,
 ***************************************************************************/
 void arkanoi2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-    int color,code,i,offs,x,y, t;
-    int colmask[32];
+    int t;
 
     /* Update credit counter. The game somehow tells the hardware when
        to decrease the counter. (maybe by writing to c001 on the 2nd cpu?) */
@@ -500,54 +522,6 @@ void arkanoi2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
     /* If the byte at f300 has bit 6 set, flip the screen
        (I'm not 100% sure about this) */
     tnzs_screenflip = (tnzs_scrollram[0x100] & 0x40) >> 6;
-
-    /* Remap dynamic palette */
-    memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * sizeof(unsigned char));
-
-    for (color = 0;color < 32;color++) colmask[color] = 0;
-
-    /* See what colours the tiles need */
-    for (offs=32*16 - 1;offs >= 0;offs--)
-	{
-        code = tnzs_objram[offs + 0x400]
-             + 0x100 * (tnzs_objram[offs + 0x1400] & 0x1f);
-        color = tnzs_objram[offs + 0x1600] >> 3;
-
-        colmask[color] |= Machine->gfx[0]->pen_usage[code];
-	}
-
-    /* See what colours the sprites need */
-    for (offs=0x1ff;offs >= 0;offs--)
-	{
-        code = tnzs_objram[offs]
-             + 0x100 * (tnzs_objram[offs + 0x1000] & 0x1f);
-        color = tnzs_objram[offs + 0x1200] >> 3;
-
-        colmask[color] |= Machine->gfx[0]->pen_usage[code];
-	}
-
-    /* Construct colour usage table */
-    for (color=0;color<32;color++)
-	{
-		if (colmask[color] & (1 << 0))
-            palette_used_colors[16 * color] = PALETTE_COLOR_TRANSPARENT;
-        for (i=1;i<16;i++)
-		{
-			if (colmask[color] & (1 << i))
-                palette_used_colors[16 * color + i] = PALETTE_COLOR_USED;
-		}
-	}
-
-    if (palette_recalc())
-    {
-        for (x=0;x<32;x++)
-        {
-            for (y=0;y<16;y++)
-            {
-                tnzs_dirty_map[x][y] = -1;
-            }
-        }
-    }
 
     /* Blank the background */
     fillbitmap(bitmap, Machine->pens[0], &Machine->drv->visible_area);

@@ -1226,6 +1226,7 @@ struct GameDriver astrob_driver =
 	"Dave Fish (security consultant)\nMike Balfour (game driver)",
 	0,
 	&astrob_machine_driver,
+	0,
 
 	astrob_rom,
 	astrob_decode, 0,
@@ -1251,6 +1252,7 @@ struct GameDriver astrob1_driver =
 	"Dave Fish (security consultant)\nMike Balfour (game driver)",
 	0,
 	&astrob_machine_driver,
+	0,
 
 	astrob1_rom,
 	astrob_decode, 0,
@@ -1276,6 +1278,7 @@ struct GameDriver s005_driver =
 	"Dave Fish (security consultant)\nMike Balfour (game driver)",
 	0,
 	&s005_machine_driver,
+	0,
 
 	s005_rom,
 	s005_decode, 0,
@@ -1301,6 +1304,7 @@ struct GameDriver monsterb_driver =
 	"Dave Fish (security consultant)\nMike Balfour (game driver)",
 	0,
 	&monsterb_machine_driver,
+	0,
 
 	monsterb_rom,
 	monsterb_decode, 0,
@@ -1326,6 +1330,7 @@ struct GameDriver spaceod_driver =
 	"Dave Fish (security consultant)\nMike Balfour (game driver)",
 	0,
 	&spaceod_machine_driver,
+	0,
 
 	spaceod_rom,
 	spaceod_decode, 0,

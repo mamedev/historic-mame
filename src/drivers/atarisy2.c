@@ -1507,6 +1507,7 @@ struct GameDriver paperboy_driver =
 	"Aaron Giles (MAME driver)\nJuergen Buchmueller (MAME driver)\nMike Balfour (hardware info)",
 	0,
 	&paperboy_machine_driver,
+	0,
 
 	paperboy_rom,
 	paperboy_rom_decode,
@@ -1532,6 +1533,7 @@ struct GameDriver apb_driver =
 	"Juergen Buchmueller (MAME driver)\nAaron Giles (MAME driver)\nMike Balfour (hardware info)",
 	GAME_NOT_WORKING,
 	&apb_machine_driver,
+	0,
 
 	apb_rom,
 	apb_rom_decode,
@@ -1557,6 +1559,7 @@ struct GameDriver apb2_driver =
 	"Juergen Buchmueller (MAME driver)\nAaron Giles (MAME driver)\nMike Balfour (hardware info)",
 	GAME_NOT_WORKING,
 	&apb_machine_driver,
+	0,
 
 	apb2_rom,
 	apb_rom_decode,
@@ -1582,6 +1585,7 @@ struct GameDriver a720_driver =
 	"Aaron Giles (MAME driver)\nJuergen Buchmueller (MAME driver)\nMike Balfour (hardware info)",
 	GAME_NOT_WORKING,
 	&a720_machine_driver,
+	0,
 
 	a720_rom,
 	a720_rom_decode,
@@ -1607,6 +1611,7 @@ struct GameDriver a720b_driver =
 	"Aaron Giles (MAME driver)\nJuergen Buchmueller (MAME driver)\nMike Balfour (hardware info)",
 	GAME_NOT_WORKING,
 	&a720_machine_driver,
+	0,
 
 	a720b_rom,
 	a720_rom_decode,
@@ -1632,6 +1637,7 @@ struct GameDriver ssprint_driver =
 	"Aaron Giles (MAME driver)\nJuergen Buchmueller (MAME driver)\nMike Balfour (hardware info)",
 	0,
 	&ssprint_machine_driver,
+	0,
 
 	ssprint_rom,
 	ssprint_rom_decode,
@@ -1658,6 +1664,7 @@ struct GameDriver csprint_driver =
 	"Aaron Giles (MAME driver)\nJuergen Buchmueller (MAME driver)\nMike Balfour (hardware info)",
 	0,
 	&csprint_machine_driver,
+	0,
 
 	csprint_rom,
 	csprint_rom_decode,

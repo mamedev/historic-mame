@@ -610,6 +610,7 @@ struct GameDriver mpatrol_driver =
 	"Nicola Salmoria\nChris Hardy\nValerio Verrando\nTim Lindquist (color info)\nAaron Giles (sound)\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	mpatrol_rom,
 	0, 0,
@@ -635,6 +636,7 @@ struct GameDriver mpatrolw_driver =
 	"Nicola Salmoria\nChris Hardy\nValerio Verrando\nTim Lindquist (color info)\nAaron Giles (sound)\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	mpatrolw_rom,
 	0, 0,
@@ -660,6 +662,7 @@ struct GameDriver mranger_driver =
 	"Nicola Salmoria (MAME driver)\nChris Hardy (hardware info)\nTim Lindquist (color info)\nAaron Giles (sound)\nValerio Verrando (high score save)\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	mranger_rom,
 	0, 0,

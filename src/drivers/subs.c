@@ -253,6 +253,7 @@ struct GameDriver subs_driver =
 	"Mike Balfour",
 	0,
 	&machine_driver,
+	0,
 
 	subs_rom,
 	subs_rom_init, 0,

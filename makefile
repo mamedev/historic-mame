@@ -4,23 +4,20 @@
 AR = ar
 CC = gcc
 LD = gcc
-ASM = nasm
-#ASM = nasmw
+#ASM = nasm
+ASM = nasmw
 ASMFLAGS = -f coff
 VPATH=src src/Z80 src/M6502 src/I86 src/M6809 src/TMS34010
 
 # uncomment next line to use Assembler 6808 engine
-#X86_ASM_6808 = 1
+# X86_ASM_6808 = 1
 # uncomment next line to use Assembler 68k engine
-#X86_ASM_68K = 1
-
-# ASMDEFS = -dMAME_DEBUG
-ASMDEFS =
+X86_ASM_68K = 1
 
 ifdef X86_ASM_6808
-M6808OBJS = obj/M6808/m6808.oa obj/M6808/6808dasm.o
+M6808OBJS = obj/m6808/m6808.oa obj/m6808/6808dasm.o
 else
-M6808OBJS = obj/m6808/m6808.o obj/M6808/6808dasm.o
+M6808OBJS = obj/m6808/m6808.o obj/m6808/6808dasm.o
 endif
 
 ifdef X86_ASM_68K
@@ -35,9 +32,7 @@ M68KDEF  =
 endif
 
 # add -DMAME_DEBUG to include the debugger
-#DEFS   = -DX86_ASM -DLSB_FIRST -DSIGNED_SAMPLES -Dinline=__inline__ -Dasm=__asm__
-DEFS   = -DX86_ASM -DLSB_FIRST -DSIGNED_SAMPLES -Dinline=__inline__ -Dasm=__asm__ \
-	-DBETA_VERSION
+DEFS   = -DX86_ASM -DLSB_FIRST -DSIGNED_SAMPLES -Dinline=__inline__ -Dasm=__asm__
 #DEFS   = -DX86_ASM -DLSB_FIRST -DSIGNED_SAMPLES -Dinline=__inline__ -Dasm=__asm__ \
 	-DMAME_DEBUG
 
@@ -79,7 +74,8 @@ OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
          obj/sndhrdw/adpcm.o \
          obj/sndhrdw/ym2203.opm obj/sndhrdw/ay8910.o obj/sndhrdw/psgintf.o \
          obj/sndhrdw/2151intf.o obj/sndhrdw/fm.o \
-         obj/sndhrdw/ym2151.o obj/sndhrdw/ym3812.o \
+         obj/sndhrdw/ym2151.o obj/sndhrdw/ym2413.o \
+         obj/sndhrdw/ym3812.o obj/sndhrdw/3812intf.o \
 		 obj/sndhrdw/tms5220.o obj/sndhrdw/5220intf.o obj/sndhrdw/vlm5030.o \
 		 obj/sndhrdw/pokey.o obj/sndhrdw/pokyintf.o obj/sndhrdw/sn76496.o \
 		 obj/sndhrdw/nes.o obj/sndhrdw/nesintf.o obj/sndhrdw/astrocde.o \
@@ -99,7 +95,7 @@ OBJS   = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
          obj/TMS34010/tms34010.o obj/TMS34010/34010fld.o \
          $(M6808OBJS) \
          $(M68KOBJS) \
-         obj/mamedbg.o obj/asg.o obj/M6502/6502dasm.o obj/I8085/8085dasm.o \
+         obj/mamedbg.o obj/asg.o obj/M6502/6502dasm.o obj/I86/I86dasm.o obj/I8085/8085dasm.o \
          obj/M6809/6809dasm.o obj/M6805/6805dasm.o  obj/I8039/8039dasm.o \
          obj/S2650/2650dasm.o obj/T11/t11dasm.o obj/TMS34010/34010dsm.o obj/M68000/m68kdasm.o \
          obj/msdos/msdos.o obj/msdos/video.o obj/msdos/vector.o obj/msdos/sound.o \
@@ -115,9 +111,13 @@ mame.exe:  $(OBJS) $(LIBS)
 obj/%.o: src/%.c mame.h driver.h
 	 $(CC) $(DEFS) $(M68KDEF) $(CFLAGS) -o $@ -c $<
 
-obj/M6808/m6808.asm:  src/M6808/make6808.c
+obj/m6808/m6808.asm:  src/m6808/make6808.c
 	 $(CC) -o obj/m6808/make6808.exe src/m6808/make6808.c
 	 obj/m6808/make6808 obj/m6808/m6808.asm -s -m -h
+
+obj/m68000/68kem.asm:  src/M68000/make68k.c
+	 $(CC) $(DEFS) $(CFLAGS) -o obj/M68000/make68k.exe src/M68000/make68k.c
+	 obj/M68000/make68k obj/M68000/68kem.asm
 
 obj/%.oa:  obj/%.asm
 	 $(ASM) -o $@ $(ASMFLAGS) $(ASMDEFS) $<
@@ -474,7 +474,8 @@ obj/other.a: \
          obj/vidhrdw/cop01.o obj/drivers/cop01.o \
          obj/vidhrdw/terracre.o obj/drivers/terracre.o \
          obj/vidhrdw/sharkatt.o obj/drivers/sharkatt.o \
-         obj/machine/turbo.o obj/vidhrdw/turbo.o obj/drivers/turbo.o
+         obj/machine/turbo.o obj/vidhrdw/turbo.o obj/drivers/turbo.o \
+         obj/vidhrdw/kingobox.o obj/drivers/kingobox.o \
 
 # dependencies
 obj/Z80/Z80.o:  Z80.c Z80.h Z80Codes.h Z80IO.h Z80DAA.h
@@ -516,9 +517,11 @@ clean:
 	del obj\M6809\*.o
 	del obj\M6808\*.o
 	del obj\M6808\*.oa
+	del obj\M6808\*.exe
 	del obj\M6805\*.o
 	del obj\M68000\*.o
 	del obj\M68000\*.oa
+	del obj\M68000\*.exe
 	del obj\S2650\*.o
 	del obj\T11\*.o
 	del obj\TMS34010\*.o
@@ -533,13 +536,16 @@ cleandebug:
 	del obj\*.o
 	del obj\Z80\*.o
 	del obj\M6502\*.o
+	del obj\I8039\*.o
 	del obj\I8085\*.o
 	del obj\M6809\*.o
 	del obj\M6808\*.o
 	del obj\M6808\*.oa
+	del obj\M6808\*.exe
 	del obj\M6805\*.o
 	del obj\M68000\*.o
 	del obj\M68000\*.oa
+	del obj\M68000\*.exe
 	del obj\S2650\*.o
 	del obj\T11\*.o
 	del obj\TMS34010\*.o

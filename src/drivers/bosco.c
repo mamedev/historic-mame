@@ -664,6 +664,7 @@ struct GameDriver bosco_driver =
 	"Martin Scragg\nAaron Giles\nPete Grounds\nSidney Brown\nKurt Mahan (color info)\nNicola Salmoria\nMirko Buffoni",
 	0,
 	&machine_driver,
+	0,
 
 	bosco_rom,
 	0, 0,
@@ -689,6 +690,7 @@ struct GameDriver bosconm_driver =
 	"Martin Scragg\nAaron Giles\nPete Grounds\nSidney Brown\nKurt Mahan (color info)\nNicola Salmoria\nMirko Buffoni",
 	0,
 	&machine_driver,
+	0,
 
 	bosconm_rom,
 	0, 0,

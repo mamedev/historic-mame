@@ -291,6 +291,33 @@ ROM_START( exerion_rom )
 	ROM_LOAD( "exerion.05",   0x0000, 0x2000, 0x32f6bff5 )
 ROM_END
 
+ROM_START( exeriont_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "prom5.4p",     0x0000, 0x4000, 0x58b4dc1b )
+	ROM_LOAD( "prom6.4s",     0x4000, 0x2000, 0xfca18c2d )
+
+	ROM_REGION_DISPOSE(0x1c000)     /* temporary space for graphics (disposed after conversion) */
+	/* Set aside 0xe000 for the unscrambled graphics */
+	ROM_LOAD( "exerion.06",   0x0e000, 0x2000, 0x435a85a4 )
+	ROM_LOAD( "exerion.01",   0x10000, 0x2000, 0x5bb755cb )
+	ROM_LOAD( "exerion.02",   0x12000, 0x2000, 0xa7ecbb70 )
+	ROM_LOAD( "exerion.03",   0x14000, 0x2000, 0x790595b8 )
+	ROM_LOAD( "exerion.04",   0x16000, 0x2000, 0xd7abd0b9 )
+	/* sprites */
+	ROM_LOAD( "exerion.11",   0x18000, 0x2000, 0xf0633a09 )
+	ROM_LOAD( "exerion.10",   0x1a000, 0x2000, 0x80312de0 )
+
+	ROM_REGION(0x420)       /* color/lookup proms */
+	ROM_LOAD( "exerion.e1",   0x0000, 0x020, 0x2befcc20 ) /* palette */
+	ROM_LOAD( "exerion.i3",   0x0020, 0x100, 0xfe72ab79 ) /* ?? */
+	ROM_LOAD( "exerion.k4",   0x0120, 0x100, 0xffc2ba43 ) /* ?? */
+	ROM_LOAD( "exerion.i8",   0x0220, 0x100, 0x31db0e08 ) /* ?? */
+	ROM_LOAD( "exerion.h10",  0x0320, 0x100, 0xcdd23f3e ) /* ?? */
+
+	ROM_REGION(0x10000)     /* 64k for the audio CPU */
+	ROM_LOAD( "exerion.05",   0x0000, 0x2000, 0x32f6bff5 )
+ROM_END
+
 ROM_START( exerionb_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "eb5.bin",      0x0000, 0x4000, 0xda175855 )
@@ -449,14 +476,41 @@ struct GameDriver exerion_driver =
 	__FILE__,
 	0,
 	"exerion",
-	"Exerion",
+	"Exerion (Jaleco)",
 	"1983",
 	"Jaleco",
 	"Brad Oliver\nJohn Butler\nValerio Verrando (high score save)\nGerald Vanderick (color info)",
 	GAME_WRONG_COLORS,
 	&machine_driver,
+	0,
 
 	exerion_rom,
+	exerion_decode, 0,
+	0,
+	0,      /* sound_prom */
+
+	exerion_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	hiload, hisave
+};
+
+struct GameDriver exeriont_driver =
+{
+	__FILE__,
+	&exerion_driver,
+	"exeriont",
+	"Exerion (Taito)",
+	"1983",
+	"Jaleco (Taito America license)",
+	"Brad Oliver\nJohn Butler\nValerio Verrando (high score save)\nGerald Vanderick (color info)",
+	GAME_WRONG_COLORS,
+	&machine_driver,
+	0,
+
+	exeriont_rom,
 	exerion_decode, 0,
 	0,
 	0,      /* sound_prom */
@@ -480,6 +534,7 @@ struct GameDriver exerionb_driver =
 	"Brad Oliver\nJohn Butler\nValerio Verrando (high score save)\nGerald Vanderick (color info)",
 	GAME_WRONG_COLORS,
 	&machine_driver,
+	0,
 
 	exerionb_rom,
 	exerionb_decode, 0,

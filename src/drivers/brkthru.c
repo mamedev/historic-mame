@@ -720,6 +720,7 @@ struct GameDriver brkthru_driver =
 	"Phil Stroffolino (MAME driver)\nCarlos Lozano (hardware info)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili\nGerrit Van Goethem (high score save)\nBryan McPhail (sound)",
 	0,
 	&brkthru_machine_driver,
+	0,
 
 	brkthru_rom,
 	0, 0,
@@ -744,6 +745,7 @@ struct GameDriver darwin_driver =
 	"Phil Stroffolino (MAME driver)\nCarlos Lozano (Breakthru hardware info)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili\nBryan McPhail (sound)\nVille Laitinen (MAME driver)",
 	GAME_WRONG_COLORS,
 	&darwin_machine_driver,
+	0,
 
 	darwin_rom,
 	0, 0,

@@ -917,6 +917,7 @@ struct GameDriver kaos_driver =
     "Chris Moore      (MAME driver)\nSanteri Saarimaa (not a sausage)",
 	0,
 	&machine_driver,
+	0,
 
 	kaos_rom,
 	0, 0, 0, 0,					/* sound_prom */
@@ -941,6 +942,7 @@ struct GameDriver killcom_driver =
     "Chris Moore      (MAME driver)\nSanteri Saarimaa (cleaning up, hi-scores)",
 	0,
     &machine_driver,
+	0,
 
 	killcom_rom,
 	0, 0, 0, 0,					/* sound_prom */
@@ -965,6 +967,7 @@ struct GameDriver megatack_driver =
     "Chris Moore      (MAME driver)\nSanteri Saarimaa (cleaning up, hi-scores)",
 	0,
 	&machine_driver,
+	0,
 
 	megatack_rom,
 	0, 0, 0, 0,					/* sound_prom */
@@ -988,6 +991,7 @@ struct GameDriver challeng_driver =
     "Chris Moore      (MAME driver)\nSanteri Saarimaa (cleaning up, hi-scores)",
 	0,
     &machine_driver,
+	0,
 
     challeng_rom,
     0, 0, 0, 0,                 /* sound_prom */

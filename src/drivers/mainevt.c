@@ -576,6 +576,7 @@ struct GameDriver mainevt_driver =
 	"Bryan McPhail\n",
 	0,
 	&machine_driver,
+	0,
 
 	mainevt_rom,
 	0, 0,
@@ -601,6 +602,7 @@ struct GameDriver devstors_driver =
 	"Bryan McPhail\n",
 	GAME_NOT_WORKING,
 	&dv_machine_driver,
+	0,
 
 	devstors_rom,
 	0, 0,

@@ -102,6 +102,11 @@ WORD wat_readmemw(void *a);
 #define put_word(a,b) cpu_writemem24_word((a)&0xffffff,b)
 #define put_long(a,b) cpu_writemem24_dword((a)&0xffffff,b)
 
+/***************************************/
+/* First block is for C 68000 emulator */
+/***************************************/
+
+#ifndef A68KEM
 
 union flagu {
     struct {
@@ -333,5 +338,73 @@ INLINE void MakeFromSR(void)
 }
 
 extern int opcode ;
+
+		/************************/
+#else 	/* Structures for 68KEM */
+		/************************/
+
+/*	Assembler Engine Register Structure */
+
+typedef struct
+{
+    LONG Icount; 			/* 0x0000 Cycles to Process */
+
+    ULONG d[8];             /* 0x0004 8 Data registers */
+	CPTR  a[8];             /* 0x0024 8 Address registers */
+
+    CPTR  usp;              /* 0x0044 Stack registers (They will overlap over reg_a7) */
+    CPTR  isp;              /* 0x0048 */
+
+    ULONG statusflags;		/* 0x004C System registers */
+
+    /* byte sr_high;       	   The system register (byte most meaningful from SR) */
+    /*                         T u S u u I I I */
+
+    /* word r;         		   The CCR register except de extended carry in */
+    /*                         INTEL format,  uuuuuVuuSZuuuuuC */
+    /*                                        5432109876543210 */
+
+    /* byte extended_carry;    The extended carry (X) -> uuuuuuuX */
+    /*                                                   76543210 */
+
+    ULONG pc;            	/* 0x0050 Program Counter */
+
+    UBYTE IRQ_level;        /* IRQ level you want the MC68K process (0=None)  */
+    UBYTE vector;           /* Interruption vector (From 0 to 255)            */
+
+    /* Backward compatible with C emulator in case required */
+    /* Use MakeSR to fill with correct info */
+
+    UWORD  sr;
+
+#ifdef MAME_DEBUG
+
+    /* Stuff for Debugger (it needs these fields) */
+
+    ULONG  vbr,sfc,dfc,msp;
+    double fp[8];
+    ULONG  fpcr,fpsr,fpiar;
+
+#endif
+
+} regstruct;
+
+static __inline__ void MakeSR(void)
+{
+	/* Make Status Register compatible with C emulator */
+
+	extern regstruct regs;
+
+    regs.sr = ((regs.statusflags & 0xa7) << 8);
+
+    if (regs.statusflags & 0x0008000) regs.sr |= 8;     /* Negative */
+    if (regs.statusflags & 0x0004000) regs.sr |= 4;		/* Zero */
+    if (regs.statusflags & 0x0000100) regs.sr |= 1;		/* Carry */
+
+    if (regs.statusflags & 0x1000000) regs.sr |= 16;	/* Ex Carry */
+    if (regs.statusflags & 0x0080000) regs.sr |= 2;		/* Overflow */
+}
+
+#endif
 
 #endif

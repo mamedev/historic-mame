@@ -334,6 +334,7 @@ struct GameDriver milliped_driver =
 	"Ivan Mackintosh\nNicola Salmoria\nJohn Butler\nAaron Giles\nBernd Wiebelt\nBrad Oliver",
 	0,
 	&machine_driver,
+	0,
 
 	milliped_rom,
 	0, 0,

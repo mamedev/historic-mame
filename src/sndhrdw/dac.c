@@ -57,8 +57,12 @@ int DAC_sh_start(struct DACinterface *interface)
 
 	for (i = 0;i < interface->num;i++)
 	{
+		char name[40];
+
+
+		sprintf(name,"DAC #%d",i);
 		channel[i] = stream_init(
-				Machine->sample_rate,8,
+				name,Machine->sample_rate,8,
 				i,DAC_update);
 
 		if (channel[i] == -1)

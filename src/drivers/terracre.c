@@ -78,29 +78,19 @@ void terracre_r_write (int offset,int data)
 
 int terracre_r_read(int offset)
 {
-	int msb,lsb;
-
 	switch (offset)
 	{
 		case 0: /* Player controls */
-			return (input_port_0_r (offset));
+			return readinputport(0);
 
 		case 2: /* Dipswitch 0xf000*/
-			lsb = input_port_1_r (offset);
-			msb = input_port_3_r (offset);
-			return (lsb + (msb<<8));
+			return readinputport(1);
 
 		case 4: /* Start buttons & Dipswitch */
-			lsb=input_port_4_r (offset);
-			msb=input_port_2_r (offset);
-			return (lsb + (msb<<8));
+			return readinputport(2) << 8;
 
 		case 6: /* Dipswitch???? */
-			return (0xffff);
-
-		default:
-			if( errorlog ) fprintf( errorlog, "INPUT: [%x] \n", offset );
-			return (0xffff);
+			return (readinputport(4) << 8) | readinputport(3);
 	}
 	return 0xffff;
 }
@@ -121,7 +111,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x020200, 0x021fff, MRA_BANK2 },
 	{ 0x022000, 0x022fff, terrac_videoram2_r },
 	{ 0x023000, 0x023fff, MRA_BANK3 },
-	{ 0x024000, 0x02400f, terracre_r_read },
+	{ 0x024000, 0x024007, terracre_r_read },
 	{ 0x028000, 0x0287ff, MRA_BANK4 },
 	{ -1 }	/* end of table */
 };
@@ -189,12 +179,12 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* Player 2 controls */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2  )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL  )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
@@ -203,16 +193,60 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_SERVICE )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )  /* Test Mode */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BITX(    0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* Dipswitch */
-	PORT_DIPNAME( 0xff, 0xff, "--", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x03, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x03, "3" )
+	PORT_DIPSETTING(    0x02, "4" )
+	PORT_DIPSETTING(    0x01, "5" )
+	PORT_DIPSETTING(    0x00, "6" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x0c, "20000 60000" )
+	PORT_DIPSETTING(    0x08, "30000 70000" )
+	PORT_DIPSETTING(    0x04, "40000 80000" )
+	PORT_DIPSETTING(    0x00, "50000 90000" )
+	PORT_DIPNAME( 0x10, 0x10, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x10, "On" )
+	PORT_DIPNAME( 0x20, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x20, "Cocktail" )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 
 	PORT_START	/* Dipswitch */
-	PORT_DIPNAME( 0xff, 0xff, "--", IP_KEY_NONE )
+	PORT_DIPNAME( 0x03, 0x03, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x03, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x00, "Free Play" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x04, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x0c, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x08, "1 Coin/6 Credits" )
+	PORT_DIPNAME( 0x10, 0x10, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "Easy" )
+	PORT_DIPSETTING(    0x00, "Hard" )
+	PORT_DIPNAME( 0x20, 0x20, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x40, 0x40, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 INPUT_PORTS_END
 
 
@@ -512,6 +546,7 @@ struct GameDriver terracre_driver =
 	"Carlos A. Lozano\nMirko Buffoni\nNicola Salmoria",
 	0,
 	&ym3526_machine_driver,
+	0,
 
 	terracre_rom,
 	0, 0,
@@ -541,6 +576,7 @@ struct GameDriver terracra_driver =
 	"Carlos A. Lozano\nMirko Buffoni\nNicola Salmoria",
 	0,
 	&ym2203_machine_driver,
+	0,
 
 	terracra_rom,
 	0, 0,

@@ -686,6 +686,7 @@ struct GameDriver bublbobl_driver =
 	"Chris Moore\nOliver White\nNicola Salmoria\nMarco Cassili",
 	GAME_NOT_WORKING,
 	&bublbobl_machine_driver,
+	0,
 
 	bublbobl_rom,
 	bublbobl_patch, 0,	/* remove protection */
@@ -711,6 +712,7 @@ struct GameDriver boblbobl_driver =
 	"Chris Moore\nOliver White\nNicola Salmoria\nMarco Cassili",
 	0,
 	&boblbobl_machine_driver,
+	0,
 
 	boblbobl_rom,
 	boblbobl_patch, 0,	/* remove protection */
@@ -736,6 +738,7 @@ struct GameDriver sboblbob_driver =
 	"Chris Moore\nOliver White\nNicola Salmoria\nMarco Cassili",
 	0,
 	&boblbobl_machine_driver,
+	0,
 
 	sboblbob_rom,
 	0, 0,

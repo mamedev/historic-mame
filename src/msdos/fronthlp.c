@@ -265,7 +265,7 @@ void romident(const char* name,int enter_dirs) {
 
 enum { LIST_LIST = 1, LIST_LISTFULL, LIST_LISTSAMDIR, LIST_LISTROMS, LIST_LISTSAMPLES,
 		LIST_LMR, LIST_LISTDETAILS, LIST_LISTGAMES, LIST_LISTCLONES,
-		LIST_WRONGORIENTATION, LIST_LISTCRC };
+		LIST_WRONGORIENTATION, LIST_LISTCRC, LIST_LISTDUPCRC };
 
 int frontend_help (int argc, char **argv)
 {
@@ -307,6 +307,7 @@ int frontend_help (int argc, char **argv)
 		if (!stricmp(argv[i],"-listclones")) list = LIST_LISTCLONES;
 		if (!stricmp(argv[i],"-listsamdir")) list = LIST_LISTSAMDIR;
 		if (!stricmp(argv[i],"-listcrc")) list = LIST_LISTCRC;
+		if (!stricmp(argv[i],"-listdupcrc")) list = LIST_LISTDUPCRC;
 
 #ifdef MAME_DEBUG /* do not put this into a public release! */
 		if (!stricmp(argv[i],"-lmr")) list = LIST_LMR;
@@ -542,6 +543,7 @@ int frontend_help (int argc, char **argv)
 									case SOUND_YM2151:     printf("YM-2151 "); break;
 									case SOUND_YM2151_ALT: printf("YM-2151a"); break;
 									case SOUND_YM3812:     printf("YM-3812 "); break;
+									case SOUND_YM2413:     printf("YM-2413 "); break;
 									case SOUND_SN76496:    printf("SN76496 "); break;
 									case SOUND_POKEY:      printf("Pokey   "); break;
 									case SOUND_NES:        printf("NES     "); break;
@@ -613,6 +615,51 @@ int frontend_help (int argc, char **argv)
 				{
 					if (romp->name && romp->name != (char *)-1)
 						printf("%08x %-12s %s\n",romp->crc,romp->name,drivers[i]->description);
+
+					romp++;
+				}
+
+				i++;
+			}
+			return 0;
+			break;
+
+		case LIST_LISTDUPCRC: /* list duplicate crc-32 (with different ROM name) */
+			i = 0;
+			while (drivers[i])
+			{
+				const struct RomModule *romp;
+
+				romp = drivers[i]->rom;
+
+				while (romp->name || romp->offset || romp->length)
+				{
+					if (romp->name && romp->name != (char *)-1)
+					{
+						j = i+1;
+						while (drivers[j])
+						{
+							const struct RomModule *romp1;
+
+							romp1 = drivers[j]->rom;
+
+							while (romp1->name || romp1->offset || romp1->length)
+							{
+								if (romp1->name && romp1->name != (char *)-1 &&
+										strcmp(romp->name,romp1->name) &&
+										romp1->crc == romp->crc)
+								{
+									printf("%08x %-12s %-8s <-> %-12s %-8s\n",romp->crc,
+											romp->name,drivers[i]->name,
+											romp1->name,drivers[j]->name);
+								}
+
+								romp1++;
+							}
+
+							j++;
+						}
+					}
 
 					romp++;
 				}

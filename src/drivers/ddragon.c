@@ -828,6 +828,7 @@ struct GameDriver ddragon_driver =
 	"Carlos A. Lozano\nRob Rosenbrock\nChris Moore\nPhil Stroffolino\nErnesto Corvi",
 	GAME_NOT_WORKING,
 	&ddragon_machine_driver,
+	0,
 
 	ddragon_rom,
 	0, 0,
@@ -853,6 +854,7 @@ struct GameDriver ddragonb_driver =
 	"Carlos A. Lozano\nRob Rosenbrock\nChris Moore\nPhil Stroffolino\nErnesto Corvi\n",
 	0,
 	&ddragonb_machine_driver,
+	0,
 
 	ddragonb_rom,
 	0, 0,
@@ -878,6 +880,7 @@ struct GameDriver ddragon2_driver =
 	"Carlos A. Lozano\nRob Rosenbrock\nPhil Stroffolino\nErnesto Corvi\n",
 	0,
 	&ddragon2_machine_driver,
+	0,
 
 	ddragon2_rom,
 	0, 0,

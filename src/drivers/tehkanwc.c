@@ -648,6 +648,7 @@ struct GameDriver tehkanwc_driver =
 	"Ernesto Corvi\nRoberto Fresca",
 	0,
 	&machine_driver,
+	0,
 
 	tehkanwc_rom,
 	0, 0,
@@ -673,6 +674,7 @@ struct GameDriver gridiron_driver =
 	"Ernesto Corvi\nRoberto Fresca",
 	0,
 	&machine_driver,
+	0,
 
 	gridiron_rom,
 	0, 0,
@@ -698,6 +700,7 @@ struct GameDriver teedoff_driver =
 	"Ernesto Corvi\nRoberto Fresca",
 	GAME_NOT_WORKING,
 	&machine_driver,
+	0,
 
 	teedoff_rom,
 	0, 0,

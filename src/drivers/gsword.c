@@ -679,10 +679,13 @@ ROM_START( gsword_rom )
 	ROM_LOAD( "gs7",          0x6000, 0x2000, 0xef5f28c6 )
 	ROM_LOAD( "gs8",          0x8000, 0x2000, 0x46824b30 )
 
-	ROM_REGION(0x0300)	/* color PROMs */
+	ROM_REGION(0x0360)	/* color PROMs */
 	ROM_LOAD( "ac0-1.bpr",    0x0000, 0x0100, 0x5c4b2adc )	/* palette high bits */
 	ROM_LOAD( "ac0-2.bpr",    0x0100, 0x0100, 0x966bda66 )	/* palette low bits */
 	ROM_LOAD( "ac0-3.bpr",    0x0200, 0x0100, 0xdae13f77 )	/* sprite lookup table? */
+	ROM_LOAD( "003",          0x0300, 0x0020, 0x43a548b8 )	/* address decoder? not used */
+	ROM_LOAD( "004",          0x0320, 0x0020, 0x43a548b8 )	/* address decoder? not used */
+	ROM_LOAD( "005",          0x0340, 0x0020, 0xe8d6dec0 )	/* address decoder? not used */
 
 	ROM_REGION(0x10000)	/* 64K for 2nd CPU */
 	ROM_LOAD( "gs15",         0x0000, 0x2000, 0x1aa4690e )
@@ -747,6 +750,7 @@ struct GameDriver gsword_driver =
     "Steve Ellenoff\nJarek Parchanski\n",
 	GAME_WRONG_COLORS,
 	&machine_driver,
+	0,
 
     gsword_rom,
 	0, 0,

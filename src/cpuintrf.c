@@ -475,13 +475,13 @@ if (errorlog) fprintf(errorlog,"Machine reset\n");
 		/* was machine_reset() called? */
 		if (have_to_reset) goto reset;
 
+		osd_profiler(OSD_PROFILE_EXTRA);
+
 		/* ask the timer system to schedule */
 		if (timer_schedule_cpu (&cpunum, &running))
 		{
 			int ran;
 
-
-			osd_profiler(OSD_PROFILE_CPU1 + cpunum);
 
 			/* switch memory and CPU contexts */
 			activecpu = cpunum;
@@ -492,7 +492,9 @@ if (errorlog) fprintf(errorlog,"Machine reset\n");
 			SET_OP_BASE (activecpu, GETPC (activecpu));
 
 			/* run for the requested number of cycles */
+			osd_profiler(OSD_PROFILE_CPU1 + cpunum);
 			ran = EXECUTE (activecpu, running);
+			osd_profiler(OSD_PROFILE_END);
 
 			/* update based on how many cycles we really ran */
 			cpu[activecpu].totalcycles += ran;
@@ -504,9 +506,9 @@ if (errorlog) fprintf(errorlog,"Machine reset\n");
 
 			/* update the timer with how long we actually ran */
 			timer_update_cpu (cpunum, ran);
-
-			osd_profiler(OSD_PROFILE_END);
 		}
+
+		osd_profiler(OSD_PROFILE_END);
 	}
 
 	/* write hi scores to disk - No scores saving if cheat */

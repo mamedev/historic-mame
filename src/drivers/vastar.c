@@ -468,6 +468,7 @@ struct GameDriver vastar_driver =
 	"Allard van der Bas\nNicola Salmoria\nDani Portillo (hi score)",
 	GAME_WRONG_COLORS,
 	&machine_driver,
+	0,
 
 	vastar_rom,
 	0, 0,

@@ -23,41 +23,12 @@ void jackal_init_machine(void)
 {
 	/* Set optimization flags for M6809 */
 //	m6809_Flags = M6809_FAST_S | M6809_FAST_U;
-}
 
-
-int jackal_vh_start(void)
-{
-	videoram_size = 0x400;
-
-	dirtybuffer = 0;
-	tmpbitmap = 0;
-
-	if ((dirtybuffer = malloc(videoram_size)) == 0)
-	{
-		return 1;
-	}
-	memset(dirtybuffer,1,videoram_size);
-	if ((tmpbitmap = osd_new_bitmap(Machine->drv->screen_width,Machine->drv->screen_height,Machine->scrbitmap->depth)) == 0)
-	{
-		free(dirtybuffer);
-		return 1;
-	}
 	cpu_setbank(1,&((Machine->memory_region[0])[0x4000]));
  	jackal_rambank = &((Machine->memory_region[0])[0]);
 	jackal_spritebank = &((Machine->memory_region[0])[0]);
-	return 0;
 }
 
-
-void jackal_vh_stop(void)
-{
-	free(dirtybuffer);
-	osd_free_bitmap(tmpbitmap);
-
-	dirtybuffer = 0;
-	tmpbitmap = 0;
-}
 
 
 int jackal_zram_r(int offset)

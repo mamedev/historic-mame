@@ -381,6 +381,7 @@ struct GameDriver gberet_driver =
 	"Nicola Salmoria (MAME driver)\nChris Hardy (hardware info)\nPaul Swan (color info)\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	gberet_rom,
 	0, 0,
@@ -406,6 +407,7 @@ struct GameDriver rushatck_driver =
 	"Nicola Salmoria (MAME driver)\nChris Hardy (hardware info)\nPaul Swan (color info)\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	rushatck_rom,
 	0, 0,

@@ -334,7 +334,44 @@ ROM_START( champbb2_rom )
 	ROM_LOAD( "epr5935",      0x4000, 0x2000, 0x0 )
 ROM_END
 
+static int hiload(void) /* hsc 10/10/98 */
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
+
+    /* check if the hi score table has already been initialized */
+    if (memcmp(&RAM[0x8c30],"\x40\x40\x40",3) == 0 )
+    {
+        void *f;
+
+        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+        {
+             osd_fread(f,&RAM[0x8c30],48);
+             osd_fclose(f);
+        }
+
+        return 1;
+    }
+    else
+        return 0;  /* we can't load the hi scores yet */
+}
+
+static void hisave(void)
+{
+    void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+    if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+    {
+
+
+		/* store high score table 6 entries hsc 10/10/98 */
+        osd_fwrite(f,&RAM[0x8c30],48);
+
+        osd_fclose(f);
+    }
+}
 
 struct GameDriver champbas_driver =
 {
@@ -347,6 +384,7 @@ struct GameDriver champbas_driver =
 	"Nicola Salmoria",
 	0,
 	&machine_driver,
+	0,
 
 	champbas_rom,
 	0, 0,
@@ -357,8 +395,7 @@ struct GameDriver champbas_driver =
 
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_DEFAULT,
-
-	0, 0
+	hiload, hisave
 };
 
 /* Champion Baseball 2 doesn't work - don't know why */
@@ -373,6 +410,7 @@ struct GameDriver champbb2_driver =
 	"Nicola Salmoria",
 	0,
 	&machine_driver,
+	0,
 
 	champbb2_rom,
 	0, 0,

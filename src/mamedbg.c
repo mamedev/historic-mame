@@ -104,6 +104,8 @@ static int				DebugFast = 0; /* CM 980506 */
 static int				CPUWatchpoint[5] = { -1, -1, -1, -1, -1 };	/* EHC 980506 */
 static int				CPUWatchdata[5] = { -1, -1, -1, -1, -1 };	/* EHC 980506 */
 
+
+
 /* Draw the screen outline */
 static void DrawDebugScreen8 (int TextCol, int LineCol)
 {
@@ -641,7 +643,7 @@ static int Here(char *param)
 	TempBreakPoint = CursorPC;
 	Update = FALSE;
 	InDebug = FALSE;
-	osd_set_mastervolume(CurrentVolume);
+    osd_sound_enable(1);
 	osd_set_display(Machine->scrbitmap->width,
 					Machine->scrbitmap->height,
 					Machine->drv->video_attributes);
@@ -666,7 +668,7 @@ static int Go(char *param)
 	}
 	Update = FALSE;
 	InDebug = FALSE;
-	osd_set_mastervolume(CurrentVolume);
+    osd_sound_enable(1);
 	osd_set_display(Machine->scrbitmap->width,
 					Machine->scrbitmap->height,
 					Machine->drv->video_attributes);
@@ -1666,7 +1668,7 @@ void MAME_Debug (void)
 			BreakPoint[activecpu] = NextPC;
 			Update = FALSE;
 			InDebug = FALSE;
-			osd_set_mastervolume(CurrentVolume);
+		    osd_sound_enable(1);
 			osd_set_display(Machine->scrbitmap->width,
 							Machine->scrbitmap->height,
 							Machine->drv->video_attributes);
@@ -1701,7 +1703,7 @@ void MAME_Debug (void)
 			CPUWatchdata[activecpu] = cpuintf[cputype].memory_read( CPUWatchpoint[activecpu] );
 		}
 
-		osd_set_mastervolume(0);
+	    osd_sound_enable(0);
 		do
 		{
 			osd_update_audio();	/* give time to the sound hardware to apply the volume change */
@@ -1809,7 +1811,7 @@ void MAME_Debug (void)
 						ResetCommandLine = 1;
 						Update = FALSE;
 						InDebug = FALSE;
-						osd_set_mastervolume(CurrentVolume);
+					    osd_sound_enable(1);
 						osd_set_display(Machine->scrbitmap->width,
 										Machine->scrbitmap->height,
 										Machine->drv->video_attributes);
@@ -1829,7 +1831,7 @@ void MAME_Debug (void)
 						TempBreakPoint = CursorPC;
 						Update = FALSE;
 						InDebug = FALSE;
-						osd_set_mastervolume(CurrentVolume);
+					    osd_sound_enable(1);
 						osd_set_display(Machine->scrbitmap->width,
 										Machine->scrbitmap->height,
 										Machine->drv->video_attributes);

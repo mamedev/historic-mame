@@ -21,8 +21,6 @@ int karnov_scroll[4];
 
 extern int karnov_a,karnov_b,karnov_c;
 
-//#define KARNOV_ATTR
-
 
 
 
@@ -185,34 +183,6 @@ void karnov_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				tile,color,0,0,8*mx,8*my,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
    }
-
-/* On-screen debugging of unknown output ports */
-#ifdef KARNOV_ATTR
-  {
-   	int i,j;
-	char buf[20];
-	int trueorientation;
-	struct osd_bitmap *bitmap = Machine->scrbitmap;
-
-	trueorientation = Machine->orientation;
-	Machine->orientation = ORIENTATION_DEFAULT;
-
-	sprintf(buf,"%04X",karnov_a);
-	for (j = 0;j < 4;j++)
-		drawgfx(bitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*0+8*j,8*2,0,TRANSPARENCY_NONE,0);
-
- 	sprintf(buf,"%04X",karnov_b);
-	for (j = 0;j < 4;j++)
-		drawgfx(bitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*3+8*j,8*2,0,TRANSPARENCY_NONE,0);
-
-  sprintf(buf,"%04X",karnov_c);
-	for (j = 0;j < 4;j++)
-		drawgfx(bitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*6+8*j,8*2,0,TRANSPARENCY_NONE,0);
-
-
-	Machine->orientation = trueorientation;
-}
-#endif
 }
 
 /******************************************************************************/

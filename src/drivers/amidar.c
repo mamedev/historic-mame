@@ -786,6 +786,7 @@ struct GameDriver amidar_driver =
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAlan J. McCormick (color info)",
 	0,
 	&machine_driver,
+	0,
 
 	amidar_rom,
 	0, 0,
@@ -811,6 +812,7 @@ struct GameDriver amidarjp_driver =
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAlan J. McCormick (color info)",
 	0,
 	&machine_driver,
+	0,
 
 	amidarjp_rom,
 	0, 0,
@@ -833,9 +835,10 @@ struct GameDriver amigo_driver =
 	"Amigo",
 	"1982",
 	"bootleg",
-	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAlan J. McCormick (color info)\nDavid Winter (game driver)",
+	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAlan J. McCormick (color info)",
 	0,
 	&machine_driver,
+	0,
 
 	amigo_rom,
 	0, 0,
@@ -861,6 +864,7 @@ struct GameDriver turtles_driver =
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAlan J. McCormick (color info)\nValerio Verrando (high score save)",
 	0,
 	&machine_driver,
+	0,
 
 	turtles_rom,
 	0, 0,
@@ -886,6 +890,7 @@ struct GameDriver turpin_driver =
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAlan J. McCormick (color info)\nValerio Verrando (high score save)",
 	0,
 	&machine_driver,
+	0,
 
 	turpin_rom,
 	0, 0,
@@ -911,6 +916,7 @@ struct GameDriver k600_driver =
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nAlan J. McCormick (color info)\nValerio Verrando (high score save)",
 	0,
 	&machine_driver,
+	0,
 
 	k600_rom,
 	0, 0,

@@ -470,6 +470,7 @@ struct GameDriver commando_driver =
 	"Paul Johnson (hardware info)\nNicola Salmoria (MAME driver)",
 	0,
 	&machine_driver,
+	0,
 
 	commando_rom,
 	0, commando_decode,
@@ -495,6 +496,7 @@ struct GameDriver commandu_driver =
 	"Paul Johnson (hardware info)\nNicola Salmoria (MAME driver)",
 	0,
 	&machine_driver,
+	0,
 
 	commandu_rom,
 	0, commando_decode,
@@ -520,6 +522,7 @@ struct GameDriver commandj_driver =
 	"Paul Johnson (hardware info)\nNicola Salmoria (MAME driver)",
 	0,
 	&machine_driver,
+	0,
 
 	commandj_rom,
 	0, commando_decode,

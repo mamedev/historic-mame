@@ -635,6 +635,7 @@ struct GameDriver rainbow_driver =
 	"Richard Bush (Raine & Info)\nMike Coates (MAME driver)",
 	GAME_NOT_WORKING,
 	&machine_driver,
+	0,
 
 	rainbow_rom,
 	0, 0,
@@ -659,6 +660,7 @@ struct GameDriver rainbowe_driver =
 	"Richard Bush (Raine & Info)\nMike Coates (MAME driver)",
 	GAME_NOT_WORKING,
 	&machine_driver,
+	0,
 
 	rainbowe_rom,
 	0, 0,
@@ -683,6 +685,7 @@ struct GameDriver jumping_driver =
 	"Richard Bush (Raine & Info)\nMike Coates (MAME driver)",
 	0,
 	&jumping_machine_driver,
+	0,
 
 	jumping_rom,
 	jumping_sprite_decode, 0,

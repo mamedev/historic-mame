@@ -342,6 +342,7 @@ struct GameDriver jumpbug_driver =
 	"Richard Davies\nBrad Oliver\nNicola Salmoria\nJuan Carlos Lorente\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	jumpbug_rom,
 	jumpbug_decode, 0,
@@ -367,6 +368,7 @@ struct GameDriver jbugsega_driver =
 	"Richard Davies\nBrad Oliver\nNicola Salmoria\nJuan Carlos Lorente\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	jbugsega_rom,
 	0, 0,

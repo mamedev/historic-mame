@@ -526,6 +526,7 @@ struct GameDriver berzerk_driver =
 	"Zsolt Vasvari\nChristopher Kirmse\nMirko Buffoni\nValerio Verrando\nDouglas Silfen\nAlex Judd (Sound Programming)",
 	0,
 	&berzerk_machine_driver,
+	0,
 
 	berzerk_rom,
 	0, 0,
@@ -553,6 +554,7 @@ struct GameDriver berzerk1_driver =
 	"Zsolt Vasvari\nChristopher Kirmse\nMirko Buffoni\nValerio Verrando\nDouglas Silfen\nAlex Judd (Sound Programming)",
 	0,
 	&berzerk_machine_driver,
+	0,
 
 	berzerk1_rom,
 	0, 0,
@@ -580,6 +582,7 @@ struct GameDriver frenzy_driver =
 	"Keith Gerdes\nMirko Buffoni\nMike Cuddy\nBrad Oliver\nZsolt Vasvari\nChristopher Kirmse",
 	0,
 	&frenzy_machine_driver,
+	0,
 
 	frenzy_rom,
 	0, 0,
@@ -606,6 +609,7 @@ struct GameDriver frenzy1_driver =
 	"Keith Gerdes\nMirko Buffoni\nMike Cuddy\nBrad Oliver\nZsolt Vasvari\nChristopher Kirmse",
 	0,
 	&frenzy_machine_driver,
+	0,
 
 	frenzy1_rom,
 	0, 0,

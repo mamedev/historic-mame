@@ -512,6 +512,7 @@ struct GameDriver wc90_driver =
 	"Ernesto Corvi",
 	0,
 	&wc90_machine_driver,
+	0,
 
 	wc90_rom,
 	0, 0,

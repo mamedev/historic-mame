@@ -95,6 +95,7 @@ static struct MachineDriver DRV_NAME =  \
 	pang_vh_screenrefresh,                    \
 	0,0,0,0,\
 	{       {   SOUND_OKIM6295,  &okim6295_interface },\
+		{   SOUND_YM2413,    &ym2413_interface }, \
 	}                                                  \
 };
 
@@ -162,6 +163,15 @@ static void pang_bankswitch_w(int offset,int data)
 	}
 }
 
+static struct YM2413interface ym2413_interface=
+{
+    1,              /* 1 chip */
+    3579580,        /* FRQ */
+    {255},          /* Volume */
+    NULL,         /* IRQ handler */
+};
+
+
 /***************************************************************************
 
   Memory handlers
@@ -204,8 +214,8 @@ static struct IOWritePort writeport[] =
 {
 	{ 0x00, 0x00, pang_palette_bank_w },    /* Palette bank */
 	{ 0x02, 0x02, pang_bankswitch_w },      /* Code bank register */
-	{ 0x03, 0x03, MWA_NOP },                /* ?? Sound ?? */
-	{ 0x04, 0x04, MWA_NOP },                /* ?? Sound ?? */
+	{ 0x03, 0x03, YM2413_data_port_0_w  },  /* Sound ?? */
+	{ 0x04, 0x04, YM2413_register_port_0_w},/* Sound ?? */
 	{ 0x05, 0x05, OKIM6295_data_w },        /* ADPCM */
 	{ 0x06, 0x06, MWA_NOP },                /* Watchdog ? */
 	{ 0x07, 0x07, pang_video_bank_w },      /* Video RAM bank register */
@@ -288,7 +298,7 @@ static struct GfxDecodeInfo gfxdecodeinfo_pang[] =
 	{ -1 } /* end of array */
 };
 
-MACHINE_DRIVER(machine_driver_pang, gfxdecodeinfo_pang)
+MACHINE_DRIVER(pang_machine_driver, gfxdecodeinfo_pang)
 
 ROM_START( pang_rom )
 	ROM_REGION(0x60000)     /* 64k for code */
@@ -367,7 +377,8 @@ struct GameDriver pang_driver =
 	"Mitchell",
 	"Paul Leaman (MAME driver)\nMario Silva",
 	0,
-	&machine_driver_pang,
+	&pang_machine_driver,
+	0,
 
 	pang_rom,
 	0, pang_decode,
@@ -476,7 +487,8 @@ struct GameDriver bbros_driver =
 	"?????",
 	"Paul Leaman\n",
 	GAME_NOT_WORKING,
-	&machine_driver_pang,
+	&pang_machine_driver,
+	0,
 
 	bbros_rom,
 	0, bbros_decode,
@@ -554,7 +566,8 @@ struct GameDriver spang_driver =
 	"?????",
 	"Paul Leaman\n",
 	GAME_NOT_WORKING,
-	&machine_driver_pang,
+	&pang_machine_driver,
+	0,
 
 	spang_rom,
 	0, spang_decode,
@@ -586,7 +599,7 @@ static struct GfxDecodeInfo gfxdecodeinfo_block[] =
 	{ -1 } /* end of array */
 };
 
-MACHINE_DRIVER(machine_driver_block, gfxdecodeinfo_block)
+MACHINE_DRIVER(block_machine_driver, gfxdecodeinfo_block)
 
 ROM_START( block_rom )
 	ROM_REGION(0x60000)
@@ -655,7 +668,8 @@ struct GameDriver block_driver =
 	"?????",
 	"Paul Leaman\n",
 	GAME_NOT_WORKING,
-	&machine_driver_block,
+	&block_machine_driver,
+	0,
 
 	block_rom,
 	0, block_decode,

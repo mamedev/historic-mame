@@ -238,6 +238,7 @@ struct GameDriver cosmica_driver =
 	"Lee Taylor",
 	GAME_WRONG_COLORS,
 	&cosmicalien_machine_driver,
+	0,
 
 	cosmicalien_rom,
 	0, 0,

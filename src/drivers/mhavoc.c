@@ -556,6 +556,7 @@ struct GameDriver mhavoc_driver =
 	CREDITS,
 	0,
 	&machine_driver,
+	0,
 
 	mhavoc_rom,
 	0, 0,
@@ -581,6 +582,7 @@ struct GameDriver mhavoc2_driver =
 	CREDITS,
 	0,
 	&machine_driver,
+	0,
 
 	mhavoc2_rom,
 	0, 0,
@@ -606,6 +608,7 @@ struct GameDriver mhavocrv_driver =
 	CREDITS,
 	0,
 	&machine_driver,
+	0,
 
 	mhavoc_rv_rom,
 	0, 0,

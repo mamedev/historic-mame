@@ -451,6 +451,7 @@ struct GameDriver timeplt_driver =
 	"Nicola Salmoria (MAME driver)\nAlan J McCormick (color info)\nPaul Swan (color info)\nMike Cuddy (clouds info)\nEdward Massey (clouds info)\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	timeplt_rom,
 	0, 0,
@@ -476,6 +477,7 @@ struct GameDriver spaceplt_driver =
 	"Nicola Salmoria (MAME driver)\nAlan J McCormick (color info)\nPaul Swan (color info)\nMike Cuddy (clouds info)\nEdward Massey (clouds info)\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	spaceplt_rom,
 	0, 0,

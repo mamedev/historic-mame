@@ -486,6 +486,7 @@ struct GameDriver rocnrope_driver =
 	"Chris Hardy (MAME driver)\nPaul Swan (color info)\nValerio Verrando (high score save)",
 	0,
 	&machine_driver,
+	0,
 
 	rocnrope_rom,
 	0, rocnrope_decode,
@@ -511,6 +512,7 @@ struct GameDriver ropeman_driver =
 	"Chris Hardy (MAME driver)\nPaul Swan (color info)\nValerio Verrando (high score save)",
 	0,
 	&machine_driver,
+	0,
 
 	ropeman_rom,
 	0, rocnrope_decode,

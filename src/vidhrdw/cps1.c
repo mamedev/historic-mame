@@ -1660,29 +1660,5 @@ void cps1_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		cps1_render_scroll1(bitmap);
 	}
-
-#if 0
-	{
-		int i;
-		int nReg=layercontrolport;
-		int nVal=cps1_port(nReg);
-		struct DisplayText dt[2];
-		char szBuffer[40];
-		int count = 0;
-
-		char *pszPriority="SCROLL 2";
-		if (!scroll2priority)
-		{
-			pszPriority="SCROLL 3";
-		}
-		sprintf(szBuffer, "%04x=%04x %s", nReg, nVal, pszPriority);
-		dt[0].text = szBuffer;
-		dt[0].color = DT_COLOR_RED;
-		dt[0].x = (Machine->uiwidth - Machine->uifont->width * strlen(dt[0].text)) / 2;
-		dt[0].y = (Machine->uiheight - Machine->uifont->height) / 2 + 2;
-		dt[1].text = 0;
-		displaytext(dt,0);
-	}
-#endif
 }
 

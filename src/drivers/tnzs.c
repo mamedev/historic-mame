@@ -1,5 +1,3 @@
-#define MALLOC_CPU1_ROM_AREAS
-
 /***************************************************************************
 
 The New Zealand Story driver, used for tnzs & tnzs2.
@@ -53,92 +51,27 @@ f000-f003 ???
 
 
 /* prototypes for functions in ../machine/tnzs.c */
-extern unsigned char *tnzs_objram, *tnzs_workram;
-extern unsigned char *tnzs_vdcram, *tnzs_scrollram;
-extern unsigned char *tnzs_cpu2ram;
-extern int tnzs_objram_size;
-void init_tnzs(void);
-int tnzs_interrupt(void){return 0;}
-int tnzs_objram_r(int offset);
+unsigned char *tnzs_objram, *tnzs_workram;
+unsigned char *tnzs_vdcram, *tnzs_scrollram;
+void tnzs_init_machine(void);
 
 int tnzs_inputport_r(int offset);
-int tnzs_cpu2ram_r(int offset);
 int tnzs_workram_r(int offset);
-int tnzs_vdcram_r(int offset);
 
-void tnzs_objram_w(int offset, int data);
-void tnzs_bankswitch1_w(int offset, int data);
 void tnzs_inputport_w(int offset, int data);
-void tnzs_cpu2ram_w(int offset, int data);
 void tnzs_workram_w(int offset, int data);
-void tnzs_vdcram_w(int offset, int data);
-void tnzs_scrollram_w(int offset, int data);
 
-unsigned char *banked_ram_0, *banked_ram_1;
+void tnzs_bankswitch_w(int offset, int data);
+void tnzs_bankswitch1_w(int offset, int data);
 
-#ifdef MALLOC_CPU1_ROM_AREAS
-unsigned char *banked_rom_0, *banked_rom_1, *banked_rom_2, *banked_rom_3;
-#endif
-
-void tnzs_patch(void)
-{
-	if ((banked_ram_0 = malloc(0x4000)) == NULL)
-	{
-		if (errorlog)
-			fprintf(errorlog, "can't malloc 0x4000 for ram 0\n");
-		exit(-1);
-	}
-	if ((banked_ram_1 = malloc(0x4000)) == NULL)
-	{
-		if (errorlog)
-			fprintf(errorlog, "can't malloc 0x4000 for ram 1\n");
-		exit(-1);
-	}
-
-#ifdef MALLOC_CPU1_ROM_AREAS
-	if ((banked_rom_0 = malloc(0x2000)) == NULL)
-	{
-		if (errorlog)
-			fprintf(errorlog, "can't malloc 0x2000 for rom 0\n");
-		exit(-1);
-	}
-	memcpy(banked_rom_0, Machine->memory_region[2] + 0x8000 + 0x2000 * 0, 0x2000);
-
-	if ((banked_rom_1 = malloc(0x2000)) == NULL)
-	{
-		if (errorlog)
-			fprintf(errorlog, "can't malloc 0x2000 for rom 1\n");
-		exit(-1);
-	}
-	memcpy(banked_rom_1, Machine->memory_region[2] + 0x8000 + 0x2000 * 1, 0x2000);
-
-	if ((banked_rom_2 = malloc(0x2000)) == NULL)
-	{
-		if (errorlog)
-			fprintf(errorlog, "can't malloc 0x2000 for rom 2\n");
-		exit(-1);
-	}
-	memcpy(banked_rom_2, Machine->memory_region[2] + 0x8000 + 0x2000 * 2, 0x2000);
-
-	if ((banked_rom_3 = malloc(0x2000)) == NULL)
-	{
-		if (errorlog)
-			fprintf(errorlog, "can't malloc 0x2000 for rom 3\n");
-		exit(-1);
-	}
-	memcpy(banked_rom_3, Machine->memory_region[2] + 0x8000 + 0x2000 * 3, 0x2000);
-#endif
-}
 void tnzs_sound_command_w(int offset, int data)
 {
 	if (errorlog) fprintf(errorlog, "play sound %02x\n", data);
 }
 
-void tnzs_bankswitch_w(int offset, int data);
+int tnzs_interrupt(void) { return 0; }
 
 /* prototypes for functions in ../vidhrdw/tnzs.c */
-void tnzs_videoram_w(int offset,int data);
-void tnzs_objectram_w(int offset,int data);
 int tnzs_vh_start(void);
 void tnzs_vh_stop(void);
 void tnzs_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
@@ -147,11 +80,10 @@ void tnzs_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 static struct MemoryReadAddress readmem[] =
 {
     { 0x0000, 0x7fff, MRA_ROM },
-
     { 0x8000, 0xbfff, MRA_BANK1 }, /* BANK RAM */
-    { 0xc000, 0xdfff, tnzs_objram_r },
-    { 0xe000, 0xefff, tnzs_workram_r }, /* WORK RAM */
-    { 0xf000, 0xf1ff, tnzs_vdcram_r }, /*  VDC RAM */
+    { 0xc000, 0xdfff, MRA_RAM },
+    { 0xe000, 0xefff, MRA_RAM },   /* WORK RAM - shared with audio CPU */
+    { 0xf000, 0xf1ff, MRA_RAM },   /* VDC RAM  */
     { -1 }  /* end of table */
 };
 
@@ -162,12 +94,10 @@ static struct MemoryWriteAddress writemem[] =
 	/* { 0xef10, 0xef10, tnzs_sound_command_w }, */
 
     { 0x8000, 0xbfff, MWA_BANK1 },
-    { 0xc000, 0xdfff, tnzs_objram_w, &tnzs_objram, &tnzs_objram_size },
-
-    { 0xe000, 0xefff, tnzs_workram_w, &tnzs_workram },
-
-    { 0xf000, 0xf1ff, tnzs_vdcram_w, &tnzs_vdcram },
-    { 0xf200, 0xf3ff, tnzs_scrollram_w, &tnzs_scrollram }, /* scrolling info */
+    { 0xc000, 0xdfff, MWA_RAM, &tnzs_objram },
+    { 0xe000, 0xefff, MWA_RAM, &tnzs_workram }, /* WORK RAM - shared with audio CPU */
+    { 0xf000, 0xf1ff, MWA_RAM, &tnzs_vdcram },
+    { 0xf200, 0xf3ff, MWA_RAM, &tnzs_scrollram }, /* scrolling info */
 	{ 0xf600, 0xf600, tnzs_bankswitch_w },
     { 0xf800, 0xfbff, paletteram_xRRRRRGGGGGBBBBB_w, &paletteram },
 	{ -1 }  /* end of table */
@@ -180,7 +110,7 @@ static struct MemoryReadAddress readmem1[] =
     { 0xb000, 0xb000, YM2203_status_port_0_r  },
     { 0xb001, 0xb001, YM2203_read_port_0_r  },
     { 0xc000, 0xc001, tnzs_inputport_r},
-    { 0xd000, 0xdfff, tnzs_cpu2ram_r },
+    { 0xd000, 0xdfff, MRA_RAM },
     { 0xe000, 0xefff, tnzs_workram_r },
 	{ 0xf000, 0xf003, MRA_RAM },
     { -1 }  /* end of table */
@@ -192,8 +122,8 @@ static struct MemoryWriteAddress writemem1[] =
 	{ 0xa000, 0xa000, tnzs_bankswitch1_w },
     { 0xb000, 0xb000, YM2203_control_port_0_w  },
     { 0xb001, 0xb001, YM2203_write_port_0_w  },
-    { 0xc000, 0xc001, tnzs_inputport_w},
-    { 0xd000, 0xdfff, tnzs_cpu2ram_w, &tnzs_cpu2ram },
+    { 0xc000, 0xc001, tnzs_inputport_w },
+    { 0xd000, 0xdfff, MWA_RAM },
     { 0xe000, 0xefff, tnzs_workram_w },
 	{ -1 }  /* end of table */
 };
@@ -357,9 +287,9 @@ static struct MachineDriver tnzs_machine_driver =
 		}
     },
 	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	100,	/* 100 CPU slices per frame - an high value to ensure proper */
+	200,	/* 100 CPU slices per frame - an high value to ensure proper */
 			/* synchronization of the CPUs */
-    init_tnzs,		/* init_machine() */
+    tnzs_init_machine,		/* init_machine() */
 
     /* video hardware */
     16*16, 14*16,         /* screen_width, height */
@@ -394,24 +324,20 @@ static struct MachineDriver tnzs_machine_driver =
 ***************************************************************************/
 
 /* 00000 ROM (static)
-   08000 RAM page 0
-   0c000 RAM page 1
-   10000 ROM page 2
-   14000 ROM page 3
-   18000 ROM page 4
-   1c000 ROM page 5
-   20000 ROM page 6
-   24000 ROM page 7
-   28000 (end)
+   10000 RAM page 0
+   14000 RAM page 1
+   18000 ROM page 2
+   1c000 ROM page 3
+   20000 ROM page 4
+   24000 ROM page 5
+   28000 ROM page 6
+   2c000 ROM page 7
   */
 ROM_START( tnzs_rom )
-    ROM_REGION(0x28000)	/* 64k+64k for the first CPU */
-#if 1
+    ROM_REGION(0x30000)	/* 64k + bankswitch areas for the first CPU */
     ROM_LOAD( "nzsb5310.bin", 0x00000, 0x08000, 0xa73745c6 )
-    ROM_CONTINUE(            0x10000, 0x18000 )
-#else
-    ROM_LOAD( "nzsb5310.bin", 0x00000, 0x20000, 0xa73745c6 )
-#endif
+    /* 32k padding for 2 RAM banks, followed by 5 ROM banks */
+    ROM_CONTINUE(             0x18000, 0x18000 )
 
     ROM_REGION_DISPOSE(0x100000)	/* temporary space for graphics (disposed after conversion) */
 	/* ROMs taken from another set (the ones from this set were read incorrectly) */
@@ -424,21 +350,19 @@ ROM_START( tnzs_rom )
 	ROM_LOAD( "nzsb5320.bin", 0xc0000, 0x20000, 0x095d0dc0 )
 	ROM_LOAD( "nzsb5321.bin", 0xe0000, 0x20000, 0x9800c54d )
 
-    ROM_REGION(0x10000)	/* 64k for the second CPU */
-    ROM_LOAD( "nzsb5311.bin", 0x00000, 0x10000, 0x9784d443 )
+    ROM_REGION(0x18000)	/* 64k for the second CPU */
+    ROM_LOAD( "nzsb5311.bin", 0x00000, 0x08000, 0x9784d443 )
+    ROM_CONTINUE(             0x10000, 0x08000 )
 ROM_END
 
 
 
 
 ROM_START( tnzs2_rom )
-    ROM_REGION(0x28000)	/* 64k+64k+32k for the first CPU */
-#if 1
+    ROM_REGION(0x30000)	/* 64k + bankswitch areas for the first CPU */
     ROM_LOAD( "ns_c-11.rom",  0x00000, 0x08000, 0x3c1dae7b )
-    ROM_CONTINUE(            0x10000, 0x18000 )
-#else
-    ROM_LOAD( "ns_c-11.rom",  0x00000, 0x20000, 0x3c1dae7b )
-#endif
+    /* 32k padding for 2 RAM banks, followed by 5 ROM banks */
+    ROM_CONTINUE(             0x18000, 0x18000 )
 
     ROM_REGION_DISPOSE(0x100000)	/* temporary space for graphics (disposed after conversion) */
     ROM_LOAD( "ns_a13.rom",   0x00000, 0x20000, 0x7e0bd5bb )
@@ -450,8 +374,9 @@ ROM_START( tnzs2_rom )
     ROM_LOAD( "ns_a04.rom",   0xc0000, 0x20000, 0xe1fd1b9d )
     ROM_LOAD( "ns_a02.rom",   0xe0000, 0x20000, 0x2ab06bda )
 
-    ROM_REGION(0x10000)	/* 64k for the second CPU */
-    ROM_LOAD( "ns_e-3.rom",   0x00000, 0x10000, 0xc7662e96 )
+    ROM_REGION(0x18000)	/* 64k for the second CPU */
+    ROM_LOAD( "ns_e-3.rom",   0x00000, 0x08000, 0xc7662e96 )
+    ROM_CONTINUE(             0x10000, 0x08000 )
 ROM_END
 
 static int tnzs_hiload(void)
@@ -534,9 +459,10 @@ struct GameDriver tnzs_driver =
     "Chris Moore\nMartin Scragg\nRichard Mitton\nSanteri Saarimaa (hi-scores)",
 	0,
 	&tnzs_machine_driver,
+	0,
 
 	tnzs_rom,
-	tnzs_patch, 0,	/* remove protection */
+	0, 0,
 	0,
 	0,	/* sound_prom */
 
@@ -559,9 +485,10 @@ struct GameDriver tnzs2_driver =
     "Chris Moore\nMartin Scragg\nRichard Mitton\nSanteri Saarimaa (hi-scores)",
 	0,
 	&tnzs_machine_driver,
+	0,
 
 	tnzs2_rom,
-	tnzs_patch, 0,	/* remove protection */
+	0, 0,
 	0,
 	0,	/* sound_prom */
 

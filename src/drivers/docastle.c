@@ -443,6 +443,7 @@ struct GameDriver docastle_driver =
 	"Mirko Buffoni\nNicola Salmoria\nGary Walton\nSimon Walls",
 	0,
 	&machine_driver,
+	0,
 
 	docastle_rom,
 	0, 0,
@@ -468,6 +469,7 @@ struct GameDriver docastl2_driver =
 	"Mirko Buffoni\nNicola Salmoria\nGary Walton\nSimon Walls",
 	0,
 	&machine_driver,
+	0,
 
 	docastl2_rom,
 	0, 0,
@@ -493,6 +495,7 @@ struct GameDriver dounicorn_driver =
 	"Mirko Buffoni\nNicola Salmoria\nGary Walton\nSimon Walls",
 	0,
 	&machine_driver,
+	0,
 
 	dounicorn_rom,
 	0, 0,

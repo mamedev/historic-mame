@@ -580,21 +580,25 @@ void write_YM_CLOCKB(unsigned char n, unsigned char r, unsigned char v)
 static void timer_callback_a (int n)
 {
     YM2151 *PSG = &YMPSG[n];
+osd_profiler(OSD_PROFILE_SOUND);
     YM2151UpdateOne (n, cpu_scalebyfcount (YMBufSize));
     if (PSG->handler) (*PSG->handler)();
 	PSG->TimA=0;
 	PSG->TimIRQ|=1;
     PSG->TimATimer=0;
+osd_profiler(OSD_PROFILE_END);
 }
 
 static void timer_callback_b (int n)
 {
     YM2151 *PSG = &YMPSG[n];
+osd_profiler(OSD_PROFILE_SOUND);
     YM2151UpdateOne (n, cpu_scalebyfcount (YMBufSize));
     if (PSG->handler) (*PSG->handler)();
 	PSG->TimB=0;
 	PSG->TimIRQ|=2;
     PSG->TimBTimer=0;
+osd_profiler(OSD_PROFILE_END);
 }
 
 void write_YM_CLOCKSET(unsigned char n, unsigned char r, unsigned char v)

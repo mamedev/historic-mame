@@ -334,48 +334,6 @@ void dec8_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 
    }
-
-   /*
-    {
-   	int i,j;
-
-	char buf[80];
-
-	int trueorientation;
-
-	struct osd_bitmap *bitmap = Machine->scrbitmap;
-
-
-
-	trueorientation = Machine->orientation;
-
-	Machine->orientation = ORIENTATION_DEFAULT;
-
-
-
-	sprintf(buf,"%04X %04X %02X %02X %02X %02X",(scroll1[0]<<8)+scroll1[1],(scroll1[2]<<8)+scroll1[3],pf1_attr[0],pf1_attr[2],pf1_attr[4],pf1_attr[6]);
-
-	for (j = 0;j < 22;j++)
-
-		drawgfx(bitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*0+8*j,8*2,0,TRANSPARENCY_NONE,0);
-
-
-
-	sprintf(buf,"%04X %04X %02X %02X %02X %02X",(scroll2[0]<<8)+scroll2[1],(scroll2[2]<<8)+scroll2[3],pf2_attr[0],pf2_attr[2],pf2_attr[4],pf2_attr[6]);
-
-	for (j = 0;j < 22;j++)
-
-		drawgfx(bitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*0+8*j,8*4,0,TRANSPARENCY_NONE,0);
-
-
-
-
-
-	Machine->orientation = trueorientation;
-
-}
-  */
-
 }
 
 int dec8_video_r(int offset)

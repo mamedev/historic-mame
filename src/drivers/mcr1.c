@@ -456,9 +456,10 @@ struct GameDriver solarfox_driver =
 	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nBrad Oliver",
 	0,
 	&machine_driver,
+	solarfox_init,
 
 	solarfox_rom,
-	solarfox_init, 0,
+	0, 0,
 	0,
 	0,	/* sound_prom */
 
@@ -481,9 +482,10 @@ struct GameDriver kick_driver =
 	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nBrad Oliver\nJohn Butler",
 	0,
 	&machine_driver,
+	kick_init,
 
 	kick_rom,
-	kick_init, 0,
+	0, 0,
 	0,
 	0,	/* sound_prom */
 
@@ -506,9 +508,10 @@ struct GameDriver kicka_driver =
 	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nBrad Oliver\nJohn Butler",
 	0,
 	&machine_driver,
+	kick_init,
 
 	kicka_rom,
-	kick_init, 0,
+	0, 0,
 	0,
 	0,	/* sound_prom */
 

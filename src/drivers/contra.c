@@ -508,6 +508,7 @@ struct GameDriver contra_driver =
 	"Carlos A. Lozano\nJose Tejada Gomez\nPhil Stroffolino\nEric Hustvedt",
 	0,
 	&contra_machine_driver,
+	0,
 
 	contra_rom,
 	0, 0,
@@ -533,6 +534,7 @@ struct GameDriver contrab_driver =
 	"Carlos A. Lozano\nJose Tejada Gomez\nPhil Stroffolino\nEric Hustvedt",
 	0,
 	&contra_machine_driver,
+	0,
 
 	contrab_rom,
 	0, 0,
@@ -558,6 +560,7 @@ struct GameDriver gryzorb_driver =
 	"Carlos A. Lozano\nJose Tejada Gomez\nPhil Stroffolino\nEric Hustvedt",
 	0,
 	&contra_machine_driver,
+	0,
 
 	gryzorb_rom,
 	0, 0,

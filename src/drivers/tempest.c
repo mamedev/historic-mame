@@ -263,10 +263,10 @@ static struct MemoryWriteAddress writemem[] =
 
 INPUT_PORTS_START( input_ports )
 	PORT_START	/* IN0 */
-	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_COIN3)
-	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_COIN2)
-	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_COIN1)
-	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_TILT)
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_TILT )
 	PORT_BITX(    0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
 	PORT_DIPSETTING(    0x10, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
@@ -274,10 +274,10 @@ INPUT_PORTS_START( input_ports )
 	/* bit 6 is the VG HALT bit. We set it to "low" */
 	/* per default (busy vector processor). */
  	/* handled by tempest_IN0_r() */
-	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	/* bit 7 is tied to a 3khz (?) clock */
  	/* handled by tempest_IN0_r() */
-	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START	/* IN1/DSW0 */
 	/* This is the Tempest spinner input. It only uses 4 bits. */
@@ -289,72 +289,72 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPNAME( 0x10, 0x10, "Cabinet", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x10, "Upright" )
 	PORT_DIPSETTING(    0x00, "Cocktail" )
-	PORT_BIT ( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START	/* IN2 */
-	PORT_DIPNAME ( 0x03, 0x00, "Difficulty", IP_KEY_NONE )
+	PORT_DIPNAME(  0x03, 0x00, "Difficulty", IP_KEY_NONE )
 	PORT_DIPSETTING(     0x01, "Easy" )
 	PORT_DIPSETTING(     0x00, "Medium1" )
 	PORT_DIPSETTING(     0x03, "Medium2" )
 	PORT_DIPSETTING(     0x02, "Hard" )
-	PORT_DIPNAME ( 0x04, 0x00, "Rating", IP_KEY_NONE )
+	PORT_DIPNAME(  0x04, 0x00, "Rating", IP_KEY_NONE )
 	PORT_DIPSETTING(     0x00, "1, 3, 5, 7, 9" )
 	PORT_DIPSETTING(     0x04, "tied to high score" )
-	PORT_BIT (0x08, IP_ACTIVE_HIGH, IPT_BUTTON2 )
-	PORT_BIT (0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT (0x20, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BIT (0x40, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT (0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT(0x08, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT(0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT(0x20, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT(0x40, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT(0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START	/* DSW1 - (N13 on analog vector generator PCB */
-	PORT_DIPNAME (0x03, 0x00, "Coinage", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x01, "2 Coins/1 Credit" )
-	PORT_DIPSETTING (   0x00, "1 Coin/1 Credit" )
-	PORT_DIPSETTING (   0x03, "1 Coin/2 Credits" )
-	PORT_DIPSETTING (   0x02, "Free Play" )
-	PORT_DIPNAME (0x0c, 0x00, "Right Coin", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x00, "*1" )
-	PORT_DIPSETTING (   0x04, "*4" )
-	PORT_DIPSETTING (   0x08, "*5" )
-	PORT_DIPSETTING (   0x0c, "*6" )
-	PORT_DIPNAME (0x10, 0x00, "Left Coin", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x00, "*1" )
-	PORT_DIPSETTING (   0x10, "*2" )
-	PORT_DIPNAME (0xe0, 0x00, "Bonus Coins", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x00, "None" )
-	PORT_DIPSETTING (   0x80, "1 each 5" )
-	PORT_DIPSETTING (   0x40, "1 each 4 (+Demo)" )
-	PORT_DIPSETTING (   0xa0, "1 each 3" )
-	PORT_DIPSETTING (   0x60, "2 each 4 (+Demo)" )
-	PORT_DIPSETTING (   0x20, "1 each 2" )
-	PORT_DIPSETTING (   0xc0, "Freeze Mode" )
-	PORT_DIPSETTING (   0xe0, "Freeze Mode" )
+	PORT_DIPNAME( 0x03, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x03, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x02, "Free Play" )
+	PORT_DIPNAME( 0x0c, 0x00, "Right Coin", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "*1" )
+	PORT_DIPSETTING(    0x04, "*4" )
+	PORT_DIPSETTING(    0x08, "*5" )
+	PORT_DIPSETTING(    0x0c, "*6" )
+	PORT_DIPNAME( 0x10, 0x00, "Left Coin", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "*1" )
+	PORT_DIPSETTING(    0x10, "*2" )
+	PORT_DIPNAME( 0xe0, 0x00, "Bonus Coins", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPSETTING(    0x80, "1 each 5" )
+	PORT_DIPSETTING(    0x40, "1 each 4 (+Demo)" )
+	PORT_DIPSETTING(    0xa0, "1 each 3" )
+	PORT_DIPSETTING(    0x60, "2 each 4 (+Demo)" )
+	PORT_DIPSETTING(    0x20, "1 each 2" )
+	PORT_DIPSETTING(    0xc0, "Freeze Mode" )
+	PORT_DIPSETTING(    0xe0, "Freeze Mode" )
 
 	PORT_START	/* DSW2 - (L12 on analog vector generator PCB */
-	PORT_DIPNAME (0x01, 0x00, "Minimum", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x00, "1 Credit" )
-	PORT_DIPSETTING (   0x01, "2 Credit" )
-	PORT_DIPNAME (0x06, 0x00, "Language", IP_KEY_NONE)
-	PORT_DIPSETTING (   0x00, "English" )
-	PORT_DIPSETTING (   0x02, "French" )
-	PORT_DIPSETTING (   0x04, "German" )
-	PORT_DIPSETTING (   0x06, "Spanish" )
-	PORT_DIPNAME (0x38, 0x00, "Bonus Life", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x08, "10000" )
-	PORT_DIPSETTING (   0x00, "20000" )
-	PORT_DIPSETTING (   0x10, "30000" )
-	PORT_DIPSETTING (   0x18, "40000" )
-	PORT_DIPSETTING (   0x20, "50000" )
-	PORT_DIPSETTING (   0x28, "60000" )
-	PORT_DIPSETTING (   0x30, "70000" )
-	PORT_DIPSETTING (   0x38, "None" )
-	PORT_DIPNAME (0xc0, 0x00, "Lives", IP_KEY_NONE )
-	PORT_DIPSETTING (   0xc0, "2" )
-	PORT_DIPSETTING (   0x00, "3" )
-	PORT_DIPSETTING (   0x40, "4" )
-	PORT_DIPSETTING (   0x80, "5" )
+	PORT_DIPNAME( 0x01, 0x00, "Minimum", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "1 Credit" )
+	PORT_DIPSETTING(    0x01, "2 Credit" )
+	PORT_DIPNAME( 0x06, 0x00, "Language", IP_KEY_NONE)
+	PORT_DIPSETTING(    0x00, "English" )
+	PORT_DIPSETTING(    0x02, "French" )
+	PORT_DIPSETTING(    0x04, "German" )
+	PORT_DIPSETTING(    0x06, "Spanish" )
+	PORT_DIPNAME( 0x38, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "10000" )
+	PORT_DIPSETTING(    0x00, "20000" )
+	PORT_DIPSETTING(    0x10, "30000" )
+	PORT_DIPSETTING(    0x18, "40000" )
+	PORT_DIPSETTING(    0x20, "50000" )
+	PORT_DIPSETTING(    0x28, "60000" )
+	PORT_DIPSETTING(    0x30, "70000" )
+	PORT_DIPSETTING(    0x38, "None" )
+	PORT_DIPNAME( 0xc0, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0xc0, "2" )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x40, "4" )
+	PORT_DIPSETTING(    0x80, "5" )
 INPUT_PORTS_END
 
 
@@ -601,6 +601,7 @@ struct GameDriver tempest_driver =
 	"Brad Oliver (MAME driver)\n"VECTOR_TEAM"Keith Gerdes (Pokey protection)",
 	0,
 	&machine_driver,
+	0,
 
 	tempest_rom,
 	0, 0,
@@ -626,6 +627,7 @@ struct GameDriver tempest1_driver =
 	"Brad Oliver (MAME driver)\n"VECTOR_TEAM"Keith Gerdes (Pokey protection)",
 	0,
 	&machine_driver,
+	0,
 
 	tempest1_rom,
 	0, 0,
@@ -651,6 +653,7 @@ struct GameDriver tempest2_driver =
 	"Brad Oliver (MAME driver)\n"VECTOR_TEAM"Keith Gerdes (Pokey protection)",
 	0,
 	&machine_driver,
+	0,
 
 	tempest2_rom,
 	0, 0,
@@ -676,6 +679,7 @@ struct GameDriver temptube_driver =
 	"Brad Oliver (MAME driver)\n"VECTOR_TEAM"Keith Gerdes (Pokey protection)",
 	0,
 	&tempest_tube_machine_driver,
+	0,
 
 	temptube_rom,
 	0, 0,

@@ -470,6 +470,7 @@ struct GameDriver rallyx_driver =
 	"Nicola Salmoria (MAME driver)\nMirko Buffoni (bang sound)\nValerio Verrando (high score save)\nMarco Cassili\nGary Walton (color info)\nSimon Walls (color info)",
 	0,
 	&machine_driver,
+	0,
 
 	rallyx_rom,
 	0, 0,
@@ -495,6 +496,7 @@ struct GameDriver nrallyx_driver =
 	"Nicola Salmoria (MAME driver)\nMirko Buffoni (bang sound)\nValerio Verrando (high score save)\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	nrallyx_rom,
 	0, 0,

@@ -240,6 +240,7 @@ struct GameDriver nitedrvr_driver =
 	"Mike Balfour",
 	0,
 	&machine_driver,
+	0,
 
 	nitedrvr_rom,
 	0, 0,

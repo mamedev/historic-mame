@@ -443,6 +443,7 @@ struct GameDriver starwars_driver =
 	"Steve Baines (MAME driver)\nBrad Oliver (MAME driver)\nFrank Palazzolo (MAME driver)\n"VECTOR_TEAM,
 	0,
 	&machine_driver,
+	0,
 
 	starwars_rom,
 	translate_proms, 0,  /* ROM decryption, Opcode decryption */

@@ -680,6 +680,7 @@ struct GameDriver hyperspt_driver =
 	"Chris Hardy (MAME driver)\nPaul Swan (color info)\nTatsuyuki Satoh(speech sound)",
 	0,
 	&hyperspt_machine_driver,
+	0,
 
 	hyperspt_rom,
 	0, hyperspt_decode,
@@ -705,6 +706,7 @@ struct GameDriver roadf_driver =
 	"Chris Hardy (Hyper Sports driver)\nNicola Salmoria\nPaul Swan (color info)",
 	0,
 	&roadf_machine_driver,
+	0,
 
 	roadf_rom,
 	0, hyperspt_decode,

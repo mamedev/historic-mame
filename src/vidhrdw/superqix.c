@@ -222,12 +222,10 @@ void superqix_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	/* order, to have the correct priorities. */
 	for (offs = 0;offs < spriteram_size;offs += 4)
 	{
-		/* TODO: I haven't looked for the flip bits, but they are there, and used e.g. */
-		/* in the animation at the end of round 5 */
 		drawgfx(bitmap,Machine->gfx[5],
 				spriteram[offs] + 256 * (spriteram[offs + 3] & 0x01),
 				(spriteram[offs + 3] & 0xf0) >> 4,
-				0,0,	/* TODO: add flip */
+				spriteram[offs + 3] & 0x04,spriteram[offs + 3] & 0x08,
 				spriteram[offs + 1],spriteram[offs + 2],
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}

@@ -524,6 +524,7 @@ struct GameDriver srumbler_driver =
 	"Paul Leaman",
 	0,
 	&machine_driver,
+	0,
 
 	srumbler_rom,
 	0,
@@ -549,6 +550,7 @@ struct GameDriver srumblr2_driver =
 	"Paul Leaman",
 	GAME_NOT_WORKING,
 	&machine_driver,
+	0,
 
 	srumblr2_rom,
 	0,

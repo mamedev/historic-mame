@@ -7,8 +7,8 @@
 	use TMS34010.h instead.
 	
 	System dependencies:	long must be at least 32 bits
-	                        word must be 16 bit unsigned int
-							byte must be 8 bit unsigned int
+	                        word must be 16 bit UINT32
+							byte must be 8 bit UINT32
 							arrays up to 65536 bytes must be supported
 							machine must be twos complement
 
@@ -17,6 +17,7 @@
 #ifndef _34010OPS_H
 #define _34010OPS_H
 
+#include "osd_cpu.h"
 #include "memory.h"
 
 /****************************************************************************/
@@ -36,7 +37,7 @@
 #define TMS34010_WV          0x0800    /* Window Violation Interrupt */
 
 /* Size of the memory buffer allocated for the shiftr register */
-#define SHIFTREG_SIZE		 (2*512*sizeof(unsigned short))
+#define SHIFTREG_SIZE		 (2*512*sizeof(UINT16))
 
 /****************************************************************************/
 /* Read a byte from given memory location                                   */
@@ -93,70 +94,70 @@
 #define COPY_ASP   (BREG(15) = AREG(15))
 #define COPY_BSP   (AREG(15) = BREG(15))
 
-void WFIELD_01(unsigned int bitaddr, unsigned int data);
-void WFIELD_02(unsigned int bitaddr, unsigned int data);
-void WFIELD_03(unsigned int bitaddr, unsigned int data);
-void WFIELD_04(unsigned int bitaddr, unsigned int data);
-void WFIELD_05(unsigned int bitaddr, unsigned int data);
-void WFIELD_06(unsigned int bitaddr, unsigned int data);
-void WFIELD_07(unsigned int bitaddr, unsigned int data);
-void WFIELD_08(unsigned int bitaddr, unsigned int data);
-void WFIELD_09(unsigned int bitaddr, unsigned int data);
-void WFIELD_10(unsigned int bitaddr, unsigned int data);
-void WFIELD_11(unsigned int bitaddr, unsigned int data);
-void WFIELD_12(unsigned int bitaddr, unsigned int data);
-void WFIELD_13(unsigned int bitaddr, unsigned int data);
-void WFIELD_14(unsigned int bitaddr, unsigned int data);
-void WFIELD_15(unsigned int bitaddr, unsigned int data);
-void WFIELD_16(unsigned int bitaddr, unsigned int data);
-void WFIELD_17(unsigned int bitaddr, unsigned int data);
-void WFIELD_18(unsigned int bitaddr, unsigned int data);
-void WFIELD_19(unsigned int bitaddr, unsigned int data);
-void WFIELD_20(unsigned int bitaddr, unsigned int data);
-void WFIELD_21(unsigned int bitaddr, unsigned int data);
-void WFIELD_22(unsigned int bitaddr, unsigned int data);
-void WFIELD_23(unsigned int bitaddr, unsigned int data);
-void WFIELD_24(unsigned int bitaddr, unsigned int data);
-void WFIELD_25(unsigned int bitaddr, unsigned int data);
-void WFIELD_26(unsigned int bitaddr, unsigned int data);
-void WFIELD_27(unsigned int bitaddr, unsigned int data);
-void WFIELD_28(unsigned int bitaddr, unsigned int data);
-void WFIELD_29(unsigned int bitaddr, unsigned int data);
-void WFIELD_30(unsigned int bitaddr, unsigned int data);
-void WFIELD_31(unsigned int bitaddr, unsigned int data);
-void WFIELD_32(unsigned int bitaddr, unsigned int data);
+void WFIELD_01(UINT32 bitaddr, UINT32 data);
+void WFIELD_02(UINT32 bitaddr, UINT32 data);
+void WFIELD_03(UINT32 bitaddr, UINT32 data);
+void WFIELD_04(UINT32 bitaddr, UINT32 data);
+void WFIELD_05(UINT32 bitaddr, UINT32 data);
+void WFIELD_06(UINT32 bitaddr, UINT32 data);
+void WFIELD_07(UINT32 bitaddr, UINT32 data);
+void WFIELD_08(UINT32 bitaddr, UINT32 data);
+void WFIELD_09(UINT32 bitaddr, UINT32 data);
+void WFIELD_10(UINT32 bitaddr, UINT32 data);
+void WFIELD_11(UINT32 bitaddr, UINT32 data);
+void WFIELD_12(UINT32 bitaddr, UINT32 data);
+void WFIELD_13(UINT32 bitaddr, UINT32 data);
+void WFIELD_14(UINT32 bitaddr, UINT32 data);
+void WFIELD_15(UINT32 bitaddr, UINT32 data);
+void WFIELD_16(UINT32 bitaddr, UINT32 data);
+void WFIELD_17(UINT32 bitaddr, UINT32 data);
+void WFIELD_18(UINT32 bitaddr, UINT32 data);
+void WFIELD_19(UINT32 bitaddr, UINT32 data);
+void WFIELD_20(UINT32 bitaddr, UINT32 data);
+void WFIELD_21(UINT32 bitaddr, UINT32 data);
+void WFIELD_22(UINT32 bitaddr, UINT32 data);
+void WFIELD_23(UINT32 bitaddr, UINT32 data);
+void WFIELD_24(UINT32 bitaddr, UINT32 data);
+void WFIELD_25(UINT32 bitaddr, UINT32 data);
+void WFIELD_26(UINT32 bitaddr, UINT32 data);
+void WFIELD_27(UINT32 bitaddr, UINT32 data);
+void WFIELD_28(UINT32 bitaddr, UINT32 data);
+void WFIELD_29(UINT32 bitaddr, UINT32 data);
+void WFIELD_30(UINT32 bitaddr, UINT32 data);
+void WFIELD_31(UINT32 bitaddr, UINT32 data);
+void WFIELD_32(UINT32 bitaddr, UINT32 data);
 
-int RFIELD_01(unsigned int bitaddr);
-int RFIELD_02(unsigned int bitaddr);
-int RFIELD_03(unsigned int bitaddr);
-int RFIELD_04(unsigned int bitaddr);
-int RFIELD_05(unsigned int bitaddr);
-int RFIELD_06(unsigned int bitaddr);
-int RFIELD_07(unsigned int bitaddr);
-int RFIELD_08(unsigned int bitaddr);
-int RFIELD_09(unsigned int bitaddr);
-int RFIELD_10(unsigned int bitaddr);
-int RFIELD_11(unsigned int bitaddr);
-int RFIELD_12(unsigned int bitaddr);
-int RFIELD_13(unsigned int bitaddr);
-int RFIELD_14(unsigned int bitaddr);
-int RFIELD_15(unsigned int bitaddr);
-int RFIELD_16(unsigned int bitaddr);
-int RFIELD_17(unsigned int bitaddr);
-int RFIELD_18(unsigned int bitaddr);
-int RFIELD_19(unsigned int bitaddr);
-int RFIELD_20(unsigned int bitaddr);
-int RFIELD_21(unsigned int bitaddr);
-int RFIELD_22(unsigned int bitaddr);
-int RFIELD_23(unsigned int bitaddr);
-int RFIELD_24(unsigned int bitaddr);
-int RFIELD_25(unsigned int bitaddr);
-int RFIELD_26(unsigned int bitaddr);
-int RFIELD_27(unsigned int bitaddr);
-int RFIELD_28(unsigned int bitaddr);
-int RFIELD_29(unsigned int bitaddr);
-int RFIELD_30(unsigned int bitaddr);
-int RFIELD_31(unsigned int bitaddr);
-int RFIELD_32(unsigned int bitaddr);
+int RFIELD_01(UINT32 bitaddr);
+int RFIELD_02(UINT32 bitaddr);
+int RFIELD_03(UINT32 bitaddr);
+int RFIELD_04(UINT32 bitaddr);
+int RFIELD_05(UINT32 bitaddr);
+int RFIELD_06(UINT32 bitaddr);
+int RFIELD_07(UINT32 bitaddr);
+int RFIELD_08(UINT32 bitaddr);
+int RFIELD_09(UINT32 bitaddr);
+int RFIELD_10(UINT32 bitaddr);
+int RFIELD_11(UINT32 bitaddr);
+int RFIELD_12(UINT32 bitaddr);
+int RFIELD_13(UINT32 bitaddr);
+int RFIELD_14(UINT32 bitaddr);
+int RFIELD_15(UINT32 bitaddr);
+int RFIELD_16(UINT32 bitaddr);
+int RFIELD_17(UINT32 bitaddr);
+int RFIELD_18(UINT32 bitaddr);
+int RFIELD_19(UINT32 bitaddr);
+int RFIELD_20(UINT32 bitaddr);
+int RFIELD_21(UINT32 bitaddr);
+int RFIELD_22(UINT32 bitaddr);
+int RFIELD_23(UINT32 bitaddr);
+int RFIELD_24(UINT32 bitaddr);
+int RFIELD_25(UINT32 bitaddr);
+int RFIELD_26(UINT32 bitaddr);
+int RFIELD_27(UINT32 bitaddr);
+int RFIELD_28(UINT32 bitaddr);
+int RFIELD_29(UINT32 bitaddr);
+int RFIELD_30(UINT32 bitaddr);
+int RFIELD_31(UINT32 bitaddr);
+int RFIELD_32(UINT32 bitaddr);
 
 #endif /* _34010OPS_H */

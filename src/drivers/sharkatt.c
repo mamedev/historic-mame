@@ -287,6 +287,7 @@ struct GameDriver sharkatt_driver =
 	"Victor Trucco\nMike Balfour",
 	0,
 	&machine_driver,
+	0,
 
 	sharkatt_rom,
 	0, 0,

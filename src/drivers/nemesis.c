@@ -675,6 +675,7 @@ struct GameDriver nemesis_driver =
 	"Allard van der Bas (MAME driver)",
 	0,
 	&nemesis_machine_driver,
+	0,
 
 	nemesis_rom,
 	0, 0,
@@ -700,6 +701,7 @@ struct GameDriver nemesuk_driver =
 	"Allard van der Bas (MAME driver)",
 	0,
 	&nemesis_machine_driver,
+	0,
 
 	nemesuk_rom,
 	0, 0,
@@ -725,6 +727,7 @@ struct GameDriver konamigt_driver =
 	"Allard van der Bas (MAME driver)",
 	GAME_NOT_WORKING,
 	&nemesis_machine_driver,
+	0,
 
 	konamigt_rom,
 	0, 0,
@@ -750,6 +753,7 @@ struct GameDriver salamand_driver =
 	"68K test",
 	GAME_NOT_WORKING,
 	&salamand_machine_driver,
+	0,
 
 	salamand_rom,
 	0, 0,

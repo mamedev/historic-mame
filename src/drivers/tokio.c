@@ -585,6 +585,7 @@ struct GameDriver tokio_driver =
 	"Victor Trucco\nMarcelo de G. Malheiros\nFredrik Sjostedt\n---------------\nChris Moore\nOliver White\nNicola Salmoria",
 	GAME_NOT_WORKING,
 	&tokio_machine_driver,
+	0,
 
 	tokio_rom,
 	tokio_patch, 0,	/* remove protection */
@@ -610,6 +611,7 @@ struct GameDriver tokiob_driver =
 	"Marcelo de G. Malheiros\nFredrik Sjostedt\nVictor Trucco\n---------------\nChris Moore\nOliver White\nNicola Salmoria",
 	0,
 	&tokio_machine_driver,
+	0,
 
 	tokiob_rom,
 	0, 0,

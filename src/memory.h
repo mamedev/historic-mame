@@ -170,6 +170,9 @@ void shutdownmemoryhandler(void);
 void memorycontextswap(int activecpu);
 void updatememorybase(int activecpu);
 
+void install_mem_read_handler(int cpu, int start, int end, int (*handler)(int));
+void install_mem_write_handler(int cpu, int start, int end, void (*handler)(int, int));
+
 /* ----- memory read /write function ----- */
 int cpu_readmem16(int address);
 int cpu_readmem16lew(int address);

@@ -569,6 +569,7 @@ struct GameDriver omegrace_driver =
 	"Al Kossow (original code)\nBernd Wiebelt (MAME driver)\ndedicated to Natalia & Lara\n"VECTOR_TEAM,
 	0,
 	&machine_driver,
+	0,
 
 	omegrace_rom,
 	0, 0,

@@ -687,6 +687,7 @@ Data make:      Takashi Hayashi\n",
 #endif
 	GAME_NOT_WORKING,
 	&ninjakd2_machine_driver,
+	0,
 
 	ninjakd2_rom,
 	0,0,
@@ -722,6 +723,7 @@ Data make:      Takashi Hayashi\n",
 #endif
 	0,
 	&ninjak2a_machine_driver,
+	0,
 
 	ninjak2a_rom,
 	0,ninjak2a_sound_decode,

@@ -4,10 +4,6 @@
 
   Functions used to handle MAME's crude user interface.
 
-Changes:
-	042898 - LBO
-	* Changed UI menu to be more dynamic, added option to display stats
-
 *********************************************************************/
 
 #include "driver.h"
@@ -34,66 +30,82 @@ void set_ui_visarea (int xmin, int ymin, int xmax, int ymax)
 
 
 
-static int findbestcolor(unsigned char r,unsigned char g,unsigned char b,unsigned short current)
-{
-	int i;
-	int d1,d2,d3,dist;
-	int best,mindist;
-	unsigned char r1,g1,b1;
-
-
-	mindist = 200000;
-	best = 0;
-
-	osd_get_pen(current,&r1,&g1,&b1);
-	/* keep the current pen if it is close enough */
-	/* don't pick black for non-black colors */
-	if (r1+g1+b1 > 0 || r+g+b == 0)
-	{
-		d1 = (int)r1 - r;
-		d2 = (int)g1 - g;
-		d3 = (int)b1 - b;
-		dist = d1*d1 + d2*d2 + d3*d3;
-
-		if (dist < 20000)
-			return current;
-	}
-
-	for (i = 0;i < Machine->drv->total_colors;i++)
-	{
-		osd_get_pen(Machine->pens[i],&r1,&g1,&b1);
-
-		/* don't pick black for non-black colors */
-		if (r1+g1+b1 > 0 || r+g+b == 0)
-		{
-			d1 = (int)r1 - r;
-			d2 = (int)g1 - g;
-			d3 = (int)b1 - b;
-			dist = d1*d1 + d2*d2 + d3*d3;
-
-			if (dist < mindist)
-			{
-				best = i;
-				mindist = dist;
-				if (dist == 0) break;	/* perfect match */
-			}
-		}
-	}
-
-	return Machine->pens[best];
-}
-
-
-
 struct GfxElement *builduifont(void)
 {
-	static unsigned char fontdata[] =
+	static unsigned char fontdata6x8[] =
 	{
-		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x80,0x80,0x80,0x80,0x80,0x80,0x80,0x80,
-		0xc0,0xc0,0xc0,0xc0,0xc0,0xc0,0xc0,0xc0,0xe0,0xe0,0xe0,0xe0,0xe0,0xe0,0xe0,0xe0,
-		0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,0xf0,0xf8,0xf8,0xf8,0xf8,0xf8,0xf8,0xf8,0xf8,
-		0xfc,0xfc,0xfc,0xfc,0xfc,0xfc,0xfc,0xfc,0xfe,0xfe,0xfe,0xfe,0xfe,0xfe,0xfe,0xfe,
-		0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+		0x30,0x48,0x84,0xb4,0xb4,0x84,0x48,0x30,0x30,0x48,0x84,0x84,0x84,0x84,0x48,0x30,
+		0x00,0xfc,0x84,0x8c,0xd4,0xa4,0xfc,0x00,0x00,0xfc,0x84,0x84,0x84,0x84,0xfc,0x00,
+		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x30,0x68,0x78,0x78,0x30,0x00,0x00,
+		0x80,0xc0,0xe0,0xf0,0xe0,0xc0,0x80,0x00,0x04,0x0c,0x1c,0x3c,0x1c,0x0c,0x04,0x00,
+		0x20,0x70,0xf8,0x20,0x20,0xf8,0x70,0x20,0x48,0x48,0x48,0x48,0x48,0x00,0x48,0x00,
+		0x00,0x00,0x30,0x68,0x78,0x30,0x00,0x00,0x00,0x30,0x68,0x78,0x78,0x30,0x00,0x00,
+		0x70,0xd8,0xe8,0xe8,0xf8,0xf8,0x70,0x00,0x1c,0x7c,0x74,0x44,0x44,0x4c,0xcc,0xc0,
+		0x20,0x70,0xf8,0x70,0x70,0x70,0x70,0x00,0x70,0x70,0x70,0x70,0xf8,0x70,0x20,0x00,
+		0x00,0x10,0xf8,0xfc,0xf8,0x10,0x00,0x00,0x00,0x20,0x7c,0xfc,0x7c,0x20,0x00,0x00,
+		0xb0,0x54,0xb8,0xb8,0x54,0xb0,0x00,0x00,0x00,0x28,0x6c,0xfc,0x6c,0x28,0x00,0x00,
+		0x00,0x30,0x30,0x78,0x78,0xfc,0x00,0x00,0xfc,0x78,0x78,0x30,0x30,0x00,0x00,0x00,
+		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x20,0x20,0x20,0x20,0x20,0x00,0x20,0x00,
+		0x50,0x50,0x50,0x00,0x00,0x00,0x00,0x00,0x00,0x50,0xf8,0x50,0xf8,0x50,0x00,0x00,
+		0x20,0x70,0xc0,0x70,0x18,0xf0,0x20,0x00,0x40,0xa4,0x48,0x10,0x20,0x48,0x94,0x08,
+		0x60,0x90,0xa0,0x40,0xa8,0x90,0x68,0x00,0x10,0x20,0x40,0x00,0x00,0x00,0x00,0x00,
+		0x20,0x40,0x40,0x40,0x40,0x40,0x20,0x00,0x10,0x08,0x08,0x08,0x08,0x08,0x10,0x00,
+		0x20,0xa8,0x70,0xf8,0x70,0xa8,0x20,0x00,0x00,0x20,0x20,0xf8,0x20,0x20,0x00,0x00,
+		0x00,0x00,0x00,0x00,0x00,0x30,0x30,0x60,0x00,0x00,0x00,0xf8,0x00,0x00,0x00,0x00,
+		0x00,0x00,0x00,0x00,0x00,0x30,0x30,0x00,0x00,0x08,0x10,0x20,0x40,0x80,0x00,0x00,
+		0x70,0x88,0x88,0x88,0x88,0x88,0x70,0x00,0x10,0x30,0x10,0x10,0x10,0x10,0x10,0x00,
+		0x70,0x88,0x08,0x10,0x20,0x40,0xf8,0x00,0x70,0x88,0x08,0x30,0x08,0x88,0x70,0x00,
+		0x10,0x30,0x50,0x90,0xf8,0x10,0x10,0x00,0xf8,0x80,0xf0,0x08,0x08,0x88,0x70,0x00,
+		0x70,0x80,0xf0,0x88,0x88,0x88,0x70,0x00,0xf8,0x08,0x08,0x10,0x20,0x20,0x20,0x00,
+		0x70,0x88,0x88,0x70,0x88,0x88,0x70,0x00,0x70,0x88,0x88,0x88,0x78,0x08,0x70,0x00,
+		0x00,0x00,0x30,0x30,0x00,0x30,0x30,0x00,0x00,0x00,0x30,0x30,0x00,0x30,0x30,0x60,
+		0x10,0x20,0x40,0x80,0x40,0x20,0x10,0x00,0x00,0x00,0xf8,0x00,0xf8,0x00,0x00,0x00,
+		0x40,0x20,0x10,0x08,0x10,0x20,0x40,0x00,0x70,0x88,0x08,0x10,0x20,0x00,0x20,0x00,
+		0x30,0x48,0x94,0xa4,0xa4,0x94,0x48,0x30,0x70,0x88,0x88,0xf8,0x88,0x88,0x88,0x00,
+		0xf0,0x88,0x88,0xf0,0x88,0x88,0xf0,0x00,0x70,0x88,0x80,0x80,0x80,0x88,0x70,0x00,
+		0xf0,0x88,0x88,0x88,0x88,0x88,0xf0,0x00,0xf8,0x80,0x80,0xf0,0x80,0x80,0xf8,0x00,
+		0xf8,0x80,0x80,0xf0,0x80,0x80,0x80,0x00,0x70,0x88,0x80,0x98,0x88,0x88,0x70,0x00,
+		0x88,0x88,0x88,0xf8,0x88,0x88,0x88,0x00,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x00,
+		0x08,0x08,0x08,0x08,0x88,0x88,0x70,0x00,0x88,0x90,0xa0,0xc0,0xa0,0x90,0x88,0x00,
+		0x80,0x80,0x80,0x80,0x80,0x80,0xf8,0x00,0x88,0xd8,0xa8,0x88,0x88,0x88,0x88,0x00,
+		0x88,0xc8,0xa8,0x98,0x88,0x88,0x88,0x00,0x70,0x88,0x88,0x88,0x88,0x88,0x70,0x00,
+		0xf0,0x88,0x88,0xf0,0x80,0x80,0x80,0x00,0x70,0x88,0x88,0x88,0x88,0x88,0x70,0x08,
+		0xf0,0x88,0x88,0xf0,0x88,0x88,0x88,0x00,0x70,0x88,0x80,0x70,0x08,0x88,0x70,0x00,
+		0xf8,0x20,0x20,0x20,0x20,0x20,0x20,0x00,0x88,0x88,0x88,0x88,0x88,0x88,0x70,0x00,
+		0x88,0x88,0x88,0x88,0x88,0x50,0x20,0x00,0x88,0x88,0x88,0x88,0xa8,0xd8,0x88,0x00,
+		0x88,0x50,0x20,0x20,0x20,0x50,0x88,0x00,0x88,0x88,0x88,0x50,0x20,0x20,0x20,0x00,
+		0xf8,0x08,0x10,0x20,0x40,0x80,0xf8,0x00,0x30,0x20,0x20,0x20,0x20,0x20,0x30,0x00,
+		0x40,0x40,0x20,0x20,0x10,0x10,0x08,0x08,0x30,0x10,0x10,0x10,0x10,0x10,0x30,0x00,
+		0x20,0x50,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xfc,
+		0x40,0x20,0x10,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x70,0x08,0x78,0x88,0x78,0x00,
+		0x80,0x80,0xf0,0x88,0x88,0x88,0xf0,0x00,0x00,0x00,0x70,0x88,0x80,0x80,0x78,0x00,
+		0x08,0x08,0x78,0x88,0x88,0x88,0x78,0x00,0x00,0x00,0x70,0x88,0xf8,0x80,0x78,0x00,
+		0x18,0x20,0x70,0x20,0x20,0x20,0x20,0x00,0x00,0x00,0x78,0x88,0x88,0x78,0x08,0x70,
+		0x80,0x80,0xf0,0x88,0x88,0x88,0x88,0x00,0x20,0x00,0x20,0x20,0x20,0x20,0x20,0x00,
+		0x20,0x00,0x20,0x20,0x20,0x20,0x20,0xc0,0x80,0x80,0x90,0xa0,0xe0,0x90,0x88,0x00,
+		0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x00,0x00,0x00,0xf0,0xa8,0xa8,0xa8,0xa8,0x00,
+		0x00,0x00,0xb0,0xc8,0x88,0x88,0x88,0x00,0x00,0x00,0x70,0x88,0x88,0x88,0x70,0x00,
+		0x00,0x00,0xf0,0x88,0x88,0xf0,0x80,0x80,0x00,0x00,0x78,0x88,0x88,0x78,0x08,0x08,
+		0x00,0x00,0xb0,0xc8,0x80,0x80,0x80,0x00,0x00,0x00,0x78,0x80,0x70,0x08,0xf0,0x00,
+		0x20,0x20,0x70,0x20,0x20,0x20,0x18,0x00,0x00,0x00,0x88,0x88,0x88,0x98,0x68,0x00,
+		0x00,0x00,0x88,0x88,0x88,0x50,0x20,0x00,0x00,0x00,0xa8,0xa8,0xa8,0xa8,0x50,0x00,
+		0x00,0x00,0x88,0x50,0x20,0x50,0x88,0x00,0x00,0x00,0x88,0x88,0x88,0x78,0x08,0x70,
+		0x00,0x00,0xf8,0x10,0x20,0x40,0xf8,0x00,0x08,0x10,0x10,0x20,0x10,0x10,0x08,0x00,
+		0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x20,0x40,0x20,0x20,0x10,0x20,0x20,0x40,0x00,
+		0x00,0x68,0xb0,0x00,0x00,0x00,0x00,0x00,0x20,0x50,0x20,0x50,0xa8,0x50,0x00,0x00,
+	};
+	static unsigned char fontdata8x8[] =
+	{
+		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
 		0x3C,0x42,0x99,0xBD,0xBD,0x99,0x42,0x3C,0x3C,0x42,0x81,0x81,0x81,0x81,0x42,0x3C,
 		0xFE,0x82,0x8A,0xD2,0xA2,0x82,0xFE,0x00,0xFE,0x82,0x82,0x82,0x82,0x82,0xFE,0x00,
 		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x38,0x64,0x74,0x7C,0x38,0x00,0x00,
@@ -153,84 +165,39 @@ struct GfxElement *builduifont(void)
 		0x00,0x7E,0x0C,0x18,0x30,0x60,0x7E,0x00,0x0E,0x18,0x0C,0x38,0x0C,0x18,0x0E,0x00,
 		0x18,0x18,0x18,0x00,0x18,0x18,0x18,0x00,0x70,0x18,0x30,0x1C,0x30,0x18,0x70,0x00,
 		0x00,0x00,0x76,0xDC,0x00,0x00,0x00,0x00,0x10,0x28,0x10,0x54,0xAA,0x44,0x00,0x00,
-
-		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-		0x00,0x7D,0x41,0x05,0x49,0x51,0x01,0x7F,0x00,0x7D,0x41,0x41,0x41,0x41,0x01,0x7F,
-		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x38,0x64,0x74,0x7C,0x38,0x00,0x00,
-		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x11,0x11,0x33,0x66,0x00,0x22,0x66,
-		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x01,0x05,0x19,0x11,0x11,0x13,0x22,
-		0x00,0x00,0x00,0x03,0x02,0x02,0x02,0x1E,0x00,0x02,0x02,0x02,0x00,0x03,0x06,0x0C,
-		0x00,0x00,0x00,0x01,0x03,0x36,0x04,0x00,0x00,0x00,0x01,0x01,0x01,0x0F,0x08,0x00,
-		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x02,0x02,0x06,0x0C,0x00,0x04,0x0C,
-		0x12,0x12,0x5A,0x36,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x16,0x00,0x16,0x14,0x00,
-		0x00,0x00,0x1C,0x00,0x10,0x02,0x2C,0x08,0x00,0x00,0x12,0x24,0x08,0x10,0x21,0x02,
-		0x00,0x08,0x02,0x04,0x11,0x10,0x01,0x1D,0x00,0x04,0x0C,0x10,0x00,0x00,0x00,0x00,
-		0x00,0x18,0x10,0x10,0x10,0x10,0x00,0x18,0x00,0x00,0x01,0x01,0x01,0x01,0x03,0x06,
-		0x00,0x00,0x02,0x00,0x02,0x08,0x2A,0x08,0x00,0x00,0x04,0x00,0x27,0x04,0x0C,0x00,
-		0x00,0x00,0x00,0x00,0x04,0x04,0x0C,0x18,0x00,0x00,0x00,0x00,0x01,0x1F,0x00,0x00,
-		0x00,0x00,0x00,0x00,0x04,0x04,0x1C,0x00,0x00,0x02,0x04,0x08,0x10,0x20,0x40,0x00,
-		0x04,0x32,0x29,0x21,0x21,0x13,0x46,0x3C,0x04,0x04,0x24,0x04,0x04,0x04,0x01,0x7F,
-		0x02,0x39,0xE1,0x03,0x06,0x1C,0x01,0xFF,0x01,0x73,0x06,0x00,0x39,0x21,0x83,0x7E,
-		0x02,0x02,0x12,0x32,0x01,0xF3,0x02,0x0E,0x02,0x3E,0x00,0xF9,0x01,0x01,0x83,0x7E,
-		0x02,0x1E,0x30,0x00,0x39,0x21,0x83,0x7E,0x01,0x39,0xE3,0x06,0x0C,0x08,0x08,0x38,
-		0x04,0x3A,0x12,0x86,0x61,0x41,0x83,0x7E,0x02,0x39,0x21,0x81,0x79,0x03,0x06,0x7C,
-		0x00,0x00,0x00,0x0C,0x00,0x00,0x0C,0x00,0x00,0x00,0x00,0x0C,0x00,0x00,0x04,0x0C,
-		0x02,0x06,0x0C,0x18,0x08,0x04,0x02,0x1E,0x00,0x02,0x7E,0x00,0x02,0x7E,0x00,0x00,
-		0x08,0x04,0x02,0x01,0x03,0x06,0x0C,0x78,0x02,0x39,0x21,0xE3,0x06,0x1C,0x04,0x1C,
-		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x04,0x12,0x31,0x21,0x01,0x39,0x21,0xE7,
-		0x02,0x39,0x21,0x02,0x39,0x21,0x03,0xFE,0x00,0x19,0x37,0x20,0x20,0x91,0x43,0x3E,
-		0x04,0x32,0x29,0x21,0x21,0x23,0x06,0xFC,0x01,0x3F,0x20,0x02,0x3E,0x20,0x01,0xFF,
-		0x01,0x3F,0x20,0x02,0x3E,0x20,0x20,0xE0,0x01,0x1F,0x20,0x21,0x29,0x91,0x41,0x3F,
-		0x21,0x21,0x21,0x01,0x39,0x21,0x21,0xE7,0x01,0x67,0x04,0x04,0x04,0x04,0x01,0x7F,
-		0x01,0x01,0x01,0x01,0x21,0x21,0x83,0x7E,0x21,0x23,0x26,0x0C,0x00,0x20,0x21,0xEF,
-		0x10,0x10,0x10,0x10,0x10,0x10,0x01,0x7F,0x21,0x11,0x01,0x01,0x29,0x39,0x21,0xE7,
-		0x21,0x11,0x09,0x01,0x21,0x21,0x21,0xE7,0x02,0x39,0x21,0x21,0x21,0x21,0x82,0x7C,
-		0x02,0x39,0x21,0x21,0x03,0x3E,0x20,0xE0,0x02,0x39,0x21,0x21,0x21,0x33,0x85,0x7B,
-		0x02,0x39,0x21,0x21,0x07,0x20,0x21,0xEF,0x04,0x32,0x2E,0x82,0x79,0x21,0x83,0x7E,
-		0x01,0x67,0x04,0x04,0x04,0x04,0x04,0x1C,0x21,0x21,0x21,0x21,0x21,0x21,0x83,0x7E,
-		0x21,0x21,0x21,0x11,0x03,0x06,0x0C,0x18,0x21,0x21,0x29,0x01,0x01,0x11,0x31,0xE7,
-		0x21,0x11,0x03,0x06,0x00,0x11,0x31,0xE7,0x11,0x11,0x11,0x43,0x26,0x04,0x04,0x1C,
-		0x01,0xF1,0x03,0x06,0x0C,0x18,0x01,0xFF,0x00,0x0E,0x08,0x08,0x08,0x08,0x00,0x1E,
-		0x00,0x10,0x00,0x00,0x00,0x00,0x01,0x03,0x00,0x12,0x02,0x02,0x02,0x02,0x02,0x1E,
-		0x00,0x00,0x18,0x33,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-		0x00,0x08,0x00,0x0C,0x00,0x00,0x00,0x00,0x00,0x00,0x18,0x01,0x19,0x11,0x03,0x1E,
-		0x00,0x00,0x18,0x11,0x11,0x11,0x03,0x3E,0x00,0x00,0x18,0x13,0x10,0x10,0x03,0x1E,
-		0x00,0x01,0x19,0x11,0x11,0x11,0x01,0x1F,0x00,0x00,0x18,0x11,0x01,0x1F,0x00,0x1E,
-		0x00,0x0E,0x00,0x0C,0x08,0x08,0x08,0x18,0x00,0x00,0x19,0x11,0x11,0x01,0x19,0x03,
-		0x00,0x00,0x08,0x19,0x11,0x11,0x11,0x33,0x00,0x0C,0x00,0x04,0x04,0x04,0x04,0x0C,
-		0x00,0x06,0x00,0x02,0x02,0x02,0x02,0x06,0x00,0x10,0x10,0x13,0x06,0x10,0x10,0x33,
-		0x00,0x04,0x04,0x04,0x04,0x04,0x04,0x0C,0x00,0x00,0x00,0x01,0x01,0x29,0x29,0x63,
-		0x00,0x00,0x08,0x19,0x11,0x11,0x11,0x33,0x00,0x00,0x18,0x11,0x11,0x11,0x03,0x1E,
-		0x00,0x00,0x18,0x11,0x11,0x03,0x1E,0x10,0x00,0x00,0x19,0x11,0x11,0x01,0x19,0x01,
-		0x00,0x00,0x0F,0x18,0x10,0x10,0x10,0x30,0x00,0x00,0x1E,0x00,0x18,0x01,0x01,0x1E,
-		0x00,0x00,0x0C,0x08,0x08,0x08,0x00,0x0E,0x00,0x00,0x11,0x11,0x11,0x11,0x01,0x1F,
-		0x00,0x00,0x11,0x11,0x11,0x03,0x06,0x0C,0x00,0x00,0x21,0x01,0x01,0x03,0x12,0x26,
-		0x00,0x00,0x03,0x06,0x00,0x18,0x11,0x33,0x00,0x00,0x11,0x11,0x11,0x01,0x19,0x03,
-		0x00,0x00,0x33,0x06,0x0C,0x18,0x00,0x3F,0x00,0x07,0x00,0x06,0x10,0x06,0x00,0x07,
-		0x00,0x04,0x04,0x0C,0x00,0x04,0x04,0x0C,0x00,0x20,0x0C,0x00,0x0E,0x00,0x0C,0x38,
-		0x00,0x00,0x00,0x23,0x6E,0x00,0x00,0x00,0x00,0x00,0x04,0x08,0x00,0x11,0x22,0x00,
 	};
-	static struct GfxLayout fontlayout =
+	static struct GfxLayout fontlayout6x8 =
+	{
+		6,8,	/* 6*8 characters */
+		128,    /* 128 characters */
+		1,	/* 1 bit per pixel */
+		{ 0 },
+		{ 0, 1, 2, 3, 4, 5, 6, 7 },	/* straightforward layout */
+		{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+		8*8	/* every char takes 8 consecutive bytes */
+	};
+	static struct GfxLayout fontlayout12x16 =
+	{
+		12,16,	/* 6*8 characters */
+		128,    /* 128 characters */
+		1,	/* 1 bit per pixel */
+		{ 0 },
+		{ 0,0, 1,1, 2,2, 3,3, 4,4, 5,5, 6,6, 7,7 },	/* straightforward layout */
+		{ 0*8,0*8, 1*8,1*8, 2*8,2*8, 3*8,3*8, 4*8,4*8, 5*8,5*8, 6*8,6*8, 7*8,7*8 },
+		8*8	/* every char takes 8 consecutive bytes */
+	};
+	static struct GfxLayout fontlayout8x8 =
 	{
 		8,8,	/* 8*8 characters */
 		128,    /* 128 characters */
-		2,	/* 2 bits per pixel */
-		{ 0, 128*8*8 },
+		1,	/* 1 bit per pixel */
+		{ 0 },
 		{ 0, 1, 2, 3, 4, 5, 6, 7 },	/* straightforward layout */
-		{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8, 8*8, 9*8 },
+		{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 		8*8	/* every char takes 8 consecutive bytes */
 	};
 	struct GfxElement *font;
-	static unsigned short colortable[4*3];	/* ASG 980209 */
+	static unsigned short colortable[2*2];	/* ASG 980209 */
 	int trueorientation;
 
 
@@ -239,12 +206,17 @@ struct GfxElement *builduifont(void)
 	trueorientation = Machine->orientation;
 	Machine->orientation = ORIENTATION_DEFAULT;
 
-	if ((font = decodegfx(fontdata,&fontlayout)) != 0)
+	if (Machine->scrbitmap->width >= 480)
+		font = decodegfx(fontdata6x8,&fontlayout12x16);
+	else
+		font = decodegfx(fontdata6x8,&fontlayout6x8);
+
+	if (font)
 	{
 		/* colortable will be set at run time */
 		memset(colortable,0,sizeof(colortable));
 		font->colortable = colortable;
-		font->total_colors = 3;
+		font->total_colors = 2;
 	}
 
 	Machine->orientation = trueorientation;
@@ -261,40 +233,19 @@ struct GfxElement *builduifont(void)
 
 ***************************************************************************/
 
-void pick_uifont_colors(void)
+void displaytext(const struct DisplayText *dt,int erase,int update_screen)
 {
-	/*             blac blue whit    blac red  yelw    blac blac red  */
-	int dt_r[] = { 0x00,0x00,0xff,-1,0x00,0xff,0x7f,-1,0x00,0x00,0xff };
-	int dt_g[] = { 0x00,0x00,0xff,-1,0x00,0x00,0xff,-1,0x00,0x00,0x00 };
-	int dt_b[] = { 0x00,0xff,0xff,-1,0x00,0x00,0x00,-1,0x00,0x00,0x00 };
-	int i,j;
-
-	/* look for appropriate colors and update the colortable. This is necessary */
-	/* for dynamic palette games */
-
-	for( i=0; i<=10; i++ )
-	{
-		if( dt_r[i] >= 0 )
-		{
-			j = findbestcolor(dt_r[i],dt_g[i],dt_b[i],Machine->uifont->colortable[i]);
-			Machine->uifont->colortable[i] = j;
-		}
-	}
-}
-
-void displaytext(const struct DisplayText *dt,int erase)
-{
-	int i,j,trueorientation;
+	int trueorientation;
 
 
-	pick_uifont_colors();
+	if (erase)
+		osd_clearbitmap(Machine->scrbitmap);
+
 
 	/* hack: force the display into standard orientation to avoid */
 	/* rotating the user interface */
 	trueorientation = Machine->orientation;
 	Machine->orientation = ORIENTATION_DEFAULT;
-
-	if (erase) osd_clearbitmap(Machine->scrbitmap);
 
 	osd_mark_dirty (0,0,Machine->uiwidth-1,Machine->uiheight-1,1);	/* ASG 971011 */
 
@@ -310,10 +261,16 @@ void displaytext(const struct DisplayText *dt,int erase)
 
 		while (*c)
 		{
+			int wrapped;
+
+
+			wrapped = 0;
+
 			if (*c == '\n')
 			{
 				x = dt->x;
 				y += Machine->uifont->height + 1;
+				wrapped = 1;
 			}
 			else if (*c == ' ')
 			{
@@ -325,7 +282,6 @@ void displaytext(const struct DisplayText *dt,int erase)
 					const char *nc;
 
 
-					x += Machine->uifont->width;
 					nc = c+1;
 					while (*nc && *nc != ' ' && *nc != '\n')
 					{
@@ -334,15 +290,16 @@ void displaytext(const struct DisplayText *dt,int erase)
 					}
 
 					/* word wrap */
-
-					if (x + nextlen > Machine->uiwidth)
+					if (x + Machine->uifont->width + nextlen > Machine->uiwidth)
 					{
 						x = dt->x;
 						y += Machine->uifont->height + 1;
+						wrapped = 1;
 					}
 				}
 			}
-			else
+
+			if (!wrapped)
 			{
 				drawgfx(Machine->scrbitmap,Machine->uifont,*c,dt->color,0,0,x+Machine->uixmin,y+Machine->uiymin,0,TRANSPARENCY_NONE,0);
 				x += Machine->uifont->width;
@@ -354,47 +311,292 @@ void displaytext(const struct DisplayText *dt,int erase)
 		dt++;
 	}
 
-	osd_update_display();
-
 	Machine->orientation = trueorientation;
+
+	if (update_screen) osd_update_display();
 }
 
 
 
-
-void displayset (const struct DisplayText *dt,int total,int s)
+void drawbox(int leftx,int topy,int width,int height)
 {
-	struct DisplayText ds[80];
-	int i,ofs;
+	int x,y;
+	int black,white;
 
-	if (((3*Machine->uifont->height * (total+1))/2) > (Machine->uiheight-Machine->uifont->height))
-	{  /* MENU SCROLL */
-		ofs = (Machine->uiheight)/2-dt[2*s].y;
-		if (dt[0].y + ofs > 0) ofs = -dt[0].y;
-		if (dt[2*total-2].y + ofs < Machine->uiheight-Machine->uifont->height)
-			ofs = Machine->uiheight-Machine->uifont->height - dt[2*total-2].y;
 
-		for (i = 0;i < 2*total-1;i++)
+	if (leftx < 0) leftx = 0;
+	if (topy < 0) topy = 0;
+	if (width > Machine->uiwidth) width = Machine->uiwidth;
+	if (height > Machine->uiheight) height = Machine->uiheight;
+
+	leftx += Machine->uixmin;
+	topy += Machine->uiymin;
+
+	black = Machine->uifont->colortable[0];
+	white = Machine->uifont->colortable[1];
+
+	memset(&Machine->scrbitmap->line[topy][leftx],white,width);
+	for (y = topy+1;y < topy+height-1;y++)
+	{
+		Machine->scrbitmap->line[y][leftx] = white;
+		memset(&Machine->scrbitmap->line[y][leftx+1],black,width-2);
+		Machine->scrbitmap->line[y][leftx+width-1] = white;
+	}
+	memset(&Machine->scrbitmap->line[topy+height-1][leftx],white,width);
+}
+
+
+void drawbar(int leftx,int topy,int width,int height,int percentage)
+{
+	int x,y;
+	int black,white;
+
+
+	if (leftx < 0) leftx = 0;
+	if (topy < 0) topy = 0;
+	if (width > Machine->uiwidth) width = Machine->uiwidth;
+	if (height > Machine->uiheight) height = Machine->uiheight;
+
+	leftx += Machine->uixmin;
+	topy += Machine->uiymin;
+
+	black = Machine->uifont->colortable[0];
+	white = Machine->uifont->colortable[1];
+
+	for (y = topy;y < topy + height/8;y++)
+	{
+		Machine->scrbitmap->line[y][leftx] = white;
+		Machine->scrbitmap->line[y][leftx+1] = white;
+		Machine->scrbitmap->line[y][leftx+width/2-1] = white;
+		Machine->scrbitmap->line[y][leftx+width/2] = white;
+		Machine->scrbitmap->line[y][leftx+width-2] = white;
+		Machine->scrbitmap->line[y][leftx+width-1] = white;
+	}
+	for (y = topy+height/8;y < topy+height-height/8;y++)
+	{
+		memset(&Machine->scrbitmap->line[y][leftx],white,width*percentage/100);
+	}
+	for (y = topy+height-height/8;y < topy + height;y++)
+	{
+		Machine->scrbitmap->line[y][leftx] = white;
+		Machine->scrbitmap->line[y][leftx+1] = white;
+		Machine->scrbitmap->line[y][leftx+width/2-1] = white;
+		Machine->scrbitmap->line[y][leftx+width/2] = white;
+		Machine->scrbitmap->line[y][leftx+width-2] = white;
+		Machine->scrbitmap->line[y][leftx+width-1] = white;
+	}
+}
+
+
+void displaymenu(const char **items,const char **subitems,int selected,int arrowize_subitem)
+{
+	struct DisplayText dt[256];
+	int curr_dt;
+	char lefthilight[2] = "\x1a";
+	char righthilight[2] = "\x1b";
+	char uparrow[2] = "\x18";
+	char downarrow[2] = "\x19";
+	char leftarrow[2] = "\x11";
+	char rightarrow[2] = "\x10";
+	int i,count,len,maxlen;
+	int leftoffs,topoffs,visible,topitem;
+
+
+	i = 0;
+	maxlen = 0;
+	while (items[i])
+	{
+		len = strlen(items[i]);
+		if (subitems && subitems[i])
 		{
-			ds[i].color = dt[i].color;
-			ds[i].text = dt[i].text;
-			ds[i].x = dt[i].x;
-			ds[i].y = dt[i].y + ofs;
-			if ((ds[i].y<0) || (ds[i].y>(Machine->uiheight-Machine->uifont->height)))
+			len += 1 + strlen(subitems[i]);
+		}
+		if (len > maxlen) maxlen = len;
+		i++;
+	}
+	count = i;
+
+	maxlen += 3;
+	if (maxlen * Machine->uifont->width > Machine->uiwidth)
+		maxlen = Machine->uiwidth / Machine->uifont->width;
+
+	visible = Machine->uiheight / (3 * Machine->uifont->height / 2) - 1;
+	topitem = 0;
+	if (visible > count) visible = count;
+	else
+	{
+		topitem = selected - visible / 2;
+		if (topitem < 0) topitem = 0;
+		if (topitem > count - visible) topitem = count - visible;
+	}
+
+	leftoffs = (Machine->uiwidth - maxlen * Machine->uifont->width) / 2;
+	topoffs = (Machine->uiheight - (3 * visible + 1) * Machine->uifont->height / 2) / 2;
+
+	/* black background */
+	drawbox(leftoffs,topoffs,maxlen * Machine->uifont->width,(3 * visible + 1) * Machine->uifont->height / 2);
+
+	curr_dt = 0;
+	for (i = 0;i < visible;i++)
+	{
+		int item = i + topitem;
+
+		if (i == 0 && item > 0)
+		{
+			dt[curr_dt].text = uparrow;
+			dt[curr_dt].color = DT_COLOR_WHITE;
+			dt[curr_dt].x = (Machine->uiwidth - Machine->uifont->width * strlen(uparrow)) / 2;
+			dt[curr_dt].y = topoffs + (3*i+1)*Machine->uifont->height/2;
+			curr_dt++;
+		}
+		else if (i == visible - 1 && item < count - 1)
+		{
+			dt[curr_dt].text = downarrow;
+			dt[curr_dt].color = DT_COLOR_WHITE;
+			dt[curr_dt].x = (Machine->uiwidth - Machine->uifont->width * strlen(downarrow)) / 2;
+			dt[curr_dt].y = topoffs + (3*i+1)*Machine->uifont->height/2;
+			curr_dt++;
+		}
+		else
+		{
+			if (subitems && subitems[item])
 			{
-				ds[i].x=0;
-				ds[i].y=0;
-				ds[i].text="  ";
+				dt[curr_dt].text = items[item];
+				dt[curr_dt].color = DT_COLOR_WHITE;
+				dt[curr_dt].x = leftoffs + 3*Machine->uifont->width/2;
+				dt[curr_dt].y = topoffs + (3*i+1)*Machine->uifont->height/2;
+				curr_dt++;
+				dt[curr_dt].text = subitems[item];
+				dt[curr_dt].color = DT_COLOR_WHITE;
+				dt[curr_dt].x = leftoffs + Machine->uifont->width * (maxlen-1 - strlen(subitems[item])) - Machine->uifont->width/2;
+				dt[curr_dt].y = topoffs + (3*i+1)*Machine->uifont->height/2;
+				curr_dt++;
+			}
+			else
+			{
+				dt[curr_dt].text = items[item];
+				dt[curr_dt].color = DT_COLOR_WHITE;
+				dt[curr_dt].x = (Machine->uiwidth - Machine->uifont->width * strlen(items[item])) / 2;
+				dt[curr_dt].y = topoffs + (3*i+1)*Machine->uifont->height/2;
+				curr_dt++;
 			}
 		}
-		ds[total*2-1].text=0;
-		displaytext(ds,1);
 	}
-	else displaytext(dt,1);
+
+	i = selected - topitem;
+	if (subitems && subitems[selected] && arrowize_subitem)
+	{
+		if (arrowize_subitem & 1)
+		{
+			dt[curr_dt].text = leftarrow;
+			dt[curr_dt].color = DT_COLOR_WHITE;
+			dt[curr_dt].x = leftoffs + Machine->uifont->width * (maxlen-2 - strlen(subitems[selected])) - Machine->uifont->width/2 - 1;
+			dt[curr_dt].y = topoffs + (3*i+1)*Machine->uifont->height/2;
+			curr_dt++;
+		}
+		if (arrowize_subitem & 2)
+		{
+			dt[curr_dt].text = rightarrow;
+			dt[curr_dt].color = DT_COLOR_WHITE;
+			dt[curr_dt].x = leftoffs + Machine->uifont->width * (maxlen-1) - Machine->uifont->width/2;
+			dt[curr_dt].y = topoffs + (3*i+1)*Machine->uifont->height/2;
+			curr_dt++;
+		}
+	}
+	else
+	{
+		dt[curr_dt].text = righthilight;
+		dt[curr_dt].color = DT_COLOR_WHITE;
+		dt[curr_dt].x = leftoffs + Machine->uifont->width * (maxlen-1) - Machine->uifont->width/2;
+		dt[curr_dt].y = topoffs + (3*i+1)*Machine->uifont->height/2;
+		curr_dt++;
+	}
+	dt[curr_dt].text = lefthilight;
+	dt[curr_dt].color = DT_COLOR_WHITE;
+	dt[curr_dt].x = leftoffs + Machine->uifont->width/2;
+	dt[curr_dt].y = topoffs + (3*i+1)*Machine->uifont->height/2;
+	curr_dt++;
+
+	dt[curr_dt].text = 0;	/* terminate array */
+
+	displaytext(dt,0,0);
 }
 
 
-int showcharset(void)
+
+static void displaymessagewindow(const char *text)
+{
+	struct DisplayText dt[256];
+	int curr_dt;
+	char *c,*c2;
+	int i,len,maxlen,lines;
+	char textcopy[2048];
+	int leftoffs,topoffs;
+
+
+	strcpy(textcopy,text);
+
+	maxlen = 0;
+	lines = 0;
+	c = textcopy;
+	while (*c)
+	{
+		len = 0;
+		while (*c && *c != '\n')
+		{
+			c++;
+			len++;
+		}
+
+		if (*c == '\n') c++;
+
+		if (len > maxlen) maxlen = len;
+
+		lines++;
+	}
+
+	maxlen += 1;
+
+	leftoffs = (Machine->uiwidth - Machine->uifont->width * maxlen) / 2;
+	if (leftoffs < 0) leftoffs = 0;
+	topoffs = (Machine->uiheight - (3 * lines + 1) * Machine->uifont->height / 2) / 2;
+
+	/* black background */
+	drawbox(leftoffs,topoffs,maxlen * Machine->uifont->width,(3 * lines + 1) * Machine->uifont->height / 2);
+
+	curr_dt = 0;
+	c = textcopy;
+	i = 0;
+	while (*c)
+	{
+		c2 = c;
+		while (*c && *c != '\n')
+			c++;
+
+		if (*c == '\n')
+		{
+			*c = '\0';
+			c++;
+		}
+
+		dt[curr_dt].text = c2;
+		dt[curr_dt].color = DT_COLOR_WHITE;
+		dt[curr_dt].x = leftoffs + Machine->uifont->width/2;
+		dt[curr_dt].y = topoffs + (3*i+1)*Machine->uifont->height/2;
+		curr_dt++;
+
+		i++;
+	}
+
+	dt[curr_dt].text = 0;	/* terminate array */
+
+	displaytext(dt,0,0);
+}
+
+
+
+
+static void showcharset(void)
 {
 	int i,key,cpx,cpy;
 	struct DisplayText dt[2];
@@ -405,7 +607,7 @@ int showcharset(void)
 
 	if ((Machine->drv->gfxdecodeinfo == 0) ||
 			(Machine->drv->gfxdecodeinfo[0].memory_region == -1))
-		return 0;	/* no gfx sets, return */
+		return;	/* no gfx sets, return */
 
 
 	/* hack: force the display into standard orientation to avoid */
@@ -443,7 +645,7 @@ int showcharset(void)
 		dt[0].x = 0;
 		dt[0].y = 0;
 		dt[1].text = 0;
-		displaytext(dt,0);
+		displaytext(dt,0,1);
 
 		key = osd_read_keyrepeat(1);
 
@@ -481,6 +683,10 @@ int showcharset(void)
 			case OSD_KEY_DOWN:
 				if (color > 0) color--;
 				break;
+
+			case OSD_KEY_SNAPSHOT:
+				osd_save_snapshot();
+				break;
 		}
 	} while (key != OSD_KEY_SHOW_GFX && key != OSD_KEY_FAST_EXIT && key != OSD_KEY_ESC);
 
@@ -491,19 +697,24 @@ int showcharset(void)
 
 	Machine->orientation = trueorientation;
 
-	return 0;
+	return;
 }
 
 
 
 
-static int setdipswitches(void)
+static int setdipswitches(int selected)
 {
-	struct DisplayText dt[80];
+	const char *menu_item[40];
+	const char *menu_subitem[40];
 	struct InputPort *entry[40];
-	int i,s,key,done;
+	int i,sel;
 	struct InputPort *in;
 	int total;
+	int arrowize;
+
+
+	sel = selected - 1;
 
 
 	in = Machine->input_ports;
@@ -516,6 +727,7 @@ static int setdipswitches(void)
 				!(nocheat && (in->type & IPF_CHEAT)))
 		{
 			entry[total] = in;
+			menu_item[total] = default_name(in);
 
 			total++;
 		}
@@ -525,129 +737,157 @@ static int setdipswitches(void)
 
 	if (total == 0) return 0;
 
-	dt[2 * total].text = "Return to Main Menu";
-	dt[2 * total].x = (Machine->uiwidth - Machine->uifont->width * strlen(dt[2 * total].text)) / 2;
-	dt[2 * total].y = (3*Machine->uifont->height * (total+1))/2 + (Machine->uiheight - (3*Machine->uifont->height * (total + 1))/2) / 2;
-	dt[2 * total + 1].text = 0;	/* terminate array */
+	menu_item[total] = "Return to Main Menu";
+	menu_item[total + 1] = 0;	/* terminate array */
 	total++;
 
-	s = 0;
-	done = 0;
-	do
+
+	for (i = 0;i < total;i++)
 	{
-		for (i = 0;i < total;i++)
+		if (i < total - 1)
 		{
-			dt[2 * i].color = (i == s) ? DT_COLOR_YELLOW : DT_COLOR_WHITE;
-			if (i < total - 1)
+			in = entry[i] + 1;
+			while ((in->type & ~IPF_MASK) == IPT_DIPSWITCH_SETTING &&
+					in->default_value != entry[i]->default_value)
+				in++;
+
+			if ((in->type & ~IPF_MASK) != IPT_DIPSWITCH_SETTING)
+				menu_subitem[i] = "INVALID";
+			else menu_subitem[i] = default_name(in);
+		}
+		else menu_subitem[i] = 0;	/* no subitem */
+	}
+
+	arrowize = 0;
+	if (sel < total - 1)
+	{
+		in = entry[sel] + 1;
+		while ((in->type & ~IPF_MASK) == IPT_DIPSWITCH_SETTING &&
+				in->default_value != entry[sel]->default_value)
+			in++;
+
+		if ((in->type & ~IPF_MASK) != IPT_DIPSWITCH_SETTING)
+			/* invalid setting: revert to a valid one */
+			arrowize |= 1;
+		else
+		{
+			if (((in-1)->type & ~IPF_MASK) == IPT_DIPSWITCH_SETTING &&
+					!(nocheat && ((in-1)->type & IPF_CHEAT)))
+				arrowize |= 1;
+		}
+	}
+	if (sel < total - 1)
+	{
+		in = entry[sel] + 1;
+		while ((in->type & ~IPF_MASK) == IPT_DIPSWITCH_SETTING &&
+				in->default_value != entry[sel]->default_value)
+			in++;
+
+		if ((in->type & ~IPF_MASK) != IPT_DIPSWITCH_SETTING)
+			/* invalid setting: revert to a valid one */
+			arrowize |= 2;
+		else
+		{
+			if (((in+1)->type & ~IPF_MASK) == IPT_DIPSWITCH_SETTING &&
+					!(nocheat && ((in+1)->type & IPF_CHEAT)))
+				arrowize |= 2;
+		}
+	}
+
+	displaymenu(menu_item,menu_subitem,sel,arrowize);
+
+	if (osd_key_pressed_memory_repeat(OSD_KEY_DOWN,8))
+	{
+		if (sel < total - 1) sel++;
+		else sel = 0;
+	}
+
+	if (osd_key_pressed_memory_repeat(OSD_KEY_UP,8))
+	{
+		if (sel > 0) sel--;
+		else sel = total - 1;
+	}
+
+	if (osd_key_pressed_memory_repeat(OSD_KEY_RIGHT,8))
+	{
+		if (sel < total - 1)
+		{
+			in = entry[sel] + 1;
+			while ((in->type & ~IPF_MASK) == IPT_DIPSWITCH_SETTING &&
+					in->default_value != entry[sel]->default_value)
+				in++;
+
+			if ((in->type & ~IPF_MASK) != IPT_DIPSWITCH_SETTING)
+				/* invalid setting: revert to a valid one */
+				entry[sel]->default_value = (entry[sel]+1)->default_value & entry[sel]->mask;
+			else
 			{
-				dt[2 * i].text = default_name(entry[i]);
-				dt[2 * i].x = 0;
-				dt[2 * i].y = (3*Machine->uifont->height * i)/2 + (Machine->uiheight - (3*Machine->uifont->height * (total + 1))/2) / 2;
-
-				dt[2 * i + 1].color = (i == s) ? DT_COLOR_YELLOW : DT_COLOR_WHITE;
-
-				in = entry[i] + 1;
-				while ((in->type & ~IPF_MASK) == IPT_DIPSWITCH_SETTING &&
-						in->default_value != entry[i]->default_value)
-					in++;
-
-				if ((in->type & ~IPF_MASK) != IPT_DIPSWITCH_SETTING)
-					dt[2 * i + 1].text = "INVALID";
-				else dt[2 * i + 1].text = default_name(in);
-
-				dt[2 * i + 1].x = Machine->uiwidth - Machine->uifont->width*strlen(dt[2 * i + 1].text);
-				dt[2 * i + 1].y = dt[2 * i].y;
+				if (((in+1)->type & ~IPF_MASK) == IPT_DIPSWITCH_SETTING &&
+						!(nocheat && ((in+1)->type & IPF_CHEAT)))
+					entry[sel]->default_value = (in+1)->default_value & entry[sel]->mask;
 			}
 		}
+	}
 
-		displayset(dt,total,s);
-
-		key = osd_read_keyrepeat(1);
-
-		switch (key)
+	if (osd_key_pressed_memory_repeat(OSD_KEY_LEFT,8))
+	{
+		if (sel < total - 1)
 		{
-			case OSD_KEY_DOWN:
-				if (s < total - 1) s++;
-				else s = 0;
-				break;
+			in = entry[sel] + 1;
+			while ((in->type & ~IPF_MASK) == IPT_DIPSWITCH_SETTING &&
+					in->default_value != entry[sel]->default_value)
+				in++;
 
-			case OSD_KEY_UP:
-				if (s > 0) s--;
-				else s = total - 1;
-				break;
-
-			case OSD_KEY_RIGHT:
-				if (s < total - 1)
-				{
-					in = entry[s] + 1;
-					while ((in->type & ~IPF_MASK) == IPT_DIPSWITCH_SETTING &&
-							in->default_value != entry[s]->default_value)
-						in++;
-
-					if ((in->type & ~IPF_MASK) != IPT_DIPSWITCH_SETTING)
-						/* invalid setting: revert to a valid one */
-						entry[s]->default_value = (entry[s]+1)->default_value & entry[s]->mask;
-					else
-					{
-						if (((in+1)->type & ~IPF_MASK) == IPT_DIPSWITCH_SETTING &&
-								!(nocheat && ((in+1)->type & IPF_CHEAT)))
-							entry[s]->default_value = (in+1)->default_value & entry[s]->mask;
-					}
-				}
-				break;
-
-			case OSD_KEY_LEFT:
-				if (s < total - 1)
-				{
-					in = entry[s] + 1;
-					while ((in->type & ~IPF_MASK) == IPT_DIPSWITCH_SETTING &&
-							in->default_value != entry[s]->default_value)
-						in++;
-
-					if ((in->type & ~IPF_MASK) != IPT_DIPSWITCH_SETTING)
-						/* invalid setting: revert to a valid one */
-						entry[s]->default_value = (entry[s]+1)->default_value & entry[s]->mask;
-					else
-					{
-						if (((in-1)->type & ~IPF_MASK) == IPT_DIPSWITCH_SETTING &&
-								!(nocheat && ((in-1)->type & IPF_CHEAT)))
-							entry[s]->default_value = (in-1)->default_value & entry[s]->mask;
-					}
-				}
-				break;
-
-			case OSD_KEY_ENTER:
-				if (s == total - 1) done = 1;
-				break;
-
-			case OSD_KEY_ESC:
-			case OSD_KEY_FAST_EXIT:
-            case OSD_KEY_CONFIGURE:
-				done = 1;
-				break;
+			if ((in->type & ~IPF_MASK) != IPT_DIPSWITCH_SETTING)
+				/* invalid setting: revert to a valid one */
+				entry[sel]->default_value = (entry[sel]+1)->default_value & entry[sel]->mask;
+			else
+			{
+				if (((in-1)->type & ~IPF_MASK) == IPT_DIPSWITCH_SETTING &&
+						!(nocheat && ((in-1)->type & IPF_CHEAT)))
+					entry[sel]->default_value = (in-1)->default_value & entry[sel]->mask;
+			}
 		}
-	} while (done == 0);
+	}
 
-	while (osd_key_pressed(key)) ;	/* wait for key release */
+	if (osd_key_pressed_memory(OSD_KEY_ENTER))
+	{
+		if (sel == total - 1) sel = -1;
+	}
 
+	if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT))
+		sel = -1;
 
-	/* clear the screen before returning */
-	osd_clearbitmap(Machine->scrbitmap);
+	if (osd_key_pressed_memory(OSD_KEY_CONFIGURE))
+		sel = -2;
 
-	if (done == 2) return 1;
-	else return 0;
+	if (sel == -1 || sel == -2)
+	{
+		/* redraw the screen before quitting */
+		osd_clearbitmap(Machine->scrbitmap);	/* needed to get the GfxLayer games working... */
+		(*Machine->drv->vh_update)(Machine->scrbitmap,1);
+	}
+
+	return sel + 1;
 }
 
 
 
-static int setkeysettings(void)
+static int setkeysettings(int selected)
 {
-	struct DisplayText dt[80];
+	const char *menu_item[40];
+	const char *menu_subitem[40];
 	struct InputPort *entry[40];
-	int i,s,key,done;
+	int i,sel;
 	struct InputPort *in;
 	int total;
 
+
+	sel = selected - 1;
+
+
+	if (Machine->input_ports == 0)
+		return 0;
 
 	in = Machine->input_ports;
 
@@ -659,6 +899,7 @@ static int setkeysettings(void)
 			&& !(nocheat && (in->type & IPF_CHEAT)))
 		{
 			entry[total] = in;
+			menu_item[total] = default_name(in);
 
 			total++;
 		}
@@ -668,97 +909,95 @@ static int setkeysettings(void)
 
 	if (total == 0) return 0;
 
-	dt[2 * total].text = "Return to Main Menu";
-	dt[2 * total].x = (Machine->uiwidth - Machine->uifont->width * strlen(dt[2 * total].text)) / 2;
-	dt[2 * total].y = (3*Machine->uifont->height * (total+1))/2 + (Machine->uiheight - (3*Machine->uifont->height * (total + 1))/2) / 2;
-	dt[2 * total + 1].text = 0;	/* terminate array */
+	menu_item[total] = "Return to Main Menu";
+	menu_item[total + 1] = 0;	/* terminate array */
 	total++;
 
-	s = 0;
-	done = 0;
-	do
+	for (i = 0;i < total;i++)
 	{
-		for (i = 0;i < total;i++)
-		{
-			dt[2 * i].color = (i == s) ? DT_COLOR_YELLOW : DT_COLOR_WHITE;
-			if (i < total - 1)
-			{
-				dt[2 * i].text = default_name(entry[i]);
-				dt[2 * i].x = 0;
-				dt[2 * i].y = (3*Machine->uifont->height * i)/2 + (Machine->uiheight - (3*Machine->uifont->height * (total + 1))/2) / 2;
-				dt[2 * i + 1].color = (i == s) ? DT_COLOR_YELLOW : DT_COLOR_WHITE;
-				dt[2 * i + 1].text = osd_key_name(default_key(entry[i]));
-				dt[2 * i + 1].x = Machine->uiwidth - Machine->uifont->width*strlen(dt[2 * i + 1].text);
-				dt[2 * i + 1].y = dt[2 * i].y;
+		if (i < total - 1)
+			menu_subitem[i] = osd_key_name(default_key(entry[i]));
+		else menu_subitem[i] = 0;	/* no subitem */
+	}
 
-				in++;
-			}
+	if (sel > 255)	/* are we waiting for a new key? */
+	{
+		int newkey;
+
+
+		menu_subitem[sel & 0xff] = "    ";
+		displaymenu(menu_item,menu_subitem,sel & 0xff,3);
+		newkey = osd_read_key_immediate();
+		if (newkey != OSD_KEY_NONE)
+		{
+			sel &= 0xff;
+
+			if (key_to_pseudo_code(newkey) != newkey)	/* pseudo key code ? */
+				entry[sel]->keyboard = IP_KEY_DEFAULT;
+			else
+				entry[sel]->keyboard = newkey;
 		}
 
-		displayset(dt,total,s);
-
-		key = osd_read_keyrepeat(1);
-
-		switch (key)
-		{
-			case OSD_KEY_DOWN:
-				if (s < total - 1) s++;
-				else s = 0;
-				break;
-
-			case OSD_KEY_UP:
-				if (s > 0) s--;
-				else s = total - 1;
-				break;
-
-			case OSD_KEY_ENTER:
-				if (s == total - 1) done = 1;
-				else
-				{
-					int newkey;
+		return sel + 1;
+	}
 
 
-					dt[2 * s + 1].text = "            ";
-					dt[2 * s + 1].x = Machine->uiwidth - 2*Machine->uifont->width - Machine->uifont->width*strlen(dt[2 * s + 1].text);
-					displayset(dt,total,s);
-					newkey = osd_read_key(1);
-					if (newkey > OSD_MAX_KEY)	/* pseudo key code ? */
-						entry[s]->keyboard = IP_KEY_DEFAULT;
-					else
-						entry[s]->keyboard = newkey;
-				}
-				break;
+	displaymenu(menu_item,menu_subitem,sel,0);
 
-			case OSD_KEY_ESC:
-            case OSD_KEY_FAST_EXIT:
-			case OSD_KEY_CONFIGURE:
-				done = 1;
-				break;
-		}
-	} while (done == 0);
+	if (osd_key_pressed_memory_repeat(OSD_KEY_DOWN,8))
+	{
+		if (sel < total - 1) sel++;
+		else sel = 0;
+	}
 
-	while (osd_key_pressed(key)) ;	/* wait for key release */
+	if (osd_key_pressed_memory_repeat(OSD_KEY_UP,8))
+	{
+		if (sel > 0) sel--;
+		else sel = total - 1;
+	}
 
-	/* clear the screen before returning */
-	osd_clearbitmap(Machine->scrbitmap);
+	if (osd_key_pressed_memory(OSD_KEY_ENTER))
+	{
+		if (sel == total - 1) sel = -1;
+		else sel |= 0x100;	/* we'll ask for a key */
+	}
 
-	if (done == 2) return 1;
-	else return 0;
+	if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT))
+		sel = -1;
+
+	if (osd_key_pressed_memory(OSD_KEY_CONFIGURE))
+		sel = -2;
+
+	if (sel == -1 || sel == -2)
+	{
+		/* redraw the screen before quitting */
+		osd_clearbitmap(Machine->scrbitmap);	/* needed to get the GfxLayer games working... */
+		(*Machine->drv->vh_update)(Machine->scrbitmap,1);
+	}
+
+	return sel + 1;
 }
 
 
 
 #ifdef macintosh
-static int setjoysettings(void) { return 0; }
+static int setjoysettings(int selected) { return 0; }
 #else
-static int setjoysettings(void)
+static int setjoysettings(int selected)
 {
-	struct DisplayText dt[80];
+	const char *menu_item[40];
+	const char *menu_subitem[40];
 	struct InputPort *entry[40];
-	int i,s,key,done;
+	int i,sel;
 	struct InputPort *in;
 	int total;
 
+
+	sel = selected - 1;
+
+
+	if (Machine->input_ports == 0)
+		return 0;
 
 	in = Machine->input_ports;
 
@@ -770,6 +1009,7 @@ static int setjoysettings(void)
 			&& !(nocheat && (in->type & IPF_CHEAT)))
 		{
 			entry[total] = in;
+			menu_item[total] = default_name(in);
 
 			total++;
 		}
@@ -779,127 +1019,116 @@ static int setjoysettings(void)
 
 	if (total == 0) return 0;
 
-	dt[2 * total].text = "Return to Main Menu";
-	dt[2 * total].x = (Machine->uiwidth - Machine->uifont->width * strlen(dt[2 * total].text)) / 2;
-	dt[2 * total].y = (3*Machine->uifont->height * (total+1))/2 + (Machine->uiheight - (3*Machine->uifont->height * (total + 1))/2) / 2;
-	dt[2 * total + 1].text = 0;	/* terminate array */
+	menu_item[total] = "Return to Main Menu";
+	menu_item[total + 1] = 0;	/* terminate array */
 	total++;
 
-	s = 0;
-	done = 0;
-	do
+	for (i = 0;i < total;i++)
 	{
-		for (i = 0;i < total;i++)
-		{
-			dt[2 * i].color = (i == s) ? DT_COLOR_YELLOW : DT_COLOR_WHITE;
-			if (i < total - 1)
-			{
-				dt[2 * i].text = default_name(entry[i]);
-				dt[2 * i].x = 0;
-				dt[2 * i].y = (3*Machine->uifont->height * i)/2 + (Machine->uiheight - (3*Machine->uifont->height * (total + 1))/2) / 2;
-				dt[2 * i + 1].color = (i == s) ? DT_COLOR_YELLOW : DT_COLOR_WHITE;
-				dt[2 * i + 1].text = osd_joy_name(default_joy(entry[i]));
-				dt[2 * i + 1].x = Machine->uiwidth - Machine->uifont->width*strlen(dt[2 * i + 1].text);
-				dt[2 * i + 1].y = dt[2 * i].y;
+		if (i < total - 1)
+			menu_subitem[i] = osd_joy_name(default_joy(entry[i]));
+		else menu_subitem[i] = 0;	/* no subitem */
+	}
 
-				in++;
+	if (sel > 255)	/* are we waiting for a new joy direction? */
+	{
+		int newjoy;
+		int joyindex;
+
+
+		menu_subitem[sel & 0xff] = "    ";
+		displaymenu(menu_item,menu_subitem,sel & 0xff,3);
+
+		/* Check all possible joystick values for switch or button press */
+		if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT))
+		{
+			sel &= 0xff;
+			entry[sel]->joystick = IP_JOY_DEFAULT;
+		}
+
+		/* Allows for "All buttons" */
+		if (osd_key_pressed_memory(OSD_KEY_A))
+		{
+			sel &= 0xff;
+			entry[sel]->joystick = OSD_JOY_FIRE;
+		}
+		if (osd_key_pressed_memory(OSD_KEY_B))
+		{
+			sel &= 0xff;
+			entry[sel]->joystick = OSD_JOY2_FIRE;
+		}
+		/* Clears entry "None" */
+		if (osd_key_pressed_memory(OSD_KEY_N))
+		{
+			sel &= 0xff;
+			entry[sel]->joystick = 0;
+		}
+
+		for (joyindex = 1; joyindex < OSD_MAX_JOY; joyindex++)
+		{
+			newjoy = osd_joy_pressed(joyindex);
+			if (newjoy)
+			{
+				sel &= 0xff;
+				entry[sel]->joystick = joyindex;
+				break;
 			}
 		}
 
-		displayset(dt,total,s);
+		return sel + 1;
+	}
 
-		key = osd_read_keyrepeat(1);
-		osd_poll_joystick();
 
-		switch (key)
-		{
-			case OSD_KEY_DOWN:
-				if (s < total - 1) s++;
-				else s = 0;
-				break;
+	displaymenu(menu_item,menu_subitem,sel,0);
 
-			case OSD_KEY_UP:
-				if (s > 0) s--;
-				else s = total - 1;
-				break;
+	if (osd_key_pressed_memory_repeat(OSD_KEY_DOWN,8))
+	{
+		if (sel < total - 1) sel++;
+		else sel = 0;
+	}
 
-			case OSD_KEY_ENTER:
-				if (s == total - 1) done = 1;
-				else
-				{
-					int newjoy;
-					int joyindex, joypressed;
-					dt[2 * s + 1].text = "            ";
-					dt[2 * s + 1].x = Machine->uiwidth - 2*Machine->uifont->width - Machine->uifont->width*strlen(dt[2 * s + 1].text);
-					displayset(dt,total,s);
+	if (osd_key_pressed_memory_repeat(OSD_KEY_UP,8))
+	{
+		if (sel > 0) sel--;
+		else sel = total - 1;
+	}
 
-					/* Check all possible joystick values for switch or button press */
-					joypressed = 0;
-					while (!joypressed)
-					{
-						if (osd_key_pressed(OSD_KEY_ESC) ||
-							osd_key_pressed(OSD_KEY_FAST_EXIT))
-							joypressed = 1;
-						osd_poll_joystick();
+	if (osd_key_pressed_memory(OSD_KEY_ENTER))
+	{
+		if (sel == total - 1) sel = -1;
+		else sel |= 0x100;	/* we'll ask for a joy */
+	}
 
-						/* Allows for "All buttons" */
-						if (osd_key_pressed(OSD_KEY_A))
-						{
-							entry[s]->joystick = OSD_JOY_FIRE;
-							joypressed = 1;
-						}
-						if (osd_key_pressed(OSD_KEY_B))
-						{
-							entry[s]->joystick = OSD_JOY2_FIRE;
-							joypressed = 1;
-						}
-						/* Clears entry "None" */
-						if (osd_key_pressed(OSD_KEY_N))
-						{
-							entry[s]->joystick = 0;
-							joypressed = 1;
-						}
+	if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT))
+		sel = -1;
 
-						for (joyindex = 1; joyindex < OSD_MAX_JOY; joyindex++)
-						{
-							newjoy = osd_joy_pressed(joyindex);
-							if (newjoy)
-							{
-								entry[s]->joystick = joyindex;
-								joypressed = 1;
-								break;
-							}
-						}
-					}
-				}
-				break;
+	if (osd_key_pressed_memory(OSD_KEY_CONFIGURE))
+		sel = -2;
 
-            case OSD_KEY_ESC:
-			case OSD_KEY_FAST_EXIT:
-			case OSD_KEY_CONFIGURE:
-				done = 1;
-				break;
-		}
-	} while (done == 0);
+	if (sel == -1 || sel == -2)
+	{
+		/* redraw the screen before quitting */
+		osd_clearbitmap(Machine->scrbitmap);	/* needed to get the GfxLayer games working... */
+		(*Machine->drv->vh_update)(Machine->scrbitmap,1);
+	}
 
-	while (osd_key_pressed(key)) ;	/* wait for key release */
-
-	/* clear the screen before returning */
-	osd_clearbitmap(Machine->scrbitmap);
-
-	if (done == 2) return 1;
-	else return 0;
+	return sel + 1;
 }
 #endif
 
 
-static int settraksettings(void)
+static int settraksettings(int selected)
 {
-	struct DisplayText dt[80];
+	const char *menu_item[40];
+	const char *menu_subitem[40];
 	struct InputPort *entry[40];
-	int i,s,pkey,done;
+	int i,sel;
 	struct InputPort *in;
 	int total,total2;
+	int arrowize;
+
+
+	sel = selected - 1;
 
 
 	if (Machine->input_ports == 0)
@@ -927,312 +1156,310 @@ static int settraksettings(void)
 
 	total2 = total * ENTRIES;
 
-	dt[2 * total2].text = "Return to Main Menu";
-	dt[2 * total2].x = (Machine->uiwidth - Machine->uifont->width * strlen(dt[2 * total2].text)) / 2;
-	dt[2 * total2].y = (3*Machine->uifont->height * (total2+1))/2 + (Machine->uiheight - (3*Machine->uifont->height * (total2 + 1))/2) / 2;
-	dt[2 * total2 + 1].text = 0;	/* terminate array */
+	menu_item[total2] = "Return to Main Menu";
+	menu_item[total2 + 1] = 0;	/* terminate array */
 	total2++;
 
-	s = 0;
-	done = 0;
-	do
+	arrowize = 0;
+	for (i = 0;i < total2;i++)
 	{
-		for (i = 0;i < total2;i++)
+		if (i < total2 - 1)
 		{
-			dt[2 * i].color = (i == s) ? DT_COLOR_YELLOW : DT_COLOR_WHITE;
-			if (i < total2 - 1)
+			char label[30][40];
+			char setting[30][40];
+			int key, joy;
+			int sensitivity;
+			int reverse;
+
+			strcpy (label[i], default_name(entry[i/ENTRIES]));
+			key = default_key (entry[i/ENTRIES]);
+			joy = default_joy (entry[i/ENTRIES]);
+			sensitivity = (entry[i/ENTRIES]->arg & 0x000000ff);
+			reverse = (entry[i/ENTRIES]->type & IPF_REVERSE);
+
+			switch (i%ENTRIES)
 			{
-				char label[30][40];
-				char setting[30][40];
-				int key, joy;
-				int sensitivity;
-				int reverse;
-
-				strcpy (label[i], default_name(entry[i/ENTRIES]));
-				key = default_key (entry[i/ENTRIES]);
-				joy = default_joy (entry[i/ENTRIES]);
-				sensitivity = (entry[i/ENTRIES]->arg & 0x000000ff);
-				reverse = (entry[i/ENTRIES]->type & IPF_REVERSE);
-
-				switch (i%ENTRIES)
-				{
-					case 0:
-						strcat (label[i], " Key Dec");
-						strcpy (setting[i], osd_key_name (key & 0xff));
-						break;
-					case 1:
-						strcat (label[i], " Key Inc");
-						strcpy (setting[i], osd_key_name ((key & 0xff00) >> 8));
-						break;
-					case 2:
-						strcat (label[i], " Joy Dec");
-						strcpy (setting[i], osd_joy_name (joy & 0xff));
-						break;
-					case 3:
-						strcat (label[i], " Joy Inc");
-						strcpy (setting[i], osd_joy_name ((joy & 0xff00) >> 8));
-						break;
-					case 4:
-						strcat (label[i], " Key/Joy Delta");
-						sprintf(setting[i],"%d",(key & 0xff0000) >> 16);
-						break;
-					case 5:
-						strcat (label[i], " Reverse ");
-						if (reverse)
-							sprintf(setting[i],"On");
-						else
-							sprintf(setting[i],"Off");
-						break;
-					case 6:
-						strcat (label[i], " Sensitivity (%)");
-						sprintf(setting[i],"%3d",sensitivity);
-						break;
-				}
-				dt[2 * i].text = label[i];
-				dt[2 * i].x = 0;
-				dt[2 * i].y = (3*Machine->uifont->height * i)/2 + (Machine->uiheight - (3*Machine->uifont->height * (total2 + 1))/2) / 2;
-				dt[2 * i + 1].color = (i == s) ? DT_COLOR_YELLOW : DT_COLOR_WHITE;
-				dt[2 * i + 1].text = setting[i];
-				dt[2 * i + 1].x = Machine->uiwidth - Machine->uifont->width*strlen(dt[2 * i + 1].text);
-				dt[2 * i + 1].y = dt[2 * i].y;
-
-				in++;
+				case 0:
+					strcat (label[i], " Key Dec");
+					strcpy (setting[i], osd_key_name (key & 0xff));
+					break;
+				case 1:
+					strcat (label[i], " Key Inc");
+					strcpy (setting[i], osd_key_name ((key & 0xff00) >> 8));
+					break;
+				case 2:
+					strcat (label[i], " Joy Dec");
+					strcpy (setting[i], osd_joy_name (joy & 0xff));
+					break;
+				case 3:
+					strcat (label[i], " Joy Inc");
+					strcpy (setting[i], osd_joy_name ((joy & 0xff00) >> 8));
+					break;
+				case 4:
+					strcat (label[i], " Key/Joy Delta");
+					sprintf(setting[i],"%d",(key & 0xff0000) >> 16);
+					if (i == sel) arrowize = 3;
+					break;
+				case 5:
+					strcat (label[i], " Reverse ");
+					if (reverse)
+						sprintf(setting[i],"On");
+					else
+						sprintf(setting[i],"Off");
+					if (i == sel) arrowize = 3;
+					break;
+				case 6:
+					strcat (label[i], " Sensitivity (%)");
+					sprintf(setting[i],"%3d",sensitivity);
+					if (i == sel) arrowize = 3;
+					break;
 			}
+
+			menu_item[i] = label[i];
+			menu_subitem[i] = setting[i];
+
+			in++;
 		}
+		else menu_subitem[i] = 0;	/* no subitem */
+	}
 
-		displayset(dt,total2,s);
-
-		pkey = osd_read_keyrepeat(1);
-
-		switch (pkey)
+	if (sel > 255)	/* are we waiting for a new key? */
+	{
+		switch ((sel & 0xff) % ENTRIES)
 		{
-			case OSD_KEY_DOWN:
-				if (s < total2 - 1) s++;
-				else s = 0;
-				break;
+			case 0:
+			case 1:
+			/* We're changing either the dec key or the inc key */
+			{
+				int newkey;
+				int oldkey = default_key(entry[(sel & 0xff)/ENTRIES]);
 
-			case OSD_KEY_UP:
-				if (s > 0) s--;
-				else s = total2 - 1;
-				break;
-
-			case OSD_KEY_LEFT:
-				if ((s % ENTRIES) == 4)
-				/* keyboard/joystick delta */
+				menu_subitem[sel & 0xff] = "    ";
+				displaymenu(menu_item,menu_subitem,sel & 0xff,3);
+				newkey = osd_read_key_immediate();
+				if (newkey != OSD_KEY_NONE)
 				{
-					int oldval = default_key (entry[s/ENTRIES]);
-					int val = (oldval & 0xff0000) >> 16;
+					sel &= 0xff;
 
-					val --;
-					if (val < 1) val = entry[s/ENTRIES]->mask - 1;
-					oldval &= ~0xff0000;
-					oldval |= (val & 0xff) << 16;
-					entry[s/ENTRIES]->keyboard = oldval;
-				}
-				else if ((s % ENTRIES) == 5)
-				/* reverse */
-				{
-					int reverse = entry[s/ENTRIES]->type & IPF_REVERSE;
-					if (reverse)
-						reverse=0;
-					else
-						reverse=IPF_REVERSE;
-					entry[s/ENTRIES]->type &= ~IPF_REVERSE;
-					entry[s/ENTRIES]->type |= reverse;
-				}
-				else if ((s % ENTRIES) == 6)
-				/* sensitivity */
-				{
-					int oldval = (entry[s/ENTRIES]->arg);
-					int val = (oldval & 0xff);
+					if (key_to_pseudo_code(newkey) != newkey)	/* pseudo key code ? */
+						newkey = 0;//IP_KEY_DEFAULT;
 
-					val --;
-					if (val < 1) val = 1;
-					oldval &= ~0xff;
-					oldval |= (val & 0xff);
-					entry[s/ENTRIES]->arg = oldval;
-				}
-				break;
-
-			case OSD_KEY_RIGHT:
-				if ((s % ENTRIES) == 4)
-				/* keyboard/joystick delta */
-				{
-					int oldval = default_key (entry[s/ENTRIES]);
-					int val = (oldval & 0xff0000) >> 16;
-
-					val ++;
-					if (val > entry[s/ENTRIES]->mask - 1) val = 1;
-					oldval &= ~0xff0000;
-					oldval |= (val & 0xff) << 16;
-					entry[s/ENTRIES]->keyboard = oldval;
-				}
-				else if ((s % ENTRIES) == 5)
-				/* reverse */
-				{
-					int reverse = entry[s/ENTRIES]->type & IPF_REVERSE;
-					if (reverse)
-						reverse=0;
-					else
-						reverse=IPF_REVERSE;
-					entry[s/ENTRIES]->type &= ~IPF_REVERSE;
-					entry[s/ENTRIES]->type |= reverse;
-				}
-				else if ((s % ENTRIES) == 6)
-				/* sensitivity */
-				{
-					int oldval = (entry[s/ENTRIES]->arg);
-					int val = (oldval & 0xff);
-
-					val ++;
-					if (val > 255) val = 255;
-					oldval &= ~0xff;
-					oldval |= (val & 0xff);
-					entry[s/ENTRIES]->arg = oldval;
-				}
-				break;
-
-			case OSD_KEY_ENTER:
-				if (s == total2 - 1) done = 1;
-				else
-				{
-					switch (s % ENTRIES)
+					if (sel % ENTRIES)
 					{
-						case 0:
-						case 1:
-						/* We're changing either the dec key or the inc key */
+						oldkey &= ~0xff00;
+						oldkey |= (newkey << 8);
+					}
+					else
+					{
+						oldkey &= ~0xff;
+						oldkey |= (newkey);
+					}
+					entry[sel/ENTRIES]->keyboard = oldkey;
+				}
+				break;
+			}
+			case 2:
+			case 3:
+			/* We're changing either the dec joy or the inc joy */
+			{
+				int newjoy;
+				int oldjoy = default_joy(entry[(sel & 0xff)/ENTRIES]);
+				int joyindex;
+
+
+				menu_subitem[sel & 0xff] = "    ";
+				displaymenu(menu_item,menu_subitem,sel & 0xff,3);
+
+				/* Check all possible joystick values for switch or button press */
+				newjoy = -1;
+
+				if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT))
+				{
+					sel &= 0xff;
+					newjoy = 0;//IP_JOY_DEFAULT;
+				}
+
+				/* Allows for "All buttons" */
+				if (osd_key_pressed_memory(OSD_KEY_A))
+				{
+					sel &= 0xff;
+					newjoy = OSD_JOY_FIRE;
+				}
+				if (osd_key_pressed_memory(OSD_KEY_B))
+				{
+					sel &= 0xff;
+					newjoy = OSD_JOY2_FIRE;
+				}
+				/* Clears entry "None" */
+				if (osd_key_pressed_memory(OSD_KEY_N))
+				{
+					sel &= 0xff;
+					newjoy = 0;
+				}
+
+				if (newjoy == -1)
+				{
+					for (joyindex = 1; joyindex < OSD_MAX_JOY; joyindex++)
+					{
+						newjoy = osd_joy_pressed(joyindex);
+						if (newjoy)
 						{
-							int newkey;
-							int oldkey = default_key (entry[s/ENTRIES]);
-
-							dt[2 * s + 1].text = "            ";
-							dt[2 * s + 1].x = Machine->uiwidth - 2*Machine->uifont->width - Machine->uifont->width*strlen(dt[2 * s + 1].text);
-							displayset(dt,total2,s);
-							newkey = osd_read_key(1);
-							if (newkey == OSD_KEY_ESC ||
-								newkey == OSD_KEY_FAST_EXIT)
-							{
-								newkey = IP_KEY_DEFAULT;
-								break;
-							}
-							else
-							if (newkey > OSD_MAX_KEY)	/* pseudo key code ? */
-							{
-								newkey = IP_KEY_NONE;
-								break;
-							}
-							if (s % ENTRIES)
-							{
-								oldkey &= ~0xff00;
-								oldkey |= (newkey << 8);
-							}
-							else
-							{
-								oldkey &= ~0xff;
-								oldkey |= (newkey);
-							}
-							entry[s/ENTRIES]->keyboard = oldkey;
-							break;
-						}
-						case 2:
-						case 3:
-						/* We're changing either the dec joy or the inc joy */
-						{
-							int newjoy;
-							int oldjoy = default_joy (entry[s/ENTRIES]);
-							int joyindex, joypressed;
-							dt[2 * s + 1].text = "            ";
-							dt[2 * s + 1].x = Machine->uiwidth - 2*Machine->uifont->width - Machine->uifont->width*strlen(dt[2 * s + 1].text);
-							displayset(dt,total,s);
-
-							/* Check all possible joystick values for switch or button press */
-							joypressed = 0;
-							newjoy = -1;
-							while (!joypressed)
-							{
-								if (osd_key_pressed(OSD_KEY_ESC) ||
-									osd_key_pressed(OSD_KEY_FAST_EXIT))
-									joypressed = 1;
-								osd_poll_joystick();
-
-								/* Allows for "All buttons" */
-								if (osd_key_pressed(OSD_KEY_A))
-								{
-									newjoy = OSD_JOY_FIRE;
-									joypressed = 1;
-								}
-								if (osd_key_pressed(OSD_KEY_B))
-								{
-									newjoy = OSD_JOY2_FIRE;
-									joypressed = 1;
-								}
-								/* Clears entry "None" */
-								if (osd_key_pressed(OSD_KEY_N))
-								{
-									newjoy = IP_JOY_NONE;
-									joypressed = 1;
-								}
-
-								for (joyindex = 1; joyindex < OSD_MAX_JOY; joyindex++)
-								{
-									newjoy = osd_joy_pressed(joyindex);
-									if (newjoy)
-									{
-										newjoy = joyindex;
-										joypressed = 1;
-										break;
-									}
-								}
-							}
-							if (newjoy != -1)
-							{
-								if ((s % ENTRIES) == 3)
-								{
-									oldjoy &= ~0xff00;
-									oldjoy |= (newjoy << 8);
-								}
-								else
-								{
-									oldjoy &= ~0xff;
-									oldjoy |= (newjoy);
-								}
-								entry[s/ENTRIES]->joystick = oldjoy;
-							}
+							sel &= 0xff;
+							newjoy = joyindex;
 							break;
 						}
 					}
 				}
-				break;
 
-			case OSD_KEY_ESC:
-			case OSD_KEY_FAST_EXIT:
-            case OSD_KEY_CONFIGURE:
-				done = 1;
+				if (newjoy != -1)
+				{
+					if ((sel % ENTRIES) == 3)
+					{
+						oldjoy &= ~0xff00;
+						oldjoy |= (newjoy << 8);
+					}
+					else
+					{
+						oldjoy &= ~0xff;
+						oldjoy |= (newjoy);
+					}
+					entry[sel/ENTRIES]->joystick = oldjoy;
+				}
 				break;
+			}
 		}
-	} while (done == 0);
 
-	while (osd_key_pressed(pkey)) ;	/* wait for key release */
+		return sel + 1;
+	}
 
-	/* clear the screen before returning */
-	osd_clearbitmap(Machine->scrbitmap);
 
-	if (done == 2) return 1;
-	else return 0;
+	displaymenu(menu_item,menu_subitem,sel,arrowize);
+
+	if (osd_key_pressed_memory_repeat(OSD_KEY_DOWN,8))
+	{
+		if (sel < total2 - 1) sel++;
+		else sel = 0;
+	}
+
+	if (osd_key_pressed_memory_repeat(OSD_KEY_UP,8))
+	{
+		if (sel > 0) sel--;
+		else sel = total2 - 1;
+	}
+
+	if (osd_key_pressed_memory_repeat(OSD_KEY_LEFT,8))
+	{
+		if ((sel % ENTRIES) == 4)
+		/* keyboard/joystick delta */
+		{
+			int oldval = default_key (entry[sel/ENTRIES]);
+			int val = (oldval & 0xff0000) >> 16;
+
+			val --;
+			if (val < 1) val = entry[sel/ENTRIES]->mask - 1;
+			oldval &= ~0xff0000;
+			oldval |= (val & 0xff) << 16;
+			entry[sel/ENTRIES]->keyboard = oldval;
+		}
+		else if ((sel % ENTRIES) == 5)
+		/* reverse */
+		{
+			int reverse = entry[sel/ENTRIES]->type & IPF_REVERSE;
+			if (reverse)
+				reverse=0;
+			else
+				reverse=IPF_REVERSE;
+			entry[sel/ENTRIES]->type &= ~IPF_REVERSE;
+			entry[sel/ENTRIES]->type |= reverse;
+		}
+		else if ((sel % ENTRIES) == 6)
+		/* sensitivity */
+		{
+			int oldval = (entry[sel/ENTRIES]->arg);
+			int val = (oldval & 0xff);
+
+			val --;
+			if (val < 1) val = 1;
+			oldval &= ~0xff;
+			oldval |= (val & 0xff);
+			entry[sel/ENTRIES]->arg = oldval;
+		}
+	}
+
+	if (osd_key_pressed_memory_repeat(OSD_KEY_RIGHT,8))
+	{
+		if ((sel % ENTRIES) == 4)
+		/* keyboard/joystick delta */
+		{
+			int oldval = default_key (entry[sel/ENTRIES]);
+			int val = (oldval & 0xff0000) >> 16;
+
+			val ++;
+			if (val > entry[sel/ENTRIES]->mask - 1) val = 1;
+			oldval &= ~0xff0000;
+			oldval |= (val & 0xff) << 16;
+			entry[sel/ENTRIES]->keyboard = oldval;
+		}
+		else if ((sel % ENTRIES) == 5)
+		/* reverse */
+		{
+			int reverse = entry[sel/ENTRIES]->type & IPF_REVERSE;
+			if (reverse)
+				reverse=0;
+			else
+				reverse=IPF_REVERSE;
+			entry[sel/ENTRIES]->type &= ~IPF_REVERSE;
+			entry[sel/ENTRIES]->type |= reverse;
+		}
+		else if ((sel % ENTRIES) == 6)
+		/* sensitivity */
+		{
+			int oldval = (entry[sel/ENTRIES]->arg);
+			int val = (oldval & 0xff);
+
+			val ++;
+			if (val > 255) val = 255;
+			oldval &= ~0xff;
+			oldval |= (val & 0xff);
+			entry[sel/ENTRIES]->arg = oldval;
+		}
+	}
+
+	if (osd_key_pressed_memory(OSD_KEY_ENTER))
+	{
+		if (sel == total2 - 1) sel = -1;
+		else if ((sel % ENTRIES) <= 3) sel |= 0x100;	/* we'll ask for a key/joy */
+	}
+
+	if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT))
+		sel = -1;
+
+	if (osd_key_pressed_memory(OSD_KEY_CONFIGURE))
+		sel = -2;
+
+	if (sel == -1 || sel == -2)
+	{
+		/* redraw the screen before quitting */
+		osd_clearbitmap(Machine->scrbitmap);	/* needed to get the GfxLayer games working... */
+		(*Machine->drv->vh_update)(Machine->scrbitmap,1);
+	}
+
+	return sel + 1;
 }
 
-void mame_stats (void)
+
+
+static int mame_stats(int selected)
 {
 	int key;
-	struct DisplayText dt[2];
 	char temp[10];
-	char buf[1024];
+	char buf[2048];
+	int sel;
 
-	strcpy (buf, "MAME ver: ");
-	strcat (buf, mameversion);
-	strcat (buf, "\n\n");
 
-	strcat (buf, "Tickets dispensed: ");
+	sel = selected - 1;
+
+	strcpy(buf, "Tickets dispensed: ");
 	if (!dispensed_tickets)
 		strcat (buf, "NA\n\n");
 	else
@@ -1240,6 +1467,7 @@ void mame_stats (void)
 		sprintf (temp, "%d\n\n", dispensed_tickets);
 		strcat (buf, temp);
 	}
+
 	strcat (buf, "Coin A: ");
 	if (!coins[0])
 		strcat (buf, "NA\n");
@@ -1248,6 +1476,7 @@ void mame_stats (void)
 		sprintf (temp, "%d\n", coins[0]);
 		strcat (buf, temp);
 	}
+
 	strcat (buf, "Coin B: ");
 	if (!coins[1])
 		strcat (buf, "NA\n");
@@ -1256,23 +1485,33 @@ void mame_stats (void)
 		sprintf (temp, "%d\n", coins[1]);
 		strcat (buf, temp);
 	}
+
 	strcat (buf, "Coin C: ");
 	if (!coins[2])
-		strcat (buf, "NA\n\n");
+		strcat (buf, "NA\n");
 	else
 	{
-		sprintf (temp, "%d\n\n", coins[2]);
+		sprintf (temp, "%d\n", coins[2]);
 		strcat (buf, temp);
 	}
-	dt[0].text = buf;
-	dt[0].color = DT_COLOR_WHITE;
-	dt[0].x = 0;
-	dt[0].y = 0;
-	dt[1].text = 0;
-	displaytext(dt,1);
 
-	key = osd_read_key(1);
-	while (osd_key_pressed(key)) ;	/* wait for key release */
+	displaymessagewindow(buf);
+
+	if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT)
+			|| osd_key_pressed_memory(OSD_KEY_ENTER))
+		sel = -1;
+
+	if (osd_key_pressed_memory(OSD_KEY_CONFIGURE))
+		sel = -2;
+
+	if (sel == -1 || sel == -2)
+	{
+		/* redraw the screen before quitting */
+		osd_clearbitmap(Machine->scrbitmap);	/* needed to get the GfxLayer games working... */
+		(*Machine->drv->vh_update)(Machine->scrbitmap,1);
+	}
+
+	return sel + 1;
 }
 
 int showcopyright(void)
@@ -1292,7 +1531,7 @@ int showcopyright(void)
 	dt[0].x = 0;
 	dt[0].y = 0;
 	dt[1].text = 0;
-	displaytext(dt,1);
+	displaytext(dt,1,1);
 
 	key = osd_read_key(1);
 	while (osd_key_pressed(key)) ;	/* wait for key release */
@@ -1311,7 +1550,7 @@ int showcredits(void)
 {
 	int key;
 	struct DisplayText dt[2];
-	char buf[1024];
+	char buf[2048];
 
 
 	strcpy(buf,"The following people contributed to this driver:\n\n");
@@ -1321,7 +1560,7 @@ int showcredits(void)
 	dt[0].x = 0;
 	dt[0].y = 0;
 	dt[1].text = 0;
-	displaytext(dt,1);
+	displaytext(dt,1,1);
 
 	key = osd_read_key(1);
 	while (osd_key_pressed(key)) ;	/* wait for key release */
@@ -1336,8 +1575,9 @@ int showgameinfo(void)
 {
 	int key;
 	int i;
-	struct DisplayText dt[2];
-	char buf[1024];
+	struct DisplayText dt[3];
+	char buf[2048];
+	char mamever[80];
 	static char *cpunames[] =
 	{
 		"",
@@ -1365,6 +1605,7 @@ int showgameinfo(void)
 		"YM2151",
 		"YM2151",
 		"YM3812",
+		"YM2413",
 		"SN76496",
 		"Pokey",
 		"Namco",
@@ -1428,7 +1669,7 @@ int showgameinfo(void)
 		dt[0].x = 0;
 		dt[0].y = 0;
 		dt[1].text = 0;
-		displaytext(dt,1);
+		displaytext(dt,1,1);
 
 		do
 		{
@@ -1508,12 +1749,21 @@ int showgameinfo(void)
 		else strcat(buf,"(static)\n");
 	}
 
+
+	strcpy(mamever,"MAME ");
+	strcat(mamever,mameversion);
+
+
 	dt[0].text = buf;
 	dt[0].color = DT_COLOR_WHITE;
 	dt[0].x = 0;
 	dt[0].y = 0;
-	dt[1].text = 0;
-	displaytext(dt,1);
+	dt[1].text = mamever;
+	dt[1].color = DT_COLOR_WHITE;
+	dt[1].x = (Machine->uiwidth - Machine->uifont->width * strlen(mamever)) / 2;
+	dt[1].y = Machine->uiheight - Machine->uifont->height;
+	dt[2].text = 0;
+	displaytext(dt,1,1);
 
 	key = osd_read_key(1);
 	while (osd_key_pressed(key)) ;	/* wait for key release */
@@ -1527,19 +1777,22 @@ int showgameinfo(void)
 	return 0;
 }
 
+
+
 enum { UI_SWITCH = 0, UI_KEY, UI_JOY, UI_ANALOG, UI_STATS, UI_CREDITS, UI_GAMEINFO, UI_CHEAT, UI_EXIT };
 
-int setup_menu (void)
+#define MAX_SETUPMENU_ITEMS 20
+static const char *menu_item[MAX_SETUPMENU_ITEMS];
+static int menu_action[MAX_SETUPMENU_ITEMS];
+static int menu_total;
+
+static void setup_menu_init(void)
 {
-	struct DisplayText dt[20];
-	int ui_menu[9];
-	int i,s,key,done;
-	int total = 0;
+	menu_total = 0;
 
-
-	dt[total].text = "DIP SWITCH SETUP"; ui_menu[total++] = UI_SWITCH;
-	dt[total].text = "KEYBOARD SETUP"; ui_menu[total++] = UI_KEY;
-	dt[total].text = "JOYSTICK SETUP"; ui_menu[total++] = UI_JOY;
+	menu_item[menu_total] = "Dip Switch Setup"; menu_action[menu_total++] = UI_SWITCH;
+	menu_item[menu_total] = "Keyboard Setup"; menu_action[menu_total++] = UI_KEY;
+	menu_item[menu_total] = "Joystick Setup"; menu_action[menu_total++] = UI_JOY;
 
 	/* Determine if there are any analog controls */
 	{
@@ -1559,107 +1812,468 @@ int setup_menu (void)
 
 		if (num != 0)
 		{
-			dt[total].text = "ANALOG SETUP"; ui_menu[total++] = UI_ANALOG;
+			menu_item[menu_total] = "Analog Setup"; menu_action[menu_total++] = UI_ANALOG;
 		}
 	}
 
-	dt[total].text = "STATS"; ui_menu[total++] = UI_STATS;
-	dt[total].text = "CREDITS"; ui_menu[total++] = UI_CREDITS;
-	dt[total].text = "GAME INFORMATION"; ui_menu[total++] = UI_GAMEINFO;
+	menu_item[menu_total] = "Stats"; menu_action[menu_total++] = UI_STATS;
+	menu_item[menu_total] = "Credits"; menu_action[menu_total++] = UI_CREDITS;
+	menu_item[menu_total] = "Game Information"; menu_action[menu_total++] = UI_GAMEINFO;
 
 	if (nocheat == 0)
 	{
-		dt[total].text = "CHEAT"; ui_menu[total++] = UI_CHEAT;
+		menu_item[menu_total] = "Cheat"; menu_action[menu_total++] = UI_CHEAT;
 	}
 
-	dt[total].text = "RETURN TO GAME"; ui_menu[total++] = UI_EXIT;
-	for (i = 0; i < total; i++)
+	menu_item[menu_total] = "Return to Game"; menu_action[menu_total++] = UI_EXIT;
+	menu_item[menu_total] = 0; /* terminate array */
+}
+
+
+static int setup_menu(int selected)
+{
+	int sel,res;
+	static int lastselected = 0;
+
+
+	if (selected == -1)
+		sel = lastselected;
+	else sel = selected - 1;
+
+	if (sel > 0xff)
 	{
-		dt[i].x = (Machine->uiwidth - Machine->uifont->width * strlen(dt[i].text)) / 2;
-		dt[i].y = i * 2*Machine->uifont->height + (Machine->uiheight - 2*Machine->uifont->height * (total - 1)) / 2;
-		if (i == total-1) dt[i].y += 2*Machine->uifont->height;
-	}
-	dt[total].text = 0; /* terminate array */
-
-	s = 0;
-	done = 0;
-	do
-	{
-		for (i = 0; i < total; i++)
+		switch (menu_action[sel & 0xff])
 		{
-			dt[i].color = (i == s) ? DT_COLOR_YELLOW : DT_COLOR_WHITE;
-		}
-
-		displaytext (dt,1);
-
-		key = osd_read_keyrepeat (1);
-
-		switch (key)
-		{
-			case OSD_KEY_DOWN:
-				if (s < total - 1) s++;
-				else s = 0;
-				break;
-
-			case OSD_KEY_UP:
-				if (s > 0) s--;
-				else s = total - 1;
-				break;
-
-			case OSD_KEY_ENTER:
-				switch (ui_menu[s])
+			case UI_SWITCH:
+				res = setdipswitches(sel >> 8);
+				if (res == -1)
 				{
-					case UI_SWITCH:
-						if (setdipswitches()) done = 2;
-						break;
-
-					case UI_KEY:
-						if (setkeysettings()) done = 2;
-						break;
-
-					case UI_JOY:
-						if (setjoysettings()) done = 2;
-						break;
-
-					case UI_ANALOG:
-						if (settraksettings()) done = 2;
-						break;
-
-					case UI_STATS:
-						mame_stats ();
-						break;
-
-					case UI_CREDITS:
-						if (showcredits()) done = 2;
-						break;
-
-					case UI_GAMEINFO:
-						if (showgameinfo()) done = 2;
-						break;
-
-					case UI_CHEAT:
-						cheat_menu();
-						break;
-
-					case UI_EXIT:
-						done = 1;
-						break;
+					lastselected = sel;
+					sel = -1;
 				}
+				else
+					sel = (sel & 0xff) | (res << 8);
 				break;
 
-			case OSD_KEY_ESC:
-			case OSD_KEY_FAST_EXIT:
-            case OSD_KEY_CONFIGURE:
-				done = 1;
+			case UI_KEY:
+				res = setkeysettings(sel >> 8);
+				if (res == -1)
+				{
+					lastselected = sel;
+					sel = -1;
+				}
+				else
+					sel = (sel & 0xff) | (res << 8);
+				break;
+
+			case UI_JOY:
+				res = setjoysettings(sel >> 8);
+				if (res == -1)
+				{
+					lastselected = sel;
+					sel = -1;
+				}
+				else
+					sel = (sel & 0xff) | (res << 8);
+				break;
+
+			case UI_ANALOG:
+				res = settraksettings(sel >> 8);
+				if (res == -1)
+				{
+					lastselected = sel;
+					sel = -1;
+				}
+				else
+					sel = (sel & 0xff) | (res << 8);
+				break;
+
+			case UI_STATS:
+				res = mame_stats(sel >> 8);
+				if (res == -1)
+				{
+					lastselected = sel;
+					sel = -1;
+				}
+				else
+					sel = (sel & 0xff) | (res << 8);
+				break;
+
+			case UI_CREDITS:
+osd_sound_enable(0);
+while (osd_key_pressed(OSD_KEY_ENTER))
+	osd_update_audio();     /* give time to the sound hardware to apply the volume change */
+				showcredits();
+osd_sound_enable(1);
+sel = sel & 0xff;
+				break;
+
+			case UI_GAMEINFO:
+osd_sound_enable(0);
+while (osd_key_pressed(OSD_KEY_ENTER))
+	osd_update_audio();     /* give time to the sound hardware to apply the volume change */
+				showgameinfo();
+osd_sound_enable(1);
+sel = sel & 0xff;
+				break;
+
+			case UI_CHEAT:
+osd_sound_enable(0);
+while (osd_key_pressed(OSD_KEY_ENTER))
+	osd_update_audio();     /* give time to the sound hardware to apply the volume change */
+				cheat_menu();
+osd_sound_enable(1);
+sel = sel & 0xff;
 				break;
 		}
-	} while (done == 0);
 
-	while (osd_key_pressed(key)) ;	/* wait for key release */
+		return sel + 1;
+	}
 
-	/* clear the screen before returning */
-	osd_clearbitmap(Machine->scrbitmap);
 
-	if (done == 2) return 1;
-	else return 0;
+	displaymenu(menu_item,0,sel,0);
+
+	if (osd_key_pressed_memory_repeat(OSD_KEY_DOWN,8))
+		sel = (sel + 1) % menu_total;
+
+	if (osd_key_pressed_memory_repeat(OSD_KEY_UP,8))
+		sel = (sel + menu_total - 1) % menu_total;
+
+	if (osd_key_pressed_memory(OSD_KEY_ENTER))
+	{
+		switch (menu_action[sel])
+		{
+			case UI_SWITCH:
+			case UI_KEY:
+			case UI_JOY:
+			case UI_ANALOG:
+			case UI_STATS:
+			case UI_CREDITS:
+			case UI_GAMEINFO:
+			case UI_CHEAT:
+				sel |= 0x100;
+		/* redraw the screen before changing menu */
+		osd_clearbitmap(Machine->scrbitmap);	/* needed to get the GfxLayer games working... */
+		(*Machine->drv->vh_update)(Machine->scrbitmap,1);
+				break;
+
+			case UI_EXIT:
+				lastselected = 0;
+				sel = -1;
+				break;
+		}
+	}
+
+	if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT) ||
+			osd_key_pressed_memory(OSD_KEY_CONFIGURE))
+	{
+		lastselected = sel;
+		sel = -1;
+	}
+
+	if (sel == -1)
+	{
+		/* redraw the screen before quitting */
+		osd_clearbitmap(Machine->scrbitmap);	/* needed to get the GfxLayer games working... */
+		(*Machine->drv->vh_update)(Machine->scrbitmap,1);
+	}
+
+	return sel + 1;
+}
+
+
+
+/*********************************************************************
+
+  start of On Screen Display handling
+
+*********************************************************************/
+
+void displayosd(const char *text,int percentage)
+{
+	struct DisplayText dt[2];
+	int i,avail;
+
+
+	avail = (Machine->uiwidth / Machine->uifont->width) * 19 / 20;
+
+	drawbox((Machine->uiwidth - Machine->uifont->width * avail) / 2,
+			(Machine->uiheight - 7*Machine->uifont->height/2),
+			avail * Machine->uifont->width,
+			3*Machine->uifont->height);
+
+	avail--;
+
+	drawbar((Machine->uiwidth - Machine->uifont->width * avail) / 2,
+			(Machine->uiheight - 3*Machine->uifont->height),
+			avail * Machine->uifont->width,
+			Machine->uifont->height,
+			percentage);
+
+	dt[0].text = text;
+	dt[0].color = DT_COLOR_WHITE;
+	dt[0].x = (Machine->uiwidth - Machine->uifont->width * strlen(text)) / 2;
+	dt[0].y = (Machine->uiheight - 2*Machine->uifont->height) + 2;
+	dt[1].text = 0;	/* terminate array */
+	displaytext(dt,0,0);
+}
+
+
+
+static void onscrd_volume(int increment,int arg)
+{
+	char buf[20];
+	int attenuation;
+
+	if (increment)
+	{
+		attenuation = osd_get_mastervolume();
+		attenuation += 1 * increment;
+		if (attenuation > 0) attenuation = 0;
+		if (attenuation < -24) attenuation = -24;
+		osd_set_mastervolume(attenuation);
+	}
+	attenuation = osd_get_mastervolume();
+
+	sprintf(buf,"Volume %3ddB",attenuation);
+	displayosd(buf,100 * (attenuation + 24) / 24);
+}
+
+static void onscrd_streamvol(int increment,int arg)
+{
+	char buf[40];
+	int volume;
+
+	if (increment)
+	{
+		volume = stream_get_volume(arg);
+		volume += 10 * increment;
+		if (volume > 255) volume = 255;
+		if (volume < 0) volume = 0;
+		stream_set_volume(arg,volume);
+	}
+	volume = stream_get_volume(arg);
+
+	sprintf(buf,"%s Volume %3d",stream_get_name(arg),volume);
+	displayosd(buf,100 * volume / 255);
+}
+
+static void onscrd_brightness(int increment,int arg)
+{
+	char buf[20];
+	int brightness;
+
+
+	if (increment)
+	{
+		brightness = osd_get_brightness();
+		brightness += 5 * increment;
+		if (brightness < 0) brightness = 0;
+		if (brightness > 100) brightness = 100;
+		osd_set_brightness(brightness);
+	}
+	brightness = osd_get_brightness();
+
+	sprintf(buf,"Brightness %3d%%",brightness);
+	displayosd(buf,brightness);
+}
+
+static void onscrd_gamma(int increment,int arg)
+{
+	char buf[20];
+	float gamma_correction;
+
+
+	if (increment)
+	{
+		gamma_correction = osd_get_gamma();
+		gamma_correction += 0.05 * increment;
+		if (gamma_correction < 0.5) gamma_correction = 0.5;
+		if (gamma_correction > 2.0) gamma_correction = 2.0;
+		osd_set_gamma(gamma_correction);
+	}
+	gamma_correction = osd_get_gamma();
+
+	sprintf(buf,"Gamma %1.2f",gamma_correction);
+	displayosd(buf,100*(gamma_correction-0.5)/(2.0-0.5));
+}
+
+
+#define MAX_OSD_ITEMS 30
+static void (*onscrd_fnc[MAX_OSD_ITEMS])(int increment,int arg);
+static int onscrd_arg[MAX_OSD_ITEMS];
+static int onscrd_total_items;
+
+static void onscrd_init(void)
+{
+	int item,ch;
+
+
+	item = 0;
+
+	onscrd_fnc[item] = onscrd_volume;
+	onscrd_arg[item] = 0;
+	item++;
+
+	for (ch = 0;ch < MAX_STREAM_CHANNELS;ch++)
+	{
+		if (stream_get_name(ch) != 0)
+		{
+			onscrd_fnc[item] = onscrd_streamvol;
+			onscrd_arg[item] = ch;
+			item++;
+		}
+	}
+
+	onscrd_fnc[item] = onscrd_brightness;
+	onscrd_arg[item] = 0;
+	item++;
+
+	onscrd_fnc[item] = onscrd_gamma;
+	onscrd_arg[item] = 0;
+	item++;
+
+	onscrd_total_items = item;
+}
+
+static int on_screen_display(int selected)
+{
+	int increment,sel;
+	static int lastselected = 0;
+
+
+	if (selected == -1)
+		sel = lastselected;
+	else sel = selected - 1;
+
+	increment = 0;
+	if (osd_key_pressed_memory_repeat(OSD_KEY_LEFT,8))
+		increment = -1;
+	if (osd_key_pressed_memory_repeat(OSD_KEY_RIGHT,8))
+		increment = 1;
+	if (osd_key_pressed_memory_repeat(OSD_KEY_DOWN,8))
+		sel = (sel + 1) % onscrd_total_items;
+	if (osd_key_pressed_memory_repeat(OSD_KEY_UP,8))
+		sel = (sel + onscrd_total_items - 1) % onscrd_total_items;
+
+	(*onscrd_fnc[sel])(increment,onscrd_arg[sel]);
+
+	lastselected = sel;
+
+	if (osd_key_pressed_memory(OSD_KEY_ON_SCREEN_DISPLAY))
+	{
+		sel = -1;
+
+		/* redraw the screen before quitting */
+		osd_clearbitmap(Machine->scrbitmap);	/* needed to get the GfxLayer games working... */
+		(*Machine->drv->vh_update)(Machine->scrbitmap,1);
+	}
+
+	return sel + 1;
+}
+
+/*********************************************************************
+
+  end of On Screen Display handling
+
+*********************************************************************/
+
+
+
+int handle_user_interface(void)
+{
+	static int setup_selected = 0;
+	static int osd_selected = 0;
+
+
+
+	/* This call is for the cheat, it must be called at least each frames */
+	if (nocheat == 0) DoCheat();
+
+	/* if the user pressed ESC, stop the emulation */
+	/* but don't quit if the setup menu is on screen */
+	if (setup_selected == 0 && osd_key_pressed_memory(OSD_KEY_FAST_EXIT))
+		return 1;
+
+	if (setup_selected == 0 && osd_key_pressed_memory(OSD_KEY_CONFIGURE))
+	{
+		setup_menu_init();
+		setup_selected = -1;
+	}
+	if (setup_selected != 0) setup_selected = setup_menu(setup_selected);
+
+	if (osd_selected == 0 && osd_key_pressed_memory(OSD_KEY_ON_SCREEN_DISPLAY))
+	{
+		onscrd_init();
+		osd_selected = -1;
+	}
+	if (osd_selected != 0) osd_selected = on_screen_display(osd_selected);
+
+
+	/* if the user pressed F3, reset the emulation */
+	if (osd_key_pressed_memory(OSD_KEY_RESET_MACHINE))
+		machine_reset();
+
+
+	if (osd_key_pressed_memory(OSD_KEY_PAUSE)) /* pause the game */
+	{
+		float orig_brt;
+		int pressed;
+
+
+		osd_selected = 0;	/* disable on screen display, since we are going */
+							/* to change parameters affected by it */
+
+		osd_sound_enable(0);
+		orig_brt = osd_get_brightness();
+		osd_set_brightness(orig_brt * 0.65);
+
+		pressed = 1;
+
+		while (pressed || osd_key_pressed_memory(OSD_KEY_UNPAUSE) == 0)
+		{
+			osd_profiler(OSD_PROFILE_VIDEO);
+			(*Machine->drv->vh_update)(Machine->scrbitmap,1);
+			osd_profiler(OSD_PROFILE_END);
+
+			if (setup_selected == 0 && osd_key_pressed_memory(OSD_KEY_FAST_EXIT))
+				return 1;
+
+			if (setup_selected == 0 && osd_key_pressed_memory(OSD_KEY_CONFIGURE))
+			{
+				setup_menu_init();
+				setup_selected = -1;
+			}
+			if (setup_selected != 0) setup_selected = setup_menu(setup_selected);
+
+			osd_update_display();
+			osd_update_audio();
+
+			if (!osd_key_pressed(OSD_KEY_PAUSE)) pressed = 0;
+		}
+
+		osd_sound_enable(1);
+		osd_set_brightness(orig_brt);
+	}
+
+
+	/* if the user pressed F4, show the character set */
+	if (osd_key_pressed_memory(OSD_KEY_SHOW_GFX))
+	{
+		osd_sound_enable(0);
+
+		while (osd_key_pressed(OSD_KEY_SHOW_GFX))
+			osd_update_audio();     /* give time to the sound hardware to apply the volume change */
+
+		showcharset();
+
+		osd_sound_enable(1);
+	}
+
+
+	/* if the user pressed F12, save the screen to a file */
+	if (osd_key_pressed_memory(OSD_KEY_SNAPSHOT))
+		osd_save_snapshot();
+
+	return 0;
 }

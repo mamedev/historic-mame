@@ -403,6 +403,7 @@ struct GameDriver monymony_driver =
 	"Nicola Salmoria",
 	0,
 	&machine_driver,
+	0,
 
 	monymony_rom,
 	0, 0,
@@ -428,6 +429,7 @@ struct GameDriver jackrabt_driver =
 	"Nicola Salmoria",
 	0,
 	&machine_driver,
+	0,
 
 	jackrabt_rom,
 	0, 0,

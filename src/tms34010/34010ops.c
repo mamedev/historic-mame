@@ -9,10 +9,10 @@
 /* clears flags */
 #define CLR_V (V_FLAG = 0)
 
-#define ZEXTEND(val,width) if (width) (val) &= ((unsigned int)0xffffffff>>(32-(width)))
+#define ZEXTEND(val,width) if (width) (val) &= ((UINT32)0xffffffff>>(32-(width)))
 #define EXTEND(val,width)  if (width)														  \
 						   {																  \
-						       (val) &= ((unsigned int)0xffffffff>>(32-(width))); 			  \
+						       (val) &= ((UINT32)0xffffffff>>(32-(width))); 			 	  \
 							   (val) |= (((val)&(1<<((width)-1)))?((0xffffffff)<<(width)):0); \
 						   }
 #define EXTEND_B(val) EXTEND(val,8)
@@ -26,19 +26,19 @@
 #define SET_NZ(val) {SET_Z(val); SET_N(val);}
 #define SET_V_SUB(a,b,r) (V_FLAG = ((SIGN(a)!=SIGN(b))&&(SIGN(a)!=SIGN(r))))
 #define SET_V_ADD(a,b,r) (V_FLAG = ((SIGN(a)==SIGN(b))&&(SIGN(a)!=SIGN(r))))
-#define SET_C_SUB(a,b)  (C_FLAG = (((unsigned int)  (b)) >((unsigned int)(a))))
-#define SET_C_ADD(a,b)  (C_FLAG = (((unsigned int)(~(a)))<((unsigned int)(b))))
+#define SET_C_SUB(a,b)  (C_FLAG = (((UINT32)  (b)) >((UINT32)(a))))
+#define SET_C_ADD(a,b)  (C_FLAG = (((UINT32)(~(a)))<((UINT32)(b))))
 #define SET_NZV_SUB(a,b,r)   {SET_NZ(r);SET_V_SUB(a,b,r);}
 #define SET_NZCV_SUB(a,b,r)  {SET_NZV_SUB(a,b,r);SET_C_SUB(a,b);}
 #define SET_NZCV_ADD(a,b,r)  {SET_NZ(r);SET_V_ADD(a,b,r);SET_C_ADD(a,b);}
 
 /* XY manipulation macros */
 
-#define GET_X(val) ((signed short)((val) & 0xffff))
-#define GET_Y(val) ((signed short)(((unsigned int)(val)) >> 16))
-#define COMBINE_XY(x,y) (((unsigned int)((unsigned short)(x))) | (((unsigned int)(y)) << 16))
-#define XYTOL(val) ((((int)((unsigned short)GET_Y(val)) <<state.xytolshiftcount1) | \
-				    (((int)((unsigned short)GET_X(val)))<<state.xytolshiftcount2)) + OFFSET)
+#define GET_X(val) ((INT16)((val) & 0xffff))
+#define GET_Y(val) ((INT16)(((UINT32)(val)) >> 16))
+#define COMBINE_XY(x,y) (((UINT32)((UINT16)(x))) | (((UINT16)(y)) << 16))
+#define XYTOL(val) ((((INT32)((UINT16)GET_Y(val)) <<state.xytolshiftcount1) | \
+				    (((INT32)((UINT16)GET_X(val)))<<state.xytolshiftcount2)) + OFFSET)
 
 
 static void unimpl(void)
@@ -54,9 +54,9 @@ static void unimpl(void)
 static void adjust_xy_to_window(void)
 {
 	/* Window clipping mode 3 */
-	signed short  sx, sy, ex, ey;
-	signed short wsx,wsy,wex,wey;
-	signed short csx,csy,cex,cey;
+	INT16  sx, sy, ex, ey;
+	INT16 wsx,wsy,wex,wey;
+	INT16 csx,csy,cex,cey;
 
 	sx = GET_X(DADDR);
 	sy = GET_Y(DADDR);
@@ -79,14 +79,14 @@ static void adjust_xy_to_window(void)
 
 static void pixblt_b_l(void)
 {
-	int boundary;
+	UINT32 boundary;
 
 	if (!P_FLAG)
 	{
 		// Setup
 		P_FLAG = 1;
-		BREG(10) = (unsigned short)GET_X(DYDX);
-		BREG(11) = (unsigned short)GET_Y(DYDX);
+		BREG(10) = (UINT16)GET_X(DYDX);
+		BREG(11) = (UINT16)GET_Y(DYDX);
 		BREG(12) = DADDR;
 		BREG(13) = SADDR;
 	}
@@ -120,8 +120,8 @@ static void pixblt_b_l(void)
 
 static void pixblt_b_xy(void)
 {
-	int boundary;
-	signed short x,y;
+	UINT32 boundary;
+	INT16 x,y;
 
 	if (!P_FLAG)
 	{
@@ -132,8 +132,8 @@ static void pixblt_b_xy(void)
 
 		// Setup
 		P_FLAG = 1;
-		BREG(10) = (unsigned short)GET_X(DYDX);
-		BREG(11) = (unsigned short)GET_Y(DYDX);
+		BREG(10) = (UINT16)GET_X(DYDX);
+		BREG(11) = (UINT16)GET_Y(DYDX);
 		BREG(12) = DADDR;
 		BREG(13) = SADDR;
 	}
@@ -172,7 +172,7 @@ static void pixblt_b_xy(void)
 
 static void pixblt_l_l(void)
 {
-	int boundary;
+	UINT32 boundary;
 
 	if (!P_FLAG)
 	{
@@ -187,8 +187,8 @@ static void pixblt_l_l(void)
 			SADDR += BREG(14);
 		}
 
-		BREG(10) = (unsigned short)GET_X(DYDX);
-		BREG(11) = (unsigned short)GET_Y(DYDX);
+		BREG(10) = (UINT16)GET_X(DYDX);
+		BREG(11) = (UINT16)GET_Y(DYDX);
 		BREG(12) = DADDR;
 		BREG(13) = SADDR;
 	}
@@ -231,16 +231,13 @@ static void pixblt_l_l(void)
 
 static void pixblt_l_xy(void)
 {
-	int boundary;
+	UINT32 boundary;
 
-	signed short x,y;
+	INT16 x,y;
 
-	if (PBH || PBV)
+	if ((PBH || PBV) && errorlog)
 	{
-		if (state.window_checking && errorlog)
-		{
-			fprintf(errorlog, "PIXBLT L,XY  %08X - Corner Adjust not supported\n", PC);
-		}
+		fprintf(errorlog, "PIXBLT L,XY  %08X - Corner Adjust not supported\n", PC);
 	}
 
 	if (!P_FLAG)
@@ -252,8 +249,8 @@ static void pixblt_l_xy(void)
 
 		// Setup
 		P_FLAG = 1;
-		BREG(10) = (unsigned short)GET_X(DYDX);
-		BREG(11) = (unsigned short)GET_Y(DYDX);
+		BREG(10) = (UINT16)GET_X(DYDX);
+		BREG(11) = (UINT16)GET_Y(DYDX);
 		BREG(12) = DADDR;
 		BREG(13) = SADDR;
 	}
@@ -291,24 +288,21 @@ static void pixblt_l_xy(void)
 
 static void pixblt_xy_l(void)
 {
-	int boundary;
+	UINT32 boundary;
 
-	signed short x,y;
+	INT16 x,y;
 
-	if (PBH || PBV)
+	if ((PBH || PBV) && errorlog)
 	{
-		if (state.window_checking && errorlog)
-		{
-			fprintf(errorlog, "PIXBLT XY,L  %08X - Corner Adjust not supported\n", PC);
-		}
+		fprintf(errorlog, "PIXBLT XY,L  %08X - Corner Adjust not supported\n", PC);
 	}
 
 	if (!P_FLAG)
 	{
 		// Setup
 		P_FLAG = 1;
-		BREG(10) = (unsigned short)GET_X(DYDX);
-		BREG(11) = (unsigned short)GET_Y(DYDX);
+		BREG(10) = (UINT16)GET_X(DYDX);
+		BREG(11) = (UINT16)GET_Y(DYDX);
 		BREG(12) = DADDR;
 		BREG(13) = SADDR;
 	}
@@ -346,16 +340,13 @@ static void pixblt_xy_l(void)
 
 static void pixblt_xy_xy(void)
 {
-	int boundary;
+	UINT32 boundary;
 
-	signed short x,y;
+	INT16 x,y;
 
-	if (PBH || PBV)
+	if ((PBH || PBV) && errorlog)
 	{
-		if (state.window_checking && errorlog)
-		{
-			fprintf(errorlog, "PIXBLT XY,XY  %08X - Corner Adjust not supported\n", PC);
-		}
+		fprintf(errorlog, "PIXBLT XY,XY  %08X - Corner Adjust not supported\n", PC);
 	}
 
 	if (!P_FLAG)
@@ -367,8 +358,8 @@ static void pixblt_xy_xy(void)
 
 		// Setup
 		P_FLAG = 1;
-		BREG(10) = (unsigned short)GET_X(DYDX);
-		BREG(11) = (unsigned short)GET_Y(DYDX);
+		BREG(10) = (UINT16)GET_X(DYDX);
+		BREG(11) = (UINT16)GET_Y(DYDX);
 		BREG(12) = DADDR;
 		BREG(13) = SADDR;
 	}
@@ -410,14 +401,14 @@ static void pixblt_xy_xy(void)
 
 static void fill_l(void)
 {
-	int boundary;
+	UINT32 boundary;
 
 	if (!P_FLAG)
 	{
 		// Setup
 		P_FLAG = 1;
-		BREG(10) = (unsigned short)GET_X(DYDX);
-		BREG(11) = (unsigned short)GET_Y(DYDX);
+		BREG(10) = (UINT16)GET_X(DYDX);
+		BREG(11) = (UINT16)GET_Y(DYDX);
 		BREG(12) = DADDR;
 	}
 
@@ -448,9 +439,9 @@ static void fill_l(void)
 
 static void fill_xy(void)
 {
-	int boundary;
+	UINT32 boundary;
 
-	signed short x,y;
+	INT16 x,y;
 	if (!P_FLAG)
 	{
 		switch (state.window_checking)
@@ -463,12 +454,12 @@ static void fill_xy(void)
 		}
 
 		// Setup
-		BREG(10) = (unsigned short)GET_X(DYDX);
-		BREG(11) = (unsigned short)GET_Y(DYDX);
+		BREG(10) = (UINT16)GET_X(DYDX);
+		BREG(11) = (UINT16)GET_Y(DYDX);
 		BREG(12) = DADDR;
 
-		if ((signed short)BREG(10)<=0 ||
-			(signed short)BREG(11)<=0)
+		if ((INT16)BREG(10)<=0 ||
+			(INT16)BREG(11)<=0)
 		{
 			return;
 		}
@@ -507,7 +498,7 @@ static void fill_xy(void)
 
 static void line(void)
 {
-	int algorithm = state.op & 0x80;
+	UINT32 algorithm = state.op & 0x80;
 
 	if (!P_FLAG)
 	{
@@ -520,7 +511,7 @@ static void line(void)
 	P_FLAG = 1;
 	if (COUNT > 0)
 	{
-		signed short x1,x2,y1,y2,newx,newy;
+		INT16 x1,x2,y1,y2,newx,newy;
 
 		COUNT--;
 		WPIXEL(XYTOL(DADDR),COLOR1);
@@ -551,12 +542,12 @@ static void line(void)
 
 #define ADD_XY(R)								\
 {												\
-	signed short x1 = GET_X(R##REG(DSTREG));	\
-	signed short y1 = GET_Y(R##REG(DSTREG));	\
-	signed short x2 = GET_X(R##REG(SRCREG));	\
-	signed short y2 = GET_Y(R##REG(SRCREG));	\
-	signed short newx = x1+x2;					\
-	signed short newy = y1+y2;					\
+	INT16 x1 = GET_X(R##REG(DSTREG));			\
+	INT16 y1 = GET_Y(R##REG(DSTREG));			\
+	INT16 x2 = GET_X(R##REG(SRCREG));			\
+	INT16 y2 = GET_Y(R##REG(SRCREG));			\
+	INT16 newx = x1+x2;							\
+	INT16 newy = y1+y2;							\
 	R##REG(DSTREG) = COMBINE_XY(newx,newy);		\
 	   N_FLAG = !newx;							\
 	NOTZ_FLAG =  newy;							\
@@ -569,12 +560,12 @@ static void add_xy_b(void) { ADD_XY(B); }
 
 #define SUB_XY(R)								\
 {												\
-	signed short x1 = GET_X(R##REG(DSTREG));	\
-	signed short y1 = GET_Y(R##REG(DSTREG));	\
-	signed short x2 = GET_X(R##REG(SRCREG));	\
-	signed short y2 = GET_Y(R##REG(SRCREG));	\
-	signed short newx = x1-x2;					\
-	signed short newy = y1-y2;					\
+	INT16 x1 = GET_X(R##REG(DSTREG));			\
+	INT16 y1 = GET_Y(R##REG(DSTREG));			\
+	INT16 x2 = GET_X(R##REG(SRCREG));			\
+	INT16 y2 = GET_Y(R##REG(SRCREG));			\
+	INT16 newx = x1-x2;							\
+	INT16 newy = y1-y2;							\
 	R##REG(DSTREG) = COMBINE_XY(newx,newy);		\
 	   N_FLAG = (x2 == x1);						\
 	   C_FLAG = (y2 >  y1);						\
@@ -587,12 +578,12 @@ static void sub_xy_b(void) { SUB_XY(B); }
 
 #define CMP_XY(R)								\
 {												\
-	signed short x1 = GET_X(R##REG(DSTREG));	\
-	signed short y1 = GET_Y(R##REG(DSTREG));	\
-	signed short x2 = GET_X(R##REG(SRCREG));	\
-	signed short y2 = GET_Y(R##REG(SRCREG));	\
-	signed short newx = x1-x2;					\
-	signed short newy = y1-y2;					\
+	INT16 x1 = GET_X(R##REG(DSTREG));			\
+	INT16 y1 = GET_Y(R##REG(DSTREG));			\
+	INT16 x2 = GET_X(R##REG(SRCREG));			\
+	INT16 y2 = GET_Y(R##REG(SRCREG));			\
+	INT16 newx = x1-x2;							\
+	INT16 newy = y1-y2;							\
 	   N_FLAG = !newx;							\
 	NOTZ_FLAG =  newy;							\
 	   V_FLAG = (newx & 0x8000);				\
@@ -603,13 +594,13 @@ static void cmp_xy_b(void) { CMP_XY(B); }
 
 #define CPW(R)										\
 {													\
-	int res = 0;									\
-	signed short x       = GET_X(R##REG(SRCREG));	\
-	signed short y       = GET_Y(R##REG(SRCREG));	\
-	signed short wstartx = GET_X(WSTART);			\
-	signed short wstarty = GET_Y(WSTART);			\
-	signed short wendx   = GET_X(WEND);				\
-	signed short wendy   = GET_Y(WEND);				\
+	INT32 res = 0;									\
+	INT16 x       = GET_X(R##REG(SRCREG));			\
+	INT16 y       = GET_Y(R##REG(SRCREG));			\
+	INT16 wstartx = GET_X(WSTART);					\
+	INT16 wstarty = GET_Y(WSTART);					\
+	INT16 wendx   = GET_X(WEND);					\
+	INT16 wendy   = GET_Y(WEND);					\
 													\
 	res |= ((wstartx > x) ? 0x20  : 0);				\
 	res |= ((x > wendx)   ? 0x40  : 0);				\
@@ -631,8 +622,8 @@ static void cvxyl_b(void) { CVXYL(B); }
 
 #define MOVX(R)										\
 {													\
-	signed short x = GET_X(R##REG(SRCREG));			\
-	signed short y = GET_Y(R##REG(DSTREG));			\
+	INT16 x = GET_X(R##REG(SRCREG));				\
+	INT16 y = GET_Y(R##REG(DSTREG));				\
 	R##REG(DSTREG) = COMBINE_XY(x,y);				\
 	COPY_##R##SP;									\
 }
@@ -641,8 +632,8 @@ static void movx_b(void) { MOVX(B); }
 
 #define MOVY(R)										\
 {													\
-	signed short x = GET_X(R##REG(DSTREG));			\
-	signed short y = GET_Y(R##REG(SRCREG));			\
+	INT16 x = GET_X(R##REG(DSTREG));				\
+	INT16 y = GET_Y(R##REG(SRCREG));				\
 	R##REG(DSTREG) = COMBINE_XY(x,y);				\
 	COPY_##R##SP;									\
 }
@@ -706,7 +697,7 @@ static void pixt_ixyixy_b(void) { PIXT_IXYIXY(B); }
 
 #define DRAV(R)			              			      		\
 {															\
-	signed short x1,y1,x2,y2,newx,newy;						\
+	INT16 x1,y1,x2,y2,newx,newy;							\
 															\
 	if (state.window_checking && errorlog)					\
 	{														\
@@ -732,7 +723,7 @@ static void drav_b(void) { DRAV(B); }
 /* General Instructions */
 #define ABS(R)			              			      		\
 {															\
-	int r;		  											\
+	INT32 r;		  										\
 	r = 0 - R##REG(DSTREG);									\
 	SET_NZV_SUB(0,R##REG(DSTREG),r);						\
 	if (!N_FLAG)											\
@@ -746,7 +737,7 @@ static void abs_b(void) { ABS(B); }
 
 #define ADD(R)			              			      		\
 {							 								\
-	int t,r;												\
+	INT32 t,r;												\
 	t = R##REG(SRCREG);										\
 	r = t + R##REG(DSTREG);									\
 	SET_NZCV_ADD(t,R##REG(DSTREG),r);						\
@@ -760,7 +751,7 @@ static void add_b(void) { ADD(B); }
 {			  												\
 	/* I'm not sure to which side the carry is added to, should	*/	\
 	/* verify it against the examples */					\
-	int t,r;												\
+	INT32 t,r;												\
 	t = R##REG(SRCREG) + (C_FLAG?1:0);						\
 	r = t + R##REG(DSTREG);									\
 	SET_NZCV_ADD(t,R##REG(DSTREG),r);						\
@@ -772,7 +763,7 @@ static void addc_b(void) { ADDC(B); }
 
 #define ADDI_W(R)			              			      	\
 {			  												\
-	int t,r;												\
+	INT32 t,r;												\
 	t = PARAM_WORD;											\
 	EXTEND_W(t);											\
 	r = t + R##REG(DSTREG);									\
@@ -785,7 +776,7 @@ static void addi_w_b(void) { ADDI_W(B); }
 
 #define ADDI_L(R)			              			      	\
 {			  												\
-	int t,r;												\
+	INT32 t,r;												\
 	t = PARAM_LONG();										\
 	r = t + R##REG(DSTREG);									\
 	SET_NZCV_ADD(t,R##REG(DSTREG),r);						\
@@ -797,7 +788,7 @@ static void addi_l_b(void) { ADDI_L(B); }
 
 #define ADDK(R)				              			      	\
 {			  												\
-	int t,r;												\
+	INT32 t,r;												\
 	t = PARAM_K; if (!t) t = 32;							\
 	r = t + R##REG(DSTREG);									\
 	SET_NZCV_ADD(t,R##REG(DSTREG),r);						\
@@ -855,7 +846,7 @@ static void clrc(void)
 
 #define CMP(R)				       		       			    \
 {															\
-	int r;													\
+	INT32 r;												\
 	r = R##REG(DSTREG) - R##REG(SRCREG);					\
 	SET_NZCV_SUB(R##REG(DSTREG),R##REG(SRCREG),r);			\
 }
@@ -864,7 +855,7 @@ static void cmp_b(void) { CMP(B); }
 
 #define CMPI_W(R)			       		       			    \
 {															\
-	int t,r;												\
+	INT32 t,r;												\
 	t = ~PARAM_WORD;										\
 	EXTEND_W(t);											\
 	r = R##REG(DSTREG) - t;									\
@@ -875,7 +866,7 @@ static void cmpi_w_b(void) { CMPI_W(B); }
 
 #define CMPI_L(R)			       		       			    \
 {															\
-	int t,r;												\
+	INT32 t,r;												\
 	t = ~PARAM_LONG();										\
 	r = R##REG(DSTREG) - t;									\
 	SET_NZCV_SUB(R##REG(DSTREG),t,r);						\
@@ -890,30 +881,43 @@ static void dint(void)
 
 #define DIVS(R)			       		       			    	\
 {															\
+	V_FLAG = N_FLAG = 0;									\
+	NOTZ_FLAG = 1;											\
 	if (!(DSTREG & 0x01))									\
 	{														\
-		if (errorlog) fprintf(errorlog,"64-bit signed divides are not implemented!\n");	\
-        unimpl();											\
+		if (!R##REG(SRCREG))								\
+		{													\
+			V_FLAG = 1;										\
+		}													\
+		else												\
+		{													\
+			INT64 dividend  = COMBINE_64_32_32(R##REG(DSTREG), R##REG(DSTREG+1));	\
+			INT64 quotient  = DIV_64_64_32(dividend, R##REG(SRCREG)); 				\
+			INT32 remainder = MOD_32_64_32(dividend, R##REG(SRCREG)); 				\
+			UINT32 signbits = ((quotient & 0x80000000) ? 0xffffffff : 0); 			\
+			if (HI32_32_64(quotient) != signbits)			\
+			{												\
+				V_FLAG = 1;									\
+			}												\
+			else											\
+			{												\
+				R##REG(DSTREG)   = quotient;				\
+				R##REG(DSTREG+1) = remainder;				\
+				SET_NZ(R##REG(DSTREG));						\
+				COPY_##R##SP;								\
+			}												\
+		}													\
 	}														\
 	else													\
 	{														\
 		if (!R##REG(SRCREG))								\
 		{													\
-			V_FLAG = NOTZ_FLAG = 1;							\
-			N_FLAG = 0;										\
+			V_FLAG = 1;										\
 		}													\
 		else												\
 		{													\
 			R##REG(DSTREG) /= R##REG(SRCREG);				\
-			if (R##REG(DSTREG) == 0x80000000) /* Can this happen in C? */ \
-			{												\
-				N_FLAG = NOTZ_FLAG = 1;						\
-				V_FLAG = 0;									\
-			}												\
-			else											\
-			{												\
-				SET_NZ(R##REG(DSTREG));						\
-			}												\
+			SET_NZ(R##REG(DSTREG));							\
 			COPY_##R##SP;									\
 		}													\
 	}														\
@@ -921,29 +925,29 @@ static void dint(void)
 static void divs_a(void) { DIVS(A); }
 static void divs_b(void) { DIVS(B); }
 
-#define TO32  (4294967296.0)
-
 #define DIVU(R)			       		       			    						\
 {										  										\
+	V_FLAG = 0;																	\
+	NOTZ_FLAG = 1;																\
 	if (!(DSTREG & 0x01))														\
 	{																			\
 		if (!R##REG(SRCREG))													\
 		{																		\
-			V_FLAG = NOTZ_FLAG = 1;												\
+			V_FLAG = 1;															\
 		}																		\
 		else																	\
 		{																		\
-			double dividend = (double)((unsigned int) R##REG(DSTREG+1) +		\
-							          ((unsigned int) R##REG(DSTREG))*TO32);	\
-			double quotient = dividend / R##REG(SRCREG);						\
-			if (quotient >= TO32)												\
+			UINT64 dividend  = COMBINE_U64_U32_U32(R##REG(DSTREG), R##REG(DSTREG+1)); \
+			UINT64 quotient  = DIV_U64_U64_U32(dividend, R##REG(SRCREG)); 		\
+			UINT32 remainder = MOD_U32_U64_U32(dividend, R##REG(SRCREG)); 		\
+			if (HI32_U32_U64(quotient) != 0)									\
 			{																	\
-				V_FLAG = NOTZ_FLAG = 1;											\
+				V_FLAG = 1;														\
 			}																	\
 			else																\
 			{																	\
-				R##REG(DSTREG)   = (unsigned int)quotient;						\
-				R##REG(DSTREG+1) = (unsigned int)(dividend - (double)R##REG(SRCREG) * R##REG(DSTREG));	\
+				R##REG(DSTREG)   = quotient;									\
+				R##REG(DSTREG+1) = remainder;									\
 				SET_Z(R##REG(DSTREG));											\
 				COPY_##R##SP;													\
 			}																	\
@@ -953,11 +957,11 @@ static void divs_b(void) { DIVS(B); }
 	{																			\
 		if (!R##REG(SRCREG))													\
 		{																		\
-			V_FLAG = NOTZ_FLAG = 1;												\
+			V_FLAG = 1;															\
 		}																		\
 		else																	\
 		{																		\
-			R##REG(DSTREG) = (unsigned int)R##REG(DSTREG) / (unsigned int)R##REG(SRCREG);  \
+			R##REG(DSTREG) = (UINT32)R##REG(DSTREG) / (UINT32)R##REG(SRCREG);  	\
 			SET_Z(R##REG(DSTREG));												\
 			COPY_##R##SP;														\
 		}																		\
@@ -973,7 +977,7 @@ static void eint(void)
 
 #define EXGF(F,R)			       		       			    	\
 {																\
-	int temp = (FE##F##_FLAG ? 0x20 : 0) | FW(F);				\
+	UINT32 temp = (FE##F##_FLAG ? 0x20 : 0) | FW(F);			\
 	FE##F##_FLAG = (R##REG(DSTREG)&0x20);						\
 	FW(F) = (R##REG(DSTREG)&0x1f);								\
 	SET_FW();													\
@@ -987,7 +991,7 @@ static void exgf1_b(void) { EXGF(1,B); }
 
 #define LMO(R)			       		       			    		\
 {																\
-	int r,i;													\
+	UINT32 r,i;													\
 	r = R##REG(SRCREG);											\
 	SET_Z(r);													\
 	if (r)														\
@@ -1013,8 +1017,8 @@ static void lmo_b(void) { LMO(B); }
 
 #define MMFM(R)			       		       			    		\
 {																\
-	int i;														\
-	unsigned int l = (unsigned int) PARAM_WORD;					\
+	INT32 i;													\
+	UINT32 l = (UINT32) PARAM_WORD;								\
   	for (i = 15; i >= 0 ; i--)									\
 	{															\
 		if (l & 0x8000)											\
@@ -1031,9 +1035,9 @@ static void mmfm_b(void) { MMFM(B); }
 
 #define MMTM(R)			       		       			    		\
 {			  													\
-	int i;														\
-	unsigned int l = (unsigned int) PARAM_WORD;					\
-	int bitaddr = R##REG(DSTREG);								\
+	UINT32 i;													\
+	UINT32 l = (UINT32) PARAM_WORD;								\
+	UINT32 bitaddr = R##REG(DSTREG);							\
 	SET_N(bitaddr^0x80000000);									\
   	for (i = 0; i  < 16; i++)									\
 	{															\
@@ -1072,7 +1076,7 @@ static void mods_b(void) { MODS(B); }
 	if (R##REG(SRCREG) != 0)									\
 	{															\
 		CLR_V;													\
-		R##REG(DSTREG) = (unsigned int)R##REG(DSTREG) % (unsigned int)R##REG(SRCREG);	\
+		R##REG(DSTREG) = (UINT32)R##REG(DSTREG) % (UINT32)R##REG(SRCREG);	\
 		SET_Z(R##REG(DSTREG));									\
 		COPY_##R##SP;											\
 	}															\
@@ -1086,62 +1090,56 @@ static void modu_b(void) { MODU(B); }
 
 #define MPYS(R)			       		       			    		\
 {																\
-	int m1;														\
+	INT32 m1;													\
 																\
 	m1 = R##REG(SRCREG);										\
 	EXTEND(m1, FW(1));											\
 																\
 	if (!(DSTREG & 0x01))										\
 	{															\
-		double factor1 = (double)m1;							\
-		double factor2 = (double)R##REG(DSTREG);				\
-		double product = factor1 * factor2;						\
-		R##REG(DSTREG) = (int)(product/TO32);					\
-		R##REG(DSTREG+1) = (int)product;						\
-		SET_Z(R##REG(DSTREG)|R##REG(DSTREG+1));					\
+		INT64 product = MUL_64_32_32(m1, R##REG(DSTREG));		\
+		R##REG(DSTREG)   = HI32_32_64(product);					\
+		R##REG(DSTREG+1) = LO32_32_64(product);					\
+		SET_Z(product!=0);										\
 		SET_N(R##REG(DSTREG));									\
-		COPY_##R##SP;											\
 	}															\
 	else														\
 	{															\
 		R##REG(DSTREG) *= m1;									\
 		SET_NZ(R##REG(DSTREG));									\
-		COPY_##R##SP;											\
 	}															\
+	COPY_##R##SP;												\
 }
 static void mpys_a(void) { MPYS(A); }
 static void mpys_b(void) { MPYS(B); }
 
 #define MPYU(R)			       		       			    		\
 {				  												\
-	unsigned int m1;											\
+	UINT32 m1;													\
 																\
 	m1 = R##REG(SRCREG);										\
 	ZEXTEND(m1, FW(1));											\
 																\
 	if (!(DSTREG & 0x01))										\
 	{															\
-		double factor1 = (double)m1;							\
-		double factor2 = (double)(unsigned int)R##REG(DSTREG);	\
-		double product = factor1 * factor2;						\
-		R##REG(DSTREG) = (unsigned int)(product/TO32);			\
-		R##REG(DSTREG+1) = (unsigned int)product;				\
-		SET_Z(R##REG(DSTREG)|R##REG(DSTREG+1));					\
-		COPY_##R##SP;											\
+		UINT64 product = MUL_U64_U32_U32(m1, R##REG(DSTREG));	\
+		R##REG(DSTREG)   = HI32_U32_U64(product);				\
+		R##REG(DSTREG+1) = LO32_U32_U64(product);				\
+		SET_Z(product!=0);										\
 	}															\
 	else														\
 	{															\
-		R##REG(DSTREG) = (unsigned int)R##REG(DSTREG) * m1;		\
+		R##REG(DSTREG) = (UINT32)R##REG(DSTREG) * m1;			\
 		SET_Z(R##REG(DSTREG));									\
-		COPY_##R##SP;											\
 	}															\
+	COPY_##R##SP;												\
 }
 static void mpyu_a(void) { MPYU(A); }
 static void mpyu_b(void) { MPYU(B); }
 
 #define NEG(R)			       		       			    		\
 {			  													\
-	int r;														\
+	INT32 r;													\
 	r = 0 - R##REG(DSTREG);										\
 	SET_NZCV_SUB(0,R##REG(DSTREG),r);							\
 	R##REG(DSTREG) = r;											\
@@ -1152,7 +1150,7 @@ static void neg_b(void) { NEG(B); }
 
 #define NEGB(R)			       		       			    		\
 {			  													\
-	int r,t;													\
+	INT32 r,t;													\
 	t = R##REG(DSTREG) + (C_FLAG?1:0);							\
 	r = 0 - t;													\
 	SET_NZCV_SUB(0,t,r);										\
@@ -1195,10 +1193,10 @@ static void ori_b(void) { ORI(B); }
 
 #define RL(R,K)			       		       			    		\
 {			 													\
-	int k = K;													\
+	UINT32 k = K;												\
 	if (k)														\
 	{															\
-		int b = ((unsigned int)R##REG(DSTREG))>>(32-k);			\
+		UINT32 b = ((UINT32)R##REG(DSTREG))>>(32-k);			\
 		C_FLAG = (R##REG(DSTREG)&(1<<(32-k)));					\
 		R##REG(DSTREG)<<=k;										\
 		R##REG(DSTREG)|=b;										\
@@ -1242,11 +1240,11 @@ static void sext1_b(void) { SEXT(1,B); }
 
 #define SLA(R,K)												\
 {				 												\
-	int k = K;													\
+	UINT32 k = K;												\
 	if (k)														\
 	{															\
-		int res = 0;											\
-		int mask = (0xffffffff<<(31-k))&0x7fffffff;				\
+		INT32 res = 0;											\
+		UINT32 mask = (0xffffffff<<(31-k))&0x7fffffff;			\
 		if (SIGN(R##REG(DSTREG))) res = mask;					\
 		V_FLAG = ((R##REG(DSTREG) & mask) != res);				\
 		C_FLAG =  (R##REG(DSTREG)&(1<<(32-k)));					\
@@ -1266,7 +1264,7 @@ static void sla_r_b(void) { SLA(B,BREG(SRCREG)&0x1f); }
 
 #define SLL(R,K)												\
 {			 													\
-	int k = K;													\
+	UINT32 k = K;													\
 	if (k)														\
 	{															\
 		C_FLAG = (R##REG(DSTREG)&(1<<(32-k)));					\
@@ -1286,7 +1284,7 @@ static void sll_r_b(void) { SLL(B,BREG(SRCREG)&0x1f); }
 
 #define SRA(R,K)												\
 {			  													\
-	int k = (32-(K)) & 0x1f;									\
+	UINT32 k = (32-(K)) & 0x1f;									\
 	if (k)														\
 	{															\
 		C_FLAG = (R##REG(DSTREG)&(1<<(k-1)));					\
@@ -1306,11 +1304,11 @@ static void sra_r_b(void) { SRA(B,BREG(SRCREG)); }
 
 #define SRL(R,K)												\
 {																\
-	int k = (32-(K)) & 0x1f;									\
+	UINT32 k = (32-(K)) & 0x1f;									\
 	if (k)														\
 	{															\
 		C_FLAG = (R##REG(DSTREG)&(1<<(k-1)));					\
-		R##REG(DSTREG) = ((unsigned int)R##REG(DSTREG)) >> k;	\
+		R##REG(DSTREG) = ((UINT32)R##REG(DSTREG)) >> k;			\
 		COPY_##R##SP;											\
 	}															\
 	else														\
@@ -1326,7 +1324,7 @@ static void srl_r_b(void) { SRL(B,BREG(SRCREG)); }
 
 #define SUB(R)			       		       			    		\
 {			  													\
-	int r;														\
+	INT32 r;													\
 	r = R##REG(DSTREG) - R##REG(SRCREG);						\
 	SET_NZCV_SUB(R##REG(DSTREG),R##REG(SRCREG),r);				\
 	R##REG(DSTREG) = r;											\
@@ -1337,7 +1335,7 @@ static void sub_b(void) { SUB(B); }
 
 #define SUBB(R)			       		       			    		\
 {			  													\
-	int r,t;													\
+	INT32 r,t;													\
 	t = R##REG(SRCREG) + (C_FLAG?1:0);							\
 	r = R##REG(DSTREG) - t;										\
 	SET_NZCV_SUB(R##REG(DSTREG),t,r);							\
@@ -1349,7 +1347,7 @@ static void subb_b(void) { SUBB(B); }
 
 #define SUBI_W(R)			       		       			    	\
 {			  													\
-	int t,r;													\
+	INT32 t,r;													\
 	t = ~PARAM_WORD;											\
 	EXTEND_W(t);												\
 	r = R##REG(DSTREG) - t;										\
@@ -1362,7 +1360,7 @@ static void subi_w_b(void) { SUBI_W(B); }
 
 #define SUBI_L(R)			       		       			    	\
 {			  													\
-	int t,r;													\
+	INT32 t,r;													\
 	t = ~PARAM_LONG();											\
 	r = R##REG(DSTREG) - t;										\
 	SET_NZCV_SUB(R##REG(DSTREG),t,r);							\
@@ -1374,7 +1372,7 @@ static void subi_l_b(void) { SUBI_L(B); }
 
 #define SUBK(R)			       		       			    		\
 {			  													\
-	int t,r;													\
+	INT32 t,r;													\
 	t = PARAM_K; if (!t) t = 32;								\
 	r = R##REG(DSTREG) - t;										\
 	SET_NZCV_SUB(R##REG(DSTREG),t,r);							\
@@ -1438,7 +1436,7 @@ static void movi_l_b(void) { MOVI_L(B); }
 
 #define MOVK(R)		       		       			    			\
 {																\
-	int k = PARAM_K; if (!k) k = 32;							\
+	INT32 k = PARAM_K; if (!k) k = 32;							\
 	R##REG(DSTREG) = k;											\
 	COPY_##R##SP;												\
 }
@@ -1472,7 +1470,7 @@ static void movb_nn_b(void) { MOVB_NN(B); }
 
 #define MOVB_R_NO(R)	       		       			    		\
 {							  									\
-	int o = PARAM_WORD;											\
+	INT32 o = PARAM_WORD;										\
 	EXTEND_W(o);												\
 	WBYTE(R##REG(DSTREG)+o,R##REG(SRCREG));						\
 }
@@ -1481,7 +1479,7 @@ static void movb_r_no_b(void) { MOVB_R_NO(B); }
 
 #define MOVB_NO_R(R)	       		       			    		\
 {			  													\
-	int o = PARAM_WORD;											\
+	INT32 o = PARAM_WORD;										\
 	EXTEND_W(o);												\
 	R##REG(DSTREG) = RBYTE(R##REG(SRCREG)+o);					\
 	CLR_V;														\
@@ -1494,7 +1492,7 @@ static void movb_no_r_b(void) { MOVB_NO_R(B); }
 
 #define MOVB_NO_NO(R)	       		       			    		\
 {																\
-	int o1,o2;													\
+	INT32 o1,o2;												\
 	o1 = PARAM_WORD;											\
 	EXTEND_W(o1);												\
 	o2 = PARAM_WORD;											\
@@ -1524,7 +1522,7 @@ static void movb_ar_b(void) { MOVB_AR(B); }
 
 static void movb_aa(void)
 {
-	int bitaddrs=PARAM_LONG();
+	UINT32 bitaddrs=PARAM_LONG();
 	WBYTE(PARAM_LONG(),RBYTE(bitaddrs));
 }
 
@@ -1600,7 +1598,7 @@ static void move1_dn_r_b (void) { MOVE_DN_R(1,B); }
 
 #define MOVE_NI_R(F,R)	       		       			    		\
 {			  													\
-	int data = RFIELD##F(R##REG(SRCREG));						\
+	INT32 data = RFIELD##F(R##REG(SRCREG));						\
 	R##REG(SRCREG)+=FW_INC(F);									\
 	R##REG(DSTREG) = data;										\
 	EXTEND_F##F(R##REG(DSTREG));								\
@@ -1624,7 +1622,7 @@ static void move1_nn_b (void) { MOVE_NN(1,B); }
 
 #define MOVE_DN_DN(F,R)	       		       			    		\
 {			  													\
-	int data;													\
+	INT32 data;													\
 	R##REG(SRCREG)-=FW_INC(F);									\
 	data = RFIELD##F(R##REG(SRCREG));							\
 	R##REG(DSTREG)-=FW_INC(F);									\
@@ -1638,7 +1636,7 @@ static void move1_dn_dn_b (void) { MOVE_DN_DN(1,B); }
 
 #define MOVE_NI_NI(F,R)	       		       			    		\
 {			  													\
-	int data = RFIELD##F(R##REG(SRCREG));						\
+	INT32 data = RFIELD##F(R##REG(SRCREG));						\
 	R##REG(SRCREG)+=FW_INC(F);									\
 	WFIELD##F(R##REG(DSTREG),data);								\
 	R##REG(DSTREG)+=FW_INC(F);									\
@@ -1651,7 +1649,7 @@ static void move1_ni_ni_b (void) { MOVE_NI_NI(1,B); }
 
 #define MOVE_R_NO(F,R)	       		       			    		\
 {								  								\
-	int o = PARAM_WORD;											\
+	INT32 o = PARAM_WORD;										\
 	EXTEND_W(o);												\
 	WFIELD##F(R##REG(DSTREG)+o,R##REG(SRCREG));					\
 }
@@ -1662,7 +1660,7 @@ static void move1_r_no_b (void) { MOVE_R_NO(1,B); }
 
 #define MOVE_NO_R(F,R)	       		       			    		\
 {			  													\
-	int o = PARAM_WORD;											\
+	INT32 o = PARAM_WORD;										\
 	EXTEND_W(o);												\
 	R##REG(DSTREG) = RFIELD##F(R##REG(SRCREG)+o);				\
 	EXTEND_F##F(R##REG(DSTREG));								\
@@ -1677,8 +1675,8 @@ static void move1_no_r_b (void) { MOVE_NO_R(1,B); }
 
 #define MOVE_NO_NI(F,R)	       		       			    		\
 {			  													\
-	int data;													\
-	int o = PARAM_WORD;											\
+	INT32 data;													\
+	INT32 o = PARAM_WORD;										\
 	EXTEND_W(o);												\
 	data = RFIELD##F(R##REG(SRCREG)+o);							\
 	WFIELD##F(R##REG(DSTREG),data);								\
@@ -1692,9 +1690,9 @@ static void move1_no_ni_b (void) { MOVE_NO_NI(1,B); }
 
 #define MOVE_NO_NO(F,R)	       		       			    		\
 {				 												\
-	int data;													\
-	int o1 = PARAM_WORD;										\
-	int o2 = PARAM_WORD;										\
+	INT32 data;													\
+	INT32 o1 = PARAM_WORD;										\
+	INT32 o2 = PARAM_WORD;										\
 	EXTEND_W(o1);												\
 	EXTEND_W(o2);												\
 	data = RFIELD##F(R##REG(SRCREG)+o1);						\
@@ -1740,7 +1738,7 @@ static void move1_a_ni_b (void) { MOVE_A_NI(1,B); }
 
 #define MOVE_AA(F)		       		       			    		\
 {																\
-	int bitaddrs=PARAM_LONG();									\
+	UINT32 bitaddrs=PARAM_LONG();								\
 	WFIELD##F(PARAM_LONG(),RFIELD##F(bitaddrs));				\
 }
 static void move0_aa (void) { MOVE_AA(0); }
@@ -1759,7 +1757,7 @@ static void call_b (void) { CALL(B); }
 static void callr(void)
 {
 	PUSH(PC+0x10);
-	PC += (((signed short)PARAM_WORD)<<4);
+	PC += (((INT16)PARAM_WORD)<<4);
 }
 
 static void calla(void)
@@ -1772,7 +1770,7 @@ static void calla(void)
 {																\
 	if (--R##REG(DSTREG))										\
 	{															\
-		PC += (((signed short)PARAM_WORD)<<4);					\
+		PC += (((INT16)PARAM_WORD)<<4);							\
 	}															\
 	else														\
 	{															\
@@ -1789,7 +1787,7 @@ static void dsj_b (void) { DSJ(B); }
 	{															\
 		if (--R##REG(DSTREG))									\
 		{														\
-			PC += (((signed short)PARAM_WORD)<<4);				\
+			PC += (((INT16)PARAM_WORD)<<4);						\
 		}														\
 		else													\
 		{														\
@@ -1811,7 +1809,7 @@ static void dsjeq_b (void) { DSJEQ(B); }
 	{															\
 		if (--R##REG(DSTREG))									\
 		{														\
-			PC += (((signed short)PARAM_WORD)<<4);				\
+			PC += (((INT16)PARAM_WORD)<<4);						\
 		}														\
 		else													\
 		{														\
@@ -1849,7 +1847,7 @@ static void emu(void)
 
 #define EXGPC(R)												\
 {			  													\
-	int temppc = R##REG(DSTREG);								\
+	INT32 temppc = R##REG(DSTREG);								\
 	R##REG(DSTREG) = PC;										\
 	PC = temppc;												\
 	COPY_##R##SP;												\
@@ -1908,7 +1906,7 @@ static void getst_b (void) { GETST(B); }
 	{															\
 		if (TAKE)												\
 		{														\
-			signed short ls = (signed short) PARAM_WORD;		\
+			INT16 ls = (INT16) PARAM_WORD;						\
 			PC += (ls << 4);									\
 		}														\
 		else													\
@@ -2166,7 +2164,7 @@ static void rev_b (void) { REV(B); }
 
 static void trap(void)
 {
-	int t = PARAM_N;
+	UINT32 t = PARAM_N;
 	if (t)
 	{
 		PUSH(PC);
@@ -2175,4 +2173,3 @@ static void trap(void)
 	RESET_ST();
 	PC = RLONG(0xffffffe0-(t<<5));
 }
-

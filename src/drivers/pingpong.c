@@ -311,6 +311,7 @@ struct GameDriver pingpong_driver =
 	"Jarek Parchanski (MAME driver)\nMartin Binder (color info)",
 	GAME_IMPERFECT_COLORS,
 	&machine_driver,
+	0,
 
 	pingpong_rom,
 	0, 0,

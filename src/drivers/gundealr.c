@@ -293,6 +293,7 @@ struct GameDriver gundealr_driver =
 	"Nicola Salmoria",
 	0,
 	&machine_driver,
+	0,
 
 	gundealr_rom,
 	0, 0,

@@ -760,6 +760,7 @@ struct GameDriver dowild_driver =
 	"Mirko Buffoni\nNicola Salmoria\nGary Walton\nSimon Walls\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	dowild_rom,
 	0, 0,
@@ -785,6 +786,7 @@ struct GameDriver jjack_driver =
 	"Mirko Buffoni\nNicola Salmoria\nGary Walton\nSimon Walls\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	jjack_rom,
 	0, 0,
@@ -810,6 +812,7 @@ struct GameDriver dorunrun_driver =
 	"Mirko Buffoni\nNicola Salmoria\nGary Walton\nSimon Walls\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	dorunrun_rom,
 	0, 0,
@@ -829,12 +832,13 @@ struct GameDriver spiero_driver =
 	__FILE__,
 	&dorunrun_driver,
 	"spiero",
-	"Super Piero (Japan)",
+	"Super Pierrot (Japan)",
 	"1987",
 	"Universal",
 	"Mirko Buffoni\nNicola Salmoria\nGary Walton\nSimon Walls\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	spiero_rom,
 	0, 0,
@@ -860,6 +864,7 @@ struct GameDriver kickridr_driver =
 	"Mirko Buffoni\nNicola Salmoria\nGary Walton\nSimon Walls\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	kickridr_rom,
 	0, 0,

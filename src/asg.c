@@ -401,4 +401,32 @@ void asg_34010Trace(unsigned char *RAM, int PC) /* AJP 980802 */
 	}
 }
 
+void asg_I86Trace(unsigned char *RAM, int PC) /* AM 980925 */
+{
+	extern int DasmI86(unsigned char *pBase, char *buffer, int pc);
+
+	if (traceon && traceFile[current])
+	{
+		char temp[80];
+		int count, i;
+
+		// check for loops
+		for (i=count=0;i<LOOP_CHECK;i++)
+			if (lastPC[current][i]==PC)
+				count++;
+		if (count>1)
+			loops[current]++;
+		else
+		{
+			if (loops[current])
+				fprintf(traceFile[current],"\n   (loops for %d instructions)\n\n",loops[current]);
+			loops[current]=0;
+			DasmI86 (&RAM[PC],temp,PC);
+			fprintf(traceFile[current],"%06X: %s\n",PC,temp);
+			memmove(&lastPC[current][0],&lastPC[current][1],(LOOP_CHECK-1)*sizeof(int));
+			lastPC[current][LOOP_CHECK-1]=PC;
+		}
+	}
+}
+
 #endif

@@ -461,6 +461,7 @@ struct GameDriver gunsmoke_driver =
 	"Paul Leaman (MAME driver)\nRichard Davies\nAnders Nilsson\nMirko Buffoni\nNicola Salmoria\nPaul Swan (color info)\nJuan Carlos Lorente (high score save)",
 	0,
 	&machine_driver,
+	0,
 
 	gunsmoke_rom,
 	0, 0,
@@ -486,6 +487,7 @@ struct GameDriver gunsmrom_driver =
 	"Paul Leaman (MAME driver)\nRichard Davies\nAnders Nilsson\nMirko Buffoni\nNicola Salmoria\nPaul Swan (color info)\nJuan Carlos Lorente (high score save)",
 	0,
 	&machine_driver,
+	0,
 
 	gunsmrom_rom,
 	0, 0,
@@ -511,6 +513,7 @@ struct GameDriver gunsmokj_driver =
 	"Paul Leaman (MAME driver)\nRichard Davies\nAnders Nilsson\nMirko Buffoni\nNicola Salmoria\nPaul Swan (color info)\nJuan Carlos Lorente (high score save)",
 	0,
 	&machine_driver,
+	0,
 
 	gunsmokj_rom,
 	0, 0,

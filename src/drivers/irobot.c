@@ -377,6 +377,7 @@ struct GameDriver irobot_driver =
     "Dan Boris\nMike Balfour\nFrank Palazzolo\nBryan Smith (Tech info)",
 	GAME_NOT_WORKING,
 	&machine_driver,
+	0,
 
     irobot_rom,
 	0, 0,

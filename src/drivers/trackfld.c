@@ -625,6 +625,7 @@ struct GameDriver trackfld_driver =
 	"Chris Hardy (MAME driver)\nTim Lindquist (color info)\nTatsuyuki Satoh(speech sound)",
 	0,
 	&machine_driver,
+	0,
 
 	trackfld_rom,
 	0, trackfld_decode,
@@ -651,6 +652,7 @@ struct GameDriver hyprolym_driver =
 	"Chris Hardy (MAME driver)\nTim Lindquist (color info)\nTatsuyuki Satoh(speech sound)",
 	0,
 	&machine_driver,
+	0,
 
 	hyprolym_rom,
 	0, trackfld_decode,
@@ -676,6 +678,7 @@ struct GameDriver hyprolyb_driver =
 	"Chris Hardy (MAME driver)\nTim Lindquist (color info)\nTatsuyuki Satoh(speech sound)",
 	0,
 	&hyprolyb_machine_driver,
+	0,
 
 	hyprolyb_rom,
 	0, trackfld_decode,

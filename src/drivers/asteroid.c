@@ -807,6 +807,7 @@ struct GameDriver asteroid_driver =
 	"Brad Oliver (Mame Driver)\n"VECTOR_TEAM,
 	0,
 	&asteroid_machine_driver,
+	0,
 
 	asteroid_rom,
 	0, 0,
@@ -832,6 +833,7 @@ struct GameDriver asteroi1_driver =
 	"Brad Oliver (Mame Driver)\n"VECTOR_TEAM,
 	0,
 	&asteroid_machine_driver,
+	0,
 
 	asteroi1_rom,
 	0, 0,
@@ -894,6 +896,7 @@ struct GameDriver astdelux_driver =
 	"Brad Oliver (Mame Driver)\n"VECTOR_TEAM,
 	0,
 	&astdelux_machine_driver,
+	0,
 
 	astdelux_rom,
 	0, 0,
@@ -920,6 +923,7 @@ struct GameDriver astdelu1_driver =
 	"Brad Oliver (Mame Driver)\n"VECTOR_TEAM,
 	0,
 	&astdelux_machine_driver,
+	0,
 
 	astdelu1_rom,
 	0, 0,
@@ -977,6 +981,7 @@ struct GameDriver llander_driver =
 	"Brad Oliver (Mame Driver)\nKeith Wilkins (Sound)\n"VECTOR_TEAM,
 	0,
 	&llander_machine_driver,
+	0,
 
 	llander_rom,
 	0, 0,
@@ -1002,6 +1007,7 @@ struct GameDriver llander1_driver =
 	"Brad Oliver (Mame Driver)\nKeith Wilkins (Sound)\n"VECTOR_TEAM,
 	0,
 	&llander_machine_driver,
+	0,
 
 	llander1_rom,
 	0, 0,

@@ -463,6 +463,7 @@ struct GameDriver kangaroo_driver =
 	"Ville Laitinen (MAME driver)\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	kangaroo_rom,
 	0, 0,
@@ -488,6 +489,7 @@ struct GameDriver kangarob_driver =
 	"Ville Laitinen (MAME driver)\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	kangarob_rom,
 	0, 0,

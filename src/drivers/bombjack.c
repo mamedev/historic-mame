@@ -523,6 +523,7 @@ struct GameDriver bombjack_driver =
 	"Brad Thomas (hardware info)\nJakob Frendsen (hardware info)\nConny Melin (hardware info)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nJarek Burczynski (sound)\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	bombjack_rom,
 	0, 0,

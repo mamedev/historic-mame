@@ -663,6 +663,7 @@ struct GameDriver eprom_driver =
 	"Aaron Giles (MAME driver)\nTim Lindquist (hardware information)",
 	0,
 	&eprom_machine_driver,
+	0,
 
 	eprom_rom,
 	eprom_rom_decode,

@@ -385,6 +385,7 @@ struct GameDriver redalert_driver =
 	"Mike Balfour\nDick Milliken (Information)",
 	0,
 	&machine_driver,
+	0,
 
 	redalert_rom,
 	0, 0,

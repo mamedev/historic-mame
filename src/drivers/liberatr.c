@@ -366,6 +366,7 @@ struct GameDriver liberatr_driver =
 	"Paul Winkler",		/* credits				*/
 	0,
 	&machine_driver,	/* MachineDriver		*/
+	0,
 
 	liberator_rom,		/* RomModule			*/
 	0, 0,				/* ROM decoding fcn's	*/

@@ -279,6 +279,7 @@ struct GameDriver formatz_driver =
 	"Carlos A. Lozano",
 	GAME_NOT_WORKING,
 	&machine_driver,
+	0,
 
 	formatz_rom,
 	0, 0,
@@ -304,6 +305,7 @@ struct GameDriver aeroboto_driver =
 	"Carlos A. Lozano",
 	GAME_NOT_WORKING,
 	&machine_driver,
+	0,
 
 	aeroboto_rom,
 	0, 0,

@@ -699,6 +699,7 @@ struct GameDriver gyruss_driver =
 	"Mike Cuddy (hardware info)\nPete Ground (hardware info)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	gyruss_rom,
 	0, 0,
@@ -728,6 +729,7 @@ struct GameDriver gyrussce_driver =
 	"Mike Cuddy (hardware info)\nPete Ground (hardware info)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	gyrussce_rom,
 	0, 0,
@@ -757,6 +759,7 @@ struct GameDriver venus_driver =
 	"Mike Cuddy (hardware info)\nPete Ground (hardware info)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	venus_rom,
 	0, 0,

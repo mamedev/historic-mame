@@ -349,6 +349,7 @@ struct GameDriver stactics_driver =
     "Frank Palazzolo",
     0,
 	&machine_driver,
+	0,
 
     stactics_rom,
 	0, 0,

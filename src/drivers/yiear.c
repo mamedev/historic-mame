@@ -441,6 +441,7 @@ struct GameDriver yiear_driver =
 	"Enrique Sanchez\nPhilip Stroffolino\nMike Balfour (high score)\nTim Lindquist (color info)\nKevin Estep (sound info)\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	yiear_rom,
 	0, 0,   /* ROM decode and opcode decode functions */

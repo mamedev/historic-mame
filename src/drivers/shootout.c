@@ -371,6 +371,7 @@ struct GameDriver shootout_driver =
 	"Ernesto Corvi\nPhil Stroffolino\nZsolt Vasvari\nKevin Brisley\n",
 	0,
 	&machine_driver,
+	0,
 
 	shootout_rom,
 	0, shootout_decode,

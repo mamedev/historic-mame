@@ -443,6 +443,7 @@ struct GameDriver vulgus_driver =
 	"Paul Leaman (hardware info)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nPete Ground (color info)\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	vulgus_rom,
 	0, 0,
@@ -468,6 +469,7 @@ struct GameDriver vulgus2_driver =
 	"Paul Leaman (hardware info)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nPete Ground (color info)\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	vulgus2_rom,
 	0, 0,

@@ -300,6 +300,7 @@ struct GameDriver blockout_driver =
 	"Nicola Salmoria\nAaron Giles (ADPCM sound)",
 	0,
 	&machine_driver,
+	0,
 
 	blockout_rom,
 	0, 0,

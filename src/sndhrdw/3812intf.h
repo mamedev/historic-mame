@@ -1,6 +1,12 @@
 #ifndef YM3812INTF_H
 #define YM3812INTF_H
 
+/* Main emulated vs non-emulated switch */
+/* 0 = Use non-emulated YM3812 */
+/* 1 = Use emulated YM3812 */
+/* default value : 0 ( Use non-emulated YM3812 ) */
+extern int use_emulated_ym3812;
+
 #define MAX_3812 1
 
 struct YM3812interface

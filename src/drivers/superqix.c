@@ -326,6 +326,7 @@ struct GameDriver superqix_driver =
 	"Mirko Buffoni\nNicola Salmoria",
 	GAME_NOT_WORKING,
 	&machine_driver,
+	0,
 
 	superqix_rom,
 	0, 0,
@@ -351,6 +352,7 @@ struct GameDriver sqixbl_driver =
 	"Mirko Buffoni\nNicola Salmoria",
 	0,
 	&machine_driver,
+	0,
 
 	sqixbl_rom,
 	0, 0,

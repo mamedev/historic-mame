@@ -518,6 +518,7 @@ struct GameDriver yard_driver =
 	"Lee Taylor\nJohn Clegg\nMirko Buffoni\nNicola Salmoria\nIshmair\nTim Lindquist (color info)\nAaron Giles (sound)\nKevin Brisley (hiscores)",
 	0,
 	&machine_driver,
+	0,
 
 	yard_rom,
 	0, 0,
@@ -543,6 +544,7 @@ struct GameDriver vsyard_driver =
 	"Lee Taylor\nJohn Clegg\nMirko Buffoni\nNicola Salmoria\nIshmair\nTim Lindquist (color info)\nAaron Giles (sound)\nKevin Brisley (hiscores)",
 	0,
 	&machine_driver,
+	0,
 
 	vsyard_rom,
 	0, 0,

@@ -10,5 +10,5 @@ void InitCheat(void);
 void StopCheat(void);
 
 int cheat_menu(void);
-void DoCheat(int CurrentVolume);
+void DoCheat(void);
 

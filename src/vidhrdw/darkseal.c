@@ -38,8 +38,6 @@ in attract mode.
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-//#define PRINT_PF_ATTRIBUTES
-
 #define TEXTRAM_SIZE	0x2000	/* Size of text layer */
 #define TILERAM_SIZE	0x2000	/* Size of background and foreground */
 
@@ -56,47 +54,6 @@ static unsigned char darkseal_control_1[16];
 static int darkseal_pf1_static,darkseal_pf2_static,darkseal_pf3_static;
 static int offsetx[4],offsety[4];
 
-#ifdef PRINT_PF_ATTRIBUTES
-static void printpfattributes(void)
-{
-
-	int i,j;
-	char buf[20];
-	int trueorientation;
-	struct osd_bitmap *bitmap = Machine->scrbitmap;
-
-	trueorientation = Machine->orientation;
-	Machine->orientation = ORIENTATION_DEFAULT;
-
-
-for (i = 0;i < 8;i+=2)
-{
-	sprintf(buf,"%04X",READ_WORD(&darkseal_control_0[i]));
-	for (j = 0;j < 4;j++)
-		drawgfx(bitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j,8*5,0,TRANSPARENCY_NONE,0);
-}
-for (i = 0;i < 8;i+=2)
-{
-	sprintf(buf,"%04X",READ_WORD(&darkseal_control_0[i+8]));
-	for (j = 0;j < 4;j++)
-		drawgfx(bitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j,8*6,0,TRANSPARENCY_NONE,0);
-}
-for (i = 0;i < 8;i+=2)
-{
-	sprintf(buf,"%04X",READ_WORD(&darkseal_control_1[i]));
-	for (j = 0;j < 4;j++)
-		drawgfx(bitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j,8*8,0,TRANSPARENCY_NONE,0);
-}
-for (i = 0;i < 8;i+=2)
-{
-	sprintf(buf,"%04X",READ_WORD(&darkseal_control_1[i+8]));
-	for (j = 0;j < 4;j++)
-		drawgfx(bitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j,8*9,0,TRANSPARENCY_NONE,0);
-}
-
-
-}
-#endif
 
 /******************************************************************************/
 
@@ -461,10 +418,6 @@ void darkseal_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	scrollx = -READ_WORD(&darkseal_control_1[6]);
 	scrolly = -READ_WORD(&darkseal_control_1[8]);
 	copyscrollbitmap(bitmap,darkseal_pf1_bitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_PEN,palette_transparent_pen);
-
-  #ifdef PRINT_PF_ATTRIBUTES
-	printpfattributes();
-  #endif
 }
 
 /******************************************************************************/

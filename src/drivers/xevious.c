@@ -1023,6 +1023,7 @@ struct GameDriver xevious_driver =
 	"Mirko Buffoni\nTatsuyuki Satoh\nNicola Salmoria\nValerio Verrando (high score save)",
 	0,
 	&machine_driver,
+	0,
 
 	xevious_rom,
 	0, 0,
@@ -1048,6 +1049,7 @@ struct GameDriver xeviousa_driver =
 	"Mirko Buffoni\nTatsuyuki Satoh\nNicola Salmoria\nValerio Verrando (high score save)",
 	0,
 	&machine_driver,
+	0,
 
 	xeviousa_rom,
 	0, 0,
@@ -1073,6 +1075,7 @@ struct GameDriver xevios_driver =
 	"Mirko Buffoni\nTatsuyuki Satoh\nNicola Salmoria\nValerio Verrando (high score save)",
 	0,
 	&machine_driver,
+	0,
 
 	xevios_rom,
 	xevios_decode, 0,
@@ -1098,6 +1101,7 @@ struct GameDriver sxevious_driver =
 	"Mirko Buffoni\nTatsuyuki Satoh\nNicola Salmoria\nValerio Verrando (high score save)",
 	0,
 	&machine_driver,
+	0,
 
 	sxevious_rom,
 	0, 0,

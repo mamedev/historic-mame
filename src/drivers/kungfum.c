@@ -417,7 +417,7 @@ static struct MachineDriver machine_driver =
 	0,
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
+	32*8, 32*8, { 0*8, 32*8-1, 0*8, 31*8-1 },
 	gfxdecodeinfo,
 	512, 512,
 	kungfum_vh_convert_color_prom,
@@ -582,6 +582,7 @@ struct GameDriver kungfum_driver =
 	"Mirko Buffoni\nNicola Salmoria\nIshmair\nPaul Swan\nAaron Giles (sound)\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	kungfum_rom,
 	0, 0,
@@ -607,6 +608,7 @@ struct GameDriver kungfub_driver =
 	"Mirko Buffoni\nNicola Salmoria\nIshmair\nPaul Swan\nAaron Giles (sound)\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	kungfub_rom,
 	0, 0,

@@ -355,6 +355,7 @@ struct GameDriver snowbros_driver =
 	"Richard Bush (Raine & Info)\nMike Coates (MAME Driver)",
 	0,
 	&machine_driver,
+	0,
 
 	snowbros_rom,
 	0, 0,

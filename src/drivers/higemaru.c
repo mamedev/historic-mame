@@ -292,6 +292,7 @@ struct GameDriver higemaru_driver =
 	"Mirko Buffoni\nNicola Salmoria",
 	0,
 	&machine_driver,
+	0,
 
 	higemaru_rom,
 	0, 0,

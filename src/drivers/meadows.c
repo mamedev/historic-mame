@@ -613,6 +613,7 @@ struct GameDriver deadeye_driver =
 	"Juergen Buchmueller\n",
 	0,
 	&deadeye_machine_driver,
+	0,
 
 	deadeye_rom,
 	0,
@@ -641,6 +642,7 @@ struct GameDriver gypsyjug_driver =
 	"Juergen Buchmueller\n",
 	0,
 	&gypsyjug_machine_driver,
+	0,
 
 	gypsyjug_rom,
 	gypsyjug_rom_decode,

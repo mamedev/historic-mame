@@ -557,6 +557,7 @@ struct GameDriver pengo_driver =
 	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)\nSergio Munoz (color and sound info)",
 	0,
 	&machine_driver,
+	0,
 
 	pengo_rom,
 	0, pengo_decode,
@@ -582,6 +583,7 @@ struct GameDriver pengo2_driver =
 	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)\nSergio Munoz (color and sound info)",
 	0,
 	&machine_driver,
+	0,
 
 	pengo2_rom,
 	0, pengo_decode,
@@ -607,6 +609,7 @@ struct GameDriver pengo2u_driver =
 	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)\nSergio Munoz (color and sound info)\nGerrit Van Goethem (high score fix)",
 	0,
 	&machine_driver,
+	0,
 
 	pengo2u_rom,
 	0, 0,
@@ -632,6 +635,7 @@ struct GameDriver penta_driver =
 	"Allard van der Bas (original code)\nNicola Salmoria (MAME driver)\nSergio Munoz (color and sound info)",
 	0,
 	&machine_driver,
+	0,
 
 	penta_rom,
 	0, penta_decode,

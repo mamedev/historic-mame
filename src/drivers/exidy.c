@@ -1507,6 +1507,7 @@ struct GameDriver sidetrac_driver =
 	"Marc LaFontaine\nBrian Levine\nMike Balfour",
 	0,
 	&targ_machine_driver,
+	0,
 
 	sidetrac_rom,
 	0, 0,
@@ -1533,6 +1534,7 @@ struct GameDriver targ_driver =
 	"Neil Bradley (hardware info)\nDan Boris (adaptation of Venture driver)",
 	0,
 	&targ_machine_driver,
+	0,
 
 	targ_rom,
 	0, 0,
@@ -1559,6 +1561,7 @@ struct GameDriver spectar_driver =
 	"Neil Bradley (hardware info)\nDan Boris (adaptation of Venture driver)",
 	0,
 	&targ_machine_driver,
+	0,
 
 	spectar_rom,
 	0, 0,
@@ -1585,6 +1588,7 @@ struct GameDriver spectar1_driver =
 	"Neil Bradley (hardware info)\nDan Boris (adaptation of Venture driver)",
 	0,
 	&targ_machine_driver,
+	0,
 
 	spectar1_rom,
 	0, 0,
@@ -1611,6 +1615,7 @@ struct GameDriver mtrap_driver =
 	"Marc LaFontaine\nBrian Levine\nMike Balfour\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	mtrap_rom,
 	0, 0,
@@ -1636,6 +1641,7 @@ struct GameDriver venture_driver =
 	"Marc LaFontaine\nNicola Salmoria\nBrian Levine\nMike Balfour\nBryan Smith (hardware info)",
 	0,
 	&venture_machine_driver,
+	0,
 
 	venture_rom,
 	0, 0,
@@ -1661,6 +1667,7 @@ struct GameDriver venture2_driver =
 	"Marc LaFontaine\nNicola Salmoria\nBrian Levine\nMike Balfour\nBryan Smith (hardware info)",
 	0,
 	&venture_machine_driver,
+	0,
 
 	venture2_rom,
 	0, 0,
@@ -1686,6 +1693,7 @@ struct GameDriver venture4_driver =
 	"Marc LaFontaine\nNicola Salmoria\nBrian Levine\nMike Balfour\nBryan Smith (hardware info)",
 	0,
 	&venture_machine_driver,
+	0,
 
 	venture4_rom,
 	0, 0,
@@ -1711,6 +1719,7 @@ struct GameDriver pepper2_driver =
 	"Marc LaFontaine\nBrian Levine\nMike Balfour",
 	0,
 	&pepper2_machine_driver,
+	0,
 
 	pepper2_rom,
 	0, 0,
@@ -1736,6 +1745,7 @@ struct GameDriver hardhat_driver =
 	"Marc LaFontaine\nBrian Levine\nMike Balfour",
 	0,
 	&pepper2_machine_driver,
+	0,
 
 	hardhat_rom,
 	0, 0,
@@ -1761,6 +1771,7 @@ struct GameDriver fax_driver =
 	"Marc LaFontaine\nBrian Levine\nMike Balfour",
 	0,
 	&fax_machine_driver,
+	0,
 
 	fax_rom,
 	0, 0,

@@ -470,6 +470,7 @@ struct GameDriver missile_driver =
 	"Ray Giarratana\nMarco Cassili\nEric Anschuetz",  /* EEA */
 	0,
 	&machine_driver,
+	0,
 
 	missile_rom,
 	0, 0,
@@ -495,6 +496,7 @@ struct GameDriver missile2_driver =
 	"Ray Giarratana\nMarco Cassili\nEric Anschuetz",  /* EEA */
 	0,
 	&machine_driver,
+	0,
 
 	missile2_rom,
 	0, 0,
@@ -520,6 +522,7 @@ struct GameDriver suprmatk_driver =
 	"Ray Giarratana\nMarco Cassili\nEric Anschuetz",  /* EEA */
 	0,
 	&machine_driver,
+	0,
 
 	suprmatk_rom,
 	0, 0,

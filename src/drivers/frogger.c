@@ -552,6 +552,7 @@ struct GameDriver frogger_driver =
 	"Robert Anschuetz\nNicola Salmoria\nMirko Buffoni\nGerald Vanderick (color info)\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	frogger_rom,
 	frogger_decode, 0,
@@ -577,6 +578,7 @@ struct GameDriver frogsega_driver =
 	"Robert Anschuetz\nNicola Salmoria\nMirko Buffoni\nGerald Vanderick (color info)\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	frogsega_rom,
 	frogger_decode, 0,
@@ -603,6 +605,7 @@ struct GameDriver frogger2_driver =
 	"Robert Anschuetz\nNicola Salmoria\nMirko Buffoni\nGerald Vanderick (color info)\nMarco Cassili",
 	0,
 	&frogger2_machine_driver,
+	0,
 
 	frogger2_rom,
 	frogger2_decode, 0,

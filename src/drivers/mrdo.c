@@ -393,6 +393,7 @@ struct GameDriver mrdo_driver =
 	"Nicola Salmoria (MAME driver)\nPaul Swan (color info)\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	mrdo_rom,
 	0, 0,
@@ -418,6 +419,7 @@ struct GameDriver mrdot_driver =
 	"Nicola Salmoria (MAME driver)\nPaul Swan (color info)\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	mrdot_rom,
 	0, 0,
@@ -443,6 +445,7 @@ struct GameDriver mrlo_driver =
 	"Nicola Salmoria (MAME driver)\nPaul Swan (color info)\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	mrlo_rom,
 	0, 0,
@@ -468,6 +471,7 @@ struct GameDriver mrdu_driver =
 	"Nicola Salmoria (MAME driver)\nPaul Swan (color info)\nMarco Cassili\nLee Taylor",
 	0,
 	&machine_driver,
+	0,
 
 	mrdu_rom,
 	0, 0,

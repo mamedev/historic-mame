@@ -559,6 +559,7 @@ struct GameDriver naughtyb_driver =
 	"Sal and John Bugliarisi (MAME driver)\nMirko Buffoni (additional code)\nNicola Salmoria (additional code)\nAlan J. McCormick (color info)",
 	0,
 	&machine_driver,
+	0,
 
 	naughtyb_rom,
 	0, 0,
@@ -584,6 +585,7 @@ struct GameDriver popflame_driver =
 	"Brad Oliver (MAME driver)\nSal and John Bugliarisi (Naughty Boy driver)\nMirko Buffoni (additional code)\nNicola Salmoria (additional code)\nTim Lindquist (color info)",
 	0,
 	&popflame_machine_driver,
+	0,
 
 	popflame_rom,
 	0, 0,

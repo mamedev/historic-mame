@@ -85,7 +85,6 @@ Priority:
 #include "vidhrdw/generic.h"
 
 //#define DE_DEBUG
-//#define PRINT_PF_ATTRIBUTES
 
 #define TEXTRAM_SIZE	0x2000	/* Size of text layer */
 #define TILERAM_SIZE	0x800	/* Size of background and foreground */
@@ -117,75 +116,6 @@ static int dec0_pri;
 void dec0_vh_stop (void);
 
 int dec0_unknown1,dec0_unknown2; /* Temporary */
-
-#ifdef PRINT_PF_ATTRIBUTES
-static void printpfattributes(void)
-{
-
-	int i,j;
-	char buf[20];
-	int trueorientation;
-	struct osd_bitmap *bitmap = Machine->scrbitmap;
-
-	trueorientation = Machine->orientation;
-	Machine->orientation = ORIENTATION_DEFAULT;
-
-for (i = 0;i < 8;i+=2)
-{
-	sprintf(buf,"%04X",READ_WORD(&dec0_pf1_control_0[i]));
-	for (j = 0;j < 4;j++)
-		drawgfx(bitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j,8*2,0,TRANSPARENCY_NONE,0);
-}
-for (i = 0;i < 8;i+=2)
-{
-	sprintf(buf,"%04X",READ_WORD(&dec0_pf1_control_1[i]));
-	for (j = 0;j < 4;j++)
-		drawgfx(bitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j,8*3,0,TRANSPARENCY_NONE,0);
-}
-for (i = 0;i < 8;i+=2)
-{
-	sprintf(buf,"%04X",READ_WORD(&dec0_pf2_control_0[i]));
-	for (j = 0;j < 4;j++)
-		drawgfx(bitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j,8*5,0,TRANSPARENCY_NONE,0);
-}
-for (i = 0;i < 8;i+=2)
-{
-	sprintf(buf,"%04X",READ_WORD(&dec0_pf2_control_1[i]));
-	for (j = 0;j < 4;j++)
-		drawgfx(bitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j,8*6,0,TRANSPARENCY_NONE,0);
-}
-for (i = 0;i < 8;i+=2)
-{
-	sprintf(buf,"%04X",READ_WORD(&dec0_pf3_control_0[i]));
-	for (j = 0;j < 4;j++)
-		drawgfx(bitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j,8*8,0,TRANSPARENCY_NONE,0);
-}
-for (i = 0;i < 8;i+=2)
-{
-	sprintf(buf,"%04X",READ_WORD(&dec0_pf3_control_1[i]));
-	for (j = 0;j < 4;j++)
-		drawgfx(bitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,3*8*i+8*j,8*9,0,TRANSPARENCY_NONE,0);
-}
-{
-	sprintf(buf,"%04X",dec0_pri);
-	for (j = 0;j < 4;j++)
-		drawgfx(bitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,8*j,8*11,0,TRANSPARENCY_NONE,0);
-}
-{
-	sprintf(buf,"%04X",dec0_unknown1);
-	for (j = 0;j < 4;j++)
-		drawgfx(bitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,8*j,8*12,0,TRANSPARENCY_NONE,0);
-}
-{
-	sprintf(buf,"%04X",dec0_unknown2);
-	for (j = 0;j < 4;j++)
-		drawgfx(bitmap,Machine->uifont,buf[j],DT_COLOR_WHITE,0,0,8*j,8*13,0,TRANSPARENCY_NONE,0);
-}
-	Machine->orientation = trueorientation;
-
-}
-#endif
-
 
 
 
@@ -855,10 +785,6 @@ else
 }
 
 	dec0_pf1_draw(bitmap);
-
-  #ifdef PRINT_PF_ATTRIBUTES
-	printpfattributes();
-  #endif
 }
 
 /******************************************************************************/
@@ -949,11 +875,6 @@ else
 }
 
 	dec0_pf1_draw(bitmap);
-
-
-  #ifdef PRINT_PF_ATTRIBUTES
-	printpfattributes();
-  #endif
 }
 
 /******************************************************************************/
@@ -1018,10 +939,6 @@ void hbarrel_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	dec0_drawsprites(bitmap,0x00,0x00);
 	dec0_pf1_draw(bitmap);
-
-  #ifdef PRINT_PF_ATTRIBUTES
-	printpfattributes();
-  #endif
 }
 
 void hippodrm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
@@ -1052,10 +969,6 @@ void hippodrm_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	dec0_drawsprites(bitmap,0x00,0x00);
 	dec0_pf1_draw(bitmap);
-
-  #ifdef PRINT_PF_ATTRIBUTES
-	printpfattributes();
-  #endif
 }
 
 /******************************************************************************/
@@ -1144,10 +1057,6 @@ else
 
 
 	dec0_pf1_draw(bitmap);
-
-  #ifdef PRINT_PF_ATTRIBUTES
-	printpfattributes();
-  #endif
 }
 
 /******************************************************************************/
@@ -1200,10 +1109,6 @@ void slyspy_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	dec0_drawsprites(bitmap,0x00,0x00);
 	dec0_pf1_draw(bitmap);
-
-  #ifdef PRINT_PF_ATTRIBUTES
-	printpfattributes();
-  #endif
 }
 
 

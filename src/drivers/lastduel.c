@@ -771,6 +771,7 @@ struct GameDriver lastduel_driver =
 	"Bryan McPhail",
 	0,
 	&lastduel_machine_driver,
+	0,
 
 	lastduel_rom,
 	0,0,0,0,
@@ -793,6 +794,7 @@ struct GameDriver lstduelb_driver =
 	"Bryan McPhail",
 	0,
 	&lastduel_machine_driver,
+	0,
 
 	lstduelb_rom,
 	0,0,0,0,
@@ -815,6 +817,7 @@ struct GameDriver madgear_driver =
 	"Bryan McPhail\n\nDriver Notes: \n  Tile roms missing!\n",
 	GAME_NOT_WORKING,
 	&madgear_machine_driver,
+	0,
 
 	madgear_rom,
 	0,0,0,0,

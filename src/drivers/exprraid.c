@@ -64,14 +64,14 @@ void exprraid_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 /* Emulate Protection ( only for original express raider, code is cracked on the bootleg */
 /*****************************************************************************************/
 
-int exprraid_prot_0_r(int offset)
+static int exprraid_prot_0_r(int offset)
 {
 	unsigned char *RAM = Machine->memory_region[0];
 
 	return RAM[0x02a9];
 }
 
-int exprraid_prot_1_r(int offset)
+static int exprraid_prot_1_r(int offset)
 {
 	return 0x02;
 }
@@ -82,11 +82,18 @@ static void sound_cpu_command_w( int offset, int v )
     cpu_cause_interrupt(1,M6809_INT_NMI);
 }
 
+static int vblank_r( int offset ) {
+	int val = readinputport( 0 );
 
+	if ( ( val & 0x02 ) )
+		cpu_spin();
+
+	return val;
+}
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0x00ff, 0x00ff, input_port_0_r }, /* HACK!!!! see exprraid_decode_rom below */
+	{ 0x00ff, 0x00ff, vblank_r }, /* HACK!!!! see exprraid_decode_rom below */
     { 0x0000, 0x05ff, MRA_RAM },
     { 0x0600, 0x07ff, MRA_RAM }, /* sprites */
     { 0x0800, 0x0bff, videoram_r },
@@ -97,7 +104,7 @@ static struct MemoryReadAddress readmem[] =
     { 0x1803, 0x1803, input_port_4_r }, /* DSW 1 */
 	{ 0x2800, 0x2800, exprraid_prot_0_r }, /* protection */
 	{ 0x2801, 0x2801, exprraid_prot_1_r }, /* protection */
-    { 0x3800, 0x3800, input_port_0_r }, /* vblank on bootleg */
+    { 0x3800, 0x3800, vblank_r }, /* vblank on bootleg */
     { 0x4000, 0xffff, MRA_ROM },
     { -1 }  /* end of table */
 };
@@ -138,7 +145,7 @@ static struct MemoryWriteAddress sub_writemem[] =
 
 INPUT_PORTS_START( input_ports )
 	PORT_START /* IN 0 - 0x3800 */
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_VBLANK )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_VBLANK )
 
 	PORT_START /* DSW 0 - 0x1800 */
 	PORT_DIPNAME( 0x03, 0x03, "Coin A", IP_KEY_NONE )
@@ -480,6 +487,7 @@ struct GameDriver exprraid_driver =
 	"Ernesto Corvi\nNicola Salmoria",
 	0,
 	&machine_driver,
+	0,
 
 	exprraid_rom,
 	exprraid_gfx_expand, exprraid_decode_rom,
@@ -505,6 +513,7 @@ struct GameDriver exprraib_driver =
 	"Ernesto Corvi\nNicola Salmoria",
 	0,
 	&machine_driver,
+	0,
 
 	exprraib_rom,
 	exprraid_gfx_expand, 0,

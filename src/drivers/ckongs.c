@@ -346,6 +346,7 @@ struct GameDriver ckongs_driver =
 	"Nicola Salmoria (MAME driver)",
 	0,
 	&machine_driver,
+	0,
 
 	ckongs_rom,
 	0, 0,

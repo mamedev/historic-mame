@@ -2212,6 +2212,7 @@ struct GameDriver scobra_driver =
 	"Nicola Salmoria (MAME driver)\nValerio Verrando (high score)\nTim Lindquist (color info)\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	scobra_rom,
 	0, 0,
@@ -2237,6 +2238,7 @@ struct GameDriver scobrak_driver =
 	"Nicola Salmoria (MAME driver)\nValerio Verrando (high score)\nTim Lindquist (color info)\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	scobrak_rom,
 	0, 0,
@@ -2262,6 +2264,7 @@ struct GameDriver scobrab_driver =
 	"Nicola Salmoria (MAME driver)\nValerio Verrando (high score)\nTim Lindquist (color info)\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	scobrab_rom,
 	0, 0,
@@ -2287,6 +2290,7 @@ struct GameDriver stratgyx_driver =
 	"Lee Taylor",
 	0,
 	&stratgyx_machine_driver,
+	0,
 
 	stratgyx_rom,
 	0, 0,
@@ -2311,6 +2315,7 @@ struct GameDriver stratgyb_driver =
 	"Lee Taylor",
 	0,
 	&stratgyx_machine_driver,
+	0,
 
 	stratgyb_rom,
 	0, 0,
@@ -2335,6 +2340,7 @@ struct GameDriver armorcar_driver =
 	"Nicola Salmoria (MAME driver)\nMike Balfour (high score save)",
 	GAME_WRONG_COLORS,
 	&armorcar_machine_driver,
+	0,
 
 	armorcar_rom,
 	0, 0,
@@ -2360,6 +2366,7 @@ struct GameDriver moonwar2_driver =
 	"Nicola Salmoria (MAME driver)\nBrad Oliver (additional code)",
 	0,
 	&moonwar2_machine_driver,
+	0,
 
 	moonwar2_rom,
 	0, 0,
@@ -2385,6 +2392,7 @@ struct GameDriver darkplnt_driver =
 	"Mike Balfour",
 	GAME_NOT_WORKING,
 	&stratgyx_machine_driver,
+	0,
 
 	darkplnt_rom,
 	0, 0,
@@ -2410,6 +2418,7 @@ struct GameDriver tazmania_driver =
 	"Chris Hardy\nChris Moore (high score save)",
 	0,
 	&machine_driver,
+	0,
 
 	tazmania_rom,
 	0, 0,
@@ -2435,6 +2444,7 @@ struct GameDriver calipso_driver =
 	"Nicola Salmoria (MAME driver)\nBrad Oliver (additional code)",
 	0,
 	&calipso_machine_driver,
+	0,
 
 	calipso_rom,
 	0, 0,
@@ -2460,6 +2470,7 @@ struct GameDriver anteater_driver =
 	"James R. Twine\nChris Hardy\nMirko Buffoni\nFabio Buffoni",
 	GAME_WRONG_COLORS,
 	&machine_driver,
+	0,
 
 	anteater_rom,
 	anteater_decode, 0,
@@ -2485,6 +2496,7 @@ struct GameDriver rescue_driver =
 	"James R. Twine\nChris Hardy\nMirko Buffoni\nFabio Buffoni\nAlan J. McCormick\nMike Coates (Background)",
 	0,
 	&rescue_machine_driver,
+	0,
 
 	rescue_rom,
 	rescue_decode, 0,
@@ -2510,6 +2522,7 @@ struct GameDriver minefld_driver =
 	"Nicola Salmoria (MAME driver)\nAl Kossow (color info)\nMike Coates (Background)",
 	0,
 	&minefield_machine_driver,
+	0,
 
 	minefld_rom,
 	minefld_decode, 0,
@@ -2535,6 +2548,7 @@ struct GameDriver losttomb_driver =
 	"Nicola Salmoria\nJames R. Twine\nMirko Buffoni\nFabio Buffoni",
 	0,
 	&machine_driver,
+	0,
 
 	losttomb_rom,
 	losttomb_decode, 0,
@@ -2560,6 +2574,7 @@ struct GameDriver losttmbh_driver =
 	"Nicola Salmoria\nJames R. Twine\nMirko Buffoni\nFabio Buffoni",
 	0,
 	&machine_driver,
+	0,
 
 	losttmbh_rom,
 	losttomb_decode, 0,
@@ -2585,6 +2600,7 @@ struct GameDriver superbon_driver =
 	"Chris Hardy",
 	GAME_WRONG_COLORS,
 	&machine_driver,
+	0,
 
 	superbon_rom,
 	superbon_decode, 0,
@@ -2610,6 +2626,7 @@ struct GameDriver hustler_driver =
 	"Nicola Salmoria",
 	0,
 	&hustler_machine_driver,
+	0,
 
 	hustler_rom,
 	hustler_decode, 0,
@@ -2636,6 +2653,7 @@ struct GameDriver pool_driver =
 	"Nicola Salmoria",
 	GAME_NOT_WORKING,
 	&hustler_machine_driver,
+	0,
 
 	pool_rom,
 	hustler_decode, 0,

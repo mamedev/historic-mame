@@ -276,6 +276,7 @@ struct GameDriver ssi_driver =
 	"Howie Cohen \nAlex Pasadyn \nBill Boyle (graphics info) \nRichard Bush (technical information)",
 	0,
 	&machine_driver,
+	0,
 
 	ssi_rom,
 	0, 0,

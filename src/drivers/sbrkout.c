@@ -343,6 +343,7 @@ struct GameDriver sbrkout_driver =
 	"Mike Balfour",
 	0,
 	&machine_driver,
+	0,
 
 	sbrkout_rom,
 	0, 0,

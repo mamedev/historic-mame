@@ -801,9 +801,10 @@ struct GameDriver flyboy_driver =
 	"Zsolt Vasvari\nBrad Oliver (additional code)\nMarco Cassili (additional code)",
 	0,
 	&fastfred_machine_driver,
+	flyboy_init,
 
 	flyboy_rom,
-	flyboy_init, 0,
+	0, 0,
 	0,
 	0,      /* sound_prom */
 
@@ -826,9 +827,10 @@ struct GameDriver fastfred_driver =
 	"Zsolt Vasvari",
 	0,
 	&fastfred_machine_driver,
+	fastfred_init,
 
 	fastfred_rom,
-	fastfred_init, 0,
+	0, 0,
 	0,
 	0,      /* sound_prom */
 
@@ -851,6 +853,7 @@ struct GameDriver jumpcoas_driver =
 	"Zsolt Vasvari",
 	0,
 	&jumpcoas_machine_driver,
+	0,
 
 	jumpcoas_rom,
 	0, 0,

@@ -430,6 +430,7 @@ struct GameDriver blstroid_driver =
 	"Aaron Giles (MAME driver)\nNeil Bradley (Hardware Info)",
 	0,
 	&blstroid_machine_driver,
+	0,
 
 	blstroid_rom,
 	0,

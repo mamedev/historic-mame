@@ -1616,6 +1616,7 @@ struct GameDriver reactor_driver =
 	"Fabrice Frances",
 	0,
 	&reactor_machine_driver,
+	0,
 
 	reactor_rom,
 	0, 0,
@@ -1641,6 +1642,7 @@ struct GameDriver mplanets_driver =
 	"Fabrice Frances",
 	0,
 	&gottlieb_machine_driver,
+	0,
 
 	mplanets_rom,
 	0, 0,
@@ -1666,6 +1668,7 @@ struct GameDriver qbert_driver =
 	"Fabrice Frances (MAME driver)\nMarco Cassili\nJohn Butler     (speech\nHowie Cohen     samples)\n\nDedicated to:\nWarren Davis\nJeff Lee\nDavid Thiel",
 	0,
 	&gottlieb_machine_driver,
+	0,
 
 	qbert_rom,
 	0, 0,
@@ -1691,6 +1694,7 @@ struct GameDriver qbertjp_driver =
 	"Fabrice Frances (MAME driver)\nMarco Cassili\nJohn Butler     (speech\nHowie Cohen     samples)\n\nDedicated to:\nWarren Davis\nJeff Lee\nDavid Thiel",
 	0,
 	&gottlieb_machine_driver,
+	0,
 
 	qbertjp_rom,
 	0, 0,
@@ -1716,6 +1720,7 @@ struct GameDriver sqbert_driver =
 	"Fabrice Frances (MAME driver)\nMarco Cassili\nJohn Butler     (speech\nHowie Cohen     samples)\n\n Special thanks to:\nFred Sookiasian\n\nDedicated to:\nWarren Davis\nJeff Lee\nDavid Thiel",
 	0,
 	&gottlieb_machine_driver,
+	0,
 
 	sqbert_rom,
 	0, 0,
@@ -1741,6 +1746,7 @@ struct GameDriver qbertqub_driver =
 	"Fabrice Frances & Rodimus Prime (MAME driver)\nMarco Cassili",
 	0,
 	&qbertqub_machine_driver,
+	0,
 
 	qbertqub_rom,
 	0, 0,
@@ -1766,6 +1772,7 @@ struct GameDriver krull_driver =
 	"Fabrice Frances (MAME driver)\nMarco Cassili",
 	0,
 	&krull_machine_driver,
+	0,
 
 	krull_rom,
 	0, 0,
@@ -1792,6 +1799,7 @@ struct GameDriver mach3_driver =
 	"This is a LASER DISC game, so it doesn't work.",
 	GAME_NOT_WORKING,
 	&mach3_machine_driver,
+	0,
 
 	mach3_rom,
 	0, 0,
@@ -1818,6 +1826,7 @@ struct GameDriver usvsthem_driver =
 	"This is a LASER DISC game, so it doesn't work.",
 	GAME_NOT_WORKING,
 	&usvsthem_machine_driver,
+	0,
 
 	usvsthem_rom,
 	0, 0,
@@ -1843,6 +1852,7 @@ struct GameDriver stooges_driver =
 	"Fabrice Frances (MAME driver)\nJohn Butler\nMarco Cassili",
 	0,
 	&stooges_machine_driver,
+	0,
 
 	stooges_rom,
 	0, 0,
@@ -1868,6 +1878,7 @@ struct GameDriver curvebal_driver =
 	"Fabrice Frances (MAME driver)",
 	0,
 	&gottlieb_machine_driver,
+	0,
 
 	curvebal_rom,
 	0, 0,

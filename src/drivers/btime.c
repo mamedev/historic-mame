@@ -1537,6 +1537,7 @@ struct GameDriver btime_driver =
 	"Kevin Brisley (Replay emulator)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nZsolt Vasvari (ROM decryption)",
 	0,
 	&btime_machine_driver,
+	0,
 
 	btime_rom,
 	0, btime_decode,
@@ -1562,6 +1563,7 @@ struct GameDriver btimea_driver =
 	"Kevin Brisley (Replay emulator)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nZsolt Vasvari (ROM decryption)",
 	0,
 	&btime_machine_driver,
+	0,
 
 	btimea_rom,
 	0, btime_decode,
@@ -1587,6 +1589,7 @@ struct GameDriver hamburge_driver =
 	"Kevin Brisley (Replay emulator)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)",
 	GAME_NOT_WORKING,
 	&btime_machine_driver,
+	0,
 
 	hamburge_rom,
 	0, 0,
@@ -1612,6 +1615,7 @@ struct GameDriver eggs_driver =
 	"Nicola Salmoria (MAME driver)\nMike Balfour (high score save)",
 	0,
 	&eggs_machine_driver,
+	0,
 
 	eggs_rom,
 	0, 0,
@@ -1637,6 +1641,7 @@ struct GameDriver scregg_driver =
 	"Nicola Salmoria (MAME driver)\nMike Balfour (high score save)",
 	0,
 	&eggs_machine_driver,
+	0,
 
 	scregg_rom,
 	0, 0,
@@ -1662,6 +1667,7 @@ struct GameDriver lnc_driver =
 	"Zsolt Vasvari\nKevin Brisley (Bump 'n' Jump driver)\nMirko Buffoni (Audio/Add. code)",
 	0,
 	&lnc_machine_driver,
+	0,
 
 	lnc_rom,
 	0, lnc_decode,
@@ -1687,6 +1693,7 @@ struct GameDriver bnj_driver =
 	"Kevin Brisley (MAME driver)\nMirko Buffoni (Audio/Add. code)",
 	0,
 	&bnj_machine_driver,
+	0,
 
 	bnj_rom,
 	0, lnc_decode,
@@ -1712,6 +1719,7 @@ struct GameDriver brubber_driver =
 	"Kevin Brisley (MAME driver)\nMirko Buffoni (Audio/Add. code)",
 	0,
 	&bnj_machine_driver,
+	0,
 
 	brubber_rom,
 	0, lnc_decode,
@@ -1737,6 +1745,7 @@ struct GameDriver caractn_driver =
 	"Ivan Mackintosh\nKevin Brisley (Bump 'n' Jump driver)\nMirko Buffoni (Audio/Add. code)",
 	0,
 	&bnj_machine_driver,
+	0,
 
 	caractn_rom,
 	0, lnc_decode,
@@ -1762,6 +1771,7 @@ struct GameDriver zoar_driver =
 	"Zsolt Vasvari\nKevin Brisley (Bump 'n' Jump driver)",
 	0,
 	&zoar_machine_driver,
+	0,
 
 	zoar_rom,
 	0, zoar_decode,

@@ -368,7 +368,7 @@ INPUT_PORTS_START( armwrest_input_ports )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START	/* IN1 */
@@ -879,6 +879,7 @@ struct GameDriver punchout_driver =
 	"Nicola Salmoria (MAME driver)\nTim Lindquist (color info)\nBryan Smith (hardware info)\nTatsuyuki Satoh(speech sound)",
 	0,
 	&machine_driver,
+	0,
 
 	punchout_rom,
 	punchout_decode, 0,
@@ -904,6 +905,7 @@ struct GameDriver spnchout_driver =
 	"Nicola Salmoria (MAME driver)\nTim Lindquist (color info)\nBryan Smith (hardware info)",
 	GAME_NOT_WORKING | GAME_WRONG_COLORS,
 	&machine_driver,
+	0,
 
 	spnchout_rom,
 	punchout_decode, 0,
@@ -929,6 +931,7 @@ struct GameDriver armwrest_driver =
 	"Nicola Salmoria",
 	0,
 	&armwrest_machine_driver,
+	0,
 
 	armwrest_rom,
 	armwrest_decode, 0,

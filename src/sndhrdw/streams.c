@@ -2,23 +2,21 @@
 #include <math.h>
 
 
-#define MAX_CHANNELS 16
+static char stream_name[MAX_STREAM_CHANNELS][40];
+static void *stream_buffer[MAX_STREAM_CHANNELS];
+static int stream_buffer_len[MAX_STREAM_CHANNELS];
+static int stream_sample_rate[MAX_STREAM_CHANNELS];
+static int stream_sample_bits[MAX_STREAM_CHANNELS];
+static int stream_volume[MAX_STREAM_CHANNELS];
+static int stream_buffer_pos[MAX_STREAM_CHANNELS];
+static int stream_param[MAX_STREAM_CHANNELS];
+static void (*stream_callback[MAX_STREAM_CHANNELS])(int param,void *buffer,int length);
 
-
-static void *stream_buffer[MAX_CHANNELS];
-static int stream_buffer_len[MAX_CHANNELS];
-static int stream_sample_rate[MAX_CHANNELS];
-static int stream_sample_bits[MAX_CHANNELS];
-static int stream_volume[MAX_CHANNELS];
-static int stream_buffer_pos[MAX_CHANNELS];
-static int stream_param[MAX_CHANNELS];
-static void (*stream_callback[MAX_CHANNELS])(int param,void *buffer,int length);
-
-static int memory[MAX_CHANNELS];
-static int r1[MAX_CHANNELS];
-static int r2[MAX_CHANNELS];
-static int r3[MAX_CHANNELS];
-static int c[MAX_CHANNELS];
+static int memory[MAX_STREAM_CHANNELS];
+static int r1[MAX_STREAM_CHANNELS];
+static int r2[MAX_STREAM_CHANNELS];
+static int r3[MAX_STREAM_CHANNELS];
+static int c[MAX_STREAM_CHANNELS];
 
 /*
 signal >--R1--+--R2--+---> amp
@@ -103,7 +101,7 @@ int streams_sh_start(void)
 	int i;
 
 
-	for (i = 0;i < MAX_CHANNELS;i++)
+	for (i = 0;i < MAX_STREAM_CHANNELS;i++)
 	{
 		stream_buffer[i] = 0;
 	}
@@ -117,7 +115,7 @@ void streams_sh_stop(void)
 	int i;
 
 
-	for (i = 0;i < MAX_CHANNELS;i++)
+	for (i = 0;i < MAX_STREAM_CHANNELS;i++)
 	{
 		free(stream_buffer[i]);
 		stream_buffer[i] = 0;
@@ -133,7 +131,7 @@ void streams_sh_update(void)
 	if (Machine->sample_rate == 0) return;
 
 	/* update all the output buffers */
-	for (channel = 0;channel < MAX_CHANNELS;channel++)
+	for (channel = 0;channel < MAX_STREAM_CHANNELS;channel++)
 	{
 		if (stream_buffer[channel])
 		{
@@ -165,7 +163,7 @@ void streams_sh_update(void)
 		}
 	}
 
-	for (channel = 0;channel < MAX_CHANNELS;channel++)
+	for (channel = 0;channel < MAX_STREAM_CHANNELS;channel++)
 	{
 		if (stream_buffer[channel])
 		{
@@ -182,13 +180,15 @@ void streams_sh_update(void)
 }
 
 
-int stream_init(int sample_rate,int sample_bits,
+int stream_init(const char *name,int sample_rate,int sample_bits,
 		int param,void (*callback)(int param,void *buffer,int length))
 {
 	int channel;
 
 
 	channel = get_play_channels(1);
+
+	strcpy(stream_name[channel],name);
 
 	stream_buffer_len[channel] = sample_rate / Machine->drv->frames_per_second;
 	/* adjust sample rate to make it a multiple of buffer_len */
@@ -205,12 +205,6 @@ int stream_init(int sample_rate,int sample_bits,
 	stream_callback[channel] = callback;
 
 	return channel;
-}
-
-
-void stream_set_volume(int channel,int volume)
-{
-	stream_volume[channel] = volume;
 }
 
 
@@ -242,4 +236,24 @@ void stream_update(int channel)
 
 		stream_buffer_pos[channel] += buflen;
 	}
+}
+
+
+void stream_set_volume(int channel,int volume)
+{
+	stream_volume[channel] = volume;
+}
+
+
+int stream_get_volume(int channel)
+{
+	return stream_volume[channel];
+}
+
+
+const char *stream_get_name(int channel)
+{
+	if (stream_buffer[channel])
+		return stream_name[channel];
+	else return 0;	/* unused channel */
 }

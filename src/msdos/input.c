@@ -12,6 +12,7 @@ void msdos_init_input (void)
 {
 	int err;
 
+	install_keyboard();
 	set_leds(0);    /* turn off all leds */
 
 	if (joystick != JOY_TYPE_NONE)
@@ -42,6 +43,12 @@ void msdos_init_input (void)
 		use_mouse = 1;
 	else
 		use_mouse = 0;
+}
+
+
+void msdos_shutdown_input(void)
+{
+	remove_keyboard();
 }
 
 
@@ -133,17 +140,11 @@ int osd_key_pressed(int keycode)
             case OSD_KEY_CONFIGURE:
 				return key[OSD_KEY_TAB];
 
-            case OSD_KEY_VOLUME_DOWN:
-				return (key[OSD_KEY_MINUS_PAD] && !key[OSD_KEY_LSHIFT]);
-
-			case OSD_KEY_VOLUME_UP:
-				return (key[OSD_KEY_PLUS_PAD] && !key[OSD_KEY_LSHIFT]);
-
-			case OSD_KEY_GAMMA_DOWN:
-				return (key[OSD_KEY_MINUS_PAD] && key[OSD_KEY_LSHIFT]);
-
-            case OSD_KEY_GAMMA_UP:
-                return (key[OSD_KEY_PLUS_PAD] && key[OSD_KEY_LSHIFT]);
+            case OSD_KEY_ON_SCREEN_DISPLAY:
+			{
+				extern int mame_debug;
+				return (key[OSD_KEY_TILDE] && !mame_debug);
+			}
 
             case OSD_KEY_PAUSE:
 				return key[OSD_KEY_P];
@@ -160,6 +161,83 @@ int osd_key_pressed(int keycode)
 	if (keycode == OSD_KEY_ALTGR) keycode = KEY_ALTGR;
 	return key[keycode];
 }
+
+static char memory[256];
+
+/* Report a key as pressed only when the user hits it, not while it is */
+/* being kept pressed. */
+int osd_key_pressed_memory(int keycode)
+{
+	int res = 0;
+
+	if (osd_key_pressed(keycode))
+	{
+		if (memory[keycode] == 0) res = 1;
+		memory[keycode] = 1;
+	}
+	else
+		memory[keycode] = 0;
+
+	return res;
+}
+
+/* report kay as pulsing while it is pressed */
+int osd_key_pressed_memory_repeat(int keycode,int speed)
+{
+	static int counter;
+	int res = 0;
+
+	if (osd_key_pressed(keycode))
+	{
+		if (memory[keycode] == 0 || ++counter > speed * Machine->drv->frames_per_second / 60)
+		{
+			counter = 0;
+			res = 1;
+		}
+		memory[keycode] = 1;
+	}
+	else
+		memory[keycode] = 0;
+
+	return res;
+}
+
+
+/* If the user presses a key return it, otherwise return OSD_KEY_NONE. */
+/* DO NOT wait for the user to press a key */
+int osd_read_key_immediate(void)
+{
+	int res;
+
+
+	/* first of all, record keys which are NOT pressed */
+	for (res = OSD_MAX_KEY;res > OSD_KEY_NONE;res--)
+	{
+		if (!osd_key_pressed(res))
+		{
+			memory[res] = 0;
+			memory[key_to_pseudo_code(res)] = 0;
+		}
+	}
+
+	for (res = OSD_MAX_KEY;res > OSD_KEY_NONE;res--)
+	{
+		if (osd_key_pressed(res))
+		{
+			if (memory[res] == 0)
+			{
+				memory[res] = 1;
+				memory[key_to_pseudo_code(res)] = 1;
+			}
+			else res = OSD_KEY_NONE;
+			break;
+		}
+	}
+
+	return res;
+}
+
+
 
 /*
  * Wait for a key press and return the keycode.
@@ -213,7 +291,7 @@ int osd_read_key(int translate)
 }
 
 /* translate a scancode to a pseudo key code */
-static int key_to_pseudo_code(int k)
+int key_to_pseudo_code(int k)
 {
 #ifdef MESS
     switch (k)
@@ -288,15 +366,8 @@ static int key_to_pseudo_code(int k)
         case OSD_KEY_TAB:
             return OSD_KEY_CONFIGURE;
 
-        case OSD_KEY_MINUS_PAD:
-            if (key[OSD_KEY_LSHIFT])
-                return OSD_KEY_GAMMA_DOWN;
-            return OSD_KEY_VOLUME_DOWN;
-
-        case OSD_KEY_PLUS_PAD:
-            if (key[OSD_KEY_LSHIFT])
-                return OSD_KEY_GAMMA_UP;
-            return OSD_KEY_VOLUME_UP;
+        case OSD_KEY_TILDE:
+            return OSD_KEY_ON_SCREEN_DISPLAY;
 
         case OSD_KEY_P:
             return OSD_KEY_PAUSE;
@@ -340,14 +411,14 @@ const char *osd_key_name(int keycode)
 {
 	static char *keynames[] =
 	{
-		"ESC", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "MINUS", "EQUAL", "BACKSPACE",
-		"TAB", "Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P", "OPENBRACE", "CLOSEBRACE", "ENTER",
-		"LEFTCONTROL", "A", "S", "D", "F", "G", "H", "J", "K", "L", "COLON", "QUOTE", "TILDE",
-		"LEFTSHIFT", "Error", "Z", "X", "C", "V", "B", "N", "M", "COMMA", ".", "SLASH", "RIGHTSHIFT",
-		"ASTERISK", "ALT", "SPACE", "CAPSLOCK", "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10",
+		"ESC", "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "MINUS", "EQUAL", "BKSPACE",
+		"TAB", "Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P", "OPBRACE", "CLBRACE", "ENTER",
+		"LCTRL", "A", "S", "D", "F", "G", "H", "J", "K", "L", "COLON", "QUOTE", "TILDE",
+		"LSHIFT", "Error", "Z", "X", "C", "V", "B", "N", "M", "COMMA", ".", "SLASH", "RSHIFT",
+		"*", "ALT", "SPACE", "CAPSLOCK", "F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8", "F9", "F10",
 		"NUMLOCK", "SCRLOCK", "HOME", "UP", "PGUP", "MINUS PAD",
 		"LEFT", "5 PAD", "RIGHT", "PLUS PAD", "END", "DOWN",
-		"PGDN", "INS", "DEL", "RIGHTCONTROL", "ALTGR", "Error",
+		"PGDN", "INS", "DEL", "RCTRL", "ALTGR", "Error",
 		"F11", "F12", "Error", "Error",
 		"Error", "Error", "Error", "Error", "Error",
 		"Error", "Error", "Error", "Error", "Error",

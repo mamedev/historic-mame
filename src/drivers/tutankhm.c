@@ -577,6 +577,7 @@ struct GameDriver tutankhm_driver =
 	"Mirko Buffoni (MAME driver)\nDavid Dahl (hardware info)\nAaron Giles\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	tutankhm_rom,
 	0, 0,   /* ROM decode and opcode decode functions */
@@ -602,6 +603,7 @@ struct GameDriver tutankst_driver =
 	"Mirko Buffoni (MAME driver)\nDavid Dahl (hardware info)\nAaron Giles\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	tutankst_rom,
 	0, 0,   /* ROM decode and opcode decode functions */

@@ -512,6 +512,7 @@ struct GameDriver ironhors_driver =
 	"Mirko Buffoni (MAME driver)\nPaul Swan (color info)",
 	0,
 	&ironhors_machine_driver,
+	0,
 
 	ironhors_rom,
 	0, 0,
@@ -537,6 +538,7 @@ struct GameDriver farwest_driver =
 	"Mirko Buffoni (MAME driver)\nGerald Vanderick (color info)",
 	GAME_NOT_WORKING,
 	&farwest_machine_driver,
+	0,
 
 	farwest_rom,
 	0, 0,

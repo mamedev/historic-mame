@@ -315,6 +315,7 @@ struct GameDriver nova2001_driver =
 	"Howie Cohen\nFrank Palazzolo\nAlex Pasadyn",
 	0,
 	&machine_driver,
+	0,
 
 	nova2001_rom,
 	0,0,

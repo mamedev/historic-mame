@@ -82,6 +82,21 @@ void hvymetal_bankswitch_w(int offset,int data)
 	bankswitch = data;
 }
 
+void brain_bankswitch_w(int offset,int data)
+{
+	int bankaddress;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	bankaddress = 0x10000 + (((data & 0x04)>>2) * 0x4000) + (((data & 0x40)>>5) * 0x4000);
+	cpu_setbank(1,&RAM[bankaddress]);
+	/* TODO: the memory system doesn't yet support bank switching on an encrypted */
+	/* ROM, so we have to copy the data manually */
+	memcpy(&ROM[0x8000],&RAM[bankaddress],0x4000);
+
+	bankswitch = data;
+}
+
 void chplft_bankswitch_w(int offset,int data)
 {
 	int bankaddress;
@@ -239,6 +254,13 @@ static struct IOWritePort hvymetal_writeport[] =
 {
 	{ 0x18, 0x18, system8_soundport_w },	/* sound commands */
 	{ 0x19, 0x19, hvymetal_bankswitch_w },
+	{ -1 }	/* end of table */
+};
+
+static struct IOWritePort brain_writeport[] =
+{
+	{ 0x18, 0x18, system8_soundport_w },	/* sound commands */
+	{ 0x19, 0x19, brain_bankswitch_w },
 	{ -1 }	/* end of table */
 };
 
@@ -1840,7 +1862,7 @@ static struct MachineDriver brain_machine_driver =
 			CPU_Z80,
 			4000000,	/* My Hero has 2 OSCs 8 & 20 MHz (Cabbe Info) */
 			0,		/* memory region */
-			readmem,writemem,readport,hvymetal_writeport,
+			readmem,writemem,readport,brain_writeport,
 			interrupt,1
 		},
 		{
@@ -1996,6 +2018,31 @@ ROM_START( regulus_rom )
 	ROM_LOAD( "epr5643a.32",  0x6000, 0x2000, 0xb8ac7eb4 )	/* encrypted */
 	ROM_LOAD( "epr5644.33",   0x8000, 0x2000, 0xffd05b7d )
 	ROM_LOAD( "epr5645a.34",  0xa000, 0x2000, 0x6b4bf77c )
+
+	ROM_REGION_DISPOSE(0xc000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "epr5651.82",   0x0000, 0x2000, 0xf07f3e82 )
+	ROM_LOAD( "epr5650.65",   0x2000, 0x2000, 0x84c1baa2 )
+	ROM_LOAD( "epr5649.81",   0x4000, 0x2000, 0x6774c895 )
+	ROM_LOAD( "epr5648.64",   0x6000, 0x2000, 0x0c69e92a )
+	ROM_LOAD( "epr5647.80",   0x8000, 0x2000, 0x9330f7b5 )
+	ROM_LOAD( "epr5646.63",   0xa000, 0x2000, 0x4dfacbbc )
+
+	ROM_REGION(0x8000)	/* 32k for sprites data */
+	ROM_LOAD( "epr5638.92",   0x0000, 0x4000, 0x617363dd )
+	ROM_LOAD( "epr5639.93",   0x4000, 0x4000, 0xa4ec5131 )
+
+	ROM_REGION(0x10000)	/* 64k for sound cpu */
+	ROM_LOAD( "epr5652.3",    0x0000, 0x2000, 0x74edcb98 )
+ROM_END
+
+ROM_START( regulusu_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "epr-5950.129", 0x0000, 0x2000, 0x3b047b67 )
+	ROM_LOAD( "epr-5951.130", 0x2000, 0x2000, 0xd66453ab )
+	ROM_LOAD( "epr-5952.131", 0x4000, 0x2000, 0xf3d0158a )
+	ROM_LOAD( "epr-5953.132", 0x6000, 0x2000, 0xa9ad4f44 )
+	ROM_LOAD( "epr5644.33",   0x8000, 0x2000, 0xffd05b7d )
+	ROM_LOAD( "epr-5955.134", 0xa000, 0x2000, 0x65ddb2a3 )
 
 	ROM_REGION_DISPOSE(0xc000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "epr5651.82",   0x0000, 0x2000, 0xf07f3e82 )
@@ -2766,7 +2813,7 @@ ROM_START( blockgal_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "bg.116",       0x0000, 0x4000, 0xa99b231a )	/* encrypted */
 	ROM_LOAD( "bg.109",       0x4000, 0x4000, 0xa6b573d5 )	/* encrypted */
-	ROM_LOAD( "bg.96",        0x8000, 0x4000, 0x3cbbaf64 )
+	ROM_LOAD( "bg.96",        0x8000, 0x4000, 0x3cbbaf64 )	/* same as My Hero - not used? */
 
 	ROM_REGION_DISPOSE(0xc000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "bg.62",        0x0000, 0x2000, 0x7e3ea4eb )
@@ -3422,6 +3469,7 @@ struct GameDriver starjack_driver =
 	BASE_CREDITS,
 	0,
 	&system8_small_machine_driver,
+	0,
 
 	starjack_rom,
 	0, 0,					/* ROM decode and opcode decode functions */
@@ -3446,6 +3494,7 @@ struct GameDriver starjacs_driver =
 	BASE_CREDITS,
 	0,
 	&system8_small_machine_driver,
+	0,
 
 	starjacs_rom,
 	0, 0,					/* ROM decode and opcode decode functions */
@@ -3470,9 +3519,35 @@ struct GameDriver regulus_driver =
 	BASE_CREDITS,
 	0,
 	&system8_machine_driver,
+	0,
 
 	regulus_rom,
 	0, regulus_decode,		/* ROM decode and opcode decode functions */
+	0,      				/* Sample names */
+	0,
+
+	regulus_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_270,
+	0, 0
+};
+
+struct GameDriver regulusu_driver =
+{
+	__FILE__,
+	&regulus_driver,
+	"regulusu",
+	"Regulus (not encrypted)",
+	"1983",
+	"Sega",
+	BASE_CREDITS,
+	0,
+	&system8_machine_driver,
+	0,
+
+	regulusu_rom,
+	0, 0,      /* ROM decode and opcode decode functions */
 	0,      				/* Sample names */
 	0,
 
@@ -3494,6 +3569,7 @@ struct GameDriver upndown_driver =
 	BASE_CREDITS,
 	0,
 	&system8_machine_driver,
+	0,
 
 	upndown_rom,
 	0, 0,   				/* ROM decode and opcode decode functions */
@@ -3518,6 +3594,7 @@ struct GameDriver mrviking_driver =
 	BASE_CREDITS,
 	0,
 	&system8_small_machine_driver,
+	0,
 
 	mrviking_rom,
 	0, mrviking_decode,		/* ROM decode and opcode decode functions */
@@ -3542,6 +3619,7 @@ struct GameDriver swat_driver =
 	BASE_CREDITS,
 	0,
 	&system8_machine_driver,
+	0,
 
 	swat_rom,
 	0, swat_decode,			/* ROM decode and opcode decode functions */
@@ -3566,6 +3644,7 @@ struct GameDriver flicky_driver =
 	BASE_CREDITS,
 	0,
 	&system8_machine_driver,
+	0,
 
 	flicky_rom,
 	0, flicky_decode,		/* ROM decode and opcode decode functions */
@@ -3590,6 +3669,7 @@ struct GameDriver flicky2_driver =
 	BASE_CREDITS,
 	0,
 	&system8_machine_driver,
+	0,
 
 	flicky2_rom,
 	0, flicky_decode,		/* ROM decode and opcode decode functions */
@@ -3614,6 +3694,7 @@ struct GameDriver bullfgtj_driver =
 	BASE_CREDITS,
 	0,
 	&system8_machine_driver,
+	0,
 
 	bullfgtj_rom,
 	0, bullfgtj_decode,		/* ROM decode and opcode decode functions */
@@ -3638,6 +3719,7 @@ struct GameDriver pitfall2_driver =
 	BASE_CREDITS,
 	0,
 	&pitfall2_machine_driver,
+	0,
 
 	pitfall2_rom,
 	0, pitfall2_decode,		/* ROM decode and opcode decode functions */
@@ -3662,6 +3744,7 @@ struct GameDriver pitfallu_driver =
 	BASE_CREDITS,
 	0,
 	&pitfall2_machine_driver,
+	0,
 
 	pitfallu_rom,
 	0, 0,   				/* ROM decode and opcode decode functions */
@@ -3686,6 +3769,7 @@ struct GameDriver seganinj_driver =
 	BASE_CREDITS,
 	0,
 	&system8_machine_driver,
+	0,
 
 	seganinj_rom,
 	0, seganinj_decode,		/* ROM decode and opcode decode functions */
@@ -3710,6 +3794,7 @@ struct GameDriver seganinu_driver =
 	BASE_CREDITS,
 	0,
 	&system8_machine_driver,
+	0,
 
 	seganinu_rom,
 	0, 0,   				/* ROM decode and opcode decode functions */
@@ -3734,6 +3819,7 @@ struct GameDriver nprinces_driver =
 	BASE_CREDITS,
 	0,
 	&system8_machine_driver,
+	0,
 
 	nprinces_rom,
 	0, nprinces_decode,		/* ROM decode and opcode decode functions */
@@ -3758,6 +3844,7 @@ struct GameDriver nprinceb_driver =
 	BASE_CREDITS,
 	0,
 	&system8_machine_driver,
+	0,
 
 	nprinceb_rom,
 	0, flicky_decode,		/* ROM decode and opcode decode functions */
@@ -3782,6 +3869,7 @@ struct GameDriver imsorry_driver =
 	BASE_CREDITS,
 	0,
 	&system8_machine_driver,
+	0,
 
 	imsorry_rom,
 	0, imsorry_decode,		/* ROM decode and opcode decode functions */
@@ -3806,6 +3894,7 @@ struct GameDriver imsorryj_driver =
 	BASE_CREDITS,
 	0,
 	&system8_machine_driver,
+	0,
 
 	imsorryj_rom,
 	0, imsorry_decode,		/* ROM decode and opcode decode functions */
@@ -3830,6 +3919,7 @@ struct GameDriver teddybb_driver =
 	BASE_CREDITS,
 	0,
 	&system8_machine_driver,
+	0,
 
 	teddybb_rom,
 	0, teddybb_decode,		/* ROM decode and opcode decode functions */
@@ -3854,6 +3944,7 @@ struct GameDriver hvymetal_driver =
 	BASE_CREDITS,
 	0,
 	&hvymetal_machine_driver,
+	0,
 
 	hvymetal_rom,
 	0, hvymetal_decode,		/* ROM decode and opcode decode functions */
@@ -3878,6 +3969,7 @@ struct GameDriver myhero_driver =
 	BASE_CREDITS,
 	0,
 	&system8_machine_driver,
+	0,
 
 	myhero_rom,
 	0, 0,   				/* ROM decode and opcode decode functions */
@@ -3902,6 +3994,7 @@ struct GameDriver myheroj_driver =
 	BASE_CREDITS,
 	0,
 	&system8_machine_driver,
+	0,
 
 	myheroj_rom,
 	0, myheroj_decode,		/* ROM decode and opcode decode functions */
@@ -3926,6 +4019,7 @@ struct GameDriver chplft_driver =
 	BASE_CREDITS,
 	GAME_NOT_WORKING,
 	&chplft_machine_driver,
+	0,
 
 	chplft_rom,
 	0, 0,   				/* ROM decode and opcode decode functions */
@@ -3950,6 +4044,7 @@ struct GameDriver chplftb_driver =
 	BASE_CREDITS,
 	0,
 	&chplft_machine_driver,
+	0,
 
 	chplftb_rom,
 	0, 0,   				/* ROM decode and opcode decode functions */
@@ -3974,6 +4069,7 @@ struct GameDriver chplftbl_driver =
 	BASE_CREDITS,
 	0,
 	&chplft_machine_driver,
+	0,
 
 	chplftbl_rom,
 	0, 0,   				/* ROM decode and opcode decode functions */
@@ -3998,6 +4094,7 @@ struct GameDriver fdwarrio_driver =
 	BASE_CREDITS,
 	0,
 	&system8_machine_driver,
+	0,
 
 	fdwarrio_rom,
 	0, fdwarrio_decode,		/* ROM decode and opcode decode functions */
@@ -4022,6 +4119,7 @@ struct GameDriver brain_driver =
 	BASE_CREDITS,
 	GAME_WRONG_COLORS,
 	&brain_machine_driver,
+	0,
 
 	brain_rom,
 	0, 0,		/* ROM decode and opcode decode functions */
@@ -4046,6 +4144,7 @@ struct GameDriver wboy_driver =
 	BASE_CREDITS,
 	0,
 	&system8_machine_driver,
+	0,
 
 	wboy_rom,
 	0, hvymetal_decode,		/* ROM decode and opcode decode functions */
@@ -4070,6 +4169,7 @@ struct GameDriver wboy2_driver =
 	BASE_CREDITS,
 	0,
 	&system8_machine_driver,
+	0,
 
 	wboy2_rom,
 	0, hvymetal_decode,		/* ROM decode and opcode decode functions */
@@ -4094,6 +4194,7 @@ struct GameDriver wboy3_driver =
 	BASE_CREDITS,
 	GAME_NOT_WORKING,
 	&system8_machine_driver,
+	0,
 
 	wboy3_rom,
 	0, wboy3_decode,		/* ROM decode and opcode decode functions */
@@ -4118,6 +4219,7 @@ struct GameDriver wboy4_driver =
 	BASE_CREDITS,
 	0,
 	&system8_machine_driver,
+	0,
 
 	wboy4_rom,
 	0, wboy4_decode,		/* ROM decode and opcode decode functions */
@@ -4142,6 +4244,7 @@ struct GameDriver wboyu_driver =
 	BASE_CREDITS,
 	0,
 	&system8_machine_driver,
+	0,
 
 	wboyu_rom,
 	0, 0,   				/* ROM decode and opcode decode functions */
@@ -4166,6 +4269,7 @@ struct GameDriver wboy4u_driver =
 	BASE_CREDITS,
 	0,
 	&system8_machine_driver,
+	0,
 
 	wboy4u_rom,
 	0, 0,   				/* ROM decode and opcode decode functions */
@@ -4190,6 +4294,7 @@ struct GameDriver wbdeluxe_driver =
 	BASE_CREDITS,
 	0,
 	&system8_machine_driver,
+	0,
 
 	wbdeluxe_rom,
 	0, 0,   				/* ROM decode and opcode decode functions */
@@ -4214,6 +4319,7 @@ struct GameDriver gardia_driver =
 	BASE_CREDITS,
 	GAME_NOT_WORKING,
 	&brain_machine_driver,
+	0,
 
 	gardia_rom,
 	0, gardia_decode,		/* ROM decode and opcode decode functions */
@@ -4238,6 +4344,7 @@ struct GameDriver blockgal_driver =
 	BASE_CREDITS,
 	GAME_NOT_WORKING,
 	&system8_machine_driver,
+	0,
 
 	blockgal_rom,
 	0, 0,					/* ROM decode and opcode decode functions */
@@ -4262,6 +4369,7 @@ struct GameDriver tokisens_driver =
 	BASE_CREDITS,
 	0,
 	&wbml_machine_driver,
+	0,
 
 	tokisens_rom,
 	0, 0,   				/* ROM decode and opcode decode functions */
@@ -4286,6 +4394,7 @@ struct GameDriver dakkochn_driver =
 	BASE_CREDITS,
 	GAME_NOT_WORKING,
 	&chplft_machine_driver,
+	0,
 
 	dakkochn_rom,
 	0, 0,   				/* ROM decode and opcode decode functions */
@@ -4310,6 +4419,7 @@ struct GameDriver ufosensi_driver =
 	BASE_CREDITS,
 	GAME_NOT_WORKING,
 	&chplft_machine_driver,
+	0,
 
 	ufosensi_rom,
 	0, 0,   				/* ROM decode and opcode decode functions */
@@ -4334,6 +4444,7 @@ struct GameDriver wbml_driver =
 	BASE_CREDITS,
 	0,
 	&wbml_machine_driver,
+	0,
 
 	wbml_rom,
 	0, wbml_decode,   		/* ROM decode and opcode decode functions */

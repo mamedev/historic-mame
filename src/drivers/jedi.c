@@ -398,6 +398,7 @@ struct GameDriver jedi_driver =
 	"Dan Boris",
 	0,
 	&machine_driver,
+	0,
 
 	jedi_rom,
 	0, 0,

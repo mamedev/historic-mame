@@ -500,6 +500,7 @@ struct GameDriver pooyan_driver =
 	"Mike Cuddy (hardware info)\nAllard Van Der Bas (Pooyan emulator)\nNicola Salmoria (MAME driver)\nMartin Binder (color info)\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	pooyan_rom,
 	0, 0,
@@ -525,6 +526,7 @@ struct GameDriver pooyans_driver =
 	"Mike Cuddy (hardware info)\nAllard Van Der Bas (Pooyan emulator)\nNicola Salmoria (MAME driver)\nMartin Binder (color info)\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	pooyans_rom,
 	0, 0,
@@ -550,6 +552,7 @@ struct GameDriver pootan_driver =
 	"Mike Cuddy (hardware info)\nAllard Van Der Bas (Pooyan emulator)\nNicola Salmoria (MAME driver)\nMartin Binder (color info)\nMarco Cassili",
 	0,
 	&machine_driver,
+	0,
 
 	pootan_rom,
 	0, 0,
