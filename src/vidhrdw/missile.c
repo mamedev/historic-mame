@@ -117,13 +117,33 @@ missile_video_3rd_bit_w(int address, int data)
 /********************************************************************************************/
 void missile_vh_update(struct osd_bitmap *bitmap)
 {
-	int x, y;
+	int x, y, tmp;
 	int address;
+	int bottom;
+
+
+	/* RG - 4/11/98 - added flips and rotates... */
 
 	for(address = 0x1900;address <= 0xFFFF;address++){
 		y = (address >> 8) - 25;
 		x = address & 0xFF;
-		if(y < 231 - 32)
+		if( y < 231 - 32)
+			bottom = 1;
+		else
+			bottom = 0;
+
+		if (Machine->orientation & ORIENTATION_SWAP_XY){
+			tmp = x;
+			x = y;
+			y = tmp;
+		}
+		if (Machine->orientation & ORIENTATION_FLIP_X)
+			x = bitmap->width - 1 - x;
+		if (Machine->orientation & ORIENTATION_FLIP_Y)
+			y = bitmap->height - 1 - y;
+
+
+		if(bottom)
 			bitmap->line[y][x] = Machine->pens[RAM[0x4B00 + ((missile_videoram[address] >> 5) & 6)] + 1];
 		else
 			bitmap->line[y][x] = Machine->pens[RAM[0x4B00 + (missile_videoram[address] >> 5)] + 1];

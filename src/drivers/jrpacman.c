@@ -111,9 +111,6 @@ void jrpacman_vh_screenrefresh(struct osd_bitmap *bitmap);
 extern unsigned char *pengo_soundregs;
 void pengo_sound_enable_w(int offset,int data);
 void pengo_sound_w(int offset,int data);
-int pengo_sh_start(void);
-void waveform_sh_stop(void);
-void waveform_sh_update(void);
 
 
 
@@ -305,19 +302,29 @@ static unsigned char sound_prom[] =
 
 
 
+static struct namco_interface namco_interface =
+{
+	3072000/32,	/* sample rate */
+	3,			/* number of voices */
+	32,			/* gain adjustment */
+	255			/* playback volume */
+};
+
+
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_Z80,
-			3072000,	/* 3.072 Mhz */
+			18432000/6,	/* 3.072 Mhz */
 			0,
 			readmem,writemem,0,writeport,
 			jrpacman_interrupt,1
 		}
 	},
-	60,
+	60, 2500,	/* frames per second, vblank duration */
 	1,	/* single CPU, no need for interleaving */
 	jrpacman_init_machine,
 
@@ -334,10 +341,13 @@ static struct MachineDriver machine_driver =
 	jrpacman_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	pengo_sh_start,
-	waveform_sh_stop,
-	waveform_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_NAMCO,
+			&namco_interface
+		}
+	}
 };
 
 
@@ -495,7 +505,7 @@ struct GameDriver jrpacman_driver =
 	0,
 	sound_prom,	/* sound_prom */
 
-	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,

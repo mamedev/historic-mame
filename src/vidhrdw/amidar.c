@@ -11,18 +11,14 @@
 
 
 
-unsigned char *amidar_attributesram;
-static int flipscreen[2];
-
-
 static struct rectangle spritevisiblearea =
 {
-	2*8, 32*8-1,
+	2*8+1, 32*8-1,
 	2*8, 30*8-1
 };
 static struct rectangle spritevisibleareaflipx =
 {
-	0*8, 30*8-1,
+	0*8, 30*8-2,
 	2*8, 30*8-1
 };
 
@@ -87,38 +83,32 @@ void amidar_vh_convert_color_prom(unsigned char *palette, unsigned char *colorta
 
 
 
-void amidar_flipx_w(int offset,int data)
+static void updatetile(int x,int y)
 {
-	if (flipscreen[0] != (data & 1))
-	{
-		flipscreen[0] = data & 1;
-		memset(dirtybuffer,1,videoram_size);
-	}
+	set_tile_attributes(0,			/* layer number */
+		x + y * 32, 				/* x/y position */
+		0,videoram00[32*y+x],		/* tile bank, code */
+		videoram01[2*x + 1] & 0x07,	/* color */
+		0,0,						/* flip x/y */
+		TILE_TRANSPARENCY_OPAQUE);	/* transparency */
 }
 
-void amidar_flipy_w(int offset,int data)
+void amidar_updatehook00(int offset)
 {
-	if (flipscreen[1] != (data & 1))
-	{
-		flipscreen[1] = data & 1;
-		memset(dirtybuffer,1,videoram_size);
-	}
+	updatetile(offset % 32,offset / 32);
 }
 
-
-
-void amidar_attributes_w(int offset,int data)
+void amidar_updatehook01(int offset)
 {
-	if ((offset & 1) && amidar_attributesram[offset] != data)
+	if (offset & 1)
 	{
-		int i;
+		int x,y;
 
 
-		for (i = offset / 2;i < videoram_size;i += 32)
-			dirtybuffer[i] = 1;
+		x = offset / 2;
+		for (y = 0;y < 32;y++)
+			updatetile(x,y);
 	}
-
-	amidar_attributesram[offset] = data;
 }
 
 
@@ -135,35 +125,11 @@ void amidar_vh_screenrefresh(struct osd_bitmap *bitmap)
 	int offs;
 
 
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		if (dirtybuffer[offs])
-		{
-			int sx,sy;
-
-
-			dirtybuffer[offs] = 0;
-
-			sx = offs % 32;
-			sy = offs / 32;
-
-			if (flipscreen[0]) sx = 31 - sx;
-			if (flipscreen[1]) sy = 31 - sy;
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs],
-					amidar_attributesram[2 * (offs % 32) + 1] & 0x07,
-					flipscreen[0],flipscreen[1],
-					8*sx,8*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-		}
-	}
-
-
-	/* copy the temporary bitmap to the screen */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	set_tile_layer_attributes(0,bitmap,				/* layer number, bitmap */
+			0,0,									/* scroll x/y */
+			*flip_screen_x & 1,*flip_screen_y & 1,	/* flip x/y */
+			0,0);									/* global attributes */
+	update_tile_layer(0,bitmap);
 
 
 	/* Draw the sprites. Note that it is important to draw them exactly in this */
@@ -178,12 +144,12 @@ void amidar_vh_screenrefresh(struct osd_bitmap *bitmap)
 		flipx = spriteram[offs + 1] & 0x40;
 		flipy = spriteram[offs + 1] & 0x80;
 
-		if (flipscreen[0])
+		if (*flip_screen_x & 1)
 		{
 			sx = 241 - sx;	/* note: 241, not 240 */
 			flipx = !flipx;
 		}
-		if (flipscreen[1])
+		if (*flip_screen_y & 1)
 		{
 			sy = 240 - sy;
 			flipy = !flipy;
@@ -196,11 +162,13 @@ void amidar_vh_screenrefresh(struct osd_bitmap *bitmap)
 		/* proving that this is a hardware related "feature" */
 		if (offs <= 2*4) sy++;
 
-		drawgfx(bitmap,Machine->gfx[1],
+		drawgfx(bitmap,Machine->gfx[0],
 				spriteram[offs + 1] & 0x3f,
 				spriteram[offs + 2] & 0x07,
 				flipx,flipy,
 				sx,sy,
-				flipscreen[0] ? &spritevisibleareaflipx : &spritevisiblearea,TRANSPARENCY_PEN,0);
+				*flip_screen_x & 1 ? &spritevisibleareaflipx : &spritevisiblearea,TRANSPARENCY_PEN,0);
+
+layer_mark_rectangle_dirty(Machine->layer[0],sx,sx+15,sy,sy+15);
 	}
 }

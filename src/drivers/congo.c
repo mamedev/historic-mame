@@ -47,8 +47,6 @@ NMI causes a ROM/RAM test.
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/generic.h"
-#include "sndhrdw/SN76496.h"
 
 
 extern unsigned char *congo_background_position;
@@ -58,7 +56,6 @@ int  congo_vh_start(void);
 void congo_vh_stop(void);
 void congo_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-int congo_sh_start(void);
 void congo_daio(int offset, int data);
 
 
@@ -86,7 +83,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xc01f, 0xc01f, interrupt_enable_w },
 	{ 0xc028, 0xc029, MWA_RAM, &congo_background_position },
 	{ 0xc01d, 0xc01d, MWA_RAM, &congo_background_enable },
-	{ 0xc038, 0xc038, sound_command_w },
+	{ 0xc038, 0xc038, soundlatch_w },
 	{ 0xc030, 0xc033, MWA_NOP }, /* ??? */
 	{ 0xc01e, 0xc01e, MWA_NOP }, /* flip unused for now */
 	{ 0xc018, 0xc018, MWA_NOP }, /* coinAen */
@@ -103,7 +100,7 @@ static struct MemoryReadAddress sh_readmem[] =
 {
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x4000, 0x47ff, MRA_RAM },
-	{ 0x8000, 0x8003, sound_command_latch_r },
+	{ 0x8000, 0x8003, soundlatch_r },
 	{ -1 }
 };
 static struct MemoryWriteAddress sh_writemem[] =
@@ -309,20 +306,18 @@ static unsigned char color_prom[] =
 	0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00
 };
 
-/* Samples for Congo Bongo, these are needed for now    */
-/* as I haven't gotten around to calculate a formula for the */
-/* simple oscillators producing the drums VL*/
-/* As for now, thanks to Tim L. for providing samples */
 
-static const char *congo_samplenames[] =
+
+static struct SN76496interface sn76496_interface =
 {
-	"*congo",
-	"gorilla.sam",
-	"bass.sam",
-	"congaa.sam",
-	"congab.sam",
-	"rim.sam",
-	0
+	2,	/* 2 chips */
+	4000000,	/* 4 Mhz??? */
+	{ 255, 255 }
+};
+
+static struct Samplesinterface samples_interface =
+{
+	5	/* 5 channels */
 };
 
 
@@ -333,7 +328,7 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_Z80,
-			3072000,	/* 3.072 Mhz */
+			3072000,	/* 3.072 Mhz ?? */
 			0,
 			readmem,writemem,0,0,
 			congo_interrupt,1
@@ -346,8 +341,8 @@ static struct MachineDriver machine_driver =
 			interrupt, 4
 		}
 	},
-	60,
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
 	/* video hardware */
@@ -363,10 +358,17 @@ static struct MachineDriver machine_driver =
 	congo_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	congo_sh_start,
-	SN76496_sh_stop,
-	SN76496_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_SN76496,
+			&sn76496_interface
+		},
+		{
+			SOUND_SAMPLES,
+			&samples_interface
+		}
+	}
 };
 
 
@@ -436,6 +438,23 @@ ROM_START( tiptop_rom )
 ROM_END
 
 
+/* Samples for Congo Bongo, these are needed for now    */
+/* as I haven't gotten around to calculate a formula for the */
+/* simple oscillators producing the drums VL*/
+/* As for now, thanks to Tim L. for providing samples */
+
+static const char *congo_samplenames[] =
+{
+	"*congo",
+	"gorilla.sam",
+	"bass.sam",
+	"congaa.sam",
+	"congab.sam",
+	"rim.sam",
+	0
+};
+
+
 
 static int hiload(void)
 {
@@ -495,7 +514,7 @@ struct GameDriver congo_driver =
 	congo_samplenames,
 	0,	/* sound_prom */
 
-	0/*TBR*/,input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -515,7 +534,7 @@ struct GameDriver tiptop_driver =
 	congo_samplenames,
 	0,	/* sound_prom */
 
-	0/*TBR*/,input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,

@@ -18,15 +18,15 @@ Space Panic memory map
           byte 4 - 08 = Switch sprite bank
                    07 = Colour
 
-6800      IN1 - See input port setup for mappings
-6802	  DSW
-6803      IN0
+6800      IN1 - Player controls. See input port setup for mappings
+6801      IN2 - Player 2 controls for cocktail mode. See input port setup for mappings.
+6802      DSW - Dip switches
+6803      IN0 - Coinage and player start
 42FC-42FE Colour Map Selector
 700C      Alternate colour mapping
 
 (Not Implemented)
 
-6801      Control keys for Player 2 on Cocktail table
 7000-700B Various triggers, Sound etc
 700D-700F Various triggers
 7800      80 = Flash Screen?
@@ -54,9 +54,10 @@ static struct MemoryReadAddress readmem[] =
 {
 	{ 0x4000, 0x5FFF, MRA_RAM },
 	{ 0x0000, 0x3fff, MRA_ROM },
-        { 0x6803, 0x6803, input_port_0_r },
-        { 0x6800, 0x6800, input_port_1_r },
-        { 0x6802, 0x6802, input_port_2_r }, /* DSW */
+	{ 0x6803, 0x6803, input_port_0_r }, /* IN0 */
+	{ 0x6800, 0x6800, input_port_1_r }, /* IN1 */
+	{ 0x6801, 0x6801, input_port_2_r }, /* IN2 */
+	{ 0x6802, 0x6802, input_port_3_r }, /* DSW */
 	{ -1 }	/* end of table */
 };
 
@@ -71,61 +72,61 @@ static struct MemoryWriteAddress writemem[] =
 
 
 
-static struct IOReadPort readport[] =
-{
-	{ -1 }	/* end of table */
-};
+INPUT_PORTS_START( input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
-static struct IOWritePort writeport[] =
-{
-	{ -1 }	/* end of table */
-};
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 )
 
+	PORT_START      /* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
 
-
-static struct InputPort input_ports[] =
-{
-	{       /* IN0 */
-		0xFF,
-		{ OSD_KEY_1, OSD_KEY_2, 0, 0, 0, 0, OSD_KEY_3, OSD_KEY_4 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{       /* IN1 */
-		0xFF,
-		{ OSD_KEY_LCONTROL, OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_DOWN, OSD_KEY_UP, 0, 0, OSD_KEY_ALT },
-		{ OSD_JOY_FIRE1, OSD_JOY_RIGHT, OSD_JOY_LEFT, OSD_JOY_DOWN, OSD_JOY_UP, 0, 0, OSD_JOY_FIRE2 }
-	},
-	{	/* DSW */
-		0x00,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{ -1 }
-};
-
-
-
-static struct KEYSet keys[] =
-{
-        { 1, 4, "MOVE UP" },
-        { 1, 2, "MOVE LEFT"  },
-        { 1, 1, "MOVE RIGHT" },
-        { 1, 3, "MOVE DOWN" },
-        { 1, 7, "FILL" },
-        { 1, 0, "DIG" },
-        { -1 }
-};
-
-
-static struct DSW dsw[] =
-{
-	{ 2, 0x20, "LIVES", { "3", "4" } },
-	{ 2, 0x10, "BONUS", { "3000", "5000" } },
-	{ 2, 0x08, "CABINET", { "UPRIGHT", "COCKTAIL" } },
-	{ 2, 0x07, "LEFT SLOT", { "1 1", "1 2", "1 3", "1 4", "1 5", "2 3", "? ?", "? ?" } },
-	{ 2, 0xC0, "RIGHT SLOT", { "2 1", "1 1", "1 2", "1 3" } },
-	{ -1 }
-};
+	PORT_START      /* DSW */
+	PORT_DIPNAME( 0x07, 0x00, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x05, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x01, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x02, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x03, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0x04, "1 Coin/5 Credits" )
+/* 0x06 and 0x07 disabled */
+	PORT_DIPNAME( 0x08, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x08, "Cocktail" )
+	PORT_DIPNAME( 0x10, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3000" )
+	PORT_DIPSETTING(    0x10, "5000" )
+	PORT_DIPNAME( 0x20, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x20, "4" )
+	PORT_DIPNAME( 0xc0, 0x40, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x40, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x80, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0xc0, "1 Coin/3 Credits" )
+INPUT_PORTS_END
 
 
 
@@ -195,6 +196,8 @@ static unsigned char colortable[] =
         0,     0,            0,          white
 };
 
+
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -203,11 +206,11 @@ static struct MachineDriver machine_driver =
 			CPU_Z80,
 			2000000,	/* 2 Mhz? */
 			0,
-			readmem,writemem,readport,writeport,
+			readmem,writemem,0,0,
 			panic_interrupt,2
 		}
 	},
-	60,
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* single CPU, no need for interleaving */
 	0,
 
@@ -316,7 +319,7 @@ struct GameDriver panic_driver =
 {
 	"Space Panic",
 	"panic",
-	"MIKE COATES",
+	"Mike Coates (MAME driver)\nMarco Cassili",
 	&machine_driver,
 
 	panic_rom,
@@ -324,7 +327,7 @@ struct GameDriver panic_driver =
 	0,
 	0,	/* sound_prom */
 
-	input_ports, 0, 0/*TBR*/,dsw, keys,
+	input_ports,
 
 	0, palette, colortable,
 	ORIENTATION_DEFAULT,
@@ -336,7 +339,7 @@ struct GameDriver panica_driver =
 {
 	"Space Panic (alternate version)",
 	"panica",
-	"MIKE COATES",
+	"Mike Coates (MAME driver)\nMarco Cassili",
 	&machine_driver,
 
 	panica_rom,
@@ -344,7 +347,7 @@ struct GameDriver panica_driver =
 	0,
 	0,	/* sound_prom */
 
-	input_ports, 0, 0/*TBR*/,dsw, keys,
+	input_ports,
 
 	0, palette, colortable,
 	ORIENTATION_DEFAULT,

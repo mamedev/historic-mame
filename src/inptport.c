@@ -9,183 +9,26 @@ TODO: remove the 1 analog device per port limitation
 ***************************************************************************/
 
 #include "driver.h"
-
+#include <math.h>
 
 /* header identifying the version of the game.cfg file */
 #define MAMECFGSTRING "MAMECFG\2"
 
 extern int nocheat;
+extern void *record;
+extern void *playback;
 
 static unsigned char input_port_value[MAX_INPUT_PORTS];
 static unsigned char input_vblank[MAX_INPUT_PORTS];
 
 /* Assuming a maxium of one analog input device per port BW 101297 */
-static struct NewInputPort *input_analog[MAX_INPUT_PORTS];
+static struct InputPort *input_analog[MAX_INPUT_PORTS];
 static int input_analog_value[MAX_INPUT_PORTS];
+static char input_analog_init[MAX_INPUT_PORTS];
 
-static int newgame = 1;
-
-/***************************************************************************
-
-  Obsolete functions which will eventually be removed
-
-***************************************************************************/
-static void old_load_input_port_settings(void)
-{
-	void *f;
-	char buf[100];
-	unsigned int i,j;
-	unsigned int len,incount,keycount;
-
-
-	incount = 0;
-	while (Machine->gamedrv->input_ports[incount].default_value != -1) incount++;
-
-	keycount = 0;
-	while (Machine->gamedrv->keysettings[keycount].num != -1) keycount++;
-
-
-		/* find the configuration file */
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_CONFIG,0)) != 0)
-		{
-			for (j=0; j < 4; j++)
-			{
-				if ((len = osd_fread(f,buf,4)) == 4)
-				{
-					len = (unsigned char)buf[3];
-					buf[3] = '\0';
-					if (stricmp(buf,"dsw") == 0) {
-						if ((len == incount) && (osd_fread(f,buf,incount) == incount))
-		{
-			for (i = 0;i < incount;i++)
-				Machine->gamedrv->input_ports[i].default_value = ((unsigned char)buf[i]);
-		}
-					} else if (stricmp(buf,"key") == 0) {
-						if ((len == keycount) && (osd_fread(f,buf,keycount) == keycount))
-		{
-			for (i = 0;i < keycount;i++)
-				Machine->gamedrv->input_ports[ Machine->gamedrv->keysettings[i].num ].keyboard[ Machine->gamedrv->keysettings[i].mask ] = ((unsigned char)buf[i]);
-		}
-					} else if (stricmp(buf,"joy") == 0) {
-						if ((len == keycount) && (osd_fread(f,buf,keycount) == keycount))
-		{
-			for (i = 0;i < keycount;i++)
-				Machine->gamedrv->input_ports[ Machine->gamedrv->keysettings[i].num ].joystick[ Machine->gamedrv->keysettings[i].mask ] = ((unsigned char)buf[i]);
-		}
-					}
-			}
-		}
-		osd_fclose(f);
-	}
-}
-
-
-
-static void old_save_input_port_settings(void)
-{
-	void *f;
-	char buf[100];
-	unsigned int i;
-	unsigned int incount,keycount;
-
-
-incount = 0;
-while (Machine->gamedrv->input_ports[incount].default_value != -1) incount++;
-
-keycount = 0;
-while (Machine->gamedrv->keysettings[keycount].num != -1) keycount++;
-
-
-				/* write the configuration file */
-				if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_CONFIG,1)) != 0)
-				{
-						sprintf(buf, "dsw ");
-						buf[3] = incount;
-						osd_fwrite(f,buf,4);
-	/* use buf as temporary buffer */
-	for (i = 0;i < incount;i++)
-		buf[i] = Machine->gamedrv->input_ports[i].default_value;
-	osd_fwrite(f,buf,incount);
-
-						sprintf(buf, "key ");
-						buf[3] = keycount;
-						osd_fwrite(f,buf,4);
-	/* use buf as temporary buffer */
-	for (i = 0;i < keycount;i++)
-		buf[i] = Machine->gamedrv->input_ports[ Machine->gamedrv->keysettings[i].num ].keyboard[ Machine->gamedrv->keysettings[i].mask ];
-	osd_fwrite(f,buf,keycount);
-
-						sprintf(buf, "joy ");
-						buf[3] = keycount;
-						osd_fwrite(f,buf,4);
-	/* use buf as temporary buffer */
-	for (i = 0;i < keycount;i++)
-		buf[i] = Machine->gamedrv->input_ports[ Machine->gamedrv->keysettings[i].num ].joystick[ Machine->gamedrv->keysettings[i].mask ];
-	osd_fwrite(f,buf,keycount);
-
-						osd_fclose(f);
-				}
-}
-
-
-
-static void old_update_input_ports(void)
-{
-	int port;
-
-
-	/* scan all the input ports */
-	port = 0;
-	while (Machine->gamedrv->input_ports[port].default_value != -1)
-	{
-		int res, i;
-		struct InputPort *in;
-
-
-		in = &Machine->gamedrv->input_ports[port];
-
-		res = in->default_value;
-		input_vblank[port] = 0;
-
-		for (i = 7;i >= 0;i--)
-		{
-			int c;
-
-
-			c = in->keyboard[i];
-			if (c == IPB_VBLANK)
-			{
-				res ^= (1 << i);
-				input_vblank[port] ^= (1 << i);
-			}
-			else
-			{
-				if (c && osd_key_pressed(c))
-					res ^= (1 << i);
-				else
-				{
-					c = in->joystick[i];
-					if (c && osd_joy_pressed(c))
-						res ^= (1 << i);
-				}
-			}
-		}
-
-		input_port_value[port] = res;
-		port++;
-	}
-}
-/***************************************************************************
-
-  End of obsolete functions
-
-***************************************************************************/
-
-
-
-
-
-
+static int mouse_last_x,mouse_last_y;
+static int mouse_current_x,mouse_current_y;
+static int mouse_previous_x,mouse_previous_y;
 
 
 /***************************************************************************
@@ -230,7 +73,7 @@ static void writeint(void *f,int num)
 	}
 }
 
-static int readip(void *f,struct NewInputPort *in)
+static int readip(void *f,struct InputPort *in)
 {
 	if (readint(f,&in->type) != 0)
 		return -1;
@@ -248,7 +91,7 @@ static int readip(void *f,struct NewInputPort *in)
 	return 0;
 }
 
-static void writeip(void *f,struct NewInputPort *in)
+static void writeip(void *f,struct InputPort *in)
 {
 	writeint(f,in->type);
 	osd_fwrite(f,&in->mask,1);
@@ -265,15 +108,9 @@ void load_input_port_settings(void)
 	void *f;
 
 
-if (Machine->input_ports == 0)
-{
-	old_load_input_port_settings();
-	return;
-}
-
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_CONFIG,0)) != 0)
 	{
-		struct NewInputPort *in;
+		struct InputPort *in;
 		int total,savedtotal;
 		char buf[8];
 
@@ -304,7 +141,7 @@ if (Machine->input_ports == 0)
 		in = Machine->gamedrv->new_input_ports;
 		while (in->type != IPT_END)
 		{
-			struct NewInputPort saved;
+			struct InputPort saved;
 
 
 			if (readip(f,&saved) != 0)
@@ -322,7 +159,6 @@ if (Machine->input_ports == 0)
 
 		/* read the current settings */
 		in = Machine->input_ports;
-		newgame = 1;
 		while (in->type != IPT_END)
 		{
 			if (readip(f,in) != 0)
@@ -334,6 +170,13 @@ if (Machine->input_ports == 0)
 getout:
 		osd_fclose(f);
 	}
+
+	/* All analog ports need initialization */
+	{
+		int i;
+		for (i = 0; i < MAX_INPUT_PORTS; i++)
+			input_analog_init[i] = 1;
+	}
 }
 
 
@@ -343,16 +186,9 @@ void save_input_port_settings(void)
 	void *f;
 
 
-if (Machine->input_ports == 0)
-{
-	old_save_input_port_settings();
-	return;
-}
-
-
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_CONFIG,1)) != 0)
 	{
-		struct NewInputPort *in;
+		struct InputPort *in;
 		int total;
 
 
@@ -410,10 +246,10 @@ struct ipd inputport_defaults[] =
 	{ IPT_JOYSTICK_DOWN  | IPF_PLAYER2, "2 Down",          OSD_KEY_F,       0 },
 	{ IPT_JOYSTICK_LEFT  | IPF_PLAYER2, "2 Left",          OSD_KEY_D,       0 },
 	{ IPT_JOYSTICK_RIGHT | IPF_PLAYER2, "2 Right",         OSD_KEY_G,       0 },
-	{ IPT_JOYSTICK_UP    | IPF_PLAYER3, "3 Up",            0,               0 },
-	{ IPT_JOYSTICK_DOWN  | IPF_PLAYER3, "3 Down",          0,               0 },
-	{ IPT_JOYSTICK_LEFT  | IPF_PLAYER3, "3 Left",          0,               0 },
-	{ IPT_JOYSTICK_RIGHT | IPF_PLAYER3, "3 Right",         0,               0 },
+	{ IPT_JOYSTICK_UP    | IPF_PLAYER3, "3 Up",            OSD_KEY_I,       0 },
+	{ IPT_JOYSTICK_DOWN  | IPF_PLAYER3, "3 Down",          OSD_KEY_K,       0 },
+	{ IPT_JOYSTICK_LEFT  | IPF_PLAYER3, "3 Left",          OSD_KEY_J,       0 },
+	{ IPT_JOYSTICK_RIGHT | IPF_PLAYER3, "3 Right",         OSD_KEY_L,       0 },
 	{ IPT_JOYSTICK_UP    | IPF_PLAYER4, "4 Up",            0,               0 },
 	{ IPT_JOYSTICK_DOWN  | IPF_PLAYER4, "4 Down",          0,               0 },
 	{ IPT_JOYSTICK_LEFT  | IPF_PLAYER4, "4 Left",          0,               0 },
@@ -438,14 +274,16 @@ struct ipd inputport_defaults[] =
 	{ IPT_BUTTON2,             "Button 2",        OSD_KEY_ALT,     OSD_JOY_FIRE2 },
 	{ IPT_BUTTON3,             "Button 3",        OSD_KEY_SPACE,   OSD_JOY_FIRE3 },
 	{ IPT_BUTTON4,             "Button 4",        OSD_KEY_LSHIFT,  OSD_JOY_FIRE4 },
-	{ IPT_BUTTON5,             "Button 5",        OSD_KEY_Z,       0 },
-	{ IPT_BUTTON1 | IPF_PLAYER2, "2 Button 1",        OSD_KEY_A,       0 },
+	{ IPT_BUTTON5,             "Button 5",        OSD_KEY_Z,       OSD_JOY_FIRE5 },
+	{ IPT_BUTTON6,             "Button 6",        OSD_KEY_X,       OSD_JOY_FIRE6 },
+	{ IPT_BUTTON7,             "Button 7",        OSD_KEY_C,       OSD_JOY_FIRE7 },
+	{ IPT_BUTTON8,             "Button 8",        OSD_KEY_V,       OSD_JOY_FIRE8 },	{ IPT_BUTTON1 | IPF_PLAYER2, "2 Button 1",        OSD_KEY_A,       0 },
 	{ IPT_BUTTON2 | IPF_PLAYER2, "2 Button 2",        OSD_KEY_S,       0 },
 	{ IPT_BUTTON3 | IPF_PLAYER2, "2 Button 3",        OSD_KEY_Q,       0 },
 	{ IPT_BUTTON4 | IPF_PLAYER2, "2 Button 4",        OSD_KEY_W,       0 },
-	{ IPT_BUTTON1 | IPF_PLAYER3, "3 Button 1",        0,               0 },
-	{ IPT_BUTTON2 | IPF_PLAYER3, "3 Button 2",        0,               0 },
-	{ IPT_BUTTON3 | IPF_PLAYER3, "3 Button 3",        0,               0 },
+	{ IPT_BUTTON1 | IPF_PLAYER3, "3 Button 1",        OSD_KEY_RCONTROL,0 },
+	{ IPT_BUTTON2 | IPF_PLAYER3, "3 Button 2",        OSD_KEY_RSHIFT,  0 },
+	{ IPT_BUTTON3 | IPF_PLAYER3, "3 Button 3",        OSD_KEY_ENTER,   0 },
 	{ IPT_BUTTON4 | IPF_PLAYER3, "3 Button 4",        0,               0 },
 	{ IPT_BUTTON1 | IPF_PLAYER4, "4 Button 1",        0,               0 },
 	{ IPT_BUTTON2 | IPF_PLAYER4, "4 Button 2",        0,               0 },
@@ -460,12 +298,12 @@ struct ipd inputport_defaults[] =
 	{ IPT_START2,              "2 Players Start", OSD_KEY_2,       IP_JOY_NONE },
 	{ IPT_START3,              "3 Players Start", OSD_KEY_7,       IP_JOY_NONE },
 	{ IPT_START4,              "4 Players Start", OSD_KEY_8,       IP_JOY_NONE },
-	{ IPT_PADDLE,                "Paddle",            IPF_DEC(OSD_KEY_LEFT)    | IPF_INC(OSD_KEY_RIGHT)     | IPF_DELTA(4), \
+	{ IPT_PADDLE,              "Paddle",          IPF_DEC(OSD_KEY_LEFT) | IPF_INC(OSD_KEY_RIGHT) | IPF_DELTA(4), \
 	                                              IPF_DEC(OSD_JOY_LEFT) | IPF_INC(OSD_JOY_RIGHT) | IPF_DELTA(4) },
 	{ IPT_PADDLE | IPF_PLAYER2,  "Paddle 2",          IPF_DELTA(4), IPF_DELTA(4) },
 	{ IPT_PADDLE | IPF_PLAYER3,  "Paddle 3",          IPF_DELTA(4), IPF_DELTA(4) },
 	{ IPT_PADDLE | IPF_PLAYER4,  "Paddle 4",          IPF_DELTA(4), IPF_DELTA(4) },
-	{ IPT_DIAL,                "Dial",            IPF_DEC(OSD_KEY_Z)    | IPF_INC(OSD_KEY_X)     | IPF_DELTA(4), \
+	{ IPT_DIAL,                "Dial",            IPF_DEC(OSD_KEY_LEFT) | IPF_INC(OSD_KEY_RIGHT) | IPF_DELTA(4), \
 	                                              IPF_DEC(OSD_JOY_LEFT) | IPF_INC(OSD_JOY_RIGHT) | IPF_DELTA(4) },
 	{ IPT_DIAL | IPF_PLAYER2,  "Dial 2",          IPF_DELTA(4), IPF_DELTA(4) },
 	{ IPT_DIAL | IPF_PLAYER3,  "Dial 3",          IPF_DELTA(4), IPF_DELTA(4) },
@@ -495,7 +333,7 @@ struct ipd inputport_defaults[] =
 };
 
 /* Note that the following 3 routines have slightly different meanings with analog ports */
-const char *default_name(const struct NewInputPort *in)
+const char *default_name(const struct InputPort *in)
 {
 	int i;
 
@@ -510,12 +348,12 @@ const char *default_name(const struct NewInputPort *in)
 	return inputport_defaults[i].name;
 }
 
-int default_key(const struct NewInputPort *in)
+int default_key(const struct InputPort *in)
 {
 	int i;
 
 
-	if (in->keyboard == IP_KEY_PREVIOUS) in--;
+	while (in->keyboard == IP_KEY_PREVIOUS) in--;
 
 	if (in->keyboard != IP_KEY_DEFAULT) return in->keyboard;
 
@@ -527,12 +365,12 @@ int default_key(const struct NewInputPort *in)
 	return inputport_defaults[i].keyboard;
 }
 
-int default_joy(const struct NewInputPort *in)
+int default_joy(const struct InputPort *in)
 {
 	int i;
 
 
-	if (in->joystick == IP_JOY_PREVIOUS) in--;
+	while (in->joystick == IP_JOY_PREVIOUS) in--;
 
 	if (in->joystick != IP_JOY_DEFAULT) return in->joystick;
 
@@ -544,14 +382,13 @@ int default_joy(const struct NewInputPort *in)
 	return inputport_defaults[i].joystick;
 }
 
-void update_analog_port(port)
+void update_analog_port(int port)
 {
-	struct NewInputPort *in;
-	int current, delta, scaled_delta, type, sensitivity, clip, min, max;
+	struct InputPort *in;
+	int current, delta, type, sensitivity, clip, min, max, default_value;
 	int axis, is_stick, check_bounds, anajoy;
 	int inckey, deckey, keydelta, incjoy, decjoy, joydelta;
 	int key,joy;
-
 
 	/* get input definition */
 	in=input_analog[port];
@@ -573,40 +410,20 @@ void update_analog_port(port)
 	switch (type)
 	{
 		case IPT_PADDLE:
-			axis = X_AXIS;
-			is_stick = 0;
-			check_bounds = 1;
-			break;
+			axis = X_AXIS; is_stick = 0; check_bounds = 1; break;
 		case IPT_DIAL:
-			axis = X_AXIS;
-			is_stick = 0;
-			check_bounds = 0;
-			break;
+			axis = X_AXIS; is_stick = 0; check_bounds = 0; break;
 		case IPT_TRACKBALL_X:
-			axis = X_AXIS;
-			is_stick = 0;
-			check_bounds = 0;
-			break;
+			axis = X_AXIS; is_stick = 0; check_bounds = 0; break;
 		case IPT_TRACKBALL_Y:
-			axis = Y_AXIS;
-			is_stick = 0;
-			check_bounds = 0;
-			break;
+			axis = Y_AXIS; is_stick = 0; check_bounds = 0; break;
 		case IPT_AD_STICK_X:
-			axis = X_AXIS;
-			is_stick = 1;
-			check_bounds = 1;
-			break;
+			axis = X_AXIS; is_stick = 1; check_bounds = 1; break;
 		case IPT_AD_STICK_Y:
-			axis = Y_AXIS;
-			is_stick = 1;
-			check_bounds = 1;
-			break;
+			axis = Y_AXIS; is_stick = 1; check_bounds = 1; break;
 		default:
 			/* Use some defaults to prevent crash */
-			axis = X_AXIS;
-			is_stick = 0;
-			check_bounds = 0;
+			axis = X_AXIS; is_stick = 0; check_bounds = 0;
 			if (errorlog)
 				fprintf (errorlog,"Oops, polling non analog device in update_analog_port()????\n");
 	}
@@ -616,91 +433,111 @@ void update_analog_port(port)
 	clip = (in->arg & 0x0000ff00) >> 8;
 	min = (in->arg & 0x00ff0000) >> 16;
 	max = (in->arg & 0xff000000) >> 24;
+	default_value = in->default_value * 100 / sensitivity;
+	/* extremes can be either signed or unsigned */
+	if (min > max) min = min - 256;
 
-	if (newgame || ((in->type & IPF_CENTER) && (!is_stick)))
-		input_analog_value[port] = in->default_value * 16 / sensitivity;
+	if (((in->type & IPF_CENTER) && (!is_stick)))
+		input_analog_value[port] = default_value;
 
 	current = input_analog_value[port];
 
-	delta = osd_trak_read(axis);
+	if (axis == X_AXIS)
+	{
+		int now;
+
+		now = cpu_scalebyfcount(mouse_current_x - mouse_previous_x) + mouse_previous_x;
+		delta = now - mouse_last_x;
+		mouse_last_x = now;
+	}
+	else
+	{
+		int now;
+
+		now = cpu_scalebyfcount(mouse_current_y - mouse_previous_y) + mouse_previous_y;
+		delta = now - mouse_last_y;
+		mouse_last_y = now;
+	}
 
 	if (osd_key_pressed(deckey)) delta -= keydelta;
 	if (osd_key_pressed(inckey)) delta += keydelta;
 	if (osd_joy_pressed(decjoy)) delta -= keydelta; /* LBO 120897 */
 	if (osd_joy_pressed(incjoy)) delta += keydelta;
 
-	/* Internally, we use 16=2^4 as default sensivity. 32 is twice as */
-	/* sensitive, 8 half, and so on. The macro in driver.h translates */
-	/* this to the old "percent" semantics, so there's no need to     */
-	/* change the drivers. 101297 BW */
-
-	scaled_delta = delta;
-
 	if (clip != 0)
 	{
-		if (scaled_delta*sensitivity/16 < -clip)
-			scaled_delta = -clip*16/sensitivity;
-		else if (scaled_delta*sensitivity/16 > clip)
-			scaled_delta = clip*16/sensitivity;
+		if (delta*sensitivity/100 < -clip)
+			delta = -clip*100/sensitivity;
+		else if (delta*sensitivity/100 > clip)
+			delta = clip*100/sensitivity;
 	}
 
-	if (in->type & IPF_REVERSE) scaled_delta = -scaled_delta;
+	if (in->type & IPF_REVERSE) delta = -delta;
 
 	if (is_stick)
 	{
-		if (axis == Y_AXIS) scaled_delta = -scaled_delta;
 		if ((delta == 0) && (in->type & IPF_CENTER))
 		{
-			if (current * sensitivity / 16 > in->default_value)
-			scaled_delta = -1;
-			if (current * sensitivity / 16 < in->default_value)
-			scaled_delta = 1;
+			if (current > default_value)
+				delta = -100 / sensitivity;
+			if (current < default_value)
+				delta =  100 / sensitivity;
 		}
 
 		/* perhaps there's a real analog joystick present? */
-		/* osd_analog_joyread() returns values from -128 to 127 */
-
+		/* osd_analog_joyread() returns values from -128 to 128 (yes, 128, not 127) */
 		anajoy=osd_analogjoy_read(axis);
+
 		if (anajoy != NO_ANALOGJOY)
 		{
-			if ((in->type & IPF_REVERSE) && (axis==X_AXIS)) anajoy=-anajoy;
-			if (!(in->type & IPF_REVERSE) && (axis==Y_AXIS)) anajoy=-anajoy;
-			scaled_delta=0;
-			current = (anajoy * (max-min)) / 256 + in->default_value;
+			if (in->type & IPF_REVERSE) anajoy=-anajoy;
+			delta=0;
+
+#if 1 /* why use logarithmic scaling? BW */
+			if (anajoy > 0)
+			{
+				current = (pow(anajoy / 128.0, 100.0 / sensitivity) * (max-in->default_value)
+						+ in->default_value) * 100 / sensitivity;
+			}
+			else
+			{
+				current = (pow(-anajoy / 128.0, 100.0 / sensitivity) * (min-in->default_value)
+						+ in->default_value) * 100 / sensitivity;
+			}
+#else /* use linear scaling BW */
+
+			current = default_value + (anajoy * (max-min) * 100) / (256 * sensitivity);
+#endif
+
 		}
 	}
 
-	current += scaled_delta;
+	current += delta;
 
 	if (check_bounds)
 	{
-		if (current*sensitivity/16 <= min)
-			current=min*16/sensitivity;
-		if (current*sensitivity/16 >= max)
-			current=max*16/sensitivity;
+		if (current*sensitivity/100 < min)
+			current=min*100/sensitivity;
+		if (current*sensitivity/100 > max)
+			current=max*100/sensitivity;
 	}
 
 	input_analog_value[port]=current;
 
 	input_port_value[port] &= ~in->mask;
-	input_port_value[port] |= (current * sensitivity / 16) & in->mask;
+	input_port_value[port] |= (current * sensitivity / 100) & in->mask;
+
+	if (playback)
+		osd_fread(playback,&input_port_value[port],1);
+	else if (record)
+		osd_fwrite(record,&input_port_value[port],1);
 }
 
-void update_analog_ports(void)
-{
-	int port;
-
-	for (port = 0;port < MAX_INPUT_PORTS;port++)
-	{
-		if (input_analog[port])
-			update_analog_port(port);
-	}
-}
 
 void update_input_ports(void)
 {
 	int i,port,ib;
-	struct NewInputPort *in;
+	struct InputPort *in;
 #define MAX_INPUT_BITS 1024
 static int impulsecount[MAX_INPUT_BITS];
 static int waspressed[MAX_INPUT_BITS];
@@ -709,12 +546,6 @@ static int waspressed[MAX_INPUT_BITS];
 int joystick[MAX_JOYSTICKS*MAX_PLAYERS][4];
 
 
-if (Machine->input_ports == 0)
-{
-	old_update_input_ports();
-}
-else
-{
 	/* clear all the values before proceeding */
 	for (port = 0;port < MAX_INPUT_PORTS;port++)
 	{
@@ -743,7 +574,7 @@ else
 	ib = 0;
 	while (in->type != IPT_END && port < MAX_INPUT_PORTS)
 	{
-		struct NewInputPort *start;
+		struct InputPort *start;
 
 
 		/* first of all, scan the whole input port definition and build the */
@@ -775,14 +606,21 @@ else
 				{
 					input_vblank[port] ^= in->mask;
 					input_port_value[port] ^= in->mask;
+if (errorlog && Machine->drv->vblank_duration == 0)
+	fprintf(errorlog,"Warning: you are using IPT_VBLANK with vblank_duration = 0. You need to increase vblank_duration for IPT_VBLANK to work.\n");
 				}
 				/* If it's an analog control, handle it appropriately */
 				else if (((in->type & ~IPF_MASK) > IPT_ANALOG_START)
 					  && ((in->type & ~IPF_MASK) < IPT_ANALOG_END  )) /* LBO 120897 */
+				{
+					input_analog[port]=in;
+					/* reset the analog port on first access */
+					if (input_analog_init[port])
 					{
-						input_analog[port]=in;
-						update_analog_port(port);
+						input_analog_init[port] = 0;
+						input_analog_value[port] = in->default_value * 100 / (in->arg & 0x000000ff);
 					}
+				}
 				else
 				{
 					int key,joy;
@@ -872,12 +710,6 @@ if (errorlog && in->arg == 0)
 		port++;
 		if (in->type == IPT_PORT) in++;
 	}
-	newgame = 0;
-}
-
-{
-	extern void *record;
-	extern void *playback;
 
 	if (playback)
 		osd_fread(playback,input_port_value,MAX_INPUT_PORTS);
@@ -885,21 +717,47 @@ if (errorlog && in->arg == 0)
 		osd_fwrite(record,input_port_value,MAX_INPUT_PORTS);
 }
 
+
+
+/* used the the CPU interface to notify that VBlank has ended, so we can update */
+/* IPT_VBLANK input ports. */
+void inputport_vblank_end(void)
+{
+	int port;
+	int deltax,deltay;
+
+
+	for (port = 0;port < MAX_INPUT_PORTS;port++)
+	{
+		if (input_vblank[port])
+		{
+			input_port_value[port] ^= input_vblank[port];
+			input_vblank[port] = 0;
+		}
+	}
+
+	/* update mouse position */
+	mouse_previous_x = mouse_current_x;
+	mouse_previous_y = mouse_current_y;
+	osd_trak_read(&deltax,&deltay);
+	mouse_current_x += deltax;
+	mouse_current_y += deltay;
 }
 
 
 
 int readinputport(int port)
 {
-	if (input_vblank[port])
+	struct InputPort *in;
+
+	/* Update analog ports on demand, unless IPF_CUSTOM_UPDATE type */
+	/* In that case, the driver must call osd_update_port (int port) */
+	/* directly. BW 980112 */
+	in=input_analog[port];
+	if (in)
 	{
-		/* I'm not yet sure about how long the vertical blanking should last, */
-		/* I think it should be about 1/12th of the frame. */
-		if (cpu_getfcount() < cpu_getfperiod() * 11 / 12)
-		{
-			input_port_value[port] ^= input_vblank[port];
-			input_vblank[port] = 0;
-		}
+		if (!(in->type & IPF_CUSTOM_UPDATE))
+			update_analog_port(port);
 	}
 
 	return input_port_value[port];

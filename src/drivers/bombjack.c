@@ -37,7 +37,7 @@ b800      command to soundboard & trigger NMI on sound board
 
 SOUND BOARD:
 0x0000 0x1fff ROM
-0x2000 0x4400 RAM
+0x2000 0x43ff RAM
 
 memory mapped ports:
 read:
@@ -62,20 +62,52 @@ NMI interrupts for music timing
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/generic.h"
-#include "sndhrdw/8910intf.h"
 
 
 
 extern unsigned char *bombjack_paletteram;
+void bombjack_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void bombjack_paletteram_w(int offset,int data);
 void bombjack_background_w(int offset,int data);
-void bombjack_flipscreen_w(int offset,int data);
-void bombjack_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void bombjack_updatehook0(int offset);
 void bombjack_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-int bombjack_sh_intflag_r(int offset);
-int bombjack_sh_start(void);
+
+
+static int latch;
+
+static void soundlatch_callback(int param)
+{
+	latch = param;
+}
+
+void bombjack_soundlatch_w(int offset,int data)
+{
+	/* make all the CPUs synchronize, and only AFTER that write the new command to the latch */
+	timer_set(TIME_NOW,data,soundlatch_callback);
+}
+
+int bombjack_soundlatch_r(int offset)
+{
+	int res;
+
+
+	res = latch;
+	latch = 0;
+	return res;
+}
+
+unsigned char *bombjack_sh_intflag;
+
+int bombjack_sh_intflag_r(int offset)
+{
+	/* to speed up the emulation, detect when the program is looping waiting */
+	/* for an interrupt, and force it in that case */
+	if (cpu_getpc() == 0x0099 && (*bombjack_sh_intflag & 1) == 0)
+		cpu_spinuntil_int();
+
+	return *bombjack_sh_intflag;
+}
 
 
 
@@ -97,34 +129,32 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x8fff, MWA_RAM },
-	{ 0x9000, 0x93ff, videoram_w, &videoram, &videoram_size },
-	{ 0x9400, 0x97ff, colorram_w, &colorram },
+	{ 0x9000, 0x93ff, videoram00_w, &videoram00 },
+	{ 0x9400, 0x97ff, videoram01_w, &videoram01 },
 	{ 0x9820, 0x987f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x9a00, 0x9a00, MWA_NOP },
 	{ 0x9c00, 0x9cff, bombjack_paletteram_w, &bombjack_paletteram },
 	{ 0x9e00, 0x9e00, bombjack_background_w },
 	{ 0xb000, 0xb000, interrupt_enable_w },
-	{ 0xb004, 0xb004, bombjack_flipscreen_w },
-	{ 0xb800, 0xb800, sound_command_w },
+	{ 0xb004, 0xb004, MWA_RAM, &flip_screen },
+	{ 0xb800, 0xb800, bombjack_soundlatch_w },
 	{ 0xc000, 0xdfff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
 
 static struct MemoryReadAddress bombjack_sound_readmem[] =
 {
-#if 0
-	{ 0x4390, 0x4390, bombjack_sh_intflag_r },	/* kludge to speed up the emulation */
-#endif
+	{ 0x4390, 0x4390, bombjack_sh_intflag_r, &bombjack_sh_intflag },	/* kludge to speed up the emulation */
 	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x2000, 0x5fff, MRA_RAM },
-	{ 0x6000, 0x6000, sound_command_r },
+	{ 0x2000, 0x43ff, MRA_RAM },
+	{ 0x6000, 0x6000, bombjack_soundlatch_r },
 	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress bombjack_sound_writemem[] =
 {
 	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x2000, 0x5fff, MWA_RAM },
+	{ 0x2000, 0x43ff, MWA_RAM },
 	{ -1 }  /* end of table */
 };
 
@@ -219,40 +249,16 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout charlayout1 =
-{
-	8,8,	/* 8*8 characters */
-	512,	/* 512 characters */
-	3,	/* 3 bits per pixel */
-	{ 0, 512*8*8, 2*512*8*8 },	/* the bitplanes are separated */
-	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },	/* pretty straightforward layout */
-	8*8	/* every char takes 8 consecutive bytes */
-};
-
-static struct GfxLayout charlayout2 =
-{
-	16,16,	/* 16*16 characters */
-	256,	/* 256 characters */
-	3,	/* 3 bits per pixel */
-	{ 0, 1024*8*8, 2*1024*8*8 },	/* the bitplanes are separated */
-	{ 23*8, 22*8, 21*8, 20*8, 19*8, 18*8, 17*8, 16*8,
-			7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7,	/* pretty straightforward layout */
-			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7 },
-	32*8	/* every character takes 32 consecutive bytes */
-};
-
 static struct GfxLayout spritelayout1 =
 {
 	16,16,	/* 16*16 sprites */
 	128,	/* 128 sprites */
 	3,	/* 3 bits per pixel */
 	{ 0, 1024*8*8, 2*1024*8*8 },	/* the bitplanes are separated */
-	{ 23*8, 22*8, 21*8, 20*8, 19*8, 18*8, 17*8, 16*8,
-			7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7,	/* pretty straightforward layout */
+	{ 0, 1, 2, 3, 4, 5, 6, 7,
 			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8 },
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
 
@@ -262,27 +268,99 @@ static struct GfxLayout spritelayout2 =
 	32,	/* 32 sprites */
 	3,	/* 3 bits per pixel */
 	{ 0, 1024*8*8, 2*1024*8*8 },	/* the bitplanes are separated */
-	{ 87*8, 86*8, 85*8, 84*8, 83*8, 82*8, 81*8, 80*8,
-			71*8, 70*8, 69*8, 68*8, 67*8, 66*8, 65*8, 64*8,
-			23*8, 22*8, 21*8, 20*8, 19*8, 18*8, 17*8, 16*8,
-			7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7,	/* pretty straightforward layout */
+	{ 0, 1, 2, 3, 4, 5, 6, 7,
 			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7,
 			32*8+0, 32*8+1, 32*8+2, 32*8+3, 32*8+4, 32*8+5, 32*8+6, 32*8+7,
 			40*8+0, 40*8+1, 40*8+2, 40*8+3, 40*8+4, 40*8+5, 40*8+6, 40*8+7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			16*8, 17*8, 18*8, 19*8, 20*8, 21*8, 22*8, 23*8,
+			64*8, 65*8, 66*8, 67*8, 68*8, 69*8, 70*8, 71*8,
+			80*8, 81*8, 82*8, 83*8, 84*8, 85*8, 86*8, 87*8 },
 	128*8	/* every sprite takes 128 consecutive bytes */
 };
 
-
-
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout1,      0, 16 },	/* characters */
-	{ 1, 0x3000, &charlayout2,      0, 16 },	/* background tiles */
 	{ 1, 0x9000, &spritelayout1,    0, 16 },	/* normal sprites */
 	{ 1, 0xa000, &spritelayout2,    0, 16 },	/* large sprites */
 	{ -1 } /* end of array */
 };
+
+
+
+static struct GfxTileLayout tilelayout0 =
+{
+	512,	/* 512 characters */
+	3,	/* 3 bits per pixel */
+	{ 0, 512*8*8, 2*512*8*8 },	/* the bitplanes are separated */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8	/* every char takes 8 consecutive bytes */
+};
+
+static struct GfxTileDecodeInfo gfxtiledecodeinfo0[] =
+{
+	{ 1, 0x0000, &tilelayout0, 0, 16, 0x00000001 },	/* foreground tiles */
+	{ -1 } /* end of array */
+};
+
+static struct GfxTileLayout tilelayout1 =
+{
+	256*4,	/* 256 characters */
+	3,	/* 3 bits per pixel */
+	{ 0, 1024*8*8, 2*1024*8*8 },	/* the bitplanes are separated */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8	/* every character takes 32 consecutive bytes */
+};
+
+static struct GfxTileCompose gfxtilecompose1 =
+{
+	2,2,	/* 16x16 tiles */
+	4,		/* multiply code by 4 to obtain the base tile code */
+	{ 0, 1 },
+	{ 0, 2 },
+};
+
+static struct GfxTileDecodeInfo gfxtiledecodeinfo1[] =
+{
+	{ 1, 0x3000, &tilelayout1, 0, 16, 0 },	/* background tiles */
+	{ -1 } /* end of array */
+};
+
+
+
+static struct MachineLayer machine_layers[MAX_LAYERS] =
+{
+	{
+		LAYER_TILE,
+		32*8,32*8,
+		gfxtiledecodeinfo0,
+		0,
+		bombjack_updatehook0,bombjack_updatehook0,0,0
+	},
+	{
+		LAYER_TILE,
+		16*16,16*16,
+		gfxtiledecodeinfo1,
+		&gfxtilecompose1,
+		0,0,0,0	/* no hooks because tile maps are in ROM */
+	}
+};
+
+
+
+static struct AY8910interface ay8910_interface =
+{
+	3,	/* 3 chips */
+	1500000,	/* 1.5 MHz?????? */
+	{ 255, 255, 255 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 }
+};
+
 
 
 static struct MachineDriver machine_driver =
@@ -304,27 +382,30 @@ static struct MachineDriver machine_driver =
 			nmi_interrupt,1
 		}
 	},
-	60,
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
 	/* video hardware */
-	32*8, 32*8, { 2*8, 30*8-1, 0, 32*8-1 },
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
 	128, 16*8,
 	bombjack_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE|VIDEO_SUPPORTS_DIRTY,
-	0,
+	machine_layers,
 	generic_vh_start,
 	generic_vh_stop,
 	bombjack_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	bombjack_sh_start,
-	AY8910_sh_stop,
-	AY8910_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&ay8910_interface
+		}
+	}
 };
 
 
@@ -403,14 +484,14 @@ static int hiload(void)
 					(RAM[0x8103] & 0x0f) * 1000000 +
 					(RAM[0x8103] >> 4) * 10000000;
 			sprintf(buf,"%8d",hi);
-			videoram_w(0x013f,buf[0]);
-			videoram_w(0x011f,buf[1]);
-			videoram_w(0x00ff,buf[2]);
-			videoram_w(0x00df,buf[3]);
-			videoram_w(0x00bf,buf[4]);
-			videoram_w(0x009f,buf[5]);
-			videoram_w(0x007f,buf[6]);
-			videoram_w(0x005f,buf[7]);
+			videoram00_w(0x013f,buf[0]);
+			videoram00_w(0x011f,buf[1]);
+			videoram00_w(0x00ff,buf[2]);
+			videoram00_w(0x00df,buf[3]);
+			videoram00_w(0x00bf,buf[4]);
+			videoram00_w(0x009f,buf[5]);
+			videoram00_w(0x007f,buf[6]);
+			videoram00_w(0x005f,buf[7]);
 			osd_fclose(f);
 		}
 
@@ -450,10 +531,10 @@ struct GameDriver bombjack_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	input_ports,
 
 	0,0,0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };

@@ -198,11 +198,11 @@ void popeye_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 	{
 		static int lastpos[2] = { -1, -1 };
-		if (/*popeye_background_pos[0] != 0 ||*/ popeye_background_pos[0] != lastpos[0] || 
+		if (/*popeye_background_pos[0] != 0 ||*/ popeye_background_pos[0] != lastpos[0] ||
 		    popeye_background_pos[1] != lastpos[1])
 		{
 			/* mark the whole screen dirty if we're scrolling */
-			osd_mark_dirty (Machine->drv->visible_area.min_x, Machine->drv->visible_area.min_y, 
+			osd_mark_dirty (Machine->drv->visible_area.min_x, Machine->drv->visible_area.min_y,
 				Machine->drv->visible_area.max_x, Machine->drv->visible_area.max_y, 0);
 			lastpos[0] = popeye_background_pos[0];
 			lastpos[1] = popeye_background_pos[1];
@@ -264,6 +264,8 @@ void popeye_vh_screenrefresh(struct osd_bitmap *bitmap)
 					0xff - (spriteram[offs + 2] & 0x7f) - 8*(spriteram[offs + 3] & 0x10),
 					(spriteram[offs + 3] & 0x07) + 8*(*popeye_palette_bank & 0x07),
 					spriteram[offs + 2] & 0x80,spriteram[offs + 3] & 0x08,
+		/* sprite placement IS correct - the squares on level 1 leave one pixel */
+		/* of the house background uncovered */
 					2*(spriteram[offs])-7,2*(256-spriteram[offs + 1]) - 16,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
@@ -277,16 +279,13 @@ void popeye_vh_screenrefresh(struct osd_bitmap *bitmap)
 			int sx,sy;
 
 
-			if (videoram[offs] != 0xff)	/* don't draw spaces */
-			{
-				sx = 16 * (offs % 32);
-				sy = 16 * (offs / 32) - 16;
+			sx = 16 * (offs % 32);
+			sy = 16 * (offs / 32) - 16;
 
-				drawgfx(bitmap,Machine->gfx[0],
-						videoram[offs],colorram[offs],
-						0,0,sx,sy,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-			}
+			drawgfx(bitmap,Machine->gfx[0],
+					videoram[offs],colorram[offs],
+					0,0,sx,sy,
+					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}
 }

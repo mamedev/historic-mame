@@ -11,8 +11,9 @@
 
 
 
+unsigned char *zaxxon_char_color_bank;
 unsigned char *zaxxon_background_position;
-unsigned char *zaxxon_background_color;
+unsigned char *zaxxon_background_color_bank;
 unsigned char *zaxxon_background_enable;
 static struct osd_bitmap *backgroundbitmap1,*backgroundbitmap2;
 static const unsigned char *color_codes;
@@ -229,6 +230,11 @@ void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 
 	/* copy the background */
+	/* TODO: there's a bug here which shows only in test mode. The background doesn't */
+	/* cover the whole screen, so the image is not fully overwritten and part of the */
+	/* character color test screen remains on screen when it is replaced by the background */
+	/* color test. Also, we clip away the bottom 4 rows because they are constantly */
+	/* covered during gameplay, but they should be visible during the test. */
 	if (*zaxxon_background_enable)
 	{
 		int i,skew,scroll;
@@ -238,7 +244,7 @@ void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap)
 		clip.min_x = Machine->drv->visible_area.min_x;
 		clip.max_x = Machine->drv->visible_area.max_x;
 
-		scroll = 2048+63 - (zaxxon_background_position[0] + 256*zaxxon_background_position[1]);
+		scroll = 2048+63 - (zaxxon_background_position[0] + 256*(zaxxon_background_position[1]&7));
 
 		skew = 128;
 
@@ -247,7 +253,7 @@ void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap)
 			clip.min_y = i;
 			clip.max_y = i;
 
-			if (*zaxxon_background_color)
+			if (*zaxxon_background_color_bank & 1)
 				copybitmap(bitmap,backgroundbitmap2,0,0,skew,-scroll,&clip,TRANSPARENCY_NONE,0);
 			else copybitmap(bitmap,backgroundbitmap1,0,0,skew,-scroll,&clip,TRANSPARENCY_NONE,0);
 
@@ -282,12 +288,12 @@ void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap)
 		sx = 31 - offs / 32;
 		sy = offs % 32;
 
-		if (videoram[offs] != 0x60)	/* don't draw spaces */
-			drawgfx(bitmap,Machine->gfx[0],
-					videoram[offs],
-					color_codes[sy + 32 * (7-sx/4)],
-					0,0,
-					8*sx,8*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+		drawgfx(bitmap,Machine->gfx[0],
+				videoram[offs],
+/* not sure about the color code calculation - char_color_bank is used only in test mode */
+				(color_codes[sy + 32 * (7-sx/4)] & 0x0f) + 16 * (*zaxxon_char_color_bank & 1),
+				0,0,
+				8*sx,8*sy,
+				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

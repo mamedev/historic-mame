@@ -22,7 +22,7 @@ static const unsigned char *color_codes;
 
   Donkey Kong has two 256x4 palette PROMs and one 256x4 PROM which contains
   the color codes to use for characters on a per row/column basis (groups of
-  of 4 characters in the same column - actually row, since the diplay is
+  of 4 characters in the same column - actually row, since the display is
   rotated)
   The palette PROMs are connected to the RGB output this way:
 
@@ -75,6 +75,36 @@ void dkong_vh_convert_color_prom(unsigned char *palette, unsigned char *colortab
 		COLOR(0,i) = i;
 }
 
+/***************************************************************************
+
+  Convert the color PROMs into a more useable format.
+
+  Donkey Kong 3 has two 512x8 palette PROMs and one 256x4 PROM which contains
+  the color codes to use for characters on a per row/column basis (groups of
+  of 4 characters in the same column - actually row, since the display is
+  rotated)
+  Interstingly, bytes 0-255 of the palette PROMs contain an inverted palette,
+  as other Nintendo games like Donkey Kong, while bytes 256-511 contain a non
+  inverted palette. This was probably done to allow connection to both the
+  special Nintendo and a standard monitor.
+  I don't know the exact values of the resistors between the PROMs and the
+  RGB output, but they are probably the usual:
+
+  bit 7 -- 220 ohm resistor -- inverter  -- RED
+        -- 470 ohm resistor -- inverter  -- RED
+        -- 1  kohm resistor -- inverter  -- RED
+        -- 2.2kohm resistor -- inverter  -- RED
+        -- 220 ohm resistor -- inverter  -- GREEN
+        -- 470 ohm resistor -- inverter  -- GREEN
+        -- 1  kohm resistor -- inverter  -- GREEN
+  bit 0 -- 2.2kohm resistor -- inverter  -- GREEN
+
+  bit 3 -- 220 ohm resistor -- inverter  -- BLUE
+        -- 470 ohm resistor -- inverter  -- BLUE
+        -- 1  kohm resistor -- inverter  -- BLUE
+  bit 0 -- 2.2kohm resistor -- inverter  -- BLUE
+
+***************************************************************************/
 void dkong3_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
 {
 	int i;
@@ -88,28 +118,28 @@ void dkong3_vh_convert_color_prom(unsigned char *palette, unsigned char *colorta
 
 
 		/* red component */
+		bit0 = (color_prom[0] >> 4) & 0x01;
+		bit1 = (color_prom[0] >> 5) & 0x01;
+		bit2 = (color_prom[0] >> 6) & 0x01;
+		bit3 = (color_prom[0] >> 7) & 0x01;
+		*(palette++) = 255 - (0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3);
+		/* green component */
 		bit0 = (color_prom[0] >> 0) & 0x01;
 		bit1 = (color_prom[0] >> 1) & 0x01;
 		bit2 = (color_prom[0] >> 2) & 0x01;
 		bit3 = (color_prom[0] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-		/* green component */
+		*(palette++) = 255 - (0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3);
+		/* blue component */
 		bit0 = (color_prom[Machine->drv->total_colors] >> 0) & 0x01;
 		bit1 = (color_prom[Machine->drv->total_colors] >> 1) & 0x01;
 		bit2 = (color_prom[Machine->drv->total_colors] >> 2) & 0x01;
 		bit3 = (color_prom[Machine->drv->total_colors] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-		/* blue component */
-		bit0 = (color_prom[2*Machine->drv->total_colors] >> 0) & 0x01;
-		bit1 = (color_prom[2*Machine->drv->total_colors] >> 1) & 0x01;
-		bit2 = (color_prom[2*Machine->drv->total_colors] >> 2) & 0x01;
-		bit3 = (color_prom[2*Machine->drv->total_colors] >> 3) & 0x01;
-		*(palette++) = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
+		*(palette++) = 255 - (0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3);
 
 		color_prom++;
 	}
 
-	color_prom += 2*Machine->drv->total_colors;
+	color_prom += Machine->drv->total_colors;
 	/* color_prom now points to the beginning of the character color codes */
 	color_codes = color_prom;	/* we'll need it later */
 

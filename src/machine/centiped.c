@@ -9,82 +9,47 @@
 
 #include "driver.h"
 
-/* JB 971220 */
-/* This wrapper routine is necessary because Centipede requires a direction bit
-   to be set or cleared. We have to look at the change in the input port to
-   determine whether to set or clear the bit. Why doesn't Centipede do this
-   itself instead of requiring a direction bit? */
+/*
+ * This wrapper routine is necessary because Centipede requires a direction bit
+ * to be set or cleared. The direction bit is held until the mouse is moved
+ * again. Furthermore, the trackball x port should only be updated when the
+ * code reaches 0x39b8. We still don't understand why the difference between
+ * two consecutive reads must not exceed 7. After all, the input is 4 bits
+ * wide, and we have a fifth bit for the sign...
+ * JB 971220, BW 980121
+ */
 int centiped_IN0_r(int offset)
 {
-	int res, delta;
-	static int last = 0;
-	static int lastdelta = 0;
+	static int counter, sign;
+	int delta;
 
-	res = readinputport(0);
+	if (cpu_getpc()==0x39b8)
+	{
+		delta=readinputport(6);
+		if (delta !=0)
+		{
+			counter=(counter+delta) & 0x0f;
+			sign=(delta<8)? 0: 0x80;
+		}
+	}
 
-	/* Determine the change since last time. */
-	delta = (res & 0x0f) - last;
-	last = (res & 0x0f);
-
-	/* Skanky hack to determine correct direction bit,
-	   necessary because input port is updated half as often as Centipede
-	   reads it, which causes every second delta to be 0. */
-	if (delta==0)
-		delta = lastdelta;
-	else
-		lastdelta = delta;
-
-	/* Since we know input delta is clipped to 7, if delta is greater than that, it
-	   must have wrapped past 0, so adjust. */
-	if (delta<-7)
-		delta += 16;
-	else
-	if (delta>7)
-		delta -= 16;
-
-	/* Centipede expects a direction bit. */
-	if (delta<0)
-		res |= 0x80;
-
-	return res;
+	return (readinputport(0) | counter | sign );
 }
 
-/* JB 971220 */
-/* This wrapper routine is necessary because Centipede requires a direction bit
-   to be set or cleared. We have to look at the change in the input port to
-   determine whether to set or clear the bit. Why doesn't Centipede do this
-   itself instead of requiring a direction bit? */
 int centiped_IN2_r(int offset)
 {
-	int res, delta;
-	static int last = 0;
-	static int lastdelta = 0;
+	static int counter, sign;
+	int delta;
 
-	res = readinputport(2);
+	if (cpu_getpc()==0x39b8)
+	{
+		delta=readinputport(2);
+		if (delta !=0)
+		{
+			counter=(counter+delta) & 0x0f;
+			sign=(delta<8)? 0: 0x80;
+		}
+	}
 
-	/* Determine the change since last time. */
-	delta = res - last;
-	last = res;
-
-	/* Skanky hack to determine correct direction bit,
-	   necessary because input port is updated half as often as Centipede
-	   reads it, which causes every second delta to be 0. */
-	if (delta==0)
-		delta = lastdelta;
-	else
-		lastdelta = delta;
-
-	/* Since we know input delta is clipped to 7, if delta is greater than that, it
-	   must have wrapped past 0, so adjust. */
-	if (delta<-7)
-		delta += 16;
-	else
-	if (delta>7)
-		delta -= 16;
-
-	/* Centipede expects a direction bit. */
-	if (delta<0)
-		res |= 0x80;
-
-	return res;
+	return (counter | sign );
 }

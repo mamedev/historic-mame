@@ -146,25 +146,17 @@ void bnj_vh_screenrefresh (struct osd_bitmap *bitmap)
 	/* draw the frontmost playfield. They are characters, but draw them as sprites */
 	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
-		int code;
+		int sx,sy;
 
 
-		code = videoram[offs] + 256 * (colorram[offs] & 0x03);
+		sx = 8 * (offs % 32);
+		sy = 8 * (offs / 32);
 
-		if (code != 0)		/* don't draw spaces */
-		{
-			int sx,sy;
-
-
-			sx = 8 * (offs % 32);
-			sy = 8 * (offs / 32);
-
-			drawgfx(bitmap,Machine->gfx[0],
-					code,
-					0,
-					0,0,
-					sx,sy,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-		}
+		drawgfx(bitmap,Machine->gfx[0],
+				videoram[offs] + 256 * (colorram[offs] & 0x03),
+				0,
+				0,0,
+				sx,sy,
+				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

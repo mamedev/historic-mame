@@ -141,7 +141,6 @@ void exedexes_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 			tile = ((yo & 0xf0) >> 4) + (xo & 0xF0) + (yo & 0x700) + ((xo & 0x700) << 3);
 
-			if (TileMap(tile))	/* don't draw spaces */
 			drawgfx(bitmap,Machine->gfx[2],
 				TileMap(tile),
 				0,
@@ -167,25 +166,17 @@ void exedexes_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* draw the frontmost playfield. They are characters, but draw them as sprites */
 	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
-		int code;
+		int sx,sy;
 
 
-		code = videoram[offs] + 2 * (colorram[offs] & 0x80);
+		sx = 8 * (offs / 32);
+		sy = 8 * (31 - offs % 32);
 
-		if (code != 0x24 || colorram[offs] != 0)		/* don't draw spaces */
-		{
-			int sx,sy;
-
-
-			sx = 8 * (offs / 32);
-			sy = 8 * (31 - offs % 32);
-
-			drawgfx(bitmap,Machine->gfx[0],
-					code,
-					colorram[offs] & 0x3f,
-					0,0,
-					sx,sy,
-					&Machine->drv->visible_area,TRANSPARENCY_COLOR,207);
-		}
+		drawgfx(bitmap,Machine->gfx[0],
+				videoram[offs] + 2 * (colorram[offs] & 0x80),
+				colorram[offs] & 0x3f,
+				0,0,
+				sx,sy,
+				&Machine->drv->visible_area,TRANSPARENCY_COLOR,207);
 	}
 }

@@ -164,15 +164,12 @@ OUTPUT:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/generic.h"
-#include "sndhrdw/2203intf.h"
 
 
 
 void gng_bankswitch_w(int offset,int data);
 int gng_bankedrom_r(int offset);
 int gng_catch_loop_r(int offset); /* JB 970823 */
-int gng_interrupt(void);
 void gng_init_machine(void);
 
 extern unsigned char *gng_paletteram;
@@ -184,12 +181,9 @@ void gng_bgvideoram_w(int offset,int data);
 void gng_bgcolorram_w(int offset,int data);
 void gng_flipscreen_w(int offset,int data);
 int gng_vh_start(void);
-int diamond_vh_start(void);
 void gng_vh_stop(void);
 void gng_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void gng_vh_screenrefresh(struct osd_bitmap *bitmap);
-
-int capcomOPN_sh_start(void);
 
 
 
@@ -232,7 +226,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x2800, 0x2bff, gng_bgvideoram_w, &gng_bgvideoram, &gng_bgvideoram_size },
 	{ 0x2c00, 0x2fff, gng_bgcolorram_w, &gng_bgcolorram },
 	{ 0x3800, 0x39ff, gng_paletteram_w, &gng_paletteram },
-	{ 0x3a00, 0x3a00, sound_command_w },
+	{ 0x3a00, 0x3a00, soundlatch_w },
 	{ 0x3b08, 0x3b09, MWA_RAM, &gng_scrollx },
 	{ 0x3b0a, 0x3b0b, MWA_RAM, &gng_scrolly },
 	{ 0x3c00, 0x3c00, MWA_NOP },   /* watchdog? */
@@ -247,7 +241,7 @@ static struct MemoryWriteAddress writemem[] =
 static struct MemoryReadAddress sound_readmem[] =
 {
 	{ 0xc000, 0xc7ff, MRA_RAM },
-	{ 0xc800, 0xc800, sound_command_latch_r },
+	{ 0xc800, 0xc800, soundlatch_r },
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -262,6 +256,8 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
+
+
 
 INPUT_PORTS_START( gng_input_ports )
 	PORT_START	/* IN0 */
@@ -344,7 +340,94 @@ INPUT_PORTS_START( gng_input_ports )
 	PORT_DIPSETTING(    0x60, "Normal" )
 	PORT_DIPSETTING(    0x20, "Difficult" )
 	PORT_DIPSETTING(    0x00, "Very Difficult" )
-	PORT_DIPNAME( 0x80, 0x80, "unknown", IP_KEY_NONE )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+INPUT_PORTS_END
+
+/* identical to gng, but the "unknown" dip switch is Invulnerability */
+INPUT_PORTS_START( gngjap_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x0f, 0x0f, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x05, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x08, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x04, "3 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x01, "4 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x03, "3 Coins/4 Credits" )
+	PORT_DIPSETTING(    0x07, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x06, "2 Coins/5 Credits" )
+	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0x0b, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0x0a, "1 Coin/6 Credits" )
+	PORT_DIPSETTING(    0x09, "1 Coin/7 Credits" )
+	PORT_DIPSETTING(    0x00, "Free Play" )
+	PORT_DIPNAME( 0x10, 0x10, "Coinage affects", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "Coin A" )
+	PORT_DIPSETTING(    0x00, "Coin B" )
+	PORT_DIPNAME( 0x20, 0x00, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x80, "Flip Screen", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x03, 0x03, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x03, "3" )
+	PORT_DIPSETTING(    0x02, "4" )
+	PORT_DIPSETTING(    0x01, "5" )
+	PORT_DIPSETTING(    0x00, "7" )
+	PORT_DIPNAME( 0x04, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x04, "Cocktail" )
+	PORT_DIPNAME( 0x18, 0x18, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x18, "20000 70000 70000" )
+	PORT_DIPSETTING(    0x10, "30000 80000 80000" )
+	PORT_DIPSETTING(    0x08, "20000 80000" )
+	PORT_DIPSETTING(    0x00, "30000 80000" )
+	PORT_DIPNAME( 0x60, 0x60, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Easy" )
+	PORT_DIPSETTING(    0x60, "Normal" )
+	PORT_DIPSETTING(    0x20, "Difficult" )
+	PORT_DIPSETTING(    0x00, "Very Difficult" )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE, 0 )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 INPUT_PORTS_END
@@ -365,7 +448,7 @@ INPUT_PORTS_START( diamond_input_ports )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -476,27 +559,42 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
+
+static struct YM2203interface ym2203_interface =
+{
+	2,			/* 2 chips */
+	1500000,	/* 1.5 MHz (?) */
+	{ YM2203_VOL(100,0x20ff), YM2203_VOL(100,0x20ff) },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 }
+};
+
+
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M6809,
-			1500000,			/* 1 Mhz */
+			1500000,			/* 1.5 Mhz ? */
 			0,
 			readmem,writemem,0,0,
-			gng_interrupt,1
+			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3072000,	/* 3 Mhz ??? */
+			3000000,	/* 3 Mhz (?) */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,4
 		}
 	},
-	60,
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	60, 500,	/* frames per second, vblank duration */
+				/* vblank duration is crucial to get proper sprite/background alignment */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	gng_init_machine,
 
 	/* video hardware */
@@ -512,10 +610,13 @@ static struct MachineDriver machine_driver =
 	gng_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	capcomOPN_sh_start,
-	YM2203_sh_stop,
-	YM2203_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_YM2203,
+			&ym2203_interface
+		}
+	}
 };
 
 /* JB 970823 - separate diamond run from gng */
@@ -525,21 +626,22 @@ static struct MachineDriver diamond_machine_driver =
 	{
 		{
 			CPU_M6809,
-			1500000,			/* 1 Mhz */
+			1500000,			/* 1.5 Mhz ? */
 			0,
 			diamond_readmem,writemem,0,0,
-			gng_interrupt,1
+			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3072000,	/* 3 Mhz ??? */
+			3000000,	/* 3 Mhz (?) */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,4
 		}
 	},
-	60,
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	60, 500,	/* frames per second, vblank duration */
+				/* vblank duration is crucial to get proper sprite/background alignment */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	gng_init_machine,
 
 	/* video hardware */
@@ -550,15 +652,18 @@ static struct MachineDriver diamond_machine_driver =
 
 	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
 	0,
-	diamond_vh_start,
+	gng_vh_start,
 	gng_vh_stop,
 	gng_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	capcomOPN_sh_start,
-	YM2203_sh_stop,
-	YM2203_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_YM2203,
+			&ym2203_interface
+		}
+	}
 };
 
 
@@ -782,7 +887,7 @@ struct GameDriver gng_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/, gng_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	gng_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -802,7 +907,7 @@ struct GameDriver gngcross_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/, gng_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	gng_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -822,7 +927,7 @@ struct GameDriver gngjap_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/, gng_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	gngjap_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -842,7 +947,7 @@ struct GameDriver diamond_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/, diamond_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	diamond_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

@@ -20,6 +20,10 @@ static int flipscreen;
 
 
 
+/* Sidearms has a 2048 color palette RAM, but it doesn't seem to modify it */
+/* dynamically. The color space is 4x4x4, and the number of unique colors is */
+/* greater than 256; however, ignoring the least significant bit of the blue */
+/* component, we can squeeze them into 250 colors with no appreciable loss. */
 void sidearms_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
 {
 	int i;
@@ -58,7 +62,7 @@ void sidearms_vh_convert_color_prom(unsigned char *palette, unsigned char *color
 
 ***************************************************************************/
 
-int sidearms_vh_start()
+int sidearms_vh_start(void)
 {
 	if (generic_vh_start() != 0)
 		return 1;
@@ -269,24 +273,16 @@ void sidearms_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* draw the frontmost playfield. They are characters, but draw them as sprites */
 	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
-		int code;
+		int sx,sy;
 
+		sy = offs / 64;
+		sx = offs % 64 - 8;
 
-		code = videoram[offs] + 4 * (colorram[offs] & 0xc0);
-
-		if (code != 0x27)     /* don't draw spaces */
-		{
-			int sx,sy;
-
-			sy = offs / 64;
-			sx = offs % 64 - 8;
-
-			drawgfx(bitmap,Machine->gfx[0],
-					code,
-					colorram[offs] & 0x3f,
-					0,0,
-					8*sx,8*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,3);
-		}
+		drawgfx(bitmap,Machine->gfx[0],
+				videoram[offs] + 4 * (colorram[offs] & 0xc0),
+				colorram[offs] & 0x3f,
+				0,0,
+				8*sx,8*sy,
+				&Machine->drv->visible_area,TRANSPARENCY_PEN,3);
 	}
 }

@@ -1,132 +1,61 @@
 #include "driver.h"
-#include "sndhrdw/generic.h"
-#include "sndhrdw/dac.h"
+#include "M6502/M6502.h"
 
 
-#ifdef OLD_ROUTINES
 
-/* macroscopic sound emulation from my understanding of the 6502 rom (FF) */
 
-static int current_fx,interrupted_fx;
-
+/* note: pinball "thwok" sound is command 0x0d */
 void gottlieb_sh_w(int offset,int data)
 {
-   int fx= 255-data;
+	int command = 255-data;
 
 
-   if (Machine->samples == 0) return;
-
-   if (fx && fx<48 && Machine->samples->sample[fx])
-	switch (fx) {
-		case 44: /* reset */
-			break;
-		case 45:
-		case 46:
-		case 47:
-			/* read expansion socket */
-			break;
-		default:
-		     osd_play_sample(0,Machine->samples->sample[fx]->data,
-					Machine->samples->sample[fx]->length,
-					 Machine->samples->sample[fx]->smpfreq,
-					  Machine->samples->sample[fx]->volume,0);
-		     break;
+	if (command)
+	{
+		soundlatch_w(offset,command);
+		cpu_cause_interrupt(1,INT_IRQ);
 	}
-}
-
-void gottlieb_sh_update(void)
-{
-	if (interrupted_fx && osd_get_sample_status(1)) {
-		current_fx=interrupted_fx;
-		interrupted_fx=0;
-		osd_restart_sample(0);
-	}
-	if (current_fx && osd_get_sample_status(0))
-		current_fx=0;
 }
 
 void qbert_sh_w(int offset,int data)
 {
-   static int fx_priority[]={
-	0,
-	3,3,3,3,3,3,3,3,3,3,3,3,5,3,4,3,
-	3,3,3,3,3,5,5,3,3,3,3,3,3,3,3,3,
-	15,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3 };
-   int fx= 255-data;
-   int channel;
-
-   if (Machine->samples == 0) return;
-
-   if (fx==44) { /* reset */
-	interrupted_fx=0;
-	current_fx=0;
-	osd_stop_sample(0);
-	osd_stop_sample(1);
-   }
-   if (fx && fx<44 && fx_priority[fx] >= fx_priority[current_fx]) {
-	if (current_fx==25 || current_fx==26 || current_fx==27)
-		interrupted_fx=current_fx;
-	if (fx==25 || fx==26 || fx==27 || fx==35)
-		interrupted_fx=0;
-	if (interrupted_fx)
-		channel=1;
-	else
-		channel=0;
-	osd_stop_sample(0);
-	osd_stop_sample(1);
-	if (Machine->samples->sample[fx])
-		osd_play_sample(channel,Machine->samples->sample[fx]->data,
-				   Machine->samples->sample[fx]->length,
-				    Machine->samples->sample[fx]->smpfreq,
-				      Machine->samples->sample[fx]->volume,0);
-	current_fx=fx;
-   }
-}
-#else
+	int command = 255-data;
 
 
-void gottlieb_sh_w(int offset,int data)
-{
-    int command= 255-data;
-    if (command) sound_command_w(offset,command);
+	switch(command)
+	{ /* now with all 4 samples ;) */
+		case 0x12:      /* JB 980110 */
+			/* play a sample here (until Votrax speech is emulated) */
+			sample_start (0, 0, 0);
+			break;
+
+		case 0x16:
+			/* play a sample here (until Votrax speech is emulated) */
+			sample_start (0, 2, 0);
+			break;
+
+		case 0x14:
+			/* play a sample here (until Votrax speech is emulated) */
+			sample_start (0, 1, 0);
+			break;
+
+		case 0x11:
+			/* play a sample here (until Votrax speech is emulated) */
+			sample_start (0, 3, 0);
+			break;
+	}
+
+	gottlieb_sh_w(offset,data);
 }
 
 void gottlieb_sh2_w(int offset,int command)
 {
-    if (command) sound_command_w(offset,command);
+    if (command)
+	{
+		soundlatch_w(offset,command);
+		cpu_cause_interrupt(1,INT_IRQ);
+	}
 }
-
-
-void gottlieb_sh_update(void)
-{
-	DAC_sh_update ();
-}
-
-void qbert_sh_w(int offset, int data)
-{}
-#endif
-
-
-static struct DACinterface dac_intf =
-{
-	1,
-	441000,
-	{ 255 },
-	{ 0 },
-};
-
-int gottlieb_sh_start(void)
-{
-	return DAC_sh_start (&dac_intf);
-}
-
-
-
-void gottlieb_sh_stop(void)
-{
-	DAC_sh_stop ();
-}
-
 
 
 void gottlieb_amplitude_DAC_w(int offset,int data)
@@ -134,12 +63,6 @@ void gottlieb_amplitude_DAC_w(int offset,int data)
 	DAC_data_w (offset, data);
 }
 
-
-int gottlieb_sh_interrupt(void)
-{
-    if (pending_commands) return interrupt();
-    else return ignore_interrupt();
-}
 
 int gottlieb_sound_expansion_socket_r(int offset)
 {
@@ -182,7 +105,7 @@ int gottlieb_riot_r(int offset)
 {
     switch (offset&0x1f) {
 	case 0: /* port A */
-		return sound_command_r(offset);
+		return soundlatch_r(offset);
 	case 2: /* port B */
 		return 0x40;    /* say that PB6 is 1 (test SW1 not pressed) */
 	case 5: /* interrupt register */

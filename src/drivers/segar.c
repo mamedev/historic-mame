@@ -1068,7 +1068,7 @@ static struct MachineDriver astrob_machine_driver =
 			segar_interrupt,1
 		}
 	},
-	60,
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
 	0,
 
@@ -1103,7 +1103,7 @@ static struct MachineDriver spaceod_machine_driver =
 			segar_interrupt,1
 		}
 	},
-	60,
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
 	0,
 
@@ -1138,7 +1138,7 @@ static struct MachineDriver s005_machine_driver =
 			segar_interrupt,1
 		}
 	},
-	60,
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
 	0,
 
@@ -1174,128 +1174,128 @@ static struct MachineDriver monsterb_machine_driver =
 			segar_interrupt,1
 		}
 	},
-	60,
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
 	0,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 28*8-1, 0*8, 32*8-1 },
 	monsterb_gfxdecodeinfo,
-        16*4*2+1,16*4*2+1,
+	16*4*2+1,16*4*2+1,
 	segar_init_colors,
 
-        VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
-        generic_vh_start,
-        generic_vh_stop,
+	generic_vh_start,
+	generic_vh_stop,
 	segar_vh_screenrefresh,
 
 	/* sound hardware */
 	0,
-        monsterb_sh_start,
-        monsterb_sh_stop,
-        monsterb_sh_update
+	monsterb_sh_start,
+	monsterb_sh_stop,
+	monsterb_sh_update
 };
 
 
 
 struct GameDriver astrob_driver =
 {
-        "Astro Blaster (version 2)",
-        "astrob",
-        "Dave Fish (security consultant)\nMike Balfour (game driver)",
-        &astrob_machine_driver,
+	"Astro Blaster (version 2)",
+	"astrob",
+	"Dave Fish (security consultant)\nMike Balfour (game driver)",
+	&astrob_machine_driver,
 
-        astrob_rom,
-        astrob_decode, 0,
-        astrob_sample_names,
+	astrob_rom,
+	astrob_decode, 0,
+	astrob_sample_names,
 	0,	/* sound_prom */
 
-        0, astrob_input_ports, 0, 0, 0,
+	astrob_input_ports,
 
-		0, 0, 0,
-        ORIENTATION_DEFAULT,
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
 
 	astrob_hiload, astrob_hisave
 };
 
 struct GameDriver astrob1_driver =
 {
-		"Astro Blaster (version 1)",
-        "astrob1",
-        "Dave Fish (security consultant)\nMike Balfour (game driver)",
-                &astrob_machine_driver,
+	"Astro Blaster (version 1)",
+	"astrob1",
+	"Dave Fish (security consultant)\nMike Balfour (game driver)",
+	&astrob_machine_driver,
 
-        astrob1_rom,
-		astrob_decode, 0,
-                astrob_sample_names,
+	astrob1_rom,
+	astrob_decode, 0,
+	astrob_sample_names,
 	0,	/* sound_prom */
 
-        0, astrob_input_ports, 0, 0, 0,
+	astrob_input_ports,
 
-		0, 0, 0,
-        ORIENTATION_DEFAULT,
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
 
 	astrob_hiload, astrob_hisave
 };
 
 struct GameDriver s005_driver =
 {
-        "005",
-        "005",
-        "Dave Fish (security consultant)\nMike Balfour (game driver)",
-        &s005_machine_driver,
+	"005",
+	"005",
+	"Dave Fish (security consultant)\nMike Balfour (game driver)",
+	&s005_machine_driver,
 
-        s005_rom,
-        s005_decode, 0,
-        s005_sample_names,
+	s005_rom,
+	s005_decode, 0,
+	s005_sample_names,
 	0,	/* sound_prom */
 
-        0, s005_input_ports, 0, 0, 0,
+	s005_input_ports,
 
-		0, 0, 0,
-        ORIENTATION_DEFAULT,
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
 
-        s005_hiload, s005_hisave
+	s005_hiload, s005_hisave
 };
 
 struct GameDriver monsterb_driver =
 {
-        "Monster Bash",
-        "monsterb",
-        "Dave Fish (security consultant)\nMike Balfour (game driver)",
+	"Monster Bash",
+	"monsterb",
+	"Dave Fish (security consultant)\nMike Balfour (game driver)",
 	&monsterb_machine_driver,
 
-        monsterb_rom,
-        monsterb_decode, 0,
-        monsterb_sample_names,
+	monsterb_rom,
+	monsterb_decode, 0,
+	monsterb_sample_names,
 	0,	/* sound_prom */
 
-        0, monsterb_input_ports, 0, 0, 0,
+	monsterb_input_ports,
 
-		0, 0, 0,
-        ORIENTATION_DEFAULT,
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
 
 	monsterb_hiload, monsterb_hisave
 };
 
 struct GameDriver spaceod_driver =
 {
-        "Space Odyssey",
-        "spaceod",
-        "Dave Fish (security consultant)\nMike Balfour (game driver)",
-        &spaceod_machine_driver,
+	"Space Odyssey",
+	"spaceod",
+	"Dave Fish (security consultant)\nMike Balfour (game driver)",
+	&spaceod_machine_driver,
 
-        spaceod_rom,
-        spaceod_decode, 0,
-        spaceod_sample_names,
+	spaceod_rom,
+	spaceod_decode, 0,
+	spaceod_sample_names,
 	0,	/* sound_prom */
 
-        0, spaceod_input_ports, 0, 0, 0,
+	spaceod_input_ports,
 
-		0, 0, 0,
-        ORIENTATION_DEFAULT,
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
 
-        spaceod_hiload, spaceod_hisave
+	spaceod_hiload, spaceod_hisave
 };
 

@@ -43,9 +43,6 @@ DSW1
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/generic.h"
-#include "sndhrdw/8910intf.h"
-#include "Z80.h"
 
 void mcr1_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void solarfox_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
@@ -62,7 +59,6 @@ int mcr_readport(int port);
 void mcr_soundstatus_w (int offset,int data);
 int mcr_soundlatch_r (int offset);
 
-int mcr_sh_start(void);
 
 static struct MemoryReadAddress mcr1_readmem[] =
 {
@@ -284,6 +280,19 @@ static struct GfxDecodeInfo solarfox_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
+
+static struct AY8910interface ay8910_interface =
+{
+	2,	/* 2 chips */
+	2000000,	/* 2 MHZ ?? */
+	{ 0x20ff, 0x20ff },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 }
+};
+
+
 static struct MachineDriver kick_machine_driver =
 {
 	/* basic machine hardware */
@@ -293,7 +302,7 @@ static struct MachineDriver kick_machine_driver =
 			2500000,	/* 2.5 Mhz */
 			0,
 			mcr1_readmem,mcr1_writemem,kick_readport,writeport,
-			mcr_interrupt,32
+			mcr_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
@@ -303,8 +312,8 @@ static struct MachineDriver kick_machine_driver =
 			interrupt,26
 		}
 	},
-	30,
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	30, DEFAULT_30HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - sound CPU has enough interrupts to handle synchronization */
 	mcr_init_machine,
 
 	/* video hardware */
@@ -320,10 +329,13 @@ static struct MachineDriver kick_machine_driver =
 	mcr1_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	mcr_sh_start,
-	AY8910_sh_stop,
-	AY8910_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&ay8910_interface
+		}
+	}
 };
 
 
@@ -336,7 +348,7 @@ static struct MachineDriver solarfox_machine_driver =
 			2500000,	/* 2.5 Mhz */
 			0,
 			mcr1_readmem,mcr1_writemem,readport,writeport,
-			mcr_interrupt,32
+			mcr_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
@@ -346,8 +358,8 @@ static struct MachineDriver solarfox_machine_driver =
 			interrupt,26
 		}
 	},
-	30,
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	30, DEFAULT_30HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - sound CPU has enough interrupts to handle synchronization */
 	mcr_init_machine,
 
 	/* video hardware */
@@ -363,10 +375,13 @@ static struct MachineDriver solarfox_machine_driver =
 	mcr1_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	mcr_sh_start,
-	AY8910_sh_stop,
-	AY8910_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&ay8910_interface
+		}
+	}
 };
 
 
@@ -471,6 +486,27 @@ ROM_START( kick_rom )
 	ROM_LOAD( "sio_a10", 0x3000, 0x1000, 0x1667420b )
 ROM_END
 
+struct GameDriver kick_driver =
+{
+	"Kick",
+	"kick",
+	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nBrad Oliver\nJohn Butler",
+	&kick_machine_driver,
+
+	kick_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	kick_input_ports,
+
+	0, 0,0,
+	ORIENTATION_SWAP_XY,
+
+	kick_hiload,kick_hisave
+};
+
+
 ROM_START( solarfox_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "sfcpu.3b", 0x0000, 0x1000, 0x1b63bbb9 )
@@ -496,31 +532,11 @@ ROM_START( solarfox_rom )
 
 ROM_END
 
-struct GameDriver kick_driver =
-{
-	"Kick",
-	"kick",
-	"CHRISTOPHER KIRMSE\nAARON GILES\nNICOLA SALMORIA\nBRAD OLIVER\nJOHN BUTLER",
-	&kick_machine_driver,
-
-	kick_rom,
-	0, 0,
-	0,
-	0,	/* sound_prom */
-
-	0/*TBR*/, kick_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
-
-	0, 0,0,
-	ORIENTATION_SWAP_XY,
-
-	kick_hiload,kick_hisave
-};
-
 struct GameDriver solarfox_driver =
 {
 	"Solar Fox",
 	"solarfox",
-	"CHRISTOPHER KIRMSE\nAARON GILES\nNICOLA SALMORIA\nBRAD OLIVER",
+	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nBrad Oliver",
 	&solarfox_machine_driver,
 
 	solarfox_rom,
@@ -528,7 +544,7 @@ struct GameDriver solarfox_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/, solarfox_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	solarfox_input_ports,
 
 	0, 0,0,
 	ORIENTATION_SWAP_XY,

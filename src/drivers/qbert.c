@@ -78,17 +78,12 @@ doesn't seem to serve any purpose...(?)
 
 int qbert_vh_start(void);
 void gottlieb_vh_init_color_palette(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-void gottlieb_sh_w(int offset, int data);
-void gottlieb_output(int offset, int data);
-int qbert_IN1_r(int offset);
+void qbert_sh_w(int offset, int data);
+void gottlieb_video_outputs(int offset,int data);
 extern unsigned char *gottlieb_paletteram;
 void gottlieb_paletteram_w(int offset,int data);
 void gottlieb_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-int gottlieb_sh_start(void);
-void gottlieb_sh_stop(void);
-void gottlieb_sh_update(void);
-int gottlieb_sh_interrupt(void);
 int riot_ram_r(int offset);
 int gottlieb_riot_r(int offset);
 int gottlieb_sound_expansion_socket_r(int offset);
@@ -99,15 +94,19 @@ void gottlieb_speech_w(int offset, int data);
 void gottlieb_speech_clock_DAC_w(int offset, int data);
 void gottlieb_sound_expansion_socket_w(int offset, int data);
 
+int gottlieb_nvram_load(void);
+void gottlieb_nvram_save(void);
+
+
 
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x57ff, MRA_RAM },
 	{ 0x5800, 0x5800, input_port_0_r },     /* DSW */
-	{ 0x5801, 0x5801, qbert_IN1_r },     /* buttons */
-	{ 0x5802, 0x5802, input_port_2_r },     /* trackball: not used */
-	{ 0x5803, 0x5803, input_port_3_r },     /* trackball: not used */
-	{ 0x5804, 0x5804, input_port_4_r },     /* joystick */
+	{ 0x5801, 0x5801, input_port_1_r },     /* IN1 buttons */
+	{ 0x5802, 0x5802, input_port_2_r },     /* IN2 trackball: not used */
+	{ 0x5803, 0x5803, input_port_3_r },     /* IN3 trackball: not used */
+	{ 0x5804, 0x5804, input_port_4_r },     /* IN4 joystick */
 	{ 0xA000, 0xffff, MRA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -122,8 +121,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x5000, 0x501f, gottlieb_paletteram_w, &gottlieb_paletteram },
 	{ 0x5800, 0x5800, MWA_RAM },    /* watchdog timer clear */
 	{ 0x5801, 0x5801, MWA_RAM },    /* trackball: not used */
-	{ 0x5802, 0x5802, gottlieb_sh_w }, /* sound/speech command */
-	{ 0x5803, 0x5803, gottlieb_output },       /* OUT1 */
+	{ 0x5802, 0x5802, qbert_sh_w }, /* sound/speech command */
+	{ 0x5803, 0x5803, gottlieb_video_outputs },       /* OUT1 */
 	{ 0x5804, 0x5804, MWA_RAM },    /* OUT2 */
 	{ 0xa000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
@@ -165,62 +164,54 @@ struct MemoryWriteAddress gottlieb_sound_writemem[] =
 
 
 
-static struct InputPort input_ports[] =
-{
-	{       /* DSW */
-		0x0,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{       /* buttons */
-		0x40,   /* test mode off */
-		{ OSD_KEY_1, OSD_KEY_2, OSD_KEY_3, 0 /* coin 2 */,
-				0, 0, 0, OSD_KEY_F2 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{       /* trackball: not used */
-		0xff,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{       /* trackball: not used */
-		0xff,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{       /* 2 joysticks (cocktail mode) mapped to one */
-		0x00,
-		{ OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_UP, OSD_KEY_DOWN,
-			OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_UP, OSD_KEY_DOWN },
-		{ OSD_JOY_RIGHT, OSD_JOY_LEFT, OSD_JOY_UP, OSD_JOY_DOWN,
-			OSD_JOY_RIGHT, OSD_JOY_LEFT, OSD_JOY_UP, OSD_JOY_DOWN },
-	},
-	{ -1 }  /* end of table */
-};
+INPUT_PORTS_START( input_ports )
+	PORT_START      /* DSW */
+	PORT_DIPNAME( 0x01, 0x00, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x02, 0x00, "Kicker", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x02, "On" )
+	PORT_DIPNAME( 0x04, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x04, "Cocktail" )
+	PORT_BITX( 0x08, 0x00, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Auto Round Advance", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x08, "On" )
+	PORT_DIPNAME( 0x10, 0x00, "Free Play", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x10, "On" )
+	PORT_BIT( 0xe0, IP_ACTIVE_LOW, IPT_UNUSED )
+/* 0x40 must be connected to the IP16 line */
 
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING (   0x40, "Off" )
+	PORT_DIPSETTING (   0x00, "On" )
+	PORT_BITX(0x80, IP_ACTIVE_HIGH, IPT_SERVICE, "Select in Service Mode", OSD_KEY_F1, IP_JOY_NONE, 0 )
 
+	PORT_START      /* IN2 trackball not used */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
-static struct KEYSet keys[] =
-{
-	{ 4, 0, "MOVE DOWN RIGHT" },
-	{ 4, 1, "MOVE UP LEFT"  },
-	{ 4, 2, "MOVE UP RIGHT" },
-	{ 4, 3, "MOVE DOWN LEFT" },
-	{ -1 }
-};
+	PORT_START      /* IN3 trackball not used */
+	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 
-
-static struct DSW dsw[] =
-{
-	{ 0, 0x08, "AUTO ROUND ADVANCE", { "OFF","ON" } },
-	{ 0, 0x01, "ATTRACT MODE SOUND", { "ON", "OFF" } },
-	{ 0, 0x10, "FREE PLAY", { "OFF" , "ON" } },
-	{ 0, 0x04, "", { "UPRIGHT", "COCKTAIL" } },
-	{ 0, 0x02, "KICKER", { "OFF", "ON" } },
-/* the following switch must be connected to the IP16 line */
-/*      { 1, 0x40, "TEST MODE", {"ON", "OFF"} },*/
-	{ -1 }
-};
+	PORT_START      /* IN4 joystick */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+INPUT_PORTS_END
 
 
 static struct GfxLayout charlayout =
@@ -257,6 +248,21 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
+static struct DACinterface dac_interface =
+{
+	1,
+	441000,
+	{ 255 },
+	{ 0 },
+};
+
+static struct Samplesinterface samples_interface =
+{
+	1	/* one channel */
+};
+
+
+
 static const struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -273,11 +279,11 @@ static const struct MachineDriver machine_driver =
 			3579545/4,
 			2,             /* memory region #2 */
 			gottlieb_sound_readmem,gottlieb_sound_writemem,0,0,
-			gottlieb_sh_interrupt,1
+			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
 	},
-	60,     /* frames / second */
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,      /* init machine */
 
 	/* video hardware */
@@ -293,10 +299,17 @@ static const struct MachineDriver machine_driver =
 	gottlieb_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	gottlieb_sh_start,
-	gottlieb_sh_stop,
-	gottlieb_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_DAC,
+			&dac_interface
+		},
+		{
+			SOUND_SAMPLES,
+			&samples_interface
+		}
+	}
 };
 
 
@@ -341,101 +354,55 @@ ROM_START( qbertjp_rom )
 	ROM_RELOAD(0x7000, 0x1000) /* A15 is not decoded */
 ROM_END
 
-
-
-static int hiload(void)
+/* JB 980110 */
+static const char *sample_names[] =
 {
-	void *f=osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
-	unsigned char *RAM=Machine->memory_region[0];
+	"*qbert",
+	"FX_18.SAM", /*curse*/
+	"FX_20.SAM", /*little purple guy*/
+	"fx_22.sam", /*snake falling */
+	"fx_17.sam", /*green guy*/
+     0	/* end of array */
+};
 
-	/* no need to wait for anything: Q*bert doesn't touch the tables
-	if the checksum is correct */
-	if (f) {
-		osd_fread(f,RAM+0xA00,2); /* hiscore table checksum */
-		osd_fread(f,RAM+0xA02,23*10); /* 23 hiscore ascending entries: name (3 chars) + score (7 figures) */
-		osd_fread(f,RAM+0xBB0,12); /* operator parameters : coins/credits, lives, extra-lives points */
-		osd_fclose(f);
-	}
-	return 1;
-}
 
-static void hisave(void)
-{
-	void *f=osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1);
-	unsigned char *RAM=Machine->memory_region[0];
-
-	if (f) {
-	/* not saving distributions tables : does anyone really want them ? */
-		osd_fwrite(f,RAM+0xA00,2); /* hiscore table checksum */
-		osd_fwrite(f,RAM+0xA02,23*10); /* 23 hiscore ascending entries: name (3 chars) + score (7 figures) */
-		osd_fwrite(f,RAM+0xBB0,12); /* operator parameters : coins/credits, lives, extra-lives points */
-		osd_fclose(f);
-	}
-}
-
-static int qbertjp_hiload(void)
-{
-	void *f=osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
-	unsigned char *RAM=Machine->memory_region[0];
-
-	if (f) {
-		osd_fread(f,RAM+0xA00,2); /* hiscore table checksum */
-		osd_fread(f,RAM+0xA02,23*10); /* 23 hiscore ascending entries: name (3 chars) + score (7 figures) */
-		osd_fread(f,RAM+0xC0C,12); /* operator parameters : coins/credits, lives, extra-lives points */
-		osd_fclose(f);
-	}
-	return 1;
-}
-
-static void qbertjp_hisave(void)
-{
-	void *f=osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1);
-	unsigned char *RAM=Machine->memory_region[0];
-
-	if (f) {
-		osd_fwrite(f,RAM+0xA00,2); /* hiscore table checksum */
-		osd_fwrite(f,RAM+0xA02,23*10); /* 23 hiscore ascending entries: name (3 chars) + score (7 figures) */
-		osd_fwrite(f,RAM+0xC0C,12); /* operator parameters : coins/credits, lives, extra-lives points */
-		osd_fclose(f);
-	}
-}
 
 struct GameDriver qbert_driver =
 {
 	"Q*Bert (US version)",
 	"qbert",
-	"FABRICE FRANCES\n\nDEDICATED TO:\nJEFF LEE\nWARREN DAVIES\nDAVID THIEL",
+        "Fabrice Frances (MAME driver)\nMarco Cassili\nJohn Butler     (speech\nHowie Cohen     samples)\n\nDedicated to:\nJeff Lee\nWarren Davies\nDavid Thiel",
 	&machine_driver,
 
 	qbert_rom,
 	0, 0,   /* rom decode and opcode decode functions */
-	0,
+	sample_names,	/* JB 980110 */
 	0,	/* sound_prom */
 
-	input_ports, 0, 0/*TBR*/,dsw, keys,
+	input_ports,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
-	hiload,hisave     /* hi-score load and save */
+	gottlieb_nvram_load, gottlieb_nvram_save
 };
 
 struct GameDriver qbertjp_driver =
 {
 	"Q*Bert (Japanese version)",
 	"qbertjp",
-	"FABRICE FRANCES\n\nDEDICATED TO:\nJEFF LEE\nWARREN DAVIES\nDAVID THIEL",
+        "Fabrice Frances (MAME driver)\nMarco Cassili\nJohn Butler     (speech\nHowie Cohen     samples)\n\nDedicated to:\nJeff Lee\nWarren Davies\nDavid Thiel",
 	&machine_driver,
 
 	qbertjp_rom,
 	0, 0,   /* rom decode and opcode decode functions */
-	0,
+	sample_names,	/* JB 980110 */
 	0,	/* sound_prom */
 
-	input_ports, 0, 0/*TBR*/,dsw, keys,
+	input_ports,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
-	qbertjp_hiload,qbertjp_hisave     /* hi-score load and save */
+	gottlieb_nvram_load, gottlieb_nvram_save
 };

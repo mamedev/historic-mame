@@ -57,8 +57,6 @@ write:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/generic.h"
-#include "sndhrdw/8910intf.h"
 
 
 
@@ -71,8 +69,6 @@ extern unsigned char *exedexes_nbg_yscroll;
 extern unsigned char *exedexes_nbg_xscroll;
 void exedexes_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void exedexes_vh_screenrefresh(struct osd_bitmap *bitmap);
-
-int capcom_sh_start(void);
 
 
 
@@ -120,8 +116,8 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x4000, 0x47ff, MWA_RAM },
 	{ 0x8000, 0x8000, AY8910_control_port_0_w },
 	{ 0x8001, 0x8001, AY8910_write_port_0_w },
-	{ 0x8002, 0x8002, AY8910_control_port_1_w },
-	{ 0x8003, 0x8003, AY8910_write_port_1_w },
+	{ 0x8002, 0x8002, SN76496_0_w },
+	{ 0x8003, 0x8003, SN76496_1_w },
 	{ -1 }	/* end of table */
 };
 
@@ -134,7 +130,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BITX(0x20, IP_ACTIVE_LOW, IPT_COIN3 | IPF_IMPULSE, "Coin Aux", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 8 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
@@ -172,7 +168,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPNAME( 0x10, 0x10, "2 Players Game", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "1 Credit" )
 	PORT_DIPSETTING(    0x10, "2 Credits" )
-	PORT_DIPNAME( 0x20, 0x20, "Language", IP_KEY_NONE )
+	PORT_DIPNAME( 0x20, 0x00, "Language", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x20, "Japanese")
 	PORT_DIPSETTING(    0x00, "English")
 	PORT_DIPNAME( 0x40, 0x40, "Freeze", IP_KEY_NONE )
@@ -406,6 +402,26 @@ static unsigned char color_prom[] =
 
 
 
+static struct AY8910interface ay8910_interface =
+{
+	2,	/* 2 chips */
+	1500000,	/* 1.5 MHz ? */
+	{ 0x20ff, 0x20ff },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 }
+};
+
+static struct SN76496interface sn76496_interface =
+{
+	2,	/* 2 chips */
+	3000000,	/* 3 MHz????? */
+	{ 255, 255 }
+};
+
+
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -425,8 +441,8 @@ static struct MachineDriver machine_driver =
 			interrupt,4
 		}
 	},
-	60,
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
 	/* video hardware */
@@ -442,10 +458,17 @@ static struct MachineDriver machine_driver =
 	exedexes_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	capcom_sh_start,
-	AY8910_sh_stop,
-	AY8910_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&ay8910_interface
+		},
+		{
+			SOUND_SN76496,
+			&sn76496_interface
+		}
+	}
 };
 
 
@@ -470,6 +493,28 @@ ROM_START( exedexes_rom )
 	ROM_REGION(0x6000)      /* For Tile background */
 	ROM_LOAD( "c01_ee07.bin", 0x0000, 0x4000, 0x1ffca036 )	/* Front Tile Map */
 	ROM_LOAD( "h04_ee09.bin", 0x4000, 0x2000, 0xbff79735 )	/* Back Tile map */
+ROM_END
+
+ROM_START( savgbees_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "ee04e.11m", 0x0000, 0x4000, 0xdbe9544d )
+	ROM_LOAD( "ee03e.10m", 0x4000, 0x4000, 0x72b30c5b )
+	ROM_LOAD( "ee02e.9m",  0x8000, 0x4000, 0x7c31db8d )
+
+	ROM_REGION(0x16000)     /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ee00e.5c", 0x00000, 0x2000, 0xf26a4292 ) /* Characters */
+	ROM_LOAD( "ee08.h1",  0x02000, 0x4000, 0x92c19717 ) /* 32x32 tiles planes 0-1 */
+	ROM_LOAD( "ee06.a3",  0x06000, 0x4000, 0x2cd31109 ) /* 16x16 tiles planes 0-1 */
+	ROM_LOAD( "ee05.a2",  0x0a000, 0x4000, 0xc3ef9bc9 ) /* 16x16 tiles planes 2-3 */
+	ROM_LOAD( "ee10.j11", 0x0e000, 0x4000, 0x9fa65502 ) /* Sprites planes 0-1 */
+	ROM_LOAD( "ee11.j12", 0x12000, 0x4000, 0x06151a97 ) /* Sprites planes 2-3 */
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "ee01e.11e", 0x00000, 0x4000, 0xe725cdeb )
+
+	ROM_REGION(0x6000)      /* For Tile background */
+	ROM_LOAD( "ee07.c1", 0x0000, 0x4000, 0x1ffca036 )	/* Front Tile Map */
+	ROM_LOAD( "ee09.h4", 0x4000, 0x2000, 0xbff79735 )	/* Back Tile map */
 ROM_END
 
 
@@ -500,8 +545,6 @@ static int hiload(void)
 	else return 0;	/* we can't load the hi scores yet */
 }
 
-
-
 static void hisave(void)
 {
 	void *f;
@@ -525,7 +568,7 @@ struct GameDriver exedexes_driver =
 {
 	"Exed Exes",
 	"exedexes",
-	"RICHARD DAVIES\nPAUL LEAMAN\nNICOLA SALMORIA\nMIRKO BUFFONI\nPAUL SWAN\nMIKE BALFOUR",
+	"Richard Davies\nPaul Leaman\nNicola Salmoria\nMirko Buffoni\nPaul Swan (color info)\nMike Balfour (high score save)",
 	&machine_driver,
 
 	exedexes_rom,
@@ -533,7 +576,27 @@ struct GameDriver exedexes_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/,input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	input_ports,
+
+	color_prom, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	hiload, hisave
+};
+
+struct GameDriver savgbees_driver =
+{
+	"Savage Bees",
+	"savgbees",
+	"Richard Davies\nPaul Leaman\nNicola Salmoria\nMirko Buffoni\nPaul Swan (color info)\nMike Balfour (high score save)",
+	&machine_driver,
+
+	savgbees_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,

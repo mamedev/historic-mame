@@ -17,6 +17,24 @@ static int flipscreen;
 
 
 
+/***************************************************************************
+
+  Convert the color PROMs into a more useable format.
+
+  Circus Charlie has one 32x8 palette PROM and two 256x4 lookup table PROMs
+  (one for characters, one for sprites).
+  The palette PROM is connected to the RGB output this way:
+
+  bit 7 -- 220 ohm resistor  -- BLUE
+        -- 470 ohm resistor  -- BLUE
+        -- 220 ohm resistor  -- GREEN
+        -- 470 ohm resistor  -- GREEN
+        -- 1  kohm resistor  -- GREEN
+        -- 220 ohm resistor  -- RED
+        -- 470 ohm resistor  -- RED
+  bit 0 -- 1  kohm resistor  -- RED
+
+***************************************************************************/
 void circusc_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
 {
 	int i;
@@ -24,7 +42,7 @@ void circusc_vh_convert_color_prom(unsigned char *palette, unsigned char *colort
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
 
-	for (i = 0;i < Machine->drv->total_colors ;i++)
+	for (i = 0;i < Machine->drv->total_colors;i++)
 	{
 		int bit0,bit1,bit2;
 
@@ -50,11 +68,12 @@ void circusc_vh_convert_color_prom(unsigned char *palette, unsigned char *colort
 	/* color_prom now points to the beginning of the lookup table */
 
 	/* sprites */
-	/* characters */
-	for (i = 0;i < TOTAL_COLORS(1);i++) {
-		COLOR(0,i) = *(color_prom) & 0x0f;
+	for (i = 0;i < TOTAL_COLORS(1);i++)
 		COLOR(1,i) = *(color_prom++) & 0x0f;
-	}
+
+	/* characters */
+	for (i = 0;i < TOTAL_COLORS(0);i++)
+		COLOR(0,i) = (*(color_prom++) & 0x0f) + 0x10;
 }
 
 

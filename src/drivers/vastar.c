@@ -61,8 +61,6 @@ write:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/generic.h"
-#include "sndhrdw/8910intf.h"
 
 
 
@@ -85,24 +83,6 @@ void vastar_init_machine(void);
 void vastar_hold_cpu2_w(int offset,int data);
 int vastar_sharedram_r(int offset);
 void vastar_sharedram_w(int offset, int data);
-
-
-
-static struct AY8910interface interface =
-{
-	1,	/* 1 chip */
-	1500000,	/* 1.5 MHZ??????? */
-	{ 255 },
-	{ input_port_3_r },
-	{ input_port_4_r },
-	{ 0 },
-	{ 0 }
-};
-
-int vastar_sh_start(void)
-{
-	return AY8910_sh_start(&interface);
-}
 
 
 
@@ -342,6 +322,19 @@ static unsigned char color_prom[] =
 
 
 
+static struct AY8910interface ay8910_interface =
+{
+	1,	/* 1 chip */
+	1500000,	/* 1.5 MHz??????? */
+	{ 255 },
+	{ input_port_3_r },
+	{ input_port_4_r },
+	{ 0 },
+	{ 0 }
+};
+
+
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -361,7 +354,7 @@ static struct MachineDriver machine_driver =
 			interrupt,4	/* ??? */
 		}
 	},
-	60,
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	100,	/* 100 CPU slices per frame - an high value to ensure proper */
 			/* synchronization of the CPUs */
 	vastar_init_machine,
@@ -379,10 +372,13 @@ static struct MachineDriver machine_driver =
 	vastar_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	vastar_sh_start,
-	AY8910_sh_stop,
-	AY8910_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&ay8910_interface
+		}
+	}
 };
 
 
@@ -430,7 +426,7 @@ struct GameDriver vastar_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,

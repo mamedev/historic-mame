@@ -296,22 +296,16 @@ void starforc_vh_screenrefresh(struct osd_bitmap *bitmap)
 	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		int sx,sy;
-		int charcode;
 
 
-		charcode = videoram[offs] + 0x10 * (colorram[offs] & 0x10);
+		sx = 8 * (31 - offs / 32);
+		sy = 8 * (offs % 32);
 
-		if (charcode)	/* don't draw spaces */
-		{
-			sx = 8 * (31 - offs / 32);
-			sy = 8 * (offs % 32);
-
-			drawgfx(bitmap,Machine->gfx[0],
-					charcode,
-					colorram[offs] & 0x07,
-					0,0,
-					sx,sy,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-		}
+		drawgfx(bitmap,Machine->gfx[0],
+				videoram[offs] + 0x10 * (colorram[offs] & 0x10),
+				colorram[offs] & 0x07,
+				0,0,
+				sx,sy,
+				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

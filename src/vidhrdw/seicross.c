@@ -114,14 +114,14 @@ void seicross_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 			dirtybuffer[offs] = 0;
 
-			sx = 8 * (31 - offs / 32);
-			sy = 8 * (offs % 32);
+			sx = offs % 32;
+			sy = offs / 32;
 
 			drawgfx(tmpbitmap,Machine->gfx[(colorram[offs] & 0x10) ? 1 : 0],
 					videoram[offs] + 8 * (colorram[offs] & 0x20),
 					colorram[offs] & 0x0f,
 					colorram[offs] & 0x40,colorram[offs] & 0x80,
-					sx,sy,
+					8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);
 		}
 	}
@@ -133,9 +133,9 @@ void seicross_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 
 		for (offs = 0;offs < 32;offs++)
-			scroll[offs] = seicross_row_scroll[offs];
+			scroll[offs] = -seicross_row_scroll[offs];
 
-		copyscrollbitmap(bitmap,tmpbitmap,32,scroll,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 	/* draw sprites */
@@ -144,8 +144,8 @@ void seicross_vh_screenrefresh(struct osd_bitmap *bitmap)
 		drawgfx(bitmap,Machine->gfx[spriteram[offs + 1] & 0x10 ? 3 : 2],
 				(spriteram[offs] & 0x3f),
 				spriteram[offs + 1] & 0x0f,
-				spriteram[offs] & 0x80,spriteram[offs] & 0x40,
-				spriteram[offs + 2] + 1,spriteram[offs + 3],
+				spriteram[offs] & 0x40,spriteram[offs] & 0x80,
+				spriteram[offs + 3],240-spriteram[offs + 2],
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 

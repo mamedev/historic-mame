@@ -1,50 +1,40 @@
 #include "driver.h"
 
-void gottlieb_video_outputs(int data);
-static int test;
-static int test_switch;
-static int joystick2, joystick3;
 
-
-static int gottlieb_buttons()
+int gottlieb_nvram_load(void)
 {
-	int res = readinputport(1);
+	void *f;
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
 
-	if (osd_key_pressed(OSD_KEY_F1))
+
+	/* Try loading static RAM */
+	/* no need to wait for anything: Krull doesn't touch the tables
+		if the checksum is correct */
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 	{
-		while (osd_key_pressed(OSD_KEY_F1)){};
-
-		test ^= 1;
+		/* just load in everything, the game will overwrite what it doesn't want */
+		osd_fread(f,&RAM[0x0000],0x1000);
+		osd_fclose(f);
 	}
+	/* Invalidate the static RAM to force reset to factory settings */
+	else memset(&RAM[0x0000],0xff,0x1000);
 
-	if (test)
-		res &= ~test_switch;
-
-	return res;
+	return 1;
 }
 
-int qbert_IN1_r(int offset)
+void gottlieb_nvram_save(void)
 {
-	test_switch=0x40;
-	return gottlieb_buttons();
-}
+	void *f;
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
 
-int stooges_IN1_r(int offset)
-{
-	test_switch=0x01;
-	return gottlieb_buttons();
-}
 
-int stooges_joysticks(int offset)
-{
-	if (joystick2) return readinputport(5);
-	else if (joystick3) return readinputport(6);
-	else return readinputport(4);
-}
-
-void gottlieb_output(int offset, int data)
-{
-	joystick2=data&0x20;
-	joystick3=data&0x40;
-	gottlieb_video_outputs(data);
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x0000],0x1000);
+		osd_fclose(f);
+	}
 }

@@ -8,7 +8,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "M6502.h"
 
 
 
@@ -22,10 +21,10 @@ int mystston_interrupt(void)
 		if (coin == 0)
 		{
 			coin = 1;
-			return INT_NMI;
+			return nmi_interrupt();
 		}
 	}
 	else coin = 0;
 
-	return INT_IRQ;
+	return interrupt();
 }

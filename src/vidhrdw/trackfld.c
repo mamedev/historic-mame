@@ -197,15 +197,19 @@ void trackfld_vh_screenrefresh(struct osd_bitmap *bitmap)
 		int sx,sy,flipx,flipy;
 
 
-		sx = spriteram[offs]-1;
-		sy = 241-spriteram_2[offs + 1];
+		sx = spriteram[offs] - 1;
+		sy = 240 - spriteram_2[offs + 1];
 		flipx = ~spriteram_2[offs] & 0x40;
 		flipy = spriteram_2[offs] & 0x80;
 		if (flipscreen)
 		{
-			sy = 241 - sy;
+			sy = 240 - sy;
 			flipy = !flipy;
 		}
+
+		/* Note that this adjustement must be done AFTER handling flipscreen, thus */
+		/* proving that this is a hardware related "feature" */
+		sy += 1;
 
 		drawgfx(bitmap,Machine->gfx[1],
 				spriteram[offs + 1],

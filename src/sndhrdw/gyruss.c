@@ -1,24 +1,11 @@
 #include "driver.h"
-#include "sndhrdw/generic.h"
-#include "sndhrdw/8910intf.h"
-#include "sndhrdw/dac.h"
-#include "I8039.h"
+#include "I8039/I8039.h"
 
 
 /*#define USE_SAMPLES*/
 
 
-#ifndef USE_SAMPLES
-static struct DACinterface DAinterface =
-{
-	1,
-	441000,
-	{ 128, 128 },
-	{  1,  1 }
-};
-
 static unsigned char voltable[255];
-#endif
 
 static unsigned char soundcommand = 0;
 
@@ -34,15 +21,8 @@ void gyruss_i8039_command_w(int offset,int data)
 	soundcommand = data;
 
 #ifdef USE_SAMPLES
-	if (data)
-	{
-		if (Machine->samples && Machine->samples->sample[data-1])
-			osd_play_sample(5,Machine->samples->sample[data-1]->data,
-					Machine->samples->sample[data-1]->length,
-					Machine->samples->sample[data-1]->smpfreq,
-					Machine->samples->sample[data-1]->volume,0);
-	}
-	else osd_stop_sample(5);
+	if (data) sample_start(0,data-1,0);
+	else sample_stop(0);
 #endif
 }
 
@@ -52,7 +32,7 @@ int gyruss_i8039_command_r(int offset)
 	00000013: ba 00       	mov r2,#0
 	00000015: 05          	en  i
 	00000016: fa          	mov a,r2
-	and expects r2 to retirve the command from an external latch. Since the
+	and expects r2 to retrieve the command from an external latch. Since the
 	8039 emulator doesn't allow that, we kick in later, when the code does
 	00000062: 53 0f       	anl a,#$0f
 	00000064: 03 32       	add a,#$32
@@ -90,7 +70,7 @@ static int gyruss_timer[20] = {
 0x08, 0x09, 0x08, 0x09, 0x0a, 0x0b, 0x0a, 0x0b, 0x0c, 0x0d
 };
 
-static int gyruss_portA_r(int offset)
+int gyruss_portA_r(int offset)
 {
 	/* need to protect from totalcycles overflow */
 	static int last_totalcycles = 0;
@@ -118,37 +98,11 @@ void gyruss_sh_irqtrigger_w(int offset,int data)
 
 
 
-static struct AY8910interface interface =
+
+void gyruss_init_machine(void)
 {
-	5,	/* 5 chips */
-	1789772,	/* 1.789772727 MHz */
-	{ 0x20ff, 0x20ff, 0x38ff, 0x38ff, 0x38ff },
-	/*  R       L   |   R       R       L */
-	/*   effects    |         music       */
-	{ 0, 0, gyruss_portA_r },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-
-
-int gyruss_sh_start(void)
-{
-	pending_commands = 0;
-
-	if (AY8910_sh_start(&interface))
-		return 1;
-#ifndef USE_SAMPLES
-	if (DAC_sh_start(&DAinterface))
-	{
-		AY8910_sh_stop();
-		return 1;
-	}
-	else
-	{
-		int i,j;
-		int weight[8],totweight;
+	int i,j;
+	int weight[8],totweight;
 
 
 	/* reproduce the resistor ladder
@@ -170,44 +124,24 @@ int gyruss_sh_start(void)
 	   -- 200 -+-------- out
 	*/
 
-		totweight = 0;
-		for (i = 0;i < 8;i++)
+	totweight = 0;
+	for (i = 0;i < 8;i++)
+	{
+		weight[i] = 252000 / (200 + (7-i) * 100);
+		totweight += weight[i];
+	}
+
+	for (i = 0;i < 8;i++)
+		weight[i] = (255 * weight[i] + totweight / 2) / totweight;
+
+	for (i = 0;i < 256;i++)
+	{
+		voltable[i] = 0;
+
+		for (j = 0;j < 8;j++)
 		{
-			weight[i] = 252000 / (200 + (7-i) * 100);
-			totweight += weight[i];
-		}
-
-		for (i = 0;i < 8;i++)
-			weight[i] = (255 * weight[i] + totweight / 2) / totweight;
-
-		for (i = 0;i < 256;i++)
-		{
-			voltable[i] = 0;
-
-			for (j = 0;j < 8;j++)
-			{
-				if ((i >> j) & 1)
-					voltable[i] += weight[j];
-			}
+			if ((i >> j) & 1)
+				voltable[i] += weight[j];
 		}
 	}
-#endif
-
-	return 0;
-}
-
-void gyruss_sh_stop(void)
-{
-	AY8910_sh_stop();
-#ifndef USE_SAMPLES
-	DAC_sh_stop();
-#endif
-}
-
-void gyruss_sh_update(void)
-{
-	AY8910_sh_update();
-#ifndef USE_SAMPLES
-	DAC_sh_update();
-#endif
 }

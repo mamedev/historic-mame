@@ -59,8 +59,7 @@ I/O read/write
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/generic.h"
-#include "sndhrdw/sn76496.h"
+#include "machine/z80fmly.h"
 
 extern unsigned char *starforc_scrollx2,*starforc_scrolly2;
 extern unsigned char *starforc_scrollx3,*starforc_scrolly3;
@@ -80,25 +79,19 @@ void starforc_vh_stop(void);
 void starforc_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void starforc_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-int starforce_sh_interrupt(void);
-int starforce_sh_start(void);
-void starforce_sh_stop(void);
-void starforce_sh_update(void);
+int starforc_sh_start(void);
+void starforc_sh_stop(void);
+void starforc_sh_update(void);
 
-void starforce_sh_0_w( int offset , int data );
-void starforce_sh_1_w( int offset , int data );
-void starforce_sh_2_w( int offset , int data );
+void starforc_sh_0_w( int offset , int data );
+void starforc_sh_1_w( int offset , int data );
+void starforc_sh_2_w( int offset , int data );
 
-void starforce_pio_w( int offset , int data );
-int  starforce_pio_r( int offset );
-void starforce_ctc_w( int offset , int data );
-int  starforce_ctc_r( int offset );
-
-extern unsigned char *starforce_sound_command;
-void starforce_sound_latch( int offset , int data );
+void starforc_pio_w( int offset , int data );
+int  starforc_pio_r( int offset );
 
 #if 1
-void starforce_volume_w( int offset , int data );
+void starforc_volume_w( int offset , int data );
 #endif
 
 static struct MemoryReadAddress readmem[] =
@@ -132,26 +125,26 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xa000, 0xa1ff, starforc_tiles2_w, &starforc_tilebackground2, &starforc_bgvideoram_size },
 	{ 0xa800, 0xa9ff, starforc_tiles3_w, &starforc_tilebackground3 },
 	{ 0xb000, 0xb1ff, starforc_tiles4_w, &starforc_tilebackground4 },
-	{ 0xd004, 0xd004, sound_command_w },
+	{ 0xd004, 0xd004, z80pioA_0_p_w },
 	{ -1 }  /* end of table */
 };
 
 
 static struct MemoryReadAddress sound_readmem[] =
 {
-        { 0x4000, 0x43ff, MRA_RAM },
 	{ 0x0000, 0x3fff, MRA_ROM },
+	{ 0x4000, 0x43ff, MRA_RAM },
 	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress sound_writemem[] =
 {
-        { 0x4000, 0x43ff, MWA_RAM },
 	{ 0x0000, 0x3fff, MWA_ROM },
+	{ 0x4000, 0x43ff, MWA_RAM },
 	{ 0x8000, 0x8000, SN76496_0_w },
 	{ 0x9000, 0x9000, SN76496_1_w },
 	{ 0xa000, 0xa000, SN76496_2_w },
-	{ 0xd000, 0xd000, starforce_volume_w },
+	{ 0xd000, 0xd000, starforc_volume_w },
 #if 0
 	{ 0xe000, 0xe000, unknown },
 	{ 0xf000, 0xf000, unknown },
@@ -161,17 +154,19 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 static struct IOReadPort sound_readport[] =
 {
-	{ 0x00, 0x03, starforce_pio_r },
-	{ 0x08, 0x0b, starforce_ctc_r },
+	{ 0x00, 0x03, z80pio_0_r },
+	{ 0x08, 0x0b, z80ctc_0_r },
 	{ -1 }	/* end of table */
 };
 
 static struct IOWritePort sound_writeport[] =
 {
-	{ 0x00, 0x03, starforce_pio_w },
-	{ 0x08, 0x0b, starforce_ctc_w },
+	{ 0x00, 0x03, z80pio_0_w },
+	{ 0x08, 0x0b, z80ctc_0_w },
 	{ -1 }	/* end of table */
 };
+
+
 
 INPUT_PORTS_START( input_ports )
 	PORT_START	/* IN0 */
@@ -346,16 +341,16 @@ static struct MachineDriver machine_driver =
 			interrupt,1
 		},
 		{
-				CPU_Z80 | CPU_AUDIO_CPU,
-				2000000,        /* 2 Mhz */
-				2,
-				sound_readmem,sound_writemem,
-				sound_readport,sound_writeport,
-				starforce_sh_interrupt,10
+			CPU_Z80 | CPU_AUDIO_CPU,
+			2000000,        /* 2 Mhz */
+			2,
+			sound_readmem,sound_writemem,
+			sound_readport,sound_writeport,
+			0,0 /* interrupts are made by z80 daisy chain system */
 		}
 	},
-	60,
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
 	/* video hardware */
@@ -372,9 +367,9 @@ static struct MachineDriver machine_driver =
 
 	/* sound hardware */
 	0,
-	starforce_sh_start,
-	starforce_sh_stop,
-	starforce_sh_update,
+	starforc_sh_start,
+	starforc_sh_stop,
+	starforc_sh_update,
 };
 
 
@@ -558,7 +553,7 @@ struct GameDriver starforc_driver =
 	0,
 	0,      /* sound_prom */
 
-	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -578,7 +573,7 @@ struct GameDriver megaforc_driver =
 	0,
 	0,      /* sound_prom */
 
-	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

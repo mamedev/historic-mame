@@ -9,10 +9,6 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-extern unsigned char *gauntlet_bank3;
-
-/*#define GAUNTLET_DEBUG 1*/
-
 #define XDIM 42
 #define YDIM 30
 
@@ -20,6 +16,14 @@ extern unsigned char *gauntlet_bank3;
 /*
  *		Globals we own
  */
+
+unsigned char *gauntlet_playfieldram;
+unsigned char *gauntlet_spriteram;
+unsigned char *gauntlet_alpharam;
+unsigned char *gauntlet_paletteram;
+unsigned char *gauntlet_vscroll;
+unsigned char *gauntlet_hscroll;
+unsigned char *gauntlet_bank3;
 
 int gauntlet_playfieldram_size;
 int gauntlet_spriteram_size;
@@ -36,14 +40,6 @@ static unsigned char *colordirty;
 static unsigned char *spritevisit;
 
 static struct osd_bitmap *playfieldbitmap;
-
-static unsigned char *playfieldram;
-static unsigned char *spriteram;
-static unsigned char *alpharam;
-static unsigned char *paletteram;
-
-static unsigned char vscroll[4];
-static unsigned char hscroll[4];
 
 static unsigned char trans_count_col[XDIM];
 static unsigned char trans_count_row[YDIM];
@@ -62,60 +58,12 @@ int gauntlet_system_stop (void);
 void gauntlet_vh_stop (void);
 
 
-/***************************************************************************
-
-  Convert the color PROMs into a more useable format.
-
-  Gauntlet doesn't have a color PROM. It uses 64KB bytes of RAM to
-  dynamically create the palette. Each couple of bytes defines one
-  color (5 bits per R,G,B; the highest 1 bit of the first byte is unused).
-  Graphics use 4 bitplanes.
-
-***************************************************************************/
-void gauntlet_vh_convert_color_prom (unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
-{
-	int i;
-
-	for (i = 0;i < 256;i++)
-	{
-		int bits;
-
-		bits = (i >> 0) & 0x07;
-		palette[3*i] = (bits >> 1) | (bits << 2) | (bits << 5);
-		bits = (i >> 3) & 0x07;
-		palette[3*i + 1] = (bits >> 1) | (bits << 2) | (bits << 5);
-		bits = (i >> 6) & 0x03;
-		palette[3*i + 2] = bits | (bits << 2) | (bits << 4) | (bits << 6);
-	}
-}
-
-
 /*
  *   video system start; we also initialize the system memory as well here
  */
 
 int gauntlet_vh_start(void)
 {
-	int res;
-
-	/* start up the machine */
-	res = gauntlet_system_start ();
-	if (res != 0)
-		return res;
-
-	/* allocate RAM space */
-	if (!playfieldram)
-		playfieldram = calloc (gauntlet_playfieldram_size + gauntlet_spriteram_size +
-		                       gauntlet_paletteram_size + gauntlet_alpharam_size, 1);
-	if (!playfieldram)
-	{
-		gauntlet_vh_stop ();
-		return 1;
-	}
-	spriteram = playfieldram + gauntlet_playfieldram_size;
-	paletteram = spriteram + gauntlet_spriteram_size;
-	alpharam = paletteram + gauntlet_paletteram_size;
-
 	/* allocate dirty buffers */
 	if (!playfielddirty)
 		playfielddirty = calloc (gauntlet_playfieldram_size/2 + gauntlet_paletteram_size/2 +
@@ -130,7 +78,7 @@ int gauntlet_vh_start(void)
 
 	/* allocate bitmaps */
 	if (!playfieldbitmap)
-		playfieldbitmap = osd_create_bitmap (64*8, 64*8);
+		playfieldbitmap = osd_new_bitmap (64*8, 64*8, Machine->scrbitmap->depth);
 	if (!playfieldbitmap)
 	{
 		gauntlet_vh_stop ();
@@ -140,9 +88,6 @@ int gauntlet_vh_start(void)
 	/* initialize the transparency trackers */
 	memset (trans_count_col, YDIM, sizeof (trans_count_col));
 	memset (trans_count_row, XDIM, sizeof (trans_count_row));
-
-	/* spriteram is bank 4 */
-	cpu_setbank (4, spriteram);
 
 	current_head = current_head_link = 0;
 
@@ -165,14 +110,6 @@ void gauntlet_vh_stop(void)
 	if (playfielddirty)
 		free (playfielddirty);
 	playfielddirty = colordirty = spritevisit = 0;
-
-	/* free RAM space */
-	if (playfieldram)
-		free (playfieldram);
-	playfieldram = spriteram = paletteram = alpharam = 0;
-
-	/* close down the machine */
-	gauntlet_system_stop();
 }
 
 
@@ -182,30 +119,18 @@ void gauntlet_vh_stop(void)
 
 int gauntlet_vscroll_r (int offset)
 {
-	return vscroll[offset];
+	return READ_WORD (&gauntlet_vscroll[offset]);
 }
 
 void gauntlet_vscroll_w (int offset, int data)
 {
+	int oldword = READ_WORD (&gauntlet_vscroll[offset]);
+	int newword = COMBINE_WORD (oldword, data);
+	WRITE_WORD (&gauntlet_vscroll[offset], newword);
+
 	/* invalidate the entire playfield if we're switching ROM banks */
-	if (offset == 3 && (vscroll[3] & 3) != (data & 3))
+	if (offset == 2 && (oldword & 3) != (newword & 3))
 		memset (playfielddirty, 1, gauntlet_playfieldram_size / 2);
-	vscroll[offset] = data;
-}
-
-
-/*
- *   horizontal scroll read/write handlers
- */
-
-int gauntlet_hscroll_r (int offset)
-{
-	return hscroll[offset];
-}
-
-void gauntlet_hscroll_w (int offset, int data)
-{
-	hscroll[offset] = data;
 }
 
 
@@ -215,14 +140,17 @@ void gauntlet_hscroll_w (int offset, int data)
 
 int gauntlet_playfieldram_r (int offset)
 {
-	return playfieldram[offset];
+	return READ_WORD (&gauntlet_playfieldram[offset]);
 }
 
 void gauntlet_playfieldram_w (int offset, int data)
 {
-	if (playfieldram[offset] != data)
+	int oldword = READ_WORD (&gauntlet_playfieldram[offset]);
+	int newword = COMBINE_WORD (oldword, data);
+
+	if (oldword != newword)
 	{
-		playfieldram[offset] = data;
+		WRITE_WORD (&gauntlet_playfieldram[offset], newword);
 		playfielddirty[offset / 2] = 1;
 	}
 }
@@ -234,13 +162,17 @@ void gauntlet_playfieldram_w (int offset, int data)
 
 int gauntlet_alpharam_r (int offset)
 {
-	return alpharam[offset];
+	return READ_WORD (&gauntlet_alpharam[offset]);
 }
 
 void gauntlet_alpharam_w (int offset, int data)
 {
+	int oldword = READ_WORD (&gauntlet_alpharam[offset]);
+	int newword = COMBINE_WORD (oldword, data);
+	WRITE_WORD (&gauntlet_alpharam[offset], newword);
+
 	/* track opacity of rows & columns */
-	if (!(offset & 1) && ((data ^ alpharam[offset]) & 0x80))
+	if ((oldword ^ newword) & 0x8000)
 	{
 		int sx,sy;
 
@@ -249,14 +181,12 @@ void gauntlet_alpharam_w (int offset, int data)
 
 		if (sx < XDIM && sy < YDIM)
 		{
-			if (data & 0x80)
+			if (newword & 0x8000)
 				trans_count_col[sx]--, trans_count_row[sy]--;
 			else
 				trans_count_col[sx]++, trans_count_row[sy]++;
 		}
 	}
-
-	alpharam[offset] = data;
 }
 
 
@@ -266,14 +196,17 @@ void gauntlet_alpharam_w (int offset, int data)
 
 int gauntlet_paletteram_r (int offset)
 {
-	return paletteram[offset];
+	return READ_WORD (&gauntlet_paletteram[offset]);
 }
 
 void gauntlet_paletteram_w (int offset, int data)
 {
-	if (paletteram[offset] != data)
+	int oldword = READ_WORD (&gauntlet_paletteram[offset]);
+	int newword = COMBINE_WORD (oldword, data);
+
+	if (oldword != newword)
 	{
-		paletteram[offset] = data;
+		WRITE_WORD (&gauntlet_paletteram[offset], newword);
 		colordirty[offset / 2] = 1;
 	}
 }
@@ -293,27 +226,8 @@ void gauntlet_vh_screenrefresh(struct osd_bitmap *bitmap)
 	unsigned char smalldirty[64];
 	struct rectangle clip;
 	int xscroll, yscroll;
-	int offs, bank, link, count = 64*64;
+	int offs, bank, link;
 	int x, y, sx, sy, xoffs, yoffs;
-
-
-/* Fun debugging stuff -- leave here until I can figure out the motion object system */
-#if GAUNTLET_DEBUG
-FILE *f = NULL;
-int record = 0;
-if (osd_key_pressed (OSD_KEY_BACKSPACE))
-{
-	while (osd_key_pressed (OSD_KEY_BACKSPACE));
-	dumpit();
-}
-
-if (osd_key_pressed (OSD_KEY_L))
-{
-	record = 1;
-	f = fopen ("sprite.log", "a");
-	if (f) fprintf (f, "\n\n=======================\n\n");
-}
-#endif
 
 
 	/* clip out any rows and columns that are completely covered by characters */
@@ -340,41 +254,40 @@ if (osd_key_pressed (OSD_KEY_L))
 	{
 		if (colordirty[offs / 2])
 		{
-			int inten = ((paletteram[offs] >> 4) + 2) & 0x1c;
-			int red = (paletteram[offs] & 0xf) * inten;
-			int green = (paletteram[offs+1] >> 4) * inten;
-			int blue = (paletteram[offs+1] & 0xf) * inten;
-			int color = ((red >> 5) & 0x07) + ((green >> 2) & 0x38) + (blue & 0xc0);
+			int palette = READ_WORD (&gauntlet_paletteram[offs]);
+			int inten = (palette >> 12) & 15;
+			int red = ((palette >> 8) & 15) * inten + inten;
+			int green = ((palette >> 4) & 15) * inten + inten;
+			int blue = (palette & 15) * inten + inten;
 
 			int index = offs / 2;
 			smalldirty[index >> 4] = 1;
 
-			if (offs < 0x200)
-				Machine->gfx[0]->colortable[index] = Machine->pens[color];
-			else
-				Machine->gfx[1]->colortable[(index-16*16) ^ 0xf] = Machine->pens[color];
+			setgfxcolorentry (Machine, index, red, green, blue);
 
 			colordirty[offs / 2] = 0;
 		}
 	}
 
+
 	/* mark any tiles containing dirty colors dirty now */
 	for (offs = gauntlet_playfieldram_size - 2; offs >= 0; offs -= 2)
 	{
-		int color = ((playfieldram[offs] >> 4) & 7) + 0x18;
+		int color = ((READ_WORD (&gauntlet_playfieldram[offs]) >> 12) & 7) + 0x18;
 		if (smalldirty[color+16])
 			playfielddirty[offs/2] = 1;
 	}
 
 
 	/* compute scrolling so we know what to update */
-	xscroll = (hscroll[0] << 8) + hscroll[1];
-	yscroll = (vscroll[2] << 8) + vscroll[3];
+	xscroll = READ_WORD (&gauntlet_hscroll[0]);
+	yscroll = READ_WORD (&gauntlet_vscroll[2]);
 	xscroll = -(xscroll & 0x1ff);
 	yscroll = -((yscroll >> 7) & 0x1ff);
 
+
 	/* update only the portion of the playfield that's visible. */
-	bank = (vscroll[3] & 3) << 12;
+	bank = (READ_WORD (&gauntlet_vscroll[2]) & 3) << 12;
 	xoffs = (-xscroll/8) + (clip.min_x/8);
 	yoffs = (-yscroll/8) + (clip.min_y/8);
 	for (y = yoffs + (clip.max_y-clip.min_y)/8 + 1; y >= yoffs; y--)
@@ -387,7 +300,7 @@ if (osd_key_pressed (OSD_KEY_L))
 			sx = x & 63;
 			offs = sx * 64 + sy;
 
-			data = (playfieldram[offs*2] << 8) + playfieldram[offs*2+1];
+			data = READ_WORD (&gauntlet_playfieldram[offs*2]);
 			color = ((data >> 12) & 7) + 0x18;
 
 			if (playfielddirty[offs])
@@ -407,6 +320,8 @@ if (osd_key_pressed (OSD_KEY_L))
 		}
 	}
 
+
+	/* copy the playfield to the destination */
 	copyscrollbitmap (bitmap, playfieldbitmap,
 			1, &xscroll,
 			1, &yscroll,
@@ -414,114 +329,98 @@ if (osd_key_pressed (OSD_KEY_L))
 			TRANSPARENCY_NONE, 0);
 
 
-	/* motion objects -- yuck! */
-
-	/* kludge alert -- this address in bank3 is seemingly where the software keeps track of the
-	   head of the linked list; I don't know how the hardware does it yet */
-	memset (spritevisit, 0, gauntlet_spriteram_size / 8);
-	link = (((gauntlet_bank3[0x80] << 8) + gauntlet_bank3[0x81]) & 0x3ff) * 2;
-
-	/* kludge of a kludge alert -- the above doesn't work for the title screen, so if we're pointing
-	   to any empty list, go back to my old brute-force method */
-	if (!link && !spriteram[0x1801] && !(spriteram[0x1800] & 3))
+	/* motion objects -- attempt to simulate the real hardware behavior as closely as possible */
+	yoffs = (-yscroll/8) % 64;
+	memset (spritevisit, 0, gauntlet_spriteram_size/8);
+	for (y = 0; y <= YDIM; y++, yoffs = (yoffs + 1) % 64)
 	{
-		for (offs = 0; offs < gauntlet_spriteram_size / 4; offs += 2)
-		{
-			int data4 = (spriteram[offs + 0x1800] << 8) + spriteram[offs + 0x1801];
-			if ((data4 & 0x3ff) && (data4 & 0x3ff) != offs/2)
-				break;
-		}
+		/* compute the address of the link list start */
+		offs = 0xf80 + yoffs*2;
+		link = (READ_WORD (&gauntlet_alpharam[offs]) & 0x3ff) * 2;
 
-		if (offs == gauntlet_spriteram_size / 4)
-			goto nomo;
-
-		link = offs/2;
-		do
+		/* loop over motion objects until one is clipped */
+		while (!spritevisit[link/2])
 		{
-			for (offs = 0; offs < gauntlet_spriteram_size / 4; offs += 2)
+			int data1 = READ_WORD (&gauntlet_spriteram[link + 0x0000]);
+			int data2 = READ_WORD (&gauntlet_spriteram[link + 0x0800]);
+			int data3 = READ_WORD (&gauntlet_spriteram[link + 0x1000]);
+			int data4 = READ_WORD (&gauntlet_spriteram[link + 0x1800]);
+
+			/* extract data from the various words */
+			int pict = data1 & 0x7fff;
+			int color = (data2 & 0x0f);
+			int xpos = xscroll + (data2 >> 7);
+			int vsize = (data3 & 7) + 1;
+			int hsize = ((data3 >> 3) & 7) + 1;
+			int hflip = ((data3 >> 6) & 1);
+			int ypos = yscroll - (data3 >> 7) - vsize * 8;
+			int x, y;
+
+			/* h-flip case is handled differently */
+			if (hflip)
 			{
-				int data4 = (spriteram[offs + 0x1800] << 8) + spriteram[offs + 0x1801];
-				if ((data4 & 0x3ff) == link && !spritevisit[link])
+				for (y = 0; y < vsize; y++)
 				{
-					spritevisit[link] = 1;
-					link = offs/2;
-					break;
+					/* wrap and clip the Y coordinate */
+					int ty = (ypos + y*8) & 0x1ff;
+					if (ty > 0x1f8) ty -= 0x200;
+					if (ty <= -8 || ty >= YDIM*8)
+					{
+						pict += hsize;
+						continue;
+					}
+
+					for (x = 0; x < hsize; x++, pict++)
+					{
+						/* wrap and clip the X coordinate */
+						int tx = (xpos + (hsize-x-1)*8) & 0x1ff;
+						if (tx > 0x1f8) tx -= 0x200;
+						if (tx <= -8 || tx >= XDIM*8) continue;
+
+						drawgfx (bitmap, Machine->gfx[1],
+								pict ^ 0x800, color, 1, 0, tx, ty, &clip, TRANSPARENCY_PEN, 0);
+					}
 				}
 			}
-		} while (offs != gauntlet_spriteram_size / 4);
-		link *= 2;
+			else
+			{
+				for (y = 0; y < vsize; y++)
+				{
+					/* wrap and clip the Y coordinate */
+					int ty = (ypos + y*8) & 0x1ff;
+					if (ty > 0x1f8) ty -= 0x200;
+					if (ty <= -8 || ty >= YDIM*8)
+					{
+						pict += hsize;
+						continue;
+					}
+
+					for (x = 0; x < hsize; x++, pict++)
+					{
+						/* wrap and clip the X coordinate */
+						int tx = (xpos + x*8) & 0x1ff;
+						if (tx > 0x1f8) tx -= 0x200;
+						if (tx <= -8 || tx >= XDIM*8) continue;
+
+						drawgfx (bitmap, Machine->gfx[1],
+								pict ^ 0x800, color, 0, 0, tx, ty, &clip, TRANSPARENCY_PEN, 0);
+					}
+				}
+			}
+
+			/* get a link to the next sprite */
+			spritevisit[link/2] = 1;
+			link = (data4 & 0x3ff) * 2;
+		}
 	}
 
-	/* max out at 64*64 tiles, just to be safe */
-	while (count > 0)
-	{
-		int data1 = (spriteram[link + 0x0000] << 8) + spriteram[link + 0x0001];
-		int data2 = (spriteram[link + 0x0800] << 8) + spriteram[link + 0x0801];
-		int data3 = (spriteram[link + 0x1000] << 8) + spriteram[link + 0x1001];
-		int data4 = (spriteram[link + 0x1800] << 8) + spriteram[link + 0x1801];
 
-		/* extract data from the various words */
-		int pict = data1 & 0x7fff;
-		int color = (data2 & 0x0f);
-		int xpos = xscroll + (data2 >> 7);
-		int vsize = (data3 & 7) + 1;
-		int hsize = ((data3 >> 3) & 7) + 1;
-		int hflip = ((data3 >> 6) & 1);
-		int ypos = yscroll - (data3 >> 7) - vsize * 8;
-
-		int x, y;
-
-#ifdef GAUNTLET_DEBUG
-		if (record && f)
-			fprintf (f, "%04X: %04X %04X %04X %04X -> LNK=%04X PIC=%04X COL=%01X XPOS=%3d YPOS=%3d HSIZ=%d VSIZ=%d HFLIP=%d\n", link/2, data1, data2, data3, data4, data4 & 0x3ff, pict, color & 0xf, xpos, ypos, hsize, vsize, hflip);
-#endif
-
-		/* h-flip case is handled differently */
-		if (hflip)
-		{
-			for (y = 0; y < vsize; y++)
-				for (x = 0; x < hsize; x++, pict++)
-					drawgfx (bitmap, Machine->gfx[1],
-							pict ^ 0x800, color,
-							1, 0,
-							(xpos + (hsize-x-1)*8) & 0x1ff,
-							(ypos + y*8) & 0x1ff,
-							&clip,
-							TRANSPARENCY_PEN, 15);
-		}
-		else
-		{
-			for (y = 0; y < vsize; y++)
-				for (x = 0; x < hsize; x++, pict++)
-					drawgfx (bitmap, Machine->gfx[1],
-							pict ^ 0x800, color,
-							0, 0,
-							(xpos + x*8) & 0x1ff,
-							(ypos + y*8) & 0x1ff,
-							&clip,
-							TRANSPARENCY_PEN, 15);
-		}
-
-		/* count the tiles and remember that we visited this sprite already */
-		count -= hsize * vsize;
-		spritevisit[link/2] = 2;
-
-		/* get a link to the next sprite; bail if we've done it already */
-		link = (data4 & 0x3ff);
-		if (spritevisit[link] == 2)
-			break;
-		link *= 2;
-	}
-
-nomo:
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
+	/* redraw the alpha layer completely */
 	for (sy = 0; sy < YDIM; sy++)
 	{
 		for (sx = 0, offs = sy*64; sx < XDIM; sx++, offs++)
 		{
-			int data = (alpharam[offs*2] << 8) + alpharam[offs*2+1];
+			int data = READ_WORD (&gauntlet_alpharam[offs*2]);
 			int pict = (data & 0x3ff);
 
 			if (pict || (data & 0x8000))
@@ -537,33 +436,4 @@ nomo:
 			}
 		}
 	}
-
-#ifdef GAUNTLET_DEBUG
-if (f) fclose(f);
-#endif
 }
-
-
-
-#ifdef GAUNTLET_DEBUG
-static dumpit()
-{
-	FILE *f;
-
-	f = fopen ("gauntlet-vid.bin", "wb");
-	fwrite (playfieldram, 1, gauntlet_playfieldram_size, f);
-	fclose (f);
-
-	f = fopen ("gauntlet-alpha.bin", "wb");
-	fwrite (alpharam, 1, gauntlet_alpharam_size, f);
-	fclose (f);
-
-	f = fopen ("gauntlet-spr.bin", "wb");
-	fwrite (spriteram, 1, gauntlet_spriteram_size, f);
-	fclose (f);
-
-	f = fopen ("gauntlet-pal.bin", "wb");
-	fwrite (paletteram, 1, gauntlet_paletteram_size, f);
-	fclose (f);
-}
-#endif

@@ -4,8 +4,6 @@
 
   Functions to emulate the video hardware of the machine.
 
-  This file is used by the Crazy Climber and Crazy Kong drivers.
-
 ***************************************************************************/
 
 #include "driver.h"
@@ -23,13 +21,15 @@ unsigned char *cclimber_column_scroll;
 static unsigned char *bsdirtybuffer;
 static struct osd_bitmap *bsbitmap;
 static int flipscreen[2];
+static int palettebank;
+static int sidepanel_enabled;
 
 
 /***************************************************************************
 
   Convert the color PROMs into a more useable format.
 
-  Crazy Climber has three 32 bytes palette PROM.
+  Crazy Climber has three 32x8 palette PROMs.
   The palette PROMs are connected to the RGB output this way:
 
   bit 7 -- 220 ohm resistor  -- BLUE
@@ -46,7 +46,7 @@ void cclimber_vh_convert_color_prom(unsigned char *palette, unsigned char *color
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
-	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
+	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + (offs)])
 
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
@@ -88,51 +88,180 @@ void cclimber_vh_convert_color_prom(unsigned char *palette, unsigned char *color
 	}
 }
 
-/* similar to the above, but graphics are 3bpp */
+
+/***************************************************************************
+
+  Convert the color PROMs into a more useable format.
+
+  Swimmer has two 256x4 char/sprite palette PROMs and one 32x8 big sprite
+  palette PROM.
+  I don't know for sure how the palette PROMs are connected to the RGB
+  output, but it's probably the usual:
+
+  bit 3 -- 220 ohm resistor  -- BLUE
+        -- 470 ohm resistor  -- BLUE
+        -- 220 ohm resistor  -- GREEN
+  bit 0 -- 470 ohm resistor  -- GREEN
+  bit 3 -- 1  kohm resistor  -- GREEN
+        -- 220 ohm resistor  -- RED
+        -- 470 ohm resistor  -- RED
+  bit 0 -- 1  kohm resistor  -- RED
+
+  bit 7 -- 220 ohm resistor  -- BLUE
+        -- 470 ohm resistor  -- BLUE
+        -- 220 ohm resistor  -- GREEN
+        -- 470 ohm resistor  -- GREEN
+        -- 1  kohm resistor  -- GREEN
+        -- 220 ohm resistor  -- RED
+        -- 470 ohm resistor  -- RED
+  bit 0 -- 1  kohm resistor  -- RED
+
+***************************************************************************/
 void swimmer_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
 {
-	int i;
+	int i,j,used,realcnt;
+	unsigned char allocated[256];
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
-	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
+	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + (offs)])
 
 
-	for (i = 0;i < Machine->drv->total_colors;i++)
+	/* The game has 256+32 colors, plus the river background, but we are */
+	/* limited to a maximum of 256. */
+	/* Luckily, many of the colors are duplicated, so the total number of */
+	/* different colors is less than 256. We select the unique colors and */
+	/* put them in our palette. */
+
+	memset(palette,0,3 * Machine->drv->total_colors);
+
+	/* transparent black */
+	allocated[0] = 0;
+	palette[0] = 0;
+	palette[1] = 0;
+	palette[2] = 0;
+	/* non transparent black */
+	allocated[1] = 0;
+	palette[3] = 0;
+	palette[4] = 0;
+	palette[5] = 0;
+	used = 2;
+
+	realcnt = TOTAL_COLORS(0) / 2;
+	for (i = 0;i < realcnt;i++)
 	{
-		int bit0,bit1,bit2;
+		for (j = 0;j < used;j++)
+		{
+			if (allocated[j] == (color_prom[i] & 0x0f) + 16 * (color_prom[i+256] & 0x0f))
+				break;
+		}
+		if (j == used)
+		{
+			int bit0,bit1,bit2;
 
 
-		/* red component */
-		bit0 = (*color_prom >> 0) & 0x01;
-		bit1 = (*color_prom >> 1) & 0x01;
-		bit2 = (*color_prom >> 2) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-		/* green component */
-		bit0 = (*color_prom >> 3) & 0x01;
-		bit1 = (*color_prom >> 4) & 0x01;
-		bit2 = (*color_prom >> 5) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
-		/* blue component */
-		bit0 = 0;
-		bit1 = (*color_prom >> 6) & 0x01;
-		bit2 = (*color_prom >> 7) & 0x01;
-		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+			used++;
 
-		color_prom++;
+			allocated[j] = (color_prom[i] & 0x0f) + 16 * (color_prom[i+256] & 0x0f);
+
+			/* red component */
+			bit0 = (color_prom[i] >> 0) & 0x01;
+			bit1 = (color_prom[i] >> 1) & 0x01;
+			bit2 = (color_prom[i] >> 2) & 0x01;
+			palette[3*j] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+			/* green component */
+			bit0 = (color_prom[i] >> 3) & 0x01;
+			bit1 = (color_prom[i+256] >> 0) & 0x01;
+			bit2 = (color_prom[i+256] >> 1) & 0x01;
+			palette[3*j + 1] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+			/* blue component */
+			bit0 = 0;
+			bit1 = (color_prom[i+256] >> 2) & 0x01;
+			bit2 = (color_prom[i+256] >> 3) & 0x01;
+			palette[3*j + 2] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		}
+
+		COLOR(0,i) = j;
+
+		// Black background for the side panel
+		if (i % 8)
+		{
+		    COLOR(0,i+realcnt) = j;
+		}
+		else
+		{
+		    // Opaque black
+		    COLOR(0,i+realcnt) = 1;
+		}
 	}
 
+	color_prom += 2 * 256;
 
-	/* character and sprite lookup table */
-	/* they use colors 0-127 */
-	for (i = 0;i < TOTAL_COLORS(0);i++)
-		COLOR(0,i) = i;
-
-	/* big sprite lookup table */
-	/* it uses colors 128-191 */
 	for (i = 0;i < TOTAL_COLORS(2);i++)
 	{
-		if (i % 8 == 0) COLOR(2,i) = 0;
-		else COLOR(2,i) = i + 128;
+		for (j = 0;j < used;j++)
+		{
+			if (allocated[j] == color_prom[i])
+				break;
+		}
+		if (j == used)
+		{
+			int bit0,bit1,bit2;
+
+
+			used++;
+
+			allocated[j] = color_prom[i];
+
+			/* red component */
+			bit0 = (color_prom[i] >> 0) & 0x01;
+			bit1 = (color_prom[i] >> 1) & 0x01;
+			bit2 = (color_prom[i] >> 2) & 0x01;
+			palette[3*j] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+			/* green component */
+			bit0 = (color_prom[i] >> 3) & 0x01;
+			bit1 = (color_prom[i] >> 4) & 0x01;
+			bit2 = (color_prom[i] >> 5) & 0x01;
+			palette[3*j + 1] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+			/* blue component */
+			bit0 = 0;
+			bit1 = (color_prom[i] >> 6) & 0x01;
+			bit2 = (color_prom[i] >> 7) & 0x01;
+			palette[3*j + 2] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		}
+
+		if (i % 8 == 0) j = 0;  /* enforce transparency */
+		else if (j == 0) j = 1; /* avoid undesired transparency */
+
+		COLOR(2,i) = j;
 	}
+}
+
+
+
+void swimmer_bgcolor_w(int offset,int data)
+{
+	int bit0,bit1,bit2;
+	int r,g,b;
+
+
+	/* red component */
+	bit0 = 0;
+	bit1 = (data >> 6) & 0x01;
+	bit2 = (data >> 7) & 0x01;
+	r = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+	/* green component */
+	bit0 = (data >> 3) & 0x01;
+	bit1 = (data >> 4) & 0x01;
+	bit2 = (data >> 5) & 0x01;
+	g = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+	/* blue component */
+	bit0 = (data >> 0) & 0x01;
+	bit1 = (data >> 1) & 0x01;
+	bit2 = (data >> 2) & 0x01;
+	b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+	osd_modify_pen(Machine->pens[0],r,g,b);
 }
 
 
@@ -222,6 +351,31 @@ void cclimber_bigsprite_videoram_w(int offset,int data)
 
 
 
+void swimmer_palettebank_w(int offset,int data)
+{
+	if (palettebank != (data & 1))
+	{
+		palettebank = data & 1;
+		memset(dirtybuffer,1,videoram_size);
+	}
+}
+
+
+
+void swimmer_sidepanel_enable_w(int offset,int data)
+{
+    if (data != sidepanel_enabled)
+    {
+		sidepanel_enabled = data;
+
+		/* We only need to dirty the side panel, but this location is not */
+		/* written to very often, so we just dirty the whole screen */
+		memset(dirtybuffer,1,videoram_size);
+    }
+}
+
+
+
 /***************************************************************************
 
   Draw the game screen in the given osd_bitmap.
@@ -238,15 +392,30 @@ static void drawbigsprite(struct osd_bitmap *bitmap)
 	sy = 128 - cclimber_bigspriteram[2];
 	flipx = cclimber_bigspriteram[1] & 0x10;
 	flipy = cclimber_bigspriteram[1] & 0x20;
-	if (flipscreen[1])	/* only the Y direction has to be flipped */
+	if (flipscreen[1])      /* only the Y direction has to be flipped */
 	{
 		sy = 128 - sy;
 		flipy = !flipy;
 	}
 
+	/* we have to draw if four times for wraparound */
+	sx &= 0xff;
+	sy &= 0xff;
 	copybitmap(bitmap,bsbitmap,
 			flipx,flipy,
 			sx,sy,
+			&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+	copybitmap(bitmap,bsbitmap,
+			flipx,flipy,
+			sx-256,sy,
+			&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+	copybitmap(bitmap,bsbitmap,
+			flipx,flipy,
+			sx-256,sy-256,
+			&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+	copybitmap(bitmap,bsbitmap,
+			flipx,flipy,
+			sx,sy-256,
 			&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
 }
 
@@ -271,6 +440,9 @@ void cclimber_vh_screenrefresh(struct osd_bitmap *bitmap)
 			sy = offs / 32;
 			flipx = colorram[offs] & 0x40;
 			flipy = colorram[offs] & 0x80;
+			/* vertical flipping flips two adjacent characters */
+			if (flipy) sy ^= 1;
+
 			if (flipscreen[0])
 			{
 				sx = 31 - sx;
@@ -350,8 +522,9 @@ void cclimber_vh_screenrefresh(struct osd_bitmap *bitmap)
 		drawbigsprite(bitmap);
 
 
-	/* draw sprites */
-	for (offs = 0;offs < spriteram_size;offs += 4)
+	/* Draw the sprites. Note that it is important to draw them exactly in this */
+	/* order, to have the correct priorities. */
+	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 	{
 		int sx,sy,flipx,flipy;
 
@@ -385,7 +558,8 @@ void cclimber_vh_screenrefresh(struct osd_bitmap *bitmap)
 		drawbigsprite(bitmap);
 }
 
-/* This is identical to the cclimber routine except for the difference in bankswitching the gfx */
+
+
 void swimmer_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
 	int offs;
@@ -397,7 +571,7 @@ void swimmer_vh_screenrefresh(struct osd_bitmap *bitmap)
 	{
 		if (dirtybuffer[offs])
 		{
-			int sx,sy,flipx,flipy;
+			int sx,sy,flipx,flipy,color;
 
 
 			dirtybuffer[offs] = 0;
@@ -406,6 +580,9 @@ void swimmer_vh_screenrefresh(struct osd_bitmap *bitmap)
 			sy = offs / 32;
 			flipx = colorram[offs] & 0x40;
 			flipy = colorram[offs] & 0x80;
+			/* vertical flipping flips two adjacent characters */
+			if (flipy) sy ^= 1;
+
 			if (flipscreen[0])
 			{
 				sx = 31 - sx;
@@ -417,9 +594,15 @@ void swimmer_vh_screenrefresh(struct osd_bitmap *bitmap)
 				flipy = !flipy;
 			}
 
+			color = (colorram[offs] & 0x0f) + 0x10 * palettebank;
+			if (sx >= 24 && sidepanel_enabled)
+			{
+			    color += 32;
+			}
+
 			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs] | ((colorram[offs] & 0x10) << 4),
-					0/*colorram[offs] & 0x0f*/,
+					videoram[offs] + ((colorram[offs] & 0x10) << 4),
+					color,
 					flipx,flipy,
 					8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);
@@ -453,7 +636,7 @@ void swimmer_vh_screenrefresh(struct osd_bitmap *bitmap)
 		static int lastcol;
 
 
-		newcol = cclimber_bigspriteram[1] & 0x07;
+		newcol = cclimber_bigspriteram[1] & 0x03;
 
 		for (offs = cclimber_bsvideoram_size - 1;offs >= 0;offs--)
 		{
@@ -468,7 +651,8 @@ void swimmer_vh_screenrefresh(struct osd_bitmap *bitmap)
 				sy = offs / 16;
 
 				drawgfx(bsbitmap,Machine->gfx[2],
-						cclimber_bsvideoram[offs],0/*newcol*/,
+						cclimber_bsvideoram[offs] + ((cclimber_bigspriteram[1] & 0x08) << 5),
+						newcol,
 						0,0,
 						8*sx,8*sy,
 						0,TRANSPARENCY_NONE,0);
@@ -485,8 +669,9 @@ void swimmer_vh_screenrefresh(struct osd_bitmap *bitmap)
 		drawbigsprite(bitmap);
 
 
-	/* draw sprites */
-	for (offs = 0;offs < spriteram_size;offs += 4)
+	/* Draw the sprites. Note that it is important to draw them exactly in this */
+	/* order, to have the correct priorities. */
+	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
 	{
 		int sx,sy,flipx,flipy;
 
@@ -508,7 +693,7 @@ void swimmer_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 		drawgfx(bitmap,Machine->gfx[1],
 				(spriteram[offs] & 0x3f) | (spriteram[offs + 1] & 0x10) << 2,
-				0/*spriteram[offs + 1] & 0x0f*/,
+				(spriteram[offs + 1] & 0x0f) + 0x10 * palettebank,
 				flipx,flipy,
 				sx,sy,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);

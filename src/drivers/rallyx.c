@@ -71,7 +71,8 @@ a140      virtual screen Y scroll position
 a170      ? this is written to A LOT of times every frame
 a180      explosion sound trigger
 a181      interrupt enable
-a182-a183 ?
+a182      ?
+a183      flip screen
 a184      1 player start lamp
 a185      2 players start lamp
 a186      ?
@@ -86,17 +87,17 @@ IM 2 and IM 0)
 #include "vidhrdw/generic.h"
 
 
+
 void pengo_sound_w(int offset,int data);
-int pengo_sh_start(void);
-void waveform_sh_stop(void);
-void waveform_sh_update(void);
 extern unsigned char *pengo_soundregs;
 
 extern unsigned char *rallyx_videoram2,*rallyx_colorram2;
 extern unsigned char *rallyx_radarcarx,*rallyx_radarcary,*rallyx_radarcarcolor;
+extern int rallyx_radarram_size;
 extern unsigned char *rallyx_scrollx,*rallyx_scrolly;
 void rallyx_videoram2_w(int offset,int data);
 void rallyx_colorram2_w(int offset,int data);
+void rallyx_flipscreen_w(int offset,int data);
 void rallyx_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 int rallyx_vh_start(void);
 void rallyx_vh_stop(void);
@@ -105,26 +106,20 @@ void rallyx_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 static void rallyx_play_sound_w(int offset, int data)
 {
-        static int counter=0;
+	static int last;
 
-	if (Machine->sample_rate == 0 || Machine->samples->sample[0] == 0)
-		return;
 
-        if (data == 0 && counter > 0)
-        {
-          osd_play_sample(4,Machine->samples->sample[0]->data,
-                          Machine->samples->sample[0]->length,
-                          Machine->samples->sample[0]->smpfreq,
-                          Machine->samples->sample[0]->volume,0);
-        }
-        counter = data;
+	if (data == 0 && last != 0)
+		sample_start(0,0,0);
+
+	last = data;
 }
 
 static struct MemoryReadAddress readmem[] =
 {
+	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x8000, 0x8fff, MRA_RAM },
 	{ 0x9800, 0x9fff, MRA_RAM },
-	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0xa000, 0xa000, input_port_0_r },	/* IN0 */
 	{ 0xa080, 0xa080, input_port_1_r },	/* IN1 */
 	{ 0xa100, 0xa100, input_port_2_r },	/* DSW1 */
@@ -133,27 +128,27 @@ static struct MemoryReadAddress readmem[] =
 
 static struct MemoryWriteAddress writemem[] =
 {
+	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x8000, 0x83ff, videoram_w, &videoram, &videoram_size },
 	{ 0x8400, 0x87ff, rallyx_videoram2_w, &rallyx_videoram2 },
 	{ 0x8800, 0x8bff, colorram_w, &colorram },
 	{ 0x8c00, 0x8fff, rallyx_colorram2_w, &rallyx_colorram2 },
 	{ 0x9800, 0x9fff, MWA_RAM },
-	{ 0xa080, 0xa080, MWA_NOP },
+	{ 0xa004, 0xa00f, MWA_RAM, &rallyx_radarcarcolor },
+	{ 0xa080, 0xa080, watchdog_reset_w },
+	{ 0xa100, 0xa11f, pengo_sound_w, &pengo_soundregs },
 	{ 0xa130, 0xa130, MWA_RAM, &rallyx_scrollx },
 	{ 0xa140, 0xa140, MWA_RAM, &rallyx_scrolly },
-	{ 0xa004, 0xa00c, MWA_RAM, &rallyx_radarcarcolor },
-	{ 0xa100, 0xa11f, pengo_sound_w, &pengo_soundregs },
 	{ 0xa170, 0xa170, MWA_NOP },	/* ????? */
 	{ 0xa180, 0xa180, rallyx_play_sound_w },
 	{ 0xa181, 0xa181, interrupt_enable_w },
-	{ 0xa182, 0xa183, MWA_NOP },
+	{ 0xa183, 0xa183, rallyx_flipscreen_w },
 	{ 0xa184, 0xa185, osd_led_w },
 	{ 0xa186, 0xa186, MWA_NOP },
-	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x8014, 0x801f, MWA_RAM, &spriteram },	/* these are here just to initialize */
+	{ 0x8014, 0x801f, MWA_RAM, &spriteram, &spriteram_size },	/* these are here just to initialize */
 	{ 0x8814, 0x881f, MWA_RAM, &spriteram_2 },	/* the pointers. */
-	{ 0x8034, 0x803c, MWA_RAM, &rallyx_radarcarx },	/* ditto */
-	{ 0x8834, 0x883c, MWA_RAM, &rallyx_radarcary },
+	{ 0x8034, 0x803f, MWA_RAM, &rallyx_radarcarx, &rallyx_radarram_size },	/* ditto */
+	{ 0x8834, 0x883f, MWA_RAM, &rallyx_radarcary },
 	{ -1 }	/* end of table */
 };
 
@@ -165,49 +160,105 @@ static struct IOWritePort writeport[] =
 
 
 
-static struct InputPort input_ports[] =
-{
-	{	/* IN0 */
-		0xff,
-		{ OSD_KEY_3, OSD_KEY_LCONTROL, OSD_KEY_LEFT, OSD_KEY_RIGHT,
-				OSD_KEY_DOWN, OSD_KEY_UP, OSD_KEY_1, 0 },
-		{ 0, OSD_JOY_FIRE, OSD_JOY_LEFT, OSD_JOY_RIGHT,
-				OSD_JOY_DOWN, OSD_JOY_UP, 0, 0 }
-	},
-	{	/* IN1 */
-		0xff,
-		{ 0, 0, 0, 0, 0, 0, OSD_KEY_2, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW1 */
-		0xcb,
-		{ OSD_KEY_F2, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{ -1 }	/* end of table */
-};
+INPUT_PORTS_START( rallyx_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT |IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
+	PORT_START      /* IN1 */
+	PORT_DIPNAME( 0x01, 0x01, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "Upright" )
+	PORT_DIPSETTING(    0x00, "Cocktail" )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
+	PORT_START      /* DSW0 */
+	PORT_BITX(    0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x01, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	/* the bonus score depends on the number of lives */
+	PORT_DIPNAME( 0x02, 0x02, "Bonus Life Score", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Low" )
+	PORT_DIPSETTING(    0x02, "High" )
+	PORT_DIPNAME( 0x04, 0x04, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Not Awarded" )
+	PORT_DIPSETTING(    0x04, "Awarded" )
+	PORT_DIPNAME( 0x38, 0x08, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "1 Car, Medium" )
+	PORT_DIPSETTING(    0x28, "1 Car, Hard" )
+	PORT_DIPSETTING(    0x00, "2 Cars, Easy" )
+	PORT_DIPSETTING(    0x18, "2 Cars, Medium" )
+	PORT_DIPSETTING(    0x30, "2 Cars, Hard" )
+	PORT_DIPSETTING(    0x08, "3 Cars, Easy" )
+	PORT_DIPSETTING(    0x20, "3 Cars, Medium" )
+	PORT_DIPSETTING(    0x38, "3 Cars, Hard" )
+	PORT_DIPNAME( 0xc0, 0xc0, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xc0, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x80, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x00, "Free Play" )
+INPUT_PORTS_END
 
-static struct KEYSet keys[] =
-{
-        { 0, 5, "MOVE UP" },
-        { 0, 2, "MOVE LEFT"  },
-        { 0, 3, "MOVE RIGHT" },
-        { 0, 4, "MOVE DOWN" },
-        { 0, 1, "SMOKE" },
-        { -1 }
-};
+INPUT_PORTS_START( nrallyx_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT |IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
+	PORT_START      /* IN1 */
+	PORT_DIPNAME( 0x01, 0x01, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "Upright" )
+	PORT_DIPSETTING(    0x00, "Cocktail" )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
-static struct DSW dsw[] =
-{
-	{ 2, 0x38, "DIFFICULTY", { "2 CARS, RANK A", "3 CARS, RANK A", "1 CAR , RANK B", "2 CARS, RANK B",
-			"3 CARS, RANK B", "1 CAR , RANK C", "2 CARS, RANK C", "3 CARS, RANK C" } },
-	{ 2, 0x02, "BONUS", { "OFF", "ON" } },
-	{ 2, 0x04, "BONUS SCORE", { "LOW", "HIGH" } },
-	{ -1 }
-};
+	PORT_START      /* DSW0 */
+	PORT_BITX(    0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x01, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	/* the bonus score depends on the number of lives */
+	PORT_DIPNAME( 0x02, 0x02, "Bonus Life Score", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Low" )
+	PORT_DIPSETTING(    0x02, "High" )
+	PORT_DIPNAME( 0x04, 0x04, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Not Awarded" )
+	PORT_DIPSETTING(    0x04, "Awarded" )
+	PORT_DIPNAME( 0x38, 0x00, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "1 Car, Medium" )
+	PORT_DIPSETTING(    0x28, "1 Car, Hard" )
+	PORT_DIPSETTING(    0x18, "2 Cars, Medium" )
+	PORT_DIPSETTING(    0x30, "2 Cars, Hard" )
+	PORT_DIPSETTING(    0x00, "3 Cars, Easy" )
+	PORT_DIPSETTING(    0x20, "3 Cars, Medium" )
+	PORT_DIPSETTING(    0x38, "3 Cars, Hard" )
+	PORT_DIPSETTING(    0x08, "4 Cars, Easy" )
+	PORT_DIPNAME( 0xc0, 0xc0, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xc0, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x80, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x00, "Free Play" )
+INPUT_PORTS_END
 
 
 
@@ -240,8 +291,8 @@ static struct GfxLayout radardotlayout =
 	1,	/* just one */
 	1,	/* 1 bit per pixel */
 	{ 0 },
-	{ 0, 0 },	/* I "know" that this bit is 1 */
-	{ 0, 0 },	/* I "know" that this bit is 1 */
+	{ 0, 0 },	/* I "know" that this bit of the */
+	{ 0, 0 },	/* graphics ROMs is 1 */
 	0	/* no use */
 };
 
@@ -259,23 +310,23 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 static unsigned char rallyx_color_prom[] =
 {
-	/* palette - might be wrong, I had to change the first two bytes from FF to 00 */
+	/* 11N - palette  */
 	0x00,0x00,0x06,0x3F,0x5A,0xF1,0x15,0x18,0x66,0xD1,0x2A,0x03,0xA4,0x91,0xBF,0xF6,
 	0x00,0x07,0xF6,0x00,0x00,0x07,0xF6,0x00,0x00,0x07,0xF6,0x00,0x00,0x07,0xF6,0xF6,
-	/* lookup table - this is NOT the original one, it's from New Rally X */
+	/* 8P - lookup table */
 	0xF0,0xF0,0xF0,0xF0,0xF0,0xF9,0xFE,0xF1,0xF0,0xF2,0xF5,0xF1,0xF0,0xFC,0xF8,0xF0,
 	0xF0,0xF3,0xF8,0xF2,0xF0,0xF3,0xF8,0xFE,0xF0,0xF2,0xF8,0xF0,0xF8,0xF2,0xF2,0xF2,
 	0xF8,0xFF,0xFF,0xFF,0xF8,0xFB,0xF9,0xFF,0xF8,0xFB,0xFF,0xF2,0xF0,0xF2,0xF3,0xF7,
-	0xF0,0xF7,0xF3,0xFA,0xF0,0xFA,0xF8,0xF5,0xF0,0xF6,0xF8,0xF5,0xF0,0xF4,0xF8,0xF5,
-	0xF0,0xFC,0xF8,0xF5,0xF0,0xF7,0xF3,0xFA,0xF0,0xFE,0xF2,0xF4,0xF0,0xF3,0xFF,0xFA,
-	0xF0,0xF3,0xFC,0xF7,0xF0,0xFB,0xF8,0xF7,0xF0,0xF3,0xF8,0xF2,0xF0,0xF0,0xF0,0xF0,
+	0xF0,0xF7,0xF3,0xFA,0xF0,0xFA,0xF8,0xF6,0xF0,0xF6,0xF8,0xF0,0xF0,0xF4,0xF8,0xF6,
+	0xF0,0xFC,0xF8,0xF6,0xF0,0xF7,0xF3,0xFA,0xF0,0xFE,0xF2,0xF7,0xF0,0xF5,0xF3,0xF7,
+	0xF0,0xF3,0xFA,0xF7,0xF0,0xFB,0xF8,0xF6,0xF0,0xF3,0xF8,0xF2,0xF0,0xF0,0xF0,0xF0,
 	0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,
 	0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,
 	0xF0,0xF0,0xF0,0xF0,0xF8,0xF0,0xF0,0xFF,0xF8,0xF0,0xF0,0xF2,0xF0,0xFD,0xF3,0xF4,
-	0xF0,0xFD,0xF9,0xFE,0xF0,0xF0,0xF0,0xF0,0xF0,0xFF,0xFF,0xFF,0xF0,0xF0,0xF0,0xF0,
-	0xF0,0xF3,0xF0,0xF0,0xF0,0xF0,0xF3,0xF3,0xF0,0xF0,0xF0,0xF3,0xF0,0xFE,0xF2,0xFC,
-	0xF0,0xF9,0xF0,0xF0,0xF0,0xF0,0xF9,0xF9,0xF0,0xF0,0xF0,0xF9,0xF0,0xF2,0xF0,0xF0,
-	0xF0,0xF0,0xF2,0xF2,0xF0,0xF0,0xF0,0xF2,0xF0,0xF0,0xF0,0xF6,0xF0,0xF2,0xF2,0xF2,
+	0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xFF,0xFF,0xFF,0xF0,0xF0,0xF0,0xF0,
+	0xF0,0xF3,0xF0,0xF0,0xF0,0xF0,0xF3,0xF3,0xF0,0xF0,0xF0,0xF3,0xF0,0xFE,0xF2,0xFA,
+	0xF0,0xF9,0xF0,0xF0,0xF0,0xF0,0xF9,0xF9,0xF0,0xF0,0xF9,0xF0,0xF0,0xF2,0xF0,0xF0,
+	0xF0,0xF0,0xF2,0xF2,0xF0,0xF0,0xF0,0xF2,0xF0,0xF0,0xF0,0xF5,0xF0,0xF2,0xF2,0xF2,
 	0xF5,0xF0,0xF0,0xF0,0xF5,0xF0,0xF0,0xF2,0xF5,0xF0,0xF0,0xF3,0xF0,0xF0,0xF0,0xF0,
 	0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,
 	0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,0xF0,
@@ -308,7 +359,6 @@ static unsigned char nrallyx_color_prom[] =
 
 
 /* waveforms for the audio hardware */
-/* these are from New Rally X, hopefully they are correct for Rally X as well */
 static unsigned char sound_prom[] =
 {
 	0xF8,0xF8,0xF8,0xF8,0xF8,0xFF,0xFF,0xF8,0xF8,0xF0,0xF0,0xF0,0xF8,0xF8,0xF8,0xF8,
@@ -331,6 +381,21 @@ static unsigned char sound_prom[] =
 
 
 
+static struct namco_interface namco_interface =
+{
+	3072000/32,	/* sample rate */
+	3,			/* number of voices */
+	32,			/* gain adjustment */
+	255			/* playback volume */
+};
+
+static struct Samplesinterface samples_interface =
+{
+	1	/* 1 channel */
+};
+
+
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -343,7 +408,7 @@ static struct MachineDriver machine_driver =
 			interrupt,1
 		}
 	},
-	60,
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* single CPU, no need for interleaving */
 	0,
 
@@ -360,10 +425,17 @@ static struct MachineDriver machine_driver =
 	rallyx_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	pengo_sh_start,
-	waveform_sh_stop,
-	waveform_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_NAMCO,
+			&namco_interface
+		},
+		{
+			SOUND_SAMPLES,
+			&samples_interface
+		}
+	}
 };
 
 
@@ -444,7 +516,7 @@ struct GameDriver rallyx_driver =
 {
 	"Rally X",
 	"rallyx",
-	"Nicola Salmoria (MAME driver)\nMirko Buffoni (bang sound)\nValerio Verrando (high score save)",
+	"Nicola Salmoria (MAME driver)\nMirko Buffoni (bang sound)\nValerio Verrando (high score save)\nMarco Cassili\nGary Walton (color info)\nSimon Walls (color info)",
 	&machine_driver,
 
 	rallyx_rom,
@@ -452,7 +524,7 @@ struct GameDriver rallyx_driver =
 	rallyx_sample_names,
 	sound_prom,	/* sound_prom */
 
-	input_ports, 0, 0/*TBR*/,dsw, keys,
+	rallyx_input_ports,
 
 	rallyx_color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -464,7 +536,7 @@ struct GameDriver nrallyx_driver =
 {
 	"New Rally X",
 	"nrallyx",
-	"Nicola Salmoria (MAME driver)\nMirko Buffoni (bang sound)\nValerio Verrando (high score save)",
+	"Nicola Salmoria (MAME driver)\nMirko Buffoni (bang sound)\nValerio Verrando (high score save)\nMarco Cassili",
 	&machine_driver,
 
 	nrallyx_rom,
@@ -472,7 +544,7 @@ struct GameDriver nrallyx_driver =
 	rallyx_sample_names,
 	sound_prom,	/* sound_prom */
 
-	input_ports, 0, 0/*TBR*/,dsw, keys,
+	nrallyx_input_ports,
 
 	nrallyx_color_prom, 0, 0,
 	ORIENTATION_DEFAULT,

@@ -568,3 +568,126 @@ zaxxon:0:62B1:80:0:Infinite Fuel
 ;
 exerion:0:6046:50:0:Infinite Firepower
 exerion:0:6048:6:0:Infinite Lives
+pbaction:0:C15B:9:0:Infinite Lives
+; Track And Field Infinite Lives
+trackfld:0:2B81:2:0:Infinite Lives
+; Zookeeper Infinite Lives: Must do both codes for it to work.
+zookeep:0:04A0:3:0:Infinite Lives Part 1/2
+zookeep:0:04C9:3:0:Infinite Lives Part 2/2
+; Zookeeper Invincibility
+zookeep:0:049B:7F:0:Invincibility
+; Zookeeper Warp Code: If you use the cheat when the directions
+; screen is on, you start the game at Round 5. If you use it
+; during Round 1, the next round will be round 6. If you use it
+; at the title screen, there is no effect.
+; TECH NOTE: If you create codes to warp to different levels,
+; keep an eye on 04C2 (in addition to 04C6). Also, if you want
+; the game to display the correct Round number, keep an eye on
+; 04B5.
+zookeep:0:04C6:8:1:Warp to Round 5/6
+citycon:0:004C:3:0:infinite lives
+citycon:0:00AE:1:0:infinite oil
+excthour:0:004A:FF:0:004A Infinite Energy
+excthour:0:02CF:59:0:02CF Infinite Time
+excthour:0:0039:0:0:Infinite Attacks
+excthour:0:00E6:1:0:00E6 Referee stops counting
+arkatayt:0:ED71:2:0:Infinite Lives
+arkatayt:0:ED72:20:0:Jump to End of Game
+astrob:0:CCEE:4:0:Infinite Lives
+astrob:0:CD4B:0:0:Laser Temp cool
+astrob:0:CCF3:FF:0:Warp always available
+astrob:0:CCDC:19:0:unlimited Fuel
+;This code may be glitchy until you dock once.
+;If you get both ships hit at the same time, the game bugs out.
+galaga:0:8B60:6:0:Double Ships Part 1
+galaga:0:8B61:9:0:Double Ships Part 2
+galaga:0:9361:29:0:Double Ships Part 3
+galaga:0:9827:1:0:Double Ships Part 4
+tacscan:0:E0DC:1:0:Always have ship 1
+tacscan:0:E0E6:1:0:Always have ship 2
+tacscan:0:E0F0:1:0:Always have ship 3
+tacscan:0:E0FA:1:0:Always have ship 4
+tacscan:0:E104:1:0:Always have ship 5
+tacscan:0:E10E:1:0:Always have ship 6
+tacscan:0:E118:1:0:Always have ship 7
+firetpbl:0:C143:3:0:Infinite lives
+
+pacman:0:4E13:FF:0:Always Garbage Maze
+pacman:0:4E13:0:0:Always Cherries Maze
+pacman:0:4E13:1:0:Always Strawbery Maze
+pacman:0:4E13:2:0:Always 1st Peach Maze
+pacman:0:4E13:4:0:Always 1st Apple Maze
+pacman:0:4E13:6:0:Always 1st Pineapple Maze
+pacman:0:4E13:8:0:Always 1st Galaxian Maze
+pacman:0:4E13:A:0:Always 1st Bell Maze
+pacman:0:4E13:C:0:Always 1st Key Maze
+
+;These let you go to certain events in Track n Field
+;and Hypersports so you can practice a specific event.
+;Enable the cheat when the screen comes up asking
+;you to enter your initials. If you try to enable one
+;of these when in the middle of another event, it
+;may produce strange results. :)
+
+hyperspt:0:3068:1:0:Always Skeet Shoot
+hyperspt:0:3068:2:0:Always Long Horse
+hyperspt:0:3068:3:0:Always Archery
+hyperspt:0:3068:4:0:Always Triple Jump
+hyperspt:0:3068:5:0:Always Weight Lifting
+hyperspt:0:3068:6:0:Always Pole Vaulting
+
+trackfld:0:2884:1:0:Always Long Jump
+trackfld:0:2884:2:0:Always Javelin Throw
+trackfld:0:2884:3:0:Always Hurdles
+trackfld:0:2884:4:0:Always Hammer Throw
+trackfld:0:2884:5:0:Always High Jump
+
+005:0:E382:6:0:Infinite Lives
+amidars:0:4285:5:0:Infinite Jumps
+amidars:0:4288:7:0:Infinite Lives
+armorcar:0:8628:5:0:Infinite Lives
+armorcar:0:8630:6:0:Infinite Sawhorses
+astrob:0:CCEE:5:0:Infinite Lives PL1
+astrob:0:CD4A:0:0:Anti-Firing Overheater
+berzerk1:0:4349:5:0:Infinite Lives
+bnj:0:001A:7:0:Infinite Lives PL1
+brkthru:0:040F:4:0:Infinite Lives
+brubber:0:001A:5:0:Infinite Lives PL1
+circus:0:002C:5:0:Infinite Jumps PL1
+cosmicmo:0:21FF:4:0:Infinite Lives
+frenzy:0:400C:5:0:Infinite Lives
+spectar:0:00C1:8:0:Infinite Lives PL1
+targ:0:00C1:8:0:Infinite Lives PL1
+
+; Gunsmoke (Romstar)
+gunsmrom:0:E041:6:0:Infinite Boots (Speed)
+gunsmrom:0:E042:6:0:Infinite Bullets (Shot Speed)
+gunsmrom:0:E043:6:0:Infinite Rifles (Range)
+
+sidearms:0:F20B:3:0:Player 1 infinite lives
+sidearms:0:F40B:3:0:Player 2 infinite lives
+sidearms:0:F20B:80:0:Player 1 inmunity
+sidearms:0:F40B:80:0:Player 2 inmunity
+
+silkworm:0:D531:3:0:Heli infinite lives
+silkworm:0:D578:D:0:Heli inmunity
+silkworm:0:D577:A9:0:Killer heli
+silkworm:0:D547:F:0:Heli starts with auto+double shot
+silkworm:0:D555:3:0:Jeep infinite lives
+silkworm:0:D5A8:D:0:Jeep inmunity
+silkworm:0:D5A7:A9:0:Killer jeep
+silkworm:0:D56B:F:0:Jeep starts with auto+double shot
+
+jedi:0:0013:3:0:Infinite Lives
+
+punchout:0:D022:70:0:Invulnerability
+punchout:0:D048:1A:0:KO Power
+
+trojan:0:C078:00:0:Infinite Energy
+
+marble2:0:400082:FF:0:Infinite Time
+indytemp:0:40062E:6:0:Infinite Lives
+
+;For The Following Cheat, You MUST Rescue At Least One Kid
+;For The Game To Re-Read The Value.
+indytemp:0:400CD4:0:0:All Children Rescued

@@ -10,9 +10,60 @@
 #include "driver.h"
 
 
+
+static unsigned char voltable[255];
+
+
 void taito_init_machine(void)
 {
+	int i,j;
+	int weight[8],totweight;
+
+
+	/* set the default ROM bank (many games only have one bank and */
+	/* never write to the bank selector register) */
 	cpu_setbank(1,&RAM[0x6000]);
+
+
+	/* reproduce the resistor ladder for the DAC output
+
+	   -- 30 -+
+	          15
+	   -- 30 -+
+	          15
+	   -- 30 -+
+	          15
+	   -- 30 -+
+	          15
+	   -- 30 -+
+	          15
+	   -- 30 -+
+	          15
+	   -- 30 -+
+	          15
+	   -- 30 -+-------- out
+	*/
+
+	totweight = 0;
+	for (i = 0;i < 8;i++)
+	{
+		weight[i] = 75600 / (30 + (7-i) * 15);
+		totweight += weight[i];
+	}
+
+	for (i = 0;i < 8;i++)
+		weight[i] = (255 * weight[i] + totweight / 2) / totweight;
+
+	for (i = 0;i < 256;i++)
+	{
+		voltable[i] = 0;
+
+		for (j = 0;j < 8;j++)
+		{
+			if ((i >> j) & 1)
+				voltable[i] += weight[j];
+		}
+	}
 }
 
 
@@ -21,6 +72,13 @@ void taito_bankswitch_w(int offset,int data)
 {
 	if (data & 0x80) { cpu_setbank(1,&RAM[0x10000]); }
 	else cpu_setbank(1,&RAM[0x6000]);
+}
+
+
+
+void taito_digital_out(int offset,int data)
+{
+	DAC_data_w(0,voltable[data]);
 }
 
 

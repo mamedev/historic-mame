@@ -19,7 +19,7 @@
 #include <string.h>
 #include <ctype.h>
 
-#define RDWORD(A) (Rd6502(A+1)*256+Rd6502(A))
+#define RDWORD(A) (Op6502(A+1)*256+Op6502(A))
 
 enum Addressing_Modes { Ac=0,Il,Im,Ab,Zp,Zx,Zy,Ax,Ay,Rl,Ix,Iy,In,No };
 
@@ -79,22 +79,22 @@ int Dasm6502(char *S,word A)
   byte J;
   word B,OP,TO;
 
-  B=A;OP=Rd6502(B++)*2;
+  B=A;OP=Op6502_1(B++)*2;
 
   switch(ad[OP+1])
   {
     case Ac: sprintf(S,"%s a",mn[ad[OP]]);break;
     case Il: sprintf(S,"%s",mn[ad[OP]]);break;
 
-    case Rl: J=Rd6502(B++);TO=A+2+((J<0x80)? J:(J-256));
+    case Rl: J=Op6502(B++);TO=A+2+((J<0x80)? J:(J-256));
              sprintf(S,"%s $%04X",mn[ad[OP]],TO);break;
 
-    case Im: sprintf(S,"%s #$%02X",mn[ad[OP]],Rd6502(B++));break;
-    case Zp: sprintf(S,"%s $%02X",mn[ad[OP]],Rd6502(B++));break;
-    case Zx: sprintf(S,"%s $%02X,x",mn[ad[OP]],Rd6502(B++));break;
-    case Zy: sprintf(S,"%s $%02X,y",mn[ad[OP]],Rd6502(B++));break;
-    case Ix: sprintf(S,"%s ($%02X,x)",mn[ad[OP]],Rd6502(B++));break;
-    case Iy: sprintf(S,"%s ($%02X),y",mn[ad[OP]],Rd6502(B++));break;
+    case Im: sprintf(S,"%s #$%02X",mn[ad[OP]],Op6502(B++));break;
+    case Zp: sprintf(S,"%s $%02X",mn[ad[OP]],Op6502(B++));break;
+    case Zx: sprintf(S,"%s $%02X,x",mn[ad[OP]],Op6502(B++));break;
+    case Zy: sprintf(S,"%s $%02X,y",mn[ad[OP]],Op6502(B++));break;
+    case Ix: sprintf(S,"%s ($%02X,x)",mn[ad[OP]],Op6502(B++));break;
+    case Iy: sprintf(S,"%s ($%02X),y",mn[ad[OP]],Op6502(B++));break;
 
     case Ab: sprintf(S,"%s $%04X",mn[ad[OP]],RDWORD(B));B+=2;break;
     case Ax: sprintf(S,"%s $%04X,x",mn[ad[OP]],RDWORD(B));B+=2;break;
@@ -134,10 +134,10 @@ byte Debug6502(M6502 *R)
   printf
   (
     "AT PC: [%02X - %s]   AT SP: [%02X %02X %02X]\n",
-    Rd6502(R->PC.W),S,
-    Rd6502(0x0100+(byte)(R->S+1)),
-    Rd6502(0x0100+(byte)(R->S+2)),
-    Rd6502(0x0100+(byte)(R->S+3))
+    Op6502(R->PC.W),S,
+    Op6502(0x0100+(byte)(R->S+1)),
+    Op6502(0x0100+(byte)(R->S+2)),
+    Op6502(0x0100+(byte)(R->S+3))
   );
 
   while(1)
@@ -186,9 +186,9 @@ byte Debug6502(M6502 *R)
 
       case 'V':
         puts("\n6502 Interrupt Vectors:");
-        printf("[$FFFC] INIT: $%04X\n",Rd6502(0xFFFC)+256*Rd6502(0xFFFD));
-        printf("[$FFFE] IRQ:  $%04X\n",Rd6502(0xFFFE)+256*Rd6502(0xFFFF));
-        printf("[$FFFA] NMI:  $%04X\n",Rd6502(0xFFFA)+256*Rd6502(0xFFFB));
+        printf("[$FFFC] INIT: $%04X\n",Op6502(0xFFFC)+256*Op6502(0xFFFD));
+        printf("[$FFFE] IRQ:  $%04X\n",Op6502(0xFFFE)+256*Op6502(0xFFFF));
+        printf("[$FFFA] NMI:  $%04X\n",Op6502(0xFFFA)+256*Op6502(0xFFFB));
         break;
 
       case 'M':
@@ -201,10 +201,10 @@ byte Debug6502(M6502 *R)
           {
             printf("%04X: ",Addr);
             for(I=0;I<16;I++,Addr++)
-              printf("%02X ",Rd6502(Addr));
+              printf("%02X ",Op6502(Addr));
             printf(" | ");Addr-=16;
             for(I=0;I<16;I++,Addr++)
-              putchar(isprint(Rd6502(Addr))? Rd6502(Addr):'.');
+              putchar(isprint(Op6502(Addr))? Op6502(Addr):'.');
             puts("");
           }
         }

@@ -74,69 +74,8 @@ int always_item = -1;
 
 #include "driver.h"
 
-typedef unsigned char byte;
 unsigned char *bublbobl_sharedram1,*bublbobl_sharedram2;
 
-/* SOUND EFFECT CODES - from Oliver White */
-
-#ifdef LOG_SOUND_EFFECTS
-static char *sound_descriptions[] =
-{
-    " 0: Silence",
-    " 1: Silence",
-    " 2: Silence",
-    " 3: Silence",
-    " 4: Silence",
-    " 5: Silence",
-    " 6: Silence",
-    " 7: Start of new game music -> game theme music (looped)",
-    " 8: Music for entering score into scoreboard (looped)",
-    " 9: Level 100 music",
-    "10: Potion music, also played for getting heart and EXTEND screen (looped)",
-    "11: Sound played after end of game or entering high scores",
-    "12: ??? strange buzzing",
-    "13: Death roll sound",
-    "14: ??? very short sound",
-    "15: Theme music, double speed (looped)",
-    "16: Bells -> Extend sound -> EXTEND screen music (looped)",
-    "17: Pick up a piece of fruit or diamond, etc",
-    "18: Thunder",
-    "19: Complete level 100 happy ending, 1,000,000 points sound",
-    "20: Credits music after happy ending (looped)",
-    "21: Level 100 monster shooting sound",
-    "22: Pick up special item (lolly, shoes, etc)",
-    "23: Pop letter bubble",
-    "24: \"Hurry Up!\" siren -> Theme music, double speed (looped)",
-    "25: \"Baron von Blubba\" (ghosts) appear to harry you",
-    "26: ??? something metal hitting a wall?",
-    "27: Big bonus after getting candy stick and finishing level (?)",
-    "28: Happy ending bells (looped)",
-    "29: Space invaders shoot",
-    "30: Pop water bubble",
-    "31: <silence>",
-    "32: Pick up special fruit (The one whose type depends on how quickly the previous level was completed) [very similar sound to #49]",
-    "33: ??? 4 short sounds",
-    "34: Shooting a fireball (?)",
-    "35: Lightning bolt (?)",
-    "36: Bouncing ball (from necklace special item)",
-    "37: Kill 1 monster",
-    "38: Kill 2 monsters at once",
-    "39: Kill 3+ monsters at once",
-    "40: Warning bell at start of level (screen flashes red; special killer item will be present on level)",
-    "41: Treasure room music (looped)",
-    "42: Same as \"Baron von Blubba\" sound but probably for the treasure room equivalents",
-    "43: Music after completing level 100 with only 1 player. Message scrolls up screen and you are zapped to a random level.",
-    "44: Jump",
-    "45: Extra life",
-    "46: <silence> some white noise comes out eventually",
-    "47: ??? bells",
-    "48: Theme music at normal speed",
-    "49: Blow Bubble [very similar sound to #32]",
-    "50: Extend sound -> EXTEND screen music (looped)",
-    "51: Getting zapped by a spark",
-    "52: Insert coin"
-};
-#endif
 
 
 
@@ -315,23 +254,6 @@ void boblbobl_patch(void)
 	MOD_PAGE(3,0xa4af,0x00); MOD_PAGE(3,0xa4b0,0x00); MOD_PAGE(3,0xa4b1,0x00);
 	MOD_PAGE(3,0xa55d,0x00); MOD_PAGE(3,0xa55e,0x00); MOD_PAGE(3,0xa55f,0x00);
 	MOD_PAGE(3,0xb561,0x00); MOD_PAGE(3,0xb562,0x00); MOD_PAGE(3,0xb563,0x00);
-}
-
-
-
-void bublbobl_play_sound(int offset, int data)
-{
-#ifdef LOG_SOUND_EFFECTS
-  if (errorlog)
-  {
-      if (data < sizeof(sound_descriptions) / sizeof(char *))
-	  fprintf(errorlog, "playing sound: '%s'\n",
-		  sound_descriptions[data]);
-      else
-	  fprintf(errorlog, "playing unknown sound: ID 0x%x\n",
-		  data);
-  }
-#endif
 }
 
 

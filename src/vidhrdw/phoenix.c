@@ -175,13 +175,12 @@ void phoenix_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 		if (sy >= 1)
 		{
-			if (phoenix_videoram2[offs])	/* don't draw spaces */
-				drawgfx(bitmap,Machine->gfx[1],
-						phoenix_videoram2[offs],
-						(phoenix_videoram2[offs] >> 5) + 8 * palette_bank,
-						0,0,
-						8*sx,8*sy,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			drawgfx(bitmap,Machine->gfx[1],
+					phoenix_videoram2[offs],
+					(phoenix_videoram2[offs] >> 5) + 8 * palette_bank,
+					0,0,
+					8*sx,8*sy,
+					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 		}
 		else
 			drawgfx(bitmap,Machine->gfx[1],

@@ -48,14 +48,14 @@ read:
  *
 
 write:
-7d00      sound?
+7d00      ?
 7d80      ?
-7e00      sound?
+7e00      sound
 7e80-7e82 ?
 7e83      sprite palette bank select
 7e84      interrupt enable
 7e85      ?
-7f00-7f07 ?
+7f00-7f07 sound triggers
 
 
 I/O ports
@@ -67,10 +67,8 @@ write:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "I8039.h"
+#include "I8039/I8039.h"
 
-static int tune = 0;
-static int test = 0;
 static int p[8] = { 0,0xf0,0,0,0,0,0,0 };
 static int t[2] = { 0,0 };
 
@@ -86,14 +84,9 @@ void mario_vh_screenrefresh(struct osd_bitmap *bitmap);
 /*
  *  from sndhrdw/mario.c
  */
-extern unsigned char *mario_dac;
-void   mario_digital_out_w(int offset,int data);
-int    mario_sh_start(void);
-void   mario_sh_stop(void);
-void   mario_sh_update(void);
 void   mario_sh_w(int offset,int data);
 void   mario_sh1_w(int offset,int data);
-/*void   mario_sh2_w(int offset,int data);*/
+void   mario_sh2_w(int offset,int data);
 void   mario_sh3_w(int offset,int data);
 
 
@@ -106,18 +99,17 @@ void mario_sh_getcoin(int offset, int data)    { t[0] = data; }
 void mario_sh_crab(int offset, int data)       { p[1] = ACTIVEHIGH_PORT_BIT(p[1],0,data); }
 void mario_sh_turtle(int offset, int data)     { p[1] = ACTIVEHIGH_PORT_BIT(p[1],1,data); }
 void mario_sh_fly(int offset, int data)        { p[1] = ACTIVEHIGH_PORT_BIT(p[1],2,data); }
-static void mario_sh_tuneselect(int offset, int data) { tune = data; }
+static void mario_sh_tuneselect(int offset, int data) { soundlatch_w(offset,data); }
 
 static int  mario_sh_getp1(int offset)   { return p[1]; }
 static int  mario_sh_getp2(int offset)   { return p[2]; }
 static int  mario_sh_gett0(int offset)   { return t[0]; }
 static int  mario_sh_gett1(int offset)   { return t[1]; }
-static int  mario_sh_gettune(int offset) { return tune; }
-static int  mario_sh_gettest(int offset) { return test; }
+static int  mario_sh_gettune(int offset) { return soundlatch_r(offset); }
 
 static void mario_sh_putsound(int offset, int data)
 {
-	mario_digital_out_w(offset, data);
+	DAC_data_w(0,data);
 }
 static void mario_sh_putp1(int offset, int data)
 {
@@ -151,12 +143,13 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x7e80, 0x7e80, mario_gfxbank_w },
 	{ 0x7e83, 0x7e83, mario_palettebank_w },
 	{ 0x7e84, 0x7e84, interrupt_enable_w },
-        { 0x7c00, 0x7c00, mario_sh3_w },
-        { 0x7f01, 0x7f01, mario_sh_getcoin },
-        { 0x7f03, 0x7f03, mario_sh_crab },
-        { 0x7f04, 0x7f04, mario_sh_turtle },
-        { 0x7f05, 0x7f05, mario_sh_fly },
-        { 0x7f00, 0x7f07, mario_sh1_w },
+	{ 0x7c00, 0x7c00, mario_sh1_w }, /* Mario run sample */
+	{ 0x7c80, 0x7c80, mario_sh2_w }, /* Luigi run sample */
+	{ 0x7f01, 0x7f01, mario_sh_getcoin },
+	{ 0x7f03, 0x7f03, mario_sh_crab },
+	{ 0x7f04, 0x7f04, mario_sh_turtle },
+	{ 0x7f05, 0x7f05, mario_sh_fly },
+	{ 0x7f00, 0x7f07, mario_sh3_w }, /* Misc discrete samples */
 	{ 0x7e00, 0x7e00, mario_sh_tuneselect },
 	{ 0x7000, 0x73ff, MWA_NOP },	/* ??? */
 //	{ 0x7e85, 0x7e85, MWA_RAM },	/* Sets alternative 1 and 0 */
@@ -183,7 +176,7 @@ static struct MemoryWriteAddress writemem_sound[] =
 static struct IOReadPort readport_sound[] =
 {
 	{ 0x00,     0xff,     mario_sh_gettune },
-        { I8039_p1, I8039_p1, mario_sh_getp1 },
+	{ I8039_p1, I8039_p1, mario_sh_getp1 },
 	{ I8039_p2, I8039_p2, mario_sh_getp2 },
 	{ I8039_t0, I8039_t0, mario_sh_gett0 },
 	{ I8039_t1, I8039_t1, mario_sh_gett1 },
@@ -319,6 +312,21 @@ static unsigned char color_prom[] =
 
 
 
+static struct DACinterface dac_interface =
+{
+	1,
+	441000,
+	{255,255 },
+	{  1,  1 }
+};
+
+static struct Samplesinterface samples_interface =
+{
+	3	/* 3 channels */
+};
+
+
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -332,15 +340,15 @@ static struct MachineDriver machine_driver =
 		},
 		{
 			CPU_I8039 | CPU_AUDIO_CPU,
-                        670000,         /* 670 khz (?) */
+			670000,         /* 670 khz (?) */
 			2,
 			readmem_sound,writemem_sound,readport_sound,writeport_sound,
 			ignore_interrupt,1
 		}
 	},
-	60,
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
-        0,
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	0,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
@@ -355,10 +363,17 @@ static struct MachineDriver machine_driver =
 	mario_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	mario_sh_start,
-	mario_sh_stop,
-	mario_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_DAC,
+			&dac_interface
+		},
+		{
+			SOUND_SAMPLES,
+			&samples_interface
+		}
+	}
 };
 
 
@@ -371,43 +386,17 @@ static struct MachineDriver machine_driver =
 
 static const char *sample_names[] =
 {
-	/* 7d00 - 7d07 sounds */
-	"death.sam", 		/* 0x00 death */
-	"getcoin.sam",		/* 0x01 coin */
-	"effect00.sam", 	/* 0x02 ice appears? */
-	"crab.sam", 		/* 0x03 crab appears */
-	"turtle.sam", 		/* 0x04 turtle appears */
-	"fly.sam", 			/* 0x05 fighterfly appears*/
-	"effect01.sam", /* 0x06 */
-	"skid.sam", 		/* 0x07 skid */
-
-	/* 7e00 sounds */
-	"b_coin.sam",	/* 0x10 - 08 end bonus count? */
-	"blueapp.sam",	/* 0x20 - 09 red/blue fireball appears */
-	"ice.sam",		/* 0x40 - 0a ice spreads? */
-	"effect03.sam",	/* 0x80 - 0b */
-
-	"pow.sam",			/* 0x01 - 0c pow */
-	"resurr.sam",		/* 0x02 - 0d resurrection */
-	"jump.sam",			/* 0x03 - 0e jump */
-	"kill.sam",			/* 0x04 - 0f kill creature */
-	"flip.sam",			/* 0x05 - 10 flip creature */
-	"effect04.sam",		/* 0x06 - 11 coin appear */
-	"intro2.sam",		/* 0x07 - 12 jack-in-the-box music */
-	"crab_int.sam",		/* 0x08 - 13 crab pissed off */
-	"levstart.sam",		/* 0x09 - 14 level start */
-	"turtintr.sam",		/* 0x0a - 15 turtle intro */
-	"gameover.sam",		/* 0x0b - 16 game over */
-	"b_perf.sam",		/* 0x0c - 17 perfect bonus */
-	"endlevel.sam",		/* 0x0d - 18 end level */
-	"b_loop.sam",		/* 0x0e - 19 bonus counter */
-	"effect05.sam",	/* 0x0f - 1a */
+	/* 7f00 - 7f07 sounds */
+	"death.sam",  /* 0x00 death */
+	"ice.sam",    /* 0x02 ice appears (formerly effect0.sam) */
+	"coin.sam",   /* 0x06 coin appears (formerly effect1.sam) */
+	"skid.sam",   /* 0x07 skid */
 
 	/* 7c00 */
-	"run.sam", /* 03, 02, 01 - 0x1b */
+	"run.sam",        /* 03, 02, 01 - 0x1b */
 
 	/* 7c80 */
-	"run.sam", /* 03, 02, 01 - 0x1c */
+	"luigirun.sam",   /* 03, 02, 01 - 0x1c */
 
     0	/* end of array */
 };
@@ -498,7 +487,7 @@ struct GameDriver mario_driver =
 	sample_names,
 	0,	/* sound_prom */
 
-	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,

@@ -19,69 +19,37 @@ c100      IN2
 see the input_ports definition below for details on the input bits
 
 write:
-c000-c002 ?
-c006      ?
+c000      coin A enable
+c001      coin B enable
+c002      coin aux enable
+c003-c004 coin counters
+c006      flip screen
 ff3c-ff3f sound (see below)
 fff0      interrupt enable
-fff1      ?
-fff8-fff9 background playfield position
-fffa      background color? (0 = standard  1 = reddish)
-fffb      background enable?
-fffe      ?
+fff1      character color bank (not used during the game, but used in test mode)
+fff8-fff9 background playfield position (11 bits)
+fffa      background color bank (0 = standard  1 = reddish)
+fffb      background enable
 
 interrupts:
 VBlank triggers IRQ, handled with interrupt mode 1
 NMI enters the test mode.
 
--------------
+Changes:
+25 Jan 98 LBO
+	* Added crude support for samples based on Frank's info. As of yet, I don't have
+	  a set that matches the names - I need a way to edit the .sam files I have.
+	  Hopefully I'll be able to create a good set shortly. I also don't know which
+	  sounds "loop".
+26 Jan 98 LBO
+	* Fixed the sound support. I lack explosion samples and the base missile sample so
+	  these are untested. I'm also unsure about the background noise. It seems to have
+	  a variable volume so I've tried to reproduce that via just 1 sample.
 
-Zaxxon Sound Information: (from the schematics)
-by Frank Palazzolo
-
-There are four registers in the 8255. they are mapped to
-(111x xxxx 0011 11pp) by Zaxxon.  Zaxxon writes to these
-at FF3C-FF3F.
-
-There are three modes of the 8255, but by the schematics I
-can see that Zaxxon is using "Mode 0", which is very simple.
-
-Important Note:
-These are all Active-Low outputs.
-A 1 De-activates the sound, while a 0 Activates/Triggers it
-
-Port A Output:
-FF3C bit7 Battleship
-     bit6 Laser
-     bit5 Base Missle
-     bit4 Homing Missle
-     bit3 Player Ship D
-     bit2 Player Ship C
-     bit1 Player Ship B
-     bit0 Player Ship A
-
-Port B Output:
-FF3D bit7 Cannon
-     bit6 N/C
-     bit5 M-Exp
-     bit4 S-Exp
-     bit3 N/C
-     bit2 N/C
-     bit1 N/C
-     bit0 N/C
-
-Port C Output:
-FF3E bit7 N/C
-     bit6 N/C
-     bit5 N/C
-     bit4 N/C
-     bit3 Alarm 3
-     bit2 Alarm 2
-     bit1 N/C
-     bit0 Shot
-
-Control Byte:
-FF3F Should be written an 0x80 for Mode 0
-     (Very Simple) operation of the 8255
+12 Mar 98 ATJ
+        * For the moment replaced Brad's version of the samples with mine from the Mame/P
+          release. As yet, no variable volume, but I will be combining the features from
+          Brad's driver into mine ASAP.
 
 ***************************************************************************/
 
@@ -92,14 +60,17 @@ FF3F Should be written an 0x80 for Mode 0
 
 int zaxxon_IN2_r(int offset);
 
+extern unsigned char *zaxxon_char_color_bank;
 extern unsigned char *zaxxon_background_position;
-extern unsigned char *zaxxon_background_color;
+extern unsigned char *zaxxon_background_color_bank;
 extern unsigned char *zaxxon_background_enable;
 void zaxxon_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 int  zaxxon_vh_start(void);
 void zaxxon_vh_stop(void);
 void zaxxon_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap);
+
+void zaxxon_sound_w(int offset, int data);
 
 
 
@@ -123,9 +94,11 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x6000, 0x6fff, MWA_RAM },
 	{ 0x8000, 0x83ff, videoram_w, &videoram, &videoram_size },
 	{ 0xa000, 0xa0ff, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0xff3c, 0xff3e, zaxxon_sound_w },
 	{ 0xfff0, 0xfff0, interrupt_enable_w },
+	{ 0xfff1, 0xfff1, MWA_RAM, &zaxxon_char_color_bank },
 	{ 0xfff8, 0xfff9, MWA_RAM, &zaxxon_background_position },
-	{ 0xfffa, 0xfffa, MWA_RAM, &zaxxon_background_color },
+	{ 0xfffa, 0xfffa, MWA_RAM, &zaxxon_background_color_bank },
 	{ 0xfffb, 0xfffb, MWA_RAM, &zaxxon_background_enable },
 	{ -1 }  /* end of table */
 };
@@ -152,9 +125,9 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )	/* the self test calls this UP */
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )	/* the self test calls this DOWN */
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused (the self test doesn't mention it) */
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused (the self test doesn't mention it) */
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused (the self test doesn't mention it) */
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* button 2 - unused */
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
@@ -162,24 +135,22 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )	/* the self test calls this UP */
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )	/* the self test calls this DOWN */
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused (the self test doesn't mention it) */
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused (the self test doesn't mention it) */
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused (the self test doesn't mention it) */
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* button 2 - unused */
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START	/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused (the self test doesn't mention it) */
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused (the self test doesn't mention it) */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused (the self test doesn't mention it) */
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )
 	/* the coin inputs must stay active for exactly one frame, otherwise */
 	/* the game will keep inserting coins. */
 	PORT_BITX(0x20, IP_ACTIVE_HIGH, IPT_COIN1 | IPF_IMPULSE,
 			"Coin A", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
 	PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_COIN2 | IPF_IMPULSE,
 			"Coin B", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
-	/* Coin Aux doesn't need IMPULSE to pass the test, but it still needs it */
-	/* to avoid the freeze. */
 	PORT_BITX(0x80, IP_ACTIVE_HIGH, IPT_COIN3 | IPF_IMPULSE,
 			"Coin Aux", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
 
@@ -189,6 +160,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x01, "20000" )
 	PORT_DIPSETTING(    0x02, "30000" )
 	PORT_DIPSETTING(    0x00, "40000" )
+	/* The Super Zaxxon manual lists the following as unused. */
 	PORT_DIPNAME( 0x0c, 0x0c, "Difficulty???", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x0c, "Easy?" )
 	PORT_DIPSETTING(    0x04, "Medium?" )
@@ -301,7 +273,45 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-/* these are actually Super Zaxxon's PROMs. Most colors are wrong. */
+static unsigned char zaxxon_color_prom[] =
+{
+	/* U98 - palette */
+	0x00,0x00,0xF0,0xF0,0x36,0x26,0x00,0xFF,0x00,0x00,0xF0,0xF6,0x26,0x36,0x00,0xFF,
+	0x00,0x00,0xF0,0x36,0x00,0x06,0x00,0xFF,0x00,0x00,0xF0,0x06,0x06,0x00,0x00,0x00,
+	0x00,0x00,0xF0,0x30,0x06,0x06,0x00,0x00,0x00,0x00,0x36,0xC6,0x46,0x86,0x00,0xFF,
+	0x00,0x00,0x36,0x06,0x06,0x06,0x06,0x00,0x00,0xC0,0xDB,0xF6,0xF0,0xE0,0x80,0x06,
+	0x00,0x04,0x02,0xF0,0x06,0x06,0x06,0x06,0x00,0x00,0x9B,0xA3,0xA4,0xEC,0xA3,0xA4,
+	0x00,0xF6,0xE0,0xEC,0xA3,0xA4,0x9B,0x00,0x00,0x80,0xC0,0xAC,0xA4,0xA2,0x85,0xE0,
+	0x00,0xDB,0xC0,0x80,0x82,0x00,0x04,0xE0,0x00,0x00,0xF6,0x80,0x40,0xAC,0xA4,0xA2,
+	0x00,0xAC,0xA4,0xE0,0x80,0x40,0xA2,0x00,0x00,0xA4,0xAC,0x36,0xF6,0xA2,0x00,0x80,
+	0x00,0xC6,0x06,0xF0,0x36,0x26,0x04,0x36,0x00,0xF6,0x36,0x2D,0x24,0x1B,0xFF,0xFF,
+	0x00,0x00,0x20,0x06,0x26,0x34,0x32,0x30,0x00,0xF6,0x00,0xAC,0xA4,0xA2,0x51,0x06,
+	0x00,0xA4,0x00,0x05,0x04,0x16,0x26,0xF6,0x00,0xA3,0x36,0x34,0x30,0xA4,0x16,0x20,
+	0x00,0xF6,0xA3,0xF0,0xE0,0xDB,0xD2,0x00,0x00,0xC0,0x84,0xF6,0xF0,0xE0,0x80,0x03,
+	0x00,0xF6,0xEE,0x86,0x46,0x06,0x04,0x00,0x00,0xA3,0x26,0x06,0x04,0xA4,0x16,0x5D,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x16,0x07,0xEE,0x9C,0x03,0x5D,0x00,
+	0x00,0xEE,0x9C,0xC6,0x05,0x05,0x5D,0x16,0x00,0x00,0x36,0x16,0x05,0xEE,0x9C,0x03,
+	0x00,0xEE,0x9C,0xC6,0x16,0x05,0x03,0x00,0x00,0x9C,0xEE,0x86,0x36,0x03,0x00,0x16,
+	/* U72 - character color lookup table */
+	/* this is the Super Zaxxon one, but they should be the same */
+	0x00,0x01,0x01,0x01,0x01,0x01,0x01,0x02,0x03,0x00,0x04,0x00,0x03,0x03,0x02,0x01,
+	0x04,0x01,0x04,0x01,0x04,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x06,0x06,0x06,0x01,
+	0x00,0x01,0x01,0x01,0x01,0x01,0x01,0x02,0x03,0x00,0x04,0x00,0x03,0x03,0x02,0x01,
+	0x04,0x01,0x04,0x01,0x04,0x01,0x01,0x01,0x01,0x01,0x01,0x01,0x06,0x06,0x06,0x01,
+	0x00,0x01,0x01,0x01,0x01,0x01,0x01,0x02,0x03,0x00,0x04,0x00,0x03,0x03,0x02,0x01,
+	0x04,0x01,0x04,0x01,0x04,0x01,0x01,0x01,0x01,0x01,0x01,0x03,0x06,0x06,0x06,0x01,
+	0x00,0x01,0x01,0x01,0x01,0x01,0x01,0x02,0x03,0x00,0x04,0x00,0x03,0x03,0x02,0x01,
+	0x04,0x01,0x04,0x01,0x04,0x01,0x01,0x01,0x02,0x02,0x02,0x02,0x05,0x05,0x06,0x01,
+	0x00,0x01,0x01,0x01,0x01,0x01,0x01,0x02,0x03,0x00,0x04,0x00,0x03,0x03,0x02,0x01,
+	0x04,0x01,0x04,0x01,0x04,0x01,0x01,0x01,0x02,0x02,0x02,0x02,0x05,0x05,0x06,0x01,
+	0x00,0x01,0x01,0x01,0x01,0x01,0x01,0x02,0x03,0x00,0x04,0x00,0x03,0x03,0x02,0x01,
+	0x04,0x01,0x04,0x01,0x04,0x01,0x01,0x01,0x02,0x02,0x02,0x02,0x05,0x05,0x06,0x01,
+	0x00,0x01,0x01,0x01,0x01,0x01,0x01,0x02,0x03,0x00,0x04,0x00,0x03,0x03,0x02,0x01,
+	0x04,0x01,0x04,0x01,0x04,0x01,0x01,0x01,0x02,0x02,0x02,0x02,0x05,0x05,0x04,0x01,
+	0x00,0x01,0x01,0x01,0x01,0x01,0x01,0x02,0x03,0x00,0x04,0x00,0x03,0x03,0x02,0x01,
+	0x04,0x01,0x04,0x01,0x04,0x01,0x01,0x01,0x02,0x02,0x02,0x02,0x05,0x05,0x04,0x01
+};
+
 static unsigned char szaxxon_color_prom[] =
 {
 	/* U98 - palette */
@@ -340,6 +350,10 @@ static unsigned char szaxxon_color_prom[] =
 	0x04,0x01,0x04,0x01,0x04,0x01,0x01,0x01,0x02,0x02,0x02,0x02,0x05,0x05,0x04,0x01
 };
 
+static struct Samplesinterface zaxxon_samples_interface =
+{
+	12	/* 12 channels */
+};
 
 
 static struct MachineDriver machine_driver =
@@ -348,13 +362,13 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_Z80,
-			3072000,	/* 3.072 Mhz */
+			3072000,	/* 3.072 Mhz ?? */
 			0,
 			readmem,writemem,0,0,
 			zaxxon_interrupt,1
 		}
 	},
-	60,
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* single CPU, no need for interleaving */
 	0,
 
@@ -371,10 +385,13 @@ static struct MachineDriver machine_driver =
 	zaxxon_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	0,
-	0,
-	0
+	0,0,0,0,
+	{
+		{
+			SOUND_SAMPLES,
+			&zaxxon_samples_interface
+		}
+	}
 };
 
 
@@ -384,6 +401,24 @@ static struct MachineDriver machine_driver =
   Game driver(s)
 
 ***************************************************************************/
+
+static const char *zaxxon_sample_names[] =
+{
+	"*zaxxon",
+	"03.sam",	/* Homing Missile */
+	"02.sam",	/* Base Missile */
+	"01.sam",	/* Laser (force field) */
+	"00.sam",	/* Battleship (end of level boss) */
+	"11.sam",	/* S-Exp (enemy explosion) */
+	"10.sam",	/* M-Exp (ship explosion) */
+	"08.sam", 	/* Cannon (ship fire) */
+	"23.sam",	/* Shot (enemy fire) */
+	"21.sam",	/* Alarm 2 (target lock) */
+	"20.sam",	/* Alarm 3 (low fuel) */
+	"05.sam",	/* initial background noise */
+	"04.sam",	/* looped asteroid noise */
+	0
+};
 
 ROM_START( zaxxon_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
@@ -606,37 +641,37 @@ struct GameDriver zaxxon_driver =
 {
 	"Zaxxon",
 	"zaxxon",
-	"Mirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)",
+	"Mirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nAlex Judd (sound)\n" \
+		"Gerald Vanderick (color info)\nFrank Palazzolo (sound info)\nRiek Gladys (sound info)",
 	&machine_driver,
 
 	zaxxon_rom,
 	0, 0,
-	0,
+	zaxxon_sample_names,
 	0,	/* sound_prom */
 
-	0/*TBR*/,input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	input_ports,
 
-	szaxxon_color_prom, 0, 0,
+	zaxxon_color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };
 
-/* Super Zaxxon runs on hardware similar to Zaxxon, but the program ROMs are encrypted */
-/* so it isn't working. */
 struct GameDriver szaxxon_driver =
 {
 	"Super Zaxxon",
 	"szaxxon",
-	"Mirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nTim Lindquist (encryption and color info)",
+	"Mirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nAlex Judd (sound)\n" \
+		"Tim Lindquist (encryption and color info)\nFrank Palazzolo (sound info)\nRiek Gladys (sound info)",
 	&machine_driver,
 
 	szaxxon_rom,
 	0, szaxxon_decode,
-	0,
+	zaxxon_sample_names,
 	0,	/* sound_prom */
 
-	0/*TBR*/,input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	input_ports,
 
 	szaxxon_color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -658,7 +693,7 @@ struct GameDriver futspy_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/,input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	input_ports,
 
 	szaxxon_color_prom, 0, 0,
 	ORIENTATION_ROTATE_180,

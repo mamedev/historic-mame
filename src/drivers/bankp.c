@@ -31,7 +31,6 @@ write:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/sn76496.h"
 
 
 extern unsigned char *bankp_videoram2;
@@ -44,8 +43,6 @@ void bankp_out_w(int offset,int data);
 int bankp_vh_start(void);
 void bankp_vh_stop(void);
 void bankp_vh_screenrefresh(struct osd_bitmap *bitmap);
-
-int bankp_sh_start(void);
 
 
 
@@ -218,6 +215,15 @@ static unsigned char color_prom[] =
 
 
 
+static struct SN76496interface sn76496_interface =
+{
+	3,	/* 3 chips */
+	3867120,	/* ?? the main oscillator is 15.46848 Mhz */
+	{ 255, 255, 255 }
+};
+
+
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -230,7 +236,7 @@ static struct MachineDriver machine_driver =
 			nmi_interrupt,1
 		},
 	},
-	60,
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* single CPU, no need for interleaving */
 	0,
 
@@ -247,10 +253,13 @@ static struct MachineDriver machine_driver =
 	bankp_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	bankp_sh_start,
-	SN76496_sh_stop,
-	SN76496_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_SN76496,
+			&sn76496_interface
+		}
+	}
 };
 
 
@@ -332,7 +341,7 @@ struct GameDriver bankp_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/,input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,

@@ -20,8 +20,7 @@
 #define __inline__
 #endif
 
-//#define ASM_MEMORY
-/* LBO 090597 */
+
 #ifdef __MWERKS__
 #pragma require_prototypes off
 #endif
@@ -65,29 +64,13 @@ WORD wat_readmemw(void *a);
 #define READ_MEMW(a,b) b=wat_readmemw(a)
 #endif
 
-/* ASG 971108 extern unsigned char *RAM;*/
-
-/* ASG 971010 -- changed to macros: */
-#if 0
-extern /*inline*/ UBYTE get_byte(LONG a); /* LBO 090597 */
-extern UWORD get_word(LONG a);
-extern ULONG get_long(LONG a);
-extern void put_byte(LONG a, UBYTE b);
-extern void put_word(LONG a, UWORD b);
-extern void put_long(LONG a, ULONG b);
-#else
 #define get_byte(a) cpu_readmem24((a)&0xffffff)
 #define get_word(a) cpu_readmem24_word((a)&0xffffff)
 #define get_long(a) cpu_readmem24_dword((a)&0xffffff)
 #define put_byte(a,b) cpu_writemem24((a)&0xffffff,b)
 #define put_word(a,b) cpu_writemem24_word((a)&0xffffff,b)
 #define put_long(a,b) cpu_writemem24_dword((a)&0xffffff,b)
-#endif
 
-/* LBO 090597 - unused
-BYTE *cart_rom;
-int cart_size;
-*/
 
 union flagu {
     struct {
@@ -96,8 +79,15 @@ union flagu {
         char n;
         char z;
     } flags;
+    struct {
+        unsigned short vc;
+        unsigned short nz;
+    } quickclear;
     ULONG longflags;
 };
+
+#define CLEARVC regflags.quickclear.vc=0;
+
 
 extern int areg_byteinc[];
 extern int movem_index1[256];
@@ -127,16 +117,10 @@ typedef struct
 
 extern regstruct regs, lastint_regs;
 
-/* LBO 090597
-#ifndef __WATCOMC__
-union flagu intel_flag_lookup[256] __asm__ ("intel_flag_lookup");
-union flagu regflags __asm__ ("regflags");
-#endif
-#ifdef __WATCOMC__
-*/
+
 extern union flagu intel_flag_lookup[256];
 extern union flagu regflags;
-/* #endif */ /* LBO 090597 */
+
 
 #define ZFLG (regflags.flags.z)
 #define NFLG (regflags.flags.n)
@@ -146,13 +130,13 @@ extern union flagu regflags;
 #ifdef ASM_MEMORY
 static __inline__ UWORD nextiword_opcode(void)
 {
-        asm("
-                movzwl  _regs+88,%ecx
-                movzbl  _regs+90,%ebx
-                addl    $2,_regs+88
-                movl    _MRAM(,%ebx,4),%edx
-                movb    (%ecx, %edx),%bh
-                movb    1(%ecx, %edx),%bl
+        asm(" \
+                movzwl  _regs+88,%ecx \
+                movzbl  _regs+90,%ebx \
+                addl    $2,_regs+88 \
+                movl    _MRAM(,%ebx,4),%edx \
+                movb    (%ecx, %edx),%bh \
+                movb    1(%ecx, %edx),%bl \
         ");
 }
 #endif
@@ -161,20 +145,20 @@ static __inline__ UWORD nextiword(void)
 {
     unsigned int i=regs.pc&0xffffff;
     regs.pc+=2;
-    return ( (cpu_readop(i)<<8) | cpu_readop(i+1) );	/* ASG 971108 */
+    return (cpu_readop16(i));
 }
 
 static __inline__ ULONG nextilong(void)
 {
     unsigned int i=regs.pc&0xffffff;
     regs.pc+=4;
-    return ( (cpu_readop(i)<<24) | (cpu_readop(i+1)<<16) | (cpu_readop(i+2)<<8) | cpu_readop(i+3) );	/* ASG 971108 */
+    return ((cpu_readop16(i)<<16) | cpu_readop16(i+2));
 }
 
 static __inline__ void m68k_setpc(CPTR newpc)
 {
     regs.pc = newpc;
-    change_pc24(regs.pc&0xffffff);	/* ASG 971108 */
+    change_pc24(regs.pc&0xffffff);
 }
 
 static __inline__ CPTR m68k_getpc(void)

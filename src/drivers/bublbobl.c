@@ -23,15 +23,16 @@ ff02      IN0
 ff03      IN1
 
 write:
-fa80      watchdog reset
+fa80      watchdog reset?
 fc00      interrupt vector? (not needed by Bobble Bobble)
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/generic.h"
-#include "sndhrdw/2203intf.h"
+#include "Z80/Z80.h"
+
+
 
 /* prototypes for functions in ../machine/bublbobl.c */
 extern unsigned char *bublbobl_sharedram1,*bublbobl_sharedram2;
@@ -57,8 +58,13 @@ int bublbobl_vh_start(void);
 void bublbobl_vh_stop(void);
 void bublbobl_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-void bublbobl_sound_command_w(int offset,int data);
-int bublbobl_sh_start(void);
+
+
+void bublbobl_sound_command_w(int offset,int data)
+{
+	soundlatch_w(offset,data);
+	cpu_cause_interrupt(2,Z80_NMI_INT);
+}
 
 
 
@@ -107,20 +113,13 @@ static struct MemoryWriteAddress writemem_lvl[] =
 };
 
 
-
-static int pip(int offset)
-{
-//if (errorlog) fprintf(errorlog,"%04x read pip\n",cpu_getpc());
-	return 0x80;
-}
-
 static struct MemoryReadAddress sound_readmem[] =
 {
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x8fff, MRA_RAM },
 	{ 0x9000, 0x9000, YM2203_status_port_0_r },
 	{ 0x9001, 0x9001, YM2203_read_port_0_r },
-	{ 0xa000, 0xa000, pip },
+	{ 0xa000, 0xa000, YM3526_status_port_0_r },
 	{ 0xb000, 0xb000, soundlatch_r },
 	{ 0xb001, 0xb001, MRA_NOP },	/* sound chip? */
 	{ 0xe000, 0xefff, MRA_ROM },	/* space for diagnostic ROM? */
@@ -133,7 +132,8 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x8000, 0x8fff, MWA_RAM },
 	{ 0x9000, 0x9000, YM2203_control_port_0_w },
 	{ 0x9001, 0x9001, YM2203_write_port_0_w },
-	{ 0xa000, 0xa001, MWA_NOP },	/* sound chip? */
+	{ 0xa000, 0xa000, YM3526_control_port_0_w },
+	{ 0xa001, 0xa001, YM3526_write_port_0_w },
 	{ 0xb000, 0xb001, MWA_NOP },	/* sound chip? */
 	{ 0xb002, 0xb002, MWA_NOP },	/* interrupt enable/acknowledge? */
 	{ 0xe000, 0xefff, MWA_ROM },	/* space for diagnostic ROM? */
@@ -279,8 +279,8 @@ INPUT_PORTS_END
 INPUT_PORTS_START( sboblbob_input_ports )
 	PORT_START      /* DSW0 */
 	PORT_DIPNAME( 0x01, 0x00, "Game", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Super Bobble Bobble" )
 	PORT_DIPSETTING(    0x01, "Bobble Bobble" )
+	PORT_DIPSETTING(    0x00, "Super Bobble Bobble" )
 	PORT_DIPNAME( 0x02, 0x02, "Flip Screen", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x02, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
@@ -316,7 +316,7 @@ INPUT_PORTS_START( sboblbob_input_ports )
 	PORT_DIPSETTING(    0x10, "1" )
 	PORT_DIPSETTING(    0x00, "2" )
 	PORT_DIPSETTING(    0x30, "3" )
-	PORT_DIPSETTING(    0x20, "6" )
+	PORT_BITX( 0,       0x20, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "100", IP_KEY_NONE, IP_JOY_NONE, 0 )
 	PORT_DIPNAME( 0xc0, 0x00, "Monster Speed", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "Normal" )
 	PORT_DIPSETTING(    0x40, "Medium" )
@@ -368,6 +368,33 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
+/* handler called by the 2203 emulator when the internal timers cause an IRQ */
+static void irqhandler(void)
+{
+	cpu_cause_interrupt(2,0xff);
+}
+
+static struct YM2203interface ym2203_interface =
+{
+	1,			/* 1 chip */
+	1500000,	/* 1.5 MHz ??? */
+	{ YM2203_VOL(255,255) },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ irqhandler }
+};
+
+static struct YM3526interface ym3526_interface =
+{
+	1,			/* 1 chip (no more supported) */
+	3000000,	/* 3 MHz ? (not supported) */
+	{ 255 }		/* (not supported) */
+};
+
+
+
 static struct MachineDriver bublbobl_machine_driver =
 {
     /* basic machine hardware */
@@ -391,11 +418,11 @@ static struct MachineDriver bublbobl_machine_driver =
 			4000000,	/* 4 Mhz ??? */
 			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,0,0,
-			interrupt,1	/* NMIs are triggered by the main CPU; I don't know */
-						/* whether the IRQs should be triggered by the 2203 */
+			ignore_interrupt,0	/* NMIs are triggered by the main CPU */
+								/* IRQs are triggered by the YM2203 */
 		}
     },
-    60,				/* frames_per_second */
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	100,	/* 100 CPU slices per frame - an high value to ensure proper */
 			/* synchronization of the CPUs */
     0,		/* init_machine() */
@@ -414,10 +441,18 @@ static struct MachineDriver bublbobl_machine_driver =
 	bublbobl_vh_stop,
 	bublbobl_vh_screenrefresh,
 
-	0,
-	bublbobl_sh_start,
-	YM2203_sh_stop,
-	YM2203_sh_update
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_YM2203,
+			&ym2203_interface
+		},
+		{
+			SOUND_YM3526,
+			&ym3526_interface
+		}
+	}
 };
 
 static struct MachineDriver boblbobl_machine_driver =
@@ -443,11 +478,11 @@ static struct MachineDriver boblbobl_machine_driver =
 			4000000,	/* 4 Mhz ??? */
 			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,0,0,
-			interrupt,1	/* NMIs are triggered by the main CPU; I don't know */
-						/* whether the IRQs should be triggered by the 2203 */
+			ignore_interrupt,0	/* NMIs are triggered by the main CPU */
+								/* IRQs are triggered by the YM2203 */
 		}
     },
-    60,				/* frames_per_second */
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	100,	/* 100 CPU slices per frame - an high value to ensure proper */
 			/* synchronization of the CPUs */
     0,		/* init_machine() */
@@ -466,10 +501,18 @@ static struct MachineDriver boblbobl_machine_driver =
 	bublbobl_vh_stop,
 	bublbobl_vh_screenrefresh,
 
-	0,
-	bublbobl_sh_start,
-	YM2203_sh_stop,
-	YM2203_sh_update
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_YM2203,
+			&ym2203_interface
+		},
+		{
+			SOUND_YM3526,
+			&ym3526_interface
+		}
+	}
 };
 
 
@@ -650,7 +693,7 @@ struct GameDriver bublbobl_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/, bublbobl_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	bublbobl_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -670,7 +713,7 @@ struct GameDriver boblbobl_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/, boblbobl_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	boblbobl_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -690,7 +733,7 @@ struct GameDriver sboblbob_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/, sboblbob_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	sboblbob_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

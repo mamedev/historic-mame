@@ -187,11 +187,10 @@ void congo_vh_screenrefresh(struct osd_bitmap *bitmap)
 		sx = 8 * (31 - offs / 32);
 		sy = 8 * (offs % 32);
 
-		if (videoram[offs] != 0x60)      /* don't draw spaces */
-			drawgfx(bitmap,Machine->gfx[0],
-					videoram[offs],
-					colorram[offs],
-					0,0,sx,sy,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+		drawgfx(bitmap,Machine->gfx[0],
+				videoram[offs],
+				colorram[offs],
+				0,0,sx,sy,
+				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

@@ -174,10 +174,15 @@ static uint8 bit4[POLY4_SIZE] =
 static uint8 bit5[POLY5_SIZE] =
       { 0,0,1,1,0,0,0,1,1,1,1,0,0,1,0,1,0,1,1,0,1,1,1,0,1,0,0,0,0,0,1 };
 
+/* ASG 980126 - changed this to a dynamically allocated array */
+#if 1
+static uint8 *bit17;
+#else
 static uint8 bit17[POLY17_SIZE];  /* Rather than have a table with 131071 */
                             /* entries, I use a random number generator. */
                             /* It shouldn't make much difference since */
                             /* the pattern rarely repeats anyway. */
+#endif
 
 static uint32 Poly_adjust; /* the amount that the polynomial will need */
                            /* to be adjusted to process the next bit */
@@ -240,10 +245,16 @@ static uint8  clip; /* LBO 101297 */
 /*                                                                           */
 /*****************************************************************************/
 
-void Pokey_sound_init (uint32 freq17, uint16 playback_freq, uint8 num_pokeys, uint8 use_clip)
+/* ASG 980126 - added a return parameter to indicate failure */
+int Pokey_sound_init (uint32 freq17, uint16 playback_freq, uint8 num_pokeys, uint8 use_clip)
 {
    uint8 chan,chip;
    int32 n;
+
+   /* ASG 980126 - dynamically allocate this array */
+   bit17 = malloc (POLY17_SIZE);
+   if (!bit17)
+   	return 1;
 
    /* fill the 17bit polynomial with random bits */
    for (n=0; n<POLY17_SIZE; n++)
@@ -293,6 +304,17 @@ void Pokey_sound_init (uint32 freq17, uint16 playback_freq, uint8 num_pokeys, ui
    clip = use_clip; /* LBO 101297 */
 
 /*    _enable();*/		/* RSF - removed for portability 31-MAR-97 */
+
+	/* ASG 980126 - return success */
+	return 0;
+}
+
+/* ASG 980126 - added this function for cleanup */
+void Pokey_sound_exit (void)
+{
+	if (bit17)
+		free (bit17);
+	bit17 = NULL;
 }
 
 
@@ -443,12 +465,14 @@ void Update_pokey_sound (uint16 addr, uint8 val, uint8 chip, uint8 gain)
     {
        /* process channel 2 frequency */
        if (AUDCTL[chip] & CH1_CH2)
+	   {
           if (AUDCTL[chip] & CH1_179)
              new_val = AUDF[CHAN2 + chip_offs] * 256 +
                        AUDF[CHAN1 + chip_offs] + 7;
           else
              new_val = (AUDF[CHAN2 + chip_offs] * 256 +
                         AUDF[CHAN1 + chip_offs] + 1) * Base_mult[chip];
+		}
        else
           new_val = (AUDF[CHAN2 + chip_offs] + 1) * Base_mult[chip];
 
@@ -486,12 +510,14 @@ void Update_pokey_sound (uint16 addr, uint8 val, uint8 chip, uint8 gain)
     {
        /* process channel 4 frequency */
        if (AUDCTL[chip] & CH3_CH4)
+	   {
           if (AUDCTL[chip] & CH3_179)
              new_val = AUDF[CHAN4 + chip_offs] * 256 +
                        AUDF[CHAN3 + chip_offs] + 7;
           else
              new_val = (AUDF[CHAN4 + chip_offs] * 256 +
                         AUDF[CHAN3 + chip_offs] + 1) * Base_mult[chip];
+		}
        else
           new_val = (AUDF[CHAN4 + chip_offs] + 1) * Base_mult[chip];
 
@@ -511,17 +537,10 @@ void Update_pokey_sound (uint16 addr, uint8 val, uint8 chip, uint8 gain)
     {
        if (chan_mask & (1 << chan))
        {
-          /* I've disabled any frequencies that exceed the sampling
-             frequency.  There isn't much point in processing frequencies
-             that the hardware can't reproduce.  I've also disabled
-             processing if the volume is zero. */
-
           /* if the channel is volume only */
           /* or the channel is off (volume == 0) */
-          /* or the channel freq is greater than the playback freq */
           if ((AUDC[chan + chip_offs] & VOL_ONLY) ||
-             ((AUDC[chan + chip_offs] & VOLUME_MASK) == 0) ||
-              (Div_n_max[chan + chip_offs] < (Samp_n_max >> 8)))
+             ((AUDC[chan + chip_offs] & VOLUME_MASK) == 0))
           {
              /* indicate the channel is 'on' */
              Outvol[chan + chip_offs] = 1;
@@ -570,6 +589,28 @@ void Pokey_process (register unsigned char *buffer, register uint16 n)
     register uint8 toggle;
     register uint8 count;
     register uint8 *vol_ptr;
+
+/* GSL 980313 B'zarre defines to handle optimised non-dword-aligned load/stores on ARM etc processors */
+/* The shifts may look strange, but ARM has an inexpensive barrel shifter, and the following produces
+   quite reasonable code */
+
+#ifndef ACORN
+#define	READ_WHOLE_PORTION(address) *(uint32 *)address
+#define DECREMENT_WHOLE_PORTION(address, data) *(uint32 *)address -= data
+#else
+	uint32 temp_value;
+	uint32 temp_value2;
+#define READ_WHOLE_PORTION(address)	((*(uint32 *)((uint8 *)address-1)) >> 8) + \
+									 ((*(uint8 *)(address+3)) << 24)
+#define DECREMENT_WHOLE_PORTION(address, data) \
+		temp_value = *(uint32 *)((uint8 *)address-1); /* 24.8 value */\
+		temp_value2 = (temp_value >> 8) + *(uint8 *)(address+3)	- data;	/* updated whole portion */\
+		*(uint32 *)((uint8 *)address-1)	= (temp_value & 0xff) + (temp_value2 << 8);	\
+		*(uint8 *)(address+3) = (temp_value2 >> 24)
+
+#endif
+
+
 
     /* set a pointer to the whole portion of the samp_n_cnt */
 #ifdef BIG_ENDIAN
@@ -624,7 +665,7 @@ void Pokey_process (register unsigned char *buffer, register uint16 n)
 
        /* find next smallest event (either sample or chan 1-4) */
        next_event = SAMPLE;
-       event_min = *samp_cnt_w_ptr;
+       event_min = READ_WHOLE_PORTION(samp_cnt_w_ptr);
 
        div_n_ptr = Div_n_cnt;
 
@@ -678,7 +719,7 @@ void Pokey_process (register unsigned char *buffer, register uint16 n)
           count--;
        } while (count);
 
-       *samp_cnt_w_ptr -= event_min;
+       DECREMENT_WHOLE_PORTION(samp_cnt_w_ptr, event_min);
 
        /* since the polynomials require a mod (%) function which is
           division, I don't adjust the polynomials on the SAMPLE events,

@@ -1,3 +1,9 @@
+/* List of Changes *
+
+	MJC - 22.01.98 - Boot hill controls/memory mappings
+
+*/
+
 /***************************************************************************
 
 Space Invaders memory map (preliminary)
@@ -94,24 +100,35 @@ I don't know why.
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-int invaders_shift_data_r(int offset);
+int  invaders_shift_data_r(int offset);
 void invaders_shift_amount_w(int offset,int data);
 void invaders_shift_data_w(int offset,int data);
-int invaders_interrupt(void);
+int  invaders_interrupt(void);
+
+int  boothill_shift_data_r(int offset);                  /* MJC 310198 */
+int  boothill_port_0_r(int offset);                              /* MJC 310198 */
+int  boothill_port_1_r(int offset);                              /* MJC 310198 */
+void boothill_sh_port3_w(int offset, int data);            /* HC 4/14/98 */
+void boothill_sh_port5_w(int offset, int data);            /* HC 4/14/98 */
 
 extern unsigned char *invaders_videoram;
+
 void invaders_videoram_w(int offset,int data);
 void lrescue_videoram_w(int offset,int data);    /* V.V */
+void astinvad_videoram_w(int offset,int data);   /* L.T */
 void invrvnge_videoram_w(int offset,int data);   /* V.V */
 void rollingc_videoram_w(int offset,int data);   /* L.T */
-int invaders_vh_start(void);
+void boothill_videoram_w(int offset,int data);   /* MAB */
+void bandido_videoram_w(int offset,int data);    /* MJC */
+
+int  invaders_vh_start(void);
 void invaders_vh_stop(void);
 void invaders_vh_screenrefresh(struct osd_bitmap *bitmap);
 void invaders_sh_port3_w(int offset,int data);
+void invaders_sh_port4_w(int offset,int data);
+void invadpt2_sh_port3_w(int offset,int data);
 void invaders_sh_port5_w(int offset,int data);
 void invaders_sh_update(void);
-
-
 
 
 static struct MemoryReadAddress readmem[] =
@@ -134,8 +151,8 @@ static struct MemoryWriteAddress writemem[] =
 
 static struct MemoryReadAddress rollingc_readmem[] =
 {
-//	{ 0x2000, 0x2002, MRA_RAM },
-//	{ 0x2003, 0x2003, hack },
+//      { 0x2000, 0x2002, MRA_RAM },
+//      { 0x2003, 0x2003, hack },
 	{ 0x2000, 0x3fff, MRA_RAM },
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x4000, 0x5fff, MRA_ROM },
@@ -176,6 +193,51 @@ static struct MemoryWriteAddress invrvnge_writemem[] = /* V.V */ /* Whole functi
 };
 
 
+static struct MemoryReadAddress bandido_readmem[] =                             /* MJC */
+{
+	{ 0x0000, 0x27ff, MRA_ROM },
+	{ 0x4200, 0x7FFF, MRA_RAM },
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryWriteAddress bandido_writemem[] =           /* MJC */
+{
+	{ 0x4200, 0x5dff, bandido_videoram_w, &invaders_videoram },
+	{ 0x5E00, 0x7fff, MWA_RAM },
+	{ 0x0000, 0x27ff, MWA_ROM },
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryWriteAddress boothill_writemem[] =
+{
+	{ 0x2000, 0x23ff, MWA_RAM },
+	{ 0x2400, 0x3fff, boothill_videoram_w, &invaders_videoram },
+	{ 0x0000, 0x1fff, MWA_ROM },
+	{ 0x4000, 0x57ff, MWA_ROM },
+	{ -1 }  /* end of table */
+};
+
+
+static struct MemoryWriteAddress astinvad_writemem[] = /* L.T */ /* Whole function */
+{
+	{ 0x1c00, 0x23ff, MWA_RAM },
+	{ 0x2400, 0x3fff, astinvad_videoram_w, &invaders_videoram },
+	{ 0x4000, 0x4fff, MWA_RAM, },
+	{ 0x0000, 0x1bff, MWA_ROM },
+	{ -1 }  /* end of table */
+};
+
+
+static struct MemoryReadAddress astinvad_readmem[] =
+{
+	{ 0x1c00, 0x3fff, MRA_RAM },
+	{ 0x0000, 0x1bff, MRA_ROM },
+	{ 0x4000, 0x4fff, MRA_RAM },
+	{ -1 }  /* end of table */
+};
+
+
+
 static struct IOReadPort readport[] =
 {
 	{ 0x01, 0x01, input_port_0_r },
@@ -183,6 +245,16 @@ static struct IOReadPort readport[] =
 	{ 0x03, 0x03, invaders_shift_data_r },
 	{ -1 }  /* end of table */
 };
+
+/* LT 20-3-1998 */
+static struct IOReadPort astinvad_readport[] =
+{
+	{ 0x08, 0x08, input_port_0_r },
+	{ 0x09, 0x09, input_port_1_r },
+	{ -1 }  /* end of table */
+};
+
+
 
 
 static struct IOReadPort invdelux_readport[] =
@@ -193,6 +265,17 @@ static struct IOReadPort invdelux_readport[] =
 	{ 0x03, 0x03, invaders_shift_data_r },
 	{ -1 }  /* end of table */
 };
+
+
+static struct IOReadPort tornbase_readport[] =
+{
+	{ 0x00, 0x00, input_port_0_r },
+	{ 0x01, 0x01, input_port_1_r },
+	{ 0x02, 0x02, input_port_2_r },
+	{ 0x03, 0x03, invaders_shift_data_r },
+	{ -1 }  /* end of table */
+};
+
 
 /* Catch the write to unmapped I/O port 6 */
 void invaders_dummy_write(int offset,int data)
@@ -209,16 +292,64 @@ static struct IOWritePort writeport[] =
 	{ -1 }  /* end of table */
 };
 
-static struct IOWritePort invdelux_writeport[] =
+
+/* LT 20-3-1998 */
+static struct IOWritePort invadpt2_writeport[] =
 {
 	{ 0x02, 0x02, invaders_shift_amount_w },
-	{ 0x03, 0x03, invaders_sh_port3_w },
+	{ 0x03, 0x03, invadpt2_sh_port3_w },
 	{ 0x04, 0x04, invaders_shift_data_w },
 	{ 0x05, 0x05, invaders_sh_port5_w },
 	{ 0x06, 0x06, invaders_dummy_write },
 	{ -1 }  /* end of table */
 };
 
+
+
+/* LT 20-3-1998 */
+static struct IOWritePort astinvad_writeport[] =
+{
+	{ 0x04, 0x04, invaders_sh_port4_w },
+	{ 0x05, 0x05, invaders_sh_port5_w },
+	{ -1 }  /* end of table */
+};
+
+
+
+static struct IOReadPort bandido_readport[] =                                   /* MJC */
+{
+	{ 0x00, 0x00, input_port_0_r },
+	{ 0x01, 0x01, input_port_1_r },
+	{ 0x02, 0x02, input_port_2_r },
+	{ 0x03, 0x03, invaders_shift_data_r },
+	{ 0x04, 0x04, input_port_3_r },
+	{ -1 }  /* end of table */
+};
+
+static struct IOWritePort bandido_writeport[] =                 /* MJC */
+{
+	{ 0x02, 0x02, invaders_shift_amount_w },
+	{ 0x03, 0x03, invaders_shift_data_w },
+	{ -1 }  /* end of table */
+};
+
+static struct IOReadPort boothill_readport[] =                                  /* MJC 310198 */
+{
+	{ 0x00, 0x00, boothill_port_0_r },
+	{ 0x01, 0x01, boothill_port_1_r },
+	{ 0x02, 0x02, input_port_2_r },
+	{ 0x03, 0x03, boothill_shift_data_r },
+	{ -1 }  /* end of table */
+};
+
+static struct IOWritePort boothill_writeport[] =                                /* MJC 310198 */
+{
+	{ 0x01, 0x01, invaders_shift_amount_w },
+	{ 0x02, 0x02, invaders_shift_data_w },
+	{ 0x03, 0x03, boothill_sh_port3_w },
+	{ 0x05, 0x05, boothill_sh_port5_w },
+	{ -1 }  /* end of table */
+};
 
 INPUT_PORTS_START( invaders_input_ports )
 	PORT_START      /* IN0 */
@@ -549,6 +680,250 @@ INPUT_PORTS_START( rollingc_input_ports )
 	PORT_DIPSETTING(    0x80, "Off" )
 INPUT_PORTS_END
 
+
+/* All of the controls/dips for cocktail mode are as per the schematic */
+/* BUT a coffee table version was never manufactured and support was   */
+/* probably never completed.                                           */
+/* e.g. cocktail players button will give 6 credits!                   */
+
+INPUT_PORTS_START( bandido_input_ports )                        /* MJC */
+
+	PORT_START      /* 00 Main Controls */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_LEFT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_UP | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_DOWN | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_LEFT | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_UP | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_DOWN | IPF_8WAY )
+
+	PORT_START      /* 01 Player 2 Controls */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_DOWN | IPF_8WAY | IPF_COCKTAIL )
+
+	PORT_START      /* 02 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )           /* Marked for   */
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )           /* Expansion    */
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )           /* on Schematic */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 )
+
+	PORT_START      /* 04 */
+	PORT_DIPNAME( 0x03, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPSETTING(    0x03, "6" )
+	PORT_DIPNAME( 0x80, 0x80, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "Upright" )
+	PORT_DIPSETTING(    0x00, "Cocktail (SEE NOTES)" )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( boothill_input_ports )                                       /* MJC 310198 */
+    /* Gun position uses bits 4-6, handled using fake paddles */
+	PORT_START      /* IN0 - Player 2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2 )        /* Move Man */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )                      /* Fire */
+
+	PORT_START      /* IN1 - Player 1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN )              /* Move Man */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )                    /* Fire */
+
+	PORT_START      /* IN2 Dips & Coins */
+	PORT_DIPNAME( 0x03, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "1 Coin  - 1 Player" )
+	PORT_DIPSETTING(    0x01, "1 Coin  - 2 Players" )
+	PORT_DIPSETTING(    0x02, "2 Coins - 1 Player" )
+	PORT_DIPNAME( 0x0C, 0x00, "Time", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "64" )
+	PORT_DIPSETTING(    0x04, "74" )
+	PORT_DIPSETTING(    0x08, "84" )
+	PORT_DIPSETTING(    0x0C, "94" )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_SERVICE )                   /* Test */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
+    PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
+
+    PORT_START                                                                                          /* Player 2 Gun */
+	PORT_ANALOGX ( 0xff, 0x00, IPT_PADDLE | IPF_PLAYER2, 100, 7, 1, 255, 0, 0, 0, 0, 1 )
+
+    PORT_START                                                                                          /* Player 1 Gun */
+	PORT_ANALOGX ( 0xff, 0x00, IPT_PADDLE, 100, 7, 1, 255, OSD_KEY_Z, OSD_KEY_A, 0, 0, 1 )
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( schaser_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT)
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1)
+	PORT_START      /* IN1 */
+	PORT_DIPNAME( 0x03, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPSETTING(    0x03, "6" )
+	PORT_DIPNAME( 0x04, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x04, "On" )
+	PORT_DIPNAME( 0x08, 0x00, "Level", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Easy" )
+	PORT_DIPSETTING(    0x08, "Hard" )
+	PORT_DIPNAME( 0x10, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x10, "On" )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Tilt  */
+	PORT_DIPNAME( 0x40, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x40, "On" )
+	PORT_DIPNAME( 0x80, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x80, "On" )
+INPUT_PORTS_END
+
+
+INPUT_PORTS_START( astinvad_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_START      /* IN1 */
+	PORT_DIPNAME( 0x01, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPNAME( 0x02, 0x00, "Extra Live", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "10000" )
+	PORT_DIPSETTING(    0x02, "20000" )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x08, 0x00, "Coins", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "1 Coin  Per 2 Plays" )
+	PORT_DIPSETTING(    0x00, "1 Coin  Per Play" )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Left */
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Left */
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Right */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Right */
+INPUT_PORTS_END
+
+
+
+INPUT_PORTS_START( tornbase_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_PLAYER1)
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN)
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON3 | IPF_PLAYER2)
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_RIGHT  | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_DOWN  | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_UP  | IPF_PLAYER1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER1)
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN)
+	PORT_START      /* DSW0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x78, 0x40, "Coins / Rounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "1 / 1" )
+	PORT_DIPSETTING(    0x08, "2 / 1" )
+	PORT_DIPSETTING(    0x10, "3 / 1" )
+	PORT_DIPSETTING(    0x18, "4 / 1" )
+	PORT_DIPSETTING(    0x20, "1 / 2" )
+	PORT_DIPSETTING(    0x28, "2 / 2" )
+	PORT_DIPSETTING(    0x30, "3 / 2" )
+	PORT_DIPSETTING(    0x38, "4 / 2" )
+	PORT_DIPSETTING(    0x40, "1 / 4" )
+	PORT_DIPSETTING(    0x48, "2 / 4" )
+	PORT_DIPSETTING(    0x50, "3 / 4" )
+	PORT_DIPSETTING(    0x58, "4 / 4" )
+	PORT_DIPSETTING(    0x60, "1 / 9" )
+	PORT_DIPSETTING(    0x68, "2 / 9" )
+	PORT_DIPSETTING(    0x70, "3 / 9" )
+	PORT_DIPSETTING(    0x78, "4 / 9" )
+	PORT_DIPNAME( 0x80, 0x00, "Test Mode", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x80, "On" )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( maze_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_PLAYER1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_PLAYER1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_PLAYER1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_PLAYER2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_PLAYER2 )
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1  )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN)
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x01, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x01, "On" )
+	PORT_DIPNAME( 0x02, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x02,"On" )
+	PORT_DIPNAME( 0x04, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x04, "On" )
+	PORT_DIPNAME( 0x08, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x08, "On" )
+	PORT_DIPNAME( 0x10, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x10, "On" )
+	PORT_DIPNAME( 0x20, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x20, "On" )
+	PORT_DIPNAME( 0x40, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x40, "On" )
+	PORT_DIPNAME( 0x80, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x80, "On" )
+INPUT_PORTS_END
+
+
 static unsigned char palette[] = /* V.V */ /* Smoothed pure colors, overlays are not so contrasted */
 {
 	0x00,0x00,0x00, /* BLACK */
@@ -585,25 +960,50 @@ static unsigned char rollingc_palette[] =
 
 };
 
+
+static unsigned char astinvad_palette[] = /* L.T */
+{
+	0x00,0x00,0x00,
+	0x20,0x20,0xff,
+	0x20,0xff,0x20,
+	0x20,0xff,0xff,
+	0xff,0x20,0x20,
+	0xff,0x20,0xff,
+	0xff,0xff,0x20,
+	0xff,0xff,0xff
+};
+
+
+
+
+
+static struct Samplesinterface samples_interface =
+{
+	9       /* 9 channels */
+};
+
+
+
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
 		{
-			CPU_Z80,
+			CPU_8080,
 			2000000,        /* 1 Mhz? */
 			0,
 			readmem,writemem,readport,writeport,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
 	},
-	60,
-	1,	/* single CPU, no need for interleaving */
+	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
+	1,      /* single CPU, no need for interleaving */
 	0,
 
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
-	0,	/* no gfxdecodeinfo - bitmapped display */
+	0,      /* no gfxdecodeinfo - bitmapped display */
 	sizeof(palette)/3, 0,
 	0,
 
@@ -617,7 +1017,14 @@ static struct MachineDriver machine_driver =
 	0,
 	0,
 	0,
-	invaders_sh_update
+	0,
+	{
+		{
+			SOUND_SAMPLES,
+			&samples_interface
+		}
+	}
+
 };
 
 
@@ -626,20 +1033,20 @@ static struct MachineDriver lrescue_machine_driver = /* V.V */ /* Whole function
 	/* basic machine hardware */
 	{
 		{
-			CPU_Z80,
+			CPU_8080,
 			2000000,        /* 2 Mhz? */
 			0,
 			readmem,lrescue_writemem,readport,writeport, /* V.V */
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
 	},
-	60,
-	1,	/* single CPU, no need for interleaving */
+	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
+	1,      /* single CPU, no need for interleaving */
 	0,
 
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
-	0,	/* no gfxdecodeinfo - bitmapped display */
+	0,      /* no gfxdecodeinfo - bitmapped display */
 	sizeof(palette)/3, 0,
 	0,
 
@@ -653,8 +1060,59 @@ static struct MachineDriver lrescue_machine_driver = /* V.V */ /* Whole function
 	0,
 	0,
 	0,
-	invaders_sh_update
+	0,
+	{
+		{
+			SOUND_SAMPLES,
+			&samples_interface
+		}
+	}
+
 };
+
+
+static struct MachineDriver invadpt2_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_8080,
+			2000000,        /* 2 Mhz? */
+			0,
+			readmem,lrescue_writemem,readport,invadpt2_writeport, /* V.V */
+			invaders_interrupt,2    /* two interrupts per frame */
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
+	1,      /* single CPU, no need for interleaving */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
+	0,      /* no gfxdecodeinfo - bitmapped display */
+	sizeof(palette)/3, 0,
+	0,
+
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	0,
+	invaders_vh_start,
+	invaders_vh_stop,
+	invaders_vh_screenrefresh,
+
+	/* sound hardware */
+	0,
+	0,
+	0,
+	0,
+	{
+		{
+			SOUND_SAMPLES,
+			&samples_interface
+		}
+	}
+
+};
+
 
 
 static struct MachineDriver invrvnge_machine_driver = /* V.V */ /* Whole function */
@@ -662,20 +1120,20 @@ static struct MachineDriver invrvnge_machine_driver = /* V.V */ /* Whole functio
 	/* basic machine hardware */
 	{
 		{
-			CPU_Z80,
+			CPU_8080,
 			2000000,        /* 2 Mhz? */
 			0,
 			readmem,invrvnge_writemem,readport,writeport,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
 	},
-	60,
-	1,	/* single CPU, no need for interleaving */
+	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
+	1,      /* single CPU, no need for interleaving */
 	0,
 
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
-	0,	/* no gfxdecodeinfo - bitmapped display */
+	0,      /* no gfxdecodeinfo - bitmapped display */
 	sizeof(palette)/3, 0,
 	0,
 
@@ -689,7 +1147,14 @@ static struct MachineDriver invrvnge_machine_driver = /* V.V */ /* Whole functio
 	0,
 	0,
 	0,
-	invaders_sh_update
+	0,
+	{
+		{
+			SOUND_SAMPLES,
+			&samples_interface
+		}
+	}
+
 };
 
 
@@ -699,20 +1164,20 @@ static struct MachineDriver invdelux_machine_driver =
 	/* basic machine hardware */
 	{
 		{
-			CPU_Z80,
+			CPU_8080,
 			2000000,        /* 2 Mhz? */
 			0,
-			readmem,writemem,invdelux_readport, invdelux_writeport,
+			readmem,writemem,invdelux_readport, writeport,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
 	},
-	60,
-	1,	/* single CPU, no need for interleaving */
+	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
+	1,      /* single CPU, no need for interleaving */
 	0,
 
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
-	0,	/* no gfxdecodeinfo - bitmapped display */
+	0,      /* no gfxdecodeinfo - bitmapped display */
 	sizeof(palette)/3, 0,
 	0,
 
@@ -726,9 +1191,15 @@ static struct MachineDriver invdelux_machine_driver =
 	0,
 	0,
 	0,
-	invaders_sh_update
-};
+	0,
+	{
+		{
+			SOUND_SAMPLES,
+			&samples_interface
+		}
+	}
 
+};
 
 
 static struct MachineDriver rollingc_machine_driver =
@@ -736,20 +1207,20 @@ static struct MachineDriver rollingc_machine_driver =
 	/* basic machine hardware */
 	{
 		{
-			CPU_Z80,
+			CPU_8080,
 			2000000,        /* 1 Mhz? */
 			0,
 			rollingc_readmem,rollingc_writemem,invdelux_readport,writeport,
 			invaders_interrupt,2    /* two interrupts per frame */
 		}
 	},
-	60,
-	1,	/* single CPU, no need for interleaving */
+	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
+	1,      /* single CPU, no need for interleaving */
 	0,
 
 	/* video hardware */
 	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
-	0,	/* no gfxdecodeinfo - bitmapped display */
+	0,      /* no gfxdecodeinfo - bitmapped display */
 	sizeof(rollingc_palette)/3, 0,
 	0,
 
@@ -763,8 +1234,261 @@ static struct MachineDriver rollingc_machine_driver =
 	0,
 	0,
 	0,
-	invaders_sh_update
+	0,
+	{
+		{
+			SOUND_SAMPLES,
+			&samples_interface
+		}
+	}
+
 };
+
+
+
+static struct MachineDriver bandido_machine_driver =                    /* MJC */
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_8080,
+			2000000,        /* 2 Mhz? */
+			0,
+			bandido_readmem,bandido_writemem,bandido_readport,bandido_writeport,
+			invaders_interrupt,2    /* two interrupts per frame */
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
+	1,      /* single CPU, no need for interleaving */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
+	0,      /* no gfxdecodeinfo - bitmapped display */
+	sizeof(palette)/3, 0,
+	0,
+
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	0,
+	invaders_vh_start,
+	invaders_vh_stop,
+	invaders_vh_screenrefresh,
+
+	/* sound hardware */
+	0,
+	0,
+	0,
+	0
+};
+
+static struct MachineDriver boothill_machine_driver =                   /* MJC 310198 */
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_8080,
+			2000000,        /* 2 Mhz? */
+			0,
+	    readmem,boothill_writemem,boothill_readport,boothill_writeport,
+			invaders_interrupt,2    /* two interrupts per frame */
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,
+	1,      /* single CPU, no need for interleaving */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
+	0,      /* no gfxdecodeinfo - bitmapped display */
+	sizeof(palette)/3, 0,
+	0,
+
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	0,
+	invaders_vh_start,
+	invaders_vh_stop,
+    invaders_vh_screenrefresh,
+
+	/* sound hardware */
+	0,
+	0,
+	0,
+	0,
+	{
+		{
+			SOUND_SAMPLES,
+			&samples_interface
+
+		}
+	}
+};
+
+
+static struct MachineDriver astinvad_machine_driver = /* LT */
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_8080,
+			2000000,        /* 2 Mhz? */
+			0,
+			astinvad_readmem,astinvad_writemem,astinvad_readport,astinvad_writeport, /* V.V */
+			interrupt,1    /* two interrupts per frame */
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
+	1,      /* single CPU, no need for interleaving */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
+	0,      /* no gfxdecodeinfo - bitmapped display */
+	sizeof(astinvad_palette)/3, 0,
+	0,
+
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	0,
+	invaders_vh_start,
+	invaders_vh_stop,
+	invaders_vh_screenrefresh,
+
+	/* sound hardware */
+	0,
+	0,
+	0,
+	0,
+	{
+		{
+			SOUND_SAMPLES,
+			&samples_interface
+		}
+	}
+
+};
+
+
+static struct MachineDriver schaser_machine_driver = /* LT */
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_8080,
+			2000000,        /* 2 Mhz? */
+			0,
+			readmem,lrescue_writemem,readport,writeport, /* LT */
+			invaders_interrupt,2    /* two interrupts per frame */
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
+	1,      /* single CPU, no need for interleaving */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
+	0,      /* no gfxdecodeinfo - bitmapped display */
+	sizeof(palette)/3, 0,
+	0,
+
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	0,
+	invaders_vh_start,
+	invaders_vh_stop,
+	invaders_vh_screenrefresh,
+
+	/* sound hardware */
+	0,
+	0,
+	0,
+	0,
+	{
+		{
+			SOUND_SAMPLES,
+			&samples_interface
+		}
+	}
+
+};
+
+
+static struct MachineDriver zzzap_machine_driver = /* V.V */ /* Whole function */
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_8080,
+			2000000,        /* 2 Mhz? */
+			0,
+			astinvad_readmem,astinvad_writemem,readport,writeport, /* V.V */
+			nmi_interrupt,2    /* two interrupts per frame */
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
+	1,      /* single CPU, no need for interleaving */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
+	0,      /* no gfxdecodeinfo - bitmapped display */
+	sizeof(palette)/3, 0,
+	0,
+
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	0,
+	invaders_vh_start,
+	invaders_vh_stop,
+	invaders_vh_screenrefresh,
+
+	/* sound hardware */
+	0,
+	0,
+	0,
+	0,
+	{
+		{
+			SOUND_SAMPLES,
+			&samples_interface
+		}
+	}
+
+};
+
+
+static struct MachineDriver tornbase_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_8080,
+			2000000,        /* 1 Mhz? */
+			0,
+			readmem,boothill_writemem,tornbase_readport,writeport,
+			invaders_interrupt,2    /* two interrupts per frame */
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
+	1,      /* single CPU, no need for interleaving */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 2*8, 30*8-1, 0*8, 32*8-1 },
+	0,      /* no gfxdecodeinfo - bitmapped display */
+	sizeof(palette)/3, 0,
+	0,
+
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	0,
+	invaders_vh_start,
+	invaders_vh_stop,
+	invaders_vh_screenrefresh,
+
+	/* sound hardware */
+	0,
+	0,
+	0,
+	0
+
+};
+
 
 
 
@@ -783,7 +1507,7 @@ ROM_START( invaders_rom )
 ROM_END
 
 ROM_START( earthinv_rom )
-	ROM_REGION(0x10000)		/* 64k for code */
+	ROM_REGION(0x10000)             /* 64k for code */
 	ROM_LOAD( "invaders.h", 0x0000, 0x0800, 0xec409c20 )
 	ROM_LOAD( "invaders.g", 0x0800, 0x0800, 0x46a1b083 )
 	ROM_LOAD( "invaders.f", 0x1000, 0x0800, 0xfcb8d54c )
@@ -898,6 +1622,97 @@ ROM_START( rollingc_rom )
 	ROM_LOAD( "rc12.bin", 0x5800, 0x0800, 0xdd2c4d68 )
 ROM_END
 
+ROM_START( bandido_rom )                                                                                /* MJC */
+	ROM_REGION(0x10000)             /* 64k for code */
+	ROM_LOAD( "BAF1-3", 0x0000, 0x0400, 0xc62cf9c2 )
+	ROM_LOAD( "BAF2-1", 0x0400, 0x0400, 0xcc34ebda )
+	ROM_LOAD( "BAG1-1", 0x0800, 0x0400, 0x23f48c36 )
+	ROM_LOAD( "BAG2-1", 0x0C00, 0x0400, 0x2d832c93 )
+	ROM_LOAD( "BAH1-1", 0x1000, 0x0400, 0x7be81f76 )
+	ROM_LOAD( "BAH2-1", 0x1400, 0x0400, 0x853c7eca )
+	ROM_LOAD( "BAI1-1", 0x1800, 0x0400, 0x0a903e90 )
+	ROM_LOAD( "BAI2-1", 0x1C00, 0x0400, 0x7158d760 )
+	ROM_LOAD( "BAJ1-1", 0x2000, 0x0400, 0xd563f205 )
+	ROM_LOAD( "BAJ2-2", 0x2400, 0x0400, 0x4d14b20a )
+
+#if 0
+	ROM_REGION(0x0010)              /* Not Used */
+
+    ROM_REGION(0x0800)                  /* Sound 8035 + 76477 Sound Generator */
+    ROM_LOAD( "BASND.U2", 0x0000, 0x0400, 0x0 )
+#endif
+
+ROM_END
+
+
+ROM_START( boothill_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+    ROM_LOAD( "romh.cpu", 0x0000, 0x0800, 0xec5fd9d3 )
+    ROM_LOAD( "romg.cpu", 0x0800, 0x0800, 0x4cfcd35e )
+    ROM_LOAD( "romf.cpu", 0x1000, 0x0800, 0x61543dac )
+    ROM_LOAD( "rome.cpu", 0x1800, 0x0800, 0xe00189af )
+ROM_END
+
+
+ROM_START( astinvad_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "ai_cpu_1.rom", 0x0000, 0x0400, 0xfea7ea35 )
+	ROM_LOAD( "ai_cpu_2.rom", 0x0400, 0x0400, 0x90bc4412 )
+	ROM_LOAD( "ai_cpu_3.rom", 0x0800, 0x0400, 0x4ef7a34d )
+	ROM_LOAD( "ai_cpu_4.rom", 0x0c00, 0x0400, 0xb49ad24c )
+	ROM_LOAD( "ai_cpu_5.rom", 0x1000, 0x0400, 0x2e35e513 )
+	ROM_LOAD( "ai_cpu_6.rom", 0x1400, 0x0400, 0x83a0c7c8 )
+	ROM_LOAD( "ai_cpu_7.rom", 0x1800, 0x0400, 0xd9259ef3 )
+ROM_END
+
+ROM_START( kamikaze_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "km01", 0x0000, 0x0800, 0xc0183e5c )
+	ROM_LOAD( "km02", 0x0800, 0x0800, 0xd8397221 )
+	ROM_LOAD( "km03", 0x1000, 0x0800, 0x15f835c0 )
+	ROM_LOAD( "km04", 0x1800, 0x0800, 0x856b59e5 )
+ROM_END
+
+
+ROM_START( schaser_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "rt13.bin", 0x0000, 0x0400, 0x8f508fda )
+	ROM_LOAD( "rt14.bin", 0x0400, 0x0400, 0xc45e9dae )
+	ROM_LOAD( "rt15.bin", 0x0800, 0x0400, 0x222fdee9 )
+	ROM_LOAD( "rt16.bin", 0x0c00, 0x0400, 0xfac11b19 )
+	ROM_LOAD( "rt17.bin", 0x1000, 0x0400, 0xa7e3889b )
+	ROM_LOAD( "rt18.bin", 0x1400, 0x0400, 0x1a453dcf )
+	ROM_LOAD( "rt19.bin", 0x1800, 0x0400, 0x711544dd )
+	ROM_LOAD( "rt20.bin", 0x1c00, 0x0400, 0xec27aa4b )
+	ROM_LOAD( "rt21.bin", 0x4000, 0x0400, 0x1965c393 )
+	ROM_LOAD( "rt22.bin", 0x4400, 0x0400, 0x2d0388f7 )
+ROM_END
+
+
+ROM_START( zzzap_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "zzzaph", 0x0000, 0x0400, 0xb41c108e )
+	ROM_LOAD( "zzzapg", 0x0400, 0x0400, 0xa0e0f700 )
+	ROM_LOAD( "zzzapf", 0x0800, 0x0400, 0xb201f13d )
+	ROM_LOAD( "zzzape", 0x0c00, 0x0400, 0x3e746ae4 )
+	ROM_LOAD( "zzzapd", 0x1000, 0x0400, 0xbcdfbd65 )
+	ROM_LOAD( "zzzapc", 0x1400, 0x0400, 0x1cea3240 )
+ROM_END
+
+
+ROM_START( tornbase_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "tb.h", 0x0000, 0x0800, 0x00ee84b4 )
+	ROM_LOAD( "tb.g", 0x0800, 0x0800, 0xb9fedbe4 )
+	ROM_LOAD( "tb.f", 0x1000, 0x0800, 0xd512b59c )
+ROM_END
+
+
+ROM_START( maze_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "invaders.h", 0x0000, 0x0800, 0xa96063c2 )
+	ROM_LOAD( "invaders.g", 0x0800, 0x0800, 0x784e056a )
+ROM_END
 
 
 static const char *invaders_sample_names[] =
@@ -915,12 +1730,21 @@ static const char *invaders_sample_names[] =
 	0       /* end of array */
 };
 
+static const char *boothill_sample_names[] =
+{
+	"*boothill", /* in case we ever find any bootlegs hehehe */
+	"addcoin.sam",
+	"endgame.sam",
+	"gunshot.sam",
+	"killed.sam",
+	0       /* end of array */
+};
 
 
 static int invaders_hiload(void)
 {
 	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x20f4],"\x00\x00",2) == 0)
+	if (memcmp(&RAM[0x20f4],"\x00\x00\x1c",3) == 0)
 	{
 		void *f;
 
@@ -987,7 +1811,7 @@ static void invdelux_hisave(void)
 static int invrvnge_hiload(void)
 {
 	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x2019],"\x00\x00\x00",3) == 0)
+	if (memcmp(&RAM[0x2003],"\xce\x00",2) == 0)
 	{
 		void *f;
 
@@ -1018,7 +1842,7 @@ static void invrvnge_hisave(void)
 static int galxwars_hiload(void)
 {
 	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x2004],"\x00\x00",2) == 0)
+	if (memcmp(&RAM[0x2000],"\x07\x00",2) == 0)
 	{
 		void *f;
 
@@ -1121,9 +1945,9 @@ struct GameDriver invaders_driver =
 	invaders_rom,
 	0, 0,
 	invaders_sample_names,
-	0,	/* sound_prom */
+	0,      /* sound_prom */
 
-	0/*TBR*/, invaders_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	invaders_input_ports,
 
 	0, palette, 0,
 	ORIENTATION_DEFAULT,
@@ -1141,9 +1965,9 @@ struct GameDriver earthinv_driver =
 	earthinv_rom,
 	0, 0,
 	invaders_sample_names,
-	0,	/* sound_prom */
+	0,      /* sound_prom */
 
-	0/*TBR*/, earthinv_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	earthinv_input_ports,
 
 	0, palette, 0,
 	ORIENTATION_DEFAULT,
@@ -1161,9 +1985,9 @@ struct GameDriver spaceatt_driver =
 	spaceatt_rom,
 	0, 0,
 	invaders_sample_names,
-	0,	/* sound_prom */
+	0,      /* sound_prom */
 
-	0/*TBR*/, spaceatt_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	spaceatt_input_ports,
 
 	0, palette, 0,
 	ORIENTATION_DEFAULT,
@@ -1181,9 +2005,9 @@ struct GameDriver invrvnge_driver =
 	invrvnge_rom,
 	0, 0,
 	invaders_sample_names,
-	0,	/* sound_prom */
+	0,      /* sound_prom */
 
-	0/*TBR*/, desterth_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	desterth_input_ports,
 
 	0, palette, 0,
 	ORIENTATION_DEFAULT,
@@ -1201,9 +2025,9 @@ struct GameDriver invdelux_driver =
 	invdelux_rom,
 	0, 0,
 	invaders_sample_names,
-	0,	/* sound_prom */
+	0,      /* sound_prom */
 
-	0/*TBR*/, invdelux_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	invdelux_input_ports,
 
 	0, palette, 0,
 	ORIENTATION_DEFAULT,
@@ -1212,24 +2036,25 @@ struct GameDriver invdelux_driver =
 };
 
 /* LT 24-11-1997 */
+/* LT 20-3-1998 UPDATED */
 struct GameDriver invadpt2_driver =
 {
 	"Space Invaders Part II (Taito)",
 	"invadpt2",
 	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nValerio Verrando\nLee Taylor\nMarco Cassili",
-	&lrescue_machine_driver,
+	&invadpt2_machine_driver,
 
 	invaders2_rom,
 	0, 0,
 	invaders_sample_names,
-	0,	/* sound_prom */
+	0,      /* sound_prom */
 
-	0/*TBR*/, invadpt2_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	invadpt2_input_ports,
 
-	0, palette, 0,
+	0,palette, 0,
 	ORIENTATION_DEFAULT,
 
-        invdelux_hiload, invdelux_hisave
+	invdelux_hiload, invdelux_hisave
 };
 
 
@@ -1243,9 +2068,9 @@ struct GameDriver galxwars_driver =
 	galxwars_rom,
 	0, 0,
 	invaders_sample_names,
-	0,	/* sound_prom */
+	0,      /* sound_prom */
 
-	0/*TBR*/, galxwars_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	galxwars_input_ports,
 
 	0, palette, 0,
 	ORIENTATION_DEFAULT,
@@ -1263,9 +2088,9 @@ struct GameDriver lrescue_driver =
 	lrescue_rom,
 	0, 0,
 	invaders_sample_names,
-	0,	/* sound_prom */
+	0,      /* sound_prom */
 
-	0/*TBR*/, lrescue_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	lrescue_input_ports,
 
 	0, palette, 0,
 	ORIENTATION_DEFAULT,
@@ -1279,14 +2104,14 @@ struct GameDriver desterth_driver =
 	"Destination Earth",
 	"desterth",
 	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nValerio Verrando\nMarco Cassili",
-        &machine_driver,
+	&machine_driver,
 
 	desterth_rom,
 	0, 0,
 	invaders_sample_names,
-	0,	/* sound_prom */
+	0,      /* sound_prom */
 
-	0/*TBR*/, desterth_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	desterth_input_ports,
 
 	0, palette, 0,
 	ORIENTATION_DEFAULT,
@@ -1302,12 +2127,12 @@ struct GameDriver cosmicmo_driver =
 	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nValerio Verrando\nLee Taylor\nMarco Cassili",
 	&machine_driver,
 
-        cosmicmo_rom,
+	cosmicmo_rom,
 	0, 0,
 	invaders_sample_names,
-	0,	/* sound_prom */
+	0,      /* sound_prom */
 
-	0/*TBR*/, cosmicmo_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	cosmicmo_input_ports,
 
 	0, palette, 0,
 	ORIENTATION_DEFAULT,
@@ -1328,14 +2153,14 @@ struct GameDriver spaceph_driver =
 	spaceph_rom,
 	0, 0,
 	invaders_sample_names,
-	0,	/* sound_prom */
+	0,      /* sound_prom */
 
-	0/*TBR*/, spaceph_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	spaceph_input_ports,
 
 	0, palette, 0,
 	ORIENTATION_DEFAULT,
 
-        0,0
+	0,0
 };
 
 /* LT 3-12-1997 */
@@ -1349,9 +2174,9 @@ struct GameDriver rollingc_driver =
 	rollingc_rom,
 	0, 0,
 	invaders_sample_names,
-	0,	/* sound_prom */
+	0,      /* sound_prom */
 
-	0/*TBR*/, rollingc_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	rollingc_input_ports,
 
 	0,rollingc_palette, 0,
 	ORIENTATION_DEFAULT,
@@ -1359,3 +2184,171 @@ struct GameDriver rollingc_driver =
 	0, 0
 };
 
+
+struct GameDriver bandido_driver =                                                              /* MJC */
+{
+	"Bandido",
+	"bandido",
+	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nMirko Buffoni\nValerio Verrando\nMike Coates\n",
+	&bandido_machine_driver,
+
+	bandido_rom,
+	0, 0,
+	0,
+	0,      /* sound_prom */
+
+	bandido_input_ports,
+
+	0, palette, 0,
+	ORIENTATION_DEFAULT,
+
+	0,0
+};
+
+struct GameDriver boothill_driver =                                                     /* MJC 310198 */
+{
+	"Boot Hill",
+	"boothill",
+	"Michael Strutts (Space Invaders emulator)\nNicola Salmoria\nTormod Tjaberg (sound)\nMirko Buffoni\nValerio Verrando\nMarco Cassili\nMike Balfour\nMike Coates\n\n(added samples)\n Howie Cohen \n Douglas Silfen \n Eric Lundquist",
+	&boothill_machine_driver,
+
+	boothill_rom,
+	0, 0,
+	boothill_sample_names,
+	0,      /* sound_prom */
+
+	boothill_input_ports,
+
+	0, palette, 0,
+	ORIENTATION_DEFAULT,
+
+	0,0
+};
+
+
+/* LT 20-3-1998 */
+struct GameDriver astinvad_driver =
+{
+	"Astro Invader",
+	"astinvad",
+	"Lee Taylor\n",
+	&astinvad_machine_driver,
+
+	astinvad_rom,
+	0, 0,
+	invaders_sample_names,
+	0,      /* sound_prom */
+
+	astinvad_input_ports,
+
+	0, astinvad_palette, 0,
+	ORIENTATION_DEFAULT,
+
+	0,0
+};
+
+/* LT 20-2-1998 */
+struct GameDriver schaser_driver =
+{
+	"Space Chaser",
+	"schaser",
+	"Lee Taylor\n",
+	&schaser_machine_driver,
+
+	schaser_rom,
+	0, 0,
+	invaders_sample_names,
+	0,      /* sound_prom */
+
+	schaser_input_ports,
+
+	0, palette, 0,
+	ORIENTATION_DEFAULT,
+
+	0,0
+};
+
+/* LT 20-2-1998 */
+struct GameDriver zzzap_driver =
+{
+	"Zzap",
+	"zzzap",
+	"Lee Taylor\n",
+	&zzzap_machine_driver,
+
+	zzzap_rom,
+	0, 0,
+	invaders_sample_names,
+	0,      /* sound_prom */
+
+	lrescue_input_ports,
+
+	0, palette, 0,
+	ORIENTATION_DEFAULT,
+
+	0,0
+};
+
+
+/* LT 20-2-1998 */
+struct GameDriver tornbase_driver =
+{
+	"Tornado BaseBall",
+	"tornbase",
+	"Lee Taylor\n",
+	&tornbase_machine_driver,
+
+	tornbase_rom,
+	0, 0,
+	invaders_sample_names,
+	0,      /* sound_prom */
+
+	tornbase_input_ports,
+
+	0, palette, 0,
+	ORIENTATION_ROTATE_90,
+
+	0,0
+};
+
+/* LT 20 - 3 19978 */
+struct GameDriver kamikaze_driver =
+{
+	"Kamikaze",
+	"kamikaze",
+	"Lee Taylor\n",
+	&astinvad_machine_driver,
+
+	kamikaze_rom,
+	0, 0,
+	invaders_sample_names,
+	0,      /* sound_prom */
+
+	astinvad_input_ports,
+
+	0, astinvad_palette, 0,
+	ORIENTATION_DEFAULT,
+
+	0,0
+};
+
+/* L.T 11/3/1998 */
+struct GameDriver maze_driver =
+{
+	"The Amazing Maze Game",
+	"maze",
+	"Space Invaders Team\nLee Taylor\n",
+	&tornbase_machine_driver,
+
+	maze_rom,
+	0, 0,
+	invaders_sample_names,
+	0,      /* sound_prom */
+
+	maze_input_ports,
+
+	0, palette, 0,
+	ORIENTATION_ROTATE_90,
+
+	0,0
+};

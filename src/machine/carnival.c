@@ -8,7 +8,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "Z80.h"
 
 
 
@@ -22,10 +21,10 @@ int carnival_interrupt(void)
 		if (coin == 0)
 		{
 			coin = 1;
-			Z80_Reset();	/* cause a reset, IN3 will be read and the coin acknowledged */
+			cpu_reset(0);	/* cause a CPU reset, IN3 will be read and the coin acknowledged */
 		}
 	}
 	else coin = 0;
 
-	return Z80_IGNORE_INT;
+	return ignore_interrupt();
 }

@@ -64,8 +64,7 @@ void gottlieb_vh_init_color_palette(unsigned char *palette, unsigned char *color
 void gottlieb_sh_w(int offset, int data);
 void gottlieb_characterram_w(int offset, int data);
 int gottlieb_sh_init(const char *gamename);
-void gottlieb_sh_update(void);
-void gottlieb_output(int offset, int data);
+void gottlieb_video_outputs(int offset,int data);
 extern unsigned char *gottlieb_paletteram;
 extern unsigned char *gottlieb_characterram;
 void gottlieb_paletteram_w(int offset,int data);
@@ -74,10 +73,6 @@ void gottlieb_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 extern struct MemoryReadAddress gottlieb_sound_readmem[];
 extern struct MemoryWriteAddress gottlieb_sound_writemem[];
-int gottlieb_sh_start(void);
-void gottlieb_sh_stop(void);
-void gottlieb_sh_update(void);
-int gottlieb_sh_interrupt(void);
 
 
 static struct MemoryReadAddress readmem[] =
@@ -102,7 +97,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x7000, 0x7000, MWA_RAM },    /* watchdog timer clear */
 	{ 0x7001, 0x7001, MWA_RAM },    /* trackball: not used */
 	{ 0x7002, 0x7002, gottlieb_sh_w }, /* sound/speech command */
-	{ 0x7003, 0x7003, gottlieb_output },       /* OUT1 */
+	{ 0x7003, 0x7003, gottlieb_video_outputs },       /* OUT1 */
 	{ 0x7004, 0x7004, MWA_RAM },    /* OUT2 */
 	{ 0x8000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
@@ -137,7 +132,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING (   0x80, "20000" )
 
 	PORT_START	/* IN1 */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Advance in Service Mode", OSD_KEY_F1, IP_JOY_NONE, 0 )
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Select in Service Mode", OSD_KEY_F1, IP_JOY_NONE, 0 )
 	PORT_BITX(0x02, 0x02, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
 	PORT_DIPSETTING (   0x02, "Off" )
 	PORT_DIPSETTING (   0x00, "On" )
@@ -191,6 +186,18 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
+
+
+static struct DACinterface dac_interface =
+{
+	1,
+	441000,
+	{ 255 },
+	{ 0 },
+};
+
+
+
 static const struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -207,11 +214,11 @@ static const struct MachineDriver machine_driver =
 			3579545/4,        /* could it be /2 ? */
 			2,             /* memory region #2 */
 			gottlieb_sound_readmem,gottlieb_sound_writemem,0,0,
-			gottlieb_sh_interrupt,1
+			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
 	},
-	60,     /* frames / second */
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,      /* init machine */
 
 	/* video hardware */
@@ -227,11 +234,16 @@ static const struct MachineDriver machine_driver =
 	gottlieb_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	gottlieb_sh_start,
-	gottlieb_sh_stop,
-	gottlieb_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_DAC,
+			&dac_interface
+		}
+	}
 };
+
+
 
 ROM_START( reactor_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
@@ -256,6 +268,8 @@ ROM_START( reactor_rom )
 	ROM_LOAD( "SND2", 0xf800, 0x800, 0x10e64e0a )
 		ROM_RELOAD(0x7800, 0x800) /* A15 is not decoded */
 ROM_END
+
+
 
 static int hiload(void)
 {
@@ -282,11 +296,13 @@ static void hisave(void)
 	}
 }
 
+
+
 struct GameDriver reactor_driver =
 {
 	"Reactor",
 	"reactor",
-	"FABRICE FRANCES",
+	"Fabrice Frances",
 	&machine_driver,
 
 	reactor_rom,
@@ -294,7 +310,7 @@ struct GameDriver reactor_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

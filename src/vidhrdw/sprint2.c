@@ -16,6 +16,8 @@ extern int sprint2_gear1;
 extern int sprint2_gear2;
 
 /* local */
+void sprint_vh_screenrefresh(struct osd_bitmap *bitmap);
+
 unsigned char *sprint2_horiz_ram;
 unsigned char *sprint2_vert_car_ram;
 
@@ -89,7 +91,7 @@ It might seem strange to put the collision-checking routine in vidhrdw.
 However, the way Sprint2 hardware collision-checking works is by sending
 the video signals for the grey cars, white car, black car, black background,
 and white background through a series of logic gates.  This effectively checks
-for collisions at a pixel-by-pixel basis.  So we'll do the same thing, but 
+for collisions at a pixel-by-pixel basis.  So we'll do the same thing, but
 with a little bit of smarts - there can only be collisions where the black
 car and white car are located, so we'll base our checks on these two locations.
 
@@ -179,7 +181,7 @@ void sprint2_check_collision1(struct osd_bitmap *bitmap)
             videoram[offs] & 0x3F, (videoram[offs] & 0x80)>>7,
 			0,0,sx,sy, &clip,TRANSPARENCY_NONE,0);
 
-    
+
     /* Grey car 1 */
     sx=30*8-sprint2_horiz_ram[GREY_CAR1];
     sy=31*8-sprint2_vert_car_ram[GREY_CAR1*2];
@@ -198,7 +200,7 @@ void sprint2_check_collision1(struct osd_bitmap *bitmap)
 
     drawgfx(grey_cars_vid,Machine->gfx[1],
             (sprint2_vert_car_ram[GREY_CAR2*2+1]>>3), GREY_CAR2,
-            0,0,sx,sy,&clip,TRANSPARENCY_PEN,Machine->pens[1]);
+            0,0,sx,sy,&clip,TRANSPARENCY_COLOR,1);
 
 
     /* Black car */
@@ -241,7 +243,7 @@ void sprint2_check_collision1(struct osd_bitmap *bitmap)
                }
         }
     }
-        
+
 }
 
 void sprint2_check_collision2(struct osd_bitmap *bitmap)
@@ -339,7 +341,7 @@ void sprint2_check_collision2(struct osd_bitmap *bitmap)
 
     drawgfx(grey_cars_vid,Machine->gfx[1],
             (sprint2_vert_car_ram[GREY_CAR2*2+1]>>3), GREY_CAR2,
-            0,0,sx,sy,&clip,TRANSPARENCY_PEN,Machine->pens[1]);
+            0,0,sx,sy,&clip,TRANSPARENCY_COLOR,1);
 
 
     /* White car */
@@ -384,6 +386,48 @@ void sprint2_check_collision2(struct osd_bitmap *bitmap)
     }
 }
 
+/***************************************************************************
+***************************************************************************/
+
+void sprint2_vh_screenrefresh(struct osd_bitmap *bitmap)
+{
+        char gear_buf[6] = {0x07,0x05,0x01,0x12,0x00,0x00}; /* "GEAR  " */
+        int offs;
+
+        sprint_vh_screenrefresh(bitmap);
+
+        /* gear shift indicators - not a part of the original game!!! */
+        gear_buf[5]=0x30 + sprint2_gear1;
+        for (offs = 0; offs < 6; offs++)
+                drawgfx(bitmap,Machine->gfx[0],
+                        gear_buf[offs],1,
+                        0,0,(offs+25)*8,30*8,
+                        &Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+
+        gear_buf[5]=0x30 + sprint2_gear2;
+        for (offs = 0; offs < 6; offs++)
+                drawgfx(bitmap,Machine->gfx[0],
+                        gear_buf[offs],0,
+                        0,0,(offs+1)*8,30*8,
+                        &Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+
+}
+
+void sprint1_vh_screenrefresh(struct osd_bitmap *bitmap)
+{
+        char gear_buf[6] = {0x07,0x05,0x01,0x12,0x00,0x00}; /* "GEAR  " */
+        int offs;
+
+        sprint_vh_screenrefresh(bitmap);
+
+        /* gear shift indicators - not a part of the original game!!! */
+        gear_buf[5]=0x30 + sprint2_gear1;
+        for (offs = 0; offs < 6; offs++)
+                drawgfx(bitmap,Machine->gfx[0],
+                        gear_buf[offs],1,
+                        0,0,(offs+12)*8,30*8,
+                        &Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+}
 
 /***************************************************************************
 
@@ -392,10 +436,9 @@ void sprint2_check_collision2(struct osd_bitmap *bitmap)
   the main emulation engine.
 
 ***************************************************************************/
-void sprint2_vh_screenrefresh(struct osd_bitmap *bitmap)
+void sprint_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
         int offs,car;
-        char gear_buf[6] = {0x07,0x05,0x01,0x12,0x00,0x00}; /* "GEAR  " */
 
     /* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
@@ -409,7 +452,7 @@ void sprint2_vh_screenrefresh(struct osd_bitmap *bitmap)
                         dirtybuffer[offs]=0;
 
                         charcode = videoram[offs] & 0x3F;
-        
+
                         sx = 8 * (offs % 32);
                         sy = 8 * (offs / 32);
                         drawgfx(tmpbitmap,Machine->gfx[0],
@@ -433,24 +476,9 @@ void sprint2_vh_screenrefresh(struct osd_bitmap *bitmap)
                 drawgfx(bitmap,Machine->gfx[1],
                         (sprint2_vert_car_ram[car*2+1]>>3), car,
                         0,0,sx,sy,
-                        &Machine->drv->visible_area,TRANSPARENCY_PEN,Machine->pens[1]);
+                        &Machine->drv->visible_area,TRANSPARENCY_COLOR,1);
 
         }
-
-        /* gear shift indicators - not a part of the original game!!! */
-        gear_buf[5]=0x30 + sprint2_gear1;
-        for (offs = 0; offs < 6; offs++)
-                drawgfx(bitmap,Machine->gfx[0],
-                        gear_buf[offs],1,
-                        0,0,(offs+25)*8,30*8,
-                        &Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-
-        gear_buf[5]=0x30 + sprint2_gear2;
-        for (offs = 0; offs < 6; offs++)
-                drawgfx(bitmap,Machine->gfx[0],
-                        gear_buf[offs],0,
-                        0,0,(offs+1)*8,30*8,
-                        &Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
        /* Refresh our collision detection buffers */
        sprint2_check_collision1(bitmap);

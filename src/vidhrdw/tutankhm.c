@@ -13,8 +13,9 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-unsigned char tut_paletteram[16];
-unsigned char *tut_scrollx;
+unsigned char tutankhm_paletteram[16];
+unsigned char *tutankhm_scrollx;
+static int flipscreen[2];
 
 
 
@@ -24,7 +25,7 @@ unsigned char *tut_scrollx;
   This routine sets up the color tables to simulate it.
 
 ***************************************************************************/
-void tut_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+void tutankhm_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
 {
 	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
@@ -39,39 +40,17 @@ void tut_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable
 		*(palette++) = ((i & 2) >> 1) * 0xff;
 		*(palette++) = ((i & 4) >> 2) * 0xff;
 	}
-
-	/* initialize the color table */
-	for (i = 0;i < TOTAL_COLORS(0);i++)
-		COLOR(0,i) = i;
 }
 
 
-void tut_videoram_w(int offset,int data)
-{
-	if (videoram[offset] != data)
-	{
-		unsigned char *lookup = Machine->gfx[0]->colortable;
-		unsigned char x, y;
 
-		/* bitmap is rotated -90 deg. */
-		x = ( offset >> 7 );
-		y = ( ( ~offset ) & 0x7f ) << 1;
-
-		tmpbitmap->line[ y ][ x ] = lookup[data >> 4];
-		tmpbitmap->line[ y + 1 ][ x ] = lookup[data & 0x0f];
-
-		videoram[offset] = data;
-	}
-}
-
-
-void tut_palette_w(int offset,int data)
+void tutankhm_palette_w(int offset,int data)
 {
 	int r, g, b;
 	int bit0,bit1,bit2;
 
 
-	tut_paletteram[offset] = data;
+	tutankhm_paletteram[offset] = data;
 
 	/* red component */
 	bit0 = (data >> 0) & 0x01;
@@ -89,8 +68,86 @@ void tut_palette_w(int offset,int data)
 	bit2 = (data >> 7) & 0x01;
 	b = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
 
-	osd_modify_pen (Machine->gfx[0]->colortable[offset], r, g, b);
+	osd_modify_pen(Machine->pens[offset], r, g, b);
 }
+
+
+
+static void videowrite(int offset,int data)
+{
+	unsigned char x1,x2,y1,y2;
+
+
+	x1 = ( offset & 0x7f ) << 1;
+	y1 = ( offset >> 7 );
+	x2 = x1 + 1;
+	y2 = y1;
+
+	if (flipscreen[0])
+	{
+		x1 = 255 - x1;
+		x2 = 255 - x2;
+	}
+	if (flipscreen[1])
+	{
+		y1 = 255 - y1;
+		y2 = 255 - y2;
+	}
+
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
+	{
+		int temp;
+
+
+		temp = x1;
+		x1 = y1;
+		y1 = temp;
+		temp = x2;
+		x2 = y2;
+		y2 = temp;
+	}
+	if (Machine->orientation & ORIENTATION_FLIP_X)
+	{
+		x1 = 255 - x1;
+		x2 = 255 - x2;
+	}
+	if (Machine->orientation & ORIENTATION_FLIP_Y)
+	{
+		y1 = 255 - y1;
+		y2 = 255 - y2;
+	}
+
+	tmpbitmap->line[y1][x1] = Machine->pens[data & 0x0f];
+	tmpbitmap->line[y2][x2] = Machine->pens[data >> 4];
+}
+
+
+
+void tutankhm_videoram_w(int offset,int data)
+{
+	if (videoram[offset] != data)
+	{
+		videoram[offset] = data;
+		videowrite(offset,data);
+	}
+}
+
+
+
+void tutankhm_flipscreen_w(int offset,int data)
+{
+	if (flipscreen[offset] != (data & 1))
+	{
+		int offs;
+
+
+		flipscreen[offset] = data & 1;
+		/* refresh the display */
+		for (offs = 0;offs < videoram_size;offs++)
+			videowrite(offs,videoram[offs]);
+	}
+}
+
 
 
 /***************************************************************************
@@ -100,18 +157,34 @@ void tut_palette_w(int offset,int data)
   the main emulation engine.
 
 ***************************************************************************/
-void tut_vh_screenrefresh(struct osd_bitmap *bitmap)
+void tutankhm_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
 	/* copy the temporary bitmap to the screen */
 	{
 		int scroll[32], i;
 
 
-		for (i = 0;i < 8;i++)
-			scroll[i] = 0;
-		for (i = 8;i < 32;i++)
-			scroll[i] = -(*tut_scrollx);
+		if (flipscreen[0])
+		{
+			for (i = 0;i < 8;i++)
+				scroll[i] = 0;
+			for (i = 8;i < 32;i++)
+			{
+				scroll[i] = -*tutankhm_scrollx;
+				if (flipscreen[1]) scroll[i] = -scroll[i];
+			}
+		}
+		else
+		{
+			for (i = 0;i < 24;i++)
+			{
+				scroll[i] = -*tutankhm_scrollx;
+				if (flipscreen[1]) scroll[i] = -scroll[i];
+			}
+			for (i = 24;i < 32;i++)
+				scroll[i] = 0;
+		}
 
-		copyscrollbitmap(bitmap,tmpbitmap,32,scroll,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
 }

@@ -47,20 +47,22 @@ write:
 c000      NMI enable
 
 interrupts:
-NMI used for timing (music etc), clocked at (I think) 8V
+NMI used for timing (music etc), clocked at 8V
 IRQ triggered by commands sent by the main CPU.
+
+
+Main clock: XTAL = 12 MHz
+Horizontal video frequency: HSYNC = XTAL/768?? = 15.625 kHz ??
+Video frequency: VSYNC = HSYNC/272 = 57.44 Hz ?
+VBlank duration: 1/VSYNC * (24/272) = 1536 us ?
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/generic.h"
-#include "sndhrdw/8910intf.h"
+#include "M6502/M6502.h"
 
 
-
-int btime_DSW1_r(int offset);
-int btime_interrupt(void);
 
 void btime_paletteram_w(int offset,int data);
 void btime_background_w(int offset,int data);
@@ -71,9 +73,13 @@ void btime_mirrorcolorram_w(int offset,int data);
 void btime_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void btime_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-void btime_sh_interrupt_enable_w(int offset,int data);
-int btime_sh_interrupt(void);
-int btime_sh_start(void);
+
+
+static void btime_sound_command_w(int offset,int data)
+{
+	soundlatch_w(offset,data);
+	cpu_cause_interrupt(1,INT_IRQ);
+}
 
 
 
@@ -101,7 +107,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x1800, 0x1bff, btime_mirrorvideoram_w },
 	{ 0x1c00, 0x1fff, btime_mirrorcolorram_w },
 	{ 0x4000, 0x4000, MWA_NOP },
-	{ 0x4003, 0x4003, sound_command_w },
+	{ 0x4003, 0x4003, btime_sound_command_w },
 	{ 0x4004, 0x4004, btime_background_w },
 	{ 0xb000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
@@ -113,7 +119,7 @@ static struct MemoryReadAddress sound_readmem[] =
 {
 	{ 0x0000, 0x03ff, MRA_RAM },
 	{ 0xf000, 0xffff, MRA_ROM },
-	{ 0xa000, 0xa000, sound_command_latch_r },
+	{ 0xa000, 0xa000, soundlatch_r },
 	{ -1 }	/* end of table */
 };
 
@@ -124,7 +130,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x4000, 0x4000, AY8910_control_port_0_w },
 	{ 0x6000, 0x6000, AY8910_write_port_1_w },
 	{ 0x8000, 0x8000, AY8910_control_port_1_w },
-	{ 0xc000, 0xc000, btime_sh_interrupt_enable_w },
+	{ 0xc000, 0xc000, interrupt_enable_w },
 	{ 0xf000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -149,13 +155,10 @@ int btime_interrupt(void)
 			coin = 1;
 			return interrupt();
 		}
-		else return ignore_interrupt();
 	}
-	else
-	{
-		coin = 0;
-		return ignore_interrupt();
-	}
+	else coin = 0;
+
+	return ignore_interrupt();
 }
 
 
@@ -289,6 +292,28 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
+/* The original Burger Time has color RAM, but the bootleg uses a PROM. */
+static unsigned char hamburge_color_prom[] =
+{
+	0x00,0xFF,0x2F,0x3F,0x07,0x38,0x1E,0x2B,0x00,0xAD,0xF8,0xC0,0xFF,0x07,0x3F,0xC7,
+	0x00,0xFF,0x2F,0x3F,0x07,0x38,0x1E,0x2B,0x00,0xAD,0xF8,0xC0,0xFF,0x07,0x3F,0xC7
+};
+
+
+
+static struct AY8910interface ay8910_interface =
+{
+	2,	/* 2 chips */
+	1500000,	/* 1.5 MHz ? (hand tuned) */
+	{ 0x20ff, 0x20ff },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 }
+};
+
+
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -302,14 +327,14 @@ static struct MachineDriver machine_driver =
 		},
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
-			500000,	/* 500 khz */
+			500000,	/* 500 kHz */
 			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,0,0,
-			btime_sh_interrupt,30	/* / 2 = 15 (??) NMI interrupts per frame */
+			nmi_interrupt,16	/* IRQs are triggered by the main CPU */
 		}
 	},
-	60,
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	57, 1536, //DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
 	/* video hardware */
@@ -325,10 +350,13 @@ static struct MachineDriver machine_driver =
 	btime_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	btime_sh_start,
-	AY8910_sh_stop,
-	AY8910_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&ay8910_interface
+		}
+	}
 };
 
 
@@ -388,6 +416,31 @@ ROM_START( btimea_rom )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "aa14.12h",   0xf000, 0x1000, 0x06b5888d )
+ROM_END
+
+ROM_START( hamburge_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	/* the following might be wrong - ROMs seem encrypted */
+	ROM_LOAD( "inc.1", 0xc000, 0x2000, 0x5e7aae64 )
+	ROM_LOAD( "inc.2", 0xe000, 0x2000, 0x57e824c8 )
+
+	ROM_REGION(0x7800)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "inc.9", 0x0000, 0x2000, 0x2cd80018 )	/* charset #1 */
+	ROM_LOAD( "inc.8", 0x2000, 0x2000, 0x940f50fd )
+	ROM_LOAD( "inc.7", 0x4000, 0x2000, 0xdd7cc6dc )
+	ROM_LOAD( "inc.5", 0x6000, 0x0800, 0x241199e7 )	/* garbage?? */
+	ROM_CONTINUE(      0x6000, 0x0800 )		/* charset #2 */
+	ROM_LOAD( "inc.4", 0x6800, 0x0800, 0x02c16917 )	/* garbage?? */
+	ROM_CONTINUE(      0x6800, 0x0800 )
+	ROM_LOAD( "inc.3", 0x7000, 0x0800, 0xc8b931bf )	/* garbage?? */
+	ROM_CONTINUE(      0x7000, 0x0800 )
+
+	ROM_REGION(0x0800)	/* background graphics */
+	/* this ROM is missing? maybe the hardware works differently */
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "inc.6", 0x0000, 0x1000, 0x3c760fb8 )	/* starts at 0000, not f000; 0000-01ff is RAM */
+	ROM_RELOAD(        0xf000, 0x1000 )	/* for the reset/interrupt vectors */
 ROM_END
 
 
@@ -604,7 +657,7 @@ struct GameDriver btime_driver =
 	0,
 	0,	/* sound_prom */
 
-    0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+    input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -624,9 +677,29 @@ struct GameDriver btimea_driver =
 	0,
 	0,	/* sound_prom */
 
-    0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+    input_ports,
 
 	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	hiload, hisave
+};
+
+struct GameDriver hamburge_driver =
+{
+	"Hamburger",
+	"hamburge",
+	"Kevin Brisley (Replay emulator)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)",
+	&machine_driver,
+
+	hamburge_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+    input_ports,
+
+	hamburge_color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave

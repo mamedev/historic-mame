@@ -4,14 +4,6 @@
 
 #define MAX_PSG 5
 
-
-#ifndef SAMPLE_16BIT
-typedef signed char SAMPLE;
-#else
-typedef signed short SAMPLE;
-#endif
-
-
 /*
 ** Initialize AY8910 emulator(s).
 **
@@ -20,7 +12,7 @@ typedef signed short SAMPLE;
 ** 'rate' is sampling rate and 'bufsiz' is the size of the
 ** buffer that should be updated at each interval
 */
-int AYInit(int num, int clock, int rate, int bufsiz, SAMPLE **buffer );
+int AYInit(int num, int clock, int rate, int bitsize, int bufsiz, void **buffer );
 
 /*
 ** shutdown the AY8910 emulators .. make sure that no sound system stuff
@@ -61,7 +53,7 @@ void AYSetClock(int n,int clock,int rate);
 ** set output gain
 **
 ** The gain is expressed in 0.2dB increments, e.g. a gain of 10 is an increase
-** of 2dB. Note that the gain aìonly affects sounds not playing at full volume,
+** of 2dB. Note that the gain only affects sounds not playing at full volume,
 ** since the ones at full volume are already played at the maximum intensity
 ** allowed by the sound card.
 ** 0x00 is the default.

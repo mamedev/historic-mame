@@ -1,17 +1,42 @@
 #include "driver.h"
 #include "machine/Z80fmly.h"
-#include "generic.h"
-#include "sn76496.h"
 #include <math.h>
 
 /* mixing level */
 #define SINGLE_VOLUME 32
 #define SSG_VOLUME 255
 
-/* z80 pio , ctc */
-#define CPU_CLOCK 2000000
-static Z80PIO pio;
-static Z80CTC ctc;
+/* z80 pio */
+static void pio_interrupt(int state)
+{
+	cpu_cause_interrupt (1, Z80_VECTOR(0,state) );
+}
+
+static z80pio_interface pio_intf =
+{
+	1,
+	{pio_interrupt},
+	{0},
+	{0}
+};
+
+/* z80 ctc */
+static void ctc_interrupt (int state)
+{
+	cpu_cause_interrupt (1, Z80_VECTOR(1,state) );
+}
+
+static z80ctc_interface ctc_intf =
+{
+	1,                   /* 1 chip */
+	{ 0 },               /* clock (filled in from the CPU 0 clock */
+	{ NOTIMER_2 },       /* timer disables */
+	{ ctc_interrupt },   /* interrupt handler */
+	{ z80ctc_0_trg1_w }, /* ZC/TO0 callback */
+	{ 0 },               /* ZC/TO1 callback */
+	{ 0 }                /* ZC/TO2 callback */
+};
+
 
 /* single tone generator */
 #define SINGLE_LENGTH 10000
@@ -21,64 +46,10 @@ static char *single;
 static int single_rate = 1000;
 static int single_volume = 0;
 
-
-
-void starforce_pio_w( int offset , int data )
-{
-	z80pio_w( &pio , (offset/2)&0x01 , offset&0x01 , data );
-}
-
-int starforce_pio_r( int offset )
-{
-	return z80pio_r( &pio , (offset/2)&0x01 , offset&0x01 );
-}
-
-int starforce_pio_p_r( int offset )
-{
-	return z80pio_p_r( &pio , 0 );
-}
-
-void  starforce_ctc_w( int offset , int data )
-{
-	z80ctc_w( &ctc , offset , data );
-}
-
-int starforce_ctc_r( int offset  )
-{
-	return z80ctc_r( &ctc , offset );
-}
-
-
-
-void starforce_volume_w( int offset , int data )
+void starforc_volume_w( int offset , int data )
 {
 	single_volume = ((data & 0x0f)<<4)|(data & 0x0f);
 }
-
-int starforce_sh_interrupt(void)
-{
-	int irq = 0;
-
-	/* ctc2 timer single tone generator frequency */
-	single_rate = Machine->drv->cpu[1].cpu_clock / ctc.tconst[2] * ((ctc.mode[2]&0x20)? 1:16);
-#if 0
-	z80ctc_update( &ctc,2, 1,0);	/* tone freq. */
-	ctc_update(&ctc,3,0,0);			/* not use    */
-#endif
-	/* ctc_0 cascade to ctc_1 , interval interrupt */
-	if( z80ctc_update(&ctc,1,z80ctc_update(&ctc,0,1,0),0 ) ){
-		/* interrupt check */
-		if( (irq = z80ctc_irq_r(&ctc)) != Z80_IGNORE_INT ) return irq;
-	}
-	/* pio interrupt check */
-	if (pending_commands){
-		z80pio_p_w( &pio , 0 , sound_command_r(0) );
-		if( (irq = z80pio_irq_r(&pio)) != Z80_IGNORE_INT ) return irq;
-	}
-	return Z80_IGNORE_INT;
-}
-
-
 
 static struct SN76496interface interface =
 {
@@ -87,20 +58,55 @@ static struct SN76496interface interface =
 	{ 255, 255, 255 }
 };
 
-
-
-int starforce_sh_start(void)
+int starforc_sh_start(void)
 {
 	int i;
 
 
-	pending_commands = 0;
-
 	if (SN76496_sh_start(&interface) != 0)
 		return 1;
 
-	z80ctc_reset( &ctc , Machine->drv->cpu[1].cpu_clock );
-	z80pio_reset( &pio );
+	/* z80 ctc init */
+	ctc_intf.clock[0] = Machine->drv->cpu[1].cpu_clock;
+	z80ctc_init (&ctc_intf);
+
+	/* z80 pio init */
+	z80pio_init (&pio_intf);
+
+	/* setup daisy chain connection */
+	{
+		static Z80_DaisyChain daisy_chain[] =
+		{
+			{ z80pio_reset , z80pio_interrupt, z80pio_reti , 0 }, /* device 0 = PIO_0 , low  priority */
+			{ z80ctc_reset , z80ctc_interrupt, z80ctc_reti , 0 }, /* device 1 = CTC_0 , high priority */
+			{ 0,0,0,-1}        /* end mark */
+		};
+		cpu_setdaisychain (1,daisy_chain );
+/*
+	daisy_chain is connect link for Z80 daisy-chain .
+	paramater is
+	{ pointer of reset , pointer of interrupt entry,pointer of RETI handler , device paramater }
+
+	reset           : This function is called when z80 cpu reset
+	interrupt entry : This function is called when z80 interrupt entry for this device
+	                  It shoud be change interrupt status and
+	                  set new status with cpu_cause_interrupt function
+	                  return value is interrupt vector
+
+	RETI handler    : This function is called when z80 reti operation for this device
+	                  It shoud be change interrupt status and
+	                  set new status with cpu_cause_interrupt function
+
+	handler shoud be allocate static.
+	Because this pointers is used when reset cpu.
+
+	The daisy chain link is build by this pointers.
+
+	daisy chain priority:
+		As for Priority , the top side is lower , bottom side is higher
+
+*/
+	}
 
 	if ((single = malloc(SINGLE_LENGTH)) == 0)
 	{
@@ -119,7 +125,7 @@ int starforce_sh_start(void)
 
 
 
-void starforce_sh_stop(void)
+void starforc_sh_stop(void)
 {
 	SN76496_sh_stop();
 	free(single);
@@ -127,12 +133,18 @@ void starforce_sh_stop(void)
 
 
 
-void starforce_sh_update(void)
+void starforc_sh_update(void)
 {
+	double period;
+
 	if (Machine->sample_rate == 0) return;
 
 	SN76496_sh_update();
 
-	/* CTC2 single tone generator */
+	/* ctc2 timer single tone generator frequency */
+	period = z80ctc_getperiod (0, 2);
+	if( period != 0 ) single_rate = (int)(1.0 / period );
+	else single_rate = 0;
+
 	osd_adjust_sample(4,single_rate,single_volume );
 }

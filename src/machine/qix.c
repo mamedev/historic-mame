@@ -8,14 +8,17 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "M6809.h"
+#include "timer.h"
+#include "M6809/M6809.h"
 #include "6821pia.h"
-#include "sndhrdw/dac.h"
 
 
+static int qix_sound_r (int offset);
 static void qix_dac_w (int offset, int data);
-static void qix_pia_dint (void);
 static void qix_pia_sint (void);
+static void qix_pia_dint (void);
+static int suspended;
+
 
 
 /***************************************************************************
@@ -59,16 +62,16 @@ static void qix_pia_sint (void);
 
 static pia6821_interface pia_intf =
 {
-	6,                                             /* 6 chips */
-	{ PIA_DDRA, PIA_CTLA, PIA_DDRB, PIA_CTLB },    /* offsets */
-	{ input_port_0_r, 0, 0, 0, 0, 0 },             /* input port A */
-	{ input_port_1_r, 0, 0, 0, 0, 0 },             /* input port B */
-	{ 0, 0, 0, pia_5_porta_w, pia_4_porta_w, 0 },  /* output port A */
-	{ 0, 0, 0, 0, qix_dac_w, 0 },                  /* output port B */
-	{ 0, 0, 0, pia_5_ca1_w, pia_4_ca1_w, 0 },      /* output CA2 */
-	{ 0, 0, 0, 0, 0, 0 },                          /* output CB2 */
-	{ 0, 0, 0, qix_pia_dint, qix_pia_sint, 0 },    /* IRQ A */
-	{ 0, 0, 0, qix_pia_dint, qix_pia_sint, 0 },    /* IRQ B */
+	6,                                             	/* 6 chips */
+	{ PIA_DDRA, PIA_CTLA, PIA_DDRB, PIA_CTLB },    	/* offsets */
+	{ input_port_0_r, 0, 0, 0, qix_sound_r, 0 },   	/* input port A */
+	{ input_port_1_r, 0, 0, 0, 0, 0 },             	/* input port B */
+	{ 0, 0, 0, pia_5_porta_w, pia_4_porta_w, 0 },  	/* output port A */
+	{ 0, 0, 0, 0, qix_dac_w, 0 },                  	/* output port B */
+	{ 0, 0, 0, pia_5_ca1_w, pia_4_ca1_w, 0 },      	/* output CA2 */
+	{ 0, 0, 0, 0, 0, 0 },                          	/* output CB2 */
+	{ 0, 0, 0, 0/*qix_pia_dint*/, qix_pia_sint, 0 },/* IRQ A */
+	{ 0, 0, 0, 0/*qix_pia_dint*/, qix_pia_sint, 0 },/* IRQ B */
 };
 
 
@@ -77,13 +80,7 @@ static pia6821_interface pia_intf =
 unsigned char *qix_sharedram;
 
 
-int qix_sharedram_r_1(int offset)
-{
-	return qix_sharedram[offset];
-}
-
-
-int qix_sharedram_r_2(int offset)
+int qix_sharedram_r(int offset)
 {
 	return qix_sharedram[offset];
 }
@@ -94,6 +91,14 @@ void qix_sharedram_w(int offset,int data)
 	qix_sharedram[offset] = data;
 }
 
+
+void zoo_bankswitch_w(int offset,int data)
+{
+	if (data & 0x04)
+		cpu_setbank (1, &RAM[0x10000])
+	else
+		cpu_setbank (1, &RAM[0xa000]);
+}
 
 
 void qix_video_firq_w(int offset, int data)
@@ -115,15 +120,27 @@ void qix_data_firq_w(int offset, int data)
 /* Return the current video scan line */
 int qix_scanline_r(int offset)
 {
-	return 255 - (cpu_getfcount() * 256 / cpu_getfperiod());
+	return cpu_scalebyfcount(256);
 }
 
 
 
 void qix_init_machine(void)
 {
+	suspended = 0;
+
 	/* Set OPTIMIZATION FLAGS FOR M6809 */
 	m6809_Flags = M6809_FAST_S;/* | M6809_FAST_U;*/
+
+	pia_startup (&pia_intf);
+}
+
+void zoo_init_machine(void)
+{
+	suspended = 0;
+
+	/* Set OPTIMIZATION FLAGS FOR M6809 */
+	m6809_Flags = M6809_FAST_NONE;
 
 	pia_startup (&pia_intf);
 }
@@ -135,37 +152,37 @@ void qix_init_machine(void)
 
 ***************************************************************************/
 
-static struct DACinterface dac_intf =
-{
-	1,
-	441000,
-	{ 255 },
-	{ 0 },
-};
-
-
 static void qix_dac_w (int offset, int data)
 {
 	DAC_data_w (0, data);
 }
 
+int qix_sound_r (int offset)
+{
+	/* if we've suspended the main CPU for this, trigger it and give up some of our timeslice */
+	if (suspended)
+	{
+		timer_trigger (500);
+		cpu_yielduntil_time (TIME_IN_USEC (100));
+		suspended = 0;
+	}
+	return pia_5_porta_r (offset);
+}
 
 static void qix_pia_dint (void)
 {
-	/* not used by Qix, but Zookeeper might use it; depends on a jumper on the PCB */
+	/* not used by Qix, but others might use it; depends on a jumper on the PCB */
 }
 
 static void qix_pia_sint (void)
 {
+	/* generate a sound interrupt */
 	cpu_cause_interrupt (2, M6809_INT_IRQ);
 
-	/* Sometimes the data CPU sends commands in quick succession; to prevent this from doing
-	   bad things, we kill the rest of this CPU slice. Since commands are not sent that often,
-	   and we're only losing 1/6000th of a second, I don't think it's a big deal */
-	cpu_seticount (0);
-}
+	/* wait for the sound CPU to read the command */
+	cpu_yielduntil_trigger (500);
+	suspended = 1;
 
-int qix_sh_start (void)
-{
-	return DAC_sh_start (&dac_intf);
+	/* but add a watchdog so that we're not hosed if interrupts are disabled */
+	cpu_triggertime (TIME_IN_USEC (100), 500);
 }

@@ -120,7 +120,7 @@ static void convert_color_prom(unsigned char *palette, unsigned char *colortable
    /* now check our sprites and mark which ones have color 15 ('draw under') */
 	{
 		struct GfxElement *gfx;
-		int i,x,y;
+		int x,y;
 		unsigned char *dp;
 
 		gfx = Machine->gfx[1];

@@ -8,11 +8,9 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "Z80.h"
-#include "sndhrdw/8910intf.h"
+#include "Z80/Z80.h"
 
 static int clock=0;
-static int port0e=0;
 static int port0f=0;
 
 int arabian_d7f6(int offset)
@@ -36,13 +34,17 @@ int arabian_interrupt(void)
 }
 
 
+void arabian_portB_w(int offset,int data)
+{
+	port0f = data;
+}
+
 int arabian_input_port(int offset)
 {
   int pom;
 
   if (port0f & 0x10)  /* if 1 read the switches */
   {
-
     switch(offset)
     {
     case 0:
@@ -70,7 +72,7 @@ int arabian_input_port(int offset)
 	pom = arabian_d7f8(offset);
 	break;
     default:
-	pom = RAM[ 0xd7f0 + offset ];    
+	pom = RAM[ 0xd7f0 + offset ];
      break;
     }
 
@@ -81,34 +83,4 @@ int arabian_input_port(int offset)
   }
 
   return pom;
-}
-
-
-
-void moja(int port, int val)
-{
-  Z80_Regs regs;
-  static int lastr;
-
-  Z80_GetRegs(&regs);
-
-
-  if (regs.BC.D==0xc800)
-  {
-    AY8910_control_port_0_w(port,val);
-    lastr=val;
-  }
-  else
-  {
-    if ( (lastr==0x0e) || (lastr==0x0f) )
-    {
-      if (lastr==0x0e)
-        port0e=val;
-      if (lastr==0x0f)
-        port0f=val;
-    }
-    else
-      AY8910_write_port_0_w(port,val);
-  }
-
 }

@@ -1,5 +1,15 @@
 /***************************************************************************
 
+Changes:
+	Mar 12 98 LBO
+	* Added Sinistar speech samples provided by Howie Cohen
+	* Fixed clipping circuit with help from Sean Riddle and Pat Lawrence
+
+	Mar 22 98 ASG
+	* Fixed Sinistar head drawing, did another major cleanup
+	* Rewrote the blitter routines
+	* Fixed interrupt timing finally!!!
+
 Do to:  Mystic Marathon
 Not sure of the board: Turkey shoot, Joust 2
 
@@ -41,7 +51,7 @@ c80f rom_pia_ctrlb
 C900 rom_enable_scr_ctrl  Switch between video ram and rom at 0000-97FF
 
 C940 Blaster only: Select bank in the color Prom for color remap
-C980 Blaster only: Select witch ROM is at 0000-3FFF
+C980 Blaster only: Select which ROM is at 0000-3FFF
 C9C0 Blaster only: bit 0 = enable the color 0 changing each lines
 		   bit 1 = erase back each frame
 
@@ -364,103 +374,99 @@ d000 Select bank (c000-cfff)
 ***************************************************************************/
 
 #include "driver.h"
+#include "machine/6821pia.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/generic.h"
 
 
 /**** from machine/williams.h ****/
-extern unsigned char *williams_port_select;
-extern unsigned char *williams_video_counter;
 extern unsigned char *williams_bank_base;
-void williams_init_machine(void);
+extern unsigned char *williams_video_counter;
+
+void robotron_init_machine(void);
+void joust_init_machine(void);
+void stargate_init_machine(void);
+void bubbles_init_machine(void);
+void sinistar_init_machine(void);
+void defender_init_machine(void);
+void splat_init_machine(void);
+void blaster_init_machine(void);
+void colony7_init_machine(void);
+void lottofun_init_machine(void);
+
 int williams_interrupt(void);
 void williams_vram_select_w(int offset,int data);
-int williams_input_port_0_1(int offset);
-int williams_input_port_2_3(int offset);
 
 extern unsigned char *robotron_catch;
-int robotron_catch_loop_r(int offset); /* JB 970823 */
+int robotron_catch_loop_r(int offset);
 
 extern unsigned char *stargate_catch;
-int stargate_interrupt(void);
-int stargate_catch_loop_r(int offset); /* JB 970823 */
-int stargate_input_port_0_r(int offset);
+int stargate_catch_loop_r(int offset);
 
-
-extern unsigned char *defender_irq_enable;
 extern unsigned char *defender_catch;
 extern unsigned char *defender_bank_base;
-int defender_interrupt(void);
-int defender_bank_r(int offset);
-void defender_bank_w(int offset,int data);
+int defender_catch_loop_r(int offset);
 void defender_bank_select_w(int offset,int data);
-int defender_catch_loop_r(int offset); /* JB 970823 */
 
-extern unsigned char *blaster_color_zero_table;
-extern unsigned char *blaster_color_zero_flags;
+void colony7_bank_select_w(int offset,int data);
 
 extern unsigned char *blaster_catch;
 extern unsigned char *blaster_bank2_base;
-int blaster_catch_loop_r(int offset); /* JB 970823 */
+int blaster_catch_loop_r(int offset);
 void blaster_bank_select_w(int offset,int data);
 void blaster_vram_select_w(int offset,int data);
-int blaster_input_port_0(int offset);
-int sinistar_input_port_0(int offset);
 
 extern unsigned char *splat_catch;
-int splat_catch_loop_r(int offset); /* JB 970823 */
-
-
-/**** from sndhrdw/williams.h ****/
-extern unsigned char *williams_dac;
-void williams_sh_w(int offset,int data);
-void williams_digital_out_w(int offset,int data);
-int williams_sh_start(void);
-void williams_sh_stop(void);
-void williams_sh_update(void);
+int splat_catch_loop_r(int offset);
 
 
 /**** from vidhrdw/williams.h ****/
 extern unsigned char *williams_paletteram;
 extern unsigned char *williams_blitterram;
+extern unsigned char *williams_remap_select;
+
 extern int williams_paletteram_size;
 void williams_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 int williams_vh_start(void);
+int williams_vh_start_sc2(void);
 void williams_vh_stop(void);
 void williams_vh_screenrefresh(struct osd_bitmap *bitmap);
-int williams_videoram_r(int offset);
 void williams_palette_w(int offset,int data);
 void williams_videoram_w(int offset,int data);
 void williams_blitter_w(int offset,int data);
+void williams_remap_select_w(int offset, int data);
 
-extern unsigned char *blaster_remap_select;
+extern unsigned char *blaster_color_zero_table;
+extern unsigned char *blaster_color_zero_flags;
 extern unsigned char *blaster_video_bits;
-int blaster_videoram_r(int offset);
-void blaster_blitter_w(int offset,int data);
-void blaster_vh_screenrefresh(struct osd_bitmap *bitmap);
 void blaster_vh_convert_color_prom (unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void blaster_vh_screenrefresh(struct osd_bitmap *bitmap);
+void blaster_video_bits_w(int offset, int data);
 
-void splat_blitter_w(int offset,int data);
+int sinistar_vh_start(void);
 
 void defender_videoram_w(int offset,int data);
 
 
 
+/***************************************************************************
+
+  Memory handlers
+
+***************************************************************************/
+
 /*
- *   Read mem for Robotron Joust Stargate Bubbles
+ *   Read/Write mem for Robotron Joust Stargate Bubbles
  */
 
 static struct MemoryReadAddress robotron_readmem[] =
 {
 	{ 0x0000, 0x97ff, MRA_BANK1, &williams_bank_base },
-	{ 0x9810, 0x9810, robotron_catch_loop_r, &robotron_catch }, /* JB 970823 */
+	{ 0x9810, 0x9810, robotron_catch_loop_r, &robotron_catch },
 	{ 0x9800, 0xbfff, MRA_RAM },
-	{ 0xc804, 0xc804, input_port_0_r },     /* IN0 */
-	{ 0xc806, 0xc806, input_port_1_r },     /* IN1 */
-	{ 0xc80c, 0xc80c, input_port_2_r },     /* IN2 */
-	{ 0xc80e, 0xc80e, MRA_RAM },            /* not used? */
+	{ 0xc804, 0xc807, pia_1_r },
+	{ 0xc80c, 0xc80f, pia_2_r },
 	{ 0xcb00, 0xcb00, MRA_RAM, &williams_video_counter },
-	{ 0xCC00, 0xCFFF, MRA_RAM },            /* CMOS */
+	{ 0xcc00, 0xcfff, MRA_RAM },            /* CMOS */
 	{ 0xd000, 0xffff, MRA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -469,12 +475,10 @@ static struct MemoryReadAddress joust_readmem[] =
 {
 	{ 0x0000, 0x97ff, MRA_BANK1, &williams_bank_base },
 	{ 0x9800, 0xbfff, MRA_RAM },
-	{ 0xc804, 0xc804, williams_input_port_0_1 }, /* IN0-1 */
-	{ 0xc806, 0xc806, input_port_2_r },          /* IN2 */
-	{ 0xc80c, 0xc80c, input_port_3_r },          /* IN3 */
-	{ 0xc80e, 0xc80e, MRA_RAM },                 /* not used? */
+	{ 0xc804, 0xc807, pia_1_r },
+	{ 0xc80c, 0xc80f, pia_2_r },
 	{ 0xcb00, 0xcb00, MRA_RAM, &williams_video_counter },
-	{ 0xCC00, 0xCFFF, MRA_RAM },                 /* CMOS */
+	{ 0xcc00, 0xcfff, MRA_RAM },                 /* CMOS */
 	{ 0xd000, 0xffff, MRA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -482,14 +486,12 @@ static struct MemoryReadAddress joust_readmem[] =
 static struct MemoryReadAddress stargate_readmem[] =
 {
 	{ 0x0000, 0x97ff, MRA_BANK1, &williams_bank_base },
-	{ 0x9c39, 0x9c39, stargate_catch_loop_r, &stargate_catch }, /* JB 970823 */
+	{ 0x9c39, 0x9c39, stargate_catch_loop_r, &stargate_catch },
 	{ 0x9800, 0xbfff, MRA_RAM },
-	{ 0xc804, 0xc804, stargate_input_port_0_r }, /* IN0 */
-	{ 0xc806, 0xc806, input_port_1_r },     /* IN1 */
-	{ 0xc80c, 0xc80c, input_port_2_r },     /* IN2 */
-	{ 0xc80e, 0xc80e, MRA_RAM },            /* not used? */
+	{ 0xc804, 0xc807, pia_1_r },
+	{ 0xc80c, 0xc80f, pia_2_r },
 	{ 0xcb00, 0xcb00, MRA_RAM, &williams_video_counter },
-	{ 0xCC00, 0xCFFF, MRA_RAM },            /* CMOS */
+	{ 0xcc00, 0xcfff, MRA_RAM },            /* CMOS */
 	{ 0xd000, 0xffff, MRA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -498,89 +500,75 @@ static struct MemoryReadAddress bubbles_readmem[] =
 {
 	{ 0x0000, 0x97ff, MRA_BANK1, &williams_bank_base },
 	{ 0x9800, 0xbfff, MRA_RAM },
-	{ 0xc804, 0xc804, input_port_0_r },     /* IN0 */
-	{ 0xc806, 0xc806, input_port_1_r },     /* IN1 */
-	{ 0xc80c, 0xc80c, input_port_2_r },     /* IN2 */
-	{ 0xc80e, 0xc80e, MRA_RAM },            /* not used? */
+	{ 0xc804, 0xc807, pia_1_r },
+	{ 0xc80c, 0xc80f, pia_2_r },
 	{ 0xcb00, 0xcb00, MRA_RAM, &williams_video_counter },
-	{ 0xCC00, 0xCFFF, MRA_RAM },            /* CMOS */
+	{ 0xcc00, 0xcfff, MRA_RAM },            /* CMOS */
 	{ 0xd000, 0xffff, MRA_ROM },
 	{ -1 }  /* end of table */
 };
-
-
-/*
- *   Write mem for Robotron Joust Stargate Bubbles
- */
 
 static struct MemoryWriteAddress williams_writemem[] =
 {
 	{ 0x0000, 0x97ff, williams_videoram_w, &videoram, &videoram_size },
 	{ 0x9800, 0xbfff, MWA_RAM },
 	{ 0xc000, 0xc00f, williams_palette_w, &williams_paletteram, &williams_paletteram_size },
-	{ 0xc807, 0xc807, MWA_RAM, &williams_port_select },
-	{ 0xc80e, 0xc80e, williams_sh_w },                            /* Sound */
+	{ 0xc804, 0xc807, pia_1_w },
+	{ 0xc80c, 0xc80f, pia_2_w },
 	{ 0xc900, 0xc900, williams_vram_select_w },           /* bank  */
 	{ 0xca00, 0xca07, williams_blitter_w, &williams_blitterram }, /* blitter */
-	{ 0xcbff, 0xcbff, MWA_NOP },                                  /* WatchDog (have to be $39) */
+	{ 0xcbff, 0xcbff, watchdog_reset_w },                         /* WatchDog (have to be $39) */
 	{ 0xcc00, 0xcfff, MWA_RAM },                                  /* CMOS                      */
 	{ 0xd000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
 
 
+
 /*
- *   Read mem for Splat
+ *   Read/Write mem for Splat
  */
 
 static struct MemoryReadAddress splat_readmem[] =
 {
 	{ 0x0000, 0x97ff, MRA_BANK1, &williams_bank_base },
-	{ 0x984b, 0x984b, splat_catch_loop_r, &splat_catch },    /* JB 970823 */
+	{ 0x984b, 0x984b, splat_catch_loop_r, &splat_catch },
 	{ 0x9800, 0xbfff, MRA_RAM },
-	{ 0xc804, 0xc804, williams_input_port_0_1 },           /* IN0-1 */
-	{ 0xc806, 0xc806, williams_input_port_2_3 },           /* IN2-3*/
-	{ 0xc80c, 0xc80c, input_port_4_r },                    /* IN4 */
-	{ 0xc80e, 0xc80e, MRA_RAM },                           /* not used? */
+	{ 0xc804, 0xc807, pia_1_r },
+	{ 0xc80c, 0xc80f, pia_2_r },
 	{ 0xcb00, 0xcb00, MRA_RAM, &williams_video_counter },
 	{ 0xcc00, 0xcfff, MRA_RAM },                           /* CMOS */
 	{ 0xd000, 0xffff, MRA_ROM },
 	{ -1 }  /* end of table */
 };
 
-
-/*
- *   Write mem for Splat
- */
-
 static struct MemoryWriteAddress splat_writemem[] =
 {
 	{ 0x0000, 0x97ff, williams_videoram_w, &videoram, &videoram_size },
 	{ 0x9800, 0xbfff, MWA_RAM },
 	{ 0xc000, 0xc00f, williams_palette_w, &williams_paletteram, &williams_paletteram_size },
-	{ 0xc807, 0xc807, MWA_RAM, &williams_port_select },
-	{ 0xc80e, 0xc80e, williams_sh_w},                           /* Sound */
+	{ 0xc804, 0xc807, pia_1_w },
+	{ 0xc80c, 0xc80f, pia_2_w },
 	{ 0xc900, 0xc900, williams_vram_select_w },         /* bank  */
-	{ 0xca00, 0xca07, splat_blitter_w, &williams_blitterram },  /* blitter */
-	{ 0xcbff, 0xcbff, MWA_NOP },                                /* WatchDog     */
+	{ 0xca00, 0xca07, williams_blitter_w, &williams_blitterram },  /* blitter */
+	{ 0xcbff, 0xcbff, watchdog_reset_w },                         /* WatchDog (have to be $39) */
 	{ 0xcc00, 0xcfff, MWA_RAM },                                /* CMOS         */
 	{ 0xd000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
 
 
+
 /*
- *   Read mem for Sinistar
+ *   Read/Write mem for Sinistar
  */
 
 static struct MemoryReadAddress sinistar_readmem[] =
 {
 	{ 0x0000, 0x97ff, MRA_BANK1, &williams_bank_base },
 	{ 0x9800, 0xbfff, MRA_RAM },
-	{ 0xc804, 0xc804, sinistar_input_port_0 },    /* IN0 Special joystick */
-	{ 0xc806, 0xc806, input_port_1_r },          /* IN1 */
-	{ 0xc80c, 0xc80c, input_port_2_r },          /* IN2 */
-	{ 0xc80e, 0xc80e, MRA_RAM },                 /* not used? */
+	{ 0xc804, 0xc807, pia_1_r },
+	{ 0xc80c, 0xc80f, pia_2_r },
 	{ 0xcb00, 0xcb00, MRA_RAM, &williams_video_counter },
 	{ 0xcc00, 0xcfff, MRA_RAM },                 /* CMOS */
 	{ 0xd000, 0xdfff, MRA_RAM },                 /* for Sinistar */
@@ -588,20 +576,16 @@ static struct MemoryReadAddress sinistar_readmem[] =
 	{ -1 }  /* end of table */
 };
 
-
-/*
- *   Write mem for Sinistar
- */
-
 static struct MemoryWriteAddress sinistar_writemem[] =
 {
 	{ 0x0000, 0x97ff, williams_videoram_w, &videoram, &videoram_size },
 	{ 0x9800, 0xbfff, MWA_RAM },
 	{ 0xc000, 0xc00f, williams_palette_w, &williams_paletteram, &williams_paletteram_size },
-	{ 0xc80e, 0xc80e, williams_sh_w },                            /* Sound */
+	{ 0xc804, 0xc807, pia_1_w },
+	{ 0xc80c, 0xc80f, pia_2_w },
 	{ 0xc900, 0xc900, williams_vram_select_w },             /* bank  */
 	{ 0xca00, 0xca07, williams_blitter_w, &williams_blitterram },   /* blitter */
-	{ 0xcbff, 0xcbff, MWA_NOP },                                    /* WatchDog     */
+	{ 0xcbff, 0xcbff, watchdog_reset_w },                         /* WatchDog (have to be $39) */
 	{ 0xcc00, 0xcfff, MWA_RAM },                                    /* CMOS         */
 	{ 0xd000, 0xdfff, MWA_RAM },                                    /* for Sinistar */
 	{ 0xe000, 0xffff, MWA_ROM },
@@ -609,30 +593,24 @@ static struct MemoryWriteAddress sinistar_writemem[] =
 };
 
 
+
 /*
- *   Read mem for Blaster
+ *   Read/Write mem for Blaster
  */
 
 static struct MemoryReadAddress blaster_readmem[] =
 {
 	{ 0x0000, 0x3fff, MRA_BANK1, &williams_bank_base },
 	{ 0x4000, 0x96ff, MRA_BANK2, &blaster_bank2_base },
-/*      { 0x9700, 0x9700, blaster_catch_loop_r, &blaster_catch },*/             /* JB 970823 */
+/*      { 0x9700, 0x9700, blaster_catch_loop_r, &blaster_catch },*/
 	{ 0x9700, 0xbfff, MRA_RAM },
-	{ 0xc804, 0xc804, blaster_input_port_0 },    /* IN0 */
-	{ 0xc806, 0xc806, input_port_1_r },          /* IN1 */
-	{ 0xc80c, 0xc80c, input_port_2_r },          /* IN2 */
-	{ 0xc80e, 0xc80e, MRA_RAM },                 /* not used? */
+	{ 0xc804, 0xc807, pia_1_r },
+	{ 0xc80c, 0xc80f, pia_2_r },
 	{ 0xcb00, 0xcb00, MRA_RAM, &williams_video_counter },
 	{ 0xcc00, 0xcfff, MRA_RAM },                 /* CMOS      */
 	{ 0xd000, 0xffff, MRA_ROM },
 	{ -1 }  /* end of table */
 };
-
-
-/*
- *   Write mem for Blaster
- */
 
 static struct MemoryWriteAddress blaster_writemem[] =
 {
@@ -642,37 +620,33 @@ static struct MemoryWriteAddress blaster_writemem[] =
 	{ 0xbc00, 0xbcff, MWA_RAM, &blaster_color_zero_flags },     /* Color 0 flags, latch color only if bit 0 = 1 */
 	{ 0xbd00, 0xbfff, MWA_RAM },
 	{ 0xc000, 0xc00f, williams_palette_w, &williams_paletteram, &williams_paletteram_size },
-	{ 0xc80e, 0xc80e, williams_sh_w},                            /* Sound */
+	{ 0xc804, 0xc807, pia_1_w },
+	{ 0xc80c, 0xc80f, pia_2_w },
 	{ 0xc900, 0xc900, blaster_vram_select_w },          			 /* VRAM bank  */
-	{ 0xc940, 0xc940, MWA_RAM, &blaster_remap_select },          /* select remap colors in Remap prom */
+	{ 0xc940, 0xc940, williams_remap_select_w, &williams_remap_select }, /* select remap colors in Remap prom */
 	{ 0xc980, 0xc980, blaster_bank_select_w },                   /* Bank Select */
-	{ 0xc9C0, 0xc9C0, MWA_RAM, &blaster_video_bits },            /* Video related bits */
-	{ 0xca00, 0xca07, blaster_blitter_w, &williams_blitterram }, /* blitter */
-	{ 0xcbff, 0xcbff, MWA_NOP },                                 /* WatchDog     */
-	{ 0xCC00, 0xCFFF, MWA_RAM },                                 /* CMOS         */
+	{ 0xc9C0, 0xc9c0, blaster_video_bits_w, &blaster_video_bits },/* Video related bits */
+	{ 0xca00, 0xca07, williams_blitter_w, &williams_blitterram }, /* blitter */
+	{ 0xcbff, 0xcbff, watchdog_reset_w },                         /* WatchDog (have to be $39) */
+	{ 0xcc00, 0xcfff, MWA_RAM },                                 /* CMOS         */
 	{ 0xd000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
 
 
+
 /*
- *   Read mem for Defender
+ *   Read/Write mem for Defender
  */
 
 static struct MemoryReadAddress defender_readmem[] =
 {
-	{ 0xa05d, 0xa05d, defender_catch_loop_r, &defender_catch }, /* JB 970823 */
+	{ 0xa05d, 0xa05d, defender_catch_loop_r, &defender_catch },
 	{ 0x0000, 0xbfff, MRA_RAM },
 	{ 0xc000, 0xcfff, MRA_BANK1 },          /* i/o / rom */
-	{ 0xcc07, 0xcc07, MRA_BANK1, &defender_irq_enable },
 	{ 0xd000, 0xffff, MRA_ROM },
 	{ -1 }  /* end of table */
 };
-
-
-/*
- *   Write mem for Defender
- */
 
 static struct MemoryWriteAddress defender_writemem[] =
 {
@@ -687,13 +661,38 @@ static struct MemoryWriteAddress defender_writemem[] =
 
 
 
+/*
+ *   Read/Write mem for Colony7
+ */
 
-/* memory handlers for the audio CPU */
+static struct MemoryReadAddress colony7_readmem[] =
+{
+	{ 0x0000, 0xbfff, MRA_RAM },
+	{ 0xc000, 0xcfff, MRA_BANK1 },		/* i/o / rom */
+	{ 0xd000, 0xffff, MRA_ROM },
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryWriteAddress colony7_writemem[] =
+{
+	{ 0x0000, 0x97ff, defender_videoram_w, &videoram, &videoram_size },
+	{ 0x9800, 0xbfff, MWA_RAM },
+	{ 0xc000, 0xcfff, MWA_BANK1, &defender_bank_base }, /* non map */
+	{ 0xc000, 0xc00f, MWA_RAM, &williams_paletteram, &williams_paletteram_size },	/* here only to initialize the pointers */
+	{ 0xd000, 0xd000, colony7_bank_select_w },       /* Bank Select */
+	{ 0xd001, 0xffff, MWA_ROM },
+	{ -1 }  /* end of table */
+};
+
+
+/*
+ *   memory handlers for the audio CPU
+ */
+
 static struct MemoryReadAddress sound_readmem[] =
 {
 	{ 0x0000, 0x007f, MRA_RAM },
-	{ 0x0400, 0x0400, MRA_RAM },
-	{ 0x0402, 0x0402, soundlatch_r },
+	{ 0x0400, 0x0403, pia_3_r },
 	{ 0xf000, 0xffff, MRA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -701,14 +700,39 @@ static struct MemoryReadAddress sound_readmem[] =
 static struct MemoryWriteAddress sound_writemem[] =
 {
 	{ 0x0000, 0x007f, MWA_RAM },
-	{ 0x0400, 0x0400, williams_digital_out_w, &williams_dac },
+	{ 0x0400, 0x0403, pia_3_w },
+	{ 0xf000, 0xffff, MWA_ROM },
+	{ -1 }  /* end of table */
+};
+
+
+/*
+ *   memory handlers for the Colony 7 audio CPU
+ */
+
+static struct MemoryReadAddress colony7_sound_readmem[] =
+{
+	{ 0x0000, 0x007f, MRA_RAM },
+	{ 0x8400, 0x8403, pia_3_r },
+	{ 0xf000, 0xffff, MRA_ROM },
+	{ -1 }  /* end of table */
+};
+
+static struct MemoryWriteAddress colony7_sound_writemem[] =
+{
+	{ 0x0000, 0x007f, MWA_RAM },
+	{ 0x8400, 0x8403, pia_3_w },
 	{ 0xf000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
 
 
 
+/***************************************************************************
 
+  I/O port definitions
+
+***************************************************************************/
 
 /*
  *   Robotron buttons
@@ -731,10 +755,13 @@ INPUT_PORTS_START( robotron_input_ports )
 	PORT_BIT( 0xfc, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START      /* IN2 */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, 0, "Auto Up", OSD_KEY_5, IP_JOY_NONE, 0)
-	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "Advance", OSD_KEY_6, IP_JOY_NONE, 0)
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, 0, "Auto Up", OSD_KEY_F1, IP_JOY_NONE, 0)
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "Advance", OSD_KEY_F2, IP_JOY_NONE, 0)
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 )
 	PORT_BITX(0x08, IP_ACTIVE_HIGH, 0, "High Score Reset", OSD_KEY_7, IP_JOY_NONE, 0)
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_TILT )
 INPUT_PORTS_END
 
 
@@ -747,26 +774,31 @@ INPUT_PORTS_START( joust_input_ports )
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_PLAYER2, "Player 2 Move Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
 	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER2, "Player 2 Move Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
 	PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2, "Player 2 Flap", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BIT( 0xc0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0xc0, IP_ACTIVE_HIGH, IPT_UNUSED )
 
-/*Not really a hardware port, this is just to map the buttons */
 	PORT_START      /* IN1 */
+	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START      /* IN2 */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, 0, "Auto Up", OSD_KEY_F1, IP_JOY_NONE, 0)
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "Advance", OSD_KEY_F2, IP_JOY_NONE, 0)
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BITX(0x08, IP_ACTIVE_HIGH, 0, "High Score Reset", OSD_KEY_7, IP_JOY_NONE, 0)
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_TILT )
+
+	PORT_START      /* IN3 (muxed with IN0) */
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_PLAYER1, "Player 1 Move Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
 	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER1, "Player 1 Move Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
 	PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1, "Player 1 Flap", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
-	PORT_BIT( 0xf8, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START      /* IN2 */
-	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START      /* IN3 */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, 0, "Auto Up", OSD_KEY_5, IP_JOY_NONE, 0)
-	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "Advance", OSD_KEY_6, IP_JOY_NONE, 0)
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BITX(0x08, IP_ACTIVE_HIGH, 0, "High Score Reset", OSD_KEY_7, IP_JOY_NONE, 0)
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0xc0, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
 
@@ -779,10 +811,10 @@ INPUT_PORTS_START( stargate_input_ports )
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_BUTTON1, "Fire", OSD_KEY_COLON, IP_JOY_DEFAULT, 0)
 	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_BUTTON2, "Thrust", OSD_KEY_L, IP_JOY_DEFAULT, 0)
 	PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_BUTTON3, "Smart Bomb", OSD_KEY_COMMA, IP_JOY_DEFAULT, 0)
-	PORT_BITX(0x08, IP_ACTIVE_HIGH, IPT_BUTTON4, "Hyperspace", OSD_KEY_N, IP_JOY_DEFAULT, 0)
+	PORT_BITX(0x08, IP_ACTIVE_HIGH, IPT_BUTTON6, "Hyperspace", OSD_KEY_N, IP_JOY_DEFAULT, 0)
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_BUTTON6, "Reverse", OSD_KEY_ALT, IP_JOY_DEFAULT, 0)
+	PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_BUTTON4, "Reverse", OSD_KEY_ALT, IP_JOY_DEFAULT, 0)
 	PORT_BITX(0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY, "Move Down", OSD_KEY_S, IP_JOY_DEFAULT, 0)
 
 	PORT_START      /* IN1 */
@@ -791,10 +823,13 @@ INPUT_PORTS_START( stargate_input_ports )
 	PORT_BIT( 0xfc, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START      /* IN2 */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, 0, "Auto Up", OSD_KEY_5, IP_JOY_NONE, 0)
-	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "Advance", OSD_KEY_6, IP_JOY_NONE, 0)
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, 0, "Auto Up", OSD_KEY_F1, IP_JOY_NONE, 0)
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "Advance", OSD_KEY_F2, IP_JOY_NONE, 0)
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 )
 	PORT_BITX(0x08, IP_ACTIVE_HIGH, 0, "High Score Reset", OSD_KEY_7, IP_JOY_NONE, 0)
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_TILT )
 
 	PORT_START      /* IN3 - fake port for better joystick control */
 	/* This fake port is handled via stargate_input_port_0 */
@@ -809,12 +844,6 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( defender_input_ports )
 	PORT_START      /* IN0 */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, 0, "Auto Up", OSD_KEY_5, IP_JOY_NONE, 0)
-	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "Advance", OSD_KEY_6, IP_JOY_NONE, 0)
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BITX(0x08, IP_ACTIVE_HIGH, 0, "High Score Reset", OSD_KEY_7, IP_JOY_NONE, 0)
-
-	PORT_START      /* IN1 */
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_BUTTON1, "Fire", OSD_KEY_COLON, IP_JOY_DEFAULT, 0)
 	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_BUTTON2, "Thrust", OSD_KEY_L, IP_JOY_DEFAULT, 0)
 	PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_BUTTON3, "Smart Bomb", OSD_KEY_COMMA, IP_JOY_DEFAULT, 0)
@@ -824,9 +853,18 @@ INPUT_PORTS_START( defender_input_ports )
 	PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_BUTTON6, "Reverse", OSD_KEY_ALT, IP_JOY_DEFAULT, 0)
 	PORT_BITX(0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY, "Move Down", OSD_KEY_S, IP_JOY_DEFAULT, 0)
 
-	PORT_START      /* IN2 */
+	PORT_START      /* IN1 */
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY, "Move Up", OSD_KEY_Q, IP_JOY_DEFAULT, 0)
 	PORT_BIT( 0xfe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START      /* IN2 */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, 0, "Auto Up", OSD_KEY_F1, IP_JOY_NONE, 0)
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "Advance", OSD_KEY_F2, IP_JOY_NONE, 0)
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BITX(0x08, IP_ACTIVE_HIGH, 0, "High Score Reset", OSD_KEY_7, IP_JOY_NONE, 0)
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_TILT )
 
 	PORT_START      /* IN3 - fake port for better joystick control */
 	/* This fake port is handled via defender_input_port_1 */
@@ -848,7 +886,6 @@ INPUT_PORTS_START( sinistar_input_ports )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-
 	PORT_START      /* IN1 */
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_BUTTON1, "Fire", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
 	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_BUTTON2, "Bomb", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
@@ -856,10 +893,13 @@ INPUT_PORTS_START( sinistar_input_ports )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START2 )
 
 	PORT_START      /* IN2 */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, 0, "Auto Up", OSD_KEY_5, IP_JOY_NONE, 0)
-	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "Advance", OSD_KEY_6, IP_JOY_NONE, 0)
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, 0, "Auto Up", OSD_KEY_F1, IP_JOY_NONE, 0)
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "Advance", OSD_KEY_F2, IP_JOY_NONE, 0)
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 )
 	PORT_BITX(0x08, IP_ACTIVE_HIGH, 0, "High Score Reset", OSD_KEY_7, IP_JOY_NONE, 0)
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_TILT )
 INPUT_PORTS_END
 
 
@@ -880,10 +920,13 @@ INPUT_PORTS_START( bubbles_input_ports )
 	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START      /* IN2 */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, 0, "Auto Up", OSD_KEY_5, IP_JOY_NONE, 0)
-	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "Advance", OSD_KEY_6, IP_JOY_NONE, 0)
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, 0, "Auto Up", OSD_KEY_F1, IP_JOY_NONE, 0)
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "Advance", OSD_KEY_F2, IP_JOY_NONE, 0)
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 )
 	PORT_BITX(0x08, IP_ACTIVE_HIGH, 0, "High Score Reset", OSD_KEY_7, IP_JOY_NONE, 0)
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_TILT )
 INPUT_PORTS_END
 
 
@@ -902,31 +945,34 @@ INPUT_PORTS_START( splat_input_ports )
 	PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_UP | IPF_8WAY | IPF_PLAYER2, "Throw Up", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
 	PORT_BITX(0x80, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_DOWN | IPF_8WAY | IPF_PLAYER2, "Throw Down", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
 
-	PORT_START      /* IN1 */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_UP | IPF_8WAY | IPF_PLAYER1, "Walk Up", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
-	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_DOWN | IPF_8WAY | IPF_PLAYER1, "Walk Down", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
-	PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_LEFT | IPF_8WAY | IPF_PLAYER1, "Walk Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
-	PORT_BITX(0x08, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_RIGHT | IPF_8WAY | IPF_PLAYER1, "Walk Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
-/*      PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_START1 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START2 )*/
-	PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_UP | IPF_8WAY | IPF_PLAYER1, "Throw Up", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
-	PORT_BITX(0x80, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_DOWN | IPF_8WAY | IPF_PLAYER1, "Throw Down", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
-
 	PORT_START      /* IN2 */
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_LEFT | IPF_8WAY | IPF_PLAYER2, "Throw Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
 	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_RIGHT | IPF_8WAY | IPF_PLAYER2, "Throw Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
 	PORT_BIT( 0xfc, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
+	PORT_START      /* IN4 */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, 0, "Auto Up", OSD_KEY_F1, IP_JOY_NONE, 0)
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "Advance", OSD_KEY_F2, IP_JOY_NONE, 0)
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BITX(0x08, IP_ACTIVE_HIGH, 0, "High Score Reset", OSD_KEY_7, IP_JOY_NONE, 0)
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_TILT )
+
 	PORT_START      /* IN3 */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_UP | IPF_8WAY | IPF_PLAYER1, "Walk Up", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_DOWN | IPF_8WAY | IPF_PLAYER1, "Walk Down", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+	PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_LEFT | IPF_8WAY | IPF_PLAYER1, "Walk Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+	PORT_BITX(0x08, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_RIGHT | IPF_8WAY | IPF_PLAYER1, "Walk Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_UP | IPF_8WAY | IPF_PLAYER1, "Throw Up", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+	PORT_BITX(0x80, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_DOWN | IPF_8WAY | IPF_PLAYER1, "Throw Down", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
+
+	PORT_START      /* IN4 */
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_LEFT | IPF_8WAY | IPF_PLAYER1, "Throw Left", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
 	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_RIGHT | IPF_8WAY | IPF_PLAYER1, "Throw Right", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 0)
 	PORT_BIT( 0xfc, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-
-	PORT_START      /* IN4 */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, 0, "Auto Up", OSD_KEY_5, IP_JOY_NONE, 0)
-	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "Advance", OSD_KEY_6, IP_JOY_NONE, 0)
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1 )
-	PORT_BITX(0x08, IP_ACTIVE_HIGH, 0, "High Score Reset", OSD_KEY_7, IP_JOY_NONE, 0)
 INPUT_PORTS_END
 
 
@@ -936,7 +982,7 @@ INPUT_PORTS_END
 
 INPUT_PORTS_START( blaster_input_ports )
 	PORT_START      /* IN0 */
-/* Not really the hardware bits, see blaster_input_port_0() */
+/* Not really the hardware bits */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
@@ -953,34 +999,97 @@ INPUT_PORTS_START( blaster_input_ports )
 	PORT_BIT( 0xc0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START      /* IN2 */
-	PORT_BITX(0x01, IP_ACTIVE_HIGH, 0, "Auto Up", OSD_KEY_5, IP_JOY_NONE, 0)
-	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "Advance", OSD_KEY_6, IP_JOY_NONE, 0)
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, 0, "Auto Up", OSD_KEY_F1, IP_JOY_NONE, 0)
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "Advance", OSD_KEY_F2, IP_JOY_NONE, 0)
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN3 )
 	PORT_BITX(0x08, IP_ACTIVE_HIGH, 0, "High Score Reset", OSD_KEY_7, IP_JOY_NONE, 0)
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_TILT )
 INPUT_PORTS_END
 
 
-/* there's nothing here, this is just a placeholder to let the video hardware */
-/* pick the background color table. */
-static struct GfxLayout fakelayout =
+/*
+ *   Colony7 buttons
+ */
+
+INPUT_PORTS_START( colony7_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON3 )
+	PORT_BIT( 0xfe, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+INPUT_PORTS_END
+
+
+/*
+ *   Lotto Fun buttons
+ */
+
+INPUT_PORTS_START( lottofun_input_ports )
+	PORT_START		/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Used by ticket dispenser */
+
+	PORT_START		/* IN1 */
+	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START		/* IN2 */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPF_TOGGLE, "Memory Protect", OSD_KEY_F1, IP_JOY_NONE, 0)
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, 0, "Advance", OSD_KEY_F2, IP_JOY_NONE, 0)
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BITX(0x08, IP_ACTIVE_HIGH, 0, "High Score Reset", OSD_KEY_7, IP_JOY_NONE, 0)
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN ) // COIN1.5? :)
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_TILT )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN ) // Sound board handshake
+INPUT_PORTS_END
+
+
+/***************************************************************************
+
+  Machine drivers
+
+***************************************************************************/
+
+/*
+ *   Sound interface
+ */
+
+static struct DACinterface dac_interface =
 {
-	1,1,
-	0,
-	4,      /* 4 bits per pixel */
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	0
+	1,
+	441000,
+	{255,255 },
+	{  1,  1 }
 };
 
 
-static struct GfxDecodeInfo gfxdecodeinfo[] =
-{
-	{ 0, 0, &fakelayout, 0, 1 },
-	{ -1 } /* end of array */
-};
-
-
+/*
+ *   Robotron driver
+ */
 
 static struct MachineDriver robotron_machine_driver =
 {
@@ -990,12 +1099,12 @@ static struct MachineDriver robotron_machine_driver =
 			CPU_M6809,
 			1000000,                /* ? Mhz */
 			0,                      /* memory region */
-			robotron_readmem,       /* MemoryReadAddress */ /* JB 970823 */
+			robotron_readmem,       /* MemoryReadAddress */
 			williams_writemem,      /* MemoryWriteAddress */
 			0,                      /* IOReadPort */
 			0,                      /* IOWritePort */
 			williams_interrupt,     /* interrupt routine */
-			4                       /* interrupts per frame (should be 4ms) */
+			64                      /* interrupts per frame (64 times/frame for video counter) */
 		},
 		{
 			CPU_M6808 | CPU_AUDIO_CPU,
@@ -1005,16 +1114,16 @@ static struct MachineDriver robotron_machine_driver =
 			ignore_interrupt,1      /* interrupts are triggered by the main CPU */
 		}
 	},
-	60,                                     /* frames per second */
-	10,     /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
-	williams_init_machine,          /* init machine routine */
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	robotron_init_machine,          /* init machine routine */
 
 	/* video hardware */
 	304, 256,                               /* screen_width, screen_height */
 	{ 0, 304-1, 0, 256-1 },                 /* struct rectangle visible_area */
-	gfxdecodeinfo,                          /* GfxDecodeInfo * */
-	1+16,                                  /* total colors */
-	16,                                      /* color table length */
+	0,                          /* GfxDecodeInfo * */
+	16,                                  /* total colors */
+	0,                                      /* color table length */
 	williams_vh_convert_color_prom,         /* convert color prom routine */
 
 	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE|VIDEO_SUPPORTS_DIRTY,
@@ -1024,12 +1133,19 @@ static struct MachineDriver robotron_machine_driver =
 	williams_vh_screenrefresh,              /* vh_update routine */
 
 	/* sound hardware */
-	0,                                      /* sh_init routine */
-	williams_sh_start,                      /* sh_start routine */
-	williams_sh_stop,                       /* sh_stop routine */
-	williams_sh_update                      /* sh_update routine */
+	0,0,0,0,
+	{
+		{
+			SOUND_DAC,
+			&dac_interface
+		}
+	}
 };
 
+
+/*
+ *   Joust driver
+ */
 
 static struct MachineDriver joust_machine_driver =
 {
@@ -1044,7 +1160,7 @@ static struct MachineDriver joust_machine_driver =
 			0,                      /* IOReadPort */
 			0,                      /* IOWritePort */
 			williams_interrupt,     /* interrupt routine */
-			4                       /* interrupts per frame (should be 4ms) */
+			64                      /* interrupts per frame (64 times/frame for video counter) */
 		},
 		{
 			CPU_M6808 | CPU_AUDIO_CPU,
@@ -1054,16 +1170,16 @@ static struct MachineDriver joust_machine_driver =
 			ignore_interrupt,1      /* interrupts are triggered by the main CPU */
 		}
 	},
-	60,                                     /* frames per second */
-	10,     /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
-	williams_init_machine,          /* init machine routine */
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	joust_init_machine,          /* init machine routine */
 
 	/* video hardware */
 	304, 256,                               /* screen_width, screen_height */
 	{ 0, 304-1, 0, 256-1 },                 /* struct rectangle visible_area */
-	gfxdecodeinfo,                          /* GfxDecodeInfo * */
-	1+16,                                  /* total colors */
-	16,                                      /* color table length */
+	0,                          /* GfxDecodeInfo * */
+	16,                                  /* total colors */
+	0,                                      /* color table length */
 	williams_vh_convert_color_prom,         /* convert color prom routine */
 
 	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE|VIDEO_SUPPORTS_DIRTY,
@@ -1073,13 +1189,20 @@ static struct MachineDriver joust_machine_driver =
 	williams_vh_screenrefresh,              /* vh_update routine */
 
 	/* sound hardware */
-	0,                                      /* sh_init routine */
-	williams_sh_start,                      /* sh_start routine */
-	williams_sh_stop,                       /* sh_stop routine */
-	williams_sh_update                      /* sh_update routine */
+	0,0,0,0,
+	{
+		{
+			SOUND_DAC,
+			&dac_interface
+		}
+	}
 };
 
 
+
+/*
+ *   Stargate driver
+ */
 
 static struct MachineDriver stargate_machine_driver =
 {
@@ -1089,61 +1212,12 @@ static struct MachineDriver stargate_machine_driver =
 			CPU_M6809,
 			1000000,                /* ? Mhz */
 			0,                      /* memory region */
-			stargate_readmem,       /* MemoryReadAddress */ /* JB 970823 */
+			stargate_readmem,       /* MemoryReadAddress */
 			williams_writemem,      /* MemoryWriteAddress */
 			0,                      /* IOReadPort */
 			0,                      /* IOWritePort */
-			stargate_interrupt,     /* interrupt routine */
-			2                       /* interrupts per frame (should be 4ms) */
-		},
-		{
-			CPU_M6808 | CPU_AUDIO_CPU,
-			894750, /* 0.89475 Mhz (3.579 / 4) */
-			2,      /* memory region #2 */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,1      /* interrupts are triggered by the main CPU */
-		}
-	},
-	60,                                     /* frames per second */
-	10,     /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
-	williams_init_machine,          /* init machine routine */
-
-	/* video hardware */
-	304, 256,                               /* screen_width, screen_height */
-	{ 0, 304-1, 0, 256-1 },                 /* struct rectangle visible_area */
-	gfxdecodeinfo,                          /* GfxDecodeInfo * */
-	1+16,                                  /* total colors */
-	16,                                      /* color table length */
-	williams_vh_convert_color_prom,         /* convert color prom routine */
-
-	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE|VIDEO_SUPPORTS_DIRTY,
-	0,                                      /* vh_init routine */
-	williams_vh_start,                      /* vh_start routine */
-	williams_vh_stop,                       /* vh_stop routine */
-	williams_vh_screenrefresh,              /* vh_update routine */
-
-	/* sound hardware */
-	0,                                      /* sh_init routine */
-	williams_sh_start,                      /* sh_start routine */
-	williams_sh_stop,                       /* sh_stop routine */
-	williams_sh_update                      /* sh_update routine */
-};
-
-
-static struct MachineDriver sinistar_machine_driver =
-{
-	/* basic machine hardware  */
-	{
-		{
-			CPU_M6809,
-			1000000,                /* ? Mhz */ /*Sinistar do not like 1 mhz*/
-			0,                      /* memory region */
-			sinistar_readmem,       /* MemoryReadAddress */
-			sinistar_writemem,      /* MemoryWriteAddress */
-			0,                      /* IOReadPort */
-			0,                      /* IOWritePort */
 			williams_interrupt,     /* interrupt routine */
-			1                       /* interrupts per frame (should be 4ms but?) */
+			64                      /* interrupts per frame (64 times/frame for video counter) */
 		},
 		{
 			CPU_M6808 | CPU_AUDIO_CPU,
@@ -1153,16 +1227,16 @@ static struct MachineDriver sinistar_machine_driver =
 			ignore_interrupt,1      /* interrupts are triggered by the main CPU */
 		}
 	},
-	60,                                     /* frames per second */
-	10,     /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
-	williams_init_machine,          /* init machine routine */
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	stargate_init_machine,          /* init machine routine */
 
 	/* video hardware */
 	304, 256,                               /* screen_width, screen_height */
 	{ 0, 304-1, 0, 256-1 },                 /* struct rectangle visible_area */
-	gfxdecodeinfo,                          /* GfxDecodeInfo * */
-	1+16,                                  /* total colors */
-	16,                                      /* color table length */
+	0,                          /* GfxDecodeInfo * */
+	16,                                  /* total colors */
+	0,                                      /* color table length */
 	williams_vh_convert_color_prom,         /* convert color prom routine */
 
 	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE|VIDEO_SUPPORTS_DIRTY,
@@ -1172,110 +1246,19 @@ static struct MachineDriver sinistar_machine_driver =
 	williams_vh_screenrefresh,              /* vh_update routine */
 
 	/* sound hardware */
-	0,                                      /* sh_init routine */
-	williams_sh_start,                      /* sh_start routine */
-	williams_sh_stop,                       /* sh_stop routine */
-	williams_sh_update                      /* sh_update routine */
-};
-
-
-static struct MachineDriver defender_machine_driver =
-{
-	/* basic machine hardware  */
+	0,0,0,0,
 	{
 		{
-			CPU_M6809,
-			1200000,                /* ? Mhz */ /*Defender do not like 1 mhz. Collect at least 9 humans, when you depose them, the game stuck */
-			0,                      /* memory region */
-			defender_readmem,       /* MemoryReadAddress */
-			defender_writemem,      /* MemoryWriteAddress */
-			0,                      /* IOReadPort */
-			0,                      /* IOWritePort */
-			defender_interrupt,     /* interrupt routine */
-			2                       /* interrupts per frame (should be 4ms) */
-		},
-		{
-			CPU_M6808 | CPU_AUDIO_CPU,
-			894750, /* 0.89475 Mhz (3.579 / 4) */
-			2,      /* memory region #2 */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,1      /* interrupts are triggered by the main CPU */
+			SOUND_DAC,
+			&dac_interface
 		}
-	},
-	60,                                     /* frames per second */
-	10,     /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
-	williams_init_machine,          /* init machine routine */
-
-	/* video hardware */
-	304, 256,                               /* screen_width, screen_height */
-	{ 0, 304-1, 0, 256-1 },                 /* struct rectangle visible_area */
-	gfxdecodeinfo,                          /* GfxDecodeInfo * */
-	1+16,                                  /* total colors */
-	16,                                      /* color table length */
-	williams_vh_convert_color_prom,         /* convert color prom routine */
-
-	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE|VIDEO_SUPPORTS_DIRTY,
-	0,                                      /* vh_init routine */
-	williams_vh_start,                      /* vh_start routine */
-	williams_vh_stop,                       /* vh_stop routine */
-	williams_vh_screenrefresh,              /* vh_update routine */
-
-	/* sound hardware */
-	0,                                      /* sh_init routine */
-	williams_sh_start,                      /* sh_start routine */
-	williams_sh_stop,                       /* sh_stop routine */
-	williams_sh_update                      /* sh_update routine */
+	}
 };
 
 
-static struct MachineDriver splat_machine_driver =
-{
-	/* basic machine hardware  */
-	{
-		{
-			CPU_M6809,
-			1000000,                /* ? Mhz */
-			0,                      /* memory region */
-			splat_readmem,          /* MemoryReadAddress */
-			splat_writemem,         /* MemoryWriteAddress */
-			0,                      /* IOReadPort */
-			0,                      /* IOWritePort */
-			williams_interrupt,     /* interrupt routine */
-			4                       /* interrupts per frame (should be 4ms) */
-		},
-		{
-			CPU_M6808 | CPU_AUDIO_CPU,
-			894750, /* 0.89475 Mhz (3.579 / 4) */
-			2,      /* memory region #2 */
-			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,1      /* interrupts are triggered by the main CPU */
-		}
-	},
-	60,                                     /* frames per second */
-	10,     /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
-	williams_init_machine,          /* init machine routine */
-
-	/* video hardware */
-	304, 256,                               /* screen_width, screen_height */
-	{ 0, 304-1, 0, 256-1 },                 /* struct rectangle visible_area */
-	gfxdecodeinfo,                          /* GfxDecodeInfo * */
-	1+16,                                  /* total colors */
-	16,                                      /* color table length */
-	williams_vh_convert_color_prom,         /* convert color prom routine */
-
-	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE|VIDEO_SUPPORTS_DIRTY,
-	0,                                      /* vh_init routine */
-	williams_vh_start,                      /* vh_start routine */
-	williams_vh_stop,                       /* vh_stop routine */
-	williams_vh_screenrefresh,              /* vh_update routine */
-
-	/* sound hardware */
-	0,                                      /* sh_init routine */
-	williams_sh_start,                      /* sh_start routine */
-	williams_sh_stop,                       /* sh_stop routine */
-	williams_sh_update                      /* sh_update routine */
-};
-
+/*
+ *   Bubbles driver
+ */
 
 static struct MachineDriver bubbles_machine_driver =
 {
@@ -1290,7 +1273,7 @@ static struct MachineDriver bubbles_machine_driver =
 			0,                      /* IOReadPort */
 			0,                      /* IOWritePort */
 			williams_interrupt,     /* interrupt routine */
-			4                       /* interrupts per frame (should be 4ms) */
+			64                      /* interrupts per frame (64 times/frame for video counter) */
 		},
 		{
 			CPU_M6808 | CPU_AUDIO_CPU,
@@ -1300,16 +1283,16 @@ static struct MachineDriver bubbles_machine_driver =
 			ignore_interrupt,1      /* interrupts are triggered by the main CPU */
 		}
 	},
-	60,                                     /* frames per second */
-	10,     /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
-	williams_init_machine,          /* init machine routine */
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	bubbles_init_machine,          /* init machine routine */
 
 	/* video hardware */
 	304, 256,                               /* screen_width, screen_height */
 	{ 0, 304-1, 0, 256-1 },                 /* struct rectangle visible_area */
-	gfxdecodeinfo,                          /* GfxDecodeInfo * */
-	1+16,                                  /* total colors */
-	16,                                      /* color table length */
+	0,                          /* GfxDecodeInfo * */
+	16,                                  /* total colors */
+	0,                                      /* color table length */
 	williams_vh_convert_color_prom,         /* convert color prom routine */
 
 	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE|VIDEO_SUPPORTS_DIRTY,
@@ -1319,12 +1302,196 @@ static struct MachineDriver bubbles_machine_driver =
 	williams_vh_screenrefresh,              /* vh_update routine */
 
 	/* sound hardware */
-	0,                                      /* sh_init routine */
-	williams_sh_start,                      /* sh_start routine */
-	williams_sh_stop,                       /* sh_stop routine */
-	williams_sh_update                      /* sh_update routine */
+	0,0,0,0,
+	{
+		{
+			SOUND_DAC,
+			&dac_interface
+		}
+	}
 };
 
+
+/*
+ *   Sinistar driver
+ */
+
+static struct Samplesinterface sinistar_samples_interface =
+{
+	1	/* 1 channel */
+};
+
+static struct MachineDriver sinistar_machine_driver =
+{
+	/* basic machine hardware  */
+	{
+		{
+			CPU_M6809,
+			1000000,                /* ? Mhz */ /*Sinistar do not like 1 mhz*/
+			0,                      /* memory region */
+			sinistar_readmem,       /* MemoryReadAddress */
+			sinistar_writemem,      /* MemoryWriteAddress */
+			0,                      /* IOReadPort */
+			0,                      /* IOWritePort */
+			williams_interrupt,     /* interrupt routine */
+			64                      /* interrupts per frame (64 times/frame for video counter) */
+		},
+		{
+			CPU_M6808 | CPU_AUDIO_CPU,
+			894750, /* 0.89475 Mhz (3.579 / 4) */
+			2,      /* memory region #2 */
+			sound_readmem,sound_writemem,0,0,
+			ignore_interrupt,1      /* interrupts are triggered by the main CPU */
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	sinistar_init_machine,          /* init machine routine */
+
+	/* video hardware */
+	304, 256,                               /* screen_width, screen_height */
+	{ 0, 304-1, 0, 256-1 },                /* struct rectangle visible_area */
+	0,                          /* GfxDecodeInfo * */
+	16,                                  /* total colors */
+	0,                                      /* color table length */
+	williams_vh_convert_color_prom,         /* convert color prom routine */
+
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE|VIDEO_SUPPORTS_DIRTY,
+	0,                                      /* vh_init routine */
+	sinistar_vh_start,                      /* vh_start routine */
+	williams_vh_stop,                       /* vh_stop routine */
+	williams_vh_screenrefresh,              /* vh_update routine */
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_DAC,
+			&dac_interface
+		},
+		{
+			SOUND_SAMPLES,
+			&sinistar_samples_interface
+		}
+	}
+};
+
+
+/*
+ *   Defender driver
+ */
+
+static struct MachineDriver defender_machine_driver =
+{
+	/* basic machine hardware  */
+	{
+		{
+			CPU_M6809,
+			1200000,                /* ? Mhz */ /*Defender do not like 1 mhz. Collect at least 9 humans, when you depose them, the game stuck */
+			0,                      /* memory region */
+			defender_readmem,       /* MemoryReadAddress */
+			defender_writemem,      /* MemoryWriteAddress */
+			0,                      /* IOReadPort */
+			0,                      /* IOWritePort */
+			williams_interrupt,     /* interrupt routine */
+			64                      /* interrupts per frame (64 times/frame for video counter) */
+		},
+		{
+			CPU_M6808 | CPU_AUDIO_CPU,
+			894750, /* 0.89475 Mhz (3.579 / 4) */
+			2,      /* memory region #2 */
+			sound_readmem,sound_writemem,0,0,
+			ignore_interrupt,1      /* interrupts are triggered by the main CPU */
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	defender_init_machine,          /* init machine routine */
+
+	/* video hardware */
+	304, 256,                               /* screen_width, screen_height */
+	{ 0, 304-1, 0, 256-1 },                 /* struct rectangle visible_area */
+	0,                          /* GfxDecodeInfo * */
+	16,                                  /* total colors */
+	0,                                      /* color table length */
+	williams_vh_convert_color_prom,         /* convert color prom routine */
+
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE|VIDEO_SUPPORTS_DIRTY,
+	0,                                      /* vh_init routine */
+	williams_vh_start,                      /* vh_start routine */
+	williams_vh_stop,                       /* vh_stop routine */
+	williams_vh_screenrefresh,              /* vh_update routine */
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_DAC,
+			&dac_interface
+		}
+	}
+};
+
+
+/*
+ *   Splat driver
+ */
+
+static struct MachineDriver splat_machine_driver =
+{
+	/* basic machine hardware  */
+	{
+		{
+			CPU_M6809,
+			1000000,                /* ? Mhz */
+			0,                      /* memory region */
+			splat_readmem,          /* MemoryReadAddress */
+			splat_writemem,         /* MemoryWriteAddress */
+			0,                      /* IOReadPort */
+			0,                      /* IOWritePort */
+			williams_interrupt,     /* interrupt routine */
+			64                      /* interrupts per frame (64 times/frame for video counter) */
+		},
+		{
+			CPU_M6808 | CPU_AUDIO_CPU,
+			894750, /* 0.89475 Mhz (3.579 / 4) */
+			2,      /* memory region #2 */
+			sound_readmem,sound_writemem,0,0,
+			ignore_interrupt,1      /* interrupts are triggered by the main CPU */
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	splat_init_machine,          /* init machine routine */
+
+	/* video hardware */
+	304, 256,                               /* screen_width, screen_height */
+	{ 0, 304-1, 0, 256-1 },                 /* struct rectangle visible_area */
+	0,                          /* GfxDecodeInfo * */
+	16,                                  /* total colors */
+	0,                                      /* color table length */
+	williams_vh_convert_color_prom,         /* convert color prom routine */
+
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE|VIDEO_SUPPORTS_DIRTY,
+	0,                                      /* vh_init routine */
+	williams_vh_start_sc2,                  /* vh_start routine */
+	williams_vh_stop,                       /* vh_stop routine */
+	williams_vh_screenrefresh,              /* vh_update routine */
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_DAC,
+			&dac_interface
+		}
+	}
+};
+
+
+/*
+ *   Blaster driver
+ */
 
 static struct MachineDriver blaster_machine_driver =
 {
@@ -1339,7 +1506,7 @@ static struct MachineDriver blaster_machine_driver =
 			0,                      /* IOReadPort */
 			0,                      /* IOWritePort */
 			williams_interrupt,     /* interrupt routine */
-			4                       /* interrupts per frame (should be 4ms) */
+			64                      /* interrupts per frame (64 times/frame for video counter) */
 		},
 		{
 			CPU_M6808 | CPU_AUDIO_CPU,
@@ -1349,31 +1516,145 @@ static struct MachineDriver blaster_machine_driver =
 			ignore_interrupt,1      /* interrupts are triggered by the main CPU */
 		}
 	},
-	60,                                     /* frames per second */
-	10,     /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
-	williams_init_machine,          /* init machine routine */
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	blaster_init_machine,          /* init machine routine */
 
 	/* video hardware */
 	304, 256,                               /* screen_width, screen_height */
 	{ 0, 304-1, 0, 256-1 },                 /* struct rectangle visible_area */
-	gfxdecodeinfo,                          /* GfxDecodeInfo * */
+	0,                          /* GfxDecodeInfo * */
 	256,                                  /* total colors */
-	16,                                      /* color table length */
+	0,                                      /* color table length */
 	blaster_vh_convert_color_prom,         /* convert color prom routine */
+
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE|VIDEO_SUPPORTS_DIRTY,
+	0,                                      /* vh_init routine */
+	williams_vh_start_sc2,                  /* vh_start routine */
+	williams_vh_stop,                       /* vh_stop routine */
+	blaster_vh_screenrefresh,               /* vh_update routine */
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_DAC,
+			&dac_interface
+		}
+	}
+};
+
+
+/*
+ *   Colony 7 driver
+ */
+
+static struct MachineDriver colony7_machine_driver =
+{
+	/* basic machine hardware  */
+	{
+		{
+			CPU_M6809,
+			1000000,                /* 1 Mhz */
+			0,                      /* memory region */
+			colony7_readmem,       /* MemoryReadAddress */
+			colony7_writemem,      /* MemoryWriteAddress */
+			0,                      /* IOReadPort */
+			0,                      /* IOWritePort */
+			williams_interrupt,     /* interrupt routine */
+			64                      /* interrupts per frame (64 times/frame for video counter) */
+		},
+		{
+			CPU_M6808 | CPU_AUDIO_CPU,
+			894750,   /* 0.89475 Mhz (3.579 / 4) */
+			2,        /* memory region #2 */
+			colony7_sound_readmem,colony7_sound_writemem,0,0,
+			ignore_interrupt,1      /* interrupts are triggered by the main CPU */
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	colony7_init_machine,          /* init machine routine */
+
+	/* video hardware */
+	304, 256,                               /* screen_width, screen_height */
+	{ 0, 304-1, 0, 256-1 },                 /* struct rectangle visible_area */
+	0,                          /* GfxDecodeInfo * */
+	16,                                  /* total colors */
+	0,                                      /* color table length */
+	williams_vh_convert_color_prom,         /* convert color prom routine */
 
 	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE|VIDEO_SUPPORTS_DIRTY,
 	0,                                      /* vh_init routine */
 	williams_vh_start,                      /* vh_start routine */
 	williams_vh_stop,                       /* vh_stop routine */
-	blaster_vh_screenrefresh,               /* vh_update routine */
+	williams_vh_screenrefresh,              /* vh_update routine */
 
 	/* sound hardware */
-	0,                                      /* sh_init routine */
-	williams_sh_start,                      /* sh_start routine */
-	williams_sh_stop,                       /* sh_stop routine */
-	williams_sh_update                      /* sh_update routine */
+	0,0,0,0,
+	{
+		{
+			SOUND_DAC,
+			&dac_interface
+		}
+	}
 };
 
+
+/*
+ *	 Lotto Fun driver
+ */
+
+static struct MachineDriver lottofun_machine_driver =
+{
+	/* basic machine hardware  */
+	{
+		{
+			CPU_M6809,
+			1000000,				/* ? Mhz */
+			0,						/* memory region */
+			bubbles_readmem,		/* MemoryReadAddress */
+			williams_writemem,		/* MemoryWriteAddress */
+			0,						/* IOReadPort */
+			0,						/* IOWritePort */
+			williams_interrupt, 	/* interrupt routine */
+			64						/* interrupts per frame (64 times/frame for video counter) */
+		},
+		{
+			CPU_M6808 | CPU_AUDIO_CPU,
+			894750, /* 0.89475 Mhz (3.579 / 4) */
+			2,		/* memory region #2 */
+			sound_readmem,sound_writemem,0,0,
+			ignore_interrupt,1		/* interrupts are triggered by the main CPU */
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	lottofun_init_machine,			/* init machine routine */
+
+	/* video hardware */
+	304, 256,								/* screen_width, screen_height */
+	{ 0, 304-1, 8, 256-8-1 }, 				/* struct rectangle visible_area */
+	0,							/* GfxDecodeInfo * */
+	16, 								 /* total colors */
+	0,										/* color table length */
+	williams_vh_convert_color_prom, 		/* convert color prom routine */
+
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE|VIDEO_SUPPORTS_DIRTY,
+	0,										/* vh_init routine */
+	williams_vh_start,						/* vh_start routine */
+	williams_vh_stop,						/* vh_stop routine */
+	williams_vh_screenrefresh,				/* vh_update routine */
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_DAC,
+			&dac_interface
+		}
+	}
+};
 
 
 /***************************************************************************
@@ -1389,40 +1670,11 @@ static int cmos_load(void)
 	unsigned char *RAM = Machine->memory_region[0];
 	void *f;
 
+
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 	{
 		osd_fread(f,&RAM[0xcc00],0x400);
 		osd_fclose (f);
-	}
-	else
-	{
-		struct DisplayText dt[2];
-		dt[0].text =
-      "THIS IS THE FIRST TIME YOU START THIS GAME\n"
-      "\n"
-      "AFTER THE RAM TEST THE GAME WILL\n"
-      "DISPLAY  FACTORY SETTINGS RESTORED\n"
-      "IT WILL WAIT FOR YOU TO PRESS\n"
-      "THE ADVANCE BUTTON THAT IS KEY 6\n"
-      "\n"
-      "PRESS THIS BUTTON LATER TO GO TO\n"
-      "THE TESTS AND OPERATOR MENU\n"
-      "\n"
-      "TO SKIP THE TESTS HOLD THE AUTO UP\n"
-      "BUTTON BEFORE PRESSING ADVANCE\n"
-      "AUTO UP BUTTON IS KEY 5\n"
-      "\n"
-      "\n"
-			"PRESS ADVANCE TO CONTINUE\n";
-
-		dt[0].color = DT_COLOR_RED;
-		dt[0].x = 10;
-		dt[0].y = 20;
-		dt[1].text = 0;
-		displaytext (dt, 0);
-
-		while (!osd_key_pressed (OSD_KEY_6));    /* wait for key press */
-		while (osd_key_pressed (OSD_KEY_6));     /* wait for key release */
 	}
 
 	return 1;
@@ -1434,6 +1686,7 @@ static void cmos_save(void)
 	/* RAM pointer is pointing to the right place) */
 	unsigned char *RAM = Machine->memory_region[0];
 	void *f;
+
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
@@ -1450,49 +1703,11 @@ static int defender_cmos_load(void)
 	unsigned char *RAM = Machine->memory_region[0];
 	void *f;
 
+
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 	{
 		osd_fread(f,&RAM[0xc400],0x100);
 		osd_fclose (f);
-	}
-	else
-	{
-		struct DisplayText dt[2];
-		dt[0].text =
-      "THIS IS THE FIRST TIME YOU START DEFENDER\n"
-      "\n"
-      "AFTER THE RAM TEST THE GAME WILL\n"
-      "GO IN THE OPERATOR MENU\n"
-      "THIS IS NORMAL AND WILL OCCUR\n"
-      "ONLY THIS TIME\n"
-      "WHILE IN THE MENU IF AUTO UP\n"
-      "BUTTON IS RELEASED YOU WILL\n"
-      "DECREASE VALUES HOLD IT PRESSED\n"
-      "TO INCREASE VALUES\n"
-      "TO EXIT THE MENU YOU HAVE TO\n"
-      "PASS FROM LINE 28 TO LINE 0\n"
-      "SO HOLD AUTO UP AND PRESS ADVANCE\n"
-      "MANY TIMES\n"
-      "THE AUTO UP BUTTON IS KEY 5\n"
-      "THE ADVANCE BUTTON IS KEY 6\n"
-      "\n"
-      "PRESS ADVANCE BUTTON LATER TO GO\n"
-      "TO THE TESTS AND OPERATOR MENU\n"
-      "\n"
-      "TO SKIP THE TESTS HOLD THE AUTO UP\n"
-      "BUTTON BEFORE PRESSING ADVANCE\n"
-      "\n"
-      "\n"
-			"   PRESS ADVANCE TO CONTINUE\n";
-
-		dt[0].color = DT_COLOR_RED;
-		dt[0].x = 10;
-		dt[0].y = 0;
-		dt[1].text = 0;
-		displaytext (dt, 0);
-
-		while (!osd_key_pressed (OSD_KEY_6));    /* wait for key press */
-		while (osd_key_pressed (OSD_KEY_6));     /* wait for key release */
 	}
 
 	return 1;
@@ -1513,11 +1728,155 @@ static void defender_cmos_save(void)
 }
 
 
+
+/***************************************************************************
+
+  Color PROM data
+
+***************************************************************************/
+
+static unsigned char blaster_remap_prom[] =
+{
+     0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,
+     0x00,0x01,0x02,0x03,0x04,0x05,0x04,0x01,0x03,0x09,0x0A,0x01,0x0C,0x0D,0x0F,0x0F,
+     0x00,0x01,0x02,0x03,0x04,0x05,0x0C,0x0D,0x0A,0x09,0x0A,0x0C,0x0C,0x0D,0x0B,0x0F,
+     0x00,0x01,0x02,0x03,0x04,0x0C,0x0F,0x01,0x01,0x09,0x0A,0x07,0x0C,0x0D,0x06,0x0F,
+     0x00,0x01,0x02,0x03,0x04,0x05,0x01,0x09,0x0E,0x09,0x09,0x0B,0x0E,0x0D,0x0E,0x0F,
+     0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x04,0x0C,0x0D,0x05,0x0F,
+     0x00,0x01,0x02,0x03,0x04,0x05,0x0C,0x09,0x0E,0x09,0x09,0x0B,0x0E,0x0D,0x0E,0x0F,
+     0x00,0x01,0x02,0x03,0x04,0x05,0x09,0x09,0x0E,0x01,0x0A,0x09,0x0C,0x0D,0x09,0x0F,
+     0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x0C,0x0A,0x09,0x0C,0x0D,0x0B,0x0F,
+     0x00,0x01,0x02,0x03,0x04,0x05,0x05,0x0B,0x0E,0x0C,0x0B,0x06,0x0E,0x0D,0x07,0x0F,
+     0x00,0x01,0x02,0x03,0x04,0x05,0x05,0x06,0x0E,0x0C,0x06,0x01,0x0E,0x0D,0x03,0x0F,
+     0x00,0x01,0x02,0x03,0x04,0x05,0x05,0x01,0x0E,0x0C,0x01,0x0B,0x0E,0x0D,0x0D,0x0F,
+     0x00,0x01,0x02,0x03,0x04,0x05,0x05,0x0B,0x0E,0x0C,0x0B,0x0C,0x0E,0x0D,0x0D,0x0F,
+     0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x04,0x0A,0x05,0x0C,0x0D,0x01,0x0F,
+     0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x05,0x0C,0x0B,0x0C,0x0D,0x0E,0x0F,
+     0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x05,0x01,0x0B,0x0C,0x0D,0x0E,0x0F,
+     0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x06,0x03,0x0B,0x0C,0x0D,0x0E,0x0F,
+     0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x0C,0x0B,0x0B,0x0C,0x0D,0x0E,0x0F,
+     0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x0E,0x01,0x0B,0x0C,0x0D,0x0E,0x0F,
+     0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x0E,0x0B,0x0B,0x0C,0x0D,0x0E,0x0F,
+     0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x01,0x0B,0x0B,0x0C,0x0D,0x0E,0x0F,
+     0x00,0x01,0x02,0x03,0x04,0x0E,0x01,0x04,0x03,0x09,0x0B,0x0C,0x0C,0x0D,0x0B,0x0F,
+     0x00,0x0F,0x02,0x0D,0x0C,0x0B,0x0A,0x09,0x08,0x07,0x06,0x05,0x04,0x03,0x02,0x01,
+     0x00,0x03,0x02,0x07,0x09,0x0B,0x0D,0x0F,0x05,0x04,0x06,0x08,0x0A,0x0C,0x0E,0x01,
+     0x00,0x03,0x02,0x0E,0x07,0x01,0x0F,0x09,0x0D,0x06,0x08,0x0A,0x0C,0x05,0x04,0x0B,
+     0x00,0x0B,0x02,0x05,0x0C,0x0A,0x04,0x06,0x0D,0x09,0x0F,0x01,0x07,0x0E,0x08,0x03,
+     0x00,0x06,0x02,0x0A,0x0C,0x05,0x04,0x0B,0x03,0x08,0x0E,0x07,0x01,0x0F,0x09,0x0D,
+     0x00,0x07,0x02,0x0D,0x0F,0x0C,0x04,0x0B,0x05,0x0A,0x06,0x09,0x01,0x03,0x08,0x0E,
+     0x00,0x09,0x02,0x05,0x03,0x07,0x01,0x0D,0x0A,0x04,0x08,0x0F,0x06,0x0C,0x0B,0x0E,
+     0x00,0x01,0x02,0x01,0x01,0x01,0x01,0x01,0x05,0x09,0x0C,0x01,0x0C,0x01,0x01,0x05,
+     0x00,0x05,0x02,0x01,0x01,0x01,0x01,0x01,0x01,0x09,0x0C,0x01,0x0C,0x01,0x01,0x05,
+     0x00,0x05,0x02,0x05,0x01,0x01,0x01,0x01,0x01,0x09,0x0C,0x01,0x0C,0x01,0x01,0x01,
+     0x00,0x01,0x02,0x05,0x05,0x01,0x01,0x01,0x01,0x09,0x0C,0x01,0x0C,0x01,0x01,0x01,
+     0x00,0x01,0x02,0x01,0x05,0x05,0x01,0x01,0x01,0x09,0x0C,0x01,0x0C,0x01,0x01,0x01,
+     0x00,0x01,0x05,0x01,0x01,0x05,0x05,0x01,0x01,0x09,0x05,0x05,0x05,0x05,0x05,0x01,
+     0x00,0x01,0x05,0x01,0x01,0x01,0x05,0x05,0x01,0x09,0x05,0x05,0x05,0x05,0x05,0x01,
+     0x00,0x01,0x05,0x01,0x01,0x01,0x01,0x05,0x05,0x09,0x05,0x05,0x05,0x05,0x05,0x01,
+     0x00,0x00,0x02,0x03,0x0D,0x05,0x00,0x07,0x08,0x0D,0x00,0x0B,0x0C,0x0D,0x0D,0x0F,
+     0x00,0x00,0x02,0x03,0x0D,0x05,0x09,0x07,0x08,0x09,0x00,0x0B,0x0C,0x0D,0x0D,0x0F,
+     0x00,0x00,0x02,0x03,0x0D,0x05,0x00,0x07,0x08,0x0D,0x09,0x0B,0x0C,0x0D,0x09,0x0F,
+     0x00,0x09,0x02,0x03,0x09,0x05,0x00,0x07,0x08,0x0D,0x00,0x0B,0x0C,0x0D,0x0D,0x0F,
+     0x00,0x00,0x02,0x03,0x0D,0x05,0x00,0x07,0x08,0x0D,0x00,0x09,0x0C,0x0D,0x0D,0x0F,
+     0x00,0x00,0x02,0x03,0x0D,0x05,0x09,0x07,0x08,0x09,0x00,0x09,0x0C,0x0D,0x0D,0x0F,
+     0x00,0x00,0x02,0x03,0x0D,0x05,0x00,0x07,0x08,0x0D,0x09,0x09,0x0C,0x0D,0x09,0x0F,
+     0x00,0x09,0x02,0x03,0x09,0x05,0x00,0x07,0x08,0x0D,0x00,0x09,0x0C,0x0D,0x0D,0x0F,
+     0x00,0x0D,0x02,0x03,0x01,0x04,0x05,0x04,0x01,0x09,0x0E,0x0B,0x0C,0x0A,0x09,0x03,
+     0x00,0x03,0x02,0x0D,0x03,0x01,0x04,0x05,0x04,0x09,0x0E,0x0B,0x0C,0x0A,0x09,0x01,
+     0x00,0x01,0x02,0x03,0x0D,0x03,0x01,0x04,0x05,0x09,0x0E,0x0B,0x0C,0x0A,0x09,0x04,
+     0x00,0x04,0x02,0x01,0x03,0x0D,0x03,0x01,0x04,0x09,0x0E,0x0B,0x0C,0x0A,0x09,0x05,
+     0x00,0x05,0x02,0x04,0x01,0x03,0x0D,0x03,0x01,0x09,0x0E,0x0B,0x0C,0x0A,0x09,0x04,
+     0x00,0x04,0x02,0x05,0x04,0x01,0x03,0x0D,0x03,0x09,0x0E,0x0B,0x0C,0x0A,0x09,0x01,
+     0x00,0x01,0x02,0x04,0x05,0x04,0x01,0x03,0x0D,0x09,0x0E,0x0B,0x0C,0x0A,0x09,0x03,
+     0x00,0x03,0x02,0x01,0x04,0x05,0x04,0x01,0x03,0x09,0x0E,0x0B,0x0C,0x0A,0x09,0x0D,
+     0x00,0x0B,0x02,0x03,0x04,0x01,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,
+     0x00,0x01,0x02,0x03,0x04,0x09,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,
+     0x00,0x0C,0x02,0x03,0x04,0x01,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,
+     0x00,0x05,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,
+     0x00,0x05,0x02,0x0A,0x05,0x05,0x08,0x08,0x08,0x09,0x0A,0x0B,0x06,0x07,0x0E,0x06,
+     0x00,0x09,0x02,0x0B,0x09,0x05,0x02,0x02,0x02,0x09,0x0A,0x0B,0x09,0x0A,0x0E,0x0E,
+     0x00,0x04,0x02,0x03,0x01,0x05,0x05,0x05,0x05,0x09,0x0A,0x0B,0x04,0x03,0x0E,0x0F,
+     0x00,0x01,0x02,0x0D,0x01,0x05,0x0B,0x0B,0x0B,0x09,0x0A,0x0B,0x05,0x01,0x0E,0x06,
+     0x00,0x01,0x02,0x03,0x01,0x05,0x09,0x09,0x09,0x09,0x0A,0x0B,0x0F,0x01,0x0E,0x09,
+     0x00,0x01,0x02,0x0D,0x01,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x05,0x04,0x0E,0x0F,
+     0x00,0x02,0x02,0x03,0x04,0x05,0x0B,0x02,0x0B,0x09,0x0A,0x0B,0x0C,0x0D,0x02,0x0B,
+     0x00,0x02,0x02,0x03,0x04,0x05,0x0B,0x02,0x09,0x09,0x0A,0x0B,0x0C,0x0D,0x09,0x0B,
+     0x00,0x02,0x02,0x03,0x04,0x05,0x0B,0x09,0x0B,0x09,0x0A,0x0B,0x0C,0x0D,0x02,0x09,
+     0x00,0x09,0x02,0x03,0x04,0x05,0x09,0x02,0x0B,0x09,0x0A,0x0B,0x0C,0x0D,0x02,0x0B,
+     0x00,0x0E,0x02,0x0A,0x0B,0x09,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,
+     0x00,0x0B,0x02,0x0A,0x01,0x09,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0C,0x0E,0x0F,
+     0x00,0x07,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x04,0x0E,0x0F,
+     0x00,0x01,0x02,0x0B,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0C,
+     0x00,0x05,0x02,0x07,0x03,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x08,0x0E,0x09,
+     0x00,0x0F,0x02,0x01,0x0C,0x0B,0x06,0x07,0x08,0x0D,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,
+     0x00,0x08,0x02,0x06,0x07,0x09,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0A,0x0E,0x05,
+     0x00,0x0C,0x02,0x08,0x03,0x04,0x0E,0x0E,0x0E,0x06,0x08,0x0B,0x0C,0x08,0x07,0x0F,
+     0x00,0x0B,0x02,0x0A,0x0D,0x0C,0x0E,0x0E,0x0A,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0C,
+     0x00,0x06,0x02,0x0D,0x02,0x0A,0x06,0x07,0x08,0x0C,0x01,0x0B,0x0C,0x0D,0x0F,0x0F,
+     0x00,0x05,0x02,0x03,0x01,0x04,0x05,0x04,0x01,0x0F,0x03,0x0B,0x0C,0x0D,0x0A,0x0F,
+     0x00,0x01,0x02,0x02,0x08,0x06,0x05,0x04,0x01,0x05,0x07,0x0B,0x0C,0x0D,0x0A,0x06,
+     0x00,0x01,0x02,0x03,0x04,0x05,0x05,0x01,0x0E,0x09,0x01,0x0B,0x0E,0x0D,0x0E,0x0F,
+     0x00,0x01,0x02,0x03,0x04,0x05,0x05,0x06,0x0E,0x09,0x06,0x0B,0x0E,0x0D,0x0E,0x0F,
+     0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x01,0x0E,0x09,0x01,0x0B,0x0E,0x0D,0x0E,0x0F,
+     0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x0B,0x0E,0x09,0x0B,0x0B,0x0E,0x0D,0x0E,0x0F,
+     0x00,0x01,0x02,0x03,0x04,0x0E,0x0F,0x0C,0x0D,0x05,0x05,0x0B,0x0C,0x0D,0x0E,0x0F,
+     0x00,0x01,0x02,0x03,0x04,0x09,0x05,0x04,0x03,0x0C,0x0C,0x0B,0x0C,0x0D,0x0E,0x0F,
+     0x00,0x01,0x02,0x03,0x04,0x0F,0x04,0x01,0x03,0x06,0x06,0x0B,0x0C,0x0D,0x0E,0x0F,
+     0x00,0x01,0x02,0x03,0x04,0x09,0x0E,0x0A,0x0D,0x01,0x01,0x0B,0x0C,0x0D,0x0E,0x0F,
+     0x00,0x0A,0x02,0x0D,0x0C,0x0E,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,
+     0x00,0x07,0x02,0x08,0x06,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,
+     0x00,0x0C,0x02,0x03,0x04,0x06,0x0E,0x07,0x08,0x05,0x0A,0x0B,0x01,0x03,0x06,0x04,
+     0x00,0x0C,0x02,0x03,0x04,0x06,0x02,0x07,0x08,0x05,0x0A,0x0B,0x01,0x03,0x06,0x04,
+     0x00,0x05,0x02,0x0A,0x05,0x05,0x01,0x01,0x01,0x09,0x0A,0x0B,0x06,0x07,0x0E,0x06,
+     0x00,0x05,0x02,0x0A,0x05,0x05,0x05,0x05,0x05,0x09,0x0A,0x0B,0x06,0x07,0x0E,0x06,
+     0x00,0x01,0x02,0x03,0x04,0x05,0x02,0x02,0x02,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,
+     0x00,0x09,0x02,0x0B,0x09,0x05,0x01,0x01,0x01,0x09,0x0A,0x0B,0x09,0x0A,0x0E,0x0E,
+     0x00,0x04,0x02,0x03,0x01,0x05,0x01,0x01,0x01,0x09,0x0A,0x0B,0x04,0x03,0x0E,0x0F,
+     0x00,0x02,0x02,0x03,0x04,0x05,0x01,0x02,0x01,0x02,0x0E,0x01,0x0C,0x01,0x02,0x01,
+     0x00,0x02,0x02,0x03,0x04,0x05,0x01,0x02,0x05,0x02,0x0E,0x01,0x0C,0x01,0x05,0x01,
+     0x00,0x02,0x02,0x03,0x04,0x05,0x01,0x05,0x01,0x02,0x0E,0x01,0x0C,0x01,0x02,0x05,
+     0x00,0x05,0x02,0x03,0x04,0x05,0x05,0x02,0x01,0x02,0x0E,0x01,0x0C,0x01,0x02,0x01,
+     0x00,0x02,0x02,0x0A,0x09,0x0E,0x0C,0x02,0x0C,0x02,0x0A,0x0C,0x0C,0x0A,0x02,0x0C,
+     0x00,0x02,0x02,0x0A,0x09,0x0E,0x0C,0x02,0x0F,0x02,0x0A,0x0C,0x0C,0x0A,0x0F,0x0C,
+     0x00,0x02,0x02,0x0A,0x09,0x0E,0x0C,0x09,0x0C,0x02,0x0A,0x0C,0x0C,0x0A,0x02,0x0F,
+     0x00,0x09,0x02,0x0A,0x09,0x0E,0x0F,0x02,0x0C,0x02,0x0A,0x0C,0x0C,0x0A,0x02,0x0C,
+     0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x0B,0x0A,0x09,0x0C,0x0D,0x0B,0x0F,
+     0x00,0x01,0x02,0x03,0x04,0x05,0x06,0x07,0x08,0x03,0x04,0x05,0x0C,0x0D,0x0E,0x0F,
+     0x00,0x01,0x02,0x03,0x04,0x05,0x0B,0x09,0x0E,0x09,0x09,0x0B,0x0E,0x0D,0x0E,0x0F,
+     0x00,0x01,0x02,0x03,0x04,0x05,0x0C,0x09,0x0E,0x09,0x09,0x0B,0x0E,0x0D,0x0E,0x0F,
+     0x00,0x01,0x02,0x03,0x04,0x05,0x01,0x04,0x03,0x09,0x0A,0x0B,0x04,0x03,0x0E,0x05,
+     0x00,0x01,0x02,0x03,0x04,0x0E,0x06,0x07,0x08,0x09,0x0A,0x0B,0x04,0x03,0x0E,0x05,
+     0x00,0x01,0x02,0x03,0x04,0x0E,0x05,0x04,0x03,0x09,0x0A,0x0B,0x0C,0x0D,0x0E,0x0A,
+     0x00,0x01,0x02,0x03,0x04,0x06,0x05,0x04,0x03,0x0E,0x0A,0x0B,0x01,0x0D,0x0E,0x04,
+     0x00,0x01,0x02,0x03,0x04,0x0C,0x01,0x01,0x03,0x09,0x0E,0x0B,0x07,0x08,0x0E,0x06,
+     0x00,0x01,0x02,0x03,0x04,0x05,0x09,0x09,0x0A,0x09,0x0A,0x0B,0x01,0x0D,0x0E,0x0C,
+     0x00,0x01,0x02,0x03,0x04,0x09,0x05,0x05,0x03,0x09,0x0A,0x0B,0x04,0x04,0x0E,0x03,
+     0x00,0x01,0x02,0x03,0x04,0x01,0x0C,0x0C,0x0D,0x01,0x0D,0x0B,0x0A,0x0D,0x0E,0x09,
+     0x00,0x01,0x02,0x03,0x04,0x0E,0x06,0x07,0x08,0x0E,0x0A,0x0B,0x04,0x04,0x0E,0x03,
+     0x00,0x01,0x02,0x03,0x04,0x0F,0x04,0x01,0x03,0x0F,0x0A,0x0B,0x0C,0x0D,0x0E,0x0F,
+     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+     0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+};
+
+
+
 /***************************************************************************
 
   Game driver(s)
 
 ***************************************************************************/
+
+/*
+ *   Robotron
+ */
 
 ROM_START( robotron_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
@@ -1578,7 +1937,7 @@ struct GameDriver robotron_driver =
 	0,          /* samplenames */
 	0,      /* sound_prom */
 
-	0/*TBR*/,robotron_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	robotron_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -1599,13 +1958,19 @@ struct GameDriver robotryo_driver =
 	0,          /* samplenames */
 	0,      /* sound_prom */
 
-	0/*TBR*/,robotron_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	robotron_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	cmos_load, cmos_save
 };
+
+
+
+/*
+ *   Joust
+ */
 
 ROM_START( joust_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
@@ -1712,7 +2077,7 @@ struct GameDriver joust_driver =
 	0,          /* samplenames */
 	0,      /* sound_prom */
 
-	0/*TBR*/,joust_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	joust_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -1732,7 +2097,7 @@ struct GameDriver joustr_driver =
 	0,          /* samplenames */
 	0,      /* sound_prom */
 
-	0/*TBR*/,joust_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	joust_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -1752,7 +2117,7 @@ struct GameDriver joustg_driver =
 	0,          /* samplenames */
 	0,      /* sound_prom */
 
-	0/*TBR*/,joust_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	joust_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -1772,7 +2137,7 @@ struct GameDriver joustwr_driver =
 	0,          /* samplenames */
 	0,      /* sound_prom */
 
-	0/*TBR*/,joust_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	joust_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -1782,6 +2147,10 @@ struct GameDriver joustwr_driver =
 
 
 
+
+/*
+ *   Sinistar
+ */
 
 ROM_START( sinistar_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
@@ -1805,28 +2174,47 @@ ROM_START( sinistar_rom )
 	ROM_LOAD( "SINISTAR.SND", 0xf000, 0x1000, 0x7400ae74 )
 ROM_END
 
+/* Sinistar speech samples */
+const char *sinistar_sample_names[]=
+{
+	"*sinistar",
+	"ilive.sam",
+	"ihunger.sam",
+	"roar.sam",
+	"runrun.sam",
+	"iamsin.sam",
+	"bewarcow.sam",
+	"ihungerc.sam",
+	"runcow.sam",
+	0 /*array end*/
+};
+
 struct GameDriver sinistar_driver =
 {
 	"Sinistar",
 	"sinistar",
-	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles",
+	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles\nHowie Cohen\nSean Riddle\nPat Lawrence",
 	&sinistar_machine_driver,       /* MachineDriver * */
 
 	sinistar_rom,                   /* RomModule * */
 	0, 0,                           /* ROM decrypt routines */
-	0,                              /* samplenames */
+	sinistar_sample_names,          /* samplenames */
 	0,      /* sound_prom */
 
-	0/*TBR*/,sinistar_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	sinistar_input_ports,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ORIENTATION_ROTATE_270,
 
 	cmos_load, cmos_save
 };
 
 
 
+
+/*
+ *   Bubbles
+ */
 
 ROM_START( bubbles_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
@@ -1887,7 +2275,7 @@ struct GameDriver bubbles_driver =
 	0,                              /* samplenames */
 	0,      /* sound_prom */
 
-	0/*TBR*/,bubbles_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	bubbles_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -1908,7 +2296,7 @@ struct GameDriver bubblesr_driver =
 	0,                              /* samplenames */
 	0,      /* sound_prom */
 
-	0/*TBR*/,bubbles_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	bubbles_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -1918,6 +2306,10 @@ struct GameDriver bubblesr_driver =
 
 
 
+
+/*
+ *   Stargate
+ */
 
 ROM_START( stargate_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
@@ -1954,7 +2346,7 @@ struct GameDriver stargate_driver =
 	0,                              /* samplenames */
 	0,      /* sound_prom */
 
-	0/*TBR*/,stargate_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	stargate_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -1964,6 +2356,10 @@ struct GameDriver stargate_driver =
 
 
 
+
+/*
+ *   Defender
+ */
 
 ROM_START( defender_rom )
 	ROM_REGION(0x14000)
@@ -2001,7 +2397,7 @@ struct GameDriver defender_driver =
 	0,                              /* samplenames */
 	0,      /* sound_prom */
 
-	0/*TBR*/,defender_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	defender_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -2011,6 +2407,10 @@ struct GameDriver defender_driver =
 
 
 
+
+/*
+ *   Splat!
+ */
 
 ROM_START( splat_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
@@ -2048,7 +2448,7 @@ struct GameDriver splat_driver =
 	0,                              /* samplenames */
 	0,      /* sound_prom */
 
-	0/*TBR*/,splat_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	splat_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -2058,6 +2458,10 @@ struct GameDriver splat_driver =
 
 
 
+
+/*
+ *   Blaster
+ */
 
 ROM_START( blaster_rom )
 	ROM_REGION(0x3c000)
@@ -2101,12 +2505,149 @@ struct GameDriver blaster_driver =
 	0,                              /* samplenames */
 	0,      /* sound_prom */
 
-	0/*TBR*/,blaster_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	blaster_input_ports,
 
-	0, 0, 0,
+	blaster_remap_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	cmos_load, cmos_save
 };
 
 
+
+
+/*
+ *   Colony 7
+ */
+
+ROM_START( colony7_rom )
+	ROM_REGION(0x14000)
+	/* bank 0 is the place for CMOS ram */
+	ROM_LOAD( "cs06.bin", 0x10000, 0x0800, 0xb4d158c1 )
+	ROM_LOAD( "cs04.bin", 0x10800, 0x0800, 0x69594a21 )
+	ROM_LOAD( "cs07.bin", 0x11000, 0x0800, 0xc168b5da )
+	ROM_LOAD( "cs05.bin", 0x11800, 0x0800, 0x49741fe0 )
+	ROM_LOAD( "cs08.bin", 0x12000, 0x0800, 0x7838bc72 )
+	ROM_LOAD( "cs08.bin", 0x12800, 0x0800, 0x7838bc72 )
+	ROM_LOAD( "cs03.bin", 0xd000,  0x1000, 0xd3fcbf64 )
+	ROM_LOAD( "cs02.bin", 0xe000,  0x1000, 0x741ecfe4 )
+	ROM_LOAD( "cs01.bin", 0xf000,  0x1000, 0xdfb0181c )
+
+	ROM_REGION(0x1000)
+	ROM_LOAD( "cs11.bin", 0x0000, 0x0800, 0x54ba49bc )
+
+	ROM_REGION(0x10000)
+	ROM_LOAD( "cs11.bin", 0xf800, 0x0800, 0x54ba49bc ) /* Sound ROM */
+ROM_END
+
+ROM_START( colony7a_rom )
+	ROM_REGION(0x14000)
+	/* bank 0 is the place for CMOS ram */
+	ROM_LOAD( "cs06.bin", 0x10000, 0x0800, 0xb4d158c1 )
+	ROM_LOAD( "cs04.bin", 0x10800, 0x0800, 0x69594a21 )
+	ROM_LOAD( "cs07.bin", 0x11000, 0x0800, 0xc168b5da )
+	ROM_LOAD( "cs05.bin", 0x11800, 0x0800, 0x49741fe0 )
+	ROM_LOAD( "cs08.bin", 0x12000, 0x0800, 0x7838bc72 )
+	ROM_LOAD( "cs08.bin", 0x12800, 0x0800, 0x7838bc72 )
+	ROM_LOAD( "cs03a.bin", 0xd000,  0x1000, 0x124fcfb1 )
+	ROM_LOAD( "cs02a.bin", 0xe000,  0x1000, 0x9acb45f3 )
+	ROM_LOAD( "cs01a.bin", 0xf000,  0x1000, 0xe3508de4 )
+
+	ROM_REGION(0x1000)
+	ROM_LOAD( "cs11.bin", 0x0000, 0x0800, 0x54ba49bc )
+
+	ROM_REGION(0x10000)
+	ROM_LOAD( "cs11.bin", 0xf800, 0x0800, 0x54ba49bc ) /* Sound ROM */
+ROM_END
+
+struct GameDriver colony7_driver =
+{
+	"Colony 7",
+	"colony7",
+	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles\nMike Balfour",
+	&colony7_machine_driver,       /* MachineDriver * */
+
+	colony7_rom,                   /* RomModule * */
+	0, 0,                           /* ROM decrypt routines */
+	0,                              /* samplenames */
+	0,	/* sound_prom */
+
+	colony7_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	defender_cmos_load, defender_cmos_save
+};
+
+struct GameDriver colony7a_driver =
+{
+	"Colony 7 (Alternate)",
+	"colony7a",
+	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles\nMike Balfour",
+	&colony7_machine_driver,       /* MachineDriver * */
+
+	colony7a_rom,                   /* RomModule * */
+	0, 0,                           /* ROM decrypt routines */
+	0,                              /* samplenames */
+	0,	/* sound_prom */
+
+	colony7_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	defender_cmos_load, defender_cmos_save
+};
+
+
+
+
+/*
+ *   Lotto Fun
+ */
+
+ROM_START( lottofun_rom )
+	ROM_REGION(0x10000) 	/* 64k for code */
+	ROM_LOAD( "vl4e.dat", 0x0000, 0x1000, 0x8c22de60 )
+	ROM_LOAD( "vl4c.dat", 0x1000, 0x1000, 0x76ffdc39 )
+	ROM_LOAD( "vl4a.dat", 0x2000, 0x1000, 0xaad204c2 )
+	ROM_LOAD( "vl5e.dat", 0x3000, 0x1000, 0x8cd1bc8b )
+	ROM_LOAD( "vl5c.dat", 0x4000, 0x1000, 0x61ca8076 )
+	ROM_LOAD( "vl5a.dat", 0x5000, 0x1000, 0x52705d22 )
+	ROM_LOAD( "vl6e.dat", 0x6000, 0x1000, 0xc8f2a4d6 )
+	ROM_LOAD( "vl6c.dat", 0x7000, 0x1000, 0x80f34965 )
+	ROM_LOAD( "vl6a.dat", 0x8000, 0x1000, 0x44305588 )
+	ROM_LOAD( "vl7a.dat", 0xd000, 0x1000, 0x041338f9 )
+	ROM_LOAD( "vl7c.dat", 0xe000, 0x1000, 0x864747f3 )
+	ROM_LOAD( "vl7e.dat", 0xf000, 0x1000, 0x820df961 )
+
+	ROM_REGION(0x1000)		/* temporary space for graphics (disposed after conversion) */
+	/* empty memory region - not used by the game, but needed bacause the main */
+	/* core currently always frees region #1 after initialization. */
+
+	ROM_REGION(0x10000) 	/* 64k for the sound CPU */
+	ROM_LOAD( "vl2532.snd", 0xf000, 0x1000, 0x79b62d96 )
+ROM_END
+
+
+
+struct GameDriver lottofun_driver =
+{
+	"Lotto Fun",
+	"lottofun",
+	"Marc Lafontaine\nSteven Hugg\nMirko Buffoni\nAaron Giles\nMike Balfour (Ticket Dispenser)",
+	&lottofun_machine_driver,		/* MachineDriver * */
+
+	lottofun_rom,					 /* RomModule * */
+	0, 0,							/* ROM decrypt routines */
+	0,								/* samplenames */
+	0,		/* sound_prom */
+
+	lottofun_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	cmos_load, cmos_save
+};

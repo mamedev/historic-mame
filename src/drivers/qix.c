@@ -1,10 +1,11 @@
 /***************************************************************************
 
-Qix Memory Map
---- ------ ---
+Qix/ZooKeeper Memory Map
+------------- ------ ---
 
 Qix uses two 6809 CPUs:  one for data and sound and the other for video.
 Communication between the two CPUs is done using a 4K RAM space at $8000
+(for ZooKeeper the data cpu maps it at $0000 and the video cpu at $8000)
 which both CPUs have direct access.  FIRQs (fast interrupts) are generated
 by each CPU to interrupt the other at specific times.
 
@@ -35,7 +36,8 @@ The scan line at $9800 on the video CPU records where the scan line is
 on the display (0-255).  Several places in the ROM code wait until the
 scan line reaches zero before continuing.
 
-CPU #1 (Data/Sound):
+QIX CPU #1 (Data/Sound):
+    $8000 - $83FF:  Dual port RAM accessible by both processors
     $8400 - $87FF:  Local Memory
     $8800        :  ACIA base address
     $8C00        :  Video FIRQ activation
@@ -62,10 +64,40 @@ CPU #1 (Data/Sound):
     $9900        :  Game PIA 2
     $9C00        :  Game PIA 3
 
+ZOOKEEPER CPU #1 (Data/Sound):
+	$0000 - $03FF:  Dual Port RAM accessible by both processors
+    $0400 - $07FF:  Local Memory
+    $0800        :  ACIA base address
+    $0C00        :  Video FIRQ activation
+    $0C01        :  Data FIRQ deactivation
+    $1000        :  Sound PIA
+    $1400        :  [76543210] Game PIA 1 (Port A)
+                     o         Fast draw
+                      o        1P button
+                       o       2P button
+                        o      Slow draw
+                         o     Joystick Left
+                          o    Joystick Down
+                           o   Joystick Right
+                            o  Joystick Up
+    $1402        :  [76543210] Game PIA 1 (Port B)
+                     o         Tilt
+                      o        Coin sw      Unknown
+                       o       Right coin
+                        o      Left coin
+                         o     Slew down
+                          o    Slew up
+                           o   Sub. test
+                            o  Adv. test
+    $1900        :  Game PIA 2
+    $1C00        :  Game PIA 3
+
 CPU #2 (Video):
     $0000 - $7FFF:  Video/Screen RAM
+    $8000 - $83FF:  Dual port RAM accessible by both processors
     $8400 - $87FF:  CMOS backup and local memory
     $8800        :  LED output and color RAM page select
+    $8801		 :  EPROM page select (ZooKeeper only)
     $8C00        :  Data FIRQ activation
     $8C01        :  Video FIRQ deactivation
     $9000        :  Color RAM
@@ -75,10 +107,7 @@ CPU #2 (Video):
     $9800        :  Scan line location
     $9C00        :  CRT controller base address
 
-BOTH CPUS:
-    $8000 - $83FF:  Dual port RAM accessible by both processors
-
-NONVOLATILE CMOS MEMORY MAP (CPU #2 -- Video) $8400-$87ff
+QIX NONVOLATILE CMOS MEMORY MAP (CPU #2 -- Video) $8400-$87ff
 	$86A9 - $86AA:	When CMOS is valid, these bytes are $55AA
 	$86AC - $86C3:	AUDIT TOTALS -- 4 4-bit BCD digits per setting
 					(All totals default to: 0000)
@@ -124,7 +153,8 @@ NONVOLATILE CMOS MEMORY MAP (CPU #2 -- Video) $8400-$87ff
 
 #include "driver.h"
 #include "machine/6821pia.h"
-#include "sndhrdw/dac.h"
+
+/*#define TRYGAMEPIA 1*/
 
 extern unsigned char *qix_sharedram;
 int qix_scanline_r(int offset);
@@ -142,8 +172,7 @@ void qix_addresslatch_w(int offset, int data);
 void qix_paletteram_w(int offset,int data);
 void qix_palettebank_w(int offset,int data);
 
-int qix_sharedram_r_1(int offset);
-int qix_sharedram_r_2(int offset);
+int qix_sharedram_r(int offset);
 void qix_sharedram_w(int offset, int data);
 int qix_interrupt_video(void);
 void qix_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
@@ -156,14 +185,14 @@ int qix_data_io_r (int offset);
 int qix_sound_io_r (int offset);
 void qix_data_io_w (int offset, int data);
 void qix_sound_io_w (int offset, int data);
-int qix_sh_start (void);
-void qix_sh_stop (void);
-void qix_sh_update (void);
+
+extern void zoo_bankswitch_w(int offset, int data);
+extern void zoo_init_machine(void);
 
 
-static struct MemoryReadAddress readmem_cpu_data[] =
+static struct MemoryReadAddress readmem[] =
 {
-	{ 0x8000, 0x83ff, qix_sharedram_r_1, &qix_sharedram },
+	{ 0x8000, 0x83ff, qix_sharedram_r, &qix_sharedram },
 	{ 0x8400, 0x87ff, MRA_RAM },
 	{ 0x9000, 0x9003, pia_4_r },
 	{ 0x9400, 0x9403, pia_1_r },
@@ -173,10 +202,29 @@ static struct MemoryReadAddress readmem_cpu_data[] =
 	{ -1 } /* end of table */
 };
 
-static struct MemoryReadAddress readmem_cpu_video[] =
+static struct MemoryReadAddress zoo_readmem[] =
+{
+	{ 0x0000, 0x03ff, qix_sharedram_r, &qix_sharedram },
+	{ 0x0400, 0x07ff, MRA_RAM },
+	{ 0x1000, 0x1003, pia_4_r },	/* Sound PIA */
+#ifdef TRYGAMEPIA
+	{ 0x1400, 0x1403, pia_1_r },	/* Game PIA 1 - Player inputs, coin door switches */
+	{ 0x1c00, 0x1c03, pia_3_r },	/* Game PIA 3 - Player 2 */
+#else
+	{ 0x1400, 0x1400, input_port_0_r }, /* PIA 1 PORT A -- Player controls */
+	{ 0x1402, 0x1402, input_port_1_r }, /* PIA 1 PORT B -- Coin door switches */
+	{ 0x1c00, 0x1c00, input_port_2_r }, /* PIA 3 PORT A -- Player 2 controls */
+#endif
+	{ 0x1900, 0x1903, pia_2_r },	/* Game PIA 2 */
+	{ 0x1ffe, 0x1ffe, MRA_RAM },	/* ????? Some kind of I/O */
+	{ 0x8000, 0xffff, MRA_ROM },
+	{ -1 } /* end of table */
+};
+
+static struct MemoryReadAddress readmem_video[] =
 {
 	{ 0x0000, 0x7fff, qix_videoram_r },
-	{ 0x8000, 0x83ff, qix_sharedram_r_2 },
+	{ 0x8000, 0x83ff, qix_sharedram_r },
 	{ 0x8400, 0x87ff, MRA_RAM },
 	{ 0x9400, 0x9400, qix_addresslatch_r },
 	{ 0x9800, 0x9800, qix_scanline_r },
@@ -184,7 +232,19 @@ static struct MemoryReadAddress readmem_cpu_video[] =
 	{ -1 } /* end of table */
 };
 
-static struct MemoryReadAddress readmem_cpu_sound[] =
+static struct MemoryReadAddress zoo_readmem_video[] =
+{
+	{ 0x0000, 0x7fff, qix_videoram_r },
+	{ 0x8000, 0x83ff, qix_sharedram_r },
+	{ 0x8400, 0x87ff, MRA_RAM },
+	{ 0x9400, 0x9400, qix_addresslatch_r },
+	{ 0x9800, 0x9800, qix_scanline_r },
+	{ 0xa000, 0xbfff, MRA_BANK1 },
+	{ 0xc000, 0xffff, MRA_ROM },
+	{ -1 } /* end of table */
+};
+
+static struct MemoryReadAddress readmem_sound[] =
 {
 	{ 0x0000, 0x007f, MRA_RAM },
 	{ 0x2000, 0x2003, pia_6_r },
@@ -193,7 +253,17 @@ static struct MemoryReadAddress readmem_cpu_sound[] =
 	{ -1 } /* end of table */
 };
 
-static struct MemoryWriteAddress writemem_cpu_data[] =
+static struct MemoryReadAddress zoo_readmem_sound[] =
+{
+	{ 0x0000, 0x007f, MRA_RAM },
+	{ 0x2000, 0x2003, pia_6_r },
+	{ 0x4000, 0x4003, pia_5_r },
+	{ 0xd000, 0xffff, MRA_ROM },
+	{ -1 } /* end of table */
+};
+
+
+static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x8000, 0x83ff, qix_sharedram_w },
 	{ 0x8400, 0x87ff, MWA_RAM },
@@ -206,7 +276,22 @@ static struct MemoryWriteAddress writemem_cpu_data[] =
 	{ -1 } /* end of table */
 };
 
-static struct MemoryWriteAddress writemem_cpu_video[] =
+static struct MemoryWriteAddress zoo_writemem[] =
+{
+	{ 0x0000, 0x03ff, qix_sharedram_w },
+	{ 0x0400, 0x07ff, MWA_RAM },
+	{ 0x0c00, 0x0c00, qix_video_firq_w },
+	{ 0x0c01, 0x0c01, MWA_NOP },	/* interrupt acknowledge */
+	{ 0x1000, 0x1003, pia_4_w },	/* Sound PIA */
+	{ 0x1400, 0x1403, pia_1_w },	/* Game PIA 1 */
+	{ 0x1900, 0x1903, pia_2_w },	/* Game PIA 2 */
+	{ 0x1c00, 0x1c03, pia_3_w },	/* Game PIA 3 */
+	{ 0x1ffe, 0x1ffe, MWA_RAM },	/* ????? Some kind of I/O */
+	{ 0x8000, 0xffff, MWA_ROM },
+	{ -1 } /* end of table */
+};
+
+static struct MemoryWriteAddress writemem_video[] =
 {
 	{ 0x0000, 0x7fff, qix_videoram_w },
 	{ 0x8000, 0x83ff, qix_sharedram_w },
@@ -220,12 +305,39 @@ static struct MemoryWriteAddress writemem_cpu_video[] =
 	{ -1 } /* end of table */
 };
 
-static struct MemoryWriteAddress writemem_cpu_sound[] =
+static struct MemoryWriteAddress zoo_writemem_video[] =
+{
+	{ 0x0000, 0x7fff, qix_videoram_w },
+	{ 0x8000, 0x83ff, qix_sharedram_w },
+///	{ 0x8400, 0x87ff, MWA_RAM },
+	{ 0x8400, 0x86ff, MWA_RAM },
+	{ 0x8700, 0x87ff, MWA_RAM },/////protected when coin door is closed
+	{ 0x8800, 0x8800, qix_palettebank_w, &qix_palettebank },	/* LEDs are upper 6 bits */
+	{ 0x8801, 0x8801, zoo_bankswitch_w },
+	{ 0x8c00, 0x8c00, qix_data_firq_w },
+	{ 0x8c01, 0x8c01, MWA_NOP },	/* interrupt acknowledge */
+	{ 0x9000, 0x93ff, qix_paletteram_w, &qix_paletteram },
+	{ 0x9400, 0x9400, qix_addresslatch_w },
+	{ 0x9402, 0x9403, MWA_RAM, &qix_videoaddress },
+	{ 0xa000, 0xffff, MWA_ROM },
+	{ -1 } /* end of table */
+};
+
+static struct MemoryWriteAddress writemem_sound[] =
 {
 	{ 0x0000, 0x007f, MWA_RAM },
 	{ 0x2000, 0x2003, pia_6_w },
 	{ 0x4000, 0x4003, pia_5_w },
 	{ 0xf800, 0xffff, MWA_ROM },
+	{ -1 } /* end of table */
+};
+
+static struct MemoryWriteAddress zoo_writemem_sound[] =
+{
+	{ 0x0000, 0x007f, MWA_RAM },
+	{ 0x2000, 0x2003, pia_6_w },
+	{ 0x4000, 0x4003, pia_5_w },
+	{ 0xd000, 0xffff, MWA_ROM },
 	{ -1 } /* end of table */
 };
 
@@ -253,16 +365,61 @@ INPUT_PORTS_START( input_ports )
 INPUT_PORTS_END
 
 
+INPUT_PORTS_START( zoo_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* button 2 - not used */
+
+	PORT_START	/* IN1 */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Advance Test", OSD_KEY_F1, IP_JOY_NONE, 0 )
+	PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, "Advance Sub-Test", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_BITX(0x04, IP_ACTIVE_HIGH, IPT_SERVICE, "Slew Up", OSD_KEY_F5, IP_JOY_NONE, 0 )
+	PORT_BITX(0x08, IP_ACTIVE_HIGH, IPT_SERVICE, "Slew Down", OSD_KEY_F6, IP_JOY_NONE, 0 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* coin switch ? */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_TILT )
+
+	PORT_START /* Game PIA 3 Port A -- Player 2 controls */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* button 2 - not used */
+INPUT_PORTS_END
+
+
+
+
+static struct DACinterface dac_interface =
+{
+	1,
+	441000,
+	{ 255 },
+	{ 0 },
+};
+
+
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M6809,
-			1250000,		/* 1.25 Mhz */
+			1250000,	/* 1.25 Mhz */
 			0,			/* memory region */
-			readmem_cpu_data,	/* MemoryReadAddress */
-			writemem_cpu_data,	/* MemoryWriteAddress */
+			readmem,	/* MemoryReadAddress */
+			writemem,	/* MemoryWriteAddress */
 			0,			/* IOReadPort */
 			0,			/* IOWritePort */
 			interrupt,
@@ -270,46 +427,108 @@ static struct MachineDriver machine_driver =
 		},
 		{
 			CPU_M6809,
-			1250000,		/* 1.25 Mhz */
+			1250000,	/* 1.25 Mhz */
 			2,			/* memory region #2 */
-			readmem_cpu_video, writemem_cpu_video, 0, 0,
+			readmem_video, writemem_video, 0, 0,
 			ignore_interrupt,
 			1
 		},
 		{
 			CPU_M6802 | CPU_AUDIO_CPU,
-			3680000/4,		/* 0.92 Mhz */
+			3680000/4,	/* 0.92 Mhz */
 			3,			/* memory region #3 */
-			readmem_cpu_sound, writemem_cpu_sound, 0, 0,
+			readmem_sound, writemem_sound, 0, 0,
 			ignore_interrupt,
 			1
 		}
 	},
-	60,					/* frames per second */
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	100,	/* 100 CPU slices per frame - an high value to ensure proper */
 			/* synchronization of the CPUs */
 	qix_init_machine,			/* init machine routine */ /* JB 970526 */
 
 	/* video hardware */
-	256, 256,				/* screen_width, screen_height */
-	/* this is the maximum viewable area, as shown by the test mode */
-	{ 3, 253, 2, 252 },		        /* struct rectangle visible_area */
-	0,				/* GfxDecodeInfo * */
-	256,			/* total colors */
-	0,			/* color table length */
-	qix_vh_convert_color_prom,					/* convert color prom routine */
+	256, 256,					/* screen_width, screen_height */
+	{ 0, 255, 8, 247 }, 		/* struct rectangle visible_area */
+	0,							/* GfxDecodeInfo * */
+	256,						/* total colors */
+	0,							/* color table length */
+	qix_vh_convert_color_prom,	/* convert color prom routine */
 
 	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE|VIDEO_SUPPORTS_DIRTY,
-	0,					/* vh_init routine */
-	qix_vh_start,				/* vh_start routine */ /* JB 970524 */
-	qix_vh_stop,				/* vh_stop routine */ /* JB 970524 */
-	qix_vh_screenrefresh,		        /* vh_update routine */	/* JB 970524 */
+	0,							/* vh_init routine */
+	qix_vh_start,				/* vh_start routine */
+	qix_vh_stop,				/* vh_stop routine */
+	qix_vh_screenrefresh,		/* vh_update routine */
 
 	/* sound hardware */
-	0,					/* sh_init routine */
-	qix_sh_start,			/* sh_start routine */
-	DAC_sh_stop,			/* sh_stop routine */
-	DAC_sh_update			/* sh_update routine */
+	0,0,0,0,
+	{
+		{
+			SOUND_DAC,
+			&dac_interface
+		}
+	}
+};
+
+static struct MachineDriver zoo_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M6809,
+			1250000,		/* 1.25 Mhz */
+			0,				/* memory region */
+			zoo_readmem,	/* MemoryReadAddress */
+			zoo_writemem,	/* MemoryWriteAddress */
+			0,				/* IOReadPort */
+			0,				/* IOWritePort */
+			interrupt,		/* interrupt routine */
+			1				/* interrupts per frame */
+		},
+		{
+			CPU_M6809,
+			1250000,		/* 1.25 Mhz */
+			2,				/* memory region #2 */
+			zoo_readmem_video, zoo_writemem_video, 0, 0,
+			ignore_interrupt,
+            1
+		},
+		{
+			CPU_M6802 | CPU_AUDIO_CPU,
+			3680000/4,		/* 0.92 Mhz */
+			3,				/* memory region #3 */
+			zoo_readmem_sound, zoo_writemem_sound, 0, 0,
+			ignore_interrupt,
+			1
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	100,								/* 100 cpu slices per frame */
+	zoo_init_machine,					/* init machine routine */
+
+	/* video hardware */
+	256, 256,					/* screen_width, screen_height */
+	{ 0, 255, 8, 247 }, 		/* struct rectangle visible_area */
+	0,							/* GfxDecodeInfo * */
+	256,						/* total colors */
+	0,							/* color table length */
+	qix_vh_convert_color_prom,	/* convert color prom routine */
+
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE|VIDEO_SUPPORTS_DIRTY,
+	0,							/* vh_init routine */
+	qix_vh_start,				/* vh_start routine */
+	qix_vh_stop,				/* vh_stop routine */
+	qix_vh_screenrefresh,		/* vh_update routine */
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_DAC,
+			&dac_interface
+		}
+	}
 };
 
 
@@ -377,6 +596,38 @@ ROM_START( qix2_rom )
 	ROM_LOAD( "u27.rmb", 0xF800, 0x800, 0xdc9c8536 )
 ROM_END
 
+ROM_START( zookeeper_rom )
+	ROM_REGION(0x10000)	/* 64k for code for the first CPU (Data) */
+	ROM_LOAD( "ZB12", 0x8000, 0x1000, 0x04506034 )
+	ROM_LOAD( "ZA13", 0x9000, 0x1000, 0x91f9297d )
+	ROM_LOAD( "ZA14", 0xA000, 0x1000, 0xa9a036e4 )
+	ROM_LOAD( "ZA15", 0xB000, 0x1000, 0x56a14af7 )
+	ROM_LOAD( "ZA16", 0xC000, 0x1000, 0x01f7597d )
+	ROM_LOAD( "ZA17", 0xD000, 0x1000, 0x3dd0c4e0 )
+	ROM_LOAD( "ZA18", 0xE000, 0x1000, 0xdc96af3a )
+	ROM_LOAD( "ZA19", 0xF000, 0x1000, 0xfd5cd200 )
+
+	ROM_REGION(0x1000)
+	/* empty memory region - not used by the game, but needed bacause the main */
+	/* core currently always frees region #1 after initialization. */
+
+	ROM_REGION(0x12000)     /* 64k for code + 2 ROM banks for the second CPU (Video) */
+	ROM_LOAD(  "ZA5", 0x0A000, 0x1000, 0x05e61772 )
+	ROM_LOAD(  "ZA3", 0x10000, 0x1000, 0x8f54bbe8 )
+	ROM_LOAD(  "ZA6", 0x0B000, 0x1000, 0x3b0092ac )
+	ROM_LOAD(  "ZA4", 0x11000, 0x1000, 0x8979a0b3 )
+
+	ROM_LOAD(  "ZA7", 0x0C000, 0x1000, 0xe01d57bd )
+	ROM_LOAD(  "ZA8", 0x0D000, 0x1000, 0x62a73b67 )
+	ROM_LOAD(  "ZA9", 0x0E000, 0x1000, 0x7feb3005 )
+	ROM_LOAD( "ZA10", 0x0F000, 0x1000, 0x0729e957 )
+
+	ROM_REGION(0x10000) 	/* 64k for code for the third CPU (sound) */
+	ROM_LOAD( "ZA25", 0xD000, 0x1000, 0x6b0469ba )
+	ROM_LOAD( "ZA26", 0xE000, 0x1000, 0x1b46045a )
+	ROM_LOAD( "ZA27", 0xF000, 0x1000, 0xd583f705 )
+ROM_END
+
 
 
 
@@ -425,12 +676,12 @@ struct GameDriver qix_driver =
 	qix_rom,
 	0, 0,   /* ROM decode and opcode decode functions */
 	0,      /* Sample names */
-	0,	/* sound_prom */
+	0,		/* sound_prom */
 
-	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	input_ports,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_270,
 
 	hiload, hisave	       /* High score load and save */
 };
@@ -445,13 +696,33 @@ struct GameDriver qix2_driver =
 	qix2_rom,
 	0, 0,   /* ROM decode and opcode decode functions */
 	0,      /* Sample names */
-	0,	/* sound_prom */
+	0,		/* sound_prom */
 
-	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	input_ports,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_270,
 
 	hiload, hisave	       /* High score load and save */
+};
+
+struct GameDriver zookeep_driver =
+{
+	"Zoo Keeper",
+	"zookeep",
+	"John Butler\nEd. Mueller\nAaron Giles",
+	&zoo_machine_driver,
+
+    zookeeper_rom,
+	0, 0,   /* ROM decode and opcode decode functions */
+	0,      /* Sample names */
+	0,		/* sound_prom */
+
+    zoo_input_ports,
+
+    0, 0, 0,   			/* colors, palette, colortable */
+	ORIENTATION_DEFAULT,
+
+	hiload,hisave		/* High score load and save */
 };
 

@@ -1,6 +1,8 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
+#define MAX_BANKS 8
+
 /***************************************************************************
 
 Note that the memory hooks are not passed the actual memory address where
@@ -22,13 +24,16 @@ struct MemoryReadAddress
 };
 
 #define MRA_NOP   0	              /* don't care, return 0 */
-#define MRA_RAM   ((int(*)())-1)	  /* plain RAM location (return its contents) */
-#define MRA_ROM   ((int(*)())-2)	  /* plain ROM location (return its contents) */
-#define MRA_BANK1 ((int(*)())-10)  /* bank memory */
-#define MRA_BANK2 ((int(*)())-11)  /* bank memory */
-#define MRA_BANK3 ((int(*)())-12)  /* bank memory */
-#define MRA_BANK4 ((int(*)())-13)  /* bank memory */
-#define MRA_BANK5 ((int(*)())-14)  /* bank memory */
+#define MRA_RAM   ((int(*)(int))-1)	  /* plain RAM location (return its contents) */
+#define MRA_ROM   ((int(*)(int))-2)	  /* plain ROM location (return its contents) */
+#define MRA_BANK1 ((int(*)(int))-10)  /* bank memory */
+#define MRA_BANK2 ((int(*)(int))-11)  /* bank memory */
+#define MRA_BANK3 ((int(*)(int))-12)  /* bank memory */
+#define MRA_BANK4 ((int(*)(int))-13)  /* bank memory */
+#define MRA_BANK5 ((int(*)(int))-14)  /* bank memory */
+#define MRA_BANK6 ((int(*)(int))-15)  /* bank memory */
+#define MRA_BANK7 ((int(*)(int))-16)  /* bank memory */
+#define MRA_BANK8 ((int(*)(int))-17)  /* bank memory */
 
 struct MemoryWriteAddress
 {
@@ -39,18 +44,21 @@ struct MemoryWriteAddress
 };
 
 #define MWA_NOP 0	                  /* do nothing */
-#define MWA_RAM ((void(*)())-1)	   /* plain RAM location (store the value) */
-#define MWA_ROM ((void(*)())-2)	   /* plain ROM location (do nothing) */
+#define MWA_RAM ((void(*)(int,int))-1)	   /* plain RAM location (store the value) */
+#define MWA_ROM ((void(*)(int,int))-2)	   /* plain ROM location (do nothing) */
 /* RAM[] and ROM[] are usually the same, but they aren't if the CPU opcodes are */
 /* encrypted. In such a case, opcodes are fetched from ROM[], and arguments from */
 /* RAM[]. If the program dynamically creates code in RAM and executes it, it */
 /* won't work unless writes to RAM affects both RAM[] and ROM[]. */
-#define MWA_RAMROM ((void(*)())-3)	/* write to both the RAM[] and ROM[] array. */
-#define MWA_BANK1 ((void(*)())-10)  /* bank memory */
-#define MWA_BANK2 ((void(*)())-11)  /* bank memory */
-#define MWA_BANK3 ((void(*)())-12)  /* bank memory */
-#define MWA_BANK4 ((void(*)())-13)  /* bank memory */
-#define MWA_BANK5 ((void(*)())-14)  /* bank memory */
+#define MWA_RAMROM ((void(*)(int,int))-3)	/* write to both the RAM[] and ROM[] array. */
+#define MWA_BANK1 ((void(*)(int,int))-10)  /* bank memory */
+#define MWA_BANK2 ((void(*)(int,int))-11)  /* bank memory */
+#define MWA_BANK3 ((void(*)(int,int))-12)  /* bank memory */
+#define MWA_BANK4 ((void(*)(int,int))-13)  /* bank memory */
+#define MWA_BANK5 ((void(*)(int,int))-14)  /* bank memory */
+#define MWA_BANK6 ((void(*)(int,int))-15)  /* bank memory */
+#define MWA_BANK7 ((void(*)(int,int))-16)  /* bank memory */
+#define MWA_BANK8 ((void(*)(int,int))-17)  /* bank memory */
 
 
 
@@ -79,14 +87,32 @@ struct IOWritePort
 #define IOWP_NOP 0	/* do nothing */
 
 
-/* ASG 971005 -- moved into the header file */
+/***************************************************************************
+
+If a memory region contains areas that are outside of the ROM region for
+an address space, the memory system will allocate an array of structures
+to track the external areas.
+
+***************************************************************************/
+
+#define MAX_EXT_MEMORY 64
+
+struct ExtMemory
+{
+	int start,end,region;
+	unsigned char *data;
+};
+
+extern struct ExtMemory ext_memory[MAX_EXT_MEMORY];
+
+
+
 /* memory element block size */
 #define MH_SBITS    8			/* sub element bank size */
 #define MH_PBITS    8			/* port   current element size */
 #define MH_ELEMAX  64			/* sub elements       limit */
 #define MH_HARDMAX 64			/* hardware functions limit */
 
-/* ASG 971007 customize to elemet size period */
 /* 24 bits address */
 #define ABITS1_24    14
 #define ABITS2_24     8
@@ -121,6 +147,7 @@ extern unsigned char *OP_ROM;	/* op_code used */
 void cpu_setOPbase16(int pc );
 void cpu_setOPbase20(int pc );
 void cpu_setOPbase24(int pc );
+void cpu_setOPbaseoverride (int (*f)(int));
 
 /* ----- memory setup function ----- */
 int initmemoryhandlers(void);
@@ -141,31 +168,38 @@ void cpu_writemem24(int address,int data);
 void cpu_writemem24_word(int address,int data);
 void cpu_writemem24_dword(int address,int data);
 
+/* ----- 16-bit memory access macros ----- */
+#define READ_WORD(a)          (*(unsigned short *)(a))
+#define WRITE_WORD(a,d)       (*(unsigned short *)(a) = (d))
+#define COMBINE_WORD(w,d)     (((w) & ((d) >> 16)) | ((d) & 0xffff))
+#define COMBINE_WORD_MEM(a,d) (WRITE_WORD ((a), (READ_WORD (a) & ((d) >> 16)) | (d)))
+
 /* ----- port read / write function ----- */
 int cpu_readport(int Port);
 void cpu_writeport(int Port,int Value);
 
 /* -----  bank memory function ----- */
-#define cpu_setbank(B,A)  {cpu_bankbase[B]=(unsigned char *)(A)/*ASG 971213 -cpu_bankoffset[B]*/;if(ophw==B){ \
-                               ophw=0xff;cpu_setOPbase16(cpu_getpc());}}
+#define cpu_setbank(B,A)  {cpu_bankbase[B]=(unsigned char *)(A);if(ophw==B){ophw=0xff;cpu_setOPbase16(cpu_getpc());}}
+
 /* ------ bank memory handler ------ */
-extern void cpu_setbankhandler_r(int bank,int (*handler)() );
-extern void cpu_setbankhandler_w(int bank,void (*handler)() );
+extern void cpu_setbankhandler_r(int bank,int (*handler)(int) );
+extern void cpu_setbankhandler_w(int bank,void (*handler)(int,int) );
 
 /* ----- op-code region set function ----- */
-#define change_pc change_pc16
-/* ASG 971108 -- added 20 and 24-bit version */
 #define change_pc16(pc) {if(cur_mrhard[(pc)>>(ABITS2_16+ABITS_MIN_16)]!=ophw)cpu_setOPbase16(pc);}
 #define change_pc20(pc) {if(cur_mrhard[(pc)>>(ABITS2_20+ABITS_MIN_20)]!=ophw)cpu_setOPbase20(pc);}
 #define change_pc24(pc) {if(cur_mrhard[(pc)>>(ABITS2_24+ABITS_MIN_24)]!=ophw)cpu_setOPbase24(pc);}
+
+#define change_pc change_pc16
 
 
 /* bank memory functions */
 extern MHELE ophw;
 extern unsigned char *cpu_bankbase[];
-/*ASG 971213extern int cpu_bankoffset[];*/
 
 #define cpu_readop(A) 		(OP_ROM[A])
+#define cpu_readop16(A)    (*(unsigned short *)&OP_ROM[A])
 #define cpu_readop_arg(A)	(OP_RAM[A])
+#define cpu_readop_arg16(A) (*(unsigned short *)&OP_RAM[A])
 
 #endif

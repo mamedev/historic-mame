@@ -10,9 +10,8 @@
 #include "driver.h"
 #include "inptport.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/generic.h"
+#include "vidhrdw/vector.h"
 #include "vidhrdw/avgdvg.h"
-#include "sndhrdw/pokyintf.h"
 
 
 int quantum_avg_start(void);
@@ -31,33 +30,9 @@ int quantum_switches_r(int);
 int quantum_input_1_r(int);
 int quantum_input_2_r(int);
 
-extern int quantum_ram_size;
+extern unsigned char *quantum_ram;
+extern unsigned char *quantum_nvram;
 
-
-static struct POKEYinterface pokey =
-{
-	2,	/* 2 chips */
-	FREQ_17_APPROX,	/* 1.7 Mhz */
-	255,
-	NO_CLIP,
-	/* The 8 pot handlers */
-	{ quantum_input_1_r, quantum_input_2_r },
-	{ quantum_input_1_r, quantum_input_2_r },
-	{ quantum_input_1_r, quantum_input_2_r },
-	{ quantum_input_1_r, quantum_input_2_r },
-	{ quantum_input_1_r, quantum_input_2_r },
-	{ quantum_input_1_r, quantum_input_2_r },
-	{ quantum_input_1_r, quantum_input_2_r },
-	{ quantum_input_1_r, quantum_input_2_r },
-	/* The allpot handler */
-	{ 0, 0 },
-};
-
-/* sound hardware start hook */
-static int quantum_sh_start(void)
-{
-	return pokey_sh_start(&pokey);
-}
 
 /*
 	QUANTUM MEMORY MAP (per schem):
@@ -90,10 +65,10 @@ static int quantum_sh_start(void)
 struct MemoryReadAddress quantum_read[] =
 {
 	{ 0x000000, 0x013fff, MRA_ROM },
-	{ 0x018000, 0x01cfff, MRA_BANK1, 0, &quantum_ram_size },
-	{ 0x800000, 0x801fff, quantum_vram_read, 0, &vectorram_size },
+	{ 0x018000, 0x01cfff, MRA_BANK1, &quantum_ram },
+	{ 0x800000, 0x801fff, MRA_BANK2, &vectorram, &vectorram_size },
 	{ 0x840000, 0x8400ff, quantum_snd_read },
-	{ 0x900000, 0x9001ff, quantum_nvram_read },
+	{ 0x900000, 0x9001ff, quantum_nvram_read, &quantum_nvram },
 	{ 0x940000, 0x947fff, quantum_trackball_r }, /* trackball */
 	{ 0x948000, 0x94ffff, quantum_switches_r },
 	{ 0x950000, 0x957fff, MRA_NOP }, /* color RAM isn't readable */
@@ -106,7 +81,7 @@ struct MemoryWriteAddress quantum_write[] =
 {
 	{ 0x000000, 0x013fff, MWA_ROM },
 	{ 0x018000, 0x01cfff, MWA_BANK1 },
-	{ 0x800000, 0x801fff, quantum_vram_write },
+	{ 0x800000, 0x801fff, MWA_BANK2 },
 	{ 0x840000, 0x8400ff, quantum_snd_write },
 	{ 0x900000, 0x9001ff, quantum_nvram_write },
 	{ 0x948000, 0x94ffff, MWA_NOP }, /* switches */
@@ -165,11 +140,11 @@ INPUT_PORTS_START( quantum_input_ports )
 	PORT_DIPNAME(   0xff, 0xff, "Unknown",             IP_KEY_NONE )
 	PORT_DIPSETTING(      0xff, "Factory Settings"     )
 
-	PORT_START	/* IN2 */
-	PORT_ANALOG ( 0xff, 0, IPT_TRACKBALL_Y | IPF_REVERSE, 150, 64, 0, 0 )
+	PORT_START      /* IN2 */
+	PORT_ANALOG ( 0x0f, 0, IPT_TRACKBALL_Y | IPF_REVERSE, 20, 7, 0,0)
 
-	PORT_START	/* IN3 */
-	PORT_ANALOG ( 0xff, 0, IPT_TRACKBALL_X, 150, 64, 0, 0 )
+	PORT_START      /* IN3 */
+	PORT_ANALOG ( 0x0f, 0, IPT_TRACKBALL_X, 20, 7, 0, 0 )
 INPUT_PORTS_END
 
 
@@ -192,24 +167,28 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
-static unsigned char color_prom[] =
+static unsigned char color_prom[] = { VEC_PAL_COLOR };
+
+
+
+static struct POKEYinterface pokey_interface =
 {
-	0x00,0x00,0x00, /* BLACK */
-	0x00,0x00,0x01, /* BLUE */
-	0x00,0x01,0x00, /* GREEN */
-	0x00,0x01,0x01, /* CYAN */
-	0x01,0x00,0x00, /* RED */
-	0x01,0x00,0x01, /* MAGENTA */
-	0x01,0x01,0x00, /* YELLOW */
-	0x01,0x01,0x01,	/* WHITE */
-	0x00,0x00,0x00, /* BLACK */
-	0x00,0x00,0x01, /* BLUE */
-	0x00,0x01,0x00, /* GREEN */
-	0x00,0x01,0x01, /* CYAN */
-	0x01,0x00,0x00, /* RED */
-	0x01,0x00,0x01, /* MAGENTA */
-	0x01,0x01,0x00, /* YELLOW */
-	0x01,0x01,0x01	/* WHITE */
+	2,	/* 2 chips */
+	600000,	/* 0.6 MHz??? */
+	255,
+	POKEY_DEFAULT_GAIN/2,
+	NO_CLIP,
+	/* The 8 pot handlers */
+	{ quantum_input_1_r, quantum_input_2_r },
+	{ quantum_input_1_r, quantum_input_2_r },
+	{ quantum_input_1_r, quantum_input_2_r },
+	{ quantum_input_1_r, quantum_input_2_r },
+	{ quantum_input_1_r, quantum_input_2_r },
+	{ quantum_input_1_r, quantum_input_2_r },
+	{ quantum_input_1_r, quantum_input_2_r },
+	{ quantum_input_1_r, quantum_input_2_r },
+	/* The allpot handler */
+	{ 0, 0 },
 };
 
 
@@ -223,10 +202,11 @@ static struct MachineDriver machine_driver =
 			8000000,		/* really should be 6MHz, but we use 8 because the 68k isn't properly timed */
 			0,
 			quantum_read,quantum_write,0,0,
-			quantum_interrupt,6	/* IRQ rate = 750kHz/4096 ~= 183Hz, or ~= 30Hz * 6 ints/frame */
+			0,0,
+			quantum_interrupt,750000/4096	/* IRQ rate = 750kHz/4096 */
 		}
 	},
-	30,
+	30, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
 	1,
 	0,
 
@@ -238,56 +218,48 @@ static struct MachineDriver machine_driver =
 
 	VIDEO_TYPE_VECTOR,
 	0,
-	quantum_avg_start,
+	avg_start_quantum,
 	avg_stop,
 	avg_screenrefresh,
 
 	/* sound hardware */
-	0,
-	quantum_sh_start,
-	pokey_sh_stop,
-	pokey_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_POKEY,
+			&pokey_interface
+		}
+	}
 };
 
 
 
 ROM_START( quantum_rom )
 	ROM_REGION(0x014000)
-
-    ROM_LOAD_ODD ( "136016.106", 0x000000, 0x002000, 0xf8098bbd )
     ROM_LOAD_EVEN( "136016.101", 0x000000, 0x002000, 0x6d6c10aa )
-
-    ROM_LOAD_ODD ( "136016.107", 0x004000, 0x002000, 0x08a8ebee )
+    ROM_LOAD_ODD ( "136016.106", 0x000000, 0x002000, 0xf8098bbd )
     ROM_LOAD_EVEN( "136016.102", 0x004000, 0x002000, 0xe248a2b4 )
-
-    ROM_LOAD_ODD ( "136016.108", 0x008000, 0x002000, 0x16aa75d6 )
+    ROM_LOAD_ODD ( "136016.107", 0x004000, 0x002000, 0x08a8ebee )
     ROM_LOAD_EVEN( "136016.103", 0x008000, 0x002000, 0x8f3b4f1f )
-
-    ROM_LOAD_ODD ( "136016.109", 0x00C000, 0x002000, 0x35fe3930 )
+    ROM_LOAD_ODD ( "136016.108", 0x008000, 0x002000, 0x16aa75d6 )
     ROM_LOAD_EVEN( "136016.104", 0x00C000, 0x002000, 0xbd97cfe7 )
-
-    ROM_LOAD_ODD ( "136016.110", 0x010000, 0x002000, 0x943b9d71 )
+    ROM_LOAD_ODD ( "136016.109", 0x00C000, 0x002000, 0x35fe3930 )
     ROM_LOAD_EVEN( "136016.105", 0x010000, 0x002000, 0xf574385a )
+    ROM_LOAD_ODD ( "136016.110", 0x010000, 0x002000, 0x943b9d71 )
 ROM_END
-
 
 ROM_START( quantum2_rom )
 	ROM_REGION(0x014000)
-
-    ROM_LOAD_ODD ( "136016.206", 0x000000, 0x002000, 0x75bd063d )
     ROM_LOAD_EVEN( "136016.201", 0x000000, 0x002000, 0x8cfa0e3a )
-
-    ROM_LOAD_ODD ( "136016.107", 0x004000, 0x002000, 0x08a8ebee )
+    ROM_LOAD_ODD ( "136016.206", 0x000000, 0x002000, 0x75bd063d )
     ROM_LOAD_EVEN( "136016.102", 0x004000, 0x002000, 0xe248a2b4 )
-
-    ROM_LOAD_ODD ( "136016.208", 0x008000, 0x002000, 0xa6e3e47d )
+    ROM_LOAD_ODD ( "136016.107", 0x004000, 0x002000, 0x08a8ebee )
     ROM_LOAD_EVEN( "136016.203", 0x008000, 0x002000, 0x87164704 )
-
-    ROM_LOAD_ODD ( "136016.109", 0x00C000, 0x002000, 0x35fe3930 )
+    ROM_LOAD_ODD ( "136016.208", 0x008000, 0x002000, 0xa6e3e47d )
     ROM_LOAD_EVEN( "136016.104", 0x00C000, 0x002000, 0xbd97cfe7 )
-
-    ROM_LOAD_ODD ( "136016.110", 0x010000, 0x002000, 0x943b9d71 )
+    ROM_LOAD_ODD ( "136016.109", 0x00C000, 0x002000, 0x35fe3930 )
     ROM_LOAD_EVEN( "136016.105", 0x010000, 0x002000, 0xf574385a )
+    ROM_LOAD_ODD ( "136016.110", 0x010000, 0x002000, 0x943b9d71 )
 ROM_END
 
 
@@ -295,9 +267,9 @@ struct GameDriver quantum_driver =
 {
 	"Quantum",
 	"quantum",
-	"Paul Forgey\n"
-	"Hedley Rainnie\n"
-	"Aaron Giles",
+	"Paul Forgey (Mame driver)\n"
+	"Aaron Giles (Mame driver)\n"
+	VECTOR_TEAM,
 
 	&machine_driver,
 
@@ -307,10 +279,7 @@ struct GameDriver quantum_driver =
 	NULL,
 	NULL,
 
-	/* input ports */
-	NULL, quantum_input_ports, NULL,
-
-	NULL, NULL,
+	quantum_input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -322,9 +291,9 @@ struct GameDriver quantum2_driver =
 {
 	"Quantum (version 2)",
 	"quantum2",
-	"Paul Forgey\n"
-	"Hedley Rainnie\n"
-	"Aaron Giles",
+	"Paul Forgey (Mame driver)\n"
+	"Aaron Giles (Mame driver)\n"
+	VECTOR_TEAM,
 
 	&machine_driver,
 
@@ -334,10 +303,7 @@ struct GameDriver quantum2_driver =
 	NULL,
 	NULL,
 
-	/* input ports */
-	NULL, quantum_input_ports, NULL,
-
-	NULL, NULL,
+	quantum_input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,

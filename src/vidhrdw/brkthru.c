@@ -10,7 +10,7 @@
 
 unsigned char *brkthru_scroll;
 unsigned char *brkthru_videoram;
-unsigned int brkthru_videoram_size;
+int brkthru_videoram_size;
 static int bgscroll;
 static int bgbasecolor;
 static int flipscreen;
@@ -287,25 +287,22 @@ void brkthru_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* draw the frontmost playfield. They are characters, but draw them as sprites */
 	for (offs = brkthru_videoram_size - 1;offs >= 0;offs--)
 	{
-		if (brkthru_videoram[offs])	/* don't draw spaces */
+		int sx,sy;
+
+
+		sx = offs % 32;
+		sy = offs / 32;
+		if (flipscreen)
 		{
-			int sx,sy;
-
-
-			sx = offs % 32;
-			sy = offs / 32;
-			if (flipscreen)
-			{
-				sx = 31 - sx;
-				sy = 31 - sy;
-			}
-
-			drawgfx(bitmap,Machine->gfx[0],
-					brkthru_videoram[offs],
-					0,
-					flipscreen,flipscreen,
-					8*sx,8*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			sx = 31 - sx;
+			sy = 31 - sy;
 		}
+
+		drawgfx(bitmap,Machine->gfx[0],
+				brkthru_videoram[offs],
+				0,
+				flipscreen,flipscreen,
+				8*sx,8*sy,
+				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

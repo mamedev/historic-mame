@@ -25,12 +25,12 @@ void circus_clown_x_w(int offset, int data);
 void circus_clown_y_w(int offset, int data);
 void circus_clown_z_w(int offset, int data);
 
-int  circus_sh_start(void);
-void circus_sh_stop(void);
-void circus_sh_update(void);
 
+void crash_vh_screenrefresh(struct osd_bitmap *bitmap);
 void circus_vh_screenrefresh(struct osd_bitmap *bitmap);
 void robotbowl_vh_screenrefresh(struct osd_bitmap *bitmap);
+
+int crash_interrupt(void);
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -138,6 +138,15 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
+
+static struct DACinterface dac_interface =
+{
+	1,
+	441000,
+	{ 255, 255 },
+	{  1,  1 } /* filter rate (rate = Register(ohm)*Capaciter(F)*1000000) */
+};
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -150,7 +159,7 @@ static struct MachineDriver machine_driver =
 			interrupt,1
 		}
 	},
-	60,
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,      /* single CPU, no need for interleaving */
 	0,
 
@@ -167,10 +176,13 @@ static struct MachineDriver machine_driver =
 	circus_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	circus_sh_start,
-	circus_sh_stop,
-	circus_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_DAC,
+			&dac_interface
+		}
+	}
 };
 
 
@@ -239,7 +251,7 @@ struct GameDriver circus_driver =
 {
 	"Circus",
 	"circus",
-	"Al Kossow (Information)\nMike Coates (Mame Driver)\nValerio Verrando (High Score Saving)",
+	"Mike Coates (MAME driver)\nValerio Verrando (high score save)",
 	&machine_driver,
 
 	circus_rom,
@@ -247,7 +259,7 @@ struct GameDriver circus_driver =
 	0,
 	0,      /* sound_prom */
 
-	0, input_ports, 0, 0, 0,
+	input_ports,
 
 	0, palette, colortable,
 	ORIENTATION_DEFAULT,
@@ -349,7 +361,7 @@ static struct MachineDriver robotbowl_machine_driver =
 			interrupt,1
 		}
 	},
-	60,
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,      /* single CPU, no need for interleaving */
 	0,
 
@@ -366,17 +378,20 @@ static struct MachineDriver robotbowl_machine_driver =
 	robotbowl_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	circus_sh_start,
-	circus_sh_stop,
-	circus_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_DAC,
+			&dac_interface
+		}
+	}
 };
 
 struct GameDriver robotbwl_driver =
 {
 	"Robot Bowl",
 	"robotbwl",
-	"Al Kossow (Information)\nMike Coates (Mame Driver)\n",
+	"Mike Coates",
 	&robotbowl_machine_driver,
 
 	robotbowl_rom,
@@ -384,10 +399,154 @@ struct GameDriver robotbwl_driver =
 	0,
 	0,      /* sound_prom */
 
-	0, robotbowl_input_ports, 0, 0, 0,
+	robotbowl_input_ports,
 
 	0, palette, colortable,
 	ORIENTATION_DEFAULT,
 
 	0,0
+};
+
+/***************************************************************************
+
+ Crash
+
+***************************************************************************/
+
+ROM_START( crash_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "CRASH.A1", 0x1000, 0x0200, 0xb43221da ) /* Code */
+	ROM_LOAD( "CRASH.A2", 0x1200, 0x0200, 0x7eef07ef )
+	ROM_LOAD( "CRASH.A3", 0x1400, 0x0200, 0xdb35fe5d )
+	ROM_LOAD( "CRASH.A4", 0x1600, 0x0200, 0x99c59ef9 )
+	ROM_LOAD( "CRASH.A5", 0x1800, 0x0200, 0xdbd7928f )
+	ROM_LOAD( "CRASH.A6", 0x1A00, 0x0200, 0x7f79c719 )
+	ROM_LOAD( "CRASH.A7", 0x1C00, 0x0200, 0x26c42afa )
+	ROM_LOAD( "CRASH.A8", 0x1E00, 0x0200, 0xd79d983b )
+	ROM_RELOAD(            0xFE00, 0x0200 ) /* for the reset and interrupt vectors */
+
+	ROM_REGION(0x0A00)      /* temporary space for graphics */
+	ROM_LOAD( "CRASH.C1", 0x0600, 0x0200, 0xc05ac420 )  /* Character Set */
+	ROM_LOAD( "CRASH.C2", 0x0400, 0x0200, 0xd82dddbb )
+	ROM_LOAD( "CRASH.C3", 0x0200, 0x0200, 0xa595e3c7 )
+	ROM_LOAD( "CRASH.C4", 0x0000, 0x0200, 0xdbccbdbc )
+	ROM_LOAD( "CRASH.D14",0x0800, 0x0200, 0xbd1e3d80 ) /* Cars */
+ROM_END
+
+INPUT_PORTS_START( crash_input_ports )
+	PORT_START /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1)
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 )
+
+	PORT_START      /* Dip Switch */
+	PORT_DIPNAME( 0x03, 0x01, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x01, "3" )
+	PORT_DIPSETTING(    0x02, "4" )
+	PORT_DIPSETTING(    0x03, "5" )
+	PORT_DIPNAME( 0x0C, 0x04, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x04, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x08, "1 Coin/2 Credits" )
+	PORT_DIPNAME( 0x10, 0x00, "Top Score", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "No Award" )
+	PORT_DIPSETTING(    0x10, "Credit Awarded" )
+	PORT_BIT( 0x60, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
+INPUT_PORTS_END
+
+static int crash_hiload(void)
+{
+	/* check if the hi score table has already been initialized */
+	if (RAM[0x004B] != 0)
+	{
+		void *f;
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x000F],2);
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;  /* we can't load the hi scores yet */
+}
+
+
+
+static void crash_hisave(void)
+{
+	void *f;
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x000F],2);
+		osd_fclose(f);
+	}
+}
+
+static struct MachineDriver crash_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_M6502,
+			1411125,        /* 11.289 / 8 Mhz */
+			0,
+			readmem,writemem,0,0,
+			interrupt,2
+		}
+	},
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,      /* single CPU, no need for interleaving */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 31*8-1, 0*8, 32*8-1 },
+	gfxdecodeinfo,
+	sizeof(palette)/3,sizeof(colortable),
+	0,
+
+	VIDEO_TYPE_RASTER,
+	0,
+	generic_vh_start,
+	generic_vh_stop,
+	crash_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_DAC,
+			&dac_interface
+		}
+	}
+};
+
+struct GameDriver crash_driver =
+{
+	"Crash",
+	"crash",
+	"Mike Coates",
+	&crash_machine_driver,
+
+	crash_rom,
+	0, 0,
+	0,
+	0,      /* sound_prom */
+
+	crash_input_ports,
+
+	0, palette, colortable,
+	ORIENTATION_DEFAULT,
+
+	crash_hiload,crash_hisave
 };

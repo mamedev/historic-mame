@@ -340,7 +340,7 @@ static struct MachineDriver machine_driver =
 			naughtyb_interrupt,1
 		}
 	},
-	60,
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* single CPU, no need for interleaving */
 	0,
 
@@ -471,7 +471,7 @@ static int hiload(void)
 
 
 
-static unsigned long get_score(char *score)
+static unsigned long get_score(unsigned char *score)
 {
    return (score[3])+(154*score[2])+((unsigned long)(39322)*score[1])+((unsigned long)(39322)*154*score[0]);
 }
@@ -513,7 +513,7 @@ struct GameDriver naughtyb_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/,input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	input_ports,
 
 	naughtyb_color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -533,7 +533,7 @@ struct GameDriver popflame_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/,input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	input_ports,
 
 	popflame_color_prom, 0, 0,
 	ORIENTATION_DEFAULT,

@@ -14,11 +14,10 @@
 /* 6808 Registers */
 typedef struct
 {
-	word		pc;	/* Program counter */
-	word		u, s;	/* Stack pointers */
-	word		x, y;	/* Index registers */
-	byte		dp;	/* Direct Page register */
-	byte		a, b;	/* Accumulator */
+	word		pc;		/* Program counter */
+	word		s;		/* Stack pointer */
+	word		x;		/* Index register */
+	byte		a, b;	/* Accumulators */
 	byte		cc;
 
 	int pending_interrupts;	/* MB */
@@ -29,9 +28,10 @@ typedef struct
 #endif
 
 
-#define M6808_INT_NONE  0            /* No interrupt required */
-#define M6808_INT_IRQ	1            /* Standard IRQ interrupt */
-#define M6808_INT_NMI	2            /* NMI interrupt          */
+#define M6808_INT_NONE  0			/* No interrupt required */
+#define M6808_INT_IRQ	1 			/* Standard IRQ interrupt */
+#define M6808_INT_NMI	2			/* NMI interrupt          */
+#define M6808_WAI		8			/* set when WAI is waiting for an interrupt */
 
 
 /* PUBLIC FUNCTIONS */
@@ -44,9 +44,7 @@ extern void m6808_Cause_Interrupt(int type);       /* MB */
 extern void m6808_Clear_Pending_Interrupts(void);  /* MB */
 
 /* PUBLIC GLOBALS */
-/*extern int	m6808_IPeriod; */
 extern int	m6808_ICount;
-/* extern int	m6808_IRequest; */
 
 /****************************************************************************/
 /* Read a byte from given memory location                                   */
@@ -73,6 +71,23 @@ extern int	m6808_ICount;
 /****************************************************************************/
 #define M6808_RDOP_ARG(A) ((unsigned)cpu_readop_arg(A))
 
+/****************************************************************************/
+/* Flags for optimizing memory access. Game drivers should set m6808_Flags  */
+/* to a combination of these flags depending on what can be safely          */
+/* optimized. For example, if M6809_FAST_S is set, bytes are pulled         */
+/* directly from the RAM array, and cpu_readmem() is not called.            */
+/* The flags affect reads and writes.                                       */
+/****************************************************************************/
+extern int m6808_Flags;
+#define M6808_FAST_NONE	0x00	/* no memory optimizations */
+#define M6808_FAST_S	0x02	/* stack */
+
+#ifndef FALSE
+#    define FALSE 0
+#endif
+#ifndef TRUE
+#    define TRUE (!FALSE)
+#endif
 
 #endif /* _M6808_H */
 

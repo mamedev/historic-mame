@@ -79,7 +79,8 @@ Things to do:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/pokyintf.h"
+
+
 
 extern unsigned char *ccastles_bitmapram;
 extern unsigned char *ccastles_mobram1;
@@ -105,32 +106,6 @@ void ccastles_bitmapram_w(int offset,int data);
 void ccastles_flipscreen_w(int offset,int data);
 
 
-
-/* Misc sound code */
-static struct POKEYinterface interface =
-{
-	2,	/* 2 chips */
-	FREQ_17_APPROX,	/* 1.7 Mhz */
-	255,
-	NO_CLIP,
-	/* The 8 pot handlers */
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	/* The allpot handler */
-	{ 0, input_port_1_r },
-};
-
-
-static int ccastles_sh_start(void)
-{
-	return pokey_sh_start (&interface);
-}
 
 static void ccastles_led_w(int offset,int data)
 {
@@ -208,10 +183,10 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT ( 0xc0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START	/* IN2 */
-	PORT_ANALOG ( 0xff, 0x7f, IPT_TRACKBALL_Y | IPF_REVERSE, 100, 0, 0, 0 )
+	PORT_ANALOGX( 0xff, 0x7f, IPT_TRACKBALL_Y | IPF_REVERSE, 10, 0, 0, 0, OSD_KEY_UP, OSD_KEY_DOWN, OSD_JOY_UP, OSD_JOY_DOWN, 30 )
 
 	PORT_START	/* IN3 */
-	PORT_ANALOG ( 0xff, 0x7f, IPT_TRACKBALL_X, 100, 0, 0, 0 )
+	PORT_ANALOGX( 0xff, 0x7f, IPT_TRACKBALL_X, 10, 0, 0, 0, OSD_KEY_LEFT, OSD_KEY_RIGHT, OSD_JOY_LEFT, OSD_JOY_RIGHT, 30 )
 INPUT_PORTS_END
 
 static struct GfxLayout ccastles_spritelayout =
@@ -250,6 +225,28 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
+static struct POKEYinterface pokey_interface =
+{
+	2,	/* 2 chips */
+	1250000,	/* 1.25 MHz??? */
+	255,
+	POKEY_DEFAULT_GAIN/2,
+	NO_CLIP,
+	/* The 8 pot handlers */
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	/* The allpot handler */
+	{ 0, input_port_1_r },
+};
+
+
+
 static struct MachineDriver ccastles_machine =
 {
 	/* basic machine hardware */
@@ -262,7 +259,7 @@ static struct MachineDriver ccastles_machine =
 			interrupt,4
 		}
 	},
-	60,
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* single CPU, no need for interleaving */
 
 	0,
@@ -278,11 +275,16 @@ static struct MachineDriver ccastles_machine =
 	ccastles_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	ccastles_sh_start,
-	pokey_sh_stop,
-	pokey_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_POKEY,
+			&pokey_interface
+		}
+	}
 };
+
+
 
 /***************************************************************************
 
@@ -352,7 +354,7 @@ struct GameDriver ccastles_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

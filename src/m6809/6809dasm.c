@@ -15,6 +15,7 @@
 /* sriddle@ionet.net */
 #include <stdio.h>
 #include <strings.h>
+#include "m6809.h"
 
 #ifndef TRUE
 #define TRUE         -1
@@ -370,14 +371,15 @@ static char *hexstring (int address)
 	return labtemp;
 }
 
-int Dasm6809 (unsigned char *pBase, char *buffer, int pc)
+int Dasm6809 (char *buffer, int pc)
 {
 	int i, j, k, page, opcode, numoperands, mode;
-	unsigned char *p = pBase, operandarray[4];
+	unsigned char operandarray[4];
 	unsigned char *opname;
+	int p = 0;
 
 	buffer[0] = 0;
-	opcode = *p++;
+	opcode = M6809_RDOP(pc+(p++));
 	for (i = 0; i < numops[0]; i++)
 		if (pg1opcodes[i].opcode == opcode)
 			break;
@@ -386,7 +388,7 @@ int Dasm6809 (unsigned char *pBase, char *buffer, int pc)
 	{
 		if (pg1opcodes[i].mode >= PG2)
 		{
-			opcode = *p++;
+			opcode = M6809_RDOP(pc+(p++));
 			page = pg1opcodes[i].mode - PG2 + 1;          /* get page # */
 			for (k = 0; k < numops[page]; k++)
 				if (opcode == pgpointers[page][k].opcode)
@@ -396,7 +398,7 @@ int Dasm6809 (unsigned char *pBase, char *buffer, int pc)
 			{                 /* opcode found */
 				numoperands = pgpointers[page][k].numoperands - 1;
 				for (j = 0; j < numoperands; j++)
-					operandarray[j] = *p++;
+					operandarray[j] = M6809_RDOP_ARG(pc+(p++));
 				mode = pgpointers[page][k].mode;
 				opname = pgpointers[page][k].name;
 				if (mode != IND)
@@ -413,7 +415,7 @@ int Dasm6809 (unsigned char *pBase, char *buffer, int pc)
 		{                                /* page 1 opcode */
 			numoperands = pg1opcodes[i].numoperands;
 			for (j = 0; j < numoperands; j++)
-				operandarray[j] = *p++;
+				operandarray[j] = M6809_RDOP_ARG(pc+(p++));
 			mode = pg1opcodes[i].mode;
 			opname = pg1opcodes[i].name;
 			if (mode != IND)
@@ -428,7 +430,7 @@ int Dasm6809 (unsigned char *pBase, char *buffer, int pc)
    }
 
 printoperands:
-	pc += p - pBase;
+	pc += p;
 {
    int i, rel, pb, offset=0, reg, pb2;
    int comma;
@@ -469,7 +471,7 @@ printoperands:
          pb2 = pb & 0x8f;
          if ((pb2 == 0x88) || (pb2 == 0x8c))
          {                    /* 8-bit offset */
-            offset = *p++;
+            offset = M6809_RDOP_ARG(pc+(p++));
             if (offset > 127)                            /* convert to signed */
                offset = offset - 256;
             if (pb == 0x8c)
@@ -488,8 +490,8 @@ printoperands:
          }
          else if ((pb2 == 0x89) || (pb2 == 0x8d) || (pb2 == 0x8f))
          { /* 16-bit */
-            offset = *p++ << 8;
-            offset += *p++;
+            offset = M6809_RDOP_ARG(pc+(p++)) << 8;
+            offset += M6809_RDOP_ARG(pc+(p++));
             if ((pb != 0x8f) && (offset > 32767))
                offset = offset - 65536;
             offset &= 0xffff;
@@ -685,5 +687,5 @@ printoperands:
    }
 }
 
-	return p - pBase;
+	return p;
 }

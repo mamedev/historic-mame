@@ -13,6 +13,8 @@
 
 unsigned char *frogger_attributesram;
 
+/* To whomever will implement cocktail mode: sprites are offset by two pixels */
+/* by the program when the screen is flipped */
 
 
 /***************************************************************************
@@ -116,17 +118,19 @@ void frogger_vh_screenrefresh(struct osd_bitmap *bitmap)
 	{
 		if (dirtybuffer[offs])
 		{
-			int sx,sy;
+			int sx,sy,col;
 
 
 			dirtybuffer[offs] = 0;
 
 			sx = (31 - offs / 32);
 			sy = (offs % 32);
+			col = frogger_attributesram[2 * sy + 1] & 7;
+			col = ((col >> 1) & 0x03) | ((col << 2) & 0x04);
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
 					videoram[offs],
-					frogger_attributesram[2 * sy + 1] + (sy < 17 ? 8 : 0),
+					col + (sy <= 15 ? 8 : 0),	/* blue background in the upper 128 lines */
 					0,0,8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);
 		}
@@ -154,17 +158,86 @@ void frogger_vh_screenrefresh(struct osd_bitmap *bitmap)
 	{
 		if (spriteram[offs + 3] != 0)
 		{
-			int x;
+			int x,col;
 
 
 			x = spriteram[offs];
 			x = ((x << 4) & 0xf0) | ((x >> 4) & 0x0f);
+			col = spriteram[offs + 2] & 7;
+			col = ((col >> 1) & 0x03) | ((col << 2) & 0x04);
 
 			drawgfx(bitmap,Machine->gfx[1],
 					spriteram[offs + 1] & 0x3f,
-					spriteram[offs + 2],
+					col,
 					spriteram[offs + 1] & 0x80,spriteram[offs + 1] & 0x40,
 					x,spriteram[offs + 3],
+					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+		}
+	}
+}
+
+
+/* the alternate version doesn't have the sprite & scroll registers mangling, */
+/* but it still has the color code mangling. */
+void frogger2_vh_screenrefresh(struct osd_bitmap *bitmap)
+{
+	int i,offs;
+
+
+	/* for every character in the Video RAM, check if it has been modified */
+	/* since last time and update it accordingly. */
+	for (offs = videoram_size - 1;offs >= 0;offs--)
+	{
+		if (dirtybuffer[offs])
+		{
+			int sx,sy,col;
+
+
+			dirtybuffer[offs] = 0;
+
+			sx = (31 - offs / 32);
+			sy = (offs % 32);
+			col = frogger_attributesram[2 * sy + 1] & 7;
+			col = ((col >> 1) & 0x03) | ((col << 2) & 0x04);
+
+			drawgfx(tmpbitmap,Machine->gfx[0],
+					videoram[offs],
+					col + (sy <= 15 ? 8 : 0),	/* blue background in the upper 128 lines */
+					0,0,8*sx,8*sy,
+					0,TRANSPARENCY_NONE,0);
+		}
+	}
+
+
+	/* copy the temporary bitmap to the screen */
+	{
+		int scroll[32];
+
+
+		for (i = 0;i < 32;i++)
+			scroll[i] = frogger_attributesram[2 * i];
+
+		copyscrollbitmap(bitmap,tmpbitmap,32,scroll,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	}
+
+
+	/* Draw the sprites. Note that it is important to draw them exactly in this */
+	/* order, to have the correct priorities. */
+	for (offs = spriteram_size - 4;offs >= 0;offs -= 4)
+	{
+		if (spriteram[offs + 3] != 0)
+		{
+			int col;
+
+
+			col = spriteram[offs + 2] & 7;
+			col = ((col >> 1) & 0x03) | ((col << 2) & 0x04);
+
+			drawgfx(bitmap,Machine->gfx[1],
+					spriteram[offs + 1] & 0x3f,
+					col,
+					spriteram[offs + 1] & 0x80,spriteram[offs + 1] & 0x40,
+					spriteram[offs],spriteram[offs + 3],
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 		}
 	}

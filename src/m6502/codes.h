@@ -235,6 +235,8 @@ case 0x4A: M_LSR(R->A);break;             /* LSR a ACC */
 case 0x6A: M_ROR(R->A);break;             /* ROR a ACC */
 
 default:
+if (errorlog) fprintf(errorlog,"M6502 Unrecognized instruction: $%02X at PC=$%04X\n",
+      Op6502(R->PC.W-1),(word)(R->PC.W-1));	/* NS 980212 */
   if(R->TrapBadOps)
     printf
     (

@@ -125,7 +125,7 @@ void spacefb_port_1_w(int offset,int data);
 void spacefb_port_2_w(int offset,int data);
 void spacefb_port_3_w(int offset,int data);
 
-int spacefb_interrupt();
+int spacefb_interrupt(void);
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -143,62 +143,78 @@ static struct MemoryWriteAddress writemem[] =
 	{ -1 }	/* end of table */
 };
 
-static struct InputPort input_ports[] =
-{
-	{	/* DSW1 */
-		0x00,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{ /* P1 and P2 IO */
-		0x00,
-		{ OSD_KEY_RIGHT, OSD_KEY_LEFT, 0,0,OSD_KEY_ALT, 0,0, OSD_KEY_LCONTROL},
-		{ OSD_JOY_RIGHT, OSD_JOY_LEFT, 0,0,OSD_JOY_FIRE2, 0,0, OSD_JOY_FIRE}
-	},
-	{
-		0x00,
-		{ 0,0,OSD_KEY_1, OSD_KEY_2, 0,0,0,OSD_KEY_3},
-		{ 0,0,0,0,0,0,0}
-	},
-	{ -1 }	/* end of table */
-};
-
 static struct IOReadPort readport[] =
 {
-	{ 0x00, 0x00, input_port_1_r },
-	{ 0x02, 0x02, input_port_2_r },
-	{ 0x03, 0x03, input_port_0_r },
+	{ 0x00, 0x00, input_port_0_r }, /* IN 0 */
+	{ 0x01, 0x01, input_port_1_r }, /* IN 1 */
+	{ 0x02, 0x02, input_port_2_r }, /* Coin - Start */
+	{ 0x03, 0x03, input_port_3_r }, /* DSW0 */
 	{ -1 }	/* end of table */
 };
 
 static struct IOWritePort writeport[] =
 {
 	{ 0x00, 0x00, spacefb_port_0_w },
-        { 0x01, 0x01, spacefb_port_1_w },
+	{ 0x01, 0x01, spacefb_port_1_w },
 	{ 0x02, 0x02, spacefb_port_2_w },
-        { 0x03, 0x03, spacefb_port_3_w },
+	{ 0x03, 0x03, spacefb_port_3_w },
 	{ -1 }	/* end of table */
 };
 
 
 
-static struct KEYSet keys[] =
-{
-        { 1, 1, "MOVE LEFT"  },
-        { 1, 0, "MOVE RIGHT" },
-        { 1, 7, "FIRE"       },
-        { 1, 4, "ESCAPE"     },
-        { -1 }
-};
+INPUT_PORTS_START( input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON2 )
 
-static struct DSW dsw[] =
-{
-	{ 0, 0x03, "SHIPS", { "3", "4", "5", "6" } },
-	{ 0, 0x0C, "CREDITS", { "1 COIN 1 CREDIT","2 COIN 1 CREDIT","1 COIN 3 CREDITS","1 COIN 2 CREDITS" } },
-	{ 0, 0x10, "EXTRA SHIP", { "AT 5000 PTS","AT 8000 PTS" } },
-	{ 0, 0x20, "CABINET", { "COCKTAIL" ,"UPRIGHT", } },
-	{ -1 }
-};
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL )
+
+	PORT_START      /* Coin - Start */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Test ? */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN1 )
+
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x03, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x02, "5" )
+	PORT_DIPSETTING(    0x03, "6" )
+	PORT_DIPNAME( 0x0c, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x0c, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x08, "1 Coin/3 Credits" )
+	PORT_DIPNAME( 0x10, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "5000" )
+	PORT_DIPSETTING(    0x10, "8000" )
+	PORT_DIPNAME( 0x20, 0x20, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Upright" )
+	PORT_DIPSETTING(    0x00, "Cocktail" )
+	PORT_BIT( 0xc0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+INPUT_PORTS_END
+
+
 
 static struct GfxLayout charlayout =
 {
@@ -251,7 +267,7 @@ static struct MachineDriver machine_driver =
 			spacefb_interrupt,2 /* two int's per frame */
 		}
 	},
-	60,
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* single CPU, no need for interleaving */
 	0,
 
@@ -296,11 +312,96 @@ ROM_END
 
 
 
+static int hiload(void)
+{
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+	unsigned char *from, *to;
+	int i, index, digit, started;
+
+	/* check if the hi score table has already been initialized */
+	if (RAM[0xc0db] == 0xc1 &&	/* check that the scores have been zeroed */
+		videoram[0x299] == 0x0f && /* and that the videoram has been 'cleared' */
+		videoram[0x29a] == 0x0f &&
+		videoram[0x29b] == 0x0f &&
+		videoram[0x299 + 47] == 0x0f &&	/* all the way down */
+		videoram[0x299 + 48] == 0x0f &&
+		videoram[0x299 + 49] == 0x0f &&
+		videoram[0x299 + 50] == 0x05 &&
+		videoram[0x299 + 59] == 0x05)
+	{
+		void *f;
+
+		if ((f = osd_fopen(Machine->gamedrv->name, 0,
+						   OSD_FILETYPE_HIGHSCORE, 0)) != 0)
+		{
+			osd_fread(f, &RAM[0xc0a0], 3 * 10);
+			osd_fseek(f, 0, SEEK_SET);
+			osd_fread(f, &RAM[0xc0e0], 3);
+			osd_fclose(f);
+
+			from = &RAM[0xc0a0];
+			index = 0x299;
+
+			for (i = 0; i < 10; i++)
+			{
+				started = 0;
+
+				if (!(digit = ((*from & 0xf0) >> 4)) && !started) digit = 10; else started = 1;
+				videoram_w(index++, digit + 5);
+
+				if (!(digit = (*from++ & 0x0f)) && !started) digit = 10; else started = 1;
+				videoram_w(index++, digit + 5);
+
+				if (!(digit = ((*from & 0xf0) >> 4)) && !started) digit = 10; else started = 1;
+				videoram_w(index++, digit + 5);
+
+				if (!(digit = (*from++ & 0x0f)) && !started) digit = 10; else started = 1;
+				videoram_w(index++, digit + 5);
+
+				if (!(digit = ((*from++ & 0xf0) >> 4)) && !started) digit = 10; else started = 1;
+				videoram_w(index++, digit + 5);
+			}
+
+			from = &RAM[0xc0a0];
+			to = &RAM[0xc773];
+			index = 0x251;
+
+			videoram_w(index++, *to++ = ((*from & 0xf0) >> 4) + 5);
+			videoram_w(index++, *to++ = (*from++ & 0x0f) + 5);
+			videoram_w(index++, *to++ = ((*from & 0xf0) >> 4) + 5);
+			videoram_w(index++, *to++ = (*from++ & 0x0f) + 5);
+			videoram_w(index++, *to++ = ((*from++ & 0xf0) >> 4) + 5);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+static void hisave(void)
+{
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name, 0,
+					   OSD_FILETYPE_HIGHSCORE, 1)) != 0)
+    {
+		osd_fwrite(f, &RAM[0xc0a0], 3 * 10);
+		osd_fclose(f);
+	}
+}
+
+
+
 struct GameDriver spacefb_driver =
 {
 	"Space Firebird",
 	"spacefb",
-	"CHRIS HARDY\nANDY CLARK\nPAUL JOHNSON",
+	"Chris Hardy\nAndy Clark\nPaul Johnson\nChris Moore (high score save)\nMarco Cassili",
 	&machine_driver,
 
 	spacefb_rom,
@@ -308,11 +409,11 @@ struct GameDriver spacefb_driver =
 	0,
 	0,	/* sound_prom */
 
-	input_ports, 0, 0/*TBR*/,dsw, keys,
+	input_ports,
 
 	colorprom, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	hiload, hisave
 };
 

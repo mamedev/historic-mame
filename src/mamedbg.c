@@ -1,261 +1,88 @@
-/****************************************************************************/
-//
-// Instructions for use of debugger
-//
-// Key						Function
-//
-// Tilde					Enter debugger
-// B						Set breakpoint
-// D						Delete breakpoint
-// S, Space or Enter		Single step
-// 1						Edit memory window 1
-// 2						Edit memory window 2
-// R						Edit Registers
-// T						Trace through the code at high speed in debugger
-// V						View the output
-// C						Continue to run program out of debugger
-// Arrows, PgUp, PgDn		Move around in the edit windows and Scrolls
-// 							the disassembly window
-// ESC						Exit edit window and program
-//
+/*		The MAME Debugger!
+ *
+ *		Written by:   Martin Scragg, John Butler, Mirko Buffoni
+ *		              Chris Moore, Aaron Giles
+ *
+ *		Powered by the new Command-Line parser!    (MB: 980204)
+ *		Many commands accept either a value or a register name.
+ *		You can indeed type either  R HL = SP  or  R HL = 1fd0.
+ *		In the syntax, where you see <address> you may generally
+ *		use a number or a register name.
+ *
+ *		Commands:
+ *		-  BPX  <address>           Set a breakpoint
+ *		-  BC                       Clear all breakpoints
+ *		-  D    <address> [1|2]     Display an address on viewport 1 or 2
+ *		-  DASM <filename>          Disassemble a range of memory to file
+ *		        <StartAddress>      Addresses may be a value or a register
+ *		        <EndAddress>
+ *		-  DUMP <filename>          Dump a memory range to "filename"
+ *		        <StartAddress>      Addresses may be a value or a register
+ *		        <EndAddress>
+ *		-  TRACE <filename>|OFF		Start CPU instruction tracing to "filename"
+ *									or turn CPU instruction tracing OFF
+ *		-  E    <address> [1|2]     Edit an address on viewport 1 or 2
+ *		-  G    <address>           Continue execution.  If an address is
+ *		                            provided, MDB will set a breakpoint there
+ *		-  HERE                     Set a temporary breakpoint to current
+ *		                            cursor position
+ *		-  J    <address>           Jump to address in code window.  Doesn't
+ *		                            alter PC.
+ *		-  R    <register> =        Edit register.  If no parameters are given
+ *		        <register|value>    the first register is edited.  If only the
+ *		                            first parameter is given, it will edit
+ *		                            <register>.
+ *
+ *		During memory editing, it is possible to search for a string by
+ *		pressing S.  This doesn't work yet on 68K systems if string is not
+ *		found!  By pressing 'H', you can toggle ASCII display.  By pressing
+ *		J you can jump to an address.
+ *
+ *		Shortcuts are available:
+ *		-	F2	Toggle a breakpoint at current cursor position
+ *		-	F4	Run to cursor
+ *		-	F5	View emulation screen
+ *		-	F6	Breakpoint to the next CPU
+ *		-	F8	Step
+ *		-	F9	Animate (Trace at high speed)
+ *		-   F10  Step Over
+ *		-	F12	GO!
+ *		-	ESC	^ditto^
+ *
+ *		ENJOY! ;)
+ */
 
 #ifdef MAME_DEBUG
 
-#include <stdio.h>
-#include <string.h>
-#include <ctype.h>
-#include <time.h>
-
-
-#if defined (UNIX)
-#define uclock_t clock_t
-#define	uclock clock
-#define UCLOCKS_PER_SEC CLOCKS_PER_SEC
-#else
-#if defined(WIN32)
-#include "uclock.h"
-#endif
-#endif
-
-#ifndef macintosh
-#ifndef WIN32
-	#include <conio.h>
-	#include <allegro.h>
-#endif
-#endif
-
-#include "osdepend.h"
-#include "driver.h"
-#include "osd_dbg.h"
-#include "Z80.h"
-#include "Z80Dasm.h"
-#include "m6809.h"
-#include "m6808.h"	/* JB 971018 */
-#include "M6502.h"	/* JB 971019 */
-#include "M68000.h"	/* JB 971207 */
-
-extern int Dasm6809 (unsigned char *pBase, char *buffer, int pc);
-extern int Dasm6808 (unsigned char *base, char *buf, int pc);	/* JB 971018 */
-extern int Dasm6502 (char *buf, int pc);	/* JB 971019 */
-extern int Dasm68000 (unsigned char *pBase, char *buffer, int pc);
-
-extern int CurrentVolume;
-
-#define	MEM1DEFAULT	0xc000
-#define	MEM2DEFAULT	0xc200
-#define	HEADING_COLOUR		LIGHTGREEN
-#define	LINE_COLOUR			LIGHTCYAN
-#define	REGISTER_COLOUR		WHITE
-#define	FLAG_COLOUR			WHITE
-#define	BREAKPOINT_COLOUR	YELLOW
-#define	PC_COLOUR			RED
-#define	CODE_COLOUR			WHITE
-#define	MEM1_COLOUR			WHITE
-#define	MEM2_COLOUR			WHITE
-#define	ERROR_COLOUR		RED
-#define	PROMPT_COLOUR		CYAN
-#define	INSTRUCTION_COLOUR	WHITE
-#define	INPUT_COLOUR		WHITE
+#include "mamedbg.h"
+#include "mame.h"
 
 static int MEM1 = MEM1DEFAULT;	/* JB 971210 */
 static int MEM2 = MEM2DEFAULT;	/* JB 971210 */
 
-struct	EditRegs {
-	int		X;
-	int		Y;
-	int		Len;
-	int		val;
-};
-
-typedef struct
-{
-	char 	*name;
-	int		size;
-} tRegdef;
-
-/* JB 971207 */
-static tRegdef m68k_reglist[] =
-{
-	{ "PC", 4 },
-	{ "VBR", 4 },
-	{ "ISP", 4 },
-	{ "USP", 4 },
-	{ "SFC", 4 },
-	{ "DFC", 4 },
-	{ "D0", 4 },
-	{ "D1", 4 },
-	{ "D2", 4 },
-	{ "D3", 4 },
-	{ "D4", 4 },
-	{ "D5", 4 },
-	{ "D6", 4 },
-	{ "D7", 4 },
-	{ "A0", 4 },
-	{ "A1", 4 },
-	{ "A2", 4 },
-	{ "A3", 4 },
-	{ "A4", 4 },
-	{ "A5", 4 },
-	{ "A6", 4 },
-	{ "A7", 4 },
-	{ "", -1 }
-};
-
-/* JB 971019 */
-static tRegdef m6502_reglist[] =
-{
-	{ "A", 1 },
-	{ "X", 1 },
-	{ "Y", 1 },
-	{ "S", 1 },
-	{ "PC", 2 },
-	{ "", -1 }
-};
-
-/* JB 971018 */
-static tRegdef m6808_reglist[] =
-{
-	{ "A",	1 },
-	{ "B",	1 },
-	{ "PC",	2 },
-	{ "S",	2 },
-	{ "X",	2 },
-	{ "",	-1 }
-};
-
-static tRegdef m6809_reglist[] =
-{
-	{ "A",	1 },
-	{ "B",	1 },
-	{ "PC",	2 },
-	{ "S",	2 },
-	{ "U",	2 },
-	{ "X",	2 },
-	{ "Y",	2 },
-	{ "DP", 1 },
-	{ "",	-1 }
-};
-
-static tRegdef z80_reglist[] =
-{
-	{ "AF",	2 },
-	{ "HL",	2 },
-	{ "DE",	2 },
-	{ "BC",	2 },
-	{ "PC",	2 },
-	{ "SP",	2 },
-	{ "IX",	2 },
-	{ "IY", 2 },
-	{ "",	-1 }
-};
-
 /* globals */
-static struct EditRegs	edit[32];	/* JB 971210 */
-static unsigned char	rgs[CPU_CONTEXT_SIZE];	/* ASG 971105 */
-static int				BreakPoint[5] = { -1, -1, -1, -1, -1 };
-static int				CurrentPC = -1;
-static int				StartAddress = -1;
-static int				activecpu, cputype, PreviousCPUType;
+static int              BreakPoint[5] = { -1, -1, -1, -1, -1 };
+static int              TempBreakPoint = -1;	/* MB 980103 */
+static int				CPUBreakPoint = -1;		/* MB 980121 */
+static int              CurrentPC = -1;
+static int              CursorPC = -1;		/* MB 980103 */
+static int				NextPC = -1;
+static int				PreviousSP = 0;
+static int              StartAddress = -1;
+static int              EndAddress = -1;	/* MB 980103 */
+static int              activecpu, cputype, PreviousCPUType;
+static int              DisplayASCII[2] = { FALSE, FALSE };	/* MB 980103 */
+static int				InDebug=FALSE;
+static int				Update;
+static int				gCurrentTraceCPU = -1;	/* JB 980214 */
 
-/* private functions */
-static void DrawDebugScreen (int TextCol, int LineCol);
-static int debug_readbyte (int a);
-static void debug_writebyte (int a, int v);
-static void DrawMemWindow (int Base, int Col, int Offset);	/* JB 971210 */
-static int GetNumber (int X, int Y, int Col);
-static int ScreenEdit (int XMin, int XMax, int YMin, int YMax, int Col, int BaseAdd);	/* JB 971210 */
-static void debug_draw_disasm (int pc);
-static int debug_dasm_line (int, char *);
-static void debug_draw_cpu (void);
-static void debug_draw_flags (void);
-static void debug_draw_registers (void);
-static void debug_get_regs (void);
-static void debug_store_editregs (void);
-static int /* numregs */ debug_setup_editregs (void);
-
-static void EditRegisters (struct EditRegs *Edit, int Size, int Col);
-static int debug_key_pressed (void);
 
 /* Draw the screen outline */
-static void DrawDebugScreen (int TextCol, int LineCol)
+static void DrawDebugScreen8 (int TextCol, int LineCol)
 {
 	int		y;
 
 	ScreenClear();
-	switch (cputype)
-	{
-		case CPU_M68000:	/* JB 971210 */
-	ScreenPutString("ษออ           อออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป", LineCol, 0, 0);
-	ScreenPutString("Registers", TextCol, 4, 0);
-	ScreenPutString("บ", LineCol, 0, 1);
-	ScreenPutString("บ", LineCol, 79, 1);
-	ScreenPutString("ฬออ       อออออออออหออ     อออหออ          อออออออออออออออออออออป              บ", LineCol, 0, 2);
-	ScreenPutString("Flags", TextCol, 4, 2);
-	ScreenPutString("CPU", TextCol, 23, 2);
-	ScreenPutString("Memory 1", TextCol, 34, 2);
-	ScreenPutString("บ", LineCol, 0, 3);
-	ScreenPutString("บ", LineCol, 19, 3);
-	ScreenPutString("บ", LineCol, 30, 3);
-	ScreenPutString("บ", LineCol, 64, 3);
-	ScreenPutString("บ", LineCol, 79, 3);
-	ScreenPutString("ฬออ      ออออออออออสออออออออออน", LineCol, 0, 4);
-	ScreenPutString("บ", LineCol, 64, 4);
-	ScreenPutString("Code", TextCol, 4, 4);
-	ScreenPutString("บ", LineCol, 79, 4);
-	for (y = 5; y < 11; y++)
-	{
-		ScreenPutString("บ", LineCol, 0, y);
-		ScreenPutString("บ", LineCol, 30, y);
-		ScreenPutString("บ", LineCol, 64, y);
-		ScreenPutString("บ", LineCol, 79, y);
-	}
-	ScreenPutString("บ", LineCol, 0, 11);
-	ScreenPutString("ฬออ          อออออออออออออออออออออน", LineCol, 30, 11);
-	ScreenPutString("บ", LineCol, 79, 11);
-	ScreenPutString("Memory 2", TextCol, 34, 11);
-	for (y = 12; y < 20; y++)
-	{
-		ScreenPutString("บ", LineCol, 0, y);
-		ScreenPutString("บ", LineCol, 30, y);
-		ScreenPutString("บ", LineCol, 64, y);
-		ScreenPutString("บ", LineCol, 79, y);
-	}
-	ScreenPutString("ฬออ         ออออออออออออออออออสอออออออออออออออออออออออออออออออออสออออออออออออออน", LineCol, 0, 20);
-	ScreenPutString("Command", TextCol, 4, 20);
-	for (y = 21; y < 24; y++)
-	{
-		ScreenPutString("บ", LineCol, 0, y);
-		ScreenPutString("บ", LineCol, 79, y);
-	}
-	ScreenPutString("ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ", LineCol, 0, 24);
-			break;
-
-		case CPU_Z80:
-		case CPU_M6502:
-		case CPU_I86:
-		case CPU_M6808:
-		case CPU_M6809:
-
 	ScreenPutString("ษออ           อออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป", LineCol, 0, 0);
 	ScreenPutString("Registers", TextCol, 4, 0);
 	ScreenPutString("บ", LineCol, 0, 1);
@@ -294,106 +121,623 @@ static void DrawDebugScreen (int TextCol, int LineCol)
 		ScreenPutString("บ", LineCol, 79, y);
 	}
 	ScreenPutString("ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ", LineCol, 0, 24);
-		break;
-	}
 }
 
-static int debug_readbyte (int a)
+static void DrawDebugScreen16 (int TextCol, int LineCol)	/* MB 980103 */
 {
-	int b = 0;
+	int		y;
 
-	switch (cputype)
+	ScreenClear();
+	ScreenPutString("ษออ           อออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป", LineCol, 0, 0);
+	ScreenPutString("Registers", TextCol, 4, 0);
+	ScreenPutString("บ", LineCol, 0, 1);
+	ScreenPutString("บ", LineCol, 79, 1);
+	ScreenPutString("ฬออ       อออออออออหออ     ออออหออ          อออออออออออออออออออออป             บ", LineCol, 0, 2);
+	ScreenPutString("Flags", TextCol, 4, 2);
+	ScreenPutString("CPU", TextCol, 23, 2);
+	ScreenPutString("Memory 1", TextCol, 34, 2);
+	ScreenPutString("บ", LineCol, 0, 3);
+	ScreenPutString("บ", LineCol, 19, 3);
+	ScreenPutString("บ", LineCol, 31, 3);
+	ScreenPutString("บ", LineCol, 65, 3);
+	ScreenPutString("บ", LineCol, 79, 3);
+	ScreenPutString("ฬออ      ออออออออออสอออออออออออน", LineCol, 0, 4);
+	ScreenPutString("บ", LineCol, 65, 4);
+	ScreenPutString("Code", TextCol, 4, 4);
+	ScreenPutString("บ", LineCol, 79, 4);
+	for (y = 5; y < 11; y++)
 	{
-		case CPU_Z80:
-			b = Z80_RDMEM (a);
-			break;
-		case CPU_M6809:
-			b = M6809_RDMEM (a);
-			break;
-		case CPU_M6808:		/* JB 971018 */
-			b = M6808_RDMEM (a);
-			break;
-		case CPU_M6502:		/* JB 971019 */
-			b = Rd6502 (a);
-			break;
-#if 0
-		case CPU_I86:
-			b = ReadByte (a);
-			break;
-#endif
-		case CPU_M68000:	/* JB 971207 */
-			b = cpu_readmem24 (a & 0xffffff);
-			/* get_byte (a); */
-			break;
+		ScreenPutString("บ", LineCol, 0, y);
+		ScreenPutString("บ", LineCol, 31, y);
+		ScreenPutString("บ", LineCol, 65, y);
+		ScreenPutString("บ", LineCol, 79, y);
 	}
-	return b;
-}
-
-static void debug_writebyte (int a, int v)
-{
-	switch (cputype)
+	ScreenPutString("บ", LineCol, 0, 11);
+	ScreenPutString("ฬออ          อออออออออออออออออออออน", LineCol, 31, 11);
+	ScreenPutString("บ", LineCol, 79, 11);
+	ScreenPutString("Memory 2", TextCol, 34, 11);
+	for (y = 12; y < 20; y++)
 	{
-		case CPU_Z80:
-			Z80_WRMEM (a, v);
-			break;
-		case CPU_M6809:
-			M6809_WRMEM (a, v);
-			break;
-		case CPU_M6808:		/* JB 971018 */
-			M6808_WRMEM (a, v);
-			break;
-		case CPU_M6502:		/* JB 971019 */
-			Wr6502 (a, v);
-			break;
-#if 0
-		case CPU_I86:
-			WriteByte (a, v);
-			break;
-#endif
-		case CPU_M68000:	/* JB 971207 */
-			cpu_writemem24 (a & 0xffffff, v);
-			/* put_byte (a, v); */
-			break;
+		ScreenPutString("บ", LineCol, 0, y);
+		ScreenPutString("บ", LineCol, 31, y);
+		ScreenPutString("บ", LineCol, 65, y);
+		ScreenPutString("บ", LineCol, 79, y);
 	}
+	ScreenPutString("ฬออ         อออออออออออออออออออสอออออออออออออออออออออออออออออออออสอออออออออออออน", LineCol, 0, 20);
+	ScreenPutString("Command", TextCol, 4, 20);
+	for (y = 21; y < 24; y++)
+	{
+		ScreenPutString("บ", LineCol, 0, y);
+		ScreenPutString("บ", LineCol, 79, y);
+	}
+	ScreenPutString("ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ", LineCol, 0, 24);
 }
 
 /* Draw the Memory dump windows */
-static void DrawMemWindow (int Base, int Col, int Offset)	/* JB 971210 */
+static void DrawMemWindow (int Base, int Col, int Offset, int DisplayASCII)	/* JB 971210 */
 {
-	int		X;
-	int		Y;
-	char	S[8];
+	int     X;
+	int     Y;
+	int		which = ((Offset==12)?0x100:0);		/* I hate to do this */
+	char    FMT[32];
+	char    S[32];
+	unsigned char	value, oldValue;
 
-	switch (cputype)	/* JB 971210 */
+	for (Y = 0; Y < 8; Y++)
 	{
-		case CPU_M68000:
-			for (Y = 0; Y < 8; Y++)
+		sprintf(FMT, "%s", DebugInfo[cputype].AddPrint);
+		sprintf(S, FMT, Base);
+		ScreenPutString(S, Col, DebugInfo[cputype].MemWindowAddX,
+				Y + Offset);
+		for (X = 0; X < DebugInfo[cputype].MemWindowNumBytes; X++)
+		{
+			value = cpuintf[cputype].memory_read(Base++ & DebugInfo[cputype].AddMask);
+			oldValue = MemWindowBackup[Y * DebugInfo[cputype].MemWindowNumBytes + X + which];
+			if (DisplayASCII)	/* MB 980103 */
 			{
-				sprintf(S, "%06X:", Base);
-				ScreenPutString(S, Col, 32, Y + Offset);
-				for (X = 0; X < 8; X++)
+				sprintf (S, "  ");
+				if (S[0] != 0) S[0] = value; else S[0] = 32;
+			}
+			else
+			  sprintf (S, "%02X", value);
+			ScreenPutString(S, ((value == oldValue)?Col:CHANGES_COLOUR), DebugInfo[cputype].MemWindowDataX +
+					(X * 3), Y + Offset);
+			MemWindowBackup[Y * DebugInfo[cputype].MemWindowNumBytes + X + which] = value;
+			if (Base > DebugInfo[cputype].AddMask || Base < 0)
+				Base = 0x000000;
+		}
+	}
+}
+
+
+static int IsRegister(int cputype, char *src)
+{
+	int i = 0;
+	while ((i < 32) && (DebugInfo[cputype].RegList[i].Name != NULL) &&
+			(strcmp(DebugInfo[cputype].RegList[i].Name,src) != 0))
+		i++;
+
+	if ((i < 32) && (DebugInfo[cputype].RegList[i].Name != NULL))
+		return i;
+	return -1;
+}
+
+static unsigned long GetAddress(int cputype, char *src)
+{
+	static unsigned char rgs[CPU_CONTEXT_SIZE];	/* ASG 971105 */
+	int SrcREG = IsRegister(cputype, src);
+	unsigned long rv = 0;
+
+	if (SrcREG != -1)
+	{
+		cpuintf[cputype].get_regs(rgs);
+		switch (DebugInfo[cputype].RegList[SrcREG].Size)
+		{
+			case 1:
+				rv = *(byte *)DebugInfo[cputype].RegList[SrcREG].Val;
+				break;
+			case 2:
+				rv = *(word *)DebugInfo[cputype].RegList[SrcREG].Val;
+				break;
+			case 4:
+				rv = *(dword *)DebugInfo[cputype].RegList[SrcREG].Val;
+				break;
+		}
+	}
+	else
+	{
+		int value;
+		int n = sscanf(src, "%x", &value);
+		if (n > 0)
+			rv = value;
+	}
+	return rv;
+}
+
+
+static int ModifyRegisters(char *param)
+{
+	int	 i,nCorrectParams = 0, rv = 0;
+	char s1[20],s2[20];
+	char *pr = param;
+	char *pr2;
+
+	while ((pr[0] == ' ') && (pr[0] != '\0')) pr++;
+	i = strlen(pr);
+	while ((i >= 0) && ((pr[i] == ' ') || (pr[i] == '\0'))) pr[i--] = '\0';
+
+	if (strlen(pr) > 0)
+	{
+		pr2 = strtok(pr,"=");
+		if (pr2)
+		{
+			pr2 += strlen(pr2);
+			pr2[0] = ' ';
+			if (pr2[1] == ' ')
+			{
+				i = 0;
+				while ((pr2[i] == ' ') && (pr2[i] != '\0')) i++;
+				while (pr2[0] != '\0')
 				{
-					sprintf (S, "%02X", debug_readbyte (Base++));
-					ScreenPutString(S, Col, 40 + (X * 3), Y + Offset);
-					if (Base > 0xffffff || Base < 0)
-						Base = 0x000000;
+				  pr2[0] = pr2[i];
+				  pr2++;
 				}
 			}
-			break;
-		default:
-			for (Y = 0; Y < 8; Y++)
+		}
+		nCorrectParams = sscanf(pr, "%s %s", s1, s2);
+		if (nCorrectParams > 1)
+		{
+			int TrgREG = IsRegister(cputype, s1);
+			unsigned long addr = GetAddress(cputype, s2);
+			byte b = addr & 0xff;
+			word w = addr & 0xffff;
+
+			if (TrgREG != -1)
 			{
-				sprintf(S, "%04X:", Base);
-				ScreenPutString(S, Col, 25, Y + Offset);
-				for (X = 0; X < 16; X++)
+				cpuintf[cputype].get_regs(rgs);
+				switch (DebugInfo[cputype].RegList[TrgREG].Size)
 				{
-					sprintf (S, "%02X", debug_readbyte (Base++));
-					ScreenPutString(S, Col, 31 + (X * 3), Y + Offset);
-					if (Base > 0xffff || Base < 0)
-						Base = 0x0000;	/* JB 971210 */
+					case 1:
+						*(byte *)DebugInfo[cputype].RegList[TrgREG].Val = b;
+						break;
+					case 2:
+						*(word *)DebugInfo[cputype].RegList[TrgREG].Val = w;
+						break;
+					case 4:
+						*(dword *)DebugInfo[cputype].RegList[TrgREG].Val = addr;
+						break;
+				}
+				cpuintf[cputype].set_regs(rgs);
+			}
+			else
+				EditRegisters(0);
+		}
+		else if (nCorrectParams > 0)
+		{
+			int TrgREG = IsRegister(cputype, s1);
+			if (TrgREG != -1)
+				EditRegisters(TrgREG);
+			else
+				EditRegisters(0);
+		}
+		else
+			EditRegisters(0);
+	}
+	else
+		EditRegisters(0);
+	return rv;
+}
+
+/* JB 980214 */
+/* TRACE <FileName>|OFF */
+static int TraceToFile(char *param)
+{
+	int	i,nCorrectParams = 0, rv = 0;
+	char s1[128];
+	char *pr = param;
+
+	/* strip leading and trailing spaces */
+	while ((pr[0] == ' ') && (pr[0] != '\0')) pr++;
+	i = strlen(pr);
+	while ((i >= 0) && ((pr[i] == ' ') || (pr[i] == '\0'))) pr[i--] = '\0';
+
+	nCorrectParams = sscanf(param, "%s", s1);
+	if (nCorrectParams == 1)
+	{
+		if (!stricmp (s1, "OFF"))
+		{
+			/* turn trace off */
+			if (!traceon)
+			{
+				if (errorlog)
+					fprintf (errorlog, "Trace not on when TRACE OFF encountered.\n");
+				rv = -1;
+			}
+			else
+			{
+				asg_TraceKill ();
+				traceon = 0;
+			}
+		}
+		else
+		{
+			/* turn trace on */
+			if (traceon)
+			{
+				if (errorlog)
+					fprintf (errorlog, "Trace already on when TRACE %s encountered.\n", s1);
+				rv = -1;
+			}
+			else
+			{
+				asg_TraceInit (cpu_gettotalcpu (), s1);
+				traceon = 1;
+				gCurrentTraceCPU = activecpu;
+				asg_TraceSelect (gCurrentTraceCPU);
+			}
+		}
+	}
+	else rv = -1;
+	return rv;
+}
+
+static int DumpToFile(char *param)
+{
+	FILE *f;
+	int	i,nCorrectParams = 0, rv = 0, first;
+	char s1[128], s2[20], s3[20];
+	char *pr = param;
+
+	while ((pr[0] == ' ') && (pr[0] != '\0')) pr++;
+	i = strlen(pr);
+	while ((i >= 0) && ((pr[i] == ' ') || (pr[i] == '\0'))) pr[i--] = '\0';
+
+	nCorrectParams = sscanf(param, "%s %s %s", s1, s2, s3);
+	if (nCorrectParams >= 3)
+	{
+		unsigned long StartAd = GetAddress(cputype,s2);
+		unsigned long EndAd = GetAddress(cputype,s3);
+
+		if ((f = fopen(s1, "w")) == NULL)
+		{
+			if (errorlog) fprintf(errorlog, "Error while creating DUMP file:  %s\n", s1);
+			rv = -1;
+		}
+
+		first = 1;
+		while (StartAd <= EndAd)
+		{
+			if (first || (StartAd % 16 == 0))
+			{
+				int start = StartAd & (DebugInfo[cputype].AddMask ^ 0xf);
+				sprintf(s1, DebugInfo[cputype].AddPrint, start);
+				s1[7] = 0;
+				fprintf(f, "%s", s1);
+				if (first)
+				{
+					fprintf(f, "%*s", 3 * (int)(StartAd-start), "");
+					first = 0;
 				}
 			}
-			break;
+
+			fprintf(f, " %02x",	cpuintf[cputype].memory_read(StartAd & DebugInfo[cputype].AddMask));
+
+			StartAd++;
+			if (StartAd % 16 == 0)
+				fprintf(f, "\n");
+		}
+
+		fprintf(f, "\n");
+		if (fclose(f) != 0)
+		{
+			if (errorlog) fprintf(errorlog, "Error while closing DUMP file.\n");
+			rv = -1;
+		}
+	}
+	else rv = -1;
+	return rv;
+}
+static int DasmToFile(char *param)
+{
+	FILE *f;
+	int	i,nCorrectParams = 0, rv = 0;
+	char s1[128], s2[20], s3[20];
+	char *pr = param;
+	int  pc, old_pc, tmp;
+
+	while ((pr[0] == ' ') && (pr[0] != '\0')) pr++;
+	i = strlen(pr);
+	while ((i >= 0) && ((pr[i] == ' ') || (pr[i] == '\0'))) pr[i--] = '\0';
+
+	nCorrectParams = sscanf(param, "%s %s %s", s1, s2, s3);
+	if (nCorrectParams >= 3)
+	{
+		unsigned long StartAd = GetAddress(cputype,s2);
+		unsigned long EndAd = GetAddress(cputype,s3);
+
+		if ((f = fopen(s1, "w")) == NULL)
+		{
+			if (errorlog) fprintf(errorlog, "Error while creating DASM file:  %s\n", s1);
+			rv = -1;
+		}
+
+		pc = StartAd;
+		while (pc < EndAd)
+		{
+			sprintf(s1, DebugInfo[cputype].AddPrint, pc);
+			s1[7] = 0;
+			fprintf(f, "%s", s1);
+			old_pc = pc;
+			pc += debug_dasm_line (pc, s1);
+
+			for (tmp = old_pc; tmp < pc; tmp++)
+				fprintf(f, " %02x",	cpuintf[cputype].memory_read(tmp & DebugInfo[cputype].AddMask));
+
+			fprintf(f, " %*s ",	3 * (old_pc + DebugInfo[cputype].MaxInstLen - pc), "");
+
+			fprintf(f, "%s\n", s1);
+		}
+
+		if (fclose(f) != 0)
+		{
+			if (errorlog) fprintf(errorlog, "Error while closing DASM file.\n");
+			rv = -1;
+		}
+	}
+	else rv = -1;
+	return rv;
+}
+
+static int SetBreakPoint(char *param)
+{
+	int	i,nCorrectParams = 0;
+	char s1[20];
+	char *pr = param;
+
+	while ((pr[0] == ' ') && (pr[0] != '\0')) pr++;
+	i = strlen(pr);
+	while ((i >= 0) && ((pr[i] == ' ') || (pr[i] == '\0'))) pr[i--] = '\0';
+
+	nCorrectParams = sscanf(param, "%s", s1);
+	if (nCorrectParams > 0)
+	{
+		int addr = GetAddress(cputype, s1);
+		BreakPoint[activecpu] = addr & DebugInfo[cputype].AddMask;
+	}
+	else
+		BreakPoint[activecpu] = CursorPC;
+
+	return 0;
+}
+
+static int ClearBreakPoint(char *param)
+{
+	BreakPoint[activecpu] = -1;
+	return 0;
+}
+
+static int Here(char *param)
+{
+	TempBreakPoint = CursorPC;
+	Update = FALSE;
+	InDebug = FALSE;
+	osd_set_mastervolume(CurrentVolume);
+	osd_set_display(Machine->scrbitmap->width,
+					Machine->scrbitmap->height,
+					Machine->drv->video_attributes);
+	return 0;
+}
+
+static int Go(char *param)
+{
+	int	i,nCorrectParams = 0;
+	char s1[20];
+	char *pr = param;
+
+	while ((pr[0] == ' ') && (pr[0] != '\0')) pr++;
+	i = strlen(pr);
+	while ((i >= 0) && ((pr[i] == ' ') || (pr[i] == '\0'))) pr[i--] = '\0';
+
+	nCorrectParams = sscanf(param, "%s", s1);
+	if (nCorrectParams > 0)
+	{
+		int addr = GetAddress(cputype, s1);
+		TempBreakPoint = addr & DebugInfo[cputype].AddMask;
+	}
+	Update = FALSE;
+	InDebug = FALSE;
+	osd_set_mastervolume(CurrentVolume);
+	osd_set_display(Machine->scrbitmap->width,
+					Machine->scrbitmap->height,
+					Machine->drv->video_attributes);
+	return 0;
+}
+
+static int EditMemory(char *param)
+{
+	int	i,nCorrectParams = 0, rv = 0;
+	char s1[20];
+	int addr, view;
+	char *pr = param;
+
+	while ((pr[0] == ' ') && (pr[0] != '\0')) pr++;
+	i = strlen(pr);
+	while ((i >= 0) && ((pr[i] == ' ') || (pr[i] == '\0'))) pr[i--] = '\0';
+
+	if (strlen(pr) > 0)
+	{
+			nCorrectParams = sscanf(pr, "%s %d", s1, &view);
+			if (nCorrectParams > 0)
+			{
+				addr = GetAddress(cputype, s1);
+				if (nCorrectParams == 2)
+				{
+					if (view == 1)
+					  MEM1 = ScreenEdit(DebugInfo[cputype].MemWindowDataX,
+										DebugInfo[cputype].MemWindowDataXEnd,
+										3, 10, MEM1_COLOUR, addr, &DisplayASCII[0]);
+					else if (view == 2)
+					  MEM2 = ScreenEdit(DebugInfo[cputype].MemWindowDataX,
+										DebugInfo[cputype].MemWindowDataXEnd,
+										12, 19, MEM2_COLOUR, addr, &DisplayASCII[1]);
+					else rv = -1;
+				}
+				else
+					  MEM1 = ScreenEdit(DebugInfo[cputype].MemWindowDataX,
+										DebugInfo[cputype].MemWindowDataXEnd,
+										3, 10, MEM1_COLOUR, addr, &DisplayASCII[0]);
+			}
+	}
+	else
+	{
+		MEM1 = ScreenEdit(DebugInfo[cputype].MemWindowDataX,
+						  DebugInfo[cputype].MemWindowDataXEnd,
+						  3, 10, MEM1_COLOUR, MEM1, &DisplayASCII[0]);
+	}
+	return rv;
+}
+
+static int DisplayMemory(char *param)
+{
+	int	i,nCorrectParams = 0, rv = 0;
+	char s1[20];
+	int addr, view;
+	char *pr = param;
+
+	while ((pr[0] == ' ') && (pr[0] != '\0')) pr++;
+	i = strlen(pr);
+	while ((i >= 0) && ((pr[i] == ' ') || (pr[i] == '\0'))) pr[i--] = '\0';
+
+	if (strlen(pr) > 0)
+	{
+		nCorrectParams = sscanf(pr, "%s %d", s1, &view);
+		if (nCorrectParams > 0)
+		{
+			addr = GetAddress(cputype, s1);
+			if (nCorrectParams == 2)
+			{
+				if (view == 1)
+				{
+				  DrawMemWindow (addr, MEM1_COLOUR, 3, DisplayASCII[0]);	/* MB 980103 */
+				  MEM1 = addr;
+				}
+				else if (view == 2)
+				{
+				  DrawMemWindow (addr, MEM2_COLOUR, 12, DisplayASCII[1]);	/* MB 980103 */
+				  MEM2 = addr;
+				}
+				else rv = -1;
+			}
+			else
+			{
+				  DrawMemWindow (addr, MEM1_COLOUR, 3, DisplayASCII[0]);	/* MB 980103 */
+				  MEM1 = addr;
+			}
+		}
+	}
+	else
+		rv = -1;
+	return rv;
+}
+
+
+static int DisplayCode(char *param)
+{
+	int	i,nCorrectParams = 0, rv = 0;
+	char s1[20];
+	char *pr = param;
+
+	while ((pr[0] == ' ') && (pr[0] != '\0')) pr++;
+	i = strlen(pr);
+	while ((i >= 0) && ((pr[i] == ' ') || (pr[i] == '\0'))) pr[i--] = '\0';
+
+	if (strlen(pr) > 0)
+	{
+		nCorrectParams = sscanf(pr, "%s", s1);
+		if (nCorrectParams > 0)
+		{
+			StartAddress = GetAddress(cputype, s1);
+			CursorPC = StartAddress;
+			EndAddress = debug_draw_disasm (StartAddress);
+		}
+	}
+	return rv;
+}
+
+
+/* Get a String of hex digits */
+static void GetHexString (int X, int Y, int Col, int *String)
+{
+	char		Num[16], *Num_Ptr;
+	int			Pos = 0;
+	int			Key;
+	int			Index;
+	char		Temp[3];
+
+	Num[Pos] = '\0';
+	ScreenSetCursor(Y, X);
+	ScreenPutString("        ", Col, X, Y);
+	while ((Key = osd_debug_readkey ()) != OSD_KEY_ENTER)	/* JB 980208 */
+	{
+		switch(Key)
+		{
+			case OSD_KEY_0: case OSD_KEY_1: case OSD_KEY_2: case OSD_KEY_3:
+			case OSD_KEY_4: case OSD_KEY_5: case OSD_KEY_6: case OSD_KEY_7:
+			case OSD_KEY_8: case OSD_KEY_9: case OSD_KEY_A: case OSD_KEY_B:
+			case OSD_KEY_C: case OSD_KEY_D: case OSD_KEY_E: case OSD_KEY_F:
+				if (Pos<15)		/* JB 971207 */
+				{
+					strcat(Num, osd_key_name(Key));
+					Pos++;
+				}
+				break;
+			case OSD_KEY_BACKSPACE:
+				if (Pos > 0)
+				{
+					Pos--;
+					Num[Pos] = '\0';
+				}
+				break;
+			default:
+				Key = 0;
+				break;
+		}
+		if (Key)
+		{
+			ScreenPutString("        ", Col, X + Pos, Y);
+			ScreenPutString(Num, Col, X, Y);
+			ScreenSetCursor(Y, X + Pos);
+		}
+	}
+	ScreenPutString("        ", Col, X, Y);
+
+	Index = 0;
+	Num_Ptr = &Num[0];
+	if ((Pos % 2) == 1)
+	{
+		Temp[0] = *(Num_Ptr++);
+		Temp[1] = '\0';
+		String[Index++] = strtol(Temp, NULL, 16);
+	}
+
+	while (*Num_Ptr)
+	{
+		Temp[0] = *(Num_Ptr++);
+		Temp[1] = *(Num_Ptr++);
+		Temp[2] = '\0';
+		String[Index++] = strtol(Temp, NULL, 16);
+	}
+
+	String[Index] = -1;
+
+	if (errorlog)
+	{
+		int Loop;
+
+		fprintf(errorlog, "got a string:\n");
+		for (Loop = 0; String[Loop] != -1; Loop++)
+			fprintf(errorlog, "%3d %02x\n", String[Loop], String[Loop]);
+		fprintf(errorlog, "end of string:\n");
 	}
 }
 
@@ -407,34 +751,33 @@ static int GetNumber (int X, int Y, int Col)
 	Num[Pos] = '\0';
 	ScreenSetCursor(Y, X);
 	ScreenPutString("        ", Col, X, Y);
-	while ((Key = (readkey()) & 0xff) != '\r')
+	while ((Key = osd_debug_readkey ()) != OSD_KEY_ENTER)	/* JB 980208 */
 	{
-		Key = toupper(Key);
 		switch(Key)
 		{
-			case '0':
-			case '1':
-			case '2':
-			case '3':
-			case '4':
-			case '5':
-			case '6':
-			case '7':
-			case '8':
-			case '9':
-			case 'A':
-			case 'B':
-			case 'C':
-			case 'D':
-			case 'E':
-			case 'F':
+			case OSD_KEY_0:
+			case OSD_KEY_1:
+			case OSD_KEY_2:
+			case OSD_KEY_3:
+			case OSD_KEY_4:
+			case OSD_KEY_5:
+			case OSD_KEY_6:
+			case OSD_KEY_7:
+			case OSD_KEY_8:
+			case OSD_KEY_9:
+			case OSD_KEY_A:
+			case OSD_KEY_B:
+			case OSD_KEY_C:
+			case OSD_KEY_D:
+			case OSD_KEY_E:
+			case OSD_KEY_F:
 				if (Pos<15)		/* JB 971207 */
 				{
-					Num[Pos++] = Key;
-					Num[Pos] = '\0';
+					strcat(Num, osd_key_name(Key));
+					Pos++;
 				}
 				break;
-			case '\b':
+			case OSD_KEY_BACKSPACE:
 				if (Pos > 0)
 				{
 					Pos--;
@@ -456,102 +799,225 @@ static int GetNumber (int X, int Y, int Col)
 	return(strtol(Num, NULL, 16));
 }
 
+/* Search for a string of numbers in memory; target is a -1 terminated array */
+int FindString (int Add, int *Target)
+{
+	int Start_Address;
+	int Offset;
+
+	ScreenPutString ("Searching...       ", INSTRUCTION_COLOUR, 2, 23);
+	for (Start_Address = Add + 1; Start_Address != Add;
+		 Start_Address = (Start_Address + 1) % DebugInfo[cputype].AddMask)
+	{
+		if (Start_Address % ((DebugInfo[cputype].AddMask >> 8) + 1) == 0)
+		{
+			char tmp[70];
+			sprintf(tmp, "[%02x%%] %x/%x",
+					Start_Address / ((DebugInfo[cputype].AddMask >> 8) + 1),
+					Start_Address, ((DebugInfo[cputype].AddMask >> 8) + 1));
+			ScreenPutString (tmp, INSTRUCTION_COLOUR, 15, 23);
+		}
+		for (Offset = 0;
+			 Target[Offset] != -1 &&
+				 cpuintf[cputype].memory_read(Start_Address + Offset) ==
+				 Target[Offset];
+			 Offset++);
+
+		if (Target[Offset] == -1)
+		{
+			ScreenPutString ("Found the string   ", INSTRUCTION_COLOUR, 2, 23);
+			return Start_Address;
+		}
+	}
+
+	ScreenPutString ("Not found          ",
+					 INSTRUCTION_COLOUR, 2, 23);
+	return Add;
+}
+
 /* Edit the memory window */
-static int ScreenEdit (int XMin, int XMax, int YMin, int YMax, int Col, int BaseAdd)	/* JB 971210 */
+static int ScreenEdit (int XMin, int XMax, int YMin, int YMax, int Col, int BaseAdd, int *DisplayASCII)	/* JB 971210 */
 {
 	int		Editing = TRUE;
 	int		High = TRUE;
 	int		Scroll = FALSE;
-	char	Num[2];
-	char	Digits[] = {"0123456789ABCDEF"};
 	int		Key;
+	char	Num[2];
 	int		X = XMin;
 	int		Y = YMin;
 	int		row_bytes;		/* JB 971210 */
 	int		Add = BaseAdd;	/* JB 971210 */
 	int		Base = BaseAdd;	/* JB 971210 */
+	int		Target[16];
+	static int	Last_Target[16] = {-1};
+	int		Loop;
+	char	info[80];
+	byte	b;
 
-	if ( (XMax - XMin) < 46 )	/* JB 971210 */
-		row_bytes = 8;
-	else
-		row_bytes = 16;
+	DrawMemWindow (Base, Col, YMin, *DisplayASCII);
+
+	row_bytes = DebugInfo[cputype].MemWindowNumBytes;
 
 	while (Editing)
 	{
 		ScreenSetCursor(Y, X);
-		Key = readkey();
-		switch((Key & 0xff00) >> 8)
+		//Key = osd_read_keyrepeat();
+		Key = osd_debug_readkey();	/* JB 980103 */
+		switch(Key)
 		{
-			case 0x48:			/* Up */
+			case OSD_KEY_HOME:			/* Home */	/* MB 980103 */
+				Add &= 0xFF0000;
+				Base &= 0xFF0000;
+				X = XMin;
+				Y = YMin;
+				High = TRUE;
+				Scroll = TRUE;
+				break;
+			case OSD_KEY_END:			/* End */	/* MB 980103 */
+				Base = (Add & 0xff0000) | (0x010000-(YMax-YMin+1)*row_bytes);
+				Add |= 0x00FFFF;
+				X = XMax-1;
+				Y = YMax;
+				High = TRUE;
+				Scroll = TRUE;
+				break;
+			case OSD_KEY_UP:			/* Up */
 				Y--;
 				Add -= row_bytes;		/* JB 971210 */
 				break;
-			case 0x49:			/* Page Up */
+			case OSD_KEY_PGUP:			/* Page Up */
 				Add -= row_bytes * 8;	/* JB 971210 */
 				Base -= row_bytes * 8;	/* JB 971210 */
 				Scroll = TRUE;
 				break;
-			case 0x4B:			/* Left */
-				if (High)
-				{
-					X -= 2;
-					Add--;
-				}
-				else
-					X -= 1;
-				High = !High;
-				break;
-			case 0x4D:			/* Right */
-				if (High)
-					X += 1;
+			case OSD_KEY_LEFT:			/* Left */
+				if (*DisplayASCII)	/* MB 980103 */
+				   X-=3;
 				else
 				{
-					X += 2;
-					Add++;
+				   if (High)
+				   {
+					   X -= 2;
+					   Add--;
+				   }
+				   else
+					   X -= 1;
+				   High = !High;
 				}
-				High = !High;
 				break;
-			case 0x50:			/* Down */
+			case OSD_KEY_RIGHT:			/* Right */
+				if (*DisplayASCII)	/* MB 980103 */
+				   X+=3;
+				else
+				{
+				   if (High)
+					   X += 1;
+				   else
+				   {
+					   X += 2;
+					   Add++;
+				   }
+				   High = !High;
+				}
+				break;
+			case OSD_KEY_DOWN:			/* Down */
 				Y++;
 				Add += row_bytes;	/* JB 971210 */
 				break;
-			case 0x51:			/* Page Down */
+			case OSD_KEY_PGDN:			/* Page Down */
 				Add += row_bytes * 8;	/* JB 971210 */
 				Base += row_bytes * 8;	/* JB 971210 */
 				Scroll = TRUE;
 				break;
-			default:
-				Key = toupper (Key & 0xff);
-				if ((Key >= '0' && Key <= '9') || (Key >='A' && Key <= 'F'))
-				{
-					byte b = debug_readbyte (Add);
+			case OSD_KEY_H:
+				*DisplayASCII = !(*DisplayASCII);	/* MB 980103 */
+				High = TRUE;
+				Scroll = TRUE;
+				break;
+			case OSD_KEY_J:	/* MB 980103 */
+				sprintf(info, "%-76s", " ");
+				ScreenPutString(info, INSTRUCTION_COLOUR, 2, 23);
+				ScreenPutString ("Jump to new address",	INSTRUCTION_COLOUR, 2, 23);
+				Add = GetNumber (10, 21, INPUT_COLOUR);
+				Base = Add;
+				X = XMin + (High ? 0 : 1);			/* CM 980118 */
+				Y = YMin;
+				Scroll = TRUE;
+				break;
 
-					sprintf (Num, "%c", Key);
+			case OSD_KEY_S:
+				sprintf(info, "%-76s", " ");
+				ScreenPutString(info, INSTRUCTION_COLOUR, 2, 23);
+				ScreenPutString ("Search for string  ",	INSTRUCTION_COLOUR, 2, 23);
+				GetHexString (10, 21, INPUT_COLOUR, Target);
+				if (Target[0] == -1)
+				{
+					Base = Add = FindString (Add, Last_Target);
+				}
+				else
+				{
+					Base = Add = FindString (Add, Target);
+					for (Loop = 0; Target[Loop] != -1; Loop++)
+						Last_Target[Loop] = Target[Loop];
+					Last_Target[Loop] = -1;
+				}
+				X = XMin + (High ? 0 : 1);
+				Y = YMin;
+				Scroll = TRUE;
+				break;
+
+			case OSD_KEY_0:
+			case OSD_KEY_1:
+			case OSD_KEY_2:
+			case OSD_KEY_3:
+			case OSD_KEY_4:
+			case OSD_KEY_5:
+			case OSD_KEY_6:
+			case OSD_KEY_7:
+			case OSD_KEY_8:
+			case OSD_KEY_9:
+			case OSD_KEY_A:
+			case OSD_KEY_B:
+			case OSD_KEY_C:
+			case OSD_KEY_D:
+			case OSD_KEY_E:
+			case OSD_KEY_F:
+				if (!(*DisplayASCII))	/* MB 980103 */
+				{
+					b = cpuintf[cputype].memory_read(Add & DebugInfo[cputype].AddMask);
+
+					sprintf(Num, osd_key_name(Key));
 					ScreenPutString (Num, Col, X, Y);
+					Num[0] -= '0';
+					if (Num[0] > 9)
+						Num[0] -= 7;
 
 					if (High)
 					{
-						debug_writebyte (Add, (b & 0x0f) | ((strchr (Digits, Key) - Digits) << 4));
+						cpuintf[cputype].memory_write(Add &
+							DebugInfo[cputype].AddMask, (b & 0x0f) | (Num[0] << 4));
 						X++;
 					}
 					else
 					{
-						debug_writebyte (Add, (b & 0xf0) | (strchr (Digits, Key) - Digits));
+						cpuintf[cputype].memory_write(Add &
+							DebugInfo[cputype].AddMask, (b & 0xf0) | Num[0]);
 						X += 2;
 						Add++;
 					}
 					High = !High;
 				}
-				else if (Key==0x1b)
-				{
-					Editing = FALSE;
-				}
+				break;
+			case OSD_KEY_ESC:
+			case OSD_KEY_ENTER:
+				Editing = FALSE;
 				break;
 		}
 		if (X < XMin)
 		{
 			X = XMax;
 			Y--;
+			if (*DisplayASCII) X--;
 		}
 		else if (X > XMax)
 		{
@@ -570,58 +1036,57 @@ static int ScreenEdit (int XMin, int XMax, int YMin, int YMax, int Col, int Base
 			Base -= row_bytes;	/* JB 971210 */
 			Scroll = TRUE;
 		}
-		if (cputype==CPU_M68000) 	/* JB 971210 */
+		if ((Base < 0) || Base > (DebugInfo[cputype].AddMask -
+			 (YMax-YMin) * DebugInfo[cputype].MemWindowNumBytes))
 		{
-			if ( (Base<0) || Base > (0xffffff - 16*8) )
-			{
-				Base = Add = 0;
-				Scroll = TRUE;
-			}
-		}
-		else if ( (Base<0) || Base > (0xffff - 16*16) )
-		{
-			Base = Add = 0x0000;
+			Base = Add = 0;
 			Scroll = TRUE;
 		}
 		if (Scroll)
 		{
-			DrawMemWindow (Base, Col, YMin);
+			DrawMemWindow (Base, Col, YMin, *DisplayASCII);
 			Scroll = FALSE;
 		}
 	}
 	return (Base);
 }
 
-static void debug_draw_disasm (int pc)
+static int debug_draw_disasm (int pc)
 {
+	char 	fmt[100];
 	char 	s[100];
 	int		i, Colour;
 
 	for (i=0; i<15; i++)
 	{
 		if (pc==BreakPoint[activecpu])
-			Colour = BREAKPOINT_COLOUR;
+		{
+			Colour = BREAKPOINT_COLOUR;	/* MB 980103 */
+			if (pc == CurrentPC) Colour += (PC_COLOUR & 0xf0);
+			else if (pc == CursorPC) Colour += (CURSOR_COLOUR & 0xf0);
+		}
+		else if (pc==CursorPC)	/* MB 980103 */
+			Colour = CURSOR_COLOUR;
 		else
 			if (pc == CurrentPC)
 				Colour = PC_COLOUR;
 			else
 				Colour = CODE_COLOUR;
 
-		if (cputype==CPU_M68000)	/* JB 971207 */
-		{
-			sprintf(s, "%06X:                     ", pc);
-			ScreenPutString (s, Colour, 2, i + 5);
-			pc += debug_dasm_line (pc, s);
-			ScreenPutString (s, Colour, 10, i + 5);
-		}
-		else
-		{
-			sprintf(s, "%04X:                ", pc);
-			ScreenPutString (s, Colour, 2, i + 5);
-			pc += debug_dasm_line (pc, s);
-			ScreenPutString (s, Colour, 8, i + 5);
-		}
+		/* MB:  I don't like current implementation.  We must think each window as
+			an object with its property, so we must clear its content depending on
+			its size, and everything inside is another set of objects.  So we can
+			move and resize the window without become crazy each time! */
+
+		sprintf(fmt, " %s                          ",	/* MB 980103 */
+				DebugInfo[cputype].AddPrint);
+		sprintf(s, fmt, pc);
+				s[DebugInfo[cputype].DasmStartX+DebugInfo[cputype].DasmLineLen-1] = '\0';	/* MB 980103 */
+		ScreenPutString (s, Colour, 1, i + 5);
+		pc += debug_dasm_line (pc, s);
+		ScreenPutString (s, Colour, DebugInfo[cputype].DasmStartX, i + 5);
 	}
+		return pc;
 }
 
 static int debug_dasm_line (int pc, char *s)
@@ -629,64 +1094,11 @@ static int debug_dasm_line (int pc, char *s)
 	int		offset = 0;
 
 	s[0] = '\0';
-	switch (cputype)
-	{
-		case CPU_M6809:
-			offset = Dasm6809 (&ROM[pc], s, pc);
-			break;
-		case CPU_Z80:
-			offset = DasmZ80 (s, pc);
-			break;
-		case CPU_M6808:		/* JB 971018 */
-			offset = Dasm6808 (&ROM[pc], s, pc);
-			break;
-		case CPU_M6502:		/* JB 971019 */
-			offset = Dasm6502 (s, pc);
-			break;
-		case CPU_M68000:	/* JB 971207 */
-			offset = Dasm68000 (&ROM[pc], s, pc);
-			s[20] = '\0';
-			break;
-		default:
-			break;
-	}
-	if (cputype != CPU_M68000)	/* JB 971210 */
-		s[15] = '\0';
-	return (offset);
+	offset = DebugInfo[cputype].Dasm(s, pc);
+	s[DebugInfo[cputype].DasmLineLen] = '\0';
+	return (offset);	/* MB 980103 */
 }
 
-static void debug_draw_cpu (void)
-{
-	char s[20], name[10];
-	int	x = 14;		/* JB 971210 */
-
-	switch (cputype)
-	{
-		case CPU_Z80:
-			strcpy (name, "Z80");
-			break;
-		case CPU_M6809:
-			strcpy (name, "6809");
-			break;
-		case CPU_M6808:		/* JB 971018 */
-			strcpy (name, "6808");
-			break;
-		case CPU_M6502:		/* JB 971019 */
-			strcpy (name, "6502");
-			break;
-		case CPU_M68000:	/* JB 971207 */
-			strcpy (name, "68K");
-			x = 21;
-			break;
-		default:
-			name[0] = '\0';
-			break;
-	}
-
-	ScreenPutString ("        ", FLAG_COLOUR, x, 3);	/* JB 971210 */
-	sprintf (s, "%d (%s)", activecpu, name);
-	ScreenPutString (s, FLAG_COLOUR, x, 3);				/* JB 971210 */
-}
 
 static void debug_draw_flags (void)
 {
@@ -694,42 +1106,19 @@ static void debug_draw_flags (void)
 	int		i, cc;
 	int		flag_size = 8;
 
-	switch (cputype)
-	{
-		case CPU_M6809:
-			strcpy (Flags, "..H.NZVC");
-			cc = ((m6809_Regs *)rgs)->cc;
-			break;
-		case CPU_Z80:
-			strcpy (Flags, "SZ.H.PNC");
-			cc = ((Z80_Regs *)rgs)->AF.B.l;
-			break;
-		case CPU_M6808:	/* JB 971018 */
-			strcpy (Flags, "..HINZVC");
-			cc = ((m6808_Regs *)rgs)->cc;
-			break;
-		case CPU_M6502:	/* JB 971019 */
-			strcpy (Flags, "NVRBDIZC");
-			cc = ((M6502 *)rgs)->P;
-			break;
-		case CPU_M68000:	/* JB 971207 */
-			flag_size = 16;
-			strcpy (Flags, "T.S..III...XNZVC");
-			cc = ((MC68000_Regs *)rgs)->regs.sr;
-			break;
-		default:		/* JB 971018 */
-			strcpy (Flags, "........");
-			cc = 0;
-			break;
-	}
+	strcpy (Flags, DebugInfo[cputype].Flags);
+//	cc = *DebugInfo[cputype].CC;	/* removed /* JB 980103 */
+	flag_size = DebugInfo[cputype].FlagSize;
 
 	if (flag_size==8)		/* JB 971210 */
 	{
+		cc = *(byte *)DebugInfo[cputype].CC;	/* JB 980103 */
 		for (i=0; i<8; i++, cc <<= 1)
 			s[i] = cc & 0x80 ? Flags[i] : '.';
 	}
 	else
 	{
+		cc = *(word *)DebugInfo[cputype].CC;	/* JB 980103 */
 		/* this is probably wrong for little endian machines */
 		for (i=0; i<16; i++, cc <<= 1)
 			s[i] = cc & 0x8000 ? Flags[i] : '.';
@@ -740,437 +1129,291 @@ static void debug_draw_flags (void)
 
 static void debug_draw_registers (void)
 {
-	m6809_Regs				*r6809;
-	m6808_Regs				*r6808;		/* JB 971018 */
-	Z80_Regs				*rZ80;
-	M6502					*r6502;		/* JB 971019 */
-	MC68000_Regs			*r68k;	/* JB 971207 */
-	char					s[100];
+	char	s[32];
+	int		Num = 0;
+	int 	Value = 0, oldValue = 0;
 
-	switch (cputype)
+	while (DebugInfo[cputype].RegList[Num].Size > 0)
 	{
-		case CPU_M6809:
-			r6809 = (m6809_Regs *)rgs;
-			sprintf (s, "A:%02X B:%02X PC:%04X S:%04X U:%04X X:%04X Y:%04X DP:%02X",
-				r6809->a, r6809->b, r6809->pc, r6809->s, r6809->u, r6809->x, r6809->y, r6809->dp );
-			break;
-		case CPU_M6808:		/* JB 971018 */
-			r6808 = (m6808_Regs *)rgs;
-			sprintf (s, "A:%02X B:%02X PC:%04X S:%04X X:%04X",
-				r6808->a, r6808->b, r6808->pc, r6808->s, r6808->x );
-			break;
-		case CPU_Z80:
-			rZ80 = (Z80_Regs *)rgs;
-			sprintf (s, "AF:%04X HL:%04X DE:%04X BC:%04X PC:%04X SP:%04X IX:%04X IY:%04X I:%02X",
-				rZ80->AF.W.l, rZ80->HL.W.l, rZ80->DE.W.l, rZ80->BC.W.l, rZ80->PC.W.l,
-				rZ80->SP.W.l, rZ80->IX.W.l, rZ80->IY.W.l, rZ80->I);
-			break;
-		case CPU_M6502:		/* JB 971019 */
-			r6502 = (M6502 *)rgs;
-			sprintf (s, "A:%02X X:%02X Y:%02X S:%02X PC:%04X", r6502->A, r6502->X, r6502->Y,
-				r6502->S, r6502->PC.W);
-			break;
-		case CPU_M68000:	/* JB 971207 */
-			{
-				int i;
-
-				r68k = (MC68000_Regs *)rgs;
-
-				for (i=0; i<8; i++)
-				{
-					sprintf (s, "D%d:%08X", i, r68k->regs.d[i] );
-					ScreenPutString (s, REGISTER_COLOUR, 67, 3+i);
-
-					sprintf (s, "A%d:%08X", i, r68k->regs.a[i] );
-					ScreenPutString (s, REGISTER_COLOUR, 67, 12+i);
-				}
-
-				sprintf (s, "PC:%08X VBR:%08X ISP:%08X USP:%08X SFC:%08X DFC:%08X",
-					r68k->regs.pc, r68k->regs.vbr, r68k->regs.isp, r68k->regs.usp,
-					r68k->regs.sfc, r68k->regs.dfc);
-			}
-			break;
-		default:
-			s[0] = '\0';
-			break;
-	}
-	ScreenPutString ("                                                                       ",
-		REGISTER_COLOUR, 2, 1);
-	ScreenPutString (s, REGISTER_COLOUR, 2, 1);
-}
-
-static void debug_get_regs (void)
-{
-	switch (cputype)
-	{
-		case CPU_M6809:
-			m6809_GetRegs ((m6809_Regs *)rgs);
-			break;
-		case CPU_M6808:	/* JB 971018 */
-			m6808_GetRegs ((m6808_Regs *)rgs);
-			break;
-		case CPU_Z80:
-			Z80_GetRegs ((Z80_Regs *)rgs);
-			break;
-		case CPU_M6502:	/* JB 971019 */
-			cpu_getcpucontext (activecpu, rgs);
-			break;
-		case CPU_M68000:/* JB 971207 */
-			MC68000_GetRegs ((MC68000_Regs *)rgs);
-			break;
-		default:
-			break;
-	}
-}
-
-static void debug_store_editregs (void)
-{
-	m6809_Regs	*r6809;
-	m6808_Regs	*r6808;	/* JB 971018 */
-	Z80_Regs	*rZ80;
-	M6502		*r6502;	/* JB 971019 */
-	MC68000_Regs *r68k;	/* JB 971207 */
-
-	switch (cputype)
-	{
-		case CPU_M68000:	/* JB 971207 */
-			r68k = (MC68000_Regs *)rgs;
-			r68k->regs.pc = edit[0].val;
-			r68k->regs.vbr = edit[1].val;
-			r68k->regs.isp = edit[2].val;
-			r68k->regs.usp = edit[3].val;
-			r68k->regs.sfc = edit[4].val;
-			r68k->regs.dfc = edit[5].val;
-
-			r68k->regs.d[0] = edit[6].val;
-			r68k->regs.d[1] = edit[7].val;
-			r68k->regs.d[2] = edit[8].val;
-			r68k->regs.d[3] = edit[9].val;
-			r68k->regs.d[4] = edit[10].val;
-			r68k->regs.d[5] = edit[11].val;
-			r68k->regs.d[6] = edit[12].val;
-			r68k->regs.d[7] = edit[13].val;
-
-			r68k->regs.a[0] = edit[14].val;
-			r68k->regs.a[1] = edit[15].val;
-			r68k->regs.a[2] = edit[16].val;
-			r68k->regs.a[3] = edit[17].val;
-			r68k->regs.a[4] = edit[18].val;
-			r68k->regs.a[5] = edit[19].val;
-			r68k->regs.a[6] = edit[20].val;
-			r68k->regs.a[7] = edit[21].val;
-			MC68000_SetRegs (r68k);
-			break;
-		case CPU_M6809:
-			r6809 = (m6809_Regs *)rgs;
-			r6809->a = edit[0].val;
-			r6809->b = edit[1].val;
-			r6809->pc = edit[2].val;
-			r6809->s = edit[3].val;
-			r6809->u = edit[4].val;
-			r6809->x = edit[5].val;
-			r6809->y = edit[6].val;
-			r6809->dp = edit[7].val;
-			m6809_SetRegs (r6809);
-			break;
-		case CPU_M6808:		/* JB 971018 */
-			r6808 = (m6808_Regs *)rgs;
-			r6808->a = edit[0].val;
-			r6808->b = edit[1].val;
-			r6808->pc = edit[2].val;
-			r6808->s = edit[3].val;
-			r6808->x = edit[4].val;
-			m6808_SetRegs (r6808);
-			break;
-		case CPU_Z80:		/* JB 971019 */
-			rZ80 = (Z80_Regs *)rgs;
-			rZ80->AF.W.l = edit[0].val;
-			rZ80->HL.W.l = edit[1].val;
-			rZ80->DE.W.l = edit[2].val;
-			rZ80->BC.W.l = edit[3].val;
-			rZ80->PC.W.l = edit[4].val;
-			rZ80->SP.W.l = edit[5].val;
-			rZ80->IX.W.l = edit[6].val;
-			rZ80->IY.W.l = edit[7].val;
-			Z80_SetRegs (rZ80);
-			break;
-		case CPU_M6502:		/* JB 971019 */
-			r6502 = (M6502 *)rgs;
-			r6502->A = edit[0].val;
-			r6502->X = edit[1].val;
-			r6502->Y = edit[2].val;
-			r6502->S = edit[3].val;
-			r6502->PC.W = edit[4].val;
-			cpu_setcpucontext (activecpu, rgs);
-			break;
-		default:
-			break;
-	}
-}
-
-static int /* numregs */ debug_setup_editregs (void)
-{
-	static unsigned char 	rgs[CPU_CONTEXT_SIZE];	/* ASG 971105 */
-	m6809_Regs				*r6809;
-	m6808_Regs				*r6808;		/* JB 971018 */
-	Z80_Regs				*rZ80;
-	M6502					*r6502;		/* JB 971019 */
-	MC68000_Regs			*r68k;		/* JB 971207 */
-	tRegdef					*rd;
-	int						num = 0;
-
-	switch (cputype)
-	{
-		case CPU_M6809:
-			rd = m6809_reglist;
-			break;
-		case CPU_M6808:		/* JB 971018 */
-			rd = m6808_reglist;
-			break;
-		case CPU_Z80:
-			rd = z80_reglist;
-			break;
-		case CPU_M6502:		/* JB 971019 */
-			rd = m6502_reglist;
-			break;
-		case CPU_M68000:	/* JB 971207 */
-			rd = m68k_reglist;
-			break;
-		default:
-			rd = 0;
-			break;
-	}
-
-	/* build EditRegs table from register list */
-	if (rd)
-	{
-		int x = 2;
-
-		for (num=0; rd->size != -1; num++)
+		switch (DebugInfo[cputype].RegList[Num].Size)
 		{
-			x += strlen (rd->name) + 1;
-			edit[num].X = x;
-			edit[num].Y = 1;
-			edit[num].Len = 2 * rd->size;
-			edit[num].val = 0;
-			x += 1 + edit[num].Len;
-			rd++;
+			case 1:
+				Value = *(byte *)DebugInfo[cputype].RegList[Num].Val;	/* MB 980221 */
+				oldValue = *(byte *)BackupRegisters[cputype].RegList[Num].Val;	/* MB 980221 */
+				sprintf(s, "%s:%02X", DebugInfo[cputype].RegList[Num].Name, Value);
+//						*(byte *)DebugInfo[cputype].RegList[Num].Val);	/* JB 980103 */
+				break;
+			case 2:
+				Value = *(word *)DebugInfo[cputype].RegList[Num].Val;	/* MB 980221 */
+				oldValue = *(word *)BackupRegisters[cputype].RegList[Num].Val;	/* MB 980221 */
+				sprintf(s, "%s:%04X", DebugInfo[cputype].RegList[Num].Name, Value);
+//						*(word *)DebugInfo[cputype].RegList[Num].Val);	/* JB 980103 */
+				break;
+			case 4:
+				Value = *(dword *)DebugInfo[cputype].RegList[Num].Val;	/* MB 980221 */
+				oldValue = *(dword *)BackupRegisters[cputype].RegList[Num].Val;	/* MB 980221 */
+				sprintf(s, "%s:%08X", DebugInfo[cputype].RegList[Num].Name, Value);
+//						*(dword *)DebugInfo[cputype].RegList[Num].Val);	/* JB 980103 */
+				break;
 		}
+		ScreenPutString (s, ((Value == oldValue)?REGISTER_COLOUR:CHANGES_COLOUR),
+			DebugInfo[cputype].RegList[Num].XPos,
+			DebugInfo[cputype].RegList[Num].YPos);
+		Num++;
 	}
-
-	switch (cputype)
-	{
-		case CPU_M6809:
-			r6809 = (m6809_Regs *)rgs;
-			m6809_GetRegs (r6809);
-			edit[0].val = r6809->a;
-			edit[1].val = r6809->b;
-			edit[2].val = r6809->pc;
-			edit[3].val = r6809->s;
-			edit[4].val = r6809->u;
-			edit[5].val = r6809->x;
-			edit[6].val = r6809->y;
-			edit[7].val = r6809->dp;
-			break;
-		case CPU_M6808:		/* JB 971018 */
-			r6808 = (m6808_Regs *)rgs;
-			m6808_GetRegs (r6808);
-			edit[0].val = r6808->a;
-			edit[1].val = r6808->b;
-			edit[2].val = r6808->pc;
-			edit[3].val = r6808->s;
-			edit[4].val = r6808->x;
-			break;
-		case CPU_Z80:
-			rZ80 = (Z80_Regs *)rgs;
-			Z80_GetRegs (rZ80);
-			edit[0].val = rZ80->AF.W.l;
-			edit[1].val = rZ80->HL.W.l;
-			edit[2].val = rZ80->DE.W.l;
-			edit[3].val = rZ80->BC.W.l;
-			edit[4].val = rZ80->PC.W.l;
-			edit[5].val = rZ80->SP.W.l;
-			edit[6].val = rZ80->IX.W.l;
-			edit[7].val = rZ80->IY.W.l;
-			break;
-		case CPU_M6502:		/* JB 971019 */
-			r6502 = (M6502 *)rgs;
-			cpu_getcpucontext (activecpu, rgs);
-			edit[0].val = r6502->A;
-			edit[1].val = r6502->X;
-			edit[2].val = r6502->Y;
-			edit[3].val = r6502->S;
-			edit[4].val = r6502->PC.W;
-			break;
-		case CPU_M68000:	/* JB 971207 */
-
-			/* adjust because some of the registers are displayed down the right side */
-			{
-				int i;
-
-				for (i=0; i<8; i++)
-				{
-					/* d0-d7 */
-					edit[6+i].X = 70;
-					edit[6+i].Y = 3+i;
-					/* a0-a7 */
-					edit[14+i].X = 70;
-					edit[14+i].Y = 12+i;
-				}
-			}
-
-			r68k = (MC68000_Regs *)rgs;
-			MC68000_GetRegs (r68k);
-			edit[0].val = r68k->regs.pc;
-			edit[1].val = r68k->regs.vbr;
-			edit[2].val = r68k->regs.isp;
-			edit[3].val = r68k->regs.usp;
-			edit[4].val = r68k->regs.sfc;
-			edit[5].val = r68k->regs.dfc;
-
-			edit[6].val = r68k->regs.d[0];
-			edit[7].val = r68k->regs.d[1];
-			edit[8].val = r68k->regs.d[2];
-			edit[9].val = r68k->regs.d[3];
-			edit[10].val = r68k->regs.d[4];
-			edit[11].val = r68k->regs.d[5];
-			edit[12].val = r68k->regs.d[6];
-			edit[13].val = r68k->regs.d[7];
-
-			edit[14].val = r68k->regs.a[0];
-			edit[15].val = r68k->regs.a[1];
-			edit[16].val = r68k->regs.a[2];
-			edit[17].val = r68k->regs.a[3];
-			edit[18].val = r68k->regs.a[4];
-			edit[19].val = r68k->regs.a[5];
-			edit[20].val = r68k->regs.a[6];
-			edit[21].val = r68k->regs.a[7];
-			break;
-		default:
-			break;
-	}
-
-	return num;
+	cpuintf[cputype].get_regs(bckrgs);
 }
 
 /* Edit registers window */
-static void EditRegisters (struct EditRegs *Edit, int Size, int Col)
+static void EditRegisters (int Which)
 {
 	int		Editing = TRUE;
-	int		Pos = 0;
-	int		Which = 0;
-	char	Num[2];
-	char	Digits[] = {"0123456789ABCDEF"};
+	int		High = TRUE;
 	int		Key;
+	char	Num[2];
 	int		X = 0;
 	int		Y = 0;
+	int		NumRegs = 0;
+	unsigned char	*Val;
+#ifdef	LSB_FIRST
+	int		Msw = TRUE;
+	int		Msb = TRUE;
+#endif
 
-	if (Size<=0) return;
+	X = 0;
+	while (DebugInfo[cputype].RegList[X++].Size > 0)
+		NumRegs++;
 
-	X = Edit[Which].X;
-	Y = Edit[Which].Y;
-	Pos = Edit[Which].Len;
+	if (NumRegs == 0)
+		return;
+
+	cpuintf[cputype].get_regs(rgs);
+
+	X = DebugInfo[cputype].RegList[Which].XPos +
+		strlen(DebugInfo[cputype].RegList[Which].Name) + 1;
+	Y = DebugInfo[cputype].RegList[Which].YPos;
+#ifdef	LSB_FIRST
+	Val = (unsigned char *)DebugInfo[cputype].RegList[Which].Val +
+		DebugInfo[cputype].RegList[Which].Size - 1;
+#else
+	Val = (unsigned char *)DebugInfo[cputype].RegList[Which].Val;
+#endif
 
 	while (Editing)
 	{
 		ScreenSetCursor (Y, X);
-		Key = readkey();
-		switch ((Key & 0xff00) >> 8)
+//		Key = osd_read_keyrepeat();
+		Key = osd_debug_readkey();	/* JB 980103 */
+		switch (Key)
 		{
-			case 0x4B:			/* Left */
+			case OSD_KEY_LEFT:			/* Left */
 				X--;
-				Pos++;
+				High = !High;
+				if (!High)
+				{
+#ifdef	LSB_FIRST
+					if (Msb)
+					{
+						if (Msw)
+							Val -= 4;
+						else
+							if (DebugInfo[cputype].RegList[Which].Size > 2)
+								Val++;
+							else
+								Val -= 2;
+						Msw = !Msw;
+					}
+					else
+					{
+						if (DebugInfo[cputype].RegList[Which].Size > 1)
+							Val++;
+						else
+							Val--;
+					}
+					Msb = !Msb;
+#else
+					Val--;
+#endif
+				}
 				break;
-			case 0x4D:			/* Right */
+			case OSD_KEY_RIGHT:			/* Right */
 				X++;
-				Pos--;
+				High = !High;
+				if (High)
+				{
+#ifdef	LSB_FIRST
+					if (!Msb)
+					{
+						if (!Msw)
+							Val += 4;
+						else
+							if (DebugInfo[cputype].RegList[Which].Size > 2)
+								Val--;
+							else
+								Val += 2;
+						Msw = !Msw;
+					}
+					else
+					{
+						if (DebugInfo[cputype].RegList[Which].Size > 1)
+							Val--;
+						else
+							Val++;
+					}
+					Msb = !Msb;
+#else
+					Val++;
+#endif
+				}
 				break;
-			case 0x48:			/* Up */	/* JB 971215 */
+			case OSD_KEY_UP:			/* Up */	/* JB 971215 */
 				if (--Which < 0)
-					Which = Size - 1;
+					Which = NumRegs - 1;
 
-				X = Edit[Which].X + Edit[Which].Len - 1;
-				Y = Edit[Which].Y;
-				Pos = Edit[Which].Len;
+				X = DebugInfo[cputype].RegList[Which].XPos +
+					strlen(DebugInfo[cputype].RegList[Which].Name) + 1 +
+					(DebugInfo[cputype].RegList[Which].Size * 2) - 1;
+				Y = DebugInfo[cputype].RegList[Which].YPos;
+#ifdef	LSB_FIRST
+				Val = (unsigned char *)DebugInfo[cputype].RegList[Which].Val;
+				Msw = FALSE;
+				Msb = FALSE;
+#else
+				Val = ((unsigned char *)DebugInfo[cputype].RegList[Which].Val +
+					(DebugInfo[cputype].RegList[Which].Size - 1));
+#endif
+				High = FALSE;
 				break;
-			case 0x50:			/* Down */	/* JB 971215 */
-				if (++Which >=  Size)
+			case OSD_KEY_DOWN:			/* Down */	/* JB 971215 */
+				if (++Which >=  NumRegs)
 					Which = 0;
 
-				X = Edit[Which].X;
-				Y = Edit[Which].Y;
-				Pos = Edit[Which].Len;
+				X = DebugInfo[cputype].RegList[Which].XPos +
+					strlen(DebugInfo[cputype].RegList[Which].Name) + 1;
+				Y = DebugInfo[cputype].RegList[Which].YPos;
+				Val = (unsigned char *)DebugInfo[cputype].RegList[Which].Val;
+#ifdef	LSB_FIRST
+				Val = ((unsigned char *)DebugInfo[cputype].RegList[Which].Val +
+					(DebugInfo[cputype].RegList[Which].Size - 1));
+				Msw = TRUE;
+				Msb = TRUE;
+#else
+				Val = (unsigned char *)DebugInfo[cputype].RegList[Which].Val;
+#endif
+				High = TRUE;
 				break;
-			default:
-				Key = toupper (Key & 0xff);
-				if ((Key >= '0' && Key <= '9') || (Key >= 'A' && Key <= 'F'))
+			case OSD_KEY_0:
+			case OSD_KEY_1:
+			case OSD_KEY_2:
+			case OSD_KEY_3:
+			case OSD_KEY_4:
+			case OSD_KEY_5:
+			case OSD_KEY_6:
+			case OSD_KEY_7:
+			case OSD_KEY_8:
+			case OSD_KEY_9:
+			case OSD_KEY_A:
+			case OSD_KEY_B:
+			case OSD_KEY_C:
+			case OSD_KEY_D:
+			case OSD_KEY_E:
+			case OSD_KEY_F:
+				sprintf(Num, osd_key_name(Key));
+				ScreenPutString (Num, REGISTER_COLOUR, X, Y);
+				Num[0] -= '0';
+				if (Num[0] > 9)
+					Num[0] -= 7;
+				if (High)
 				{
-					switch (Pos - 1)
+					*Val &= 0x0f;
+					*Val |= (Num[0] << 4);
+				}
+				else
+				{
+					*Val &= 0xf0;
+					*Val |= Num[0];
+				}
+				X++;
+				High = !High;
+				if (High)
+				{
+#ifdef	LSB_FIRST
+					if (!Msb)
 					{
-						case 0:
-							Edit[Which].val &= 0xfffffff0;	/* JB 971207 */
-							break;
-						case 1:
-							Edit[Which].val &= 0xffffff0f;	/* JB 971207 */
-							break;
-						case 2:
-							Edit[Which].val &= 0xfffff0ff;	/* JB 971207 */
-							break;
-						case 3:
-							Edit[Which].val &= 0xffff0fff;	/* JB 971207 */
-							break;
-						case 4:	/* JB 971207 */
-							Edit[Which].val &= 0xfff0ffff;
-							break;
-						case 5:	/* JB 971207 */
-							Edit[Which].val &= 0xff0fffff;
-							break;
-						case 6:	/* JB 971207 */
-							Edit[Which].val &= 0xf0ffffff;
-							break;
-						case 7:	/* JB 971207 */
-							Edit[Which].val &= 0x0fffffff;
-							break;
+						if (!Msw)
+							Val += 4;
+						else
+							if (DebugInfo[cputype].RegList[Which].Size > 2)
+								Val--;
+							else
+								Val += 2;
+						Msw = !Msw;
 					}
-					Edit[Which].val |=
-						((strchr(Digits,Key) - Digits) << (4 * (Pos - 1)));
-					sprintf (Num, "%c", Key);
-					ScreenPutString (Num, Col, X, Y);
-					X++;
-					Pos--;
-				}
-				else if (Key==0x1b)
-				{
-					Editing = FALSE;
+					else
+					{
+						if (DebugInfo[cputype].RegList[Which].Size > 1)
+							Val--;
+						else
+							Val++;
+					}
+					Msb = !Msb;
+#else
+					Val++;
+#endif
 				}
 				break;
+			case OSD_KEY_ENTER:
+				Editing = FALSE;
+				break;
 		}
-		if (Pos > Edit[Which].Len)
+		if (Val >
+				((unsigned char *)DebugInfo[cputype].RegList[Which].Val +
+				(DebugInfo[cputype].RegList[Which].Size - 1)))
 		{
-			if (--Which < 0)
-				Which = Size - 1;
-
-			X = Edit[Which].X + Edit[Which].Len - 1;
-			Y = Edit[Which].Y;
-			Pos = 1;
-		}
-		else if (Pos < 1)
-		{
-			if (++Which >=  Size)
+			if (++Which >=  NumRegs)
 				Which = 0;
 
-			X = Edit[Which].X;
-			Y = Edit[Which].Y;
-			Pos = Edit[Which].Len;
+			X = DebugInfo[cputype].RegList[Which].XPos +
+				strlen(DebugInfo[cputype].RegList[Which].Name) + 1;
+			Y = DebugInfo[cputype].RegList[Which].YPos;
+#ifdef	LSB_FIRST
+			Val = ((unsigned char *)DebugInfo[cputype].RegList[Which].Val +
+				(DebugInfo[cputype].RegList[Which].Size - 1));
+			Msw = TRUE;
+			Msb = TRUE;
+#else
+			Val = (unsigned char *)DebugInfo[cputype].RegList[Which].Val;
+#endif
+			High = TRUE;
+		}
+		else if (Val < (unsigned char *)DebugInfo[cputype].RegList[Which].Val)
+		{
+			if (--Which < 0)
+				Which = NumRegs - 1;
+
+			X = DebugInfo[cputype].RegList[Which].XPos +
+				strlen(DebugInfo[cputype].RegList[Which].Name) + 1 +
+				(DebugInfo[cputype].RegList[Which].Size * 2) - 1;
+			Y = DebugInfo[cputype].RegList[Which].YPos;
+#ifdef	LSB_FIRST
+			Val = (unsigned char *)DebugInfo[cputype].RegList[Which].Val;
+			Msw = FALSE;
+			Msb = FALSE;
+#else
+			Val = ((unsigned char *)DebugInfo[cputype].RegList[Which].Val +
+				(DebugInfo[cputype].RegList[Which].Size - 1));
+#endif
+			High = FALSE;
 		}
 	}
+	cpuintf[cputype].set_regs(rgs);
 }
 
 static int debug_key_pressed (void)
 {
 	static int	delay = 0;
 
-	if (++delay==0xffff)
+	if (++delay==0x7fff)
 	{
 		delay = 0;
 		return osd_key_pressed (OSD_KEY_TILDE);
@@ -1179,27 +1422,129 @@ static int debug_key_pressed (void)
 		return FALSE;
 }
 
+
+static int DisplayCommandInfo(char * commandline, char * command)
+{
+	int i,found,offst, rv = -1;
+	char info[80] = "\0";
+
+	sprintf(info, "%-67s", " ");
+	ScreenPutString(info, INSTRUCTION_COLOUR, 10, 21);
+	sprintf(info, "%-76s", " ");
+	ScreenPutString(info, COMMANDINFO_COLOUR, 2, 23);
+	sprintf(info, "Found:  ");
+
+	i = 0;
+	offst = 0;
+	found = 0;
+	while (CommandInfo[i].Cmd != cmNOMORE)
+	{
+		if (memcmp(CommandInfo[i].Name,command,strlen(command)) == 0)
+		{
+			if (found) strcat(info,", ");
+			strcat(info, CommandInfo[i].Name);
+			found++;
+			offst = i;
+		}
+		i++;
+	}
+
+	if ((found == 1) && (strcmp(CommandInfo[offst].Name,command) == 0))
+	{
+		sprintf(info, "%-76s", " ");
+		sprintf(info, CommandInfo[offst].Description);
+		rv = offst;
+	}
+	else if (!found)
+	{
+		sprintf(info, "Found:  Nothing!%-60s", " ");
+	}
+
+	if (strlen(info) >= 75) { info[75] = 16; info[76] = '\0'; }
+	ScreenSetCursor(21,10+strlen(commandline));
+	ScreenPutString(commandline, INSTRUCTION_COLOUR, 10, 21);
+	ScreenPutString(info, COMMANDINFO_COLOUR, 2, 23);
+
+	return ((rv==-1) ? cmNOMORE : CommandInfo[rv].Cmd);
+}
+
+
+static int GetSPValue(int cputype)
+{
+	int rv = 0;
+	switch (DebugInfo[cputype].SPSize)
+	{
+		case 1: rv = *(byte *)DebugInfo[cputype].SPReg;
+				break;
+		case 2: rv = *(word *)DebugInfo[cputype].SPReg;
+				break;
+		case 4: rv = *(dword *)DebugInfo[cputype].SPReg;
+				break;
+	}
+	return rv;
+}
+
+
 /*** Single-step debugger ****************************/
 /*** This function should exist if DEBUG is        ***/
 /*** #defined. Call from the CPU's Execute function***/
 /*****************************************************/
 void MAME_Debug (void)
 {
-	static int				InDebug=FALSE;
-	static int				Update;
-	static int				Step;
-	static int				DebugTrace = FALSE;
-	static int				FirstTime = TRUE;
-	int						Key;
-	int						InvalidKey;
+	static char		CommandLine[80];
+	static char		Command[80];
+	static int		cmd = cmNOMORE;
+	static int		ResetCommandLine = 0;
+	static int		Step;
+	static int		DebugTrace = FALSE;
+	static int		FirstTime = TRUE;
+	int				Key;
 
+	memset(CommandLine,0,80);
+	memset(Command,0,80);
 	activecpu = cpu_getactivecpu ();
 	cputype = Machine->drv->cpu[activecpu].cpu_type & ~CPU_FLAGS_MASK;
-	debug_get_regs ();
+	cpuintf[cputype].get_regs(rgs);
+
+	/* JB 980214 -- Call CPU trace function */
+	if (activecpu != gCurrentTraceCPU)
+	{
+		gCurrentTraceCPU = activecpu;
+		asg_TraceSelect (gCurrentTraceCPU);
+	}
+	DebugInfo[cputype].Trace(cpu_getpc ());
+
+	if (PreviousSP)
+	{
+		/* See if we went into a function.  A RET will cause SP to be > than previousSP */
+		if ((cpu_getpc() != NextPC) && (GetSPValue(cputype) < PreviousSP))
+		{
+			/* if so, set a breakpoint on the return PC */
+			BreakPoint[activecpu] = NextPC;
+			Update = FALSE;
+			InDebug = FALSE;
+			osd_set_mastervolume(CurrentVolume);
+			osd_set_display(Machine->scrbitmap->width,
+							Machine->scrbitmap->height,
+							Machine->drv->video_attributes);
+		}
+		else
+		{
+			/* if not, set trace on so that we break immediately */
+			InDebug = TRUE;
+		}
+		PreviousSP = 0;
+	}
+
+	if (FirstTime)
+	{
+		cpuintf[cputype].get_regs(bckrgs);
+		memset(MemWindowBackup,0,0x200);
+	}
 
 	/* Check for breakpoint or tilde key to enter debugger */
-	if (cpu_getpc()==BreakPoint[activecpu] || debug_key_pressed () ||
-			FirstTime)
+	if (cpu_getpc()==BreakPoint[activecpu] || cpu_getpc() == TempBreakPoint ||	/* MB 980103 */
+			debug_key_pressed () || FirstTime || ((CPUBreakPoint >= 0) && (activecpu != CPUBreakPoint)))    /* MB 980121 */
 	{
 		uclock_t	curr = uclock();
 
@@ -1209,37 +1554,45 @@ void MAME_Debug (void)
 			osd_update_audio();	/* give time to the sound hardware to apply the volume change */
 		} while (uclock() < (curr + (UCLOCKS_PER_SEC / 15)));
 
-		clear_keybuf ();
 		set_gfx_mode (GFX_TEXT,80,25,0,0);
+		TempBreakPoint = -1;
+		CPUBreakPoint = -1;	/* MB 980121 */
 		PreviousCPUType = !cputype;
 		InDebug = TRUE;
 		Update = TRUE;
 		DebugTrace = FALSE;
 		FirstTime = FALSE;
 		StartAddress = cpu_getpc ();
+		CursorPC = StartAddress;	/* MB 980103 */
 	}
 	if (Step)
-		StartAddress = cpu_getpc ();
+		CursorPC = cpu_getpc ();	/* MB 980103 */
 	Step = FALSE;		/* So that we will get back into debugger if needed */
 	Update = TRUE;		/* Cause a screen refresh */
 	while ((InDebug) && !Step)
 	{
 		if (Update)
 		{
+			char s[21];
+
 			if (cputype != PreviousCPUType)
 			{
-				DrawDebugScreen (HEADING_COLOUR, LINE_COLOUR);
+				DebugInfo[cputype].DrawDebugScreen(HEADING_COLOUR, LINE_COLOUR);
 				PreviousCPUType = cputype;
 			}
 			debug_draw_flags ();
 			debug_draw_registers ();
-			debug_draw_cpu ();
+			ScreenPutString ("        ", FLAG_COLOUR, DebugInfo[cputype].NamePos, 3);
+			sprintf (s, "%d (%s)", activecpu, DebugInfo[cputype].Name);
+			ScreenPutString (s, FLAG_COLOUR, DebugInfo[cputype].NamePos, 3);
 			CurrentPC = cpu_getpc ();
 			if (DebugTrace)
-				StartAddress = CurrentPC;
-			debug_draw_disasm (StartAddress);
-			DrawMemWindow (MEM1, MEM1_COLOUR, 3);
-			DrawMemWindow (MEM2, MEM2_COLOUR, 12);
+			   StartAddress = CurrentPC;
+			if (CurrentPC < StartAddress || CurrentPC >= EndAddress)	/* MB 980103 */
+			   StartAddress = CurrentPC;
+			EndAddress = debug_draw_disasm (StartAddress);
+			DrawMemWindow (MEM1, MEM1_COLOUR, 3, DisplayASCII[0]);	/* MB 980103 */
+			DrawMemWindow (MEM2, MEM2_COLOUR, 12, DisplayASCII[1]);	/* MB 980103 */
 			ScreenPutString ("Command>", PROMPT_COLOUR, 2, 21);
 			ScreenSetCursor (21, 10);
 			Update = FALSE;
@@ -1249,171 +1602,220 @@ void MAME_Debug (void)
 		{
 			char	S[128];
 			int		TempAddress;
-			int		MaxInstLen;
 			int		Line;
 
-			Key = readkey ();
-			InvalidKey = FALSE;		/* Assume a valid key */
-			sprintf (S, "%c", Key);
-			ScreenPutString(S, INPUT_COLOUR, 10, 21);
-			ScreenPutString("                                              ", INSTRUCTION_COLOUR, 2, 22);
-
-			switch (toupper (Key & 0xff))
+			//Key = osd_read_keyrepeat ();
+			Key = osd_debug_readkey ();	/* JB 980103 */
+			if ((strlen(osd_key_name(Key)) == 1) && (strlen(CommandLine) < 80))
+				strcat(CommandLine,osd_key_name(Key));
+			else if (((Key == OSD_KEY_SPACE) || (Key == OSD_KEY_ENTER)) && (strlen(CommandLine) < 80))
+				strcat(CommandLine," ");
+			else if ((Key == OSD_KEY_EQUALS) && (strlen(CommandLine) < 80))
+				strcat(CommandLine,"=");
+			else if ((Key == OSD_KEY_STOP) && (strlen(CommandLine) < 80))
+				strcat(CommandLine,".");
+#ifdef macintosh
+			else if ((Key == OSD_KEY_SLASH) && (strlen(CommandLine) < 80))
+				strcat(CommandLine,"/");
+#else
+			else if ((Key == OSD_KEY_SLASH) && (strlen(CommandLine) < 80))
+				strcat(CommandLine,"\\");
+#endif
+			else if ((Key == OSD_KEY_BACKSPACE) && (strlen(CommandLine) > 0))
+				CommandLine[strlen(CommandLine)-1] = '\0';
 			{
-				case '1':
-					if (cputype==CPU_M68000)	/* JB 971210 */
-						MEM1 = ScreenEdit (40, 62, 3, 10, MEM1_COLOUR, MEM1);
-					else
-						MEM1 = ScreenEdit (31, 77, 3, 10, MEM1_COLOUR, MEM1);
-					Update = TRUE;
-					break;
-				case '2':
-					if (cputype==CPU_M68000)	/* JB 971210 */
-						MEM2 = ScreenEdit (40, 62, 12, 19, MEM2_COLOUR, MEM2);
-					else
-						MEM2 = ScreenEdit (31, 77, 12, 19, MEM2_COLOUR, MEM2);
-					Update = TRUE;
-					break;
-				case 'B':
-					ScreenPutString ("Enter new breakpoint address", INSTRUCTION_COLOUR, 2, 22);
-					BreakPoint[activecpu] = GetNumber (10, 21, INPUT_COLOUR);
-					Update = TRUE;
-					break;
-				case 'C':
-				case 27:	/* ESC */
-					Update = FALSE;
-					InDebug = FALSE;
-					osd_set_mastervolume(CurrentVolume);
-					osd_set_display(Machine->scrbitmap->width,
-							Machine->scrbitmap->height,
-							Machine->drv->video_attributes);
-					break;
-				case 'D':
-					BreakPoint[activecpu] = -1;
-					Update = TRUE;
-					break;
-				case 'R':
-					EditRegisters (edit, debug_setup_editregs (), REGISTER_COLOUR);
-					debug_store_editregs ();
-					Update = TRUE;
-					break;
-				case 'S':
-				case ' ':
-				case '\r':
-					Step = TRUE;
-					break;
-				case 'T':
-					DebugTrace = TRUE;
-					Step = TRUE;
-					break;
-				case 'V':
-					osd_set_display(Machine->scrbitmap->width,
-							Machine->scrbitmap->height,
-							Machine->drv->video_attributes);
-					updatescreen();
-					while (!readkey ())
-						continue;		/* do nothing */
-					set_gfx_mode (GFX_TEXT,80,25,0,0);
-					DrawDebugScreen (HEADING_COLOUR, LINE_COLOUR);
-					Update = TRUE;
-					break;
-				default:
-					switch (cputype)
+				int i;
+				Command[0] = CommandLine[0];
+				for (i=0; i<=strlen(CommandLine); i++)
+				{
+					if (CommandLine[i] == ' ')
 					{
-						case CPU_M6809:
-							MaxInstLen = 5;	/* JB 971207 */
-							break;
-						case CPU_M6808:		/* JB 971018 */
-							MaxInstLen = 4;
-							break;
-						case CPU_Z80:
-							MaxInstLen = 4;
-							break;
-						case CPU_M6502:		/* JB 971019 */
-							MaxInstLen = 3;
-							break;
-						case CPU_M68000:	/* JB 971207 */
-							MaxInstLen = 5;
-							break;
-						default:
-							MaxInstLen = 1;
-							break;
+						memcpy(Command,CommandLine,i);
+						Command[i] = ' ';
+						Command[i+1] = '\0';
+						break;
 					}
-					switch ((Key & 0xff00) >> 8)
-					{
-						case 0x48:		/* Scroll disassembly up a line */
-							/*
-							 * Try to find the previous instruction by searching
-							 * from the longest instruction length towards the
-							 * current address.  If we can't find one then
-							 * just go back one byte, which means that a
-							 * previous guess was wrong.
-							 */
-							for (TempAddress = StartAddress - MaxInstLen;
-									TempAddress < StartAddress; TempAddress++)
+					else
+						Command[i] = CommandLine[i];
+				}
+			}
+			cmd = DisplayCommandInfo(CommandLine,Command);
+			if (cmd != cmNOMORE && Key == OSD_KEY_ENTER)
+			{
+				CommandInfo[cmd].ExecuteCommand(&CommandLine[strlen(CommandInfo[cmd].Name)]);
+				if (cmd != cmJ)
+					Update = TRUE;
+				ResetCommandLine = 1;
+			}
+			else
+			{
+				switch (Key)
+				{
+					case OSD_KEY_F12:
+					case OSD_KEY_ESC:
+						ResetCommandLine = 1;
+						Update = FALSE;
+						InDebug = FALSE;
+						osd_set_mastervolume(CurrentVolume);
+						osd_set_display(Machine->scrbitmap->width,
+										Machine->scrbitmap->height,
+										Machine->drv->video_attributes);
+						break;
+
+					case OSD_KEY_F2:	/* MB 980103 */
+						ResetCommandLine = 1;
+						if (BreakPoint[activecpu] == -1)
+						   BreakPoint[activecpu] = CursorPC;
+						else
+						   BreakPoint[activecpu] = -1;
+						Update = TRUE;
+						break;
+
+					case OSD_KEY_F4:	/* MB 980103 */
+						ResetCommandLine = 1;
+						TempBreakPoint = CursorPC;
+						Update = FALSE;
+						InDebug = FALSE;
+						osd_set_mastervolume(CurrentVolume);
+						osd_set_display(Machine->scrbitmap->width,
+										Machine->scrbitmap->height,
+										Machine->drv->video_attributes);
+						break;
+
+					case OSD_KEY_F6:
+						CPUBreakPoint = activecpu;
+
+					case OSD_KEY_F8:	/* MB 980118 */
+					case OSD_KEY_ENTER:
+						ResetCommandLine = 1;
+						Step = TRUE;
+						break;
+
+					case OSD_KEY_F9:	/* Was T */
+						ResetCommandLine = 1;
+						DebugTrace = TRUE;
+						Step = TRUE;
+						break;
+
+					case OSD_KEY_F10:	/* MB 980207 */
+						ResetCommandLine = 1;
+						NextPC = CurrentPC + debug_dasm_line(CurrentPC,S);
+						PreviousSP = GetSPValue(cputype);
+						Step = TRUE;
+						break;
+
+					case OSD_KEY_F5:	/* MB 980103 */
+						ResetCommandLine = 1;
+						osd_set_display(Machine->scrbitmap->width,
+										Machine->scrbitmap->height,
+										Machine->drv->video_attributes);
+						updatescreen();
+						while (!osd_read_key ()) continue;		/* do nothing */
+						set_gfx_mode (GFX_TEXT,80,25,0,0);
+						DebugInfo[cputype].DrawDebugScreen(HEADING_COLOUR, LINE_COLOUR);
+						Update = TRUE;
+						break;
+
+					case OSD_KEY_UP:		/* Scroll disassembly up a line */
+						ResetCommandLine = 1;
+						if ((CursorPC >= StartAddress+debug_dasm_line(StartAddress,S)) &&
+							(CursorPC < EndAddress))	/* MB 980103 */
+						{
+							int previous = StartAddress;
+							int tmp = StartAddress;
+							while (tmp < EndAddress)
+							{
+								tmp += debug_dasm_line(previous,S);
+								if (tmp == CursorPC)
+								{
+									CursorPC = previous;
+									tmp = EndAddress;
+								}
+								else
+									previous = tmp;
+							}
+							EndAddress = debug_draw_disasm (StartAddress);
+						}
+						else
+						{
+							  /*
+							   * Try to find the previous instruction by searching
+							   * from the longest instruction length towards the
+							   * current address.  If we can't find one then
+							   * just go back one byte, which means that a
+							   * previous guess was wrong.
+							   */
+							  for (TempAddress = StartAddress -
+									  DebugInfo[cputype].MaxInstLen;
+									  TempAddress < StartAddress; TempAddress++)
+							  {
+								  if ((TempAddress +
+									  debug_dasm_line (TempAddress, S)) ==
+										  StartAddress)
+									  break;
+							  }
+							  if (TempAddress == StartAddress)
+								  TempAddress--;
+							  CursorPC = TempAddress;
+												  if (CursorPC < StartAddress) StartAddress = CursorPC;
+												  EndAddress = debug_draw_disasm (StartAddress);
+						}
+						break;
+
+					case OSD_KEY_PGUP:			/* Page Up */
+						ResetCommandLine = 1;
+						for (Line = 0; Line < 15; Line++)	/* MB 980103 */
+						{
+							for (TempAddress = StartAddress -
+									DebugInfo[cputype].MaxInstLen;
+									TempAddress <StartAddress;TempAddress++)
 							{
 								if ((TempAddress +
 									debug_dasm_line (TempAddress, S)) ==
-										StartAddress)
+									StartAddress)
 									break;
 							}
 							if (TempAddress == StartAddress)
 								TempAddress--;
 							StartAddress = TempAddress;
-							Update = TRUE;
-							break;
+						}
+						CursorPC = StartAddress;
+						EndAddress = debug_draw_disasm (StartAddress);
+						break;
 
-						case 0x49:			/* Page Up */
-							for (Line = 0; Line < 15; Line++)
-							{
-								for (TempAddress = StartAddress - MaxInstLen;
-										TempAddress <StartAddress;TempAddress++)
-								{
-									if ((TempAddress +
-										debug_dasm_line (TempAddress, S)) ==
-											StartAddress)
-										break;
-								}
-								if (TempAddress == StartAddress)
-									TempAddress--;
-								StartAddress = TempAddress;
-							}
-							Update = TRUE;
-							break;
+					case OSD_KEY_DOWN:		/* Scroll disassembly down a line */
+						ResetCommandLine = 1;
+						CursorPC += debug_dasm_line (CursorPC, S);	/* MB 980103 */
+						if (CursorPC >= EndAddress)
+							  StartAddress += debug_dasm_line(StartAddress, S);
+						EndAddress = debug_draw_disasm (StartAddress);
+						break;
 
-						case 0x50:		/* Scroll disassembly down a line */
-							StartAddress += debug_dasm_line (StartAddress, S);
-							Update = TRUE;
-							break;
+					case OSD_KEY_PGDN:			/* Page Down */
+						ResetCommandLine = 1;
+						for (Line = 0; Line < 15; Line++)	/* MB 980103 */
+						{
+							StartAddress += debug_dasm_line(StartAddress,S);
+							CursorPC += debug_dasm_line(CursorPC,S);
+						}
+						EndAddress = debug_draw_disasm (StartAddress);
+						break;
 
-						case 0x51:			/* Page Down */
-							for (Line = 0; Line < 15; Line++)
-								StartAddress += debug_dasm_line(StartAddress,S);
-							Update = TRUE;
-							break;
-
-						default:
-							InvalidKey = TRUE;
-							break;
-					}
+				}
 			}
-			if (InvalidKey)
+			if (ResetCommandLine)
 			{
-				ScreenPutString ("Unknown Command", ERROR_COLOUR, 2, 22);
-			}
-			else
-			{
-				ScreenPutString (" ", INPUT_COLOUR, 10, 21);
-				ScreenPutString ("                                             ",
-					INSTRUCTION_COLOUR, 2, 22);
+				ResetCommandLine = 0;
+				memset(CommandLine,0,80);
+				memset(Command,0,80);
+				DisplayCommandInfo(CommandLine,Command);
 			}
 		}
 		else
 		{
 			Step = TRUE;
-			if (keypressed ())
+			if (osd_key_pressed (OSD_KEY_SPACE))
 			{
-				clear_keybuf ();
 				DebugTrace = FALSE;
 			}
 		}

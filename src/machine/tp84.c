@@ -8,7 +8,7 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "m6809.h" /* JB 970829 */
+#include "M6809/M6809.h" /* JB 970829 */
 
 extern unsigned char *tp84_sharedram;	/* JB 970829 */
 

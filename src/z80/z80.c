@@ -15,6 +15,7 @@
 #include "osd_dbg.h"
 
 #include "Z80.h"
+typedef signed char offset;
 
 #define M_RDMEM(A)      Z80_RDMEM(A)
 #define M_WRMEM(A,V)    Z80_WRMEM(A,V)
@@ -25,6 +26,12 @@
 
 #define DoIn(lo,hi)     Z80_In((lo)+(((unsigned)(hi))<<8))
 #define DoOut(lo,hi,v)  Z80_Out((lo)+(((unsigned)(hi))<<8),v)
+
+#ifdef Z80_DAISYCHAIN
+#define NMI_IRQ 0x02
+#define INT_IRQ 0x01
+
+#endif
 
 static void Interrupt(void/*int j*/);	/* NS 970904 */
 static void ei(void);
@@ -572,8 +579,16 @@ static void jp(void)
   M_JP;
   newpc = R.PC.D;
   if (newpc == oldpc) { if (Z80_ICount > 0) Z80_ICount = 0; } /* speed up busy loop */
+  else if (newpc == oldpc-1 && M_RDOP(newpc) == 0x00)	/* NOP - JP */
+  		{ if (Z80_ICount > 0) Z80_ICount = 0; }
   else if (newpc == oldpc-3 && M_RDOP(newpc) == 0x31)	/* LD SP,#xxxx - Galaga */
-	  { if (Z80_ICount > 10) Z80_ICount = 10; }
+		{ if (Z80_ICount > 10) Z80_ICount = 10; }
+#ifdef Z80_DAISYCHAIN
+  else if (newpc == oldpc-1 && M_RDOP(newpc) == 0xfb && R.pending_irq == 0)	/* EI - JP */
+#else
+  else if (newpc == oldpc-1 && M_RDOP(newpc) == 0xfb && R.pending_irq == Z80_IGNORE_INT)	/* EI - JP */
+#endif
+	  { if (Z80_ICount > 4) Z80_ICount = 4; }
 }
 static void jp_hl(void) { R.PC.D=R.HL.D;change_pc(R.PC.D); }	/* TS 971002 */
 static void jp_ix(void) { R.PC.D=R.IX.D;change_pc(R.PC.D); }	/* TS 971002 */
@@ -596,7 +611,11 @@ static void jr(void)
   M_JR;
   newpc = R.PC.D;
   if (newpc == oldpc) { if (Z80_ICount > 0) Z80_ICount = 0; } /* speed up busy loop */
-  else if (newpc == oldpc-1 && M_RDOP(newpc) == 0xfb)	/* EI - 1942 */
+#ifdef Z80_DAISYCHAIN
+  else if (newpc == oldpc-1 && M_RDOP(newpc) == 0xfb && R.pending_irq == 0)	/* EI - 1942 */
+#else
+  else if (newpc == oldpc-1 && M_RDOP(newpc) == 0xfb && R.pending_irq == Z80_IGNORE_INT)	/* EI - 1942 */
+#endif
 	  { if (Z80_ICount > 4) Z80_ICount = 4; }
 }
 static void jr_c(void) { if (M_C) { M_JR; } else { M_SKIP_JR; } }
@@ -1193,7 +1212,52 @@ static void ret_pe(void) { if (M_PE) { M_RET; } else { M_SKIP_RET; } }
 static void ret_po(void) { if (M_PO) { M_RET; } else { M_SKIP_RET; } }
 static void ret_z(void) { if (M_Z) { M_RET; } else { M_SKIP_RET; } }
 
+#ifdef Z80_DAISYCHAIN
+
+/* search highest interrupt request device (next interrupt device) */
+/*    and highest interrupt service device (next reti      device) */
+static inline void check_daisy_chain( void )
+{
+	int device;
+
+	R.request_irq = R.service_irq = -1;
+
+	/* search higher IRQ or IEO */
+	for( device = 0 ; device < R.irq_max ; device ++ )
+	{
+		/* IEO = disable ? */
+		if( R.int_state[device] & Z80_INT_IEO )
+		{
+			/* if IEO is disable , masking lower IRQ */
+			R.request_irq = -1;
+			/* set highest interrupt service device */
+			R.service_irq = device;
+		}
+		/* IRQ = ON ? */
+		if( R.int_state[device] & Z80_INT_REQ )
+			R.request_irq = device;
+	}
+	/* set interrupt pending flag */
+	if( R.request_irq >= 0 ) R.pending_irq |=  INT_IRQ;
+	else                     R.pending_irq &= ~INT_IRQ;
+}
+
+static void reti(void)
+{
+	int device = R.service_irq;
+
+	/* daisy-chain interrupt is handled ? */
+	if( device >= 0 )
+	{
+		/* callback reti handling */
+		R.irq[device].interrupt_reti(R.irq[device].irq_param);
+	}
+    Z80_Reti();
+    M_RET;
+}
+#else
 static void reti(void) { Z80_Reti(); M_RET; }
+#endif
 static void retn(void) { R.IFF1=R.IFF2; Z80_Retn(); M_RET; }
 
 static void rl_xhl(void)
@@ -2324,7 +2388,11 @@ static void ei(void)
   R.PC.W.l++;
   Z80_ICount-=cycles_main[opcode];
   (*(opcode_main[opcode]))();
+#ifdef Z80_DAISYCHAIN
+  /* interrupt is checked before op-code fetch in main loop */
+#else
   Interrupt(/*Z80_IRQ*/);	/* NS 970904 */
+#endif
  }
  else
   R.IFF2=1;
@@ -2333,7 +2401,11 @@ static void ei(void)
 /****************************************************************************/
 /* Reset registers to their initial values                                  */
 /****************************************************************************/
+#ifdef Z80_DAISYCHAIN
+void Z80_Reset (Z80_DaisyChain *daisy_chain )
+#else
 void Z80_Reset (void)
+#endif
 {
  memset (&R,0,sizeof(Z80_Regs));
  change_pc(R.PC.D);	/* TS 971002 */
@@ -2341,6 +2413,26 @@ void Z80_Reset (void)
  R.R=rand();
 /* Z80_ICount=Z80_IPeriod;*/  /* NS 970904 */
 Z80_Clear_Pending_Interrupts();	/* NS 970904 */
+#ifdef Z80_DAISYCHAIN
+ R.irq_max = 0;
+ if( daisy_chain )
+ {  /* daisy-chain mode */
+	while( daisy_chain->irq_param != -1 && R.irq_max < Z80_MAXDAISY )
+	{
+		/* set callbackhandler after reti */
+		R.irq[R.irq_max] = * daisy_chain;
+		/* device reset */
+		if( R.irq[R.irq_max].reset )
+			R.irq[R.irq_max].reset(R.irq[R.irq_max].irq_param);
+
+		R.irq_max++;
+		daisy_chain++;
+
+	}
+
+
+ }
+#endif
 }
 
 /****************************************************************************/
@@ -2389,8 +2481,12 @@ static void Interrupt (void/*int j*/)	/* NS 970904 */
 /* if (j==Z80_IGNORE_INT) return; */ /* NS 970904*/
 /* if (j==Z80_NMI_INT || R.IFF1) */
 
-	if (R.pending_irq == Z80_IGNORE_INT && R.pending_nmi == 0) return;	/* NS 970904 */
+#ifdef Z80_DAISYCHAIN
+	if ( (R.pending_irq & NMI_IRQ) || R.IFF1)
+#else
+ 	if (R.pending_irq == Z80_IGNORE_INT && R.pending_nmi == 0) return;	/* NS 970904 */
 	if (R.pending_nmi != 0 || R.IFF1)	/* NS 970904 */
+#endif
  {
 {	/* NS 971024 */
 	extern int previouspc;
@@ -2405,6 +2501,31 @@ static void Interrupt (void/*int j*/)	/* NS 970904 */
    ++R.PC.W.l;
    R.HALT=0;
   }
+#ifdef Z80_DAISYCHAIN
+	if (R.pending_irq & NMI_IRQ)
+	{	/* NMI */
+		M_PUSH (PC);
+		R.PC.D=0x0066;
+		/* reset nmi interrupt request */
+		R.pending_irq &= ~NMI_IRQ;
+	}
+	else
+	{
+		int j;
+
+		if ( R.irq_max )
+		{	/* DaisyChain */
+			/* get interrupt vector and enter interrupt service */
+			/* interrupt_entry handler shoud be call Z80_Cause_Interrupt */
+			/* with new interrupt status                                 */
+			j = R.irq[R.request_irq].interrupt_entry(R.irq[R.request_irq].irq_param);
+		}
+		else
+		{	/* SINGLE INT */
+			j = R.vector;
+			R.pending_irq &= ~INT_IRQ;
+		}
+#else
 /*  if (j==Z80_NMI_INT)*/
 	if (R.pending_nmi != 0)	/* NS 970904 */
   {
@@ -2415,9 +2536,9 @@ static void Interrupt (void/*int j*/)	/* NS 970904 */
   else
   {
 	  int j;
-
-	  j = R.pending_irq;	/* NS 970904 */
+	j = R.pending_irq;	/* NS 970904 */
 	R.pending_irq = Z80_IGNORE_INT;	/* NS 970904 */
+#endif
 
    /* Interrupt mode 2. Call [R.I:databyte] */
    if (R.IM==2)
@@ -2494,7 +2615,11 @@ int Z80_Execute(int cycles)	/* NS 970904 */
 
  do
  {
-if (R.pending_nmi != 0 || R.pending_irq != Z80_IGNORE_INT) Interrupt();	/* NS 970901 */
+#ifdef Z80_DAISYCHAIN
+	if (R.pending_irq) Interrupt();
+#else
+  if (R.pending_nmi != 0 || R.pending_irq != Z80_IGNORE_INT) Interrupt();	/* NS 970901 */
+#endif
 
 #ifdef TRACE
   pc_trace[pc_count]=R.PC.D;
@@ -2580,16 +2705,64 @@ void Z80_SetWaitStates (int n)
  }
 }
 
-
 void Z80_Cause_Interrupt(int type)	/* NS 970904 */
 {
+#ifdef Z80_DAISYCHAIN
+/* type value :                                                          */
+/*  Z80_NMI_INT                      -> NMI request                      */
+/*  Z80_IGNORE_INT                   -> no request                       */
+/*  vector(0x00-0xff)                -> SINGLE interrupt request         */
+/*  Z80_VECTOR(device,status)        -> DaisyChain change interrupt status */
+/*      device : device number of daisy-chain link                       */
+/*      status : Z80_INT_REQ  -> interrupt request                       */
+/*               Z80_INT_IEO  -> interrupt disable output                */
+
+	if (type == Z80_NMI_INT)
+	{
+		R.pending_irq |= NMI_IRQ;
+	}
+	else if (type != Z80_IGNORE_INT)
+	{
+		if( R.irq_max )
+		{	/* daisy chain mode */
+			int device = type >> 8;
+			int state  = type & 0xff;
+
+			if( R.int_state[device] != state )
+			{
+				/* set new interrupt status */
+				R.int_state[device] = state;
+				/* check interrupt status */
+				check_daisy_chain();
+			}
+		}
+		else
+		{	/* single int mode */
+			R.vector = type & 0xff;
+			R.pending_irq |= INT_IRQ;
+		}
+	}
+#else
 	if (type == Z80_NMI_INT)
 		R.pending_nmi = 1;
 	else if (type != Z80_IGNORE_INT)
 		R.pending_irq = type;
+#endif
 }
 void Z80_Clear_Pending_Interrupts(void)	/* NS 970904 */
 {
+#ifdef Z80_DAISYCHAIN
+	int i;
+	/* clear irq for all device */
+	for( i = 0 ; i < Z80_MAXDAISY ; i++ )
+	{
+		/* !!!!! shoud be clear interrupt status for daisy-chain devices !!!!! */
+		R.int_state[i]  = 0;
+	}
+	R.pending_irq  = 0;
+	R.request_irq  = R.service_irq  = -1;
+#else
 	R.pending_irq = Z80_IGNORE_INT;
 	R.pending_nmi = 0;
+#endif
 }

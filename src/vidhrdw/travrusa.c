@@ -33,8 +33,9 @@ static struct rectangle spritevisiblearea =
 
   Convert the color PROMs into a more useable format.
 
-  Traverse USA has one 512x8 (?) character palette PROM, one 32x8 sprite
-  palette PROM, and one 256x4 sprite color lookup table PROM.
+  Traverse USA has one 256x8 character palette PROM (some versions have two
+  256x4), one 32x8 sprite palette PROM, and one 256x4 sprite color lookup
+  table PROM.
 
   I don't know for sure how the palette PROMs are connected to the RGB
   output, but it's probably something like this; note that RED and BLUE
@@ -57,7 +58,36 @@ void trace_vh_convert_color_prom(unsigned char *palette, unsigned char *colortab
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
 
-	for (i = 0;i < Machine->drv->total_colors;i++)
+	/* character palette */
+	for (i = 0;i < 128;i++)
+	{
+		int bit0,bit1,bit2;
+
+
+		/* red component */
+		bit0 = 0;
+		bit1 = (*color_prom >> 6) & 0x01;
+		bit2 = (*color_prom >> 7) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* green component */
+		bit0 = (*color_prom >> 3) & 0x01;
+		bit1 = (*color_prom >> 4) & 0x01;
+		bit2 = (*color_prom >> 5) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* blue component */
+		bit0 = (*color_prom >> 0) & 0x01;
+		bit1 = (*color_prom >> 1) & 0x01;
+		bit2 = (*color_prom >> 2) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+		color_prom++;
+	}
+
+	/* skip bottom half - not used */
+	color_prom += 128;
+
+	/* sprite palette */
+	for (i = 0;i < 32;i++)
 	{
 		int bit0,bit1,bit2;
 

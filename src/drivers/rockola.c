@@ -296,20 +296,20 @@ INPUT_PORTS_START( nibbler_input_ports )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* debug command? */
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* debug command */
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* debug command */
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY)
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY)
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY)
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY)
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
 
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* Pause */
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* Unpause */
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* End game */
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* debug command */
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
 
 	PORT_START	/* DSW0 */
 	PORT_DIPNAME( 0x03, 0x00, "Lives", IP_KEY_NONE )
@@ -440,7 +440,7 @@ static struct MachineDriver vanguard_machine_driver =
 			rockola_interrupt,2
 		}
 	},
-	60,
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* single CPU, no need for interleaving */
 	0,
 
@@ -475,7 +475,7 @@ static struct MachineDriver fantasy_machine_driver =
 			rockola_interrupt,2
 		}
 	},
-	60,
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* single CPU, no need for interleaving */
 	0,
 
@@ -578,8 +578,11 @@ ROM_START( nibbler_rom )
 	ROM_LOAD( "IC51", 0x1000, 0x1000, 0x27bd8de9 )
 
 	ROM_REGION(0x1000)	/* space for the sound ROMs */
-	ROM_LOAD( "IC52", 0x0000, 0x0800, 0x9ad746f9 )
-	ROM_LOAD( "IC53", 0x0800, 0x0800, 0xbe207f5e )
+	/* IC53 seems way off - load IC52 twice */
+	ROM_LOAD( "IC52", 0x0800, 0x0800, 0x9ad746f9 )
+	ROM_RELOAD(       0x0000, 0x0800 )
+
+/*	ROM_LOAD( "IC53", 0x0000, 0x0800, 0xbe207f5e )  ?? */
 ROM_END
 
 
@@ -618,7 +621,34 @@ static void vanguard_hisave(void)    /* V.V */
 	}
 }
 
+static int fantasy_hiload(void)
+{
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x0025],"\x00\x20\x00",3) == 0)
+	{
+		void *f;
 
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x0025],3);
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;   /* we can't load the hi scores yet */
+}
+
+static void fantasy_hisave(void)
+{
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x0025],3);
+		osd_fclose(f);
+	}
+}
 
 static int nibbler_hiload(void)
 {
@@ -668,7 +698,7 @@ struct GameDriver vanguard_driver =
 	vanguard_sample_names,
 	0,	/* sound_prom */
 
-	0/*TBR*/, vanguard_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	vanguard_input_ports,
 
 	vanguard_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -680,7 +710,7 @@ struct GameDriver fantasy_driver =
 {
 	"Fantasy",
 	"fantasy",
-	"NICOLA SALMORIA\nBRIAN LEVINE\nMIRKO BUFFONI",
+	"Nicola Salmoria\nBrian Levine\nMirko Buffoni\nDani Portillo (high score save)",
 	&fantasy_machine_driver,
 
 	fantasy_rom,
@@ -688,12 +718,12 @@ struct GameDriver fantasy_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/, fantasy_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	fantasy_input_ports,
 
 	fantasy_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
 
-	0, 0
+	fantasy_hiload, fantasy_hisave
 };
 
 struct GameDriver nibbler_driver =
@@ -708,7 +738,7 @@ struct GameDriver nibbler_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/, nibbler_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	nibbler_input_ports,
 
 	nibbler_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,

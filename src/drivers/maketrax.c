@@ -41,9 +41,9 @@ $5090, and $5080.  These addresses should return multiple values.  The other
 ugly thing happening is in the ROMs at $3AE5.  It keeps checking for
 different values of $50C0 and $5080, and weird things happen if it gets
 the wrong values.  The only way I've found around these is to patch the
-ROMs using the same patches Crush Roller uses.  Even this wouldn't be
-too bad, except we have to patch sometime after initialization or else
-it will fail the ROM checksums.
+ROMs using the same patches Crush Roller uses.  The only thing to watch
+with this is that changing the ROMs will break the beginning checksum.
+That's why we use the rom opcode decode function to do our patches.
 
 Incidentally, there are extremely few differences between Crush Roller
 and Make Trax.  About 98% of the differences appear to be either unused
@@ -77,16 +77,13 @@ void pacman_init_machine(void);
 int pacman_interrupt(void);
 
 void pengo_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-void pengo_flipscreen_w(int offset,int data);
+void pengo_updatehook0(int offset);
 int pacman_vh_start(void);
 void pengo_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 extern unsigned char *pengo_soundregs;
 void pengo_sound_enable_w(int offset,int data);
 void pengo_sound_w(int offset,int data);
-int pengo_sh_start(void);
-void waveform_sh_stop(void);
-void waveform_sh_update(void);
 
 
 int maketrax_special_port2_r(int offset)
@@ -127,8 +124,8 @@ int maketrax_special_r(int offset)
 		return 0x20;
 	else if (pc==0x115E)
 		return 0x00;
-	else if (pc==0x3AE2)
-		return 0x01;
+        else if (pc==0x3AE2)
+                return 0x00;
 
 	switch (offset)
 	{
@@ -143,14 +140,15 @@ int maketrax_special_r(int offset)
 	}
 }
 
-/* We can't use this because the ROM checksum fails */
+
 static void maketrax_rom_decode(void)
 {
+	memcpy(ROM,RAM,0x10000);
+
 	ROM[0x0415]=0xC9;
 	ROM[0x1978]=0x18;
 	ROM[0x238E]=0xC9;
 	ROM[0x3AE5]=0xE6;
-	ROM[0x3AE6]=0x00;
 	ROM[0x3AE7]=0x00;
 	ROM[0x3AE8]=0xC9;
 	ROM[0x3AED]=0x86;
@@ -159,7 +157,6 @@ static void maketrax_rom_decode(void)
 
 }
 
-/* This is where it gets *really* ugly.  Here's where we do our ROM patches. */
 static int maketrax_hiload(void)
 {
 	static int resetcount;
@@ -167,23 +164,12 @@ static int maketrax_hiload(void)
 
 
 	/* during a reset, leave time to the game to clear the screen */
-	if (++resetcount < 60) return 0;
+        if (++resetcount < 60) return 0;
 
 	/* wait for "HI SCORE" to be on screen */
-	if (memcmp(&RAM[0x43d0],"\x53\x40\x49\x48",2) == 0)
+        if (memcmp(&RAM[0x43d0],"\x53\x40\x49\x48",4) == 0)
 	{
 		resetcount = 0;
-
-		ROM[0x0415]=0xC9;
-		ROM[0x1978]=0x18;
-		ROM[0x238E]=0xC9;
-		ROM[0x3AE5]=0xE6;
-		ROM[0x3AE6]=0x00;
-		ROM[0x3AE7]=0x00;
-		ROM[0x3AE8]=0xC9;
-		ROM[0x3AED]=0x86;
-		ROM[0x3AEE]=0xC0;
-		ROM[0x3AEF]=0xB0;
 
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
@@ -233,14 +219,15 @@ static struct MemoryReadAddress maketrax_readmem[] =
 static struct MemoryWriteAddress maketrax_writemem[] =
 {
 	{ 0x0000, 0x3fff, MWA_ROM },
-	{ 0x4000, 0x43ff, videoram_w, &videoram, &videoram_size },
-	{ 0x4400, 0x47ff, colorram_w, &colorram },
+	{ 0x4000, 0x43ff, videoram00_w, &videoram00 },
+	{ 0x4400, 0x47ff, videoram01_w, &videoram01 },
 	{ 0x4c00, 0x4fef, MWA_RAM },
 	{ 0x4ff0, 0x4fff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x5000, 0x5000, interrupt_enable_w },
 	{ 0x5001, 0x5001, pengo_sound_enable_w },
 	{ 0x5002, 0x5002, MWA_NOP },
-	{ 0x5003, 0x5003, pengo_flipscreen_w },
+	{ 0x5003, 0x5003, MWA_RAM, &flip_screen },
+        { 0x5007, 0x5007, MWA_NOP }, /* ??? */
 	{ 0x5040, 0x505f, pengo_sound_w, &pengo_soundregs },
 	{ 0x5060, 0x506f, MWA_RAM, &spriteram_2 },
 	{ 0x50c0, 0x50c0, MWA_NOP },
@@ -306,53 +293,125 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout charlayout =
-{
-	8,8,    /* 8*8 characters */
-	256,    /* 256 characters */
-	2,      /* 2 bits per pixel */
-	{ 0, 4},        /* the two bitplanes for 4 pixels are packed into one byte */
-	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 }, /* characters are rotated 90 degrees */
-	{ 8*8+0, 8*8+1, 8*8+2, 8*8+3, 0, 1, 2, 3 },     /* bits are packed in groups of four */
-	16*8    /* every char takes 16 bytes */
-};
 static struct GfxLayout spritelayout =
 {
 	16,16,  /* 16*16 sprites */
 	64,     /* 64 sprites */
 	2,      /* 2 bits per pixel */
 	{ 0, 4 },       /* the two bitplanes for 4 pixels are packed into one byte */
-	{ 39*8, 38*8, 37*8, 36*8, 35*8, 34*8, 33*8, 32*8,
-			7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
 	{ 8*8, 8*8+1, 8*8+2, 8*8+3, 16*8+0, 16*8+1, 16*8+2, 16*8+3,
 			24*8+0, 24*8+1, 24*8+2, 24*8+3, 0, 1, 2, 3 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
+			32*8, 33*8, 34*8, 35*8, 36*8, 37*8, 38*8, 39*8 },
 	64*8    /* every sprite takes 64 bytes */
 };
 
-
-
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,   0, 32 },
 	{ 1, 0x1000, &spritelayout, 0, 32 },
 	{ -1 } /* end of array */
 };
 
 
-static unsigned char maketrax_color_prom[] =
+
+static struct GfxTileLayout tilelayout =
 {
-	/* palette */
-	0x00,0x07,0x66,0xEF,0x00,0xF8,0xEA,0x6F,0x00,0x3F,0x00,0xC9,0x38,0xAA,0xAF,0xF6,
-	/* color lookup table */
-	0x00,0x00,0x00,0x00,0x00,0x0f,0x0b,0x01,0x00,0x0f,0x0b,0x03,0x00,0x0f,0x0b,0x0f,
-	0x00,0x0f,0x0b,0x07,0x00,0x0f,0x0b,0x05,0x00,0x0f,0x0b,0x0c,0x00,0x0f,0x0b,0x09,
-	0x00,0x05,0x0b,0x07,0x00,0x0b,0x01,0x09,0x00,0x05,0x0b,0x01,0x00,0x02,0x05,0x01,
-	0x00,0x02,0x0b,0x01,0x00,0x05,0x0b,0x09,0x00,0x0c,0x01,0x07,0x00,0x01,0x0c,0x0f,
-	0x00,0x0f,0x00,0x0b,0x00,0x0c,0x05,0x0f,0x00,0x0f,0x0b,0x0e,0x00,0x0f,0x0b,0x0d,
-	0x00,0x01,0x09,0x0f,0x00,0x09,0x0c,0x09,0x00,0x09,0x05,0x0f,0x00,0x05,0x0c,0x0f,
-	0x00,0x01,0x07,0x0b,0x00,0x0f,0x0b,0x00,0x00,0x0f,0x00,0x0b,0x00,0x0b,0x05,0x09,
-	0x00,0x0b,0x0c,0x0f,0x00,0x0b,0x07,0x09,0x00,0x02,0x0b,0x00,0x00,0x02,0x0b,0x07
+	256,    /* 256 characters */
+	2,      /* 2 bits per pixel */
+	{ 0, 4},        /* the two bitplanes for 4 pixels are packed into one byte */
+	{ 8*8+0, 8*8+1, 8*8+2, 8*8+3, 0, 1, 2, 3 },	/* bits are packed in groups of four */
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	16*8    /* every char takes 16 bytes */
 };
+
+static struct GfxTileDecodeInfo gfxtiledecodeinfo[] =
+{
+	{ 1, 0x0000, &tilelayout, 0, 32, 0 },
+	{ -1 } /* end of array */
+};
+
+
+
+static struct MachineLayer machine_layers[MAX_LAYERS] =
+{
+	{
+		LAYER_TILE,
+		36*8,28*8,
+		gfxtiledecodeinfo,
+		0,
+		pengo_updatehook0,pengo_updatehook0,0,0
+	}
+};
+
+
+
+static struct namco_interface namco_interface =
+{
+	3072000/32,	/* sample rate */
+	3,			/* number of voices */
+	32,			/* gain adjustment */
+	255			/* playback volume */
+};
+
+
+
+static struct MachineDriver maketrax_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			3072000,        /* 3.072 Mhz */
+			0,
+			maketrax_readmem,maketrax_writemem,0,writeport,
+			pacman_interrupt,1
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,      /* single CPU, no need for interleaving */
+	pacman_init_machine,
+
+	/* video hardware */
+	36*8, 28*8, { 0*8, 36*8-1, 0*8, 28*8-1 },
+	gfxdecodeinfo,
+	16,4*32,
+	pengo_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	machine_layers,
+	pacman_vh_start,
+	generic_vh_stop,
+	pengo_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_NAMCO,
+			&namco_interface
+		}
+	}
+};
+
+
+
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+ROM_START( maketrax_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "maketrax.6e", 0x0000, 0x1000, 0xb25ba5a5 )
+	ROM_LOAD( "maketrax.6f", 0x1000, 0x1000, 0xbe0c6060 )
+	ROM_LOAD( "maketrax.6h", 0x2000, 0x1000, 0x59fca6a6 )
+	ROM_LOAD( "maketrax.6j", 0x3000, 0x1000, 0xc5ad1d1d )
+
+	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "maketrax.5e", 0x0000, 0x1000, 0xf4366ee0 )
+	ROM_LOAD( "maketrax.5f", 0x1000, 0x1000, 0x4a383bfc )
+ROM_END
 
 
 
@@ -379,60 +438,20 @@ static unsigned char sound_prom[] =
 
 
 
-static struct MachineDriver maketrax_machine_driver =
+static unsigned char maketrax_color_prom[] =
 {
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			3072000,        /* 3.072 Mhz */
-			0,
-			maketrax_readmem,maketrax_writemem,0,writeport,
-			pacman_interrupt,1
-		}
-	},
-	60,
-	1,      /* single CPU, no need for interleaving */
-	pacman_init_machine,
-
-	/* video hardware */
-	28*8, 36*8, { 0*8, 28*8-1, 0*8, 36*8-1 },
-	gfxdecodeinfo,
-	16,4*32,
-	pengo_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
-	0,
-	pacman_vh_start,
-	generic_vh_stop,
-	pengo_vh_screenrefresh,
-
-	/* sound hardware */
-	0,
-	pengo_sh_start,
-	waveform_sh_stop,
-	waveform_sh_update
+	/* palette */
+	0x00,0x07,0x66,0xEF,0x00,0xF8,0xEA,0x6F,0x00,0x3F,0x00,0xC9,0x38,0xAA,0xAF,0xF6,
+	/* color lookup table */
+	0x00,0x00,0x00,0x00,0x00,0x0f,0x0b,0x01,0x00,0x0f,0x0b,0x03,0x00,0x0f,0x0b,0x0f,
+	0x00,0x0f,0x0b,0x07,0x00,0x0f,0x0b,0x05,0x00,0x0f,0x0b,0x0c,0x00,0x0f,0x0b,0x09,
+	0x00,0x05,0x0b,0x07,0x00,0x0b,0x01,0x09,0x00,0x05,0x0b,0x01,0x00,0x02,0x05,0x01,
+	0x00,0x02,0x0b,0x01,0x00,0x05,0x0b,0x09,0x00,0x0c,0x01,0x07,0x00,0x01,0x0c,0x0f,
+	0x00,0x0f,0x00,0x0b,0x00,0x0c,0x05,0x0f,0x00,0x0f,0x0b,0x0e,0x00,0x0f,0x0b,0x0d,
+	0x00,0x01,0x09,0x0f,0x00,0x09,0x0c,0x09,0x00,0x09,0x05,0x0f,0x00,0x05,0x0c,0x0f,
+	0x00,0x01,0x07,0x0b,0x00,0x0f,0x0b,0x00,0x00,0x0f,0x00,0x0b,0x00,0x0b,0x05,0x09,
+	0x00,0x0b,0x0c,0x0f,0x00,0x0b,0x07,0x09,0x00,0x02,0x0b,0x00,0x00,0x02,0x0b,0x07
 };
-
-
-
-/***************************************************************************
-
-  Game driver(s)
-
-***************************************************************************/
-
-ROM_START( maketrax_rom )
-	ROM_REGION(0x10000)     /* 64k for code */
-	ROM_LOAD( "maketrax.6e", 0x0000, 0x1000, 0xb25ba5a5 )
-	ROM_LOAD( "maketrax.6f", 0x1000, 0x1000, 0xbe0c6060 )
-	ROM_LOAD( "maketrax.6h", 0x2000, 0x1000, 0x59fca6a6 )
-	ROM_LOAD( "maketrax.6j", 0x3000, 0x1000, 0xc5ad1d1d )
-
-	ROM_REGION(0x2000)      /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "maketrax.5e", 0x0000, 0x1000, 0xf4366ee0 )
-	ROM_LOAD( "maketrax.5f", 0x1000, 0x1000, 0x4a383bfc )
-ROM_END
 
 
 
@@ -444,14 +463,14 @@ struct GameDriver maketrax_driver =
 	&maketrax_machine_driver,
 
 	maketrax_rom,
-	0, 0,
+        0, maketrax_rom_decode,
 	0,
 	sound_prom,     /* sound_prom */
 
-	0/*TBR*/,maketrax_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	maketrax_input_ports,
 
 	maketrax_color_prom, 0, 0,
-	ORIENTATION_ROTATE_180,
+	ORIENTATION_ROTATE_270,
 
 	maketrax_hiload, maketrax_hisave /* hiload hisave */
 };

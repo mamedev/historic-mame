@@ -120,6 +120,8 @@ void digdug_interrupt_enable_3_w(int offset,int data);
 void digdug_halt_w(int offset,int data);
 int digdug_customio_r(int offset);
 void digdug_customio_w(int offset,int data);
+int digdug_customio_data_r(int offset);
+void digdug_customio_data_w(int offset,int data);
 int digdug_interrupt_1(void);
 int digdug_interrupt_2(void);
 int digdug_interrupt_3(void);
@@ -134,72 +136,72 @@ void digdug_vh_screenrefresh(struct osd_bitmap *bitmap);
 void digdug_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 
 void pengo_sound_w(int offset,int data);
-int pengo_sh_start(void);
-void waveform_sh_stop(void);
-void waveform_sh_update(void);
 extern unsigned char *pengo_soundregs;
 extern unsigned char digdug_hiscoreloaded;
 
 
+
 static struct MemoryReadAddress readmem_cpu1[] =
 {
-	{ 0x8000, 0x9fff, digdug_sharedram_r, &digdug_sharedram },
-	{ 0x7100, 0x7100, digdug_customio_r },
-	{ 0x7000, 0x700f, MRA_RAM },
-        { 0x0000, 0x0000, digdug_reset_r },
+	{ 0x0000, 0x0000, digdug_reset_r },
 	{ 0x0001, 0x3fff, MRA_ROM },
+	{ 0x7000, 0x700f, digdug_customio_data_r },
+	{ 0x7100, 0x7100, digdug_customio_r },
+	{ 0x8000, 0x9fff, digdug_sharedram_r, &digdug_sharedram },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryReadAddress readmem_cpu2[] =
 {
-	{ 0x8000, 0x9fff, digdug_sharedram_r },
 	{ 0x0000, 0x1fff, MRA_ROM },
+	{ 0x8000, 0x9fff, digdug_sharedram_r },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryReadAddress readmem_cpu3[] =
 {
-	{ 0x8000, 0x9fff, digdug_sharedram_r },
 	{ 0x0000, 0x0fff, MRA_ROM },
+	{ 0x8000, 0x9fff, digdug_sharedram_r },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress writemem_cpu1[] =
 {
-	{ 0x8000, 0x9fff, digdug_sharedram_w },
-	{ 0x6830, 0x6830, MWA_NOP },
-	{ 0x7100, 0x7100, digdug_customio_w },
-	{ 0x7000, 0x700f, MWA_RAM },
+	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x6820, 0x6820, digdug_interrupt_enable_1_w },
+	{ 0x6821, 0x6821, digdug_interrupt_enable_2_w },
 	{ 0x6822, 0x6822, digdug_interrupt_enable_3_w },
 	{ 0x6823, 0x6823, digdug_halt_w },
-	{ 0x0000, 0x3fff, MWA_ROM },
+	{ 0x6825, 0x6827, MWA_NOP },
+	{ 0x6830, 0x6830, watchdog_reset_w },
+	{ 0x7000, 0x700f, digdug_customio_data_w },
+	{ 0x7100, 0x7100, digdug_customio_w },
+	{ 0x8000, 0x9fff, digdug_sharedram_w },
+	{ 0x8000, 0x83ff, MWA_RAM, &videoram, &videoram_size },   /* dirtybuffer[] handling is not needed because */
+	{ 0x8400, 0x87ff, MWA_RAM },	                          /* characters are redrawn every frame */
 	{ 0x8b80, 0x8bff, MWA_RAM, &spriteram, &spriteram_size }, /* these three are here just to initialize */
 	{ 0x9380, 0x93ff, MWA_RAM, &spriteram_2 },	          /* the pointers. The actual writes are */
 	{ 0x9b80, 0x9bff, MWA_RAM, &spriteram_3 },                /* handled by digdug_sharedram_w() */
-	{ 0x8000, 0x83ff, MWA_RAM, &videoram, &videoram_size },   /* dirtybuffer[] handling is not needed because */
-	{ 0x8400, 0x87ff, MWA_RAM },	                          /* characters are redrawn every frame */
 	{ 0xa000, 0xa00f, digdug_vh_latch_w, &digdug_vlatches },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress writemem_cpu2[] =
 {
-	{ 0x8000, 0x9fff, digdug_sharedram_w },
-	{ 0x6821, 0x6821, digdug_interrupt_enable_2_w },
-	{ 0x6830, 0x6830, MWA_NOP },
 	{ 0x0000, 0x1fff, MWA_ROM },
+	{ 0x6821, 0x6821, digdug_interrupt_enable_2_w },
+	{ 0x6830, 0x6830, watchdog_reset_w },
+	{ 0x8000, 0x9fff, digdug_sharedram_w },
 	{ 0xa000, 0xa00f, digdug_vh_latch_w },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress writemem_cpu3[] =
 {
-	{ 0x8000, 0x9fff, digdug_sharedram_w },
+	{ 0x0000, 0x0fff, MWA_ROM },
 	{ 0x6800, 0x681f, pengo_sound_w, &pengo_soundregs },
 	{ 0x6822, 0x6822, digdug_interrupt_enable_3_w },
-	{ 0x0000, 0x0fff, MWA_ROM },
+	{ 0x8000, 0x9fff, digdug_sharedram_w },
 	{ -1 }	/* end of table */
 };
 
@@ -394,6 +396,17 @@ static unsigned char sound_prom[] =
 };
 
 
+
+static struct namco_interface namco_interface =
+{
+	3072000/32,	/* sample rate */
+	3,			/* number of voices */
+	32,			/* gain adjustment */
+	255			/* playback volume */
+};
+
+
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -420,7 +433,7 @@ static struct MachineDriver machine_driver =
 			digdug_interrupt_3,2
 		}
 	},
-	60,
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	100,	/* 100 CPU slices per frame - an high value to ensure proper */
 			/* synchronization of the CPUs */
 	digdig_init_machine,
@@ -438,10 +451,13 @@ static struct MachineDriver machine_driver =
 	digdug_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	pengo_sh_start,
-	waveform_sh_stop,
-	waveform_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_NAMCO,
+			&namco_interface
+		}
+	}
 };
 
 
@@ -560,7 +576,7 @@ struct GameDriver digdugnm_driver =
 	0,
 	sound_prom,	/* sound_prom */
 
-	0/*TBR*/,digdug_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	digdug_input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -581,7 +597,7 @@ struct GameDriver digdugat_driver =
 	0,
 	sound_prom,	/* sound_prom */
 
-	0/*TBR*/,digdug_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	digdug_input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,

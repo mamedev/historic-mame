@@ -1,32 +1,55 @@
 #include "driver.h"
-#include "sndhrdw/8910intf.h"
+
+/* signed/unsigned 8-bit conversion macros */
+#ifdef SIGNED_SAMPLES
+	#define AUDIO_CONV(A) ((A)-0x80)
+#else
+	#define AUDIO_CONV(A) ((A))
+#endif
 
 
-static unsigned char speech[0x6000];	/* 24k for speech */
-int pengo_sh_start(void);
+static signed char *speech;	/* 24k for speech */
+static int channel;
+
+
 
 int bosco_sh_start(void)
 {
 	int i;
 	unsigned char bits;
 
+	channel = get_play_channels(1);
+
+	speech = malloc(0x6000);
+	if (!speech)
+		return 1;
+
 	/* decode the rom samples */
 	for (i = 0;i < 0x3000;i++)
 	{
 		bits = Machine->memory_region[4][i] & 0x0f;
-		speech[2 * i] = ((bits << 4) | bits) + 0x80;
+		speech[2 * i] = AUDIO_CONV ((bits << 4) | bits);
 
 		bits = Machine->memory_region[4][i] & 0xf0;
-		speech[2 * i + 1] = (bits | (bits >> 4)) + 0x80;
+		speech[2 * i + 1] = AUDIO_CONV (bits | (bits >> 4));
 	}
 
-	return pengo_sh_start();
+	return 0;
 }
+
+
+void bosco_sh_stop (void)
+{
+	if (speech)
+		free(speech);
+	speech = NULL;
+}
+
 
 void bosco_sample_play(int offset, int length)
 {
 	if (Machine->sample_rate == 0)
 		return;
 
-	osd_play_sample(4,speech + offset,length,4000,0xff,0);
+	osd_play_sample(channel,speech + offset,length,4000,0xff,0);
 }

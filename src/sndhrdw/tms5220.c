@@ -71,7 +71,7 @@ static int randbit = 0;
 /* Static function prototypes */
 static void process_command (void);
 static int extract_bits (int count);
-static int parse_frame (int remove);
+static int parse_frame (int removeit);
 static void check_buffer_low (void);
 static void cause_interrupt (void);
 
@@ -504,10 +504,10 @@ static int extract_bits (int count)
 
 ***********************************************************************************************/
 
-static int parse_frame (int remove)
+static int parse_frame (int removeit)
 {
     int old_head, old_taken, old_count;
-    int bits, index, i, rep_flag;
+    int bits, indx, i, rep_flag;
 
     /* remember previous frame */
     old_energy = new_energy;
@@ -537,21 +537,21 @@ static int parse_frame (int remove)
     bits -= 4;
     if (bits < 0)
         goto ranout;
-    index = extract_bits (4);
-    new_energy = energytable[index] >> 6;
+    indx = extract_bits (4);
+    new_energy = energytable[indx] >> 6;
 
 	/* if the index is 0 or 15, we're done */
-	if (index == 0 || index == 15)
+	if (indx == 0 || indx == 15)
 	{
 		#ifdef DEBUG_5220
 			if (f) fprintf (f, "  (4-bit energy=%d frame)\n",new_energy);
 		#endif
 
 		/* clear fifo if stop frame encountered */
-		if (index == 15)
+		if (indx == 15)
 		{
 			fifo_head = fifo_tail = fifo_count = bits_taken = 0;
-			remove = 1;
+			removeit = 1;
 		}
 		goto done;
 	}
@@ -566,8 +566,8 @@ static int parse_frame (int remove)
     bits -= 6;
     if (bits < 0)
         goto ranout;
-    index = extract_bits (6);
-    new_pitch = pitchtable[index] / 256;
+    indx = extract_bits (6);
+    new_pitch = pitchtable[indx] / 256;
 
     /* if this is a repeat frame, just copy the k's */
     if (rep_flag)
@@ -582,7 +582,7 @@ static int parse_frame (int remove)
     }
 
     /* if the pitch index was zero, we need 4 k's */
-    if (index == 0)
+    if (indx == 0)
     {
         /* attempt to extract 4 K's */
         bits -= 18;
@@ -625,7 +625,7 @@ done:
     #endif
 
     /* if we're not to remove this one, restore the FIFO */
-    if (!remove)
+    if (!removeit)
     {
         fifo_count = old_count;
         fifo_head = old_head;

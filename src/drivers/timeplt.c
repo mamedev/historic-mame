@@ -41,8 +41,6 @@ same as Pooyan
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/generic.h"
-#include "sndhrdw/8910intf.h"
 
 
 
@@ -51,8 +49,63 @@ int timeplt_scanline_r(int offset);
 void timeplt_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void timeplt_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-void timeplt_sh_irqtrigger_w(int offset,int data);
-int timeplt_sh_start(void);
+
+/* I am not 100% sure that this timer is correct, but */
+/* I'm using the Gyruss wired to the higher 4 bits    */
+/* instead of the lower ones, so there is a good      */
+/* chance it's the right one. */
+/* I had to change one value in _timer to avoid the */
+/* tempo being twice what it should be. */
+
+/* The timer clock which feeds the lower 4 bits of    */
+/* AY-3-8910 port A is based on the same clock        */
+/* feeding the sound CPU Z80.  It is a divide by      */
+/* 10240, formed by a standard divide by 1024,        */
+/* followed by a divide by 10 using a 4 bit           */
+/* bi-quinary count sequence. (See LS90 data sheet    */
+/* for an example).                                   */
+/* Bits 1-3 come directly from the upper three bits   */
+/* of the bi-quinary counter. Bit 0 comes from the    */
+/* output of the divide by 1024.                      */
+
+static int timeplt_timer[20] = {
+0x00, 0x01, 0x02, 0x01, 0x02, 0x03, 0x02, 0x03, 0x04, 0x05,
+/*            ^^ changed this to make tempo correct */
+/* the code waits until (timer & 0xf0) == 0 so we must return 0 only once */
+0x08, 0x09, 0x08, 0x09, 0x0a, 0x0b, 0x0a, 0x0b, 0x0c, 0x0d
+};
+
+static int timeplt_portB_r(int offset)
+{
+	/* need to protect from totalcycles overflow */
+	static int last_totalcycles = 0;
+
+	/* number of Z80 clock cycles to count */
+	static int clock;
+
+	int current_totalcycles;
+
+	current_totalcycles = cpu_gettotalcycles();
+	clock = (clock + (current_totalcycles-last_totalcycles)) % 10240;
+
+	last_totalcycles = current_totalcycles;
+
+	return timeplt_timer[clock/512] << 4;
+}
+
+void timeplt_sh_irqtrigger_w(int offset,int data)
+{
+	static int last;
+
+
+	if (last == 1 && data == 0)
+	{
+		/* setting bit 0 high then low triggers IRQ on the sound CPU */
+		cpu_cause_interrupt(1,0xff);
+	}
+
+	last = data;
+}
 
 
 
@@ -281,6 +334,19 @@ static unsigned char color_prom[] =
 
 
 
+static struct AY8910interface ay8910_interface =
+{
+	2,	/* 2 chips */
+	1789750,	/* 1.78975 MHz ? (same as other Konami games) */
+	{ 0x40ff, 0x40ff },
+	{ soundlatch_r },
+	{ timeplt_portB_r },
+	{ 0 },
+	{ 0 }
+};
+
+
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -294,14 +360,14 @@ static struct MachineDriver machine_driver =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			14318180/4,	/* ? */
+			14318180/4,	/* ???? same as other Konami games */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
 	},
-	60,
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
 	/* video hardware */
@@ -317,10 +383,13 @@ static struct MachineDriver machine_driver =
 	timeplt_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	timeplt_sh_start,
-	AY8910_sh_stop,
-	AY8910_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&ay8910_interface
+		}
+	}
 };
 
 
@@ -422,7 +491,7 @@ struct GameDriver timeplt_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_ROTATE_270,
@@ -442,7 +511,7 @@ struct GameDriver spaceplt_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_ROTATE_270,

@@ -19,9 +19,7 @@ MAIN BOARD:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/generic.h"
-#include "sndhrdw/sn76496.h"
-#include "M6809.h"
+#include "M6809/M6809.h"
 
 
 
@@ -34,20 +32,20 @@ int konami_IN1_r(int offset);
 
 void hyperspt_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-extern unsigned char *konami_speech;
 extern unsigned char *konami_dac;
 void konami_sh_irqtrigger_w(int offset,int data);
 int trackfld_sh_timer_r(int offset);
 int trackfld_speech_r(int offset);
 void trackfld_sound_w(int offset , int data);
-extern const char *trackfld_sample_names[];
 
+extern struct VLM5030interface konami_vlm5030_interface;
+extern struct SN76496interface konami_sn76496_interface;
+extern struct DACinterface konami_dac_interface;
 void konami_dac_w(int offset,int data);
-int konami_sh_start(void);
-void konami_sh_stop(void);
-void konami_sh_update(void);
 
 unsigned char KonamiDecode( unsigned char opcode, unsigned short address );
+
+
 
 void trackfld_init_machine(void)
 {
@@ -119,7 +117,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 	Currently these are un-supported by Mame
 */
 	{ 0xe001, 0xe001, MWA_NOP }, /* watch dog ? */
-	{ 0xe004, 0xe004, MWA_RAM, &konami_speech },
+	{ 0xe004, 0xe004, VLM5030_data_w },
 	{ 0xe000, 0xefff, trackfld_sound_w, }, /* e003 speech controll */
 
 	{ 0xe079, 0xe079, MWA_NOP },  /* ???? */
@@ -301,7 +299,20 @@ static unsigned char color_prom[] =
 	0x0C,0x00,0x0C,0x03,0x04,0x05,0x06,0x07,0x08,0x09,0x0A,0x0B,0x01,0x0D,0x0A,0x0F
 };
 
-
+/* filename for trackn field sample files */
+static const char *trackfld_sample_names[] =
+{
+	"*trackfld",
+	"00.sam","01.sam","02.sam","03.sam","04.sam","05.sam","06.sam","07.sam",
+	"08.sam","09.sam","0a.sam","0b.sam","0c.sam","0d.sam","0e.sam","0f.sam",
+	"10.sam","11.sam","12.sam","13.sam","14.sam","15.sam","16.sam","17.sam",
+	"18.sam","19.sam","1a.sam","1b.sam","1c.sam","1d.sam","1e.sam","1f.sam",
+	"20.sam","21.sam","22.sam","23.sam","24.sam","25.sam","26.sam","27.sam",
+	"28.sam","29.sam","2a.sam","2b.sam","2c.sam","2d.sam","2e.sam","2f.sam",
+	"30.sam","31.sam","32.sam","33.sam","34.sam","35.sam","36.sam","37.sam",
+	"38.sam","39.sam","3a.sam","3b.sam","3c.sam","3d.sam",
+	0
+};
 
 static struct MachineDriver machine_driver =
 {
@@ -322,8 +333,8 @@ static struct MachineDriver machine_driver =
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
 	},
-	60,
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	trackfld_init_machine,
 
 	/* video hardware */
@@ -339,10 +350,21 @@ static struct MachineDriver machine_driver =
 	trackfld_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	konami_sh_start,
-	konami_sh_stop,
-	konami_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_DAC,
+			&konami_dac_interface
+		},
+		{
+			SOUND_SN76496,
+			&konami_sn76496_interface
+		},
+		{
+			SOUND_VLM5030,
+			&konami_vlm5030_interface
+		}
+	}
 };
 
 
@@ -373,7 +395,7 @@ ROM_START( trackfld_rom )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "c2_d13.bin", 0x0000, 0x2000, 0x6244bd30 )
-	ROM_REGION(0x02000)	/*  8k for speech rom    */
+	ROM_REGION(0x10000)	/*  64k for speech rom    */
 	ROM_LOAD( "c9_d15.bin", 0x0000, 0x2000, 0xbaaab302 )
 ROM_END
 
@@ -397,7 +419,7 @@ ROM_START( hyprolym_rom )
 
 	ROM_REGION(0x10000)     /* 64k for the audio CPU */
 	ROM_LOAD( "c2_d13.bin", 0x0000, 0x2000, 0x6244bd30 )
-	ROM_REGION(0x02000)	/*  8k for speech rom    */
+	ROM_REGION(0x10000)	/*  64k for speech rom    */
 	ROM_LOAD( "c9_d15.bin", 0x0000, 0x2000, 0xbaaab302 )
 ROM_END
 
@@ -418,6 +440,8 @@ static void trackfld_decode(void)
  Track'n'Field has 1k of battery backed RAM which can be erased by setting a dipswitch
  All we need to do is load it in. If the Dipswitch is set it will be erased
 */
+static int we_flipped_the_switch;
+
 static int hiload(void)
 {
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
@@ -430,6 +454,32 @@ static int hiload(void)
 	{
 		osd_fread(f,&RAM[0x2C00],0x3000-0x2c00);
 		osd_fclose(f);
+
+		we_flipped_the_switch = 0;
+	}
+	else
+	{
+		struct InputPort *in;
+
+
+		/* find the dip switch which resets the high score table, and set it on */
+		in = Machine->input_ports;
+
+		while (in->type != IPT_END)
+		{
+			if (in->name != NULL && in->name != IP_NAME_DEFAULT &&
+					strcmp(in->name,"World Records") == 0)
+			{
+				if (in->default_value == in->mask)
+				{
+					in->default_value = 0;
+					we_flipped_the_switch = 1;
+				}
+				break;
+			}
+
+			in++;
+		}
 	}
 
 	return 1;
@@ -448,6 +498,31 @@ static void hisave(void)
 		osd_fwrite(f,&RAM[0x2C00],0x400);
 		osd_fclose(f);
 	}
+
+	if (we_flipped_the_switch)
+	{
+		struct InputPort *in;
+
+
+		/* find the dip switch which resets the high score table, and set it */
+		/* back to off. */
+		in = Machine->input_ports;
+
+		while (in->type != IPT_END)
+		{
+			if (in->name != NULL && in->name != IP_NAME_DEFAULT &&
+					strcmp(in->name,"World Records") == 0)
+			{
+				if (in->default_value == 0)
+					in->default_value = in->mask;
+				break;
+			}
+
+			in++;
+		}
+
+		we_flipped_the_switch = 0;
+	}
 }
 
 
@@ -456,7 +531,7 @@ struct GameDriver trackfld_driver =
 {
 	"Track'n'Field",
 	"trackfld",
-	"Chris Hardy (MAME driver)\nTim Lindquist (color info)",
+	"Chris Hardy (MAME driver)\nTim Lindquist (color info)\nTatsuyuki Satoh(speech sound)",
 	&machine_driver,
 
 	trackfld_rom,
@@ -465,7 +540,7 @@ struct GameDriver trackfld_driver =
 
 	0,	/* sound_prom */
 
-	0/*TBR*/,input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -477,7 +552,7 @@ struct GameDriver hyprolym_driver =
 {
 	"Hyper Olympics",
 	"hyprolym",
-	"Chris Hardy (MAME driver)\nTim Lindquist (color info)",
+	"Chris Hardy (MAME driver)\nTim Lindquist (color info)\nTatsuyuki Satoh(speech sound)",
 	&machine_driver,
 
 	hyprolym_rom,
@@ -485,7 +560,7 @@ struct GameDriver hyprolym_driver =
 	trackfld_sample_names,
 	0,	/* sound_prom */
 
-	0/*TBR*/,input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,

@@ -8,7 +8,6 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "M6809.h"
 
 
 
@@ -18,9 +17,7 @@ unsigned char *gng_bgvideoram,*gng_bgcolorram;
 int gng_bgvideoram_size;
 unsigned char *gng_scrollx, *gng_scrolly;
 static unsigned char *dirtybuffer2;
-static unsigned char *spritebuffer1,*spritebuffer2;
 static struct osd_bitmap *tmpbitmap2;
-static int spacechar;
 static int flipscreen;
 
 
@@ -78,7 +75,7 @@ void gng_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable
   Start the video hardware emulation.
 
 ***************************************************************************/
-static int vh_start(void)
+int gng_vh_start(void)
 {
 	if (generic_vh_start() != 0)
 		return 1;
@@ -90,44 +87,15 @@ static int vh_start(void)
 	}
 	memset(dirtybuffer2,1,gng_bgvideoram_size);
 
-	if ((spritebuffer1 = malloc(spriteram_size)) == 0)
-	{
-		free(dirtybuffer2);
-		generic_vh_stop();
-		return 1;
-	}
-
-	if ((spritebuffer2 = malloc(spriteram_size)) == 0)
-	{
-		free(spritebuffer1);
-		free(dirtybuffer2);
-		generic_vh_stop();
-		return 1;
-	}
-
 	/* the background area is twice as tall and twice as large as the screen */
 	if ((tmpbitmap2 = osd_create_bitmap(2*Machine->drv->screen_width,2*Machine->drv->screen_height)) == 0)
 	{
-		free(spritebuffer2);
-		free(spritebuffer1);
 		free(dirtybuffer2);
 		generic_vh_stop();
 		return 1;
 	}
 
 	return 0;
-}
-
-int gng_vh_start(void)
-{
-	spacechar = 0x20;
-	return vh_start();
-}
-
-int diamond_vh_start(void)
-{
-	spacechar = 0x29;
-	return vh_start();
 }
 
 
@@ -140,8 +108,6 @@ int diamond_vh_start(void)
 void gng_vh_stop(void)
 {
 	osd_free_bitmap(tmpbitmap2);
-	free(spritebuffer2);
-	free(spritebuffer1);
 	free(dirtybuffer2);
 	generic_vh_stop();
 }
@@ -200,19 +166,6 @@ void gng_paletteram_w(int offset,int data)
 	b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
 	osd_modify_pen(Machine->pens[(offset & ~0x100)],r,g,b);
-}
-
-
-
-int gng_interrupt(void)
-{
-	/* we must store previous sprite data in a buffer and draw that instead of */
-	/* the latest one, otherwise sprites will not be synchronized with */
-	/* background scrolling */
-	memcpy(spritebuffer2,spritebuffer1,spriteram_size);
-	memcpy(spritebuffer1,spriteram,spriteram_size);
-
-	return interrupt();
 }
 
 
@@ -295,11 +248,11 @@ void gng_vh_screenrefresh(struct osd_bitmap *bitmap)
 		int sx,sy,flipx,flipy,bank;
 
 
-		sx = spritebuffer2[offs + 3] - 0x100 * (spritebuffer2[offs + 1] & 0x01);
-		sy = spritebuffer2[offs + 2];
-		flipx = spritebuffer2[offs + 1] & 0x04;
-		flipy = spritebuffer2[offs + 1] & 0x08;
-		bank = ((spritebuffer2[offs + 1] >> 6) & 3);
+		sx = spriteram[offs + 3] - 0x100 * (spriteram[offs + 1] & 0x01);
+		sy = spriteram[offs + 2];
+		flipx = spriteram[offs + 1] & 0x04;
+		flipy = spriteram[offs + 1] & 0x08;
+		bank = ((spriteram[offs + 1] >> 6) & 3);
 
 		if (flipscreen)
 		{
@@ -311,8 +264,8 @@ void gng_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 		if (bank < 3)
 			drawgfx(bitmap,Machine->gfx[2],
-					spritebuffer2[offs] + 256* bank,
-					(spritebuffer2[offs + 1] >> 4) & 3,
+					spriteram[offs] + 256* bank,
+					(spriteram[offs + 1] >> 4) & 3,
 					flipx,flipy,
 					sx,sy,
 					&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
@@ -367,35 +320,27 @@ void gng_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* draw the frontmost playfield. They are characters, but draw them as sprites */
 	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
-		int charcode;
+		int sx,sy,flipx,flipy;
 
 
-		charcode = videoram[offs] + 4 * (colorram[offs] & 0xc0);
+		sx = offs % 32;
+		sy = offs / 32;
+		flipx = colorram[offs] & 0x10;	/* ? */
+		flipy = colorram[offs] & 0x20;	/* ? */
 
-		if (charcode != spacechar)	/* don't draw spaces */
+		if (flipscreen)
 		{
-			int sx,sy,flipx,flipy;
-
-
-			sx = offs % 32;
-			sy = offs / 32;
-			flipx = colorram[offs] & 0x10;	/* ? */
-			flipy = colorram[offs] & 0x20;	/* ? */
-
-			if (flipscreen)
-			{
-				sx = 31 - sx;
-				sy = 31 - sy;
-				flipx = !flipx;
-				flipy = !flipy;
-			}
-
-			drawgfx(bitmap,Machine->gfx[0],
-					charcode,
-					colorram[offs] & 0x0f,
-					flipx,flipy,
-					8*sx,8*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,3);
+			sx = 31 - sx;
+			sy = 31 - sy;
+			flipx = !flipx;
+			flipy = !flipy;
 		}
+
+		drawgfx(bitmap,Machine->gfx[0],
+				videoram[offs] + 4 * (colorram[offs] & 0xc0),
+				colorram[offs] & 0x0f,
+				flipx,flipy,
+				8*sx,8*sy,
+				&Machine->drv->visible_area,TRANSPARENCY_PEN,3);
 	}
 }

@@ -57,9 +57,7 @@ and 1 SFX channel controlled by an 8039:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/generic.h"
-#include "sndhrdw/8910intf.h"
-#include "I8039.h"
+#include "I8039/I8039.h"
 
 
 /*#define USE_SAMPLES*/
@@ -71,10 +69,9 @@ void gyruss_flipscreen_w(int offset, int data);
 void gyruss_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void gyruss_vh_screenrefresh(struct osd_bitmap *bitmap);
 
+int gyruss_portA_r(int offset);
 void gyruss_sh_irqtrigger_w(int offset,int data);
-int gyruss_sh_start(void);
-void gyruss_sh_stop();
-void gyruss_sh_update(void);
+void gyruss_init_machine(void);
 void gyruss_i8039_irq_w(int offset,int data);
 void gyruss_i8039_command_w(int offset,int data);
 int gyruss_i8039_command_r(int offset);
@@ -172,7 +169,7 @@ static struct MemoryReadAddress i8039_readmem[] =
 	00000013: ba 00       	mov r2,#0
 	00000015: 05          	en  i
 	00000016: fa          	mov a,r2
-	and expects r2 to retirve the command from an external latch. Since the
+	and expects r2 to retrieve the command from an external latch. Since the
 	8039 emulator doesn't allow that, we kick in later, when the code does
 	00000062: 53 0f       	anl a,#$0f
 	00000064: 03 32       	add a,#$32
@@ -490,6 +487,35 @@ static unsigned char color_prom[] =
 
 
 
+static struct AY8910interface ay8910_interface =
+{
+	5,	/* 5 chips */
+	1789772,	/* 1.789772727 MHz */
+	{ 0x20ff, 0x20ff, 0x38ff, 0x38ff, 0x38ff },
+	/*  R       L   |   R       R       L */
+	/*   effects    |         music       */
+	{ 0, 0, gyruss_portA_r },
+	{ 0 },
+	{ 0 },
+	{ 0 }
+};
+
+#ifndef USE_SAMPLES
+static struct DACinterface dac_interface =
+{
+	1,
+	441000,
+	{ 128, 128 },
+	{  1,  1 }
+};
+#else
+static struct Samplesinterface samples_interface =
+{
+	1	/* 1 channel */
+};
+#endif
+
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -518,9 +544,9 @@ static struct MachineDriver machine_driver =
 		}
 #endif
 	},
-	60,
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
-	0,
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	gyruss_init_machine,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
@@ -535,10 +561,24 @@ static struct MachineDriver machine_driver =
 	gyruss_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	gyruss_sh_start,
-	gyruss_sh_stop,
-	gyruss_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&ay8910_interface
+		},
+#ifndef USE_SAMPLES
+		{
+			SOUND_DAC,
+			&dac_interface
+		}
+#else
+		{
+			SOUND_SAMPLES,
+			&samples_interface
+		}
+#endif
+	}
 };
 
 
@@ -648,8 +688,6 @@ static int hiload(void)
 	else return 0;	/* we can't load the hi scores yet */
 }
 
-
-
 static void hisave(void)
 {
 	void *f;
@@ -671,7 +709,7 @@ struct GameDriver gyruss_driver =
 {
 	"Gyruss (Konami)",
 	"gyruss",
-	"Mike Cuddy (hardware info)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili",
+	"Mike Cuddy (hardware info)\nPete Ground (hardware info)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili",
 	&machine_driver,
 
 	gyruss_rom,
@@ -683,7 +721,7 @@ struct GameDriver gyruss_driver =
 #endif
 	0,	/* sound_prom */
 
-	0/*TBR*/, gyruss_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	gyruss_input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -695,7 +733,7 @@ struct GameDriver gyrussce_driver =
 {
 	"Gyruss (Centuri)",
 	"gyrussce",
-	"Mike Cuddy (hardware info)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili",
+	"Mike Cuddy (hardware info)\nPete Ground (hardware info)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili",
 	&machine_driver,
 
 	gyrussce_rom,
@@ -707,7 +745,7 @@ struct GameDriver gyrussce_driver =
 #endif
 	0,	/* sound_prom */
 
-	0/*TBR*/, gyrussce_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	gyrussce_input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,

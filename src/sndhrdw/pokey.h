@@ -117,8 +117,11 @@
 extern "C" {
 #endif
 
-void Pokey_sound_init (uint32 freq17, uint16 playback_freq,
+/* ASG 980126 - added a return parameter to indicate failure */
+int Pokey_sound_init (uint32 freq17, uint16 playback_freq,
                        uint8 num_pokeys, uint8 use_clip);
+/* ASG 980126 - added this function for cleanup */
+void Pokey_sound_exit (void);
 void Update_pokey_sound (uint16 addr, uint8 val, uint8 chip, uint8 gain);
 void Pokey_process_2 (register unsigned char *buffer, register uint16 n);
 void Pokey_process (register unsigned char *buffer, register uint16 n);

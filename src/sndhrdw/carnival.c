@@ -37,80 +37,47 @@ void carnival_sh_port1_w(int offset, int data)
 {
 	static unsigned char Sound = 0;
 
-	if (Machine->samples == 0) return;
-
     data = ~data;
 
  	if (errorlog) fprintf(errorlog,"port 0 : %02x and %02x\n",data,SoundFX);
 
-	if (data & 0x01 && ~Sound & 0x01 && Machine->samples->sample[0])
-		osd_play_sample(0,Machine->samples->sample[0]->data,
-				          Machine->samples->sample[0]->length,
-                          Machine->samples->sample[0]->smpfreq,
-                          Machine->samples->sample[0]->volume,0);
+	if (data & 0x01 && ~Sound & 0x01)
+		sample_start(0,0,0);
 
 	if (data & 0x02 && ~Sound & 0x02)
 	{
-        if (SoundFX & 0x04 && Machine->samples->sample[1])
- 		    osd_play_sample(1,Machine->samples->sample[1]->data,
-				              Machine->samples->sample[1]->length,
-                              Machine->samples->sample[1]->smpfreq,
-                              Machine->samples->sample[1]->volume,0);
+        if (SoundFX & 0x04)
+			sample_start(1,1,0);
         else
-            if (Machine->samples->sample[9])
-		        osd_play_sample(1,Machine->samples->sample[9]->data,
-				                  Machine->samples->sample[9]->length,
-                                  Machine->samples->sample[9]->smpfreq,
-                                  Machine->samples->sample[9]->volume,0);
+           	sample_start(1,9,0);
     }
 
-	if (data & 0x04 && ~Sound & 0x04 && Machine->samples->sample[2])
-		osd_play_sample(2,Machine->samples->sample[2]->data,
-				          Machine->samples->sample[2]->length,
-                          Machine->samples->sample[2]->smpfreq,
-                          Machine->samples->sample[2]->volume,1);
+	if (data & 0x04 && ~Sound & 0x04)
+		sample_start(2,2,1);
 
   	if (~data & 0x04 && Sound & 0x04)
-  		osd_stop_sample(2);
+  		sample_stop(2);
 
-
-	if (data & 0x08 && ~Sound & 0x08 && Machine->samples->sample[3])
-		osd_play_sample(3,Machine->samples->sample[3]->data,
-				          Machine->samples->sample[3]->length,
-                          Machine->samples->sample[3]->smpfreq,
-                          Machine->samples->sample[3]->volume,1);
+	if (data & 0x08 && ~Sound & 0x08)
+		sample_start(3,3,1);
 
   	if (~data & 0x08 && Sound & 0x08)
-  		osd_stop_sample(3);
+  		sample_stop (3);
 
-
-	if (data & 0x10 && ~Sound & 0x10 && Machine->samples->sample[4])
-		osd_play_sample(4,Machine->samples->sample[4]->data,
-				          Machine->samples->sample[4]->length,
-                          Machine->samples->sample[4]->smpfreq,
-                          Machine->samples->sample[4]->volume,1);
+	if (data & 0x10 && ~Sound & 0x10)
+		sample_start(4,4,1);
 
   	if (~data & 0x10 && Sound & 0x10)
-  		osd_stop_sample(4);
+  		sample_stop(4);
 
+	if (data & 0x20 && ~Sound & 0x20)
+		sample_start(5,5,0);
 
-	if (data & 0x20 && ~Sound & 0x20 && Machine->samples->sample[5])
-		osd_play_sample(5,Machine->samples->sample[5]->data,
-				          Machine->samples->sample[5]->length,
-                          Machine->samples->sample[5]->smpfreq,
-                          Machine->samples->sample[5]->volume,0);
+	if (data & 0x40 && ~Sound & 0x40)
+		sample_start(6,6,0);
 
-	if (data & 0x40 && ~Sound & 0x40 && Machine->samples->sample[6])
-		osd_play_sample(6,Machine->samples->sample[6]->data,
-				          Machine->samples->sample[6]->length,
-                          Machine->samples->sample[6]->smpfreq,
-                          Machine->samples->sample[6]->volume,0);
-
-	if (data & 0x80 && ~Sound & 0x80 && Machine->samples->sample[7])
-		osd_play_sample(7,Machine->samples->sample[7]->data,
- 						  Machine->samples->sample[7]->length,
-                		  Machine->samples->sample[7]->smpfreq,
-                		  Machine->samples->sample[7]->volume,0);
+	if (data & 0x80 && ~Sound & 0x80)
+		sample_start(7,7,0);
 
 	Sound = data;
 }
@@ -119,9 +86,4 @@ void carnival_sh_port1_w(int offset, int data)
 void carnival_sh_port2_w(int offset, int data)
 {
     SoundFX = data;
-}
-
-
-void carnival_sh_update(void)
-{
 }

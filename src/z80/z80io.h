@@ -16,15 +16,13 @@
 /* Input a byte from given I/O port                                         */
 /****************************************************************************/
 /*byte Z80_In (byte Port);*/
-/* cant handle 16 bit port addresses yet */
-#define Z80_In(Port) ((byte)cpu_readport((Port)&0xff))
+#define Z80_In(Port) ((byte)cpu_readport(Port))
 
 /****************************************************************************/
 /* Output a byte to given I/O port                                          */
 /****************************************************************************/
 /*void Z80_Out (byte Port,byte Value);*/
-/* cant handle 16 bit port addresses yet */
-#define Z80_Out(Port,Value) (cpu_writeport((Port)&0xff,Value))
+#define Z80_Out(Port,Value) (cpu_writeport(Port,Value))
 
 /****************************************************************************/
 /* Read a byte from given memory location                                   */

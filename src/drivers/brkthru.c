@@ -1,8 +1,6 @@
 /***************************************************************************
 Break Thru Doc. Data East (1986)
 
-Sound: YM2203 and YM3526
-
 UNK-1.1    (16Kb)  Code (4000-7FFF)
 UNK-1.2    (32Kb)  Main 6809 (8000-FFFF)
 UNK-1.3    (32Kb)  Mapped (2000-3FFF)
@@ -42,15 +40,18 @@ MAIN CPU
 Interrupts: Reset, NMI, IRQ
 The test routine is at F000
 
+Sound: YM2203 and YM3526 driven by 6809.  Sound added by Bryan McPhail, 1/4/98.
+
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/generic.h"
+#include "M6809/m6809.h"
+
 
 unsigned char *brkthru_nmi_enable; /* needs to be tracked down */
 extern unsigned char *brkthru_videoram;
-extern unsigned int brkthru_videoram_size;
+extern int brkthru_videoram_size;
 
 void brkthru_1800_w(int offset,int data);
 int brkthru_vh_start(void);
@@ -67,6 +68,12 @@ void brkthru_1803_w(int offset, int data)
 	nmi_enable = ~data & 1;
 
 	/* bit 1 = ? maybe IRQ acknowledge */
+}
+
+void brkthru_soundlatch_w(int offset, int data)
+{
+	soundlatch_w(offset,data);
+	cpu_cause_interrupt(1,M6809_INT_NMI);
 }
 
 
@@ -95,25 +102,32 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x1000, 0x10ff, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x1100, 0x17ff, MWA_RAM },
 	{ 0x1800, 0x1801, brkthru_1800_w },	/* bg scroll and color, ROM bank selection, flip screen */
-	{ 0x1802, 0x1802, soundlatch_w },
+	{ 0x1802, 0x1802, brkthru_soundlatch_w },
 	{ 0x1803, 0x1803, brkthru_1803_w },	/* NMI enable, + ? */
 	{ 0x2000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
 
-#ifdef TRY_SOUND
 static struct MemoryReadAddress sound_readmem[] =
 {
+	{ 0x0000, 0x1fff, MRA_RAM },
+	{ 0x4000, 0x4000, soundlatch_r },
+	{ 0x6000, 0x6000, YM2203_status_port_0_r },
 	{ 0x8000, 0xffff, MRA_ROM },
 	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress sound_writemem[] =
 {
+	{ 0x0000, 0x1fff, MWA_RAM },
+	{ 0x2000, 0x2000, YM3526_control_port_0_w  },
+	{ 0x2001, 0x2001, YM3526_write_port_0_w },
+	{ 0x6000, 0x6000, YM2203_control_port_0_w },
+	{ 0x6001, 0x6001, YM2203_write_port_0_w },
 	{ 0x8000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
-#endif
+
 
 
 int brkthru_interrupt(void)
@@ -305,6 +319,26 @@ static unsigned char color_prom[] =
 
 
 
+static struct YM2203interface ym2203_interface =
+{
+	1,
+	1500000,	/* Unknown */
+	{ YM2203_VOL(100,0x20ff) },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 }
+};
+
+static struct YM3526interface ym3526_interface =
+{
+	1,			/* 1 chip (no more supported) */
+	3000000,	/* 3 MHz ? (not supported) */
+	{ 255 }		/* (not supported) */
+};
+
+
+
 static struct MachineDriver brkthru_machine_driver =
 {
 	/* basic machine hardware */
@@ -315,19 +349,17 @@ static struct MachineDriver brkthru_machine_driver =
 			0,
 			readmem,writemem,0,0,
 			brkthru_interrupt,2
-#ifdef TRY_SOUND
 		},
 		{
 			CPU_M6809 | CPU_AUDIO_CPU,
 			1250000,        /* 1.25 Mhz ? */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,1
-#endif
+			interrupt,8	/* Set by hand. */
 		}
 	},
-	60,
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,	/* init machine */
 
 	/* video hardware */
@@ -343,10 +375,17 @@ static struct MachineDriver brkthru_machine_driver =
 	brkthru_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	0,
-	0,
-	0
+	0,0,0,0,
+	{
+		{
+			SOUND_YM2203,
+			&ym2203_interface
+		},
+		{
+			SOUND_YM3526,
+			&ym3526_interface
+		}
+	}
 };
 
 
@@ -391,12 +430,57 @@ ROM_START( brkthru_rom )
 ROM_END
 
 
+static int hiload(void)
+{
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+
+	/* check if the hi score table has already been initialized */
+        if (memcmp(&RAM[0x0531],"\x00\x01\x50\x00",4) == 0)
+	{
+		void *f;
+
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+
+                        osd_fread(f,&RAM[0x0531],4*5+3*5);
+
+                        memcpy(&RAM[0x0402], &RAM[0x0531], 4);
+                        osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+static void hisave(void)
+{
+	void *f;
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+                osd_fwrite(f,&RAM[0x0531],4*5+3*5);
+		osd_fclose(f);
+	}
+}
+
+
 
 struct GameDriver brkthru_driver =
 {
 	"Break Thru",
 	"brkthru",
-	"Phil Stroffolino (MAME driver)\nCarlos Lozano (hardware info)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili",
+	"Phil Stroffolino (MAME driver)\nCarlos Lozano (hardware info)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nMarco Cassili\nGerrit Van Goethem (high score save)\nBryan McPhail (sound)",
 	&brkthru_machine_driver,
 
 	brkthru_rom,
@@ -404,10 +488,10 @@ struct GameDriver brkthru_driver =
 	0,
 	0,
 
-	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	hiload, hisave
 };

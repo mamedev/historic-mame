@@ -12,15 +12,15 @@
 #include <stdio.h>
 
 #include "driver.h"
-#include "Z80.h"
+#include "Z80/Z80.h"
 #include "machine/Z80fmly.h"
-#include "sndhrdw/generic.h"
-#include "sndhrdw/dac.h"
-#include "sndhrdw/5220intf.h"
 #include "M6808/m6808.h"
 #include "M6809/m6809.h"
 #include "machine/6821pia.h"
+#include "timer.h"
 
+int pedal_sensitivity = 4;			/* Amount of change to read each time the pedal keys are pulsed */
+int weighting_factor = 0;			/* Progressive weighting factor */
 
 int mcr_loadnvram;
 int spyhunt_lamp[8];
@@ -31,20 +31,28 @@ static int spyhunt_mux;
 static unsigned char soundlatch[4];
 static unsigned char soundstatus;
 
-static int vblholdcycles;
-
-static int watchdogcount = 0;
-static int watchdogmax;
-static int watchdogon;
 
 /* z80 ctc */
-static Z80CTC ctc;
+static void ctc_interrupt (int state)
+{
+	cpu_cause_interrupt (0, Z80_VECTOR(0,state) );
+}
+
+static z80ctc_interface ctc_intf =
+{
+	1,                  /* 1 chip */
+	{ 0 },              /* clock (filled in from the CPU 0 clock */
+	{ 0 },              /* timer disables */
+	{ ctc_interrupt },  /* interrupt handler */
+	{ 0 },              /* ZC/TO0 callback */
+	{ 0 },              /* ZC/TO1 callback */
+	{ 0 }               /* ZC/TO2 callback */
+};
 
 
 /* used for the sound boards */
 static int dacval;
-static int buffered_data;
-
+static int suspended;
 
 
 /* Chip Squeak Deluxe (CSD) interface */
@@ -68,7 +76,6 @@ static pia6821_interface csd_pia_intf =
 
 
 /* Sounds Good (SG) PIA interface */
-static int sg_portb_r (int offset);
 static void sg_porta_w (int offset, int data);
 static void sg_portb_w (int offset, int data);
 static void sg_irq (void);
@@ -78,7 +85,7 @@ static pia6821_interface sg_pia_intf =
 	1,                /* 1 chip */
 	{ PIA_DDRA, PIA_NOP, PIA_DDRB, PIA_NOP, PIA_CTLA, PIA_NOP, PIA_CTLB, PIA_NOP }, /* offsets */
 	{ 0 },            /* input port A */
-	{ sg_portb_r },	/* input port B */
+	{ 0 },         	/* input port B */
 	{ sg_porta_w },   /* output port A */
 	{ sg_portb_w },   /* output port B */
 	{ 0 },            /* output CA2 */
@@ -89,7 +96,6 @@ static pia6821_interface sg_pia_intf =
 
 
 /* Turbo Chip Squeak (TCS) PIA interface */
-static int tcs_portb_r (int offset);
 static void tcs_irq (void);
 
 static pia6821_interface tcs_pia_intf =
@@ -97,7 +103,7 @@ static pia6821_interface tcs_pia_intf =
 	1,                /* 1 chip */
 	{ PIA_DDRA, PIA_DDRB, PIA_CTLA, PIA_CTLB }, /* offsets */
 	{ 0 },            /* input port A */
-	{ tcs_portb_r },	/* input port B */
+	{ 0 },         	/* input port B */
 	{ DAC_data_w },   /* output port A */
 	{ 0 },            /* output port B */
 	{ 0 },            /* output CA2 */
@@ -108,7 +114,6 @@ static pia6821_interface tcs_pia_intf =
 
 
 /* Squawk & Talk (SNT) PIA interface */
-static int snt_porta1_r (int offset);
 static void snt_porta1_w (int offset, int data);
 static void snt_porta2_w (int offset, int data);
 static void snt_portb2_w (int offset, int data);
@@ -116,16 +121,16 @@ static void snt_irq (void);
 
 static pia6821_interface snt_pia_intf =
 {
-	2,                /* 2 chips */
+	2,                              /* 2 chips */
 	{ PIA_DDRA, PIA_CTLA, PIA_DDRB, PIA_CTLB }, /* offsets */
-	{ snt_porta1_r, 0 },               /* input port A */
-	{ 0, 0 },			      /* input port B */
-	{ snt_porta1_w, snt_porta2_w },               /* output port A */
-	{ 0, snt_portb2_w },               /* output port B */
-	{ 0, 0 },               /* output CA2 */
-	{ 0, 0 },            	/* output CB2 */
-	{ snt_irq, snt_irq },   /* IRQ A */
-	{ snt_irq, snt_irq },   /* IRQ B */
+	{ 0, 0 },                       /* input port A */
+	{ 0, 0 },                       /* input port B */
+	{ snt_porta1_w, snt_porta2_w }, /* output port A */
+	{ 0, snt_portb2_w },            /* output port B */
+	{ 0, 0 },                       /* output CA2 */
+	{ 0, 0 },                       /* output CB2 */
+	{ snt_irq, snt_irq },           /* IRQ A */
+	{ snt_irq, snt_irq },           /* IRQ B */
 };
 
 
@@ -143,18 +148,24 @@ void mcr_init_machine(void)
    for (i = 0; i < 4; i++)
       soundlatch[i] = 0;
    soundstatus = 0;
+   suspended = 0;
 
-   /* compute the duration of the VBL for the CTC -- assume it's is about 1/12th of the frame time */
-   vblholdcycles = Machine->drv->cpu[0].cpu_clock / Machine->drv->frames_per_second / 12;
-   z80ctc_reset (&ctc, Machine->drv->cpu[0].cpu_clock);
+   /* initialize the CTC */
+   ctc_intf.clock[0] = Machine->drv->cpu[0].cpu_clock;
+   z80ctc_init (&ctc_intf);
+
+   /* daisy chain set */
+	{
+		static Z80_DaisyChain daisy_chain[] =
+		{
+			{ z80ctc_reset, z80ctc_interrupt, z80ctc_reti, 0 }, /* CTC number 0 */
+			{ 0,0,0,-1}         /* end mark */
+		};
+		cpu_setdaisychain (0,daisy_chain );
+	}
 
    /* can't load NVRAM right away */
    mcr_loadnvram = 0;
-
-   /* set up the watchdog */
-   watchdogon = 1;
-   watchdogcount = 0;
-   watchdogmax = Machine->drv->frames_per_second * Machine->drv->cpu[0].interrupts_per_frame;
 }
 
 void spyhunt_init_machine (void)
@@ -169,11 +180,9 @@ void spyhunt_init_machine (void)
 void rampage_init_machine (void)
 {
 	mcr_init_machine ();
-	watchdogon = 0;
 	mcr_loadnvram = 1;
 
    /* reset the PIAs */
-   buffered_data = -1;
    pia_startup (&sg_pia_intf);
 }
 
@@ -181,11 +190,9 @@ void rampage_init_machine (void)
 void sarge_init_machine (void)
 {
 	mcr_init_machine ();
-	watchdogon = 0;
 	mcr_loadnvram = 1;
 
    /* reset the PIAs */
-   buffered_data = -1;
    pia_startup (&tcs_pia_intf);
 }
 
@@ -195,38 +202,23 @@ void dotron_init_machine (void)
    mcr_init_machine ();
 
    /* reset the PIAs */
-   buffered_data = -1;
    pia_startup (&snt_pia_intf);
 }
 
 
-int mcr_interrupt(void)
+int mcr_interrupt (void)
 {
-   int irq;
-
-	/* watchdog time? */
-	if (watchdogon && ++watchdogcount > watchdogmax)
-	{
-		machine_reset ();
-		watchdogcount = 0;
-		return ignore_interrupt ();
-	}
-
-   /* clock the external clock at 30Hz, but update more frequently */
-   z80ctc_update (&ctc, 0, 0, 0);
-   z80ctc_update (&ctc, 1, 0, 0);
-   z80ctc_update (&ctc, 2, 0, 0);
-   z80ctc_update (&ctc, 3, cpu_getiloops () == 0, vblholdcycles);
-
-   /* handle any pending interrupts */
-   irq = z80ctc_irq_r (&ctc);
-   if (irq != Z80_IGNORE_INT)
-      if (errorlog)
-			fprintf (errorlog, "  (Interrupt from ch. %d)\n", (irq - ctc.vector) / 2);
-
-   return irq;
+	/* once per frame, pulse the CTC line 3 */
+	z80ctc_0_trg3_w (0, 1);
+	z80ctc_0_trg3_w (0, 0);
+	return ignore_interrupt ();
 }
 
+
+void mcr_delayed_write (int param)
+{
+	soundlatch[param >> 8] = param & 0xff;
+}
 
 void mcr_writeport(int port,int value)
 {
@@ -246,11 +238,13 @@ void mcr_writeport(int port,int value)
 		case 0x1d:	/* WIRAM0 - write audio latch 1 */
 		case 0x1e:	/* WIRAM0 - write audio latch 2 */
 		case 0x1f:	/* WIRAM0 - write audio latch 3 */
-			soundlatch[port - 0x1c] = value;
+			timer_set (TIME_NOW, ((port - 0x1c) << 8) | (value & 0xff), mcr_delayed_write);
+//			mcr_delayed_write (((port - 0x1c) << 8) | (value & 0xff));
+//			soundlatch[port - 0x1c] = value;
 			return;
 
 		case 0xe0:	/* clear watchdog timer */
-			watchdogcount = 0;
+			watchdog_reset_w (0, 0);
 			return;
 
 		case 0xe8:
@@ -273,7 +267,7 @@ void mcr_writeport(int port,int value)
 		case 0xf1:
 		case 0xf2:
 		case 0xf3:
-	      z80ctc_w (&ctc, port - 0xf0, value);
+	      z80ctc_0_w (port - 0xf0, value);
 	      return;
 	}
 
@@ -355,6 +349,14 @@ int sarge_IN2_r(int offset)
 	return (res);
 }
 
+
+
+void spyhunt_delayed_write (int param)
+{
+	pia_1_portb_w (0, param & 0x0f);
+	pia_1_ca1_w (0, param & 0x10);
+}
+
 void spyhunt_writeport(int port,int value)
 {
 	static int lastport4;
@@ -378,8 +380,7 @@ void spyhunt_writeport(int port,int value)
 		   }
 
 	   	/* CSD command triggered by bit 4, data is in low four bits */
-	   	pia_1_portb_w (0, value & 0x0f);
-	   	pia_1_ca1_w (0, value & 0x10);
+	   	timer_set (TIME_NOW, value, spyhunt_delayed_write);
 
 		   /* remember the last value */
 		   lastport4 = value;
@@ -405,6 +406,13 @@ void spyhunt_writeport(int port,int value)
 }
 
 
+
+void rampage_delayed_write (int param)
+{
+	pia_1_portb_w (0, (param >> 1) & 0x0f);
+	pia_1_ca1_w (0, ~param & 0x01);
+}
+
 void rampage_writeport(int port,int value)
 {
 	switch (port)
@@ -414,11 +422,7 @@ void rampage_writeport(int port,int value)
 			break;
 
 		case 0x06:
-	   	pia_1_portb_w (0, (value >> 1) & 0x0f);
-	   	pia_1_ca1_w (0, ~value & 0x01);
-
-	   	/* need to give the sound CPU time to process the first nibble */
-	   	cpu_seticount (0);
+			timer_set (TIME_NOW, value, rampage_delayed_write);
 	   	break;
 
 		case 0x07:
@@ -431,6 +435,13 @@ void rampage_writeport(int port,int value)
 }
 
 
+
+void sarge_delayed_write (int param)
+{
+	pia_1_portb_w (0, (param >> 1) & 0x0f);
+	pia_1_ca1_w (0, ~param & 0x01);
+}
+
 void sarge_writeport(int port,int value)
 {
 	switch (port)
@@ -440,11 +451,7 @@ void sarge_writeport(int port,int value)
 			break;
 
 		case 0x06:
-	   	pia_1_portb_w (0, (value >> 1) & 0x0f);
-	   	pia_1_ca1_w (0, ~value & 0x01);
-
-	   	/* need to give the sound CPU time to process the first nibble */
-	   	cpu_seticount (0);
+			timer_set (TIME_NOW, value, sarge_delayed_write);
 			break;
 
 		case 0x07:
@@ -457,24 +464,49 @@ void sarge_writeport(int port,int value)
 }
 
 
+
+void dotron_delayed_write (int param)
+{
+	pia_1_porta_w (0, ~param & 0x0f);
+	pia_1_cb1_w (0, ~param & 0x10);
+}
+
 void dotron_writeport(int port,int value)
 {
 	switch (port)
 	{
 		case 0x04:
-	   	pia_1_porta_w (0, ~value & 0x0f);
-	   	pia_1_cb1_w (0, ~value & 0x10);
-
-	   	/* need to give the sound CPU time to process the first nibble */
-	   	if (value & 0x10)
-		   	cpu_seticount (0);
-   		cpu_halt(2, 1);
+			timer_set (TIME_NOW, value, dotron_delayed_write);
 			break;
 
 		case 0x05:
 		case 0x06:
 		case 0x07:
 		   break;
+
+		default:
+			mcr_writeport(port,value);
+			break;
+	}
+}
+
+
+void crater_writeport(int port,int value)
+{
+	switch (port)
+	{
+		case 0x84:
+			spyhunt_scrollx = (spyhunt_scrollx & ~0xff) | value;
+			break;
+
+		case 0x85:
+			spyhunt_scrollx = (spyhunt_scrollx & 0xff) | ((value & 0x07) << 8);
+			spyhunt_scrolly = (spyhunt_scrolly & 0xff) | ((value & 0x80) << 1);
+			break;
+
+		case 0x86:
+			spyhunt_scrolly = (spyhunt_scrolly & ~0xff) | value;
+			break;
 
 		default:
 			mcr_writeport(port,value);
@@ -499,6 +531,7 @@ int spyhunt_port_1_r(int offset)
 /* Spy Hunter -- multiplexed steering wheel/gas pedal */
 int spyhunt_port_2_r(int offset)
 {
+        int weighting = 0;
 	int port = readinputport (6);
 
 	/* mux high bit on means return steering wheel */
@@ -518,12 +551,14 @@ int spyhunt_port_2_r(int offset)
 		static int val = 0x30;
 		if (port & 1)
 		{
-			val += 4;
+                        if (weighting_factor != 0) weighting = val/((0xff-0x30)/weighting_factor);
+			val += (pedal_sensitivity + weighting);
 			if (val > 0xff) val = 0xff;
 		}
 		else if (port & 2)
 		{
-			val -= 4;
+                        if (weighting_factor != 0) weighting = weighting_factor - (val/((0xff-0x30)/weighting_factor));
+			val -= (pedal_sensitivity + weighting);
 			if (val < 0x30) val = 0x30;
 		}
 		return val;
@@ -581,6 +616,18 @@ int kroozr_trakball_y_r(int data)
 
 ***************************************************************************/
 
+void mcr_pia_1_w (int offset, int data)
+{
+	if (!(data & 0xff000000))
+		pia_1_w (offset, (data >> 8) & 0xff);
+}
+
+int mcr_pia_1_r (int offset)
+{
+	return pia_1_r (offset) << 8;
+}
+
+
 /*
  *		Chip Squeak Deluxe (Spy Hunter) board
  *
@@ -603,6 +650,7 @@ static void csd_portb_w (int offset, int data)
 
 static void csd_irq (void)
 {
+	/* generate a sound interrupt */
   	cpu_cause_interrupt (2, 4);
 }
 
@@ -611,20 +659,7 @@ static void csd_irq (void)
  *		Sounds Good (Rampage) board
  *
  *		MC68000, 1 PIA, 10-bit DAC
- *		Extra handshaking needed because data is written in 2 nibbles
  */
-static int sg_portb_r (int offset)
-{
-	if (buffered_data != -1)
-	{
-		int temp = buffered_data;
-		buffered_data = -1;
-		cpu_seticount (0);
-		return temp;
-	}
-	return pia_1_portb_r (offset);
-}
-
 static void sg_porta_w (int offset, int data)
 {
 	int temp;
@@ -642,8 +677,8 @@ static void sg_portb_w (int offset, int data)
 
 static void sg_irq (void)
 {
+	/* generate a sound interrupt */
   	cpu_cause_interrupt (1, 4);
-   buffered_data = pia_1_portb_r (0);
 }
 
 
@@ -651,24 +686,11 @@ static void sg_irq (void)
  *		Turbo Chip Squeak (Sarge) board
  *
  *		MC6809, 1 PIA, 8-bit DAC
- *		Extra handshaking needed because data is written in 2 nibbles
  */
-static int tcs_portb_r (int offset)
-{
-	if (buffered_data != -1)
-	{
-		int temp = buffered_data;
-		buffered_data = -1;
-		cpu_seticount (0);
-		return temp;
-	}
-	return pia_1_portb_r (offset);
-}
-
 static void tcs_irq (void)
 {
+	/* generate a sound interrupt */
 	cpu_cause_interrupt (1, M6809_INT_IRQ);
-   buffered_data = pia_1_portb_r (0);
 }
 
 
@@ -676,20 +698,9 @@ static void tcs_irq (void)
  *		Squawk & Talk (Discs of Tron) board
  *
  *		MC6802, 2 PIAs, TMS5220, AY8912 (not used), 8-bit DAC (not used)
- *		Extra handshaking needed because data is written in 2 nibbles
  */
 static int tms_command;
 static int tms_strobes;
-static int halt_on_read;
-
-static int snt_porta1_r (int offset)
-{
-  	cpu_seticount (0);
-  	if (halt_on_read)
-		cpu_halt(2, 0);
-	halt_on_read = 0;
-	return pia_1_porta_r (offset);
-}
 
 static void snt_porta1_w (int offset, int data)
 {
@@ -727,5 +738,4 @@ static void snt_portb2_w (int offset, int data)
 static void snt_irq (void)
 {
 	cpu_cause_interrupt (2, M6808_INT_IRQ);
-	halt_on_read = 1;
 }

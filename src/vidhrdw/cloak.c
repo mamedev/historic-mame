@@ -9,7 +9,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-struct osd_bitmap *tmpbitmap2,*charbitmap;
+static struct osd_bitmap *tmpbitmap2,*charbitmap;
 unsigned char bx,by,bmap;
 static unsigned char inverse_palette[256];
 

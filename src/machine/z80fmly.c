@@ -4,8 +4,6 @@
 
   Support chip :  Z80PIO , Z80CTC
 
-  It is not support dizzy chain.
-
   Copyright(C) 1997 Tatsuyuki Satoh.
 
   This version are tested starforce driver.
@@ -21,8 +19,29 @@ pending:
 #include <stdio.h>
 #include "driver.h"
 #include "z80fmly.h"
+#include "timer.h"
 
-#define DEBUG
+typedef struct
+{
+	int vector;                           /* interrupt vector */
+	int clock;                            /* system clock */
+	double invclock16;                    /* 16/system clock */
+	double invclock256;                   /* 256/system clock */
+	void (*intr)(int which);              /* interrupt callback */
+	void (*zc[4])(int offset, int data);  /* zero crossing callbacks */
+	int notimer;                          /* no timer masks */
+	int mask[4];                          /* masked channel flags */
+	int mode[4];                          /* current mode */
+	int tconst[4];                        /* time constant */
+	int down[4];                          /* down counter (clock mode only) */
+	int extclk[4];                        /* current signal from the external clock */
+	void *timer[4];                       /* array of active timers */
+
+	int int_state[4];                     /* interrupt status (for daisy chain) */
+} z80ctc;
+
+static z80ctc ctcs[MAX_CTC];
+
 
 /* these are the bits of the incoming commands to the CTC */
 #define INTERRUPT			0x80
@@ -61,33 +80,99 @@ pending:
 #define WAITING_FOR_TRIG	0x100
 
 
-void z80ctc_reset (Z80CTC *ctc, int system_clock)
+static void z80ctc_timercallback (int param);
+
+
+void z80ctc_init (z80ctc_interface *intf)
 {
-	int ch;
+	int i;
 
-	/* erase everything */
-	memset (ctc, 0, sizeof (*ctc));
+	memset (ctcs, 0, sizeof (ctcs));
 
-	/* insert default timers */
-	for (ch = 0; ch < 4; ch++)
+	for (i = 0; i < intf->num; i++)
 	{
-		ctc->mode[ch] = RESET_ACTIVE;
-		ctc->down[ch] = 0x7fffffff;
-		ctc->last[ch] = cpu_gettotalcycles();
-		ctc->tconst[ch] = 0x100;
+		ctcs[i].clock = intf->clock[i];
+		ctcs[i].invclock16 = 16.0 / (double)intf->clock[i];
+		ctcs[i].invclock256 = 256.0 / (double)intf->clock[i];
+		ctcs[i].notimer = intf->notimer[i];
+		ctcs[i].intr = intf->intr[i];
+		ctcs[i].zc[0] = intf->zc0[i];
+		ctcs[i].zc[1] = intf->zc1[i];
+		ctcs[i].zc[2] = intf->zc2[i];
+		ctcs[i].zc[3] = 0;
+		z80ctc_reset (i);
 	}
-
-	/* set the system clock */
-	ctc->sys_clk = system_clock;
 }
 
 
-void z80ctc_w (Z80CTC *ctc, int ch, int data)
+double z80ctc_getperiod (int which, int ch)
 {
-	int mode, i;
+	z80ctc *ctc = ctcs + which;
+	double clock;
+	int mode;
 
 	/* keep channel within range, and get the current mode */
 	ch &= 3;
+	mode = ctc->mode[ch];
+
+	/* if reset active */
+	if( (mode & RESET) == RESET_ACTIVE) return 0;
+	/* if counter mode */
+	if( (mode & MODE) == MODE_COUNTER)
+	{
+		if (errorlog) fprintf (errorlog, "CTC %d is CounterMode : Can't calcrate period\n", ch );
+		return 0;
+	}
+
+	/* compute the period */
+	clock = ((mode & PRESCALER) == PRESCALER_16) ? ctc->invclock16 : ctc->invclock256;
+	return clock * (double)ctc->tconst[ch];
+}
+
+/* interrupt request callback with daisy-chain circuit */
+static void z80ctc_interrupt_check( z80ctc *ctc )
+{
+	int state = 0;
+	int ch;
+
+	for( ch = 3 ; ch >= 0 ; ch-- )
+	{
+		/* if IEO disable , same and lower IRQ is masking */
+		if( ctc->int_state[ch] & Z80_INT_IEO ) state  = Z80_INT_IEO;
+		else                                   state |= ctc->int_state[ch];
+	}
+	/* change interrupt status */
+	if (ctc->intr) (*ctc->intr)(state);
+}
+
+
+void z80ctc_reset (int which)
+{
+	z80ctc *ctc = ctcs + which;
+	int i;
+
+	/* set up defaults */
+	for (i = 0; i < 4; i++)
+	{
+		ctc->mode[i] = RESET_ACTIVE;
+		ctc->tconst[i] = 0x100;
+		ctc->timer[i] = NULL;
+		ctc->int_state[i] = 0;
+	}
+	z80ctc_interrupt_check( ctc );
+}
+
+void z80ctc_0_reset (void) { z80ctc_reset (0); }
+void z80ctc_1_reset (void) { z80ctc_reset (1); }
+
+
+void z80ctc_w (int which, int offset, int data)
+{
+	z80ctc *ctc = ctcs + which;
+	int mode, ch;
+
+	/* keep channel within range, and get the current mode */
+	ch = offset & 3;
 	mode = ctc->mode[ch];
 
 	/* if we're waiting for a time constant, this is it */
@@ -107,33 +192,34 @@ void z80ctc_w (Z80CTC *ctc, int ch, int data)
 		{
 			/* if we're triggering on the time constant, reset the down counter now */
 			if ((mode & TRIGGER) == TRIGGER_AUTO)
-				ctc->down[ch] = ctc->tconst[ch] << 8;
+			{
+				double clock = ((mode & PRESCALER) == PRESCALER_16) ? ctc->invclock16 : ctc->invclock256;
+				if (ctc->timer[ch])
+					timer_remove (ctc->timer[ch]);
+				if (!(ctc->notimer & (1<<ch)))
+					ctc->timer[ch] = timer_pulse (clock * (double)ctc->tconst[ch], (which << 2) + ch, z80ctc_timercallback);
+			}
 
 			/* else set the bit indicating that we're waiting for the appropriate trigger */
 			else
-			{
-				unsigned long delta = ctc->fall[ch] - cpu_gettotalcycles ();
-
-				/* if we're waiting for the falling edge and we know when that is, set it up */
-				if ((mode & EDGE) == EDGE_FALLING && delta < ctc->sys_clk)
-					ctc->down[ch] = (ctc->tconst[ch] << 8) + delta;
-
-				/* otherwise, just indicate that we're waiting for a trigger */
-				else
-					ctc->mode[ch] |= WAITING_FOR_TRIG;
-			}
+				ctc->mode[ch] |= WAITING_FOR_TRIG;
 		}
 
-		/* else just set the down counter now */
-		else
-			ctc->down[ch] = ctc->tconst[ch] << 8;
+		/* also set the down counter in case we're clocking externally */
+		ctc->down[ch] = ctc->tconst[ch];
 
 		/* all done here */
 		return;
 	}
 
 	/* if we're writing the interrupt vector, handle it specially */
+#if 0	/* Tatsuyuki Satoh changes */
+	/* The 'Z80family handbook' wrote,                            */
+	/* interrupt vector is able to set for even channel (0 or 2)  */
+	if ((data & CONTROL) == CONTROL_VECTOR && (ch&1) == 0)
+#else
 	if ((data & CONTROL) == CONTROL_VECTOR && ch == 0)
+#endif
 	{
 		ctc->vector = data & 0xf8;
 		if (errorlog) fprintf (errorlog, "CTC Vector = %02x\n", ctc->vector);
@@ -147,12 +233,19 @@ void z80ctc_w (Z80CTC *ctc, int ch, int data)
 		ctc->mode[ch] = data;
 		if (errorlog) fprintf (errorlog,"CTC ch.%d mode = %02x\n", ch, data);
 
-		/* if we're being reset, clear out any pending interrupts for this channel */
+		/* if we're being reset, clear out any pending timers for this channel */
 		if ((data & RESET) == RESET_ACTIVE)
 		{
-			for (i = 0; i < MAX_IRQ; i++)
-				if (ctc->irq[i].irq == ctc->vector + (ch << 1))
-					ctc->irq[i].irq = 0;
+			if (ctc->timer[ch])
+				timer_remove (ctc->timer[ch]);
+			ctc->timer[ch] = NULL;
+
+			if( ctc->int_state[ch] != 0 )
+			{
+				/* clear interrupt service , request */
+				ctc->int_state[ch] = 0;
+				z80ctc_interrupt_check( ctc );
+			}
 		}
 
 		/* all done here */
@@ -160,303 +253,496 @@ void z80ctc_w (Z80CTC *ctc, int ch, int data)
 	}
 }
 
+void z80ctc_0_w (int offset, int data) { z80ctc_w (0, offset, data); }
+void z80ctc_1_w (int offset, int data) { z80ctc_w (1, offset, data); }
 
-int z80ctc_r (Z80CTC *ctc, int ch)
+
+int z80ctc_r (int which, int ch)
 {
+	z80ctc *ctc = ctcs + which;
+	int mode;
+
 	/* keep channel within range */
-	ch &= 3;
-
-	/* return the current down counter value */
-	return ctc->down[ch] >> 8;
-}
-
-
-int z80ctc_update (Z80CTC *ctc, int ch, int cntclk, int cnthold)
-{
-	unsigned long time = cpu_gettotalcycles ();
-	int mode, zco = 0;
-	int upclk, sysclk, i;
-
-	/* keep channel within range, and get the current mode */
 	ch &= 3;
 	mode = ctc->mode[ch];
 
-	/* increment the last timer update */
-	sysclk = time - ctc->last[ch];
-	ctc->last[ch] = time;
+	/* if we're in counter mode, just return the count */
+	if ((mode & MODE) == MODE_COUNTER)
+		return ctc->down[ch];
 
-	/* if we got an external clock, handle it */
-	if (cntclk)
-	{
-		/* set the time of the falling edge here */
-		ctc->fall[ch] = time + cnthold;
-
-		/* if this timer is waiting for a trigger, we can resolve it now */
-		if (mode & WAITING_FOR_TRIG)
-		{
-			/* first clear the waiting flag */
-			ctc->mode[ch] &= ~WAITING_FOR_TRIG;
-			mode &= ~WAITING_FOR_TRIG;
-
-			/* rising edge? */
-			if ((mode & EDGE) == EDGE_RISING)
-				ctc->down[ch] = ctc->tconst[ch] << 8;
-
-			/* falling edge? */
-			else
-				ctc->down[ch] = (ctc->tconst[ch] << 8) + cnthold;
-		}
-	}
-
-	/* if this channel is reset, we're done */
-	if ((mode & RESET) == RESET_ACTIVE)
-		return 0;
-
-	/* if this channel is in timer mode waiting for a trigger, we're done */
-	if (mode & WAITING_FOR_TRIG)
-		return 0;
-
-	/* select the clock to use */
-	if ((mode & MODE) == MODE_TIMER)
-	{
-		if ((mode & PRESCALER) == PRESCALER_16)
-			upclk = sysclk << 4;
-		else
-			upclk = sysclk;
-	}
+	/* else compute the down counter value */
 	else
-		upclk = cntclk << 8;
-
-	/* if the clock isn't updated this time, bail */
-	if (!upclk)
-		return 0;
-
-	/* decrement the counter and count zero crossings */
-	ctc->down[ch] -= upclk;
-	while (ctc->down[ch] <= 0)
 	{
-		/* if we're doing interrupts, add a pending one */
-		if ((mode & INTERRUPT) == INTERRUPT_ON)
-		{
-			for (i = 0; i < MAX_IRQ; i++)
-				if (!ctc->irq[i].irq)
-				{
-					ctc->irq[i].irq = ctc->vector + (ch << 1);
-					ctc->irq[i].time = time + ctc->down[ch];
-					break;
-				}
-		}
+		double clock = ((mode & PRESCALER) == PRESCALER_16) ? ctc->invclock16 : ctc->invclock256;
 
-		/* update the counters */
-		zco += 1;
-		ctc->down[ch] += ctc->tconst[ch] << 8;
-	}
+if(errorlog) fprintf(errorlog,"CTC clock %f\n",1.0/clock);
 
-	/* log it */
-	if (errorlog && zco)
-	{
-		if ((mode & MODE) == MODE_COUNTER)
-			fprintf (errorlog, "CTC Ch.%d trigger\n", ch);
+
+		if (ctc->timer[ch])
+			return ((int)(timer_timeleft (ctc->timer[ch]) / clock) + 1) & 0xff;
 		else
-			fprintf (errorlog, "CTC Ch.%d rollover x%d\n", ch, zco);
+			return 0;
+	}
+}
+
+int z80ctc_0_r (int offset) { return z80ctc_r (0, offset); }
+int z80ctc_1_r (int offset) { return z80ctc_r (1, offset); }
+
+
+int z80ctc_interrupt( int which )
+{
+	z80ctc *ctc = ctcs + which;
+	int ch;
+
+	for( ch = 0 ; ch < 4 ; ch++ )
+	{
+		if( ctc->int_state[ch] )
+		{
+			if( ctc->int_state[ch] == Z80_INT_REQ)
+				ctc->int_state[ch] = Z80_INT_IEO;
+			break;
+		}
+	}
+	if( ch > 3 )
+	{
+		if (errorlog) fprintf(errorlog,"CTC entry INT : non IRQ\n");
+		ch = 0;
+	}
+	z80ctc_interrupt_check( ctc );
+	return ctc->vector + ch * 2;
+}
+
+/* when operate RETI , soud be call this function for request pending interrupt */
+void z80ctc_reti( int which )
+{
+	z80ctc *ctc = ctcs + which;
+	int ch;
+
+	for( ch = 0 ; ch < 4 ; ch++ )
+	{
+		if( ctc->int_state[ch] & Z80_INT_IEO )
+		{
+			/* highest served interrupt found */
+			/* clear interrupt status */
+			ctc->int_state[ch] &= ~Z80_INT_IEO;
+			/* search next interrupt */
+			break;
+		}
+	}
+	/* set next interrupt stattus */
+	z80ctc_interrupt_check( ctc );
+}
+
+static void z80ctc_timercallback (int param)
+{
+	int which = param >> 2;
+	int ch = param & 3;
+	z80ctc *ctc = ctcs + which;
+
+	/* down counter has reached zero - see if we should interrupt */
+	if ((ctc->mode[ch] & INTERRUPT) == INTERRUPT_ON)
+	{
+		if( !(ctc->int_state[ch] & Z80_INT_REQ) )
+		{
+			ctc->int_state[ch] |= Z80_INT_REQ;
+			z80ctc_interrupt_check( ctc );
+		}
+	}
+	/* generate the clock pulse */
+	if (ctc->zc[ch])
+	{
+		(*ctc->zc[ch])(0,1);
+		(*ctc->zc[ch])(0,0);
 	}
 
-	/* return the number of zero crossings */
-	return zco;
+	/* reset the down counter */
+	ctc->down[ch] = ctc->tconst[ch];
 }
 
 
-int z80ctc_irq_r (Z80CTC *ctc)
+void z80ctc_trg_w (int which, int trg, int offset, int data)
 {
-	unsigned long basetime = cpu_gettotalcycles () - ctc->sys_clk;	/* no more than 1 second behind! */
-	unsigned long time, earliestTime = 0xffffffff;
-	int i, earliest = -1;
+	z80ctc *ctc = ctcs + which;
+	int ch = trg & 3;
+	int mode;
 
-	/* find the earliest IRQ */
-	for (i = 0; i < MAX_IRQ; i++)
-		if (ctc->irq[i].irq)
+	data = data ? 1 : 0;
+	mode = ctc->mode[ch];
+
+	/* see if the trigger value has changed */
+	if (data != ctc->extclk[ch])
+	{
+		ctc->extclk[ch] = data;
+
+		/* see if this is the active edge of the trigger */
+		if (((mode & EDGE) == EDGE_RISING && data) || ((mode & EDGE) == EDGE_FALLING && !data))
 		{
-			time = ctc->irq[i].time - basetime;
-			if (time < earliestTime)
+			/* if we're waiting for a trigger, start the timer */
+			if ((mode & WAITING_FOR_TRIG) && (mode & MODE) == MODE_TIMER)
 			{
-				earliest = i;
-				earliestTime = time;
+				double clock = ((mode & PRESCALER) == PRESCALER_16) ? ctc->invclock16 : ctc->invclock256;
+
+if(errorlog) fprintf(errorlog,"CTC clock %f\n",1.0/clock);
+
+
+				if (ctc->timer[ch])
+					timer_remove (ctc->timer[ch]);
+				if (!(ctc->notimer & (1<<ch)))
+					ctc->timer[ch] = timer_pulse (clock * (double)ctc->tconst[ch], (which << 2) + ch, z80ctc_timercallback);
+			}
+
+			/* we're no longer waiting */
+			ctc->mode[ch] &= ~WAITING_FOR_TRIG;
+
+			/* if we're clocking externally, decrement the count */
+			if ((mode & MODE) == MODE_COUNTER)
+			{
+				ctc->down[ch]--;
+
+				/* if we hit zero, do the same thing as for a timer interrupt */
+				if (!ctc->down[ch])
+					z80ctc_timercallback ((which << 2) + ch);
 			}
 		}
-
-	/* if none, bail */
-	if (earliest == -1)
-		return Z80_IGNORE_INT;
-
-	/* otherwise, return the IRQ and clear it */
-	i = ctc->irq[earliest].irq;
-	ctc->irq[earliest].irq = 0;
-	return i;
-}
-
-
-void z80pio_reset( Z80PIO *pio )
-{
-	int i;
-	for( i = 0 ; i <= 1 ; i++){
-		pio->mask[i]   = 0xff;	/* mask all on */
-		pio->enable[i] = 0x00;	/* disable     */
-		pio->mode[i]   = 0x01;	/* mode input  */
-		pio->dir[i]    = 0x01;	/* mode input  */
-		pio->rdy[i]    = 0x00;	/* RDY = low   */
-		pio->out[i]    = 0x00;	/* outdata = 0 */
 	}
 }
 
-void z80pio_w( Z80PIO *pio , int ch , int cd , int data )
-{
-	if( ch ) ch = 1;
+void z80ctc_0_trg0_w (int offset, int data) { z80ctc_trg_w (0, 0, offset, data); }
+void z80ctc_0_trg1_w (int offset, int data) { z80ctc_trg_w (0, 1, offset, data); }
+void z80ctc_0_trg2_w (int offset, int data) { z80ctc_trg_w (0, 2, offset, data); }
+void z80ctc_0_trg3_w (int offset, int data) { z80ctc_trg_w (0, 3, offset, data); }
+void z80ctc_1_trg0_w (int offset, int data) { z80ctc_trg_w (1, 0, offset, data); }
+void z80ctc_1_trg1_w (int offset, int data) { z80ctc_trg_w (1, 1, offset, data); }
+void z80ctc_1_trg2_w (int offset, int data) { z80ctc_trg_w (1, 2, offset, data); }
+void z80ctc_1_trg3_w (int offset, int data) { z80ctc_trg_w (1, 3, offset, data); }
 
-	if( cd ){			/* controll port */
-		if( pio->mode[ch] == 0x13 ){		/* direction */
-			pio->dir[ch] = data;
-			pio->mode[ch] = 0x03;
-			return;
-		}
-		if( pio->enable[ch] & 0x10 ){	/* mask folows */
-			pio->mask[ch] = data;
-			pio->enable[ch] &= 0xef;
-			return;
-		}
-		switch( data & 0x0f ){
-		case 0x0f:	/* mode select 0=out,1=in,2=i/o,3=bit */
-			pio->mode[ch] = (data >> 6 );
-			if( pio->mode[ch] == 0x03 ) pio->mode[ch] = 0x13;
-			if (errorlog) fprintf(errorlog,"PIO-%c Mode %02x\n",'A'+ch,data );
-			break;
-		case 0x07:		/* interrupt control */
-			pio->enable[ch] = data;
-			pio->mask[ch]   = 0x00;
-			if (errorlog) fprintf(errorlog,"PIO-%c int %02x\n",'A'+ch,data );
-			break;
-		case 0x03:		/* interrupt enable controll */
-			pio->enable[ch] = (pio->enable[ch]&0x7f)|(data &0x80);
-			if (errorlog) fprintf(errorlog,"PIO-%c ena %02x\n",'A'+ch,data );
-			break;
-		default:
-			if( !(data&1) ) pio->vector[ch] = data;
-			if (errorlog) fprintf(errorlog,"PIO-%c vector %02x\n",'A'+ch,data );
-		}
-	}else{				/* data port */
-		pio->out[ch] = data;		/* latch out data */
-		switch( pio->mode[ch] ){
-		case 0x00:			/* mode 0 output */
-		case 0x02:			/* mode 2 i/o */
-			pio->rdy[ch] = 1;	/* ready = H */
-			return;
-		case 0x01:			/* mode 1 intput */
-		case 0x03:			/* mode 0 bit */
-			return;
-		default:
-			if (errorlog) fprintf(errorlog,"PIO-%c data write,bad mode\n",'A'+ch );
-		}
-	}
-}
+
+/*---------------------- Z80 PIO ---------------------------------*/
 
 /* starforce emurate Z80PIO subset */
 /* ch.A mode 1 input handshake mode from sound command */
 /* ch.b not use */
-int z80pio_r( Z80PIO *pio , int ch , int cd )
+
+
+#define PIO_MODE0 0x00		/* output mode */
+#define PIO_MODE1 0x01		/* input  mode */
+#define PIO_MODE2 0x02		/* i/o    mode */
+#define PIO_MODE3 0x03		/* bit    mode */
+/* pio controll port operation (bit 0-3) */
+#define PIO_OP_MODE 0x0f	/* mode select        */
+#define PIO_OP_INTC 0x07	/* interrupt controll */
+#define PIO_OP_INTE 0x03	/* interrupt enable   */
+#define PIO_OP_INTE 0x03	/* interrupt enable   */
+/* pio interrupt controll nit */
+#define PIO_INT_ENABLE 0x80  /* ENABLE : 0=disable , 1=enable */
+#define PIO_INT_AND    0x40  /* LOGIC  : 0=OR      , 1=AND    */
+#define PIO_INT_HIGH   0x20  /* LEVEL  : 0=low     , 1=high   */
+#define PIO_INT_MASK   0x10  /* MASK   : 0=off     , 1=on     */
+
+typedef struct
+{
+	int vector[2];                        /* interrupt vector               */
+	void (*intr)(int which);              /* interrupt callbacks            */
+	void (*rdyr[2])(int data);            /* RDY active callback            */
+	int mode[2];                          /* mode 00=in,01=out,02=i/o,03=bit*/
+	int enable[2];                        /* interrupt enable               */
+	int mask[2];                          /* mask folowers                  */
+	int dir[2];                           /* direction (bit mode)           */
+	int rdy[2];                           /* ready pin level                */
+	int in[2];                            /* input port data                */
+	int out[2];                           /* output port                    */
+	int int_state[2];                     /* interrupt status (daisy chain) */
+} z80pio;
+
+static z80pio pios[MAX_PIO];
+
+/* initialize pio emurator */
+void z80pio_init (z80pio_interface *intf)
+{
+	int i;
+
+	memset (pios, 0, sizeof (pios));
+
+	for (i = 0; i < intf->num; i++)
+	{
+		pios[i].intr = intf->intr[i];
+		pios[i].rdyr[0] = intf->rdyA[i];
+		pios[i].rdyr[1] = intf->rdyB[i];
+		z80pio_reset (i);
+	}
+}
+
+static void z80pio_interrupt_check( z80pio *pio )
+{
+	int state;
+
+	if( pio->int_state[1] & Z80_INT_IEO ) state  = Z80_INT_IEO;
+	else                                  state  = pio->int_state[1];
+	if( pio->int_state[0] & Z80_INT_IEO ) state  = Z80_INT_IEO;
+	else                                  state |= pio->int_state[0];
+	/* change daisy chain status */
+	if (pio->intr) (*pio->intr)(state);
+}
+
+static void z80pio_check_irq( z80pio *pio , int ch )
+{
+	int irq = 0;
+	int data;
+	int old_state;
+
+	if( pio->enable[ch] & PIO_INT_ENABLE )
+	{
+		if( pio->mode[ch] == PIO_MODE3 )
+		{
+			data  =  pio->in[ch] & pio->dir[ch]; /* input data only */
+			data &= ~pio->mask[ch];              /* mask follow     */
+			if( !(pio->enable[ch]&PIO_INT_HIGH) )/* active level    */
+				data ^= pio->mask[ch];             /* active low  */
+			if( pio->enable[ch]&PIO_INT_AND )    /* logic      */
+			     { if( data == pio->mask[ch] ) irq = 1; }
+			else { if( data == 0             ) irq = 1; }
+			/* if portB , portA mode 2 check */
+			if( ch && (pio->mode[0]==PIO_MODE2) )
+			{
+				if( pio->rdy[ch] == 0 ) irq = 1;
+			}
+		}
+		else if( pio->rdy[ch] == 0 ) irq = 1;
+	}
+	old_state = pio->int_state[ch];
+	if( irq ) pio->int_state[ch] |=  Z80_INT_REQ;
+	else      pio->int_state[ch] &= ~Z80_INT_REQ;
+
+	if( old_state != pio->int_state[ch] )
+		z80pio_interrupt_check( pio );
+}
+
+void z80pio_reset (int which)
+{
+	z80pio *pio = pios + which;
+	int i;
+
+	for( i = 0 ; i <= 1 ; i++){
+		pio->mask[i]   = 0xff;	/* mask all on */
+		pio->enable[i] = 0x00;	/* disable     */
+		pio->mode[i]   = 0x01;	/* mode input  */
+		pio->dir[i]    = 0x01;	/* dir  input  */
+		pio->rdy[i]    = 0x00;	/* RDY = low   */
+		pio->out[i]    = 0x00;	/* outdata = 0 */
+		pio->int_state[i] = 0;
+	}
+	z80pio_interrupt_check( pio );
+}
+
+/* pio data register write */
+void z80pio_d_w( int which , int ch , int data )
+{
+	z80pio *pio = pios + which;
+	if( ch ) ch = 1;
+
+	pio->out[ch] = data;	/* latch out data */
+	switch( pio->mode[ch] ){
+	case PIO_MODE0:			/* mode 0 output */
+	case PIO_MODE2:			/* mode 2 i/o */
+		pio->rdy[ch] = 1;	/* ready = H */
+		z80pio_check_irq( pio , ch );
+		return;
+	case PIO_MODE1:			/* mode 1 intput */
+	case PIO_MODE3:			/* mode 0 bit */
+		return;
+	default:
+		if (errorlog) fprintf(errorlog,"PIO-%c data write,bad mode\n",'A'+ch );
+	}
+}
+
+/* pio controll register write */
+void z80pio_c_w( int which , int ch , int data )
+{
+	z80pio *pio = pios + which;
+	if( ch ) ch = 1;
+
+	/* load direction phase ? */
+	if( pio->mode[ch] == 0x13 ){
+		pio->dir[ch] = data;
+		pio->mode[ch] = 0x03;
+		return;
+	}
+	/* load mask folows phase ? */
+	if( pio->enable[ch] & PIO_INT_MASK ){	/* load mask folows */
+		pio->mask[ch] = data;
+		pio->enable[ch] &= ~PIO_INT_MASK;
+		if (errorlog) fprintf(errorlog,"PIO-%c interrupt mask %02x\n",'A'+ch,data );
+		return;
+	}
+	switch( data & 0x0f ){
+	case PIO_OP_MODE:	/* mode select 0=out,1=in,2=i/o,3=bit */
+		pio->mode[ch] = (data >> 6 );
+		if( pio->mode[ch] == 0x03 ) pio->mode[ch] = 0x13;
+		if (errorlog) fprintf(errorlog,"PIO-%c Mode %x\n",'A'+ch,pio->mode[ch] );
+		break;
+	case PIO_OP_INTC:		/* interrupt control */
+		pio->enable[ch] = data & 0xf0;
+		pio->mask[ch]   = 0x00;
+		/* when interrupt enable , set vector request flag */
+		if (errorlog) fprintf(errorlog,"PIO-%c Controll %02x\n",'A'+ch,data );
+		break;
+	case PIO_OP_INTE:		/* interrupt enable controll */
+		pio->enable[ch] &= ~PIO_INT_ENABLE;
+		pio->enable[ch] |= (data & PIO_INT_ENABLE);
+		if (errorlog) fprintf(errorlog,"PIO-%c enable %02x\n",'A'+ch,data&0x80 );
+		break;
+	default:
+			if( !(data&1) )
+			{
+				pio->vector[ch] = data;
+				if (errorlog) fprintf(errorlog,"PIO-%c vector %02x\n",'A'+ch,data);
+			}
+			else if (errorlog) fprintf(errorlog,"PIO-%c illegal command %02x\n",'A'+ch,data );
+	}
+	/* interrupt check */
+	z80pio_check_irq( pio , ch );
+}
+
+/* pio controll register read */
+int z80pio_c_r( int which , int ch )
 {
 	if( ch ) ch = 1;
 
-	if( cd ){
-		if (errorlog) fprintf(errorlog,"PIO-%c controll read\n",'A'+ch );
-		return 0;
-	}
+	if (errorlog) fprintf(errorlog,"PIO-%c controll read\n",'A'+ch );
+	return 0;
+}
+
+/* pio data register read */
+int z80pio_d_r( int which , int ch )
+{
+	z80pio *pio = pios + which;
+	if( ch ) ch = 1;
+
 	switch( pio->mode[ch] ){
-	case 0x00:			/* mode 0 output */
+	case PIO_MODE0:			/* mode 0 output */
 		return pio->out[ch];
-	case 0x01:			/* mode 1 intput */
+	case PIO_MODE1:			/* mode 1 intput */
 		pio->rdy[ch] = 1;	/* ready = H */
+		z80pio_check_irq( pio , ch );
 		return pio->in[ch];
-	case 0x02:			/* mode 2 i/o */
+	case PIO_MODE2:			/* mode 2 i/o */
 		if( ch ) if (errorlog) fprintf(errorlog,"PIO-B mode 2 \n");
 		pio->rdy[1] = 1;	/* brdy = H */
-		return pio->in[0];
-	case 0x03:			/* mode 0 bit */
+		z80pio_check_irq( pio , ch );
+		return pio->in[ch];
+	case PIO_MODE3:			/* mode 3 bit */
 		return (pio->in[ch]&pio->dir[ch])|(pio->out[ch]&~pio->dir[ch]);
 	}
 	if (errorlog) fprintf(errorlog,"PIO-%c data read,bad mode\n",'A'+ch );
 	return 0;
 }
 
-/* z80pio port write */
-void z80pio_p_w( Z80PIO *pio , int ch , int data )
+int z80pio_interrupt( int which )
 {
+	z80pio *pio = pios + which;
+	int ch = 0;
+
+	/* port A */
+	if( pio->int_state[0] == Z80_INT_REQ )
+	{
+		pio->int_state[0] |= Z80_INT_IEO;
+	} if( pio->int_state[0] == 0 )
+	{
+		/* port B */
+		ch = 1;
+		if( pio->int_state[1] == Z80_INT_REQ )
+		{
+			pio->int_state[1] |= Z80_INT_IEO;
+		}
+		else
+		{
+			if (errorlog) fprintf(errorlog,"PIO entry INT : non IRQ\n");
+			ch = 0;
+		}
+	}
+	z80pio_interrupt_check( pio );
+	return pio->vector[ch];
+}
+
+void z80pio_reti( int which )
+{
+	z80pio *pio = pios + which;
+
+	if( pio->int_state[0] & Z80_INT_IEO )
+	{
+		pio->int_state[0] &= ~Z80_INT_IEO;
+	} else if( pio->int_state[1] & Z80_INT_IEO )
+	{
+		pio->int_state[1] &= ~Z80_INT_IEO;
+	}
+	/* set next interrupt stattus */
+	z80pio_interrupt_check( pio );
+}
+
+/* z80pio port write */
+void z80pio_p_w( int which , int ch , int data )
+{
+	z80pio *pio = pios + which;
+
 	if( ch ) ch = 1;
 
 	pio->in[ch]  = data;
 	switch( pio->mode[ch] ){
-	case 0x01:
-	case 0x02:
+	case PIO_MODE0:
+		if (errorlog) fprintf(errorlog,"PIO-%c OUTPUT mode and data write\n",'A'+ch );
+		break;
+	case PIO_MODE2:	/* only port A */
+		ch = 1;		/* handshake and IRQ is use portB */
+	case PIO_MODE1:
 		pio->rdy[ch] = 0;
+		z80pio_check_irq( pio , ch );
+		break;
+	case PIO_MODE3:
+		/* irq check */
+		z80pio_check_irq( pio , ch );
+		break;
 	}
 }
 
 /* z80pio port read */
-int z80pio_p_r( Z80PIO *pio , int ch )
+int z80pio_p_r( int which , int ch )
 {
+	z80pio *pio = pios + which;
+
 	if( ch ) ch = 1;
 
 	switch( pio->mode[ch] ){
-	case 0x00:
+	case PIO_MODE2:		/* port A only */
+	case PIO_MODE0:
 		pio->rdy[ch] = 0;
-		return pio->out[ch];
+		z80pio_check_irq( pio , ch );
 		break;
-	case 0x02:
-		pio->rdy[1] = 0;		/* port a only */
-		return pio->out[ch];
-	case 0x03:
+	case PIO_MODE1:
+		if (errorlog) fprintf(errorlog,"PIO-%c INPUT mode and data read\n",'A'+ch );
+		break;
+	case PIO_MODE3:
+		/*     input bits                , output bits                */
 		return (pio->in[ch]&pio->dir[ch])|(pio->out[ch]&~pio->dir[ch]);
 	}
-	return 0;
+	return pio->out[ch];
 }
 
-int z80pio_irq_r( Z80PIO *pio )
+/* for mame interface */
+
+void z80pio_0_reset (void) { z80pio_reset (0); }
+
+void z80pio_0_w(int offset , int data)
 {
-	int data;
-
-	if( pio->enable[0]&0x80 ){		/* channel A */
-		switch( pio->mode[0] ){
-		case 0x00:			/* mode 0 output */
-		case 0x02:
-			if( !(pio->rdy[1]) ) return pio->vector[1];
-		case 0x01:			/* mode 1/2 intput */
-			if( !(pio->rdy[0]) ) return pio->vector[0];
-			break;
-		case 0x03:
-			data = (pio->in[0]&pio->dir[0])|(pio->out[0]&~pio->dir[0]);
-			data &= ~pio->mask[0];
-			if( !(pio->enable[0]&0x20) ) data ^= pio->mask[0]; /* low active */
-			if( pio->enable[0]&0x40 ){	/* and */
-				if( data == pio->mask[0] ) return pio->vector[0];
-			}else{						/* or  */
-				if( data                ) return pio->vector[0];
-			}
-		}
-	}
-	if( pio->enable[1]&0x80 ){		/* channel B */
-		switch( pio->mode[1] ){
-		case 0x00:			/* mode 0 output */
-		case 0x01:			/* mode 1 intput */
-			if( !(pio->rdy[1]) ) return pio->vector[1];
-			break;
-		case 0x03:
-			data = (pio->in[1]&pio->dir[1])|(pio->out[1]&~pio->dir[1]);
-			data &= ~pio->mask[1];
-			if( !(pio->enable[1]&0x20) ) data ^= pio->mask[1]; /* low active */
-			if( pio->enable[1]&0x40 ){	/* and */
-				if( data == pio->mask[1] ) return pio->vector[1];
-			}else{						/* or  */
-				if( data                ) return pio->vector[1];
-			}
-		}
-	}
-	return Z80_IGNORE_INT;
+	if(offset&1) z80pio_c_w(0,(offset/2)&1,data);
+	else         z80pio_d_w(0,(offset/2)&1,data);
 }
+
+int  z80pio_0_r(int offset)
+{
+	return (offset&1) ? z80pio_c_r(0,(offset/2)&1) : z80pio_d_r(0,(offset/2)&1);
+}
+
+void z80pioA_0_p_w(int offset , int data) { z80pio_p_w(0,0,data);   }
+void z80pioB_0_p_w(int offset , int data) { z80pio_p_w(0,1,data);   }
+int  z80pioA_0_p_r(int offset )           { return z80pio_p_r(0,0); }
+int  z80pioB_0_p_r(int offset )           { return z80pio_p_r(0,1); }

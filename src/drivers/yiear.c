@@ -56,10 +56,10 @@ Memory map
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "M6809/M6809.h"
 
 void yiear_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void yiear_vh_screenrefresh(struct osd_bitmap *bitmap);
-void yiear_init_machine(void);
 void yiear_videoram_w(int offset,int data);
 void yiear_4f00_w(int offset,int data);
 
@@ -69,6 +69,13 @@ void yiear_audio_out_w( int offset, int val );
 int yiear_sh_start( void );
 void yiear_sh_update(void);
 
+
+
+void yiear_init_machine(void)
+{
+	/* Set OPTIMIZATION FLAGS FOR M6809 */
+	m6809_Flags = M6809_FAST_S;
+}
 
 static void yiear_interrupt_enable_w(int offset,int data)
 {
@@ -283,7 +290,7 @@ static struct MachineDriver machine_driver =
 			1			/* interrupts per frame */
 		}
 	},
-	60,					/* frames per second */
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* single CPU, no need for interleaving */
 	0,
 
@@ -384,7 +391,7 @@ struct GameDriver yiear_driver =
 	yiear_sample_names,	/* Sample names */
 	0,	/* sound_prom */
 
-	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,

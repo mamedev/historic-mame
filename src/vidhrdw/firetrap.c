@@ -379,30 +379,22 @@ void firetrap_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* draw the frontmost playfield. They are characters, but draw them as sprites */
 	for (offs = firetrap_videoram_size - 1;offs >= 0;offs--)
 	{
-		int code;
+		int sx,sy;
 
 
-		code = firetrap_videoram[offs] + 256 * (firetrap_colorram[offs] & 0x01);
-
-		if (code != 0x10)	/* don't draw spaces */
+		sx = offs % 32;
+		sy = offs / 32;
+		if (flipscreen)
 		{
-			int sx,sy;
-
-
-			sx = offs % 32;
-			sy = offs / 32;
-			if (flipscreen)
-			{
-				sx = 31 - sx;
-				sy = 31 - sy;
-			}
-
-			drawgfx(bitmap,Machine->gfx[0],
-					code,
-					(firetrap_colorram[offs] & 0xf0) >> 4,
-					flipscreen,flipscreen,
-					8*sx,8*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			sx = 31 - sx;
+			sy = 31 - sy;
 		}
+
+		drawgfx(bitmap,Machine->gfx[0],
+				firetrap_videoram[offs] + 256 * (firetrap_colorram[offs] & 0x01),
+				(firetrap_colorram[offs] & 0xf0) >> 4,
+				flipscreen,flipscreen,
+				8*sx,8*sy,
+				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

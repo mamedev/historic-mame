@@ -12,8 +12,6 @@
 
 
 unsigned char *bombjack_paletteram;
-static int background_image;
-static int flipscreen;
 
 
 
@@ -108,22 +106,43 @@ void bombjack_paletteram_w(int offset,int data)
 
 void bombjack_background_w(int offset,int data)
 {
-	if (background_image != data)
+	int base,offs,code,attr;
+
+
+	base = 0x200 * (data & 0x07);
+
+	for (offs = 0;offs < 0x100;offs++)
 	{
-		memset(dirtybuffer,1,videoram_size);
-		background_image = data;
+		if (data & 0x10)
+		{
+			code = Machine->memory_region[2][base + offs];
+			attr = Machine->memory_region[2][base + offs + 0x100];
+		}
+		else
+		{
+			code = 0xff;
+			attr = 0;
+		}
+
+		set_tile_attributes(1,			/* layer number */
+			offs,						/* x/y position */
+			0,code,						/* tile bank, code */
+			attr & 0x0f,				/* color */
+			attr & 0x40,attr & 0x80,	/* flip x/y */
+			TILE_TRANSPARENCY_OPAQUE);	/* transparency */
 	}
 }
 
 
 
-void bombjack_flipscreen_w(int offset,int data)
+void bombjack_updatehook0(int offset)
 {
-	if (flipscreen != (data & 1))
-	{
-		flipscreen = data & 1;
-		memset(dirtybuffer,1,videoram_size);
-	}
+	set_tile_attributes(0,											/* layer number */
+		offset,														/* x/y position */
+		0,videoram00[offset] + ((videoram01[offset] & 0x10) << 4),	/* tile bank, code */
+		videoram01[offset] & 0x0f,									/* color */
+		0,0,														/* flip x/y */
+		TILE_TRANSPARENCY_PEN);										/* transparency */
 }
 
 
@@ -137,91 +156,19 @@ void bombjack_flipscreen_w(int offset,int data)
 ***************************************************************************/
 void bombjack_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
-	int offs,base;
+	int offs;
 
 
-	base = 0x200 * (background_image & 0x07);
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		int sx,sy;
-		int tilecode,tileattribute;
-
-
-		sx = 31 - offs / 32;
-		sy = offs % 32;
-
-		if (background_image & 0x10)
-		{
-			int bgoffs;
-
-
-			bgoffs = base+16*(15-sx/2)+sy/2;
-
-			tilecode = Machine->memory_region[2][bgoffs],
-			tileattribute = Machine->memory_region[2][bgoffs + 0x100];
-		}
-		else
-		{
-			tilecode = 0xff;
-			tileattribute = 0;	/* avoid compiler warning */
-		}
-
-		if (dirtybuffer[offs])
-		{
-			if (flipscreen)
-			{
-				sx = 31 - sx;
-				sy = 31 - sy;
-			}
-
-			/* draw the background (this can be handled better) */
-			if (tilecode != 0xff)
-			{
-				struct rectangle clip;
-				int flipx;
-
-
-				clip.min_x = 8*sx;
-				clip.max_x = 8*sx+7;
-				clip.min_y = 8*sy;
-				clip.max_y = 8*sy+7;
-
-				flipx = tileattribute & 0x80;
-				if (flipscreen) flipx = !flipx;
-
-				drawgfx(tmpbitmap,Machine->gfx[1],
-						tilecode,
-						tileattribute & 0x0f,
-						flipx,flipscreen,
-						16*(sx/2),16*(sy/2),
-						&clip,TRANSPARENCY_NONE,0);
-
-				drawgfx(tmpbitmap,Machine->gfx[0],
-						videoram[offs] + 16 * (colorram[offs] & 0x10),
-						colorram[offs] & 0x0f,
-						flipscreen,flipscreen,
-						8*sx,8*sy,
-						&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-			}
-			else
-				drawgfx(tmpbitmap,Machine->gfx[0],
-						videoram[offs] + 16 * (colorram[offs] & 0x10),
-						colorram[offs] & 0x0f,
-						flipscreen,flipscreen,
-						8*sx,8*sy,
-						&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-
-
-			dirtybuffer[offs] = 0;
-		}
-	}
-
-
-	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	set_tile_layer_attributes(1,bitmap,			/* layer number, bitmap */
+			0,0,								/* scroll x/y */
+			*flip_screen & 1,*flip_screen & 1,	/* flip x/y */
+			0,0);								/* global attributes */
+	set_tile_layer_attributes(0,bitmap,			/* layer number, bitmap */
+			0,0,								/* scroll x/y */
+			*flip_screen & 1,*flip_screen & 1,	/* flip x/y */
+			0,0);								/* global attributes */
+	update_tile_layer(1,bitmap);
+	update_tile_layer(0,bitmap);
 
 
 	/* Draw the sprites. */
@@ -244,13 +191,16 @@ void bombjack_vh_screenrefresh(struct osd_bitmap *bitmap)
 		int sx,sy,flipx,flipy;
 
 
-		sx = spriteram[offs+2]-1;
-		sy = spriteram[offs+3];
-		flipx =	spriteram[offs+1] & 0x80;
-		flipy = spriteram[offs+1] & 0x40;
-		if (flipscreen)
+		sx = spriteram[offs+3];
+		if (spriteram[offs] & 0x80)
+			sy = 225-spriteram[offs+2];
+		else
+			sy = 241-spriteram[offs+2];
+		flipx = spriteram[offs+1] & 0x40;
+		flipy =	spriteram[offs+1] & 0x80;
+		if (*flip_screen & 1)
 		{
-			if (spriteram[offs+1] & 0x20)
+			if (spriteram[offs] & 0x80)
 			{
 				sx = 224 - sx;
 				sy = 224 - sy;
@@ -264,11 +214,20 @@ void bombjack_vh_screenrefresh(struct osd_bitmap *bitmap)
 			flipy = !flipy;
 		}
 
-		drawgfx(bitmap,Machine->gfx[(spriteram[offs] & 0x80) ? 3 : 2],
+		drawgfx(bitmap,Machine->gfx[(spriteram[offs] & 0x80) ? 1 : 0],
 				spriteram[offs] & 0x7f,
 				spriteram[offs+1] & 0x0f,
 				flipx,flipy,
 				sx,sy,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+
+if (spriteram[offs] & 0x80)
+{
+	layer_mark_rectangle_dirty(Machine->layer[1],sx,sx+31,sy,sy+31);
+}
+else
+{
+	layer_mark_rectangle_dirty(Machine->layer[1],sx,sx+15,sy,sy+15);
+}
 	}
 }

@@ -8,7 +8,7 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "Z80.h"
+#include "Z80/Z80.h"
 
 
 int panic_interrupt(void)

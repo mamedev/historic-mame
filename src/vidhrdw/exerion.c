@@ -25,6 +25,46 @@ static unsigned char palreg;
 /* used to select video bank */
 static int bankreg;
 
+
+
+void exerion_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+{
+	int i;
+	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
+	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
+
+
+	for (i = 0;i < Machine->drv->total_colors;i++)
+	{
+		int bit0,bit1,bit2;
+
+
+		/* red component */
+		bit0 = (*color_prom >> 0) & 0x01;
+		bit1 = (*color_prom >> 1) & 0x01;
+		bit2 = (*color_prom >> 2) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* green component */
+		bit0 = (*color_prom >> 3) & 0x01;
+		bit1 = (*color_prom >> 4) & 0x01;
+		bit2 = (*color_prom >> 5) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		/* blue component */
+		bit0 = 0;
+		bit1 = (*color_prom >> 6) & 0x01;
+		bit2 = (*color_prom >> 7) & 0x01;
+		*(palette++) = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+
+		color_prom++;
+	}
+
+
+	for (i = 0;i < TOTAL_COLORS(0);i++)
+		COLOR(0,i) = (*(color_prom++) & 0x0f);
+}
+
+
+
 int exerion_vh_start (void)
 {
 #ifdef DEBUG_SPRITES
@@ -40,6 +80,7 @@ void exerion_vh_stop (void)
 #endif
 	generic_vh_stop();
 }
+
 
 /***************************************************************************
 
@@ -90,7 +131,7 @@ void exerion_vh_screenrefresh (struct osd_bitmap *bitmap)
 	{
 		int x, y, s, s2;
 		int xflip, yflip, wide;
-		int wider;
+		int doubled;
 		int color;
 
 		x = spriteram[i+1]-32;
@@ -101,7 +142,7 @@ void exerion_vh_screenrefresh (struct osd_bitmap *bitmap)
 		xflip = spriteram[i] & 0x40;
 		yflip = spriteram[i] & 0x80;
 		wide = spriteram[i] & 0x08;
-		wider = spriteram[i] & 0x10;
+		doubled = spriteram[i] & 0x10;
 
 		color = 1;
 
@@ -112,36 +153,46 @@ void exerion_vh_screenrefresh (struct osd_bitmap *bitmap)
 			else
 				s2++;
 
-			drawgfx (tmpbitmap,Machine->gfx[1],
-				s2,
-				color,
-				xflip,yflip,
-				x-16,y,
-				0, TRANSPARENCY_PEN,0);
-
-			if (wider)
+			if (doubled)
 			{
-				drawgfx (tmpbitmap,Machine->gfx[1],
-					s,
-					color,
-					xflip,yflip,
-					x-32,y,
-					0, TRANSPARENCY_PEN,0);
-				drawgfx (tmpbitmap,Machine->gfx[1],
+				drawgfx (tmpbitmap,Machine->gfx[2],
 					s2,
 					color,
 					xflip,yflip,
 					x-48,y,
 					0, TRANSPARENCY_PEN,0);
 			}
+			else
+			{
+				drawgfx (tmpbitmap,Machine->gfx[1],
+					s2,
+					color,
+					xflip,yflip,
+					x-16,y,
+					0, TRANSPARENCY_PEN,0);
+			}
 		}
 
-		drawgfx (tmpbitmap,Machine->gfx[1],
+		if (doubled)
+		{
+			drawgfx (tmpbitmap,Machine->gfx[2],
+			s,
+			color,
+			xflip,yflip,
+			x-16,y,
+			0, TRANSPARENCY_PEN,0);
+		}
+		else
+		{
+			drawgfx (tmpbitmap,Machine->gfx[1],
 			s,
 			color,
 			xflip,yflip,
 			x,y,
 			0, TRANSPARENCY_PEN,0);
+		}
+
+		if (doubled) i += 4;
 	}
 	/* copy the temporary bitmap to the screen */
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);

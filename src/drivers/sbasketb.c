@@ -15,9 +15,7 @@ MAIN BOARD:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/generic.h"
-#include "sndhrdw/sn76496.h"
-#include "M6809.h"
+#include "M6809/M6809.h"
 
 
 extern unsigned char *sbasketb_scroll;
@@ -25,13 +23,31 @@ extern unsigned char *sbasketb_palettebank;
 void sbasketb_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void sbasketb_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-extern unsigned char *sbasketb_dac;
-void sbasketb_sh_irqtrigger_w(int offset,int data);
-int sbasketb_sh_timer_r(int offset);
-void sbasketb_dac_w(int offset,int data);
-int sbasketb_sh_start(void);
-void sbasketb_sh_stop(void);
-void sbasketb_sh_update(void);
+extern unsigned char *konami_dac;
+
+extern struct VLM5030interface konami_vlm5030_interface;
+extern struct SN76496interface konami_sn76496_interface;
+extern struct DACinterface konami_dac_interface;
+void konami_dac_w(int offset,int data);
+
+
+void hyperspt_sound_w(int offset , int data);
+
+int sbasketb_sh_timer_r(int offset)
+{
+	int clock;
+
+#define TIMER_RATE 1024
+
+	clock = cpu_gettotalcycles() / TIMER_RATE;
+
+	return (clock & 0x3) | (VLM5030_BSY()? 0x04 : 0);
+}
+
+static void sbasketb_sh_irqtrigger_w(int offset,int data)
+{
+	cpu_cause_interrupt(1,0xff);
+}
 
 
 
@@ -91,11 +107,12 @@ static struct MemoryWriteAddress sound_writemem[] =
 {
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x4000, 0x43ff, MWA_RAM },
-	{ 0xc00f, 0xc00f, MWA_NOP },	/* ???? */
-	{ 0xc1cf, 0xc1cf, MWA_NOP },	/* ???? */
-	{ 0xe000, 0xe000, sbasketb_dac_w, &sbasketb_dac },
+	{ 0xa000, 0xa000, VLM5030_data_w }, /* speech data */
+	{ 0xc000, 0xdfff, hyperspt_sound_w },     /* speech and output controll */
+	{ 0xe000, 0xe000, konami_dac_w, &konami_dac },
 	{ 0xe001, 0xe001, SN76496_0_w },	/* SN76496 command */
 	{ 0xe002, 0xe002, MWA_NOP },	/* SN76496 command */
+
 	{ -1 }  /* end of table */
 };
 
@@ -320,9 +337,29 @@ static unsigned char color_prom[] =
 	0x00,0x01,0x02,0x03,0x04,0x0A,0x06,0x07,0x08,0x09,0x0F,0x0B,0x0C,0x0D,0x0E,0x0F
 };
 
+/* filename for trackn field sample files */
+static const char *sbasketball_sample_names[] =
+{
+	"00.sam","01.sam","02.sam","03.sam","04.sam","05.sam","06.sam","07.sam",
+	"08.sam","09.sam","0a.sam","0b.sam","0c.sam","0d.sam","0e.sam","0f.sam",
+	"10.sam","11.sam","12.sam","13.sam","14.sam","15.sam","16.sam","17.sam",
+	"18.sam","19.sam","1a.sam","1b.sam","1c.sam","1d.sam","1e.sam","1f.sam",
+	"20.sam","21.sam","22.sam","23.sam","24.sam","25.sam","26.sam","27.sam",
+	"28.sam","29.sam","2a.sam","2b.sam","2c.sam","2d.sam","2e.sam","2f.sam",
+	"30.sam","31.sam","32.sam","33.sam",
+	0
+};
 
+#if 0
+static struct SN76496interface sn76496_interface =
+{
+	1,	/* 1 chip */
+	1789750,	/* 1.78975 Mhz ? */
+	{ 255 }
+};
+#endif
 
-static struct MachineDriver sbasketb_machine_driver =
+static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -341,8 +378,8 @@ static struct MachineDriver sbasketb_machine_driver =
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
 	},
-	60,
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	sbasketb_init_machine,
 
 	/* video hardware */
@@ -358,10 +395,21 @@ static struct MachineDriver sbasketb_machine_driver =
 	sbasketb_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	sbasketb_sh_start,
-	sbasketb_sh_stop,
-	sbasketb_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_DAC,
+			&konami_dac_interface
+		},
+		{
+			SOUND_SN76496,
+			&konami_sn76496_interface
+		},
+		{
+			SOUND_VLM5030,
+			&konami_vlm5030_interface
+		}
+	}
 };
 
 
@@ -386,6 +434,8 @@ ROM_START( sbasketb_rom )
 
         ROM_REGION(0x10000)     /* 64k for audio cpu */
         ROM_LOAD( "sbb_e13.bin", 0x0000, 0x2000, 0x3d1ba1cb )
+        ROM_LOAD( "sbb_e15.bin", 0x2000, 0x2000, 0x1c954ee7 )
+        ROM_REGION(0x10000)     /* 64k for speeck rom */
         ROM_LOAD( "sbb_e15.bin", 0x2000, 0x2000, 0x1c954ee7 )
 ROM_END
 
@@ -414,8 +464,6 @@ static int hiload(void)
         else return 0;  /* we can't load the hi scores yet */
 }
 
-
-
 static void hisave(void)
 {
         void *f;
@@ -437,15 +485,15 @@ struct GameDriver sbasketb_driver =
 {
 	"Super Basketball",
 	"sbasketb",
-	"Zsolt Vasvari\nTim Linquist (color info)\nMarco Cassili",
-	&sbasketb_machine_driver,
+	"Zsolt Vasvari\nTim Linquist (color info)\nMarco Cassili\nTatsuyuki Satoh(speech sound)",
+	&machine_driver,
 
 	sbasketb_rom,
 	0, 0,
-	0,
+	sbasketball_sample_names,
 	0,	/* sound_prom */
 
-	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,

@@ -14,8 +14,6 @@
 
 #include "driver.h"
 #include "tms5220.h"
-#include "5220intf.h"
-#include "sndhrdw/generic.h"
 
 
 /* these describe the current state of the output buffer */
@@ -96,7 +94,7 @@ void tms5220_sh_update (void)
     sample_pos = 0;
 
     /* play this sample */
-    osd_play_streamed_sample (channel, buffer, buffer_len, emulation_rate, intf->volume);
+    osd_play_streamed_sample (channel, (signed char *)buffer, buffer_len, emulation_rate, intf->volume);
 }
 
 
@@ -169,12 +167,10 @@ int tms5220_int_r (void)
 
 static void tms5220_update (int force)
 {
-    int totcycles, leftcycles, newpos;
+    int newpos;
 
-    /* determine the new buffer positon */
-    totcycles = cpu_getfperiod ();
-    leftcycles = cpu_getfcount ();
-    newpos = buffer_len * (totcycles - leftcycles) / totcycles;
+
+	newpos = cpu_scalebyfcount(buffer_len);	/* get current position based on the timer */
 
     /* if we need more than MIN_SLICE samples, or if we're not yet talking, generate them now */
     if (newpos > buffer_len)

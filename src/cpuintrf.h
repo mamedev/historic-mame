@@ -3,6 +3,8 @@
 
 #define CPU_CONTEXT_SIZE 200		/* ASG 971105 */
 
+#include "timer.h"
+#include "z80/z80.h"
 
 /* ASG 971222 -- added this generic structure */
 struct cpu_interface
@@ -49,6 +51,8 @@ int cpu_getactivecpu(void);
 int cpu_getpc(void);
 int cpu_getpreviouspc(void);  /* -RAY- */
 int cpu_getreturnpc(void);
+int cycles_currently_ran(void);
+int cycles_left_to_run(void);
 /* Returns the number of CPU cycles which take place in one video frame */
 int cpu_gettotalcycles(void);
 /* Returns the number of CPU cycles before the next interrupt handler call */
@@ -57,6 +61,16 @@ int cpu_geticount(void);
 int cpu_getfcount(void);
 /* Returns the number of CPU cycles in one video frame */
 int cpu_getfperiod(void);
+/* Scales a given value by the ratio of fcount / fperiod */
+int cpu_scalebyfcount(int value);
+
+/* Returns the current scanline number */
+int cpu_getscanline(void);
+/* Returns the amount of time until a given scanline */
+double cpu_getscanlinetime(int scanline);
+/* Returns the duration of a single scanline */
+double cpu_getscanlineperiod(void);
+
 void cpu_seticount(int cycles);
 /*
   Returns the number of times the interrupt handler will be called before
@@ -66,7 +80,31 @@ void cpu_seticount(int cycles);
   that the interrupt handler will be called once.
 */
 int cpu_getiloops(void);
+/* Returns the current VBLANK state */
+int cpu_getvblank(void);
 
+/* generate a trigger after a specific period of time */
+void cpu_triggertime (double duration, int trigger);
+/* generate a trigger now */
+void cpu_trigger (int trigger);
+
+/* burn CPU cycles until a timer trigger */
+void cpu_spinuntil_trigger (int trigger);
+/* burn CPU cycles until the next interrupt */
+void cpu_spinuntil_int (void);
+/* burn CPU cycles until our timeslice is up */
+void cpu_spin (void);
+/* burn CPU cycles for a specific period of time */
+void cpu_spinuntil_time (double duration);
+
+/* yield our timeslice for a specific period of time */
+void cpu_yielduntil_trigger (int trigger);
+/* yield our timeslice until the next interrupt */
+void cpu_yielduntil_int (void);
+/* yield our current timeslice */
+void cpu_yield (void);
+/* yield our timeslice for a specific period of time */
+void cpu_yielduntil_time (double duration);
 
 /* cause an interrupt on a CPU */
 void cpu_cause_interrupt(int cpu,int type);
@@ -79,5 +117,8 @@ int ignore_interrupt(void);
 
 void cpu_getcpucontext (int, unsigned char *);
 void cpu_setcpucontext (int, const unsigned char *);
+
+/* IFDEF Z80_DAISYCHAIN */
+void cpu_setdaisychain (int cpunum, Z80_DaisyChain *daisy_chain );
 
 #endif

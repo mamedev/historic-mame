@@ -27,5 +27,6 @@ void displaytext(const struct DisplayText *dt,int erase);
 int showcharset(void);
 int showcredits(void);
 int setup_menu(void);
+void set_ui_visarea (int xmin, int ymin, int xmax, int ymax);
 
 #endif

@@ -11,6 +11,11 @@
 
 
 
+static int flipscreen[2];
+static int gfxbank,palettebank;
+
+
+
 /***************************************************************************
 
   Convert the color PROMs into a more useable format.
@@ -82,6 +87,44 @@ void arkanoid_vh_convert_color_prom(unsigned char *palette, unsigned char *color
 
 
 
+void arkanoid_d008_w(int offset,int data)
+{
+	/* bits 0 and 1 flip X and Y, I don't know which is which */
+	if (flipscreen[0] != (data & 0x01))
+	{
+		flipscreen[0] = data & 0x01;
+		memset(dirtybuffer,1,videoram_size);
+	}
+	if (flipscreen[1] != (data & 0x02))
+	{
+		flipscreen[1] = data & 0x02;
+		memset(dirtybuffer,1,videoram_size);
+	}
+
+	/* bit 2 selects the input paddle - not supported */
+
+	/* bit 3 is unknown */
+
+	/* bit 4 is unknown */
+
+	/* bits 5 and 6 control gfx bank and palette bank. They are used together */
+	/* so I don't know which is which. */
+	if (gfxbank != ((data & 0x20) >> 5))
+	{
+		gfxbank = (data & 0x20) >> 5;
+		memset(dirtybuffer,1,videoram_size);
+	}
+	if (palettebank != ((data & 0x40) >> 6))
+	{
+		palettebank = (data & 0x40) >> 6;
+		memset(dirtybuffer,1,videoram_size);
+	}
+
+	/* bit 7 is unknown */
+}
+
+
+
 /***************************************************************************
 
   Draw the game screen in the given osd_bitmap.
@@ -92,14 +135,7 @@ void arkanoid_vh_convert_color_prom(unsigned char *palette, unsigned char *color
 void arkanoid_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
 	int offs;
-static int base;
 
-if (osd_key_pressed(OSD_KEY_SPACE))
-{
-	while (osd_key_pressed(OSD_KEY_SPACE));
-	base ^= 1;
-	memset(dirtybuffer,1,videoram_size);
-}
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
@@ -110,24 +146,23 @@ if (osd_key_pressed(OSD_KEY_SPACE))
 		offs2 = offs/2;
 		if (dirtybuffer[offs] || dirtybuffer[offs+1])
 		{
-			int sx,sy;
-			int num;
+			int sx,sy,code;
+
 
 			dirtybuffer[offs] = 0;
-			dirtybuffer[offs+1] = 0;
+			dirtybuffer[offs + 1] = 0;
 
-			sy = offs2 % 32;
-			sx = 31 - (offs2 / 32);
+			sx = offs2 % 32;
+			sy = offs2 / 32;
 
-//			if (flipscreen[0]) sx = 31 - sx;
-//			if (flipscreen[1]) sy = 31 - sy;
+			if (flipscreen[0]) sx = 31 - sx;
+			if (flipscreen[1]) sy = 31 - sy;
 
-			num = videoram[offs+1] + ((videoram[offs] & 0x07) << 8) + 2048*base;
+			code = videoram[offs + 1] + ((videoram[offs] & 0x07) << 8) + 2048 * gfxbank;
 			drawgfx(tmpbitmap,Machine->gfx[0],
-					num,
-					((videoram[offs] & 0xf8) >> 3) + 32*base,
-//					flipscreen[0],flipscreen[1],
-					0,0,
+					code,
+					((videoram[offs] & 0xf8) >> 3) + 32 * palettebank,
+					flipscreen[0],flipscreen[1],
 					8*sx,8*sy,
 					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 		}
@@ -136,4 +171,31 @@ if (osd_key_pressed(OSD_KEY_SPACE))
 
 	/* copy the temporary bitmap to the screen */
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+
+
+	/* Draw the sprites. */
+	for (offs = 0;offs < spriteram_size;offs += 4)
+	{
+		int sx,sy,code;
+
+
+		sx = spriteram[offs];
+		sy = 248 - spriteram[offs + 1];
+		if (flipscreen[0]) sx = 248 - sx;
+		if (flipscreen[1]) sy = 248 - sy;
+
+		code = spriteram[offs + 3] + ((spriteram[offs + 2] & 0x03) << 8) + 1024 * gfxbank;
+		drawgfx(bitmap,Machine->gfx[0],
+				2 * code,
+				((spriteram[offs + 2] & 0xf8) >> 3) + 32 * palettebank,
+				flipscreen[0],flipscreen[1],
+				sx,sy + (flipscreen[1] ? 8 : -8),
+				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+		drawgfx(bitmap,Machine->gfx[0],
+				2 * code + 1,
+				((spriteram[offs + 2] & 0xf8) >> 3) + 32 * palettebank,
+				flipscreen[0],flipscreen[1],
+				sx,sy,
+				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+	}
 }

@@ -8,8 +8,8 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw\generic.h"
-#include "Z80.h"
+#include "vidhrdw/generic.h"
+#include "Z80/Z80.h"
 
 unsigned char *xevious_sharedram;
 unsigned char *xevious_vlatches;
@@ -20,6 +20,10 @@ static unsigned char *rom2a;
 static unsigned char *rom2b;
 static unsigned char *rom2c;
 static int xevious_bs[2];
+
+static void *nmi_timer;
+
+void xevious_halt_w(int offset,int data);
 
 /* namco stick number array */
 /*
@@ -52,6 +56,10 @@ void xevious_init_machine(void)
 	rom2a = Machine->memory_region[4];
 	rom2b = Machine->memory_region[4]+0x1000;
 	rom2c = Machine->memory_region[4]+0x3000;
+
+	nmi_timer = 0;
+
+	xevious_halt_w (0, 0);
 
 #if 0		/* bypass initial rom & ram test , goto hot start(namco) */
 	Machine->memory_region[0][0x15f] = 0xc3;	/* check sum break */
@@ -176,27 +184,9 @@ if (errorlog) fprintf(errorlog,"%04x: custom IO offset %02x data %02x\n",cpu_get
 				/* it is not known how the parameters control the explosion. */
 				/* We just use samples. */
 				if (memcmp(customio,"\x40\x40\x40\x01\xff\x00\x20",7) == 0)
-				{
-					/* ground target explosion */
-					if (Machine->samples && Machine->samples->sample[0])
-					{
-						osd_play_sample(7,Machine->samples->sample[0]->data,
-								Machine->samples->sample[0]->length,
-								Machine->samples->sample[0]->smpfreq,
-								Machine->samples->sample[0]->volume,0);
-					}
-				}
+					sample_start (0, 0, 0);
 				else if (memcmp(customio,"\x30\x40\x00\x02\xdf\x00\x10",7) == 0)
-				{
-					/* Solvalou explosion */
-					if (Machine->samples && Machine->samples->sample[0])
-					{
-						osd_play_sample(7,Machine->samples->sample[1]->data,
-								Machine->samples->sample[1]->length,
-								Machine->samples->sample[1]->smpfreq,
-								Machine->samples->sample[1]->volume,0);
-					}
-				}
+					sample_start (0, 1, 0);
 			}
 			break;
 	}
@@ -317,6 +307,11 @@ int xevious_customio_r(int offset)
 	return customio_command;
 }
 
+void xevious_nmi_generate (int param)
+{
+	cpu_cause_interrupt (0, Z80_NMI_INT);
+}
+
 
 void xevious_customio_w(int offset,int data)
 {
@@ -327,17 +322,35 @@ if (errorlog && data != 0x10 && data != 0x71) fprintf(errorlog,"%04x: custom IO 
 	switch (data)
 	{
 		case 0x10:
+			if (nmi_timer) timer_remove (nmi_timer);
+			nmi_timer = 0;
 			return;	/* nop */
-			break;
 	}
+
+	nmi_timer = timer_pulse (TIME_IN_USEC (50), 0, xevious_nmi_generate);
 }
 
 
 
 void xevious_halt_w(int offset,int data)
 {
-	cpu_halt(1,data&1);
-	cpu_halt(2,data&1);
+	static int reset23;
+
+	data &= 1;
+	if (data && !reset23)
+	{
+		cpu_reset (1);
+		cpu_reset (2);
+		cpu_halt (1,1);
+		cpu_halt (2,1);
+	}
+	else if (!data)
+	{
+		cpu_halt (1,0);
+		cpu_halt (2,0);
+	}
+
+	reset23 = data;
 }
 
 
@@ -351,16 +364,8 @@ void xevious_interrupt_enable_1_w(int offset,int data)
 
 int xevious_interrupt_1(void)
 {
-	if (cpu_getiloops() == 0)
-	{
-		if (interrupt_enable_1) return interrupt();
-	}
-	/* the custom I/O chip generates NMI to cause data to be transferred */
-	/* by the main CPU to/from the command registers. */
-	else if (customio_command != 0x10)
-		return nmi_interrupt();
-
-	return ignore_interrupt();
+	if (interrupt_enable_1) return interrupt();
+	else return ignore_interrupt();
 }
 
 

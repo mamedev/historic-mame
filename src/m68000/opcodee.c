@@ -1206,7 +1206,7 @@ void op_e2d0(ULONG opcode) /* LSRW */
 {	UWORD val = data;
 	ULONG carry = val&1;
 	val >>= 1;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(val)) == 0;
 	NFLG = ((WORD)(val)) < 0;
 CFLG = regs.x = carry!=0;
@@ -1221,7 +1221,7 @@ void op_e2d8(ULONG opcode) /* LSRW */
 {	UWORD val = data;
 	ULONG carry = val&1;
 	val >>= 1;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(val)) == 0;
 	NFLG = ((WORD)(val)) < 0;
 CFLG = regs.x = carry!=0;
@@ -1236,7 +1236,7 @@ void op_e2e0(ULONG opcode) /* LSRW */
 {	UWORD val = data;
 	ULONG carry = val&1;
 	val >>= 1;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(val)) == 0;
 	NFLG = ((WORD)(val)) < 0;
 CFLG = regs.x = carry!=0;
@@ -1250,7 +1250,7 @@ void op_e2e8(ULONG opcode) /* LSRW */
 {	UWORD val = data;
 	ULONG carry = val&1;
 	val >>= 1;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(val)) == 0;
 	NFLG = ((WORD)(val)) < 0;
 CFLG = regs.x = carry!=0;
@@ -1264,7 +1264,7 @@ void op_e2f0(ULONG opcode) /* LSRW */
 {	UWORD val = data;
 	ULONG carry = val&1;
 	val >>= 1;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(val)) == 0;
 	NFLG = ((WORD)(val)) < 0;
 CFLG = regs.x = carry!=0;
@@ -1277,7 +1277,7 @@ void op_e2f8(ULONG opcode) /* LSRW */
 {	UWORD val = data;
 	ULONG carry = val&1;
 	val >>= 1;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(val)) == 0;
 	NFLG = ((WORD)(val)) < 0;
 CFLG = regs.x = carry!=0;
@@ -1290,7 +1290,7 @@ void op_e2f9(ULONG opcode) /* LSRW */
 {	UWORD val = data;
 	ULONG carry = val&1;
 	val >>= 1;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(val)) == 0;
 	NFLG = ((WORD)(val)) < 0;
 CFLG = regs.x = carry!=0;
@@ -1305,7 +1305,7 @@ void op_e3d0(ULONG opcode) /* LSLW */
 	ULONG cmask = 0x8000;
 	ULONG carry = val&cmask;
 	val <<= 1;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(val)) == 0;
 	NFLG = ((WORD)(val)) < 0;
 CFLG = regs.x = carry!=0;
@@ -1321,7 +1321,7 @@ void op_e3d8(ULONG opcode) /* LSLW */
 	ULONG cmask = 0x8000;
 	ULONG carry = val&cmask;
 	val <<= 1;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(val)) == 0;
 	NFLG = ((WORD)(val)) < 0;
 CFLG = regs.x = carry!=0;
@@ -1337,7 +1337,7 @@ void op_e3e0(ULONG opcode) /* LSLW */
 	ULONG cmask = 0x8000;
 	ULONG carry = val&cmask;
 	val <<= 1;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(val)) == 0;
 	NFLG = ((WORD)(val)) < 0;
 CFLG = regs.x = carry!=0;
@@ -1352,7 +1352,7 @@ void op_e3e8(ULONG opcode) /* LSLW */
 	ULONG cmask = 0x8000;
 	ULONG carry = val&cmask;
 	val <<= 1;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(val)) == 0;
 	NFLG = ((WORD)(val)) < 0;
 CFLG = regs.x = carry!=0;
@@ -1367,7 +1367,7 @@ void op_e3f0(ULONG opcode) /* LSLW */
 	ULONG cmask = 0x8000;
 	ULONG carry = val&cmask;
 	val <<= 1;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(val)) == 0;
 	NFLG = ((WORD)(val)) < 0;
 CFLG = regs.x = carry!=0;
@@ -1381,7 +1381,7 @@ void op_e3f8(ULONG opcode) /* LSLW */
 	ULONG cmask = 0x8000;
 	ULONG carry = val&cmask;
 	val <<= 1;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(val)) == 0;
 	NFLG = ((WORD)(val)) < 0;
 CFLG = regs.x = carry!=0;
@@ -1395,7 +1395,7 @@ void op_e3f9(ULONG opcode) /* LSLW */
 	ULONG cmask = 0x8000;
 	ULONG carry = val&cmask;
 	val <<= 1;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(val)) == 0;
 	NFLG = ((WORD)(val)) < 0;
 CFLG = regs.x = carry!=0;
@@ -1412,7 +1412,7 @@ void op_e4d0(ULONG opcode) /* ROXRW */
 	val >>= 1;
 	if(regs.x) val |= cmask;
 	regs.x = carry != 0;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(val)) == 0;
 	NFLG = ((WORD)(val)) < 0;
 regs.x = CFLG = carry!=0;
@@ -1430,7 +1430,7 @@ void op_e4d8(ULONG opcode) /* ROXRW */
 	val >>= 1;
 	if(regs.x) val |= cmask;
 	regs.x = carry != 0;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(val)) == 0;
 	NFLG = ((WORD)(val)) < 0;
 regs.x = CFLG = carry!=0;
@@ -1448,7 +1448,7 @@ void op_e4e0(ULONG opcode) /* ROXRW */
 	val >>= 1;
 	if(regs.x) val |= cmask;
 	regs.x = carry != 0;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(val)) == 0;
 	NFLG = ((WORD)(val)) < 0;
 regs.x = CFLG = carry!=0;
@@ -1465,7 +1465,7 @@ void op_e4e8(ULONG opcode) /* ROXRW */
 	val >>= 1;
 	if(regs.x) val |= cmask;
 	regs.x = carry != 0;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(val)) == 0;
 	NFLG = ((WORD)(val)) < 0;
 regs.x = CFLG = carry!=0;
@@ -1482,7 +1482,7 @@ void op_e4f0(ULONG opcode) /* ROXRW */
 	val >>= 1;
 	if(regs.x) val |= cmask;
 	regs.x = carry != 0;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(val)) == 0;
 	NFLG = ((WORD)(val)) < 0;
 regs.x = CFLG = carry!=0;
@@ -1498,7 +1498,7 @@ void op_e4f8(ULONG opcode) /* ROXRW */
 	val >>= 1;
 	if(regs.x) val |= cmask;
 	regs.x = carry != 0;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(val)) == 0;
 	NFLG = ((WORD)(val)) < 0;
 regs.x = CFLG = carry!=0;
@@ -1514,7 +1514,7 @@ void op_e4f9(ULONG opcode) /* ROXRW */
 	val >>= 1;
 	if(regs.x) val |= cmask;
 	regs.x = carry != 0;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(val)) == 0;
 	NFLG = ((WORD)(val)) < 0;
 regs.x = CFLG = carry!=0;
@@ -1531,7 +1531,7 @@ void op_e5d0(ULONG opcode) /* ROXLW */
 	val <<= 1;
 	if(regs.x) val |= 1;
 	regs.x = carry != 0;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(val)) == 0;
 	NFLG = ((WORD)(val)) < 0;
 regs.x = CFLG = carry!=0;
@@ -1549,7 +1549,7 @@ void op_e5d8(ULONG opcode) /* ROXLW */
 	val <<= 1;
 	if(regs.x) val |= 1;
 	regs.x = carry != 0;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(val)) == 0;
 	NFLG = ((WORD)(val)) < 0;
 regs.x = CFLG = carry!=0;
@@ -1567,7 +1567,7 @@ void op_e5e0(ULONG opcode) /* ROXLW */
 	val <<= 1;
 	if(regs.x) val |= 1;
 	regs.x = carry != 0;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(val)) == 0;
 	NFLG = ((WORD)(val)) < 0;
 regs.x = CFLG = carry!=0;
@@ -1584,7 +1584,7 @@ void op_e5e8(ULONG opcode) /* ROXLW */
 	val <<= 1;
 	if(regs.x) val |= 1;
 	regs.x = carry != 0;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(val)) == 0;
 	NFLG = ((WORD)(val)) < 0;
 regs.x = CFLG = carry!=0;
@@ -1601,7 +1601,7 @@ void op_e5f0(ULONG opcode) /* ROXLW */
 	val <<= 1;
 	if(regs.x) val |= 1;
 	regs.x = carry != 0;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(val)) == 0;
 	NFLG = ((WORD)(val)) < 0;
 regs.x = CFLG = carry!=0;
@@ -1617,7 +1617,7 @@ void op_e5f8(ULONG opcode) /* ROXLW */
 	val <<= 1;
 	if(regs.x) val |= 1;
 	regs.x = carry != 0;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(val)) == 0;
 	NFLG = ((WORD)(val)) < 0;
 regs.x = CFLG = carry!=0;
@@ -1633,7 +1633,7 @@ void op_e5f9(ULONG opcode) /* ROXLW */
 	val <<= 1;
 	if(regs.x) val |= 1;
 	regs.x = carry != 0;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(val)) == 0;
 	NFLG = ((WORD)(val)) < 0;
 regs.x = CFLG = carry!=0;
@@ -1649,7 +1649,7 @@ void op_e6d0(ULONG opcode) /* RORW */
 	ULONG cmask = 0x8000;
 	val >>= 1;
 	if(carry) val |= cmask;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(val)) == 0;
 	NFLG = ((WORD)(val)) < 0;
 CFLG = carry!=0;
@@ -1666,7 +1666,7 @@ void op_e6d8(ULONG opcode) /* RORW */
 	ULONG cmask = 0x8000;
 	val >>= 1;
 	if(carry) val |= cmask;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(val)) == 0;
 	NFLG = ((WORD)(val)) < 0;
 CFLG = carry!=0;
@@ -1683,7 +1683,7 @@ void op_e6e0(ULONG opcode) /* RORW */
 	ULONG cmask = 0x8000;
 	val >>= 1;
 	if(carry) val |= cmask;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(val)) == 0;
 	NFLG = ((WORD)(val)) < 0;
 CFLG = carry!=0;
@@ -1699,7 +1699,7 @@ void op_e6e8(ULONG opcode) /* RORW */
 	ULONG cmask = 0x8000;
 	val >>= 1;
 	if(carry) val |= cmask;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(val)) == 0;
 	NFLG = ((WORD)(val)) < 0;
 CFLG = carry!=0;
@@ -1715,7 +1715,7 @@ void op_e6f0(ULONG opcode) /* RORW */
 	ULONG cmask = 0x8000;
 	val >>= 1;
 	if(carry) val |= cmask;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(val)) == 0;
 	NFLG = ((WORD)(val)) < 0;
 CFLG = carry!=0;
@@ -1730,7 +1730,7 @@ void op_e6f8(ULONG opcode) /* RORW */
 	ULONG cmask = 0x8000;
 	val >>= 1;
 	if(carry) val |= cmask;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(val)) == 0;
 	NFLG = ((WORD)(val)) < 0;
 CFLG = carry!=0;
@@ -1745,7 +1745,7 @@ void op_e6f9(ULONG opcode) /* RORW */
 	ULONG cmask = 0x8000;
 	val >>= 1;
 	if(carry) val |= cmask;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(val)) == 0;
 	NFLG = ((WORD)(val)) < 0;
 CFLG = carry!=0;
@@ -1761,7 +1761,7 @@ void op_e7d0(ULONG opcode) /* ROLW */
 	ULONG carry = val&cmask;
 	val <<= 1;
 	if(carry)  val |= 1;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(val)) == 0;
 	NFLG = ((WORD)(val)) < 0;
 CFLG = carry!=0;
@@ -1778,7 +1778,7 @@ void op_e7d8(ULONG opcode) /* ROLW */
 	ULONG carry = val&cmask;
 	val <<= 1;
 	if(carry)  val |= 1;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(val)) == 0;
 	NFLG = ((WORD)(val)) < 0;
 CFLG = carry!=0;
@@ -1795,7 +1795,7 @@ void op_e7e0(ULONG opcode) /* ROLW */
 	ULONG carry = val&cmask;
 	val <<= 1;
 	if(carry)  val |= 1;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(val)) == 0;
 	NFLG = ((WORD)(val)) < 0;
 CFLG = carry!=0;
@@ -1811,7 +1811,7 @@ void op_e7e8(ULONG opcode) /* ROLW */
 	ULONG carry = val&cmask;
 	val <<= 1;
 	if(carry)  val |= 1;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(val)) == 0;
 	NFLG = ((WORD)(val)) < 0;
 CFLG = carry!=0;
@@ -1827,7 +1827,7 @@ void op_e7f0(ULONG opcode) /* ROLW */
 	ULONG carry = val&cmask;
 	val <<= 1;
 	if(carry)  val |= 1;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(val)) == 0;
 	NFLG = ((WORD)(val)) < 0;
 CFLG = carry!=0;
@@ -1842,7 +1842,7 @@ void op_e7f8(ULONG opcode) /* ROLW */
 	ULONG carry = val&cmask;
 	val <<= 1;
 	if(carry)  val |= 1;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(val)) == 0;
 	NFLG = ((WORD)(val)) < 0;
 CFLG = carry!=0;
@@ -1857,7 +1857,7 @@ void op_e7f9(ULONG opcode) /* ROLW */
 	ULONG carry = val&cmask;
 	val <<= 1;
 	if(carry)  val |= 1;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(val)) == 0;
 	NFLG = ((WORD)(val)) < 0;
 CFLG = carry!=0;

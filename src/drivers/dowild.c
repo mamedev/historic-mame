@@ -41,7 +41,6 @@ ac00      sound port 4
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/sn76496.h"
 
 
 
@@ -55,8 +54,6 @@ void dowild_vh_convert_color_prom(unsigned char *palette, unsigned char *colorta
 int docastle_vh_start(void);
 void docastle_vh_stop(void);
 void docastle_vh_screenrefresh(struct osd_bitmap *bitmap);
-
-int docastle_sh_start(void);
 
 
 
@@ -151,29 +148,29 @@ INPUT_PORTS_START( dowild_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* reported as not used */
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x80, 0x80, "Lives", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x80, "3" )
-	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x40, 0x40, "Special", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x40, "Given" )
-	PORT_DIPSETTING(    0x00, "Not Given" )
-	PORT_DIPNAME( 0x20, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x20, "Cocktail" )
-	PORT_DIPNAME( 0x10, 0x10, "Extra", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x10, "Easy" )
-	PORT_DIPSETTING(    0x00, "Hard" )
-	PORT_DIPNAME( 0x08, 0x08, "DSW5", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x08, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Rack Test", OSD_KEY_F1, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x04, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
 	PORT_DIPNAME( 0x03, 0x03, "Difficulty", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x03, "Easy" )
 	PORT_DIPSETTING(    0x02, "Medium" )
 	PORT_DIPSETTING(    0x01, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Rack Test", OSD_KEY_F1, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x08, 0x08, "DSW5", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x10, 0x10, "Extra", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "Easy" )
+	PORT_DIPSETTING(    0x00, "Hard" )
+	PORT_DIPNAME( 0x20, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x20, "Cocktail" )
+	PORT_DIPNAME( 0x40, 0x40, "Special", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Given" )
+	PORT_DIPSETTING(    0x00, "Not Given" )
+	PORT_DIPNAME( 0x80, 0x80, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
 
 	PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x0f, 0x0f, "Coin B", IP_KEY_NONE )
@@ -239,28 +236,28 @@ INPUT_PORTS_START( jjack_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* reported as not used */
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0xc0, 0xc0, "Lives", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "2" )
-	PORT_DIPSETTING(    0xc0, "3" )
-	PORT_DIPSETTING(    0x80, "4" )
-	PORT_DIPSETTING(    0x40, "5" )
-	PORT_DIPNAME( 0x20, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x20, "Cocktail" )
-	PORT_DIPNAME( 0x10, 0x10, "Extra?", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x10, "Easy" )
-	PORT_DIPSETTING(    0x00, "Hard" )
-	PORT_DIPNAME( 0x08, 0x08, "DSW5", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x08, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Rack Test", OSD_KEY_F1, IP_JOY_NONE, 0 )
-	PORT_DIPSETTING(    0x04, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
 	PORT_DIPNAME( 0x03, 0x03, "Difficulty?", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x03, "Easy" )
 	PORT_DIPSETTING(    0x02, "Medium" )
 	PORT_DIPSETTING(    0x01, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Rack Test", OSD_KEY_F1, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x08, 0x08, "DSW5", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x10, 0x10, "Extra?", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "Easy" )
+	PORT_DIPSETTING(    0x00, "Hard" )
+	PORT_DIPNAME( 0x20, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x20, "Cocktail" )
+	PORT_DIPNAME( 0xc0, 0xc0, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0xc0, "3" )
+	PORT_DIPSETTING(    0x80, "4" )
+	PORT_DIPSETTING(    0x40, "5" )
 
 	PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x0f, 0x0f, "Coin B", IP_KEY_NONE )
@@ -327,29 +324,29 @@ INPUT_PORTS_START( dorunrun_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* DSW0 */
-	PORT_DIPNAME( 0x80, 0x80, "Lives", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x80, "3" )
-	PORT_DIPSETTING(    0x00, "5" )
-	PORT_DIPNAME( 0x40, 0x40, "Special", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x40, "Given" )
-	PORT_DIPSETTING(    0x00, "Not Given" )
-	PORT_DIPNAME( 0x20, 0x00, "Cabinet", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Upright" )
-	PORT_DIPSETTING(    0x20, "Cocktail" )
-	PORT_DIPNAME( 0x10, 0x10, "Extra", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x10, "Easy" )
-	PORT_DIPSETTING(    0x00, "Hard" )
-	PORT_DIPNAME( 0x08, 0x08, "DSW5", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x08, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x04, 0x04, "Demo Sounds", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "Off" )
-	PORT_DIPSETTING(    0x04, "On" )
 	PORT_DIPNAME( 0x03, 0x03, "Difficulty", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x03, "Easy" )
 	PORT_DIPSETTING(    0x02, "Medium" )
 	PORT_DIPSETTING(    0x01, "Hard" )
 	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x04, 0x04, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x04, "On" )
+	PORT_DIPNAME( 0x08, 0x08, "DSW5", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x10, 0x10, "Extra", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "Easy" )
+	PORT_DIPSETTING(    0x00, "Hard" )
+	PORT_DIPNAME( 0x20, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x20, "Cocktail" )
+	PORT_DIPNAME( 0x40, 0x40, "Special", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Given" )
+	PORT_DIPSETTING(    0x00, "Not Given" )
+	PORT_DIPNAME( 0x80, 0x80, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
 
 	PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x0f, 0x0f, "Coin B", IP_KEY_NONE )
@@ -607,28 +604,36 @@ static unsigned char kickridr_color_prom[] =
 
 
 
+static struct SN76496interface sn76496_interface =
+{
+	4,	/* 4 chips */
+	4000000,	/* 4 Mhz? */
+	{ 255, 255, 255, 255 }
+};
+
+
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_Z80,
-			4000000,	/* 4 Mhz ? */
+			4000000,	/* 4 Mhz */
 			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80,
-			4000000,	/* 4 Mhz ??? */
+			4000000,	/* 4 Mhz */
 			2,	/* memory region #2 */
 			readmem2, writemem2,0,0,
 			interrupt,8
 		}
 	},
-	60,
-	100,	/* 100 CPU slices per frame - an high value to ensure proper */
-			/* synchronization of the CPUs */
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when communication takes place */
 	0,
 
 	/* video hardware */
@@ -644,10 +649,13 @@ static struct MachineDriver machine_driver =
 	docastle_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	docastle_sh_start,
-	SN76496_sh_stop,
-	SN76496_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_SN76496,
+			&sn76496_interface
+		}
+	}
 };
 
 
@@ -854,7 +862,7 @@ struct GameDriver dowild_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/, dowild_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	dowild_input_ports,
 
 	dowild_color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -874,7 +882,7 @@ struct GameDriver jjack_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/, jjack_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	jjack_input_ports,
 
 	jjack_color_prom, 0, 0,
 	ORIENTATION_ROTATE_270,
@@ -894,7 +902,7 @@ struct GameDriver dorunrun_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/, dorunrun_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	dorunrun_input_ports,
 
 	dorunrun_color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -914,7 +922,7 @@ struct GameDriver spiero_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/, dorunrun_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	dorunrun_input_ports,
 
 	spiero_color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -934,7 +942,7 @@ struct GameDriver kickridr_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/, kickridr_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	kickridr_input_ports,
 
 	kickridr_color_prom, 0, 0,
 	ORIENTATION_DEFAULT,

@@ -6,8 +6,6 @@
 
 
 #include "driver.h"
-#include "sndhrdw/generic.h"
-#include "sndhrdw/8910intf.h"
 
 
 
@@ -26,7 +24,7 @@ static int scramble_timer[20] = {
 0x80, 0x90, 0x80, 0x90, 0xa0, 0xb0, 0xa0, 0xb0, 0xc0, 0xd0
 };
 
-static int scramble_portB_r(int offset)
+int scramble_portB_r(int offset)
 {
 	/* need to protect from totalcycles overflow */
 	static int last_totalcycles = 0;
@@ -55,35 +53,7 @@ void scramble_sh_irqtrigger_w(int offset,int data)
 	{
 		/* setting bit 3 low then high triggers IRQ on the sound CPU */
 		cpu_cause_interrupt(1,0xff);
-
-	/* TODO: I shouldn't do this, but if I don't, in Minefield some commands */
-	/* go lost regardless of the CPU interleaving factor (even 500 won't be */
-	/* enough). The command which goes lost is the "turn on helicopter sound" at */
-	/* the beginning of the game. Currently, calling seticount() means that we */
-	/* throw away some CPU cycles for CPU #0. Hopefully this will be fixed when */
-	/* proper slice control is implemented. */
-		cpu_seticount(0);
 	}
 
 	last = data & 0x08;
-}
-
-
-
-static struct AY8910interface interface =
-{
-	2,	/* 2 chips */
-	1789750,	/* 1.78975 Mhz */
-	{ 0x60ff, 0x60ff },
-	{ soundlatch_r },
-	{ scramble_portB_r },
-	{ 0 },
-	{ 0 }
-};
-
-
-
-int scramble_sh_start(void)
-{
-	return AY8910_sh_start(&interface);
 }

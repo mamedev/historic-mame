@@ -1,3 +1,7 @@
+#ifndef M68000_H
+#define M68000_H
+
+
 #include "cpudefs.h"
 
 /* ASG 971105 */
@@ -28,3 +32,8 @@ extern int MC68000_ICount;                            /* ASG 971105 */
 #define MC68000_IRQ_5    5
 #define MC68000_IRQ_6    6
 #define MC68000_IRQ_7    7
+
+#define MC68000_STOP     0x10
+
+
+#endif

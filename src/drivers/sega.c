@@ -65,8 +65,9 @@ read:
 
 write:
 
-These games all have dipswitches, but they are mapped in such a way as to make using
-them with MAME extremely difficult. I might try to implement them in the future.
+These games all have dipswitches, but they are mapped in such a way as to make
+using them with MAME extremely difficult. I might try to implement them in the
+future.
 
 SWITCH MAPPINGS
 ---------------
@@ -103,21 +104,18 @@ SWITCH MAPPINGS
 
 Known problems:
 
-* The games seem to run too fast. This is most noticable with the speech samples in Zektor - they
-don't match the mouth. Slowing down the Z80 doesn't help and in fact hurts performance.
+1 The games seem to run too fast. This is most noticable
+  with the speech samples in Zektor - they don't match the mouth.
+  Slowing down the Z80 doesn't help and in fact hurts performance.
 
-* Cocktail mode isn't implemented.
+2 Cocktail mode isn't implemented.
 
-* In Star Trek, the vector colors are additive such that in the opening screen, the
-  Star Trek logo should end up being white.
-
-* TODO: add high score support
+Is 1) still valid?
 
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/avgdvg.h"
-
+#include "vidhrdw/vector.h"
 
 extern unsigned char *sega_mem;
 extern void sega_security(int chip);
@@ -153,7 +151,6 @@ void startrek_sh_w (int offset, int data);
 /* Video hardware prototypes */
 void sega_init_colors (unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 int sega_vh_start (void);
-int tacscan_vh_start(void);
 void sega_vh_stop (void);
 void sega_vh_screenrefresh(struct osd_bitmap *bitmap);
 
@@ -172,22 +169,22 @@ static struct MemoryWriteAddress writemem[] =
 	{ -1 }
 };
 
-static struct IOReadPort readport[] =
+static struct IOReadPort spacfury_readport[] =
 {
  	{ 0x3f, 0x3f, sega_sh_r },
  	{ 0xbe, 0xbe, sega_mult_r },
-        { 0xf8, 0xfb, sega_read_ports },
+	{ 0xf8, 0xfb, sega_read_ports },
 	{ -1 }	/* end of table */
 };
 
-static struct IOWritePort writeport[] =
+static struct IOWritePort spacfury_writeport[] =
 {
 	{ 0x38, 0x38, sega_sh_speech_w },
 	{ 0x3e, 0x3e, spacfury1_sh_w },
 	{ 0x3f, 0x3f, spacfury2_sh_w },
   	{ 0xbd, 0xbd, sega_mult1_w },
  	{ 0xbe, 0xbe, sega_mult2_w },
-// 	{ 0xf9, 0xf9, coin_counter_w },			/* 0x80 = enable, 0x00 = disable */
+/* 	{ 0xf9, 0xf9, coin_counter_w },*//* 0x80 = enable, 0x00 = disable */
 	{ -1 }	/* end of table */
 };
 
@@ -195,7 +192,7 @@ static struct IOReadPort zektor_readport[] =
 {
  	{ 0x3f, 0x3f, sega_sh_r },
  	{ 0xbe, 0xbe, sega_mult_r },
-        { 0xf8, 0xfb, sega_read_ports },
+	{ 0xf8, 0xfb, sega_read_ports },
 	{ 0xfc, 0xfc, sega_IN4_r },
 	{ -1 }	/* end of table */
 };
@@ -206,7 +203,7 @@ static struct IOWritePort zektor_writeport[] =
   	{ 0xbd, 0xbd, sega_mult1_w },
  	{ 0xbe, 0xbe, sega_mult2_w },
  	{ 0xf8, 0xf8, sega_switch_w },
-// 	{ 0xf9, 0xf9, coin_counter_w },			/* 0x80 = enable, 0x00 = disable */
+/* 	{ 0xf9, 0xf9, coin_counter_w },*//* 0x80 = enable, 0x00 = disable */
 	{ -1 }	/* end of table */
 };
 
@@ -216,7 +213,7 @@ static struct IOWritePort tacscan_writeport[] =
   	{ 0xbd, 0xbd, sega_mult1_w },
  	{ 0xbe, 0xbe, sega_mult2_w },
  	{ 0xf8, 0xf8, sega_switch_w },
-// 	{ 0xf9, 0xf9, coin_counter_w },			/* 0x80 = enable, 0x00 = disable */
+/* 	{ 0xf9, 0xf9, coin_counter_w },*//* 0x80 = enable, 0x00 = disable */
 	{ -1 }	/* end of table */
 };
 
@@ -224,7 +221,7 @@ static struct IOReadPort elim2_readport[] =
 {
  	{ 0x3f, 0x3f, sega_sh_r },
  	{ 0xbe, 0xbe, sega_mult_r },
-        { 0xf8, 0xfb, sega_read_ports },
+	{ 0xf8, 0xfb, sega_read_ports },
 	{ 0xfc, 0xfc, input_port_4_r },
 	{ -1 }	/* end of table */
 };
@@ -233,7 +230,7 @@ static struct IOReadPort elim4_readport[] =
 {
  	{ 0x3f, 0x3f, sega_sh_r },
  	{ 0xbe, 0xbe, sega_mult_r },
-        { 0xf8, 0xfb, sega_read_ports },
+	{ 0xf8, 0xfb, sega_read_ports },
 	{ 0xfc, 0xfc, elim4_IN4_r },
 	{ -1 }	/* end of table */
 };
@@ -245,7 +242,7 @@ static struct IOWritePort elim_writeport[] =
   	{ 0xbd, 0xbd, sega_mult1_w },
  	{ 0xbe, 0xbe, sega_mult2_w },
  	{ 0xf8, 0xf8, sega_switch_w },
-// 	{ 0xf9, 0xf9, coin_counter_w },			/* 0x80 = enable, 0x00 = disable */
+/* 	{ 0xf9, 0xf9, coin_counter_w },*//* 0x80 = enable, 0x00 = disable */
 	{ -1 }	/* end of table */
 };
 
@@ -256,7 +253,7 @@ static struct IOWritePort startrek_writeport[] =
   	{ 0xbd, 0xbd, sega_mult1_w },
  	{ 0xbe, 0xbe, sega_mult2_w },
  	{ 0xf8, 0xf8, sega_switch_w },
-// 	{ 0xf9, 0xf9, coin_counter_w },			/* 0x80 = enable, 0x00 = disable */
+/* 	{ 0xf9, 0xf9, coin_counter_w },*//* 0x80 = enable, 0x00 = disable */
 	{ -1 }	/* end of table */
 };
 
@@ -441,7 +438,7 @@ INPUT_PORTS_START( zektor_input_ports )
         PORT_DIPSETTING(    0xF0, "1/2/3/4 / 2/4/6/9" )
 
         PORT_START      /* IN8 - FAKE port for the dial */
-	PORT_ANALOG ( 0xff, 0x00, IPT_DIAL, 100, 0, 0, 0 )
+	PORT_ANALOG ( 0xff, 0x00, IPT_DIAL|IPF_CENTER, 100, 0, 0, 0 )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( startrek_input_ports )
@@ -537,7 +534,7 @@ INPUT_PORTS_START( startrek_input_ports )
         PORT_DIPSETTING(    0xF0, "1/2/3/4 / 2/4/6/9" )
 
         PORT_START      /* IN8 - dummy port for the dial */
-	PORT_ANALOG ( 0xff, 0x00, IPT_DIAL, 100, 0, 0, 0 )
+	PORT_ANALOG ( 0xff, 0x00, IPT_DIAL|IPF_CENTER, 100, 0, 0, 0 )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( elim2_input_ports )
@@ -962,19 +959,18 @@ ROM_END
 static int spacfury_hiload(void)
 {
 	/* check if the hi score table has already been initialized */
-        if ((memcmp(&RAM[0xC924],"\x90\x02",2) == 0) &&
-                (memcmp(&RAM[0xC95C],"\x10\x00",2) == 0))
+	if ((memcmp(&RAM[0xC924],"\x90\x02",2) == 0) &&
+			(memcmp(&RAM[0xC95C],"\x10\x00",2) == 0))
 	{
 		void *f;
 
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-                        osd_fread(f,&RAM[0xC924],2*30);  /* 2 bytes * 30 scores */
-                        osd_fread(f,&RAM[0xCFD2],3*10);   /* 3 letters * 10 scores */
+			osd_fread(f,&RAM[0xC924],2*30);  /* 2 bytes * 30 scores */
+			osd_fread(f,&RAM[0xCFD2],3*10);   /* 3 letters * 10 scores */
 
 			osd_fclose(f);
 		}
-
 		return 1;
 	}
 	else return 0;  /* we can't load the hi scores yet */
@@ -987,8 +983,8 @@ static void spacfury_hisave(void)
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-                osd_fwrite(f,&RAM[0xC924],2*30); /* 2 bytes * 30 scores */
-                osd_fwrite(f,&RAM[0xCFD2],3*10);  /* 3 letters * 10 scores */
+		osd_fwrite(f,&RAM[0xC924],2*30); /* 2 bytes * 30 scores */
+		osd_fwrite(f,&RAM[0xCFD2],3*10);  /* 3 letters * 10 scores */
 		osd_fclose(f);
 	}
 }
@@ -997,19 +993,18 @@ static void spacfury_hisave(void)
 static int zektor_hiload(void)
 {
 	/* check if the hi score table has already been initialized */
-        if ((memcmp(&RAM[0xC924],"\x90\x02",2) == 0) &&
-                (memcmp(&RAM[0xC95C],"\x10\x00",2) == 0))
+	if ((memcmp(&RAM[0xC924],"\x90\x02",2) == 0) &&
+			(memcmp(&RAM[0xC95C],"\x10\x00",2) == 0))
 	{
 		void *f;
 
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-                        osd_fread(f,&RAM[0xC924],2*30);  /* 2 bytes * 30 scores? */
-                        osd_fread(f,&RAM[0xCFD2],3*5);   /* 3 letters * 5 scores */
+			osd_fread(f,&RAM[0xC924],2*30);  /* 2 bytes * 30 scores? */
+			osd_fread(f,&RAM[0xCFD2],3*5);   /* 3 letters * 5 scores */
 
 			osd_fclose(f);
 		}
-
 		return 1;
 	}
 	else return 0;  /* we can't load the hi scores yet */
@@ -1022,8 +1017,8 @@ static void zektor_hisave(void)
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-                osd_fwrite(f,&RAM[0xC924],2*30); /* 2 bytes * 30 scores? */
-                osd_fwrite(f,&RAM[0xCFD2],3*5);  /* 3 letters * 5 scores */
+		osd_fwrite(f,&RAM[0xC924],2*30); /* 2 bytes * 30 scores? */
+		osd_fwrite(f,&RAM[0xCFD2],3*5);  /* 3 letters * 5 scores */
 		osd_fclose(f);
 	}
 }
@@ -1065,15 +1060,15 @@ static void tacscan_hisave(void)
 static int elim2_hiload(void)
 {
 	/* check if the hi score table has already been initialized */
-        if ((memcmp(&RAM[0xC99F],"\x0C\x0B\x07",3) == 0) &&
-                (memcmp(&RAM[0xC9BA],"\x0A\x08\x03",3) == 0))
+	if ((memcmp(&RAM[0xC99F],"\x0C\x0B\x07",3) == 0) &&
+			(memcmp(&RAM[0xC9BA],"\x0A\x08\x03",3) == 0))
 	{
 		void *f;
 
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-                        osd_fread(f,&RAM[0xC924],2*30);  /* 2 bytes * 30 scores */
-                        osd_fread(f,&RAM[0xC99F],3*10);  /* 3 letters * 10 scores */
+			osd_fread(f,&RAM[0xC924],2*30);  /* 2 bytes * 30 scores */
+			osd_fread(f,&RAM[0xC99F],3*10);  /* 3 letters * 10 scores */
 
 			osd_fclose(f);
 		}
@@ -1090,8 +1085,8 @@ static void elim2_hisave(void)
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-                osd_fwrite(f,&RAM[0xC924],2*30); /* 2 bytes * 30 scores */
-                osd_fwrite(f,&RAM[0xC99F],3*10); /* 3 letters * 10 scores */
+		osd_fwrite(f,&RAM[0xC924],2*30); /* 2 bytes * 30 scores */
+		osd_fwrite(f,&RAM[0xC99F],3*10); /* 3 letters * 10 scores */
 		osd_fclose(f);
 	}
 }
@@ -1099,15 +1094,15 @@ static void elim2_hisave(void)
 static int elim4_hiload(void)
 {
 	/* check if the hi score table has already been initialized */
-        if ((memcmp(&RAM[0xCC4D],"\x0C\x0B\x07",3) == 0) &&
-                (memcmp(&RAM[0xCC68],"\x0A\x08\x03",3) == 0))
+	if ((memcmp(&RAM[0xCC4D],"\x0C\x0B\x07",3) == 0) &&
+			(memcmp(&RAM[0xCC68],"\x0A\x08\x03",3) == 0))
 	{
 		void *f;
 
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-                        osd_fread(f,&RAM[0xC928],2*30);  /* 2 bytes * 30 scores */
-                        osd_fread(f,&RAM[0xCC4D],3*10);  /* 3 letters * 10 scores */
+			osd_fread(f,&RAM[0xC928],2*30);  /* 2 bytes * 30 scores */
+			osd_fread(f,&RAM[0xCC4D],3*10);  /* 3 letters * 10 scores */
 
 			osd_fclose(f);
 		}
@@ -1124,8 +1119,8 @@ static void elim4_hisave(void)
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-                osd_fwrite(f,&RAM[0xC928],2*30); /* 2 bytes * 30 scores */
-                osd_fwrite(f,&RAM[0xCC4D],3*10); /* 3 letters * 10 scores */
+		osd_fwrite(f,&RAM[0xC928],2*30); /* 2 bytes * 30 scores */
+		osd_fwrite(f,&RAM[0xCC4D],3*10); /* 3 letters * 10 scores */
 		osd_fclose(f);
 	}
 }
@@ -1134,7 +1129,7 @@ static int startrek_hiload(void)
 {
 	/* check if the hi score table has already been initialized */
 	if ((memcmp(&RAM[0xC98B],"SLP",3) == 0) &&
-		(memcmp(&RAM[0xC910],"\x25\x06\x09",3) == 0))
+			(memcmp(&RAM[0xC910],"\x25\x06\x09",3) == 0))
 	{
 		void *f;
 
@@ -1213,7 +1208,12 @@ static const char *spacfury_sample_names[] =
     0	/* end of array */
 };
 
-static struct MachineDriver machine_driver =
+static struct Samplesinterface spacfury_samples_interface =
+{
+	9	/* 9 channels */
+};
+
+static struct MachineDriver spacfury_machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -1221,16 +1221,17 @@ static struct MachineDriver machine_driver =
 			CPU_Z80,
 			3867120,	/* 3.86712 Mhz */
 			0,
-			readmem,writemem,readport,writeport,
-			sega_interrupt,1
+			readmem, writemem, spacfury_readport, spacfury_writeport,
+			0, 0, /* no vblank interrupt */
+			sega_interrupt, 40 /* 40 Hz */
 		}
 	},
-	40,
+	40, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
 	1,	/* single CPU, no need for interleaving */
 	0,
 
 	/* video hardware */
-	256, 232, { 512, 1536, 512, 1536 },
+	400, 300, { 512, 1536, 552, 1464 },
 	gfxdecodeinfo,
 	256,256,
 	sega_init_colors,
@@ -1245,49 +1246,61 @@ static struct MachineDriver machine_driver =
 	0,
 	sega_sh_start,
 	0,
-	sega_sh_update
+	sega_sh_update,
+	{
+		{
+			SOUND_SAMPLES,
+			&spacfury_samples_interface
+		}
+	}
 };
 
 
 
 struct GameDriver spacfury_driver =
 {
-        "Space Fury (revision A)",
-        "spacfury",
-        "Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\nMike Balfour (high score saving)",
-	&machine_driver,
+	"Space Fury (revision A)",
+	"spacfury",
+	"Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\n"
+	"Mike Balfour (high score saving)\n"
+	VECTOR_TEAM,
 
-        spacfury_rom,
+	&spacfury_machine_driver,
+
+	spacfury_rom,
 	spacfury_decode, 0,
 	spacfury_sample_names,
 	0,
 
-	0/*TBR*/, spacfury_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	spacfury_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
-        spacfury_hiload, spacfury_hisave
+    spacfury_hiload, spacfury_hisave
 };
 
 struct GameDriver spacfurc_driver =
 {
 	"Space Fury (revision C)",
 	"spacfurc",
-        "Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\nMike Balfour (high score saving)",
-	&machine_driver,
+	"Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\n"
+	"Mike Balfour (high score saving)\n"
+	VECTOR_TEAM,
+
+	&spacfury_machine_driver,
 
 	spacfurc_rom,
 	spacfury_decode, 0,
 	spacfury_sample_names,
 	0,
 
-	0/*TBR*/, spacfury_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	spacfury_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
-        spacfury_hiload, spacfury_hisave
+	spacfury_hiload, spacfury_hisave
 };
 
 /***************************************************************************
@@ -1321,6 +1334,11 @@ static const char *zektor_sample_names[] =
     0	/* end of array */
 };
 
+static struct Samplesinterface zektor_samples_interface =
+{
+	1 /* only speech for now */
+};
+
 static struct MachineDriver zektor_machine_driver =
 {
 	/* basic machine hardware */
@@ -1330,15 +1348,17 @@ static struct MachineDriver zektor_machine_driver =
 			3867120,	/* 3.86712 Mhz */
 			0,
 			readmem,writemem,zektor_readport,zektor_writeport,
-			sega_interrupt,1
+
+			0, 0, /* no vblank interrupt */
+			sega_interrupt, 40 /* 40 Hz */
 		}
 	},
-	40,
+	40, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
 	1,	/* single CPU, no need for interleaving */
 	0,
 
 	/* video hardware */
-	256, 232, { 510, 1540, 600, 1400 },
+	400, 300, { 512, 1536, 624, 1432 },
 	gfxdecodeinfo,
 	256,256,
 	sega_init_colors,
@@ -1353,7 +1373,13 @@ static struct MachineDriver zektor_machine_driver =
 	0,
 	sega_sh_start,
 	0,
-	sega_sh_update
+	sega_sh_update,
+	{
+		{
+			SOUND_SAMPLES,
+			&zektor_samples_interface
+		}
+	}
 };
 
 
@@ -1362,7 +1388,10 @@ struct GameDriver zektor_driver =
 {
 	"Zektor",
 	"zektor",
-        "Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\nMike Balfour (high score saving)",
+	"Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\n"
+	"Mike Balfour (high score saving)\n"
+	VECTOR_TEAM,
+
 	&zektor_machine_driver,
 
 	zektor_rom,
@@ -1370,12 +1399,12 @@ struct GameDriver zektor_driver =
 	zektor_sample_names,
 	0,
 
-	0/*TBR*/, zektor_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	zektor_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
-        zektor_hiload, zektor_hisave
+	zektor_hiload, zektor_hisave
 };
 
 /***************************************************************************
@@ -1403,6 +1432,10 @@ static const char *tacscan_sample_names[] =
     0	/* end of array */
 };
 
+static struct Samplesinterface tacscan_samples_interface =
+{
+	6	/* 6 channels */
+};
 
 static struct MachineDriver tacscan_machine_driver =
 {
@@ -1413,22 +1446,24 @@ static struct MachineDriver tacscan_machine_driver =
 			3867120,	/* 3.86712 Mhz */
 			0,
 			readmem,writemem,zektor_readport,tacscan_writeport,
-			sega_interrupt,1
+
+			0, 0, /* no vblank interrupt */
+			sega_interrupt, 40 /* 40 Hz */
 		}
 	},
-	40,
+	40, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
 	1,	/* single CPU, no need for interleaving */
 	0,
 
 	/* video hardware */
-	224, 288, { 500, 1600, 1500, 2500 },
+	400, 300, { 496, 1552, 592, 1456 },
 	gfxdecodeinfo,
 	256,256,
 	sega_init_colors,
 
 	VIDEO_TYPE_VECTOR,
 	0,
-	tacscan_vh_start,
+	sega_vh_start,
 	sega_vh_stop,
 	sega_vh_screenrefresh,
 
@@ -1436,14 +1471,23 @@ static struct MachineDriver tacscan_machine_driver =
 	0,
 	tacscan_sh_start,
 	0,
-	tacscan_sh_update
+	tacscan_sh_update,
+	{
+		{
+			SOUND_SAMPLES,
+			&tacscan_samples_interface
+		}
+	}
 };
 
 struct GameDriver tacscan_driver =
 {
 	"Tac-Scan",
 	"tacscan",
-	"Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\nValerio Verrando (high score saving)",
+	"Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\n"
+	"Valerio Verrando (high score saving)\n"
+	VECTOR_TEAM,
+
 	&tacscan_machine_driver,
 
 	tacscan_rom,
@@ -1451,10 +1495,10 @@ struct GameDriver tacscan_driver =
 	tacscan_sample_names,
 	0,
 
-	0/*TBR*/, zektor_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	zektor_input_ports,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_270,
 
 	tacscan_hiload, tacscan_hisave
 };
@@ -1484,6 +1528,11 @@ static const char *elim_sample_names[] =
     0	/* end of array */
 };
 
+static struct Samplesinterface elim2_samples_interface =
+{
+	8	/* 8 channels */
+};
+
 static struct MachineDriver elim2_machine_driver =
 {
 	/* basic machine hardware */
@@ -1493,15 +1542,17 @@ static struct MachineDriver elim2_machine_driver =
 			3867120,	/* 3.86712 Mhz */
 			0,
 			readmem,writemem,elim2_readport,elim_writeport,
-			sega_interrupt,1
+
+			0, 0, /* no vblank interrupt */
+			sega_interrupt, 40 /* 40 Hz */
 		}
 	},
-	40,
+	40, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
 	1,	/* single CPU, no need for interleaving */
 	0,
 
 	/* video hardware */
-	256, 232, { 510, 1540, 600, 1450 },
+	400, 300, { 512, 1536, 600, 1440 },
 	gfxdecodeinfo,
 	256,256,
 	sega_init_colors,
@@ -1516,14 +1567,23 @@ static struct MachineDriver elim2_machine_driver =
 	0,
 	sega_sh_start,
 	0,
-	sega_sh_update
+	sega_sh_update,
+	{
+		{
+			SOUND_SAMPLES,
+			&elim2_samples_interface
+		}
+	}
 };
 
 struct GameDriver elim2_driver =
 {
 	"Eliminator (2 Player)",
 	"elim2",
-        "Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\nMike Balfour (high score saving)",
+	"Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\n"
+	"Mike Balfour (high score saving)\n"
+	VECTOR_TEAM,
+
 	&elim2_machine_driver,
 
 	elim2_rom,
@@ -1531,12 +1591,12 @@ struct GameDriver elim2_driver =
 	elim_sample_names,
 	0,
 
-	0/*TBR*/, elim2_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	elim2_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
-        elim2_hiload, elim2_hisave
+	elim2_hiload, elim2_hisave
 };
 
 static struct MachineDriver elim4_machine_driver =
@@ -1548,15 +1608,17 @@ static struct MachineDriver elim4_machine_driver =
 			3867120,	/* 3.86712 Mhz */
 			0,
 			readmem,writemem,elim4_readport,elim_writeport,
-			sega_interrupt,1
+
+			0, 0, /* no vblank interrupt */
+			sega_interrupt, 40 /* 40 Hz */
 		}
 	},
-	40,
+	40, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
 	1,	/* single CPU, no need for interleaving */
 	0,
 
 	/* video hardware */
-	256, 232, { 510, 1540, 600, 1450 },
+	400, 300, { 512, 1536, 600, 1440 },
 	gfxdecodeinfo,
 	256,256,
 	sega_init_colors,
@@ -1571,14 +1633,23 @@ static struct MachineDriver elim4_machine_driver =
 	0,
 	sega_sh_start,
 	0,
-	sega_sh_update
+	sega_sh_update,
+	{
+		{
+			SOUND_SAMPLES,
+			&elim2_samples_interface
+		}
+	}
 };
 
 struct GameDriver elim4_driver =
 {
 	"Eliminator (4 Player)",
 	"elim4",
-        "Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\nMike Balfour (high score saving)",
+        "Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\n"
+	"Mike Balfour (high score saving)\n"
+	VECTOR_TEAM,
+
 	&elim4_machine_driver,
 
 	elim4_rom,
@@ -1586,12 +1657,12 @@ struct GameDriver elim4_driver =
 	elim_sample_names,
 	0,
 
-	0/*TBR*/, elim4_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	elim4_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
-        elim4_hiload, elim4_hisave
+	elim4_hiload, elim4_hisave
 };
 
 /***************************************************************************
@@ -1659,7 +1730,10 @@ static const char *startrek_sample_names[] =
     0	/* end of array */
 };
 
-
+static struct Samplesinterface startrek_samples_interface =
+{
+	6	/* 6 channels */
+};
 
 static struct MachineDriver startrek_machine_driver =
 {
@@ -1670,15 +1744,17 @@ static struct MachineDriver startrek_machine_driver =
 			3867120,	/* 3.86712 Mhz */
 			0,
 			readmem,writemem,zektor_readport,startrek_writeport,
-			sega_interrupt,1
+
+			0, 0, /* no vblank interrupt */
+			sega_interrupt, 40 /* 40 Hz */
 		}
 	},
-	40,
+	40, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
 	1,	/* single CPU, no need for interleaving */
 	0,
 
 	/* video hardware */
-	256, 232, { 500, 1600, 600, 1450 },
+	400, 300, { 512, 1536, 616, 1464 },
 	gfxdecodeinfo,
 	256,256,
 	sega_init_colors,
@@ -1693,14 +1769,23 @@ static struct MachineDriver startrek_machine_driver =
 	0,
 	sega_sh_start,
 	0,
-	sega_sh_update
+	sega_sh_update,
+	{
+		{
+			SOUND_SAMPLES,
+			&startrek_samples_interface
+		}
+	}
 };
 
 struct GameDriver startrek_driver =
 {
 	"Star Trek",
 	"startrek",
-	"Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\nValerio Verrando (high score saving)",
+	"Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\n"
+	"Valerio Verrando (high score saving)\n"
+	VECTOR_TEAM,
+
 	&startrek_machine_driver,
 
 	startrek_rom,
@@ -1708,7 +1793,7 @@ struct GameDriver startrek_driver =
 	startrek_sample_names,
 	0,
 
-	0/*TBR*/, startrek_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	startrek_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

@@ -12,12 +12,23 @@
 
 
 unsigned char *ironhors_scroll;
-unsigned char *ironhors_charbank;
+static int palettebank,charbank,spriterambank;
+
 
 
 /***************************************************************************
 
   Convert the color PROMs into a more useable format.
+
+  Iron Horse has three 256x4 palette PROMs (one per gun) and two 256x4
+  lookup table PROMs (one for characters, one for sprites).
+  I don't know for sure how the palette PROMs are connected to the RGB
+  output, but it's probably the usual:
+
+  bit 3 -- 220 ohm resistor  -- RED/GREEN/BLUE
+        -- 470 ohm resistor  -- RED/GREEN/BLUE
+        -- 1  kohm resistor  -- RED/GREEN/BLUE
+  bit 0 -- 2.2kohm resistor  -- RED/GREEN/BLUE
 
 ***************************************************************************/
 void ironhors_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
@@ -51,10 +62,61 @@ void ironhors_vh_convert_color_prom(unsigned char *palette, unsigned char *color
 		color_prom++;
 	}
 
-	/* characters and sprites use the same colors */
-	for (i = 0;i < TOTAL_COLORS(0);i++)
-		COLOR(0,i) = i;
+	color_prom += 2*Machine->drv->total_colors;
+	/* color_prom now points to the beginning of the character lookup table */
+
+
+	/* there are eight 32 colors palette banks; sprites use colors 0-15 and */
+	/* characters 16-31 of each bank. */
+	for (i = 0;i < TOTAL_COLORS(0)/8;i++)
+	{
+		int j;
+
+
+		for (j = 0;j < 8;j++)
+			COLOR(0,i + j * TOTAL_COLORS(0)/8) = (*color_prom & 0x0f) + 32 * j + 16;
+
+		color_prom++;
+	}
+
+	for (i = 0;i < TOTAL_COLORS(1)/8;i++)
+	{
+		int j;
+
+
+		for (j = 0;j < 8;j++)
+			COLOR(1,i + j * TOTAL_COLORS(1)/8) = (*color_prom & 0x0f) + 32 * j;
+
+		color_prom++;
+	}
 }
+
+
+
+void ironhors_charbank_w(int offset,int data)
+{
+	if (charbank != (data & 1))
+	{
+		charbank = data & 1;
+		memset(dirtybuffer,1,videoram_size);
+	}
+
+	spriterambank = data & 8;
+
+	/* other bits unknown */
+}
+
+
+
+void ironhors_palettebank_w(int offset,int data)
+{
+	if (palettebank != (data & 7))
+	{
+		palettebank = data & 7;
+		memset(dirtybuffer,1,videoram_size);
+	}
+}
+
 
 
 /***************************************************************************
@@ -84,9 +146,9 @@ void ironhors_vh_screenrefresh(struct osd_bitmap *bitmap)
 			sy = 8 * (offs / 32);
 
 			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs] + 16*(colorram[offs] & 0x20) + 4*(colorram[offs] & 0x40) + (*ironhors_charbank & 1)*1024,
-					colorram[offs] & 0x0f,
-					0,colorram[offs] & 0x20,
+					videoram[offs] + 16*(colorram[offs] & 0x20) + 4*(colorram[offs] & 0x40) + 1024 * charbank,
+					(colorram[offs] & 0x0f) + 16 * palettebank,
+					colorram[offs] & 0x10,colorram[offs] & 0x20,
 					sx,sy,
 					0,TRANSPARENCY_NONE,0);
 		}
@@ -110,7 +172,7 @@ void ironhors_vh_screenrefresh(struct osd_bitmap *bitmap)
 		unsigned char *sr;
 
 
-		if ((*ironhors_charbank & 0x08) != 0)
+		if (spriterambank != 0)
 			sr = spriteram;
 		else sr = spriteram_2;
 
@@ -131,13 +193,13 @@ void ironhors_vh_screenrefresh(struct osd_bitmap *bitmap)
 					int spritenum = sr[offs]*4+((sr[offs+1] & 8) >> 2);
 					drawgfx(bitmap,Machine->gfx[2],
 							spritenum,
-							sr[offs+4] & 0x0f,
+							(sr[offs+4] & 0x0f) + 16 * palettebank,
 							flipx,flipy,
 							sx,sy,
 							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 					drawgfx(bitmap,Machine->gfx[2],
 							spritenum+1,
-							sr[offs+4] & 0x0f,
+							(sr[offs+4] & 0x0f) + 16 * palettebank,
 							flipx,flipy,
 							sx+8,sy,
 							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
@@ -145,7 +207,7 @@ void ironhors_vh_screenrefresh(struct osd_bitmap *bitmap)
 				else
 					drawgfx(bitmap,Machine->gfx[1],
 							sr[offs] + 256 * (sr[offs+1] & 1),
-							sr[offs+4] & 0x0f,
+							(sr[offs+4] & 0x0f) + 16 * palettebank,
 							flipx,flipy,
 							sx,sy,
 							&Machine->drv->visible_area,TRANSPARENCY_PEN,0);

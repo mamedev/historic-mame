@@ -5,6 +5,5 @@
 typedef unsigned char byte;
 typedef unsigned short word;
 typedef unsigned       dword;
-typedef signed char offset;
 
 #endif

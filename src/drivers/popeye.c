@@ -50,7 +50,6 @@ I/O 2  ;bit 0 Coin in 1
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/8910intf.h"
 
 
 
@@ -65,8 +64,6 @@ void popeye_vh_convert_color_prom(unsigned char *palette, unsigned char *colorta
 void popeye_vh_screenrefresh(struct osd_bitmap *bitmap);
 int  popeye_vh_start(void);
 void popeye_vh_stop(void);
-
-int popeye_sh_start(void);
 
 
 
@@ -287,6 +284,37 @@ static unsigned char color_prom[] =
 
 
 
+static int dswbit;
+
+static void popeye_portB_w(int offset,int data)
+{
+	dswbit = data >> 1;
+}
+
+static int popeye_portA_r(int offset)
+{
+	int res;
+
+
+	res = input_port_3_r(offset);
+	res |= (input_port_4_r(offset) << (7-dswbit)) & 0x80;
+
+	return res;
+}
+
+static struct AY8910interface ay8910_interface =
+{
+	1,	/* 1 chip */
+	1500000,	/* 1.5 MHz ????? */
+	{ 255 },
+	{ popeye_portA_r },
+	{ 0 },
+	{ 0 },
+	{ popeye_portB_w }
+};
+
+
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -299,7 +327,7 @@ static struct MachineDriver machine_driver =
 			nmi_interrupt,2
 		}
 	},
-	30,
+	30, DEFAULT_30HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* single CPU, no need for interleaving */
 	0,
 
@@ -316,10 +344,13 @@ static struct MachineDriver machine_driver =
 	popeye_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	popeye_sh_start,
-	AY8910_sh_stop,
-	AY8910_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&ay8910_interface
+		}
+	}
 };
 
 
@@ -352,7 +383,8 @@ static int hiload(void)
 {
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x8209],"\x00\x26\x03",3) == 0 &&
-			memcmp(&RAM[0x8221],"\x50\x11\x02",3) == 0)
+			memcmp(&RAM[0x8221],"\x50\x11\x02",3) == 0 &&
+			memcmp(&RAM[0x8fed],"\x00\x26\x03",3) == 0)	/* high score */
 	{
 		void *f;
 
@@ -416,7 +448,7 @@ struct GameDriver popeyebl_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,

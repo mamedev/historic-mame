@@ -23,7 +23,7 @@ write:
 3008      ? one of these two should be
 3018      ? the watchdog reset
 3010      command for the audio CPU
-3019      signal for the audio CPU?
+3019      trigger FIRQ on audio CPU
 
 
 SOUND CPU:
@@ -31,8 +31,7 @@ SOUND CPU:
 e000-ffff ROM
 
 read:
-0001      !0 if there is a command waiting
-0002      command from the main CPU
+a000      command from the main CPU
 
 write:
 2000      8910 #1 control
@@ -44,22 +43,36 @@ write:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/generic.h"
-#include "sndhrdw/8910intf.h"
+#include "M6809/M6809.h"
 
-#include "M6809.h"
-void sonson_init_machine(void)
-{
-	/* Set optimization flags for M6809 */
-	m6809_Flags = M6809_FAST_S | M6809_FAST_U;
-}
+
 
 extern unsigned char *sonson_scrollx;
 
 void sonson_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void sonson_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-int capcom_sh_start(void);
+
+
+void sonson_init_machine(void)
+{
+	/* Set optimization flags for M6809 */
+	m6809_Flags = M6809_FAST_S | M6809_FAST_U;
+}
+
+void sonson_sh_irqtrigger_w(int offset,int data)
+{
+	static int last;
+
+
+	if (last == 0 && data == 1)
+	{
+		/* setting bit 0 low then high triggers IRQ on the sound CPU */
+		cpu_cause_interrupt(1,M6809_INT_FIRQ);
+	}
+
+	last = data;
+}
 
 
 
@@ -83,17 +96,17 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x2020, 0x207f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x3000, 0x3000, MWA_RAM, &sonson_scrollx },
 { 0x3008, 0x3008, MWA_NOP },
-	{ 0x3010, 0x3010, sound_command_w },
-{ 0x3008, 0x3019, MWA_NOP },
+	{ 0x3010, 0x3010, soundlatch_w },
+{ 0x3018, 0x3018, MWA_NOP },
+	{ 0x3019, 0x3019, sonson_sh_irqtrigger_w },
 	{ 0x4000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryReadAddress sound_readmem[] =
 {
-	{ 0x0001, 0x0001, sound_pending_commands_r },
-	{ 0x0002, 0x0002, sound_command_latch_r },
 	{ 0x0000, 0x07ff, MRA_RAM },
+	{ 0xa000, 0xa000, soundlatch_r },
 	{ 0xe000, 0xffff, MRA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -279,6 +292,19 @@ static unsigned char color_prom[] =
 
 
 
+static struct AY8910interface ay8910_interface =
+{
+	2,	/* 2 chips */
+	1500000,	/* 1.5 MHz ? */
+	{ 0x40ff, 0x20ff },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 }
+};
+
+
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -295,11 +321,11 @@ static struct MachineDriver machine_driver =
 			2000000,	/* 2 Mhz (?) */
 			2,
 			sound_readmem,sound_writemem,0,0,
-			interrupt,4
+			interrupt,4	/* FIRQs are triggered by the main CPU */
 		},
 	},
-	60,
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	sonson_init_machine,
 
 	/* video hardware */
@@ -315,10 +341,13 @@ static struct MachineDriver machine_driver =
 	sonson_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	capcom_sh_start,
-	AY8910_sh_stop,
-	AY8910_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&ay8910_interface
+		}
+	}
 };
 
 
@@ -411,7 +440,7 @@ struct GameDriver sonson_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/,input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,

@@ -93,7 +93,6 @@ Off On  On                          For every 5 coins, add 1 coin
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/pokyintf.h"
 
 
 int warlord_pot1_r (int offset);
@@ -105,32 +104,6 @@ int warlord_trakball_r (int offset);
 void warlord_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void warlord_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-
-/* Misc sound code */
-static struct POKEYinterface interface =
-{
-	1,	/* 1 chip */
-	FREQ_17_APPROX,
-	255,
-	NO_CLIP,
-	/* The 8 pot handlers */
-	{ input_port_4_r },
-	{ warlord_pot2_r },
-	{ warlord_pot3_r },
-	{ warlord_pot4_r },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	/* The allpot handler */
-	{ 0 },
-};
-
-
-int warlord_sh_start(void)
-{
-	return pokey_sh_start (&interface);
-}
 
 
 static struct MemoryReadAddress readmem[] =
@@ -253,6 +226,28 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
+static struct POKEYinterface pokey_interface =
+{
+	1,	/* 1 chip */
+	1500000,	/* 1.5 MHz??? */
+	255,
+	POKEY_DEFAULT_GAIN,
+	NO_CLIP,
+	/* The 8 pot handlers */
+	{ input_port_4_r },
+	{ warlord_pot2_r },
+	{ warlord_pot3_r },
+	{ warlord_pot4_r },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	/* The allpot handler */
+	{ 0 },
+};
+
+
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -265,7 +260,7 @@ static struct MachineDriver machine_driver =
 			interrupt,1
 		}
 	},
-	60,
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	10,
 	0,
 
@@ -282,10 +277,13 @@ static struct MachineDriver machine_driver =
 	warlord_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	warlord_sh_start,
-	pokey_sh_stop,
-	pokey_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_POKEY,
+			&pokey_interface
+		}
+	}
 };
 
 
@@ -312,20 +310,6 @@ ROM_END
 
 
 
-static int hiload(void)
-{
-	return 0;
-}
-
-
-
-static void hisave(void)
-{
-
-}
-
-
-
 struct GameDriver warlord_driver =
 {
 	"Warlords",
@@ -338,7 +322,7 @@ struct GameDriver warlord_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

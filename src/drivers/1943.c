@@ -6,12 +6,9 @@ TODO: 1943 is almost identical to GunSmoke (one more scrolling playfield). We
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/generic.h"
-#include "sndhrdw/2203intf.h"
+#include "Z80/Z80.h"
 
 
-
-int c1943_protection_r(int offset);
 
 extern unsigned char *c1943_scrollx;
 extern unsigned char *c1943_scrolly;
@@ -23,7 +20,19 @@ void c1943_vh_screenrefresh(struct osd_bitmap *bitmap);
 int c1943_vh_start(void);
 void c1943_vh_stop(void);
 
-int capcomOPN_sh_start(void);
+
+
+/* this is a protection check. The game crashes (thru a jump to 0x8000) */
+/* if a read from this address doesn't return the value it expects. */
+static int c1943_protection_r(int offset)
+{
+	Z80_Regs regs;
+
+
+	Z80_GetRegs(&regs);
+	if (errorlog) fprintf(errorlog,"protection read, PC: %04x Result:%02x\n",cpu_getpc(),regs.BC.B.h);
+	return regs.BC.B.h;
+}
 
 
 
@@ -592,6 +601,19 @@ static unsigned char c1943kai_color_prom[] =
 
 
 
+static struct YM2203interface ym2203_interface =
+{
+	2,			/* 2 chips */
+	1500000,	/* 1.5 MHz */
+	{ YM2203_VOL(100,0x20ff), YM2203_VOL(100,0x20ff) },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 }
+};
+
+
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -611,8 +633,8 @@ static struct MachineDriver machine_driver =
 			interrupt,4
 		}
 	},
-	60,
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
 	/* video hardware */
@@ -628,10 +650,13 @@ static struct MachineDriver machine_driver =
 	c1943_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	capcomOPN_sh_start,
-	YM2203_sh_stop,
-	YM2203_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_YM2203,
+			&ym2203_interface
+		}
+	}
 };
 
 
@@ -714,7 +739,7 @@ ROM_END
 
 
 
-static int hiload(void)
+static int c1943_hiload(void)
 {
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
 	/* RAM pointer is pointing to the right place) */
@@ -753,7 +778,76 @@ static int hiload(void)
 
 
 
-static void hisave(void)
+static void c1943_hisave(void)
+{
+	void *f;
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		// High score table.
+		osd_fwrite(f,&RAM[0xe600],0x60);
+
+		// High score.
+		osd_fwrite(f,&RAM[0xe110],8);
+
+		// High score screen.
+		osd_fwrite(f,&RAM[0xd1be],1);
+		osd_fwrite(f,&RAM[0xd1de],1);
+		osd_fwrite(f,&RAM[0xd1fe],1);
+		osd_fwrite(f,&RAM[0xd21e],1);
+		osd_fwrite(f,&RAM[0xd23e],1);
+		osd_fwrite(f,&RAM[0xd25e],1);
+		osd_fwrite(f,&RAM[0xd27e],1);
+
+		osd_fclose(f);
+	}
+}
+
+
+static int c1943kai_hiload(void)
+{
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0xe600],"\x00\x00\x02\x00\x00\x00\x00\x00\x1D\x0A\x0E\x24\x24\x24\x24\x24",16) == 0)
+	{
+		void *f;
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			// High score table.
+			osd_fread(f,&RAM[0xe600],0x60);
+
+			// High score.
+			osd_fread(f,&RAM[0xe110],8);
+
+			// High score screen.
+			osd_fread(f,&RAM[0xd1be],1);
+			osd_fread(f,&RAM[0xd1de],1);
+			osd_fread(f,&RAM[0xd1fe],1);
+			osd_fread(f,&RAM[0xd21e],1);
+			osd_fread(f,&RAM[0xd23e],1);
+			osd_fread(f,&RAM[0xd25e],1);
+			osd_fread(f,&RAM[0xd27e],1);
+
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0; /* we can't load the hi scores yet */
+}
+
+
+
+static void c1943kai_hisave(void)
 {
 	void *f;
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
@@ -796,12 +890,12 @@ struct GameDriver c1943_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/,input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	input_ports,
 
 	c1943_color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	hiload, hisave
+	c1943_hiload, c1943_hisave
 };
 
 
@@ -809,7 +903,7 @@ struct GameDriver c1943kai_driver =
 {
 	"1943 Kai (1943 sequel)",
 	"1943kai",
-	"Mirko Buffoni (MAME driver)\nPaul Leaman (MAME driver)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nJeff Johnson (high score save)",
+	"Mirko Buffoni (MAME driver)\nPaul Leaman (MAME driver)\nNicola Salmoria (MAME driver)\nTim Lindquist (color info)\nJeff Johnson (high score save)\nGerrit Van Goethem (high score fix)",
 	&machine_driver,
 
 	c1943kai_rom,
@@ -817,10 +911,10 @@ struct GameDriver c1943kai_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/,input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	input_ports,
 
 	c1943kai_color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	hiload, hisave
+	c1943kai_hiload, c1943kai_hisave
 };

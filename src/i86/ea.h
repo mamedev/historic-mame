@@ -27,7 +27,7 @@ static unsigned EA_205(void) { cycle_count-=9; EA=FETCH; EA+=FETCH<<8; EA+=regs.
 static unsigned EA_206(void) { cycle_count-=9; EA=FETCH; EA+=FETCH<<8; EA+=regs.w[BP]; EA=base[SS]+(WORD)EA; return EA; }
 static unsigned EA_207(void) { cycle_count-=9; EA=FETCH; EA+=FETCH<<8; EA+=regs.w[BX]; EA=base[DS]+(WORD)EA; return EA; }
 
-static unsigned (*GetEA[192])()={
+static unsigned (*GetEA[192])(void)={
 	EA_000, EA_001, EA_002, EA_003, EA_004, EA_005, EA_006, EA_007,
 	EA_000, EA_001, EA_002, EA_003, EA_004, EA_005, EA_006, EA_007,
 	EA_000, EA_001, EA_002, EA_003, EA_004, EA_005, EA_006, EA_007,

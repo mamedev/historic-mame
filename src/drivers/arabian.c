@@ -66,12 +66,13 @@ BIT 7 -
 
 interrupts:
 standart IM 1 interrupt mode (rst #38 every vblank)
+
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "Z80.h"
-#include "sndhrdw/8910intf.h"
+
+
 
 int arabian_vh_start(void);
 void arabian_vh_stop(void);
@@ -79,29 +80,29 @@ void arabian_vh_screenrefresh(struct osd_bitmap *bitmap);
 void arabian_spriteramw(int offset, int val);
 void arabian_videoramw(int offset, int val);
 
-void moja(int port, int val);
 int arabian_interrupt(void);
+void arabian_portB_w(int offset,int data);
 int arabian_input_port(int offset);
 
-int arabian_sh_start(void);
+
 
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_RAM },
-        { 0xc000, 0xc000, input_port_0_r },
-        { 0xc200, 0xc200, input_port_1_r },
-        { 0xd000, 0xd7ef, MRA_RAM },
-        { 0xd7f0, 0xd7f8, arabian_input_port },
-        { 0xd7f9, 0xdfff, MRA_RAM },
+	{ 0xc000, 0xc000, input_port_0_r },
+	{ 0xc200, 0xc200, input_port_1_r },
+	{ 0xd000, 0xd7ef, MRA_RAM },
+	{ 0xd7f0, 0xd7f8, arabian_input_port },
+	{ 0xd7f9, 0xdfff, MRA_RAM },
 	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x8000, 0xbfff, arabian_videoramw, &videoram },
-        { 0xd000, 0xd7ff, MWA_RAM },
-        { 0xe000, 0xe07f, arabian_spriteramw, &spriteram },
+	{ 0xd000, 0xd7ff, MWA_RAM },
+	{ 0xe000, 0xe07f, arabian_spriteramw, &spriteram },
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -110,89 +111,122 @@ static struct MemoryWriteAddress writemem[] =
 
 static struct IOWritePort writeport[] =
 {
-	{ 0x00, 0x00, moja },
+	{ 0xc800, 0xc800, AY8910_control_port_0_w },
+	{ 0xca00, 0xca00, AY8910_write_port_0_w },
 	{ -1 }	/* end of table */
 };
 
 
 
-static struct InputPort input_ports[] =
-{
-	{	/* IN6 */
-		0x00,
-		{ OSD_KEY_3, OSD_KEY_4, OSD_KEY_F1, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW1 */
-		0x00,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* IN0 */
-		0x00,
-		{ 0, OSD_KEY_1, OSD_KEY_2, OSD_KEY_F2, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
+INPUT_PORTS_START( input_ports )
+	PORT_START      /* IN6 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BITX(    0x04, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x04, "On" )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	{	/* IN1 */
-		0x00,
-		{ OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_UP, OSD_KEY_DOWN,
-				0, 0, 0, 0 },
-		{ OSD_JOY_RIGHT, OSD_JOY_LEFT, OSD_JOY_UP, OSD_JOY_DOWN,
-				0, 0, 0, 0 }
-	},
-	{	/* IN2 */
-		0x00,
-		{ OSD_KEY_LCONTROL, 0, 0, 0, 0, 0, 0, 0 },
-		{ OSD_JOY_FIRE, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* IN3 */
-		0x00,
-		{ OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_UP, OSD_KEY_DOWN,
-				0, 0, 0, 0 },
-		{ OSD_JOY_RIGHT, OSD_JOY_LEFT, OSD_JOY_UP, OSD_JOY_DOWN,
-				0, 0, 0, 0 }
-	},
-	{	/* IN4 */
-		0x00,
-		{ OSD_KEY_LCONTROL, 0, 0, 0, 0, 0, 0, 0 },
-		{ OSD_JOY_FIRE, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* IN5 */
-		0x04,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{ -1 }  /* end of table */
-};
+	PORT_START      /* DSW1 */
+	PORT_DIPNAME( 0x01, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "5" )
+	PORT_DIPNAME( 0x02, 0x02, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "Upright" )
+	PORT_DIPSETTING(    0x00, "Cocktail" )
+	PORT_DIPNAME( 0x04, 0x04, "Flip Screen", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x08, 0x00, "Bonus", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Carry Bowls to Next Life" )
+	PORT_DIPSETTING(    0x08, "Do Not Carry Bowls" )
+	PORT_DIPNAME( 0xf0, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "A 2/1 B 2/1" )
+	PORT_DIPSETTING(    0x20, "A 2/1 B 1/3" )
+	PORT_DIPSETTING(    0x00, "A 1/1 B 1/1" )
+	PORT_DIPSETTING(    0x30, "A 1/1 B 1/2" )
+	PORT_DIPSETTING(    0x40, "A 1/1 B 1/3" )
+	PORT_DIPSETTING(    0x50, "A 1/1 B 1/4" )
+	PORT_DIPSETTING(    0x60, "A 1/1 B 1/5" )
+	PORT_DIPSETTING(    0x70, "A 1/1 B 1/6" )
+	PORT_DIPSETTING(    0x80, "A 1/2 B 1/2" )
+	PORT_DIPSETTING(    0x90, "A 1/2 B 1/4" )
+	PORT_DIPSETTING(    0xa0, "A 1/2 B 1/6" )
+	PORT_DIPSETTING(    0xb0, "A 1/2 B 1/10" )
+	PORT_DIPSETTING(    0xc0, "A 1/2 B 1/11" )
+	PORT_DIPSETTING(    0xd0, "A 1/2 B 1/12" )
+	PORT_DIPSETTING(    0xf0, "Free Play" )
+	/* 0xe0 gives A 1/2 B 1/6 */
 
-static struct KEYSet keys[] =
-{
-        { 3, 2, "PL1 MOVE UP" },
-        { 3, 1, "PL1 MOVE LEFT"  },
-        { 3, 0, "PL1 MOVE RIGHT" },
-        { 3, 3, "PL1 MOVE DOWN" },
-        { 4, 0, "PL1 KICK" },
-        { 5, 2, "PL2 MOVE UP" },
-        { 5, 1, "PL2 MOVE LEFT"  },
-        { 5, 0, "PL2 MOVE RIGHT" },
-        { 5, 3, "PL2 MOVE DOWN" },
-        { 6, 0, "PL2 KICK" },
-        { -1 }
-};
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-static struct DSW dsw[] =
-{
-	{ 1, 0x01, "LIVES       ", { "  3", "  5" } },
-	{ 1, 0x08, "BOWLS       ", { "CARRY TO NEXT LEVEL",
-				     "       DO NOT CARRY" } },
-	{ 1, 0xf0, "COIN SELECT ", { "1 COIN 1 CREDIT", "SET 2", "SET 3", "SET 4",
-				    "SET 5", "SET 6", "SET 7", "FREE PLAY"} },
-	{ 7, 0x02, "ATTRACT SOUND", { " ON", "OFF" } },
-	{ 7, 0x0c, "BONUS        ", { "   NO BONUS", "20000 1 MEN", "30000 1 MEN", "FORGET BONUS"} },
-	{ -1 }
-};
+	PORT_START      /* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START      /* IN3 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START      /* IN4 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START      /* IN5 */
+	PORT_DIPNAME( 0x01, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x01, "On" )
+	PORT_DIPNAME( 0x02, 0x00, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x0c, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "No Bonus" )
+	PORT_DIPSETTING(    0x04, "20000" )
+	PORT_DIPSETTING(    0x08, "30000" )
+	PORT_DIPSETTING(    0x0c, "Forget Bonus (??)" )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
+INPUT_PORTS_END
+
 
 
 
@@ -247,19 +281,32 @@ static unsigned char colortable[] =
 
 
 
+static struct AY8910interface ay8910_interface =
+{
+	1,	/* 1 chip */
+	1500000,	/* 1.5 MHz?????? */
+	{ 255 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ arabian_portB_w }
+};
+
+
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
 		{
-			CPU_Z80,
+			CPU_Z80 | CPU_16BIT_PORT,
 			4000000,	/* 4 Mhz */
 			0,
 			readmem,writemem,0,writeport,
 			arabian_interrupt,1
 		}
 	},
-	60,
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* single CPU, no need for interleaving */
 	0,
 
@@ -276,10 +323,13 @@ static struct MachineDriver machine_driver =
 	arabian_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	arabian_sh_start,
-	AY8910_sh_stop,
-	AY8910_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&ay8910_interface
+		}
+	}
 };
 
 
@@ -351,7 +401,7 @@ struct GameDriver arabian_driver =
 {
 	"Arabian",
 	"arabian",
-	"JAREK BURCZYNSKI",
+	"Jarek Burczynski (MAME driver)\nMarco Cassili",
 	&machine_driver,
 
 	arabian_rom,
@@ -359,7 +409,7 @@ struct GameDriver arabian_driver =
 	0,
 	0,	/* sound_prom */
 
-	input_ports, 0, 0/*TBR*/,dsw, keys,
+	input_ports,
 
 	0, palette, colortable,
 	ORIENTATION_DEFAULT,

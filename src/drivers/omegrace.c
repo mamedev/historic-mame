@@ -204,20 +204,71 @@ Sound Commands:
 ***************************************************************************/
 
 #include "driver.h"
+#include "vidhrdw/vector.h"
 #include "vidhrdw/avgdvg.h"
-#include "sndhrdw/generic.h"
-#include "sndhrdw/8910intf.h"
 
 
-void omegrace_init_machine(void);
-int omegrace_vg_status_r(int offset);
-int omegrace_vg_go(int offset);
-int omegrace_watchdog_r(int offset);
-int omegrace_spinner1_r(int offset);
+static void omegrace_init_machine(void)
+{
+	/* Omega Race expects the vector processor to be ready. */
+	avgdvg_reset (0, 0);
+}
 
-int omegrace_interrupt(void);
-int omegrace_sh_interrupt(void);
-int omegrace_sh_start(void);
+static int omegrace_vg_go(int data)
+{
+	avgdvg_go(0,0);
+	return 0;
+}
+
+static int omegrace_watchdog_r(int offset)
+{
+	return 0;
+}
+
+static int omegrace_vg_status_r(int offset)
+{
+	if (avgdvg_done())
+		return 0;
+	else
+		return 0x80;
+}
+
+/*
+ * Encoder bit mappings
+ * The encoder is a 64 way switch, with the inputs scrambled
+ * on the input port (and shifted 2 bits to the left for the
+ * 1 player encoder
+ *
+ * 3 6 5 4 7 2 for encoder 1 (shifted two bits left..)
+ *
+ *
+ * 5 4 3 2 1 0 for encoder 2 (not shifted..)
+ */
+
+static unsigned char spinnerTable[64] = {
+	0x00, 0x04, 0x14, 0x10, 0x18, 0x1c, 0x5c, 0x58,
+	0x50, 0x54, 0x44, 0x40, 0x48, 0x4c, 0x6c, 0x68,
+	0x60, 0x64, 0x74, 0x70, 0x78, 0x7c, 0xfc, 0xf8,
+	0xf0, 0xf4, 0xe4, 0xe0, 0xe8, 0xec, 0xcc, 0xc8,
+	0xc0, 0xc4, 0xd4, 0xd0, 0xd8, 0xdc, 0x9c, 0x98,
+	0x90, 0x94, 0x84, 0x80, 0x88, 0x8c, 0xac, 0xa8,
+	0xa0, 0xa4, 0xb4, 0xb0, 0xb8, 0xbc, 0x3c, 0x38,
+	0x30, 0x34, 0x24, 0x20, 0x28, 0x2c, 0x0c, 0x08 };
+
+
+int omegrace_spinner1_r(int offset)
+{
+	int res;
+	res=readinputport(4);
+
+	return (spinnerTable[res&0x3f]);
+}
+
+void omegrace_soundlatch_w (int offset, int data)
+{
+	soundlatch_w (offset, data);
+	cpu_cause_interrupt (1, 0xff);
+}
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -275,13 +326,13 @@ static struct IOWritePort writeport[] =
 {
   	{ 0x0a, 0x0a, avgdvg_reset },
  	{ 0x13, 0x13, IOWP_NOP }, /* diverse outputs */
-	{ 0x14, 0x14, sound_command_w }, /* Sound command */
+	{ 0x14, 0x14, omegrace_soundlatch_w }, /* Sound command */
 	{ -1 }	/* end of table */
 };
 
 static struct IOReadPort sound_readport[] =
 {
-	{ 0x00, 0x00, sound_command_r },
+	{ 0x00, 0x00, soundlatch_r },
 	{ -1 }
 };
 
@@ -367,11 +418,13 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
 	PORT_START /* IN4 - port 0x15 - spinner */
-	PORT_ANALOG (0x3f, 0x00, IPT_DIAL, 25, 0, 0, 0 )
+	PORT_ANALOG (0x3f, 0x00, IPT_DIAL, 12, 0, 0, 0 )
 
 	PORT_START /* IN5 - port 0x16 - second spinner */
-	PORT_ANALOG (0x3f, 0x00, IPT_DIAL | IPF_COCKTAIL, 25, 0, 0, 0 )
+	PORT_ANALOG (0x3f, 0x00, IPT_DIAL | IPF_COCKTAIL, 12, 0, 0, 0 )
 INPUT_PORTS_END
+
+
 
 static struct GfxLayout fakelayout =
 {
@@ -390,7 +443,22 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
         { -1 } /* end of array */
 };
 
-static unsigned char color_prom[] = { 0 };
+static unsigned char color_prom[] = { VEC_PAL_BW };
+
+
+
+static struct AY8910interface ay8910_interface =
+{
+	2,	/* 2 chips */
+	1500000,	/* 1.5 MHz */
+	{ 0x20ff, 0x20ff },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 }
+};
+
+
 
 static struct MachineDriver machine_driver =
 {
@@ -398,26 +466,28 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_Z80,
-			3000000,	/* 3.0 Mhz */
+			3000000,	/* 3.0 MHz */
 			0,
 			readmem,writemem,readport,writeport,
-			omegrace_interrupt,4 	/* 240 Hz */
+			0,0, /* no vblank interrupt */
+			interrupt, 240 /* 240 Hz */
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			1500000,	/* 1.5 Mhz */
+			1500000,	/* 1.5 MHz */
 			2, 		/* memory region 1*/
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
-			omegrace_sh_interrupt,8 /* gets divided by 2, so 240Hz */
+			0, 0, /* no vblank interrupt */
+			nmi_interrupt, 240 /* 240 Hz */
 		}
 	},
-	60,
-	10, /* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	40, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
+	1, /* the soundcpu is synchronized by the new timer code */
 
 	omegrace_init_machine,
 
 	/* video hardware */
-	288, 224, { 0, 1020, -10, 1010 },
+	400, 300, { 0, 1020, -10, 1010 },
 	gfxdecodeinfo,
 	256,256,
 	avg_init_colors,
@@ -429,10 +499,13 @@ static struct MachineDriver machine_driver =
 	dvg_screenrefresh,
 
 	/* sound hardware */
-	0,
-	omegrace_sh_start,
-	AY8910_sh_stop,
-	AY8910_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&ay8910_interface
+		}
+	}
 };
 
 
@@ -492,13 +565,11 @@ struct GameDriver omegrace_driver =
 {
 	"Omega Race",
 	"omegrace",
-	"Al Kossow (hardware info)\n"
-	"Hedley Rainnie (dvg code)\n"
-	"Eric Smith (dvg code)\n"
+	"Al Kossow (original code)\n"
 	"Bernd Wiebelt (MAME driver)\n"
-	"-------\n"
-	"  dedicated to Natalia\n"
-	"  and Lara Anna Maria\n",
+	" dedicated to Natalia & Lara\n"
+	VECTOR_TEAM,
+
 	&machine_driver,
 
 	omegrace_rom,
@@ -506,7 +577,7 @@ struct GameDriver omegrace_driver =
 	0,
 	0,	/* sound_prom */
 
-	0,input_ports, 0, 0, 0,
+	input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,

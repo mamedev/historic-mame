@@ -82,8 +82,6 @@ C004      76489 #4 trigger
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/generic.h"
-#include "sndhrdw/sn76496.h"
 
 
 /* In Machine */
@@ -110,9 +108,23 @@ int tp84_vh_start(void);
 void tp84_vh_stop(void);
 void tp84_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-int tp84_sh_timer_r(int offset);
-int tp84_sh_interrupt(void);
-int tp84_sh_start(void);
+
+
+int tp84_sh_timer_r(int offset)
+{
+	int clock;
+
+#define TIMER_RATE 256
+
+	clock = cpu_gettotalcycles() / TIMER_RATE;
+
+	return clock;
+}
+
+void tp84_sh_irqtrigger_w(int offset,int data)
+{
+	cpu_cause_interrupt(2,0xff);
+}
 
 
 
@@ -137,7 +149,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x2000, 0x2000, MWA_RAM }, /*Watch dog?*/
 	{ 0x2800, 0x2800, tp84_col0_w },
 	{ 0x3000, 0x3000, MWA_RAM },
-	{ 0x3a00, 0x3a00, sound_command_w },
+	{ 0x3800, 0x3800, tp84_sh_irqtrigger_w },
+	{ 0x3a00, 0x3a00, soundlatch_w },
 	{ 0x3c00, 0x3c00, MWA_RAM, &tp84_scrollx }, /* Y scroll */
 	{ 0x3e00, 0x3e00, MWA_RAM, &tp84_scrolly }, /* X scroll */
 	{ 0x4000, 0x43ff, videoram_w, &videoram , &videoram_size},
@@ -177,7 +190,7 @@ static struct MemoryReadAddress sound_readmem[] =
 {
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x4000, 0x43ff, MRA_RAM },
-	{ 0x6000, 0x6000, sound_command_r },
+	{ 0x6000, 0x6000, soundlatch_r },
 	{ 0x8000, 0x8000, tp84_sh_timer_r },
 	{ -1 }	/* end of table */
 };
@@ -408,6 +421,15 @@ static unsigned char color_prom[] =
 
 
 
+static struct SN76496interface sn76496_interface =
+{
+	3,	/* 3 chips */
+	1789750,	/* 1.78975 Mhz ? */
+	{ 255, 255, 255 }
+};
+
+
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware  */
@@ -438,10 +460,10 @@ static struct MachineDriver machine_driver =
 			14318180/4,	/* ? */
 			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,0,0,
-			tp84_sh_interrupt,1
+			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
 	},
-	60,							/* frames per second */
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	100,	/* 100 CPU slices per frame - an high value to ensure proper */
 			/* synchronization of the CPUs */
 	tp84_init_machine,		/* init machine routine */ /* JB 970829 */
@@ -459,11 +481,15 @@ static struct MachineDriver machine_driver =
 	tp84_vh_screenrefresh,	/* vh_update routine */
 
 	/* sound hardware */
-	0,
-	tp84_sh_start,
-	SN76496_sh_stop,
-	SN76496_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_SN76496,
+			&sn76496_interface
+		}
+	}
 };
+
 
 
 ROM_START( tp84_rom )
@@ -545,7 +571,7 @@ struct GameDriver tp84_driver =
 	0,						/* samplenames */
 	0,	/* sound_prom */
 
-	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	input_ports,
 
 	color_prom,						/* color prom */
 	0, 	          /* palette */

@@ -204,45 +204,74 @@ $Manufacturer's suggested settings
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "vidhrdw/vector.h"
 #include "vidhrdw/avgdvg.h"
 #include "machine/atari_vg.h"
-#include "sndhrdw/pokyintf.h"
 
+
+#define IN_LEFT	(1 << 0)
+#define IN_RIGHT (1 << 1)
+#define IN_FIRE (1 << 2)
+#define IN_SHIELD (1 << 3)
+#define IN_THRUST (1 << 4)
+#define IN_P1 (1 << 5)
+#define IN_P2 (1 << 6)
+
+/*
+
+These 7 memory locations are used to read the 2 players' controls as well
+as sharing some dipswitch info in the lower 4 bits pertaining to coins/credits
+Typically, only the high 2 bits are read.
+
+*/
+
+static int spacduel_IN3_r (int offset) {
+
+	int res;
+	int res1;
+	int res2;
+
+	res1 = readinputport(3);
+	res2 = readinputport(4);
+	res = 0x00;
+
+	switch (offset & 0x07) {
+		case 0:
+			if (res1 & IN_SHIELD) res |= 0x80;
+			if (res1 & IN_FIRE) res |= 0x40;
+			break;
+		case 1: /* Player 2 */
+			if (res2 & IN_SHIELD) res |= 0x80;
+			if (res2 & IN_FIRE) res |= 0x40;
+			break;
+		case 2:
+			if (res1 & IN_LEFT) res |= 0x80;
+			if (res1 & IN_RIGHT) res |= 0x40;
+			break;
+		case 3: /* Player 2 */
+			if (res2 & IN_LEFT) res |= 0x80;
+			if (res2 & IN_RIGHT) res |= 0x40;
+			break;
+		case 4:
+			if (res1 & IN_THRUST) res |= 0x80;
+			if (res1 & IN_P1) res |= 0x40;
+			break;
+		case 5:  /* Player 2 */
+			if (res2 & IN_THRUST) res |= 0x80;
+			break;
+		case 6:
+			if (res1 & IN_P2) res |= 0x80;
+			break;
+		case 7:
+			res = (0x00 /* upright */ | (0 & 0x40));
+			break;
+		}
+	return res;
+	}
 
 int bzone_IN0_r(int offset);
-int spacduel_IN3_r(int offset);
 
-int bwidow_interrupt(void);
-int gravitar_interrupt(void);
-int spacduel_interrupt(void);
-
-/* Misc sound code */
-static struct POKEYinterface interface =
-{
-	2,	/* 2 chips */
-	FREQ_17_APPROX,	/* 1.7 Mhz */
-	255,
-	NO_CLIP,
-	/* The 8 pot handlers */
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	/* The allpot handler */
-	{ input_port_1_r, input_port_2_r },
-};
-
-
-int bwidow_sh_start(void)
-{
-	return pokey_sh_start (&interface);
-}
-
-static struct MemoryReadAddress readmem[] =
+static struct MemoryReadAddress bwidow_readmem[] =
 {
 	{ 0x0000, 0x07ff, MRA_RAM },
 	{ 0x9000, 0xffff, MRA_ROM },
@@ -257,7 +286,7 @@ static struct MemoryReadAddress readmem[] =
 	{ -1 }	/* end of table */
 };
 
-static struct MemoryWriteAddress writemem[] =
+static struct MemoryWriteAddress bwidow_writemem[] =
 {
 	{ 0x0000, 0x07ff, MWA_RAM },
 	{ 0x2000, 0x27ff, MWA_RAM },
@@ -566,25 +595,30 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
         { -1 } /* end of array */
 };
 
-static unsigned char color_prom[] =
+static unsigned char color_prom[] = { VEC_PAL_COLOR };
+
+
+static struct POKEYinterface pokey_interface =
 {
-	0x00,0x00,0x00, /* BLACK */
-	0x00,0x00,0x01, /* BLUE */
-	0x00,0x01,0x00, /* GREEN */
-	0x00,0x01,0x01, /* CYAN */
-	0x01,0x00,0x00, /* RED */
-	0x01,0x00,0x01, /* MAGENTA */
-	0x01,0x01,0x00, /* YELLOW */
-	0x01,0x01,0x01,	/* WHITE */
-	0x00,0x00,0x00, /* BLACK */
-	0x00,0x00,0x01, /* BLUE */
-	0x00,0x01,0x00, /* GREEN */
-	0x00,0x01,0x01, /* CYAN */
-	0x01,0x00,0x00, /* RED */
-	0x01,0x00,0x01, /* MAGENTA */
-	0x01,0x01,0x00, /* YELLOW */
-	0x01,0x01,0x01	/* WHITE */
+	2,	/* 2 chips */
+	1500000,	/* 1.5 MHz??? */
+	255,
+	POKEY_DEFAULT_GAIN/2,
+	NO_CLIP,
+	/* The 8 pot handlers */
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	/* The allpot handler */
+	{ input_port_1_r, input_port_2_r },
 };
+
+
 
 static struct MachineDriver bwidow_machine_driver =
 {
@@ -594,16 +628,17 @@ static struct MachineDriver bwidow_machine_driver =
 			CPU_M6502,
 			1500000,	/* 1.5 Mhz */
 			0,
-			readmem,writemem,0,0,
-			bwidow_interrupt,8 /* 240 Hz interrupts */
+			bwidow_readmem,bwidow_writemem,0,0,
+			0, 0, /* no vblank-interrupts */
+			interrupt, 240 /* 240 Hz */
 		}
 	},
-	30, /* frames per second */
+	30, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
 	1,
 	0,
 
 	/* video hardware */
-	288, 224, { 0, 480, 0, 440 },
+	400, 300, { 0, 480, 0, 440 },
 	gfxdecodeinfo,
 	256, 256,
 	avg_init_colors,
@@ -615,10 +650,13 @@ static struct MachineDriver bwidow_machine_driver =
 	avg_screenrefresh,
 
 	/* sound hardware */
-	0,
-	bwidow_sh_start,
-	pokey_sh_stop,
-	pokey_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_POKEY,
+			&pokey_interface
+		}
+	}
 };
 
 static struct MachineDriver gravitar_machine_driver =
@@ -629,16 +667,17 @@ static struct MachineDriver gravitar_machine_driver =
 			CPU_M6502,
 			1500000,	/* 1.5 Mhz */
 			0,
-			readmem,writemem,0,0,
-			gravitar_interrupt,8 /* 240 Hz */
+			bwidow_readmem,bwidow_writemem,0,0,
+			0, 0, /* no vblank-interrupts */
+			interrupt, 240 /* 240 Hz */
 		}
 	},
-	30, /* frames per second */
+	30, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
 	1,
 	0,
 
 	/* video hardware */
-	288, 224, { 0, 420, 0, 400 },
+	400, 300, { 0, 420, 0, 400 },
 	gfxdecodeinfo,
 	256, 256,
 	avg_init_colors,
@@ -650,10 +689,13 @@ static struct MachineDriver gravitar_machine_driver =
 	avg_screenrefresh,
 
 	/* sound hardware */
-	0,
-	bwidow_sh_start,
-	pokey_sh_stop,
-	pokey_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_POKEY,
+			&pokey_interface
+		}
+	}
 };
 
 static struct MachineDriver spacduel_machine_driver =
@@ -665,15 +707,16 @@ static struct MachineDriver spacduel_machine_driver =
 			1500000,	/* 1.5 Mhz */
 			0,
 			spacduel_readmem,spacduel_writemem,0,0,
-			spacduel_interrupt,8 /* 240 Hz */
+			0, 0, /* no vblank-interrupts */
+			interrupt, 240 /* 240 Hz */
 		}
 	},
-	30, /* frames per second */
+	60, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
 	1,
 	0,
 
 	/* video hardware */
-	288, 224, { 0, 540, 0, 400 },
+	400, 300, { 0, 540, 0, 400 },
 	gfxdecodeinfo,
 	256, 256,
 	avg_init_colors,
@@ -685,10 +728,13 @@ static struct MachineDriver spacduel_machine_driver =
 	avg_screenrefresh,
 
 	/* sound hardware */
-	0,
-	bwidow_sh_start,
-	pokey_sh_stop,
-	pokey_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_POKEY,
+			&pokey_interface
+		}
+	}
 };
 
 
@@ -760,6 +806,7 @@ struct GameDriver bwidow_driver =
 {
 	"Black Widow",
 	"bwidow",
+	"Brad Oliver (Mame driver)\n"
 	VECTOR_TEAM,
 
 	&bwidow_machine_driver,
@@ -769,13 +816,15 @@ struct GameDriver bwidow_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/, bwidow_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	bwidow_input_ports,
 
 	color_prom, 0,0,
 	ORIENTATION_DEFAULT,
 
 	bwidow_hiload, bwidow_hisave
 };
+
+
 
 /***************************************************************************
 
@@ -810,6 +859,7 @@ struct GameDriver gravitar_driver =
 {
 	"Gravitar",
 	"gravitar",
+	"Brad Oliver (Mame driver)\n"
 	VECTOR_TEAM,
 
 	&gravitar_machine_driver,
@@ -819,7 +869,7 @@ struct GameDriver gravitar_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/, gravitar_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	gravitar_input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -862,6 +912,8 @@ struct GameDriver spacduel_driver =
 {
 	"Space Duel",
 	"spacduel",
+
+	"Brad Oliver (Mame driver)\n"
 	VECTOR_TEAM,
 
 	&spacduel_machine_driver,
@@ -871,7 +923,7 @@ struct GameDriver spacduel_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/, spacduel_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	spacduel_input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,

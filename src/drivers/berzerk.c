@@ -1,6 +1,7 @@
 /***************************************************************************
 
  Berzerk Driver by Zsolt Vasvari
+ Sound Driver by Alex Judd
 
 ***************************************************************************/
 
@@ -9,9 +10,9 @@
 
 extern unsigned char* magicram;
 
-void berzerk_init_machine();
+void berzerk_init_machine(void);
 
-int  berzerk_interrupt();
+int  berzerk_interrupt(void);
 void berzerk_interrupt_enable_w(int offset,int data);
 void berzerk_enable_nmi_w(int offset,int data);
 void berzerk_disable_nmi_w(int offset,int data);
@@ -19,6 +20,9 @@ int  berzerk_enable_nmi_r(int offset);
 int  berzerk_disable_nmi_r(int offset);
 int berzerk_led_on_w(int offset);
 int berzerk_led_off_w(int offset);
+int berzerk_debug_read(int offset);
+int berzerk_voiceboard_read(int offset);
+void berzerk_videoram_w(int offset,int data);
 
 void berzerk_videoram_w(int offset,int data);
 
@@ -31,6 +35,11 @@ void berzerk_magicram_w(int offset,int data);
 int  berzerk_magicram_r(int offset);
 void berzerk_magicram_control_w(int offset,int data);
 int  berzerk_collision_r(int offset);
+
+void berzerk_sound_control_a_w(int offset, int data);
+void berzerk_sound_control_b_w(int offset, int data);
+int berzerk_sh_start(void);
+void berzerk_sh_update(void);
 
 void berzerk_vh_screenrefresh(struct osd_bitmap *bitmap);
 
@@ -83,7 +92,9 @@ int  frenzy_io62_r(int offset)
 
 static struct IOReadPort readport[] =
 {
-        { 0x40, 0x47, IORP_NOP}, /* Sound stuff */
+        { 0x40, 0x43, IORP_NOP}, /* Sound stuff */
+        { 0x44, 0x44, berzerk_voiceboard_read}, /* Sound stuff */
+        { 0x45, 0x47, IORP_NOP}, /* Sound stuff */
         { 0x48, 0x48, input_port_0_r},
         { 0x49, 0x49, input_port_1_r},
         { 0x4a, 0x4a, input_port_7_r}, /* Same as 48 for Player 2 */
@@ -105,12 +116,13 @@ static struct IOReadPort readport[] =
 
 static struct IOWritePort writeport[] =
 {
-        { 0x40, 0x47, IOWP_NOP}, /* Sound stuff */
+        { 0x40, 0x46, berzerk_sound_control_a_w}, /* First sound board */
+        { 0x47, 0x47, IOWP_NOP}, /* not used sound stuff */
         { 0x4b, 0x4b, berzerk_magicram_control_w},
         { 0x4c, 0x4c, berzerk_enable_nmi_w},
         { 0x4d, 0x4d, berzerk_disable_nmi_w},
         { 0x4f, 0x4f, berzerk_interrupt_enable_w},
-        { 0x50, 0x57, IOWP_NOP}, /* Sound stuff */
+        { 0x50, 0x57, IOWP_NOP}, /* Second sound board but not used */
         { -1 }  /* end of table */
 };
 
@@ -191,7 +203,6 @@ INPUT_PORTS_START( input_ports )
         PORT_DIPNAME( 0x80, 0x80, "Cocktail Mode", IP_KEY_NONE )
         PORT_DIPSETTING(    0x80, "Off" )
         PORT_DIPSETTING(    0x00, "On" )
-
 INPUT_PORTS_END
 
 INPUT_PORTS_START( frenzy_input_ports )
@@ -273,7 +284,6 @@ INPUT_PORTS_START( frenzy_input_ports )
         PORT_DIPNAME( 0x80, 0x80, "Cocktail Mode", IP_KEY_NONE )
         PORT_DIPSETTING(    0x80, "Off" )
         PORT_DIPSETTING(    0x00, "On" )
-
 INPUT_PORTS_END
 
 
@@ -299,6 +309,10 @@ unsigned char berzerk_palette[16 * 3] =
         0xff, 0xff, 0xff
 };
 
+static struct Samplesinterface berzerk_samples_interface =
+{
+	8	/* 8 channels */
+};
 
 static struct MachineDriver berzerk_machine_driver =
 {
@@ -312,7 +326,7 @@ static struct MachineDriver berzerk_machine_driver =
 					berzerk_interrupt,8
 			},
 	},
-	60,
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* single CPU, no need for interleaving */
 	berzerk_init_machine,
 
@@ -330,9 +344,15 @@ static struct MachineDriver berzerk_machine_driver =
 
 	/* sound hardware */
 	0,
+	berzerk_sh_start,
 	0,
-	0,
-	0
+	berzerk_sh_update,
+	{
+		{
+			SOUND_SAMPLES,
+			&berzerk_samples_interface
+		}
+	}
 };
 
 
@@ -348,7 +368,7 @@ static struct MachineDriver frenzy_machine_driver =
 			berzerk_interrupt,8
 		},
 	},
-	60,
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* single CPU, no need for interleaving */
 	0,
 
@@ -366,9 +386,15 @@ static struct MachineDriver frenzy_machine_driver =
 
 	/* sound hardware */
 	0,
+	berzerk_sh_start,
 	0,
-	0,
-	0
+	berzerk_sh_update,
+	{
+		{
+			SOUND_SAMPLES,
+			&berzerk_samples_interface
+		}
+	}
 };
 
 
@@ -448,92 +474,129 @@ ROM_START( frenzy1_rom )
         ROM_LOAD( "frenzy02.bin", 0xc000, 0x1000, 0x44cf1045 )
 ROM_END
 
-
+static const char *berzerk_sample_names[] =
+{
+	"*berzerk", /* universal samples directory */
+	"",
+	"01.sam", // "kill"
+	"02.sam", // "attack"
+	"03.sam", // "charge"
+	"04.sam", // "got"
+	"05.sam", // "to"
+	"06.sam", // "get"
+	"",
+	"08.sam", // "alert"
+	"09.sam", // "detected"
+	"10.sam", // "the"
+	"11.sam", // "in"
+	"12.sam", // "it"
+	"",
+	"",
+	"15.sam", // "humanoid"
+	"16.sam", // "coins"
+	"17.sam", // "pocket"
+	"18.sam", // "intruder"
+	"",
+	"20.sam", // "escape"
+	"21.sam", // "destroy"
+	"22.sam", // "must"
+	"23.sam", // "not"
+	"24.sam", // "chicken"
+	"25.sam", // "fight"
+	"26.sam", // "like"
+	"27.sam", // "a"
+	"28.sam", // "robot"
+	"",
+	"30.sam", // player fire
+	"31.sam", // baddie fire
+	"32.sam", // kill baddie
+	"33.sam", // kill human (real)
+	"34.sam", // kill human (cheat)
+	0	/* end of array */
+};
 
 struct GameDriver berzerk_driver =
 {
-        "Berzerk",
-        "berzerk",
-        "Zsolt Vasvari\nChristopher Kirmse\nMirko Buffoni\nValerio Verrando",
-        &berzerk_machine_driver,
+	"Berzerk",
+	"berzerk",
+	"Zsolt Vasvari\nChristopher Kirmse\nMirko Buffoni\nValerio Verrando\nDouglas Silfen\nAlex Judd (Sound Programming)",
+	&berzerk_machine_driver,
 
-        berzerk_rom,
-        0, 0,
-        0,
+	berzerk_rom,
+	0, 0,
+	berzerk_sample_names,
 	0,	/* sound_prom */
 
-        0, input_ports, 0, 0, 0,
+	input_ports,
 
-        0, berzerk_palette, 0,
+	0, berzerk_palette, 0,
 
-        ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT,
 
-        hiload, hisave
+	hiload, hisave
 };
 
 
 struct GameDriver berzerk1_driver =
 {
-        "Berzerk (version 1)",
-        "berzerk1",
-        "Zsolt Vasvari\nChristopher Kirmse\nMirko Buffoni",
-        &berzerk_machine_driver,
+	"Berzerk (version 1)",
+	"berzerk1",
+	"Zsolt Vasvari\nChristopher Kirmse\nMirko Buffoni\nValerio Verrando\nDouglas Silfen\nAlex Judd (Sound Programming)",
+	&berzerk_machine_driver,
 
-        berzerk1_rom,
-        0, 0,
-        0,
+	berzerk1_rom,
+	0, 0,
+	berzerk_sample_names,
 	0,	/* sound_prom */
 
-        0, input_ports, 0, 0, 0,
+	input_ports,
 
-        0, berzerk_palette, 0,
+	0, berzerk_palette, 0,
 
-        ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT,
 
-        hiload, hisave
+	hiload, hisave
 };
 
 
 struct GameDriver frenzy_driver =
 {
-        "Frenzy",
-        "frenzy",
-        "Keith Gerdes\nMirko Buffoni\nMike Cuddy\nBrad Oliver\nZsolt Vasvari\nChristopher Kirmse",
-        &frenzy_machine_driver,
+	"Frenzy",
+	"frenzy",
+	"Keith Gerdes\nMirko Buffoni\nMike Cuddy\nBrad Oliver\nZsolt Vasvari\nChristopher Kirmse",
+	&frenzy_machine_driver,
 
-        frenzy_rom,
-        0, 0,
-        0,
+	frenzy_rom,
+	0, 0,
+	berzerk_sample_names,
 	0,	/* sound_prom */
 
-        0, frenzy_input_ports, 0, 0, 0,
+	frenzy_input_ports,
 
-        0, berzerk_palette, 0,
+	0, berzerk_palette, 0,
 
-        ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT,
 
-        0, 0
+	0, 0
 };
 
 struct GameDriver frenzy1_driver =
 {
-        "Frenzy (version 1)",
-        "frenzy1",
-        "Keith Gerdes\nMirko Buffoni\nMike Cuddy\nBrad Oliver\nZsolt Vasvari\nChristopher Kirmse",
-        &frenzy_machine_driver,
+	"Frenzy (version 1)",
+	"frenzy1",
+	"Keith Gerdes\nMirko Buffoni\nMike Cuddy\nBrad Oliver\nZsolt Vasvari\nChristopher Kirmse",
+	&frenzy_machine_driver,
 
-        frenzy1_rom,
-        0, 0,
-        0,
+	frenzy1_rom,
+	0, 0,
+	berzerk_sample_names,
 	0,	/* sound_prom */
 
-        0, frenzy_input_ports, 0, 0, 0,
+	frenzy_input_ports,
 
-        0, berzerk_palette, 0,
+	0, berzerk_palette, 0,
 
-        ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT,
 
-        0, 0
+	0, 0
 };
-
-

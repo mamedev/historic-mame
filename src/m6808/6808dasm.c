@@ -2,7 +2,7 @@
  *   A quick-hack 6803/6808 disassembler
  *
  *   Note: this is not the good and proper way to disassemble anything, but it works
- * 
+ *
  *   I'm afraid to put my name on it, but I feel obligated:
  *   This code written by Aaron Giles (agiles@sirius.com) for the MAME project
  *
@@ -16,7 +16,7 @@ static char *opcode_strings[0x0100] =
 	"illegal", 	"illegal", 	"illegal", 	"illegal", 	"lsrd", 		"asld", 		"tap",		"tpa",			/*00*/
 	"inx",		"dex",		"clv",		"sev",		"clc",		"sec",		"cli",		"sti",
 	"sba",		"cba",		"illegal", 	"illegal", 	"illegal", 	"illegal", 	"tab",		"tba",			/*10*/
-	"illegal", 	"daa",		"illegal", 	"aba",		"illegal", 	"illegal", 	"illegal", 	"illegal", 	
+	"xgdx", 	"daa",		"illegal", 	"aba",		"illegal", 	"illegal", 	"illegal", 	"illegal",
 	"bra",		"brn",		"bhi",		"bls",		"bcc",		"bcs",		"bne",		"beq",			/*20*/
 	"bvc",		"bvs",		"bpl",		"bmi",		"bge",		"blt",		"bgt",		"ble",
 	"tsx",		"ins",		"pula",		"pulb",		"des",		"txs",		"psha",		"pshb",			/*30*/
@@ -25,10 +25,10 @@ static char *opcode_strings[0x0100] =
 	"asla",		"rola",		"deca",		"illegal", 	"inca",		"tsta",		"illegal", 	"clra",
 	"negb",		"illegal", 	"illegal", 	"comb",		"lsrb",		"illegal", 	"rorb",		"asrb",			/*50*/
 	"aslb",		"rolb",		"decb",		"illegal", 	"incb",		"tstb",		"illegal", 	"clrb",
-	"neg_ix",	"illegal", 	"illegal", 	"com_ix",	"lsr_ix",	"illegal", 	"ror_ix",	"asr_ix",		/*60*/
-	"asl_ix",	"rol_ix",	"dec_ix",	"illegal", 	"inc_ix",	"tst_ix",	"jmp_ix",	"clr_ix",
-	"neg_ex",	"illegal", 	"illegal", 	"com_ex",	"lsr_ex",	"illegal", 	"ror_ex",	"asr_ex",		/*70*/
-	"asl_ex",	"rol_ex",	"dec_ex",	"illegal", 	"inc_ex",	"tst_ex",	"jmp_ex",	"clr_ex",
+	"neg_ix",	"aim_ix", 	"oim_ix", 	"com_ix",	"lsr_ix",	"eim_ix", 	"ror_ix",	"asr_ix",		/*60*/
+	"asl_ix",	"rol_ix",	"dec_ix",	"tim_ix", 	"inc_ix",	"tst_ix",	"jmp_ix",	"clr_ix",
+	"neg_ex",	"aim_di", 	"oim_di", 	"com_ex",	"lsr_ex",	"eim_di", 	"ror_ex",	"asr_ex",		/*70*/
+	"asl_ex",	"rol_ex",	"dec_ex",	"tim_di", 	"inc_ex",	"tst_ex",	"jmp_ex",	"clr_ex",
 	"suba_im",	"cmpa_im",	"sbca_im",	"subd_im", 	"anda_im",	"bita_im",	"lda_im",	"sta_im",		/*80*/
 	"eora_im",	"adca_im",	"ora_im",	"adda_im",	"cmpx_im",	"bsr",		"lds_im",	"sts_im",
 	"suba_di",	"cmpa_di",	"sbca_di",	"subd_di", 	"anda_di",	"bita_di",	"lda_di",	"sta_di",		/*90*/
@@ -54,7 +54,7 @@ int Dasm6808 (unsigned char *base, char *buf, int pc)
 	char *opptr = opcode_strings[code];
 	char opstr[20];
 	char *p, *s;
-	
+
 	strcpy (opstr, opptr);
 	p = opstr + 3;
 	if (*p != '_')
@@ -73,13 +73,18 @@ int Dasm6808 (unsigned char *base, char *buf, int pc)
 			}
 		}
 	}
-	
+
 	s = p - 1;
 	*p++ = 0;
 	if (*p == 'i')
 	{
 		if (*++p == 'x')
 		{
+			if ( s[-1] == 'i' && s[0] == 'm' ) { /* EHC 04-11 Added AIM/OIM/EIM/TIM support */
+				sprintf (buf, "%-5s#$%02x,(x+$%02x)", opstr, base[0], base[1] );
+				return 3;
+			}
+
 			sprintf (buf, "%-5s(x+$%02x)", opstr, *base);
 			return 2;
 		}
@@ -99,6 +104,11 @@ int Dasm6808 (unsigned char *base, char *buf, int pc)
 	}
 	else if (*p == 'd')
 	{
+		if ( s[-1] == 'i' && s[0] == 'm' ) { /* EHC 04-11 Added AIM/OIM/EIM/TIM support */
+			sprintf (buf, "%-5s#$%02x,$%02x", opstr, base[0], base[1] );
+			return 3;
+		}
+
 		sprintf (buf, "%-5s$%02x", opstr, *base);
 		return 2;
 	}

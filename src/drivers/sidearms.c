@@ -8,15 +8,15 @@
   Please do not send anything large to this address without asking me
   first.
 
-  The ROMs seem to contain code for three Z80s, however the board only has
-  two. Some code for that ghost third Z80 is missing.
+  There is an additional ROM which seems to contain code for a third Z80,
+  however the board only has two. The ROM is related to the missing star
+  background. At one point, the code jumps to A000, outside of the ROM
+  address space.
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/generic.h"
-#include "sndhrdw/8910intf.h"
 
 extern unsigned char *sidearms_bg_scrollx,*sidearms_bg_scrolly;
 extern unsigned char *sidearms_bg2_scrollx,*sidearms_bg2_scrolly;
@@ -33,8 +33,6 @@ void sidearms_vh_stop(void);
 void sidearms_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void sidearms_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-int capcomOPN_sh_start(void);
-
 
 
 static void sidearms_bankswitch_w(int offset,int data)
@@ -48,12 +46,6 @@ static void sidearms_bankswitch_w(int offset,int data)
 }
 
 
-static int pip(int offset)
-{
-if (errorlog && cpu_getpc() != 0x005b) fprintf(errorlog,"read c805 at PC %04x\n",cpu_getpc());
-	return 0x80;
-}
-
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x7fff, MRA_ROM },
@@ -63,7 +55,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xc802, 0xc802, input_port_2_r },
 	{ 0xc803, 0xc803, input_port_3_r },
 	{ 0xc804, 0xc804, input_port_4_r },
-	{ 0xc805, 0xc805, pip },
+	{ 0xc805, 0xc805, input_port_5_r },
 	{ 0xd000, 0xffff, MRA_RAM },
 	{ -1 }	/* end of table */
 };
@@ -88,40 +80,45 @@ static struct MemoryWriteAddress writemem[] =
 };
 
 #ifdef THIRD_CPU
+static void pop(int offset,int data)
+{
+RAM[0xa000] = 0xc3;
+RAM[0xa001] = 0x00;
+RAM[0xa002] = 0xa0;
+//	interrupt_enable_w(offset,data & 0x80);
+}
+
 static struct MemoryReadAddress readmem2[] =
 {
 	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0xc000, 0xefff, MRA_RAM },
+	{ 0xc000, 0xdfff, MRA_RAM },
+	{ 0xe000, 0xe3ff, MRA_RAM },
+	{ 0xe400, 0xe7ff, MRA_RAM },
+	{ 0xe800, 0xebff, MRA_RAM },
+	{ 0xec00, 0xefff, MRA_RAM },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress writemem2[] =
 {
 	{ 0x0000, 0x7fff, MWA_ROM },
-	{ 0xc000, 0xefff, MWA_RAM },
+	{ 0xc000, 0xdfff, MWA_RAM },
+	{ 0xe000, 0xe3ff, MWA_RAM },
+	{ 0xe400, 0xe7ff, MWA_RAM },
+	{ 0xe800, 0xebff, MWA_RAM },
+	{ 0xec00, 0xefff, MWA_RAM },
+	{ 0xf80e, 0xf80e, pop },	/* ROM bank selector? (to appear at 8000) */
 	{ -1 }	/* end of table */
 };
 #endif
-
-/*
-  The sound board reads both sound chip control registers (or a value supplied
-  by the main CPU. It will not output any sound unless I return 3. Must be
-  some "is device ready?" code.
-*/
-static int ControlPort_r(int addr)
-{
-        return 3;
-}
 
 static struct MemoryReadAddress sound_readmem[] =
 {
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0xc000, 0xc7ff, MRA_RAM },
 	{ 0xd000, 0xd000, soundlatch_r },
-	{ 0xf000, 0xf000, ControlPort_r },
-	{ 0xf001, 0xf001, MRA_RAM },
-	{ 0xf002, 0xf002, ControlPort_r },
-	{ 0xf003, 0xf003, MRA_RAM },
+	{ 0xf000, 0xf000, YM2203_status_port_0_r },
+	{ 0xf002, 0xf002, YM2203_status_port_1_r },
 	{ -1 }	/* end of table */
 };
 
@@ -129,10 +126,10 @@ static struct MemoryWriteAddress sound_writemem[] =
 {
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0xc000, 0xc7ff, MWA_RAM },
-	{ 0xf000, 0xf000, AY8910_control_port_0_w },
-	{ 0xf001, 0xf001, AY8910_write_port_0_w },
-	{ 0xf002, 0xf002, AY8910_control_port_1_w },
-	{ 0xf003, 0xf003, AY8910_write_port_1_w },
+	{ 0xf000, 0xf000, YM2203_control_port_0_w },
+	{ 0xf001, 0xf001, YM2203_write_port_0_w },
+	{ 0xf002, 0xf002, YM2203_control_port_1_w },
+	{ 0xf003, 0xf003, YM2203_write_port_1_w },
 	{ -1 }	/* end of table */
 };
 
@@ -220,6 +217,10 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPNAME( 0x80, 0x80, "Demo sounds", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "Off")
 	PORT_DIPSETTING(    0x80, "On" )
+
+	PORT_START      /* DSW1 */
+	PORT_BIT( 0x7f, IP_ACTIVE_LOW, IPT_UNUSED )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )	/* not sure, but likely */
 INPUT_PORTS_END
 
 
@@ -323,6 +324,26 @@ static unsigned char color_table[251*2] =
 
 
 
+/* handler called by the 2203 emulator when the internal timers cause an IRQ */
+static void irqhandler(void)
+{
+	cpu_cause_interrupt(1,0xff);
+}
+
+static struct YM2203interface ym2203_interface =
+{
+	2,			/* 2 chips */
+	3500000,	/* 3.5 MHz ? (hand tuned) */
+	{ YM2203_VOL(100,0x20ff), YM2203_VOL(100,0x20ff) },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ irqhandler }
+};
+
+
+
 static struct MachineDriver sidearms_machine_driver =
 {
 	/* basic machine hardware */
@@ -334,6 +355,13 @@ static struct MachineDriver sidearms_machine_driver =
 			readmem,writemem,0,0,
 			interrupt,1
 		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			3000000,	/* 3 Mhz (?) */
+			2,	/* memory region #2 */
+			sound_readmem,sound_writemem,0,0,
+			ignore_interrupt,0	/* IRQs are triggered by the YM2203 */
+		},
 #ifdef THIRD_CPU
 		{
 			CPU_Z80,
@@ -341,18 +369,11 @@ static struct MachineDriver sidearms_machine_driver =
 			4,	/* memory region #4 */
 			readmem2,writemem2,0,0,
 			nmi_interrupt,1
-		},
-#endif
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,	/* 3 Mhz ??? */
-			2,	/* memory region #2 */
-			sound_readmem,sound_writemem,0,0,
-			interrupt,4
 		}
+#endif
 	},
-	60,
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
 	/* video hardware */
@@ -369,10 +390,13 @@ static struct MachineDriver sidearms_machine_driver =
 	sidearms_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	capcomOPN_sh_start,
-	YM2203_sh_stop,
-	YM2203_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_YM2203,
+			&ym2203_interface
+		}
+	}
 };
 
 
@@ -452,12 +476,57 @@ ROM_START( sidearjp_rom )
 ROM_END
 
 
+static int hiload(void)
+{
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+
+	/* check if the hi score table has already been initialized */
+        if (memcmp(&RAM[0xe680],"\x00\x00\x00\x01\x00\x00\x00\x00",8) == 0)
+	{
+		void *f;
+
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+
+                        osd_fread(f,&RAM[0xe680],16*5);
+
+                        memcpy(&RAM[0xe600], &RAM[0xe680], 8);
+                        osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+static void hisave(void)
+{
+	void *f;
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+                osd_fwrite(f,&RAM[0xe680],16*5);
+		osd_fclose(f);
+	}
+}
+
+
 
 struct GameDriver sidearms_driver =
 {
 	"Sidearms",
 	"sidearms",
-	"Paul Leaman (MAME driver)\nNicola Salmoria (additional code)",
+	"Paul Leaman (MAME driver)\nNicola Salmoria (additional code)\nGerrit Van Goethem (high score save)",
 	&sidearms_machine_driver,
 
 	sidearms_rom,
@@ -465,18 +534,18 @@ struct GameDriver sidearms_driver =
 	0,
 	0,	/* sound_prom */
 
-	0,input_ports,0,0,0,
+	input_ports,
 
 	color_table, 0, 0,
 	ORIENTATION_DEFAULT,
-	NULL, NULL
+	hiload, hisave
 };
 
 struct GameDriver sidearjp_driver =
 {
 	"Sidearms (Japanese)",
 	"sidearjp",
-	"Paul Leaman (MAME driver)\nNicola Salmoria (additional code)",
+	"Paul Leaman (MAME driver)\nNicola Salmoria (additional code)\nGerrit Van Goethem (high score save)",
 	&sidearms_machine_driver,
 
 	sidearjp_rom,
@@ -484,9 +553,9 @@ struct GameDriver sidearjp_driver =
 	0,
 	0,	/* sound_prom */
 
-	0,input_ports,0,0,0,
+	input_ports,
 
 	color_table, 0, 0,
 	ORIENTATION_DEFAULT,
-	NULL, NULL
+	hiload, hisave
 };

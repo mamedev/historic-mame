@@ -5,7 +5,6 @@
 */
 #include "driver.h"
 #include "vlm5030.h"
-#include "sndhrdw/generic.h"
 
 #define MIN_SLICE 10
 
@@ -22,12 +21,17 @@ static int buffer_len;
 static int emulation_rate;
 static struct VLM5030interface *intf;
 
-static unsigned char *buffer;
+static unsigned char *output_buffer;
 static int channel;
 
 static unsigned char *VLM5030_rom;
 static int VLM5030_address;
-static int VLM5030_BUSY;
+static int pin_BSY;
+static int pin_ST;
+static int pin_RST;
+static int latch_data = 0;
+
+static int table_h;
 
 /* decode and buffering data */
 static void vlm5030_process(unsigned char *buffer, unsigned int size)
@@ -36,7 +40,7 @@ static void vlm5030_process(unsigned char *buffer, unsigned int size)
 	int data;
 
 	/* write data to tms5220 */
-	while( VLM5030_BUSY  && tms5220_ready_r() )
+	while( pin_BSY  && tms5220_ready_r() )
 	{
 		/* write data */
 		data = VLM5030_rom[VLM5030_address++];
@@ -45,7 +49,7 @@ static void vlm5030_process(unsigned char *buffer, unsigned int size)
 //		if( data == 0x03 )
 		if( VLM5030_address >= VLM5030_end )
 		{
-			 VLM5030_BUSY = 0;
+			 pin_BSY = 0;
 		}
 	}
 #else
@@ -63,55 +67,133 @@ static void vlm5030_process(unsigned char *buffer, unsigned int size)
 /* realtime update */
 void VLM5030_update(void)
 {
-	int totcycles,leftcycles,newpos;
+	int newpos;
+
+	if (Machine->sample_rate == 0) return;
 
 	if( VLM5030_rom )
 	{
 		/* docode mode */
-		totcycles = cpu_getfperiod();
-		leftcycles = cpu_getfcount();
-		newpos = buffer_len * (totcycles-leftcycles) / totcycles;
+		newpos = cpu_scalebyfcount(buffer_len);	/* get current position based on the timer */
 
-		if (newpos > buffer_len)
-			newpos = buffer_len;
 		if (newpos - sample_pos < MIN_SLICE)
 			return;
-		vlm5030_process (buffer + sample_pos, newpos - sample_pos);
+		vlm5030_process (output_buffer + sample_pos, newpos - sample_pos);
 
 		sample_pos = newpos;
 	}
 	else
 	{
-		/* sampling mode (set busy flag) */
-		VLM5030_BUSY = osd_get_sample_status(channel) ? 0 : 1;
+		/* sampling mode (check  busy flag) */
+		if( pin_ST == 0 && pin_BSY == 1 )
+		{
+			if( osd_get_sample_status(channel) )
+				pin_BSY = 0;
+		}
 	}
 }
 
-int VLM5030_busy(void)
+/* get BSY pin level */
+int VLM5030_BSY(void)
 {
 	VLM5030_update();
-	return VLM5030_BUSY;
+	return pin_BSY;
 }
 
-void VLM5030_w(int offset , int data )
+/* latch contoll data */
+void VLM5030_data_w(int offset,int data)
 {
-	if( VLM5030_rom )
+	latch_data = data;
+}
+
+/* set RST pin level : reset / set table address A8-A15 */
+void VLM5030_RST (int pin )
+{
+	if( pin_RST )
 	{
-		/* docode mode */
-		VLM5030_address = (((int)VLM5030_rom[data&0xfffe])<<8)|VLM5030_rom[data|1];
-#ifdef TRY_5220
-		/* !!!!! Get the end point !!!!! */
-		VLM5030_end     = (((int)VLM5030_rom[(data&0xfffe)+2])<<8)|VLM5030_rom[(data|1)+3];
-#endif
-		tms5220_data_w (0, 0x60 );
-		VLM5030_BUSY = 1;
-		VLM5030_update();
+		if( !pin )
+		{	/* H -> L : latch high address table */
+			pin_RST = 0;
+/*			table_h = latch_data * 256; */
+			table_h = 0;
+		}
 	}
-	else if (Machine->samples)
+	else
 	{
-		/* sampling mode */
-		struct GameSample *sample = Machine->samples->sample[data>>1];
-		if( sample ) osd_play_sample( channel, sample->data, sample->length, sample->smpfreq, sample->volume, 0 );
+		if( pin )
+		{	/* L -> H : reset chip */
+			pin_RST = 1;
+			if( pin_BSY )
+			{
+				osd_stop_sample( channel );
+				pin_BSY = 0;
+			}
+		}
+	}
+}
+
+/* set VCU pin level : ?? unknown */
+void VLM5030_VCU(int pin)
+{
+	/* unknown */
+	intf->vcu = pin;
+	return;
+}
+
+/* set ST pin level  : set table address A0-A7 / start speech */
+void VLM5030_ST(int pin )
+{
+	int table = table_h | latch_data;
+
+	if( pin_ST )
+	{
+		if( !pin )
+		{	/* H -> L */
+			pin_ST = 0;
+			/* start speech */
+
+			if (Machine->sample_rate == 0)
+			{
+				pin_BSY = 0;
+				return;
+			}
+			if( VLM5030_rom )
+			{
+				/* docode mode */
+				VLM5030_address = (((int)VLM5030_rom[table&0xfffe])<<8)|VLM5030_rom[table|1];
+#ifdef TRY_5220
+				/* !!!!! Get the end point !!!!! */
+				VLM5030_end     = (((int)VLM5030_rom[(table&0xfffe)+2])<<8)|VLM5030_rom[(table|1)+3];
+				tms5220_data_w (0, 0x60 );
+#endif
+				VLM5030_update();
+			}
+			else if (Machine->samples)
+			{
+				/* sampling mode */
+				int num = table>>1;
+
+				if (Machine->samples == 0) return;
+				if (Machine->samples->total <= num ) return;
+				if (Machine->samples->sample[num] == 0) return;
+
+				osd_play_sample(channel,
+					Machine->samples->sample[num]->data,
+					Machine->samples->sample[num]->length,
+					Machine->samples->sample[num]->smpfreq,
+					Machine->samples->sample[num]->volume,
+					0);
+			}
+		}
+	}
+	else
+	{
+		if( pin )
+		{	/* L -> H */
+			pin_ST = 1;
+			/* setup speech , BSY on after 30ms? */
+			pin_BSY = 1;
+		}
 	}
 }
 
@@ -126,7 +208,7 @@ static struct TMS5220interface tms5220_interface =
 
 /* start VLM5030 with sound rom              */
 /* speech_rom == 0 -> use sampling data mode */
-int VLM5030_sh_start( struct VLM5030interface *interface , unsigned char *speech_rom )
+int VLM5030_sh_start( struct VLM5030interface *interface )
 {
     intf = interface;
 
@@ -134,13 +216,16 @@ int VLM5030_sh_start( struct VLM5030interface *interface , unsigned char *speech
 	buffer_len = Machine->sample_rate / Machine->drv->frames_per_second;
 	emulation_rate = buffer_len * Machine->drv->frames_per_second;
 	sample_pos = 0;
+	pin_BSY = pin_RST = pin_ST  = 0;
+/*	VLM5030_setVCU(intf->vcu); */
 
-	VLM5030_rom = speech_rom;
-	VLM5030_BUSY = 0;
-
-	if( VLM5030_rom )
-	{
-		/* decode mode */
+	if( intf->memory_region == -1 )
+	{	/* sampling file mode */
+		VLM5030_rom = 0;
+	}
+	else
+	{	/* decode mode */
+		VLM5030_rom = Machine->memory_region[intf->memory_region];
 #ifdef TRY_5220
 		if( tms5220_sh_start (&tms5220_interface) != 0 ) return 1;
 #else

@@ -51,20 +51,13 @@ just some guesses for now, obtained with a fast overlook at the sound rom
 int stooges_vh_start(void);
 void gottlieb_vh_init_color_palette(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void gottlieb_sh2_w(int offset, int data);
-void gottlieb_sh_update(void);
-void gottlieb_output(int offset, int data);
-int stooges_IN1_r(int offset);
-int stooges_joysticks(int offset);
+void gottlieb_video_outputs(int offset,int data);
 extern unsigned char *gottlieb_characterram;
 extern unsigned char *gottlieb_paletteram;
 void gottlieb_characterram_w(int offset,int data);
 void gottlieb_paletteram_w(int offset,int data);
 void gottlieb_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-int gottlieb_sh_start(void);
-void gottlieb_sh_stop(void);
-void gottlieb_sh_update(void);
-int gottlieb_sh_interrupt(void);
 int riot_ram_r(int offset);
 int gottlieb_riot_r(int offset);
 int gottlieb_sound_expansion_socket_r(int offset);
@@ -75,16 +68,53 @@ void gottlieb_speech_w(int offset, int data);
 void gottlieb_speech_clock_DAC_w(int offset, int data);
 void gottlieb_sound_expansion_socket_w(int offset, int data);
 
+int gottlieb_nvram_load(void);
+void gottlieb_nvram_save(void);
+
+
+
+static int joympx;
+
+int stooges_IN4_r(int offset)
+{
+	int joy;
+
+
+	switch (joympx)
+	{
+		case 0:
+		default:
+			joy = ((readinputport(4) >> 0) & 0x0f);	/* joystick 1 */
+			break;
+		case 1:
+			joy = ((readinputport(5) >> 0) & 0x0f);	/* joystick 2 */
+			break;
+		case 2:
+			joy = ((readinputport(5) >> 4) & 0x0f);	/* joystick 3 */
+			break;
+	}
+
+	return joy | (readinputport(4) & 0xf0);
+}
+
+void stooges_output(int offset,int data)
+{
+	joympx = (data >> 5) & 0x03;
+	gottlieb_video_outputs(offset,data);
+}
+
+
+
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x1fff, MRA_RAM },
 	{ 0x2000, 0x2fff, MRA_ROM },
 	{ 0x3000, 0x57ff, MRA_RAM },
 	{ 0x5800, 0x5800, input_port_0_r },     /* DSW */
-	{ 0x5801, 0x5801, stooges_IN1_r },     /* buttons */
+	{ 0x5801, 0x5801, input_port_1_r },     /* buttons */
 	{ 0x5802, 0x5802, input_port_2_r },     /* trackball H: not used */
 	{ 0x5803, 0x5803, input_port_3_r },     /* trackball V: not used */
-	{ 0x5804, 0x5804, stooges_joysticks },  /* joysticks demultiplexer */
+	{ 0x5804, 0x5804, stooges_IN4_r },  /* joysticks demultiplexer */
 	{ 0x6000, 0xffff, MRA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -100,7 +130,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x5800, 0x5800, MWA_RAM },    /* watchdog timer clear */
 	{ 0x5801, 0x5801, MWA_RAM },    /* trackball output not used */
 	{ 0x5802, 0x5802, gottlieb_sh2_w }, /* sound/speech command */
-	{ 0x5803, 0x5803, gottlieb_output },       /* OUT1 */
+	{ 0x5803, 0x5803, stooges_output },       /* OUT1 */
 	{ 0x5804, 0x5804, MWA_RAM },    /* OUT2 */
 	{ 0x6000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
@@ -125,87 +155,70 @@ struct MemoryWriteAddress stooges_sound_writemem[] =
 };
 
 
-static struct InputPort input_ports[] =
-{
-	{       /* DSW */
-		0x00,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{       /* buttons */
-		0x11, /* tilt off, test mode off */
-		{ 0, OSD_KEY_F2, /* test mode, select */
-		  OSD_KEY_4,OSD_KEY_3, /* coin 1 & 2 */
-		  OSD_KEY_T, /* tilt : does someone really want that ??? */
-		  0,0,0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{       /* trackball H: not used */
-		0x00,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{       /* trackball V: not used */
-		0x00,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{       /* joystick 2 (Moe) */
-		0x00,
-		{ OSD_KEY_I, OSD_KEY_L, OSD_KEY_K, OSD_KEY_J,
-		OSD_KEY_ALT,0,0,0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{       /* joystick 1 (Curly) */
-		0x00,
-		{ OSD_KEY_E, OSD_KEY_F, OSD_KEY_D, OSD_KEY_S,
-		0,OSD_KEY_LCONTROL,0,0 },        /* Larry fire */
-		{ 0, 0, 0, 0, 0, OSD_JOY_FIRE, 0, 0 }
-	},
-	{       /* joystick 3 (Larry) */
-		0x00,
-		{ OSD_KEY_UP, OSD_KEY_RIGHT, OSD_KEY_DOWN, OSD_KEY_LEFT,
-		0,0,OSD_KEY_ENTER,0 },  /* Curly fire */
-		{ OSD_JOY_UP, OSD_JOY_RIGHT, OSD_JOY_DOWN, OSD_JOY_LEFT, 0, 0, 0, 0 }
-	},
-	{ -1 }  /* end of table */
-};
 
-static struct KEYSet keys[] =
-{
-	{ 4, 0, "MOE UP" },
-	{ 4, 3, "MOE LEFT"  },
-	{ 4, 1, "MOE RIGHT" },
-	{ 4, 2, "MOE DOWN" },
-	{ 4, 4, "MOE FIRE"     },
-	{ 5, 0, "CURLY UP" },
-	{ 5, 3, "CURLY LEFT"  },
-	{ 5, 1, "CURLY RIGHT" },
-	{ 5, 2, "CURLY DOWN" },
-	{ 6, 6, "CURLY FIRE"     },
-	{ 6, 0, "LARRY UP" },
-	{ 6, 3, "LARRY LEFT"  },
-	{ 6, 1, "LARRY RIGHT" },
-	{ 6, 2, "LARRY DOWN" },
-	{ 5, 5, "LARRY FIRE" },
-	{ -1 }
-};
+INPUT_PORTS_START( input_ports )
+	PORT_START	/* DSW */
+	PORT_DIPNAME (0x01, 0x00, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x01, "Off" )
+	PORT_DIPSETTING (   0x00, "On" )
+	PORT_DIPNAME (0x02, 0x00, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "Normal" )
+	PORT_DIPSETTING (   0x02, "Hard" )
+	PORT_DIPNAME (0x14, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x04, "2 Coins/1 Credit" )
+	PORT_DIPSETTING (   0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING (   0x10, "1 Coin/2 Credits" )
+	PORT_DIPSETTING (   0x14, "Free Play" )
+	PORT_DIPNAME (0x08, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x00, "3" )
+	PORT_DIPSETTING (   0x08, "5" )
+	PORT_BIT( 0x20, 0x00, IPT_UNUSED )
+	PORT_DIPNAME (0x40, 0x00, "Bonus Life At", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x40, "10000" )
+	PORT_DIPSETTING (   0x00, "20000" )
+	PORT_DIPNAME (0x80, 0x00, "And Bonus Life Every", IP_KEY_NONE )
+	PORT_DIPSETTING (   0x80, "10000" )
+	PORT_DIPSETTING (   0x00, "20000" )
 
-static struct DSW dsw[] =
-{
-	{ 0, 0x01, "ATTRACT MODE SOUND", { "ON", "OFF" } },
-	{ 0, 0x02, "DIFFICULTY", { "NORMAL", "HARD" } },
-	{ 0, 0x08, "LIVES PER GAME", { "3", "5" } },
-	{ 0, 0x1C, "", {
-		"1 PLAY FOR 1 COIN" , "2 PLAYS FOR 1 COIN",
-		"1 PLAY FOR 1 COIN" , "2 PLAYS FOR 1 COIN",
-		"1 PLAY FOR 2 COINS", "FREE PLAY",
-		"1 PLAY FOR 2 COINS", "FREE PLAY"
-		} },
-	{ 0, 0x40, "FIRST EXTRA LIVE AT", { "20000","10000" } },
-	{ 0, 0x80, "ADD. EXTRA LIVE EVERY", { "20000", "10000" } },
-	{ -1 }
-};
+	PORT_START	/* IN1 */
+	PORT_BITX(    0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING (   0x01, "Off" )
+	PORT_DIPSETTING (   0x00, "On" )
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_SERVICE, "Select in Service Mode", OSD_KEY_F1, IP_JOY_NONE, 0 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0xe0, 0x00, IPT_UNKNOWN )
+
+	PORT_START	/* trackball h: not used */
+	PORT_BIT( 0xff, 0x00, IPT_UNUSED )
+
+	PORT_START	/* trackball v: not used */
+	PORT_BIT( 0xff, 0x00, IPT_UNUSED )
+
+	PORT_START	/* joystick 2 (Moe) */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_PLAYER2 | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER1 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER3 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	/* the bottom four bits of the previous port are multiplexed among */
+	/* three joysticks - the following port contains settings for the other two */
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_PLAYER3 | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER3 | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_PLAYER3 | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_PLAYER3 | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_PLAYER1 | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_PLAYER1 | IPF_8WAY )
+INPUT_PORTS_END
+
 
 
 static struct GfxLayout charlayout =
@@ -239,6 +252,18 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
+
+
+static struct DACinterface dac_interface =
+{
+	1,
+	441000,
+	{ 255 },
+	{ 0 },
+};
+
+
+
 static const struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -255,11 +280,11 @@ static const struct MachineDriver machine_driver =
 			3579545/4,
 			2,             /* memory region #2 */
 			stooges_sound_readmem,stooges_sound_writemem,0,0,
-			gottlieb_sh_interrupt,1
+			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
 	},
-	60,     /* frames / second */
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,      /* init machine */
 
 	/* video hardware */
@@ -275,11 +300,16 @@ static const struct MachineDriver machine_driver =
 	gottlieb_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	gottlieb_sh_start,
-	gottlieb_sh_stop,
-	gottlieb_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_DAC,
+			&dac_interface
+		}
+	}
 };
+
+
 
 ROM_START( stooges_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
@@ -300,35 +330,13 @@ ROM_START( stooges_rom )
 	ROM_LOAD( "DROM1", 0xe000, 0x2000, 0x3aa5d107 )
 ROM_END
 
-static int hiload(void)
-{
-	void *f=osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
-	unsigned char *RAM=Machine->memory_region[0];
-
-	if (f) {
-		osd_fread(f,RAM+0x485,22*7); /* 21 hiscore entries + 1 (?) */
-		osd_fclose(f);
-	}
-	return 1;
-}
-
-static void hisave(void)
-{
-	void *f=osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1);
-	unsigned char *RAM=Machine->memory_region[0];
-
-	if (f) {
-		osd_fwrite(f,RAM+0x485,22*7); /* hiscore entries */
-		osd_fclose(f);
-	}
-}
 
 
 struct GameDriver stooges_driver =
 {
 	"Three Stooges",
 	"3stooges",
-	"FABRICE FRANCES",
+	"Fabrice Frances (MAME driver)\nJohn Butler\nMarco Cassili",
 	&machine_driver,
 
 	stooges_rom,
@@ -336,10 +344,10 @@ struct GameDriver stooges_driver =
 	0,
 	0,	/* sound_prom */
 
-	input_ports, 0, 0/*TBR*/,dsw, keys,
+	input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	hiload, hisave
+	gottlieb_nvram_load, gottlieb_nvram_save
 };

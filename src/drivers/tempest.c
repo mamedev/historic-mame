@@ -166,44 +166,51 @@ High Scores:
 #include "vidhrdw/generic.h"
 #include "machine/mathbox.h"
 #include "vidhrdw/avgdvg.h"
+#include "vidhrdw/vector.h"
 #include "machine/atari_vg.h"
-#include "sndhrdw/pokyintf.h"
 
 
-int tempest_interrupt(void);
-int tempest_catch_busyloop (int offset);
-int tempest_IN0_r(int offset);
-void tempest_led_w (int offset, int data);
+/*
+ * Catch the following busy loop:
+ * C7A7	LDA $53
+ * C7A9 CMP #$09
+ * C7AB BCC C7A7
+ *
+ */
 
-/* Misc sound code */
-static struct POKEYinterface interface =
+static int tempest_catch_busyloop (int offset)
 {
-	2,	/* 2 chips */
-	FREQ_17_APPROX,	/* 1.7 Mhz */
-	255,
-	NO_CLIP,
-	/* The 8 pot handlers */
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	{ 0, 0 },
-	/* The allpot handler */
-	{ input_port_1_r, input_port_2_r },
-};
+	if (cpu_getpreviouspc()==0xc7a7)
+		cpu_spinuntil_int();
+	return RAM[0x0053];
+}
 
-
-int tempest_sh_start(void)
+static int tempest_IN0_r(int offset)
 {
-	return pokey_sh_start (&interface);
+	int res;
+
+	res = readinputport(0);
+
+	if (avgdvg_done())
+		res|=0x40;
+
+	/* Emulate the 3Khz source on bit 7 (divide 1.5Mhz by 512) */
+	if (cpu_gettotalcycles() & 0x100)
+		res |=0x80;
+
+	return res;
+}
+
+static void tempest_led_w (int offset, int data)
+{
+	osd_led_w (0, ~(data >> 1));
+	osd_led_w (1, ~data);
+	/* FLIP is bit 0x04 */
 }
 
 static struct MemoryReadAddress readmem[] =
 {
-//	{ 0x0053, 0x0053, tempest_catch_busyloop },
+	{ 0x0053, 0x0053, tempest_catch_busyloop }, /* small advantage. BW */
 	{ 0x0000, 0x07ff, MRA_RAM },
 	{ 0x9000, 0xdfff, MRA_ROM },
 	{ 0x3000, 0x3fff, MRA_ROM },
@@ -260,9 +267,8 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START	/* IN1/DSW0 */
-	/* This is the Tempest spinner input. It only uses 4 bits. It also clips the */
-	/* returned value to a maximum of +/- 7 */
-	PORT_ANALOGX ( 0x0f, 0x00, IPT_DIAL | IPF_REVERSE, 100, 7, 0, 0, OSD_KEY_LEFT, OSD_KEY_RIGHT, OSD_JOY_LEFT, OSD_JOY_RIGHT, 1 )
+	/* This is the Tempest spinner input. It only uses 4 bits. */
+	PORT_ANALOG ( 0x0f, 0x00, IPT_DIAL | IPF_REVERSE, 25, 0, 0, 0)
 	/* The next one is reponsible for cocktail mode.
 	 * According to the documentation, this is not a switch, although
 	 * it may have been planned to put it on the Math Box PCB, D/E2 )
@@ -338,6 +344,8 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING (   0x80, "5" )
 INPUT_PORTS_END
 
+
+
 /*
  * Tempest does not really have a colorprom, nor any graphics to
  * decode. It has a 16 byte long colorram, but only the lower nibble
@@ -364,25 +372,31 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
         { -1 } /* end of array */
 };
 
-static unsigned char color_prom[] =
+static unsigned char color_prom[] = { VEC_PAL_COLOR };
+
+
+
+static struct POKEYinterface pokey_interface =
 {
-	0xff,0xff,0xff,	/* WHITE */
-	0xaf,0xaf,0xaf,	/* WHITE */
-	0x00,0xff,0xff, /* CYAN */
-	0x00,0xaf,0xaf, /* CYAN */
-	0xff,0xff,0x00, /* YELLOW */
-	0xaf,0xaf,0x00, /* YELLOW */
-	0x00,0xff,0x00, /* GREEN */
-	0x00,0xaf,0x00, /* GREEN */
-	0xff,0x00,0xff, /* MAGENTA */
-	0xaf,0x00,0xaf, /* MAGENTA */
-	0x00,0x00,0xff,	/* BLUE */
-	0x00,0x00,0xaf,	/* BLUE */
-	0xff,0x00,0x00, /* RED */
-	0xaf,0x00,0x00, /* RED */
-	0x00,0x00,0x00, /* BLACK */
-	0x00,0x00,0x00  /* BLACK */
+	2,	/* 2 chips */
+	1500000,	/* 1.5 MHz??? */
+	255,
+	POKEY_DEFAULT_GAIN/2,
+	NO_CLIP,
+	/* The 8 pot handlers */
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	{ 0, 0 },
+	/* The allpot handler */
+	{ input_port_1_r, input_port_2_r },
 };
+
+
 
 static struct MachineDriver machine_driver =
 {
@@ -393,15 +407,16 @@ static struct MachineDriver machine_driver =
 			1500000,	/* 1.5 Mhz */
 			0,
 			readmem,writemem,0,0,
-			tempest_interrupt,8 /* approx. 250Hz */
+			0,0,	/* no vblank interrupts */
+			interrupt, 240 /* 240Hz */
 		}
 	},
-	30, /* frames per second */
+	30, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
 	1,
 	0,
 
 	/* video hardware */
-	224, 288, { 0, 580, 0, 540 },
+	350, 400, { 0, 580, 0, 540 },
 	gfxdecodeinfo,
 	256,256,
 	avg_init_colors,
@@ -413,10 +428,13 @@ static struct MachineDriver machine_driver =
 	avg_screenrefresh,
 
 	/* sound hardware */
-	0,
-	tempest_sh_start,
-	pokey_sh_stop,
-	pokey_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_POKEY,
+			&pokey_interface
+		}
+	}
 };
 
 
@@ -447,7 +465,7 @@ ROM_START( tempest_rom )
 	ROM_LOAD( "136002.120", 0xc800, 0x0800, 0x82d1e4ed )
 	ROM_LOAD( "136002.121", 0xd000, 0x0800, 0xe663151f )
 	ROM_LOAD( "136002.122", 0xd800, 0x0800, 0x292ebfb4 )
-	ROM_RELOAD(             0xf800, 0x0800 )	/* for reset/interrupt vectors */
+	ROM_RELOAD(             0xf800, 0x0800 ) /* for reset/interrupt vectors */
 	/* Mathbox ROMs */
 	ROM_LOAD( "136002.123", 0x3000, 0x0800, 0xca906060 )
 	ROM_LOAD( "136002.124", 0x3800, 0x0800, 0xb6c4f9f8 )
@@ -465,7 +483,7 @@ ROM_START( temptube_rom )
 	ROM_LOAD( "136002.120", 0xc800, 0x0800, 0x82d1e4ed )
 	ROM_LOAD( "136002.121", 0xd000, 0x0800, 0xe663151f )
 	ROM_LOAD( "136002.122", 0xd800, 0x0800, 0x292ebfb4 )
-	ROM_RELOAD(             0xf800, 0x0800 )	/* for reset/interrupt vectors */
+	ROM_RELOAD(             0xf800, 0x0800 ) /* for reset/interrupt vectors */
 	/* Mathbox ROMs */
 	ROM_LOAD( "136002.123", 0x3000, 0x0800, 0xca906060 )
 	ROM_LOAD( "136002.124", 0x3800, 0x0800, 0xb6c4f9f8 )
@@ -489,6 +507,7 @@ struct GameDriver tempest_driver =
 {
 	"Tempest",
 	"tempest",
+	"Brad Oliver (Mame Driver)\n"
 	VECTOR_TEAM
 	"Keith Gerdes (Pokey protection)",
 
@@ -499,7 +518,7 @@ struct GameDriver tempest_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/,input_ports, 0/*TBR*/, 0/*TBR*/,0/*TBR*/,
+	input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -511,6 +530,7 @@ struct GameDriver temptube_driver =
 {
 	"Tempest Tubes",
 	"temptube",
+	"Brad Oliver (Mame driver)\n"
 	VECTOR_TEAM
 	"Keith Gerdes (Pokey protection)",
 
@@ -521,7 +541,7 @@ struct GameDriver temptube_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/,input_ports, 0/*TBR*/, 0/*TBR*/,0/*TBR*/,
+	input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,

@@ -8,9 +8,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "M6502.h"
-#include "cpuintrf.h"
-#include "sndhrdw/pokyintf.h"
 
 
 static int ctrld;

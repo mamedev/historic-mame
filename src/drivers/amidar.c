@@ -51,20 +51,16 @@ interrupt mode 1 triggered by the main CPU
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/generic.h"
-#include "sndhrdw/8910intf.h"
 
 
 
-extern unsigned char *amidar_attributesram;
 void amidar_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-void amidar_flipx_w(int offset,int data);
-void amidar_flipy_w(int offset,int data);
-void amidar_attributes_w(int offset,int data);
+void amidar_updatehook00(int offset);
+void amidar_updatehook01(int offset);
 void amidar_vh_screenrefresh(struct osd_bitmap *bitmap);
 
+int scramble_portB_r(int offset);
 void scramble_sh_irqtrigger_w(int offset,int data);
-int scramble_sh_start(void);
 
 
 
@@ -86,13 +82,13 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x4fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0x9000, 0x93ff, videoram_w, &videoram, &videoram_size },
-	{ 0x9800, 0x983f, amidar_attributes_w, &amidar_attributesram },
+	{ 0x9000, 0x93ff, videoram00_w, &videoram00 },
+	{ 0x9800, 0x983f, videoram01_w, &videoram01 },
 	{ 0x9840, 0x985f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x9860, 0x987f, MWA_NOP },
 	{ 0xa008, 0xa008, interrupt_enable_w },
-	{ 0xa010, 0xa010, amidar_flipx_w },
-	{ 0xa018, 0xa018, amidar_flipy_w },
+	{ 0xa010, 0xa010, MWA_RAM, &flip_screen_x },
+	{ 0xa018, 0xa018, MWA_RAM, &flip_screen_y },
 	{ 0xa030, 0xa030, MWA_NOP },
 	{ 0xa038, 0xa038, MWA_NOP },
 	{ 0xb800, 0xb800, soundlatch_w },
@@ -305,12 +301,12 @@ INPUT_PORTS_END
 /* selects coins per credit, is not used. */
 INPUT_PORTS_START( turtles_input_ports )
 	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably space for button 2 */
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_COIN3 )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
@@ -322,13 +318,13 @@ INPUT_PORTS_START( turtles_input_ports )
 	PORT_DIPSETTING(    0x03, "126" )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably space for player 2 button 2 */
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
 	PORT_START	/* IN2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
 	PORT_DIPNAME( 0x06, 0x00, "Coinage", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "A 1/1 B 2/1 C 1/1" )
 	PORT_DIPSETTING(    0x02, "A 1/2 B 1/1 C 1/2" )
@@ -337,11 +333,11 @@ INPUT_PORTS_START( turtles_input_ports )
 	PORT_DIPNAME( 0x08, 0x00, "Cabinet", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "Upright" )
 	PORT_DIPSETTING(    0x08, "Cocktail" )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_DIPNAME( 0x20, 0x00, "unknown1", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x20, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
 	PORT_DIPNAME( 0x80, 0x00, "unknown2", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x80, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
@@ -394,16 +390,6 @@ INPUT_PORTS_END
 
 
 
-static struct GfxLayout charlayout =
-{
-	8,8,	/* 8*8 characters */
-	256,	/* 256 characters */
-	2,	/* 2 bits per pixel */
-	{ 0, 256*8*8 },	/* the two bitplanes are separated */
-	{ 0, 1, 2, 3, 4, 5, 6, 7 },
-	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8	/* every char takes 8 consecutive bytes */
-};
 static struct GfxLayout spritelayout =
 {
 	16,16,	/* 16*16 sprites */
@@ -417,31 +403,54 @@ static struct GfxLayout spritelayout =
 	32*8	/* every sprite takes 32 consecutive bytes */
 };
 
-
-
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,     0, 8 },
 	{ 1, 0x0000, &spritelayout,   0, 8 },
 	{ -1 } /* end of array */
 };
 
 
 
-static unsigned char amidar_color_prom[] =
+static struct GfxTileLayout tilelayout =
 {
-	/* palette */
-	0x00,0x07,0xC0,0xB6,0x00,0x38,0xC5,0x67,0x00,0x30,0x07,0x3F,0x00,0x07,0x30,0x3F,
-	0x00,0x3F,0x30,0x07,0x00,0x38,0x67,0x3F,0x00,0xFF,0x07,0xDF,0x00,0xF8,0x07,0xFF
+	256,	/* 256 characters */
+	2,	/* 2 bits per pixel */
+	{ 0, 256*8*8 },	/* the two bitplanes are separated */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8	/* every char takes 8 consecutive bytes */
+};
+
+static struct GfxTileDecodeInfo gfxtiledecodeinfo[] =
+{
+	{ 1, 0x0000, &tilelayout, 0, 8, 0 },
+	{ -1 } /* end of array */
 };
 
 
 
-static unsigned char turtles_color_prom[] =
+static struct MachineLayer machine_layers[MAX_LAYERS] =
 {
-	/* palette */
-	0x00,0xC0,0x57,0xFF,0x00,0x66,0xF2,0xFE,0x00,0x2D,0x12,0xBF,0x00,0x2F,0x7D,0xB8,
-	0x00,0x72,0xD2,0x06,0x00,0x94,0xFF,0xE8,0x00,0x54,0x2F,0xF6,0x00,0x24,0xBF,0xC6
+	{
+		LAYER_TILE,
+		32*8,32*8,
+		gfxtiledecodeinfo,
+		0,
+		amidar_updatehook00,amidar_updatehook01,0,0
+	}
+};
+
+
+
+static struct AY8910interface ay8910_interface =
+{
+	2,	/* 2 chips */
+	14318000/8,	/* 1.78975 Mhz */
+	{ 0x60ff, 0x60ff },
+	{ soundlatch_r },
+	{ scramble_portB_r },
+	{ 0 },
+	{ 0 }
 };
 
 
@@ -452,21 +461,21 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_Z80,
-			3072000,	/* 3.072 Mhz */
+			18432000/6,	/* 3.072 Mhz */
 			0,
 			amidar_readmem,writemem,0,0,
 			nmi_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			1789750,	/* 1.78975 Mhz */
+			14318000/8,	/* 1.78975 Mhz */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
 	},
-	60,
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	60, 2500,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
 	/* video hardware */
@@ -476,16 +485,19 @@ static struct MachineDriver machine_driver =
 	amidar_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
-	0,
+	machine_layers,
 	generic_vh_start,
 	generic_vh_stop,
 	amidar_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	scramble_sh_start,
-	AY8910_sh_stop,
-	AY8910_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&ay8910_interface
+		}
+	}
 };
 
 
@@ -578,6 +590,22 @@ ROM_START( turpin_rom )
 	ROM_LOAD( "D1", 0x0000, 0x1000, 0x90ecc748 )
 	ROM_LOAD( "D2", 0x1000, 0x1000, 0xad8bffad )
 ROM_END
+
+
+
+static unsigned char amidar_color_prom[] =
+{
+	/* palette */
+	0x00,0x07,0xC0,0xB6,0x00,0x38,0xC5,0x67,0x00,0x30,0x07,0x3F,0x00,0x07,0x30,0x3F,
+	0x00,0x3F,0x30,0x07,0x00,0x38,0x67,0x3F,0x00,0xFF,0x07,0xDF,0x00,0xF8,0x07,0xFF
+};
+
+static unsigned char turtles_color_prom[] =
+{
+	/* palette */
+	0x00,0xC0,0x57,0xFF,0x00,0x66,0xF2,0xFE,0x00,0x2D,0x12,0xBF,0x00,0x2F,0x7D,0xB8,
+	0x00,0x72,0xD2,0x06,0x00,0x94,0xFF,0xE8,0x00,0x54,0x2F,0xF6,0x00,0x24,0xBF,0xC6
+};
 
 
 
@@ -693,7 +721,7 @@ struct GameDriver amidar_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/,amidar_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	amidar_input_ports,
 
 	amidar_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -713,7 +741,7 @@ struct GameDriver amidarjp_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/,amidarjp_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	amidarjp_input_ports,
 
 	amidar_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -733,7 +761,7 @@ struct GameDriver amigo_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/,amidar_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	amidar_input_ports,
 
 	amidar_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -753,7 +781,7 @@ struct GameDriver turtles_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/,turtles_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	turtles_input_ports,
 
 	turtles_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -773,7 +801,7 @@ struct GameDriver turpin_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/,turpin_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	turpin_input_ports,
 
 	turtles_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,

@@ -5,6 +5,12 @@
 *********************************************************************/
 
 /*|*\
+|*|  Modifications by John Butler
+|*|
+|*|  JB 980407: Changes to support 68K processor and 24-bit addresses.
+|*|      This also provided a way to make the cheat system "aware" of
+|*|      RAM areas and have it ignore ROM areas.
+|*|
 |*|  Modifications/Thoughts By James R. Twine
 |*|
 |*|  JRT1: These modifications fix the redraw problem with the watches,
@@ -65,7 +71,7 @@
 #include <stdarg.h>
 #include <ctype.h>  /* for toupper() and tolower() */
 
-#define ram_size 65536
+//#define ram_size 65536 /* JB 980407 */
 
 /*      --------- Mame Action Replay version 1.00 ------------        */
 
@@ -142,9 +148,11 @@ static unsigned int Watches[10];
 static int WatchesFlag;
 static int WatchX,WatchY;
 
+#if 0 /* JB 980407 */
 static unsigned char *StartRam;
 static unsigned char *BackupRam;
 static unsigned char *FlagTable;
+#endif
 static int StartValue;
 static int CurrentMethod;
 
@@ -158,6 +166,149 @@ void	StartSearchHelp( void );
 static int CheatEnabled;
 int he_did_cheat;
 
+/* START JB 980407 */
+static struct ExtMemory StartRam[MAX_EXT_MEMORY];
+static struct ExtMemory BackupRam[MAX_EXT_MEMORY];
+static struct ExtMemory FlagTable[MAX_EXT_MEMORY];
+
+#define RD_GAMERAM(cpu,a)	read_gameram(cpu,a)
+#define WR_GAMERAM(cpu,a,v)	write_gameram(cpu,a,v)
+#define RD_STARTRAM(a)		read_ram(StartRam,a)
+#define WR_STARTRAM(a,v)	write_ram(StartRam,a,v)
+#define RD_BACKUPRAM(a)		read_ram(BackupRam,a)
+#define WR_BACKUPRAM(a,v)	write_ram(BackupRam,a,v)
+#define RD_FLAGTABLE(a)		read_ram(FlagTable,a)
+#define WR_FLAGTABLE(a,v)	write_ram(FlagTable,a,v)
+
+extern unsigned char *memory_find_base (int cpu, int offset);
+
+/* read a byte from CPU 0 ram at address <add> */
+static unsigned char read_gameram (int cpu, int add)
+{
+	return *(unsigned char *)memory_find_base (cpu, add);
+}
+
+/* write a byte to CPU 0 ram at address <add> */
+static void write_gameram (int cpu, int add, unsigned char data)
+{
+	*(unsigned char *)memory_find_base (cpu, add) = data;
+}
+
+/* read a byte representing the address <offset> from one of the tables */
+static unsigned char read_ram (struct ExtMemory *table, int offset)
+{
+	struct ExtMemory *ext;
+
+	for (ext = table; ext->data; ext++)
+		if (ext->start <= offset && ext->end >= offset)
+			return *(ext->data + (offset - ext->start));
+
+	/* address requested is not one that we have -- shrug */
+	return 0;
+}
+
+/* write a byte at the address <offset> in one of the tables */
+static void write_ram (struct ExtMemory *table, int offset, unsigned char data)
+{
+	struct ExtMemory *ext;
+
+	for (ext = table; ext->data; ext++)
+		if (ext->start <= offset && ext->end >= offset)
+			*(ext->data + (offset - ext->start)) = data;
+}
+
+/* make a copy of each ram area from CPU 0 ram to the specified table */
+static void backup_ram (struct ExtMemory *table)
+{
+	struct ExtMemory *ext;
+	unsigned char *gameram;
+
+	for (ext = table; ext->data; ext++)
+	{
+		gameram = memory_find_base (0, ext->start);
+		memcpy (ext->data, gameram, ext->end - ext->start + 1);
+	}
+}
+
+/* set every byte in specified table to data */
+static void memset_ram (struct ExtMemory *table, unsigned char data)
+{
+	struct ExtMemory *ext;
+
+	for (ext = table; ext->data; ext++)
+		memset (ext->data, data, ext->end - ext->start + 1);
+}
+
+/* free all the memory and init the table */
+static void reset_table (struct ExtMemory *table)
+{
+	struct ExtMemory *ext;
+
+	for (ext = table; ext->data; ext++)
+		free (ext->data);
+	memset (table, 0, sizeof (struct ExtMemory) * MAX_EXT_MEMORY);
+}
+
+/* create tables for storing copies of all MRA_RAM areas of CPU 0 */
+static int build_tables (void)
+{
+	const struct MemoryReadAddress *memoryread;
+	const struct MemoryReadAddress *mra;
+	struct ExtMemory *ext_sr = StartRam;
+	struct ExtMemory *ext_br = BackupRam;
+	struct ExtMemory *ext_ft = FlagTable;
+
+	memoryread = Machine->drv->cpu[0].memory_read;
+
+	/* memory read handler build */
+	mra = memoryread;
+	while (mra->start != -1) mra++;
+	mra--;
+
+	while (mra >= memoryread)
+	{
+		int (*handler)(int) = mra->handler;
+		int size;
+
+		switch ((int)handler)
+		{
+			/* only track RAM areas */
+			case (int)MRA_RAM:
+			case (int)MRA_BANK1:
+			case (int)MRA_BANK2:
+			case (int)MRA_BANK3:
+			case (int)MRA_BANK4:
+			case (int)MRA_BANK5:
+			case (int)MRA_BANK6:
+			case (int)MRA_BANK7:
+			case (int)MRA_BANK8:
+				size = mra->end - mra->start + 1;
+
+				/* time to allocate */
+				ext_sr->start = ext_br->start = ext_ft->start = mra->start;
+				ext_sr->end = ext_br->end = ext_ft->end = mra->end;
+				ext_sr->region = ext_br->region = ext_ft->region = 0;
+				ext_sr->data = malloc (size);
+				ext_br->data = malloc (size);
+				ext_ft->data = malloc (size);
+
+				/* if that fails, we're through */
+				if (ext_sr->data==NULL || ext_br->data==NULL || ext_ft->data==NULL)
+					return 1;
+
+				/* reset the memory */
+				memset (ext_sr->data, 0, size);
+				memset (ext_br->data, 0, size);
+				memset (ext_ft->data, 0, size);
+
+				ext_sr++, ext_br++, ext_ft++;
+				break;
+		}
+		mra--;
+	}
+	return 0;
+}
+/* END JB 980407 */
 
 void xprintf(int x,int y,va_list arg_list,...);
 void ContinueCheat(void);
@@ -180,12 +331,21 @@ void InitCheat(void)
   LoadedCheatTotal = 0;
   CurrentMethod = 0;
 
+/* JB 980407 */
+#if 0
   StartRam = NULL;
   BackupRam = NULL;
   FlagTable = NULL;
+#else
+  reset_table (StartRam);
+  reset_table (BackupRam);
+  reset_table (FlagTable);
+#endif
+
 
   for(i=0;i<10;i++)
-    Watches[i] = 0xFFFF;
+    //Watches[i] = 0xFFFF;
+    Watches[i] = 0xFFFFFF;	/* JB 980407 */
   WatchX = 0;
   WatchY = 0;
   WatchesFlag = 0;
@@ -246,12 +406,20 @@ void InitCheat(void)
  */
 void StopCheat(void)
 {
+
+/* JB 980407 */
+#if 0
   if(StartRam != NULL)
     free(StartRam);
   if(BackupRam != NULL)
     free(BackupRam);
   if(FlagTable != NULL)
     free(FlagTable);
+#else
+	reset_table (StartRam);
+	reset_table (BackupRam);
+	reset_table (FlagTable);
+#endif
 }
 
 /*****************
@@ -261,192 +429,212 @@ void StopCheat(void)
  */
 void DoCheat(int CurrentVolume)
 {
-int i,j,y;
-char buf[80];
-char buf2[10];
+	int i,j,y;
+	char buf[80];
+	char buf2[10];
 
-/* Display watches if there is some */
-  if(WatchesFlag != 0){
-    int trueorientation;
+	/* Display watches if there is some */
+	if(WatchesFlag != 0)
+	{
+		int trueorientation;
 
-  /* hack: force the display into standard orientation */
-    trueorientation = Machine->orientation;
-    Machine->orientation = ORIENTATION_DEFAULT;
+		/* hack: force the display into standard orientation */
+		trueorientation = Machine->orientation;
+		Machine->orientation = ORIENTATION_DEFAULT;
 
+		buf[0] = 0;
+		for (i=0;i<10;i++)
+		{
+			//if(Watches[i] != 0xFFFF)
+			if(Watches[i] != 0xFFFFFF)	/* JB 980407 */
+			{
+				//sprintf(buf2,"%02X ",Machine->memory_region[0][Watches[i]]);
+				sprintf(buf2,"%02X ", RD_GAMERAM (0, Watches[i])); /* JB 980407 */
+				strcat(buf,buf2);
+			}
+		}
 
-    buf[0] = 0;
-    for (i=0;i<10;i++){
-      if(Watches[i] != 0xFFFF){
-        sprintf(buf2,"%02X ",Machine->memory_region[0][Watches[i]]);
-        strcat(buf,buf2);
-      }
-    }
+		for (i = 0;i < (int)strlen(buf);i++)
+			drawgfx(Machine->scrbitmap,Machine->uifont,buf[i],DT_COLOR_WHITE,0,0,
+				WatchX+(i*Machine->uifont->width),WatchY,0,TRANSPARENCY_NONE,0);
 
-    for (i = 0;i < (int)strlen(buf);i++)
-      drawgfx(Machine->scrbitmap,Machine->uifont,buf[i],DT_COLOR_WHITE,0,0,WatchX+(i*Machine->uifont->width),WatchY,0,TRANSPARENCY_NONE,0);
+		Machine->orientation = trueorientation;
+	}
 
-    Machine->orientation = trueorientation;
-  }
+	/* Affect the memory */
+	for(i=0; CheatEnabled==1 && i<CheatTotal;i++) /* JB 980407 */
+	{
+		if(CheatTable[i].Special == 0)
+		{
+			/* JB 980407 */
+			WR_GAMERAM (CheatTable[i].CpuNo, CheatTable[i].Address, CheatTable[i].Data);
+		}
+		else
+		{
+			if(CheatTable[i].Count == 0)
+			{
+				/* Check special function */
+				switch(CheatTable[i].Special)
+				{
+					case 1:
+						/* JB 980407 */
+						WR_GAMERAM (CheatTable[i].CpuNo, CheatTable[i].Address,
+							CheatTable[i].Data);
 
-/* Affect the memory */
-  if(CheatEnabled == 1)
-    for(i=0;i<CheatTotal;i++)
-      if(CheatTable[i].Special == 0){
-        Machine->memory_region[ Machine->drv->cpu[CheatTable[i].CpuNo].memory_region ]
-          [CheatTable[i].Address] = CheatTable[i].Data; /* JB 971004 */
-      }else{
-        if(CheatTable[i].Count == 0){
+						/*Delete this cheat from the table*/
+						for(j = i;j<CheatTotal-1;j++)
+						{
+							CheatTable[j].CpuNo = CheatTable[j+1].CpuNo;
+							CheatTable[j].Address = CheatTable[j+1].Address;
+							CheatTable[j].Data = CheatTable[j+1].Data;
+							CheatTable[j].Special = CheatTable[j+1].Special;
+							CheatTable[j].Count = CheatTable[j+1].Count;
+							strcpy(CheatTable[j].Name,CheatTable[j+1].Name);
+						}
+						CheatTotal--;
+						break;
+					case 2:
+						/* JB 980407 */
+						WR_GAMERAM (CheatTable[i].CpuNo, CheatTable[i].Address,
+							CheatTable[i].Data);
+						CheatTable[i].Count = 1*60;
+						break;
+					case 3:
+						/* JB 980407 */
+						WR_GAMERAM (CheatTable[i].CpuNo, CheatTable[i].Address,
+							CheatTable[i].Data);
+						CheatTable[i].Count = 2*60;
+						break;
+					case 4:
+						/* JB 980407 */
+						WR_GAMERAM (CheatTable[i].CpuNo, CheatTable[i].Address,
+							CheatTable[i].Data);
+						CheatTable[i].Count = 5*60;
+						break;
 
-/* Check special function */
-          switch(CheatTable[i].Special){
-            case 1:
-              Machine->memory_region[ Machine->drv->cpu[CheatTable[i].CpuNo].memory_region ]
-                [CheatTable[i].Address] = CheatTable[i].Data; /* JB 971004 */
-/*Delete this cheat from the table*/
-              for(j = i;j<CheatTotal-1;j++){
-                CheatTable[j].CpuNo = CheatTable[j+1].CpuNo;
-                CheatTable[j].Address = CheatTable[j+1].Address;
-                CheatTable[j].Data = CheatTable[j+1].Data;
-                CheatTable[j].Special = CheatTable[j+1].Special;
-                CheatTable[j].Count = CheatTable[j+1].Count;
-                strcpy(CheatTable[j].Name,CheatTable[j+1].Name);
-              }
-              CheatTotal--;
+					/* 5,6,7 check if the value has changed, if yes, start a timer
+					    when the timer end, change the location*/
+					case 5:
+						/* JB 980407 */
+						if (RD_GAMERAM (CheatTable[i].CpuNo, CheatTable[i].Address) != CheatTable[i].Data)
+						{
+							CheatTable[i].Count = 1*60;
+							CheatTable[i].Special = 100;
+						}
+						break;
+					case 6:
+						/* JB 980407 */
+						if (RD_GAMERAM (CheatTable[i].CpuNo, CheatTable[i].Address) != CheatTable[i].Data)
+						{
+							CheatTable[i].Count = 2*60;
+							CheatTable[i].Special = 101;
+						}
+						break;
+					case 7:
+						/* JB 980407 */
+						if (RD_GAMERAM (CheatTable[i].CpuNo, CheatTable[i].Address) != CheatTable[i].Data)
+						{
+							CheatTable[i].Count = 5*60;
+							CheatTable[i].Special = 102;
+						}
+						break;
 
-              break;
-            case 2:
-              Machine->memory_region[ Machine->drv->cpu[CheatTable[i].CpuNo].memory_region ]
-                [CheatTable[i].Address] = CheatTable[i].Data; /* JB 971004 */
-              CheatTable[i].Count = 1*60;
-              break;
-            case 3:
-              Machine->memory_region[ Machine->drv->cpu[CheatTable[i].CpuNo].memory_region ]
-                [CheatTable[i].Address] = CheatTable[i].Data; /* JB 971004 */
-              CheatTable[i].Count = 2*60;
-              break;
-            case 4:
-              Machine->memory_region[ Machine->drv->cpu[CheatTable[i].CpuNo].memory_region ]
-                [CheatTable[i].Address] = CheatTable[i].Data; /* JB 971004 */
-              Machine->memory_region[CheatTable[i].CpuNo][CheatTable[i].Address] = CheatTable[i].Data;
-              CheatTable[i].Count = 5*60;
-              break;
+					/* 8,9,10,11 do not change the location if the value change by X every frames
+					   This is to try to not change the value of an energy bar
+					   when a bonus is awarded to it at the end of a level
+					   See Kung Fu Master*/
+					case 8:
+						/* JB 980407 */
+						if (RD_GAMERAM (CheatTable[i].CpuNo, CheatTable[i].Address) != CheatTable[i].Data)
+						{
+							CheatTable[i].Count = 1;
+							CheatTable[i].Special = 103;
+							CheatTable[i].Backup =
+								RD_GAMERAM (CheatTable[i].CpuNo, CheatTable[i].Address);
+						}
+						break;
+					case 9:
+						/* JB 980407 */
+						if (RD_GAMERAM (CheatTable[i].CpuNo, CheatTable[i].Address) != CheatTable[i].Data)
+						{
+							CheatTable[i].Count = 1;
+							CheatTable[i].Special = 104;
+							CheatTable[i].Backup =
+								RD_GAMERAM (CheatTable[i].CpuNo, CheatTable[i].Address);
+						}
+						break;
+					case 10:
+						/* JB 980407 */
+						if (RD_GAMERAM (CheatTable[i].CpuNo, CheatTable[i].Address) != CheatTable[i].Data)
+						{
+							CheatTable[i].Count = 1;
+							CheatTable[i].Special = 105;
+							CheatTable[i].Backup =
+								RD_GAMERAM (CheatTable[i].CpuNo, CheatTable[i].Address);
+						}
+						break;
+					case 11:
+						/* JB 980407 */
+						if (RD_GAMERAM (CheatTable[i].CpuNo, CheatTable[i].Address) != CheatTable[i].Data)
+						{
+							CheatTable[i].Count = 1;
+							CheatTable[i].Special = 106;
+							CheatTable[i].Backup =
+								RD_GAMERAM (CheatTable[i].CpuNo, CheatTable[i].Address);
+						}
+						break;
 
-/* 5,6,7 check if the value has changed, if yes, start a timer
-    when the timer end, change the location*/
-            case 5:
-              if(Machine->memory_region[ Machine->drv->cpu[CheatTable[i].CpuNo].memory_region ]
-                [CheatTable[i].Address] != CheatTable[i].Data){ /* JB 971004 */
-                CheatTable[i].Count = 1*60;
-                CheatTable[i].Special = 100;
-              }
-              break;
-            case 6:
-              if(Machine->memory_region[ Machine->drv->cpu[CheatTable[i].CpuNo].memory_region ]
-                [CheatTable[i].Address] != CheatTable[i].Data){ /* JB 971004 */
-                CheatTable[i].Count = 2*60;
-                CheatTable[i].Special = 101;
-              }
-              break;
-            case 7:
-              if(Machine->memory_region[ Machine->drv->cpu[CheatTable[i].CpuNo].memory_region ]
-                [CheatTable[i].Address] != CheatTable[i].Data){ /* JB 971004 */
-                CheatTable[i].Count = 5*60;
-                CheatTable[i].Special = 102;
-              }
-              break;
+						/*Special case, linked with 5,6,7 */
+					case 100:
+						/* JB 980407 */
+						WR_GAMERAM (CheatTable[i].CpuNo, CheatTable[i].Address, CheatTable[i].Data);
+						CheatTable[i].Special = 5;
+						break;
+					case 101:
+						/* JB 980407 */
+						WR_GAMERAM (CheatTable[i].CpuNo, CheatTable[i].Address, CheatTable[i].Data);
+						CheatTable[i].Special = 6;
+						break;
+					case 102:
+						/* JB 980407 */
+						WR_GAMERAM (CheatTable[i].CpuNo, CheatTable[i].Address, CheatTable[i].Data);
+						CheatTable[i].Special = 7;
+						break;
 
-/* 8,9,10,11 do not change the location if the value change by X every frames
-   This is to try to not change the value of an energy bar
-   when a bonus is awarded to it at the end of a level
-   See Kung Fu Master*/
-            case 8:
-              if(Machine->memory_region[ Machine->drv->cpu[CheatTable[i].CpuNo].memory_region ]
-                [CheatTable[i].Address] != CheatTable[i].Data){ /* JB 971004 */
-                CheatTable[i].Count = 1;
-                CheatTable[i].Special = 103;
-                CheatTable[i].Backup = Machine->memory_region[ Machine->drv->cpu[CheatTable[i].CpuNo].memory_region ]
-                  [CheatTable[i].Address];  /* JB 971017 */
-              }
-              break;
-            case 9:
-              if(Machine->memory_region[ Machine->drv->cpu[CheatTable[i].CpuNo].memory_region ]
-                [CheatTable[i].Address] != CheatTable[i].Data){ /* JB 971004 */
-                CheatTable[i].Count = 1;
-                CheatTable[i].Special = 104;
-                CheatTable[i].Backup = Machine->memory_region[ Machine->drv->cpu[CheatTable[i].CpuNo].memory_region ]
-                  [CheatTable[i].Address];  /* JB 971017 */
-              }
-              break;
-            case 10:
-              if(Machine->memory_region[ Machine->drv->cpu[CheatTable[i].CpuNo].memory_region ]
-                [CheatTable[i].Address] != CheatTable[i].Data){ /* JB 971004 */
-                CheatTable[i].Count = 1;
-                CheatTable[i].Special = 105;
-                CheatTable[i].Backup = Machine->memory_region[ Machine->drv->cpu[CheatTable[i].CpuNo].memory_region ]
-                  [CheatTable[i].Address];  /* JB 971017 */
-              }
-              break;
-            case 11:
-              if(Machine->memory_region[ Machine->drv->cpu[CheatTable[i].CpuNo].memory_region ]
-                [CheatTable[i].Address] != CheatTable[i].Data){ /* JB 971004 */
-                CheatTable[i].Count = 1;
-                CheatTable[i].Special = 106;
-                CheatTable[i].Backup = Machine->memory_region[ Machine->drv->cpu[CheatTable[i].CpuNo].memory_region ]
-                  [CheatTable[i].Address];  /* JB 971017 */
-              }
-              break;
-
-/*Special case, linked with 5,6,7 */
-            case 100:
-              Machine->memory_region[ Machine->drv->cpu[CheatTable[i].CpuNo].memory_region ]
-                [CheatTable[i].Address] = CheatTable[i].Data; /* JB 971004 */
-              CheatTable[i].Special = 5;
-              break;
-            case 101:
-              Machine->memory_region[ Machine->drv->cpu[CheatTable[i].CpuNo].memory_region ]
-                [CheatTable[i].Address] = CheatTable[i].Data; /* JB 971004 */
-              CheatTable[i].Special = 6;
-              break;
-            case 102:
-              Machine->memory_region[ Machine->drv->cpu[CheatTable[i].CpuNo].memory_region ]
-                [CheatTable[i].Address] = CheatTable[i].Data; /* JB 971004 */
-              CheatTable[i].Special = 7;
-              break;
-/*Special case, linked with 8,9,10,11 */
-/* Change the memory only if the memory decreased by X */
-            case 103:
-              if(Machine->memory_region[ Machine->drv->cpu[CheatTable[i].CpuNo].memory_region ]
-                [CheatTable[i].Address] != CheatTable[i].Backup-1)  /* JB 971017 */
-                Machine->memory_region[ Machine->drv->cpu[CheatTable[i].CpuNo].memory_region ]
-                  [CheatTable[i].Address] = CheatTable[i].Data;   /* JB 971017 */
-              CheatTable[i].Special = 8;
-              break;
-            case 104:
-              if(Machine->memory_region[ Machine->drv->cpu[CheatTable[i].CpuNo].memory_region ]
-                [CheatTable[i].Address] != CheatTable[i].Backup-2)  /* JB 971017 */
-                Machine->memory_region[ Machine->drv->cpu[CheatTable[i].CpuNo].memory_region ]
-                  [CheatTable[i].Address] = CheatTable[i].Data;   /* JB 971017 */
-              CheatTable[i].Special = 9;
-              break;
-            case 105:
-              if(Machine->memory_region[ Machine->drv->cpu[CheatTable[i].CpuNo].memory_region ]
-                [CheatTable[i].Address] != CheatTable[i].Backup-3)  /* JB 971017 */
-                Machine->memory_region[ Machine->drv->cpu[CheatTable[i].CpuNo].memory_region ]
-                  [CheatTable[i].Address] = CheatTable[i].Data;   /* JB 971017 */
-              CheatTable[i].Special = 10;
-              break;
-            case 106:
-              if(Machine->memory_region[ Machine->drv->cpu[CheatTable[i].CpuNo].memory_region ]
-                [CheatTable[i].Address] != CheatTable[i].Backup-4)  /* JB 971017 */
-                Machine->memory_region[ Machine->drv->cpu[CheatTable[i].CpuNo].memory_region ]
-                  [CheatTable[i].Address] = CheatTable[i].Data;   /* JB 971017 */
-              CheatTable[i].Special = 11;
-              break;
-          }
-        }else{
-          CheatTable[i].Count--;
-        }
-      }
+					/*Special case, linked with 8,9,10,11 */
+					/* Change the memory only if the memory decreased by X */
+					case 103:
+						/* JB 980407 */
+						if (RD_GAMERAM(CheatTable[i].CpuNo, CheatTable[i].Address) != CheatTable[i].Backup-1)
+							WR_GAMERAM(CheatTable[i].CpuNo, CheatTable[i].Address, CheatTable[i].Data);
+						CheatTable[i].Special = 8;
+						break;
+					case 104:
+						/* JB 980407 */
+						if (RD_GAMERAM(CheatTable[i].CpuNo, CheatTable[i].Address) != CheatTable[i].Backup-2)
+							WR_GAMERAM(CheatTable[i].CpuNo, CheatTable[i].Address, CheatTable[i].Data);
+						CheatTable[i].Special = 9;
+						break;
+					case 105:
+						/* JB 980407 */
+						if (RD_GAMERAM(CheatTable[i].CpuNo, CheatTable[i].Address) != CheatTable[i].Backup-3)
+							WR_GAMERAM(CheatTable[i].CpuNo, CheatTable[i].Address, CheatTable[i].Data);
+						CheatTable[i].Special = 10;
+						break;
+					case 106:
+						/* JB 980407 */
+						if (RD_GAMERAM(CheatTable[i].CpuNo, CheatTable[i].Address) != CheatTable[i].Backup-4)
+							WR_GAMERAM(CheatTable[i].CpuNo, CheatTable[i].Address, CheatTable[i].Data);
+						CheatTable[i].Special = 11;
+						break;
+          		}	/* end switch */
+        	} /* end if(CheatTable[i].Count == 0) */
+        	else
+			{
+				CheatTable[i].Count--;
+			}
+		} /* end else */
+	} /* end for */
 
 
 /* ` continue cheat, to accelerate the search for new cheat */
@@ -467,7 +655,7 @@ char buf2[10];
 /* JRT3 10-26-97 BEGIN */
   if( osd_key_pressed( OSD_KEY_F7 ) && CheatTotal ){
 /* JRT3 10-26-97 END */
-    y = (Machine->scrbitmap->height - Machine->uifont->height) / 2;
+    y = (Machine->uiheight - Machine->uifont->height) / 2;
     if(CheatEnabled == 0){
       CheatEnabled = 1;
       xprintf(0,y,"Cheat On");
@@ -507,12 +695,12 @@ char *format;
   dt[0].text = s;
   dt[0].color = DT_COLOR_WHITE;
   if(x == 0)
-    dt[0].x = (Machine->scrbitmap->width - Machine->uifont->width * strlen(s)) / 2;
+    dt[0].x = (Machine->uiwidth - Machine->uifont->width * strlen(s)) / 2;
   else
     dt[0].x = x;
   if(dt[0].x < 0)
     dt[0].x = 0;
-  if(dt[0].x > Machine->scrbitmap->width)
+  if(dt[0].x > Machine->uiwidth)
     dt[0].x = 0;
   dt[0].y = y;
   dt[1].text = 0;
@@ -536,12 +724,12 @@ char *format;
   dt[0].text = s;
   dt[0].color = DT_COLOR_WHITE;
   if(x == 0)
-    dt[0].x = (Machine->scrbitmap->width - Machine->uifont->width * strlen(s)) / 2;
+    dt[0].x = (Machine->uiwidth - Machine->uifont->width * strlen(s)) / 2;
   else
     dt[0].x = x;
   if(dt[0].x < 0)
     dt[0].x = 0;
-  if(dt[0].x > Machine->scrbitmap->width)
+  if(dt[0].x > Machine->uiwidth)
     dt[0].x = 0;
   dt[0].y = y;
   dt[1].text = 0;
@@ -615,8 +803,8 @@ void EditCheat(int CheatNo)
       dt[i].y = 20;
     dt[i].color = DT_COLOR_WHITE;
     dt[i].text = paDisplayText[i];
-    dt[i].x = (Machine->scrbitmap->width - Machine->uifont->width * strlen(dt[i].text)) / 2;
-    if(dt[i].x > Machine->scrbitmap->width)
+    dt[i].x = (Machine->uiwidth - Machine->uifont->width * strlen(dt[i].text)) / 2;
+    if(dt[i].x > Machine->uiwidth)
       dt[i].x = 0;
   }
   y = ( dt[ EDIT_CHEAT_LINES - 1 ].y + ( 3 * iFontHeight ) );
@@ -626,10 +814,11 @@ void EditCheat(int CheatNo)
    FirstEditableItem = total;
 
   sprintf(str2[0],"Name: %s",LoadedCheatTable[CheatNo].Name);
-  if((Machine->uifont->width * (int)strlen(str2[0])) > Machine->scrbitmap->width)
+  if((Machine->uifont->width * (int)strlen(str2[0])) > Machine->uiwidth)
     sprintf(str2[0],"%s",LoadedCheatTable[CheatNo].Name);
   sprintf(str2[1],"CPU:        %1d",LoadedCheatTable[CheatNo].CpuNo);
-  sprintf(str2[2],"Address: %04X",LoadedCheatTable[CheatNo].Address);
+//  sprintf(str2[2],"Address: %04X",LoadedCheatTable[CheatNo].Address);
+  sprintf(str2[2],"Addr:  %06X",LoadedCheatTable[CheatNo].Address);	/* JB 980407 */
   sprintf(str2[3],"Value:    %03d  (0x%02X)",LoadedCheatTable[CheatNo].Data,LoadedCheatTable[CheatNo].Data);
   sprintf(str2[4],"Type:      %02d",LoadedCheatTable[CheatNo].Special);
 
@@ -637,8 +826,8 @@ void EditCheat(int CheatNo)
 
     dt[total].text = str2[i];
 
-	  dt[total].x = Machine->scrbitmap->width / 2;
-	  if(Machine->scrbitmap->width < 35*Machine->uifont->width)
+	  dt[total].x = Machine->uiwidth / 2;
+	  if(Machine->uiwidth < 35*Machine->uifont->width)
 		  dt[total].x = 0;
 	  else
 		  dt[total].x -= 15*Machine->uifont->width;
@@ -699,7 +888,7 @@ void EditCheat(int CheatNo)
           strcpy(LoadedCheatTable[CheatNo].Name,CheatNameList[CurrentName]);
           sprintf(str2[0],"Name: %s",LoadedCheatTable[CheatNo].Name);
           for(i=dt[FirstEditableItem].y; i< ( dt[FirstEditableItem].y + iFontHeight + 1); i++)
-            memset(Machine->scrbitmap->line[i],0,Machine->scrbitmap->width);
+            memset(Machine->scrbitmap->line[i],0,Machine->uiwidth);
         }
         if(s == 1+FirstEditableItem){
           if(LoadedCheatTable[CheatNo].CpuNo == 0)
@@ -711,11 +900,13 @@ void EditCheat(int CheatNo)
         }
         if(s == 2+FirstEditableItem){
           if(LoadedCheatTable[CheatNo].Address == 0)
-            LoadedCheatTable[CheatNo].Address = 0xFFFF;
+            //LoadedCheatTable[CheatNo].Address = 0xFFFF;
+            LoadedCheatTable[CheatNo].Address = 0xFFFFFF;	/* JB 980407 */
           else
             LoadedCheatTable[CheatNo].Address --;
 
-          sprintf(str2[2],"Address: %04X",LoadedCheatTable[CheatNo].Address);
+          //sprintf(str2[2],"Address: %04X",LoadedCheatTable[CheatNo].Address);
+          sprintf(str2[2],"Addr:  %06X",LoadedCheatTable[CheatNo].Address);	/* JB 980407 */
         }
         if(s == 3+FirstEditableItem){
           if(LoadedCheatTable[CheatNo].Data == 0)
@@ -744,7 +935,7 @@ void EditCheat(int CheatNo)
           strcpy(LoadedCheatTable[CheatNo].Name,CheatNameList[CurrentName]);
           sprintf(str2[0],"Name: %s",LoadedCheatTable[CheatNo].Name);
           for(i=dt[FirstEditableItem].y; i< ( dt[FirstEditableItem].y + iFontHeight + 1); i++)
-            memset(Machine->scrbitmap->line[i],0,Machine->scrbitmap->width);
+            memset(Machine->scrbitmap->line[i],0,Machine->uiwidth);
         }
         if(s == 1+FirstEditableItem){
           if(LoadedCheatTable[CheatNo].CpuNo == 9)
@@ -754,12 +945,14 @@ void EditCheat(int CheatNo)
           sprintf(str2[1],"CPU:        %1d",LoadedCheatTable[CheatNo].CpuNo);
         }
         if(s == 2+FirstEditableItem){
-          if(LoadedCheatTable[CheatNo].Address == 0xFFFF)
+          //if(LoadedCheatTable[CheatNo].Address == 0xFFFF)
+          if(LoadedCheatTable[CheatNo].Address == 0xFFFFFF)	/* JB 980407 */
             LoadedCheatTable[CheatNo].Address = 0;
           else
             LoadedCheatTable[CheatNo].Address ++;
 
-          sprintf(str2[2],"Address: %04X",LoadedCheatTable[CheatNo].Address);
+          //sprintf(str2[2],"Address: %04X",LoadedCheatTable[CheatNo].Address);
+          sprintf(str2[2],"Addr:  %06X",LoadedCheatTable[CheatNo].Address);	/* JB 980407 */
         }
         if(s == 3+FirstEditableItem){
           if(LoadedCheatTable[CheatNo].Data == 0xFF)
@@ -779,15 +972,36 @@ void EditCheat(int CheatNo)
         }
         break;
 
-
-      case OSD_KEY_4:
+      case OSD_KEY_6:	/* JB 980407 */
         if(s == 2+FirstEditableItem){
-          if((LoadedCheatTable[CheatNo].Address&0x000F) >= 0x000F)
-            LoadedCheatTable[CheatNo].Address &= 0xFFF0;
+          if((LoadedCheatTable[CheatNo].Address&0x00000F) >= 0x00000F)	/* JB 980407 */
+            LoadedCheatTable[CheatNo].Address &= 0xFFFFF0;				/* JB 980407 */
           else
             LoadedCheatTable[CheatNo].Address ++;
 
-          sprintf(str2[2],"Address: %04X",LoadedCheatTable[CheatNo].Address);
+          sprintf(str2[2],"Addr:  %06X",LoadedCheatTable[CheatNo].Address);	/* JB 980407 */
+        }
+        break;
+
+      case OSD_KEY_5:	/* JB 980407 */
+        if(s == 2+FirstEditableItem){
+          if((LoadedCheatTable[CheatNo].Address&0x0000FF) >= 0x0000F0)	/* JB 980407 */
+            LoadedCheatTable[CheatNo].Address &= 0xFFFF0F;				/* JB 980407 */
+          else
+            LoadedCheatTable[CheatNo].Address += 0x10;
+
+          sprintf(str2[2],"Addr:  %06X",LoadedCheatTable[CheatNo].Address);	/* JB 980407 */
+        }
+        break;
+
+      case OSD_KEY_4:
+        if(s == 2+FirstEditableItem){
+          if((LoadedCheatTable[CheatNo].Address&0x000FFF) >= 0x000F00)	/* JB 980407 */
+            LoadedCheatTable[CheatNo].Address &= 0xFFF0FF;				/* JB 980407 */
+          else
+            LoadedCheatTable[CheatNo].Address += 0x100;
+
+          sprintf(str2[2],"Addr:  %06X",LoadedCheatTable[CheatNo].Address);	/* JB 980407 */
         }
         if(s == 3+FirstEditableItem){
           if((LoadedCheatTable[CheatNo].Data&0x000F) >= 0x000F)
@@ -801,12 +1015,12 @@ void EditCheat(int CheatNo)
 
       case OSD_KEY_3:
         if(s == 2+FirstEditableItem){
-          if((LoadedCheatTable[CheatNo].Address&0x00FF) >= 0x00F0)
-            LoadedCheatTable[CheatNo].Address &= 0xFF0F;
+          if((LoadedCheatTable[CheatNo].Address&0x00FFFF) >= 0x00F000)	/* JB 980407 */
+            LoadedCheatTable[CheatNo].Address &= 0xFF0FFF;				/* JB 980407 */
           else
-            LoadedCheatTable[CheatNo].Address += 0x10;
+            LoadedCheatTable[CheatNo].Address += 0x1000;
 
-          sprintf(str2[2],"Address: %04X",LoadedCheatTable[CheatNo].Address);
+          sprintf(str2[2],"Addr:  %06X",LoadedCheatTable[CheatNo].Address);	/* JB 980407 */
         }
         if(s == 3+FirstEditableItem){
           if((LoadedCheatTable[CheatNo].Data&0x00FF) >= 0x00F0)
@@ -820,12 +1034,12 @@ void EditCheat(int CheatNo)
 
       case OSD_KEY_2:
         if(s == 2+FirstEditableItem){
-          if((LoadedCheatTable[CheatNo].Address&0x0FFF) >= 0x0F00)
-            LoadedCheatTable[CheatNo].Address &= 0xF0FF;
+          if((LoadedCheatTable[CheatNo].Address&0x0FFFFF) >= 0x0F0000)	/* JB 980407 */
+            LoadedCheatTable[CheatNo].Address &= 0xF0FFFF;				/* JB 980407 */
           else
-            LoadedCheatTable[CheatNo].Address += 0x100;
+            LoadedCheatTable[CheatNo].Address += 0x10000;
 
-          sprintf(str2[2],"Address: %04X",LoadedCheatTable[CheatNo].Address);
+          sprintf(str2[2],"Addr:  %06X",LoadedCheatTable[CheatNo].Address);	/* JB 980407 */
         }
         if(s == 3+FirstEditableItem){
           if((LoadedCheatTable[CheatNo].Data&0x000F) >= 0x000F)
@@ -839,12 +1053,12 @@ void EditCheat(int CheatNo)
 
       case OSD_KEY_1:
         if(s == 2+FirstEditableItem){
-          if(LoadedCheatTable[CheatNo].Address >= 0xF000)
-            LoadedCheatTable[CheatNo].Address &= 0x0FFF;
+          if((LoadedCheatTable[CheatNo].Address&0xFFFFFF) >= 0xF00000)	/* JB 980407 */
+            LoadedCheatTable[CheatNo].Address &= 0x0FFFFF;				/* JB 980407 */
           else
-            LoadedCheatTable[CheatNo].Address += 0x1000;
+            LoadedCheatTable[CheatNo].Address += 0x100000;
 
-          sprintf(str2[2],"Address: %04X",LoadedCheatTable[CheatNo].Address);
+          sprintf(str2[2],"Addr:  %06X",LoadedCheatTable[CheatNo].Address);	/* JB 980407 */
         }
         if(s == 3+FirstEditableItem){
           if((LoadedCheatTable[CheatNo].Data&0x00FF) >= 0x00F0)
@@ -870,7 +1084,7 @@ void EditCheat(int CheatNo)
           memset( buffer, '\0', 32 );
 				  strncpy( buffer, LoadedCheatTable[ CheatNo ].Name, 25 );
 				  for(i=EditYPos; i< ( EditYPos + iFontHeight + 1); i++)
-				    memset(Machine->scrbitmap->line[i],0,Machine->scrbitmap->width);
+				    memset(Machine->scrbitmap->line[i],0,Machine->uiwidth);
 				  xprintfForEdit(0,EditYPos,"%s",buffer);
 /* JRT5 END */
           do
@@ -1035,7 +1249,7 @@ void EditCheat(int CheatNo)
                 break;
             }
             for(i=EditYPos; i< ( EditYPos + iFontHeight + 1); i++)
-              memset(Machine->scrbitmap->line[i],0,Machine->scrbitmap->width);
+              memset(Machine->scrbitmap->line[i],0,Machine->uiwidth);
             xprintfForEdit(0,EditYPos,"%s",buffer);
           } while (done == 0);
           done = 0;
@@ -1072,7 +1286,7 @@ int i;
     y += Machine->uifont->height;
   }
   if(CheatTotal == 0){
-    x = (Machine->scrbitmap->width - Machine->uifont->width * 12) / 2;
+    x = (Machine->uiwidth - Machine->uifont->width * 12) / 2;
     xprintf(x,y,"--- None ---");
   }
 }
@@ -1100,8 +1314,8 @@ int		iWhereY = 0;
 HardRefresh:
   osd_clearbitmap(Machine->scrbitmap);
 
-  x = Machine->scrbitmap->width / 2;
-  if(Machine->scrbitmap->width < 35*Machine->uifont->width)
+  x = Machine->uiwidth / 2;
+  if(Machine->uiwidth < 35*Machine->uifont->width)
 	  x = 0;
   else
 	  x -= 15*Machine->uifont->width;
@@ -1203,7 +1417,7 @@ End of list
 
 /* Clear old list */
           for (i = StartY;i < EndY;i++)
-            memset(Machine->scrbitmap->line[i],0,Machine->scrbitmap->width);
+            memset(Machine->scrbitmap->line[i],0,Machine->uiwidth);
 
         }
         break;
@@ -1243,7 +1457,7 @@ End of list
 
 /* Clear old list */
           for (i = StartY;i < EndY;i++)
-            memset(Machine->scrbitmap->line[i],0,Machine->scrbitmap->width);
+            memset(Machine->scrbitmap->line[i],0,Machine->uiwidth);
 
         }
         break;
@@ -1286,7 +1500,8 @@ End of list
       case OSD_KEY_F2:
 /* Add to watch list */
         for (i=0;i<10;i++){
-          if(Watches[i] == 0xFFFF){
+          //if(Watches[i] == 0xFFFF){
+          if(Watches[i] == 0xFFFFFF){	/* JB 980407 */
             Watches[i] = LoadedCheatTable[s+Index].Address;
             xprintf(dt[s].x+(strlen(LoadedCheatTable[s+Index].Name)*Machine->uifont->width)+Machine->uifont->width,dt[s].y,"(Watch)");
             WatchesFlag = 1;
@@ -1499,8 +1714,8 @@ void StartCheat(void)
   y += 3*Machine->uifont->height;
   for (i = 0;i < total;i++)
   {
-    dt[i].x = (Machine->scrbitmap->width - Machine->uifont->width * strlen(dt[i].text)) / 2;
-    if(dt[i].x > Machine->scrbitmap->width)
+    dt[i].x = (Machine->uiwidth - Machine->uifont->width * strlen(dt[i].text)) / 2;
+    if(dt[i].x > Machine->uiwidth)
       dt[i].x = 0;
     dt[i].y = i * ( Machine->uifont->height + 2 ) + y;
     if (i == total-1) dt[i].y += 2*Machine->uifont->height;
@@ -1644,6 +1859,11 @@ if(CurrentMethod == Method_1){
   StartValue = 0;
 }
 
+	/* JB 980407 */
+	/* build ram tables to match game ram */
+	if (build_tables ())
+		return;
+#if 0
 /* Allocate array if not already allocated */
   if(StartRam == NULL)
     if ((StartRam = malloc(ram_size)) == 0)
@@ -1657,25 +1877,51 @@ if(CurrentMethod == Method_1){
   if(FlagTable == NULL)
     if ((FlagTable = malloc(ram_size)) == 0)
       return ;
+#endif
 
+	/* JB 980407 */
+	/* Backup the ram */
+	backup_ram (StartRam);
+	backup_ram (BackupRam);
+	memset_ram (FlagTable, 0xFF); /* At start, all location are good */
 
-/* Backup the ram */
+#if 0
   memcpy (StartRam, Machine->memory_region[0], ram_size);
   memcpy (BackupRam, Machine->memory_region[0], ram_size);
 
   memset(FlagTable,0xFF,ram_size); /* At start, all location are good */
+#endif
 
+	/* Flag the location that match the initial value if method 1 */
+	if(CurrentMethod == Method_1)
+	{
+		/* JB 980407 */
+		struct ExtMemory *ext, *ext_ft;
 
-/* Flag the location that match the initial value if method 1 */
-  if(CurrentMethod == Method_1){
+		for (ext = StartRam, ext_ft = FlagTable; ext->data; ext++, ext_ft++)
+		{
+			for (i=0; i <= ext->end - ext->start; i++)
+				if ((ext->data[i] != s) && (ext->data[i] != s-1))
+					ext_ft->data[i] = 0;
+		}
+#if 0
     for (i=0;i<ram_size;i++)
       if((StartRam[i] != s)&&(StartRam[i] != s-1))
         FlagTable[i] = 0;
+#endif
 
+		/* JB 980407 */
+		count = 0;
+		for (ext = FlagTable; ext->data; ext++)
+			for (i=0; i<= ext->end - ext->start; i++)
+				if (ext->data[i] != 0)
+					count++;
+#if 0
     count = 0;
     for (i=0;i<ram_size;i++)
       if(FlagTable[i] != 0)
         count++;
+#endif
 
     y += 2*Machine->uifont->height;
     xprintf(0,y,"Matches Found: %d",count);
@@ -1706,6 +1952,9 @@ void ContinueCheat(void)
  struct DisplayText dt[20];
  int total;
  int Continue;
+ struct ExtMemory *ext;		/* JB 980407 */
+ struct ExtMemory *ext_br;	/* JB 980407 */
+ struct ExtMemory *ext_sr;	/* JB 980407 */
 
   osd_clearbitmap(Machine->scrbitmap);
 
@@ -1783,12 +2032,21 @@ void ContinueCheat(void)
 
     StartValue = s; /* Save the value for when continue */
 
+	/* JB 980407 */
+	for (ext = FlagTable; ext->data; ext++)
+	{
+		unsigned char *gameram = memory_find_base (0, ext->start);
+		for (i=0; i <= ext->end - ext->start; i++)
+			if ((gameram[i] != s) && (gameram[i] != s-1))
+				ext->data[i] = 0;
+	}
+#if 0
 /* Flag the value */
     for (i=0;i<ram_size;i++)
       if(FlagTable[i] != 0)
         if((Machine->memory_region[0][i] != s)&&(Machine->memory_region[0][i] != s-1))
           FlagTable[i] = 0;
-
+#endif
   }
 
 
@@ -1881,16 +2139,27 @@ void ContinueCheat(void)
 
     StartValue = s; /* Save the value for when continue */
 
+	/* JB 980407 */
+	for (ext = FlagTable, ext_br = BackupRam; ext->data; ext++, ext_br++)
+	{
+		unsigned char *gameram = memory_find_base (0, ext->start);
+		for (i=0; i <= ext->end - ext->start; i++)
+			if (ext->data[i] != 0)
+				if (gameram[i] != (ext_br->data[i] + s))
+					ext->data[i] = 0;
+	}
+#if 0
 /* Flag the value */
     for (i=0;i<ram_size;i++)
       if(FlagTable[i] != 0)
         if(Machine->memory_region[0][i] != (BackupRam[i] + s))
           FlagTable[i] = 0;
+#endif
 
 /* Backup the ram because we ask how much the value changed since the last
    time, not in relation of the start value */
-    memcpy (BackupRam, Machine->memory_region[0], ram_size);
-
+    //memcpy (BackupRam, Machine->memory_region[0], ram_size);
+	backup_ram (BackupRam);	/* JB 980407 */
   }
 
 
@@ -1923,8 +2192,8 @@ void ContinueCheat(void)
     dt[3].text = 0; /* terminate array */
     for (i = 0;i < total;i++)
     {
-      dt[i].x = (Machine->scrbitmap->width - Machine->uifont->width * strlen(dt[i].text)) / 2;
-      if(dt[i].x > Machine->scrbitmap->width)
+      dt[i].x = (Machine->uiwidth - Machine->uifont->width * strlen(dt[i].text)) / 2;
+      if(dt[i].x > Machine->uiwidth)
         dt[i].x = 0;
       dt[i].y = y;
       y += Machine->uifont->height;
@@ -1982,32 +2251,76 @@ void ContinueCheat(void)
 		iCheatInitialized = 0;
 /* JRT5 */
 
-    if(s == 0){
-/* User select that the value is now smaller, then clear the flag
-    of the locations that are equal or greater at the backup */
-      for (i=0;i<ram_size;i++)
-        if(FlagTable[i] != 0)
-          if(Machine->memory_region[0][i] >= BackupRam[i])
-            FlagTable[i] = 0;
-    }else if(s==1){
-/* User select that the value is equal, then clear the flag
-    of the locations that do not equal the backup */
-      for (i=0;i<ram_size;i++)
-        if(FlagTable[i] != 0)
-          if(Machine->memory_region[0][i] != BackupRam[i])
-            FlagTable[i] = 0;
-    }else{
-/* User select that the value is now greater, then clear the flag
-    of the locations that are equal or smaller */
-      for (i=0;i<ram_size;i++)
-        if(FlagTable[i] != 0)
-          if(Machine->memory_region[0][i] <= BackupRam[i])
-            FlagTable[i] = 0;
+    if (s == 0)
+    {
+		/* User select that the value is now smaller, then clear the flag
+	    	of the locations that are equal or greater at the backup */
+
+		/* JB 980407 */
+		for (ext = FlagTable, ext_br = BackupRam; ext->data; ext++, ext_br++)
+		{
+			unsigned char *gameram = memory_find_base (0, ext->start);
+			for (i=0; i <= ext->end - ext->start; i++)
+				if (ext->data[i] != 0)
+					if (gameram[i] >= ext_br->data[i])
+						ext->data[i] = 0;
+		}
+		#if 0
+	      for (i=0;i<ram_size;i++)
+	        if(FlagTable[i] != 0)
+	          if(Machine->memory_region[0][i] >= BackupRam[i])
+	            FlagTable[i] = 0;
+		#endif
+    }
+    else if (s==1)
+    {
+		/* User select that the value is equal, then clear the flag
+		    of the locations that do not equal the backup */
+
+		/* JB 980407 */
+		for (ext = FlagTable, ext_br = BackupRam; ext->data; ext++, ext_br++)
+		{
+			unsigned char *gameram = memory_find_base (0, ext->start);
+			for (i=0; i <= ext->end - ext->start; i++)
+				if (ext->data[i] != 0)
+					if (gameram[i] != ext_br->data[i])
+						ext->data[i] = 0;
+		}
+
+		#if 0
+	      for (i=0;i<ram_size;i++)
+	        if(FlagTable[i] != 0)
+	          if(Machine->memory_region[0][i] != BackupRam[i])
+	            FlagTable[i] = 0;
+		#endif
+    }
+    else
+    {
+		/* User select that the value is now greater, then clear the flag
+		    of the locations that are equal or smaller */
+
+		/* JB 980407 */
+		for (ext = FlagTable, ext_br = BackupRam; ext->data; ext++, ext_br++)
+		{
+			unsigned char *gameram = memory_find_base (0, ext->start);
+			for (i=0; i <= ext->end - ext->start; i++)
+				if (ext->data[i] != 0)
+					if (gameram[i] <= ext_br->data[i])
+						ext->data[i] = 0;
+		}
+
+		#if 0
+	      for (i=0;i<ram_size;i++)
+	        if(FlagTable[i] != 0)
+	          if(Machine->memory_region[0][i] <= BackupRam[i])
+	            FlagTable[i] = 0;
+		#endif
     }
 
-/* Backup the ram because we ask how much the value changed since the last
-   time, not in relation of the start value */
-    memcpy (BackupRam, Machine->memory_region[0], ram_size);
+	/* Backup the ram because we ask how much the value changed since the last
+	   time, not in relation of the start value */
+	//memcpy (BackupRam, Machine->memory_region[0], ram_size);
+	backup_ram (BackupRam);	/* JB 980407 */
 
   }
 
@@ -2029,8 +2342,8 @@ void ContinueCheat(void)
     dt[2].text = 0; /* terminate array */
     for (i = 0;i < total;i++)
     {
-      dt[i].x = (Machine->scrbitmap->width - Machine->uifont->width * strlen(dt[i].text)) / 2;
-      if(dt[i].x > Machine->scrbitmap->width)
+      dt[i].x = (Machine->uiwidth - Machine->uifont->width * strlen(dt[i].text)) / 2;
+      if(dt[i].x > Machine->uiwidth)
         dt[i].x = 0;
       dt[i].y = y;
       y += Machine->uifont->height;
@@ -2087,23 +2400,56 @@ void ContinueCheat(void)
 		iCheatInitialized = 0;
 /* JRT5 */
 
-    if(s == 0){
-/* User select same as start */
-/* We want to keep a flag if a bit has not change */
-/* So,*/
-      for (i=0;i<ram_size;i++)
-        if(FlagTable[i] != 0){
-          j = Machine->memory_region[0][i] ^ (StartRam[i] ^ 0xFF);
-          FlagTable[i] = j & FlagTable[i];
-        }
-    }else{
-/* User select opposite as start */
-/* We want to keep a flag if a bit has change */
-      for (i=0;i<ram_size;i++)
-        if(FlagTable[i] != 0){
-          j = Machine->memory_region[0][i] ^ StartRam[i];
-          FlagTable[i] = j & FlagTable[i];
-        }
+    if (s == 0)
+    {
+		/* User select same as start */
+		/* We want to keep a flag if a bit has not change */
+		/* So,*/
+
+		/* JB 980407 */
+		for (ext = FlagTable, ext_sr = StartRam; ext->data; ext++, ext_sr++)
+		{
+			unsigned char *gameram = memory_find_base (0, ext->start);
+			for (i=0; i <= ext->end - ext->start; i++)
+				if (ext->data[i] != 0)
+				{
+					j = gameram[i] ^ (ext_sr->data[i] ^ 0xFF);
+					ext->data[i] = j & ext->data[i];
+				}
+		}
+
+		#if 0
+	      for (i=0;i<ram_size;i++)
+	        if(FlagTable[i] != 0){
+	          j = Machine->memory_region[0][i] ^ (StartRam[i] ^ 0xFF);
+	          FlagTable[i] = j & FlagTable[i];
+	        }
+		#endif
+    }
+    else
+    {
+		/* User select opposite as start */
+		/* We want to keep a flag if a bit has change */
+
+		/* JB 980407 */
+		for (ext = FlagTable, ext_sr = StartRam; ext->data; ext++, ext_sr++)
+		{
+			unsigned char *gameram = memory_find_base (0, ext->start);
+			for (i=0; i <= ext->end - ext->start; i++)
+				if (ext->data[i] != 0)
+				{
+					j = gameram[i] ^ ext_sr->data[i];
+					ext->data[i] = j & ext->data[i];
+				}
+		}
+
+		#if 0
+	      for (i=0;i<ram_size;i++)
+	        if(FlagTable[i] != 0){
+	          j = Machine->memory_region[0][i] ^ StartRam[i];
+	          FlagTable[i] = j & FlagTable[i];
+	        }
+		#endif
     }
   }
 
@@ -2126,8 +2472,8 @@ void ContinueCheat(void)
     dt[2].text = 0; /* terminate array */
     for (i = 0;i < total;i++)
     {
-      dt[i].x = (Machine->scrbitmap->width - Machine->uifont->width * strlen(dt[i].text)) / 2;
-      if(dt[i].x > Machine->scrbitmap->width)
+      dt[i].x = (Machine->uiwidth - Machine->uifont->width * strlen(dt[i].text)) / 2;
+      if(dt[i].x > Machine->uiwidth)
         dt[i].x = 0;
       dt[i].y = y;
       y += Machine->uifont->height;
@@ -2184,20 +2530,48 @@ void ContinueCheat(void)
 		iCheatInitialized = 0;
 /* JRT5 */
 
-    if(s == 0){
-/* Discard the locations that are different from when we started */
-/* The value must be the same as when we start to keep it */
-      for (i=0;i<ram_size;i++)
-        if(FlagTable[i] != 0)
-          if(Machine->memory_region[0][i] != StartRam[i])
-            FlagTable[i] = 0;
-    }else{
-/* Discard the locations that are the same from when we started */
-/* The value must be different as when we start to keep it */
-      for (i=0;i<ram_size;i++)
-        if(FlagTable[i] != 0)
-          if(Machine->memory_region[0][i] == StartRam[i])
-            FlagTable[i] = 0;
+    if (s == 0)
+    {
+		/* Discard the locations that are different from when we started */
+		/* The value must be the same as when we start to keep it */
+
+		/* JB 980407 */
+		for (ext = FlagTable, ext_sr = StartRam; ext->data; ext++, ext_sr++)
+		{
+			unsigned char *gameram = memory_find_base (0, ext->start);
+			for (i=0; i <= ext->end - ext->start; i++)
+				if (ext->data[i] != 0)
+					if (gameram[i] != ext_sr->data[i])
+						ext->data[i] = 0;
+		}
+		#if 0
+	      for (i=0;i<ram_size;i++)
+	        if(FlagTable[i] != 0)
+	          if(Machine->memory_region[0][i] != StartRam[i])
+	            FlagTable[i] = 0;
+		#endif
+    }
+    else
+    {
+		/* Discard the locations that are the same from when we started */
+		/* The value must be different as when we start to keep it */
+
+		/* JB 980407 */
+		for (ext = FlagTable, ext_sr = StartRam; ext->data; ext++, ext_sr++)
+		{
+			unsigned char *gameram = memory_find_base (0, ext->start);
+			for (i=0; i <= ext->end - ext->start; i++)
+				if (ext->data[i] != 0)
+					if (gameram[i] == ext_sr->data[i])
+						ext->data[i] = 0;
+		}
+
+		#if 0
+	      for (i=0;i<ram_size;i++)
+	        if(FlagTable[i] != 0)
+	          if(Machine->memory_region[0][i] == StartRam[i])
+	            FlagTable[i] = 0;
+		#endif
     }
   }
 
@@ -2211,10 +2585,19 @@ void ContinueCheat(void)
     -The user can press ENTER to add one to the cheat list*/
 
 /* Count how much we have flagged */
+
+	/* JB 980407 */
+	count = 0;
+	for (ext = FlagTable; ext->data; ext++)
+		for (i=0; i <= ext->end - ext->start; i++)
+			if (ext->data[i] != 0)
+				count++;
+#if 0
   count = 0;
   for (i=0;i<ram_size;i++)
     if(FlagTable[i] != 0)
       count++;
+#endif
 
   y += 2*Machine->uifont->height;
   xprintf(0,y,"Matches Found: %d",count);
@@ -2228,11 +2611,36 @@ void ContinueCheat(void)
   y += 2*Machine->uifont->height;
   xprintf(0,y,"%s",str);
 
-  x = (Machine->scrbitmap->width - Machine->uifont->width * 9) / 2;
+  x = (Machine->uiwidth - Machine->uifont->width * 9) / 2;
   y += 2*Machine->uifont->height;
 
   total = 0;
   Continue = 0;
+
+	/* JB 980407 */
+	for (ext = FlagTable, ext_sr = StartRam; ext->data && Continue==0; ext++, ext_sr++)
+	{
+		for (i=0; i <= ext->end - ext->start; i++)
+			if (ext->data[i] != 0)
+			{
+				sprintf (str2[total], "%04X = %02X", i+ext->start, ext_sr->data[i]);
+				dt[total].text = str2[total];
+				dt[total].x = x;
+				dt[total].y = y;
+				dt[total].color = DT_COLOR_WHITE;
+
+				total++;
+
+				y += Machine->uifont->height;
+				if (total >= 10)
+				{
+					Continue = i+ext->start;
+					break;
+				}
+			}
+	}
+
+#if 0
   for (i=0;i<ram_size;i++){
     if(FlagTable[i] != 0){
       sprintf(str2[total],"%04X = %02X",i,StartRam[i]);
@@ -2250,6 +2658,7 @@ void ContinueCheat(void)
       }
     }
   }
+#endif
   dt[total].text = 0; /* terminate array */
 
   y += 2*Machine->uifont->height;
@@ -2264,6 +2673,8 @@ void ContinueCheat(void)
   done = 0;
   do
   {
+    	int Begin = 0;	/* JB 980407 */
+
     for (i = 0;i < total;i++)
       dt[i].color = (i == s) ? DT_COLOR_YELLOW : DT_COLOR_WHITE;
 
@@ -2283,19 +2694,44 @@ void ContinueCheat(void)
           if(total < 10)
             break;
           total = 0;
-          for (i=Continue+1;i<ram_size;i++){
-            if(FlagTable[i] != 0){
-              sprintf(str2[total],"%04X = %02X",i,StartRam[i]);
-              dt[total].text = str2[total];
 
-              total++;
+			/* JB 980407 */
+			Begin = Continue+1;
+			Continue = 0;
+			for (ext = FlagTable, ext_sr = StartRam; ext->data && Continue==0; ext++, ext_sr++)
+			{
+				if (ext->start <= Begin && ext->end >= Begin)
+					for (i = Begin - ext->start; i <= ext->end - ext->start; i++)
+						if (ext->data[i] != 0)
+						{
+							sprintf (str2[total],"%04X = %02X", i+ext->start, ext_sr->data[i]);
+							dt[total].text = str2[total];
 
-              if(total >= 10){
-                Continue = i;
-                break;
-              }
-            }
-          }
+							total++;
+
+							if (total >= 10)
+							{
+								Continue = i+ext->start;
+								break;
+							}
+						}
+			}
+
+			#if 0
+	          for (i=Continue+1;i<ram_size;i++){
+	            if(FlagTable[i] != 0){
+	              sprintf(str2[total],"%04X = %02X",i,StartRam[i]);
+	              dt[total].text = str2[total];
+
+	              total++;
+
+	              if(total >= 10){
+	                Continue = i;
+	                break;
+	              }
+	            }
+	          }
+			#endif
           dt[total].text = 0; /* terminate array */
 
         }
@@ -2308,19 +2744,40 @@ void ContinueCheat(void)
 
       case OSD_KEY_HOME:
         total = 0;
-        for (i=0;i<ram_size;i++){
-          if(FlagTable[i] != 0){
-            sprintf(str2[total],"%04X = %02X",i,StartRam[i]);
-            dt[total].text = str2[total];
 
-            total++;
+		/* JB 980407 */
+		Continue = 0;
+		for (ext = FlagTable, ext_sr = StartRam; ext->data && Continue==0; ext++, ext_sr++)
+		{
+			for (i=0; i <= ext->end - ext->start; i++)
+				if (ext->data[i] != 0)
+				{
+					sprintf (str2[total], "%04X = %02X", i+ext->start, ext_sr->data[i]);
+					dt[total].text = str2[total];
 
-            if(total >= 10){
-              Continue = i;
-              break;
-            }
-          }
-        }
+					total++;
+					if (total >= 10)
+					{
+						Continue = i+ext->start;
+						break;
+					}
+				}
+		}
+		#if 0
+	       for (i=0;i<ram_size;i++){
+	          if(FlagTable[i] != 0){
+	            sprintf(str2[total],"%04X = %02X",i,StartRam[i]);
+	            dt[total].text = str2[total];
+
+	            total++;
+
+	            if(total >= 10){
+	              Continue = i;
+	              break;
+	            }
+	          }
+	        }
+        #endif
         dt[total].text = 0; /* terminate array */
         break;
 
@@ -2330,19 +2787,44 @@ void ContinueCheat(void)
         if(total < 10)
           Continue = -1;
         total = 0;
-        for (i=Continue+1;i<ram_size;i++){
-          if(FlagTable[i] != 0){
-            sprintf(str2[total],"%04X = %02X",i,StartRam[i]);
-            dt[total].text = str2[total];
 
-            total++;
+		/* JB 980407 */
+		Begin = Continue+1;
+		Continue = 0;
+		for (ext = FlagTable, ext_sr = StartRam; ext->data && Continue==0; ext++, ext_sr++)
+		{
+			if (ext->start <= Begin && ext->end >= Begin)
+				for (i = Begin - ext->start; i <= ext->end - ext->start; i++)
+					if (ext->data[i] != 0)
+					{
+						sprintf (str2[total],"%04X = %02X", i+ext->start, ext_sr->data[i]);
+						dt[total].text = str2[total];
 
-            if(total >= 10){
-              Continue = i;
-              break;
-            }
-          }
-        }
+						total++;
+
+						if (total >= 10)
+						{
+							Continue = i+ext->start;
+							break;
+						}
+					}
+		}
+
+		#if 0
+	        for (i=Continue+1;i<ram_size;i++){
+	          if(FlagTable[i] != 0){
+	            sprintf(str2[total],"%04X = %02X",i,StartRam[i]);
+	            dt[total].text = str2[total];
+
+	            total++;
+
+	            if(total >= 10){
+	              Continue = i;
+	              break;
+	            }
+	          }
+	        }
+        #endif
         dt[total].text = 0; /* terminate array */
         break;
 
@@ -2355,21 +2837,44 @@ void ContinueCheat(void)
           break;
         }
         count = 0;
-        for (i=0;i<ram_size;i++){
-          if(FlagTable[i] != 0){
-            count++;
-            LoadedCheatTable[LoadedCheatTotal].Special = 0;
-            LoadedCheatTable[LoadedCheatTotal].Count = 0;
-            LoadedCheatTable[LoadedCheatTotal].CpuNo = 0;
-            LoadedCheatTable[LoadedCheatTotal].Address = i;
-            LoadedCheatTable[LoadedCheatTotal].Data = StartRam[i];
-            sprintf(str2[11],"%04X = %02X",i,StartRam[i]);
-            strcpy(LoadedCheatTable[LoadedCheatTotal].Name,str2[11]);
-            LoadedCheatTotal++;
-          }
-          if(LoadedCheatTotal > 99)
-            break;
-        }
+
+		/* JB 980407 */
+		for (ext = FlagTable, ext_sr = StartRam; ext->data && count<100; ext++, ext_sr++)
+		{
+			for (i = 0; i <= ext->end - ext->start; i++)
+				if (ext->data[i] != 0)
+				{
+					count++;
+					LoadedCheatTable[LoadedCheatTotal].Special = 0;
+					LoadedCheatTable[LoadedCheatTotal].Count = 0;
+					LoadedCheatTable[LoadedCheatTotal].CpuNo = 0;
+					LoadedCheatTable[LoadedCheatTotal].Address = i+ext->start;
+					LoadedCheatTable[LoadedCheatTotal].Data = ext_sr->data[i];
+					sprintf (str2[11],"%04X = %02X", i+ext->start, ext_sr->data[i]);
+					strcpy(LoadedCheatTable[LoadedCheatTotal].Name,str2[11]);
+					LoadedCheatTotal++;
+				}
+				if(LoadedCheatTotal > 99)
+				break;
+		}
+
+		#if 0
+	        for (i=0;i<ram_size;i++){
+	          if(FlagTable[i] != 0){
+	            count++;
+	            LoadedCheatTable[LoadedCheatTotal].Special = 0;
+	            LoadedCheatTable[LoadedCheatTotal].Count = 0;
+	            LoadedCheatTable[LoadedCheatTotal].CpuNo = 0;
+	            LoadedCheatTable[LoadedCheatTotal].Address = i;
+	            LoadedCheatTable[LoadedCheatTotal].Data = StartRam[i];
+	            sprintf(str2[11],"%04X = %02X",i,StartRam[i]);
+	            strcpy(LoadedCheatTable[LoadedCheatTotal].Name,str2[11]);
+	            LoadedCheatTotal++;
+	          }
+	          if(LoadedCheatTotal > 99)
+	            break;
+	        }
+        #endif
         xprintf(0,y,"%d Added",count);
 
 /* JRT5 Print Message If Cheat List Is Full */
@@ -2395,7 +2900,8 @@ void ContinueCheat(void)
         LoadedCheatTable[LoadedCheatTotal].Count = 0;
         sscanf(dt[s].text,"%X",&i);
         LoadedCheatTable[LoadedCheatTotal].Address = i;
-        LoadedCheatTable[LoadedCheatTotal].Data = StartRam[i];
+        //LoadedCheatTable[LoadedCheatTotal].Data = StartRam[i];
+        LoadedCheatTable[LoadedCheatTotal].Data = RD_STARTRAM(i); /* JB 980407 */
         strcpy(LoadedCheatTable[LoadedCheatTotal].Name,dt[s].text);
         LoadedCheatTotal++;
         xprintf(0,y,"%s Added",dt[s].text);
@@ -2429,12 +2935,12 @@ void ChooseWatch(void)
  char *paDisplayText[] = {
                 "<+> and Right arrow key: +1",
                 "<-> and Left  arrow key: -1",
-                "<1>/<2>/<3>/<4>: +1 digit",
+                "<1/2/3/4/5/6>: +1 digit",			/* JB 980407 */
                 "<Delete> to disable a watch",
                 "<Enter> to copy previous watch",
                 "<I>, <J>, <K>, and <L> move",
                 "the watch positions",
-                "(FFFF means watch disabled)",
+                "(FFFFFF means watch disabled)",	/* JB 980407 */
                 "\0" };
  /* JRT1 10-23-97 END */
  int i,s,y,key,done;
@@ -2464,8 +2970,8 @@ void ChooseWatch(void)
       dt[ i ].y = 35;                 // Set To Static Value
     dt[ i ].color = DT_COLOR_WHITE;           // Draw As White
     dt[ i ].text = paDisplayText[ i ];          // Assign String
-    dt[i].x = (Machine->scrbitmap->width - Machine->uifont->width * strlen(dt[i].text)) / 2;
-    if(dt[i].x > Machine->scrbitmap->width)
+    dt[i].x = (Machine->uiwidth - Machine->uifont->width * strlen(dt[i].text)) / 2;
+    if(dt[i].x > Machine->uiwidth)
       dt[i].x = 0;
   }
   y = ( dt[ 7 ].y + ( 3 * iFontHeight ) );          // Calculate Watch Start
@@ -2475,11 +2981,12 @@ void ChooseWatch(void)
   for (i=0;i<10;i++){
 
 /* JRT1 10-23-97 BEGIN */
-    sprintf(str2[ i ],"$%04X",Watches[i]);          // Use Loop Index, Not "total"
+    //sprintf(str2[ i ],"$%04X",Watches[i]);          // Use Loop Index, Not "total"
+    sprintf(str2[ i ],"$%06X",Watches[i]);    /* JB 980407 */      // Use Loop Index, Not "total"
     dt[total].text = str2[ i ];               // Use Loop Index, Not "total"
 /* JRT1 10-23-97 END */
 
-    dt[total].x = (Machine->scrbitmap->width - Machine->uifont->width * 5) / 2;
+    dt[total].x = (Machine->uiwidth - Machine->uifont->width * 5) / 2;
     dt[total].y = y;
     dt[total].color = DT_COLOR_WHITE;
 
@@ -2500,8 +3007,10 @@ void ChooseWatch(void)
 /* Display a test to see where the watches are */
     buf[0] = 0;
     for(i=0;i<10;i++)
-      if(Watches[i] != 0xFFFF){
-        sprintf(buf2,"%02X ",Machine->memory_region[0][Watches[i]]);
+      //if(Watches[i] != 0xFFFF){
+      if (Watches[i] != 0xFFFFFF){	/* JB 980407 */
+        //sprintf(buf2,"%02X ",Machine->memory_region[0][Watches[i]]);
+        sprintf (buf2, "%02X ", RD_GAMERAM(0,Watches[i]));	/* JB 980407 */
         strcat(buf,buf2);
       }
 
@@ -2515,7 +3024,7 @@ void ChooseWatch(void)
     memset( Machine -> scrbitmap -> line[ i ], 0,
     Machine -> scrbitmap -> width );      // Clear Old Drawing
   }
-    while( WatchX >= ( Machine->scrbitmap->width -
+    while( WatchX >= ( Machine->uiwidth -
         ( iFontWidth * (int)strlen( buf ) ) ) )   // If Going To Draw OffScreen
   {
     if( !WatchX-- )                   // Adjust Drawing X Offset
@@ -2559,14 +3068,14 @@ void ChooseWatch(void)
         break;
       case OSD_KEY_L:
 /* JRT1 10-23-97 BEGIN */
-        if(WatchX <= ( Machine->scrbitmap->width -
+        if(WatchX <= ( Machine->uiwidth -
           ( iFontWidth * (int)strlen( buf ) ) ) )
 /* JRT1 10-23-97 END */
           WatchX++;
         break;
       case OSD_KEY_K:                   // (Minus Extra One)
 /* JRT1 10-23-97 BEGIN */
-        if(WatchY <= (Machine->scrbitmap->height-Machine->uifont->height) - 1 )
+        if(WatchY <= (Machine->uiheight-Machine->uifont->height) - 1 )
 /* JRT1 10-23-97 END */
           WatchY++;
         break;
@@ -2579,81 +3088,108 @@ void ChooseWatch(void)
       case OSD_KEY_MINUS_PAD:
       case OSD_KEY_LEFT:
         if(Watches[ iSelectedWatch ] == 0)
-          Watches[ iSelectedWatch ] = 0xFFFF;
+          //Watches[ iSelectedWatch ] = 0xFFFF;
+          Watches[ iSelectedWatch ] = 0xFFFFFF;	/* JB 980407 */
         else
           Watches[ iSelectedWatch ]--;
-        sprintf(str2[ iSelectedWatch ],"$%04X",Watches[ iSelectedWatch ]);
+        //sprintf(str2[ iSelectedWatch ],"$%04X",Watches[ iSelectedWatch ]);
+        sprintf (str2[ iSelectedWatch ], "$%06X", Watches[ iSelectedWatch ]);	/* JB 980407 */
         break;
 
       case OSD_KEY_PLUS_PAD:
       case OSD_KEY_RIGHT:
-        if(Watches[ iSelectedWatch ] == 0xFFFF)
+        //if(Watches[ iSelectedWatch ] == 0xFFFF)
+        if(Watches[ iSelectedWatch ] == 0xFFFFFF)	/* JB 980407 */
           Watches[ iSelectedWatch ] = 0;
         else
           Watches[ iSelectedWatch ] ++;
-        sprintf(str2[ iSelectedWatch ],"$%04X",Watches[ iSelectedWatch ]);
+        //sprintf(str2[ iSelectedWatch ],"$%04X",Watches[ iSelectedWatch ]);
+        sprintf (str2[ iSelectedWatch ], "$%06X", Watches[ iSelectedWatch ]);	/* JB 980407 */
         break;
 
       case OSD_KEY_PGDN:
         if(Watches[ iSelectedWatch ] <= 0x100)
-          Watches[ iSelectedWatch ] |= 0xFF00;
+          //Watches[ iSelectedWatch ] |= 0xFF00;
+          Watches[ iSelectedWatch ] |= 0xFFFF00;	/* JB 980407 */
         else
           Watches[ iSelectedWatch ] -= 0x100;
-        sprintf(str2[ iSelectedWatch ],"$%04X",Watches[ iSelectedWatch ]);
+        //sprintf(str2[ iSelectedWatch ],"$%04X",Watches[ iSelectedWatch ]);
+        sprintf (str2[ iSelectedWatch ], "$%06X", Watches[ iSelectedWatch ]);	/* JB 980407 */
         break;
 
       case OSD_KEY_PGUP:
         if(Watches[ iSelectedWatch ] >= 0xFF00)
-          Watches[ iSelectedWatch ] &= 0x00FF;
+          //Watches[ iSelectedWatch ] &= 0x00FF;
+          Watches[ iSelectedWatch ] &= 0xFF00FF;	/* JB 980407 */
         else
           Watches[ iSelectedWatch ] += 0x100;
-        sprintf(str2[ iSelectedWatch ],"$%04X",Watches[ iSelectedWatch ]);
+        //sprintf(str2[ iSelectedWatch ],"$%04X",Watches[ iSelectedWatch ]);
+        sprintf (str2[ iSelectedWatch ], "$%06X", Watches[ iSelectedWatch ]);	/* JB 980407 */
         break;
 
 
-      case OSD_KEY_4:
-        if((Watches[ iSelectedWatch ]&0x000F) >= 0x000F)
-          Watches[ iSelectedWatch ] &= 0xFFF0;
+      case OSD_KEY_6:
+        if((Watches[ iSelectedWatch ]&0x00000F) >= 0x00000F)	/* JB 980407 */
+          Watches[ iSelectedWatch ] &= 0xFFFFF0;				/* JB 980407 */
         else
           Watches[ iSelectedWatch ] ++;
-        sprintf(str2[ iSelectedWatch ],"$%04X",Watches[ iSelectedWatch ]);
+        sprintf (str2[ iSelectedWatch ], "$%06X", Watches[ iSelectedWatch ]);	/* JB 980407 */
+        break;
+
+      case OSD_KEY_5:
+        if((Watches[ iSelectedWatch ]&0x0000FF) >= 0x0000F0)	/* JB 980407 */
+          Watches[ iSelectedWatch ] &= 0xFFFF0F;				/* JB 980407 */
+        else
+          Watches[ iSelectedWatch ] += 0x10;
+        sprintf (str2[ iSelectedWatch ], "$%06X", Watches[ iSelectedWatch ]);	/* JB 980407 */
+        break;
+
+      case OSD_KEY_4:
+        if((Watches[ iSelectedWatch ]&0x000FFF) >= 0x000F00)	/* JB 980407 */
+          Watches[ iSelectedWatch ] &= 0xFFF0FF;				/* JB 980407 */
+        else
+          Watches[ iSelectedWatch ] += 0x100;
+        sprintf (str2[ iSelectedWatch ], "$%06X", Watches[ iSelectedWatch ]);	/* JB 980407 */
         break;
 
       case OSD_KEY_3:
-        if((Watches[ iSelectedWatch ]&0x00FF) >= 0x00F0)
-          Watches[ iSelectedWatch ] &= 0xFF0F;
+        if((Watches[ iSelectedWatch ]&0x00FFFF) >= 0x00F000)	/* JB 980407 */
+          Watches[ iSelectedWatch ] &= 0xFF0FFF;				/* JB 980407 */
         else
-          Watches[ iSelectedWatch ] += 0x10;
-        sprintf(str2[ iSelectedWatch ],"$%04X",Watches[ iSelectedWatch ]);
+          Watches[ iSelectedWatch ] += 0x1000;
+        sprintf (str2[ iSelectedWatch ], "$%06X", Watches[ iSelectedWatch ]);	/* JB 980407 */
         break;
 
       case OSD_KEY_2:
-        if((Watches[ iSelectedWatch ]&0x0FFF) >= 0x0F00)
-          Watches[ iSelectedWatch ] &= 0xF0FF;
+        if((Watches[ iSelectedWatch ]&0x0FFFFF) >= 0x0F0000)	/* JB 980407 */
+          Watches[ iSelectedWatch ] &= 0xF0FFFF;				/* JB 980407 */
         else
-          Watches[ iSelectedWatch ] += 0x100;
-        sprintf(str2[ iSelectedWatch ],"$%04X",Watches[ iSelectedWatch ]);
+          Watches[ iSelectedWatch ] += 0x10000;
+        sprintf (str2[ iSelectedWatch ], "$%06X", Watches[ iSelectedWatch ]);	/* JB 980407 */
         break;
 
       case OSD_KEY_1:
-        if(Watches[ iSelectedWatch ] >= 0xF000)
-          Watches[ iSelectedWatch ] &= 0x0FFF;
+        if((Watches[ iSelectedWatch ]&0xFFFFFF) >= 0xF00000)	/* JB 980407 */
+          Watches[ iSelectedWatch ] &= 0x0FFFFF;				/* JB 980407 */
         else
-          Watches[ iSelectedWatch ] += 0x1000;
-        sprintf(str2[ iSelectedWatch ],"$%04X",Watches[ iSelectedWatch ]);
+          Watches[ iSelectedWatch ] += 0x100000;
+        sprintf (str2[ iSelectedWatch ], "$%06X", Watches[ iSelectedWatch ]);	/* JB 980407 */
         break;
 
 
       case OSD_KEY_DEL:
-        Watches[ iSelectedWatch ] = 0xFFFF;
-        sprintf(str2[ iSelectedWatch ],"$%04X",Watches[ iSelectedWatch ]);
+        //Watches[ iSelectedWatch ] = 0xFFFF;
+        //sprintf(str2[ iSelectedWatch ],"$%04X",Watches[ iSelectedWatch ]);
+        Watches[ iSelectedWatch ] = 0xFFFFFF;	/* JB 980407 */
+        sprintf (str2[ iSelectedWatch ], "$%06X", Watches[ iSelectedWatch ]);	/* JB 980407 */
         break;
 
       case OSD_KEY_ENTER:
         if(s == 8)                      // Start Of Watch DT Locations
           break;
         Watches[ iSelectedWatch ] = Watches[ iSelectedWatch - 1];
-        sprintf(str2[ iSelectedWatch ],"$%04X",Watches[ iSelectedWatch ]);
+        //sprintf(str2[ iSelectedWatch ],"$%04X",Watches[ iSelectedWatch ]);
+        sprintf (str2[ iSelectedWatch ], "$%06X", Watches[ iSelectedWatch ]);	/* JB 980407 */
         break;
 /* JRT1 10-23-97 END */
 
@@ -2669,7 +3205,8 @@ void ChooseWatch(void)
 /* Set Watch Flag */
   WatchesFlag = 0;
   for(i=0;i<10;i++)
-    if(Watches[i] != 0xFFFF)
+    //if(Watches[i] != 0xFFFF)
+    if(Watches[i] != 0xFFFFFF)	/* JB 980407 */
       WatchesFlag = 1;
 
   osd_clearbitmap(Machine->scrbitmap);
@@ -2684,9 +3221,10 @@ void ChooseWatch(void)
 int cheat_menu(void)
 {
   struct DisplayText dt[10];
-  int i,y,s,key,done;
+  int i,s,key,done;
   int total;
 
+#if 0 /* JB 980407 */
 /* Exit if the Cpu is a 68000 */
   if(Machine->drv->cpu[0].cpu_type == CPU_M68000){
     y = 50;
@@ -2700,6 +3238,7 @@ int cheat_menu(void)
     while (osd_key_pressed(key)); /* wait for key release */
     return 0;
   }
+#endif
 
 /* Cheat menu */
   total = 6;
@@ -2712,8 +3251,8 @@ int cheat_menu(void)
   dt[6].text = 0; /* terminate array */
   for (i = 0;i < total;i++)
   {
-    dt[i].x = (Machine->scrbitmap->width - Machine->uifont->width * strlen(dt[i].text)) / 2;
-    if(dt[i].x > Machine->scrbitmap->width)
+    dt[i].x = (Machine->uiwidth - Machine->uifont->width * strlen(dt[i].text)) / 2;
+    if(dt[i].x > Machine->uiwidth)
       dt[i].x = 0;
     dt[i].y = i * ( Machine->uifont->height + 2 );//4*Machine->uifont->height;
     if (i == total-1) dt[i].y += Machine->uifont->height;
@@ -3052,8 +3591,10 @@ void	EditCheatHelp( void )
 	dtHelpText[ 16 ].text = " arrow keys to increment and";
 	dtHelpText[ 17 ].text = " decrement values, or to";
 	dtHelpText[ 18 ].text = " select from pre-defined";
-	dtHelpText[ 19 ].text = " Cheat Names.  The <1>, <2>,";
-	dtHelpText[ 20 ].text = " <3> and <4> keys are used";
+	//dtHelpText[ 19 ].text = " Cheat Names.  The <1>, <2>,";
+	//dtHelpText[ 20 ].text = " <3> and <4> keys are used";
+	dtHelpText[ 19 ].text = " Cheat Names.  The <1>, <2>,";	/* JB 980407 */
+	dtHelpText[ 20 ].text = " <3>, <4> etc. keys are used";	/* JB 980407 */
 	dtHelpText[ 21 ].text = " to increment the number in";
 	dtHelpText[ 22 ].text = " that specific column of a";
 	dtHelpText[ 23 ].text = " value.";

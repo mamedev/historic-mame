@@ -8,93 +8,223 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "M6809.h"
+#include "M6808/M6808.h"
+#include "M6809/M6809.h"
+#include "6821pia.h"
 
+
+/* defined in vidhrdw/williams.c */
 extern unsigned char *williams_videoram;
 
-unsigned char *williams_port_select;
-unsigned char *williams_video_counter;
+/* various banking controls */
 unsigned char *williams_bank_base;
-
-unsigned char *robotron_catch;
-
-unsigned char *stargate_catch;
-
-unsigned char *defender_irq_enable;
-unsigned char *defender_catch;
+unsigned char *williams_video_counter;
 unsigned char *defender_bank_base;
-unsigned char *defender_bank_ram;
-int defender_bank_select;
-
-unsigned char *splat_catch;
-
-unsigned char *blaster_catch;
 unsigned char *blaster_bank2_base;
 
+/* pointers to memory locations for speedup optimizations */
+unsigned char *robotron_catch;
+unsigned char *stargate_catch;
+unsigned char *defender_catch;
+unsigned char *splat_catch;
+unsigned char *blaster_catch;
 
-void williams_sh_w(int offset,int data);
-void williams_palette_w(int offset,int data);
+/* internal bank switching tracks */
+int blaster_bank;
+int vram_bank;
 
-/*
- *  int williams_inttable[] = {0,0x40,0xC0,0xff};
- *  int williams_inttable[] = {0,0x24,0x48,0x6c,0x90,0xB4,0xD8,0xff};
- *  int williams_inttable[] = {0,0x55,0xAA,0xff};
- *
- *  MUST be in this order to have the Back Zone not in the playfield
- *  in Joust.
- *
- *  int williams_inttable[] = {0x00,0x00,0x00,0x00};
- *  int williams_inttable[] = {0x00,0x10,0x20,0x30,0x40,0x50,0x60,0x70,0x80,0x90,0xa0,0xb0,0xc0,0xd0,0xe0,0xff};
- *
- *  Here is some test that I have done, This is for the value of 0xCB00
- *  It affect the color cycling and/or the speed of the game
- *  0xCB00 is the value of the video counter (6 hi bits)
- *  IRQ is supposed to be at 4 ms interval.
- *  I put IRQ 4 times by frame so we are supposed to have near 4 ms
- *
- *  So, the value of CB00 normally pass all the values from 0 to 0xFC each
- *  frame.
- *  After trying many combination, I found that Stargate have to have
- *  more time than the others games between IRQs, but will work if he see
- *  only 00 and FF at $CB00. So I call IRQ just 2 times by frame.
- *  If I do like the others, IRQ 4 time by frames, I need to boost the
- *  CPU speed, but even pass 2 mhz, the game will freeze if he dont have
- *  time to execute all he is supposed to before the next IRQ.
- *  Same thing with Defender. This thing was observed even on the arcade
- *  board. In defender, on the first wave try to catch more than 7 man,
- *  stop your ship, press DOWN to drop the mens. You will see the
- *  game slowdown. If you had the 10 men, it will freeze for a long
- *  period of time. On the emulator, it crash if there is not enough
- *  instructions executed before the video counter reached a certain
- *  value.
- *  But Robotron will not work if only 0 and FF pass at CB00, he want
- *  more value.With only 0 and FF the color cycling do not work.
- *  Joust is like Robotron, but, the values has to match the real
- *  thing. What I mean is that normally the first IRQ is supposed
- *  to be after the first Quarter of a screen refresh, the second
- *  is supposed to appen at the middle of the screen...
- *  So, the value at CB00 has to follow that rule.
- *  In Joust, when a shape is erased, it is displayed at the new position
- *  just at the next IRQ. So we have a blackout area in the screen.
- *  If the value of CB00 are not synchronized with our computer, this
- *  blackout zone can be in the middle of the screen.
- *  Thats why the values in the table are 0xAA,0xff,0,0x55 and not
- *  0,0x55,0xAA,0xff. It seem to work fine.
- */
+/* switches controlled by $c900 */
+int sinistar_clip;
+int williams_cocktail;
 
-static int williams_inttable[] = { 0xaa, 0xff, 0x00, 0x55 };
-static int stargate_inttable[] = { 0x00, 0xff, 0x00, 0xff };
-
-static int video_counter_index;
+/* video counter offset */
+static int port_select;
 static unsigned char defender_video_counter;
 
-static int blaster_bank;
-static int vram_bank;
+/* various input port maps */
+int williams_input_port_0_3 (int offset);
+int williams_input_port_1_4 (int offset);
+int stargate_input_port_0_r (int offset);
+int blaster_input_port_0_r (int offset);
+int sinistar_input_port_0_r (int offset);
+int defender_input_port_0_r (int offset);
+int lottofun_input_port_0_r (int offset);
 
-
+/* Defender-specific code */
 int defender_io_r (int offset);
 void defender_io_w (int offset,int data);
-void defender_bank_select_w (int offset,int data);
+void defender_bank_select_w (int offset, int data);
+
+/* Colony 7-specific code */
+void colony7_bank_select_w (int offset, int data);
+
+/* PIA interface functions */
+static void williams_irq (void);
+static void williams_snd_irq (void);
+static void williams_snd_cmd_w (int offset, int cmd);
+static void williams_port_select_w (int offset, int data);
+static void sinistar_snd_cmd_w (int offset, int cmd);
+
+/* external code to modify the palette */
+void williams_palette_w (int offset, int data);
+
+/* external code to update part of the screen */
+void williams_vh_update (int counter);
+
+/* external code for ticket dispenser */
+extern void ticket_dispenser_init(int msec);
+extern int ticket_dispenser_r(int offset);
+extern void ticket_dispenser_w(int offset, int data);
+
+
+
+/***************************************************************************
+
+	PIA Interfaces for each game
+
+***************************************************************************/
+
+static pia6821_interface robotron_pia_intf =
+{
+	3,                                              /* 3 chips */
+	{ PIA_DDRA, PIA_CTLA, PIA_DDRB, PIA_CTLB },     /* offsets */
+	{ input_port_0_r, input_port_2_r, 0 },          /* input port A */
+	{ input_port_1_r, 0, 0 },                       /* input port B */
+	{ 0, 0, DAC_data_w },                           /* output port A */
+	{ 0, williams_snd_cmd_w, 0 },                   /* output port B */
+	{ 0, 0, 0 },                                    /* output CA2 */
+	{ 0, 0, 0 },                                    /* output CB2 */
+	{ 0, williams_irq, williams_snd_irq },          /* IRQ A */
+	{ 0, williams_irq, williams_snd_irq }           /* IRQ B */
+};
+
+static pia6821_interface joust_pia_intf =
+{
+	3,                                              /* 3 chips */
+	{ PIA_DDRA, PIA_CTLA, PIA_DDRB, PIA_CTLB },     /* offsets */
+	{ williams_input_port_0_3, input_port_2_r, 0 }, /* input port A */
+	{ input_port_1_r, 0, 0 },                       /* input port B */
+	{ 0, 0, DAC_data_w },                           /* output port A */
+	{ 0, williams_snd_cmd_w, 0 },                   /* output port B */
+	{ 0, 0, 0 },                                    /* output CA2 */
+	{ williams_port_select_w, 0, 0 },               /* output CB2 */
+	{ 0, williams_irq, williams_snd_irq },          /* IRQ A */
+	{ 0, williams_irq, williams_snd_irq }           /* IRQ B */
+};
+
+static pia6821_interface stargate_pia_intf =
+{
+	3,                                              /* 3 chips */
+	{ PIA_DDRA, PIA_CTLA, PIA_DDRB, PIA_CTLB },     /* offsets */
+	{ stargate_input_port_0_r, input_port_2_r, 0 }, /* input port A */
+	{ input_port_1_r, 0, 0 },                       /* input port B */
+	{ 0, 0, DAC_data_w },                           /* output port A */
+	{ 0, williams_snd_cmd_w, 0 },                   /* output port B */
+	{ 0, 0, 0 },                                    /* output CA2 */
+	{ 0, 0, 0 },                                    /* output CB2 */
+	{ 0, williams_irq, williams_snd_irq },          /* IRQ A */
+	{ 0, williams_irq, williams_snd_irq }           /* IRQ B */
+};
+
+static pia6821_interface bubbles_pia_intf =
+{
+	3,                                              /* 3 chips */
+	{ PIA_DDRA, PIA_CTLA, PIA_DDRB, PIA_CTLB },     /* offsets */
+	{ input_port_0_r, input_port_2_r, 0 },          /* input port A */
+	{ input_port_1_r, 0, 0 },                       /* input port B */
+	{ 0, 0, DAC_data_w },                           /* output port A */
+	{ 0, williams_snd_cmd_w, 0 },                   /* output port B */
+	{ 0, 0, 0 },                                    /* output CA2 */
+	{ 0, 0, 0 },                                    /* output CB2 */
+	{ 0, williams_irq, williams_snd_irq },          /* IRQ A */
+	{ 0, williams_irq, williams_snd_irq }           /* IRQ B */
+};
+
+static pia6821_interface splat_pia_intf =
+{
+	3,                                              /* 3 chips */
+	{ PIA_DDRA, PIA_CTLA, PIA_DDRB, PIA_CTLB },     /* offsets */
+	{ williams_input_port_0_3, input_port_2_r, 0 }, /* input port A */
+	{ williams_input_port_1_4, 0, 0 },              /* input port B */
+	{ 0, 0, DAC_data_w },                           /* output port A */
+	{ 0, williams_snd_cmd_w, 0 },                   /* output port B */
+	{ 0, 0, 0 },                                    /* output CA2 */
+	{ williams_port_select_w, 0, 0 },               /* output CB2 */
+	{ 0, williams_irq, williams_snd_irq },          /* IRQ A */
+	{ 0, williams_irq, williams_snd_irq }           /* IRQ B */
+};
+
+static pia6821_interface sinistar_pia_intf =
+{
+	3,                                              /* 3 chips */
+	{ PIA_DDRA, PIA_CTLA, PIA_DDRB, PIA_CTLB },     /* offsets */
+	{ sinistar_input_port_0_r, input_port_2_r, 0 }, /* input port A */
+	{ input_port_1_r, 0, 0 },                       /* input port B */
+	{ 0, 0, DAC_data_w },                           /* output port A */
+	{ 0, sinistar_snd_cmd_w, 0 },                   /* output port B */
+	{ 0, 0, 0 },                                    /* output CA2 */
+	{ 0, 0, 0 },                                    /* output CB2 */
+	{ 0, williams_irq, williams_snd_irq },          /* IRQ A */
+	{ 0, williams_irq, williams_snd_irq }           /* IRQ B */
+};
+
+static pia6821_interface blaster_pia_intf =
+{
+	3,                                              /* 3 chips */
+	{ PIA_DDRA, PIA_CTLA, PIA_DDRB, PIA_CTLB },     /* offsets */
+	{ blaster_input_port_0_r, input_port_2_r, 0 },  /* input port A */
+	{ input_port_1_r, 0, 0 },                       /* input port B */
+	{ 0, 0, DAC_data_w },                           /* output port A */
+	{ 0, williams_snd_cmd_w, 0 },                   /* output port B */
+	{ 0, 0, 0 },                                    /* output CA2 */
+	{ 0, 0, 0 },                                    /* output CB2 */
+	{ 0, williams_irq, williams_snd_irq },          /* IRQ A */
+	{ 0, williams_irq, williams_snd_irq }           /* IRQ B */
+};
+
+static pia6821_interface defender_pia_intf =
+{
+	3,                                              /* 3 chips */
+	{ PIA_DDRA, PIA_CTLA, PIA_DDRB, PIA_CTLB },     /* offsets */
+	{ defender_input_port_0_r, input_port_2_r, 0 }, /* input port A */
+	{ input_port_1_r, 0, 0 },                       /* input port B */
+	{ 0, 0, DAC_data_w },                           /* output port A */
+	{ 0, williams_snd_cmd_w, 0 },                   /* output port B */
+	{ 0, 0, 0 },                                    /* output CA2 */
+	{ 0, 0, 0 },                                    /* output CB2 */
+	{ 0, williams_irq, williams_snd_irq },          /* IRQ A */
+	{ 0, williams_irq, williams_snd_irq }           /* IRQ B */
+};
+
+static pia6821_interface colony7_pia_intf =
+{
+	3,                                              /* 3 chips */
+	{ PIA_DDRA, PIA_CTLA, PIA_DDRB, PIA_CTLB },     /* offsets */
+	{ input_port_0_r, input_port_2_r, 0 },          /* input port A */
+	{ input_port_1_r, 0, 0 },                       /* input port B */
+	{ 0, 0, DAC_data_w },                           /* output port A */
+	{ 0, williams_snd_cmd_w, 0 },                   /* output port B */
+	{ 0, 0, 0 },                                    /* output CA2 */
+	{ 0, 0, 0 },                                    /* output CB2 */
+	{ 0, williams_irq, williams_snd_irq },          /* IRQ A */
+	{ 0, williams_irq, williams_snd_irq }           /* IRQ B */
+};
+
+static pia6821_interface lottofun_pia_intf =
+{
+	3,                                              /* 3 chips */
+	{ PIA_DDRA, PIA_CTLA, PIA_DDRB, PIA_CTLB },     /* offsets */
+    { lottofun_input_port_0_r, input_port_2_r, 0 }, /* input port A */
+    { input_port_1_r, 0, 0 },                       /* input port B */
+    { 0, 0, DAC_data_w },                           /* output port A */
+    { ticket_dispenser_w, williams_snd_cmd_w, 0 },  /* output port B */
+	{ 0, 0, 0 },                                    /* output CA2 */
+	{ 0, 0, 0 },                                    /* output CB2 */
+	{ 0, williams_irq, williams_snd_irq },          /* IRQ A */
+	{ 0, williams_irq, williams_snd_irq }           /* IRQ B */
+};
+
+
 
 /***************************************************************************
 
@@ -106,56 +236,127 @@ void defender_bank_select_w (int offset,int data);
  *  Initialize the machine
  */
 
-void williams_init_machine (void)
+void robotron_init_machine (void)
 {
-	/* set the optimization flags */
 	m6809_Flags = M6809_FAST_NONE;
+	pia_startup (&robotron_pia_intf);
 }
 
+void joust_init_machine (void)
+{
+	m6809_Flags = M6809_FAST_NONE;
+	pia_startup (&joust_pia_intf);
+}
+
+void stargate_init_machine (void)
+{
+	m6809_Flags = M6809_FAST_NONE;
+	pia_startup (&stargate_pia_intf);
+}
+
+void bubbles_init_machine (void)
+{
+	m6809_Flags = M6809_FAST_NONE;
+	pia_startup (&bubbles_pia_intf);
+}
+
+void splat_init_machine (void)
+{
+	m6809_Flags = M6809_FAST_NONE;
+	pia_startup (&splat_pia_intf);
+}
+
+void sinistar_init_machine (void)
+{
+	m6809_Flags = M6809_FAST_NONE;
+	pia_startup (&sinistar_pia_intf);
+}
+
+void blaster_init_machine (void)
+{
+	m6809_Flags = M6809_FAST_NONE;
+	pia_startup (&blaster_pia_intf);
+}
 
 void defender_init_machine (void)
 {
-	/* set the optimization flags */
 	m6809_Flags = M6809_FAST_NONE;
+	pia_startup (&defender_pia_intf);
+	williams_video_counter = &defender_video_counter;
+
 	/* initialize the banks */
-	defender_bank_select_w (0,0);
+	defender_bank_select_w (0, 0);
+}
+
+void colony7_init_machine (void)
+{
+	m6809_Flags = M6809_FAST_NONE;
+	pia_startup (&colony7_pia_intf);
+	williams_video_counter = &defender_video_counter;
+
+	/* initialize the banks */
+	colony7_bank_select_w (0, 0);
+}
+
+void lottofun_init_machine (void)
+{
+	m6809_Flags = M6809_FAST_NONE;
+	pia_startup (&lottofun_pia_intf);
+
+	/* Initialize the ticket dispenser to 70 milliseconds */
+	/* (I'm not sure what the correct value really is) */
+	ticket_dispenser_init(70);
 }
 
 
 /*
- *  Update the video counter and call an interrupt
+ *  Generic interrupt routine; interrupts are generated via the PIA, so we merely pulse the
+ *  external inputs here; the PIA emulator will generate the interrupt if the proper conditions
+ *  are met
  */
 
 int williams_interrupt (void)
 {
-	*williams_video_counter = williams_inttable[video_counter_index++ & 0x03];
-	return interrupt ();
+	/* the video counter value is taken from the six bits of VA8-VA13 */
+	*williams_video_counter = ((64 - cpu_getiloops ()) << 2);
+
+	/* the IRQ signal comes into CB1, and is set to VA11 */
+	pia_2_cb1_w (0, *williams_video_counter & 0x20);
+
+	/* the COUNT240 signal comes into CA1, and is set to the logical AND of VA10-VA13 */
+	pia_2_ca1_w (0, (*williams_video_counter & 0xf0) == 0xf0);
+
+	/* update the screen partially */
+	williams_vh_update (*williams_video_counter);
+
+	/* PIA generates interrupts, not us */
+	return ignore_interrupt ();
 }
 
 
 /*
- *  Read either port 0 or 1, depending on williams_port_select
+ *  Read either port 0 or 3, depending on the value in CB2
  */
 
-int williams_input_port_0_1 (int offset)
+int williams_input_port_0_3 (int offset)
 {
-	if ((*williams_port_select & 0x1c) == 0x1c)
-		return input_port_1_r (0);
+	if (port_select)
+		return input_port_3_r (0);
 	else
 		return input_port_0_r (0);
 }
 
 
 /*
- *  Read either port 2 or 3, depending on williams_port_select
+ *  Read either port 2 or 3, depending on the value in CB2
  */
 
-int williams_input_port_2_3 (int offset)
+int williams_input_port_1_4 (int offset)
 {
-	if((*williams_port_select & 0x1c) == 0x1c)
-	   return input_port_3_r (0);
+	if (port_select)
+	   return input_port_4_r (0);
 	else
-	   return input_port_2_r (0);
+	   return input_port_1_r (0);
 }
 
 
@@ -163,9 +364,12 @@ int williams_input_port_2_3 (int offset)
  *  Switch between VRAM and ROM
  */
 
-void williams_vram_select_w(int offset,int data)
+void williams_vram_select_w (int offset, int data)
 {
-	vram_bank = data;
+	vram_bank = data & 0x01;
+	williams_cocktail = data & 0x02;
+	sinistar_clip = data & 0x04;
+
 	if (vram_bank)
 	{
 		cpu_setbank (1, williams_bank_base);
@@ -176,6 +380,52 @@ void williams_vram_select_w(int offset,int data)
 	}
 }
 
+
+/*
+ *  PIA callback to generate the interrupt to the main CPU
+ */
+
+static void williams_irq (void)
+{
+	cpu_cause_interrupt (0, M6809_INT_IRQ);
+}
+
+
+/*
+ *  PIA callback to generate the interrupt to the sound CPU
+ */
+
+static void williams_snd_irq (void)
+{
+	cpu_cause_interrupt (1, M6808_INT_IRQ);
+}
+
+
+/*
+ *  Handle a write to the PIA which communicates to the sound CPU
+ */
+
+static void williams_snd_cmd_real_w (int param)
+{
+	pia_3_portb_w (0, param);
+	pia_3_cb1_w (0, (param == 0xff) ? 0 : 1);
+}
+
+static void williams_snd_cmd_w (int offset, int cmd)
+{
+	/* the high two bits are set externally, and should be 1 */
+	timer_set (TIME_NOW, cmd | 0xc0, williams_snd_cmd_real_w);
+}
+
+
+/*
+ *  Detect a switch between input port sets
+ */
+
+static void williams_port_select_w (int offset, int data)
+{
+	port_select = data;
+}
 
 
 /***************************************************************************
@@ -226,12 +476,6 @@ int stargate_input_port_0_r(int offset)
 	return keys;
 }
 
-int stargate_interrupt (void)
-{
-	*williams_video_counter = stargate_inttable[video_counter_index++ & 0x03];
-	return interrupt ();
-}
-
 
 /* JB 970823 - speed up very busy loop in Stargate */
 /*    0011: LDA   $39    ; dp=9c
@@ -252,22 +496,6 @@ int stargate_catch_loop_r (int offset)
 
 ***************************************************************************/
 
-int defender_interrupt (void)
-{
-	defender_video_counter = stargate_inttable[video_counter_index++ & 0x03];
-
-  /*
-   *  IRQ only if enabled (0x3C will it work all the time? or should I check for a bit?)
-   *  I think I should check for 111 in bits 5-3 but it work anyway
-   */
-
-	if (*defender_irq_enable == 0x3c)
-		return interrupt();
-
-	return ignore_interrupt();
-}
-
-
 /*
  *  Defender Select a bank
  *  There is just data in bank 0
@@ -276,16 +504,21 @@ int defender_interrupt (void)
 void defender_bank_select_w (int offset,int data)
 {
 	static int bank[8] = { 0x0c000, 0x10000, 0x11000, 0x12000, 0x0c000, 0x0c000, 0x0c000, 0x13000 };
+
 	/* set bank address */
-	cpu_setbank(1,&RAM[bank[data&7]]);
-	if( bank[data] < 0x10000 ){
+	cpu_setbank (1, &RAM[bank[data & 7]]);
+
+	if (bank[data] < 0x10000)
+	{
 		/* i/o area map */
-		cpu_setbankhandler_r(1,defender_io_r );
-		cpu_setbankhandler_w(1,defender_io_w );
-	}else{
+		cpu_setbankhandler_r (1, defender_io_r);
+		cpu_setbankhandler_w (1, defender_io_w);
+	}
+	else
+	{
 		/* bank rom map */
-		cpu_setbankhandler_r(1,MRA_BANK1);
-		cpu_setbankhandler_w(1,MWA_ROM);
+		cpu_setbankhandler_r (1, MRA_BANK1);
+		cpu_setbankhandler_w (1, MWA_ROM);
 	}
 }
 
@@ -294,11 +527,11 @@ void defender_bank_select_w (int offset,int data)
  *   Defender Read at C000-CFFF
  */
 
-int defender_input_port_1_r(int offset)
+int defender_input_port_0_r(int offset)
 {
 	int keys, altkeys;
 
-	keys = readinputport(1);
+	keys = readinputport(0);
 	altkeys = readinputport(3);
 
 	if (altkeys)
@@ -318,14 +551,15 @@ int defender_input_port_1_r(int offset)
 
 int defender_io_r (int offset)
 {
-	if (offset == 0xc00)           /* Buttons IN 0  */
-		return input_port_0_r (0);
-	if (offset == 0xc04)           /* Buttons IN 1  */
-		return defender_input_port_1_r (0);
-	if (offset == 0xc06)           /* Buttons IN 2  */
-		return input_port_2_r (0);
-	if (offset == 0x800)           /* video counter */
-		return defender_video_counter;
+	/* PIAs */
+	if (offset >= 0x0c00 && offset < 0x0c04)
+		return pia_2_r (offset - 0x0c00);
+	else if (offset >= 0x0c04 && offset < 0x0c08)
+		return pia_1_r (offset - 0x0c04);
+
+	/* video counter */
+	else if (offset == 0x800)
+		return *williams_video_counter;
 
 	/* If not bank 0 then return banked RAM */
 	return defender_bank_base[offset];
@@ -342,15 +576,17 @@ void defender_io_w (int offset,int data)
 
 	/* WatchDog */
 	if (offset == 0x03fc)
-		return;
+		watchdog_reset_w (offset, data);
 
 	/* Palette */
-	if (offset < 0x10)
+	else if (offset < 0x10)
 		williams_palette_w (offset, data);
 
-	/* Sound */
-	if (offset == 0x0c02)
-		williams_sh_w (offset,data);
+	/* PIAs */
+	else if (offset >= 0x0c00 && offset < 0x0c04)
+		pia_2_w (offset - 0x0c00, data);
+	else if (offset >= 0x0c04 && offset < 0x0c08)
+		pia_1_w (offset - 0x0c04, data);
 }
 
 
@@ -363,6 +599,38 @@ int defender_catch_loop_r(int offset)
 	if (t == 0 && cpu_getpc () == 0xe7c5)
 		cpu_seticount (0);
 	return t;
+}
+
+
+
+/***************************************************************************
+
+	Colony 7-specific routines
+
+***************************************************************************/
+
+/*
+ *  Colony7 Select a bank
+ *  There is just data in bank 0
+ */
+void colony7_bank_select_w (int offset,int data)
+{
+	static int bank[8] = { 0x0c000, 0x10000, 0x11000, 0x12000, 0x0c000, 0x0c000, 0x0c000, 0xc000 };
+
+	/* set bank address */
+	cpu_setbank (1, &RAM[bank[data & 7]]);
+	if (bank[data] < 0x10000)
+	{
+		/* i/o area map */
+		cpu_setbankhandler_r (1, defender_io_r);
+		cpu_setbankhandler_w (1, defender_io_w);
+	}
+	else
+	{
+		/* bank rom map */
+		cpu_setbankhandler_r (1, MRA_BANK1);
+		cpu_setbankhandler_w (1, MWA_ROM);
+	}
 }
 
 
@@ -394,7 +662,7 @@ int splat_catch_loop_r(int offset)
 /*
  *  Sinistar Joystick
  */
-int sinistar_input_port_0(int offset)
+int sinistar_input_port_0_r (int offset)
 {
 	int i;
 	int keys;
@@ -420,31 +688,53 @@ int sinistar_input_port_0(int offset)
 	return i;
 }
 
+
+static void sinistar_snd_cmd_w (int offset, int cmd)
+{
+/*	if (errorlog) fprintf (errorlog, "snd command: %02x %d\n", cmd, cmd); */
+
+	switch (cmd)
+	{
+		case 0x31: /* beware i live */
+			sample_start (0,0,0);
+			break;
+		case 0x30: /* coin sound "I Hunger"*/
+			sample_start (0,1,0);
+			break;
+		case 0x3d: /* roar */
+			sample_start (0,2,0);
+			break;
+		case 0x32: /* i am sinistar */
+			sample_start (0,4,0);
+			break;
+		case 0x34: /* Run Run Run (may be wrong) */
+			sample_start (0,3,0);
+			break;
+		case 0x2c: /* Run coward (may be wrong) */
+			sample_start (0,5,0);
+			break;
+		case 0x39: /* Run coward (may be wrong) */
+			sample_start (0,7,0);
+			break;
+		case 0x22: /* I hunger coward (may be wrong) */
+			sample_start (0,6,0);
+			break;
+	}
+
+	timer_set (TIME_NOW, cmd | 0xc0, williams_snd_cmd_real_w);
+}
+
+
 /***************************************************************************
 
 	Blaster-specific routines
 
 ***************************************************************************/
 
-#if 0 /* the fix for Blaster is more expensive than the loop */
-/* JB 970823 - speed up very busy loop in Blaster */
-/*    D184: LDA   $00    ; dp=97
-      D186: CMPA  #$02
-      D188: BCS   $D184  ; (BLO)   */
-int blaster_catch_loop_r(int offset)
-{
-	unsigned char t = *blaster_catch;
-	if (t < 2 && cpu_getpc () == 0xd186)
-		cpu_seticount (0);
-	return t;
-}
-#endif
-
-
 /*
  *  Blaster Joystick
  */
-int blaster_input_port_0(int offset)
+int blaster_input_port_0_r (int offset)
 {
 	int i;
 	int keys;
@@ -476,7 +766,7 @@ int blaster_input_port_0(int offset)
 static int bank[16] = { 0x00000, 0x10000, 0x14000, 0x18000, 0x1c000, 0x20000, 0x24000, 0x28000,
                         0x2c000, 0x30000, 0x34000, 0x38000, 0x2c000, 0x30000, 0x34000, 0x38000 };
 
-void blaster_vram_select_w(int offset,int data)
+void blaster_vram_select_w (int offset, int data)
 {
 	vram_bank = data;
 	if (vram_bank)
@@ -491,7 +781,8 @@ void blaster_vram_select_w(int offset,int data)
 	}
 }
 
-void blaster_bank_select_w(int offset,int data)
+
+void blaster_bank_select_w (int offset, int data)
 {
 	blaster_bank = data & 15;
 	if (vram_bank)
@@ -503,3 +794,31 @@ void blaster_bank_select_w(int offset,int data)
 		cpu_setbank (1, williams_videoram);
 	}
 }
+
+
+#if 0 /* the fix for Blaster is more expensive than the loop */
+/* JB 970823 - speed up very busy loop in Blaster */
+/*    D184: LDA   $00    ; dp=97
+      D186: CMPA  #$02
+      D188: BCS   $D184  ; (BLO)   */
+int blaster_catch_loop_r(int offset)
+{
+	unsigned char t = *blaster_catch;
+	if (t < 2 && cpu_getpc () == 0xd186)
+		cpu_seticount (0);
+	return t;
+}
+#endif
+
+
+/***************************************************************************
+
+	Lotto Fun-specific routines
+
+***************************************************************************/
+
+int lottofun_input_port_0_r(int offset)
+{
+	return input_port_0_r(offset) | ticket_dispenser_r(offset);
+}
+

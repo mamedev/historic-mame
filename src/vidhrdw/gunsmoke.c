@@ -269,31 +269,23 @@ void gunsmoke_vh_screenrefresh(struct osd_bitmap *bitmap)
 		/* draw the frontmost playfield. They are characters, but draw them as sprites */
 		for (offs = videoram_size - 1;offs >= 0;offs--)
 		{
-			int code;
+			int sx,sy;
 
 
-			code = videoram[offs] + ((colorram[offs] & 0xc0) << 2);
-
-			if (code != 0x24 || colorram[offs] != 0)		/* don't draw spaces */
+			sx = offs / 32;
+			sy = 31 - offs % 32;
+			if (flipscreen)
 			{
-				int sx,sy;
-
-
-				sx = offs / 32;
-				sy = 31 - offs % 32;
-				if (flipscreen)
-				{
-					sx = 31 - sx;
-					sy = 31 - sy;
-				}
-
-				drawgfx(bitmap,Machine->gfx[0],
-						code,
-						colorram[offs] & 0x1f,
-						flipscreen,flipscreen,
-						8*sx,8*sy,
-						&Machine->drv->visible_area,TRANSPARENCY_COLOR,79);
+				sx = 31 - sx;
+				sy = 31 - sy;
 			}
+
+			drawgfx(bitmap,Machine->gfx[0],
+					videoram[offs] + ((colorram[offs] & 0xc0) << 2),
+					colorram[offs] & 0x1f,
+					flipscreen,flipscreen,
+					8*sx,8*sy,
+					&Machine->drv->visible_area,TRANSPARENCY_COLOR,79);
 		}
 	}
 }

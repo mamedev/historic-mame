@@ -19,7 +19,8 @@ static int flipscreen;
 
   Convert the color PROMs into a more useable format.
 
-  Roc'n Rope has one 32x8 palette PROM and one 256x4 lookup table PROM.
+  Roc'n Rope has one 32x8 palette PROM and two 256x4 lookup table PROMs
+  (one for characters, one for sprites).
   The palette PROM is connected to the RGB output this way:
 
   bit 7 -- 220 ohm resistor  -- BLUE
@@ -64,7 +65,11 @@ void rocnrope_vh_convert_color_prom(unsigned char *palette, unsigned char *color
 
 	/* color_prom now points to the beginning of the lookup table */
 
-	/* sprites & characters */
+	/* sprites */
+	for (i = 0;i < TOTAL_COLORS(1);i++)
+		COLOR(1,i) = *(color_prom++) & 0x0f;
+
+	/* characters */
 	for (i = 0;i < TOTAL_COLORS(0);i++)
 		COLOR(0,i) = *(color_prom++) & 0x0f;
 }

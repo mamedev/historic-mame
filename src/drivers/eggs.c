@@ -27,8 +27,6 @@ write:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/generic.h"
-#include "sndhrdw/8910intf.h"
 
 
 
@@ -37,8 +35,6 @@ int btime_mirrorcolorram_r(int offset);
 void btime_mirrorvideoram_w(int offset,int data);
 void btime_mirrorcolorram_w(int offset,int data);
 void eggs_vh_screenrefresh(struct osd_bitmap *bitmap);
-
-int eggs_sh_start(void);
 
 
 
@@ -198,6 +194,19 @@ static unsigned char colortable[] =
 
 
 
+static struct AY8910interface ay8910_interface =
+{
+	2,	/* 2 chips */
+	1500000,	/* 1.5 MHz??? */
+	{ 255, 255 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 }
+};
+
+
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -210,7 +219,7 @@ static struct MachineDriver machine_driver =
 			interrupt,1
 		},
 	},
-	60,
+	57, 1536, //DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* single CPU, no need for interleaving */
 	0,
 
@@ -227,10 +236,13 @@ static struct MachineDriver machine_driver =
 	eggs_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	eggs_sh_start,
-	AY8910_sh_stop,
-	AY8910_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&ay8910_interface
+		}
+	}
 };
 
 
@@ -259,6 +271,23 @@ ROM_START( eggs_rom )
 	ROM_LOAD( "j10.bin",  0x5000, 0x1000, 0x8786e8c4 )
 ROM_END
 
+ROM_START( scregg_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "scregg.e14", 0x3000, 0x1000, 0x84a288b2 )
+	ROM_LOAD( "scregg.d14", 0x4000, 0x1000, 0x8ab8d190 )
+	ROM_LOAD( "scregg.c14", 0x5000, 0x1000, 0xf212ac78 )
+	ROM_LOAD( "scregg.b14", 0x6000, 0x1000, 0xdc095969 )
+	ROM_LOAD( "scregg.a14", 0x7000, 0x1000, 0x1afd9ddb )
+	ROM_RELOAD(             0xf000, 0x1000 )	/* for reset/interrupt vectors */
+
+	ROM_REGION(0x6000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "scregg.g12",  0x0000, 0x1000, 0xa3b0e2d6 )
+	ROM_LOAD( "scregg.g10",  0x1000, 0x1000, 0xeb7f0865 )
+	ROM_LOAD( "scregg.h12",  0x2000, 0x1000, 0xc48207f2 )
+	ROM_LOAD( "scregg.h10",  0x3000, 0x1000, 0x007800b8 )
+	ROM_LOAD( "scregg.j12",  0x4000, 0x1000, 0xe5077119 )
+	ROM_LOAD( "scregg.j10",  0x5000, 0x1000, 0xc41a7b5e )
+ROM_END
 
 
 static int hiload(void)
@@ -304,7 +333,7 @@ struct GameDriver eggs_driver =
 {
 	"Eggs",
 	"eggs",
-	"NICOLA SALMORIA\nMIKE BALFOUR",
+	"Nicola Salmoria (MAME driver)\nMike Balfour (high score save)",
 	&machine_driver,
 
 	eggs_rom,
@@ -312,10 +341,31 @@ struct GameDriver eggs_driver =
 	0,
 	0,	/* sound_prom */
 
-    0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+    input_ports,
 
 	0, palette, colortable,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };
+
+struct GameDriver scregg_driver =
+{
+	"Scrambled Egg",
+	"scregg",
+	"Nicola Salmoria (MAME driver)\nMike Balfour (high score save)",
+	&machine_driver,
+
+	scregg_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+    input_ports,
+
+	0, palette, colortable,
+	ORIENTATION_DEFAULT,
+
+	hiload, hisave
+};
+

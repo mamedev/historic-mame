@@ -8,6 +8,11 @@
 #include "vidhrdw/generic.h"
 #include "m6502/m6502.h"
 
+void slapstic_init (int chip);
+int slapstic_bank (void);
+int slapstic_tweak (int offset);
+
+
 
 /*************************************
  *
@@ -15,16 +20,10 @@
  *
  *************************************/
 
-int gauntlet_bank1_size;
-int gauntlet_bank2_size;
-int gauntlet_bank3_size;
-int gauntlet_eeprom_size;
-
-unsigned char *gauntlet_bank1;
-unsigned char *gauntlet_bank2;
-unsigned char *gauntlet_bank3;
 unsigned char *gauntlet_eeprom;
 unsigned char *gauntlet_slapstic_base;
+unsigned char *gauntlet_speed_check;
+
 
 
 /*************************************
@@ -36,101 +35,83 @@ unsigned char *gauntlet_slapstic_base;
 static int cpu_to_sound, cpu_to_sound_ready;
 static int sound_to_cpu, sound_to_cpu_ready;
 static int unlocked;
+static int last_speed_check;
+
+static void *comm_timer;
+static void *stop_comm_timer;
+
+static int speech_val;
+static int last_speech_write;
+
 
 
 /*************************************
  *
- *		Actually called by the video system to initialize memory regions.
+ *		Initialization of globals.
  *
  *************************************/
 
-int gauntlet_system_start (void)
+static void generic_init_machine (void)
 {
-	unsigned long *p1, *p2, temp;
-	int i;
-
-	/* swap the top and bottom halves of the main CPU ROM images */
-	p1 = (unsigned long *)&Machine->memory_region[0][0x000000];
-	p2 = (unsigned long *)&Machine->memory_region[0][0x008000];
-	for (i = 0; i < 0x8000 / 4; i++)
-		temp = *p1, *p1++ = *p2, *p2++ = temp;
-	p1 = (unsigned long *)&Machine->memory_region[0][0x040000];
-	p2 = (unsigned long *)&Machine->memory_region[0][0x048000];
-	for (i = 0; i < 0x8000 / 4; i++)
-		temp = *p1, *p1++ = *p2, *p2++ = temp;
-	p1 = (unsigned long *)&Machine->memory_region[0][0x050000];
-	p2 = (unsigned long *)&Machine->memory_region[0][0x058000];
-	for (i = 0; i < 0x8000 / 4; i++)
-		temp = *p1, *p1++ = *p2, *p2++ = temp;
-	p1 = (unsigned long *)&Machine->memory_region[0][0x060000];
-	p2 = (unsigned long *)&Machine->memory_region[0][0x068000];
-	for (i = 0; i < 0x8000 / 4; i++)
-		temp = *p1, *p1++ = *p2, *p2++ = temp;
-	p1 = (unsigned long *)&Machine->memory_region[0][0x070000];
-	p2 = (unsigned long *)&Machine->memory_region[0][0x078000];
-	for (i = 0; i < 0x8000 / 4; i++)
-		temp = *p1, *p1++ = *p2, *p2++ = temp;
-
-	/* allocate the RAM banks */
-	if (!gauntlet_bank1)
-		gauntlet_bank1 = calloc (gauntlet_bank1_size + gauntlet_bank2_size +
-		                         gauntlet_bank3_size + gauntlet_eeprom_size, 1);
-	if (!gauntlet_bank1)
-		return 1;
-	gauntlet_bank2 = gauntlet_bank1 + gauntlet_bank1_size;
-	gauntlet_bank3 = gauntlet_bank2 + gauntlet_bank2_size;
-	gauntlet_eeprom = gauntlet_bank3 + gauntlet_bank3_size;
-
-	/* point to the generic RAM banks */
-	cpu_setbank (1, gauntlet_bank1);
-	cpu_setbank (2, gauntlet_bank2);
-	cpu_setbank (3, gauntlet_bank3);
-
 	unlocked = 0;
+	cpu_to_sound = cpu_to_sound_ready = 0;
+	sound_to_cpu = sound_to_cpu_ready = 0;
+	last_speed_check = 0;
 
-	return 0;
+	last_speech_write = 0x80;
+	comm_timer = stop_comm_timer = NULL;
 }
 
 
-/*************************************
- *
- *		Actually called by the video system to free memory regions.
- *
- *************************************/
-
-int gauntlet_system_stop (void)
+void gauntlet_init_machine (void)
 {
-	/* free the banks we allocated */
-	if (gauntlet_bank1)
-		free (gauntlet_bank1);
-	gauntlet_bank1 = gauntlet_bank2 = gauntlet_bank3 = gauntlet_eeprom = 0;
-
-	return 0;
+	generic_init_machine ();
+	slapstic_init (104);
 }
+
+
+void gaunt2p_init_machine (void)
+{
+	generic_init_machine ();
+	slapstic_init (107);
+}
+
+
+void gauntlet2_init_machine (void)
+{
+	generic_init_machine ();
+	slapstic_init (106);
+}
+
 
 
 /*************************************
  *
- *		EEPROM read/write.
+ *		EEPROM read/write/enable
  *
  *************************************/
+
+void gauntlet_eeprom_enable_w (int offset, int data)
+{
+	unlocked = 1;
+}
+
 
 int gauntlet_eeprom_r (int offset)
 {
-	if (!(offset & 1))
-		return 0;
-	return gauntlet_eeprom[offset];
+	return READ_WORD (&gauntlet_eeprom[offset]) & 0xff;
 }
+
 
 void gauntlet_eeprom_w (int offset, int data)
 {
-	if (!(offset & 1))
-		return;
 	if (!unlocked)
 		return;
-	gauntlet_eeprom[offset] = data;
+
+	COMBINE_WORD_MEM (&gauntlet_eeprom[offset], data);
 	unlocked = 0;
 }
+
 
 
 /*************************************
@@ -141,53 +122,16 @@ void gauntlet_eeprom_w (int offset, int data)
 
 int gauntlet_slapstic_r (int offset)
 {
-	if (errorlog) fprintf (errorlog, "Slapstic read offset %04X\n", offset);
-
-	/* Warning: this is not a real slapstic decode function; it just emulates the effects of the
-	   hacked ROMs so that we can run with the standard set */
-
-/*
-	if (slapstic_active && offset < 0x160 && !(offset & 1))
-	{
-		if ((offset >= 0x054 && offset <= 0x056) ||
-		    (offset >= 0x062 && offset <= 0x07c) ||
-		    (offset >= 0x08a && offset <= 0x0a6))
-			return gauntlet_slapstic_base[offset] | 0x20;
-		if ((offset >= 0x058 && offset <= 0x060) ||
-		    (offset == 0x0a8) ||
-		    (offset >= 0x0b4 && offset <= 0x0d2) ||
-		    (offset >= 0x0e0 && offset <= 0x0fc))
-			return gauntlet_slapstic_base[offset] | 0x40;
-		if ((offset >= 0x07e && offset <= 0x088) ||
-		    (offset >= 0x0aa && offset <= 0x0b2) ||
-		    (offset >= 0x0d4 && offset <= 0x0de) ||
-		    (offset >= 0x146 && offset <= 0x15e))
-			return gauntlet_slapstic_base[offset] | 0x60;
-	}
-*/
-
-	return gauntlet_slapstic_base[offset];
+	int bank = slapstic_tweak (offset / 2) * 0x2000;
+	return READ_WORD (&gauntlet_slapstic_base[bank + (offset & 0x1fff)]);
 }
+
 
 void gauntlet_slapstic_w (int offset, int data)
 {
-	if (errorlog) fprintf (errorlog, "Slapstic write offset %04X\n", offset);
+	slapstic_tweak (offset / 2);
 }
 
-int gauntlet2_slapstic_r (int offset)
-{
-	if (errorlog) fprintf (errorlog, "Slapstic read offset %04X\n", offset);
-
-	/* Warning: this is not a real slapstic decode function; it just emulates the effects of the
-	   hacked ROMs so that we can run with the standard set */
-
-	return gauntlet_slapstic_base[offset];
-}
-
-void gauntlet2_slapstic_w (int offset, int data)
-{
-	if (errorlog) fprintf (errorlog, "Slapstic write offset %04X\n", offset);
-}
 
 
 /*************************************
@@ -208,6 +152,7 @@ int gauntlet_sound_interrupt(void)
 }
 
 
+
 /*************************************
  *
  *		Controller read dispatch.
@@ -219,17 +164,18 @@ int gauntlet_control_r (int offset)
 	int p1 = input_port_6_r (offset);
 	switch (offset)
 	{
-		case 1:
+		case 0:
 			return readinputport (p1);
-		case 3:
+		case 2:
 			return readinputport ((p1 != 1) ? 1 : 0);
-		case 5:
+		case 4:
 			return readinputport ((p1 != 2) ? 2 : 0);
-		case 7:
+		case 6:
 			return readinputport ((p1 != 3) ? 3 : 0);
 	}
 	return 0;
 }
+
 
 
 /*************************************
@@ -244,13 +190,13 @@ int gauntlet_io_r (int offset)
 
 	switch (offset)
 	{
-		case 1:
+		case 0:
 			temp = input_port_5_r (offset);
 			if (cpu_to_sound_ready) temp |= 0x20;
 			if (sound_to_cpu_ready) temp |= 0x10;
 			return temp;
 
-		case 7:
+		case 6:
 			sound_to_cpu_ready = 0;
 			return sound_to_cpu;
 	}
@@ -265,10 +211,11 @@ int gauntlet_6502_switch_r (int offset)
 	if (cpu_to_sound_ready) temp |= 0x80;
 	if (sound_to_cpu_ready) temp |= 0x40;
 	if (!tms5220_ready_r ()) temp |= 0x20;
-	temp |= 0x10;
+	if (input_port_5_r (offset) & 0x08) temp |= 0x10;
 
 	return temp;
 }
+
 
 
 /*************************************
@@ -281,7 +228,7 @@ void gauntlet_io_w (int offset, int data)
 {
 	switch (offset)
 	{
-		case 0x0f:		/* sound CPU reset */
+		case 0x0e:		/* sound CPU reset */
 			if (data & 1)
 				cpu_halt (1, 1);
 			else
@@ -294,40 +241,85 @@ void gauntlet_io_w (int offset, int data)
 }
 
 
+
 /*************************************
  *
- *		EEPROM enable.
+ *		Sound TMS5220 write.
  *
  *************************************/
 
-void gauntlet_eeprom_enable_w (int offset, int data)
+void gauntlet_tms_w (int offset, int data)
 {
-	unlocked = 1;
+	speech_val = data;
 }
 
 
+
 /*************************************
  *
- *		I/O between main CPU and sound CPU.
+ *		Sound control write.
  *
  *************************************/
 
-void gauntlet_sound_w (int offset, int data)
+void gauntlet_sound_ctl_w (int offset, int data)
 {
-	if (offset == 1)
+	switch (offset & 7)
 	{
-		cpu_to_sound = data;
-		cpu_to_sound_ready = 1;
-		cpu_cause_interrupt (1, INT_NMI);
+		case 0:	/* music reset, bit D7, low reset */
+			break;
+
+		case 1:	/* speech write, bit D7, active low */
+			if (((data ^ last_speech_write) & 0x80) && (data & 0x80))
+				tms5220_data_w (0, speech_val);
+			last_speech_write = data;
+			break;
+
+		case 2:	/* speech reset, bit D7, active low */
+			break;
+
+		case 3:	/* speech squeak, bit D7, low = 650kHz clock */
+			break;
 	}
 }
 
 
-void gauntlet_6502_sound_w (int offset, int data)
+/*************************************
+ *
+ *		Main CPU to sound CPU communications
+ *
+ *************************************/
+
+void gauntlet_stop_comm_timer (int param)
 {
-	sound_to_cpu = data;
-	sound_to_cpu_ready = 1;
-	cpu_cause_interrupt (0, 6);
+	if (comm_timer)
+		timer_remove (comm_timer);
+	comm_timer = stop_comm_timer = NULL;
+}
+
+
+void gauntlet_delayed_sound_w (int param)
+{
+	if (cpu_to_sound_ready)
+		if (errorlog) fprintf (errorlog, "Missed command from 68010\n");
+
+	cpu_to_sound = param;
+	cpu_to_sound_ready = 1;
+	cpu_cause_interrupt (1, INT_NMI);
+
+	/* allocate a high frequency timer until a response is generated */
+	/* the main CPU is *very* sensistive to the timing of the response */
+	if (!comm_timer)
+		comm_timer = timer_pulse (TIME_IN_USEC (50), 0, 0);
+	if (stop_comm_timer)
+		timer_remove (stop_comm_timer);
+	stop_comm_timer = timer_set (TIME_IN_USEC (1000), 0, gauntlet_stop_comm_timer);
+}
+
+
+void gauntlet_sound_w (int offset, int data)
+{
+	/* use a timer to force a resynchronization */
+	timer_set (TIME_NOW, data & 0xff, gauntlet_delayed_sound_w);
 }
 
 
@@ -338,27 +330,55 @@ int gauntlet_6502_sound_r (int offset)
 }
 
 
+
+/*************************************
+ *
+ *		Sound CPU to main CPU communications
+ *
+ *************************************/
+
+void gauntlet_delayed_6502_sound_w (int param)
+{
+	if (sound_to_cpu_ready)
+		if (errorlog) fprintf (errorlog, "Missed result from 6502\n");
+
+	sound_to_cpu = param;
+	sound_to_cpu_ready = 1;
+	cpu_cause_interrupt (0, 6);
+
+	/* remove the high frequency timer if there is one */
+	if (comm_timer)
+		timer_remove (comm_timer);
+	comm_timer = NULL;
+}
+
+
+void gauntlet_6502_sound_w (int offset, int data)
+{
+	/* use a timer to force a resynchronization */
+	timer_set (TIME_NOW, data, gauntlet_delayed_6502_sound_w);
+}
+
+
+
 /*************************************
  *
  *		Speed cheats
  *
  *************************************/
 
-static int last_speed_check;
-static unsigned char speed_check_ram[4];
-
 int gauntlet_68010_speedup_r (int offset)
 {
-	int result = speed_check_ram[offset];
+	int result = READ_WORD (&gauntlet_speed_check[offset]);
 
-	if (offset == 3)
+	if (offset == 2)
 	{
-		int time = cpu_getfcount ();
-		int delta = last_speed_check - time;
+		int time = cpu_gettotalcycles ();
+		int delta = time - last_speed_check;
 
 		last_speed_check = time;
-		if (delta >= 0 && delta <= 100 && result == 0 && speed_check_ram[2] == 0)
-			cpu_seticount (0);
+		if (delta <= 100 && result == 0 && delta >= 0)
+			cpu_spin ();
 	}
 
 	return result;
@@ -367,9 +387,9 @@ int gauntlet_68010_speedup_r (int offset)
 
 void gauntlet_68010_speedup_w (int offset, int data)
 {
-	if (offset & 2)
-		last_speed_check = -10000;
-	speed_check_ram[offset] = data;
+	if (offset == 2)
+		last_speed_check -= 1000;
+	COMBINE_WORD_MEM (&gauntlet_speed_check[offset], data);
 }
 
 
@@ -377,6 +397,6 @@ int gauntlet_6502_speedup_r (int offset)
 {
 	int result = RAM[0x0211];
 	if (cpu_getpreviouspc() == 0x412a && RAM[0x0211] == RAM[0x0210] && RAM[0x0225] == RAM[0x0224])
-		cpu_seticount (0);
+		cpu_spin ();
 	return result;
 }

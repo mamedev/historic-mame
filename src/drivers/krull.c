@@ -60,20 +60,13 @@ Sound processor (6502) memory map:
 int krull_vh_start(void);
 void gottlieb_vh_init_color_palette(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void gottlieb_sh_w(int offset, int data);
-void gottlieb_sh_update(void);
-void gottlieb_output(int offset, int data);
-int krull_IN1_r(int offset);
+void gottlieb_video_outputs(int offset,int data);
 extern unsigned char *gottlieb_paletteram;
 extern unsigned char *gottlieb_characterram;
 void gottlieb_paletteram_w(int offset,int data);
 void gottlieb_characterram_w(int offset, int data);
 void gottlieb_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-int gottlieb_sh_start(void);
-void gottlieb_sh_stop(void);
-void gottlieb_sh_update(void);
-int gottlieb_sh_interrupt(void);
-int gottlieb_sh_interrupt(void);
 int riot_ram_r(int offset);
 int gottlieb_riot_r(int offset);
 int gottlieb_sound_expansion_socket_r(int offset);
@@ -83,6 +76,11 @@ void gottlieb_amplitude_DAC_w(int offset, int data);
 void gottlieb_speech_w(int offset, int data);
 void gottlieb_speech_clock_DAC_w(int offset, int data);
 void gottlieb_sound_expansion_socket_w(int offset, int data);
+
+int gottlieb_nvram_load(void);
+void gottlieb_nvram_save(void);
+
+
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -109,7 +107,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x5800, 0x5800, MWA_RAM },    /* watchdog timer clear */
 	{ 0x5801, 0x5801, MWA_RAM },    /* trackball: not used */
 	{ 0x5802, 0x5802, gottlieb_sh_w }, /* sound/speech command */
-	{ 0x5803, 0x5803, gottlieb_output },       /* OUT1 */
+	{ 0x5803, 0x5803, gottlieb_video_outputs },       /* OUT1 */
 	{ 0x5804, 0x5804, MWA_RAM },    /* OUT2 */
 	{ 0x6000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
@@ -178,7 +176,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_BITX(    0x01, 0x01, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
 	PORT_DIPSETTING(    0x01, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_SERVICE, "Advance in Service Mode", OSD_KEY_F1, IP_JOY_NONE, 0 )
+	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_SERVICE, "Select in Service Mode", OSD_KEY_F1, IP_JOY_NONE, 0 )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -238,6 +236,16 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
+static struct DACinterface dac_interface =
+{
+	1,
+	441000,
+	{ 255 },
+	{ 0 },
+};
+
+
+
 static const struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -254,12 +262,11 @@ static const struct MachineDriver machine_driver =
 			3579545/4,        /* could it be /2 ? */
 			2,             /* memory region #2 */
 			krull_sound_readmem,krull_sound_writemem,0,0,
-			gottlieb_sh_interrupt,1
+			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
-
 	},
-	60,     /* frames / second */
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,      /* init machine */
 
 	/* video hardware */
@@ -275,10 +282,13 @@ static const struct MachineDriver machine_driver =
 	gottlieb_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	gottlieb_sh_start,
-	gottlieb_sh_stop,
-	gottlieb_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_DAC,
+			&dac_interface
+		}
+	}
 };
 
 
@@ -309,52 +319,6 @@ ROM_END
 
 
 
-static int hiload(void)
-{
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
-
-
-	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x0b3d],"\x7F\x7F\x7F\x00\x00\x00\x00\x00\x00\x00",10) == 0 &&
-			memcmp(&RAM[0x0c2d],"\x7F\x7F\x7F\x00\x00\x00\x00\x00\x00\x00",10) == 0)
-	{
-		void *f;
-
-
-		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-		{
-			osd_fread(f,&RAM[0x0ace],10*10);
-			osd_fread(f,&RAM[0x0b3d],10*25);
-			osd_fclose(f);
-		}
-
-		return 1;
-	}
-	else return 0;  /* we can't load the hi scores yet */
-}
-
-
-
-static void hisave(void)
-{
-	void *f;
-	/* get RAM pointer (this game is multiCPU, we can't assume the global */
-	/* RAM pointer is pointing to the right place) */
-	unsigned char *RAM = Machine->memory_region[0];
-
-
-	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-	{
-		osd_fwrite(f,&RAM[0x0ace],10*10);
-		osd_fwrite(f,&RAM[0x0b3d],10*25);
-		osd_fclose(f);
-	}
-}
-
-
-
 struct GameDriver krull_driver =
 {
 	"Krull",
@@ -367,10 +331,10 @@ struct GameDriver krull_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	input_ports,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
-	hiload, hisave
+	gottlieb_nvram_load, gottlieb_nvram_save
 };

@@ -68,6 +68,8 @@ CPU #3 NMI (@120Hz)
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+
+
 extern unsigned char *galaga_sharedram;
 int galaga_hiscore_print_r(int offset);
 int galaga_sharedram_r(int offset);
@@ -94,9 +96,6 @@ void galaga_vh_screenrefresh(struct osd_bitmap *bitmap);
 void galaga_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 
 void pengo_sound_w(int offset,int data);
-int pengo_sh_start(void);
-void waveform_sh_stop(void);
-void waveform_sh_update(void);
 extern unsigned char *pengo_soundregs;
 extern unsigned char galaga_hiscoreloaded;
 
@@ -440,6 +439,20 @@ static unsigned char sound_prom[] =
 
 
 
+static struct namco_interface namco_interface =
+{
+	3072000/32,	/* sample rate */
+	3,			/* number of voices */
+	32,			/* gain adjustment */
+	255			/* playback volume */
+};
+
+static struct Samplesinterface samples_interface =
+{
+	1	/* one channel */
+};
+
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -449,7 +462,7 @@ static struct MachineDriver machine_driver =
 			3125000,        /* 3.125 Mhz */
 			0,
 			readmem_cpu1,writemem_cpu1,0,0,
-			galaga_interrupt_1,100
+			galaga_interrupt_1,1
 		},
 		{
 			CPU_Z80,
@@ -466,7 +479,7 @@ static struct MachineDriver machine_driver =
 			galaga_interrupt_3,2
 		}
 	},
-	60,
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	100,	/* 100 CPU slices per frame - an high value to ensure proper */
 			/* synchronization of the CPUs */
 	galaga_init_machine,
@@ -484,10 +497,17 @@ static struct MachineDriver machine_driver =
 	galaga_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	pengo_sh_start,
-	waveform_sh_stop,
-	waveform_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_NAMCO,
+			&namco_interface
+		},
+		{
+			SOUND_SAMPLES,
+			&samples_interface
+		}
+	}
 };
 
 
@@ -574,6 +594,25 @@ ROM_START( gallag_rom )
 	ROM_LOAD( "gallag.7", 0x0000, 0x1000, 0x9dd8ebd8 )
 ROM_END
 
+ROM_START( galagab2_rom )
+	ROM_REGION(0x10000)     /* 64k for code for the first CPU  */
+	ROM_LOAD( "g1", 0x0000, 0x1000, 0x7aecbece )
+	ROM_LOAD( "g2", 0x1000, 0x1000, 0xb778a4da )
+	ROM_LOAD( "g3", 0x2000, 0x1000, 0x8fe52561 )
+	ROM_LOAD( "g4", 0x3000, 0x1000, 0x21f8c6ba )
+
+	ROM_REGION(0x3000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "g9",  0x0000, 0x1000, 0x0c670ff9 )
+	ROM_LOAD( "g11", 0x1000, 0x1000, 0xffdf703b )
+	ROM_LOAD( "g10", 0x2000, 0x1000, 0xa83e9cae )
+
+	ROM_REGION(0x10000)     /* 64k for the second CPU */
+	ROM_LOAD( "g5", 0x0000, 0x1000, 0x6079fa7d )
+
+	ROM_REGION(0x10000)     /* 64k for the third CPU  */
+	ROM_LOAD( "g7", 0x0000, 0x1000, 0x9dd8ebd8 )
+ROM_END
+
 
 
 static const char *galaga_sample_names[] =
@@ -644,7 +683,7 @@ struct GameDriver galaga_driver =
 	galaga_sample_names,
 	sound_prom,	/* sound_prom */
 
-	0/*TBR*/,galaga_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	galaga_input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -664,7 +703,7 @@ struct GameDriver galaganm_driver =
 	galaga_sample_names,
 	sound_prom,	/* sound_prom */
 
-	0/*TBR*/,galaganm_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	galaganm_input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -684,7 +723,7 @@ struct GameDriver galagabl_driver =
 	galaga_sample_names,
 	sound_prom,	/* sound_prom */
 
-	0/*TBR*/,galaganm_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	galaganm_input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -704,7 +743,27 @@ struct GameDriver gallag_driver =
 	galaga_sample_names,
 	sound_prom,	/* sound_prom */
 
-	0/*TBR*/,galaganm_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	galaganm_input_ports,
+
+	color_prom, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	hiload, hisave
+};
+
+struct GameDriver galagab2_driver =
+{
+	"Galaga (NAMCO alternate)",
+	"galagab2",
+	"Martin Scragg (hardware info)\nNicola Salmoria (MAME driver)\nMirko Buffoni (additional code)\nValerio Verrando (high score fix)",
+	&machine_driver,
+
+	galagab2_rom,
+	0, 0,
+	galaga_sample_names,
+	sound_prom,	/* sound_prom */
+
+	galaganm_input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,

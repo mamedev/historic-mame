@@ -39,11 +39,17 @@ XXXX01XX   4-6 ships
 XXXX00XX   5-7 ships
 XXX1XXXX   1-play minimum $
 XXX0XXXX   2-play minimum
-11XXXXXX   Bonus ship every 10,000 points $
-10XXXXXX   Bonus ship every 12,000 points
-01XXXXXX   Bonus ship every 15,000 points
+XX1XXXXX   Easier gameplay for first 30000 points +
+XX0XXXXX   Hard gameplay throughout the game      +
+11XXXXXX   Bonus ship every 10,000 points $ !
+10XXXXXX   Bonus ship every 12,000 points !
+01XXXXXX   Bonus ship every 15,000 points !
 00XXXXXX   No bonus ships (adds one ship at game start)
 
++ only with the newer romset  
+! not "every", but "at", e.g. only once.
+
+Thanks to Gregg Woodcock for the info.
 
 8 SWITCH DIP (L8)
 87654321
@@ -124,19 +130,17 @@ Known issues:
 * Sound emu isn't perfect - sometimes explosions don't register in Asteroids
 * The low background thrust in Lunar Lander isn't emulated
 * Asteroids Deluxe and Lunar Lander both toggle the LEDs too frequently to be effectively emulated
-
+* The ERROR message in Asteroids Deluxe self test is related to a pokey problem
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "vidhrdw/vector.h"
 #include "vidhrdw/avgdvg.h"
-#include "sndhrdw/pokyintf.h"
 #include "machine/atari_vg.h"
 
 void asteroid_init_machine(void);
-void astdelux_init_machine(void);
 int asteroid_interrupt(void);
-void llander_init_machine(void);
 int llander_interrupt(void);
 
 void asteroid_bank_switch_w(int offset, int data);
@@ -147,8 +151,6 @@ void llander_led_w (int offset,int data);
 void asteroid_explode_w(int offset,int data);
 void asteroid_thump_w(int offset,int data);
 void asteroid_sounds_w(int offset,int data);
-void asteroid_sh_update(void);
-int astdelux_sh_start (void);
 void astdelux_sounds_w(int offset,int data);
 void llander_sounds_w(int offset,int data);
 
@@ -231,8 +233,8 @@ static struct MemoryWriteAddress astdelux_writemem[] =
 static struct MemoryReadAddress llander_readmem[] =
 {
 	{ 0x0000, 0x01ff, MRA_RAM },
-//	{ 0x0000, 0x00ff, llander_zeropage_r },
-//	{ 0x0100, 0x01ff, MRA_RAM },
+/*	{ 0x0000, 0x00ff, llander_zeropage_r },*/
+/*	{ 0x0100, 0x01ff, MRA_RAM },*/
 	{ 0x6000, 0x7fff, MRA_ROM },
 	{ 0x4800, 0x5fff, MRA_ROM }, /* vector rom */
 	{ 0xf800, 0xffff, MRA_ROM }, /* for the reset / interrupt vectors */
@@ -247,8 +249,8 @@ static struct MemoryReadAddress llander_readmem[] =
 static struct MemoryWriteAddress llander_writemem[] =
 {
 	{ 0x0000, 0x01ff, MWA_RAM },
-//	{ 0x0000, 0x00ff, llander_zeropage_w },
-//	{ 0x0100, 0x01ff, MWA_RAM },
+/*	{ 0x0000, 0x00ff, llander_zeropage_w },*/
+/*	{ 0x0100, 0x01ff, MWA_RAM },*/
 	{ 0x4000, 0x47ff, MWA_RAM },
 	{ 0x3000, 0x3000, avgdvg_go },
 /*	{ 0x3200, 0x3200, llander_led_w }, */
@@ -428,8 +430,7 @@ INPUT_PORTS_START ( llander_input_ports )
 
 	/* The next one is a potentiometer */
 	PORT_START /* IN3 */
-	PORT_ANALOG ( 0xff, 0x00, IPT_PADDLE, 100, 7, 0, 255 )
-
+	PORT_ANALOGX( 0xff, 0x00, IPT_PADDLE|IPF_REVERSE, 100, 0, 0, 255, OSD_KEY_UP, OSD_KEY_DOWN, OSD_JOY_UP, OSD_JOY_DOWN, 1)
 INPUT_PORTS_END
 
 static struct GfxLayout fakelayout =
@@ -449,7 +450,12 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static unsigned char color_prom[] = { 0 };
+
+
+static unsigned char asteroid_color_prom[] = { VEC_PAL_BW        };
+static unsigned char astdelux_color_prom[] = { VEC_PAL_MONO_AQUA };
+
+
 
 static int asteroid1_hiload(void)
 {
@@ -519,10 +525,17 @@ static void asteroid2_hisave(void)
 	}
 }
 
+
+
 /* Asteroids Deluxe now uses the earom routines
  * However, we keep the highscore location, just in case
  *		osd_fwrite(f,&RAM[0x0023],3*10+3*11);
  */
+
+static struct Samplesinterface asteroid_samples_interface =
+{
+	7	/* 7 channels */
+};
 
 static struct MachineDriver asteroid_machine_driver =
 {
@@ -533,15 +546,16 @@ static struct MachineDriver asteroid_machine_driver =
 			1500000,	/* 1.5 Mhz */
 			0,
 			asteroid_readmem,asteroid_writemem,0,0,
-			asteroid_interrupt,4 /* approx 250Hz? */
+			0, 0, /* no vblank based interrupt */
+			asteroid_interrupt, 240 /* 240Hz? */
 		}
 	},
-	60, /* frames per second */
+	60, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
 	1,
 	asteroid_init_machine,
 
 	/* video hardware */
-	288, 224, { 0, 1020, 70, 950 },
+	400, 300, { 0, 1040, 70, 950 },
 	gfxdecodeinfo,
 	256, 256,
 	avg_init_colors,
@@ -553,11 +567,42 @@ static struct MachineDriver asteroid_machine_driver =
 	dvg_screenrefresh,
 
 	/* sound hardware */
-	0,
-	0,
-	0,
-	asteroid_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_SAMPLES,
+			&asteroid_samples_interface
+		}
+	}
 };
+
+
+
+static struct POKEYinterface pokey_interface =
+{
+	1,	/* 1 chip */
+	1500000,	/* 1.5 MHz??? */
+	255,
+	POKEY_DEFAULT_GAIN,
+	NO_CLIP,
+	/* The 8 pot handlers */
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	/* The allpot handler */
+	{ input_port_3_r }
+};
+
+static struct Samplesinterface astdelux_samples_interface =
+{
+	3	/* 3 channels */
+};
+
 
 static struct MachineDriver astdelux_machine_driver =
 {
@@ -568,15 +613,16 @@ static struct MachineDriver astdelux_machine_driver =
 			1500000,	/* 1.5 Mhz */
 			0,
 			astdelux_readmem,astdelux_writemem,0,0,
-			asteroid_interrupt,4 /* approx 250Hz? */
+			0, 0, /* no vblank based interrupt */
+			asteroid_interrupt, 240 /* 240Hz? */
 		}
 	},
-	60, /* frames per second */
+	60, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
 	1,
-	astdelux_init_machine,
+	0,
 
 	/* video hardware */
-	288, 224, { 0, 1020, 70, 950 },
+	400, 300, { 0, 1040, 70, 950 },
 	gfxdecodeinfo,
 	256, 256,
 	avg_init_colors,
@@ -588,10 +634,24 @@ static struct MachineDriver astdelux_machine_driver =
 	dvg_screenrefresh,
 
 	/* sound hardware */
-	0,
-	astdelux_sh_start,
-	pokey_sh_stop,
-	pokey_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_POKEY,
+			&pokey_interface
+		},
+		{
+			SOUND_SAMPLES,
+			&astdelux_samples_interface
+		}
+	}
+};
+
+
+
+static struct Samplesinterface llander_samples_interface =
+{
+	3	/* 3 channels */
 };
 
 static struct MachineDriver llander_machine_driver =
@@ -603,15 +663,16 @@ static struct MachineDriver llander_machine_driver =
 			1500000,	/* 1.5 Mhz */
 			0,
 			llander_readmem, llander_writemem,0,0,
-			llander_interrupt,4 /* approx 250Hz? */
+			0, 0, /* no vblank based interrupt */
+			llander_interrupt, 240 /* 240Hz? */
 		}
 	},
-	60, /* frames per second */
+	40, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
 	1,
-	llander_init_machine,
+	0,
 
 	/* video hardware */
-	288, 224, { -30, 1050, 0, 900 },
+	400, 300, { 0, 1050, 0, 900 },
 	gfxdecodeinfo,
 	256, 256,
 	avg_init_colors,
@@ -623,10 +684,13 @@ static struct MachineDriver llander_machine_driver =
 	dvg_screenrefresh,
 
 	/* sound hardware */
-	0,
-	0,
-	0,
-	asteroid_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_SAMPLES,
+			&llander_samples_interface
+		}
+	}
 };
 
 /***************************************************************************
@@ -678,6 +742,7 @@ struct GameDriver asteroid_driver =
 {
 	"Asteroids (rev 1)",
 	"asteroid",
+	"Brad Oliver (Mame Driver)\n"
 	VECTOR_TEAM,
 
 	&asteroid_machine_driver,
@@ -687,9 +752,9 @@ struct GameDriver asteroid_driver =
 	asteroid_sample_names,
 	0,	/* sound_prom */
 
-	0, asteroid_input_ports, 0, 0, 0,
+	asteroid_input_ports,
 
-	color_prom, 0, 0,
+	asteroid_color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	asteroid1_hiload, asteroid1_hisave
@@ -699,6 +764,7 @@ struct GameDriver asteroi2_driver =
 {
 	"Asteroids (rev 2)",
 	"asteroi2",
+	"Brad Oliver (Mame Driver)\n"
 	VECTOR_TEAM,
 
 	&asteroid_machine_driver,
@@ -708,9 +774,9 @@ struct GameDriver asteroi2_driver =
 	asteroid_sample_names,
 	0,	/* sound_prom */
 
-	0, asteroid_input_ports, 0, 0, 0,
+	asteroid_input_ports,
 
-	color_prom, 0, 0,
+	asteroid_color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	asteroid2_hiload, asteroid2_hisave
@@ -728,6 +794,7 @@ ROM_START( astdelux_rom )
 	ROM_LOAD( "036799.01", 0x5000, 0x0800, 0x5bcf256d )
 ROM_END
 
+#if 0 /* anyone have a correct romset? */
 ROM_START( astdelu1_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "036430.01", 0x6000, 0x0800, 0x4bca4e5e )
@@ -739,6 +806,9 @@ ROM_START( astdelu1_rom )
 	ROM_LOAD( "036800.01", 0x4800, 0x0800, 0xc05aa9d8 )
 	ROM_LOAD( "036799.01", 0x5000, 0x0800, 0x5bcf256d )
 ROM_END
+#endif
+
+
 
 static const char *astdelux_sample_names[] =
 {
@@ -753,6 +823,7 @@ struct GameDriver astdelux_driver =
 {
 	"Asteroids Deluxe",
 	"astdelux",
+	"Brad Oliver (Mame Driver)\n"
 	VECTOR_TEAM,
 
 	&astdelux_machine_driver,
@@ -762,18 +833,20 @@ struct GameDriver astdelux_driver =
 	astdelux_sample_names,
 	0,	/* sound_prom */
 
-	0, astdelux_input_ports, 0, 0, 0,
+	astdelux_input_ports,
 
-	color_prom, 0, 0,
+	astdelux_color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	atari_vg_earom_load, atari_vg_earom_save
 };
 
+#if 0 /* the romset floating around is probably broken */
 struct GameDriver astdelu1_driver =
 {
 	"Asteroids Deluxe (alternate version)",
 	"astdelu1",
+	"Brad Oliver (Mame Driver)\n"
 	VECTOR_TEAM,
 
 	&astdelux_machine_driver,
@@ -783,13 +856,14 @@ struct GameDriver astdelu1_driver =
 	asteroid_sample_names,
 	0,	/* sound_prom */
 
-	0, astdelux_input_ports, 0, 0, 0,
+	astdelux_input_ports,
 
-	color_prom, 0, 0,
+	astdelux_color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	atari_vg_earom_load, atari_vg_earom_save
 };
+#endif
 
 static const char *llander_sample_names[] =
 {
@@ -816,6 +890,7 @@ struct GameDriver llander_driver =
 {
 	"Lunar Lander",
 	"llander",
+	"Brad Oliver (Mame Driver)\n"
 	VECTOR_TEAM,
 
 	&llander_machine_driver,
@@ -825,9 +900,9 @@ struct GameDriver llander_driver =
 	llander_sample_names,
 	0,	/* sound_prom */
 
-	0, llander_input_ports, 0, 0, 0,
+	llander_input_ports,
 
-	color_prom, 0, 0,
+	asteroid_color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	0, 0

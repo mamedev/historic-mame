@@ -7,12 +7,12 @@
 **************************************************************************/
 
 #include "driver.h"
-#include "Z80.h"
+#include "Z80/Z80.h"
+
+
 
 extern void CopyLine(int Line);
 extern void Gorf_CopyLine(int Line);
-extern int interrupt(void);
-extern int Z80_IRQ;
 
 /****************************************************************************
  * Scanline Interrupt System
@@ -50,29 +50,36 @@ void wow_interrupt_enable_w(int offset, int data)
           	GorfDelay = NextScanInt - 1;
         }
 
+#ifdef MAME_DEBUG
         if (errorlog) fprintf(errorlog,"Gorf Delay set to %02x\n",GorfDelay);
+#endif
+
     }
 
+#ifdef MAME_DEBUG
     if (errorlog) fprintf(errorlog,"Interrupt Flag set to %02x\n",InterruptFlag);
+#endif
 }
 
 void wow_interrupt_w(int offset, int data)
 {
 	/* A write to 0F triggers an interrupt at that scanline */
 
+#ifdef MAME_DEBUG
 	if (errorlog) fprintf(errorlog,"Scanline interrupt set to %02x\n",data);
+#endif
 
     NextScanInt = data;
 }
 
 int wow_interrupt(void)
 {
-	int res=Z80_IGNORE_INT;
+	int res=ignore_interrupt();
     int Direction;
 
     CurrentScan++;
 
-    if (CurrentScan == Machine->drv->cpu[0].interrupts_per_frame)
+    if (CurrentScan == Machine->drv->cpu[0].vblank_interrupts_per_frame)
 	{
 		CurrentScan = 0;
 
@@ -115,7 +122,7 @@ int wow_interrupt(void)
 
 int gorf_interrupt(void)
 {
-	int res=Z80_IGNORE_INT;
+	int res=ignore_interrupt();
 
     CurrentScan++;
 
@@ -131,7 +138,6 @@ int gorf_interrupt(void)
     if ((InterruptFlag & 0x08) && (CurrentScan == NextScanInt))
 		res = interrupt();
 
-
     /* Gorf Special Bits */
 
     if (Countdown>0) Countdown--;
@@ -139,7 +145,9 @@ int gorf_interrupt(void)
     if ((InterruptFlag & 0x10) && (CurrentScan==GorfDelay))
 		res = interrupt() & 0xF0;
 
-	cpu_clear_pending_interrupts(0);
+/*	cpu_clear_pending_interrupts(0); */
+
+	Z80_Clear_Pending_Interrupts();					/* Temporary Fix */
 
     return res;
 }
@@ -194,7 +202,7 @@ static const int ControllerTable[64] = {
 
 int seawolf2_controller1_r(int offset)
 {
-    return (input_port_0_r(0) & 0x80) + ControllerTable[Controller1];
+    return (input_port_0_r(0) & 0xC0) + ControllerTable[Controller1];
 }
 
 int seawolf2_controller2_r(int offset)

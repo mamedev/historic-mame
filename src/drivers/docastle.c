@@ -70,13 +70,9 @@ ec00      sound port 4
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/sn76496.h"
 
 
 
-extern unsigned char *docastle_intkludge1,*docastle_intkludge2;
-int docastle_intkludge1_r(int offset);
-int docastle_intkludge2_r(int offset);
 int docastle_shared0_r(int offset);
 int docastle_shared1_r(int offset);
 void docastle_shared0_w(int offset,int data);
@@ -87,8 +83,6 @@ void docastle_vh_convert_color_prom(unsigned char *palette, unsigned char *color
 int docastle_vh_start(void);
 void docastle_vh_stop(void);
 void docastle_vh_screenrefresh(struct osd_bitmap *bitmap);
-
-int docastle_sh_start(void);
 
 
 
@@ -148,70 +142,93 @@ static struct MemoryWriteAddress writemem2[] =
 
 
 
-static struct InputPort input_ports[] =
-{
-	{	/* IN0 */
-		0xff,
-		{ OSD_KEY_RIGHT, OSD_KEY_UP, OSD_KEY_LEFT, OSD_KEY_DOWN,
-				OSD_KEY_Q, OSD_KEY_W, OSD_KEY_E, OSD_KEY_R },
-		{ OSD_JOY_RIGHT, OSD_JOY_UP, OSD_JOY_LEFT, OSD_JOY_DOWN,
-				0, 0, 0, 0 }
-	},
-	{	/* IN1 */
-		0xff,
-		{ OSD_KEY_LCONTROL, 0, 0, OSD_KEY_1,
-				0, 0, 0, OSD_KEY_2 },
-		{ OSD_JOY_FIRE, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* IN2 */
-		0xff,
-		{ OSD_KEY_T, OSD_KEY_C, OSD_KEY_5, OSD_KEY_Z, OSD_KEY_4, OSD_KEY_3, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSWA */
-		0xdf,
-		{ 0, 0, OSD_KEY_F1, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* COIN */
-		0xff,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{ -1 }	/* end of table */
-};
+INPUT_PORTS_START( input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
 
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* reported as not used */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* reported as 2 Player Fire */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* reported as 2 Player Jump */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* reported as not used */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
+	PORT_START	/* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_TILT )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* reported as test */
+/* coin input must be active for 32 frames to be consistently recognized */
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_COIN3 | IPF_IMPULSE, "Coin Aux", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 32)
+	PORT_DIPNAME( 0x08, 0x08, "Freeze", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* reported as not used */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* reported as not used */
 
-static struct KEYSet keys[] =
-{
-	{ 0, 1, "MOVE UP" },
-	{ 0, 2, "MOVE LEFT"  },
-	{ 0, 0, "MOVE RIGHT" },
-	{ 0, 3, "MOVE DOWN" },
-	{ 1, 0, "HAMMER" },
-	{ -1 }
-};
+	PORT_START	/* DSW0 */
+	PORT_DIPNAME( 0x03, 0x03, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x03, "Easy" )
+	PORT_DIPSETTING(    0x02, "Medium" )
+	PORT_DIPSETTING(    0x01, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_BITX(    0x04, 0x04, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Rack Test", OSD_KEY_F1, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x04, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x08, 0x08, "DSW5", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x10, 0x10, "Extra", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "Easy" )
+	PORT_DIPSETTING(    0x00, "Hard" )
+	PORT_DIPNAME( 0x20, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x20, "Cocktail" )
+	PORT_DIPNAME( 0xc0, 0xc0, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0xc0, "3" )
+	PORT_DIPSETTING(    0x80, "4" )
+	PORT_DIPSETTING(    0x40, "5" )
 
+	PORT_START	/* DSW1 */
+	PORT_DIPNAME( 0x0f, 0x0f, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x06, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x08, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0a, "2 Coins/1 Credits" )
+	PORT_DIPSETTING(    0x07, "3 Coins/2 Credits" )
+	PORT_DIPSETTING(    0x0f, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x09, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x0e, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x0d, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x0c, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0x0b, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0x00, "Free Play" )
+	/* 0x01, 0x02, 0x03, 0x04, 0x05 all give 1 Coin/1 Credit */
+	PORT_DIPNAME( 0xf0, 0xf0, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x60, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x80, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xa0, "2 Coins/1 Credits" )
+	PORT_DIPSETTING(    0x70, "3 Coins/2 Credits" )
+	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x90, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0xe0, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0xd0, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0xc0, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0xb0, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0x00, "Free Play" )
+	/* 0x10, 0x20, 0x30, 0x40, 0x50 all give 1 Coin/1 Credit */
+INPUT_PORTS_END
 
-static struct DSW dsw[] =
-{
-	{ 3, 0xc0, "LIVES", { "2", "5", "4", "3" }, 1 },
-	{ 3, 0x03, "DIFFICULTY", { "HARDEST", "HARD", "MEDIUM", "EASY" }, 1 },
-	{ 3, 0x10, "EXTRA", { "HARD", "EASY" }, 1 },
-	{ 3, 0x08, "SW4", { "ON", "OFF" }, 1 },
-	{ -1 }
-};
-
-static struct DSW dsw_unicorn[] =
-{
-	{ 3, 0xc0, "LIVES", { "2", "5", "4", "3" }, 1 },
-	{ 3, 0x03, "DIFFICULTY", { "HARDEST", "HARD", "MEDIUM", "EASY" }, 1 },
-	{ 3, 0x10, "EXTRA", { "HARD", "EASY" }, 1 },
-        { 3, 0x08, "DSW 4", { "ON", "OFF" }, 1 },
-        { 3, 0x04, "RACK ADVANCE", { "ON", "OFF" }, 1 },
-	{ -1 }
-};
 
 
 static struct GfxLayout charlayout =
@@ -270,28 +287,36 @@ static unsigned char color_prom[] =
 
 
 
+static struct SN76496interface sn76496_interface =
+{
+	4,	/* 4 chips */
+	4000000,	/* 4 Mhz? */
+	{ 255, 255, 255, 255 }
+};
+
+
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_Z80,
-			4000000,	/* 4 Mhz ? */
+			4000000,	/* 4 MHz */
 			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80,
-			4000000,	/* 4 Mhz ??? */
+			4000000,	/* 4 MHz */
 			2,	/* memory region #2 */
 			readmem2,writemem2,0,0,
 			interrupt,8
 		}
 	},
-	60,
-	100,	/* 100 CPU slices per frame - an high value to ensure proper */
-			/* synchronization of the CPUs */
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when communication takes place */
 	0,
 
 	/* video hardware */
@@ -307,10 +332,13 @@ static struct MachineDriver machine_driver =
 	docastle_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	docastle_sh_start,
-	SN76496_sh_stop,
-	SN76496_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_SN76496,
+			&sn76496_interface
+		}
+	}
 };
 
 
@@ -432,7 +460,7 @@ struct GameDriver docastle_driver =
 	0,
 	0,	/* sound_prom */
 
-	input_ports, 0, 0/*TBR*/,dsw, keys,
+	input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_ROTATE_270,
@@ -452,7 +480,7 @@ struct GameDriver docastl2_driver =
 	0,
 	0,	/* sound_prom */
 
-	input_ports, 0, 0/*TBR*/,dsw, keys,
+	input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_ROTATE_270,
@@ -472,7 +500,7 @@ struct GameDriver dounicorn_driver =
 	0,
 	0,	/* sound_prom */
 
-	input_ports, 0, 0/*TBR*/,dsw_unicorn, keys,
+	input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_ROTATE_270,

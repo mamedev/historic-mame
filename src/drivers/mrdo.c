@@ -30,11 +30,9 @@ f800      playfield 0 X scroll position
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/sn76496.h"
+#include "Z80/Z80.h"
 
 
-
-int mrdo_SECRE_r(int offset);
 
 extern unsigned char *mrdo_videoram2;
 extern unsigned char *mrdo_colorram2;
@@ -47,7 +45,18 @@ int mrdo_vh_start(void);
 void mrdo_vh_stop(void);
 void mrdo_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-int ladybug_sh_start(void);
+
+
+/* this looks like some kind of protection. The game doesn't clear the screen */
+/* if a read from this address doesn't return the value it expects. */
+int mrdo_SECRE_r(int offset)
+{
+	Z80_Regs regs;
+
+
+	Z80_GetRegs(&regs);
+	return RAM[regs.HL.D];
+}
 
 
 
@@ -208,6 +217,15 @@ static unsigned char color_prom[] =
 
 
 
+static struct SN76496interface sn76496_interface =
+{
+	2,	/* 2 chips */
+	4000000,	/* 4 MHz */
+	{ 255, 255 }
+};
+
+
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -220,7 +238,7 @@ static struct MachineDriver machine_driver =
 			interrupt,1
 		}
 	},
-	60,
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* single CPU, no need for interleaving */
 	0,
 
@@ -237,10 +255,13 @@ static struct MachineDriver machine_driver =
 	mrdo_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	ladybug_sh_start,
-	SN76496_sh_stop,
-	SN76496_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_SN76496,
+			&sn76496_interface
+		}
+	}
 };
 
 
@@ -327,7 +348,7 @@ static int hiload(void)
 
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-			osd_fread(f,&RAM[0xe017],10*10+2);
+			osd_fread(f,&RAM[0xe017],10*10);
 			osd_fclose(f);
 		}
 
@@ -336,8 +357,6 @@ static int hiload(void)
 	else return 0;	/* we can't load the hi scores yet */
 }
 
-
-
 static void hisave(void)
 {
 	void *f;
@@ -345,7 +364,7 @@ static void hisave(void)
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		osd_fwrite(f,&RAM[0xe017],10*10+2);
+		osd_fwrite(f,&RAM[0xe017],10*10);
 		osd_fclose(f);
 	}
 }
@@ -364,7 +383,7 @@ struct GameDriver mrdo_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_ROTATE_270,
@@ -384,7 +403,7 @@ struct GameDriver mrdot_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_ROTATE_270,
@@ -404,7 +423,7 @@ struct GameDriver mrlo_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_ROTATE_270,
@@ -424,7 +443,7 @@ struct GameDriver mrdu_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_ROTATE_270,

@@ -54,8 +54,6 @@ interrupt mode 1 triggered by the main CPU
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/generic.h"
-#include "sndhrdw/8910intf.h"
 
 
 
@@ -74,13 +72,13 @@ void scramble_background_w(int offset, int data);	/* MJC 051297 */
 int scramble_vh_start(void);
 void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap);
 int scramble_vh_interrupt(void);
-
-void scramble_sh_irqtrigger_w(int offset,int data);
-int scramble_sh_start(void);
-int frogger_sh_interrupt(void);
-int frogger_sh_start(void);
-
 void scramble_background_w(int offset, int data);	/* MJC 051297 */
+
+int scramble_portB_r(int offset);
+void scramble_sh_irqtrigger_w(int offset,int data);
+
+int frogger_portB_r(int offset);
+
 
 
 static struct MemoryReadAddress scramble_readmem[] =
@@ -434,8 +432,8 @@ static struct GfxLayout bulletlayout =
 	1,	/* just one */
 	1,	/* 1 bit per pixel */
 	{ 0 },
-	{ 3, 0, 0, 0, 0, 0, 0 },	/* I "know" that this bit is 1 */
-	{ 0 },	/* I "know" that this bit is 1 */
+	{ 3, 0, 0, 0, 0, 0, 0 },	/* I "know" that this bit of the */
+	{ 0 },						/* graphics ROMs is 1 */
 	0	/* no use */
 };
 static struct GfxLayout theend_bulletlayout =
@@ -445,8 +443,8 @@ static struct GfxLayout theend_bulletlayout =
 	1,	/* just one */
 	1,	/* 1 bit per pixel */
 	{ 0 },
-	{ 2, 2, 2, 2, 0, 0, 0 },	/* I "know" that this bit is 1 */
-	{ 0 },	/* I "know" that this bit is 1 */
+	{ 2, 2, 2, 2, 0, 0, 0 },	/* I "know" that this bit of the */
+	{ 0 },						/* graphics ROMs is 1 */
 	0	/* no use */
 };
 
@@ -472,11 +470,12 @@ static struct GfxDecodeInfo theend_gfxdecodeinfo[] =
 
 static unsigned char scramble_color_prom[] =
 {
-	/* palette */
 	0x00,0x17,0xC7,0xF6,0x00,0x17,0xC0,0x3F,0x00,0x07,0xC0,0x3F,0x00,0xC0,0xC4,0x07,
 	0x00,0xC7,0x31,0x17,0x00,0x31,0xC7,0x3F,0x00,0xF6,0x07,0xF0,0x00,0x3F,0x07,0xC4
 };
 
+/* these colors are nowhere near the real Frogger, but they match the actual ones */
+/* of the bootleg the ROMs come from. */
 static unsigned char froggers_color_prom[] =
 {
 	/* palette */
@@ -484,19 +483,36 @@ static unsigned char froggers_color_prom[] =
 	0x00,0x7F,0xCF,0xF9,0x00,0x57,0xB7,0xC3,0x00,0xFF,0x7F,0x87,0x00,0x79,0x4F,0xFF
 };
 
-static unsigned char triplep_color_prom[] =
-{
-	/* palette */
-	0x00,0x14,0xF0,0x3F,0x00,0xF8,0x9F,0x3F,0x00,0x80,0x3D,0xFB,0x00,0x07,0x00,0xA5,
-	0x00,0x24,0xFF,0x3F,0x00,0x1E,0x2F,0x07,0x00,0x5E,0xD9,0xBF,0x00,0x07,0xFF,0x3F
-};
-
 static unsigned char amidars_color_prom[] =
 {
-	/* palette */
 	0x00,0x07,0xC0,0xB6,0x00,0x38,0xC5,0x67,0x00,0x30,0x07,0x3F,0x00,0x07,0x30,0x3F,
 	0x00,0x3F,0x30,0x07,0x00,0x38,0x67,0x3F,0x00,0xFF,0x07,0xDF,0x00,0xF8,0x07,0xFF
 };
+
+
+
+static struct AY8910interface scramble_ay8910_interface =
+{
+	2,	/* 2 chips */
+	14318000/8,	/* 1.78975 Mhz */
+	{ 0x60ff, 0x60ff },
+	{ soundlatch_r },
+	{ scramble_portB_r },
+	{ 0 },
+	{ 0 }
+};
+
+static struct AY8910interface frogger_ay8910_interface =
+{
+	1,	/* 1 chip */
+	14318000/8,	/* 1.78975 Mhz */
+	{ 0x60ff },
+	{ soundlatch_r },
+	{ frogger_portB_r },
+	{ 0 },
+	{ 0 }
+};
+
 
 
 static struct MachineDriver scramble_machine_driver =
@@ -505,21 +521,21 @@ static struct MachineDriver scramble_machine_driver =
 	{
 		{
 			CPU_Z80,
-			3072000,	/* 3.072 Mhz */
+			18432000/6,	/* 3.072 Mhz */
 			0,
 			scramble_readmem,writemem,0,0,
 			scramble_vh_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			1789750,	/* 1.78975 Mhz */
+			14318000/8,	/* 1.78975 Mhz */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
 	},
-	60,
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	60, 2500,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
 	/* video hardware */
@@ -535,10 +551,13 @@ static struct MachineDriver scramble_machine_driver =
 	galaxian_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	scramble_sh_start,
-	AY8910_sh_stop,
-	AY8910_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&scramble_ay8910_interface
+		}
+	}
 };
 
 /* same as Scramble, the only differences are gfxdecodeinfo and readmem */
@@ -548,21 +567,21 @@ static struct MachineDriver theend_machine_driver =
 	{
 		{
 			CPU_Z80,
-			3072000,	/* 3.072 Mhz */
+			18432000/6,	/* 3.072 Mhz */
 			0,
 			readmem,writemem,0,0,
 			scramble_vh_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			1789750,	/* 1.78975 Mhz */
+			14318000/8,	/* 1.78975 Mhz */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
 	},
-	60,
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	60, 2500,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
 	/* video hardware */
@@ -578,10 +597,13 @@ static struct MachineDriver theend_machine_driver =
 	galaxian_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	scramble_sh_start,
-	AY8910_sh_stop,
-	AY8910_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&scramble_ay8910_interface
+		}
+	}
 };
 
 static struct MachineDriver froggers_machine_driver =
@@ -590,21 +612,21 @@ static struct MachineDriver froggers_machine_driver =
 	{
 		{
 			CPU_Z80,
-			3072000,	/* 3.072 Mhz */
+			18432000/6,	/* 3.072 Mhz */
 			0,
 			readmem,writemem,0,0,
 			scramble_vh_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			1789750,	/* 1.78975 Mhz */
+			14318000/8,	/* 1.78975 Mhz */
 			2,	/* memory region #2 */
 			froggers_sound_readmem,froggers_sound_writemem,froggers_sound_readport,froggers_sound_writeport,
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
 	},
-	60,
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	60, 2500,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
 	/* video hardware */
@@ -620,10 +642,13 @@ static struct MachineDriver froggers_machine_driver =
 	galaxian_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	frogger_sh_start,
-	AY8910_sh_stop,
-	AY8910_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&frogger_ay8910_interface
+		}
+	}
 };
 
 
@@ -946,7 +971,7 @@ struct GameDriver scramble_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/, scramble_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	scramble_input_ports,
 
 	scramble_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -966,7 +991,7 @@ struct GameDriver atlantis_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/, atlantis_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	atlantis_input_ports,
 
 	scramble_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -986,7 +1011,7 @@ struct GameDriver theend_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/, theend_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	theend_input_ports,
 
 	scramble_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -1006,7 +1031,7 @@ struct GameDriver froggers_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/, froggers_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	froggers_input_ports,
 
 	froggers_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -1026,7 +1051,7 @@ struct GameDriver amidars_driver =
 	0,
 	0,	/* sound_prom */
 
-	0, amidars_input_ports, 0, 0, 0,
+	amidars_input_ports,
 
 	amidars_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -1148,6 +1173,28 @@ INPUT_PORTS_START( triplep_input_ports )
 INPUT_PORTS_END
 
 
+
+static unsigned char triplep_color_prom[] =
+{
+	0x00,0x14,0xF0,0x3F,0x00,0xF8,0x9F,0x3F,0x00,0x80,0x3D,0xFB,0x00,0x07,0x00,0xA5,
+	0x00,0x24,0xFF,0x3F,0x00,0x1E,0x2F,0x07,0x00,0x5E,0xD9,0xBF,0x00,0x07,0xFF,0x3F
+};
+
+
+
+static struct AY8910interface triplep_ay8910_interface =
+{
+	1,	/* 1 chip */
+	1789750,	/* 1.78975 MHz? */
+	{ 0x30ff },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 }
+};
+
+
+
 /* Triple Punch is different - only one CPU, one 8910 */
 static struct MachineDriver triplep_machine_driver =
 {
@@ -1155,14 +1202,14 @@ static struct MachineDriver triplep_machine_driver =
 	{
 		{
 			CPU_Z80,
-			3072000,	/* 3.072 Mhz? */
+			3072000,	/* 3.072 Mhz ? */
 			0,
 			triplep_readmem,triplep_writemem,triplep_readport,triplep_writeport,
 			scramble_vh_interrupt,1
 		}
 	},
-	60,
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	60, 2500,/* ? */	/* frames per second, vblank duration */
+	1,	/* single CPU, no need for interleaving */
 	0,
 
 	/* video hardware */
@@ -1178,10 +1225,13 @@ static struct MachineDriver triplep_machine_driver =
 	galaxian_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	frogger_sh_start,
-	AY8910_sh_stop,
-	AY8910_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&triplep_ay8910_interface
+		}
+	}
 };
 
 ROM_START( triplep_rom )
@@ -1208,7 +1258,7 @@ struct GameDriver triplep_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/, triplep_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	triplep_input_ports,
 
 	triplep_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,

@@ -1,8 +1,8 @@
-/* ASG 971105 #include "cpudefs.h"*/
-#include "M68000.h"	/* ASG 971105 */
+#include "M68000.h"
 #include "driver.h"
 #include "cpuintrf.h"
 #include "readcpu.h"
+#include "osd_dbg.h"
 #include <stdio.h>
 
 /* LBO 090597 - added these lines and made them extern in cpudefs.h */
@@ -17,19 +17,15 @@ union flagu intel_flag_lookup[256];
 union flagu regflags;
 
 extern int cpu_interrupt(void);
-/* ASG 971105 extern MC68000_disasm(CPTR, CPTR*, int); */
 extern void BuildCPU(void);
 
 #define MC68000_interrupt() (cpu_interrupt())
 
-/* ASG 971005 -- changed to cpu_readmem24/cpu_writemem24 */
 #define ReadMEM(A) (cpu_readmem24(A))
 #define WriteMEM(A,V) (cpu_writemem24(A,V))
 
-/* ASG 971105 static int icount=0;*/
-/* ASG 971105 static int MC68000_IPeriod=0;*/
 int MC68000_ICount;
-static int pending_interrupts;
+int pending_interrupts;
 
 static int InitStatus=0;
 
@@ -37,7 +33,7 @@ extern FILE * errorlog;
 
 
 
-void m68k_dumpstate()
+void m68k_dumpstate(void)
 {
    int i;
    CPTR nextpc;
@@ -73,65 +69,6 @@ void m68k_dumpstate()
 
 
 
-/* ASG 971010 -- removed to macros in cpudefs.h
-#ifdef ASM_MEMORY
-UBYTE get_byte(LONG a);
-void put_byte(LONG a, UBYTE b);
-void put_word(LONG a, UWORD b);
-UWORD get_word(LONG a);
-void put_long(LONG a, ULONG b);
-ULONG get_long(LONG a);
-
-#else
-
-UBYTE get_byte(LONG a) {
-   return( ReadMEM(a) );
-}
-
-void put_byte(LONG a, UBYTE b) {
-   WriteMEM(a, b);
-}
-
-UWORD get_word(LONG a) {
-
-     return ( (ReadMEM(a)<<8) | ReadMEM(a+1) );
-}
-
-void put_word(LONG a, UWORD b) {
-   WriteMEM(a, (UBYTE)((b&0xFF00)>>8));
-   WriteMEM(a+1, (UBYTE)(b&0x00FF));
-}
-
-ULONG get_long(LONG a) {
-
-     return ( (ReadMEM(a)<<24) + (ReadMEM(a+1)<<16)
-              + (ReadMEM(a+2)<<8) + ReadMEM(a+3) );
-
-}
-
-void put_long(LONG a, ULONG b) {
-   WriteMEM(a, (UBYTE)((b&0xFF000000)>>24));
-   WriteMEM(a+1, (UBYTE)((b&0x00FF0000)>>16));
-   WriteMEM(a+2, (UBYTE)((b&0x0000FF00)>>8));
-   WriteMEM(a+3, (UBYTE)(b&0x000000FF));
-}
-
-#endif*/
-
-
-/*
-UWORD get_word(LONG a) {
-   UBYTE bank=(a&0xFF0000)>>16;
-   UWORD offs=(a&0xFFFF);
-   if (bank==0xC4) CheckInput(offs);
-   return((MRAM[bank][offs]*256)+MRAM[bank][offs+1]);
-}
-*/
-
-
-
-
-
 
 
 static void initCPU(void)
@@ -155,11 +92,12 @@ static void initCPU(void)
 
 }
 
-void inline Exception(int nr, CPTR oldpc)
+inline void Exception(int nr, CPTR oldpc)
 {
    MakeSR();
 
    if(!regs.s) {
+   	  regs.usp=regs.a[7];
       regs.a[7]=regs.isp;
       regs.s=1;
    }
@@ -173,32 +111,31 @@ void inline Exception(int nr, CPTR oldpc)
    regs.t1 = regs.t0 = regs.m = 0;
 }
 
-void inline Interrupt68k(int level)
+inline void Interrupt68k(int level)
 {
    int ipl=(regs.sr&0xf00)>>8;
-   if(level>=ipl)
+   if(level>ipl)
    {
    	Exception(24+level,0);
-   	pending_interrupts &= ~(1 << (level-1));	/* ASG 971105 */
+   	pending_interrupts &= ~(1 << (level + 24));
+   	regs.intmask = level;
+   	MakeSR();
    }
 }
 
-void Initialisation() {
+void Initialisation(void) {
    /* Init 68000 emulator */
    BuildCPU();
    initCPU();
 }
 
-void MC68000_Reset(void)	/* ASG 971105 */
+void MC68000_Reset(void)
 {
 if (!InitStatus)
 {
 	Initialisation();
 	InitStatus=1;
 }
-
-/* ASG 971105   MC68000_IPeriod = IPeriod;
-  icount = IPeriod;*/
 
    regs.a[7]=get_long(0);
    m68k_setpc(get_long(4));
@@ -213,7 +150,7 @@ if (!InitStatus)
    regs.vbr = regs.sfc = regs.dfc = 0;
    regs.fpcr = regs.fpsr = regs.fpiar = 0;
 
-   pending_interrupts = 0;		/* ASG 971105 */
+   pending_interrupts = 0;
 }
 
 
@@ -235,20 +172,20 @@ void MC68000_GetRegs(MC68000_Regs *dst)
 	dst->pending_interrupts = pending_interrupts;
 }
 
-/* ASG 971105 */
+
 void MC68000_Cause_Interrupt(int level)
 {
 	if (level >= 1 && level <= 7)
-		pending_interrupts |= (1 << (level-1));
+		pending_interrupts |= 1 << (24 + level);
 }
 
-/* ASG 971105 */
+
 void MC68000_Clear_Pending_Interrupts(void)
 {
-	pending_interrupts = 0;
+	pending_interrupts &= ~0xff000000;
 }
 
-/* ASG 971105 */
+
 int  MC68000_GetPC(void)
 {
 	return regs.pc;
@@ -258,29 +195,44 @@ int  MC68000_GetPC(void)
 
 /* Execute one 68000 instruction */
 
-/* ASG 971105 */
 int MC68000_Execute(int cycles)
 {
 	UWORD opcode;
 
+	if ((pending_interrupts & MC68000_STOP) && !(pending_interrupts & 0xff000000))
+		return cycles;
+
 	MC68000_ICount = cycles;
 	do
 	{
-		if (pending_interrupts)
+#ifdef MAME_DEBUG
 		{
-			static unsigned char inttable[128] =
-			{
-				0, 1, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4,
-				5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5,
-				6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
-				6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6,
-				7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
-				7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
-				7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7,
-				7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7, 7
-			};
-			Interrupt68k (inttable[pending_interrupts]);
+			extern int mame_debug;
+			if (mame_debug)
+				MAME_Debug();
 		}
+#endif
+
+		if (pending_interrupts & 0xff000000)
+		{
+			int level, mask = 0x80000000;
+			for (level = 7; level; level--, mask >>= 1)
+				if (pending_interrupts & mask)
+					break;
+			Interrupt68k (level);
+		}
+
+{	/* ASG 980413 */
+	extern int previouspc;
+	previouspc = regs.pc;
+}
+	#if MC68000ASM_DEBUG
+	{
+	void MC68000_MiniTrace(unsigned long *d, unsigned long *a, unsigned long pc, unsigned long sr, int icount);
+	MakeSR();
+	MC68000_MiniTrace(regs.d, regs.a, regs.pc, regs.sr, MC68000_ICount);
+	}
+	#endif
 
 		#ifdef ASM_MEMORY
 			opcode=nextiword_opcode();
@@ -288,7 +240,7 @@ int MC68000_Execute(int cycles)
 			opcode=nextiword();
 		#endif
 
-		MC68000_ICount -= 15;
+		MC68000_ICount -= 12;
 		cpufunctbl[opcode](opcode);
 
 	}

@@ -1,49 +1,12 @@
 #include "driver.h"
 #include "inptport.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/generic.h"
 #include "vidhrdw/avgdvg.h"
-#include "sndhrdw/pokyintf.h"
 
-/* globals (to this module) */
+/* globals */
 
-
-int quantum_ram_size;
-
-static unsigned char *ram;	/* ASG 971124 */
-static unsigned char *vram;
-static unsigned char nvram[256];
-
-
-/*** quantum_avg_start
-*
-* Purpose: our own hook to the Atari Vector Graphics start
-*
-* Returns: avg_start()
-*
-* History: 11/19/97 PF Created
-*
-**************************/
-int quantum_avg_start(void)
-{
-	/* dynamically allocate this to be polite -
-	   running mame != always running my driver! :) */
-	vram = (unsigned char *)malloc(vectorram_size);
-
-	if (!vram)
-		return 1;
-
-	ram = malloc(quantum_ram_size);
-	if (!ram)
-	{
-		free (vram);
-		return 1;
-	}
-	cpu_setbank(1,ram);
-
-	vectorram = vram;
-	return avg_start_quantum();
-}
+unsigned char *quantum_ram;
+unsigned char *quantum_nvram;
 
 
 /*** quantum_interrupt
@@ -57,9 +20,6 @@ int quantum_avg_start(void)
 **************************/
 int quantum_interrupt(void)
 {
-	if (cpu_getiloops() == 5)
-		avgdvg_clr_busy();
-
 	return 1; /* ipl0' == ivector 1 */
 }
 
@@ -74,9 +34,6 @@ int quantum_interrupt(void)
 **************************/
 int quantum_switches_r(int offset)
 {
-	if (!(offset & 1))
-		return 0xff;
-
 	return (input_port_0_r(0) |
 		(avgdvg_done() ? 1 : 0));
 }
@@ -98,28 +55,6 @@ void quantum_led_write(int offset, int value)
 }
 
 
-/*** quantum_vram_read, quantum_vram_write
-*
-* Purpose: read and write vector memory
-*	no hokey translation is done, since the vector memory
-*	was 16 bit
-*
-* Returns: Nothing
-*
-* History: 11/19/97 PF Created
-*
-**************************/
-void quantum_vram_write(int offset, int value)
-{
-	vram[offset % 0x2000] = value;
-}
-
-int quantum_vram_read(int offset)
-{
-	return vram[offset % 0x2000];
-}
-
-
 /*** quantum_nvram_write, quantum_nvram_read
 *
 * Purpose: read and write non volitile memory.
@@ -132,18 +67,12 @@ int quantum_vram_read(int offset)
 **************************/
 void quantum_nvram_write(int offset, int value)
 {
-	if (!(offset & 0x01))
-		return;
-
-	nvram[(offset >> 1) % sizeof nvram] = (unsigned char)(value & 0xF);
+	quantum_nvram[offset >> 1] = (unsigned char)(value & 0xF);
 }
 
 int quantum_nvram_read(int offset)
 {
-	if (!(offset & 0x01))
-		return 0xff;
-
-	return (int)(nvram[(offset >> 1) % sizeof nvram]);
+	return (int)(quantum_nvram[offset >> 1]);
 }
 
 
@@ -159,10 +88,6 @@ int quantum_nvram_read(int offset)
 **************************/
 void quantum_snd_write(int offset, int value)
 {
-	/* D8-D15 aren't hooked up in this range */
-	if (!(offset & 0x01))
-		return;
-
 	if (offset & 0x20) /* A5 selects chip */
 		pokey2_w((offset >> 1) % 0x10, value);
 	else
@@ -171,9 +96,6 @@ void quantum_snd_write(int offset, int value)
 
 int quantum_snd_read(int offset)
 {
-	if (!(offset & 0x01))
-		return 0xff;
-
 	if (offset & 0x20)
 		return pokey2_r((offset >> 1) % 0x10);
 	else
@@ -198,14 +120,8 @@ int quantum_trackball_r (int offset)
 {
 	int x, y;
 
-	if (!(offset & 1))
-		return 0;
-
-	/* we seem to need this in order to get accurate trackball movement */
-	update_analog_ports ();
-
-	x = input_port_4_r (offset) >> 4;
-	y = input_port_3_r (offset) >> 4;
+	x = input_port_4_r (offset);
+	y = input_port_3_r (offset);
 
 	return (x << 4) + y;
 }
@@ -222,15 +138,11 @@ int quantum_trackball_r (int offset)
 **************************/
 int quantum_input_1_r(int offset)
 {
-	if (!(offset & 1))
-		return 0;
 	return (input_port_1_r (0) << (7 - (offset - POT0_C))) & 0x80;
 }
 
 int quantum_input_2_r(int offset)
 {
-	if (!(offset & 1))
-		return 0;
 	return (input_port_2_r (0) << (7 - (offset - POT0_C))) & 0x80;
 }
 
@@ -246,9 +158,73 @@ int quantum_input_2_r(int offset)
 **************************/
 int quantum_nvram_load(void)
 {
+	static int nvram_loaded = 0;
+	void *f;
+
+	/* load the nvram contents immediately, but only once */
+	if (nvram_loaded == 0)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name, 0,
+						   OSD_FILETYPE_HIGHSCORE, 0)) != 0)
+		{
+			osd_fread(f, quantum_nvram, sizeof(quantum_nvram));
+			nvram_loaded = 1;
+		}
+		else
+			quantum_nvram[15] = 5;
+	}
+
+	/* load the other ram contents once the highscores have been initialised */
+	if (memcmp(&quantum_ram[0x1c902 - 0x18000], "\x00\x01\xbe\x16", 4) == 0)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0))
+			!= 0)
+		{
+			/* skip the nvram contents */
+			osd_fseek(f, sizeof(quantum_nvram), SEEK_SET);
+
+			/* restore all time scores */
+			osd_fread(f, quantum_ram + 0x1b52e - 0x18000, 2 * 3 * 3);   /* initials */
+			osd_fread(f, quantum_ram + 0x1b540 - 0x18000, 4 * 3);         /* scores */
+			osd_fread(f, quantum_ram + 0x1b5aa - 0x18000, 4);	   /* the highscore */
+			osd_fread(f, quantum_ram + 0x1bdbc - 0x18000, 2 * 7 * 3);     /* digits */
+			osd_fread(f, quantum_ram + 0x1c158 - 0x18000, 7); /* highscore's digits */
+
+			/* today's scores - not for saving? */
+			/* osd_fread(f, quantum_ram + 0x1c726 - 0x18000, 0x1c816 - 0x1c726); */
+
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else
+	{
+		return 0;  /* we can't load the hi scores yet */
+	}
 	return -1;
 }
 
 void quantum_nvram_save(void)
 {
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name, 0,
+					   OSD_FILETYPE_HIGHSCORE, 1)) != 0)
+	{
+		/* nvram */
+		osd_fwrite(f, quantum_nvram, sizeof(quantum_nvram));
+
+		/* all time scores */
+		osd_fwrite(f, quantum_ram + 0x1b52e - 0x18000, 2 * 3 * 3);		/* initials */
+		osd_fwrite(f, quantum_ram + 0x1b540 - 0x18000, 4 * 3);			  /* scores */
+		osd_fwrite(f, quantum_ram + 0x1b5aa - 0x18000, 4);			   /* highscore */
+		osd_fwrite(f, quantum_ram + 0x1bdbc - 0x18000, 2 * 7 * 3);		  /* digits */
+		osd_fwrite(f, quantum_ram + 0x1c158 - 0x18000, 7);	  /* highscore's digits */
+
+		/* today's scores - not for saving? */
+		/* osd_fwrite(f, quantum_ram + 0x1c726 - 0x18000, 0x1c816 - 0x1c726); */
+
+		osd_fclose(f);
+	}
 }

@@ -5,29 +5,15 @@
   Routines to emulate the Texas Instruments SN76489 and SN76496 programmable
   tone /noise generator.
 
-  This is a very simple chip with no envelope control, therefore unlike the
-  AY8910 or Pokey emulators, this module does not create a sample in a
-  buffer: it just keeps track of the frequency of the three voices, it's up
-  to the caller to generate tone of the required frenquency.
-
   Noise emulation is not accurate due to lack of documentation. In the chip,
   the noise generator uses a shift register, which can shift at four
   different rates: three of them are fixed, while the fourth is connected
   to the tone generator #3 output, but it's not clear how. It is also
   unknown how exactly the shift register works.
-  Since it couldn't be accurate, this module doesn't create a sample for the
-  noise output. It will only return the shift rate, that is, the sample rate
-  the caller should use. It's up to the caller to create a suitable sample;
-  a 10K sample filled with rand() will do.
-
-  update 1997.6.21 Tatsuyuki Satoh.
-    added SN76496UpdateB() function.
 
 ***************************************************************************/
 
 #include "driver.h"
-#include "sn76496.h"
-#include "sndhrdw/generic.h"
 
 #define MIN_SLICE 1		/* minimum update step */
 
@@ -49,13 +35,30 @@
 /* noise generator start preset (for periodic noise) */
 #define NG_PRESET 0x0f35
 
+struct SN76496
+{
+	/* set this before calling SN76496Reset() */
+	int Clock;			/* chip clock in Hz     */
+	int freqStep;		/* frequency count step */
+	int Volume[4];		/* volume of voice 0-2 and noise. Range is 0-0x1fff */
+	int NoiseFB;		/* noise feedback mask */
+	int Register[8];	/* registers */
+	int LastRegister;	/* last writed register */
+	int Counter[4];		/* frequency counter    */
+	int Turn[4];
+	int Dir[4];			/* output direction     */
+	int VolTable[16];	/* volume tables        */
+	unsigned int NoiseGen;		/* noise generator      */
+};
+
 static int emulation_rate;
 static int buffer_len;
+static int sample_16bit;
 
 static struct SN76496interface *intf;
 
 static struct SN76496 sn[MAX_76496];
-static unsigned char *buffer[MAX_76496];
+static void *output_buffer[MAX_76496];
 static int sample_pos[MAX_76496];
 static int volume[MAX_76496];
 
@@ -65,8 +68,7 @@ static void SN76496Reset(struct SN76496 *R)
 {
 	int i;
 
-//	R->freqStep = (double)emulation_rate * 0x10000 / R->Clock * 2;  /* SN76494 */
-	R->freqStep = (double)emulation_rate * 0x10000 / R->Clock * 16; /* SN76496 */
+	R->freqStep = (double)emulation_rate * 0x10000 * 16 / R->Clock; /* SN76496 */
 
 	for (i = 0;i < 4;i++) R->Volume[i] = 0;
 
@@ -87,15 +89,15 @@ static void SN76496Reset(struct SN76496 *R)
 static void SetVolRate( struct SN76496 *R, int rate , int limit )
 {
 	int i;
-	double div;
+	double divdr;
 
 	/* make volume table (2dB per step) */
-	div = 1;
+	divdr = 1;
 	R->VolTable[0] = rate / 2 / 4;
 	for (i = 1;i <= 14;i++)
 	{
-		R->VolTable[i] = R->VolTable[0] / div;
-		div *= 1.258925412; /* 2dB */
+		R->VolTable[i] = R->VolTable[0] / divdr;
+		divdr *= 1.258925412; /* 2dB */
 	}
 	R->VolTable[15] = 0;
 
@@ -115,22 +117,25 @@ int SN76496_sh_start(struct SN76496interface *interface)
 	buffer_len = Machine->sample_rate / Machine->drv->frames_per_second;
 	emulation_rate = buffer_len * Machine->drv->frames_per_second;
 
+	if( Machine->sample_bits == 16 ) sample_16bit = 1;
+	else                             sample_16bit = 0;
+
 	channel = get_play_channels( intf->num );
 
 	for (i = 0;i < MAX_76496;i++)
 	{
 		sample_pos[i] = 0;
-		buffer[i] = 0;
+		output_buffer[i] = 0;
 	}
 
 	for (i = 0;i < intf->num;i++)
 	{
-		if ((buffer[i] = malloc(buffer_len)) == 0)
+		if ((output_buffer[i] = malloc((Machine->sample_bits/8)*buffer_len)) == 0)
 		{
-			while (--i >= 0) free(buffer[i]);
+			while (--i >= 0) free(output_buffer[i]);
 			return 1;
 		}
-		memset(buffer[i],AUDIO_CONV(0),buffer_len);
+		memset(output_buffer[i],AUDIO_CONV(0),(Machine->sample_bits/8)*buffer_len);
 
 		sn[i].Clock = intf->clock;
 		SN76496Reset(&sn[i]);
@@ -153,7 +158,7 @@ void SN76496_sh_stop(void)
 {
 	int i;
 
-	for (i = 0;i < intf->num;i++) free(buffer[i]);
+	for (i = 0;i < intf->num;i++) free(output_buffer[i]);
 }
 
 static void SN76496Write(struct SN76496 *R,int data)
@@ -163,17 +168,28 @@ static void SN76496Write(struct SN76496 *R,int data)
 		R->LastRegister = (data >> 4) & 0x07;
 		R->Register[R->LastRegister] = (R->Register[R->LastRegister]&0x3f0) | (data & 0x0f);
 		switch( data & 0x70 ){
+		case 0x00:	/* tone 0 : frequency */
+			R->Turn[0] = R->freqStep * R->Register[0];
+			break;
 		case 0x10:	/* tone 0 : volume    */
 			R->Volume[0] = R->VolTable[ data&0x0f ];
+			break;
+		case 0x20:	/* tone 1 : frequency */
+			R->Turn[1] = R->freqStep * R->Register[2];
 			break;
 		case 0x30:	/* tone 1 : volume    */
 			R->Volume[1] = R->VolTable[ data&0x0f ];
 			break;
+		case 0x40:	/* tone 2 : frequency */
+			R->Turn[2] = R->freqStep * R->Register[4];
+			if( (R->Register[6]&0x03) == 0x03 ) R->Turn[3] = R->Turn[2]<<1;
+			break;
 		case 0x50:	/* tone 2 : volume    */
 			R->Volume[2] = R->VolTable[ data&0x0f ];
 			break;
-		case 0x70:	/* noise  : vokume     */
+		case 0x70:	/* noise  : volume     */
 			R->Volume[3] = R->VolTable[ data&0x0f ];
+			break;
 		case 0x60:	/* noise  : frequency, mode */
 			{
 				int n = R->Register[6];
@@ -184,6 +200,7 @@ static void SN76496Write(struct SN76496 *R,int data)
 				/* reset noise shifter */
 				R->NoiseGen = NG_PRESET;
 			}
+			break;
 		}
 	}
 	else
@@ -198,16 +215,18 @@ static void SN76496Write(struct SN76496 *R,int data)
 			break;
 		case 0x04:	/* tone 2 : frequency */
 			R->Turn[2] = R->freqStep * R->Register[4];
+			if( (R->Register[6]&0x03) == 0x03 ) R->Turn[3] = R->Turn[2]<<1;
 			break;
 		}
 	}
 }
 
-static void SN76496UpdateB(struct SN76496 *R , char *buffer , int size)
+static void SN76496UpdateB(struct SN76496 *R , char *buffer , int start , int end)
 {
 	int i;
 	int vb0,vb1,vb2,vbn;
 	int outdata;
+	int size = end - start;
 
 	if (size <= 0) return;
 
@@ -223,7 +242,7 @@ static void SN76496UpdateB(struct SN76496 *R , char *buffer , int size)
 	if( !vbn || !R->Turn[3] ) R->Counter[3]+=size<<16;
 
 	/* make buffer */
-	for (i = 0;i < size;i++)
+	for (i = start;i < end;i++)
 	{
 		outdata = AUDIO_CONV( vb0 + vb1 + vb2 + vbn );
 
@@ -255,21 +274,20 @@ static void SN76496UpdateB(struct SN76496 *R , char *buffer , int size)
 			R->NoiseGen>>=1;
 			R->Counter[3] += R->Turn[3];
 		}
-		buffer[i] = outdata >>8; /* 16bit -> 8bit */
+		if( sample_16bit ) ((unsigned short *)buffer)[i] = outdata;
+		else               ((unsigned char  *)buffer)[i] = outdata >> 8; /* 16bit -> 8bit */
 	}
 }
 
 static void doupdate(int chip)
 {
-	int totcycles,leftcycles,newpos;
+	int newpos;
 
-	totcycles = cpu_getfperiod();
-	leftcycles = cpu_getfcount();
-	newpos = buffer_len * (totcycles-leftcycles) / totcycles;
-	if (newpos >= buffer_len) newpos = buffer_len - 1;
+
+	newpos = cpu_scalebyfcount(buffer_len);	/* get current position based on the timer */
 
 	if( newpos - sample_pos[chip] < MIN_SLICE ) return;
-	SN76496UpdateB(&sn[chip],&buffer[chip][sample_pos[chip]],newpos - sample_pos[chip]);
+	SN76496UpdateB(&sn[chip],output_buffer[chip] ,sample_pos[chip],newpos);
 	sample_pos[chip] = newpos;
 }
 
@@ -306,10 +324,11 @@ void SN76496_sh_update(void)
 
 	for (i = 0;i < intf->num;i++)
 	{
-		SN76496UpdateB(&sn[i],&buffer[i][sample_pos[i]],buffer_len - sample_pos[i]);
+		SN76496UpdateB(&sn[i],output_buffer[i],sample_pos[i],buffer_len);
 		sample_pos[i] = 0;
 	}
 
 	for (i = 0;i < intf->num;i++)
-		osd_play_streamed_sample(channel+i,buffer[i],buffer_len,emulation_rate,volume[i]);
+		if( sample_16bit ) osd_play_streamed_sample_16(channel+i,output_buffer[i],buffer_len,emulation_rate,volume[i]);
+		else               osd_play_streamed_sample(channel+i,output_buffer[i],buffer_len,emulation_rate,volume[i]);
 }

@@ -12,6 +12,8 @@
 #ifndef _Z80_H
 #define _Z80_H
 
+#define Z80_DAISYCHAIN		/* DAISY CHAIN SUPPORT SECTION */
+
 /****************************************************************************/
 /*** Machine dependent definitions                                        ***/
 /****************************************************************************/
@@ -84,6 +86,26 @@ typedef union
 #define INLINE static inline
 #endif
 
+#ifdef Z80_DAISYCHAIN
+
+#define Z80_MAXDAISY 4          /* maximum of daisy chan device */
+
+#define Z80_INT_REQ 0x01        /* interrupt request mask       */
+#define Z80_INT_IEO 0x02        /* interrupt disable mask(IEO)  */
+
+#define Z80_VECTOR(device,state) (((device)<<8)|(state))
+
+/* daisy-chain link */
+typedef struct
+{
+   void (*reset)(int);            /* reset callback     */
+   int  (*interrupt_entry)(int);  /* entry callback     */
+   void (*interrupt_reti)(int);   /* reti callback      */
+   int irq_param;                 /* callback paramater */
+}Z80_DaisyChain;
+
+#endif
+
 /****************************************************************************/
 /* The Z80 registers. HALT is set to 1 when the CPU is halted, the refresh  */
 /* register is calculated as follows: refresh=(Regs.R&127)|(Regs.R2&128)    */
@@ -94,7 +116,17 @@ typedef struct
   z80_pair AF2,BC2,DE2,HL2;	/* -NS- */
   unsigned IFF1,IFF2,HALT,IM,I,R,R2;
 
+#ifdef Z80_DAISYCHAIN
+  int vector;              /* interrupt vector for SINGLE INT mode   */
+  int pending_irq;
+  int irq_max;             /* number of daisy chain device           */
+  int request_irq;         /* daisy chain next request device        */
+  int service_irq;         /* daisy chain next reti handling devicve */
+  int int_state[Z80_MAXDAISY];
+  Z80_DaisyChain irq[Z80_MAXDAISY];
+#else
   int pending_irq,pending_nmi;	/* NS 970904 */
+#endif
 } Z80_Regs;
 
 /****************************************************************************/
@@ -111,13 +143,18 @@ extern int Z80_Running;      /* When 0, emulation terminates                */
 /*extern int Z80_IPeriod; */ /* NS 970904 */     /* Number of T-states per interrupt            */
 extern int Z80_ICount;       /* T-state count                               */
 /* extern int Z80_IRQ;*/  /* NS 970904 */          /* Current IRQ status. Checked after EI occurs */
+
 #define Z80_IGNORE_INT  -1   /* Ignore interrupt                            */
 #define Z80_NMI_INT     -2   /* Execute NMI                                 */
 
 unsigned Z80_GetPC (void);         /* Get program counter                   */
 void Z80_GetRegs (Z80_Regs *Regs); /* Get registers                         */
 void Z80_SetRegs (Z80_Regs *Regs); /* Set registers                         */
+#ifdef Z80_DAISYCHAIN
+void Z80_Reset (Z80_DaisyChain *daisy_chain );
+#else
 void Z80_Reset (void);             /* Reset registers to the initial values */
+#endif
 /*int  Z80_Execute (void);*/ /* NS 970904 */           /* Execute IPeriod T-States              */
 int  Z80_Execute(int cycles);           /* Execute cycles T-States - returns number of cycles actually run */
 /*word Z80 (void);*/ /* NS 970904 */                   /* Execute until Z80_Running==0          */

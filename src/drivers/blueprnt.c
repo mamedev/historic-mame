@@ -7,7 +7,6 @@ CPU #1
 5000-7fff Space for other ROMs, but which ones?
 8000-87ff RAM
 9000-93ff Video RAM
-a000-a01f ??
 b000-b0ff Sprite RAM
 f000-f3ff Color RAM
 
@@ -69,17 +68,33 @@ write:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/generic.h"
-#include "sndhrdw/8910intf.h"
+#include "Z80/Z80.h"
 
 
 
 void blueprnt_flipscreen_w(int offset,int data);
 void blueprnt_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-void blueprnt_sound_command_w(int offset,int data);
-int blueprnt_sh_dipsw_r(int offset);
-int blueprnt_sh_start(void);
+
+
+static int dipsw;
+
+static void dipsw_w(int offset,int data)
+{
+	dipsw = data;
+}
+
+int blueprnt_sh_dipsw_r(int offset)
+{
+	return dipsw;
+}
+
+void blueprnt_sound_command_w(int offset,int data)
+{
+	soundlatch_w(offset,data);
+	cpu_cause_interrupt(1,Z80_NMI_INT);
+}
+
 
 
 static struct MemoryReadAddress readmem[] =
@@ -273,16 +288,29 @@ static unsigned char palette[] =
 
 static unsigned char colortable[] =
 {
-	0,1,2,3,
-	0,4,5,6,
-	0,7,8,9,
-	0,10,11,12,
-	0,13,14,15,
+	0,0,0,0,
+	0,7,1,4,
+	0,7,3,3,
 	0,1,3,5,
-	0,7,9,11,
-	0,13,15,17,
+	0,1,17,4,
+	0,3,14,7,
+	0,4,4,1,
+	0,3,16,7,
 
-	0,1,2,3,7,4,5,6
+	0,2,3,6,1,4,5,7
+};
+
+
+
+static struct AY8910interface ay8910_interface =
+{
+	2,	/* 2 chips */
+	1250000,	/* 1.25 MHz? (hand tuned) */
+	{ 0x20ff, 0x20ff },
+	{            0, input_port_2_r },
+	{ soundlatch_r, input_port_3_r },
+	{ dipsw_w },
+	{ 0 }
 };
 
 
@@ -306,8 +334,8 @@ static struct MachineDriver machine_driver =
 			interrupt,4
 		}
 	},
-	60,
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
 	/* video hardware */
@@ -323,10 +351,13 @@ static struct MachineDriver machine_driver =
 	blueprnt_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	blueprnt_sh_start,
-	AY8910_sh_stop,
-	AY8910_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&ay8910_interface
+		}
+	}
 };
 
 
@@ -416,7 +447,7 @@ struct GameDriver blueprnt_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/,input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	input_ports,
 
 	0, palette, colortable,
 	ORIENTATION_ROTATE_270,

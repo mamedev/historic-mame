@@ -21,7 +21,8 @@ extern void segar_bcolortable_w(int offset,int data);
 
 void segar_wr(int offset, int data)
 {
-	int pc,op,page,bad,off;
+	int pc,op,page,off;
+	unsigned int bad;
 
 	off=offset;
 

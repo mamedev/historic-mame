@@ -12,12 +12,9 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/generic.h"
-#include "sndhrdw/2203intf.h"
 
 
 
-void gunsmoke_bankswitch_w(int offset,int data);
 int gunsmoke_bankedrom_r(int offset);
 extern void gunsmoke_init_machine(void);
 
@@ -31,7 +28,7 @@ void gunsmoke_vh_screenrefresh(struct osd_bitmap *bitmap);
 int gunsmoke_vh_start(void);
 void gunsmoke_vh_stop(void);
 
-int capcomOPN_sh_start(void);
+
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -358,6 +355,21 @@ static unsigned char color_prom[] =
 	0x00,0x02,0x01,0x01,0x01,0x07,0x07,0x07,0x07,0x00,0x00,0x07,0x01,0x07,0x00,0x07
 };
 
+
+
+static struct YM2203interface ym2203_interface =
+{
+	2,			/* 2 chips */
+	1500000,	/* 1.5 MHz (?) */
+	{ YM2203_VOL(100,0x20ff), YM2203_VOL(100,0x20ff) },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 }
+};
+
+
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -371,14 +383,14 @@ static struct MachineDriver machine_driver =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,	/* 3 Mhz ??? */
+			3000000,	/* 3 Mhz (?) */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
 			interrupt,4
 		}
 	},
-	60,
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
 	/* video hardware */
@@ -394,10 +406,13 @@ static struct MachineDriver machine_driver =
 	gunsmoke_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	capcomOPN_sh_start,
-	YM2203_sh_stop,
-	YM2203_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_YM2203,
+			&ym2203_interface
+		}
+	}
 };
 
 
@@ -563,7 +578,7 @@ struct GameDriver gunsmoke_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/,input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -583,7 +598,7 @@ struct GameDriver gunsmrom_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/,input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -603,7 +618,7 @@ struct GameDriver gunsmokj_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/,input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,

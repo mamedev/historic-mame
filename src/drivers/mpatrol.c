@@ -30,16 +30,19 @@ write:
 a0        background #2 y position
 c0        background control?
 
+
+There's an interesting problem with this game: it is designed to run on an
+horizontal monitor, but the display in MAME is narrow and tall. The reason
+is that the real board doesn't produce square pixels, but rectangular ones
+whose width is almost twice their height.
+
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/generic.h"
-#include "sndhrdw/8910intf.h"
+#include "Z80/Z80.h"
 
 
-
-int mpatrol_protection_r(int offset);
 
 void mpatrol_scroll_w(int offset,int data);
 void mpatrol_bg1xpos_w(int offset,int data);
@@ -52,15 +55,26 @@ void mpatrol_vh_stop(void);
 void mpatrol_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void mpatrol_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-extern unsigned char *mpatrol_io_ram;
-extern unsigned char *mpatrol_sample_data;
-extern unsigned char *mpatrol_sample_table;
-int mpatrol_sh_init(const char *);
-int mpatrol_sh_start(void);
 void mpatrol_io_w(int offset, int value);
 int mpatrol_io_r(int offset);
-void mpatrol_sample_trigger_w(int offset,int value);
+void mpatrol_adpcm_reset_w(int offset,int value);
 void mpatrol_sound_cmd_w(int offset, int value);
+
+void mpatrol_adpcm_int(int data);
+
+
+/* this looks like some kind of protection. The game does strange things */
+/* if a read from this address doesn't return the value it expects. */
+int mpatrol_protection_r(int offset)
+{
+	Z80_Regs regs;
+
+
+	if (errorlog) fprintf(errorlog,"%04x: read protection\n",cpu_getpc());
+	Z80_GetRegs(&regs);
+	return regs.DE.B.l;
+}
+
 
 
 static struct MemoryReadAddress readmem[] =
@@ -105,19 +119,17 @@ static struct IOWritePort writeport[] =
 
 static struct MemoryReadAddress sound_readmem[] =
 {
-	{ 0x0000, 0x001f, mpatrol_io_r, &mpatrol_io_ram },
+	{ 0x0000, 0x001f, mpatrol_io_r },
 	{ 0x0080, 0x00ff, MRA_RAM },
 	{ 0xf000, 0xffff, MRA_ROM },
-	{ 0xf400, 0xf43f, MRA_ROM, &mpatrol_sample_table },
 	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress sound_writemem[] =
 {
 	{ 0x0000, 0x001f, mpatrol_io_w },
-	{ 0x00c3, 0x00ca, mpatrol_sample_trigger_w, &mpatrol_sample_data },
 	{ 0x0080, 0x00ff, MWA_RAM },
-	{ 0x0801, 0x0802, MWA_NOP },
+	{ 0x0801, 0x0802, MSM5205_data_w },
 	{ 0x9000, 0x9000, MWA_NOP },    /* IACK */
 	{ 0xf000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
@@ -125,56 +137,206 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 
 
-static struct InputPort input_ports[] =
-{
-	{       /* IN0 */
-		0xff,
-		{ OSD_KEY_1, OSD_KEY_2, 0, OSD_KEY_3, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{       /* IN1 */
-		0xff,
-		{ OSD_KEY_RIGHT, OSD_KEY_LEFT, 0, 0, 0, OSD_KEY_ALT, 0, OSD_KEY_LCONTROL },
-		{ OSD_JOY_RIGHT, OSD_JOY_LEFT, 0, 0, 0, OSD_JOY_FIRE2, 0, OSD_JOY_FIRE1 },
-	},
-	{       /* IN2 */
-		0xff,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{       /* DSW1 */
-		0xfd,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{       /* DSW2 */
-		0xfd,
-		{ 0, 0, 0, 0, 0, 0, 0, OSD_KEY_F2 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{ -1 }  /* end of table */
-};
+INPUT_PORTS_START( mpatrol_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+/* coin input must be active for ? frames to be consistently recognized */
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_COIN3 | IPF_IMPULSE, "Coin Aux", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 17)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
 
+	PORT_START      /* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 
-static struct KEYSet keys[] =
-{
-	{ 1, 1, "MOVE LEFT"  },
-	{ 1, 0, "MOVE RIGHT" },
-	{ 1, 5, "JUMP" },
-	{ 1, 7, "FIRE" },
-	{ -1 }
-};
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x03, 0x02, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "1" )
+	PORT_DIPSETTING(    0x01, "2" )
+	PORT_DIPSETTING(    0x02, "3" )
+	PORT_DIPSETTING(    0x03, "5" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x0c, "10000 30000 50000" )
+	PORT_DIPSETTING(    0x08, "20000 40000 60000" )
+	PORT_DIPSETTING(    0x04, "10000" )
+	PORT_DIPSETTING(    0x00, "None" )
+	/* TODO: support the different settings which happen in Coin Mode 2 */
+	PORT_DIPNAME( 0xf0, 0xf0, "Coinage", IP_KEY_NONE ) /* mapped on coin mode 1 */
+	PORT_DIPSETTING(    0x90, "7 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xa0, "6 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xb0, "5 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xc0, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xd0, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xe0, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x70, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x60, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x50, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0x40, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0x30, "1 Coin/6 Credits" )
+	PORT_DIPSETTING(    0x20, "1 Coin/7 Credits" )
+	PORT_DIPSETTING(    0x10, "1 Coin/8 Credits" )
+	PORT_DIPSETTING(    0x00, "Free Play" )
+/* 0x80 gives 1 Coin/1 Credit */
+/*	PORT_DIPNAME( 0x30, 0x30, "Coin A Mode 2", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Free" )
+	PORT_DIPSETTING(    0x10, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x20, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x30, "1 Coin/1 Credit" )
+	PORT_DIPNAME( 0xc0, 0xc0, "Coin B Mode 2", IP_KEY_NONE )
+	PORT_DIPSETTING(    0xc0, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x80, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x40, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0x00, "1 Coin/6 Credits" )*/
 
+	PORT_START      /* DSW1 */
+	PORT_DIPNAME( 0x01, 0x01, "Flip Screen", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x02, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x02, "Cocktail" )
+	PORT_DIPNAME( 0x04, 0x04, "Coin Mode", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "Mode 1" )
+	PORT_DIPSETTING(    0x00, "Mode 2" )
+	PORT_DIPNAME( 0x08, 0x08, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	/* In stop mode, press 2 to stop and 1 to restart */
+	PORT_BITX   ( 0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Stop Mode", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX(    0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Sector Selection", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+INPUT_PORTS_END
 
-static struct DSW dsw[] =
-{
-	{ 3, 0x03, "LIVES", { "2", "3", "4", "5" } },
-	{ 3, 0x0c, "BONUS", { "NONE", "10000", "20 40 60000", "10 30 50000" } },
-	{ 4, 0x20, "SECTOR SELECTION", { "YES", "NO" }, 1 },
-	{ 4, 0x40, "DEMO MODE", { "YES", "NO" }, 1 },
-	{ -1 }
-};
+/* Identical to mpatrol, the only difference is the number of lives */
+INPUT_PORTS_START( mpatrolw_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+/* coin input must be active for ? frames to be consistently recognized */
+	PORT_BITX(0x04, IP_ACTIVE_LOW, IPT_COIN3 | IPF_IMPULSE, "Coin Aux", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 17)
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
+
+	PORT_START      /* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x03, 0x01, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x01, "3" )
+	PORT_DIPSETTING(    0x02, "4" )
+	PORT_DIPSETTING(    0x03, "5" )
+	PORT_DIPNAME( 0x0c, 0x0c, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x0c, "10000 30000 50000" )
+	PORT_DIPSETTING(    0x08, "20000 40000 60000" )
+	PORT_DIPSETTING(    0x04, "10000" )
+	PORT_DIPSETTING(    0x00, "None" )
+	/* TODO: support the different settings which happen in Coin Mode 2 */
+	PORT_DIPNAME( 0xf0, 0xf0, "Coinage", IP_KEY_NONE ) /* mapped on coin mode 1 */
+	PORT_DIPSETTING(    0x90, "7 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xa0, "6 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xb0, "5 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xc0, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xd0, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xe0, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xf0, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x70, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x60, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x50, "1 Coin/4 Credits" )
+	PORT_DIPSETTING(    0x40, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0x30, "1 Coin/6 Credits" )
+	PORT_DIPSETTING(    0x20, "1 Coin/7 Credits" )
+	PORT_DIPSETTING(    0x10, "1 Coin/8 Credits" )
+	PORT_DIPSETTING(    0x00, "Free Play" )
+/* 0x80 gives 1 Coin/1 Credit */
+/*	PORT_DIPNAME( 0x30, 0x30, "Coin A Mode 2", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Free" )
+	PORT_DIPSETTING(    0x10, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x20, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x30, "1 Coin/1 Credit" )
+	PORT_DIPNAME( 0xc0, 0xc0, "Coin B Mode 2", IP_KEY_NONE )
+	PORT_DIPSETTING(    0xc0, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x80, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x40, "1 Coin/5 Credits" )
+	PORT_DIPSETTING(    0x00, "1 Coin/6 Credits" )*/
+
+	PORT_START      /* DSW1 */
+	PORT_DIPNAME( 0x01, 0x01, "Flip Screen", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x02, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x02, "Cocktail" )
+	PORT_DIPNAME( 0x04, 0x04, "Coin Mode", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "Mode 1" )
+	PORT_DIPSETTING(    0x00, "Mode 2" )
+	PORT_DIPNAME( 0x08, 0x08, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	/* In stop mode, press 2 to stop and 1 to restart */
+	PORT_BITX   ( 0x10, 0x10, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Stop Mode", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX(    0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Sector Selection", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX(    0x40, 0x40, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Invulnerability", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_BITX(    0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+INPUT_PORTS_END
 
 
 
@@ -202,19 +364,15 @@ static struct GfxLayout spritelayout =
 };
 static struct GfxLayout bgcharlayout =
 {
-	64,64,  /* 64*64 characters */
-	4,      /* 4 characters (actually, it is just 1 big 256x64 image) */
+	32,32,  /* 32*32 characters (actually, it is just 1 big 256x64 image) */
+	8,      /* 8 characters */
 	2,      /* 2 bits per pixel */
 	{ 4, 0 },       /* the two bitplanes for 4 pixels are packed into one byte */
 	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3, 2*8+0, 2*8+1, 2*8+2, 2*8+3, 3*8+0, 3*8+1, 3*8+2, 3*8+3,
-			4*8+0, 4*8+1, 4*8+2, 4*8+3, 5*8+0, 5*8+1, 5*8+2, 5*8+3, 6*8+0, 6*8+1, 6*8+2, 6*8+3, 7*8+0, 7*8+1, 7*8+2, 7*8+3,
-			8*8+0, 8*8+1, 8*8+2, 8*8+3, 9*8+0, 9*8+1, 9*8+2, 9*8+3, 10*8+0, 10*8+1, 10*8+2, 10*8+3, 11*8+0, 11*8+1, 11*8+2, 11*8+3,
-			12*8+0, 12*8+1, 12*8+2, 12*8+3, 13*8+0, 13*8+1, 13*8+2, 13*8+3, 14*8+0, 14*8+1, 14*8+2, 14*8+3, 15*8+0, 15*8+1, 15*8+2, 15*8+3 },
+			4*8+0, 4*8+1, 4*8+2, 4*8+3, 5*8+0, 5*8+1, 5*8+2, 5*8+3, 6*8+0, 6*8+1, 6*8+2, 6*8+3, 7*8+0, 7*8+1, 7*8+2, 7*8+3 },
 	{ 0*512, 1*512, 2*512, 3*512, 4*512, 5*512, 6*512, 7*512, 8*512, 9*512, 10*512, 11*512, 12*512, 13*512, 14*512, 15*512,
-			16*512, 17*512, 18*512, 19*512, 20*512, 21*512, 22*512, 23*512, 24*512, 25*512, 26*512, 27*512, 28*512, 29*512, 30*512, 31*512,
-			32*512, 33*512, 34*512, 35*512, 36*512, 37*512, 38*512, 39*512, 40*512, 41*512, 42*512, 43*512, 44*512, 45*512, 46*512, 47*512,
-			48*512, 49*512, 50*512, 51*512, 52*512, 53*512, 54*512, 55*512, 56*512, 57*512, 58*512, 59*512, 60*512, 61*512, 62*512, 63*512 },
-	128
+			16*512, 17*512, 18*512, 19*512, 20*512, 21*512, 22*512, 23*512, 24*512, 25*512, 26*512, 27*512, 28*512, 29*512, 30*512, 31*512 },
+	8*8
 };
 
 
@@ -223,9 +381,12 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ 1, 0x0000, &charlayout,               0, 64 },
 	{ 1, 0x2000, &spritelayout,          64*4, 16 },
-	{ 1, 0x4000, &bgcharlayout, 64*4+16*4+0*4,  1 },
-	{ 1, 0x5000, &bgcharlayout, 64*4+16*4+1*4,  1 },
-	{ 1, 0x6000, &bgcharlayout, 64*4+16*4+2*4,  1 },
+	{ 1, 0x4000, &bgcharlayout, 64*4+16*4+0*4,  1 },	/* top half */
+	{ 1, 0x4800, &bgcharlayout, 64*4+16*4+0*4,  1 },	/* bottom half */
+	{ 1, 0x5000, &bgcharlayout, 64*4+16*4+1*4,  1 },	/* top half */
+	{ 1, 0x5800, &bgcharlayout, 64*4+16*4+1*4,  1 },	/* bottom half */
+	{ 1, 0x6000, &bgcharlayout, 64*4+16*4+2*4,  1 },	/* top half */
+	{ 1, 0x6800, &bgcharlayout, 64*4+16*4+2*4,  1 },	/* bottom half */
 	{ -1 } /* end of array */
 };
 
@@ -277,6 +438,26 @@ static unsigned char color_prom[] =
 
 
 
+static struct AY8910interface ay8910_interface =
+{
+	2,	/* 2 chips */
+	910000,	/* .91 MHZ ?? */
+	{ 160, 160 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0, mpatrol_adpcm_reset_w }
+};
+
+static struct MSM5205interface msm5205_interface =
+{
+	2,			/* 2 chips */
+	4000,       /* 4000Hz playback */
+	mpatrol_adpcm_int,	/* interrupt function */
+	{ 255, 255 }
+};
+
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -289,15 +470,17 @@ static struct MachineDriver machine_driver =
 			interrupt,1
 		},
 		{
-			CPU_M6802 | CPU_AUDIO_CPU,
+			CPU_M6803 | CPU_AUDIO_CPU,
 			1000000,        /* 1.0 Mhz ? */
 			2,
 			sound_readmem,sound_writemem,0,0,
-			nmi_interrupt,68 /* 68 ints per frame = 4080 ints/sec -- can this be right? */
+			ignore_interrupt,0	/* interrupts are generated by the ADPCM hardware */
 		}
 	},
-	60,
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	57, 1790,	/* accurate frequency, measured on a real board, is 56.75Hz. */
+				/* the Lode Runner manual (similar but different hardware) */
+				/* talks about 55Hz and 1790ms vblank duration. */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
 	/* video hardware */
@@ -313,10 +496,17 @@ static struct MachineDriver machine_driver =
 	mpatrol_vh_screenrefresh,
 
 	/* sound hardware */
-	mpatrol_sh_init,
-	mpatrol_sh_start,
-	AY8910_sh_stop,
-	AY8910_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&ay8910_interface
+		},
+		{
+			SOUND_MSM5205,
+			&msm5205_interface
+		}
+	}
 };
 
 
@@ -328,6 +518,26 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( mpatrol_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "mp-a.3m", 0x0000, 0x1000, 0x0440639c )
+	ROM_LOAD( "mp-a.3l", 0x1000, 0x1000, 0x15d6639c )
+	ROM_LOAD( "mp-a.3k", 0x2000, 0x1000, 0x2f2a0bf4 )
+	ROM_LOAD( "mp-a.3j", 0x3000, 0x1000, 0xf5377887 )
+
+	ROM_REGION(0x7000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "mp-e.3e", 0x0000, 0x1000, 0xefe9bb1d )       /* chars */
+	ROM_LOAD( "mp-e.3f", 0x1000, 0x1000, 0x796d8525 )
+	ROM_LOAD( "mp-b.3m", 0x2000, 0x1000, 0xfe518a23 )       /* sprites */
+	ROM_LOAD( "mp-b.3n", 0x3000, 0x1000, 0x974b35c3 )
+	ROM_LOAD( "mp-e.3l", 0x4000, 0x1000, 0x48b86bb0 )       /* background graphics */
+	ROM_LOAD( "mp-e.3k", 0x5000, 0x1000, 0x48d8cace )
+	ROM_LOAD( "mp-e.3h", 0x6000, 0x1000, 0x89ce19a8 )
+
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "mp-snd.1a", 0xf000, 0x1000, 0x506d76fb )
+ROM_END
+
+ROM_START( mpatrolw_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "mp-a.3m", 0x0000, 0x1000, 0x138439c6 )
 	ROM_LOAD( "mp-a.3l", 0x1000, 0x1000, 0x0c1bc43b )
@@ -369,29 +579,40 @@ ROM_END
 
 
 
-static int hiload(void)     /* V.V */
+static int hiload(void)
 {
+	static int loop = 0;
+
+
 	unsigned char *RAM = Machine->memory_region[0];
 
 	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x0E008],"\x00\x00\x00",3) == 0)
+	/* the high score table is intialized to all 0, so first of all */
+	/* we dirty it, then we wait for it to be cleared again */
+	if (loop == 0)
+	{
+		memset(&RAM[0x0e008],0xff,44);
+		loop = 1;
+	}
+
+	if (RAM[0x0e008] == 0 && RAM[0x0e04b] == 0)
 	{
 		void *f;
 
+
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-			osd_fread(f,&RAM[0x0E008],44);
+			osd_fread(f,&RAM[0x0e008],44);
 			osd_fclose(f);
 		}
 
+		loop = 0;
 		return 1;
 	}
 	else return 0;   /* we can't load the hi scores yet */
-
 }
 
-
-static void hisave(void)    /* V.V */
+static void hisave(void)
 {
 	void *f;
 
@@ -399,7 +620,7 @@ static void hisave(void)    /* V.V */
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		osd_fwrite(f,&RAM[0x0E008],44);
+		osd_fwrite(f,&RAM[0x0e008],44);
 		osd_fclose(f);
 	}
 }
@@ -410,7 +631,7 @@ struct GameDriver mpatrol_driver =
 {
 	"Moon Patrol",
 	"mpatrol",
-	"Nicola Salmoria\nChris Hardy\nValerio Verrando\nTim Lindquist (color info)\nAaron Giles (sound)",
+	"Nicola Salmoria\nChris Hardy\nValerio Verrando\nTim Lindquist (color info)\nAaron Giles (sound)\nMarco Cassili",
 	&machine_driver,
 
 	mpatrol_rom,
@@ -418,7 +639,27 @@ struct GameDriver mpatrol_driver =
 	0,
 	0,	/* sound_prom */
 
-	input_ports, 0, 0/*TBR*/,dsw, keys,
+	mpatrol_input_ports,
+
+	color_prom, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	hiload, hisave
+};
+
+struct GameDriver mpatrolw_driver =
+{
+	"Moon Patrol (Williams)",
+	"mpatrolw",
+	"Nicola Salmoria\nChris Hardy\nValerio Verrando\nTim Lindquist (color info)\nAaron Giles (sound)\nMarco Cassili",
+	&machine_driver,
+
+	mpatrolw_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	mpatrolw_input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -430,7 +671,7 @@ struct GameDriver mranger_driver =
 {
 	"Moon Ranger (bootleg Moon Patrol)",
 	"mranger",
-	"Nicola Salmoria (MAME driver)\nChris Hardy (hardware info)\nTim Lindquist (color info)\nAaron Giles (sound)\nValerio Verrando (high score save)",
+	"Nicola Salmoria (MAME driver)\nChris Hardy (hardware info)\nTim Lindquist (color info)\nAaron Giles (sound)\nValerio Verrando (high score save)\nMarco Cassili",
 	&machine_driver,
 
 	mranger_rom,
@@ -438,7 +679,7 @@ struct GameDriver mranger_driver =
 	0,
 	0,	/* sound_prom */
 
-	input_ports, 0, 0/*TBR*/,dsw, keys,
+	mpatrol_input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,

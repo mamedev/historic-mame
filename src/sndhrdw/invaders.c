@@ -1,4 +1,6 @@
-/* invaders.c ********************************* updated: 1997-04-09 08:46 TT
+/* invaders.c *********************************
+ updated: 1997-04-09 08:46 TT
+ updated  20-3-1998 LT Added colour changes on base explosion
  *
  * Author      : Tormod Tjaberg
  * Created     : 1997-04-09
@@ -28,102 +30,210 @@
 
 #include "driver.h"
 
-#define emulation_rate 11025
-
-
-
 void invaders_sh_port3_w(int offset, int data)
 {
 	static unsigned char Sound = 0;
 
-
-	if (Machine->samples == 0) return;
-
-	if (data & 0x01 && ~Sound & 0x01 && Machine->samples->sample[0])
-		osd_play_sample(0,Machine->samples->sample[0]->data,
-				Machine->samples->sample[0]->length,
-                                Machine->samples->sample[0]->smpfreq,
-                                Machine->samples->sample[0]->volume,1);
+	if (data & 0x01 && ~Sound & 0x01)
+		sample_start (0, 0, 1);
 
 	if (~data & 0x01 && Sound & 0x01)
-		osd_stop_sample(0);
+		sample_stop (0);
 
-	if (data & 0x02 && ~Sound & 0x02 && Machine->samples->sample[1])
-		osd_play_sample(1,Machine->samples->sample[1]->data,
-				Machine->samples->sample[1]->length,
-                                Machine->samples->sample[1]->smpfreq,
-                                Machine->samples->sample[1]->volume,0);
+	if (data & 0x02 && ~Sound & 0x02)
+		sample_start (1, 1, 0);
 
 	if (~data & 0x02 && Sound & 0x02)
-		osd_stop_sample(1);
+		sample_stop (1);
 
-	if (data & 0x04 && ~Sound & 0x04 && Machine->samples->sample[2])
-		osd_play_sample(2,Machine->samples->sample[2]->data,
-				Machine->samples->sample[2]->length,
-                                Machine->samples->sample[2]->smpfreq,
-                                Machine->samples->sample[2]->volume,0);
+	if (data & 0x04 && ~Sound & 0x04)
+		sample_start (2, 2, 0);
 
 	if (~data & 0x04 && Sound & 0x04)
-		osd_stop_sample(2);
+		sample_stop (2);
 
-	if (data & 0x08 && ~Sound & 0x08 && Machine->samples->sample[3])
-		osd_play_sample(3,Machine->samples->sample[3]->data,
-				Machine->samples->sample[3]->length,
-                                Machine->samples->sample[3]->smpfreq,
-                                Machine->samples->sample[3]->volume,0);
+	if (data & 0x08 && ~Sound & 0x08)
+		sample_start (3, 3, 0);
 
 	if (~data & 0x08 && Sound & 0x08)
-		osd_stop_sample(3);
+		sample_stop (3);
 
 	Sound = data;
 }
+
+/* LT 20-3-1998 */
+void invadpt2_sh_port3_w(int offset, int data)
+{
+	static unsigned char Sound = 0;
+
+	if (data & 0x01 && ~Sound & 0x01)
+		sample_start (0, 0, 1);
+
+	if (~data & 0x01 && Sound & 0x01)
+		sample_stop (0);
+
+	if (data & 0x02 && ~Sound & 0x02)
+		sample_start (1, 1, 0);
+
+	if (~data & 0x02 && Sound & 0x02)
+		sample_stop (1);
+
+	if (data & 0x04 && ~Sound & 0x04){
+            sample_start (2, 2, 0);
+    /* turn all colours red here */
+            osd_modify_pen(Machine->pens[1],0xff,0x00,0x00);
+            osd_modify_pen(Machine->pens[2],0xff,0x00,0x00);
+            osd_modify_pen(Machine->pens[3],0xff,0x00,0x00);
+            osd_modify_pen(Machine->pens[4],0xff,0x00,0x00);
+            osd_modify_pen(Machine->pens[5],0xff,0x00,0x00);
+            osd_modify_pen(Machine->pens[6],0xff,0x00,0x00);
+        }
+
+	if (~data & 0x04 && Sound & 0x04){
+            sample_stop (2);
+            osd_modify_pen(Machine->pens[1],0xff,0x20,0x20);
+            osd_modify_pen(Machine->pens[2],0x20,0xff,0x20);
+            osd_modify_pen(Machine->pens[3],0xff,0xff,0x20);
+            osd_modify_pen(Machine->pens[4],0xff,0xff,0xff);
+            osd_modify_pen(Machine->pens[5],0x20,0xff,0xff);
+            osd_modify_pen(Machine->pens[6],0xff,0x20,0xff);
+        }
+	if (data & 0x08 && ~Sound & 0x08)
+		sample_start (3, 3, 0);
+
+	if (~data & 0x08 && Sound & 0x08)
+		sample_stop (3);
+
+	Sound = data;
+}
+
+/* LT 20-3-1998 */
+void invaders_sh_port4_w(int offset, int data)
+{
+	static unsigned char Sound = 0;
+
+	if (data & 0x01 && ~Sound & 0x01)
+		sample_start (0, 0, 1);
+
+	if (~data & 0x01 && Sound & 0x01)
+		sample_stop (0);
+
+	if (data & 0x02 && ~Sound & 0x02)
+		sample_start (1, 1, 0);
+
+	if (~data & 0x02 && Sound & 0x02)
+		sample_stop (1);
+
+	if (data & 0x04 && ~Sound & 0x04){
+            sample_start (2, 2, 0);
+    /* turn all colours red here */
+            osd_modify_pen(Machine->pens[1],0xff,0x00,0x00);
+            osd_modify_pen(Machine->pens[2],0xff,0x00,0x00);
+            osd_modify_pen(Machine->pens[3],0xff,0x00,0x00);
+            osd_modify_pen(Machine->pens[4],0xff,0x00,0x00);
+            osd_modify_pen(Machine->pens[5],0xff,0x00,0x00);
+            osd_modify_pen(Machine->pens[6],0xff,0x00,0x00);
+            osd_modify_pen(Machine->pens[7],0xff,0x00,0x00);
+        }
+
+	if (~data & 0x04 && Sound & 0x04){
+            sample_stop (2);
+    /* restore colours here */
+            osd_modify_pen(Machine->pens[1],0x20,0x20,0xff);
+            osd_modify_pen(Machine->pens[2],0x20,0xff,0x20);
+            osd_modify_pen(Machine->pens[3],0x20,0xff,0xff);
+            osd_modify_pen(Machine->pens[4],0xff,0x20,0x20);
+            osd_modify_pen(Machine->pens[5],0xff,0x20,0xff);
+            osd_modify_pen(Machine->pens[6],0xff,0xff,0x20);
+            osd_modify_pen(Machine->pens[7],0xff,0xff,0xff);
+        }
+	if (data & 0x08 && ~Sound & 0x08)
+		sample_start (3, 3, 0);
+
+	if (~data & 0x08 && Sound & 0x08)
+		sample_stop (3);
+
+	Sound = data;
+}
+
 
 
 void invaders_sh_port5_w(int offset, int data)
 {
 	static unsigned char Sound = 0;
 
+	if (data & 0x01 && ~Sound & 0x01)
+		sample_start (4, 4, 0);
 
-	if (Machine->samples == 0) return;
+	if (data & 0x02 && ~Sound & 0x02)
+		sample_start (5, 5, 0);
 
-	if (data & 0x01 && ~Sound & 0x01 && Machine->samples->sample[4])
-		osd_play_sample(4,Machine->samples->sample[4]->data,
-				Machine->samples->sample[4]->length,
-                                Machine->samples->sample[4]->smpfreq,
-                                Machine->samples->sample[4]->volume,0);
+	if (data & 0x04 && ~Sound & 0x04)
+		sample_start (6, 6, 0);
 
-	if (data & 0x02 && ~Sound & 0x02 && Machine->samples->sample[5])
-		osd_play_sample(4,Machine->samples->sample[5]->data,
-				Machine->samples->sample[5]->length,
-                                Machine->samples->sample[5]->smpfreq,
-                                Machine->samples->sample[5]->volume,0);
+	if (data & 0x08 && ~Sound & 0x08)
+		sample_start (7, 7, 0);
 
-	if (data & 0x04 && ~Sound & 0x04 && Machine->samples->sample[6])
-		osd_play_sample(4,Machine->samples->sample[6]->data,
-				Machine->samples->sample[6]->length,
-                                Machine->samples->sample[6]->smpfreq,
-                                Machine->samples->sample[6]->volume,0);
-
-	if (data & 0x08 && ~Sound & 0x08 && Machine->samples->sample[7])
-		osd_play_sample(4,Machine->samples->sample[7]->data,
-				Machine->samples->sample[7]->length,
-                                Machine->samples->sample[7]->smpfreq,
-                                Machine->samples->sample[7]->volume,0);
-
-	if (data & 0x10 && ~Sound & 0x10 && Machine->samples->sample[8])
-		osd_play_sample(5,Machine->samples->sample[8]->data,
-				Machine->samples->sample[8]->length,
-                                Machine->samples->sample[8]->smpfreq,
-                                Machine->samples->sample[8]->volume,0);
+	if (data & 0x10 && ~Sound & 0x10)
+		sample_start (8, 8, 0);
 
 	if (~data & 0x10 && Sound & 0x10)
-		osd_stop_sample(5);
+		sample_stop (5);
 
 	Sound = data;
 }
 
 
+/* HC 4/14/98 NOTE: *I* THINK there are sounds missing...
+i dont know for sure... but that is my guess....... */
 
-void invaders_sh_update(void)
+
+
+void boothill_sh_port3_w(int offset, int data)
 {
+switch (data)
+{
+
+        case 0x0c:
+        sample_start (0, 0, 0);
+        break;
+
+        case 0x18:
+        case 0x28:
+        sample_start (1, 2, 0);
+        break;
+
+        case 0x48:
+        case 0x88:
+        sample_start (2, 3, 0);
+
+        break;
+
 }
+
+
+}
+
+/* HC 4/14/98 */
+void boothill_sh_port5_w(int offset, int data)
+{
+
+
+
+switch (data)
+{
+
+
+
+
+case 0x3b:
+        sample_start (2, 1, 0);
+        break;
+
+}
+
+
+}
+
+
+

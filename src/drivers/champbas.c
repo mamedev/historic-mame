@@ -31,15 +31,11 @@ There's a second CPU, but what does it do???
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/generic.h"
-#include "sndhrdw/8910intf.h"
 
 
 
 void champbas_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void champbas_vh_screenrefresh(struct osd_bitmap *bitmap);
-
-int champbas_sh_start(void);
 
 
 
@@ -206,6 +202,19 @@ static unsigned char color_prom[] =
 
 
 
+static struct AY8910interface ay8910_interface =
+{
+	1,	/* 1 chip */
+	1500000,	/* 1.5 MHz ? */
+	{ 0x30ff },
+	{ input_port_0_r },
+	{ input_port_1_r },
+	{ 0 },
+	{ 0 }
+};
+
+
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -225,7 +234,7 @@ static struct MachineDriver machine_driver =
 			ignore_interrupt,1
 		}
 	},
-	60,
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	100,	/* 100 CPU slices per frame - an high value to ensure proper */
 			/* synchronization of the CPUs */
 	0,
@@ -243,10 +252,13 @@ static struct MachineDriver machine_driver =
 	champbas_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	champbas_sh_start,
-	AY8910_sh_stop,
-	AY8910_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&ay8910_interface
+		}
+	}
 };
 
 
@@ -287,7 +299,7 @@ struct GameDriver champbas_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/,input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,

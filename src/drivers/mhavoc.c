@@ -166,7 +166,7 @@ Every 3, add 1                  | On |Off | On |    |    |    |    |    |
 #include "machine/mathbox.h"
 #include "machine/atari_vg.h"
 #include "vidhrdw/avgdvg.h"
-#include "sndhrdw/pokyintf.h"
+#include "vidhrdw/vector.h"
 
 void mhavoc_init_machine(void);
 int mhavoc_alpha_interrupt (void);
@@ -186,32 +186,6 @@ void mhavoc_gammaram_w(int offset, int data);
 void tempest_colorram_w(int offset, int data);
 
 
-#include "sndhrdw/starwars.h"
-
-static struct POKEYinterface interface =
-{
-	4,	/* 4 chips */
-	FREQ_17_APPROX,	/* 1.7 Mhz */
-	255,
-	NO_CLIP,
-	/* The 8 pot handlers */
-	{ 0, 0, 0, 0 },
-	{ 0, 0, 0, 0 },
-	{ 0, 0, 0, 0 },
-	{ 0, 0, 0, 0 },
-	{ 0, 0, 0, 0 },
-	{ 0, 0, 0, 0 },
-	{ 0, 0, 0, 0 },
-	{ 0, 0, 0, 0 },
-	/* The allpot handler */
-	{ input_port_3_r, 0, 0, 0 },
-};
-
-
-int mhavoc_sh_start(void)
-{
-	return pokey_sh_start (&interface);
-}
 
 /* Main board Readmem */
 static struct MemoryReadAddress readmem[] =
@@ -299,7 +273,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT ( 0x0f, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* IN2 - gamma */
-	PORT_ANALOG ( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 100, 64, 0, 0 )
+	PORT_ANALOG ( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 100, 0, 0, 0 )
 
 	PORT_START /* DIP Switch at position 13/14S */
 	PORT_DIPNAME( 0xc0, 0x00, "Lives", IP_KEY_NONE )
@@ -371,7 +345,31 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-static unsigned char color_prom[] = { 0 };
+static unsigned char color_prom[] = { VEC_PAL_COLOR };
+
+
+
+static struct POKEYinterface pokey_interface =
+{
+	4,	/* 4 chips */
+	1250000,	/* 1.25 MHz??? */
+	255,
+	POKEY_DEFAULT_GAIN/4,
+	NO_CLIP,
+	/* The 8 pot handlers */
+	{ 0, 0, 0, 0 },
+	{ 0, 0, 0, 0 },
+	{ 0, 0, 0, 0 },
+	{ 0, 0, 0, 0 },
+	{ 0, 0, 0, 0 },
+	{ 0, 0, 0, 0 },
+	{ 0, 0, 0, 0 },
+	{ 0, 0, 0, 0 },
+	/* The allpot handler */
+	{ input_port_3_r, 0, 0, 0 },
+};
+
+
 
 static struct MachineDriver machine_driver =
 {
@@ -382,22 +380,25 @@ static struct MachineDriver machine_driver =
 			2500000,	/* 2.5 Mhz */
 			0,
 			readmem,writemem,0,0,
-			mhavoc_alpha_interrupt,10 /* 10 interrupts per frame = 3.3ms (2.4 is eventually more appropriate */
+			0, 0, /* no vblank interrupt */
+			interrupt, 407 /* 2.4576 ms period */
 		},
 		{
 			CPU_M6502,
 			1250000,	/* 1.25 Mhz */
 			2,		/* CPU #2 */
 			gamma_readmem,gamma_writemem,0,0,
-			mhavoc_gamma_interrupt,10 /* 10 interrupts per frame = 3.3ms period */
+			0, 0, /* no vblank interrupt */
+			interrupt, 305 /* 3.2768 ms period */
 		}
 	},
-	30,		/* fps should be 30, but MH draws "empty" frames */
-	400,	/* 400 cycles per frame = tight processor timing */
+	30, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
+			/* fps should be 30, but MH draws "empty" frames */
+	1,		/* 1 CPU slice. see machine.c */
 	mhavoc_init_machine,
 
 	/* video hardware */
-	224, 288, { 0, 300, 0, 260 },
+	400, 300, { 0, 300, 0, 260 },
 	gfxdecodeinfo,
 	256,256,
 	avg_init_colors,
@@ -409,10 +410,13 @@ static struct MachineDriver machine_driver =
 	avg_screenrefresh,
 
 	/* sound hardware */
-	0,
-	mhavoc_sh_start,
-	pokey_sh_stop,
-	pokey_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_POKEY,
+			&pokey_interface
+		}
+	}
 };
 
 
@@ -537,12 +541,9 @@ void hisave(void)
 	"Brad Oliver (MAME driver)\n" \
 	"Neil Bradley (MAME driver)\n" \
 	"Bernd Wiebelt (MAME driver)\n" \
-	"Al Kossow (VECSIM)\n" \
-	"Hedley Rainnie (VECSIM)\n" \
-	"Eric Smith (VECSIM)\n" \
-	"Jess Askey (technical advice)\n" \
-	"Chris Kirmse (technical advice)\n" \
-	"Sean Trowbridge (Vectorrama)\n"
+	"Frank Palazzolo (technical info)\n" \
+	"Jess Askey (technical info)\n" \
+	VECTOR_TEAM
 
 struct GameDriver mhavoc_driver =
 {
@@ -557,7 +558,7 @@ struct GameDriver mhavoc_driver =
 	0,
 	0,
 
-	0, input_ports, 0, 0, 0,
+	input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -578,7 +579,7 @@ struct GameDriver mhavoc2_driver =
 	0,
 	0,
 
-	0, input_ports, 0, 0, 0,
+	input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -599,7 +600,7 @@ struct GameDriver mhavocrv_driver =
 	0,
 	0,
 
-	0, input_ports, 0, 0, 0,
+	input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,

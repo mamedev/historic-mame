@@ -8,7 +8,7 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "M6809.h"
+#include "M6809/M6809.h"
 
 
 unsigned char *mappy_sharedram;
@@ -34,7 +34,8 @@ void motos_init_machine(void)
 	credits = coin = start1 = start2 = 0;
 
 	/* Set optimization flags for M6809 */
-	m6809_Flags = M6809_FAST_NONE;
+	m6809_Flags = M6809_FAST_S | M6809_FAST_U;
+//	m6809_Flags = M6809_FAST_NONE;
 }
 
 
@@ -49,7 +50,7 @@ int mappy_sharedram_r2(int offset)
 	/* to speed up emulation, we check for the loop the sound CPU sits in most of the time
 	   and end the current iteration (things will start going again with the next IRQ) */
 	if (offset == 0x010a - 0x40 && mappy_sharedram[offset] == 0)
-		cpu_seticount (0);
+		cpu_spinuntil_int ();
 	return mappy_sharedram[offset];
 }
 
@@ -58,7 +59,7 @@ int digdug2_sharedram_r2(int offset)
 	/* to speed up emulation, we check for the loop the sound CPU sits in most of the time
 	   and end the current iteration (things will start going again with the next IRQ) */
 	if (offset == 0x0a1 - 0x40 && mappy_sharedram[offset] == 0 && cpu_getpc () == 0xe383)
-		cpu_seticount (0);
+		cpu_spinuntil_int ();
 	return mappy_sharedram[offset];
 }
 
@@ -78,7 +79,7 @@ int mappy_cpu1ram_r(int offset)
 	/* to speed up emulation, we check for the loop the main CPU sits in much of the time
 	   and end the current iteration (things will start going again with the next IRQ) */
 	if (offset == 0x1382 && RAM[offset] == 0)
-		cpu_seticount (0);
+		cpu_spinuntil_int ();
 	return RAM[offset];
 }
 
@@ -87,7 +88,7 @@ int digdug2_cpu1ram_r(int offset)
 	/* to speed up emulation, we check for the loop the main CPU sits in much of the time
 	   and end the current iteration (things will start going again with the next IRQ) */
 	if (offset == 0x1000 && RAM[offset] == 0 && cpu_getpc () == 0x80c4)
-		cpu_seticount (0);
+		cpu_spinuntil_int ();
 	return RAM[offset];
 }
 

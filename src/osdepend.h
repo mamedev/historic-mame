@@ -4,7 +4,8 @@
 
 struct osd_bitmap
 {
-	int width,height;       /* width and hegiht of the bitmap */
+	int width,height;       /* width and height of the bitmap */
+	int depth;		/* bits per pixel - ASG 980209 */
 	void *_private; /* don't touch! - reserved for osdepend use */
 	unsigned char **line; /* pointers to the start of each line */
 };
@@ -98,7 +99,27 @@ struct osd_bitmap
 /* 86 */
 #define OSD_KEY_F11         87
 #define OSD_KEY_F12         88
-#define OSD_MAX_KEY         88
+#define OSD_KEY_COMMAND     89
+#define OSD_KEY_OPTION      90
+/* 91 - 100 */
+/* The following are all undefined in Allegro */
+#define OSD_KEY_1_PAD		101
+#define OSD_KEY_2_PAD		102
+#define OSD_KEY_3_PAD		103
+#define OSD_KEY_4_PAD		104
+/* 105 */
+#define OSD_KEY_6_PAD		106
+#define OSD_KEY_7_PAD		107
+#define OSD_KEY_8_PAD		108
+#define OSD_KEY_9_PAD		109
+#define OSD_KEY_0_PAD		110
+#define OSD_KEY_STOP_PAD	111
+#define OSD_KEY_EQUALS_PAD	112
+#define OSD_KEY_SLASH_PAD	113
+#define OSD_KEY_ASTER_PAD	114
+#define OSD_KEY_ENTER_PAD	115
+
+#define OSD_MAX_KEY         115
 
 
 #define OSD_JOY_LEFT    1
@@ -172,9 +193,14 @@ struct osd_bitmap
 extern int video_sync;
 
 
-int osd_init(int argc,char **argv);
+int osd_init(void);
 void osd_exit(void);
-struct osd_bitmap *osd_create_bitmap(int width,int height);
+/* VERY IMPORTANT: the function must allocate also a "safety area" 8 pixels wide all */
+/* around the bitmap. This is required because, for performance reasons, some graphic */
+/* routines don't clip at boundaries of the bitmap. */
+struct osd_bitmap *osd_new_bitmap(int width,int height,int depth);	/* ASG 980209 */
+#define osd_create_bitmap(w,h) osd_new_bitmap((w),(h),8)		/* ASG 980209 */
+/* ASG 980209 struct osd_bitmap *osd_create_bitmap(int width,int height);*/
 void osd_clearbitmap(struct osd_bitmap *bitmap);
 void osd_free_bitmap(struct osd_bitmap *bitmap);
 /* Create a display screen, or window, large enough to accomodate a bitmap */
@@ -182,13 +208,13 @@ void osd_free_bitmap(struct osd_bitmap *bitmap);
 /* palette is an array of 'totalcolors' R,G,B triplets. The function returns */
 /* in *pens the pen values corresponding to the requested colors. */
 /* Return a osd_bitmap pointer or 0 in case of error. */
-struct osd_bitmap *osd_create_display(int width,int height,int totalcolors,
-		const unsigned char *palette,unsigned char *pens,int attributes);
+struct osd_bitmap *osd_create_display(int width,int height,unsigned int totalcolors,
+		const unsigned char *palette,unsigned short *pens,int attributes);
 int osd_set_display(int width,int height,int attributes);
 void osd_close_display(void);
 void osd_modify_pen(int pen,unsigned char red, unsigned char green, unsigned char blue);
 void osd_get_pen(int pen,unsigned char *red, unsigned char *green, unsigned char *blue);
-void osd_mark_dirty(int x1, int y1, int x2, int y2, int ui);    /* ASG 971011 */
+void osd_mark_dirty(int xmin, int ymin, int xmax, int ymax, int ui);    /* ASG 971011 */
 void osd_update_display(void);
 void osd_update_audio(void);
 void osd_play_sample(int channel,signed char *data,int len,int freq,int volume,int loop);
@@ -201,6 +227,10 @@ void osd_restart_sample(int channel);
 int osd_get_sample_status(int channel);
 void osd_ym2203_write(int n, int r, int v);
 void osd_ym2203_update(void);
+int osd_ym3812_status(void);
+int osd_ym3812_read(void);
+void osd_ym3812_control(int reg);
+void osd_ym3812_write(int data);
 void osd_set_mastervolume(int volume);
 int osd_key_pressed(int keycode);
 int osd_read_key(void);
@@ -210,12 +240,10 @@ const char *osd_key_name(int keycode);
 void osd_poll_joystick(void);
 int osd_joy_pressed(int joycode);
 
-int osd_trak_read(int axis);
+void osd_trak_read(int *deltax,int *deltay);
+
+/* return a value in the range -128 .. 128 (yes, 128, not 127) */
 int osd_analogjoy_read(int axis);
-
-int osd_update_vectors(int *x_res, int *y_res, int step);
-void osd_draw_to(int x, int y, int col);
-
 
 /* file handling routines */
 #define OSD_FILETYPE_ROM 1
@@ -224,9 +252,11 @@ void osd_draw_to(int x, int y, int col);
 #define OSD_FILETYPE_CONFIG 4
 #define OSD_FILETYPE_INPUTLOG 5
 
-/* gamename holds the driver name, filename is only used for ROMs and samples. */
-/* if 'write' is not 0, the file is opened for write. Otherwise it is opened */
-/* for read. */
+/* gamename holds the driver name, filename is only used for ROMs and    */
+/* samples. If 'write' is not 0, the file is opened for write. Otherwise */
+/* it is opened for read. */
+
+int osd_faccess (const char *filename, int filetype);
 void *osd_fopen (const char *gamename,const char *filename,int filetype,int write);
 int osd_fread (void *file,void *buffer,int length);
 int osd_fwrite (void *file,const void *buffer,int length);

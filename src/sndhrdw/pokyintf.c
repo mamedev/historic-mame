@@ -11,11 +11,9 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "sndhrdw/pokyintf.h"
-#include "sndhrdw/generic.h"
+#include "sndhrdw/pokey.h"
 
 #define MIN_SLICE 10	/* minimum update step for POKEY (226usec @ 44100Hz) */
-#define POKEY_GAIN	16
 
 static int buffer_len;
 static int emulation_rate;
@@ -29,14 +27,10 @@ static uint8 pokey_random[MAXPOKEYS];     /* The random number for each pokey */
 static struct POKEYinterface *intf;
 static unsigned char *buffer;
 
-#ifdef macintosh
-#include "macpokey.c"
-#endif
 
 int pokey_sh_start (struct POKEYinterface *interface)
 {
-
-	int i;
+	int i, res;
 
 	intf = interface;
 
@@ -47,14 +41,15 @@ int pokey_sh_start (struct POKEYinterface *interface)
 	channel = get_play_channels(1);
 
 	if ((buffer = malloc(buffer_len)) == 0)
+		return 1;
+	memset(buffer,0,buffer_len);
+
+	res = Pokey_sound_init (intf->clock, emulation_rate, intf->num, intf->clip);
+	if (res)
 	{
 		free(buffer);
 		return 1;
 	}
-	memset(buffer,0,buffer_len);
-
-	Pokey_sound_init (intf->clock, emulation_rate, intf->num, intf->clip);
-//	Pokey_sound_init (intf->clock, emulation_rate, intf->num, true);
 
 	for (i = 0; i < intf->num; i ++)
 		/* Seed the values */
@@ -66,18 +61,16 @@ int pokey_sh_start (struct POKEYinterface *interface)
 
 void pokey_sh_stop (void)
 {
+	Pokey_sound_exit ();
 }
 
 static void update_pokeys(void)
 {
-	int totcycles,leftcycles,newpos;
+	int newpos;
 
-	totcycles = cpu_getfperiod();
-	leftcycles = cpu_getfcount();
-	newpos = buffer_len * (totcycles-leftcycles) / totcycles;
 
-	if (newpos > buffer_len)
-		newpos = buffer_len;
+	newpos = cpu_scalebyfcount(buffer_len);	/* get current position based on the timer */
+
 	if (newpos - sample_pos < MIN_SLICE)
 		return;
 	Pokey_process (buffer + sample_pos, newpos - sample_pos);
@@ -185,25 +178,25 @@ int quad_pokey_r (int offset)
 void pokey1_w (int offset,int data)
 {
 	update_pokeys ();
-	Update_pokey_sound (offset,data,0,POKEY_GAIN/intf->num);
+	Update_pokey_sound (offset,data,0,intf->gain);
 }
 
 void pokey2_w (int offset,int data)
 {
 	update_pokeys ();
-	Update_pokey_sound (offset,data,1,POKEY_GAIN/intf->num);
+	Update_pokey_sound (offset,data,1,intf->gain);
 }
 
 void pokey3_w (int offset,int data)
 {
 	update_pokeys ();
-	Update_pokey_sound (offset,data,2,POKEY_GAIN/intf->num);
+	Update_pokey_sound (offset,data,2,intf->gain);
 }
 
 void pokey4_w (int offset,int data)
 {
 	update_pokeys ();
-	Update_pokey_sound (offset,data,3,POKEY_GAIN/intf->num);
+	Update_pokey_sound (offset,data,3,intf->gain);
 }
 
 void quad_pokey_w (int offset,int data)
@@ -237,5 +230,5 @@ void pokey_sh_update (void)
 		Pokey_process (buffer + sample_pos, buffer_len - sample_pos);
 	sample_pos = 0;
 
-	osd_play_streamed_sample(channel,buffer,buffer_len,emulation_rate,intf->volume);
+	osd_play_streamed_sample(channel,(signed char *)buffer,buffer_len,emulation_rate,intf->volume);
 }

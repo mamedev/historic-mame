@@ -22,6 +22,69 @@ static int sprint2_steering_val2 = 0xFF;
 /***************************************************************************
 Read Ports
 
+Sprint1 looks for the following:
+   AAAAAAAA          D                   D
+   76543210          6                   7
+   00101000 ($28)    n/a                 1st1 (player 1 1st gear)
+   00101001 ($29)    n/a                 1st1 (player 1 2nd gear)
+   00101010 ($2A)    n/a                 1st1 (player 1 3rd gear)
+   00101100 ($2B)    n/a                 Gas1 (player 1 accelerator)
+   00101101 ($2C)    n/a                 Self Test
+   00101110 ($2D)    n/a                 Start1
+
+   00x10x00          Track Cycle (DIP)   Oil Slick (DIP)
+   00x10x01          Mode 0 $ (DIP)      Mode 1 $ (DIP)
+   00x10x10          Spare (DIP?)        Ext Play (DIP)
+   00x10x11          Time 0 (DIP)        Time 1 (DIP)
+
+We remap our input ports because if we didn't, we'd need 16 ports for this.
+***************************************************************************/
+
+int sprint1_read_ports(int offset)
+{
+        int gear;
+
+        gear=input_port_1_r(0);
+        if (gear & 0x01)                sprint2_gear1=1;
+        else if (gear & 0x02)           sprint2_gear1=2;
+        else if (gear & 0x04)           sprint2_gear1=3;
+        else if (gear & 0x08)           sprint2_gear1=4;
+
+        switch (offset)
+        {
+                /* IN1 */
+                case 0x28:      if (sprint2_gear1==1) return 0x00; else return 0x80;
+                case 0x29:      if (sprint2_gear2==1) return 0x00; else return 0x80;
+                case 0x2A:      if (sprint2_gear1==2) return 0x00; else return 0x80;
+                case 0x2B:      return ((input_port_2_r(0) & 0x01) << 7);
+                case 0x2C:      return ((input_port_2_r(0) & 0x02) << 6);
+                case 0x2D:      return ((input_port_2_r(0) & 0x04) << 5);
+                /* DSW */
+                case 0x10:
+                case 0x14:
+                case 0x30:
+                case 0x34:      return ((input_port_0_r(0) & 0x03) << 6);
+                case 0x11:
+                case 0x15:
+                case 0x31:
+                case 0x35:      return ((input_port_0_r(0) & 0x0C) << 4);
+                case 0x12:
+                case 0x16:
+                case 0x32:
+                case 0x36:      return ((input_port_0_r(0) & 0x30) << 2);
+                case 0x13:
+                case 0x17:
+                case 0x33:
+                case 0x37:      return ((input_port_0_r(0) & 0xC0) << 0);
+
+                /* Just in case */
+                default:        return 0xFF;
+        }
+}
+
+/***************************************************************************
+Read Ports
+
 Sprint2 looks for the following:
    AAAAAAAA          D                   D
    76543210          6                   7
@@ -61,14 +124,14 @@ int sprint2_read_ports(int offset)
         else if (gear & 0x20)           sprint2_gear2=2;
         else if (gear & 0x40)           sprint2_gear2=3;
         else if (gear & 0x80)           sprint2_gear2=4;
-                
+
 
         switch (offset)
         {
                 /* IN0 */
                 case 0x28:      return ((input_port_2_r(0) & 0x01) << 7);
                 case 0x29:      return ((input_port_2_r(0) & 0x02) << 6);
-                case 0x2A:      return ((input_port_2_r(0) & 0x04) << 5); 
+                case 0x2A:      return ((input_port_2_r(0) & 0x04) << 5);
                 case 0x2C:      return ((input_port_2_r(0) & 0x08) << 4);
                 case 0x2D:      return ((input_port_2_r(0) & 0x10) << 3);
                 case 0x2E:      return ((input_port_2_r(0) & 0x20) << 2);
@@ -152,7 +215,7 @@ int sprint2_steering1(int offset)
         int delta;
 
         this_val=input_port_5_r(0);
-        
+
         delta=this_val-last_val;
         last_val=this_val;
         if (delta>128) delta-=256;

@@ -118,7 +118,7 @@ void timeplt_flipscreen_w(int offset,int data)
 /* Return the current video scan line */
 int timeplt_scanline_r(int offset)
 {
-	return 255 - (cpu_getfcount() * 256 / cpu_getfperiod());
+	return cpu_scalebyfcount(256);
 }
 
 

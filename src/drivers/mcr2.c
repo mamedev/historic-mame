@@ -43,9 +43,6 @@ Known issues:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/generic.h"
-#include "sndhrdw/8910intf.h"
-#include "Z80.h"
 
 void journey_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void journey_vh_screenrefresh(struct osd_bitmap *bitmap);
@@ -70,7 +67,12 @@ int kroozr_dial_r(int offset);
 int kroozr_trakball_x_r(int offset);
 int kroozr_trakball_y_r(int offset);
 
-int mcr_sh_start(void);
+
+/***************************************************************************
+
+  Memory maps
+
+***************************************************************************/
 
 static struct MemoryReadAddress mcr2_readmem[] =
 {
@@ -89,6 +91,7 @@ static struct MemoryWriteAddress mcr2_writemem[] =
 	{ 0xff80, 0xffff, mcr2_palette_w, &mcr2_paletteram },
 	{ -1 }  /* end of table */
 };
+
 
 static struct MemoryReadAddress journey_readmem[] =
 {
@@ -136,44 +139,11 @@ static struct MemoryWriteAddress sound_writemem[] =
 };
 
 
-static struct IOReadPort readport[] =
-{
-   { 0x00, 0x00, input_port_0_r },
-   { 0x01, 0x01, input_port_1_r },
-   { 0x02, 0x02, input_port_2_r },
-   { 0x03, 0x03, input_port_3_r },
-   { 0x04, 0x04, input_port_4_r },
-   { 0x05, 0xff, mcr_readport },
-   { -1 }
-};
+/***************************************************************************
 
-static struct IOReadPort wacko_readport[] =
-{
-   { 0x00, 0x00, input_port_0_r },
-   { 0x01, 0x01, input_port_1_r },
-   { 0x02, 0x02, input_port_2_r },
-   { 0x03, 0x03, input_port_3_r },
-   { 0x04, 0x04, input_port_4_r },
-   { 0x05, 0xff, mcr_readport },
-   { -1 }
-};
+  Input port definitions
 
-static struct IOReadPort kroozr_readport[] =
-{
-   { 0x00, 0x00, input_port_0_r },
-   { 0x01, 0x01, kroozr_dial_r }, /* firing spinner */
-   { 0x02, 0x02, kroozr_trakball_x_r }, /* x-axis */
-   { 0x03, 0x03, input_port_3_r },
-   { 0x04, 0x04, kroozr_trakball_y_r }, /* y-axis */
-   { 0x05, 0xff, mcr_readport },
-   { -1 }
-};
-
-static struct IOWritePort writeport[] =
-{
-   { 0, 0xFF, mcr_writeport },
-   { -1 }	/* end of table */
-};
+***************************************************************************/
 
 INPUT_PORTS_START( tron_input_ports )
 	PORT_START	/* IN0 */
@@ -334,19 +304,19 @@ INPUT_PORTS_START( wacko_input_ports )
 	PORT_DIPSETTING(    0x00, "On" )
 
 	PORT_START	/* IN1 -- controls joystick x-axis */
-	PORT_ANALOG ( 0xff, 0x00, IPT_TRACKBALL_X, 50, 8, 0, 0 )
+	PORT_ANALOG ( 0xff, 0x00, IPT_TRACKBALL_X, 50, 0, 0, 0 )
 
 	PORT_START	/* IN2 -- controls joystick y-axis */
-	PORT_ANALOG ( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_REVERSE, 50, 8, 0, 0 )
+	PORT_ANALOG ( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_REVERSE, 50, 0, 0, 0 )
 
 	PORT_START	/* IN3 -- dipswitches */
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* IN4 -- 4-way firing joystick */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP | IPF_4WAY )
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* AIN0 */
@@ -397,6 +367,55 @@ INPUT_PORTS_START( kroozr_input_ports )
 	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 40, 0, 0, 0 )
 INPUT_PORTS_END
 
+
+static struct IOReadPort readport[] =
+{
+   { 0x00, 0x00, input_port_0_r },
+   { 0x01, 0x01, input_port_1_r },
+   { 0x02, 0x02, input_port_2_r },
+   { 0x03, 0x03, input_port_3_r },
+   { 0x04, 0x04, input_port_4_r },
+   { 0x05, 0xff, mcr_readport },
+   { -1 }
+};
+
+static struct IOReadPort wacko_readport[] =
+{
+   { 0x00, 0x00, input_port_0_r },
+   { 0x01, 0x01, input_port_1_r },
+   { 0x02, 0x02, input_port_2_r },
+   { 0x03, 0x03, input_port_3_r },
+   { 0x04, 0x04, input_port_4_r },
+   { 0x05, 0xff, mcr_readport },
+   { -1 }
+};
+
+static struct IOReadPort kroozr_readport[] =
+{
+   { 0x00, 0x00, input_port_0_r },
+   { 0x01, 0x01, kroozr_dial_r }, /* firing spinner */
+   { 0x02, 0x02, kroozr_trakball_x_r }, /* x-axis */
+   { 0x03, 0x03, input_port_3_r },
+   { 0x04, 0x04, kroozr_trakball_y_r }, /* y-axis */
+   { 0x05, 0xff, mcr_readport },
+   { -1 }
+};
+
+static struct IOWritePort writeport[] =
+{
+   { 0, 0xFF, mcr_writeport },
+   { -1 }	/* end of table */
+};
+
+
+/***************************************************************************
+
+  Graphics layouts
+
+***************************************************************************/
+
+/* note that characters are half the resolution of sprites in each direction, so we generate
+   them at double size */
 
 /* 512 characters; used by all the mcr2 games */
 static struct GfxLayout mcr2_charlayout_512 =
@@ -468,6 +487,31 @@ static struct GfxDecodeInfo journey_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
+
+/***************************************************************************
+
+  Sound interfaces
+
+***************************************************************************/
+
+static struct AY8910interface ay8910_interface =
+{
+	2,	/* 2 chips */
+	2000000,	/* 2 MHZ ?? */
+	{ 0x20ff, 0x20ff },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 }
+};
+
+
+/***************************************************************************
+
+  Machine drivers
+
+***************************************************************************/
+
 static struct MachineDriver tron_machine_driver =
 {
 	/* basic machine hardware */
@@ -477,7 +521,7 @@ static struct MachineDriver tron_machine_driver =
 			2500000,	/* 2.5 Mhz */
 			0,
 			mcr2_readmem,mcr2_writemem,readport,writeport,
-			mcr_interrupt,32
+			mcr_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
@@ -487,8 +531,8 @@ static struct MachineDriver tron_machine_driver =
 			interrupt,26
 		}
 	},
-	30,
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	30, DEFAULT_30HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - sound CPU has enough interrupts to handle synchronization */
 	mcr_init_machine,
 
 	/* video hardware */
@@ -504,10 +548,13 @@ static struct MachineDriver tron_machine_driver =
 	mcr2_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	mcr_sh_start,
-	AY8910_sh_stop,
-	AY8910_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&ay8910_interface
+		}
+	}
 };
 
 static struct MachineDriver domino_machine_driver =
@@ -519,7 +566,7 @@ static struct MachineDriver domino_machine_driver =
 			2500000,	/* 2.5 Mhz */
 			0,
 			mcr2_readmem,mcr2_writemem,readport,writeport,
-			mcr_interrupt,32
+			mcr_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
@@ -529,8 +576,8 @@ static struct MachineDriver domino_machine_driver =
 			interrupt,26
 		}
 	},
-	30,
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	30, DEFAULT_30HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - sound CPU has enough interrupts to handle synchronization */
 	mcr_init_machine,
 
 	/* video hardware */
@@ -546,10 +593,13 @@ static struct MachineDriver domino_machine_driver =
 	mcr2_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	mcr_sh_start,
-	AY8910_sh_stop,
-	AY8910_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&ay8910_interface
+		}
+	}
 };
 
 static struct MachineDriver wacko_machine_driver =
@@ -561,7 +611,7 @@ static struct MachineDriver wacko_machine_driver =
 			2500000,	/* 2.5 Mhz */
 			0,
 			mcr2_readmem,mcr2_writemem,wacko_readport,writeport,
-			mcr_interrupt,32
+			mcr_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
@@ -571,8 +621,8 @@ static struct MachineDriver wacko_machine_driver =
 			interrupt,26
 		}
 	},
-	30,
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	30, DEFAULT_30HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - sound CPU has enough interrupts to handle synchronization */
 	mcr_init_machine,
 
 	/* video hardware */
@@ -588,10 +638,13 @@ static struct MachineDriver wacko_machine_driver =
 	mcr2_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	mcr_sh_start,
-	AY8910_sh_stop,
-	AY8910_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&ay8910_interface
+		}
+	}
 };
 
 static struct MachineDriver kroozr_machine_driver =
@@ -603,7 +656,7 @@ static struct MachineDriver kroozr_machine_driver =
 			2500000,	/* 2.5 Mhz */
 			0,
 			mcr2_readmem,mcr2_writemem,kroozr_readport,writeport,
-			mcr_interrupt,32
+			mcr_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
@@ -613,8 +666,8 @@ static struct MachineDriver kroozr_machine_driver =
 			interrupt,26
 		}
 	},
-	30,
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	30, DEFAULT_30HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - sound CPU has enough interrupts to handle synchronization */
 	mcr_init_machine,
 
 	/* video hardware */
@@ -630,10 +683,13 @@ static struct MachineDriver kroozr_machine_driver =
 	mcr2_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	mcr_sh_start,
-	AY8910_sh_stop,
-	AY8910_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&ay8910_interface
+		}
+	}
 };
 
 static struct MachineDriver journey_machine_driver =
@@ -645,7 +701,7 @@ static struct MachineDriver journey_machine_driver =
 			7500000,	/* Looks like it runs at 7.5 Mhz rather than 5 or 2.5 */
 			0,
 			journey_readmem,journey_writemem,readport,writeport,
-			mcr_interrupt,32
+			mcr_interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
@@ -655,8 +711,8 @@ static struct MachineDriver journey_machine_driver =
 			interrupt,26
 		}
 	},
-	30,
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	30, DEFAULT_30HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - sound CPU has enough interrupts to handle synchronization */
 	mcr_init_machine,
 
 	/* video hardware */
@@ -672,10 +728,13 @@ static struct MachineDriver journey_machine_driver =
 	journey_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	mcr_sh_start,
-	AY8910_sh_stop,
-	AY8910_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&ay8910_interface
+		}
+	}
 };
 
 
@@ -773,7 +832,7 @@ struct GameDriver tron_driver =
 {
 	"Tron",
 	"tron",
-	"CHRISTOPHER KIRMSE\nAARON GILES\nNICOLA SALMORIA\nBRAD OLIVER",
+	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nBrad Oliver",
 	&tron_machine_driver,
 
 	tron_rom,
@@ -781,13 +840,14 @@ struct GameDriver tron_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/,tron_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	tron_input_ports,
 
 	0, 0,0,
 	ORIENTATION_ROTATE_90,
 
 	tron_hiload,tron_hisave
 };
+
 
 ROM_START( twotiger_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
@@ -814,7 +874,7 @@ struct GameDriver twotiger_driver =
 {
 	"Two Tigers",
 	"twotiger",
-	"CHRISTOPHER KIRMSE\nAARON GILES\nNICOLA SALMORIA\nBRAD OLIVER",
+	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nBrad Oliver",
 	&tron_machine_driver,
 
 	twotiger_rom,
@@ -822,13 +882,14 @@ struct GameDriver twotiger_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/,twotiger_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	twotiger_input_ports,
 
 	0, 0,0,
 	ORIENTATION_DEFAULT,
 
 	twotiger_hiload,twotiger_hisave
 };
+
 
 ROM_START( domino_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
@@ -856,7 +917,7 @@ struct GameDriver domino_driver =
 {
 	"Domino Man",
 	"domino",
-	"CHRISTOPHER KIRMSE\nAARON GILES\nNICOLA SALMORIA\nBRAD OLIVER",
+	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nBrad Oliver",
 	&domino_machine_driver,
 
 	domino_rom,
@@ -864,13 +925,14 @@ struct GameDriver domino_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/,domino_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	domino_input_ports,
 
 	0, 0,0,
 	ORIENTATION_DEFAULT,
 
 	domino_hiload,domino_hisave
 };
+
 
 ROM_START( shollow_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
@@ -899,7 +961,7 @@ struct GameDriver shollow_driver =
 {
 	"Satan's Hollow",
 	"shollow",
-	"CHRISTOPHER KIRMSE\nAARON GILES\nNICOLA SALMORIA\nBRAD OLIVER",
+	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nBrad Oliver",
 	&domino_machine_driver,
 
 	shollow_rom,
@@ -907,13 +969,14 @@ struct GameDriver shollow_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/,shollow_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	shollow_input_ports,
 
 	0, 0,0,
 	ORIENTATION_ROTATE_90,
 
 	shollow_hiload,shollow_hisave
 };
+
 
 ROM_START( wacko_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
@@ -940,7 +1003,7 @@ struct GameDriver wacko_driver =
 {
 	"Wacko",
 	"wacko",
-	"CHRISTOPHER KIRMSE\nAARON GILES\nNICOLA SALMORIA\nBRAD OLIVER\nJOHN BUTLER",
+	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nBrad Oliver\nJOHN BUTLER",
 	&wacko_machine_driver,
 
 	wacko_rom,
@@ -948,13 +1011,14 @@ struct GameDriver wacko_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/,wacko_input_ports, 0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	wacko_input_ports,
 
 	0,0,0,
 	ORIENTATION_DEFAULT,
 
 	wacko_hiload,wacko_hisave
 };
+
 
 ROM_START( kroozr_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
@@ -982,7 +1046,7 @@ struct GameDriver kroozr_driver =
 {
 	"Kozmik Kroozr",
 	"kroozr",
-	"CHRISTOPHER KIRMSE\nAARON GILES\nNICOLA SALMORIA\nBRAD OLIVER",
+	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nBrad Oliver",
 	&kroozr_machine_driver,
 
 	kroozr_rom,
@@ -990,13 +1054,14 @@ struct GameDriver kroozr_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/,kroozr_input_ports, 0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	kroozr_input_ports,
 
 	0,0,0,
 	ORIENTATION_DEFAULT,
 
 	kroozr_hiload,kroozr_hisave
 };
+
 
 ROM_START( journey_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
@@ -1029,7 +1094,7 @@ struct GameDriver journey_driver =
 {
 	"Journey",
 	"journey",
-	"CHRISTOPHER KIRMSE\nAARON GILES\nNICOLA SALMORIA\nBRAD OLIVER",
+	"Christopher Kirmse\nAaron Giles\nNicola Salmoria\nBrad Oliver",
 	&journey_machine_driver,
 
 	journey_rom,
@@ -1037,7 +1102,7 @@ struct GameDriver journey_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/,domino_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	domino_input_ports,
 
 	0,0,0,
 	ORIENTATION_ROTATE_90,

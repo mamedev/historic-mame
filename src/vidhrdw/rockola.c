@@ -154,22 +154,19 @@ void rockola_vh_screenrefresh(struct osd_bitmap *bitmap)
 			dirtycharacter[charcode] = 0;
 		}
 
-		if (charcode != 0x30)	/* don't draw spaces */
+		sx = offs % 32;
+		sy = offs / 32 + 2;
+		if (flipscreen)
 		{
-			sx = offs % 32;
-			sy = offs / 32 + 2;
-			if (flipscreen)
-			{
-				sx = 31 - sx;
-				sy = 31 - sy;
-			}
-
-			drawgfx(bitmap,Machine->gfx[0],
-					charcode,
-					colorram[offs] & 0x07,
-					flipscreen,flipscreen,
-					8*sx,8*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+			sx = 31 - sx;
+			sy = 31 - sy;
 		}
+
+		drawgfx(bitmap,Machine->gfx[0],
+				charcode,
+				colorram[offs] & 0x07,
+				flipscreen,flipscreen,
+				8*sx,8*sy,
+				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

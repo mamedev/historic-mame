@@ -188,33 +188,81 @@ All different denominations                         |Off |Off |    |    |
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "machine/mathbox.h"
+#include "vidhrdw/vector.h"
 #include "vidhrdw/avgdvg.h"
+#include "machine/mathbox.h"
 #include "machine/atari_vg.h"
-#include "sndhrdw/pokyintf.h"
 
-void bzone_init_machine(void);
-void redbaron_init_machine(void);
-int bzone_interrupt(void);
+#define IN0_3KHZ (1<<7)
+#define IN0_VG_HALT (1<<6)
 
-int bzone_IN0_r(int offset);
-
-int bzone_sh_start (void);
-void bzone_sounds_w (int offset,int data);
-void bzone_pokey_w (int offset,int data);
-
-int redbaron_joy_r (int offset);
-int redbaron_sh_start (void);
 void redbaron_sounds_w (int offset,int data);
+void bzone_pokey_w (int offset, int data);
+void bzone_sounds_w (int offset, int data);
+
+int bzone_IN0_r(int offset)
+{
+	int res;
+
+	res = readinputport(0);
+
+	if (cpu_gettotalcycles() & 0x100)
+		res |= IN0_3KHZ;
+	else
+		res &= ~IN0_3KHZ;
+
+	if (avgdvg_done())
+		res |= IN0_VG_HALT;
+	else
+		res &= ~IN0_VG_HALT;
+
+	return res;
+}
+
+/* Translation table for one-joystick emulation */
+static int one_joy_trans[32]={
+        0x00,0x0A,0x05,0x00,0x06,0x02,0x01,0x00,
+        0x09,0x08,0x04,0x00,0x00,0x00,0x00,0x00 };
+
+static int bzone_IN3_r(int offset)
+{
+	int res,res1;
+
+	res=readinputport(3);
+	res1=readinputport(4);
+
+	res|=one_joy_trans[res1&0x1f];
+
+	return (res);
+}
+
+static int bzone_interrupt(void)
+{
+	if (readinputport(0) & 0x10)
+		return nmi_interrupt();
+	else
+		return ignore_interrupt();
+}
+
+int rb_input_select;
+
+static int redbaron_joy_r (int offset)
+{
+	if (rb_input_select)
+		return readinputport (5);
+	else
+		return readinputport (6);
+}
+
 
 static struct MemoryReadAddress bzone_readmem[] =
 {
 	{ 0x0000, 0x03ff, MRA_RAM },
 	{ 0x5000, 0x7fff, MRA_ROM },
 	{ 0x3000, 0x3fff, MRA_ROM },
-	{ 0xf800, 0xffff, MRA_ROM },	/* for the reset / interrupt vectors */
+	{ 0xf800, 0xffff, MRA_ROM },        /* for the reset / interrupt vectors */
 	{ 0x2000, 0x2fff, MRA_RAM, &vectorram, &vectorram_size },
-	{ 0x0800, 0x0800, bzone_IN0_r },	/* IN0 */
+	{ 0x0800, 0x0800, bzone_IN0_r },    /* IN0 */
 	{ 0x0a00, 0x0a00, input_port_1_r },	/* DSW1 */
 	{ 0x0c00, 0x0c00, input_port_2_r },	/* DSW2 */
 	{ 0x1820, 0x182f, pokey1_r },
@@ -276,8 +324,8 @@ INPUT_PORTS_START( bzone_input_ports )
 	PORT_DIPSETTING (   0x30, "50k and 100k" )
 	PORT_DIPNAME (0xc0, 0x00, "Language", IP_KEY_NONE )
 	PORT_DIPSETTING (   0x00, "English" )
-	PORT_DIPSETTING (   0x40, "French" )
-	PORT_DIPSETTING (   0x80, "German" )
+	PORT_DIPSETTING (   0x40, "German" )
+	PORT_DIPSETTING (   0x80, "French" )
 	PORT_DIPSETTING (   0xc0, "Spanish" )
 
 	PORT_START	/* DSW1 */
@@ -306,7 +354,7 @@ INPUT_PORTS_START( bzone_input_ports )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_UP | IPF_2WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_DOWN | IPF_2WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_UP | IPF_2WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON3 )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -317,6 +365,7 @@ INPUT_PORTS_START( bzone_input_ports )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_CHEAT )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_CHEAT )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_CHEAT )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_CHEAT )
 INPUT_PORTS_END
 
 
@@ -325,9 +374,9 @@ static struct MemoryReadAddress redbaron_readmem[] =
 	{ 0x0000, 0x03ff, MRA_RAM },
 	{ 0x5000, 0x7fff, MRA_ROM },
 	{ 0x3000, 0x3fff, MRA_ROM },
-	{ 0xf800, 0xffff, MRA_ROM },		/* for the reset / interrupt vectors */
+	{ 0xf800, 0xffff, MRA_ROM },        /* for the reset / interrupt vectors */
 	{ 0x2000, 0x2fff, MRA_RAM, &vectorram, &vectorram_size },
-	{ 0x0800, 0x0800, bzone_IN0_r },	/* IN0 */
+	{ 0x0800, 0x0800, bzone_IN0_r },    /* IN0 */
 	{ 0x0a00, 0x0a00, input_port_1_r },	/* DSW1 */
 	{ 0x0c00, 0x0c00, input_port_2_r },	/* DSW2 */
 	{ 0x1810, 0x181f, pokey1_r },
@@ -343,7 +392,7 @@ static struct MemoryWriteAddress redbaron_writemem[] =
 {
 	{ 0x0000, 0x03ff, MWA_RAM },
 	{ 0x2000, 0x2fff, MWA_RAM },
-	{ 0x1808, 0x1808, redbaron_sounds_w },	/* used for selecting joystick pot also */
+	{ 0x1808, 0x1808, redbaron_sounds_w },	/* and select joystick pot also */
 	{ 0x1000, 0x1000, MWA_NOP },			/* coin out */
 	{ 0x180a, 0x180a, MWA_NOP },			/* sound reset, yet todo */
 	{ 0x180c, 0x180c, atari_vg_earom_ctrl },
@@ -424,7 +473,7 @@ INPUT_PORTS_START( redbaron_input_ports )
 	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 50, 0, 64, 192 )
 
 	PORT_START	/* IN6 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y | IPF_REVERSE, 50, 0, 64, 192 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y, 50, 0, 64, 192 )
 INPUT_PORTS_END
 
 static struct GfxLayout fakelayout =
@@ -445,26 +494,8 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
-static unsigned char color_prom[] =
-{
-	0x00,0x01,0x00, /* GREEN */
-	0x00,0x01,0x01, /* CYAN */
-	0x00,0x00,0x01, /* BLUE */
-	0x01,0x00,0x00, /* RED */
-	0x01,0x00,0x01, /* MAGENTA */
-	0x01,0x01,0x00, /* YELLOW */
-	0x01,0x01,0x01,	/* WHITE */
-	0x00,0x00,0x00,	/* BLACK */
-	0x00,0x01,0x00, /* GREEN */
-	0x00,0x01,0x01, /* CYAN */
-	0x00,0x00,0x01, /* BLUE */
-	0x01,0x00,0x00, /* RED */
-	0x01,0x00,0x01, /* MAGENTA */
-	0x01,0x01,0x00, /* YELLOW */
-	0x01,0x01,0x01,	/* WHITE */
-	0x00,0x00,0x00	/* BLACK */
-};
-
+static unsigned char bzone_color_prom[]    = { VEC_PAL_BZONE     };
+static unsigned char redbaron_color_prom[] = { VEC_PAL_MONO_AQUA };
 
 
 static int bzone_hiload(void)
@@ -501,6 +532,34 @@ static void bzone_hisave(void)
 	}
 }
 
+
+
+static struct POKEYinterface bzone_pokey_interface =
+{
+	1,	/* 1 chip */
+	1500000,	/* 1.5 MHz??? */
+	255,
+	POKEY_DEFAULT_GAIN,
+	NO_CLIP,
+	/* The 8 pot handlers */
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	/* The allpot handler */
+	{ bzone_IN3_r },
+};
+
+static struct Samplesinterface bzone_samples_interface =
+{
+	2	/* 2 channels */
+};
+
+
 static struct MachineDriver bzone_machine_driver =
 {
 	/* basic machine hardware */
@@ -510,15 +569,16 @@ static struct MachineDriver bzone_machine_driver =
 			1500000,	/* 1.5 Mhz */
 			0,
 			bzone_readmem,bzone_writemem,0,0,
-			bzone_interrupt,6 /* approx 250Hz */
+			0, 0, /* no vblank interrupt */
+			bzone_interrupt, 240 /* 240 Hz */
 		}
 	},
-	45, /* frames per second */
+	40, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
 	1,
-	bzone_init_machine,
+	0,
 
 	/* video hardware */
-	288, 224, { 0, 580, 0, 400 },
+	400, 300, { 0, 580, 0, 400 },
 	gfxdecodeinfo,
 	256, 256,
 	avg_init_colors,
@@ -530,10 +590,18 @@ static struct MachineDriver bzone_machine_driver =
 	avg_screenrefresh,
 
 	/* sound hardware */
-	0,
-	bzone_sh_start,
-	pokey_sh_stop,
-	pokey_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_POKEY,
+			&bzone_pokey_interface
+		},
+		{
+			SOUND_SAMPLES,
+			&bzone_samples_interface
+		}
+	}
+
 };
 
 
@@ -589,8 +657,10 @@ struct GameDriver bzone_driver =
 {
 	"Battle Zone",
 	"bzone",
+	"Brad Oliver (Mame driver)\n"
 	VECTOR_TEAM
-	"Mauro Minenna (solo joystick code)\n",
+	"Mauro Minenna (one-stick mode)",
+
 	&bzone_machine_driver,
 
 	bzone_rom,
@@ -598,9 +668,9 @@ struct GameDriver bzone_driver =
 	bzone_sample_names,
 	0,	/* sound_prom */
 
-	0, bzone_input_ports, 0, 0, 0,
+	bzone_input_ports,
 
-	color_prom, 0, 0,
+	bzone_color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	bzone_hiload, bzone_hisave
@@ -610,24 +680,51 @@ struct GameDriver bzone2_driver =
 {
 	"Battle Zone (alternate version)",
 	"bzone2",
-	VECTOR_TEAM
-	"Mauro Minenna (solo joystick code)\n",
-	&bzone_machine_driver,
 
+	"Brad Oliver (Mame driver)\n"
+	VECTOR_TEAM
+	"Mauro Minenna (one-stick mode)",
+
+	&bzone_machine_driver,
 	bzone2_rom,
 	0, 0,
 	bzone_sample_names,
 	0,	/* sound_prom */
 
-	0, bzone_input_ports, 0, 0, 0,
+	bzone_input_ports,
 
-	color_prom, 0, 0,
+	bzone_color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	bzone_hiload, bzone_hisave
 };
 
 
+static struct POKEYinterface redbaron_pokey_interface =
+{
+	1,	/* 1 chip */
+	1500000,	/* 1.5 MHz??? */
+	255,
+	POKEY_DEFAULT_GAIN,
+	NO_CLIP,
+	/* The 8 pot handlers */
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	/* The allpot handler */
+	{ redbaron_joy_r },
+};
+
+
+static struct Samplesinterface redbaron_samples_interface =
+{
+	2	/* 2 channels */
+};
 
 static struct MachineDriver redbaron_machine_driver =
 {
@@ -638,30 +735,38 @@ static struct MachineDriver redbaron_machine_driver =
 			1500000,	/* 1.5 Mhz */
 			0,
 			redbaron_readmem,redbaron_writemem,0,0,
-			bzone_interrupt,6 /* approx 250Hz */
+			0, 0, /* no vblank interrupts */
+			bzone_interrupt, 240 /* 240 Hz */
 		}
 	},
-	45, /* frames per second */
+	40, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
 	1,
-	redbaron_init_machine,
+	0,
 
 	/* video hardware */
-	288, 224, { 0, 520, 0, 400 },
+	400, 300, { 0, 520, 0, 400 },
 	gfxdecodeinfo,
 	256, 256,
 	avg_init_colors,
 
 	VIDEO_TYPE_VECTOR,
 	0,
-	avg_start,
+	avg_start_redbaron,
 	avg_stop,
 	avg_screenrefresh,
 
 	/* sound hardware */
-	0,
-	redbaron_sh_start,
-	pokey_sh_stop,
-	pokey_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_POKEY,
+			&redbaron_pokey_interface
+		},
+		{
+			SOUND_SAMPLES,
+			&redbaron_samples_interface
+		}
+	}
 };
 
 
@@ -699,8 +804,10 @@ struct GameDriver redbaron_driver =
 {
 	"Red Baron",
 	"redbaron",
+	"Brad Oliver (Mame driver)\n"
 	VECTOR_TEAM
-	"Baloo (joystick code)\n",
+	"Baloo (stick support)",
+
 	&redbaron_machine_driver,
 
 	redbaron_rom,
@@ -708,9 +815,9 @@ struct GameDriver redbaron_driver =
 	redbaron_sample_names,
 	0,	/* sound_prom */
 
-	0/*TBR*/, redbaron_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	redbaron_input_ports,
 
-	color_prom, 0, 0,
+	redbaron_color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	atari_vg_earom_load, atari_vg_earom_save

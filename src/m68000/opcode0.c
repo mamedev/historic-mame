@@ -5,7 +5,7 @@ void op_0(ULONG opcode) /* OR */
 {{	BYTE src = nextiword();
 {	BYTE dst = regs.d[dstreg];
 	src |= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((BYTE)(src)) == 0;
 	NFLG = ((BYTE)(src)) < 0;
 	regs.d[dstreg] = (regs.d[dstreg] & ~0xff) | ((src) & 0xff);
@@ -17,7 +17,7 @@ void op_10(ULONG opcode) /* OR */
 {	CPTR dsta = regs.a[dstreg];
 	BYTE dst = get_byte(dsta);
 	src |= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((BYTE)(src)) == 0;
 	NFLG = ((BYTE)(src)) < 0;
 	put_byte(dsta,src);
@@ -30,7 +30,7 @@ void op_18(ULONG opcode) /* OR */
 	BYTE dst = get_byte(dsta);
 {	regs.a[dstreg] += areg_byteinc[dstreg];
 	src |= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((BYTE)(src)) == 0;
 	NFLG = ((BYTE)(src)) < 0;
 	put_byte(dsta,src);
@@ -43,7 +43,7 @@ void op_20(ULONG opcode) /* OR */
 {	CPTR dsta = regs.a[dstreg];
 	BYTE dst = get_byte(dsta);
 	src |= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((BYTE)(src)) == 0;
 	NFLG = ((BYTE)(src)) < 0;
 	put_byte(dsta,src);
@@ -55,7 +55,7 @@ void op_28(ULONG opcode) /* OR */
 {	CPTR dsta = regs.a[dstreg] + (LONG)(WORD)nextiword();
 	BYTE dst = get_byte(dsta);
 	src |= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((BYTE)(src)) == 0;
 	NFLG = ((BYTE)(src)) < 0;
 	put_byte(dsta,src);
@@ -67,7 +67,7 @@ void op_30(ULONG opcode) /* OR */
 {	CPTR dsta = get_disp_ea(regs.a[dstreg]);
 {	BYTE dst = get_byte(dsta);
 	src |= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((BYTE)(src)) == 0;
 	NFLG = ((BYTE)(src)) < 0;
 	put_byte(dsta,src);
@@ -78,7 +78,7 @@ void op_38(ULONG opcode) /* OR */
 {	CPTR dsta = (LONG)(WORD)nextiword();
 	BYTE dst = get_byte(dsta);
 	src |= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((BYTE)(src)) == 0;
 	NFLG = ((BYTE)(src)) < 0;
 	put_byte(dsta,src);
@@ -89,7 +89,7 @@ void op_39(ULONG opcode) /* OR */
 {	CPTR dsta = nextilong();
 	BYTE dst = get_byte(dsta);
 	src |= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((BYTE)(src)) == 0;
 	NFLG = ((BYTE)(src)) < 0;
 	put_byte(dsta,src);
@@ -108,7 +108,7 @@ void op_40(ULONG opcode) /* OR */
 {{	WORD src = nextiword();
 {	WORD dst = regs.d[dstreg];
 	src |= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(src)) == 0;
 	NFLG = ((WORD)(src)) < 0;
 	regs.d[dstreg] = (regs.d[dstreg] & ~0xffff) | ((src) & 0xffff);
@@ -120,7 +120,7 @@ void op_50(ULONG opcode) /* OR */
 {	CPTR dsta = regs.a[dstreg];
 	WORD dst = get_word(dsta);
 	src |= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(src)) == 0;
 	NFLG = ((WORD)(src)) < 0;
 	put_word(dsta,src);
@@ -133,7 +133,7 @@ void op_58(ULONG opcode) /* OR */
 	WORD dst = get_word(dsta);
 {	regs.a[dstreg] += 2;
 	src |= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(src)) == 0;
 	NFLG = ((WORD)(src)) < 0;
 	put_word(dsta,src);
@@ -146,7 +146,7 @@ void op_60(ULONG opcode) /* OR */
 {	CPTR dsta = regs.a[dstreg];
 	WORD dst = get_word(dsta);
 	src |= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(src)) == 0;
 	NFLG = ((WORD)(src)) < 0;
 	put_word(dsta,src);
@@ -158,7 +158,7 @@ void op_68(ULONG opcode) /* OR */
 {	CPTR dsta = regs.a[dstreg] + (LONG)(WORD)nextiword();
 	WORD dst = get_word(dsta);
 	src |= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(src)) == 0;
 	NFLG = ((WORD)(src)) < 0;
 	put_word(dsta,src);
@@ -170,7 +170,7 @@ void op_70(ULONG opcode) /* OR */
 {	CPTR dsta = get_disp_ea(regs.a[dstreg]);
 {	WORD dst = get_word(dsta);
 	src |= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(src)) == 0;
 	NFLG = ((WORD)(src)) < 0;
 	put_word(dsta,src);
@@ -181,7 +181,7 @@ void op_78(ULONG opcode) /* OR */
 {	CPTR dsta = (LONG)(WORD)nextiword();
 	WORD dst = get_word(dsta);
 	src |= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(src)) == 0;
 	NFLG = ((WORD)(src)) < 0;
 	put_word(dsta,src);
@@ -192,7 +192,7 @@ void op_79(ULONG opcode) /* OR */
 {	CPTR dsta = nextilong();
 	WORD dst = get_word(dsta);
 	src |= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(src)) == 0;
 	NFLG = ((WORD)(src)) < 0;
 	put_word(dsta,src);
@@ -211,7 +211,7 @@ void op_80(ULONG opcode) /* OR */
 {{	LONG src = nextilong();
 {	LONG dst = regs.d[dstreg];
 	src |= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((LONG)(src)) == 0;
 	NFLG = ((LONG)(src)) < 0;
 	regs.d[dstreg] = (src);
@@ -223,7 +223,7 @@ void op_90(ULONG opcode) /* OR */
 {	CPTR dsta = regs.a[dstreg];
 	LONG dst = get_long(dsta);
 	src |= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((LONG)(src)) == 0;
 	NFLG = ((LONG)(src)) < 0;
 	put_long(dsta,src);
@@ -236,7 +236,7 @@ void op_98(ULONG opcode) /* OR */
 	LONG dst = get_long(dsta);
 {	regs.a[dstreg] += 4;
 	src |= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((LONG)(src)) == 0;
 	NFLG = ((LONG)(src)) < 0;
 	put_long(dsta,src);
@@ -249,7 +249,7 @@ void op_a0(ULONG opcode) /* OR */
 {	CPTR dsta = regs.a[dstreg];
 	LONG dst = get_long(dsta);
 	src |= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((LONG)(src)) == 0;
 	NFLG = ((LONG)(src)) < 0;
 	put_long(dsta,src);
@@ -261,7 +261,7 @@ void op_a8(ULONG opcode) /* OR */
 {	CPTR dsta = regs.a[dstreg] + (LONG)(WORD)nextiword();
 	LONG dst = get_long(dsta);
 	src |= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((LONG)(src)) == 0;
 	NFLG = ((LONG)(src)) < 0;
 	put_long(dsta,src);
@@ -273,7 +273,7 @@ void op_b0(ULONG opcode) /* OR */
 {	CPTR dsta = get_disp_ea(regs.a[dstreg]);
 {	LONG dst = get_long(dsta);
 	src |= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((LONG)(src)) == 0;
 	NFLG = ((LONG)(src)) < 0;
 	put_long(dsta,src);
@@ -284,7 +284,7 @@ void op_b8(ULONG opcode) /* OR */
 {	CPTR dsta = (LONG)(WORD)nextiword();
 	LONG dst = get_long(dsta);
 	src |= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((LONG)(src)) == 0;
 	NFLG = ((LONG)(src)) < 0;
 	put_long(dsta,src);
@@ -295,7 +295,7 @@ void op_b9(ULONG opcode) /* OR */
 {	CPTR dsta = nextilong();
 	LONG dst = get_long(dsta);
 	src |= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((LONG)(src)) == 0;
 	NFLG = ((LONG)(src)) < 0;
 	put_long(dsta,src);
@@ -816,7 +816,7 @@ void op_200(ULONG opcode) /* AND */
 {{	BYTE src = nextiword();
 {	BYTE dst = regs.d[dstreg];
 	src &= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((BYTE)(src)) == 0;
 	NFLG = ((BYTE)(src)) < 0;
 	regs.d[dstreg] = (regs.d[dstreg] & ~0xff) | ((src) & 0xff);
@@ -828,7 +828,7 @@ void op_210(ULONG opcode) /* AND */
 {	CPTR dsta = regs.a[dstreg];
 	BYTE dst = get_byte(dsta);
 	src &= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((BYTE)(src)) == 0;
 	NFLG = ((BYTE)(src)) < 0;
 	put_byte(dsta,src);
@@ -841,7 +841,7 @@ void op_218(ULONG opcode) /* AND */
 	BYTE dst = get_byte(dsta);
 {	regs.a[dstreg] += areg_byteinc[dstreg];
 	src &= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((BYTE)(src)) == 0;
 	NFLG = ((BYTE)(src)) < 0;
 	put_byte(dsta,src);
@@ -854,7 +854,7 @@ void op_220(ULONG opcode) /* AND */
 {	CPTR dsta = regs.a[dstreg];
 	BYTE dst = get_byte(dsta);
 	src &= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((BYTE)(src)) == 0;
 	NFLG = ((BYTE)(src)) < 0;
 	put_byte(dsta,src);
@@ -866,7 +866,7 @@ void op_228(ULONG opcode) /* AND */
 {	CPTR dsta = regs.a[dstreg] + (LONG)(WORD)nextiword();
 	BYTE dst = get_byte(dsta);
 	src &= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((BYTE)(src)) == 0;
 	NFLG = ((BYTE)(src)) < 0;
 	put_byte(dsta,src);
@@ -878,7 +878,7 @@ void op_230(ULONG opcode) /* AND */
 {	CPTR dsta = get_disp_ea(regs.a[dstreg]);
 {	BYTE dst = get_byte(dsta);
 	src &= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((BYTE)(src)) == 0;
 	NFLG = ((BYTE)(src)) < 0;
 	put_byte(dsta,src);
@@ -889,7 +889,7 @@ void op_238(ULONG opcode) /* AND */
 {	CPTR dsta = (LONG)(WORD)nextiword();
 	BYTE dst = get_byte(dsta);
 	src &= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((BYTE)(src)) == 0;
 	NFLG = ((BYTE)(src)) < 0;
 	put_byte(dsta,src);
@@ -900,7 +900,7 @@ void op_239(ULONG opcode) /* AND */
 {	CPTR dsta = nextilong();
 	BYTE dst = get_byte(dsta);
 	src &= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((BYTE)(src)) == 0;
 	NFLG = ((BYTE)(src)) < 0;
 	put_byte(dsta,src);
@@ -919,7 +919,7 @@ void op_240(ULONG opcode) /* AND */
 {{	WORD src = nextiword();
 {	WORD dst = regs.d[dstreg];
 	src &= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(src)) == 0;
 	NFLG = ((WORD)(src)) < 0;
 	regs.d[dstreg] = (regs.d[dstreg] & ~0xffff) | ((src) & 0xffff);
@@ -931,7 +931,7 @@ void op_250(ULONG opcode) /* AND */
 {	CPTR dsta = regs.a[dstreg];
 	WORD dst = get_word(dsta);
 	src &= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(src)) == 0;
 	NFLG = ((WORD)(src)) < 0;
 	put_word(dsta,src);
@@ -944,7 +944,7 @@ void op_258(ULONG opcode) /* AND */
 	WORD dst = get_word(dsta);
 {	regs.a[dstreg] += 2;
 	src &= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(src)) == 0;
 	NFLG = ((WORD)(src)) < 0;
 	put_word(dsta,src);
@@ -957,7 +957,7 @@ void op_260(ULONG opcode) /* AND */
 {	CPTR dsta = regs.a[dstreg];
 	WORD dst = get_word(dsta);
 	src &= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(src)) == 0;
 	NFLG = ((WORD)(src)) < 0;
 	put_word(dsta,src);
@@ -969,7 +969,7 @@ void op_268(ULONG opcode) /* AND */
 {	CPTR dsta = regs.a[dstreg] + (LONG)(WORD)nextiword();
 	WORD dst = get_word(dsta);
 	src &= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(src)) == 0;
 	NFLG = ((WORD)(src)) < 0;
 	put_word(dsta,src);
@@ -981,7 +981,7 @@ void op_270(ULONG opcode) /* AND */
 {	CPTR dsta = get_disp_ea(regs.a[dstreg]);
 {	WORD dst = get_word(dsta);
 	src &= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(src)) == 0;
 	NFLG = ((WORD)(src)) < 0;
 	put_word(dsta,src);
@@ -992,7 +992,7 @@ void op_278(ULONG opcode) /* AND */
 {	CPTR dsta = (LONG)(WORD)nextiword();
 	WORD dst = get_word(dsta);
 	src &= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(src)) == 0;
 	NFLG = ((WORD)(src)) < 0;
 	put_word(dsta,src);
@@ -1003,7 +1003,7 @@ void op_279(ULONG opcode) /* AND */
 {	CPTR dsta = nextilong();
 	WORD dst = get_word(dsta);
 	src &= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(src)) == 0;
 	NFLG = ((WORD)(src)) < 0;
 	put_word(dsta,src);
@@ -1022,7 +1022,7 @@ void op_280(ULONG opcode) /* AND */
 {{	LONG src = nextilong();
 {	LONG dst = regs.d[dstreg];
 	src &= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((LONG)(src)) == 0;
 	NFLG = ((LONG)(src)) < 0;
 	regs.d[dstreg] = (src);
@@ -1034,7 +1034,7 @@ void op_290(ULONG opcode) /* AND */
 {	CPTR dsta = regs.a[dstreg];
 	LONG dst = get_long(dsta);
 	src &= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((LONG)(src)) == 0;
 	NFLG = ((LONG)(src)) < 0;
 	put_long(dsta,src);
@@ -1047,7 +1047,7 @@ void op_298(ULONG opcode) /* AND */
 	LONG dst = get_long(dsta);
 {	regs.a[dstreg] += 4;
 	src &= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((LONG)(src)) == 0;
 	NFLG = ((LONG)(src)) < 0;
 	put_long(dsta,src);
@@ -1060,7 +1060,7 @@ void op_2a0(ULONG opcode) /* AND */
 {	CPTR dsta = regs.a[dstreg];
 	LONG dst = get_long(dsta);
 	src &= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((LONG)(src)) == 0;
 	NFLG = ((LONG)(src)) < 0;
 	put_long(dsta,src);
@@ -1072,7 +1072,7 @@ void op_2a8(ULONG opcode) /* AND */
 {	CPTR dsta = regs.a[dstreg] + (LONG)(WORD)nextiword();
 	LONG dst = get_long(dsta);
 	src &= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((LONG)(src)) == 0;
 	NFLG = ((LONG)(src)) < 0;
 	put_long(dsta,src);
@@ -1084,7 +1084,7 @@ void op_2b0(ULONG opcode) /* AND */
 {	CPTR dsta = get_disp_ea(regs.a[dstreg]);
 {	LONG dst = get_long(dsta);
 	src &= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((LONG)(src)) == 0;
 	NFLG = ((LONG)(src)) < 0;
 	put_long(dsta,src);
@@ -1095,7 +1095,7 @@ void op_2b8(ULONG opcode) /* AND */
 {	CPTR dsta = (LONG)(WORD)nextiword();
 	LONG dst = get_long(dsta);
 	src &= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((LONG)(src)) == 0;
 	NFLG = ((LONG)(src)) < 0;
 	put_long(dsta,src);
@@ -1106,7 +1106,7 @@ void op_2b9(ULONG opcode) /* AND */
 {	CPTR dsta = nextilong();
 	LONG dst = get_long(dsta);
 	src &= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((LONG)(src)) == 0;
 	NFLG = ((LONG)(src)) < 0;
 	put_long(dsta,src);
@@ -2314,7 +2314,7 @@ void op_a00(ULONG opcode) /* EOR */
 {{	BYTE src = nextiword();
 {	BYTE dst = regs.d[dstreg];
 	src ^= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((BYTE)(src)) == 0;
 	NFLG = ((BYTE)(src)) < 0;
 	regs.d[dstreg] = (regs.d[dstreg] & ~0xff) | ((src) & 0xff);
@@ -2326,7 +2326,7 @@ void op_a10(ULONG opcode) /* EOR */
 {	CPTR dsta = regs.a[dstreg];
 	BYTE dst = get_byte(dsta);
 	src ^= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((BYTE)(src)) == 0;
 	NFLG = ((BYTE)(src)) < 0;
 	put_byte(dsta,src);
@@ -2339,7 +2339,7 @@ void op_a18(ULONG opcode) /* EOR */
 	BYTE dst = get_byte(dsta);
 {	regs.a[dstreg] += areg_byteinc[dstreg];
 	src ^= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((BYTE)(src)) == 0;
 	NFLG = ((BYTE)(src)) < 0;
 	put_byte(dsta,src);
@@ -2352,7 +2352,7 @@ void op_a20(ULONG opcode) /* EOR */
 {	CPTR dsta = regs.a[dstreg];
 	BYTE dst = get_byte(dsta);
 	src ^= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((BYTE)(src)) == 0;
 	NFLG = ((BYTE)(src)) < 0;
 	put_byte(dsta,src);
@@ -2364,7 +2364,7 @@ void op_a28(ULONG opcode) /* EOR */
 {	CPTR dsta = regs.a[dstreg] + (LONG)(WORD)nextiword();
 	BYTE dst = get_byte(dsta);
 	src ^= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((BYTE)(src)) == 0;
 	NFLG = ((BYTE)(src)) < 0;
 	put_byte(dsta,src);
@@ -2376,7 +2376,7 @@ void op_a30(ULONG opcode) /* EOR */
 {	CPTR dsta = get_disp_ea(regs.a[dstreg]);
 {	BYTE dst = get_byte(dsta);
 	src ^= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((BYTE)(src)) == 0;
 	NFLG = ((BYTE)(src)) < 0;
 	put_byte(dsta,src);
@@ -2387,7 +2387,7 @@ void op_a38(ULONG opcode) /* EOR */
 {	CPTR dsta = (LONG)(WORD)nextiword();
 	BYTE dst = get_byte(dsta);
 	src ^= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((BYTE)(src)) == 0;
 	NFLG = ((BYTE)(src)) < 0;
 	put_byte(dsta,src);
@@ -2398,7 +2398,7 @@ void op_a39(ULONG opcode) /* EOR */
 {	CPTR dsta = nextilong();
 	BYTE dst = get_byte(dsta);
 	src ^= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((BYTE)(src)) == 0;
 	NFLG = ((BYTE)(src)) < 0;
 	put_byte(dsta,src);
@@ -2417,7 +2417,7 @@ void op_a40(ULONG opcode) /* EOR */
 {{	WORD src = nextiword();
 {	WORD dst = regs.d[dstreg];
 	src ^= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(src)) == 0;
 	NFLG = ((WORD)(src)) < 0;
 	regs.d[dstreg] = (regs.d[dstreg] & ~0xffff) | ((src) & 0xffff);
@@ -2429,7 +2429,7 @@ void op_a50(ULONG opcode) /* EOR */
 {	CPTR dsta = regs.a[dstreg];
 	WORD dst = get_word(dsta);
 	src ^= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(src)) == 0;
 	NFLG = ((WORD)(src)) < 0;
 	put_word(dsta,src);
@@ -2442,7 +2442,7 @@ void op_a58(ULONG opcode) /* EOR */
 	WORD dst = get_word(dsta);
 {	regs.a[dstreg] += 2;
 	src ^= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(src)) == 0;
 	NFLG = ((WORD)(src)) < 0;
 	put_word(dsta,src);
@@ -2455,7 +2455,7 @@ void op_a60(ULONG opcode) /* EOR */
 {	CPTR dsta = regs.a[dstreg];
 	WORD dst = get_word(dsta);
 	src ^= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(src)) == 0;
 	NFLG = ((WORD)(src)) < 0;
 	put_word(dsta,src);
@@ -2467,7 +2467,7 @@ void op_a68(ULONG opcode) /* EOR */
 {	CPTR dsta = regs.a[dstreg] + (LONG)(WORD)nextiword();
 	WORD dst = get_word(dsta);
 	src ^= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(src)) == 0;
 	NFLG = ((WORD)(src)) < 0;
 	put_word(dsta,src);
@@ -2479,7 +2479,7 @@ void op_a70(ULONG opcode) /* EOR */
 {	CPTR dsta = get_disp_ea(regs.a[dstreg]);
 {	WORD dst = get_word(dsta);
 	src ^= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(src)) == 0;
 	NFLG = ((WORD)(src)) < 0;
 	put_word(dsta,src);
@@ -2490,7 +2490,7 @@ void op_a78(ULONG opcode) /* EOR */
 {	CPTR dsta = (LONG)(WORD)nextiword();
 	WORD dst = get_word(dsta);
 	src ^= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(src)) == 0;
 	NFLG = ((WORD)(src)) < 0;
 	put_word(dsta,src);
@@ -2501,7 +2501,7 @@ void op_a79(ULONG opcode) /* EOR */
 {	CPTR dsta = nextilong();
 	WORD dst = get_word(dsta);
 	src ^= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((WORD)(src)) == 0;
 	NFLG = ((WORD)(src)) < 0;
 	put_word(dsta,src);
@@ -2520,7 +2520,7 @@ void op_a80(ULONG opcode) /* EOR */
 {{	LONG src = nextilong();
 {	LONG dst = regs.d[dstreg];
 	src ^= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((LONG)(src)) == 0;
 	NFLG = ((LONG)(src)) < 0;
 	regs.d[dstreg] = (src);
@@ -2532,7 +2532,7 @@ void op_a90(ULONG opcode) /* EOR */
 {	CPTR dsta = regs.a[dstreg];
 	LONG dst = get_long(dsta);
 	src ^= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((LONG)(src)) == 0;
 	NFLG = ((LONG)(src)) < 0;
 	put_long(dsta,src);
@@ -2545,7 +2545,7 @@ void op_a98(ULONG opcode) /* EOR */
 	LONG dst = get_long(dsta);
 {	regs.a[dstreg] += 4;
 	src ^= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((LONG)(src)) == 0;
 	NFLG = ((LONG)(src)) < 0;
 	put_long(dsta,src);
@@ -2558,7 +2558,7 @@ void op_aa0(ULONG opcode) /* EOR */
 {	CPTR dsta = regs.a[dstreg];
 	LONG dst = get_long(dsta);
 	src ^= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((LONG)(src)) == 0;
 	NFLG = ((LONG)(src)) < 0;
 	put_long(dsta,src);
@@ -2570,7 +2570,7 @@ void op_aa8(ULONG opcode) /* EOR */
 {	CPTR dsta = regs.a[dstreg] + (LONG)(WORD)nextiword();
 	LONG dst = get_long(dsta);
 	src ^= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((LONG)(src)) == 0;
 	NFLG = ((LONG)(src)) < 0;
 	put_long(dsta,src);
@@ -2582,7 +2582,7 @@ void op_ab0(ULONG opcode) /* EOR */
 {	CPTR dsta = get_disp_ea(regs.a[dstreg]);
 {	LONG dst = get_long(dsta);
 	src ^= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((LONG)(src)) == 0;
 	NFLG = ((LONG)(src)) < 0;
 	put_long(dsta,src);
@@ -2593,7 +2593,7 @@ void op_ab8(ULONG opcode) /* EOR */
 {	CPTR dsta = (LONG)(WORD)nextiword();
 	LONG dst = get_long(dsta);
 	src ^= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((LONG)(src)) == 0;
 	NFLG = ((LONG)(src)) < 0;
 	put_long(dsta,src);
@@ -2604,7 +2604,7 @@ void op_ab9(ULONG opcode) /* EOR */
 {	CPTR dsta = nextilong();
 	LONG dst = get_long(dsta);
 	src ^= dst;
-	VFLG = CFLG = 0;
+	CLEARVC;
 	ZFLG = ((LONG)(src)) == 0;
 	NFLG = ((LONG)(src)) < 0;
 	put_long(dsta,src);

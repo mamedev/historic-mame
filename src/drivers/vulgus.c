@@ -39,8 +39,6 @@ c001      YM2203 #2 write
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/generic.h"
-#include "sndhrdw/8910intf.h"
 
 
 
@@ -57,8 +55,6 @@ int vulgus_vh_start(void);
 void vulgus_vh_stop(void);
 void vulgus_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void vulgus_vh_screenrefresh(struct osd_bitmap *bitmap);
-
-int vulgus_sh_start(void);
 
 
 
@@ -113,60 +109,91 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 
 
-static struct InputPort input_ports[] =
-{
-	{	/* IN0 */
-		0xff,
-		{ OSD_KEY_1, OSD_KEY_2, 0, 0, OSD_KEY_3, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* IN1 */
-		0xff,
-		{ OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_DOWN, OSD_KEY_UP,
-				OSD_KEY_LCONTROL, OSD_KEY_ALT, 0, 0 },
-		{ OSD_JOY_RIGHT, OSD_JOY_LEFT, OSD_JOY_DOWN, OSD_JOY_UP,
-				OSD_JOY_FIRE1, OSD_JOY_FIRE2, 0, 0 }
-	},
-	{	/* IN2 */
-		0xff,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW1 */
-		0xf7,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW2 */
-		0xff,
-		{ 0, 0, 0, OSD_KEY_F2, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{ -1 }	/* end of table */
-};
+INPUT_PORTS_START( input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_COIN3 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
+	PORT_START      /* IN2 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-static struct KEYSet keys[] =
-{
-        { 1, 3, "MOVE UP" },
-        { 1, 1, "MOVE LEFT"  },
-        { 1, 0, "MOVE RIGHT" },
-        { 1, 2, "MOVE DOWN" },
-        { 1, 4, "FIRE" },
-        { 1, 5, "MISSILE" },
-        { -1 }
-};
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x03, 0x03, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "1" )
+	PORT_DIPSETTING(    0x02, "2" )
+	PORT_DIPSETTING(    0x03, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
+	/* these are the settings for the second coin input, but it seems that the */
+	/* game only supports one */
+	PORT_DIPNAME( 0x1c, 0x1c, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "5 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x08, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x18, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x04, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x1c, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x0c, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x14, "1 Coin/3 Credits" )
+/*	PORT_DIPSETTING(    0x00, "Invalid" ) disables both coins */
+	PORT_DIPNAME( 0xe0, 0xe0, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "5 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x40, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xc0, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x20, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0xe0, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x60, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0xa0, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x00, "Free Play" )
 
-
-static struct DSW dsw[] =
-{
-	{ 3, 0x03, "LIVES", { "5", "1", "2", "3" }, 1 },
-	{ 4, 0x30, "BONUS", { "30000 70000", "10000 60000", "20000 70000", "20000 60000" }, 1 },
-	{ 4, 0x03, "DIFFICULTY", { "HARDEST", "HARD", "EASY", "NORMAL" }, 1 },
-/* not sure about difficulty. Code perform a read and (& 0x03). NdMix */
-	{ -1 }
-};
+	PORT_START      /* DSW1 */
+/* not sure about difficulty
+   Code perform a read and (& 0x03). NDMix*/
+	PORT_DIPNAME( 0x03, 0x03, "Difficulty?", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "Easy?" )
+	PORT_DIPSETTING(    0x03, "Normal?" )
+	PORT_DIPSETTING(    0x01, "Hard?" )
+	PORT_DIPSETTING(    0x00, "Hardest?" )
+	PORT_DIPNAME( 0x04, 0x04, "Demo Music", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x04, "On" )
+	PORT_DIPNAME( 0x08, 0x08, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x08, "On" )
+	PORT_DIPNAME( 0x70, 0x70, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x30, "10000 50000" )
+	PORT_DIPSETTING(    0x50, "10000 60000" )
+	PORT_DIPSETTING(    0x10, "10000 70000" )
+	PORT_DIPSETTING(    0x70, "20000 60000" )
+	PORT_DIPSETTING(    0x60, "20000 70000" )
+	PORT_DIPSETTING(    0x20, "20000 80000" )
+	PORT_DIPSETTING(    0x40, "30000 70000" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPNAME( 0x80, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x80, "Cocktail" )
+INPUT_PORTS_END
 
 
 
@@ -324,6 +351,19 @@ static unsigned char color_prom[] =
 
 
 
+static struct AY8910interface ay8910_interface =
+{
+	2,	/* 2 chips */
+	1500000,	/* 1.5 MHz ? */
+	{ 0x20ff, 0x20ff },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 }
+};
+
+
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -343,8 +383,8 @@ static struct MachineDriver machine_driver =
 			interrupt,8
 		}
 	},
-	60,
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
 	/* video hardware */
@@ -360,10 +400,13 @@ static struct MachineDriver machine_driver =
 	vulgus_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	vulgus_sh_start,
-	AY8910_sh_stop,
-	AY8910_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&ay8910_interface
+		}
+	}
 };
 
 
@@ -452,7 +495,7 @@ struct GameDriver vulgus_driver =
 {
 	"Vulgus",
 	"vulgus",
-	"Paul Leaman (hardware info)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nPete Ground (color info)",
+	"Paul Leaman (hardware info)\nMirko Buffoni (MAME driver)\nNicola Salmoria (MAME driver)\nPete Ground (color info)\nMarco Cassili",
 	&machine_driver,
 
 	vulgus_rom,
@@ -460,7 +503,7 @@ struct GameDriver vulgus_driver =
 	0,
 	0,	/* sound_prom */
 
-	input_ports, 0, 0/*TBR*/,dsw, keys,
+	input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,

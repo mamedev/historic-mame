@@ -3,9 +3,11 @@
 
 
 #include "common.h"
+#include "gfxlayer.h"
 #include "mame.h"
 #include "cpuintrf.h"
 #include "memory.h"
+#include "sndhrdw/generic.h"
 #include "inptport.h"
 #include "usrintrf.h"
 #include "cheat.h"
@@ -21,19 +23,6 @@ address or I/O port.
 
 ***************************************************************************/
 struct InputPort
-{
-	int default_value;	/* default value for the input port */
-	int keyboard[8];	/* keys affecting the 8 bits of the input port (0 means none) */
-	int joystick[8];	/* same for joystick */
-};
-
-/* Many games poll an input bit to check for vertical blanks instead of using */
-/* interrupts. This special value to put in the keyboard[] field allows you to */
-/* handle that. If you set one of the input bits to this, the bit will be */
-/* inverted while a vertical blank is happening. */
-#define IPB_VBLANK	(-1)
-
-struct NewInputPort
 {
 	unsigned char mask;	/* bits affected */
 	unsigned char default_value;	/* default value for the bits affected */
@@ -69,6 +58,9 @@ enum { IPT_END=1,IPT_PORT,
 	IPT_START1, IPT_START2, IPT_START3, IPT_START4,	/* start buttons */
 	IPT_SERVICE, IPT_TILT,
 	IPT_DIPSWITCH_NAME, IPT_DIPSWITCH_SETTING,
+/* Many games poll an input bit to check for vertical blanks instead of using */
+/* interrupts. This special value allows you to handle that. If you set one of the */
+/* input bits to this, the bit will be inverted while a vertical blank is happening. */
 	IPT_VBLANK,
 	IPT_UNKNOWN
 };
@@ -114,10 +106,14 @@ enum { IPT_END=1,IPT_PORT,
 
 #define IPF_CENTER     0x00800000	/* always preload in->default, autocentering the STICK/TRACKBALL */
 
+#define IPF_CUSTOM_UPDATE 0x01000000 /* normally, analog ports are updated when they are accessed. */
+									/* When this flag is set, they are never updated automatically, */
+									/* it is the responsibility of the driver to call */
+									/* update_analog_port(int port). */
+
+
 /* LBO - These 4 byte values are packed into the arg field and are typically used with analog ports */
-/* Since the sensivity is only one byte, we want to have 100% = 2^16, */
-/* 50% = 2^8, 200% = 2^32 and so on. BW	*/
-#define IPF_SENSITIVITY(percent)	(((percent*16)/100)&0xff)
+#define IPF_SENSITIVITY(percent)	(percent&0xff)
 #define IPF_CLIP(clip)			((clip&0xff) << 8  )
 #define IPF_MIN(min)			((min&0xff)  << 16 )
 #define IPF_MAX(max)			((max&0xff)  << 24 )
@@ -138,7 +134,7 @@ enum { IPT_END=1,IPT_PORT,
 #define IP_JOY_PREVIOUS -3	/* use the same joy as the previous input bit */
 
 /* start of table */
-#define INPUT_PORTS_START(name) static struct NewInputPort name[] = {
+#define INPUT_PORTS_START(name) static struct InputPort name[] = {
 /* end of table */
 #define INPUT_PORTS_END { 0, 0, IPT_END, 0, 0 } };
 /* start of a new input port */
@@ -164,42 +160,6 @@ enum { IPT_END=1,IPT_PORT,
 
 
 
-/* Key setting definition */
-struct KEYSet
-{
-	int num;	      /* input port affected */
-			      /* -1 terminates the array */
-	int mask;	      /* bit affected */
-	const char *name;     /* name of the setting */
-};
-
-
-/* dipswitch setting definition */
-struct DSW
-{
-	int num;	/* input port affected */
-				/* -1 terminates the array */
-	int mask;	/* bits affected */
-	const char *name;	/* name of the setting */
-	const char *values[17];/* null terminated array of names for the values */
-									/* the setting can have */
-	int reverse; 	/* set to 1 to display values in reverse order */
-};
-
-
-
-struct GfxDecodeInfo
-{
-	int memory_region;	/* memory region where the data resides (usually 1) */
-						/* -1 marks the end of the array */
-	int start;	/* beginning of data to decode */
-	struct GfxLayout *gfxlayout;
-	int color_codes_start;	/* offset in the color lookup table where color codes start */
-	int total_color_codes;	/* total number of color codes */
-};
-
-
-
 struct MachineCPU
 {
 	int cpu_type;	/* see #defines below. */
@@ -210,23 +170,33 @@ struct MachineCPU
 	const struct MemoryWriteAddress *memory_write;
 	const struct IOReadPort *port_read;
 	const struct IOWritePort *port_write;
-	int (*interrupt)(void);
-	int interrupts_per_frame;	/* usually 1 */
+	int (*vblank_interrupt)(void);
+	int vblank_interrupts_per_frame;	/* usually 1 */
+	int (*timed_interrupt)(void);	/* use this for interrupts which are not tied to vblank */
+	int timed_interrupts_per_second;	/* usually frequency in Hz, but if you need */
+								/* greater precision you can give the period in nanoseconds */
 };
 
 #define CPU_Z80    1
+#define CPU_8080   CPU_Z80
 #define CPU_M6502  2
 #define CPU_I86    3
 #define CPU_I8039  4
+#define CPU_I8035  CPU_I8039
 #define CPU_M6803  5
 #define CPU_M6802  CPU_M6803
 #define CPU_M6808  CPU_M6803
-#define CPU_M6809  6
-#define CPU_M68000 7
+#define CPU_HD63701  CPU_M6803	/* 6808 with some additional opcodes */
+#define CPU_M6805  6
+#define CPU_M6809  7
+#define CPU_M68000 8
 
 /* set this if the CPU is used as a slave for audio. It will not be emulated if */
 /* sound is disabled, therefore speeding up a lot the emulation. */
 #define CPU_AUDIO_CPU 0x8000
+
+/* the Z80 can be wired to use 16 bit addressing for I/O ports */
+#define CPU_16BIT_PORT 0x4000
 
 #define CPU_FLAGS_MASK 0xff00
 
@@ -235,17 +205,34 @@ struct MachineCPU
 					/* can run at the same time. Currently, 4 is enough. */
 
 
-/* ASG 081897 -- added these flags for the video hardware */
 
-/* bit 0 of the video attributes indicates raster or vector video hardware */
-#define	VIDEO_TYPE_RASTER			0x0000
-#define	VIDEO_TYPE_VECTOR			0x0001
+struct MachineSound
+{
+	int sound_type;
+	void *sound_interface;
+};
 
-/* bit 1 of the video attributes indicates whether or not dirty rectangles will work */
-#define	VIDEO_SUPPORTS_DIRTY		0x0002
+#define SOUND_CUSTOM   1
+#define SOUND_SAMPLES  2
+#define SOUND_DAC      3
+#define SOUND_AY8910   4
+#define SOUND_YM2203   5
+#define SOUND_YM2151   6
+#define SOUND_YM2151_ALT 7
+#define SOUND_YM3812   8
+#define SOUND_YM3526   SOUND_YM3812	/* 100% compatible, less features */
+#define SOUND_SN76496  9
+#define SOUND_POKEY    10
+#define SOUND_NAMCO    11
+#define SOUND_NES      12
+#define SOUND_TMS5220  13
+#define SOUND_VLM5030  14
+#define SOUND_ADPCM    15
+#define SOUND_OKIM6295 16  /* ROM-based ADPCM system */
+#define SOUND_MSM5205  17  /* CPU-based ADPCM system */
 
-/* bit 2 of the video attributes indicates whether or not the driver modifies the palette */
-#define	VIDEO_MODIFIES_PALETTE	0x0004
+#define MAX_SOUND 4	/* MAX_SOUND is the maximum number of sound subsystems */
+					/* which can run at the same time. Currently, 4 is enough. */
 
 
 
@@ -254,6 +241,7 @@ struct MachineDriver
 	/* basic machine hardware */
 	struct MachineCPU cpu[MAX_CPU];
 	int frames_per_second;
+	int vblank_duration;	/* in microseconds - see description below */
 	int cpu_slices_per_frame;	/* for multicpu games. 1 is the minimum, meaning */
 								/* that each CPU runs for the whole video frame */
 								/* before giving control to the others. The higher */
@@ -267,12 +255,13 @@ struct MachineDriver
 	int screen_width,screen_height;
 	struct rectangle visible_area;
 	struct GfxDecodeInfo *gfxdecodeinfo;
-	int total_colors;	/* palette is 3*total_colors bytes long */
-	int color_table_len;	/* length in bytes of the color lookup table */
+	unsigned int total_colors;	/* palette is 3*total_colors bytes long */
+	unsigned int color_table_len;	/* length in bytes of the color lookup table */
 	void (*vh_convert_color_prom)(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 
 	int video_attributes;	/* ASG 081897 */
-	int (*vh_init)(const char *gamename);
+	struct MachineLayer *layer;	/* make sure the array has MAX_LAYERS elements */
+								/* order is front to back: layer[0] is the frontmost layer, */
 	int (*vh_start)(void);
 	void (*vh_stop)(void);
 	void (*vh_update)(struct osd_bitmap *bitmap);
@@ -282,7 +271,53 @@ struct MachineDriver
 	int (*sh_start)(void);
 	void (*sh_stop)(void);
 	void (*sh_update)(void);
+	struct MachineSound sound[MAX_SOUND];
 };
+
+
+
+/* VBlank is the period when the video beam is outside of the visible area and */
+/* returns from the bottom to the top of the screen to prepare for a new video frame. */
+/* VBlank duration is an important factor in how the game renders itself. MAME */
+/* generates the vblank_interrupt, lets the game run for vblank_duration microseconds, */
+/* and then updates the screen. This faithfully reproduces the behaviour of the real */
+/* hardware. In many cases, the game does video related operations both in its vblank */
+/* interrupt, and in the normal game code; it is therefore important to set up */
+/* vblank_duration accurately to have everything properly in sync. An example of this */
+/* is Commando: if you set vblank_duration to 0, therefore redrawing the screen BEFORE */
+/* the vblank interrupt is executed, sprites will be misaligned when the screen scrolls. */
+
+/* Here are some predefined, TOTALLY ARBITRARY values for vblank_duration, which should */
+/* be OK for most cases. I have NO IDEA how accurate they are compared to the real */
+/* hardware, they could be completely wrong. */
+#define DEFAULT_60HZ_VBLANK_DURATION 0
+#define DEFAULT_30HZ_VBLANK_DURATION 0
+/* If you use IPT_VBLANK, you need a duration different from 0. */
+#define DEFAULT_REAL_60HZ_VBLANK_DURATION 2500
+#define DEFAULT_REAL_30HZ_VBLANK_DURATION 2500
+
+
+
+/* bit 0 of the video attributes indicates raster or vector video hardware */
+#define	VIDEO_TYPE_RASTER			0x0000
+#define	VIDEO_TYPE_VECTOR			0x0001
+
+/* bit 1 of the video attributes indicates whether or not dirty rectangles will work */
+#define	VIDEO_SUPPORTS_DIRTY		0x0002
+
+/* bit 2 of the video attributes indicates whether or not the driver modifies the palette */
+#define	VIDEO_MODIFIES_PALETTE	0x0004
+
+/* ASG 980209 - added: */
+/* bit 3 of the video attributes indicates whether or not the driver wants 16-bit color */
+#define	VIDEO_SUPPORTS_16BIT		0x0008
+
+/* ASG 980417 - added: */
+/* bit 4 of the video attributes indicates that the driver wants its refresh before the VBLANK */
+/*       instead of after. You usually don't want to use this, but it might be necessary if */
+/*       you are caching data during the video frame and want to update the screen before */
+/*       the game starts calculating the next frame. */
+#define	VIDEO_UPDATE_BEFORE_VBLANK	0x0010
 
 
 
@@ -301,11 +336,7 @@ struct GameDriver
 						/* drivers can retrieve them in Machine->samples */
 	const unsigned char *sound_prom;
 
-struct InputPort *input_ports;	/* obsolete */
-	struct NewInputPort *new_input_ports;
-int trak;	/* filler for obsolete struct - will be removed */
-const struct DSW *dswsettings;	/* obsolete */
-const struct KEYSet *keysettings;	/* obsolete */
+	struct InputPort *new_input_ports;
 
 		/* if they are available, provide a dump of the color proms (there is no */
 		/* copyright infringement in that, since you can't copyright a color scheme) */
@@ -327,14 +358,14 @@ const struct KEYSet *keysettings;	/* obsolete */
 #define	ORIENTATION_DEFAULT		0x00
 #define	ORIENTATION_FLIP_X		0x01	/* mirror everything in the X direction */
 #define	ORIENTATION_FLIP_Y		0x02	/* mirror everything in the Y direction */
-#define ORIENTATION_SWAP_XY		0x04	/* mirror along the top-left/bottom-rigth diagonal */
+#define ORIENTATION_SWAP_XY		0x04	/* mirror along the top-left/bottom-right diagonal */
 #define	ORIENTATION_ROTATE_90	(ORIENTATION_SWAP_XY|ORIENTATION_FLIP_X)	/* rotate clockwise 90 degrees */
 #define	ORIENTATION_ROTATE_180	(ORIENTATION_FLIP_X|ORIENTATION_FLIP_Y)	/* rotate 180 degrees */
 #define	ORIENTATION_ROTATE_270	(ORIENTATION_SWAP_XY|ORIENTATION_FLIP_Y)	/* rotate counter-clockwise 90 degrees */
 /* IMPORTANT: to perform more than one transformation, DO NOT USE |, use ^ instead. */
 /* For example, to rotate 90 degrees counterclockwise and flip horizontally, use: */
-/* ORIENTATION_ROTATE_270 ^ ORIENTATION_FLIP_X */
-/* FLIP is performed *after* SWAP_XY. */
+/* ORIENTATION_ROTATE_270 ^ ORIENTATION_FLIP_X*/
+/* Always remember that FLIP is performed *after* SWAP_XY. */
 
 
 

@@ -130,43 +130,19 @@ the Atari vector games.
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/pokyintf.h"
 
 
 int centiped_IN0_r(int offset);
 int centiped_IN2_r(int offset);	/* JB 971220 */
 
-extern unsigned char *centiped_charpalette,*centiped_spritepalette;
+extern unsigned char *centiped_paletteram;
+
 void centiped_vh_convert_color_prom (unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void centiped_paletteram_w (int offset, int data);
+void centiped_vh_flipscreen_w (int offset,int data);
 void centiped_vh_screenrefresh (struct osd_bitmap *bitmap);
-void centiped_vh_charpalette_w (int offset, int data);
-void centiped_vh_flipscreen_w (int offset, int data);
-
-/* Misc sound code */
-static struct POKEYinterface interface =
-{
-	1,	/* 1 chip */
-	FREQ_17_APPROX,	/* 1.7 Mhz */
-	255,
-	NO_CLIP,
-	/* The 8 pot handlers */
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	/* The allpot handler */
-	{ 0 },
-};
 
 
-int centiped_sh_start(void)
-{
-	return pokey_sh_start (&interface);
-}
 
 void centiped_led_w(int offset,int data)
 {
@@ -196,8 +172,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0400, 0x07bf, videoram_w, &videoram, &videoram_size },
 	{ 0x07c0, 0x07ff, MWA_RAM, &spriteram },
 	{ 0x1000, 0x100f, pokey1_w },
-	{ 0x1404, 0x1407, centiped_vh_charpalette_w, &centiped_charpalette },
-	{ 0x140c, 0x140f, MWA_RAM, &centiped_spritepalette },
+	{ 0x1400, 0x140f, centiped_paletteram_w, &centiped_paletteram },
 	{ 0x1800, 0x1800, MWA_NOP },
 	{ 0x1c00, 0x1c02, MWA_NOP },
 	{ 0x1c03, 0x1c04, centiped_led_w },
@@ -213,7 +188,9 @@ static struct MemoryWriteAddress writemem[] =
 
 INPUT_PORTS_START( input_ports )
 	PORT_START	/* IN0 */
-	PORT_ANALOG ( 0x0f, IP_ACTIVE_HIGH, IPT_TRACKBALL_X | IPF_REVERSE, 100, 7, 0, 0 ) /* JB 971220 */
+	/* The lower 4 bits and bit 7 are for trackball x input. */
+	/* They are handled by fake input port 6 and a custom routine. */
+	PORT_BIT ( 0x0f, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_DIPNAME (0x10, 0x00, "Cabinet", IP_KEY_NONE )
 	PORT_DIPSETTING (   0x00, "Upright" )
 	PORT_DIPSETTING (   0x10, "Cocktail" )
@@ -221,7 +198,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x20, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
 	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_VBLANK )
-	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* direction bit for trackball x */
+	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START	/* IN1 */
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_START1 )
@@ -234,15 +211,14 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
 	PORT_START	/* IN2 */
-	PORT_ANALOG ( 0x0f, IP_ACTIVE_HIGH, IPT_TRACKBALL_Y, 100, 7, 0, 0 ) /* JB 971220 */
-	PORT_BIT ( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT ( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT ( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BIT ( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* direction bit for trackball y */
+	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_Y | IPF_CENTER, 100, 7, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE, 4 )
+	/* The lower 4 bits are the input, and bit 7 is the direction. */
+	/* The state of bit 7 does not change if the trackball is not */
+	/* moved. JB 971220, BW 980121 */
 
 	PORT_START	/* IN3 */
-	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
-	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT ( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT ( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
@@ -294,6 +270,9 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING (   0x60, "6 credits/4 coins" )
 	PORT_DIPSETTING (   0x80, "6 credits/5 coins" )
 	PORT_DIPSETTING (   0x0a, "4 credits/3 coins" )
+
+	PORT_START	/* IN6, fake trackball input port. */
+	PORT_ANALOGX ( 0xff, 0x00, IPT_TRACKBALL_X | IPF_REVERSE | IPF_CENTER, 100, 7, 0, 0, IP_KEY_NONE, IP_KEY_NONE, IP_JOY_NONE, IP_JOY_NONE, 4 )
 INPUT_PORTS_END
 
 
@@ -303,19 +282,19 @@ static struct GfxLayout charlayout =
 	256,	/* 256 characters */
 	2,	/* 2 bits per pixel */
 	{ 256*8*8, 0 },	/* the two bitplanes are separated */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	{ 7, 6, 5, 4, 3, 2, 1, 0 },
 	8*8	/* every char takes 8 consecutive bytes */
 };
 static struct GfxLayout spritelayout =
 {
-	16,8,	/* 16*8 sprites */
+	8,16,	/* 16*8 sprites */
 	128,	/* 64 sprites */
 	2,	/* 2 bits per pixel */
 	{ 128*16*8, 0 },	/* the two bitplanes are separated */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
 			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
-	{ 7, 6, 5, 4, 3, 2, 1, 0 },
 	16*8	/* every sprite takes 16 consecutive bytes */
 };
 
@@ -323,9 +302,31 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,   4, 1 },
-	{ 1, 0x0000, &spritelayout, 0, 1 },
+	{ 1, 0x0000, &charlayout,   0, 1 },
+	{ 1, 0x0000, &spritelayout, 4, 1 },
 	{ -1 } /* end of array */
+};
+
+
+
+static struct POKEYinterface pokey_interface =
+{
+	1,	/* 1 chip */
+	1500000,	/* 1.5 MHz??? */
+	255,
+	POKEY_DEFAULT_GAIN,
+	NO_CLIP,
+	/* The 8 pot handlers */
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	/* The allpot handler */
+	{ 0 },
 };
 
 
@@ -342,27 +343,30 @@ static struct MachineDriver machine_driver =
 			interrupt,1
 		}
 	},
-	60,
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	10,
 	0,
 
 	/* video hardware */
-	32*8, 32*8, { 1*8, 31*8-1, 0*8, 32*8-1 },
+	32*8, 32*8, { 0*8, 32*8-1, 0*8, 30*8-1 },
 	gfxdecodeinfo,
 	16, 2*4,
 	centiped_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_MODIFIES_PALETTE,
 	0,
 	generic_vh_start,
 	generic_vh_stop,
 	centiped_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	centiped_sh_start,
-	pokey_sh_stop,
-	pokey_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_POKEY,
+			&pokey_interface
+		}
+	}
 };
 
 
@@ -436,10 +440,10 @@ struct GameDriver centiped_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	input_ports,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_270,
 
 	hiload, hisave
 };

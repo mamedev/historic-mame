@@ -35,12 +35,11 @@ CPU #2 uses no interrupts
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+
+
 extern unsigned char *mappy_soundregs;
 void mappy_sound_enable_w(int offset,int data);
 void mappy_sound_w(int offset,int data);
-int mappy_sh_start(void);
-void waveform_sh_stop(void);
-void waveform_sh_update(void);
 
 extern unsigned char *superpac_sharedram;
 extern unsigned char *superpac_customio_1,*superpac_customio_2;
@@ -465,6 +464,17 @@ static unsigned char pacnpal_sound_prom[8*32] =
 };
 
 
+
+static struct namco_interface namco_interface =
+{
+	23920,	/* sample rate (approximate value) */
+	8,		/* number of voices */
+	48,		/* gain adjustment */
+	255		/* playback volume */
+};
+
+
+
 static struct MachineDriver superpac_machine_driver =
 {
 	/* basic machine hardware  */
@@ -488,11 +498,11 @@ static struct MachineDriver superpac_machine_driver =
 			superpac_writemem_cpu2,/* MemoryWriteAddress */
 			0,                   /* IOReadPort */
 			0,                   /* IOWritePort */
-			ignore_interrupt,		/* interrupt routine */
+			ignore_interrupt,    /* interrupt routine */
 			1                    /* interrupts per frame */
 		}
 	},
-	60,                        /* frames per second */
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	100,	/* 100 CPU slices per frame - an high value to ensure proper */
 			/* synchronization of the CPUs */
 	superpac_init_machine,     /* init machine routine */
@@ -512,10 +522,13 @@ static struct MachineDriver superpac_machine_driver =
 	superpac_vh_screenrefresh, /* vh_update routine */
 
 	/* sound hardware */
-	0,                         /* sh_init routine */
-	mappy_sh_start,                         /* sh_start routine */
-	waveform_sh_stop,                         /* sh_stop routine */
-	waveform_sh_update            /* sh_update routine */
+	0,0,0,0,
+	{
+		{
+			SOUND_NAMCO,
+			&namco_interface
+		}
+	}
 };
 
 static struct MachineDriver pacnpal_machine_driver =
@@ -545,8 +558,9 @@ static struct MachineDriver pacnpal_machine_driver =
 			1                    /* interrupts per frame */
 		}
 	},
-	60,                        /* frames per second */
-	1,	/* TODO: an higher setting causes the game to run too fast. Understand why. */
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	100,	/* 100 CPU slices per frame - an high value to ensure proper */
+			/* synchronization of the CPUs */
 	superpac_init_machine,     /* init machine routine */
 
 	/* video hardware */
@@ -564,11 +578,16 @@ static struct MachineDriver pacnpal_machine_driver =
 	superpac_vh_screenrefresh, /* vh_update routine */
 
 	/* sound hardware */
-	0,                         /* sh_init routine */
-	mappy_sh_start,                         /* sh_start routine */
-	waveform_sh_stop,                         /* sh_stop routine */
-	waveform_sh_update            /* sh_update routine */
+	0,0,0,0,
+	{
+		{
+			SOUND_NAMCO,
+			&namco_interface
+		}
+	}
 };
+
+
 
 
 ROM_START( superpac_rom )
@@ -752,7 +771,7 @@ struct GameDriver superpac_driver =
 	0,                        /* samplenames */
 	superpac_sound_prom,	/* sound_prom */
 
-	0/*TBR*/,superpac_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	superpac_input_ports,
 
 	superpac_color_prom,		  /* color prom */
 	0,                        /* palette */
@@ -774,7 +793,7 @@ struct GameDriver superpcn_driver =
 	0,                        /* samplenames */
 	superpac_sound_prom,	/* sound_prom */
 
-	0/*TBR*/,superpac_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	superpac_input_ports,
 
 	superpac_color_prom,		  /* color prom */
 	0,                        /* palette */
@@ -796,7 +815,7 @@ struct GameDriver pacnpal_driver =
 	0,                        /* samplenames */
 	pacnpal_sound_prom,	/* sound_prom */
 
-	0/*TBR*/,pacnpal_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	pacnpal_input_ports,
 
 	pacnpal_color_prom,       /* color prom */
 	0,                        /* palette */

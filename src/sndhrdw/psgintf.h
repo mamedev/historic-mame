@@ -20,6 +20,7 @@ struct PSGinterface
 	int (*portBread[MAX_PSG])(int offset);
 	void (*portAwrite[MAX_PSG])(int offset,int data);
 	void (*portBwrite[MAX_PSG])(int offset,int data);
+	void (*handler[MAX_PSG])(void);	/* IRQ handler for the YM2203 */
 };
 #define AY8910interface PSGinterface
 #define YM2203interface PSGinterface

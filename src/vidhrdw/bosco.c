@@ -19,6 +19,7 @@ unsigned char *bosco_starblink;
 unsigned char *bosco_flipvideo;
 static unsigned int stars_scrollx;
 static unsigned int stars_scrolly;
+static int flipscreen;
 
 struct star
 {
@@ -31,6 +32,7 @@ static int total_stars;
 
 unsigned char *bosco_videoram2,*bosco_colorram2;
 unsigned char *bosco_radarx,*bosco_radary,*bosco_radarattr;
+int bosco_radarram_size;
 unsigned char *bosco_scrollx,*bosco_scrolly;
 											/* to speed up video refresh */
 static unsigned char *dirtybuffer2;	/* keep track of modified portions of the screen */
@@ -39,17 +41,31 @@ static struct osd_bitmap *tmpbitmap1;
 
 
 
-static struct rectangle visiblearea =
+static struct rectangle spritevisiblearea =
 {
-	0*8, 28*8-1,
+	0*8+3, 28*8-1,
 	0*8, 28*8-1
 };
+
+static struct rectangle spritevisibleareaflip =
+{
+	8*8, 36*8-1-3,
+	0*8, 28*8-1
+};
+
 
 static struct rectangle radarvisiblearea =
 {
 	28*8, 36*8-1,
 	0*8, 28*8-1
 };
+
+static struct rectangle radarvisibleareaflip =
+{
+	0*8, 8*8-1,
+	0*8, 28*8-1
+};
+
 
 
 void bosco_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
@@ -218,42 +234,64 @@ void bosco_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
-	for (offs = videoram_size-1; offs >= 0;offs--)
+	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
 		if (dirtybuffer2[offs])
 		{
+			int flipx,flipy;
+
+
 			dirtybuffer2[offs] = 0;
 
 			sx = offs % 32;
 			sy = offs / 32;
+			flipx = ~bosco_colorram2[offs] & 0x40;
+			flipy = bosco_colorram2[offs] & 0x80;
+			if (flipscreen)
+			{
+				sx = 31 - sx;
+				sy = 31 - sy;
+				flipx = !flipx;
+				flipy = !flipy;
+			}
 
 			drawgfx(tmpbitmap1,Machine->gfx[0],
 					bosco_videoram2[offs],
 					bosco_colorram2[offs] & 0x3f,
-					!(bosco_colorram2[offs] & 0x40),bosco_colorram2[offs] & 0x80,
+					flipx,flipy,
 					8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);
 		}
 	}
 
 	/* update radar */
-	for (sy = 0;sy < 32;sy++)
+	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
-		for (sx = 0;sx < 8;sx++)
+		if (dirtybuffer[offs])
 		{
-			offs = sy * 32 + sx;
+			int flipx,flipy;
 
-			if (dirtybuffer[offs])
+
+			dirtybuffer[offs] = 0;
+
+			sx = (offs % 32) ^ 4;
+			sy = offs / 32 - 2;
+			flipx = ~colorram[offs] & 0x40;
+			flipy = colorram[offs] & 0x80;
+			if (flipscreen)
 			{
-				dirtybuffer[offs] = 0;
-
-				drawgfx(tmpbitmap,Machine->gfx[0],
-						videoram[offs],
-						colorram[offs] & 0x3f,
-						!(colorram[offs] & 0x40),colorram[offs] & 0x80,
-						8 * ((sx ^ 4) + 28),8*(sy-2),
-						&radarvisiblearea,TRANSPARENCY_NONE,0);
+				sx = 7 - sx;
+				sy = 27 - sy;
+				flipx = !flipx;
+				flipy = !flipy;
 			}
+
+			drawgfx(tmpbitmap,Machine->gfx[0],
+					videoram[offs],
+					colorram[offs] & 0x3f,
+					flipx,flipy,
+					8*sx,8*sy,
+					&radarvisibleareaflip,TRANSPARENCY_NONE,0);
 		}
 	}
 
@@ -263,29 +301,42 @@ void bosco_vh_screenrefresh(struct osd_bitmap *bitmap)
 		int scrollx,scrolly;
 
 
-		scrollx = -(*bosco_scrollx - 3);
-		scrolly = -(*bosco_scrolly + 16);
+		if (flipscreen)
+		{
+			scrollx = (*bosco_scrollx ) + 32;
+			scrolly = (*bosco_scrolly + 16) - 32;
+		}
+		else
+		{
+			scrollx = -(*bosco_scrollx - 3);
+			scrolly = -(*bosco_scrolly + 16);
+		}
 
 		copyscrollbitmap(bitmap,tmpbitmap1,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 
 	/* radar */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&radarvisiblearea,TRANSPARENCY_NONE,0);
+	if (flipscreen)
+		copybitmap(bitmap,tmpbitmap,0,0,0,0,&radarvisibleareaflip,TRANSPARENCY_NONE,0);
+	else
+		copybitmap(bitmap,tmpbitmap,0,0,28*8,0,&radarvisiblearea,TRANSPARENCY_NONE,0);
 
 
 	/* draw the sprites */
 	for (offs = 0;offs < spriteram_size;offs += 2)
 	{
 		drawgfx(bitmap,Machine->gfx[1],
-				spriteram[offs] >> 2,spriteram_2[offs + 1],
+				(spriteram[offs] & 0xfc) >> 2,
+				spriteram_2[offs + 1],
 				spriteram[offs] & 1,spriteram[offs] & 2,
 				spriteram[offs + 1] - 1,224 - spriteram_2[offs],
-				&visiblearea,TRANSPARENCY_THROUGH,0);
+				flipscreen ? &spritevisibleareaflip : &spritevisiblearea,TRANSPARENCY_THROUGH,0);
 	}
 
+
 	/* draw the dots on the radar and the bullets */
-	for (offs = 0; offs < 12; offs++)
+	for (offs = 0; offs < bosco_radarram_size;offs++)
 	{
 		int x,y;
 		int color;
@@ -381,6 +432,8 @@ void bosco_vh_screenrefresh(struct osd_bitmap *bitmap)
 			}
 		}
 	}
+
+
 	/* draw the stars */
 	if ((*bosco_staronoff & 1) == 0)
 	{
@@ -413,4 +466,3 @@ void bosco_vh_interrupt(void)
 	stars_scrollx += speedsx[*bosco_starcontrol & 7];
 	stars_scrolly += speedsy[(*bosco_starcontrol & 56) >> 3];
 }
-

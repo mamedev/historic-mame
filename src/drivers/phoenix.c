@@ -60,7 +60,6 @@ extern unsigned char *phoenix_videoram2;
 extern unsigned char *phoenix_scroll;
 
 int phoenix_DSW_r (int offset);
-int phoenix_interrupt (void);
 
 void phoenix_videoreg_w (int offset,int data);
 void phoenix_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
@@ -334,14 +333,14 @@ static struct MachineDriver machine_driver =
 	/* basic machine hardware */
 	{
 		{
-			CPU_Z80,
+			CPU_8080,
 			3072000,	/* 3 Mhz ? */
 			0,
 			readmem,writemem,0,0,
-			phoenix_interrupt,1
+			ignore_interrupt,1
 		}
 	},
-	60,
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* single CPU, no need for interleaving */
 	0,
 
@@ -369,14 +368,14 @@ static struct MachineDriver pleiads_machine_driver =
 	/* basic machine hardware */
 	{
 		{
-			CPU_Z80,
+			CPU_8080,
 			3072000,	/* 3 Mhz ? */
 			0,
                         readmem,pl_writemem,0,0,
-			phoenix_interrupt,1
+			ignore_interrupt,1
 		}
 	},
-	60,
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* single CPU, no need for interleaving */
 	0,
 
@@ -487,6 +486,24 @@ ROM_START( pleiads_rom )
 	ROM_LOAD( "pleiades.26", 0x1800, 0x0800, 0x96ac4eb6 )
 ROM_END
 
+ROM_START( pleitek_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "ic45.bin", 0x0000, 0x0800, 0x19613f7b )
+	ROM_LOAD( "ic46.bin", 0x0800, 0x0800, 0x64c4c8d2 )
+	ROM_LOAD( "ic47.bin", 0x1000, 0x0800, 0xc88cbee2 )
+	ROM_LOAD( "ic48.bin", 0x1800, 0x0800, 0x7b66cd1c )
+	ROM_LOAD( "ic49.bin", 0x2000, 0x0800, 0x5918e774 )
+	ROM_LOAD( "ic50.bin", 0x2800, 0x0800, 0xafa44e9c )
+	ROM_LOAD( "ic51.bin", 0x3000, 0x0800, 0x71f3d4cd )
+	ROM_LOAD( "ic52.bin", 0x3800, 0x0800, 0xbbd3b4b7 )
+
+	ROM_REGION(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ic23.bin", 0x0000, 0x0800, 0xf2e857b4 )
+	ROM_LOAD( "ic24.bin", 0x0800, 0x0800, 0x415293ee )
+	ROM_LOAD( "ic39.bin", 0x1000, 0x0800, 0x880280d4 )
+	ROM_LOAD( "ic40.bin", 0x1800, 0x0800, 0x96ac4eb6 )
+ROM_END
+
 
 
 static int hiload(void)
@@ -568,7 +585,7 @@ struct GameDriver phoenix_driver =
 	phoenix_sample_names,
 	0,	/* sound_prom */
 
-	0/*TBR*/, phoenix_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	phoenix_input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -588,7 +605,7 @@ struct GameDriver phoenixt_driver =
 	phoenix_sample_names,
 	0,	/* sound_prom */
 
-	0/*TBR*/, phoenixt_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	phoenixt_input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -608,7 +625,7 @@ struct GameDriver phoenix3_driver =
 	phoenix_sample_names,
 	0,	/* sound_prom */
 
-	0/*TBR*/, phoenix3_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	phoenix3_input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -618,7 +635,7 @@ struct GameDriver phoenix3_driver =
 
 struct GameDriver pleiads_driver =
 {
-	"Pleiads",
+	"Pleiads (Centuri)",
 	"pleiads",
 	"Richard Davies\nBrad Oliver\nMirko Buffoni\nNicola Salmoria\nShaun Stephenson\nAndrew Scott\nMarco Cassili",
 	&pleiads_machine_driver,
@@ -628,7 +645,27 @@ struct GameDriver pleiads_driver =
 	phoenix_sample_names,
 	0,	/* sound_prom */
 
-	0/*TBR*/, pleiads_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	pleiads_input_ports,
+
+	color_prom, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	hiload, hisave
+};
+
+struct GameDriver pleitek_driver =
+{
+	"Pleiads (Tehkan)",
+	"pleitek",
+	"Richard Davies\nBrad Oliver\nMirko Buffoni\nNicola Salmoria\nShaun Stephenson\nAndrew Scott\nMarco Cassili",
+	&pleiads_machine_driver,
+
+	pleitek_rom,
+	0, 0,
+	phoenix_sample_names,
+	0,	/* sound_prom */
+
+	pleiads_input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,

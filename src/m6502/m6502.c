@@ -20,14 +20,17 @@
 #include "Tables.h"
 #include <stdio.h>
 #include "osd_dbg.h"
+#include "driver.h"	/* NS 980212 */
 
 /** INLINE ***************************************************/
 /** Different compilers inline C functions differently.     **/
 /*************************************************************/
+#ifndef INLINE	/* ASG 980216 */
 #ifdef __GNUC__
 #define INLINE inline
 #else
 #define INLINE static
+#endif
 #endif
 
 /** System-Dependent Stuff ***********************************/
@@ -104,7 +107,7 @@ INLINE byte Op6502(register word A) { return(Page[A>>13][A&0x1FFF]); }
 
 #define M_PUSH(Rg)	Wr6502(0x0100|R->S,Rg);R->S--
 #define M_POP(Rg)	R->S++;Rg=Zr6502(0x0100|R->S)  /* ASG 971210 -- changed from Op6502 to Zr6502 */
-#define M_JR		R->PC.W+=(offset)Op6502(R->PC.W)+1;R->ICount--
+#define M_JR		R->PC.W+=(signed char)Op6502(R->PC.W)+1;R->ICount--
 
 #define M_ADC(Rg) \
   if(R->P&D_FLAG) \

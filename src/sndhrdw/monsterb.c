@@ -1,5 +1,4 @@
 #include "driver.h"
-#include "sndhrdw/generic.h"
 
 extern int segar_sh_start(void);
 extern void segar_sh_update(void);
@@ -260,15 +259,12 @@ void TMS3617_sh_update(void)
 /********************************************************************************/
 
 
-static void doupdate()
+static void doupdate(void)
 {
-	int totcycles,leftcycles,newpos;
+	int newpos;
 
 
-	totcycles = cpu_getfperiod();
-	leftcycles = cpu_getfcount();
-	newpos = buffer_len * (totcycles-leftcycles) / totcycles;
-	if (newpos >= buffer_len) newpos = buffer_len - 1;
+	newpos = cpu_scalebyfcount(buffer_len);	/* get current position based on the timer */
 
 	TMS3617_update(&buffer[sample_pos],newpos - sample_pos);
 	sample_pos = newpos;

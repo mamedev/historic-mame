@@ -47,9 +47,9 @@ read:
 3400      command from the main cpu
 
 write:
-1000      YM3526
-2000      VOICE
-2400      ADPCM
+1000-1001 YM3526
+2000      ADPCM data for the MSM5205 chip
+2400      bit 0 = to sound chip MSM5205 (1 = play sample); bit 1 = IRQ enable
 2800      ROM bank select
 
 
@@ -60,8 +60,7 @@ Who knows, it's protected. The bootleg doesn't have it.
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/generic.h"
-#include "sndhrdw/8910intf.h"
+#include "M6502/M6502.h"
 
 
 
@@ -80,6 +79,7 @@ void firetrap_vh_convert_color_prom(unsigned char *palette, unsigned char *color
 void firetrap_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 
+static int firetrap_irq_enable = 0;
 
 void firetrap_nmi_disable_w(int offset,int data)
 {
@@ -112,6 +112,41 @@ if (errorlog) fprintf(errorlog,"PC:%04x write %02x to 8751\n",cpu_getpc(),data);
 	cpu_cause_interrupt(0,0xff);
 }
 
+static void firetrap_sound_command_w(int offset,int data)
+{
+	soundlatch_w(offset,data);
+	cpu_cause_interrupt(1,INT_NMI);
+}
+
+static void firetrap_sound_2400_w(int offset,int data)
+{
+	MSM5205_reset_w(offset,~data & 0x01);
+	firetrap_irq_enable = data & 0x02;
+}
+
+void firetrap_sound_bankselect_w(int offset,int data)
+{
+	int bankaddress;
+
+
+	bankaddress = 0x10000 + (data & 0x01) * 0x4000;
+	cpu_setbank(2,&RAM[bankaddress]);
+}
+
+void firetrap_adpcm_int (int data)
+{
+	static int toggle;
+
+	toggle = 1 - toggle;
+	if (firetrap_irq_enable && toggle)
+		cpu_cause_interrupt (1, INT_IRQ);
+}
+
+void firetrap_adpcm_data_w (int offset, int data)
+{
+	MSM5205_data_w (offset, data >> 4);
+	MSM5205_data_w (offset, data);
+}
 
 
 static struct MemoryReadAddress readmem[] =
@@ -139,6 +174,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xe400, 0xe7ff, MWA_RAM, &firetrap_colorram },
 	{ 0xe800, 0xe97f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xf000, 0xf000, MWA_NOP },	/* IRQ acknowledge */
+	{ 0xf001, 0xf001, firetrap_sound_command_w },
 	{ 0xf002, 0xf002, firetrap_bankselect_w },
 	{ 0xf003, 0xf003, firetrap_flipscreen_w },
 	{ 0xf004, 0xf004, firetrap_nmi_disable_w },
@@ -150,20 +186,27 @@ static struct MemoryWriteAddress writemem[] =
 	{ -1 }	/* end of table */
 };
 
-#if 0
 static struct MemoryReadAddress sound_readmem[] =
 {
-	{ 0x4000, 0x7fff, MRA_BANK1 },
+	{ 0x0000, 0x07ff, MRA_RAM },
+	{ 0x3400, 0x3400, soundlatch_r },
+	{ 0x4000, 0x7fff, MRA_BANK2 },
 	{ 0x8000, 0xffff, MRA_ROM },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress sound_writemem[] =
 {
+	{ 0x0000, 0x07ff, MWA_RAM },
+	{ 0x1000, 0x1000, YM3526_control_port_0_w },
+	{ 0x1001, 0x1001, YM3526_write_port_0_w },
+	{ 0x2000, 0x2000, firetrap_adpcm_data_w },	/* ADPCM data for the MSM5205 chip */
+	{ 0x2400, 0x2400, firetrap_sound_2400_w },
+	{ 0x2800, 0x2800, firetrap_sound_bankselect_w },
 	{ 0x4000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
-#endif
+
 
 
 INPUT_PORTS_START( input_ports )
@@ -285,15 +328,15 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,                0, 16 },
-	{ 1, 0x02000, &tilelayout,             16*4,  4 },
-	{ 1, 0x06000, &tilelayout,             16*4,  4 },
-	{ 1, 0x12000, &tilelayout,             16*4,  4 },
-	{ 1, 0x16000, &tilelayout,             16*4,  4 },
-	{ 1, 0x22000, &tilelayout,        16*4+4*16,  4 },
-	{ 1, 0x26000, &tilelayout,        16*4+4*16,  4 },
-	{ 1, 0x32000, &tilelayout,        16*4+4*16,  4 },
-	{ 1, 0x36000, &tilelayout,        16*4+4*16,  4 },
+	{ 1, 0x00000, &charlayout,		0, 16 },
+	{ 1, 0x02000, &tilelayout,	     16*4,  4 },
+	{ 1, 0x06000, &tilelayout,	     16*4,  4 },
+	{ 1, 0x12000, &tilelayout,	     16*4,  4 },
+	{ 1, 0x16000, &tilelayout,	     16*4,  4 },
+	{ 1, 0x22000, &tilelayout,	16*4+4*16,  4 },
+	{ 1, 0x26000, &tilelayout,	16*4+4*16,  4 },
+	{ 1, 0x32000, &tilelayout,	16*4+4*16,  4 },
+	{ 1, 0x36000, &tilelayout,	16*4+4*16,  4 },
 	{ 1, 0x42000, &spritelayout, 16*4+4*16+4*16,  4 },
 	{ -1 } /* end of array */
 };
@@ -340,6 +383,23 @@ static unsigned char color_prom[] =
 
 
 
+static struct YM3526interface ym3526_interface =
+{
+	1,			/* 1 chip (no more supported) */
+	3000000,	/* 3 MHz ? (not supported) */
+	{ 255 }		/* (not supported) */
+};
+
+static struct MSM5205interface msm5205_interface =
+{
+	1,		/* 1 chip */
+	8000,	/* 8000Hz playback ? */
+	firetrap_adpcm_int,		/* interrupt function */
+	{ 255 }
+};
+
+
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -351,18 +411,18 @@ static struct MachineDriver machine_driver =
 			readmem,writemem,0,0,
 			nmi_interrupt,1
 		},
-#if 0
 		{
 			CPU_M6502 | CPU_AUDIO_CPU,
-			1500000,	/* 1.5 Mhz? */
+			3072000/2,	/* 1.536 Mhz? */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,0,0,
-			ignore_interrupt,1
+			ignore_interrupt,0
+							/* IRQs are caused by the ADPCM chip */
+							/* NMIs are caused by the main CPU */
 		},
-#endif
 	},
-	60,
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
 	/* video hardware */
@@ -378,10 +438,17 @@ static struct MachineDriver machine_driver =
 	firetrap_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	0,
-	0,
-	0
+	0,0,0,0,
+	{
+		{
+			SOUND_YM3526,
+			&ym3526_interface
+		},
+		{
+			SOUND_MSM5205,
+			&msm5205_interface
+		}
+	}
 };
 
 
@@ -448,43 +515,72 @@ ROM_START( firetpbl_rom )
 ROM_END
 
 
+static int hiload(void)
+{
+	if (memcmp(&RAM[0xca47],"\x02\x14\x00",3) == 0)
+	{
+		void *f;
+
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0xca47],93);
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;  /* we can't load the hi scores yet */
+}
+
+static void hisave(void)
+{
+	void *f;
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0xca47],93);
+		osd_fclose(f);
+	}
+}
+
+
 
 struct GameDriver firetrap_driver =
 {
 	"Fire Trap",
 	"firetrap",
-	"Nicola Salmoria (MAME driver)\nTim Lindquist (color and hardware info)",
+	"Nicola Salmoria (MAME driver)\nTim Lindquist (color and hardware info)\nDani Portillo (high score save)",
 	&machine_driver,
 
 	firetrap_rom,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	0/*TBR*/,input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	hiload, hisave
 };
 
 struct GameDriver firetpbl_driver =
 {
 	"Fire Trap (Japanese bootleg)",
 	"firetpbl",
-	"Nicola Salmoria (MAME driver)\nTim Lindquist (color and hardware info)",
+	"Nicola Salmoria (MAME driver)\nTim Lindquist (color and hardware info)\nDani Portillo (high score save)",
 	&machine_driver,
 
 	firetpbl_rom,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	0,
 
-	0/*TBR*/,input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	hiload, hisave
 };

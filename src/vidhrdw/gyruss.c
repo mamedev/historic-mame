@@ -370,7 +370,7 @@ void gyruss_vh_screenrefresh(struct osd_bitmap *bitmap)
 			flipy = !flipy;
 		}
 
-		if ((colorram[offs] & 0x10) != 0)
+		if (colorram[offs] & 0x10)
 			drawgfx(bitmap,Machine->gfx[0],
 					videoram[offs] + 8 * (colorram[offs] & 0x20),
 					colorram[offs] & 0x0f,

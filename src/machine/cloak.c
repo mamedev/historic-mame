@@ -9,7 +9,6 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "M6502.h"
 
 unsigned char *cloak_sharedram;
 unsigned char *cloak_nvRAM;
@@ -24,4 +23,3 @@ void cloak_sharedram_w(int offset,int data)
 {
 	cloak_sharedram[offset] = data;
 }
-

@@ -11,7 +11,6 @@ See drivers\starwars.c for notes
 
 #include "driver.h"
 #include "swmathbx.h"
-#include "starwars.h"
 
 #define READ_ACC      0x02
 #define LAC           0x01

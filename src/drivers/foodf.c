@@ -54,15 +54,15 @@ Audio 2                            AC0000-AC001F  R/W  D0-D7
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/generic.h"
-#include "sndhrdw/pokyintf.h"
 
-extern int foodf_nvram_size;
 extern int foodf_playfieldram_size;
 extern int foodf_spriteram_size;
-extern int foodf_paletteram_size;
+int foodf_nvram_size;
 
 extern unsigned char *foodf_spriteram;
+extern unsigned char *foodf_playfieldram;
+extern unsigned char *foodf_paletteram;
+extern unsigned char *foodf_nvram;
 
 int foodf_playfieldram_r (int offset);
 int foodf_nvram_r (int offset);
@@ -81,8 +81,6 @@ void foodf_pokey1_w (int offset, int data);
 void foodf_pokey2_w (int offset, int data);
 void foodf_pokey3_w (int offset, int data);
 
-unsigned char *foodf_nvram_base (void);
-
 int foodf_interrupt(void);
 
 int foodf_vh_start(void);
@@ -91,16 +89,25 @@ void foodf_vh_stop(void);
 void foodf_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void foodf_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-int foodf_sh_start (void);
+
+
+int foodf_pokey1_r (int offset) { return pokey1_r (offset/2); }
+int foodf_pokey2_r (int offset) { return pokey2_r (offset/2); }
+int foodf_pokey3_r (int offset) { return pokey3_r (offset/2); }
+
+void foodf_pokey1_w (int offset, int data) { pokey1_w (offset/2, data & 0xff); }
+void foodf_pokey2_w (int offset, int data) { pokey2_w (offset/2, data & 0xff); }
+void foodf_pokey3_w (int offset, int data) { pokey3_w (offset/2, data & 0xff); }
+
 
 
 static struct MemoryReadAddress foodf_readmem[] =
 {
 	{ 0x000000, 0x00ffff, MRA_ROM },
-	{ 0x014000, 0x01bfff, MRA_RAM },
-	{ 0x01c000, 0x01cfff, MRA_RAM, &foodf_spriteram, &foodf_spriteram_size },
-	{ 0x800000, 0x8007ff, foodf_playfieldram_r, 0, &foodf_playfieldram_size },
-	{ 0x900000, 0x9001ff, foodf_nvram_r, 0, &foodf_nvram_size },
+	{ 0x014000, 0x01bfff, MRA_BANK1 },
+	{ 0x01c000, 0x01cfff, MRA_BANK2, &foodf_spriteram, &foodf_spriteram_size },
+	{ 0x800000, 0x8007ff, foodf_playfieldram_r, &foodf_playfieldram, &foodf_playfieldram_size },
+	{ 0x900000, 0x9001ff, foodf_nvram_r, &foodf_nvram, &foodf_nvram_size },
 	{ 0x940000, 0x940007, foodf_analog_r },
 	{ 0x948000, 0x948003, foodf_digital_r },
 	{ 0x94c000, 0x94c003, MRA_NOP }, /* Used from PC 0x776E */
@@ -114,13 +121,13 @@ static struct MemoryReadAddress foodf_readmem[] =
 static struct MemoryWriteAddress foodf_writemem[] =
 {
 	{ 0x000000, 0x00ffff, MWA_ROM },
-	{ 0x014000, 0x01bfff, MWA_RAM },
-	{ 0x01c000, 0x01cfff, MWA_RAM },
+	{ 0x014000, 0x01bfff, MWA_BANK1 },
+	{ 0x01c000, 0x01cfff, MWA_BANK2 },
 	{ 0x800000, 0x8007ff, foodf_playfieldram_w },
 	{ 0x900000, 0x9001ff, foodf_nvram_w },
 	{ 0x944000, 0x944007, foodf_analog_w },
 	{ 0x948000, 0x948003, foodf_digital_w },
-	{ 0x950000, 0x9503ff, foodf_paletteram_w, 0, &foodf_paletteram_size },
+	{ 0x950000, 0x9503ff, foodf_paletteram_w, &foodf_paletteram },
 	{ 0x954000, 0x954003, MWA_NOP },
 	{ 0x958000, 0x958003, MWA_NOP },
 	{ 0xa40000, 0xa4001f, foodf_pokey1_w },
@@ -130,7 +137,7 @@ static struct MemoryWriteAddress foodf_writemem[] =
 };
 
 
-INPUT_PORTS_START( foodf_ports )
+INPUT_PORTS_START( foodf_input_ports )
 	PORT_START	/* IN0 */
 	PORT_ANALOG ( 0xff, 0x7f, IPT_AD_STICK_X | IPF_PLAYER1 | IPF_REVERSE, 100, 0, 0, 255 )
 
@@ -138,10 +145,10 @@ INPUT_PORTS_START( foodf_ports )
 	PORT_ANALOG ( 0xff, 0x7f, IPT_AD_STICK_X | IPF_PLAYER2 | IPF_REVERSE | IPF_COCKTAIL, 100, 0, 0, 255 )
 
 	PORT_START	/* IN2 */
-	PORT_ANALOG ( 0xff, 0x7f, IPT_AD_STICK_Y | IPF_PLAYER1, 100, 0, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x7f, IPT_AD_STICK_Y | IPF_PLAYER1 | IPF_REVERSE, 100, 0, 0, 255 )
 
 	PORT_START	/* IN3 */
-	PORT_ANALOG ( 0xff, 0x7f, IPT_AD_STICK_Y | IPF_PLAYER2 | IPF_COCKTAIL, 100, 0, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x7f, IPT_AD_STICK_Y | IPF_PLAYER2 | IPF_REVERSE | IPF_COCKTAIL, 100, 0, 0, 255 )
 
 	PORT_START	/* IN4 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -190,19 +197,42 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
+
+static struct POKEYinterface pokey_interface =
+{
+	3,	/* 3 chips */
+	600000,	/* .6 Mhz */
+	255,
+	POKEY_DEFAULT_GAIN/3,
+	USE_CLIP,
+	/* The 8 pot handlers */
+	{ 0, 0, 0 },
+	{ 0, 0, 0 },
+	{ 0, 0, 0 },
+	{ 0, 0, 0 },
+	{ 0, 0, 0 },
+	{ 0, 0, 0 },
+	{ 0, 0, 0 },
+	{ 0, 0, 0 },
+	/* The allpot handler */
+	{ 0, 0, 0 }
+};
+
+
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_M68000,
-			8000000,	/* 6 Mhz really, but use 8 to account for fake 68k timing */
+			6000000,	/* 6 Mhz */
 			0,
 			foodf_readmem,foodf_writemem,0,0,
 			foodf_interrupt,4
 		},
 	},
-	60,
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,
 	0,
 
@@ -219,12 +249,70 @@ static struct MachineDriver machine_driver =
 	foodf_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	foodf_sh_start,
-	pokey_sh_stop,
-	pokey_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_POKEY,
+			&pokey_interface
+		}
+	}
 };
 
+
+
+/***************************************************************************
+
+  High score save/load
+
+***************************************************************************/
+
+static int hiload (void)
+{
+   void *f;
+
+	f = osd_fopen (Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 0);
+	if (f)
+	{
+		osd_fread (f, foodf_nvram, foodf_nvram_size);
+		osd_fclose (f);
+	}
+	else
+	{
+		static unsigned char factory_nvram[] =
+		{
+			0x10,0x00,0x10,0x00,0xf1,0x00,0xca,0xb8,0x00,0x00,0x10,0x20,0x00,0x00,0x00,0x00,
+			0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+			0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+			0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+			0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xa1,0x20,0x00,0x00,0xcd,0x10,
+			0x14,0xa4,0x49,0x10,0x02,0x75,0x45,0x84,0x00,0xa4,0x24,0x25,0xe0,0x00,0xf0,0x00,
+			0x10,0x00,0xd0,0x00,0x50,0x00,0x10,0x00,0x10,0x00,0x41,0x00,0x10,0x00,0x10,0x00,
+			0x00,0x00,0x00,0x00,0x08,0x08,0x00,0x00,0x08,0x08,0x08,0x08,0x00,0x00,0x08,0x08
+		};
+		int i;
+
+		/* reset to factory defaults */
+		memset (foodf_nvram, 0, foodf_nvram_size);
+		for (i = 0; i < foodf_nvram_size; i += 4)
+		{
+			WRITE_WORD (&foodf_nvram[i], factory_nvram[i/4] >> 4);
+			WRITE_WORD (&foodf_nvram[i+2], factory_nvram[i/4] & 0x0f);
+		}
+	}
+	return 1;
+}
+
+static void hisave (void)
+{
+   void *f;
+
+	f = osd_fopen (Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 1);
+   if (f)
+   {
+      osd_fwrite (f, foodf_nvram, foodf_nvram_size);
+      osd_fclose (f);
+   }
+}
 
 
 /***************************************************************************
@@ -232,8 +320,9 @@ static struct MachineDriver machine_driver =
   Game driver(s)
 
 ***************************************************************************/
+
 ROM_START( foodf_rom )
-	ROM_REGION(0x20000)	/* 128k for 68000 code + RAM */
+	ROM_REGION(0x10000)	/* 64k for 68000 code */
 	ROM_LOAD_EVEN( "foodf.9c",  0x00000, 0x02000, 0x428f3769 )
 	ROM_LOAD_ODD ( "foodf.8c",  0x00000, 0x02000, 0x073c9d32 )
 	ROM_LOAD_EVEN( "foodf.9d",  0x04000, 0x02000, 0xce746fa0 )
@@ -249,63 +338,6 @@ ROM_START( foodf_rom )
 	ROM_LOAD( "foodf.6lm", 0x4000, 0x2000, 0x1ed008ec )
 ROM_END
 
-
-/***************************************************************************
-
-  High score save/load
-
-***************************************************************************/
-
-static int hiload (void)
-{
-  	unsigned char *nvram = foodf_nvram_base ();
-   void *f;
-
-	f = osd_fopen (Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 0);
-   if (f)
-   {
-		osd_fread (f, nvram, foodf_nvram_size);
-		osd_fclose (f);
-   }
-   else
-   {
-   	static unsigned char factory_nvram[] =
-   	{
-   		0x10,0x00,0x10,0x00,0xf1,0x00,0xca,0xb8,0x00,0x00,0x10,0x20,0x00,0x00,0x00,0x00,
-   		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-   		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-   		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-   		0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xa1,0x20,0x00,0x00,0xcd,0x10,
-   		0x14,0xa4,0x49,0x10,0x02,0x75,0x45,0x84,0x00,0xa4,0x24,0x25,0xe0,0x00,0xf0,0x00,
-   		0x10,0x00,0xd0,0x00,0x50,0x00,0x10,0x00,0x10,0x00,0x41,0x00,0x10,0x00,0x10,0x00,
-   		0x00,0x00,0x00,0x00,0x08,0x08,0x00,0x00,0x08,0x08,0x08,0x08,0x00,0x00,0x08,0x08
-   	};
-   	int i;
-
-   	/* reset to factory defaults */
-   	memset (nvram, 0, foodf_nvram_size);
-   	for (i = 0; i < foodf_nvram_size; i += 4)
-   	{
-   		nvram[i+1] = factory_nvram[i/4] >> 4;
-   		nvram[i+3] = factory_nvram[i/4] & 0x0f;
-   	}
-   }
-   return 1;
-}
-
-static void hisave (void)
-{
-   void *f;
-
-	f = osd_fopen (Machine->gamedrv->name, 0, OSD_FILETYPE_HIGHSCORE, 1);
-   if (f)
-   {
-      osd_fwrite (f, foodf_nvram_base (), foodf_nvram_size);
-      osd_fclose (f);
-   }
-}
-
-
 struct GameDriver foodf_driver =
 {
 	"Food Fight",
@@ -318,7 +350,7 @@ struct GameDriver foodf_driver =
 	0,
 	0,	/* sound_prom */
 
-	0, foodf_ports, 0, 0, 0,
+	foodf_input_ports,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,

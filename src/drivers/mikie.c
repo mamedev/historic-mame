@@ -3,7 +3,7 @@
 Mikie memory map (preliminary)
 
 MAIN BOARD:
-36d0-37cf Sprite RAM
+2800-288f Sprite RAM (288f, not 287f - quite unusual)
 3800-3bff Color RAM
 3c00-3fff Video RAM
 4000-5fff ROM (?)
@@ -15,9 +15,7 @@ MAIN BOARD:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/generic.h"
-#include "sndhrdw/sn76496.h"
-#include "M6809.h"
+#include "M6809/M6809.h"
 
 
 
@@ -25,16 +23,37 @@ void mikie_palettebank_w(int offset,int data);
 void mikie_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void mikie_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-void mikie_sh_irqtrigger_w(int offset,int data);
-int  mikie_sh_timer_r(int offset);
-int  mikie_sh_start(void);
-
 
 
 void mikie_init_machine(void)
 {
         /* Set optimization flags for M6809 */
         m6809_Flags = M6809_FAST_S | M6809_FAST_U;
+}
+
+int mikie_sh_timer_r(int offset)
+{
+	int clock;
+
+#define TIMER_RATE 512
+
+	clock = cpu_gettotalcycles() / TIMER_RATE;
+
+	return clock;
+}
+
+void mikie_sh_irqtrigger_w(int offset,int data)
+{
+	static int last;
+
+
+	if (last == 0 && data == 1)
+	{
+		/* setting bit 0 low then high triggers IRQ on the sound CPU */
+		cpu_cause_interrupt(1,0xff);
+	}
+
+	last = data;
 }
 
 
@@ -63,10 +82,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x2100, 0x2100, MWA_NOP },		/* Watchdog */
 	{ 0x2200, 0x2200, mikie_palettebank_w },
 	{ 0x2400, 0x2400, soundlatch_w },
-	{ 0x2800, 0x2fff, MWA_RAM },
-	{ 0x3000, 0x36cf, MWA_RAM },
-	{ 0x36d0, 0x3767, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x3768, 0x37ff, MWA_RAM },
+	{ 0x2800, 0x288f, MWA_RAM, &spriteram, &spriteram_size },
+	{ 0x2890, 0x37ff, MWA_RAM },
 	{ 0x3800, 0x3bff, colorram_w, &colorram },
 	{ 0x3c00, 0x3fff, videoram_w, &videoram, &videoram_size },
 	{ 0x6000, 0xffff, MWA_ROM },
@@ -215,7 +232,7 @@ static struct GfxLayout spritelayout =
 	16,16,	     /* 16*16 sprites */
 	256,	        /* 256 sprites */
 	4,	           /* 4 bits per pixel */
-	{ 0, 4, 256*128*8, 256*128*8+4 },
+	{ 0, 4, 256*128*8+0, 256*128*8+4 },
 	{ 39*16, 38*16, 37*16, 36*16, 35*16, 34*16, 33*16, 32*16,
 			7*16, 6*16, 5*16, 4*16, 3*16, 2*16, 1*16, 0*16 },
 	{ 32*8+0, 32*8+1, 32*8+2, 32*8+3, 16*8+0, 16*8+1, 16*8+2, 16*8+3,
@@ -234,7 +251,6 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-/* This color prom comes from Yie ar Kung fu , mikie must have a similar one */
 static unsigned char color_prom[] =
 {
 	/* 469D19.1I - palette red component */
@@ -326,6 +342,15 @@ static unsigned char color_prom[] =
 
 
 
+static struct SN76496interface sn76496_interface =
+{
+	2,	/* 2 chips */
+	1789750,	/* 1.78975 Mhz ??? */
+	{ 255, 255 }
+};
+
+
+
 static struct MachineDriver mikie_machine_driver =
 {
 	/* basic machine hardware */
@@ -345,8 +370,8 @@ static struct MachineDriver mikie_machine_driver =
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
 	},
-	60,
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	mikie_init_machine,
 
 	/* video hardware */
@@ -362,10 +387,13 @@ static struct MachineDriver mikie_machine_driver =
 	mikie_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	mikie_sh_start,
-	SN76496_sh_stop,
-	SN76496_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_SN76496,
+			&sn76496_interface
+		}
+	}
 };
 
 
@@ -398,11 +426,62 @@ ROM_END
 
 
 
+static int hiload(void)
+{
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+
+	/* check if the hi score table has already been initialized */
+        if (memcmp(&RAM[0x2a00],"\x1d\x2c\x1f\x00\x01",5) == 0)
+	{
+		void *f;
+
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+
+                        osd_fread(f,&RAM[0x2a00],9*5);
+
+				/* top score display */
+                        memcpy(&RAM[0x29f0], &RAM[0x2a05], 4);
+
+				/* 1p score display, which also displays the top score on startup */
+				memcpy(&RAM[0x297c], &RAM[0x2a05], 4);
+
+                        osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+
+static void hisave(void)
+{
+	void *f;
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+                osd_fwrite(f,&RAM[0x2a00],9*5);
+		osd_fclose(f);
+	}
+}
+
+
+
 struct GameDriver mikie_driver =
 {
 	"Mikie",
 	"mikie",
-	"Allard Van Der Bas (MAME driver)\nMirko Buffoni (MAME driver)\nStefano Mozzi (MAME driver)\nMarco Cassili (dip switches)\nAl Kossow (color info)",
+	"Allard Van Der Bas (MAME driver)\nMirko Buffoni (MAME driver)\nStefano Mozzi (MAME driver)\nMarco Cassili (dip switches)\nAl Kossow (color info)\nGerrit Van Goethem (high score save)",
 	&mikie_machine_driver,
 
 	mikie_rom,
@@ -410,10 +489,10 @@ struct GameDriver mikie_driver =
 	0,
 	0,
 
-	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	hiload, hisave
 };

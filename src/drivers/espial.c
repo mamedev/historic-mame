@@ -60,8 +60,6 @@ B ?
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/generic.h"
-#include "sndhrdw/8910intf.h"
 
 
 
@@ -69,15 +67,24 @@ void espial_init_machine(void);
 void espial_interrupt_enable_w(int offset,int data);
 int espial_interrupt(void);
 
-int espial_sh_interrupt(void);
-int espial_sh_start(void);
-void espial_sound_command_w (int offset, int data);
-
 extern unsigned char *espial_attributeram;
 extern unsigned char *espial_column_scroll;
 void espial_attributeram_w(int offset,int data);
 void espial_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void espial_vh_screenrefresh(struct osd_bitmap *bitmap);
+
+int espial_sh_interrupt(void);
+
+
+
+/* Send sound data to the sound cpu and cause an irq */
+void espial_sound_command_w (int offset, int data)
+{
+	/* The sound cpu runs in interrupt mode 1 */
+	soundlatch_w(0,data);
+	cpu_cause_interrupt(1,0xff);
+}
+
 
 
 static struct MemoryReadAddress readmem[] =
@@ -259,6 +266,19 @@ static unsigned char color_prom[] =
 
 
 
+static struct AY8910interface ay8910_interface =
+{
+	1,	/* 1 chip */
+	1500000,	/* 1.5 MHZ?????? */
+	{ 255 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 }
+};
+
+
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -278,8 +298,8 @@ static struct MachineDriver machine_driver =
 			espial_sh_interrupt,4
 		}
 	},
-	60,
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	espial_init_machine,
 
 	/* video hardware */
@@ -295,10 +315,13 @@ static struct MachineDriver machine_driver =
 	espial_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	espial_sh_start,
-	AY8910_sh_stop,
-	AY8910_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&ay8910_interface
+		}
+	}
 };
 
 
@@ -318,7 +341,7 @@ ROM_START( espial_rom )
 
 	ROM_REGION(0x5000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "espial.8",  0x0000, 0x2000, 0xc2dfd8e7 )
-	ROM_LOAD( "espial.7",  0x2000, 0x1000, 0x868e222e )
+	ROM_LOAD( "espial.7",  0x2000, 0x1000, 0x868c222c )
 	ROM_LOAD( "espial.10", 0x3000, 0x1000, 0x43808b36 )
 	ROM_LOAD( "espial.9",  0x4000, 0x1000, 0x04efcefb )
 
@@ -327,10 +350,32 @@ ROM_START( espial_rom )
 	ROM_LOAD( "espial.2", 0x1000, 0x1000, 0xeec42d68 )
 ROM_END
 
+ROM_START( espiale_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "2764.3", 0x0000, 0x2000, 0xf57f05b9 )
+	ROM_LOAD( "2764.4", 0x2000, 0x2000, 0x2fc1446b )
+	ROM_LOAD( "2732.6", 0x4000, 0x1000, 0x147f9035 )
+	ROM_LOAD( "2732.5", 0xc000, 0x1000, 0x25bff16d )
+
+	ROM_REGION(0x5000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "2764.8",  0x0000, 0x2000, 0xc2dfd8e7 )
+	ROM_LOAD( "2732.7",  0x2000, 0x1000, 0x868c222c )
+	ROM_LOAD( "2732.10", 0x3000, 0x1000, 0x43808b36 )
+	ROM_LOAD( "2732.9",  0x4000, 0x1000, 0x04efcefb )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "2732.1", 0x0000, 0x1000, 0x13b5696d )
+	ROM_LOAD( "2732.2", 0x1000, 0x1000, 0xd690636c )
+ROM_END
+
 
 
 static int hiload(void)
 {
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
 
 	/* check if the hi score table has already been initialized */
         if (memcmp(&RAM[0x584c],"\x81\x00\x13",3) == 0 &&
@@ -355,6 +400,9 @@ static int hiload(void)
 static void hisave(void)
 {
 	void *f;
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
@@ -378,7 +426,27 @@ struct GameDriver espial_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/,espial_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	espial_input_ports,
+
+	color_prom, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	hiload, hisave
+};
+
+struct GameDriver espiale_driver =
+{
+	"Espial (European version)",
+	"espiale",
+	"Brad Oliver\nNicola Salmoria\nTim Lindquist (color info)\nJuan Carlos Lorente (high score save)",
+	&machine_driver,
+
+	espiale_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	espial_input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,

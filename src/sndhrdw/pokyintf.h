@@ -3,14 +3,17 @@
 
 #include "sndhrdw/pokey.h"
 
-#define NO_CLIP		0
-#define USE_CLIP	1
+#define NO_CLIP   0
+#define USE_CLIP  1
+
+#define POKEY_DEFAULT_GAIN 16
 
 struct POKEYinterface
 {
 	int num;	/* total number of pokeys in the machine */
 	int clock;
 	int volume;
+	int gain;
 	int clip;				/* determines if pokey.c will clip the sample range */
 	/* Handlers for reading the pot values. Some Atari games use ALLPOT to return */
 	/* dipswitch settings and other things */
@@ -24,10 +27,6 @@ struct POKEYinterface
 	int (*pot7_r[MAXPOKEYS])(int offset);
 	int (*allpot_r[MAXPOKEYS])(int offset);
 };
-
-int pokey1_sh_start (void);
-int pokey2_sh_start (void);
-int pokey4_sh_start (void);
 
 int pokey_sh_start (struct POKEYinterface *interface);
 void pokey_sh_stop (void);

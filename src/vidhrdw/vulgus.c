@@ -254,19 +254,16 @@ void vulgus_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* draw the frontmost playfield. They are characters, but draw them as sprites */
 	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
-		if (videoram[offs] != 0x20)	/* don't draw spaces */
-		{
-			int sx,sy;
+		int sx,sy;
 
 
-			sx = 8 * (offs / 32);
-			sy = 8 * (31 - offs % 32);
+		sx = 8 * (offs / 32);
+		sy = 8 * (31 - offs % 32);
 
-			drawgfx(bitmap,Machine->gfx[0],
-					videoram[offs] + 2 * (colorram[offs] & 0x80),
-					colorram[offs] & 0x3f,
-					0,0,sx,sy,
-					&Machine->drv->visible_area,TRANSPARENCY_COLOR,47);
-		}
+		drawgfx(bitmap,Machine->gfx[0],
+				videoram[offs] + 2 * (colorram[offs] & 0x80),
+				colorram[offs] & 0x3f,
+				0,0,sx,sy,
+				&Machine->drv->visible_area,TRANSPARENCY_COLOR,47);
 	}
 }

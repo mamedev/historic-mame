@@ -18,8 +18,9 @@
 
 int foodf_playfieldram_size;
 int foodf_spriteram_size;
-int foodf_paletteram_size;
 
+unsigned char *foodf_playfieldram;
+unsigned char *foodf_paletteram;
 unsigned char *foodf_spriteram;
 
 
@@ -31,16 +32,10 @@ static unsigned char *playfielddirty;
 
 static struct osd_bitmap *playfieldbitmap;
 
-static unsigned char *playfieldram;
-static unsigned char *paletteram;
-
 
 /*
  *		Prototypes from other modules
  */
-
-int foodf_system_start (void);
-int foodf_system_stop (void);
 
 void foodf_vh_stop (void);
 
@@ -80,22 +75,6 @@ void foodf_vh_convert_color_prom (unsigned char *palette, unsigned char *colorta
 
 int foodf_vh_start(void)
 {
-	int res;
-
-	/* start up the machine */
-	res = foodf_system_start ();
-	if (res != 0)
-		return res;
-
-	/* allocate RAM space */
-	if (!playfieldram) playfieldram = calloc (foodf_playfieldram_size, 1);
-	if (!paletteram)   paletteram   = calloc (PALETTE_SIZE, 1);
-	if (!playfieldram || !foodf_spriteram || !paletteram)
-	{
-		foodf_vh_stop ();
-		return 1;
-	}
-
 	/* allocate dirty buffers */
 	if (!playfielddirty) playfielddirty = malloc (foodf_playfieldram_size / 2);
 	if (!playfielddirty)
@@ -128,13 +107,6 @@ void foodf_vh_stop(void)
 
 	/* free dirty buffers */
 	if (playfielddirty) free (playfielddirty); playfielddirty = 0;
-
-	/* free RAM space */
-	if (paletteram)   free (paletteram);   paletteram = 0;
-	if (playfieldram) free (playfieldram); playfieldram = 0;
-
-	/* close down the machine */
-	foodf_system_stop();
 }
 
 
@@ -144,14 +116,17 @@ void foodf_vh_stop(void)
 
 int foodf_playfieldram_r (int offset)
 {
-	return playfieldram[offset];
+	return READ_WORD (&foodf_playfieldram[offset]);
 }
 
 void foodf_playfieldram_w (int offset, int data)
 {
-	if (playfieldram[offset] != data)
+	int oldword = READ_WORD (&foodf_playfieldram[offset]);
+	int newword = COMBINE_WORD (oldword, data);
+	
+	if (oldword != newword)
 	{
-		playfieldram[offset] = data;
+		WRITE_WORD (&foodf_playfieldram[offset], newword);
 		playfielddirty[offset / 2] = 1;
 	}
 }
@@ -163,24 +138,17 @@ void foodf_playfieldram_w (int offset, int data)
 
 int foodf_paletteram_r (int offset)
 {
-	if (!(offset & 1))
-		return 0;
-
 	offset = (offset / 2) % PALETTE_SIZE;
-	return paletteram[offset];
+	return foodf_paletteram[offset];
 }
 
 void foodf_paletteram_w (int offset, int data)
 {
 	int red, green, blue;
 
-
-	if (!(offset & 1))
-		return;
-
 	offset = (offset / 2) % PALETTE_SIZE;
 
-	paletteram[offset] = data;
+	foodf_paletteram[offset] = data;
 
 	/* extract RGB */
 	red = (data >> 0) & 7;
@@ -212,7 +180,7 @@ void foodf_vh_screenrefresh (struct osd_bitmap *bitmap)
 	/* since last time and update it accordingly. */
 	for (offs = foodf_playfieldram_size - 2; offs >= 0; offs -= 2)
 	{
-		int data = (playfieldram[offs] << 8) + playfieldram[offs+1];
+		int data = READ_WORD (&foodf_playfieldram[offs]);
 		int color = (data >> 8) & 0x3f;
 
 		if (playfielddirty[offs / 2])
@@ -238,25 +206,21 @@ void foodf_vh_screenrefresh (struct osd_bitmap *bitmap)
 	/* walk the motion object list. */
 	for (offs = 0; offs < foodf_spriteram_size; offs += 4)
 	{
-		int data1 = (foodf_spriteram[offs + 0x0000] << 8) + foodf_spriteram[offs + 0x0001];
+		int data1 = READ_WORD (&foodf_spriteram[offs + 0x0000]);
+		int data2 = READ_WORD (&foodf_spriteram[offs + 0x0002]);
 
-		/*if (!(data1 & 0x2000))*/
-		{
-			int data2 = (foodf_spriteram[offs + 0x0002] << 8) + foodf_spriteram[offs + 0x0003];
+		int pict = data1 & 0xff;
+		int color = (data1 >> 8) & 0x1f;
+		int xpos = (data2 >> 8) & 0xff;
+		int ypos = (0xff - data2 - 16) & 0xff;
+		int hflip = (data1 >> 15) & 1;
+		int vflip = (data1 >> 14) & 1;
 
-			int pict = data1 & 0xff;
-			int color = (data1 >> 8) & 0x1f;
-			int xpos = (data2 >> 8) & 0xff;
-			int ypos = (0xff - data2 - 16) & 0xff;
-			int hflip = (data1 >> 15) & 1;
-			int vflip = (data1 >> 14) & 1;
-
-			drawgfx (bitmap, Machine->gfx[1],
-					pict, color,
-					hflip, vflip,
-					xpos, ypos,
-					&Machine->drv->visible_area,
-					TRANSPARENCY_PEN, 0);
-		}
+		drawgfx (bitmap, Machine->gfx[1],
+				pict, color,
+				hflip, vflip,
+				xpos, ypos,
+				&Machine->drv->visible_area,
+				TRANSPARENCY_PEN, 0);
 	}
 }

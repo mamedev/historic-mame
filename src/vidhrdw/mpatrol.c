@@ -172,14 +172,14 @@ void mpatrol_vh_convert_color_prom(unsigned char *palette, unsigned char *colort
 	COLOR(2,1) = 128+4;
 	COLOR(2,2) = 128+8;
 	COLOR(2,3) = 128+12;
-	COLOR(3,0) = 128;
-	COLOR(3,1) = 128+1;
-	COLOR(3,2) = 128+2;
-	COLOR(3,3) = 128+3;
 	COLOR(4,0) = 128;
-	COLOR(4,1) = 128+16+1;
-	COLOR(4,2) = 128+16+2;
-	COLOR(4,3) = 128+16+3;
+	COLOR(4,1) = 128+1;
+	COLOR(4,2) = 128+2;
+	COLOR(4,3) = 128+3;
+	COLOR(6,0) = 128;
+	COLOR(6,1) = 128+16+1;
+	COLOR(6,2) = 128+16+2;
+	COLOR(6,3) = 128+16+3;
 }
 
 
@@ -191,7 +191,7 @@ void mpatrol_vh_convert_color_prom(unsigned char *palette, unsigned char *colort
 ***************************************************************************/
 int mpatrol_vh_start(void)
 {
-	int i,j;
+	int i,j,k;
 
 
 	if (generic_vh_start() != 0)
@@ -207,12 +207,13 @@ int mpatrol_vh_start(void)
 	/* prepare the background graphics */
 	for (i = 0;i < 3;i++)
 	{
-		for (j = 0;j < 4;j++)
-			drawgfx(bgbitmap,Machine->gfx[2 + i],
-					j,0,
-					0,0,
-					64 * j,BGHEIGHT * i,
-					0,TRANSPARENCY_NONE,0);
+		for (j = 0;j < 8;j++)
+			for (k = 0;k < 2;k++)
+				drawgfx(bgbitmap,Machine->gfx[2 + 2 * i + k],
+						j,0,
+						0,0,
+						32 * j,BGHEIGHT * i + (BGHEIGHT / 2) * k,
+						0,TRANSPARENCY_NONE,0);
 
 		for (j = 0;j < BGHEIGHT-64;j++)
 			memset(bgbitmap->line[BGHEIGHT*i + 64 + j],Machine->gfx[2+i]->colortable[3],256);
@@ -346,7 +347,7 @@ void mpatrol_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 		clip.min_y = bg1ypos + BGHEIGHT;
 		clip.max_y = Machine->drv->visible_area.max_y;
-		fillbitmap(bitmap,Machine->gfx[3]->colortable[3],&clip);
+		fillbitmap(bitmap,Machine->gfx[4]->colortable[3],&clip);
 	}
 	else if (bgcontrol == 0x03)
 	{
@@ -376,7 +377,7 @@ void mpatrol_vh_screenrefresh(struct osd_bitmap *bitmap)
 
 		clip.min_y = bg1ypos + BGHEIGHT;
 		clip.max_y = Machine->drv->visible_area.max_y;
-		fillbitmap(bitmap,Machine->gfx[4]->colortable[3],&clip);
+		fillbitmap(bitmap,Machine->gfx[6]->colortable[3],&clip);
 	}
 	else fillbitmap(bitmap,Machine->pens[0],&Machine->drv->visible_area);
 

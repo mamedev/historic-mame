@@ -50,7 +50,7 @@ void warpwarp_vh_screenrefresh(struct osd_bitmap *bitmap);
 int warpwarp_input_c000_7_r(int offset);
 int warpwarp_input_c020_27_r(int offset);
 int warpwarp_input_controller_r(int offset);
-int warpwarp_interrupt();
+int warpwarp_interrupt(void);
 
 
 static struct MemoryReadAddress readmem[] =
@@ -76,50 +76,53 @@ static struct MemoryWriteAddress writemem[] =
 	{ -1 }	/* end of table */
 };
 
-static struct InputPort input_ports[] =
-{
-	{	/* DSW1 */
-		0x0D,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{ /* Controls get mapped to correct read location in Machine.c code */
-		0xFF,
-		{ OSD_KEY_3, 0, OSD_KEY_1, OSD_KEY_2, OSD_KEY_LCONTROL },
-		{ 0        , 0, 0        , 0        , OSD_JOY_FIRE2}
-	},
-	{
-		0x00,
-		{ OSD_KEY_LEFT, OSD_KEY_RIGHT, OSD_KEY_UP, OSD_KEY_DOWN },
-		{ OSD_JOY_LEFT, OSD_JOY_RIGHT, OSD_JOY_UP, OSD_JOY_DOWN }
-	},
-	{	/* Test setting */
-		0x1,
-		{ 0},
-		{ 0}
-	},
-	{ -1 }	/* end of table */
-};
 
+INPUT_PORTS_START( input_ports )
+	PORT_START      /* DSW1 */
+	PORT_DIPNAME( 0x03, 0x01, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x03, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x01, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x00, "Freeplay" )
+	PORT_DIPNAME( 0x0c, 0x04, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x04, "3" )
+	PORT_DIPSETTING(    0x08, "4" )
+	PORT_DIPSETTING(    0x0c, "5" )
+/* The bonus setting changes depending on the number of lives */
+	PORT_DIPNAME( 0x30, 0x10, "Bonus", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Setting 1" )
+	PORT_DIPSETTING(    0x10, "Setting 2" )
+	PORT_DIPSETTING(    0x20, "Setting 3" )
+	PORT_DIPSETTING(    0x30, "Setting 4" )
+	PORT_DIPNAME( 0x40, 0x40, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x80, 0x80, "Unknown", IP_KEY_NONE ) /* Probably unused */
+	PORT_DIPSETTING(    0x80, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
 
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BITX(    0x20, 0x20, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x40, 0x40, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "Upright" )
+	PORT_DIPSETTING(    0x00, "Cocktail" )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 
-static struct KEYSet keys[] =
-{
-        { -1 }
-};
+	PORT_START      /* FAKE - used by input_controller_r to simulate an analog stick */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY )
+INPUT_PORTS_END
 
-
-
-static struct DSW dsw[] =
-{
-	{ 0, 0x03, "CREDITS", { "FREEPLAY", "1 COIN 1 CREDIT","1 COIN 2 CREDITS","2 COINS 1 CREDIT" } },
-	{ 0, 0x0C, "NO FIGHTERS", { "2", "3", "4", "5" } },
-/* The bonus setting changes depending on the no of lives */
-	{ 0, 0x30, "BONUS", {	"SETTING 1","SETTING 2","SETTING 3","SETTING 4", } },
-	{ 0, 0x40, "DEMO SOUND", { "ON", "OFF" } },
-	{ 1, 1<<5, "TEST MODE", { "ON", "OFF" } },
-	{ -1 }
-};
 
 
 
@@ -211,7 +214,7 @@ static struct MachineDriver machine_driver =
 			interrupt,1
 		}
 	},
-	60,
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* single CPU, no need for interleaving */
 	0,
 
@@ -288,7 +291,7 @@ struct GameDriver warpwarp_driver =
 {
 	"Warp Warp",
 	"warpwarp",
-	"Chris Hardy (MAME driver)\nJuan Carlos Lorente (high score)",
+	"Chris Hardy (MAME driver)\nJuan Carlos Lorente (high score)\nMarco Cassili",
 	&machine_driver,
 
 	warpwarp_rom,
@@ -296,7 +299,7 @@ struct GameDriver warpwarp_driver =
 	0,
 	0,	/* sound_prom */
 
-	input_ports, 0, 0/*TBR*/,dsw, keys,
+	input_ports,
 
 	0, palette, colortable,
 	ORIENTATION_DEFAULT,

@@ -26,19 +26,32 @@ struct RomModule
 /* that marks the start of a new memory region. Confused? Well, don't worry, just use */
 /* the macros below. */
 
+#define ROMFLAG_MASK          0xf0000000           /* 4 bits worth of flags in the high nibble */
+#define ROMFLAG_ALTERNATE     0x80000000           /* Alternate bytes, either even or odd */
+#define ROMFLAG_DISPOSE       0x80000000           /* Dispose of this region when done */
+#define ROMFLAG_WIDE          0x40000000           /* 16-bit ROM; may need byte swapping */
+#define ROMFLAG_SWAP          0x20000000           /* 16-bit ROM with bytes in wrong order */
+
 /* start of table */
 #define ROM_START(name) static struct RomModule name[] = {
 /* start of memory region */
 #define ROM_REGION(length) { 0, length, 0, 0 },
+/* start of disposable memory region */
+#define ROM_REGION_DISPOSE(length) { 0, length | ROMFLAG_DISPOSE, 0, 0 },
 /* ROM to load */
 #define ROM_LOAD(name,offset,length,checksum) { name, offset, length, checksum },
 /* continue loading the previous ROM to a new address */
 #define ROM_CONTINUE(offset,length) { 0, offset, length, 0 },
 /* restart loading the previous ROM to a new address */
 #define ROM_RELOAD(offset,length) { (char *)-1, offset, length, 0 },
+
+/* The following ones are for code ONLY - don't use for graphics data!!! */
 /* load the ROM at even/odd addresses. Useful with 16 bit games */
-#define ROM_LOAD_EVEN(name,offset,length,checksum) { name, offset & ~1, length | 0x80000000, checksum },
-#define ROM_LOAD_ODD(name,offset,length,checksum)  { name, offset |  1, length | 0x80000000, checksum },
+#define ROM_LOAD_EVEN(name,offset,length,checksum) { name, offset & ~1, length | ROMFLAG_ALTERNATE, checksum },
+#define ROM_LOAD_ODD(name,offset,length,checksum)  { name, offset |  1, length | ROMFLAG_ALTERNATE, checksum },
+/* load the ROM at even/odd addresses. Useful with 16 bit games */
+#define ROM_LOAD_WIDE(name,offset,length,checksum) { name, offset, length | ROMFLAG_WIDE, checksum },
+#define ROM_LOAD_WIDE_SWAP(name,offset,length,checksum) { name, offset, length | ROMFLAG_WIDE | ROMFLAG_SWAP, checksum },
 /* end of table */
 #define ROM_END { 0, 0, 0, 0 } };
 
@@ -47,10 +60,10 @@ struct RomModule
 struct GameSample
 {
 	int length;
-        int smpfreq;
-        unsigned char resolution;
-        unsigned char volume;
-	char data[1];	/* extendable */
+	int smpfreq;
+	unsigned char resolution;
+	unsigned char volume;
+	signed char data[1];	/* extendable */
 };
 
 struct GameSamples
@@ -63,16 +76,14 @@ struct GameSamples
 
 struct GfxLayout
 {
-	int width,height;	/* width and height of chars/sprites */
-	int total;	/* total numer of chars/sprites in the rom */
-	int planes;	/* number of bitplanes */
+	short width,height;	/* width and height of chars/sprites */
+	short total;	/* total numer of chars/sprites in the rom */
+	short planes;	/* number of bitplanes */
 	int planeoffset[8];	/* start of every bitplane */
-	int xoffset[64];	/* coordinates of the bit corresponding to the pixel */
-	int yoffset[64];	/* of the given coordinates */
-	int charincrement;	/* distance between two consecutive characters/sprites */
+	int xoffset[32];	/* coordinates of the bit corresponding to the pixel */
+	int yoffset[32];	/* of the given coordinates */
+	short charincrement;	/* distance between two consecutive characters/sprites */
 };
-
-
 
 struct GfxElement
 {
@@ -83,11 +94,25 @@ struct GfxElement
 
 	int color_granularity;	/* number of colors for each color code */
 							/* (for example, 4 for 2 bitplanes gfx) */
-	unsigned char *colortable;	/* map color codes to screen pens */
+	unsigned short *colortable;	/* map color codes to screen pens */
 								/* if this is 0, the function does a verbatim copy */
 	int total_colors;
+	unsigned int *pen_usage;	/* an array of total_elements ints. */
+								/* It is a table of the pens each character uses */
+								/* (bit 0 = pen 0, and so on). This is used by */
+								/* drawgfgx() to do optimizations like skipping */
+								/* drawing of a totally transparent characters */
 };
 
+struct GfxDecodeInfo
+{
+	int memory_region;	/* memory region where the data resides (usually 1) */
+						/* -1 marks the end of the array */
+	int start;	/* beginning of data to decode */
+	struct GfxLayout *gfxlayout;
+	int color_codes_start;	/* offset in the color lookup table where color codes start */
+	int total_color_codes;	/* total number of color codes */
+};
 
 
 struct rectangle
@@ -100,6 +125,7 @@ struct rectangle
 
 #define TRANSPARENCY_NONE 0
 #define TRANSPARENCY_PEN 1
+#define TRANSPARENCY_PENS 4
 #define TRANSPARENCY_COLOR 2
 #define TRANSPARENCY_THROUGH 3
 
@@ -117,9 +143,19 @@ void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 		const struct rectangle *clip,int transparency,int transparent_color);
 void copybitmap(struct osd_bitmap *dest,struct osd_bitmap *src,int flipx,int flipy,int sx,int sy,
 		const struct rectangle *clip,int transparency,int transparent_color);
+void copybitmapzoom(struct osd_bitmap *dest,struct osd_bitmap *src,int flipx,int flipy,int sx,int sy,
+		const struct rectangle *clip,int transparency,int transparent_color,int scalex,int scaley);
 void copyscrollbitmap(struct osd_bitmap *dest,struct osd_bitmap *src,
 		int rows,const int *rowscroll,int cols,const int *colscroll,
 		const struct rectangle *clip,int transparency,int transparent_color);
 void fillbitmap(struct osd_bitmap *dest,int pen,const struct rectangle *clip);
+void drawgfxzoom( struct osd_bitmap *dest_bmp,const struct GfxElement *gfx,
+		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
+		const struct rectangle *clip,int scalex, int scaley );
+
+/* ASG 980209 - added: */
+#define rgbpenindex(r,g,b) ((Machine->scrbitmap->depth==16) ? ((((r)>>3)<<10)+(((g)>>3)<<5)+((b)>>3)) : ((((r)>>5)<<5)+(((g)>>5)<<2)+((b)>>6)))
+#define rgbpen(r,g,b) (Machine->pens[rgbpenindex(r,g,b)])
+#define setgfxcolorentry(gfx,i,r,g,b) ((gfx)->colortable[i] = rgbpen (r,g,b))
 
 #endif

@@ -416,8 +416,8 @@ static void xch_a_r4(void)   { byte i=R.A; R.A=R4; R4=i; }
 static void xch_a_r5(void)   { byte i=R.A; R.A=R5; R5=i; }
 static void xch_a_r6(void)   { byte i=R.A; R.A=R6; R6=i; }
 static void xch_a_r7(void)   { byte i=R.A; R.A=R7; R7=i; }
-static void xch_a_xr0(void)  { byte i=R.A; R.A=intRAM[R0 & 0x7F]; intRAM[R0 & 0x7F]=i; };
-static void xch_a_xr1(void)  { byte i=R.A; R.A=intRAM[R1 & 0x7F]; intRAM[R1 & 0x7F]=i; };
+static void xch_a_xr0(void)  { byte i=R.A; R.A=intRAM[R0 & 0x7F]; intRAM[R0 & 0x7F]=i; }
+static void xch_a_xr1(void)  { byte i=R.A; R.A=intRAM[R1 & 0x7F]; intRAM[R1 & 0x7F]=i; }
 static void xchd_a_xr0(void) { M_XCHD(R0 & 0x7f); }
 static void xchd_a_xr1(void) { M_XCHD(R1 & 0x7f); }
 static void xrl_a_n(void)    { R.A ^= M_RDMEM_OPCODE(); }
@@ -546,7 +546,7 @@ unsigned I8039_GetPC (void)
 /****************************************************************************/
 /* Issue an interrupt if necessary                                          */
 /****************************************************************************/
-static int Timer_IRQ()
+static int Timer_IRQ(void)
 {
 	if (R.tirq_en && !R.irq_executing)
 	{
@@ -563,7 +563,7 @@ static int Timer_IRQ()
 	return 0;
 }
 
-static int Ext_IRQ()
+static int Ext_IRQ(void)
 {
 	if (R.xirq_en)
 	{

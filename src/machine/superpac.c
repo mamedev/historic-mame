@@ -8,12 +8,11 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "M6809.h"
+#include "M6809/M6809.h"
 
 
 unsigned char *superpac_sharedram;
 unsigned char *superpac_customio_1,*superpac_customio_2;
-unsigned char *pacnpal_loop_val_1;
 
 static unsigned char interrupt_enable_1,interrupt_enable_2;
 static int coin1, coin2, credits, start1, start2;
@@ -60,10 +59,6 @@ int pacnpal_sharedram_r2(int offset)
 void pacnpal_sharedram_w2(int offset,int data)
 {
 	superpac_sharedram[offset] = data;
-
-	/* this hack allows proper synchronization between CPU 1 & 2 at startup */
-	if (offset == 0x41 - 0x40 && data == 2)
-		cpu_seticount (0);
 }
 
 
@@ -107,7 +102,7 @@ void superpac_update_credits (void)
 		if (!start1 && credits >= credden[temp]) credits -= credden[temp], start1++;
 	}
 	else start1 = 0;
-	
+
 	if (val & 2)
 	{
 		if (!start2 && credits >= 2 * credden[temp]) credits -= 2 * credden[temp], start2++;
@@ -167,13 +162,11 @@ int superpac_customio_r_1(int offset)
 			switch (offset)
 			{
 				case 0:
-//					superpac_update_credits ();
 					temp = readinputport (1) & 7;
 					val = (credits * crednum[temp] / credden[temp]) / 10;
 					break;
 
 				case 1:
-//					superpac_update_credits ();
 					temp = readinputport (1) & 7;
 					val = (credits * crednum[temp] / credden[temp]) % 10;
 					break;
@@ -314,10 +307,6 @@ int superpac_interrupt_1(void)
 
 void pacnpal_interrupt_enable_2_w(int offset,int data)
 {
-	/* note: only used by Pac & Pal */
-	if (offset == 1 && cpu_getpc () == 0xf2cd && cpu_geticount () > 100)
-		cpu_seticount (100);
-
 	interrupt_enable_2 = offset;
 }
 

@@ -243,7 +243,7 @@ void galaga_vh_screenrefresh(struct osd_bitmap *bitmap)
 	{
 		if ((spriteram_3[offs + 1] & 2) == 0)
 		{
-			int code,color,flipx,flipy,sx,sy;
+			int code,color,flipx,flipy,sx,sy,sfa,sfb;
 
 
 			code = spriteram[offs];
@@ -252,39 +252,49 @@ void galaga_vh_screenrefresh(struct osd_bitmap *bitmap)
 			flipy = spriteram_3[offs] & 1;
 			sx = spriteram_2[offs] - 16;
 			sy = spriteram_2[offs + 1] - 40 + 0x100*(spriteram_3[offs + 1] & 1);
+			sfa = 0;
+			sfb = 16;
 
 			if (flipscreen)
 			{
 				flipx = !flipx;
 				flipy = !flipy;
+				sfa = 16;
+				sfb = 0;
 			}
 
-			if (spriteram_3[offs] & 8)	/* double width */
+			if ((spriteram_3[offs] & 0x0c) == 0x0c)		/* double width, double height */
 			{
 				drawgfx(bitmap,Machine->gfx[1],
-						code+2,color,flipx,flipy,sx,sy,
+						code+2,color,flipx,flipy,sx+sfa,sy+sfa,
 						&Machine->drv->visible_area,TRANSPARENCY_THROUGH,0);
 				drawgfx(bitmap,Machine->gfx[1],
-						code,color,flipx,flipy,sx+16,sy,
+						code,color,flipx,flipy,sx+sfb,sy+sfa,
 						&Machine->drv->visible_area,TRANSPARENCY_THROUGH,0);
 
-				if (spriteram_3[offs] & 4)	/* double width, double height */
-				{
-					drawgfx(bitmap,Machine->gfx[1],
-							code+3,color,flipx,flipy,sx,sy+16,
-							&Machine->drv->visible_area,TRANSPARENCY_THROUGH,0);
-					drawgfx(bitmap,Machine->gfx[1],
-							code+1,color,flipx,flipy,sx+16,sy+16,
-							&Machine->drv->visible_area,TRANSPARENCY_THROUGH,0);
-				}
+				drawgfx(bitmap,Machine->gfx[1],
+						code+3,color,flipx,flipy,sx+sfa,sy+sfb,
+						&Machine->drv->visible_area,TRANSPARENCY_THROUGH,0);
+				drawgfx(bitmap,Machine->gfx[1],
+						code+1,color,flipx,flipy,sx+sfb,sy+sfb,
+						&Machine->drv->visible_area,TRANSPARENCY_THROUGH,0);
+			}
+			else if (spriteram_3[offs] & 8)	/* double width */
+			{
+				drawgfx(bitmap,Machine->gfx[1],
+						code+2,color,flipx,flipy,sx+sfa,sy,
+						&Machine->drv->visible_area,TRANSPARENCY_THROUGH,0);
+				drawgfx(bitmap,Machine->gfx[1],
+						code,color,flipx,flipy,sx+sfb,sy,
+						&Machine->drv->visible_area,TRANSPARENCY_THROUGH,0);
 			}
 			else if (spriteram_3[offs] & 4)	/* double height */
 			{
 				drawgfx(bitmap,Machine->gfx[1],
-						code,color,flipx,flipy,sx,sy,
+						code,color,flipx,flipy,sx,sy+sfa,
 						&Machine->drv->visible_area,TRANSPARENCY_THROUGH,0);
 				drawgfx(bitmap,Machine->gfx[1],
-						code+1,color,flipx,flipy,sx,sy+16,
+						code+1,color,flipx,flipy,sx,sy+sfb,
 						&Machine->drv->visible_area,TRANSPARENCY_THROUGH,0);
 			}
 			else	/* normal */

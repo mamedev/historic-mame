@@ -80,6 +80,10 @@ int  bosco_customio_r_1(int offset);
 int  bosco_customio_r_2(int offset);
 void bosco_customio_w_1(int offset,int data);
 void bosco_customio_w_2(int offset,int data);
+int  bosco_customio_data_r_1(int offset);
+int  bosco_customio_data_r_2(int offset);
+void bosco_customio_data_w_1(int offset,int data);
+void bosco_customio_data_w_2(int offset,int data);
 int  bosco_interrupt_1(void);
 int  bosco_interrupt_2(void);
 int  bosco_interrupt_3(void);
@@ -92,6 +96,7 @@ void bosco_vh_convert_color_prom(unsigned char *palette, unsigned char *colortab
 
 extern unsigned char *bosco_videoram2,*bosco_colorram2;
 extern unsigned char *bosco_radarx,*bosco_radary,*bosco_radarattr;
+extern int bosco_radarram_size;
 extern unsigned char *bosco_scrollx,*bosco_scrolly;
 extern unsigned char *bosco_starcontrol,*bosco_staronoff;
 extern unsigned char *bosco_flipvideo,*bosco_starblink;
@@ -103,8 +108,7 @@ void bosco_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 void pengo_sound_w(int offset,int data);
 int  bosco_sh_start(void);
-void waveform_sh_stop(void);
-void waveform_sh_update(void);
+void bosco_sh_stop(void);
 extern unsigned char *pengo_soundregs;
 extern unsigned char bosco_hiscoreloaded;
 extern int  HiScore;
@@ -114,7 +118,7 @@ static struct MemoryReadAddress readmem_cpu1[] =
 {
 	{ 0x7800, 0x9fff, bosco_sharedram_r, &bosco_sharedram },
 	{ 0x6800, 0x6807, bosco_dsw_r },
-	{ 0x7000, 0x7010, MRA_RAM },
+	{ 0x7000, 0x700f, bosco_customio_data_r_1 },
 	{ 0x7100, 0x7100, bosco_customio_r_1 },
 	{ 0x0000, 0x3fff, MRA_ROM },
 
@@ -123,7 +127,7 @@ static struct MemoryReadAddress readmem_cpu1[] =
 
 static struct MemoryReadAddress readmem_cpu2[] =
 {
-	{ 0x9000, 0x9010, MRA_RAM },
+	{ 0x9000, 0x900f, bosco_customio_data_r_2 },
 	{ 0x9100, 0x9100, bosco_customio_r_2 },
 	{ 0x7800, 0x9fff, bosco_sharedram_r },
 	{ 0x6800, 0x6807, bosco_dsw_r },
@@ -149,7 +153,7 @@ static struct MemoryWriteAddress writemem_cpu1[] =
 	{ 0x7800, 0x9fff, bosco_sharedram_w },
 
 	{ 0x6800, 0x681f, pengo_sound_w, &pengo_soundregs },
-	{ 0x7000, 0x7010, MWA_RAM },
+	{ 0x7000, 0x700f, bosco_customio_data_w_1 },
 	{ 0x7100, 0x7100, bosco_customio_w_1 },
 	{ 0x6820, 0x6820, bosco_interrupt_enable_1_w },
 	{ 0x6822, 0x6822, bosco_interrupt_enable_3_w },
@@ -159,7 +163,7 @@ static struct MemoryWriteAddress writemem_cpu1[] =
 
 	{ 0x83d4, 0x83df, MWA_RAM, &spriteram, &spriteram_size },	/* these are here just to initialize */
 	{ 0x8bd4, 0x8bdf, MWA_RAM, &spriteram_2 },	                /* the pointers. */
-	{ 0x83f4, 0x83ff, MWA_RAM, &bosco_radarx },	                /* ditto */
+	{ 0x83f4, 0x83ff, MWA_RAM, &bosco_radarx, &bosco_radarram_size },	/* ditto */
 	{ 0x8bf4, 0x8bff, MWA_RAM, &bosco_radary },
 	{ 0x9810, 0x9810, MWA_RAM, &bosco_scrollx },
 	{ 0x9820, 0x9820, MWA_RAM, &bosco_scrolly },
@@ -179,7 +183,7 @@ static struct MemoryWriteAddress writemem_cpu2[] =
 	{ 0x8800, 0x8bff, colorram_w },
 	{ 0x8c00, 0x8fff, bosco_colorram2_w },
 
-	{ 0x9000, 0x9010, MWA_RAM },
+	{ 0x9000, 0x900f, bosco_customio_data_w_2 },
 	{ 0x9100, 0x9100, bosco_customio_w_2 },
 	{ 0x7800, 0x9fff, bosco_sharedram_w },
 	{ 0x6821, 0x6821, bosco_interrupt_enable_2_w },
@@ -485,6 +489,29 @@ static unsigned char sound_prom[] =
 
 
 
+static struct namco_interface namco_interface =
+{
+	3072000/32,	/* sample rate */
+	3,			/* number of voices */
+	32,			/* gain adjustment */
+	255			/* playback volume */
+};
+
+
+static struct Samplesinterface samples_interface =
+{
+	3	/* 3 channels */
+};
+
+
+static struct CustomSound_interface custom_interface =
+{
+	bosco_sh_start,
+	bosco_sh_stop,
+	0
+};
+
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -511,7 +538,7 @@ static struct MachineDriver machine_driver =
 			bosco_interrupt_3,2
 		}
 	},
-	60,
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	100,	/* 100 CPU slices per frame - an high value to ensure proper */
 			/* synchronization of the CPUs */
 	bosco_init_machine,
@@ -529,10 +556,21 @@ static struct MachineDriver machine_driver =
 	bosco_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	bosco_sh_start,
-	waveform_sh_stop,
-	waveform_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_NAMCO,
+			&namco_interface
+		},
+		{
+			SOUND_SAMPLES,
+			&samples_interface
+		},
+		{
+			SOUND_CUSTOM,
+			&custom_interface
+		}
+	}
 };
 
 
@@ -675,7 +713,7 @@ struct GameDriver bosco_driver =
 	bosco_sample_names,
 	sound_prom,	/* sound_prom */
 
-	0, bosco_input_ports, 0, 0, 0,
+	bosco_input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -695,7 +733,7 @@ struct GameDriver bosconm_driver =
 	bosco_sample_names,
 	sound_prom,	/* sound_prom */
 
-	0, bosconm_input_ports, 0, 0, 0,
+	bosconm_input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,

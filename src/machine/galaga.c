@@ -9,32 +9,38 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "Z80.h"
+#include "Z80/Z80.h"
 
 
 unsigned char *galaga_sharedram;
 static unsigned char interrupt_enable_1,interrupt_enable_2,interrupt_enable_3;
 unsigned char galaga_hiscoreloaded;
 
+static void *nmi_timer;
+
+void galaga_halt_w(int offset,int data);
 void galaga_vh_interrupt(void);
 
 
 void galaga_init_machine(void)
 {
 	galaga_hiscoreloaded = 0;
+	nmi_timer = 0;
+	galaga_halt_w (0, 0);
 }
 
 
 int galaga_hiscore_print_r(int offset)
 {
-        if ((cpu_getpc() == 0x031e || cpu_getpc() == 0xe1) && galaga_hiscoreloaded) {
-          if (offset == 4)
-            RAM[0x83f2] = RAM[0x8a25];  /* Adjust the 6th digit */
+	if ((cpu_getpc() == 0x031e || cpu_getpc() == 0xe1) && galaga_hiscoreloaded)
+	{
+		if (offset == 4)
+			RAM[0x83f2] = RAM[0x8a25];  /* Adjust the 6th digit */
 
-          return RAM[0x8a20+offset];    /* return HISCORE */
-        }
-        else
-          return RAM[0x2b9+offset];     /* bypass ROM test */
+		return RAM[0x8a20+offset];    /* return HISCORE */
+	}
+	else
+		return RAM[0x2b9+offset];     /* bypass ROM test */
 }
 
 int galaga_sharedram_r(int offset)
@@ -88,15 +94,7 @@ if (errorlog) fprintf(errorlog,"%04x: custom IO offset %02x data %02x\n",cpu_get
 	{
 		case 0xa8:
 			if (offset == 3 && data == 0x20)	/* total hack */
-			{
-		        if (Machine->samples && Machine->samples->sample[0])
-				{
-					osd_play_sample(7,Machine->samples->sample[0]->data,
-							Machine->samples->sample[0]->length,
-							Machine->samples->sample[0]->smpfreq,
-							Machine->samples->sample[0]->volume,0);
-				}
-			}
+		        sample_start(0,0,0);
 			break;
 
 		case 0xe1:
@@ -178,6 +176,12 @@ int galaga_customio_r(int offset)
 }
 
 
+void galaga_nmi_generate (int param)
+{
+	cpu_cause_interrupt (0, Z80_NMI_INT);
+}
+
+
 void galaga_customio_w(int offset,int data)
 {
 if (errorlog && data != 0x10 && data != 0x71) fprintf(errorlog,"%04x: custom IO command %02x\n",cpu_getpc(),data);
@@ -187,8 +191,9 @@ if (errorlog && data != 0x10 && data != 0x71) fprintf(errorlog,"%04x: custom IO 
 	switch (data)
 	{
 		case 0x10:
-			return;	/* nop */
-			break;
+			if (nmi_timer) timer_remove (nmi_timer);
+			nmi_timer = 0;
+			return;
 
 		case 0xa1:	/* go into switch mode */
 			mode = 1;
@@ -199,14 +204,31 @@ if (errorlog && data != 0x10 && data != 0x71) fprintf(errorlog,"%04x: custom IO 
 			mode = 0;
 			break;
 	}
+
+	nmi_timer = timer_pulse (TIME_IN_USEC (50), 0, galaga_nmi_generate);
 }
 
 
 
 void galaga_halt_w(int offset,int data)
 {
-	cpu_halt(1,data);
-	cpu_halt(2,data);
+	static int reset23;
+
+	data &= 1;
+	if (data && !reset23)
+	{
+		cpu_reset (1);
+		cpu_reset (2);
+		cpu_halt (1,1);
+		cpu_halt (2,1);
+	}
+	else if (!data)
+	{
+		cpu_halt (1,0);
+		cpu_halt (2,0);
+	}
+
+	reset23 = data;
 }
 
 
@@ -220,16 +242,10 @@ void galaga_interrupt_enable_1_w(int offset,int data)
 
 int galaga_interrupt_1(void)
 {
-	if (cpu_getiloops() == 0)
-	{
-		galaga_vh_interrupt();	/* update the background stars position */
+	galaga_vh_interrupt();	/* update the background stars position */
 
-		if (interrupt_enable_1) return interrupt();
-	}
-	else if (customio_command != 0x10)
-		return nmi_interrupt();
-
-	return ignore_interrupt();
+	if (interrupt_enable_1) return interrupt();
+	else return ignore_interrupt();
 }
 
 

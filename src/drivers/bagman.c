@@ -13,7 +13,7 @@ c000-ffff ROM (Super Bagman only)
 memory mapped ports:
 
 read:
-a000 random number generator? No, PAL rather - this is why guards get stuck...
+a000      PAL16r6 output.
 a800      ? (read only in one place, not used)
 b000      DSW
 b800      watchdog reset?
@@ -25,7 +25,7 @@ a002      /
 a003      video enable??
 a004      coin counter
 a007      ?
-a800-a805 ?
+a800-a805 PAL16r6 inputs. This chip is custom logic used for guards controlling.
 b000      ?
 b800      ?
 
@@ -41,18 +41,18 @@ I/O C  ;AY-3-8910 Data Read Reg.
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/8910intf.h"
 
 
 
-int bagman_rand_r(int offset);
+int bagman_pal16r6_r(int offset);
+void bagman_machine_init(void);
+void bagman_pal16r6_w(int offset, int data);
+
 
 extern unsigned char *bagman_video_enable;
 void bagman_flipscreen_w(int offset,int data);
 void bagman_vh_screenrefresh(struct osd_bitmap *bitmap);
 void bagman_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable, const unsigned char *color_prom);
-
-int bagman_sh_start(void);
 
 
 
@@ -62,7 +62,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x6000, 0x67ff, MRA_RAM },
 	{ 0x9000, 0x93ff, MRA_RAM },	/* video RAM */
 	{ 0x9800, 0x9bff, MRA_RAM },	/* color RAM + sprites */
-	{ 0xa000, 0xa000, bagman_rand_r },
+	{ 0xa000, 0xa000, bagman_pal16r6_r },
 	{ 0xa800, 0xa800, MRA_NOP },
 	{ 0xb000, 0xb000, input_port_2_r },	/* DSW */
 	{ 0xb800, 0xb800, MRA_NOP },
@@ -81,13 +81,13 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xa003, 0xa003, MWA_RAM, &bagman_video_enable },
 	{ 0xc000, 0xffff, MWA_ROM },	/* Super Bagman only */
 	{ 0x9800, 0x981f, MWA_RAM, &spriteram, &spriteram_size },	/* hidden portion of color RAM */
-														/* here only to initialize the pointer, */
+									/* here only to initialize the pointer, */
+	{ 0xa7ff, 0xa805, bagman_pal16r6_w },	/* PAL16r6 custom logic */
 														/* writes are handled by colorram_w */
 	{ 0x9c00, 0x9fff, MWA_NOP },	/* written to, but unused */
 #if 0
 	{ 0xa004, 0xa004, MWA_NOP },	/* ???? */
 	{ 0xa007, 0xa007, MWA_NOP },	/* ???? */
-	{ 0xa800, 0xa805, MWA_NOP },	/* ???? */
 	{ 0xb000, 0xb000, MWA_NOP },	/* ???? */
 	{ 0xb800, 0xb800, MWA_NOP },	/* ???? */
 #endif
@@ -250,6 +250,20 @@ static unsigned char bagman_color_prom[] =
 };
 
 
+
+static struct AY8910interface ay8910_interface =
+{
+	1,	/* 1 chip */
+	1500000,	/* 1.5 MHz??? */
+	{ 255 },
+	{ input_port_0_r },
+	{ input_port_1_r },
+	{ 0 },
+	{ 0 }
+};
+
+
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -262,9 +276,9 @@ static struct MachineDriver machine_driver =
 			interrupt,1
 		}
 	},
-	60,
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* single CPU, no need for interleaving */
-	0,
+	bagman_machine_init,
 
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
@@ -279,10 +293,13 @@ static struct MachineDriver machine_driver =
 	bagman_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	bagman_sh_start,
-	AY8910_sh_stop,
-	AY8910_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&ay8910_interface
+		}
+	}
 };
 
 /***************************************************************************
@@ -390,7 +407,7 @@ struct GameDriver bagman_driver =
 {
 	"Bagman",
 	"bagman",
-	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nJarek Burczynski (colors)\nTim Lindquist (color info)\nJuan Carlos Lorente (high score save)",
+	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nJarek Burczynski (additional code)\nTim Lindquist (color info)\nJuan Carlos Lorente (high score save)\nAndrew Deschenes (protection info)",
 	&machine_driver,
 
 	bagman_rom,
@@ -398,7 +415,7 @@ struct GameDriver bagman_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/,bagman_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	bagman_input_ports,
 
 	bagman_color_prom, 0, 0,
 	ORIENTATION_ROTATE_270,
@@ -410,7 +427,7 @@ struct GameDriver sbagman_driver =
 {
 	"Super Bagman",
 	"sbagman",
-	"Jarek Burczynski (enhancement of the Bagman driver)",
+	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (Bagman driver)\nJarek Burczynski (MAME driver)\nTim Lindquist (color info)\nJuan Carlos Lorente (high score save)\nAndrew Deschenes (protection info)",
 	&machine_driver,
 
 	sbagman_rom,
@@ -418,7 +435,7 @@ struct GameDriver sbagman_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/,sbagman_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	sbagman_input_ports,
 
 	bagman_color_prom, 0, 0,
 	ORIENTATION_ROTATE_270,

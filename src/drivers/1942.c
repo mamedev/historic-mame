@@ -110,8 +110,8 @@ Sound CPU:
 1-C11.BIN       16K Sound ROM 0000-3fff
 
 Main CPU:
-1-N4.BIN        16K CODE ROM 0000-4000
-1-N3.BIN        16K CODE ROM 4000-7fff
+1-N3.BIN        16K CODE ROM 0000-4000
+1-N4.BIN        16K CODE ROM 4000-7fff
 1-N5.BIN        16K CODE ROM 8000-bfff (paged)
 1-N6.BIN         8K CODE ROM 8000-9fff (paged)
 1-N7.BIN        16K CODE ROM 8000-bfff (paged)
@@ -349,35 +349,42 @@ WWW.SPIES.COM contains DIP switch settings.
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/generic.h"
-#include "sndhrdw/8910intf.h"
 
 
 
-void c1942_bankswitch_w(int offset,int data);
-int c1942_bankedrom_r(int offset);
-int c1942_interrupt(void);
-
-extern unsigned char *c1942_backgroundram;
-extern int c1942_backgroundram_size;
 extern unsigned char *c1942_scroll;
 extern unsigned char *c1942_palette_bank;
-void c1942_background_w(int offset,int data);
-void c1942_palette_bank_w(int offset,int data);
-void c1942_flipscreen_w(int offset,int data);
-int c1942_vh_start(void);
-void c1942_vh_stop(void);
 void c1942_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void c1942_flipscreen_w(int offset,int data);
+void c1942_updatehook0(int offset);
+void c1942_updatehook1(int offset);
 void c1942_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-int capcom_sh_start(void);
+
+
+void c1942_bankswitch_w(int offset,int data)
+{
+	int bankaddress;
+
+
+	bankaddress = 0x10000 + (data & 0x03) * 0x4000;
+	cpu_setbank(1,&RAM[bankaddress]);
+}
+
+
+
+int c1942_interrupt(void)
+{
+	if (cpu_getiloops() != 0) return 0x00cf;	/* RST 08h */
+	else return 0x00d7;	/* RST 10h - vblank */
+}
 
 
 
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x7fff, MRA_ROM },
-	{ 0x8000, 0xbfff, c1942_bankedrom_r },
+	{ 0x8000, 0xbfff, MRA_BANK1 },
 	{ 0xc000, 0xc000, input_port_0_r },	/* IN0 */
 	{ 0xc001, 0xc001, input_port_1_r },	/* IN1 */
 	{ 0xc002, 0xc002, input_port_2_r },	/* IN2 */
@@ -393,13 +400,13 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc800, 0xc800, soundlatch_w },
 	{ 0xc802, 0xc803, MWA_RAM, &c1942_scroll },
-	{ 0xc804, 0xc804, c1942_flipscreen_w },
-	{ 0xc805, 0xc805, c1942_palette_bank_w, &c1942_palette_bank },
+	{ 0xc804, 0xc804, MWA_RAM, &flip_screen },
+	{ 0xc805, 0xc805, MWA_RAM, &c1942_palette_bank },
 	{ 0xc806, 0xc806, c1942_bankswitch_w },
 	{ 0xcc00, 0xcc7f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0xd000, 0xd3ff, videoram_w, &videoram, &videoram_size },
-	{ 0xd400, 0xd7ff, colorram_w, &colorram },
-	{ 0xd800, 0xdbff, c1942_background_w, &c1942_backgroundram, &c1942_backgroundram_size },
+	{ 0xd000, 0xd3ff, videoram00_w, &videoram00 },
+	{ 0xd400, 0xd7ff, videoram01_w, &videoram01 },
+	{ 0xd800, 0xdbff, videoram10_w, &videoram10 },
 	{ 0xe000, 0xefff, MWA_RAM },
 	{ -1 }	/* end of table */
 };
@@ -545,8 +552,6 @@ static struct GfxLayout spritelayout =
 	64*8	/* every sprite takes 64 consecutive bytes */
 };
 
-
-
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
 	{ 1, 0x00000, &charlayout,             0, 64 },
@@ -557,7 +562,160 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-/* these are NOT the original color PROMs */
+static struct GfxTileLayout tilelayout0 =
+{
+	512,	/* 512 characters */
+	2,	/* 2 bits per pixel */
+	{ 4, 0 },
+	{ 0, 1, 2, 3, 8+0, 8+1, 8+2, 8+3 },
+	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
+	16*8	/* every char takes 16 consecutive bytes */
+};
+
+static struct GfxTileDecodeInfo gfxtiledecodeinfo0[] =
+{
+	{ 1, 0x00000, &tilelayout0, 0, 64, 0x00000001 },	/* foreground tiles */
+	{ -1 } /* end of array */
+};
+
+static struct GfxTileLayout tilelayout1 =
+{
+	512*4,	/* 512 tiles */
+	3,	/* 3 bits per pixel */
+	{ 0, 512*32*8, 2*512*32*8 },	/* the bitplanes are separated */
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8	/* every tile takes 32 consecutive bytes */
+};
+
+static struct GfxTileCompose gfxtilecompose1 =
+{
+	2,2,	/* 16x16 tiles */
+	4,		/* multiply code by 4 to obtain the base tile code */
+	{ 0, 2 },
+	{ 0, 1 },
+};
+
+static struct GfxTileDecodeInfo gfxtiledecodeinfo1[] =
+{
+	{ 1, 0x02000, &tilelayout1, 64*4, 4*32, 0 },	/* background tiles */
+	{ -1 } /* end of array */
+};
+
+
+static struct MachineLayer machine_layers[MAX_LAYERS] =
+{
+	{
+		LAYER_TILE,
+		32*8,32*8,
+		gfxtiledecodeinfo0,
+		0,
+		c1942_updatehook0,c1942_updatehook0,0,0
+	},
+	{
+		LAYER_TILE,
+		32*16,16*16,
+		gfxtiledecodeinfo1,
+		&gfxtilecompose1,
+		c1942_updatehook1,0,0,0
+	}
+};
+
+
+
+static struct AY8910interface ay8910_interface =
+{
+	2,	/* 2 chips */
+	1500000,	/* 1.5 MHz ? */
+	{ 0x20ff, 0x20ff },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 }
+};
+
+
+
+static struct MachineDriver machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			4000000,	/* 4 Mhz (?) */
+			0,
+			readmem,writemem,0,0,
+			c1942_interrupt,2
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU,
+			3000000,	/* 3 Mhz ??? */
+			2,	/* memory region #2 */
+			sound_readmem,sound_writemem,0,0,
+			interrupt,4
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	gfxdecodeinfo,
+	256,64*4+4*32*8+16*16,
+	c1942_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	machine_layers,
+	generic_vh_start,
+	generic_vh_stop,
+	c1942_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&ay8910_interface
+		}
+	}
+};
+
+
+
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+ROM_START( c1942_rom )
+	ROM_REGION(0x1c000)	/* 64k for code + 3*16k for the banked ROMs images */
+	ROM_LOAD( "1-n3.bin",  0x0000, 0x4000, 0x33ff9663 )
+	ROM_LOAD( "1-n4.bin",  0x4000, 0x4000, 0xd492925e )
+	ROM_LOAD( "1-n5.bin", 0x10000, 0x4000, 0xf2525fe2 )
+	ROM_LOAD( "1-n6.bin", 0x14000, 0x2000, 0x659736b3 )
+	ROM_LOAD( "1-n7.bin", 0x18000, 0x4000, 0xc9728db2 )
+
+	ROM_REGION(0x1e000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "1-f2.bin", 0x00000, 0x2000, 0x90e7df87 )	/* characters */
+	ROM_LOAD( "2-a1.bin", 0x02000, 0x2000, 0x144b5325 )	/* tiles */
+	ROM_LOAD( "2-a2.bin", 0x04000, 0x2000, 0xbeecefb2 )
+	ROM_LOAD( "2-a3.bin", 0x06000, 0x2000, 0x6649e7e3 )
+	ROM_LOAD( "2-a4.bin", 0x08000, 0x2000, 0x33e7a52d )
+	ROM_LOAD( "2-a5.bin", 0x0a000, 0x2000, 0x606bfaa1 )
+	ROM_LOAD( "2-a6.bin", 0x0c000, 0x2000, 0xcb9343fd )
+	ROM_LOAD( "2-l1.bin", 0x0e000, 0x4000, 0x3de5e617 )	/* sprites */
+	ROM_LOAD( "2-l2.bin", 0x12000, 0x4000, 0x900c4178 )
+	ROM_LOAD( "2-n1.bin", 0x16000, 0x4000, 0x8b02cefe )
+	ROM_LOAD( "2-n2.bin", 0x1a000, 0x4000, 0x0fb73451 )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "1-c11.bin", 0x0000, 0x4000, 0xb16cd20e )
+ROM_END
+
+
+
 static unsigned char color_prom[] =
 {
 	/* 08E_SB-5: palette red component */
@@ -666,84 +824,6 @@ static unsigned char color_prom[] =
 
 
 
-static struct MachineDriver machine_driver =
-{
-	/* basic machine hardware */
-	{
-		{
-			CPU_Z80,
-			4000000,	/* 4 Mhz (?) */
-			0,
-			readmem,writemem,0,0,
-			c1942_interrupt,2
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,	/* 3 Mhz ??? */
-			2,	/* memory region #2 */
-			sound_readmem,sound_writemem,0,0,
-			interrupt,4
-		}
-	},
-	60,
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
-	0,
-
-	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
-	gfxdecodeinfo,
-	256,64*4+4*32*8+16*16,
-	c1942_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER,
-	0,
-	c1942_vh_start,
-	c1942_vh_stop,
-	c1942_vh_screenrefresh,
-
-	/* sound hardware */
-	0,
-	capcom_sh_start,
-	AY8910_sh_stop,
-	AY8910_sh_update
-};
-
-
-
-/***************************************************************************
-
-  Game driver(s)
-
-***************************************************************************/
-
-ROM_START( c1942_rom )
-	ROM_REGION(0x1c000)	/* 64k for code + 3*16k for the banked ROMs images */
-	ROM_LOAD( "1-n3.bin",  0x0000, 0x4000, 0x33ff9663 )
-	ROM_LOAD( "1-n4.bin",  0x4000, 0x4000, 0xd492925e )
-	ROM_LOAD( "1-n7.bin",  0x8000, 0x4000, 0xc9728db2 )	/* this is the only one of the banked ROMs containing code */
-	ROM_LOAD( "1-n5.bin", 0x10000, 0x4000, 0xf2525fe2 )
-	ROM_LOAD( "1-n6.bin", 0x14000, 0x2000, 0x659736b3 )
-	ROM_LOAD( "1-n7.bin", 0x18000, 0x4000, 0xc9728db2 )
-
-	ROM_REGION(0x1e000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "1-f2.bin", 0x00000, 0x2000, 0x90e7df87 )	/* characters */
-	ROM_LOAD( "2-a1.bin", 0x02000, 0x2000, 0x144b5325 )	/* tiles */
-	ROM_LOAD( "2-a2.bin", 0x04000, 0x2000, 0xbeecefb2 )
-	ROM_LOAD( "2-a3.bin", 0x06000, 0x2000, 0x6649e7e3 )
-	ROM_LOAD( "2-a4.bin", 0x08000, 0x2000, 0x33e7a52d )
-	ROM_LOAD( "2-a5.bin", 0x0a000, 0x2000, 0x606bfaa1 )
-	ROM_LOAD( "2-a6.bin", 0x0c000, 0x2000, 0xcb9343fd )
-	ROM_LOAD( "2-l1.bin", 0x0e000, 0x4000, 0x3de5e617 )	/* sprites */
-	ROM_LOAD( "2-l2.bin", 0x12000, 0x4000, 0x900c4178 )
-	ROM_LOAD( "2-n1.bin", 0x16000, 0x4000, 0x8b02cefe )
-	ROM_LOAD( "2-n2.bin", 0x1a000, 0x4000, 0x0fb73451 )
-
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "1-c11.bin", 0x0000, 0x4000, 0xb16cd20e )
-ROM_END
-
-
-
 static int hiload(void)
 {
 	/* get RAM pointer (this game is multiCPU, we can't assume the global */
@@ -822,7 +902,7 @@ struct GameDriver c1942_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/,input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_ROTATE_270,

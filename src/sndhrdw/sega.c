@@ -1,5 +1,11 @@
 #include "driver.h"
 
+/* History:
+ *
+ * 980205 now using the new sample_*() functions. BW
+ *
+ */
+
 /*
 	Tac/Scan sound constants
 
@@ -11,8 +17,8 @@
 	$30 - $3f
 	$41
 
-	Some sound samples are missing - I use the one bullet and one explosion sound
-	for all 3 for example.
+	Some sound samples are missing:
+   	- I use the one bullet and one explosion sound for all 3 for example.
 
 Star Trk Sounds (USB Loaded from 5400 in main EPROMs)
 
@@ -105,13 +111,6 @@ d0      crafts joining
 
 */
 
-#define M_osd_play_sample(chan,num,loop) { \
-	if (Machine->samples->sample[num] != 0) \
-		osd_play_sample(chan,Machine->samples->sample[num]->data, \
-			Machine->samples->sample[num]->length, \
-			Machine->samples->sample[num]->smpfreq, \
-			Machine->samples->sample[num]->volume,loop); }\
-
 /* Some Tac/Scan sound constants */
 #define	shipStop 0x10
 #define	shipLaser 0x18
@@ -136,141 +135,115 @@ d0      crafts joining
 #define	kVoiceStinger 3
 #define	kVoiceEnemy 4
 
-static int roarPlaying;		/* Is the ship roar noise playing? */
+static int roarPlaying;	/* Is the ship roar noise playing? */
 
 /*
-	The speech samples are queued in the order they are received in sega_sh_speech_w ().
-	sega_sh_update () takes care of playing and updating the sounds in the order they
-	were queued.
-*/
+ * The speech samples are queued in the order they are received
+ * in sega_sh_speech_w (). sega_sh_update () takes care of playing
+ * and updating the sounds in the order they were queued.
+ */
 
-#define MAX_SPEECH	10		/* Number of speech samples which can be queued */
-#define NOT_PLAYING	-1		/* The queue holds the sample # so -1 will indicate no sample */
-/* #define DEBUG */
+#define MAX_SPEECH	10	/* Number of speech samples which can be queued */
+#define NOT_PLAYING	-1	/* Queue position empty */
 
 static int queue[MAX_SPEECH];
 static int queuePtr = 0;
 
-#ifdef macintosh
-#pragma mark ________Speech
-#endif
-
-int sega_sh_start (void) {
+int sega_sh_start (void)
+{
 	int i;
 
 	for (i = 0; i < MAX_SPEECH; i ++)
 		queue[i] = NOT_PLAYING;
 
 	return 0;
-	}
+}
 
-int sega_sh_r (int offset) {
-
+int sega_sh_r (int offset)
+{
 	/* 0x80 = universal sound board ready */
 	/* 0x01 = speech ready */
 
-	int retVal;
+	if (sample_playing(0))
+		return 0x81;
+	else
+		return 0x80;
+}
 
-	if (!osd_get_sample_status(0)) {
-		retVal = 0x80;
-		}
-	else retVal = 0x81;
-
-#ifdef DEBUG
-	if (errorlog) fprintf (errorlog, "Check sample status: %02x\n", retVal);
-#endif
-	return (retVal);
-	}
-
-void sega_sh_speech_w (int offset,int data) {
-
+void sega_sh_speech_w (int offset,int data)
+{
 	int sound;
-
-	if (Machine->samples == 0) return;
-
-	if (errorlog) fprintf (errorlog, "Speech data #:%02x\n", data);
 
 	sound = data & 0x7f;
 	/* The sound numbers start at 1 but the sample name array starts at 0 */
 	sound --;
-	
-	if ((sound >= Machine->samples->total) || (sound < 0))
+
+	if (sound < 0)	/* Can this happen? */
 		return;
 
-	if (!(data & 0x80)) {
+	if (!(data & 0x80))
+   	{
 		/* This typically comes immediately after a speech command. Purpose? */
-		/* osd_stop_sample (0);*/
 		return;
-	} else if (Machine->samples->sample[sound] != 0) {
+	}
+   	else if (Machine->samples->sample[sound] != 0)
+   	{
 		int newPtr;
 
-#ifdef DEBUG
-		if (errorlog) fprintf (errorlog, "Queueing sound #:%02x    raw data:%02x\n", sound, data);
-#endif
 		/* Queue the new sound */
 		newPtr = queuePtr;
-		while (queue[newPtr] != NOT_PLAYING) {
+		while (queue[newPtr] != NOT_PLAYING)
+	   	{
 			newPtr ++;
 			if (newPtr >= MAX_SPEECH)
 				newPtr = 0;
-			if (newPtr == queuePtr) {
+			if (newPtr == queuePtr)
+		   	{
 				/* The queue has overflowed. Oops. */
 				if (errorlog) fprintf (errorlog, "*** Queue overflow! queuePtr: %02d\n", queuePtr);
 				return;
-				}
 			}
-
-		queue[newPtr] = sound;
 		}
-
+		queue[newPtr] = sound;
 	}
+}
 
-void sega_sh_update (void) {
+void sega_sh_update (void)
+{
 	int sound;
 
 	/* if a sound is playing, return */
-	if (!osd_get_sample_status (0)) return;
+	if (sample_playing(0)) return;
 
 	/* Check the queue position. If a sound is scheduled, play it */
-	if (queue[queuePtr] != NOT_PLAYING) {
+	if (queue[queuePtr] != NOT_PLAYING)
+   	{
 		sound = queue[queuePtr];
+		sample_start(0, sound, 0);
 
-#ifdef DEBUG
-		if (errorlog) fprintf (errorlog, "playing sound: %02d\n", sound);
-#endif
-		osd_play_sample (0,Machine->samples->sample[sound]->data,
-			Machine->samples->sample[sound]->length,
-			Machine->samples->sample[sound]->smpfreq,
-			Machine->samples->sample[sound]->volume,0);
 		/* Update the queue pointer to the next one */
 		queue[queuePtr] = NOT_PLAYING;
 		++ queuePtr;
 		if (queuePtr >= MAX_SPEECH)
 			queuePtr = 0;
 		}
-
 	}
 
-#ifdef macintosh
-#pragma mark ________Tac/Scan Sound
-#endif
-
-int tacscan_sh_start (void) {
-
+int tacscan_sh_start (void)
+{
 	roarPlaying = 0;
 	return 0;
-	}
+}
 
-void tacscan_sh_w (int offset,int data) {
-
-	int sound;	/* index into the sample name array in drivers/sega.c */
-	int voice=0;	/* which voice to play the sound on */
-	int loop;	/* is this sound continuous? */
-
-	if (Machine->samples == 0) return;
+void tacscan_sh_w (int offset,int data)
+{
+	int sound;   /* index into the sample name array in drivers/sega.c */
+	int voice=0; /* which voice to play the sound on */
+	int loop;    /* is this sound continuous? */
 
 	loop = 0;
-	switch (data) {
+	switch (data)
+   	{
 		case shipRoar:
 			/* Play the increasing roar noise */
 			voice = kVoiceShipRoar;
@@ -330,270 +303,246 @@ void tacscan_sh_w (int offset,int data) {
 			sound = 11;
 			break;
 		default:
-#ifdef DEBUG
-			if (errorlog) fprintf (errorlog, "Play sample #: %02x\n", data);
-#endif
 			/* don't play anything */
 			sound = -1;
 			break;
-		}
-	if (sound != -1) {
-		osd_stop_sample (voice);
+	}
+	if (sound != -1)
+   	{
+		sample_stop (voice);
 		/* If the game is over, turn off the stinger noise */
 		if (data == shipStop)
-			osd_stop_sample (kVoiceStinger);
-		if (Machine->samples->sample[sound] !=0)
-			osd_play_sample (voice,Machine->samples->sample[sound]->data,
-			Machine->samples->sample[sound]->length,
-			Machine->samples->sample[sound]->smpfreq,
-			Machine->samples->sample[sound]->volume,loop);
-		}
+			sample_stop (kVoiceStinger);
+		sample_start (voice, sound, loop);
 	}
+}
 
-void tacscan_sh_update (void) {
-
+void tacscan_sh_update (void)
+{
 	/* If the ship roar has started playing but the sample stopped */
 	/* play the intermediate roar noise */
-	if ((roarPlaying) && (osd_get_sample_status (kVoiceShipRoar))) {
-		if (Machine->samples->sample[kVoiceShipRoar] !=0)
-			osd_play_sample (kVoiceShipRoar, Machine->samples->sample[1]->data,
-			Machine->samples->sample[1]->length,
-			Machine->samples->sample[1]->smpfreq,
-			Machine->samples->sample[1]->volume,1);
-		}
-	}
 
-#ifdef macintosh
-#pragma mark ________Eliminator Sound
-#endif
+	if ((roarPlaying) && (!sample_playing(kVoiceShipRoar)))
+		sample_start (kVoiceShipRoar, 1, 1);
+}
 
-void elim1_sh_w (int offset,int data) {
-	
-	if (Machine->samples == 0) return;
-
+void elim1_sh_w (int offset,int data)
+{
 	data ^= 0xff;
-	
+
 	/* Play fireball sample */
 	if (data & 0x02)
-		M_osd_play_sample (0, 0, 0);
-	
+		sample_start (0, 0, 0);
+
 	/* Play explosion samples */
 	if (data & 0x04)
-		M_osd_play_sample (1, 10, 0);
+		sample_start (1, 10, 0);
 	if (data & 0x08)
-		M_osd_play_sample (1, 9, 0);
+		sample_start (1, 9, 0);
 	if (data & 0x10)
-		M_osd_play_sample (1, 8, 0);
+		sample_start (1, 8, 0);
 
 	/* Play bounce sample */
-	if (data & 0x20) {
-		if (!osd_get_sample_status (2))
+	if (data & 0x20)
+   	{
+		if (sample_playing(2))
 			osd_stop_sample (2);
-		M_osd_play_sample (2, 1, 0);
-		}
-		
-	/* Play lazer sample */
-	if (data & 0xc0) {
-		if (!osd_get_sample_status (3))
-			osd_stop_sample (3);
-		M_osd_play_sample (3, 5, 0);
-		}
+		sample_start (2, 1, 0);
 	}
 
-void elim2_sh_w (int offset,int data) {
+	/* Play lazer sample */
+	if (data & 0xc0)
+   	{
+		if (sample_playing(3))
+			osd_stop_sample (3);
+		sample_start (3, 5, 0);
+	}
+}
 
-	if (Machine->samples == 0) return;
-
+void elim2_sh_w (int offset,int data)
+{
 	data ^= 0xff;
-	
+
 	/* Play thrust sample */
 	if (data & 0x0f)
-		M_osd_play_sample (4, 6, 0)
+		sample_start (4, 6, 0);
 	else
-		osd_stop_sample (4);
-	
+		sample_stop (4);
+
 	/* Play skitter sample */
 	if (data & 0x10)
-		M_osd_play_sample (5, 2, 0);
+		sample_start (5, 2, 0);
 
 	/* Play eliminator sample */
 	if (data & 0x20)
-		M_osd_play_sample (6, 3, 0);
+		sample_start (6, 3, 0);
 
 	/* Play electron samples */
 	if (data & 0x40)
-		M_osd_play_sample (7, 7, 0);
+		sample_start (7, 7, 0);
 	if (data & 0x80)
-		M_osd_play_sample (7, 4, 0);
-	}
+		sample_start (7, 4, 0);
+}
 
-#ifdef macintosh
-#pragma mark ________Star Trek Sound
-#endif
-
-void startrek_sh_w (int offset,int data) {
-
-	if (Machine->samples == 0) return;
-
-	switch (data) {
+void startrek_sh_w (int offset,int data)
+{
+	switch (data)
+   	{
 		case 0x08: /* phaser - trek1.sam */
-			M_osd_play_sample (1, 0x17, 0);
+			sample_start (1, 0x17, 0);
 			break;
 		case 0x0a: /* photon - trek2.sam */
-			M_osd_play_sample (1, 0x18, 0);
+			sample_start (1, 0x18, 0);
 			break;
 		case 0x0e: /* targeting - trek3.sam */
-			M_osd_play_sample (1, 0x19, 0);
+			sample_start (1, 0x19, 0);
 			break;
 		case 0x10: /* dent - trek4.sam */
-			M_osd_play_sample (2, 0x1a, 0);
+			sample_start (2, 0x1a, 0);
 			break;
 		case 0x12: /* shield hit - trek5.sam */
-			M_osd_play_sample (2, 0x1b, 0);
+			sample_start (2, 0x1b, 0);
 			break;
 		case 0x14: /* enterprise hit - trek6.sam */
-			M_osd_play_sample (2, 0x1c, 0);
+			sample_start (2, 0x1c, 0);
 			break;
 		case 0x16: /* enterprise explosion - trek7.sam */
-			M_osd_play_sample (2, 0x1d, 0);
+			sample_start (2, 0x1d, 0);
 			break;
 		case 0x1a: /* klingon explosion - trek8.sam */
-			M_osd_play_sample (2, 0x1e, 0);
+			sample_start (2, 0x1e, 0);
 			break;
 		case 0x1c: /* dock - trek9.sam */
-			M_osd_play_sample (1, 0x1f, 0);
+			sample_start (1, 0x1f, 0);
 			break;
 		case 0x1e: /* starbase hit - trek10.sam */
-			M_osd_play_sample (1, 0x20, 0);
+			sample_start (1, 0x20, 0);
 			break;
 		case 0x11: /* starbase red - trek11.sam */
-			M_osd_play_sample (1, 0x21, 0);
+			sample_start (1, 0x21, 0);
 			break;
 		case 0x22: /* starbase explosion - trek12.sam */
-			M_osd_play_sample (2, 0x22, 0);
+			sample_start (2, 0x22, 0);
 			break;
 		case 0x24: /* small bonus - trek13.sam */
-			M_osd_play_sample (3, 0x23, 0);
+			sample_start (3, 0x23, 0);
 			break;
 		case 0x25: /* large bonus - trek14.sam */
-			M_osd_play_sample (3, 0x24, 0);
+			sample_start (3, 0x24, 0);
 			break;
 		case 0x26: /* starbase intro - trek15.sam */
-			M_osd_play_sample (1, 0x25, 0);
+			sample_start (1, 0x25, 0);
 			break;
 		case 0x27: /* klingon intro - trek16.sam */
-			M_osd_play_sample (1, 0x26, 0);
+			sample_start (1, 0x26, 0);
 			break;
 		case 0x28: /* enterprise intro - trek17.sam */
-			M_osd_play_sample (1, 0x27, 0);
+			sample_start (1, 0x27, 0);
 			break;
 		case 0x29: /* player change - trek18.sam */
-			M_osd_play_sample (1, 0x28, 0);
+			sample_start (1, 0x28, 0);
 			break;
 		case 0x2e: /* klingon fire - trek19.sam */
-			M_osd_play_sample (2, 0x29, 0);
+			sample_start (2, 0x29, 0);
 			break;
 		case 0x04: /* impulse start - trek20.sam */
-			M_osd_play_sample (3, 0x2a, 0);
+			sample_start (3, 0x2a, 0);
 			break;
 		case 0x06: /* warp start - trek21.sam */
-			M_osd_play_sample (3, 0x2b, 0);
+			sample_start (3, 0x2b, 0);
 			break;
 		case 0x0c: /* red alert start - trek22.sam */
-			M_osd_play_sample (4, 0x2c, 0);
+			sample_start (4, 0x2c, 0);
 			break;
 		case 0x18: /* warp suck - trek23.sam */
-			M_osd_play_sample (4, 0x2d, 0);
+			sample_start (4, 0x2d, 0);
 			break;
 		case 0x19: /* saucer exit - trek24.sam */
-			M_osd_play_sample (4, 0x2e, 0);
+			sample_start (4, 0x2e, 0);
 			break;
 		case 0x2c: /* nomad motion - trek25.sam */
-			M_osd_play_sample (5, 0x2f, 0);
+			sample_start (5, 0x2f, 0);
 			break;
 		case 0x2d: /* nomad stopped - trek26.sam */
-			M_osd_play_sample (5, 0x30, 0);
+			sample_start (5, 0x30, 0);
 			break;
 		case 0x2b: /* coin drop music - trek27.sam */
-			M_osd_play_sample (1, 0x31, 0);
+			sample_start (1, 0x31, 0);
 			break;
 		case 0x2a: /* high score music - trek28.sam */
-			M_osd_play_sample (1, 0x32, 0);
+			sample_start (1, 0x32, 0);
 			break;
-		}
 	}
-	
-#ifdef macintosh
-#pragma mark ________Space Fury Sound
-#endif
+}
 
-void spacfury1_sh_w (int offset,int data) {
-	
-	if (Machine->samples == 0) return;
-
+void spacfury1_sh_w (int offset,int data)
+{
 	data ^= 0xff;
-	
+
 	/* craft growing */
 	if (data & 0x01)
-		M_osd_play_sample (1, 0x15, 0);
-		
+		sample_start (1, 0x15, 0);
+
 	/* craft moving */
-	if (data & 0x02) {
-		if (osd_get_sample_status (2))
-			M_osd_play_sample (2, 0x16, 1)
-		}
+	if (data & 0x02)
+   	{
+		if (!sample_playing(2))
+			sample_start (2, 0x16, 1);
+	}
 	else
 		osd_stop_sample (2);
 
 	/* Thrust */
-	if (data & 0x04) {
-		if (osd_get_sample_status (3))
-			M_osd_play_sample (2, 0x19, 1)
-		}
+	if (data & 0x04)
+   	{
+		if (!sample_playing(3))
+			sample_start (3, 0x19, 1);
+	}
 	else
 		osd_stop_sample (3);
-		
+
 	/* star spin */
 	if (data & 0x40)
-		M_osd_play_sample (4, 0x1d, 0);
+		sample_start (4, 0x1d, 0);
 
 	/* partial warship? */
 	if (data & 0x80)
-		M_osd_play_sample (4, 0x1e, 0);
+		sample_start (4, 0x1e, 0);
 
-	}
+}
 
-void spacfury2_sh_w (int offset,int data) {
-
+void spacfury2_sh_w (int offset,int data)
+{
 	if (Machine->samples == 0) return;
 
 	data ^= 0xff;
-	
+
 	/* craft joining */
 	if (data & 0x01)
-		M_osd_play_sample (5, 0x17, 0);
+		sample_start (5, 0x17, 0);
 
 	/* ship firing */
-	if (data & 0x02) {
-		if (!osd_get_sample_status (6))
-			osd_stop_sample (6);
-		M_osd_play_sample (6, 0x18, 0);
-		}
-		
+	if (data & 0x02)
+   	{
+		if (sample_playing(6))
+			osd_stop_sample(6);
+		sample_start(6, 0x18, 0);
+	}
+
 	/* fireball */
 	if (data & 0x04)
-		M_osd_play_sample (7, 0x1b, 0);
+		sample_start (7, 0x1b, 0);
 
 	/* small explosion */
 	if (data & 0x08)
-		M_osd_play_sample (7, 0x1b, 0);
+		sample_start (7, 0x1b, 0);
 	/* large explosion */
 	if (data & 0x10)
-		M_osd_play_sample (7, 0x1a, 0);
+		sample_start (7, 0x1a, 0);
 
 	/* docking bang */
 	if (data & 0x20)
-		M_osd_play_sample (8, 0x1c, 0);
+		sample_start (8, 0x1c, 0);
 
-	}
+}
 

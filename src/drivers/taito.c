@@ -50,7 +50,7 @@ d40a      DSW1
           bit 3-4 = lives
 		  bit 2   = ?
           bit 0-1 = finish bonus
-d40b      IN2
+d40b      IN2 - comes from a protection chip
           bit 7 = start 2
           bit 6 = start 1
 d40c      COIN
@@ -105,6 +105,7 @@ d509-d50a pointer to graphic ROM to read from d404
 d50b      command for the audio CPU
 d50d      watchdog reset
 d50e      bit 7 = ROM bank selector
+d50f      goes to a protection chip, I think; the result is read from d40b
 d600      bit 0 horizontal screen flip
           bit 1 vertical screen flip
           bit 2 ? sprite related, called OBJEX
@@ -118,10 +119,11 @@ d600      bit 0 horizontal screen flip
 SOUND CPU:
 0000-3fff ROM (none of the games has this fully populated)
 4000-43ff RAM
+e000-efff space for diagnostics ROM?
 
 read:
 5000      command from CPU board
-e000      ?
+8101      ?
 
 write:
 4800      8910 #1  control
@@ -137,14 +139,16 @@ write:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/generic.h"
-#include "sndhrdw/8910intf.h"
+#include "Z80/Z80.h"
+
+
 
 extern unsigned char *elevator_protection;
 int elevator_protection_r(int offset);
 int elevator_protection_t_r(int offset);
 void taito_init_machine(void);
 void taito_bankswitch_w(int offset,int data);
+void taito_digital_out(int offset,int data);
 
 extern unsigned char *taito_videoram2,*taito_videoram3;
 extern unsigned char *taito_characterram;
@@ -165,10 +169,20 @@ int taito_vh_start(void);
 void taito_vh_stop(void);
 void taito_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-int taito_sh_interrupt(void);
-int taito_sh_start(void);
-void taito_sh_stop(void);
-void taito_sh_update(void);
+
+
+static int sndnmi_disable = 1;
+
+static void taito_sndnmi_msk(int offset,int data)
+{
+	sndnmi_disable = data & 0x01;
+}
+
+static void taito_soundcommand_w(int offset,int data)
+{
+	soundlatch_w(offset,data);
+	if (!sndnmi_disable) cpu_cause_interrupt(1,Z80_NMI_INT);
+}
 
 
 
@@ -216,8 +230,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xd505, 0xd505, MWA_RAM, &taito_scrolly3 },
 	{ 0xd506, 0xd507, taito_colorbank_w, &taito_colorbank },
 	{ 0xd509, 0xd50a, MWA_RAM, &taito_gfxpointer },
-	{ 0xd50b, 0xd50b, sound_command_w },
-	{ 0xd50d, 0xd50d, MWA_NOP },
+	{ 0xd50b, 0xd50b, taito_soundcommand_w },
+	{ 0xd50d, 0xd50d, watchdog_reset_w },
 	{ 0xd50e, 0xd50e, taito_bankswitch_w },
 	{ 0xd600, 0xd600, taito_videoenable_w, &taito_video_enable },
 	{ 0xe000, 0xefff, MWA_ROM },
@@ -230,7 +244,11 @@ static struct MemoryReadAddress sound_readmem[] =
 {
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x43ff, MRA_RAM },
-	{ 0x5000, 0x5000, sound_command_r },
+	{ 0x4801, 0x4801, AY8910_read_port_1_r },
+	{ 0x4803, 0x4803, AY8910_read_port_2_r },
+	{ 0x4805, 0x4805, AY8910_read_port_3_r },
+	{ 0x5000, 0x5000, soundlatch_r },
+	{ 0xe000, 0xefff, MRA_ROM },
 	{ -1 }	/* end of table */
 };
 
@@ -669,27 +687,54 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
+static struct AY8910interface ay8910_interface =
+{
+	4,	/* 4 chips */
+	6000000/4,	/* 1.5 MHz */
+	{ 255, 255, 255, 0x40ff },
+	{ input_port_5_r, 0, 0, 0 },		/* port Aread */
+	{ input_port_6_r, 0, 0, 0 },		/* port Bread */
+	{ 0, taito_digital_out, 0, 0 },		/* port Awrite */
+	{ 0, 0, 0, taito_sndnmi_msk }	/* port Bwrite */
+};
+
+static struct DACinterface dac_interface =
+{
+	1,
+	441000,
+	{ 128, 128 },
+	{  1,  1 }
+};
+
+
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_Z80,
-			4000000,	/* 4 Mhz */
+			8000000/2,	/* 4 Mhz */
 			0,
 			readmem,writemem,0,0,
 			interrupt,1
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			3000000,	/* 3 Mhz */
+			6000000/2,	/* 3 Mhz */
 			3,	/* memory region #3 */
 			sound_readmem,sound_writemem,0,0,
-			taito_sh_interrupt,10
+			/* interrupts: */
+			/* - no interrupts synced with vblank */
+			/* - NMI triggered by the main CPU */
+			/* - periodic IRQ, with frequency 6000000/(4*16*16*10*16) = 36.621 Hz, */
+			/*   that is a period of 27306666.6666 ns */
+			0,0,
+			interrupt,27306667
 		}
 	},
-	60,
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	taito_init_machine,
 
 	/* video hardware */
@@ -705,10 +750,17 @@ static struct MachineDriver machine_driver =
 	taito_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	taito_sh_start,
-	taito_sh_stop,
-	taito_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&ay8910_interface
+		},
+		{
+			SOUND_DAC,
+			&dac_interface
+		}
+	}
 };
 
 
@@ -1021,7 +1073,7 @@ struct GameDriver elevator_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/, elevator_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	elevator_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -1041,7 +1093,7 @@ struct GameDriver elevatob_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/, elevator_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	elevator_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -1061,7 +1113,7 @@ struct GameDriver junglek_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/, junglek_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	junglek_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -1081,7 +1133,7 @@ struct GameDriver jhunt_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/, junglek_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	junglek_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -1101,7 +1153,7 @@ struct GameDriver frontlin_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/, frontlin_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	frontlin_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -1122,7 +1174,7 @@ struct GameDriver wwestern_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/, elevator_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	elevator_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
@@ -1142,7 +1194,7 @@ struct GameDriver alpine_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/, elevator_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	elevator_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,

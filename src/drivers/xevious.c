@@ -205,8 +205,6 @@ S-RAMS in schematic
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/generic.h"
-#include "sndhrdw/8910intf.h"
 
 
 extern unsigned char *xevious_sharedram;
@@ -240,9 +238,6 @@ void xevious_vh_convert_color_prom(unsigned char *palette, unsigned char *colort
 void xevious_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 void pengo_sound_w(int offset,int data);
-int pengo_sh_start(void);
-void waveform_sh_stop(void);
-void waveform_sh_update(void);
 extern unsigned char *pengo_soundregs;
 
 
@@ -814,6 +809,21 @@ static unsigned char sound_prom[] =
 
 
 
+static struct namco_interface namco_interface =
+{
+	3072000/32,	/* sample rate */
+	3,			/* number of voices */
+	32,			/* gain adjustment */
+	255			/* playback volume */
+};
+
+struct Samplesinterface samples_interface =
+{
+	1	/* one channel */
+};
+
+
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -823,7 +833,7 @@ static struct MachineDriver machine_driver =
 			3125000,	/* 3.125 Mhz (?) */
 			0,
 			readmem_cpu1,writemem_cpu1,0,0,
-			xevious_interrupt_1,100
+			xevious_interrupt_1,1
 		},
 		{
 			CPU_Z80,
@@ -840,9 +850,9 @@ static struct MachineDriver machine_driver =
 			xevious_interrupt_3,2
 		}
 	},
-	60,
-	1,	/* TODO: higher values cause sound not to work and sprites to scroll jerkily. */
-		/* Understand why. */
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	100,	/* 100 CPU slices per frame - an high value to ensure proper */
+			/* synchronization of the CPUs */
 	xevious_init_machine,
 
 	/* video hardware */
@@ -858,10 +868,17 @@ static struct MachineDriver machine_driver =
 	xevious_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	pengo_sh_start,
-	waveform_sh_stop,
-	waveform_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_NAMCO,
+			&namco_interface
+		},
+		{
+			SOUND_SAMPLES,
+			&samples_interface
+		}
+	}
 };
 
 
@@ -1024,7 +1041,7 @@ struct GameDriver xevious_driver =
 	xevious_sample_names,
 	sound_prom,	/* sound_prom */
 
-	0/*TBR*/,xevious_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	xevious_input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -1044,7 +1061,7 @@ struct GameDriver xeviousn_driver =
 	xevious_sample_names,
 	sound_prom,	/* sound_prom */
 
-	0/*TBR*/,xeviousn_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	xeviousn_input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -1064,7 +1081,7 @@ struct GameDriver sxevious_driver =
 	xevious_sample_names,
 	sound_prom,	/* sound_prom */
 
-	0/*TBR*/,sxevious_input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	sxevious_input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,

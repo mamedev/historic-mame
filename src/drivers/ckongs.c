@@ -18,38 +18,6 @@ b000      Watchdog Reset
 7001      IN1
 7002      IN2
 
-*
- * IN0 (all bits are inverted)
- * bit 7 : COIN 1
- * bit 6 : COIN 2
- * bit 5 : LEFT player 1
- * bit 4 : RIGHT player 1
- * bit 3 : SHOOT 1 player 1
- * bit 2 : CREDIT (SERVICE)
- * bit 1 : SHOOT 2 player 1
- * bit 0 : UP player 2 (TABLE only)
- *
-*
- * IN1 (all bits are inverted)
- * bit 7 : START 1
- * bit 6 : START 2
- * bit 5 : LEFT player 2 (TABLE only)
- * bit 4 : RIGHT player 2 (TABLE only)
- * bit 3 : SHOOT 1 player 2 (TABLE only)
- * bit 2 : SHOOT 2 player 2 (TABLE only)
- * bit 1 :\ nr of lives
- * bit 0 :/ 00 = 3  01 = 4  10 = 5  11 = 256
-*
- * IN2 (all bits are inverted)
- * bit 7 : protection check?
- * bit 6 : DOWN player 1
- * bit 5 : protection check?
- * bit 4 : UP player 1
- * bit 3 : COCKTAIL or UPRIGHT cabinet (0 = UPRIGHT)
- * bit 2 :\ coins per play
- * bit 1 :/
- * bit 0 : DOWN player 2 (TABLE only)
- *
 
 write:
 a801      interrupt enable
@@ -85,8 +53,6 @@ interrupt mode 1 triggered by the main CPU
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/generic.h"
-#include "sndhrdw/8910intf.h"
 
 
 
@@ -94,24 +60,36 @@ extern unsigned char *galaxian_attributesram;
 extern unsigned char *galaxian_bulletsram;
 extern int galaxian_bulletsram_size;
 void galaxian_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void galaxian_flipx_w(int offset,int data);
+void galaxian_flipy_w(int offset,int data);
 void galaxian_attributes_w(int offset,int data);
 void galaxian_stars_w(int offset,int data);
 int ckongs_vh_start(void);
 void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap);
 int scramble_vh_interrupt(void);
 
+int scramble_portB_r(int offset);
 void scramble_sh_irqtrigger_w(int offset,int data);
-int scramble_sh_start(void);
 
 
+
+int ckongs_input_port_1_r(int offset)
+{
+	return (readinputport(1) & 0xfc) | ((readinputport(2) & 0x06) >> 1);
+}
+
+int ckongs_input_port_2_r(int offset)
+{
+	return (readinputport(2) & 0xf9) | ((readinputport(1) & 0x03) << 1);
+}
 
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x5fff, MRA_ROM },
 	{ 0x6000, 0x6bff, MRA_RAM },	/* RAM */
 	{ 0x7000, 0x7000, input_port_0_r },	/* IN0 */
-	{ 0x7001, 0x7001, input_port_1_r },	/* IN1 */
-	{ 0x7002, 0x7002, input_port_2_r },	/* IN2 */
+	{ 0x7001, 0x7001, ckongs_input_port_1_r },	/* IN1 */
+	{ 0x7002, 0x7002, ckongs_input_port_2_r },	/* IN2 */
 	{ 0x9000, 0x93ff, MRA_RAM },	/* Video RAM */
 	{ 0x9800, 0x987f, MRA_RAM },	/* screen attributes, sprites, bullets */
 	{ 0xb000, 0xb000, watchdog_reset_r },
@@ -131,7 +109,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xa801, 0xa801, interrupt_enable_w },
 	{ 0xa802, 0xa802, MWA_NOP },
 	{ 0xa804, 0xa804, galaxian_stars_w },
-	{ 0xa806, 0xa807, MWA_NOP },
+	{ 0xa806, 0xa806, galaxian_flipx_w },
+	{ 0xa807, 0xa807, galaxian_flipy_w },
 	{ -1 }	/* end of table */
 };
 
@@ -170,57 +149,53 @@ static struct IOWritePort sound_writeport[] =
 };
 
 
+INPUT_PORTS_START( input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 
-static struct InputPort input_ports[] =
-{
-	{	/* IN0 */
-		0xff,
-		{ OSD_KEY_UP, OSD_KEY_ALT, 0, OSD_KEY_LCONTROL,
-				OSD_KEY_RIGHT, OSD_KEY_LEFT, 0, OSD_KEY_3 },
-		{ OSD_JOY_UP, OSD_JOY_FIRE2, 0, OSD_JOY_FIRE1,
-				OSD_JOY_RIGHT, OSD_JOY_LEFT, 0, 0 }
-	},
-	{	/* IN1 */
-		0xff,
-		{ 0, 0, OSD_KEY_ALT, OSD_KEY_LCONTROL,
-				OSD_KEY_RIGHT, OSD_KEY_LEFT, OSD_KEY_2, OSD_KEY_1 },
-		{ 0, 0, OSD_JOY_FIRE2, OSD_JOY_FIRE1,
-				OSD_JOY_RIGHT, OSD_JOY_LEFT, 0, 0 }
-	},
-	{	/* IN2 */
-		0xff,
-		{ OSD_KEY_DOWN, 0, 0, 0, OSD_KEY_UP, 0, OSD_KEY_DOWN, 0 },
-		{ OSD_JOY_DOWN, 0, 0, 0, OSD_JOY_UP, 0, OSD_JOY_DOWN, 0 }
-	},
-	{ -1 }	/* end of table */
-};
+	PORT_START      /* IN1 */
+	/* the coinage dip switch is spread across bits 0/1 of port 1 and bit 3 of port 2. */
+	/* To handle that, we swap bits 0/1 of port 1 and bits 1/2 of port 2 - this is handled */
+	/* by ckongs_input_port_N_r() */
+	PORT_DIPNAME( 0x01, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x01, "Cocktail" )
+	PORT_DIPNAME( 0x02, 0x02, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "3" )
+	PORT_DIPSETTING(    0x00, "4" )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START1 )
 
-
-
-static struct KEYSet keys[] =
-{
-        { 0, 0, "PL1 MOVE UP" },
-        { 0, 5, "PL1 MOVE LEFT"  },
-        { 0, 4, "PL1 MOVE RIGHT" },
-        { 2, 0, "PL1 MOVE DOWN" },
-        { 0, 1, "PL1 FIRE1" },
-        { 0, 3, "PL1 FIRE2" },
-        { 2, 4, "PL1 MOVE UP" },
-        { 1, 5, "PL1 MOVE LEFT"  },
-        { 1, 4, "PL1 MOVE RIGHT" },
-        { 2, 6, "PL1 MOVE DOWN" },
-        { 1, 2, "PL1 FIRE1" },
-        { 1, 3, "PL1 FIRE2" },
-        { -1 }
-};
-
-
-static struct DSW dsw[] =
-{
-	{ 2, 0x04, "LIVES", { "4", "3" }, 1 },
-	{ 2, 0x02, "SW3", { "OFF", "ON" } },
-	{ -1 }
-};
+	PORT_START      /* IN2 */
+	/* the coinage dip switch is spread across bits 0/1 of port 1 and bit 3 of port 2. */
+	/* To handle that, we swap bits 0/1 of port 1 and bits 1/2 of port 2 - this is handled */
+	/* by ckongs_input_port_N_r() */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_DIPNAME( 0x0e, 0x0e, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "5 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x02, "4 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x08, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0a, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x0e, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x0c, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x06, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x04, "1 Coin/4 Credits" )
+	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
+INPUT_PORTS_END
 
 
 
@@ -253,8 +228,8 @@ static struct GfxLayout bulletlayout =
 	1,	/* just one */
 	1,	/* 1 bit per pixel */
 	{ 0 },
-	{ 2, 2, 2 },	/* I "know" that this bit is 1 */
-	{ 0 },	/* I "know" that this bit is 1 */
+	{ 2, 2, 2 },	/* I "know" that this bit of the */
+	{ 0 },			/* graphics ROMs is 1 */
 	0	/* no use */
 };
 
@@ -279,6 +254,19 @@ static unsigned char color_prom[] =
 
 
 
+static struct AY8910interface ay8910_interface =
+{
+	2,	/* 2 chips */
+	1789750,	/* 1.78975 MHz */
+	{ 0x60ff, 0x60ff },
+	{ soundlatch_r },
+	{ scramble_portB_r },
+	{ 0 },
+	{ 0 }
+};
+
+
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -298,8 +286,8 @@ static struct MachineDriver machine_driver =
 			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
 	},
-	60,
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
 	/* video hardware */
@@ -315,10 +303,13 @@ static struct MachineDriver machine_driver =
 	galaxian_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	scramble_sh_start,
-	AY8910_sh_stop,
-	AY8910_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&ay8910_interface
+		}
+	}
 };
 
 
@@ -353,7 +344,7 @@ struct GameDriver ckongs_driver =
 {
 	"Crazy Kong (Scramble Hardware)",
 	"ckongs",
-	"NICOLA SALMORIA",
+	"Nicola Salmoria (MAME driver)",
 	&machine_driver,
 
 	ckongs_rom,
@@ -361,7 +352,7 @@ struct GameDriver ckongs_driver =
 	0,
 	0,	/* sound_prom */
 
-	input_ports, 0, 0/*TBR*/,dsw, keys,
+	input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,

@@ -5,38 +5,29 @@
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/generic.h"
-#include "sndhrdw/2151intf.h"
 
-extern int rastan_ram_size;
-extern int rastan_paletteram_size;
-extern int rastan_videoram1_size;
-extern int rastan_videoram2_size;
-extern int rastan_videoram3_size;
-extern int rastan_videoram4_size;
-extern int rastan_spriteram_size;
+extern unsigned char *rastan_paletteram;
+extern unsigned char *rastan_spriteram;
+extern unsigned char *rastan_scrollx;
+extern unsigned char *rastan_scrolly;
+
+void rastan_updatehook0(int offset);
+void rastan_updatehook1(int offset);
 
 void rastan_paletteram_w(int offset,int data);
 int rastan_paletteram_r(int offset);
 void rastan_spriteram_w(int offset,int data);
 int rastan_spriteram_r(int offset);
-void rastan_videoram1_w(int offset,int data);
-int rastan_videoram1_r(int offset);
-void rastan_videoram2_w(int offset,int data);
-int rastan_videoram2_r(int offset);
-void rastan_videoram3_w(int offset,int data);
-int rastan_videoram3_r(int offset);
-void rastan_videoram4_w(int offset,int data);
-int rastan_videoram4_r(int offset);
 
 void rastan_scrollY_w(int offset,int data);
 void rastan_scrollX_w(int offset,int data);
+
+void rastan_videocontrol_w(int offset,int data);
 
 int rastan_interrupt(void);
 int rastan_s_interrupt(void);
 
 void rastan_background_w(int offset,int data);
-void rastan_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void rastan_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 int  rastan_vh_start(void);
@@ -56,26 +47,25 @@ int r_rd_a001(int offset);
 void r_wr_a000(int offset,int data);
 void r_wr_a001(int offset,int data);
 
-int  rastan_sh_init(const char *gamename);
-int  rastan_sh_start(void);
 void r_wr_b000(int offset,int data);
 void r_wr_c000(int offset,int data);
 void r_wr_d000(int offset,int data);
+
 
 
 static struct MemoryReadAddress rastan_readmem[] =
 {
 	{ 0x000000, 0x05ffff, MRA_ROM },
 //	{ 0x10dc10, 0x10dc13, rastan_speedup_r },
-	{ 0x10c000, 0x10ffff, MRA_BANK1, 0, &rastan_ram_size },	/* RAM */
-	{ 0x200000, 0x20ffff, rastan_paletteram_r, 0, &rastan_paletteram_size },
+	{ 0x10c000, 0x10ffff, MRA_BANK1 },	/* RAM */
+	{ 0x200000, 0x20ffff, rastan_paletteram_r, &rastan_paletteram },
 	{ 0x3e0000, 0x3e0003, rastan_sound_r },
 	{ 0x390000, 0x39000f, rastan_input_r },
-	{ 0xc00000, 0xc03fff, rastan_videoram1_r,  0, &rastan_videoram1_size },
-	{ 0xc04000, 0xc07fff, MRA_BANK2,  0, &rastan_videoram2_size },
-	{ 0xc08000, 0xc0bfff, rastan_videoram3_r,  0, &rastan_videoram3_size },
-	{ 0xc0c000, 0xc0ffff, MRA_BANK3,  0, &rastan_videoram4_size },
-	{ 0xd00000, 0xd0ffff, MRA_BANK4,  0, &rastan_spriteram_size },
+	{ 0xc00000, 0xc03fff, videoram10_word_r },
+	{ 0xc04000, 0xc07fff, MRA_BANK2 },
+	{ 0xc08000, 0xc0bfff, videoram00_word_r },
+	{ 0xc0c000, 0xc0ffff, MRA_BANK3 },
+	{ 0xd00000, 0xd0ffff, MRA_BANK4, &rastan_spriteram },
 	{ -1 }  /* end of table */
 };
 
@@ -86,16 +76,16 @@ static struct MemoryWriteAddress rastan_writemem[] =
 	{ 0x10c000, 0x10ffff, MWA_BANK1 },
 	{ 0x200000, 0x20ffff, rastan_paletteram_w },
 	{ 0x350008, 0x35000b, MWA_NOP },     /* 0 only (often) ? */
-	{ 0x380000, 0x380003, MWA_NOP },     /*0000,0060,0063,0063b   ? */
+	{ 0x380000, 0x380003, rastan_videocontrol_w },	/* sprite palette bank, coin counters, other unknowns */
 	{ 0x3c0000, 0x3c0003, MWA_NOP },     /*0000,0020,0063,0992,1753 (very often) watchdog? */
 	{ 0x3e0000, 0x3e0003, rastan_sound_w },
-	{ 0xc00000, 0xc03fff, rastan_videoram1_w }, /*this is just a fake */
+	{ 0xc00000, 0xc03fff, videoram10_word_w, &videoram10 },
 	{ 0xc04000, 0xc07fff, MWA_BANK2 },
-	{ 0xc08000, 0xc0bfff, rastan_videoram3_w },
+	{ 0xc08000, 0xc0bfff, videoram00_word_w, &videoram00 },
 	{ 0xc0c000, 0xc0ffff, MWA_BANK3 },
-	{ 0xc20000, 0xc20003, rastan_scrollY_w },  /* scroll Y  1st.w plane1  2nd.w plane2 */
-	{ 0xc40000, 0xc40003, rastan_scrollX_w },  /* scroll X  1st.w plane1  2nd.w plane2 */
-	{ 0xc50000, 0xc50003, MWA_NOP },     /* 0 only (rarely)*/
+	{ 0xc20000, 0xc20003, rastan_scrollY_w, &rastan_scrolly },  /* scroll Y  1st.w plane1  2nd.w plane2 */
+	{ 0xc40000, 0xc40003, rastan_scrollX_w, &rastan_scrollx },  /* scroll X  1st.w plane1  2nd.w plane2 */
+//	{ 0xc50000, 0xc50003, MWA_NOP },     /* 0 only (rarely)*/
 	{ 0xd00000, 0xd0ffff, MWA_BANK4 },
 	{ -1 }  /* end of table */
 };
@@ -120,7 +110,8 @@ static struct MemoryWriteAddress rastan_s_writemem[] =
 	{ 0x9001, 0x9001, YM2151_data_port_0_w },
 	{ 0xa000, 0xa000, r_wr_a000 },
 	{ 0xa001, 0xa001, r_wr_a001 },
-	{ 0xb000, 0xb000, r_wr_b000 },
+	{ 0xb000, 0xb000, ADPCM_trigger },
+/*	{ 0xb000, 0xb000, r_wr_b000 },*/
 	{ 0xc000, 0xc000, r_wr_c000 },
 	{ 0xd000, 0xd000, r_wr_d000 },
 	{ -1 }  /* end of table */
@@ -210,20 +201,20 @@ INPUT_PORTS_END
 /* same as rastan, coinage is different */
 INPUT_PORTS_START( rastsaga_input_ports )
 	PORT_START	/* IN0 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START	/* IN1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -288,69 +279,97 @@ INPUT_PORTS_START( rastsaga_input_ports )
 INPUT_PORTS_END
 
 
-static struct GfxLayout spritelayout1 =
+
+static struct GfxLayout spritelayout =
 {
-	8,8,	/* 8*8 sprites */
+	16,16,	/* 16*16 sprites */
 	4096,	/* 4096 sprites */
 	4,	/* 4 bits per pixel */
 	{ 0, 1, 2, 3 },
-        { 0, 4, 0x10000*8+0 ,0x10000*8+4, 8+0, 8+4, 0x10000*8+8+0, 0x10000*8+8+4 },
-	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
-	16*8	/* every sprite takes 16 consecutive bytes */
-};
-
-static struct GfxLayout spritelayout2 =
-{
-	16,16,	/* 16*16 sprites */
-	1024,	/* 1024 sprites */
-	4,	/* 4 bits per pixel */
-	{ 0, 1, 2, 3 },
-{
-0, 4, 0x10000*8+0 ,0x10000*8+4,
-8+0, 8+4, 0x10000*8+8+0, 0x10000*8+8+4,
-16+0, 16+4, 0x10000*8+16+0, 0x10000*8+16+4,
-24+0, 24+4, 0x10000*8+24+0, 0x10000*8+24+4
-},
+	{
+	0, 4, 0x40000*8+0 ,0x40000*8+4,
+	8+0, 8+4, 0x40000*8+8+0, 0x40000*8+8+4,
+	16+0, 16+4, 0x40000*8+16+0, 0x40000*8+16+4,
+	24+0, 24+4, 0x40000*8+24+0, 0x40000*8+24+4
+	},
 	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
 			8*32, 9*32, 10*32, 11*32, 12*32, 13*32, 14*32, 15*32 },
 	64*8	/* every sprite takes 64 consecutive bytes */
 };
 
-/* there's nothing here, this is just a placeholder to let the video hardware */
-/* pick the remapped color table and dynamically build the real one. */
-
-static struct GfxLayout fakelayout =
-{
-	1,1,
-	0,
-	1,
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	0
-};
-
-
-
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &spritelayout1,  0, 0x80 },	/* sprites 8x8*/
-	{ 1, 0x20000, &spritelayout1,  0, 0x80 },	/* sprites 8x8*/
-	{ 1, 0x40000, &spritelayout1,  0, 0x80 },	/* sprites 8x8*/
-	{ 1, 0x60000, &spritelayout1,  0, 0x80 },	/* sprites 8x8*/
-	{ 1, 0x80000, &spritelayout2,  0, 0x80 },	/* sprites 16x16*/
-	{ 1, 0xa0000, &spritelayout2,  0, 0x80 },	/* sprites 16x16*/
-	{ 1, 0xC0000, &spritelayout2,  0, 0x80 },	/* sprites 16x16*/
-	{ 1, 0xE0000, &spritelayout2,  0, 0x80 },	/* sprites 16x16*/
-	{ 0, 0,      &fakelayout,    0x80*16, 0xff },
+	{ 1, 0x80000, &spritelayout,  0, 0x80 },	/* sprites 16x16*/
 	{ -1 } /* end of array */
 };
 
 
 
-/* RASTAN doesn't have a color PROM, it uses a RAM to generate colors */
-/* and change them during the game. Here is the list of all the colors is uses. */
-/* We cannot do it this time :( I've checked : RASTAN uses more than 512 colors*/
+static struct GfxTileLayout tilelayout =
+{
+	16384,	/* 16384 sprites */
+	4,	/* 4 bits per pixel */
+	{ 0, 1, 2, 3 },
+    { 0, 4, 0x40000*8+0 ,0x40000*8+4, 8+0, 8+4, 0x40000*8+8+0, 0x40000*8+8+4 },
+	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
+	16*8	/* every sprite takes 16 consecutive bytes */
+};
+
+static struct GfxTileDecodeInfo gfxtiledecodeinfo0[] =
+{
+	{ 1, 0x00000, &tilelayout, 0, 128, 0x00000001 },	/* foreground tiles */
+	{ -1 } /* end of array */
+};
+
+static struct GfxTileDecodeInfo gfxtiledecodeinfo1[] =
+{
+	{ 1, 0x00000, &tilelayout, 0, 128, 0 },	/* background tiles */
+	{ -1 } /* end of array */
+};
+
+
+static struct MachineLayer machine_layers[MAX_LAYERS] =
+{
+	{
+		LAYER_TILE,
+		64*8,64*8,
+		gfxtiledecodeinfo0,
+		0,
+		rastan_updatehook0,0,0,0
+	},
+	{
+		LAYER_TILE,
+		64*8,64*8,
+		gfxtiledecodeinfo1,
+		0,
+		rastan_updatehook1,0,0,0
+	}
+};
+
+
+
+static void rastan_irq_handler (void)
+{
+	cpu_cause_interrupt (1, 0);
+}
+
+static struct YM2151interface ym2151_interface =
+{
+	1,			/* 1 chip */
+	4000000,	/* 4 MHz ? */
+	{ 255 },
+	{ rastan_irq_handler }
+};
+
+static struct ADPCMinterface adpcm_interface =
+{
+	1,			/* 1 chip */
+	8000,       /* 8000Hz playback */
+	3,			/* memory region 3 */
+	0,			/* init function */
+	{ 255 }
+};
+
 
 
 static struct MachineDriver machine_driver =
@@ -372,27 +391,35 @@ static struct MachineDriver machine_driver =
 			ignore_interrupt,1
 		}
 	},
-	60,
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
 	0,
 
 	/* video hardware */
-	40*8, 30*8, { 0*8, 40*8-1, 0*8, 30*8-1 },
+	40*8, 32*8, { 0*8, 40*8-1, 1*8, 31*8-1 },
 	gfxdecodeinfo,
-	256,0x80*16+256, /* looking on palette it seems that RASTAN uses 0x0-0x4f color schemes 16 colors each*/
-	rastan_vh_convert_color_prom,
-
-	VIDEO_TYPE_RASTER,
+	256,0x80*16, /* looking on palette it seems that RASTAN uses 0x0-0x4f color schemes 16 colors each*/
 	0,
+
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY|VIDEO_SUPPORTS_16BIT,
+	machine_layers,
 	rastan_vh_start,
 	rastan_vh_stop,
 	rastan_vh_screenrefresh,
 
 	/* sound hardware */
-	rastan_sh_init,
-	rastan_sh_start,
-	YM2151_sh_stop,
-	YM2151_sh_update,
+	0,0,0,0,
+	{
+		{
+			SOUND_YM2151_ALT,
+//			SOUND_YM2151,
+			&ym2151_interface
+		},
+		{
+			SOUND_ADPCM,
+			&adpcm_interface
+		}
+	}
 };
 
 
@@ -413,20 +440,22 @@ ROM_START( rastan_rom )
 
 	ROM_REGION(0x100000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "IC40_01.bin",   0x00000, 0x10000, 0x67dad0cc )        /* 8x8 0 */
-	ROM_LOAD( "IC67_02.bin",   0x10000, 0x10000, 0xe6a11bdb )        /* 8x8 1 */
+	ROM_LOAD( "IC40_01H.bin",  0x10000, 0x10000, 0x114df5eb )        /* 8x8 0 */
 	ROM_LOAD( "IC39_03.bin",   0x20000, 0x10000, 0xe8b5dfe5 )        /* 8x8 0 */
-	ROM_LOAD( "IC66_04.bin",   0x30000, 0x10000, 0xfde7e2cf )        /* 8x8 1 */
-	ROM_LOAD( "IC40_01H.bin",  0x40000, 0x10000, 0x114df5eb )        /* 8x8 0 */
+	ROM_LOAD( "IC39_03H.bin",  0x30000, 0x10000, 0xc3dd6377 )        /* 8x8 0 */
+
+	ROM_LOAD( "IC67_02.bin",   0x40000, 0x10000, 0xe6a11bdb )        /* 8x8 1 */
 	ROM_LOAD( "IC67_02H.bin",  0x50000, 0x10000, 0x8eefac47 )        /* 8x8 1 */
-	ROM_LOAD( "IC39_03H.bin",  0x60000, 0x10000, 0xc3dd6377 )        /* 8x8 0 */
+	ROM_LOAD( "IC66_04.bin",   0x60000, 0x10000, 0xfde7e2cf )        /* 8x8 1 */
 	ROM_LOAD( "IC66_04H.bin",  0x70000, 0x10000, 0x80000000 )        /* 8x8 1 */
+
 	ROM_LOAD( "IC15_05.bin",   0x80000, 0x10000, 0xecd6fbcc )        /* sprites 1a */
-	ROM_LOAD( "IC28_06.bin",   0x90000, 0x10000, 0x81e8d0be )        /* sprites 1b */
-	ROM_LOAD( "IC15_05H.bin",  0xa0000, 0x10000, 0x1fe25954 )        /* sprites 2a */
-	ROM_LOAD( "IC28_06H.bin",  0xb0000, 0x10000, 0xab0be5c7 )        /* sprites 2b */
-	ROM_LOAD( "IC14_07.bin",   0xc0000, 0x10000, 0x022daf1d )        /* sprites 3a */
-	ROM_LOAD( "IC27_08.bin",   0xd0000, 0x10000, 0xbf187cba )        /* sprites 3b */
-	ROM_LOAD( "IC14_07H.bin",  0xe0000, 0x10000, 0x22a736c3 )        /* sprites 4a */
+	ROM_LOAD( "IC15_05H.bin",  0x90000, 0x10000, 0x1fe25954 )        /* sprites 2a */
+	ROM_LOAD( "IC14_07.bin",   0xa0000, 0x10000, 0x022daf1d )        /* sprites 3a */
+	ROM_LOAD( "IC14_07H.bin",  0xb0000, 0x10000, 0x22a736c3 )        /* sprites 4a */
+	ROM_LOAD( "IC28_06.bin",   0xc0000, 0x10000, 0x81e8d0be )        /* sprites 1b */
+	ROM_LOAD( "IC28_06H.bin",  0xd0000, 0x10000, 0xab0be5c7 )        /* sprites 2b */
+	ROM_LOAD( "IC27_08.bin",   0xe0000, 0x10000, 0xbf187cba )        /* sprites 3b */
 	ROM_LOAD( "IC27_08H.bin",  0xf0000, 0x10000, 0xb7eaa116 )        /* sprites 4b */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
@@ -447,20 +476,20 @@ ROM_START( rastsaga_rom )
 
 	ROM_REGION(0x100000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "IC40_01.bin",   0x00000, 0x10000, 0x67dad0cc )        /* 8x8 0 */
-	ROM_LOAD( "IC67_02.bin",   0x10000, 0x10000, 0xe6a11bdb )        /* 8x8 1 */
+	ROM_LOAD( "IC40_01H.bin",  0x10000, 0x10000, 0x114df5eb )        /* 8x8 0 */
 	ROM_LOAD( "IC39_03.bin",   0x20000, 0x10000, 0xe8b5dfe5 )        /* 8x8 0 */
-	ROM_LOAD( "IC66_04.bin",   0x30000, 0x10000, 0xfde7e2cf )        /* 8x8 1 */
-	ROM_LOAD( "IC40_01H.bin",  0x40000, 0x10000, 0x114df5eb )        /* 8x8 0 */
+	ROM_LOAD( "IC39_03H.bin",  0x30000, 0x10000, 0xc3dd6377 )        /* 8x8 0 */
+	ROM_LOAD( "IC67_02.bin",   0x40000, 0x10000, 0xe6a11bdb )        /* 8x8 1 */
 	ROM_LOAD( "IC67_02H.bin",  0x50000, 0x10000, 0x8eefac47 )        /* 8x8 1 */
-	ROM_LOAD( "IC39_03H.bin",  0x60000, 0x10000, 0xc3dd6377 )        /* 8x8 0 */
+	ROM_LOAD( "IC66_04.bin",   0x60000, 0x10000, 0xfde7e2cf )        /* 8x8 1 */
 	ROM_LOAD( "IC66_04H.bin",  0x70000, 0x10000, 0x80000000 )        /* 8x8 1 */
 	ROM_LOAD( "IC15_05.bin",   0x80000, 0x10000, 0xecd6fbcc )        /* sprites 1a */
-	ROM_LOAD( "IC28_06.bin",   0x90000, 0x10000, 0x81e8d0be )        /* sprites 1b */
-	ROM_LOAD( "IC15_05H.bin",  0xa0000, 0x10000, 0x1fe25954 )        /* sprites 2a */
-	ROM_LOAD( "IC28_06H.bin",  0xb0000, 0x10000, 0xab0be5c7 )        /* sprites 2b */
-	ROM_LOAD( "IC14_07.bin",   0xc0000, 0x10000, 0x022daf1d )        /* sprites 3a */
-	ROM_LOAD( "IC27_08.bin",   0xd0000, 0x10000, 0xbf187cba )        /* sprites 3b */
-	ROM_LOAD( "IC14_07H.bin",  0xe0000, 0x10000, 0x22a736c3 )        /* sprites 4a */
+	ROM_LOAD( "IC15_05H.bin",  0x90000, 0x10000, 0x1fe25954 )        /* sprites 2a */
+	ROM_LOAD( "IC14_07.bin",   0xa0000, 0x10000, 0x022daf1d )        /* sprites 3a */
+	ROM_LOAD( "IC14_07H.bin",  0xb0000, 0x10000, 0x22a736c3 )        /* sprites 4a */
+	ROM_LOAD( "IC28_06.bin",   0xc0000, 0x10000, 0x81e8d0be )        /* sprites 1b */
+	ROM_LOAD( "IC28_06H.bin",  0xd0000, 0x10000, 0xab0be5c7 )        /* sprites 2b */
+	ROM_LOAD( "IC27_08.bin",   0xe0000, 0x10000, 0xbf187cba )        /* sprites 3b */
 	ROM_LOAD( "IC27_08H.bin",  0xf0000, 0x10000, 0xb7eaa116 )        /* sprites 4b */
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
@@ -471,10 +500,20 @@ ROM_START( rastsaga_rom )
 ROM_END
 
 
+ADPCM_SAMPLES_START(rastan_samples)
+	ADPCM_SAMPLE(0x00, 0x0000, 0x0200*2)
+	ADPCM_SAMPLE(0x02, 0x0200, 0x0500*2)
+	ADPCM_SAMPLE(0x07, 0x0700, 0x2100*2)
+	ADPCM_SAMPLE(0x28, 0x2800, 0x3b00*2)
+	ADPCM_SAMPLE(0x63, 0x6300, 0x4e00*2)
+	ADPCM_SAMPLE(0xb1, 0xb100, 0x1600*2)
+ADPCM_SAMPLES_END
+
+
 
 struct GameDriver rastan_driver =
 {
-	"RASTAN",
+	"Rastan",
 	"rastan",
 	"Jarek Burczynski\nMarco Cassili",
 	&machine_driver,
@@ -482,9 +521,9 @@ struct GameDriver rastan_driver =
 	rastan_rom,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	(void *)rastan_samples,	/* sound_prom */
 
-	0/*TBR*/, rastan_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	rastan_input_ports,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
@@ -501,12 +540,103 @@ struct GameDriver rastsaga_driver =
 	rastsaga_rom,
 	0, 0,
 	0,
-	0,	/* sound_prom */
+	(void *)rastan_samples,	/* sound_prom */
 
-	0/*TBR*/, rastsaga_input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	rastsaga_input_ports,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
 	0, 0
 };
 
+
+
+
+
+
+
+
+#if 0
+/* ---------------------------  CUT HERE  ----------------------------- */
+/**************** This can be deleted somewhere in the future ***********/
+/*                This is here just to test YM2151 emulator             */
+
+
+int rastan_smus_interrupt(void);
+void rastan_vhmus_screenrefresh(struct osd_bitmap *bitmap);
+int r_rd_a001mus(int offset);
+
+static struct MemoryReadAddress rastan_smus_readmem[] =
+{
+	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0x8000, 0x8fff, MRA_RAM },
+	{ 0x9001, 0x9001, YM2151_status_port_0_r },
+        { 0x9002, 0x9100, MRA_RAM },
+        { 0xa000, 0xa000, r_rd_a000 },
+        { 0xa001, 0xa001, r_rd_a001mus },
+	{ -1 }  /* end of table */
+};
+
+
+static struct MachineDriver rastmu_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			4000000,	/* 4 Mhz */
+			2,
+			rastan_smus_readmem,rastan_s_writemem,0,0,
+			rastan_smus_interrupt,1
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
+	gfxdecodeinfo,
+	256,0x50*16+256, /* looking on palette it seems that RASTAN uses 0x0-0x4f color schemes 16 colors each*/
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_16BIT,
+	0,
+	rastan_vh_start,
+	rastan_vh_stop,
+	rastan_vhmus_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_YM2151_ALT,
+//			SOUND_YM2151,
+			&ym2151_interface
+		},
+		{
+			SOUND_ADPCM,
+			&adpcm_interface
+		}
+	}
+};
+
+struct GameDriver rastmus_driver =
+{
+	"RASTAN MUSIC PLAY (YM2151)",
+	"rastmus",
+	"JAREK BURCZYNSKI",
+	&rastmu_driver,
+
+	rastan_rom,
+	0, 0,
+	0,
+	(void *)rastan_samples,	/* sound_prom */
+
+	rastan_input_ports,
+
+	0, 0, 0,   /* colors, palette, colortable */
+	ORIENTATION_DEFAULT,
+	0, 0
+};
+#endif

@@ -3,7 +3,7 @@
   psg.c
 
 
-  Emulation of the AY-3-8910 sound chip.
+  Emulation of the AY-3-8910 / YM2149 sound chip.
 
   Based on various code snippets by Ville Hallik, Michael Cuddy,
   Tatsuyuki Satoh, Fabrice Frances, Nicola Salmoria.
@@ -15,16 +15,18 @@
 
 
 
-#define AUDIO_CONV(A) (A)
-
-#define MAX_OUTPUT 0x7fff
+#ifdef SIGNED_SAMPLES
+	#define MAX_OUTPUT 0x7fff
+#else
+	#define MAX_OUTPUT 0xffff
+#endif
 
 #define STEP 0x10000
 
 struct AY8910
 {
 	unsigned char Regs[16];
-	SAMPLE *Buf;			/* sound buffer */
+	void *Buf;			/* sound buffer */
 	int bufp;				/* update buffer point */
 	unsigned int UpdateStep;
 	int PeriodA,PeriodB,PeriodC,PeriodN,PeriodE;
@@ -66,6 +68,8 @@ static int AYNumChips;		/* total # of PSG's emulated */
 
 static struct AY8910 AYPSG[MAX_PSG];		/* array of PSG's */
 
+static int sample_16bit;
+
 
 /*
 ** Initialize AY8910 emulator(s).
@@ -75,7 +79,7 @@ static struct AY8910 AYPSG[MAX_PSG];		/* array of PSG's */
 ** 'rate'     is sampling rate and 'bufsiz' is the size of the
 ** buffer that should be updated at each interval
 */
-int AYInit(int num, int clock, int rate, int bufsiz, SAMPLE **buffer )
+int AYInit(int num, int clock, int rate, int bitsize, int bufsiz, void **buffer )
 {
 	int i;
 
@@ -84,6 +88,8 @@ int AYInit(int num, int clock, int rate, int bufsiz, SAMPLE **buffer )
 
 	AYNumChips = num;
 	AYBufSize = bufsiz;
+	if( bitsize == 16 ) sample_16bit = 1;
+	else                sample_16bit = 0;
 
 	/* init chip state */
 	for ( i = 0 ; i < AYNumChips; i++ )
@@ -233,9 +239,9 @@ if (errorlog) fprintf(errorlog,"error: write to 8910 #%d, allocated only %d\n",n
 
 		1 1 1 1  /___
 
-		The envelope counter on the AY-3-8910 has 16 steps. On the YM2203 it
+		The envelope counter on the AY-3-8910 has 16 steps. On the YM2149 it
 		has twice the steps, happening twice as fast. Since the end result is
-		just a smoother curve, we always use the YM2203 behaviour.
+		just a smoother curve, we always use the YM2149 behaviour.
 		*/
 		PSG->Regs[AY_ESHAPE] &= 0x0f;
 		PSG->Attack = (PSG->Regs[AY_ESHAPE] & 0x04) ? 0x1f : 0x00;
@@ -307,10 +313,12 @@ if (errorlog) fprintf(errorlog,"warning: read from 8910 #%d Port B set as output
 void AYUpdateOne(int chip,int endp)
 {
 	struct AY8910 *PSG = &AYPSG[chip];
-	SAMPLE *buffer = &PSG->Buf[PSG->bufp];
+	void *buffer;
 	int length;
 	int outn;
 
+	if( sample_16bit ) buffer = &((unsigned short *)PSG->Buf)[PSG->bufp];
+	else               buffer = &((unsigned char  *)PSG->Buf)[PSG->bufp];
 
 	if( endp > AYBufSize ) endp = AYBufSize;
 	length = endp - PSG->bufp;
@@ -319,31 +327,51 @@ void AYUpdateOne(int chip,int endp)
 	/* tone generators and of the (single) noise generator. The two are mixed */
 	/* BEFORE going into the DAC. The formula to mix each channel is this one: */
 	/* (ToneOn | ToneDisable) & (NoiseOn | NoiseDisable). */
-	/* Note that his means that if both tone and noise are disabled, the output */
+	/* Note that this means that if both tone and noise are disabled, the output */
 	/* is 1, not 0, and can be modulated changing the volume. */
 
 
-	/* if the channels are disabled, set their output to 1, and set */
-	/* the counter so they will not be inverted during this update. */
+	/* If the channels are disabled, set their output to 1, and increase the */
+	/* counter, if necessary, so they will not be inverted during this update. */
+	/* Setting the output to 1 is necessary because a disabled channel is locked */
+	/* into the ON state (see above); and it has no effect if the volume is 0. */
+	/* If the volume is 0, increase the counter, but don't touch the output. */
 	if (PSG->Regs[AY_ENABLE] & 0x01)
 	{
-		PSG->CountA = length*STEP + 1;
+		if (PSG->CountA <= length*STEP) PSG->CountA += length*STEP;
 		PSG->OutputA = 1;
+	}
+	else if (PSG->Regs[AY_AVOL] == 0)
+	{
+		/* note that I do count += length, NOT count = length + 1. You might think */
+		/* it's the same since the volume is 0, but doing the latter could cause */
+		/* interferencies when the program is rapidly modulating the volume. */
+		if (PSG->CountA <= length*STEP) PSG->CountA += length*STEP;
 	}
 	if (PSG->Regs[AY_ENABLE] & 0x02)
 	{
-		PSG->CountB = length*STEP + 1;
+		if (PSG->CountB <= length*STEP) PSG->CountB += length*STEP;
 		PSG->OutputB = 1;
+	}
+	else if (PSG->Regs[AY_BVOL] == 0)
+	{
+		if (PSG->CountB <= length*STEP) PSG->CountB += length*STEP;
 	}
 	if (PSG->Regs[AY_ENABLE] & 0x04)
 	{
-		PSG->CountC = length*STEP + 1;
+		if (PSG->CountC <= length*STEP) PSG->CountC += length*STEP;
 		PSG->OutputC = 1;
 	}
+	else if (PSG->Regs[AY_CVOL] == 0)
+	{
+		if (PSG->CountC <= length*STEP) PSG->CountC += length*STEP;
+	}
+
 	/* for the noise channel we must not touch OutputN - it's also not necessary */
 	/* since we use outn. */
 	if ((PSG->Regs[AY_ENABLE] & 0x38) == 0x38)	/* all off */
-		PSG->CountN = length*STEP + 1;
+		if (PSG->CountN <= length*STEP) PSG->CountN += length*STEP;
+
 	outn = (PSG->OutputN | PSG->Regs[AY_ENABLE]);
 
 
@@ -351,6 +379,7 @@ void AYUpdateOne(int chip,int endp)
 	while (length)
 	{
 		int vola,volb,volc;
+		int output;
 		int left;
 
 
@@ -510,41 +539,42 @@ void AYUpdateOne(int chip,int endp)
 				do
 				{
 					PSG->CountEnv--;
-					if (PSG->CountEnv < 0)
-					{
-						PSG->CountEnv = 0x1f;
+					PSG->CountE += PSG->PeriodE;
+				} while (PSG->CountE <= 0);
 
+				/* check envelope current position */
+				if (PSG->CountEnv < 0)
+				{
+					if (PSG->Hold)
+					{
 						if (PSG->Alternate)
 							PSG->Attack ^= 0x1f;
-
-						if (PSG->Hold != 0)
-						{
-							PSG->Holding = 1;
-							PSG->CountEnv = 0;
-						}
+						PSG->Holding = 1;
+						PSG->CountEnv = 0;
 					}
+					else
+					{
+						/* if CountEnv has looped an odd number of times (usually 1), */
+						/* invert the output. */
+						if (PSG->Alternate && (PSG->CountEnv & 0x20))
+ 							PSG->Attack ^= 0x1f;
 
-					PSG->VolE = PSG->VolTable[PSG->CountEnv ^ PSG->Attack];
-					if (PSG->EnvelopeA) PSG->VolA = PSG->VolE;
-					if (PSG->EnvelopeB) PSG->VolB = PSG->VolE;
-					if (PSG->EnvelopeC) PSG->VolC = PSG->VolE;
+						PSG->CountEnv &= 0x1f;
+					}
+				}
 
-					PSG->CountE += PSG->PeriodE;
-				} while (PSG->CountE <= 0 && PSG->Holding == 0);
+				PSG->VolE = PSG->VolTable[PSG->CountEnv ^ PSG->Attack];
+				/* reload volume */
+				if (PSG->EnvelopeA) PSG->VolA = PSG->VolE;
+				if (PSG->EnvelopeB) PSG->VolB = PSG->VolE;
+				if (PSG->EnvelopeC) PSG->VolC = PSG->VolE;
 			}
 		}
 
-		vola *= PSG->VolA;
-		volb *= PSG->VolB;
-		volc *= PSG->VolC;
+		output = vola*PSG->VolA + volb*PSG->VolB + volc*PSG->VolC;
+		if( sample_16bit ) *((unsigned short *)buffer)++ = output / STEP;
+		else               *((unsigned char  *)buffer)++ = output / (STEP*256);
 
-#ifdef SAMPLE_16BIT
-		*buffer = (vola + volb + volc) / STEP;
-#else
-		*buffer = AUDIO_CONV((vola + volb + volc) / (STEP * 256));
-#endif
-
-		buffer++;
 		length--;
 	}
 	PSG->bufp  = endp;
@@ -574,14 +604,14 @@ void AYSetClock(int n,int clock,int rate)
 {
 	/* the step clock for the tone and noise generators is the chip clock */
 	/* divided by 8; for the envelope generator of the AY-3-8910, it is half */
-	/* that much (clock/16), but the envelope of the YM2203 goes twice as */
+	/* that much (clock/16), but the envelope of the YM2149 goes twice as */
 	/* fast, therefore again clock/8. */
 	/* Here we calculate the number of steps which happen during one sample */
 	/* at the given sample rate. No. of events = sample rate / (clock/8). */
 	/* STEP is a multiplier used to turn the fraction into a fixed point */
 	/* number. */
 	AYPSG[n].UpdateStep = ((double)STEP * rate * 8) / clock;
-};
+}
 
 
 
@@ -611,7 +641,7 @@ void AYSetGain(int n,int gain)
 
 	/* calculate the volume->voltage conversion table */
 	/* The AY-3-8910 has 16 levels, in a logarithmic scale (3dB per step) */
-	/* The YM2203 still has 16 levels for the tone generators, but 32 for */
+	/* The YM2149 still has 16 levels for the tone generators, but 32 for */
 	/* the envelope generator (1.5dB per step). */
 	for (i = 31;i > 0;i--)
 	{

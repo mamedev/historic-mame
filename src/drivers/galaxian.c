@@ -92,10 +92,11 @@ void mooncrst_background_w(int offset,int data);
 void mooncrst_shoot_w(int offset,int data);
 void mooncrst_lfo_freq_w(int offset,int data);
 void mooncrst_sound_freq_sel_w(int offset,int data);
-int mooncrst_sh_init(const char *gamename);
 int mooncrst_sh_start(void);
 void mooncrst_sh_stop(void);
 void mooncrst_sh_update(void);
+
+
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -114,7 +115,7 @@ static struct MemoryWriteAddress galaxian_writemem[] =
 	{ 0x5000, 0x53ff, videoram_w, &videoram, &videoram_size },
 	{ 0x5800, 0x583f, galaxian_attributes_w, &galaxian_attributesram },
 	{ 0x5840, 0x585f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x5860, 0x5880, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
+	{ 0x5860, 0x587f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
 	{ 0x7001, 0x7001, interrupt_enable_w },
 	{ 0x7800, 0x7800, mooncrst_sound_freq_w },
 	{ 0x6800, 0x6800, mooncrst_background_w },
@@ -135,7 +136,7 @@ static struct MemoryWriteAddress pisces_writemem[] =
 	{ 0x5000, 0x53ff, videoram_w, &videoram, &videoram_size },
 	{ 0x5800, 0x583f, galaxian_attributes_w, &galaxian_attributesram },
 	{ 0x5840, 0x585f, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x5860, 0x5880, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
+	{ 0x5860, 0x587f, MWA_RAM, &galaxian_bulletsram, &galaxian_bulletsram_size },
 	{ 0x7001, 0x7001, interrupt_enable_w },
 	{ 0x7800, 0x7800, mooncrst_sound_freq_w },
 	{ 0x6800, 0x6800, mooncrst_background_w },
@@ -154,159 +155,269 @@ static struct MemoryWriteAddress pisces_writemem[] =
 
 
 
-static struct InputPort galaxian_input_ports[] =
-{
-	{	/* IN0 */
-		0x00,
-		{ 0, OSD_KEY_3, OSD_KEY_LEFT, OSD_KEY_RIGHT,
-				OSD_KEY_LCONTROL, 0, OSD_KEY_F2, 0 },
-		{ 0, 0, OSD_JOY_LEFT, OSD_JOY_RIGHT,
-				OSD_JOY_FIRE, 0, 0, 0 }
-	},
-	{	/* IN1 */
-		0x00,
-		{ OSD_KEY_1, OSD_KEY_2, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW */
-		0x00,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{ -1 }	/* end of table */
-};
+INPUT_PORTS_START( galaxian_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_DIPNAME( 0x20, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x20, "Cocktail" )
+	PORT_BITX(    0x40, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x40, "On" )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN3 )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused */
+	PORT_DIPNAME( 0xc0, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x80, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0xc0, "Free Play" )
+
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x03, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "7000" )
+	PORT_DIPSETTING(    0x01, "10000" )
+	PORT_DIPSETTING(    0x02, "12000" )
+	PORT_DIPSETTING(    0x03, "20000" )
+	PORT_DIPNAME( 0x04, 0x04, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x04, "3" )
+	PORT_DIPNAME( 0x08, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x08, "On" )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( galnamco_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_DIPNAME( 0x20, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x20, "Cocktail" )
+	PORT_BITX(    0x40, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x40, "On" )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN3 )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused */
+	PORT_DIPNAME( 0xc0, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x80, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0xc0, "Free Play" )
+
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x03, 0x01, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "4000" )
+	PORT_DIPSETTING(    0x02, "5000" )
+	PORT_DIPSETTING(    0x03, "7000" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPNAME( 0x04, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x04, "5" )
+	PORT_DIPNAME( 0x08, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x08, "On" )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( pisces_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+/* 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN ) */
+	PORT_DIPNAME( 0x20, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x20, "On" )
+	PORT_DIPNAME( 0x40, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x40, "On" )
+	PORT_DIPNAME( 0x80, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x80, "On" )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_DIPNAME( 0x20, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x20, "On" )
+/* 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )	 */
+	PORT_DIPNAME( 0x40, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x40, "4" )
+	PORT_DIPNAME( 0x80, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x80, "Cocktail" )
+
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x01, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x01, "On" )
+	PORT_DIPNAME( 0x02, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x02, "LC 2C/1C RC 1C/2C 2C/5C" )
+	PORT_DIPSETTING(    0x00, "LC 1C/1C RC 1C/5C" )
+	PORT_DIPNAME( 0x04, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x04, "On" )
+	PORT_DIPNAME( 0x08, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x08, "On" )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
+INPUT_PORTS_END
 
 
+INPUT_PORTS_START( warofbug_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY )
 
-static struct KEYSet keys[] =
-{
-        { 0, 2, "MOVE LEFT"  },
-        { 0, 3, "MOVE RIGHT" },
-        { 0, 4, "FIRE"       },
-        { -1 }
-};
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_DIPNAME( 0xc0, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0xc0, "Free Play" )
+/* 0x80 gives 2 Coins/1 Credit */
 
-
-static struct InputPort warofbug_input_ports[] =
-{
-	{	/* IN0 */
-		0x00,
-		{ OSD_KEY_3, 0, OSD_KEY_LEFT, OSD_KEY_RIGHT,
-				OSD_KEY_LCONTROL, 0, OSD_KEY_DOWN, OSD_KEY_UP },
-		{ 0, 0, OSD_JOY_LEFT, OSD_JOY_RIGHT,
-				OSD_JOY_FIRE, 0, OSD_JOY_DOWN, OSD_JOY_UP }
-	},
-	{	/* IN1 */
-		0x00,
-		{ OSD_KEY_1, OSD_KEY_2, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW */
-		0x02,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{ -1 }	/* end of table */
-};
-
-
-static struct KEYSet warofbug_keys[] =
-{
-        { 0, 7, "MOVE UP" },
-        { 0, 2, "MOVE LEFT"  },
-        { 0, 3, "MOVE RIGHT" },
-        { 0, 6, "MOVE DOWN" },
-        { 0, 4, "FIRE"      },
-        { -1 }
-};
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x03, 0x02, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "1" )
+	PORT_DIPSETTING(    0x01, "2" )
+	PORT_DIPSETTING(    0x02, "3" )
+	PORT_DIPSETTING(    0x03, "4" )
+	PORT_DIPNAME( 0x04, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x04, "On" )
+	PORT_DIPNAME( 0x08, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x08, "On" )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
+INPUT_PORTS_END
 
 
-static struct InputPort pacmanbl_input_ports[] =
-{
-	{	/* IN0 */
-		0x00,
-		{ OSD_KEY_3, OSD_KEY_4, OSD_KEY_LEFT, OSD_KEY_RIGHT,
-				0, OSD_KEY_DOWN, 0, OSD_KEY_UP },
-		{ 0, 0, OSD_JOY_LEFT, OSD_JOY_RIGHT,
-				0, OSD_JOY_DOWN, 0, OSD_JOY_UP }
-	},
-	{	/* IN1 */
-		0xc0,
-		{ OSD_KEY_1, OSD_KEY_2, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW */
-		0x00,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{ -1 }	/* end of table */
-};
+INPUT_PORTS_START( redufo_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_DIPNAME( 0x20, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x20, "Cocktail" )
+	PORT_BITX(    0x40, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x40, "On" )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_COIN3 )
 
-static struct KEYSet pacmanbl_keys[] =
-{
-        { 0, 7, "MOVE UP" },
-        { 0, 2, "MOVE LEFT"  },
-        { 0, 3, "MOVE RIGHT" },
-        { 0, 5, "MOVE DOWN" },
-        { -1 }
-};
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_DIPNAME( 0xc0, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x40, "LC 2C/1C RC 1C/3C" )
+	PORT_DIPSETTING(    0x00, "LC 1C/1C RC 1C/6C" )
+	PORT_DIPSETTING(    0x80, "LC 1C/2C RC 1C/12C" )
+	PORT_DIPSETTING(    0xc0, "Free Play" )
 
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x03, 0x01, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "4000" )
+	PORT_DIPSETTING(    0x02, "5000" )
+	PORT_DIPSETTING(    0x03, "7000" )
+	PORT_DIPSETTING(    0x00, "None" )
+	PORT_DIPNAME( 0x04, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x04, "5" )
+	PORT_DIPNAME( 0x08, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x08, "On" )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
+INPUT_PORTS_END
 
-static struct DSW galaxian_dsw[] =
-{
-	{ 2, 0x04, "LIVES", { "2", "3" } },
-	{ 2, 0x03, "BONUS", { "7000", "10000", "12000", "20000" } },
-	{ -1 }
-};
+INPUT_PORTS_START( pacmanbl_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY )
 
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_DIPNAME( 0x40, 0x40, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x40, "1 Coin/1 Credit" )
+	PORT_DIPNAME( 0x80, 0x80, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x00, "1 Coin/5 Credits" )
 
-
-static struct DSW galboot_dsw[] =
-{
-	{ 2, 0x04, "LIVES", { "3", "5" } },
-	{ 2, 0x03, "BONUS", { "7000", "10000", "12000", "20000" } },
-	{ -1 }
-};
-
-
-
-static struct DSW pisces_dsw[] =
-{
-	{ 1, 0x40, "LIVES", { "3", "4" } },
-	{ 1, 0x80, "SW2", { "OFF", "ON" } },
-	{ 2, 0x01, "SW3", { "OFF", "ON" } },
-	{ 2, 0x04, "SW5", { "OFF", "ON" } },
-	{ 2, 0x08, "SW6", { "OFF", "ON" } },
-	{ -1 }
-};
-
-static struct DSW japirem_dsw[] =
-{
-	{ 2, 0x04, "LIVES", { "3", "5" } },
-	{ 2, 0x03, "BONUS", { "NONE", "4000", "5000", "7000" } },
-	{ 2, 0x08, "SW6", { "OFF", "ON" } },
-	{ -1 }
-};
-
-static struct DSW warofbug_dsw[] =
-{
-	{ 2, 0x03, "LIVES", { "1", "2", "3", "4" } },
-	{ 2, 0x04, "SW5", { "OFF", "ON" } },
-	{ 2, 0x08, "SW6", { "OFF", "ON" } },
-	{ -1 }
-};
-
-static struct DSW pacmanbl_dsw[] =
-{
-	{ 1, 0x40, "COIN1", { "2 COINS 1 CREDIT", "1 COIN 1 CREDIT" } },
-	{ 1, 0x80, "COIN2", { "1 COIN 6 CREDITS", "1 COIN 3 CREDITS" } },
-	{ 2, 0x01, "BONUS", { "15000", "20000" } },
-	{ 2, 0x02, "DIFFICULTY", { "EASY", "HARD" } },
-	{ 2, 0x04, "LIVES", { "3", "5" } },
-	{ 2, 0x08, "CABINET", { "UPRIGHT", "COCKTAIL" } },
-	{ -1 }
-};
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x01, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "15000" )
+	PORT_DIPSETTING(    0x01, "20000" )
+	PORT_DIPNAME( 0x02, 0x00, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Easy" )
+	PORT_DIPSETTING(    0x02, "Hard" )
+	PORT_DIPNAME( 0x04, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x04, "5" )
+	PORT_DIPNAME( 0x08, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x08, "Cocktail" )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
+INPUT_PORTS_END
 
 
 
@@ -361,8 +472,8 @@ static struct GfxLayout bulletlayout =
 	1,	/* just one */
 	1,	/* 1 bit per pixel */
 	{ 0 },
-	{ 2, 2, 2 },	/* I "know" that this bit is 1 */
-	{ 0 },	/* I "know" that this bit is 1 */
+	{ 2, 2, 2 },	/* I "know" that this bit of the */
+	{ 0 },			/* graphics ROMs is 1 */
 	0	/* no use */
 };
 
@@ -429,19 +540,28 @@ static unsigned char pacmanbl_color_prom[] =
 
 
 
+static struct CustomSound_interface custom_interface =
+{
+	mooncrst_sh_start,
+	mooncrst_sh_stop,
+	mooncrst_sh_update
+};
+
+
+
 static struct MachineDriver galaxian_machine_driver =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_Z80,
-			3072000,	/* 3.072 Mhz */
+			18432000/6,	/* 3.072 Mhz */
 			0,
 			readmem,galaxian_writemem,0,0,
 			galaxian_vh_interrupt,1
 		}
 	},
-	60,
+	60, 2500,	/* frames per second, vblank duration */
 	1,	/* single CPU, no need for interleaving */
 	0,
 
@@ -458,13 +578,14 @@ static struct MachineDriver galaxian_machine_driver =
 	galaxian_vh_screenrefresh,
 
 	/* sound hardware */
-	mooncrst_sh_init,
-	mooncrst_sh_start,
-	mooncrst_sh_stop,
-	mooncrst_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_CUSTOM,
+			&custom_interface
+		}
+	}
 };
-
-
 
 static struct MachineDriver pisces_machine_driver =
 {
@@ -472,13 +593,13 @@ static struct MachineDriver pisces_machine_driver =
 	{
 		{
 			CPU_Z80,
-			3072000,	/* 3.072 Mhz */
+			18432000/6,	/* 3.072 Mhz */
 			0,
 			readmem,pisces_writemem,0,0,
 			galaxian_vh_interrupt,1
 		}
 	},
-	60,
+	60, 2500,	/* frames per second, vblank duration */
 	1,	/* single CPU, no need for interleaving */
 	0,
 
@@ -495,10 +616,13 @@ static struct MachineDriver pisces_machine_driver =
 	galaxian_vh_screenrefresh,
 
 	/* sound hardware */
-	mooncrst_sh_init,
-	mooncrst_sh_start,
-	mooncrst_sh_stop,
-	mooncrst_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_CUSTOM,
+			&custom_interface
+		}
+	}
 };
 
 static struct MachineDriver pacmanbl_machine_driver =
@@ -507,13 +631,13 @@ static struct MachineDriver pacmanbl_machine_driver =
 	{
 		{
 			CPU_Z80,
-			3072000,	/* 3.072 Mhz */
+			18432000/6,	/* 3.072 Mhz */
 			0,
 			readmem,pisces_writemem,0,0,
 			galaxian_vh_interrupt,1
 		}
 	},
-	60,
+	60, 2500,	/* frames per second, vblank duration */
 	1,	/* single CPU, no need for interleaving */
 	0,
 
@@ -530,10 +654,13 @@ static struct MachineDriver pacmanbl_machine_driver =
 	galaxian_vh_screenrefresh,
 
 	/* sound hardware */
-	mooncrst_sh_init,
-	mooncrst_sh_start,
-	mooncrst_sh_stop,
-	mooncrst_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_CUSTOM,
+			&custom_interface
+		}
+	}
 };
 
 static const char *mooncrst_sample_names[] =
@@ -898,7 +1025,7 @@ struct GameDriver galaxian_driver =
 {
 	"Galaxian (Namco)",
 	"galaxian",
-	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nANDREW SCOTT",
+	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	&galaxian_machine_driver,
 
 	galaxian_rom,
@@ -906,7 +1033,7 @@ struct GameDriver galaxian_driver =
 	mooncrst_sample_names,
 	0,	/* sound_prom */
 
-	galaxian_input_ports, 0, 0/*TBR*/,galaxian_dsw, keys,
+	galaxian_input_ports,
 
 	galaxian_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -918,7 +1045,7 @@ struct GameDriver galmidw_driver =
 {
 	"Galaxian (Midway)",
 	"galmidw",
-	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nANDREW SCOTT",
+	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	&galaxian_machine_driver,
 
 	galmidw_rom,
@@ -926,7 +1053,7 @@ struct GameDriver galmidw_driver =
 	mooncrst_sample_names,
 	0,	/* sound_prom */
 
-	galaxian_input_ports, 0, 0/*TBR*/,galaxian_dsw, keys,
+	galaxian_input_ports,
 
 	galaxian_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -938,7 +1065,7 @@ struct GameDriver galnamco_driver =
 {
 	"Galaxian (Namco, modified)",
 	"galnamco",
-	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nANDREW SCOTT",
+	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	&galaxian_machine_driver,
 
 	galnamco_rom,
@@ -946,7 +1073,7 @@ struct GameDriver galnamco_driver =
 	mooncrst_sample_names,
 	0,	/* sound_prom */
 
-	galaxian_input_ports, 0, 0/*TBR*/,galboot_dsw, keys,
+	galnamco_input_ports,
 
 	galaxian_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -956,9 +1083,9 @@ struct GameDriver galnamco_driver =
 
 struct GameDriver superg_driver =
 {
-	"Super Galaxian",
+	"Super Galaxians",
 	"superg",
-	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nANDREW SCOTT",
+	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	&galaxian_machine_driver,
 
 	superg_rom,
@@ -966,7 +1093,7 @@ struct GameDriver superg_driver =
 	mooncrst_sample_names,
 	0,	/* sound_prom */
 
-	galaxian_input_ports, 0, 0/*TBR*/,galboot_dsw, keys,
+	galnamco_input_ports,
 
 	galaxian_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -978,7 +1105,7 @@ struct GameDriver galapx_driver =
 {
 	"Galaxian Part X",
 	"galapx",
-	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nANDREW SCOTT",
+	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	&galaxian_machine_driver,
 
 	galapx_rom,
@@ -986,7 +1113,7 @@ struct GameDriver galapx_driver =
 	mooncrst_sample_names,
 	0,	/* sound_prom */
 
-	galaxian_input_ports, 0, 0/*TBR*/,galboot_dsw, keys,
+	galnamco_input_ports,
 
 	galaxian_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -996,9 +1123,9 @@ struct GameDriver galapx_driver =
 
 struct GameDriver galap1_driver =
 {
-	"Galaxian Part 1",
+	"Space Invaders Galactica",
 	"galap1",
-	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nANDREW SCOTT",
+	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	&galaxian_machine_driver,
 
 	galap1_rom,
@@ -1006,7 +1133,7 @@ struct GameDriver galap1_driver =
 	mooncrst_sample_names,
 	0,	/* sound_prom */
 
-	galaxian_input_ports, 0, 0/*TBR*/,galboot_dsw, keys,
+	galnamco_input_ports,
 
 	galaxian_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -1018,7 +1145,7 @@ struct GameDriver galap4_driver =
 {
 	"Galaxian Part 4",
 	"galap4",
-	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nANDREW SCOTT",
+	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	&galaxian_machine_driver,
 
 	galap4_rom,
@@ -1026,7 +1153,7 @@ struct GameDriver galap4_driver =
 	mooncrst_sample_names,
 	0,	/* sound_prom */
 
-	galaxian_input_ports, 0, 0/*TBR*/,galboot_dsw, keys,
+	galnamco_input_ports,
 
 	galaxian_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -1038,7 +1165,7 @@ struct GameDriver galturbo_driver =
 {
 	"Galaxian Turbo",
 	"galturbo",
-	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nANDREW SCOTT",
+	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMarco Cassili",
 	&galaxian_machine_driver,
 
 	galturbo_rom,
@@ -1046,7 +1173,7 @@ struct GameDriver galturbo_driver =
 	mooncrst_sample_names,
 	0,	/* sound_prom */
 
-	galaxian_input_ports, 0, 0/*TBR*/,galboot_dsw, keys,
+	galnamco_input_ports,
 
 	galaxian_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -1058,7 +1185,7 @@ struct GameDriver pisces_driver =
 {
 	"Pisces",
 	"pisces",
-	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nANDREW SCOTT\nMIKE BALFOUR",
+	"Robert Anschuetz\nNicola Salmoria\nAndrew Scott\nMike Balfour\nMarco Cassili",
 	&pisces_machine_driver,
 
 	pisces_rom,
@@ -1066,7 +1193,7 @@ struct GameDriver pisces_driver =
 	mooncrst_sample_names,
 	0,	/* sound_prom */
 
-	galaxian_input_ports, 0, 0/*TBR*/,pisces_dsw, keys,
+	pisces_input_ports,
 
 	galaxian_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -1078,7 +1205,7 @@ struct GameDriver japirem_driver =
 {
 	"Gingateikoku No Gyakushu",
 	"japirem",
-	"NICOLA SALMORIA\nLIONEL THEUNISSEN\nROBERT ANSCHUETZ\nANDREW SCOTT",
+	"Nicola Salmoria\nLionel Theunissen\nRobert Anschuetz\nAndrew Scott\nMarco Cassili",
 	&pisces_machine_driver,
 
 	japirem_rom,
@@ -1086,7 +1213,7 @@ struct GameDriver japirem_driver =
 	mooncrst_sample_names,
 	0,	/* sound_prom */
 
-	galaxian_input_ports, 0, 0/*TBR*/,japirem_dsw, keys,
+	galnamco_input_ports,
 
 	japirem_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -1098,7 +1225,7 @@ struct GameDriver uniwars_driver =
 {
 	"Uniwars",
 	"uniwars",
-	"NICOLA SALMORIA\nGARY WALTON\nROBERT ANSCHUETZ\nANDREW SCOTT",
+	"Nicola Salmoria\nGary Walton\nRobert Anschuetz\nAndrew Scott\nMarco Cassili",
 	&pisces_machine_driver,
 
 	uniwars_rom,
@@ -1106,7 +1233,7 @@ struct GameDriver uniwars_driver =
 	mooncrst_sample_names,
 	0,	/* sound_prom */
 
-	galaxian_input_ports, 0, 0/*TBR*/,japirem_dsw, keys,
+	galnamco_input_ports,
 
 	uniwars_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -1118,7 +1245,7 @@ struct GameDriver warofbug_driver =
 {
 	"War of the Bugs",
 	"warofbug",
-	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nANDREW SCOTT\nMIKE BALFOUR\nTim Lindquist (color info)",
+	"Robert Aanchuetz\nNicola Salmoria\nAndrew Scott\nMike Balfour\nTim Lindquist (color info)\nMarco Cassili",
 	&galaxian_machine_driver,
 
 	warofbug_rom,
@@ -1126,7 +1253,7 @@ struct GameDriver warofbug_driver =
 	mooncrst_sample_names,
 	0,	/* sound_prom */
 
-	warofbug_input_ports, 0, 0/*TBR*/,warofbug_dsw, warofbug_keys,
+	warofbug_input_ports,
 
 	warofbug_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -1138,7 +1265,7 @@ struct GameDriver redufo_driver =
 {
 	"Defend the Terra Attack on the Red UFO",
 	"redufo",
-	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nANDREW SCOTT\nVALERIO VERRANDO",
+	"Robert Aanchuetz\nNicola Salmoria\nAndrew Scott\nValerio Verrando (high score save)\nMarco Cassili",
 	&galaxian_machine_driver,
 
 	redufo_rom,
@@ -1146,7 +1273,7 @@ struct GameDriver redufo_driver =
 	mooncrst_sample_names,
 	0,      /* sound_prom */
 
-	galaxian_input_ports, 0, 0/*TBR*/,galaxian_dsw, keys,
+	redufo_input_ports,
 
 	galaxian_color_prom, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -1158,7 +1285,7 @@ struct GameDriver pacmanbl_driver =
 {
 	"Pac Man (bootleg on Galaxian hardware)",
 	"pacmanbl",
-	"ROBERT ANSCHUETZ\nNICOLA SALMORIA\nANDREW SCOTT\nVALERIO VERRANDO",
+	"Robert Aanchuetz\nNicola Salmoria\nAndrew Scott\nValerio Verrando (high score save)\nMarco Cassili",
 	&pacmanbl_machine_driver,
 
 	pacmanbl_rom,
@@ -1166,7 +1293,7 @@ struct GameDriver pacmanbl_driver =
 	mooncrst_sample_names,
 	0,      /* sound_prom */
 
-	pacmanbl_input_ports, 0, 0/*TBR*/,pacmanbl_dsw, pacmanbl_keys,
+	pacmanbl_input_ports,
 
 	pacmanbl_color_prom, 0, 0,
 	ORIENTATION_ROTATE_270,

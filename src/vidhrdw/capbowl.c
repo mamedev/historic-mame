@@ -14,30 +14,8 @@
 unsigned char *capbowl_scanline;
 
 static unsigned char *raw_video_ram;
-static unsigned char *line_pens;
+static unsigned short *line_pens;
 static unsigned char *dirtypalette;
-
-
-
-void capbowl_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom     )
-{
-     int i;
-
-     for (i=0; i<Machine->drv->total_colors; i++)
-     {
-         /*
-         Convert 12 bit RGB to 8 bit RGB. Some blue will be lost.
-         */
-         int red, green, blue;
-         red = (i & 0x07)<<5;
-         green=(i & 0x38)<<2;
-         blue= (i & 0xc0);
-
-         palette[3*i]   =  red;
-         palette[3*i+1] =  green;
-         palette[3*i+2] =  blue;
-     }
-}
 
 
 
@@ -52,7 +30,7 @@ int capbowl_vh_start(void)
 		return 1;
 	memset(dirtypalette,1,256);
 
-	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if ((tmpbitmap = osd_new_bitmap(Machine->drv->screen_width,Machine->drv->screen_height,Machine->scrbitmap->depth)) == 0)
 	{
 		free(dirtypalette);
 		return 1;
@@ -64,7 +42,7 @@ int capbowl_vh_start(void)
 		free(dirtypalette);
 		return 1;
 	}
-	if ((line_pens = malloc(256 * 16)) == 0)
+	if ((line_pens = malloc(256 * 16 * 2)) == 0)
 	{
 		free(raw_video_ram);
 		osd_free_bitmap(tmpbitmap);
@@ -101,8 +79,16 @@ void capbowl_videoram_w(int offset,int data)
 		{
 			if (dirtypalette[*capbowl_scanline] == 0 && offset < 212)
 			{
-				tmpbitmap->line[359 - ((offset-0x20) << 1)][*capbowl_scanline] = line_pens[*capbowl_scanline * 16 + (data >> 4)  ];
-				tmpbitmap->line[358 - ((offset-0x20) << 1)][*capbowl_scanline] = line_pens[*capbowl_scanline * 16 + (data & 0x0f)];
+				if (tmpbitmap->depth == 16)
+				{
+					*(unsigned short *)&tmpbitmap->line[359 - ((offset-0x20) << 1)][*capbowl_scanline*2] = line_pens[*capbowl_scanline * 16 + (data >> 4)  ];
+					*(unsigned short *)&tmpbitmap->line[358 - ((offset-0x20) << 1)][*capbowl_scanline*2] = line_pens[*capbowl_scanline * 16 + (data & 0x0f)];
+				}
+				else
+				{
+					tmpbitmap->line[359 - ((offset-0x20) << 1)][*capbowl_scanline] = line_pens[*capbowl_scanline * 16 + (data >> 4)  ];
+					tmpbitmap->line[358 - ((offset-0x20) << 1)][*capbowl_scanline] = line_pens[*capbowl_scanline * 16 + (data & 0x0f)];
+				}
 			}
 		}
 		else
@@ -140,7 +126,7 @@ void capbowl_vh_screenrefresh(struct osd_bitmap *bitmap)
 		if (dirtypalette[line])
 		{
 			int i;
-			unsigned char *pens = &line_pens[line * 16];
+			unsigned short *pens = &line_pens[line * 16];
 			int r,g,b;
 
 
@@ -151,16 +137,32 @@ void capbowl_vh_screenrefresh(struct osd_bitmap *bitmap)
 				r = (raw_video_ram[line * 256 + i] & 0x0f);
 				g = (raw_video_ram[line * 256 + i + 1] & 0xf0) >> 4;
 				b = (raw_video_ram[line * 256 + i + 1] & 0x0f);
+				r = (r << 4) + r;
+				g = (g << 4) + g;
+				b = (b << 4) + b;
 
-				pens[i / 2] = Machine->pens[((r & 0x0e) >> 1) | ((g & 0x0e) << 2) | ((b & 0x0c) << 4)];
+				pens[i / 2] = rgbpen (r,g,b);
 			}
 
-			for (i = 0x20; i < 212; i++)
+			if (tmpbitmap->depth == 16)
 			{
-				int data2 = raw_video_ram[line * 256 + i];
-
-				tmpbitmap->line[359 - ((i-0x20) << 1)][line] = pens[data2 >> 4  ];
-				tmpbitmap->line[358 - ((i-0x20) << 1)][line] = pens[data2 & 0x0f];
+				for (i = 0x20; i < 212; i++)
+				{
+					int data2 = raw_video_ram[line * 256 + i];
+	
+					*(unsigned short *)&tmpbitmap->line[359 - ((i-0x20) << 1)][line*2] = pens[data2 >> 4  ];
+					*(unsigned short *)&tmpbitmap->line[358 - ((i-0x20) << 1)][line*2] = pens[data2 & 0x0f];
+				}
+			}
+			else
+			{
+				for (i = 0x20; i < 212; i++)
+				{
+					int data2 = raw_video_ram[line * 256 + i];
+	
+					tmpbitmap->line[359 - ((i-0x20) << 1)][line] = pens[data2 >> 4  ];
+					tmpbitmap->line[358 - ((i-0x20) << 1)][line] = pens[data2 & 0x0f];
+				}
 			}
 		}
 	}

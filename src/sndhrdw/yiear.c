@@ -49,10 +49,13 @@ void yiear_sh_update( void ){
 	}
 	else if( yiear_sound1 >= 0 ){
 		struct GameSample *sample = Machine->samples->sample[yiear_sound1];
-		M_OSD_PLAY_SAMPLE (2, yiear_sound1, 0);
-		yiear_timer1 = sample->length*60/sample->smpfreq; /* compute ticks until finished */
-		yiear_sound1 = yiear_sound2;
-		yiear_sound2 = -1;
+		if (sample)
+		{
+			M_OSD_PLAY_SAMPLE (2, yiear_sound1, 0);
+			yiear_timer1 = sample->length*60/sample->smpfreq; /* compute ticks until finished */
+			yiear_sound1 = yiear_sound2;
+			yiear_sound2 = -1;
+		}
 	}
 }
 

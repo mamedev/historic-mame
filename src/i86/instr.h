@@ -93,6 +93,22 @@ static void i_pop_sp(void);
 static void i_pop_bp(void);
 static void i_pop_si(void);
 static void i_pop_di(void);
+static void i_pusha(void);
+static void i_popa(void);
+static void i_bound(void);
+
+
+
+
+
+static void i_push_d16(void);
+static void i_imul_d16(void);
+static void i_push_d8(void);
+static void i_imul_d8(void);
+static void i_insb(void);
+static void i_insw(void);
+static void i_outsb(void);
+static void i_outsw(void);
 static void i_jo(void);
 static void i_jno(void);
 static void i_jb(void);
@@ -172,22 +188,26 @@ static void i_mov_spd16(void);
 static void i_mov_bpd16(void);
 static void i_mov_sid16(void);
 static void i_mov_did16(void);
+static void i_rotshft_bd8(void);
+static void i_rotshft_wd8(void);
 static void i_ret_d16(void);
 static void i_ret(void);
 static void i_les_dw(void);
 static void i_lds_dw(void);
 static void i_mov_bd8(void);
 static void i_mov_wd16(void);
+static void i_enter(void);
+static void i_leave(void);
 static void i_retf_d16(void);
 static void i_retf(void);
 static void i_int3(void);
 static void i_int(void);
 static void i_into(void);
 static void i_iret(void);
-static void i_d0pre(void);
-static void i_d1pre(void);
-static void i_d2pre(void);
-static void i_d3pre(void);
+static void i_rotshft_b(void);
+static void i_rotshft_w(void);
+static void i_rotshft_bcl(void);
+static void i_rotshft_wcl(void);
 static void i_aam(void);
 static void i_aad(void);
 static void i_xlat(void);
@@ -324,22 +344,22 @@ void (*instruction[256])(void) =
     i_pop_bp,           /* 0x5d */
     i_pop_si,           /* 0x5e */
     i_pop_di,           /* 0x5f */
+    i_pusha,            /* 0x60 */
+    i_popa,             /* 0x61 */
+    i_bound,            /* 0x62 */
     i_invalid,
     i_invalid,
     i_invalid,
     i_invalid,
     i_invalid,
-    i_invalid,
-    i_invalid,
-    i_invalid,
-    i_invalid,
-    i_invalid,
-    i_invalid,
-    i_invalid,
-    i_invalid,
-    i_invalid,
-    i_invalid,
-    i_invalid,
+    i_push_d16,         /* 0x68 */
+    i_imul_d16,         /* 0x69 */
+    i_push_d8,          /* 0x6a */
+    i_imul_d8,          /* 0x6b */
+    i_insb,             /* 0x6c */
+    i_insw,             /* 0x6d */
+    i_outsb,            /* 0x6e */
+    i_outsw,            /* 0x6f */
     i_jo,               /* 0x70 */
     i_jno,              /* 0x71 */
     i_jb,               /* 0x72 */
@@ -420,26 +440,26 @@ void (*instruction[256])(void) =
     i_mov_bpd16,        /* 0xbd */
     i_mov_sid16,        /* 0xbe */
     i_mov_did16,        /* 0xbf */
-    i_invalid,
-    i_invalid,
+    i_rotshft_bd8,      /* 0xc0 */
+    i_rotshft_wd8,      /* 0xc1 */
     i_ret_d16,          /* 0xc2 */
     i_ret,              /* 0xc3 */
     i_les_dw,           /* 0xc4 */
     i_lds_dw,           /* 0xc5 */
     i_mov_bd8,          /* 0xc6 */
     i_mov_wd16,         /* 0xc7 */
-    i_invalid,
-    i_invalid,
+    i_enter,            /* 0xc8 */
+    i_leave,            /* 0xc9 */
     i_retf_d16,         /* 0xca */
     i_retf,             /* 0xcb */
     i_int3,             /* 0xcc */
     i_int,              /* 0xcd */
     i_into,             /* 0xce */
     i_iret,             /* 0xcf */
-    i_d0pre,            /* 0xd0 */
-    i_d1pre,            /* 0xd1 */
-    i_d2pre,            /* 0xd2 */
-    i_d3pre,            /* 0xd3 */
+    i_rotshft_b,        /* 0xd0 */
+    i_rotshft_w,        /* 0xd1 */
+    i_rotshft_bcl,      /* 0xd2 */
+    i_rotshft_wcl,      /* 0xd3 */
     i_aam,              /* 0xd4 */
     i_aad,              /* 0xd5 */
     i_invalid,

@@ -9,29 +9,87 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "Z80.h"
-#include "I8039.h"
-#include "M6502.h"
-#include "M6809.h"
-#include "M6808.h"
-#include "M68000.h"
-#include "i86intrf.h"
+#include "Z80/Z80.h"
+#include "I8039/I8039.h"
+#include "M6502/M6502.h"
+#include "M6809/M6809.h"
+#include "M6808/M6808.h"
+#include "M6805/M6805.h"
+#include "M68000/M68000.h"
+#include "I86/i86intrf.h"
+#include "timer.h"
+
+
+/* these are triggers sent to the timer system for various interrupt events */
+#define TRIGGER_TIMESLICE       -1000
+#define TRIGGER_INT             -2000
+#define TRIGGER_YIELDTIME       -3000
+#define TRIGGER_SUSPENDTIME     -4000
+
+
+struct cpuinfo
+{
+	struct cpu_interface *intf;                /* pointer to the interface functions */
+	int iloops;                                /* number of interrupts remaining this frame */
+	int totalcycles;                           /* total CPU cycles executed */
+	int vblankint_countdown;                   /* number of vblank callbacks left until we interrupt */
+	int vblankint_multiplier;                  /* number of vblank callbacks per interrupt */
+	void *vblankint_timer;                     /* reference to elapsed time counter */
+	double vblankint_period;                   /* timing period of the VBLANK interrupt */
+	void *timedint_timer;                      /* reference to this CPU's timer */
+	double timedint_period;                    /* timing period of the timed interrupt */
+	int save_context;                          /* need to context switch this CPU? yes or no */
+	unsigned char context[CPU_CONTEXT_SIZE];   /* this CPU's context */
+};
+
+static struct cpuinfo cpu[MAX_CPU];
+
 
 static int activecpu,totalcpu;
-static int iloops[MAX_CPU];
-static int cpurunning[MAX_CPU];
-static int totalcycles[MAX_CPU];
-static int current_slice;
-static int ran_this_frame[MAX_CPU];
-static int save_context[MAX_CPU]; /* ASG 971220 */
-static int next_interrupt;	/* cycle count (relative to start of frame) when next interrupt will happen */
 static int running;	/* number of cycles that the CPU emulation was requested to run */
 					/* (needed by cpu_getfcount) */
 static int have_to_reset;
-static int watchdog_counter;
+static int hiscoreloaded;
 
-static unsigned char cpucontext[MAX_CPU][CPU_CONTEXT_SIZE];	/* ASG 971105 */
 int previouspc;
+
+static int interrupt_enable[MAX_CPU];
+static int interrupt_vector[MAX_CPU];
+
+
+static void *watchdog_timer;
+
+static void *vblank_timer;
+static int vblank_countdown;
+static int vblank_multiplier;
+static double vblank_period;
+
+static void *refresh_timer;
+static double refresh_period;
+static double refresh_period_inv;
+
+static void *timeslice_timer;
+static double timeslice_period;
+
+static double scanline_period;
+static double scanline_period_inv;
+
+static int usres; /* removed from cpu_run and made global */
+static int vblank;
+
+static void cpu_generate_interrupt (int cpu, int (*func)(void), int num);
+static void cpu_vblankintcallback (int param);
+static void cpu_timedintcallback (int param);
+static void cpu_manualintcallback (int param);
+static void cpu_clearintcallback (int param);
+static void cpu_resetcallback (int param);
+static void cpu_timeslicecallback (int param);
+static void cpu_vblankreset (void);
+static void cpu_vblankcallback (int param);
+static void cpu_updatecallback (int param);
+static double cpu_computerate (int value);
+static void cpu_inittimers (void);
+
 
 
 /* interfaces to the 6502 so that it looks like the other CPUs */
@@ -54,17 +112,21 @@ static int Dummy_Execute(int cycles);
 static void Dummy_Cause_Interrupt(int type);
 static void Dummy_Clear_Pending_Interrupts(void);
 
+#ifdef Z80_DAISYCHAIN
+static void z80_Reset(void);
+/* pointers of daisy chain link */
+static Z80_DaisyChain *z80_daisychain[MAX_CPU];
+#endif
 
-
-/* ASG 971222 -- warning these must match the defines in driver.h! */
+/* warning these must match the defines in driver.h! */
 struct cpu_interface cpuintf[] =
 {
 	/* Dummy CPU -- placeholder for type 0 */
 	{
 		Dummy_Reset,                       /* Reset CPU */
 		Dummy_Execute,                     /* Execute a number of cycles */
-		(void *)Dummy_SetRegs,             /* Set the contents of the registers */
-		(void *)Dummy_GetRegs,             /* Get the contents of the registers */
+		(void (*)(void *))Dummy_SetRegs,             /* Set the contents of the registers */
+		(void (*)(void *))Dummy_GetRegs,             /* Get the contents of the registers */
 		Dummy_GetPC,                       /* Return the current PC */
 		Dummy_Cause_Interrupt,             /* Generate an interrupt */
 		Dummy_Clear_Pending_Interrupts,    /* Clear pending interrupts */
@@ -78,10 +140,14 @@ struct cpu_interface cpuintf[] =
 	},
 	/* #define CPU_Z80    1 */
 	{
+#ifdef Z80_DAISYCHAIN
+		z80_Reset,                         /* Reset CPU */
+#else
 		Z80_Reset,                         /* Reset CPU */
+#endif
 		Z80_Execute,                       /* Execute a number of cycles */
-		(void *)Z80_SetRegs,               /* Set the contents of the registers */
-		(void *)Z80_GetRegs,               /* Get the contents of the registers */
+		(void (*)(void *))Z80_SetRegs,               /* Set the contents of the registers */
+		(void (*)(void *))Z80_GetRegs,               /* Get the contents of the registers */
 		Z80_GetPC,                         /* Return the current PC */
 		Z80_Cause_Interrupt,               /* Generate an interrupt */
 		Z80_Clear_Pending_Interrupts,      /* Clear pending interrupts */
@@ -97,8 +163,8 @@ struct cpu_interface cpuintf[] =
 	{
 		m6502_Reset,                       /* Reset CPU */
 		m6502_Execute,                     /* Execute a number of cycles */
-		(void *)m6502_SetRegs,             /* Set the contents of the registers */
-		(void *)m6502_GetRegs,             /* Get the contents of the registers */
+		(void (*)(void *))m6502_SetRegs,             /* Set the contents of the registers */
+		(void (*)(void *))m6502_GetRegs,             /* Get the contents of the registers */
 		m6502_GetPC,                       /* Return the current PC */
 		m6502_Cause_Interrupt,             /* Generate an interrupt */
 		m6502_Clear_Pending_Interrupts,    /* Clear pending interrupts */
@@ -114,8 +180,8 @@ struct cpu_interface cpuintf[] =
 	{
 		i86_Reset,                         /* Reset CPU */
 		i86_Execute,                       /* Execute a number of cycles */
-		(void *)i86_SetRegs,               /* Set the contents of the registers */
-		(void *)i86_GetRegs,               /* Get the contents of the registers */
+		(void (*)(void *))i86_SetRegs,               /* Set the contents of the registers */
+		(void (*)(void *))i86_GetRegs,               /* Get the contents of the registers */
 		i86_GetPC,                         /* Return the current PC */
 		i86_Cause_Interrupt,               /* Generate an interrupt */
 		i86_Clear_Pending_Interrupts,      /* Clear pending interrupts */
@@ -131,8 +197,8 @@ struct cpu_interface cpuintf[] =
 	{
 		I8039_Reset,                       /* Reset CPU */
 		I8039_Execute,                     /* Execute a number of cycles */
-		(void *)I8039_SetRegs,             /* Set the contents of the registers */
-		(void *)I8039_GetRegs,             /* Get the contents of the registers */
+		(void (*)(void *))I8039_SetRegs,             /* Set the contents of the registers */
+		(void (*)(void *))I8039_GetRegs,             /* Get the contents of the registers */
 		I8039_GetPC,                       /* Return the current PC */
 		I8039_Cause_Interrupt,             /* Generate an interrupt */
 		I8039_Clear_Pending_Interrupts,    /* Clear pending interrupts */
@@ -148,8 +214,8 @@ struct cpu_interface cpuintf[] =
 	{
 		m6808_reset,                       /* Reset CPU */
 		m6808_execute,                     /* Execute a number of cycles */
-		(void *)m6808_SetRegs,             /* Set the contents of the registers */
-		(void *)m6808_GetRegs,             /* Get the contents of the registers */
+		(void (*)(void *))m6808_SetRegs,             /* Set the contents of the registers */
+		(void (*)(void *))m6808_GetRegs,             /* Get the contents of the registers */
 		m6808_GetPC,                       /* Return the current PC */
 		m6808_Cause_Interrupt,             /* Generate an interrupt */
 		m6808_Clear_Pending_Interrupts,    /* Clear pending interrupts */
@@ -161,12 +227,29 @@ struct cpu_interface cpuintf[] =
 		16,                                /* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16   /* Address bits, for the memory system */
 	},
-	/* #define CPU_M6809  6 */
+	/* #define CPU_M6805  6 */
+	{
+		m6805_reset,                       /* Reset CPU */
+		m6805_execute,                     /* Execute a number of cycles */
+		(void (*)(void *))m6805_SetRegs,             /* Set the contents of the registers */
+		(void (*)(void *))m6805_GetRegs,             /* Get the contents of the registers */
+		m6805_GetPC,                       /* Return the current PC */
+		m6805_Cause_Interrupt,             /* Generate an interrupt */
+		m6805_Clear_Pending_Interrupts,    /* Clear pending interrupts */
+		&m6805_ICount,                     /* Pointer to the instruction count */
+		M6805_INT_NONE,M6805_INT_IRQ,-1,   /* Interrupt types: none, IRQ, NMI */
+		cpu_readmem16,                     /* Memory read */
+		cpu_writemem16,                    /* Memory write */
+		cpu_setOPbase16,                   /* Update CPU opcode base */
+		16,                                /* CPU address bits */
+		ABITS1_16,ABITS2_16,ABITS_MIN_16   /* Address bits, for the memory system */
+	},
+	/* #define CPU_M6809  7 */
 	{
 		m6809_reset,                       /* Reset CPU */
 		m6809_execute,                     /* Execute a number of cycles */
-		(void *)m6809_SetRegs,             /* Set the contents of the registers */
-		(void *)m6809_GetRegs,             /* Get the contents of the registers */
+		(void (*)(void *))m6809_SetRegs,             /* Set the contents of the registers */
+		(void (*)(void *))m6809_GetRegs,             /* Get the contents of the registers */
 		m6809_GetPC,                       /* Return the current PC */
 		m6809_Cause_Interrupt,             /* Generate an interrupt */
 		m6809_Clear_Pending_Interrupts,    /* Clear pending interrupts */
@@ -178,13 +261,13 @@ struct cpu_interface cpuintf[] =
 		16,                                /* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16   /* Address bits, for the memory system */
 	},
-	/* #define CPU_M68000 7 */
+	/* #define CPU_M68000 8 */
 	{
 		MC68000_Reset,                     /* Reset CPU */
 		MC68000_Execute,                   /* Execute a number of cycles */
-		(void *)MC68000_SetRegs,           /* Set the contents of the registers */
-		(void *)MC68000_GetRegs,           /* Get the contents of the registers */
-		(void *)MC68000_GetPC,             /* Return the current PC */
+		(void (*)(void *))MC68000_SetRegs,           /* Set the contents of the registers */
+		(void (*)(void *))MC68000_GetRegs,           /* Get the contents of the registers */
+		(unsigned int (*)(void))MC68000_GetPC,             /* Return the current PC */
 		MC68000_Cause_Interrupt,           /* Generate an interrupt */
 		MC68000_Clear_Pending_Interrupts,  /* Clear pending interrupts */
 		&MC68000_ICount,                   /* Pointer to the instruction count */
@@ -197,179 +280,167 @@ struct cpu_interface cpuintf[] =
 	}
 };
 
-/* ASG 971222 -- Convenience macros - not in cpuintrf.h because they shouldn't be used by everyone */
-#define RESET(index)                    ((*cpuintf[Machine->drv->cpu[index].cpu_type & ~CPU_FLAGS_MASK].reset)())
-#define EXECUTE(index,cycles)           ((*cpuintf[Machine->drv->cpu[index].cpu_type & ~CPU_FLAGS_MASK].execute)(cycles))
-#define SETREGS(index,regs)             ((*cpuintf[Machine->drv->cpu[index].cpu_type & ~CPU_FLAGS_MASK].set_regs)(regs))
-#define GETREGS(index,regs)             ((*cpuintf[Machine->drv->cpu[index].cpu_type & ~CPU_FLAGS_MASK].get_regs)(regs))
-#define GETPC(index)                    ((*cpuintf[Machine->drv->cpu[index].cpu_type & ~CPU_FLAGS_MASK].get_pc)())
-#define CAUSE_INTERRUPT(index,type)     ((*cpuintf[Machine->drv->cpu[index].cpu_type & ~CPU_FLAGS_MASK].cause_interrupt)(type))
-#define CLEAR_PENDING_INTERRUPTS(index) ((*cpuintf[Machine->drv->cpu[index].cpu_type & ~CPU_FLAGS_MASK].clear_pending_interrupts)())
-#define ICOUNT(index)                   (*cpuintf[Machine->drv->cpu[index].cpu_type & ~CPU_FLAGS_MASK].icount)
-#define INT_TYPE_NONE(index)            (cpuintf[Machine->drv->cpu[index].cpu_type & ~CPU_FLAGS_MASK].no_int)
-#define INT_TYPE_IRQ(index)             (cpuintf[Machine->drv->cpu[index].cpu_type & ~CPU_FLAGS_MASK].irq_int)
-#define INT_TYPE_NMI(index)             (cpuintf[Machine->drv->cpu[index].cpu_type & ~CPU_FLAGS_MASK].nmi_int)
+/* Convenience macros - not in cpuintrf.h because they shouldn't be used by everyone */
+#define RESET(index)                    ((*cpu[index].intf->reset)())
+#define EXECUTE(index,cycles)           ((*cpu[index].intf->execute)(cycles))
+#define SETREGS(index,regs)             ((*cpu[index].intf->set_regs)(regs))
+#define GETREGS(index,regs)             ((*cpu[index].intf->get_regs)(regs))
+#define GETPC(index)                    ((*cpu[index].intf->get_pc)())
+#define CAUSE_INTERRUPT(index,type)     ((*cpu[index].intf->cause_interrupt)(type))
+#define CLEAR_PENDING_INTERRUPTS(index) ((*cpu[index].intf->clear_pending_interrupts)())
+#define ICOUNT(index)                   (*cpu[index].intf->icount)
+#define INT_TYPE_NONE(index)            (cpu[index].intf->no_int)
+#define INT_TYPE_IRQ(index)             (cpu[index].intf->irq_int)
+#define INT_TYPE_NMI(index)             (cpu[index].intf->nmi_int)
 
-#define SET_OP_BASE(index,pc)           ((*cpuintf[Machine->drv->cpu[index].cpu_type & ~CPU_FLAGS_MASK].set_op_base)(pc))
+#define SET_OP_BASE(index,pc)           ((*cpu[index].intf->set_op_base)(pc))
 
 
 void cpu_init(void)
 {
+	int i;
+
 	/* count how many CPUs we have to emulate */
 	totalcpu = 0;
 
 	while (totalcpu < MAX_CPU)
 	{
 		if (Machine->drv->cpu[totalcpu].cpu_type == 0) break;
-
 		totalcpu++;
 	}
 
-/* ASG 971007 move for mame.c */
-/*	initmemoryhandlers();    */
+	/* zap the CPU data structure */
+	memset (cpu, 0, sizeof (cpu));
+
+	/* set up the interface functions */
+	for (i = 0; i < MAX_CPU; i++)
+		cpu[i].intf = &cpuintf[Machine->drv->cpu[i].cpu_type & ~CPU_FLAGS_MASK];
+#ifdef Z80_DAISYCHAIN
+	for (i = 0; i < MAX_CPU; i++)
+		z80_daisychain[i] = 0;
+#endif
+
+	/* reset the timer system */
+	timer_init ();
+	timeslice_timer = refresh_timer = watchdog_timer = vblank_timer = NULL;
 }
 
 
 
 void cpu_run(void)
 {
-	int usres;
+	int i;
 
-	/* ASG 971220 - determine which CPUs need a context switch */
-	for (activecpu = 0;activecpu < totalcpu;activecpu++)
+	/* determine which CPUs need a context switch */
+	for (i = 0; i < totalcpu; i++)
 	{
 		#ifdef MAME_DEBUG
-		save_context[activecpu] = 1;
+
+			/* with the debugger, we need to save the contexts */
+			cpu[i].save_context = 1;
+
 		#else
-		{
-			int i;
+			int j;
 
-			save_context[activecpu] = 0;
 
-			for (i = 0; i < totalcpu; i++)
-				if (i != activecpu && (Machine->drv->cpu[activecpu].cpu_type & ~CPU_FLAGS_MASK) == (Machine->drv->cpu[i].cpu_type & ~CPU_FLAGS_MASK))
-					save_context[activecpu] = 1;
-		}
+			/* otherwise, we only need to save if there is another CPU of the same type */
+			cpu[i].save_context = 0;
+
+			for (j = 0; j < totalcpu; j++)
+				if (i != j && (Machine->drv->cpu[i].cpu_type & ~CPU_FLAGS_MASK) == (Machine->drv->cpu[j].cpu_type & ~CPU_FLAGS_MASK))
+					cpu[i].save_context = 1;
+
 		#endif
 	}
 
 reset:
+	/* initialize the various timers (suspends all CPUs at startup) */
+	cpu_inittimers ();
+
+	/* enable all CPUs (except for audio CPUs if the sound is off) */
+	for (i = 0; i < totalcpu; i++)
+		if (!(Machine->drv->cpu[i].cpu_type & CPU_AUDIO_CPU) || Machine->sample_rate != 0)
+			timer_suspendcpu (i, 0);
+
 	have_to_reset = 0;
-	watchdog_counter = -1;	/* disable watchdog */
+	hiscoreloaded = 0;
+	vblank = 0;
 
-	for (activecpu = 0;activecpu < totalcpu;activecpu++)
+if (errorlog) fprintf(errorlog,"Machine reset\n");
+
+	/* start with interrupts enabled, so the generic routine will work even if */
+	/* the machine doesn't have an interrupt enable port */
+	for (i = 0;i < MAX_CPU;i++)
 	{
-		/* if sound is disabled, don't emulate the audio CPU */
-		if (Machine->sample_rate == 0 && (Machine->drv->cpu[activecpu].cpu_type & CPU_AUDIO_CPU))
-			cpurunning[activecpu] = 0;
-		else
-			cpurunning[activecpu] = 1;
-
-		totalcycles[activecpu] = 0;
+		interrupt_enable[i] = 1;
+		interrupt_vector[i] = 0xff;
 	}
 
 	/* do this AFTER the above so init_machine() can use cpu_halt() to hold the */
-	/* execution of some CPUs */
+	/* execution of some CPUs, or disable interrupts */
 	if (Machine->drv->init_machine) (*Machine->drv->init_machine)();
 
-	for (activecpu = 0;activecpu < totalcpu;activecpu++)
+	/* reset each CPU */
+	for (i = 0; i < totalcpu; i++)
 	{
-		int cycles;
+		/* swap memory contexts and reset */
+		memorycontextswap (i);
+#ifdef Z80_DAISYCHAIN
+		if (cpu[i].save_context) SETREGS (i, cpu[i].context);
+		activecpu = i;
+#endif
+		RESET (i);
+		/* save the CPU context if necessary */
+		if (cpu[i].save_context) GETREGS (i, cpu[i].context);
 
-
-		cycles = (Machine->drv->cpu[activecpu].cpu_clock / Machine->drv->frames_per_second)
-				/ Machine->drv->cpu[activecpu].interrupts_per_frame;
-
-		memorycontextswap(activecpu);
-
-		RESET (activecpu);
-		if (save_context[activecpu]) GETREGS (activecpu, cpucontext[activecpu]);
+		/* reset the total number of cycles */
+		cpu[i].totalcycles = 0;
 	}
 
+	/* reset the globals */
+	cpu_vblankreset ();
 
-	do
+	/* loop until the user quits */
+	usres = 0;
+	while (usres == 0)
 	{
-		update_input_ports();	/* read keyboard & update the status of the input ports */
+		int cpunum;
 
-		for (activecpu = 0;activecpu < totalcpu;activecpu++)
+		/* was machine_reset() called? */
+		if (have_to_reset) goto reset;
+
+		/* ask the timer system to schedule */
+		if (timer_schedule_cpu (&cpunum, &running))
 		{
-			ran_this_frame[activecpu] = 0;
+			int ran;
 
-			if (cpurunning[activecpu])
-				iloops[activecpu] = Machine->drv->cpu[activecpu].interrupts_per_frame - 1;
-			else
-				iloops[activecpu] = -1;
+			/* switch memory and CPU contexts */
+			activecpu = cpunum;
+			memorycontextswap (activecpu);
+			if (cpu[activecpu].save_context) SETREGS (activecpu, cpu[activecpu].context);
+
+			/* make sure any bank switching is reset */
+			SET_OP_BASE (activecpu, GETPC (activecpu));
+
+			/* run for the requested number of cycles */
+			ran = EXECUTE (activecpu, running);
+
+			/* update based on how many cycles we really ran */
+			cpu[activecpu].totalcycles += ran;
+
+			/* update the contexts */
+			if (cpu[activecpu].save_context) GETREGS (activecpu, cpu[activecpu].context);
+			updatememorybase (activecpu);
+			activecpu = -1;
+
+			/* update the timer with how long we actually ran */
+			timer_update_cpu (cpunum, ran);
 		}
+	}
 
-
-		for (current_slice = 0;current_slice < Machine->drv->cpu_slices_per_frame;current_slice++)
-		{
-			for (activecpu = 0;activecpu < totalcpu;activecpu++)
-			{
-				if (have_to_reset) goto reset;	/* machine_reset() was called, have to reset */
-
-				if (cpurunning[activecpu])
-				{
-					if (iloops[activecpu] >= 0)
-					{
-						int ran,target;
-
-						memorycontextswap(activecpu);
-
-						if (save_context[activecpu]) SETREGS (activecpu, cpucontext[activecpu]);
-
-						/* ASG 971223 -- make sure any bank switching is reset */
-						SET_OP_BASE (activecpu, GETPC (activecpu));
-
-						target = (Machine->drv->cpu[activecpu].cpu_clock / Machine->drv->frames_per_second)
-								* (current_slice + 1) / Machine->drv->cpu_slices_per_frame;
-
-						next_interrupt = (Machine->drv->cpu[activecpu].cpu_clock / Machine->drv->frames_per_second)
-								* (Machine->drv->cpu[activecpu].interrupts_per_frame - iloops[activecpu])
-								/ Machine->drv->cpu[activecpu].interrupts_per_frame;
-
-
-						while (ran_this_frame[activecpu] < target)
-						{
-							if (target <= next_interrupt)
-								running = target - ran_this_frame[activecpu];
-							else
-								running = next_interrupt - ran_this_frame[activecpu];
-
-							ran = EXECUTE (activecpu, running);
-
-							ran_this_frame[activecpu] += ran;
-							totalcycles[activecpu] += ran;
-							if (ran_this_frame[activecpu] >= next_interrupt)
-							{
-								cpu_cause_interrupt(activecpu,cpu_interrupt());
-								iloops[activecpu]--;
-
-								next_interrupt = (Machine->drv->cpu[activecpu].cpu_clock / Machine->drv->frames_per_second)
-										* (Machine->drv->cpu[activecpu].interrupts_per_frame - iloops[activecpu])
-										/ Machine->drv->cpu[activecpu].interrupts_per_frame;
-							}
-						}
-
-						if (save_context[activecpu]) GETREGS (activecpu, cpucontext[activecpu]);
-
-						updatememorybase(activecpu);
-					}
-				}
-			}
-		}
-
-		usres = updatescreen();
-
-		if (watchdog_counter >= 0)
-		{
-			if (--watchdog_counter < 0)
-			{
-if (errorlog) fprintf(errorlog,"warning: reset caused by the watchdog\n");
-				machine_reset();
-			}
-		}
-	} while (usres == 0);
+	/* write hi scores to disk - No scores saving if cheat */
+	if (hiscoreloaded != 0 && Machine->gamedrv->hiscore_save)
+		(*Machine->gamedrv->hiscore_save)();
 }
 
 
@@ -384,15 +455,22 @@ if (errorlog) fprintf(errorlog,"warning: reset caused by the watchdog\n");
   machine will be reset.
 
 ***************************************************************************/
+static void watchdog_callback (int param)
+{
+	watchdog_timer = 0;
+
+	if (errorlog) fprintf(errorlog,"warning: reset caused by the watchdog\n");
+	machine_reset ();
+}
+
 void watchdog_reset_w(int offset,int data)
 {
-	watchdog_counter = 10;
+	timer_reset (watchdog_timer, TIME_IN_HZ (4));
 }
 
 int watchdog_reset_r(int offset)
 {
-
-	watchdog_counter = 10;
+	timer_reset (watchdog_timer, TIME_IN_HZ (4));
 	return 0;
 }
 
@@ -407,12 +485,10 @@ int watchdog_reset_r(int offset)
 ***************************************************************************/
 void machine_reset(void)
 {
-	extern int hiscoreloaded;
-
-
-	/* write hi scores to disk */
+	/* write hi scores to disk - No scores saving if cheat */
 	if (hiscoreloaded != 0 && Machine->gamedrv->hiscore_save)
 		(*Machine->gamedrv->hiscore_save)();
+
 	hiscoreloaded = 0;
 
 	have_to_reset = 1;
@@ -425,25 +501,10 @@ void machine_reset(void)
   Use this function to reset a specified CPU immediately
 
 ***************************************************************************/
-/* ASG 971105 -- added this function */
-void cpu_reset(int cpu)
+void cpu_reset(int cpunum)
 {
-	if (cpu == activecpu)
-		RESET (cpu);
-	else
-	{
-		unsigned char context[CPU_CONTEXT_SIZE];
-
-		if (save_context[activecpu]) GETREGS (activecpu, context);
-		if (save_context[cpu]) SETREGS (cpu, cpucontext[cpu]);
-		memorycontextswap (cpu);
-		RESET (cpu);
-		memorycontextswap (activecpu);
-		if (save_context[cpu]) GETREGS (cpu, cpucontext[cpu]);
-		if (save_context[activecpu]) SETREGS (activecpu, context);
-	}
+	timer_set (TIME_NOW, cpunum, cpu_resetcallback);
 }
-
 
 
 /***************************************************************************
@@ -455,7 +516,7 @@ void cpu_halt(int cpunum,int running)
 {
 	if (cpunum >= MAX_CPU) return;
 
-	cpurunning[cpunum] = running;
+	timer_suspendcpu (cpunum, !running);
 }
 
 
@@ -469,14 +530,15 @@ int cpu_getstatus(int cpunum)
 {
 	if (cpunum >= MAX_CPU) return 0;
 
-	return cpurunning[cpunum];
+	return !timer_iscpususpended (cpunum);
 }
 
 
 
 int cpu_getactivecpu(void)
 {
-	return activecpu;
+	int cpunum = (activecpu < 0) ? 0 : activecpu;
+	return cpunum;
 }
 
 int cpu_gettotalcpu(void)
@@ -488,7 +550,8 @@ int cpu_gettotalcpu(void)
 
 int cpu_getpc(void)
 {
-	return GETPC (activecpu);
+	int cpunum = (activecpu < 0) ? 0 : activecpu;
+	return GETPC (cpunum);
 }
 
 
@@ -507,16 +570,19 @@ int cpu_getpc(void)
 ***************************************************************************/
 int cpu_getpreviouspc(void)  /* -RAY- */
 {
-	switch(Machine->drv->cpu[activecpu].cpu_type & ~CPU_FLAGS_MASK)
+	int cpunum = (activecpu < 0) ? 0 : activecpu;
+
+	switch(Machine->drv->cpu[cpunum].cpu_type & ~CPU_FLAGS_MASK)
 	{
 		case CPU_Z80:
 		case CPU_I8039:
 		case CPU_M6502:
+		case CPU_M68000:	/* ASG 980413 */
 			return previouspc;
 			break;
 
 		default:
-	if (errorlog) fprintf(errorlog,"cpu_getpreviouspc: unsupported CPU type %02x\n",Machine->drv->cpu[activecpu].cpu_type);
+	if (errorlog) fprintf(errorlog,"cpu_getpreviouspc: unsupported CPU type %02x\n",Machine->drv->cpu[cpunum].cpu_type);
 			return -1;
 			break;
 	}
@@ -534,7 +600,9 @@ int cpu_getpreviouspc(void)  /* -RAY- */
 ***************************************************************************/
 int cpu_getreturnpc(void)
 {
-	switch(Machine->drv->cpu[activecpu].cpu_type & ~CPU_FLAGS_MASK)
+	int cpunum = (activecpu < 0) ? 0 : activecpu;
+
+	switch(Machine->drv->cpu[cpunum].cpu_type & ~CPU_FLAGS_MASK)
 	{
 		case CPU_Z80:
 			{
@@ -547,17 +615,24 @@ int cpu_getreturnpc(void)
 			break;
 
 		default:
-	if (errorlog) fprintf(errorlog,"cpu_getreturnpc: unsupported CPU type %02x\n",Machine->drv->cpu[activecpu].cpu_type);
+	if (errorlog) fprintf(errorlog,"cpu_getreturnpc: unsupported CPU type %02x\n",Machine->drv->cpu[cpunum].cpu_type);
 			return -1;
 			break;
 	}
 }
 
 
-
-static int cycles_currently_ran(void)
+/* these are available externally, for the timer system */
+int cycles_currently_ran(void)
 {
-	return running - ICOUNT (activecpu);
+	int cpunum = (activecpu < 0) ? 0 : activecpu;
+	return running - ICOUNT (cpunum);
+}
+
+int cycles_left_to_run(void)
+{
+	int cpunum = (activecpu < 0) ? 0 : activecpu;
+	return ICOUNT (cpunum);
 }
 
 
@@ -576,7 +651,8 @@ static int cycles_currently_ran(void)
 ***************************************************************************/
 int cpu_gettotalcycles(void)
 {
-	return totalcycles[activecpu] + cycles_currently_ran();
+	int cpunum = (activecpu < 0) ? 0 : activecpu;
+	return cpu[cpunum].totalcycles + cycles_currently_ran();
 }
 
 
@@ -588,7 +664,9 @@ int cpu_gettotalcycles(void)
 ***************************************************************************/
 int cpu_geticount(void)
 {
-	return next_interrupt - ran_this_frame[activecpu] - cycles_currently_ran();
+	int cpunum = (activecpu < 0) ? 0 : activecpu;
+	int result = TIME_TO_CYCLES (cpunum, cpu[cpunum].vblankint_period - timer_timeelapsed (cpu[cpunum].vblankint_timer));
+	return (result < 0) ? 0 : result;
 }
 
 
@@ -600,8 +678,8 @@ int cpu_geticount(void)
 ***************************************************************************/
 int cpu_getfcount(void)
 {
-	int result = (Machine->drv->cpu[activecpu].cpu_clock / Machine->drv->frames_per_second)
-			- ran_this_frame[activecpu] - cycles_currently_ran();
+	int cpunum = (activecpu < 0) ? 0 : activecpu;
+	int result = TIME_TO_CYCLES (cpunum, refresh_period - timer_timeelapsed (refresh_timer));
 	return (result < 0) ? 0 : result;
 }
 
@@ -614,14 +692,61 @@ int cpu_getfcount(void)
 ***************************************************************************/
 int cpu_getfperiod(void)
 {
-	return Machine->drv->cpu[activecpu].cpu_clock / Machine->drv->frames_per_second;
+	int cpunum = (activecpu < 0) ? 0 : activecpu;
+	return TIME_TO_CYCLES (cpunum, refresh_period);
+}
+
+
+
+/***************************************************************************
+
+  Scales a given value by the ratio of fcount / fperiod
+
+***************************************************************************/
+int cpu_scalebyfcount(int value)
+{
+	int result = (int)((double)value * timer_timeelapsed (refresh_timer) * refresh_period_inv);
+	if (value >= 0) return (result < value) ? result : value;
+	else return (result > value) ? result : value;
+}
+
+
+
+/***************************************************************************
+
+  Returns the current scanline, or the time until a specific scanline
+
+  Note: cpu_getscanline() counts from 0, 0 being the first visible line. You
+  might have to adjust this value to match the hardware, since in many cases
+  the first visible line is >0.
+
+***************************************************************************/
+int cpu_getscanline(void)
+{
+	return (int)(timer_timeelapsed (refresh_timer) * scanline_period_inv);
+}
+
+
+double cpu_getscanlinetime(int scanline)
+{
+	double scantime = timer_starttime (refresh_timer) + (double)scanline * scanline_period;
+	double time = timer_gettime ();
+	if (time >= scantime) scantime += TIME_IN_HZ (Machine->drv->frames_per_second);
+	return scantime - time;
+}
+
+
+double cpu_getscanlineperiod(void)
+{
+	return scanline_period;
 }
 
 
 
 void cpu_seticount(int cycles)
 {
-	ICOUNT (activecpu) = cycles;
+	int cpunum = (activecpu < 0) ? 0 : activecpu;
+	ICOUNT (cpunum) = cycles;
 }
 
 
@@ -637,7 +762,8 @@ void cpu_seticount(int cycles)
 ***************************************************************************/
 int cpu_getiloops(void)
 {
-	return iloops[activecpu];
+	int cpunum = (activecpu < 0) ? 0 : activecpu;
+	return cpu[cpunum].iloops;
 }
 
 
@@ -654,65 +780,40 @@ int cpu_getiloops(void)
   until the next call to the interrupt handler)
 
 ***************************************************************************/
-void cpu_cause_interrupt(int cpu,int type)
+void cpu_cause_interrupt(int cpunum,int type)
 {
-	if (cpu == activecpu)
-		CAUSE_INTERRUPT (cpu, type);
-	else
-	{
-		unsigned char context[CPU_CONTEXT_SIZE];
-
-		if (save_context[activecpu]) GETREGS (activecpu, context);
-		if (save_context[cpu]) SETREGS (cpu, cpucontext[cpu]);
-		CAUSE_INTERRUPT (cpu, type);
-		if (save_context[cpu]) GETREGS (cpu, cpucontext[cpu]);
-		if (save_context[activecpu]) SETREGS (activecpu, context);
-	}
+	timer_set (TIME_NOW, (cpunum & 7) | (type << 3), cpu_manualintcallback);
 }
 
 
 
-void cpu_clear_pending_interrupts(int cpu)
+void cpu_clear_pending_interrupts(int cpunum)
 {
-	if (cpu == activecpu)
-		CLEAR_PENDING_INTERRUPTS (cpu);
-	else
-	{
-		unsigned char context[CPU_CONTEXT_SIZE];
-
-		if (save_context[activecpu]) GETREGS (activecpu, context);
-		if (save_context[cpu]) SETREGS (cpu, cpucontext[cpu]);
-		CLEAR_PENDING_INTERRUPTS (cpu);
-		if (save_context[cpu]) GETREGS (cpu, cpucontext[cpu]);
-		if (save_context[activecpu]) SETREGS (activecpu, context);
-	}
+	timer_set (TIME_NOW, cpunum, cpu_clearintcallback);
 }
 
 
-
-/* start with interrupts enabled, so the generic routine will work even if */
-/* the machine doesn't have an interrupt enable port */
-static int interrupt_enable[MAX_CPU] = { 1, 1, 1, 1 };
-static int interrupt_vector[MAX_CPU] = { 0xff, 0xff, 0xff, 0xff };
 
 void interrupt_enable_w(int offset,int data)
 {
-	interrupt_enable[activecpu] = data;
+	int cpunum = (activecpu < 0) ? 0 : activecpu;
+	interrupt_enable[cpunum] = data;
 
 	/* make sure there are no queued interrupts */
-	if (data == 0) cpu_clear_pending_interrupts(activecpu);
+	if (data == 0) cpu_clear_pending_interrupts(cpunum);
 }
 
 
 
 void interrupt_vector_w(int offset,int data)
 {
-	if (interrupt_vector[activecpu] != data)
+	int cpunum = (activecpu < 0) ? 0 : activecpu;
+	if (interrupt_vector[cpunum] != data)
 	{
-		interrupt_vector[activecpu] = data;
+		interrupt_vector[cpunum] = data;
 
 		/* make sure there are no queued interrupts */
-		cpu_clear_pending_interrupts(activecpu);
+		cpu_clear_pending_interrupts(cpunum);
 	}
 }
 
@@ -720,14 +821,15 @@ void interrupt_vector_w(int offset,int data)
 
 int interrupt(void)
 {
+	int cpunum = (activecpu < 0) ? 0 : activecpu;
 	int val;
 
-	if (interrupt_enable[activecpu] == 0)
-		return INT_TYPE_NONE (activecpu);
+	if (interrupt_enable[cpunum] == 0)
+		return INT_TYPE_NONE (cpunum);
 
-	val = INT_TYPE_IRQ (activecpu);
+	val = INT_TYPE_IRQ (cpunum);
 	if (val == -1000)
-		val = interrupt_vector[activecpu];
+		val = interrupt_vector[cpunum];
 	return val;
 }
 
@@ -735,49 +837,511 @@ int interrupt(void)
 
 int nmi_interrupt(void)
 {
-	if (interrupt_enable[activecpu] == 0)
-		return INT_TYPE_NONE (activecpu);
-	return INT_TYPE_NMI (activecpu);
+	int cpunum = (activecpu < 0) ? 0 : activecpu;
+	if (interrupt_enable[cpunum] == 0)
+		return INT_TYPE_NONE (cpunum);
+	return INT_TYPE_NMI (cpunum);
 }
 
 
 
 int ignore_interrupt(void)
 {
-	return INT_TYPE_NONE (activecpu);
+	int cpunum = (activecpu < 0) ? 0 : activecpu;
+	return INT_TYPE_NONE (cpunum);
 }
 
 
 
 /***************************************************************************
 
-  Interrupt handler. This function is called at regular intervals
-  (determined by IPeriod) by the CPU emulation.
+  CPU timing and synchronization functions.
 
 ***************************************************************************/
 
-int cpu_interrupt(void)
+/* generate a trigger */
+void cpu_trigger (int trigger)
 {
-	return (*Machine->drv->cpu[activecpu].interrupt)();
+	timer_trigger (trigger);
 }
+
+/* generate a trigger after a specific period of time */
+void cpu_triggertime (double duration, int trigger)
+{
+	timer_set (duration, trigger, cpu_trigger);
+}
+
+
+
+/* burn CPU cycles until a timer trigger */
+void cpu_spinuntil_trigger (int trigger)
+{
+	int cpunum = (activecpu < 0) ? 0 : activecpu;
+	timer_suspendcpu_trigger (cpunum, trigger);
+}
+
+/* burn CPU cycles until the next interrupt */
+void cpu_spinuntil_int (void)
+{
+	int cpunum = (activecpu < 0) ? 0 : activecpu;
+	cpu_spinuntil_trigger (TRIGGER_INT + cpunum);
+}
+
+/* burn CPU cycles until our timeslice is up */
+void cpu_spin (void)
+{
+	cpu_spinuntil_trigger (TRIGGER_TIMESLICE);
+}
+
+/* burn CPU cycles for a specific period of time */
+void cpu_spinuntil_time (double duration)
+{
+	static int timetrig = 0;
+
+	cpu_spinuntil_trigger (TRIGGER_SUSPENDTIME + timetrig);
+	cpu_triggertime (duration, TRIGGER_SUSPENDTIME + timetrig);
+	timetrig = (timetrig + 1) & 255;
+}
+
+
+
+/* yield our timeslice for a specific period of time */
+void cpu_yielduntil_trigger (int trigger)
+{
+	int cpunum = (activecpu < 0) ? 0 : activecpu;
+	timer_holdcpu_trigger (cpunum, trigger);
+}
+
+/* yield our timeslice until the next interrupt */
+void cpu_yielduntil_int (void)
+{
+	int cpunum = (activecpu < 0) ? 0 : activecpu;
+	cpu_yielduntil_trigger (TRIGGER_INT + cpunum);
+}
+
+/* yield our current timeslice */
+void cpu_yield (void)
+{
+	cpu_yielduntil_trigger (TRIGGER_TIMESLICE);
+}
+
+/* yield our timeslice for a specific period of time */
+void cpu_yielduntil_time (double duration)
+{
+	static int timetrig = 0;
+
+	cpu_yielduntil_trigger (TRIGGER_YIELDTIME + timetrig);
+	cpu_triggertime (duration, TRIGGER_YIELDTIME + timetrig);
+	timetrig = (timetrig + 1) & 255;
+}
+
+
+
+int cpu_getvblank(void)
+{
+	return vblank;
+}
+
+
+/***************************************************************************
+
+  Internal CPU event processors.
+
+***************************************************************************/
+static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
+{
+	int oldactive = activecpu;
+
+	/* swap to the CPU's context */
+	activecpu = cpunum;
+	memorycontextswap (activecpu);
+	if (cpu[activecpu].save_context) SETREGS (activecpu, cpu[activecpu].context);
+
+	/* cause the interrupt, calling the function if it exists */
+	if (func) num = (*func)();
+
+	CAUSE_INTERRUPT (cpunum, num);
+
+	/* update the CPU's context */
+	if (cpu[activecpu].save_context) GETREGS (activecpu, cpu[activecpu].context);
+	activecpu = oldactive;
+	if (activecpu >= 0) memorycontextswap (activecpu);
+
+	/* generate a trigger to unsuspend any CPUs waiting on the interrupt */
+	if (num != INT_TYPE_NONE (cpunum))
+		timer_trigger (TRIGGER_INT + cpunum);
+}
+
+
+static void cpu_clear_interrupts (int cpunum)
+{
+	int oldactive = activecpu;
+
+	/* swap to the CPU's context */
+	activecpu = cpunum;
+	memorycontextswap (activecpu);
+	if (cpu[activecpu].save_context) SETREGS (activecpu, cpu[activecpu].context);
+
+	/* cause the interrupt, calling the function if it exists */
+	CLEAR_PENDING_INTERRUPTS (cpunum);
+
+	/* update the CPU's context */
+	if (cpu[activecpu].save_context) GETREGS (activecpu, cpu[activecpu].context);
+	activecpu = oldactive;
+	if (activecpu >= 0) memorycontextswap (activecpu);
+}
+
+
+static void cpu_reset_cpu (int cpunum)
+{
+	int oldactive = activecpu;
+
+	/* swap to the CPU's context */
+	activecpu = cpunum;
+	memorycontextswap (activecpu);
+	if (cpu[activecpu].save_context) SETREGS (activecpu, cpu[activecpu].context);
+
+	/* reset the CPU */
+	RESET (cpunum);
+
+	/* update the CPU's context */
+	if (cpu[activecpu].save_context) GETREGS (activecpu, cpu[activecpu].context);
+	activecpu = oldactive;
+	if (activecpu >= 0) memorycontextswap (activecpu);
+}
+
+
+/***************************************************************************
+
+  Interrupt callback. This is called once per CPU interrupt by either the
+  VBLANK handler or by the CPU's own timer directly, depending on whether
+  or not the CPU's interrupts are synced to VBLANK.
+
+***************************************************************************/
+static void cpu_vblankintcallback (int param)
+{
+	if (Machine->drv->cpu[param].vblank_interrupt)
+		cpu_generate_interrupt (param, Machine->drv->cpu[param].vblank_interrupt, 0);
+
+	/* update the counters */
+	cpu[param].iloops--;
+}
+
+
+static void cpu_timedintcallback (int param)
+{
+	/* bail if there is no routine */
+	if (!Machine->drv->cpu[param].timed_interrupt)
+		return;
+
+	/* generate the interrupt */
+	cpu_generate_interrupt (param, Machine->drv->cpu[param].timed_interrupt, 0);
+}
+
+
+static void cpu_manualintcallback (int param)
+{
+	int intnum = param >> 3;
+	int cpunum = param & 7;
+
+	/* generate the interrupt */
+	cpu_generate_interrupt (cpunum, 0, intnum);
+}
+
+
+static void cpu_clearintcallback (int param)
+{
+	/* clear the interrupts */
+	cpu_clear_interrupts (param);
+}
+
+
+static void cpu_resetcallback (int param)
+{
+	/* reset the CPU */
+	cpu_reset_cpu (param);
+}
+
+
+/***************************************************************************
+
+  VBLANK reset. Called at the start of emulation and once per VBLANK in
+  order to update the input ports and reset the interrupt counter.
+
+***************************************************************************/
+static void cpu_vblankreset (void)
+{
+	int i;
+
+	/* read hi scores from disk */
+	if (hiscoreloaded == 0 && Machine->gamedrv->hiscore_load)
+		hiscoreloaded = (*Machine->gamedrv->hiscore_load)();
+
+	/* read keyboard & update the status of the input ports */
+	update_input_ports ();
+
+	/* reset the cycle counters */
+	for (i = 0; i < totalcpu; i++)
+	{
+		if (!timer_iscpususpended (i))
+			cpu[i].iloops = Machine->drv->cpu[i].vblank_interrupts_per_frame - 1;
+		else
+			cpu[i].iloops = -1;
+	}
+}
+
+
+/***************************************************************************
+
+  VBLANK callback. This is called 'vblank_multipler' times per frame to
+  service VBLANK-synced interrupts and to begin the screen update process.
+
+***************************************************************************/
+static void cpu_vblankcallback (int param)
+{
+	int i;
+
+	/* loop over CPUs */
+	for (i = 0; i < totalcpu; i++)
+	{
+		/* if the interrupt multiplier is valid */
+		if (cpu[i].vblankint_multiplier != -1)
+		{
+			/* decrement; if we hit zero, generate the interrupt and reset the countdown */
+			if (!--cpu[i].vblankint_countdown)
+			{
+				cpu_vblankintcallback (i);
+				cpu[i].vblankint_countdown = cpu[i].vblankint_multiplier;
+				timer_reset (cpu[i].vblankint_timer, TIME_NEVER);
+			}
+		}
+
+		/* else reset the VBLANK timer if this is going to be a real VBLANK */
+		else if (vblank_countdown == 1)
+			timer_reset (cpu[i].vblankint_timer, TIME_NEVER);
+	}
+
+	/* is it a real VBLANK? */
+	if (!--vblank_countdown)
+	{
+		/* do we update the screen now? */
+		if (Machine->drv->video_attributes & VIDEO_UPDATE_BEFORE_VBLANK)
+			usres = updatescreen();
+
+		/* set the timer to update the screen */
+		timer_set (TIME_IN_USEC (Machine->drv->vblank_duration), 0, cpu_updatecallback);
+		vblank = 1;
+
+		/* reset the globals */
+		cpu_vblankreset ();
+
+		/* reset the counter */
+		vblank_countdown = vblank_multiplier;
+	}
+}
+
+
+/***************************************************************************
+
+  Video update callback. This is called a game-dependent amount of time
+  after the VBLANK in order to trigger a video update.
+
+***************************************************************************/
+static void cpu_updatecallback (int param)
+{
+	/* update the screen if we didn't before */
+	if (!(Machine->drv->video_attributes & VIDEO_UPDATE_BEFORE_VBLANK))
+		usres = updatescreen();
+	vblank = 0;
+
+	/* update the sound system */
+	sound_update();
+
+	/* update IPT_VBLANK input ports */
+	inputport_vblank_end();
+
+	/* reset the refresh timer */
+	timer_reset (refresh_timer, TIME_NEVER);
+}
+
+
+/***************************************************************************
+
+  Converts an integral timing rate into a period. Rates can be specified
+  as follows:
+
+        rate > 0       -> 'rate' cycles per frame
+        rate == 0      -> 0
+        rate >= -10000 -> 'rate' cycles per second
+        rate < -10000  -> 'rate' nanoseconds
+
+***************************************************************************/
+static double cpu_computerate (int value)
+{
+	/* values equal to zero are zero */
+	if (value <= 0)
+		return 0.0;
+
+	/* values above between 0 and 50000 are in Hz */
+	if (value < 50000)
+		return TIME_IN_HZ (value);
+
+	/* values greater than 50000 are in nanoseconds */
+	else
+		return TIME_IN_NSEC (value);
+}
+
+
+static void cpu_timeslicecallback (int param)
+{
+	timer_trigger (TRIGGER_TIMESLICE);
+}
+
+
+/***************************************************************************
+
+  Initializes all the timers used by the CPU system.
+
+***************************************************************************/
+static void cpu_inittimers (void)
+{
+	int i, max, ipf;
+
+	/* remove old timers */
+	if (timeslice_timer)
+		timer_remove (timeslice_timer);
+	if (refresh_timer)
+		timer_remove (refresh_timer);
+	if (watchdog_timer)
+		timer_remove (watchdog_timer);
+	if (vblank_timer)
+		timer_remove (vblank_timer);
+
+	/* allocate a dummy timer at the minimum frequency to break things up */
+	ipf = Machine->drv->cpu_slices_per_frame;
+	if (ipf <= 0)
+		ipf = 1;
+	timeslice_period = TIME_IN_HZ (Machine->drv->frames_per_second * ipf);
+	timeslice_timer = timer_pulse (timeslice_period, 0, cpu_timeslicecallback);
+
+	/* allocate an infinite timer to track elapsed time since the last refresh */
+	refresh_period = TIME_IN_HZ (Machine->drv->frames_per_second);
+	refresh_period_inv = 1.0 / refresh_period;
+	refresh_timer = timer_set (TIME_NEVER, 0, NULL);
+
+	/* while we're at it, compute the scanline times */
+	scanline_period = (refresh_period - TIME_IN_USEC (Machine->drv->vblank_duration)) / (double)Machine->drv->screen_height;
+	scanline_period_inv = 1.0 / scanline_period;
+
+	/* allocate an infinite watchdog timer; it will be set to a sane value on a read/write */
+	watchdog_timer = timer_set (TIME_NEVER, 0, watchdog_callback);
+
+	/*
+	 *		The following code finds all the CPUs that are interrupting in sync with the VBLANK
+	 *		and sets up the VBLANK timer to run at the minimum number of cycles per frame in
+	 *		order to service all the synced interrupts
+	 */
+
+	/* find the CPU with the maximum interrupts per frame */
+	max = 1;
+	for (i = 0; i < totalcpu; i++)
+	{
+		ipf = Machine->drv->cpu[i].vblank_interrupts_per_frame;
+		if (ipf > max)
+			max = ipf;
+	}
+
+	/* now find the LCD with the rest of the CPUs (brute force - these numbers aren't huge) */
+	vblank_multiplier = max;
+	while (1)
+	{
+		for (i = 0; i < totalcpu; i++)
+		{
+			ipf = Machine->drv->cpu[i].vblank_interrupts_per_frame;
+			if (ipf > 0 && (vblank_multiplier % ipf) != 0)
+				break;
+		}
+		if (i == totalcpu)
+			break;
+		vblank_multiplier += max;
+	}
+
+	/* initialize the countdown timers and intervals */
+	for (i = 0; i < totalcpu; i++)
+	{
+		ipf = Machine->drv->cpu[i].vblank_interrupts_per_frame;
+		if (ipf > 0)
+			cpu[i].vblankint_countdown = cpu[i].vblankint_multiplier = vblank_multiplier / ipf;
+		else
+			cpu[i].vblankint_countdown = cpu[i].vblankint_multiplier = -1;
+	}
+
+	/* allocate a vblank timer at the frame rate * the LCD number of interrupts per frame */
+	vblank_period = TIME_IN_HZ (Machine->drv->frames_per_second * vblank_multiplier);
+	vblank_timer = timer_pulse (vblank_period, 0, cpu_vblankcallback);
+	vblank_countdown = vblank_multiplier;
+
+	/*
+	 *		The following code creates individual timers for each CPU whose interrupts are not
+	 *		synced to the VBLANK, and computes the typical number of cycles per interrupt
+	 */
+
+	/* start the CPU interrupt timers */
+	for (i = 0; i < totalcpu; i++)
+	{
+		ipf = Machine->drv->cpu[i].vblank_interrupts_per_frame;
+
+		/* remove old timers */
+		if (cpu[i].vblankint_timer)
+			timer_remove (cpu[i].vblankint_timer);
+		if (cpu[i].timedint_timer)
+			timer_remove (cpu[i].timedint_timer);
+
+		/* compute the average number of cycles per interrupt */
+		if (ipf <= 0)
+			ipf = 1;
+		cpu[i].vblankint_period = TIME_IN_HZ (Machine->drv->frames_per_second * ipf);
+		cpu[i].vblankint_timer = timer_set (TIME_NEVER, 0, NULL);
+
+		/* see if we need to allocate a CPU timer */
+		ipf = Machine->drv->cpu[i].timed_interrupts_per_second;
+		if (ipf)
+		{
+			cpu[i].timedint_period = cpu_computerate (ipf);
+			cpu[i].timedint_timer = timer_pulse (cpu[i].timedint_period, i, cpu_timedintcallback);
+		}
+	}
+}
+
 
 
 #ifdef MAME_DEBUG
 /* JB 971019 */
-void cpu_getcpucontext (int activecpu, unsigned char *buf)
+void cpu_getcontext (int activecpu, unsigned char *buf)
 {
-    memcpy (buf, cpucontext[activecpu], CPU_CONTEXT_SIZE);	/* ASG 971105 */
+    memcpy (buf, cpu[activecpu].context, CPU_CONTEXT_SIZE);
 }
 
-void cpu_setcpucontext (int activecpu, const unsigned char *buf)
+void cpu_setcontext (int activecpu, const unsigned char *buf)
 {
-    memcpy (cpucontext[activecpu], buf, CPU_CONTEXT_SIZE);	/* ASG 971105 */
+    memcpy (cpu[activecpu].context, buf, CPU_CONTEXT_SIZE);
 }
 #endif
 
 
+#ifdef Z80_DAISYCHAIN
 
-
+/* reset Z80 with set daisychain link */
+static void z80_Reset(void)
+{
+	Z80_Reset( z80_daisychain[activecpu] );
+}
+/* set z80 daisy chain link (upload when after reset ) */
+void cpu_setdaisychain (int cpunum, Z80_DaisyChain *daisy_chain )
+{
+	z80_daisychain[cpunum] = daisy_chain;
+}
+#endif
 
 /* some empty functions needed by the Z80 emulation */
 void Z80_Patch (Z80_Regs *Regs)

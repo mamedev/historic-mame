@@ -6,39 +6,104 @@
 
 ***************************************************************************/
 
+/*
+ * History:
+ *
+ * 97???? Converted Al Kossow's G80 sources. LBO
+ * 970807 Scaling support and dynamic sin/cos tables. ASG
+ * 980124 Suport for antialiasing. .ac
+ * 980203 cleaned up and interfaced to generic vector routines. BW
+ *
+ * TODO: use floating point math instead of fixed point.
+ */
+
 #include "driver.h"
 #include "avgdvg.h"
-#include "math.h"
+#include "vector.h"
+#include <math.h>
 
-/* ASG 080697 -- begin */
-#define VEC_SHIFT 14		/* NOTE: must be even */
-#define RES_SHIFT 16		/* NOTE: must be even */
+#define VEC_SHIFT 15	/* do not use a higher value. Values will overflow */
 
-#define VEC_X(x,xs)	( ( ((x) >> VEC_SHIFT/2) * ((xs) >> RES_SHIFT/2) ) >> (RES_SHIFT/2 + VEC_SHIFT/2) )
-#define VEC_Y(y,ys)	( ( ((y) >> VEC_SHIFT/2) * ((ys) >> RES_SHIFT/2) ) >> (RES_SHIFT/2 + VEC_SHIFT/2) )
-/* ASG 080697 -- end */
+static int width, height, cent_x, cent_y, min_x, min_y, max_x, max_y;
+static long *sinTable, *cosTable;
+static int intensity;
 
-/* #define SEGA_DEBUG */
+void sega_generate_vector_list (void)
+{
+	int deltax, deltay;
+	int currentX, currentY;
 
-/* #define BASE	1024 */ /* Maximum resolution of the vector hardware */
+	int vectorIndex;
+	int symbolIndex;
 
-#ifdef SEGA_DEBUG
-FILE	*segaFile;
-#endif
+	int rotate, scale;
+	int attrib;
 
-/* This structure holds the used screen dimension by the vector game	*/
-static struct { int width; int height;
-	 int x_cent; int y_cent;
-	 int x_min; int y_min;
-	 int x_max; int y_max; } vg_video;
+	int angle, length;
+	int color;
 
-extern int vectorram_size;
-/* static int frameCount = 1; */
-int portrait;
+	int draw;
 
-static long *sinTable, *cosTable;		/* ASG 080797 */
+	vector_clear_list();
 
+	symbolIndex = 0;	/* Reset vector PC to 0 */
 
+	/*
+	 * walk the symbol list until 'last symbol' set
+	 */
+
+	do {
+		draw = vectorram[symbolIndex++];
+
+		if (draw & 1)	/* if symbol active */
+		{
+			currentX    = vectorram[symbolIndex + 0] | (vectorram[symbolIndex + 1] << 8);
+			currentY    = vectorram[symbolIndex + 2] | (vectorram[symbolIndex + 3] << 8);
+			vectorIndex = vectorram[symbolIndex + 4] | (vectorram[symbolIndex + 5] << 8);
+			rotate      = vectorram[symbolIndex + 6] | (vectorram[symbolIndex + 7] << 8);
+			scale       = vectorram[symbolIndex + 8];
+
+			currentX = ((currentX & 0x7ff) - min_x) << VEC_SHIFT;
+			currentY = (max_y - (currentY & 0x7ff)) << VEC_SHIFT;
+			vector_add_point ( currentX, currentY, 0, 0);
+			vectorIndex &= 0xfff;
+
+			/* walk the vector list until 'last vector' bit */
+			/* is set in attributes */
+
+			do
+			{
+				attrib = vectorram[vectorIndex + 0];
+				length = vectorram[vectorIndex + 1];
+				angle  = vectorram[vectorIndex + 2] | (vectorram[vectorIndex + 3] << 8);
+
+				vectorIndex += 4;
+
+				/* calculate deltas based on len, angle(s), and scale factor */
+
+				angle = (angle + rotate) & 0x3ff;
+				deltax = sinTable[angle] * scale * length;
+				deltay = cosTable[angle] * scale * length;
+
+				currentX += deltax >> 7;
+				currentY -= deltay >> 7;
+
+				color = attrib & 0x7e;
+				if ((attrib & 1) && color)
+					intensity = 0xff;
+				else
+					intensity = 0;
+				vector_add_point ( currentX, currentY, color, intensity );
+
+			} while (!(attrib & 0x80));
+		}
+
+		symbolIndex += 9;
+		if (symbolIndex >= vectorram_size)
+			break;
+
+	} while (!(draw & 0x80));
+}
 /***************************************************************************
 
   The Sega vector games don't have a color PROM, it uses RGB values for the
@@ -47,32 +112,56 @@ static long *sinTable, *cosTable;		/* ASG 080797 */
 
 ***************************************************************************/
 
+
 void sega_init_colors (unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
 {
-	int i;
+	int i,r,g,b;
 
-	for( i = 0; i < 128; i++ )
+	/* Bits are-> Red: 6&5 (0x60), Green: 4&3 (0x18), Blue: 2&1 (0x06) */
+	for (i=0; i<128; i+=2)
 	{
-		int bit0, bit1;
-
-		/* Red is bits 5 & 6 (0x60) */
-		bit0 = ( i >> 5 ) & 0x01;
-		bit1 = ( i >> 6 ) & 0x01;
-		palette[ 3 * i ] = 0x47 * bit0 + 0x97 * bit1;
-		/* Green is bits 3 & 4 (0x18) */
-		bit0 = ( i >> 3 ) & 0x01;
-		bit1 = ( i >> 4 ) & 0x01;
-		palette[ 3 * i + 1 ] = 0x47 * bit0 + 0x97 * bit1;
-		/* Blue is bits 1 & 2 (0x06) */
-		bit0 = ( i >> 1 ) & 0x01;
-		bit1 = ( i >> 2 ) & 0x01;
-		palette[ 3 * i + 2 ] = 0x47 * bit0 + 0x97 * bit1;
+		palette[3*i  ] = 85 * ((i>>5)&0x3);
+		palette[3*i+1] = 85 * ((i>>3)&0x3);
+		palette[3*i+2] = 85 * ((i>>1)&0x3);
 		/* Set the color table */
 		colortable[i] = i;
 	}
+	/*
+	 * Fill in the holes with good anti-aliasing colors.  This is a very good
+	 * range of colors based on the previous palette entries.     .ac JAN2498
+	 */
+	i=1;
+	for (r=0; r<=6; r++)
+	{
+		for (g=0; g<=6; g++)
+		{
+			for (b=0; b<=6; b++)
+			{
+				if (!((r|g|b)&0x1) ) continue;
+				if ((g==5 || g==6) && (b==1 || b==2 || r==1 || r==2)) continue;
+				if ((g==3 || g==4) && (b==1         || r==1        )) continue;
+				if ((b==6 || r==6) && (g==1 || g==2                )) continue;
+				if ((r==5)         && (b==1)                        ) continue;
+				if ((b==5)         && (r==1)                        ) continue;
+				palette[3*i  ] = (255*r) / 6;
+				palette[3*i+1] = (255*g) / 6;
+				palette[3*i+2] = (255*b) / 6;
+				colortable[i]  = i;
+				if (i < 128)
+					i+=2;
+				else
+					i++;
+			}
+		}
+	}
+	/* There are still 4 colors left, just going to put some grays in. */
+	for (i=252; i<=255; i++)
+	{
+		palette[3*i  ] =
+		palette[3*i+1] =
+		palette[3*i+2] = 107 + (42*(i-252));
+	}
 }
-
-
 
 /***************************************************************************
 
@@ -81,25 +170,22 @@ void sega_init_colors (unsigned char *palette, unsigned char *colortable,const u
 ***************************************************************************/
 int sega_vh_start (void)
 {
-	int i;		/* ASG 080697 */
+	int i;
 
 	if (vectorram_size == 0)
 		return 1;
-#ifdef SEGA_DEBUG
-	segaFile = fopen ("Sega Dump","w");
-#endif
-	vg_video.width =Machine->drv->visible_area.max_x-Machine->drv->visible_area.min_x;
-	vg_video.height=Machine->drv->visible_area.max_y-Machine->drv->visible_area.min_y;
-	vg_video.x_cent=(Machine->drv->visible_area.max_x+Machine->drv->visible_area.min_x)/2;
-	vg_video.y_cent=(Machine->drv->visible_area.max_y+Machine->drv->visible_area.min_y)/2;
-	vg_video.x_min=Machine->drv->visible_area.min_x;
-	vg_video.y_min=Machine->drv->visible_area.min_y;
-	vg_video.x_max=Machine->drv->visible_area.max_x;
-	vg_video.y_max=Machine->drv->visible_area.max_y;
+	min_x =Machine->drv->visible_area.min_x;
+	min_y =Machine->drv->visible_area.min_y;
+	max_x =Machine->drv->visible_area.max_x;
+	max_y =Machine->drv->visible_area.max_y;
+	width =max_x-min_x;
+	height=max_y-min_y;
+	cent_x=(max_x+min_x)/2;
+	cent_y=(max_y+min_y)/2;
 
-/* ASG 080697 -- begin */
+	vector_set_shift (VEC_SHIFT);
 
-	/* allocate memory for the sine and cosine lookup tables */
+	/* allocate memory for the sine and cosine lookup tables ASG 080697 */
 	sinTable = malloc (0x400 * sizeof (long));
 	if (!sinTable)
 		return 1;
@@ -127,19 +213,10 @@ int sega_vh_start (void)
 			cosTable[i] = (long)(temp * (double)(1 << VEC_SHIFT) - 0.5);
 		else
 			cosTable[i] = (long)(temp * (double)(1 << VEC_SHIFT) + 0.5);
+
 	}
 
-/* ASG 080697 -- end */
-
-	portrait = 0;
-	return 0;
-}
-
-int tacscan_vh_start (void)
-{
-	if (sega_vh_start ()) return 1;
-	portrait = 1;
-	return 0;
+	return vector_vh_start();
 }
 
 /***************************************************************************
@@ -149,18 +226,14 @@ int tacscan_vh_start (void)
 ***************************************************************************/
 void sega_vh_stop (void)
 {
-#ifdef SEGA_DEBUG
-	fclose (segaFile);
-#endif
-
-/* ASG 080797 -- begin */
 	if (sinTable)
 		free (sinTable);
 	sinTable = NULL;
 	if (cosTable)
 		free (cosTable);
 	cosTable = NULL;
-/* ASG 080797 -- end */
+
+	vector_vh_stop();
 }
 
 /***************************************************************************
@@ -170,290 +243,12 @@ void sega_vh_stop (void)
   the main emulation engine.
 
 ***************************************************************************/
-void sega_vh_screenrefresh (struct osd_bitmap *bitmap) {
-/* This routine does nothing. The interrupt handler refreshes the screen. */
-	}
-
-
-/* ASG 080797 -- begin */
-void sega_vg_draw (void)
+void sega_vh_screenrefresh (struct osd_bitmap *bitmap)
 {
-	int x_res, y_res;
-	int xscale, yscale;
-
-	int deltax, deltay;
-	int currentX, currentY;
-
-	int vectorIndex;
-	int symbolIndex;
-
-	int rotate, scale;
-	int attrib;
-
-	int angle, length;
-	int color;
-
-	int draw;
-
-	if (osd_update_vectors(&x_res, &y_res, 0))
-		return;
-
-	symbolIndex = 0;					/* Reset vector PC to 0 */
-
-	xscale = (x_res << RES_SHIFT) / vg_video.width;
-	yscale = (y_res << RES_SHIFT) / vg_video.height;
-
-	/*
-	* walk the symbol list until 'last symbol' set
-	*/
-
-	do
-	{
-		draw = vectorram[symbolIndex++];
-
-		if (draw & 1)								/* if symbol active */
-		{
-			currentX    = vectorram[symbolIndex + 0] | (vectorram[symbolIndex + 1] << 8);
-			currentY    = vectorram[symbolIndex + 2] | (vectorram[symbolIndex + 3] << 8);
-			vectorIndex = vectorram[symbolIndex + 4] | (vectorram[symbolIndex + 5] << 8);
-			rotate      = vectorram[symbolIndex + 6] | (vectorram[symbolIndex + 7] << 8);
-			scale       = vectorram[symbolIndex + 8];
-
-			if (portrait) {
-				currentX = ((currentX & 0x7ff) - vg_video.y_min) << VEC_SHIFT;
-				currentY = (vg_video.x_max - (currentY & 0x7ff)) << VEC_SHIFT;
-				osd_draw_to (VEC_X (currentY, xscale), VEC_Y (vg_video.y_max-currentX, yscale), -1);
-
-			} else {
-				currentX = ((currentX & 0x7ff) - vg_video.x_min) << VEC_SHIFT;
-				currentY = (vg_video.y_max - (currentY & 0x7ff)) << VEC_SHIFT;
-				osd_draw_to (VEC_X (currentX, xscale), VEC_Y (currentY, yscale), -1);
-			}
-			vectorIndex &= 0xfff;
-
-			/*
-			 * walk the vector list until 'last vector' bit is set in attributes
-			 */
-
-			do
-			{
-				attrib = vectorram[vectorIndex + 0];
-				length = vectorram[vectorIndex + 1];
-				angle  = vectorram[vectorIndex + 2] | (vectorram[vectorIndex + 3] << 8);
-
-				vectorIndex += 4;
-
-			  /*
-			   * calculate delta x / delta y based on len, angle(s), and scale factor
-			   */
-
-				angle = (angle + rotate) & 0x3ff;
-				deltax = sinTable[angle] * scale * length;
-				deltay = cosTable[angle] * scale * length;
-
-				currentX += deltax >> 7;
-				currentY -= deltay >> 7;
-
-				color = attrib & 0x7e;
-				if (!(attrib & 1) || !color)
-					color = -1;
-
-					if (portrait)
-						osd_draw_to (VEC_X (currentY, xscale), VEC_Y (vg_video.y_max-currentX, yscale), color);
-					else
-						osd_draw_to (VEC_X (currentX, xscale), VEC_Y (currentY, yscale), color);
-
-			} while (!(attrib & 0x80));
-		}
-
-		symbolIndex += 9;
-		if (symbolIndex >= vectorram_size)
-			break;
-
-	} while (!(draw & 0x80));
-
-	 /*
-	  * all done, push it out to the screen
-	  */
-
+	sega_generate_vector_list();
+	vector_vh_update (bitmap);
 }
-/* ASG 080797 -- end */
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*	ASG 080797 -- begin removal */
-#if 0
-
-#define USE_SCALING
-
-struct symbolVal {
-	unsigned char draw;
-	unsigned short x;
-	unsigned short y;
-	unsigned long vectorAdr;
-	unsigned short angle;
-	unsigned char scale;
-} sym;
-
-struct vectorVal {
-	unsigned char attrib;
-	unsigned char len;
-	unsigned int angle;
-} vec;
-
-
-void sega_vg_draw (void) {
-
-	int x_res;
-	int y_res;
-
-	int x_init_scale;
-	int y_init_scale;
-
-	double real_angle = 0.0;
-	double deltax;
-	double deltay;
-	int currentX;
-	int currentY;
-	int color;
-
-	int vectorIndex;
-	int symbolIndex;
-	unsigned char lastColor = 0;
-
-	if (osd_update_vectors(&x_res,&y_res,0))
-		return;
-
-	symbolIndex = 0;					/* Reset vector PC to 0 */
-
-	x_init_scale = x_res;
-	y_init_scale = y_res;
-
-
-	/*
-	* walk the symbol list until 'last symbol' set
-	*/
-
-	do {
-		sym.draw = vectorram[symbolIndex++];
-		if (sym.draw & 0x1) {								/* if symbol active */
-
-			sym.x = vectorram[symbolIndex++];									/* X Start */
-			sym.x |= (vectorram[symbolIndex++] << 8);
-			sym.y = vectorram[symbolIndex++];
-			sym.y |= (vectorram[symbolIndex++] << 8);							/* Y Start */
-			sym.vectorAdr = vectorram[symbolIndex++];
-			sym.vectorAdr |= (vectorram[symbolIndex++] << 8);					/* Adr of vector data */
-			sym.angle = vectorram[symbolIndex++];
-			sym.angle |= (vectorram[symbolIndex++] << 8);						/* Initial rotation of symbol */
-			sym.scale = vectorram[symbolIndex++];								/* Fixed-point scale factor */
-
-#ifdef USE_SCALING
-			/* Shifting by 10 is the equivalent of dividing by 1024, which is the base resolution */
-			currentX = (((sym.x & 0x7ff) * x_init_scale) >> 10) - x_res/2;
-			currentY = (((sym.y & 0x7ff) * y_init_scale) >> 10) - y_res/2;
-#else
-			currentX = ((sym.x & 0x7ff) - BASE/2);
-			currentY = ((sym.y & 0x7ff) - BASE/2);
-#endif
-
-/*			if (errorlog) fprintf (errorlog, "current x: %f  ",currentX); */
-
-			/* Position the pen */
-#ifdef USE_SCALING
-			if (portrait)
-				osd_draw_to (x_res - currentY, y_res - currentX, -1);
-			else
-				osd_draw_to (currentX, y_res - currentY, -1);
-#else
-			if (portrait)
-				osd_draw_to (BASE/2 - (currentY >> 1), BASE/2 - (currentX >> 1), -1);
-			else
-				osd_draw_to (currentX >> 1, BASE/2 - (currentY >> 1), -1);
-#endif
-
-			vectorIndex = sym.vectorAdr & 0xfff;
-
-			/*
-			 * walk the vector list until 'last vector' bit is set in attributes
-			 */
-			do {
-				vec.attrib = vectorram[vectorIndex++];
-				vec.len = vectorram[vectorIndex++];
-				vec.angle = vectorram[vectorIndex++];
-				vec.angle |= (vectorram[vectorIndex++] << 8);
-
-			  /*
-			   * calculate delta x / delta y based on len, angle(s), and scale factor
-			   */
-
-				real_angle = ((2. * PI) / BASE) * (double)((vec.angle + sym.angle) & 0x3ff);
-
-#ifdef USE_SCALING
-				deltax = (sin(real_angle) * ((sym.scale * vec.len * x_init_scale) >> 17));
-				deltay = (cos(real_angle) * ((sym.scale * vec.len * y_init_scale) >> 17));
-#else
-				deltax = (sin(real_angle) * ((sym.scale * vec.len) >> 7));
-				deltay = (cos(real_angle) * ((sym.scale * vec.len) >> 7));
-#endif
-
-#ifdef SEGA_DEBUG
-				fprintf (segaFile,"real_angle %f ",real_angle);
-				fprintf (segaFile,"sin:%f cos: %f deltax: %d deltay: %d\n",sin(real_angle), cos(real_angle),deltax, deltay);
-#endif
-
-				currentX += (int) deltax;
-				currentY += (int) deltay;
-
-				if ((vec.attrib & 1) && (vec.attrib & 0x7e))
-					color = vec.attrib & 0x7e;
-				else color = -1;
-
-#ifdef USE_SCALING
-			if (portrait)
-				osd_draw_to (x_res - currentY, y_res - currentX, color);
-			else
-				osd_draw_to (currentX, y_res - currentY, color);
-#else
-			if (portrait)
-				osd_draw_to (BASE/2 - (currentY >> 1), BASE/2 - (currentX >> 1), color);
-			else
-				osd_draw_to (currentX >> 1, BASE/2 - (currentY >> 1), color);
-#endif
-
-				} while ((vec.attrib & 0x80) == 0);
-			}
-		else {											/* symbol inactive */
-			symbolIndex += 9;							/* bump to next one */
-			}
-
-		if (symbolIndex >= vectorram_size){
-/*		    printf("ran off the end of the vector ram\n"); */
-			break;
-			}
-
-		} while((sym.draw & 0x80) == 0);
-
-	 /*
-	  * all done, push it out to the screen
-	  */
-
-	}
-#endif
-/*	ASG 080697 -- end removal */
 
 

@@ -97,17 +97,20 @@ void gottlieb_vh_init_color_palette(unsigned char *palette, unsigned char *color
 }
 
 
-void gottlieb_video_outputs(int data)
+void gottlieb_video_outputs(int offset,int data)
 {
 	static int last = 0;
 
+
 	background_priority = data & 1;
+
 	hflip = data & 2;
 	vflip = data & 4;
-	currentbank = (data & 0x10) ? 256 : 0;
-
 	if ((data & 6) != (last & 6))
 		memset(dirtybuffer,1,videoram_size);
+
+	currentbank = (data & 0x10) ? 256 : 0;
+
 	last = data;
 }
 
@@ -224,8 +227,6 @@ void gottlieb_vh_screenrefresh(struct osd_bitmap *bitmap)
 					hflip, vflip,
 					sx,sy,
 					&Machine->drv->visible_area,
-			/* the background pen for the game is actually 1, not 0, because we reserved */
-			/* pen 0 for the background black */
 					background_priority ? TRANSPARENCY_THROUGH : TRANSPARENCY_PEN,0);
 	}
 }

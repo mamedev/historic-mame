@@ -64,18 +64,33 @@ Sound processor (6502) memory map:
 int mplanets_vh_start(void);
 void gottlieb_vh_init_color_palette(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void gottlieb_sh_w(int offset, int data);
-void gottlieb_sh_update(void);
-void gottlieb_output(int offset, int data);
+void gottlieb_video_outputs(int offset,int data);
 extern unsigned char *gottlieb_paletteram;
 void gottlieb_paletteram_w(int offset,int data);
 void gottlieb_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 extern struct MemoryReadAddress gottlieb_sound_readmem[];
 extern struct MemoryWriteAddress gottlieb_sound_writemem[];
-int gottlieb_sh_start(void);
-void gottlieb_sh_stop(void);
-void gottlieb_sh_update(void);
-int gottlieb_sh_interrupt(void);
+
+int gottlieb_nvram_load(void);
+void gottlieb_nvram_save(void);
+
+
+
+static int trak;
+
+int mplanets_trak_r(int offset)
+{
+	return input_port_2_r(offset) - trak;
+}
+
+void mplanets_trak_w(int offset,int data)
+{
+	/* recenter the dial */
+	trak = input_port_2_r(offset);
+}
+
+
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -83,7 +98,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x5800, 0x5800, input_port_0_r },     /* DSW */
 	{ 0x5801, 0x5801, input_port_1_r },     /* buttons */
 	{ 0x5802, 0x5802, MRA_NOP },     		/* trackball H: not used */
-	{ 0x5803, 0x5803, input_port_2_r },     /* trackball V: dialer */
+	{ 0x5803, 0x5803, mplanets_trak_r },     /* trackball V: dialer */
 	{ 0x5804, 0x5804, input_port_3_r },     /* joystick */
 	{ 0x6000, 0xffff, MRA_ROM },
 	{ -1 }  /* end of table */
@@ -97,9 +112,9 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x4000, 0x4fff, MWA_RAM }, /* bg object ram... ? not used ? */
 	{ 0x5000, 0x501f, gottlieb_paletteram_w, &gottlieb_paletteram },
 	{ 0x5800, 0x5800, MWA_RAM },    /* watchdog timer clear */
-	{ 0x5801, 0x5801, MWA_RAM },    /* trackball: not used */
+	{ 0x5801, 0x5801, mplanets_trak_w },    /* trackball */
 	{ 0x5802, 0x5802, gottlieb_sh_w }, /* sound/speech command */
-	{ 0x5803, 0x5803, gottlieb_output },       /* OUT1 */
+	{ 0x5803, 0x5803, gottlieb_video_outputs },       /* OUT1 */
 	{ 0x5804, 0x5804, MWA_RAM },    /* OUT2 */
 	{ 0x6000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
@@ -112,7 +127,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPNAME (0x08, 0x00, "Round Select", IP_KEY_NONE )
 	PORT_DIPSETTING (   0x00, "Off" )
 	PORT_DIPSETTING (   0x08, "On" )
-	PORT_DIPNAME (0x01, 0x00, "Attract Sound", IP_KEY_NONE )
+	PORT_DIPNAME (0x01, 0x00, "Demo Sounds", IP_KEY_NONE )
 	PORT_DIPSETTING (   0x01, "Off" )
 	PORT_DIPSETTING (   0x00, "On" )
 	PORT_DIPNAME (0x14, 0x00, "Coinage", IP_KEY_NONE )
@@ -120,29 +135,29 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING (   0x00, "1 Coin/1 Credit" )
 	PORT_DIPSETTING (   0x10, "1 Coin/2 Credits" )
 	PORT_DIPSETTING (   0x14, "Free Play" )
-	PORT_DIPNAME (0x20, 0x00, "Ships", IP_KEY_NONE )
+	PORT_DIPNAME (0x20, 0x00, "Lives", IP_KEY_NONE )
 	PORT_DIPSETTING (   0x00, "3" )
 	PORT_DIPSETTING (   0x20, "5" )
-	PORT_DIPNAME (0x02, 0x00, "Extra Ship", IP_KEY_NONE )
+	PORT_DIPNAME (0x02, 0x00, "Bonus Life", IP_KEY_NONE )
 	PORT_DIPSETTING (   0x00, "10000" )
 	PORT_DIPSETTING (   0x02, "12000" )
 	PORT_DIPNAME (0xc0, 0x00, "Difficulty", IP_KEY_NONE )
-	PORT_DIPSETTING (   0x00, "Standard" )
 	PORT_DIPSETTING (   0x40, "Easy" )
+	PORT_DIPSETTING (   0x00, "Normal" )
 	PORT_DIPSETTING (   0x80, "Hard" )
-	PORT_DIPSETTING (   0xc0, "Very Hard" )
+	PORT_DIPSETTING (   0xc0, "Hardest" )
 
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT( 0x3c, IP_ACTIVE_HIGH, IPT_UNKNOWN )
-	PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_SERVICE, "Advance in Service Mode", OSD_KEY_F1, IP_JOY_NONE, 0 )
+	PORT_BITX(0x40, IP_ACTIVE_HIGH, IPT_SERVICE, "Select in Service Mode", OSD_KEY_F1, IP_JOY_NONE, 0 )
 	PORT_BITX( 0x80, 0x80, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
 	PORT_DIPSETTING (   0x80, "Off" )
 	PORT_DIPSETTING (   0x00, "On" )
 
 	PORT_START	/* trackball v (dial) */
-	PORT_ANALOGX ( 0xff, 0x00, IPT_DIAL | IPF_CENTER, 100, 2, 0, 0, OSD_KEY_Z, OSD_KEY_X, 0, 0, 2 )
+	PORT_ANALOGX ( 0xff, 0x00, IPT_DIAL, 15, 0, 0, 0, OSD_KEY_Z, OSD_KEY_X, 0, 0, 4 )
 
 	PORT_START	/* IN3 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
@@ -190,6 +205,16 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
+static struct DACinterface dac_interface =
+{
+	1,
+	441000,
+	{ 255 },
+	{ 0 },
+};
+
+
+
 static const struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -206,12 +231,11 @@ static const struct MachineDriver machine_driver =
 			3579545/4,        /* could it be /2 ? */
 			2,             /* memory region #2 */
 			gottlieb_sound_readmem,gottlieb_sound_writemem,0,0,
-			gottlieb_sh_interrupt,1
+			ignore_interrupt,1	/* interrupts are triggered by the main CPU */
 		}
-
 	},
-	60,     /* frames / second */
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,      /* init machine */
 
 	/* video hardware */
@@ -227,11 +251,16 @@ static const struct MachineDriver machine_driver =
 	gottlieb_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	gottlieb_sh_start,
-	gottlieb_sh_stop,
-	gottlieb_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_DAC,
+			&dac_interface
+		}
+	}
 };
+
+
 
 ROM_START( mplanets_rom )
 	ROM_REGION(0x10000)     /* 64k for code */
@@ -251,48 +280,19 @@ ROM_START( mplanets_rom )
 
 	ROM_REGION(0x10000)      /* 64k for sound cpu */
 	ROM_LOAD( "SND1", 0xf000, 0x800, 0xca36c072 )
-		ROM_RELOAD(0x7000, 0x800) /* A15 is not decoded */
+	ROM_RELOAD(0x7000, 0x800) /* A15 is not decoded */
 	ROM_LOAD( "SND2", 0xf800, 0x800, 0x66461044 )
-		ROM_RELOAD(0x7800, 0x800) /* A15 is not decoded */
+	ROM_RELOAD(0x7800, 0x800) /* A15 is not decoded */
 
 ROM_END
 
-
-
-static int hiload(void)
-{
-	void *f=osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0);
-	unsigned char *RAM=Machine->memory_region[0];
-
-	/* no need to wait for anything: Mad Planets doesn't touch the tables
-		if the checksum is correct */
-	if (f) {
-		osd_fread(f,RAM+0x536,2); /* hiscore table checksum */
-		osd_fread(f,RAM+0x538,41*7); /* 20+20+1 hiscore entries */
-		osd_fclose(f);
-	}
-	return 1;
-}
-
-static void hisave(void)
-{
-	void *f=osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1);
-	unsigned char *RAM=Machine->memory_region[0];
-
-	if (f) {
-	/* not saving distributions tables : does anyone really want them ? */
-		osd_fwrite(f,RAM+0x536,2); /* hiscore table checksum */
-		osd_fwrite(f,RAM+0x538,41*7); /* 20+20+1 hiscore entries */
-		osd_fclose(f);
-	}
-}
 
 
 struct GameDriver mplanets_driver =
 {
 	"Mad Planets",
 	"mplanets",
-	"FABRICE FRANCES",
+	"Fabrice Frances",
 	&machine_driver,
 
 	mplanets_rom,
@@ -300,10 +300,10 @@ struct GameDriver mplanets_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	input_ports,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
-	hiload,hisave     /* hi-score load and save */
+	gottlieb_nvram_load, gottlieb_nvram_save
 };

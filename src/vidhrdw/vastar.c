@@ -254,24 +254,17 @@ void vastar_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* draw the frontmost playfield - they are characters, but draw them as sprites */
 	for (offs = videoram_size - 1;offs >= 0;offs--)
 	{
-		int code;
+		int sx,sy;
 
 
-		code = vastar_fgvideoram[offs] + 256 * (vastar_fgcolorram2[offs] & 0x01);
-		if (code != 0x28)	/* don't draw spaces */
-		{
-			int sx,sy;
+		sx = offs % 32;
+		sy = offs / 32;
 
-
-			sx = offs % 32;
-			sy = offs / 32;
-
-			drawgfx(bitmap,Machine->gfx[0],
-					code,
-					vastar_fgcolorram1[offs],
-					0,0,
-					8*sx,8*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-		}
+		drawgfx(bitmap,Machine->gfx[0],
+				vastar_fgvideoram[offs] + 256 * (vastar_fgcolorram2[offs] & 0x01),
+				vastar_fgcolorram1[offs],
+				0,0,
+				8*sx,8*sy,
+				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 }

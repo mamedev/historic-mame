@@ -14,14 +14,66 @@ Release 2.0 (6 August 1997)
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "vidhrdw/vector.h"
 #include "vidhrdw/avgdvg.h"
-#include "sndhrdw/pokyintf.h"
-#include "sndhrdw/starwars.h"
 #include "machine/swmathbx.h"
-#include "machine/starwars.h"
 #include "machine/atari_vg.h"
 
 #define EMPIRE 0
+
+/* formerly sndhrdw/starwars.h */
+int  starwars_main_read_r(int);
+int  starwars_main_ready_flag_r(int);
+void starwars_main_wr_w(int, int);
+void starwars_soundrst(int, int);
+
+int  starwars_sin_r(int);
+int  starwars_m6532_r(int);
+
+void starwars_sout_w(int, int);
+void starwars_m6532_w(int, int);
+
+/* formerly machine/starwars.h */
+int  starwars_input_bank_1_r(int);
+void starwars_wdclr(int, int);
+
+int  starwars_control_r (int offset);
+void starwars_control_w (int offset, int data);
+int  starwars_interrupt (void);
+
+
+void starwars_out_w (int offset, int data)
+{
+	switch (offset)
+	{
+		case 0:		/* Coin counter 1 */
+			break;
+		case 1:		/* Coin counter 2 */
+			break;
+		case 2:		/* LED 3 */
+			osd_led_w (2, data >> 7); break;
+			break;
+		case 3:		/* LED 2 */
+			osd_led_w (1, data >> 7); break;
+			break;
+		case 4:
+			if ((data & 0x80)==0)
+				cpu_setbank (1, &RAM[0x6000])
+			else
+				cpu_setbank (1, &RAM[0x10000]);
+			break;
+		case 5:
+			prngclr (offset, data); break;
+		case 6:
+			break;	/* LED 1 */
+			osd_led_w (0, data >> 7); break;
+		case 7:
+			if (errorlog)
+				fprintf (errorlog, "recall\n"); /* what's that? */
+			break;
+	}
+}
+
 
 /* Star Wars READ memory map */
 static struct MemoryReadAddress readmem[] =
@@ -32,15 +84,15 @@ static struct MemoryReadAddress readmem[] =
 /*	{ 0x5000, 0x5fff, MRA_RAM }, */		/* (math_ram_r) math_ram */
 /*	{ 0x0000, 0x3fff, MRA_RAM, &vectorram}, *//* Vector RAM and ROM */
 	{ 0x4800, 0x5fff, MRA_RAM },		/* CPU and Math RAM */
-	{ 0x6000, 0x7fff, MRA_BANK1 },	/* banked ROM */
+	{ 0x6000, 0x7fff, MRA_BANK1 },	    /* banked ROM */
 	{ 0x8000, 0xffff, MRA_ROM },		/* rest of main_rom */
 	{ 0x4300, 0x431f, input_port_0_r }, /* Memory mapped input port 0 */
-	{ 0x4320, 0x433f, input_bank_1_r }, /* Memory mapped input port 1 */
+	{ 0x4320, 0x433f, starwars_input_bank_1_r }, /* Memory mapped input port 1 */
 	{ 0x4340, 0x435f, input_port_2_r },	/* DIP switches bank 0 */
 	{ 0x4360, 0x437f, input_port_3_r },	/* DIP switches bank 1 */
-	{ 0x4380, 0x439f, control_r },		/* a-d control result */
-	{ 0x4400, 0x4400, main_read_r },
-	{ 0x4401, 0x4401, main_ready_flag_r },
+	{ 0x4380, 0x439f, starwars_control_r }, /* a-d control result */
+	{ 0x4400, 0x4400, starwars_main_read_r },
+	{ 0x4401, 0x4401, starwars_main_ready_flag_r },
 	{ 0x4500, 0x45ff, MRA_RAM },		/* nov_ram */
 	{ 0x4700, 0x4700, reh },
 	{ 0x4701, 0x4701, rel },
@@ -51,10 +103,10 @@ static struct MemoryReadAddress readmem[] =
 /* Star Wars Sound READ memory map */
 static struct MemoryReadAddress readmem2[] =
 {
-	{ 0x0800, 0x0fff, sin_r },		/* SIN Read */
+	{ 0x0800, 0x0fff, starwars_sin_r },		/* SIN Read */
 
 	{ 0x1000, 0x107f, MRA_RAM },	/* 6532 RAM */
-	{ 0x1080, 0x109f, m6532_r },
+	{ 0x1080, 0x109f, starwars_m6532_r },
 
 	{ 0x2000, 0x27ff, MRA_RAM },	/* program RAM */
 	{ 0x4000, 0x7fff, MRA_ROM },	/* sound roms */
@@ -73,24 +125,16 @@ static struct MemoryWriteAddress writemem[] =
 /*	{ 0x5000, 0x5fff, MWA_RAM }, */		/* (math_ram_w) math_ram */
 	{ 0x4800, 0x5fff, MWA_RAM },		/* CPU and Math RAM */
 	{ 0x6000, 0xffff, MWA_ROM },		/* main_rom */
-	{ 0x4400, 0x4400, main_wr_w },
+	{ 0x4400, 0x4400, starwars_main_wr_w },
 	{ 0x4500, 0x45ff, MWA_RAM },		/* nov_ram */
-	{ 0x4600, 0x461f, avgdvg_go },		/* evggo(mine) or vg2_go */
-	{ 0x4620, 0x463f, avgdvg_reset },	/* evgres(mine) or vg_reset */
+	{ 0x4600, 0x461f, avgdvg_go },
+	{ 0x4620, 0x463f, avgdvg_reset },
 	{ 0x4640, 0x465f, MWA_NOP },		/* (wdclr) Watchdog clear */
-	{ 0x4660, 0x467f, irqclr },			/* clear periodic interrupt */
-	{ 0x4680, 0x4681, MWA_NOP },		/* Coin counters */
-/*	{ 0x4680, 0x4680, MWA_NOP }, */		/*   (coin_ctr2) Coin counter 1 */
-/*	{ 0x4681, 0x4681, MWA_NOP }, */		/*   (coin_ctr1) Coin counter 2 */
-	{ 0x4682, 0x4682, led3 },			/* led3 */
-	{ 0x4683, 0x4683, led2 },			/* led2 */
-	{ 0x4684, 0x4684, mpage },			/* Page select for ROM0 */
-	{ 0x4685, 0x4685, prngclr },		/* Reset PRNG */
-	{ 0x4686, 0x4686, led1 },			/* led1 */
-	{ 0x4687, 0x4687, recall },
-	{ 0x46a0, 0x46bf, nstore },
-	{ 0x46c0, 0x46c2, control_w },		/* Selects which a-d control port (0-3) will be read */
-	{ 0x46e0, 0x46e0, soundrst },
+	{ 0x4660, 0x467f, MWA_NOP },        /* irqclr: clear periodic interrupt */
+	{ 0x4680, 0x4687, starwars_out_w },
+	{ 0x46a0, 0x46bf, MWA_NOP },		/* nstore */
+	{ 0x46c0, 0x46c2, starwars_control_w },	/* Selects which a-d control port (0-3) will be read */
+	{ 0x46e0, 0x46e0, starwars_soundrst },
 	{ 0x4700, 0x4707, swmathbx },
 	{ -1 }	/* end of table */
 };
@@ -98,10 +142,10 @@ static struct MemoryWriteAddress writemem[] =
 /* Star Wars sound WRITE memory map */
 static struct MemoryWriteAddress writemem2[] =
 {
-	{ 0x0000, 0x07ff, sout_w },
+	{ 0x0000, 0x07ff, starwars_sout_w },
 
 	{ 0x1000, 0x107f, MWA_RAM }, /* 6532 ram */
-	{ 0x1080, 0x109f, m6532_w },
+	{ 0x1080, 0x109f, starwars_m6532_w },
 
 	{ 0x1800, 0x183f, quad_pokey_w },
 
@@ -168,10 +212,10 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT ( 0xfc, IP_ACTIVE_HIGH, IPT_UNKNOWN)
 
 	PORT_START	/* IN4 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y, 100, 0, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y, 70, 0, 0, 255 )
 
 	PORT_START	/* IN5 */
-	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 100, 0, 0, 255 )
+	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 50, 0, 0, 255 )
 INPUT_PORTS_END
 
 
@@ -192,23 +236,38 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
         { -1 } /* end of array */
 };
 
-static unsigned char color_prom[] =
+static unsigned char color_prom[] = { VEC_PAL_SWARS };
+
+
+
+static struct POKEYinterface pokey_interface =
 {
-	0x00,0x00,0x00,
-	0x00,0x00,0x01,
-	0x00,0x01,0x00,
-	0x00,0x01,0x01,
-	0x01,0x00,0x00,
-	0x01,0x00,0x01,
-	0x01,0x01,0x00,
-	0x01,0x01,0x01
+	4,			/* 4 chips */
+	1500000,	/* 1.5 MHz? */
+    127,    /* volume */
+	POKEY_DEFAULT_GAIN/4,
+	USE_CLIP,
+	/* The 8 pot handlers */
+	{ 0, 0, 0, 0 },
+	{ 0, 0, 0, 0 },
+	{ 0, 0, 0, 0 },
+	{ 0, 0, 0, 0 },
+	{ 0, 0, 0, 0 },
+	{ 0, 0, 0, 0 },
+	{ 0, 0, 0, 0 },
+	{ 0, 0, 0, 0 },
+	/* The allpot handler */
+	{ 0, 0, 0, 0 },
 };
 
-/*********************************/
+static struct TMS5220interface tms5220_interface =
+{
+    640000,     /* clock speed (80*samplerate) */
+    255,        /* volume */
+    0           /* IRQ handler */
+};
 
-/* Memory regions relate to the ROM loader memory definitions later */
-/* in this file.  Note that main machine has region 0      */
-/* and I've not put a sound board in yet                  */
+
 
 static struct MachineDriver machine_driver =
 {
@@ -220,8 +279,8 @@ static struct MachineDriver machine_driver =
 			1500000,					/* 1.5 Mhz CPU clock (Don't know what speed it should be) */
 			0,							/* Memory region #0 */
 			readmem,writemem,0,0,
-			starwars_interrupt,6		/* Interrupt handler, and interrupts per frame (usually 1) */
-			/* Starwars should be 183Hz interrupts */
+			0, 0, /* no vblank interrupts */
+			interrupt, 183 /* 183Hz ? */
 			/* Increasing number of interrupts per frame speeds game up */
 		},
 		/* Sound CPU */
@@ -230,22 +289,20 @@ static struct MachineDriver machine_driver =
 			1500000,					/* 1.5 Mhz CPU clock (Don't know what speed it should be) */
 			2,							/* Memory region #2 */
 			readmem2,writemem2,0,0,
-			starwars_snd_interrupt,24	/* Interrupt handler, and interrupts per frame (usually 1) */
-			/* Interrupts are to attempt to get */
-			/* resolution for the PIA Timer */
-			/* Approx. 2048 PIA clocks (@1.5 Mhz) */
+			0, 0,
+			0, 0	/* no regular interrupts, see sndhrdw/starwars.c */
 		}
 
 	},
-	30,	/* Target Frames per Second */
-	10,
+	30, 0,	/* frames per second, vblank duration (vector game, so no vblank) */
+	1,		/* 1 CPU slice per frame. */
 	0,  /* Name of initialisation handler */
 
 	/* video hardware */
-	288, 224, { 0, 240, 0, 280 },
+	400, 300, { 0, 250, 0, 280 },
 	gfxdecodeinfo,
 	256,256, /* Number of colours, length of colour lookup table */
-	sw_avg_init_colors,
+	avg_init_colors,
 
 	VIDEO_TYPE_VECTOR,
 	0,							/* Handler to initialise video handware */
@@ -254,10 +311,17 @@ static struct MachineDriver machine_driver =
 	avg_screenrefresh,			/* Do a screen refresh */
 
 	/* sound hardware */
-	0,							/* Initialise audio hardware */
-	starwars_sh_start,			/* Start audio  */
-	starwars_sh_stop,				/* Stop audio   */
-	starwars_sh_update				/* Update audio */
+	0,0,0,0,
+	{
+		{
+			SOUND_POKEY,
+			&pokey_interface
+		},
+		{
+			SOUND_TMS5220,
+			&tms5220_interface
+		}
+	}
 };
 
 
@@ -371,7 +435,11 @@ struct GameDriver starwars_driver =
 {
 	"Star Wars",
 	"starwars",
-	"STEVE BAINES\nBRAD OLIVER\nFRANK PALAZZOLO",
+	"Steve Baines (Mame driver)\n"
+	"Brad Oliver (Mame driver)\n"
+	"Frank Palazzolo (Mame driver)\n"
+	VECTOR_TEAM,
+
 	&machine_driver,
 
 	starwars_rom,
@@ -379,7 +447,7 @@ struct GameDriver starwars_driver =
 	0,     /* Sample Array (optional) */
 	0,	/* sound_prom */
 
-	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	input_ports,
 	color_prom, /* Colour PROM */
 	0,          /* palette */
 	0,          /* colourtable */

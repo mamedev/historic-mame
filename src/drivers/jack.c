@@ -6,104 +6,53 @@ b400 - sound command? 0x1d = self-test?
 
 Sound CPU appears to run in interrupt mode 1
 
+Known problems:
+	* Sound doesn't work. No clue why.
+	* The palette seems to be wrong when you die. Should the beans change color?
+
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/generic.h"
-#include "sndhrdw/8910intf.h"
 
-//#define TRYSOUND
+unsigned char *jack_paletteram;
 
-void espial_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
-void jack_vh_screenrefresh(struct osd_bitmap *bitmap)
-{
-	int offs;
-
-
-	/* for every character in the Video RAM, check if it has been modified */
-	/* since last time and update it accordingly. */
-	for (offs = videoram_size - 1;offs >= 0;offs--)
-	{
-		if (dirtybuffer[offs])
-		{
-			int sx,sy;
-
-
-			dirtybuffer[offs] = 0;
-
-			sx = offs % 32;
-			sy = offs / 32;
-
-			drawgfx(tmpbitmap,Machine->gfx[0],
-					videoram[offs] + ((colorram[offs] & 0x30) << 4),
-//					colorram[offs] & 0x0f,
-					0,
-					0,0,
-					8*sx,8*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-		}
-	}
-
-
-	/* copy the temporary bitmap to the screen */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-
-	/* draw sprites */
-	for (offs = 0;offs < spriteram_size;offs += 4)
-	{
-		int sx,sy;
-		int num, color;
-
-		color = spriteram[offs + 2];
-		num   = spriteram[offs + 3];
-		sx =    spriteram[offs];
-		sy =    spriteram[offs + 1];
-//		flipx = spriteram[offs] & 0x40;
-//		flipy = spriteram[offs] & 0x80;
-
-		drawgfx(bitmap,Machine->gfx[1],
-				num,
-				color,
-				0,0,
-				sx,sy,
-				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-	}
-
-}
-
-static int b506_r (int offset)
-{
-	return rand();
-}
-
-#ifdef TRYSOUND
-/* Sound stuff */
-static struct AY8910interface jack_interface =
-{
-	2,	/* 2 chips */
-	1832727040,	/* 1.832727040 MHZ?????? */
-	{ 255, 255 },
-	{ 0 },
-	{ 0 },
-	{ 0 },
-	{ 0 }
-};
-
-
-int jack_sh_start(void)
-{
-	pending_commands = 0;
-
-	return AY8910_sh_start(&jack_interface);
-}
+void jack_paletteram_w(int offset,int data);
+void jack_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+void jack_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 void jack_sh_command_w(int offset,int data)
 {
-	sound_command_w(0,data);
+	soundlatch_w(0,data);
 	cpu_cause_interrupt(1,0xff);
 }
-#endif
+
+
+/* I'm using a reworking of the Scramble timer here - it could be TOTALLY WRONG */
+static int jack_timer[20] = {
+0x00, 0x01, 0x00, 0x01, 0x02, 0x03, 0x02, 0x03, 0x04, 0x05,
+0x08, 0x09, 0x08, 0x09, 0x0a, 0x0b, 0x0a, 0x0b, 0x0c, 0x0d
+};
+
+int jack_portB_r(int offset)
+{
+	/* need to protect from totalcycles overflow */
+	static int last_totalcycles = 0;
+
+	/* number of Z80 clock cycles to count */
+	static int clock;
+
+	int current_totalcycles;
+
+	current_totalcycles = cpu_gettotalcycles();
+	clock = (clock + (current_totalcycles-last_totalcycles)) % 5120;
+
+	last_totalcycles = current_totalcycles;
+
+	return jack_timer[clock/256];
+}
+
+
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -129,16 +78,14 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x4000, 0x5fff, MWA_RAM },
 	{ 0x6000, 0x62ff, MWA_RAM },
 	{ 0xb000, 0xb07f, MWA_RAM, &spriteram, &spriteram_size },
-#ifdef TRYSOUND
 	{ 0xb400, 0xb400, jack_sh_command_w },
-#endif
+	{ 0xb600, 0xb61f, jack_paletteram_w, &jack_paletteram },
 	{ 0xb800, 0xbbff, videoram_w, &videoram, &videoram_size },
 	{ 0xbc00, 0xbfff, colorram_w, &colorram },
 	{ 0xc000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
-#ifdef TRYSOUND
 static struct MemoryReadAddress sound_readmem[] =
 {
 	{ 0x0000, 0x0fff, MRA_ROM },
@@ -154,67 +101,101 @@ static struct MemoryWriteAddress sound_writemem[] =
 };
 
 
-
 static struct IOReadPort sound_readport[] =
 {
-	{ 0x40, 0x40, sound_command_latch_r },
-//	{ 0x20, 0x20, AY8910_read_port_1_r },
+	{ 0x40, 0x40, AY8910_read_port_0_r },
 	{ -1 }	/* end of table */
 };
 
 static struct IOWritePort sound_writeport[] =
 {
-//	{ 0x40, 0x40, AY8910_control_port_0_w },
-//	{ 0x80, 0x80, AY8910_write_port_0_w },
 	{ 0x80, 0x80, AY8910_control_port_0_w },
 	{ 0x40, 0x40, AY8910_write_port_0_w },
 	{ -1 }	/* end of table */
 };
-#endif
+
+
 
 INPUT_PORTS_START( input_ports )
-	PORT_START	/* IN0 - DSW1 */
-	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_START      /* DSW1 */
+	PORT_DIPNAME( 0x03, 0x00, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x03, "4 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x01, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x02, "1 Coin/3 Credits" )
+	PORT_DIPNAME( 0x0c, 0x00, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x0c, "4 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x08, "3 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x04, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPNAME( 0x10, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x10, "5" )
+	PORT_DIPNAME( 0x20, 0x00, "Bonus", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Every 10000" )
+	PORT_DIPSETTING(    0x20, "10000 Only" )
+	PORT_DIPNAME( 0x40, 0x00, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Start Level 1" )
+	PORT_DIPSETTING(    0x40, "Start Level 5" )
+	PORT_DIPNAME( 0x80, 0x00, "Number of Beans", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "x1" )
+	PORT_DIPSETTING(    0x80, "x2" )
 
-	PORT_START	/* DSW2 */
-	PORT_BIT( 0xdf, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_START      /* DSW2 */
+	PORT_DIPNAME( 0x01, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x01, "On" )
+	PORT_DIPNAME( 0x02, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x02, "On" )
+	PORT_DIPNAME( 0x04, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x04, "On" )
+	PORT_DIPNAME( 0x08, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x08, "On" )
+	PORT_DIPNAME( 0x10, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x10, "On" )
 	PORT_BITX ( 0x20, 0x00, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
 	PORT_DIPSETTING ( 0x00, "Off" )
 	PORT_DIPSETTING ( 0x20, "On" )
+	PORT_DIPNAME( 0x40, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x40, "On" )
+	PORT_BITX ( 0x80, 0x00, IPT_DIPSWITCH_NAME | IPF_CHEAT, "Infinite Lives", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_DIPSETTING ( 0x00, "Off" )
+	PORT_DIPSETTING ( 0x80, "On" )
 
-	PORT_START	/* IN2 */
+	PORT_START      /* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
-	PORT_BIT( 0x1c, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START	/* IN3 */
+	PORT_START      /* IN3 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_PLAYER2 )
-	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
 
-	PORT_START	/* IN4 */
+	PORT_START      /* IN4 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY )
-	PORT_BIT( 0xe0, IP_ACTIVE_HIGH, IPT_UNUSED )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0xfc, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* ?? */
 
-	PORT_START	/* IN5 */
+	PORT_START      /* IN5 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0xe0, IP_ACTIVE_HIGH, IPT_UNUSED )
-
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0xfc, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* ?? */
 INPUT_PORTS_END
 
 
@@ -225,71 +206,29 @@ static struct GfxLayout charlayout =
 	1024,	/* 1024 characters */
 	2,	/* 2 bits per pixel */
 	{ 0, 1024*8*8 },	/* the two bitplanes for 4 pixels are packed into one byte */
-	{ 7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8	/* every char takes 16 bytes */
 };
 
-static struct GfxLayout spritelayout =
-{
-	16,16,	/* 16*16 sprites */
-	256,	/* 256 sprites */
-	2,	/* 2 bits per pixel */
-	{ 0, 256*16*16 },	/* the bitplanes are separated */
-	{ 23*8, 22*8, 21*8, 20*8, 19*8, 18*8, 17*8, 16*8,
-			7*8, 6*8, 5*8, 4*8, 3*8, 2*8, 1*8, 0*8 },
-	{ 0, 1, 2, 3, 4, 5, 6, 7,	/* pretty straightforward layout */
-			8*8+0, 8*8+1, 8*8+2, 8*8+3, 8*8+4, 8*8+5, 8*8+6, 8*8+7 },
-	32*8	/* every sprite takes 32 consecutive bytes */
-};
-
-
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,    0, 64 },
-	{ 1, 0x0000, &spritelayout,  0, 64 },
+	{ 1, 0x0000, &charlayout, 0, 8 },
 	{ -1 } /* end of array */
 };
 
 
 
-/* these are NOT the original color PROMs - they come from Espial */
-static unsigned char color_prom[] =
+/* Sound stuff */
+static struct AY8910interface ay8910_interface =
 {
-	/* 1f - palette low 4 bits */
-	0x00,0x00,0x06,0x00,0x03,0x00,0x06,0x00,0x00,0x00,0x07,0x00,0x00,0x08,0x08,0x05,
-	0x00,0x0D,0x08,0x0A,0x00,0x00,0x00,0x00,0x00,0x0E,0x06,0x0F,0x00,0x00,0x00,0x00,
-	0x00,0x0F,0x08,0x07,0x00,0x06,0x0F,0x0C,0x00,0x06,0x00,0x09,0x00,0x06,0x06,0x07,
-	0x00,0x00,0x00,0x0F,0x00,0x00,0x00,0x06,0x00,0x00,0x00,0x07,0x00,0x00,0x00,0x0F,
-	0x00,0x06,0x07,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-	0x00,0x0F,0x05,0x0B,0x00,0x00,0x00,0x00,0x00,0x0F,0x07,0x06,0x00,0x0E,0x03,0x06,
-	0x00,0x00,0x00,0x00,0x00,0x05,0x08,0x08,0x0D,0x02,0x06,0x00,0x0D,0x05,0x06,0x00,
-	0x0D,0x07,0x06,0x00,0x00,0x07,0x06,0x0F,0x04,0x0F,0x07,0x06,0x0D,0x0F,0x07,0x06,
-	0x04,0x00,0x00,0x06,0x04,0x09,0x00,0x06,0x04,0x06,0x03,0x02,0x00,0x07,0x06,0x00,
-	0x00,0x00,0x06,0x04,0x04,0x00,0x06,0x00,0x00,0x04,0x02,0x05,0x0D,0x08,0x08,0x08,
-	0x04,0x0D,0x03,0x0B,0x04,0x0B,0x03,0x0D,0x04,0x0D,0x03,0x00,0x04,0x0B,0x03,0x00,
-	0x02,0x00,0x03,0x08,0x05,0x00,0x03,0x08,0x07,0x00,0x03,0x08,0x0D,0x05,0x06,0x04,
-	0x00,0x08,0x03,0x08,0x0D,0x0D,0x00,0x02,0x00,0x0D,0x0C,0x02,0x00,0x00,0x00,0x00,
-	0x0D,0x00,0x00,0x00,0x0D,0x00,0x06,0x00,0x00,0x0C,0x0E,0x02,0x00,0x02,0x03,0x08,
-	0x00,0x0C,0x0E,0x02,0x00,0x0C,0x0D,0x08,0x0D,0x0B,0x02,0x03,0x0D,0x02,0x0B,0x0B,
-	0x00,0x05,0x07,0x04,0x00,0x03,0x0C,0x08,0x0D,0x0A,0x06,0x00,0x0D,0x0A,0x06,0x00,
-	/* 1h - palette high 4 bits */
-	0x00,0x08,0x0F,0x0F,0x08,0x00,0x0F,0x00,0x00,0x00,0x00,0x00,0x00,0x0C,0x0E,0x0F,
-	0x00,0x0F,0x0A,0x05,0x00,0x00,0x00,0x00,0x00,0x07,0x0F,0x0E,0x00,0x00,0x00,0x00,
-	0x00,0x0F,0x07,0x07,0x00,0x0F,0x0E,0x0F,0x00,0x0F,0x0D,0x0E,0x00,0x0F,0x07,0x06,
-	0x00,0x00,0x00,0x0E,0x00,0x00,0x00,0x0F,0x00,0x00,0x00,0x0F,0x00,0x00,0x00,0x01,
-	0x00,0x0F,0x03,0x0C,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
-	0x00,0x0F,0x0E,0x08,0x00,0x00,0x00,0x00,0x00,0x03,0x01,0x0F,0x00,0x03,0x0A,0x0F,
-	0x00,0x00,0x00,0x00,0x00,0x0F,0x0E,0x0C,0x0E,0x01,0x0F,0x0F,0x0E,0x01,0x0F,0x0F,
-	0x0E,0x04,0x0F,0x0F,0x00,0x01,0x0F,0x03,0x0A,0x02,0x01,0x0F,0x01,0x02,0x01,0x0F,
-	0x0A,0x00,0x0F,0x0F,0x0A,0x09,0x00,0x0F,0x0A,0x0F,0x04,0x04,0x00,0x04,0x0F,0x0F,
-	0x00,0x08,0x0F,0x0A,0x0A,0x08,0x0F,0x0F,0x00,0x0A,0x0A,0x0E,0x01,0x06,0x0B,0x01,
-	0x0A,0x0E,0x0A,0x0E,0x0A,0x0E,0x0A,0x0E,0x0A,0x0E,0x0A,0x00,0x0A,0x0E,0x0A,0x00,
-	0x01,0x0A,0x0F,0x05,0x01,0x0A,0x0F,0x05,0x01,0x0A,0x0F,0x05,0x01,0x0E,0x0F,0x0C,
-	0x00,0x0E,0x0F,0x09,0x01,0x05,0x04,0x0E,0x04,0x05,0x01,0x0E,0x00,0x00,0x00,0x00,
-	0x01,0x00,0x00,0x00,0x01,0x04,0x0F,0x00,0x00,0x0A,0x0F,0x0A,0x00,0x0E,0x0F,0x09,
-	0x00,0x0A,0x0F,0x0A,0x00,0x0A,0x0F,0x05,0x01,0x08,0x04,0x05,0x01,0x04,0x08,0x05,
-	0x00,0x0A,0x0F,0x04,0x00,0x0A,0x0F,0x09,0x01,0x00,0x02,0x00,0x01,0x00,0x02,0x00
+	1,	/* 1 chip */
+	1789750,	/* 1.78975 MHz?????? */
+	{ 0x20ff },
+	{ soundlatch_r },
+	{ jack_portB_r },
+	{ 0 },
+	{ 0 }
 };
 
 
@@ -300,46 +239,43 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_Z80,
-			3072000,	/* 3.072 Mhz */
+			3072000,	/* 3.072 Mhz? */
 			0,
 			readmem,writemem,0,0,
 			interrupt,1
-#ifdef TRYSOUND
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU,
-			2100000,	/* 2 Mhz?????? */
+			1789750,	/* 1.78975 Mhz?????? */
 			2,	/* memory region #2 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
-			ignore_interrupt,1
-#endif
+			ignore_interrupt,0	/* IRQs are caused by the main CPU */
 		}
 	},
-	60,
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
 	/* video hardware */
-	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	gfxdecodeinfo,
-	256,256,
-	espial_vh_convert_color_prom,
+	32,8*4,
+	jack_vh_convert_color_prom,
 
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
 	0,
 	generic_vh_start,
 	generic_vh_stop,
 	jack_vh_screenrefresh,
 
 	/* sound hardware */
-#ifdef TRYSOUND
-	0,
-	jack_sh_start,
-	AY8910_sh_stop,
-	AY8910_sh_update
-#else
-	0,0,0,0
-#endif
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&ay8910_interface
+		}
+	}
 };
 
 
@@ -356,9 +292,9 @@ ROM_START( jack_rom )
 	ROM_LOAD( "jgk.j6", 0x1000, 0x1000, 0x97ab32d9 )
 	ROM_LOAD( "jgk.j7", 0x2000, 0x1000, 0x4622cc4a )
 	ROM_LOAD( "jgk.j5", 0x3000, 0x1000, 0xbfda4dce )
-	ROM_LOAD( "jgk.j4", 0xc000, 0x1000, 0x9c7a8886 )
-	ROM_LOAD( "jgk.j2", 0xd000, 0x1000, 0xe1862056 )
-	ROM_LOAD( "jgk.j3", 0xe000, 0x1000, 0xd4cad17e )
+	ROM_LOAD( "jgk.j3", 0xc000, 0x1000, 0xd4cad17e )
+	ROM_LOAD( "jgk.j4", 0xd000, 0x1000, 0x9c7a8886 )
+	ROM_LOAD( "jgk.j2", 0xe000, 0x1000, 0xe1862056 )
 	ROM_LOAD( "jgk.j1", 0xf000, 0x1000, 0x832bfd35 )
 
 	ROM_REGION(0x4000)	/* temporary space for graphics (disposed after conversion) */
@@ -370,6 +306,48 @@ ROM_START( jack_rom )
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "jgk.j9", 0x0000, 0x1000, 0x7b878165 )
 ROM_END
+
+
+
+static int hiload(void)
+{
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x04506],"\x41\x41\x41",3) == 0 &&
+			memcmp(&RAM[0x4560],"\x41\x41\x41",3) == 0)
+	{
+		void *f;
+
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x4500],9*11);
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+static void hisave(void)
+{
+	void *f;
+	/* get RAM pointer (this game is multiCPU, we can't assume the global */
+	/* RAM pointer is pointing to the right place) */
+	unsigned char *RAM = Machine->memory_region[0];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x4500],9*11);
+		osd_fclose(f);
+	}
+}
 
 
 
@@ -385,10 +363,10 @@ struct GameDriver jack_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/,input_ports,0/*TBR*/,0/*TBR*/,0/*TBR*/,
+	input_ports,
 
-	color_prom, 0, 0,
-	ORIENTATION_DEFAULT,
+	0, 0, 0,
+	ORIENTATION_ROTATE_90,
 
-	0, 0
+	hiload, hisave
 };

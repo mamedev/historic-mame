@@ -1,6 +1,4 @@
 #include "driver.h"
-#include "sndhrdw/generic.h"
-#include "sndhrdw/8910intf.h"
 
 
 
@@ -19,7 +17,7 @@ static int frogger_timer[20] = {
 0x80, 0x90, 0x80, 0x90, 0x88, 0x98, 0x88, 0x98, 0xc0, 0xd0
 };
 
-static int frogger_portB_r(int offset)
+int frogger_portB_r(int offset)
 {
 	/* need to protect from totalcycles overflow */
 	static int last_totalcycles = 0;
@@ -53,22 +51,16 @@ void frogger_sh_irqtrigger_w(int offset,int data)
 	last = data & 0x08;
 }
 
-
-
-static struct AY8910interface interface =
+void frogger2_sh_irqtrigger_w(int offset,int data)
 {
-	1,	/* 1 chip */
-	1789750,	/* 1.78975 MHZ */
-	{ 0x60ff },
-	{ soundlatch_r },
-	{ frogger_portB_r },
-	{ 0 },
-	{ 0 }
-};
+	static int last;
 
 
+	if (last == 0 && (data & 0x01) != 0)
+	{
+		/* setting bit 0 low then high triggers IRQ on the sound CPU */
+		cpu_cause_interrupt(1,0xff);
+	}
 
-int frogger_sh_start(void)
-{
-	return AY8910_sh_start(&interface);
+	last = data & 0x01;
 }

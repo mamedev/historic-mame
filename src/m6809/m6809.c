@@ -53,14 +53,14 @@ int	m6809_ICount=50000;
 int m6809_Flags;	/* flags for speed optimization */
 
 /* flag, handlers for speed optimization */
-static int (*rd_u_handler)();
-static int (*rd_u_handler_wd)();
-static int (*rd_s_handler)();
-static int (*rd_s_handler_wd)();
-static void (*wr_u_handler)();
-static void (*wr_u_handler_wd)();
-static void (*wr_s_handler)();
-static void (*wr_s_handler_wd)();
+static int (*rd_u_handler)(int);
+static int (*rd_u_handler_wd)(int);
+static int (*rd_s_handler)(int);
+static int (*rd_s_handler_wd)(int);
+static void (*wr_u_handler)(int,int);
+static void (*wr_u_handler_wd)(int,int);
+static void (*wr_s_handler)(int,int);
+static void (*wr_s_handler_wd)(int,int);
 
 /* these are re-defined in m6809.h TO RAM, ROM or functions in cpuintrf.c */
 #define M_RDMEM(A)      M6809_RDMEM(A)

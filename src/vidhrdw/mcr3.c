@@ -13,6 +13,9 @@ unsigned char *mcr3_paletteram;
 
 static char sprite_transparency[512]; /* no mcr3 game has more than this many sprites */
 
+static int scroll_offset;
+static int draw_lamps;
+
 
 /***************************************************************************
 
@@ -315,8 +318,19 @@ int spyhunt_vh_start(void)
 	}
 
 	spyhunt_scrollx = spyhunt_scrolly = 0;
+	scroll_offset = -16;
+	draw_lamps = 1;
 
 	return 0;
+}
+
+
+int crater_vh_start(void)
+{
+	int result = spyhunt_vh_start();
+	scroll_offset = -96;
+	draw_lamps = 0;
+	return result;
 }
 
 
@@ -352,6 +366,11 @@ void spyhunt_vh_screenrefresh(struct osd_bitmap *bitmap)
 				(code & 0x3f) | ((code & 0x80) >> 1),
 				1,0,(code & 0x40),64*mx,32*my,
 				NULL,TRANSPARENCY_NONE,0);
+
+			drawgfx(backbitmap,Machine->gfx[1],
+				(code & 0x3f) | ((code & 0x80) >> 1),
+				1,0,(code & 0x40),64*mx + 32,32*my,
+				NULL,TRANSPARENCY_NONE,0);
 		}
    }
 
@@ -359,7 +378,7 @@ void spyhunt_vh_screenrefresh(struct osd_bitmap *bitmap)
    {
 		int scrollx,scrolly;
 
-		scrollx = -spyhunt_scrollx * 2 - 16;
+		scrollx = -spyhunt_scrollx * 2 + scroll_offset;
 		scrolly = -spyhunt_scrolly * 2;
 
 		copyscrollbitmap(bitmap,backbitmap,1,&scrollx,1,&scrolly,&clip,TRANSPARENCY_NONE,0);
@@ -377,10 +396,10 @@ void spyhunt_vh_screenrefresh(struct osd_bitmap *bitmap)
       flags = spriteram[offs+1];
       flipx = flags & 0x10;
       flipy = flags & 0x20;
-      sx = (spriteram[offs+3]-3)*2;
+      sx = (spriteram[offs+3])*2;
       sy = (241-spriteram[offs])*2;
 
-      drawgfx(bitmap,Machine->gfx[1],
+      drawgfx(bitmap,Machine->gfx[2],
 	      code,0,flipx,flipy,sx-16,sy+4,
 	      &clip,TRANSPARENCY_PEN,0);
 
@@ -410,23 +429,26 @@ void spyhunt_vh_screenrefresh(struct osd_bitmap *bitmap)
 	      mx = (offs) / 32;
 	      my = (offs) % 32;
 
-	      drawgfx(bitmap,Machine->gfx[2],
+	      drawgfx(bitmap,Machine->gfx[3],
 		      ch,
 		      0,0,0,16*mx-16,16*my,
 		      &clip,TRANSPARENCY_PEN,0);
 		}
 	}
-	
+
 	/* lamp indicators */
-	sprintf (buffer, "%s  %s  %s  %s  %s",
-				spyhunt_lamp[0] ? "OIL" : "   ",
-				spyhunt_lamp[1] ? "MISSILE" : "       ",
-				spyhunt_lamp[2] ? "VAN" : "   ",
-				spyhunt_lamp[3] ? "SMOKE" : "     ",
-				spyhunt_lamp[4] ? "GUNS" : "    ");
-	for (offs = 0; offs < 30; offs++)
-		drawgfx(bitmap,Machine->gfx[2],
-			buffer[offs],
-			0,0,0,30*16,(29-offs)*16,
-			&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	if (draw_lamps)
+	{
+		sprintf (buffer, "%s  %s  %s  %s  %s",
+					spyhunt_lamp[0] ? "OIL" : "   ",
+					spyhunt_lamp[1] ? "MISSILE" : "       ",
+					spyhunt_lamp[2] ? "VAN" : "   ",
+					spyhunt_lamp[3] ? "SMOKE" : "     ",
+					spyhunt_lamp[4] ? "GUNS" : "    ");
+		for (offs = 0; offs < 30; offs++)
+			drawgfx(bitmap,Machine->gfx[3],
+				buffer[offs],
+				0,0,0,30*16,(29-offs)*16,
+				&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	}
 }

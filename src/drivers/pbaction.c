@@ -24,8 +24,7 @@ e600      interrupt enable
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/generic.h"
-#include "sndhrdw/8910intf.h"
+#include "machine/z80fmly.h"
 
 
 extern unsigned char *pbaction_videoram2,*pbaction_colorram2;
@@ -39,22 +38,6 @@ void pbaction_vh_stop(void);
 void pbaction_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 void pbaction_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-int pbaction_sh_interrupt(void);
-int pbaction_sh_start(void);
-void pbaction_sh_stop(void);
-void pbaction_sh_update(void);
-
-void pbaction_sh_0_w( int offset , int data );
-void pbaction_sh_1_w( int offset , int data );
-void pbaction_sh_2_w( int offset , int data );
-
-void pbaction_pio_w( int offset , int data );
-int  pbaction_pio_r( int offset );
-void pbaction_ctc_w( int offset , int data );
-int  pbaction_ctc_r( int offset );
-
-extern unsigned char *pbaction_sound_command;
-void pbaction_sound_latch( int offset , int data );
 
 
 static struct MemoryReadAddress readmem[] =
@@ -83,45 +66,10 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xe000, 0xe07f, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0xe400, 0xe5ff, pbaction_paletteram_w, &pbaction_paletteram },
 	{ 0xe600, 0xe600, interrupt_enable_w },
-	{ 0xe800, 0xe800, sound_command_w },	/* ??? */
+	{ 0xe800, 0xe800, soundlatch_w },	/* ??? */
 	{ -1 }  /* end of table */
 };
 
-#ifdef TRY_SOUND
-static struct MemoryReadAddress sound_readmem[] =
-{
-	{ 0x0000, 0x1fff, MRA_ROM },
-	{ 0x4000, 0x47ff, MRA_RAM },
-	{ -1 }  /* end of table */
-};
-
-static struct MemoryWriteAddress sound_writemem[] =
-{
-	{ 0x0000, 0x1fff, MWA_ROM },
-	{ 0x4000, 0x47ff, MWA_RAM },
-	{ -1 }  /* end of table */
-};
-
-static struct IOReadPort sound_readport[] =
-{
-//	{ 0x00, 0x03, pbaction_pio_r },
-//	{ 0x08, 0x0b, pbaction_ctc_r },
-	{ -1 }	/* end of table */
-};
-
-static struct IOWritePort sound_writeport[] =
-{
-//	{ 0x00, 0x03, pbaction_pio_w },
-//	{ 0x08, 0x0b, pbaction_ctc_w },
-	{ 0x10, 0x10, AY8910_control_port_0_w },
-	{ 0x11, 0x11, AY8910_write_port_0_w },
-	{ 0x20, 0x20, AY8910_control_port_1_w },
-	{ 0x21, 0x21, AY8910_write_port_1_w },
-	{ 0x30, 0x30, AY8910_control_port_2_w },
-	{ 0x31, 0x31, AY8910_write_port_2_w },
-	{ -1 }	/* end of table */
-};
-#endif
 
 
 INPUT_PORTS_START( input_ports )
@@ -279,20 +227,10 @@ static struct MachineDriver machine_driver =
 			0,
 			readmem,writemem,0,0,
 			nmi_interrupt,1
-#ifdef TRY_SOUND
-		},
-		{
-			CPU_Z80 | CPU_AUDIO_CPU,
-			2000000,        /* 2 Mhz? */
-			2,
-			sound_readmem,sound_writemem,
-			sound_readport,sound_writeport,
-			pbaction_sh_interrupt,10
-#endif
 		}
 	},
-	60,
-	10,	/* 10 CPU slices per frame - enough for the sound CPU to read all commands */
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	0,
 
 	/* video hardware */
@@ -308,14 +246,7 @@ static struct MachineDriver machine_driver =
 	pbaction_vh_screenrefresh,
 
 	/* sound hardware */
-#ifdef TRY_SOUND
-	0,
-	pbaction_sh_start,
-	pbaction_sh_stop,
-	pbaction_sh_update,
-#else
 	0,0,0,0
-#endif
 };
 
 
@@ -364,7 +295,7 @@ struct GameDriver pbaction_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

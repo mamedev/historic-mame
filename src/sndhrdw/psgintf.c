@@ -13,8 +13,6 @@
 #include "driver.h"
 #include "psg.h"
 #include "fm.h"
-#include "sndhrdw/psgintf.h"
-#include "sndhrdw/generic.h"
 
 extern unsigned char No_FM;
 
@@ -25,8 +23,10 @@ static int emulation_rateAY;
 static int buffer_lenAY;
 static int emulation_rateFM;
 static int buffer_lenFM;
+static int sample_bits;
 
 static struct PSGinterface *intf;
+
 
 static int FMMode;
 #define CHIP_AY8910 1
@@ -34,16 +34,8 @@ static int FMMode;
 #define CHIP_YM2203_OPL 3   /* YM2203 with OPL chip */
 
 
-static SAMPLE *bufferAY[MAX_PSG];
-#ifdef OPN_MIX
+static void *bufferAY[MAX_PSG];
 static FMSAMPLE *bufferFM[MAX_PSG];
-#else
-static FMSAMPLE *bufferFM[MAX_PSG*3];
-static int ofstA;
-static int ofstB;
-static int ofstC;
-
-#endif
 static int sample_posAY[MAX_PSG];
 static int sample_posFM[MAX_PSG];
 
@@ -51,17 +43,9 @@ static int volumeAY[MAX_PSG];
 static int volumeFM[MAX_PSG];
 
 static int channelAY;
-#ifdef OPN_MIX
-static int channelFM;
-#else
-static int channelFMa;
-static int channelFMb;
-static int channelFMc;
-#endif
 
-#ifdef macintosh
-#include "mac8910.c"
-#endif
+static int channelFM;
+
 
 unsigned char AYPortHandler(int num,int port, int iswrite, unsigned char val)
 {
@@ -99,7 +83,7 @@ else if (errorlog) fprintf(errorlog,"PC %04x: warning - read 8910 #%d Port B\n",
 
 int PSG_sh_start(struct PSGinterface *interface , int type , int rate)
 {
-	int i,j;
+	int i;//,j;
 
 	intf = interface;
 
@@ -108,12 +92,8 @@ int PSG_sh_start(struct PSGinterface *interface , int type , int rate)
 
 	buffer_lenFM = rate / Machine->drv->frames_per_second;
 	emulation_rateFM = buffer_lenFM * Machine->drv->frames_per_second;
+	sample_bits = Machine->sample_bits;
 
-#ifndef OPN_MIX
-	ofstA = intf->num;
-	ofstB = ofstA*2;
-	ofstC = ofstB*3;
-#endif
 	FMMode = type;
 
 	for (i = 0;i < MAX_8910;i++)
@@ -122,25 +102,19 @@ int PSG_sh_start(struct PSGinterface *interface , int type , int rate)
 		sample_posAY[i] = 0;
 
 		bufferAY[i] = 0;
-#ifdef OPN_MIX
 		bufferFM[i] = 0;
-#else
-		bufferFM[i*3  ] = 0;
-		bufferFM[i*3+1] = 0;
-		bufferFM[i*3+2] = 0;
-#endif
 	}
 	/* SSG initialize */
 	for (i = 0;i < intf->num;i++)
 	{
-		if ((bufferAY[i] = malloc(sizeof(SAMPLE)*buffer_lenAY)) == 0)
+		if ((bufferAY[i] = malloc((sample_bits/8)*buffer_lenAY)) == 0)
 		{
 			while (--i >= 0) free(bufferAY[i]);
 			return 1;
 		}
 //		for (j = 0;j < buffer_lenAY ;j++) bufferAY[i][j] = AUDIO_CONV(0);
 	}
-	if (AYInit(intf->num,intf->clock,emulation_rateAY,buffer_lenAY,bufferAY) == 0)
+	if (AYInit(intf->num,intf->clock,emulation_rateAY,sample_bits,buffer_lenAY,bufferAY) == 0)
 	{
 		channelAY = get_play_channels( intf->num );
 
@@ -166,38 +140,26 @@ int PSG_sh_start(struct PSGinterface *interface , int type , int rate)
 		if( FMMode == CHIP_AY8910 ) return 0; /* not use OPN */
 
 		/* OPN initialize */
-#ifdef OPN_MIX
 		for (i = 0;i < intf->num;i++)
-#else
-		for (i = 0;i < intf->num *3;i++)
-#endif
 		{
-			if ((bufferFM[i] = malloc(sizeof(FMSAMPLE)*buffer_lenFM)) == 0)
+			if ((bufferFM[i] = malloc((sample_bits/8)*buffer_lenFM)) == 0)
 			{
 			while (--i >= 0) free(bufferFM[i]);
 			for (i = 0;i < intf->num;i++) free(bufferAY[i]);
 			return 1;
 			}
-			for (j = 0;j < buffer_lenFM ;j++) bufferFM[i][j] = FMOUT_0;
+//			for (j = 0;j < buffer_lenFM ;j++) bufferFM[i][j] = FMOUT_0;
 		}
 
-		if (OPNInit(intf->num,intf->clock,emulation_rateFM,buffer_lenFM,bufferFM) == 0)
+		if (OPNInit(intf->num,intf->clock,emulation_rateFM,sample_bits,buffer_lenFM,bufferFM) == 0)
 		{
-#ifdef OPN_MIX
 			channelFM = get_play_channels( intf->num );
-#else
-			channelFMa = get_play_channels( intf->num * 3 );
-			channelFMb = channelFMa + intf->num;
-			channelFMc = channelFMb + intf->num;
-#endif
+			for (i = 0; i < intf->num; i++)
+				OPNSetIrqHandler (i, intf->handler[i]);
 			return 0;
 		}
 		/* error */
-#ifdef OPN_MIX
 		for (i = 0;i < intf->num;i++) free(bufferFM[i]);
-#else
-		for (i = 0;i < intf->num *3;i++) free(bufferFM[i]);
-#endif
 	}
 	for (i = 0;i < intf->num;i++) free(bufferAY[i]);
 	return 1;
@@ -219,7 +181,7 @@ int YM2203_sh_start(struct PSGinterface *interface)
 
 void YM2203_sh_stop(void)
 {
-	int i,j;
+	int i;
 
 	AYShutdown();
 	for (i = 0;i < intf->num;i++){
@@ -230,24 +192,17 @@ void YM2203_sh_stop(void)
 	{
 		OPNShutdown();
 		for (i = 0;i < intf->num;i++){
-#ifdef OPN_MIX
 			free(bufferFM[i]);
-#else
-			for (j = 0;j < 3;j++){
-				free(bufferFM[i*3+j]);
-			}
-#endif
 		}
 	}
 }
 
 static void update_ay(int chip)
 {
-	int totcycles,leftcycles,newpos;
+	int newpos;
 
-	totcycles = cpu_getfperiod();
-	leftcycles = cpu_getfcount();
-	newpos = buffer_lenAY * (totcycles-leftcycles) / totcycles;
+
+	newpos = cpu_scalebyfcount(buffer_lenAY);	/* get current position based on the timer */
 
 	if( newpos - sample_posAY[chip] < MIN_SLICE_8910 ) return;
 	AYUpdateOne(chip, newpos );
@@ -257,11 +212,10 @@ static void update_ay(int chip)
 
 static inline void update_fm(int chip)
 {
-	int totcycles,leftcycles,newpos;
+	int newpos;
 
-	leftcycles = cpu_getfcount();
-	totcycles = cpu_getfperiod();
-	newpos = buffer_lenFM * (totcycles-leftcycles) / totcycles;
+
+	newpos = cpu_scalebyfcount(buffer_lenFM);	/* get current position based on the timer */
 
 	if( newpos - sample_posFM[chip] < MIN_SLICE_2203 ) return;
 	OPNUpdateOne( chip , newpos );
@@ -489,15 +443,16 @@ void PSG_sh_update(void)
 		for (i = 0;i < intf->num;i++)
 		{
 			sample_posAY[i] = sample_posFM[i] = 0;
-#ifdef OPN_MIX
-			osd_play_streamed_sample(channelAY+i,bufferAY[i],buffer_lenFM,emulation_rateFM,volumeAY[i]>>2);
-			osd_play_streamed_sample(channelFM+i,bufferFM[i],buffer_lenFM,emulation_rateFM,volumeFM[i]);
-#else
-			osd_play_streamed_sample(channelAY +i,bufferAY[i]    ,buffer_lenFM,emulation_rateFM,volumeAY[i]);
-			osd_play_streamed_sample(channelFMa+i,bufferFM[i*3  ],buffer_lenFM,emulation_rateFM,volumeFM[i]);
-			osd_play_streamed_sample(channelFMb+i,bufferFM[i*3+1],buffer_lenFM,emulation_rateFM,volumeFM[i]);
-			osd_play_streamed_sample(channelFMc+i,bufferFM[i*3+2],buffer_lenFM,emulation_rateFM,volumeFM[i]);
-#endif
+			if( sample_bits == 16 )
+			{
+				osd_play_streamed_sample_16(channelAY+i,bufferAY[i],buffer_lenFM,emulation_rateFM,volumeAY[i]);
+				osd_play_streamed_sample_16(channelFM+i,bufferFM[i],buffer_lenFM,emulation_rateFM,volumeFM[i]);
+			}
+			else
+			{
+				osd_play_streamed_sample(channelAY+i,bufferAY[i],buffer_lenFM,emulation_rateFM,volumeAY[i]);
+				osd_play_streamed_sample(channelFM+i,bufferFM[i],buffer_lenFM,emulation_rateFM,volumeFM[i]);
+			}
 		}
 	}else{
 		if( FMMode == CHIP_YM2203_OPL ){	/* OPL chip emurator */
@@ -507,7 +462,10 @@ void PSG_sh_update(void)
 		for (i = 0;i < intf->num;i++)
 		{
 			sample_posAY[i] = 0;
-			osd_play_streamed_sample(channelAY+i,bufferAY[i],buffer_lenAY,emulation_rateAY,volumeAY[i]);
+			if( sample_bits == 16 )
+				osd_play_streamed_sample_16(channelAY+i,bufferAY[i],buffer_lenAY,emulation_rateAY,volumeAY[i]);
+			else
+				osd_play_streamed_sample(channelAY+i,bufferAY[i],buffer_lenAY,emulation_rateAY,volumeAY[i]);
 		}
 	}
 

@@ -62,7 +62,6 @@ void carnival_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 void carnival_sh_port1_w(int offset, int data);			/* MJC */
 void carnival_sh_port2_w(int offset, int data);			/* MJC */
-void carnival_sh_update(void);
 
 void carnival_colour_bank_w(int offset, int data);		/* MJC */
 
@@ -161,6 +160,14 @@ static unsigned char carnival_color_prom[] =
 };
 
 
+
+static struct Samplesinterface samples_interface =
+{
+	8	/* 8 channels */
+};
+
+
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -173,7 +180,7 @@ static struct MachineDriver machine_driver =
 			carnival_interrupt,1
 		}
 	},
-	60,
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* single CPU, no need for interleaving */
 	0,
 
@@ -190,11 +197,15 @@ static struct MachineDriver machine_driver =
 	carnival_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	0,
-	0,
-	carnival_sh_update											/* MJC */
+	0,0,0,0,
+	{
+		{
+			SOUND_SAMPLES,
+			&samples_interface
+		}
+	}
 };
+
 
 
 /***************************************************************************
@@ -296,7 +307,7 @@ struct GameDriver carnival_driver =
 	carnival_sample_names,										/* MJC */
 	0,	/* sound_prom */
 
-	0, input_ports, 0, 0, 0,
+	input_ports,
 
 	carnival_color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -350,7 +361,7 @@ struct GameDriver pulsar_driver =
 	0,
 	0,	/* sound_prom */
 
-	0, input_ports, 0, 0, 0,
+	input_ports,
 
 	pulsar_color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -405,7 +416,7 @@ struct GameDriver invho2_driver =
 	0,
 	0,	/* sound_prom */
 
-	0, input_ports, 0, 0, 0,
+	input_ports,
 
 	inv_hd2_color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -450,7 +461,7 @@ static struct MachineDriver sspaceattack_machine_driver =
 			carnival_interrupt,1
 		}
 	},
-	60,
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* single CPU, no need for interleaving */
 	0,
 
@@ -473,14 +484,21 @@ static struct MachineDriver sspaceattack_machine_driver =
 	0
 };
 
-INPUT_PORTS_START( sspaceat_input_ports )
 
+
+INPUT_PORTS_START( sspaceat_input_ports )
 		PORT_START	/* Dip Switch */
-        PORT_DIPNAME( 0x0E, 0x0E, "Lives", IP_KEY_NONE )
-        PORT_DIPSETTING(    0x0E, "3" )
-        PORT_DIPSETTING(    0x0C, "4" )
-        PORT_DIPSETTING(    0x0A, "5" )
+        PORT_DIPNAME( 0x0e, 0x0e, "Lives", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x0e, "3" )
+        PORT_DIPSETTING(    0x0c, "4" )
+        PORT_DIPSETTING(    0x0a, "5" )
         PORT_DIPSETTING(    0x06, "6" )
+/*
+        PORT_DIPSETTING(    0x00, "4" )
+        PORT_DIPSETTING(    0x04, "4" )
+        PORT_DIPSETTING(    0x08, "4" )
+        PORT_DIPSETTING(    0x02, "5" )
+*/
 
         PORT_START /* IN1 */
         PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
@@ -496,8 +514,9 @@ INPUT_PORTS_START( sspaceat_input_ports )
         PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_VBLANK )
 		PORT_BITX(0x80, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE,
 				"Coin", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 18 )
-
 INPUT_PORTS_END
+
+
 
 static unsigned char sspaceat_color_prom[] =
 {
@@ -520,7 +539,7 @@ struct GameDriver sspaceat_driver =
 	0,
 	0,	/* sound_prom */
 
-	0, sspaceat_input_ports, 0, 0, 0,
+	sspaceat_input_ports,
 
 	sspaceat_color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -589,7 +608,7 @@ struct GameDriver invinco_driver =
 	0,
 	0,	/* sound_prom */
 
-	0, invinco_input_ports, 0, 0, 0,
+	invinco_input_ports,
 
 	invinco_color_prom, 0, 0,
 	ORIENTATION_DEFAULT,

@@ -14,11 +14,13 @@ static int irq_enabled;
 static int nmi_enabled;
 int berzerk_irq_end_of_screen;
 
+int berzerkplayvoice;
+
 static int int_count;
 
 
 
-void berzerk_init_machine()
+void berzerk_init_machine(void)
 {
   int i;
 
@@ -74,7 +76,15 @@ int berzerk_led_off_w(int offset)
 	return 0;
 }
 
-int berzerk_interrupt()
+int berzerk_voiceboard_read(int offset)
+{
+   if (!berzerkplayvoice)
+      return 0;
+   else
+      return 0x40;
+}
+
+int berzerk_interrupt(void)
 {
   int_count++;
 

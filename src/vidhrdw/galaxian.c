@@ -22,29 +22,28 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-
-
 static struct rectangle spritevisiblearea =
 {
-	2*8, 32*8-1,
+	2*8+1, 32*8-1,
 	2*8, 30*8-1
 };
 static struct rectangle spritevisibleareaflipx =
 {
-	0*8, 30*8-1,
+	0*8, 30*8-2,
 	2*8, 30*8-1
 };
-
-
 
 #define MAX_STARS 250
 #define STARS_COLOR_BASE 32
 
 unsigned char *galaxian_attributesram;
 unsigned char *galaxian_bulletsram;
+
 int galaxian_bulletsram_size;
 static int stars_on,stars_blink;
-static int stars_type;	/* 0 = Galaxian stars  1 = Scramble stars */
+static int stars_type;	/* 0 = Galaxian stars */
+						/* 1 = Scramble stars */
+						/* 2 = Rescue stars (same as Scramble, but only half screen) */
 static unsigned int stars_scroll;
 
 struct star
@@ -57,7 +56,9 @@ static int gfx_bank;	/* used by Pisces and "japirem" only */
 static int gfx_extend;	/* used by Moon Cresta only */
 static int bank_mask;	/* different games have different gfx bank switching */
 static int flipscreen[2];
-static int BackGround;	/* MJC 051297 */
+
+static int BackGround;					/* MJC 051297 */
+static unsigned char backcolour[256];  	/* MJC 220198 */
 
 /***************************************************************************
 
@@ -138,18 +139,43 @@ void galaxian_vh_convert_color_prom(unsigned char *palette, unsigned char *color
 		*(palette++) = map[bits];
 	}
 
-	/* use an otherwise unused pen for the blue background */
-	opalette[3*4] = 0;
-	opalette[3*4 + 1] = 0;
-	opalette[3*4 + 2] = 0x55;
-
-
 	/* characters and sprites use the same palette */
 	for (i = 0;i < TOTAL_COLORS(0);i++)
 	{
 		if (i & 3) COLOR(0,i) = i;
 		else COLOR(0,i) = 0;	/* 00 is always black, regardless of the contents of the PROM */
 	}
+
+    /* colours for alternate background */
+
+    if (Machine->drv->total_colors == 224)
+    {
+    	/* Graduated Blue */
+
+    	for (i=0;i<64;i++)
+        {
+        	opalette[64*3 + i*3 + 0] = 0;
+        	opalette[64*3 + i*3 + 1] = i * 2;
+        	opalette[64*3 + i*3 + 2] = i * 4;
+        }
+
+        /* Graduated Brown */
+
+    	for (i=0;i<64;i++)
+        {
+        	opalette[128*3 + i*3 + 0] = i * 3;
+        	opalette[128*3 + i*3 + 1] = i * 1.5;
+        	opalette[128*3 + i*3 + 2] = i;
+        }
+    }
+    else
+    {
+		/* use an otherwise unused pen for the standard blue background */
+
+		opalette[3*4] = 0;
+		opalette[3*4 + 1] = 0;
+		opalette[3*4 + 2] = 0x55;
+    }
 
 	/* bullets can be either white or yellow */
 
@@ -161,25 +187,16 @@ void galaxian_vh_convert_color_prom(unsigned char *palette, unsigned char *color
 
 void scramble_background_w(int offset, int data)	/* MJC 051297 */
 {
-	int i,NewBackGround;
-
-    if (data & 1) NewBackGround=Machine->pens[4];
-    else NewBackGround=Machine->pens[0];
-
-    if (NewBackGround != BackGround)
+	if (BackGround != data)
     {
-        BackGround = NewBackGround;
-
-        for (i=0;i<32;i+=4)
-        {
-		    Machine->gfx[0]->colortable[i] = BackGround;
-        }
-
-        memset(dirtybuffer,1,videoram_size);
+		BackGround = data;
+		memset(dirtybuffer,1,videoram_size);
     }
 
     if(errorlog) fprintf(errorlog,"background changed %d\n",data);
 }
+
+
 
 /***************************************************************************
 
@@ -192,17 +209,24 @@ static int common_vh_start(void)
 	int generator;
 	int x,y;
 
-	BackGround=Machine->pens[0];		/* MJC 051297 */
-
 	gfx_bank = 0;
 	gfx_extend = 0;
 	stars_on = 0;
+	flipscreen[0] = 0;
+	flipscreen[1] = 0;
 
 	if (generic_vh_start() != 0)
 		return 1;
 
 
+    /* Default alternate background - Solid Blue - MJC 220198 */
+
+    for(x=0;x<256;x++) backcolour[x] = Machine->pens[4];
+	BackGround=0;
+
+
 	/* precalculate the star background */
+
 	total_stars = 0;
 	generator = 0;
 
@@ -268,6 +292,64 @@ int scramble_vh_start(void)
 	bank_mask = 0;
 	stars_type = 1;
 	return common_vh_start();
+}
+
+int rescue_vh_start(void)
+{
+	int ans,x;
+
+	gfx_bank = 0;
+	gfx_extend = 0;
+	bank_mask = 0;
+	stars_type = 2;
+	ans = common_vh_start();
+
+    /* Setup background colour array (blue sky, blue sea, black bottom line) */
+
+    for (x=0;x<64;x++)
+	{
+		backcolour[x*2]   = Machine->pens[64+x];
+		backcolour[x*2+1] = Machine->pens[64+x];
+    }
+
+    for (x=0;x<60;x++)
+	{
+		backcolour[128+x*2]   = Machine->pens[68+x];
+		backcolour[128+x*2+1] = Machine->pens[68+x];
+    }
+
+    for (x=248;x<256;x++) backcolour[x] = Machine->pens[0];
+
+    return ans;
+}
+
+int minefield_vh_start(void)
+{
+	int ans,x;
+
+	gfx_bank = 0;
+	gfx_extend = 0;
+	bank_mask = 0;
+	stars_type = 2;
+	ans = common_vh_start();
+
+    /* Setup background colour array (blue sky, brown earth, black bottom line) */
+
+    for (x=0;x<64;x++)
+	{
+		backcolour[x*2]   = Machine->pens[64+x];
+		backcolour[x*2+1] = Machine->pens[64+x];
+    }
+
+    for (x=0;x<60;x++)
+	{
+		backcolour[128+x*2]   = Machine->pens[128+x];
+		backcolour[128+x*2+1] = Machine->pens[128+x];
+    }
+
+    for (x=248;x<256;x++) backcolour[x] = Machine->pens[0];
+
+    return ans;
 }
 
 int ckongs_vh_start(void)
@@ -351,7 +433,6 @@ void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
 	int i,offs;
 
-
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
 	for (offs = videoram_size - 1;offs >= 0;offs--)
@@ -366,9 +447,8 @@ void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap)
 			sx = offs % 32;
 			sy = offs / 32;
 
-			if (flipscreen[0]) sx = 31 - sx;
-			if (flipscreen[1]) sy = 31 - sy;
-
+  			if (flipscreen[0]) sx = 31 - sx;
+  			if (flipscreen[1]) sy = 31 - sy;
 
 			charcode = videoram[offs];
 
@@ -384,12 +464,95 @@ void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap)
 			if ((gfx_extend & 4) && (charcode & 0xc0) == 0x80)
 				charcode = (charcode & 0x3f) | (gfx_extend << 6);
 
- 			drawgfx(tmpbitmap,Machine->gfx[0],
-					charcode,
-					galaxian_attributesram[2 * (offs % 32) + 1] & 0x07,
-					flipscreen[0],flipscreen[1],
-					8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
+            if (BackGround)
+            {
+            	/* Fill with Background colours */
+
+            	int startx,starty,backline,j;
+
+                if (Machine->orientation & ORIENTATION_SWAP_XY)
+                {
+			        starty = backline = sx * 8;
+			        startx = sy * 8;
+
+				    if (Machine->orientation & ORIENTATION_FLIP_X)
+                	    startx = (255 - startx)-7;
+
+				    if (Machine->orientation & ORIENTATION_FLIP_Y)
+                    {
+                    	if (errorlog) fprintf(errorlog,"flip_y\n");
+					    starty = (255 - starty);
+
+				        for (i=0;i<8;i++)
+                        {
+                	        for(j=0;j<8;j++)
+                            {
+						        tmpbitmap->line[starty-i][startx+j] = backcolour[backline+i];
+                            }
+                        }
+                    }
+                    else
+                    {
+				        for (i=0;i<8;i++)
+                        {
+                	        for(j=0;j<8;j++)
+                            {
+						        tmpbitmap->line[starty+i][startx+j] = backcolour[backline+i];
+                            }
+                        }
+                    }
+                }
+                else
+                {
+			        starty = sy * 8;
+			        startx = backline = sx * 8;
+
+				    if (Machine->orientation & ORIENTATION_FLIP_Y)
+                	    starty = (255 - starty) - 7;
+
+				    if (Machine->orientation & ORIENTATION_FLIP_X)
+                    {
+					    startx = (255 - startx);
+
+				        for (i=0;i<8;i++)
+                        {
+                	        for(j=0;j<8;j++)
+                            {
+						        tmpbitmap->line[starty+i][startx-j] = backcolour[backline+j];
+                            }
+                        }
+                    }
+                    else
+                    {
+				        for (i=0;i<8;i++)
+                        {
+                	        for(j=0;j<8;j++)
+                            {
+						        tmpbitmap->line[starty][startx+j] = backcolour[backline+j];
+                            }
+                            starty++;
+                        }
+                    }
+                }
+
+                /* Overlay foreground */
+
+ 			    drawgfx(tmpbitmap,Machine->gfx[0],
+					    charcode,
+					    galaxian_attributesram[2 * (offs % 32) + 1] & 0x07,
+					    flipscreen[0],flipscreen[1],
+					    8*sx,8*sy,
+					    0,TRANSPARENCY_COLOR,0);
+            }
+            else
+            {
+ 			    drawgfx(tmpbitmap,Machine->gfx[0],
+					    charcode,
+					    galaxian_attributesram[2 * (offs % 32) + 1] & 0x07,
+					    flipscreen[0],flipscreen[1],
+					    8*sx,8*sy,
+					    0,TRANSPARENCY_NONE,0);
+            };
 		}
 	}
 
@@ -399,15 +562,21 @@ void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap)
 		int scroll[32];
 
 
-		if (flipscreen[1])
+		if (flipscreen[0])
 		{
 			for (i = 0;i < 32;i++)
-				scroll[31-i] = galaxian_attributesram[2 * i];
+			{
+				scroll[31-i] = -galaxian_attributesram[2 * i];
+				if (flipscreen[1]) scroll[31-i] = -scroll[31-i];
+			}
 		}
 		else
 		{
 			for (i = 0;i < 32;i++)
+			{
 				scroll[i] = -galaxian_attributesram[2 * i];
+				if (flipscreen[1]) scroll[i] = -scroll[i];
+			}
 		}
 
 		copyscrollbitmap(bitmap,tmpbitmap,0,0,32,scroll,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
@@ -425,7 +594,8 @@ void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap)
 		else color = 1;	/* white */
 
 		x = 255 - galaxian_bulletsram[offs + 3] - Machine->drv->gfxdecodeinfo[2].gfxlayout->width;
-		y = 256 - galaxian_bulletsram[offs + 1] - Machine->drv->gfxdecodeinfo[2].gfxlayout->height;
+		y = 255 - galaxian_bulletsram[offs + 1];
+		if (flipscreen[1]) y = 255 - y;
 
 		drawgfx(bitmap,Machine->gfx[2],
 				0,	/* this is just a line, generated by the hardware */
@@ -494,10 +664,6 @@ void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap)
 	/* draw the stars */
 	if (stars_on)
 	{
-		int bpen;
-
-		bpen = BackGround; /* MJC 051297 */
-
 		switch (stars_type)
 		{
 			case 0:	/* Galaxian stars */
@@ -525,13 +691,15 @@ void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap)
 						if (Machine->orientation & ORIENTATION_FLIP_Y)
 							y = 255 - y;
 
-						if (bitmap->line[y][x] == bpen)
+						if (bitmap->line[y][x] == Machine->pens[0] ||
+								bitmap->line[y][x] == backcolour[x])
 							bitmap->line[y][x] = stars[offs].col;
 					}
 				}
 				break;
 
 			case 1:	/* Scramble stars */
+			case 2:	/* Rescue stars */
 				for (offs = 0;offs < total_stars;offs++)
 				{
 					int x,y;
@@ -540,7 +708,8 @@ void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap)
 					x = stars[offs].x / 2;
 					y = stars[offs].y;
 
-					if ((y & 1) ^ ((x >> 4) & 1))
+					if ((stars_type != 2 || x < 128) &&	/* draw only half screen in Rescue */
+							((y & 1) ^ ((x >> 4) & 1)))
 					{
 						if (Machine->orientation & ORIENTATION_SWAP_XY)
 						{
@@ -556,7 +725,8 @@ void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap)
 						if (Machine->orientation & ORIENTATION_FLIP_Y)
 							y = 255 - y;
 
-						if (bitmap->line[y][x] == bpen)
+						if (bitmap->line[y][x] == Machine->pens[0] ||
+								bitmap->line[y][x] == backcolour[x])
 						{
 							switch (stars_blink)
 							{
@@ -592,13 +762,13 @@ int galaxian_vh_interrupt(void)
 
 
 
-int scramble_vh_interrupt()
+int scramble_vh_interrupt(void)
 {
 	static int blink_count;
 
 
 	blink_count++;
-	if (blink_count >= 43)
+	if (blink_count >= 45)
 	{
 		blink_count = 0;
 		stars_blink = (stars_blink + 1) % 4;

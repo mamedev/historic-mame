@@ -46,26 +46,15 @@ static unsigned char waveform2[32] =
    0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc, 0xcc
 };
 
-int mooncrst_sh_init(const char *gamename)
-{
-        if (Machine->samples != 0 && Machine->samples->sample[0] != 0)    /* We should check also that Samplename[0] = 0 */
-          shootsampleloaded = 1;
-        else
-          shootsampleloaded = 0;
+static int channel;
 
-        if (Machine->samples != 0 && Machine->samples->sample[1] != 0)    /* We should check also that Samplename[0] = 0 */
-          deathsampleloaded = 1;
-        else
-          deathsampleloaded = 0;
 
-        return 0;
-}
 
 void mooncrst_sound_freq_w(int offset,int data)
 {
 
-	if (data && data != 0xff) osd_adjust_sample(0,(SOUND_CLOCK/16)/(256-data)*32*F,128);
-	else osd_adjust_sample(0,1000,0);
+	if (data && data != 0xff) osd_adjust_sample(channel+0,(SOUND_CLOCK/16)/(256-data)*32*F,128);
+	else osd_adjust_sample(channel+0,1000,0);
 
 }
 
@@ -75,7 +64,7 @@ void mooncrst_noise_w(int offset,int data)
         if (deathsampleloaded)
         {
            if (data & 1 && !(LastPort1 & 1))
-              osd_play_sample(1,Machine->samples->sample[1]->data,
+              osd_play_sample(channel+1,Machine->samples->sample[1]->data,
                            Machine->samples->sample[1]->length,
                            Machine->samples->sample[1]->smpfreq,
                            Machine->samples->sample[1]->volume,0);
@@ -83,8 +72,8 @@ void mooncrst_noise_w(int offset,int data)
         }
         else
         {
-  	  if (data & 1) osd_adjust_sample(1,NOISE_RATE,255);
-	  else osd_adjust_sample(1,NOISE_RATE,0);
+  	  if (data & 1) osd_adjust_sample(channel+1,NOISE_RATE,255);
+	  else osd_adjust_sample(channel+1,NOISE_RATE,0);
         }
 }
 
@@ -100,7 +89,7 @@ void mooncrst_shoot_w(int offset,int data)
 {
 
       if (data & 1 && !(LastPort2 & 1) && shootsampleloaded)
-         osd_play_sample(2,Machine->samples->sample[0]->data,
+         osd_play_sample(channel+2,Machine->samples->sample[0]->data,
                            Machine->samples->sample[0]->length,
                            Machine->samples->sample[0]->smpfreq,
                            Machine->samples->sample[0]->volume,0);
@@ -112,6 +101,18 @@ int mooncrst_sh_start(void)
 {
 	int i;
 
+
+	channel = get_play_channels(5);
+
+	if (Machine->samples != 0 && Machine->samples->sample[0] != 0)    /* We should check also that Samplename[0] = 0 */
+	  shootsampleloaded = 1;
+	else
+	  shootsampleloaded = 0;
+
+	if (Machine->samples != 0 && Machine->samples->sample[1] != 0)    /* We should check also that Samplename[0] = 0 */
+	  deathsampleloaded = 1;
+	else
+	  deathsampleloaded = 0;
 
 	if ((tone = malloc(TONE_LENGTH)) == 0)
 		return 1;
@@ -126,12 +127,12 @@ int mooncrst_sh_start(void)
 	for (i = 0;i < TONE_LENGTH;i++)
 		tone[i] = WAVE_AMPLITUDE * sin(2*PI*i/TONE_PERIOD);
 
-        osd_play_sample(0,waveform1,32,1000,0,1);
+        osd_play_sample(channel+0,waveform1,32,1000,0,1);
         if (!deathsampleloaded)
-   	    osd_play_sample(1,noise,NOISE_LENGTH,NOISE_RATE,0,1);
+	   	    osd_play_sample(channel+1,noise,NOISE_LENGTH,NOISE_RATE,0,1);
 
-        osd_play_sample(3,waveform2,32,1000,0,1);
-        osd_play_sample(4,waveform2,32,1000,0,1);
+        osd_play_sample(channel+3,waveform2,32,1000,0,1);
+        osd_play_sample(channel+4,waveform2,32,1000,0,1);
 
 	return 0;
 }
@@ -142,11 +143,11 @@ void mooncrst_sh_stop(void)
 {
 	free(noise);
 	free(tone);
-        osd_stop_sample(0);
-        osd_stop_sample(1);
-        osd_stop_sample(2);
-        osd_stop_sample(3);
-        osd_stop_sample(4);
+	osd_stop_sample(channel+0);
+	osd_stop_sample(channel+1);
+	osd_stop_sample(channel+2);
+	osd_stop_sample(channel+3);
+	osd_stop_sample(channel+4);
 }
 
 void mooncrst_sound_freq_sel_w(int offset,int data)
@@ -171,8 +172,8 @@ void mooncrst_sh_update(void)
 {
     if (lfo_active)
     {
-      osd_adjust_sample(3,freq*32,32);
-      osd_adjust_sample(4,(freq+60)*32,32);
+      osd_adjust_sample(channel+3,freq*32,32);
+      osd_adjust_sample(channel+4,(freq+60)*32,32);
       if (t==0)
          freq-=lfo_rate;
       if (freq<=MINFREQ)
@@ -180,8 +181,8 @@ void mooncrst_sh_update(void)
     }
     else
     {
-      osd_adjust_sample(3,1000,0);
-      osd_adjust_sample(4,1000,0);
+      osd_adjust_sample(channel+3,1000,0);
+      osd_adjust_sample(channel+4,1000,0);
     }
     t++;
     if (t==3) t=0;

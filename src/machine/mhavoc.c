@@ -8,7 +8,6 @@
 ***************************************************************************/
 #include "driver.h"
 #include "vidhrdw/avgdvg.h"
-#include "sndhrdw/pokyintf.h"
 #include "m6502/m6502.h"
 
 int gamma_data;
@@ -85,8 +84,10 @@ void mhavoc_gamma_w (int offset, int data)
 	alpha_xmtd=1;
 	alpha_data = data;
 	cpu_cause_interrupt (1, INT_NMI);
-}
 
+	/* the sound CPU needs to reply in 250ms (according to Neil Bradley) */
+	timer_set (TIME_IN_USEC(250), 0, 0);
+}
 
 /* Write to the alpha processor */
 void mhavoc_alpha_w (int offset, int data)
@@ -113,14 +114,10 @@ int mhavoc_port_0_r(int offset)
 	else
 		res|=0x02;
 
-#if 0	/* does not work correct with MH */
 	if (avgdvg_done())
 		res |=0x01;
 	else
 		res &=~0x01;
-#else	/* vector generator is always ready */
-	res|=0x01;
-#endif
 
 	if (gamma_rcvd==1)
 		res |=0x08;
@@ -175,21 +172,6 @@ void mhavoc_out_1_w (int offset, int data)
 {
 	osd_led_w (1, data & 0x01);
 	osd_led_w (0, (data & 0x02)>>1);
-}
-
-int mhavoc_alpha_interrupt(void)
-{
-	update_analog_ports();	/* needed to get good key emulation */
-	if (cpu_getiloops() == 9)
-		avgdvg_clr_busy();
-	if (errorlog) fprintf (errorlog, "*** Alpha IRQ ***\n");
-	return interrupt ();
-}
-
-int mhavoc_gamma_interrupt(void)
-{
-	if (errorlog) fprintf (errorlog, "\t\t\t\t\t*** Gamma IRQ ***\n");
-	return interrupt ();
 }
 
 int mhavoc_gammaram_r (int offset)

@@ -48,7 +48,6 @@ The game uses both IRQ (mode 1) and NMI.
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/sn76496.h"
 
 
 
@@ -61,20 +60,6 @@ void gberet_vh_stop(void);
 void gberet_vh_screenrefresh(struct osd_bitmap *bitmap);
 
 int gberet_interrupt(void);
-
-
-
-static struct SN76496interface interface =
-{
-	1,	/* 1 chip */
-	3072000,	/* 3.072 Mhz???? */
-	{ 255 }
-};
-
-int gberet_sh_start(void)
-{
-	return SN76496_sh_start(&interface);
-}
 
 
 
@@ -290,19 +275,29 @@ static unsigned char color_prom[] =
 
 
 
+static struct SN76496interface sn76496_interface =
+{
+	1,	/* 1 chip */
+	1500000,	/* hand tuned, however other sources claim that */
+				/* the schematics mention a 1.78975 MHz freq) */
+	{ 255 }
+};
+
+
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
 	{
 		{
 			CPU_Z80,
-			3072000,	/* 3.072 Mhz?? */
+			3072000,	/* 3.072 MHz ?? */
 			0,
 			readmem,writemem,0,0,
 			gberet_interrupt,32	/* 1 IRQ + 16 NMI */
 		}
 	},
-	30,
+	30, DEFAULT_30HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* single CPU, no need for interleaving */
 	0,
 
@@ -319,10 +314,13 @@ static struct MachineDriver machine_driver =
 	gberet_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	gberet_sh_start,
-	SN76496_sh_stop,
-	SN76496_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_SN76496,
+			&sn76496_interface
+		}
+	}
 };
 
 
@@ -414,7 +412,7 @@ struct GameDriver gberet_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -434,7 +432,7 @@ struct GameDriver rushatck_driver =
 	0,
 	0,	/* sound_prom */
 
-	0/*TBR*/, input_ports, 0/*TBR*/, 0/*TBR*/, 0/*TBR*/,
+	input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,

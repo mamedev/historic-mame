@@ -8,9 +8,9 @@
 void load_input_port_settings(void);
 void save_input_port_settings(void);
 
-void update_analog_ports(void);
 void update_analog_port(int port);
-void update_input_ports(void);	/* called by cpu_run() */
+void update_input_ports(void);	/* called by cpuintrf.c - not for external use */
+void inputport_vblank_end(void);	/* called by cpuintrf.c - not for external use */
 
 int readinputport(int port);
 int input_port_0_r(int offset);

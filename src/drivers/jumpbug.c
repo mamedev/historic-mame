@@ -16,40 +16,7 @@ Jump Bug memory map (preliminary)
 read:
 6000      IN0
 6800      IN1
-7000      IN2 ?
-*
- * IN0 (all bits are inverted)
- * bit 7 : DOWN player 1
- * bit 6 : UP player 1
- * bit 5 : ?
- * bit 4 : SHOOT player 1
- * bit 3 : LEFT player 1
- * bit 2 : RIGHT player 1
- * bit 1 : DOWN player 2
- * bit 0 : COIN A
-*
- * IN1 (bits 2-7 are inverted)
- * bit 7 : UP player 2
- * bit 6 : Difficulty: 1 Easy, 0 Hard (according to JBE v0.5)
- * bit 5 : COIN B
- * bit 4 : SHOOT player 2
- * bit 3 : LEFT player 2
- * bit 2 : RIGHT player 2
- * bit 1 : START 2 player
- * bit 0 : START 1 player
-*
- * DSW (all bits are inverted)
- * bit 7 : ?
- * bit 6 : ?
- * bit 5 : ?
- * bit 4 : ?
- * bit 3 : \ coins: 11; coin a 1 credit, coin b 6 credits
- * bit 2 : /        10; coin a 1/2 credits, coin b 3 credits credits
-                    01; coin a 1/2 credits, coin b 1/2
-                    00; coin a 1 credit, coin b 1 credit
- * bit 1 : \ lives: 11; 5 cars, 10; 4 cars,
- * bit 0 : /        01; 3 cars, 00; Free Play
-
+7000      IN2
 
 write:
 5800      8910 write port
@@ -62,13 +29,12 @@ write:
 7005      ?
 7006      screen vertical flip ????
 7007      screen horizontal flip ????
-7800      watchdog reset
+7800      ?
 
 ***************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "sndhrdw/8910intf.h"
 
 
 
@@ -82,8 +48,6 @@ void jumpbug_stars_w(int offset,int data);
 int jumpbug_vh_start(void);
 void jumpbug_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-int jumpbug_sh_start(void);
-
 
 
 static struct MemoryReadAddress readmem[] =
@@ -95,8 +59,8 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x8000, 0xafff, MRA_ROM },
 	{ 0x6000, 0x6000, input_port_0_r },	/* IN0 */
 	{ 0x6800, 0x6800, input_port_1_r },	/* IN1 */
-	{ 0x7000, 0x7000, input_port_2_r },	/* IN2 */
-        { 0xeff0, 0xefff, MRA_RAM },
+	{ 0x7000, 0x7000, input_port_2_r },	/* DSW0 */
+	{ 0xeff0, 0xefff, MRA_RAM },
 	{ -1 }	/* end of table */
 };
 
@@ -112,57 +76,62 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x6002, 0x6006, jumpbug_gfxbank_w, &jumpbug_gfxbank },
 	{ 0x5900, 0x5900, AY8910_control_port_0_w },
 	{ 0x5800, 0x5800, AY8910_write_port_0_w },
-	{ 0x7800, 0x7800, MWA_NOP },
-        { 0xeff0, 0xefff, MWA_RAM },
+	{ 0xeff0, 0xefff, MWA_RAM },
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x8000, 0xafff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
 
+INPUT_PORTS_START( input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_DIPNAME( 0x20, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x20, "Cocktail" )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
 
-static struct InputPort input_ports[] =
-{
-	{	/* IN0 */
-		0x00,
-		{ 0, 0, OSD_KEY_LEFT, OSD_KEY_RIGHT,
-				OSD_KEY_LCONTROL, OSD_KEY_ALT, OSD_KEY_DOWN, OSD_KEY_UP },
-		{ 0, 0, OSD_JOY_LEFT, OSD_JOY_RIGHT,
-				OSD_JOY_FIRE1, OSD_JOY_FIRE2, OSD_JOY_DOWN, OSD_JOY_UP }
-	},
-	{	/* IN1 */
-		0x40,
-		{ OSD_KEY_1, OSD_KEY_2, 0, 0, 0, OSD_KEY_3, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{	/* DSW */
-		0x01,
-		{ 0, 0, 0, 0, 0, 0, 0, 0 },
-		{ 0, 0, 0, 0, 0, 0, 0, 0 }
-	},
-	{ -1 }	/* end of table */
-};
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_DIPNAME( 0x40, 0x00, "Difficulty ?", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Hard?" )
+	PORT_DIPSETTING(    0x40, "Easy?" )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
 
-
-
-static struct KEYSet keys[] =
-{
-        { 0, 7, "MOVE UP" },
-        { 0, 2, "MOVE LEFT"  },
-        { 0, 3, "MOVE RIGHT" },
-        { 0, 6, "MOVE DOWN" },
-        { 0, 4, "FIRE" },
-        { 0, 5, "JUMP" },
-        { -1 }
-};
-
-
-static struct DSW dsw[] =
-{
-	{ 2, 0x03, "LIVES", { "UNLIMITED", "3", "4", "5" } },
-	{ 1, 0x40, "DIFFICULTY", { "HARD", "EASY" }, 1 },
-	{ -1 }
-};
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x03, 0x01, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "3" )
+	PORT_DIPSETTING(    0x02, "4" )
+	PORT_DIPSETTING(    0x03, "5" )
+	PORT_BITX( 0,       0x00, IPT_DIPSWITCH_SETTING | IPF_CHEAT, "Infinite", IP_KEY_NONE, IP_JOY_NONE, 0 )
+	PORT_DIPNAME( 0x0c, 0x00, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x04, "2/1 2/1" )
+	PORT_DIPSETTING(    0x08, "2/1 1/3" )
+	PORT_DIPSETTING(    0x00, "1/1 1/1" )
+	PORT_DIPSETTING(    0x0c, "1/1 1/6" )
+	PORT_DIPNAME( 0x10, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPNAME( 0x20, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPNAME( 0x40, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x40, "Off" )
+	PORT_DIPNAME( 0x80, 0x00, "Unknown", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPSETTING(    0x80, "Off" )
+INPUT_PORTS_END
 
 
 
@@ -210,6 +179,19 @@ static unsigned char color_prom[] =
 
 
 
+static struct AY8910interface ay8910_interface =
+{
+	1,	/* 1 chip */
+	1500000,	/* 1.5 MHz????? */
+	{ 255 },
+	{ 0 },
+	{ 0 },
+	{ 0 },
+	{ 0 }
+};
+
+
+
 static struct MachineDriver machine_driver =
 {
 	/* basic machine hardware */
@@ -222,7 +204,7 @@ static struct MachineDriver machine_driver =
 			nmi_interrupt,1
 		}
 	},
-	60,
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	1,	/* single CPU, no need for interleaving */
 	0,
 
@@ -239,10 +221,13 @@ static struct MachineDriver machine_driver =
 	jumpbug_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	jumpbug_sh_start,
-	AY8910_sh_stop,
-	AY8910_sh_update
+	0,0,0,0,
+	{
+		{
+			SOUND_AY8910,
+			&ay8910_interface
+		}
+	}
 };
 
 
@@ -339,7 +324,7 @@ struct GameDriver jumpbug_driver =
 {
 	"Jump Bug",
 	"jumpbug",
-	"RICHARD DAVIES\nBRAD OLIVER\nNICOLA SALMORIA\nJuan Carlos Lorente",
+	"Richard Davies\nBrad Oliver\nNicola Salmoria\nJuan Carlos Lorente\nMarco Cassili",
 	&machine_driver,
 
 	jumpbug_rom,
@@ -347,7 +332,7 @@ struct GameDriver jumpbug_driver =
 	0,
 	0,	/* sound_prom */
 
-	input_ports, 0, 0/*TBR*/,dsw, keys,
+	input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -359,7 +344,7 @@ struct GameDriver jbugsega_driver =
 {
 	"Jump Bug (bootleg)",
 	"jbugsega",
-	"RICHARD DAVIES\nBRAD OLIVER\nNICOLA SALMORIA\nJuan Carlos Lorente",
+	"Richard Davies\nBrad Oliver\nNicola Salmoria\nJuan Carlos Lorente\nMarco Cassili",
 	&machine_driver,
 
 	jbugsega_rom,
@@ -367,7 +352,7 @@ struct GameDriver jbugsega_driver =
 	0,
 	0,	/* sound_prom */
 
-	input_ports, 0, 0/*TBR*/,dsw, keys,
+	input_ports,
 
 	color_prom, 0, 0,
 	ORIENTATION_DEFAULT,

@@ -13,9 +13,6 @@
 
 int asteroid_interrupt (void)
 {
-	if (cpu_getiloops() == 3)
-		avgdvg_clr_busy();
-
 	/* Turn off interrupts if self-test is enabled */
 	if (readinputport(0) & 0x80)
 		return ignore_interrupt();
@@ -25,9 +22,6 @@ int asteroid_interrupt (void)
 
 int llander_interrupt (void)
 {
-	if (cpu_getiloops() == 3)
-		avgdvg_clr_busy();
-
 	/* Turn off interrupts if self-test is enabled */
 	if (readinputport(0) & 0x02)
 		return nmi_interrupt();
@@ -57,9 +51,9 @@ int asteroid_IN0_r (int offset) {
 		res |= 0x02;
 	if (!avgdvg_done()) {
 		if (cpu_getpc()==0x6815)
-			cpu_seticount(0);
+			cpu_spinuntil_int();
 		if (cpu_getpc()==0x6017)
-			cpu_seticount(0);
+			cpu_spinuntil_int();
 		res |= 0x04;
 	}
 
@@ -153,13 +147,6 @@ void astdelux_led_w (int offset,int data)
 void asteroid_init_machine(void)
 {
 	asteroid_bank_switch_w (0,0);
-	avgdvg_clr_busy();
-}
-
-void astdelux_init_machine(void)
-{
-	avg_fake_colorram_w(7,3);
-	avgdvg_clr_busy();
 }
 
 /*
@@ -174,7 +161,7 @@ int llander_IN0_r (int offset)
 	int res;
 
 	if (cpu_getpc()==0x6534)
-		cpu_seticount(0);
+		cpu_spinuntil_int();
 
 	res = readinputport(0);
 
@@ -184,11 +171,6 @@ int llander_IN0_r (int offset)
 		res |= 0x40;
 
 	return res;
-}
-
-void llander_init_machine(void)
-{
-	avgdvg_clr_busy();
 }
 
 void llander_led_w (int offset,int data)
