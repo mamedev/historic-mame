@@ -50,6 +50,10 @@ extern WRITE8_HANDLER( jack_flipscreen_w );
 extern VIDEO_START( jack );
 extern VIDEO_UPDATE( jack );
 
+extern PALETTE_INIT( joinem );
+extern VIDEO_START( joinem );
+extern VIDEO_UPDATE( joinem );
+
 static int timer_rate;
 
 static READ8_HANDLER( timer_r )
@@ -66,6 +70,25 @@ static WRITE8_HANDLER( jack_sh_command_w )
 	cpunum_set_input_line(1, 0, HOLD_LINE);
 }
 
+/* these handlers are guessed, because otherwise you can't enter test mode */
+
+static int joinem_snd_bit = 0;
+
+static WRITE8_HANDLER( joinem_misc_w )
+{
+	flip_screen_set(data & 0x80);
+	joinem_snd_bit = data & 1;
+}
+
+static READ8_HANDLER( joinem_input1_r )
+{
+	data8_t ret = readinputport(1) & ~0x20;
+
+	if((readinputport(4) & 0x80) && !joinem_snd_bit)
+		ret |= 0x20;
+
+	return ret;
+}
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
@@ -92,6 +115,22 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xb800, 0xbbff) AM_WRITE(jack_videoram_w) AM_BASE(&videoram)
 	AM_RANGE(0xbc00, 0xbfff) AM_WRITE(jack_colorram_w) AM_BASE(&colorram)
 	AM_RANGE(0xc000, 0xffff) AM_WRITE(MWA8_ROM)
+ADDRESS_MAP_END
+
+static ADDRESS_MAP_START( joinem_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x5fff) AM_ROM
+	AM_RANGE(0x8000, 0x8fff) AM_RAM
+	AM_RANGE(0xb000, 0xb0ff) AM_RAM AM_BASE(&spriteram) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xb400, 0xb400) AM_WRITE(jack_sh_command_w)
+	AM_RANGE(0xb500, 0xb500) AM_READ(input_port_0_r)
+	AM_RANGE(0xb501, 0xb501) AM_READ(joinem_input1_r)
+	AM_RANGE(0xb502, 0xb502) AM_READ(input_port_2_r)
+	AM_RANGE(0xb503, 0xb503) AM_READ(input_port_3_r)
+	AM_RANGE(0xb504, 0xb504) AM_READ(input_port_4_r)
+	AM_RANGE(0xb506, 0xb507) AM_READWRITE(jack_flipscreen_r, jack_flipscreen_w)
+	AM_RANGE(0xb700, 0xb700) AM_WRITE(joinem_misc_w)
+	AM_RANGE(0xb800, 0xbbff) AM_RAM AM_WRITE(jack_videoram_w) AM_BASE(&videoram)
+	AM_RANGE(0xbc00, 0xbfff) AM_RAM AM_WRITE(jack_colorram_w) AM_BASE(&colorram)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -520,6 +559,81 @@ INPUT_PORTS_START( tripool )
 	PORT_BIT( 0xfc, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( joinem )
+	PORT_START
+	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 4C_3C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_3C ) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x10, "5" )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( On ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+
+	PORT_START
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( On ) )
+	PORT_DIPNAME( 0x04, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
+	PORT_DIPNAME( 0x10, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_SPECIAL ) // sound check
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x00, "Infinite Lives" )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_8WAY
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_8WAY
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP ) PORT_8WAY PORT_COCKTAIL
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_COCKTAIL
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_COCKTAIL
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_COCKTAIL
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_SPECIAL ) // otherwise it doesn't boot because the code is buggy
+	PORT_SERVICE( 0x80, IP_ACTIVE_HIGH )
+INPUT_PORTS_END
+
 
 static struct GfxLayout charlayout =
 {
@@ -538,6 +652,22 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
+static struct GfxLayout joinem_charlayout =
+{
+	8,8,
+	RGN_FRAC(1,3),
+	3,
+	{ RGN_FRAC(0,3),RGN_FRAC(1,3),RGN_FRAC(2,3) },
+	{ 0,1,2,3,4,5,6,7 },
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	8*8
+};
+
+static struct GfxDecodeInfo joinem_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &joinem_charlayout, 0, 32 },
+	{ -1 }
+};
 
 
 static struct AY8910interface ay8910_interface =
@@ -589,7 +719,36 @@ static MACHINE_DRIVER_START( tripool )
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,2) /* tripool needs 2 or the palette is broken */
 MACHINE_DRIVER_END
 
+INTERRUPT_GEN( joinem_interrupts )
+{
+	if(cpu_getiloops() > 0)
+	{
+		cpunum_set_input_line(0, 0, PULSE_LINE);
+	}
+	else
+	{
+		if(!(readinputport(4) & 0x80))
+			cpunum_set_input_line(0, INPUT_LINE_NMI, PULSE_LINE);
+	}
+}
 
+static MACHINE_DRIVER_START( joinem )
+	
+	/* basic machine hardware */
+	MDRV_IMPORT_FROM(jack)
+	MDRV_CPU_MODIFY("main")
+	MDRV_CPU_PROGRAM_MAP(joinem_map,0)
+	MDRV_CPU_VBLANK_INT(joinem_interrupts,3)
+
+	MDRV_GFXDECODE(joinem_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(0x100)
+
+	MDRV_VISIBLE_AREA(1*8, 31*8-1, 2*8, 30*8-1)
+
+	MDRV_PALETTE_INIT(joinem)
+	MDRV_VIDEO_START(joinem)
+	MDRV_VIDEO_UPDATE(joinem)
+MACHINE_DRIVER_END
 
 /***************************************************************************
 
@@ -825,6 +984,26 @@ ROM_START( tripoola )
 	ROM_LOAD( "tri105a.bin",  0x0000, 0x1000, CRC(366a753c) SHA1(30fa8d80e42287e3e8677aefd15beab384265728) )
 ROM_END
 
+ROM_START( joinem )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 ) /* main z80 cpu */
+	ROM_LOAD( "join1.r0", 0x0000, 0x2000, CRC(b5b2e2cc) SHA1(e939478d19ac27807ba4180835c512b5fcb8d0c5) )
+	ROM_LOAD( "join2.r2", 0x2000, 0x2000, CRC(bcf140e6) SHA1(3fb4fbb758518d8ae26abbe76f12678cf988bd0e) )
+	ROM_LOAD( "join3.r4", 0x4000, 0x2000, CRC(fe04e4d4) SHA1(9b34cc5915dd78340d1cedb34f5d397d3b39ca14) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* sound z80 cpu */
+	ROM_LOAD( "join7.s0", 0x0000, 0x1000, CRC(bb8a7814) SHA1(cfb85408827b96a81401223256e23082b7e9598f) )
+
+	ROM_REGION( 0x3000, REGION_GFX1, ROMREGION_DISPOSE ) /* gfx - 8x8x3bpp */
+	ROM_LOAD( "join4.p3", 0x0000, 0x1000, CRC(4964c82c) SHA1(7a45399db20f9bbdb2de58243732e3951ffe358c) )
+	ROM_LOAD( "join5.p2", 0x1000, 0x1000, CRC(ae78fa89) SHA1(8f43fd2ec037185a1b9bd9c61c49ad891c504d4d) )
+	ROM_LOAD( "join6.p1", 0x2000, 0x1000, CRC(2b533261) SHA1(ce6c1fa833b34aeb401f430d212415c33beb2922) )
+
+	ROM_REGION( 0x100, REGION_PROMS, 0 ) /* colours */
+	ROM_LOAD_NIB_LOW(  "l82s129.11n", 0x0000, 0x100, CRC(7b724211) SHA1(7396c773e8d48dea856d9482d6c48de966616c83) )
+	ROM_LOAD_NIB_HIGH( "h82s129.12n", 0x0000, 0x100, CRC(2e81c5ff) SHA1(e103c8813af704d5de11fe705de5105ff3a691c3) )
+ROM_END
+
+
 static void treahunt_decode(void)
 {
 	int A;
@@ -888,14 +1067,15 @@ static DRIVER_INIT( zzyzzyxx )
 
 
 
-GAME( 1982, jack,     0,        jack, jack,     jack,     ROT90, "Cinematronics", "Jack the Giantkiller (set 1)" )
-GAME( 1982, jack2,    jack,     jack, jack2,    jack,     ROT90, "Cinematronics", "Jack the Giantkiller (set 2)" )
-GAME( 1982, jack3,    jack,     jack, jack3,    jack,     ROT90, "Cinematronics", "Jack the Giantkiller (set 3)" )
-GAME( 1982, treahunt, jack,     jack, treahunt, treahunt, ROT90, "Hara Industries", "Treasure Hunt (Japan?)" )
-GAME( 1982, zzyzzyxx, 0,        jack, zzyzzyxx, zzyzzyxx, ROT90, "Cinematronics + Advanced Microcomputer Systems", "Zzyzzyxx (set 1)" )
-GAME( 1982, zzyzzyx2, zzyzzyxx, jack, zzyzzyxx, zzyzzyxx, ROT90, "Cinematronics + Advanced Microcomputer Systems", "Zzyzzyxx (set 2)" )
-GAME( 1982, brix,     zzyzzyxx, jack, zzyzzyxx, zzyzzyxx, ROT90, "Cinematronics + Advanced Microcomputer Systems", "Brix" )
-GAME( 1984, freeze,   0,        jack, freeze,   jack,     ROT90, "Cinematronics", "Freeze" )
-GAME( 1984, sucasino, 0,        jack, sucasino, jack,     ROT90, "Data Amusement", "Super Casino" )
+GAME( 1982, jack,     0,        jack,    jack,     jack,     ROT90, "Cinematronics", "Jack the Giantkiller (set 1)" )
+GAME( 1982, jack2,    jack,     jack,    jack2,    jack,     ROT90, "Cinematronics", "Jack the Giantkiller (set 2)" )
+GAME( 1982, jack3,    jack,     jack,    jack3,    jack,     ROT90, "Cinematronics", "Jack the Giantkiller (set 3)" )
+GAME( 1982, treahunt, jack,     jack,    treahunt, treahunt, ROT90, "Hara Industries", "Treasure Hunt (Japan?)" )
+GAME( 1982, zzyzzyxx, 0,        jack,    zzyzzyxx, zzyzzyxx, ROT90, "Cinematronics + Advanced Microcomputer Systems", "Zzyzzyxx (set 1)" )
+GAME( 1982, zzyzzyx2, zzyzzyxx, jack,    zzyzzyxx, zzyzzyxx, ROT90, "Cinematronics + Advanced Microcomputer Systems", "Zzyzzyxx (set 2)" )
+GAME( 1982, brix,     zzyzzyxx, jack,    zzyzzyxx, zzyzzyxx, ROT90, "Cinematronics + Advanced Microcomputer Systems", "Brix" )
+GAME( 1984, freeze,   0,        jack,    freeze,   jack,     ROT90, "Cinematronics", "Freeze" )
+GAME( 1984, sucasino, 0,        jack,    sucasino, jack,     ROT90, "Data Amusement", "Super Casino" )
 GAME( 1981, tripool,  0,        tripool, tripool,  jack,     ROT90, "Noma (Casino Tech license)", "Tri-Pool (Casino Tech)" )
 GAME( 1981, tripoola, tripool,  tripool, tripool,  jack,     ROT90, "Noma (Costal Games license)", "Tri-Pool (Costal Games)" )
+GAME( 1986, joinem,   0,        joinem,  joinem,   zzyzzyxx, ROT90, "Global Corporation", "Joinem" )

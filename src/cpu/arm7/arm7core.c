@@ -110,6 +110,22 @@ INLINE data32_t arm7_cpu_read32( int addr );
 INLINE data16_t arm7_cpu_read16( int addr );
 INLINE data8_t arm7_cpu_read8( offs_t addr );
 
+/* Static Vars */
+//Note: for multi-cpu implementation, this approach won't work w/o modification
+WRITE32_HANDLER((*arm7_coproc_do_callback));        //holder for the co processor Data Operations Callback func.
+READ32_HANDLER((*arm7_coproc_rt_r_callback));   //holder for the co processor Register Transfer Read Callback func.
+WRITE32_HANDLER((*arm7_coproc_rt_w_callback));  //holder for the co processor Register Transfer Write Callback Callback func.
+//holder for the co processor Data Transfer Read & Write Callback funcs
+void (*arm7_coproc_dt_r_callback)(data32_t insn, data32_t* prn, data32_t (*read32)(int addr));      
+void (*arm7_coproc_dt_w_callback)(data32_t insn, data32_t* prn, void (*write32)(int addr, data32_t data));
+
+#ifdef MAME_DEBUG
+//custom dasm callback handlers for co-processor instructions
+char *(*arm7_dasm_cop_dt_callback)( char *pBuf, data32_t opcode, char *pConditionCode, char *pBuf0 );
+char *(*arm7_dasm_cop_rt_callback)( char *pBuf, data32_t opcode, char *pConditionCode, char *pBuf0 );
+char *(*arm7_dasm_cop_do_callback)( char *pBuf, data32_t opcode, char *pConditionCode, char *pBuf0 );
+#endif
+
 /***************************************************************************
  * Default Memory Handlers 
  ***************************************************************************/

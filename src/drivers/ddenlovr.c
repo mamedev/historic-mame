@@ -1768,7 +1768,7 @@ INPUT_PORTS_START( rongrong )
  	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
   	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
   	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-  
+
   	PORT_START	// IN4 - DSW
  	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
   	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
@@ -1794,7 +1794,7 @@ INPUT_PORTS_START( rongrong )
  	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
   	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
   	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-  
+
   	PORT_START	// IN5 - DSW
  	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
   	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
@@ -2101,10 +2101,12 @@ static INTERRUPT_GEN( quizchq_irq )
 		cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, 0xee);
 }
 
+/*
 static INTERRUPT_GEN( rtc_irq )
 {
-//	cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, 0xfc);
+	cpunum_set_input_line_and_vector(0, 0, HOLD_LINE, 0xfc);
 }
+*/
 
 static MACHINE_DRIVER_START( quizchq )
 
@@ -2331,8 +2333,8 @@ ROM_START( quiz365 )
 
 	ROM_REGION( 0x100000, REGION_SOUND1, ROMREGION_SOUNDONLY )	/* Samples */
 	// piggy-backed sample roms dumped as 2 separate files
-	ROM_LOAD( "7801.1fu",     0x000000, 0x080000, CRC(53519d67) SHA1(c83b8504d5154c6667e25ff6e222e190ae771bc0) ) 
-	ROM_LOAD( "7801.1fd",     0x080000, 0x080000, CRC(448c58dd) SHA1(991a4e2f82d2ee9b0839a76962c00e0848623879) ) 
+	ROM_LOAD( "7801.1fu",     0x000000, 0x080000, CRC(53519d67) SHA1(c83b8504d5154c6667e25ff6e222e190ae771bc0) )
+	ROM_LOAD( "7801.1fd",     0x080000, 0x080000, CRC(448c58dd) SHA1(991a4e2f82d2ee9b0839a76962c00e0848623879) )
 ROM_END
 
 ROM_START( quiz365t )

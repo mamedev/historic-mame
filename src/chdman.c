@@ -1069,7 +1069,7 @@ static void do_verify(int argc, char *argv[], int fix)
 		if (err == CHDERR_CANT_VERIFY)
 			printf("Can't verify this type of image (probably writeable)\n");
 		else
-			printf("Error during verify: %s\n", error_string(err));
+			printf("\nError during verify: %s\n", error_string(err));
 		chd_close(chd);
 		return;
 	}

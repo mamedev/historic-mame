@@ -5,7 +5,7 @@
 ****************************************************************************
 
 	Known bugs:
-		*
+		* none at this time
 
 	To do for each game:
 		* verify memory test
@@ -113,7 +113,7 @@ static MACHINE_INIT( hangon )
 	ppi_write_offset = 0;
 }
 
-
+#if 0
 static INTERRUPT_GEN( hangon_irq )
 {
 	/* according to the schematics, IRQ2 is generated every 16 scanlines */
@@ -122,7 +122,7 @@ static INTERRUPT_GEN( hangon_irq )
 	else
 		cpunum_set_input_line(0, 4, HOLD_LINE);
 }
-
+#endif
 
 
 /*************************************
@@ -1243,9 +1243,9 @@ ROM_END
 ROM_START( endurobl )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 ) /* 68000 code */
 	ROM_LOAD16_BYTE( "7.13j", 0x030000, 0x08000, CRC(f1d6b4b7) SHA1(32bd966191cbb36d1e60ed1a06d4caa023dd6b88) )
-	ROM_CONTINUE (            0x000000, 0x08000 )
+	ROM_CONTINUE(             0x000000, 0x08000 )
 	ROM_LOAD16_BYTE( "4.13h", 0x030001, 0x08000, CRC(43bff873) SHA1(04e906c1965a6211fb8e13987db52f1f99cc0203) )				// rom de-coded
-	ROM_CONTINUE (            0x000001, 0x08000 )		// data de-coded
+	ROM_CONTINUE(             0x000001, 0x08000 )		// data de-coded
 	ROM_LOAD16_BYTE( "8.14j", 0x010000, 0x08000, CRC(2153154a) SHA1(145d8ed59812d26ca412a01ae77cd7872adaba5a) )
 	ROM_LOAD16_BYTE( "5.14h", 0x010001, 0x08000, CRC(0a97992c) SHA1(7a6fc8c575637107ed07a30f6f0f8cb8877cbb43) )
 	ROM_LOAD16_BYTE( "9.15j", 0x020000, 0x08000, CRC(db3bff1c) SHA1(343ed27a690800683cdd5128dcdb28c7b45288a3) )	// one byte difference from
@@ -1315,8 +1315,11 @@ ROM_END
 */
 ROM_START( endurob2 )
 	ROM_REGION( 0x040000, REGION_CPU1, 0 ) /* 68000 code */
-	ROM_LOAD16_BYTE( "enduro.a07", 0x000000, 0x08000, CRC(259069bc) SHA1(42fa47ce4a29294f9eff3eddbba6c305d750aaa5) )
-	ROM_LOAD16_BYTE( "enduro.a04", 0x000001, 0x08000, CRC(f584fbd9) SHA1(6c9ddcd1d9cf95c6250b705b27865644da45d197) )
+	/* the program roms should be twice the size */
+	ROM_LOAD16_BYTE( "enduro.a07", 0x000000, 0x08000, BAD_DUMP CRC(259069bc) SHA1(42fa47ce4a29294f9eff3eddbba6c305d750aaa5) )
+//	ROM_CONTINUE(                  0x030000, 0x08000 )
+	ROM_LOAD16_BYTE( "enduro.a04", 0x000001, 0x08000, BAD_DUMP CRC(f584fbd9) SHA1(6c9ddcd1d9cf95c6250b705b27865644da45d197) )
+//	ROM_CONTINUE(                  0x030000, 0x08000 )
 	ROM_LOAD16_BYTE( "enduro.a08", 0x010000, 0x08000, CRC(d234918c) SHA1(ce2493a4ceff48331551e915fdbe19107865436e) )
 	ROM_LOAD16_BYTE( "enduro.a05", 0x010001, 0x08000, CRC(a525dd57) SHA1(587f449ea317dc9eae06e755e7c63a652effbe15) )
 	ROM_LOAD16_BYTE( "enduro.a09", 0x020000, 0x08000, CRC(f6391091) SHA1(3160b342b6447cccf67c932c7c1a42354cdfb058) )
@@ -1430,8 +1433,7 @@ static DRIVER_INIT( endurob2 )
 	memory_set_opcode_base(0, decrypt);
 
 	memcpy(decrypt, rom, 0x30000);
-	endurob2_decode_data (rom + 0x00000/2, decrypt + 0x00000/2, 0x10000);
-	endurob2_decode_data2(rom + 0x10000/2, decrypt + 0x10000/2, 0x10000);
+	/* missing data ROM */
 }
 
 
@@ -1447,4 +1449,4 @@ GAME( 1992, shangupb, shangon,  shangupb, shangupb, hangon,   ROT0, "bootleg", "
 GAME( 1985, sharrier, 0,        sharrier, sharrier, sharrier, ROT0, "Sega",    "Space Harrier" )
 GAME( 1986, enduror,  0,        enduror,  enduror,  enduror,  ROT0, "Sega",    "Enduro Racer (FD1089B 317-unknown)" )
 GAME( 1986, endurobl, enduror,  endurobl, enduror,  endurobl, ROT0, "bootleg", "Enduro Racer (bootleg set 1)" )
-GAME( 1986, endurob2, enduror,  endurob2, enduror,  endurob2, ROT0, "bootleg", "Enduro Racer (bootleg set 2)" )
+GAMEX(1986, endurob2, enduror,  endurob2, enduror,  endurob2, ROT0, "bootleg", "Enduro Racer (bootleg set 2)", GAME_NOT_WORKING )

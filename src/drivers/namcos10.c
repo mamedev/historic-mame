@@ -27,7 +27,7 @@ static ADDRESS_MAP_START( namcos10_map, ADDRESS_SPACE_PROGRAM, 32 )
 	AM_RANGE(0x1f801060, 0x1f80106f) AM_WRITENOP
 	AM_RANGE(0x1f801070, 0x1f801077) AM_READWRITE(psx_irq_r, psx_irq_w)
 	AM_RANGE(0x1f801080, 0x1f8010ff) AM_READWRITE(psx_dma_r, psx_dma_w)
-	AM_RANGE(0x1f801100, 0x1f80113f) AM_READWRITE(psx_counter_r, psx_counter_w)
+	AM_RANGE(0x1f801100, 0x1f80112f) AM_READWRITE(psx_counter_r, psx_counter_w)
 	AM_RANGE(0x1f801810, 0x1f801817) AM_READWRITE(psx_gpu_r, psx_gpu_w)
 	AM_RANGE(0x1f801820, 0x1f801827) AM_READWRITE(psx_mdec_r, psx_mdec_w)
 	AM_RANGE(0x1f801c00, 0x1f801dff) AM_NOP
@@ -71,7 +71,6 @@ static MACHINE_DRIVER_START( namcos10 )
 	MDRV_VBLANK_DURATION( 0 )
 
 	MDRV_MACHINE_INIT( namcos10 )
-	MDRV_NVRAM_HANDLER( generic_0fill )
 
 	/* video hardware */
 	MDRV_VIDEO_ATTRIBUTES( VIDEO_TYPE_RASTER )

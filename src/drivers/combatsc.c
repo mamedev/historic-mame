@@ -218,12 +218,12 @@ static WRITE8_HANDLER( combasc_sh_irqtrigger_w )
 
 static WRITE8_HANDLER( combasc_play_w )
 {
-	UPD7759_start_w(0, data & 2);
+	upd7759_start_w(0, data & 2);
 }
 
 static WRITE8_HANDLER( combasc_voice_reset_w )
 {
-    UPD7759_reset_w(0,data & 1);
+    upd7759_reset_w(0,data & 1);
 }
 
 static WRITE8_HANDLER( combasc_portA_w )
@@ -338,7 +338,7 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( combasc_readmem_sound, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)					/* ROM */
 	AM_RANGE(0x8000, 0x87ff) AM_READ(MRA8_RAM)					/* RAM */
-	AM_RANGE(0xb000, 0xb000) AM_READ(UPD7759_0_busy_r)			/* UPD7759 busy? */
+	AM_RANGE(0xb000, 0xb000) AM_READ(upd7759_0_busy_r)			/* upd7759 busy? */
 	AM_RANGE(0xd000, 0xd000) AM_READ(soundlatch_r)				/* soundlatch_r? */
 	AM_RANGE(0xe000, 0xe000) AM_READ(combasc_YM2203_status_port_0_r)	/* YM 2203 intercepted */
 ADDRESS_MAP_END
@@ -346,9 +346,9 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( combasc_writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)				/* ROM */
 	AM_RANGE(0x8000, 0x87ff) AM_WRITE(MWA8_RAM)				/* RAM */
-	AM_RANGE(0x9000, 0x9000) AM_WRITE(combasc_play_w)			/* uPD7759 play voice */
-	AM_RANGE(0xa000, 0xa000) AM_WRITE(UPD7759_0_port_w)		/* uPD7759 voice select */
-	AM_RANGE(0xc000, 0xc000) AM_WRITE(combasc_voice_reset_w)	/* uPD7759 reset? */
+	AM_RANGE(0x9000, 0x9000) AM_WRITE(combasc_play_w)			/* upd7759 play voice */
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(upd7759_0_port_w)		/* upd7759 voice select */
+	AM_RANGE(0xc000, 0xc000) AM_WRITE(combasc_voice_reset_w)	/* upd7759 reset? */
  	AM_RANGE(0xe000, 0xe000) AM_WRITE(YM2203_control_port_0_w)/* YM 2203 */
 	AM_RANGE(0xe001, 0xe001) AM_WRITE(YM2203_write_port_0_w)	/* YM 2203 */
 ADDRESS_MAP_END
@@ -654,12 +654,12 @@ static struct YM2203interface ym2203_interface =
 	{ 0 }
 };
 
-static struct UPD7759_interface upd7759_interface =
+static struct upd7759_interface upd7759_interface =
 {
 	1,							/* number of chips */
+	{ UPD7759_STANDARD_CLOCK },
 	{ 70 },						/* volume */
 	{ REGION_SOUND1 },			/* memory region */
-	UPD7759_STANDALONE_MODE,	/* chip mode */
 	{0}
 };
 

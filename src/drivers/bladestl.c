@@ -94,12 +94,12 @@ static WRITE8_HANDLER( bladestl_sh_irqtrigger_w )
 
 static WRITE8_HANDLER( bladestl_port_B_w ){
 	/* bit 1, 2 unknown */
-	UPD7759_set_bank_base(0, ((data & 0x38) >> 3)*0x20000);
+	upd7759_set_bank_base(0, ((data & 0x38) >> 3)*0x20000);
 }
 
 static WRITE8_HANDLER( bladestl_speech_ctrl_w ){
-	UPD7759_reset_w(0, data & 1);
-	UPD7759_start_w(0, data & 2);
+	upd7759_reset_w(0, data & 1);
+	upd7759_start_w(0, data & 2);
 }
 
 static ADDRESS_MAP_START( bladestl_readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -139,7 +139,7 @@ static ADDRESS_MAP_START( bladestl_readmem_sound, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_RAM)				/* RAM */
 	AM_RANGE(0x1000, 0x1000) AM_READ(YM2203_status_port_0_r)	/* YM2203 */
 	AM_RANGE(0x1001, 0x1001) AM_READ(YM2203_read_port_0_r)	/* YM2203 */
-	AM_RANGE(0x4000, 0x4000) AM_READ(UPD7759_0_busy_r)		/* UPD7759 */
+	AM_RANGE(0x4000, 0x4000) AM_READ(upd7759_0_busy_r)		/* UPD7759 */
 	AM_RANGE(0x6000, 0x6000) AM_READ(soundlatch_r)			/* soundlatch_r */
 	AM_RANGE(0x8000, 0xffff) AM_READ(MRA8_ROM)				/* ROM */
 ADDRESS_MAP_END
@@ -423,16 +423,16 @@ static struct YM2203interface ym2203_interface =
 	{ YM2203_VOL(45,45) },
 	{ 0 },
 	{ 0 },
-	{ UPD7759_0_port_w },
+	{ upd7759_0_port_w },
 	{ bladestl_port_B_w }
 };
 
-static struct UPD7759_interface upd7759_interface =
+static struct upd7759_interface upd7759_interface =
 {
 	1,							/* number of chips */
+	{ UPD7759_STANDARD_CLOCK },
 	{ 60  },					/* volume */
 	{ REGION_SOUND1 },					/* memory regions */
-	UPD7759_STANDALONE_MODE,
 	{ 0 }
 };
 

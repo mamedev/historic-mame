@@ -869,6 +869,67 @@ VIDEO_START( drivfrcg )
 	return 0;
 }
 
+data8_t *racknrol_tiles_bank;
+
+WRITE8_HANDLER( racknrol_tiles_bank_w )
+{
+	racknrol_tiles_bank[offset] = data;
+	tilemap_mark_all_tiles_dirty(tilemap);
+}
+
+static void racknrol_get_tile_info(int tile_index)
+{
+	int code = galaxian_videoram[tile_index];
+	UINT8 x = tile_index & 0x1f;
+	UINT8 color = galaxian_attributesram[(x << 1) | 1] & 7;
+	UINT8 bank = racknrol_tiles_bank[x] & 7;
+
+	code |= (bank << 8);
+
+	SET_TILE_INFO(0, code, color, 0)
+}
+
+VIDEO_START( racknrol )
+{
+	tilemap = tilemap_create(racknrol_get_tile_info,tilemap_scan_rows,TILEMAP_TRANSPARENT,8,8,32,32);
+
+	if (!tilemap)
+		return 1;
+
+	tilemap_set_transparent_pen(tilemap,0);
+	tilemap_set_scroll_cols(tilemap, 32);
+	tilemap_set_scroll = tilemap_set_scrolly;
+
+	modify_charcode = 0;
+	modify_spritecode = 0;
+	modify_color = 0;
+	modify_ypos = 0;
+
+	mooncrst_gfxextend = 0;
+
+	draw_bullets = 0;
+
+	draw_background = galaxian_draw_background;
+	background_enable = 0;
+	background_blue = 0;
+	background_red = 0;
+	background_green = 0;
+
+	draw_stars = noop_draw_stars;
+
+	flip_screen_x = 0;
+	flip_screen_y = 0;
+
+	spriteram2_present = 0;
+
+	spritevisiblearea      = &_spritevisiblearea;
+	spritevisibleareaflipx = &_spritevisibleareaflipx;
+
+	color_mask = 0xff;
+
+	return 0;
+}
+
 VIDEO_START( bongo )
 {
 	int ret = video_start_galaxian_plain();
@@ -990,6 +1051,7 @@ WRITE8_HANDLER( galaxian_stars_enable_w )
 		stars_scrollpos = 0;
 	}
 }
+
 
 WRITE8_HANDLER( darkplnt_bullet_color_w )
 {

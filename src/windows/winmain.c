@@ -108,6 +108,7 @@ int main(int argc, char **argv)
 	int game_index;
 	char *ext;
 	int res = 0;
+	extern void free_pathlists(void);
 
 #if 1
  #ifndef WINUI
@@ -230,13 +231,16 @@ int main(int argc, char **argv)
 	output_symbol_list(stderr);
 #endif
 	free_symbol_map();
+	free_pathlists();
 
 #ifdef MAME_DEBUG
+#ifndef MESS
 	{
 		void check_unfreed_mem(void);
 
 		check_unfreed_mem();
 	}
+#endif
 #endif
 
 	return res;
@@ -268,9 +272,7 @@ int osd_init(void)
 void osd_exit(void)
 {
 	extern void win_shutdown_input(void);
-	extern void free_pathlists(void);
 
-	free_pathlists();
 	win_shutdown_input();
 	osd_set_leds(0);
 }

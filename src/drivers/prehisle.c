@@ -58,9 +58,9 @@ ADDRESS_MAP_END
 
 static WRITE8_HANDLER( D7759_write_port_0_w )
 {
-	UPD7759_port_w(offset,data);
-	UPD7759_start_w (0,0);
-	UPD7759_start_w (0,1);
+	upd7759_port_w(offset,data);
+	upd7759_start_w (0,0);
+	upd7759_start_w (0,1);
 }
 
 static ADDRESS_MAP_START( prehisle_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -83,7 +83,7 @@ static ADDRESS_MAP_START( prehisle_sound_writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x00, 0x00) AM_WRITE(YM3812_control_port_0_w)
 	AM_RANGE(0x20, 0x20) AM_WRITE(YM3812_write_port_0_w)
 	AM_RANGE(0x40, 0x40) AM_WRITE(D7759_write_port_0_w)
-	AM_RANGE(0x80, 0x80) AM_WRITE(UPD7759_0_reset_w)
+	AM_RANGE(0x80, 0x80) AM_WRITE(upd7759_0_reset_w)
 ADDRESS_MAP_END
 
 /******************************************************************************/
@@ -226,12 +226,12 @@ static struct YM3812interface ym3812_interface =
 	{ irqhandler },
 };
 
-static struct UPD7759_interface upd7759_interface =
+static struct upd7759_interface upd7759_interface =
 {
 	1,							/* number of chips */
+	{ UPD7759_STANDARD_CLOCK },
 	{ 90 }, 					/* volume */
 	{ REGION_SOUND1 },			/* memory region */
-	UPD7759_STANDALONE_MODE,	/* chip mode */
 	{ NULL }
 };
 

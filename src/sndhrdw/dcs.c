@@ -324,6 +324,34 @@ ADDRESS_MAP_END
 
 
 
+/* DCS3-based readmem/writemem structures */
+ADDRESS_MAP_START( dcs3_program_map, ADDRESS_SPACE_PROGRAM, 32 )
+	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
+	AM_RANGE(0x0000, 0x3fff) AM_RAM	AM_BASE(&dcs_program_ram) /* internal/external program ram */
+ADDRESS_MAP_END
+
+
+ADDRESS_MAP_START( dcs3_data_map, ADDRESS_SPACE_DATA, 16 )
+	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
+	AM_RANGE(0x0000, 0x03ff) AM_RAMBANK(20) AM_SIZE(&bank20_size) AM_BASE(&dcs_data_ram) /* D/RAM */
+	AM_RANGE(0x0400, 0x0400) AM_READWRITE(input_latch_r, input_latch_ack_w) /* input latch read */
+	AM_RANGE(0x0401, 0x0401) AM_WRITE(output_latch_w)			/* soundlatch write */
+	AM_RANGE(0x0402, 0x0402) AM_READWRITE(output_control_r, output_control_w) /* secondary soundlatch read */
+	AM_RANGE(0x0403, 0x0403) AM_READ(latch_status_r)			/* latch status read */
+	AM_RANGE(0x0404, 0x0407) AM_READ(fifo_input_r)				/* FIFO input read */
+	AM_RANGE(0x0480, 0x0480) AM_READWRITE(dcs2_sram_bank_r, dcs2_sram_bank_w) /* S/RAM bank */
+	AM_RANGE(0x0481, 0x0481) AM_NOP								/* LED in bit $2000 */
+	AM_RANGE(0x0482, 0x0482) AM_READWRITE(dcs_data_bank_select_r, dcs_data_bank_select_w) /* D/RAM bank */
+	AM_RANGE(0x0483, 0x0483) AM_READ(dcs_sdrc_asic_ver_r)		/* SDRC version number */
+	AM_RANGE(0x0800, 0x17ff) AM_RAM								/* S/RAM */
+	AM_RANGE(0x1800, 0x27ff) AM_RAMBANK(21) AM_BASE(&dcs_sram_bank0) /* banked S/RAM */
+	AM_RANGE(0x2800, 0x37ff) AM_RAM								/* S/RAM */
+	AM_RANGE(0x3800, 0x3fdf) AM_RAM								/* internal data ram */
+	AM_RANGE(0x3fe0, 0x3fff) AM_WRITE(dcs_control_w)			/* adsp control regs */
+ADDRESS_MAP_END
+
+
+
 /***************************************************************************
 	AUDIO STRUCTURES
 ****************************************************************************/
@@ -338,6 +366,12 @@ static struct dmadac_interface dcs2_dmadac_interface =
 {
 	2,
 	{ MIXER(100, MIXER_PAN_RIGHT), MIXER(100, MIXER_PAN_LEFT) }
+};
+
+static struct dmadac_interface dcs3_dmadac_interface =
+{
+	6,
+	{ MIXER(100, MIXER_PAN_RIGHT), MIXER(100, MIXER_PAN_LEFT), MIXER(100, MIXER_PAN_RIGHT), MIXER(100, MIXER_PAN_LEFT), MIXER(100, MIXER_PAN_RIGHT), MIXER(100, MIXER_PAN_LEFT) }
 };
 
 
@@ -385,6 +419,17 @@ MACHINE_DRIVER_START( dcs2_audio_2104_rom )
 	MDRV_IMPORT_FROM(dcs2_audio_2104)
 	MDRV_CPU_MODIFY("dcs2")
 	MDRV_CPU_DATA_MAP(dcs2_rom_data_map,0)
+MACHINE_DRIVER_END
+
+
+MACHINE_DRIVER_START( dcs3_audio )
+	MDRV_CPU_ADD_TAG("dcs3", ADSP2181, 33000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_PROGRAM_MAP(dcs3_program_map,0)
+	MDRV_CPU_DATA_MAP(dcs3_data_map,0)
+
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(DMADAC, dcs3_dmadac_interface)
 MACHINE_DRIVER_END
 
 
@@ -487,6 +532,8 @@ void dcs2_init(offs_t polling_offset)
 {
 	/* find the DCS CPU and the sound ROMs */
 	dcs_cpunum = mame_find_cpu_index("dcs2");
+	if (dcs_cpunum == -1)
+		dcs_cpunum = mame_find_cpu_index("dcs3");
 	dcs.channels = 2;
 	dcs.soundboot = (UINT16 *)memory_region(REGION_SOUND1);
 	dcs.sounddata = dcs.soundboot + 0x10000/2;
@@ -548,6 +595,12 @@ void dcs2_rom_init(offs_t polling_offset)
 
 	/* reset the system */
 	dcs_reset();
+}
+
+
+void dcs3_init(offs_t polling_offset)
+{
+	dcs2_init(polling_offset);
 }
 
 

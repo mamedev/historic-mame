@@ -556,11 +556,6 @@ static void do_addressing( char *buf ) {
 
 *********************************************************************************/
 
-static void illegal2( char *buf ) {
-	sprintf( buf, "unknown " );
-	do_addressing( buf );
-}
-
 static void illegal( char *buf ) {
 	sprintf( buf, "illegal/unknown " );
 

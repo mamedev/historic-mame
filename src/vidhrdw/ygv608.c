@@ -50,7 +50,9 @@ static struct mame_bitmap *work_bitmap = NULL;
 
 #ifdef MAME_DEBUG
 static void ShowYGV608Registers( void );
+#if 0
 static void dump_block( char *name, unsigned char *block, int len );
+#endif
 #endif
 
 /* interrupt generated every 1ms second */
@@ -1557,6 +1559,7 @@ void SetPostShortcuts( int reg )
 
 #define nSHOW_SOURCE_MODE
 
+#if 0
 void dump_block( char *name, unsigned char *block, int len )
 {
   int i;
@@ -1571,7 +1574,7 @@ void dump_block( char *name, unsigned char *block, int len )
   }
   logerror( "};\n" );
 }
-
+#endif
 READ16_HANDLER( debug_trigger )
 {
   static int oneshot = 0;
@@ -1586,7 +1589,7 @@ READ16_HANDLER( debug_trigger )
   ShowYGV608Registers();
 
 #ifdef SHOW_SOURCE_MODE
-
+#if 0
   dump_block( "ygv608_regs",
 	      (unsigned char *)ygv608.regs.b,
 	      64 );
@@ -1602,6 +1605,7 @@ READ16_HANDLER( debug_trigger )
   dump_block( "ygv608_cp",
 	      (unsigned char *)ygv608.colour_palette,
 	      768 );
+#endif
 
 #else
 

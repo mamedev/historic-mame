@@ -371,6 +371,32 @@ ROM_START( eggventr )
 ROM_END
 
 
+ROM_START( eggvent7 )
+	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 )		/* 34010 code */
+	ROM_LOAD16_BYTE( "eggvc8.7", 0x000000, 0x020000, CRC(99999899) SHA1(e3908600fa711baa7f7562f86498ec7e988a5bea) )
+	ROM_LOAD16_BYTE( "eggvc9.7", 0x000001, 0x020000, CRC(1b608155) SHA1(256dd981515d57f806a3770bdc6ff46b9000f7f3) )
+	ROM_COPY( REGION_USER1, 0x000000, 0x040000, 0x040000 )
+	ROM_COPY( REGION_USER1, 0x000000, 0x080000, 0x080000 )
+
+	ROM_REGION16_LE( 0x600000, REGION_GFX1, 0 )			/* graphics data */
+	ROM_LOAD16_BYTE( "egr1.bin",  0x000000, 0x100000, CRC(f73f80d9) SHA1(6278b45579a256b9576ba6d4f5a15fab26797c3d) )
+	ROM_LOAD16_BYTE( "egr2.bin",  0x000001, 0x100000, CRC(3a9ba910) SHA1(465aa3119af103aa65b25042b3572fdcb9c1887a) )
+	ROM_LOAD16_BYTE( "egr4.bin",  0x200000, 0x100000, CRC(4ea5900e) SHA1(20341337ee3c6c22580c52312156b818f4187693) )
+	ROM_LOAD16_BYTE( "egr3.bin",  0x200001, 0x100000, CRC(3f8dfc73) SHA1(83a168069f896ea7e67a97c6d591d09b19d5f486) )
+	ROM_LOAD16_BYTE( "egr6.3",    0x400000, 0x100000, CRC(f299d818) SHA1(abbb333c43675d34c59201b5d297779cfea8b092) )
+	ROM_LOAD16_BYTE( "egr5.3",    0x400001, 0x100000, CRC(ebfca07b) SHA1(20465d14b41d99651166f221057737d7b3cc770c) )
+
+	ROM_REGION( 0x40000, REGION_SOUND1, 0)				/* sound data */
+	ROM_LOAD( "eu18.bin", 0x00000, 0x40000, CRC(3760b1db) SHA1(70e258a6036f9ce26b354c4df57e0e4d2c871bcb) )
+
+	ROM_REGION( 0x40000, REGION_SOUND2, 0)				/* sound data */
+	ROM_LOAD( "eu18.bin", 0x00000, 0x40000, CRC(3760b1db) SHA1(70e258a6036f9ce26b354c4df57e0e4d2c871bcb) )
+
+	ROM_REGION( 0x40000, REGION_SOUND3, 0)				/* sound data */
+	ROM_LOAD( "eu18.bin", 0x00000, 0x40000, CRC(3760b1db) SHA1(70e258a6036f9ce26b354c4df57e0e4d2c871bcb) )
+ROM_END
+
+
 ROM_START( eggvntdx )
 	ROM_REGION16_LE( 0x100000, REGION_USER1, 0 )		/* 34010 code */
 	ROM_LOAD16_BYTE( "eggdlx.vc8", 0x000000, 0x080000, CRC(d7f56141) SHA1(3c16b509fd1c763e452c27084fb0e90cde3947f7) )
@@ -403,5 +429,6 @@ ROM_END
  *************************************/
 
 GAME( 1996, lethalj,  0,        lethalj, lethalj,  0, ROT0, "The Game Room", "Lethal Justice" )
-GAME( 1997, eggventr, 0,        lethalj, eggventr, 0, ROT0, "The Game Room", "Egg Venture" )
+GAME( 1997, eggventr, 0,        lethalj, eggventr, 0, ROT0, "The Game Room", "Egg Venture (Release 10)" )
+GAME( 1997, eggvent7, eggventr, lethalj, eggventr, 0, ROT0, "The Game Room", "Egg Venture (Release 7)" )
 GAME( 1997, eggvntdx, eggventr, lethalj, eggvntdx, 0, ROT0, "The Game Room", "Egg Venture Deluxe" )

@@ -249,7 +249,7 @@ void model3_tap_write(int tck, int tms, int tdi, int trst)
          * TCK)
          */
 
-        ir &= 0x3fffffffffff;
+        ir &= U64(0x3fffffffffff);
         current_instruction = ir;
         break;
 

@@ -7,13 +7,13 @@
   It's a DIP20 chip with a sticker of the form XXnn, where XX is the
   company and nn a number:
     AC = Acclaim
-	AT = Atlus       
+	AT = Atlus
 	CP = Capcom
     ET = Raizing
     KN = Konami
     MG = Tecmo
 	TT = Taito
-	TW = Atari 
+	TW = Atari
 
   There usually are 2 of them, one on the cpu board and one on the rom
   board.  The cpu board one is usually numbered 01.
@@ -78,7 +78,7 @@
                          0<=bit<=7
   then
        c[n, bit=0..6] = Shift(c[n-1, (bit-1)&7])
-       c[n, 7]        = Shift(c[n-1, 6])^c[n, 0]    
+       c[n, 7]        = Shift(c[n-1, 6])^c[n, 0]
                       = Shift(c[n-1, 6])^Shift(c[n-1, 7])
 */
 
@@ -93,6 +93,7 @@ static znsec_state zns[2];
 
 // Given the value for x7..x0 and linear transform coefficients a7..a0
 // compute the value of the transform
+#if 0
 static int c_linear(unsigned char x, unsigned char a)
 {
 	int i;
@@ -104,6 +105,7 @@ static int c_linear(unsigned char x, unsigned char a)
 			r = !r;
 	return r;
 }
+#endif
 
 // Derive the sbox xor mask for a given input and select bit
 static unsigned char compute_sbox_coef(int chip, int sel, int bit)
@@ -138,7 +140,7 @@ static unsigned char apply_sbox(unsigned char state, const unsigned char *sbox)
 	for(i=0; i<8; i++)
 		if(state & (1<<i))
 			r ^= sbox[i];
-	return r; 
+	return r;
 }
 
 void znsec_init(int chip, const unsigned char *transform)

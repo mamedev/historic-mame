@@ -1290,7 +1290,7 @@ static void execute_dasm(int ref, int params, const char *param[])
 		outdex += sprintf(&output[outdex], "%0*X: ", info->space[ADDRESS_SPACE_PROGRAM].addrchars, (UINT32)BYTE2ADDR(pcbyte, info, ADDRESS_SPACE_PROGRAM));
 
 		/* get the disassembly up front, but only if mapped */
-		if (memory_get_read_ptr(cpunum, ADDRESS_SPACE_PROGRAM, pcbyte) != NULL)
+		if (memory_get_op_ptr(cpunum, pcbyte) != NULL)
 		{
 			memory_set_opbase(pcbyte);
 			i += numbytes = activecpu_dasm(disasm, offset + i) & DASMFLAG_LENGTHMASK;

@@ -289,6 +289,7 @@ WRITE8_HANDLER( cntsteer_background_w )
 	}
 }
 
+#if 0
 static WRITE8_HANDLER( gekitsui_int_w )
 {
 //	if (errorlog) fprintf(errorlog,"%04x: CPU 2 causes NMI\n",cpu_get_pc());
@@ -299,16 +300,19 @@ static WRITE8_HANDLER( gekitsui_int2_w ) // not used..
 //	if (errorlog) fprintf(errorlog,"%04x: CPU 1 causes IRQ\n",cpu_get_pc());
 	cpunum_set_input_line(1, M6809_IRQ_LINE, ASSERT_LINE);
 }
+#endif
 
 static WRITE8_HANDLER( gekitsui_sub_irq_ack )
 {
 	cpunum_set_input_line(1, M6809_IRQ_LINE, CLEAR_LINE);
 }
 
+#if 0
 static WRITE8_HANDLER( cntsteer_int_w )
 {
 	cpunum_set_input_line(0, M6809_IRQ_LINE, ASSERT_LINE);
 }
+#endif
 
 static WRITE8_HANDLER( cntsteer_sound_w )
 {
@@ -325,6 +329,7 @@ static WRITE8_HANDLER( zerotrgt_ctrl_w )
 //	if (offset==2) cpunum_set_input_line(1, INPUT_LINE_RESET, CLEAR_LINE);
 }
 
+#if 0
 static WRITE8_HANDLER( cntsteer_halt_cpu0_w )
 {
 //	if (errorlog) fprintf(errorlog,"%04x: CPU halt %02x\n",cpu_get_pc(),data);
@@ -336,11 +341,12 @@ static WRITE8_HANDLER( cntsteer_restart_cpu0_w )
 //	if (errorlog) fprintf(errorlog,"%04x: CPU restart %02x\n",cpu_get_pc(),data);
 //if (data&0x4)	cpu_halt(0,1); /* Restart cpu */
 }
-
+#endif
 
 
 /***************************************************************************/
 
+#if 0
 static ADDRESS_MAP_START( cntsteer_cpu1_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x0fff) AM_RAM AM_SHARE(1)
 	AM_RANGE(0x1000, 0x11ff) AM_RAM AM_BASE(&spriteram)
@@ -377,6 +383,7 @@ static ADDRESS_MAP_START( cntsteer_cpu2_map, ADDRESS_SPACE_PROGRAM, 8 )
 //	{ 0x3004, 0x3004, cntsteer_int_w },
 	AM_RANGE(0x4000, 0xffff) AM_ROM
 ADDRESS_MAP_END
+#endif
 
 static ADDRESS_MAP_START( gekitsui_cpu1_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x0fff) AM_RAM AM_SHARE(1)
@@ -942,6 +949,7 @@ static void zerotrgt_rearrange_gfx(int romsize, int romarea)
 
 }
 
+#if 0
 static void init_cntsteer(void)
 {
 	data8_t *RAM = memory_region(REGION_CPU2);
@@ -954,6 +962,7 @@ static void init_cntsteer(void)
 	zerotrgt_rearrange_gfx(0x02000, 0x10000);
 
 }
+#endif
 
 DRIVER_INIT( zerotrgt )
 {

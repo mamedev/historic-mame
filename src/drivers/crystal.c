@@ -527,7 +527,7 @@ static ADDRESS_MAP_START( crystal_mem, ADDRESS_SPACE_PROGRAM, 32 )
 
 ADDRESS_MAP_END
 
-static void PatchReset()
+static void PatchReset(void)
 {
 	//The test menu reset routine seems buggy
 	//it reads the reset vector from 0x02000000 but it should be

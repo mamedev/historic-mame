@@ -63,8 +63,6 @@ static void twotigra_get_bg_tile_info(int tile_index)
 
 static int video_start_common(void)
 {
-	const struct GfxElement *gfx = Machine->gfx[1];
-
 	/* allocate a dirty buffer */
 	dirtybuffer = auto_malloc(videoram_size);
 	if (!dirtybuffer)

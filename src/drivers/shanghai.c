@@ -13,9 +13,14 @@ to a NOP to jump to it immediately at the beginning of a round.
 I'm not sure about the refresh rate, 60Hz makes time match the dip switch
 settings, but music runs too fast.
 
+TS 20050212:
+- added Kyuukyoku no Othello - problems with gfx 
+  (wrong data copied to HD63484 ?)
+
 ***************************************************************************/
 
 #include "driver.h"
+#include "sndhrdw/seibu.h"
 
 /* the on-chip FIFO is 16 bytes long, but we use a larger one to simplify */
 /* decoding of long commands. Commands can be up to 64KB long... but Shanghai */
@@ -827,6 +832,34 @@ ADDRESS_MAP_END
 
 
 
+
+
+static READ8_HANDLER(rand_r)
+{
+	return rand();
+}
+
+static READ8_HANDLER( kothello_HD63484_status_r )
+{
+	if (offset == 1) return 0xff;	/* high 8 bits - not used */
+	return 0x22;	/* write FIFO ready + command end    + read FIFO ready */
+}
+
+static ADDRESS_MAP_START( kothello_mem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x00000, 0x07fff) AM_RAM
+	AM_RANGE(0x08010, 0x08011) AM_READ(kothello_HD63484_status_r) AM_WRITE(HD63484_address_w)
+	AM_RANGE(0x08012, 0x08013) AM_READ(HD63484_data_r) AM_WRITE(HD63484_data_w)
+	AM_RANGE(0x09010, 0x0901f) AM_READ(rand_r)AM_WRITENOP // unknown, sub cpu communication ?
+	AM_RANGE(0x0a000, 0x0a1ff) AM_WRITE(paletteram_xxxxBBBBGGGGRRRR_w) AM_BASE(&paletteram)
+	AM_RANGE(0x0b010, 0x0b01f) AM_READ(seibu_main_v30_r) AM_WRITE(seibu_main_v30_w)
+	AM_RANGE(0x80000, 0xfffff) AM_ROM
+ADDRESS_MAP_END	
+
+INPUT_PORTS_START( kothello )
+	SEIBU_COIN_INPUTS	
+INPUT_PORTS_END
+
+	
 INPUT_PORTS_START( shanghai )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY
@@ -986,7 +1019,7 @@ INPUT_PORTS_END
 
 
 
-static struct YM2203interface ym2203_interface =
+static struct YM2203interface sh_ym2203_interface =
 {
 	1,			/* 1 chip */
 	16000000/4,	/* ? */
@@ -1021,7 +1054,7 @@ static MACHINE_DRIVER_START( shanghai )
 	MDRV_VIDEO_UPDATE(shanghai)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(YM2203, sh_ym2203_interface)
 MACHINE_DRIVER_END
 
 
@@ -1046,7 +1079,41 @@ static MACHINE_DRIVER_START( shangha2 )
 	MDRV_VIDEO_UPDATE(shanghai)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(YM2203, sh_ym2203_interface)
+MACHINE_DRIVER_END
+
+SEIBU_SOUND_SYSTEM_YM2203_HARDWARE(14318180/4)
+
+SEIBU_SOUND_SYSTEM_ADPCM_HARDWARE
+
+
+static MACHINE_DRIVER_START( kothello )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(V30,16000000/2)	/* ? */
+	MDRV_CPU_PROGRAM_MAP(kothello_mem, 0)
+	MDRV_CPU_VBLANK_INT(shanghai_interrupt,1)
+	
+	SEIBU3A_SOUND_SYSTEM_CPU(14318180/4)
+
+	MDRV_FRAMES_PER_SECOND(30)
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(200)
+	
+	MDRV_MACHINE_INIT(seibu_sound_1)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(384, 384)
+	MDRV_VISIBLE_AREA(0, 384-1, 0, 280-1)
+	MDRV_PALETTE_LENGTH(256)
+
+	MDRV_VIDEO_START(shanghai)
+	MDRV_VIDEO_UPDATE(shanghai)
+	
+	/* sound hardware */
+	SEIBU_SOUND_SYSTEM_YM2203_INTERFACE
+	SEIBU_SOUND_SYSTEM_ADPCM_INTERFACE
 MACHINE_DRIVER_END
 
 
@@ -1075,7 +1142,76 @@ ROM_START( shangha2 )
 	ROM_LOAD16_BYTE( "sht-30j", 0xc0000, 0x20000, CRC(2861a894) SHA1(6da99d15f41e900735f8943f2710487817f98579) )
 ROM_END
 
+/*
+
+Kyuukyoku no Othello
+Success Corp. 1990
+
+PCB Layout
+
+SSS8906
+|------------------------------------------|
+| YM3014 DSW2  DSW1           4464    4464 |
+|                             4464    4464 |
+|              YM2203         4464    4464 |
+|J      M5205  Z80            4464    4464 |
+|A             6116           4464    4464 |
+|M             PAL            4464    4464 |
+|M                            4464    4464 |
+|A  ROM6                      4464    4464 |
+|              ROM5           HD63484      |
+| YM3931                             898-3 |
+|                  SIS6091                 |
+|                                          |
+|                                          |
+| PAL                                      |
+| PAL              ROM3  ROM4              |
+|                                    PAL   |
+|                  ROM2  ROM1              |
+| CXQ70116                                 |
+| D71011           6264  6264              |
+|16MHz     PAL     6264  6264              |
+|------------------------------------------|
+Notes:
+      Z80 clock     : 4.000MHz
+      CXQ70116 clock: 16.000MHz
+      YM3931 clock  : 4.000MHz
+      YM2203 clock  : 4.000MHz
+      M5205 clock   : 444598Hz; sample rate = M5205 clock / 48
+      HD63484 clock : pin50- 4.000MHz, pin52- 2.000MHz
+      VSync         : 57Hz
+
+      HD63484  : Crt Controller
+      CXQ70116 : Compatible with NEC V30 (DIP40)
+      D71011   : ? (DIP18) 710xx is series of common NEC ICs; timers, counters, parallel interface, interrupt controllers etc
+      898-3    : BI 898-3-R 22  8920  (?, DIP16, tied to HD63484)
+      YM3931   : Also printed 'SEI0100BU' (SDIP64)
+      SIS6091  : Custom QFP80 (Graphics controller?)
+      4464     : 64K x4 DRAM
+      6264       8K x8 SRAM
+      6116     : 2K x8 SRAM
+
+*/
+
+
+ROM_START( kothello )
+	ROM_REGION( 0x100000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "rom1.3e", 0x80001, 0x20000, CRC(8601dcfa) SHA1(e7ffc6da0bfb5cec5a543a2a5223b235c3428eb3) )
+	ROM_LOAD16_BYTE( "rom2.5e", 0x80000, 0x20000, CRC(68f6b7a3) SHA1(9f7e217e07bc79b1e95551cd0fe107294bf5889f) )
+	ROM_LOAD16_BYTE( "rom3.3f", 0xc0001, 0x20000, CRC(2f3dacd1) SHA1(35bfdc1f377b87a80c3abbb48f9f0b52108fbfc0) )
+	ROM_LOAD16_BYTE( "rom4.5f", 0xc0000, 0x20000, CRC(ee8bbea7) SHA1(35dfa7aa89cecba6482b18a5233511bacc4bf331) )
+
+	ROM_REGION( 0x20000, REGION_CPU2, 0 )
+	ROM_LOAD( "rom5.5l",   0x00000, 0x02000, CRC(7eb6e697) SHA1(4476e13f9a9e04472581f2c069760f53b33d5672))
+	ROM_CONTINUE(          0x10000, 0x0e000 )
+		
+	ROM_REGION( 0x10000, REGION_SOUND1, 0 )
+	ROM_LOAD( "rom6.7m",   0x00000, 0x10000, CRC(4ab1335d) SHA1(3a803e8a7e9b0c2a26ee23e7ac9c89c70cf2504b))
+ROM_END
+
 
 
 GAMEX(1988, shanghai, 0, shanghai, shanghai, 0, ROT0, "Sunsoft", "Shanghai (Japan)", GAME_IMPERFECT_GRAPHICS )
 GAME( 1989, shangha2, 0, shangha2, shangha2, 0, ROT0, "Sunsoft", "Shanghai II (Japan)" )
+GAMEX(1990, kothello, 0, kothello, kothello, 0, ROT0, "Success", "Kyuukyoku no Othello", GAME_NOT_WORKING )
+

@@ -81,11 +81,6 @@ static ADDRESS_MAP_START( writeport_1_2, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x02, 0x02) AM_WRITE(c8080bw_shift_data_w)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( writeport_2_3, ADDRESS_SPACE_IO, 8 )
-	AM_RANGE(0x02, 0x02) AM_WRITE(c8080bw_shift_amount_w)
-	AM_RANGE(0x03, 0x03) AM_WRITE(c8080bw_shift_data_w)
-ADDRESS_MAP_END
-
 static ADDRESS_MAP_START( writeport_2_4, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x02, 0x02) AM_WRITE(c8080bw_shift_amount_w)
 	AM_RANGE(0x04, 0x04) AM_WRITE(c8080bw_shift_data_w)

@@ -1160,7 +1160,7 @@ int chd_verify(struct chd_file *chd, void (*progress)(const char *, ...), UINT8 
 	struct MD5Context md5;
 	struct sha1_ctx sha;
 	UINT64 sourceoffset = 0;
-	int err, hunknum = 0;
+	int err, prev_err = CHDERR_NONE, hunknum = 0;
 	clock_t lastupdate;
 
 	/* punt if no interface */
@@ -1196,7 +1196,13 @@ int chd_verify(struct chd_file *chd, void (*progress)(const char *, ...), UINT8 
 
 		/* read the hunk into the cache */
 		err = read_hunk_into_cache(chd, hunknum);
-		if (err != CHDERR_NONE)
+		if (err == CHDERR_DECOMPRESSION_ERROR)
+		{
+			prev_err = CHDERR_DECOMPRESSION_ERROR;
+			if (progress)
+				(*progress)("Bad hunk %d/%d.        \r\n", hunknum, chd->header.totalhunks);
+		}
+		else if (err != CHDERR_NONE)
 			SET_ERROR_AND_CLEANUP(err);
 
 		/* update the MD5/SHA1 */
@@ -1217,6 +1223,8 @@ int chd_verify(struct chd_file *chd, void (*progress)(const char *, ...), UINT8 
 		/* prepare for the next hunk */
 		sourceoffset += chd->header.hunkbytes;
 	}
+	if (prev_err == CHDERR_DECOMPRESSION_ERROR)
+		SET_ERROR_AND_CLEANUP(prev_err);
 
 	/* compute the final MD5 */
 	MD5Final(actualmd5, &md5);

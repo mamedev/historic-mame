@@ -39,6 +39,8 @@ extern data8_t *galaxian_spriteram2;
 extern data8_t *galaxian_attributesram;
 extern data8_t *galaxian_bulletsram;
 extern data8_t *rockclim_videoram;
+extern data8_t *racknrol_tiles_bank;
+
 
 extern size_t galaxian_spriteram_size;
 extern size_t galaxian_spriteram2_size;
@@ -63,7 +65,6 @@ WRITE8_HANDLER( rockclim_videoram_w );
 WRITE8_HANDLER( rockclim_scroll_w );
 READ8_HANDLER( rockclim_videoram_r );
 
-
 WRITE8_HANDLER( galaxian_attributesram_w );
 
 WRITE8_HANDLER( galaxian_stars_enable_w );
@@ -73,6 +74,7 @@ WRITE8_HANDLER( scramble_background_green_w );
 WRITE8_HANDLER( scramble_background_blue_w );
 WRITE8_HANDLER( hotshock_flip_screen_w );
 WRITE8_HANDLER( darkplnt_bullet_color_w );
+WRITE8_HANDLER( racknrol_tiles_bank_w );
 
 VIDEO_START( galaxian_plain );
 VIDEO_START( galaxian );
@@ -106,6 +108,7 @@ VIDEO_START( rockclim );
 VIDEO_START( drivfrcg );
 VIDEO_START( bongo );
 VIDEO_START( scorpion );
+VIDEO_START( racknrol );
 
 VIDEO_UPDATE( galaxian );
 

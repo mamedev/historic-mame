@@ -1,5 +1,6 @@
 /* helper function to join two 16-bit ROMs and form a 32-bit data stream */
 void konami_rom_deinterleave_2(int mem_region);
+void konami_rom_deinterleave_2_half(int mem_region);
 /* helper function to join four 16-bit ROMs and form a 64-bit data stream */
 void konami_rom_deinterleave_4(int mem_region);
 
@@ -124,6 +125,7 @@ WRITE16_HANDLER( K053244_word_w );
 void K053244_bankselect(int bank);	/* used by TMNT2, Asterix and Premier Soccer for ROM testing */
 void K053245_sprites_draw(struct mame_bitmap *bitmap,const struct rectangle *cliprect);
 void K053245_clear_buffer(void);
+void K053245_set_SpriteOffset(int offsx, int offsy);
 
 #define K055673_LAYOUT_GX  0
 #define K055673_LAYOUT_RNG 1
@@ -262,6 +264,7 @@ int K054157_is_IRQ_enabled(void);
 int K054157_get_lookup(int bits);
 void K054157_set_tile_bank(int bank);	/* Asterix */
 int K054157_get_current_rambank(void);
+void K056832_SetExtLinescroll(void);	/* Lethal Enforcers */
 
 int K056832_vh_start(int gfx_memory_region, int bpp, int big,
 			int (*scrolld)[4][2],
@@ -274,14 +277,17 @@ READ16_HANDLER( K056832_5bpp_rom_word_r );
 READ32_HANDLER( K056832_5bpp_rom_long_r );
 READ32_HANDLER( K056832_6bpp_rom_long_r );
 READ16_HANDLER( K056832_rom_word_r );
+READ16_HANDLER( K056832_old_rom_word_r );
 WRITE16_HANDLER( K056832_word_w ); // "VRAM" registers
 WRITE16_HANDLER( K056832_b_word_w );
 READ8_HANDLER( K056832_ram_code_lo_r );
 READ8_HANDLER( K056832_ram_code_hi_r );
-READ8_HANDLER( K056832_ram_attr_r );
+READ8_HANDLER( K056832_ram_attr_lo_r );
+READ8_HANDLER( K056832_ram_attr_hi_r );
 WRITE8_HANDLER( K056832_ram_code_lo_w );
 WRITE8_HANDLER( K056832_ram_code_hi_w );
-WRITE8_HANDLER( K056832_ram_attr_w );
+WRITE8_HANDLER( K056832_ram_attr_lo_w );
+WRITE8_HANDLER( K056832_ram_attr_hi_w );
 WRITE8_HANDLER( K056832_w );
 WRITE8_HANDLER( K056832_b_w );
 void K056832_mark_plane_dirty(int num);
@@ -298,12 +304,16 @@ int  K056832_is_IRQ_enabled(int irqline);
 void K056832_read_AVAC(int *mode, int *data);
 int  K056832_read_register(int regnum);
 int K056832_get_current_rambank(void);
+int K056832_get_lookup(int bits);	/* Asterix */
+void K056832_set_tile_bank(int bank);	/* Asterix */
 
 READ32_HANDLER( K056832_ram_long_r );
 READ32_HANDLER( K056832_rom_long_r );
 WRITE32_HANDLER( K056832_ram_long_w );
 WRITE32_HANDLER( K056832_long_w );
 WRITE32_HANDLER( K056832_b_long_w );
+READ16_HANDLER( K056832_ram_half_word_r );
+WRITE16_HANDLER( K056832_ram_half_word_w );
 
 /* bit depths for the 56832 */
 #define K056832_BPP_4	0
@@ -311,6 +321,7 @@ WRITE32_HANDLER( K056832_b_long_w );
 #define K056832_BPP_6	2
 #define K056832_BPP_8	3
 #define K056832_BPP_4dj	4
+#define K056832_BPP_8LE	5
 
 void K055555_vh_start(void); // "PCU2"
 void K055555_write_reg(data8_t regnum, data8_t regdat);

@@ -300,6 +300,7 @@ WRITE32_HANDLER( tms32031_control_w )
  *
  *************************************/
 
+#if 0
 static READ32_HANDLER( crusnwld_serial_status_r )
 {
 	int status = midway_serial_pic_status_r();
@@ -322,7 +323,7 @@ static WRITE32_HANDLER( crusnwld_serial_data_w )
 	}
 	midway_serial_pic_w(data >> 16);
 }
-
+#endif
 
 
 /*************************************
@@ -1026,7 +1027,7 @@ MACHINE_DRIVER_START( midvplus )
 
 	MDRV_MACHINE_INIT(midvplus)
 	MDRV_NVRAM_HANDLER(midway_serial_pic2)
-	
+
 	/* sound hardware */
 	MDRV_IMPORT_FROM(dcs2_audio)
 MACHINE_DRIVER_END
@@ -1331,9 +1332,10 @@ static void init_crusnwld_common(offs_t speedup)
 		generic_speedup = memory_install_read32_handler(0, ADDRESS_SPACE_PROGRAM, speedup, speedup + 1, 0, 0, generic_speedup_r);
 }
 static DRIVER_INIT( crusnwld ) { init_crusnwld_common(0xd4c0); }
+#if 0
 static DRIVER_INIT( crusnw20 ) { init_crusnwld_common(0xd49c); }
 static DRIVER_INIT( crusnw13 ) { init_crusnwld_common(0); }
-
+#endif
 
 static DRIVER_INIT( offroadc )
 {
@@ -1368,7 +1370,7 @@ static DRIVER_INIT( wargods )
 	ide_controller_init(0, &ide_intf);
 	midway_ioasic_init(0, 452/* no alternates */, 94, NULL);
 	adc_shift = 16;
-	
+
 	/* we need proper VRAM */
 	memset(default_nvram, 0xff, sizeof(default_nvram));
 	default_nvram[0x0e] = default_nvram[0x2e] = 0x67;

@@ -107,7 +107,7 @@
  *
  * - INR r, DCR r, ADD r, SUB r, CMP r instructions should affect parity flag.
  *   Fixed only for non x86 asm version (#define i8080_EXACT 1).
- * 
+ *
  *****************************************************************************/
 
 /*int survival_prot = 0; */
@@ -198,14 +198,6 @@ static UINT8 RM(UINT32 a)
 static void WM(UINT32 a, UINT8 v)
 {
 	program_write_byte_8(a, v);
-}
-
-static	void illegal(void)
-{
-#if VERBOSE
-	UINT16 pc = I.PC.w.l - 1;
-	LOG(("i8085 illegal instruction %04X $%02X\n", pc, cpu_readop(pc)));
-#endif
 }
 
 INLINE void execute_one(int opcode)
@@ -1646,7 +1638,7 @@ static void i8085_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_REGISTER + I8085_VECTOR:		I.INTR = info->i;						break;
 
 		case CPUINFO_INT_I8085_SID:						if (info->i) I.IM |= IM_SID; else I.IM &= ~IM_SID; break;
-		
+
 		/* --- the following bits of info are set as pointers to data or functions --- */
 		case CPUINFO_PTR_IRQ_CALLBACK:					I.irq_callback = info->irqcallback;		break;
 		case CPUINFO_PTR_I8085_SOD_CALLBACK:			I.sod_callback = (void (*)(int))info->f;break;
@@ -1673,7 +1665,7 @@ void i8085_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 3;							break;
 		case CPUINFO_INT_MIN_CYCLES:					info->i = 4;							break;
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 16;							break;
-		
+
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 8;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 16;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;

@@ -97,6 +97,13 @@ READ32_HANDLER( am53cf96_r )
 	return rv;
 }
 
+static void am53cf96_irq( int unused )
+{
+	scsi_regs[REG_IRQSTATE] = 8;	// indicate success
+	scsi_regs[REG_STATUS] |= 0x80;	// indicate IRQ
+	intf->irq_callback();
+}
+
 WRITE32_HANDLER( am53cf96_w )
 {
 	int reg, val, dma;
@@ -143,16 +150,12 @@ WRITE32_HANDLER( am53cf96_w )
 				xfer_state = 0;
 				break;
 			case 3:	// reset SCSI bus
-				scsi_regs[REG_IRQSTATE] = 8;	// indicate success
 				scsi_regs[REG_INTSTATE] = 4;	// command sent OK
-				scsi_regs[REG_STATUS] |= 0x80;	// indicate IRQ
 				xfer_state = 0;
-				intf->irq_callback();
+				timer_set( TIME_IN_HZ( 16384 ), 0, am53cf96_irq );
 				break;
 			case 0x42:    	// select with ATN steps
-				scsi_regs[REG_IRQSTATE] = 8;	// indicate success
-				scsi_regs[REG_STATUS] |= 0x80;	// indicate IRQ
-				intf->irq_callback();
+				timer_set( TIME_IN_HZ( 16384 ), 0, am53cf96_irq );
 				last_cmd = fifo[1];
 //				logerror("53cf96: executing SCSI command %x\n", last_cmd);
 				if ((last_cmd == 0) || (last_cmd == 0x48) || (last_cmd == 0x4b))
@@ -237,10 +240,8 @@ WRITE32_HANDLER( am53cf96_w )
 			case 0x10:	// information transfer (must not change xfer_state)
 			case 0x11:	// second phase of information transfer
 			case 0x12:	// message accepted
-				scsi_regs[REG_IRQSTATE] = 8;	// indicate success
+				timer_set( TIME_IN_HZ( 16384 ), 0, am53cf96_irq );
 				scsi_regs[REG_INTSTATE] = 6;	// command sent OK
-				scsi_regs[REG_STATUS] |= 0x80;	// indicate IRQ
-				intf->irq_callback();
 				break;
 		}
 	}

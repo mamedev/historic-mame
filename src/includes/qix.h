@@ -70,3 +70,11 @@ READ8_HANDLER( qix_data_io_r );
 READ8_HANDLER( qix_sound_io_r );
 WRITE8_HANDLER( qix_data_io_w );
 WRITE8_HANDLER( qix_sound_io_w );
+
+
+/*----------- defined in sndhrdw/qix.c -----------*/
+
+extern struct discrete_sound_block qix_discrete_interface[];
+
+WRITE8_HANDLER( qix_dac_w );
+WRITE8_HANDLER( qix_vol_w );

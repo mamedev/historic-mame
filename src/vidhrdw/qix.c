@@ -23,7 +23,7 @@ UINT8 qix_cocktail_flip;
 /* Local variables */
 static UINT8 vram_mask;
 static UINT8 qix_palettebank;
-
+static int leds;
 
 
 /*************************************
@@ -224,6 +224,7 @@ WRITE8_HANDLER( qix_palettebank_w )
 	}
 
 	/* LEDs are in the upper 6 bits */
+	leds = ~data & 0xfc;
 }
 
 
@@ -242,4 +243,9 @@ VIDEO_UPDATE( qix )
 	/* draw the bitmap */
 	for (y = cliprect->min_y; y <= cliprect->max_y; y++)
 		draw_scanline8(bitmap, 0, y, 256, &videoram[y * 256], pens, -1);
+
+#if 0
+	// note the confusing bit order!
+	usrintf_showmessage("self test leds: %d%d %d%d%d%d",BIT(leds,7),BIT(leds,5),BIT(leds,6),BIT(leds,4),BIT(leds,2),BIT(leds,3));
+#endif
 }

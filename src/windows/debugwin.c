@@ -8,6 +8,9 @@
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <windowsx.h>
+#ifdef _MSC_VER
+#include <zmouse.h>
+#endif
 
 // MAME headers
 #include "driver.h"
@@ -168,8 +171,12 @@ static int debug_view_create(struct debugwin_info *info, int which, int type);
 
 static LRESULT CALLBACK debug_edit_proc(HWND wnd, UINT message, WPARAM wparam, LPARAM lparam);
 
+#if 0
 static void generic_create_window(int type);
+#endif
+#if 0
 static void generic_recompute_children(struct debugwin_info *info);
+#endif
 
 static void memory_create_window(void);
 static void memory_recompute_children(struct debugwin_info *info);
@@ -1465,7 +1472,7 @@ static LRESULT CALLBACK debug_edit_proc(HWND wnd, UINT message, WPARAM wparam, L
 }
 
 
-
+#if 0
 //============================================================
 //	generic_create_window
 //============================================================
@@ -1510,9 +1517,9 @@ static void generic_create_window(int type)
 	// recompute the children and set focus on the edit box
 	generic_recompute_children(info);
 }
+#endif
 
-
-
+#if 0
 //============================================================
 //	generic_recompute_children
 //============================================================
@@ -1528,7 +1535,7 @@ static void generic_recompute_children(struct debugwin_info *info)
 	InflateRect(&parent, -EDGE_WIDTH, -EDGE_WIDTH);
 	debug_view_set_bounds(&info->view[0], info->wnd, &parent);
 }
-
+#endif
 
 
 //============================================================

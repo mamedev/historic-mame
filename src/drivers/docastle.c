@@ -228,7 +228,7 @@ ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( docastle_map3, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x00ff) AM_ROM
-	AM_RANGE(0x4000, 0x4fff) AM_RAM
+	AM_RANGE(0x4000, 0x47ff) AM_RAM
 	AM_RANGE(0x8000, 0x8008) AM_READ(docastle_shared1_r)	// ???
 	AM_RANGE(0xc003, 0xc003) AM_NOP // EP according to schematics
 	AM_RANGE(0xc432, 0xc435) AM_NOP	// ???
@@ -656,7 +656,8 @@ static struct MSM5205interface msm5205_interface =
 
 static MACHINE_DRIVER_START( docastle )
 	// basic machine hardware
-	MDRV_CPU_ADD_TAG("main", Z80, 4000000)	// 4 MHz
+//	MDRV_CPU_ADD_TAG("main", Z80, 4000000)	// 4 MHz
+	MDRV_CPU_ADD_TAG("main", Z80, 3900000)	// make dip switches work in docastle and dorunrun
 	MDRV_CPU_PROGRAM_MAP(docastle_map, 0)
 	MDRV_CPU_IO_MAP(docastle_io_map, 0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold, 1)

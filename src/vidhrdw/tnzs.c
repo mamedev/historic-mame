@@ -14,7 +14,7 @@
 extern unsigned char *tnzs_objram;
 extern unsigned char *tnzs_vdcram;
 extern unsigned char *tnzs_scrollram;
-
+extern unsigned char *tnzs_objctrl;
 
 static int tnzs_screenflip;
 
@@ -66,10 +66,14 @@ void tnzs_vh_draw_background(struct mame_bitmap *bitmap,unsigned char *m)
 	int x,y,column,tot;
 	int scrollx, scrolly;
 	unsigned int upperbits;
+	int ctrl2	=	tnzs_objctrl[1];
 
 
-	/* If the byte at f301 has bit 0 clear, then don't draw the
-	   background tiles -WRONG- */
+	if ((ctrl2 ^ (~ctrl2<<1)) & 0x40)
+	{
+		m += 0x800;
+	}
+
 
 	/* The byte at f200 is the y-scroll value for the first column.
 	   The byte at f204 is the LSB of x-scroll value for the first column.
@@ -79,23 +83,11 @@ void tnzs_vh_draw_background(struct mame_bitmap *bitmap,unsigned char *m)
 	   The 9th bit of each x-scroll value is combined into 2 bytes
 	   at f302-f303 */
 
-	/* f301 seems to control how many columns are drawn but it's not clear how. */
-	/* Arkanoid 2 also uses f381, which TNZS always leaves at 00. */
-	/* Maybe it's a background / foreground thing? In Arkanoid 2, f381 contains */
-	/* the value we expect for the background stars (2E vs. 2A), while f301 the */
-	/* one we expect at the beginning of a level (2C vs. 2A). */
-	x = tnzs_scrollram[0x101] & 0xf;
-	if (x == 1) x = 16;
-	y = tnzs_scrollram[0x181] & 0xf;
-	if (y == 1) y = 16;
-	/* let's just pick the larger value... */
-	tot = x;
-	if (y > tot) tot = y;
+	/* f301 controls how many columns are drawn. */
+	tot = tnzs_objctrl[1] & 0x1f;
+	if (tot == 1) tot = 16;
 
-	upperbits = tnzs_scrollram[0x102] + tnzs_scrollram[0x103] * 256;
-	/* again, it's not clear why there are two areas, but Arkanoid 2 uses these */
-	/* for the end of game animation */
-	upperbits |= tnzs_scrollram[0x182] + tnzs_scrollram[0x183] * 256;
+	upperbits = tnzs_objctrl[2] + tnzs_objctrl[3] * 256;
 
 	for (column = 0;column < tot;column++)
 	{
@@ -132,6 +124,14 @@ void tnzs_vh_draw_background(struct mame_bitmap *bitmap,unsigned char *m)
 						flipx,flipy,
 						sx + scrollx,(sy + scrolly) & 0xff,
 						0,TRANSPARENCY_PEN,0);
+
+				/* wrap around x */
+				drawgfx(bitmap,Machine->gfx[0],
+						code,
+						color,
+						flipx,flipy,
+						sx + 512 + scrollx,(sy + scrolly) & 0xff,
+						0,TRANSPARENCY_PEN,0);
 			}
 		}
 
@@ -148,6 +148,16 @@ void tnzs_vh_draw_foreground(struct mame_bitmap *bitmap,
 							 unsigned char *color_pointer)
 {
 	int i;
+	int ctrl2	=	tnzs_objctrl[1];
+
+
+	if ((ctrl2 ^ (~ctrl2<<1)) & 0x40)
+	{
+		char_pointer += 0x800;
+		x_pointer += 0x800;
+		ctrl_pointer += 0x800;
+		color_pointer += 0x800;
+	}
 
 
 	/* Draw all 512 sprites */
@@ -176,6 +186,14 @@ void tnzs_vh_draw_foreground(struct mame_bitmap *bitmap,
 				flipx,flipy,
 				sx,sy+2,
 				&Machine->visible_area,TRANSPARENCY_PEN,0);
+
+		/* wrap around x */
+		drawgfx(bitmap,Machine->gfx[0],
+				code,
+				color,
+				flipx,flipy,
+				sx + 512,sy+2,
+				&Machine->visible_area,TRANSPARENCY_PEN,0);
 	}
 }
 
@@ -183,7 +201,7 @@ VIDEO_UPDATE( tnzs )
 {
 	/* If the byte at f300 has bit 6 set, flip the screen
 	   (I'm not 100% sure about this) */
-	tnzs_screenflip = (tnzs_scrollram[0x100] & 0x40) >> 6;
+	tnzs_screenflip = (tnzs_objctrl[0] & 0x40) >> 6;
 
 
 	/* Blank the background */
@@ -199,4 +217,27 @@ VIDEO_UPDATE( tnzs )
 							tnzs_vdcram + 0x0000, /*	  y : f000 */
 							tnzs_objram + 0x1000, /*   ctrl : d000 */
 							tnzs_objram + 0x1200); /* color : d200 */
+}
+
+VIDEO_EOF( tnzs )
+{
+	int ctrl2	=	tnzs_objctrl[1];
+	if (~ctrl2 & 0x20)
+	{
+		// note I copy sprites only. seta.c also copies the "floating tilemap"
+		if (ctrl2 & 0x40)
+		{
+			memcpy(&tnzs_objram[0x0000],&tnzs_objram[0x0800],0x0400);
+			memcpy(&tnzs_objram[0x1000],&tnzs_objram[0x1800],0x0400);
+		}
+		else
+		{
+			memcpy(&tnzs_objram[0x0800],&tnzs_objram[0x0000],0x0400);
+			memcpy(&tnzs_objram[0x1800],&tnzs_objram[0x1000],0x0400);
+		}
+
+		// and I copy the "floating tilemap" BACKWARDS - this fixes kabukiz
+		memcpy(&tnzs_objram[0x0400],&tnzs_objram[0x0c00],0x0400);
+		memcpy(&tnzs_objram[0x1400],&tnzs_objram[0x1c00],0x0400);
+	}
 }

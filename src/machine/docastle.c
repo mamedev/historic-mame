@@ -16,18 +16,25 @@ static unsigned char buffer0[9],buffer1[9];
 
 
 
+/*
+Communication between the two CPUs happens through a single bidirectional latch.
+Whenever CPU 0 reads or writes it, its WAIT input is asserted. It is implicitly
+cleared by CPU 1, when it accesses the latch. This enforces synchronization
+between the two CPUs.
+This is currently impossible to reproduce accurately in MAME, because it would
+require putting on hold CPU 0 while it is reading the latch, and resume its
+execution only when CPU 1 has written it.
+Instead, we take advantage of how the two CPUs access the latch, and treat it as
+if it was a small shared buffer. The order of operations is:
+1) CPU 0 triggers NMI on CPU 1
+2) CPU 0 writes 9 bytes to the buffer
+3) at this point we suspend execution of CPU 0, to give CPU 1 time to read the 9
+   bytes and write its own 9 bytes
+4) resume execution of CPU 0.
+*/
 READ8_HANDLER( docastle_shared0_r )
 {
 	if (offset == 8) logerror("CPU #0 shared0r  clock = %d\n",activecpu_gettotalcycles());
-
-	/* this shouldn't be done, however it's the only way I've found */
-	/* to make dip switches work in Do Run Run. */
-	if (offset == 8)
-	{
-		cpunum_set_input_line(1,INPUT_LINE_NMI,PULSE_LINE);
-		cpu_spinuntil_trigger(500);
-	}
-
 	return buffer0[offset];
 }
 

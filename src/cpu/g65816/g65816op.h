@@ -78,6 +78,14 @@ INLINE uint g65816i_read_8_direct(uint address)
 	return g65816_read_8(address);
 }
 
+INLINE uint g65816i_read_8_vector(uint address)
+{
+	if (READ_VECTOR)
+		return READ_VECTOR(address);
+	else
+		return g65816i_read_8_normal(address);
+}
+
 INLINE void g65816i_write_8_normal(uint address, uint value)
 {
 	address = ADDRESS_65816(address);
@@ -111,6 +119,12 @@ INLINE uint g65816i_read_16_direct(uint address)
 {
 	return   g65816i_read_8_direct(address) |
 			(g65816i_read_8_direct(address+1)<<8);
+}
+
+INLINE uint g65816i_read_16_vector(uint address)
+{
+	return	 g65816i_read_8_vector(address) |
+			(g65816i_read_8_vector(address+1)<<8);
 }
 
 INLINE void g65816i_write_16_normal(uint address, uint value)
@@ -367,7 +381,7 @@ INLINE void g65816i_interrupt_hardware(uint vector)
 	FLAG_D = DFLAG_CLEAR;
 	g65816i_set_flag_i(IFLAG_SET);
 	REGISTER_PB = 0;
-	g65816i_jump_16(g65816i_read_16_normal(vector));
+	g65816i_jump_16(g65816i_read_16_vector(vector));
 	if(INT_ACK) INT_ACK(0);
 #else
 	CLK(8);
@@ -377,7 +391,7 @@ INLINE void g65816i_interrupt_hardware(uint vector)
 	FLAG_D = DFLAG_CLEAR;
 	g65816i_set_flag_i(IFLAG_SET);
 	REGISTER_PB = 0;
-	g65816i_jump_16(g65816i_read_16_normal(vector));
+	g65816i_jump_16(g65816i_read_16_vector(vector));
 	if(INT_ACK) INT_ACK(0);
 #endif
 }
@@ -624,7 +638,7 @@ INLINE uint EA_DIY(void)   {uint tmp = REGISTER_DB | OPER_16_D(); if((tmp^(tmp+R
 INLINE uint EA_DLIY(void)  {return OPER_24_D() + REGISTER_Y;}
 INLINE uint EA_AXI(void)   {return read_16_AXI(MAKE_UINT_16(OPER_16_IMM() + REGISTER_X));}
 INLINE uint EA_S(void)     {return MAKE_UINT_16(REGISTER_S + OPER_8_IMM());}
-INLINE uint EA_SIY(void)   {return EA_S() + REGISTER_DB + REGISTER_Y;}
+INLINE uint EA_SIY(void)   {return MAKE_UINT_16(read_16_SIY(REGISTER_S + OPER_8_IMM()) + REGISTER_Y) | REGISTER_DB;}
 
 
 

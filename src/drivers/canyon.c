@@ -92,11 +92,6 @@ static READ8_HANDLER( canyon_options_r )
 }
 
 
-static READ8_HANDLER( canyon_wram_r )
-{
-	return memory_region(REGION_CPU1)[offset];
-}
-
 
 
 /*************************************
@@ -110,11 +105,6 @@ static WRITE8_HANDLER( canyon_led_w )
 	set_led_status(offset & 0x01, offset & 0x02);
 }
 
-
-static WRITE8_HANDLER( canyon_wram_w )
-{
-	memory_region(REGION_CPU1)[offset] = data;
-}
 
 
 

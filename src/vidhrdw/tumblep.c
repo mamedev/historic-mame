@@ -22,6 +22,7 @@ static struct tilemap *pf1_tilemap,*pf1_alt_tilemap,*pf2_tilemap,*pf2_alt_tilema
 static int flipscreen;
 extern data16_t* jumppop_control;
 static data16_t bcstory_tilebank;
+extern data16_t* suprtrio_control;
 
 /******************************************************************************/
 
@@ -220,6 +221,18 @@ WRITE16_HANDLER( bcstory_tilebank_w )
 	tilemap_mark_all_tiles_dirty(pf1_alt_tilemap);
 	tilemap_mark_all_tiles_dirty(pf2_tilemap);
 }
+
+WRITE16_HANDLER( suprtrio_tilebank_w )
+{
+	bcstory_tilebank = data<<14; // shift it here, makes using bcstory_tilebank easier
+	tilemap_mark_all_tiles_dirty(pf1_tilemap);
+	tilemap_mark_all_tiles_dirty(pf1_alt_tilemap);
+	tilemap_mark_all_tiles_dirty(pf2_tilemap);
+}
+
+
+
+
 
 WRITE16_HANDLER( tumblep_pf1_data_w )
 {
@@ -581,4 +594,48 @@ VIDEO_UPDATE( jumppop )
 
 	jumpkids_drawsprites(bitmap,cliprect);
 }
+
+
+VIDEO_UPDATE( suprtrio )
+{
+	tilemap_set_scrollx( pf1_alt_tilemap,0, -suprtrio_control[1]-6 );
+	tilemap_set_scrolly( pf1_alt_tilemap,0, -suprtrio_control[2] );
+	tilemap_set_scrollx( pf2_tilemap,0, -suprtrio_control[3]-2 );
+	tilemap_set_scrolly( pf2_tilemap,0, -suprtrio_control[4] );
+
+	tilemap_draw(bitmap,cliprect,pf2_tilemap,0,0);
+	tilemap_draw(bitmap,cliprect,pf1_alt_tilemap,0,0);
+
+	jumpkids_drawsprites(bitmap,cliprect);
+#if 0
+usrintf_showmessage("%04x %04x %04x %04x %04x %04x %04x %04x",
+ suprtrio_control[0],
+ suprtrio_control[1],
+ suprtrio_control[2],
+ suprtrio_control[3],
+ suprtrio_control[4],
+ suprtrio_control[5],
+ suprtrio_control[6],
+ suprtrio_control[7]);
+#endif
+
+}
+
+
+
+VIDEO_START( suprtrio )
+{
+	pf1_tilemap =     tilemap_create(get_fg_tile_info, tilemap_scan_rows,TILEMAP_OPAQUE, 8, 8,64,32);
+	pf1_alt_tilemap = tilemap_create(get_bg1_tile_info,tumblep_scan,TILEMAP_TRANSPARENT,16,16,64,32);
+	pf2_tilemap =     tilemap_create(get_bg2_tile_info,tumblep_scan,TILEMAP_OPAQUE,     16,16,64,32);
+
+	if (!pf1_tilemap || !pf1_alt_tilemap || !pf2_tilemap)
+		return 1;
+
+	tilemap_set_transparent_pen(pf1_alt_tilemap,0);
+	bcstory_tilebank = 0;
+
+	return 0;
+}
+
 

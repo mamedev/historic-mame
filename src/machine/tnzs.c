@@ -25,8 +25,10 @@ enum
 	MCU_NONE_INSECTX,
 	MCU_NONE_KAGEKI,
 	MCU_NONE_TNZSB,
+	MCU_NONE_KABUKIZ,
 	MCU_EXTRMATN,
 	MCU_ARKANOID,
+	MCU_PLUMPOP,
 	MCU_DRTOPPEL,
 	MCU_CHUKATAI,
 	MCU_TNZS
@@ -98,7 +100,7 @@ READ8_HANDLER( tnzs_port2_r )
 
 WRITE8_HANDLER( tnzs_port2_w )
 {
-	logerror("I8742:%04x  Write %02x to port 2\n", activecpu_get_previouspc(), data);
+//	logerror("I8742:%04x  Write %02x to port 2\n", activecpu_get_previouspc(), data);
 
 	coin_lockout_w( 0, (data & 0x40) );
 	coin_lockout_w( 1, (data & 0x80) );
@@ -114,7 +116,7 @@ READ8_HANDLER( arknoid2_sh_f000_r )
 {
 	int val;
 
-	logerror("PC %04x: read input %04x\n", activecpu_get_pc(), 0xf000 + offset);
+//	logerror("PC %04x: read input %04x\n", activecpu_get_pc(), 0xf000 + offset);
 
 	val = readinputport(7 + offset/2);
 	if (offset & 1)
@@ -158,7 +160,7 @@ static void mcu_handle_coins(int coin)
 	{
 		if (coin & 0x01)	/* coin A */
 		{
-			logerror("Coin dropped into slot A\n");
+//			logerror("Coin dropped into slot A\n");
 			coin_counter_w(0,1); coin_counter_w(0,0); /* Count slot A */
 			mcu_coinsA++;
 			if (mcu_coinsA >= mcu_coinage[0])
@@ -178,7 +180,7 @@ static void mcu_handle_coins(int coin)
 		}
 		if (coin & 0x02)	/* coin B */
 		{
-			logerror("Coin dropped into slot B\n");
+//			logerror("Coin dropped into slot B\n");
 			coin_counter_w(1,1); coin_counter_w(1,0); /* Count slot B */
 			mcu_coinsB++;
 			if (mcu_coinsB >= mcu_coinage[2])
@@ -198,7 +200,7 @@ static void mcu_handle_coins(int coin)
 		}
 		if (coin & 0x04)	/* service */
 		{
-			logerror("Coin dropped into service slot C\n");
+//			logerror("Coin dropped into service slot C\n");
 			mcu_credits++;
 		}
 		mcu_reportcoin = coin;
@@ -323,7 +325,7 @@ static READ8_HANDLER( mcu_extrmatn_r )
 {
 	const char *mcu_startup = "\x5a\xa5\x55";
 
-	logerror("PC %04x: read mcu %04x\n", activecpu_get_pc(), 0xc000 + offset);
+//	logerror("PC %04x: read mcu %04x\n", activecpu_get_pc(), 0xc000 + offset);
 
 	if (offset == 0)
 	{
@@ -408,7 +410,7 @@ static WRITE8_HANDLER( mcu_extrmatn_w )
 {
 	if (offset == 0)
 	{
-		logerror("PC %04x: write %02x to mcu %04x\n", activecpu_get_pc(), data, 0xc000 + offset);
+//		logerror("PC %04x: write %02x to mcu %04x\n", activecpu_get_pc(), data, 0xc000 + offset);
 		if (mcu_command == 0x41)
 		{
 			mcu_credits = (mcu_credits + data) & 0xff;
@@ -430,7 +432,7 @@ static WRITE8_HANDLER( mcu_extrmatn_w )
 		during initialization, a sequence of 4 bytes sets coin/credit settings
 		*/
 
-		logerror("PC %04x: write %02x to mcu %04x\n", activecpu_get_pc(), data, 0xc000 + offset);
+//		logerror("PC %04x: write %02x to mcu %04x\n", activecpu_get_pc(), data, 0xc000 + offset);
 
 		if (mcu_initializing)
 		{
@@ -443,9 +445,9 @@ static WRITE8_HANDLER( mcu_extrmatn_w )
 			mcu_readcredits = 0;	/* reset input port number */
 
 		/* Dr Toppel decrements credits differently. So handle it */
-		if ((data == 0x09) && (mcu_type == MCU_DRTOPPEL))
+		if ((data == 0x09) && (mcu_type == MCU_DRTOPPEL || mcu_type == MCU_PLUMPOP))
 			mcu_credits = (mcu_credits - 1) & 0xff;		/* Player 1 start */
-		if ((data == 0x18) && (mcu_type == MCU_DRTOPPEL))
+		if ((data == 0x18) && (mcu_type == MCU_DRTOPPEL || mcu_type == MCU_PLUMPOP))
 			mcu_credits = (mcu_credits - 2) & 0xff;		/* Player 2 start */
 
 		mcu_command = data;
@@ -511,6 +513,12 @@ static WRITE8_HANDLER( tnzs_sync_kludge_w )
 
 
 
+
+DRIVER_INIT( plumpop )
+{
+	mcu_type = MCU_PLUMPOP;
+}
+
 DRIVER_INIT( extrmatn )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
@@ -539,7 +547,7 @@ DRIVER_INIT( drtoppel )
 
 	mcu_type = MCU_DRTOPPEL;
 
-	/* there's code which falls through from the fixed ROM to bank #0, I have to */
+	/* there's code which falls through from the fixed ROM to bank #2, I have to */
 	/* copy it there otherwise the CPU bank switching support will not catch it. */
 	memcpy(&RAM[0x08000],&RAM[0x18000],0x4000);
 
@@ -549,13 +557,7 @@ DRIVER_INIT( drtoppel )
 
 DRIVER_INIT( chukatai )
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
-
 	mcu_type = MCU_CHUKATAI;
-
-	/* there's code which falls through from the fixed ROM to bank #0, I have to */
-	/* copy it there otherwise the CPU bank switching support will not catch it. */
-	memcpy(&RAM[0x08000],&RAM[0x18000],0x4000);
 }
 
 DRIVER_INIT( tnzs )
@@ -563,9 +565,9 @@ DRIVER_INIT( tnzs )
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	mcu_type = MCU_TNZS;
 
-	/* there's code which falls through from the fixed ROM to bank #0, I have to */
+	/* there's code which falls through from the fixed ROM to bank #7, I have to */
 	/* copy it there otherwise the CPU bank switching support will not catch it. */
-	memcpy(&RAM[0x08000],&RAM[0x18000],0x4000);
+	memcpy(&RAM[0x08000],&RAM[0x2c000],0x4000);
 
 	/* we need to install a kludge to avoid problems with a bug in the original code */
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xef10, 0xef10, 0, 0, tnzs_sync_kludge_w);
@@ -576,9 +578,9 @@ DRIVER_INIT( tnzsb )
 	unsigned char *RAM = memory_region(REGION_CPU1);
 	mcu_type = MCU_NONE_TNZSB;
 
-	/* there's code which falls through from the fixed ROM to bank #0, I have to */
+	/* there's code which falls through from the fixed ROM to bank #7, I have to */
 	/* copy it there otherwise the CPU bank switching support will not catch it. */
-	memcpy(&RAM[0x08000],&RAM[0x18000],0x4000);
+	memcpy(&RAM[0x08000],&RAM[0x2c000],0x4000);
 
 	/* we need to install a kludge to avoid problems with a bug in the original code */
 	memory_install_write8_handler(0, ADDRESS_SPACE_PROGRAM, 0xef10, 0xef10, 0, 0, tnzs_sync_kludge_w);
@@ -586,12 +588,7 @@ DRIVER_INIT( tnzsb )
 
 DRIVER_INIT( kabukiz )
 {
-	unsigned char *RAM = memory_region(REGION_CPU1);
-	mcu_type = MCU_NONE_TNZSB;
-
-	/* there's code which falls through from the fixed ROM to bank #0, I have to */
-	/* copy it there otherwise the CPU bank switching support will not catch it. */
-	memcpy(&RAM[0x08000],&RAM[0x18000],0x4000);
+	mcu_type = MCU_NONE_KABUKIZ;
 }
 
 DRIVER_INIT( insectx )
@@ -623,6 +620,7 @@ READ8_HANDLER( tnzs_mcu_r )
 			break;
 		case MCU_EXTRMATN:
 		case MCU_DRTOPPEL:
+		case MCU_PLUMPOP:
 			return mcu_extrmatn_r(offset);
 			break;
 		default:
@@ -644,6 +642,7 @@ WRITE8_HANDLER( tnzs_mcu_w )
 			break;
 		case MCU_EXTRMATN:
 		case MCU_DRTOPPEL:
+		case MCU_PLUMPOP:
 			mcu_extrmatn_w(offset,data);
 			break;
 		default:
@@ -660,6 +659,7 @@ INTERRUPT_GEN( arknoid2_interrupt )
 		case MCU_ARKANOID:
 		case MCU_EXTRMATN:
 		case MCU_DRTOPPEL:
+		case MCU_PLUMPOP:
 			coin  = 0;
 			coin |= ((readinputport(5) & 1) << 0);
 			coin |= ((readinputport(6) & 1) << 1);
@@ -682,6 +682,7 @@ MACHINE_INIT( tnzs )
 		case MCU_ARKANOID:
 		case MCU_EXTRMATN:
 		case MCU_DRTOPPEL:
+		case MCU_PLUMPOP:
 			mcu_reset();
 			break;
 		default:
@@ -733,7 +734,7 @@ WRITE8_HANDLER( tnzs_bankswitch1_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU2);
 
-	logerror("PC %04x: writing %02x to bankswitch 1\n", activecpu_get_pc(),data);
+//	logerror("PC %04x: writing %02x to bankswitch 1\n", activecpu_get_pc(),data);
 
 	switch (mcu_type)
 	{
@@ -754,6 +755,7 @@ WRITE8_HANDLER( tnzs_bankswitch1_w )
 				coin_counter_w( 1, (data & 0x20) );
 				break;
 		case MCU_NONE_TNZSB:
+		case MCU_NONE_KABUKIZ:
 				coin_lockout_w( 0, (~data & 0x10) );
 				coin_lockout_w( 1, (~data & 0x20) );
 				coin_counter_w( 0, (data & 0x04) );
@@ -767,6 +769,7 @@ WRITE8_HANDLER( tnzs_bankswitch1_w )
 		case MCU_ARKANOID:
 		case MCU_EXTRMATN:
 		case MCU_DRTOPPEL:
+		case MCU_PLUMPOP:
 				/* bit 2 resets the mcu */
 				if (data & 0x04)
 					mcu_reset();

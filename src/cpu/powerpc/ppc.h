@@ -119,7 +119,7 @@ enum {
 	EXCEPTION_IRQ			= 0x5,
 	EXCEPTION_DECREMENTER	= 0x9,
 	EXCEPTION_TRAP			= 0x7,	
-	EXCEPTION_SYSTEM_CALL	= 0xc,
+	EXCEPTION_SYSTEM_CALL	= 0xc
 };
 
 enum {
@@ -180,7 +180,7 @@ typedef enum {
 	PPC_MODEL_750				= PPC_MODEL_740,
 	PPC_MODEL_740P				= 0x00080202,	/* "Conan Doyle", version 1.2 */
 	PPC_MODEL_750P				= PPC_MODEL_740P,
-	PPC_MODEL_755				= 0x00083203,	/* "Goldfinger", version 2.3 */
+	PPC_MODEL_755				= 0x00083203	/* "Goldfinger", version 2.3 */
 } PPC_MODEL;
 
 typedef struct {

@@ -341,6 +341,8 @@ static ADDRESS_MAP_START( writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
 
 ADDRESS_MAP_END
 
+#ifdef USE_MCU
+
 static ADDRESS_MAP_START( mcu_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	ADDRESS_MAP_FLAGS( AMEF_ABITS(11) )
 	AM_RANGE(0x0000, 0x0000) AM_READ(buggychl_68705_portA_r)
@@ -362,6 +364,7 @@ static ADDRESS_MAP_START( mcu_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0080, 0x07ff) AM_WRITE(MWA8_ROM)
 ADDRESS_MAP_END
 
+#endif
 
 INPUT_PORTS_START( msisaac )
 	PORT_START_TAG("DSW1")
@@ -441,7 +444,7 @@ INPUT_PORTS_START( msisaac )
 	PORT_DIPNAME( 0x30, 0x00, "Copyright Notice" )
 	PORT_DIPSETTING(    0x00, "(C) 1985 Taito Corporation" )
 	PORT_DIPSETTING(    0x10, "(C) Taito Corporation" )
-	PORT_DIPSETTING(    0x20, "(C) Taito Corp. MCMLXXXV" ) 
+	PORT_DIPSETTING(    0x20, "(C) Taito Corp. MCMLXXXV" )
 	PORT_DIPSETTING(    0x30, "(C) Taito Corporation" )
 	PORT_DIPNAME( 0x40, 0x00, "Coinage Display" )
 	PORT_DIPSETTING(    0x40, "Insert Coin" )

@@ -539,10 +539,6 @@ static MACHINE_DRIVER_START( percuss )
 	MDRV_MACHINE_INIT(percuss)
 MACHINE_DRIVER_END
 
-static MACHINE_DRIVER_START( moguchan )
-	MDRV_IMPORT_FROM(zodiack)
-	MDRV_MACHINE_INIT(percuss)
-MACHINE_DRIVER_END
 
 /***************************************************************************
 

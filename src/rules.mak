@@ -564,16 +564,10 @@ CPU=$(strip $(findstring M68000@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/m68000
 CPUDEFS += -DHAS_M68000=1
-ifdef X86_ASM_68000
-CPUOBJS += $(OBJ)/cpu/m68000/asmintf.o $(OBJ)/cpu/m68000/68000.o
-ASMDEFS += -DA68K0
-$(OBJ)/cpu/m68000/68kem.o: $(OBJ)/cpu/m68000/68kem.asm make68k.c
-else
 M68000_GENERATED_OBJS = \
 $(OBJ)/cpu/m68000/m68kops.o $(OBJ)/cpu/m68000/m68kopac.o \
 $(OBJ)/cpu/m68000/m68kopdm.o $(OBJ)/cpu/m68000/m68kopnz.o
 CPUOBJS += $(M68000_GENERATED_OBJS) $(OBJ)/cpu/m68000/m68kcpu.o $(OBJ)/cpu/m68000/m68kmame.o
-endif
 DBGOBJS += $(OBJ)/cpu/m68000/m68kdasm.o
 else
 CPUDEFS += -DHAS_M68000=0
@@ -583,16 +577,10 @@ CPU=$(strip $(findstring M68008@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/m68000
 CPUDEFS += -DHAS_M68008=1
-ifdef X86_ASM_68000
-CPUOBJS += $(OBJ)/cpu/m68000/asmintf.o $(OBJ)/cpu/m68000/68000.o
-ASMDEFS += -DA68K0
-$(OBJ)/cpu/m68000/68kem.o: $(OBJ)/cpu/m68000/68kem.asm make68k.c
-else
 M68000_GENERATED_OBJS = \
 $(OBJ)/cpu/m68000/m68kops.o $(OBJ)/cpu/m68000/m68kopac.o \
 $(OBJ)/cpu/m68000/m68kopdm.o $(OBJ)/cpu/m68000/m68kopnz.o
 CPUOBJS += $(M68000_GENERATED_OBJS) $(OBJ)/cpu/m68000/m68kcpu.o $(OBJ)/cpu/m68000/m68kmame.o
-endif
 DBGOBJS += $(OBJ)/cpu/m68000/m68kdasm.o
 else
 CPUDEFS += -DHAS_M68008=0
@@ -602,16 +590,10 @@ CPU=$(strip $(findstring M68010@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/m68000
 CPUDEFS += -DHAS_M68010=1
-ifdef X86_ASM_68000
-CPUOBJS += $(OBJ)/cpu/m68000/asmintf.o $(OBJ)/cpu/m68000/68000.o
-ASMDEFS += -DA68K0
-$(OBJ)/cpu/m68000/68kem.o: $(OBJ)/cpu/m68000/68kem.asm make68k.c
-else
 M68000_GENERATED_OBJS = \
 $(OBJ)/cpu/m68000/m68kops.o $(OBJ)/cpu/m68000/m68kopac.o \
 $(OBJ)/cpu/m68000/m68kopdm.o $(OBJ)/cpu/m68000/m68kopnz.o
 CPUOBJS += $(M68000_GENERATED_OBJS) $(OBJ)/cpu/m68000/m68kcpu.o $(OBJ)/cpu/m68000/m68kmame.o
-endif
 DBGOBJS += $(OBJ)/cpu/m68000/m68kdasm.o
 else
 CPUDEFS += -DHAS_M68010=0
@@ -620,18 +602,11 @@ endif
 CPU=$(strip $(findstring M68EC020@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/m68000
-CPUDEFS += -DHAS_M68EC020=1
-ifdef X86_ASM_68020
-ASMDEFS += -DA68K2
-CPUOBJS += $(OBJ)/cpu/m68000/asmintf.o $(OBJ)/cpu/m68000/68020.o
-ASMDEFS += -DA68KEM
-$(OBJ)/cpu/m68000/68kem.o: $(OBJ)/cpu/m68000/68kem.asm make68k.c
-else
+CPUDEFS += -DHAS_M68EC020=1 
 M68000_GENERATED_OBJS = \
 $(OBJ)/cpu/m68000/m68kops.o $(OBJ)/cpu/m68000/m68kopac.o \
 $(OBJ)/cpu/m68000/m68kopdm.o $(OBJ)/cpu/m68000/m68kopnz.o
 CPUOBJS += $(M68000_GENERATED_OBJS) $(OBJ)/cpu/m68000/m68kcpu.o $(OBJ)/cpu/m68000/m68kmame.o
-endif
 DBGOBJS += $(OBJ)/cpu/m68000/m68kdasm.o
 else
 CPUDEFS += -DHAS_M68EC020=0
@@ -641,17 +616,10 @@ CPU=$(strip $(findstring M68020@,$(CPUS)))
 ifneq ($(CPU),)
 OBJDIRS += $(OBJ)/cpu/m68000
 CPUDEFS += -DHAS_M68020=1
-ifdef X86_ASM_68020
-ASMDEFS += -DA68K2
-CPUOBJS += $(OBJ)/cpu/m68000/asmintf.o $(OBJ)/cpu/m68000/68020.o
-ASMDEFS += -DA68KEM
-$(OBJ)/cpu/m68000/68kem.o: $(OBJ)/cpu/m68000/68kem.asm make68k.c
-else
 M68000_GENERATED_OBJS = \
 $(OBJ)/cpu/m68000/m68kops.o $(OBJ)/cpu/m68000/m68kopac.o \
 $(OBJ)/cpu/m68000/m68kopdm.o $(OBJ)/cpu/m68000/m68kopnz.o
 CPUOBJS += $(M68000_GENERATED_OBJS) $(OBJ)/cpu/m68000/m68kcpu.o $(OBJ)/cpu/m68000/m68kmame.o
-endif
 DBGOBJS += $(OBJ)/cpu/m68000/m68kdasm.o
 else
 CPUDEFS += -DHAS_M68020=0
@@ -1440,6 +1408,28 @@ DBGOBJS += $(OBJ)/cpu/powerpc/ppc_dasm.o
 $(OBJ)/cpu/powerpc/ppc.o: ppc.c ppc.h ppc_ops.c ppc_ops.h ppc403.c
 else
 CPUDEFS += -DHAS_PPC403=0
+endif
+
+CPU=$(strip $(findstring PPC602@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/powerpc
+CPUDEFS += -DHAS_PPC602=1
+CPUOBJS += $(OBJ)/cpu/powerpc/ppc.o
+DBGOBJS += $(OBJ)/cpu/powerpc/ppc_dasm.o
+$(OBJ)/cpu/powerpc/ppc.o: ppc.c ppc.h ppc_ops.c ppc_ops.h ppc602.c
+else
+CPUDEFS += -DHAS_PPC602=0
+endif
+
+CPU=$(strip $(findstring PPC602@,$(CPUS)))
+ifneq ($(CPU),)
+OBJDIRS += $(OBJ)/cpu/powerpc
+CPUDEFS += -DHAS_PPC602=1
+CPUOBJS += $(OBJ)/cpu/powerpc/ppc.o
+DBGOBJS += $(OBJ)/cpu/powerpc/ppc_dasm.o
+$(OBJ)/cpu/powerpc/ppc.o: ppc.c ppc.h ppc_ops.c ppc_ops.h ppc403.c
+else
+CPUDEFS += -DHAS_PPC602=0
 endif
 
 CPU=$(strip $(findstring PPC603@,$(CPUS)))

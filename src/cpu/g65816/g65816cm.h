@@ -87,6 +87,7 @@ typedef struct
 	uint ir;			/* Instruction Register */
 	uint irq_delay;		/* delay 1 instruction before checking irq */
 	int (*int_ack)(int); /* Interrupt Acknowledge */
+	read8_handler read_vector;	/* Read vector override */
 	uint stopped;		/* Sets how the CPU is stopped */
 	void (**opcodes)(void);
 	uint (*get_reg)(int regnum);
@@ -129,6 +130,7 @@ extern int (*g65816i_execute[])(int cycles);
 #define LINE_NMI		g65816i_cpu.line_nmi	/* Status of the NMI line */
 #define REGISTER_IR		g65816i_cpu.ir		/* Instruction Register */
 #define INT_ACK			g65816i_cpu.int_ack	/* Interrupt Acknowledge function pointer */
+#define READ_VECTOR		g65816i_cpu.read_vector	/* Vector reading override */
 #define CLOCKS			g65816_ICount		/* Clock cycles remaining */
 #define IRQ_DELAY		g65816i_cpu.irq_delay /* Delay 1 instruction before checking IRQ */
 #define CPU_STOPPED 	g65816i_cpu.stopped	/* Stopped status of the CPU */

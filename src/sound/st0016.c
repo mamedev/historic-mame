@@ -43,7 +43,7 @@ WRITE8_HANDLER(st0016_snd_w)
 	}
 }
 
-static void st0016_update(int num, INT16 **outputs, int length) 
+static void st0016_update(int num, INT16 **outputs, int length)
 {
 	int v, i, snum;
 	unsigned char *slot;
@@ -70,7 +70,7 @@ static void st0016_update(int num, INT16 **outputs, int length)
 
 			for (snum = 0; snum < length; snum++)
 			{
-				sample = st0016_sound_ram[sptr + st0016_vpos[v]]<<8;
+				sample = st0016_sound_ram[(sptr + st0016_vpos[v])&0x1fffff]<<8;
 
 				*mixp++ += (sample * (char)slot[0x14]) >> 8;
 				*mixp++ += (sample * (char)slot[0x15]) >> 8;

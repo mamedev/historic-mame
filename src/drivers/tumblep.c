@@ -9,6 +9,9 @@
   Hatch Catch			(c) 1995 SemiCom
   B.C. Story            (c) 1997 SemiCom
   Jumping Pop			(c) 2001 ESD
+  Super Trio[1]			(c) 1994 GameAce
+
+  [1] has the same sprites as the bootlegs, not much else is the same tho
 
   Bootleg sound is not quite correct yet (Nothing on bootleg 2).
 
@@ -168,6 +171,8 @@ VIDEO_UPDATE( jumpkids );
 VIDEO_UPDATE( fncywld );
 VIDEO_UPDATE( jumppop );
 VIDEO_UPDATE( semicom );
+VIDEO_START( suprtrio );
+VIDEO_UPDATE( suprtrio );
 
 WRITE16_HANDLER( tumblep_pf1_data_w );
 WRITE16_HANDLER( tumblep_pf2_data_w );
@@ -177,10 +182,12 @@ WRITE16_HANDLER( tumblep_control_0_w );
 WRITE16_HANDLER( semicom_soundcmd_w );
 
 extern WRITE16_HANDLER( bcstory_tilebank_w );
+extern WRITE16_HANDLER( suprtrio_tilebank_w );
 
 extern data16_t *tumblep_pf1_data,*tumblep_pf2_data;
 data16_t* tumblep_mainram;
 data16_t* jumppop_control;
+data16_t* suprtrio_control;
 
 /******************************************************************************/
 
@@ -389,6 +396,24 @@ static ADDRESS_MAP_START( jumppop_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 ADDRESS_MAP_END
 
 
+static ADDRESS_MAP_START( suprtrio_main_cpu, ADDRESS_SPACE_PROGRAM, 16 )
+	AM_RANGE(0x000000, 0x07ffff) AM_ROM
+	AM_RANGE(0x700000, 0x700fff) AM_RAM AM_BASE(&spriteram16) AM_SIZE(&spriteram_size)
+	AM_RANGE(0xa00000, 0xa0000f) AM_RAM AM_BASE(&suprtrio_control)
+	AM_RANGE(0xa20000, 0xa20fff) AM_RAM AM_WRITE(tumblep_pf1_data_w) AM_BASE(&tumblep_pf1_data)
+	AM_RANGE(0xa22000, 0xa22fff) AM_RAM AM_WRITE(tumblep_pf2_data_w) AM_BASE(&tumblep_pf2_data)
+	AM_RANGE(0xcf0000, 0xcf05ff) AM_RAM AM_WRITE(paletteram16_xBBBBBGGGGGRRRRR_word_w) AM_BASE(&paletteram16)
+
+	AM_RANGE(0xe00000, 0xe00001) AM_READ(input_port_0_word_r) AM_WRITE(suprtrio_tilebank_w)
+
+	AM_RANGE(0xe40000, 0xe40001) AM_READ(input_port_1_word_r)
+	AM_RANGE(0xe80002, 0xe80003) AM_READ(input_port_2_word_r)
+	AM_RANGE(0xec0000, 0xec0001) AM_WRITE(semicom_soundcmd_w)
+	AM_RANGE(0xf00000, 0xf07fff) AM_RAM
+ADDRESS_MAP_END
+
+
+
 /******************************************************************************/
 
 static WRITE8_HANDLER( YM2151_w )
@@ -427,13 +452,27 @@ ADDRESS_MAP_END
 
 WRITE16_HANDLER( semicom_soundcmd_w )
 {
-	if (ACCESSING_LSB) soundlatch_w(0,data & 0xff);
+	if (ACCESSING_LSB)
+	{
+		soundlatch_w(0,data & 0xff);
+		// needed for Super Trio which reads the sound with polling
+//		cpu_spinuntil_time(TIME_IN_USEC(100));
+		cpu_boost_interleave(0, TIME_IN_USEC(20));
+
+	}
+}
+
+static WRITE8_HANDLER( oki_sound_bank_w )
+{
+	data8_t *oki = memory_region(REGION_SOUND1);
+	memcpy(&oki[0x30000], &oki[(data * 0x10000) + 0x40000], 0x10000);
 }
 
 static ADDRESS_MAP_START( semicom_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0xcfff) AM_READ(MRA8_ROM)
 	AM_RANGE(0xd000, 0xd7ff) AM_READ(MRA8_RAM)
 	AM_RANGE(0xf001, 0xf001) AM_READ(YM2151_status_port_0_r)
+	AM_RANGE(0xf002, 0xf002) AM_READ(OKIM6295_status_0_r)
 	AM_RANGE(0xf008, 0xf008) AM_READ(soundlatch_r)
 ADDRESS_MAP_END
 
@@ -443,7 +482,8 @@ static ADDRESS_MAP_START( semicom_sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xf000, 0xf000) AM_WRITE(YM2151_register_port_0_w)
 	AM_RANGE(0xf001, 0xf001) AM_WRITE(YM2151_data_port_0_w)
 	AM_RANGE(0xf002, 0xf002) AM_WRITE(OKIM6295_data_0_w)
-//	AM_RANGE(0xf006, 0xf006) ???
+//	AM_RANGE(0xf006, 0xf006) ??
+	AM_RANGE(0xf00e, 0xf00e) AM_WRITE(oki_sound_bank_w)
 ADDRESS_MAP_END
 
 static WRITE8_HANDLER(jumppop_z80_bank_w)
@@ -965,6 +1005,56 @@ INPUT_PORTS_START( bcstory )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
+
+INPUT_PORTS_START( suprtrio )
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x0004, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x0008, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(1)
+	PORT_BIT( 0x0010, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(1)
+	PORT_BIT( 0x0020, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(1)
+	PORT_BIT( 0x0040, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(1)
+	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x0400, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x0800, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
+	PORT_BIT( 0x1000, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
+	PORT_BIT( 0x2000, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
+	PORT_BIT( 0x4000, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
+	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_START2 )
+
+	PORT_START
+	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0xfffe, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_DIPNAME( 0x0007, 0x0000, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(      0x0006, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(      0x0005, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(      0x0004, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(      0x0003, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(      0x0000, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(      0x0001, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(      0x0002, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(      0x0007, DEF_STR( Free_Play ))
+	PORT_DIPNAME( 0x0018, 0x0010, DEF_STR( Lives ) )
+	PORT_DIPSETTING(      0x0000, "1" )
+	PORT_DIPSETTING(      0x0008, "2" )
+	PORT_DIPSETTING(      0x0010, "3" )
+	PORT_DIPSETTING(      0x0018, "5" )
+	PORT_DIPNAME( 0x0020, 0x0000, DEF_STR(Difficulty) )
+	PORT_DIPSETTING(      0x0000, DEF_STR(Normal) )
+	PORT_DIPSETTING(      0x0020, DEF_STR(Hard) )
+	PORT_DIPNAME( 0x0040, 0x0000, DEF_STR(Bonus_Life) )
+	PORT_DIPSETTING(      0x0000, "50000" )
+	PORT_DIPSETTING(      0x0040, "60000" )
+	PORT_SERVICE( 0x0080, IP_ACTIVE_HIGH )
+	PORT_BIT( 0xff00, IP_ACTIVE_LOW, IPT_UNKNOWN )
+
+INPUT_PORTS_END
+
 /******************************************************************************/
 
 static struct GfxLayout tcharlayout =
@@ -1002,6 +1092,20 @@ static struct GfxLayout tlayout =
 	64*8
 };
 
+static struct GfxLayout suprtrio_tlayout =
+{
+	16,16,
+	RGN_FRAC(1,4),
+	4,
+	{ RGN_FRAC(2,4),RGN_FRAC(0,4), RGN_FRAC(3,4), RGN_FRAC(1,4) },
+
+	{ 0, 1, 2, 3, 4, 5, 6, 7,16*8+0, 16*8+1, 16*8+2, 16*8+3, 16*8+4, 16*8+5, 16*8+6,16*8+7,},
+	{ 1*8, 0*8, 2*8, 3*8, 5*8, 4*8, 6*8, 7*8,
+			8*8, 9*8, 10*8, 11*8, 12*8, 13*8, 14*8, 15*8 },
+	32*8
+};
+
+
 static struct GfxLayout jumpop_tlayout =
 {
 	16,16,
@@ -1024,6 +1128,15 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ REGION_GFX1, 0, &tcharlayout, 256, 16 },	/* Characters 8x8 */
 	{ REGION_GFX1, 0, &tlayout,     512, 16 },	/* Tiles 16x16 */
 	{ REGION_GFX1, 0, &tlayout,     256, 16 },	/* Tiles 16x16 */
+	{ REGION_GFX2, 0, &tlayout,       0, 16 },	/* Sprites 16x16 */
+	{ -1 } /* end of array */
+};
+
+static struct GfxDecodeInfo suprtrio_gfxdecodeinfo[] =
+{
+	{ REGION_GFX1, 0, &tcharlayout, 256, 16 },	/* Characters 8x8 */
+	{ REGION_GFX1, 0, &suprtrio_tlayout,     512, 16 },	/* Tiles 16x16 */
+	{ REGION_GFX1, 0, &suprtrio_tlayout,     256, 16 },	/* Tiles 16x16 */
 	{ REGION_GFX2, 0, &tlayout,       0, 16 },	/* Sprites 16x16 */
 	{ -1 } /* end of array */
 };
@@ -1314,6 +1427,36 @@ static MACHINE_DRIVER_START( jumppop )
 	MDRV_SOUND_ADD(YM3812, ym3812_interface)
 	MDRV_SOUND_ADD(OKIM6295, okim6295_interface3)
 MACHINE_DRIVER_END
+
+static MACHINE_DRIVER_START( suprtrio )
+
+	/* basic machine hardware */
+	MDRV_CPU_ADD(M68000, 14000000) /* 14mhz should be correct, but lots of sprite flicker later in game */
+	MDRV_CPU_PROGRAM_MAP(suprtrio_main_cpu,0)
+	MDRV_CPU_VBLANK_INT(irq6_line_hold,1)
+
+	MDRV_CPU_ADD(Z80, 8000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_PROGRAM_MAP(semicom_sound_readmem,semicom_sound_writemem)
+
+	MDRV_FRAMES_PER_SECOND(60)
+	MDRV_VBLANK_DURATION(529)
+
+	/* video hardware */
+	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
+	MDRV_SCREEN_SIZE(40*8, 32*8)
+	MDRV_VISIBLE_AREA(0*8, 40*8-1, 1*8-1, 31*8-2)
+	MDRV_GFXDECODE(suprtrio_gfxdecodeinfo)
+	MDRV_PALETTE_LENGTH(1024)
+
+	MDRV_VIDEO_START(suprtrio)
+	MDRV_VIDEO_UPDATE(suprtrio)
+
+	/* sound hardware */
+	MDRV_SOUND_ATTRIBUTES(SOUND_SUPPORTS_STEREO)
+	MDRV_SOUND_ADD(OKIM6295, semicom_okim6295_interface)
+MACHINE_DRIVER_END
+
 
 /******************************************************************************/
 
@@ -1664,6 +1807,37 @@ ROM_START( jumppop )
 ROM_END
 
 
+ROM_START( suprtrio )
+	ROM_REGION( 0x80000, REGION_CPU1, 0 ) /* 68k */
+	ROM_LOAD16_BYTE( "rom2",  0x00000, 0x40000, CRC(4102e59d) SHA1(f06f1273dbbb91fa61d84541aa124d9c88ee94c1) )
+	ROM_LOAD16_BYTE( "rom1",  0x00001, 0x40000, CRC(cc3a83c3) SHA1(6f8b1b6b666ce11c02e9defcba751d88621e572d) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* Z80 */
+	ROM_LOAD( "rom4l", 0x000000, 0x10000, CRC(466aa96d) SHA1(37f1ba148dbad27ed8e71a0b3434ff970fcb519f) )
+
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE ) /* bg tiles */
+	ROM_LOAD( "rom4",  0x00000, 0x20000, CRC(cd2dfae4) SHA1(1d872b5abaf72d34bd4a45f6be69aa6474887b4b) )
+	ROM_CONTINUE(      0x40000, 0x20000 )
+	ROM_CONTINUE(      0x20000, 0x20000 )
+	ROM_CONTINUE(      0x60000, 0x20000 )
+	ROM_LOAD( "rom5",  0x80000, 0x20000, CRC(4e64da64) SHA1(f2518b3d83d7fd46000ca982b2d91ce75034b411) )
+	ROM_CONTINUE(      0xc0000, 0x20000 )
+	ROM_CONTINUE(      0xa0000, 0x20000 )
+	ROM_CONTINUE(      0xe0000, 0x20000 )
+
+	ROM_REGION( 0x100000, REGION_GFX2, ROMREGION_DISPOSE ) /* sprites */
+	ROM_LOAD16_BYTE( "rom9l", 0x00000, 0x40000, CRC(cc45f437) SHA1(fa735c3b3f96266ddfb611af6908abe72d5ae9d9) )
+	ROM_LOAD16_BYTE( "rom8l", 0x00001, 0x40000, CRC(9bc90169) SHA1(3bc0d34911f063ff79c529346f41695376428f75) )
+	ROM_LOAD16_BYTE( "rom7l", 0x80000, 0x40000, CRC(bfc7c756) SHA1(e533f633dec63c27ac78f170e222e590e815a022) )
+	ROM_LOAD16_BYTE( "rom6l", 0x80001, 0x40000, CRC(bb3499af) SHA1(1a0a6a63227e8ad28aa23afc6d076037518b4802) )
+
+	ROM_REGION( 0xb0000, REGION_SOUND1, 0 ) /* samples */
+	ROM_LOAD( "rom3h", 0x00000, 0x30000, CRC(34ea7ec9) SHA1(1f80a2c7ed4fb13610731732b11268d1d7be5bb2) )
+	ROM_CONTINUE(      0x40000, 0x50000 )
+	ROM_LOAD( "rom3l", 0x90000, 0x20000, CRC(1b73233b) SHA1(5d82bbdc31d99f8d77bdb5c2f6e5e23037b4bca0) )
+ROM_END
+
+
 /******************************************************************************/
 
 void tumblep_patch_code(UINT16 offset)
@@ -2006,6 +2180,54 @@ static DRIVER_INIT( htchctch )
 
 }
 
+static void suprtrio_decrypt_code(void)
+{
+	data16_t *rom = (data16_t *)memory_region(REGION_CPU1);
+	data16_t *buf = malloc(0x80000);
+	int i;
+
+	/* decrypt main ROMs */
+	if (buf)
+	{
+		memcpy(buf,rom,0x80000);
+		for (i = 0;i < 0x40000;i++)
+		{
+			int j = i ^ 0x06;
+			if ((i & 1) == 0) j ^= 0x02;
+			if ((i & 3) == 0) j ^= 0x08;
+			rom[i] = buf[j];
+		}
+		free(buf);
+	}
+}
+
+static void suprtrio_decrypt_gfx(void)
+{
+	data16_t *rom = (data16_t *)memory_region(REGION_GFX1);
+	data16_t *buf = malloc(0x100000);
+	int i;
+
+	/* decrypt tiles */
+	if (buf)
+	{
+		memcpy(buf,rom,0x100000);
+		for (i = 0;i < 0x80000;i++)
+		{
+			int j = i ^ 0x02;
+			if (i & 1) j ^= 0x04;
+			rom[i] = buf[j];
+		}
+		free(buf);
+	}
+}
+
+DRIVER_INIT( suprtrio )
+{
+	suprtrio_decrypt_code();
+	suprtrio_decrypt_gfx();
+}
+
+
 /******************************************************************************/
 
 GAME( 1991, tumblep,  0,       tumblep,   tumblep,  tumblep,  ROT0, "Data East Corporation", "Tumble Pop (World)" )
@@ -2018,3 +2240,4 @@ GAME (1995, htchctch, 0,       htchctch,  htchctch, htchctch, ROT0, "SemiCom", "
 GAMEX(1997, bcstry,   0,       htchctch,  bcstory,  bcstory,  ROT0, "SemiCom", "B.C. Story (set 1)", GAME_IMPERFECT_GRAPHICS)
 GAMEX(1997, bcstrya,  bcstry,  htchctch,  bcstory,  bcstory,  ROT0, "SemiCom", "B.C. Story (set 2)", GAME_IMPERFECT_GRAPHICS)
 GAME (2001, jumppop,  0,       jumppop,   jumppop,  0, ORIENTATION_FLIP_X, "ESD", "Jumping Pop" )
+GAME (1994, suprtrio, 0,       suprtrio,  suprtrio, suprtrio, ROT0, "Gameace", "Super Trio" )

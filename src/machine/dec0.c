@@ -457,6 +457,7 @@ static void birdtry_i8751_write(int data)
 	}
 }
 
+#if 0
 static void *i8751_timer;
 
 static void i8751_callback(int param)
@@ -467,6 +468,7 @@ static void i8751_callback(int param)
 
 	logerror("i8751:  Timer called!!!\n");
 }
+#endif
 
 void dec0_i8751_write(int data)
 {

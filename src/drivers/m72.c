@@ -132,7 +132,7 @@ the NMI handler in the other games.
 
 ***************************************************************************/
 
-
+#if 0
 static int find_sample(int num)
 {
 	data8_t *rom = memory_region(REGION_SOUND1);
@@ -150,6 +150,7 @@ static int find_sample(int num)
 
 	return addr;
 }
+#endif
 
 static INTERRUPT_GEN(fake_nmi)
 {

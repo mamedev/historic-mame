@@ -992,6 +992,7 @@ void		memory_set_opcode_base(int cpunum, void *base);
 /* ----- return a base pointer to memory ---- */
 void *		memory_get_read_ptr(int cpunum, int spacenum, offs_t offset);
 void *		memory_get_write_ptr(int cpunum, int spacenum, offs_t offset);
+void *		memory_get_op_ptr(int cpunum, offs_t offset);
 
 /* ----- memory banking ----- */
 void		memory_set_bankptr(int banknum, void *base);

@@ -189,8 +189,6 @@ WRITE8_HANDLER( sys16_7751_sh_rom_select_w );
 
 /***************************************************************************/
 
-int sys16_wwfix=0, sys16_alienfix=0; //*
-
 static data16_t coinctrl;
 
 static WRITE16_HANDLER( sys16_3d_coinctrl_w )
@@ -212,7 +210,6 @@ static WRITE16_HANDLER( sys16_3d_coinctrl_w )
 
 static INTERRUPT_GEN( sys16_interrupt )
 {
-	if(sys16_custom_irq) sys16_custom_irq();
 	cpunum_set_input_line(0, 4, HOLD_LINE); /* Interrupt vector 4, used by VBlank */
 }
 
@@ -415,12 +412,11 @@ static ADDRESS_MAP_START( sound_readmem_7759, ADDRESS_SPACE_PROGRAM, 8 )
 ADDRESS_MAP_END
 
 
-static WRITE8_HANDLER( UPD7759_bank_w ) //*
+static WRITE8_HANDLER( upd7759_bank_w ) //*
 {
 	int offs, size = memory_region_length(REGION_CPU2) - 0x10000;
 
-	UPD7759_reset_w(0, data & 0x40);
-	if (sys16_alienfix && (data&0x30)==0x20) data-=2;
+	upd7759_reset_w(0, data & 0x40);
 	offs = 0x10000 + (data * 0x4000) % size;
 	cpu_setbank(1, memory_region(REGION_CPU2) + offs);
 }
@@ -429,8 +425,8 @@ static WRITE8_HANDLER( UPD7759_bank_w ) //*
 static ADDRESS_MAP_START( sound_writeport_7759, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x00, 0x00) AM_WRITE(YM2151_register_port_0_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(YM2151_data_port_0_w)
-	AM_RANGE(0x40, 0x40) AM_WRITE(UPD7759_bank_w)
-	AM_RANGE(0x80, 0x80) AM_WRITE(UPD7759_0_port_w)
+	AM_RANGE(0x40, 0x40) AM_WRITE(upd7759_bank_w)
+	AM_RANGE(0x80, 0x80) AM_WRITE(upd7759_0_port_w)
 ADDRESS_MAP_END
 
 
@@ -454,10 +450,6 @@ static WRITE16_HANDLER( sound_command_nmi_w )
 
 //static data16_t coinctrl;
 
-static READ16_HANDLER( sys16_coinctrl_r )
-{
-	return coinctrl;
-}
 
 static WRITE16_HANDLER( sys16_coinctrl_w )
 {
@@ -587,39 +579,8 @@ static void set_bg_page( int data )
 	sys16_bg_page[3] = data&0xf;
 }
 
-static void set_fg_page1( int data )
-{
-	sys16_fg_page[1] = data>>12;
-	sys16_fg_page[0] = (data>>8)&0xf;
-	sys16_fg_page[3] = (data>>4)&0xf;
-	sys16_fg_page[2] = data&0xf;
-}
 
-static void set_bg_page1( int data )
-{
-	sys16_bg_page[1] = data>>12;
-	sys16_bg_page[0] = (data>>8)&0xf;
-	sys16_bg_page[3] = (data>>4)&0xf;
-	sys16_bg_page[2] = data&0xf;
-}
 
-#if 0
-static void set_fg2_page( int data )
-{
-	sys16_fg2_page[0] = data>>12;
-	sys16_fg2_page[1] = (data>>8)&0xf;
-	sys16_fg2_page[2] = (data>>4)&0xf;
-	sys16_fg2_page[3] = data&0xf;
-}
-
-static void set_bg2_page( int data )
-{
-	sys16_bg2_page[0] = data>>12;
-	sys16_bg2_page[1] = (data>>8)&0xf;
-	sys16_bg2_page[2] = (data>>4)&0xf;
-	sys16_bg2_page[3] = data&0xf;
-}
-#endif
 
 
 /***************************************************************************/
@@ -631,137 +592,21 @@ static void set_bg2_page( int data )
 
 /***************************************************************************/
 
-static ADDRESS_MAP_START( alexkidd_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x400000, 0x40ffff) AM_READ(SYS16_MRA16_TILERAM)
-	AM_RANGE(0x410000, 0x410fff) AM_READ(SYS16_MRA16_TEXTRAM)
-	AM_RANGE(0x440000, 0x440fff) AM_READ(SYS16_MRA16_SPRITERAM)
-	AM_RANGE(0x840000, 0x840fff) AM_READ(SYS16_MRA16_PALETTERAM)
-	AM_RANGE(0xc40002, 0xc40005) AM_READ(MRA16_NOP)		//??
-	AM_RANGE(0xc41002, 0xc41003) AM_READ(input_port_0_word_r) // player1
-	AM_RANGE(0xc41006, 0xc41007) AM_READ(input_port_1_word_r) // player2
-	AM_RANGE(0xc41000, 0xc41001) AM_READ(input_port_2_word_r) // service
-	AM_RANGE(0xc42000, 0xc42001) AM_READ(input_port_3_word_r) // dip1
-	AM_RANGE(0xc42002, 0xc42003) AM_READ(input_port_4_word_r) // dip2
-	AM_RANGE(0xc60000, 0xc60001) AM_READ(MRA16_NOP)
-	AM_RANGE(0xffc000, 0xffffff) AM_READ(SYS16_MRA16_WORKINGRAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( alexkidd_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x410000, 0x410fff) AM_WRITE(SYS16_MWA16_TEXTRAM) AM_BASE(&sys16_textram)
-	AM_RANGE(0x400000, 0x40ffff) AM_WRITE(SYS16_MWA16_TILERAM) AM_BASE(&sys16_tileram)
-	AM_RANGE(0x440000, 0x440fff) AM_WRITE(SYS16_MWA16_SPRITERAM) AM_BASE(&sys16_spriteram)
-	AM_RANGE(0x840000, 0x840fff) AM_WRITE(SYS16_MWA16_PALETTERAM) AM_BASE(&paletteram16)
-	AM_RANGE(0xc40000, 0xc40001) AM_WRITE(sound_command_nmi_w)
-	AM_RANGE(0xc40002, 0xc40005) AM_WRITE(MWA16_NOP)		//??
-	AM_RANGE(0xffc000, 0xffffff) AM_WRITE(SYS16_MWA16_WORKINGRAM) AM_BASE(&sys16_workingram)
-ADDRESS_MAP_END
 
 /***************************************************************************/
 
-static void alexkidd_update_proc( void )
-{
-	set_bg_page1( sys16_textram[0x74e] );
-	set_fg_page1( sys16_textram[0x74f] );
-	sys16_fg_scrollx = sys16_textram[0x7fc] & 0x01ff;
-	sys16_bg_scrollx = sys16_textram[0x7fd] & 0x01ff;
-	sys16_fg_scrolly = sys16_textram[0x792] & 0x00ff;
-	sys16_bg_scrolly = sys16_textram[0x793] & 0x01ff;
-}
 
-static MACHINE_INIT( alexkidd )
-{
-	sys16_textmode=1;
-	sys16_spritesystem = sys16_sprite_quartet2;
-	sys16_sprxoffset = -0xbc;
-	sys16_fgxoffset = sys16_bgxoffset = 7;
-	sys16_bg_priority_mode=1;
-
-	sys16_update_proc = alexkidd_update_proc;
-}
-
-static DRIVER_INIT( alexkidd )
-{
-	machine_init_sys16_onetime();
-}
 /***************************************************************************/
 
 /***************************************************************************/
 
-static MACHINE_DRIVER_START( alexkidd )
-
-	/* basic machine hardware */
-	MDRV_IMPORT_FROM(system16_7751)
-	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PROGRAM_MAP(alexkidd_readmem,alexkidd_writemem)
-
-	MDRV_MACHINE_INIT(alexkidd)
-MACHINE_DRIVER_END
 
 /***************************************************************************/
 
-static ADDRESS_MAP_START( aliensyn_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x02ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x400000, 0x40ffff) AM_READ(SYS16_MRA16_TILERAM)
-	AM_RANGE(0x410000, 0x410fff) AM_READ(SYS16_MRA16_TEXTRAM)
-	AM_RANGE(0x440000, 0x440fff) AM_READ(SYS16_MRA16_SPRITERAM)
-	AM_RANGE(0x840000, 0x840fff) AM_READ(SYS16_MRA16_PALETTERAM)
-	AM_RANGE(0xc41002, 0xc41003) AM_READ(input_port_0_word_r) // player1
-	AM_RANGE(0xc41006, 0xc41007) AM_READ(input_port_1_word_r) // player2
-	AM_RANGE(0xc41000, 0xc41001) AM_READ(input_port_2_word_r) // service
-	AM_RANGE(0xc42002, 0xc42003) AM_READ(input_port_3_word_r) // dip1
-	AM_RANGE(0xc42000, 0xc42001) AM_READ(input_port_4_word_r) // dip2
-	AM_RANGE(0xffc000, 0xffffff) AM_READ(SYS16_MRA16_WORKINGRAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( aliensyn_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x02ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x400000, 0x40ffff) AM_WRITE(SYS16_MWA16_TILERAM) AM_BASE(&sys16_tileram)
-	AM_RANGE(0x410000, 0x410fff) AM_WRITE(SYS16_MWA16_TEXTRAM) AM_BASE(&sys16_textram)
-	AM_RANGE(0x440000, 0x440fff) AM_WRITE(SYS16_MWA16_SPRITERAM) AM_BASE(&sys16_spriteram)
-	AM_RANGE(0x840000, 0x840fff) AM_WRITE(SYS16_MWA16_PALETTERAM) AM_BASE(&paletteram16)
-	AM_RANGE(0xc00006, 0xc00007) AM_WRITE(sound_command_w)
-	AM_RANGE(0xc00020, 0xc0003f) AM_WRITE(MWA16_NOP) // config regs
-	AM_RANGE(0xc40000, 0xc40001) AM_WRITE(sys16_coinctrl_w)
-	AM_RANGE(0xffc000, 0xffffff) AM_WRITE(SYS16_MWA16_WORKINGRAM) AM_BASE(&sys16_workingram)
-ADDRESS_MAP_END
 
 /***************************************************************************/
 
-static void aliensyn_update_proc( void )
-{
-	set_fg_page( sys16_textram[0x740] );
-	set_bg_page( sys16_textram[0x741] );
-	sys16_fg_scrolly = sys16_textram[0x748];
-	sys16_bg_scrolly = sys16_textram[0x749];
-	sys16_fg_scrollx = sys16_textram[0x74c];
-	sys16_bg_scrollx = sys16_textram[0x74d];
-}
 
-static MACHINE_INIT( aliensyn )
-{
-	static int bank[16] = {
-		0,0,0,0,
-		0,0,0,3,
-		0,0,0,2,
-		0,1,0,0
-	};
-	sys16_obj_bank = bank;
-
-	sys16_bg_priority_mode=1;
-	sys16_fg_priority_mode=1;
-
-	sys16_update_proc = aliensyn_update_proc;
-
-	sys16_alienfix = 1; //*
-}
-
-static DRIVER_INIT( aliensyn )
-{
-	machine_init_sys16_onetime();
-	sys16_bg1_trans=1;
-}
 
 /***************************************************************************/
 
@@ -796,16 +641,6 @@ INPUT_PORTS_START( aliensyn )
 INPUT_PORTS_END
 
 /****************************************************************************/
-
-static MACHINE_DRIVER_START( aliensyn )
-
-	/* basic machine hardware */
-	MDRV_IMPORT_FROM(system16_7759)
-	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PROGRAM_MAP(aliensyn_readmem,aliensyn_writemem)
-
-	MDRV_MACHINE_INIT(aliensyn)
-MACHINE_DRIVER_END
 
 
 /***************************************************************************/
@@ -861,16 +696,6 @@ static MACHINE_INIT( bayroute )
 	sys16_obj_bank = bank;
 	sys16_update_proc = bayroute_update_proc;
 	sys16_spritesystem = sys16_sprite_shinobi;
-}
-
-static DRIVER_INIT( bayroute )
-{
-	machine_init_sys16_onetime();
-}
-
-static DRIVER_INIT( bayrouta )
-{
-	machine_init_sys16_onetime();
 }
 
 static DRIVER_INIT( bayrtbl1 )
@@ -932,161 +757,15 @@ MACHINE_DRIVER_END
 
 ***************************************************************************/
 
-static ADDRESS_MAP_START( bodyslam_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x02ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x400000, 0x40ffff) AM_READ(SYS16_MRA16_TILERAM)
-	AM_RANGE(0x410000, 0x410fff) AM_READ(SYS16_MRA16_TEXTRAM)
-	AM_RANGE(0x440000, 0x440fff) AM_READ(SYS16_MRA16_SPRITERAM)
-	AM_RANGE(0x840000, 0x840fff) AM_READ(SYS16_MRA16_PALETTERAM)
-	AM_RANGE(0xc41002, 0xc41003) AM_READ(input_port_0_word_r) // player1
-	AM_RANGE(0xc41006, 0xc41007) AM_READ(input_port_1_word_r) // player2
-	AM_RANGE(0xc41000, 0xc41001) AM_READ(input_port_2_word_r) // service
-	AM_RANGE(0xc42000, 0xc42001) AM_READ(input_port_3_word_r) // dip1
-	AM_RANGE(0xc42002, 0xc42003) AM_READ(input_port_4_word_r) // dip2
-	AM_RANGE(0xffc000, 0xffffff) AM_READ(SYS16_MRA16_WORKINGRAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( bodyslam_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x02ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x400000, 0x40ffff) AM_WRITE(SYS16_MWA16_TILERAM) AM_BASE(&sys16_tileram)
-	AM_RANGE(0x410000, 0x410fff) AM_WRITE(SYS16_MWA16_TEXTRAM) AM_BASE(&sys16_textram)
-	AM_RANGE(0x440000, 0x440fff) AM_WRITE(SYS16_MWA16_SPRITERAM) AM_BASE(&sys16_spriteram)
-	AM_RANGE(0x840000, 0x840fff) AM_WRITE(SYS16_MWA16_PALETTERAM) AM_BASE(&paletteram16)
-	AM_RANGE(0xc40000, 0xc40001) AM_WRITE(sound_command_nmi_w)
-	AM_RANGE(0xc40002, 0xc40003) AM_WRITE(sys16_3d_coinctrl_w)
-	AM_RANGE(0xffc000, 0xffffff) AM_WRITE(SYS16_MWA16_WORKINGRAM) AM_BASE(&sys16_workingram)
-ADDRESS_MAP_END
 
 /***************************************************************************/
 
-static void bodyslam_update_proc (void)
-{
-	sys16_fg_scrollx = sys16_textram[0x0ffa/2] & 0x01ff;
-	sys16_bg_scrollx = sys16_textram[0x0ff8/2] & 0x01ff;
-	sys16_fg_scrolly = sys16_textram[0x0f26/2] & 0x00ff;
-	sys16_bg_scrolly = sys16_textram[0x0f24/2] & 0x01ff;
-
-	set_fg_page1( sys16_textram[0x0e9e/2] );
-	set_bg_page1( sys16_textram[0x0e9c/2] );
-}
-
-static MACHINE_INIT( bodyslam )
-{
-	sys16_textmode=1;
-	sys16_spritesystem = sys16_sprite_quartet2;
-	sys16_sprxoffset = -0xbc;
-	sys16_fgxoffset = sys16_bgxoffset = 7;
-	sys16_bg_priority_mode = 2;
-	sys16_bg_priority_value=0x0e00;
-
-	sys16_textlayer_lo_min=0;
-	sys16_textlayer_lo_max=0x1f;
-	sys16_textlayer_hi_min=0x20;
-	sys16_textlayer_hi_max=0xff;
-
-	sys16_update_proc = bodyslam_update_proc;
-}
-
-// I have no idea if this is needed, but I cannot find any code for the countdown
-// timer in the code and this seems to work ok.
-static void bodyslam_irq_timer(void)
-{
-	int flag=(*(UINT16 *)(&sys16_workingram[0x200/2]))>>8;
-	int tick=(*(UINT16 *)(&sys16_workingram[0x200/2]))&0xff;
-	int sec=(*(UINT16 *)(&sys16_workingram[0x202/2]))>>8;
-	int min=(*(UINT16 *)(&sys16_workingram[0x202/2]))&0xff;
-
-	if(tick == 0 && sec == 0 && min == 0)
-		flag=1;
-	else
-	{
-		if(tick==0)
-		{
-			tick=0x40;	// The game initialise this to 0x40
-			if(sec==0)
-			{
-				sec=0x59;
-				if(min==0)
-				{
-					flag=1;
-					tick=sec=min=0;
-				}
-				else
-					min--;
-			}
-			else
-			{
-				if((sec&0xf)==0)
-				{
-					sec-=0x10;
-					sec|=9;
-				}
-				else
-					sec--;
-
-			}
-		}
-		else
-			tick--;
-	}
-	sys16_workingram[0x200/2] = (flag<<8)+tick;
-	sys16_workingram[0x202/2] = (sec<<8)+min;
-}
-
-static DRIVER_INIT( bodyslam )
-{
-	machine_init_sys16_onetime();
-	sys16_bg1_trans=1;
-	sys16_custom_irq=bodyslam_irq_timer;
-}
 
 /***************************************************************************/
 
-INPUT_PORTS_START( bodyslam )
-	SYS16_JOY1
-	SYS16_JOY2
-	SYS16_SERVICE
-	SYS16_COINAGE
-
-	PORT_START_TAG("DSW1")
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
-INPUT_PORTS_END
 
 /***************************************************************************/
 
-static MACHINE_DRIVER_START( bodyslam )
-
-	/* basic machine hardware */
-	MDRV_IMPORT_FROM(system16_7751)
-	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PROGRAM_MAP(bodyslam_readmem,bodyslam_writemem)
-
-	MDRV_MACHINE_INIT(bodyslam)
-MACHINE_DRIVER_END
 
 /***************************************************************************/
 
@@ -1254,7 +933,6 @@ static ADDRESS_MAP_START( eswat_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 ADDRESS_MAP_END
 
 static int eswat_tilebank0;
-static int eswat_tilebank1;
 
 static WRITE16_HANDLER( eswat_tilebank0_w )
 {
@@ -1264,13 +942,7 @@ static WRITE16_HANDLER( eswat_tilebank0_w )
 	}
 }
 
-static WRITE16_HANDLER( eswat_tilebank1_w )
-{
-	if( ACCESSING_LSB )
-{
-		eswat_tilebank1 = data&0xff;
-	}
-}
+
 
 static ADDRESS_MAP_START( eswatbl_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
@@ -1373,190 +1045,15 @@ MACHINE_DRIVER_END
 
 /***************************************************************************/
 
-static ADDRESS_MAP_START( fantzono_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x02ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x400000, 0x40ffff) AM_READ(SYS16_MRA16_TILERAM)
-	AM_RANGE(0x410000, 0x410fff) AM_READ(SYS16_MRA16_TEXTRAM)
-	AM_RANGE(0x440000, 0x440fff) AM_READ(SYS16_MRA16_SPRITERAM)
-	AM_RANGE(0x840000, 0x840fff) AM_READ(SYS16_MRA16_PALETTERAM)
-	AM_RANGE(0xc41002, 0xc41003) AM_READ(input_port_0_word_r) // player1
-	AM_RANGE(0xc41006, 0xc41007) AM_READ(input_port_1_word_r) // player2
-	AM_RANGE(0xc41000, 0xc41001) AM_READ(input_port_2_word_r) // service
-	AM_RANGE(0xc42000, 0xc42001) AM_READ(input_port_3_word_r) // dip1
-	AM_RANGE(0xc42002, 0xc42003) AM_READ(input_port_4_word_r) // dip2
-	AM_RANGE(0xc40000, 0xc40003) AM_READ(SYS16_MRA16_EXTRAM2)
-	AM_RANGE(0xffc000, 0xffffff) AM_READ(SYS16_MRA16_WORKINGRAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( fantzono_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x02ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x400000, 0x40ffff) AM_WRITE(SYS16_MWA16_TILERAM) AM_BASE(&sys16_tileram)
-	AM_RANGE(0x410000, 0x410fff) AM_WRITE(SYS16_MWA16_TEXTRAM) AM_BASE(&sys16_textram)
-	AM_RANGE(0x440000, 0x440fff) AM_WRITE(SYS16_MWA16_SPRITERAM) AM_BASE(&sys16_spriteram)
-	AM_RANGE(0x840000, 0x840fff) AM_WRITE(SYS16_MWA16_PALETTERAM) AM_BASE(&paletteram16)
-	AM_RANGE(0xc40000, 0xc40001) AM_WRITE(sound_command_nmi_w)
-	AM_RANGE(0xc40000, 0xc40003) AM_WRITE(SYS16_MWA16_EXTRAM2) AM_BASE(&sys16_extraram2)
-	AM_RANGE(0xc60000, 0xc60003) AM_WRITE(MWA16_NOP)
-	AM_RANGE(0xffc000, 0xffffff) AM_WRITE(SYS16_MWA16_WORKINGRAM) AM_BASE(&sys16_workingram)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( fantzone_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x02ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x400000, 0x40ffff) AM_READ(SYS16_MRA16_TILERAM)
-	AM_RANGE(0x410000, 0x410fff) AM_READ(SYS16_MRA16_TEXTRAM)
-	AM_RANGE(0x440000, 0x440fff) AM_READ(SYS16_MRA16_SPRITERAM)
-	AM_RANGE(0x840000, 0x840fff) AM_READ(SYS16_MRA16_PALETTERAM)
-	AM_RANGE(0xc41002, 0xc41003) AM_READ(input_port_0_word_r) // player1
-	AM_RANGE(0xc41006, 0xc41007) AM_READ(input_port_1_word_r) // player2
-	AM_RANGE(0xc41000, 0xc41001) AM_READ(input_port_2_word_r) // service
-	AM_RANGE(0xc42000, 0xc42001) AM_READ(input_port_3_word_r) // dip1
-	AM_RANGE(0xc42002, 0xc42003) AM_READ(input_port_4_word_r) // dip2
-	AM_RANGE(0xffc000, 0xffffff) AM_READ(SYS16_MRA16_WORKINGRAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( fantzone_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x02ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x400000, 0x40ffff) AM_WRITE(SYS16_MWA16_TILERAM) AM_BASE(&sys16_tileram)
-	AM_RANGE(0x410000, 0x410fff) AM_WRITE(SYS16_MWA16_TEXTRAM) AM_BASE(&sys16_textram)
-	AM_RANGE(0x440000, 0x440fff) AM_WRITE(SYS16_MWA16_SPRITERAM) AM_BASE(&sys16_spriteram)
-	AM_RANGE(0x840000, 0x840fff) AM_WRITE(SYS16_MWA16_PALETTERAM) AM_BASE(&paletteram16)
-	AM_RANGE(0xc40000, 0xc40001) AM_WRITE(sound_command_nmi_w)
-	AM_RANGE(0xc40002, 0xc40003) AM_WRITE(sys16_3d_coinctrl_w)
-	AM_RANGE(0xc60000, 0xc60003) AM_WRITE(MWA16_NOP)
-	AM_RANGE(0xffc000, 0xffffff) AM_WRITE(SYS16_MWA16_WORKINGRAM) AM_BASE(&sys16_workingram)
-ADDRESS_MAP_END
 
 /***************************************************************************/
 
-static void fantzone_update_proc( void )
-{
-	set_bg_page1( sys16_textram[0x74e] );
-	set_fg_page1( sys16_textram[0x74f] );
-	sys16_fg_scrollx = sys16_textram[0x7fc] & 0x01ff;
-	sys16_bg_scrollx = sys16_textram[0x7fd] & 0x01ff;
-	sys16_fg_scrolly = sys16_textram[0x792] & 0x00ff;
-	sys16_bg_scrolly = sys16_textram[0x793] & 0x01ff;
-}
-
-static MACHINE_INIT( fantzono )
-{
-	sys16_textmode=1;
-	sys16_spritesystem = sys16_sprite_fantzone;
-	sys16_sprxoffset = -0xbe;
-//	sys16_fgxoffset = sys16_bgxoffset = 8;
-	sys16_fg_priority_mode=3;				// fixes end of game priority
-	sys16_fg_priority_value=0xd000;
-
-	sys16_patch_code( 0x20e7, 0x16 );
-	sys16_patch_code( 0x30ef, 0x16 );
-
-	// solving Fantasy Zone scrolling bug
-	sys16_patch_code(0x308f,0x00);
-
-	// invincible
-/*	sys16_patch_code(0x224e,0x4e);
-	sys16_patch_code(0x224f,0x71);
-	sys16_patch_code(0x2250,0x4e);
-	sys16_patch_code(0x2251,0x71);
-
-	sys16_patch_code(0x2666,0x4e);
-	sys16_patch_code(0x2667,0x71);
-	sys16_patch_code(0x2668,0x4e);
-	sys16_patch_code(0x2669,0x71);
-
-	sys16_patch_code(0x25c0,0x4e);
-	sys16_patch_code(0x25c1,0x71);
-	sys16_patch_code(0x25c2,0x4e);
-	sys16_patch_code(0x25c3,0x71);
-*/
-
-	sys16_update_proc = fantzone_update_proc;
-}
-
-static MACHINE_INIT( fantzone )
-{
-	sys16_textmode=1;
-	sys16_spritesystem = sys16_sprite_fantzone;
-	sys16_sprxoffset = -0xbe;
-	sys16_fg_priority_mode=3;				// fixes end of game priority
-	sys16_fg_priority_value=0xd000;
-
-	sys16_patch_code( 0x2135, 0x16 );
-	sys16_patch_code( 0x3649, 0x16 );
-
-	// hack? solving Fantasy Zone scrolling bug
-	sys16_patch_code(0x35e9,0x00);
-
-	sys16_update_proc = fantzone_update_proc;
-}
-
-static DRIVER_INIT( fantzone )
-{
-	machine_init_sys16_onetime();
-}
-/***************************************************************************/
-
-INPUT_PORTS_START( fantzone )
-	SYS16_JOY1
-	SYS16_JOY2
-	SYS16_SERVICE
-	SYS16_COINAGE
-
-	PORT_START_TAG("DSW1")
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x08, "2" )
-	PORT_DIPSETTING(    0x0c, "3" )
-	PORT_DIPSETTING(    0x04, "4" )
-	PORT_DIPSETTING(    0x00, "240 (Cheat)")
-	PORT_DIPNAME( 0x30, 0x30, "Extra Ship Cost" )
-	PORT_DIPSETTING(    0x30, "5000" )
-	PORT_DIPSETTING(    0x20, "10000" )
-	PORT_DIPSETTING(    0x10, "15000" )
-	PORT_DIPSETTING(    0x00, "20000" )
-	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Easy ) )
-	PORT_DIPSETTING(    0xc0, DEF_STR( Normal ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Hard ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
-
-INPUT_PORTS_END
 
 /***************************************************************************/
 
-static MACHINE_DRIVER_START( fantzono )
-
-	/* basic machine hardware */
-	MDRV_IMPORT_FROM(system16)
-	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PROGRAM_MAP(fantzono_readmem,fantzono_writemem)
-
-	MDRV_MACHINE_INIT(fantzono)
-MACHINE_DRIVER_END
-
-
-static MACHINE_DRIVER_START( fantzone )
-
-	/* basic machine hardware */
-	MDRV_IMPORT_FROM(system16)
-	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PROGRAM_MAP(fantzone_readmem,fantzone_writemem)
-
-	MDRV_MACHINE_INIT(fantzone)
-MACHINE_DRIVER_END
 
 /***************************************************************************/
 
-static READ16_HANDLER( fp_io_service_dummy_r )
-{
-	int data = readinputport( 2 ) & 0xff;
-	return (data << 8) + data;
-}
 
 static ADDRESS_MAP_START( fpointbl_map, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x01ffff) AM_ROM
@@ -1850,10 +1347,7 @@ static MACHINE_INIT( goldnaxe )
 	sys16_update_proc = goldnaxe_update_proc;
 }
 
-static DRIVER_INIT( goldnaxe )
-{
-	machine_init_sys16_onetime();
-}
+
 
 static DRIVER_INIT( goldnabl )
 {
@@ -1913,332 +1407,19 @@ MACHINE_DRIVER_END
 
 /***************************************************************************/
 
-// This version has somekind of hardware comparitor for collision detection,
-// and a hardware multiplier.
-static data16_t *ga_hardware_collision_data;
-static WRITE16_HANDLER( ga_hardware_collision_w )
-{
-	static int bit=1;
 
-	COMBINE_DATA( &ga_hardware_collision_data[offset] );
-	if( offset==4/2 )
-{
-		if( ga_hardware_collision_data[2] <= ga_hardware_collision_data[0] &&
-			ga_hardware_collision_data[2] >= ga_hardware_collision_data[1])
-		{
-			ga_hardware_collision_data[4] |=bit;
-		}
-		bit=bit<<1;
-	}
-	else if( offset==8/2 ) bit=1;
-}
-
-static READ16_HANDLER( ga_hardware_collision_r )
-{
-	return ga_hardware_collision_data[4];
-}
-
-static data16_t *ga_hardware_multiplier_data;
-static WRITE16_HANDLER( ga_hardware_multiplier_w )
-{
-	COMBINE_DATA( &ga_hardware_multiplier_data[offset] );
-}
-
-static READ16_HANDLER( ga_hardware_multiplier_r )
-{
-	if(offset==6/2)
-		return ga_hardware_multiplier_data[0] * ga_hardware_multiplier_data[1];
-	else
-		return ga_hardware_multiplier_data[offset];
-}
-
-static ADDRESS_MAP_START( goldnaxa_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x100000, 0x10ffff) AM_READ(SYS16_MRA16_TILERAM)
-	AM_RANGE(0x110000, 0x110fff) AM_READ(SYS16_MRA16_TEXTRAM)
-	AM_RANGE(0x140000, 0x140fff) AM_READ(SYS16_MRA16_PALETTERAM)
-	AM_RANGE(0x1e0008, 0x1e0009) AM_READ(ga_hardware_collision_r)
-	AM_RANGE(0x1f0000, 0x1f0007) AM_READ(ga_hardware_multiplier_r)
-	AM_RANGE(0x1f1008, 0x1f1009) AM_READ(ga_hardware_collision_r)
-	AM_RANGE(0x1f2000, 0x1f2003) AM_READ(SYS16_MRA16_EXTRAM)
-	AM_RANGE(0x200000, 0x200fff) AM_READ(SYS16_MRA16_SPRITERAM)
-	AM_RANGE(0xc41002, 0xc41003) AM_READ(input_port_0_word_r) // player1
-	AM_RANGE(0xc41006, 0xc41007) AM_READ(input_port_1_word_r) // player2
-	AM_RANGE(0xc41000, 0xc41001) AM_READ(input_port_2_word_r) // service
-	AM_RANGE(0xc42002, 0xc42003) AM_READ(input_port_3_word_r) // dip1
-	AM_RANGE(0xc42000, 0xc42001) AM_READ(input_port_4_word_r) // dip2
-	AM_RANGE(0xffecd0, 0xffecd1) AM_READ(ga_io_players_r)
-	AM_RANGE(0xffec96, 0xffec97) AM_READ(ga_io_service_r)
-	AM_RANGE(0xffc000, 0xffffff) AM_READ(SYS16_MRA16_WORKINGRAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( goldnaxa_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x100000, 0x10ffff) AM_WRITE(SYS16_MWA16_TILERAM) AM_BASE(&sys16_tileram)
-	AM_RANGE(0x110000, 0x110fff) AM_WRITE(SYS16_MWA16_TEXTRAM) AM_BASE(&sys16_textram)
-	AM_RANGE(0x140000, 0x140fff) AM_WRITE(SYS16_MWA16_PALETTERAM) AM_BASE(&paletteram16)
-	AM_RANGE(0x1e0000, 0x1e0009) AM_WRITE(ga_hardware_collision_w) AM_BASE(&ga_hardware_collision_data)
-	AM_RANGE(0x1f0000, 0x1f0003) AM_WRITE(ga_hardware_multiplier_w) AM_BASE(&ga_hardware_multiplier_data)
-	AM_RANGE(0x1f1000, 0x1f1009) AM_WRITE(ga_hardware_collision_w)
-	AM_RANGE(0x1f2000, 0x1f2003) AM_WRITE(SYS16_MWA16_EXTRAM) AM_BASE(&sys16_extraram)
-	AM_RANGE(0x200000, 0x200fff) AM_WRITE(SYS16_MWA16_SPRITERAM) AM_BASE(&sys16_spriteram)
-	AM_RANGE(0xc40000, 0xc40001) AM_WRITE(sys16_coinctrl_w)
-	AM_RANGE(0xffecfc, 0xffecfd) AM_WRITE(ga_sound_command_w)
-	AM_RANGE(0xffc000, 0xffffff) AM_WRITE(SYS16_MWA16_WORKINGRAM) AM_BASE(&sys16_workingram)
-ADDRESS_MAP_END
 
 /***************************************************************************/
 
-static void goldnaxa_update_proc( void )
-{
-	set_fg_page( sys16_textram[0x740] );
-	set_bg_page( sys16_textram[0x741] );
-	sys16_fg_scrolly = sys16_textram[0x748];
-	sys16_bg_scrolly = sys16_textram[0x749];
-	sys16_fg_scrollx = sys16_textram[0x74c];
-	sys16_bg_scrollx = sys16_textram[0x74d];
-
-	set_tile_bank( sys16_workingram[0x2c94/2] );
-}
-
-static MACHINE_INIT( goldnaxa )
-{
-	static int bank[16] = {
-		0,1,4,5,
-		8,9,0,0,
-		2,3,6,7,
-		10,11,0,0
-	};
-	sys16_obj_bank = bank;
-	//?
-	sys16_patch_code( 0x3CA2, 0x60 );
-	sys16_patch_code( 0x3CA3, 0x1e );
-	sys16_sprxoffset = -0xb8;
-	sys16_update_proc = goldnaxa_update_proc;
-}
 
 /***************************************************************************/
 
-static MACHINE_DRIVER_START( goldnaxa )
-
-	/* basic machine hardware */
-	MDRV_IMPORT_FROM(system16_7759)
-	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PROGRAM_MAP(goldnaxa_readmem,goldnaxa_writemem)
-
-	MDRV_MACHINE_INIT(goldnaxa)
-MACHINE_DRIVER_END
 
 /***************************************************************************/
 
-static READ16_HANDLER( mjl_io_player1_r )
-{
-	data16_t data=input_port_0_r( offset ) & 0x80;
-
-	if( sys16_extraram2[2/2] & 0x4 )
-		data|=(input_port_5_r( offset ) & 0x3f) << 1;
-	else
-		data|=(input_port_6_r( offset ) & 0x3f) << 1;
-
-	return data;
-}
-
-static READ16_HANDLER( mjl_io_service_r )
-{
-	data16_t data=input_port_2_r( offset ) & 0x3f;
-
-	if(sys16_extraram2[2/2] & 0x4)
-{
-		data|=(input_port_5_r( offset ) & 0x40);
-		data|=(input_port_7_r( offset ) & 0x40) << 1;
-	}
-	else {
-		data|=(input_port_6_r( offset ) & 0x40);
-		data|=(input_port_8_r( offset ) & 0x40) << 1;
-	}
-
-	return data;
-}
-
-static READ16_HANDLER( mjl_io_player2_r )
-{
-	data16_t data=input_port_1_r( offset ) & 0x80;
-	if(sys16_extraram2[2/2] & 0x4)
-		data|=(input_port_7_r( offset ) & 0x3f) << 1;
-	else
-		data|=(input_port_8_r( offset ) & 0x3f) << 1;
-	return data;
-}
-
-static READ16_HANDLER( mjl_io_bat_r )
-{
-	int data1=input_port_0_r( offset );
-	int data2=input_port_1_r( offset );
-	int ret=0;
-
-	// Hitting has 8 values, but for easy of playing, I've only added 3
-
-	if(data1 &1) ret=0x00;
-	else if(data1 &2) ret=0x03;
-	else if(data1 &4) ret=0x07;
-	else ret=0x0f;
-
-	if(data2 &1) ret|=0x00;
-	else if(data2 &2) ret|=0x30;
-	else if(data2 &4) ret|=0x70;
-	else ret|=0xf0;
-
-	return ret;
-}
-
-static ADDRESS_MAP_START( mjleague_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x02ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x400000, 0x40ffff) AM_READ(SYS16_MRA16_TILERAM)
-	AM_RANGE(0x410000, 0x410fff) AM_READ(SYS16_MRA16_TEXTRAM)
-	AM_RANGE(0x440000, 0x440fff) AM_READ(SYS16_MRA16_SPRITERAM)
-	AM_RANGE(0x840000, 0x840fff) AM_READ(SYS16_MRA16_PALETTERAM)
-
-	/* ?? these are just plain broken, they need 'extraram' but it isn't mapped! */
-//	AM_RANGE(0xc40002, 0xc40003) AM_READ(sys16_coinctrl_r)
-//	AM_RANGE(0xc41000, 0xc41001) AM_READ(mjl_io_service_r)
-//	AM_RANGE(0xc41002, 0xc41003) AM_READ(mjl_io_player1_r)
-//	AM_RANGE(0xc41006, 0xc41007) AM_READ(mjl_io_player2_r)
-//	AM_RANGE(0xc41004, 0xc41005) AM_READ(mjl_io_bat_r)
-//	AM_RANGE(0xc42000, 0xc42001) AM_READ(input_port_3_word_r) // dip1
-//	AM_RANGE(0xc42002, 0xc42003) AM_READ(input_port_4_word_r) // dip2
-
-	AM_RANGE(0xc40002, 0xc40003) AM_READ(sys16_coinctrl_r)
-	AM_RANGE(0xc41002, 0xc41003) AM_READ(input_port_0_word_r) // player1
-	AM_RANGE(0xc41006, 0xc41007) AM_READ(input_port_1_word_r) // player2
-	AM_RANGE(0xc41000, 0xc41001) AM_READ(input_port_2_word_r) // service
-	AM_RANGE(0xc42000, 0xc42001) AM_READ(input_port_3_word_r) // dip1
-	AM_RANGE(0xc42002, 0xc42003) AM_READ(input_port_4_word_r) // dip2
-
-	AM_RANGE(0xc60000, 0xc60001) AM_READ(MRA16_NOP) /* What is this? Watchdog? */
-
-	AM_RANGE(0xffc000, 0xffffff) AM_READ(SYS16_MRA16_WORKINGRAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( mjleague_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x02ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x400000, 0x40ffff) AM_WRITE(SYS16_MWA16_TILERAM) AM_BASE(&sys16_tileram)
-	AM_RANGE(0x410000, 0x410fff) AM_WRITE(SYS16_MWA16_TEXTRAM) AM_BASE(&sys16_textram)
-	AM_RANGE(0x440000, 0x440fff) AM_WRITE(SYS16_MWA16_SPRITERAM) AM_BASE(&sys16_spriteram)
-	AM_RANGE(0x840000, 0x840fff) AM_WRITE(SYS16_MWA16_PALETTERAM) AM_BASE(&paletteram16)
-	AM_RANGE(0xc40000, 0xc40001) AM_WRITE(sound_command_nmi_w)
-	AM_RANGE(0xc40002, 0xc40003) AM_WRITE(sys16_3d_coinctrl_w)
-	AM_RANGE(0xffc000, 0xffffff) AM_WRITE(SYS16_MWA16_WORKINGRAM) AM_BASE(&sys16_workingram)
-ADDRESS_MAP_END
 
 /***************************************************************************/
 
-static void mjleague_update_proc( void )
-{
-	set_bg_page1( sys16_textram[0x746] );
-	set_fg_page1( sys16_textram[0x747] );
-
-	sys16_fg_scrollx = sys16_textram[0x7fc] & 0x01ff;
-	sys16_bg_scrollx = sys16_textram[0x7fd] & 0x01ff;
-	sys16_fg_scrolly = sys16_textram[0x792] & 0x00ff;
-	sys16_bg_scrolly = sys16_textram[0x793] & 0x01ff;
-}
-
-static MACHINE_INIT( mjleague )
-{
-	sys16_textmode=1;
-	sys16_spritesystem = sys16_sprite_quartet2;
-	sys16_sprxoffset = -0xbd;
-	sys16_fgxoffset = sys16_bgxoffset = 7;
-
-	// remove memory test because it fails.
-	sys16_patch_code( 0xBD42, 0x66 );
-
-	sys16_update_proc = mjleague_update_proc;
-}
-
-static DRIVER_INIT( mjleague )
-{
-	machine_init_sys16_onetime();
-}
-
-/***************************************************************************/
-
-INPUT_PORTS_START( mjleague )
-
-	PORT_START_TAG("IN0") /* player 1 button fake */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON2 )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON3 )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON4 )
-
-	PORT_START_TAG("IN1") /* player 1 button fake */
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON2 ) PORT_PLAYER(2)
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON3 ) PORT_PLAYER(2)
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON4 ) PORT_PLAYER(2)
-
-	PORT_START_TAG("IN2")  /* Service */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_SERVICE_NO_TOGGLE(0x04, IP_ACTIVE_LOW)
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-
-	SYS16_COINAGE
-
-	PORT_START_TAG("DSW1")
-	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Cocktail ) )
-	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0c, 0x00, "Starting Points" )
-	PORT_DIPSETTING(    0x0c, "2000" )
-	PORT_DIPSETTING(    0x08, "3000" )
-	PORT_DIPSETTING(    0x04, "5000" )
-	PORT_DIPSETTING(    0x00, "10000" )
-	PORT_DIPNAME( 0x10, 0x10, "Team Select" )
-	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )	//??? something to do with cocktail mode?
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
-	PORT_START_TAG("IN5")
-	PORT_BIT( 0x7f, 0x40, IPT_TRACKBALL_Y ) PORT_MINMAX(0,127) PORT_SENSITIVITY(70) PORT_KEYDELTA(30)
-
-	PORT_START_TAG("IN6")
-	PORT_BIT( 0x7f, 0x40, IPT_TRACKBALL_X ) PORT_MINMAX(0,127) PORT_SENSITIVITY(50) PORT_KEYDELTA(30) PORT_REVERSE
-
-	PORT_START_TAG("IN7")
-	PORT_BIT( 0x7f, 0x40, IPT_TRACKBALL_Y ) PORT_MINMAX(0,127) PORT_SENSITIVITY(70) PORT_KEYDELTA(30) PORT_PLAYER(2)
-
-	PORT_START_TAG("IN8")
-	PORT_BIT( 0x7f, 0x40, IPT_TRACKBALL_X ) PORT_MINMAX(0,127) PORT_SENSITIVITY(50) PORT_KEYDELTA(30) PORT_REVERSE PORT_PLAYER(2)
-
-INPUT_PORTS_END
-
-/***************************************************************************/
-
-static MACHINE_DRIVER_START( mjleague )
-
-	/* basic machine hardware */
-	MDRV_IMPORT_FROM(system16_7751)
-	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PROGRAM_MAP(mjleague_readmem,mjleague_writemem)
-
-	MDRV_MACHINE_INIT(mjleague)
-MACHINE_DRIVER_END
 
 /***************************************************************************/
 
@@ -2559,467 +1740,10 @@ MACHINE_DRIVER_END
 /***************************************************************************/
 
 
-static ADDRESS_MAP_START( quartet_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x02ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x400000, 0x40ffff) AM_READ(SYS16_MRA16_TILERAM)
-	AM_RANGE(0x410000, 0x410fff) AM_READ(SYS16_MRA16_TEXTRAM)
-	AM_RANGE(0x440000, 0x440fff) AM_READ(SYS16_MRA16_SPRITERAM)
-	AM_RANGE(0x840000, 0x840fff) AM_READ(SYS16_MRA16_PALETTERAM)
-	AM_RANGE(0xc40002, 0xc40003) AM_READ(sys16_coinctrl_r)
-	AM_RANGE(0xc41000, 0xc41001) AM_READ(input_port_0_word_r) // p1
-	AM_RANGE(0xc41002, 0xc41003) AM_READ(input_port_1_word_r) // p2
-	AM_RANGE(0xc41004, 0xc41005) AM_READ(input_port_2_word_r) // p3
-	AM_RANGE(0xc41006, 0xc41007) AM_READ(input_port_3_word_r) // p4
-	AM_RANGE(0xc42000, 0xc42001) AM_READ(input_port_3_word_r) // dip1
-	AM_RANGE(0xc42002, 0xc42003) AM_READ(input_port_5_word_r) // dip2
-	AM_RANGE(0xffc000, 0xffffff) AM_READ(SYS16_MRA16_WORKINGRAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( quartet_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x02ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x400000, 0x40ffff) AM_WRITE(SYS16_MWA16_TILERAM) AM_BASE(&sys16_tileram)
-	AM_RANGE(0x410000, 0x410fff) AM_WRITE(SYS16_MWA16_TEXTRAM) AM_BASE(&sys16_textram)
-	AM_RANGE(0x440000, 0x440fff) AM_WRITE(SYS16_MWA16_SPRITERAM) AM_BASE(&sys16_spriteram)
-	AM_RANGE(0x840000, 0x840fff) AM_WRITE(SYS16_MWA16_PALETTERAM) AM_BASE(&paletteram16)
-	AM_RANGE(0xc40000, 0xc40001) AM_WRITE(sound_command_nmi_w)
-	AM_RANGE(0xc40002, 0xc40003) AM_WRITE(sys16_3d_coinctrl_w)
-	AM_RANGE(0xffc000, 0xffffff) AM_WRITE(SYS16_MWA16_WORKINGRAM) AM_BASE(&sys16_workingram)
-ADDRESS_MAP_END
-
 /***************************************************************************/
-
-static void quartet_update_proc( void )
-{
-	sys16_fg_scrollx = sys16_workingram[0x0d14/2] & 0x01ff;
-	sys16_bg_scrollx = sys16_workingram[0x0d18/2] & 0x01ff;
-	sys16_fg_scrolly = sys16_textram[0x0f24/2] & 0x00ff;
-	sys16_bg_scrolly = sys16_textram[0x0f26/2] & 0x01ff;
-
-//	if(((*(UINT16 *)(&sys16_extraram[4])) & 0xff) == 1)
-//		\=1;
-//	else
-		sys16_quartet_title_kludge=0;
-
-	set_fg_page1( sys16_workingram[0x0d1c/2] );
-	set_bg_page1( sys16_workingram[0x0d1e/2] );
-}
-
-static MACHINE_INIT( quartet )
-{
-	sys16_textmode=1;
-	sys16_spritesystem = sys16_sprite_quartet2;
-	sys16_sprxoffset = -0xbc;
-	sys16_fgxoffset = sys16_bgxoffset = 7;
-
-	sys16_update_proc = quartet_update_proc;
-}
-
-static DRIVER_INIT( quartet )
-{
-	machine_init_sys16_onetime();
-}
-/***************************************************************************/
-
-INPUT_PORTS_START( quartet )
-	// Player 1
-	PORT_START_TAG("P1")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  ) PORT_8WAY
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_UP  ) PORT_8WAY
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* player 1 coin 2 really */
-	// Player 2
-	PORT_START_TAG("P2")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1) PORT_PLAYER(2)
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2) PORT_PLAYER(2)
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* player 2 coin 2 really */
-	// Player 3
-	PORT_START_TAG("P3")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  ) PORT_8WAY PORT_PLAYER(3)
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(3)
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(3)
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(3)
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(3)
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START3 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(3)
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN3 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* player 3 coin 2 really */
-	// Player 4
-	PORT_START_TAG("P4")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(4)
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(4)
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT) PORT_8WAY PORT_PLAYER(4)
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT) PORT_8WAY PORT_PLAYER(4)
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1) PORT_PLAYER(4)
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START4 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_BUTTON2) PORT_PLAYER(4)
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN4 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* player 4 coin 2 really */
-
-	SYS16_COINAGE
-
-	PORT_START_TAG("DSW1")
-	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x06, 0x00, "Credit Power" )
-	PORT_DIPSETTING(    0x04, "500" )
-	PORT_DIPSETTING(    0x06, "1000" )
-	PORT_DIPSETTING(    0x02, "2000" )
-	PORT_DIPSETTING(    0x00, "9000" )
-	PORT_DIPNAME( 0x18, 0x00, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Easy ) )
-	PORT_DIPSETTING(    0x18, DEF_STR( Normal ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Hard ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
-	PORT_DIPNAME( 0x20, 0x20, "Coin During Game" )
-	PORT_DIPSETTING(    0x20, "Power" )
-	PORT_DIPSETTING(    0x00, "Credit" )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Free_Play ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
-INPUT_PORTS_END
-
-/***************************************************************************/
-
-static MACHINE_DRIVER_START( quartet )
-
-	/* basic machine hardware */
-	MDRV_IMPORT_FROM(system16_7751)
-	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PROGRAM_MAP(quartet_readmem,quartet_writemem)
-
-	MDRV_MACHINE_INIT(quartet)
-MACHINE_DRIVER_END
-
-/***************************************************************************/
-
-static ADDRESS_MAP_START( quartet2_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x02ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x400000, 0x40ffff) AM_READ(SYS16_MRA16_TILERAM)
-	AM_RANGE(0x410000, 0x410fff) AM_READ(SYS16_MRA16_TEXTRAM)
-	AM_RANGE(0x440000, 0x440fff) AM_READ(SYS16_MRA16_SPRITERAM)
-	AM_RANGE(0x840000, 0x840fff) AM_READ(SYS16_MRA16_PALETTERAM)
-	AM_RANGE(0xc40002, 0xc40003) AM_READ(sys16_coinctrl_r)
-	AM_RANGE(0xc41002, 0xc41003) AM_READ(input_port_0_word_r) // player1
-	AM_RANGE(0xc41006, 0xc41007) AM_READ(input_port_1_word_r) // player2
-	AM_RANGE(0xc41000, 0xc41001) AM_READ(input_port_2_word_r) // service
-	AM_RANGE(0xc42000, 0xc42001) AM_READ(input_port_3_word_r) // dip1
-	AM_RANGE(0xc42002, 0xc42003) AM_READ(input_port_4_word_r) // dip2
-	AM_RANGE(0xffc000, 0xffffff) AM_READ(SYS16_MRA16_WORKINGRAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( quartet2_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x02ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x400000, 0x40ffff) AM_WRITE(SYS16_MWA16_TILERAM) AM_BASE(&sys16_tileram)
-	AM_RANGE(0x410000, 0x410fff) AM_WRITE(SYS16_MWA16_TEXTRAM) AM_BASE(&sys16_textram)
-	AM_RANGE(0x440000, 0x440fff) AM_WRITE(SYS16_MWA16_SPRITERAM) AM_BASE(&sys16_spriteram)
-	AM_RANGE(0x840000, 0x840fff) AM_WRITE(SYS16_MWA16_PALETTERAM) AM_BASE(&paletteram16)
-	AM_RANGE(0xc40000, 0xc40001) AM_WRITE(sound_command_nmi_w)
-	AM_RANGE(0xc40002, 0xc40003) AM_WRITE(sys16_3d_coinctrl_w)
-	AM_RANGE(0xffc000, 0xffffff) AM_WRITE(SYS16_MWA16_WORKINGRAM) AM_BASE(&sys16_workingram)
-ADDRESS_MAP_END
-
-/***************************************************************************/
-
-static void quartet2_update_proc( void )
-{
-	sys16_fg_scrollx = sys16_workingram[0x0d14/2] & 0x01ff;
-	sys16_bg_scrollx = sys16_workingram[0x0d18/2] & 0x01ff;
-	sys16_fg_scrolly = sys16_textram[0x792] & 0x00ff;
-	sys16_bg_scrolly = sys16_textram[0x793] & 0x01ff;
-
-//let's fix this properly
-//	if(((*(UINT16 *)(&sys16_extraram[4])) & 0xff) == 1)
-//		sys16_quartet_title_kludge=1;
-//	else
-		sys16_quartet_title_kludge=0;
-
-	set_fg_page1( sys16_workingram[0x0d1c/2] );
-	set_bg_page1( sys16_workingram[0x0d1e/2] );
-}
-
-static MACHINE_INIT( quartet2 )
-{
-	sys16_textmode=1;
-	sys16_spritesystem = sys16_sprite_quartet2;
-	sys16_sprxoffset = -0xbc;
-	sys16_fgxoffset = sys16_bgxoffset = 7;
-
-	sys16_update_proc = quartet2_update_proc;
-}
-
-static DRIVER_INIT( quartet2 )
-{
-	machine_init_sys16_onetime();
-}
-/***************************************************************************/
-
-INPUT_PORTS_START( quartet2 )
-	SYS16_JOY1_SWAPPEDBUTTONS
-	SYS16_JOY2_SWAPPEDBUTTONS
-	SYS16_SERVICE
-	SYS16_COINAGE
-
-	PORT_START_TAG("DSW1")
-	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x06, 0x00, "Credit Power" )
-	PORT_DIPSETTING(    0x04, "500" )
-	PORT_DIPSETTING(    0x06, "1000" )
-	PORT_DIPSETTING(    0x02, "2000" )
-	PORT_DIPSETTING(    0x00, "9000" )
-	PORT_DIPNAME( 0x18, 0x00, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Easy ) )
-	PORT_DIPSETTING(    0x18, DEF_STR( Normal ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Hard ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-
-INPUT_PORTS_END
-
-/***************************************************************************/
-
-static MACHINE_DRIVER_START( quartet2 )
-
-	/* basic machine hardware */
-	MDRV_IMPORT_FROM(system16_7751)
-	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PROGRAM_MAP(quartet2_readmem,quartet2_writemem)
-
-	MDRV_MACHINE_INIT(quartet2)
-MACHINE_DRIVER_END
 
 
 /***************************************************************************/
-
-static READ16_HANDLER( io_p1mousex_r )
-{ return 0xff-input_port_5_r( offset ); }
-static READ16_HANDLER( io_p1mousey_r )
-{ return input_port_6_r( offset ); }
-
-static READ16_HANDLER( io_p2mousex_r )
-{ return input_port_7_r( offset ); }
-static READ16_HANDLER( io_p2mousey_r )
-{ return input_port_8_r( offset ); }
-
-static ADDRESS_MAP_START( sdi_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x02ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x400000, 0x40ffff) AM_READ(SYS16_MRA16_TILERAM)
-	AM_RANGE(0x410000, 0x411fff) AM_READ(SYS16_MRA16_TEXTRAM) //*
-	AM_RANGE(0x440000, 0x440fff) AM_READ(SYS16_MRA16_SPRITERAM)
-	AM_RANGE(0x840000, 0x840fff) AM_READ(SYS16_MRA16_PALETTERAM)
-	AM_RANGE(0xc41004, 0xc41005) AM_READ(input_port_0_word_r) // player1
-	AM_RANGE(0xc41002, 0xc41003) AM_READ(input_port_1_word_r) // player2
-	AM_RANGE(0xc41000, 0xc41001) AM_READ(input_port_2_word_r) // service
-	AM_RANGE(0xc42000, 0xc42001) AM_READ(input_port_4_word_r) // dip2
-	AM_RANGE(0xc42002, 0xc42003) AM_READ(input_port_3_word_r) // dip1
-	AM_RANGE(0xc42004, 0xc42005) AM_READ(input_port_4_word_r) // dip2
-	AM_RANGE(0xc43000, 0xc43001) AM_READ(io_p1mousex_r)
-	AM_RANGE(0xc43004, 0xc43005) AM_READ(io_p1mousey_r)
-	AM_RANGE(0xc43008, 0xc43009) AM_READ(io_p2mousex_r)
-	AM_RANGE(0xc4300c, 0xc4300d) AM_READ(io_p2mousey_r)
-//	AM_RANGE(0xc42000, 0xc42001) AM_READ(MRA16_NOP) /* What is this? */
-	AM_RANGE(0xc60000, 0xc60001) AM_READ(MRA16_NOP) /* What is this? */
-	AM_RANGE(0xffc000, 0xffffff) AM_READ(SYS16_MRA16_WORKINGRAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( sdi_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x02ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x123406, 0x123407) AM_WRITE(sound_command_w)
-	AM_RANGE(0x400000, 0x40ffff) AM_WRITE(SYS16_MWA16_TILERAM) AM_BASE(&sys16_tileram)
-	AM_RANGE(0x410000, 0x411fff) AM_WRITE(SYS16_MWA16_TEXTRAM) AM_BASE(&sys16_textram)
-	AM_RANGE(0x440000, 0x440fff) AM_WRITE(SYS16_MWA16_SPRITERAM) AM_BASE(&sys16_spriteram)
-	AM_RANGE(0x840000, 0x840fff) AM_WRITE(SYS16_MWA16_PALETTERAM) AM_BASE(&paletteram16)
-	AM_RANGE(0xc40000, 0xc40001) AM_WRITE(sys16_coinctrl_w)
-	AM_RANGE(0xffc000, 0xffffff) AM_WRITE(SYS16_MWA16_WORKINGRAM) AM_BASE(&sys16_workingram)
-ADDRESS_MAP_END
-
-/***************************************************************************/
-
-static void sdi_update_proc( void )
-{
-	set_fg_page( sys16_textram[0x740] );
-	set_bg_page( sys16_textram[0x741] );
-	sys16_fg_scrolly = sys16_textram[0x748];
-	sys16_bg_scrolly = sys16_textram[0x749];
-	sys16_fg_scrollx = sys16_textram[0x74c];
-	sys16_bg_scrollx = sys16_textram[0x74d];
-}
-
-static MACHINE_INIT( sdi )
-{
-	static int bank[16] = {
-		0,0,0,0,
-		0,0,0,3,
-		0,0,0,2,
-		0,1,0,0
-	};
-	sys16_obj_bank = bank;
-
-	sys16_patch_code( 0x102f2, 0x00 );
-	sys16_patch_code( 0x102f3, 0x02 );
-
-	sys16_update_proc = sdi_update_proc;
-}
-
-static DRIVER_INIT( sdi )
-{
-	machine_init_sys16_onetime();
-	sys18_splittab_bg_x=&sys16_textram[0x0fc0];
-	sys16_rowscroll_scroll=0xff00;
-}
-
-/***************************************************************************/
-
-INPUT_PORTS_START( sdi )
-	PORT_START_TAG("IN0")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN ) PORT_8WAY
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP ) PORT_8WAY
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT ) PORT_8WAY
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT ) PORT_8WAY
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT) PORT_8WAY PORT_PLAYER(2)
-
-	SYS16_JOY2
-
-	PORT_START_TAG("IN2")
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
-	PORT_SERVICE_NO_TOGGLE(0x04, IP_ACTIVE_LOW)
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_SERVICE1 )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1) PORT_PLAYER(2)
-
-	SYS16_COINAGE
-
-	PORT_START_TAG("DSW1")
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x08, "2" )
-	PORT_DIPSETTING(    0x0c, "3" )
-	PORT_DIPSETTING(    0x04, "4" )
-	PORT_DIPSETTING(    0x00, "240? (Cheat)")
-	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Easy ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( Normal ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Hard ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
-	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Bonus_Life ) )
-	PORT_DIPSETTING(    0x80, "Every 50000" )
-	PORT_DIPSETTING(    0xc0, "50000" )
-	PORT_DIPSETTING(    0x40, "100000" )
-	PORT_DIPSETTING(    0x00, DEF_STR( None ) )
-
-	PORT_START_TAG("IN5")				/* fake analog X */
-	PORT_BIT( 0xff, 0x80, IPT_TRACKBALL_X ) PORT_MINMAX(0,255) PORT_SENSITIVITY(75) PORT_KEYDELTA(1)
-
-	PORT_START_TAG("IN6")				/* fake analog Y */
-	PORT_BIT( 0xff, 0x80, IPT_TRACKBALL_Y ) PORT_MINMAX(0,255) PORT_SENSITIVITY(75) PORT_KEYDELTA(1)
-
-	PORT_START_TAG("IN7")				/* fake analog X */
-	PORT_BIT( 0xff, 0x80, IPT_TRACKBALL_X  ) PORT_MINMAX(0,255) PORT_SENSITIVITY(75) PORT_KEYDELTA(1) PORT_PLAYER(2)
-
-	PORT_START_TAG("IN8")				/* fake analog Y */
-	PORT_BIT( 0xff, 0x80, IPT_TRACKBALL_Y ) PORT_MINMAX(0,255) PORT_SENSITIVITY(75) PORT_KEYDELTA(1) PORT_PLAYER(2)
-
-INPUT_PORTS_END
-
-/***************************************************************************/
-
-static MACHINE_DRIVER_START( sdi )
-
-	/* basic machine hardware */
-	MDRV_IMPORT_FROM(system16)
-	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PROGRAM_MAP(sdi_readmem,sdi_writemem)
-
-	MDRV_MACHINE_INIT(sdi)
-MACHINE_DRIVER_END
-
-/***************************************************************************/
-
-static ADDRESS_MAP_START( shinobi_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x400000, 0x40ffff) AM_READ(SYS16_MRA16_TILERAM)
-	AM_RANGE(0x410000, 0x410fff) AM_READ(SYS16_MRA16_TEXTRAM)
-	AM_RANGE(0x440000, 0x440fff) AM_READ(SYS16_MRA16_SPRITERAM)
-	AM_RANGE(0x840000, 0x840fff) AM_READ(SYS16_MRA16_PALETTERAM)
-	AM_RANGE(0xc41002, 0xc41003) AM_READ(input_port_0_word_r) // player1
-	AM_RANGE(0xc41006, 0xc41007) AM_READ(input_port_1_word_r) // player2
-	AM_RANGE(0xc41000, 0xc41001) AM_READ(input_port_2_word_r) // service
-	AM_RANGE(0xc42002, 0xc42003) AM_READ(input_port_3_word_r) // dip1
-	AM_RANGE(0xc42000, 0xc42001) AM_READ(input_port_4_word_r) // dip2
-	AM_RANGE(0xc43000, 0xc43001) AM_READ(MRA16_NOP)
-	AM_RANGE(0xffc000, 0xffffff) AM_READ(SYS16_MRA16_WORKINGRAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( shinobi_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x400000, 0x40ffff) AM_WRITE(SYS16_MWA16_TILERAM) AM_BASE(&sys16_tileram)
-	AM_RANGE(0x410000, 0x410fff) AM_WRITE(SYS16_MWA16_TEXTRAM) AM_BASE(&sys16_textram)
-	AM_RANGE(0x440000, 0x440fff) AM_WRITE(SYS16_MWA16_SPRITERAM) AM_BASE(&sys16_spriteram)
-	AM_RANGE(0x840000, 0x840fff) AM_WRITE(SYS16_MWA16_PALETTERAM) AM_BASE(&paletteram16)
-	AM_RANGE(0xc40000, 0xc40001) AM_WRITE(sys16_coinctrl_w)
-	AM_RANGE(0xc43000, 0xc43001) AM_WRITE(MWA16_NOP)
-	AM_RANGE(0xfe0006, 0xfe0007) AM_WRITE(sound_command_w)
-	AM_RANGE(0xffc000, 0xffffff) AM_WRITE(SYS16_MWA16_WORKINGRAM) AM_BASE(&sys16_workingram)
-ADDRESS_MAP_END
-
-/***************************************************************************/
-
-static void shinobi_update_proc( void )
-{
-	set_fg_page( sys16_textram[0x740] );
-	set_bg_page( sys16_textram[0x741] );
-	sys16_fg_scrolly = sys16_textram[0x748];
-	sys16_bg_scrolly = sys16_textram[0x749];
-	sys16_fg_scrollx = sys16_textram[0x74c];
-	sys16_bg_scrollx = sys16_textram[0x74d];
-}
-
-static MACHINE_INIT( shinobi )
-{
-	static int bank[16] = {
-		0,0,0,0,
-		0,0,0,3,
-		0,0,0,2,
-		0,1,0,0
-	};
-	sys16_obj_bank = bank;
-	sys16_update_proc = shinobi_update_proc;
-	fd1094_machine_init();
-
-}
 
 
 static DRIVER_INIT( shinobi )
@@ -3063,15 +1787,6 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-static MACHINE_DRIVER_START( shinobi )
-
-	/* basic machine hardware */
-	MDRV_IMPORT_FROM(system16_7759)
-	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PROGRAM_MAP(shinobi_readmem,shinobi_writemem)
-
-	MDRV_MACHINE_INIT(shinobi)
-MACHINE_DRIVER_END
 
 /***************************************************************************/
 
@@ -3119,7 +1834,6 @@ static MACHINE_INIT( shinobl )
 		1,3,5,7
 	};
 	sys16_obj_bank = bank;
-	sys16_textmode=1;
 	sys16_spritesystem = sys16_sprite_quartet2;
 	sys16_sprxoffset = -0xbc;
 	sys16_fgxoffset = sys16_bgxoffset = 7;
@@ -3144,32 +1858,7 @@ MACHINE_DRIVER_END
 
 /***************************************************************************/
 
-static ADDRESS_MAP_START( tetris_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x400000, 0x40ffff) AM_READ(SYS16_MRA16_TILERAM)
-	AM_RANGE(0x410000, 0x410fff) AM_READ(SYS16_MRA16_TEXTRAM)
 
-	AM_RANGE(0x440000, 0x440fff) AM_READ(SYS16_MRA16_SPRITERAM)
-	AM_RANGE(0x840000, 0x840fff) AM_READ(SYS16_MRA16_PALETTERAM)
-	AM_RANGE(0xc41002, 0xc41003) AM_READ(input_port_0_word_r) // player1
-	AM_RANGE(0xc41006, 0xc41007) AM_READ(input_port_1_word_r) // player2
-	AM_RANGE(0xc41000, 0xc41001) AM_READ(input_port_2_word_r) // service
-	AM_RANGE(0xc42002, 0xc42003) AM_READ(input_port_3_word_r) // dip1
-	AM_RANGE(0xc42000, 0xc42001) AM_READ(input_port_4_word_r) // dip2
-
-	AM_RANGE(0xffc000, 0xffffff) AM_READ(SYS16_MRA16_WORKINGRAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( tetris_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x400000, 0x40ffff) AM_WRITE(SYS16_MWA16_TILERAM) AM_BASE(&sys16_tileram)
-	AM_RANGE(0x410000, 0x410fff) AM_WRITE(SYS16_MWA16_TEXTRAM) AM_BASE(&sys16_textram)
-	AM_RANGE(0x440000, 0x440fff) AM_WRITE(SYS16_MWA16_SPRITERAM) AM_BASE(&sys16_spriteram)
-	AM_RANGE(0x840000, 0x840fff) AM_WRITE(SYS16_MWA16_PALETTERAM) AM_BASE(&paletteram16)
-	AM_RANGE(0xc40000, 0xc40001) AM_WRITE(sound_command_nmi_w) // tetris
-	AM_RANGE(0xfe0006, 0xfe0007) AM_WRITE(sound_command_w) // tetrisa + tetrisb
-	AM_RANGE(0xffc000, 0xffffff) AM_WRITE(SYS16_MWA16_WORKINGRAM) AM_BASE(&sys16_workingram)
-ADDRESS_MAP_END
 
 /* bootleg has extra ram for regs? */
 
@@ -3206,16 +1895,6 @@ ADDRESS_MAP_END
 /***************************************************************************/
 
 
-static void tetris_s16a_update_proc( void )
-{
-	sys16_fg_scrolly = sys16_textram[0xf24/2];
-	sys16_bg_scrolly = sys16_textram[0xf26/2];
-	sys16_fg_scrollx = sys16_textram[0xff8/2];
-	sys16_bg_scrollx = sys16_textram[0xffa/2];
-
-	set_fg_page( sys16_textram[0xe9e/2] );
-	set_bg_page( sys16_textram[0xe9c/2] );
-}
 
 static void tetris_bootleg_update_proc( void )
 {
@@ -3228,18 +1907,6 @@ static void tetris_bootleg_update_proc( void )
 	set_bg_page( sys16_extraram2[0x28/2] );
 }
 
-static MACHINE_INIT( tetris_s16a )
-{
-	fd1094_machine_init();
-
-	sys16_textmode=1;
-	sys16_spritesystem = sys16_sprite_quartet2;
-	sys16_sprxoffset = -0xb8;
-	sys16_tilebank_switch=0x2000;
-	sys16_fgxoffset = sys16_bgxoffset = 8;
-
-	sys16_update_proc = tetris_s16a_update_proc;
-}
 
 static MACHINE_INIT( tetrisbl )
 {
@@ -3250,12 +1917,6 @@ static MACHINE_INIT( tetrisbl )
 	sys16_update_proc = tetris_bootleg_update_proc;
 }
 
-static DRIVER_INIT( tetris )
-{
-	machine_init_sys16_onetime();
-
-	fd1094_driver_init();
-}
 
 static DRIVER_INIT( tetrisbl )
 {
@@ -3298,15 +1959,6 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-static MACHINE_DRIVER_START( tetris_s16a )
-
-	/* basic machine hardware */
-	MDRV_IMPORT_FROM(system16)
-	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PROGRAM_MAP(tetris_readmem,tetris_writemem)
-
-	MDRV_MACHINE_INIT(tetris_s16a)
-MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( tetrisbl )
 
@@ -3327,30 +1979,7 @@ static READ16_HANDLER( tt_io_player2_r )
 static READ16_HANDLER( tt_io_service_r )
 { return input_port_2_r( offset ) << 8; }
 
-static ADDRESS_MAP_START( tturf_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x2001e6, 0x2001e7) AM_READ(tt_io_service_r)
-	AM_RANGE(0x2001e8, 0x2001e9) AM_READ(tt_io_player1_r)
-	AM_RANGE(0x2001ea, 0x2001eb) AM_READ(tt_io_player2_r)
-	AM_RANGE(0x200000, 0x203fff) AM_READ(SYS16_MRA16_EXTRAM)
-	AM_RANGE(0x300000, 0x300fff) AM_READ(SYS16_MRA16_SPRITERAM)
-	AM_RANGE(0x400000, 0x40ffff) AM_READ(SYS16_MRA16_TILERAM)
-	AM_RANGE(0x410000, 0x410fff) AM_READ(SYS16_MRA16_TEXTRAM)
-	AM_RANGE(0x500000, 0x500fff) AM_READ(SYS16_MRA16_PALETTERAM)
-	AM_RANGE(0x602002, 0x602003) AM_READ(input_port_3_word_r) // dip1
-	AM_RANGE(0x602000, 0x602001) AM_READ(input_port_4_word_r) // dip2
-ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( tturf_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x200000, 0x203fff) AM_WRITE(SYS16_MWA16_EXTRAM) AM_BASE(&sys16_extraram)
-	AM_RANGE(0x300000, 0x300fff) AM_WRITE(SYS16_MWA16_SPRITERAM) AM_BASE(&sys16_spriteram)
-	AM_RANGE(0x400000, 0x40ffff) AM_WRITE(SYS16_MWA16_TILERAM) AM_BASE(&sys16_tileram)
-	AM_RANGE(0x410000, 0x410fff) AM_WRITE(SYS16_MWA16_TEXTRAM) AM_BASE(&sys16_textram)
-	AM_RANGE(0x500000, 0x500fff) AM_WRITE(SYS16_MWA16_PALETTERAM) AM_BASE(&paletteram16)
-	AM_RANGE(0x600000, 0x600001) AM_WRITE(sys16_coinctrl_w)
-	AM_RANGE(0xff0020, 0xff003f) AM_WRITE(MWA16_NOP) // config regs
-ADDRESS_MAP_END
 
 /***************************************************************************/
 
@@ -3381,79 +2010,7 @@ ADDRESS_MAP_END
 	be tricky, tturfbl handles it correctly.
 */
 
-static WRITE16_HANDLER( tturfu_mcu_sound_trigger_w )
-{
-	COMBINE_DATA(&sys16_extraram[offset]);
 
-	if(activecpu_get_pc() == 0x100E)
-	{
-		int code;
-
-		if(ACCESSING_LSB)
-			code = (data >> 0) & 0xFF;
-		else
-			code = (data >> 8) & 0xFF;
-
-		soundlatch_w(0, code);
-		cpunum_set_input_line(1, 0, HOLD_LINE);
-	}
-}
-static WRITE16_HANDLER( tturf_mcu_sound_trigger_w )
-{
-	COMBINE_DATA(&sys16_extraram[offset]);
-
-	if(activecpu_get_pc() == 0x104c)
-	{
-		int code;
-
-		if(ACCESSING_LSB)
-			code = (data >> 0) & 0xFF;
-		else
-			code = (data >> 8) & 0xFF;
-
-		soundlatch_w(0, code);
-		cpunum_set_input_line(1, 0, HOLD_LINE);
-	}
-}
-
-
-static void tturf_update_proc( void )
-{
-	set_fg_page( sys16_textram[0x740] );
-	set_bg_page( sys16_textram[0x741] );
-	sys16_fg_scrolly = sys16_textram[0x748];
-	sys16_bg_scrolly = sys16_textram[0x749];
-	sys16_fg_scrollx = sys16_textram[0x74c];
-	sys16_bg_scrollx = sys16_textram[0x74d];
-}
-
-static MACHINE_INIT( tturf )
-{
-	static int bank[16] = { 0,0,1,0,2,0,3,0 };
-	sys16_obj_bank = bank;
-	sys16_update_proc = tturf_update_proc;
-
-	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2001d6, 0x2001e5, 0, 0, tturf_mcu_sound_trigger_w );
-
-}
-
-static MACHINE_INIT( tturfu )
-{
-	static int bank[16] = {
-		0,0,0,0,
-		0,0,0,0,
-		0,0,0,1,
-		0,2,3,0
-	};
-	sys16_obj_bank = bank;
-	sys16_update_proc = tturf_update_proc;
-	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0x2001d6, 0x2001e5, 0, 0, tturfu_mcu_sound_trigger_w );
-}
-
-static DRIVER_INIT( tturf )
-{
-	machine_init_sys16_onetime();
-}
 /***************************************************************************/
 
 INPUT_PORTS_START( tturf )
@@ -3603,75 +2160,11 @@ MACHINE_DRIVER_END
 
 /***************************************************************************/
 
-static ADDRESS_MAP_START( wb3_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x400000, 0x40ffff) AM_READ(SYS16_MRA16_TILERAM)
-	AM_RANGE(0x410000, 0x410fff) AM_READ(SYS16_MRA16_TEXTRAM)
-	AM_RANGE(0x440000, 0x440fff) AM_READ(SYS16_MRA16_SPRITERAM)
-	AM_RANGE(0x840000, 0x840fff) AM_READ(SYS16_MRA16_PALETTERAM)
-	AM_RANGE(0xc41002, 0xc41003) AM_READ(input_port_0_word_r) // player1
-	AM_RANGE(0xc41006, 0xc41007) AM_READ(input_port_1_word_r) // player2
-	AM_RANGE(0xc41000, 0xc41001) AM_READ(input_port_2_word_r) // service
-	AM_RANGE(0xc42002, 0xc42003) AM_READ(input_port_3_word_r) // dip1
-	AM_RANGE(0xc42000, 0xc42001) AM_READ(input_port_4_word_r) // dip2
-	AM_RANGE(0xffc000, 0xffffff) AM_READ(SYS16_MRA16_WORKINGRAM)
-ADDRESS_MAP_END
-
-static WRITE16_HANDLER( wb3_sound_command_w )
-{
-	if( ACCESSING_MSB ) sound_command_w(offset,data>>8,0xff00); //*
-}
-
-static ADDRESS_MAP_START( wb3_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x03ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x3f0000, 0x3fffff) AM_WRITE(sys16_tilebank_w)
-	AM_RANGE(0x400000, 0x40ffff) AM_WRITE(SYS16_MWA16_TILERAM) AM_BASE(&sys16_tileram)
-	AM_RANGE(0x410000, 0x410fff) AM_WRITE(SYS16_MWA16_TEXTRAM) AM_BASE(&sys16_textram)
-	AM_RANGE(0x440000, 0x440fff) AM_WRITE(SYS16_MWA16_SPRITERAM) AM_BASE(&sys16_spriteram)
-	AM_RANGE(0x840000, 0x840fff) AM_WRITE(SYS16_MWA16_PALETTERAM) AM_BASE(&paletteram16)
-	AM_RANGE(0xc40000, 0xc40001) AM_WRITE(sys16_coinctrl_w)
- 	AM_RANGE(0xdf0006, 0xdf0007) AM_WRITE(sound_command_w) // original encrypted
-//	AM_RANGE(0xffc008, 0xffc009) AM_WRITE(wb3_sound_command_w) // protected set with mcu
-	AM_RANGE(0xffc000, 0xffffff) AM_WRITE(SYS16_MWA16_WORKINGRAM) AM_BASE(&sys16_workingram)
-ADDRESS_MAP_END
 
 /***************************************************************************/
 
-static void wb3_update_proc( void )
-{
-	set_fg_page( sys16_textram[0x740] );
-	set_bg_page( sys16_textram[0x741] );
-	sys16_fg_scrolly = sys16_textram[0x748];
-	sys16_bg_scrolly = sys16_textram[0x749];
-	sys16_fg_scrollx = sys16_textram[0x74c];
-	sys16_bg_scrollx = sys16_textram[0x74d];
-}
 
-static MACHINE_INIT( wb3b )
-{
-	static int bank[16] = {
-		2,0,
-		1,0,
-		3,0,
-		0,3,
-		0,0,
-		0,2,
-		0,1,
-		0,0
-	};
-	sys16_obj_bank = bank;
-	sys16_update_proc = wb3_update_proc;
-}
 
-static DRIVER_INIT( wb3b )
-{
-	machine_init_sys16_onetime();
-
-	/* mcu grabs sound command direct from ram! */
-	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xffc008, 0xffc009, 0, 0, wb3_sound_command_w );
-	memory_install_write16_handler(0, ADDRESS_SPACE_PROGRAM, 0xfe0006, 0xfe0007, 0, 0, MWA16_NOP );
-
-}
 
 
 /***************************************************************************/
@@ -3710,15 +2203,6 @@ INPUT_PORTS_END
 
 /***************************************************************************/
 
-static MACHINE_DRIVER_START( wb3b )
-
-	/* basic machine hardware */
-	MDRV_IMPORT_FROM(system16)
-	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PROGRAM_MAP(wb3_readmem,wb3_writemem)
-
-	MDRV_MACHINE_INIT(wb3b)
-MACHINE_DRIVER_END
 
 /***************************************************************************/
 
@@ -3825,42 +2309,6 @@ static MACHINE_DRIVER_START( wb3bbl )
 	MDRV_CPU_PROGRAM_MAP(wb3bbl_readmem,wb3bbl_writemem)
 
 	MDRV_MACHINE_INIT(wb3bbl)
-MACHINE_DRIVER_END
-
-/*****************************************************************************/
-/* Dummy drivers for games that don't have a working clone and are protected */
-/*****************************************************************************/
-
-static ADDRESS_MAP_START( sys16_dummy_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x0fffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0xff0000, 0xffffff) AM_READ(SYS16_MRA16_WORKINGRAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( sys16_dummy_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x0fffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0xff0000, 0xffffff) AM_WRITE(SYS16_MWA16_WORKINGRAM) AM_BASE(&sys16_workingram)
-ADDRESS_MAP_END
-
-static MACHINE_INIT( sys16_dummy )
-{
-}
-
-static DRIVER_INIT( s16dummy )
-{
-	machine_init_sys16_onetime();
-}
-
-INPUT_PORTS_START( s16dummy )
-INPUT_PORTS_END
-
-static MACHINE_DRIVER_START( s16dummy )
-
-	/* basic machine hardware */
-	MDRV_IMPORT_FROM(system16)
-	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PROGRAM_MAP(sys16_dummy_readmem,sys16_dummy_writemem)
-
-	MDRV_MACHINE_INIT(sys16_dummy)
 MACHINE_DRIVER_END
 
 
@@ -4312,4 +2760,4 @@ GAME( 1988, passshtb, passsht,  passsht,  passsht,  passsht,  ROT270, "bootleg",
 GAMEX(1988, passht4b, passsht,  passht4b, passht4b, passht4b, ROT270, "bootleg", "Passing Shot (4 Players) (bootleg)", GAME_NO_SOUND )
 GAME( 1988, tetrisbl, tetris,   tetrisbl, tetris,   tetrisbl, ROT0,   "bootleg", "Tetris (bootleg)" )
 GAMEX(1989, tturfbl,  tturf,    tturfbl,  tturf,    tturfbl,  ROT0,   "bootleg", "Tough Turf (bootleg)", GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND)
-GAME( 1988, wb3bbl,   wb3b,     wb3bbl,   wb3b,     wb3bbl, ROT0,   "bootleg", "Wonder Boy III - Monster Lair (bootleg)" )
+GAME( 1988, wb3bbl,   wb3,     wb3bbl,   wb3b,     wb3bbl, ROT0,   "bootleg", "Wonder Boy III - Monster Lair (bootleg)" )

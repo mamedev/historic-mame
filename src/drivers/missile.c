@@ -8,6 +8,8 @@
 	Known issues:
 		* none at this time
 
+	Missile-command sync-prom added by HIGHWAYMAN.
+	The prom pcb location is:L6 and is 32x8
 ****************************************************************************
 
 	Modified from original schematics...
@@ -416,6 +418,9 @@ ROM_START( missile )
 	ROM_LOAD( "035824.02",    0x7000, 0x0800, CRC(606e42e0) SHA1(9718f84a73c66b4e8ef7805a7ab638a7380624e1) )
 	ROM_LOAD( "035825.02",    0x7800, 0x0800, CRC(f752eaeb) SHA1(0339a6ce6744d2091cc7e07675e509b202b0f380) )
 	ROM_RELOAD( 		   0xF800, 0x0800 ) 	/* for interrupt vectors  */
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "035826.01",   0x0000, 0x0020, CRC(86a22140) SHA1(2beebf7855e29849ada1823eae031fc98220bc43) )
 ROM_END
 
 
@@ -428,6 +433,9 @@ ROM_START( missile2 )
 	ROM_LOAD( "35824-01.np1", 0x7000, 0x0800, CRC(0ca089c8) SHA1(7f69ee990fd4fa1f2fceca7fc66fcaa02e4d2314) )
 	ROM_LOAD( "35825-01.r1",  0x7800, 0x0800, CRC(428cf0d5) SHA1(03cabbef50c33852fbbf38dd3eecaf70a82df82f) )
 	ROM_RELOAD( 		      0xF800, 0x0800 ) 	/* for interrupt vectors  */
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "035826.01",   0x0000, 0x0020, CRC(86a22140) SHA1(2beebf7855e29849ada1823eae031fc98220bc43) )
 ROM_END
 
 
@@ -440,6 +448,9 @@ ROM_START( suprmatk )
 	ROM_LOAD( "035824.sma",   0x7000, 0x0800, CRC(90a06be8) SHA1(f46fd6847bc9836d11ea0042df19fbf33ddab0db) )
 	ROM_LOAD( "035825.sma",   0x7800, 0x0800, CRC(1298213d) SHA1(c8e4301704e3700c339557f2a833e70f6a068d5e) )
 	ROM_RELOAD( 		   0xF800, 0x0800 ) 	/* for interrupt vectors  */
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "035826.01",   0x0000, 0x0020, CRC(86a22140) SHA1(2beebf7855e29849ada1823eae031fc98220bc43) )
 ROM_END
 
 

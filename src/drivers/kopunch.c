@@ -69,11 +69,6 @@ static ADDRESS_MAP_START( kopunch_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x7100, 0x7aff) AM_RAM	// ???
 ADDRESS_MAP_END
 
-static READ8_HANDLER( pip_r )
-{
-	return rand();
-}
-
 static ADDRESS_MAP_START( kopunch_io_map, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x30, 0x30) AM_READ(input_port_0_r)
 	AM_RANGE(0x31, 0x32) AM_READ(kopunch_in_r)

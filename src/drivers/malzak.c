@@ -332,11 +332,6 @@ static struct GfxDecodeInfo malzak_gfxdecodeinfo[] =
 
 static int val = -1;
 
-static INTERRUPT_GEN( malzak_interrupt )
-{
-//	if(irqenable != 0)
-//		cpunum_set_input_line_and_vector(0,0,HOLD_LINE,0x0300);
-}
 
 static PALETTE_INIT( malzak )
 {
@@ -380,7 +375,6 @@ static MACHINE_DRIVER_START( malzak )
 	MDRV_CPU_ADD(S2650, 3800000/4)
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_IO_MAP(readport,writeport)
-//	MDRV_CPU_VBLANK_INT(malzak_interrupt,1)
 
 	MDRV_FRAMES_PER_SECOND(50)
 	MDRV_VBLANK_DURATION(SAA5050_VBLANK)

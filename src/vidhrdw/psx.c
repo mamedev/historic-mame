@@ -413,32 +413,28 @@ static void DebugMeshEnd( void )
 	m_n_debugcoord = 0;
 }
 
-static int DebugMeshDisplay( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+static void DebugCheckKeys( void )
 {
 	if( code_pressed_memory( KEYCODE_M ) )
 	{
 		m_b_debugmesh = !m_b_debugmesh;
 	}
-	if( m_b_debugmesh )
-	{
-		set_visible_area( 0, Machine->drv->screen_width - 1, 0, Machine->drv->screen_height - 1 );
-		copybitmap( bitmap, debugmesh, 0, 0, 0, 0, cliprect, TRANSPARENCY_NONE, 0 );
-	}
-	m_b_debugclear = 1;
-	return m_b_debugmesh;
-}
-
-static int DebugTextureDisplay( struct mame_bitmap *bitmap )
-{
-	UINT32 n_y;
-
 	if( code_pressed_memory( KEYCODE_V ) )
 	{
 		m_b_debugtexture = !m_b_debugtexture;
 	}
-	if( m_b_debugtexture )
+	if( m_b_debugmesh || m_b_debugtexture )
 	{
-		if( code_pressed_memory( KEYCODE_I ) )
+		set_visible_area( 0, Machine->drv->screen_width - 1, 0, Machine->drv->screen_height - 1 );
+	}
+	else
+	{
+		set_visible_area( 0, m_n_screenwidth - 1, 0, m_n_screenheight - 1 );
+	}
+
+	if( code_pressed_memory( KEYCODE_I ) )
+	{
+		if( m_b_debugtexture )
 		{
 			m_n_debuginterleave++;
 			if( m_n_debuginterleave == 2 )
@@ -458,8 +454,73 @@ static int DebugTextureDisplay( struct mame_bitmap *bitmap )
 				usrintf_showmessage_secs( 1, "8 bit interleave" );
 			}
 		}
-		set_visible_area( 0, Machine->drv->screen_width - 1, 0, Machine->drv->screen_height - 1 );
+		else
+		{
+			m_n_debugskip++;
+			if( m_n_debugskip > 15 )
+			{
+				m_n_debugskip = 0;
+			}
+			usrintf_showmessage_secs( 1, "debug skip %d", m_n_debugskip );
+		}
+	}
 
+#if 0
+	if( code_pressed_memory( KEYCODE_D ) )
+	{
+		FILE *f;
+		int n_x;
+		f = fopen( "dump.txt", "w" );
+		for( n_y = 256; n_y < 512; n_y++ )
+		{
+			for( n_x = 640; n_x < 1024; n_x++ )
+			{
+				fprintf( f, "%04u,%04u = %04x\n", n_y, n_x, m_p_p_vram[ n_y ][ n_x ] );
+			}
+		}
+		fclose( f );
+	}
+	if( code_pressed_memory( KEYCODE_S ) )
+	{
+		FILE *f;
+		usrintf_showmessage_secs( 1, "saving..." );
+		f = fopen( "VRAM.BIN", "wb" );
+		for( n_y = 0; n_y < 1024; n_y++ )
+		{
+			fwrite( m_p_p_vram[ n_y ], 1024 * 2, 1, f );
+		}
+		fclose( f );
+	}
+	if( code_pressed_memory( KEYCODE_L ) )
+	{
+		FILE *f;
+		usrintf_showmessage_secs( 1, "loading..." );
+		f = fopen( "VRAM.BIN", "rb" );
+		for( n_y = 0; n_y < 1024; n_y++ )
+		{
+			fread( m_p_p_vram[ n_y ], 1024 * 2, 1, f );
+		}
+		fclose( f );
+	}
+#endif
+}
+
+static int DebugMeshDisplay( struct mame_bitmap *bitmap, const struct rectangle *cliprect )
+{
+	if( m_b_debugmesh )
+	{
+		copybitmap( bitmap, debugmesh, 0, 0, 0, 0, cliprect, TRANSPARENCY_NONE, 0 );
+	}
+	m_b_debugclear = 1;
+	return m_b_debugmesh;
+}
+
+static int DebugTextureDisplay( struct mame_bitmap *bitmap )
+{
+	UINT32 n_y;
+
+	if( m_b_debugtexture )
+	{
 		for( n_y = 0; n_y < Machine->drv->screen_height; n_y++ )
 		{
 			int n_x;
@@ -493,6 +554,70 @@ static int DebugTextureDisplay( struct mame_bitmap *bitmap )
 }
 
 #endif
+
+static void updatevisiblearea( void )
+{
+	if( ( m_n_gpustatus & ( 1 << 0x14 ) ) != 0 )
+	{
+		/* pal */
+		set_refresh_rate( 50 );
+		switch( ( m_n_gpustatus >> 0x13 ) & 1 )
+		{
+		case 0:
+			m_n_screenheight = 256;
+			break;
+		case 1:
+			m_n_screenheight = 512;
+			break;
+		}
+	}
+	else
+	{
+		/* ntsc */
+		set_refresh_rate( 60 );
+		switch( ( m_n_gpustatus >> 0x13 ) & 1 )
+		{
+		case 0:
+			m_n_screenheight = 240;
+			break;
+		case 1:
+			m_n_screenheight = 480;
+			break;
+		}
+	}
+	switch( ( m_n_gpustatus >> 0x11 ) & 3 )
+	{
+	case 0:
+		switch( ( m_n_gpustatus >> 0x10 ) & 1 )
+		{
+		case 0:
+			m_n_screenwidth = 256;
+			break;
+		case 1:
+			m_n_screenwidth = 368;
+			break;
+		}
+		break;
+	case 1:
+		switch( ( m_n_gpustatus >> 0x10 ) & 1 )
+		{
+		case 0:
+			m_n_screenwidth = 320;
+			break;
+		case 1:
+			m_n_screenwidth = 384;
+			break;
+		}
+		break;
+	case 2:
+		m_n_screenwidth = 512;
+		break;
+	case 3:
+		m_n_screenwidth = 640;
+		break;
+	}
+	set_visible_area( 0, m_n_screenwidth - 1, 0, m_n_screenheight - 1 );
+}
 
 static int psx_gpu_init( void )
 {
@@ -642,9 +767,9 @@ static int psx_gpu_init( void )
 	state_save_register_UINT32( "psx", 0, "m_n_gpuinfo", &m_n_gpuinfo, 1 );
 	state_save_register_UINT32( "psx", 0, "m_n_lightgun_x", &m_n_lightgun_x, 1 );
 	state_save_register_UINT32( "psx", 0, "m_n_lightgun_y", &m_n_lightgun_y, 1 );
-	state_save_register_UINT32( "psx", 0, "m_n_screenwidth", &m_n_screenwidth, 1 );
-	state_save_register_UINT32( "psx", 0, "m_n_screenheight", &m_n_screenheight, 1 );
 	state_save_register_UINT32( "psx", 0, "m_n_drawmode", &m_n_drawmode, 1 );
+
+	state_save_register_func_postload( updatevisiblearea );
 
 	return 0;
 }
@@ -688,56 +813,7 @@ VIDEO_UPDATE( psx )
 	{
 		return;
 	}
-#if 0
-	if( code_pressed_memory( KEYCODE_I ) )
-	{
-		m_n_debugskip++;
-		if( m_n_debugskip > 15 )
-		{
-			m_n_debugskip = 0;
-		}
-		usrintf_showmessage_secs( 1, "debug skip %d", m_n_debugskip );
-	}
-	if( code_pressed_memory( KEYCODE_D ) )
-	{
-		FILE *f;
-		int n_x;
-		f = fopen( "dump.txt", "w" );
-		for( n_y = 256; n_y < 512; n_y++ )
-		{
-			for( n_x = 640; n_x < 1024; n_x++ )
-			{
-				fprintf( f, "%04u,%04u = %04x\n", n_y, n_x, m_p_p_vram[ n_y ][ n_x ] );
-			}
-		}
-		fclose( f );
-	}
-	if( code_pressed_memory( KEYCODE_S ) )
-	{
-		FILE *f;
-		usrintf_showmessage_secs( 1, "saving..." );
-		f = fopen( "VRAM.BIN", "wb" );
-		for( n_y = 0; n_y < 1024; n_y++ )
-		{
-			fwrite( m_p_p_vram[ n_y ], 1024 * 2, 1, f );
-		}
-		fclose( f );
-	}
-	if( code_pressed_memory( KEYCODE_L ) )
-	{
-		FILE *f;
-		usrintf_showmessage_secs( 1, "loading..." );
-		f = fopen( "VRAM.BIN", "rb" );
-		for( n_y = 0; n_y < 1024; n_y++ )
-		{
-			fread( m_p_p_vram[ n_y ], 1024 * 2, 1, f );
-		}
-		fclose( f );
-	}
 #endif
-#endif
-
-	set_visible_area( 0, m_n_screenwidth - 1, 0, m_n_screenheight - 1 );
 
 	if( ( m_n_gpustatus & ( 1 << 0x17 ) ) != 0 )
 	{
@@ -858,6 +934,8 @@ VIDEO_UPDATE( psx )
 		}
 	}
 }
+
+#define WRITE_PIXEL( p ) *( p_vram ) = p
 
 /*
 type 1
@@ -1027,9 +1105,10 @@ f  e  d  c| b| a  9| 8  7| 6  5| 4| 3  2  1  0
 		/* transparency off */ \
 		while( n_distance > 0 ) \
 		{ \
-			*( p_vram ) = m_p_n_redshade[ MID_LEVEL | n_r.w.h ] | \
+			WRITE_PIXEL( \
+				m_p_n_redshade[ MID_LEVEL | n_r.w.h ] | \
 				m_p_n_greenshade[ MID_LEVEL | n_g.w.h ] | \
-				m_p_n_blueshade[ MID_LEVEL | n_b.w.h ]; \
+				m_p_n_blueshade[ MID_LEVEL | n_b.w.h ] ); \
 			p_vram++; \
 			PIXELUPDATE \
 			n_distance--; \
@@ -1039,9 +1118,10 @@ f  e  d  c| b| a  9| 8  7| 6  5| 4| 3  2  1  0
 		/* transparency on */ \
 		while( n_distance > 0 ) \
 		{ \
-			*( p_vram ) = p_n_redtrans[ p_n_f[ MID_LEVEL | n_r.w.h ] | p_n_redb[ *( p_vram ) ] ] | \
+			WRITE_PIXEL( \
+				p_n_redtrans[ p_n_f[ MID_LEVEL | n_r.w.h ] | p_n_redb[ *( p_vram ) ] ] | \
 				p_n_greentrans[ p_n_f[ MID_LEVEL | n_g.w.h ] | p_n_greenb[ *( p_vram ) ] ] | \
-				p_n_bluetrans[ p_n_f[ MID_LEVEL | n_b.w.h ] | p_n_blueb[ *( p_vram ) ] ]; \
+				p_n_bluetrans[ p_n_f[ MID_LEVEL | n_b.w.h ] | p_n_blueb[ *( p_vram ) ] ] ); \
 			p_vram++; \
 			PIXELUPDATE \
 			n_distance--; \
@@ -1110,9 +1190,10 @@ f  e  d  c| b| a  9| 8  7| 6  5| 4| 3  2  1  0
 #define SHADEDPIXEL( PIXELUPDATE ) \
 		if( n_bgr != 0 ) \
 		{ \
-			*( p_vram ) = m_p_n_redshade[ m_p_n_redlevel[ n_bgr ] | n_r.w.h ] | \
+			WRITE_PIXEL( \
+				m_p_n_redshade[ m_p_n_redlevel[ n_bgr ] | n_r.w.h ] | \
 				m_p_n_greenshade[ m_p_n_greenlevel[ n_bgr ] | n_g.w.h ] | \
-				m_p_n_blueshade[ m_p_n_bluelevel[ n_bgr ] | n_b.w.h ]; \
+				m_p_n_blueshade[ m_p_n_bluelevel[ n_bgr ] | n_b.w.h ] ); \
 		} \
 		p_vram++; \
 		PIXELUPDATE \
@@ -1124,15 +1205,17 @@ f  e  d  c| b| a  9| 8  7| 6  5| 4| 3  2  1  0
 		{ \
 			if( ( n_bgr & 0x8000 ) != 0 ) \
 			{ \
-				*( p_vram ) = p_n_redtrans[ p_n_f[ m_p_n_redlevel[ n_bgr ] | n_r.w.h ] | p_n_redb[ *( p_vram ) ] ] | \
+				WRITE_PIXEL( \
+					p_n_redtrans[ p_n_f[ m_p_n_redlevel[ n_bgr ] | n_r.w.h ] | p_n_redb[ *( p_vram ) ] ] | \
 					p_n_greentrans[ p_n_f[ m_p_n_greenlevel[ n_bgr ] | n_g.w.h ] | p_n_greenb[ *( p_vram ) ] ] | \
-					p_n_bluetrans[ p_n_f[ m_p_n_bluelevel[ n_bgr ] | n_b.w.h ] | p_n_blueb[ *( p_vram ) ] ]; \
+					p_n_bluetrans[ p_n_f[ m_p_n_bluelevel[ n_bgr ] | n_b.w.h ] | p_n_blueb[ *( p_vram ) ] ] ); \
 			} \
 			else \
 			{ \
-				*( p_vram ) = m_p_n_redshade[ m_p_n_redlevel[ n_bgr ] | n_r.w.h ] | \
+				WRITE_PIXEL( \
+					m_p_n_redshade[ m_p_n_redlevel[ n_bgr ] | n_r.w.h ] | \
 					m_p_n_greenshade[ m_p_n_greenlevel[ n_bgr ] | n_g.w.h ] | \
-					m_p_n_blueshade[ m_p_n_bluelevel[ n_bgr ] | n_b.w.h ]; \
+					m_p_n_blueshade[ m_p_n_bluelevel[ n_bgr ] | n_b.w.h ] ); \
 			} \
 		} \
 		p_vram++; \
@@ -2316,9 +2399,10 @@ static void MonochromeLine( void )
 			(INT16)n_y.w.h <= (INT32)m_n_drawarea_y2 )
 		{
 			p_vram = m_p_p_vram[ n_y.w.h ] + n_x.w.h;
-			*( p_vram ) = m_p_n_redshade[ MID_LEVEL | n_r ] |
+			WRITE_PIXEL(
+				m_p_n_redshade[ MID_LEVEL | n_r ] |
 				m_p_n_greenshade[ MID_LEVEL | n_g ] |
-				m_p_n_blueshade[ MID_LEVEL | n_b ];
+				m_p_n_blueshade[ MID_LEVEL | n_b ] );
 		}
 		n_x.d += n_dx;
 		n_y.d += n_dy;
@@ -2427,9 +2511,10 @@ static void GouraudLine( void )
 			(INT16)n_y.w.h <= (INT32)m_n_drawarea_y2 )
 		{
 			p_vram = m_p_p_vram[ n_y.w.h ] + n_x.w.h;
-			*( p_vram ) = m_p_n_redshade[ MID_LEVEL | n_r.w.h ] |
+			WRITE_PIXEL(
+				m_p_n_redshade[ MID_LEVEL | n_r.w.h ] |
 				m_p_n_greenshade[ MID_LEVEL | n_g.w.h ] |
-				m_p_n_blueshade[ MID_LEVEL | n_b.w.h ];
+				m_p_n_blueshade[ MID_LEVEL | n_b.w.h ] );
 		}
 		n_x.d += n_dx;
 		n_y.d += n_dy;
@@ -2449,6 +2534,7 @@ static void FrameBufferRectangleDraw( void )
 	INT32 n_h;
 	INT16 n_y;
 	INT16 n_x;
+	UINT16 *p_vram;
 
 #if defined( MAME_DEBUG )
 	if( m_n_debugskip == 7 )
@@ -2476,10 +2562,11 @@ static void FrameBufferRectangleDraw( void )
 		n_distance = SIZE_W( m_packet.FlatRectangle.n_size );
 		while( n_distance > 0 )
 		{
-			*( m_p_p_vram[ n_y & 1023 ] + ( n_x & 1023 ) ) =
+			p_vram = m_p_p_vram[ n_y & 1023 ] + ( n_x & 1023 );
+			WRITE_PIXEL( 
 				m_p_n_redshade[ MID_LEVEL | n_r.w.h ] |
 				m_p_n_greenshade[ MID_LEVEL | n_g.w.h ] |
-				m_p_n_blueshade[ MID_LEVEL | n_b.w.h ];
+				m_p_n_blueshade[ MID_LEVEL | n_b.w.h ] );
 			n_x++;
 			n_distance--;
 		}
@@ -3001,9 +3088,10 @@ static void Dot( void )
 		(INT16)n_y <= (INT32)m_n_drawarea_y2 )
 	{
 		p_vram = m_p_p_vram[ n_y ] + n_x;
-		*( p_vram ) = m_p_n_redshade[ MID_LEVEL | n_r ] |
+		WRITE_PIXEL( 
+			m_p_n_redshade[ MID_LEVEL | n_r ] |
 			m_p_n_greenshade[ MID_LEVEL | n_g ] |
-			m_p_n_blueshade[ MID_LEVEL | n_b ];
+			m_p_n_blueshade[ MID_LEVEL | n_b ] );
 	}
 }
 
@@ -3015,6 +3103,7 @@ static void MoveImage( void )
 	INT16 n_srcy;
 	INT16 n_dsty;
 	INT16 n_dstx;
+	UINT16 *p_vram;
 
 #if defined( MAME_DEBUG )
 	if( m_n_debugskip == 15 )
@@ -3039,8 +3128,8 @@ static void MoveImage( void )
 		n_w = SIZE_W( m_packet.MoveImage.n_size );
 		while( n_w > 0 )
 		{
-			*( m_p_p_vram[ n_dsty & 1023 ] + ( n_dstx & 1023 ) ) =
-				*( m_p_p_vram[ n_srcy & 1023 ] + ( n_srcx & 1023 ) );
+			p_vram = m_p_p_vram[ n_dsty & 1023 ] + ( n_dstx & 1023 );
+			WRITE_PIXEL( *( m_p_p_vram[ n_srcy & 1023 ] + ( n_srcx & 1023 ) ) );
 			n_srcx++;
 			n_dstx++;
 			n_w--;
@@ -3411,12 +3500,15 @@ void psx_gpu_write( UINT32 *p_ram, INT32 n_size )
 				UINT32 n_pixel;
 				for( n_pixel = 0; n_pixel < 2; n_pixel++ )
 				{
+					UINT16 *p_vram;
+
 					verboselog( 2, "send image to framebuffer ( pixel %u,%u = %u )\n",
 						( m_n_vramx + m_packet.n_entry[ 1 ] ) & 1023,
 						( m_n_vramy + ( m_packet.n_entry[ 1 ] >> 16 ) ) & 1023,
 						data & 0xffff );
 
-					*( m_p_p_vram[ ( m_n_vramy + ( m_packet.n_entry[ 1 ] >> 16 ) ) & 1023 ] + ( ( m_n_vramx + m_packet.n_entry[ 1 ] ) & 1023 ) ) = data & 0xffff;
+					p_vram = m_p_p_vram[ ( m_n_vramy + ( m_packet.n_entry[ 1 ] >> 16 ) ) & 1023 ] + ( ( m_n_vramx + m_packet.n_entry[ 1 ] ) & 1023 );
+					WRITE_PIXEL( data & 0xffff );
 					m_n_vramx++;
 					if( m_n_vramx >= ( m_packet.n_entry[ 2 ] & 0xffff ) )
 					{
@@ -3560,14 +3652,13 @@ WRITE32_HANDLER( psx_gpu_w )
 			m_n_horiz_disend = 0xc60;
 			m_n_vert_disstart = 0x010;
 			m_n_vert_disend = 0x100;
-			m_n_screenwidth = 256;
-			m_n_screenheight = 240;
 			m_n_vramx = 0;
 			m_n_vramy = 0;
 			m_n_twx = 0;
 			m_n_twy = 0;
 			m_n_twh = 255;
 			m_n_tww = 255;
+			updatevisiblearea();
 			break;
 		case 0x01:
 			verboselog( 1, "not handled: reset command buffer\n" );
@@ -3613,65 +3704,7 @@ WRITE32_HANDLER( psx_gpu_w )
 			m_n_gpustatus |= ( data & 0x3f ) << 0x11; /* width 0 + height + videmode + isrgb24 + isinter */
 			m_n_gpustatus |= ( ( data & 0x40 ) >> 0x06 ) << 0x10; /* width 1 */
 			m_b_reverseflag = ( data >> 7 ) & 1;
-			if( ( m_n_gpustatus & ( 1 << 0x14 ) ) != 0 )
-			{
-				/* pal */
-				set_refresh_rate( 50 );
-				switch( ( m_n_gpustatus >> 0x13 ) & 1 )
-				{
-				case 0:
-					m_n_screenheight = 256;
-					break;
-				case 1:
-					m_n_screenheight = 512;
-					break;
-				}
-			}
-			else
-			{
-				/* ntsc */
-				set_refresh_rate( 60 );
-				switch( ( m_n_gpustatus >> 0x13 ) & 1 )
-				{
-				case 0:
-					m_n_screenheight = 240;
-					break;
-				case 1:
-					m_n_screenheight = 480;
-					break;
-				}
-			}
-			switch( ( m_n_gpustatus >> 0x11 ) & 3 )
-			{
-			case 0:
-				switch( ( m_n_gpustatus >> 0x10 ) & 1 )
-				{
-				case 0:
-					m_n_screenwidth = 256;
-					break;
-				case 1:
-					m_n_screenwidth = 368;
-					break;
-				}
-				break;
-			case 1:
-				switch( ( m_n_gpustatus >> 0x10 ) & 1 )
-				{
-				case 0:
-					m_n_screenwidth = 320;
-					break;
-				case 1:
-					m_n_screenwidth = 384;
-					break;
-				}
-				break;
-			case 2:
-				m_n_screenwidth = 512;
-				break;
-			case 3:
-				m_n_screenwidth = 640;
-				break;
-			}
+			updatevisiblearea();
 			break;
 		case 0x09:
 			verboselog( 1, "not handled: GPU Control 0x09: %08x\n", data );
@@ -3820,6 +3853,10 @@ READ32_HANDLER( psx_gpu_r )
 
 INTERRUPT_GEN( psx_vblank )
 {
+#if defined( MAME_DEBUG )
+	DebugCheckKeys();
+#endif
+
 	m_n_gpustatus ^= ( 1L << 31 );
 	psx_irq_set( 0x0001 );
 }

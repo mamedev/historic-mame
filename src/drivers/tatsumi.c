@@ -82,8 +82,8 @@ data8_t *apache3_bg_ram;
 
 /***************************************************************************/
 
-static READ16_HANDLER(cyclwarr_cpu_b_r) { return cyclwarr_cpub_ram[offset+0x800]; }
-static WRITE16_HANDLER(cyclwarr_cpu_b_w){ COMBINE_DATA(&cyclwarr_cpub_ram[offset+0x800]); }
+//static READ16_HANDLER(cyclwarr_cpu_b_r) { return cyclwarr_cpub_ram[offset+0x800]; }
+//static WRITE16_HANDLER(cyclwarr_cpu_b_w){ COMBINE_DATA(&cyclwarr_cpub_ram[offset+0x800]); }
 static READ16_HANDLER(cyclwarr_cpu_bb_r){ return cyclwarr_cpub_ram[offset]; }
 static WRITE16_HANDLER(cyclwarr_cpu_bb_w) { COMBINE_DATA(&cyclwarr_cpub_ram[offset]); }
 static READ16_HANDLER(cyclwarr_palette_r) { return paletteram16[offset]; }

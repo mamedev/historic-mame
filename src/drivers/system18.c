@@ -70,7 +70,6 @@ Other notes:
 
 void fd1094_machine_init(void);
 void fd1094_driver_init(void);
-extern WRITE16_HANDLER( sys18_extrombank_w );
 
 /* vidhrdw/segac2.c */
 extern void update_system18_vdp( struct mame_bitmap *bitmap, const struct rectangle *cliprect );
@@ -474,25 +473,6 @@ static READ16_HANDLER( vdp_r )
 
 static int io_reg[0x10];
 
-void sys18_io_reset(void)
-{
-	// All output latches are reset
-	io_reg[0x00] = 0x00;
-	io_reg[0x01] = 0x00;
-	io_reg[0x02] = 0x00;
-	io_reg[0x03] = 0x00;
-	io_reg[0x04] = 0x00;
-	io_reg[0x05] = 0x00;
-	io_reg[0x06] = 0x00;
-	io_reg[0x07] = 0x00;
-
-	// CNT2-0 pins reset
-	io_reg[0x0E] = 0x00;
-
-	// All ports are inputs
-	io_reg[0x0F] = 0x00;
-}
-
 static READ16_HANDLER( sys18_io_r )
 {
 	if(ACCESSING_LSB)
@@ -661,170 +641,13 @@ static WRITE16_HANDLER( sys18_io_w )
 	}
 }
 
-/***************************************************************************/
-/*
-	Shadow Dancer (Export)
-*/
-/***************************************************************************/
-
-static ADDRESS_MAP_START( shdancer_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x400000, 0x40ffff) AM_READ(SYS16_MRA16_TILERAM)
-	AM_RANGE(0x410000, 0x410fff) AM_READ(SYS16_MRA16_TEXTRAM)
-	AM_RANGE(0x440000, 0x440fff) AM_READ(SYS16_MRA16_SPRITERAM)
-	AM_RANGE(0x840000, 0x840fff) AM_READ(SYS16_MRA16_PALETTERAM)
-	AM_RANGE(0xc00000, 0xc0ffff) AM_READ(vdp_r);
-	AM_RANGE(0xe40000, 0xe4ffff) AM_READ(sys18_io_r)
-	AM_RANGE(0xffc000, 0xffffff) AM_READ(SYS16_MRA16_WORKINGRAM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( shdancer_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x400000, 0x40ffff) AM_WRITE(SYS16_MWA16_TILERAM) AM_BASE(&sys16_tileram)
-	AM_RANGE(0x410000, 0x410fff) AM_WRITE(SYS16_MWA16_TEXTRAM) AM_BASE(&sys16_textram)
-	AM_RANGE(0x440000, 0x440fff) AM_WRITE(SYS16_MWA16_SPRITERAM) AM_BASE(&sys16_spriteram)
-	AM_RANGE(0x840000, 0x840fff) AM_WRITE(SYS16_MWA16_PALETTERAM) AM_BASE(&paletteram16)
-	AM_RANGE(0xc00000, 0xc0ffff) AM_WRITE(vdp_w)
-	AM_RANGE(0xe40000, 0xe4ffff) AM_WRITE(sys18_io_w)
-	AM_RANGE(0xfe0006, 0xfe0007) AM_WRITE(sound_command_nmi_w)
-	AM_RANGE(0xfe0020, 0xfe003f) AM_WRITE(MWA16_NOP) // config regs
-	AM_RANGE(0xffc000, 0xffffff) AM_WRITE(SYS16_MWA16_WORKINGRAM) AM_BASE(&sys16_workingram)
-ADDRESS_MAP_END
-
-/***************************************************************************/
-
-static void shdancer_update_proc( void ){
-	sys16_fg_scrolly = sys16_textram[0x0e90/2];
-	sys16_bg_scrolly = sys16_textram[0x0e92/2];
-	sys16_fg_scrollx = sys16_textram[0x0e98/2];
-	sys16_bg_scrollx = sys16_textram[0x0e9a/2];
-
-	set_fg_page( sys16_textram[0x0e80/2] );
-	set_bg_page( sys16_textram[0x0e82/2] );
-
-	sys16_fg2_scrollx = sys16_textram[0x0e9c/2];
-	sys16_bg2_scrollx = sys16_textram[0x0e9e/2];
-	sys16_fg2_scrolly = sys16_textram[0x0e94/2];
-	sys16_bg2_scrolly = sys16_textram[0x0e96/2];
-
-	set_fg2_page( sys16_textram[0x0e84/2] );
-	set_bg2_page( sys16_textram[0x0e86/2] );
-
-	sys18_bg2_active=0;
-	sys18_fg2_active=0;
-
-	if(sys16_fg2_scrollx | sys16_fg2_scrolly | sys16_textram[0x0e84/2]) sys18_fg2_active=1;
-	if(sys16_bg2_scrollx | sys16_bg2_scrolly | sys16_textram[0x0e86/2]) sys18_bg2_active=1;
-}
-
-static MACHINE_INIT( shdancer ){
-	sys16_update_proc = shdancer_update_proc;
-
-	sys18_io_reset();
-}
-
-static READ16_HANDLER( shdancer_skip_r ){
-	if (activecpu_get_pc()==0x2f76) {cpu_spinuntil_int(); return 0xffff;}
-	return sys16_workingram[0];
-}
-
-static DRIVER_INIT( shdancer ){
-	unsigned char *RAM = memory_region(REGION_CPU2);
-	static const int shdancer_sound_info[] =
-	{
-		0x0f, 0x00000, // ROM #1 = 128K
-		0x1f, 0x20000, // ROM #2 = 256K
-		0x1f, 0x60000, // ROM #3 = 256K
-		0x1f, 0xA0000  // ROM #4 = 256K
-	};
-
-	machine_init_sys16_onetime();
-	sys18_splittab_fg_x=&sys16_textram[0x0f80/2];
-	sys18_splittab_bg_x=&sys16_textram[0x0fc0/2];
-	sys16_MaxShadowColors=0;
-	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xffc000, 0xffc001, 0, 0, shdancer_skip_r );
-
-	memcpy(sys18_sound_info, shdancer_sound_info, sizeof(sys18_sound_info));
-	memcpy(RAM,&RAM[0x10000],0xa000);
-}
-
-/***************************************************************************/
-/*
-	Shadow Dancer (Japan)
-*/
-/***************************************************************************/
-
-static READ16_HANDLER( shdancrj_skip_r ){
-	if (activecpu_get_pc()==0x2f70) {cpu_spinuntil_int(); return 0xffff;}
-	return sys16_workingram[0];
-}
-
-static MACHINE_INIT( shdancrj ){
-//	sys16_patch_code(0x6821, 0xdf); /* ? */
-	sys16_update_proc = shdancer_update_proc;
-}
-
-static DRIVER_INIT( shdancrj ){
-	unsigned char *RAM = memory_region(REGION_CPU2);
-	static const int shdancrj_sound_info[] =
-	{
-		0x0f, 0x00000, // ROM #1 = 128K
-		0x1f, 0x20000, // ROM #2 = 256K
-		0x1f, 0x60000, // ROM #3 = 256K
-		0x1f, 0xA0000  // ROM #4 = 256K
-	};
-
-	machine_init_sys16_onetime();
-	sys18_splittab_fg_x=&sys16_textram[0x0f80/2];
-	sys18_splittab_bg_x=&sys16_textram[0x0fc0/2];
-	sys16_MaxShadowColors=0;
-	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xffc000, 0xffc001, 0, 0, shdancrj_skip_r );
-
-	memcpy(sys18_sound_info, shdancrj_sound_info, sizeof(sys18_sound_info));
-	memcpy(RAM,&RAM[0x10000],0xa000);
-}
 
 
 /***************************************************************************/
-/*
-	Shadow Dancer (Export, Rev.B)
 
-	- Program code has more similarities with shdancrj than shdancer
-	- Input test only shows 1P joystick (all other versions include 2P)
-	- It does not display the warning screen and has English text in the attract sequence like shdancer
-	- ROM board has a sticker with 'Rev.B' printed on it
-*/
-/***************************************************************************/
 
-static READ16_HANDLER( shdancrb_skip_r ){
-	if (activecpu_get_pc()==0x2f70) {  cpu_spinuntil_int(); return 0xffff; }
-	return sys16_workingram[0];
-}
 
-static MACHINE_INIT( shdancrb ){
-	sys16_update_proc = shdancer_update_proc;
-}
 
-static DRIVER_INIT( shdancrb ){
-	unsigned char *RAM = memory_region(REGION_CPU2);
-	static const int shdancrb_sound_info[] =
-	{
-		0x0f, 0x00000, // ROM #1 = 128K
-		0x1f, 0x20000, // ROM #2 = 256K
-		0x1f, 0x60000, // ROM #3 = 256K
-		0x1f, 0xA0000  // ROM #4 = 256K
-	};
-
-	machine_init_sys16_onetime();
-	sys18_splittab_fg_x=&sys16_textram[0x0f80/2];
-	sys18_splittab_bg_x=&sys16_textram[0x0fc0/2];
-	sys16_MaxShadowColors=0;
-	memory_install_read16_handler(0, ADDRESS_SPACE_PROGRAM, 0xffc000, 0xffc001, 0, 0, shdancrb_skip_r );
-
-	memcpy(sys18_sound_info, shdancrb_sound_info, sizeof(sys18_sound_info));
-	memcpy(RAM,&RAM[0x10000],0xa000);
-}
 
 /***************************************************************************/
 /*
@@ -973,29 +796,6 @@ static READ16_HANDLER( mwalkbl_skip_r ){
 	return sys16_workingram[0x202c/2];
 }
 
-static ADDRESS_MAP_START( mwalk_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x400000, 0x40ffff) AM_READ(SYS16_MRA16_TILERAM)
-	AM_RANGE(0x410000, 0x410fff) AM_READ(SYS16_MRA16_TEXTRAM)
-	AM_RANGE(0x440000, 0x440fff) AM_READ(SYS16_MRA16_SPRITERAM)
-	AM_RANGE(0x840000, 0x840fff) AM_READ(SYS16_MRA16_PALETTERAM)
-	AM_RANGE(0xe40000, 0xe4ffff) AM_READ(sys18_io_r)
-	AM_RANGE(0xc00000, 0xc0ffff) AM_READ(segac2_vdp_r)
-	AM_RANGE(0xffc000, 0xffffff) AM_READ(SYS16_MRA16_WORKINGRAM)
-ADDRESS_MAP_END
-
-
-static ADDRESS_MAP_START( mwalk_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x400000, 0x40ffff) AM_WRITE(SYS16_MWA16_TILERAM) AM_BASE(&sys16_tileram)
-	AM_RANGE(0x410000, 0x410fff) AM_WRITE(SYS16_MWA16_TEXTRAM) AM_BASE(&sys16_textram)
-	AM_RANGE(0x440000, 0x440fff) AM_WRITE(SYS16_MWA16_SPRITERAM) AM_BASE(&sys16_spriteram)
-	AM_RANGE(0x840000, 0x840fff) AM_WRITE(SYS16_MWA16_PALETTERAM) AM_BASE(&paletteram16)
-	AM_RANGE(0xe40000, 0xe4ffff) AM_WRITE(sys18_io_w)
-	AM_RANGE(0xc00000, 0xc0ffff) AM_WRITE(segac2_vdp_w)
-	AM_RANGE(0xfe0020, 0xfe003f) AM_WRITE(MWA16_NOP)
-	AM_RANGE(0xffc000, 0xffffff) AM_WRITE(SYS16_MWA16_WORKINGRAM) AM_BASE(&sys16_workingram)
-ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( mwalkbl_readmem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
@@ -1126,32 +926,7 @@ static DRIVER_INIT( mwalkbl ){
 
 /***************************************************************************/
 
-static ADDRESS_MAP_START( astorm_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x100000, 0x10ffff) AM_READ(SYS16_MRA16_TILERAM)
-	AM_RANGE(0x110000, 0x110fff) AM_READ(SYS16_MRA16_TEXTRAM)
-	AM_RANGE(0x140000, 0x140fff) AM_READ(SYS16_MRA16_PALETTERAM)
-	AM_RANGE(0x200000, 0x200fff) AM_READ(SYS16_MRA16_SPRITERAM)
-	AM_RANGE(0xa00000, 0xa0ffff) AM_READ(sys18_io_r)
-	AM_RANGE(0xc00000, 0xc0ffff) AM_READ(segac2_vdp_r)
-	AM_RANGE(0xffc000, 0xffffff) AM_READ(SYS16_MRA16_WORKINGRAM)
-ADDRESS_MAP_END
 
-
-static ADDRESS_MAP_START( astorm_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x100000, 0x10ffff) AM_WRITE(SYS16_MWA16_TILERAM) AM_BASE(&sys16_tileram)
-	AM_RANGE(0x110000, 0x110fff) AM_WRITE(SYS16_MWA16_TEXTRAM) AM_BASE(&sys16_textram)
-	AM_RANGE(0x140000, 0x140fff) AM_WRITE(SYS16_MWA16_PALETTERAM) AM_BASE(&paletteram16)
-	AM_RANGE(0x200000, 0x200fff) AM_WRITE(SYS16_MWA16_SPRITERAM) AM_BASE(&sys16_spriteram)
-	AM_RANGE(0xa00006, 0xa00007) AM_WRITE(sound_command_nmi_w)
-	AM_RANGE(0xa0000e, 0xa0000f) AM_WRITE(sys18_tilebank_w)
-	AM_RANGE(0xa0001c, 0xa0001d) AM_WRITE(sys18_refreshenable_w)
-	AM_RANGE(0xc00000, 0xc0ffff) AM_WRITE(segac2_vdp_w)
-//	AM_RANGE(0xc46600, 0xc46601) AM_WRITE(sys18_refreshenable_w)
-	AM_RANGE(0xfe0020, 0xfe003f) AM_WRITE(MWA16_NOP)
-	AM_RANGE(0xffc000, 0xffffff) AM_WRITE(SYS16_MWA16_WORKINGRAM) AM_BASE(&sys16_workingram)
-ADDRESS_MAP_END
 
 /* bootleg doesn't have real vdp or i/o */
 
@@ -1187,77 +962,8 @@ static ADDRESS_MAP_START( astormbl_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 ADDRESS_MAP_END
 
 
-static ADDRESS_MAP_START( cltchitr_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x07ffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x200000, 0x27ffff) AM_READ(MRA16_ROM)
-
-	AM_RANGE(0x400000, 0x40ffff) AM_READ(SYS16_MRA16_TILERAM)
-	AM_RANGE(0x410000, 0x410fff) AM_READ(SYS16_MRA16_TEXTRAM)
-	AM_RANGE(0x840000, 0x840fff) AM_READ(SYS16_MRA16_PALETTERAM)
-	AM_RANGE(0x440000, 0x440fff) AM_READ(SYS16_MRA16_SPRITERAM)
-	AM_RANGE(0xa40000, 0xa4ffff) AM_READ(sys18_io_r)
-	AM_RANGE(0xc00000, 0xc0ffff) AM_READ(segac2_vdp_r)
 
 
-	AM_RANGE(0xffc000, 0xffffff) AM_READ(SYS16_MRA16_WORKINGRAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( cltchitr_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x07ffff) AM_WRITE(MWA16_ROM)
-	AM_RANGE(0x200000, 0x27ffff) AM_WRITE(MWA16_ROM)
-
-	AM_RANGE(0x3e0000, 0x3e001f) AM_WRITE(sys18_extrombank_w)
-
-	AM_RANGE(0x400000, 0x40ffff) AM_WRITE(SYS16_MWA16_TILERAM) AM_BASE(&sys16_tileram)
-	AM_RANGE(0x410000, 0x410fff) AM_WRITE(SYS16_MWA16_TEXTRAM) AM_BASE(&sys16_textram)
-	AM_RANGE(0x840000, 0x840fff) AM_WRITE(SYS16_MWA16_PALETTERAM) AM_BASE(&paletteram16)
-	AM_RANGE(0x440000, 0x440fff) AM_WRITE(SYS16_MWA16_SPRITERAM) AM_BASE(&sys16_spriteram)
-	AM_RANGE(0xa40006, 0xa40007) AM_WRITE(sound_command_nmi_w)
-
-	AM_RANGE(0xa4001c, 0xa4001d) AM_WRITE(sys18_refreshenable_w)
-	AM_RANGE(0xa4001e, 0xa4001f) AM_WRITE(MWA16_NOP)
-	AM_RANGE(0xa42000, 0xa42001) AM_WRITE(MWA16_NOP)
-	AM_RANGE(0xa43034, 0xa43035) AM_WRITE(MWA16_NOP)
-
-	AM_RANGE(0xc00000, 0xc0ffff) AM_WRITE(segac2_vdp_w)
-
-	AM_RANGE(0xfe0006, 0xfe0007) AM_WRITE(sound_command_nmi_w)
-
-	AM_RANGE(0xfe0020, 0xfe003f) AM_WRITE(MWA16_NOP)
-	AM_RANGE(0xffc000, 0xffffff) AM_WRITE(SYS16_MWA16_WORKINGRAM) AM_BASE(&sys16_workingram)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( ddcrew_readmem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x2fffff) AM_READ(MRA16_ROM)
-	AM_RANGE(0x400000, 0x40ffff) AM_READ(SYS16_MRA16_TILERAM)
-	AM_RANGE(0x410000, 0x410fff) AM_READ(SYS16_MRA16_TEXTRAM)
-	AM_RANGE(0x840000, 0x840fff) AM_READ(SYS16_MRA16_PALETTERAM)
-	AM_RANGE(0x440000, 0x440fff) AM_READ(SYS16_MRA16_SPRITERAM)
-	AM_RANGE(0xe40000, 0xe4ffff) AM_READ(sys18_io_r)
-	AM_RANGE(0xc00000, 0xc0ffff) AM_READ(segac2_vdp_r)
-	AM_RANGE(0xffc000, 0xffffff) AM_READ(SYS16_MRA16_WORKINGRAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( ddcrew_writemem, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0x000000, 0x2fffff) AM_WRITE(MWA16_ROM)
-
-	AM_RANGE(0x3e0000, 0x3e001f) AM_WRITE(sys18_extrombank_w)
-
-	AM_RANGE(0x400000, 0x40ffff) AM_WRITE(SYS16_MWA16_TILERAM) AM_BASE(&sys16_tileram)
-	AM_RANGE(0x410000, 0x410fff) AM_WRITE(SYS16_MWA16_TEXTRAM) AM_BASE(&sys16_textram)
-	AM_RANGE(0x840000, 0x840fff) AM_WRITE(SYS16_MWA16_PALETTERAM) AM_BASE(&paletteram16)
-	AM_RANGE(0x440000, 0x440fff) AM_WRITE(SYS16_MWA16_SPRITERAM) AM_BASE(&sys16_spriteram)
-	AM_RANGE(0xe40006, 0xe40007) AM_WRITE(sound_command_nmi_w)
-
-	AM_RANGE(0xe4001c, 0xe4001d) AM_WRITE(sys18_refreshenable_w)
-
-
-
-//	AM_RANGE(0xe4000e, 0xe4000f) AM_WRITE(sys18_tilebank_w)
-	AM_RANGE(0xc00000, 0xc0ffff) AM_WRITE(segac2_vdp_w)
-	AM_RANGE(0xfe0020, 0xfe003f) AM_WRITE(MWA16_NOP)
-	AM_RANGE(0xffc000, 0xffffff) AM_WRITE(SYS16_MWA16_WORKINGRAM) AM_BASE(&sys16_workingram)
-ADDRESS_MAP_END
 
 /***************************************************************************/
 
@@ -1378,13 +1084,6 @@ static MACHINE_INIT( astormbl ){
 
 
 
-static MACHINE_INIT( astorm )
-{
-	fd1094_machine_init();
-
-//	sys16_fgxoffset = sys16_bgxoffset = -9;
-	sys16_update_proc = shdancer_update_proc;
-}
 
 
 
@@ -1407,37 +1106,8 @@ static DRIVER_INIT( astormbl ){
 	memcpy(RAM,&RAM[0x10000],0xa000);
 }
 
-static DRIVER_INIT( astorm )
-{
-	init_astormbl();
-
-	fd1094_driver_init();
-}
 
 
-
-
-static MACHINE_INIT( ddcrew )
-{
-	fd1094_machine_init();
-
-//	sys16_fgxoffset = sys16_bgxoffset = -9;
-	sys16_update_proc = shdancer_update_proc;
-}
-
-static DRIVER_INIT( cltchitr )
-{
-	machine_init_sys16_onetime();
-
-	fd1094_driver_init();
-}
-
-static DRIVER_INIT( ddcrew )
-{
-	machine_init_sys16_onetime();
-
-	fd1094_driver_init();
-}
 
 /*****************************************************************************/
 
@@ -1472,15 +1142,6 @@ static MACHINE_DRIVER_START( system18 )
 MACHINE_DRIVER_END
 
 
-static MACHINE_DRIVER_START( astorm )
-
-	/* basic machine hardware */
-	MDRV_IMPORT_FROM(system18)
-	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PROGRAM_MAP(astorm_readmem,astorm_writemem)
-
-	MDRV_MACHINE_INIT(astorm)
-MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( astormbl )
 
@@ -1492,35 +1153,7 @@ static MACHINE_DRIVER_START( astormbl )
 	MDRV_MACHINE_INIT(astormbl)
 MACHINE_DRIVER_END
 
-static MACHINE_DRIVER_START( cltchitr )
 
-	/* basic machine hardware */
-	MDRV_IMPORT_FROM(system18)
-	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PROGRAM_MAP(cltchitr_readmem,cltchitr_writemem)
-
-	MDRV_MACHINE_INIT(ddcrew)
-MACHINE_DRIVER_END
-
-static MACHINE_DRIVER_START( ddcrew )
-
-	/* basic machine hardware */
-	MDRV_IMPORT_FROM(system18)
-	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PROGRAM_MAP(ddcrew_readmem,ddcrew_writemem)
-
-	MDRV_MACHINE_INIT(ddcrew)
-MACHINE_DRIVER_END
-
-static MACHINE_DRIVER_START( mwalk )
-
-	/* basic machine hardware */
-	MDRV_IMPORT_FROM(system18)
-	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PROGRAM_MAP(mwalk_readmem,mwalk_writemem)
-
-	MDRV_MACHINE_INIT(astorm)
-MACHINE_DRIVER_END
 
 
 static MACHINE_DRIVER_START( mwalkbl )
@@ -1534,15 +1167,6 @@ static MACHINE_DRIVER_START( mwalkbl )
 MACHINE_DRIVER_END
 
 
-static MACHINE_DRIVER_START( shdancer )
-
-	/* basic machine hardware */
-	MDRV_IMPORT_FROM(system18)
-	MDRV_CPU_MODIFY("main")
-	MDRV_CPU_PROGRAM_MAP(shdancer_readmem,shdancer_writemem)
-
-	MDRV_MACHINE_INIT(shdancer)
-MACHINE_DRIVER_END
 
 
 static MACHINE_DRIVER_START( shdancbl )
@@ -1563,81 +1187,9 @@ static MACHINE_DRIVER_START( shdancbl )
 MACHINE_DRIVER_END
 
 
-static MACHINE_DRIVER_START( shdancrj )
-
-	/* basic machine hardware */
-	MDRV_IMPORT_FROM(shdancer)
-
-	MDRV_MACHINE_INIT(shdancrj)
-MACHINE_DRIVER_END
-
-static MACHINE_DRIVER_START( shdancrb )
-
-	/* basic machine hardware */
-	MDRV_IMPORT_FROM(shdancer)
-
-	MDRV_MACHINE_INIT(shdancrb)
-MACHINE_DRIVER_END
-
-
 /***************************************************************************/
 
-INPUT_PORTS_START( astorm )
-	PORT_START /* player 1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY
-	PORT_START /* player 2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
-	SYS16_SERVICE
-	SYS16_COINAGE
-	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x01, 0x01, "2 Credits to Start" )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x1c, 0x1c, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x04, "Easiest" )
-	PORT_DIPSETTING(    0x08, "Easier" )
-	PORT_DIPSETTING(    0x0c, DEF_STR( Easy ) )
-	PORT_DIPSETTING(    0x1c, DEF_STR( Normal ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Hard ) )
-	PORT_DIPSETTING(    0x14, DEF_STR( Harder ) )
-	PORT_DIPSETTING(    0x18, DEF_STR( Hardest ) )
-	PORT_DIPSETTING(    0x00, "Special" )
-	PORT_DIPNAME( 0x20, 0x20, "Coin Chutes" )
-	PORT_DIPSETTING(    0x20, "3" )
-	PORT_DIPSETTING(    0x00, "1" )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unused ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_START /* player 3 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(3)
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(3)
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(3)
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(3)
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(3)
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(3)
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(3)
-INPUT_PORTS_END
+
 
 INPUT_PORTS_START( astormbl )
 	PORT_START /* player 1 */
@@ -1769,50 +1321,6 @@ INPUT_PORTS_START( mwalkbl )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(3)
 INPUT_PORTS_END
 
-INPUT_PORTS_START( shdancer )
-	PORT_START /* player 1 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 )
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY
-	PORT_START /* player 2 */
-	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 ) PORT_PLAYER(2)
-	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 ) PORT_PLAYER(2)
-	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_BUTTON3 ) PORT_PLAYER(2)
-	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_JOYSTICK_UP ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT ) PORT_8WAY PORT_PLAYER(2)
-	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY PORT_PLAYER(2)
-	SYS16_SERVICE
-	SYS16_COINAGE
-	PORT_START	/* DSW1 */
-	PORT_DIPNAME( 0x01, 0x01, "2 Credits to Start" )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x00, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Lives ) )
-	PORT_DIPSETTING(    0x00, "2" )
-	PORT_DIPSETTING(    0x0c, "3" )
-	PORT_DIPSETTING(    0x08, "4" )
-	PORT_DIPSETTING(    0x04, "5" )
-	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Difficulty ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Easy ) )
-	PORT_DIPSETTING(    0x30, DEF_STR( Normal ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Hard ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( Hardest ) )
-	PORT_DIPNAME( 0xc0, 0xc0, "Time Adjust" )
-	PORT_DIPSETTING(    0x00, "2.20" )
-	PORT_DIPSETTING(    0x40, "2.40" )
-	PORT_DIPSETTING(    0xc0, "3.00" )
-	PORT_DIPSETTING(    0x80, "3.30" )
-INPUT_PORTS_END
 
 /*****************************************************************************/
 
@@ -1963,5 +1471,5 @@ GAME( 1990, astormbl, astorm,   astormbl, astormbl, astormbl, ROT0, "bootleg", "
 
 GAME( 1990, mwalkbl,  mwalk,    mwalkbl,  mwalkbl,  mwalkbl,  ROT0, "bootleg", "Michael Jackson's Moonwalker (bootleg)" )
 
-GAMEX(1989, shdancbl, shdancer, shdancbl, shdancer, shdancbl, ROT0, "bootleg", "Shadow Dancer (bootleg)", GAME_IMPERFECT_GRAPHICS)
+GAMEX(1989, shdancbl, shdancer, shdancbl, mwalkbl, shdancbl, ROT0, "bootleg", "Shadow Dancer (bootleg)", GAME_IMPERFECT_GRAPHICS)
 

@@ -42,7 +42,7 @@ INLINE void dither_to_matrix(UINT32 color, UINT16 *matrix)
 	UINT32 rawg = (color >> 8) & 0xff;
 	UINT32 rawb = color & 0xff;
 	int i;
-	
+
 	for (i = 0; i < 16; i++)
 	{
 		UINT8 dither = fbz_dither_matrix[i];
@@ -70,7 +70,7 @@ static void fastfill(void)
 	UINT16 *buffer = *fbz_draw_buffer;
 	UINT16 dither[16];
 	int x, y;
-	
+
 	/* frame buffer clear? */
 	if (fbz_rgb_write)
 	{
@@ -82,7 +82,7 @@ static void fastfill(void)
 			dither[0] = (((voodoo_regs[color1] >> 19) & 0x1f) << 11) | (((voodoo_regs[color1] >> 10) & 0x3f) << 5) | (((voodoo_regs[color1] >> 3) & 0x1f) << 0);
 		else
 			dither_to_matrix(voodoo_regs[color1], dither);
-	
+
 		/* loop over y */
 #if (RESOLUTION_DIVIDE_SHIFT != 0)
 		if (cheating_allowed)
@@ -102,7 +102,7 @@ static void fastfill(void)
 					for (x = (sx >> RESOLUTION_DIVIDE_SHIFT) << RESOLUTION_DIVIDE_SHIFT; x < ex; x += (1 << RESOLUTION_DIVIDE_SHIFT))
 						dest[x] = color;
 				}
-				
+
 				/* dithered is a little trickier */
 				else
 				{
@@ -126,7 +126,7 @@ static void fastfill(void)
 				for (x = sx; x < ex; x++)
 					*dest++ = color;
 			}
-			
+
 			/* dithered is a little trickier */
 			else
 			{
@@ -136,7 +136,7 @@ static void fastfill(void)
 			}
 		}
 	}
-	
+
 	/* depth buffer clear? */
 	if (fbz_depth_write)
 	{
@@ -178,15 +178,16 @@ static void fastfill(void)
  *
  *************************************/
 
+#if 0
 static int add_rasterizer(genf *callback)
 {
 	struct rasterizer_info *info = &raster[num_rasters++];
 	if (num_rasters > MAX_RASTERIZERS)
 		return 0;
-		
+
 	info->next = raster_head;
 	raster_head = info;
-	
+
 	info->callback = callback;
 	info->needs_texMode0 = ((voodoo_regs[fbzColorPath] >> 27) & 1);
 	info->needs_texMode1 = info->needs_texMode0 &&
@@ -202,18 +203,18 @@ static int add_rasterizer(genf *callback)
 	info->val_tlod0 = voodoo_regs[0x100 + tLOD];
 	info->val_textureMode1 = voodoo_regs[0x200 + textureMode];
 	info->val_tlod1 = voodoo_regs[0x200 + tLOD];
-	
+
 	printf("Adding rasterizer @ %08X : %08X %08X %08X %08X %08X %08X %08X %08X\n",
 			(UINT32)callback,
-			info->val_fbzColorPath, info->val_alphaMode, info->val_fogMode, info->val_fbzMode, 
+			info->val_fbzColorPath, info->val_alphaMode, info->val_fogMode, info->val_fbzMode,
 			info->needs_texMode0 ? info->val_textureMode0 : 0,
 			info->needs_texMode0 ? info->val_tlod0 : 0,
 			info->needs_texMode1 ? info->val_textureMode1 : 0,
 			info->needs_texMode1 ? info->val_tlod1 : 0);
-	
+
 	return 1;
 }
-
+#endif
 
 static void draw_triangle(void)
 {
@@ -221,7 +222,7 @@ static void draw_triangle(void)
 	UINT32 temp;
 
 	profiler_mark(PROFILER_USER1);
-	
+
 	voodoo_regs[fbiTrianglesOut] = (voodoo_regs[fbiTrianglesOut] + 1) & 0xffffff;
 
 	/* recompute dirty texture params */
@@ -265,10 +266,10 @@ static void draw_triangle(void)
 			continue;
 //		if (info->needs_texMode1 && info->val_tlod1 != voodoo_regs[0x200 + tLOD])
 //			continue;
-		
+
 		/* call the rasterizer */
 		(*info->callback)();
-		
+
 		/* if we weren't the head, become the head */
 		if (prev)
 		{
@@ -438,7 +439,7 @@ static void setup_and_draw_triangle(void)
 	tri_vb.y = setup_verts[1].y;
 	tri_vc.x = setup_verts[2].x;
 	tri_vc.y = setup_verts[2].y;
-	
+
 	/* compute the divisor */
 	divisor = 1.0f / ((tri_va.x - tri_vb.x) * (tri_va.y - tri_vc.y) - (tri_va.x - tri_vc.x) * (tri_va.y - tri_vb.y));
 
@@ -447,11 +448,11 @@ static void setup_and_draw_triangle(void)
 	{
 		int culling_sign = (voodoo_regs[sSetupMode] >> 18) & 1;
 		int divisor_sign = (divisor < 0);
-		
+
 		/* if doing strips and ping pong is enabled, apply the ping pong */
 		if ((voodoo_regs[sSetupMode] & 0x90000) == 0x00000)
 			culling_sign ^= (setup_count - 3) & 1;
-		
+
 		/* if our sign matches the culling sign, we're done for */
 		if (divisor_sign == culling_sign)
 			return;
@@ -575,7 +576,7 @@ static void init_texel_1(int which)
 		else if (g > 255) g = 255;
 		if (b < 0) b = 0;
 		else if (b > 255) b = 255;
-		
+
 		texel_lookup[which][1][i] = 0xff000000 | (r << 16) | (g << 8) | b;
 	}
 }
@@ -646,7 +647,7 @@ static void init_texel_7(int which)
 		else if (g > 255) g = 255;
 		if (b < 0) b = 0;
 		else if (b > 255) b = 255;
-		
+
 		texel_lookup[which][7][i] = 0xff000000 | (r << 16) | (g << 8) | b;
 	}
 }
@@ -691,7 +692,7 @@ static void init_texel_9(int which)
 		else if (g > 255) g = 255;
 		if (b < 0) b = 0;
 		else if (b > 255) b = 255;
-		
+
 		texel_lookup[which][9][i] = (a << 24) | (r << 16) | (g << 8) | b;
 	}
 }
@@ -713,7 +714,7 @@ static void init_texel_a(int which)
 	}
 }
 
-		
+
 static void init_texel_b(int which)
 {
 	/* format 11: 16-bit ARGB (1-5-5-5) */
@@ -731,7 +732,7 @@ static void init_texel_b(int which)
 	}
 }
 
-		
+
 static void init_texel_c(int which)
 {
 	/* format 12: 16-bit ARGB (4-4-4-4) */
@@ -750,7 +751,7 @@ static void init_texel_c(int which)
 	}
 }
 
-		
+
 static void init_texel_d(int which)
 {
 	/* format 13: 16-bit alpha, intensity */
@@ -797,7 +798,7 @@ static void init_texel_f(int which)
 		else if (g > 255) g = 255;
 		if (b < 0) b = 0;
 		else if (b > 255) b = 255;
-		
+
 		texel_lookup[which][15][i] = (a << 24) | (r << 16) | (g << 8) | b;
 	}
 }
@@ -820,12 +821,12 @@ static void (*update_texel_lookup[16])(int which) =
  *************************************/
 
 #if 0
-#include "voodbx86.h"
+#include "voodrx86.h"
 #endif
 
-/* 
+/*
 	WG3dh:
-	
+
     816782: 0C000035 00000000 00045119 000B4779 082410DF
     629976: 0C000035 00000000 00045119 000B4779 0824109F
     497958: 0C000035 00000000 00045119 000B4779 0824101F
@@ -874,7 +875,7 @@ static void (*update_texel_lookup[16])(int which) =
 /*
 
 	mace:
-	
+
 000000001173E00C: 0C000035 00000000 00045119 000B4779 082418DF (done)
 000000000D3EB6D7: 0C600C09 00000000 00045119 000B4779 0824100F
 0000000003E4A1D5: 0C600C09 00000000 00045119 000B4779 0824180F
@@ -1057,7 +1058,7 @@ One of these is bad:
        175: 0C000035 00000000 00045119 000B4779 082418DF 00000000 00000000
        175: 0C480035 00000000 00045119 000B4779 082418DF 00000000 00000000
        703: 0C000035 00000000 00045119 000B477B 082410DB 00000000 00000000
-       
+
        108: 0C600C09 00000001 00045119 000B4779 0824101F 0824101F 00000000
        688: 0C600C09 00000001 00045119 000B4779 00000000 00000000 00000000
          1: 0C600C09 00000001 00045119 000B4779 0824101F 082410DF 00000000
@@ -1071,13 +1072,13 @@ OK      41: 0C482435 00000001 00045119 000B4379 0824101F 0824101F 00000000
          9: 0C000035 00000001 00045119 000B477B 082410DB 0824181F 00000000
        463: 0C000035 00000001 00045119 000B4779 082410DF 0824181F 00000000
          1: 0C480035 00000001 00045119 000B4779 082418DF 0824181F 00000000
-         
+
        127: 0C000035 00000000 00045119 000B4779 082410DF 0824181F 00000000
         31: 0C480035 00000000 00045119 000B4779 082418DF 0824181F 00000000
        127: 0C000035 00000000 00045119 000B477B 082410DB 0824181F 00000000
-       
+
 -----------------------------------------------------------
-	
+
        511: 00000002 00000000 00000000 00000300 00000000
          1: 08000001 00000000 00000000 00000300 00000800
          1: 08000001 00000000 00000000 00000200 08241800
@@ -1109,7 +1110,7 @@ OK      41: 0C482435 00000001 00045119 000B4379 0824101F 0824101F 00000000
        328: 0C600C09 00000001 00045119 000B4779 082700DF
        659: 0C600C09 00000001 00045119 000B4779 082708DF
         67: 0C480035 00000000 00045119 000B4779 00000000
-        
+
 */
 
 

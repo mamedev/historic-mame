@@ -63,11 +63,11 @@ static int pitch_count;
 static int u[11];
 static int x[10];
 
-static INT8 randbit;
+static int RNG;	/* the random noise generator configuration is: 1 + x + x^3 + x^4 + x^13 */
 
 
 /* Static function prototypes */
-static int parse_frame(int removeit);
+static void parse_frame(void);
 
 
 #define DEBUG_5110	0
@@ -88,6 +88,7 @@ void tms5110_reset(void)
     /* initialize the chip state */
     speaking_now = speak_delay_frames = talk_status = 0;
     CTL_pins = 0;
+    RNG = 0xfff;
 
     /* initialize the energy/pitch/k states */
     old_energy = new_energy = current_energy = target_energy = 0;
@@ -99,7 +100,6 @@ void tms5110_reset(void)
 
     /* initialize the sample generators */
     interp_count = sample_count = pitch_count = 0;
-    randbit = 0;
     memset(u, 0, sizeof(u));
     memset(x, 0, sizeof(x));
 }
@@ -125,7 +125,7 @@ void tms5110_set_M0_callback(int (*func)(void))
 ******************************************************************************************/
 static void FIFO_data_write(int data)
 {
-	/* add this byte to the FIFO */
+	/* add this bit to the FIFO */
 	if (fifo_count < FIFO_SIZE)
 	{
 		fifo[fifo_tail] = (data&1); /* set bit to 1 or 0 */
@@ -162,7 +162,7 @@ static int extract_bits(int count)
 
 static void request_bits(int no)
 {
-int i;
+	int i;
 	for (i=0; i<no; i++)
 	{
 		if (M0_callback)
@@ -234,7 +234,6 @@ void tms5110_process(INT16 *buffer, unsigned int size)
     int buf_count=0;
     int i, interp_period;
 
-/* tryagain: */
 
     /* if we're not speaking, fill with nothingness */
     if (!speaking_now)
@@ -244,33 +243,23 @@ void tms5110_process(INT16 *buffer, unsigned int size)
     if (!talk_status)
     {
 
-/*"perform dummy read" is not mentioned in the datasheet */
-/* However Bagman speech roms data are organized in such way so bit at address 0
-** is NOT a speech data. Bit at address 1 is data speech. Seems that the
-** tms5110 is performing dummy read before starting to execute a SPEAK command.
-*/
+    /* a "dummy read" is mentioned in the tms5200 datasheet */
+    /* The Bagman speech roms data are organized in such a way that
+    ** the bit at address 0 is NOT a speech data. The bit at address 1
+    ** is the speech data. It seems that the tms5110 performs a dummy read
+    ** just before it executes a SPEAK command.
+    */
 		perform_dummy_read();
 
-        /* parse but don't remove the first frame, and set the status to 1 */
-        parse_frame(1);
+        /* clear out the new frame parameters (it will become old frame just before the first call to parse_frame() ) */
+        new_energy = 0;
+        new_pitch = 0;
+        for (i = 0; i < 10; i++)
+            new_k[i] = 0;
+
         talk_status = 1;
     }
-#if 0
-    /* apply some delay before we actually consume data */
-    if (speak_delay_frames)
-    {
-    	if (size <= speak_delay_frames)
-    	{
-    		speak_delay_frames -= size;
-    		size = 0;
-    	}
-    	else
-    	{
-    		size -= speak_delay_frames;
-    		speak_delay_frames = 0;
-    	}
-    }
-#endif
+
 
     /* loop until the buffer is full or we've stopped speaking */
     while ((size > 0) && speaking_now)
@@ -280,9 +269,28 @@ void tms5110_process(INT16 *buffer, unsigned int size)
         /* if we're ready for a new frame */
         if ((interp_count == 0) && (sample_count == 0))
         {
-            /* Parse a new frame */
-            if (!parse_frame(1))
-                break;
+
+            /* remember previous frame */
+            old_energy = new_energy;
+            old_pitch = new_pitch;
+            for (i = 0; i < 10; i++)
+                old_k[i] = new_k[i];
+
+
+            /* if the old frame was a stop frame, exit and do not process any more frames */
+            if (old_energy == energytable[15])
+            {
+                /*if (DEBUG_5110) logerror("processing frame: stop frame\n");*/
+                target_energy = current_energy = 0;
+                speaking_now = talk_status = 0;
+                interp_count = sample_count = pitch_count = 0;
+                goto empty;
+            }
+
+
+            /* Parse a new frame into the new_energy, new_pitch and new_k[] */
+            parse_frame();
+
 
             /* Set old target as new start of frame */
             current_energy = old_energy;
@@ -290,70 +298,71 @@ void tms5110_process(INT16 *buffer, unsigned int size)
             for (i = 0; i < 10; i++)
                 current_k[i] = old_k[i];
 
-            /* is this a zero energy frame? */
-            if (current_energy == 0)
-            {
-                /*logerror("processing frame: zero energy\n");*/
-                target_energy = 0;
-                target_pitch = current_pitch;
-                for (i = 0; i < 10; i++)
-                    target_k[i] = current_k[i];
-            }
-            /* is this a stop frame? */
-            else if (current_energy == (energytable[15] >> 6))
-            {
-                /*if (DEBUG_5110) logerror("processing frame: stop frame\n");*/
-                current_energy = energytable[0] >> 6;
-                target_energy = current_energy;
-                speaking_now = talk_status = 0;
-                interp_count = sample_count = pitch_count = 0;
 
-                /* try to fetch commands again */
-                /*goto tryagain;*/
+            /* is this the stop (ramp down) frame? */
+            if (new_energy == energytable[15])
+            {
+                /*logerror("processing frame: ramp down\n");*/
+                target_energy = 0;
+                target_pitch = old_pitch;
+                for (i = 0; i < 10; i++)
+                    target_k[i] = old_k[i];
+            }
+            else if ((old_energy == 0) && (new_energy != 0)) /* was the old frame a zero-energy frame? */
+            {
+                /* if so, and if the new frame is non-zero energy frame then the new parameters
+                   should become our current and target parameters immediately,
+                   i.e. we should NOT interpolate them slowly in.
+                */
+
+                /*logerror("processing non-zero energy frame after zero-energy frame\n");*/
+                target_energy = new_energy;
+                target_pitch = current_pitch = new_pitch;
+                for (i = 0; i < 10; i++)
+                    target_k[i] = current_k[i] = new_k[i];
+            }
+            else if ((old_pitch == 0) && (new_pitch != 0))    /* is this a change from unvoiced to voiced frame ? */
+            {
+                /* if so, then the new parameters should become our current and target parameters immediately,
+                   i.e. we should NOT interpolate them slowly in.
+                */
+                /*if (DEBUG_5110) logerror("processing frame: UNVOICED->VOICED frame change\n");*/
+                target_energy = new_energy;
+                target_pitch = current_pitch = new_pitch;
+                for (i = 0; i < 10; i++)
+                    target_k[i] = current_k[i] = new_k[i];
+            }
+            else if ((old_pitch != 0) && (new_pitch == 0))    /* is this a change from voiced to unvoiced frame ? */
+            {
+                /* if so, then the new parameters should become our current and target parameters immediately,
+                   i.e. we should NOT interpolate them slowly in.
+                */
+                /*if (DEBUG_5110) logerror("processing frame: VOICED->UNVOICED frame change\n");*/
+                target_energy = new_energy;
+                target_pitch = current_pitch = new_pitch;
+                for (i = 0; i < 10; i++)
+                    target_k[i] = current_k[i] = new_k[i];
             }
             else
             {
-                /* is this the ramp down frame? */
-                if (new_energy == (energytable[15] >> 6))
-                {
-                    /*logerror("processing frame: ramp down\n");*/
-                    target_energy = 0;
-                    target_pitch = current_pitch;
-                    for (i = 0; i < 10; i++)
-                        target_k[i] = current_k[i];
-                }
-                /* Reset the step size */
-                else
-                {
-                    /*logerror("processing frame: Normal\n");*/
-                    /*logerror("*** Energy = %d\n",current_energy);*/
-                    /*logerror("proc: %d %d\n",last_fbuf_head,fbuf_head);*/
+                /*logerror("processing frame: Normal\n");*/
+                /*logerror("*** Energy = %d\n",current_energy);*/
+                /*logerror("proc: %d %d\n",last_fbuf_head,fbuf_head);*/
 
-                    target_energy = new_energy;
-                    target_pitch = new_pitch;
-
-                    for (i = 0; i < 4; i++)
-                        target_k[i] = new_k[i];
-                    if (current_pitch == 0)
-                        for (i = 4; i < 10; i++)
-                        {
-                            target_k[i] = current_k[i] = 0;
-                        }
-                    else
-                        for (i = 4; i < 10; i++)
-                            target_k[i] = new_k[i];
-                }
+                target_energy = new_energy;
+                target_pitch = new_pitch;
+                for (i = 0; i < 10; i++)
+                    target_k[i] = new_k[i];
             }
         }
         else if (interp_count == 0)
         {
-            /* Update values based on step values */
+            /* interpolate (update) values based on step values */
             /*logerror("\n");*/
 
             interp_period = sample_count / 25;
             current_energy += (target_energy - current_energy) / interp_coeff[interp_period];
-            if (old_pitch != 0)
-                current_pitch += (target_pitch - current_pitch) / interp_coeff[interp_period];
+            current_pitch  += (target_pitch - current_pitch) / interp_coeff[interp_period];
 
             /*logerror("*** Energy = %d\n",current_energy);*/
 
@@ -363,16 +372,35 @@ void tms5110_process(INT16 *buffer, unsigned int size)
             }
         }
 
-        if (old_energy == 0)
+
+
+
+
+	/* calculate the output */
+
+        if (current_energy == 0)
         {
             /* generate silent samples here */
             current_val = 0x00;
         }
         else if (old_pitch == 0)
         {
+            int bitout, randbit;
+
             /* generate unvoiced samples here */
-            randbit = (rand() % 2) * 2 - 1;
-            current_val = (randbit * current_energy) / 4;
+            if (RNG&1)
+                randbit = -64; /* according to the patent it is (either + or -) half of the maximum value in the chirp table */
+            else
+                randbit = 64;
+
+            bitout = ((RNG>>12)&1) ^
+                     ((RNG>>10)&1) ^
+                     ((RNG>> 9)&1) ^
+                     ((RNG>> 0)&1);
+            RNG >>= 1;
+            RNG |= (bitout<<12);
+
+            current_val = (randbit * current_energy) / 256;
         }
         else
         {
@@ -382,6 +410,7 @@ void tms5110_process(INT16 *buffer, unsigned int size)
             else
                 current_val = 0x00;
         }
+
 
         /* Lattice filter here */
 
@@ -398,6 +427,7 @@ void tms5110_process(INT16 *buffer, unsigned int size)
 
         x[0] = u[0];
 
+
         /* clipping, just like the chip */
 
         if (u[0] > 511)
@@ -407,9 +437,9 @@ void tms5110_process(INT16 *buffer, unsigned int size)
         else
             buffer[buf_count] = u[0] << 6;
 
+
         /* Update all counts */
 
-        size--;
         sample_count = (sample_count + 1) % 200;
 
         if (current_pitch != 0)
@@ -418,13 +448,18 @@ void tms5110_process(INT16 *buffer, unsigned int size)
             pitch_count = 0;
 
         interp_count = (interp_count + 1) % 25;
+
         buf_count++;
+        size--;
     }
 
 empty:
 
     while (size > 0)
     {
+        sample_count = (sample_count + 1) % 200;
+        interp_count = (interp_count + 1) % 25;
+
         buffer[buf_count] = 0x00;
         buf_count++;
         size--;
@@ -459,13 +494,12 @@ void tms5110_PDC_set(int data)
 		PDC = data & 0x1;
 		if (PDC == 0) /* toggling 1->0 processes command on CTL_pins */
 		{
-			/* only real commands we handle now are SPEAK and RESET */
+			/* the only real commands we handle now are SPEAK and RESET */
 
 			switch (CTL_pins & 0xe) /*CTL1 - don't care*/
 			{
 			case TMS5110_CMD_SPEAK:
 				speaking_now = 1;
-				/*speak_delay_frames = 10;*/
 
 				//should FIFO be cleared now ?????
 
@@ -491,33 +525,14 @@ void tms5110_PDC_set(int data)
 
 ******************************************************************************************/
 
-static int parse_frame(int removeit)
+static void parse_frame(void)
 {
-    int old_head, old_count;
     int bits, indx, i, rep_flag;
 
-    /* remember previous frame */
-    old_energy = new_energy;
-    old_pitch = new_pitch;
-    for (i = 0; i < 10; i++)
-        old_k[i] = new_k[i];
-
-    /* clear out the new frame */
-    new_energy = 0;
-    new_pitch = 0;
-    for (i = 0; i < 10; i++)
-        new_k[i] = 0;
-
-    /* if the previous frame was a stop frame, don't do anything */
-    if (old_energy == (energytable[15] >> 6))
-        return 1;
-
-    /* remember the original FIFO counts, in case we don't have enough bits */
-    old_count = fifo_count;
-    old_head = fifo_head;
 
     /* count the total number of bits available */
     bits = fifo_count;
+
 
     /* attempt to extract the energy index */
     bits -= 4;
@@ -527,23 +542,32 @@ static int parse_frame(int removeit)
 	bits = 0;
     }
     indx = extract_bits(4);
-    new_energy = energytable[indx] >> 6;
+    new_energy = energytable[indx];
 
-	/* if the index is 0 or 15, we're done */
-	if (indx == 0 || indx == 15)
-	{
-		if (DEBUG_5110) logerror("  (4-bit energy=%d frame)\n",new_energy);
 
-		/* clear fifo if stop frame encountered */
-		if (indx == 15)
-		{
-			if (DEBUG_5110) logerror("  (4-bit energy=%d STOP frame)\n",new_energy);
-			fifo_head = fifo_tail = fifo_count = 0;
-			removeit = 1;
-            speaking_now = talk_status = 0;
-		}
-		goto done;
+    /* if the energy index is 0 or 15, we're done */
+
+    if ((indx == 0) || (indx == 15))
+    {
+        if (DEBUG_5110) logerror("  (4-bit energy=%d frame)\n",new_energy);
+
+	/* clear the k's */
+        if (indx == 0)
+        {
+            for (i = 0; i < 10; i++)
+                new_k[i] = 0;
 	}
+
+        /* clear fifo if stop frame encountered */
+        if (indx == 15)
+        {
+            if (DEBUG_5110) logerror("  (4-bit energy=%d STOP frame)\n",new_energy);
+            fifo_head = fifo_tail = fifo_count = 0;
+            //speaking_now = talk_status = 0;
+        }
+        return;
+    }
+
 
     /* attempt to extract the repeat flag */
     bits -= 1;
@@ -562,17 +586,18 @@ static int parse_frame(int removeit)
         bits = 0;
     }
     indx = extract_bits(5);
-    new_pitch = pitchtable[indx] / 256;
+    new_pitch = pitchtable[indx];
+
 
     /* if this is a repeat frame, just copy the k's */
     if (rep_flag)
     {
-        for (i = 0; i < 10; i++)
-            new_k[i] = old_k[i];
+	//actually, we do nothing because the k's were already loaded (on parsing the previous frame)
 
         if (DEBUG_5110) logerror("  (10-bit energy=%d pitch=%d rep=%d frame)\n", new_energy, new_pitch, rep_flag);
-        goto done;
+        return;
     }
+
 
     /* if the pitch index was zero, we need 4 k's */
     if (indx == 0)
@@ -589,8 +614,12 @@ static int parse_frame(int removeit)
         new_k[2] = k3table[extract_bits(4)];
         new_k[3] = k4table[extract_bits(4)];
 
+	/* and clear the rest of the new_k[] */
+        for (i = 4; i < 10; i++)
+            new_k[i] = 0;
+
         if (DEBUG_5110) logerror("  (28-bit energy=%d pitch=%d rep=%d 4K frame)\n", new_energy, new_pitch, rep_flag);
-        goto done;
+        return;
     }
 
     /* else we need 10 K's */
@@ -612,21 +641,6 @@ static int parse_frame(int removeit)
     new_k[9] = k10table[extract_bits(3)];
 
     if (DEBUG_5110) logerror("  (49-bit energy=%d pitch=%d rep=%d 10K frame)\n", new_energy, new_pitch, rep_flag);
-
-done:
-
-    if (DEBUG_5110) logerror("Parsed a frame successfully - %d bits remaining\n", bits);
-
-#if 0
-    /* if we're not to remove this one, restore the FIFO */
-    if (!removeit)
-    {
-        fifo_count = old_count;
-        fifo_head = old_head;
-    }
-#endif
-
-    return 1;
 
 }
 
@@ -653,4 +667,3 @@ static unsigned int example_word_TEN[619]={
 /*16*/1,1,1,1
 };
 #endif
-

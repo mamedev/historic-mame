@@ -168,6 +168,7 @@ VIDEO_START( acommand )
 #define LED_ON		0x01c00
 #define SHOW_LEDS	0
 
+#if SHOW_LEDS
 static void draw_led(struct mame_bitmap *bitmap, int x, int y,data8_t value)
 {
 	plot_box(bitmap, x, y, 5, 9, 0x00000000);
@@ -215,7 +216,7 @@ static void draw_led(struct mame_bitmap *bitmap, int x, int y,data8_t value)
 		plot_pixel(bitmap, x+4, y+7, LED_ON);
 	}
 }
-
+#endif
 static UINT16 led0;
 
 VIDEO_UPDATE( acommand )

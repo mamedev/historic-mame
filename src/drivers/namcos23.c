@@ -212,6 +212,7 @@ VIDEO_START( ss23 )
 	return 0;
 }
 
+#if 0
 static double
 Normalize( UINT32 data )
 {
@@ -301,6 +302,7 @@ DrawPoly( struct mame_bitmap *bitmap, const UINT32 *pSource, int n, int bNew )
 		}
 	}
 }
+#endif
 
 VIDEO_UPDATE( ss23 )
 {

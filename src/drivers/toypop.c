@@ -225,12 +225,6 @@ INTERRUPT_GEN( toypop_m68000_interrupt )
 		cpunum_set_input_line(2, 6, HOLD_LINE);
 }
 
-static WRITE8_HANDLER( toypop_68k_irq_trigger_w )
-{
-	if (interrupt_enable_68k)
-		cpunum_set_input_line(2, 6, HOLD_LINE);
-}
-
 WRITE16_HANDLER( toypop_m68000_interrupt_enable_w )
 {
 	interrupt_enable_68k = 1;

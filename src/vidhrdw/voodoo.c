@@ -276,9 +276,9 @@ static struct setup_vert setup_verts[3];
 static struct setup_vert setup_pending;
 
 /* rasterizers */
-static struct rasterizer_info raster[MAX_RASTERIZERS];
+//static struct rasterizer_info raster[MAX_RASTERIZERS];
 static int num_rasters;
-static struct rasterizer_info *raster_head;
+//static struct rasterizer_info *raster_head;
 
 /* debugging/stats */
 static UINT32 polycount, wpolycount, pixelcount, lastfps, framecount, totalframes;
@@ -599,8 +599,8 @@ static const char *voodoo_reg_name[] =
 	/* 0x140 */
 	"stipple",		"color0",		"color1",		"fbiPixelsIn",
 	"fbiChromaFail","fbiZfuncFail",	"fbiAfuncFail",	"fbiPixelsOut",
-	"fogTable160",	"fogTable164",	"fogTable168",	"fogTable16c",	
-	"fogTable170",	"fogTable174",	"fogTable178",	"fogTable17c",	
+	"fogTable160",	"fogTable164",	"fogTable168",	"fogTable16c",
+	"fogTable170",	"fogTable174",	"fogTable178",	"fogTable17c",
 	/* 0x180 */
 	"fogTable180",	"fogTable184",	"fogTable188",	"fogTable18c",
 	"fogTable190",	"fogTable194",	"fogTable198",	"fogTable19c",
@@ -662,25 +662,25 @@ int voodoo_start_common(void)
 	int i, j;
 
 	fvoodoo_regs = (float *)voodoo_regs;
-	
+
 	/* allocate memory for the pen, dither, and depth lookups */
 	pen_lookup = auto_malloc(sizeof(pen_lookup[0]) * 65536);
 	lod_lookup = auto_malloc(sizeof(lod_lookup[0]) * 65536);
 	if (!pen_lookup || !lod_lookup)
 		return 1;
-	
+
 	/* allocate memory for the frame a depth buffers */
 	framebuf[0] = auto_malloc(sizeof(UINT16) * FRAMEBUF_WIDTH * FRAMEBUF_HEIGHT);
 	framebuf[1] = auto_malloc(sizeof(UINT16) * FRAMEBUF_WIDTH * FRAMEBUF_HEIGHT);
 	depthbuf = auto_malloc(sizeof(UINT16) * FRAMEBUF_WIDTH * FRAMEBUF_HEIGHT);
 	if (!framebuf[0] || !framebuf[1] || !depthbuf)
 		return 1;
-	
+
 	/* allocate memory for the memory fifo */
 	memory_fifo = auto_malloc(65536 * sizeof(memory_fifo[0]));
 	if (!memory_fifo)
 		return 1;
-	
+
 	/* allocate memory for the cmdfifo */
 	if (voodoo_type >= 2)
 	{
@@ -688,7 +688,7 @@ int voodoo_start_common(void)
 		if (!cmdfifo)
 			return 1;
 	}
-	
+
 	/* allocate memory for texture RAM */
 	for (i = 0; i < tmus; i++)
 	{
@@ -696,7 +696,7 @@ int voodoo_start_common(void)
 		if (!textureram[i])
 			return 1;
 	}
-	
+
 	/* allocate memory for the lookup tables */
 	for (j = 0; j < tmus; j++)
 		for (i = 0; i < 16; i++)
@@ -705,13 +705,13 @@ int voodoo_start_common(void)
 			if (!texel_lookup[j][i])
 				return 1;
 		}
-	
+
 	/* initialize LOD tables */
 	for (i = 0; i < 65536; i++)
 	{
 		UINT32 bits = (i << 16) | 0x8000;
 		float fval = u2f(bits);
-		
+
 		if (fval <= 0)
 			lod_lookup[i] = 0;
 		else
@@ -725,7 +725,7 @@ int voodoo_start_common(void)
 				lod_lookup[i] = 256 * 8;
 		}
 	}
-	
+
 	/* init the palette */
 	for (i = 1; i < 65535; i++)
 	{
@@ -743,7 +743,7 @@ int voodoo_start_common(void)
 
 	/* allocate a vblank timer */
 	vblank_timer = timer_alloc(vblank_callback);
-	
+
 	voodoo_reset();
 	num_rasters = 0;
 //init_generator();
@@ -787,12 +787,12 @@ void voodoo_reset(void)
 	/* fog tables */
 	memset(fog_blend, 0, sizeof(fog_blend));
 	memset(fog_delta, 0, sizeof(fog_delta));
-	
+
 	/* VBLANK and swapping */
 	vblank_count = 0;
 	num_pending_swaps = 0;
 	blocked_on_swap = 0;
-	
+
 	/* fbzMode variables */
 	fbz_cliprect = &fbz_noclip;
 	fbz_noclip.min_x = fbz_noclip.min_y = 0;
@@ -820,10 +820,10 @@ void voodoo_reset(void)
 	inverted_yorigin = 0;
 
 	/* textureMode variables */
-	
+
 	/* triangle setup */
 	setup_count = 0;
-	
+
 	update_memory_fifo();
 }
 
@@ -995,7 +995,7 @@ VIDEO_UPDATE( voodoo )
 INLINE void add_to_memory_fifo(write32_handler handler, offs_t offset, data32_t data, data32_t mem_mask)
 {
 	struct fifo_entry *entry;
-	
+
 	/* fill in the entry */
  	entry = &memory_fifo[memory_fifo_count++];
  	entry->writefunc = handler;
@@ -1011,7 +1011,7 @@ INLINE void add_to_memory_fifo(write32_handler handler, offs_t offset, data32_t 
 		cpu_spinuntil_trigger(MEMFIFO_TRIGGER);
 	}
 
-	/* debugging */	
+	/* debugging */
 	if (LOG_MEMFIFO && memory_fifo_count % 1000 == 0)
 		logerror("Memory FIFO = %d entries\n", memory_fifo_count);
 }
@@ -1045,17 +1045,17 @@ static void empty_memory_fifo(void)
 	if (memory_fifo_in_process)
 		return;
 	memory_fifo_in_process = 1;
-	
+
 	if (LOG_MEMFIFO)
 		logerror("empty_memory_fifo: %d entries\n", memory_fifo_count);
-	
+
 	/* loop while we're not blocked */
 	for (fifo_index = 0; !blocked_on_swap && fifo_index < memory_fifo_count; fifo_index++)
 	{
 		struct fifo_entry *entry = &memory_fifo[fifo_index];
 		(*entry->writefunc)(entry->offset, entry->data, entry->mem_mask);
 	}
-	
+
 	/* chomp all the entries */
 	if (fifo_index == 0 && memory_fifo_count > 0)
 	{
@@ -1073,10 +1073,10 @@ static void empty_memory_fifo(void)
 		if (LOG_MEMFIFO)
 			logerror("empty_memory_fifo: consumed %d entries\n", memory_fifo_count);
 	}
-	
+
 	/* update the count */
 	memory_fifo_count -= fifo_index;
-	
+
 	/* if we're below the threshhold, get the CPU going again */
 	if (memory_fifo_count < memory_fifo_size)
 		cpu_trigger(MEMFIFO_TRIGGER);
@@ -1096,7 +1096,7 @@ static void empty_memory_fifo(void)
  *	VBLANK callback/buffer swapping
  *
  *************************************/
- 
+
 static void swap_buffers(void)
 {
 	UINT16 *temp;
@@ -1106,7 +1106,7 @@ static void swap_buffers(void)
 
 	/* force a partial update */
 	force_partial_update(cpu_getscanline());
-	
+
 	/* swap -- but only if we're actually swapping */
 	if (!swap_dont_swap)
 	{
@@ -1114,15 +1114,15 @@ static void swap_buffers(void)
 		frontbuf = backbuf;
 		backbuf = temp;
 	}
-	
+
 	/* no longer blocked */
 	blocked_on_swap = 0;
 	if (num_pending_swaps > 0)
 		num_pending_swaps--;
-	
+
 	/* empty the FIFO */
 	empty_memory_fifo();
-	
+
 	/* update the statistics (debug) */
 	if (display_statistics)
 	{
@@ -1153,7 +1153,7 @@ static void swap_buffers(void)
 static void vblank_off_callback(int param)
 {
 	vblank_state = 0;
-	
+
 	/* call the client */
 	if (client_vblank_callback)
 		(*client_vblank_callback)(0);
@@ -1167,7 +1167,7 @@ static void vblank_callback(int scanline)
 {
 	vblank_state = 1;
 	vblank_count++;
-	
+
 	if (LOG_UPDATE_SWAP)
 	{
 		if (num_pending_swaps > 0)
@@ -1221,7 +1221,7 @@ UINT32 voodoo_fifo_words_left(void)
 	/* if we're blocked, return a real number */
 	if (blocked_on_swap)
 		return memory_fifo_size - memory_fifo_count;
-	
+
 	/* otherwise, return infinity */
 	return 0x7fffffff;
 }
@@ -1253,7 +1253,7 @@ static void recompute_texture_params(int tmu)
 		trex_format[0] += 6;
 	modes_used |= 1 << trex_format[0];
 	shift = (data >> 11) & 1;
-	
+
 	/* update LOD data */
 	data = voodoo_regs[0x100 + 0x100*tmu + tLOD];
 	trex_lodmin[tmu] = ((data >> 0) & 0x3f) << 6;
@@ -1284,7 +1284,7 @@ static void recompute_texture_params(int tmu)
 		trex_lod_start[tmu][7] = base + ((offset + (lod_offset[7] << shift)) & texram_mask);
 		trex_lod_start[tmu][8] = base + ((offset + (lod_offset[8] << shift)) & texram_mask);
 	}
-	
+
 	/* multi base address */
 	else
 	{
@@ -1303,7 +1303,7 @@ static void recompute_texture_params(int tmu)
 		trex_lod_start[tmu][8] = base + ((offset + ((lod_offset[8] - lod_offset[3]) << shift)) & texram_mask);
 	}
 }
-		
+
 
 
 /*************************************
@@ -1337,7 +1337,7 @@ WRITE32_HANDLER( voodoo_textureram_w )
 //			printf("TMU %d write\n", trex);
 		return;
 	}
-	
+
 	/* recompute any stale data */
 	if (trex_dirty[0])
 	{
@@ -1349,20 +1349,20 @@ WRITE32_HANDLER( voodoo_textureram_w )
 		recompute_texture_params(1);
 		trex_dirty[1] = 0;
 	}
-	
+
 	/* swizzle the data */
 	if (voodoo_regs[trex_base + tLOD] & 0x02000000)
 		data = (data >> 24) | ((data >> 8) & 0xff00) | ((data << 8) & 0xff0000) | (data << 24);
 	if (voodoo_regs[trex_base + tLOD] & 0x04000000)
 		data = (data >> 16) | (data << 16);
 
-	if (LOG_TEXTURERAM && s == 0 && t == 0)	
+	if (LOG_TEXTURERAM && s == 0 && t == 0)
 		logerror("%06X:voodoo_textureram_w[%d,%06X,%d,%02X,%02X]", activecpu_get_pc(), trex, tbaseaddr & texram_mask, lod >> 2, s, t);
-		
+
 	while (lod != 0)
 	{
 		lod -= 4;
-		
+
 		if (trex_format[trex] < 8)
 			tbaseaddr += twidth * theight;
 		else
@@ -1377,7 +1377,7 @@ WRITE32_HANDLER( voodoo_textureram_w )
 			theight = 1;
 	}
 	tbaseaddr &= texram_mask;
-	
+
 	if (trex_format[trex] < 8)
 	{
 		UINT8 *dest = textureram[trex];
@@ -1385,10 +1385,10 @@ WRITE32_HANDLER( voodoo_textureram_w )
 			tbaseaddr += t * twidth + ((s << 1) & 0xfc);
 		else
 			tbaseaddr += t * twidth + (s & 0xfc);
-		
-		if (LOG_TEXTURERAM && s == 0 && t == 0)	
+
+		if (LOG_TEXTURERAM && s == 0 && t == 0)
 			logerror(" -> %06X = %08X\n", tbaseaddr, data);
-			
+
 		dest[BYTE4_XOR_LE(tbaseaddr + 0)] = (data >> 0) & 0xff;
 		dest[BYTE4_XOR_LE(tbaseaddr + 1)] = (data >> 8) & 0xff;
 		dest[BYTE4_XOR_LE(tbaseaddr + 2)] = (data >> 16) & 0xff;
@@ -1400,9 +1400,9 @@ WRITE32_HANDLER( voodoo_textureram_w )
 		tbaseaddr /= 2;
 		tbaseaddr += t * twidth + s;
 
-		if (LOG_TEXTURERAM && s == 0 && t == 0)	
+		if (LOG_TEXTURERAM && s == 0 && t == 0)
 			logerror(" -> %06X = %08X\n", tbaseaddr*2, data);
-			
+
 		dest[BYTE_XOR_LE(tbaseaddr + 0)] = (data >> 0) & 0xffff;
 		dest[BYTE_XOR_LE(tbaseaddr + 1)] = (data >> 16) & 0xffff;
 	}
@@ -1455,13 +1455,13 @@ WRITE32_HANDLER( voodoo_regs_w )
 	/* determine which chips we are addressing */
 	chips = (offset >> 8) & 0x0f;
 	if (chips == 0) chips = 0x0f;
-	
+
 	/* the first 64 registers can be aliased differently */
 	if ((offset & 0x800c0) == 0x80000 && (voodoo_regs[fbiInit3] & 1))
 		regnum = register_alias_map[offset & 0x3f];
 	else
 		regnum = offset & 0xff;
-	
+
 	/* spread data to the chips */
 	if (chips & 1)
 		voodoo_regs[0x000 + regnum] = data;
@@ -1469,7 +1469,7 @@ WRITE32_HANDLER( voodoo_regs_w )
 		voodoo_regs[0x100 + regnum] = data;
 	if (chips & 4)
 		voodoo_regs[0x200 + regnum] = data;
-	
+
 	/* look up the handler and call it if valid */
 	handler = voodoo_handler_w[regnum];
 	if (handler)
@@ -1498,52 +1498,52 @@ WRITE32_HANDLER( voodoo_regs_w )
 READ32_HANDLER( voodoo_regs_r )
 {
 	data32_t result;
-	
+
 	if ((offset & 0x800c0) == 0x80000 && (voodoo_regs[fbiInit3] & 1))
 		offset = register_alias_map[offset & 0x3f];
 	else
 		offset &= 0xff;
-	
+
 	result = voodoo_regs[offset];
 	switch (offset)
 	{
 		case status:
 		{
 			int fifo_space;
-			
+
 			result = 0;
-			
+
 			/* compute free FIFO space */
 			fifo_space = memory_fifo_size - memory_fifo_count;
 			if (fifo_space < 0)
 				fifo_space = 0;
-			
+
 			/* PCI FIFO free space */
 			result |= (fifo_space < 0x3f) ? fifo_space : 0x3f;
-			
+
 			/* vertical retrace */
 			result |= vblank_state << 6;
-			
+
 			/* FBI graphics engine busy */
 			result |= blocked_on_swap << 7;
-			
+
 			/* TREX busy */
 			result |= 0 << 8;
-			
+
 			/* SST-1 overall busy */
 			result |= (blocked_on_swap || memory_fifo_count > 0) << 9;
-			
+
 			/* buffer displayed (0-2) */
 			result |= (frontbuf == framebuf[1]) << 10;
-			
+
 			/* memory FIFO free space */
 			result |= ((voodoo_regs[fbiInit0] >> 13) & 1) ? (fifo_space << 12) : (0xffff << 12);
-			
+
 			/* swap buffers pending */
 			result |= num_pending_swaps << 28;
-			
+
 			activecpu_eat_cycles(100);
-			
+
 			if (LOG_REGISTERS)
 			{
 				offs_t pc = activecpu_get_pc();
@@ -1560,7 +1560,7 @@ READ32_HANDLER( voodoo_regs_r )
 			}
 			break;
 		}
-		
+
 		case fbiInit2:
 			/* bit 2 of the initEnable register maps this to dacRead */
 			if (init_enable & 0x00000004)
@@ -1569,13 +1569,13 @@ READ32_HANDLER( voodoo_regs_r )
 			if (LOG_REGISTERS)
 				logerror("%06X:voodoo fbiInit2 read = %08X\n", activecpu_get_pc(), result);
 			break;
-		
+
 		case vRetrace:
 			result = cpu_getscanline();
 //			if (LOG_REGISTERS)
 //				logerror("%06X:voodoo vRetrace read = %08X\n", activecpu_get_pc(), result);
 			break;
-		
+
 		/* reserved area in the TMU read by the Vegas startup sequence */
 		case hvRetrace:
 			result = 0x200 << 16;	/* should be between 0x7b and 0x267 */
@@ -1597,6 +1597,9 @@ READ32_HANDLER( voodoo_regs_r )
 #pragma mark VOODOO 2 COMMAND FIFO
 #endif
 
+static void voodoo2_handle_register_w(offs_t offset, data32_t data);
+
+
 /*************************************
  *
  *	MMIO register writes
@@ -1607,7 +1610,7 @@ static int cmdfifo_compute_expected_depth(UINT32 *fifobase, offs_t readptr)
 {
 	UINT32 command = fifobase[readptr / 4];
 	int i, count = 0;
- 	
+
 	switch (command & 7)
 	{
 		/* packet type 0 */
@@ -1615,17 +1618,17 @@ static int cmdfifo_compute_expected_depth(UINT32 *fifobase, offs_t readptr)
 			if (((command >> 3) & 7) == 4)
 				return 2;
 			return 1;
-		
+
 		/* packet type 1 */
 		case 1:
 			return 1 + (command >> 16);
-		
+
 		/* packet type 2 */
 		case 2:
 			for (i = 3; i <= 31; i++)
 				if (command & (1 << i)) count++;
 			return 1 + count;
-		
+
 		/* packet type 3 */
 		case 3:
 			count = 2;		/* X/Y */
@@ -1648,17 +1651,17 @@ static int cmdfifo_compute_expected_depth(UINT32 *fifobase, offs_t readptr)
 //			if (command & 0xfc00000)				/* smode != 0 */
 //				count++;
 			return 1 + count + (command >> 29);
-		
+
 		/* packet type 4 */
 		case 4:
 			for (i = 15; i <= 28; i++)
 				if (command & (1 << i)) count++;
 			return 1 + count + (command >> 29);
-		
+
 		/* packet type 5 */
 		case 5:
 			return 2 + ((command >> 3) & 0x7ffff);
-		
+
 		default:
 			printf("UNKNOWN PACKET TYPE %d\n", command & 7);
 			return 1;
@@ -1684,57 +1687,57 @@ static UINT32 cmdfifo_execute(UINT32 *fifobase, offs_t readptr)
 				case 0:		/* NOP */
 					if (LOG_CMDFIFO) logerror("  NOP\n");
 					break;
-				
+
 				case 1:		/* JSR */
 					if (LOG_CMDFIFO) logerror("  JSR $%06X\n", target);
 					voodoo_regs[cmdFifoAMin] = voodoo_regs[cmdFifoAMax] = target - 4;
 					return target;
-				
+
 				case 2:		/* RET */
 					if (LOG_CMDFIFO) logerror("  RET $%06X\n", target);
 					break;
-				
+
 				case 3:		/* JMP LOCAL FRAME BUFFER */
 					if (LOG_CMDFIFO) logerror("  JMP LOCAL FRAMEBUF $%06X\n", target);
 					voodoo_regs[cmdFifoAMin] = voodoo_regs[cmdFifoAMax] = target - 4;
 					return target;
-				
+
 				case 4:		/* JMP AGP */
 					if (LOG_CMDFIFO) logerror("  JMP AGP $%06X\n", target);
 					voodoo_regs[cmdFifoAMin] = voodoo_regs[cmdFifoAMax] = target - 4;
 					return target;
-				
+
 				default:
 					logerror("  INVALID JUMP COMMAND\n");
 					break;
 			}
 			break;
-		
+
 		/* packet type 1 */
 		case 1:
 			count = command >> 16;
 			inc = (command >> 15) & 1;
 			target = (command >> 3) & 0xfff;
-			
+
 			if (LOG_CMDFIFO) logerror("  PACKET TYPE 1: count=%d inc=%d reg=%04X\n", count, inc, target);
 			for (i = 0; i < count; i++, target += inc)
-				voodoo_regs_w(target, *src++, 0);
+				voodoo2_handle_register_w(target, *src++);
 			break;
-		
+
 		/* packet type 2 */
 		case 2:
 			if (LOG_CMDFIFO) logerror("  PACKET TYPE 2: mask=%X\n", (command >> 3) & 0x1ffffff);
 			for (i = 3; i <= 31; i++)
 				if (command & (1 << i))
-					voodoo_regs_w(bltSrcBaseAddr + (i - 3), *src++, 0);
+					voodoo2_handle_register_w(bltSrcBaseAddr + (i - 3), *src++);
 			break;
-		
+
 		/* packet type 3 */
 		case 3:
 			count = (command >> 6) & 15;
 			code = (command >> 3) & 7;
 			if (LOG_CMDFIFO) logerror("  PACKET TYPE 3: count=%d code=%d mask=%03X smode=%02X pc=%d\n", count, code, (command >> 10) & 0xfff, (command >> 22) & 0x3f, (command >> 28) & 1);
-			
+
 			voodoo_regs[sSetupMode] = ((command >> 10) & 0xfff) | ((command >> 6) & 0xf0000);
 			for (i = 0; i < count; i++)
 			{
@@ -1804,7 +1807,7 @@ static UINT32 cmdfifo_execute(UINT32 *fifobase, offs_t readptr)
 			}
 			src += command >> 29;
 			break;
-		
+
 		/* packet type 4 */
 		case 4:
 			target = (command >> 3) & 0xfff;
@@ -1812,10 +1815,10 @@ static UINT32 cmdfifo_execute(UINT32 *fifobase, offs_t readptr)
 			if (LOG_CMDFIFO) logerror("  PACKET TYPE 4: mask=%X reg=%04X pad=%d\n", (command >> 15) & 0x3fff, target, command >> 29);
 			for (i = 15; i <= 28; i++)
 				if (command & (1 << i))
-					voodoo_regs_w(target + (i - 15), *src++, 0);
+					voodoo2_handle_register_w(target + (i - 15), *src++);
 			src += command >> 29;
 			break;
-		
+
 		/* packet type 5 */
 		case 5:
 			count = (command >> 3) & 0x7ffff;
@@ -1834,7 +1837,7 @@ static UINT32 cmdfifo_execute(UINT32 *fifobase, offs_t readptr)
 					voodoo_textureram_w(target++, *src++, 0);
 			}
 			break;
-		
+
 		default:
 			fprintf(stderr, "PACKET TYPE %d\n", command & 7);
 			break;
@@ -1856,7 +1859,7 @@ static void cmdfifo_process_pending(data32_t old_depth)
 			cmdfifo_expected = cmdfifo_compute_expected_depth(cmdfifo, voodoo_regs[cmdFifoRdPtr]);
 			if (LOG_CMDFIFO_VERBOSE) logerror("PACKET TYPE %d, expecting %d words\n", cmdfifo[voodoo_regs[cmdFifoRdPtr]/4] & 7, cmdfifo_expected);
 		}
-		
+
 		/* if we got everything, execute */
 		if (voodoo_regs[cmdFifoDepth] >= cmdfifo_expected)
 		{
@@ -1888,13 +1891,13 @@ static void voodoo2_handle_register_w(offs_t offset, data32_t data)
 	/* determine which chips we are addressing */
 	chips = (offset >> 8) & 0x0f;
 	if (chips == 0) chips = 0x0f;
-	
+
 	/* the first 64 registers can be aliased differently */
 	if ((offset & 0x800c0) == 0x80000 && (voodoo_regs[fbiInit3] & 1))
 		regnum = register_alias_map[offset & 0x3f];
 	else
 		regnum = offset & 0xff;
-	
+
 	/* spread data to the chips */
 	if (chips & 1)
 		voodoo_regs[0x000 + regnum] = data;
@@ -1902,7 +1905,7 @@ static void voodoo2_handle_register_w(offs_t offset, data32_t data)
 		voodoo_regs[0x100 + regnum] = data;
 	if (chips & 4)
 		voodoo_regs[0x200 + regnum] = data;
-	
+
 	/* look up the handler and call it if valid */
 	handler = voodoo2_handler_w[regnum];
 	if (handler)
@@ -1941,7 +1944,7 @@ WRITE32_HANDLER( voodoo2_regs_w )
 		voodoo2_handle_register_w(offset, data);
 		return;
 	}
-	
+
 	/* handle legacy writes that still work in FIFO mode */
 	if (!(offset & 0x80000))
 	{
@@ -1950,20 +1953,20 @@ WRITE32_HANDLER( voodoo2_regs_w )
 			voodoo2_handle_register_w(offset, data);
 		else
 			logerror("Threw out write to %s\n", ((offset & 0xff) < 0x384/4) ? voodoo_reg_name[(offset & 0xff)] : "oob");
-		
+
 		/* otherwise, drop it on the floor */
 		return;
 	}
-	
+
 	/* handle writes to the command FIFO */
 	addr = ((voodoo_regs[cmdFifoBaseAddr] & 0x3ff) << 12) + ((offset & 0xffff) * 4);
 	old_depth = voodoo_regs[cmdFifoDepth];
-	
+
 	/* swizzling */
 	if (offset & 0x10000)
 		data = (data >> 24) | ((data >> 8) & 0xff00) | ((data << 8) & 0xff0000) | (data << 24);
 	cmdfifo[addr/4] = data;
-	
+
 	/* count holes? */
 	if (!(voodoo_regs[fbiInit7] & 0x400))
 	{
@@ -1973,7 +1976,7 @@ WRITE32_HANDLER( voodoo2_regs_w )
 			voodoo_regs[cmdFifoAMin] = voodoo_regs[cmdFifoAMax] = addr;
 			voodoo_regs[cmdFifoDepth]++;
 		}
-		
+
 		/* out-of-order, but within the min-max range */
 		else if (addr < voodoo_regs[cmdFifoAMax])
 		{
@@ -1984,7 +1987,7 @@ WRITE32_HANDLER( voodoo2_regs_w )
 				voodoo_regs[cmdFifoAMin] = voodoo_regs[cmdFifoAMax];
 			}
 		}
-		
+
 		/* out-of-order, bumping max */
 		else
 		{
@@ -1992,8 +1995,8 @@ WRITE32_HANDLER( voodoo2_regs_w )
 			voodoo_regs[cmdFifoAMax] = addr;
 		}
 	}
-	
-	if (LOG_CMDFIFO_VERBOSE) 
+
+	if (LOG_CMDFIFO_VERBOSE)
 	{
 		if ((cmdfifo[voodoo_regs[cmdFifoRdPtr]/4] & 7) == 3)
 			logerror("CMDFIFO(%06X)=%f  (min=%06X max=%06X d=%d h=%d)\n", addr, u2f(data), voodoo_regs[cmdFifoAMin], voodoo_regs[cmdFifoAMax], voodoo_regs[cmdFifoDepth], voodoo_regs[cmdFifoHoles]);

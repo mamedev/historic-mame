@@ -720,7 +720,7 @@ static void vdp_control_w(int data)
 
 static void vdp_register_w(int data)
 {
-	int scrwidth;
+	int scrwidth = 0;
 	static const UINT8 is_important[32] = { 0,0,1,1,1,1,0,1,0,0,0,1,0,1,0,0,1,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0 };
 
 	UINT8 regnum = (data & 0x1f00) >> 8; /* ---R RRRR ---- ---- */

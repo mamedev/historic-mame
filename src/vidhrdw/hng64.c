@@ -27,16 +27,16 @@ data32_t *hng64_fcram ;
 
 static void  matmul4( float *product, const float *a, const float *b ) ;
 static void  vecmatmul4( float *product, const float *a, const float *b) ;
-static float vecDotProduct( const float *a, const float *b) ;
+//static float vecDotProduct( const float *a, const float *b) ;
 void normalize(float* x) ;
 
-// 3d helpers 
+// 3d helpers
 static float uToF(UINT16 input) ;
 void SetIdentity(float *matrix) ;
 
 
-static void plot(INT32 x, INT32 y, INT32 color, struct mame_bitmap *bitmap) ;
-static void drawline2d(INT32 x0, INT32 y0, INT32 x1, INT32 y1, INT32 color, struct mame_bitmap *bitmap) ;
+//static void plot(INT32 x, INT32 y, INT32 color, struct mame_bitmap *bitmap) ;
+//static void drawline2d(INT32 x0, INT32 y0, INT32 x1, INT32 y1, INT32 color, struct mame_bitmap *bitmap) ;
 
 static float *depthBuffer ;
 static struct polygon *polys ;
@@ -194,7 +194,7 @@ static void hng64_drawsprites( struct mame_bitmap *bitmap, const struct rectangl
 
 /* Transition_Control Memory Region Map
  * ------------------------------
- * 
+ *
  *	UINT32 | Bytes    | Use
  *	-------+-76543210-+----------
  *	     0 |          |
@@ -227,7 +227,7 @@ static void hng64_transition_control(struct mame_bitmap *bitmap)
 //	float colorScaleR, colorScaleG, colorScaleB ;
 //	float finR, finG, finB ;
 	INT32 finR, finG, finB ;
-	
+
 	INT32 darkR, darkG, darkB ;
 	INT32 brigR, brigG, brigB ;
 
@@ -320,7 +320,7 @@ static void hng64_transition_control(struct mame_bitmap *bitmap)
  * UINT32 | Bytes    | Use
  * -------+-76543210-+----------------
  *   0    | xxxx---- | Activation/display list type flag.
- *        
+ *
  *    (see below)
  */
 
@@ -329,7 +329,7 @@ static void hng64_transition_control(struct mame_bitmap *bitmap)
 struct polyVert
 {
 	float worldCoords[4] ;		// World space coordinates (X Y Z 1.0)
-	
+
 	float texCoords[4] ;		// Texture coordinates (U V 0 1.0) -> OpenGL style...
 
 	float normal[4] ;			// Normal (X Y Z 1.0)
@@ -354,7 +354,7 @@ struct polygon
 
 static void PerformFrustumClip(struct polygon *p) ;
 
-static void DrawWireframe(struct polygon *p, struct mame_bitmap *bitmap) ;
+//static void DrawWireframe(struct polygon *p, struct mame_bitmap *bitmap) ;
 static void DrawShaded(struct polygon *p, struct mame_bitmap *bitmap) ;
 
 
@@ -458,9 +458,9 @@ static void hng64_draw3d( struct mame_bitmap *bitmap, const struct rectangle *cl
 				for (xxx = 0; xxx < 16; xxx++)
 					printf("%f ", projectionMatrix[xxx]) ;
 				printf("\n") ;
-				
+
 				printf("Vars   : %f %f %f %f %f %f\n", left, right, top, bottom, near, far) ;
-				printf("Camera : %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n", 
+				printf("Camera : %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f %f\n",
 								 uToF((workingList[i+0] & 0xffff0000) >> 16)*128, uToF( workingList[i+0] & 0x0000ffff)*128,
 								 uToF((workingList[i+1] & 0xffff0000) >> 16)*128, uToF( workingList[i+1] & 0x0000ffff)*128,
 
@@ -473,7 +473,7 @@ static void hng64_draw3d( struct mame_bitmap *bitmap, const struct rectangle *cl
 								 uToF((workingList[i+6] & 0xffff0000) >> 16)*128, uToF( workingList[i+6] & 0x0000ffff)*128,
 								 uToF((workingList[i+7] & 0xffff0000) >> 16)*128, uToF( workingList[i+7] & 0x0000ffff)*128) ;
 				*/
-				
+
 				break ;
 
 			case 0x0001:
@@ -529,7 +529,7 @@ static void hng64_draw3d( struct mame_bitmap *bitmap, const struct rectangle *cl
 				threeDPointer = &threeDRoms[threeDOffset] ;
 
 
-				// 66 byte versus 48 byte chunk flag 
+				// 66 byte versus 48 byte chunk flag
 				//    WRONG !  I think it's something to do with lighting...
 				//    it's 0 for the 66-byte lit globe in the character select and 0 for something in terry's hand...
 				// if (workingList[i+0] & 0x00000010)
@@ -611,9 +611,9 @@ static void hng64_draw3d( struct mame_bitmap *bitmap, const struct rectangle *cl
 						UINT8 chunkLength = 0 ;
 
 						// Some chunks only have 1 vertex (they act as a vertex fan)
-						if (triangleType == 0x97 || 
-							triangleType == 0x87 || 
-							triangleType == 0xd7 || 
+						if (triangleType == 0x97 ||
+							triangleType == 0x87 ||
+							triangleType == 0xd7 ||
 							triangleType == 0x96)
 							numVertices = 1 ;
 
@@ -811,9 +811,9 @@ static void hng64_draw3d( struct mame_bitmap *bitmap, const struct rectangle *cl
 						normalize(cullRay) ;
 						// Dot product that with the normal to see if you're negative...
 						vecmatmul4(cullNorm, modelViewMatrix, polys[numPolys].faceNormal) ;
-						
+
 						float result = vecDotProduct(cullRay, cullNorm) ;
-						
+
 						if (result < 0.0f)
 							polys[numPolys].visible = 1 ;
 						else
@@ -883,7 +883,7 @@ static void hng64_draw3d( struct mame_bitmap *bitmap, const struct rectangle *cl
 								printf("%.2x%.2x ", threeDPointer[ajg], threeDPointer[ajg+1]) ;
 							printf("\n") ;
 						}
-						// END DEBUG 
+						// END DEBUG
 */
 
 						// Advance to the next polygon chunk...
@@ -1055,7 +1055,7 @@ VIDEO_UPDATE( hng64 )
 	}
 
 	/* AJG */
-	// if(code_pressed(KEYCODE_D)) 
+	// if(code_pressed(KEYCODE_D))
 
 #if ENABLE_TRANSITIONS
 	hng64_transition_control(bitmap) ;
@@ -1102,13 +1102,13 @@ VIDEO_STOP( hng64 )
 static void matmul4( float *product, const float *a, const float *b )
 {
    int i;
-   for (i = 0; i < 4; i++) 
+   for (i = 0; i < 4; i++)
    {
       const float ai0 = a[0  + i] ;
 	  const float ai1 = a[4  + i] ;
 	  const float ai2 = a[8  + i] ;
 	  const float ai3 = a[12 + i] ;
-	  
+
 	  product[0  + i] = ai0 * b[0 ] + ai1 * b[1 ] + ai2 * b[2 ] + ai3 * b[3 ] ;
 	  product[4  + i] = ai0 * b[4 ] + ai1 * b[5 ] + ai2 * b[6 ] + ai3 * b[7 ] ;
 	  product[8  + i] = ai0 * b[8 ] + ai1 * b[9 ] + ai2 * b[10] + ai3 * b[11] ;
@@ -1129,12 +1129,12 @@ static void vecmatmul4( float *product, const float *a, const float *b)
 	product[2] = bi0 * a[2] + bi1 * a[6] + bi2 * a[10] + bi3 * a[14];
 	product[3] = bi0 * a[3] + bi1 * a[7] + bi2 * a[11] + bi3 * a[15];
 }
-
+#if 0
 static float vecDotProduct( const float *a, const float *b)
 {
 	return ((a[0]*b[0]) + (a[1]*b[1]) + (a[2]*b[2])) ;
 }
-
+#endif
 void SetIdentity(float *matrix)
 {
 	int i ;
@@ -1213,7 +1213,7 @@ int Inside(struct polyVert *v, int plane)
 	case HNG64_NEAR:
 		return (v->clipCoords[2] <=  v->clipCoords[3]) ? 1 : 0;
 		return 1 ;
-	case HNG64_FAR: 
+	case HNG64_FAR:
 		return (v->clipCoords[2] >= -v->clipCoords[3]) ? 1 : 0;
 		return 1 ;
 	}
@@ -1224,7 +1224,7 @@ int Inside(struct polyVert *v, int plane)
 void Intersect(struct polyVert *input0, struct polyVert *input1, struct polyVert *output, int plane)
 {
 	float t = 0.0f ;
-	
+
 	float *Iv0 = input0->clipCoords ;
 	float *Iv1 = input1->clipCoords ;
 	float *Ov  = output->clipCoords ;
@@ -1254,11 +1254,11 @@ void Intersect(struct polyVert *input0, struct polyVert *input1, struct polyVert
 	case HNG64_NEAR:
 		t = (Iv0[2]-Iv0[3]) / (Iv1[3]-Iv0[3]-Iv1[2]+Iv0[2]);
 		break;
-	case HNG64_FAR: 
+	case HNG64_FAR:
 		t = (Iv0[2]+Iv0[3]) / (-Iv1[3]+Iv0[3]-Iv1[2]+Iv0[2]);
 		break;
 	}
-	
+
 	Ov[0] = Iv0[0] + (Iv1[0] - Iv0[0]) * t ;
 	Ov[1] = Iv0[1] + (Iv1[1] - Iv0[1]) * t ;
 	Ov[2] = Iv0[2] + (Iv1[2] - Iv0[2]) * t ;
@@ -1276,7 +1276,7 @@ void Intersect(struct polyVert *input0, struct polyVert *input1, struct polyVert
 
 
 
-static void PerformFrustumClip(struct polygon *p) 
+static void PerformFrustumClip(struct polygon *p)
 {
 	int i, j ;
 	int k ;
@@ -1298,7 +1298,7 @@ static void PerformFrustumClip(struct polygon *p)
 	{
 		for (i = 0; i < p->n; i++)
 		{
-			k = (i+1) % p->n; // Index of next vertex 
+			k = (i+1) % p->n; // Index of next vertex
 
 			v0 = &p->vert[i] ;
 			v1 = &p->vert[k] ;
@@ -1344,6 +1344,7 @@ static void PerformFrustumClip(struct polygon *p)
 /////////////////////////
 // wireframe rendering //
 /////////////////////////
+#if 0
 
 static void plot(INT32 x, INT32 y, INT32 color, struct mame_bitmap *bitmap)
 {
@@ -1360,22 +1361,22 @@ static void drawline2d(INT32 x0, INT32 y0, INT32 x1, INT32 y1, INT32 color, stru
 	INT32 sx, sy;  /* step positive or negative (1 or -1) */
 	INT32 dx, dy;  /* delta (difference in X and Y between points) */
 	INT32 e;
-	
+
 	/*
 	* inline swap. On some architectures, the XOR trick may be faster
 	*/
 	INT32 tmpswap;
-	
+
 	/*
 	* optimize for vertical and horizontal lines here
 	*/
-	
+
 	dx = abs(x1 - x0);
 	sx = ((x1 - x0) > 0) ? 1 : -1;
 	dy = abs(y1 - y0);
 	sy = ((y1 - y0) > 0) ? 1 : -1;
 
-	if (dy > dx) 
+	if (dy > dx)
 	{
 		steep = 0;
 		SWAP(x0, y0);
@@ -1385,22 +1386,22 @@ static void drawline2d(INT32 x0, INT32 y0, INT32 x1, INT32 y1, INT32 color, stru
 
 	e = (dy << 1) - dx;
 
-	for (i = 0; i < dx; i++) 
+	for (i = 0; i < dx; i++)
 	{
-		if (steep) 
+		if (steep)
 		{
 			plot(x0,y0,color, bitmap);
-		} 
-		else 
+		}
+		else
 		{
 			plot(y0,x0,color, bitmap);
 		}
-		while (e >= 0) 
+		while (e >= 0)
 		{
 			y0 += sy;
 			e -= (dx << 1);
 		}
-		
+
 		x0 += sx;
 		e += (dy << 1);
 	}
@@ -1428,13 +1429,13 @@ static void DrawWireframe(struct polygon *p, struct mame_bitmap *bitmap)
 	}
 	*/
 }
-
+#endif
 
 ///////////////////////
 // polygon rendering //
 ///////////////////////
 
-void RasterizeTriangle_SMOOTH_TEX_PC(struct mame_bitmap *Color, 
+void RasterizeTriangle_SMOOTH_TEX_PC(struct mame_bitmap *Color,
                                      float A[4], float B[4], float C[4],
                                      float Ca[3], float Cb[3], float Cc[3], // PER-VERTEX RGB COLORS
                                      float Ta[2], float Tb[2], float Tc[2], // PER-VERTEX (S,T) TEX-COORDS
@@ -1463,7 +1464,7 @@ static void DrawShaded(struct polygon *p, struct mame_bitmap *bitmap)
 										p->vert[0].texCoords,  p->vert[j].texCoords,  p->vert[j+1].texCoords,
 										p->texType, p->palIndex, p->texIndex) ;
 
-	}	
+	}
 }
 
 
@@ -1476,27 +1477,27 @@ static void DrawShaded(struct polygon *p, struct mame_bitmap *bitmap)
 /**                                                                 **/
 /**     Output: none                                                **/
 /*********************************************************************/
-INLINE void FillSmoothTexPCHorizontalLine(struct mame_bitmap *Color, 
+INLINE void FillSmoothTexPCHorizontalLine(struct mame_bitmap *Color,
 					  int Wrapping, int Filtering, int Function,
 					  int x_start, int x_end, int y, float z_start, float z_delta,
-					  float w_start, float w_delta, float r_start, float r_delta, 
+					  float w_start, float w_delta, float r_start, float r_delta,
 					  float g_start, float g_delta, float b_start, float b_delta,
 					  float s_start, float s_delta, float t_start, float t_delta)
 {
 	float *dp = &(depthBuffer[y*Machine->visible_area.max_x+x_start]);
-	
+
 	const struct GfxElement *gfx = Machine->gfx[6] ;
 	const UINT8 *textureOffset ;
 	UINT8 paletteEntry ;
 	float t_coord, s_coord ;
-	
+
 	if (Function >= 0) textureOffset = &gfx->gfxdata[Function * 1024 * 1024] ;
 	else               textureOffset = 0x00 ;
 
 
-	for ( ; x_start <= x_end; x_start++) 
+	for ( ; x_start <= x_end; x_start++)
 	{
-		if (z_start < (*dp)) 
+		if (z_start < (*dp))
 		{
 			// MULTIPLY BACK THROUGH BY W
 			t_coord = t_start / w_start;
@@ -1509,7 +1510,7 @@ INLINE void FillSmoothTexPCHorizontalLine(struct mame_bitmap *Color,
 					paletteEntry = textureOffset[(((int)(s_coord*1024.0f))*1024 + (int)(t_coord*1024.0f))] ;
 				else
 					paletteEntry = textureOffset[(((int)(s_coord*512.0f))*1024 + (int)(t_coord*512.0f))] ;
-				
+
 				// Naieve Alpha Implementation (?) - don't draw if you're at texture index 0...
 				if (paletteEntry != 0)
 				{
@@ -1546,14 +1547,14 @@ INLINE void FillSmoothTexPCHorizontalLine(struct mame_bitmap *Color,
 // (0.5,0.5). In other words, the pixel sample point is in the center of the
 // rectangular grid cell containing the pixel sample. The framebuffer has
 // dimensions width x height (WxH). The Color buffer is a 1D array (row-major
-// order) with 3 unsigned chars per pixel (24-bit color). The Depth buffer is 
+// order) with 3 unsigned chars per pixel (24-bit color). The Depth buffer is
 // a 1D array (also row-major order) with a float value per pixel
 // For a pixel location (x,y) we can obtain
-// the Color and Depth array locations as: Color[(((int)y)*W+((int)x))*3] 
+// the Color and Depth array locations as: Color[(((int)y)*W+((int)x))*3]
 // (for the red value, green is offset +1, and blue is offset +2 and
 // Depth[((int)y)*W+((int)x)]. Fills the pixels contained in the triangle
 // with the global current color and the properly linearly interpolated depth
-// value (performs Z-buffer depth test before writing new pixel). 
+// value (performs Z-buffer depth test before writing new pixel).
 // Pixel samples that lie inside the triangle edges are filled with
 // a bias towards the minimum values (samples that lie exactly on a triangle
 // edge are filled only for minimum x values along a horizontal span and for
@@ -1561,13 +1562,13 @@ INLINE void FillSmoothTexPCHorizontalLine(struct mame_bitmap *Color,
 // Per-vertex colors are RGB floating point triplets in [0.0,255.0]. The vertices
 // include their w-components for use in linearly interpolating perspectively
 // correct color (RGB) and texture-coords (st) across the face of the triangle.
-// A texture image of RGB floating point triplets of size TWxWH is also given. 
+// A texture image of RGB floating point triplets of size TWxWH is also given.
 // Texture colors are normalized RGB values in [0,1].
-//   clamp and repeat wrapping modes : Wrapping={0,1} 
-//   nearest and bilinear filtering: Filtering={0,1} 
-//   replace and modulate application modes: Function={0,1} 
+//   clamp and repeat wrapping modes : Wrapping={0,1}
+//   nearest and bilinear filtering: Filtering={0,1}
+//   replace and modulate application modes: Function={0,1}
 //---------------------------------------------------------------------------
-void RasterizeTriangle_SMOOTH_TEX_PC(struct mame_bitmap *Color, 
+void RasterizeTriangle_SMOOTH_TEX_PC(struct mame_bitmap *Color,
                                      float A[4], float B[4], float C[4],
                                      float Ca[3], float Cb[3], float Cc[3], // PER-VERTEX RGB COLORS
                                      float Ta[2], float Tb[2], float Tc[2], // PER-VERTEX (S,T) TEX-COORDS
@@ -1577,7 +1578,7 @@ void RasterizeTriangle_SMOOTH_TEX_PC(struct mame_bitmap *Color,
 	float *p_min = ((A[1] <= B[1]) && (A[1] <= C[1])) ? A : ((B[1] <= A[1]) && (B[1] <= C[1])) ? B : C;
 	float *p_max = ((A[1] >= B[1]) && (A[1] >= C[1])) ? A : ((B[1] >= A[1]) && (B[1] >= C[1])) ? B : C;
 	float *p_mid = ((A != p_min) && (A != p_max)) ? A : ((B != p_min) && (B != p_max)) ? B : C;
-	
+
 	// Perspectively correct color interpolation, interpolate r/w, g/w, b/w, then divide by 1/w at each pixel (A[3] = 1/w)
 	float ca[3], cb[3], cc[3];
 	float ta[2], tb[2], tc[2];
@@ -1585,17 +1586,17 @@ void RasterizeTriangle_SMOOTH_TEX_PC(struct mame_bitmap *Color,
 	float *c_min;
 	float *c_mid;
 	float *c_max;
-	
+
 	// We must keep the tex coords straight with the point ordering
 	float *t_min;
 	float *t_mid;
 	float *t_max;
-	
+
 	// Find out control points for y, this divides the triangle into upper and lower
 	int   y_min;
 	int   y_max;
 	int   y_mid;
-	
+
 	// Compute the slopes of each line, and color this is used to determine the interpolation
 	float x1_slope;
 	float x2_slope;
@@ -1613,7 +1614,7 @@ void RasterizeTriangle_SMOOTH_TEX_PC(struct mame_bitmap *Color,
 	float s2_slope;
 	float t1_slope;
 	float t2_slope;
-	
+
 	// Compute the t values used in the equation Ax = Ax + (Bx - Ax)*t
 	// We only need one t, because it is only used to compute the start.
 	// Create storage for the interpolated x and z values for both lines
@@ -1627,7 +1628,7 @@ void RasterizeTriangle_SMOOTH_TEX_PC(struct mame_bitmap *Color,
 	float b1_interp;
 	float s1_interp;
 	float t1_interp;
-	
+
 	float x2_interp;
 	float z2_interp;
 	float w2_interp;
@@ -1636,7 +1637,7 @@ void RasterizeTriangle_SMOOTH_TEX_PC(struct mame_bitmap *Color,
 	float b2_interp;
 	float s2_interp;
 	float t2_interp;
-	
+
 	// Create storage for the horizontal interpolation of z and RGB color and its starting points
 	// This is used to fill the triangle horizontally
 	int   x_start,     x_end;
@@ -1648,30 +1649,30 @@ void RasterizeTriangle_SMOOTH_TEX_PC(struct mame_bitmap *Color,
 	float s_interp_x,  s_delta_x;
 	float t_interp_x,  t_delta_x;
 
-	ca[0] = Ca[0]; ca[1] = Ca[1]; ca[2] = Ca[2]; 
-	cb[0] = Cb[0]; cb[1] = Cb[1]; cb[2] = Cb[2]; 
-	cc[0] = Cc[0]; cc[1] = Cc[1]; cc[2] = Cc[2]; 
-	
+	ca[0] = Ca[0]; ca[1] = Ca[1]; ca[2] = Ca[2];
+	cb[0] = Cb[0]; cb[1] = Cb[1]; cb[2] = Cb[2];
+	cc[0] = Cc[0]; cc[1] = Cc[1]; cc[2] = Cc[2];
+
 	// Perspectively correct tex interpolation, interpolate s/w, t/w, then divide by 1/w at each pixel (A[3] = 1/w)
 	ta[0] = Ta[0]; ta[1] = Ta[1];
 	tb[0] = Tb[0]; tb[1] = Tb[1];
 	tc[0] = Tc[0]; tc[1] = Tc[1];
-	
+
 	// We must keep the colors straight with the point ordering
 	c_min = (p_min == A) ? ca : (p_min == B) ? cb : cc;
 	c_mid = (p_mid == A) ? ca : (p_mid == B) ? cb : cc;
 	c_max = (p_max == A) ? ca : (p_max == B) ? cb : cc;
-	
+
 	// We must keep the tex coords straight with the point ordering
 	t_min = (p_min == A) ? ta : (p_min == B) ? tb : tc;
 	t_mid = (p_mid == A) ? ta : (p_mid == B) ? tb : tc;
 	t_max = (p_max == A) ? ta : (p_max == B) ? tb : tc;
-	
+
 	// Find out control points for y, this divides the triangle into upper and lower
 	y_min  = (((int)p_min[1]) + 0.5 >= p_min[1]) ? p_min[1] : ((int)p_min[1]) + 1;
 	y_max  = (((int)p_max[1]) + 0.5 <  p_max[1]) ? p_max[1] : ((int)p_max[1]) - 1;
 	y_mid  = (((int)p_mid[1]) + 0.5 >= p_mid[1]) ? p_mid[1] : ((int)p_mid[1]) + 1;
-	
+
 	// Compute the slopes of each line, and color this is used to determine the interpolation
 	x1_slope = (p_max[0] - p_min[0]) / (p_max[1] - p_min[1]);
 	x2_slope = (p_mid[0] - p_min[0]) / (p_mid[1] - p_min[1]);
@@ -1689,7 +1690,7 @@ void RasterizeTriangle_SMOOTH_TEX_PC(struct mame_bitmap *Color,
 	s2_slope = (t_mid[0] - t_min[0]) / (p_mid[1] - p_min[1]);
 	t1_slope = (t_max[1] - t_min[1]) / (p_max[1] - p_min[1]);
 	t2_slope = (t_mid[1] - t_min[1]) / (p_mid[1] - p_min[1]);
-	
+
 	// Compute the t values used in the equation Ax = Ax + (Bx - Ax)*t
 	// We only need one t, because it is only used to compute the start.
 	// Create storage for the interpolated x and z values for both lines
@@ -1703,7 +1704,7 @@ void RasterizeTriangle_SMOOTH_TEX_PC(struct mame_bitmap *Color,
 	b1_interp = c_min[2] + (c_max[2] - c_min[2]) * t;
 	s1_interp = t_min[0] + (t_max[0] - t_min[0]) * t;
 	t1_interp = t_min[1] + (t_max[1] - t_min[1]) * t;
-	
+
 	t = (((float)y_min) + 0.5 - p_min[1]) / (p_mid[1] - p_min[1]);
 	x2_interp = p_min[0] + (p_mid[0] - p_min[0]) * t;
 	z2_interp = p_min[2] + (p_mid[2] - p_min[2]) * t;
@@ -1713,11 +1714,11 @@ void RasterizeTriangle_SMOOTH_TEX_PC(struct mame_bitmap *Color,
 	b2_interp = c_min[2] + (c_mid[2] - c_min[2]) * t;
 	s2_interp = t_min[0] + (t_mid[0] - t_min[0]) * t;
 	t2_interp = t_min[1] + (t_mid[1] - t_min[1]) * t;
-	
+
 	// First work on the bottom half of the triangle
 	// I'm using y_min as the incrementer because it saves space and we don't need it anymore
 	for ( ; y_min < y_mid; y_min++) {
-		
+
 		// We always want to fill left to right, so we have 2 main cases
 		// Compute the integer starting and ending points and the appropriate z by
 		// interpolating.  Remember the pixels are in the middle of the grid, i.e. (0.5,0.5,0.5)
@@ -1739,7 +1740,7 @@ void RasterizeTriangle_SMOOTH_TEX_PC(struct mame_bitmap *Color,
 			b_interp_x = b1_interp + (b2_interp - b1_interp) * t;
 			s_interp_x = s1_interp + (s2_interp - s1_interp) * t;
 			t_interp_x = t1_interp + (t2_interp - t1_interp) * t;
-			
+
 		} else {
 			x_start    = ((((int)x2_interp) + 0.5) >= x2_interp) ? x2_interp : ((int)x2_interp) + 1;
 			x_end      = ((((int)x1_interp) + 0.5) <  x1_interp) ? x1_interp : ((int)x1_interp) - 1;
@@ -1759,11 +1760,11 @@ void RasterizeTriangle_SMOOTH_TEX_PC(struct mame_bitmap *Color,
 			s_interp_x = s2_interp + (s1_interp - s2_interp) * t;
 			t_interp_x = t2_interp + (t1_interp - t2_interp) * t;
 		}
-		
+
 		// Pass the horizontal line to the filler, this could be put in the routine
 		// then interpolate for the next values of x and z
 		FillSmoothTexPCHorizontalLine(Color, Wrapping, Filtering, Function,
-			x_start, x_end, y_min, z_interp_x, z_delta_x, w_interp_x, w_delta_x, 
+			x_start, x_end, y_min, z_interp_x, z_delta_x, w_interp_x, w_delta_x,
 			r_interp_x, r_delta_x, g_interp_x, g_delta_x, b_interp_x, b_delta_x,
 			s_interp_x, s_delta_x, t_interp_x, t_delta_x);
 		x1_interp += x1_slope;   z1_interp += z1_slope;
@@ -1775,7 +1776,7 @@ void RasterizeTriangle_SMOOTH_TEX_PC(struct mame_bitmap *Color,
 		s1_interp += s1_slope;   s2_interp += s2_slope;
 		t1_interp += t1_slope;   t2_interp += t2_slope;
 	}
-	
+
 	// Now do the same thing for the top half of the triangle.
 	// We only need to recompute the x2 line because it changes at the midpoint
 	x2_slope = (p_max[0] - p_mid[0]) / (p_max[1] - p_mid[1]);
@@ -1786,7 +1787,7 @@ void RasterizeTriangle_SMOOTH_TEX_PC(struct mame_bitmap *Color,
 	b2_slope = (c_max[2] - c_mid[2]) / (p_max[1] - p_mid[1]);
 	s2_slope = (t_max[0] - t_mid[0]) / (p_max[1] - p_mid[1]);
 	t2_slope = (t_max[1] - t_mid[1]) / (p_max[1] - p_mid[1]);
-	
+
 	t = (((float)y_mid) + 0.5 - p_mid[1]) / (p_max[1] - p_mid[1]);
 	x2_interp = p_mid[0] + (p_max[0] - p_mid[0]) * t;
 	z2_interp = p_mid[2] + (p_max[2] - p_mid[2]) * t;
@@ -1796,11 +1797,11 @@ void RasterizeTriangle_SMOOTH_TEX_PC(struct mame_bitmap *Color,
 	b2_interp = c_mid[2] + (c_max[2] - c_mid[2]) * t;
 	s2_interp = t_mid[0] + (t_max[0] - t_mid[0]) * t;
 	t2_interp = t_mid[1] + (t_max[1] - t_mid[1]) * t;
-	
+
 	// We've seen this loop before haven't we?
 	// I'm using y_mid as the incrementer because it saves space and we don't need it anymore
 	for ( ; y_mid <= y_max; y_mid++) {
-		
+
 		if (x1_interp < x2_interp) {
 			x_start    = ((((int)x1_interp) + 0.5) >= x1_interp) ? x1_interp : ((int)x1_interp) + 1;
 			x_end      = ((((int)x2_interp) + 0.5) <  x2_interp) ? x2_interp : ((int)x2_interp) - 1;
@@ -1819,7 +1820,7 @@ void RasterizeTriangle_SMOOTH_TEX_PC(struct mame_bitmap *Color,
 			b_interp_x = b1_interp + (b2_interp - b1_interp) * t;
 			s_interp_x = s1_interp + (s2_interp - s1_interp) * t;
 			t_interp_x = t1_interp + (t2_interp - t1_interp) * t;
-			
+
 		} else {
 			x_start    = ((((int)x2_interp) + 0.5) >= x2_interp) ? x2_interp : ((int)x2_interp) + 1;
 			x_end      = ((((int)x1_interp) + 0.5) <  x1_interp) ? x1_interp : ((int)x1_interp) - 1;
@@ -1839,7 +1840,7 @@ void RasterizeTriangle_SMOOTH_TEX_PC(struct mame_bitmap *Color,
 			s_interp_x = s2_interp + (s1_interp - s2_interp) * t;
 			t_interp_x = t2_interp + (t1_interp - t2_interp) * t;
 		}
-		
+
 		// Pass the horizontal line to the filler, this could be put in the routine
 		// then interpolate for the next values of x and z
 		FillSmoothTexPCHorizontalLine(Color, Wrapping, Filtering, Function,

@@ -710,7 +710,7 @@ static MACHINE_DRIVER_START( leland )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION((1000000*16)/(256*60))
-	
+
 	MDRV_MACHINE_INIT(leland)
 	MDRV_NVRAM_HANDLER(leland)
 
@@ -739,7 +739,7 @@ static MACHINE_DRIVER_START( redline )
 	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
 	MDRV_CPU_PROGRAM_MAP(leland_i86_map_program,0)
 	MDRV_CPU_IO_MAP(redline_i86_map_io,0)
-	
+
 	/* sound hardware */
 	MDRV_SOUND_REPLACE("custom", CUSTOM, redline_custom_interface)
 MACHINE_DRIVER_END
@@ -751,7 +751,7 @@ static MACHINE_DRIVER_START( quarterb )
 	MDRV_IMPORT_FROM(redline)
 	MDRV_CPU_MODIFY("sound")
 	MDRV_CPU_IO_MAP(leland_i86_map_io,0)
-	
+
 	/* sound hardware */
 	MDRV_SOUND_REPLACE("custom", CUSTOM, i186_custom_interface)
 MACHINE_DRIVER_END
@@ -1817,7 +1817,7 @@ ROM_END
  *
  *************************************/
 
-#ifdef MAME_DEBUG
+#if 0
 /*
 Copy this code into the init function and modify:
 {
@@ -1844,6 +1844,7 @@ Copy this code into the init function and modify:
 	fclose(output);
 }
 */
+
 static void dasm_chunk(char *tag, UINT8 *base, UINT16 pc, UINT32 length, FILE *output)
 {
 	extern unsigned DasmZ80(char *buffer, unsigned _pc);
@@ -1875,7 +1876,6 @@ static void dasm_chunk(char *tag, UINT8 *base, UINT16 pc, UINT32 length, FILE *o
 	opcode_arg_base = old_ram;
 }
 #endif
-
 
 static void init_master_ports(UINT8 mvram_base, UINT8 io_base)
 {

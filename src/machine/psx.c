@@ -8,6 +8,7 @@
 
 #include "driver.h"
 #include "state.h"
+#include "cpu/mips/psx.h"
 #include "includes/psx.h"
 
 #define VERBOSE_LEVEL ( 0 )
@@ -69,12 +70,12 @@ static void psx_irq_update( void )
 	if( ( m_n_irqdata & m_n_irqmask ) != 0 )
 	{
 		verboselog( 2, "psx irq assert\n" );
-		cpunum_set_input_line( 0, 0, ASSERT_LINE );
+		cpunum_set_input_line( 0, MIPS_IRQ0, ASSERT_LINE );
 	}
 	else
 	{
 		verboselog( 2, "psx irq clear\n" );
-		cpunum_set_input_line( 0, 0, CLEAR_LINE );
+		cpunum_set_input_line( 0, MIPS_IRQ0, CLEAR_LINE );
 	}
 }
 
@@ -121,6 +122,7 @@ READ32_HANDLER( psx_irq_r )
 
 void psx_irq_set( UINT32 data )
 {
+	verboselog( 2, "psx_irq_set %08x\n", data );
 	m_n_irqdata |= data;
 	psx_irq_update();
 }
@@ -151,7 +153,7 @@ static void dma_stop_timer( int n_channel )
 	m_p_b_dma_running[ n_channel ] = 0;
 }
 
-static void dma_timer( int n_channel )
+static void dma_timer_adjust( int n_channel )
 {
 	if( m_p_b_dma_running[ n_channel ] )
 	{
@@ -161,6 +163,33 @@ static void dma_timer( int n_channel )
 	{
 		dma_stop_timer( n_channel );
 	}
+}
+
+static void dma_interrupt_update( void )
+{
+	int n_int;
+	int n_mask;
+
+	n_int = ( m_n_dicr >> 24 ) & 0x7f;
+	n_mask = ( m_n_dicr >> 16 ) & 0xff;
+
+	if( ( n_mask & 0x80 ) != 0 && ( n_int & n_mask ) != 0 )
+	{
+		verboselog( 2, "dma_interrupt_update( %02x, %02x ) interrupt triggered\n", n_int, n_mask );
+		m_n_dicr |= 0x80000000;
+		psx_irq_set( 0x0008 );
+	}
+	else if( ( m_n_dicr & 0x80000000 ) != 0 )
+	{
+		verboselog( 2, "dma_interrupt_update( %02x, %02x ) interrupt cleared\n", n_int, n_mask );
+		m_n_dicr &= ~0x80000000;
+	}
+	else if( n_int != 0 )
+	{
+		verboselog( 2, "dma_interrupt_update( %02x, %02x ) interrupt not enabled\n", n_int, n_mask );
+	}
+
+	m_n_dicr &= 0x00ffffff | ( m_n_dicr << 8 );
 }
 
 void dma_finished( int n_channel )
@@ -178,35 +207,33 @@ void dma_finished( int n_channel )
 			n_total = 0;
 			for( ;; )
 			{
+				if( n_address == 0xffffff )
+				{
+					m_p_n_dmabase[ n_channel ] = n_address;
+					dma_start_timer( n_channel, 26000 );
+					return;
+				}
+				if( n_total > 65535 )
+				{
+					m_p_n_dmabase[ n_channel ] = n_address;
+					dma_start_timer( n_channel, 16 );
+					return;
+				}
 				n_address &= n_adrmask;
 				n_nextaddress = g_p_n_psxram[ n_address / 4 ];
 				n_size = n_nextaddress >> 24;
 				m_p_fn_dma_write[ n_channel ]( n_address + 4, n_size );
 				n_address = ( n_nextaddress & 0xffffff );
 
-				n_total += ( n_size + 1 ) * 2;
-				if( n_total > 4096 || n_address == 0xffffff )
-				{
-					m_p_n_dmabase[ n_channel ] = n_address;
-					dma_start_timer( n_channel, n_total );
-					return;
-				}
+				n_total += ( n_size + 1 );
 			}
 		}
 	}
 
 	m_p_n_dmachannelcontrol[ n_channel ] &= ~( ( 1L << 0x18 ) | ( 1L << 0x1c ) );
 
-	if( ( m_n_dicr & ( 1 << ( 16 + n_channel ) ) ) != 0 )
-	{
-		m_n_dicr |= 0x80000000 | ( 1 << ( 24 + n_channel ) );
-		psx_irq_set( 0x0008 );
-		verboselog( 2, "dma_finished( %d ) interrupt triggered\n", n_channel );
-	}
-	else
-	{
-		verboselog( 2, "dma_finished( %d ) interrupt not enabled\n", n_channel );
-	}
+	m_n_dicr |= 1 << ( 24 + n_channel );
+	dma_interrupt_update();
 	dma_stop_timer( n_channel );
 }
 
@@ -275,7 +302,7 @@ WRITE32_HANDLER( psx_dma_w )
 					m_p_fn_dma_read[ n_channel ]( n_address, n_size );
 					if( n_channel == 1 )
 					{
-						dma_start_timer( n_channel, 16384 / 2 );
+						dma_start_timer( n_channel, 26000 );
 					}
 					else
 					{
@@ -315,7 +342,7 @@ WRITE32_HANDLER( psx_dma_w )
 						}
 						g_p_n_psxram[ n_address / 4 ] = 0xffffff;
 					}
-					dma_finished( n_channel );
+					dma_start_timer( n_channel, 2150 );
 				}
 				else
 				{
@@ -341,8 +368,19 @@ WRITE32_HANDLER( psx_dma_w )
 			m_n_dpcp = ( m_n_dpcp & mem_mask ) | data;
 			break;
 		case 0x1:
-			verboselog( 1, "psx_dma_w( %04x, %08x, %08x ) dicr\n", offset, data, mem_mask );
-			m_n_dicr = ( m_n_dicr & mem_mask ) | ( data & 0xffffff );
+			m_n_dicr = ( m_n_dicr & mem_mask ) |
+				( ~mem_mask & 0x80000000 & m_n_dicr ) |
+				( ~data & ~mem_mask & 0x7f000000 & m_n_dicr ) |
+				( data & ~mem_mask & 0x00ffffff );
+/* todo: find out whether to do this instead of dma_interrupt_update()
+
+			if( ( m_n_dicr & 0x7f000000 ) != 0 )
+			{
+				m_n_dicr &= ~0x80000000;
+			}
+*/
+			verboselog( 1, "psx_dma_w( %04x, %08x, %08x ) dicr -> %08x\n", offset, data, mem_mask, m_n_dicr );
+			dma_interrupt_update();
 			break;
 		default:
 			verboselog( 0, "psx_dma_w( %04x, %08x, %08x ) Unknown dma control register\n", offset, data, mem_mask );
@@ -393,50 +431,117 @@ READ32_HANDLER( psx_dma_r )
 
 /* Root Counters */
 
-static void *m_p_timer_root[ 7 ];
+static void *m_p_timer_root[ 3 ];
 static data16_t m_p_n_root_count[ 3 ];
 static data16_t m_p_n_root_mode[ 3 ];
 static data16_t m_p_n_root_target[ 3 ];
+static data32_t m_p_n_root_start[ 3 ];
 
-static void root_timer( int n_counter );
+#define RC_STOP ( 0x01 )
+#define RC_RESET ( 0x04 ) /* guess */
+#define RC_COUNTTARGET ( 0x08 )
+#define RC_IRQTARGET ( 0x10 )
+#define RC_IRQOVERFLOW ( 0x20 )
+#define RC_REPEAT ( 0x40 )
+#define RC_CLC ( 0x100 )
+#define RC_DIV ( 0x200 )
 
-static void root_finished( int n_counter )
+static UINT32 psxcpu_gettotalcycles( void )
 {
-	m_p_n_root_count[ n_counter ] = 0;
-	if( ( m_p_n_root_mode[ n_counter ] & 0x40 ) != 0 )
+	/* TODO: should return the start of the current tick. */
+	return cpunum_gettotalcycles(0) * 2;
+}
+
+static int root_divider( int n_counter )
+{
+	if( n_counter == 0 && ( m_p_n_root_mode[ n_counter ] & RC_CLC ) != 0 )
 	{
-		root_timer( n_counter );
+		/* TODO: pixel clock, probably based on resolution */
+		return 5;
 	}
-	if( ( m_p_n_root_mode[ n_counter ] & 0x10 ) != 0 )
+	else if( n_counter == 1 && ( m_p_n_root_mode[ n_counter ] & RC_CLC ) != 0 )
 	{
-		psx_irq_set( 0x10 << n_counter );
+		return 2150;
+	}
+	else if( n_counter == 2 && ( m_p_n_root_mode[ n_counter ] & RC_DIV ) != 0 )
+	{
+		return 8;
+	}
+	return 1;
+}
+
+static data16_t root_current( int n_counter )
+{
+	if( ( m_p_n_root_mode[ n_counter ] & RC_STOP ) != 0 )
+	{
+		return m_p_n_root_count[ n_counter ];
+	}
+	else
+	{
+		data32_t n_current;
+		n_current = psxcpu_gettotalcycles() - m_p_n_root_start[ n_counter ];
+		n_current /= root_divider( n_counter );
+		n_current += m_p_n_root_count[ n_counter ];
+		if( n_current > 0xffff )
+		{
+			/* TODO: use timer for wrap on 0x10000. */
+			m_p_n_root_count[ n_counter ] = n_current;
+			m_p_n_root_start[ n_counter ] = psxcpu_gettotalcycles();
+		}
+		return n_current;
 	}
 }
 
-static void root_timer( int n_counter )
+static int root_target( int n_counter )
 {
-	int n_duration;
+	if( ( m_p_n_root_mode[ n_counter ] & RC_COUNTTARGET ) != 0 ||
+		( m_p_n_root_mode[ n_counter ] & RC_IRQTARGET ) != 0 )
+	{
+		return m_p_n_root_target[ n_counter ];
+	}
+	return 0x10000;
+}
 
-	n_duration = m_p_n_root_target[ n_counter ] - m_p_n_root_count[ n_counter ];
-	if( n_duration < 1 )
+static void root_timer_adjust( int n_counter )
+{
+	if( ( m_p_n_root_mode[ n_counter ] & RC_STOP ) != 0 )
 	{
-		n_duration += 0x10000;
+		timer_adjust( m_p_timer_root[ n_counter ], TIME_NEVER, n_counter, 0 );
 	}
+	else
+	{
+		int n_duration;
 
-	if( n_counter == 0 )
-	{
-		n_duration *= 1200;
-	}
-	else if( n_counter == 1 && ( m_p_n_root_mode[ n_counter ] & ( 1 << 0x08 ) ) != 0 )
-	{
-		n_duration *= 4800;
-	}
-	else if( n_counter == 2 && ( m_p_n_root_mode[ n_counter ] & ( 1 << 0x09 ) ) != 0 )
-	{
-		n_duration *= 480;
-	}
+		n_duration = root_target( n_counter ) - root_current( n_counter );
+		if( n_duration < 1 )
+		{
+			n_duration += 0x10000;
+		}
 
-	timer_adjust( m_p_timer_root[ n_counter ], TIME_IN_SEC( (double)n_duration / 33868800 ), n_counter, 0 );
+		n_duration *= root_divider( n_counter );
+
+		timer_adjust( m_p_timer_root[ n_counter ], TIME_IN_SEC( (double)n_duration / 33868800 ), n_counter, 0 );
+	}
+}
+
+static void root_finished( int n_counter )
+{
+	verboselog( 2, "root_finished( %d ) %04x\n", n_counter, root_current( n_counter ) );
+//	if( ( m_p_n_root_mode[ n_counter ] & RC_COUNTTARGET ) != 0 )
+	{
+		/* TODO: wrap should be handled differently as RC_COUNTTARGET & RC_IRQTARGET don't have to be the same. */
+		m_p_n_root_count[ n_counter ] = 0;
+		m_p_n_root_start[ n_counter ] = psxcpu_gettotalcycles();
+	}
+	if( ( m_p_n_root_mode[ n_counter ] & RC_REPEAT ) != 0 )
+	{
+		root_timer_adjust( n_counter );
+	}
+	if( ( m_p_n_root_mode[ n_counter ] & RC_IRQOVERFLOW ) != 0 ||
+		( m_p_n_root_mode[ n_counter ] & RC_IRQTARGET ) != 0 )
+	{
+		psx_irq_set( 0x10 << n_counter );
+	}
 }
 
 WRITE32_HANDLER( psx_counter_w )
@@ -451,16 +556,33 @@ WRITE32_HANDLER( psx_counter_w )
 	{
 	case 0:
 		m_p_n_root_count[ n_counter ] = data;
+		m_p_n_root_start[ n_counter ] = psxcpu_gettotalcycles();
 		break;
 	case 1:
+		m_p_n_root_count[ n_counter ] = root_current( n_counter );
+		m_p_n_root_start[ n_counter ] = psxcpu_gettotalcycles();
 		m_p_n_root_mode[ n_counter ] = data;
+
+		if( ( m_p_n_root_mode[ n_counter ] & RC_RESET ) != 0 )
+		{
+			m_p_n_root_count[ n_counter ] = 0;
+		}
+//		if( ( data & 0xfca6 ) != 0 ||
+//			( ( data & 0x0100 ) != 0 && n_counter != 0 && n_counter != 1 ) ||
+//			( ( data & 0x0200 ) != 0 && n_counter != 2 ) )
+//		{
+//			printf( "mode %d 0x%04x\n", n_counter, data & 0xfca6 );
+//		}
 		break;
 	case 2:
 		m_p_n_root_target[ n_counter ] = data;
 		break;
+	default:
+		verboselog( 0, "psx_counter_w( %08x, %08x, %08x ) unknown register\n", offset, mem_mask, data );
+		return;
 	}
 
-	root_timer( n_counter );
+	root_timer_adjust( n_counter );
 }
 
 READ32_HANDLER( psx_counter_r )
@@ -473,21 +595,7 @@ READ32_HANDLER( psx_counter_r )
 	switch( offset % 4 )
 	{
 	case 0:
-		data = activecpu_gettotalcycles() / 2;
-		if( n_counter == 0 )
-		{
-			data /= 1200;
-		}
-		else if( n_counter == 1 && ( m_p_n_root_mode[ n_counter ] & ( 1 << 0x08 ) ) != 0 )
-		{
-			data /= 4800;
-		}
-		else if( n_counter == 2 && ( m_p_n_root_mode[ n_counter ] & ( 1 << 0x09 ) ) != 0 )
-		{
-			data /= 480;
-		}
-		data &= 0xffff;
-		m_p_n_root_count[ n_counter ] = data;
+		data = root_current( n_counter );
 		break;
 	case 1:
 		data = m_p_n_root_mode[ n_counter ];
@@ -496,8 +604,8 @@ READ32_HANDLER( psx_counter_r )
 		data = m_p_n_root_target[ n_counter ];
 		break;
 	default:
-		data = 0;
-		break;
+		verboselog( 0, "psx_counter_r( %08x, %08x ) unknown register\n", offset, mem_mask );
+		return 0;
 	}
 	verboselog( 1, "psx_counter_r ( %08x, %08x ) %08x\n", offset, mem_mask, data );
 	return data;
@@ -554,7 +662,7 @@ static void sio_interrupt( int n_port )
 	}
 }
 
-static void sio_timer( int n_port )
+static void sio_timer_adjust( int n_port )
 {
 	double n_time;
 	if( ( m_p_n_sio_status[ n_port ] & SIO_STATUS_TX_EMPTY ) == 0 || m_p_n_sio_tx_bits[ n_port ] != 0 )
@@ -580,18 +688,18 @@ static void sio_timer( int n_port )
 		if( m_p_n_sio_baud[ n_port ] != 0 && n_prescaler != 0 )
 		{
 			n_time = TIME_IN_SEC( (double)( n_prescaler * m_p_n_sio_baud[ n_port ] ) / 33868800 );
-			verboselog( 2, "sio_timer( %d ) = %f ( %d x %d )\n", n_port, n_time, n_prescaler, m_p_n_sio_baud[ n_port ] );
+			verboselog( 2, "sio_timer_adjust( %d ) = %f ( %d x %d )\n", n_port, n_time, n_prescaler, m_p_n_sio_baud[ n_port ] );
 		}
 		else
 		{
 			n_time = TIME_NEVER;
-			verboselog( 0, "sio_timer( %d ) invalid baud rate ( %d x %d )\n", n_port, n_prescaler, m_p_n_sio_baud[ n_port ] );
+			verboselog( 0, "sio_timer_adjust( %d ) invalid baud rate ( %d x %d )\n", n_port, n_prescaler, m_p_n_sio_baud[ n_port ] );
 		}
 	}
 	else
 	{
 		n_time = TIME_NEVER;
-		verboselog( 2, "sio_timer( %d ) finished\n", n_port );
+		verboselog( 2, "sio_timer_adjust( %d ) finished\n", n_port );
 	}
 	timer_adjust( m_p_timer_sio[ n_port ], n_time, n_port, 0 );
 }
@@ -662,7 +770,7 @@ static void sio_clock( int n_port )
 		}
 	}
 
-	sio_timer( n_port );
+	sio_timer_adjust( n_port );
 }
 
 void psx_sio_input( int n_port, int n_mask, int n_data )
@@ -699,7 +807,7 @@ WRITE32_HANDLER( psx_sio_w )
 		m_p_n_sio_tx_data[ n_port ] = data;
 		m_p_n_sio_status[ n_port ] &= ~( SIO_STATUS_TX_RDY );
 		m_p_n_sio_status[ n_port ] &= ~( SIO_STATUS_TX_EMPTY );
-		sio_timer( n_port );
+		sio_timer_adjust( n_port );
 		break;
 	case 1:
 		verboselog( 0, "psx_sio_w( %08x, %08x, %08x )\n", offset, data, mem_mask );
@@ -1346,17 +1454,17 @@ static void psx_postload( void )
 
 	for( n = 0; n < 7; n++ )
 	{
-		dma_timer( n );
+		dma_timer_adjust( n );
 	}
 
 	for( n = 0; n < 3; n++ )
 	{
-		root_timer( n );
+		root_timer_adjust( n );
 	}
 
 	for( n = 0; n < 2; n++ )
 	{
-		sio_timer( n );
+		sio_timer_adjust( n );
 	}
 
 	mdec_cos_precalc();
@@ -1425,6 +1533,7 @@ void psx_driver_init( void )
 	state_save_register_UINT16( "psx", 0, "m_p_n_root_count", m_p_n_root_count, 3 );
 	state_save_register_UINT16( "psx", 0, "m_p_n_root_mode", m_p_n_root_mode, 3 );
 	state_save_register_UINT16( "psx", 0, "m_p_n_root_target", m_p_n_root_target, 3 );
+	state_save_register_UINT32( "psx", 0, "m_p_n_root_start", m_p_n_root_start, 3 );
 
 	state_save_register_UINT32( "psx", 0, "m_p_n_sio_status", m_p_n_sio_status, 2 );
 	state_save_register_UINT32( "psx", 0, "m_p_n_sio_mode", m_p_n_sio_mode, 2 );

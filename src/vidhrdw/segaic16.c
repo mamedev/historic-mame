@@ -5,7 +5,7 @@
 ****************************************************************************
 
 	Hang On
-	------------
+	-------
 		Control Board (834-5668):
 			315-5011       -- sprite line comparitor
 			315-5012       -- sprite generator control
@@ -135,7 +135,7 @@
 		CPU Board 171-5376-01:
 			315-5195       -- memory mapper
 			315-5218       -- PCM sound controller
-			315-5155 (PAL)
+			315-5155 (PAL x2)
 			315-5222 (PAL)
 			315-5223a (PAL)
 			315-5224 (PAL)
@@ -149,6 +149,24 @@
 			315-5242       -- color encoder
 			315-5251 (PAL)
 
+	Out Run
+	-------
+		CPU Board 837-6063-01:
+			315-5195       -- memory mapper
+			315-5218       -- PCM sound controller
+			315-5155 (PAL x2)
+			315-5222 (PAL)
+			315-5223a (PAL)
+			315-5224 (PAL)
+			315-5225 (PAL)
+			315-5226 (PAL)
+
+		VIDEO Board: 837-6064, 171-5377-01
+			315-5197       -- tilemap generator
+			315-5211       -- sprite generator
+			315-5227a (PAL)
+			315-5228 (PAL)
+			315-5242       -- color encoder
 
 	Sega System 32
 	--------------
@@ -208,32 +226,34 @@
 
 	Custom parts
 	------------
-		           SYS1  SYS2  PR16  S16A  S16B  SY18  XBRD  YBRD  SYSC  SY24  SY32
-		315-5011:   xx    xx    xx    xx                                             -- sprite line comparitor
-		315-5012:   xx    xx    xx    xx                                             -- sprite generator control
-		315-5049:         xx    x2    x2                                             -- tilemap generator
-		315-5195:                           xx                                       -- memory mapper
-		315-5196:                           xx                xx                     -- sprite genereator
-		315-5197:                           xx          xx                           -- tilemap generator
-		315-5211A:                                      xx                           -- sprite generator
-		315-5242:                                 xx    xx    xx    xx    xx    xx   -- color encoder
-		315-5248:                           xx          x2    x3                     -- hardware multiplier
-		315-5249:                                       x2    x3                     -- hardware divider
-		315-5250:                           xx          x2                           -- compare/timer
-		315-5275:                                       xx                           -- road generator
-		315-5296:                                 xx          xx    xx          xx   -- I/O chip
-		315-5305:                                             xx                     --
-		315-5312:                                             xx                     -- video mixing
-		315-5313:                                 xx                xx               -- VDP
-		315-5360:                                 xx                                 -- memory mapper
-		315-5361:                                 xx                                 -- sprite generator
-		315-5362:                                 xx                                 -- tilemap generator
-		315-5385:                                                               xx   -- ???
-		315-5386:                                                               xx   -- tilemap generator
-		315-5387:                                                               xx   -- sprite generator
-		315-5388:                                                               xx   -- video mixing
-		315-5436:                                 xx                                 -- sprite/tile banking
-		315-5476:                                                               xx   -- ????
+		           SYS1  SYS2  HANG  ENDU  PR16  S16A  S16B  SY18  SHNG  ORUN  XBRD  YBRD  SYSC  SY24  SY32
+		315-5011:   xx    xx    xx    xx    xx    xx                                                         -- sprite line comparitor
+		315-5012:   xx    xx    xx    xx    xx    xx                                                         -- sprite generator control
+		315-5049:         xx    x2    x2    x2    x2                                                         -- tilemap generator
+		315-5195:                                       xx          xx    xx                                 -- memory mapper
+		315-5196:                                       xx          xx                xx                     -- sprite genereator
+		315-5197:                                       xx          xx    xx    xx                           -- tilemap generator
+		315-5211:                                                         xx                                 -- sprite generator
+		315-5211A:                                                              xx                           -- sprite generator
+		315-5218:                                                   xx    xx                                 -- PCM sound controller
+		315-5242:                                             xx    xx    xx    xx    xx    xx    xx    xx   -- color encoder
+		315-5248:                                       xx                      x2    x3                     -- hardware multiplier
+		315-5249:                                                               x2    x3                     -- hardware divider
+		315-5250:                                       xx                      x2                           -- compare/timer
+		315-5275:                                                               xx                           -- road generator
+		315-5296:                                             xx                      xx    xx          xx   -- I/O chip
+		315-5305:                                                                     xx                     --
+		315-5312:                                                                     xx                     -- video mixing
+		315-5313:                                             xx                            xx               -- VDP
+		315-5360:                                             xx                                             -- memory mapper
+		315-5361:                                             xx                                             -- sprite generator
+		315-5362:                                             xx                                             -- tilemap generator
+		315-5385:                                                                                       xx   -- ???
+		315-5386:                                                                                       xx   -- tilemap generator
+		315-5387:                                                                                       xx   -- sprite generator
+		315-5388:                                                                                       xx   -- video mixing
+		315-5436:                                             xx                                             -- sprite/tile banking
+		315-5476:                                                                                       xx   -- ????
 
 ****************************************************************************
 

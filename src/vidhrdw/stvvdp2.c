@@ -71,8 +71,6 @@ In other words,the first three types uses the offset and not the color allocated
 	\-I: NBG0 layer toggle
 	\-O: SPRITE toggle
 	\-K: RBG0 layer toggle
-	\-A: SPRITE priority decrease
-	\-Q: SPRITE priority increase
 	\-Z: Enables Window processing debug screen
 		\-C: Window 0 toggle
 		\-V: Window 1 toggle
@@ -96,6 +94,7 @@ extern void video_update_vdp1(struct mame_bitmap *bitmap, const struct rectangle
 extern int stv_vdp1_start ( void );
 static void stv_vdp2_dynamic_res_change(void);
 static void stv_vdp2_fade_effects(void);
+static void refresh_palette_data(void);
 static int stv_vdp2_window_process(int x,int y);
 
 #define LOG_VDP2 1
@@ -152,6 +151,7 @@ static int stv_vdp2_window_process(int x,int y);
 
 	#define STV_VDP2_TVMD 	((stv_vdp2_regs[0x000/4] >> 16)&0x0000ffff)
 
+	#define STV_VDP2_DISP   ((STV_VDP2_TVMD & 0x8000) >> 15)
 	#define STV_VDP2_BDCLMD	((STV_VDP2_TVMD & 0x0100) >> 8)
 	#define STV_VDP2_LSMD 	((STV_VDP2_TVMD & 0x00c0) >> 6)
 	#define STV_VDP2_VRES 	((STV_VDP2_TVMD & 0x0030) >> 4)
@@ -209,14 +209,15 @@ static int stv_vdp2_window_process(int x,int y);
 
 /* 18000E - r/w - RAMCTL - RAM Control
  bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
-       |    --    |    --    | CRMD1    | CRMD0    |    --    |    --    | VRBMD    | VRAMD    |
+       |  CRKTE   |    --    | CRMD1    | CRMD0    |    --    |    --    | VRBMD    | VRAMD    |
        |----07----|----06----|----05----|----04----|----03----|----02----|----01----|----00----|
        | RDBSB11  | RDBSB10  | RDBSB01  | RDBSB00  | RDBSA11  | RDBSA10  | RDBSA01  | RDBSA00  |
        \----------|----------|----------|----------|----------|----------|----------|---------*/
 
 	#define STV_VDP2_RAMCTL ((stv_vdp2_regs[0x00c/4] >> 0)&0x0000ffff)
 
-	#define STV_VDP2_CRMD ((STV_VDP2_RAMCTL & 0x3000) >> 12)
+	#define STV_VDP2_CRKTE ((STV_VDP2_RAMCTL & 0x8000) >> 15)
+	#define STV_VDP2_CRMD  ((STV_VDP2_RAMCTL & 0x3000) >> 12)
 
 /* 180010 - r/w - -CYCA0L - VRAM CYCLE PATTERN (BANK A0)
  bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
@@ -326,6 +327,14 @@ bit->  /----15----|----14----|----13----|----12----|----11----|----10----|----09
        |----07----|----06----|----05----|----04----|----03----|----02----|----01----|----00----|
        |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
        \----------|----------|----------|----------|----------|----------|----------|---------*/
+
+	#define STV_VDP2_MZCTL ((stv_vdp2_regs[0x020/4] >> 0)&0x0000ffff)
+
+	#define STV_VDP2_R0MZE ((STV_VDP2_MZCTL & 0x0010) >> 4)
+	#define STV_VDP2_N3MZE ((STV_VDP2_MZCTL & 0x0008) >> 3)
+	#define STV_VDP2_N2MZE ((STV_VDP2_MZCTL & 0x0004) >> 2)
+	#define STV_VDP2_N1MZE ((STV_VDP2_MZCTL & 0x0002) >> 1)
+	#define STV_VDP2_N0MZE ((STV_VDP2_MZCTL & 0x0001) >> 0)
 
 /*180024 - Special Function Code Select
 
@@ -807,10 +816,10 @@ bit->  /----15----|----14----|----13----|----12----|----11----|----10----|----09
 
 	#define STV_VDP2_MPABRA ((stv_vdp2_regs[0x050/4] >> 16)&0x0000ffff)
 
-	/* R0MPB5 = lower 6 bits of Map Address of Plane B of Tilemap RBG3 */
+	/* R0MPB5 = lower 6 bits of Map Address of Plane B of Tilemap RBG0 */
 	#define STV_VDP2_RAMPB ((STV_VDP2_MPABRA & 0x3f00) >> 8)
 
-	/* R0MPA5 = lower 6 bits of Map Address of Plane A of Tilemap RBG3 */
+	/* R0MPA5 = lower 6 bits of Map Address of Plane A of Tilemap RBG0 */
 	#define STV_VDP2_RAMPA ((STV_VDP2_MPABRA & 0x003f) >> 0)
 
 
@@ -878,12 +887,29 @@ bit->  /----15----|----14----|----13----|----12----|----11----|----10----|----09
        |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
        \----------|----------|----------|----------|----------|----------|----------|---------*/
 
+	#define STV_VDP2_MPABRB ((stv_vdp2_regs[0x060/4] >> 16)&0x0000ffff)
+
+	/* R0MPB5 = lower 6 bits of Map Address of Plane B of Tilemap RBG0 */
+	#define STV_VDP2_RBMPB ((STV_VDP2_MPABRB & 0x3f00) >> 8)
+
+	/* R0MPA5 = lower 6 bits of Map Address of Plane A of Tilemap RBG0 */
+	#define STV_VDP2_RBMPA ((STV_VDP2_MPABRB & 0x003f) >> 0)
+
+
 /* 180062 - Map (Rotation Parameter B, Plane C,D)
  bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
        |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
        |----07----|----06----|----05----|----04----|----03----|----02----|----01----|----00----|
        |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
        \----------|----------|----------|----------|----------|----------|----------|---------*/
+
+	#define STV_VDP2_MPCDRB ((stv_vdp2_regs[0x060/4] >> 0)&0x0000ffff)
+
+	/* R0MPB5 = lower 6 bits of Map Address of Plane D of Tilemap RBG0 */
+	#define STV_VDP2_RBMPD ((STV_VDP2_MPCDRB & 0x3f00) >> 8)
+
+	/* R0MPA5 = lower 6 bits of Map Address of Plane C of Tilemap RBG0 */
+	#define STV_VDP2_RBMPC ((STV_VDP2_MPCDRB & 0x003f) >> 0)
 
 /* 180064 - Map (Rotation Parameter B, Plane E,F)
  bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
@@ -1230,6 +1256,10 @@ bit->  /----15----|----14----|----13----|----12----|----11----|----10----|----09
        |----07----|----06----|----05----|----04----|----03----|----02----|----01----|----00----|
        |    --    |    --    |    --    |    --    |    --    |    --    |    --    |    --    |
        \----------|----------|----------|----------|----------|----------|----------|---------*/
+
+	#define STV_VDP2_RPMD_ ((stv_vdp2_regs[0x0b0/4] >> 16)&0x0000ffff)
+
+	#define STV_VDP2_RPMD (STV_VDP2_RPMD_ & 0x0003)
 
 /* 1800b2 - Rotation Parameter Read Control
  bit-> /----15----|----14----|----13----|----12----|----11----|----10----|----09----|----08----\
@@ -1816,9 +1846,19 @@ bit->  /----15----|----14----|----13----|----12----|----11----|----10----|----09
 static struct stv_vdp2_debugging
 {
 	UINT8 l_en;	 /*For Layer enable/disable*/
-	UINT8 s_pri; /*Sprite Priority Number*/
 	UINT8 win;	 /*Enters into Window effect debug menu*/
+	UINT32 error; /*bits for VDP2 error logging*/
 } debug;
+
+/*
+Errors are currently mapped as follows:
+x--- ---- ---- ---- ---- ---- ---- ---- VRAM Size = 8 Mbit
+-x-- ---- ---- ---- ---- ---- ---- ---- CRKTE used
+---- ---- ---- ---- ---- ---- ---- --x- Mosaic Control
+---- ---- ---- ---- ---- ---- ---- ---x Window on tilemap
+*/
+#define VDP2_ERR(_bit_) (debug.error & _bit_)
+#define VDP2_CHK(_bit_) (debug.error^=_bit_)
 
 /* Not sure if to use this for the rotating tilemaps as well or just use different draw functions, might add too much bloat */
 static struct stv_vdp2_tilemap_capabilities
@@ -2284,7 +2324,7 @@ static void stv_vdp2_draw_basic_bitmap(struct mame_bitmap *bitmap, const struct 
 	be added...*/
 	if(STV_VDP2_LSMD == 3)
 	{
-		yoffs = (stv2_current_tilemap.scrolly & 1)*(ysize-1);
+		yoffs = (stv2_current_tilemap.scrolly & 1)*(ysize);
 	}
 
 	switch( stv2_current_tilemap.colour_depth )
@@ -2959,6 +2999,7 @@ static void stv_vdp2_draw_basic_tilemap(struct mame_bitmap *bitmap, const struct
 	}
 }
 
+
 static void stv_vdp2_check_tilemap(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
 	/* the idea is here we check the tilemap capabilities / whats enabled and call an appropriate tilemap drawing routine, or
@@ -2971,6 +3012,18 @@ static void stv_vdp2_check_tilemap(struct mame_bitmap *bitmap, const struct rect
 	else
 	{
 		stv_vdp2_draw_basic_tilemap(bitmap, cliprect);
+
+		if((stv2_current_tilemap.window_control & 6) != 0 && VDP2_ERR(1))
+		{
+			VDP2_CHK(1);
+			printf("Window control enabled on a tilemap plane = %02x\n",stv2_current_tilemap.window_control);
+		}
+	}
+
+	if((STV_VDP2_MZCTL & 0x1f) != 0 && VDP2_ERR(2))
+	{
+		VDP2_CHK(2);
+		printf("Mosaic control enabled = %04x\n",STV_VDP2_MZCTL);
 	}
 }
 
@@ -3347,11 +3400,25 @@ static void stv_vdp2_draw_RBG0(struct mame_bitmap *bitmap, const struct rectangl
 	stv2_current_tilemap.bitmap_enable = STV_VDP2_R0BMEN;
 	stv2_current_tilemap.bitmap_size = STV_VDP2_R0BMSZ;
 	stv2_current_tilemap.bitmap_palette_number = STV_VDP2_R0BMP;
-	stv2_current_tilemap.bitmap_map = STV_VDP2_RAMP_;
-	stv2_current_tilemap.map_offset[0] = STV_VDP2_RAMPA | (STV_VDP2_RAMP_ << 6);
-	stv2_current_tilemap.map_offset[1] = STV_VDP2_RAMPB | (STV_VDP2_RAMP_ << 6);
-	stv2_current_tilemap.map_offset[2] = STV_VDP2_RAMPC | (STV_VDP2_RAMP_ << 6);
-	stv2_current_tilemap.map_offset[3] = STV_VDP2_RAMPD | (STV_VDP2_RAMP_ << 6);
+	switch(STV_VDP2_RPMD)
+	{
+		case 0://Rotation Parameter A
+		case 2://Rotation Parameter A & B CKTE (wrong)
+		case 3://Rotation Parameter A & B Window (wrong)
+			stv2_current_tilemap.bitmap_map = STV_VDP2_RAMP_;
+			stv2_current_tilemap.map_offset[0] = STV_VDP2_RAMPA | (STV_VDP2_RAMP_ << 6);
+			stv2_current_tilemap.map_offset[1] = STV_VDP2_RAMPB | (STV_VDP2_RAMP_ << 6);
+			stv2_current_tilemap.map_offset[2] = STV_VDP2_RAMPC | (STV_VDP2_RAMP_ << 6);
+			stv2_current_tilemap.map_offset[3] = STV_VDP2_RAMPD | (STV_VDP2_RAMP_ << 6);
+			break;
+		case 1://Rotation Parameter B
+			stv2_current_tilemap.bitmap_map = STV_VDP2_RBMP_;
+			stv2_current_tilemap.map_offset[0] = STV_VDP2_RBMPA | (STV_VDP2_RBMP_ << 6);
+			stv2_current_tilemap.map_offset[1] = STV_VDP2_RBMPB | (STV_VDP2_RBMP_ << 6);
+			stv2_current_tilemap.map_offset[2] = STV_VDP2_RBMPC | (STV_VDP2_RBMP_ << 6);
+			stv2_current_tilemap.map_offset[3] = STV_VDP2_RBMPD | (STV_VDP2_RBMP_ << 6);
+			break;
+	}
 
 	stv2_current_tilemap.pattern_data_size = STV_VDP2_R0PNB;
 	stv2_current_tilemap.character_number_supplement = STV_VDP2_R0CNSM;
@@ -3448,7 +3515,6 @@ READ32_HANDLER ( stv_vdp2_vram_r )
 	return stv_vdp2_vram[offset];
 }
 
-
 WRITE32_HANDLER ( stv_vdp2_cram_w )
 {
 	int r,g,b;
@@ -3513,6 +3579,71 @@ WRITE32_HANDLER ( stv_vdp2_cram_w )
 	}
 }
 
+static void refresh_palette_data()
+{
+	int r,g,b;
+	int c_i;
+
+	for(c_i=0;c_i<0x800;c_i++)
+	{
+		switch( STV_VDP2_CRMD )
+		{
+			/*Mode 2/3*/
+			case 2:
+			case 3:
+			{
+				b = ((stv_vdp2_cram[c_i] & 0x00ff0000) >> 16);
+				g = ((stv_vdp2_cram[c_i] & 0x0000ff00) >> 8);
+				r = ((stv_vdp2_cram[c_i] & 0x000000ff) >> 0);
+				palette_set_color(c_i,r,g,b);
+			}
+			break;
+			/*Mode 0*/
+			case 0:
+			{
+				//c_i &= 0x3ff;
+
+				b = ((stv_vdp2_cram[c_i] & 0x00007c00) >> 10);
+				g = ((stv_vdp2_cram[c_i] & 0x000003e0) >> 5);
+				r = ((stv_vdp2_cram[c_i] & 0x0000001f) >> 0);
+				b*=0x8;
+				g*=0x8;
+				r*=0x8;
+				palette_set_color((c_i*2)+1,r,g,b);
+				b = ((stv_vdp2_cram[c_i] & 0x7c000000) >> 26);
+				g = ((stv_vdp2_cram[c_i] & 0x03e00000) >> 21);
+				r = ((stv_vdp2_cram[c_i] & 0x001f0000) >> 16);
+				b*=0x8;
+				g*=0x8;
+				r*=0x8;
+				palette_set_color(c_i*2,r,g,b);
+			}
+			break;
+			/*Mode 1*/
+			case 1:
+			{
+				//c_i &= 0x7ff;
+
+				b = ((stv_vdp2_cram[c_i] & 0x00007c00) >> 10);
+				g = ((stv_vdp2_cram[c_i] & 0x000003e0) >> 5);
+				r = ((stv_vdp2_cram[c_i] & 0x0000001f) >> 0);
+				b*=0x8;
+				g*=0x8;
+				r*=0x8;
+				palette_set_color((c_i*2)+1,r,g,b);
+				b = ((stv_vdp2_cram[c_i] & 0x7c000000) >> 26);
+				g = ((stv_vdp2_cram[c_i] & 0x03e00000) >> 21);
+				r = ((stv_vdp2_cram[c_i] & 0x001f0000) >> 16);
+				b*=0x8;
+				g*=0x8;
+				r*=0x8;
+				palette_set_color(c_i*2,r,g,b);
+			}
+			break;
+		}
+	}
+}
+
 READ32_HANDLER ( stv_vdp2_cram_r )
 {
 	return stv_vdp2_cram[offset];
@@ -3520,7 +3651,14 @@ READ32_HANDLER ( stv_vdp2_cram_r )
 
 WRITE32_HANDLER ( stv_vdp2_regs_w )
 {
+	static UINT8 old_crmd;
 	COMBINE_DATA(&stv_vdp2_regs[offset]);
+
+	if(old_crmd != STV_VDP2_CRMD)
+	{
+		old_crmd = STV_VDP2_CRMD;
+		refresh_palette_data();
+	}
 }
 
 extern int stv_vblank,stv_hblank;
@@ -3540,6 +3678,7 @@ READ32_HANDLER ( stv_vdp2_regs_r )
 								     /*H-Counter                               V-Counter                                         */
 			stv_vdp2_regs[offset] = (((Machine->visible_area.max_x - 1)<<16)&0x3ff0000)|(((Machine->visible_area.max_y - 1)<<0)& ((STV_VDP2_LSMD == 3) ? 0x7ff : 0x3ff));
 			if(LOG_VDP2) logerror("CPU #%d PC(%08x) = VDP2: H/V counter read : %08x\n",cpu_getactivecpu(),activecpu_get_pc(),stv_vdp2_regs[offset]);
+			stv_vdp2_regs[offset] = 0;
 		break;
 	}
 	return stv_vdp2_regs[offset];
@@ -3575,7 +3714,7 @@ VIDEO_START( stv_vdp2 )
 	stv_vdp2_start();
 	stv_vdp1_start();
 	debug.l_en = 0xff;
-	debug.s_pri = 6;
+	debug.error = 0xffffffff;
 
 	return 0;
 }
@@ -4005,9 +4144,7 @@ VIDEO_UPDATE( stv_vdp2 )
 {
 	static UINT8 pri;
 
-//#ifndef MAME_DEBUG
 	stv_vdp2_dynamic_res_change();
-//#endif
 
 	video_update_vdp1(bitmap,cliprect);
 
@@ -4015,20 +4152,64 @@ VIDEO_UPDATE( stv_vdp2 )
 
 	stv_vdp2_draw_back(bitmap,cliprect);
 
-	/*If a plane has a priority value of zero it isn't shown at all.*/
-	for(pri=1;pri<8;pri++)
+	#ifdef MAME_DEBUG
+	if(code_pressed_memory(KEYCODE_T))
 	{
-		if (!(code_pressed(KEYCODE_T))) {if(pri==STV_VDP2_N3PRIN) stv_vdp2_draw_NBG3(bitmap,cliprect);}
-		if (!(code_pressed(KEYCODE_Y))) {if(pri==STV_VDP2_N2PRIN) stv_vdp2_draw_NBG2(bitmap,cliprect);}
-		if (!(code_pressed(KEYCODE_U))) {if(pri==STV_VDP2_N1PRIN) stv_vdp2_draw_NBG1(bitmap,cliprect);}
-		if (!(code_pressed(KEYCODE_I))) {if(pri==STV_VDP2_N0PRIN) stv_vdp2_draw_NBG0(bitmap,cliprect);}
-		if (!(code_pressed(KEYCODE_K))) {if(pri==STV_VDP2_R0PRIN) stv_vdp2_draw_RBG0(bitmap,cliprect);}
-		if (!(code_pressed(KEYCODE_O))) {stv_vdp2_drawsprites(bitmap,cliprect,pri);}
+		debug.l_en^=1;
+		usrintf_showmessage("NBG3 %sabled",debug.l_en & 1 ? "en" : "dis");
+	}
+	if(code_pressed_memory(KEYCODE_Y))
+	{
+		debug.l_en^=2;
+		usrintf_showmessage("NBG2 %sabled",debug.l_en & 2 ? "en" : "dis");
+	}
+	if(code_pressed_memory(KEYCODE_U))
+	{
+		debug.l_en^=4;
+		usrintf_showmessage("NBG1 %sabled",debug.l_en & 4 ? "en" : "dis");
+	}
+	if(code_pressed_memory(KEYCODE_I))
+	{
+		debug.l_en^=8;
+		usrintf_showmessage("NBG0 %sabled",debug.l_en & 8 ? "en" : "dis");
+	}
+	if(code_pressed_memory(KEYCODE_K))
+	{
+		debug.l_en^=0x10;
+		usrintf_showmessage("RBG0 %sabled",debug.l_en & 0x10 ? "en" : "dis");
+	}
+	if(code_pressed_memory(KEYCODE_O))
+	{
+		debug.l_en^=0x20;
+		usrintf_showmessage("SPRITE %sabled",debug.l_en & 0x20 ? "en" : "dis");
+	}
+	#endif
+
+	if(STV_VDP2_DISP != 0)
+	{
+		/*If a plane has a priority value of zero it isn't shown at all.*/
+		for(pri=1;pri<8;pri++)
+		{
+			if (debug.l_en & 1)    {if(pri==STV_VDP2_N3PRIN) stv_vdp2_draw_NBG3(bitmap,cliprect);}
+			if (debug.l_en & 2)    {if(pri==STV_VDP2_N2PRIN) stv_vdp2_draw_NBG2(bitmap,cliprect);}
+			if (debug.l_en & 4)    {if(pri==STV_VDP2_N1PRIN) stv_vdp2_draw_NBG1(bitmap,cliprect);}
+			if (debug.l_en & 8)    {if(pri==STV_VDP2_N0PRIN) stv_vdp2_draw_NBG0(bitmap,cliprect);}
+			if (debug.l_en & 0x10) {if(pri==STV_VDP2_R0PRIN) stv_vdp2_draw_RBG0(bitmap,cliprect);}
+			if (debug.l_en & 0x20) {stv_vdp2_drawsprites(bitmap,cliprect,pri);}
+		}
 	}
 
 #ifdef MAME_DEBUG
-	if(STV_VDP2_VRAMSZ)
-		usrintf_showmessage("Warning: VRAM Size = 8 MBit!");
+	if(STV_VDP2_VRAMSZ && VDP2_ERR(0x80000000))
+	{
+		VDP2_CHK(0x80000000);
+		printf("Warning: VRAM Size = 8 MBit!\n");
+	}
+	if(STV_VDP2_CRKTE && VDP2_ERR(0x40000000))
+	{
+		VDP2_CHK(0x40000000);
+		printf("Warning: Color RAM Coefficient Table Ctrl used\n");
+	}
 
 	/*usrintf_showmessage("N0 %02x %04x %02x %04x N1 %02x %04x %02x %04x"
 	,STV_VDP2_N0ZMXI,STV_VDP2_N0ZMXD

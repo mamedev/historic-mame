@@ -749,6 +749,11 @@ int cli_frontend_init (int argc, char **argv)
 
 void cli_frontend_exit(void)
 {
+#ifdef MESS
+	if (win_write_config)
+		write_config(NULL, Machine->gamedrv);
+#endif /* MESS */
+
 	free(gamename);
 	gamename = NULL;
 
@@ -777,11 +782,6 @@ void cli_frontend_exit(void)
 		mame_fclose(options.language_file);
 		options.language_file = NULL;
 	}
-
-#ifdef MESS
-	if (win_write_config)
-		write_config(NULL, Machine->gamedrv);
-#endif /* MESS */
 }
 
 static int config_handle_arg(char *arg)

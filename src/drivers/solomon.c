@@ -27,6 +27,27 @@ static WRITE8_HANDLER( solomon_sh_command_w )
 	cpunum_set_input_line(1,INPUT_LINE_NMI,PULSE_LINE);
 }
 
+/* this is checked on the title screen and when you reach certain scores in the game
+   it could be a form of protection.  the real board needs to be analysed to find out
+   what really lives here */
+
+static READ8_HANDLER( solomon_0xe603_r )
+{
+	if (activecpu_get_pc()==0x161) // all the time .. return 0 to act as before  for coin / startup etc.
+	{
+		return 0;
+	}
+	else if (activecpu_get_pc()==0x4cf0) // stop it clearing the screen at certain scores
+	{
+		return (activecpu_get_reg(Z80_BC) & 0x08);
+	}
+	else
+	{
+		printf("unhandled solomon_0xe603_r %04x\n",activecpu_get_pc());
+		return 0;
+	}
+}
+
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0xbfff) AM_READ(MRA8_ROM)
@@ -37,6 +58,7 @@ static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xe600, 0xe600) AM_READ(input_port_0_r)
 	AM_RANGE(0xe601, 0xe601) AM_READ(input_port_1_r)
 	AM_RANGE(0xe602, 0xe602) AM_READ(input_port_2_r)
+	AM_RANGE(0xe603, 0xe603) AM_READ(solomon_0xe603_r)
 	AM_RANGE(0xe604, 0xe604) AM_READ(input_port_3_r)	/* DSW1 */
 	AM_RANGE(0xe605, 0xe605) AM_READ(input_port_4_r)	/* DSW2 */
 	AM_RANGE(0xf000, 0xffff) AM_READ(MRA8_ROM)

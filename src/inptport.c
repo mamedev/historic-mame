@@ -2002,13 +2002,14 @@ profiler_mark(PROFILER_INPUT);
 
 		/* insert into the port */
 		input_port_value[port] = (input_port_value[port] & ~info->port->mask) | ((value << info->shift) & info->port->mask);
+
+		/* handle playback/record scenarios */
+		if (playback)
+			read_port_value(playback, &input_port_value[port]);
+		if (record)
+			write_port_value(record, input_port_value[port]);
 	}
 
-	/* handle playback/record scenarios */
-	if (playback)
-		read_port_value(playback, &input_port_value[port]);
-	if (record)
-		write_port_value(record, input_port_value[port]);
 
 profiler_mark(PROFILER_END);
 }

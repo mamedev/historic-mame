@@ -44,7 +44,7 @@ extern int win_window_mode;
 
 #define MAX_KEYS			256
 
-#define MAX_JOY				256
+#define MAX_JOY				512
 #define MAX_AXES			8
 #define MAX_BUTTONS			32
 #define MAX_POV				4

@@ -216,10 +216,10 @@ typedef struct {
 	int (*irq_callback)(int irqline);
 
 
-	// STUFF added for the 6xx series 
+	// STUFF added for the 6xx series
 	UINT32 dec;
 	UINT32 fpscr;
-	
+
 	FPR	fpr[32];
 	UINT32 sr[16];
 
@@ -344,7 +344,7 @@ INLINE void ppc_set_spr(int spr, UINT32 value)
 			case SPR603E_DEC:
 				if((value & 0x80000000) && !(DEC & 0x80000000))
 				{
-					/* trigger interrupt */		
+					/* trigger interrupt */
 					printf("ERROR: set_spr to DEC triggers IRQ\n");
 					exit(1);
 				}
@@ -386,7 +386,7 @@ INLINE void ppc_set_spr(int spr, UINT32 value)
 			case SPR603E_DBAT2U:		ppc.dbat2u = value; return;
 			case SPR603E_DBAT3L:		ppc.dbat3l = value; return;
 			case SPR603E_DBAT3U:		ppc.dbat3u = value; return;
-		
+
 			case SPR603E_SDR1:
 				ppc.sdr1 = value;
 				return;
@@ -414,7 +414,7 @@ INLINE void ppc_set_spr(int spr, UINT32 value)
 		{
 			case SPR403_TBHI:		ppc.tb &= 0xffffffff; ppc.tb |= (UINT64)value << 32; return;
 			case SPR403_TBLO:		ppc.tb &= U64(0xffffffff00000000); ppc.tb |= value; return;
-			case SPR403_TSR:		
+			case SPR403_TSR:
 				ppc.tsr &= ~value; // 1 clears, 0 does nothing
 				return;
 			case SPR403_ESR:		ppc.esr = value; return;
@@ -519,6 +519,7 @@ INLINE UINT32 ppc_get_spr(int spr)
 #endif
 
 	osd_die("ppc: get_spr: unknown spr %d (%03X) !\n", spr, spr);
+	return 0;
 }
 
 INLINE void ppc_set_msr(UINT32 value)
@@ -621,9 +622,9 @@ INLINE UINT16 READ16(UINT32 a)
 
 	if( a & 0x1 ) {
 		osd_die("ppc: Unaligned read16 %08X\n", a);
-	} else {
-		return program_read_word_32be(a);
-	}
+	} 
+
+	return program_read_word_32be(a);
 }
 
 INLINE UINT32 READ32(UINT32 a)
@@ -638,9 +639,9 @@ INLINE UINT32 READ32(UINT32 a)
 
 	if( a & 0x3 ) {
 		osd_die("ppc: Unaligned read32 %08X\n", a);
-	} else {
-		return program_read_dword_32be(a);
 	}
+		
+	return program_read_dword_32be(a);
 }
 
 INLINE UINT64 READ64(UINT32 a)
@@ -763,7 +764,7 @@ void ppc_init(void)
 
 		switch(ppc_opcode_common[i].code)
 		{
-			case 19:	
+			case 19:
 				optable19[ppc_opcode_common[i].subcode] = ppc_opcode_common[i].handler;
 				break;
 
@@ -788,7 +789,7 @@ void ppc_init(void)
 			int mb = i;
 			int me = j;
 			mask = ((UINT32)0xFFFFFFFF >> mb) ^ ((me >= 31) ? 0 : ((UINT32)0xFFFFFFFF >> (me + 1)));
-			if( mb > me ) 
+			if( mb > me )
 				mask = ~mask;
 
 			ppc_rotate_mask[i][j] = mask;
@@ -828,7 +829,7 @@ static void ppc403_exit(void)
 static void ppc603_init(void)
 {
 	int i ;
-	
+
 	ppc_init() ;
 
 	optable[48] = ppc_lfs;
@@ -924,10 +925,11 @@ static void ppc603_exit(void)
 
 }
 
+#if (HAS_PPC602)
 static void ppc602_init(void)
 {
 	int i ;
-	
+
 	ppc_init() ;
 
 	optable[48] = ppc_lfs;
@@ -1023,6 +1025,7 @@ static void ppc602_exit(void)
 {
 
 }
+#endif
 
 static void ppc_get_context(void *dst)
 {
@@ -1195,7 +1198,7 @@ void ppc_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_MAX_INSTRUCTION_BYTES:			info->i = 4;							break;
 		case CPUINFO_INT_MIN_CYCLES:					info->i = 1;							break;
 		case CPUINFO_INT_MAX_CYCLES:					info->i = 40;							break;
-		
+
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 32;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 32;					break;
 		case CPUINFO_INT_ADDRBUS_SHIFT + ADDRESS_SPACE_PROGRAM: info->i = 0;					break;
@@ -1326,7 +1329,7 @@ void ppc403_get_info(UINT32 state, union cpuinfo *info)
 		/* --- the following bits of info are returned as 64-bit signed integers --- */
 		case CPUINFO_INT_INPUT_LINES:					info->i = 5;							break;
 		case CPUINFO_INT_ENDIANNESS:					info->i = CPU_IS_BE;					break;
-		
+
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_SET_INFO:						info->setinfo = ppc403_set_info;		break;
 		case CPUINFO_PTR_INIT:							info->init = ppc403_init;				break;
@@ -1353,7 +1356,7 @@ void ppc603_get_info(UINT32 state, union cpuinfo *info)
 
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 64;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 32;					break;
-		
+
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_SET_INFO:					info->setinfo = ppc603_set_info;		break;
 		case CPUINFO_PTR_INIT:						info->init = ppc603_init;				break;
@@ -1396,7 +1399,7 @@ void ppc602_get_info(UINT32 state, union cpuinfo *info)
 
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 64;					break;
 		case CPUINFO_INT_ADDRBUS_WIDTH + ADDRESS_SPACE_PROGRAM: info->i = 32;					break;
-		
+
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_SET_INFO:					info->setinfo = ppc602_set_info;		break;
 		case CPUINFO_PTR_INIT:						info->init = ppc602_init;				break;

@@ -1121,6 +1121,79 @@ Notes:
       VSync: 60Hz
 
 
+***************************************************************************
+
+Rezon (Taito License)
+Allumer / Taito, 1992
+
+This game runs on fairly standard Allumer hardware.
+
+PCB Layout
+----------
+
+P0-063A (Allumer code printed on the PCB)
+M6100627A REZON (Taito sticker)
+|-----------------------------------------------------------|
+|  VOL   3404   6264 US001009     US001007      US001005    |
+| MB3730                    US001008      US001006          |
+|                                                           |
+|                                                           |
+|                                                           |
+|  PAL4           X1-010       X1-011       X1-011          |
+|                                                           |
+|                                                           |
+|J                                                          |
+|A                             X1-012       X1-012          |
+|M                                                          |
+|M  X1-007                                                  |
+|A                                                          |
+|        6116  6116                           PAL2   PAL3   |
+|                                                           |
+|                         62256       62256                 |
+|  16MHZ                  62256       62256     6264  6264  |
+|         DSW2(8)                                           |
+|  X1-004                 PAL1                              |
+|         DSW1(8)  |------------|US001004      REZON_1_P    |
+|                  |   68000    |   US001003      REZON_0_P |
+|  RESET_SW        |------------|       62256          62256|
+|-----------------------------------------------------------|
+Notes:
+      68000 clock  - 16.000MHz
+      X1-010 clocks - pin1 16.000MHz, pin2 8.000MHz, pin79 4.000MHz, pin80 2.000MHz
+      VSync - 57.5Hz
+      PAL1  - PAL16L8 labelled 'US-010'
+      PAL2  - PAL16L8 labelled 'US-011'
+      PAL3  - PAL16L8 labelled 'US-012'
+      PAL4  - PAL16L8 labelled 'US-013'
+      62256 - 32K x8 SRAM
+      6264  - 8K x8 SRAM
+      6116  - 2K x8 SRAM
+
+      Custom IC's -
+                    X1-001A (SDIP64)    \ Sprite Generators
+                    X1-002A (SDIP64)    /
+                    X1-004  (SDIP52)      Input Related Functions (connected to joystick/input controls)
+                    X1-007  (SDIP42)      Video DAC? (connected to RGB output)
+                    X1-010  (QFP80)       Sound Chip, 16Bit PCM
+                    X1-011  (x2, QFP100)\ Tilemap Generators
+                    X1-012  (x2, QFP100)/
+
+      ROMs -
+            Filename         Type               Use
+            ---------------------------------------------------
+            REZON_0_P.U3     27C1000 (DIP32)    \
+            REZON_1_P.U4     27C1000 (DIP32)    | 68000 Program
+            US001003.U102    27C1000 (DIP32)    |
+            US001004.U103    27C1000 (DIP32)    /
+
+            US001005.U63     4M MaskROM (DIP42) \ Sprites
+            US001006.U64     4M MaskROM (DIP42) /
+
+            US001007.U66     4M MaskROM (DIP42) \ Tiles
+            US001008.U68     4M MaskROM (DIP42) /
+
+            US001009.U70     4M MaskROM (DIP32)   PCM Samples
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -4829,7 +4902,7 @@ INPUT_PORTS_START( rezon )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 ) PORT_IMPULSE(5)
 	PORT_BIT(  0x0004, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_SERVICE_NO_TOGGLE( 0x0008, IP_ACTIVE_LOW)
-	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT(  0x0010, IP_ACTIVE_LOW, IPT_UNKNOWN ) // no taito logo
 	PORT_BIT(  0x0020, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT(  0x0040, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT(  0x0080, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -4886,6 +4959,13 @@ INPUT_PORTS_START( rezon )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Free_Play ) )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( rezont )
+
+	PORT_INCLUDE( rezon )
+
+	PORT_MODIFY("IN2")
+	PORT_BIT(  0x0010, IP_ACTIVE_HIGH, IPT_UNKNOWN ) // gives the taito logo
+INPUT_PORTS_END
 
 /***************************************************************************
 							SD Gundam Neo Battling
@@ -7788,6 +7868,31 @@ ROM_START( rezon )
 	ROM_LOAD16_WORD_SWAP( "us001009.u70",  0x000000, 0x100000, CRC(0d7d2e2b) SHA1(cfba19314ecb0a49ed9ff8df32cd6a3fe37ff526) )
 ROM_END
 
+/* note the ONLY byte that changes is the year, 1992 instead of 1991.  The actual license is controlled by a jumper but
+   since Taito released the game in 1992 this is the Taito version and we hardcode the jumper in the input ports */
+
+ROM_START( rezont )
+	ROM_REGION( 0x200000, REGION_CPU1, 0 )		/* 68000 Code */
+	ROM_LOAD16_BYTE( "us001001.u3",  0x000000, 0x020000, CRC(ab923052) SHA1(26761c228b63c300f635787e63e1276b6e3083f0) )
+	ROM_LOAD16_BYTE( "rezon_1_p.u4",  0x000001, 0x020000,  CRC(9ed32f8c) SHA1(68b926de4cb5f2632ab78b2cdf7409411fadbb1d) )
+	/* empty gap */
+	ROM_LOAD16_BYTE( "us001004.103", 0x100000, 0x020000, CRC(54871c7c) SHA1(2f807b15760b1e712fa69eee6f33cc8a36ee1c02) ) // 1xxxxxxxxxxxxxxxx = 0x00
+	ROM_LOAD16_BYTE( "us001003.102", 0x100001, 0x020000, CRC(1ac3d272) SHA1(0f19bc9c19e355dad5b463b0fa33127523bf141b) ) // 1xxxxxxxxxxxxxxxx = 0x00
+
+	ROM_REGION( 0x100000, REGION_GFX1, ROMREGION_DISPOSE )	/* Sprites */
+	ROM_LOAD( "us001006.u64",  0x000000, 0x080000, CRC(a4916e96) SHA1(bfb63b72273e4fbf0843b3201bb4fddaf54909a7) )
+	ROM_LOAD( "us001005.u63",  0x080000, 0x080000, CRC(e6251ebc) SHA1(f02a4c8373e33fc57e18e39f1b5ecff3f6d9ca9e) )
+
+	ROM_REGION( 0x080000, REGION_GFX2, ROMREGION_DISPOSE )	/* Layer 1 */
+	ROM_LOAD( "us001007.u66",  0x000000, 0x080000, CRC(3760b935) SHA1(f5fe69f7e93c90a5b6c1dff236402b962821e33f) ) // 1xxxxxxxxxxxxxxxxxx = 0xFF
+
+	ROM_REGION( 0x080000, REGION_GFX3, ROMREGION_DISPOSE )	/* Layer 2 */
+	ROM_LOAD( "us001008.u68",  0x000000, 0x080000, CRC(0ab73910) SHA1(78e2c0570c5c6f5e1cdb2fbeae73376923127024) ) // 1xxxxxxxxxxxxxxxxxx = 0xFF
+
+	ROM_REGION( 0x100000, REGION_SOUND1, 0 )	/* Samples */
+	ROM_LOAD16_WORD_SWAP( "us001009.u70",  0x000000, 0x100000, CRC(0d7d2e2b) SHA1(cfba19314ecb0a49ed9ff8df32cd6a3fe37ff526) )
+ROM_END
+
 ROM_START( stg )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 )		/* 68000 Code */
 	ROM_LOAD16_BYTE( "att01003.u27", 0x000000, 0x020000, CRC(7a640a93) SHA1(28c54eca9502d06ca55c2db91bfe7d149af006ed) )
@@ -8624,6 +8729,7 @@ GAME( 1989, wits,     0,        wits,     wits,     0,        ROT0,   "Athena (V
 GAME( 1990, thunderl, 0,        thunderl, thunderl, 0,        ROT270, "Seta",                   "Thunder & Lightning" ) // Country/License: DSW
 GAME( 1994, wiggie,   0,        wiggie,   thunderl, wiggie,   ROT270, "Promat",                 "Wiggie Waggie" ) // hack of Thunder & Lightning
 GAME( 1991, rezon,    0,        rezon,    rezon,    rezon,    ROT0,   "Allumer",                "Rezon" )
+GAME( 1992, rezont,   rezon,    rezon,    rezont,   rezon,    ROT0,   "Allumer (Taito license)","Rezon (Taito)" )
 GAME( 1991, stg,      0,        drgnunit, stg,      0,        ROT270, "Athena / Tecmo",         "Strike Gunner S.T.G" )
 GAME( 1991, pairlove, 0,        pairlove, pairlove, 0,        ROT270, "Athena",                 "Pairs Love" )
 GAME( 1992, blandia,  0,        blandia,  blandia,  blandia,  ROT0,   "Allumer",                "Blandia" )

@@ -459,7 +459,7 @@ static void draw_quads(struct mame_bitmap *bitmap, const struct rectangle *clipr
 #endif
 	}
 }
-
+#if 0
 static UINT16 scale_color(UINT16 color, float level)
 {
 	int r, g, b;
@@ -468,7 +468,7 @@ static UINT16 scale_color(UINT16 color, float level)
 	b = (color & 31)*level;
 	return (r<<10)|(g<<5)|b;
 }
-
+#endif
 // xe = xc + (x/z * zm + tx)
 // xe < x1 => xc + (x/z * zm + tx) < x1
 //         => x/z < (x1-xc-tx)/zm

@@ -667,6 +667,26 @@ void *memory_get_write_ptr(int cpunum, int spacenum, offs_t offset)
 
 
 /*-------------------------------------------------
+	memory_get_op_ptr - return a pointer to the
+	base of opcode RAM associated with the given
+	CPU and offset
+-------------------------------------------------*/
+
+void *memory_get_op_ptr(int cpunum, offs_t offset)
+{
+	offs_t opbase = ~0;
+
+	if (cpudata[cpunum].opbase)
+		opbase = cpudata[cpunum].opbase(offset);
+
+	if (opbase == ~0)
+		return memory_get_read_ptr(cpunum, ADDRESS_SPACE_PROGRAM, offset);
+	else
+		return (void *) (opbase + offset);
+}
+
+
+/*-------------------------------------------------
 	memory_set_bankptr - set the base of a bank
 -------------------------------------------------*/
 
@@ -1241,26 +1261,30 @@ static void install_mem_handler(struct addrspace_data_t *space, int iswrite, int
 				hmirrorbase |= hmirrorbit[i];
 
 		/* if this is not our first time through, and the level 2 entry matches the previous
-		   level 2 entry, just do a quick map and get out */
+		   level 2 entry, just do a quick map and get out; note that this only works for entries
+		   which don't span multiple level 1 table entries */
 		cur_index = LEVEL1_INDEX(start + hmirrorbase);
-		if (hmirrorcount != 0 && prev_entry == tabledata->table[cur_index])
+		if (cur_index == LEVEL1_INDEX(end + hmirrorbase))
 		{
-			VPRINTF(("Quick mapping subtable at %08X to match subtable at %08X\n", cur_index << LEVEL2_BITS, prev_index << LEVEL2_BITS));
-			
-			/* release the subtable if the old value was a subtable */
-			if (tabledata->table[cur_index] >= SUBTABLE_BASE)
-				release_subtable(tabledata, tabledata->table[cur_index]);
-			
-			/* reallocate the subtable if the new value is a subtable */
-			if (tabledata->table[prev_index] >= SUBTABLE_BASE)
-				reallocate_subtable(tabledata, tabledata->table[prev_index]);
-			
-			/* set the new value and short-circuit the mapping step */
-			tabledata->table[cur_index] = tabledata->table[prev_index];
-			continue;
+			if (hmirrorcount != 0 && prev_entry == tabledata->table[cur_index])
+			{
+				VPRINTF(("Quick mapping subtable at %08X to match subtable at %08X\n", cur_index << LEVEL2_BITS, prev_index << LEVEL2_BITS));
+				
+				/* release the subtable if the old value was a subtable */
+				if (tabledata->table[cur_index] >= SUBTABLE_BASE)
+					release_subtable(tabledata, tabledata->table[cur_index]);
+				
+				/* reallocate the subtable if the new value is a subtable */
+				if (tabledata->table[prev_index] >= SUBTABLE_BASE)
+					reallocate_subtable(tabledata, tabledata->table[prev_index]);
+				
+				/* set the new value and short-circuit the mapping step */
+				tabledata->table[cur_index] = tabledata->table[prev_index];
+				continue;
+			}
+			prev_index = cur_index;
+			prev_entry = tabledata->table[cur_index];
 		}
-		prev_index = cur_index;
-		prev_entry = tabledata->table[cur_index];
 
 		/* loop over mirrors in the level 1 table */
 		for (lmirrorcount = 0; lmirrorcount < (1 << lmirrorbits); lmirrorcount++)

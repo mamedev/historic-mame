@@ -109,11 +109,6 @@ WRITE8_HANDLER( congo_colorram_w )
 	}
 }
 
-static void copy_pixel(struct mame_bitmap *dst_bm, int dx, int dy,
-					   struct mame_bitmap *src_bm, int sx, int sy)
-{
-	plot_pixel(dst_bm, dx, dy, read_pixel(src_bm, sx, sy));
-}
 
 static void create_background( struct mame_bitmap *dst_bm, struct mame_bitmap *src_bm, int col )
 {

@@ -86,7 +86,7 @@ static data8_t at28c16_8_r( data32_t chip, offs_t offset )
 	}
 	else
 	{
-		logerror( "at28c16_8_r( %04x ) data\n", offset );
+//		logerror( "at28c16_8_r( %04x ) data\n", offset );
 		return at28c16[ chip ].p_n_data[ offset ];
 	}
 }
@@ -100,7 +100,7 @@ static void at28c16_8_w( data32_t chip, offs_t offset, data8_t data )
 	}
 	else
 	{
-		logerror( "at28c16_8_w( %04x, %02x ) data\n", offset, data );
+//		logerror( "at28c16_8_w( %04x, %02x ) data\n", offset, data );
 		at28c16[ chip ].p_n_data[ offset ] = data;
 	}
 }

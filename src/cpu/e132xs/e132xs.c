@@ -5,7 +5,7 @@
  All the types are compatible, but they have different IRAM size and cycles
 
  Hyperstone models:
- 
+
  16 bits
  - E1-16T
  - E1-16XT
@@ -19,7 +19,7 @@
  - E1-32XSR
 
  Hynix models:
- 
+
  16 bits
  - GMS30C2116
  - GMS30C2216
@@ -33,12 +33,12 @@
 
  Tomasz Slanina
  - Fixed delayed branching for delay instructions longer than 2 bytes
- 
+
  Pierpaolo Prazzoli
  - Added and fixed Timer without hack
- 
+
  Tomasz Slanina
- - Fixed MULU/MULS 
+ - Fixed MULU/MULS
  - Fixed Carry in ADDC/SUBC
 
  Pierpaolo Prazzoli
@@ -594,42 +594,57 @@ static void (*hyperstone_op[0x100])(void) = {
 };
 
 // 4Kb IRAM (On-Chip Memory)
-#if 1
+#if (HAS_E116T || HAS_GMS30C2116)
 
 static ADDRESS_MAP_START( e116_4k_iram_map, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0xc0000000, 0xc0000fff) AM_RAM
-ADDRESS_MAP_END
-
-#else
-
-static ADDRESS_MAP_START( e116_4k_iram_map, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0xc0000000, 0xdfffffff) AM_RAM AM_MASK(0xfff)
+	AM_RANGE(0xc0000000, 0xc0000fff) AM_RAM AM_MIRROR(0x1ffff000)
 ADDRESS_MAP_END
 
 #endif
 
+#if (HAS_E132N || HAS_E132T || HAS_GMS30C2132)
+
 static ADDRESS_MAP_START( e132_4k_iram_map, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0xc0000000, 0xdfffffff) AM_RAM AM_MASK(0xfff)
+	AM_RANGE(0xc0000000, 0xc0000fff) AM_RAM AM_MIRROR(0x1ffff000)
 ADDRESS_MAP_END
+
+#endif
 
 // 8Kb IRAM (On-Chip Memory)
+
+#if (HAS_E116XT || HAS_GMS30C2216)
+
 static ADDRESS_MAP_START( e116_8k_iram_map, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0xc0000000, 0xdfffffff) AM_RAM AM_MASK(0x1fff)
+	AM_RANGE(0xc0000000, 0xc0001fff) AM_RAM AM_MIRROR(0x1fffe000)
 ADDRESS_MAP_END
+
+#endif
+
+#if (HAS_E132XN || HAS_E132XT || HAS_GMS30C2232)
 
 static ADDRESS_MAP_START( e132_8k_iram_map, ADDRESS_SPACE_PROGRAM, 32 )
-//	AM_RANGE(0xc0000000, 0xdfffffff) AM_RAM AM_MASK(0x1fff)
+	AM_RANGE(0xc0000000, 0xc0001fff) AM_RAM AM_MIRROR(0x1fffe000)
 ADDRESS_MAP_END
+
+#endif
 
 // 16Kb IRAM (On-Chip Memory)
+
+#if (HAS_E116XS || HAS_E116XSR)
+
 static ADDRESS_MAP_START( e116_16k_iram_map, ADDRESS_SPACE_PROGRAM, 16 )
-	AM_RANGE(0xc0000000, 0xdfffffff) AM_RAM AM_MASK(0x3fff)
+	AM_RANGE(0xc0000000, 0xc0003fff) AM_RAM AM_MIRROR(0x1fffc000)
 ADDRESS_MAP_END
+
+#endif
+
+#if (HAS_E132XS || HAS_E132XSR)
 
 static ADDRESS_MAP_START( e132_16k_iram_map, ADDRESS_SPACE_PROGRAM, 32 )
-	AM_RANGE(0xc0000000, 0xdfffffff) AM_RAM AM_MASK(0x3fff)
+	AM_RANGE(0xc0000000, 0xc0003fff) AM_RAM AM_MIRROR(0x1fffc000)
 ADDRESS_MAP_END
 
+#endif
 
 /* Return the entry point for a determinated trap */
 UINT32 get_trap_addr(UINT8 trapno)
@@ -883,7 +898,7 @@ void set_global_register(UINT8 code, UINT32 val)
 				break;
 
 			case TPR_REGISTER:
-				
+
 				hyperstone.n = (val & 0xff0000) >> 16;
 				hyperstone.time = cpunum_get_clock(cpu_getactivecpu()) / (hyperstone.n + 2);
 
@@ -1446,7 +1461,7 @@ void execute_dbr(INT32 rel)
 {
 	struct delay *tmp;
 	tmp = (struct delay *) malloc(sizeof(struct delay));
-	
+
 	tmp->delay_cmd    = DELAY_TAKEN;
 	tmp->delay_pc     = PC + rel;
 	tmp->no_delay_pc  = PC + 2;
@@ -1639,7 +1654,7 @@ static void set_irq_line(int irqline, int state)
 
 		if( !(FCR&(1<<28)) ) printf("int1 en\n"); //  int 1
 
-		if( (FCR&(1<<10)) && (!(FCR&(1<<8))) ) printf("IO3 en\n"); // IO3		
+		if( (FCR&(1<<10)) && (!(FCR&(1<<8))) ) printf("IO3 en\n"); // IO3
 
 		if( !(FCR&(1<<23)) ) printf("timer irq!\n"); //  timer
 */
@@ -1712,7 +1727,7 @@ static void hyperstone_reset(void *param)
 	//TODO: Add different reset initializations for BCR, MCR, FCR, TPR
 
 	void *hyp_timer;
-	
+
 	check_and_remove_delays();
 
 	hyp_timer = hyperstone.timer;
@@ -2365,7 +2380,7 @@ void hyperstone_subc(void)
 		CHECK_VSUB(SREG + GET_C,DREG,tmp);
 	}
 
-	
+
 	if( SRC_IS_SR )
 	{
 		DREG = DREG - GET_C;
@@ -2473,7 +2488,7 @@ void hyperstone_addc(void)
 		CHECK_VADD3(SREG,DREG,GET_C,tmp);
 	}
 
-	
+
 
 	if( SRC_IS_SR )
 		DREG = DREG + GET_C;
@@ -5358,7 +5373,7 @@ void hyperstone_get_info(UINT32 state, union cpuinfo *info)
 void e116t_get_info(UINT32 state, union cpuinfo *info)
 {
 	switch (state)
-	{		
+	{
 
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 16;					break;
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 16;					break;
@@ -5381,7 +5396,7 @@ void e116t_get_info(UINT32 state, union cpuinfo *info)
 void e116xt_get_info(UINT32 state, union cpuinfo *info)
 {
 	switch (state)
-	{		
+	{
 
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 16;					break;
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 16;					break;
@@ -5404,7 +5419,7 @@ void e116xt_get_info(UINT32 state, union cpuinfo *info)
 void e116xs_get_info(UINT32 state, union cpuinfo *info)
 {
 	switch (state)
-	{		
+	{
 
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 16;					break;
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 16;					break;
@@ -5427,7 +5442,7 @@ void e116xs_get_info(UINT32 state, union cpuinfo *info)
 void e116xsr_get_info(UINT32 state, union cpuinfo *info)
 {
 	switch (state)
-	{		
+	{
 
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 16;					break;
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 16;					break;
@@ -5450,7 +5465,7 @@ void e116xsr_get_info(UINT32 state, union cpuinfo *info)
 void e132n_get_info(UINT32 state, union cpuinfo *info)
 {
 	switch (state)
-	{		
+	{
 
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 32;					break;
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 32;					break;
@@ -5473,7 +5488,7 @@ void e132n_get_info(UINT32 state, union cpuinfo *info)
 void e132t_get_info(UINT32 state, union cpuinfo *info)
 {
 	switch (state)
-	{		
+	{
 
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 32;					break;
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 32;					break;
@@ -5496,7 +5511,7 @@ void e132t_get_info(UINT32 state, union cpuinfo *info)
 void e132xn_get_info(UINT32 state, union cpuinfo *info)
 {
 	switch (state)
-	{		
+	{
 
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 32;					break;
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 32;					break;
@@ -5519,7 +5534,7 @@ void e132xn_get_info(UINT32 state, union cpuinfo *info)
 void e132xt_get_info(UINT32 state, union cpuinfo *info)
 {
 	switch (state)
-	{		
+	{
 
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 32;					break;
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 32;					break;
@@ -5542,7 +5557,7 @@ void e132xt_get_info(UINT32 state, union cpuinfo *info)
 void e132xs_get_info(UINT32 state, union cpuinfo *info)
 {
 	switch (state)
-	{		
+	{
 
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 32;					break;
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 32;					break;
@@ -5565,7 +5580,7 @@ void e132xs_get_info(UINT32 state, union cpuinfo *info)
 void e132xsr_get_info(UINT32 state, union cpuinfo *info)
 {
 	switch (state)
-	{		
+	{
 
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 32;					break;
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 32;					break;
@@ -5588,7 +5603,7 @@ void e132xsr_get_info(UINT32 state, union cpuinfo *info)
 void gms30c2116_get_info(UINT32 state, union cpuinfo *info)
 {
 	switch (state)
-	{		
+	{
 
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 16;					break;
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 16;					break;
@@ -5611,7 +5626,7 @@ void gms30c2116_get_info(UINT32 state, union cpuinfo *info)
 void gms30c2132_get_info(UINT32 state, union cpuinfo *info)
 {
 	switch (state)
-	{		
+	{
 
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 32;					break;
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 32;					break;
@@ -5634,12 +5649,12 @@ void gms30c2132_get_info(UINT32 state, union cpuinfo *info)
 void gms30c2216_get_info(UINT32 state, union cpuinfo *info)
 {
 	switch (state)
-	{		
+	{
 
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 16;					break;
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 16;					break;
 
-		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM: info->internal_map = &construct_map_e132_8k_iram_map; break;
+		case CPUINFO_PTR_INTERNAL_MEMORY_MAP + ADDRESS_SPACE_PROGRAM: info->internal_map = &construct_map_e116_8k_iram_map; break;
 
 		/* --- the following bits of info are returned as pointers to data or functions --- */
 		case CPUINFO_PTR_INIT:							info->init = e116_init;				break;
@@ -5657,7 +5672,7 @@ void gms30c2216_get_info(UINT32 state, union cpuinfo *info)
 void gms30c2232_get_info(UINT32 state, union cpuinfo *info)
 {
 	switch (state)
-	{		
+	{
 
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_PROGRAM:	info->i = 32;					break;
 		case CPUINFO_INT_DATABUS_WIDTH + ADDRESS_SPACE_IO:		info->i = 32;					break;

@@ -40,7 +40,7 @@ todo:
 
 fix scrolling
 sound
-fix sprite colour problems.
+fix s7prite colour problems.
 should these be considered clones or not since the game has
 been rewritten, they just use the gfx ...
 
@@ -82,6 +82,8 @@ Stephh's notes :
 */
 
 #include "driver.h"
+#include "cpu/upd7810/upd7810.h"
+
 
 data16_t *fitfight_spriteram;
 data16_t *fof_100000, *fof_600000, *fof_700000, *fof_800000, *fof_900000, *fof_a00000;
@@ -211,6 +213,67 @@ static ADDRESS_MAP_START( bbprot_main_map, ADDRESS_SPACE_PROGRAM, 16 )
 
 	AM_RANGE(0xe00000, 0xe0ffff) AM_RAM
 ADDRESS_MAP_END
+
+
+/* 7810 (?) sound cpu */
+
+static ADDRESS_MAP_START( snd_mem, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_ROM
+	AM_RANGE(0x4000, 0x7fff) AM_READ(MRA8_BANK1)	/* ??? External ROM */
+	AM_RANGE(0x8000, 0x87ff) AM_RAM
+	AM_RANGE(0xff00, 0xffff) AM_RAM
+ADDRESS_MAP_END
+
+static READ8_HANDLER(snd_porta_r)
+{
+	//printf("PA R @%x\n",activecpu_get_pc());
+	return rand();
+}
+
+static READ8_HANDLER(snd_portb_r)
+{
+	//printf("PB R @%x\n",activecpu_get_pc());
+	return rand();
+}
+
+static READ8_HANDLER(snd_portc_r)
+{
+	//printf("PC R @%x\n",activecpu_get_pc());
+	return rand();
+}
+
+static WRITE8_HANDLER(snd_porta_w)
+{
+	//printf("PA W %x @%x\n",data,activecpu_get_pc());
+}
+
+static WRITE8_HANDLER(snd_portb_w)
+{
+	//printf("PB W %x @%x\n",data,activecpu_get_pc());
+}
+
+static WRITE8_HANDLER(snd_portc_w)
+{
+	//printf("PC W %x @%x\n",data,activecpu_get_pc());
+}
+
+static ADDRESS_MAP_START( snd_io, ADDRESS_SPACE_IO, 8 )
+		AM_RANGE(UPD7810_PORTA, UPD7810_PORTA) AM_READ(snd_porta_r) AM_WRITE(snd_porta_w)
+		AM_RANGE(UPD7810_PORTB, UPD7810_PORTB) AM_READ(snd_portb_r) AM_WRITE(snd_portb_w)
+		AM_RANGE(UPD7810_PORTC, UPD7810_PORTC) AM_READ(snd_portc_r) AM_WRITE(snd_portc_w)
+ADDRESS_MAP_END
+
+static INTERRUPT_GEN( snd_irq )
+{
+	cpunum_set_input_line(1,UPD7810_INTF2,HOLD_LINE);
+}
+
+UPD7810_CONFIG sound_cpu_config =
+{
+    TYPE_7810,
+    0
+};
+
 
 /* I've put the inputs the same way they can be read in the "test mode" */
 
@@ -683,7 +746,7 @@ static struct GfxDecodeInfo prot_gfxdecodeinfo[] =
 	{ -1 } /* end of array */
 };
 
-/*
+
 static struct OKIM6295interface okim6295_interface =
 {
 	1,
@@ -691,12 +754,18 @@ static struct OKIM6295interface okim6295_interface =
 	{ REGION_SOUND1 },
 	{ 100 }
 };
-*/
 
 static MACHINE_DRIVER_START( fitfight )
 	MDRV_CPU_ADD_TAG("main",M68000, 12000000)
 	MDRV_CPU_PROGRAM_MAP(fitfight_main_map,0)
 	MDRV_CPU_VBLANK_INT(irq2_line_hold,1)
+	
+	MDRV_CPU_ADD(UPD7810, 12000000)
+	MDRV_CPU_FLAGS(CPU_AUDIO_CPU)
+	MDRV_CPU_CONFIG(sound_cpu_config)
+	MDRV_CPU_PROGRAM_MAP(snd_mem, 0)
+	MDRV_CPU_IO_MAP(snd_io, 0)
+	MDRV_CPU_VBLANK_INT(snd_irq,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
@@ -711,7 +780,7 @@ static MACHINE_DRIVER_START( fitfight )
 	MDRV_VIDEO_START(fitfight)
 	MDRV_VIDEO_UPDATE(fitfight)
 
-//	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
 MACHINE_DRIVER_END
 
 static MACHINE_DRIVER_START( bbprot )
@@ -732,7 +801,7 @@ static MACHINE_DRIVER_START( bbprot )
 	MDRV_VIDEO_START(fitfight)
 	MDRV_VIDEO_UPDATE(fitfight)
 
-//	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
+	MDRV_SOUND_ADD(OKIM6295, okim6295_interface)
 MACHINE_DRIVER_END
 
 /***
@@ -762,14 +831,10 @@ ROM_START( fitfight )
 	ROM_LOAD16_BYTE( "u138_ff1.bin", 0x000001, 0x080000, CRC(165600fe) SHA1(b1987dbf34abdb6d08bdf7f71b256b62125e6517) )
 	ROM_LOAD16_BYTE( "u125_ff1.bin", 0x000000, 0x080000, CRC(2f9bdb66) SHA1(4c1ade349f1219d448453b27d4a7517966912ffa) )
 
-	ROM_REGION( 0x010000, REGION_CPU2, 0 ) /* Sound Program? */
-	ROM_LOAD( "u23_ff1.bin",  0x000000, 0x010000, CRC(e2d6d768) SHA1(233e5501ffda8db48341fa66f16b630544803a89) )
-	/* It sure doesn't look like Z80 code to me...
-	   Is it a H6280?
-	   It's also not encrypted as there are 2 similar readable text strings
-	   (in spanish, italian or brazilian portuguese?) starting at 0x9fb3 and 0xa071 
-	   "Completando de 0x797B a 0xFEFB (banco 0)"*/
-
+	ROM_REGION( 0x01c000, REGION_CPU2, 0 ) /* Sound Program */
+	ROM_LOAD( "u23_ff1.bin",  0x000000, 0x004000, CRC(e2d6d768) SHA1(233e5501ffda8db48341fa66f16b630544803a89) )
+	ROM_CONTINUE(          0x010000, 0x00c000 )
+	
 	ROM_REGION( 0x100000, REGION_SOUND1, 0 ) /* OKI Samples? */
 	ROM_LOAD( "h7e_ff1.bin",  0x000000, 0x080000, CRC(3e12dfd8) SHA1(8f21abfc6a6aac9ad3fafe97d0279739c7b9fab9) ) //seems to be a merge of 2 0x040000 roms
 	ROM_LOAD( "h18e_ff1.bin", 0x080000, 0x080000, CRC(a7f36dbe) SHA1(206efb7f32d6123ed3e22790ff38dd0a8e1626d7) ) //seems to be a merge of 2 0x040000 roms
@@ -820,8 +885,9 @@ ROM_START( histryma )
 	ROM_LOAD16_BYTE( "l_th.bin", 0x000001, 0x080000, CRC(5af9356a) SHA1(f3d797dcc528a3a2a4f0ebbf07d59bd2cc868622) )
 	ROM_LOAD16_BYTE( "r_th.bin", 0x000000, 0x080000, CRC(1a44b504) SHA1(621d95b67d413da3e8a90c0cde494b2529b92407) )
 
-	ROM_REGION( 0x010000, REGION_CPU2, 0 ) /* Sound Program? */
-	ROM_LOAD( "y61f.bin",  0x000000, 0x010000, CRC(b588525a) SHA1(b768bd75d6351430f9656289146119e9c0308554) )
+	ROM_REGION( 0x01c000, REGION_CPU2, 0 ) /* Sound Program */
+	ROM_LOAD( "y61f.bin",  0x000000, 0x004000, CRC(b588525a) SHA1(b768bd75d6351430f9656289146119e9c0308554) )
+	ROM_CONTINUE(          0x010000, 0x00c000 )
 
 	ROM_REGION( 0x100000, REGION_SOUND1, 0 ) /* OKI Samples? */
 	ROM_LOAD( "u7_th.bin",  0x000000, 0x080000, CRC(88b41ef5) SHA1(565e2c4554dde79cd2da8b8a181b3378818223cc) ) //seems to be a merge of 2 0x040000 roms

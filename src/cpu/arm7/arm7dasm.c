@@ -37,11 +37,6 @@
 
 #ifdef MAME_DEBUG
 
-//custom dasm callback handlers for co-processor instructions (setup in the core)
-extern char *(*arm7_dasm_cop_dt_callback)( char *pBuf, data32_t opcode, char *pConditionCode, char *pBuf0 );
-extern char *(*arm7_dasm_cop_rt_callback)( char *pBuf, data32_t opcode, char *pConditionCode, char *pBuf0 );
-extern char *(*arm7_dasm_cop_do_callback)( char *pBuf, data32_t opcode, char *pConditionCode, char *pBuf0 );
-
 static char *WritePadding( char *pBuf, const char *pBuf0 )
 {
 	pBuf0 += 8;

@@ -635,10 +635,18 @@ static const UINT8 opdeco16[256][3] =
  };
 #endif
 
+#if (HAS_M6502)
 static unsigned m6502_get_reg(int reg) { union cpuinfo info; m6502_get_info(CPUINFO_INT_REGISTER + (reg), &info); return info.i; }
+#endif
+#if (HAS_M6509)
 static unsigned m6509_get_reg(int reg) { union cpuinfo info; m6502_get_info(CPUINFO_INT_REGISTER + (reg), &info); return info.i; }
+#endif
+#if (HAS_M65CE02)
 static unsigned m65ce02_get_reg(int reg) { union cpuinfo info; m6502_get_info(CPUINFO_INT_REGISTER + (reg), &info); return info.i; }
+#endif
+#if (HAS_M4510)
 static unsigned m4510_get_reg(int reg) { union cpuinfo info; m6502_get_info(CPUINFO_INT_REGISTER + (reg), &info); return info.i; }
+#endif
 
 /*****************************************************************************
  * Disassemble a single opcode starting at pc

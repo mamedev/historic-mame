@@ -8,10 +8,11 @@ static data8_t led_reg1;
 #define LED_ON		0xff00ff00
 #define SHOW_LEDS	0
 
+#if 0
 static void draw_led(struct mame_bitmap *bitmap, int x, int y,data8_t value)
 {
 	plot_box(bitmap, x, y, 5, 9, 0x00000000);
-	
+
 	/* Top */
 	if( (value & 0x40) == 0 ) {
 		plot_pixel(bitmap, x+1, y+0, LED_ON);
@@ -55,7 +56,7 @@ static void draw_led(struct mame_bitmap *bitmap, int x, int y,data8_t value)
 		plot_pixel(bitmap, x+4, y+7, LED_ON);
 	}
 }
-
+#endif
 
 
 int K001604_vh_start(void);

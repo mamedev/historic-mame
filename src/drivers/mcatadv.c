@@ -14,7 +14,8 @@
 
  Hardware Overview:
 
- Board Name : LINDA5 (Magical Cat) / LINDA25 (Nostradamus)
+Magical Cat (C) 1993 Wintechno
+Board Name: LINDA5
 
  Main CPU: 68000-16
  Sound CPU: Z80
@@ -22,6 +23,83 @@
 
  Custom: FACE FX1037 x1
          038 x2 (As in Cave)
+
+
+Nostradamus (C) 1993 FACE
+Board Name: LINDA25
+
+  Main CPU: MC68000P12F 16MHz
+ Sound CPU: Z8400B PS (Goldstar)
+Sound chip: YMF286-K & Y3016-F
+
+Graphics chips:
+176 Pin PQFP 038 9330EX705
+176 Pin PQFP 038 9320EX702
+176 Pin PQFP FX1037 FACE FA01-2075 (Face Custom)
+
+OSC 28.000 MHz - SEOAN SX0-T100
+OSC 16.000 MHz - Sunny SC0-010T
+
+8 Way DIP Switch x 2
+Push Button Test Switch
+
+Roms:
+NOS-PO-U 2740000PC-15 (68k Program) U29 - Odd
+NOS-PE-U 2740000PC-15 (68k Program) U30 - Even
+NOS-PS     D27C020-15 (Z80 program) U9
+
+As labelled on PCB, with location:
+NOS-SO-00.U83-
+NOS-SO-01.U85 \
+NOS-SO-02.U87  | Sprites Odd/Even (These are 27C8001)
+NOS-SE-00.U82  |
+NOS-SE-01.U84 /
+NOS-SE-02.U86-
+U92 & U93 are unpopulated
+
+NOS-SN-00.U53 Sound samples (Near the YMF286-K)
+
+NOS-B0-00.U58-
+NOS-B0-01.U59 \ Background (Seperate for each 038 chip?)
+NOS-B1-00.U60 /
+NOS-B1-01.U61-
+
+YMF286-K is compatible to YM2610 - see psikyo.c driver
+038 9320EX702 / 038 9330EX705    - see Cave.c driver
+
+Note # = Pin #1    PCB Layout:
+
++----------------------------------------------------------------------------+
+| ___________                                                                |_
+|| NOS-B1-00 |                                                                J|
+|#___________|                ________   ________                             A|
+| ___________   __________   |NOS-PO-U| |NOS-PE-U|                            M|
+|| NOS-B1-01 | |          |  #________| #________|                            M|
+|#___________| | 038      |   ___________________    _______                  A|
+|              | 9330EX705|  |   MC68000P12F     |  |NOS-PS |                  |
+|              |__________#  |   16MHz           |  #_______|                 C|
+|                            #___________________|  ___________               o|
+| ___________   __________                         | Z8400B PS |              n|
+|| NOS-B0-00 | |          |                        #___________|              n|
+|#___________| | 038      |                        ______________             e|
+| ___________  | 9320EX702|                   SW1 |   YMF286-K   |            c|
+|| NOS-B0-01 | |__________#     _________         #______________|            t|
+|#___________|                 |FX1037   #  SW2                    _______    i|
+|                              |(C) Face |         ___________    |Y3016-F#   o|
+|                              |FA01-2075|        | NOS-SN-00 |   |_______|   n|
+|                              |_________|        #___________|               _|
+| ______                   ___  ___  ___       ___  ___  ___                 |
+||OSC 28|                 # N |# N |# N |  E  # N |# N |# N | E              |
+|#______|                 | O || O || O |  m  | O || O || O | m              |
+|                         | S || S || S |  p  | S || S || S | p              |
+| Empty                   | | || | || | |  t  | | || | || | | t              |
+|  OSC                    | S || S || S |  y  | S || S || S | y              |
+| ______                  | E || E || E |     | O || O || O |                |
+||OSC 16|                 | | || | || | |  S  | | || | || | | S              |
+|#______|                 | 0 || 0 || 0 |  C  | 0 || 0 || 0 | C              |
+|                         | 0 || 1 || 2 |  K  | 0 || 1 || 2 | K              |
+|    PUSHBTN              |___||___||___|  T  |___||___||___| T              |
++----------------------------------------------------------------------------+
 
 *******************************************************************************
 
@@ -86,6 +164,7 @@ static WRITE16_HANDLER( mcat_soundlatch_w )
 	cpunum_set_input_line(1, INPUT_LINE_NMI, PULSE_LINE);
 }
 
+#if 0 // mcat only.. install read handler?
 static WRITE16_HANDLER( mcat_coin_w )
 {
 	if(ACCESSING_MSB16)
@@ -96,6 +175,7 @@ static WRITE16_HANDLER( mcat_coin_w )
 		coin_lockout_w(1, ~data & 0x8000);
 	}
 }
+#endif
 
 static READ16_HANDLER( mcat_wd_r )
 {

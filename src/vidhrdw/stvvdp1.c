@@ -169,6 +169,7 @@ static void stv_set_framebuffer_config( void )
 		default: logerror( "Invalid framebuffer config %x\n", STV_VDP1_TVM ); stv_framebuffer_width = 512; stv_framebuffer_height = 256; break;
 	}
 	if ( STV_VDP1_DIE ) stv_framebuffer_height *= 2; /* double interlace */
+
 	rowsize = stv_framebuffer_width;
 	for ( i = 0; i < stv_framebuffer_height; i++ )
 	{
@@ -1418,4 +1419,5 @@ void video_update_vdp1(struct mame_bitmap *bitmap, const struct rectangle *clipr
 			logerror("Warning: Invalid PTM mode set for VDP1!\n");
 			break;
 	}
+	//usrintf_showmessage("%04x %04x",STV_VDP1_EWRR_X3,STV_VDP1_EWRR_Y3);
 }

@@ -5,6 +5,7 @@
 ****************************************************************************
 
 	Known bugs:
+		* lghost title screen not displaying
 		* lghost sprites seem to be slightly out of sync
 		* vdp gfx on 2nd attract level of lghost are corrupt at top of stairs
 		  after attract mode loops
@@ -161,8 +162,6 @@ static data8_t sound_r(void)
 
 static void system18_generic_init(int _rom_board)
 {
-	int rgnum;
-
 	/* set the ROM board */
 	rom_board = _rom_board;
 
@@ -760,11 +759,11 @@ static INPUT_PORTS_START( system18_generic )
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-
+#if 0
 static INPUT_PORTS_START( generic )
 	PORT_INCLUDE( system18_generic )
 INPUT_PORTS_END
-
+#endif
 
 
 /*************************************
@@ -1273,17 +1272,17 @@ MACHINE_DRIVER_END
 /**************************************************************************************************************************
  **************************************************************************************************************************
  **************************************************************************************************************************
-	Alien Storm, Sega System 18
-	CPU: FD1094 (317-0146)
+	Alien Storm (2 players version), Sega System 18
+	CPU: FD1094 (317-????)
 	ROM Board: 171-5873B
 */
 ROM_START( astorm )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* 68000 code */
-	ROM_LOAD16_BYTE( "epr13085.bin", 0x000000, 0x40000, CRC(15f74e2d) SHA1(30d9d099ec18907edd3d20df312565c3bd5a80de) )
-	ROM_LOAD16_BYTE( "epr13084.bin", 0x000001, 0x40000, CRC(9687b38f) SHA1(cdeb5b4f06ad4ad8ca579392c1ec901487b08e76) )
+	ROM_LOAD16_BYTE( "epr13182.bin", 0x000000, 0x40000, CRC(e31f2a1c) SHA1(690ee10c36e5bb6175470fb5564527e0e4a94d2c) )
+	ROM_LOAD16_BYTE( "epr13181.bin", 0x000001, 0x40000, CRC(78cd3b26) SHA1(a81b807c5da625d8e4648ae80c41e4ca3870c0fa) )
 
 	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
-	ROM_LOAD( "317-0146.key", 0x0000, 0x2000, CRC(e94991c5) SHA1(c9a8b56e01792654436f24b219d7a92c0852461f) )
+	/* not dumped */
 
 	ROM_REGION( 0xc0000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
 	ROM_LOAD( "epr13073.bin", 0x00000, 0x40000, CRC(df5d0a61) SHA1(79ad71de348f280bad847566c507b7a31f022292) )
@@ -1301,7 +1300,7 @@ ROM_START( astorm )
 	ROM_LOAD16_BYTE( "epr13086.bin", 0x180000, 0x40000, CRC(8c9a71c4) SHA1(40b774765ac888792aad46b6351a24b7ef40d2dc) )
 
 	ROM_REGION( 0x210000, REGION_CPU2, ROMREGION_ERASEFF ) /* sound CPU */
-	ROM_LOAD( "epr13083.bin", 0x010000, 0x20000, CRC(5df3af20) SHA1(e49105fcfd5bf37d14bd760f6adca5ce2412883d) )
+	ROM_LOAD( "ep13083a.bin", 0x010000, 0x20000, CRC(e7528e06) SHA1(1f4e618692c20aeb316d578c5ded12440eb072ab) )
 	ROM_LOAD( "epr13076.bin", 0x090000, 0x40000, CRC(94e6c76e) SHA1(f99e58a9bf372c41af211bd9b9ea3ac5b924c6ed) )
 	ROM_LOAD( "epr13077.bin", 0x110000, 0x40000, CRC(e2ec0d8d) SHA1(225b0d223b7282cba7710300a877fb4a2c6dbabb) )
 	ROM_LOAD( "epr13078.bin", 0x190000, 0x40000, CRC(15684dc5) SHA1(595051006de24f791dae937584e502ff2fa31d9c) )
@@ -1313,7 +1312,7 @@ ROM_END
 	ROM Board: 171-5873B
 	Game numbers: 833-7379-02 (main pcb: 834-7381-02, rom pcb: 834-7380-02)
 */
-ROM_START( astorma )
+ROM_START( astorm3 )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* 68000 code */
 	ROM_LOAD16_BYTE( "ep13165.a6", 0x000000, 0x40000, CRC(6efcd381) SHA1(547c6703a34c3b9b887f5a63ec59a7055067bf3b) )
 	ROM_LOAD16_BYTE( "ep13164.a5", 0x000001, 0x40000, CRC(97d693c6) SHA1(1a9aa98b32aae9367ed897e6931b2633b11b079e) )
@@ -1347,7 +1346,7 @@ ROM_END
 	Alien Storm (3 players US version), Sega System 18
 	CPU: FD1094 (317-0147)
 */
-ROM_START( astormb )
+ROM_START( astormu )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* 68000 code */
 	ROM_LOAD16_BYTE( "epr13095.a6", 0x000000, 0x40000, CRC(55d40742) SHA1(c30fcd7da1fe062b1f00275dc8ac79c3c619b719) )
 	ROM_LOAD16_BYTE( "epr13094.a5", 0x000001, 0x40000, CRC(92b305f9) SHA1(d24a1de619d29a8f6ff9dfce455c2c7d6457ddbe) )
@@ -1378,17 +1377,17 @@ ROM_START( astormb )
 ROM_END
 
 /**************************************************************************************************************************
-	Alien Storm (2 players version), Sega System 18
-	CPU: FD1094 (317-????)
+	Alien Storm, Sega System 18
+	CPU: FD1094 (317-0146)
 	ROM Board: 171-5873B
 */
-ROM_START( astorm2p )
+ROM_START( astormj )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* 68000 code */
-	ROM_LOAD16_BYTE( "epr13182.bin", 0x000000, 0x40000, CRC(e31f2a1c) SHA1(690ee10c36e5bb6175470fb5564527e0e4a94d2c) )
-	ROM_LOAD16_BYTE( "epr13181.bin", 0x000001, 0x40000, CRC(78cd3b26) SHA1(a81b807c5da625d8e4648ae80c41e4ca3870c0fa) )
+	ROM_LOAD16_BYTE( "epr13085.bin", 0x000000, 0x40000, CRC(15f74e2d) SHA1(30d9d099ec18907edd3d20df312565c3bd5a80de) )
+	ROM_LOAD16_BYTE( "epr13084.bin", 0x000001, 0x40000, CRC(9687b38f) SHA1(cdeb5b4f06ad4ad8ca579392c1ec901487b08e76) )
 
 	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
-	/* not dumped */
+	ROM_LOAD( "317-0146.key", 0x0000, 0x2000, CRC(e94991c5) SHA1(c9a8b56e01792654436f24b219d7a92c0852461f) )
 
 	ROM_REGION( 0xc0000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
 	ROM_LOAD( "epr13073.bin", 0x00000, 0x40000, CRC(df5d0a61) SHA1(79ad71de348f280bad847566c507b7a31f022292) )
@@ -1406,7 +1405,7 @@ ROM_START( astorm2p )
 	ROM_LOAD16_BYTE( "epr13086.bin", 0x180000, 0x40000, CRC(8c9a71c4) SHA1(40b774765ac888792aad46b6351a24b7ef40d2dc) )
 
 	ROM_REGION( 0x210000, REGION_CPU2, ROMREGION_ERASEFF ) /* sound CPU */
-	ROM_LOAD( "ep13083a.bin", 0x010000, 0x20000, CRC(e7528e06) SHA1(1f4e618692c20aeb316d578c5ded12440eb072ab) )
+	ROM_LOAD( "epr13083.bin", 0x010000, 0x20000, CRC(5df3af20) SHA1(e49105fcfd5bf37d14bd760f6adca5ce2412883d) )
 	ROM_LOAD( "epr13076.bin", 0x090000, 0x40000, CRC(94e6c76e) SHA1(f99e58a9bf372c41af211bd9b9ea3ac5b924c6ed) )
 	ROM_LOAD( "epr13077.bin", 0x110000, 0x40000, CRC(e2ec0d8d) SHA1(225b0d223b7282cba7710300a877fb4a2c6dbabb) )
 	ROM_LOAD( "epr13078.bin", 0x190000, 0x40000, CRC(15684dc5) SHA1(595051006de24f791dae937584e502ff2fa31d9c) )
@@ -1451,7 +1450,7 @@ ROM_END
 */
 ROM_START( cltchitr )
 	ROM_REGION( 0x300000, REGION_CPU1, 0 ) /* 68000 code */
-	ROM_LOAD16_BYTE( "epr13751.4a", 0x000000, 0x40000, CRC(c8d80233) SHA1(69cdbb989f580abbb006820347becf8d233fa773) )
+	ROM_LOAD16_BYTE( "epr13794.4a", 0x000000, 0x40000, CRC(c8d80233) SHA1(69cdbb989f580abbb006820347becf8d233fa773) )
 	ROM_LOAD16_BYTE( "epr13795.6a", 0x000001, 0x40000, CRC(b0b60b67) SHA1(ee3325ddb7461008f556c1696157a766225b9ef5) )
 	ROM_LOAD16_BYTE( "epr13784.5a", 0x200000, 0x40000, CRC(80c8180d) SHA1(80e72ab7d97714009fd31b3d50176af84b0dcdb7) )
 	ROM_LOAD16_BYTE( "epr13786.7a", 0x200001, 0x40000, CRC(3095dac0) SHA1(20edce74b6f2a82a3865613e601a0e212615d0e4) )
@@ -1521,10 +1520,47 @@ ROM_END
  **************************************************************************************************************************
  **************************************************************************************************************************
 	D.D. Crew, Sega System 18
-	CPU: FD1094 (317-0186)
+	CPU: FD1094 (317-0187)
 	ROM Board: 171-5873B
 */
 ROM_START( ddcrew )
+	ROM_REGION( 0x300000, REGION_CPU1, 0 ) /* 68000 code */
+	ROM_LOAD16_BYTE( "epr14160.a4", 0x000000, 0x40000, CRC(b9f897b7) SHA1(65cee6c8006f328eee648e144e11fa60b1433ff5) )
+	ROM_LOAD16_BYTE( "epr14161.a6", 0x000001, 0x40000, CRC(bb03c1f0) SHA1(9e7fbd2cda448992c6cbf4b96078b57305def097) )
+	ROM_LOAD16_BYTE( "14139.5a",    0x200000, 0x40000, CRC(06c31531) SHA1(d084cb72bf83578b34e959bb60a0695faf4161f8) )
+	ROM_LOAD16_BYTE( "14141.7a",    0x200001, 0x40000, CRC(080a494b) SHA1(64522dccbf6ed856ab80aa185454183df87d7ae9) )
+
+	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
+	/* not dumped */
+
+	ROM_REGION( 0xc0000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
+	ROM_LOAD( "14127.1c", 0x00000, 0x40000, CRC(2228cd88) SHA1(5774bb6a401c3da05c5f3c9d3996b20bb3713cb2) )
+	ROM_LOAD( "14128.2c", 0x40000, 0x40000, CRC(edba8e10) SHA1(25a2833ead4ca363802ddc2eb97c40976502921a) )
+	ROM_LOAD( "14129.3c", 0x80000, 0x40000, CRC(e8ecc305) SHA1(a26d0c5c7826cd315f8b2c27e5a503a2a7b535c4) )
+
+	ROM_REGION16_BE( 0x800000, REGION_GFX2, 0 ) /* sprites */
+	ROM_LOAD16_BYTE( "14134.10c", 0x000001, 0x80000, CRC(4fda6a4b) SHA1(a9e582e494ab967e8f3ccf4d5844bb8ef889928c) )
+	ROM_LOAD16_BYTE( "14142.10a", 0x000000, 0x80000, CRC(3cbf1f2a) SHA1(80b6b006936740087786acd538e28aca85fa6894) )
+	ROM_LOAD16_BYTE( "14135.11c", 0x200001, 0x80000, CRC(e9c74876) SHA1(aff9d071e77f01c6937188bf67be38fa898343e6) )
+	ROM_LOAD16_BYTE( "14143.11a", 0x200000, 0x80000, CRC(59022c31) SHA1(5e1409fe0f29284dc6a3ffacf69b761aae09f132) )
+	ROM_LOAD16_BYTE( "14136.12c", 0x400001, 0x80000, CRC(720d9858) SHA1(8ebcb8b3e9555ca48b28908d47dcbbd654398b6f) )
+	ROM_LOAD16_BYTE( "14144.12a", 0x400000, 0x80000, CRC(7775fdd4) SHA1(a03cac039b400b651a4bf2167a8f2338f488ce26) )
+	ROM_LOAD16_BYTE( "14137.13c", 0x600001, 0x80000, CRC(846c4265) SHA1(58d0c213d085fb4dee18b7aefb05087d9d522950) )
+	ROM_LOAD16_BYTE( "14145.13a", 0x600000, 0x80000, CRC(0e76c797) SHA1(9a44dc948e84e5acac36e80105c2349ee78e6cfa) )
+
+	ROM_REGION( 0x210000, REGION_CPU2, ROMREGION_ERASEFF ) /* sound CPU */
+	ROM_LOAD( "14133.7c",	 0x010000, 0x20000, CRC(cff96665) SHA1(b4dc7f1a03415ebebdb99a82ae89328c345e7678) )
+	ROM_LOAD( "14130.4c",    0x090000, 0x80000, CRC(948f34a1) SHA1(d4c6728d5eea06cee6ac15a34ec8cccb4cc4b982) )
+	ROM_LOAD( "14131.5c",    0x110000, 0x80000, CRC(be5a7d0b) SHA1(c2c598b0cf711273fdd568f3401375e9772c1d61) )
+	ROM_LOAD( "14132.6c",    0x190000, 0x80000, CRC(1fae0220) SHA1(8414c74318ea915816c6b67801ac7c8c3fc905f9) )
+ROM_END
+
+/**************************************************************************************************************************
+	D.D. Crew, Sega System 18
+	CPU: FD1094 (317-0186)
+	ROM Board: 171-5873B
+*/
+ROM_START( ddcrewu )
 	ROM_REGION( 0x300000, REGION_CPU1, 0 ) /* 68000 code */
 	ROM_LOAD16_BYTE( "14152.4a", 0x000000, 0x40000, CRC(69c7b571) SHA1(9fe4815a1cff0a46a754a6bdee12abaf7beb6501) )
 	ROM_LOAD16_BYTE( "14153.6a", 0x000001, 0x40000, CRC(e01fae0c) SHA1(7166f955324f73e94d8ae6d2a5b2f4b497e62933) )
@@ -1558,47 +1594,10 @@ ROM_END
 
 /**************************************************************************************************************************
 	D.D. Crew, Sega System 18
-	CPU: FD1094 (317-????)
-	ROM Board: 171-5873B
-*/
-ROM_START( ddcrewa )
-	ROM_REGION( 0x300000, REGION_CPU1, 0 ) /* 68000 code */
-	ROM_LOAD16_BYTE( "epr14138.a4", 0x000000, 0x40000, CRC(9a0dadf0) SHA1(b55c8cdd3158607ec8203bfebc9e7aba24d6d565) )
-	ROM_LOAD16_BYTE( "epr14140.a6", 0x000001, 0x40000, CRC(e74362f4) SHA1(a6f96d714baeb826221b712b996e99831cf25abf) )
-	ROM_LOAD16_BYTE( "14139.5a",    0x200000, 0x40000, CRC(06c31531) SHA1(d084cb72bf83578b34e959bb60a0695faf4161f8) )
-	ROM_LOAD16_BYTE( "14141.7a",    0x200001, 0x40000, CRC(080a494b) SHA1(64522dccbf6ed856ab80aa185454183df87d7ae9) )
-
-	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
-	ROM_LOAD( "317-unknown_ddcrewa.key", 0x0000, 0x2000, CRC(1dfb60be) SHA1(7bd42a2e54fca574076e5ed164ab4e0cbb645a4f) )
-
-	ROM_REGION( 0xc0000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
-	ROM_LOAD( "14127.1c", 0x00000, 0x40000, CRC(2228cd88) SHA1(5774bb6a401c3da05c5f3c9d3996b20bb3713cb2) )
-	ROM_LOAD( "14128.2c", 0x40000, 0x40000, CRC(edba8e10) SHA1(25a2833ead4ca363802ddc2eb97c40976502921a) )
-	ROM_LOAD( "14129.3c", 0x80000, 0x40000, CRC(e8ecc305) SHA1(a26d0c5c7826cd315f8b2c27e5a503a2a7b535c4) )
-
-	ROM_REGION16_BE( 0x800000, REGION_GFX2, 0 ) /* sprites */
-	ROM_LOAD16_BYTE( "14134.10c", 0x000001, 0x80000, CRC(4fda6a4b) SHA1(a9e582e494ab967e8f3ccf4d5844bb8ef889928c) )
-	ROM_LOAD16_BYTE( "14142.10a", 0x000000, 0x80000, CRC(3cbf1f2a) SHA1(80b6b006936740087786acd538e28aca85fa6894) )
-	ROM_LOAD16_BYTE( "14135.11c", 0x200001, 0x80000, CRC(e9c74876) SHA1(aff9d071e77f01c6937188bf67be38fa898343e6) )
-	ROM_LOAD16_BYTE( "14143.11a", 0x200000, 0x80000, CRC(59022c31) SHA1(5e1409fe0f29284dc6a3ffacf69b761aae09f132) )
-	ROM_LOAD16_BYTE( "14136.12c", 0x400001, 0x80000, CRC(720d9858) SHA1(8ebcb8b3e9555ca48b28908d47dcbbd654398b6f) )
-	ROM_LOAD16_BYTE( "14144.12a", 0x400000, 0x80000, CRC(7775fdd4) SHA1(a03cac039b400b651a4bf2167a8f2338f488ce26) )
-	ROM_LOAD16_BYTE( "14137.13c", 0x600001, 0x80000, CRC(846c4265) SHA1(58d0c213d085fb4dee18b7aefb05087d9d522950) )
-	ROM_LOAD16_BYTE( "14145.13a", 0x600000, 0x80000, CRC(0e76c797) SHA1(9a44dc948e84e5acac36e80105c2349ee78e6cfa) )
-
-	ROM_REGION( 0x210000, REGION_CPU2, ROMREGION_ERASEFF ) /* sound CPU */
-	ROM_LOAD( "14133.7c",	 0x010000, 0x20000, CRC(cff96665) SHA1(b4dc7f1a03415ebebdb99a82ae89328c345e7678) )
-	ROM_LOAD( "14132.6c",    0x090000, 0x80000, CRC(1fae0220) SHA1(8414c74318ea915816c6b67801ac7c8c3fc905f9) )
-	ROM_LOAD( "14131.5c",    0x110000, 0x80000, CRC(be5a7d0b) SHA1(c2c598b0cf711273fdd568f3401375e9772c1d61) )
-	ROM_LOAD( "14130.4c",    0x190000, 0x80000, CRC(948f34a1) SHA1(d4c6728d5eea06cee6ac15a34ec8cccb4cc4b982) )
-ROM_END
-
-/**************************************************************************************************************************
-	D.D. Crew, Sega System 18
 	CPU: FD1094 (317-0184)
 	ROM Board: 171-5873B
 */
-ROM_START( ddcrewb )
+ROM_START( ddcrew2 )
 	ROM_REGION( 0x300000, REGION_CPU1, 0 ) /* 68000 code */
 	ROM_LOAD16_BYTE( "epr14148.a4", 0x000000, 0x40000, CRC(df4cb0cf) SHA1(153993997e9ceb06a9d4c73794ea66d0c585a291) )
 	ROM_LOAD16_BYTE( "epr14149.a6", 0x000001, 0x40000, CRC(380ff818) SHA1(7c7dd7aa825665f1a9aaebb5af4ecf5dd109b0ca) )
@@ -1632,18 +1631,18 @@ ROM_END
 
 /**************************************************************************************************************************
 	D.D. Crew, Sega System 18
-	CPU: FD1094 (317-0187)
+	CPU: FD1094 (317-????)
 	ROM Board: 171-5873B
 */
-ROM_START( ddcrewc )
+ROM_START( ddcrew1 )
 	ROM_REGION( 0x300000, REGION_CPU1, 0 ) /* 68000 code */
-	ROM_LOAD16_BYTE( "epr14160.a4", 0x000000, 0x40000, CRC(b9f897b7) SHA1(65cee6c8006f328eee648e144e11fa60b1433ff5) )
-	ROM_LOAD16_BYTE( "epr14161.a6", 0x000001, 0x40000, CRC(bb03c1f0) SHA1(9e7fbd2cda448992c6cbf4b96078b57305def097) )
+	ROM_LOAD16_BYTE( "epr14138.a4", 0x000000, 0x40000, CRC(9a0dadf0) SHA1(b55c8cdd3158607ec8203bfebc9e7aba24d6d565) )
+	ROM_LOAD16_BYTE( "epr14140.a6", 0x000001, 0x40000, CRC(e74362f4) SHA1(a6f96d714baeb826221b712b996e99831cf25abf) )
 	ROM_LOAD16_BYTE( "14139.5a",    0x200000, 0x40000, CRC(06c31531) SHA1(d084cb72bf83578b34e959bb60a0695faf4161f8) )
 	ROM_LOAD16_BYTE( "14141.7a",    0x200001, 0x40000, CRC(080a494b) SHA1(64522dccbf6ed856ab80aa185454183df87d7ae9) )
 
 	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
-	/* not dumped */
+	ROM_LOAD( "317-unknown_ddcrewa.key", 0x0000, 0x2000, CRC(1dfb60be) SHA1(7bd42a2e54fca574076e5ed164ab4e0cbb645a4f) )
 
 	ROM_REGION( 0xc0000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
 	ROM_LOAD( "14127.1c", 0x00000, 0x40000, CRC(2228cd88) SHA1(5774bb6a401c3da05c5f3c9d3996b20bb3713cb2) )
@@ -1662,9 +1661,9 @@ ROM_START( ddcrewc )
 
 	ROM_REGION( 0x210000, REGION_CPU2, ROMREGION_ERASEFF ) /* sound CPU */
 	ROM_LOAD( "14133.7c",	 0x010000, 0x20000, CRC(cff96665) SHA1(b4dc7f1a03415ebebdb99a82ae89328c345e7678) )
-	ROM_LOAD( "14130.4c",    0x090000, 0x80000, CRC(948f34a1) SHA1(d4c6728d5eea06cee6ac15a34ec8cccb4cc4b982) )
+	ROM_LOAD( "14132.6c",    0x090000, 0x80000, CRC(1fae0220) SHA1(8414c74318ea915816c6b67801ac7c8c3fc905f9) )
 	ROM_LOAD( "14131.5c",    0x110000, 0x80000, CRC(be5a7d0b) SHA1(c2c598b0cf711273fdd568f3401375e9772c1d61) )
-	ROM_LOAD( "14132.6c",    0x190000, 0x80000, CRC(1fae0220) SHA1(8414c74318ea915816c6b67801ac7c8c3fc905f9) )
+	ROM_LOAD( "14130.4c",    0x190000, 0x80000, CRC(948f34a1) SHA1(d4c6728d5eea06cee6ac15a34ec8cccb4cc4b982) )
 ROM_END
 
 
@@ -1715,18 +1714,18 @@ ROM_END
  **************************************************************************************************************************
  **************************************************************************************************************************
 	Laser Ghost, Sega System 18
-	CPU: FD1094 (317-0165)
+	CPU: FD1094 (317-0166)
 	ROM Board: 171-5873B
 */
 ROM_START( lghost )
 	ROM_REGION( 0x300000, REGION_CPU1, 0 ) /* 68000 code */
-	ROM_LOAD16_BYTE( "epr13427.bin", 0x000000, 0x40000, CRC(5bf8fb6b) SHA1(587bbf45b5e470da7d9166b2cbf4ac58a1f2a825) )
-	ROM_LOAD16_BYTE( "epr13428.bin", 0x000001, 0x40000, CRC(276775f5) SHA1(5dd5dabe7e9311b3520d0405dda0c983e9bc4ba2) )
-	ROM_LOAD16_BYTE( "epr13411.5a",  0x200000, 0x40000, CRC(5160167b) SHA1(3d176a18c7527b1e485f10b144bb4db1b945e709) )
-	ROM_LOAD16_BYTE( "epr13413.7a",  0x200001, 0x40000, CRC(656b3bd8) SHA1(db81d4ae3138308dce1e3db7a859f1d63c4ff815) )
+	ROM_LOAD16_BYTE( "epr13429.4a", 0x000000, 0x40000, CRC(09bd65c0) SHA1(f2b332a86d52af3c5270f668bdd43a0d44eca346) )
+	ROM_LOAD16_BYTE( "epr13430.6a", 0x000001, 0x40000, CRC(51009fe0) SHA1(f1e6e3714c01c15c0e932470a9e1a17abb59e958) )
+	ROM_LOAD16_BYTE( "epr13411.5a", 0x200000, 0x40000, CRC(5160167b) SHA1(3d176a18c7527b1e485f10b144bb4db1b945e709) )
+	ROM_LOAD16_BYTE( "epr13413.7a", 0x200001, 0x40000, CRC(656b3bd8) SHA1(db81d4ae3138308dce1e3db7a859f1d63c4ff815) )
 
 	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
-	ROM_LOAD( "317-0165.key", 0x0000, 0x2000,  CRC(a04267ab) SHA1(688ee59dfaaf240e23de4cada648689d1717ab04) )
+	ROM_LOAD( "317-0166.key", 0x0000, 0x2000, CRC(8379961f) SHA1(44e0662e92ece65ad2049b2cd804f516e631166e) )
 
 	ROM_REGION( 0xc0000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
 	ROM_LOAD( "epr13414.1c", 0x00000, 0x40000, CRC(dada2419) SHA1(f6ffd02d75232a09ea83fd199e5e30b2773b0cf5) )
@@ -1753,18 +1752,18 @@ ROM_END
 
 /**************************************************************************************************************************
 	Laser Ghost, Sega System 18
-	CPU: FD1094 (317-0166)
+	CPU: FD1094 (317-0165)
 	ROM Board: 171-5873B
 */
-ROM_START( lghosta )
+ROM_START( lghostu )
 	ROM_REGION( 0x300000, REGION_CPU1, 0 ) /* 68000 code */
-	ROM_LOAD16_BYTE( "epr13429.4a", 0x000000, 0x40000, CRC(09bd65c0) SHA1(f2b332a86d52af3c5270f668bdd43a0d44eca346) )
-	ROM_LOAD16_BYTE( "epr13430.6a", 0x000001, 0x40000, CRC(51009fe0) SHA1(f1e6e3714c01c15c0e932470a9e1a17abb59e958) )
-	ROM_LOAD16_BYTE( "epr13411.5a", 0x200000, 0x40000, CRC(5160167b) SHA1(3d176a18c7527b1e485f10b144bb4db1b945e709) )
-	ROM_LOAD16_BYTE( "epr13413.7a", 0x200001, 0x40000, CRC(656b3bd8) SHA1(db81d4ae3138308dce1e3db7a859f1d63c4ff815) )
+	ROM_LOAD16_BYTE( "epr13427.bin", 0x000000, 0x40000, CRC(5bf8fb6b) SHA1(587bbf45b5e470da7d9166b2cbf4ac58a1f2a825) )
+	ROM_LOAD16_BYTE( "epr13428.bin", 0x000001, 0x40000, CRC(276775f5) SHA1(5dd5dabe7e9311b3520d0405dda0c983e9bc4ba2) )
+	ROM_LOAD16_BYTE( "epr13411.5a",  0x200000, 0x40000, CRC(5160167b) SHA1(3d176a18c7527b1e485f10b144bb4db1b945e709) )
+	ROM_LOAD16_BYTE( "epr13413.7a",  0x200001, 0x40000, CRC(656b3bd8) SHA1(db81d4ae3138308dce1e3db7a859f1d63c4ff815) )
 
 	ROM_REGION( 0x2000, REGION_USER1, 0 )	/* decryption key */
-	ROM_LOAD( "317-0166.key", 0x0000, 0x2000, CRC(8379961f) SHA1(44e0662e92ece65ad2049b2cd804f516e631166e) )
+	ROM_LOAD( "317-0165.key", 0x0000, 0x2000,  CRC(a04267ab) SHA1(688ee59dfaaf240e23de4cada648689d1717ab04) )
 
 	ROM_REGION( 0xc0000, REGION_GFX1, ROMREGION_DISPOSE ) /* tiles */
 	ROM_LOAD( "epr13414.1c", 0x00000, 0x40000, CRC(dada2419) SHA1(f6ffd02d75232a09ea83fd199e5e30b2773b0cf5) )
@@ -1837,7 +1836,7 @@ ROM_END
 	CPU: FD1094 (317-0158)
 	ROM Board: 171-5873B
 */
-ROM_START( mwalka )
+ROM_START( mwalku )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* 68000 code - custom cpu 317-0158 */
 	ROM_LOAD16_BYTE( "epr13233", 0x000000, 0x40000, CRC(f3dac671) SHA1(cd9d372c7e272d2371bc1f9fb0167831c804423f) )
 	ROM_LOAD16_BYTE( "epr13232", 0x000001, 0x40000, CRC(541d8bdf) SHA1(6a99153fddca246ba070e93c4bacd145f15f76bf) )
@@ -1875,7 +1874,7 @@ ROM_END
 	CPU: FD1094 (317-0157)
 	ROM Board: 171-5873B
 */
-ROM_START( mwalkb )
+ROM_START( mwalkj )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* 68000 code - custom cpu 317-0157 */
 	ROM_LOAD16_BYTE( "ep13227.a6", 0x000000, 0x40000, CRC(6c0534b3) SHA1(23f35d1a15275cbc4b6d2f81f5634abac3832282) )
 	ROM_LOAD16_BYTE( "ep13226.a5", 0x000001, 0x40000, CRC(99765854) SHA1(c00776c676b77fed4e94bb02f52f905c845ee73c) )
@@ -1977,7 +1976,7 @@ ROM_END
 	CPU: 68000
 	ROM Board: 171-5873B
 */
-ROM_START( shdancrj )
+ROM_START( shdancej )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* 68000 code */
 	ROM_LOAD16_BYTE( "sd12722b.bin", 0x000000, 0x40000, CRC(c00552a2) SHA1(74fddfe596bc00bc11c4a06e2103417e8fd334f6) )
 	ROM_LOAD16_BYTE( "sd12721b.bin", 0x000001, 0x40000, CRC(653d351a) SHA1(1a03a154cb81a5a2f28c38aecdd6b5d107ea7ffa) )
@@ -2007,7 +2006,7 @@ ROM_END
 	CPU: 68000
 	ROM Board: 171-5873B
 */
-ROM_START( shdancrb )
+ROM_START( shdance1 )
 	ROM_REGION( 0x080000, REGION_CPU1, 0 ) /* 68000 code */
 	ROM_LOAD16_BYTE( "epr12772b.bin", 0x000000, 0x40000, CRC(6868a4d4) SHA1(f0d142c81fe1eba4f5c59a0163e25c80ccfe85d7) )
 	ROM_LOAD16_BYTE( "epr12771b.bin", 0x000001, 0x40000, CRC(04e30c84) SHA1(6c5705f7de6ee1bd754b51988cc7d1008f817c78) )
@@ -2073,7 +2072,7 @@ ROM_END
 	CPU: FD1094 317-????
 	ROM Board: 171-5873B
 */
-ROM_START( wwallyb )
+ROM_START( wwally1 )
 	ROM_REGION( 0x300000, REGION_CPU1, 0 ) /* 68000 code - custom CPU 317-0197 (?) */
 	ROM_LOAD16_BYTE( "14730", 0x000000, 0x40000, CRC(e72bc17a) SHA1(ac3b7d86571a6f510c202735134c1bc4809aa26e) )
 	ROM_LOAD16_BYTE( "14731", 0x000001, 0x40000, CRC(6e3235b9) SHA1(11d5628644e8301550c36c93e5f137c67c11e735) )
@@ -2160,26 +2159,26 @@ static DRIVER_INIT( wwally )
  *
  *************************************/
 
-GAME( 1990, astorm,   0,        system18,      astorm,   generic_5874, ROT0,   "Sega",    "Alien Storm (Japan, 2 Players, FD1094 317-0146)" ) // decrypted
-GAME( 1990, astorma,  astorm,   system18,      astorm,   generic_5874, ROT0,   "Sega",    "Alien Storm (World, 3 Players, FD1094 317-0148)" ) // decrypted
-GAME( 1990, astormb,  astorm,   system18,      astorm,   generic_5874, ROT0,   "Sega",    "Alien Storm (US, 3 Players, FD1094 317-0147)" ) // decrypted
-GAMEX(1990, astorm2p, astorm,   system18,      astorm,   generic_5874, ROT0,   "Sega",    "Alien Storm (2 Players, FD1094 317-?)", GAME_NOT_WORKING ) // not decrypted
-GAME( 1990, bloxeed,  0,        system18,      bloxeed,  generic_5874, ROT0,   "Sega",    "Bloxeed (Japan, FD1094 317-0139)" ) // decrypted
-GAME( 1991, cltchitr, 0,        system18,      cltchitr, generic_5987, ROT0,   "Sega",    "Clutch Hitter (US, FD1094 317-0176)" ) // decrypted
-GAME( 1991, cltchtrj, cltchitr, system18,      cltchitr, generic_5987, ROT0,   "Sega",    "Clutch Hitter (Japan, FD1094 317-0175)" ) // decrypted
-GAME( 1992, desertbr, 0,        system18,      desertbr, generic_5987, ROT270, "Sega",    "Desert Breaker (FD1094 317-0196)" ) // decrypted
-GAME( 1991, ddcrew,   0,        system18,      ddcrew,   ddcrew,       ROT0,   "Sega",    "D. D. Crew (US, 4 Player, FD1094 317-0186)" ) // decrypted
-GAME( 1991, ddcrewa,  ddcrew,   system18,      ddcrew,   ddcrew,       ROT0,   "Sega",    "D. D. Crew (World, 4 Player, FD1094 317-?)" ) // decrypted
-GAME( 1991, ddcrewb,  ddcrew,   system18,      ddcrew,   ddcrew,       ROT0,   "Sega",    "D. D. Crew (World, 2 Player, FD1094 317-0184)" ) // decrypted
-GAMEX(1991, ddcrewc,  ddcrew,   system18,      ddcrew,   ddcrew,       ROT0,   "Sega",    "D. D. Crew (World, 3 Player, FD1094 317-0187)", GAME_NOT_WORKING ) // not decrypted
-GAME( 1990, lghost,   0,        lghost,        lghost,   lghost,       ROT0,   "Sega",    "Laser Ghost (US, 317-0165)" ) // decrypted
-GAME( 1990, lghosta,  lghost,   lghost,        lghost,   lghost,       ROT0,   "Sega",    "Laser Ghost (317-0166)" ) // decrypted
-GAME( 1990, mwalk,    0,        system18_8751, mwalk,    generic_5874, ROT0,   "Sega",    "Michael Jackson's Moonwalker (World, FD1094/8751 317-0159)" ) // decrypted
-GAME( 1990, mwalka,   mwalk,    system18_8751, mwalka,   generic_5874, ROT0,   "Sega",    "Michael Jackson's Moonwalker (US, FD1094/8751 317-0158)" ) // decrypted
-GAME( 1990, mwalkb,   mwalk,    system18_8751, mwalk,    generic_5874, ROT0,   "Sega",    "Michael Jackson's Moonwalker (Japan, FD1094/8751 317-0157)" ) // decrypted
+GAMEX(1990, astorm,   0,        system18,      astorm,   generic_5874, ROT0,   "Sega",    "Alien Storm (set 4, 2 Players, FD1094 317-?)", GAME_NOT_WORKING ) // not decrypted
+GAME( 1990, astorm3,  astorm,   system18,      astorm,   generic_5874, ROT0,   "Sega",    "Alien Storm (set 3, World, 3 Players, FD1094 317-0148)" )
+GAME( 1990, astormu,  astorm,   system18,      astorm,   generic_5874, ROT0,   "Sega",    "Alien Storm (set 2, US, 3 Players, FD1094 317-0147)" )
+GAME( 1990, astormj,  astorm,   system18,      astorm,   generic_5874, ROT0,   "Sega",    "Alien Storm (set 1, Japan, 2 Players, FD1094 317-0146)" )
+GAME( 1990, bloxeed,  0,        system18,      bloxeed,  generic_5874, ROT0,   "Sega",    "Bloxeed (Japan, FD1094 317-0139)" )
+GAME( 1991, cltchitr, 0,        system18,      cltchitr, generic_5987, ROT0,   "Sega",    "Clutch Hitter (set 2, US, FD1094 317-0176)" )
+GAME( 1991, cltchtrj, cltchitr, system18,      cltchitr, generic_5987, ROT0,   "Sega",    "Clutch Hitter (set 1, Japan, FD1094 317-0175)" )
+GAME( 1992, desertbr, 0,        system18,      desertbr, generic_5987, ROT270, "Sega",    "Desert Breaker (FD1094 317-0196)" )
+GAMEX(1991, ddcrew,   0,        system18,      ddcrew,   ddcrew,       ROT0,   "Sega",    "D. D. Crew (set 4, World, 3 Player, FD1094 317-0187)", GAME_NOT_WORKING ) // not decrypted
+GAME( 1991, ddcrewu,  ddcrew,   system18,      ddcrew,   ddcrew,       ROT0,   "Sega",    "D. D. Crew (set 3, US, 4 Player, FD1094 317-0186)" )
+GAME( 1991, ddcrew2,  ddcrew,   system18,      ddcrew,   ddcrew,       ROT0,   "Sega",    "D. D. Crew (set 2, World, 2 Player, FD1094 317-0184)" )
+GAME( 1991, ddcrew1,  ddcrew,   system18,      ddcrew,   ddcrew,       ROT0,   "Sega",    "D. D. Crew (set 1, World, 4 Player, FD1094 317-?)" )
+GAME( 1990, lghost,   0,        lghost,        lghost,   lghost,       ROT0,   "Sega",    "Laser Ghost (set 2, World, 317-0166)" )
+GAME( 1990, lghostu,  lghost,   lghost,        lghost,   lghost,       ROT0,   "Sega",    "Laser Ghost (set 1, US, 317-0165)" )
+GAME( 1990, mwalk,    0,        system18_8751, mwalk,    generic_5874, ROT0,   "Sega",    "Michael Jackson's Moonwalker (set 3, World, FD1094/8751 317-0159)" )
+GAME( 1990, mwalku,   mwalk,    system18_8751, mwalka,   generic_5874, ROT0,   "Sega",    "Michael Jackson's Moonwalker (set 2, US, FD1094/8751 317-0158)" )
+GAME( 1990, mwalkj,   mwalk,    system18_8751, mwalk,    generic_5874, ROT0,   "Sega",    "Michael Jackson's Moonwalker (set 1, Japan, FD1094/8751 317-0157)" )
 GAMEX(1989, pontoon,  0,        system18,      shdancer, generic_5874, ROT0,   "Sega",    "Pontoon", GAME_NOT_WORKING )
-GAME( 1989, shdancer, 0,        system18,      shdancer, generic_shad, ROT0,   "Sega",    "Shadow Dancer (US)"  ) // not encrypted
-GAME( 1989, shdancrj, shdancer, system18,      shdancer, generic_shad, ROT0,   "Sega",    "Shadow Dancer (Japan)" ) // not encrypted
-GAME( 1989, shdancrb, shdancer, system18,      shdancer, generic_shad, ROT0,   "Sega",    "Shadow Dancer (Rev.B)" ) // not encrypted
-GAME( 1992, wwally,   0,        system18,      wwally,   wwally,       ROT0,   "Sega",    "Where's Wally? (Japan, FD1094 317-0197a)" ) // decrypted
-GAMEX(1992, wwallyb,  wwally,   system18,      wwally,   wwally,       ROT0,   "Sega",    "Where's Wally? (FD1094 317-?)", GAME_NOT_WORKING ) // not decrypted
+GAME( 1989, shdancer, 0,        system18,      shdancer, generic_shad, ROT0,   "Sega",    "Shadow Dancer (set 3, US)"  )
+GAME( 1989, shdancej, shdancer, system18,      shdancer, generic_shad, ROT0,   "Sega",    "Shadow Dancer (set 2, Japan)" )
+GAME( 1989, shdance1, shdancer, system18,      shdancer, generic_shad, ROT0,   "Sega",    "Shadow Dancer (set 1)" )
+GAME( 1992, wwally,   0,        system18,      wwally,   wwally,       ROT0,   "Sega",    "Where's Wally? (set 2, Japan, FD1094 317-0197a)" )
+GAMEX(1992, wwally1,  wwally,   system18,      wwally,   wwally,       ROT0,   "Sega",    "Where's Wally? (set 1, FD1094 317-?)", GAME_NOT_WORKING ) // not decrypted

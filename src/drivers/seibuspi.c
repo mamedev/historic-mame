@@ -1215,6 +1215,7 @@ static struct GfxDecodeInfo spi_gfxdecodeinfo[] =
 
 /********************************************************************************/
 
+#if 0
 static NVRAM_HANDLER( spi )
 {
 	if( read_or_write ) {
@@ -1226,6 +1227,7 @@ static NVRAM_HANDLER( spi )
 			DS2404_load(file);
 	}
 }
+#endif
 
 static NVRAM_HANDLER( sxx2f )
 {

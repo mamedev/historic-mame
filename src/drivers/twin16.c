@@ -238,7 +238,7 @@ static READ8_HANDLER( twin16_sres_r )
 static WRITE8_HANDLER( twin16_sres_w )
 {
 	/* bit 1 resets the UPD7795C sound chip */
-	UPD7759_reset_w(0, data & 0x02);
+	upd7759_reset_w(0, data & 0x02);
 	twin16_soundlatch = data;
 }
 
@@ -266,7 +266,7 @@ static ADDRESS_MAP_START( readmem_sound, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xa000, 0xa000) AM_READ(soundlatch_r)
 	AM_RANGE(0xb000, 0xb00d) AM_READ(K007232_read_port_0_r)
 	AM_RANGE(0xc001, 0xc001) AM_READ(YM2151_status_port_0_r)
-	AM_RANGE(0xf000, 0xf000) AM_READ(UPD7759_0_busy_r)
+	AM_RANGE(0xf000, 0xf000) AM_READ(upd7759_0_busy_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
@@ -276,8 +276,8 @@ static ADDRESS_MAP_START( writemem_sound, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xb000, 0xb00d) AM_WRITE(K007232_write_port_0_w)
 	AM_RANGE(0xc000, 0xc000) AM_WRITE(YM2151_register_port_0_w)
 	AM_RANGE(0xc001, 0xc001) AM_WRITE(YM2151_data_port_0_w)
-	AM_RANGE(0xd000, 0xd000) AM_WRITE(UPD7759_0_port_w)
-	AM_RANGE(0xe000, 0xe000) AM_WRITE(UPD7759_0_start_w)
+	AM_RANGE(0xd000, 0xd000) AM_WRITE(upd7759_0_port_w)
+	AM_RANGE(0xe000, 0xe000) AM_WRITE(upd7759_0_start_w)
 	AM_RANGE(0xf000, 0xf000) AM_WRITE(MWA8_NOP)	// ???
 ADDRESS_MAP_END
 
@@ -942,12 +942,12 @@ static struct K007232_interface k007232_interface =
 	{ volume_callback }	/* external port callback */
 };
 
-static struct UPD7759_interface upd7759_interface =
+static struct upd7759_interface upd7759_interface =
 {
 	1,		/* number of chips */
+	{ UPD7759_STANDARD_CLOCK },
 	{ 20 }, /* volume */
 	{ REGION_SOUND2 }, /* memory region */
-	UPD7759_STANDALONE_MODE, /* chip mode */
 	{0}
 };
 

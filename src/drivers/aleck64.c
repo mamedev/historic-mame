@@ -4,6 +4,14 @@
 
 /*
 
+If you want to boot eleven beat on any n64 emu ?(tested on nemu, 1964
+and project64) patch the rom :
+write 0 to offset $67b,$67c,$67d,$67e
+
+*/
+
+/*
+
 Eleven Beat World Tournament
 Hudson Soft, 1998
 

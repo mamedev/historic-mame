@@ -131,12 +131,6 @@ static READ8_HANDLER( boxer_misc_r )
 }
 
 
-static READ8_HANDLER( boxer_bad_address_r )
-{
-	cpunum_set_input_line(0, INPUT_LINE_RESET, PULSE_LINE);
-
-	return 0;
-}
 
 
 static WRITE8_HANDLER( boxer_bell_w )
@@ -188,10 +182,6 @@ static WRITE8_HANDLER( boxer_led_w )
 }
 
 
-static WRITE8_HANDLER( boxer_bad_address_w )
-{
-	cpunum_set_input_line(0, INPUT_LINE_RESET, PULSE_LINE);
-}
 
 
 static ADDRESS_MAP_START( boxer_map, ADDRESS_SPACE_PROGRAM, 8 )

@@ -184,14 +184,7 @@ ADDRESS_MAP_END
 
 
 
-static ADDRESS_MAP_START( speech_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_ROM)
-ADDRESS_MAP_END
 
-
-static ADDRESS_MAP_START( speech_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_ROM)
-ADDRESS_MAP_END
 
 
 /*************************************

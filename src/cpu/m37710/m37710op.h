@@ -503,7 +503,7 @@ INLINE uint EA_DIY(void)   {uint tmp = REG_DB | OPER_16_D(); if((tmp^(tmp+REG_X)
 INLINE uint EA_DLIY(void)  {return OPER_24_D() + REG_Y;}
 INLINE uint EA_AXI(void)   {return read_16_AXI(MAKE_UINT_16(OPER_16_IMM() + REG_X));}
 INLINE uint EA_S(void)     {return MAKE_UINT_16(REG_S + OPER_8_IMM());}
-INLINE uint EA_SIY(void)   {return EA_S() + REG_DB + REG_Y;}
+INLINE uint EA_SIY(void)   {return MAKE_UINT_16(read_16_SIY(REG_S + OPER_8_IMM()) + REG_Y) | REG_DB;}
 
 
 

@@ -91,8 +91,8 @@ WRITE8_HANDLER( mainevt_sh_irqtrigger_w )
 
 WRITE8_HANDLER( mainevt_sh_irqcontrol_w )
 {
-	UPD7759_reset_w(0, data & 2);
-	UPD7759_start_w(0, data & 1);
+	upd7759_reset_w(0, data & 2);
+	upd7759_start_w(0, data & 1);
 
 	interrupt_enable_w(0,data & 4);
 }
@@ -114,7 +114,7 @@ WRITE8_HANDLER( mainevt_sh_bankswitch_w )
 	K007232_set_bank( 0, bank_A, bank_B );
 
 	/* bits 4-5 select the UPD7759 bank */
-	UPD7759_set_bank_base(0, ((data >> 4) & 0x03) * 0x20000);
+	upd7759_set_bank_base(0, ((data >> 4) & 0x03) * 0x20000);
 }
 
 WRITE8_HANDLER( dv_sh_bankswitch_w )
@@ -195,14 +195,14 @@ static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x8000, 0x83ff) AM_READ(MRA8_RAM)
 	AM_RANGE(0xa000, 0xa000) AM_READ(soundlatch_r)
 	AM_RANGE(0xb000, 0xb00d) AM_READ(K007232_read_port_0_r)
-	AM_RANGE(0xd000, 0xd000) AM_READ(UPD7759_0_busy_r)
+	AM_RANGE(0xd000, 0xd000) AM_READ(upd7759_0_busy_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( sound_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
 	AM_RANGE(0x8000, 0x83ff) AM_WRITE(MWA8_RAM)
 	AM_RANGE(0xb000, 0xb00d) AM_WRITE(K007232_write_port_0_w)
-	AM_RANGE(0x9000, 0x9000) AM_WRITE(UPD7759_0_port_w)
+	AM_RANGE(0x9000, 0x9000) AM_WRITE(upd7759_0_port_w)
 	AM_RANGE(0xe000, 0xe000) AM_WRITE(mainevt_sh_irqcontrol_w)
 	AM_RANGE(0xf000, 0xf000) AM_WRITE(mainevt_sh_bankswitch_w)
 ADDRESS_MAP_END
@@ -698,12 +698,12 @@ static struct K007232_interface k007232_interface =
 	{ volume_callback }	/* external port callback */
 };
 
-static struct UPD7759_interface upd7759_interface =
+static struct upd7759_interface upd7759_interface =
 {
 	1,		/* number of chips */
+	{ UPD7759_STANDARD_CLOCK },
 	{ 50 }, /* volume */
 	{ REGION_SOUND2 },		/* memory region */
-	UPD7759_STANDALONE_MODE,		/* chip mode */
 	{0}
 };
 

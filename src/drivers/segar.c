@@ -125,7 +125,7 @@ static READ8_HANDLER( segar_ports_r )
 
 /***************************************************************************
 
-  The Sega game spaceod stores the INP and DIP switches in a very mangled 
+  The Sega game spaceod stores the INP and DIP switches in a very mangled
   format that's not directly useable by MAME.  This function mangles them
   into a format that can be used.
 
@@ -137,20 +137,20 @@ static READ8_HANDLER( segar_ports_r )
   Port 4 -  INP4-8  INP4-7  INP4-6  INP4-5  INP2-4  INP2-3  INP2-2  INP2-1
   Port 6 -  DIP1-8  DIP1-7  DIP1-6  DIP1-5  DIP1-4  DIP1-3  DIP1-2  DIP1-1
   Port 7 -  DIP2-8  DIP2-7  DIP2-6  DIP2-5  DIP2-4  DIP2-3  DIP2-2  DIP2-1
-  
+
   Original format (cocktail):
   Port 0 -  INP0-8  INP0-7  INP0-6  INP0-5  DIP1-8  DIP1-4  DIP2-8  DIP2-4
   Port 1 -  INP1-8  INP1-7  INP1-6  INP1-5  DIP1-7  DIP1-3  DIP2-7  DIP2-3
   Port 2 -  INP2-8  INP2-7  INP2-6  INP2-5  DIP1-6  DIP1-2  DIP2-6  DIP2-2
   Port 3 -  INP3-8  INP3-7  INP3-6  INP3-5  DIP1-5  DIP1-1  DIP2-5  DIP2-1
-  Port 4 -  INP4-8  INP4-7  INP4-6  INP4-5  INP4-4  INP4-3  INP4-2  INP4-1 
+  Port 4 -  INP4-8  INP4-7  INP4-6  INP4-5  INP4-4  INP4-3  INP4-2  INP4-1
 
   Original format (upright):
   Port 0 -  INP0-8  INP0-7  INP0-6 (INP4-4) DIP1-8  DIP1-4  DIP2-8  DIP2-4
   Port 1 -  INP1-8  INP1-7  INP1-6  INP1-5  DIP1-7  DIP1-3  DIP2-7  DIP2-3
   Port 2 -  INP2-8  INP2-7 (INP4-6) INP2-5  DIP1-6  DIP1-2  DIP2-6  DIP2-2
   Port 3 -  INP3-8  INP3-7 (INP4-5) INP3-5  DIP1-5  DIP1-1  DIP2-5  DIP2-1
-  Port 4 -  INP4-8  INP4-7  INP4-6  INP4-5  INP4-4  INP4-3  INP4-1  INP4-2 
+  Port 4 -  INP4-8  INP4-7  INP4-6  INP4-5  INP4-4  INP4-3  INP4-1  INP4-2
 
 ***************************************************************************/
 
@@ -317,14 +317,7 @@ ADDRESS_MAP_END
  *
  *************************************/
 
-static ADDRESS_MAP_START( speech_readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x07ff) AM_READ(MRA8_ROM)
-ADDRESS_MAP_END
 
-
-static ADDRESS_MAP_START( speech_writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x07ff) AM_WRITE(MWA8_ROM)
-ADDRESS_MAP_END
 
 
 static ADDRESS_MAP_START( monsterb_7751_readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -668,7 +661,7 @@ SEGAR_COMMON2A
 INPUT_PORTS_END
 
 
-// The port mapping in spaceod is different for upright vs. cocktail.  Use 
+// The port mapping in spaceod is different for upright vs. cocktail.  Use
 // the cocktail mapping by default to gain access to all inputs, and remap
 // the inputs for upright in spaceod_ports_r()
 
@@ -678,7 +671,7 @@ INPUT_PORTS_START( spaceod )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_SERVICE1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 ) PORT_IMPULSE(3)
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 ) PORT_IMPULSE(3)
-	
+
 	PORT_START_TAG("IN1")
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )

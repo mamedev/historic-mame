@@ -83,6 +83,11 @@ void g65816_branching(unsigned int new_pc);
 #include "state.h"
 #include "mamedbg.h"
 
+enum
+{
+	CPUINFO_PTR_G65816_READVECTOR_CALLBACK = CPUINFO_PTR_CPU_SPECIFIC
+};
+
 /* Main interface function */
 void g65816_get_info(UINT32 state, union cpuinfo *info);
 

@@ -137,7 +137,6 @@ ADDRESS_MAP_END
 static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0xbfff) AM_WRITE(MWA8_ROM)
 	AM_RANGE(0xc000, 0xe7ff) AM_WRITE(shared_w) AM_BASE(&shared)  /* shared with sound cpu */
-	//AM_RANGE(0xc000, 0xcfff) AM_WRITE(MWA8_RAM) AM_BASE(&mexico86_videoram)
 	AM_RANGE(0xc000, 0xd4ff) AM_WRITE(MWA8_RAM) AM_BASE(&mexico86_videoram) //AT: corrected size
 	AM_RANGE(0xd500, 0xd7ff) AM_WRITE(MWA8_RAM) AM_BASE(&mexico86_objectram) AM_SIZE(&mexico86_objectram_size)
 	AM_RANGE(0xe800, 0xe8ff) AM_WRITE(MWA8_RAM) AM_BASE(&mexico86_protection_ram)  /* shared with mcu */
@@ -152,7 +151,6 @@ static ADDRESS_MAP_START( sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
 	AM_RANGE(0x8000, 0xa7ff) AM_READ(shared_r)
 	AM_RANGE(0xa800, 0xbfff) AM_READ(MRA8_RAM)
-	//AM_RANGE(0xc000, 0xc000) AM_READ(YM2203_status_port_0_r)
 	AM_RANGE(0xc000, 0xc000) AM_READ(kiki_2203_r) //AT
 	AM_RANGE(0xc001, 0xc001) AM_READ(YM2203_read_port_0_r)
 ADDRESS_MAP_END
@@ -186,7 +184,9 @@ static ADDRESS_MAP_START( m68705_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0080, 0x07ff) AM_WRITE(MWA8_ROM)
 ADDRESS_MAP_END
 
-
+static ADDRESS_MAP_START( sub_cpu_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x3fff) AM_ROM
+ADDRESS_MAP_END
 
 INPUT_PORTS_START( mexico86 )
 	PORT_START      /* IN0 */
@@ -223,14 +223,14 @@ INPUT_PORTS_START( mexico86 )
 	/* When Bit 1 is On, the machine waits a signal from another one */
 	/* Seems like if you can join two cabinets, one as master */
 	/* and the other as slave, probably to play four players */
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x01, 0x01, "System Selection" )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) ) // Screen ?
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) ) // this should be Demo Sounds, but doesn't work?
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) )
@@ -245,28 +245,27 @@ INPUT_PORTS_START( mexico86 )
 	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
 
 	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x0c, 0x08, "Timer" )
-	PORT_DIPSETTING(    0x04, "Slow" )
-	PORT_DIPSETTING(    0x08, DEF_STR( Normal ) )
-	PORT_DIPSETTING(    0x0c, "Fast" )
-	PORT_DIPSETTING(    0x00, "Fastest" )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( Easy ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( Normal ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Medium ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Hard ) )
+	PORT_DIPNAME( 0x0c, 0x08, "Playing Time" )
+	PORT_DIPSETTING(    0x00, "40 Seconds" )
+	PORT_DIPSETTING(    0x0c, "One Minute" )
+	PORT_DIPSETTING(    0x08, "One Minute and 20 Sec." )
+	PORT_DIPSETTING(    0x04, "One Minute and 40 Sec." )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	/* The following dip seems to be related with the first one */
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x20, 0x20, "System Selection" )
 	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, "Max Players" )
+	PORT_DIPNAME( 0x40, 0x00, "Number of Matches" )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x40, "6" )
+	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Players ) )
 	PORT_DIPSETTING(    0x80, "2" )
 	PORT_DIPSETTING(    0x00, "4" )
 
@@ -434,6 +433,10 @@ static MACHINE_DRIVER_START( mexico86 )
 	MDRV_CPU_PROGRAM_MAP(m68705_readmem,m68705_writemem)
 	MDRV_CPU_VBLANK_INT(mexico86_m68705_interrupt,2)
 
+	MDRV_CPU_ADD(Z80, 6000000)      /* 6 MHz??? */
+	MDRV_CPU_PROGRAM_MAP(sub_cpu_map,0)
+	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
+
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)  /* frames per second, vblank duration */
 	MDRV_INTERLEAVE(100)    /* 100 CPU slices per frame - an high value to ensure proper */
@@ -508,8 +511,8 @@ ROM_START( kicknrun )
 	ROM_REGION( 0x0800, REGION_CPU3, 0 )    /* 2k for the microcontroller */
 	ROM_LOAD( "knrmcu.bin",   0x0000, 0x0800, BAD_DUMP CRC(8e821fa0) SHA1(331f5da31d8767674e2b5bf0e7f5b5ad2535e044)  )  /* manually crafted from the Mexico '86 one */
 
-	ROM_REGION( 0x10000, REGION_CPU4, 0 )    /* cpu for 4 player mode? (set with dipswitch) unused */
-	ROM_LOAD( "9.bin", 0x0000, 0x4000, CRC(6a2ad32f) SHA1(42d4b97b25d219902ad215793f1d2c006ffe94dc) )
+	ROM_REGION( 0x10000, REGION_CPU4, 0 )    /* 64k for the cpu on the sub board */
+	ROM_LOAD( "9.bin",        0x0000, 0x4000, CRC(6a2ad32f) SHA1(42d4b97b25d219902ad215793f1d2c006ffe94dc) )
 
 	ROM_REGION( 0x40000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "a87-05.bin", 0x08000, 0x08000, CRC(4eee3a8a) SHA1(2f0e4c2fb6cba48d0e2b95927fc14f0038557371) )
@@ -539,6 +542,9 @@ ROM_START( mexico86 )
 
 	ROM_REGION( 0x0800, REGION_CPU3, 0 )    /* 2k for the microcontroller */
 	ROM_LOAD( "68_h.bin",   0x0000, 0x0800, CRC(ff92f816) SHA1(0015c3f2ed014052b3fa376409e3a7cca36fac72) )
+
+	ROM_REGION( 0x10000, REGION_CPU4, 0 )    /* 64k for the cpu on the sub board */
+	ROM_LOAD( "9.bin",      0x0000, 0x4000, CRC(6a2ad32f) SHA1(42d4b97b25d219902ad215793f1d2c006ffe94dc) )
 
 	ROM_REGION( 0x40000, REGION_GFX1, ROMREGION_DISPOSE | ROMREGION_INVERT )
 	ROM_LOAD( "4_d.bin",    0x08000, 0x08000, CRC(57cfdbca) SHA1(89c305c380c3de14a956ee4bc85d3a0d343b638e) )

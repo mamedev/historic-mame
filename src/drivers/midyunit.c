@@ -654,7 +654,7 @@ INPUT_PORTS_START( term2 )
 	PORT_DIPNAME( 0x0040, 0x0040, "Dipswitch Coinage" )
 	PORT_DIPSETTING(      0x0000, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0040, DEF_STR( On ))
-	PORT_DIPNAME( 0x0080, 0x0000, "Normal Display" )
+	PORT_DIPNAME( 0x0080, 0x0080, "Normal Display" )
 	PORT_DIPSETTING(      0x0080, DEF_STR( Off ))
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ))
 	PORT_DIPNAME( 0x0100, 0x0100, "Test Switch" )
@@ -979,7 +979,8 @@ MACHINE_DRIVER_END
 static MACHINE_DRIVER_START( term2 )
 	MDRV_IMPORT_FROM(yunit_adpcm)
 	MDRV_VBLANK_DURATION(COMPUTED_VBLANK(255, 288, MKLA5_FPS))
-	MDRV_VISIBLE_AREA(0, 403, 0, 254)
+	MDRV_VISIBLE_AREA(0, 399, 0, 255)
+//	MDRV_VISIBLE_AREA(0, 403, 0, 254)
 MACHINE_DRIVER_END
 
 
@@ -1863,9 +1864,9 @@ GAME( 1990, hiimpac3, hiimpact,hiimpact, trog,    hiimpact, ROT0, "Williams", "H
 GAMEX(1991, shimpact, 0,       hiimpact, trog,    shimpact, ROT0, "Midway",   "Super High Impact (rev LA1 09/30/91)", GAME_NOT_WORKING )
 GAMEX(1991, shimpacp, shimpact,hiimpact, trog,    shimpact, ROT0, "Midway",   "Super High Impact (prototype, rev 5.0 09/15/91)", GAME_NOT_WORKING )
 
-GAME( 1991, term2,    0,       term2,    term2,   term2,    ROT0, "Midway",   "Terminator 2 - Judgment Day (rev LA3 03/27/92)" )
-GAME( 1991, term2la2, term2,   term2,    term2,   term2la2, ROT0, "Midway",   "Terminator 2 - Judgment Day (rev LA2 12/09/91)" )
-GAME( 1991, term2la1, term2,   term2,    term2,   term2la1, ROT0, "Midway",   "Terminator 2 - Judgment Day (rev LA1 11/01/91)" )
+GAME( 1991, term2,    0,       term2,    term2,   term2,    ORIENTATION_FLIP_X, "Midway",   "Terminator 2 - Judgment Day (rev LA3 03/27/92)" )
+GAME( 1991, term2la2, term2,   term2,    term2,   term2la2, ORIENTATION_FLIP_X, "Midway",   "Terminator 2 - Judgment Day (rev LA2 12/09/91)" )
+GAME( 1991, term2la1, term2,   term2,    term2,   term2la1, ORIENTATION_FLIP_X, "Midway",   "Terminator 2 - Judgment Day (rev LA1 11/01/91)" )
 GAME( 1992, mkprot9,  mk,      mk,       mkla2,   mkyunit,  ROT0, "Midway",   "Mortal Kombat (prototype, rev 9.0 07/28/92)" )
 GAME( 1992, mkla1,    mk,      mk,       mkla2,   mkyunit,  ROT0, "Midway",   "Mortal Kombat (rev 1.0 08/08/92)" )
 GAME( 1992, mkla2,    mk,      mk,       mkla2,   mkyunit,  ROT0, "Midway",   "Mortal Kombat (rev 2.0 08/18/92)" )

@@ -1,117 +1,148 @@
 /***************************************************************************
 
-Taito SJ system memory map
+Taito SJ system
+
+Memory map
+----------
 
 MAIN CPU:
 
-0000-7fff ROM (6000-7fff banked in two banks, controlled by bit 7 of d50e)
-8000-87ff RAM
-9000-bfff Character generator RAM
-c400-c7ff Video RAM: front playfield
-c800-cbff Video RAM: middle playfield
-cc00-cfff Video RAM: back playfield
-d100-d17f Sprites (d140-d15f are NOT sprites)
-d200-d27f Palette (64 pairs: xxxxxxxR RRGGGBBB. bits are inverted, i.e. 0x01ff = black)
-e000-efff ROM (on the protection board with the 68705)
+Address          Dir Data     Name       Description
+---------------- --- -------- ---------- -----------------------
+000xxxxxxxxxxxxx R   xxxxxxxx ROM5       program ROM
+001xxxxxxxxxxxxx R   xxxxxxxx ROM6       program ROM
+010xxxxxxxxxxxxx R   xxxxxxxx ROM7       program ROM
+011xxxxxxxxxxxxx R   xxxxxxxx ROM8/ROM9  program ROM (banked)
+10000xxxxxxxxxxx R/W xxxxxxxx SRAMRQ     work RAM
+10001----------0 R   xxxxxxxx 8800       68705 data read
+10001----------1 R   -------x 68ACCEPT   the 68705 has read data from the Z80
+10001----------1 R   ------x- 68READY    the 68705 has written data for the Z80
+10001----------0   W xxxxxxxx            68705 data write [3]
+10001----------1   W -------- ZINTRQ     trigger IRQ on 68705 [3]
+1001xxxxxxxxxxxx R/W xxxxxxxx CDR1-2     character generator RAM
+101xxxxxxxxxxxxx R/W xxxxxxxx CDR3-6     character generator RAM
+1100xxxxxxxxxxxx R/W xxxxxxxx CHARQ      tilemap RAM
+11010000xxxxxxxx R/W xxxxxxxx SCRRQ      tilemap column scroll
+11010001xxxxxxxx R/W xxxxxxxx OBJRQ      sprites RAM [1]
+11010010-xxxxxx0   W -------x VCRRQ      palette chip (93419)
+11010010-xxxxxx1   W xxxxxxxx VCRRQ      palette chip (93419)
+11010011--------   W ---xxxxx PRY        priority control [2]
+11010100----0000 R   xxxxxxxx H0-H7      sprite 0..7 collided
+11010100----0001 R   xxxxxxxx H8-H15     sprite 8..15 collided
+11010100----0010 R   xxxxxxxx H16-H23    sprite 16..23 collided
+11010100----0011 R   -------x OB1        sprite/tilemap 1 collision
+11010100----0011 R   ------x- OB2        sprite/tilemap 2 collision
+11010100----0011 R   -----x-- OB3        sprite/tilemap 3 collision
+11010100----0011 R   ----x--- S12        tilemap 1/tilemap 2 collision
+11010100----0011 R   ---x---- S13        tilemap 1/tilemap 3 collision
+11010100----0011 R   --x----- S23        tilemap 2/tilemap 3 collision
+11010100----0011 R   00------ S23        always 0
+11010100----01-- R   xxxxxxxx EXRHR      read contents of graphics ROMs (address selected by d509-d50a)
+11010100----1000 R   11xxxxxx IN0        digital inputs
+11010100----1001 R   11xxxxxx IN1        digital inputs
+11010100----1010 R   xxxxxxxx DP0        dip switch A
+11010100----1011 R   --xxxxxx IN3        come from a PAL (ROM6 @ 14)
+11010100----1011 R   xx------ IN3        digital inputs
+11010100----1100 R   xxxxxxxx IN4        digital inputs
+11010100----1101 R   ----xxxx IN5        digital inputs
+11010100----1101 R   xxxx---- IN5        from AY-3-8910 #2 port A (status from sound CPU)
+11010100----111x R/W xxxxxxxx READIN     AY-3-8910 #0
+11010101----0000   W xxxxxxxx SPH1       tilemap 1 H scroll
+11010101----0001   W xxxxxxxx SPV1       tilemap 1 V scroll
+11010101----0010   W xxxxxxxx SPH2       tilemap 2 H scroll
+11010101----0011   W xxxxxxxx SPV2       tilemap 2 V scroll
+11010101----0100   W xxxxxxxx SPH3       tilemap 3 H scroll
+11010101----0101   W xxxxxxxx SPV3       tilemap 3 V scroll
+11010101----0110   W -----xxx MD1        tilemap 1 color code
+11010101----0110   W ----x--- CCH1       tilemap 1 char bank
+11010101----0110   W -xxx---- MD2        tilemap 2 color code
+11010101----0110   W x------- CCH2       tilemap 2 char bank
+11010101----0111   W -----xxx MD3        tilemap 3 color code
+11010101----0111   W ----x--- CCH3       tilemap 3 char bank
+11010101----0111   W --xx---- MD0        sprite color bank
+11010101----0111   W xx------ n.c.
+11010101----1000   W -------- HTCLR      clear hardware collision detection registers
+11010101----1001   W xxxxxxxx EXROM1     low 8 bits of address to read from graphics ROMs
+11010101----1010   W xxxxxxxx EXROM2     high 8 bits of address to read from graphics ROMs
+11010101----1011   W xxxxxxxx EPORT1     command to sound CPU
+11010101----1100   W -------x EPORT2     single bit signal to audio CPU (not used?)
+11010101----1101   W -------- TIME RESET wathcdog reset
+11010101----1110   W -------x COIN LOCK  coin lockout
+11010101----1110   W ------x- SOUND STOP mute sound
+11010101----1110   W -xxxxx-- n.c.
+11010101----1110   W x------- BANK SEL   program ROM bank select
+11010101----1111   W ---xxxxx EXPORT     to a PAL (ROM6 @ 14)
+11010110--------   W -------x HINV       horizontal screen flip
+11010110--------   W ------x- VINV       vertical screen flip
+11010110--------   W -----x-- OBJEX      sprite bank select [1]
+11010110--------   W ----x--- n.c.
+11010110--------   W ---x---- SN1OFF     tilemap 1 enable
+11010110--------   W --x----- SN2OFF     tilemap 2 enable
+11010110--------   W -x------ SN3OFF     tilemap 3 enable
+11010110--------   W x------- OBJOFF     sprites enable
+11010111--------              n.c.
+111xxxxxxxxxxxxx R   xxxxxxxx ROM10      program ROM
 
-read:
 
-8800      68705 data read
-8801      68705 status read
-	    bit 0 = the 68705 has read data from the Z80
-	    bit 1 = the 68705 has written data for the Z80
-d400-d403 hardware collision detection registers
-	  d400 bit0-7 = sprite 0x00-0x07 collided
-	  d401 bit0-7 = sprite 0x08-0x0f collided
-	  d402 bit0-7 = sprite 0x18-0x1f collided
-	  d403 bit0 = obj/pf1
-	       bit1 = obj/pf2
-	       bit2 = obj/pf3
-	       bit3 = pf1/pf2
-	       bit4 = pf1/pf3
-	       bit5 = pf2/pf3
-	       bit6 = nc
-	       bit7 = nc
-d404      returns contents of graphic ROM, pointed by d509-d50a
-d408      IN0
-d409      IN1
-d40a      DSW1
-d40b      IN2 - can come from a ROM or PAL chip
-d40c      COIN
-d40d      another input port (used for player 2 dial)
-d40f      8910 #0 read
-	    port A DSW2
-	    port B DSW3
+[1] There are 256 bytes of sprite RAM, but only 128 can be accessed by the
+    video hardware at a time. OBJEX selects the high or low bank. The CPU can
+	access all the memory linearly. This feature doesn't seem to be ever used.
 
-write
-8800      68705 data write
-d000-d01f front playfield column scroll
-d020-d03f middle playfield column scroll
-d040-d05f back playfield column scroll
-d300      playfield priority control
-	  bits 0-3 go to A4-A7 of a 256x4 PROM
-		  bit 4 selects D0/D1 or D2/D3 of the PROM
-		  bit 5-7 n.c.
-	  A0-A3 of the PROM is fed with a mask of the inactive planes
-		    (i.e. all-zero) in the order sprites-front-middle-back
-	  the 2-bit code which comes out from the PROM selects the plane
-		  to display.
-d40e      8910 #0 control
-d40f      8910 #0 write
-d500      front playfield horizontal scroll
-d501      front playfield vertical scroll
-d502      middle playfield horizontal scroll
-d503      middle playfield vertical scroll
-d504      back playfield horizontal scroll
-d505      back playfield vertical scroll
-d506      bits 0-2 = front playfield color code
-	  bit 3 = front playfield character bank
-	  bits 4-6 = middle playfield color code
-	  bit 7 = middle playfield character bank
-d507      bits 0-2 = back playfield color code
-	  bit 3 = back playfield character bank
-	  bits 4-5 = sprite color bank (1 bank = 2 color codes)
-d508      clear hardware collision detection registers
-d509-d50a pointer to graphic ROM to read from d404
-d50b      command for the audio CPU
-d50d      watchdog reset
-d50e      bit 7 = ROM bank selector
-		  bit 0-4 = protection write (Alpine Ski); result is read from d40b bits 0-3
-d50f      can go to a ROM or PAL; the result is read from d40b
-		  ==> used in Alpine Ski (Set 1) for protection
-d600      bit 0 horizontal screen flip
-	  bit 1 vertical screen flip
-	  bit 2 ? sprite related, called OBJEX. It looks like there are 256
-		  bytes of sprite RAM, but only 128 can be acessed by the video
-		  hardware at a time. This select the high or low bank. The CPU
-		  can access all the memory linearly. I don't know if this is
-		  ever used.
-	  bit 3 n.c.
-		  bit 4 front playfield enable
-		  bit 5 middle playfield enable
-		  bit 6 back playfield enable
-		  bit 7 sprites enable
+[2] Priority is controlled by a 256x4 PROM.
+    Bits 0-3 of PRY go to A4-A7 of the PROM, bit 4 selectes D0-D1 or D2-D3.
+	A0-A3 of the PROM is fed with a mask of the inactive planes in the order
+	OBJ-SCN1-SCN2-SCN3. The 2-bit code which comes out from the PROM selects
+	the plane to display.
+
+[3] A jumper selects whether writing to 8800 should also automatically trigger
+    the interrupt, or it should be explicitly triggered by a write to 8801.
 
 
 SOUND CPU:
-0000-3fff ROM (none of the games have this fully populated)
-4000-43ff RAM
-e000-efff space for diagnostics ROM?
 
-read:
-5000      command from CPU board
-8101      ?
+Address          Dir Data     Name      Description
+---------------- --- -------- --------- -----------------------
+0000xxxxxxxxxxxx R   xxxxxxxx ROM1      program ROM
+0001xxxxxxxxxxxx R   xxxxxxxx ROM2      program ROM
+0010xxxxxxxxxxxx R   xxxxxxxx ROM3      program ROM
+0011xxxxxxxxxxxx R   xxxxxxxx ROM4      program ROM
+010000xxxxxxxxxx R/W xxxxxxxx           work RAM
+01001--------00x R/W xxxxxxxx CS5       AY-3-8910 #1
+01001--------01x R/W xxxxxxxx CS5       AY-3-8910 #2
+01001--------1-x R/W xxxxxxxx CS5       AY-3-8910 #3
+01010---------00 R   xxxxxxxx RD5000    read command from main CPU
+01010---------00   W -------- WR5000    clear bit 7 of command from main CPU (not used?)
+01010---------01 R   ----x--- RD5001    command pending from main CPU (not used?)
+01010---------01 R   -----x-- RD5001    single bit from main CPU (not used?)
+01010---------01 R   ------11 RD5001    always 1
+01010---------01   W -------- WR5001    clear single bit from main CPU (not used?)
+01010---------10              n.c.
+01010---------11              n.c.
+111xxxxxxxxxxxxx R   xxxxxxxx           space for diagnostics ROM? not shown in the schematics
 
-write:
-4800      8910 #1  control
-4801      8910 #1  write
-	    PORT A  digital sound out
-4802      8910 #2  control
-4803      8910 #2  write
-4804      8910 #3  control
-4805      8910 #3  write
-	    port B bit 0 SOUND CPU NMI disable
 
+
+8910 #0
+port A: DSW B
+port B: DSW C
+
+8910 #1
+port A: digital sound out
+port B: digital sound volume?
+
+8910 #2:
+port A: bits 4-7 IN54-IN57 read by main CPU at d40d
+port B: n.c.
+
+8910 #3:
+port A: bits 0-1 control RC filter on this chip's output
+port B: bit 0 NMI enable
+
+
+Notes:
+------
+- Alpine Sky uses the feature where write to d50e-d50f can be processed by a PAL and
+  answer read back from d40b.
 
 Kickstart Wheelie King :
 - additional ram @ $d800-$dfff (scroll ram  + ??)
@@ -120,6 +151,11 @@ Kickstart Wheelie King :
 - strange controls :
 	 - 'revolve type' - 3 pos switch (gears) +  button/pedal (accel)
 	 - two buttons for gear change, auto acceleration
+
+TODO:
+-----
+- RC filter on 8910 #3
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -181,6 +217,17 @@ static WRITE8_HANDLER( taitosj_soundcommand_w )
 	if (!sndnmi_disable) cpunum_set_input_line(1,INPUT_LINE_NMI,PULSE_LINE);
 }
 
+static UINT8 in5;
+
+static WRITE8_HANDLER( in5_w )
+{
+	in5 = data & 0xf0;
+}
+
+static READ8_HANDLER( in5_r )
+{
+	return (input_port_4_r(0) & 0x0f) | (in5 & 0xf0);
+}
 
 static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0x5fff) AM_READ(MRA8_ROM)
@@ -197,7 +244,7 @@ static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xd40a, 0xd40a) AM_READ(input_port_5_r)     /* DSW1 */
 	AM_RANGE(0xd40b, 0xd40b) AM_READ(input_port_2_r)     /* IN2 */
 	AM_RANGE(0xd40c, 0xd40c) AM_READ(input_port_3_r)     /* Service */
-	AM_RANGE(0xd40d, 0xd40d) AM_READ(input_port_4_r)
+	AM_RANGE(0xd40d, 0xd40d) AM_READ(in5_r)
 	AM_RANGE(0xd40f, 0xd40f) AM_READ(AY8910_read_port_0_r)       /* DSW2 and DSW3 */
 	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_ROM)
 ADDRESS_MAP_END
@@ -244,7 +291,7 @@ static ADDRESS_MAP_START( mcu_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xd40a, 0xd40a) AM_READ(input_port_5_r)     /* DSW1 */
 	AM_RANGE(0xd40b, 0xd40b) AM_READ(input_port_2_r)     /* IN2 */
 	AM_RANGE(0xd40c, 0xd40c) AM_READ(input_port_3_r)     /* Service */
-	AM_RANGE(0xd40d, 0xd40d) AM_READ(input_port_4_r)
+	AM_RANGE(0xd40d, 0xd40d) AM_READ(in5_r)
 	AM_RANGE(0xd40f, 0xd40f) AM_READ(AY8910_read_port_0_r)       /* DSW2 and DSW3 */
 	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_ROM)
 ADDRESS_MAP_END
@@ -312,7 +359,7 @@ static ADDRESS_MAP_START( kikstart_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xd40a, 0xd40a) AM_READ(input_port_5_r)     /* DSW1 */
 	AM_RANGE(0xd40b, 0xd40b) AM_READ(input_port_2_r)     /* IN2 */
 	AM_RANGE(0xd40c, 0xd40c) AM_READ(kikstart_gears_read)     /* Service */
-	AM_RANGE(0xd40d, 0xd40d) AM_READ(input_port_4_r)
+	AM_RANGE(0xd40d, 0xd40d) AM_READ(in5_r)
 	AM_RANGE(0xd40f, 0xd40f) AM_READ(AY8910_read_port_0_r)       /* DSW2 and DSW3 */
 	AM_RANGE(0xd800, 0xdfff) AM_READ(MRA8_RAM)
 	AM_RANGE(0xe000, 0xefff) AM_READ(MRA8_ROM)
@@ -420,7 +467,7 @@ ADDRESS_MAP_END
 	PORT_DIPSETTING(    0x50, DEF_STR( 1C_6C ) ) \
 	PORT_DIPSETTING(    0x60, DEF_STR( 1C_7C ) ) \
 	PORT_DIPSETTING(    0x70, DEF_STR( 1C_8C ) )
-	
+
 #define COMMON_IN0\
 	PORT_START_TAG("IN0")\
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT ) PORT_8WAY\
@@ -464,11 +511,7 @@ ADDRESS_MAP_END
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_TILT )\
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )\
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
-	
-#define COMMON_IN4\
-	PORT_START_TAG("IN4")\
-	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_BUTTON3 )
-	
+
 #define WWEST_INPUT1\
 	PORT_START_TAG("IN0")\
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_LEFT ) PORT_8WAY\
@@ -504,7 +547,8 @@ ADDRESS_MAP_END
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT ) PORT_8WAY PORT_COCKTAIL\
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN ) PORT_8WAY PORT_COCKTAIL\
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP ) PORT_8WAY PORT_COCKTAIL\
-	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )\
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_SPECIAL )	// from sound CPU
+
 
 
 
@@ -513,7 +557,10 @@ COMMON_IN0
 COMMON_IN1
 COMMON_IN2
 COMMON_IN3(IP_ACTIVE_HIGH)
-COMMON_IN4
+
+	PORT_START_TAG("IN4")
+	PORT_BIT( 0x0f, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_SPECIAL )	// from sound CPU
 
 	PORT_START_TAG("DSW1")
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
@@ -593,6 +640,8 @@ COMMON_IN2
 COMMON_IN3(IP_ACTIVE_LOW)
 
 	PORT_START_TAG("IN4")
+	PORT_BIT( 0x0f, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_SPECIAL )	// from sound CPU
 
 	PORT_START_TAG("DSW1")
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
@@ -672,7 +721,10 @@ INPUT_PORTS_START( junglek )
 
 COMMON_IN2
 COMMON_IN3(IP_ACTIVE_HIGH)
-COMMON_IN4
+
+	PORT_START_TAG("IN4")
+	PORT_BIT( 0x0f, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_SPECIAL )	// from sound CPU
 
 	PORT_START_TAG("DSW1")
 	PORT_DIPNAME( 0x03, 0x03, "Finish Bonus" )
@@ -730,7 +782,10 @@ COMMON_IN0
 COMMON_IN1 //Button 2 skips levels when Debug mode is on
 COMMON_IN2
 COMMON_IN3(IP_ACTIVE_HIGH)
-COMMON_IN4
+
+	PORT_START_TAG("IN4")
+	PORT_BIT( 0x0f, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_SPECIAL )	// from sound CPU
 
 	PORT_START_TAG("DSW1")
 	PORT_DIPNAME( 0x03, 0x03, "Finish Bonus" )
@@ -812,8 +867,11 @@ INPUT_PORTS_START( alpine )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
 	COMMON_IN3(IP_ACTIVE_LOW) //Tilt flips screen
-	COMMON_IN4
-	
+
+	PORT_START_TAG("IN4")
+	PORT_BIT( 0x0f, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_SPECIAL )	// from sound CPU
+
 	PORT_START_TAG("DSW1")
 	PORT_DIPNAME( 0x03, 0x03, "Jump Bonus" )
 	PORT_DIPSETTING(    0x00, "500-1500" )
@@ -894,7 +952,10 @@ INPUT_PORTS_START( alpinea )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
 COMMON_IN3(IP_ACTIVE_LOW) //Tilt flips screen
-COMMON_IN4
+
+	PORT_START_TAG("IN4")
+	PORT_BIT( 0x0f, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_SPECIAL )	// from sound CPU
 
 	PORT_START_TAG("DSW1")
 	PORT_DIPNAME( 0x03, 0x03, "Jump Bonus" )
@@ -968,7 +1029,10 @@ INPUT_PORTS_START( timetunl )
 
 COMMON_IN2
 COMMON_IN3(IP_ACTIVE_LOW)
-COMMON_IN4
+
+	PORT_START_TAG("IN4")
+	PORT_BIT( 0x0f, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_SPECIAL )	// from sound CPU
 
 	PORT_START_TAG("DSW1")
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Unknown ) )
@@ -1164,7 +1228,8 @@ COMMON_IN2
 COMMON_IN3(IP_ACTIVE_HIGH)
 
 	PORT_START_TAG("IN4")
-	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0x0f, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_SPECIAL )	// from sound CPU
 
 	PORT_START_TAG("DSW1")
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Bonus_Life ) )
@@ -1247,8 +1312,7 @@ WWEST_INPUT1
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT ) PORT_8WAY PORT_COCKTAIL
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN ) PORT_8WAY PORT_COCKTAIL
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP ) PORT_8WAY PORT_COCKTAIL
-	PORT_BIT( 0x30, 0x00, IPT_UNUSED )					/* protection read, the game hangs without it */
-	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_SPECIAL )	// from sound CPU
 
 	PORT_START_TAG("DSW1")
 	PORT_DIPNAME( 0x03, 0x03, "Bonus Life?" )
@@ -1327,7 +1391,10 @@ INPUT_PORTS_START( waterski )
 
 COMMON_IN2
 COMMON_IN3(IP_ACTIVE_HIGH)
-COMMON_IN4
+
+	PORT_START_TAG("IN4")
+	PORT_BIT( 0x0f, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_SPECIAL )	// from sound CPU
 
 	PORT_START_TAG("DSW1")
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
@@ -1413,7 +1480,10 @@ INPUT_PORTS_START( bioatack )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
 COMMON_IN3(IP_ACTIVE_LOW)
-COMMON_IN4
+
+	PORT_START_TAG("IN4")
+	PORT_BIT( 0x0f, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_SPECIAL )	// from sound CPU
 
 	PORT_START_TAG("DSW1")      /* d50a */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Bonus_Life ) )
@@ -1474,7 +1544,10 @@ COMMON_IN0
 COMMON_IN1
 COMMON_IN2
 COMMON_IN3(IP_ACTIVE_HIGH)
-COMMON_IN4
+
+	PORT_START_TAG("IN4")
+	PORT_BIT( 0x0f, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_SPECIAL )	// from sound CPU
 
 	PORT_START_TAG("DSW1")
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
@@ -1536,7 +1609,10 @@ COMMON_IN0
 COMMON_IN1
 COMMON_IN2
 COMMON_IN3(IP_ACTIVE_HIGH)
-COMMON_IN4
+
+	PORT_START_TAG("IN4")
+	PORT_BIT( 0x0f, IP_ACTIVE_LOW, IPT_UNKNOWN )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_SPECIAL )	// from sound CPU
 
 	PORT_START_TAG("DSW1")
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
@@ -1713,22 +1789,57 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
+static UINT8 voltable[256] =
+{
+	0xff,0xfe,0xfc,0xfb,0xf9,0xf7,0xf6,0xf4,0xf3,0xf2,0xf1,0xef,0xee,0xec,0xeb,0xea,
+	0xe8,0xe7,0xe5,0xe4,0xe2,0xe1,0xe0,0xdf,0xde,0xdd,0xdc,0xdb,0xd9,0xd8,0xd7,0xd6,
+	0xd5,0xd4,0xd3,0xd2,0xd1,0xd0,0xcf,0xce,0xcd,0xcc,0xcb,0xca,0xc9,0xc8,0xc7,0xc6,
+	0xc5,0xc4,0xc3,0xc2,0xc1,0xc0,0xbf,0xbf,0xbe,0xbd,0xbc,0xbb,0xba,0xba,0xb9,0xb8,
+	0xb7,0xb7,0xb6,0xb5,0xb4,0xb3,0xb3,0xb2,0xb1,0xb1,0xb0,0xaf,0xae,0xae,0xad,0xac,
+	0xab,0xaa,0xaa,0xa9,0xa8,0xa8,0xa7,0xa6,0xa6,0xa5,0xa5,0xa4,0xa3,0xa2,0xa2,0xa1,
+	0xa1,0xa0,0xa0,0x9f,0x9e,0x9e,0x9d,0x9d,0x9c,0x9c,0x9b,0x9b,0x9a,0x99,0x99,0x98,
+	0x97,0x97,0x96,0x96,0x95,0x95,0x94,0x94,0x93,0x93,0x92,0x92,0x91,0x91,0x90,0x90,
+	0x8b,0x8b,0x8a,0x8a,0x89,0x89,0x89,0x88,0x88,0x87,0x87,0x87,0x86,0x86,0x85,0x85,
+	0x84,0x84,0x83,0x83,0x82,0x82,0x82,0x81,0x81,0x81,0x80,0x80,0x7f,0x7f,0x7f,0x7e,
+	0x7e,0x7e,0x7d,0x7d,0x7c,0x7c,0x7c,0x7b,0x7b,0x7b,0x7a,0x7a,0x7a,0x79,0x79,0x79,
+	0x78,0x78,0x77,0x77,0x77,0x76,0x76,0x76,0x75,0x75,0x75,0x74,0x74,0x74,0x73,0x73,
+	0x73,0x73,0x72,0x72,0x72,0x71,0x71,0x71,0x70,0x70,0x70,0x70,0x6f,0x6f,0x6f,0x6e,
+	0x6e,0x6e,0x6d,0x6d,0x6d,0x6c,0x6c,0x6c,0x6c,0x6b,0x6b,0x6b,0x6b,0x6a,0x6a,0x6a,
+	0x6a,0x69,0x69,0x69,0x68,0x68,0x68,0x68,0x68,0x67,0x67,0x67,0x66,0x66,0x66,0x66,
+	0x65,0x65,0x65,0x65,0x64,0x64,0x64,0x64,0x64,0x63,0x63,0x63,0x63,0x62,0x62,0x62,
+};
+
+static INT8 dac_out;
+static UINT8 dac_vol;
+
+static WRITE8_HANDLER( dac_out_w )
+{
+	dac_out = data - 0x80;
+	DAC_signed_data_16_w(0,dac_out * dac_vol + 0x8000);
+}
+
+static WRITE8_HANDLER( dac_vol_w )
+{
+	dac_vol = voltable[data];
+	DAC_signed_data_16_w(0,dac_out * dac_vol + 0x8000);
+}
+
 
 static struct AY8910interface ay8910_interface =
 {
-	4,      /* 4 chips */
-	6000000/4,      /* 1.5 MHz */
+	4,			/* 4 chips */
+	6000000/4,	/* 1.5 MHz */
 	{ 15, 15, 15, MIXERG(15,MIXER_GAIN_2x,MIXER_PAN_CENTER) },
-	{ input_port_6_r, 0, 0, 0 },            /* port Aread */
-	{ input_port_7_r, 0, 0, 0 },            /* port Bread */
-	{ 0, DAC_0_data_w, 0, 0 },              /* port Awrite */
-	{ 0, 0, 0, taitosj_sndnmi_msk_w }       /* port Bwrite */
+	{ input_port_6_r, 0, 0, 0 },				/* port Aread */
+	{ input_port_7_r, 0, 0, 0 },				/* port Bread */
+	{ 0, dac_out_w, in5_w, 0 },					/* port Awrite */
+	{ 0, dac_vol_w, 0, taitosj_sndnmi_msk_w }	/* port Bwrite */
 };
 
 static struct DACinterface dac_interface =
 {
 	1,
-	{ 15 }
+	{ 20 }
 };
 
 

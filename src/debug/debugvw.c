@@ -1173,7 +1173,7 @@ static void disasm_recompute(struct debug_view *view)
 		sprintf(&dasmdata->dasm[instr][0], " %0*X  ", cpuinfo->space[ADDRESS_SPACE_PROGRAM].addrchars, pc);
 
 		/* get the disassembly, but only if mapped */
-		if (memory_get_read_ptr(view->cpunum, ADDRESS_SPACE_PROGRAM, pcbyte) != NULL)
+		if (memory_get_op_ptr(view->cpunum, pcbyte) != NULL)
 		{
 			memory_set_opbase(pcbyte);
 			pc += numbytes = activecpu_dasm(buffer, pc) & DASMFLAG_LENGTHMASK;

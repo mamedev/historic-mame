@@ -125,16 +125,12 @@ static WRITE8_HANDLER( wallc_videoram_w )
 
 static void get_bg_tile_info(int tile_index)
 {
-	int code = videoram[tile_index] + 0x100;
-	int color = 1;
-
-	SET_TILE_INFO(0, code, color, 0)
+	SET_TILE_INFO(0, videoram[tile_index] + 0x100, 1, 0)
 }
 
 VIDEO_START( wallc )
 {
-	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_cols_flip_y,
-		TILEMAP_OPAQUE, 8, 8, 32, 32);
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_cols_flip_y,	TILEMAP_OPAQUE, 8, 8, 32, 32);
 
 	if ( !bg_tilemap )
 		return 1;
@@ -144,68 +140,27 @@ VIDEO_START( wallc )
 
 VIDEO_UPDATE( wallc )
 {
-	tilemap_draw(bitmap, &Machine->visible_area, bg_tilemap, 0, 0);
+	tilemap_draw(bitmap, cliprect, bg_tilemap, 0, 0);
 }
 
-static int wcb0=-1;
-static WRITE8_HANDLER( wc_b0 )
+static WRITE8_HANDLER( wallc_coin_counter_w )
 {
-	if (wcb0!=data)
-	{
-		wcb0 = data;
-		//logerror("wcb0=%i pc=%4x\n",wcb0, activecpu_get_pc() );
-	}
-}
-static int wcb1=-1;
-static WRITE8_HANDLER( wc_b1 )
-{
-	if (wcb1!=data)
-	{
-		wcb1 = data;
-		//logerror("wcb1=%i pc=%4x\n",wcb1, activecpu_get_pc() );
-	}
-}
-static int wcb2=-1;
-static WRITE8_HANDLER( wc_b2 )
-{
-	if (wcb2!=data)
-	{
-		wcb2 = data;
-		//logerror("wcb2=%i pc=%4x\n",wcb2, activecpu_get_pc() );
-	}
+	coin_counter_w(0,data & 2);
 }
 
-static ADDRESS_MAP_START( readmem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x3fff) AM_READ(MRA8_ROM)
-
-	AM_RANGE(0x8000, 0x83ff) AM_READ(MRA8_RAM)
-	AM_RANGE(0x8400, 0x87ff) AM_READ(MRA8_RAM) /* mirror */
-	AM_RANGE(0x8800, 0x8bff) AM_READ(MRA8_RAM) /* mirror */
-	AM_RANGE(0x8c00, 0x8fff) AM_READ(MRA8_RAM) /* mirror */
-
-	AM_RANGE(0xa000, 0xa3ff) AM_READ(MRA8_RAM)
-
+static ADDRESS_MAP_START( wallc_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0x8000, 0x83ff) AM_RAM AM_MIRROR(0xc00) AM_WRITE(wallc_videoram_w) AM_BASE(&videoram)	/* 2114, 2114 */
+	AM_RANGE(0xa000, 0xa3ff) AM_RAM		/* 2114, 2114 */
+	
 	AM_RANGE(0xb000, 0xb000) AM_READ(input_port_0_r)
 	AM_RANGE(0xb200, 0xb200) AM_READ(input_port_1_r)
 	AM_RANGE(0xb400, 0xb400) AM_READ(input_port_2_r)
 	AM_RANGE(0xb600, 0xb600) AM_READ(input_port_3_r)
-ADDRESS_MAP_END
 
-
-static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
-
-	AM_RANGE(0x8000, 0x83ff) AM_WRITE(wallc_videoram_w) AM_BASE(&videoram)	/* 2114, 2114 */
-	AM_RANGE(0x8400, 0x87ff) AM_WRITE(wallc_videoram_w)	/* mirror */
-	AM_RANGE(0x8800, 0x8bff) AM_WRITE(wallc_videoram_w)	/* mirror */
-	AM_RANGE(0x8c00, 0x8fff) AM_WRITE(wallc_videoram_w)	/* mirror */
-
-	AM_RANGE(0xa000, 0xa3ff) AM_WRITE(MWA8_RAM)		/* 2114, 2114 */
-
-	AM_RANGE(0xb000, 0xb000) AM_WRITE(wc_b0) /*?*/
-	AM_RANGE(0xb100, 0xb100) AM_WRITE(wc_b1) /*?*/
-	AM_RANGE(0xb200, 0xb200) AM_WRITE(wc_b2) /*?*/
-
+	AM_RANGE(0xb000, 0xb000) AM_WRITENOP
+	AM_RANGE(0xb100, 0xb100) AM_WRITE(wallc_coin_counter_w)
+	AM_RANGE(0xb200, 0xb200) AM_WRITENOP
 	AM_RANGE(0xb500, 0xb500) AM_WRITE(AY8910_control_port_0_w)
 	AM_RANGE(0xb600, 0xb600) AM_WRITE(AY8910_write_port_0_w)
 ADDRESS_MAP_END
@@ -273,9 +228,9 @@ INPUT_PORTS_END
 static struct GfxLayout charlayout =
 {
 	8,8,	/* 8*8 characters */
-	512,	/* 512 characters */
+	RGN_FRAC(1,3),
 	3,	/* 3 bits per pixel */
-	{ 0, 0x1000*8*1, 0x1000*8*2 }, /* the bitplanes are separated */
+	{ RGN_FRAC(0,3),RGN_FRAC(1,3),RGN_FRAC(2,3) }, /* the bitplanes are separated */
 	{ 7, 6, 5, 4, 3, 2, 1, 0 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8 /* every char takes 8 consecutive bytes */
@@ -302,6 +257,30 @@ static DRIVER_INIT( wallc )
 	}
 }
 
+static DRIVER_INIT( wallca )
+{
+	unsigned char c;
+	unsigned int i;
+
+	data8_t *ROM = memory_region(REGION_CPU1);
+
+	for (i=0; i<0x4000; i++)
+	{
+		if(i & 0x100)
+		{
+			c = ROM[ i ] ^ 0x4a;
+			c = BITSWAP8(c, 4,7,1,3,2,0,5,6);
+		}
+		else
+		{
+			c = ROM[ i ] ^ 0xa5;
+			c = BITSWAP8(c, 0,2,3,6,1,5,7,4);
+		}
+
+		ROM[ i ] = c;
+	}
+}
+
 
 
 static struct AY8910interface ay8912_interface =
@@ -319,7 +298,7 @@ static struct AY8910interface ay8912_interface =
 static MACHINE_DRIVER_START( wallc )
 	/* basic machine hardware */
 	MDRV_CPU_ADD(Z80, 12288000 / 4)	/* 3.072 MHz ? */
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
+	MDRV_CPU_PROGRAM_MAP(wallc_map,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
 	MDRV_FRAMES_PER_SECOND(60)
@@ -351,7 +330,7 @@ ROM_START( wallc )
 	ROM_LOAD( "wac05.h7",   0x0000, 0x2000, CRC(ab6e472e) SHA1(a387fec24fb899df349a35d1d3a91e897b074712) )
 	ROM_LOAD( "wac1-52.h6", 0x2000, 0x2000, CRC(988eaa6d) SHA1(d5e5dbee6e7e0488fdecfb864198c686cbd5d59c) )
 
-	ROM_REGION( 0x4000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_REGION( 0x3000, REGION_GFX1, ROMREGION_DISPOSE )
 	ROM_LOAD( "wc1.e3",		0x0000, 0x1000, CRC(ca5c4b53) SHA1(5d2e14fe81cca4ec7dbe0c98eaa26890fca28e58) )
 	ROM_LOAD( "wc2.e2",		0x1000, 0x1000, CRC(b7f52a59) SHA1(737e7616d7295762057fbdb69d65c8c1edc773dc) )
 	ROM_LOAD( "wc3.e1",		0x2000, 0x1000, CRC(f6854b3a) SHA1(bc1e7f785c338c1afa4ab61c07c61397b3de0b01) )
@@ -360,4 +339,20 @@ ROM_START( wallc )
 	ROM_LOAD( "74s288.c2",  0x0000, 0x0020, CRC(83e3e293) SHA1(a98c5e63b688de8d175adb6539e0cdc668f313fd) )
 ROM_END
 
-GAME( 1984, wallc, 0,      wallc,  wallc, wallc, ROT0, "Midcoin", "Wall Crash" )
+/* this set uses a different encryption, but the decrypted code is the same */
+ROM_START( wallca )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )     /* 64k for main CPU */
+	ROM_LOAD( "rom4.rom",     0x0000, 0x2000, CRC(ce43af1b) SHA1(c05419cb4aa57c6187b469573a3787d9123c4a05) )
+	ROM_LOAD( "rom5.rom",     0x2000, 0x2000, CRC(b789a705) SHA1(2b62b14d1a3ad5eff5b8d502d7891e58379ee820) )
+
+	ROM_REGION( 0x3000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "rom3.rom",     0x0800, 0x0800, CRC(6634db73) SHA1(fe6104f974495a250e0cd14c0745eec8e44b8d3a) )
+	ROM_LOAD( "rom2.rom",     0x1800, 0x0800, CRC(79f49c2c) SHA1(485fdba5ebdb4c01306f3ef26c992a513aa6b5dc) )
+	ROM_LOAD( "rom1.rom",     0x2800, 0x0800, CRC(3884fd4f) SHA1(47254c8828128ac48fc15f05b52fe4d42d4919e7) )
+
+	ROM_REGION( 0x0020, REGION_PROMS, 0 )
+	ROM_LOAD( "74s288.c2",  0x0000, 0x0020, CRC(83e3e293) SHA1(a98c5e63b688de8d175adb6539e0cdc668f313fd) )
+ROM_END
+
+GAME( 1984, wallc,  0,      wallc,  wallc, wallc,  ROT0, "Midcoin", "Wall Crash (set 1)" )
+GAME( 1984, wallca, wallc,  wallc,  wallc, wallca, ROT0, "Midcoin", "Wall Crash (set 2)" )

@@ -365,6 +365,7 @@ static void g65816_set_info(UINT32 state, union cpuinfo *info)
 
 		/* --- the following bits of info are set as pointers to data or functions --- */
 		case CPUINFO_PTR_IRQ_CALLBACK:					g65816_set_irq_callback(info->irqcallback); break;
+		case CPUINFO_PTR_G65816_READVECTOR_CALLBACK:	READ_VECTOR = (read8_handler) info->f;		break;
 	}
 }
 
@@ -438,6 +439,7 @@ void g65816_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_PTR_INSTRUCTION_COUNTER:			info->icount = &g65816_ICount;			break;
 		case CPUINFO_PTR_REGISTER_LAYOUT:				info->p = g65816i_register_layout;		break;
 		case CPUINFO_PTR_WINDOW_LAYOUT:					info->p = g65816i_window_layout;		break;
+		case CPUINFO_PTR_G65816_READVECTOR_CALLBACK:	info->f = (genf *) READ_VECTOR;			break;
 
 		/* --- the following bits of info are returned as NULL-terminated strings --- */
 		case CPUINFO_STR_NAME:							strcpy(info->s = cpuintrf_temp_str(), "G65C816"); break;

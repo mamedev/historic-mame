@@ -23,7 +23,6 @@
 
 data16_t *rpunch_bitmapram;
 size_t rpunch_bitmapram_size;
-static UINT32 *rpunch_bitmapsum;
 
 int rpunch_sprite_palette;
 
@@ -86,25 +85,17 @@ static void crtc_interrupt_gen(int param)
 
 VIDEO_START( rpunch )
 {
-	int i;
-
-	/* allocate tilemaps for the backgrounds and a bitmap for the direct-mapped bitmap */
+	/* allocate tilemaps for the backgrounds */
 	background[0] = tilemap_create(get_bg0_tile_info,tilemap_scan_cols,TILEMAP_OPAQUE,     8,8,64,64);
 	background[1] = tilemap_create(get_bg1_tile_info,tilemap_scan_cols,TILEMAP_TRANSPARENT,8,8,64,64);
 
-	/* allocate a bitmap sum */
-	rpunch_bitmapsum = auto_malloc(BITMAP_HEIGHT * sizeof(UINT32));
-
 	/* if anything failed, clean up and return an error */
-	if (!background[0] || !background[1] || !rpunch_bitmapsum)
+	if (!background[0] || !background[1])
 		return 1;
 
 	/* configure the tilemaps */
 	tilemap_set_transparent_pen(background[1],15);
 
-	/* reset the sums and bitmap */
-	for (i = 0; i < BITMAP_HEIGHT; i++)
-		rpunch_bitmapsum[i] = (BITMAP_WIDTH/4) * 0xffff;
 	if (rpunch_bitmapram)
 		memset(rpunch_bitmapram, 0xff, rpunch_bitmapram_size);
 
@@ -120,27 +111,6 @@ VIDEO_START( rpunch )
  *	Write handlers
  *
  *************************************/
-
-WRITE16_HANDLER( rpunch_bitmap_w )
-{
-	if (rpunch_bitmapram)
-	{
-		int oldword = rpunch_bitmapram[offset];
-		int newword = oldword;
-		COMBINE_DATA(&newword);
-
-		if (oldword != newword)
-		{
-			int row = offset / 128;
-			int col = 4 * (offset % 128) - BITMAP_XOFFSET;
-
-			rpunch_bitmapram[offset] = data;
-			if (row < BITMAP_HEIGHT && col >= 0 && col < BITMAP_WIDTH)
-				rpunch_bitmapsum[row] += newword - oldword;
-		}
-	}
-}
-
 
 WRITE16_HANDLER( rpunch_videoram_w )
 {
@@ -263,22 +233,19 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 		int data1 = spriteram16[offs + 1];
 		int code = data1 & 0x7ff;
 
-		if (code < 0x600 && code != 0)
-		{
-			int data0 = spriteram16[offs + 0];
-			int data2 = spriteram16[offs + 2];
-			int x = (data2 & 0x1ff) + 8;
-			int y = 513 - (data0 & 0x1ff);
-			int xflip = data1 & 0x1000;
-			int yflip = data1 & 0x0800;
-			int color = ((data1 >> 13) & 7) | ((videoflags & 0x0040) >> 3);
+		int data0 = spriteram16[offs + 0];
+		int data2 = spriteram16[offs + 2];
+		int x = (data2 & 0x1ff) + 8;
+		int y = 513 - (data0 & 0x1ff);
+		int xflip = data1 & 0x1000;
+		int yflip = data1 & 0x0800;
+		int color = ((data1 >> 13) & 7) | ((videoflags & 0x0040) >> 3);
 
-			if (x >= BITMAP_WIDTH) x -= 512;
-			if (y >= BITMAP_HEIGHT) y -= 512;
+		if (x >= BITMAP_WIDTH) x -= 512;
+		if (y >= BITMAP_HEIGHT) y -= 512;
 
-			drawgfx(bitmap, Machine->gfx[2],
-					code, color + (rpunch_sprite_palette / 16), xflip, yflip, x, y, cliprect, TRANSPARENCY_PEN, 15);
-		}
+		drawgfx(bitmap, Machine->gfx[2],
+				code, color + (rpunch_sprite_palette / 16), xflip, yflip, x, y, cliprect, TRANSPARENCY_PEN, 15);
 	}
 }
 
@@ -291,30 +258,27 @@ static void draw_sprites(struct mame_bitmap *bitmap, const struct rectangle *cli
 
 static void draw_bitmap(struct mame_bitmap *bitmap, const struct rectangle *cliprect)
 {
-	pen_t *pens = &Machine->pens[512 + (videoflags & 15) * 16];
-	int x, y;
+	int colourbase;
+	int xxx=512/4;
+	int yyy=256;
+	int x,y,count;
 
-	/* draw any non-transparent scanlines from the VRAM directly */
-	for (y = 0; y < BITMAP_HEIGHT; y++)
-		if (y >= cliprect->min_y && y <= cliprect->max_y)
-			if (rpunch_bitmapsum[y] != (BITMAP_WIDTH/4) * 0xffff)
-			{
-				data16_t *src = &rpunch_bitmapram[y * 128 + BITMAP_XOFFSET/4];
-				UINT8 scanline[BITMAP_WIDTH], *dst = scanline;
+	colourbase = 512 + ((videoflags & 15) * 16);
 
-				/* extract the scanline */
-				for (x = 0; x < BITMAP_WIDTH/4; x++)
-				{
-					int data = *src++;
+	count = 0;
 
-					dst[0] = data >> 12;
-					dst[1] = (data >> 8) & 15;
-					dst[2] = (data >> 4) & 15;
-					dst[3] = data & 15;
-					dst += 4;
-				}
-				draw_scanline8(bitmap, 0, y, BITMAP_WIDTH, scanline, pens, 15);
-			}
+	for (y=0;y<yyy;y++)
+	{
+		for(x=0;x<xxx;x++)
+		{
+			int coldat;
+			coldat = (rpunch_bitmapram[count]>>12)&0xf; if (coldat!=15) plot_pixel(bitmap, ((x*4  )-4)&0x1ff,y, coldat+colourbase);
+			coldat = (rpunch_bitmapram[count]>>8 )&0xf; if (coldat!=15) plot_pixel(bitmap, ((x*4+1)-4)&0x1ff,y, coldat+colourbase);
+			coldat = (rpunch_bitmapram[count]>>4 )&0xf; if (coldat!=15) plot_pixel(bitmap, ((x*4+2)-4)&0x1ff,y, coldat+colourbase);
+			coldat = (rpunch_bitmapram[count]>>0 )&0xf; if (coldat!=15) plot_pixel(bitmap, ((x*4+3)-4)&0x1ff,y, coldat+colourbase);
+  	 		count++;
+  		}
+	}
 }
 
 

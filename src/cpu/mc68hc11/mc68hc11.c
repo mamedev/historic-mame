@@ -39,9 +39,9 @@ typedef struct
 			UINT8 a;
 			UINT8 b;
 #endif
-		};
-		UINT16 d;
-	};
+		} d8;
+		UINT16 d16;
+	} d;
 
 	UINT16 ix;
 	UINT16 iy;
@@ -120,6 +120,7 @@ static UINT8 hc11_regs_r(UINT32 address)
 	}
 
 	osd_die("HC11: regs_r %02X\n", reg);
+	return 0; // Dummy
 }
 
 static void hc11_regs_w(UINT32 address, UINT8 value)
@@ -341,10 +342,12 @@ static int hc11_execute(int cycles)
 
 	while(hc11.icount > 0)
 	{
+		UINT8 op;
+
 		hc11.ppc = hc11.pc;
 		CALL_MAME_DEBUG;
 
-		UINT8 op = FETCH();
+		op = FETCH();
 		hc11_optable[op]();
 	}
 
@@ -390,8 +393,8 @@ static void mc68hc11_set_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_PC:							hc11.pc = info->i; break;
 		case CPUINFO_INT_REGISTER + HC11_PC:			hc11.pc = info->i; change_pc(hc11.pc); break;
 		case CPUINFO_INT_REGISTER + HC11_SP:			hc11.sp = info->i; break;
-		case CPUINFO_INT_REGISTER + HC11_A:				hc11.a = info->i; break;
-		case CPUINFO_INT_REGISTER + HC11_B:				hc11.b = info->i; break;
+		case CPUINFO_INT_REGISTER + HC11_A:				hc11.d.d8.a = info->i; break;
+		case CPUINFO_INT_REGISTER + HC11_B:				hc11.d.d8.b = info->i; break;
 		case CPUINFO_INT_REGISTER + HC11_IX:			hc11.ix = info->i; break;
 		case CPUINFO_INT_REGISTER + HC11_IY:			hc11.iy = info->i; break;
 		
@@ -432,8 +435,8 @@ void mc68hc11_get_info(UINT32 state, union cpuinfo *info)
 		case CPUINFO_INT_PC:	/* intentional fallthrough */
 		case CPUINFO_INT_REGISTER + HC11_PC:			info->i = hc11.pc;						break;
 		case CPUINFO_INT_REGISTER + HC11_SP:			info->i = hc11.sp;						break;
-		case CPUINFO_INT_REGISTER + HC11_A:				info->i = hc11.a;						break;
-		case CPUINFO_INT_REGISTER + HC11_B:				info->i = hc11.b;						break;
+		case CPUINFO_INT_REGISTER + HC11_A:				info->i = hc11.d.d8.a;						break;
+		case CPUINFO_INT_REGISTER + HC11_B:				info->i = hc11.d.d8.b;						break;
 		case CPUINFO_INT_REGISTER + HC11_IX:			info->i = hc11.ix;						break;
 		case CPUINFO_INT_REGISTER + HC11_IY:			info->i = hc11.iy;						break;
 
@@ -473,8 +476,8 @@ void mc68hc11_get_info(UINT32 state, union cpuinfo *info)
 
 		case CPUINFO_STR_REGISTER + HC11_PC:			sprintf(info->s = cpuintrf_temp_str(), "PC: %04X", hc11.pc); break;
 		case CPUINFO_STR_REGISTER + HC11_SP:			sprintf(info->s = cpuintrf_temp_str(), "SP: %04X", hc11.sp); break;
-		case CPUINFO_STR_REGISTER + HC11_A:				sprintf(info->s = cpuintrf_temp_str(), "A: %02X", hc11.a); break;
-		case CPUINFO_STR_REGISTER + HC11_B:				sprintf(info->s = cpuintrf_temp_str(), "B: %02X", hc11.b); break;
+		case CPUINFO_STR_REGISTER + HC11_A:				sprintf(info->s = cpuintrf_temp_str(), "A: %02X", hc11.d.d8.a); break;
+		case CPUINFO_STR_REGISTER + HC11_B:				sprintf(info->s = cpuintrf_temp_str(), "B: %02X", hc11.d.d8.b); break;
 		case CPUINFO_STR_REGISTER + HC11_IX:			sprintf(info->s = cpuintrf_temp_str(), "IX: %04X", hc11.ix); break;
 		case CPUINFO_STR_REGISTER + HC11_IY:			sprintf(info->s = cpuintrf_temp_str(), "IY: %04X", hc11.iy); break;
 	}

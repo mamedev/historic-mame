@@ -185,11 +185,11 @@ static READ8_HANDLER(custom_r)
 	return ROM[offset|(bgadr<<11)];
 }
 
+#if 0
 static WRITE8_HANDLER(test_w)
 {
 		//printf("W %x %x %x\n",offset,data,activecpu_get_previouspc());
 }
-
 
 static READ8_HANDLER(test_r)
 {
@@ -197,7 +197,7 @@ static READ8_HANDLER(test_r)
 		UINT8 *ROM = memory_region(REGION_USER1);
 		return ROM[offset];
 }
-
+#endif
 
 static WRITE8_HANDLER( sound_w )
 {

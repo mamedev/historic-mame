@@ -305,7 +305,7 @@ READ8_HANDLER( tmnt_sres_r )
 WRITE8_HANDLER( tmnt_sres_w )
 {
 	/* bit 1 resets the UPD7795C sound chip */
-	UPD7759_reset_w(0, data & 2);
+	upd7759_reset_w(0, data & 2);
 
 	/* bit 2 plays the title music */
 	if (data & 0x04)
@@ -1394,7 +1394,7 @@ static ADDRESS_MAP_START( tmnt_s_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xa000, 0xa000) AM_READ(soundlatch_r)
 	AM_RANGE(0xb000, 0xb00d) AM_READ(K007232_read_port_0_r)
 	AM_RANGE(0xc001, 0xc001) AM_READ(YM2151_status_port_0_r)
-	AM_RANGE(0xf000, 0xf000) AM_READ(UPD7759_0_busy_r)
+	AM_RANGE(0xf000, 0xf000) AM_READ(upd7759_0_busy_r)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( tmnt_s_writemem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -1404,8 +1404,8 @@ static ADDRESS_MAP_START( tmnt_s_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xb000, 0xb00d) AM_WRITE(K007232_write_port_0_w)
 	AM_RANGE(0xc000, 0xc000) AM_WRITE(YM2151_register_port_0_w)
 	AM_RANGE(0xc001, 0xc001) AM_WRITE(YM2151_data_port_0_w)
-	AM_RANGE(0xd000, 0xd000) AM_WRITE(UPD7759_0_port_w)
-	AM_RANGE(0xe000, 0xe000) AM_WRITE(UPD7759_0_start_w)
+	AM_RANGE(0xd000, 0xd000) AM_WRITE(upd7759_0_port_w)
+	AM_RANGE(0xe000, 0xe000) AM_WRITE(upd7759_0_start_w)
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( punkshot_s_readmem, ADDRESS_SPACE_PROGRAM, 8 )
@@ -2436,12 +2436,12 @@ static struct K007232_interface k007232_interface =
 	{ volume_callback }	/* external port callback */
 };
 
-static struct UPD7759_interface upd7759_interface =
+static struct upd7759_interface upd7759_interface =
 {
 	1,		/* number of chips */
+	{ UPD7759_STANDARD_CLOCK },
 	{ 60 }, /* volume */
 	{ REGION_SOUND2 },		/* memory region */
-	UPD7759_STANDALONE_MODE,		/* chip mode */
 	{0}
 };
 
@@ -3311,6 +3311,26 @@ ROM_END
 
 ROM_START( lgtnfght )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )	/* 4*64k for 68000 code */
+	ROM_LOAD16_BYTE( "939k02.e11",   0x00000, 0x20000, CRC(2dfefa53) SHA1(135f3d06b04f950d1afc5fc0f8237c7af0e426b5) )
+	ROM_LOAD16_BYTE( "939k03.e15",   0x00001, 0x20000, CRC(14f0c454) SHA1(bc1fd3a58b493b443b93077014fdf37cf563e879) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
+	ROM_LOAD( "939e01.d7",    0x0000, 0x8000, CRC(4a5fc848) SHA1(878825e07c2718b7c923ad7c77daddf18cb28beb) )
+
+	ROM_REGION( 0x100000, REGION_GFX1, 0 )	/* graphics (addressable by the main CPU) */
+	ROM_LOAD( "939a07.k14",   0x000000, 0x80000, CRC(7955dfcf) SHA1(012644c1bfbe2e5d1c7ba25f29ebfde7dbfd1c0d) )
+	ROM_LOAD( "939a08.k19",   0x080000, 0x80000, CRC(ed95b385) SHA1(5aa5291cf1a8935b0a65ae10aa20b9cf9a138b03) )
+
+	ROM_REGION( 0x100000, REGION_GFX2, 0 )	/* graphics (addressable by the main CPU) */
+	ROM_LOAD( "939a06.k8",    0x000000, 0x80000, CRC(e393c206) SHA1(9b35fc6dba1f15c3d9d69ff5a4e1673c539aa533) )
+	ROM_LOAD( "939a05.k2",    0x080000, 0x80000, CRC(3662d47a) SHA1(789c3f07ce812902050970f48be5115b8e95bea0) )
+
+	ROM_REGION( 0x80000, REGION_SOUND1, 0 )	/* samples for the 053260 */
+	ROM_LOAD( "939a04.c5",    0x0000, 0x80000, CRC(c24e2b6e) SHA1(affc142883c2383afd08dcf156e48709ceca49fd) )
+ROM_END
+
+ROM_START( lgtnfghu )
+	ROM_REGION( 0x40000, REGION_CPU1, 0 )	/* 4*64k for 68000 code */
 	ROM_LOAD16_BYTE( "939m02.e11",   0x00000, 0x20000, CRC(61a12184) SHA1(f6d82aa0a444f885fd1e5d3d1464798b639a1710) )
 	ROM_LOAD16_BYTE( "939m03.e15",   0x00001, 0x20000, CRC(6db6659d) SHA1(def943b906eab68a0b86f9a28fb0b9a1f3b65e4c) )
 
@@ -3331,8 +3351,8 @@ ROM_END
 
 ROM_START( trigon )
 	ROM_REGION( 0x40000, REGION_CPU1, 0 )	/* 4*64k for 68000 code */
-	ROM_LOAD16_BYTE( "939j02.bin",   0x00000, 0x20000, CRC(38381d1b) SHA1(d4ddf883f61e5d48143cf467ba3c9c5b37f7e790) )
-	ROM_LOAD16_BYTE( "939j03.bin",   0x00001, 0x20000, CRC(b5beddcd) SHA1(dc5d79793d5453f284bf7fd198ba7c4ab1fc09c3) )
+	ROM_LOAD16_BYTE( "939j02.e11",   0x00000, 0x20000, CRC(38381d1b) SHA1(d4ddf883f61e5d48143cf467ba3c9c5b37f7e790) )
+	ROM_LOAD16_BYTE( "939j03.e15",   0x00001, 0x20000, CRC(b5beddcd) SHA1(dc5d79793d5453f284bf7fd198ba7c4ab1fc09c3) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the audio CPU */
 	ROM_LOAD( "939e01.d7",    0x0000, 0x8000, CRC(4a5fc848) SHA1(878825e07c2718b7c923ad7c77daddf18cb28beb) )
@@ -3351,10 +3371,10 @@ ROM_END
 
 ROM_START( blswhstl )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "e09.bin",     0x000000, 0x20000, CRC(e8b7b234) SHA1(65ae9faf34ed8ab71013acdc84e9429e5f5fb7a2) )
-	ROM_LOAD16_BYTE( "g09.bin",     0x000001, 0x20000, CRC(3c26d281) SHA1(d348305ecd4457e023bcdbc39842096d23c455fb) )
-	ROM_LOAD16_BYTE( "e11.bin",     0x040000, 0x20000, CRC(14628736) SHA1(87f7a65cffb87085b3e21043bd46fbb7db9266dd) )
-	ROM_LOAD16_BYTE( "g11.bin",     0x040001, 0x20000, CRC(f738ad4a) SHA1(5aea4afa4bf935d3e92856eff745f61ed4d98165) )
+	ROM_LOAD16_BYTE( "060_l02.e09", 0x000000, 0x20000, CRC(e8b7b234) SHA1(65ae9faf34ed8ab71013acdc84e9429e5f5fb7a2) )
+	ROM_LOAD16_BYTE( "060_l03.g09", 0x000001, 0x20000, CRC(3c26d281) SHA1(d348305ecd4457e023bcdbc39842096d23c455fb) )
+	ROM_LOAD16_BYTE( "060_l09.e11", 0x040000, 0x20000, CRC(14628736) SHA1(87f7a65cffb87085b3e21043bd46fbb7db9266dd) )
+	ROM_LOAD16_BYTE( "060_l10.g11", 0x040001, 0x20000, CRC(f738ad4a) SHA1(5aea4afa4bf935d3e92856eff745f61ed4d98165) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for the audio CPU */
 	ROM_LOAD( "060_j01.rom",  0x0000, 0x10000, CRC(f9d9a673) SHA1(8e5631c20dc37913cc7fa84f7ef786ff1ef85f09) )
@@ -3373,10 +3393,10 @@ ROM_END
 
 ROM_START( detatwin )
 	ROM_REGION( 0x80000, REGION_CPU1, 0 )
-	ROM_LOAD16_BYTE( "060_j02.rom", 0x000000, 0x20000, CRC(11b761ac) SHA1(1a143b0a43da48bdcfe085a2a9d1a2de0329fafd) )
-	ROM_LOAD16_BYTE( "060_j03.rom", 0x000001, 0x20000, CRC(8d0b588c) SHA1(a444493557cc19c7828b40a54dac9165c1f5b541) )
-	ROM_LOAD16_BYTE( "060_j09.rom", 0x040000, 0x20000, CRC(f2a5f15f) SHA1(4b8786e5ce0b895e6358e16e2a0a926325d0afcc) )
-	ROM_LOAD16_BYTE( "060_j10.rom", 0x040001, 0x20000, CRC(36eefdbc) SHA1(a3ec5078779b4ab33edf32e04db3e221e52b36c7) )
+	ROM_LOAD16_BYTE( "060_j02.e09", 0x000000, 0x20000, CRC(11b761ac) SHA1(1a143b0a43da48bdcfe085a2a9d1a2de0329fafd) )
+	ROM_LOAD16_BYTE( "060_j03.g09", 0x000001, 0x20000, CRC(8d0b588c) SHA1(a444493557cc19c7828b40a54dac9165c1f5b541) )
+	ROM_LOAD16_BYTE( "060_j09.e11", 0x040000, 0x20000, CRC(f2a5f15f) SHA1(4b8786e5ce0b895e6358e16e2a0a926325d0afcc) )
+	ROM_LOAD16_BYTE( "060_j10.g11", 0x040001, 0x20000, CRC(36eefdbc) SHA1(a3ec5078779b4ab33edf32e04db3e221e52b36c7) )
 
 	ROM_REGION( 0x10000, REGION_CPU2, 0 ) /* 64k for the audio CPU */
 	ROM_LOAD( "060_j01.rom",  0x0000, 0x10000, CRC(f9d9a673) SHA1(8e5631c20dc37913cc7fa84f7ef786ff1ef85f09) )
@@ -4115,18 +4135,19 @@ GAME( 1990, punkshot, 0,        punkshot, punkshot, gfx,      ROT0,  "Konami", "
 GAME( 1990, punksht2, punkshot, punkshot, punksht2, gfx,      ROT0,  "Konami", "Punk Shot (US 2 Players)" )
 GAME( 1990, punkshtj, punkshot, punkshot, punksht2, gfx,      ROT0,  "Konami", "Punk Shot (Japan 2 Players)" )
 
-GAME( 1990, lgtnfght, 0,        lgtnfght, lgtnfght, gfx,      ROT90, "Konami", "Lightning Fighters (US)" )
+GAME( 1990, lgtnfght, 0,        lgtnfght, lgtnfght, gfx,      ROT90, "Konami", "Lightning Fighters (World)" )
+GAME( 1990, lgtnfghu, lgtnfght, lgtnfght, lgtnfght, gfx,      ROT90, "Konami", "Lightning Fighters (US)" )
 GAME( 1990, trigon,   lgtnfght, lgtnfght, lgtnfght, gfx,      ROT90, "Konami", "Trigon (Japan)" )
 
-GAME( 1991, blswhstl, 0,        detatwin, detatwin, gfx,      ROT90, "Konami", "Bells & Whistles (Version L)" )		// version L
-GAME( 1991, detatwin, blswhstl, detatwin, detatwin, gfx,      ROT90, "Konami", "Detana!! Twin Bee (Japan ver. J)" )	// version J
+GAME( 1991, blswhstl, 0,        detatwin, detatwin, gfx,      ROT90, "Konami", "Bells & Whistles (Version L)" )
+GAME( 1991, detatwin, blswhstl, detatwin, detatwin, gfx,      ROT90, "Konami", "Detana!! Twin Bee (Japan ver. J)" )
 
 GAMEX(1991, glfgreat, 0,        glfgreat, glfgreat, glfgreat, ROT0,  "Konami", "Golfing Greats", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 GAMEX(1991, glfgretj, glfgreat, glfgreat, glfgreat, glfgreat, ROT0,  "Konami", "Golfing Greats (Japan)", GAME_UNEMULATED_PROTECTION | GAME_IMPERFECT_GRAPHICS | GAME_IMPERFECT_SOUND )
 
-GAMEX(1991, tmnt2,    0,        tmnt2,    ssridr4p, gfx,      ROT0,  "Konami", "Teenage Mutant Ninja Turtles - Turtles in Time (US 4 Players ver. UAA)", GAME_UNEMULATED_PROTECTION )		// ver. UAA
-GAMEX(1991, tmnt22p,  tmnt2,    tmnt2,    ssriders, gfx,      ROT0,  "Konami", "Teenage Mutant Ninja Turtles - Turtles in Time (US 2 Players ver. UDA)", GAME_UNEMULATED_PROTECTION )		// ver. UDA
-GAMEX(1991, tmnt2a,   tmnt2,    tmnt2,    ssrid4ps, gfx,      ROT0,  "Konami", "Teenage Mutant Ninja Turtles - Turtles in Time (Asia 4 Players ver. ADA)", GAME_UNEMULATED_PROTECTION )	// ver. ADA
+GAMEX(1991, tmnt2,    0,        tmnt2,    ssridr4p, gfx,      ROT0,  "Konami", "Teenage Mutant Ninja Turtles - Turtles in Time (US 4 Players ver. UAA)", GAME_UNEMULATED_PROTECTION ) // ver. UAA
+GAMEX(1991, tmnt22p,  tmnt2,    tmnt2,    ssriders, gfx,      ROT0,  "Konami", "Teenage Mutant Ninja Turtles - Turtles in Time (US 2 Players ver. UDA)", GAME_UNEMULATED_PROTECTION ) // ver. UDA
+GAMEX(1991, tmnt2a,   tmnt2,    tmnt2,    ssrid4ps, gfx,      ROT0,  "Konami", "Teenage Mutant Ninja Turtles - Turtles in Time (Asia 4 Players ver. ADA)", GAME_UNEMULATED_PROTECTION ) // ver. ADA
 
 GAME( 1993, qgakumon, 0,        tmnt2,    qgakumon, gfx,      ROT0,  "Konami", "Quiz Gakumon no Susume (Japan ver. JA2 Type L)" )
 

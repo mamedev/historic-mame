@@ -10,6 +10,9 @@
 	Known bugs:
 		* the ERROR message in Asteroids Deluxe self test is related to a pokey problem
 
+	Asteroids-deluxe state-prom added by HIGHWAYMAN.
+	The prom pcb location is:C8 and is 256x4
+	(i need to update the dump, this one is read in 8bit-mode)
 ****************************************************************************
 
 	Asteroids Memory Map (preliminary)
@@ -745,6 +748,9 @@ ROM_START( astdelux )
 	/* Vector ROM */
 	ROM_LOAD( "036800.02",    0x4800, 0x0800, CRC(bb8cabe1) SHA1(cebaa1b91b96e8b80f2b2c17c6fd31fa9f156386) )
 	ROM_LOAD( "036799.01",    0x5000, 0x0800, CRC(7d511572) SHA1(1956a12bccb5d3a84ce0c1cc10c6ad7f64e30b40) )
+
+	ROM_REGION( 0x0100, REGION_PROMS, 0 )
+	ROM_LOAD( "034602.bin",   0x0000, 0x0100, CRC(97953db8) SHA1(8cbded64d1dd35b18c4d5cece00f77e7b2cab2ad) )
 ROM_END
 
 
@@ -757,6 +763,9 @@ ROM_START( astdelu1 )
 	/* Vector ROM */
 	ROM_LOAD( "036800.01",    0x4800, 0x0800, CRC(3b597407) SHA1(344fea2e5d84acce365d76daed61e96b9b6b37cc) )
 	ROM_LOAD( "036799.01",    0x5000, 0x0800, CRC(7d511572) SHA1(1956a12bccb5d3a84ce0c1cc10c6ad7f64e30b40) )
+
+	ROM_REGION( 0x0100, REGION_PROMS, 0 )
+	ROM_LOAD( "034602.bin",   0x0000, 0x0100, CRC(97953db8) SHA1(8cbded64d1dd35b18c4d5cece00f77e7b2cab2ad) )
 ROM_END
 
 

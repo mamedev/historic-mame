@@ -384,13 +384,6 @@ static DRIVER_INIT( pairsten )
 	init_nb1413m3();
 }
 
-static DRIVER_INIT( mjcamerb )
-{
-	nb1413m3_type = NB1413M3_MJCAMERA;
-
-	init_nb1413m3();
-}
-
 static DRIVER_INIT( mmcamera )
 {
 	nb1413m3_type = NB1413M3_MMCAMERA;
@@ -540,7 +533,7 @@ static ADDRESS_MAP_START( readmem_taiwanmb, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xff00, 0xff1f) AM_READ(MRA8_NOP)						// ?
 	AM_RANGE(0xff20, 0xff20) AM_READ(taiwanmb_unk_r)				// MCU or 1413M3 STATUS? (return != 0x00 then loop)
 	AM_RANGE(0xff21, 0xff2f) AM_READ(MRA8_NOP)						// ?
-	AM_RANGE(0xff30, 0xffff) AM_READ(MRA8_RAM)						// 
+	AM_RANGE(0xff30, 0xffff) AM_READ(MRA8_RAM)						//
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( writemem_taiwanmb, ADDRESS_SPACE_PROGRAM, 8 )

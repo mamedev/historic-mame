@@ -465,7 +465,7 @@ static WRITE16_HANDLER( puckpkmn_YM3438_w )
 
 
 /* handle writes to the UPD7759 */
-static WRITE16_HANDLER( upd7759_w )
+static WRITE16_HANDLER( segac2_upd7759_w )
 {
 	/* make sure we have a UPD chip */
 	if (!sound_banks)
@@ -474,11 +474,11 @@ static WRITE16_HANDLER( upd7759_w )
 	/* only works if we're accessing the low byte */
 	if (ACCESSING_LSB)
 	{
-		UPD7759_reset_w(0, 0);
-		UPD7759_reset_w(0, 1);
-		UPD7759_port_w(0, data & 0xff);
-		UPD7759_start_w(0, 0);
-		UPD7759_start_w(0, 1);
+		upd7759_reset_w(0, 0);
+		upd7759_reset_w(0, 1);
+		upd7759_port_w(0, data & 0xff);
+		upd7759_start_w(0, 0);
+		upd7759_start_w(0, 1);
 	}
 }
 
@@ -640,7 +640,7 @@ static READ16_HANDLER( iochip_r )
 		case 0x00:	return 0xff00 | readinputport(1);
 		case 0x01:	return 0xff00 | readinputport(2);
 		case 0x02:	if (sound_banks)
-						return 0xff00 | (UPD7759_0_busy_r(0) << 6) | 0xbf; /* must return high bit on */
+						return 0xff00 | (upd7759_0_busy_r(0) << 6) | 0xbf; /* must return high bit on */
 					else
 						return 0xffff;
 		case 0x04:	return 0xff00 | readinputport(0);
@@ -689,7 +689,7 @@ static WRITE16_HANDLER( iochip_w )
 			if (sound_banks > 1)
 			{
 				newbank = (data >> 2) & (sound_banks - 1);
-				UPD7759_set_bank_base(0, newbank * 0x20000);
+				upd7759_set_bank_base(0, newbank * 0x20000);
 			}
 			break;
 
@@ -950,7 +950,7 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0x800200, 0x800201) AM_WRITE(control_w)					/* Seems to be global controls */
 	AM_RANGE(0x840000, 0x84001f) AM_WRITE(iochip_w)					/* I/O Chip */
 	AM_RANGE(0x840100, 0x840107) AM_WRITE(ym3438_w)					/* Ym3438 Sound Chip Writes */
-	AM_RANGE(0x880000, 0x880001) AM_WRITE(upd7759_w)					/* UPD7759 Sound Writes */
+	AM_RANGE(0x880000, 0x880001) AM_WRITE(segac2_upd7759_w)				/* UPD7759 Sound Writes */
 	AM_RANGE(0x880134, 0x880135) AM_WRITE(counter_timer_w)			/* Bookkeeping */
 	AM_RANGE(0x880334, 0x880335) AM_WRITE(counter_timer_w)			/* Bookkeeping (mirror) */
 	AM_RANGE(0x8c0000, 0x8c0fff) AM_WRITE(palette_w) AM_BASE(&paletteram16)	/* Palette Ram */
@@ -1123,62 +1123,7 @@ static READ16_HANDLER ( genesis_68k_to_z80_r )
 	return 0x0000;
 }
 
-static WRITE16_HANDLER ( genesis_68k_to_z80_w )
-{
-	offset *= 2;
-	offset &= 0x7fff;
 
-	/* Shared Ram */
-	if ((offset >= 0x0000) && (offset <= 0x3fff))
-	{
-		offset &=0x1fff;
-
-	if (ACCESSING_LSB) genesis_z80_ram[offset+1] = data & 0xff;
-	if (ACCESSING_MSB) genesis_z80_ram[offset] = (data >> 8) & 0xff;
-	}
-
-
-	/* YM2610 */
-	if ((offset >= 0x4000) && (offset <= 0x5fff))
-	{
-		switch (offset & 3)
-		{
-		case 0:
-			if (ACCESSING_MSB)	YM2612_control_port_0_A_w	(0,	(data >> 8) & 0xff);
-			else 				YM2612_data_port_0_A_w		(0,	(data >> 0) & 0xff);
-			break;
-		case 2:
-			if (ACCESSING_MSB)	YM2612_control_port_0_B_w	(0,	(data >> 8) & 0xff);
-			else 				YM2612_data_port_0_B_w		(0,	(data >> 0) & 0xff);
-			break;
-		}
-	}
-
-	/* Bank Register */
-	if ((offset >= 0x6000) && (offset <= 0x60ff))
-	{
-
-	}
-
-	/* Unused / Illegal */
-	if ((offset >= 0x6100) && (offset <= 0x7eff))
-	{
-		/* nothing */
-	}
-
-	/* VDP */
-	if ((offset >= 0x7f00) && (offset <= 0x7fff))
-	{
-		offset &= 0x1f;
-
-		if ( (offset >= 0x10) && (offset <=0x17) )
-		{
-			if (ACCESSING_LSB) SN76496_0_w(0, data & 0xff);
-			if (ACCESSING_MSB) SN76496_0_w(0, (data >>8) & 0xff);
-		}
-
-	}
-}
 static READ16_HANDLER ( megaplay_68k_to_z80_r )
 {
 	offset *= 2;
@@ -1654,14 +1599,7 @@ static READ8_HANDLER ( genesis_z80_bank_r )
 	return -1;
 }
 
-static WRITE16_HANDLER ( genesis_z80_ram_w )
-{
-	if (z80running) logerror("Z80 written whilst running!\n");
-	logerror("68000->z80 sound write, %x to %x\n", data, offset);
 
-	if (ACCESSING_LSB) genesis_z80_ram[(offset<<1)+1] = data & 0xff;
-	if (ACCESSING_MSB) genesis_z80_ram[offset<<1] = (data >> 8) & 0xff;
-}
 
 static ADDRESS_MAP_START( genesis_z80_readmem, ADDRESS_SPACE_PROGRAM, 8 )
  	AM_RANGE(0x0000, 0x1fff) AM_READ(MRA8_BANK1)
@@ -3264,12 +3202,12 @@ INPUT_PORTS_END
 	Sound interfaces
 ******************************************************************************/
 
-static struct UPD7759_interface upd7759_intf =
+static struct upd7759_interface upd7759_intf =
 {
 	1,								/* One chip */
+	{ UPD7759_STANDARD_CLOCK },
 	{ 50 },							/* Volume */
-	{ REGION_SOUND1 },				/* Memory pointer (gen.h) */
-	UPD7759_STANDALONE_MODE			/* Chip mode */
+	{ REGION_SOUND1 }				/* Memory pointer (gen.h) */
 };
 
 static struct YM2612interface ym3438_intf =
@@ -3416,12 +3354,6 @@ static MACHINE_DRIVER_START( genesis_base )
 MACHINE_DRIVER_END
 
 
-static MACHINE_DRIVER_START( genesis )
-
-	MDRV_IMPORT_FROM( genesis_base )
-	MDRV_SOUND_ADD(SN76496, sn76489_intf)
-
-MACHINE_DRIVER_END
 
 
 static MACHINE_DRIVER_START( megatech )

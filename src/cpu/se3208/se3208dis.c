@@ -237,29 +237,29 @@ INST(PUSH)
 	char str[1024];
 	strcpy(str,"PUSH  ");
 	if(Set&(1<<10))
-		strcat(str,"%%PC-");
+		strcat(str,"%PC-");
 	if(Set&(1<<9))
-		strcat(str,"%%SR-");
+		strcat(str,"%SR-");
 	if(Set&(1<<8))
-		strcat(str,"%%ER-");
+		strcat(str,"%ER-");
 	if(Set&(1<<7))
-		strcat(str,"%%R7-");
+		strcat(str,"%R7-");
 	if(Set&(1<<6))
-		strcat(str,"%%R6-");
+		strcat(str,"%R6-");
 	if(Set&(1<<5))
-		strcat(str,"%%R5-");
+		strcat(str,"%R5-");
 	if(Set&(1<<4))
-		strcat(str,"%%R4-");
+		strcat(str,"%R4-");
 	if(Set&(1<<3))
-		strcat(str,"%%R3-");
+		strcat(str,"%R3-");
 	if(Set&(1<<2))
-		strcat(str,"%%R2-");
+		strcat(str,"%R2-");
 	if(Set&(1<<1))
-		strcat(str,"%%R1-");
+		strcat(str,"%R1-");
 	if(Set&(1<<0))
-		strcat(str,"%%R0-");
+		strcat(str,"%R0-");
 	str[strlen(str)-1]=0;
-	sprintf(dst,str);
+	strcpy(dst,str);
 }
 
 INST(POP)
@@ -269,42 +269,41 @@ INST(POP)
 	int Ret=0;
 	strcpy(str,"POP   ");
 	if(Set&(1<<0))
-		strcat(str,"%%R0-");
+		strcat(str,"%R0-");
 	if(Set&(1<<1))
-		strcat(str,"%%R1-");
+		strcat(str,"%R1-");
 	if(Set&(1<<2))
-		strcat(str,"%%R2-");
+		strcat(str,"%R2-");
 	if(Set&(1<<3))
-		strcat(str,"%%R3-");
+		strcat(str,"%R3-");
 	if(Set&(1<<4))
-		strcat(str,"%%R4-");
+		strcat(str,"%R4-");
 	if(Set&(1<<5))
-		strcat(str,"%%R5-");
+		strcat(str,"%R5-");
 	if(Set&(1<<6))
-		strcat(str,"%%R6-");
+		strcat(str,"%R6-");
 	if(Set&(1<<7))
-		strcat(str,"%%R7-");
+		strcat(str,"%R7-");
 	if(Set&(1<<8))
-		strcat(str,"%%ER-");
+		strcat(str,"%ER-");
 	if(Set&(1<<9))
-		strcat(str,"%%SR-");
+		strcat(str,"%SR-");
 	if(Set&(1<<10))
 	{
-		strcat(str,"%%PC-");
+		strcat(str,"%PC-");
 		CLRFLAG(FLAG_E);	//Clear the flag, this is a ret so disassemble will start a new E block
 		Ret=1;
 	}
 	str[strlen(str)-1]=0;
 	if(Ret)
 		strcat(str,"\n");
-	sprintf(dst,str);
+	strcpy(dst,str);
 }
 
 INST(LEATOSP)
 {
 	data32_t Offset=EXTRACT(Opcode,9,12);
 	data32_t Index=EXTRACT(Opcode,3,5);
-	data32_t SrcDst=EXTRACT(Opcode,6,8);
 
 	if(TESTFLAG(FLAG_E))
 		Offset=(EXTRACT(Context.ER,0,27)<<4)|(Offset&0xf);
@@ -323,7 +322,6 @@ INST(LEAFROMSP)
 {
 	data32_t Offset=EXTRACT(Opcode,9,12);
 	data32_t Index=EXTRACT(Opcode,3,5);
-	data32_t SrcDst=EXTRACT(Opcode,6,8);
 
 	if(TESTFLAG(FLAG_E))
 		Offset=(EXTRACT(Context.ER,0,27)<<4)|(Offset&0xf);

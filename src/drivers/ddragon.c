@@ -292,11 +292,13 @@ static WRITE8_HANDLER( ddragon_spriteram_w )
 
 /*****************************************************************************/
 
+#if 0
 static WRITE8_HANDLER( cpu_sound_command_w )
 {
 	soundlatch_w( offset, data );
 	cpunum_set_input_line( snd_cpu, sound_irq, (sound_irq == INPUT_LINE_NMI) ? PULSE_LINE : HOLD_LINE );
 }
+#endif
 
 static WRITE8_HANDLER( dd_adpcm_w )
 {

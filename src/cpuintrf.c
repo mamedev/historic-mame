@@ -199,7 +199,7 @@ void adsp2181_get_info(UINT32 state, union cpuinfo *info);
 #if (HAS_M37710)
 #include "cpu/m37710/m37710.h"
 #endif
-#if (HAS_PPC403 || HAS_PPC603)
+#if (HAS_PPC403 || HAS_PPC602 || HAS_PPC603)
 #include "cpu/powerpc/ppc.h"
 #endif
 #if (HAS_SE3208)
@@ -734,6 +734,9 @@ const struct
 #endif
 #if (HAS_PPC403)
 	{ CPU_PPC403, ppc403_get_info },
+#endif
+#if (HAS_PPC602)
+	{ CPU_PPC602, ppc602_get_info },
 #endif
 #if (HAS_PPC603)
 	{ CPU_PPC603, ppc603_get_info },

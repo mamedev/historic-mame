@@ -38,6 +38,8 @@ WRITE8_HANDLER( taitosj_bankswitch_w )
 {
 	unsigned char *RAM = memory_region(REGION_CPU1);
 
+	coin_lockout_global_w(~data & 1);
+
 	cpu_setbank(1,&RAM[(data & 0x80) ? 0x10000 : 0x6000]);
 }
 

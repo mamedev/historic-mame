@@ -527,7 +527,7 @@ if (((spriteram16[i + 4]!=0xf800) && (spriteram16[i + 4]!=0xfff6))
 	if (orientation)														\
 	{																		\
 		int dy = (type *)bitmap->line[1] - (type *)bitmap->line[0];			\
-		int tx = x, ty = y, temp;											\
+		int tx = x, ty = y;													\
 		if ((orientation) & ORIENTATION_FLIP_X)								\
 			tx = bitmap->width - 1 - tx;									\
 		if ((orientation) & ORIENTATION_FLIP_Y)								\

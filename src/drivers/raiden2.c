@@ -317,22 +317,8 @@ static WRITE8_HANDLER(any_w)
 }
 
 enum {SZ=16};
-static UINT8 scroll[SZ];
+//static UINT8 scroll[SZ];
 
-static WRITE8_HANDLER(scroll_w)
-{
-	int i;
-	scroll[offset] = data;
-	//	if(offset == 1)
-	//		fprintf(stderr, "Tilebank_w %02x (%x)\n", data, activecpu_get_pc());
-
-	if(0) {
-		fprintf(stderr, "Scroll.%x :", offset);
-		for(i=0; i<SZ; i++)
-			fprintf(stderr, " %02x", scroll[i]);
-		fprintf(stderr, "\n");
-	}
-}
 
 /* MEMORY MAPS */
 
@@ -1454,11 +1440,12 @@ unsigned int zmap_5[32] = {
   0xc0c6e6c0, 0xfccaf047, 0xf89fb813, 0xe753d648, 0xba704519, 0x00548eca, 0x519799f6, 0x60604917,
 };
 
-
+#if 0
 static unsigned int xrot(unsigned int v, int r)
 {
   return (v >> r) | (v << (32-r));
 }
+#endif
 
 static unsigned int yrot(unsigned int v, int r)
 {

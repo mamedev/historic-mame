@@ -2,6 +2,7 @@
    i386 Disassembler
 
    Written by Ville Linde
+   NEC V-Series support by Bryan McPhail (currently incomplete)
 */
 
 #include "driver.h"
@@ -75,7 +76,10 @@ typedef struct {
 	I386_OPCODE *opcode;
 } GROUP_OP;
 
-static I386_OPCODE opcode_table1[256] =
+static I386_OPCODE *opcode_table1 = 0;
+static I386_OPCODE *opcode_table2 = 0;
+
+static I386_OPCODE i386_opcode_table1[256] =
 {
 	// 0x00
 	{"add",				MODRM,			PARAM_RM8,			PARAM_REG8,			0				},
@@ -351,7 +355,7 @@ static I386_OPCODE opcode_table1[256] =
 	{"groupFF",			GROUP,			0,					0,					0				}
 };
 
-static I386_OPCODE opcode_table2[256] =
+static I386_OPCODE i386_opcode_table2[256] =
 {
 	// 0x00
 	{"group0F00",		GROUP,			0,					0,					0				},
@@ -523,6 +527,282 @@ static I386_OPCODE opcode_table2[256] =
 	{"setge",			MODRM,			PARAM_RM8,			0,					0				},
 	{"setle",			MODRM,			PARAM_RM8,			0,					0				},
 	{"setg",			MODRM,			PARAM_RM8,			0,					0				},
+	// 0xa0
+	{"push fs",			0,				0,					0,					0				},
+	{"pop fs",			0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"bt",				MODRM,			PARAM_RM,			PARAM_REG,			0				},
+	{"shld",			MODRM,			PARAM_RM,			PARAM_REG,			PARAM_I8		},
+	{"shld",			MODRM,			PARAM_RM,			PARAM_REG,			PARAM_CL		},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"push gs",			0,				0,					0,					0				},
+	{"pop gs",			0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"bts",				MODRM,			PARAM_RM,			PARAM_REG,			0				},
+	{"shrd",			MODRM,			PARAM_RM,			PARAM_REG,			PARAM_I8		},
+	{"shrd",			MODRM,			PARAM_RM,			PARAM_REG,			PARAM_CL		},
+	{"???",				0,				0,					0,					0				},
+	{"imul",			MODRM,			PARAM_REG,			PARAM_RM,			0				},
+	// 0xb0
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"lss",				MODRM,			PARAM_REG,			PARAM_RM,			0				},
+	{"btr",				MODRM,			PARAM_RM,			PARAM_REG,			0				},
+	{"lfs",				MODRM,			PARAM_REG,			PARAM_RM,			0				},
+	{"lgs",				MODRM,			PARAM_REG,			PARAM_RM,			0				},
+	{"movzx",			MODRM,			PARAM_REG,			PARAM_RM8,			0				},
+	{"movzx",			MODRM,			PARAM_REG,			PARAM_RM16,			0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"group0FBA",		GROUP,			0,					0,					0				},
+	{"btc",				MODRM,			PARAM_RM,			PARAM_REG,			0				},
+	{"bsf",				MODRM,			PARAM_REG,			PARAM_RM,			0				},
+	{"bsr",				MODRM,			PARAM_REG,			PARAM_RM,			0,				DASMFLAG_STEP_OVER},
+	{"movsx",			MODRM,			PARAM_REG,			PARAM_RM8,			0				},
+	{"movsx",			MODRM,			PARAM_REG,			PARAM_RM16,			0				},
+	// 0xc0
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	// 0xd0
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	// 0xe0
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	// 0xf0
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				}
+};
+
+static I386_OPCODE necv_opcode_table2[256] =
+{
+	// 0x00
+	{"group0F00",		GROUP,			0,					0,					0				},
+	{"group0F01",		GROUP,			0,					0,					0				},
+	{"lar",				MODRM,			PARAM_REG,			PARAM_RM,			0				},
+	{"lsl",				MODRM,			PARAM_REG,			PARAM_RM,			0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"clts",			0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"ud2",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	// 0x10 - NEC V series only
+	{"test1",			0,				PARAM_RM8,			PARAM_1,			0				},
+	{"test1",			0,				PARAM_RM16,			PARAM_1,			0				},
+	{"clr1",			0,				PARAM_RM8,			PARAM_1,			0				},
+	{"clr1",			0,				PARAM_RM16,			PARAM_1,			0				},
+	{"set1",			0,				PARAM_RM8,			PARAM_1,			0				},
+	{"set1",			0,				PARAM_RM16,			PARAM_1,			0				},
+	{"not1",			0,				PARAM_RM8,			PARAM_1,			0				},
+	{"not1",			0,				PARAM_RM16,			PARAM_1,			0				},
+	{"test1",			0,				PARAM_RM8,			PARAM_I8,			0				},
+	{"test1",			0,				PARAM_RM16,			PARAM_I8,			0				},
+	{"clr1",			0,				PARAM_RM8,			PARAM_I8,			0				},
+	{"clr1",			0,				PARAM_RM16,			PARAM_I8,			0				},
+	{"set1",			0,				PARAM_RM8,			PARAM_I8,			0				},
+	{"set1",			0,				PARAM_RM16,			PARAM_I8,			0				},
+	{"not1",			0,				PARAM_RM8,			PARAM_I8,			0				},
+	{"not1",			0,				PARAM_RM16,			PARAM_I8,			0				},
+	// 0x20
+	{"mov",				MODRM,			PARAM_REG,			PARAM_CREG,			0				},
+	{"mov",				MODRM,			PARAM_REG,			PARAM_DREG,			0				},
+	{"mov",				MODRM,			PARAM_CREG,			PARAM_REG,			0				},
+	{"mov",				MODRM,			PARAM_DREG,			PARAM_REG,			0				},
+	{"mov",				MODRM,			PARAM_REG,			PARAM_TREG,			0				},
+	{"???",				0,				0,					0,					0				},
+	{"mov",				MODRM,			PARAM_TREG,			PARAM_REG,			0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	// 0x30
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	// 0x40
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	// 0x50
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	// 0x60
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	// 0x70
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	// 0x80
+	{"jo",				0,				PARAM_REL,			0,					0				},
+	{"jno",				0,				PARAM_REL,			0,					0				},
+	{"jb",				0,				PARAM_REL,			0,					0				},
+	{"jae",				0,				PARAM_REL,			0,					0				},
+	{"je",				0,				PARAM_REL,			0,					0				},
+	{"jne",				0,				PARAM_REL,			0,					0				},
+	{"jbe",				0,				PARAM_REL,			0,					0				},
+	{"ja",				0,				PARAM_REL,			0,					0				},
+	{"js",				0,				PARAM_REL,			0,					0				},
+	{"jns",				0,				PARAM_REL,			0,					0				},
+	{"jp",				0,				PARAM_REL,			0,					0				},
+	{"jnp",				0,				PARAM_REL,			0,					0				},
+	{"jl",				0,				PARAM_REL,			0,					0				},
+	{"jge",				0,				PARAM_REL,			0,					0				},
+	{"jle",				0,				PARAM_REL,			0,					0				},
+	{"jg",				0,				PARAM_REL,			0,					0				},
+	// 0x90
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"fint",			0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
+	{"???",				0,				0,					0,					0				},
 	// 0xa0
 	{"push fs",			0,				0,					0,					0				},
 	{"pop fs",			0,				0,					0,					0				},
@@ -883,11 +1163,33 @@ INLINE UINT32 FETCH32(void)
 	return d;
 }
 
+INLINE UINT8 FETCHD(void)
+{
+	pc++;
+	return cpu_readop_arg(pc-1);
+}
+
+INLINE UINT16 FETCHD16(void)
+{
+	UINT16 d;
+	d = cpu_readop_arg(pc) | (cpu_readop_arg(pc+1) << 8);
+	pc += 2;
+	return d;
+}
+
+INLINE UINT32 FETCHD32(void)
+{
+	UINT32 d;
+	d = cpu_readop_arg(pc) | (cpu_readop_arg(pc+1) << 8) | (cpu_readop_arg(pc+2) << 16) | (cpu_readop_arg(pc+3) << 24);
+	pc += 4;
+	return d;
+}
+
 static char* handle_sib_byte( char* s, UINT8 mod )
 {
 	UINT32 i32;
 	UINT8 scale, i, base;
-	UINT8 sib = FETCH();
+	UINT8 sib = FETCHD();
 	scale = (sib >> 6) & 0x3;
 	i = (sib >> 3) & 0x7;
 	base = sib & 0x7;
@@ -933,7 +1235,7 @@ static void handle_modrm(char* s)
 	INT32 disp32;
 	UINT8 mod, rm;
 
-	modrm = FETCH();
+	modrm = FETCHD();
 	mod = (modrm >> 6) & 0x3;
 	rm = modrm & 0x7;
 
@@ -961,7 +1263,7 @@ static void handle_modrm(char* s)
 			case 4: s = handle_sib_byte( s, mod ); break;
 			case 5: 
 				if( mod == 0 ) {
-					disp32 = FETCH32();
+					disp32 = FETCHD32();
 					s += sprintf( s, "$%08X", disp32 );
 				} else {
 					s += sprintf( s, "ebp" );
@@ -971,10 +1273,10 @@ static void handle_modrm(char* s)
 			case 7: s += sprintf( s, "edi" ); break;
 		}
 		if( mod == 1 ) {
-			disp8 = FETCH();
+			disp8 = FETCHD();
 			s += sprintf( s, "+$%08X", (INT32)disp8 );
 		} else if( mod == 2 ) {
-			disp32 = FETCH32();
+			disp32 = FETCHD32();
 			s += sprintf( s, "+$%08X", disp32 );
 		}
 	} else {
@@ -988,7 +1290,7 @@ static void handle_modrm(char* s)
 			case 5: s += sprintf( s, "di" ); break;
 			case 6:
 				if( mod == 0 ) {
-					disp16 = FETCH16();
+					disp16 = FETCHD16();
 					s += sprintf( s, "$%04X", (unsigned) (UINT16) disp16 );
 				} else {
 					s += sprintf( s, "bp" );
@@ -997,10 +1299,10 @@ static void handle_modrm(char* s)
 			case 7: s += sprintf( s, "bx" ); break;
 		}
 		if( mod == 1 ) {
-			disp8 = FETCH();
+			disp8 = FETCHD();
 			s += sprintf( s, "+$%08X", (INT32)disp8 );
 		} else if( mod == 2 ) {
-			disp16 = FETCH16();
+			disp16 = FETCHD16();
 			s += sprintf( s, "+$%08X", (INT32)disp16 );
 		}
 	}
@@ -1063,63 +1365,63 @@ static char* handle_param(char* s, UINT32 param)
 			break;
 
 		case PARAM_I8:
-			i8 = FETCH();
+			i8 = FETCHD();
 			s += sprintf( s, "$%02X", i8 );
 			break;
 
 		case PARAM_I16:
-			i16 = FETCH16();
+			i16 = FETCHD16();
 			s += sprintf( s, "$%04X", i16 );
 			break;
 
 		case PARAM_IMM:
 			if( operand_size ) {
-				i32 = FETCH32();
+				i32 = FETCHD32();
 				s += sprintf( s, "$%08X", i32 );
 			} else {
-				i16 = FETCH16();
+				i16 = FETCHD16();
 				s += sprintf( s, "$%04X", i16 );
 			}
 			break;
 
 		case PARAM_ADDR:
 			if( operand_size ) {
-				addr = FETCH32();
-				ptr = FETCH16();
+				addr = FETCHD32();
+				ptr = FETCHD16();
 				s += sprintf( s, "[$%04X:%08X]",ptr,addr );
 			} else {
-				addr = FETCH16();
-				ptr = FETCH16();
+				addr = FETCHD16();
+				ptr = FETCHD16();
 				s += sprintf( s, "[$%04X:%04X]",ptr,addr );
 			}
 			break;
 
 		case PARAM_REL:
 			if( operand_size ) {
-				d32 = FETCH32();
+				d32 = FETCHD32();
 				s += sprintf( s, "[$%08X]", pc + d32 );
 			} else {
-				d16 = FETCH16();
+				d16 = FETCHD16();
 				s += sprintf( s, "[$%08X]", pc + d16 );
 			}
 			break;
 
 		case PARAM_REL8:
-			d8 = FETCH();
+			d8 = FETCHD();
 			s += sprintf( s, "[$%08X]", pc + d8 );
 			break;
 
 		case PARAM_MEM_OFFS_B:
-			d8 = FETCH();
+			d8 = FETCHD();
 			s += sprintf( s, "[$%08X]", d8 );
 			break;
 
 		case PARAM_MEM_OFFS_V:
 			if( address_size ) {
-				d32 = FETCH32();
+				d32 = FETCHD32();
 				s += sprintf( s, "[$%08X]", d32 );
 			} else {
-				d32 = FETCH16();
+				d32 = FETCHD16();
 				s += sprintf( s, "[$%08X]", d32 );
 			}
 			break;
@@ -1181,7 +1483,7 @@ static void decode_opcode(char *s, I386_OPCODE *op)
 			return;
 
 		case TWO_BYTE:
-			op2 = FETCH();
+			op2 = FETCHD();
 			decode_opcode( s, &opcode_table2[op2] );
 			return;
 
@@ -1257,6 +1559,26 @@ int i386_dasm_one(char *buffer, UINT32 eip, int addr_size, int op_size)
 {
 	UINT8 op;
 
+	opcode_table1 = i386_opcode_table1;
+	opcode_table2 = i386_opcode_table2;
+	address_size = addr_size;
+	operand_size = op_size;
+	pc = eip;
+	dasm_flags = 0;
+	segment = 0;
+
+	op = FETCH();
+
+	decode_opcode( buffer, &opcode_table1[op] );
+	return (pc-eip) | dasm_flags | DASMFLAG_SUPPORTED;
+}
+
+int necv_dasm_one(char *buffer, UINT32 eip, int addr_size, int op_size)
+{
+	UINT8 op;
+
+	opcode_table1 = i386_opcode_table1;
+	opcode_table2 = necv_opcode_table2;
 	address_size = addr_size;
 	operand_size = op_size;
 	pc = eip;

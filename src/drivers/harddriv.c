@@ -382,7 +382,7 @@ static ADDRESS_MAP_START( ds3_data_map, ADDRESS_SPACE_DATA, 16 )
 	AM_RANGE(0x2000, 0x3fff) AM_READWRITE(hdds3_special_r, hdds3_special_w)
 ADDRESS_MAP_END
 
-
+#if 0
 static ADDRESS_MAP_START( ds3snd_program_map, ADDRESS_SPACE_PROGRAM, 32 )
 	ADDRESS_MAP_FLAGS( AMEF_UNMAP(1) )
 	AM_RANGE(0x0000, 0x3fff) AM_RAM
@@ -417,7 +417,7 @@ static ADDRESS_MAP_START( ds3snd_data_map, ADDRESS_SPACE_DATA, 16 )
 //	communicate over serial I/O
 
 ADDRESS_MAP_END
-
+#endif
 
 
 /*************************************

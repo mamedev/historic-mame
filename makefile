@@ -17,12 +17,6 @@ endif
 # uncomment next line to generate a link map for exception handling in windows
 # MAP = 1
 
-# uncomment next line to use Assembler 68000 engine
-# X86_ASM_68000 = 1
-
-# uncomment next line to use Assembler 68020 engine
-# X86_ASM_68020 = 1
-
 # uncomment next line to use DRC MIPS3 engine
 X86_MIPS3_DRC = 1
 
@@ -113,8 +107,8 @@ ifdef SYMBOLS
 CFLAGS += -O0 -Wall -Wno-unused -g
 else
 CFLAGS += -DNDEBUG \
-	$(ARCH) -O3 -fomit-frame-pointer -fstrict-aliasing \
-	-Wall -Wno-sign-compare -Wunused \
+	$(ARCH) -O3 -fomit-frame-pointer -fno-strict-aliasing \
+	-Werror -Wall -Wno-sign-compare -Wunused -Wno-unused-functions \
 	-Wpointer-arith -Wbad-function-cast -Wcast-align \
 	-Wstrict-prototypes -Wundef \
 	-Wformat-security -Wwrite-strings \

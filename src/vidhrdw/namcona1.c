@@ -283,7 +283,7 @@ static void pdraw_masked_tile(
 	int gfx_pitch;
 	data8_t *mask_addr;
 	int mask_pitch;
-	int x,y,temp;
+	int x,y;
 
 	/*
 	 *	custom blitter for drawing a masked 8x8x8BPP tile
@@ -409,7 +409,7 @@ static void pdraw_opaque_tile(
 	const pen_t *paldata;
 	data8_t *gfx_addr;
 	int gfx_pitch;
-	int x,y,temp;
+	int x,y;
 	int ypos;
 	data8_t *pri;
 	UINT16 *dest;

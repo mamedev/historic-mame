@@ -1,114 +1,118 @@
 /* TMS5110 ROM Tables */
 
-/* This is the energy lookup table (4-bits -> 10-bits) */
-const static unsigned short energytable[0x10]={
-0x0000,0x00C0,0x0140,0x01C0,0x0280,0x0380,0x0500,0x0740,
-0x0A00,0x0E40,0x1440,0x1C80,0x2840,0x38C0,0x5040,0x7FC0};
-
-#if 0
-/*original tms5220 table*/
-/* This is the pitch lookup table (6-bits -> 8-bits) */
-const static unsigned short pitchtable [0x40]={
-0x0000,0x1000,0x1100,0x1200,0x1300,0x1400,0x1500,0x1600,
-0x1700,0x1800,0x1900,0x1A00,0x1B00,0x1C00,0x1D00,0x1E00,
-0x1F00,0x2000,0x2100,0x2200,0x2300,0x2400,0x2500,0x2600,
-0x2700,0x2800,0x2900,0x2A00,0x2B00,0x2D00,0x2F00,0x3100,
-0x3300,0x3500,0x3600,0x3900,0x3B00,0x3D00,0x3F00,0x4200,
-0x4500,0x4700,0x4900,0x4D00,0x4F00,0x5100,0x5500,0x5700,
-0x5C00,0x5F00,0x6300,0x6600,0x6A00,0x6E00,0x7300,0x7700,
-0x7B00,0x8000,0x8500,0x8A00,0x8F00,0x9500,0x9A00,0xA000};
-#endif
-
-/* Hacked pitch lookup table (5-bits -> 8-bits) */
-/*this is a guess since the chips have different number of bits
-** per pitch component:
-** tms5110 - 5 bits
-** tms5220 - 6 bits
+/* Note: all the tables in this file were read from the real TMS5110A chip, except
+         for the chirptable and the interp_coeff
 */
-/*this table uses every second value from 5220 table*/
 
+
+/* This is the energy lookup table (4-bits -> 10-bits) */
+const static unsigned short energytable[0x10] = {
+0*2,   1*2,   2*2,   3*2,
+4*2,   6*2,   8*2,   11*2,
+16*2,  23*2,  33*2,  47*2,
+63*2,  85*2,  114*2, 511 }; /*note: the last value (511) is not a true energy value, it's just a stop-sentinel */
+
+
+/* This is the tms5110 pitchtable */ 
 const static unsigned short pitchtable [0x20]={
-0x0000,0x1100,0x1300,0x1500,
-0x1700,0x1900,0x1B00,0x1D00,
-0x1F00,0x2100,0x2300,0x2500,
-0x2700,0x2900,0x2B00,0x2F00,
-0x3300,0x3600,0x3B00,0x3F00,
-0x4500,0x4900,0x4F00,0x5500,
-0x5C00,0x6300,0x6A00,0x7300,
-0x7B00,0x8500,0x8F00,0x9A00};
-
-
-
-/*Rest of the tables are 1:1 copy from tms5220r.c*/
-
+0,   15,  16,  17,
+19,  21,  22,  25,
+26,  29,  32,  36,
+40,  42,  46,  50,
+55,  60,  64,  68,
+72,  76,  80,  84,
+86,  93,  101, 110,
+120, 132, 144, 159 };
 
 
 /* These are the reflection coefficient lookup tables */
 
 /* K1 is (5-bits -> 9 bits+sign, 2's comp. fractional (-1 < x < 1) */
 
-const static short k1table    [0x20]={
-(short)0x82C0,(short)0x8380,(short)0x83C0,(short)0x8440,(short)0x84C0,(short)0x8540,(short)0x8600,(short)0x8780,
-(short)0x8880,(short)0x8980,(short)0x8AC0,(short)0x8C00,(short)0x8D40,(short)0x8F00,(short)0x90C0,(short)0x92C0,
-(short)0x9900,(short)0xA140,(short)0xAB80,(short)0xB840,(short)0xC740,(short)0xD8C0,(short)0xEBC0,0x0000,
-0x1440,0x2740,0x38C0,0x47C0,0x5480,0x5EC0,0x6700,0x6D40};
+const static int k1table[0x20] = {
+-501*64, -498*64, -497*64, -495*64,
+-493*64, -491*64, -488*64, -482*64,
+-478*64, -474*64, -469*64, -464*64,
+-459*64, -452*64, -445*64, -437*64,
+-412*64, -380*64, -339*64, -288*64,
+-227*64, -158*64,  -81*64,   -1*64,
+  80*64,  157*64,  226*64,  287*64,
+ 337*64,  379*64,  411*64,  436*64 };
 
 /* K2 is (5-bits -> 9 bits+sign, 2's comp. fractional (-1 < x < 1) */
 
-const static short k2table    [0x20]={
-(short)0xAE00,(short)0xB480,(short)0xBB80,(short)0xC340,(short)0xCB80,(short)0xD440,(short)0xDDC0,(short)0xE780,
-(short)0xF180,(short)0xFBC0,0x0600,0x1040,0x1A40,0x2400,0x2D40,0x3600,
-0x3E40,0x45C0,0x4CC0,0x5300,0x5880,0x5DC0,0x6240,0x6640,
-0x69C0,0x6CC0,0x6F80,0x71C0,0x73C0,0x7580,0x7700,0x7E80};
+const static int k2table[0x20] = {
+-328*64, -303*64, -274*64, -244*64,
+-211*64, -175*64, -138*64,  -99*64,
+ -59*64,  -18*64,   24*64,   64*64,
+ 105*64,  143*64,  180*64,  215*64,
+ 248*64,  278*64,  306*64,  331*64,
+ 354*64,  374*64,  392*64,  408*64,
+ 422*64,  435*64,  445*64,  455*64,
+ 463*64,  470*64,  476*64,  506*64 };
 
 /* K3 is (4-bits -> 9 bits+sign, 2's comp. fractional (-1 < x < 1) */
 
-const static short k3table    [0x10]={
-(short)0x9200,(short)0x9F00,(short)0xAD00,(short)0xBA00,(short)0xC800,(short)0xD500,(short)0xE300,(short)0xF000,
-(short)0xFE00,0x0B00,0x1900,0x2600,0x3400,0x4100,0x4F00,0x5C00};
+const static int k3table[0x10] = {
+-441*64, -387*64, -333*64, -279*64,
+-225*64, -171*64, -117*64,  -63*64,
+  -9*64,   45*64,   98*64,  152*64,
+ 206*64,  260*64,  314*64,  368*64 };
 
 /* K4 is (4-bits -> 9 bits+sign, 2's comp. fractional (-1 < x < 1) */
 
-const static short k4table    [0x10]={
-(short)0xAE00,(short)0xBC00,(short)0xCA00,(short)0xD800,(short)0xE600,(short)0xF400,0x0100,0x0F00,
-0x1D00,0x2B00,0x3900,0x4700,0x5500,0x6300,0x7100,0x7E00};
+const static int k4table[0x10] = {
+-328*64, -273*64, -217*64, -161*64,
+-106*64,  -50*64,    5*64,   61*64,
+ 116*64,  172*64,  228*64,  283*64,
+ 339*64,  394*64,  450*64,  506*64 };
 
 /* K5 is (4-bits -> 9 bits+sign, 2's comp. fractional (-1 < x < 1) */
 
-const static short k5table    [0x10]={
-(short)0xAE00,(short)0xBA00,(short)0xC500,(short)0xD100,(short)0xDD00,(short)0xE800,(short)0xF400,(short)0xFF00,
-0x0B00,0x1700,0x2200,0x2E00,0x3900,0x4500,0x5100,0x5C00};
+const static int k5table[0x10] = {
+-328*64, -282*64, -235*64, -189*64,
+-142*64,  -96*64,  -50*64,   -3*64,
+  43*64,   90*64,  136*64,  182*64,
+ 229*64,  275*64,  322*64,  368*64 };
 
 /* K6 is (4-bits -> 9 bits+sign, 2's comp. fractional (-1 < x < 1) */
 
-const static short k6table    [0x10]={
-(short)0xC000,(short)0xCB00,(short)0xD600,(short)0xE100,(short)0xEC00,(short)0xF700,0x0300,0x0E00,
-0x1900,0x2400,0x2F00,0x3A00,0x4500,0x5000,0x5B00,0x6600};
+const static int k6table[0x10] = {
+-256*64, -212*64, -168*64, -123*64,
+ -79*64,  -35*64,   10*64,   54*64,
+  98*64,  143*64,  187*64,  232*64,
+ 276*64,  320*64,  365*64,  409*64 };
 
 /* K7 is (4-bits -> 9 bits+sign, 2's comp. fractional (-1 < x < 1) */
 
-const static short k7table    [0x10]={
-(short)0xB300,(short)0xBF00,(short)0xCB00,(short)0xD700,(short)0xE300,(short)0xEF00,(short)0xFB00,0x0700,
-0x1300,0x1F00,0x2B00,0x3700,0x4300,0x4F00,0x5A00,0x6600};
+const static int k7table[0x10] = {
+-308*64, -260*64, -212*64, -164*64,
+-117*64,  -69*64,  -21*64,   27*64,
+  75*64,  122*64,  170*64,  218*64,
+ 266*64,  314*64,  361*64,  409*64 };
 
 /* K8 is (3-bits -> 9 bits+sign, 2's comp. fractional (-1 < x < 1) */
 
-const static short k8table    [0x08]={
-(short)0xC000,(short)0xD800,(short)0xF000,0x0700,0x1F00,0x3700,0x4F00,0x6600};
+const static int k8table[0x08] = {
+-256*64, -161*64,  -66*64,   29*64,
+ 124*64,  219*64,  314*64,  409*64 };
 
 /* K9 is (3-bits -> 9 bits+sign, 2's comp. fractional (-1 < x < 1) */
 
-const static short k9table    [0x08]={
-(short)0xC000,(short)0xD400,(short)0xE800,(short)0xFC00,0x1000,0x2500,0x3900,0x4D00};
+const static int k9table[0x08] = {
+-256*64, -176*64,  -96*64,  -15*64,
+  65*64,  146*64,  226*64,  307*64 };
 
 /* K10 is (3-bits -> 9 bits+sign, 2's comp. fractional (-1 < x < 1) */
 
-const static short k10table   [0x08]={
-(short)0xCD00,(short)0xDF00,(short)0xF100,0x0400,0x1600,0x2000,0x3B00,0x4D00};
+const static int k10table[0x08] = {
+-205*64, -132*64,  -59*64,   14*64,
+  87*64,  160*64,  234*64,  307*64 };
+
 
 /* chirp table */
 
-const static char chirptable[41]={
+const static signed char chirptable[41] = {
 0x00, 0x2a, (char)0xd4, 0x32,
 (char)0xb2, 0x12, 0x25, 0x14,
 0x02, (char)0xe1, (char)0xc5, 0x02,

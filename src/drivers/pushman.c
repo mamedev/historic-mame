@@ -542,6 +542,36 @@ ROM_START( pushman )
 	ROM_LOAD( "pushman.010", 0x00000, 0x08000, CRC(a500132d) SHA1(26b02c9fea69b51c5f7dc1b43b838cd336ebf862) )
 ROM_END
 
+ROM_START( pushmana )
+	ROM_REGION( 0x20000, REGION_CPU1, 0 )
+	ROM_LOAD16_BYTE( "pushmana.212", 0x000000, 0x10000, CRC(871d0858) SHA1(690ca554c8c6f19c0f26ccd8d948e3aa6e1b23c0) )
+	ROM_LOAD16_BYTE( "pushmana.011", 0x000001, 0x10000, CRC(ae57761e) SHA1(63467d61c967f38e0fbb8130f08e09e03cdcce6c) )
+
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )
+	ROM_LOAD( "pushman.013", 0x00000, 0x08000,  CRC(adfe66c1) SHA1(fa4ed13d655c664b06e9b91292d2c0a88cb5a569) ) // missing from this set?
+
+	ROM_REGION( 0x01000, REGION_CPU3, 0 ) /* not from this set, check behavior is the same */
+	ROM_LOAD( "pushman.uc",  0x00000, 0x01000, BAD_DUMP CRC(d7916657) SHA1(89c14c6044f082fffe2a8f86d0a82336f4a110a2) )
+
+	ROM_REGION( 0x10000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "pushmana.130",  0x00000, 0x10000, CRC(f83f92e7) SHA1(37f337d7b496f8d81eed247c80390a6aabcf4b95) )
+
+	ROM_REGION( 0x40000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "pushman.004", 0x00000, 0x10000, CRC(87aafa70) SHA1(560661b23ddac106a3d2762fc32da666b31e7424) ) // .58
+	ROM_LOAD( "pushman.005", 0x10000, 0x10000, CRC(7fd1200c) SHA1(15d6781a2d7e3ec2e8f85f8585b1e3fd9fe4fd1d) ) // .59
+	ROM_LOAD( "pushman.002", 0x20000, 0x10000, CRC(0a094ab0) SHA1(2ff5dcf0d9439eeadd61601170c9767f4d81f022) ) // .56
+	ROM_LOAD( "pushman.003", 0x30000, 0x10000, CRC(73d1f29d) SHA1(0a87fe02b1efd04c540f016b2626d32da70219db) ) // .57
+
+	ROM_REGION( 0x40000, REGION_GFX3, ROMREGION_DISPOSE )
+	ROM_LOAD( "pushman.006", 0x00000, 0x10000, CRC(48ef3da6) SHA1(407d50c2030584bb17a4d4a1bb45e0b04e1a95a4) ) // .131
+	ROM_LOAD( "pushman.008", 0x10000, 0x10000, CRC(4b6a3e88) SHA1(c57d0528e942dd77a13e5a4bf39053f52915d44c) ) // .148
+	ROM_LOAD( "pushman.007", 0x20000, 0x10000, CRC(b70020bd) SHA1(218ca4a08b87b7dc5c1eed99960f4098c4fc7e0c) ) // .132
+	ROM_LOAD( "pushman.009", 0x30000, 0x10000, CRC(cc555667) SHA1(6c79e14fc18d1d836392044779cb3219494a3447) ) // .149
+
+	ROM_REGION( 0x10000, REGION_GFX4, 0 )	/* bg tilemaps */
+	ROM_LOAD( "pushmana.189", 0x00000, 0x10000, CRC(59f25598) SHA1(ace33afd6e6d07376ed01048db99b13bcec790d7) )
+ROM_END
+
 ROM_START( pushmans )
 	ROM_REGION( 0x20000, REGION_CPU1, 0 )
 	ROM_LOAD16_BYTE( "pman-12.212", 0x000000, 0x10000, CRC(4251109d) SHA1(d4b020e4ecc2005b3a4c1b34d88de82b09bf5a6b) )
@@ -605,6 +635,7 @@ ROM_START( bballs )
 	ROM_LOAD( "bb_prom.e9",   0x0000, 0x0100, CRC(ec80ae36) SHA1(397ec8fc1b106c8b8d4bf6798aa429e8768a101a) )	/* priority (not used) */
 ROM_END
 
-GAME( 1990, pushman,  0,       pushman, pushman, 0, ROT0, "Comad", "Pushman (Korea)" )
+GAME( 1990, pushman,  0,       pushman, pushman, 0, ROT0, "Comad", "Pushman (Korea, set 1)" )
+GAME( 1990, pushmana, pushman, pushman, pushman, 0, ROT0, "Comad", "Pushman (Korea, set 2)" )
 GAME( 1990, pushmans, pushman, pushman, pushman, 0, ROT0, "Comad (American Sammy license)", "Pushman (American Sammy license)" )
 GAME( 1991, bballs,   0,       bballs,  bballs,  0, ROT0, "Comad", "Bouncing Balls" )

@@ -80,9 +80,6 @@ static UINT8 		atarigen_sound_to_cpu;
 static UINT8 		timed_int;
 static UINT8 		ym2151_int;
 
-static UINT8 *		speed_a, *speed_b;
-static UINT32 		speed_pc;
-
 static atarigen_scanline_callback scanline_callback;
 static int 			scanlines_per_callback;
 static double 		scanline_callback_period;
@@ -112,7 +109,6 @@ static void delayed_sound_reset(int param);
 static void delayed_sound_w(int param);
 static void delayed_6502_sound_w(int param);
 
-static READ8_HANDLER( m6502_speedup_r );
 static void atarigen_set_vol(int volume, const char *string);
 
 static void vblank_timer(int param);
@@ -141,7 +137,7 @@ void atarigen_interrupt_reset(atarigen_int_callback update_int)
 	/* reset the interrupt states */
 	atarigen_video_int_state = atarigen_sound_int_state = atarigen_scanline_int_state = 0;
 	scanline_interrupt_timer = NULL;
-	
+
 	/* create a timer for scanlines */
 	scanline_interrupt_timer = timer_alloc(scanline_interrupt_callback);
 }
@@ -831,21 +827,6 @@ void atarigen_set_oki6295_vol(int volume)
 }
 
 
-/*---------------------------------------------------------------
-	m6502_speedup_r: Handles speeding up the 6502.
----------------------------------------------------------------*/
-
-static READ8_HANDLER( m6502_speedup_r )
-{
-	int result = speed_b[0];
-
-	if (activecpu_get_previouspc() == speed_pc && speed_a[0] == speed_a[1] && result == speed_b[1])
-		cpu_spinuntil_int();
-
-	return result;
-}
-
-
 
 /*##########################################################################
 	SCANLINE TIMING
@@ -1266,7 +1247,7 @@ WRITE16_HANDLER( atarigen_playfield_latched_lsb_w )
 {
 	COMBINE_DATA(&atarigen_playfield[offset]);
 	tilemap_mark_tile_dirty(atarigen_playfield_tilemap, offset);
-	
+
 	if (playfield_latch != -1)
 		atarigen_playfield_upper[offset] = (atarigen_playfield_upper[offset] & ~0x00ff) | (playfield_latch & 0x00ff);
 }
@@ -1283,7 +1264,7 @@ WRITE16_HANDLER( atarigen_playfield_latched_msb_w )
 {
 	COMBINE_DATA(&atarigen_playfield[offset]);
 	tilemap_mark_tile_dirty(atarigen_playfield_tilemap, offset);
-	
+
 	if (playfield_latch != -1)
 		atarigen_playfield_upper[offset] = (atarigen_playfield_upper[offset] & ~0xff00) | (playfield_latch & 0xff00);
 }
@@ -1292,7 +1273,7 @@ WRITE16_HANDLER( atarigen_playfield_latched_msb_w )
 
 /*---------------------------------------------------------------
 	atarigen_playfield_latched_lsb_w: Generic write handler for
-	lower word of second playfield RAM with a latch in the MSB 
+	lower word of second playfield RAM with a latch in the MSB
 	of the upper word.
 ---------------------------------------------------------------*/
 
@@ -1300,7 +1281,7 @@ WRITE16_HANDLER( atarigen_playfield2_latched_msb_w )
 {
 	COMBINE_DATA(&atarigen_playfield2[offset]);
 	tilemap_mark_tile_dirty(atarigen_playfield2_tilemap, offset);
-	
+
 	if (playfield2_latch != -1)
 		atarigen_playfield_upper[offset] = (atarigen_playfield_upper[offset] & ~0xff00) | (playfield2_latch & 0xff00);
 }

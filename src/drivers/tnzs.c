@@ -36,23 +36,26 @@ Hardware datails for the newer tnzs board (from pictures):
 
 
 
-TODO: - Find out how the hardware credit-counter works (MPU)
-	  - Verify dip switches
-	  - Fix video offsets (See Dr Toppel in Flip-Screen - also
-	       affects Chuka Taisen)
-	  - Video scroll side flicker in Chuka Taisen, Insector X and Dr Toppel
+TODO:
+-----
+- Find out how the hardware credit-counter works (MPU)
+- Verify dip switches
+- Fix video offsets (See Dr Toppel in Flip-Screen - also affects Chuka Taisen)
+- Video scroll side flicker in Chuka Taisen, Insector X, Dr Toppel, Kabuki Z
+- Sprite/background sync during scrolling, e.g. insectorx, kabukiz.
+- Merge video driver with seta.c (it's the same thing but seta.c assumes a 16-bit CPU)
 
-	Arkanoid 2:
-	  - What do writes at $f400 do ?
-	  - Why does the game zero the $fd00 area ?
-	Extrmatn:
-	  - What do reads from $f600 do ? (discarded)
-	Chuka Taisen:
-	  - What do writes at  $f400 do ? (value 40h)
-	  - What do reads from $f600 do in service mode ?
-	Dr Toppel:
-	  - What do writes at  $f400 do ? (value 40h)
-	  - What do reads from $f600 do in service mode ?
+Arkanoid 2:
+  - What do writes at $f400 do ?
+  - Why does the game zero the $fd00 area ?
+Extrmatn:
+  - What do reads from $f600 do ? (discarded)
+Chuka Taisen:
+  - What do writes at  $f400 do ? (value 40h)
+  - What do reads from $f600 do in service mode ?
+Dr Toppel:
+  - What do writes at  $f400 do ? (value 40h)
+  - What do reads from $f600 do in service mode ?
 
 ****************************************************************************
 
@@ -215,7 +218,8 @@ Driver by Takahiro Nogi (nogi@kt.rim.or.jp) 1999/11/06
 
 /* prototypes for functions in ../machine/tnzs.c */
 unsigned char *tnzs_objram, *tnzs_sharedram;
-unsigned char *tnzs_vdcram, *tnzs_scrollram;
+unsigned char *tnzs_vdcram, *tnzs_scrollram, *tnzs_objctrl;
+DRIVER_INIT( plumpop );
 DRIVER_INIT( extrmatn );
 DRIVER_INIT( arknoid2 );
 DRIVER_INIT( drtoppel );
@@ -242,6 +246,7 @@ WRITE8_HANDLER( tnzs_bankswitch1_w );
 /* prototypes for functions in ../vidhrdw/tnzs.c */
 PALETTE_INIT( arknoid2 );
 VIDEO_UPDATE( tnzs );
+VIDEO_EOF( tnzs );
 
 
 
@@ -371,7 +376,8 @@ static ADDRESS_MAP_START( writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_RAM) AM_BASE(&tnzs_objram)
 	AM_RANGE(0xe000, 0xefff) AM_WRITE(tnzs_sharedram_w) AM_BASE(&tnzs_sharedram)
 	AM_RANGE(0xf000, 0xf1ff) AM_WRITE(MWA8_RAM) AM_BASE(&tnzs_vdcram)
-	AM_RANGE(0xf200, 0xf3ff) AM_WRITE(MWA8_RAM) AM_BASE(&tnzs_scrollram) /* scrolling info */
+	AM_RANGE(0xf200, 0xf2ff) AM_WRITE(MWA8_RAM) AM_BASE(&tnzs_scrollram) /* scrolling info */
+	AM_RANGE(0xf300, 0xf303) AM_MIRROR(0xfc) AM_WRITE(MWA8_RAM) AM_BASE(&tnzs_objctrl) /* control registers (0x80 mirror used by Arkanoid 2) */
 	AM_RANGE(0xf400, 0xf400) AM_WRITE(MWA8_NOP)	/* ? */
 	AM_RANGE(0xf600, 0xf600) AM_WRITE(tnzs_bankswitch_w)
 	/* arknoid2, extrmatn, plumppop and drtoppel have PROMs instead of RAM */
@@ -425,7 +431,7 @@ static ADDRESS_MAP_START( kageki_sub_writemem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xe000, 0xefff) AM_WRITE(tnzs_sharedram_w)
 ADDRESS_MAP_END
 
-/* the bootleg board is different, it has a third CPU (and of course no mcu) */
+/* the later board is different, it has a third CPU (and of course no mcu) */
 
 static WRITE8_HANDLER( tnzsb_sound_command_w )
 {
@@ -433,25 +439,19 @@ static WRITE8_HANDLER( tnzsb_sound_command_w )
 	cpunum_set_input_line_and_vector(2,0,HOLD_LINE,0xff);
 }
 
-static ADDRESS_MAP_START( tnzsb_readmem1, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0x8000, 0x9fff) AM_READ(MRA8_BANK2)
+static ADDRESS_MAP_START( tnzsb_cpu1_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0x8000, 0x9fff) AM_ROMBANK(2)
+	AM_RANGE(0xa000, 0xa000) AM_WRITE(tnzs_bankswitch1_w)
 	AM_RANGE(0xb002, 0xb002) AM_READ(input_port_0_r)
 	AM_RANGE(0xb003, 0xb003) AM_READ(input_port_1_r)
+	AM_RANGE(0xb004, 0xb004) AM_WRITE(tnzsb_sound_command_w)
 	AM_RANGE(0xc000, 0xc000) AM_READ(input_port_2_r)
 	AM_RANGE(0xc001, 0xc001) AM_READ(input_port_3_r)
 	AM_RANGE(0xc002, 0xc002) AM_READ(input_port_4_r)
-	AM_RANGE(0xd000, 0xdfff) AM_READ(MRA8_RAM)
-	AM_RANGE(0xe000, 0xefff) AM_READ(tnzs_sharedram_r)
+	AM_RANGE(0xd000, 0xdfff) AM_RAM
+	AM_RANGE(0xe000, 0xefff) AM_READWRITE(tnzs_sharedram_r, tnzs_sharedram_w)
 	AM_RANGE(0xf000, 0xf003) AM_READ(MRA8_RAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( tnzsb_writemem1, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x9fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xa000, 0xa000) AM_WRITE(tnzs_bankswitch1_w)
-	AM_RANGE(0xb004, 0xb004) AM_WRITE(tnzsb_sound_command_w)
-	AM_RANGE(0xd000, 0xdfff) AM_WRITE(MWA8_RAM)
-	AM_RANGE(0xe000, 0xefff) AM_WRITE(tnzs_sharedram_w)
 	AM_RANGE(0xf000, 0xf3ff) AM_WRITE(paletteram_xRRRRRGGGGGBBBBB_w) AM_BASE(&paletteram)
 ADDRESS_MAP_END
 
@@ -466,18 +466,13 @@ static ADDRESS_MAP_START( kabukiz_cpu1_map, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0xc001, 0xc001) AM_READ(input_port_3_r)
 	AM_RANGE(0xc002, 0xc002) AM_READ(input_port_4_r)
 	AM_RANGE(0xd000, 0xdfff) AM_RAM
-	AM_RANGE(0xe000, 0xefff) AM_READ(tnzs_sharedram_r) AM_WRITE(tnzs_sharedram_w)
+	AM_RANGE(0xe000, 0xefff) AM_READWRITE(tnzs_sharedram_r, tnzs_sharedram_w)
 	AM_RANGE(0xf800, 0xfbff) AM_WRITE(paletteram_xRRRRRGGGGGBBBBB_w) AM_BASE(&paletteram)
 ADDRESS_MAP_END
 
-static ADDRESS_MAP_START( tnzsb_readmem2, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_READ(MRA8_ROM)
-	AM_RANGE(0xc000, 0xdfff) AM_READ(MRA8_RAM)
-ADDRESS_MAP_END
-
-static ADDRESS_MAP_START( tnzsb_writemem2, ADDRESS_SPACE_PROGRAM, 8 )
-	AM_RANGE(0x0000, 0x7fff) AM_WRITE(MWA8_ROM)
-	AM_RANGE(0xc000, 0xdfff) AM_WRITE(MWA8_RAM)
+static ADDRESS_MAP_START( tnzsb_cpu2_map, ADDRESS_SPACE_PROGRAM, 8 )
+	AM_RANGE(0x0000, 0x7fff) AM_ROM
+	AM_RANGE(0xc000, 0xdfff) AM_RAM
 ADDRESS_MAP_END
 
 static ADDRESS_MAP_START( kabukiz_cpu2_map, ADDRESS_SPACE_PROGRAM, 8 )
@@ -1051,9 +1046,9 @@ INPUT_PORTS_START( kabukiz )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1275,7 +1270,7 @@ static struct YM2203interface ym2203b_interface =
 {
 	1,			/* 1 chip */
 	3000000,	/* 3 MHz ??? */
-	{ YM2203_VOL(100,100) },
+	{ YM2203_VOL(MIXERG(100,MIXER_GAIN_2x,MIXER_PAN_CENTER),100) },	// compensate for very low volume
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -1335,6 +1330,7 @@ static MACHINE_DRIVER_START( arknoid2 )
 
 	MDRV_PALETTE_INIT(arknoid2)
 	MDRV_VIDEO_UPDATE(tnzs)
+	MDRV_VIDEO_EOF(tnzs)
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(YM2203, ym2203_interface)
@@ -1367,6 +1363,7 @@ static MACHINE_DRIVER_START( drtoppel )
 
 	MDRV_PALETTE_INIT(arknoid2)
 	MDRV_VIDEO_UPDATE(tnzs)
+	MDRV_VIDEO_EOF(tnzs)
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(YM2203, ym2203_interface)
@@ -1390,8 +1387,8 @@ static MACHINE_DRIVER_START( tnzs )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	MDRV_INTERLEAVE(500)	/* 500 CPU slices per frame - heavy sync required in order to*/
-							/* avoid crashes/hangs -kal 14 jul 2002 */
+	MDRV_INTERLEAVE(100)
+
 	MDRV_MACHINE_INIT(tnzs)
 
 	/* video hardware */
@@ -1402,44 +1399,10 @@ static MACHINE_DRIVER_START( tnzs )
 	MDRV_PALETTE_LENGTH(512)
 
 	MDRV_VIDEO_UPDATE(tnzs)
+	MDRV_VIDEO_EOF(tnzs)
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(YM2203, ym2203_interface)
-MACHINE_DRIVER_END
-
-
-static MACHINE_DRIVER_START( tnzsb )
-
-	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 6000000)		/* 6 MHz */
-	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
-	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
-
-	MDRV_CPU_ADD(Z80, 6000000)		/* 6 MHz */
-	MDRV_CPU_PROGRAM_MAP(tnzsb_readmem1,tnzsb_writemem1)
-	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
-
-	MDRV_CPU_ADD(Z80, 6000000)		/* 6 MHz */
-	MDRV_CPU_PROGRAM_MAP(tnzsb_readmem2,tnzsb_writemem2)
-	MDRV_CPU_IO_MAP(tnzsb_readport,tnzsb_writeport)
-
-	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-	MDRV_INTERLEAVE(200)	/* 200 CPU slices per frame - an high value to ensure proper */
-							/* synchronization of the CPUs */
-	MDRV_MACHINE_INIT(tnzs)
-
-	/* video hardware */
-	MDRV_VIDEO_ATTRIBUTES(VIDEO_TYPE_RASTER)
-	MDRV_SCREEN_SIZE(32*8, 32*8)
-	MDRV_VISIBLE_AREA(0*8, 32*8-1, 2*8, 30*8-1)
-	MDRV_GFXDECODE(tnzs_gfxdecodeinfo)
-	MDRV_PALETTE_LENGTH(512)
-
-	MDRV_VIDEO_UPDATE(tnzs)
-
-	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203b_interface)
 MACHINE_DRIVER_END
 
 
@@ -1456,8 +1419,8 @@ static MACHINE_DRIVER_START( insectx )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-	MDRV_INTERLEAVE(200)	/* 200 CPU slices per frame - an high value to ensure proper */
-							/* synchronization of the CPUs */
+	MDRV_INTERLEAVE(100)
+
 	MDRV_MACHINE_INIT(tnzs)
 
 	/* video hardware */
@@ -1468,6 +1431,7 @@ static MACHINE_DRIVER_START( insectx )
 	MDRV_PALETTE_LENGTH(512)
 
 	MDRV_VIDEO_UPDATE(tnzs)
+	MDRV_VIDEO_EOF(tnzs)
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(YM2203, ym2203_interface)
@@ -1487,8 +1451,8 @@ static MACHINE_DRIVER_START( kageki )
 
 	MDRV_FRAMES_PER_SECOND(60)
 	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
-	MDRV_INTERLEAVE(200)	/* 200 CPU slices per frame - an high value to ensure proper */
-							/* synchronization of the CPUs */
+	MDRV_INTERLEAVE(100)
+
 	MDRV_MACHINE_INIT(tnzs)
 
 	/* video hardware */
@@ -1499,6 +1463,7 @@ static MACHINE_DRIVER_START( kageki )
 	MDRV_PALETTE_LENGTH(512)
 
 	MDRV_VIDEO_UPDATE(tnzs)
+	MDRV_VIDEO_EOF(tnzs)
 
 	/* sound hardware */
 	MDRV_SOUND_ADD(YM2203, kageki_ym2203_interface)
@@ -1507,25 +1472,25 @@ static MACHINE_DRIVER_START( kageki )
 MACHINE_DRIVER_END
 
 
-static MACHINE_DRIVER_START( kabukiz )
+static MACHINE_DRIVER_START( tnzsb )
 
 	/* basic machine hardware */
-	MDRV_CPU_ADD(Z80, 6000000)		/* 6 MHz */
+	MDRV_CPU_ADD_TAG("cpu0", Z80, 6000000)		/* 6 MHz */
 	MDRV_CPU_PROGRAM_MAP(readmem,writemem)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-	MDRV_CPU_ADD(Z80, 6000000)		/* 6 MHz */
-	MDRV_CPU_PROGRAM_MAP(kabukiz_cpu1_map,0)
+	MDRV_CPU_ADD_TAG("cpu1", Z80, 6000000)		/* 6 MHz */
+	MDRV_CPU_PROGRAM_MAP(tnzsb_cpu1_map,0)
 	MDRV_CPU_VBLANK_INT(irq0_line_hold,1)
 
-	MDRV_CPU_ADD(Z80, 6000000)		/* 6 MHz */
-	MDRV_CPU_PROGRAM_MAP(kabukiz_cpu2_map,0)
+	MDRV_CPU_ADD_TAG("cpu2", Z80, 6000000)		/* 6 MHz */
+	MDRV_CPU_PROGRAM_MAP(tnzsb_cpu2_map,0)
 	MDRV_CPU_IO_MAP(tnzsb_readport,tnzsb_writeport)
 
 	MDRV_FRAMES_PER_SECOND(60)
-	MDRV_VBLANK_DURATION(DEFAULT_REAL_60HZ_VBLANK_DURATION)
-	MDRV_INTERLEAVE(500)	/* 500 CPU slices per frame - heavy sync required in order to*/
-							/* avoid crashes/hangs -kal 14 jul 2002 */
+	MDRV_VBLANK_DURATION(DEFAULT_60HZ_VBLANK_DURATION)
+	MDRV_INTERLEAVE(100)
+
 	MDRV_MACHINE_INIT(tnzs)
 
 	/* video hardware */
@@ -1536,10 +1501,26 @@ static MACHINE_DRIVER_START( kabukiz )
 	MDRV_PALETTE_LENGTH(512)
 
 	MDRV_VIDEO_UPDATE(tnzs)
+	MDRV_VIDEO_EOF(tnzs)
 
 	/* sound hardware */
-	MDRV_SOUND_ADD(YM2203, ym2203_interface)
+	MDRV_SOUND_ADD(YM2203, ym2203b_interface)
 MACHINE_DRIVER_END
+
+
+static MACHINE_DRIVER_START( kabukiz )
+
+	MDRV_IMPORT_FROM(tnzsb)
+
+	/* basic machine hardware */
+	MDRV_CPU_MODIFY("cpu1")
+	MDRV_CPU_PROGRAM_MAP(kabukiz_cpu1_map,0)
+
+	MDRV_CPU_MODIFY("cpu2")
+	MDRV_CPU_PROGRAM_MAP(kabukiz_cpu2_map,0)
+MACHINE_DRIVER_END
+
+
 
 /***************************************************************************
 
@@ -2052,7 +2033,7 @@ ROM_END
 
 
 /*  ( YEAR  NAME      PARENT    MACHINE   INPUT     INIT      MONITOR COMPANY    FULLNAME     FLAGS ) */
-GAME( 1987, plumppop, 0,        drtoppel, plumppop, drtoppel, ROT0,   "Taito Corporation", "Plump Pop (Japan)" )
+GAME( 1987, plumppop, 0,        drtoppel, plumppop, plumpop,  ROT0,   "Taito Corporation", "Plump Pop (Japan)" )
 GAME( 1987, extrmatn, 0,        arknoid2, extrmatn, extrmatn, ROT270, "[Taito] World Games", "Extermination (US)" )
 GAME( 1987, arknoid2, 0,        arknoid2, arknoid2, arknoid2, ROT270, "Taito Corporation Japan", "Arkanoid - Revenge of DOH (World)" )
 GAME( 1987, arknid2u, arknoid2, arknoid2, arknid2u, arknoid2, ROT270, "Taito America Corporation (Romstar license)", "Arkanoid - Revenge of DOH (US)" )
@@ -2068,6 +2049,6 @@ GAME( 1988, chukataj, chukatai, tnzs,     chukatau, chukatai, ROT0,   "Taito Cor
 GAME( 1988, tnzs,     0,        tnzsb,    tnzsb,    tnzsb,    ROT0,   "Taito Corporation Japan", "The NewZealand Story (World, newer)" )
 GAME( 1988, tnzsj,    tnzs,     tnzs,     tnzs,     tnzs,     ROT0,   "Taito Corporation", "The NewZealand Story (Japan)" )
 GAME( 1988, tnzso,    tnzs,     tnzs,     tnzs2,    tnzs,     ROT0,   "Taito Corporation Japan", "The NewZealand Story (World, older)" )
-GAMEX(1988, kabukiz,  0,		kabukiz,  kabukiz,  tnzsb,    ROT0,   "Taito Corporation Japan", "Kabuki-Z (World)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
-GAMEX(1988, kabukizj, kabukiz,  kabukiz,  kabukiz,  tnzsb,    ROT0,   "Taito Corporation", "Kabuki-Z (Japan)", GAME_IMPERFECT_GRAPHICS | GAME_NO_SOUND )
+GAME( 1988, kabukiz,  0,        kabukiz,  kabukiz,  kabukiz,  ROT0,   "Taito Corporation Japan", "Kabuki-Z (World)" )
+GAME( 1988, kabukizj, kabukiz,  kabukiz,  kabukiz,  kabukiz,  ROT0,   "Taito Corporation", "Kabuki-Z (Japan)" )
 GAME( 1989, insectx,  0,        insectx,  insectx,  insectx,  ROT0,   "Taito Corporation Japan", "Insector X (World)" )

@@ -68,8 +68,9 @@ WRITE16_HANDLER(bank1_w)
 
 // 5 bidirectional digital ports used plus one for internal control
 
-static unsigned char control[8];
+//static unsigned char control[8];
 
+#if 0
 static UINT8 io_r(int port)
 {
 	switch(port) {
@@ -166,6 +167,7 @@ static WRITE16_HANDLER( yboard_snd_w )
 		cpunum_set_input_line(3, INPUT_LINE_NMI, PULSE_LINE);
 	}
 }
+#endif
 
 static void fast_timer_callback(int param)
 {
@@ -277,6 +279,7 @@ static ADDRESS_MAP_START( y_writemem, ADDRESS_SPACE_PROGRAM, 16 )
 	AM_RANGE(0xff0000, 0xffffff) AM_WRITE(MWA16_RAM)
 ADDRESS_MAP_END
 
+#if 0
 static ADDRESS_MAP_START( yboard_sound_readmem, ADDRESS_SPACE_PROGRAM, 8 )
 	AM_RANGE(0x0000, 0xefff) AM_READ(MRA8_ROM)
 	AM_RANGE(0xf000, 0xf7ff) AM_READ(SegaPCM_r)
@@ -299,7 +302,7 @@ static ADDRESS_MAP_START( yboard_sound_writeport, ADDRESS_SPACE_IO, 8 )
 	AM_RANGE(0x00, 0x00) AM_WRITE(YM2151_register_port_0_w)
 	AM_RANGE(0x01, 0x01) AM_WRITE(YM2151_data_port_0_w)
 ADDRESS_MAP_END
-
+#endif
 
 
 

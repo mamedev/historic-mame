@@ -294,12 +294,12 @@ WRITE8_HANDLER( bublbobl_68705_portB_w );
 WRITE8_HANDLER( bublbobl_68705_ddrB_w );
 #endif
 
-
+#if 0 // doesn't work for some reason
 static WRITE8_HANDLER(soundcpu_reset_w)
 {
 	cpunum_set_input_line(2, INPUT_LINE_RESET, (data & 0x01) ? ASSERT_LINE : CLEAR_LINE);
 }
-
+#endif
 
 
 static ADDRESS_MAP_START( master_map, ADDRESS_SPACE_PROGRAM, 8 )

@@ -348,9 +348,32 @@ ROM_START( champbb2 )
 	ROM_LOAD( "pr5956",       0x0020, 0x100, CRC(872dd450) SHA1(6c1e2c4a2fc072f4bf4996c731adb0b01b347506) ) /* look-up table */
 ROM_END
 
+ROM_START( champb2a )
+	ROM_REGION( 0x10000, REGION_CPU1, 0 )	/* 64k for code */
+	ROM_LOAD( "1.bin",        0x0000, 0x2000, CRC(9b75b44d) SHA1(35b67638a5e48cbe999907e3c9c3a33da9d76bba) )
+	ROM_LOAD( "2.bin",        0x2000, 0x2000, CRC(736a1b62) SHA1(24c2d57506754ca789b378a595c03b7591eb5b5c) )
+	ROM_LOAD( "3.bin",        0x4000, 0x2000, CRC(cf5f28cb) SHA1(d553f2085c9c8c77b241b4239cc1ad1764b490d0) )
+	ROM_LOAD( "4.bin",        0x7800, 0x0800, NO_DUMP )
 
+	/* not in this set, but probably the same */
+	ROM_REGION( 0x10000, REGION_CPU2, 0 )	/* 64k for the speech CPU */
+	ROM_LOAD( "epr5933",      0x0000, 0x2000, CRC(26ab3e16) SHA1(019b9d34233a6b7a53e204154b782ceb42915d2b) )
+	ROM_LOAD( "epr5934",      0x2000, 0x2000, CRC(7c01715f) SHA1(b15b2001b8c110f2599eee3aeed79f67686ebd7e) )
+	ROM_LOAD( "epr5935",      0x4000, 0x2000, CRC(3c911786) SHA1(eea0c467e213d237b5bb9d04b19a418d6090c2dc) )
 
-GAME(1983, champbas, 0,        champbas, champbas, 0, ROT0, "Sega", "Champion Baseball" )
+	ROM_REGION( 0x2000, REGION_GFX1, ROMREGION_DISPOSE )
+	ROM_LOAD( "epr5936",      0x0000, 0x2000, CRC(c4a4df75) SHA1(7b85dbf405697b0b8881f910c08f6db6c828b19a) )
+
+	ROM_REGION( 0x2000, REGION_GFX2, ROMREGION_DISPOSE )
+	ROM_LOAD( "epr5937",      0x0000, 0x2000, CRC(5c80ec42) SHA1(9b79737577e48a6b2ec20ce145252545955e82c3) )
+
+	ROM_REGION( 0x0120, REGION_PROMS, 0 )
+	ROM_LOAD( "pr5957",       0x0000, 0x020, CRC(f5ce825e) SHA1(956f580840f1a7d24bfbd72b2929d14e9ee1b660) ) /* palette */
+	ROM_LOAD( "pr5956",       0x0020, 0x100, CRC(872dd450) SHA1(6c1e2c4a2fc072f4bf4996c731adb0b01b347506) ) /* look-up table */
+ROM_END
+
+GAME( 1983, champbas, 0,        champbas, champbas, 0, ROT0, "Sega",			 "Champion Baseball" )
 GAMEX(1983, champbbj, champbas, champbas, champbas, 0, ROT0, "Alpha Denshi Co.", "Champion Baseball (Japan set 1)", GAME_NOT_WORKING )
 GAMEX(1983, champbja, champbas, champbas, champbas, 0, ROT0, "Alpha Denshi Co.", "Champion Baseball (Japan set 2)", GAME_NOT_WORKING )
-GAMEX(1983, champbb2, 0,        champbas, champbas, 0, ROT0, "Sega", "Champion Baseball II", GAME_NOT_WORKING )
+GAMEX(1983, champbb2, 0,        champbas, champbas, 0, ROT0, "Sega",			 "Champion Baseball II (set 1)", GAME_NOT_WORKING )
+GAMEX(1983, champb2a, champbb2, champbas, champbas, 0, ROT0, "Alpha Denshi Co.", "Champion Baseball II (set 2)", GAME_NOT_WORKING )

@@ -38,21 +38,21 @@ PALETTE_INIT( gunsmoke )
 		bit1 = (color_prom[0] >> 1) & 0x01;
 		bit2 = (color_prom[0] >> 2) & 0x01;
 		bit3 = (color_prom[0] >> 3) & 0x01;
-		
+
 		r = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-		
+
 		bit0 = (color_prom[Machine->drv->total_colors] >> 0) & 0x01;
 		bit1 = (color_prom[Machine->drv->total_colors] >> 1) & 0x01;
 		bit2 = (color_prom[Machine->drv->total_colors] >> 2) & 0x01;
 		bit3 = (color_prom[Machine->drv->total_colors] >> 3) & 0x01;
-		
+
 		g = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
-		
+
 		bit0 = (color_prom[2*Machine->drv->total_colors] >> 0) & 0x01;
 		bit1 = (color_prom[2*Machine->drv->total_colors] >> 1) & 0x01;
 		bit2 = (color_prom[2*Machine->drv->total_colors] >> 2) & 0x01;
 		bit3 = (color_prom[2*Machine->drv->total_colors] >> 3) & 0x01;
-		
+
 		b = 0x0e * bit0 + 0x1f * bit1 + 0x43 * bit2 + 0x8f * bit3;
 
 		palette_set_color(i, r, g, b);
@@ -160,19 +160,19 @@ static void get_fg_tile_info(int tile_index)
 
 VIDEO_START( gunsmoke )
 {
-	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_cols, 
+	bg_tilemap = tilemap_create(get_bg_tile_info, tilemap_scan_cols,
 		TILEMAP_OPAQUE, 32, 32, 2048, 8);
 
 	if ( !bg_tilemap )
 		return 1;
 
-	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows, 
-		TILEMAP_TRANSPARENT, 8, 8, 32, 32);
+	fg_tilemap = tilemap_create(get_fg_tile_info, tilemap_scan_rows,
+		TILEMAP_TRANSPARENT_COLOR, 8, 8, 32, 32);
 
 	if ( !fg_tilemap )
 		return 1;
 
-	tilemap_set_transparent_pen(fg_tilemap, 0);
+	tilemap_set_transparent_pen(fg_tilemap, 0x4f);
 
 	return 0;
 }

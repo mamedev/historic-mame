@@ -30,8 +30,9 @@ static READ8_HANDLER( qixmcu_coin_r );
 static WRITE8_HANDLER( qixmcu_coinctrl_w );
 static WRITE8_HANDLER( qixmcu_coin_w );
 
-static WRITE8_HANDLER( qix_dac_w );
 static WRITE8_HANDLER( sync_pia_4_porta_w );
+
+static WRITE8_HANDLER( pia_5_warning_w );
 
 static WRITE8_HANDLER( qix_inv_flag_w );
 
@@ -60,19 +61,19 @@ static READ8_HANDLER( slither_trak_ud_r );
 		port B = external input (input_port_1) (coin)
 
 	PIA 1 = U20: (mapped to $9800/$9900 on the data CPU)
-		port A = external input (???)
-		port B = external input (???)
+		port A = external input (input_port_2)
+		port B = external input (input_port_3)
 
 	PIA 2 = U30: (mapped to $9c00 on the data CPU)
-		port A = external input (???)
-		port B = external input (???)
+		port A = external input (input_port_4)
+		port B = external output (coin control)
 
 
 	From the data/sound processor schematic:
 
 	PIA 3 = U20: (mapped to $9000 on the data CPU)
 		port A = data CPU to sound CPU communication
-		port B = some kind of sound control, 2 4-bit values
+		port B = stereo volume control, 2 4-bit values
 		CA1 = interrupt signal from sound CPU
 		CA2 = interrupt signal to sound CPU
 		CB1 = VS input signal (vertical sync)
@@ -124,7 +125,7 @@ static struct pia6821_interface qix_pia_2_intf =
 static struct pia6821_interface qix_pia_3_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
-	/*outputs: A/B,CA/B2       */ sync_pia_4_porta_w, 0, pia_4_ca1_w, qix_inv_flag_w,
+	/*outputs: A/B,CA/B2       */ sync_pia_4_porta_w, qix_vol_w, pia_4_ca1_w, qix_inv_flag_w,
 	/*irqs   : A/B             */ qix_pia_dint, qix_pia_dint
 };
 
@@ -138,10 +139,15 @@ static struct pia6821_interface qix_pia_4_intf =
 static struct pia6821_interface qix_pia_5_intf =
 {
 	/*inputs : A/B,CA/B1,CA/B2 */ 0, 0, 0, 0, 0, 0,
-	/*outputs: A/B,CA/B2       */ pia_3_porta_w, qix_dac_w, pia_3_ca1_w, 0,
+	/*outputs: A/B,CA/B2       */ pia_5_warning_w, pia_5_warning_w, pia_5_warning_w, pia_5_warning_w,
 	/*irqs   : A/B             */ 0, 0
 };
 
+
+static WRITE8_HANDLER( pia_5_warning_w )
+{
+	usrintf_showmessage("PIA 5 write!!");
+}
 
 
 /***************************************************************************
@@ -303,12 +309,15 @@ WRITE8_HANDLER( qix_sharedram_w )
 
 WRITE8_HANDLER( zoo_bankswitch_w )
 {
-	UINT8 *RAM = memory_region(REGION_CPU2);
+	UINT8 *rom = memory_region(REGION_CPU2);
 
 	if (data & 0x04)
-		cpu_setbank(1, &RAM[0x10000]);
+		cpu_setbank(1, &rom[0x10000]);
 	else
-		cpu_setbank(1, &RAM[0xa000]);
+		cpu_setbank(1, &rom[0xa000]);
+
+	/* not necessary, but technically correct */
+	qix_palettebank_w(offset,data);
 }
 
 
@@ -385,12 +394,6 @@ READ8_HANDLER( qix_video_firq_ack_r )
  *
  *************************************/
 
-static WRITE8_HANDLER( qix_dac_w )
-{
-	DAC_data_w(0, data);
-}
-
-
 static void deferred_pia_4_porta_w(int data)
 {
 	pia_4_porta_w(0, data);
@@ -451,8 +454,9 @@ static WRITE8_HANDLER( qixmcu_coinctrl_w )
 	if (data & 0x04)
 	{
 		cpunum_set_input_line(3, M6809_IRQ_LINE, ASSERT_LINE);
-		/* spin for a while to let the 68705 write the result */
-		cpu_spinuntil_time(TIME_IN_USEC(50));
+		/* temporarily boost the interleave to sync things up */
+		/* note: I'm using 50 because 30 is not enough for space dungeon at game over */
+		cpu_boost_interleave(0, TIME_IN_USEC(50));
 	}
 	else
 		cpunum_set_input_line(3, M6809_IRQ_LINE, CLEAR_LINE);
