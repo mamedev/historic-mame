@@ -16,26 +16,17 @@
 #include "osdepend.h"
 
 
+
 #define VIDEO_RAM_SIZE 0x400
 
 
-static unsigned char videoram[VIDEO_RAM_SIZE];
-static unsigned char colorram[VIDEO_RAM_SIZE];
+unsigned char *pengo_videoram;
+unsigned char *pengo_colorram;
+unsigned char *pengo_spritecode;
+unsigned char *pengo_spritepos;
 static unsigned char dirtybuffer[VIDEO_RAM_SIZE];	/* keep track of modified portions of the screen */
 											/* to speed up video refresh */
 static int gfx_bank;
-
-
-struct sprite
-{
-	int code;
-	int color;
-	int xflip,yflip;
-	int xpos,ypos;
-};
-
-static struct sprite sprites[8];
-
 
 
 static struct osd_bitmap *tmpbitmap;
@@ -47,6 +38,59 @@ static struct rectangle spritevisiblearea =
 	0, 28*8-1,
 	2*8, 34*8-1
 };
+
+
+
+/***************************************************************************
+
+  Convert the color PROMs into a more useable format.
+
+  Pengo has a 32 bytes palette PROM and a 256 bytes color lookup table PROM
+  (actually that's 512 bytes, but the high address bit is grounded).
+  The palette PROM is connected to the RGB output this way:
+
+  bit 7 -- 220 ohm resistor  -- BLUE
+        -- 470 ohm resistor  -- BLUE
+        -- 220 ohm resistor  -- GREEN
+        -- 470 ohm resistor  -- GREEN
+        -- 1  kohm resistor  -- GREEN
+        -- 220 ohm resistor  -- RED
+        -- 470 ohm resistor  -- RED
+  bit 0 -- 1  kohm resistor  -- RED
+
+***************************************************************************/
+void pengo_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom)
+{
+	int i;
+
+
+	for (i = 0;i < 32;i++)
+	{
+		int bit0,bit1,bit2;
+
+
+		bit0 = (color_prom[i] >> 0) & 0x01;
+		bit1 = (color_prom[i] >> 1) & 0x01;
+		bit2 = (color_prom[i] >> 2) & 0x01;
+		palette[3*i] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		bit0 = (color_prom[i] >> 3) & 0x01;
+		bit1 = (color_prom[i] >> 4) & 0x01;
+		bit2 = (color_prom[i] >> 5) & 0x01;
+		palette[3*i + 1] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+		bit0 = 0;
+		bit1 = (color_prom[i] >> 6) & 0x01;
+		bit2 = (color_prom[i] >> 7) & 0x01;
+		palette[3*i + 2] = 0x21 * bit0 + 0x47 * bit1 + 0x97 * bit2;
+	}
+
+	for (i = 0;i < 4 * 32;i++)
+		colortable[i] = color_prom[i + 32];
+	for (i = 4 * 32;i < 8 * 32;i++)
+	{
+		if (color_prom[i + 32]) colortable[i] = color_prom[i + 32] + 0x10;
+		else colortable[i] = 0;
+	}
+}
 
 
 
@@ -79,70 +123,31 @@ void pengo_vh_stop(void)
 
 
 
-int pengo_videoram_r(int address,int offset)
+void pengo_videoram_w(int offset,int data)
 {
-	return videoram[offset];
-}
-
-
-
-int pengo_colorram_r(int address,int offset)
-{
-	return colorram[offset];
-}
-
-
-
-void pengo_videoram_w(int address,int offset,int data)
-{
-	if (videoram[offset] != data)
+	if (pengo_videoram[offset] != data)
 	{
 		dirtybuffer[offset] = 1;
 
-		videoram[offset] = data;
+		pengo_videoram[offset] = data;
 	}
 }
 
 
 
-void pengo_colorram_w(int address,int offset,int data)
+void pengo_colorram_w(int offset,int data)
 {
-	if (colorram[offset] != data)
+	if (pengo_colorram[offset] != data)
 	{
 		dirtybuffer[offset] = 1;
 
-		colorram[offset] = data;
+		pengo_colorram[offset] = data;
 	}
 }
 
 
 
-void pengo_spritecode_w(int address,int offset,int data)
-{
-	if (offset & 1)
-		sprites[offset / 2].color = data;
-	else
-	{
-		offset /= 2;
-		sprites[offset].code = data >> 2;
-		sprites[offset].xflip = data & 2;
-		sprites[offset].yflip = data & 1;
-	}
-}
-
-
-
-void pengo_spritepos_w(int address,int offset,int data)
-{
-	if (offset & 1)
-		sprites[offset / 2].ypos = 272 - data;
-	else
-		sprites[offset / 2].xpos = 239 - data;
-}
-
-
-
-void pengo_gfxbank_w(int address,int offset,int data)
+void pengo_gfxbank_w(int offset,int data)
 {
 	/* the Pengo hardware can set independently the palette bank, color lookup */
 	/* table, and chars/sprites. However the game always set them together (and */
@@ -155,10 +160,12 @@ void pengo_gfxbank_w(int address,int offset,int data)
 
 /***************************************************************************
 
-  Redraw the screen.
+  Draw the game screen in the given osd_bitmap.
+  Do NOT call osd_update_display() from this function, it will be called by
+  the main emulation engine.
 
 ***************************************************************************/
-void pengo_vh_screenrefresh(void)
+void pengo_vh_screenrefresh(struct osd_bitmap *bitmap)
 {
 	int i,offs;
 
@@ -200,8 +207,8 @@ void pengo_vh_screenrefresh(void)
 			}
 
 			drawgfx(tmpbitmap,Machine->gfx[gfx_bank ? 2 : 0],
-					videoram[offs],
-					colorram[offs],
+					pengo_videoram[offs],
+					pengo_colorram[offs],
 					0,0,8*sx,8*sy,
 					0,TRANSPARENCY_NONE,0);
 		}
@@ -217,7 +224,7 @@ void pengo_vh_screenrefresh(void)
 	};
 
 	/* copy the temporary bitmap to the screen */
-	drawgfx(Machine->scrbitmap,&mygfx,0,0,0,0,0,0,0,TRANSPARENCY_NONE,0);
+	drawgfx(bitmap,&mygfx,0,0,0,0,0,0,0,TRANSPARENCY_NONE,0);
 }
 
 	/* Draw the sprites. Note that it is important to draw them exactly in this */
@@ -225,10 +232,10 @@ void pengo_vh_screenrefresh(void)
 	/* sprites #0 and #7 are not used */
 	for (i = 6;i > 0;i--)
 	{
-		drawgfx(Machine->scrbitmap,Machine->gfx[gfx_bank ? 3 : 1],
-				sprites[i].code,sprites[i].color,
-				sprites[i].xflip,sprites[i].yflip,
-				sprites[i].xpos,sprites[i].ypos,
+		drawgfx(bitmap,Machine->gfx[gfx_bank ? 3 : 1],
+				pengo_spritecode[2*i] >> 2,pengo_spritecode[2*i + 1],
+				pengo_spritecode[2*i] & 2,pengo_spritecode[2*i] & 1,
+				239 - pengo_spritepos[2*i],272 - pengo_spritepos[2*i + 1],
 				&spritevisiblearea,TRANSPARENCY_COLOR,Machine->background_pen);
 	}
 }

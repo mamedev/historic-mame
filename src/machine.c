@@ -8,6 +8,7 @@
 ***************************************************************************/
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include "mame.h"
@@ -25,12 +26,20 @@
 
 static struct RunningMachine machine;
 struct RunningMachine *Machine = &machine;
-static struct MachineDriver *drv;
+static const struct MachineDriver *drv;
+unsigned (*opcode_decode)(dword A);
+
+int frameskip;
+
+
+#define MAX_COLORS 256	/* can't handle more than 256 colors on screen */
+#define MAX_COLOR_TUPLE 8	/* no more than 3 bits per pixel, for now */
+#define MAX_COLOR_CODES 256	/* no more than 256 color codes, for now */
 
 
 unsigned char RAM[0x20000];		/* 64k for ROM/RAM and 64k for other uses (gfx, samples...) */
 
-static unsigned char remappedtable[4*256];	/// should dynamically allocate this, 4*Drv->color_codes
+static unsigned char remappedtable[MAX_COLOR_TUPLE*MAX_COLOR_CODES];
 
 
 /***************************************************************************
@@ -39,26 +48,58 @@ static unsigned char remappedtable[4*256];	/// should dynamically allocate this,
   subsystems...). Returns 0 if successful.
 
 ***************************************************************************/
-int init_machine(const char *gamename)
+int init_machine(const char *gamename,int argc,char **argv)
 {
 	int i;
+	const struct MemoryReadAddress *mra;
+	const struct MemoryWriteAddress *mwa;
 
+
+	frameskip = 0;
+	for (i = 1;i < argc;i++)
+	{
+		if (stricmp(argv[i],"-frameskip") == 0)
+		{
+			i++;
+			if (i < argc)
+			{
+				frameskip = atoi(argv[i]);
+				if (frameskip < 0) frameskip = 0;
+				if (frameskip > 3) frameskip = 3;
+			}
+		}
+	}
 
 	i = 0;
-	while (drivers[i] && stricmp(gamename,drivers[i]->name) != 0)
+	while (drivers[i].name && stricmp(gamename,drivers[i].name) != 0)
 		i++;
 
-	drv = drivers[i];
-	Machine->drv = drv;
-
-	if (drv == 0)
+	if (drivers[i].name == 0)
 	{
 		printf("game \"%s\" not supported\n",gamename);
 		return 1;
 	}
 
-	if (readroms(RAM,drv->rom,gamename) != 0)
+	drv = drivers[i].drv;
+	Machine->drv = drv;
+	opcode_decode = drivers[i].opcode_decode;
+
+	if (readroms(RAM,drivers[i].rom,gamename) != 0)
 		return 1;
+
+	/* initialize the memory base pointers for memory hooks */
+	mra = drv->memory_read;
+	while (mra->start != -1)
+	{
+		if (mra->base) *mra->base = &RAM[mra->start];
+		mra++;
+	}
+	mwa = drv->memory_write;
+	while (mwa->start != -1)
+	{
+		if (mwa->base) *mwa->base = &RAM[mwa->start];
+		mwa++;
+	}
 
 	if (*drv->init_machine && (*drv->init_machine)(gamename) != 0)
 		return 1;
@@ -68,6 +109,75 @@ int init_machine(const char *gamename)
 
 	if (*drv->sh_init && (*drv->sh_init)(gamename) != 0)
 		return 1;
+
+	return 0;
+}
+
+
+
+void vh_close(void)
+{
+	int i;
+
+
+	for (i = 0;i < MAX_GFX_ELEMENTS;i++) freegfx(Machine->gfx[i]);
+	osd_close_display();
+}
+
+
+
+int vh_open(void)
+{
+	int i;
+	unsigned char pens[MAX_COLORS];
+	const unsigned char *palette,*colortable;
+	unsigned char convpalette[3 * MAX_COLORS];
+	unsigned char convtable[MAX_COLOR_TUPLE*MAX_COLOR_CODES];
+
+
+	if ((Machine->scrbitmap = osd_create_display(drv->screen_width,drv->screen_height)) == 0)
+		return 1;
+
+	if (drv->color_prom && drv->vh_convert_color_prom)
+	{
+		(*drv->vh_convert_color_prom)(convpalette,convtable,drv->color_prom);
+		palette = convpalette;
+		colortable = convtable;
+	}
+	else
+	{
+		palette = drv->palette;
+		colortable = drv->colortable;
+	}
+
+	for (i = 0;i < drv->total_colors;i++)
+		pens[i] = osd_obtain_pen(palette[3*i],palette[3*i+1],palette[3*i+2]);
+
+	Machine->background_pen = pens[0];
+
+	for (i = 0;i < 4 * drv->color_codes;i++)
+		remappedtable[i] = pens[colortable[i]];
+
+
+	for (i = 0;i < Machine->scrbitmap->height;i++)
+		memset(Machine->scrbitmap->line[i],Machine->background_pen,Machine->scrbitmap->width);
+
+
+	for (i = 0;i < MAX_GFX_ELEMENTS;i++)
+		Machine->gfx[i++] = 0;
+	for (i = 0;i < MAX_GFX_ELEMENTS && drv->gfxdecodeinfo[i].start != -1;i++)
+	{
+		if ((Machine->gfx[i] = decodegfx(RAM + drv->gfxdecodeinfo[i].start,
+				drv->gfxdecodeinfo[i].gfxlayout)) == 0)
+		{
+			vh_close();
+			return 1;
+		}
+
+		Machine->gfx[i]->colortable = &remappedtable[4 * drv->gfxdecodeinfo[i].first_color_code];
+		Machine->gfx[i]->total_colors =
+				drv->gfxdecodeinfo[i].last_color_code - drv->gfxdecodeinfo[i].first_color_code + 1;
+	}
 
 	return 0;
 }
@@ -85,39 +195,15 @@ int run_machine(const char *gamename)
 	int res = 1;
 
 
-	if ((Machine->scrbitmap = osd_create_display(drv->screen_width,drv->screen_height)) != 0)
+	if (vh_open() == 0)
 	{
-		int i;
-		unsigned char pens[256];	/* reasonable upper limit */
-
-
-		for (i = 0;i < drv->total_colors;i++)
-			pens[i] = osd_obtain_pen(drv->palette[3*i],drv->palette[3*i+1],drv->palette[3*i+2]);
-
-		Machine->background_pen = pens[0];
-
-		for (i = 0;i < 4 * drv->color_codes;i++)
-			remappedtable[i] = pens[drv->colortable[i]];
-
-		for (i = 0;i < Machine->scrbitmap->height;i++)
-			memset(Machine->scrbitmap->line[i],Machine->background_pen,Machine->scrbitmap->width);
-
-		for (i = 0;i < MAX_GFX_ELEMENTS && drv->gfxdecodeinfo[i].start != -1;i++)
-		{
-			Machine->gfx[i] = decodegfx(RAM + drv->gfxdecodeinfo[i].start,
-					drv->gfxdecodeinfo[i].gfxlayout);
-			Machine->gfx[i]->colortable = &remappedtable[4 * drv->gfxdecodeinfo[i].first_color_code];
-			Machine->gfx[i]->total_colors =
-					drv->gfxdecodeinfo[i].last_color_code - drv->gfxdecodeinfo[i].first_color_code + 1;
-		}
-		while (i < MAX_GFX_ELEMENTS) Machine->gfx[i++] = 0;
-
 		if (*drv->vh_start == 0 || (*drv->vh_start)() == 0)	/* start the video hardware */
 		{
 			if (*drv->sh_start == 0 || (*drv->sh_start)() == 0)	/* start the audio hardware */
 			{
 				FILE *f;
 				char name[100];
+				int i;
 
 
 				for (i = 0;i < MAX_DIP_SWITCHES;i++)
@@ -137,7 +223,6 @@ int run_machine(const char *gamename)
 
 				if (*drv->sh_stop) (*drv->sh_stop)();
 				if (*drv->vh_stop) (*drv->vh_stop)();
-				osd_close_display();
 
 				/* write dipswitch settings to disk */
 				sprintf(name,"%s/%s.dsw",gamename,gamename);
@@ -153,10 +238,9 @@ int run_machine(const char *gamename)
 		}
 		else printf("Unable to start video emulation\n");
 
-
-		for (i = 0;i < MAX_GFX_ELEMENTS;i++) freegfx(Machine->gfx[i]);
+		vh_close();
 	}
-	else printf("Unable to open display\n");
+	else printf("Unable to initialize display\n");
 
 	return res;
 }
@@ -165,37 +249,11 @@ int run_machine(const char *gamename)
 
 /* some functions commonly used by emulators */
 
-int rom_r(int address,int offset)
-{
-	return RAM[address];
-}
+/* start with interrupts enabled, so the generic routine will work even if */
+/* the machine doesn't have an interrupt enable port */
+static int interrupt_enable = 1;
 
-
-
-int ram_r(int address,int offset)
-{
-	return RAM[address];
-}
-
-
-
-void rom_w(int address,int offset,int data)
-{
-	if (errorlog) fprintf(errorlog,"%04x: warning - write %02x to ROM address %04x\n",Z80_GetPC(),data,address);
-}
-
-
-
-void ram_w(int address,int offset,int data)
-{
-	RAM[address] = data;
-}
-
-
-
-static int interrupt_enable;
-
-void interrupt_enable_w(int address,int offset,int data)
+void interrupt_enable_w(int offset,int data)
 {
 	interrupt_enable = data;
 }
@@ -215,6 +273,14 @@ int interrupt(void)
 
 
 
+int nmi_interrupt(void)
+{
+	if (interrupt_enable == 0) return Z80_IGNORE_INT;
+	else return Z80_NMI_INT;
+}
+
+
+
 /***************************************************************************
 
   Perform a memory read. This function is called by the CPU emulation.
@@ -230,15 +296,26 @@ unsigned Z80_RDMEM (dword A)
 	{
 		if (A >= mra->start && A <= mra->end)
 		{
-			if (mra->handler) return (*mra->handler)(A,A - mra->start);
-			else return 0;
+			switch ((int)mra->handler)
+			{
+				case MRA_NOP:
+					return 0;
+					break;
+				case MRA_RAM:
+				case MRA_ROM:
+					return RAM[A];
+					break;
+				default:
+					return (*mra->handler)(A - mra->start);
+					break;
+			}
 		}
 
 		mra++;
 	}
 
 	if (errorlog) fprintf(errorlog,"%04x: warning - read unmapped memory address %04x\n",Z80_GetPC(),A);
-	return 0;
+	return RAM[A];
 }
 
 
@@ -258,12 +335,20 @@ void Z80_WRMEM (dword A,byte V)
 	{
 		if (A >= mwa->start && A <= mwa->end)
 		{
-			do
+			switch ((int)mwa->handler)
 			{
-				if (mwa->handler) (*mwa->handler)(A,A - mwa->start,V);
-
-				mwa++;
-			} while (A >= mwa->start && A <= mwa->end);
+				case MWA_NOP:
+					break;
+				case MWA_RAM:
+					RAM[A] = V;
+					break;
+				case MRA_ROM:
+					if (errorlog) fprintf(errorlog,"%04x: warning - write %02x to ROM address %04x\n",Z80_GetPC(),V,A);
+					break;
+				default:
+					(*mwa->handler)(A - mwa->start,V);
+					break;
+			}
 
 			return;
 		}
@@ -272,6 +357,7 @@ void Z80_WRMEM (dword A,byte V)
 	}
 
 	if (errorlog) fprintf(errorlog,"%04x: warning - write %02x to unmapped memory address %04x\n",Z80_GetPC(),V,A);
+	RAM[A] = V;
 }
 
 
@@ -310,6 +396,7 @@ int Z80_Interrupt(void)
 	static int showfps;
 	static uclock_t prev;
 	uclock_t curr;
+	static int framecount = 0;
 
 
 	/* if the user pressed ESC, stop the emulation */
@@ -352,23 +439,30 @@ int Z80_Interrupt(void)
 	/* if the user pressed TAB, go to dipswitch setup menu */
 	if (osd_key_pressed(OSD_KEY_TAB)) setdipswitches(Machine->dsw,drv->dswsettings);
 
-	(*drv->vh_screenrefresh)();	/* update screen */
 	(*drv->sh_update)();	/* update sound */
 	osd_update_audio();
 
-	if (osd_key_pressed(OSD_KEY_F11)) showfps = 1;
-	if (showfps) drawfps();
-
-	osd_update_display();
-	osd_poll_joystick();
-
-	/* now wait until it's time to trigger the interrupt */
-	do
+	if (++framecount > frameskip)
 	{
-		curr = uclock();
-	} while ((curr - prev) < UCLOCKS_PER_SEC/drv->frames_per_second);
+		framecount = 0;
 
-	prev = curr;
+		(*drv->vh_screenrefresh)(Machine->scrbitmap);	/* update screen */
+
+		if (osd_key_pressed(OSD_KEY_F11)) showfps = 1;
+		if (showfps) drawfps();
+
+		osd_update_display();
+
+		osd_poll_joystick();
+
+		/* now wait until it's time to trigger the interrupt */
+		do
+		{
+			curr = uclock();
+		} while ((curr - prev) < (frameskip+1) * UCLOCKS_PER_SEC/drv->frames_per_second);
+
+		prev = curr;
+	}
 
 	return (*drv->interrupt)();
 }

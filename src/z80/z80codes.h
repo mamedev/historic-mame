@@ -9,8 +9,8 @@
 /***     Please, notify me, if you make any changes to this file          ***/
 /****************************************************************************/
 
-#define M_POP(Rg)       R.Rg.D=M_RDMEM_WORD(R.SP.D); R.SP.W.l+=2
-#define M_PUSH(Rg)      R.SP.W.l-=2; M_WRMEM_WORD(R.SP.D,R.Rg.D)
+#define M_POP(Rg)       R.Rg.D=M_RDMEMFAST_WORD(R.SP.D); R.SP.W.l+=2
+#define M_PUSH(Rg)      R.SP.W.l-=2; M_WRMEMFAST_WORD(R.SP.D,R.Rg.D)
 #define M_CALL              \
 {                           \
  int q;                     \

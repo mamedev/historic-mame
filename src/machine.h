@@ -16,22 +16,20 @@ struct RunningMachine
 								/* the first one is used by DisplayText() */
 	int background_pen;	/* pen to use to clear the bitmap (DON'T use 0) */
 	int dsw[MAX_DIP_SWITCHES];	/* dipswitch banks */
-	struct MachineDriver *drv;	/* contains the definition of the machine */
+	const struct MachineDriver *drv;	/* contains the definition of the machine */
 };
 
 
 extern struct RunningMachine *Machine;
 
 
-int init_machine(const char *gamename);
+int init_machine(const char *gamename,int argc,char **argv);
 int run_machine(const char *gamename);
 
-int rom_r(int address,int offset);
-int ram_r(int address,int offset);
-void rom_w(int address,int offset,int data);
-void ram_w(int address,int offset,int data);
-void interrupt_enable_w(int address,int offset,int data);
+/* some useful general purpose functions for the memory map */
+void interrupt_enable_w(int offset,int data);
 int interrupt(void);
+int nmi_interrupt(void);
 
 
 #endif

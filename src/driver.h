@@ -7,20 +7,40 @@
 #include "machine.h"
 
 
+/***************************************************************************
+
+Note that the memory hooks are not passed the actual memory address where
+the operation takes place, but the offset from the beginning of the block
+they are assigned to. This makes handling of mirror addresses easier, and
+makes the handlers a bit more "object oriented". If you handler needs to
+read/write the main memory area, provide a "base" pointer: it will be
+initialized by the main engine to point to the beginning of the memory block
+assigned to the handler.
+
+***************************************************************************/
 struct MemoryReadAddress
 {
 	int start,end;
-	int (*handler)(int address,int offset);
+	int (*handler)(int offset);	/* see special values below */
+	unsigned char **base;
 };
 
+#define MRA_NOP 0	/* don't care, return 0 */
+#define MRA_RAM ((int(*)())-1)	/* plain RAM location (return its contents) */
+#define MRA_ROM ((int(*)())-2)	/* plain ROM location (return its contents) */
 
 
 struct MemoryWriteAddress
 {
 	int start,end;
-	void (*handler)(int address,int offset,int data);
+	void (*handler)(int offset,int data);	/* see special values below */
+	unsigned char **base;
 };
 
+
+#define MWA_NOP 0	/* do nothing */
+#define MWA_RAM ((void(*)())-1)	/* plain RAM location (store the value) */
+#define MWA_ROM ((void(*)())-2)	/* plain ROM location (do nothing) */
 
 
 struct GfxDecodeInfo
@@ -35,9 +55,6 @@ struct GfxDecodeInfo
 
 struct MachineDriver
 {
-	const char *name;
-	const struct RomModule *rom;
-
 	/* basic machine hardware */
 	int cpu_clock;
 	int frames_per_second;
@@ -53,12 +70,18 @@ struct MachineDriver
 	/* video hardware */
 	int screen_width,screen_height;
 	struct GfxDecodeInfo *gfxdecodeinfo;
-	const unsigned char *palette;
 	int total_colors;	/* palette is 3*total_colors bytes long */
-	const unsigned char *colortable;
 	int color_codes;	/* colortable has color_codes tuples - the length */
 						/* of each tuple depends on the graphic data, for example */
 						/* 2-bitplane characters use 4 bytes in each tuple. */
+		/* if they are available, provide a dump of the color proms (there is no */
+		/* copyright infringement in that, since you can't copyright a color scheme) */
+		/* and a function to convert them to a usable palette and colortable. */
+		/* Otherwise, leave these two fields null and provide palette and colortable. */
+	const unsigned char *color_prom;
+	void (*vh_convert_color_prom)(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+	const unsigned char *palette;
+	const unsigned char *colortable;
 
 	int	numbers_start;	/* start of numbers and letters in the character roms */
 	int letters_start;	/* (used by displaytext() ) */
@@ -68,20 +91,31 @@ struct MachineDriver
 	int (*vh_init)(const char *gamename);
 	int (*vh_start)(void);
 	void (*vh_stop)(void);
-	void (*vh_screenrefresh)(void);
+	void (*vh_screenrefresh)(struct osd_bitmap *bitmap);
 
 	/* sound hardware */
 	unsigned char *samples;
 	int (*sh_init)(const char *gamename);
 	int (*sh_start)(void);
 	void (*sh_stop)(void);
-	int (*sh_out)(byte A,byte V);
-	int (*sh_in)(byte A);
+	void (*sh_out)(byte Port,byte Value);
+	int (*sh_in)(byte Port);
 	void (*sh_update)(void);
 };
 
 
-extern struct MachineDriver *drivers[];
+
+struct GameDriver
+{
+	const char *name;
+	const struct RomModule *rom;
+	unsigned (*opcode_decode)(dword A);
+	const struct MachineDriver *drv;
+};
+
+
+
+extern struct GameDriver drivers[];
 
 
 #endif

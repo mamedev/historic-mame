@@ -87,32 +87,32 @@ write:
 #include "machine.h"
 #include "common.h"
 
-int crush_IN0_r(int address,int offset);
-int crush_IN1_r(int address,int offset);
-int pacman_DSW1_r(int address,int offset);
+int crush_IN0_r(int offset);
+int crush_IN1_r(int offset);
+int pacman_DSW1_r(int offset);
 
-int pengo_videoram_r(int address,int offset);
-int pengo_colorram_r(int address,int offset);
-void pengo_videoram_w(int address,int offset,int data);
-void pengo_colorram_w(int address,int offset,int data);
-void pengo_spritecode_w(int address,int offset,int data);
-void pengo_spritepos_w(int address,int offset,int data);
+unsigned char *pengo_videoram;
+unsigned char *pengo_colorram;
+unsigned char *pengo_spritecode;
+unsigned char *pengo_spritepos;
+unsigned char *pengo_soundregs;
+void pengo_videoram_w(int offset,int data);
+void pengo_colorram_w(int offset,int data);
 int pengo_vh_start(void);
 void pengo_vh_stop(void);
-void pengo_vh_screenrefresh(void);
+void pengo_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-void pengo_sound_enable_w(int address,int offset,int data);
-void pengo_sound_w(int address,int offset,int data);
+void pengo_sound_enable_w(int offset,int data);
+void pengo_sound_w(int offset,int data);
 void pengo_sh_update(void);
 
 
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0x4c00, 0x4fff, ram_r },
-	{ 0x4000, 0x43ff, pengo_videoram_r },
-	{ 0x4400, 0x47ff, pengo_colorram_r },
-	{ 0x0000, 0x3fff, rom_r },
+	{ 0x4c00, 0x4fff, MRA_RAM },	/* includeing sprite codes at 4ff0-4fff */
+	{ 0x4000, 0x47ff, MRA_RAM },	/* video and color RAM */
+	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x5000, 0x503f, crush_IN0_r },
 	{ 0x5040, 0x507f, crush_IN1_r },
 	{ 0x5080, 0x50bf, pacman_DSW1_r },
@@ -121,17 +121,17 @@ static struct MemoryReadAddress readmem[] =
 
 static struct MemoryWriteAddress writemem[] =
 {
-	{ 0x4c00, 0x4fff, ram_w },					/* note that the sprite codes */
-	{ 0x4ff0, 0x4fff, pengo_spritecode_w },	/* overlap standard memory. */
-	{ 0x4000, 0x43ff, pengo_videoram_w },
-	{ 0x4400, 0x47ff, pengo_colorram_w },
-	{ 0x5040, 0x505f, pengo_sound_w },
-	{ 0x5060, 0x506f, pengo_spritepos_w },
+	{ 0x4c00, 0x4fef, MWA_RAM },
+	{ 0x4000, 0x43ff, pengo_videoram_w, &pengo_videoram },
+	{ 0x4400, 0x47ff, pengo_colorram_w, &pengo_colorram },
+	{ 0x5040, 0x505f, pengo_sound_w, &pengo_soundregs },
+	{ 0x4ff0, 0x4fff, MWA_RAM, &pengo_spritecode},
+	{ 0x5060, 0x506f, MWA_RAM, &pengo_spritepos },
 	{ 0x5000, 0x5000, interrupt_enable_w },
-	{ 0x50c0, 0x50c0, 0 },
+	{ 0x50c0, 0x50c0, MWA_NOP },
 	{ 0x5001, 0x5001, pengo_sound_enable_w },
-	{ 0x5002, 0x5007, 0 },
-	{ 0x0000, 0x3fff, rom_w },
+	{ 0x5002, 0x5007, MWA_NOP },
+	{ 0x0000, 0x3fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
@@ -143,27 +143,6 @@ static struct DSW dsw[] =
 	{ 0, 0x20, "TELEPORT HOLES", { "ON", "OFF" }, 1 },
 	{ 0, 0x10, "FIRST PATTERN", { "HARD", "EASY" }, 1 },
 	{ -1 }
-};
-
-
-
-static struct RomModule rom[] =
-{
-	/* code */
-	{ "CR1", 0x00000, 0x0800 },
-	{ "CR5", 0x00800, 0x0800 },
-	{ "CR2", 0x01000, 0x0800 },
-	{ "CR6", 0x01800, 0x0800 },
-	{ "CR3", 0x02000, 0x0800 },
-	{ "CR7", 0x02800, 0x0800 },
-	{ "CR4", 0x03000, 0x0800 },
-	{ "CR8", 0x03800, 0x0800 },
-	/* gfx */
-	{ "CRA", 0x10000, 0x0800 },
-	{ "CRC", 0x10800, 0x0800 },
-	{ "CRB", 0x11000, 0x0800 },
-	{ "CRD", 0x11800, 0x0800 },
-	{ 0 }	/* end of table */
 };
 
 
@@ -299,8 +278,6 @@ static unsigned char samples[8*32] =
 
 const struct MachineDriver crush_driver =
 {
-	"crush",
-	rom,
 	/* basic machine hardware */
 	3072000,	/* 3.072 Mhz. Is this correct for Crush Roller? */
 	60,
@@ -314,8 +291,8 @@ const struct MachineDriver crush_driver =
 	/* video hardware */
 	224,288,
 	gfxdecodeinfo,
-	palette,sizeof(palette)/3,
-	colortable,sizeof(colortable)/4,
+	sizeof(palette)/3,sizeof(colortable)/4,
+	0,0,palette,colortable,
 	0,'A',
 	0x0f,0x09,
 	8*11,8*19,0x01,

@@ -57,20 +57,20 @@ static void sound_w(int voice,int data)
 
 
 
-void ladybug_sound1_w(int address,int offset,int data)
+void ladybug_sound1_w(int offset,int data)
 {
 	if (offset != 0 && errorlog)
-		fprintf(errorlog,"%04x: warning - write output port %04x from mirror address %04x\n",Z80_GetPC(),address-offset,address);
+		fprintf(errorlog,"%04x: warning - write SOUND1 from mirror address %04x\n",Z80_GetPC(),offset);
 
 	sound_w(0,data);
 }
 
 
 
-void ladybug_sound2_w(int address,int offset,int data)
+void ladybug_sound2_w(int offset,int data)
 {
 	if (offset != 0 && errorlog)
-		fprintf(errorlog,"%04x: warning - write output port %04x from mirror address %04x\n",Z80_GetPC(),address-offset,address);
+		fprintf(errorlog,"%04x: warning - write SOUND2 from mirror address %04x\n",Z80_GetPC(),offset);
 
 	sound_w(1,data);
 }

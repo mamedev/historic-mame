@@ -89,36 +89,37 @@ OUT on port $0 sets the interrupt vector
 #include "machine.h"
 #include "common.h"
 
-int pacman_IN0_r(int address,int offset);
-int pacman_IN1_r(int address,int offset);
-int pacman_DSW1_r(int address,int offset);
-void pacman_interrupt_enable_w(int address,int offset,int data);
+int pacman_IN0_r(int offset);
+int pacman_IN1_r(int offset);
+int pacman_DSW1_r(int offset);
+void pacman_interrupt_enable_w(int offset,int data);
 int pacman_init_machine(const char *gamename);
 int pacman_interrupt(void);
 void pacman_out(byte Port,byte Value);
 
-int pengo_videoram_r(int address,int offset);
-int pengo_colorram_r(int address,int offset);
-void pengo_videoram_w(int address,int offset,int data);
-void pengo_colorram_w(int address,int offset,int data);
-void pengo_spritecode_w(int address,int offset,int data);
-void pengo_spritepos_w(int address,int offset,int data);
+unsigned char *pengo_videoram;
+unsigned char *pengo_colorram;
+unsigned char *pengo_spritecode;
+unsigned char *pengo_spritepos;
+unsigned char *pengo_soundregs;
+void pengo_videoram_w(int offset,int data);
+void pengo_colorram_w(int offset,int data);
+void pacman_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 int pengo_vh_start(void);
 void pengo_vh_stop(void);
-void pengo_vh_screenrefresh(void);
+void pengo_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-void pengo_sound_enable_w(int address,int offset,int data);
-void pengo_sound_w(int address,int offset,int data);
+void pengo_sound_enable_w(int offset,int data);
+void pengo_sound_w(int offset,int data);
 void pengo_sh_update(void);
 
 
 
 static struct MemoryReadAddress pacman_readmem[] =
 {
-	{ 0x4c00, 0x4fff, ram_r },
-	{ 0x4000, 0x43ff, pengo_videoram_r },
-	{ 0x4400, 0x47ff, pengo_colorram_r },
-	{ 0x0000, 0x3fff, rom_r },
+	{ 0x4c00, 0x4fff, MRA_RAM },	/* includeing sprite codes at 4ff0-4fff */
+	{ 0x4000, 0x47ff, MRA_RAM },	/* video and color RAM */
+	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x5000, 0x503f, pacman_IN0_r },
 	{ 0x5040, 0x507f, pacman_IN1_r },
 	{ 0x5080, 0x50bf, pacman_DSW1_r },
@@ -126,11 +127,10 @@ static struct MemoryReadAddress pacman_readmem[] =
 };
 static struct MemoryReadAddress mspacman_readmem[] =
 {
-	{ 0x4c00, 0x4fff, ram_r },
-	{ 0x4000, 0x43ff, pengo_videoram_r },
-	{ 0x4400, 0x47ff, pengo_colorram_r },
-	{ 0x0000, 0x3fff, rom_r },
-	{ 0x8000, 0x9fff, rom_r },
+	{ 0x4c00, 0x4fff, MRA_RAM },	/* includeing sprite codes at 4ff0-4fff */
+	{ 0x4000, 0x47ff, MRA_RAM },	/* video and color RAM */
+	{ 0x0000, 0x3fff, MRA_ROM },
+	{ 0x8000, 0x9fff, MRA_ROM },
 	{ 0x5000, 0x503f, pacman_IN0_r },
 	{ 0x5040, 0x507f, pacman_IN1_r },
 	{ 0x5080, 0x50bf, pacman_DSW1_r },
@@ -139,37 +139,37 @@ static struct MemoryReadAddress mspacman_readmem[] =
 
 static struct MemoryWriteAddress pacman_writemem[] =
 {
-	{ 0x4c00, 0x4fff, ram_w },					/* note that the sprite codes */
-	{ 0x4ff0, 0x4fff, pengo_spritecode_w },	/* overlap standard memory. */
-	{ 0x4000, 0x43ff, pengo_videoram_w },
-	{ 0x4400, 0x47ff, pengo_colorram_w },
-	{ 0x5040, 0x505f, pengo_sound_w },
-	{ 0x5060, 0x506f, pengo_spritepos_w },
+	{ 0x4c00, 0x4fef, MWA_RAM },
+	{ 0x4000, 0x43ff, pengo_videoram_w, &pengo_videoram },
+	{ 0x4400, 0x47ff, pengo_colorram_w, &pengo_colorram },
+	{ 0x5040, 0x505f, pengo_sound_w, &pengo_soundregs },
+	{ 0x4ff0, 0x4fff, MWA_RAM, &pengo_spritecode},
+	{ 0x5060, 0x506f, MWA_RAM, &pengo_spritepos },
 	{ 0xc000, 0xc3ff, pengo_videoram_w },	/* mirror address for video ram, */
 	{ 0xc400, 0xc7ef, pengo_colorram_w },	/* used to display HIGH SCORE and CREDITS */
 	{ 0x5000, 0x5000, pacman_interrupt_enable_w },
-	{ 0x50c0, 0x50c0, 0 },
+	{ 0x50c0, 0x50c0, MWA_NOP },
 	{ 0x5001, 0x5001, pengo_sound_enable_w },
-	{ 0x5002, 0x5007, 0 },
-	{ 0x0000, 0x3fff, rom_w },
+	{ 0x5002, 0x5007, MWA_NOP },
+	{ 0x0000, 0x3fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 static struct MemoryWriteAddress mspacman_writemem[] =
 {
-	{ 0x4c00, 0x4fff, ram_w },					/* note that the sprite codes */
-	{ 0x4ff0, 0x4fff, pengo_spritecode_w },	/* overlap standard memory. */
-	{ 0x4000, 0x43ff, pengo_videoram_w },
-	{ 0x4400, 0x47ff, pengo_colorram_w },
-	{ 0x5040, 0x505f, pengo_sound_w },
-	{ 0x5060, 0x506f, pengo_spritepos_w },
+	{ 0x4c00, 0x4fef, MWA_RAM },
+	{ 0x4000, 0x43ff, pengo_videoram_w, &pengo_videoram },
+	{ 0x4400, 0x47ff, pengo_colorram_w, &pengo_colorram },
+	{ 0x5040, 0x505f, pengo_sound_w, &pengo_soundregs },
+	{ 0x4ff0, 0x4fff, MWA_RAM, &pengo_spritecode},
+	{ 0x5060, 0x506f, MWA_RAM, &pengo_spritepos },
 	{ 0xc000, 0xc3ff, pengo_videoram_w },	/* mirror address for video ram, */
 	{ 0xc400, 0xc7ef, pengo_colorram_w },	/* used to display HIGH SCORE and CREDITS */
 	{ 0x5000, 0x5000, interrupt_enable_w },
-	{ 0x50c0, 0x50c0, 0 },
+	{ 0x50c0, 0x50c0, MWA_NOP },
 	{ 0x5001, 0x5001, pengo_sound_enable_w },
-	{ 0x5002, 0x5007, 0 },
-	{ 0x0000, 0x3fff, rom_w },
-	{ 0x8000, 0x9fff, rom_w },
+	{ 0x5002, 0x5007, MWA_NOP },
+	{ 0x0000, 0x3fff, MWA_ROM },
+	{ 0x8000, 0x9fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
@@ -189,62 +189,6 @@ static struct DSW mspacdsw[] =
 	{ 0, 0x30, "BONUS", { "10000", "15000", "20000", "NONE" } },
 	{ 0, 0x40, "DIFFICULTY", { "HARD", "NORMAL" }, 1 },
 	{ -1 }
-};
-
-
-
-static struct RomModule genericrom[] =
-{
-	/* code */
-	{ "%s.6e", 0x00000, 0x1000 },
-	{ "%s.6f", 0x01000, 0x1000 },
-	{ "%s.6h", 0x02000, 0x1000 },
-	{ "%s.6j", 0x03000, 0x1000 },
-	/* gfx */
-	{ "%s.5e", 0x10000, 0x1000 },
-	{ "%s.5f", 0x11000, 0x1000 },
-	{ 0 }	/* end of table */
-};
-static struct RomModule pacmodrom[] =
-{
-	{ "6e.mod",    0x0000, 0x1000 },
-	{ "pacman.6f", 0x1000, 0x1000 },
-	{ "6h.mod",    0x2000, 0x1000 },
-	{ "pacman.6j", 0x3000, 0x1000 },
-	{ 0 }	/* end of table */
-};
-static struct RomModule mspacrom[] =
-{
-	/* code */
-	{ "boot1", 0x00000, 0x1000 },
-	{ "boot2", 0x01000, 0x1000 },
-	{ "boot3", 0x02000, 0x1000 },
-	{ "boot4", 0x03000, 0x1000 },
-	{ "boot5", 0x08000, 0x1000 },
-	{ "boot6", 0x09000, 0x1000 },
-	/* gfx */
-	{ "5e",    0x10000, 0x1000 },
-	{ "5f",    0x11000, 0x1000 },
-	{ 0 }	/* end of table */
-};
-static struct RomModule piranharom[] =
-{
-	{ "pr1.cpu", 0x0000, 0x1000 },
-	{ "pr2.cpu", 0x1000, 0x1000 },
-	{ "pr3.cpu", 0x2000, 0x1000 },
-	{ "pr4.cpu", 0x3000, 0x1000 },
-	{ 0 }	/* end of table */
-};
-
-
-
-static struct RomModule piranhagfx[] =
-{
-	{ "pr5.cpu", 0x0000, 0x0800 },
-	{ "pr7.cpu", 0x0800, 0x0800 },
-	{ "pr6.cpu", 0x1000, 0x0800 },
-	{ "pr8.cpu", 0x1800, 0x0800 },
-	{ 0 }	/* end of table */
 };
 
 
@@ -283,66 +227,19 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static unsigned char pacpalette[] =
+static unsigned char color_prom[] =
 {
-	0x00,0x00,0x00,	/* BLACK */
-	0xdb,0x00,0x00,	/* RED */
-	0xdb,0x92,0x49,	/* BROWN */
-	0xff,0xb6,0xdb,	/* PINK */
-	0x00,0x00,0x00,	/* UNUSED */
-	0x00,0xff,0xdb,	/* CYAN */
-	0x49,0xb6,0xdb,	/* DKCYAN */
-	0xff,0xb6,0x49,	/* DKORANGE */
-	0x00,0x00,0x00,	/* UNUSED */
-	0xff,0xff,0x00,	/* YELLOW */
-	0x00,0x00,0x00,	/* UNUSED */
-	0x24,0x24,0xdb,	/* BLUE */
-	0x00,0xff,0x00,	/* GREEN */
-	0x49,0xb6,0x92,	/* DKGREEN */
-	0xff,0xb6,0x92,	/* LTORANGE */
-	0xdb,0xdb,0xdb	/* WHITE */
-};
-
-enum {BLACK,RED,BROWN,PINK,UNUSED1,CYAN,DKCYAN,DKORANGE,
-		UNUSED2,YELLOW,UNUSED3,BLUE,GREEN,DKGREEN,LTORANGE,WHITE};
-#define UNUSED BLACK
-
-static unsigned char paccolortable[] =
-{
-	BLACK,BLACK,BLACK,BLACK,		/* 0x00 Background in intermissions */
-	BLACK,WHITE,BLUE,RED,			/* 0x01 - SHADOW  "BLINKY" */
-	UNUSED,UNUSED,UNUSED,UNUSED,	/* 0x02 Unused */
-	BLACK,WHITE,BLUE,PINK,			/* 0x03 - SPEEDY  "PINKY" */
-	UNUSED,UNUSED,UNUSED,UNUSED,	/* 0x04 Unused */
-	BLACK,WHITE,BLUE,CYAN,			/* 0x05 - BASHFUL  "INKY" */
-	UNUSED,UNUSED,UNUSED,UNUSED,	/* 0x06 Unused */
-	BLACK,WHITE,BLUE,DKORANGE,		/* 0x07 - POKEY  "CLYDE"; Ms Pac Man 4th maze */
-	UNUSED,UNUSED,UNUSED,UNUSED,	/* 0x08 Unused */
-	BLACK,BLUE,RED,YELLOW,			/* 0x09 Lives left; Bird; Pac Man */
-	UNUSED,UNUSED,UNUSED,UNUSED,	/* 0x0a Unused */
-	UNUSED,UNUSED,UNUSED,UNUSED,	/* 0x0b Unused */
-	UNUSED,UNUSED,UNUSED,UNUSED,	/* 0x0c Unused */
-	UNUSED,UNUSED,UNUSED,UNUSED,	/* 0x0d Unused */
-	BLACK,WHITE,BLACK,LTORANGE,		/* 0x0e BONUS PAC-MAN for xx000 PTS */
-	BLACK,RED,GREEN,WHITE,			/* 0x0f White text; Strawberry */
-	BLACK,LTORANGE,BLACK,BLUE,		/* 0x10 Background; Maze walls & dots */
-	BLACK,GREEN,BLUE,LTORANGE,		/* 0x11 Blue ghosts */
-	BLACK,GREEN,WHITE,RED,			/* 0x12 White ghosts */
-	UNUSED,UNUSED,UNUSED,UNUSED,	/* 0x13 Unused */
-	BLACK,RED,BROWN,WHITE,			/* 0x14 Cherry; Apple; Ms Pac Man 3rd maze */
-	BLACK,DKORANGE,GREEN,BROWN,		/* 0x15 Orange */
-	BLACK,YELLOW,DKCYAN,WHITE,		/* 0x16 Bell; Key; Ms Pac Man 2nd maze */
-	BLACK,DKGREEN,GREEN,WHITE,		/* 0x17 Grape; Ms Pac Man pear */
-	BLACK,CYAN,PINK,YELLOW,			/* 0x18 Barn door; Points when eating ghost */
-									/*      Ms Pac Man 5th maze */
-	BLACK,WHITE,BLUE,BLACK,			/* 0x19 Ghost eyes */
-	BLACK,LTORANGE,UNUSED,UNUSED,	/* 0x1a Dots around starting position */
-	BLACK,LTORANGE,BLACK,BLUE,		/* 0x1b Tunnel */
-	UNUSED,UNUSED,UNUSED,UNUSED,	/* 0x1c Unused */
-	BLACK,WHITE,LTORANGE,RED,		/* 0x1d Ghost without sheet (2nd intermission) */
-									/*      Ms Pac Man 1st maze */
-	BLACK,WHITE,BLUE,LTORANGE,		/* 0x1e Ghost without sheet (3rd intermission) */
-	BLACK,LTORANGE,BLACK,WHITE		/* 0x1f 10 pts, 50 pts; White maze walls when level complete */
+	/* palette */
+	0x00,0x07,0x66,0xEF,0x00,0xF8,0xEA,0x6F,0x00,0x3F,0x00,0xC9,0x38,0xAA,0xAF,0xF6,
+	/* color lookup table */
+	0x00,0x00,0x00,0x00,0x00,0x0F,0x0B,0x01,0x00,0x00,0x00,0x00,0x00,0x0F,0x0B,0x03,
+	0x00,0x00,0x00,0x00,0x00,0x0F,0x0B,0x05,0x00,0x00,0x00,0x00,0x00,0x0F,0x0B,0x07,
+	0x00,0x00,0x00,0x00,0x00,0x0B,0x01,0x09,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+	0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x0F,0x00,0x0E,0x00,0x01,0x0C,0x0F,
+	0x00,0x0E,0x00,0x0B,0x00,0x0C,0x0B,0x0E,0x00,0x0C,0x0F,0x01,0x00,0x00,0x00,0x00,
+	0x00,0x01,0x02,0x0F,0x00,0x07,0x0C,0x02,0x00,0x09,0x06,0x0F,0x00,0x0D,0x0C,0x0F,
+	0x00,0x05,0x03,0x09,0x00,0x0F,0x0B,0x00,0x00,0x0E,0x00,0x0B,0x00,0x0E,0x00,0x0B,
+	0x00,0x00,0x00,0x00,0x00,0x0F,0x0E,0x01,0x00,0x0F,0x0B,0x0E,0x00,0x0E,0x00,0x0F
 };
 
 
@@ -379,8 +276,6 @@ static unsigned char samples[8*32] =
 
 const struct MachineDriver pacman_driver =
 {
-	"pacman",
-	genericrom,
 	/* basic machine hardware */
 	3072000,	/* 3.072 Mhz. Is this correct for Pac Man? */
 	60,
@@ -394,8 +289,8 @@ const struct MachineDriver pacman_driver =
 	/* video hardware */
 	224,288,
 	gfxdecodeinfo,
-	pacpalette,sizeof(pacpalette)/3,
-	paccolortable,sizeof(paccolortable)/4,
+	16,32,
+	color_prom,pacman_vh_convert_color_prom,0,0,
 	'0','A',
 	0x0f,0x09,
 	8*11,8*20,0x01,
@@ -418,8 +313,6 @@ const struct MachineDriver pacman_driver =
 
 const struct MachineDriver mspacman_driver =
 {
-	"mspacman",
-	mspacrom,
 	/* basic machine hardware */
 	3072000,	/* 3.072 Mhz. Is this correct for Pac Man? */
 	60,
@@ -433,8 +326,8 @@ const struct MachineDriver mspacman_driver =
 	/* video hardware */
 	224,288,
 	gfxdecodeinfo,
-	pacpalette,sizeof(pacpalette)/3,
-	paccolortable,sizeof(paccolortable)/4,
+	16,32,
+	color_prom,pacman_vh_convert_color_prom,0,0,
 	'0','A',
 	0x0f,0x09,
 	8*11,8*20,0x01,

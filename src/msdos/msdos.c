@@ -36,7 +36,7 @@ int osd_joy_up, osd_joy_down, osd_joy_left, osd_joy_right;
 int osd_joy_b1, osd_joy_b2, osd_joy_b3, osd_joy_b4;
 
 /* audio related stuff */
-#define NUMVOICES 4
+#define NUMVOICES 6
 #define SAMPLE_RATE 44100
 #define SAMPLE_BUFFER_LENGTH 50000
 HAC hVoice[NUMVOICES];
@@ -150,6 +150,7 @@ void osd_exit(void)
 			free(lpWave[n]);
 		}
 		ACloseVoices();
+		ACloseAudio();
 	}
 }
 

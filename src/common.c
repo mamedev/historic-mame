@@ -460,7 +460,6 @@ void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 						{
 							bm = dest->line[y] + sx;
 							sd = gfx->gfxdata->line[start + gfx->height-1 - (y-oy)] + (sx-ox);
-							for (x = sx;x <= ex;x++)
 							memcpy(bm,sd,ex-sx+1);
 						}
 					}

@@ -17,7 +17,10 @@
 
 #define M_RDMEM(A)      Z80_RDMEM(A)
 #define M_WRMEM(A,V)    Z80_WRMEM(A,V)
+#define M_RDMEMFAST(A)      Z80_RDOP(A)
+#define M_WRMEMFAST(A,V)    Z80_WROP(A,V)
 #define M_RDOP(A)       Z80_RDOP(A)
+#define M_RDENCOP(A)       Z80_RDENCOP(A)
 
 static void Interrupt(int j);
 static void ei(void);
@@ -72,6 +75,14 @@ INLINE unsigned M_RDMEM_OPCODE (void)
  return retval;
 }
 
+INLINE unsigned M_RDMEM_ENCRYPTED_OPCODE (void)
+{
+ unsigned retval;
+ retval=M_RDENCOP(R.PC.D);
+ R.PC.W.l++;
+ return retval;
+}
+
 INLINE unsigned M_RDMEM_WORD (dword A)
 {
  int i;
@@ -84,6 +95,20 @@ INLINE void M_WRMEM_WORD (dword A,word V)
 {
  M_WRMEM (A,V&255);
  M_WRMEM (((A)+1)&0xFFFF,V>>8);
+}
+
+INLINE unsigned M_RDMEMFAST_WORD (dword A)
+{
+ int i;
+ i=M_RDMEMFAST (A);
+ i+=M_RDMEMFAST (((A)+1)&0xFFFF)*256;
+ return i;
+}
+
+INLINE void M_WRMEMFAST_WORD (dword A,word V)
+{
+ M_WRMEMFAST (A,V&255);
+ M_WRMEMFAST (((A)+1)&0xFFFF,V>>8);
 }
 
 INLINE unsigned M_RDMEM_OPCODE_WORD (void)
@@ -2313,7 +2338,7 @@ static void cb(void)
 {
  unsigned opcode;
  ++R.R;
- opcode=M_RDMEM_OPCODE();
+ opcode=M_RDMEM_ENCRYPTED_OPCODE();
  Z80_ICount-=cycles_cb[opcode];
  (*(opcode_cb[opcode]))();
 }
@@ -2321,7 +2346,7 @@ static void dd(void)
 {
  unsigned opcode;
  ++R.R;
- opcode=M_RDMEM_OPCODE();
+ opcode=M_RDMEM_ENCRYPTED_OPCODE();
  Z80_ICount-=cycles_xx[opcode];
  (*(opcode_dd[opcode]))();
 }
@@ -2329,7 +2354,7 @@ static void ed(void)
 {
  unsigned opcode;
  ++R.R;
- opcode=M_RDMEM_OPCODE();
+ opcode=M_RDMEM_ENCRYPTED_OPCODE();
  Z80_ICount-=cycles_ed[opcode];
  (*(opcode_ed[opcode]))();
 }
@@ -2337,7 +2362,7 @@ static void fd (void)
 {
  unsigned opcode;
  ++R.R;
- opcode=M_RDMEM_OPCODE();
+ opcode=M_RDMEM_ENCRYPTED_OPCODE();
  Z80_ICount-=cycles_xx[opcode];
  (*(opcode_fd[opcode]))();
 }
@@ -2387,7 +2412,7 @@ static void ei(void)
  {
   R.IFF1=R.IFF2=1;
   ++R.R;
-  opcode=M_RDMEM_OPCODE();
+  opcode=M_RDMEM_ENCRYPTED_OPCODE();
   Z80_ICount-=cycles_main[opcode];
   (*(opcode_main[opcode]))();
   Interrupt(Z80_IRQ);
@@ -2548,7 +2573,7 @@ int Z80_Execute (void)
   if (!Z80_Running) break;
 #endif
   ++R.R;
-  opcode=M_RDMEM_OPCODE();
+  opcode=M_RDMEM_ENCRYPTED_OPCODE();
   Z80_ICount-=cycles_main[opcode];
   (*(opcode_main[opcode]))();
  }
@@ -2577,7 +2602,7 @@ void Z80_RegisterDump (void)
  (
    "AF:%04X HL:%04X DE:%04X BC:%04X PC:%04X SP:%04X IX:%04X IY:%04X\n",
    R.AF.W.l,R.HL.W.l,R.DE.W.l,R.BC.W.l,R.PC.W.l,R.SP.W.l,R.IX.W.l,R.IY.W.l
- ); 
+ );
  printf ("STACK: ");
  for (i=0;i<10;++i) printf ("%04X ",M_RDMEM_WORD((R.SP.D+i*2)&0xFFFF));
  puts ("");

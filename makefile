@@ -2,13 +2,17 @@ CC	= gcc
 LD	= gcc
 
 DEFS   = -DX86_ASM -DLSB_FIRST
-CFLAGS = -Isrc -Isrc/z80 -funroll-loops -fomit-frame-pointer -O3 -m486 -Wall
+CFLAGS = -Isrc -Isrc/z80 -fstrength-reduce -funroll-loops -fomit-frame-pointer -O3 -m486 -Wall
+#CFLAGS = -pg -Isrc -Isrc/z80 -fstrength-reduce -funroll-loops -O3 -m486 -Wall
 LIBS   = -lalleg
 OBJS   = obj/mame.o obj/common.o obj/machine.o obj/driver.o obj/osdepend.o \
-         obj/pacman/machine.o \
-		 obj/pacman/driver.o obj/crush/machine.o obj/crush/driver.o \
+         obj/pacman/machine.o obj/pacman/vidhrdw.o obj/pacman/driver.o \
+		 obj/crush/machine.o obj/crush/driver.o \
          obj/pengo/machine.o obj/pengo/vidhrdw.o obj/pengo/sndhrdw.o obj/pengo/driver.o \
          obj/ladybug/machine.o obj/ladybug/vidhrdw.o obj/ladybug/sndhrdw.o obj/ladybug/driver.o \
+         obj/mrdo/machine.o obj/mrdo/vidhrdw.o obj/mrdo/driver.o \
+         obj/cclimber/machine.o obj/cclimber/vidhrdw.o obj/cclimber/sndhrdw.o obj/cclimber/driver.o \
+         obj/ckong/machine.o obj/ckong/vidhrdw.o obj/ckong/driver.o \
          obj/Z80/Z80.o
 
 VPATH = src src/z80
@@ -17,6 +21,7 @@ all: mame.exe
 
 mame.exe:  $(OBJS)
 	$(LD) -s -o mame.exe $(OBJS) $(DJDIR)/lib/audiodjf.a $(LIBS)
+#	$(LD) -pg -o mame.exe $(OBJS) $(DJDIR)/lib/audiodjf.a $(LIBS)
 
 obj/osdepend.o: src/msdos/msdos.c
 	 $(CC) $(DEFS) $(CFLAGS) -Isrc/msdos -o $@ -c $<
@@ -26,7 +31,8 @@ obj/%.o: src/%.c
 
 # dependencies
 obj/%.o:	    common.h machine.h driver.h
-obj/Z80.o:  Z80.c Z80.h Z80Codes.h Z80IO.h DAA.h
+obj/cclimber/sndhrdw.o:  src/cclimber/psg.c src/cclimber/psg.h
+obj/Z80/Z80.o:  Z80.c Z80.h Z80Codes.h Z80IO.h DAA.h
 
 
 clean:
@@ -36,4 +42,7 @@ clean:
 	del obj\crush\*.o
 	del obj\pengo\*.o
 	del obj\ladybug\*.o
+	del obj\mrdo\*.o
+	del obj\cclimber\*.o
+	del obj\ckong\*.o
 	del mame.exe

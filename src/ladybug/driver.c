@@ -88,23 +88,24 @@ Coin insertion in left slot generates an interrupt, in right slot a NMI.
 #include "machine.h"
 #include "common.h"
 
-int ladybug_IN0_r(int address,int offset);
-int ladybug_IN1_r(int address,int offset);
-int ladybug_DSW1_r(int address,int offset);
-int ladybug_DSW2_r(int address,int offset);
+int ladybug_IN0_r(int offset);
+int ladybug_IN1_r(int offset);
+int ladybug_DSW1_r(int offset);
+int ladybug_DSW2_r(int offset);
 int ladybug_interrupt(void);
 
-int ladybug_videoram_r(int address,int offset);
-int ladybug_colorram_r(int address,int offset);
-void ladybug_videoram_w(int address,int offset,int data);
-void ladybug_colorram_w(int address,int offset,int data);
-void ladybug_sprite_w(int address,int offset,int data);
+unsigned char *ladybug_videoram;
+unsigned char *ladybug_colorram;
+unsigned char *ladybug_spriteram;
+void ladybug_videoram_w(int offset,int data);
+void ladybug_colorram_w(int offset,int data);
+void ladybug_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
 int ladybug_vh_start(void);
 void ladybug_vh_stop(void);
-void ladybug_vh_screenrefresh(void);
+void ladybug_vh_screenrefresh(struct osd_bitmap *bitmap);
 
-void ladybug_sound1_w(int address,int offset,int data);
-void ladybug_sound2_w(int address,int offset,int data);
+void ladybug_sound1_w(int offset,int data);
+void ladybug_sound2_w(int offset,int data);
 int ladybug_sh_start(void);
 void ladybug_sh_update(void);
 
@@ -112,28 +113,27 @@ void ladybug_sh_update(void);
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0x6000, 0x6fff, ram_r },
-	{ 0xd000, 0xd3ff, ladybug_videoram_r },
-	{ 0xd400, 0xd7ff, ladybug_colorram_r },
-	{ 0x0000, 0x5fff, rom_r },
-	{ 0x9000, 0x9000, ladybug_IN0_r },
 	{ 0x9001, 0x9001, ladybug_IN1_r },
+	{ 0x6000, 0x6fff, MRA_RAM },
+	{ 0x0000, 0x5fff, MRA_ROM },
+	{ 0xd000, 0xd7ff, MRA_RAM },	/* video and color RAM */
+	{ 0x9000, 0x9000, ladybug_IN0_r },
 	{ 0x9002, 0x9002, ladybug_DSW1_r },
 	{ 0x9003, 0x9003, ladybug_DSW2_r },
-	{ 0x8000, 0x8000, 0 },
+	{ 0x8000, 0x8fff, MRA_NOP },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
 {
-	{ 0x6000, 0x6fff, ram_w },
-	{ 0xd000, 0xd3ff, ladybug_videoram_w },
-	{ 0xd400, 0xd7ff, ladybug_colorram_w },
-	{ 0x7000, 0x73ff, ladybug_sprite_w },
+	{ 0x6000, 0x6fff, MWA_RAM },
+	{ 0xd000, 0xd3ff, ladybug_videoram_w, &ladybug_videoram },
+	{ 0xd400, 0xd7ff, ladybug_colorram_w, &ladybug_colorram },
+	{ 0x7000, 0x73ff, MWA_RAM, &ladybug_spriteram },
 	{ 0xb000, 0xbfff, ladybug_sound1_w },
 	{ 0xc000, 0xcfff, ladybug_sound2_w },
-	{ 0xa000, 0xa000, 0 },
-	{ 0x0000, 0x5fff, rom_w },
+	{ 0xa000, 0xafff, MWA_NOP },
+	{ 0x0000, 0x5fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
@@ -145,25 +145,6 @@ static struct DSW dsw[] =
 	{ 0, 0x03, "DIFFICULTY", { "HARDEST", "HARD", "MEDIUM", "EASY" }, 1 },
 	{ 0, 0x04, "INITIALS", { "3 LETTERS", "10 LETTERS" } },
 	{ -1 }
-};
-
-
-
-static struct RomModule rom[] =
-{
-	/* code */
-	{ "lb1.cpu", 0x00000, 0x1000 },
-	{ "lb2.cpu", 0x01000, 0x1000 },
-	{ "lb3.cpu", 0x02000, 0x1000 },
-	{ "lb4.cpu", 0x03000, 0x1000 },
-	{ "lb5.cpu", 0x04000, 0x1000 },
-	{ "lb6.cpu", 0x05000, 0x1000 },
-	/* gfx */
-	{ "lb9.vid",  0x10000, 0x1000 },
-	{ "lb10.vid", 0x11000, 0x1000 },
-	{ "lb8.cpu",  0x12000, 0x1000 },
-	{ "lb7.cpu",  0x13000, 0x1000 },
-	{ 0 }	/* end of table */
 };
 
 
@@ -183,11 +164,11 @@ static struct GfxLayout spritelayout =
 	16,16,	/* 16*16 sprites */
 	128,	/* 128 sprites */
 	2,	/* 2 bits per pixel */
-	1,	/* the two bitplanes are packed in two consecutive bits */
+	-1,	/* the two bitplanes are packed in two consecutive bits */
 	{ 23*16, 22*16, 21*16, 20*16, 19*16, 18*16, 17*16, 16*16,
 			7*16, 6*16, 5*16, 4*16, 3*16, 2*16, 1*16, 0*16 },
-	{ 8*16+14, 8*16+12, 8*16+10, 8*16+8, 8*16+6, 8*16+4, 8*16+2, 8*16+0,
-			14, 12, 10, 8, 6, 4, 2, 0 },
+	{ 8*16+15, 8*16+13, 8*16+11, 8*16+9, 8*16+7, 8*16+5, 8*16+3, 8*16+1,
+			15, 13, 11, 9, 7, 5, 3, 1 },
 	64*8	/* every sprite takes 64 consecutive bytes */
 };
 
@@ -202,62 +183,14 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 
-static unsigned char palette[] =
+static unsigned char color_prom[] =
 {
-	0x00,0x00,0x00,	/* BLACK */
-	0xdb,0x00,0x00,	/* RED */
-	0xdb,0x49,0x00,	/* LTRED */
-	0x00,0x92,0x00,	/* DKGRN */
-	0xdb,0x92,0x00,	/* ORANGE */
-	0x00,0xdb,0x00,	/* GREEN */
-	0xdb,0xdb,0x00,	/* YELLOW */
-	0xdb,0x92,0x49,	/* ORANGE2 */
-	0x49,0xdb,0x49,	/* GRN2 */
-	0xdb,0xdb,0x49,	/* YELLOW2 */
-	0xdb,0x00,0x92,	/* PURPLE2 */
-	0x92,0x92,0x92,	/* GRAY */
-	0x92,0xdb,0x92,	/* LTGRN */
-	0x00,0x00,0xdb,	/* BLUE */
-	0x92,0x49,0xdb,	/* PURPLE */
-	0x00,0x92,0xdb,	/* LTBLUE */
-	0x92,0x92,0xdb,	/* LTPURPLE */
-	0xdb,0x92,0xdb,	/* PINK */
-	0x92,0xdb,0xdb,	/* CYAN */
-	0xdb,0xdb,0xdb	/* WHITE */
-};
-
-enum {BLACK,RED,LTRED,DKGRN,ORANGE,GREEN,YELLOW,ORANGE2,GRN2,YELLOW2,
-		PURPLE2,GRAY,LTGRN,BLUE,PURPLE,LTBLUE,LTPURPLE,PINK,CYAN,WHITE};
-
-static unsigned char colortable[] =
-{
-	/* characters */
-	BLACK,LTPURPLE,PINK,GRN2,	/* maze walls, doors */
-	BLACK,RED,GREEN,YELLOW,		/* Lady Bug */
-	BLACK,CYAN,WHITE,GRAY,		/* logo on title screen; CREDIT #; coin; dots */
-	BLACK,WHITE,GRAY,ORANGE2,	/* top scores */
-	BLACK,GREEN,LTGRN,DKGRN,	/* score */
-	BLACK,GRN2,LTBLUE,PINK,		/* 2x 3x 5x; timer; PART # */
-	BLACK,WHITE,YELLOW,PINK,	/* EXTRA; skull; timer */
-	BLACK,BLACK,LTRED,PINK,		/* SPECIAL */
-
-	/* sprites */
-	BLACK,GREEN,RED,YELLOW,		/* Lady Bug; cucumber; parsley; red peper */
-	BLACK,GREEN,PURPLE,WHITE,	/* 1st level monster; egg plant */
-	BLACK,GREEN,PURPLE2,WHITE,	/* 2nd level monster; sweet potato */
-	BLACK,YELLOW,ORANGE,WHITE,	/* 4th level monster */
-	BLACK,LTGRN,GREEN,WHITE,	/* 3rd level monster; japanese radish; turnip; celery; horseradish */
-	BLACK,YELLOW,ORANGE,WHITE,	/* 5th level monster; pumpkin; bamboo shoot; potato */
-	BLACK,LTGRN,ORANGE,YELLOW,	/* 6th level monster; onion */
-	BLACK,YELLOW,ORANGE,WHITE,	/* 7th level monster */
-	BLACK,GREEN,CYAN,GRN2,		/* 8th level monster */
-	BLACK,LTGRN,WHITE,YELLOW,	/* dead Lady Bug; chinese cabbage */
-	BLACK,YELLOW2,ORANGE,WHITE,	/* mushroom */
-	BLACK,GREEN,ORANGE,LTPURPLE,	/* carrot */
-	BLACK,GREEN,RED,WHITE,		/* radish; tomato */
-	BLACK,GREEN,BLUE,WHITE,
-	BLACK,GREEN,YELLOW,WHITE,
-	BLACK,YELLOW2,ORANGE,LTPURPLE	/* scores */
+	/* palette */
+	0xF5,0x90,0x41,0x54,0x94,0x11,0x80,0x65,0x05,0xD4,0x01,0x00,0xB1,0xA0,0x00,0xF5,
+	0x04,0xB1,0x00,0x15,0x11,0x25,0x90,0xD0,0xA0,0x90,0x15,0x84,0xB5,0x04,0x04,0x04,
+	/* sprite color lookup table */
+	0x00,0x59,0x33,0xB8,0x00,0xD4,0xA3,0x8D,0x00,0x2C,0x63,0xDD,0x00,0x22,0x38,0x1D,
+	0x00,0x93,0x3A,0xDD,0x00,0xE2,0x38,0xDD,0x00,0x82,0x3A,0xD8,0x00,0x22,0x68,0x1D
 };
 
 
@@ -273,8 +206,6 @@ static unsigned char samples[32] =	/* a simple sine (sort of) wave */
 
 const struct MachineDriver ladybug_driver =
 {
-	"ladybug",
-	rom,
 	/* basic machine hardware */
 	4000000,	/* 4 Mhz */
 	60,
@@ -288,11 +219,11 @@ const struct MachineDriver ladybug_driver =
 	/* video hardware */
 	256,256,
 	gfxdecodeinfo,
-	palette,sizeof(palette)/3,
-	colortable,sizeof(colortable)/4,
+	32,24,
+	color_prom,ladybug_vh_convert_color_prom,0,0,
 	0,10,
 	0x02,0x06,
-	8*13,8*30,0x08,
+	8*13,8*30,0x07,
 	0,
 	ladybug_vh_start,
 	ladybug_vh_stop,

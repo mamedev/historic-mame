@@ -1,0 +1,255 @@
+/***************************************************************************
+
+Mr Do! memory map (preliminary)
+
+0000-7fff ROM
+8000-83ff color RAM 1
+8400-87ff video RAM 1
+8800-8bff color RAM 2
+8c00-8fff video RAM 2
+e000-efff RAM
+
+memory mapped ports:
+
+read:
+9803      SECRE 1/6-J2-11
+a000      IN0
+a001      IN1
+a002      DSW1
+a003      DSW2
+
+*
+ * IN0 (all bits are inverted)
+ * bit 7 : TILT if this is 0 coins are not accepted
+ * bit 6 : START 2
+ * bit 5 : START 1
+ * bit 4 : FIRE player 1
+ * bit 3 : UP player 1
+ * bit 2 : RIGHT player 1
+ * bit 1 : DOWN player 1
+ * bit 0 : LEFT player 1
+ *
+*
+ * IN1 (all bits are inverted)
+ * bit 7 : COIN 2
+ * bit 6 : COIN 1
+ * bit 5 : unused
+ * bit 4 : FIRE player 2 (TABLE only)
+ * bit 3 : UP player 2 (TABLE only)
+ * bit 2 : RIGHT player 2 (TABLE only)
+ * bit 1 : DOWN player 2 (TABLE only)
+ * bit 0 : LEFT player 2 (TABLE only)
+ *
+*
+ * DSW1 (all bits are inverted)
+ * bit 7 : DIP SWITCH 8\ Number of lives
+ * bit 6 : DIP SWITCH 7/ 11 = 3  10 = 4  01 = 5  11 = 2
+ * bit 5 : DIP SWITCH 6  COCKTAIL or UPRIGHT (0 = UPRIGHT)
+ * bit 4 : DIP SWITCH 5  "EXTRA" difficulty  1 = easy  0 = hard
+ * bit 3 : DIP SWITCH 4  "SPECIAL" difficulty  1 = easy  0 = hard
+ * bit 2 : DIP SWITCH 3  RACK TEST
+ * bit 1 : DIP SWITCH 2\ Difficulty level
+ * bit 0 : DIP SWITCH 1/ 11 = 1st (easy) 10 = 2nd 01 = 3rd 00 = 4th (hard)
+ *
+*
+ * DSW2 (all bits are inverted)
+ * bit 7 : DIP SWITCH 8\
+ * bit 6 : DIP SWITCH 7| Left coin slot
+ * bit 5 : DIP SWITCH 6|
+ * bit 4 : DIP SWITCH 5/
+ * bit 3 : DIP SWITCH 4\
+ * bit 2 : DIP SWITCH 3| Right coin slot
+ * bit 1 : DIP SWITCH 2|
+ * bit 0 : DIP SWITCH 1/
+ *                       1111 = 1 coin 1 play
+ *                       1110 = 1 coin 2 plays
+ *                       1101 = 1 coin 3 plays
+ *                       1100 = 1 coin 4 plays
+ *                       1011 = 1 coin 5 plays
+ *                       1010 = 2 coins 1 play
+ *                       1001 = 2 coins 3 plays
+ *                       1000 = 3 coins 1 play
+ *                       0111 = 3 coins 2 plays
+ *                       0110 = 4 coins 1 play
+ *                       0000 = FREE PLAY
+ *                 all others = 1 coin 1 play
+ *
+
+write:
+9000-90ff sprites, 64 groups of 4 bytes.
+9800      flip (bit 0) playfield priority selector? (bits 1-3)
+9801      sound port 1
+9802      sound port 2
+f000      playfield 0 Y scroll position (not used by Mr. Do!)
+f800      playfield 0 X scroll position
+
+***************************************************************************/
+
+#include "driver.h"
+#include "machine.h"
+#include "common.h"
+
+int mrdo_IN0_r(int offset);
+int mrdo_IN1_r(int offset);
+int mrdo_DSW1_r(int offset);
+int mrdo_DSW2_r(int offset);
+int mrdo_SECRE_r(int offset);
+
+unsigned char *mrdo_videoram1;
+unsigned char *mrdo_colorram1;
+unsigned char *mrdo_videoram2;
+unsigned char *mrdo_colorram2;
+unsigned char *mrdo_spriteram;
+void mrdo_videoram1_w(int offset,int data);
+void mrdo_colorram1_w(int offset,int data);
+void mrdo_videoram2_w(int offset,int data);
+void mrdo_colorram2_w(int offset,int data);
+void mrdo_scrollx_w(int offset,int data);
+void mrdo_vh_convert_color_prom(unsigned char *palette, unsigned char *colortable,const unsigned char *color_prom);
+int mrdo_vh_start(void);
+void mrdo_vh_stop(void);
+void mrdo_vh_screenrefresh(struct osd_bitmap *bitmap);
+
+void ladybug_sound1_w(int offset,int data);
+void ladybug_sound2_w(int offset,int data);
+int ladybug_sh_start(void);
+void ladybug_sh_update(void);
+
+
+
+static struct MemoryReadAddress readmem[] =
+{
+	{ 0xe000, 0xefff, MRA_RAM },
+	{ 0x0000, 0x7fff, MRA_ROM },
+	{ 0x8000, 0x8fff, MRA_RAM },	/* video and color RAM */
+	{ 0xa000, 0xa000, mrdo_IN0_r },
+	{ 0xa001, 0xa001, mrdo_IN1_r },
+	{ 0xa002, 0xa002, mrdo_DSW1_r },
+	{ 0xa003, 0xa003, mrdo_DSW2_r },
+	{ 0x9803, 0x9803, mrdo_SECRE_r },
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress writemem[] =
+{
+	{ 0xe000, 0xefff, MWA_RAM },
+	{ 0x8000, 0x83ff, mrdo_colorram1_w, &mrdo_colorram1 },
+	{ 0x8400, 0x87ff, mrdo_videoram1_w, &mrdo_videoram1 },
+	{ 0x8800, 0x8bff, mrdo_colorram2_w, &mrdo_colorram2 },
+	{ 0x8c00, 0x8fff, mrdo_videoram2_w, &mrdo_videoram2 },
+	{ 0x9000, 0x90ff, MWA_RAM, &mrdo_spriteram },
+	{ 0x9801, 0x9801, ladybug_sound1_w },
+	{ 0x9802, 0x9802, ladybug_sound2_w },
+	{ 0xf800, 0xffff, mrdo_scrollx_w },
+	{ 0x9800, 0x9800, MWA_NOP },
+	{ 0xf000, 0xf7ff, MWA_NOP },
+	{ 0x0000, 0x7fff, MWA_ROM },
+	{ -1 }	/* end of table */
+};
+
+
+
+static struct DSW dsw[] =
+{
+	{ 0, 0xc0, "LIVES", { "2", "5", "4", "3" }, 1 },
+	{ 0, 0x03, "DIFFICULTY", { "HARDEST", "HARD", "MEDIUM", "EASY" }, 1 },
+	{ 0, 0x10, "EXTRA", { "HARD", "EASY" }, 1 },
+	{ 0, 0x08, "SPECIAL", { "HARD", "EASY" }, 1 },
+	{ -1 }
+};
+
+
+
+static struct GfxLayout charlayout =
+{
+	8,8,	/* 8*8 characters */
+	512,	/* 512 characters */
+	2,	/* 2 bits per pixel */
+	512*8*8,	/* the two bitplanes are separated */
+	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+	8*8	/* every char takes 8 consecutive bytes */
+};
+static struct GfxLayout spritelayout =
+{
+	16,16,	/* 16*16 sprites */
+	128,	/* 128 sprites */
+	2,	/* 2 bits per pixel */
+	-4,	/* the two bitplanes for 4 pixels are packed into one byte */
+	{ 0*16, 2*16, 4*16, 6*16, 8*16, 10*16, 12*16, 14*16,
+			16*16, 18*16, 20*16, 22*16, 24*16, 26*16, 28*16, 30*16 },
+	{ 24+4, 24+5, 24+6, 24+7, 16+4, 16+5, 16+6, 16+7,
+			8+4, 8+5, 8+6, 8+7, 4, 5, 6, 7 },
+	64*8	/* every sprite takes 64 consecutive bytes */
+};
+
+
+
+static struct GfxDecodeInfo gfxdecodeinfo[] =
+{
+	{ 0x10000, &charlayout,     0, 127 },
+	{ 0x12000, &charlayout,     0, 127 },
+	{ 0x14000, &spritelayout, 128, 143 },
+	{ -1 } /* end of array */
+};
+
+
+
+static unsigned char color_prom[] =
+{
+	/* palette (high bits) */
+	0x00,0x0C,0x03,0x00,0x0F,0x0B,0x0C,0x3F,0x0D,0x0F,0x0F,0x0C,0x0C,0x3C,0x0C,0x30,
+	0x0C,0x03,0x30,0x03,0x0C,0x0F,0x00,0x3F,0x03,0x1E,0x00,0x0F,0x37,0x36,0x0D,0x33,
+	/* palette (low bits) */
+	0x00,0x0C,0x03,0x00,0x0C,0x03,0x00,0x3F,0x0F,0x03,0x0F,0x3F,0x0C,0x0F,0x0F,0x3A,
+	0x03,0x0F,0x00,0x0C,0x00,0x0F,0x3F,0x03,0x2A,0x0C,0x00,0x0A,0x0C,0x0E,0x3F,0x0F,
+	/* sprite color lookup table */
+	0x00,0x97,0x71,0xF9,0x00,0x27,0xA5,0x13,0x00,0x32,0x77,0x3F,0x00,0xA7,0x72,0xF9,
+	0x00,0x1F,0x9A,0x77,0x00,0x15,0x27,0x38,0x00,0xC2,0x55,0x69,0x00,0x7F,0x76,0x7A
+};
+
+
+
+/* waveforms for the audio hardware */
+static unsigned char samples[32] =	/* a simple sine (sort of) wave */
+{
+	0x00,0x00,0x00,0x00,0x22,0x22,0x22,0x22,0x44,0x44,0x44,0x44,0x22,0x22,0x22,0x22,
+	0x00,0x00,0x00,0x00,0xdd,0xdd,0xdd,0xdd,0xbb,0xbb,0xbb,0xbb,0xdd,0xdd,0xdd,0xdd
+};
+
+
+
+const struct MachineDriver mrdo_driver =
+{
+	/* basic machine hardware */
+	4000000,	/* 4 Mhz */
+	60,
+	readmem,
+	writemem,
+	dsw, { 0xdf , 0xff },
+	0,
+	interrupt,
+	0,
+
+	/* video hardware */
+	256,256,
+	gfxdecodeinfo,
+	256,144,
+	color_prom,mrdo_vh_convert_color_prom,0,0,
+	0,10,
+	0x09,0x3e,
+	8*17,8*29,0x2c,
+	0,
+	mrdo_vh_start,
+	mrdo_vh_stop,
+	mrdo_vh_screenrefresh,
+
+	/* sound hardware */
+	samples,
+	0,
+	ladybug_sh_start,
+	0,
+	0,
+	0,
+	ladybug_sh_update
+};

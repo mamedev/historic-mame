@@ -44,13 +44,13 @@ int pacman_init_machine(const char *gamename)
 
 
 
-int pacman_IN0_r(int address,int offset)
+int pacman_IN0_r(int offset)
 {
 	int res = 0xff;
 
 
 	if (offset != 0 && errorlog)
-		fprintf(errorlog,"%04x: warning - read input port %04x from mirror address %04x\n",Z80_GetPC(),address-offset,address);
+		fprintf(errorlog,"%04x: warning - read IN0 from mirror address %04x\n",Z80_GetPC(),offset);
 
 	if (osd_key_pressed(OSD_KEY_3)) res &= ~IN0_CREDIT;
 	if (osd_key_pressed(OSD_KEY_F1)) res &= ~IN0_RACK_TEST;
@@ -79,13 +79,13 @@ int pacman_IN0_r(int address,int offset)
 
 
 
-int pacman_IN1_r(int address,int offset)
+int pacman_IN1_r(int offset)
 {
 	int res = 0xff;
 
 
 	if (offset != 0 && errorlog)
-		fprintf(errorlog,"%04x: warning - read input port %04x from mirror address %04x\n",Z80_GetPC(),address-offset,address);
+		fprintf(errorlog,"%04x: warning - read IN1 from mirror address %04x\n",Z80_GetPC(),offset);
 
 	if (osd_key_pressed(OSD_KEY_2)) res &= ~IN1_START2;
 	if (osd_key_pressed(OSD_KEY_1)) res &= ~IN1_START1;
@@ -95,17 +95,17 @@ int pacman_IN1_r(int address,int offset)
 
 
 
-int pacman_DSW1_r(int address,int offset)
+int pacman_DSW1_r(int offset)
 {
 	if (offset != 0 && errorlog)
-		fprintf(errorlog,"%04x: warning - read input port %04x from mirror address %04x\n",Z80_GetPC(),address-offset,address);
+		fprintf(errorlog,"%04x: warning - read DSW1 from mirror address %04x\n",Z80_GetPC(),offset);
 
 	return Machine->dsw[0];
 }
 
 
 
-void pacman_interrupt_enable_w(int address,int offset,int data)
+void pacman_interrupt_enable_w(int offset,int data)
 {
 	interrupt_enable = data;
 }

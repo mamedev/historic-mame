@@ -24,13 +24,13 @@
 #define IN1_START1 (1<<5)
 
 
-int crush_IN0_r(int address,int offset)
+int crush_IN0_r(int offset)
 {
 	int res = 0xef;	/* upright cabinet */
 
 
 	if (offset != 0 && errorlog)
-		fprintf(errorlog,"%04x: warning - read input port %04x from mirror address %04x\n",Z80_GetPC(),address-offset,address);
+		fprintf(errorlog,"%04x: warning - read IN0 from mirror address %04x\n",Z80_GetPC(),offset);
 
 	if (osd_key_pressed(OSD_KEY_3)) res &= ~IN0_CREDIT;
 	if (osd_key_pressed(OSD_KEY_DOWN) || osd_joy_down) res &= ~IN0_DOWN;
@@ -40,13 +40,13 @@ int crush_IN0_r(int address,int offset)
 
 	return res;
 }
-int crush_IN1_r(int address,int offset)
+int crush_IN1_r(int offset)
 {
 	int res = 0xff;
 
 
 	if (offset != 0 && errorlog)
-		fprintf(errorlog,"%04x: warning - read input port %04x from mirror address %04x\n",Z80_GetPC(),address-offset,address);
+		fprintf(errorlog,"%04x: warning - read IN1 from mirror address %04x\n",Z80_GetPC(),offset);
 
 	if (osd_key_pressed(OSD_KEY_2)) res &= ~IN1_START2;
 	if (osd_key_pressed(OSD_KEY_1)) res &= ~IN1_START1;

@@ -27,13 +27,13 @@
 #define DSW1_RACK_TEST (1<<5)
 
 
-int pengo_IN0_r(int address,int offset)
+int pengo_IN0_r(int offset)
 {
 	int res = 0xff;
 
 
 	if (offset != 0 && errorlog)
-		fprintf(errorlog,"%04x: warning - read input port %04x from mirror address %04x\n",Z80_GetPC(),address-offset,address);
+		fprintf(errorlog,"%04x: warning - read IN0 from mirror address %04x\n",Z80_GetPC(),offset);
 
 	if (osd_key_pressed(OSD_KEY_CONTROL) || osd_joy_b1 || osd_joy_b2) res &= ~IN0_PUSH;
 	if (osd_key_pressed(OSD_KEY_3)) res &= ~IN0_CREDIT;
@@ -46,13 +46,13 @@ int pengo_IN0_r(int address,int offset)
 
 
 
-int pengo_IN1_r(int address,int offset)
+int pengo_IN1_r(int offset)
 {
 	int res = 0xff;
 
 
 	if (offset != 0 && errorlog)
-		fprintf(errorlog,"%04x: warning - read input port %04x from mirror address %04x\n",Z80_GetPC(),address-offset,address);
+		fprintf(errorlog,"%04x: warning - read IN1 from mirror address %04x\n",Z80_GetPC(),offset);
 
 	if (osd_key_pressed(OSD_KEY_2)) res &= ~IN1_START2;
 	if (osd_key_pressed(OSD_KEY_1)) res &= ~IN1_START1;
@@ -62,13 +62,13 @@ int pengo_IN1_r(int address,int offset)
 
 
 
-int pengo_DSW1_r(int address,int offset)
+int pengo_DSW1_r(int offset)
 {
 	int res = Machine->dsw[0];
 
 
 	if (offset != 0 && errorlog)
-		fprintf(errorlog,"%04x: warning - read input port %04x from mirror address %04x\n",Z80_GetPC(),address-offset,address);
+		fprintf(errorlog,"%04x: warning - read DSW1 from mirror address %04x\n",Z80_GetPC(),offset);
 
 	if (osd_key_pressed(OSD_KEY_F1)) res &= ~DSW1_RACK_TEST;
 	return res;

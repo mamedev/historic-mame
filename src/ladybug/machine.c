@@ -30,7 +30,7 @@
 static int vblank;
 
 
-int ladybug_IN0_r(int address,int offset)
+int ladybug_IN0_r(int offset)
 {
 	int res = 0xff;
 	int newdirection;
@@ -71,7 +71,7 @@ int ladybug_IN0_r(int address,int offset)
 
 
 
-int ladybug_IN1_r(int address,int offset)
+int ladybug_IN1_r(int offset)
 {
 	byte res = 0x3f;
 
@@ -95,7 +95,7 @@ int ladybug_IN1_r(int address,int offset)
 
 
 
-int ladybug_DSW1_r(int address,int offset)
+int ladybug_DSW1_r(int offset)
 {
 	int res = Machine->dsw[0];
 
@@ -106,7 +106,7 @@ int ladybug_DSW1_r(int address,int offset)
 
 
 
-int ladybug_DSW2_r(int address,int offset)
+int ladybug_DSW2_r(int offset)
 {
 	return Machine->dsw[1];
 }
