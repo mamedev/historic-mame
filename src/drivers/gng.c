@@ -254,7 +254,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 
 
-INPUT_PORTS_START( gng_input_ports )
+INPUT_PORTS_START( gng )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -339,7 +339,7 @@ INPUT_PORTS_START( gng_input_ports )
 INPUT_PORTS_END
 
 /* identical to gng, but the "unknown" dip switch is Invulnerability */
-INPUT_PORTS_START( makaimur_input_ports )
+INPUT_PORTS_START( makaimur )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -423,7 +423,7 @@ INPUT_PORTS_START( makaimur_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( diamond_input_ports )
+INPUT_PORTS_START( diamond )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -889,7 +889,7 @@ static void diamond_hisave(void)
 
 
 
-struct GameDriver gng_driver =
+struct GameDriver driver_gng =
 {
 	__FILE__,
 	0,
@@ -902,12 +902,12 @@ struct GameDriver gng_driver =
 	&machine_driver,
 	0,
 
-	gng_rom,
+	rom_gng,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	gng_input_ports,
+	input_ports_gng,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -915,10 +915,10 @@ struct GameDriver gng_driver =
 	gng_hiload, gng_hisave
 };
 
-struct GameDriver gnga_driver =
+struct GameDriver driver_gnga =
 {
 	__FILE__,
-	&gng_driver,
+	&driver_gng,
 	"gnga",
 	"Ghosts'n Goblins (World? set 2)",
 	"1985",
@@ -928,12 +928,12 @@ struct GameDriver gnga_driver =
 	&machine_driver,
 	0,
 
-	gnga_rom,
+	rom_gnga,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	gng_input_ports,
+	input_ports_gng,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -941,10 +941,10 @@ struct GameDriver gnga_driver =
 	gng_hiload, gng_hisave
 };
 
-struct GameDriver gngt_driver =
+struct GameDriver driver_gngt =
 {
 	__FILE__,
-	&gng_driver,
+	&driver_gng,
 	"gngt",
 	"Ghosts'n Goblins (US)",
 	"1985",
@@ -954,12 +954,12 @@ struct GameDriver gngt_driver =
 	&machine_driver,
 	0,
 
-	gngt_rom,
+	rom_gngt,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	gng_input_ports,
+	input_ports_gng,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -967,10 +967,10 @@ struct GameDriver gngt_driver =
 	gng_hiload, gng_hisave
 };
 
-struct GameDriver makaimur_driver =
+struct GameDriver driver_makaimur =
 {
 	__FILE__,
-	&gng_driver,
+	&driver_gng,
 	"makaimur",
 	"Makai-Mura",
 	"1985",
@@ -980,12 +980,12 @@ struct GameDriver makaimur_driver =
 	&machine_driver,
 	0,
 
-	makaimur_rom,
+	rom_makaimur,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	makaimur_input_ports,
+	input_ports_makaimur,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -993,10 +993,10 @@ struct GameDriver makaimur_driver =
 	gng_hiload, gng_hisave
 };
 
-struct GameDriver makaimuc_driver =
+struct GameDriver driver_makaimuc =
 {
 	__FILE__,
-	&gng_driver,
+	&driver_gng,
 	"makaimuc",
 	"Makai-Mura (Revision C)",
 	"1985",
@@ -1006,12 +1006,12 @@ struct GameDriver makaimuc_driver =
 	&machine_driver,
 	0,
 
-	makaimuc_rom,
+	rom_makaimuc,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	makaimur_input_ports,
+	input_ports_makaimur,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -1019,10 +1019,10 @@ struct GameDriver makaimuc_driver =
 	gng_hiload, gng_hisave
 };
 
-struct GameDriver makaimug_driver =
+struct GameDriver driver_makaimug =
 {
 	__FILE__,
-	&gng_driver,
+	&driver_gng,
 	"makaimug",
 	"Makai-Mura (Revision G)",
 	"1985",
@@ -1032,12 +1032,12 @@ struct GameDriver makaimug_driver =
 	&machine_driver,
 	0,
 
-	makaimug_rom,
+	rom_makaimug,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	makaimur_input_ports,
+	input_ports_makaimur,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -1045,7 +1045,7 @@ struct GameDriver makaimug_driver =
 	gng_hiload, gng_hisave
 };
 
-struct GameDriver diamond_driver =
+struct GameDriver driver_diamond =
 {
 	__FILE__,
 	0,
@@ -1058,12 +1058,12 @@ struct GameDriver diamond_driver =
 	&machine_driver,
 	0,
 
-	diamond_rom,
+	rom_diamond,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	diamond_input_ports,
+	input_ports_diamond,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

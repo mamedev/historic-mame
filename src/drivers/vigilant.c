@@ -174,7 +174,7 @@ static struct IOWritePort sound_writeport[] =
 };
 
 
-INPUT_PORTS_START( vigilant_input_ports )
+INPUT_PORTS_START( vigilant )
 	PORT_START
 	PORT_BIT(0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT(0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -262,7 +262,7 @@ INPUT_PORTS_START( vigilant_input_ports )
 	PORT_DIPSETTING(	0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( kikcubic_input_ports )
+INPUT_PORTS_START( kikcubic )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
@@ -720,7 +720,7 @@ static void kikcubic_hisave(void)
 	}
 }
 
-struct GameDriver vigilant_driver =
+struct GameDriver driver_vigilant =
 {
 	__FILE__,
 	0,
@@ -733,22 +733,22 @@ struct GameDriver vigilant_driver =
 	&vigilant_machine_driver,
 	0,
 
-	vigilant_rom,
+	rom_vigilant,
 	0,0,
 	0,
 	0,	/* sound_prom */
 
-	vigilant_input_ports,
+	input_ports_vigilant,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	vigilant_hiload, vigilant_hisave
 };
 
-struct GameDriver vigilntu_driver =
+struct GameDriver driver_vigilntu =
 {
 	__FILE__,
-	&vigilant_driver,
+	&driver_vigilant,
 	"vigilntu",
 	"Vigilante (US)",
 	"1988",
@@ -758,22 +758,22 @@ struct GameDriver vigilntu_driver =
 	&vigilant_machine_driver,
 	0,
 
-	vigilntu_rom,
+	rom_vigilntu,
 	0,0,
 	0,
 	0,	/* sound_prom */
 
-	vigilant_input_ports,
+	input_ports_vigilant,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	vigilant_hiload, vigilant_hisave
 };
 
-struct GameDriver vigilntj_driver =
+struct GameDriver driver_vigilntj =
 {
 	__FILE__,
-	&vigilant_driver,
+	&driver_vigilant,
 	"vigilntj",
 	"Vigilante (Japan)",
 	"1988",
@@ -783,19 +783,19 @@ struct GameDriver vigilntj_driver =
 	&vigilant_machine_driver,
 	0,
 
-	vigilntj_rom,
+	rom_vigilntj,
 	0,0,
 	0,
 	0,	/* sound_prom */
 
-	vigilant_input_ports,
+	input_ports_vigilant,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	vigilant_hiload, vigilant_hisave
 };
 
-struct GameDriver kikcubic_driver =
+struct GameDriver driver_kikcubic =
 {
 	__FILE__,
 	0,
@@ -808,12 +808,12 @@ struct GameDriver kikcubic_driver =
 	&kikcubic_machine_driver,
 	0,
 
-	kikcubic_rom,
+	rom_kikcubic,
 	0,0,
 	0,
 	0,	/* sound_prom */
 
-	kikcubic_input_ports,
+	input_ports_kikcubic,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

@@ -111,7 +111,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( mikie )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -324,7 +324,7 @@ ROM_START( mikie )
 	ROM_LOAD( "005",          0x0c000, 0x4000, 0xba44aeef )
 	ROM_LOAD( "007",          0x10000, 0x4000, 0x31afc153 )
 
-	ROM_REGION(0x0500)	/* color PROMs */
+	ROM_REGIONX( 0x0500, REGION_PROMS )
 	ROM_LOAD( "01i_d19.bin",  0x0000, 0x0100, 0x8b83e7cf )	/* red component */
 	ROM_LOAD( "03i_d21.bin",  0x0100, 0x0100, 0x3556304a )	/* green component */
 	ROM_LOAD( "02i_d20.bin",  0x0200, 0x0100, 0x676a0669 )	/* blue component */
@@ -348,7 +348,7 @@ ROM_START( mikiej )
 	ROM_LOAD( "h01_q05.bin",  0x0c000, 0x4000, 0xf9e1ebb1 )
 	ROM_LOAD( "h03_q07.bin",  0x10000, 0x4000, 0x15dc093b )
 
-	ROM_REGION(0x0500)	/* color PROMs */
+	ROM_REGIONX( 0x0500, REGION_PROMS )
 	ROM_LOAD( "01i_d19.bin",  0x0000, 0x0100, 0x8b83e7cf )	/* red component */
 	ROM_LOAD( "03i_d21.bin",  0x0100, 0x0100, 0x3556304a )	/* green component */
 	ROM_LOAD( "02i_d20.bin",  0x0200, 0x0100, 0x676a0669 )	/* blue component */
@@ -372,7 +372,7 @@ ROM_START( mikiehs )
 	ROM_LOAD( "h01_i05.bin",  0x0c000, 0x4000, 0x00e357e1 )
 	ROM_LOAD( "h03_i07.bin",  0x10000, 0x4000, 0xceeba6ac )
 
-	ROM_REGION(0x0500)	/* color PROMs */
+	ROM_REGIONX( 0x0500, REGION_PROMS )
 	ROM_LOAD( "01i_d19.bin",  0x0000, 0x0100, 0x8b83e7cf )	/* red component */
 	ROM_LOAD( "03i_d21.bin",  0x0100, 0x0100, 0x3556304a )	/* green component */
 	ROM_LOAD( "02i_d20.bin",  0x0200, 0x0100, 0x676a0669 )	/* blue component */
@@ -432,7 +432,7 @@ static void hisave(void)
 
 
 
-struct GameDriver mikie_driver =
+struct GameDriver driver_mikie =
 {
 	__FILE__,
 	0,
@@ -445,23 +445,23 @@ struct GameDriver mikie_driver =
 	&mikie_machine_driver,
 	0,
 
-	mikie_rom,
+	rom_mikie,
 	0, 0,
 	0,
 	0,
 
-	input_ports,
+	input_ports_mikie,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	hiload, hisave
 };
 
-struct GameDriver mikiej_driver =
+struct GameDriver driver_mikiej =
 {
 	__FILE__,
-	&mikie_driver,
+	&driver_mikie,
 	"mikiej",
 	"Shinnyuushain Tooru-kun",
 	"1984",
@@ -471,23 +471,23 @@ struct GameDriver mikiej_driver =
 	&mikie_machine_driver,
 	0,
 
-	mikiej_rom,
+	rom_mikiej,
 	0, 0,
 	0,
 	0,
 
-	input_ports,
+	input_ports_mikie,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	hiload, hisave
 };
 
-struct GameDriver mikiehs_driver =
+struct GameDriver driver_mikiehs =
 {
 	__FILE__,
-	&mikie_driver,
+	&driver_mikie,
 	"mikiehs",
 	"Mikie (High School Graffiti)",
 	"1984",
@@ -497,14 +497,14 @@ struct GameDriver mikiehs_driver =
 	&mikie_machine_driver,
 	0,
 
-	mikiehs_rom,
+	rom_mikiehs,
 	0, 0,
 	0,
 	0,
 
-	input_ports,
+	input_ports_mikie,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	hiload, hisave

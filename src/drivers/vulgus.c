@@ -122,7 +122,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( vulgus )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -345,7 +345,7 @@ ROM_START( vulgus )
 	ROM_LOAD( "2-4n.bin",     0x12000, 0x2000, 0x0071a2e3 )
 	ROM_LOAD( "2-5n.bin",     0x14000, 0x2000, 0x4023a1ec )
 
-	ROM_REGION(0x0600)	/* color PROMs */
+	ROM_REGIONX( 0x0600, REGION_PROMS )
 	ROM_LOAD( "e8.bin",       0x0000, 0x0100, 0x06a83606 )	/* red component */
 	ROM_LOAD( "e9.bin",       0x0100, 0x0100, 0xbeacf13c )	/* green component */
 	ROM_LOAD( "e10.bin",      0x0200, 0x0100, 0xde1fb621 )	/* blue component */
@@ -378,7 +378,7 @@ ROM_START( vulgus2 )
 	ROM_LOAD( "2-4n.bin",     0x12000, 0x2000, 0x0071a2e3 )
 	ROM_LOAD( "2-5n.bin",     0x14000, 0x2000, 0x4023a1ec )
 
-	ROM_REGION(0x0600)	/* color PROMs */
+	ROM_REGIONX( 0x0600, REGION_PROMS )
 	ROM_LOAD( "e8.bin",       0x0000, 0x0100, 0x06a83606 )	/* red component */
 	ROM_LOAD( "e9.bin",       0x0100, 0x0100, 0xbeacf13c )	/* green component */
 	ROM_LOAD( "e10.bin",      0x0200, 0x0100, 0xde1fb621 )	/* blue component */
@@ -411,7 +411,7 @@ ROM_START( vulgusj )
 	ROM_LOAD( "2-4n.bin",     0x12000, 0x2000, 0x0071a2e3 )
 	ROM_LOAD( "2-5n.bin",     0x14000, 0x2000, 0x4023a1ec )
 
-	ROM_REGION(0x0600)	/* color PROMs */
+	ROM_REGIONX( 0x0600, REGION_PROMS )
 	ROM_LOAD( "e8.bin",       0x0000, 0x0100, 0x06a83606 )	/* red component */
 	ROM_LOAD( "e9.bin",       0x0100, 0x0100, 0xbeacf13c )	/* green component */
 	ROM_LOAD( "e10.bin",      0x0200, 0x0100, 0xde1fb621 )	/* blue component */
@@ -468,7 +468,7 @@ static void hisave(void)
 
 
 
-struct GameDriver vulgus_driver =
+struct GameDriver driver_vulgus =
 {
 	__FILE__,
 	0,
@@ -481,23 +481,23 @@ struct GameDriver vulgus_driver =
 	&machine_driver,
 	0,
 
-	vulgus_rom,
+	rom_vulgus,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_vulgus,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	hiload, hisave
 };
 
-struct GameDriver vulgus2_driver =
+struct GameDriver driver_vulgus2 =
 {
 	__FILE__,
-	&vulgus_driver,
+	&driver_vulgus,
 	"vulgus2",
 	"Vulgus (set 2)",
 	"1984",
@@ -507,23 +507,23 @@ struct GameDriver vulgus2_driver =
 	&machine_driver,
 	0,
 
-	vulgus2_rom,
+	rom_vulgus2,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_vulgus,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	hiload, hisave
 };
 
-struct GameDriver vulgusj_driver =
+struct GameDriver driver_vulgusj =
 {
 	__FILE__,
-	&vulgus_driver,
+	&driver_vulgus,
 	"vulgusj",
 	"Vulgus (Japan?)",
 	"1984",
@@ -533,14 +533,14 @@ struct GameDriver vulgusj_driver =
 	&machine_driver,
 	0,
 
-	vulgusj_rom,
+	rom_vulgusj,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_vulgus,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	hiload, hisave

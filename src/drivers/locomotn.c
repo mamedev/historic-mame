@@ -133,7 +133,7 @@ static struct MemoryWriteAddress writemem[] =
 
 
 
-INPUT_PORTS_START( locomotn_input_ports )
+INPUT_PORTS_START( locomotn )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -215,7 +215,7 @@ INPUT_PORTS_START( locomotn_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( jungler_input_ports )
+INPUT_PORTS_START( jungler )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -268,7 +268,7 @@ INPUT_PORTS_START( jungler_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( commsega_input_ports )
+INPUT_PORTS_START( commsega )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -457,7 +457,7 @@ ROM_START( locomotn )
 	ROM_LOAD( "c2.cpu",       0x1000, 0x1000, 0xc3035300 )
 	ROM_LOAD( "10g.bpr",      0x2000, 0x0100, BADCRC( 0x21fb583f ) ) /* dots - from the bootleg, wrong */
 
-	ROM_REGION(0x0160)	/* PROMs */
+	ROM_REGIONX( 0x0160, REGION_PROMS )
 	ROM_LOAD( "8b.bpr",       0x0000, 0x0020, 0x75b05da0 ) /* palette */
 	ROM_LOAD( "9d.bpr",       0x0020, 0x0100, 0xaa6cf063 ) /* loookup table */
 	ROM_LOAD( "7a.bpr",       0x0120, 0x0020, 0x48c8f094 ) /* ?? */
@@ -480,7 +480,7 @@ ROM_START( gutangtn )
 	ROM_LOAD( "5m_c2.bin",    0x1000, 0x1000, 0x51c542fd )
 	ROM_LOAD( "10g.bpr",      0x2000, 0x0100, BADCRC( 0x21fb583f ) ) /* dots - from the bootleg, wrong */
 
-	ROM_REGION(0x0160)	/* PROMs */
+	ROM_REGIONX( 0x0160, REGION_PROMS )
 	ROM_LOAD( "8b.bpr",       0x0000, 0x0020, 0x75b05da0 ) /* palette */
 	ROM_LOAD( "9d.bpr",       0x0020, 0x0100, 0xaa6cf063 ) /* loookup table */
 	ROM_LOAD( "7a.bpr",       0x0120, 0x0020, 0x48c8f094 ) /* ?? */
@@ -502,7 +502,7 @@ ROM_START( cottong )
 	ROM_LOAD( "c6",           0x1000, 0x1000, 0x0149ef46 )
 	ROM_LOAD( "5.bpr",        0x2000, 0x0100, 0x21fb583f ) /* dots */
 
-	ROM_REGION(0x0160)	/* PROMs */
+	ROM_REGIONX( 0x0160, REGION_PROMS )
 	ROM_LOAD( "2.bpr",        0x0000, 0x0020, 0x26f42e6f ) /* palette */
 	ROM_LOAD( "3.bpr",        0x0020, 0x0100, 0x4aecc0c8 ) /* loookup table */
 	ROM_LOAD( "7a.bpr",       0x0120, 0x0020, 0x48c8f094 ) /* ?? */
@@ -526,7 +526,7 @@ ROM_START( jungler )
 	/* 1000-1fff empty for my convenience */
 	ROM_LOAD( "82s129.10g",   0x2000, 0x0100, 0x2ef89356 ) /* dots */
 
-	ROM_REGION(0x0160)	/* PROMs */
+	ROM_REGIONX( 0x0160, REGION_PROMS )
 	ROM_LOAD( "18s030.8b",    0x0000, 0x0020, 0x55a7e6d1 ) /* palette */
 	ROM_LOAD( "tbp24s10.9d",  0x0020, 0x0100, 0xd223f7b8 ) /* loookup table */
 	ROM_LOAD( "18s030.7a",    0x0120, 0x0020, 0x8f574815 ) /* ?? */
@@ -549,7 +549,7 @@ ROM_START( junglers )
 	/* 1000-1fff empty for my convenience */
 	ROM_LOAD( "82s129.10g",   0x2000, 0x0100, 0x2ef89356 ) /* dots */
 
-	ROM_REGION(0x0160)	/* PROMs */
+	ROM_REGIONX( 0x0160, REGION_PROMS )
 	ROM_LOAD( "18s030.8b",    0x0000, 0x0020, 0x55a7e6d1 ) /* palette */
 	ROM_LOAD( "tbp24s10.9d",  0x0020, 0x0100, 0xd223f7b8 ) /* loookup table */
 	ROM_LOAD( "18s030.7a",    0x0120, 0x0020, 0x8f574815 ) /* ?? */
@@ -572,7 +572,7 @@ ROM_START( commsega )
 	ROM_LOAD( "csega6",       0x1000, 0x1000, 0xcf07fd5e )
 	ROM_LOAD( "gg3.bpr",      0x2000, 0x0100, 0xae7fd962 ) /* dots */
 
-	ROM_REGION(0x0160)	/* PROMs */
+	ROM_REGIONX( 0x0160, REGION_PROMS )
 	ROM_LOAD( "gg1.bpr",      0x0000, 0x0020, 0xf69e585a ) /* palette */
 	ROM_LOAD( "gg2.bpr",      0x0020, 0x0100, 0x0b756e30 ) /* loookup table */
 	ROM_LOAD( "gg0.bpr",      0x0120, 0x0020, 0x48c8f094 ) /* ?? */
@@ -710,7 +710,7 @@ static void commsega_hisave(void)
 
 
 
-struct GameDriver locomotn_driver =
+struct GameDriver driver_locomotn =
 {
 	__FILE__,
 	0,
@@ -723,23 +723,23 @@ struct GameDriver locomotn_driver =
 	&locomotn_machine_driver,
 	0,
 
-	locomotn_rom,
+	rom_locomotn,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	locomotn_input_ports,
+	input_ports_locomotn,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	locomotn_hiload, locomotn_hisave
 };
 
-struct GameDriver gutangtn_driver =
+struct GameDriver driver_gutangtn =
 {
 	__FILE__,
-	&locomotn_driver,
+	&driver_locomotn,
 	"gutangtn",
 	"Guttong Gottong",
 	"1982",
@@ -749,23 +749,23 @@ struct GameDriver gutangtn_driver =
 	&locomotn_machine_driver,
 	0,
 
-	gutangtn_rom,
+	rom_gutangtn,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	locomotn_input_ports,
+	input_ports_locomotn,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	locomotn_hiload, locomotn_hisave
 };
 
-struct GameDriver cottong_driver =
+struct GameDriver driver_cottong =
 {
 	__FILE__,
-	&locomotn_driver,
+	&driver_locomotn,
 	"cottong",
 	"Cotocoto Cottong",
 	"1982",
@@ -775,20 +775,20 @@ struct GameDriver cottong_driver =
 	&locomotn_machine_driver,
 	0,
 
-	cottong_rom,
+	rom_cottong,
 	0, 0,
 	0,
 	0, /* sound_prom */
 
-	locomotn_input_ports,
+	input_ports_locomotn,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	locomotn_hiload, locomotn_hisave
 };
 
-struct GameDriver jungler_driver =
+struct GameDriver driver_jungler =
 {
 	__FILE__,
 	0,
@@ -801,23 +801,23 @@ struct GameDriver jungler_driver =
 	&jungler_machine_driver,
 	jungler_init,
 
-	jungler_rom,
+	rom_jungler,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	jungler_input_ports,
+	input_ports_jungler,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	jungler_hiload, jungler_hisave
 };
 
-struct GameDriver junglers_driver =
+struct GameDriver driver_junglers =
 {
 	__FILE__,
-	&jungler_driver,
+	&driver_jungler,
 	"junglers",
 	"Jungler (Stern)",
 	"1981",
@@ -827,20 +827,20 @@ struct GameDriver junglers_driver =
 	&jungler_machine_driver,
 	jungler_init,
 
-	junglers_rom,
+	rom_junglers,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	jungler_input_ports,
+	input_ports_jungler,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	jungler_hiload, jungler_hisave
 };
 
-struct GameDriver commsega_driver =
+struct GameDriver driver_commsega =
 {
 	__FILE__,
 	0,
@@ -853,14 +853,14 @@ struct GameDriver commsega_driver =
 	&commsega_machine_driver,
 	0,
 
-	commsega_rom,
+	rom_commsega,
 	0, 0,
 	0,
 	0, /* sound_prom */
 
-	commsega_input_ports,
+	input_ports_commsega,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	commsega_hiload, commsega_hisave

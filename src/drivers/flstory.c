@@ -147,7 +147,7 @@ static struct MemoryWriteAddress m68705_writemem[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( flstory )
 	PORT_START      /* D800: DSW0 */
 	PORT_DIPNAME(0x03, 0x00, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(   0x00, "30000 100000" )
@@ -409,7 +409,7 @@ static void patch(void)
 	Machine->memory_region[Machine->drv->cpu[2].memory_region][0x2c0] = 0x6f;
 }
 
-struct GameDriver flstory_driver =
+struct GameDriver driver_flstory =
 {
 	__FILE__,
 	0,
@@ -418,19 +418,19 @@ struct GameDriver flstory_driver =
 	"1985",
 	"Taito",
 	"Chris Moore",
-	GAME_NOT_WORKING,
+	0,
 	&machine_driver,
 	0,
 
-	flstory_rom,
+	rom_flstory,
 	patch, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_flstory,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
 
 	0, 0
 };

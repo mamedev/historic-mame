@@ -4,10 +4,6 @@ Irem "M62" system
 
 There's two crystals on Kid Kiki. 24.00 MHz and 3.579545 MHz for sound
 
-TODO:
-- In kungfum, the top portion of the screen should have priority over sprites.
-  This was implemented before I merged the driver with this one.
-
 **************************************************************************/
 
 #include "driver.h"
@@ -495,7 +491,7 @@ static struct IOWritePort kidniki_writeport[] =
 	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) ) \
 
 
-INPUT_PORTS_START( kungfum_input_ports )
+INPUT_PORTS_START( kungfum )
 	PORT_START	/* IN0 */
 	IN0_PORT
 
@@ -548,7 +544,7 @@ INPUT_PORTS_START( kungfum_input_ports )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( battroad_input_ports )
+INPUT_PORTS_START( battroad )
 	PORT_START	/* IN0 */
 	IN0_PORT
 
@@ -599,7 +595,7 @@ INPUT_PORTS_START( battroad_input_ports )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( ldrun_input_ports )
+INPUT_PORTS_START( ldrun )
 	PORT_START	/* IN0 */
 	IN0_PORT
 
@@ -650,7 +646,7 @@ INPUT_PORTS_START( ldrun_input_ports )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( ldrun2_input_ports )
+INPUT_PORTS_START( ldrun2 )
 	PORT_START	/* IN0 */
 	IN0_PORT
 
@@ -702,7 +698,7 @@ INPUT_PORTS_START( ldrun2_input_ports )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( ldrun3_input_ports )
+INPUT_PORTS_START( ldrun3 )
 	PORT_START	/* IN0 */
 	IN0_PORT
 
@@ -754,7 +750,7 @@ INPUT_PORTS_START( ldrun3_input_ports )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( ldrun4_input_ports )
+INPUT_PORTS_START( ldrun4 )
 	PORT_START	/* IN0 */
 	IN0_PORT
 
@@ -807,7 +803,7 @@ INPUT_PORTS_START( ldrun4_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( lotlot_input_ports )
+INPUT_PORTS_START( lotlot )
 	PORT_START	/* IN0 */
 	IN0_PORT
 
@@ -857,7 +853,7 @@ INPUT_PORTS_START( lotlot_input_ports )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( kidniki_input_ports )
+INPUT_PORTS_START( kidniki )
 	PORT_START
 	IN0_PORT
 
@@ -907,7 +903,7 @@ INPUT_PORTS_START( kidniki_input_ports )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( spelunkr_input_ports )
+INPUT_PORTS_START( spelunkr )
 	PORT_START	/* IN0 */
 	IN0_PORT
 
@@ -957,7 +953,7 @@ INPUT_PORTS_START( spelunkr_input_ports )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( spelunk2_input_ports )
+INPUT_PORTS_START( spelunk2 )
 	PORT_START	/* IN0 */
 	IN0_PORT
 
@@ -1267,7 +1263,7 @@ ROM_START( kungfum )
 	ROM_LOAD( "b-4d-.bin",    0x1a000, 0x2000, 0x6a70615f )
 	ROM_LOAD( "b-4a-.bin",    0x1c000, 0x2000, 0x6189d626 )
 
-	ROM_REGION(0x0720)	/* color PROMs */
+	ROM_REGIONX( 0x0720, REGION_PROMS )
 	ROM_LOAD( "g-1j-.bin",    0x0000, 0x0100, 0x668e6bca )	/* character palette red component */
 	ROM_LOAD( "b-1m-.bin",    0x0100, 0x0100, 0x76c05a9c )	/* sprite palette red component */
 	ROM_LOAD( "g-1f-.bin",    0x0200, 0x0100, 0x964b6495 )	/* character palette green component */
@@ -1306,7 +1302,46 @@ ROM_START( kungfud )
 	ROM_LOAD( "b-4d-.bin",    0x1a000, 0x2000, 0x6a70615f )
 	ROM_LOAD( "b-4a-.bin",    0x1c000, 0x2000, 0x6189d626 )
 
-	ROM_REGION(0x0720)	/* color PROMs */
+	ROM_REGIONX( 0x0720, REGION_PROMS )
+	ROM_LOAD( "g-1j-.bin",    0x0000, 0x0100, 0x668e6bca )	/* character palette red component */
+	ROM_LOAD( "b-1m-.bin",    0x0100, 0x0100, 0x76c05a9c )	/* sprite palette red component */
+	ROM_LOAD( "g-1f-.bin",    0x0200, 0x0100, 0x964b6495 )	/* character palette green component */
+	ROM_LOAD( "b-1n-.bin",    0x0300, 0x0100, 0x23f06b99 )	/* sprite palette green component */
+	ROM_LOAD( "g-1h-.bin",    0x0400, 0x0100, 0x550563e1 )	/* character palette blue component */
+	ROM_LOAD( "b-1l-.bin",    0x0500, 0x0100, 0x35e45021 )	/* sprite palette blue component */
+	ROM_LOAD( "b-5f-.bin",    0x0600, 0x0020, 0x7a601c3d )	/* sprite height, one entry per 32 */
+															/* sprites. Used at run time! */
+	ROM_LOAD( "b-6f-.bin",    0x0620, 0x0100, 0x82c20d12 )	/* video timing? - same as battroad */
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU (6803) */
+	ROM_LOAD( "a-3e-.bin",    0xa000, 0x2000, 0x58e87ab0 )	/* samples (ADPCM 4-bit) */
+	ROM_LOAD( "a-3f-.bin",    0xc000, 0x2000, 0xc81e31ea )	/* samples (ADPCM 4-bit) */
+	ROM_LOAD( "a-3h-.bin",    0xe000, 0x2000, 0xd99fb995 )
+ROM_END
+
+ROM_START( spaltanx )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "a-4e-c-j.bin", 0x0000, 0x4000, 0x32a0a9a6 )
+	ROM_LOAD( "a-4d-c-j.bin", 0x4000, 0x4000, 0x3173ea78 )
+
+	ROM_REGION_DISPOSE(0x1e000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "g-4c-a-j.bin", 0x00000, 0x2000, 0x8af9c5a6 )	/* characters */
+	ROM_LOAD( "g-4d-a-j.bin", 0x02000, 0x2000, 0xb8300c72 )
+	ROM_LOAD( "g-4e-a-j.bin", 0x04000, 0x2000, 0xb50429cd )
+	ROM_LOAD( "b-4k-.bin",    0x06000, 0x2000, 0x16fb5150 )	/* sprites */
+	ROM_LOAD( "b-4f-.bin",    0x08000, 0x2000, 0x67745a33 )
+	ROM_LOAD( "b-4l-.bin",    0x0a000, 0x2000, 0xbd1c2261 )
+	ROM_LOAD( "b-4h-.bin",    0x0c000, 0x2000, 0x8ac5ed3a )
+	ROM_LOAD( "b-3n-.bin",    0x0e000, 0x2000, 0x28a213aa )
+	ROM_LOAD( "b-4n-.bin",    0x10000, 0x2000, 0xd5228df3 )
+	ROM_LOAD( "b-4m-.bin",    0x12000, 0x2000, 0xb16de4f2 )
+	ROM_LOAD( "b-3m-.bin",    0x14000, 0x2000, 0xeba0d66b )
+	ROM_LOAD( "b-4c-.bin",    0x16000, 0x2000, 0x01298885 )
+	ROM_LOAD( "b-4e-.bin",    0x18000, 0x2000, 0xc77b87d4 )
+	ROM_LOAD( "b-4d-.bin",    0x1a000, 0x2000, 0x6a70615f )
+	ROM_LOAD( "b-4a-.bin",    0x1c000, 0x2000, 0x6189d626 )
+
+	ROM_REGIONX( 0x0720, REGION_PROMS )
 	ROM_LOAD( "g-1j-.bin",    0x0000, 0x0100, 0x668e6bca )	/* character palette red component */
 	ROM_LOAD( "b-1m-.bin",    0x0100, 0x0100, 0x76c05a9c )	/* sprite palette red component */
 	ROM_LOAD( "g-1f-.bin",    0x0200, 0x0100, 0x964b6495 )	/* character palette green component */
@@ -1345,7 +1380,7 @@ ROM_START( kungfub )
 	ROM_LOAD( "b-4d-.bin",    0x1a000, 0x2000, 0x6a70615f )
 	ROM_LOAD( "b-4a-.bin",    0x1c000, 0x2000, 0x6189d626 )
 
-	ROM_REGION(0x0720)	/* color PROMs */
+	ROM_REGIONX( 0x0720, REGION_PROMS )
 	ROM_LOAD( "g-1j-.bin",    0x0000, 0x0100, 0x668e6bca )	/* character palette red component */
 	ROM_LOAD( "b-1m-.bin",    0x0100, 0x0100, 0x76c05a9c )	/* sprite palette red component */
 	ROM_LOAD( "g-1f-.bin",    0x0200, 0x0100, 0x964b6495 )	/* character palette green component */
@@ -1384,7 +1419,7 @@ ROM_START( kungfub2 )
 	ROM_LOAD( "b-4d-.bin",    0x1a000, 0x2000, 0x6a70615f )
 	ROM_LOAD( "b-4a-.bin",    0x1c000, 0x2000, 0x6189d626 )
 
-	ROM_REGION(0x0720)	/* color PROMs */
+	ROM_REGIONX( 0x0720, REGION_PROMS )
 	ROM_LOAD( "g-1j-.bin",    0x0000, 0x0100, 0x668e6bca )	/* character palette red component */
 	ROM_LOAD( "b-1m-.bin",    0x0100, 0x0100, 0x76c05a9c )	/* sprite palette red component */
 	ROM_LOAD( "g-1f-.bin",    0x0200, 0x0100, 0x964b6495 )	/* character palette green component */
@@ -1427,7 +1462,7 @@ ROM_START( battroad )
 	ROM_LOAD( "br-c-1b",	0x18000, 0x2000, 0x8088911e )	/* characters */
 	ROM_LOAD( "br-c-1c",	0x1a000, 0x2000, 0x3d78b653 )
 
-	ROM_REGION(0x0740)	/* color proms */
+	ROM_REGIONX( 0x0740, REGION_PROMS )
 	ROM_LOAD( "br-c-3j",     0x0000, 0x0100, 0xaceaed79 )	/* tile palette red component */
 	ROM_LOAD( "br-b-1m",     0x0100, 0x0100, 0x3bd30c7d )	/* sprite palette red component */
 	ROM_LOAD( "br-c-3l",     0x0200, 0x0100, 0x7cf6f380 )	/* tile palette green component */
@@ -1460,7 +1495,7 @@ ROM_START( ldrun )
 	ROM_LOAD( "lr-b-3n",      0x8000, 0x2000, 0x55154154 )
 	ROM_LOAD( "lr-b-4c",      0xa000, 0x2000, 0x924e34d0 )
 
-	ROM_REGION(0x0720)	/* color proms */
+	ROM_REGIONX( 0x0720, REGION_PROMS )
 	ROM_LOAD( "lr-e-3m",      0x0000, 0x0100, 0x53040416 )	/* character palette red component */
 	ROM_LOAD( "lr-b-1m",      0x0100, 0x0100, 0x4bae1c25 )	/* sprite palette red component */
 	ROM_LOAD( "lr-e-3l",      0x0200, 0x0100, 0x67786037 )	/* character palette green component */
@@ -1491,7 +1526,7 @@ ROM_START( ldruna )
 	ROM_LOAD( "lr-b-3n",      0x8000, 0x2000, 0x55154154 )
 	ROM_LOAD( "lr-b-4c",      0xa000, 0x2000, 0x924e34d0 )
 
-	ROM_REGION(0x0720)	/* color proms */
+	ROM_REGIONX( 0x0720, REGION_PROMS )
 	ROM_LOAD( "lr-e-3m",      0x0000, 0x0100, 0x53040416 )	/* character palette red component */
 	ROM_LOAD( "lr-b-1m",      0x0100, 0x0100, 0x4bae1c25 )	/* sprite palette red component */
 	ROM_LOAD( "lr-e-3l",      0x0200, 0x0100, 0x67786037 )	/* character palette green component */
@@ -1527,7 +1562,7 @@ ROM_START( ldrun2 )
 	ROM_LOAD( "lr2-b-4c",     0x0e000, 0x2000, 0xfbe6d24c )
 	ROM_LOAD( "lr2-b-4e",     0x10000, 0x2000, 0x75172d1f )
 
-	ROM_REGION(0x0720)	/* color proms */
+	ROM_REGIONX( 0x0720, REGION_PROMS )
 	ROM_LOAD( "lr2-h-3m",     0x0000, 0x0100, 0x2c5d834b )	/* character palette red component */
 	ROM_LOAD( "lr2-b-1m",     0x0100, 0x0100, 0x4ec9bb3d )	/* sprite palette red component */
 	ROM_LOAD( "lr2-h-3l",     0x0200, 0x0100, 0x3ae69aca )	/* character palette green component */
@@ -1558,7 +1593,7 @@ ROM_START( ldrun3 )
 	ROM_LOAD( "lr3-b-3n",     0x10000, 0x4000, 0xeab7ad91 )
 	ROM_LOAD( "lr3-b-4c",     0x14000, 0x4000, 0x1a460a46 )
 
-	ROM_REGION(0x0820)	/* color proms */
+	ROM_REGIONX( 0x0820, REGION_PROMS )
 	ROM_LOAD( "lr3-n-2l",     0x0000, 0x0100, 0xe880b86b ) /* character palette red component */
 	ROM_LOAD( "lr3-b-1m",     0x0100, 0x0100, 0xf02d7167 ) /* sprite palette red component */
 	ROM_LOAD( "lr3-n-2k",     0x0200, 0x0100, 0x047ee051 ) /* character palette green component */
@@ -1592,7 +1627,7 @@ ROM_START( ldrun4 )
 	ROM_LOAD( "lr4-b-4c",     0x1c000, 0x4000, 0x82c53669 )
 	ROM_LOAD( "lr4-b-4e",     0x20000, 0x4000, 0x767a1352 )
 
-	ROM_REGION(0x0820)	/* color proms */
+	ROM_REGIONX( 0x0820, REGION_PROMS )
 	ROM_LOAD( "lr4-v-1m",     0x0000, 0x0100, 0xfe51bf1d ) /* character palette red component */
 	ROM_LOAD( "lr4-b-1m",     0x0100, 0x0100, 0x5d8d17d0 ) /* sprite palette red component */
 	ROM_LOAD( "lr4-v-1n",     0x0200, 0x0100, 0xda0658e5 ) /* character palette green component */
@@ -1625,7 +1660,7 @@ ROM_START( lotlot )
 	ROM_LOAD( "lot-k-4l",     0x0e000, 0x2000, 0xf98dca1f )
 	ROM_LOAD( "lot-k-4n",     0x10000, 0x2000, 0xf0cd76a5 )
 
-	ROM_REGION(0x0e20)	/* color proms */
+	ROM_REGIONX( 0x0e20, REGION_PROMS )
 	ROM_LOAD( "lot-k-2f",     0x0000, 0x0100, 0xb820a05e ) /* tile palette red component */
 	ROM_LOAD( "lot-b-1m",     0x0100, 0x0100, 0xc146461d ) /* sprite palette red component */
 	ROM_LOAD( "lot-k-2l",     0x0200, 0x0100, 0xac3e230d ) /* character palette red component */
@@ -1673,7 +1708,7 @@ ROM_START( kidniki )
 	ROM_LOAD( "dr09.4m",      0x50000, 0x4000, 0x17df6f95 )
 	ROM_LOAD( "dr10.4n",      0x54000, 0x4000, 0x820ce252 )
 
-	ROM_REGION( 0x0920 ) /* color proms */
+	ROM_REGIONX( 0x0920, REGION_PROMS )
 	ROM_LOAD( "dr25.3f",      0x0000, 0x0100, 0x8e91430b )	/* character palette red component */
 	ROM_LOAD( "dr30.1m",      0x0100, 0x0100, 0x28c73263 )	/* sprite palette red component */
 	ROM_LOAD( "dr26.3h",      0x0200, 0x0100, 0xb563b93f )	/* character palette green component */
@@ -1687,6 +1722,53 @@ ROM_START( kidniki )
 
 	ROM_REGION( 0x10000 )	/* sound CPU */
 	ROM_LOAD( "dr00.3a",      0x4000, 0x04000, 0x458309f7 )
+	ROM_LOAD( "dr01.3cd",     0x8000, 0x04000, 0xe66897bd )
+	ROM_LOAD( "dr02.3f",      0xc000, 0x04000, 0xf9e31e26 ) /* 6803 code */
+ROM_END
+
+
+ROM_START( yanchamr )
+	ROM_REGION( 0x30000 )	/* main CPU */
+	ROM_LOAD( "ky_a-4e-.bin", 0x00000, 0x04000, 0xc73ad2d6 )
+	ROM_LOAD( "ky_a-4d-.bin", 0x04000, 0x04000, 0x401af828 )
+	ROM_LOAD( "ky_t-8k-.bin", 0x10000, 0x08000, 0xe967de88 )	/* banked at 8000-9fff */
+	ROM_LOAD( "ky_t-8l-.bin", 0x18000, 0x08000, 0xa929110b )
+/*	ROM_CONTINUE(             0x28000, 0x08000 ) */
+
+	ROM_REGION_DISPOSE(0x58000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ky_t-2c-.bin", 0x00000, 0x8000, 0xcb9761fc )	/* tiles */
+	ROM_LOAD( "ky_t-2d-.bin", 0x08000, 0x8000, 0x59732741 )
+	ROM_LOAD( "ky_t-2a-.bin", 0x10000, 0x8000, 0x0370fd82 )
+	ROM_LOAD( "ky_b-4k-.bin", 0x18000, 0x4000, 0x263a9d10 )	/* sprites */
+	ROM_LOAD( "ky_b-4f-.bin", 0x1c000, 0x4000, 0x86e3d4a8 )
+	ROM_LOAD( "ky_b-4l-.bin", 0x20000, 0x4000, 0x19fa7558 )
+	ROM_LOAD( "ky_b-4h-.bin", 0x24000, 0x4000, 0x93e6665c )
+	ROM_LOAD( "ky_b-3n-.bin", 0x28000, 0x4000, 0x0287c525 )
+	ROM_LOAD( "ky_b-4n-.bin", 0x2c000, 0x4000, 0x764946e0 )
+	ROM_LOAD( "ky_b-4m-.bin", 0x30000, 0x4000, 0xeced5db9 )
+	ROM_LOAD( "ky_b-3m-.bin", 0x34000, 0x4000, 0xbe6cee44 )
+	ROM_LOAD( "ky_b-4c-.bin", 0x38000, 0x4000, 0x84d6b65d )
+	ROM_LOAD( "ky_b-4e-.bin", 0x3c000, 0x4000, 0xf91f9273 )
+	ROM_LOAD( "ky_b-4d-.bin", 0x40000, 0x4000, 0xa2fc15f0 )
+	ROM_LOAD( "ky_b-4a-.bin", 0x48000, 0x4000, 0xff2b9c8a )
+	ROM_LOAD( "ky_t-4l-.bin", 0x4c000, 0x4000, 0x1d0a9253 )	/* chars */
+	ROM_LOAD( "ky_t-4m-.bin", 0x50000, 0x4000, 0x4075c396 )
+	ROM_LOAD( "ky_t-4n-.bin", 0x54000, 0x4000, 0x7564f2ff )
+
+	ROM_REGIONX( 0x0920, REGION_PROMS )
+	ROM_LOAD( "dr25.3f",      0x0000, 0x0100, 0x8e91430b )	/* character palette red component */
+	ROM_LOAD( "dr30.1m",      0x0100, 0x0100, 0x28c73263 )	/* sprite palette red component */
+	ROM_LOAD( "dr26.3h",      0x0200, 0x0100, 0xb563b93f )	/* character palette green component */
+	ROM_LOAD( "dr31.1n",      0x0300, 0x0100, 0x3529210e )	/* sprite palette green component */
+	ROM_LOAD( "dr27.3j",      0x0400, 0x0100, 0x70d668ef )	/* character palette blue component */
+	ROM_LOAD( "dr29.1l",      0x0500, 0x0100, 0x1173a754 )	/* sprite palette blue component */
+	ROM_LOAD( "dr32.5p",      0x0600, 0x0020, 0x11cd1f2e )	/* sprite height, one entry per 32 */
+	                                                        /* sprites. Used at run time! */
+	ROM_LOAD( "dr28.8f",      0x0620, 0x0200, 0x6cef0fbd )	/* unknown */
+	ROM_LOAD( "dr33.6f",      0x0820, 0x0100, 0x34d88d3c )	/* video timing? - common to the other games */
+
+	ROM_REGION( 0x10000 )	/* sound CPU */
+	ROM_LOAD( "ky_a-3a-.bin", 0x4000, 0x04000, 0xcb365f3b )
 	ROM_LOAD( "dr01.3cd",     0x8000, 0x04000, 0xe66897bd )
 	ROM_LOAD( "dr02.3f",      0xc000, 0x04000, 0xf9e31e26 ) /* 6803 code */
 ROM_END
@@ -1715,7 +1797,7 @@ ROM_START( spelunkr )
 	ROM_LOAD( "sprm.4l",      0x34000, 0x4000, 0x239f2cd4 )	/* first and second half identical, */
 	ROM_LOAD( "sprm.4m",      0x38000, 0x4000, 0xd6d07d70 )	/* second half not used by the driver */
 
-	ROM_REGION( 0x0920 ) /* color proms */
+	ROM_REGIONX( 0x0920, REGION_PROMS )
 	ROM_LOAD( "sprm.2k",      0x0000, 0x0100, 0xfd8fa991 )	/* character palette red component */
 	ROM_LOAD( "sprb.1m",      0x0100, 0x0100, 0x8d8cccad )	/* sprite palette red component */
 	ROM_LOAD( "sprm.2j",      0x0200, 0x0100, 0x0e3890b4 )	/* character palette blue component */
@@ -1754,7 +1836,7 @@ ROM_START( spelunk2 )
 	ROM_LOAD( "sp2-r.4m",     0x34000, 0x4000, 0xe1368b61 )	/* first and second half identical, */
 	ROM_LOAD( "sp2-r.4p",     0x38000, 0x4000, 0xfc138e13 )	/* second half not used by the driver */
 
-	ROM_REGION( 0x0a20 ) /* color proms */
+	ROM_REGIONX( 0x0a20, REGION_PROMS )
 	ROM_LOAD( "sp2-r.1k",     0x0000, 0x0200, 0x31c1bcdc )	/* chars red and green component */
 	ROM_LOAD( "sp2-r.2k",     0x0200, 0x0100, 0x1cf5987e )	/* chars blue component */
 	ROM_LOAD( "sp2-r.2j",     0x0300, 0x0100, 0x1acbe2a5 )	/* chars blue component */
@@ -2065,7 +2147,7 @@ static void lotlot_hisave(void)
 
 
 
-struct GameDriver kungfum_driver =
+struct GameDriver driver_kungfum =
 {
 	__FILE__,
 	0,
@@ -2078,23 +2160,23 @@ struct GameDriver kungfum_driver =
 	&kungfum_machine_driver,
 	0,
 
-	kungfum_rom,
+	rom_kungfum,
 	0, 0,
 	0,
 	0,
 
-	kungfum_input_ports,
+	input_ports_kungfum,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	kungfum_hiload, kungfum_hisave
 };
 
-struct GameDriver kungfud_driver =
+struct GameDriver driver_kungfud =
 {
 	__FILE__,
-	&kungfum_driver,
+	&driver_kungfum,
 	"kungfud",
 	"Kung Fu Master (Data East)",
 	"1984",
@@ -2104,23 +2186,49 @@ struct GameDriver kungfud_driver =
 	&kungfum_machine_driver,
 	0,
 
-	kungfud_rom,
+	rom_kungfud,
 	0, 0,
 	0,
 	0,
 
-	kungfum_input_ports,
+	input_ports_kungfum,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	kungfum_hiload, kungfum_hisave
 };
 
-struct GameDriver kungfub_driver =
+struct GameDriver driver_spaltanx =
 {
 	__FILE__,
-	&kungfum_driver,
+	&driver_kungfum,
+	"spaltanx",
+	"Spaltan X (Japan)",
+	"1984",
+	"Irem",
+	"Mirko Buffoni\nNicola Salmoria\nIshmair\nAaron Giles (sound)",
+	0,
+	&kungfum_machine_driver,
+	0,
+
+	rom_spaltanx,
+	0, 0,
+	0,
+	0,
+
+	input_ports_kungfum,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	kungfum_hiload, kungfum_hisave
+};
+
+struct GameDriver driver_kungfub =
+{
+	__FILE__,
+	&driver_kungfum,
 	"kungfub",
 	"Kung Fu Master (bootleg set 1)",
 	"1984",
@@ -2130,23 +2238,23 @@ struct GameDriver kungfub_driver =
 	&kungfum_machine_driver,
 	0,
 
-	kungfub_rom,
+	rom_kungfub,
 	0, 0,
 	0,
 	0,
 
-	kungfum_input_ports,
+	input_ports_kungfum,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	kungfum_hiload, kungfum_hisave
 };
 
-struct GameDriver kungfub2_driver =
+struct GameDriver driver_kungfub2 =
 {
 	__FILE__,
-	&kungfum_driver,
+	&driver_kungfum,
 	"kungfub2",
 	"Kung Fu Master (bootleg set 2)",
 	"1984",
@@ -2156,20 +2264,20 @@ struct GameDriver kungfub2_driver =
 	&kungfum_machine_driver,
 	0,
 
-	kungfub2_rom,
+	rom_kungfub2,
 	0, 0,
 	0,
 	0,
 
-	kungfum_input_ports,
+	input_ports_kungfum,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	kungfum_hiload, kungfum_hisave
 };
 
-struct GameDriver battroad_driver =
+struct GameDriver driver_battroad =
 {
 	__FILE__,
 	0,
@@ -2182,20 +2290,20 @@ struct GameDriver battroad_driver =
 	&battroad_machine_driver,
 	0,
 
-	battroad_rom,
+	rom_battroad,
 	0, 0,
 	0,
 	0,
 
-	battroad_input_ports,
+	input_ports_battroad,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	battroad_hiload, battroad_hisave
 };
 
-struct GameDriver ldrun_driver =
+struct GameDriver driver_ldrun =
 {
 	__FILE__,
 	0,
@@ -2208,23 +2316,23 @@ struct GameDriver ldrun_driver =
 	&ldrun_machine_driver,
 	0,
 
-	ldrun_rom,
+	rom_ldrun,
 	0, 0,
 	0,
 	0,
 
-	ldrun_input_ports,
+	input_ports_ldrun,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	ldrun_hiload, ldrun_hisave
 };
 
-struct GameDriver ldruna_driver =
+struct GameDriver driver_ldruna =
 {
 	__FILE__,
-	&ldrun_driver,
+	&driver_ldrun,
 	"ldruna",
 	"Lode Runner (set 2)",
 	"1984",
@@ -2234,20 +2342,20 @@ struct GameDriver ldruna_driver =
 	&ldrun_machine_driver,
 	0,
 
-	ldruna_rom,
+	rom_ldruna,
 	0, 0,
 	0,
 	0,
 
-	ldrun_input_ports,
+	input_ports_ldrun,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	ldrun_hiload, ldrun_hisave
 };
 
-struct GameDriver ldrun2_driver =
+struct GameDriver driver_ldrun2 =
 {
 	__FILE__,
 	0,
@@ -2261,20 +2369,20 @@ struct GameDriver ldrun2_driver =
 	&ldrun2_machine_driver,
 	0,
 
-	ldrun2_rom,
+	rom_ldrun2,
 	0, 0,
 	0,
 	0,
 
-	ldrun2_input_ports,
+	input_ports_ldrun2,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	ldrun2_hiload, ldrun2_hisave
 };
 
-struct GameDriver ldrun3_driver =
+struct GameDriver driver_ldrun3 =
 {
 	__FILE__,
 	0,
@@ -2287,20 +2395,20 @@ struct GameDriver ldrun3_driver =
 	&ldrun3_machine_driver,
 	0,
 
-	ldrun3_rom,
+	rom_ldrun3,
 	0, 0,
 	0,
 	0,
 
-	ldrun3_input_ports,
+	input_ports_ldrun3,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	ldrun2_hiload, ldrun2_hisave
 };
 
-struct GameDriver ldrun4_driver =
+struct GameDriver driver_ldrun4 =
 {
 	__FILE__,
 	0,
@@ -2313,20 +2421,20 @@ struct GameDriver ldrun4_driver =
 	&ldrun4_machine_driver,
 	0,
 
-	ldrun4_rom,
+	rom_ldrun4,
 	0, 0,
 	0,
 	0,
 
-	ldrun4_input_ports,
+	input_ports_ldrun4,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	ldrun4_hiload, ldrun4_hisave
 };
 
-struct GameDriver lotlot_driver =
+struct GameDriver driver_lotlot =
 {
 	__FILE__,
 	0,
@@ -2339,25 +2447,25 @@ struct GameDriver lotlot_driver =
 	&lotlot_machine_driver,
 	0,
 
-	lotlot_rom,
+	rom_lotlot,
 	0, 0,
 	0,
 	0,
 
-	lotlot_input_ports,
+	input_ports_lotlot,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	lotlot_hiload, lotlot_hisave
 };
 
-struct GameDriver kidniki_driver =
+struct GameDriver driver_kidniki =
 {
 	__FILE__,
 	0,
 	"kidniki",
-	"Kid Niki - Radical Ninja",
+	"Kid Niki - Radical Ninja (US)",
 	"1986",
 	"Irem (Data East USA license)",
 	"Phil Stroffolino\nAaron Giles (sound)",
@@ -2365,20 +2473,46 @@ struct GameDriver kidniki_driver =
 	&kidniki_machine_driver,
 	0,
 
-	kidniki_rom,
+	rom_kidniki,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	kidniki_input_ports,
+	input_ports_kidniki,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	kidniki_hiload, kidniki_hisave
 };
 
-struct GameDriver spelunkr_driver =
+struct GameDriver driver_yanchamr =
+{
+	__FILE__,
+	&driver_kidniki,
+	"yanchamr",
+	"Kaiketsu Yanchamaru (Japan)",
+	"1986",
+	"Irem",
+	"Phil Stroffolino\nAaron Giles (sound)",
+	0,
+	&kidniki_machine_driver,
+	0,
+
+	rom_yanchamr,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports_kidniki,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+
+	kidniki_hiload, kidniki_hisave
+};
+
+struct GameDriver driver_spelunkr =
 {
 	__FILE__,
 	0,
@@ -2391,20 +2525,20 @@ struct GameDriver spelunkr_driver =
 	&spelunkr_machine_driver,
 	0,
 
-	spelunkr_rom,
+	rom_spelunkr,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	spelunkr_input_ports,
+	input_ports_spelunkr,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	0, 0
 };
 
-struct GameDriver spelunk2_driver =
+struct GameDriver driver_spelunk2 =
 {
 	__FILE__,
 	0,
@@ -2417,14 +2551,14 @@ struct GameDriver spelunk2_driver =
 	&spelunk2_machine_driver,
 	0,
 
-	spelunk2_rom,
+	rom_spelunk2,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	spelunk2_input_ports,
+	input_ports_spelunk2,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	spelunk2_hiload, spelunk2_hisave

@@ -486,7 +486,7 @@ static struct IOWritePort sound_writeport[] =
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNUSED ) /* Button 3 */ \
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_START2 )
 
-INPUT_PORTS_START( sstingry_input_ports )
+INPUT_PORTS_START( sstingry )
 	PORT_START	/* Player 1 controls */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
@@ -522,7 +522,7 @@ INPUT_PORTS_START( sstingry_input_ports )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( timesold_input_ports )
+INPUT_PORTS_START( timesold )
 	ALPHA68K_PLAYER1_INPUT
 	ALPHA68K_PLAYER2_INPUT
 
@@ -580,7 +580,7 @@ INPUT_PORTS_START( timesold_input_ports )
 	PORT_ANALOGX( 0xff, 0x00, IPT_DIAL | IPF_REVERSE | IPF_PLAYER2, 25, 8, 0, 0, 0, KEYCODE_N, KEYCODE_M, 0, 0 )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( skysoldr_input_ports )
+INPUT_PORTS_START( skysoldr )
 	ALPHA68K_PLAYER1_INPUT
 	ALPHA68K_PLAYER2_INPUT
 
@@ -638,7 +638,7 @@ INPUT_PORTS_START( skysoldr_input_ports )
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( goldmedl_input_ports )
+INPUT_PORTS_START( goldmedl )
 	PORT_START	/* 3 buttons per player, no joystick */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
@@ -713,7 +713,7 @@ INPUT_PORTS_START( goldmedl_input_ports )
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( skyadvnt_input_ports )
+INPUT_PORTS_START( skyadvnt )
 	ALPHA68K_PLAYER1_INPUT
 	ALPHA68K_PLAYER2_INPUT
 
@@ -784,7 +784,7 @@ INPUT_PORTS_START( skyadvnt_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( gangwars_input_ports )
+INPUT_PORTS_START( gangwars )
 	PORT_START	/* Player 1 controls */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
@@ -872,7 +872,7 @@ INPUT_PORTS_START( gangwars_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( sbasebal_input_ports )
+INPUT_PORTS_START( sbasebal )
 	PORT_START	/* Player 1 controls */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
@@ -1409,7 +1409,7 @@ ROM_START( kyros )
 	ROM_REGION(0x8000)	/* ADPCM samples? */
 //	ROM_LOAD( "padlem.18n", 0x000000, 0x8000, 0xffffffff )
 
-	ROM_REGION(0x300)	/* Colour proms */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 //	ROM_LOAD( "padlem.a", 0x000000, 0x100, 0xffffffff )
 //	ROM_LOAD( "padlem.b", 0x000100, 0x100, 0xffffffff )
 //	ROM_LOAD( "padlem.c", 0x000200, 0x100, 0xffffffff )
@@ -1436,7 +1436,7 @@ ROM_START( sstingry )
 	ROM_LOAD( "ss_01.rom",  0x0000, 0x04000, 0xfef09a92 )
 	ROM_LOAD( "ss_02.rom",  0x4000, 0x04000, 0xab4e8c01 )
 
-	ROM_REGION(0x300)	/* Colour proms */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "ic91", 0x000000, 0x100, 0xc3965079 )
 	ROM_LOAD( "ic92", 0x000100, 0x100, 0xe7ce1179 )
 	ROM_LOAD( "ic93", 0x000200, 0x100, 0x9af8a375 )
@@ -1466,7 +1466,7 @@ ROM_START( paddlema )
 //	ROM_REGION(0x8000)	/* ADPCM samples? */
 	ROM_LOAD( "padlem.18n", 0x000000, 0x8000, 0x06506200 )
 
-	ROM_REGION(0x300)	/* Colour proms */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "padlem.a", 0x000000, 0x100, 0xcae6bcd6 )
 	ROM_LOAD( "padlem.b", 0x000100, 0x100, 0xb6df8dcb )
 	ROM_LOAD( "padlem.c", 0x000200, 0x100, 0x39ca9b86 )
@@ -1941,7 +1941,7 @@ static void custom_memory(void)
 
 /******************************************************************************/
 
-struct GameDriver kyros_driver =
+struct GameDriver driver_kyros =
 {
 	__FILE__,
 	0,
@@ -1950,23 +1950,23 @@ struct GameDriver kyros_driver =
 	"1987",
 	"World Games Inc",
 	"Bryan McPhail",
-	GAME_NOT_WORKING,
+	0,
 	&kyros_machine_driver,
 	0,
 
-	kyros_rom,
+	rom_kyros,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	timesold_input_ports,
+	input_ports_timesold,
 
-	PROM_MEMORY_REGION(0), 0, 0,
-	ORIENTATION_ROTATE_90,
+	0, 0, 0,
+	ORIENTATION_ROTATE_90 | GAME_NOT_WORKING,
 	0, 0
 };
 
-struct GameDriver sstingry_driver =
+struct GameDriver driver_sstingry =
 {
 	__FILE__,
 	0,
@@ -1975,23 +1975,23 @@ struct GameDriver sstingry_driver =
 	"1988",
 	"SNK",
 	"Bryan McPhail",
-	GAME_NOT_WORKING,
+	0,
 	&kyros_machine_driver,
 	0,
 
-	sstingry_rom,
+	rom_sstingry,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	sstingry_input_ports,
+	input_ports_sstingry,
 
-	PROM_MEMORY_REGION(3), 0, 0,
-	ORIENTATION_ROTATE_90,
+	0, 0, 0,
+	ORIENTATION_ROTATE_90 | GAME_NOT_WORKING,
 	0, 0
 };
 
-struct GameDriver paddlema_driver =
+struct GameDriver driver_paddlema =
 {
 	__FILE__,
 	0,
@@ -2000,23 +2000,23 @@ struct GameDriver paddlema_driver =
 	"1988",
 	"SNK",
 	"Bryan McPhail",
-	GAME_NOT_WORKING,
+	0,
 	&alpha68k_I_machine_driver,
 	0,
 
-	paddlema_rom,
+	rom_paddlema,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	timesold_input_ports,
+	input_ports_timesold,
 
-	PROM_MEMORY_REGION(3), 0, 0,
-	ORIENTATION_ROTATE_90,
+	0, 0, 0,
+	ORIENTATION_ROTATE_90 | GAME_NOT_WORKING,
 	0, 0
 };
 
-struct GameDriver timesold_driver =
+struct GameDriver driver_timesold =
 {
 	__FILE__,
 	0,
@@ -2029,69 +2029,69 @@ struct GameDriver timesold_driver =
 	&alpha68k_II_machine_driver,
 	custom_memory,
 
-	timesold_rom,
+	rom_timesold,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	timesold_input_ports,
+	input_ports_timesold,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_ROTATE_90,
 	0, 0
 };
 
-struct GameDriver timesol2_driver =
+struct GameDriver driver_timesol2 =
 {
 	__FILE__,
-	&timesold_driver,
+	&driver_timesold,
 	"timesol2",
 	"Time Soldiers (Rev 1)",
 	"1987",
 	"SNK / Romstar",
 	"Bryan McPhail",
-	GAME_NOT_WORKING,
+	0,
 	&alpha68k_II_machine_driver,
 	0,
 
-	timesol2_rom,
+	rom_timesol2,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	timesold_input_ports,
+	input_ports_timesold,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_90,
+	ORIENTATION_ROTATE_90 | GAME_NOT_WORKING,
 	0, 0
 };
 
-struct GameDriver btlfield_driver =
+struct GameDriver driver_btlfield =
 {
 	__FILE__,
-	&timesold_driver,
+	&driver_timesold,
 	"btlfield",
 	"Battlefield (Japan)",
 	"1987",
 	"SNK / Romstar",
 	"Bryan McPhail",
-	GAME_NOT_WORKING,
+	0,
 	&alpha68k_II_machine_driver,
 	0,
 
-	btlfield_rom,
+	rom_btlfield,
 	btl_patch, 0,
 	0,
 	0,	/* sound_prom */
 
-	timesold_input_ports,
+	input_ports_timesold,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_90,
+	ORIENTATION_ROTATE_90 | GAME_NOT_WORKING,
 	0, 0
 };
 
-struct GameDriver skysoldr_driver =
+struct GameDriver driver_skysoldr =
 {
 	__FILE__,
 	0,
@@ -2104,19 +2104,19 @@ struct GameDriver skysoldr_driver =
 	&alpha68k_II_machine_driver,
 	custom_memory,
 
-	skysoldr_rom,
+	rom_skysoldr,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	skysoldr_input_ports,
+	input_ports_skysoldr,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_ROTATE_90,
 	0, 0
 };
 
-struct GameDriver goldmedl_driver =
+struct GameDriver driver_goldmedl =
 {
 	__FILE__,
 	0,
@@ -2125,48 +2125,48 @@ struct GameDriver goldmedl_driver =
 	"1988",
 	"SNK",
 	"Bryan McPhail",
-	GAME_NOT_WORKING,
+	0,
 	&alpha68k_II_machine_driver,
 	custom_memory,
 
-	goldmedl_rom,
+	rom_goldmedl,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	goldmedl_input_ports,
+	input_ports_goldmedl,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
 	0, 0
 };
 
-struct GameDriver goldmedb_driver =
+struct GameDriver driver_goldmedb =
 {
 	__FILE__,
-	&goldmedl_driver,
+	&driver_goldmedl,
 	"goldmedb",
 	"Gold Medalist (bootleg)",
 	"1988",
 	"bootleg",
 	"Bryan McPhail",
-	GAME_NOT_WORKING,
+	0,
 	&alpha68k_II_machine_driver,
 	custom_memory,
 
-	goldmedb_rom,
+	rom_goldmedb,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	goldmedl_input_ports,
+	input_ports_goldmedl,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
 	0, 0
 };
 
-struct GameDriver skyadvnt_driver =
+struct GameDriver driver_skyadvnt =
 {
 	__FILE__,
 	0,
@@ -2179,19 +2179,19 @@ struct GameDriver skyadvnt_driver =
 	&alpha68k_V_machine_driver,
 	custom_memory,
 
-	skyadvnt_rom,
+	rom_skyadvnt,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	skyadvnt_input_ports,
+	input_ports_skyadvnt,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_ROTATE_90,
 	0, 0
 };
 
-struct GameDriver gangwars_driver =
+struct GameDriver driver_gangwars =
 {
 	__FILE__,
 	0,
@@ -2200,48 +2200,48 @@ struct GameDriver gangwars_driver =
 	"1989",
 	"Alpha",
 	"Bryan McPhail",
-	GAME_REQUIRES_16BIT | GAME_NOT_WORKING,
+	0,
 	&alpha68k_V_machine_driver,
 	custom_memory,
 
-	gangwars_rom,
+	rom_gangwars,
 	gangwars_patch, 0,
 	0,
 	0,	/* sound_prom */
 
-	gangwars_input_ports,
+	input_ports_gangwars,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_REQUIRES_16BIT | GAME_NOT_WORKING,
 	0, 0
 };
 
-struct GameDriver gangwarb_driver =
+struct GameDriver driver_gangwarb =
 {
 	__FILE__,
-	&gangwars_driver,
+	&driver_gangwars,
 	"gangwarb",
 	"Gang Wars (bootleg)",
 	"1989",
 	"bootleg",
 	"Bryan McPhail",
-	GAME_REQUIRES_16BIT,
+	0,
 	&alpha68k_V_machine_driver,
 	custom_memory,
 
-	gangwarb_rom,
+	rom_gangwarb,
 	gangwarb_patch, 0,
 	0,
 	0,	/* sound_prom */
 
-	gangwars_input_ports,
+	input_ports_gangwars,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_REQUIRES_16BIT,
 	0, 0
 };
 
-struct GameDriver sbasebal_driver =
+struct GameDriver driver_sbasebal =
 {
 	__FILE__,
 	0,
@@ -2250,18 +2250,18 @@ struct GameDriver sbasebal_driver =
 	"1989",
 	"SNK of America (licensed from Alpha)",
 	"Bryan McPhail",
-	GAME_NOT_WORKING,
+	0,
 	&alpha68k_V_sb_machine_driver,
 	custom_memory,
 
-	sbasebal_rom,
+	rom_sbasebal,
 	0, 0,
 	0,
 	0,
 
-	sbasebal_input_ports,
+	input_ports_sbasebal,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
 	0, 0
 };

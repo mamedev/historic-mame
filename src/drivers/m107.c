@@ -138,7 +138,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 /******************************************************************************/
 
-INPUT_PORTS_START( firebarr_input_ports )
+INPUT_PORTS_START( firebarr )
 	PORT_PLAYER1_2BUTTON_JOYSTICK
 	PORT_PLAYER2_2BUTTON_JOYSTICK
 	PORT_UNUSED
@@ -197,7 +197,7 @@ INPUT_PORTS_START( firebarr_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( dsoccr94_input_ports )
+INPUT_PORTS_START( dsoccr94 )
 	PORT_PLAYER1_2BUTTON_JOYSTICK
 	PORT_PLAYER2_2BUTTON_JOYSTICK
 	PORT_PLAYER3_2BUTTON_JOYSTICK
@@ -540,7 +540,7 @@ static void dsoccr94_startup(void)
 
 /***************************************************************************/
 
-struct GameDriver firebarr_driver  =
+struct GameDriver driver_firebarr =
 {
 	__FILE__,
 	0,
@@ -549,20 +549,20 @@ struct GameDriver firebarr_driver  =
 	"1993",
 	"Irem",
 	"Bryan McPhail",
-	GAME_NO_SOUND | GAME_NOT_WORKING,
+	0,
 	&machine_driver,
 	0,
-	firebarr_rom,
+	rom_firebarr,
 	m107_startup, 0,
 	0,
 	0,
-	firebarr_input_ports,
+	input_ports_firebarr,
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
+	ORIENTATION_ROTATE_270 | GAME_NO_SOUND | GAME_NOT_WORKING,
 	0,0
 };
 
-struct GameDriver dsoccr94_driver  =
+struct GameDriver driver_dsoccr94 =
 {
 	__FILE__,
 	0,
@@ -571,15 +571,15 @@ struct GameDriver dsoccr94_driver  =
 	"1994",
 	"Irem (Data East Corporation license)",
 	"Bryan McPhail",
-	GAME_NO_SOUND,
+	0,
 	&dsoccr94_machine_driver,
 	0,
-	dsoccr94_rom,
+	rom_dsoccr94,
 	dsoccr94_startup, 0,
 	0,
 	0,
-	dsoccr94_input_ports,
+	input_ports_dsoccr94,
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_NO_SOUND,
 	0,0
 };

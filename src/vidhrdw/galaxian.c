@@ -298,7 +298,7 @@ static void decode_background(void)
 
 static int common_vh_start(void)
 {
-	extern struct GameDriver newsin7_driver;
+	extern struct GameDriver driver_newsin7;
 	int generator;
 	int x,y;
 
@@ -363,7 +363,7 @@ static int common_vh_start(void)
 
 	/* all the games except New Sinbad 7 clip the sprites at the top of the screen,
 	   New Sinbad 7 does it at the bottom */
-	if (Machine->gamedrv == &newsin7_driver)
+	if (Machine->gamedrv == &driver_newsin7)
 	{
 		spritevisiblearea      = &_spritevisibleareaflipx;
         spritevisibleareaflipx = &_spritevisiblearea;
@@ -672,24 +672,9 @@ void jumpbug_gfxbank_w(int offset,int data)
 
 INLINE void plot_star(struct osd_bitmap *bitmap, int x, int y, int code)
 {
-	int backcol;
+	int backcol, pixel;
 
 	backcol = backcolor[x];
-
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
-	{
-		int temp = x;
-		x = y;
-		y = temp;
-	}
-	if (Machine->orientation & ORIENTATION_FLIP_X)
-	{
-		x = 255 - x;
-	}
-	if (Machine->orientation & ORIENTATION_FLIP_Y)
-	{
-		y = 255 - y;
-	}
 
 	if (flipscreen[0])
 	{
@@ -700,10 +685,12 @@ INLINE void plot_star(struct osd_bitmap *bitmap, int x, int y, int code)
 		y = 255 - y;
 	}
 
-	if ((bitmap->line[y][x] == Machine->pens[0]) ||
-		(bitmap->line[y][x] == Machine->pens[96 + backcol]))
+	pixel = read_pixel(bitmap, x, y);
+
+	if ((pixel == Machine->pens[0]) ||
+		(pixel == Machine->pens[96 + backcol]))
 	{
-		bitmap->line[y][x] = Machine->pens[STARS_COLOR_BASE + code];
+		plot_pixel(bitmap, x, y, Machine->pens[STARS_COLOR_BASE + code]);
 	}
 }
 

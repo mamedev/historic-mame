@@ -192,7 +192,7 @@ static struct IOWritePort writeport[] =
  *
  *************************************/
 
-INPUT_PORTS_START( shollow_input_ports )
+INPUT_PORTS_START( shollow )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -231,7 +231,7 @@ INPUT_PORTS_START( shollow_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( tron_input_ports )
+INPUT_PORTS_START( tron )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -277,7 +277,7 @@ INPUT_PORTS_START( tron_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( kroozr_input_ports )
+INPUT_PORTS_START( kroozr )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -324,7 +324,7 @@ INPUT_PORTS_START( kroozr_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( domino_input_ports )
+INPUT_PORTS_START( domino )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -369,7 +369,7 @@ INPUT_PORTS_START( domino_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( wacko_input_ports )
+INPUT_PORTS_START( wacko )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -407,7 +407,7 @@ INPUT_PORTS_START( wacko_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( twotiger_input_ports )
+INPUT_PORTS_START( twotiger )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -847,7 +847,7 @@ ROM_END
  *************************************/
 
 #define MCR2_DRIVER(name,year,rotate,fullname) 		\
-	struct GameDriver name##_driver =				\
+	struct GameDriver driver_##name =				\
 	{												\
 		__FILE__,									\
 		0,											\
@@ -861,12 +861,12 @@ ROM_END
 		&machine_driver,							\
 		name##_init,								\
 													\
-		name##_rom,									\
+		rom_##name,									\
 		0, 0,										\
 		0,											\
 		0,	/* sound_prom */						\
 													\
-		name##_input_ports,							\
+		input_ports_##name,							\
 													\
 		0, 0,0,										\
 		rotate,										\
@@ -875,10 +875,10 @@ ROM_END
 	};
 
 #define MCR2_CLONE_DRIVER(name,year,rotate,fullname,cloneof) \
-	struct GameDriver name##_driver =				\
+	struct GameDriver driver_##name =				\
 	{												\
 		__FILE__,									\
-		&cloneof##_driver,							\
+		&driver_##cloneof,							\
 		#name,										\
 		fullname,									\
 		#year,										\
@@ -889,12 +889,12 @@ ROM_END
 		&machine_driver,							\
 		cloneof##_init,								\
 													\
-		name##_rom,									\
+		rom_##name,									\
 		0, 0,										\
 		0,											\
 		0,	/* sound_prom */						\
 													\
-		cloneof##_input_ports,						\
+		input_ports_##cloneof,						\
 													\
 		0, 0,0,										\
 		rotate,										\
@@ -912,7 +912,7 @@ MCR2_DRIVER      (domino,   1982, ORIENTATION_DEFAULT,   "Domino Man")
 MCR2_DRIVER      (wacko,    1982, ORIENTATION_DEFAULT,   "Wacko")
 MCR2_DRIVER      (twotiger, 1984, ORIENTATION_DEFAULT,   "Two Tigers")
 
-struct GameDriver journey_driver =
+struct GameDriver driver_journey =
 {
 	__FILE__,
 	0,
@@ -926,12 +926,12 @@ struct GameDriver journey_driver =
 	&journey_machine_driver,
 	journey_init,
 
-	journey_rom,
+	rom_journey,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	domino_input_ports,
+	input_ports_domino,
 
 	0,0,0,
 	ORIENTATION_ROTATE_90,

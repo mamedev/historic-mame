@@ -207,7 +207,7 @@ static signed int feedback2;		/* connect for SLOT 2 */
 
 #define LOG_LEVEL LOG_INF
 
-static void Log(int level,char *format,...)
+static void CLIB_DECL Log(int level,char *format,...)
 {
 	va_list argptr;
 

@@ -230,28 +230,16 @@ static void starfield_render( struct osd_bitmap *bitmap ) {
 		return;
 
 	/* draw the starfields */
-	for ( i = 0; i < total_stars; i++ ) {
+	for ( i = 0; i < total_stars; i++ )
+	{
 		int x, y;
 
 		x = stars[i].x;
 		y = stars[i].y;
 
-		if ( x >=0 && x < width && y >= 0 && y < height ) {
-
-			if ( (Machine->orientation & ORIENTATION_SWAP_XY) )
-			{
-				x ^= y;
-				y ^= x;
-				x ^= y;
-			}
-
-			if (Machine->orientation & ORIENTATION_FLIP_X)
-				x = bitmap->width - 1 - x;
-
-			if (Machine->orientation & ORIENTATION_FLIP_Y)
-				y = bitmap->height - 1 - y;
-
-			bitmap->line[y][x] = stars[i].col;
+		if ( x >=0 && x < width && y >= 0 && y < height )
+		{
+			plot_pixel(bitmap, x, y, stars[i].col);
 		}
 	}
 }

@@ -111,7 +111,7 @@ static int tagteam_interrupt(void)
         return ignore_interrupt();
 }
 
-INPUT_PORTS_START( tagteam_input_ports )
+INPUT_PORTS_START( tagteam )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
@@ -318,7 +318,7 @@ ROM_START( tagteam )
 	ROM_LOAD( "prowbf8.bin",  0x0c000, 0x2000, 0xeafe8056 )
 	ROM_LOAD( "prowbf9.bin",  0x0e000, 0x2000, 0xd589ce1b )
 
-	ROM_REGION(0x40)    /* color PROMs */
+	ROM_REGIONX( 0x0040, REGION_PROMS )
 	ROM_LOAD( "fko-76.bin",   0x0000, 0x0020, 0xb6ee1483 )
 	ROM_LOAD( "fjo-25.bin",   0x0020, 0x0020, 0x24da2b63 ) /* What is this prom for? */
 ROM_END
@@ -363,7 +363,7 @@ static void tagteam_hisave(void)
 	}
 }
 
-struct GameDriver tagteam_driver =
+struct GameDriver driver_tagteam =
 {
 	__FILE__,
 	0,
@@ -376,15 +376,14 @@ struct GameDriver tagteam_driver =
 	&machine_driver,
 	0,
 
-	tagteam_rom,
+	rom_tagteam,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	tagteam_input_ports,
+	input_ports_tagteam,
 
-	PROM_MEMORY_REGION(3),
-	0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	tagteam_hiload, tagteam_hisave

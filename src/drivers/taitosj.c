@@ -144,7 +144,6 @@ extern unsigned char *taitosj_scroll;
 extern unsigned char *taitosj_colscrolly;
 extern unsigned char *taitosj_gfxpointer;
 extern unsigned char *taitosj_colorbank,*taitosj_video_priority;
-extern unsigned char *taitosj_collision_reg;
 void taitosj_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 int taitosj_gfxrom_r(int offset);
 void taitosj_videoram2_w(int offset,int data);
@@ -183,7 +182,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x8801, 0x8801, taitosj_fake_status_r },
 	{ 0xc400, 0xd015, MRA_RAM },
 	{ 0xd100, 0xd17f, MRA_RAM },
-	{ 0xd400, 0xd403, taitosj_collision_reg_r, &taitosj_collision_reg },
+	{ 0xd400, 0xd403, taitosj_collision_reg_r },
 	{ 0xd404, 0xd404, taitosj_gfxrom_r },
 	{ 0xd408, 0xd408, input_port_0_r },	/* IN0 */
 	{ 0xd409, 0xd409, input_port_1_r },	/* IN1 */
@@ -234,7 +233,7 @@ static struct MemoryReadAddress mcu_readmem[] =
 	{ 0x8801, 0x8801, taitosj_mcu_status_r },
 	{ 0xc400, 0xd05f, MRA_RAM },
 	{ 0xd100, 0xd17f, MRA_RAM },
-	{ 0xd400, 0xd403, taitosj_collision_reg_r, &taitosj_collision_reg },
+	{ 0xd400, 0xd403, taitosj_collision_reg_r },
 	{ 0xd404, 0xd404, taitosj_gfxrom_r },
 	{ 0xd408, 0xd408, input_port_0_r },	/* IN0 */
 	{ 0xd409, 0xd409, input_port_1_r },	/* IN1 */
@@ -360,7 +359,7 @@ static struct MemoryWriteAddress m68705_writemem[] =
 	PORT_DIPSETTING(    0x70, DEF_STR( 1C_8C ) )
 
 
-INPUT_PORTS_START( spaceskr_input_ports )
+INPUT_PORTS_START( spaceskr )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
@@ -457,7 +456,7 @@ INPUT_PORTS_START( spaceskr_input_ports )
 	PORT_DIPSETTING(    0x00, "A only" )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( junglek_input_ports )
+INPUT_PORTS_START( junglek )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
@@ -552,7 +551,7 @@ INPUT_PORTS_START( junglek_input_ports )
 	PORT_DIPSETTING(    0x00, "A only" )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( alpine_input_ports )
+INPUT_PORTS_START( alpine )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
@@ -644,7 +643,7 @@ INPUT_PORTS_START( alpine_input_ports )
 	PORT_DIPSETTING(    0x00, "A only" )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( alpinea_input_ports )
+INPUT_PORTS_START( alpinea )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL )
@@ -734,7 +733,7 @@ INPUT_PORTS_START( alpinea_input_ports )
 	PORT_DIPSETTING(    0x00, "A only" )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( timetunl_input_ports )
+INPUT_PORTS_START( timetunl )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -833,7 +832,7 @@ INPUT_PORTS_START( timetunl_input_ports )
 	PORT_DIPSETTING(    0x00, "A only" )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( wwestern_input_ports )
+INPUT_PORTS_START( wwestern )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_LEFT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_RIGHT | IPF_8WAY )
@@ -931,7 +930,7 @@ INPUT_PORTS_START( wwestern_input_ports )
 	PORT_DIPSETTING(    0x00, "A only" )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( frontlin_input_ports )
+INPUT_PORTS_START( frontlin )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_LEFT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_RIGHT | IPF_8WAY )
@@ -1031,7 +1030,7 @@ INPUT_PORTS_START( frontlin_input_ports )
 	PORT_DIPSETTING(    0x00, "A only" )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( elevator_input_ports )
+INPUT_PORTS_START( elevator )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
@@ -1128,7 +1127,7 @@ INPUT_PORTS_START( elevator_input_ports )
 	PORT_DIPSETTING(    0x00, "A only" )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( tinstar_input_ports )
+INPUT_PORTS_START( tinstar )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_LEFT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_RIGHT | IPF_8WAY )
@@ -1231,7 +1230,7 @@ INPUT_PORTS_START( tinstar_input_ports )
 	PORT_DIPSETTING(    0x00, "A only" )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( waterski_input_ports )
+INPUT_PORTS_START( waterski )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
@@ -1330,7 +1329,7 @@ INPUT_PORTS_START( waterski_input_ports )
 	PORT_DIPSETTING(    0x00, "A only" )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( bioatack_input_ports )
+INPUT_PORTS_START( bioatack )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
@@ -1425,7 +1424,7 @@ INPUT_PORTS_START( bioatack_input_ports )
 	PORT_DIPSETTING(    0x00, "A only" )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( sfposeid_input_ports )
+INPUT_PORTS_START( sfposeid )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
@@ -1524,7 +1523,7 @@ INPUT_PORTS_START( sfposeid_input_ports )
 	PORT_DIPSETTING(    0x00, "A only" )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( hwrace_input_ports )
+INPUT_PORTS_START( hwrace )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
@@ -2473,7 +2472,7 @@ static void alpinea_init_driver(void)
 
 #define BASE_CREDITS  "Nicola Salmoria (MAME driver)\nTatsuyuki Satoh (additional code)"
 
-struct GameDriver spaceskr_driver =
+struct GameDriver driver_spaceskr =
 {
 	__FILE__,
 	0,
@@ -2486,12 +2485,12 @@ struct GameDriver spaceskr_driver =
 	&machine_driver,
 	0,
 
-	spaceskr_rom,
+	rom_spaceskr,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	spaceskr_input_ports,
+	input_ports_spaceskr,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_180,
@@ -2499,7 +2498,7 @@ struct GameDriver spaceskr_driver =
 	0, 0
 };
 
-struct GameDriver junglek_driver =
+struct GameDriver driver_junglek =
 {
 	__FILE__,
 	0,
@@ -2512,12 +2511,12 @@ struct GameDriver junglek_driver =
 	&machine_driver,
 	0,
 
-	junglek_rom,
+	rom_junglek,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	junglek_input_ports,
+	input_ports_junglek,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -2525,10 +2524,10 @@ struct GameDriver junglek_driver =
 	junglek_hiload, junglek_hisave
 };
 
-struct GameDriver jungleh_driver =
+struct GameDriver driver_jungleh =
 {
 	__FILE__,
-	&junglek_driver,
+	&driver_junglek,
 	"jungleh",
 	"Jungle Hunt (US)",
 	"1982",
@@ -2538,12 +2537,12 @@ struct GameDriver jungleh_driver =
 	&machine_driver,
 	0,
 
-	jungleh_rom,
+	rom_jungleh,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	junglek_input_ports,
+	input_ports_junglek,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -2551,7 +2550,7 @@ struct GameDriver jungleh_driver =
 	junglek_hiload, junglek_hisave
 };
 
-struct GameDriver alpine_driver =
+struct GameDriver driver_alpine =
 {
 	__FILE__,
 	0,
@@ -2564,12 +2563,12 @@ struct GameDriver alpine_driver =
 	&machine_driver,
 	alpine_init_driver,
 
-	alpine_rom,
+	rom_alpine,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	alpine_input_ports,
+	input_ports_alpine,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
@@ -2577,10 +2576,10 @@ struct GameDriver alpine_driver =
 	alpine_hiload, alpine_hisave
 };
 
-struct GameDriver alpinea_driver =
+struct GameDriver driver_alpinea =
 {
 	__FILE__,
-	&alpine_driver,
+	&driver_alpine,
 	"alpinea",
 	"Alpine Ski (set 2)",
 	"1982",
@@ -2590,12 +2589,12 @@ struct GameDriver alpinea_driver =
 	&machine_driver,
 	alpinea_init_driver,
 
-	alpinea_rom,
+	rom_alpinea,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	alpinea_input_ports,
+	input_ports_alpinea,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
@@ -2603,7 +2602,7 @@ struct GameDriver alpinea_driver =
 	alpine_hiload, alpine_hisave
 };
 
-struct GameDriver timetunl_driver =
+struct GameDriver driver_timetunl =
 {
 	__FILE__,
 	0,
@@ -2616,12 +2615,12 @@ struct GameDriver timetunl_driver =
 	&machine_driver,
 	0,
 
-	timetunl_rom,
+	rom_timetunl,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	timetunl_input_ports,
+	input_ports_timetunl,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -2629,7 +2628,7 @@ struct GameDriver timetunl_driver =
 	0, 0
 };
 
-struct GameDriver wwestern_driver =
+struct GameDriver driver_wwestern =
 {
 	__FILE__,
 	0,
@@ -2642,12 +2641,12 @@ struct GameDriver wwestern_driver =
 	&machine_driver,
 	0,
 
-	wwestern_rom,
+	rom_wwestern,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	wwestern_input_ports,
+	input_ports_wwestern,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
@@ -2655,10 +2654,10 @@ struct GameDriver wwestern_driver =
 	0, 0
 };
 
-struct GameDriver wwester1_driver =
+struct GameDriver driver_wwester1 =
 {
 	__FILE__,
-	&wwestern_driver,
+	&driver_wwestern,
 	"wwester1",
 	"Wild Western (set 2)",
 	"1982",
@@ -2668,12 +2667,12 @@ struct GameDriver wwester1_driver =
 	&machine_driver,
 	0,
 
-	wwester1_rom,
+	rom_wwester1,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	wwestern_input_ports,
+	input_ports_wwestern,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
@@ -2681,7 +2680,7 @@ struct GameDriver wwester1_driver =
 	0, 0
 };
 
-struct GameDriver frontlin_driver =
+struct GameDriver driver_frontlin =
 {
 	__FILE__,
 	0,
@@ -2694,12 +2693,12 @@ struct GameDriver frontlin_driver =
 	&mcu_machine_driver,
 	0,
 
-	frontlin_rom,
+	rom_frontlin,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	frontlin_input_ports,
+	input_ports_frontlin,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
@@ -2707,7 +2706,7 @@ struct GameDriver frontlin_driver =
 	frontlin_hiload, frontlin_hisave
 };
 
-struct GameDriver elevator_driver =
+struct GameDriver driver_elevator =
 {
 	__FILE__,
 	0,
@@ -2720,12 +2719,12 @@ struct GameDriver elevator_driver =
 	&mcu_machine_driver,
 	0,
 
-	elevator_rom,
+	rom_elevator,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	elevator_input_ports,
+	input_ports_elevator,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -2733,10 +2732,10 @@ struct GameDriver elevator_driver =
 	elevator_hiload, elevator_hisave
 };
 
-struct GameDriver elevatob_driver =
+struct GameDriver driver_elevatob =
 {
 	__FILE__,
-	&elevator_driver,
+	&driver_elevator,
 	"elevatob",
 	"Elevator Action (bootleg)",
 	"1983",
@@ -2746,12 +2745,12 @@ struct GameDriver elevatob_driver =
 	&machine_driver,
 	0,
 
-	elevatob_rom,
+	rom_elevatob,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	elevator_input_ports,
+	input_ports_elevator,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -2759,7 +2758,7 @@ struct GameDriver elevatob_driver =
 	elevator_hiload, elevator_hisave
 };
 
-struct GameDriver tinstar_driver =
+struct GameDriver driver_tinstar =
 {
 	__FILE__,
 	0,
@@ -2772,12 +2771,12 @@ struct GameDriver tinstar_driver =
 	&mcu_machine_driver,
 	0,
 
-	tinstar_rom,
+	rom_tinstar,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	tinstar_input_ports,
+	input_ports_tinstar,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -2785,7 +2784,7 @@ struct GameDriver tinstar_driver =
 	0, 0
 };
 
-struct GameDriver waterski_driver =
+struct GameDriver driver_waterski =
 {
 	__FILE__,
 	0,
@@ -2798,12 +2797,12 @@ struct GameDriver waterski_driver =
 	&machine_driver,
 	0,
 
-	waterski_rom,
+	rom_waterski,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	waterski_input_ports,
+	input_ports_waterski,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
@@ -2811,7 +2810,7 @@ struct GameDriver waterski_driver =
 	0, 0
 };
 
-struct GameDriver bioatack_driver =
+struct GameDriver driver_bioatack =
 {
 	__FILE__,
 	0,
@@ -2824,12 +2823,12 @@ struct GameDriver bioatack_driver =
 	&machine_driver,
 	0,
 
-	bioatack_rom,
+	rom_bioatack,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	bioatack_input_ports,
+	input_ports_bioatack,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
@@ -2837,7 +2836,7 @@ struct GameDriver bioatack_driver =
 	0, 0
 };
 
-struct GameDriver sfposeid_driver =
+struct GameDriver driver_sfposeid =
 {
 	__FILE__,
 	0,
@@ -2850,12 +2849,12 @@ struct GameDriver sfposeid_driver =
 	&mcu_machine_driver,
 	0,
 
-	sfposeid_rom,
+	rom_sfposeid,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	sfposeid_input_ports,
+	input_ports_sfposeid,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -2863,7 +2862,7 @@ struct GameDriver sfposeid_driver =
 	0, 0
 };
 
-struct GameDriver hwrace_driver =
+struct GameDriver driver_hwrace =
 {
 	__FILE__,
 	0,
@@ -2876,12 +2875,12 @@ struct GameDriver hwrace_driver =
 	&machine_driver,
 	0,
 
-	hwrace_rom,
+	rom_hwrace,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	hwrace_input_ports,
+	input_ports_hwrace,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
@@ -2889,7 +2888,7 @@ struct GameDriver hwrace_driver =
 	0, 0
 };
 
-struct GameDriver kikstart_driver =
+struct GameDriver driver_kikstart =
 {
 	__FILE__,
 	0,
@@ -2898,19 +2897,19 @@ struct GameDriver kikstart_driver =
 	"1984",
 	"Taito Corporation",
 	BASE_CREDITS,
-	GAME_NOT_WORKING,
+	0,
 	&mcu_machine_driver,
 	0,
 
-	kikstart_rom,
+	rom_kikstart,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	junglek_input_ports,
+	input_ports_junglek,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
 
 	0, 0
 };

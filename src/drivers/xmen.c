@@ -190,7 +190,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 
 
-INPUT_PORTS_START( xmen_input_ports )
+INPUT_PORTS_START( xmen )
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
@@ -240,7 +240,7 @@ INPUT_PORTS_START( xmen_input_ports )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* unused? */
 INPUT_PORTS_END
 
-INPUT_PORTS_START( xmen2p_input_ports )
+INPUT_PORTS_START( xmen2p )
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
@@ -479,7 +479,7 @@ static void nvram_save(void)
 
 
 
-struct GameDriver xmen_driver =
+struct GameDriver driver_xmen =
 {
 	__FILE__,
 	0,
@@ -488,19 +488,19 @@ struct GameDriver xmen_driver =
 	"1992",
 	"Konami",
 	"Nicola Salmoria (MAME driver)\nAlex Pasadyn (MAME driver)\nJeff Slutter (hardware info)\nHowie Cohen (hardware info)",
-	GAME_IMPERFECT_SOUND,
+	0,
 	&xmen_machine_driver,
 	0,
 
-	xmen_rom,
+	rom_xmen,
 	gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */
 
-	xmen_input_ports,
+	input_ports_xmen,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_IMPERFECT_SOUND,
 
 	nvram_load, nvram_save
 };
@@ -516,54 +516,54 @@ static void xmen6p_patch(void)
 	gfx_untangle();
 }
 
-struct GameDriver xmen6p_driver =
+struct GameDriver driver_xmen6p =
 {
 	__FILE__,
-	&xmen_driver,
+	&driver_xmen,
 	"xmen6p",
 	"X-Men (6 Players)",
 	"1992",
 	"Konami",
 	"Nicola Salmoria (MAME driver)\nAlex Pasadyn (MAME driver)\nJeff Slutter (hardware info)\nHowie Cohen (hardware info)",
-	GAME_IMPERFECT_SOUND | GAME_NOT_WORKING,
+	0,
 	&xmen_machine_driver,
 	0,
 
-	xmen6p_rom,
+	rom_xmen6p,
 	xmen6p_patch, 0,
 	0,
 	0,	/* sound_prom */
 
-	xmen_input_ports,
+	input_ports_xmen,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING,
 
 	nvram_load, nvram_save
 };
 
-struct GameDriver xmen2pj_driver =
+struct GameDriver driver_xmen2pj =
 {
 	__FILE__,
-	&xmen_driver,
+	&driver_xmen,
 	"xmen2pj",
 	"X-Men (2 Players Japan)",
 	"1992",
 	"Konami",
 	"Nicola Salmoria (MAME driver)\nAlex Pasadyn (MAME driver)\nJeff Slutter (hardware info)\nHowie Cohen (hardware info)",
-	GAME_IMPERFECT_SOUND,
+	0,
 	&xmen_machine_driver,
 	0,
 
-	xmen2pj_rom,
+	rom_xmen2pj,
 	gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */
 
-	xmen2p_input_ports,
+	input_ports_xmen2p,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_IMPERFECT_SOUND,
 
 	nvram_load, nvram_save
 };

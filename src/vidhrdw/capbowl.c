@@ -7,7 +7,6 @@
 ***************************************************************************/
 
 #include "driver.h"
-#include "vidhrdw/generic.h"
 #include "vidhrdw/tms34061.h"
 #include "cpu/m6809/m6809.h"
 
@@ -52,14 +51,8 @@ int capbowl_vh_start(void)
 {
 	int i;
 
-	if ((tmpbitmap = osd_new_bitmap(Machine->drv->screen_width,Machine->drv->screen_height,Machine->scrbitmap->depth)) == 0)
-	{
-		return 1;
-	}
-
 	if ((raw_video_ram = malloc(256 * 256)) == 0)
 	{
-		osd_free_bitmap(tmpbitmap);
 		return 1;
 	}
 
@@ -67,7 +60,6 @@ int capbowl_vh_start(void)
     if (TMS34061_start(&tms34061_interface))
 	{
 		free(raw_video_ram);
-		osd_free_bitmap(tmpbitmap);
 		return 1;
 	}
 
@@ -100,7 +92,6 @@ int capbowl_vh_start(void)
 void capbowl_vh_stop(void)
 {
 	free(raw_video_ram);
-	osd_free_bitmap(tmpbitmap);
 
 	TMS34061_stop();
 }
@@ -215,37 +206,20 @@ static int capbowl_tms34061_getpixel(int col, int row)
   the main emulation engine.
 
 ***************************************************************************/
-INLINE void plotpixel(int col,int row,int pen)
-{
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
-	{
-		int temp;
-
-		temp = col;
-		col = row;
-		row = temp;
-	}
-	if (Machine->orientation & ORIENTATION_FLIP_X)
-		col = tmpbitmap->width - col - 1;
-	if (Machine->orientation & ORIENTATION_FLIP_Y)
-		row = tmpbitmap->height - row - 1;
-
-	if (tmpbitmap->depth == 16)
-		((unsigned short *)Machine->scrbitmap->line[row])[col] = ((unsigned short *)tmpbitmap->line[row])[col] = pen;
-	else
-		Machine->scrbitmap->line[row][col] = tmpbitmap->line[row][col] = pen;
-}
-
 void capbowl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int col, row;
 	const unsigned char *remapped;
 
 
+	if (full_refresh)
+	{
+		for (row = 0; row <= max_row; row++)  dirty_row[row] = 1;
+	}
+
 	if (TMS34061_display_blanked())
 	{
 		fillbitmap(bitmap,palette_transparent_pen,&Machine->drv->visible_area);
-
 		return;
 	}
 
@@ -283,12 +257,9 @@ void capbowl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			{
 				int pixel = raw_video_ram[row1++];
 
-				plotpixel(col1++,row,Machine->pens[row2 | (pixel >> 4)  ]);
-				plotpixel(col1++,row,Machine->pens[row2 | (pixel & 0x0f)]);
+				plot_pixel(bitmap, col1++,row,Machine->pens[row2 | (pixel >> 4)  ]);
+				plot_pixel(bitmap, col1++,row,Machine->pens[row2 | (pixel & 0x0f)]);
 			}
 		}
 	}
-
-	if (full_refresh)
-		copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 }

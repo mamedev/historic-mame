@@ -117,7 +117,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 };
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( goindol )
 
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
@@ -194,7 +194,7 @@ INPUT_PORTS_START( input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( homo_input_ports )
+INPUT_PORTS_START( homo )
 
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
@@ -374,7 +374,7 @@ ROM_START( goindol )
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "r10", 0x00000, 0x8000, 0x72e1add1 )
 
-	ROM_REGION(0x0300)	/* color PROMs */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "am27s21.pr1", 0x0000, 0x0100, 0x361f0868 )	/* palette red bits   */
 	ROM_LOAD( "am27s21.pr2", 0x0100, 0x0100, 0xe355da4d )	/* palette green bits */
 	ROM_LOAD( "am27s21.pr3", 0x0200, 0x0100, 0x8534cfb5 )	/* palette blue bits  */
@@ -399,7 +399,7 @@ ROM_START( homo )
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
 	ROM_LOAD( "r10", 0x00000, 0x8000, 0x72e1add1 )
 
-	ROM_REGION(0x0300)	/* color PROMs */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "am27s21.pr1", 0x0000, 0x0100, 0x361f0868 )	/* palette red bits   */
 	ROM_LOAD( "am27s21.pr2", 0x0100, 0x0100, 0xe355da4d )	/* palette green bits */
 	ROM_LOAD( "am27s21.pr3", 0x0200, 0x0100, 0x8534cfb5 )	/* palette blue bits  */
@@ -444,7 +444,7 @@ static void hisave(void)
 	}
 }
 
-struct GameDriver goindol_driver =
+struct GameDriver driver_goindol =
 {
 	__FILE__,
 	0,
@@ -457,23 +457,23 @@ struct GameDriver goindol_driver =
 	&machine_driver,
 	0,
 
-	goindol_rom,
+	rom_goindol,
  	goindol_init_machine, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_goindol,
 
-	PROM_MEMORY_REGION(3), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
 
-struct GameDriver homo_driver =
+struct GameDriver driver_homo =
 {
 	__FILE__,
-	&goindol_driver,
+	&driver_goindol,
 	"homo",
 	"Homo",
 	"1987",
@@ -483,14 +483,14 @@ struct GameDriver homo_driver =
 	&machine_driver,
 	0,
 
-	homo_rom,
+	rom_homo,
  	homo_init_machine, 0,
 	0,
 	0,	/* sound_prom */
 
-	homo_input_ports,
+	input_ports_homo,
 
-	PROM_MEMORY_REGION(3), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave

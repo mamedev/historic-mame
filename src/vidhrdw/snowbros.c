@@ -32,8 +32,8 @@ void snowbros_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int x=0,y=0,offs;
 
 
-	/* recalc the palette if necessary */
 	palette_recalc ();
+	/* no need to check the return code since we redraw everything each frame */
 
 
 	/*

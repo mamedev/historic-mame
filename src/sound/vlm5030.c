@@ -575,6 +575,8 @@ int VLM5030_sh_start(const struct MachineSound *msound)
 
 	intf = msound->sound_interface;
 
+	Machine->samples = readsamples(intf->samplenames,Machine->gamedrv->name);
+
 	emulation_rate = intf->baseclock / 440;
 	pin_BSY = pin_RST = pin_ST  = 0;
 	phase = PH_IDLE;

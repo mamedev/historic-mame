@@ -90,7 +90,7 @@ static int pip(int offset)
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x000000, 0x05ffff, MRA_ROM },
-	{ 0x060000, 0x06dfff, MRA_BANK2, &ram },
+	{ 0x060000, 0x06dfff, MRA_BANK2 },
 	{ 0x06e000, 0x06e7ff, paletteram_word_r },
 	{ 0x06e800, 0x06efff, toki_background1_videoram_r },
 	{ 0x06f000, 0x06f7ff, toki_background2_videoram_r },
@@ -106,7 +106,7 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x000000, 0x05ffff, MWA_ROM },
-	{ 0x060000, 0x06dfff, MWA_BANK2 },
+	{ 0x060000, 0x06dfff, MWA_BANK2, &ram },
 	{ 0x06e000, 0x06e7ff, paletteram_xxxxBBBBGGGGRRRR_word_w, &paletteram },
 	{ 0x06e800, 0x06efff, toki_background1_videoram_w, &toki_background1_videoram, &toki_background1_videoram_size },
 	{ 0x06f000, 0x06f7ff, toki_background2_videoram_w, &toki_background2_videoram, &toki_background2_videoram_size },
@@ -146,7 +146,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( toki )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -669,7 +669,7 @@ void tokib_rom_decode (void)
 
 
 
-struct GameDriver toki_driver =
+struct GameDriver driver_toki =
 {
 	__FILE__,
 	0,
@@ -678,93 +678,93 @@ struct GameDriver toki_driver =
 	"1989",
 	"Tad",
 	"Jarek Parchanski (MAME driver)\nRichard Bush (hardware info)", //Game authors:\n\nKitahara Haruki\nNishizawa Takashi\nSakuma Akira\nAoki Tsukasa\nKakiuchi Hiroyuki",
-	GAME_NOT_WORKING,
+	0,
 	&toki_machine_driver,
 	0,
 
-	toki_rom,
+	rom_toki,
 	0, 0,
 	0,
 	0,			/* sound_prom */
-	input_ports,
+	input_ports_toki,
 	0, 0, 0, 	  	/* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
 	hiload, hisave
 };
 
-struct GameDriver toki2_driver =
+struct GameDriver driver_toki2 =
 {
 	__FILE__,
-	&toki_driver,
+	&driver_toki,
 	"toki2",
 	"Toki (set 2)",
 	"1989",
 	"Tad",
 	"Jarek Parchanski (MAME driver)\nRichard Bush (hardware info)", //Game authors:\n\nKitahara Haruki\nNishizawa Takashi\nSakuma Akira\nAoki Tsukasa\nKakiuchi Hiroyuki",
-	GAME_NOT_WORKING,
+	0,
 	&toki_machine_driver,
 	0,
 
-	toki2_rom,
+	rom_toki2,
 	0, 0,
 	0,
 	0,			/* sound_prom */
-	input_ports,
+	input_ports_toki,
 	0, 0, 0, 	  	/* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
 	hiload, hisave
 };
 
-struct GameDriver toki3_driver =
+struct GameDriver driver_toki3 =
 {
 	__FILE__,
-	&toki_driver,
+	&driver_toki,
 	"toki3",
 	"Toki (set 3)",
 	"1989",
 	"Tad",
 	"Jarek Parchanski (MAME driver)\nRichard Bush (hardware info)", //Game authors:\n\nKitahara Haruki\nNishizawa Takashi\nSakuma Akira\nAoki Tsukasa\nKakiuchi Hiroyuki",
-	GAME_NOT_WORKING,
+	0,
 	&toki_machine_driver,
 	0,
 
-	toki3_rom,
+	rom_toki3,
 	0, 0,
 	0,
 	0,			/* sound_prom */
-	input_ports,
+	input_ports_toki,
 	0, 0, 0, 	  	/* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
 	hiload, hisave
 };
 
-struct GameDriver tokiu_driver =
+struct GameDriver driver_tokiu =
 {
 	__FILE__,
-	&toki_driver,
+	&driver_toki,
 	"tokiu",
 	"Toki (US)",
 	"1989",
 	"Tad (Fabtek license)",
 	"Jarek Parchanski (MAME driver)\nRichard Bush (hardware info)", //Game authors:\n\nKitahara Haruki\nNishizawa Takashi\nSakuma Akira\nAoki Tsukasa\nKakiuchi Hiroyuki",
-	GAME_NOT_WORKING,
+	0,
 	&toki_machine_driver,
 	0,
 
-	tokiu_rom,
+	rom_tokiu,
 	0, 0,
 	0,
 	0,			/* sound_prom */
-	input_ports,
+	input_ports_toki,
 	0, 0, 0, 	  	/* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
 	hiload, hisave
 };
 
-struct GameDriver tokib_driver =
+struct GameDriver driver_tokib =
 {
 	__FILE__,
-	&toki_driver,
+	&driver_toki,
 	"tokib",
 	"Toki (bootleg)",
 	"1989",
@@ -774,11 +774,11 @@ struct GameDriver tokib_driver =
 	&tokib_machine_driver,
 	0,
 
-	tokib_rom,
+	rom_tokib,
 	tokib_rom_decode, 0,
 	0,
 	0,			/* sound_prom */
-	input_ports,
+	input_ports_toki,
 	0, 0, 0, 	  	/* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
 	hiload, hisave

@@ -12,6 +12,8 @@ extern unsigned char* berzerk_magicram;
 
 void berzerk_init_machine(void);
 
+void berzerk_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
+
 int  berzerk_interrupt(void);
 void berzerk_irq_enable_w(int offset,int data);
 void berzerk_nmi_enable_w(int offset,int data);
@@ -129,7 +131,7 @@ static struct IOWritePort writeport[] =
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW,  IPT_UNUSED )
 
 
-INPUT_PORTS_START( berzerk_input_ports )
+INPUT_PORTS_START( berzerk )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
@@ -199,7 +201,7 @@ INPUT_PORTS_START( berzerk_input_ports )
 	PORT_BITX(0x80, IP_ACTIVE_HIGH, 0, "Stats", KEYCODE_F1, IP_JOY_NONE )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( frenzy_input_ports )
+INPUT_PORTS_START( frenzy )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
@@ -358,109 +360,6 @@ static void init_palette(unsigned char *game_palette, unsigned short *game_color
 
 
 
-static struct Samplesinterface berzerk_samples_interface =
-{
-	8,	/* 8 channels */
-	25	/* volume */
-};
-
-static struct CustomSound_interface custom_interface =
-{
-	berzerk_sh_start,
-	0,
-	berzerk_sh_update
-};
-
-
-
-#define  frenzy_init_machine  0
-
-#define DRIVER(GAMENAME)												\
-																		\
-static struct MachineDriver GAMENAME##_machine_driver =					\
-{																		\
-	/* basic machine hardware */										\
-	{																	\
-		{																\
-			CPU_Z80,													\
-			2500000,        /* 2.5 MHz */								\
-			0,															\
-			GAMENAME##_readmem,GAMENAME##_writemem,readport,writeport,	\
-			berzerk_interrupt,8											\
-		},																\
-	},																	\
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */	\
-	1,	/* single CPU, no need for interleaving */						\
-	GAMENAME##_init_machine,											\
-																		\
-	/* video hardware */												\
-	256, 256, { 0, 256-1, 32, 256-1 },									\
-	0,																	\
-	sizeof(palette) / sizeof(palette[0]) / 3, 0,						\
-	init_palette,														\
-																		\
-	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,							\
-	0,																	\
-	generic_bitmapped_vh_start,											\
-	generic_bitmapped_vh_stop,											\
-	generic_bitmapped_vh_screenrefresh,									\
-																		\
-	/* sound hardware */												\
-	0,0,0,0,															\
-	{																	\
-		{																\
-			SOUND_SAMPLES,												\
-			&berzerk_samples_interface									\
-		},																\
-		{																\
-			SOUND_CUSTOM,	/* actually plays the samples */			\
-			&custom_interface											\
-		}																\
-	}																	\
-};
-
-
-DRIVER(berzerk)
-DRIVER(frenzy)
-
-
-
-/***************************************************************************
-
-  Game driver(s)
-
-***************************************************************************/
-
-ROM_START( berzerk )
-        ROM_REGION(0x10000)
-        ROM_LOAD( "1c-0",         0x0000, 0x0800, 0xca566dbc )
-        ROM_LOAD( "1d-1",         0x1000, 0x0800, 0x7ba69fde )
-        ROM_LOAD( "3d-2",         0x1800, 0x0800, 0xa1d5248b )
-        ROM_LOAD( "5d-3",         0x2000, 0x0800, 0xfcaefa95 )
-        ROM_LOAD( "6d-4",         0x2800, 0x0800, 0x1e35b9a0 )
-        ROM_LOAD( "5c-5",         0x3000, 0x0800, 0xc8c665e5 )
-ROM_END
-
-ROM_START( berzerk1 )
-        ROM_REGION(0x10000)
-        ROM_LOAD( "rom0.1c",      0x0000, 0x0800, 0x5b7eb77d )
-        ROM_LOAD( "rom1.1d",      0x1000, 0x0800, 0xe58c8678 )
-        ROM_LOAD( "rom2.3d",      0x1800, 0x0800, 0x705bb339 )
-        ROM_LOAD( "rom3.5d",      0x2000, 0x0800, 0x6a1936b4 )
-        ROM_LOAD( "rom4.6d",      0x2800, 0x0800, 0xfa5dce40 )
-        ROM_LOAD( "rom5.5c",      0x3000, 0x0800, 0x2579b9f4 )
-ROM_END
-
-ROM_START( frenzy )
-        ROM_REGION(0x10000)
-        ROM_LOAD( "1c-0",         0x0000, 0x1000, 0xabdd25b8 )
-        ROM_LOAD( "1d-1",         0x1000, 0x1000, 0x536e4ae8 )
-        ROM_LOAD( "3d-2",         0x2000, 0x1000, 0x3eb9bc9b )
-        ROM_LOAD( "5d-3",         0x3000, 0x1000, 0xe1d3133c )
-        ROM_LOAD( "6d-4",         0xc000, 0x1000, 0x5581a7b1 )
-        /* 1c & 2c are the voice ROMs */
-ROM_END
-
 static const char *berzerk_sample_names[] =
 {
 	"*berzerk", /* universal samples directory */
@@ -501,6 +400,110 @@ static const char *berzerk_sample_names[] =
 	"34.wav", // kill human (cheat)
 	0	/* end of array */
 };
+
+static struct Samplesinterface berzerk_samples_interface =
+{
+	8,	/* 8 channels */
+	25,	/* volume */
+	berzerk_sample_names
+};
+
+static struct CustomSound_interface custom_interface =
+{
+	berzerk_sh_start,
+	0,
+	berzerk_sh_update
+};
+
+
+
+#define  frenzy_init_machine  0
+
+#define DRIVER(GAMENAME)												\
+																		\
+static struct MachineDriver GAMENAME##_machine_driver =					\
+{																		\
+	/* basic machine hardware */										\
+	{																	\
+		{																\
+			CPU_Z80,													\
+			2500000,        /* 2.5 MHz */								\
+			0,															\
+			GAMENAME##_readmem,GAMENAME##_writemem,readport,writeport,	\
+			berzerk_interrupt,8											\
+		},																\
+	},																	\
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */	\
+	1,	/* single CPU, no need for interleaving */						\
+	GAMENAME##_init_machine,											\
+																		\
+	/* video hardware */												\
+	256, 256, { 0, 256-1, 32, 256-1 },									\
+	0,																	\
+	sizeof(palette) / sizeof(palette[0]) / 3, 0,						\
+	init_palette,														\
+																		\
+	VIDEO_TYPE_RASTER | VIDEO_SUPPORTS_DIRTY,							\
+	0,																	\
+	0,																	\
+	0,																	\
+	berzerk_vh_screenrefresh,											\
+																		\
+	/* sound hardware */												\
+	0,0,0,0,															\
+	{																	\
+		{																\
+			SOUND_SAMPLES,												\
+			&berzerk_samples_interface									\
+		},																\
+		{																\
+			SOUND_CUSTOM,	/* actually plays the samples */			\
+			&custom_interface											\
+		}																\
+	}																	\
+};
+
+
+DRIVER(berzerk)
+DRIVER(frenzy)
+
+
+
+/***************************************************************************
+
+  Game driver(s)
+
+***************************************************************************/
+
+ROM_START( berzerk )
+	ROM_REGION(0x10000)
+	ROM_LOAD( "1c-0",         0x0000, 0x0800, 0xca566dbc )
+	ROM_LOAD( "1d-1",         0x1000, 0x0800, 0x7ba69fde )
+	ROM_LOAD( "3d-2",         0x1800, 0x0800, 0xa1d5248b )
+	ROM_LOAD( "5d-3",         0x2000, 0x0800, 0xfcaefa95 )
+	ROM_LOAD( "6d-4",         0x2800, 0x0800, 0x1e35b9a0 )
+	ROM_LOAD( "5c-5",         0x3000, 0x0800, 0xc8c665e5 )
+ROM_END
+
+ROM_START( berzerk1 )
+	ROM_REGION(0x10000)
+	ROM_LOAD( "rom0.1c",      0x0000, 0x0800, 0x5b7eb77d )
+	ROM_LOAD( "rom1.1d",      0x1000, 0x0800, 0xe58c8678 )
+	ROM_LOAD( "rom2.3d",      0x1800, 0x0800, 0x705bb339 )
+	ROM_LOAD( "rom3.5d",      0x2000, 0x0800, 0x6a1936b4 )
+	ROM_LOAD( "rom4.6d",      0x2800, 0x0800, 0xfa5dce40 )
+	ROM_LOAD( "rom5.5c",      0x3000, 0x0800, 0x2579b9f4 )
+ROM_END
+
+ROM_START( frenzy )
+	ROM_REGION(0x10000)
+	ROM_LOAD( "1c-0",         0x0000, 0x1000, 0xabdd25b8 )
+	ROM_LOAD( "1d-1",         0x1000, 0x1000, 0x536e4ae8 )
+	ROM_LOAD( "3d-2",         0x2000, 0x1000, 0x3eb9bc9b )
+	ROM_LOAD( "5d-3",         0x3000, 0x1000, 0xe1d3133c )
+	ROM_LOAD( "6d-4",         0xc000, 0x1000, 0x5581a7b1 )
+	/* 1c & 2c are the voice ROMs */
+ROM_END
 
 
 
@@ -581,7 +584,7 @@ static void frenzy_hisave(void)
 
 
 
-struct GameDriver berzerk_driver =
+struct GameDriver driver_berzerk =
 {
 	__FILE__,
 	0,
@@ -594,12 +597,12 @@ struct GameDriver berzerk_driver =
 	&berzerk_machine_driver,
 	0,
 
-	berzerk_rom,
+	rom_berzerk,
 	0, 0,
-	berzerk_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	berzerk_input_ports,
+	input_ports_berzerk,
 
 	0, 0, 0,
 
@@ -609,10 +612,10 @@ struct GameDriver berzerk_driver =
 };
 
 
-struct GameDriver berzerk1_driver =
+struct GameDriver driver_berzerk1 =
 {
 	__FILE__,
-	&berzerk_driver,
+	&driver_berzerk,
 	"berzerk1",
 	"Berzerk (set 2)",
 	"1980",
@@ -622,12 +625,12 @@ struct GameDriver berzerk1_driver =
 	&berzerk_machine_driver,
 	0,
 
-	berzerk1_rom,
+	rom_berzerk1,
 	0, 0,
-	berzerk_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	berzerk_input_ports,
+	input_ports_berzerk,
 
 	0, 0, 0,
 
@@ -637,7 +640,7 @@ struct GameDriver berzerk1_driver =
 };
 
 
-struct GameDriver frenzy_driver =
+struct GameDriver driver_frenzy =
 {
 	__FILE__,
 	0,
@@ -650,12 +653,12 @@ struct GameDriver frenzy_driver =
 	&frenzy_machine_driver,
 	0,
 
-	frenzy_rom,
+	rom_frenzy,
 	0, 0,
-	berzerk_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	frenzy_input_ports,
+	input_ports_frenzy,
 
 	0, 0, 0,
 

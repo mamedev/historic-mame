@@ -1054,7 +1054,7 @@ void leland_init_machine(void)
 
 ***************************************************************************/
 
-INPUT_PORTS_START( input_ports_strkzone )
+INPUT_PORTS_START( strkzone )
 	PORT_START      /* 0x41 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SLAVEHALT )
     PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, "Service", KEYCODE_F2, IP_JOY_NONE )
@@ -1250,7 +1250,7 @@ ROM_START( strkzone )
 	/* 89 = Empty */
 ROM_END
 
-struct GameDriver strkzone_driver =
+struct GameDriver driver_strkzone =
 {
 	__FILE__,
 	0,
@@ -1263,14 +1263,14 @@ struct GameDriver strkzone_driver =
 	&strkzone_machine,
 	0,
 
-	strkzone_rom,
+	rom_strkzone,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
 	input_ports_strkzone,
 
-	NULL, 0, 0,
+	0, 0, 0,
 
 	ORIENTATION_DEFAULT,
 	leland_hiload,leland_hisave
@@ -1358,7 +1358,7 @@ ROM_START( dblplay )
 	/* 89 = Empty */
 ROM_END
 
-struct GameDriver dblplay_driver =
+struct GameDriver driver_dblplay =
 {
 	__FILE__,
 	0,
@@ -1367,20 +1367,20 @@ struct GameDriver dblplay_driver =
 	"1987",
 	LELAND "/Tradewest",
 	"Paul Leaman",
-	GAME_NOT_WORKING,
+	0,
 	&dblplay_machine,
 	0,
 
-	dblplay_rom,
+	rom_dblplay,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
 	input_ports_strkzone,
 
-	NULL, 0, 0,
+	0, 0, 0,
 
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
 	leland_hiload,leland_hisave
 };
 
@@ -1393,7 +1393,7 @@ struct GameDriver dblplay_driver =
 
 ***************************************************************************/
 
-INPUT_PORTS_START( input_ports_wseries )
+INPUT_PORTS_START( wseries )
 	PORT_START      /* 0x41 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SLAVEHALT )
     PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, "Service", KEYCODE_F2, IP_JOY_NONE )
@@ -1503,7 +1503,7 @@ ROM_START( wseries )
 	/* 89 = Empty */
 ROM_END
 
-struct GameDriver wseries_driver =
+struct GameDriver driver_wseries =
 {
 	__FILE__,
 	0,
@@ -1516,14 +1516,14 @@ struct GameDriver wseries_driver =
 	&wseries_machine,
 	0,
 
-	wseries_rom,
+	rom_wseries,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
 	input_ports_wseries,
 
-	NULL, 0, 0,
+	0, 0, 0,
 
 	ORIENTATION_DEFAULT,
 	leland_hiload,leland_hisave
@@ -1612,7 +1612,7 @@ ROM_START( basebal2 )
 	/* 89 = Empty */
 ROM_END
 
-struct GameDriver basebal2_driver =
+struct GameDriver driver_basebal2 =
 {
 	__FILE__,
 	0,
@@ -1625,14 +1625,14 @@ struct GameDriver basebal2_driver =
 	&basebal2_machine,
 	0,
 
-	basebal2_rom,
+	rom_basebal2,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
 	input_ports_strkzone,
 
-	NULL, 0, 0,
+	0, 0, 0,
 
 	ORIENTATION_DEFAULT,
 	leland_hiload,leland_hisave
@@ -1646,7 +1646,7 @@ struct GameDriver basebal2_driver =
 
 ***************************************************************************/
 
-INPUT_PORTS_START( input_ports_alleymas )
+INPUT_PORTS_START( alleymas )
 	PORT_START      /* 0x41 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SLAVEHALT )
     PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, "Service", KEYCODE_F2, IP_JOY_NONE )
@@ -1742,7 +1742,7 @@ ROM_START( alleymas )
 	/* U89 = Empty */
 ROM_END
 
-struct GameDriver alleymas_driver =
+struct GameDriver driver_alleymas =
 {
 	__FILE__,
 	0,
@@ -1755,14 +1755,14 @@ struct GameDriver alleymas_driver =
 	&alleymas_machine,
 	0,
 
-	alleymas_rom,
+	rom_alleymas,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
 	input_ports_alleymas,
 
-	NULL, 0, 0,
+	0, 0, 0,
 
 	ORIENTATION_ROTATE_270,
 	leland_hiload,leland_hisave
@@ -1774,7 +1774,7 @@ struct GameDriver alleymas_driver =
 
 ***************************************************************************/
 
-INPUT_PORTS_START( input_ports_mayhem )
+INPUT_PORTS_START( mayhem )
 	PORT_START      /* 0x41 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SLAVEHALT )
     PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, "Service", KEYCODE_F2, IP_JOY_NONE )
@@ -1858,7 +1858,7 @@ ROM_START( mayhem )
 	ROM_LOAD( "13202.89",  0x1c000, 0x4000, 0xc5eaa4e3 )
 ROM_END
 
-struct GameDriver mayhem_driver =
+struct GameDriver driver_mayhem =
 {
 	__FILE__,
 	0,
@@ -1867,20 +1867,20 @@ struct GameDriver mayhem_driver =
 	"1985",
 	CINEMAT,
 	"Paul Leaman",
-	GAME_NOT_WORKING,
+	0,
 	&basebal2_machine,
 	0,
 
-	mayhem_rom,
+	rom_mayhem,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
 	input_ports_mayhem,
 
-	NULL, 0, 0,
+	0, 0, 0,
 
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
 	leland_hiload,leland_hisave
 };
 
@@ -1894,7 +1894,7 @@ struct GameDriver mayhem_driver =
 
 ***************************************************************************/
 
-INPUT_PORTS_START( input_ports_cerberus )
+INPUT_PORTS_START( cerberus )
     PORT_START      /* 0x91 */
     PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_VBLANK )
     PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, "Service", KEYCODE_F2, IP_JOY_NONE )
@@ -2015,7 +2015,7 @@ ROM_START( cerberus )
     ROM_LOAD( "3-23u89",  0x1c000, 0x2000, 0x7e5e82bb )
 ROM_END
 
-struct GameDriver cerberus_driver =
+struct GameDriver driver_cerberus =
 {
 	__FILE__,
 	0,
@@ -2024,20 +2024,20 @@ struct GameDriver cerberus_driver =
     "198?",
 	CINEMAT,
 	"Paul Leaman",
-	GAME_NOT_WORKING,
+	0,
     &cerberus_machine,
 	0,
 
-    cerberus_rom,
+    rom_cerberus,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
 	input_ports_cerberus,
 
-	NULL, 0, 0,
+	0, 0, 0,
 
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
 	leland_hiload,leland_hisave
 };
 
@@ -2048,7 +2048,7 @@ struct GameDriver cerberus_driver =
 
 ***************************************************************************/
 
-INPUT_PORTS_START( input_ports_pigout )
+INPUT_PORTS_START( pigout )
 	PORT_START      /* GIN1 (0x41) */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SLAVEHALT )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -2234,7 +2234,7 @@ ROM_START( pigout )
 	ROM_LOAD( "poutu89.bin",  0x1c000, 0x4000, 0x6c874a05 )
 ROM_END
 
-struct GameDriver pigout_driver =
+struct GameDriver driver_pigout =
 {
 	__FILE__,
 	0,
@@ -2243,20 +2243,20 @@ struct GameDriver pigout_driver =
 	"1990",
 	LELAND,
 	"Paul Leaman",
-	GAME_NOT_WORKING,
+	0,
 	&pigout_machine,
 	0,
 
-	pigout_rom,
+	rom_pigout,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
 	input_ports_pigout,
 
-	NULL, 0, 0,
+	0, 0, 0,
 
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
 	leland_hiload,leland_hisave
 };
 
@@ -2301,29 +2301,29 @@ ROM_START( pigoutj )
 	ROM_LOAD( "poutu89.bin",  0x1c000, 0x4000, 0x6c874a05 )
 ROM_END
 
-struct GameDriver pigoutj_driver =
+struct GameDriver driver_pigoutj =
 {
 	__FILE__,
-	&pigout_driver,
+	&driver_pigout,
 	"pigoutj",
 	"Pigout (Japan)",
 	"1990",
 	LELAND,
 	"Paul Leaman",
-	GAME_NOT_WORKING,
+	0,
 	&pigout_machine,
 	0,
 
-	pigoutj_rom,
+	rom_pigoutj,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
 	input_ports_pigout,
 
-	NULL, 0, 0,
+	0, 0, 0,
 
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
 	leland_hiload,leland_hisave
 };
 
@@ -2333,7 +2333,7 @@ struct GameDriver pigoutj_driver =
 
 ***************************************************************************/
 
-INPUT_PORTS_START( input_ports_offroad )
+INPUT_PORTS_START( offroad )
 	PORT_START      /* IN3 (0xc1)*/
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SLAVEHALT )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN3 )
@@ -2453,7 +2453,7 @@ ROM_START( offroad )
 	/* 89 = empty */
 ROM_END
 
-struct GameDriver offroad_driver =
+struct GameDriver driver_offroad =
 {
 	__FILE__,
 	0,
@@ -2462,20 +2462,20 @@ struct GameDriver offroad_driver =
 	"1989",
 	LELAND,
 	"Paul Leaman",
-	GAME_NOT_WORKING,
+	0,
 	&offroad_machine,
 	0,
 
-	offroad_rom,
+	rom_offroad,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
 	input_ports_offroad,
 
-	NULL, 0, 0,
+	0, 0, 0,
 
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
 	leland_hiload,leland_hisave
 };
 
@@ -2529,7 +2529,7 @@ ROM_START( offroadt )
 	/* 89 = empty */
 ROM_END
 
-struct GameDriver offroadt_driver =
+struct GameDriver driver_offroadt =
 {
 	__FILE__,
 	0,
@@ -2538,20 +2538,20 @@ struct GameDriver offroadt_driver =
 	"????",
 	LELAND,
 	"Paul Leaman",
-	GAME_NOT_WORKING,
+	0,
 	&pigout_machine,
 	0,
 
-	offroadt_rom,
+	rom_offroadt,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
 	input_ports_offroad,
 
-	NULL, 0, 0,
+	0, 0, 0,
 
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
 	leland_hiload,leland_hisave
 };
 
@@ -2562,7 +2562,7 @@ struct GameDriver offroadt_driver =
 
 ***************************************************************************/
 
-INPUT_PORTS_START( input_ports_teamqb )
+INPUT_PORTS_START( teamqb )
 	PORT_START      /* GIN1 (0x81) */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SLAVEHALT )
     PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, "Service", KEYCODE_F2, IP_JOY_NONE)
@@ -2688,7 +2688,7 @@ ROM_START( teamqb )
 	/* 89 = empty */
 ROM_END
 
-struct GameDriver teamqb_driver =
+struct GameDriver driver_teamqb =
 {
 	__FILE__,
 	0,
@@ -2697,20 +2697,20 @@ struct GameDriver teamqb_driver =
 	"198?",
 	LELAND,
 	"Paul Leaman",
-	GAME_NOT_WORKING,
+	0,
 	&teamqb_machine,
 	0,
 
-	teamqb_rom,
+	rom_teamqb,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
 	input_ports_teamqb,
 
-	NULL, 0, 0,
+	0, 0, 0,
 
-	ORIENTATION_ROTATE_270,
+	ORIENTATION_ROTATE_270 | GAME_NOT_WORKING,
 	leland_hiload,leland_hisave
 };
 
@@ -2721,7 +2721,7 @@ struct GameDriver teamqb_driver =
 
 ***************************************************************************/
 
-INPUT_PORTS_START( input_ports_redlin2p )
+INPUT_PORTS_START( redlin2p )
 	PORT_START      /* Analog pedal 1 */
 	PORT_ANALOG ( 0xff, 0x00, IPT_AD_STICK_Y|IPF_PLAYER1, 100, 10, 0, 0, 255 )
 
@@ -2872,7 +2872,7 @@ ROM_START( redlin2p )
     ROM_LOAD( "13927-01.u89",  0x1c000, 0x4000, 0x30e60fb5 )
 ROM_END
 
-struct GameDriver redlin2p_driver =
+struct GameDriver driver_redlin2p =
 {
 	__FILE__,
 	0,
@@ -2881,20 +2881,20 @@ struct GameDriver redlin2p_driver =
 	"1987",
 	"Cinematronics",
 	"Paul Leaman",
-	GAME_NOT_WORKING,
+	0,
 	&redlin2p_machine,
 	0,
 
-	redlin2p_rom,
+	rom_redlin2p,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
 	input_ports_redlin2p,
 
-	NULL, 0, 0,
+	0, 0, 0,
 
-	ORIENTATION_ROTATE_270,
+	ORIENTATION_ROTATE_270 | GAME_NOT_WORKING,
 	leland_hiload,leland_hisave
 };
 
@@ -2904,7 +2904,7 @@ struct GameDriver redlin2p_driver =
 
 ***************************************************************************/
 
-INPUT_PORTS_START( input_ports_dangerz )
+INPUT_PORTS_START( dangerz )
 	PORT_START      /* IN3 (0x81)*/
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
     PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, "Service", KEYCODE_F2, IP_JOY_NONE )
@@ -3018,7 +3018,7 @@ ROM_START( dangerz )
 	ROM_LOAD( "13810.89",  0x1c000, 0x4000, 0x4f645973 )
 ROM_END
 
-struct GameDriver dangerz_driver =
+struct GameDriver driver_dangerz =
 {
 	__FILE__,
 	0,
@@ -3027,26 +3027,26 @@ struct GameDriver dangerz_driver =
 	"1986",
 	CINEMAT,
 	"Paul Leaman",
-	GAME_NOT_WORKING,
+	0,
 	&dangerz_machine,
 	0,
-	dangerz_rom,
+	rom_dangerz,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
 	input_ports_dangerz,
 
-	NULL, 0, 0,
+	0, 0, 0,
 
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
 	leland_hiload,leland_hisave
 };
 
 
 
 
-INPUT_PORTS_START( input_ports_viper )
+INPUT_PORTS_START( viper )
 	PORT_START      /* IN3 (0xc1)*/
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SLAVEHALT )
     PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, "Service", KEYCODE_F2, IP_JOY_NONE )
@@ -3187,7 +3187,7 @@ ROM_START( viper )
     ROM_LOAD( "15605-01.u89",  0x1c000, 0x4000, 0x4aa9c788 )
 ROM_END
 
-struct GameDriver viper_driver =
+struct GameDriver driver_viper =
 {
 	__FILE__,
 	0,
@@ -3196,26 +3196,26 @@ struct GameDriver viper_driver =
 	"1988",
 	LELAND,
 	"Paul Leaman",
-	GAME_NOT_WORKING,
+	0,
 	&viper_machine,
 	0,
 
-	viper_rom,
+	rom_viper,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
 	input_ports_viper,
 
-	NULL, 0, 0,
+	0, 0, 0,
 
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
 	leland_hiload,leland_hisave
 };
 
 
 
-INPUT_PORTS_START( input_ports_aafb )
+INPUT_PORTS_START( aafb )
 	PORT_START      /* GIN1 (0x41) */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SLAVEHALT )
     PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, "Service", KEYCODE_F2, IP_JOY_NONE )
@@ -3338,7 +3338,7 @@ ROM_START( aafb )
 	/* 89 = empty */
 ROM_END
 
-struct GameDriver aafb_driver =
+struct GameDriver driver_aafb =
 {
 	__FILE__,
 	0,
@@ -3347,20 +3347,20 @@ struct GameDriver aafb_driver =
 	"????",
 	LELAND,
 	"Paul Leaman",
-	GAME_NOT_WORKING,
+	0,
 	&aafb_machine,
 	0,
 
-	aafb_rom,
+	rom_aafb,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
 	input_ports_aafb,
 
-	NULL, 0, 0,
+	0, 0, 0,
 
-	ORIENTATION_ROTATE_270,
+	ORIENTATION_ROTATE_270 | GAME_NOT_WORKING,
 	leland_hiload,leland_hisave
 };
 
@@ -3405,34 +3405,34 @@ ROM_START( aafb2p )
 	/* 89 = empty */
 ROM_END
 
-struct GameDriver aafb2p_driver =
+struct GameDriver driver_aafb2p =
 {
 	__FILE__,
-	&aafb_driver,
+	&driver_aafb,
 	"aafb2p",
     "All American Football (2 Players)",
 	"????",
 	LELAND,
 	"Paul Leaman",
-	GAME_NOT_WORKING,
+	0,
 	&aafb_machine,
 	0,
 
-	aafb2p_rom,
+	rom_aafb2p,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
 	input_ports_aafb,
 
-	NULL, 0, 0,
+	0, 0, 0,
 
-	ORIENTATION_ROTATE_270,
+	ORIENTATION_ROTATE_270 | GAME_NOT_WORKING,
 	leland_hiload,leland_hisave
 };
 
 
-INPUT_PORTS_START( input_ports_aafbu )
+INPUT_PORTS_START( aafbu )
 	PORT_START      /* GIN1 (0x41) */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SLAVEHALT )
     PORT_BITX(0x02, IP_ACTIVE_LOW, IPT_SERVICE, "Service", KEYCODE_F2, IP_JOY_NONE )
@@ -3557,28 +3557,28 @@ ROM_START( aafbu )
 	/* 89 = empty */
 ROM_END
 
-struct GameDriver aafbu_driver =
+struct GameDriver driver_aafbu =
 {
 	__FILE__,
-	&aafb_driver,
+	&driver_aafb,
 	"aafbu",
 	"All American Football (US Version?)",
 	"????",
 	LELAND,
 	"Paul Leaman",
-	GAME_NOT_WORKING,
+	0,
 	&aafbu_machine,
 	0,
 
-	aafbu_rom,
+	rom_aafbu,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
 	input_ports_aafbu,
 
-	NULL, 0, 0,
+	0, 0, 0,
 
-	ORIENTATION_ROTATE_270,
+	ORIENTATION_ROTATE_270 | GAME_NOT_WORKING,
 	leland_hiload,leland_hisave
 };

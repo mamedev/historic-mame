@@ -161,8 +161,8 @@ static struct MemoryReadAddress sound_readmem[] =
 {
 	{ 0x0000, 0x3fff, MRA_BANK1 },	/* Banked ROMs */
 	{ 0x4000, 0x4001, YM2151_status_port_0_r },
-	{ 0x5000, 0x50ff, namcos1_wavedata_r,&namco_wavedata },  /* PSG ( Shared ) */
-	{ 0x5100, 0x513f, namcos1_sound_r,&namco_soundregs }, /* PSG ( Shared ) */
+	{ 0x5000, 0x50ff, namcos1_wavedata_r },  /* PSG ( Shared ) */
+	{ 0x5100, 0x513f, namcos1_sound_r }, /* PSG ( Shared ) */
 	{ 0x5140, 0x54ff, MRA_RAM },	/* Sound RAM 1 - ( Shared ) */
 	{ 0x7000, 0x77ff, MRA_BANK2 },	/* Sound RAM 2 - ( Shared ) */
 	{ 0x8000, 0x9fff, MRA_RAM },	/* Sound RAM 3 */
@@ -277,7 +277,7 @@ static void namcos1_eeprom_save(void)
 	}
 }
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( namcos1 )
 	PORT_START /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
@@ -1394,157 +1394,82 @@ ROM_START( tankfrce )
 ROM_END
 
 
-#define NAMCOS1_DRIVER(NAME,REALNAME,YEAR,MANU,INIT_NAME,ORIENTATION) \
+#define GAME_DRIVER(NAME,YEAR,REALNAME,MANU,INIT_NAME,ORIENTATION) \
 extern void INIT_NAME##_driver_init(void); \
-struct GameDriver NAME##_driver  = \
+struct GameDriver driver_##NAME = \
 { \
 	__FILE__,         \
 	0,                \
 	#NAME,            \
 	REALNAME,         \
-	YEAR,             \
+	#YEAR,            \
 	MANU,             \
 	"Ernesto Corvi\nJROK\nTatsuyuki Satoh", \
 	0,                \
 	&machine_driver,  \
 	INIT_NAME##_driver_init, \
-	NAME##_rom,       \
+	rom_##NAME,       \
 	0, 0,             \
 	0,                \
 	0,                \
-	input_ports,      \
+	input_ports_namcos1,      \
 	0, 0, 0,          \
 	ORIENTATION,      \
 	namcos1_eeprom_load, \
 	namcos1_eeprom_save  \
 };
 
-#define NAMCOS1_DRIVERCLONE(NAME,CLONE,REALNAME,YEAR,MANU,INIT_NAME,ORIENTATION) \
+#define CLONE_DRIVER(NAME,CLONE,YEAR,REALNAME,MANU,INIT_NAME,ORIENTATION) \
 extern void INIT_NAME##_driver_init(void); \
-struct GameDriver NAME##_driver  = \
+struct GameDriver driver_##NAME = \
 { \
 	__FILE__,         \
-	&CLONE##_driver,  \
+	&driver_##CLONE,  \
 	#NAME,            \
 	REALNAME,         \
-	YEAR,             \
+	#YEAR,             \
 	MANU,             \
 	"Ernesto Corvi\nJROK\nTatsuyuki Satoh", \
 	0,                \
 	&machine_driver,  \
 	INIT_NAME##_driver_init, \
-	NAME##_rom,       \
+	rom_##NAME,       \
 	0, 0,             \
 	0,                \
 	0,                \
-	input_ports,      \
+	input_ports_namcos1,      \
 	0, 0, 0,          \
 	ORIENTATION,      \
 	namcos1_eeprom_load, \
 	namcos1_eeprom_save  \
 };
 
-#define NAMCOS1_DRIVER16(NAME,REALNAME,YEAR,MANU,INIT_NAME,ORIENTATION) \
-extern void INIT_NAME##_driver_init(void); \
-struct GameDriver NAME##_driver  = \
-{ \
-	__FILE__,         \
-	0,                \
-	#NAME,            \
-	REALNAME,         \
-	YEAR,             \
-	MANU,             \
-	"Ernesto Corvi\nJROK\nTatsuyuki Satoh", \
-	GAME_REQUIRES_16BIT, \
-	&machine_driver,  \
-	INIT_NAME##_driver_init, \
-	NAME##_rom,       \
-	0, 0,             \
-	0,                \
-	0,                \
-	input_ports,      \
-	0, 0, 0,          \
-	ORIENTATION,      \
-	namcos1_eeprom_load, \
-	namcos1_eeprom_save  \
-};
-
-#define NAMCOS1_DRIVER16CLONE(NAME,CLONE,REALNAME,YEAR,MANU,INIT_NAME,ORIENTATION) \
-extern void INIT_NAME##_driver_init(void); \
-struct GameDriver NAME##_driver  = \
-{ \
-	__FILE__,         \
-	&CLONE##_driver,  \
-	#NAME,            \
-	REALNAME,         \
-	YEAR,             \
-	MANU,             \
-	"Ernesto Corvi\nJROK\nTatsuyuki Satoh", \
-	GAME_REQUIRES_16BIT, \
-	&machine_driver,  \
-	INIT_NAME##_driver_init, \
-	NAME##_rom,       \
-	0, 0,             \
-	0,                \
-	0,                \
-	input_ports,      \
-	0, 0, 0,          \
-	ORIENTATION,      \
-	namcos1_eeprom_load, \
-	namcos1_eeprom_save  \
-};
-
-#define NAMCOS1_NWDRIVER(NAME,REALNAME,YEAR,MANU,INIT_NAME,ORIENTATION) \
-extern void INIT_NAME##_driver_init(void); \
-struct GameDriver NAME##_driver  = \
-{ \
-	__FILE__,         \
-	0,                \
-	#NAME,            \
-	REALNAME,         \
-	YEAR,             \
-	MANU,             \
-	"Ernesto Corvi\nJROK\nTatsuyuki Satoh", \
-	GAME_REQUIRES_16BIT | GAME_NOT_WORKING, \
-	&machine_driver,  \
-	INIT_NAME##_driver_init, \
-	NAME##_rom,       \
-	0, 0,             \
-	0,                \
-	0,                \
-	input_ports,      \
-	0, 0, 0,          \
-	ORIENTATION,      \
-	namcos1_eeprom_load, \
-	namcos1_eeprom_save  \
-};
-
-NAMCOS1_DRIVER16(shadowld,"Shadow Land","1987","Namco",shadowld,ORIENTATION_DEFAULT)
-NAMCOS1_DRIVER16CLONE(youkaidk,shadowld,"Yokai Douchuuki (Japan)","1987","Namco",shadowld,ORIENTATION_DEFAULT)
-NAMCOS1_DRIVER(dspirit,"Dragon Spirit","1987","Namco",dspirit,ORIENTATION_ROTATE_270)
-//NAMCOS1_DRIVER(dspirita,"Dragon Spirit (set 2)","1987","Namco",dspirit,ORIENTATION_ROTATE_270)
-NAMCOS1_DRIVER(blazer,"Blazer (Japan)","1987","Namco",blazer,ORIENTATION_ROTATE_270)
-//NAMCOS1_NWDRIVER(quester,"Quester","1987","Namco",quester,ORIENTATION_DEFAULT)
-NAMCOS1_DRIVER16(pacmania,"Pac-Mania","1987","Namco",pacmania,ORIENTATION_ROTATE_270)
-NAMCOS1_DRIVER16CLONE(pacmanij,pacmania,"Pac-Mania (Japan)","1987","Namco",pacmania,ORIENTATION_ROTATE_270)
+GAME_DRIVER (shadowld,         1987,"Shadow Land",                    "Namco",shadowld,ORIENTATION_DEFAULT | GAME_REQUIRES_16BIT)
+CLONE_DRIVER(youkaidk,shadowld,1987,"Yokai Douchuuki (Japan)",        "Namco",shadowld,ORIENTATION_DEFAULT | GAME_REQUIRES_16BIT)
+GAME_DRIVER (dspirit,          1987,"Dragon Spirit",                  "Namco",dspirit, ORIENTATION_ROTATE_270)
+//GAME_DRIVER (dspirita,       1987,"Dragon Spirit (set 2)",          "Namco",dspirit, ORIENTATION_ROTATE_270)
+GAME_DRIVER (blazer,           1987,"Blazer (Japan)",                 "Namco",blazer,  ORIENTATION_ROTATE_270)
+//GAME_DRIVER (quester,        1987,"Quester",                        "Namco",quester, ORIENTATION_DEFAULT | GAME_NOT_WORKING)
+GAME_DRIVER (pacmania,         1987,"Pac-Mania",                      "Namco",pacmania,ORIENTATION_ROTATE_270 | GAME_REQUIRES_16BIT)
+CLONE_DRIVER(pacmanij,pacmania,1987,"Pac-Mania (Japan)",              "Namco",pacmania,ORIENTATION_ROTATE_270 | GAME_REQUIRES_16BIT)
 /* galaga88 use shadow sprite , and could fit in 256 colors stage 21 */
-NAMCOS1_DRIVER16(galaga88,"Galaga '88","1987","Namco",galaga88,ORIENTATION_ROTATE_270)
-NAMCOS1_DRIVER16CLONE(galag88j,galaga88,"Galaga '88 (Japan)","1987","Namco",galaga88,ORIENTATION_ROTATE_270)
-//NAMCOS1_NWDRIVER(wstadium,"World Stadium","1988","Namco",wstadium,ORIENTATION_DEFAULT)
-NAMCOS1_NWDRIVER(berabohm,"Beraboh Man","1988","Namco",berabohm,ORIENTATION_DEFAULT)
-//NAMCOS1_DRIVER(alice,"Alice In Wonderland","1988","Namco",alice,ORIENTATION_DEFAULT)
-NAMCOS1_DRIVER16(mmaze,"Marchen Maze (Japan)","1988","Namco",alice,ORIENTATION_DEFAULT)
-NAMCOS1_NWDRIVER(bakutotu,"Bakutotsu Kijuutei","1988","Namco",bakutotu,ORIENTATION_DEFAULT)
-NAMCOS1_DRIVER(wldcourt,"World Court (Japan)","1988","Namco",wldcourt,ORIENTATION_DEFAULT)
+GAME_DRIVER (galaga88,         1987,"Galaga '88",                     "Namco",galaga88,ORIENTATION_ROTATE_270 | GAME_REQUIRES_16BIT)
+CLONE_DRIVER(galag88j,galaga88,1987,"Galaga '88 (Japan)",             "Namco",galaga88,ORIENTATION_ROTATE_270 | GAME_REQUIRES_16BIT)
+//GAME_DRIVER (wstadium,       1988,"World Stadium",                  "Namco",wstadium,ORIENTATION_DEFAULT | GAME_NOT_WORKING)
+GAME_DRIVER (berabohm,         1988,"Beraboh Man",                    "Namco",berabohm,ORIENTATION_DEFAULT | GAME_NOT_WORKING)
+//GAME_DRIVER (alice,          1988,"Alice In Wonderland",            "Namco",alice,   ORIENTATION_DEFAULT)
+GAME_DRIVER (mmaze,            1988,"Marchen Maze (Japan)",           "Namco",alice,   ORIENTATION_DEFAULT | GAME_REQUIRES_16BIT)
+GAME_DRIVER (bakutotu,         1988,"Bakutotsu Kijuutei",             "Namco",bakutotu,ORIENTATION_DEFAULT | GAME_NOT_WORKING)
+GAME_DRIVER (wldcourt,         1988,"World Court (Japan)",            "Namco",wldcourt,ORIENTATION_DEFAULT)
 /* in theory Splatterhouse could fit in 256 colors */
-NAMCOS1_DRIVER16(splatter,"Splatter House (Japan)","1988","Namco",splatter,ORIENTATION_DEFAULT)
-//NAMCOS1_NWDRIVER(faceoff,"Face Off","1988","Namco",faceoff,ORIENTATION_DEFAULT)
-NAMCOS1_DRIVER16(rompers,"Rompers (Japan)","1989","Namco",rompers,ORIENTATION_ROTATE_270)
-NAMCOS1_DRIVER(blastoff,"Blast Off (Japan)","1989","Namco",blastoff,ORIENTATION_ROTATE_270)
-//NAMCOS1_NWDRIVER(ws89,"World Stadium 89","1989","Namco",ws89,ORIENTATION_DEFAULT)
+GAME_DRIVER (splatter,         1988,"Splatter House (Japan)",         "Namco",splatter,ORIENTATION_DEFAULT | GAME_REQUIRES_16BIT)
+//GAME_DRIVER (faceoff,        1988,"Face Off",                       "Namco",faceoff, ORIENTATION_DEFAULT | GAME_NOT_WORKING)
+GAME_DRIVER (rompers,          1989,"Rompers (Japan)",                "Namco",rompers, ORIENTATION_ROTATE_270 | GAME_REQUIRES_16BIT)
+GAME_DRIVER (blastoff,         1989,"Blast Off (Japan)",              "Namco",blastoff,ORIENTATION_ROTATE_270)
+//GAME_DRIVER (ws89,           1989,"World Stadium 89",               "Namco",ws89,    ORIENTATION_DEFAULT | GAME_NOT_WORKING)
 /* dangseed overflows palette in a few places, it might be improveable */
-NAMCOS1_DRIVER16(dangseed,"Dangerous Seed (Japan)","1989","Namco",dangseed,ORIENTATION_ROTATE_270)
-NAMCOS1_DRIVER(ws90,"World Stadium 90 (Japan)","1990","Namco",ws90,ORIENTATION_DEFAULT)
-NAMCOS1_DRIVER(pistoldm,"Pistol Daimyo no Bouken (Japan)","1990","Namco",pistoldm,ORIENTATION_DEFAULT)
-NAMCOS1_DRIVER(soukobdx,"Souko Ban Deluxe (Japan)","1990","Namco",soukobdx,ORIENTATION_DEFAULT)
-NAMCOS1_NWDRIVER(tankfrce,"Tank Force (Japan)","1991","Namco",tankfrce,ORIENTATION_DEFAULT)
+GAME_DRIVER (dangseed,         1989,"Dangerous Seed (Japan)",         "Namco",dangseed,ORIENTATION_ROTATE_270 | GAME_REQUIRES_16BIT)
+GAME_DRIVER (ws90,             1990,"World Stadium 90 (Japan)",       "Namco",ws90,    ORIENTATION_DEFAULT)
+GAME_DRIVER (pistoldm,         1990,"Pistol Daimyo no Bouken (Japan)","Namco",pistoldm,ORIENTATION_DEFAULT)
+GAME_DRIVER (soukobdx,         1990,"Souko Ban Deluxe (Japan)",       "Namco",soukobdx,ORIENTATION_DEFAULT)
+GAME_DRIVER (tankfrce,         1991,"Tank Force (Japan)",             "Namco",tankfrce,ORIENTATION_DEFAULT | GAME_NOT_WORKING)

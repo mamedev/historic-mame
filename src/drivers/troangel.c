@@ -38,7 +38,7 @@ static struct MemoryWriteAddress troangel_writemem[] =
 
 
 
-INPUT_PORTS_START( troangel_input_ports )
+INPUT_PORTS_START( troangel )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -227,7 +227,7 @@ ROM_START( troangel )
 	ROM_LOAD( "ta-b-5c",	0x0e000, 0x2000, 0xc19134c9 )
 	ROM_LOAD( "ta-b-5a",	0x10000, 0x2000, 0x0012792a )
 
-	ROM_REGION( 0x0320 )	/* color PROMs */
+	ROM_REGIONX( 0x0320, REGION_PROMS )
 	ROM_LOAD( "ta-a-5a",	0x0000,	0x0100, 0x01de1167 ) /* chars palette low 4 bits */
 	ROM_LOAD( "ta-a-5b",	0x0100,	0x0100, 0xefd11d4b ) /* chars palette high 4 bits */
 	ROM_LOAD( "ta-b-1b",	0x0200, 0x0020, 0xf94911ea ) /* sprites palette */
@@ -239,7 +239,7 @@ ROM_END
 
 
 
-struct GameDriver troangel_driver =
+struct GameDriver driver_troangel =
 {
 	__FILE__,
 	0,
@@ -252,14 +252,14 @@ struct GameDriver troangel_driver =
 	&troangel_machine_driver,
 	0,
 
-	troangel_rom,
+	rom_troangel,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	troangel_input_ports,
+	input_ports_troangel,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	0, 0

@@ -177,7 +177,7 @@ static struct MemoryWriteAddress bl_sound_writemem[] =
 
 ***************************************************************************/
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( exctsccr )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -482,7 +482,7 @@ ROM_START( exctsccr )
     ROM_LOAD( "2_k5.bin",     0x6000, 0x1000, 0x7f9cace2 )
     ROM_LOAD( "3_l5.bin",     0x7000, 0x1000, 0xdb2d9e0d )
 
-	ROM_REGION(0x0220)	/* color proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "prom1.e1",     0x0000, 0x0020, 0xd9b10bf0 ) /* palette */
 	ROM_LOAD( "prom2.8r",     0x0020, 0x0100, 0x8a9c0edf ) /* lookup table */
 	ROM_LOAD( "prom3.k5",     0x0120, 0x0100, 0xb5db1c2c ) /* lookup table */
@@ -508,7 +508,7 @@ ROM_START( exctscca )
     ROM_LOAD( "2_k5.bin",     0x6000, 0x1000, 0x7f9cace2 )
     ROM_LOAD( "3_l5.bin",     0x7000, 0x1000, 0xdb2d9e0d )
 
-	ROM_REGION(0x0220)	/* color proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "prom1.e1",     0x0000, 0x0020, 0xd9b10bf0 ) /* palette */
 	ROM_LOAD( "prom2.8r",     0x0020, 0x0100, 0x8a9c0edf ) /* lookup table */
 	ROM_LOAD( "prom3.k5",     0x0120, 0x0100, 0xb5db1c2c ) /* lookup table */
@@ -536,7 +536,7 @@ ROM_START( exctsccb )
 	ROM_LOAD( "vr.5k",        0x6000, 0x1000, BADCRC( 0x1d37edfa ) )
 	ROM_LOAD( "vr.5l",        0x7000, 0x1000, BADCRC( 0xb97f396c ) )
 
-	ROM_REGION(0x0220)	/* color proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "prom1.e1",     0x0000, 0x0020, 0xd9b10bf0 ) /* palette */
 	ROM_LOAD( "prom2.8r",     0x0020, 0x0100, 0x8a9c0edf ) /* lookup table */
 	ROM_LOAD( "prom3.k5",     0x0120, 0x0100, 0xb5db1c2c ) /* lookup table */
@@ -560,7 +560,7 @@ ROM_START( exctscc2 )
 	ROM_LOAD( "vr.5k",        0x6000, 0x1000, 0x1d37edfa )
 	ROM_LOAD( "vr.5l",        0x7000, 0x1000, 0xb97f396c )
 
-	ROM_REGION(0x0220)	/* color proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "prom1.e1",     0x0000, 0x0020, 0xd9b10bf0 ) /* palette */
 	ROM_LOAD( "prom2.8r",     0x0020, 0x0100, 0x8a9c0edf ) /* lookup table */
 	ROM_LOAD( "prom3.k5",     0x0120, 0x0100, 0xb5db1c2c ) /* lookup table */
@@ -657,7 +657,7 @@ static void hisave_esb(void)
 
 
 
-struct GameDriver exctsccr_driver =
+struct GameDriver driver_exctsccr =
 {
 	__FILE__,
 	0,
@@ -669,23 +669,23 @@ struct GameDriver exctsccr_driver =
 	0,
 	&machine_driver,
 	0,
-	exctsccr_rom,
+	rom_exctsccr,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	input_ports,
+	input_ports_exctsccr,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload_es, hisave_es
 };
 
-struct GameDriver exctscca_driver =
+struct GameDriver driver_exctscca =
 {
 	__FILE__,
-	&exctsccr_driver,
+	&driver_exctsccr,
 	"exctscca",
 	"Exciting Soccer (alternate music)",
 	"1983",
@@ -694,24 +694,24 @@ struct GameDriver exctscca_driver =
 	0,
 	&machine_driver,
 	0,
-	exctscca_rom,
+	rom_exctscca,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	input_ports,
+	input_ports_exctsccr,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	0, 0
 };
 
 /* Bootleg */
-struct GameDriver exctsccb_driver =
+struct GameDriver driver_exctsccb =
 {
 	__FILE__,
-	&exctsccr_driver,
+	&driver_exctsccr,
 	"exctsccb",
 	"Exciting Soccer (bootleg)",
 	"1984",
@@ -720,38 +720,38 @@ struct GameDriver exctsccb_driver =
 	0,
 	&bl_machine_driver,
 	0,
-	exctsccb_rom,
+	rom_exctsccb,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	input_ports,
+	input_ports_exctsccr,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 	hiload_esb, hisave_esb
 };
 
-struct GameDriver exctscc2_driver =
+struct GameDriver driver_exctscc2 =
 {
 	__FILE__,
-	&exctsccr_driver,
+	&driver_exctsccr,
 	"exctscc2",
 	"Exciting Soccer II",
 	"1983",
 	"Alpha Denshi Co.",
 	"Ernesto Corvi\nJarek Parchanski\n\nDedicated to Paolo Nicoletti",
-	GAME_NOT_WORKING,
+	0,
 	&machine_driver,
 	0,
-	exctscc2_rom,
+	rom_exctscc2,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	input_ports,
+	input_ports_exctsccr,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
+	0, 0, 0,
+	ORIENTATION_ROTATE_90 | GAME_NOT_WORKING,
 	hiload_esb, hisave_esb
 };

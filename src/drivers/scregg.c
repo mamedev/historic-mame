@@ -57,7 +57,7 @@ static struct MemoryWriteAddress eggs_writemem[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( scregg )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
@@ -228,7 +228,7 @@ ROM_START( scregg )
 	ROM_LOAD( "scregg.g12",   0x4000, 0x1000, 0xff3c2894 )
 	ROM_LOAD( "scregg.g10",   0x5000, 0x1000, 0x9c20214a )
 
-	ROM_REGION(0x0040)	/* PROMs */
+	ROM_REGIONX( 0x0040, REGION_PROMS )
 	ROM_LOAD( "screggco.c6",  0x0000, 0x0020, 0xff23bdd6 )	/* palette */
 	ROM_LOAD( "screggco.b4",  0x0020, 0x0020, 0x7cc4824b )	/* unknown */
 ROM_END
@@ -250,7 +250,7 @@ ROM_START( eggs )
 	ROM_LOAD( "g12.bin",      0x4000, 0x1000, 0x679f8af7 )
 	ROM_LOAD( "g10.bin",      0x5000, 0x1000, 0x5b58d3b5 )
 
-	ROM_REGION(0x0040)	/* PROMs */
+	ROM_REGIONX( 0x0040, REGION_PROMS )
 	ROM_LOAD( "eggs.c6",      0x0000, 0x0020, 0xe8408c81 )	/* palette */
 	ROM_LOAD( "screggco.b4",  0x0020, 0x0020, 0x7cc4824b )	/* unknown */
 ROM_END
@@ -296,7 +296,7 @@ static void hisave(void)
 
 
 
-struct GameDriver scregg_driver =
+struct GameDriver driver_scregg =
 {
 	__FILE__,
 	0,
@@ -309,23 +309,23 @@ struct GameDriver scregg_driver =
 	&machine_driver,
 	0,
 
-	scregg_rom,
+	rom_scregg,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_scregg,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	hiload, hisave
 };
 
-struct GameDriver eggs_driver =
+struct GameDriver driver_eggs =
 {
 	__FILE__,
-	&scregg_driver,
+	&driver_scregg,
 	"eggs",
 	"Eggs",
 	"1983",
@@ -335,14 +335,14 @@ struct GameDriver eggs_driver =
 	&machine_driver,
 	0,
 
-	eggs_rom,
+	rom_eggs,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_scregg,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	hiload, hisave

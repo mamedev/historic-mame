@@ -362,7 +362,7 @@ static struct IOWritePort writeport_cpu2[] =
 	{ -1 }	/* end of table */
 };
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( gladiatr )
 	PORT_START		/* DSW1 (8741-0 parallel port)*/
 	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Difficulty ) )
 	PORT_DIPSETTING(    0x00, "Easy" )
@@ -372,9 +372,9 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPNAME( 0x04, 0x04, "After 4 Stages" )
 	PORT_DIPSETTING(    0x04, "Continues" )
 	PORT_DIPSETTING(    0x00, "Ends" )
-        PORT_DIPNAME( 0x08, 0x00, DEF_STR( Bonus_Life ) )   /*NOTE: Actual manual has these settings reversed(typo?)! */
-        PORT_DIPSETTING(    0x00, "Only at 100000" )
-        PORT_DIPSETTING(    0x08, "Every 100000" )
+	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Bonus_Life ) )   /*NOTE: Actual manual has these settings reversed(typo?)! */
+	PORT_DIPSETTING(    0x00, "Only at 100000" )
+	PORT_DIPSETTING(    0x08, "Every 100000" )
 	PORT_DIPNAME( 0x30, 0x20, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "1" )
 	PORT_DIPSETTING(    0x10, "2" )
@@ -769,7 +769,7 @@ static void gladiatr_nvram_save(void)
 
 
 
-struct GameDriver gladiatr_driver =
+struct GameDriver driver_gladiatr =
 {
 	__FILE__,
 	0,
@@ -782,11 +782,11 @@ struct GameDriver gladiatr_driver =
 	&machine_driver,
 	0,
 
-	gladiatr_rom,
+	rom_gladiatr,
 	0, 0,
 	0,
 	0,
-	input_ports,
+	input_ports_gladiatr,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -794,10 +794,10 @@ struct GameDriver gladiatr_driver =
 	gladiatr_nvram_load, gladiatr_nvram_save
 };
 
-struct GameDriver ogonsiro_driver =
+struct GameDriver driver_ogonsiro =
 {
 	__FILE__,
-	&gladiatr_driver,
+	&driver_gladiatr,
 	"ogonsiro",
 	"Ohgon no Siro (Japan)",
 	"1986",
@@ -807,11 +807,11 @@ struct GameDriver ogonsiro_driver =
 	&machine_driver,
 	0,
 
-	ogonsiro_rom,
+	rom_ogonsiro,
 	0, 0,
 	0,
 	0,
-	input_ports,
+	input_ports_gladiatr,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -819,10 +819,10 @@ struct GameDriver ogonsiro_driver =
 	gladiatr_nvram_load, gladiatr_nvram_save
 };
 
-struct GameDriver gcastle_driver =
+struct GameDriver driver_gcastle =
 {
 	__FILE__,
-	&gladiatr_driver,
+	&driver_gladiatr,
 	"gcastle",
 	"Golden Castle",
 	"1986",
@@ -832,11 +832,11 @@ struct GameDriver gcastle_driver =
 	&machine_driver,
 	0,
 
-	gcastle_rom,
+	rom_gcastle,
 	0, 0,
 	0,
 	0,
-	input_ports,
+	input_ports_gladiatr,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

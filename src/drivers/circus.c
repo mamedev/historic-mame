@@ -72,7 +72,7 @@ static struct MemoryWriteAddress writemem[] =
 };
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( circus )
 	PORT_START /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
@@ -101,7 +101,7 @@ INPUT_PORTS_START( input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( robotbowl_input_ports )
+INPUT_PORTS_START( robotbowl )
 	PORT_START /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON1 )
@@ -129,7 +129,7 @@ INPUT_PORTS_START( robotbowl_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( crash_input_ports )
+INPUT_PORTS_START( crash )
 	PORT_START /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
@@ -158,7 +158,7 @@ INPUT_PORTS_START( crash_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( ripcord_input_ports )
+INPUT_PORTS_START( ripcord )
 	PORT_START /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
@@ -608,7 +608,7 @@ static void crash_hisave(void)
   Game Drivers
 ***************************************************************************/
 
-struct GameDriver circus_driver =
+struct GameDriver driver_circus =
 {
 	__FILE__,
 	0,
@@ -621,12 +621,12 @@ struct GameDriver circus_driver =
 	&machine_driver,
 	0,
 
-	circus_rom,
+	rom_circus,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	input_ports,
+	input_ports_circus,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -634,7 +634,7 @@ struct GameDriver circus_driver =
 	hiload,hisave
 };
 
-struct GameDriver robotbwl_driver =
+struct GameDriver driver_robotbwl =
 {
 	__FILE__,
 	0,
@@ -647,12 +647,12 @@ struct GameDriver robotbwl_driver =
 	&robotbowl_machine_driver,
 	0,
 
-	robotbowl_rom,
+	rom_robotbowl,
 	robotbowl_decode, 0,
 	0,
 	0,      /* sound_prom */
 
-	robotbowl_input_ports,
+	input_ports_robotbowl,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -660,7 +660,7 @@ struct GameDriver robotbwl_driver =
 	0,0
 };
 
-struct GameDriver crash_driver =
+struct GameDriver driver_crash =
 {
 	__FILE__,
 	0,
@@ -673,12 +673,12 @@ struct GameDriver crash_driver =
 	&crash_machine_driver,
 	0,
 
-	crash_rom,
+	rom_crash,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	crash_input_ports,
+	input_ports_crash,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -686,7 +686,7 @@ struct GameDriver crash_driver =
 	crash_hiload,crash_hisave
 };
 
-struct GameDriver ripcord_driver =
+struct GameDriver driver_ripcord =
 {
 	__FILE__,
 	0,
@@ -695,19 +695,19 @@ struct GameDriver ripcord_driver =
 	"1977",
 	"Exidy",
 	"Mike Coates",
-	GAME_NOT_WORKING,
+	0,
 	&ripcord_machine_driver,
 	0,
 
-	ripcord_rom,
+	rom_ripcord,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	ripcord_input_ports,
+	input_ports_ripcord,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
 
 	0, 0
 };

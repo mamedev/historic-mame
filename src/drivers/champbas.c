@@ -98,7 +98,7 @@ static struct MemoryWriteAddress writemem2[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( champbas )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -281,7 +281,7 @@ ROM_START( champbas )
 	ROM_LOAD( "champbb.4",    0x0000, 0x2000, 0x1930fb52 )
 	ROM_LOAD( "champbb.5",    0x2000, 0x2000, 0xa4cef5a1 )
 
-	ROM_REGION(0x120)	/* color proms */
+	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "champbb.pr2",  0x0000, 0x020, 0x2585ffb0 ) /* palette */
 	ROM_LOAD( "champbb.pr1",  0x0020, 0x100, 0x872dd450 ) /* look-up table */
 
@@ -302,7 +302,7 @@ ROM_START( champbb2 )
 	ROM_LOAD( "epr5936",      0x0000, 0x2000, 0xc4a4df75 )
 	ROM_LOAD( "epr5937",      0x2000, 0x2000, 0x5c80ec42 )
 
-	ROM_REGION(0x120)	/* color proms */
+	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "pr5957",       0x0000, 0x020, 0xf5ce825e ) /* palette */
 	ROM_LOAD( "pr5956",       0x0020, 0x100, 0x872dd450 ) /* look-up table */
 
@@ -351,7 +351,7 @@ static void hisave(void)
     }
 }
 
-struct GameDriver champbas_driver =
+struct GameDriver driver_champbas =
 {
 	__FILE__,
 	0,
@@ -364,20 +364,20 @@ struct GameDriver champbas_driver =
 	&machine_driver,
 	0,
 
-	champbas_rom,
+	rom_champbas,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_champbas,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	hiload, hisave
 };
 
 /* Champion Baseball 2 doesn't work - don't know why */
-struct GameDriver champbb2_driver =
+struct GameDriver driver_champbb2 =
 {
 	__FILE__,
 	0,
@@ -386,19 +386,19 @@ struct GameDriver champbb2_driver =
 	"1983",
 	"Sega / Alpha Denshi",
 	"Nicola Salmoria",
-	GAME_NOT_WORKING,
+	0,
 	&machine_driver,
 	0,
 
-	champbb2_rom,
+	rom_champbb2,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_champbas,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	0, 0, 0,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
 
 	0, 0
 };

@@ -258,7 +258,6 @@ void exidy440_sound_interrupt_clear(int offset, int data);
 /* video driver data & functions */
 extern UINT8 *spriteram;
 extern UINT8 *exidy440_imageram;
-extern UINT8 *exidy440_latched_x;
 extern UINT8 *exidy440_scanline;
 extern UINT8 exidy440_firq_vblank;
 extern UINT8 exidy440_firq_beam;
@@ -568,13 +567,13 @@ int showdown_pld_select2_r(int offset)
 
 static struct MemoryReadAddress readmem_cpu1[] =
 {
-	{ 0x0000, 0x1fff, MRA_RAM, &exidy440_imageram },
-	{ 0x2000, 0x209f, MRA_RAM, &spriteram },
+	{ 0x0000, 0x1fff, MRA_RAM },
+	{ 0x2000, 0x209f, MRA_RAM },
 	{ 0x20a0, 0x29ff, MRA_RAM },
 	{ 0x2a00, 0x2aff, exidy440_videoram_r },
 	{ 0x2b00, 0x2b00, exidy440_vertical_pos_r },
-	{ 0x2b01, 0x2b01, exidy440_horizontal_pos_r, &exidy440_latched_x },
-	{ 0x2b02, 0x2b02, MRA_RAM, &exidy440_scanline },
+	{ 0x2b01, 0x2b01, exidy440_horizontal_pos_r },
+	{ 0x2b02, 0x2b02, MRA_RAM },
 	{ 0x2b03, 0x2b03, input_r },
 	{ 0x2c00, 0x2dff, exidy440_paletteram_r },
 	{ 0x2e00, 0x2eff, io1_r },
@@ -587,8 +586,8 @@ static struct MemoryReadAddress readmem_cpu1[] =
 
 static struct MemoryWriteAddress writemem_cpu1[] =
 {
-	{ 0x0000, 0x1fff, MWA_RAM },
-	{ 0x2000, 0x209f, MWA_RAM },
+	{ 0x0000, 0x1fff, MWA_RAM, &exidy440_imageram },
+	{ 0x2000, 0x209f, MWA_RAM, &spriteram },
 	{ 0x20a0, 0x29ff, MWA_RAM },
 	{ 0x2a00, 0x2aff, exidy440_videoram_w },
 	{ 0x2b01, 0x2b01, exidy440_interrupt_clear_w },
@@ -612,8 +611,8 @@ static struct MemoryWriteAddress writemem_cpu1[] =
 
 static struct MemoryReadAddress readmem_cpu2[] =
 {
-	{ 0x8000, 0x8016, exidy440_m6844_r, &exidy440_m6844_data },
-	{ 0x8400, 0x8407, MRA_RAM, &exidy440_sound_volume },
+	{ 0x8000, 0x8016, exidy440_m6844_r },
+	{ 0x8400, 0x8407, MRA_RAM },
 	{ 0x8800, 0x8800, exidy440_sound_command_r },
 	{ 0x9800, 0x9800, MRA_NOP },
 	{ 0xa000, 0xbfff, MRA_RAM },
@@ -624,8 +623,8 @@ static struct MemoryReadAddress readmem_cpu2[] =
 
 static struct MemoryWriteAddress writemem_cpu2[] =
 {
-	{ 0x8000, 0x8016, exidy440_m6844_w },
-	{ 0x8400, 0x8407, exidy440_sound_volume_w },
+	{ 0x8000, 0x8016, exidy440_m6844_w, &exidy440_m6844_data },
+	{ 0x8400, 0x8407, exidy440_sound_volume_w, &exidy440_sound_volume },
 	{ 0x9400, 0x9403, MWA_RAM, &exidy440_sound_banks },
 	{ 0x9800, 0x9800, exidy440_sound_interrupt_clear },
 	{ 0xa000, 0xbfff, MWA_RAM },
@@ -661,7 +660,7 @@ static struct MemoryWriteAddress writemem_cpu2[] =
 	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_4C ) )
 
 
-INPUT_PORTS_START( crossbow_input_ports )
+INPUT_PORTS_START( crossbow )
 	PORT_START				/* player inputs and logic board dips */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -701,7 +700,7 @@ INPUT_PORTS_START( crossbow_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( cheyenne_input_ports )
+INPUT_PORTS_START( cheyenne )
 	PORT_START				/* player inputs and logic board dips */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -741,7 +740,7 @@ INPUT_PORTS_START( cheyenne_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( combat_input_ports )
+INPUT_PORTS_START( combat )
 	PORT_START				/* player inputs and logic board dips */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -781,7 +780,7 @@ INPUT_PORTS_START( combat_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( cracksht_input_ports )
+INPUT_PORTS_START( cracksht )
 	PORT_START				/* player inputs and logic board dips */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -821,7 +820,7 @@ INPUT_PORTS_START( cracksht_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( claypign_input_ports )
+INPUT_PORTS_START( claypign )
 	PORT_START				/* player inputs and logic board dips */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -857,7 +856,7 @@ INPUT_PORTS_START( claypign_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( chiller_input_ports )
+INPUT_PORTS_START( chiller )
 	PORT_START				/* player inputs and logic board dips */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -894,7 +893,7 @@ INPUT_PORTS_START( chiller_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( topsecex_input_ports )
+INPUT_PORTS_START( topsecex )
 	PORT_START				/* player inputs and logic board dips */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -941,7 +940,7 @@ INPUT_PORTS_START( topsecex_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( hitnmiss_input_ports )
+INPUT_PORTS_START( hitnmiss )
 	PORT_START				/* player inputs and logic board dips */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -981,7 +980,7 @@ INPUT_PORTS_START( hitnmiss_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( whodunit_input_ports )
+INPUT_PORTS_START( whodunit )
 	PORT_START				/* player inputs and logic board dips */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -1018,7 +1017,7 @@ INPUT_PORTS_START( whodunit_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( showdown_input_ports )
+INPUT_PORTS_START( showdown )
 	PORT_START				/* player inputs and logic board dips */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -1772,7 +1771,7 @@ ROM_END
  *************************************/
 
 #define EXIDY440_DRIVER(name,year,fullname) \
-	struct GameDriver name##_driver =			\
+	struct GameDriver driver_##name =			\
 	{											\
 		__FILE__,								\
 		NULL,									\
@@ -1785,12 +1784,12 @@ ROM_END
 		&machine_driver,						\
 		name##_init,							\
 												\
-		name##_rom,								\
+		rom_##name,								\
 		0, 0,									\
 		0,										\
 		0,	/* sound_prom */					\
 												\
-		name##_input_ports,						\
+		input_ports_##name,						\
 												\
 		0,0,0,									\
 		ORIENTATION_DEFAULT,					\
@@ -1799,10 +1798,10 @@ ROM_END
 	};
 
 #define EXIDY440_CLONE_DRIVER(name,year,fullname,cloneof) \
-	struct GameDriver name##_driver =			\
+	struct GameDriver driver_##name =			\
 	{											\
 		__FILE__,								\
-		&cloneof##_driver,						\
+		&driver_##cloneof,						\
 		#name,									\
 		fullname,								\
 		#year,									\
@@ -1812,12 +1811,12 @@ ROM_END
 		&machine_driver,						\
 		cloneof##_init,							\
 												\
-		name##_rom,								\
+		rom_##name,								\
 		0, 0,									\
 		0,										\
 		0,	/* sound_prom */					\
 												\
-		cloneof##_input_ports,					\
+		input_ports_##cloneof,					\
 												\
 		0,0,0,									\
 		ORIENTATION_DEFAULT,					\

@@ -313,7 +313,7 @@ static struct MemoryWriteAddress writemem_cpu3[] =
 
 
 
-INPUT_PORTS_START( xevious_input_ports )
+INPUT_PORTS_START( xevious )
 	PORT_START	/* DSW0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_DIPNAME( 0x02, 0x02, "Flags Award Bonus Life" )
@@ -390,7 +390,7 @@ INPUT_PORTS_START( xevious_input_ports )
 INPUT_PORTS_END
 
 /* same as xevious, the only difference is DSW0 bit 7 */
-INPUT_PORTS_START( xeviousa_input_ports )
+INPUT_PORTS_START( xeviousa )
 	PORT_START	/* DSW0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_DIPNAME( 0x02, 0x02, "Flags Award Bonus Life" )
@@ -469,7 +469,7 @@ INPUT_PORTS_END
 
 /* same as xevious, the only difference is DSW0 bit 7. Note that the bit is */
 /* inverted wrt xevious. */
-INPUT_PORTS_START( sxevious_input_ports )
+INPUT_PORTS_START( sxevious )
 	PORT_START	/* DSW0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_DIPNAME( 0x02, 0x02, "Flags Award Bonus Life" )
@@ -631,10 +631,19 @@ static struct namco_interface namco_interface =
 	6			/* memory region */
 };
 
+static const char *xevious_sample_names[] =
+{
+	"*xevious",
+	"explo1.wav",	/* ground target explosion */
+	"explo2.wav",	/* Solvalou explosion */
+	0	/* end of array */
+};
+
 struct Samplesinterface samples_interface =
 {
 	1,	/* one channel */
-	80	/* volume */
+	80,	/* volume */
+	xevious_sample_names
 };
 
 
@@ -721,7 +730,7 @@ ROM_START( xevious )
 	ROM_LOAD( "xvi_16.4n",    0x9000, 0x1000, 0x605ca889 )	/* sprite set #3, planes 0/1 */
 	/* 0xa000-0xafff empty space to decode sprite set #3 as 3 bits per pixel */
 
-	ROM_REGION(0x0b00)	/* color PROMs */
+	ROM_REGIONX( 0x0b00, REGION_PROMS )
 	ROM_LOAD( "xvi_8bpr.6a",  0x0000, 0x0100, 0x5cc2727f ) /* palette red component */
 	ROM_LOAD( "xvi_9bpr.6d",  0x0100, 0x0100, 0x5c8796cc ) /* palette green component */
 	ROM_LOAD( "xvi10bpr.6e",  0x0200, 0x0100, 0x3cb60975 ) /* palette blue component */
@@ -762,7 +771,7 @@ ROM_START( xeviousa )
 	ROM_LOAD( "xvi_16.4n",    0x9000, 0x1000, 0x605ca889 )	/* sprite set #3, planes 0/1 */
 	/* 0xa000-0xafff empty space to decode sprite set #3 as 3 bits per pixel */
 
-	ROM_REGION(0x0b00)	/* color PROMs */
+	ROM_REGIONX( 0x0b00, REGION_PROMS )
 	ROM_LOAD( "xvi_8bpr.6a",  0x0000, 0x0100, 0x5cc2727f ) /* palette red component */
 	ROM_LOAD( "xvi_9bpr.6d",  0x0100, 0x0100, 0x5c8796cc ) /* palette green component */
 	ROM_LOAD( "xvi10bpr.6e",  0x0200, 0x0100, 0x3cb60975 ) /* palette blue component */
@@ -804,7 +813,7 @@ ROM_START( xevios )
 	ROM_LOAD( "xvi_16.4n",    0x9000, 0x1000, 0x605ca889 )	/* sprite set #3, planes 0/1 */
 	/* 0xa000-0xafff empty space to decode sprite set #3 as 3 bits per pixel */
 
-	ROM_REGION(0x0b00)	/* color PROMs */
+	ROM_REGIONX( 0x0b00, REGION_PROMS )
 	ROM_LOAD( "xvi_8bpr.6a",  0x0000, 0x0100, 0x5cc2727f ) /* palette red component */
 	ROM_LOAD( "xvi_9bpr.6d",  0x0100, 0x0100, 0x5c8796cc ) /* palette green component */
 	ROM_LOAD( "xvi10bpr.6e",  0x0200, 0x0100, 0x3cb60975 ) /* palette blue component */
@@ -853,7 +862,7 @@ ROM_START( sxevious )
 	ROM_LOAD( "xvi_16.4n",    0x9000, 0x1000, 0x605ca889 )	/* sprite set #3, planes 0/1 */
 	/* 0xa000-0xafff empty space to decode sprite set #3 as 3 bits per pixel */
 
-	ROM_REGION(0x0b00)	/* color PROMs */
+	ROM_REGIONX( 0x0b00, REGION_PROMS )
 	ROM_LOAD( "xvi_8bpr.6a",  0x0000, 0x0100, 0x5cc2727f ) /* palette red component */
 	ROM_LOAD( "xvi_9bpr.6d",  0x0100, 0x0100, 0x5c8796cc ) /* palette green component */
 	ROM_LOAD( "xvi10bpr.6e",  0x0200, 0x0100, 0x3cb60975 ) /* palette blue component */
@@ -931,16 +940,6 @@ static void xevios_decode(void)
 
 
 
-static const char *xevious_sample_names[] =
-{
-	"*xevious",
-	"explo1.wav",	/* ground target explosion */
-	"explo2.wav",	/* Solvalou explosion */
-	0	/* end of array */
-};
-
-
-
 static int hiload(void) /* V.V */
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
@@ -983,7 +982,7 @@ static void hisave(void) /* V.V */
 
 
 
-struct GameDriver xevious_driver =
+struct GameDriver driver_xevious =
 {
 	__FILE__,
 	0,
@@ -996,23 +995,23 @@ struct GameDriver xevious_driver =
 	&machine_driver,
 	0,
 
-	xevious_rom,
+	rom_xevious,
 	0, 0,
-	xevious_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	xevious_input_ports,
+	input_ports_xevious,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
 
-struct GameDriver xeviousa_driver =
+struct GameDriver driver_xeviousa =
 {
 	__FILE__,
-	&xevious_driver,
+	&driver_xevious,
 	"xeviousa",
 	"Xevious (Atari)",
 	"1982",
@@ -1022,23 +1021,23 @@ struct GameDriver xeviousa_driver =
 	&machine_driver,
 	0,
 
-	xeviousa_rom,
+	rom_xeviousa,
 	0, 0,
-	xevious_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	xeviousa_input_ports,
+	input_ports_xeviousa,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
 
-struct GameDriver xevios_driver =
+struct GameDriver driver_xevios =
 {
 	__FILE__,
-	&xevious_driver,
+	&driver_xevious,
 	"xevios",
 	"Xevios",
 	"1983",
@@ -1048,23 +1047,23 @@ struct GameDriver xevios_driver =
 	&machine_driver,
 	0,
 
-	xevios_rom,
+	rom_xevios,
 	xevios_decode, 0,
-	xevious_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	xevious_input_ports,
+	input_ports_xevious,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
 
-struct GameDriver sxevious_driver =
+struct GameDriver driver_sxevious =
 {
 	__FILE__,
-	&xevious_driver,
+	&driver_xevious,
 	"sxevious",
 	"Super Xevious",
 	"1984",
@@ -1074,14 +1073,14 @@ struct GameDriver sxevious_driver =
 	&machine_driver,
 	0,
 
-	sxevious_rom,
+	rom_sxevious,
 	0, 0,
-	xevious_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	sxevious_input_ports,
+	input_ports_sxevious,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave

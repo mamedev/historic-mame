@@ -203,7 +203,7 @@ static struct IOWritePort i8039_writeport[] =
 	{ -1 }	/* end of table */
 };
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( megazone )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -432,7 +432,7 @@ ROM_START( megazone )
 	ROM_LOAD( "319e10.bin",    0x8000, 0x2000, 0x7bb1aeee )
 	ROM_LOAD( "319e08.bin",    0xa000, 0x2000, 0x6add71b1 )
 
-	ROM_REGION(0x260)      /* PROMs */
+	ROM_REGIONX( 0x0260, REGION_PROMS )
 	ROM_LOAD( "319b18.a16",  0x0000, 0x020, 0x23cb02af ) /* palette */
 	ROM_LOAD( "319b16.c6",   0x0020, 0x100, 0x5748e933 ) /* sprite lookup table */
 	ROM_LOAD( "319b17.a11",  0x0120, 0x100, 0x1fbfce73 ) /* character lookup table */
@@ -462,7 +462,7 @@ ROM_START( megaznik )
 	ROM_LOAD( "319e10.bin",    0x8000, 0x2000, 0x7bb1aeee )
 	ROM_LOAD( "319e08.bin",    0xa000, 0x2000, 0x6add71b1 )
 
-	ROM_REGION(0x260)      /* PROMs */
+	ROM_REGIONX( 0x0260, REGION_PROMS )
 	ROM_LOAD( "319b18.a16",  0x0000, 0x020, 0x23cb02af ) /* palette */
 	ROM_LOAD( "319b16.c6",   0x0020, 0x100, 0x5748e933 ) /* sprite lookup table */
 	ROM_LOAD( "319b17.a11",  0x0120, 0x100, 0x1fbfce73 ) /* character lookup table */
@@ -538,7 +538,7 @@ static void megazone_decode(void)
 
 
 
-struct GameDriver megazone_driver =
+struct GameDriver driver_megazone =
 {
 	__FILE__,
 	0,
@@ -551,23 +551,23 @@ struct GameDriver megazone_driver =
 	&machine_driver,
 	0,
 
-	megazone_rom,
+	rom_megazone,
 	0, megazone_decode,
 	0,
 	0,      /* sound_prom */
 
-	input_ports,
+	input_ports_megazone,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
-        hiload, hisave
+	hiload, hisave
 };
 
-struct GameDriver megaznik_driver =
+struct GameDriver driver_megaznik =
 {
 	__FILE__,
-	&megazone_driver,
+	&driver_megazone,
 	"megaznik",
 	"Mega Zone (Kosuka)",
 	"1983",
@@ -577,15 +577,15 @@ struct GameDriver megaznik_driver =
 	&machine_driver,
 	0,
 
-	megaznik_rom,
+	rom_megaznik,
 	0, megazone_decode,
 	0,
 	0,      /* sound_prom */
 
-	input_ports,
+	input_ports_megazone,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
-        hiload, hisave
+	hiload, hisave
 };

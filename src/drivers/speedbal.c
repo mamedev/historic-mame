@@ -79,7 +79,7 @@ void speedbal_sharedram_w(int offset,int data)
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0xdbff, MRA_ROM },
-	{ 0xdc00, 0xdfff, speedbal_sharedram_r, &speedbal_sharedram },  // shared with SOUND
+	{ 0xdc00, 0xdfff, speedbal_sharedram_r },  // shared with SOUND
 	{ 0xe000, 0xe1ff, speedbal_background_videoram_r },
 	{ 0xe800, 0xefff, speedbal_foreground_videoram_r },
 	{ 0xf000, 0xffff, MRA_RAM },
@@ -143,7 +143,7 @@ static struct IOWritePort sound_writeport[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( speedbal )
 	PORT_START      /* DSW2 */
 	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x06, "70000 200000 1M" )
@@ -387,7 +387,7 @@ static void hisave(void)
 }
 
 
-struct GameDriver speedbal_driver =
+struct GameDriver driver_speedbal =
 {
 	__FILE__,
 	0,
@@ -400,12 +400,12 @@ struct GameDriver speedbal_driver =
 	&machine_driver,
 	0,
 
-	speedbal_rom,
+	rom_speedbal,
 	speedbal_decode, 0,
 	0,
 	0,
 
-	input_ports,
+	input_ports_speedbal,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,

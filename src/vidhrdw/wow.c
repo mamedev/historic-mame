@@ -6,7 +6,7 @@
 
   * History *
 
-  MJC - 01.02.98 - Line based dirty colour / dirty rectangle handling
+  MJC - 01.02.98 - Line based dirty color / dirty rectangle handling
                    Sparkle Circuit for Gorf
 
 ***************************************************************************/
@@ -16,32 +16,30 @@
 #include "cpu/z80/z80.h"
 
 
+void wow_update_line(int line, int gorf);
 
-void Gorf_CopyLine(int Line);
 
 unsigned char *wow_videoram;
-int magic_expand_color, magic_control, collision;
+static int magic_expand_color, magic_control, collision;
 
 #define MAX_STARS 750							/* Vars for Stars */
                                       			/* Used in Gorf & WOW */
 struct star
 {
-	int x,y,colour;
+	int x,y,color;
 };
 
-int StarColour[8] = {0,1,2,3,3,2,1,0};
+static int star_color[8] = {0,1,2,3,3,2,1,0};
 static struct star stars[MAX_STARS];
 static int total_stars;
 
 
-int ColourSplit=0;								/* Colour System vars */
-int Colour[8] = {0,0,0,0,0xC7,0xF3,0x7C,0x51};
+static int colors[8] = {0,0,0,0,0xc7,0xf3,0x7c,0x51}; /* otherwise WOW stars out blank */
 
-unsigned int ColourCheck=0xC7F37C51;
-unsigned int GorfColourCheck=0;
-unsigned int LineColour[256];
-												/* Latch Registers */
-int Latch[16] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0 };
+static UINT64 current_line_color;
+static UINT64 line_color[256];
+
+static int Latch[16];
 
 /* ======================================================================= */
 
@@ -56,20 +54,12 @@ int wow_intercept_r(int offset)
 }
 
 
-int wow_video_retrace_r(int offset)
+/* Switches color registers at this zone - 40 zones (NOT USED) */
+
+void wow_colour_split_w(int offset, int data)
 {
-	extern int CurrentScan;
-
-    return CurrentScan;
-}
-
-
-/* Switches colour registers at this zone - 40 zones (NOT USED) */
-
-void colour_split_w(int offset, int data)
-{
-
 #if 0
+	static int ColourSplit;
 	int NewSplit;
 
     NewSplit = (data * 2) - 1;
@@ -79,28 +69,28 @@ void colour_split_w(int offset, int data)
         ColourSplit = NewSplit;
         memset(dirtybuffer,1,204);
     }
-#endif
 
 #ifdef MAME_DEBUG
-    if (errorlog) fprintf(errorlog,"Colour split set to %02d\n",ColourSplit);
+    if (errorlog) fprintf(errorlog,"colors split set to %02d\n",ColourSplit);
+#endif
 #endif
 }
 
 
-void colour_register_w(int offset, int data)
+void wow_colour_register_w(int offset, int data)
 {
-	if(Colour[offset] != data)
+	if(colors[offset] != data)
     {
-		Colour[offset] = data;
+		colors[offset] = data;
 
-        if(offset>3)
-			ColourCheck = (Colour[4] << 24) | (Colour[5] << 16) | (Colour[6] < 8) | Colour[7];
-        else
-        	GorfColourCheck = (Colour[0] << 24) | (Colour[1] << 16) | (Colour[2] < 8) | Colour[3];
+		current_line_color = ((UINT64)colors[0] << 56) | ((UINT64)colors[1] << 48) |
+							 ((UINT64)colors[2] << 40) | ((UINT64)colors[3] << 32) |
+        					 ((UINT64)colors[4] << 24) | ((UINT64)colors[5] << 16) |
+        					 ((UINT64)colors[6] << 8)  | ((UINT64)colors[7] << 0);
 	}
 
 #ifdef MAME_DEBUG
-    if (errorlog) fprintf(errorlog,"Colour %01x set to %02x\n",offset,data);
+    if (errorlog) fprintf(errorlog,"colors %01x set to %02x\n",offset,data);
 #endif
 }
 
@@ -319,7 +309,7 @@ void wow_pattern_board_w(int offset,int data)
 
                 /* Redraw screen to avoid tears */
 
-                for (i=203;i>=0;i--) Gorf_CopyLine(i);
+                for (i=203;i>=0;i--) wow_update_line(i, 1);
 
 		        /* Cycle Steal (slow scroll down!) */
 
@@ -385,6 +375,48 @@ void wow_pattern_board_w(int offset,int data)
 }
 
 
+static void init_star_field(void)
+{
+	int generator;
+	int x,y;
+
+	total_stars = 0;
+	generator = 0;
+
+	for (y = 203;y >= 0;y--)
+	{
+		for (x = 319;x >= 0;x--)
+		{
+			int bit1,bit2;
+
+			generator <<= 1;
+			bit1 = (~generator >> 17) & 1;
+			bit2 = (generator >> 5) & 1;
+
+			if (bit1 ^ bit2) generator |= 1;
+
+			if (y >= Machine->drv->visible_area.min_x &&
+				y <= Machine->drv->visible_area.max_x &&
+				((~generator >> 16) & 1) &&
+				(generator & 0x3f) == 0x3f)
+			{
+				int color;
+
+				color = (~(generator >> 8)) & 0x07;
+				if (color && (total_stars < MAX_STARS))
+				{
+					stars[total_stars].x      = x;
+					stars[total_stars].y      = y;
+					stars[total_stars].color = color-1;
+
+					total_stars++;
+				}
+			}
+		}
+	}
+}
+
+
 /* GORF Special Registers
  *
  * These are data writes, done by IN commands
@@ -414,7 +446,7 @@ void wow_pattern_board_w(int offset,int data)
  *
  */
 
-int Gorf_IO_r(int offset)
+int gorf_io_r(int offset)
 {
 	int data;
 
@@ -434,136 +466,39 @@ int Gorf_IO_r(int offset)
  * Gorf specific routines
  ****************************************************************************/
 
-int gorf_vh_start(void)
+static void draw_stars(struct osd_bitmap *bitmap, int gorf)
 {
-	int generator;
-	int x,y;
+    static int speed = 0;
+	int offs;
 
-	if (generic_vh_start() != 0)
-		return 1;
+	int color = (gorf ? 0 : 4);
 
-
-	/* precalculate the star background */
-
-	total_stars = 0;
-	generator = 0;
-
-	for (y = 319;y >= 0;y--)
-	{
-		for (x = 203;x >= 0;x--)
-		{
-			int bit1,bit2;
-
-			generator <<= 1;
-			bit1 = (~generator >> 17) & 1;
-			bit2 = (generator >> 5) & 1;
-
-			if (bit1 ^ bit2) generator |= 1;
-
-			if (y >= Machine->drv->visible_area.min_x &&
-				y <= Machine->drv->visible_area.max_x &&
-				((~generator >> 16) & 1) &&
-				(generator & 0x3f) == 0x3f)
-			{
-				int color;
-
-				color = (~(generator >> 8)) & 0x07;
-				if (color && (total_stars < MAX_STARS))
-				{
-               	    int ex,ey;
-
-                    ex = x;
-                    ey = y;
-
-                    if (!(Machine->orientation & ORIENTATION_SWAP_XY))
-                    {
-                    	ey = x;
-                        ex = y;
-                    }
-
-					stars[total_stars].x      = ex;
-					stars[total_stars].y      = ey;
-					stars[total_stars].colour = color-1;
-
-					total_stars++;
-				}
-			}
-		}
-	}
-
-	return 0;
-}
-
-
-void Gorf_CopyLine(int Line)
-{
-	/* Copy one line to bitmap, using current colour register settings */
-
-    int memloc;
-    int i,x;
-    int data,color;
-    int ey;
-
-	if (dirtybuffer[Line] == 1 || LineColour[Line] != GorfColourCheck)
+    if (colors[color] != 0)
     {
-		LineColour[Line] = GorfColourCheck;
-        dirtybuffer[Line] = 0;
+	    speed = (speed + 1) & 3;
 
-        memloc = Line * 80;
-
-        /* Handle Line swops outside of loop */
-
-        if (!(Machine->orientation & ORIENTATION_SWAP_XY))
+        if (speed==0)								/* Time to change color */
         {
-  		    if (Machine->orientation & ORIENTATION_FLIP_Y)
-                ey = 203 - Line;
-            else
-  			    ey = Line;
-
-        	osd_mark_dirty(0,ey,319,ey,0);
-        }
-        else
-        {
-  		    if (Machine->orientation & ORIENTATION_FLIP_X)
-                ey = 203 - Line;
-            else
-  			    ey = Line;
-
-        	osd_mark_dirty(ey,0,ey,319,0);
+		    for (offs = total_stars-1;offs >= 0;offs--)
+				stars[offs].color = (stars[offs].color + 1) & 7;
         }
 
-	    for(i=0;i<80;i++,memloc++)
+	    for (offs = total_stars-1;offs >= 0;offs--)
 	    {
-			data = wow_videoram[memloc];
+		    int x,y;
 
-            for(x=316-(i*4);x<=319-(i*4);x++)
-            {
-            	color = data & 0x03;
+		    x = stars[offs].x;
+		    y = stars[offs].y;
 
-                if (!(Machine->orientation & ORIENTATION_SWAP_XY))
-                {
-					if (!(Machine->orientation & ORIENTATION_FLIP_X))
-						tmpbitmap->line[ey][319-x] = Machine->pens[Colour[color]];
-                    else
-                    	tmpbitmap->line[ey][x] = Machine->pens[Colour[color]];
-                }
-                else
-                {
-					if (!(Machine->orientation & ORIENTATION_FLIP_Y))
-						tmpbitmap->line[319-x][ey] = Machine->pens[Colour[color]];
-                    else
-                    	tmpbitmap->line[x][ey] = Machine->pens[Colour[color]];
-                }
-
-                data >>= 2;
-            }
-        }
-	}
+		    if (read_pixel(bitmap, x, y) == Machine->pens[colors[color]])
+			    plot_pixel(bitmap, x, y, Machine->pens[colors[color]+star_color[stars[offs].color]]);
+	    }
+    }
 }
+
 
 void gorf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-    static int Speed=0;
 	int offs;
     int Sparkle=0;
     int SparkleLow=0;
@@ -571,33 +506,12 @@ void gorf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
-	/* copy the character mapped graphics */
-
   	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
-    /* Plot the stars (on colour 0 only) */
 
-    if (Colour[0] != 0)
-    {
-	    Speed = (Speed + 1) & 3;
+    /* Plot the stars (on color 0 only) */
 
-        if (Speed==0)								/* Time to change colour */
-        {
-			if (!(Machine->orientation & ORIENTATION_SWAP_XY))
-				osd_mark_dirty(0,0,319,203,0);
-			else
-				osd_mark_dirty(0,0,203,319,0);
-
-		    for (offs = total_stars-1;offs >= 0;offs--)
-				stars[offs].colour = (stars[offs].colour + 1) & 7;
-        }
-
-	    for (offs = total_stars-1;offs >= 0;offs--)
-	    {
-		    if (bitmap->line[stars[offs].y][stars[offs].x] == Machine->pens[Colour[0]])
-			    bitmap->line[stars[offs].y][stars[offs].x] = Machine->pens[Colour[0]+StarColour[stars[offs].colour]];
-	    }
-    }
+	draw_stars(bitmap, 1);
 
     /*
      * Sparkle Circuit
@@ -610,35 +524,30 @@ void gorf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	if (RAM[0x5A93]==160) 							/* INVADERS */
     {
         Sparkle     = 3;
-        SparkleLow  = 216;
-        SparkleHigh = 257;
+        SparkleLow  = 62;
+        SparkleHigh = 103;
     }
 
 	if (RAM[0x5A93]==5) 							/* FLAG SHIP */
     {
         Sparkle     = 3;
-        SparkleLow  = 131;
-        SparkleHigh = 171;
+        SparkleLow  = 148;
+        SparkleHigh = 188;
     }
 
     if (Sparkle)
     {
-    	int Line;
+    	int line;
 
-        if (!(Machine->orientation & ORIENTATION_SWAP_XY))
-        {
-    	    for (Line = SparkleLow;Line <= SparkleHigh;Line++)
-        	    for (offs=203;offs>=0;offs--)
-            	    if (bitmap->line[offs][Line] == Machine->pens[Colour[Sparkle]])
-                	    if (!(rand() & 0x04)) bitmap->line[offs][Line] = Machine->pens[Colour[0]];
-        }
-        else
-        {
-    	    for (Line = SparkleLow;Line <= SparkleHigh;Line++)
-        	    for (offs=203;offs>=0;offs--)
-            	    if (bitmap->line[Line][offs] == Machine->pens[Colour[Sparkle]])
-                	    if (!(rand() & 0x04)) bitmap->line[Line][offs] = Machine->pens[Colour[0]];
-        }
+   	    for (line = SparkleLow; line <= SparkleHigh; line++)
+   	    {
+       	    for (offs = 203; offs >= 0; offs--)
+       	    {
+           	    if ( (read_pixel(bitmap, line, offs) == Machine->pens[colors[3]]) &&
+           	        !(rand() & 0x04))
+               	    plot_pixel(bitmap, line, offs, Machine->pens[colors[0]]);
+			}
+		}
     }
 }
 
@@ -648,16 +557,15 @@ void gorf_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 void seawolf2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	extern int Controller1;
-	extern int Controller2;
+	extern int wow_controller1;
+	extern int wow_controller2;
 
-    int x,y,centre,middle;
+    int x,y,centre;
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
-	/* copy the character mapped graphics */
-
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+
 
     /* Draw a sight */
 
@@ -665,93 +573,34 @@ void seawolf2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
     {
     	/* Yellow sight for Player 1 */
 
-        centre = 317 - (Controller1-18) * 10;
+        centre = 317 - (wow_controller1-18) * 10;
 
         if (centre<2)   centre=2;
         if (centre>317) centre=317;
 
-        if (Machine->orientation & ORIENTATION_SWAP_XY)
-        {
-			if ((Machine->orientation & ORIENTATION_FLIP_X) == 0)
-				centre = 319 - centre;
+		for (y=35-10;y<35+11;y++)
+			plot_pixel(bitmap, centre, y, Machine->pens[0x77]);
 
-		    if (Machine->orientation & ORIENTATION_FLIP_Y)
-            	middle = 35;
-            else
-            	middle = 168;
+   	    for (x=centre-20;x<centre+21;x++)
+       	    if((x>0) && (x<319))
+				plot_pixel(bitmap, x, 35, Machine->pens[0x77]);
 
-           	osd_mark_dirty(middle-10,1,middle+10,318,0);
-	        for(y=middle-10;y<middle+11;y++)
-				bitmap->line[centre][y] = Machine->pens[0x77];
-
-    	    for(x=centre-20;x<centre+21;x++)
-        	    if((x>0) && (x<319))
-                    bitmap->line[x][middle] = Machine->pens[0x77];
-        }
-        else
-        {
-			if (Machine->orientation & ORIENTATION_FLIP_X)
-				centre = 319 - centre;
-
-		    if (Machine->orientation & ORIENTATION_FLIP_Y)
-            	middle = 168;
-            else
-            	middle = 35;
-
-           	osd_mark_dirty(1,middle-10,318,middle+10,0);
-	        for(y=middle-10;y<middle+11;y++)
-				bitmap->line[y][centre] = Machine->pens[0x77];
-
-    	    for(x=centre-20;x<centre+21;x++)
-        	    if((x>0) && (x<319))
-			        bitmap->line[middle][x] = Machine->pens[0x77];
-        }
 
         /* Red sight for Player 2 */
 
         if(RAM[0xc1fb] == 2)
 		{
-            centre = 316 - (Controller2-18) * 10;
+            centre = 316 - (wow_controller2-18) * 10;
 
             if (centre<1)   centre=1;
             if (centre>316) centre=316;
 
-            if (Machine->orientation & ORIENTATION_SWAP_XY)
-            {
-			    if ((Machine->orientation & ORIENTATION_FLIP_X) == 0)
-				    centre = 319 - centre;
+			for (y=33-10;y<33+11;y++)
+				plot_pixel(bitmap, centre, y, Machine->pens[0x58]);
 
-		    	if (Machine->orientation & ORIENTATION_FLIP_Y)
-            		middle = 33;
-	            else
-    	        	middle = 170;
-
-           		osd_mark_dirty(middle-10,1,middle+10,318,0);
-	            for(y=middle-10;y<middle+11;y++)
-               	    bitmap->line[centre][y] = Machine->pens[0x58];
-
-    	        for(x=centre-20;x<centre+21;x++)
-        	        if((x>0) && (x<319))
-                        bitmap->line[x][middle] = Machine->pens[0x58];
-            }
-            else
-            {
-			    if ((Machine->orientation & ORIENTATION_FLIP_X))
-				    centre = 319 - centre;
-
-			    if (Machine->orientation & ORIENTATION_FLIP_Y)
-    	        	middle = 170;
-        	    else
-            		middle = 33;
-
-           		osd_mark_dirty(1,middle-10,318,middle+10,0);
-	            for(y=middle-10;y<middle+11;y++)
-			        bitmap->line[y][centre] = Machine->pens[0x58];
-
-    	        for(x=centre-20;x<centre+21;x++)
-        	        if((x>0) && (x<319))
-                        bitmap->line[middle][x] = Machine->pens[0x58];
-            }
+	   	    for (x=centre-20;x<centre+21;x++)
+	       	    if((x>0) && (x<319))
+					plot_pixel(bitmap, x, 33, Machine->pens[0x58]);
         }
     }
 }
@@ -762,60 +611,10 @@ void seawolf2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 int wow_vh_start(void)
 {
-	int generator;
-	int x,y;
-
 	if (generic_vh_start() != 0)
 		return 1;
 
-
-	/* precalculate the star background */
-
-	total_stars = 0;
-	generator = 0;
-
-	for (y = 203;y >= 0;y--)
-	{
-		for (x = 319;x >= 0;x--)
-		{
-			int bit1,bit2;
-
-			generator <<= 1;
-			bit1 = (~generator >> 17) & 1;
-			bit2 = (generator >> 5) & 1;
-
-			if (bit1 ^ bit2) generator |= 1;
-
-			if (y >= Machine->drv->visible_area.min_y &&
-				y <= Machine->drv->visible_area.max_y &&
-				((~generator >> 16) & 1) &&
-				(generator & 0x3f) == 0x3f)
-			{
-				int color;
-
-				color = (~(generator >> 8)) & 0x07;
-				if (color && (total_stars < MAX_STARS))
-				{
-               	    int ex,ey;
-
-                    ex = x;
-                    ey = y;
-
-                    if (Machine->orientation & ORIENTATION_SWAP_XY)
-                    {
-                    	ey = x;
-                        ex = y;
-                    }
-
-					stars[total_stars].x      = ex;
-					stars[total_stars].y      = ey;
-					stars[total_stars].colour = color-1;
-
-					total_stars++;
-				}
-			}
-		}
-	}
+	init_star_field();
 
 	return 0;
 }
@@ -823,40 +622,11 @@ int wow_vh_start(void)
 
 void wow_vh_screenrefresh_stars(struct osd_bitmap *bitmap,int full_refresh)
 {
-    static int Speed=0;
-	int offs;
-
-	/* copy the character mapped graphics */
-
   	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
-    /* Plot the stars (on colour 4 only) */
+    /* Plot the stars (on color 4 only) */
 
-    if (Colour[4] != 0)
-    {
-	    Speed = (Speed + 1) & 3;
-
-        if (Speed==0)								/* Time to change colour */
-        {
-			if (Machine->orientation & ORIENTATION_SWAP_XY)
-				osd_mark_dirty(0,0,203,319,0);
-			else
-				osd_mark_dirty(0,0,319,203,0);
-		    for (offs = total_stars-1;offs >= 0;offs--)
-				stars[offs].colour = (stars[offs].colour + 1) & 7;
-        }
-
-	    for (offs = 0;offs < total_stars;offs++)
-	    {
-		    int x,y;
-
-		    x = stars[offs].x;
-		    y = stars[offs].y;
-
-		    if (bitmap->line[y][x] == Machine->pens[Colour[4]])
-			    bitmap->line[y][x] = Machine->pens[Colour[4]+StarColour[stars[offs].colour]];
-	    }
-    }
+	draw_stars(bitmap, 0);
 }
 
 
@@ -864,69 +634,33 @@ void wow_vh_screenrefresh_stars(struct osd_bitmap *bitmap,int full_refresh)
  * Standard WOW routines
  ****************************************************************************/
 
-void CopyLine(int Line)
+void wow_update_line(int line, int gorf)
 {
-	/* Copy one line to bitmap, using current colour register settings */
+	/* Copy one line to bitmap, using current color register settings */
 
     int memloc;
     int i,x;
     int data,color;
-   	int ey;
 
     /* Redraw line if anything changed */
 
-	if (dirtybuffer[Line] || LineColour[Line] != ColourCheck)
+	if (dirtybuffer[line] || (line_color[line] != current_line_color))
     {
-		LineColour[Line]  = ColourCheck;
-        dirtybuffer[Line] = 0;
+		line_color[line]  = current_line_color;
+        dirtybuffer[line] = 0;
 
-        memloc = Line * 80;
-
-        /* Handle Line swops outside of loop */
-
-        if (Machine->orientation & ORIENTATION_SWAP_XY)
-        {
-  		    if (Machine->orientation & ORIENTATION_FLIP_Y)
-  			    ey = Line;
-            else
-                ey = 203 - Line;
-
-        	osd_mark_dirty(ey,0,ey,319,0);
-		}
-        else
-        {
-  		    if (Machine->orientation & ORIENTATION_FLIP_Y)
-                ey = 203 - Line;
-            else
-  			    ey = Line;
-
-	        osd_mark_dirty(0,ey,319,ey,0);
-		}
+        memloc = line * 80;
 
 
-
-        for(i=0;i<80;i++,memloc++)
+        for (i = 0; i < 80; i++, memloc++)
         {
 			data = wow_videoram[memloc];
 
-            for(x=i*4+3;x>=i*4;x--)
+            for (x = i*4+3; x >= i*4; x--)
             {
-            	color = (data & 03) | 4;
+            	color = (data & 0x03) | (gorf ? 0 : 4);
 
-                if (Machine->orientation & ORIENTATION_SWAP_XY)
-                {
-					if (Machine->orientation & ORIENTATION_FLIP_X)
-						tmpbitmap->line[x][ey] = Machine->pens[Colour[color]];
-                    else
-                    	tmpbitmap->line[319-x][ey] = Machine->pens[Colour[color]];
-                }
-                else
-                {
-					if (Machine->orientation & ORIENTATION_FLIP_X)
-                        tmpbitmap->line[ey][319-x] = Machine->pens[Colour[color]];
-                    else
-						tmpbitmap->line[ey][x] = Machine->pens[Colour[color]];
-                }
+				plot_pixel(tmpbitmap, x, line, Machine->pens[colors[color]]);
 
                 data >>= 2;
             }
@@ -934,10 +668,9 @@ void CopyLine(int Line)
     }
 }
 
+
 void wow_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	/* copy the character mapped graphics */
-
 	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 }
 

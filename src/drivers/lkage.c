@@ -86,7 +86,7 @@ static struct MemoryReadAddress readmem[] = {
 	{ 0x0000, 0xdfff, MRA_ROM },
 	{ 0xe000, 0xe7ff, MRA_RAM },
 	{ 0xe800, 0xefff, paletteram_r },
-	{ 0xf000, 0xf003, MRA_RAM, &lkage_vreg },
+	{ 0xf000, 0xf003, MRA_RAM },
 	{ 0xf062, 0xf062, unknown0_r }, /* unknown */
 	{ 0xf080, 0xf080, input_port_0_r }, /* DSW1 */
 	{ 0xf081, 0xf081, input_port_1_r }, /* DSW2 (coinage) */
@@ -96,9 +96,9 @@ static struct MemoryReadAddress readmem[] = {
 	{ 0xf084, 0xf084, input_port_5_r },	/* P2 controls */
 	{ 0xf087, 0xf087, status_r }, /* MCU? */
 	{ 0xf0a3, 0xf0a3, unknown0_r }, /* unknown */
-	{ 0xf0c0, 0xf0c5, MRA_RAM, &lkage_scroll },
-	{ 0xf100, 0xf15f, MRA_RAM, &spriteram },
-	{ 0xf400, 0xffff, MRA_RAM, &videoram },
+	{ 0xf0c0, 0xf0c5, MRA_RAM },
+	{ 0xf100, 0xf15f, MRA_RAM },
+	{ 0xf400, 0xffff, MRA_RAM },
 	{ -1 }
 };
 
@@ -107,14 +107,14 @@ static struct MemoryWriteAddress writemem[] = {
 	{ 0xe000, 0xe7ff, MWA_RAM },
 	{ 0xe800, 0xefff, MWA_RAM, &paletteram },
 //	paletteram_xxxxRRRRGGGGBBBB_w, &paletteram },
-	{ 0xf000, 0xf003, MWA_RAM }, /* video registers */
+	{ 0xf000, 0xf003, MWA_RAM, &lkage_vreg }, /* video registers */
 	{ 0xf060, 0xf060, lkage_sound_command_w },
 	{ 0xf061, 0xf063, MWA_NOP }, /* unknown */
 	{ 0xf0a2, 0xf0a3, MWA_NOP }, /* unknown */
-	{ 0xf0c0, 0xf0c5, MWA_RAM }, /* scrolling */
+	{ 0xf0c0, 0xf0c5, MWA_RAM, &lkage_scroll }, /* scrolling */
 	{ 0xf0e1, 0xf0e1, MWA_NOP }, /* unknown */
-	{ 0xf100, 0xf15f, MWA_RAM }, /* spriteram */
-	{ 0xf400, 0xffff, lkage_videoram_w }, /* videoram */
+	{ 0xf100, 0xf15f, MWA_RAM, &spriteram }, /* spriteram */
+	{ 0xf400, 0xffff, lkage_videoram_w, &videoram }, /* videoram */
 	{ -1 }
 };
 
@@ -175,7 +175,7 @@ static struct MemoryWriteAddress writemem_sound[] =
 
 /***************************************************************************/
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( lkage )
 	PORT_START      /* DSW1 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Bonus_Life ) )
 	PORT_DIPSETTING(    0x03, "10000" ) /* unconfirmed */
@@ -490,7 +490,7 @@ static int lkageb_hiload(void)
 }
 
 
-struct GameDriver lkage_driver = {
+struct GameDriver driver_lkage = {
 	__FILE__,
 	0,
 	"lkage",
@@ -502,13 +502,13 @@ struct GameDriver lkage_driver = {
 	&machine_driver,
 	0,
 
-	lkage_rom,
+	rom_lkage,
 	0,
 	0,
 	0,
 	0,
 
-	input_ports,
+	input_ports_lkage,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -516,9 +516,9 @@ struct GameDriver lkage_driver = {
 	hiload, hisave
 };
 
-struct GameDriver lkageb_driver = {
+struct GameDriver driver_lkageb = {
 	__FILE__,
-	&lkage_driver,
+	&driver_lkage,
 	"lkageb",
 	"The Legend of Kage (bootleg)",
 	"1984",
@@ -528,13 +528,13 @@ struct GameDriver lkageb_driver = {
 	&machine_driver,
 	0,
 
-	lkageb_rom,
+	rom_lkageb,
 	0,
 	0,
 	0,
 	0,
 
-	input_ports,
+	input_ports_lkage,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

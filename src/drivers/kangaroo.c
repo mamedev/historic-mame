@@ -209,7 +209,7 @@ static struct IOWritePort sh_writeport[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( kangaroo )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN3 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START1 )
@@ -451,7 +451,7 @@ static void kangaroo_hisave(void)
 
 
 
-struct GameDriver kangaroo_driver =
+struct GameDriver driver_kangaroo =
 {
 	__FILE__,
 	0,
@@ -464,12 +464,12 @@ struct GameDriver kangaroo_driver =
 	&machine_driver,
 	0,
 
-	kangaroo_rom,
+	rom_kangaroo,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_kangaroo,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
@@ -477,10 +477,10 @@ struct GameDriver kangaroo_driver =
 	kangaroo_hiload, kangaroo_hisave
 };
 
-struct GameDriver kangarob_driver =
+struct GameDriver driver_kangarob =
 {
 	__FILE__,
-	&kangaroo_driver,
+	&driver_kangaroo,
 	"kangarob",
 	"Kangaroo (bootleg)",
 	"1982",
@@ -490,12 +490,12 @@ struct GameDriver kangarob_driver =
 	&machine_driver,
 	0,
 
-	kangarob_rom,
+	rom_kangarob,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_kangaroo,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,

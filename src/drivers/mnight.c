@@ -66,8 +66,8 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xfa01, 0xfa01, MRA_RAM },
 	{ 0xfa02, 0xfa02, mnight_bankselect_r },
 	{ 0xfa03, 0xfa03, MRA_RAM },
-	{ 0xfa08, 0xfa09, MRA_RAM, &mnight_scrollx_ram },
-	{ 0xfa0a, 0xfa0b, MRA_RAM, &mnight_scrolly_ram },
+	{ 0xfa08, 0xfa09, MRA_RAM },
+	{ 0xfa0a, 0xfa0b, MRA_RAM },
 	{ 0xfa0c, 0xfa0c, MRA_RAM },
 	{ -1 }  /* end of table */
 };
@@ -86,7 +86,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xfa01, 0xfa01, MWA_RAM },		   // unknown but used
 	{ 0xfa02, 0xfa02, mnight_bankselect_w },
 	{ 0xfa03, 0xfa03, mnight_sprite_overdraw_w, &mnight_spoverdraw_ram },
-	{ 0xfa08, 0xfa0b, MWA_RAM },
+	{ 0xfa08, 0xfa09, MWA_RAM, &mnight_scrollx_ram },
+	{ 0xfa0a, 0xfa0b, MWA_RAM, &mnight_scrolly_ram },
 	{ 0xfa0c, 0xfa0c, mnight_background_enable_w, &mnight_bgenable_ram },
 	{ -1 }  /* end of table */
 };
@@ -122,7 +123,7 @@ static struct IOWritePort snd_writeport[] =
 
 
 
-INPUT_PORTS_START( mnight_input_ports )
+INPUT_PORTS_START( mnight )
 	PORT_START /* Player 1 controls */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
@@ -203,7 +204,7 @@ INPUT_PORTS_START( mnight_input_ports )
 	PORT_DIPSETTING(    0x80, DEF_STR( 1C_4C ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( arkarea_input_ports )
+INPUT_PORTS_START( arkarea )
 	PORT_START /* Player 1 controls */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
@@ -528,7 +529,7 @@ static void mnight_hisave(void)
 	}
 }
 
-struct GameDriver mnight_driver =
+struct GameDriver driver_mnight =
 {
 	__FILE__,
 	0,
@@ -541,12 +542,12 @@ struct GameDriver mnight_driver =
 	&mnight_machine_driver,
 	0,
 
-	mnight_rom,
+	rom_mnight,
 	0,0,
 	0,
 	0, /* sound prom */
 
-	mnight_input_ports,
+	input_ports_mnight,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -555,7 +556,7 @@ struct GameDriver mnight_driver =
 
 };
 
-struct GameDriver arkarea_driver =
+struct GameDriver driver_arkarea =
 {
 	__FILE__,
 	0,
@@ -568,12 +569,12 @@ struct GameDriver arkarea_driver =
 	&mnight_machine_driver,
 	0,
 
-	arkarea_rom,
+	rom_arkarea,
 	0,0,
 	0,
 	0, /* sound prom */
 
-	arkarea_input_ports,
+	input_ports_arkarea,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

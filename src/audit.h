@@ -33,12 +33,14 @@ typedef struct
 	char	name[20];		/* name of missing sample file */
 } tMissingSample;
 
-typedef void (*verify_printf_proc)(char *fmt,...);
+typedef void (CLIB_DECL *verify_printf_proc)(char *fmt,...);
 
 int AuditRomSet (int game, tAuditRecord **audit);
 int VerifyRomSet(int game,verify_printf_proc verify_printf);
+#if 0
 int AuditSampleSet (int game, tMissingSample **audit);
 int VerifySampleSet(int game,verify_printf_proc verify_printf);
+#endif
 int RomInSet (const struct GameDriver *gamedrv, unsigned int crc);
 int RomsetMissing (int game);
 

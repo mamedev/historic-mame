@@ -53,7 +53,7 @@ static struct MemoryWriteAddress writemem[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( m97 )
 	PORT_START	/* IN0 */
 INPUT_PORTS_END
 
@@ -255,7 +255,7 @@ ROM_END
 
 
 
-struct GameDriver riskchal_driver =
+struct GameDriver driver_riskchal =
 {
 	__FILE__,
 	0,
@@ -264,50 +264,50 @@ struct GameDriver riskchal_driver =
 	"1993",
 	"Irem",
 	"Nicola Salmoria",
-	GAME_NOT_WORKING,
+	0,
 	&machine_driver,
 	0,
 
-	riskchal_rom,
+	rom_riskchal,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_m97,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
 
 	0, 0
 };
 
-struct GameDriver gussun_driver =
+struct GameDriver driver_gussun =
 {
 	__FILE__,
-	&riskchal_driver,
+	&driver_riskchal,
 	"gussun",
 	"Gussun Oyoyo (Japan)",
 	"1993",
 	"Irem",
 	"Nicola Salmoria",
-	GAME_NOT_WORKING,
+	0,
 	&machine_driver,
 	0,
 
-	gussun_rom,
+	rom_gussun,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_m97,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
 
 	0, 0
 };
 
-struct GameDriver shisen2_driver =
+struct GameDriver driver_shisen2 =
 {
 	__FILE__,
 	0,
@@ -316,24 +316,24 @@ struct GameDriver shisen2_driver =
 	"1993",
 	"Tamtex",
 	"Nicola Salmoria",
-	GAME_NOT_WORKING,
+	0,
 	&machine_driver,
 	0,
 
-	shisen2_rom,
+	rom_shisen2,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_m97,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
 
 	0, 0
 };
 
-struct GameDriver quizf1_driver =
+struct GameDriver driver_quizf1 =
 {
 	__FILE__,
 	0,
@@ -342,24 +342,24 @@ struct GameDriver quizf1_driver =
 	"1992",
 	"Irem",
 	"Nicola Salmoria",
-	GAME_NOT_WORKING,
+	0,
 	&machine_driver,
 	0,
 
-	quizf1_rom,
+	rom_quizf1,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_m97,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
 
 	0, 0
 };
 
-struct GameDriver atompunk_driver =
+struct GameDriver driver_atompunk =
 {
 	__FILE__,
 	0,
@@ -368,45 +368,45 @@ struct GameDriver atompunk_driver =
 	"1992",
 	"Irem America (licensed from Hudson Soft)",
 	"Nicola Salmoria",
-	GAME_NOT_WORKING,
+	0,
 	&machine_driver,
 	0,
 
-	atompunk_rom,
+	rom_atompunk,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_m97,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
 
 	0, 0
 };
 
-struct GameDriver bbmanw_driver =
+struct GameDriver driver_bbmanw =
 {
 	__FILE__,
-	&atompunk_driver,
+	&driver_atompunk,
 	"bbmanw",
 	"Bomber Man World (Japan)",
 	"1992",
 	"Irem (licensed from Hudson Soft)",
 	"Nicola Salmoria",
-	GAME_NOT_WORKING,
+	0,
 	&machine_driver,
 	0,
 
-	bbmanw_rom,
+	rom_bbmanw,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_m97,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
 
 	0, 0
 };

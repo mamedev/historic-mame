@@ -18,16 +18,44 @@
 #define CHANNEL_BOSSFIRE  2	  /* There is no background humm on the boss level */
 #define CHANNEL_FUEL	  3
 
+
+/* Make sure that the #define's in sndhrdw/astrof.c matches these */
+static const char *astrof_sample_names[] =
+{
+	"*astrof",
+	"fire.wav",
+	"ekilled.wav",
+	"wave1.wav",
+	"wave2.wav",
+	"wave3.wav",
+	"wave4.wav",
+	"bossfire.wav",
+	"fuel.wav",
+	"death.wav",
+	"bosshit.wav",
+	"bosskill.wav",
+	0   /* end of array */
+};
+
 struct Samplesinterface astrof_samples_interface =
 {
 	4,	/* 4 channels */
-	25	/* volume */
+	25,	/* volume */
+	astrof_sample_names
+};
+
+static const char *tomahawk_sample_names[] =
+{
+	"*tomahawk",
+	/* We don't have these yet */
+	0   /* end of array */
 };
 
 struct Samplesinterface tomahawk_samples_interface =
 {
 	1,	/* 1 channel for now */
-	25	/* volume */
+	25,	/* volume */
+	tomahawk_sample_names
 };
 
 

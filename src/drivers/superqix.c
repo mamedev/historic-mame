@@ -69,7 +69,7 @@ static struct IOWritePort writeport[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( superqix )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
@@ -328,7 +328,7 @@ static void superqix_hisave(void)
 }
 
 
-struct GameDriver superqix_driver =
+struct GameDriver driver_superqix =
 {
 	__FILE__,
 	0,
@@ -337,27 +337,27 @@ struct GameDriver superqix_driver =
 	"1987",
 	"Taito",
 	"Mirko Buffoni\nNicola Salmoria",
-	GAME_NOT_WORKING,
+	0,
 	&machine_driver,
 	0,
 
-	superqix_rom,
+	rom_superqix,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_superqix,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ORIENTATION_ROTATE_90 | GAME_NOT_WORKING,
 
 	0, 0
 };
 
-struct GameDriver sqixbl_driver =
+struct GameDriver driver_sqixbl =
 {
 	__FILE__,
-	&superqix_driver,
+	&driver_superqix,
 	"sqixbl",
 	"Super Qix (bootleg)",
 	"1987",
@@ -367,12 +367,12 @@ struct GameDriver sqixbl_driver =
 	&machine_driver,
 	0,
 
-	sqixbl_rom,
+	rom_sqixbl,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_superqix,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_90,

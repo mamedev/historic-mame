@@ -258,7 +258,7 @@ static struct MemoryWriteAddress writemem_sound[] =
 
 ***************************************************************************/
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( vendetta )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
@@ -519,7 +519,7 @@ static void eeprom_save(void)
 
 
 
-struct GameDriver vendetta_driver =
+struct GameDriver driver_vendetta =
 {
 	__FILE__,
 	0,
@@ -532,22 +532,22 @@ struct GameDriver vendetta_driver =
 	&machine_driver,
 	0,
 
-	vendetta_rom,
+	rom_vendetta,
 	gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_vendetta,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	eeprom_load, eeprom_save
 };
 
-struct GameDriver vendett2_driver =
+struct GameDriver driver_vendett2 =
 {
 	__FILE__,
-	&vendetta_driver,
+	&driver_vendetta,
 	"vendett2",
 	"Vendetta (Asia set 2)",
 	"1991",
@@ -557,22 +557,22 @@ struct GameDriver vendett2_driver =
 	&machine_driver,
 	0,
 
-	vendett2_rom,
+	rom_vendett2,
 	gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_vendetta,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	eeprom_load, eeprom_save
 };
 
-struct GameDriver vendettj_driver =
+struct GameDriver driver_vendettj =
 {
 	__FILE__,
-	&vendetta_driver,
+	&driver_vendetta,
 	"vendettj",
 	"Crime Fighters 2 (Japan)",
 	"1991",
@@ -582,12 +582,12 @@ struct GameDriver vendettj_driver =
 	&machine_driver,
 	0,
 
-	vendettj_rom,
+	rom_vendettj,
 	gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_vendetta,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

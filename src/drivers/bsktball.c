@@ -157,7 +157,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ -1 }	/* end of table */
 };
 
-INPUT_PORTS_START( bsktball_input_ports )
+INPUT_PORTS_START( bsktball )
 	PORT_START	/* IN0 */
 	PORT_ANALOG ( 0xFF, 0x00, IPT_TRACKBALL_X, 100, 10, 0, 0, 0 ) /* Sensitivity, clip, min, max */
 
@@ -417,7 +417,7 @@ ROM_END
 
 
 
-struct GameDriver bsktball_driver =
+struct GameDriver driver_bsktball =
 {
 	__FILE__,
 	0,
@@ -430,12 +430,12 @@ struct GameDriver bsktball_driver =
 	&machine_driver,
 	0,
 
-	bsktball_rom,
+	rom_bsktball,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	bsktball_input_ports,
+	input_ports_bsktball,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

@@ -266,7 +266,7 @@ static struct IOWritePort kingball_sound_writeport[] =
 
 
 
-INPUT_PORTS_START( mooncrst_input_ports )
+INPUT_PORTS_START( mooncrst )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -307,7 +307,7 @@ INPUT_PORTS_START( mooncrst_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( eagle_input_ports )
+INPUT_PORTS_START( eagle )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -349,7 +349,7 @@ INPUT_PORTS_START( eagle_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( eagle2_input_ports )
+INPUT_PORTS_START( eagle2 )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -390,7 +390,7 @@ INPUT_PORTS_START( eagle2_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( moonqsr_input_ports )
+INPUT_PORTS_START( moonqsr )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -430,7 +430,7 @@ INPUT_PORTS_START( moonqsr_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( checkman_input_ports )
+INPUT_PORTS_START( checkman )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN1 )
@@ -470,7 +470,7 @@ INPUT_PORTS_START( checkman_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( moonal2_input_ports )
+INPUT_PORTS_START( moonal2 )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -511,7 +511,7 @@ INPUT_PORTS_START( moonal2_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( kingball_input_ports )
+INPUT_PORTS_START( kingball )
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -882,7 +882,7 @@ ROM_START( mooncrst )
 	ROM_LOAD( "mcs_a",        0x1000, 0x0800, 0x631ebb5a )
 	ROM_LOAD( "mcs_c",        0x1800, 0x0800, 0x24cfd145 )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
@@ -903,7 +903,7 @@ ROM_START( mooncrsg )
 	ROM_LOAD( "epr202",       0x1000, 0x0800, 0x26c7e800 )
 	ROM_LOAD( "mcs_c",        0x1800, 0x0800, 0x24cfd145 )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
@@ -924,7 +924,7 @@ ROM_START( smooncrs )
 	ROM_LOAD( "epr202",       0x1000, 0x0800, 0x26c7e800 )
 	ROM_LOAD( "mcs_c",        0x1800, 0x0800, 0x24cfd145 )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
@@ -945,7 +945,7 @@ ROM_START( mooncrsb )
 	ROM_LOAD( "epr202",       0x1000, 0x0800, 0x26c7e800 )
 	ROM_LOAD( "mcs_c",        0x1800, 0x0800, 0x24cfd145 )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
@@ -972,7 +972,7 @@ ROM_START( mooncrs2 )
 	ROM_CONTINUE(             0x1a00, 0x0200 )
 	ROM_CONTINUE(             0x1e00, 0x0200 )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
@@ -993,7 +993,7 @@ ROM_START( fantazia )
 	ROM_LOAD( "1k_1_11.bin",  0x1000, 0x0800, 0x4e79ff6b )
 	ROM_LOAD( "mcs_c",        0x1800, 0x0800, 0x24cfd145 )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	/* this PROM was bad (bit 3 always set). I tried to "fix" it to get more reasonable */
 	/* colors, but it should not be considered correct. It's a bootleg anyway. */
 	ROM_LOAD( "6l_prom.bin",  0x0000, 0x0020, BADCRC( 0xf5381d3e ) )
@@ -1022,7 +1022,7 @@ ROM_START( eagle )
 	ROM_CONTINUE(             0x1a00, 0x0200 )
 	ROM_CONTINUE(             0x1e00, 0x0200 )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
@@ -1049,7 +1049,7 @@ ROM_START( eagle2 )
 	ROM_CONTINUE(             0x1a00, 0x0200 )
 	ROM_CONTINUE(             0x1e00, 0x0200 )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
@@ -1070,7 +1070,7 @@ ROM_START( moonqsr )
 	ROM_LOAD( "mqa",          0x1000, 0x0800, 0x66eee0db )
 	ROM_LOAD( "mqc",          0x1800, 0x0800, 0xa6db5b0d )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "vid_e6.bin",   0x0000, 0x0020, 0x0b878b54 )
 ROM_END
 
@@ -1088,7 +1088,7 @@ ROM_START( checkman )
 	ROM_LOAD( "cm9",          0x1000, 0x0800, 0x3cd5c751 )
 	/* 1800-1fff empty */
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "checkman.clr", 0x0000, 0x0020, 0x57a45057 )
 
 	ROM_REGION(0x10000)	/* 64k for sound code */
@@ -1116,7 +1116,7 @@ ROM_START( moonal2 )
 	ROM_LOAD( "ali12.1k",     0x1000, 0x0800, 0x528f1481 )
 	/* 1800-1fff empty */
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
@@ -1139,7 +1139,7 @@ ROM_START( moonal2b )
 	ROM_LOAD( "ali12.1k",     0x1000, 0x0800, 0x528f1481 )
 	/* 1800-1fff empty */
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
@@ -1155,7 +1155,7 @@ ROM_START( kingball )
 	ROM_LOAD( "chg2.1k",      0x1000, 0x0800, 0xa206757d )
 	/* 1800-1fff empty */
 
-	ROM_REGION(0x20)	/* color PROMs */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "kb2-1",        0x0000, 0x0020, 0x15dd5b16 )
 
 	ROM_REGION(0x10000)	/* 64k for sound code */
@@ -1177,7 +1177,7 @@ ROM_START( kingbalj )
 	ROM_LOAD( "chg2.1k",      0x1000, 0x0800, 0xa206757d )
 	/* 1800-1fff empty */
 
-	ROM_REGION(0x20)	/* color PROMs */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "kb2-1",        0x0000, 0x0020, 0x15dd5b16 )
 
 	ROM_REGION(0x10000)	/* 64k for sound code */
@@ -1189,54 +1189,17 @@ ROM_END
 
 
 
-static const char *mooncrst_sample_names[] =
+static unsigned char decode(int data,int addr)
 {
-	"*galaxian",
-	"shot.wav",
-	"death.wav",
-	0	/* end of array */
-};
+	int res;
 
-
-
-static unsigned char evetab[] =
-{
-	0x00,0x01,0x06,0x07,0x40,0x41,0x46,0x47,0x08,0x09,0x0e,0x0f,0x48,0x49,0x4e,0x4f,
-	0x10,0x11,0x16,0x17,0x50,0x51,0x56,0x57,0x18,0x19,0x1e,0x1f,0x58,0x59,0x5e,0x5f,
-	0x60,0x61,0x66,0x67,0x20,0x21,0x26,0x27,0x68,0x69,0x6e,0x6f,0x28,0x29,0x2e,0x2f,
-	0x70,0x71,0x76,0x77,0x30,0x31,0x36,0x37,0x78,0x79,0x7e,0x7f,0x38,0x39,0x3e,0x3f,
-	0x04,0x05,0x02,0x03,0x44,0x45,0x42,0x43,0x0c,0x0d,0x0a,0x0b,0x4c,0x4d,0x4a,0x4b,
-	0x14,0x15,0x12,0x13,0x54,0x55,0x52,0x53,0x1c,0x1d,0x1a,0x1b,0x5c,0x5d,0x5a,0x5b,
-	0x64,0x65,0x62,0x63,0x24,0x25,0x22,0x23,0x6c,0x6d,0x6a,0x6b,0x2c,0x2d,0x2a,0x2b,
-	0x74,0x75,0x72,0x73,0x34,0x35,0x32,0x33,0x7c,0x7d,0x7a,0x7b,0x3c,0x3d,0x3a,0x3b,
-	0x80,0x81,0x86,0x87,0xc0,0xc1,0xc6,0xc7,0x88,0x89,0x8e,0x8f,0xc8,0xc9,0xce,0xcf,
-	0x90,0x91,0x96,0x97,0xd0,0xd1,0xd6,0xd7,0x98,0x99,0x9e,0x9f,0xd8,0xd9,0xde,0xdf,
-	0xe0,0xe1,0xe6,0xe7,0xa0,0xa1,0xa6,0xa7,0xe8,0xe9,0xee,0xef,0xa8,0xa9,0xae,0xaf,
-	0xf0,0xf1,0xf6,0xf7,0xb0,0xb1,0xb6,0xb7,0xf8,0xf9,0xfe,0xff,0xb8,0xb9,0xbe,0xbf,
-	0x84,0x85,0x82,0x83,0xc4,0xc5,0xc2,0xc3,0x8c,0x8d,0x8a,0x8b,0xcc,0xcd,0xca,0xcb,
-	0x94,0x95,0x92,0x93,0xd4,0xd5,0xd2,0xd3,0x9c,0x9d,0x9a,0x9b,0xdc,0xdd,0xda,0xdb,
-	0xe4,0xe5,0xe2,0xe3,0xa4,0xa5,0xa2,0xa3,0xec,0xed,0xea,0xeb,0xac,0xad,0xaa,0xab,
-	0xf4,0xf5,0xf2,0xf3,0xb4,0xb5,0xb2,0xb3,0xfc,0xfd,0xfa,0xfb,0xbc,0xbd,0xba,0xbb
-};
-static unsigned char oddtab[] =
-{
-	0x00,0x01,0x42,0x43,0x04,0x05,0x46,0x47,0x08,0x09,0x4a,0x4b,0x0c,0x0d,0x4e,0x4f,
-	0x10,0x11,0x52,0x53,0x14,0x15,0x56,0x57,0x18,0x19,0x5a,0x5b,0x1c,0x1d,0x5e,0x5f,
-	0x24,0x25,0x66,0x67,0x20,0x21,0x62,0x63,0x2c,0x2d,0x6e,0x6f,0x28,0x29,0x6a,0x6b,
-	0x34,0x35,0x76,0x77,0x30,0x31,0x72,0x73,0x3c,0x3d,0x7e,0x7f,0x38,0x39,0x7a,0x7b,
-	0x40,0x41,0x02,0x03,0x44,0x45,0x06,0x07,0x48,0x49,0x0a,0x0b,0x4c,0x4d,0x0e,0x0f,
-	0x50,0x51,0x12,0x13,0x54,0x55,0x16,0x17,0x58,0x59,0x1a,0x1b,0x5c,0x5d,0x1e,0x1f,
-	0x64,0x65,0x26,0x27,0x60,0x61,0x22,0x23,0x6c,0x6d,0x2e,0x2f,0x68,0x69,0x2a,0x2b,
-	0x74,0x75,0x36,0x37,0x70,0x71,0x32,0x33,0x7c,0x7d,0x3e,0x3f,0x78,0x79,0x3a,0x3b,
-	0x80,0x81,0xc2,0xc3,0x84,0x85,0xc6,0xc7,0x88,0x89,0xca,0xcb,0x8c,0x8d,0xce,0xcf,
-	0x90,0x91,0xd2,0xd3,0x94,0x95,0xd6,0xd7,0x98,0x99,0xda,0xdb,0x9c,0x9d,0xde,0xdf,
-	0xa4,0xa5,0xe6,0xe7,0xa0,0xa1,0xe2,0xe3,0xac,0xad,0xee,0xef,0xa8,0xa9,0xea,0xeb,
-	0xb4,0xb5,0xf6,0xf7,0xb0,0xb1,0xf2,0xf3,0xbc,0xbd,0xfe,0xff,0xb8,0xb9,0xfa,0xfb,
-	0xc0,0xc1,0x82,0x83,0xc4,0xc5,0x86,0x87,0xc8,0xc9,0x8a,0x8b,0xcc,0xcd,0x8e,0x8f,
-	0xd0,0xd1,0x92,0x93,0xd4,0xd5,0x96,0x97,0xd8,0xd9,0x9a,0x9b,0xdc,0xdd,0x9e,0x9f,
-	0xe4,0xe5,0xa6,0xa7,0xe0,0xe1,0xa2,0xa3,0xec,0xed,0xae,0xaf,0xe8,0xe9,0xaa,0xab,
-	0xf4,0xf5,0xb6,0xb7,0xf0,0xf1,0xb2,0xb3,0xfc,0xfd,0xbe,0xbf,0xf8,0xf9,0xba,0xbb
-};
+	res = data;
+	if (data & 0x02) res ^= 0x40;
+	if (data & 0x20) res ^= 0x04;
+	if ((addr & 1) == 0)
+		res = (res & 0xbb) | ((res & 0x40) >> 4) | ((res & 0x04) << 4);
+	return res;
+}
 
 static void mooncrst_decode(void)
 {
@@ -1245,10 +1208,7 @@ static void mooncrst_decode(void)
 
 
 	for (A = 0;A < 0x10000;A++)
-	{
-		if (A & 1) RAM[A] = oddtab[RAM[A]];
-		else RAM[A] = evetab[RAM[A]];
-	}
+		RAM[A] = decode(RAM[A],A);
 }
 
 static void moonqsr_decode(void)
@@ -1258,10 +1218,7 @@ static void moonqsr_decode(void)
 
 
 	for (A = 0;A < 0x10000;A++)
-	{
-		if (A & 1) ROM[A] = oddtab[RAM[A]];
-		else ROM[A] = evetab[RAM[A]];
-	}
+		ROM[A] = decode(RAM[A],A);
 }
 
 static void checkman_decode(void)
@@ -1507,7 +1464,7 @@ static void kingball_hisave(void)
 
 
 
-struct GameDriver mooncrst_driver =
+struct GameDriver driver_mooncrst =
 {
 	__FILE__,
 	0,
@@ -1520,23 +1477,23 @@ struct GameDriver mooncrst_driver =
 	&mooncrst_machine_driver,
 	0,
 
-	mooncrst_rom,
+	rom_mooncrst,
 	mooncrst_decode, 0,
-	mooncrst_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	mooncrst_input_ports,
+	input_ports_mooncrst,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	mooncrst_hiload, mooncrst_hisave
 };
 
-struct GameDriver mooncrsg_driver =
+struct GameDriver driver_mooncrsg =
 {
 	__FILE__,
-	&mooncrst_driver,
+	&driver_mooncrst,
 	"mooncrsg",
 	"Moon Cresta (Gremlin)",
 	"1980",
@@ -1546,23 +1503,23 @@ struct GameDriver mooncrsg_driver =
 	&mooncrst_machine_driver,
 	0,
 
-	mooncrsg_rom,
+	rom_mooncrsg,
 	0, 0,
-	mooncrst_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	mooncrst_input_ports,
+	input_ports_mooncrst,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	mooncrsg_hiload, mooncrsg_hisave
 };
 
-struct GameDriver smooncrs_driver =
+struct GameDriver driver_smooncrs =
 {
 	__FILE__,
-	&mooncrst_driver,
+	&driver_mooncrst,
 	"smooncrs",
 	"Super Moon Cresta",
 	"1980?",
@@ -1572,23 +1529,23 @@ struct GameDriver smooncrs_driver =
 	&mooncrst_machine_driver,
 	0,
 
-	smooncrs_rom,
+	rom_smooncrs,
 	0, 0,
-	mooncrst_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	mooncrst_input_ports,
+	input_ports_mooncrst,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	mooncrst_hiload, mooncrst_hisave
 };
 
-struct GameDriver mooncrsb_driver =
+struct GameDriver driver_mooncrsb =
 {
 	__FILE__,
-	&mooncrst_driver,
+	&driver_mooncrst,
 	"mooncrsb",
 	"Moon Cresta (bootleg set 1)",
 	"1980",
@@ -1598,23 +1555,23 @@ struct GameDriver mooncrsb_driver =
 	&mooncrst_machine_driver,
 	0,
 
-	mooncrsb_rom,
+	rom_mooncrsb,
 	0, 0,
-	mooncrst_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	mooncrst_input_ports,
+	input_ports_mooncrst,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	mooncrst_hiload, mooncrst_hisave
 };
 
-struct GameDriver mooncrs2_driver =
+struct GameDriver driver_mooncrs2 =
 {
 	__FILE__,
-	&mooncrst_driver,
+	&driver_mooncrst,
 	"mooncrs2",
 	"Moon Cresta (bootleg set 2)",
 	"1980",
@@ -1624,49 +1581,49 @@ struct GameDriver mooncrs2_driver =
 	&mooncrst_machine_driver,
 	0,
 
-	mooncrs2_rom,
+	rom_mooncrs2,
 	0, 0,
-	mooncrst_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	mooncrst_input_ports,
+	input_ports_mooncrst,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	mooncrst_hiload, mooncrst_hisave
 };
 
-struct GameDriver fantazia_driver =
+struct GameDriver driver_fantazia =
 {
 	__FILE__,
-	&mooncrst_driver,
+	&driver_mooncrst,
 	"fantazia",
 	"Fantazia",
 	"1980",
 	"bootleg",
 	"Robert Anschuetz (Arcade emulator)\nNicola Salmoria (MAME driver)\nGary Walton (color info)\nSimon Walls (color info)\nAndrew Scott",
-	GAME_IMPERFECT_COLORS,
+	0,
 	&mooncrst_machine_driver,
 	0,
 
-	fantazia_rom,
+	rom_fantazia,
 	0, 0,
-	mooncrst_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	mooncrst_input_ports,
+	input_ports_mooncrst,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
+	0, 0, 0,
+	ORIENTATION_ROTATE_90 | GAME_IMPERFECT_COLORS,
 
 	mooncrst_hiload, mooncrst_hisave
 };
 
-struct GameDriver eagle_driver =
+struct GameDriver driver_eagle =
 {
 	__FILE__,
-	&mooncrst_driver,
+	&driver_mooncrst,
 	"eagle",
 	"Eagle (set 1)",
 	"1980",
@@ -1676,23 +1633,23 @@ struct GameDriver eagle_driver =
 	&mooncrst_machine_driver,
 	0,
 
-	eagle_rom,
+	rom_eagle,
 	0, 0,
-	mooncrst_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	eagle_input_ports,
+	input_ports_eagle,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	mooncrst_hiload, mooncrst_hisave
 };
 
-struct GameDriver eagle2_driver =
+struct GameDriver driver_eagle2 =
 {
 	__FILE__,
-	&mooncrst_driver,
+	&driver_mooncrst,
 	"eagle2",
 	"Eagle (set 2)",
 	"1980",
@@ -1702,20 +1659,20 @@ struct GameDriver eagle2_driver =
 	&mooncrst_machine_driver,
 	0,
 
-	eagle2_rom,
+	rom_eagle2,
 	0, 0,
-	mooncrst_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	eagle2_input_ports,
+	input_ports_eagle2,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	mooncrst_hiload, mooncrst_hisave
 };
 
-struct GameDriver moonqsr_driver =
+struct GameDriver driver_moonqsr =
 {
 	__FILE__,
 	0,
@@ -1728,20 +1685,20 @@ struct GameDriver moonqsr_driver =
 	&moonqsr_machine_driver,
 	0,
 
-	moonqsr_rom,
+	rom_moonqsr,
 	0, moonqsr_decode,
-	mooncrst_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	moonqsr_input_ports,
+	input_ports_moonqsr,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	moonqsr_hiload, moonqsr_hisave
 };
 
-struct GameDriver checkman_driver =
+struct GameDriver driver_checkman =
 {
 	__FILE__,
 	0,
@@ -1754,20 +1711,20 @@ struct GameDriver checkman_driver =
 	&checkman_machine_driver,
 	0,
 
-	checkman_rom,
+	rom_checkman,
 	checkman_decode, 0,
 	0,
 	0,	/* sound_prom */
 
-	checkman_input_ports,
+	input_ports_checkman,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	checkman_hiload, checkman_hisave
 };
 
-struct GameDriver moonal2_driver =
+struct GameDriver driver_moonal2 =
 {
 	__FILE__,
 	0,
@@ -1780,23 +1737,23 @@ struct GameDriver moonal2_driver =
 	&moonal2_machine_driver,
 	0,
 
-	moonal2_rom,
+	rom_moonal2,
 	0, 0,
-	mooncrst_sample_names,
+	0,
 	0, /* sound_prom */
 
-	moonal2_input_ports,
+	input_ports_moonal2,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	0, 0
 };
 
-struct GameDriver moonal2b_driver =
+struct GameDriver driver_moonal2b =
 {
 	__FILE__,
-	&moonal2_driver,
+	&driver_moonal2,
 	"moonal2b",
 	"Moon Alien Part 2 (older version)",
 	"1980",
@@ -1806,20 +1763,20 @@ struct GameDriver moonal2b_driver =
 	&moonal2_machine_driver,
 	0,
 
-	moonal2b_rom,
+	rom_moonal2b,
 	0, 0,
-	mooncrst_sample_names,
+	0,
 	0, /* sound_prom */
 
-	moonal2_input_ports,
+	input_ports_moonal2,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	0, 0
 };
 
-struct GameDriver kingball_driver =
+struct GameDriver driver_kingball =
 {
 	__FILE__,
 	0,
@@ -1832,23 +1789,23 @@ struct GameDriver kingball_driver =
 	&kingball_machine_driver,
 	0,
 
-	kingball_rom,
+	rom_kingball,
 	0, 0,
-	mooncrst_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	kingball_input_ports,
+	input_ports_kingball,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	kingball_hiload, kingball_hisave
 };
 
-struct GameDriver kingbalj_driver =
+struct GameDriver driver_kingbalj =
 {
 	__FILE__,
-	&kingball_driver,
+	&driver_kingball,
 	"kingbalj",
 	"King & Balloon (Japan)",
 	"1980",
@@ -1858,14 +1815,14 @@ struct GameDriver kingbalj_driver =
 	&kingball_machine_driver,
 	0,
 
-	kingbalj_rom,
+	rom_kingbalj,
 	0, 0,
-	mooncrst_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	kingball_input_ports,
+	input_ports_kingball,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	kingball_hiload, kingball_hisave

@@ -76,7 +76,7 @@ static void snowbros_68000_sound_w(int offset, int data)
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x000000, 0x03ffff, MRA_ROM },
-	{ 0x100000, 0x103fff, MRA_BANK1, &ram },
+	{ 0x100000, 0x103fff, MRA_BANK1 },
 	{ 0x300000, 0x300001, snowbros_68000_sound_r },
 	{ 0x500000, 0x500005, snowbros_input_r },
 	{ 0x600000, 0x6001ff, paletteram_word_r },
@@ -87,7 +87,7 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0x100000, 0x103fff, MWA_BANK1 },
+	{ 0x100000, 0x103fff, MWA_BANK1, &ram },
 	{ 0x200000, 0x200001, watchdog_reset_w },
 	{ 0x300000, 0x300001, snowbros_68000_sound_w },
 //	{ 0x400000, 0x400001, snowbros_interrupt_enable_w },
@@ -130,7 +130,7 @@ static struct IOWritePort sound_writeport[] =
 
 
 
-INPUT_PORTS_START( snowbros_input_ports )
+INPUT_PORTS_START( snowbros )
 	PORT_START	/* 500001 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
@@ -401,7 +401,7 @@ static void hisave(void)
 
 
 
-struct GameDriver snowbros_driver =
+struct GameDriver driver_snowbros =
 {
 	__FILE__,
 	0,
@@ -414,22 +414,22 @@ struct GameDriver snowbros_driver =
 	&machine_driver,
 	0,
 
-	snowbros_rom,
+	rom_snowbros,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	snowbros_input_ports,
+	input_ports_snowbros,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
 	hiload, hisave
 };
 
-struct GameDriver snowbroa_driver =
+struct GameDriver driver_snowbroa =
 {
 	__FILE__,
-	&snowbros_driver,
+	&driver_snowbros,
 	"snowbroa",
 	"Snow Bros. - Nick & Tom (set 2)",
 	"1990",
@@ -439,22 +439,22 @@ struct GameDriver snowbroa_driver =
 	&machine_driver,
 	0,
 
-	snowbroa_rom,
+	rom_snowbroa,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	snowbros_input_ports,
+	input_ports_snowbros,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
 	hiload, hisave
 };
 
-struct GameDriver snowbrob_driver =
+struct GameDriver driver_snowbrob =
 {
 	__FILE__,
-	&snowbros_driver,
+	&driver_snowbros,
 	"snowbrob",
 	"Snow Bros. - Nick & Tom (set 3)",
 	"1990",
@@ -464,22 +464,22 @@ struct GameDriver snowbrob_driver =
 	&machine_driver,
 	0,
 
-	snowbrob_rom,
+	rom_snowbrob,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	snowbros_input_ports,
+	input_ports_snowbros,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
 	hiload, hisave
 };
 
-struct GameDriver snowbroj_driver =
+struct GameDriver driver_snowbroj =
 {
 	__FILE__,
-	&snowbros_driver,
+	&driver_snowbros,
 	"snowbroj",
 	"Snow Bros. - Nick & Tom (Japan)",
 	"1990",
@@ -489,12 +489,12 @@ struct GameDriver snowbroj_driver =
 	&machine_driver,
 	0,
 
-	snowbroj_rom,
+	rom_snowbroj,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	snowbros_input_ports,
+	input_ports_snowbros,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,

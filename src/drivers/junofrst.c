@@ -277,7 +277,7 @@ static struct IOWritePort i8039_writeport[] =
 };
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( junofrst )
 	PORT_START      /* DSW2 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x03, "3" )
@@ -637,7 +637,7 @@ static void hisave(void)
 }
 
 
-struct GameDriver junofrst_driver =
+struct GameDriver driver_junofrst =
 {
 	__FILE__,
 	0,
@@ -650,12 +650,12 @@ struct GameDriver junofrst_driver =
 	&machine_driver,
 	0,
 
-	junofrst_rom,
+	rom_junofrst,
 	0, junofrst_decode,   /* ROM decode and opcode decode functions */
 	0,      /* Sample names */
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_junofrst,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_ROTATE_90,

@@ -110,7 +110,7 @@ static struct IOWritePort sound_writeport[] =
 };
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( pbaction )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON3 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -418,7 +418,7 @@ static void hisave(void)
 
 
 
-struct GameDriver pbaction_driver =
+struct GameDriver driver_pbaction =
 {
 	__FILE__,
 	0,
@@ -431,12 +431,12 @@ struct GameDriver pbaction_driver =
 	&machine_driver,
 	0,
 
-	pbaction_rom,
+	rom_pbaction,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_pbaction,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -444,10 +444,10 @@ struct GameDriver pbaction_driver =
 	hiload, hisave
 };
 
-struct GameDriver pbactio2_driver =
+struct GameDriver driver_pbactio2 =
 {
 	__FILE__,
-	&pbaction_driver,
+	&driver_pbaction,
 	"pbactio2",
 	"Pinball Action (set 2)",
 	"1985",
@@ -457,12 +457,12 @@ struct GameDriver pbactio2_driver =
 	&machine_driver,
 	0,
 
-	pbactio2_rom,
+	rom_pbactio2,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_pbaction,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_90,

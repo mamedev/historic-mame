@@ -124,7 +124,7 @@ static struct MemoryWriteAddress writemem[] =
 };
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( warlord )
 	PORT_START	/* IN0 */
 	PORT_BIT ( 0x0f, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_DIPNAME(0x10, 0x00, "Diag Step" )  /* Not referenced */
@@ -300,7 +300,7 @@ ROM_START( warlord )
 	ROM_REGION_DISPOSE(0x800)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "037159.6e",    0x0000, 0x0800, 0xff979a08 )
 
-	ROM_REGION(0x0100)	/* color prom */
+	ROM_REGIONX( 0x0100, REGION_PROMS )
 	/* Only the first 0x80 bytes are used by the hardware. A7 is grounded. */
 	/* Bytes 0x00-0x3f are used fore the color cocktail version. */
 	/* Bytes 0x40-0x7f are for the upright version of the cabinet with a */
@@ -347,7 +347,7 @@ static void hisave(void)
 }
 
 
-struct GameDriver warlord_driver =
+struct GameDriver driver_warlord =
 {
 	__FILE__,
 	0,
@@ -360,14 +360,14 @@ struct GameDriver warlord_driver =
 	&machine_driver,
 	0,
 
-	warlord_rom,
+	rom_warlord,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_warlord,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave

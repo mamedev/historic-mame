@@ -138,7 +138,7 @@ void warpwarp_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		x = 260 - warpwarp_bulletsram[0];
 		y = 252 - warpwarp_bulletsram[1];
 		if (x >= Machine->drv->visible_area.min_x && x+3 <= Machine->drv->visible_area.max_x &&
-				y >= Machine->drv->visible_area.min_y && y+3 <= Machine->drv->visible_area.max_y)
+			y >= Machine->drv->visible_area.min_y && y+3 <= Machine->drv->visible_area.max_y)
 		{
 			int colour;
 			int i,j;
@@ -146,27 +146,11 @@ void warpwarp_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 			colour = Machine->pens[0xf6];	/* white */
 
-			if (Machine->orientation & ORIENTATION_SWAP_XY)
-			{
-				int temp;
-
-
-				temp = x;
-				x = y;
-				y = temp;
-			}
-			if (Machine->orientation & ORIENTATION_FLIP_X)
-				x = bitmap->width-4 - x;
-			if (Machine->orientation & ORIENTATION_FLIP_Y)
-				y = bitmap->height-4 - y;
-
-			osd_mark_dirty(x,y,x+3,y+3,0);
-
 			for (i = 0;i < 4;i++)
 			{
 				for (j = 0;j < 4;j++)
 				{
-					bitmap->line[y+i][x+j] = colour;
+					plot_pixel(bitmap, x+j, y+i, colour);
 				}
 			}
 		}

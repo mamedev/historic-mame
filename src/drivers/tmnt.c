@@ -972,7 +972,7 @@ static struct MemoryWriteAddress ssriders_s_writemem[] =
 
 
 
-INPUT_PORTS_START( mia_input_ports )
+INPUT_PORTS_START( mia )
 	PORT_START      /* COINS */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -1076,7 +1076,7 @@ INPUT_PORTS_START( mia_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( tmnt_input_ports )
+INPUT_PORTS_START( tmnt )
 	PORT_START      /* COINS */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -1184,7 +1184,7 @@ INPUT_PORTS_START( tmnt_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( tmnt2p_input_ports )
+INPUT_PORTS_START( tmnt2p )
 	PORT_START      /* COINS */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -1309,7 +1309,7 @@ INPUT_PORTS_START( tmnt2p_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( punkshot_input_ports )
+INPUT_PORTS_START( punkshot )
 	PORT_START	/* DSW1/DSW2 */
 	PORT_DIPNAME( 0x000f, 0x000f, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( 5C_1C ) )
@@ -1423,7 +1423,7 @@ INPUT_PORTS_START( punkshot_input_ports )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( punksht2_input_ports )
+INPUT_PORTS_START( punksht2 )
 	PORT_START	/* DSW1/DSW2 */
 	PORT_DIPNAME( 0x000f, 0x000f, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(      0x0000, DEF_STR( 5C_1C ) )
@@ -1519,7 +1519,7 @@ INPUT_PORTS_START( punksht2_input_ports )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( lgtnfght_input_ports )
+INPUT_PORTS_START( lgtnfght )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -1623,7 +1623,7 @@ INPUT_PORTS_START( lgtnfght_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( detatwin_input_ports )
+INPUT_PORTS_START( detatwin )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
@@ -1660,7 +1660,7 @@ INPUT_PORTS_START( detatwin_input_ports )
 	PORT_BIT( 0xfc, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( glfgreat_input_ports )
+INPUT_PORTS_START( glfgreat )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
@@ -1782,7 +1782,7 @@ INPUT_PORTS_START( glfgreat_input_ports )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( ssriders4p_input_ports )
+INPUT_PORTS_START( ssriders4p )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
@@ -1843,7 +1843,7 @@ INPUT_PORTS_START( ssriders4p_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( ssriders_input_ports )
+INPUT_PORTS_START( ssriders )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
@@ -3329,7 +3329,7 @@ static void nvram_save(void)
 
 
 
-struct GameDriver mia_driver =
+struct GameDriver driver_mia =
 {
 	__FILE__,
 	0,
@@ -3342,12 +3342,12 @@ struct GameDriver mia_driver =
 	&mia_machine_driver,
 	0,
 
-	mia_rom,
+	rom_mia,
 	mia_gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */
 
-	mia_input_ports,
+	input_ports_mia,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -3355,10 +3355,10 @@ struct GameDriver mia_driver =
 	0, 0
 };
 
-struct GameDriver mia2_driver =
+struct GameDriver driver_mia2 =
 {
 	__FILE__,
-	&mia_driver,
+	&driver_mia,
 	"mia2",
 	"Missing in Action (version S)",
 	"1989",
@@ -3368,12 +3368,12 @@ struct GameDriver mia2_driver =
 	&mia_machine_driver,
 	0,
 
-	mia2_rom,
+	rom_mia2,
 	mia_gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */
 
-	mia_input_ports,
+	input_ports_mia,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -3381,7 +3381,7 @@ struct GameDriver mia2_driver =
 	0, 0
 };
 
-struct GameDriver tmnt_driver =
+struct GameDriver driver_tmnt =
 {
 	__FILE__,
 	0,
@@ -3394,12 +3394,12 @@ struct GameDriver tmnt_driver =
 	&tmnt_machine_driver,
 	0,
 
-	tmnt_rom,
+	rom_tmnt,
 	tmnt_gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */
 
-	tmnt_input_ports,
+	input_ports_tmnt,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -3407,10 +3407,10 @@ struct GameDriver tmnt_driver =
 	tmnt_hiload, tmnt_hisave
 };
 
-struct GameDriver tmht_driver =
+struct GameDriver driver_tmht =
 {
 	__FILE__,
-	&tmnt_driver,
+	&driver_tmnt,
 	"tmht",
 	"Teenage Mutant Hero Turtles (4 Players UK)",
 	"1989",
@@ -3420,12 +3420,12 @@ struct GameDriver tmht_driver =
 	&tmnt_machine_driver,
 	0,
 
-	tmht_rom,
+	rom_tmht,
 	tmnt_gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */
 
-	tmnt_input_ports,
+	input_ports_tmnt,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -3433,10 +3433,10 @@ struct GameDriver tmht_driver =
 	tmnt_hiload, tmnt_hisave
 };
 
-struct GameDriver tmntj_driver =
+struct GameDriver driver_tmntj =
 {
 	__FILE__,
-	&tmnt_driver,
+	&driver_tmnt,
 	"tmntj",
 	"Teenage Mutant Ninja Turtles (4 Players Japan)",
 	"1989",
@@ -3446,12 +3446,12 @@ struct GameDriver tmntj_driver =
 	&tmnt_machine_driver,
 	0,
 
-	tmntj_rom,
+	rom_tmntj,
 	tmnt_gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */
 
-	tmnt_input_ports,
+	input_ports_tmnt,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -3459,10 +3459,10 @@ struct GameDriver tmntj_driver =
 	tmnt_hiload, tmnt_hisave
 };
 
-struct GameDriver tmht2p_driver =
+struct GameDriver driver_tmht2p =
 {
 	__FILE__,
-	&tmnt_driver,
+	&driver_tmnt,
 	"tmht2p",
 	"Teenage Mutant Hero Turtles (2 Players UK)",
 	"1989",
@@ -3472,12 +3472,12 @@ struct GameDriver tmht2p_driver =
 	&tmnt_machine_driver,
 	0,
 
-	tmht2p_rom,
+	rom_tmht2p,
 	tmnt_gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */
 
-	tmnt2p_input_ports,
+	input_ports_tmnt2p,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -3485,10 +3485,10 @@ struct GameDriver tmht2p_driver =
 	tmnt_hiload, tmnt_hisave
 };
 
-struct GameDriver tmnt2pj_driver =
+struct GameDriver driver_tmnt2pj =
 {
 	__FILE__,
-	&tmnt_driver,
+	&driver_tmnt,
 	"tmnt2pj",
 	"Teenage Mutant Ninja Turtles (2 Players Japan)",
 	"1990",
@@ -3498,12 +3498,12 @@ struct GameDriver tmnt2pj_driver =
 	&tmnt_machine_driver,
 	0,
 
-	tmnt2pj_rom,
+	rom_tmnt2pj,
 	tmnt_gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */
 
-	tmnt2p_input_ports,
+	input_ports_tmnt2p,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -3511,7 +3511,7 @@ struct GameDriver tmnt2pj_driver =
 	tmnt_hiload, tmnt_hisave
 };
 
-struct GameDriver punkshot_driver =
+struct GameDriver driver_punkshot =
 {
 	__FILE__,
 	0,
@@ -3524,12 +3524,12 @@ struct GameDriver punkshot_driver =
 	&punkshot_machine_driver,
 	0,
 
-	punkshot_rom,
+	rom_punkshot,
 	gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */
 
-	punkshot_input_ports,
+	input_ports_punkshot,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -3537,10 +3537,10 @@ struct GameDriver punkshot_driver =
 	punkshot_hiload, punkshot_hisave
 };
 
-struct GameDriver punksht2_driver =
+struct GameDriver driver_punksht2 =
 {
 	__FILE__,
-	&punkshot_driver,
+	&driver_punkshot,
 	"punksht2",
 	"Punk Shot (2 Players)",
 	"1990",
@@ -3550,12 +3550,12 @@ struct GameDriver punksht2_driver =
 	&punkshot_machine_driver,
 	0,
 
-	punksht2_rom,
+	rom_punksht2,
 	gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */
 
-	punksht2_input_ports,
+	input_ports_punksht2,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -3563,7 +3563,7 @@ struct GameDriver punksht2_driver =
 	punkshot_hiload, punkshot_hisave
 };
 
-struct GameDriver lgtnfght_driver =
+struct GameDriver driver_lgtnfght =
 {
 	__FILE__,
 	0,
@@ -3576,12 +3576,12 @@ struct GameDriver lgtnfght_driver =
 	&lgtnfght_machine_driver,
 	0,
 
-	lgtnfght_rom,
+	rom_lgtnfght,
 	gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */
 
-	lgtnfght_input_ports,
+	input_ports_lgtnfght,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -3589,10 +3589,10 @@ struct GameDriver lgtnfght_driver =
 	0, 0
 };
 
-struct GameDriver trigon_driver =
+struct GameDriver driver_trigon =
 {
 	__FILE__,
-	&lgtnfght_driver,
+	&driver_lgtnfght,
 	"trigon",
 	"Trigon (Japan)",
 	"1990",
@@ -3602,12 +3602,12 @@ struct GameDriver trigon_driver =
 	&lgtnfght_machine_driver,
 	0,
 
-	trigon_rom,
+	rom_trigon,
 	gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */
 
-	lgtnfght_input_ports,
+	input_ports_lgtnfght,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -3615,7 +3615,7 @@ struct GameDriver trigon_driver =
 	0, 0
 };
 
-struct GameDriver detatwin_driver =
+struct GameDriver driver_detatwin =
 {
 	__FILE__,
 	0,
@@ -3628,12 +3628,12 @@ struct GameDriver detatwin_driver =
 	&detatwin_machine_driver,
 	0,
 
-	detatwin_rom,
+	rom_detatwin,
 	gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */
 
-	detatwin_input_ports,
+	input_ports_detatwin,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -3641,7 +3641,7 @@ struct GameDriver detatwin_driver =
 	nvram_load, nvram_save
 };
 
-struct GameDriver glfgreat_driver =
+struct GameDriver driver_glfgreat =
 {
 	__FILE__,
 	0,
@@ -3650,24 +3650,24 @@ struct GameDriver glfgreat_driver =
 	"1991",
 	"Konami",
 	"Nicola Salmoria (MAME driver)\nAlex Pasadyn (MAME driver)\nJeff Slutter (hardware info)\nHowie Cohen (hardware info)",
-	GAME_NOT_WORKING,
+	0,
 	&glfgreat_machine_driver,
 	0,
 
-	glfgreat_rom,
+	rom_glfgreat,
 	glfgreat_gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */
 
-	glfgreat_input_ports,
+	input_ports_glfgreat,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
 
 	0, 0
 };
 
-struct GameDriver tmnt2_driver =
+struct GameDriver driver_tmnt2 =
 {
 	__FILE__,
 	0,
@@ -3676,76 +3676,76 @@ struct GameDriver tmnt2_driver =
 	"1991",
 	"Konami",
 	"Nicola Salmoria (MAME driver)\nAlex Pasadyn (MAME driver)\nJeff Slutter (hardware info)\nHowie Cohen (hardware info)",
-	GAME_IMPERFECT_COLORS,
+	0,
 	&tmnt2_machine_driver,
 	0,
 
-	tmnt2_rom,
+	rom_tmnt2,
 	gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */
 
-	ssriders4p_input_ports,
+	input_ports_ssriders4p,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_IMPERFECT_COLORS,
 
 	nvram_load, nvram_save
 };
 
-struct GameDriver tmnt22p_driver =
+struct GameDriver driver_tmnt22p =
 {
 	__FILE__,
-	&tmnt2_driver,
+	&driver_tmnt2,
 	"tmnt22p",
 	"Teenage Mutant Ninja Turtles - Turtles in Time (2 Players US)",
 	"1991",
 	"Konami",
 	"Nicola Salmoria (MAME driver)\nAlex Pasadyn (MAME driver)\nJeff Slutter (hardware info)\nHowie Cohen (hardware info)",
-	GAME_IMPERFECT_COLORS,
+	0,
 	&tmnt2_machine_driver,
 	0,
 
-	tmnt22p_rom,
+	rom_tmnt22p,
 	gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */
 
-	ssriders_input_ports,
+	input_ports_ssriders,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_IMPERFECT_COLORS,
 
 	nvram_load, nvram_save
 };
 
-struct GameDriver tmnt2a_driver =
+struct GameDriver driver_tmnt2a =
 {
 	__FILE__,
-	&tmnt2_driver,
+	&driver_tmnt2,
 	"tmnt2a",
 	"Teenage Mutant Ninja Turtles - Turtles in Time (4 Players Asia)",
 	"1991",
 	"Konami",
 	"Nicola Salmoria (MAME driver)\nAlex Pasadyn (MAME driver)\nJeff Slutter (hardware info)\nHowie Cohen (hardware info)",
-	GAME_IMPERFECT_COLORS,
+	0,
 	&tmnt2_machine_driver,
 	0,
 
-	tmnt2a_rom,
+	rom_tmnt2a,
 	gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */
 
-	ssriders4p_input_ports,
+	input_ports_ssriders4p,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_IMPERFECT_COLORS,
 
 	nvram_load, nvram_save
 };
 
-struct GameDriver ssriders_driver =
+struct GameDriver driver_ssriders =
 {
 	__FILE__,
 	0,
@@ -3758,12 +3758,12 @@ struct GameDriver ssriders_driver =
 	&ssriders_machine_driver,
 	0,
 
-	ssriders_rom,
+	rom_ssriders,
 	gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */
 
-	ssriders4p_input_ports,
+	input_ports_ssriders4p,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -3771,10 +3771,10 @@ struct GameDriver ssriders_driver =
 	nvram_load, nvram_save
 };
 
-struct GameDriver ssrdrebd_driver =
+struct GameDriver driver_ssrdrebd =
 {
 	__FILE__,
-	&ssriders_driver,
+	&driver_ssriders,
 	"ssrdrebd",
 	"Sunset Riders (World 2 Players ver. EBD)",
 	"1991",
@@ -3784,12 +3784,12 @@ struct GameDriver ssrdrebd_driver =
 	&ssriders_machine_driver,
 	0,
 
-	ssrdrebd_rom,
+	rom_ssrdrebd,
 	gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */
 
-	ssriders_input_ports,
+	input_ports_ssriders,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -3797,10 +3797,10 @@ struct GameDriver ssrdrebd_driver =
 	nvram_load, nvram_save
 };
 
-struct GameDriver ssrdrebc_driver =
+struct GameDriver driver_ssrdrebc =
 {
 	__FILE__,
-	&ssriders_driver,
+	&driver_ssriders,
 	"ssrdrebc",
 	"Sunset Riders (World 2 Players ver. EBC)",
 	"1991",
@@ -3810,12 +3810,12 @@ struct GameDriver ssrdrebc_driver =
 	&ssriders_machine_driver,
 	0,
 
-	ssrdrebc_rom,
+	rom_ssrdrebc,
 	gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */
 
-	ssriders_input_ports,
+	input_ports_ssriders,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -3823,10 +3823,10 @@ struct GameDriver ssrdrebc_driver =
 	nvram_load, nvram_save
 };
 
-struct GameDriver ssrdruda_driver =
+struct GameDriver driver_ssrdruda =
 {
 	__FILE__,
-	&ssriders_driver,
+	&driver_ssriders,
 	"ssrdruda",
 	"Sunset Riders (US 4 Players ver. UDA)",
 	"1991",
@@ -3836,12 +3836,12 @@ struct GameDriver ssrdruda_driver =
 	&ssriders_machine_driver,
 	0,
 
-	ssrdruda_rom,
+	rom_ssrdruda,
 	gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */
 
-	ssriders_input_ports,
+	input_ports_ssriders,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -3849,10 +3849,10 @@ struct GameDriver ssrdruda_driver =
 	nvram_load, nvram_save
 };
 
-struct GameDriver ssrdruac_driver =
+struct GameDriver driver_ssrdruac =
 {
 	__FILE__,
-	&ssriders_driver,
+	&driver_ssriders,
 	"ssrdruac",
 	"Sunset Riders (US 4 Players ver. UAC)",
 	"1991",
@@ -3862,12 +3862,12 @@ struct GameDriver ssrdruac_driver =
 	&ssriders_machine_driver,
 	0,
 
-	ssrdruac_rom,
+	rom_ssrdruac,
 	gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */
 
-	ssriders_input_ports,
+	input_ports_ssriders,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -3875,10 +3875,10 @@ struct GameDriver ssrdruac_driver =
 	nvram_load, nvram_save
 };
 
-struct GameDriver ssrdrubc_driver =
+struct GameDriver driver_ssrdrubc =
 {
 	__FILE__,
-	&ssriders_driver,
+	&driver_ssriders,
 	"ssrdrubc",
 	"Sunset Riders (US 2 Players ver. UBC)",
 	"1991",
@@ -3888,12 +3888,12 @@ struct GameDriver ssrdrubc_driver =
 	&ssriders_machine_driver,
 	0,
 
-	ssrdrubc_rom,
+	rom_ssrdrubc,
 	gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */
 
-	ssriders_input_ports,
+	input_ports_ssriders,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -3901,10 +3901,10 @@ struct GameDriver ssrdrubc_driver =
 	nvram_load, nvram_save
 };
 
-struct GameDriver ssrdrabd_driver =
+struct GameDriver driver_ssrdrabd =
 {
 	__FILE__,
-	&ssriders_driver,
+	&driver_ssriders,
 	"ssrdrabd",
 	"Sunset Riders (Asia 2 Players ver. ABD)",
 	"1991",
@@ -3914,12 +3914,12 @@ struct GameDriver ssrdrabd_driver =
 	&ssriders_machine_driver,
 	0,
 
-	ssrdrabd_rom,
+	rom_ssrdrabd,
 	gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */
 
-	ssriders_input_ports,
+	input_ports_ssriders,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -3927,10 +3927,10 @@ struct GameDriver ssrdrabd_driver =
 	nvram_load, nvram_save
 };
 
-struct GameDriver ssrdrjbd_driver =
+struct GameDriver driver_ssrdrjbd =
 {
 	__FILE__,
-	&ssriders_driver,
+	&driver_ssriders,
 	"ssrdrjbd",
 	"Sunset Riders (Japan 2 Players ver. JBD)",
 	"1991",
@@ -3940,12 +3940,12 @@ struct GameDriver ssrdrjbd_driver =
 	&ssriders_machine_driver,
 	0,
 
-	ssrdrjbd_rom,
+	rom_ssrdrjbd,
 	gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */
 
-	ssriders_input_ports,
+	input_ports_ssriders,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

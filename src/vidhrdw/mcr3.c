@@ -445,8 +445,6 @@ int dotron_vh_start(void)
 			dotron_palettes[2][i * 3 + 2] = MIN(dotron_backdrop->orig_palette[i * 3 + 2] * 3, 255);
 		}
 
-		/* NOTE: without this, our extra borders might never get drawn */
-		copybitmap(tmpbitmap, dotron_backdrop->artwork, 0, 0, 0, 0, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
 		if (errorlog) fprintf(errorlog, "Backdrop loaded.\n");
 	}
 
@@ -517,35 +515,29 @@ void dotron_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 		int light = light_status & 1;
 		if ((light_status & 2) && (cpu_getcurrentframe() & 1)) light++;	/* strobe */
 		dotron_change_palette(light);
+		/* This is necessary because Discs of Tron modifies the palette */
+		if (backdrop_black_recalc())
+			memset(dirtybuffer, 1, videoram_size);
+
 	}
 
-	if (palette_recalc())
-		memset(dirtybuffer, 1, videoram_size);
+	if (full_refresh || palette_recalc())
+	{
+		if (dotron_backdrop)
+		{
+			backdrop_refresh(dotron_backdrop);
+			copybitmap(tmpbitmap, dotron_backdrop->artwork, 0, 0, 0, 0, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
+			copybitmap(bitmap, dotron_backdrop->artwork, 0, 0, 0, 0, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
+			osd_mark_dirty(0,0,bitmap->width, bitmap->height, 0);
+		}
+		memset(dirtybuffer, 1 ,videoram_size);
+	}
 
 	/* Screen clip, because our backdrop is a different resolution than the game */
 	sclip.min_x = DOTRON_X_START + 0;
 	sclip.max_x = DOTRON_X_START + 32*16 - 1;
 	sclip.min_y = DOTRON_Y_START + 0;
 	sclip.max_y = DOTRON_Y_START + 30*16 - 1;
-
-	/* This is necessary because Discs of Tron modifies the palette */
-	if (dotron_backdrop != NULL)
-	{
-		if (backdrop_black_recalc())
-			memset(dirtybuffer, 1, videoram_size);
-
-	}
-
-	if (full_refresh)
-	{
-		/* This is necessary because the backdrop is a different size than the game */
-		if (dotron_backdrop != NULL)
-		{
-			copybitmap(tmpbitmap, dotron_backdrop->artwork, 0, 0, 0, 0, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
-			copybitmap(bitmap, dotron_backdrop->artwork, 0, 0, 0, 0, &Machine->drv->visible_area, TRANSPARENCY_NONE, 0);
-		}
-		memset(dirtybuffer, 1 ,videoram_size);
-	}
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */

@@ -926,7 +926,7 @@ static struct MachineDriver _shortname_##_machine_driver = \
 								_shortname_,_main_clock_,_sound_clock_, \
 								_fm_clock_,_oki1_clock_,_oki2_clock_) \
  \
-struct GameDriver _shortname_##_driver = \
+struct GameDriver driver_##_shortname_ = \
 { \
 	__FILE__, \
 	_parent_driver_, \
@@ -938,7 +938,7 @@ struct GameDriver _shortname_##_driver = \
 	_flags_, \
 	&_shortname_##_machine_driver, \
 	_rom_decode_, \
-	_shortname_##_rom, \
+	rom_##_shortname_, \
 	&driver_init_##_type_, 0, \
 	0, \
 	0, \
@@ -962,10 +962,10 @@ struct GameDriver _shortname_##_driver = \
 #define MEGASYS1_GAME_CLONE_EXT(_shortname_,_dirname_,_parentname_,_fullname_,_year_, \
 								_orientation_, _type_,  \
 								_rom_decode_, _flags_ ) \
-struct GameDriver _shortname_##_driver = \
+struct GameDriver driver_##_shortname_ = \
 { \
 	__FILE__, \
-	&_parentname_##_driver, \
+	&driver_##_parentname_, \
 	#_dirname_, \
 	#_fullname_, \
 	#_year_, \
@@ -974,7 +974,7 @@ struct GameDriver _shortname_##_driver = \
 	_flags_, \
 	&_parentname_##_machine_driver, \
 	_rom_decode_, \
-	_shortname_##_rom, \
+	rom_##_shortname_, \
 	&driver_init_##_type_, 0, \
 	0, \
 	0, \
@@ -1110,7 +1110,7 @@ ROM_END
 
 
 
-INPUT_PORTS_START( input_ports_street64 )
+INPUT_PORTS_START( street64 )
 	COINS
 	JOY(IPF_PLAYER1)
 	RESERVE				// Unused
@@ -1231,7 +1231,7 @@ ROM_START( lordofk )
 ROM_END
 
 
-INPUT_PORTS_START( input_ports_astyanax )
+INPUT_PORTS_START( astyanax )
 	COINS				/* IN0 0x80001.b */
 	JOY(IPF_PLAYER1)	/* IN1 0x80003.b */
 	RESERVE				/* IN2 0x80004.b */
@@ -1479,11 +1479,11 @@ ROM_END
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
 
-INPUT_PORTS_START( input_ports_avspirit )
+INPUT_PORTS_START( avspirit )
 	INPUT_PORTS_AVSPIRIT
 INPUT_PORTS_END
 
-INPUT_PORTS_START( input_ports_phantasm )
+INPUT_PORTS_START( phantasm )
 	INPUT_PORTS_AVSPIRIT
 INPUT_PORTS_END
 
@@ -1549,7 +1549,7 @@ MEGASYS1_GAME(	avspirit, Avenging Spirit,1991,ORIENTATION_DEFAULT,
 
 /* This is a clone of Avenging Spirit but runs on different hardware */
 /* OSC: same as avspirit(8,12,7 MHz)? (Music tempo driven by timers of the 2151) */
-MEGASYS1_GAME_EXT(	phantasm, phantasm, &avspirit_driver, Phantasm (Japan), 1990, ORIENTATION_DEFAULT,
+MEGASYS1_GAME_EXT(	phantasm, phantasm, &driver_avspirit, Phantasm (Japan), 1990, ORIENTATION_DEFAULT,
 					A,0xff0000,0xffffff,
 					12000000,8000000,STD_FM_CLOCK,STD_OKI_CLOCK,STD_OKI_CLOCK,
 					phantasm_init, 0)
@@ -1598,7 +1598,7 @@ ROM_START( bigstrik )
 ROM_END
 
 
-INPUT_PORTS_START( input_ports_bigstrik )
+INPUT_PORTS_START( bigstrik )
 	COINS
 	JOY(IPF_PLAYER1)
 	RESERVE
@@ -1725,7 +1725,7 @@ ROM_START( chimerab )
 	ROM_LOAD( "prom",         0x0000, 0x0200, 0x00000000 )
 ROM_END
 
-INPUT_PORTS_START( input_ports_chimerab )
+INPUT_PORTS_START( chimerab )
 
 	COINS
 	JOY(IPF_PLAYER1)
@@ -1833,7 +1833,7 @@ ROM_START( cybattlr )
 	ROM_LOAD( "prom",         0x0000, 0x0200, 0x00000000 )
 ROM_END
 
-INPUT_PORTS_START( input_ports_cybattlr )
+INPUT_PORTS_START( cybattlr )
 
 	COINS
 	JOY(IPF_PLAYER1)
@@ -1955,7 +1955,7 @@ ROM_START( edf )
 	ROM_LOAD( "prom",         0x0000, 0x0200, 0x00000000 )
 ROM_END
 
-INPUT_PORTS_START( input_ports_edf )
+INPUT_PORTS_START( edf )
 	COINS
 	JOY(IPF_PLAYER1)
 	RESERVE
@@ -2057,7 +2057,7 @@ ROM_START( hachoo )
 ROM_END
 
 
-INPUT_PORTS_START( input_ports_hachoo )
+INPUT_PORTS_START( hachoo )
 	COINS				/* IN0 0x80001.b */
 	JOY(IPF_PLAYER1)	/* IN1 0x80003.b */
 	RESERVE				/* IN2 0x80004.b */
@@ -2180,7 +2180,7 @@ ROM_START( iganinju )
 ROM_END
 
 
-INPUT_PORTS_START( input_ports_iganinju )
+INPUT_PORTS_START( iganinju )
 
 	COINS				/* IN0 0x80001.b */
 	JOY(IPF_PLAYER1)	/* IN1 0x80003.b */
@@ -2296,7 +2296,7 @@ ROM_START( kickoff )
 	ROM_LOAD( "prom",    0x0000, 0x0200, 0x00000000 )
 ROM_END
 
-INPUT_PORTS_START( input_ports_kickoff )
+INPUT_PORTS_START( kickoff )
 	COINS				/* IN0 0x80001.b ->  !f0008/a.w  */
 	JOY(IPF_PLAYER1)	/* IN1 0x80003.b ->  !f000c/e.w  */
 	RESERVE				/* IN2 0x80004.b --> !f0010/11.w */
@@ -2405,7 +2405,7 @@ ROM_START( makaiden )
 	ROM_LOAD( "makaiden.10", 0x0100, 0x0100, 0xe6709c51 )
 ROM_END
 
-INPUT_PORTS_START( input_ports_lomakai )
+INPUT_PORTS_START( lomakai )
 	COINS				/* IN0 0x80001.b */
 	JOY(IPF_PLAYER1)	/* IN1 0x80003.b */
 	RESERVE				/* IN2 0x80004.b */
@@ -2580,7 +2580,7 @@ ROM_START( p47j )
 	ROM_LOAD( "prom.14m",    0x0000, 0x0200, 0x1d877538 )
 ROM_END
 
-INPUT_PORTS_START( input_ports_p47 )
+INPUT_PORTS_START( p47 )
 
 	COINS				/* IN0 0x80001.b */
 	JOY(IPF_PLAYER1)	/* IN1 0x80003.b */
@@ -2742,7 +2742,7 @@ ROM_START( peekaboo )
 
 ROM_END
 
-INPUT_PORTS_START( input_ports_peekaboo )
+INPUT_PORTS_START( peekaboo )
 
 	PORT_START		/* IN0 - COINS + P1&P2 Buttons - .b */
 	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_COIN3 )		// called "service"
@@ -2806,6 +2806,18 @@ INPUT_PORTS_START( input_ports_peekaboo )
 INPUT_PORTS_END
 
 
+
+int  peekaboo_protection_r(int offset);
+void peekaboo_protection_w(int offset,int data);
+
+
+/* OSC:	? */
+/* KLOV: Jaleco board no. PB-92127A. Main CPU: Motorola 68000P10 */
+MEGASYS1_GAME(	peekaboo,Peek-a-Boo!,1993,ORIENTATION_DEFAULT,
+				D,0x1f0000,0x1fffff,
+				10000000,0,		0,12000,0,
+				0, 0 )
+
 int peekaboo_protection;
 
 /* Read the input ports, through a protection device */
@@ -2819,9 +2831,6 @@ int  peekaboo_protection_r(int offset)
 		default:	return peekaboo_protection;
 	}
 }
-
-static struct OKIM6295interface peekaboo_okim6295_interface;
-
 void peekaboo_protection_w(int offset,int data)
 {
 	static int bank;
@@ -2841,15 +2850,6 @@ void peekaboo_protection_w(int offset,int data)
 
 	cpu_cause_interrupt(0,4);
 }
-
-
-/* OSC:	? */
-/* KLOV: Jaleco board no. PB-92127A. Main CPU: Motorola 68000P10 */
-MEGASYS1_GAME(	peekaboo,Peek-a-Boo!,1993,ORIENTATION_DEFAULT,
-				D,0x1f0000,0x1fffff,
-				10000000,0,		0,12000,0,
-				0, 0 )
-
 
 
 /***************************************************************************
@@ -2901,7 +2901,7 @@ ROM_START( plusalph )
 	ROM_LOAD( "prom.14m",     0x0000, 0x0200, 0x1d877538 )
 ROM_END
 
-INPUT_PORTS_START( input_ports_plusalph )
+INPUT_PORTS_START( plusalph )
 	COINS				/* IN0 0x80001.b */
 	JOY(IPF_PLAYER1)	/* IN1 0x80003.b */
 	RESERVE				/* IN2 0x80004.b */
@@ -3064,7 +3064,7 @@ ROM_START( rodlandj )
 ROM_END
 
 
-INPUT_PORTS_START( input_ports_rodland )
+INPUT_PORTS_START( rodland )
 
 	COINS				/* IN0 0x80001.b */
 	JOY(IPF_PLAYER1)	/* IN1 0x80003.b */
@@ -3222,7 +3222,7 @@ ROM_START( stdragon )
 	ROM_LOAD( "prom.14m",    0x0000, 0x0200, 0x1d877538 )
 ROM_END
 
-INPUT_PORTS_START( input_ports_stdragon )
+INPUT_PORTS_START( stdragon )
 	COINS				/* IN0 0x80001.b */
 	JOY(IPF_PLAYER1)	/* IN1 0x80003.b */
 	RESERVE				/* IN2 0x80004.b */

@@ -110,7 +110,7 @@ static struct IOWritePort writeport[] =
 };
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( popeye )
 
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY )
@@ -315,7 +315,7 @@ ROM_START( popeye )
 	ROM_LOAD( "v-1j",         0x5000, 0x2000, 0x7e864668 )
 	ROM_LOAD( "v-1k",         0x7000, 0x2000, 0x49e1d170 )
 
-	ROM_REGION(0x0340)	/* PROMs */
+	ROM_REGIONX( 0x0340, REGION_PROMS )
 	ROM_LOAD( "prom-cpu.4a",  0x0000, 0x0020, 0x375e1602 ) /* background palette */
 	ROM_LOAD( "prom-cpu.3a",  0x0020, 0x0020, 0xe950bea1 ) /* char palette */
 	ROM_LOAD( "prom-cpu.5b",  0x0040, 0x0100, 0xc5826883 ) /* sprite palette - low 4 bits */
@@ -337,7 +337,7 @@ ROM_START( popeye2 )
 	ROM_LOAD( "v-1j",         0x5000, 0x2000, 0x7e864668 )
 	ROM_LOAD( "v-1k",         0x7000, 0x2000, 0x49e1d170 )
 
-	ROM_REGION(0x0340)	/* PROMs */
+	ROM_REGIONX( 0x0340, REGION_PROMS )
 	ROM_LOAD( "prom-cpu.4a",  0x0000, 0x0020, 0x375e1602 ) /* background palette */
 	ROM_LOAD( "prom-cpu.3a",  0x0020, 0x0020, 0xe950bea1 ) /* char palette */
 	ROM_LOAD( "prom-cpu.5b",  0x0040, 0x0100, 0xc5826883 ) /* sprite palette - low 4 bits */
@@ -360,7 +360,7 @@ ROM_START( popeyebl )
 	ROM_LOAD( "v-1j",         0x5000, 0x2000, 0x7e864668 )
 	ROM_LOAD( "v-1k",         0x7000, 0x2000, 0x49e1d170 )
 
-	ROM_REGION(0x0240)	/* PROMs */
+	ROM_REGIONX( 0x0240, REGION_PROMS )
 	ROM_LOAD( "popeye.pr1",   0x0000, 0x0020, 0xd138e8a4 ) /* background palette */
 	ROM_LOAD( "popeye.pr2",   0x0020, 0x0020, 0x0f364007 ) /* char palette */
 	ROM_LOAD( "popeye.pr3",   0x0040, 0x0100, 0xca4d7b6a ) /* sprite palette - low 4 bits */
@@ -434,7 +434,7 @@ static void hisave(void)
 /* The encryption is based on a custom ALU and seems to be dynamically evolving */
 /* (like Jr. PacMan). I think it decodes 16 bits at a time, bits 0-2 are (or can be) */
 /* an opcode for the ALU and the others contain the data. */
-struct GameDriver popeye_driver =
+struct GameDriver driver_popeye =
 {
 	__FILE__,
 	0,
@@ -443,53 +443,53 @@ struct GameDriver popeye_driver =
 	"1982?",
 	"Nintendo",
 	"Marc Lafontaine\nNicola Salmoria\nMarco Cassili",
-	GAME_NOT_WORKING,
+	0,
 	&popeyebl_machine_driver,
 	0,
 
-	popeye_rom,
+	rom_popeye,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_popeye,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	0, 0, 0,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
 
 	hiload,hisave
 };
 
-struct GameDriver popeye2_driver =
+struct GameDriver driver_popeye2 =
 {
 	__FILE__,
-	&popeye_driver,
+	&driver_popeye,
 	"popeye2",
 	"Popeye (set 2)",
 	"1982?",
 	"Nintendo",
 	"Marc Lafontaine\nNicola Salmoria\nMarco Cassili",
-	GAME_NOT_WORKING,
+	0,
 	&popeyebl_machine_driver,
 	0,
 
-	popeye2_rom,
+	rom_popeye2,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_popeye,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	0, 0, 0,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
 
 	hiload,hisave
 };
 
-struct GameDriver popeyebl_driver =
+struct GameDriver driver_popeyebl =
 {
 	__FILE__,
-	&popeye_driver,
+	&driver_popeye,
 	"popeyebl",
 	"Popeye (bootleg)",
 	"1982?",
@@ -499,14 +499,14 @@ struct GameDriver popeyebl_driver =
 	&popeyebl_machine_driver,
 	0,
 
-	popeyebl_rom,
+	rom_popeyebl,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_popeye,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload,hisave

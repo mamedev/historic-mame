@@ -159,7 +159,7 @@ enum { IPT_END=1,IPT_PORT,
 #define IP_JOY_PREVIOUS	0xfffd	/* use the same joy as the previous input bit */
 
 /* start of table */
-#define INPUT_PORTS_START(name) static struct InputPort name[] = {
+#define INPUT_PORTS_START(name) static struct InputPort input_ports_##name[] = {
 /* end of table */
 #define INPUT_PORTS_END { 0, 0, IPT_END, 0, 0, 0 } };
 /* start of a new input port */

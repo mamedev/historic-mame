@@ -5,6 +5,7 @@ struct Samplesinterface
 {
 	int channels;	/* number of discrete audio channels needed */
 	int volume;		/* global volume for all samples */
+	const char **samplenames;
 };
 
 
@@ -17,6 +18,10 @@ void sample_set_volume(int channel,int volume);
 void sample_stop(int channel);
 int sample_playing(int channel);
 
+/* helper function that reads samples from disk - this can be used by other */
+/* drivers as well (e.g. a sound chip emulator needing drum samples) */
+struct GameSamples *readsamples(const char **samplenames,const char *name);
+void freesamples(struct GameSamples *samples);
 
 int samples_sh_start(const struct MachineSound *msound);
 

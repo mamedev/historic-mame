@@ -223,7 +223,7 @@ static struct MemoryReadAddress tigerh_readmem[] =
 {
 	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xc7ff, MRA_RAM },
-	{ 0xc800, 0xc80f, slapfight_dpram_r , &slapfight_dpram },
+	{ 0xc800, 0xc80f, slapfight_dpram_r },
 	{ 0xc810, 0xcfff, MRA_RAM },
 	{ 0xd000, 0xd7ff, MRA_RAM },
 	{ 0xd800, 0xdfff, MRA_RAM },
@@ -237,7 +237,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0xbfff, MRA_BANK1 },
 	{ 0xc000, 0xc7ff, MRA_RAM },
-	{ 0xc800, 0xc80f, slapfight_dpram_r , &slapfight_dpram },
+	{ 0xc800, 0xc80f, slapfight_dpram_r },
 	{ 0xc810, 0xcfff, MRA_RAM },
 	{ 0xd000, 0xd7ff, MRA_RAM },
 	{ 0xd800, 0xdfff, MRA_RAM },
@@ -315,7 +315,7 @@ static struct MemoryReadAddress sound_readmem[] =
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0xa081, 0xa081, AY8910_read_port_0_r },
 	{ 0xa091, 0xa091, AY8910_read_port_1_r },
-	{ 0xc800, 0xc80f, MRA_RAM, &slapfight_dpram },
+	{ 0xc800, 0xc80f, slapfight_dpram_r },
 	{ 0xc810, 0xcfff, MRA_RAM },
 	{ -1 }  /* end of table */
 };
@@ -328,7 +328,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0xa090, 0xa090, AY8910_control_port_1_w },
 	{ 0xa092, 0xa092, AY8910_write_port_1_w },
 	{ 0xa0e0, 0xa0e0, getstar_sh_intenable_w }, /* LE 151098 (maybe a0f0 also)*/
-	{ 0xc800, 0xc80f, MWA_RAM, &slapfight_dpram },
+	{ 0xc800, 0xc80f, slapfight_dpram_w },
 	{ 0xc810, 0xcfff, MWA_RAM },
 	{ -1 }  /* end of table */
 };
@@ -336,7 +336,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 
 
-INPUT_PORTS_START( tigerh_input_ports )
+INPUT_PORTS_START( tigerh )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
@@ -408,7 +408,7 @@ INPUT_PORTS_START( tigerh_input_ports )
 	PORT_DIPSETTING(    0x02, "5" )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( slapfigh_input_ports )
+INPUT_PORTS_START( slapfigh )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
@@ -478,7 +478,7 @@ INPUT_PORTS_START( slapfigh_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( getstar_input_ports )
+INPUT_PORTS_START( getstar )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
@@ -810,7 +810,7 @@ ROM_START( tigerh )
 	ROM_LOAD( "11.4",         0x1c000, 0x4000, 0x744fae9b )
 	ROM_LOAD( "10.4",         0x20000, 0x4000, 0xe1cf844e )
 
-	ROM_REGION(0x0300)
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "82s129.12q",   0x0000, 0x0100, 0x2c69350d )
 	ROM_LOAD( "82s129.12m",   0x0100, 0x0100, 0x7142e972 )
 	ROM_LOAD( "82s129.12n",   0x0200, 0x0100, 0x25f273f2 )
@@ -839,7 +839,7 @@ ROM_START( tigerh2 )
 	ROM_LOAD( "11.4",         0x1c000, 0x4000, 0x744fae9b )
 	ROM_LOAD( "10.4",         0x20000, 0x4000, 0xe1cf844e )
 
-	ROM_REGION(0x0300)
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "82s129.12q",   0x0000, 0x0100, 0x2c69350d )
 	ROM_LOAD( "82s129.12m",   0x0100, 0x0100, 0x7142e972 )
 	ROM_LOAD( "82s129.12n",   0x0200, 0x0100, 0x25f273f2 )
@@ -868,7 +868,7 @@ ROM_START( tigerhb1 )
 	ROM_LOAD( "11.4",         0x1c000, 0x4000, 0x744fae9b )
 	ROM_LOAD( "10.4",         0x20000, 0x4000, 0xe1cf844e )
 
-	ROM_REGION(0x0300)
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "82s129.12q",   0x0000, 0x0100, 0x2c69350d )
 	ROM_LOAD( "82s129.12m",   0x0100, 0x0100, 0x7142e972 )
 	ROM_LOAD( "82s129.12n",   0x0200, 0x0100, 0x25f273f2 )
@@ -895,7 +895,7 @@ ROM_START( tigerhb2 )
 	ROM_LOAD( "11.4",         0x1c000, 0x4000, 0x744fae9b )
 	ROM_LOAD( "10.4",         0x20000, 0x4000, 0xe1cf844e )
 
-	ROM_REGION(0x0300)
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "82s129.12q",   0x0000, 0x0100, 0x2c69350d )
 	ROM_LOAD( "82s129.12m",   0x0100, 0x0100, 0x7142e972 )
 	ROM_LOAD( "82s129.12n",   0x0200, 0x0100, 0x25f273f2 )
@@ -921,7 +921,7 @@ ROM_START( slapfigh )
 	ROM_LOAD( "sf_r04.bin",   0x34000, 0x8000, 0x422d946b )
 	ROM_LOAD( "sf_r02.bin",   0x3c000, 0x8000, 0x587113ae )
 
-	ROM_REGION(0x0300)
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "sf_col21.bin", 0x0000, 0x0100, 0xa0efaf99 )
 	ROM_LOAD( "sf_col20.bin", 0x0100, 0x0100, 0xa56d57e5 )
 	ROM_LOAD( "sf_col19.bin", 0x0200, 0x0100, 0x5cbf9fbf )
@@ -947,7 +947,7 @@ ROM_START( slapbtjp )
 	ROM_LOAD( "sf_r04.bin",   0x34000, 0x8000, 0x422d946b )
 	ROM_LOAD( "sf_r02.bin",   0x3c000, 0x8000, 0x587113ae )
 
-	ROM_REGION(0x0300)
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "sf_col21.bin", 0x0000, 0x0100, 0xa0efaf99 )
 	ROM_LOAD( "sf_col20.bin", 0x0100, 0x0100, 0xa56d57e5 )
 	ROM_LOAD( "sf_col19.bin", 0x0200, 0x0100, 0x5cbf9fbf )
@@ -974,7 +974,7 @@ ROM_START( slapbtuk )
 	ROM_LOAD( "sf_r04.bin",   0x34000, 0x8000, 0x422d946b )
 	ROM_LOAD( "sf_r02.bin",   0x3c000, 0x8000, 0x587113ae )
 
-	ROM_REGION(0x0300)
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "sf_col21.bin", 0x0000, 0x0100, 0xa0efaf99 )
 	ROM_LOAD( "sf_col20.bin", 0x0100, 0x0100, 0xa56d57e5 )
 	ROM_LOAD( "sf_col19.bin", 0x0200, 0x0100, 0x5cbf9fbf )
@@ -1000,7 +1000,7 @@ ROM_START( alcon )
 	ROM_LOAD( "sf_r04.bin",   0x34000, 0x8000, 0x422d946b )
 	ROM_LOAD( "sf_r02.bin",   0x3c000, 0x8000, 0x587113ae )
 
-	ROM_REGION(0x0300)
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "sf_col21.bin", 0x0000, 0x0100, 0xa0efaf99 )
 	ROM_LOAD( "sf_col20.bin", 0x0100, 0x0100, 0xa56d57e5 )
 	ROM_LOAD( "sf_col19.bin", 0x0200, 0x0100, 0x5cbf9fbf )
@@ -1028,7 +1028,7 @@ ROM_START( getstar )
 	ROM_LOAD( "gs_03.rom", 0x34000, 0x8000, 0xf24158cf )
 	ROM_LOAD( "gs_04.rom", 0x3c000, 0x8000, 0x643fb282 )
 
-	ROM_REGION(0x0300) /* Region 2 - color proms (still missing) */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
     ROM_LOAD( "prom_1.bin", 0x0000, 0x0100, 0x00000000 )
     ROM_LOAD( "prom_2.bin", 0x0100, 0x0100, 0x00000000 )
     ROM_LOAD( "prom_3.bin", 0x0200, 0x0100, 0x00000000 )
@@ -1258,7 +1258,7 @@ void	*f;
 
 
 
-struct GameDriver tigerh_driver =
+struct GameDriver driver_tigerh =
 {
 	__FILE__,
 	0,
@@ -1267,53 +1267,53 @@ struct GameDriver tigerh_driver =
 	"1985",
 	"Taito",
 	"Keith Wilkins\nCarlos Baides\nNicola Salmoria",
-	GAME_NOT_WORKING,
+	0,
 	&tigerh_machine_driver,
 	0,
 
-	tigerh_rom,
+	rom_tigerh,
 	0, 0,
 	0,
 	0,
 
-	tigerh_input_ports,
+	input_ports_tigerh,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
+	0, 0, 0,
+	ORIENTATION_ROTATE_270 | GAME_NOT_WORKING,
 
 	tigerh_hiload, tigerh_hisave
 };
 
-struct GameDriver tigerh2_driver =
+struct GameDriver driver_tigerh2 =
 {
 	__FILE__,
-	&tigerh_driver,
+	&driver_tigerh,
 	"tigerh2",
 	"Tiger Heli (set 2)",
 	"1985",
 	"Taito",
 	"Keith Wilkins\nCarlos Baides\nNicola Salmoria",
-	GAME_NOT_WORKING,
+	0,
 	&tigerh_machine_driver,
 	0,
 
-	tigerh2_rom,
+	rom_tigerh2,
 	0, 0,
 	0,
 	0,
 
-	tigerh_input_ports,
+	input_ports_tigerh,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
+	0, 0, 0,
+	ORIENTATION_ROTATE_270 | GAME_NOT_WORKING,
 
 	tigerh_hiload, tigerh_hisave
 };
 
-struct GameDriver tigerhb1_driver =
+struct GameDriver driver_tigerhb1 =
 {
 	__FILE__,
-	&tigerh_driver,
+	&driver_tigerh,
 	"tigerhb1",
 	"Tiger Heli (bootleg 1)",
 	"1985",
@@ -1323,23 +1323,23 @@ struct GameDriver tigerhb1_driver =
 	&tigerh_machine_driver,
 	0,
 
-	tigerhb1_rom,
+	rom_tigerhb1,
 	0, 0,
 	0,
 	0,
 
-	tigerh_input_ports,
+	input_ports_tigerh,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	tigerh_hiload, tigerh_hisave
 };
 
-struct GameDriver tigerhb2_driver =
+struct GameDriver driver_tigerhb2 =
 {
 	__FILE__,
-	&tigerh_driver,
+	&driver_tigerh,
 	"tigerhb2",
 	"Tiger Heli (bootleg 2)",
 	"1985",
@@ -1349,20 +1349,20 @@ struct GameDriver tigerhb2_driver =
 	&tigerh_machine_driver,
 	0,
 
-	tigerhb2_rom,
+	rom_tigerhb2,
 	0, 0,
 	0,
 	0,
 
-	tigerh_input_ports,
+	input_ports_tigerh,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	tigerh_hiload, tigerh_hisave
 };
 
-struct GameDriver slapfigh_driver =
+struct GameDriver driver_slapfigh =
 {
 	__FILE__,
 	0,
@@ -1371,27 +1371,27 @@ struct GameDriver slapfigh_driver =
 	"1986",
 	"Taito",
 	"Keith Wilkins\nCarlos Baides\nNicola Salmoria",
-	GAME_NOT_WORKING,
+	0,
 	&slapfigh_machine_driver,
 	0,
 
-	slapfigh_rom,
+	rom_slapfigh,
 	0, 0,
 	0,
 	0,
 
-	slapfigh_input_ports,
+	input_ports_slapfigh,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
+	0, 0, 0,
+	ORIENTATION_ROTATE_270 | GAME_NOT_WORKING,
 
 	slapfigh_hiload, slapfigh_hisave
 };
 
-struct GameDriver slapbtjp_driver =
+struct GameDriver driver_slapbtjp =
 {
 	__FILE__,
-	&slapfigh_driver,
+	&driver_slapfigh,
 	"slapbtjp",
 	"Slap Fight (Japan bootleg)",
 	"1986",
@@ -1401,23 +1401,23 @@ struct GameDriver slapbtjp_driver =
 	&slapfigh_machine_driver,
 	0,
 
-	slapbtjp_rom,
+	rom_slapbtjp,
 	0, 0,
 	0,
 	0,
 
-	slapfigh_input_ports,
+	input_ports_slapfigh,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	slapfigh_hiload, slapfigh_hisave
 };
 
-struct GameDriver slapbtuk_driver =
+struct GameDriver driver_slapbtuk =
 {
 	__FILE__,
-	&slapfigh_driver,
+	&driver_slapfigh,
 	"slapbtuk",
 	"Slap Fight (English bootleg)",
 	"1986",
@@ -1427,46 +1427,46 @@ struct GameDriver slapbtuk_driver =
 	&slapbtuk_machine_driver,
 	0,
 
-	slapbtuk_rom,
+	rom_slapbtuk,
 	0, 0,
 	0,
 	0,
 
-	slapfigh_input_ports,
+	input_ports_slapfigh,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	slapfigh_hiload, slapfigh_hisave
 };
 
-struct GameDriver alcon_driver =
+struct GameDriver driver_alcon =
 {
 	__FILE__,
-	&slapfigh_driver,
+	&driver_slapfigh,
 	"alcon",
 	"Alcon",
 	"1986",
 	"?????",
 	"Keith Wilkins\nCarlos Baides\nNicola Salmoria",
-	GAME_NOT_WORKING,
+	0,
 	&slapfigh_machine_driver,
 	0,
 
-	alcon_rom,
+	rom_alcon,
 	0, 0,
 	0,
 	0,
 
-	slapfigh_input_ports,
+	input_ports_slapfigh,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
+	0, 0, 0,
+	ORIENTATION_ROTATE_270 | GAME_NOT_WORKING,
 
 	slapfigh_hiload, slapfigh_hisave
 };
 
-struct GameDriver getstar_driver =
+struct GameDriver driver_getstar =
 {
 	__FILE__,
 	0,
@@ -1475,19 +1475,19 @@ struct GameDriver getstar_driver =
 	"1986",
 	"bootleg",
 	"Keith Wilkins\nCarlos Baides\nNicola Salmoria\nLuca Elia",
-	GAME_WRONG_COLORS,
+	0,
 	&slapfigh_machine_driver,
 	0,
 
-	getstar_rom,
+	rom_getstar,
 	0, 0,
 	0,
 	0,
 
-	getstar_input_ports,
+	input_ports_getstar,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	0, 0, 0,
+	ORIENTATION_DEFAULT | GAME_WRONG_COLORS,
 
 	getstar_hiload, getstar_hisave
 };

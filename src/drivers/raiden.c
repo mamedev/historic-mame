@@ -209,7 +209,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 /******************************************************************************/
 
-INPUT_PORTS_START( raiden_input_ports )
+INPUT_PORTS_START( raiden )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
@@ -571,7 +571,7 @@ static void memory_patch(void)
 
 /***************************************************************************/
 
-struct GameDriver raiden_driver =
+struct GameDriver driver_raiden =
 {
 	__FILE__,
 	0,
@@ -584,10 +584,10 @@ struct GameDriver raiden_driver =
 	&raiden_machine_driver,
 	memory_patch,
 
-	raiden_rom,
+	rom_raiden,
 	0, 0,
 	0, 0,
-	raiden_input_ports,
+	input_ports_raiden,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
@@ -596,10 +596,10 @@ struct GameDriver raiden_driver =
 };
 
 /* Don't add this yet */
-struct GameDriver raidena_driver =
+struct GameDriver driver_raidena =
 {
 	__FILE__,
-	&raiden_driver,
+	&driver_raiden,
 	"raidena",
 	"Raiden (Alternate)",
 	"1990",
@@ -609,10 +609,10 @@ struct GameDriver raidena_driver =
 	&raidena_machine_driver,
 	0,
 
-	raidena_rom,
+	rom_raidena,
 	raidena_decrypt, 0,
 	0, 0,
-	raiden_input_ports,
+	input_ports_raiden,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,

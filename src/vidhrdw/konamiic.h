@@ -1,7 +1,7 @@
 /* helper function to join two 16-bit ROMs and form a 32-bit data stream */
-void konami_rom_deinterleave_2(int memory_region);
+void konami_rom_deinterleave_2(int mem_region);
 /* helper function to join four 16-bit ROMs and form a 64-bit data stream */
-void konami_rom_deinterleave_4(int memory_region);
+void konami_rom_deinterleave_4(int mem_region);
 
 
 int K007342_vh_start(int gfx_index, void (*callback)(int layer,int bank,int *code,int *color));

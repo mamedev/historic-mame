@@ -14,23 +14,23 @@
 /*--------------------------------------------------------------------------
 
 	Atari generic interrupt model (required)
-	
+
 		atarigen_scanline_int_state - state of the scanline interrupt line
 		atarigen_sound_int_state - state of the sound interrupt line
 		atarigen_video_int_state - state of the video interrupt line
-	
+
 		atarigen_int_callback - called when the interrupt state changes
-	
+
 		atarigen_interrupt_reset - resets & initializes the interrupt state
 		atarigen_update_interrupts - forces the interrupts to be reevaluted
-		
+
 		atarigen_scanline_int_set - scanline interrupt initialization
 		atarigen_sound_int_gen - scanline interrupt generator
 		atarigen_scanline_int_ack_w - scanline interrupt acknowledgement
-		
+
 		atarigen_sound_int_gen - sound interrupt generator
 		atarigen_sound_int_ack_w - sound interrupt acknowledgement
-		
+
 		atarigen_video_int_gen - video interrupt generator
 		atarigen_video_int_ack_w - video interrupt acknowledgement
 
@@ -58,18 +58,18 @@ void atarigen_video_int_ack_w(int offset, int data);
 /*--------------------------------------------------------------------------
 
 	EEPROM I/O (optional)
-	
+
 		atarigen_eeprom_default - pointer to compressed default data
 		atarigen_eeprom - pointer to base of EEPROM memory
 		atarigen_eeprom_size - size of EEPROM memory
-		
+
 		atarigen_eeprom_reset - resets the EEPROM system
 
 		atarigen_eeprom_enable_w - write handler to enable EEPROM access
 		atarigen_eeprom_w - write handler for EEPROM data
 		atarigen_eeprom_r - read handler for EEPROM data (low byte)
 		atarigen_eeprom_upper_r - read handler for EEPROM data (high byte)
-		
+
 		atarigen_hiload - standard hi score load routine; loads EEPROM data
 		atarigen_hisave - standard hi score save routine; saves EEPROM data
 
@@ -92,7 +92,7 @@ void atarigen_hisave(void);
 /*--------------------------------------------------------------------------
 
 	Slapstic I/O (optional)
-	
+
 		atarigen_slapstic_init - select and initialize the slapstic handlers
 		atarigen_slapstic_reset - resets the slapstic state
 
@@ -173,7 +173,7 @@ int atarigen_6502_sound_r(int offset);
 /*--------------------------------------------------------------------------
 
 	Misc sound helpers
-	
+
 		atarigen_init_6502_speedup - installs 6502 speedup cheat handler
 		atarigen_set_ym2151_vol - set the volume of the 2151 chip
 		atarigen_set_ym2413_vol - set the volume of the 2413 chip
@@ -217,7 +217,7 @@ extern int atarigen_alpharam_size;
 /*--------------------------------------------------------------------------
 
 	Video scanline timing
-	
+
 		atarigen_scanline_callback - called every n scanlines
 
 		atarigen_scanline_timer_reset - call to reset the system
@@ -232,10 +232,10 @@ void atarigen_scanline_timer_reset(atarigen_scanline_callback update_graphics, i
 /*--------------------------------------------------------------------------
 
 	Video Controller I/O: used in Shuuz, Thunderjaws, Relief Pitcher, Off the Wall
-	
+
 		atarigen_video_control_data - pointer to base of control memory
 		atarigen_video_control_state - current state of the video controller
-		
+
 		atarigen_video_control_reset - initializes the video controller
 
 		atarigen_video_control_w - write handler for the video controller
@@ -270,11 +270,11 @@ int atarigen_video_control_r(int offset);
 /*--------------------------------------------------------------------------
 
 	Motion object rendering
-	
+
 		atarigen_mo_desc - description of the M.O. layout
-		
+
 		atarigen_mo_callback - called back for each M.O. during processing
-		
+
 		atarigen_mo_init - initializes and configures the M.O. list walker
 		atarigen_mo_free - frees all memory allocated by atarigen_mo_init
 		atarigen_mo_reset - reset for a new frame (use only if not using interrupt system)
@@ -309,12 +309,12 @@ void atarigen_mo_process(atarigen_mo_callback callback, void *param);
 /*--------------------------------------------------------------------------
 
 	RLE Motion object rendering/decoding
-	
+
 		atarigen_rle_descriptor - describes a single object
-		
+
 		atarigen_rle_count - total number of objects found
 		atarigen_rle_info - array of descriptors for objects we found
-		
+
 		atarigen_rle_init - prescans the RLE objects
 		atarigen_rle_free - frees all memory allocated by atarigen_rle_init
 		atarigen_rle_render - render an RLE-compressed motion object
@@ -336,9 +336,9 @@ struct atarigen_rle_descriptor
 extern int atarigen_rle_count;
 extern struct atarigen_rle_descriptor *atarigen_rle_info;
 
-int atarigen_rle_init(int memory_region, int colorbase);
+int atarigen_rle_init(int region, int colorbase);
 void atarigen_rle_free(void);
-void atarigen_rle_render(struct osd_bitmap *bitmap, struct atarigen_rle_descriptor *info, int color, int hflip, int vflip, 
+void atarigen_rle_render(struct osd_bitmap *bitmap, struct atarigen_rle_descriptor *info, int color, int hflip, int vflip,
 	int x, int y, int xscale, int yscale, const struct rectangle *clip);
 
 
@@ -346,11 +346,11 @@ void atarigen_rle_render(struct osd_bitmap *bitmap, struct atarigen_rle_descript
 /*--------------------------------------------------------------------------
 
 	Playfield rendering
-	
+
 		atarigen_pf_state - data block describing the playfield
-		
+
 		atarigen_pf_callback - called back for each chunk during processing
-		
+
 		atarigen_pf_init - initializes and configures the playfield params
 		atarigen_pf_free - frees all memory allocated by atarigen_pf_init
 		atarigen_pf_reset - reset for a new frame (use only if not using interrupt system)
@@ -407,7 +407,7 @@ void atarigen_pf2_process(atarigen_pf_callback callback, void *param, const stru
 /*--------------------------------------------------------------------------
 
 	Misc Video stuff
-	
+
 		atarigen_get_hblank - returns the current HBLANK state
 		atarigen_halt_until_hblank_0_w - write handler for a HBLANK halt
 		atarigen_666_paletteram_w - 6-6-6 special RGB paletteram handler
@@ -426,7 +426,7 @@ void atarigen_shade_render(struct osd_bitmap *bitmap, const struct GfxElement *g
 /*--------------------------------------------------------------------------
 
 	General stuff
-	
+
 		atarigen_show_slapstic_message - display warning about slapstic
 		atarigen_show_sound_message - display warning about coins
 		atarigen_update_messages - update messages
@@ -441,11 +441,11 @@ void atarigen_update_messages(void);
 /*--------------------------------------------------------------------------
 
 	Motion object drawing macros
-	
+
 		atarigen_mo_compute_clip - computes the M.O. clip rect
 		atarigen_mo_compute_clip_8x8 - computes the M.O. clip rect
 		atarigen_mo_compute_clip_16x16 - computes the M.O. clip rect
-		
+
 		atarigen_mo_draw - draws a generically-sized M.O.
 		atarigen_mo_draw_strip - draws a generically-sized M.O. strip
 		atarigen_mo_draw_8x8 - draws an 8x8 M.O.
@@ -483,13 +483,13 @@ void atarigen_update_messages(void);
 
 #define atarigen_mo_compute_clip_8x8(dest, xpos, ypos, hsize, vsize, clip) \
 	atarigen_mo_compute_clip(dest, xpos, ypos, hsize, vsize, clip, 8, 8)
-	
+
 #define atarigen_mo_compute_clip_16x8(dest, xpos, ypos, hsize, vsize, clip) \
 	atarigen_mo_compute_clip(dest, xpos, ypos, hsize, vsize, clip, 16, 8)
-	
+
 #define atarigen_mo_compute_clip_16x16(dest, xpos, ypos, hsize, vsize, clip) \
 	atarigen_mo_compute_clip(dest, xpos, ypos, hsize, vsize, clip, 16, 16)
-	
+
 
 #define atarigen_mo_draw(bitmap, gfx, code, color, hflip, vflip, x, y, hsize, vsize, clip, trans, trans_pen, tile_width, tile_height) \
 {																										\

@@ -24,6 +24,9 @@ int zaxxon_vid_type;	/* set by init_machine; 0 = zaxxon; 1 = congobongo */
 #define FUTSPY_VID	2
 
 
+void zaxxon_vh_stop(void);
+
+
 /***************************************************************************
 
   Convert the color PROMs into a more useable format.
@@ -87,93 +90,25 @@ void zaxxon_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 		COLOR(0,i) = i;
 }
 
-/* handle rotation of the background bitmaps */
-static void copy_rotated_pixel (struct osd_bitmap *dst_bm, int dx, int dy,
-	struct osd_bitmap *src_bm, int sx, int sy)
-{
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
-	{
-		int temp;
-
-		temp = dx;
-		dx = dy;
-		dy = temp;
-		temp = sx;
-		sx = sy;
-		sy = temp;
-	}
-	if (Machine->orientation & ORIENTATION_FLIP_X)
-	{
-		dx = dst_bm->width - 1 - dx;
-		sx = src_bm->width - 1 - sx;
-	}
-	if (Machine->orientation & ORIENTATION_FLIP_Y)
-	{
-		dy = dst_bm->height - 1 - dy;
-		sy = src_bm->height - 1 - sy;
-	}
-
-	dst_bm->line[dy][dx] = src_bm->line[sy][sx];
-}
-
-
 /***************************************************************************
 
   Start the video hardware emulation.
 
 ***************************************************************************/
 
-int zaxxon_vh_start(void)
+static void copy_pixel(struct osd_bitmap *dst_bm, int dx, int dy,
+					   struct osd_bitmap *src_bm, int sx, int sy)
+{
+	plot_pixel(dst_bm, dx, dy, read_pixel(src_bm, sx, sy));
+}
+
+
+static void create_background(struct osd_bitmap *dst_bm, struct osd_bitmap *src_bm, int col)
 {
 	int offs;
 	int sx,sy;
-	struct osd_bitmap *prebitmap;
-	int width, height;
 
 
-	if (generic_vh_start() != 0)
-		return 1;
-
-	/* for speed, backgrounds are arranged differently if axis is swapped */
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
-		height = 512, width = 2303+32;
-	else
-		/* leave a screenful of black pixels at each end */
-		height = 256+4096+256, width = 256;
-
-	/* large bitmap for the precalculated background */
-	if ((backgroundbitmap1 = osd_create_bitmap(width,height)) == 0)
-	{
-		generic_vh_stop();
-		return 1;
-	}
-
-	if (zaxxon_vid_type == ZAXXON_VID || zaxxon_vid_type == FUTSPY_VID)
-	{
-		if ((backgroundbitmap2 = osd_create_bitmap(width,height)) == 0)
-		{
-			osd_free_bitmap(backgroundbitmap1);
-			generic_vh_stop();
-			return 1;
-		}
-	}
-
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
-	{
-		/* create a temporary bitmap to prepare the background before converting it */
-		if ((prebitmap = osd_create_bitmap(256,4096)) == 0)
-		{
-			if (zaxxon_vid_type == ZAXXON_VID || zaxxon_vid_type == FUTSPY_VID)
-				osd_free_bitmap(backgroundbitmap2);
-			osd_free_bitmap(backgroundbitmap1);
-			generic_vh_stop();
-			return 1;
-		}
-	}
-	else
-		prebitmap = backgroundbitmap1;
-
-	/* prepare the background */
 	for (offs = 0;offs < 0x4000;offs++)
 	{
 		sy = 8 * (offs / 32);
@@ -183,9 +118,9 @@ int zaxxon_vh_start(void)
 			/* leave screenful of black pixels at end */
 			sy += 256;
 
-		drawgfx(prebitmap,Machine->gfx[1],
+		drawgfx(src_bm,Machine->gfx[1],
 				Machine->memory_region[2][offs] + 256 * (Machine->memory_region[2][0x4000 + offs] & 3),
-				Machine->memory_region[2][0x4000 + offs] >> 4,
+				col + (Machine->memory_region[2][0x4000 + offs] >> 4),
 				0,0,
 				sx,sy,
 				0,TRANSPARENCY_NONE,0);
@@ -206,12 +141,61 @@ int zaxxon_vh_start(void)
 			{
 				if (offs + sy >= 0 && offs + sy < 4096)
 				{
-					copy_rotated_pixel (backgroundbitmap1, sx, 511 - sy, prebitmap, sy/2, 4095 - (offs+sy));
-					copy_rotated_pixel (backgroundbitmap1, sx, 511 - (sy+1), prebitmap, sy/2, 4095 - (offs+sy+1));
+					copy_pixel (dst_bm, sx, 511 -  sy   ,    src_bm, sy/2, 4095 - (offs+sy));
+					copy_pixel (dst_bm, sx, 511 - (sy+1), src_bm, sy/2, 4095 - (offs+sy+1));
 				}
 			}
 		}
 	}
+}
+
+
+int zaxxon_vh_start(void)
+{
+	struct osd_bitmap *prebitmap;
+	int width, height;
+
+
+	if (generic_vh_start() != 0)
+		return 1;
+
+	/* for speed, backgrounds are arranged differently if axis is swapped */
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
+		height = 512, width = 2303+32;
+	else
+		/* leave a screenful of black pixels at each end */
+		height = 256+4096+256, width = 256;
+
+	/* large bitmap for the precalculated background */
+	if ((backgroundbitmap1 = osd_create_bitmap(width,height)) == 0)
+	{
+		zaxxon_vh_stop();
+		return 1;
+	}
+
+	if (zaxxon_vid_type == ZAXXON_VID || zaxxon_vid_type == FUTSPY_VID)
+	{
+		if ((backgroundbitmap2 = osd_create_bitmap(width,height)) == 0)
+		{
+			zaxxon_vh_stop();
+			return 1;
+		}
+	}
+
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
+	{
+		/* create a temporary bitmap to prepare the background before converting it */
+		if ((prebitmap = osd_create_bitmap(256,4096)) == 0)
+		{
+			zaxxon_vh_stop();
+			return 1;
+		}
+	}
+	else
+		prebitmap = backgroundbitmap1;
+
+	/* prepare the background */
+	create_background(backgroundbitmap1, prebitmap, 0);
 
 	if (zaxxon_vid_type == ZAXXON_VID || zaxxon_vid_type == FUTSPY_VID)
 	{
@@ -219,44 +203,7 @@ int zaxxon_vh_start(void)
 			prebitmap = backgroundbitmap2;
 
 		/* prepare a second background with different colors, used in the death sequence */
-		for (offs = 0;offs < 0x4000;offs++)
-		{
-			sy = 8 * (offs / 32);
-			sx = 8 * (offs % 32);
-
-			if (!(Machine->orientation & ORIENTATION_SWAP_XY))
-				/* leave screenful of black pixels at end */
-				sy += 256;
-
-			drawgfx(prebitmap,Machine->gfx[1],
-					Machine->memory_region[2][offs] + 256 * (Machine->memory_region[2][0x4000 + offs] & 3),
-					16 + (Machine->memory_region[2][0x4000 + offs] >> 4),
-					0,0,
-					sx,sy,
-					0,TRANSPARENCY_NONE,0);
-		}
-
-		if (Machine->orientation & ORIENTATION_SWAP_XY)
-		{
-			/* the background is stored as a rectangle, but is drawn by the hardware skewed: */
-			/* go right two pixels, then up one pixel. Doing the conversion at run time would */
-			/* be extremely expensive, so we do it now. To save memory, we squash the image */
-			/* horizontally (doing line shifts at run time is much less expensive than doing */
-			/* column shifts) */
-			for (offs = -510;offs < 4096;offs += 2)
-			{
-				sx = (2302-510/2) - offs/2;
-
-				for (sy = 0;sy < 512;sy += 2)
-				{
-					if (offs + sy >= 0 && offs + sy < 4096)
-					{
-						copy_rotated_pixel (backgroundbitmap2, sx, 511 - sy, prebitmap, sy/2, 4095 - (offs+sy));
-						copy_rotated_pixel (backgroundbitmap2, sx, 511 - (sy+1), prebitmap, sy/2, 4095 - (offs+sy+1));
-					}
-				}
-			}
-		}
+		create_background(backgroundbitmap2, prebitmap, 16);
 	}
 
 	if (Machine->orientation & ORIENTATION_SWAP_XY)
@@ -273,7 +220,6 @@ int zaxxon_vh_start(void)
 int razmataz_vh_start(void)
 {
 	int offs;
-	int sx,sy;
 
 
 	if (generic_vh_start() != 0)
@@ -282,14 +228,13 @@ int razmataz_vh_start(void)
 	/* large bitmap for the precalculated background */
 	if ((backgroundbitmap1 = osd_create_bitmap(256,4096)) == 0)
 	{
-		generic_vh_stop();
+		zaxxon_vh_stop();
 		return 1;
 	}
 
 	if ((backgroundbitmap2 = osd_create_bitmap(256,4096)) == 0)
 	{
-		osd_free_bitmap(backgroundbitmap1);
-		generic_vh_stop();
+		zaxxon_vh_stop();
 		return 1;
 	}
 
@@ -297,6 +242,9 @@ int razmataz_vh_start(void)
 	/* prepare the background */
 	for (offs = 0;offs < 0x4000;offs++)
 	{
+		int sx,sy;
+
+
 		sy = 8 * (offs / 32);
 		sx = 8 * (offs % 32);
 
@@ -332,9 +280,8 @@ int razmataz_vh_start(void)
 ***************************************************************************/
 void zaxxon_vh_stop(void)
 {
-	if (zaxxon_vid_type == ZAXXON_VID || zaxxon_vid_type == FUTSPY_VID)
-		osd_free_bitmap(backgroundbitmap2);
-	osd_free_bitmap(backgroundbitmap1);
+	if (backgroundbitmap1)  osd_free_bitmap(backgroundbitmap1);
+	if (backgroundbitmap2)  osd_free_bitmap(backgroundbitmap2);
 	generic_vh_stop();
 }
 
@@ -454,7 +401,7 @@ void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				clip.max_x = i;
 
 				if ((zaxxon_vid_type == ZAXXON_VID || zaxxon_vid_type == FUTSPY_VID)
-						&& (*zaxxon_background_color_bank & 1))
+					 && (*zaxxon_background_color_bank & 1))
 					copybitmap(bitmap,backgroundbitmap2,0,0,-scroll,skew,&clip,TRANSPARENCY_NONE,0);
 				else
 					copybitmap(bitmap,backgroundbitmap1,0,0,-scroll,skew,&clip,TRANSPARENCY_NONE,0);
@@ -472,7 +419,7 @@ void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				scroll = 2*(zaxxon_background_position[0] + 256*(zaxxon_background_position[1]&7))
 					- backgroundbitmap1->height + 256;
 
-			skew = 64 - (255 - Machine->drv->visible_area.max_y);
+			skew = 72 - (255 - Machine->drv->visible_area.max_y);
 
 			clip.min_x = Machine->drv->visible_area.min_x;
 			clip.max_x = Machine->drv->visible_area.max_x;
@@ -483,7 +430,7 @@ void zaxxon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				clip.max_y = i;
 
 				if ((zaxxon_vid_type == ZAXXON_VID || zaxxon_vid_type == FUTSPY_VID)
-						&& (*zaxxon_background_color_bank & 1))
+					 && (*zaxxon_background_color_bank & 1))
 					copybitmap(bitmap,backgroundbitmap2,0,0,skew,scroll,&clip,TRANSPARENCY_NONE,0);
 				else
 					copybitmap(bitmap,backgroundbitmap1,0,0,skew,scroll,&clip,TRANSPARENCY_NONE,0);

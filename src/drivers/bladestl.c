@@ -43,9 +43,9 @@ void bladestl_vreg_w(int offset, int data);
 
 static int bladestl_interrupt( void )
 {
-	cpu_cause_interrupt(0,M6309_INT_NMI);
+	cpu_cause_interrupt(0,HD6309_INT_NMI);
 	if (K007342_is_INT_enabled())
-        return M6309_INT_FIRQ;
+        return HD6309_INT_FIRQ;
     else
 		return ignore_interrupt();
 }
@@ -177,7 +177,7 @@ static struct MemoryWriteAddress bladestl_writemem_sound[] =
 
 ***************************************************************************/
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( bladestl )
 	PORT_START	/* DSW #1 */
 	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 4C_1C ) )
@@ -420,8 +420,8 @@ ROM_START( bladestl )
 	ROM_REGION( 0x40000 ) /* uPD7759 data (chip 2) */
 	ROM_LOAD( "797a04",	0x000000, 0x40000, 0x9ac8ea4e )
 
-	ROM_REGION( 0x0100 ) /* lookup table */
-	ROM_LOAD( "797a07", 0x00000, 0x00100, 0x7aecad4e )
+	ROM_REGIONX( 0x0100, REGION_PROMS )
+	ROM_LOAD( "797a07", 0x0000, 0x0100, 0x7aecad4e )	/* lookup table */
 ROM_END
 
 /***************************************************************************
@@ -430,7 +430,7 @@ ROM_END
 
 ***************************************************************************/
 
-struct GameDriver bladestl_driver =
+struct GameDriver driver_bladestl =
 {
 	__FILE__,
 	0,
@@ -439,18 +439,18 @@ struct GameDriver bladestl_driver =
 	"1987",
 	"Konami",
 	"Manuel Abadia",
-	GAME_NOT_WORKING,
+	0,
 	&machine_driver,
 	0,
 
-	bladestl_rom,
+	rom_bladestl,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_bladestl,
 
-	PROM_MEMORY_REGION(5), 0, 0,
-    ORIENTATION_ROTATE_90,
+	0, 0, 0,
+    ORIENTATION_ROTATE_90 | GAME_NOT_WORKING,
 	0, 0
 };

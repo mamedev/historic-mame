@@ -144,7 +144,7 @@ static struct IOWritePort writeport[] =
 
 
 
-INPUT_PORTS_START( bagman_input_ports )
+INPUT_PORTS_START( bagman )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -192,7 +192,7 @@ INPUT_PORTS_END
 
 /* EXACTLY the same as bagman, the only difference is that
 Languade dip is replaced by Demo Sounds */
-INPUT_PORTS_START( bagmans_input_ports )
+INPUT_PORTS_START( bagmans )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -241,7 +241,7 @@ INPUT_PORTS_END
 
 /* EXACTLY the same as bagman, the only difference is that the START1 button */
 /* also acts as the shoot button. */
-INPUT_PORTS_START( sbagman_input_ports )
+INPUT_PORTS_START( sbagman )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -289,7 +289,7 @@ INPUT_PORTS_START( sbagman_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( pickin_input_ports )
+INPUT_PORTS_START( pickin )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -485,7 +485,7 @@ ROM_START( bagman )
 	ROM_LOAD( "c1_b01.bin",   0x2000, 0x1000, 0x705193b2 )
 	ROM_LOAD( "f1_b03s.bin",  0x3000, 0x1000, 0xdba1eda7 )
 
-	ROM_REGION(0x0040)	/* color PROMs */
+	ROM_REGIONX( 0x0040, REGION_PROMS )
 	ROM_LOAD( "p3.bin",       0x0000, 0x0020, 0x2a855523 )
 	ROM_LOAD( "r3.bin",       0x0020, 0x0020, 0xae6f1019 )
 
@@ -509,7 +509,7 @@ ROM_START( bagnard )
 	ROM_LOAD( "bagnard.001",  0x2000, 0x1000, 0x060b044c )
 	ROM_LOAD( "bagnard.003",  0x3000, 0x1000, 0x8043bc1a )
 
-	ROM_REGION(0x0040)	/* color PROMs */
+	ROM_REGIONX( 0x0040, REGION_PROMS )
 	ROM_LOAD( "p3.bin",       0x0000, 0x0020, 0x2a855523 )
 	ROM_LOAD( "r3.bin",       0x0020, 0x0020, 0xae6f1019 )
 
@@ -533,7 +533,7 @@ ROM_START( bagmans )
 	ROM_LOAD( "a2_1c.bin",    0x2000, 0x1000, 0xf3e11bd7 )
 	ROM_LOAD( "a2_1f.bin",    0x3000, 0x1000, 0xd0f7105b )
 
-	ROM_REGION(0x0040)	/* color PROMs */
+	ROM_REGIONX( 0x0040, REGION_PROMS )
 	ROM_LOAD( "p3.bin",       0x0000, 0x0020, 0x2a855523 )
 	ROM_LOAD( "r3.bin",       0x0020, 0x0020, 0xae6f1019 )
 
@@ -557,7 +557,7 @@ ROM_START( bagmans2 )
 	ROM_LOAD( "a2_1c.bin",    0x2000, 0x1000, 0xf3e11bd7 )
 	ROM_LOAD( "a2_1f.bin",    0x3000, 0x1000, 0xd0f7105b )
 
-	ROM_REGION(0x0040)	/* color PROMs */
+	ROM_REGIONX( 0x0040, REGION_PROMS )
 	ROM_LOAD( "p3.bin",       0x0000, 0x0020, 0x2a855523 )
 	ROM_LOAD( "r3.bin",       0x0020, 0x0020, 0xae6f1019 )
 
@@ -591,7 +591,7 @@ ROM_START( sbagman )
 	ROM_LOAD( "1.1c",         0x2000, 0x1000, 0xa046ff44 )
 	ROM_LOAD( "3.1f",         0x3000, 0x1000, 0xa4422da4 )
 
-	ROM_REGION(0x0040)	/* color PROMs */
+	ROM_REGIONX( 0x0040, REGION_PROMS )
 	ROM_LOAD( "p3.bin",       0x0000, 0x0020, 0x2a855523 )
 	ROM_LOAD( "r3.bin",       0x0020, 0x0020, 0xae6f1019 )
 
@@ -625,7 +625,7 @@ ROM_START( sbagmans )
 	ROM_LOAD( "sbag_1c.bin",  0x2000, 0x1000, 0x262f870a )
 	ROM_LOAD( "sbag_1f.bin",  0x3000, 0x1000, 0x350ed0fb )
 
-	ROM_REGION(0x0040)	/* color PROMs */
+	ROM_REGIONX( 0x0040, REGION_PROMS )
 	ROM_LOAD( "p3.bin",       0x0000, 0x0020, 0x2a855523 )
 	ROM_LOAD( "r3.bin",       0x0020, 0x0020, 0xae6f1019 )
 
@@ -648,7 +648,7 @@ ROM_START( pickin )
 	ROM_LOAD( "1j",           0x1000, 0x1000, 0x41c4ac1c )
 	/* 2000-3fff empty for my convenience */
 
-	ROM_REGION(0x0040)	/* color PROMs */
+	ROM_REGIONX( 0x0040, REGION_PROMS )
 	ROM_LOAD( "6331-1.3p",    0x0000, 0x0020, 0xfac81668 )
 	ROM_LOAD( "6331-1.3r",    0x0020, 0x0020, 0x14ee1603 )
 ROM_END
@@ -744,7 +744,7 @@ static void pickin_hisave(void)
 }
 
 
-struct GameDriver bagman_driver =
+struct GameDriver driver_bagman =
 {
 	__FILE__,
 	0,
@@ -757,23 +757,23 @@ struct GameDriver bagman_driver =
 	&machine_driver,
 	0,
 
-	bagman_rom,
+	rom_bagman,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	bagman_input_ports,
+	input_ports_bagman,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	hiload, hisave
 };
 
-struct GameDriver bagnard_driver =
+struct GameDriver driver_bagnard =
 {
 	__FILE__,
-	&bagman_driver,
+	&driver_bagman,
 	"bagnard",
 	"Le Bagnard",
 	"1982",
@@ -783,23 +783,23 @@ struct GameDriver bagnard_driver =
 	&machine_driver,
 	0,
 
-	bagnard_rom,
+	rom_bagnard,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	bagman_input_ports,
+	input_ports_bagman,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	hiload, hisave
 };
 
-struct GameDriver bagmans_driver =
+struct GameDriver driver_bagmans =
 {
 	__FILE__,
-	&bagman_driver,
+	&driver_bagman,
 	"bagmans",
 	"Bagman (Stern set 1)",
 	"1982",
@@ -809,23 +809,23 @@ struct GameDriver bagmans_driver =
 	&machine_driver,
 	0,
 
-	bagmans_rom,
+	rom_bagmans,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	bagmans_input_ports,
+	input_ports_bagmans,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	hiload, hisave
 };
 
-struct GameDriver bagmans2_driver =
+struct GameDriver driver_bagmans2 =
 {
 	__FILE__,
-	&bagman_driver,
+	&driver_bagman,
 	"bagmans2",
 	"Bagman (Stern set 2)",
 	"1982",
@@ -835,20 +835,20 @@ struct GameDriver bagmans2_driver =
 	&machine_driver,
 	0,
 
-	bagmans2_rom,
+	rom_bagmans2,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	bagman_input_ports,
+	input_ports_bagman,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	hiload, hisave
 };
 
-struct GameDriver sbagman_driver =
+struct GameDriver driver_sbagman =
 {
 	__FILE__,
 	0,
@@ -861,23 +861,23 @@ struct GameDriver sbagman_driver =
 	&machine_driver,
 	0,
 
-	sbagman_rom,
+	rom_sbagman,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	sbagman_input_ports,
+	input_ports_sbagman,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	hiload, hisave
 };
 
-struct GameDriver sbagmans_driver =
+struct GameDriver driver_sbagmans =
 {
 	__FILE__,
-	&sbagman_driver,
+	&driver_sbagman,
 	"sbagmans",
 	"Super Bagman (Stern)",
 	"1984",
@@ -887,20 +887,20 @@ struct GameDriver sbagmans_driver =
 	&machine_driver,
 	0,
 
-	sbagmans_rom,
+	rom_sbagmans,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	sbagman_input_ports,
+	input_ports_sbagman,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	hiload, hisave
 };
 
-struct GameDriver pickin_driver =
+struct GameDriver driver_pickin =
 {
 	__FILE__,
 	0,
@@ -913,14 +913,14 @@ struct GameDriver pickin_driver =
 	&pickin_machine_driver,
 	0,
 
-	pickin_rom,
+	rom_pickin,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	pickin_input_ports,
+	input_ports_pickin,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	pickin_hiload,pickin_hisave

@@ -184,34 +184,19 @@ int suprloco_control_r(int offset)
 
 INLINE void draw_pixel(struct osd_bitmap *bitmap,int x,int y,int color)
 {
-	int adjx = x, adjy = y;
-
-	int orientation = Machine->orientation;
-
-
 	if (flipscreen)
 	{
-		orientation ^= (ORIENTATION_FLIP_X | ORIENTATION_FLIP_Y);
+		x = bitmap->width - x - 1;
+		y = bitmap->height - y - 1;
 	}
 
-	if (orientation & ORIENTATION_SWAP_XY)
-	{
-		int temp = adjx;
-		adjx = adjy;
-		adjy = temp;
-	}
-	if (orientation & ORIENTATION_FLIP_X)
-		adjx = bitmap->width - adjx - 1;
-	if (orientation & ORIENTATION_FLIP_Y)
-		adjy = bitmap->height - adjy - 1;
-
-	if (adjx < Machine->drv->visible_area.min_x ||
-		adjx > Machine->drv->visible_area.max_x ||
-		adjy < Machine->drv->visible_area.min_y ||
-		adjy > Machine->drv->visible_area.max_y)
+	if (x < Machine->drv->visible_area.min_x ||
+		x > Machine->drv->visible_area.max_x ||
+		y < Machine->drv->visible_area.min_y ||
+		y > Machine->drv->visible_area.max_y)
 		return;
 
-	bitmap->line[adjy][adjx] = color;
+	plot_pixel(bitmap, x, y, color);
 }
 
 

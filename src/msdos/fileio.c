@@ -28,6 +28,12 @@ int samplepathc = 0;
 char *cfgdir, *hidir, *inpdir, *stadir;
 char *memcarddir, *artworkdir, *screenshotdir;
 
+#ifdef MESS
+  char *crcdir;
+  extern image_details image;
+#endif
+
+
 char *alternate_name;				   /* for "-romdir" */
 
 typedef enum
@@ -254,8 +260,8 @@ int osd_faccess (const char *newfilename, int filetype)
 
 #ifdef MESS
 	if( filetype == OSD_FILETYPE_ROM ||
-		filetype == OSD_FILETYPE_ROM_CART ||
-		filetype == OSD_FILETYPE_IMAGE )
+		filetype == OSD_FILETYPE_IMAGE_R ||
+		filetype == OSD_FILETYPE_IMAGE_RW )
 #else
 	if( filetype == OSD_FILETYPE_ROM )
 #endif
@@ -349,7 +355,7 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int _writ
 	case OSD_FILETYPE_ROM:
 	case OSD_FILETYPE_SAMPLE:
 #ifdef MESS
-	case OSD_FILETYPE_ROM_CART:
+	case OSD_FILETYPE_IMAGE_R:
 #endif
 
 		/* only for reading */
@@ -375,6 +381,28 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int _writ
 		for( indx = 0; indx < pathc && !found; ++indx )
 		{
 			const char *dir_name = pathv[indx];
+
+		#ifdef MESS	/* this section allows exact path from .cfg */
+			if (!found) {
+				sprintf(name,"%s",dir_name);
+				if (cache_stat(name,&stat_buffer)==0 && (stat_buffer.st_mode & S_IFDIR)) {
+					sprintf(name,"%s/%s",dir_name,filename);
+					if (filetype==OSD_FILETYPE_ROM)	{
+						if (checksum_file (name, &f->data, &f->length, &f->crc)==0) {
+							f->type = kRAMFile;
+							f->offset = 0;
+							found = 1;
+						}
+					}
+					else {
+						f->type = kPlainFile;
+						f->file = fopen(name,"rb");
+						found = f->file!=0;
+					}
+				}
+			}
+		#endif
+
 
 			if( !found )
 			{
@@ -403,7 +431,7 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int _writ
 
 #ifdef MESS
 			/* Zip cart support for MESS */
-			if( !found && filetype == OSD_FILETYPE_ROM_CART )
+			if( !found && filetype == OSD_FILETYPE_IMAGE_R )
 			{
 				char *extension = strrchr (name, '.');    /* find extension */
 				if( extension )
@@ -470,10 +498,28 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int _writ
 				}
 			}
 		}
+
+#ifdef MESS
+		 /* get the crc to database-match name */
+		 if (found && filetype==OSD_FILETYPE_IMAGE_R)
+		 {
+			/* Re-Get CRC */
+			if(f->type==2) /* zipped */
+			{
+				load_zipped_file(name, filename, &f->data, &f->length);
+				f->crc = crc32 (0L, f->data, f->length);
+			}
+			if(f->type==0) /* Plain */
+				checksum_file (name, &f->data, &f->length, &f->crc);
+
+			/* check crc file */
+			if(f->crc!=0) check_crc(f->crc, f->length, gamename);
+		 }
+#endif
 		break;
 
 #ifdef MESS
-	case OSD_FILETYPE_IMAGE:
+	case OSD_FILETYPE_IMAGE_RW:
 		{
 			char file[256];
 			char *extension;
@@ -486,6 +532,17 @@ void *osd_fopen (const char *game, const char *filename, int filetype, int _writ
 				for( indx = 0; indx < rompathc && !found; ++indx )
 				{
 					const char *dir_name = rompathv[indx];
+
+					/* Exact path support */
+					if (!found) {
+						sprintf(name, "%s", dir_name);
+						if(errorlog) fprintf(errorlog,"Trying %s\n", name);
+						if (cache_stat(name,&stat_buffer)==0 && (stat_buffer.st_mode & S_IFDIR)) {
+							sprintf(name,"%s/%s", dir_name, file);
+							f->file = fopen(name,_write ? "r+b" : "rb");
+							found = f->file!=0;
+						}
+					}
 
 					if( !found )
 					{
@@ -1139,9 +1196,41 @@ int osd_display_loading_rom_message (const char *name, int current, int total)
 
 #ifdef MESS
 /* Function to handle Aliases in the MESS.CFG file */
-void get_alias(char *driver_name, char *arg, char *alias)
+char * get_alias(char *driver_name, char *argv)
 {
-	strcpy(alias, get_config_string(driver_name, arg, "") );
+	return(get_config_string(driver_name,argv,""));
 }
-#endif
 
+/* Function to check if CRC is known from "<driver>.crc" file */
+int check_crc(int crc, int length, char * driver)
+{
+
+	char crc_string[8];
+	char *crc_file_name;
+
+	/* allocate the letters for the path and file */
+	crc_file_name = (char*)malloc(MAX_PATH*sizeof(char));
+
+	/* create filename from driver (.crc) */
+	sprintf(crc_file_name,"%s/%s.crc",crcdir,driver);
+
+
+	/* Match CRC and length from file */
+	image.crc=crc;
+	image.length = length;
+	itoa(image.crc,crc_string,16);
+
+	/* open the override config file and see if CRC is defined */
+	override_config_file(crc_file_name);
+	image.name = get_config_string(driver,crc_string,"");
+
+	if(image.name!="")
+	{
+		return 1; /* found */
+ 	}
+	/* If no CRC match found, set name to default */
+	image.name = "Unknown - No CRC Match";
+	return 0; /* no match found */
+}
+
+#endif

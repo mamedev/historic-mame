@@ -54,6 +54,9 @@ enum {
  * These flags can be defined in the makefile (or project) to
  * exclude (zero) or include (non zero) specific CPU cores
  */
+#ifndef HAS_GENSYNC
+#define HAS_GENSYNC		0
+#endif
 #ifndef HAS_Z80
 #define HAS_Z80 		0
 #endif

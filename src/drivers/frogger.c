@@ -186,7 +186,7 @@ static struct IOWritePort sound_writeport[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( frogger )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* 1P shoot2 - unused */
@@ -226,7 +226,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( frogger2_input_ports )
+INPUT_PORTS_START( frogger2 )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -414,7 +414,46 @@ static struct MachineDriver frogger2_machine_driver =
 
 ***************************************************************************/
 
+
 ROM_START( frogger )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "frogger.26",   0x0000, 0x1000, 0x597696d6 )
+	ROM_LOAD( "frogger.27",   0x1000, 0x1000, 0xb6e6fcc3 )
+	ROM_LOAD( "frsm3.7",      0x2000, 0x1000, 0xaca22ae0 )
+
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "frogger.606",  0x0000, 0x0800, 0xf524ee30 )
+	ROM_LOAD( "frogger.607",  0x0800, 0x0800, 0x05f7d883 )
+
+	ROM_REGIONX( 0x0020, REGION_PROMS )
+	ROM_LOAD( "pr-91.6l",     0x0000, 0x0020, 0x413703bf )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "frogger.608",  0x0000, 0x0800, 0xe8ab0256 )
+	ROM_LOAD( "frogger.609",  0x0800, 0x0800, 0x7380a48f )
+	ROM_LOAD( "frogger.610",  0x1000, 0x0800, 0x31d7eb27 )
+ROM_END
+
+ROM_START( frogseg1 )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "frogger.26",   0x0000, 0x1000, 0x597696d6 )
+	ROM_LOAD( "frogger.27",   0x1000, 0x1000, 0xb6e6fcc3 )
+	ROM_LOAD( "frogger.34",   0x2000, 0x1000, 0xed866bab )
+
+	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "frogger.606",  0x0000, 0x0800, 0xf524ee30 )
+	ROM_LOAD( "frogger.607",  0x0800, 0x0800, 0x05f7d883 )
+
+	ROM_REGIONX( 0x0020, REGION_PROMS )
+	ROM_LOAD( "pr-91.6l",     0x0000, 0x0020, 0x413703bf )
+
+	ROM_REGION(0x10000)	/* 64k for the audio CPU */
+	ROM_LOAD( "frogger.608",  0x0000, 0x0800, 0xe8ab0256 )
+	ROM_LOAD( "frogger.609",  0x0800, 0x0800, 0x7380a48f )
+	ROM_LOAD( "frogger.610",  0x1000, 0x0800, 0x31d7eb27 )
+ROM_END
+
+ROM_START( frogseg2 )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "frogger.ic5",  0x0000, 0x1000, 0xefab0c79 )
 	ROM_LOAD( "frogger.ic6",  0x1000, 0x1000, 0xaeca9c13 )
@@ -425,26 +464,7 @@ ROM_START( frogger )
 	ROM_LOAD( "frogger.606",  0x0000, 0x0800, 0xf524ee30 )
 	ROM_LOAD( "frogger.607",  0x0800, 0x0800, 0x05f7d883 )
 
-	ROM_REGION(0x0020)	/* color PROMs */
-	ROM_LOAD( "pr-91.6l",     0x0000, 0x0020, 0x413703bf )
-
-	ROM_REGION(0x10000)	/* 64k for the audio CPU */
-	ROM_LOAD( "frogger.608",  0x0000, 0x0800, 0xe8ab0256 )
-	ROM_LOAD( "frogger.609",  0x0800, 0x0800, 0x7380a48f )
-	ROM_LOAD( "frogger.610",  0x1000, 0x0800, 0x31d7eb27 )
-ROM_END
-
-ROM_START( frogsega )
-	ROM_REGION(0x10000)	/* 64k for code */
-	ROM_LOAD( "frogger.26",   0x0000, 0x1000, 0x597696d6 )
-	ROM_LOAD( "frogger.27",   0x1000, 0x1000, 0xb6e6fcc3 )
-	ROM_LOAD( "frogger.34",   0x2000, 0x1000, 0xed866bab )
-
-	ROM_REGION_DISPOSE(0x1000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "frogger.606",  0x0000, 0x0800, 0xf524ee30 )
-	ROM_LOAD( "frogger.607",  0x0800, 0x0800, 0x05f7d883 )
-
-	ROM_REGION(0x0020)	/* color PROMs */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "pr-91.6l",     0x0000, 0x0020, 0x413703bf )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
@@ -464,7 +484,7 @@ ROM_START( frogger2 )
 	ROM_LOAD( "epr-1036.1k",  0x0000, 0x0800, 0x658745f8 )
 	ROM_LOAD( "frogger.607",  0x0800, 0x0800, 0x05f7d883 )
 
-	ROM_REGION(0x0020)	/* color PROMs */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "pr-91.6l",     0x0000, 0x0020, 0x413703bf )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
@@ -545,38 +565,38 @@ static void hisave(void)
 
 
 
-struct GameDriver frogger_driver =
+struct GameDriver driver_frogger =
 {
 	__FILE__,
 	0,
 	"frogger",
-	"Frogger (set 1)",
+	"Frogger",
 	"1981",
-	"[Konami] (Sega license)",
+	"Konami",
 	"Robert Anschuetz\nNicola Salmoria\nMirko Buffoni\nGerald Vanderick (color info)\nMarco Cassili",
 	0,
 	&machine_driver,
 	0,
 
-	frogger_rom,
+	rom_frogger,
 	frogger_decode, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_frogger,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
 
-struct GameDriver frogsega_driver =
+struct GameDriver driver_frogseg1 =
 {
 	__FILE__,
-	&frogger_driver,
-	"frogsega",
-	"Frogger (set 2)",
+	&driver_frogger,
+	"frogseg1",
+	"Frogger (Sega set 1)",
 	"1981",
 	"[Konami] (Sega license)",
 	"Robert Anschuetz\nNicola Salmoria\nMirko Buffoni\nGerald Vanderick (color info)\nMarco Cassili",
@@ -584,25 +604,51 @@ struct GameDriver frogsega_driver =
 	&machine_driver,
 	0,
 
-	frogsega_rom,
+	rom_frogseg1,
 	frogger_decode, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_frogger,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	hiload, hisave
+};
+
+struct GameDriver driver_frogseg2 =
+{
+	__FILE__,
+	&driver_frogger,
+	"frogseg2",
+	"Frogger (Sega set 2)",
+	"1981",
+	"[Konami] (Sega license)",
+	"Robert Anschuetz\nNicola Salmoria\nMirko Buffoni\nGerald Vanderick (color info)\nMarco Cassili",
+	0,
+	&machine_driver,
+	0,
+
+	rom_frogseg2,
+	frogger_decode, 0,
+	0,
+	0,	/* sound_prom */
+
+	input_ports_frogger,
+
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
 
 /* this version runs on modified Moon Cresta hardware */
-struct GameDriver frogger2_driver =
+struct GameDriver driver_froggrmc =
 {
 	__FILE__,
-	&frogger_driver,
-	"frogger2",
+	&driver_frogger,
+	"froggrmc",
 	"Frogger (modified Moon Cresta hardware)",
 	"1981",
 	"bootleg?",
@@ -611,14 +657,14 @@ struct GameDriver frogger2_driver =
 	&frogger2_machine_driver,
 	0,
 
-	frogger2_rom,
+	rom_frogger2,
 	frogger2_decode, 0,
 	0,
 	0,	/* sound_prom */
 
-	frogger2_input_ports,
+	input_ports_frogger2,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave

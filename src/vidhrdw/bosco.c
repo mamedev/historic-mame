@@ -412,10 +412,15 @@ if (flipscreen) sx += 32;
 			y = (stars[offs].y + stars_scrolly) % 224;
 
 			set = (bosco_starblink[0] & 1) + ((bosco_starblink[1] & 1) << 1);
-			if ((bitmap->line[y][x] == bpen) &&
-					((stars[offs].set == starset[set][0]) ||
-					 (stars[offs].set == starset[set][1])))
-				bitmap->line[y][x] = stars[offs].col;
+
+			if (((stars[offs].set == starset[set][0]) ||
+				 (stars[offs].set == starset[set][1])))
+			{
+				if (read_pixel(bitmap, x, y) == bpen)
+				{
+					plot_pixel(bitmap, x, y, stars[offs].col);
+				}
+			}
 		}
 	}
 }

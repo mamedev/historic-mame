@@ -31,7 +31,7 @@ enum {
 	TWIN16_SCREEN_FLIPX		= 0x02,	/* confirmed: Hard Puncher Intro */
 	TWIN16_UNKNOWN1			= 0x04,	/* ?Hard Puncher uses this */
 	TWIN16_PLANE_ORDER		= 0x08,	/* confirmed: Devil Worlds */
-	TWIN16_TILE_FLIPY		= 0x20	/* confirmed: Vulcan Venture */
+	TWIN16_TILE_FLIPY		= 0x20	/* confirmed? Vulcan Venture */
 };
 
 int twin16_vh_start( void ){
@@ -112,7 +112,7 @@ static void draw_sprite( /* slow slow slow, but it's ok for now */
 	for( y=0; y<height; y++ ){
 		int sy = (flipy)?(ypos+height-1-y):(ypos+y);
 		if( sy>=16 && sy<256-16 ){
-			UINT16 *dest = (UINT16 *)bitmap->line[sy];
+			UINT8 *dest = (UINT8 *)bitmap->line[sy];
 			for( x=0; x<width; x++ ){
 				int sx = (flipx)?(xpos+width-1-x):(xpos+x);
 				if( sx>=0 && sx<320 ){
@@ -183,7 +183,8 @@ void twin16_spriteram_process( void ){
  */
 
 static void draw_sprites( struct osd_bitmap *bitmap, int pri ){
-	const UINT16 *source = (UINT16 *)(spriteram+0x3000);
+	int count = 0;
+	const UINT16 *source = 0x1800+(UINT16 *)spriteram;
 	const UINT16 *finish = source + 0x800;
 	pri = pri?0x4000:0x0000;
 
@@ -237,14 +238,16 @@ static void draw_sprites( struct osd_bitmap *bitmap, int pri ){
 				flipx = !flipx;
 			}
 
+			//if( sprite_which==count || !keyboard_pressed( KEYCODE_B ) )
 			draw_sprite( bitmap, pen_data, pal_data, xpos, ypos, width, height, flipx, flipy );
 		}
+			count++;
 		source += 4;
 	}
 }
 
 static void show_video_register( struct osd_bitmap *bitmap ){
-/*
+#if 0
 	int n;
 	for( n=0; n<4; n++ ){
 		drawgfx( bitmap, Machine->uifont,
@@ -254,14 +257,7 @@ static void show_video_register( struct osd_bitmap *bitmap ){
 			n*6+8,16,
 			0,TRANSPARENCY_NONE,0);
 	}
-
-	if( keyboard_pressed( KEYCODE_S ) ){
-		FILE *f = fopen("spriteram","wb");
-		fwrite( spriteram, 1, 0x4000, f );
-		fclose(f);
-		while( keyboard_pressed( KEYCODE_S ) ){}
-	}
-*/
+#endif
 }
 
 static void draw_layer( struct osd_bitmap *bitmap, int opaque ){
@@ -350,7 +346,7 @@ static void draw_layer( struct osd_bitmap *bitmap, int opaque ){
 				if( tile_flipx ){
 					if( opaque )
 					for( y=y1; y!=y2; y+=yd ){
-						UINT16 *dest = ((UINT16 *)bitmap->line[ypos+y])+xpos;
+						UINT8 *dest = ((UINT8 *)bitmap->line[ypos+y])+xpos;
 						data = *gfx_data++;
 						dest[7] = pal_data[(data>>4*3)&0xf];
 						dest[6] = pal_data[(data>>4*2)&0xf];
@@ -364,7 +360,7 @@ static void draw_layer( struct osd_bitmap *bitmap, int opaque ){
 					}
 					else
 					for( y=y1; y!=y2; y+=yd ){
-						UINT16 *dest = ((UINT16 *)bitmap->line[ypos+y])+xpos;
+						UINT8 *dest = ((UINT8 *)bitmap->line[ypos+y])+xpos;
 						data = *gfx_data++;
 						if( data ){
 							pen = (data>>4*3)&0xf; if( pen ) dest[7] = pal_data[pen];
@@ -384,7 +380,7 @@ static void draw_layer( struct osd_bitmap *bitmap, int opaque ){
 				else {
 					if( opaque )
 					for( y=y1; y!=y2; y+=yd ){
-						UINT16 *dest = ((UINT16 *)bitmap->line[ypos+y])+xpos;
+						UINT8 *dest = ((UINT8 *)bitmap->line[ypos+y])+xpos;
 						data = *gfx_data++;
 						*dest++ = pal_data[(data>>4*3)&0xf];
 						*dest++ = pal_data[(data>>4*2)&0xf];
@@ -398,7 +394,7 @@ static void draw_layer( struct osd_bitmap *bitmap, int opaque ){
 					}
 					else
 					for( y=y1; y!=y2; y+=yd ){
-						UINT16 *dest = ((UINT16 *)bitmap->line[ypos+y])+xpos;
+						UINT8 *dest = ((UINT8 *)bitmap->line[ypos+y])+xpos;
 						data = *gfx_data++;
 						if( data ){
 							pen = (data>>4*3)&0xf; if( pen ) dest[0] = pal_data[pen];
@@ -420,10 +416,65 @@ static void draw_layer( struct osd_bitmap *bitmap, int opaque ){
 	}
 }
 
+static void mark_used_colors( void ){
+	const UINT16 *source, *finish;
+	unsigned char used[0x40], *used_ptr;
+	memset( used, 0, 0x40 );
+
+	/* text layer */
+	used_ptr = &used[0x00];
+	source = (UINT16 *)twin16_fixram;
+	finish = source + 0x1000;
+	while( source<finish ){
+		int code = *source++;
+		used_ptr[(code>>9)&0xf] = 1;
+	}
+
+	/* sprites */
+	used_ptr = &used[0x10];
+	source = 0x1800+(UINT16 *)spriteram;
+	finish = source + 0x800;
+	while( source<finish ){
+		UINT16 attributes = source[3];
+		UINT16 code = source[0];
+		if( code!=0xffff && (attributes&0x8000) ) used_ptr[attributes&0xf] = 1;
+		source++;
+	}
+
+	/* plane#0 */
+	used_ptr = &used[0x20];
+	source = (UINT16 *)videoram;
+	finish = source+0x1000;
+	while( source<finish ){
+		int code = *source++;
+		used_ptr[code>>13] = 1;
+	}
+
+	/* plane#1 */
+	used_ptr = &used[0x28];
+	source = 0x1000+(UINT16 *)videoram;
+	finish = source+0x1000;
+	while( source<finish ){
+		int code = *source++;
+		used_ptr[code>>13] = 1;
+	}
+
+	{
+		int i;
+		memset( palette_used_colors, PALETTE_COLOR_UNUSED, 0x400 );
+		for( i=0; i<0x40; i++ ){
+			if( used[i] ){
+				memset( &palette_used_colors[i*16], PALETTE_COLOR_VISIBLE, 0x10 );
+			}
+		}
+	}
+}
+
 void twin16_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefresh ){
 	if( twin16_spriteram_process_enable() && need_process_spriteram ) twin16_spriteram_process();
 	need_process_spriteram = 1;
 
+	mark_used_colors();
 	palette_recalc();
 
 	draw_layer( bitmap,1 );

@@ -90,7 +90,7 @@ static struct IOWritePort writeport[] =
 };
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( ambush )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -225,6 +225,7 @@ static struct MachineDriver machine_driver =
   Game driver(s)
 
 ***************************************************************************/
+
 ROM_START( ambush )
 	ROM_REGION(0x10000)       /* 64k for code */
 	ROM_LOAD( "ambush.h7",    0x0000, 0x2000, 0xce306563 )
@@ -236,7 +237,7 @@ ROM_START( ambush )
 	ROM_LOAD( "ambush.n4",    0x0000, 0x2000, 0xecc0dc85 )
 	ROM_LOAD( "ambush.m4",    0x2000, 0x2000, 0xe86ca98a )
 
-	ROM_REGION(0x0200)
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "a.bpr",        0x0000, 0x0100, 0x5f27f511 )  /* color PROMs */
 	ROM_LOAD( "b.bpr",        0x0100, 0x0100, 0x1b03fd3b )	/* How is this selected, */
 															/* or is it even a color PROM? */
@@ -283,7 +284,7 @@ static void hisave(void)
 }
 
 
-struct GameDriver ambush_driver =
+struct GameDriver driver_ambush =
 {
 	__FILE__,
 	0,
@@ -296,15 +297,15 @@ struct GameDriver ambush_driver =
 	&machine_driver,
 	0,
 
-	ambush_rom,
+	rom_ambush,
 	0,
 	0,
 	0,
 	0,      /* sound_prom */
 
-	input_ports,
+	input_ports_ambush,
 
-	PROM_MEMORY_REGION(2), 0, 0,   /* colors, palette, colortable */
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave

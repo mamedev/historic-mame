@@ -1096,17 +1096,17 @@ struct priority
 	int priorities[16];
 };
 
-extern struct GameDriver avspirit_driver;
-extern struct GameDriver bigstrik_driver;
-extern struct GameDriver chimerab_driver;
-extern struct GameDriver cybattlr_driver;
-extern struct GameDriver hachoo_driver;
-extern struct GameDriver edf_driver;
-extern struct GameDriver p47_driver;
-extern struct GameDriver peekaboo_driver;
-extern struct GameDriver plusalph_driver;
-extern struct GameDriver stdragon_driver;
-extern struct GameDriver street64_driver;
+extern struct GameDriver driver_avspirit;
+extern struct GameDriver driver_bigstrik;
+extern struct GameDriver driver_chimerab;
+extern struct GameDriver driver_cybattlr;
+extern struct GameDriver driver_hachoo;
+extern struct GameDriver driver_edf;
+extern struct GameDriver driver_p47;
+extern struct GameDriver driver_peekaboo;
+extern struct GameDriver driver_plusalph;
+extern struct GameDriver driver_stdragon;
+extern struct GameDriver driver_street64;
 
 /*
 	0:	Scroll 0
@@ -1121,43 +1121,43 @@ extern struct GameDriver street64_driver;
 
 static struct priority priorities[] =
 {
-	{	&avspirit_driver,
+	{	&driver_avspirit,
 		{ 0x14032,0x04132,0x13042,0x03142,0xfffff,0xfffff,0xfffff,0xfffff,
 		  0xfffff,0xfffff,0xfffff,0xfffff,0x14302,0xfffff,0x14032,0xfffff }
 	},
-	{	&bigstrik_driver,	/* like 64street */
+	{	&driver_bigstrik,	/* like 64street */
 		{ 0xfffff,0x03142,0xfffff,0x04132,0xfffff,0x04132,0xfffff,0xfffff,
 		  0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff }
 	},
-	{	&chimerab_driver,
+	{	&driver_chimerab,
 		{ 0x14032,0x10324,0x14032,0x04132,0xfffff,0xfffff,0xfffff,0xfffff,
 		  0xfffff,0xfffff,0x01324,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff }
 	},
-	{	&cybattlr_driver,
+	{	&driver_cybattlr,
 		{ 0x04132,0xfffff,0xfffff,0xfffff,0x14032,0xfffff,0xfffff,0xfffff,
 		  0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0x04132 }
 	},
-	{	&hachoo_driver,
+	{	&driver_hachoo,
 		{ 0x24130,0xfffff,0xfffff,0xfffff,0x04132,0xfffff,0x24130,0xfffff,
 		  0x24103,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff }
 	},
-	{	&p47_driver,	/* verified with PROM */
+	{	&driver_p47,	/* verified with PROM */
 		{ 0x04132,0x02413,0x03142,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,
 		  0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff }
 	},
-	{	&peekaboo_driver, /* verified with PROM */
+	{	&driver_peekaboo, /* verified with PROM */
 		{ 0x0134f,0x034ff,0x0341f,0x3401f,0x1340f,0x3410f,0xfffff,0xfffff,
 		  0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff }
 	},
-	{	&plusalph_driver,	/* verified with PROM (same as p47) */
+	{	&driver_plusalph,	/* verified with PROM (same as p47) */
 		{ 0x04132,0x02413,0x03142,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,
 		  0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff }
 	},
-	{	&stdragon_driver,	/* verified with PROM (same as p47) */
+	{	&driver_stdragon,	/* verified with PROM (same as p47) */
 		{ 0x04132,0x02413,0x03142,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,
 		  0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff }
 	},
-	{	&street64_driver,
+	{	&driver_street64,
 		{ 0xfffff,0x03142,0xfffff,0x04132,0xfffff,0x04132,0xfffff,0xfffff,
 		  0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff,0xfffff }
 	},

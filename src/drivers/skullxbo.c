@@ -163,14 +163,14 @@ static void skullxbo_mobwr_w(int offset, int data)
 static struct MemoryReadAddress main_readmem[] =
 {
 	{ 0x000000, 0x07ffff, MRA_ROM },
-	{ 0xff2000, 0xff2fff, MRA_BANK1, &paletteram },
+	{ 0xff2000, 0xff2fff, MRA_BANK1 },
 	{ 0xff5000, 0xff5001, atarigen_sound_r },
 	{ 0xff5800, 0xff5801, input_port_0_r },
 	{ 0xff5802, 0xff5803, special_port1_r },
-	{ 0xff6000, 0xff6fff, atarigen_eeprom_r, &atarigen_eeprom, &atarigen_eeprom_size },
-	{ 0xff8000, 0xffbfff, MRA_BANK2, &atarigen_playfieldram, &atarigen_playfieldram_size },
-	{ 0xffc000, 0xffcfff, MRA_BANK3, &atarigen_alpharam, &atarigen_alpharam_size },
-	{ 0xffd000, 0xffdfff, MRA_BANK4, &atarigen_spriteram, &atarigen_spriteram_size },
+	{ 0xff6000, 0xff6fff, atarigen_eeprom_r },
+	{ 0xff8000, 0xffbfff, MRA_BANK2 },
+	{ 0xffc000, 0xffcfff, MRA_BANK3 },
+	{ 0xffd000, 0xffdfff, MRA_BANK4 },
 	{ 0xffe000, 0xffffff, MRA_BANK5 },
 	{ -1 }  /* end of table */
 };
@@ -193,13 +193,13 @@ static struct MemoryWriteAddress main_writemem[] =
 	{ 0xff1e80, 0xff1eff, skullxbo_hscroll_w },
 	{ 0xff1f00, 0xff1f7f, atarigen_scanline_int_ack_w },
 	{ 0xff1f80, 0xff1fff, watchdog_reset_w },
-	{ 0xff2000, 0xff2fff, atarigen_666_paletteram_w },
+	{ 0xff2000, 0xff2fff, atarigen_666_paletteram_w, &paletteram },
 	{ 0xff4000, 0xff47ff, skullxbo_vscroll_w },
 	{ 0xff4800, 0xff4fff, skullxbo_mobwr_w },
-	{ 0xff6000, 0xff6fff, atarigen_eeprom_w },
-	{ 0xff8000, 0xffbfff, skullxbo_playfieldram_w },
-	{ 0xffc000, 0xffcfff, MWA_BANK3 },
-	{ 0xffd000, 0xffdfff, MWA_BANK4 },
+	{ 0xff6000, 0xff6fff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
+	{ 0xff8000, 0xffbfff, skullxbo_playfieldram_w, &atarigen_playfieldram, &atarigen_playfieldram_size },
+	{ 0xffc000, 0xffcfff, MWA_BANK3, &atarigen_alpharam, &atarigen_alpharam_size },
+	{ 0xffd000, 0xffdfff, MWA_BANK4, &atarigen_spriteram, &atarigen_spriteram_size },
 	{ 0xffe000, 0xffffff, MWA_BANK5 },
 	{ -1 }  /* end of table */
 };
@@ -212,7 +212,7 @@ static struct MemoryWriteAddress main_writemem[] =
  *
  *************************************/
 
-INPUT_PORTS_START( skullxbo_ports )
+INPUT_PORTS_START( skullxbo )
 	PORT_START      /* ff5800 */
 	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
@@ -524,7 +524,7 @@ static void skullxbo_init(void)
  *
  *************************************/
 
-struct GameDriver skullxbo_driver =
+struct GameDriver driver_skullxbo =
 {
 	__FILE__,
 	0,
@@ -537,13 +537,13 @@ struct GameDriver skullxbo_driver =
 	&machine_driver,
 	skullxbo_init,
 
-	skullxbo_rom,
+	rom_skullxbo,
 	rom_decode,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	skullxbo_ports,
+	input_ports_skullxbo,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
@@ -551,10 +551,10 @@ struct GameDriver skullxbo_driver =
 };
 
 
-struct GameDriver skullxb2_driver =
+struct GameDriver driver_skullxb2 =
 {
 	__FILE__,
-	&skullxbo_driver,
+	&driver_skullxbo,
 	"skullxb2",
 	"Skull & Crossbones (set 2)",
 	"1989",
@@ -564,13 +564,13 @@ struct GameDriver skullxb2_driver =
 	&machine_driver,
 	skullxbo_init,
 
-	skullxb2_rom,
+	rom_skullxb2,
 	rom_decode,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	skullxbo_ports,
+	input_ports_skullxbo,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,

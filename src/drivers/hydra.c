@@ -117,12 +117,12 @@ static struct MemoryReadAddress main_readmem[] =
 	{ 0xfc0000, 0xfc0001, special_port0_r },
 	{ 0xfc8000, 0xfc8001, a2d_data_r },
 	{ 0xfd0000, 0xfd0001, atarigen_sound_upper_r },
-	{ 0xfd8000, 0xfdffff, atarigen_eeprom_r, &atarigen_eeprom, &atarigen_eeprom_size },
+	{ 0xfd8000, 0xfdffff, atarigen_eeprom_r },
 /*	{ 0xfe0000, 0xfe7fff, from_r },*/
-	{ 0xfe8000, 0xfe89ff, MRA_BANK1, &paletteram },
-	{ 0xff0000, 0xff3fff, MRA_BANK2, &atarigen_spriteram, &atarigen_spriteram_size },
-	{ 0xff4000, 0xff5fff, MRA_BANK3, &atarigen_playfieldram, &atarigen_playfieldram_size },
-	{ 0xff6000, 0xff6fff, MRA_BANK4, &atarigen_alpharam, &atarigen_alpharam_size },
+	{ 0xfe8000, 0xfe89ff, MRA_BANK1 },
+	{ 0xff0000, 0xff3fff, MRA_BANK2 },
+	{ 0xff4000, 0xff5fff, MRA_BANK3 },
+	{ 0xff6000, 0xff6fff, MRA_BANK4 },
 	{ 0xff7000, 0xffffff, MRA_BANK5 },
 	{ -1 }  /* end of table */
 };
@@ -138,11 +138,11 @@ static struct MemoryWriteAddress main_writemem[] =
 	{ 0xfa0000, 0xfa0001, hydra_mo_control_w },
 	{ 0xfb0000, 0xfb0001, atarigen_video_int_ack_w },
 	{ 0xfc8000, 0xfc8007, a2d_select_w },
-	{ 0xfd8000, 0xfdffff, atarigen_eeprom_w },
-	{ 0xfe8000, 0xfe89ff, atarigen_666_paletteram_w },
-	{ 0xff0000, 0xff3fff, MWA_BANK2 },
-	{ 0xff4000, 0xff5fff, hydra_playfieldram_w },
-	{ 0xff6000, 0xff6fff, MWA_BANK4 },
+	{ 0xfd8000, 0xfdffff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
+	{ 0xfe8000, 0xfe89ff, atarigen_666_paletteram_w, &paletteram },
+	{ 0xff0000, 0xff3fff, MWA_BANK2, &atarigen_spriteram, &atarigen_spriteram_size },
+	{ 0xff4000, 0xff5fff, hydra_playfieldram_w, &atarigen_playfieldram, &atarigen_playfieldram_size },
+	{ 0xff6000, 0xff6fff, MWA_BANK4, &atarigen_alpharam, &atarigen_alpharam_size },
 	{ 0xff7000, 0xffffff, MWA_BANK5 },
 	{ -1 }  /* end of table */
 };
@@ -155,7 +155,7 @@ static struct MemoryWriteAddress main_writemem[] =
  *
  *************************************/
 
-INPUT_PORTS_START( hydra_ports )
+INPUT_PORTS_START( hydra )
 	PORT_START		/* fc0000 */
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_BUTTON5 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -183,7 +183,7 @@ INPUT_PORTS_START( hydra_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( pitfight_ports )
+INPUT_PORTS_START( pitfight )
 	PORT_START		/* fc0000 */
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER1 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER1 )
@@ -611,7 +611,7 @@ ROM_END
  *
  *************************************/
 
-struct GameDriver hydra_driver =
+struct GameDriver driver_hydra =
 {
 	__FILE__,
 	0,
@@ -624,13 +624,13 @@ struct GameDriver hydra_driver =
 	&machine_driver,
 	hydra_init,
 
-	hydra_rom,
+	rom_hydra,
 	0,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	hydra_ports,
+	input_ports_hydra,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
@@ -638,10 +638,10 @@ struct GameDriver hydra_driver =
 };
 
 
-struct GameDriver hydrap_driver =
+struct GameDriver driver_hydrap =
 {
 	__FILE__,
-	&hydra_driver,
+	&driver_hydra,
 	"hydrap",
 	"Hydra (prototype)",
 	"1990",
@@ -651,13 +651,13 @@ struct GameDriver hydrap_driver =
 	&machine_driver,
 	hydrap_init,
 
-	hydrap_rom,
+	rom_hydrap,
 	0,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	hydra_ports,
+	input_ports_hydra,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
@@ -665,7 +665,7 @@ struct GameDriver hydrap_driver =
 };
 
 
-struct GameDriver pitfight_driver =
+struct GameDriver driver_pitfight =
 {
 	__FILE__,
 	0,
@@ -678,13 +678,13 @@ struct GameDriver pitfight_driver =
 	&machine_driver,
 	pitfight_init,
 
-	pitfight_rom,
+	rom_pitfight,
 	0,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	pitfight_ports,
+	input_ports_pitfight,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
@@ -692,10 +692,10 @@ struct GameDriver pitfight_driver =
 };
 
 
-struct GameDriver pitfigh3_driver =
+struct GameDriver driver_pitfigh3 =
 {
 	__FILE__,
-	&pitfight_driver,
+	&driver_pitfight,
 	"pitfigh3",
 	"Pit Fighter (version 3)",
 	"1990",
@@ -705,13 +705,13 @@ struct GameDriver pitfigh3_driver =
 	&machine_driver,
 	pitfight_init,
 
-	pitfigh3_rom,
+	rom_pitfigh3,
 	0,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	pitfight_ports,
+	input_ports_pitfight,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,

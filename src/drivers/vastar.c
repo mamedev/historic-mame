@@ -167,7 +167,7 @@ static struct IOWritePort cpu2_writeport[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( vastar )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
@@ -400,7 +400,7 @@ ROM_START( vastar )
 	ROM_LOAD( "c_n4.rom",     0x6000, 0x2000, 0xb5f9c866 )
 	ROM_LOAD( "c_s4.rom",     0x8000, 0x2000, 0xc9fbbfc9 )
 
-	ROM_REGION(0x0400)	/* color PROMs */
+	ROM_REGIONX( 0x0400, REGION_PROMS )
 	ROM_LOAD( "tbp24s10.6p",  0x0000, 0x0100, 0xa712d73a )	/* red component */
 	ROM_LOAD( "tbp24s10.6s",  0x0100, 0x0100, 0x0a7d48ec )	/* green component */
 	ROM_LOAD( "tbp24s10.6m",  0x0200, 0x0100, 0x4c3db907 )	/* blue component */
@@ -429,7 +429,7 @@ ROM_START( vastar2 )
 	ROM_LOAD( "c_n4.rom",     0x6000, 0x2000, 0xb5f9c866 )
 	ROM_LOAD( "c_s4.rom",     0x8000, 0x2000, 0xc9fbbfc9 )
 
-	ROM_REGION(0x0400)	/* color PROMs */
+	ROM_REGIONX( 0x0400, REGION_PROMS )
 	ROM_LOAD( "tbp24s10.6p",  0x0000, 0x0100, 0xa712d73a )	/* red component */
 	ROM_LOAD( "tbp24s10.6s",  0x0100, 0x0100, 0x0a7d48ec )	/* green component */
 	ROM_LOAD( "tbp24s10.6m",  0x0200, 0x0100, 0x4c3db907 )	/* blue component */
@@ -485,7 +485,7 @@ static void hisave(void)
 
 
 
-struct GameDriver vastar_driver =
+struct GameDriver driver_vastar =
 {
 	__FILE__,
 	0,
@@ -498,23 +498,23 @@ struct GameDriver vastar_driver =
 	&machine_driver,
 	0,
 
-	vastar_rom,
+	rom_vastar,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_vastar,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
 
-struct GameDriver vastar2_driver =
+struct GameDriver driver_vastar2 =
 {
 	__FILE__,
-	&vastar_driver,
+	&driver_vastar,
 	"vastar2",
 	"Vastar (set 2)",
 	"1983",
@@ -524,14 +524,14 @@ struct GameDriver vastar2_driver =
 	&machine_driver,
 	0,
 
-	vastar2_rom,
+	rom_vastar2,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_vastar,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave

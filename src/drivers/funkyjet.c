@@ -174,7 +174,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 /******************************************************************************/
 
-INPUT_PORTS_START( funkyjet_input_ports )
+INPUT_PORTS_START( funkyjet )
 	PORT_START	/* Player 1 controls */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
@@ -401,7 +401,7 @@ ROM_END
 
 /******************************************************************************/
 
-struct GameDriver funkyjet_driver =
+struct GameDriver driver_funkyjet =
 {
 	__FILE__,
 	0,
@@ -410,18 +410,18 @@ struct GameDriver funkyjet_driver =
 	"1992",
 	"[Data East] (Mitchell license)",
 	"Bryan McPhail",
-	GAME_NOT_WORKING,
+	0,
 	&funkyjet_machine_driver,
 	0,
 
-	funkyjet_rom,
+	rom_funkyjet,
 	0, 0,
 	0,
 	0,
 
-	funkyjet_input_ports,
+	input_ports_funkyjet,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
 	0, 0
 };

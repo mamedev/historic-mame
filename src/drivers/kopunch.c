@@ -129,7 +129,7 @@ static struct IOWritePort writeport[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( kopunch )
 	PORT_START	/* IN0 */
 INPUT_PORTS_END
 
@@ -222,7 +222,7 @@ ROM_START( kopunch )
 	ROM_LOAD( "epr1112",      0x5800, 0x1000, 0xef6994df )
 	ROM_LOAD( "epr1111",      0x6800, 0x1000, 0x28530ec9 )
 
-	ROM_REGION(0x0060)	/* PROMs */
+	ROM_REGIONX( 0x0060, REGION_PROMS )
 	ROM_LOAD( "epr1099",      0x0000, 0x0020, 0xfc58c456 )
 	ROM_LOAD( "epr1100",      0x0020, 0x0020, 0xbedb66b1 )
 	ROM_LOAD( "epr1101",      0x0040, 0x0020, 0x15600f5d )
@@ -238,7 +238,7 @@ static void patch(void)
 	RAM[0x119] = 0;
 }
 
-struct GameDriver kopunch_driver =
+struct GameDriver driver_kopunch =
 {
 	__FILE__,
 	0,
@@ -251,14 +251,14 @@ struct GameDriver kopunch_driver =
 	&machine_driver,
 	0,
 
-	kopunch_rom,
+	rom_kopunch,
 	patch, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_kopunch,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	0, 0

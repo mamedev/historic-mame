@@ -293,22 +293,23 @@ void bwidow_misc_w (int offset, int data)
 static struct MemoryReadAddress bwidow_readmem[] =
 {
 	{ 0x0000, 0x07ff, MRA_RAM },
-	{ 0x9000, 0xffff, MRA_ROM },
+	{ 0x2000, 0x27ff, MRA_RAM },
 	{ 0x2800, 0x5fff, MRA_ROM },
-	{ 0x2000, 0x27ff, MRA_RAM, &vectorram, &vectorram_size },
+	{ 0x6000, 0x600f, pokey1_r },
+	{ 0x6800, 0x680f, pokey2_r },
 	{ 0x7000, 0x7000, atari_vg_earom_r },
 	{ 0x7800, 0x7800, bzone_IN0_r },	/* IN0 */
 	{ 0x8000, 0x8000, input_port_3_r },	/* IN1 */
 	{ 0x8800, 0x8800, input_port_4_r },	/* IN1 */
-	{ 0x6000, 0x600f, pokey1_r },
-	{ 0x6800, 0x680f, pokey2_r },
+	{ 0x9000, 0xffff, MRA_ROM },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress bwidow_writemem[] =
 {
 	{ 0x0000, 0x07ff, MWA_RAM },
-	{ 0x2000, 0x27ff, MWA_RAM },
+	{ 0x2000, 0x27ff, MWA_RAM, &vectorram, &vectorram_size },
+	{ 0x2800, 0x5fff, MWA_ROM },
 	{ 0x6000, 0x67ff, pokey1_w },
 	{ 0x6800, 0x6fff, pokey2_w },
 	{ 0x8800, 0x8800, bwidow_misc_w }, /* coin counters, leds */
@@ -316,34 +317,30 @@ static struct MemoryWriteAddress bwidow_writemem[] =
 	{ 0x8880, 0x8880, avgdvg_reset },
 	{ 0x88c0, 0x88c0, MWA_NOP }, /* interrupt acknowledge */
 	{ 0x8900, 0x8900, atari_vg_earom_ctrl },
-	{ 0x8980, 0x89ed, MWA_NOP }, /* watchdog clear */
 	{ 0x8940, 0x897f, atari_vg_earom_w },
+	{ 0x8980, 0x89ed, MWA_NOP }, /* watchdog clear */
 	{ 0x9000, 0xffff, MWA_ROM },
-	{ 0x2800, 0x5fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryReadAddress spacduel_readmem[] =
 {
 	{ 0x0000, 0x03ff, MRA_RAM },
-	{ 0x4000, 0x8fff, MRA_ROM },
-	{ 0xf000, 0xffff, MRA_ROM },
-	{ 0x2800, 0x3fff, MRA_ROM },
-	{ 0x2000, 0x27ff, MRA_RAM, &vectorram, &vectorram_size },
-	{ 0x0a00, 0x0a00, atari_vg_earom_r },
 	{ 0x0800, 0x0800, bzone_IN0_r },	/* IN0 */
 	{ 0x0900, 0x0907, spacduel_IN3_r },	/* IN1 */
+	{ 0x0a00, 0x0a00, atari_vg_earom_r },
 	{ 0x1000, 0x100f, pokey1_r },
 	{ 0x1400, 0x140f, pokey2_r },
+	{ 0x2000, 0x27ff, MRA_RAM },
+	{ 0x2800, 0x3fff, MRA_ROM },
+	{ 0x4000, 0x8fff, MRA_ROM },
+	{ 0xf000, 0xffff, MRA_ROM },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress spacduel_writemem[] =
 {
 	{ 0x0000, 0x03ff, MWA_RAM },
-	{ 0x2000, 0x27ff, MWA_RAM, &vectorram },
-	{ 0x1000, 0x13ff, pokey1_w },
-	{ 0x1400, 0x17ff, pokey2_w },
 	{ 0x0905, 0x0906, MWA_NOP }, /* ignore? */
 //	{ 0x0c00, 0x0c00, coin_counter_w }, /* coin out */
 	{ 0x0c80, 0x0c80, avgdvg_go },
@@ -352,13 +349,16 @@ static struct MemoryWriteAddress spacduel_writemem[] =
 	{ 0x0e00, 0x0e00, MWA_NOP }, /* interrupt acknowledge */
 	{ 0x0e80, 0x0e80, atari_vg_earom_ctrl },
 	{ 0x0f00, 0x0f3f, atari_vg_earom_w },
-	{ 0x4000, 0x8fff, MWA_ROM },
+	{ 0x1000, 0x13ff, pokey1_w },
+	{ 0x1400, 0x17ff, pokey2_w },
+	{ 0x2000, 0x27ff, MWA_RAM, &vectorram, &vectorram_size },
 	{ 0x2800, 0x3fff, MWA_ROM },
+	{ 0x4000, 0x8fff, MWA_ROM },
 	{ 0xf000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
-INPUT_PORTS_START( bwidow_input_ports )
+INPUT_PORTS_START( bwidow )
 	PORT_START	/* IN0 */
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_COIN1)
 	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_COIN2)
@@ -437,7 +437,7 @@ INPUT_PORTS_START( bwidow_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( gravitar_input_ports )
+INPUT_PORTS_START( gravitar )
 	PORT_START	/* IN0 */
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_COIN1)
 	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_COIN2)
@@ -511,7 +511,7 @@ INPUT_PORTS_START( gravitar_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( spacduel_input_ports )
+INPUT_PORTS_START( spacduel )
 	PORT_START	/* IN0 */
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_COIN1)
 	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_COIN2)
@@ -797,7 +797,7 @@ ROM_START( bwidow )
 ROM_END
 
 
-struct GameDriver bwidow_driver =
+struct GameDriver driver_bwidow =
 {
 	__FILE__,
 	0,
@@ -810,12 +810,12 @@ struct GameDriver bwidow_driver =
 	&bwidow_machine_driver,
 	0,
 
-	bwidow_rom,
+	rom_bwidow,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	bwidow_input_ports,
+	input_ports_bwidow,
 
 	0, 0,0,
 	ORIENTATION_DEFAULT,
@@ -871,7 +871,7 @@ ROM_START( gravitr2 )
 ROM_END
 
 
-struct GameDriver gravitar_driver =
+struct GameDriver driver_gravitar =
 {
 	__FILE__,
 	0,
@@ -884,12 +884,12 @@ struct GameDriver gravitar_driver =
 	&gravitar_machine_driver,
 	0,
 
-	gravitar_rom,
+	rom_gravitar,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	gravitar_input_ports,
+	input_ports_gravitar,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -897,10 +897,10 @@ struct GameDriver gravitar_driver =
 	atari_vg_earom_load, atari_vg_earom_save
 };
 
-struct GameDriver gravitr2_driver =
+struct GameDriver driver_gravitr2 =
 {
 	__FILE__,
-	&gravitar_driver,
+	&driver_gravitar,
 	"gravitr2",
 	"Gravitar (version 2)",
 	"1982",
@@ -910,12 +910,12 @@ struct GameDriver gravitr2_driver =
 	&gravitar_machine_driver,
 	0,
 
-	gravitr2_rom,
+	rom_gravitr2,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	gravitar_input_ports,
+	input_ports_gravitar,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -955,7 +955,7 @@ ROM_START( spacduel )
 	ROM_RELOAD(              0xf000, 0x1000 )	/* for reset/interrupt vectors */
 ROM_END
 
-struct GameDriver spacduel_driver =
+struct GameDriver driver_spacduel =
 {
 	__FILE__,
 	0,
@@ -968,12 +968,12 @@ struct GameDriver spacduel_driver =
 	&spacduel_machine_driver,
 	0,
 
-	spacduel_rom,
+	rom_spacduel,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	spacduel_input_ports,
+	input_ports_spacduel,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

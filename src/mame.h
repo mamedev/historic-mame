@@ -19,6 +19,7 @@ struct RunningMachine
 {
 	unsigned char *memory_region[MAX_MEMORY_REGIONS];
 	unsigned int memory_region_length[MAX_MEMORY_REGIONS];	/* some drivers might find this useful */
+	int memory_region_type[MAX_MEMORY_REGIONS];
 	struct GfxElement *gfx[MAX_GFX_ELEMENTS];	/* graphic sets (chars, sprites) */
 	struct osd_bitmap *scrbitmap;	/* bitmap to draw into */
 	unsigned short *pens;	/* remapped palette pen numbers. When you write */
@@ -91,6 +92,5 @@ int run_game (int game);
 int updatescreen(void);
 /* osd_fopen() must use this to know if high score files can be used */
 int mame_highscore_enabled(void);
-
 
 #endif

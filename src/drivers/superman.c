@@ -107,7 +107,7 @@ static struct MemoryReadAddress superman_readmem[] =
 	{ 0xb00000, 0xb00fff, paletteram_word_r },
 	{ 0xd00000, 0xd007ff, supes_attribram_r },
 	{ 0xe00000, 0xe03fff, supes_videoram_r },
-	{ 0xf00000, 0xf03fff, MRA_BANK1, &ram },	/* Main RAM */
+	{ 0xf00000, 0xf03fff, MRA_BANK1 },	/* Main RAM */
 	{ -1 }  /* end of table */
 };
 
@@ -119,7 +119,7 @@ static struct MemoryWriteAddress superman_writemem[] =
 	{ 0xb00000, 0xb00fff, paletteram_xRRRRRGGGGGBBBBB_word_w, &paletteram },
 	{ 0xd00000, 0xd007ff, supes_attribram_w, &supes_attribram, &supes_attribram_size },
 	{ 0xe00000, 0xe03fff, supes_videoram_w, &supes_videoram, &supes_videoram_size },
-	{ 0xf00000, 0xf03fff, MWA_BANK1 },			/* Main RAM */
+	{ 0xf00000, 0xf03fff, MWA_BANK1, &ram },			/* Main RAM */
 	{ -1 }  /* end of table */
 };
 
@@ -154,7 +154,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ -1 }  /* end of table */
 };
 
-INPUT_PORTS_START( superman_input_ports )
+INPUT_PORTS_START( superman )
 	PORT_START /* DSW A */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unused ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ))
@@ -303,7 +303,7 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_M68000,
-			6000000,	/* 6 Mhz */
+			8000000,	/* 8 MHz? */
 			0,
 			superman_readmem,superman_writemem,0,0,
 			m68_level6_irq,1
@@ -409,7 +409,7 @@ ROM_END
 
 
 
-struct GameDriver superman_driver =
+struct GameDriver driver_superman =
 {
 	__FILE__,
 	0,
@@ -422,12 +422,12 @@ struct GameDriver superman_driver =
 	&machine_driver,
 	0,
 
-	superman_rom,
+	rom_superman,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	superman_input_ports,
+	input_ports_superman,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,

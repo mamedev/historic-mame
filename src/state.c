@@ -136,7 +136,7 @@ void state_close( void *s )
 }
 
 /* Output a formatted string to the state file */
-static void emit(void *s, const char *fmt, ...)
+static void CLIB_DECL emit(void *s, const char *fmt, ...)
 {
     static char buffer[128+1];
 	state_handle *state = (state_handle *)s;

@@ -72,6 +72,7 @@ command to list them.
 | Bagman               |  Yes   |  Yes   |No Speech  Yes   |  Yes   | bagman   |
 | Bandido              |  Yes   |  b/w   |   No   |   No   |   No   | bandido  |
 | Bank Panic           |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | bankp    |
+| Baraduke             |  Yes   |  Yes   |  Yes   |   No   |   No   | baraduke |
 | Batman               |  Yes   |  Yes   |  Yes   |  Yes   |   No   | batman   |
 | Battlantis           |  Yes   |  Yes   |  Yes   |   No   |  Yes   | battlnts |
 | Battle Chopper       |  Yes   |  Yes   |  Yes   |   No   |   No   | bchopper |
@@ -123,7 +124,7 @@ command to list them.
 | Captain Silver       |  Yes   |  Yes   |  Yes   |  Yes   |   No   | csilver  |
 | Carnival             |  Yes   |  Yes   | Yes(1) |  Yes   |   No   | carnival |
 | Carrier Air Wing     |   No   |  Yes   |  Yes   |   No   |   No   | cawing   |
-| Caveman Ninija       |  Yes   |  Yes   |  Yes   |   No   |   No   | cninja   |
+| Caveman Ninja        |  Yes   |  Yes   |  Yes   |  Yes   |   No   | cninja   |
 | Centipede            |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | centiped |
 | Challenger           |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | challeng |
 | Champion Baseball    |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | champbas |
@@ -146,6 +147,7 @@ command to list them.
 | Colony 7             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | colony7  |
 | Combat               |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | combat   |
 | Combat School        |  Yes   | Close  |  Yes   |  Yes   |   No   | combasc  |
+| Combatribes          |  Yes   |  Yes   |  Yes   |   No   |   No   | ctribe   |
 | Commando (Capcom)    |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | commando |
 | Commando (Sega)      |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | commsega |
 | Comotion             |  Yes   |  b/w   |Partl(1)|  Yes   |   No   | comotion |
@@ -172,6 +174,7 @@ command to list them.
 | Curve Ball           |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | curvebal |
 | Cybattler            |  Yes   |  Yes   |  Yes   |   No   |   No   | cybattlr |
 | Cyberball 2072 (2 Pla|  Yes   |  Yes   |  Yes   |  Yes   |   No   | cyberb2p |
+| D-Con                |  Yes   |  Yes   |  Yes   |   No   |   No   | dcon     |
 | D-Day                |  Yes   |   No   |  Yes   |  Yes   |  n/a   | dday     |
 | DakkoChan Jansoh     |   No   |  Yes   |  Yes   |   No   |   No   | dakkochn |
 | Dark Planet          |   No   |  Yes   |  Yes   |   No   |   No   | darkplnt |
@@ -202,10 +205,13 @@ command to list them.
 | Donkey Kong Jr.      |  Yes   |  Yes   | Yes(1) |  Yes   |  Yes   | dkongjr  |
 | Double Dragon        |  Yes   |  Yes   |  Yes   |  Yes   |   No   | ddragon  |
 | Double Dragon 2      |  Yes   |  Yes   |  Yes   |  Yes   |   No   | ddragon2 |
+| Double Dragon 3      |  Yes   |  Yes   |  Yes   |   No   |   No   | ddragon3 |
 | Double Dribble       |  Yes   |  Yes   |No Speech   No   |   No   | ddribble |
+| Dr. Toppel Tankentai |  Yes   |  Yes   |  Yes   |   No   |  Yes   | drtoppel |
 | Dragon Breed         |  Yes   |  Yes   |  Yes   |   No   |   No   | dbreed   |
 | Dream Soccer '94     |  Yes   |  Yes   |   No   |   No   |   No   | dsoccr94 |
-| Dyger                |  Yes   |  Yes   |  Yes   |   No   |   NO   | dyger    |
+| Dyger                |  Yes   |  Yes   |  Yes   |   No   |   No   | dyger    |
+| Dynamite Duke        |  Yes   |  Yes?  |   No   |   No   |   No   | dynduke  |
 | Dynamite Dux         |   No   |  Yes   |   No   |   No   |   No   | dduxbl   |
 | Dynasty Wars         |  Yes   |  Yes   |  Yes   |   No   |   No   | dwj      |
 | E-Swat               |   No   |  Yes   |   No   |   No   |   No   | eswatbl  |
@@ -236,6 +242,7 @@ command to list them.
 | Finalizer            |  Yes   |  Yes   |Partial |   No   |   No   | finalizr |
 | Fire One             |Partial.|   No   |   No   |   No   |   No   | fireone  |
 | Fire Trap            |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | firetrap |
+| Flak Attack          |  Yes   |  Yes   |  Yes   |   No   |   No   | flkatck  |
 | Flash Gal            |  Yes   |  Yes   |  Yes   |   No   |  Yes   | flashgal |
 | Flash Point          |   No   |  Yes   |   No   |   No   |   No   | fpointbl |
 | Flicky               |  Yes   |  Yes   |  Yes   |  Yes   |   No   | flicky   |
@@ -322,8 +329,9 @@ command to list them.
 | Hustler, The         |  Yes   |  Yes   |  Yes   |   No   |  Yes   | thehustl |
 | Hydra                |  Yes   |  Yes   |  Yes   |  Yes   |   No   | hydra    |
 | Hyper Sports         |  Yes   |  Yes   | Yes(1) |  Yes   |  Yes   | hyperspt |
+| I, Robot             |  Yes   |  Yes   |  Yes   |   No   |   No   | irobot   |
 | I'm Sorry            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | imsorry  |
-| Ikari III - The Rescue  Yes   |  Yes   |  Yes   |   No   |   No   | ikari3   |
+| Ikari III-The Rescue |  Yes   |  Yes   |  Yes   |   No   |   No   | ikari3   |
 | Ikari Warriors       |  Yes   |  Yes   |Partial |  Yes   |   No   | ikari    |
 | Image Fight          |  Yes   |  Yes   |  Yes   |   No   |   No   | imgfight |
 | In the Hunt          |  Yes   |  Yes   |   No   |   No   |   No   | inthunt  |
@@ -357,14 +365,14 @@ command to list them.
 | Karate Champ VS      |  Yes   |  Yes   |  Yes   |  Yes   |   No   | kchampvs |
 | Karnov               |  Yes   |  Yes   |  Yes   |  Yes   |   No   | karnov   |
 | Kick                 |  Yes   |  Yes   |  Yes   |  Yes   |   No   | kick     |
-| Kick and Run         |  Yes   |  Yes   |  Yes   |   No   |   No   | kicknrun |
+| Kick and Run         |  Yes   |  Yes   |  Yes   |  Yes   |   No   | kicknrun |
 | Kick Off             |  Yes   |  Yes   |  Yes   |   No   |   No   | kickoff  |
 | Kick Rider           |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | kickridr |
 | Kick Start           |   No   |  Yes   |  Yes   |   No   |   No   | kikstart |
 | Kicker               |  Yes   |  Yes   |  Yes   |  Yes   |   No   | kicker   |
 | Kickle Cubicle       |  Yes   |  Yes   |  Yes   |  Yes   |   No   | kikcubic |
 | Kid Niki             |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | kidniki  |
-| KiKi KaiKai          |  Yes   |  Yes   |  Yes   |   No   |   No   | kikikai  |
+| KiKi KaiKai          |  Yes   |  Yes   |  Yes   |  Yes   |   No   | kikikai  |
 | Killer Comet         |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | killcom  |
 | King & Balloon       |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | kingball |
 | King of Boxer        |  Yes   |  Yes?  |  Yes   |  Yes   |   No   | kingofb  |
@@ -434,6 +442,7 @@ command to list them.
 | MegaTack             |  Yes   |  Yes   |  Yes   |  Yes   |   No   | megatack |
 | Mercs                |  Yes   |  Yes   |  Yes   |   No   |   No   | mercs    |
 | Meteoroids           |  Yes   |  Yes?  |  Yes   |   No   |   No   | meteor   |
+| Metro-Cross          |  Yes   |  Yes   |  Yes   |   No   |   No   | metrocrs |
 | Midnight Resistance  |  Yes   |  Yes   |  Yes   |  Yes   |   No   | midres   |
 | Mikie                |  Yes   |  Yes   |  Yes   |  Yes   |  Yes   | mikie    |
 | Millipede            |  Yes   |  Yes   |  Yes   |  Yes   |   No   | milliped |
@@ -518,6 +527,7 @@ command to list them.
 | Pocket Gal           |  Yes   |  Yes   |  Yes   |   No   |   No   | pcktgal  |
 | Poker Ladies         |  Yes   |  Yes   |Partial |   No   |  Yes   | pkladies |
 | Polaris              |  Yes   |  b/w   |   No   |   No   |   No   | polaris  |
+| Pong                 |  Yes   |  b/w   |  Yes   |  n/a   |  n/a   | pong     |
 | Ponpoko              |  Yes   |  Yes?  |  Yes   |  Yes   |  Yes   | ponpoko  |
 | Pontoon              |  Yes   |  Yes   |  Yes   |  Yes   |   No   | pontoon  |
 | Pooyan               |  Yes   |  Yes?  |  Yes   |  Yes   |  Yes   | pooyan   |
@@ -589,7 +599,7 @@ command to list them.
 | Saint Dragon         |  Yes   |  Yes   |  Yes   |   No   |   No   | stdragon |
 | Salamander           |  Yes   |  Yes   |Partial |   No   |   No   | salamand |
 | Samurai (Sega)       |  Yes   |  Yes?  |   No   |   No   |   No   | samurai  |
-| Samurai (Taito)      |  Yes   | Close  |  Bad   |   No   |  Yes   | tsamurai |
+| Samurai (Taito)      |  Yes   |  Yes   |  Bad   |   No   |  Yes   | tsamurai |
 | Sarge                |  Yes   |  Yes   |  Yes   |  Yes   |   No   | sarge    |
 | Sasuke vs. Commander |  Yes   |  Yes   |   No   |   No   |  Yes   | sasuke   |
 | Satan of Saturn      |  Yes   |  Yes?  |Partial |   No   |  Yes   | satansat |

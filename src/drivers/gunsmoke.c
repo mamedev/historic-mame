@@ -79,7 +79,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( gunsmoke )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -302,7 +302,7 @@ ROM_START( gunsmoke )
 	ROM_LOAD( "03l_gs16.bin", 0x74000, 0x8000, 0x0d99c3b3 ) /* Sprites planes 0-1 */
 	ROM_LOAD( "01l_gs15.bin", 0x7c000, 0x8000, 0x7f14270e ) /* Sprites planes 0-1 */
 
-	ROM_REGION(0x0800)	/* color PROMs */
+	ROM_REGIONX( 0x0800, REGION_PROMS )
 	ROM_LOAD( "03b_g-01.bin", 0x0000, 0x0100, 0x02f55589 )	/* red component */
 	ROM_LOAD( "04b_g-02.bin", 0x0100, 0x0100, 0xe1e36dd9 )	/* green component */
 	ROM_LOAD( "05b_g-03.bin", 0x0200, 0x0100, 0x989399c0 )	/* blue component */
@@ -344,7 +344,7 @@ ROM_START( gunsmrom )
 	ROM_LOAD( "03l_gs16.bin", 0x74000, 0x8000, 0x0d99c3b3 ) /* Sprites planes 0-1 */
 	ROM_LOAD( "01l_gs15.bin", 0x7c000, 0x8000, 0x7f14270e ) /* Sprites planes 0-1 */
 
-	ROM_REGION(0x0800)	/* color PROMs */
+	ROM_REGIONX( 0x0800, REGION_PROMS )
 	ROM_LOAD( "03b_g-01.bin", 0x0000, 0x0100, 0x02f55589 )	/* red component */
 	ROM_LOAD( "04b_g-02.bin", 0x0100, 0x0100, 0xe1e36dd9 )	/* green component */
 	ROM_LOAD( "05b_g-03.bin", 0x0200, 0x0100, 0x989399c0 )	/* blue component */
@@ -386,7 +386,7 @@ ROM_START( gunsmokj )
 	ROM_LOAD( "03l_gs16.bin", 0x74000, 0x8000, 0x0d99c3b3 ) /* Sprites planes 0-1 */
 	ROM_LOAD( "01l_gs15.bin", 0x7c000, 0x8000, 0x7f14270e ) /* Sprites planes 0-1 */
 
-	ROM_REGION(0x0800)	/* color PROMs */
+	ROM_REGIONX( 0x0800, REGION_PROMS )
 	ROM_LOAD( "03b_g-01.bin", 0x0000, 0x0100, 0x02f55589 )	/* red component */
 	ROM_LOAD( "04b_g-02.bin", 0x0100, 0x0100, 0xe1e36dd9 )	/* green component */
 	ROM_LOAD( "05b_g-03.bin", 0x0200, 0x0100, 0x989399c0 )	/* blue component */
@@ -428,7 +428,7 @@ ROM_START( gunsmoka )
 	ROM_LOAD( "03l_gs16.bin", 0x74000, 0x8000, 0x0d99c3b3 ) /* Sprites planes 0-1 */
 	ROM_LOAD( "01l_gs15.bin", 0x7c000, 0x8000, 0x7f14270e ) /* Sprites planes 0-1 */
 
-	ROM_REGION(0x0800)	/* color PROMs */
+	ROM_REGIONX( 0x0800, REGION_PROMS )
 	ROM_LOAD( "03b_g-01.bin", 0x0000, 0x0100, 0x02f55589 )	/* red component */
 	ROM_LOAD( "04b_g-02.bin", 0x0100, 0x0100, 0xe1e36dd9 )	/* green component */
 	ROM_LOAD( "05b_g-03.bin", 0x0200, 0x0100, 0x989399c0 )	/* blue component */
@@ -487,7 +487,7 @@ static void hisave(void)
 	}
 }
 
-struct GameDriver gunsmoke_driver =
+struct GameDriver driver_gunsmoke =
 {
 	__FILE__,
 	0,
@@ -500,23 +500,23 @@ struct GameDriver gunsmoke_driver =
 	&machine_driver,
 	0,
 
-	gunsmoke_rom,
+	rom_gunsmoke,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_gunsmoke,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	hiload, hisave
 };
 
-struct GameDriver gunsmrom_driver =
+struct GameDriver driver_gunsmrom =
 {
 	__FILE__,
-	&gunsmoke_driver,
+	&driver_gunsmoke,
 	"gunsmrom",
 	"Gun.Smoke (US set 1)",
 	"1985",
@@ -526,23 +526,23 @@ struct GameDriver gunsmrom_driver =
 	&machine_driver,
 	0,
 
-	gunsmrom_rom,
+	rom_gunsmrom,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_gunsmoke,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	hiload, hisave
 };
 
-struct GameDriver gunsmoka_driver =
+struct GameDriver driver_gunsmoka =
 {
 	__FILE__,
-	&gunsmoke_driver,
+	&driver_gunsmoke,
 	"gunsmoka",
 	"Gun.Smoke (US set 2)",
 	"1986",
@@ -552,23 +552,23 @@ struct GameDriver gunsmoka_driver =
 	&machine_driver,
 	0,
 
-	gunsmoka_rom,
+	rom_gunsmoka,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_gunsmoke,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	hiload,hisave
 };
 
-struct GameDriver gunsmokj_driver =
+struct GameDriver driver_gunsmokj =
 {
 	__FILE__,
-	&gunsmoke_driver,
+	&driver_gunsmoke,
 	"gunsmokj",
 	"Gun.Smoke (Japan)",
 	"1985",
@@ -578,14 +578,14 @@ struct GameDriver gunsmokj_driver =
 	&machine_driver,
 	0,
 
-	gunsmokj_rom,
+	rom_gunsmokj,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_gunsmoke,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	hiload, hisave

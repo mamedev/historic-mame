@@ -168,7 +168,7 @@ static struct IOWritePort sound_writeport_2203[] =
 };
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( terracre )
 	PORT_START	/* Player 1 controls */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
@@ -448,7 +448,7 @@ ROM_START( terracre )
 	ROM_LOAD( "2a_6g.rom",    0x1a000, 0x4000, 0x4a9ec3e6 )
 	ROM_LOAD( "2a_7g.rom",    0x1e000, 0x4000, 0x450749fc )
 
-	ROM_REGION(0x0500)	/* color PROMs */
+	ROM_REGIONX( 0x0500, REGION_PROMS )
 	ROM_LOAD( "tc1a_10f.bin", 0x0000, 0x0100, 0xce07c544 )	/* red component */
 	ROM_LOAD( "tc1a_11f.bin", 0x0100, 0x0100, 0x566d323a )	/* green component */
 	ROM_LOAD( "tc1a_12f.bin", 0x0200, 0x0100, 0x7ea63946 )	/* blue component */
@@ -485,7 +485,7 @@ ROM_START( terracrb )
 	ROM_LOAD( "2a_6g.rom",    0x1a000, 0x4000, 0x4a9ec3e6 )
 	ROM_LOAD( "2a_7g.rom",    0x1e000, 0x4000, 0x450749fc )
 
-	ROM_REGION(0x0500)	/* color PROMs */
+	ROM_REGIONX( 0x0500, REGION_PROMS )
 	ROM_LOAD( "tc1a_10f.bin", 0x0000, 0x0100, 0xce07c544 )	/* red component */
 	ROM_LOAD( "tc1a_11f.bin", 0x0100, 0x0100, 0x566d323a )	/* green component */
 	ROM_LOAD( "tc1a_12f.bin", 0x0200, 0x0100, 0x7ea63946 )	/* blue component */
@@ -522,7 +522,7 @@ ROM_START( terracra )
 	ROM_LOAD( "2a_6g.rom",    0x1a000, 0x4000, 0x4a9ec3e6 )
 	ROM_LOAD( "2a_7g.rom",    0x1e000, 0x4000, 0x450749fc )
 
-	ROM_REGION(0x0500)	/* color PROMs */
+	ROM_REGIONX( 0x0500, REGION_PROMS )
 	ROM_LOAD( "tc1a_10f.bin", 0x0000, 0x0100, 0xce07c544 )	/* red component */
 	ROM_LOAD( "tc1a_11f.bin", 0x0100, 0x0100, 0x566d323a )	/* green component */
 	ROM_LOAD( "tc1a_12f.bin", 0x0200, 0x0100, 0x7ea63946 )	/* blue component */
@@ -571,7 +571,7 @@ static void terracre_hisave(void)
 
 
 
-struct GameDriver terracre_driver =
+struct GameDriver driver_terracre =
 {
 	__FILE__,
 	0,
@@ -584,23 +584,23 @@ struct GameDriver terracre_driver =
 	&ym3526_machine_driver,
 	0,
 
-	terracre_rom,
+	rom_terracre,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_terracre,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	terracre_hiload, terracre_hisave
 };
 
-struct GameDriver terracrb_driver =
+struct GameDriver driver_terracrb =
 {
 	__FILE__,
-	&terracre_driver,
+	&driver_terracre,
 	"terracrb",
 	"Terra Cresta (YM3526 set 2)",
 	"1985",
@@ -610,14 +610,14 @@ struct GameDriver terracrb_driver =
 	&ym3526_machine_driver,
 	0,
 
-	terracrb_rom,
+	rom_terracrb,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_terracre,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	terracre_hiload, terracre_hisave
@@ -627,10 +627,10 @@ struct GameDriver terracrb_driver =
 /* Notes: All the roms are the same except the SOUND ROMs */
 /**********************************************************/
 
-struct GameDriver terracra_driver =
+struct GameDriver driver_terracra =
 {
 	__FILE__,
-	&terracre_driver,
+	&driver_terracre,
 	"terracra",
 	"Terra Cresta (YM2203)",
 	"1985",
@@ -640,14 +640,14 @@ struct GameDriver terracra_driver =
 	&ym2203_machine_driver,
 	0,
 
-	terracra_rom,
+	rom_terracra,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_terracre,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	terracre_hiload, terracre_hisave

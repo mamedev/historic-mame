@@ -257,8 +257,8 @@ static int unknown_verify_r(int offset)
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x000000, 0x037fff, MRA_ROM },
-	{ 0x038000, 0x03ffff, bankrom_r, &bankrom_base },
-	{ 0x120000, 0x120fff, atarigen_eeprom_r, &atarigen_eeprom, &atarigen_eeprom_size },
+	{ 0x038000, 0x03ffff, bankrom_r },
+	{ 0x120000, 0x120fff, atarigen_eeprom_r },
 	{ 0x260000, 0x260001, input_port_0_r },
 	{ 0x260002, 0x260003, input_port_1_r },
 	{ 0x260010, 0x260011, special_port3_r },
@@ -267,11 +267,11 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x260022, 0x260023, input_port_6_r },
 	{ 0x260024, 0x260025, input_port_7_r },
 	{ 0x260030, 0x260031, atarigen_sound_r },
-	{ 0x3e0000, 0x3e0fff, MRA_BANK1, &paletteram },
-	{ 0x3effc0, 0x3effff, atarigen_video_control_r, &atarigen_video_control_data },
-	{ 0x3f4000, 0x3f7fff, MRA_BANK3, &atarigen_playfieldram, &atarigen_playfieldram_size },
+	{ 0x3e0000, 0x3e0fff, MRA_BANK1 },
+	{ 0x3effc0, 0x3effff, atarigen_video_control_r },
+	{ 0x3f4000, 0x3f7fff, MRA_BANK3 },
 	{ 0x3f8000, 0x3fcfff, MRA_BANK4 },
-	{ 0x3fd000, 0x3fd3ff, MRA_BANK5, &atarigen_spriteram },
+	{ 0x3fd000, 0x3fd3ff, MRA_BANK5 },
 	{ 0x3fd400, 0x3fffff, MRA_BANK6 },
 	{ -1 }  /* end of table */
 };
@@ -279,17 +279,18 @@ static struct MemoryReadAddress readmem[] =
 
 static struct MemoryWriteAddress writemem[] =
 {
-	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0x120000, 0x120fff, atarigen_eeprom_w },
+	{ 0x000000, 0x037fff, MWA_ROM },
+	{ 0x038000, 0x03ffff, MWA_ROM, &bankrom_base },
+	{ 0x120000, 0x120fff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
 	{ 0x260040, 0x260041, atarigen_sound_w },
 	{ 0x260050, 0x260051, io_latch_w },
 	{ 0x260060, 0x260061, atarigen_eeprom_enable_w },
 	{ 0x2a0000, 0x2a0001, watchdog_reset_w },
-	{ 0x3e0000, 0x3e0fff, atarigen_666_paletteram_w },
-	{ 0x3effc0, 0x3effff, atarigen_video_control_w },
-	{ 0x3f4000, 0x3f7fff, offtwall_playfieldram_w },
+	{ 0x3e0000, 0x3e0fff, atarigen_666_paletteram_w, &paletteram },
+	{ 0x3effc0, 0x3effff, atarigen_video_control_w, &atarigen_video_control_data },
+	{ 0x3f4000, 0x3f7fff, offtwall_playfieldram_w, &atarigen_playfieldram, &atarigen_playfieldram_size },
 	{ 0x3f8000, 0x3fcfff, MWA_BANK4 },
-	{ 0x3fd000, 0x3fd3ff, MWA_BANK5 },
+	{ 0x3fd000, 0x3fd3ff, MWA_BANK5, &atarigen_spriteram },
 	{ 0x3fd400, 0x3fffff, MWA_BANK6 },
 	{ -1 }  /* end of table */
 };
@@ -302,7 +303,7 @@ static struct MemoryWriteAddress writemem[] =
  *
  *************************************/
 
-INPUT_PORTS_START( offtwall_ports )
+INPUT_PORTS_START( offtwall )
 	PORT_START	/* 260000 */
 	PORT_BIT(  0x0001, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER2 )
 	PORT_BIT(  0x0002, IP_ACTIVE_LOW, IPT_START2 )
@@ -563,7 +564,7 @@ static void offtwalc_init(void)
  *
  *************************************/
 
-struct GameDriver offtwall_driver =
+struct GameDriver driver_offtwall =
 {
 	__FILE__,
 	0,
@@ -576,13 +577,13 @@ struct GameDriver offtwall_driver =
 	&machine_driver,
 	offtwall_init,
 
-	offtwall_rom,
+	rom_offtwall,
 	rom_decode,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	offtwall_ports,
+	input_ports_offtwall,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
@@ -590,10 +591,10 @@ struct GameDriver offtwall_driver =
 };
 
 
-struct GameDriver offtwalc_driver =
+struct GameDriver driver_offtwalc =
 {
 	__FILE__,
-	&offtwall_driver,
+	&driver_offtwall,
 	"offtwalc",
 	"Off the Wall (2-player cocktail)",
 	"1991",
@@ -603,13 +604,13 @@ struct GameDriver offtwalc_driver =
 	&machine_driver,
 	offtwalc_init,
 
-	offtwalc_rom,
+	rom_offtwalc,
 	rom_decode,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	offtwall_ports,
+	input_ports_offtwall,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,

@@ -209,7 +209,7 @@ static struct MemoryWriteAddress sound_writemem2[] =
 
 
 
-INPUT_PORTS_START( monymony_input_ports )
+INPUT_PORTS_START( monymony )
 	PORT_START
 	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "2" )
@@ -317,7 +317,7 @@ INPUT_PORTS_START( monymony_input_ports )
 	PORT_BIT( 0xc8, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( jackrabt_input_ports )
+INPUT_PORTS_START( jackrabt )
 	PORT_START
 	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "2" )
@@ -535,7 +535,7 @@ ROM_START( monymony )
 	ROM_LOAD( "1f",           0x2000, 0x2000, 0x40d4e4d1 )
 	ROM_LOAD( "1e",           0x4000, 0x2000, 0x36980455 )
 
-	ROM_REGION(0x0400)      /* color proms */
+	ROM_REGIONX( 0x0400, REGION_PROMS )
 	ROM_LOAD( "monymony.9g",  0x0000, 0x0200, 0xfc9a0f21 )
 	ROM_LOAD( "monymony.9f",  0x0200, 0x0200, 0x93106704 )
 
@@ -573,7 +573,7 @@ ROM_START( jackrabt )
 	ROM_LOAD( "2bg.1f",       0x2000, 0x2000, 0xafc04cd7 )
 	ROM_LOAD( "3bg.1e",       0x4000, 0x2000, 0x14f23cdd )
 
-	ROM_REGION(0x0400)      /* color proms */
+	ROM_REGIONX( 0x0400, REGION_PROMS )
 	ROM_LOAD( "jr-ic9g",      0x0000, 0x0200, 0x85577107 )
 	ROM_LOAD( "jr-ic9f",      0x0200, 0x0200, 0x085914d1 )
 
@@ -611,7 +611,7 @@ ROM_START( jackrab2 )
 	ROM_LOAD( "2bg.1f",       0x2000, 0x2000, 0xafc04cd7 )
 	ROM_LOAD( "3bg.1e",       0x4000, 0x2000, 0x14f23cdd )
 
-	ROM_REGION(0x0400)      /* color proms */
+	ROM_REGIONX( 0x0400, REGION_PROMS )
 	ROM_LOAD( "jr-ic9g",      0x0000, 0x0200, 0x85577107 )
 	ROM_LOAD( "jr-ic9f",      0x0200, 0x0200, 0x085914d1 )
 
@@ -649,7 +649,7 @@ ROM_START( jackrabs )
 	ROM_LOAD( "2bg.1f",       0x2000, 0x2000, 0xafc04cd7 )
 	ROM_LOAD( "3bg.1e",       0x4000, 0x2000, 0x14f23cdd )
 
-	ROM_REGION(0x0400)      /* color proms */
+	ROM_REGIONX( 0x0400, REGION_PROMS )
 	ROM_LOAD( "jr-ic9g",      0x0000, 0x0200, 0x85577107 )
 	ROM_LOAD( "jr-ic9f",      0x0200, 0x0200, 0x085914d1 )
 
@@ -752,7 +752,7 @@ static void jackrabt_hisave(void)
 
 
 
-struct GameDriver monymony_driver =
+struct GameDriver driver_monymony =
 {
 	__FILE__,
 	0,
@@ -765,20 +765,20 @@ struct GameDriver monymony_driver =
 	&machine_driver,
 	0,
 
-	monymony_rom,
+	rom_monymony,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	monymony_input_ports,
+	input_ports_monymony,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	monymony_hiload, monymony_hisave
 };
 
-struct GameDriver jackrabt_driver =
+struct GameDriver driver_jackrabt =
 {
 	__FILE__,
 	0,
@@ -791,23 +791,23 @@ struct GameDriver jackrabt_driver =
 	&machine_driver,
 	0,
 
-	jackrabt_rom,
+	rom_jackrabt,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	jackrabt_input_ports,
+	input_ports_jackrabt,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	jackrabt_hiload, jackrabt_hisave
 };
 
-struct GameDriver jackrab2_driver =
+struct GameDriver driver_jackrab2 =
 {
 	__FILE__,
-	&jackrabt_driver,
+	&driver_jackrabt,
 	"jackrab2",
 	"Jack Rabbit (set 2)",
 	"1984",
@@ -817,23 +817,23 @@ struct GameDriver jackrab2_driver =
 	&machine_driver,
 	0,
 
-	jackrab2_rom,
+	rom_jackrab2,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	jackrabt_input_ports,
+	input_ports_jackrabt,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	jackrabt_hiload, jackrabt_hisave
 };
 
-struct GameDriver jackrabs_driver =
+struct GameDriver driver_jackrabs =
 {
 	__FILE__,
-	&jackrabt_driver,
+	&driver_jackrabt,
 	"jackrabs",
 	"Jack Rabbit (special)",
 	"1984",
@@ -843,14 +843,14 @@ struct GameDriver jackrabs_driver =
 	&machine_driver,
 	0,
 
-	jackrabs_rom,
+	rom_jackrabs,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	jackrabt_input_ports,
+	input_ports_jackrabt,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	jackrabt_hiload, jackrabt_hisave

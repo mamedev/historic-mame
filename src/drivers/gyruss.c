@@ -231,7 +231,7 @@ static struct IOWritePort i8039_writeport[] =
 
 
 
-INPUT_PORTS_START( gyruss_input_ports )
+INPUT_PORTS_START( gyruss )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -329,7 +329,7 @@ INPUT_PORTS_END
 
 /* This is identical to gyruss except for the bonus that has different
    values */
-INPUT_PORTS_START( gyrussce_input_ports )
+INPUT_PORTS_START( gyrussce )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -592,7 +592,7 @@ ROM_START( gyruss )
 	ROM_LOAD( "gyrussk.8",    0x6000, 0x2000, 0x47cd1fbc )
 	ROM_LOAD( "gyrussk.7",    0x8000, 0x2000, 0x8e8d388c )
 
-	ROM_REGION(0x0220)	/* color PROMs */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "gyrussk.pr3",  0x0000, 0x0020, 0x98782db3 )	/* palette */
 	ROM_LOAD( "gyrussk.pr1",  0x0020, 0x0100, 0x7ed057de )	/* sprite lookup table */
 	ROM_LOAD( "gyrussk.pr2",  0x0120, 0x0100, 0xde823a81 )	/* character lookup table */
@@ -623,7 +623,7 @@ ROM_START( gyrussce )
 	ROM_LOAD( "gyrussk.8",    0x6000, 0x2000, 0x47cd1fbc )
 	ROM_LOAD( "gyrussk.7",    0x8000, 0x2000, 0x8e8d388c )
 
-	ROM_REGION(0x0220)	/* color PROMs */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "gyrussk.pr3",  0x0000, 0x0020, 0x98782db3 )	/* palette */
 	ROM_LOAD( "gyrussk.pr1",  0x0020, 0x0100, 0x7ed057de )	/* sprite lookup table */
 	ROM_LOAD( "gyrussk.pr2",  0x0120, 0x0100, 0xde823a81 )	/* character lookup table */
@@ -654,7 +654,7 @@ ROM_START( venus )
 	ROM_LOAD( "gyrussk.8",    0x6000, 0x2000, 0x47cd1fbc )
 	ROM_LOAD( "gyrussk.7",    0x8000, 0x2000, 0x8e8d388c )
 
-	ROM_REGION(0x0220)	/* color PROMs */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "gyrussk.pr3",  0x0000, 0x0020, 0x98782db3 )	/* palette */
 	ROM_LOAD( "gyrussk.pr1",  0x0020, 0x0100, 0x7ed057de )	/* sprite lookup table */
 	ROM_LOAD( "gyrussk.pr2",  0x0120, 0x0100, 0xde823a81 )	/* character lookup table */
@@ -731,7 +731,7 @@ static void hisave(void)
 
 
 
-struct GameDriver gyruss_driver =
+struct GameDriver driver_gyruss =
 {
 	__FILE__,
 	0,
@@ -744,23 +744,23 @@ struct GameDriver gyruss_driver =
 	&machine_driver,
 	0,
 
-	gyruss_rom,
+	rom_gyruss,
 	0, gyruss_decode,
 	0,
 	0,	/* sound_prom */
 
-	gyruss_input_ports,
+	input_ports_gyruss,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
 
-struct GameDriver gyrussce_driver =
+struct GameDriver driver_gyrussce =
 {
 	__FILE__,
-	&gyruss_driver,
+	&driver_gyruss,
 	"gyrussce",
 	"Gyruss (Centuri)",
 	"1983",
@@ -770,23 +770,23 @@ struct GameDriver gyrussce_driver =
 	&machine_driver,
 	0,
 
-	gyrussce_rom,
+	rom_gyrussce,
 	0, gyruss_decode,
 	0,
 	0,	/* sound_prom */
 
-	gyrussce_input_ports,
+	input_ports_gyrussce,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
 
-struct GameDriver venus_driver =
+struct GameDriver driver_venus =
 {
 	__FILE__,
-	&gyruss_driver,
+	&driver_gyruss,
 	"venus",
 	"Venus",
 	"1983",
@@ -796,14 +796,14 @@ struct GameDriver venus_driver =
 	&machine_driver,
 	0,
 
-	venus_rom,
+	rom_venus,
 	0, gyruss_decode,
 	0,
 	0,	/* sound_prom */
 
-	gyrussce_input_ports,
+	input_ports_gyrussce,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave

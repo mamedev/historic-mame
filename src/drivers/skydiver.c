@@ -193,7 +193,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ -1 }	/* end of table */
 };
 
-INPUT_PORTS_START( skydiver_input_ports )
+INPUT_PORTS_START( skydiver )
 	PORT_START /* fake port, gets mapped to Sky Diver ports */
 	PORT_BIT (0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
 	PORT_BIT (0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
@@ -396,7 +396,7 @@ ROM_END
 
 ***************************************************************************/
 
-struct GameDriver skydiver_driver =
+struct GameDriver driver_skydiver =
 {
 	__FILE__,
 	0,
@@ -409,12 +409,12 @@ struct GameDriver skydiver_driver =
 	&machine_driver,
 	0,
 
-	skydiver_rom,
+	rom_skydiver,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	skydiver_input_ports,
+	input_ports_skydiver,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

@@ -145,7 +145,7 @@ static struct MemoryWriteAddress writemem_cpu3[] =
 };
 
 /* The dipswitches and player inputs are not memory mapped, they are handled by an I/O chip. */
-INPUT_PORTS_START( phozon_input_ports )
+INPUT_PORTS_START( phozon )
 	PORT_START  /* DSW0 */
 	PORT_DIPNAME( 0x07, 0x00, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x07, DEF_STR( 3C_1C ) )
@@ -334,7 +334,7 @@ ROM_START( phozon )
 	ROM_REGION(0x10000)     /* 64k for the SOUND CPU */
 	ROM_LOAD( "3b.rom", 0xe000, 0x2000, 0x5a4b3a79 )
 
-	ROM_REGION(0x0520)      /* color proms */
+	ROM_REGIONX( 0x0520, REGION_PROMS )
 	ROM_LOAD( "red.prm",     0x0000, 0x0100, 0xa2880667 ) /* red palette ROM (4 bits) */
 	ROM_LOAD( "green.prm",   0x0100, 0x0100, 0xd6e08bef ) /* green palette ROM (4 bits) */
 	ROM_LOAD( "blue.prm",    0x0200, 0x0100, 0xb2d69c72 ) /* blue palette ROM (4 bits) */
@@ -346,7 +346,7 @@ ROM_START( phozon )
 	ROM_LOAD( "sound.prm", 0x0000, 0x0100, 0xad43688f )
 ROM_END
 
-struct GameDriver phozon_driver =
+struct GameDriver driver_phozon =
 {
 	__FILE__,
 	0,
@@ -359,14 +359,14 @@ struct GameDriver phozon_driver =
 	&phozon_machine_driver,
 	0,
 
-	phozon_rom,
+	rom_phozon,
 	0, 0,
 	0,
 	0,
 
-	phozon_input_ports,
+	input_ports_phozon,
 
-	PROM_MEMORY_REGION(4),0,0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	0, 0

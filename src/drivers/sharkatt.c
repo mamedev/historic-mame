@@ -110,7 +110,7 @@ static struct IOWritePort writeport[] =
 	{ -1 }  /* end of table */
 };
 
-INPUT_PORTS_START( sharkatt_input_ports )
+INPUT_PORTS_START( sharkatt )
 
 	PORT_START      /* IN0 */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Coinage ) )
@@ -277,7 +277,7 @@ static void hisave(void)
 }
 
 
-struct GameDriver sharkatt_driver =
+struct GameDriver driver_sharkatt =
 {
 	__FILE__,
 	0,
@@ -290,12 +290,12 @@ struct GameDriver sharkatt_driver =
 	&machine_driver,
 	0,
 
-	sharkatt_rom,
+	rom_sharkatt,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	sharkatt_input_ports,
+	input_ports_sharkatt,
 
 	0, 0, 0,    /* colors, palette, colortable */
 	ORIENTATION_SWAP_XY,

@@ -230,7 +230,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 /******************************************************************************/
 
-INPUT_PORTS_START( twocrude_input_ports )
+INPUT_PORTS_START( twocrude )
 	PORT_START	/* Player 1 controls */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
@@ -636,7 +636,7 @@ static void twocrude_decrypt(void)
 
 /******************************************************************************/
 
-struct GameDriver cbuster_driver =
+struct GameDriver driver_cbuster =
 {
 	__FILE__,
 	0,
@@ -649,22 +649,22 @@ struct GameDriver cbuster_driver =
 	&twocrude_machine_driver,
 	0,
 
-	cbuster_rom,
+	rom_cbuster,
 	twocrude_decrypt, 0,
 	0,
 	0,
 
-	twocrude_input_ports,
+	input_ports_twocrude,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	0 , 0
 };
 
-struct GameDriver cbusterw_driver =
+struct GameDriver driver_cbusterw =
 {
 	__FILE__,
-	&cbuster_driver,
+	&driver_cbuster,
 	"cbusterw",
 	"Crude Buster (World FU version)",
 	"1990",
@@ -674,22 +674,22 @@ struct GameDriver cbusterw_driver =
 	&twocrude_machine_driver,
 	0,
 
-	cbusterw_rom,
+	rom_cbusterw,
 	twocrude_decrypt, 0,
 	0,
 	0,
 
-	twocrude_input_ports,
+	input_ports_twocrude,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	0 , 0
 };
 
-struct GameDriver cbusterj_driver =
+struct GameDriver driver_cbusterj =
 {
 	__FILE__,
-	&cbuster_driver,
+	&driver_cbuster,
 	"cbusterj",
 	"Crude Buster (Japan)",
 	"1990",
@@ -699,22 +699,22 @@ struct GameDriver cbusterj_driver =
 	&twocrude_machine_driver,
 	0,
 
-	cbusterj_rom,
+	rom_cbusterj,
 	twocrude_decrypt, 0,
 	0,
 	0,
 
-	twocrude_input_ports,
+	input_ports_twocrude,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	0 , 0
 };
 
-struct GameDriver twocrude_driver =
+struct GameDriver driver_twocrude =
 {
 	__FILE__,
-	&cbuster_driver,
+	&driver_cbuster,
 	"twocrude",
 	"Two Crude (US)",
 	"1990",
@@ -724,12 +724,12 @@ struct GameDriver twocrude_driver =
 	&twocrude_machine_driver,
 	0,
 
-	twocrude_rom,
+	rom_twocrude,
 	twocrude_decrypt, 0,
 	0,
 	0,
 
-	twocrude_input_ports,
+	input_ports_twocrude,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

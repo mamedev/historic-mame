@@ -1275,13 +1275,14 @@ void fillbitmap(struct osd_bitmap *dest,int pen,const struct rectangle *clip)
 		}
 		else
 		{
-			for (y = sy;y <= ey;y++)
-			{
-				unsigned short *p = (unsigned short *)&dest->line[y][sx*2];
-				int x;
-				for (x = sx;x <= ex;x++)
-					*p++ = pen;
-			}
+			unsigned short *sp = (unsigned short *)dest->line[sy];
+			int x;
+
+			for (x = sx;x <= ex;x++)
+				sp[x] = pen;
+			sp+=sx;
+			for (y = sy+1;y <= ey;y++)
+				memcpy(&dest->line[y][sx*2],sp,(ex-sx+1)*2);
 		}
 	}
 	else
@@ -1312,8 +1313,57 @@ void plot_pixel(struct osd_bitmap *bitmap,int x,int y,int pen)
 	else
 		bitmap->line[y][x] = pen;
 
-	/* TODO: we should mark 8 bits dirty at a time */
 	osd_mark_dirty (x,y,x,y,0);
+}
+
+void plot_pixel2(struct osd_bitmap *bitmap1,struct osd_bitmap *bitmap2,int x,int y,int pen)
+{
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
+	{
+		int temp;
+
+		temp = x;
+		x = y;
+		y = temp;
+	}
+	if (Machine->orientation & ORIENTATION_FLIP_X)
+		x = bitmap1->width-1 - x;
+	if (Machine->orientation & ORIENTATION_FLIP_Y)
+		y = bitmap1->height-1 - y;
+
+	if (bitmap1->depth == 16)
+	{
+		((unsigned short *)bitmap1->line[y])[x] = pen;
+		((unsigned short *)bitmap2->line[y])[x] = pen;
+	}
+	else
+	{
+		bitmap1->line[y][x] = pen;
+		bitmap2->line[y][x] = pen;
+	}
+
+	osd_mark_dirty (x,y,x,y,0);
+}
+
+int read_pixel(struct osd_bitmap *bitmap,int x,int y)
+{
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
+	{
+		int temp;
+
+		temp = x;
+		x = y;
+		y = temp;
+	}
+	if (Machine->orientation & ORIENTATION_FLIP_X)
+		x = bitmap->width-1 - x;
+	if (Machine->orientation & ORIENTATION_FLIP_Y)
+		y = bitmap->height-1 - y;
+
+	if (bitmap->depth == 16)
+		return ((unsigned short *)bitmap->line[y])[x];
+	else
+		return bitmap->line[y][x];
 }
 
 

@@ -205,7 +205,7 @@ static struct MemoryWriteAddress mcu_writemem[] =
 
 
 
-INPUT_PORTS_START( matmania_input_ports )
+INPUT_PORTS_START( matmania )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
@@ -539,7 +539,7 @@ ROM_START( matmania )
 	ROM_LOAD( "kp-00",        0x5e000, 0x4000, 0x9c84a969 )
 	ROM_LOAD( "kq-00",        0x62000, 0x4000, 0xfa2f0003 )
 
-	ROM_REGION(0x0080)	/* color proms */
+	ROM_REGIONX( 0x0080, REGION_PROMS )
 	ROM_LOAD( "matmania.1",   0x0000, 0x0020, 0x1b58f01f ) /* char palette red and green components */
 	ROM_LOAD( "matmania.5",   0x0020, 0x0020, 0x2029f85f ) /* tile palette red and green components */
 	ROM_LOAD( "matmania.2",   0x0040, 0x0020, 0xb6ac1fd5 ) /* char palette blue component */
@@ -586,7 +586,7 @@ ROM_START( excthour )
 	ROM_LOAD( "kp-00",        0x5e000, 0x4000, 0x9c84a969 )
 	ROM_LOAD( "kq-00",        0x62000, 0x4000, 0xfa2f0003 )
 
-	ROM_REGION(0x0080)	/* color proms */
+	ROM_REGIONX( 0x0080, REGION_PROMS )
 	ROM_LOAD( "matmania.1",   0x0000, 0x0020, 0x1b58f01f ) /* char palette red and green components */
 	ROM_LOAD( "matmania.5",   0x0020, 0x0020, 0x2029f85f ) /* tile palette red and green components */
 	ROM_LOAD( "matmania.2",   0x0040, 0x0020, 0xb6ac1fd5 ) /* char palette blue component */
@@ -635,7 +635,7 @@ ROM_START( maniach )
 	ROM_LOAD( "mc-mv0.bin",   0x6a000, 0x4000, 0x36fc3e2d )
 	ROM_LOAD( "mc-mw0.bin",   0x6e000, 0x4000, 0x135dce4c )
 
-	ROM_REGION(0x0080)	/* color proms */
+	ROM_REGIONX( 0x0080, REGION_PROMS )
 	ROM_LOAD( "prom.2",       0x0000, 0x0020, 0x32db2cf4 ) /* char palette red and green components */
 	ROM_LOAD( "prom.16",      0x0020, 0x0020, 0x18836d26 ) /* tile palette red and green components */
 	ROM_LOAD( "prom.3",       0x0040, 0x0020, 0xc7925311 ) /* char palette blue component */
@@ -688,7 +688,7 @@ ROM_START( maniach2 )
 	ROM_LOAD( "mc-mv0.bin",   0x6a000, 0x4000, 0x36fc3e2d )
 	ROM_LOAD( "mc-mw0.bin",   0x6e000, 0x4000, 0x135dce4c )
 
-	ROM_REGION(0x0080)	/* color proms */
+	ROM_REGIONX( 0x0080, REGION_PROMS )
 	ROM_LOAD( "prom.2",       0x0000, 0x0020, 0x32db2cf4 ) /* char palette red and green components */
 	ROM_LOAD( "prom.16",      0x0020, 0x0020, 0x18836d26 ) /* tile palette red and green components */
 	ROM_LOAD( "prom.3",       0x0040, 0x0020, 0xc7925311 ) /* char palette blue component */
@@ -809,7 +809,7 @@ static void maniach_hisave(void)
 	}
 }
 
-struct GameDriver matmania_driver =
+struct GameDriver driver_matmania =
 {
 	__FILE__,
 	0,
@@ -822,24 +822,24 @@ struct GameDriver matmania_driver =
 	&matmania_machine_driver,
 	0,
 
-	matmania_rom,
+	rom_matmania,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	matmania_input_ports,
+	input_ports_matmania,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	matmania_hiload, matmania_hisave
 };
 
 
-struct GameDriver excthour_driver =
+struct GameDriver driver_excthour =
 {
 	__FILE__,
-	&matmania_driver,
+	&driver_matmania,
 	"excthour",
 	"Exciting Hour",
 	"1985",
@@ -849,20 +849,20 @@ struct GameDriver excthour_driver =
 	&matmania_machine_driver,
 	0,
 
-	excthour_rom,
+	rom_excthour,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	matmania_input_ports,
+	input_ports_matmania,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	excthour_hiload, matmania_hisave
 };
 
-struct GameDriver maniach_driver =
+struct GameDriver driver_maniach =
 {
 	__FILE__,
 	0,
@@ -875,23 +875,23 @@ struct GameDriver maniach_driver =
 	&maniach_machine_driver,
 	0,
 
-	maniach_rom,
+	rom_maniach,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	matmania_input_ports,
+	input_ports_matmania,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	maniach_hiload,maniach_hisave
 };
 
-struct GameDriver maniach2_driver =
+struct GameDriver driver_maniach2 =
 {
 	__FILE__,
-	&maniach_driver,
+	&driver_maniach,
 	"maniach2",
 	"Mania Challenge (set 2)",	/* earlier version? */
 	"1986",
@@ -901,14 +901,14 @@ struct GameDriver maniach2_driver =
 	&maniach_machine_driver,
 	0,
 
-	maniach2_rom,
+	rom_maniach2,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	matmania_input_ports,
+	input_ports_matmania,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	maniach_hiload,maniach_hisave

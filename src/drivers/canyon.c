@@ -102,7 +102,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ -1 }	/* end of table */
 };
 
-INPUT_PORTS_START( canyon_input_ports )
+INPUT_PORTS_START( canyon )
 	PORT_START      /* DSW - fake port, gets mapped to Canyon Bomber ports */
 	PORT_DIPNAME( 0x03, 0x00, "Language" )
 	PORT_DIPSETTING(    0x00, "English" )
@@ -332,7 +332,7 @@ static void hisave(void)
 
 ***************************************************************************/
 
-struct GameDriver canyon_driver =
+struct GameDriver driver_canyon =
 {
 	__FILE__,
 	0,
@@ -345,12 +345,12 @@ struct GameDriver canyon_driver =
     &machine_driver,
 	0,
 
-    canyon_rom,
+    rom_canyon,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-    canyon_input_ports,
+    input_ports_canyon,
 
     0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -358,10 +358,10 @@ struct GameDriver canyon_driver =
 	hiload, hisave
 };
 
-struct GameDriver canbprot_driver =
+struct GameDriver driver_canbprot =
 {
 	__FILE__,
-	&canyon_driver,
+	&driver_canyon,
     "canbprot",
     "Canyon Bomber (prototype)",
 	"1977",
@@ -371,12 +371,12 @@ struct GameDriver canbprot_driver =
     &machine_driver,
 	0,
 
-    canbprot_rom,
+    rom_canbprot,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-    canyon_input_ports,
+    input_ports_canyon,
 
     0, 0, 0,
 	ORIENTATION_DEFAULT,

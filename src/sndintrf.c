@@ -705,6 +705,9 @@ if (errorlog) fprintf(errorlog,"Sound #%d wrong ID %d: check enum SOUND_... in s
 	}
 
 
+	/* samples will be read later if needed */
+	Machine->samples = 0;
+
 	if (mixer_sh_start() != 0)
 		return 1;
 
@@ -754,6 +757,10 @@ void sound_stop(void)
 		timer_remove(sound_update_timer);
 		sound_update_timer = 0;
 	}
+
+	/* free audio samples */
+	freesamples(Machine->samples);
+	Machine->samples = 0;
 }
 
 

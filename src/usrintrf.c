@@ -12,6 +12,10 @@
 #include "datafile.h"
 #include <stdarg.h>
 
+#ifdef MESS
+  #include "mess/mess.h"
+  image_details image;
+#endif
 
 extern int mame_debug;
 
@@ -2391,7 +2395,7 @@ static int displaygameinfo(int selected)
 		sprintf(&buf[strlen(buf)],"%d x %d (%s) %d Hz\n",
 				Machine->drv->visible_area.max_x - Machine->drv->visible_area.min_x + 1,
 				Machine->drv->visible_area.max_y - Machine->drv->visible_area.min_y + 1,
-				(Machine->gamedrv->orientation & ORIENTATION_SWAP_XY) ? "V" : "H",
+				(Machine->gamedrv->flags & ORIENTATION_SWAP_XY) ? "V" : "H",
 				Machine->drv->frames_per_second);
 #if 0
 		sprintf(&buf[strlen(buf)],"pixel aspect ratio %d:%d\n",
@@ -2451,6 +2455,84 @@ static int displaygameinfo(int selected)
 
 	return sel + 1;
 }
+
+
+#ifdef MESS
+static int displayimageinfo(int selected)
+{
+
+	char buf[2048];
+	int sel;
+	int num_of_peripherals = 0;
+
+	sel = selected - 1;
+
+	{
+	   int i;
+		for (i = 0; i < MAX_ROM; i ++)
+			if (strlen(rom_name[i])>0) num_of_peripherals++;
+		for (i = 0; i < MAX_FLOPPY; i ++)
+			if (strlen(floppy_name[i])>0) num_of_peripherals++;
+		for (i = 0; i < MAX_HARD; i ++)
+			if (strlen(hard_name[i])>0) num_of_peripherals++;
+		for (i = 0; i < MAX_CASSETTE; i ++)
+			if (strlen(cassette_name[i])>0) num_of_peripherals++;
+	}
+
+	//if (errorlog) fprintf(errorlog,"Num of per = %d", num_of_peripherals);
+	/* Only display this screen if there is one image loaded, exit if more */
+	/* Also, if the image is not loaded 'properly', dont display this item */
+	if (num_of_peripherals>1 || image.length==0) return sel;
+
+
+	sprintf(buf,"%s\n\n",Machine->gamedrv->description);
+
+	sprintf(&buf[strlen(buf)],"Image Name:\n%s \n\nImage CRC:\n%-8x\n\nImage Length:\n%d bytes\n",	image.name,
+																			image.crc,
+																			image.length);
+
+
+	if (sel == -1)
+	{
+		/* startup info, print MAME version and ask for any key */
+
+
+		strcat(buf,"\n\tPress any key to Begin");
+		drawbox(0,0,Machine->uiwidth,Machine->uiheight);
+		displaymessagewindow(buf);
+
+		sel = 0;
+		if (keyboard_read_async() != KEYCODE_NONE ||
+				joystick_read_async() != JOYCODE_NONE)
+			sel = -1;
+	}
+	else
+	{
+		/* menu system, use the normal menu keys */
+		strcat(buf,"\n\t\x1a Return to Main Menu \x1b");
+
+		displaymessagewindow(buf);
+
+		if (input_ui_pressed(IPT_UI_SELECT))
+			sel = -1;
+
+		if (input_ui_pressed(IPT_UI_CANCEL))
+			sel = -1;
+
+		if (input_ui_pressed(IPT_UI_CONFIGURE))
+			sel = -2;
+	}
+
+	if (sel == -1 || sel == -2)
+	{
+		/* tell updatescreen() to clean after us */
+		need_to_clear_bitmap = 1;
+	}
+
+	return sel + 1;
+}
+#endif
+
 
 int showgamewarnings(void)
 {
@@ -2559,6 +2641,14 @@ int showgamewarnings(void)
 		osd_update_video_and_audio();
 		osd_poll_joysticks();
 	}
+
+	#ifdef MESS
+	while (displayimageinfo(0) == 1)
+	{
+		osd_update_video_and_audio();
+		osd_poll_joysticks();
+	}
+	#endif
 
 	osd_clearbitmap(Machine->scrbitmap);
 	/* make sure that the screen is really cleared, in case autoframeskip kicked in */
@@ -2931,9 +3021,16 @@ int	memcard_menu(int selection)
 #endif
 
 
+#ifndef MESS
 enum { UI_SWITCH = 0,UI_DEFKEY,UI_DEFJOY,UI_KEY,UI_JOY,UI_ANALOG,UI_CALIBRATE,
-		UI_STATS,UI_GAMEINFO,UI_HISTORY,
+		UI_STATS,UI_GAMEINFO, UI_HISTORY,
 		UI_CHEAT,UI_RESET,UI_MEMCARD,UI_EXIT };
+#else
+enum { UI_SWITCH = 0,UI_DEFKEY,UI_DEFJOY,UI_KEY,UI_JOY,UI_ANALOG,UI_CALIBRATE,
+		UI_STATS,UI_GAMEINFO, UI_IMAGEINFO, UI_HISTORY,
+		UI_CHEAT,UI_RESET,UI_MEMCARD,UI_EXIT };
+#endif
+
 
 #define MAX_SETUPMENU_ITEMS 20
 static const char *menu_item[MAX_SETUPMENU_ITEMS];
@@ -2990,6 +3087,7 @@ static void setup_menu_init(void)
 	menu_item[menu_total] = "Game History"; menu_action[menu_total++] = UI_HISTORY;
 	#else
 	menu_item[menu_total] = "Machine Information"; menu_action[menu_total++] = UI_GAMEINFO;
+	menu_item[menu_total] = "Image Information"; menu_action[menu_total++] = UI_IMAGEINFO;
 	menu_item[menu_total] = "Machine History"; menu_action[menu_total++] = UI_HISTORY;
 	#endif
 
@@ -3133,6 +3231,20 @@ static int setup_menu(int selected)
 				else
 					sel = (sel & 0xff) | (res << 8);
 				break;
+
+			#ifdef MESS
+			case UI_IMAGEINFO:
+				res = displayimageinfo(sel >> 8);
+				if (res == -1)
+				{
+					menu_lastselected = sel;
+					sel = -1;
+				}
+				else
+					sel = (sel & 0xff) | (res << 8);
+				break;
+			#endif
+
 			case UI_HISTORY:
 				res = displayhistory(sel >> 8);
 				if (res == -1)
@@ -3194,6 +3306,11 @@ sel = sel & 0xff;
 			case UI_CALIBRATE:
 			case UI_STATS:
 			case UI_GAMEINFO:
+
+			#ifdef MESS
+			case UI_IMAGEINFO:
+			#endif
+
 			case UI_HISTORY:
 			case UI_CHEAT:
 			case UI_MEMCARD:
@@ -3540,7 +3657,7 @@ static void displaymessage(const char *text)
 static char messagetext[80];
 static int messagecounter;
 
-void usrintf_showmessage(const char *text,...)
+void CLIB_DECL usrintf_showmessage(const char *text,...)
 {
 	va_list arg;
 	va_start(arg,text);

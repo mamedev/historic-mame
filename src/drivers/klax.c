@@ -152,13 +152,13 @@ static void adpcm_w(int offset, int data)
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x000000, 0x03ffff, MRA_ROM },
-	{ 0x0e0000, 0x0e0fff, atarigen_eeprom_r, &atarigen_eeprom, &atarigen_eeprom_size },
+	{ 0x0e0000, 0x0e0fff, atarigen_eeprom_r },
 	{ 0x260000, 0x260001, input_port_0_r },
 	{ 0x260002, 0x260003, input_port_1_r },
 	{ 0x270000, 0x270001, adpcm_r },
-	{ 0x3e0000, 0x3e07ff, MRA_BANK1, &paletteram },
-	{ 0x3f0000, 0x3f1fff, MRA_BANK2, &atarigen_playfieldram, &atarigen_playfieldram_size },
-	{ 0x3f2000, 0x3f27ff, MRA_BANK3, &atarigen_spriteram, &atarigen_spriteram_size },
+	{ 0x3e0000, 0x3e07ff, MRA_BANK1 },
+	{ 0x3f0000, 0x3f1fff, MRA_BANK2 },
+	{ 0x3f2000, 0x3f27ff, MRA_BANK3 },
 	{ 0x3f2800, 0x3f3fff, MRA_BANK4 },
 	{ -1 }  /* end of table */
 };
@@ -167,15 +167,15 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0x0e0000, 0x0e0fff, atarigen_eeprom_w },
+	{ 0x0e0000, 0x0e0fff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
 	{ 0x1f0000, 0x1fffff, atarigen_eeprom_enable_w },
 	{ 0x260000, 0x260001, klax_latch_w },
 	{ 0x270000, 0x270001, adpcm_w },
 	{ 0x2e0000, 0x2e0001, watchdog_reset_w },
 	{ 0x360000, 0x360001, interrupt_ack_w },
-	{ 0x3e0000, 0x3e07ff, atarigen_expanded_666_paletteram_w },
-	{ 0x3f0000, 0x3f1fff, klax_playfieldram_w },
-	{ 0x3f2000, 0x3f27ff, MWA_BANK3 },
+	{ 0x3e0000, 0x3e07ff, atarigen_expanded_666_paletteram_w, &paletteram },
+	{ 0x3f0000, 0x3f1fff, klax_playfieldram_w, &atarigen_playfieldram, &atarigen_playfieldram_size },
+	{ 0x3f2000, 0x3f27ff, MWA_BANK3, &atarigen_spriteram, &atarigen_spriteram_size },
 	{ 0x3f2800, 0x3f3fff, MWA_BANK4 },
 	{ -1 }  /* end of table */
 };
@@ -188,7 +188,7 @@ static struct MemoryWriteAddress writemem[] =
  *
  *************************************/
 
-INPUT_PORTS_START( klax_ports )
+INPUT_PORTS_START( klax )
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -425,7 +425,7 @@ static void klax_init(void)
  *
  *************************************/
 
-struct GameDriver klax_driver =
+struct GameDriver driver_klax =
 {
 	__FILE__,
 	0,
@@ -438,13 +438,13 @@ struct GameDriver klax_driver =
 	&machine_driver,
 	klax_init,
 
-	klax_rom,
+	rom_klax,
 	0,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	klax_ports,
+	input_ports_klax,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
@@ -452,10 +452,10 @@ struct GameDriver klax_driver =
 };
 
 
-struct GameDriver klax2_driver =
+struct GameDriver driver_klax2 =
 {
 	__FILE__,
-	&klax_driver,
+	&driver_klax,
 	"klax2",
 	"Klax (set 2)",
 	"1989",
@@ -465,13 +465,13 @@ struct GameDriver klax2_driver =
 	&machine_driver,
 	klax_init,
 
-	klax2_rom,
+	rom_klax2,
 	0,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	klax_ports,
+	input_ports_klax,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
@@ -479,10 +479,10 @@ struct GameDriver klax2_driver =
 };
 
 
-struct GameDriver klax3_driver =
+struct GameDriver driver_klax3 =
 {
 	__FILE__,
-	&klax_driver,
+	&driver_klax,
 	"klax3",
 	"Klax (set 3)",
 	"1989",
@@ -492,13 +492,13 @@ struct GameDriver klax3_driver =
 	&machine_driver,
 	klax_init,
 
-	klax3_rom,
+	rom_klax3,
 	0,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	klax_ports,
+	input_ports_klax,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
@@ -506,10 +506,10 @@ struct GameDriver klax3_driver =
 };
 
 
-struct GameDriver klaxj_driver =
+struct GameDriver driver_klaxj =
 {
 	__FILE__,
-	&klax_driver,
+	&driver_klax,
 	"klaxj",
 	"Klax (Japan)",
 	"1989",
@@ -519,13 +519,13 @@ struct GameDriver klaxj_driver =
 	&machine_driver,
 	klax_init,
 
-	klaxj_rom,
+	rom_klaxj,
 	0,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	klax_ports,
+	input_ports_klax,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,

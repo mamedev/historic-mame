@@ -216,7 +216,7 @@ static struct IOWritePort yamato_sound_writeport[] =
 
 
 
-INPUT_PORTS_START( yamato_input_ports )
+INPUT_PORTS_START( yamato )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -415,7 +415,7 @@ ROM_START( yamato )
 	ROM_LOAD( "7.11a",        0x5800, 0x0800, 0x4a179790 )
 	ROM_CONTINUE(             0x5000, 0x0800 )
 
-	ROM_REGION(0x00a0)        /* color proms */
+	ROM_REGIONX( 0x00a0, REGION_PROMS )
 	ROM_LOAD( "1.bpr",        0x0000, 0x0020, 0xef2053ab )
 	ROM_LOAD( "2.bpr",        0x0020, 0x0020, 0x2281d39f )
 	ROM_LOAD( "3.bpr",        0x0040, 0x0020, 0x9e6341e3 )
@@ -450,7 +450,7 @@ ROM_START( yamato2 )
 	ROM_LOAD( "7.11a",        0x5800, 0x0800, 0x4a179790 )
 	ROM_CONTINUE(             0x5000, 0x0800 )
 
-	ROM_REGION(0x00a0)        /* color proms */
+	ROM_REGIONX( 0x00a0, REGION_PROMS )
 	ROM_LOAD( "1.bpr",        0x0000, 0x0020, 0xef2053ab )
 	ROM_LOAD( "2.bpr",        0x0020, 0x0020, 0x2281d39f )
 	ROM_LOAD( "3.bpr",        0x0040, 0x0020, 0x9e6341e3 )
@@ -495,7 +495,7 @@ static void yamato_hisave(void){
 			osd_fclose(f);
 }
 
-struct GameDriver yamato_driver =
+struct GameDriver driver_yamato =
 {
 	__FILE__,
 	0,
@@ -508,22 +508,22 @@ struct GameDriver yamato_driver =
 	&yamato_machine_driver,
 	0,
 
-	yamato_rom,
+	rom_yamato,
 	0, yamato_decode,
 	0,
 	0,
 
-	yamato_input_ports,
+	input_ports_yamato,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
-        yamato_hiload, yamato_hisave
+	yamato_hiload, yamato_hisave
 };
 
-struct GameDriver yamato2_driver =
+struct GameDriver driver_yamato2 =
 {
 	__FILE__,
-	&yamato_driver,
+	&driver_yamato,
 	"yamato2",
 	"Yamato (set 2)",
 	"1983",
@@ -533,14 +533,14 @@ struct GameDriver yamato2_driver =
 	&yamato_machine_driver,
 	0,
 
-	yamato2_rom,
+	rom_yamato2,
 	0, yamato_decode,
 	0,
 	0,
 
-	yamato_input_ports,
+	input_ports_yamato,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
-        yamato_hiload, yamato_hisave
+	yamato_hiload, yamato_hisave
 };

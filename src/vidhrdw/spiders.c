@@ -123,26 +123,10 @@ void spiders_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 			for(i=0;i<8;i++)
 			{
-				int x2, y2;
-
 				x=((loop%0x20)<<3)+i;
 				col=((data2&0x01)<<2)+((data1&0x01)<<1)+(data0&0x01);
 
-				/* Do x/y swap, let bitmap copy to the flips */
-
-				x2 = x; y2 = y;
-				if (Machine->orientation & ORIENTATION_SWAP_XY)
-				{
-					x2 = y;
-					y2 = x;
-				}
-				if (Machine->orientation & ORIENTATION_FLIP_X)
-					x2 = 255 - x2;
-				if (Machine->orientation & ORIENTATION_FLIP_Y)
-					y2 = 255 - y2;
-
-				bitmap->line[y2][x2] = tmpbitmap->line[y2][x2] = Machine->pens[col];
-				osd_mark_dirty (x2, y2, x2, y2, 0);
+				plot_pixel2(bitmap, tmpbitmap, x, y, Machine->pens[col]);
 
 				data0 >>= 1;
 				data1 >>= 1;

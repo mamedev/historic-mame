@@ -200,7 +200,7 @@ static struct MemoryWriteAddress kageki_writemem2[] =
 };
 
 
-INPUT_PORTS_START( kageki_input_ports )
+INPUT_PORTS_START( kageki )
 	PORT_START		/* DSW A */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
@@ -437,7 +437,7 @@ ROM_END
 
 
 
-struct GameDriver kageki_driver =
+struct GameDriver driver_kageki =
 {
 	__FILE__,
 	0,
@@ -450,12 +450,12 @@ struct GameDriver kageki_driver =
 	&kageki_machine_driver,
 	0,
 
-	kageki_rom,
+	rom_kageki,
 	0, 0,
 	0,
 	0,
 
-	kageki_input_ports,
+	input_ports_kageki,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -463,10 +463,10 @@ struct GameDriver kageki_driver =
 	0, 0
 };
 
-struct GameDriver kagekij_driver =
+struct GameDriver driver_kagekij =
 {
 	__FILE__,
-	&kageki_driver,
+	&driver_kageki,
 	"kagekij",
 	"Kageki (Japan)",
 	"1988",
@@ -476,12 +476,12 @@ struct GameDriver kagekij_driver =
 	&kageki_machine_driver,
 	0,
 
-	kagekij_rom,
+	rom_kagekij,
 	0, 0,
 	0,
 	0,
 
-	kageki_input_ports,
+	input_ports_kageki,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_90,

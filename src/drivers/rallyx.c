@@ -135,7 +135,7 @@ static struct IOWritePort writeport[] =
 
 
 
-INPUT_PORTS_START( rallyx_input_ports )
+INPUT_PORTS_START( rallyx )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -182,7 +182,7 @@ INPUT_PORTS_START( rallyx_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( nrallyx_input_ports )
+INPUT_PORTS_START( nrallyx )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN3 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -285,10 +285,18 @@ static struct namco_interface namco_interface =
 	3			/* memory region */
 };
 
+static const char *rallyx_sample_names[] =
+{
+	"*rallyx",
+	"bang.wav",
+	0	/* end of array */
+};
+
 static struct Samplesinterface samples_interface =
 {
 	1,	/* 1 channel */
-	80	/* volume */
+	80,	/* volume */
+	rallyx_sample_names
 };
 
 
@@ -354,7 +362,7 @@ ROM_START( rallyx )
 	ROM_LOAD( "8e",           0x0000, 0x1000, 0x277c1de5 )
 	ROM_LOAD( "im5623.8m",    0x1000, 0x0100, 0x3c16f62c )	/* dots */
 
-	ROM_REGION(0x0120)	/* color proms */
+	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "m3-7603.11n",  0x0000, 0x0020, 0xc7865434 )
 	ROM_LOAD( "im5623.8p",    0x0020, 0x0100, 0x834d4fda )
 
@@ -373,7 +381,7 @@ ROM_START( rallyxm )
 	ROM_LOAD( "8e",           0x0000, 0x1000, 0x277c1de5 )
 	ROM_LOAD( "im5623.8m",    0x1000, 0x0100, 0x3c16f62c )	/* dots */
 
-	ROM_REGION(0x0120)	/* color proms */
+	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "m3-7603.11n",  0x0000, 0x0020, 0xc7865434 )
 	ROM_LOAD( "im5623.8p",    0x0020, 0x0100, 0x834d4fda )
 
@@ -392,22 +400,13 @@ ROM_START( nrallyx )
 	ROM_LOAD( "nrallyx.8e",   0x0000, 0x1000, 0xca7a174a )
 	ROM_LOAD( "im5623.8m",    0x1000, 0x0100, BADCRC( 0x3c16f62c ) )	/* dots */
 
-	ROM_REGION(0x0120)	/* color proms */
+	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "nrallyx.pr1",  0x0000, 0x0020, 0xa0a49017 )
 	ROM_LOAD( "nrallyx.pr2",  0x0020, 0x0100, 0xb2b7ca15 )
 
 	ROM_REGION(0x0100)	/* sound prom */
 	ROM_LOAD( "nrallyx.spr",  0x0000, 0x0100, 0xb75c4e87 )
 ROM_END
-
-
-
-static const char *rallyx_sample_names[] =
-{
-	"*rallyx",
-	"bang.wav",
-	0	/* end of array */
-};
 
 
 
@@ -449,7 +448,7 @@ static void hisave(void)    /* V.V */
 
 
 
-struct GameDriver rallyx_driver =
+struct GameDriver driver_rallyx =
 {
 	__FILE__,
 	0,
@@ -462,23 +461,23 @@ struct GameDriver rallyx_driver =
 	&machine_driver,
 	rallyx_init,
 
-	rallyx_rom,
+	rom_rallyx,
 	0, 0,
-	rallyx_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	rallyx_input_ports,
+	input_ports_rallyx,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };
 
-struct GameDriver rallyxm_driver =
+struct GameDriver driver_rallyxm =
 {
 	__FILE__,
-	&rallyx_driver,
+	&driver_rallyx,
 	"rallyxm",
 	"Rally X (Midway)",
 	"1980",
@@ -488,20 +487,20 @@ struct GameDriver rallyxm_driver =
 	&machine_driver,
 	rallyx_init,
 
-	rallyxm_rom,
+	rom_rallyxm,
 	0, 0,
-	rallyx_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	rallyx_input_ports,
+	input_ports_rallyx,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };
 
-struct GameDriver nrallyx_driver =
+struct GameDriver driver_nrallyx =
 {
 	__FILE__,
 	0,
@@ -514,14 +513,14 @@ struct GameDriver nrallyx_driver =
 	&machine_driver,
 	rallyx_init,
 
-	nrallyx_rom,
+	rom_nrallyx,
 	0, 0,
-	rallyx_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	nrallyx_input_ports,
+	input_ports_nrallyx,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave

@@ -488,7 +488,7 @@ static struct MemoryWriteAddress sound_writemem[] =
  *
  *************************************/
 
-INPUT_PORTS_START( gauntlet_ports )
+INPUT_PORTS_START( gauntlet )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER1 )
@@ -556,7 +556,7 @@ INPUT_PORTS_START( gauntlet_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( vindctr2_ports )
+INPUT_PORTS_START( vindctr2 )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON3 | IPF_PLAYER1 )
@@ -1120,7 +1120,7 @@ static void vindctr2_init(void)
  *
  *************************************/
 
-struct GameDriver gauntlet_driver =
+struct GameDriver driver_gauntlet =
 {
 	__FILE__,
 	0,
@@ -1133,13 +1133,13 @@ struct GameDriver gauntlet_driver =
 	&machine_driver,
 	gauntlet_init,
 
-	gauntlet_rom,
+	rom_gauntlet,
 	rom_decode,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	gauntlet_ports,
+	input_ports_gauntlet,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
@@ -1147,10 +1147,10 @@ struct GameDriver gauntlet_driver =
 };
 
 
-struct GameDriver gauntir1_driver =
+struct GameDriver driver_gauntir1 =
 {
 	__FILE__,
-	&gauntlet_driver,
+	&driver_gauntlet,
 	"gauntir1",
 	"Gauntlet (Intermediate Release 1)",
 	"1985",
@@ -1160,13 +1160,13 @@ struct GameDriver gauntir1_driver =
 	&machine_driver,
 	gauntlet_init,
 
-	gauntir1_rom,
+	rom_gauntir1,
 	rom_decode,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	gauntlet_ports,
+	input_ports_gauntlet,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
@@ -1174,10 +1174,10 @@ struct GameDriver gauntir1_driver =
 };
 
 
-struct GameDriver gauntir2_driver =
+struct GameDriver driver_gauntir2 =
 {
 	__FILE__,
-	&gauntlet_driver,
+	&driver_gauntlet,
 	"gauntir2",
 	"Gauntlet (Intermediate Release 2)",
 	"1985",
@@ -1187,13 +1187,13 @@ struct GameDriver gauntir2_driver =
 	&machine_driver,
 	gauntlet_init,
 
-	gauntir2_rom,
+	rom_gauntir2,
 	rom_decode,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	gauntlet_ports,
+	input_ports_gauntlet,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
@@ -1201,10 +1201,10 @@ struct GameDriver gauntir2_driver =
 };
 
 
-struct GameDriver gaunt2p_driver =
+struct GameDriver driver_gaunt2p =
 {
 	__FILE__,
-	&gauntlet_driver,
+	&driver_gauntlet,
 	"gaunt2p",
 	"Gauntlet (2 Players)",
 	"1985",
@@ -1214,13 +1214,13 @@ struct GameDriver gaunt2p_driver =
 	&machine_driver,
 	gaunt2p_init,
 
-	gaunt2p_rom,
+	rom_gaunt2p,
 	rom_decode,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	gauntlet_ports,
+	input_ports_gauntlet,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
@@ -1228,7 +1228,7 @@ struct GameDriver gaunt2p_driver =
 };
 
 
-struct GameDriver gaunt2_driver =
+struct GameDriver driver_gaunt2 =
 {
 	__FILE__,
 	0,
@@ -1241,13 +1241,13 @@ struct GameDriver gaunt2_driver =
 	&machine_driver,
 	gauntlet2_init,
 
-	gaunt2_rom,
+	rom_gaunt2,
 	rom_decode,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	gauntlet_ports,
+	input_ports_gauntlet,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
@@ -1255,7 +1255,7 @@ struct GameDriver gaunt2_driver =
 };
 
 
-struct GameDriver vindctr2_driver =
+struct GameDriver driver_vindctr2 =
 {
 	__FILE__,
 	0,
@@ -1264,19 +1264,19 @@ struct GameDriver vindctr2_driver =
 	"1988",
 	"Atari Games",
 	"Aaron Giles (MAME driver)\nMike Balfour (graphics info)\nFrank Palazzolo (Slapstic decoding)",
-	GAME_IMPERFECT_COLORS,
+	0,
 	&machine_driver,
 	vindctr2_init,
 
-	vindctr2_rom,
+	rom_vindctr2,
 	rom_decode,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	vindctr2_ports,
+	input_ports_vindctr2,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_IMPERFECT_COLORS,
 	atarigen_hiload, atarigen_hisave
 };

@@ -87,7 +87,7 @@ static struct MemoryWriteAddress writemem[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( finalizr )
 	PORT_START	/* IN2 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -299,7 +299,7 @@ ROM_START( finalizr )
 	ROM_LOAD( "523h09.7f",    0x18000, 0x4000, 0x8896dc85 )
 	/* 1c000-1ffff empty */
 
-	ROM_REGION(0x0240)	/* color/lookup proms */
+	ROM_REGIONX( 0x0240, REGION_PROMS )
 	ROM_LOAD( "523h10.2f",    0x0000, 0x0020, 0xec15dd15 ) /* palette */
 	ROM_LOAD( "523h11.3f",    0x0020, 0x0020, 0x54be2e83 ) /* palette */
 	ROM_LOAD( "523h12.10f",   0x0040, 0x0100, 0x53166a2a ) /* sprites */
@@ -322,7 +322,7 @@ static void finalizr_decode(void)
 
 
 
-struct GameDriver finalizr_driver =
+struct GameDriver driver_finalizr =
 {
 	__FILE__,
 	0,
@@ -331,19 +331,19 @@ struct GameDriver finalizr_driver =
 	"1985",
 	"Konami",
 	"Nicola Salmoria",
-	GAME_IMPERFECT_SOUND,
+	0,
 	&machine_driver,
 	0,
 
-	finalizr_rom,
+	rom_finalizr,
 	0, finalizr_decode,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_finalizr,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
+	0, 0, 0,
+	ORIENTATION_ROTATE_90 | GAME_IMPERFECT_SOUND,
 
 	0, 0
 };

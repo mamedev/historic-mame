@@ -84,7 +84,7 @@ static struct MemoryWriteAddress writemem[] =
 };
 
 
-INPUT_PORTS_START( copsnrob_input_ports )
+INPUT_PORTS_START( copsnrob )
         PORT_START      /* IN0 */
         PORT_BIT( 0xFF, IP_ACTIVE_LOW, IPT_VBLANK )
 
@@ -272,7 +272,7 @@ ROM_START( copsnrob )
 ROM_END
 
 
-struct GameDriver copsnrob_driver =
+struct GameDriver driver_copsnrob =
 {
 	__FILE__,
 	0,
@@ -285,12 +285,12 @@ struct GameDriver copsnrob_driver =
 	&machine_driver,
 	0,
 
-	copsnrob_rom,
+	rom_copsnrob,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	copsnrob_input_ports,
+	input_ports_copsnrob,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

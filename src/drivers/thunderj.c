@@ -148,12 +148,12 @@ static struct MemoryReadAddress main_readmem[] =
 	{ 0x260012, 0x260013, special_port2_r },
 	{ 0x260030, 0x260031, atarigen_sound_r },
 	{ 0x3e0000, 0x3e0fff, paletteram_word_r },
-	{ 0x3effc0, 0x3effff, thunderj_video_control_r, &atarigen_video_control_data },
+	{ 0x3effc0, 0x3effff, thunderj_video_control_r },
 	{ 0x3f0000, 0x3f5fff, MRA_BANK3 },
 	{ 0x3f6000, 0x3f7fff, MRA_BANK4 },
 	{ 0x3f8000, 0x3f8fff, MRA_BANK5 },
 	{ 0x3f9000, 0x3fffff, MRA_BANK6 },
-	{ 0x800000, 0x800001, MRA_BANK7, &rts_address },
+	{ 0x800000, 0x800001, MRA_BANK7 },
 	{ -1 }  /* end of table */
 };
 
@@ -169,13 +169,14 @@ static struct MemoryWriteAddress main_writemem[] =
 	{ 0x360020, 0x360021, atarigen_sound_reset_w },
 	{ 0x360030, 0x360031, atarigen_sound_w },
 	{ 0x3e0000, 0x3e0fff, atarigen_666_paletteram_w, &paletteram },
-	{ 0x3effc0, 0x3effff, atarigen_video_control_w },
+	{ 0x3effc0, 0x3effff, atarigen_video_control_w, &atarigen_video_control_data },
 	{ 0x3f0000, 0x3f1fff, thunderj_playfield2ram_w, &atarigen_playfield2ram, &atarigen_playfield2ram_size },
 	{ 0x3f2000, 0x3f3fff, thunderj_playfieldram_w, &atarigen_playfieldram, &atarigen_playfieldram_size },
 	{ 0x3f4000, 0x3f5fff, thunderj_colorram_w, &atarigen_playfieldram_color },
 	{ 0x3f6000, 0x3f7fff, MWA_BANK4, &atarigen_spriteram, &atarigen_spriteram_size },
 	{ 0x3f8000, 0x3f8fff, MWA_BANK5, &atarigen_alpharam, &atarigen_alpharam_size },
 	{ 0x3f9000, 0x3fffff, MWA_BANK6 },
+	{ 0x800000, 0x800001, MWA_BANK7, &rts_address },
 	{ -1 }  /* end of table */
 };
 
@@ -220,7 +221,7 @@ static struct MemoryWriteAddress extra_writemem[] =
  *
  *************************************/
 
-INPUT_PORTS_START( thunderj_ports )
+INPUT_PORTS_START( thunderj )
 	PORT_START		/* 260000 */
 	PORT_BIT( 0xffff, IP_ACTIVE_LOW, IPT_UNUSED )
 
@@ -472,7 +473,7 @@ ROM_END
  *
  *************************************/
 
-struct GameDriver thunderj_driver =
+struct GameDriver driver_thunderj =
 {
 	__FILE__,
 	0,
@@ -485,13 +486,13 @@ struct GameDriver thunderj_driver =
 	&machine_driver,
 	thunderj_init,
 
-	thunderj_rom,
+	rom_thunderj,
 	rom_decode,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	thunderj_ports,
+	input_ports_thunderj,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,

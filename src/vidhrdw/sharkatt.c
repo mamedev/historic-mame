@@ -65,13 +65,11 @@ void sharkatt_videoram_w(int offset,int data)
 
 		if (data & 0x80)
 		{
-			plot_pixel (tmpbitmap, x, y, col);
-			plot_pixel (Machine->scrbitmap, x, y, col);
+			plot_pixel2(tmpbitmap, Machine->scrbitmap, x, y, col);
 		}
 		else
 		{
-			plot_pixel (tmpbitmap, x, y, Machine->pens[0]);
-			plot_pixel (Machine->scrbitmap, x, y, Machine->pens[0]);
+			plot_pixel2(tmpbitmap, Machine->scrbitmap, x, y, Machine->pens[0]);
 		}
 
 		y++;

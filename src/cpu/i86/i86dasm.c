@@ -453,13 +453,13 @@ static int sib(void)
 
 /*------------------------------------------------------------------------*/
 
-static void uprintf(char *s, ...)
+static void CLIB_DECL uprintf(char *s, ...)
 {
-        va_list	arg_ptr;
+	va_list	arg_ptr;
 	va_start (arg_ptr, s);
 	vsprintf(ubufp, s, arg_ptr);
-        while (*ubufp)
-              ubufp++;
+	while (*ubufp)
+		ubufp++;
 }
 
 static void uputchar(char c)

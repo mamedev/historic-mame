@@ -461,7 +461,7 @@ static struct IOWritePort hotshock_sound_writeport[] =
 };
 
 
-INPUT_PORTS_START( scramble_input_ports )
+INPUT_PORTS_START( scramble )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -501,7 +501,7 @@ INPUT_PORTS_START( scramble_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* protection check? */
 INPUT_PORTS_END
 
-INPUT_PORTS_START( atlantis_input_ports )
+INPUT_PORTS_START( atlantis )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -540,7 +540,7 @@ INPUT_PORTS_START( atlantis_input_ports )
 INPUT_PORTS_END
 
 /* same as scramble, dip switches are different */
-INPUT_PORTS_START( theend_input_ports )
+INPUT_PORTS_START( theend )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -580,7 +580,7 @@ INPUT_PORTS_START( theend_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* protection check? */
 INPUT_PORTS_END
 
-INPUT_PORTS_START( froggers_input_ports )
+INPUT_PORTS_START( froggers )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* 1P shoot2 - unused */
@@ -620,7 +620,7 @@ INPUT_PORTS_START( froggers_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( amidars_input_ports )
+INPUT_PORTS_START( amidars )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* 1P shoot2 - unused */
@@ -666,7 +666,7 @@ INPUT_PORTS_START( amidars_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( triplep_input_ports )
+INPUT_PORTS_START( triplep )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -708,7 +708,7 @@ INPUT_PORTS_START( triplep_input_ports )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( ckongs_input_ports )
+INPUT_PORTS_START( ckongs )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
@@ -756,7 +756,7 @@ INPUT_PORTS_START( ckongs_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 INPUT_PORTS_END
 
-INPUT_PORTS_START( mars_input_ports )
+INPUT_PORTS_START( mars )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP     | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN3 )
@@ -804,7 +804,7 @@ INPUT_PORTS_START( mars_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_UP    | IPF_8WAY | IPF_COCKTAIL )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( devilfsh_input_ports )
+INPUT_PORTS_START( devilfsh )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -848,7 +848,7 @@ INPUT_PORTS_START( devilfsh_input_ports )
 	PORT_START	/* IN3 - unused */
 INPUT_PORTS_END
 
-INPUT_PORTS_START( newsin7_input_ports )
+INPUT_PORTS_START( newsin7 )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -891,7 +891,7 @@ INPUT_PORTS_START( newsin7_input_ports )
 	PORT_START	/* IN3 - unused */
 INPUT_PORTS_END
 
-INPUT_PORTS_START( hotshock_input_ports )
+INPUT_PORTS_START( hotshock )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
@@ -1394,7 +1394,7 @@ ROM_START( scramble )
 	ROM_LOAD( "5f",           0x0000, 0x0800, 0x5f30311a )
 	ROM_LOAD( "5h",           0x0800, 0x0800, 0x516e029e )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x4e3caeab )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
@@ -1418,7 +1418,7 @@ ROM_START( scramblk )
 	ROM_LOAD( "5f.k",         0x0000, 0x0800, 0x4708845b )
 	ROM_LOAD( "5h.k",         0x0800, 0x0800, 0x11fd2887 )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x4e3caeab )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
@@ -1440,7 +1440,7 @@ ROM_START( atlantis )
 	ROM_LOAD( "5f",           0x0000, 0x0800, 0x57f9c6b9 )
 	ROM_LOAD( "5h",           0x0800, 0x0800, 0xe989f325 )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x4e3caeab )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
@@ -1464,7 +1464,7 @@ ROM_START( atlants2 )
 	ROM_LOAD( "rom9",         0x0000, 0x0800, 0x55cd5acd )
 	ROM_LOAD( "rom10",        0x0800, 0x0800, 0x72e773b8 )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x4e3caeab )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
@@ -1486,7 +1486,7 @@ ROM_START( theend )
 	ROM_LOAD( "ic30_2c.bin",  0x0000, 0x0800, 0x68ccf7bf )
 	ROM_LOAD( "ic31_1c.bin",  0x0800, 0x0800, 0x4a48c999 )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "6331-1j.86",   0x0000, 0x0020, 0x24652bc4 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
@@ -1507,7 +1507,7 @@ ROM_START( theends )
 	ROM_LOAD( "ic30",         0x0000, 0x0800, 0x527fd384 )
 	ROM_LOAD( "ic31",         0x0800, 0x0800, 0xaf6d09b6 )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "6331-1j.86",   0x0000, 0x0020, 0x24652bc4 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
@@ -1528,7 +1528,7 @@ ROM_START( froggers )
 	ROM_LOAD( "epr-1036.1k",  0x0000, 0x0800, 0x658745f8 )
 	ROM_LOAD( "frogger.607",  0x0800, 0x0800, 0x05f7d883 )
 
-	ROM_REGION(0x0020)	/* color PROMs */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "vid_e6.bin",   0x0000, 0x0020, 0x0b878b54 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
@@ -1552,7 +1552,7 @@ ROM_START( amidars )
 	ROM_LOAD( "2716.a6",      0x0000, 0x0800, 0x2082ad0a )   /* Same graphics ROMs as Amigo */
 	ROM_LOAD( "2716.a5",      0x0800, 0x0800, 0x3029f94f )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "amidar.clr",   0x0000, 0x0020, 0xf940dcc3 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
@@ -1571,7 +1571,7 @@ ROM_START( triplep )
 	ROM_LOAD( "triplep.5f",   0x0000, 0x0800, 0xd51cbd6f )
 	ROM_LOAD( "triplep.5h",   0x0800, 0x0800, 0xf21c0059 )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "tripprom.6e",  0x0000, 0x0020, 0x624f75df )
 ROM_END
 
@@ -1588,7 +1588,7 @@ ROM_START( mariner )
 	ROM_LOAD( "tm8",          0x0000, 0x1000, 0x70ae611f )
 	ROM_LOAD( "tm9",          0x1000, 0x1000, 0x8e4e999e )
 
-	ROM_REGION(0x0020)      /* Color PROM */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "tm.t4",        0x0000, 0x0020, 0xca42b6dd )
 ROM_END
 
@@ -1605,7 +1605,7 @@ ROM_START( ckongs )
 	ROM_LOAD( "vid_5f.bin",   0x0000, 0x1000, 0x7866d2cb )
 	ROM_LOAD( "vid_5h.bin",   0x1000, 0x1000, 0x7311a101 )
 
-	ROM_REGION(0x20)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "vid_6e.bin",   0x0000, 0x0020, 0x5039af97 )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
@@ -1626,7 +1626,7 @@ ROM_START( mars )
 	ROM_LOAD( "u72.1",        0x0000, 0x0800, 0x279789d0 )
 	ROM_LOAD( "u101.2",       0x0800, 0x0800, 0xc5dc627f )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x4e3caeab )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
@@ -1650,7 +1650,7 @@ ROM_START( devilfsh )
 	ROM_LOAD( "u72.12",       0x0000, 0x1000, 0x5406508e )
 	ROM_LOAD( "u101.13",      0x1000, 0x1000, 0x8c4018b6 )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x4e3caeab )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
@@ -1672,7 +1672,7 @@ ROM_START( newsin7 )
 	ROM_LOAD( "newsin.8",     0x1000, 0x1000, 0x0c5b895a )
 	ROM_LOAD( "newsin.9",     0x0000, 0x1000, 0x6b87adff )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "newsin.6",     0x0000, 0x0020, 0x5cf2cd8d )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
@@ -1692,7 +1692,7 @@ ROM_START( hotshock )
 	ROM_LOAD( "hotshock.h4",  0x0000, 0x1000, 0x60bdaea9 )
 	ROM_LOAD( "hotshock.h5",  0x1000, 0x1000, 0x4ef17453 )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x4e3caeab )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
@@ -1715,7 +1715,7 @@ ROM_START( hunchbks )
 	ROM_LOAD( "5f_hb09.bin",           0x0000, 0x0800, 0xdb489c3d )
 	ROM_LOAD( "5h_hb10.bin",           0x0800, 0x0800, 0x3977650e )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "6e_prom.bin",           0x0000, 0x0020, 0x4e3caeab )
 
 	ROM_REGION(0x10000)	/* 64k for the audio CPU */
@@ -2001,7 +2001,7 @@ static void ckongs_hisave(void)
 
 
 
-struct GameDriver scramble_driver =
+struct GameDriver driver_scramble =
 {
 	__FILE__,
 	0,
@@ -2014,23 +2014,23 @@ struct GameDriver scramble_driver =
 	&scramble_machine_driver,
 	scramblk_driver_init,
 
-	scramblk_rom,
+	rom_scramblk,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	scramble_input_ports,
+	input_ports_scramble,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	scramble_hiload, scramble_hisave
 };
 
-struct GameDriver scrambls_driver =
+struct GameDriver driver_scrambls =
 {
 	__FILE__,
-	&scramble_driver,
+	&driver_scramble,
 	"scrambls",
 	"Scramble (Stern)",
 	"1981",
@@ -2040,20 +2040,20 @@ struct GameDriver scrambls_driver =
 	&scramble_machine_driver,
 	scramble_driver_init,
 
-	scramble_rom,
+	rom_scramble,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	scramble_input_ports,
+	input_ports_scramble,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	scramble_hiload, scramble_hisave
 };
 
-struct GameDriver atlantis_driver =
+struct GameDriver driver_atlantis =
 {
 	__FILE__,
 	0,
@@ -2066,23 +2066,23 @@ struct GameDriver atlantis_driver =
 	&scramble_machine_driver,
 	0,
 
-	atlantis_rom,
+	rom_atlantis,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	atlantis_input_ports,
+	input_ports_atlantis,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	atlantis_hiload, atlantis_hisave
 };
 
-struct GameDriver atlants2_driver =
+struct GameDriver driver_atlants2 =
 {
 	__FILE__,
-	&atlantis_driver,
+	&driver_atlantis,
 	"atlants2",
 	"Battle of Atlantis (set 2)",
 	"1981",
@@ -2092,20 +2092,20 @@ struct GameDriver atlants2_driver =
 	&scramble_machine_driver,
 	0,
 
-	atlants2_rom,
+	rom_atlants2,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	atlantis_input_ports,
+	input_ports_atlantis,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	atlantis_hiload, atlantis_hisave
 };
 
-struct GameDriver theend_driver =
+struct GameDriver driver_theend =
 {
 	__FILE__,
 	0,
@@ -2118,23 +2118,23 @@ struct GameDriver theend_driver =
 	&theend_machine_driver,
 	0,
 
-	theend_rom,
+	rom_theend,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	theend_input_ports,
+	input_ports_theend,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	theend_hiload, theend_hisave
 };
 
-struct GameDriver theends_driver =
+struct GameDriver driver_theends =
 {
 	__FILE__,
-	&theend_driver,
+	&driver_theend,
 	"theends",
 	"The End (Stern)",
 	"1980",
@@ -2144,24 +2144,24 @@ struct GameDriver theends_driver =
 	&theend_machine_driver,
 	0,
 
-	theends_rom,
+	rom_theends,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	theend_input_ports,
+	input_ports_theend,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	theend_hiload, theend_hisave
 };
 
-extern struct GameDriver frogger_driver;
-struct GameDriver froggers_driver =
+extern struct GameDriver driver_frogger;
+struct GameDriver driver_froggers =
 {
 	__FILE__,
-	&frogger_driver,
+	&driver_frogger,
 	"froggers",
 	"Frog",
 	"1981",
@@ -2171,24 +2171,24 @@ struct GameDriver froggers_driver =
 	&froggers_machine_driver,
 	0,
 
-	froggers_rom,
+	rom_froggers,
 	froggers_decode, 0,
 	0,
 	0,	/* sound_prom */
 
-	froggers_input_ports,
+	input_ports_froggers,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	froggers_hiload, froggers_hisave
 };
 
-extern struct GameDriver amidar_driver;
-struct GameDriver amidars_driver =
+extern struct GameDriver driver_amidar;
+struct GameDriver driver_amidars =
 {
 	__FILE__,
-	&amidar_driver,
+	&driver_amidar,
 	"amidars",
 	"Amidar (Scramble hardware)",
 	"1982",
@@ -2198,20 +2198,20 @@ struct GameDriver amidars_driver =
 	&scramble_machine_driver,
 	0,
 
-	amidars_rom,
+	rom_amidars,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	amidars_input_ports,
+	input_ports_amidars,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	0,0
 };
 
-struct GameDriver triplep_driver =
+struct GameDriver driver_triplep =
 {
 	__FILE__,
 	0,
@@ -2224,20 +2224,20 @@ struct GameDriver triplep_driver =
 	&triplep_machine_driver,
 	0,
 
-	triplep_rom,
+	rom_triplep,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	triplep_input_ports,
+	input_ports_triplep,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	scramble_hiload, scramble_hisave
 };
 
-struct GameDriver mariner_driver =
+struct GameDriver driver_mariner =
 {
 	__FILE__,
 	0,
@@ -2250,24 +2250,24 @@ struct GameDriver mariner_driver =
 	&mariner_machine_driver,
 	0,
 
-	mariner_rom,
+	rom_mariner,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	scramble_input_ports, /* seems to be the same as Scramble */
+	input_ports_scramble, /* seems to be the same as Scramble */
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	scramble_hiload, scramble_hisave
 };
 
-extern struct GameDriver ckong_driver;
-struct GameDriver ckongs_driver =
+extern struct GameDriver driver_ckong;
+struct GameDriver driver_ckongs =
 {
 	__FILE__,
-	&ckong_driver,
+	&driver_ckong,
 	"ckongs",
 	"Crazy Kong (Scramble hardware)",
 	"1981",
@@ -2277,20 +2277,20 @@ struct GameDriver ckongs_driver =
 	&ckongs_machine_driver,
 	0,
 
-	ckongs_rom,
+	rom_ckongs,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	ckongs_input_ports,
+	input_ports_ckongs,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	ckongs_hiload, ckongs_hisave
 };
 
-struct GameDriver mars_driver =
+struct GameDriver driver_mars =
 {
 	__FILE__,
 	0,
@@ -2303,20 +2303,20 @@ struct GameDriver mars_driver =
 	&mars_machine_driver,
 	0,
 
-	mars_rom,
+	rom_mars,
 	mars_decode, 0,
 	0,
 	0,	/* sound_prom */
 
-	mars_input_ports,
+	input_ports_mars,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	0, 0
 };
 
-struct GameDriver devilfsh_driver =
+struct GameDriver driver_devilfsh =
 {
 	__FILE__,
 	0,
@@ -2329,20 +2329,20 @@ struct GameDriver devilfsh_driver =
 	&devilfsh_machine_driver,
 	0,
 
-	devilfsh_rom,
+	rom_devilfsh,
 	mars_decode, 0,
 	0,
 	0,	/* sound_prom */
 
-	devilfsh_input_ports,
+	input_ports_devilfsh,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	0, 0
 };
 
-struct GameDriver newsin7_driver =
+struct GameDriver driver_newsin7 =
 {
 	__FILE__,
 	0,
@@ -2351,24 +2351,24 @@ struct GameDriver newsin7_driver =
 	"1983",
 	"ATW USA, Inc.",
 	"Zsolt Vasvari",
-	GAME_IMPERFECT_COLORS,
+	0,
 	&newsin7_machine_driver,
 	0,
 
-	newsin7_rom,
+	rom_newsin7,
 	mars_decode, 0,
 	0,
 	0,	/* sound_prom */
 
-	newsin7_input_ports,
+	input_ports_newsin7,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
+	0, 0, 0,
+	ORIENTATION_ROTATE_90 | GAME_IMPERFECT_COLORS,
 
 	0, 0
 };
 
-struct GameDriver hotshock_driver =
+struct GameDriver driver_hotshock =
 {
 	__FILE__,
 	0,
@@ -2381,25 +2381,24 @@ struct GameDriver hotshock_driver =
 	&hotshock_machine_driver,
 	hotshock_driver_init,
 
-	hotshock_rom,
+	rom_hotshock,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	hotshock_input_ports,
+	input_ports_hotshock,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	0, 0
 };
 
-extern struct GameDriver hunchbkd_driver;
-
-struct GameDriver hunchbks_driver =
+extern struct GameDriver driver_hunchbkd;
+struct GameDriver driver_hunchbks =
 {
 	__FILE__,
-	&hunchbkd_driver,
+	&driver_hunchbkd,
 	"hunchbks",
 	"Hunchback (Scramble conversion)",
 	"1983",
@@ -2409,14 +2408,14 @@ struct GameDriver hunchbks_driver =
 	&hunchbks_machine_driver,
 	0,
 
-	hunchbks_rom,
+	rom_hunchbks,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	scramble_input_ports,
+	input_ports_scramble,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	0,0

@@ -583,7 +583,7 @@ static struct IOWritePort sound_writeport[] =
 	[2] Service
 	[3] Dsw 1			[4] Dsw 2	*/
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( airbustr )
 
 	PORT_START	// IN0 - Player 1
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
@@ -869,7 +869,7 @@ static void airbustr_hisave(void)
 	}
 }
 
-struct GameDriver airbustr_driver =
+struct GameDriver driver_airbustr =
 {
 	__FILE__,
 	0,
@@ -882,15 +882,15 @@ struct GameDriver airbustr_driver =
 	&airbustr_machine_driver,
 	0,
 
-	airbustr_rom,
+	rom_airbustr,
 	airbustr_rom_decode, 0,
 	0,
 	0,
 
-	input_ports,
+	input_ports_airbustr,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
-        airbustr_hiload, airbustr_hisave
+	airbustr_hiload, airbustr_hisave
 };

@@ -83,19 +83,16 @@ void vindictr_scanline_update(int scanline);
  *
  *************************************/
 
-static UINT8 *shared_ram_1;
-static UINT8 *shared_ram_2;
-static UINT8 *shared_ram_3;
 static UINT8 *shared_ram_4;
 
-static int shared_ram_1_r(int offset) { return READ_WORD(&shared_ram_1[offset]); }
-static int shared_ram_2_r(int offset) { return READ_WORD(&shared_ram_2[offset]); }
-static int shared_ram_3_r(int offset) { return READ_WORD(&shared_ram_3[offset]); }
+static int shared_ram_1_r(int offset) { return READ_WORD(&atarigen_playfieldram[offset]); }
+static int shared_ram_2_r(int offset) { return READ_WORD(&atarigen_spriteram[offset]); }
+static int shared_ram_3_r(int offset) { return READ_WORD(&atarigen_alpharam[offset]); }
 static int shared_ram_4_r(int offset) { return READ_WORD(&shared_ram_4[offset]); }
 
-static void shared_ram_1_w(int offset, int data) { COMBINE_WORD_MEM(&shared_ram_1[offset], data); }
-static void shared_ram_2_w(int offset, int data) { COMBINE_WORD_MEM(&shared_ram_2[offset], data); }
-static void shared_ram_3_w(int offset, int data) { COMBINE_WORD_MEM(&shared_ram_3[offset], data); }
+static void shared_ram_1_w(int offset, int data) { COMBINE_WORD_MEM(&atarigen_playfieldram[offset], data); }
+static void shared_ram_2_w(int offset, int data) { COMBINE_WORD_MEM(&atarigen_spriteram[offset], data); }
+static void shared_ram_3_w(int offset, int data) { COMBINE_WORD_MEM(&atarigen_alpharam[offset], data); }
 static void shared_ram_4_w(int offset, int data) { COMBINE_WORD_MEM(&shared_ram_4[offset], data); }
 
 
@@ -207,10 +204,10 @@ static struct MemoryReadAddress main_readmem[] =
 	{ 0x260020, 0x26002f, input_port_2_r },
 	{ 0x260030, 0x260031, atarigen_sound_r },
 	{ 0x3e0000, 0x3e0fff, MRA_BANK1 },
-	{ 0x3f0000, 0x3f1fff, shared_ram_1_r, &shared_ram_1 },
-	{ 0x3f2000, 0x3f3fff, shared_ram_2_r, &shared_ram_2 },
-	{ 0x3f4000, 0x3f4fff, shared_ram_3_r, &shared_ram_3 },
-	{ 0x3f5000, 0x3f7fff, shared_ram_4_r, &shared_ram_4 },
+	{ 0x3f0000, 0x3f1fff, shared_ram_1_r },
+	{ 0x3f2000, 0x3f3fff, shared_ram_2_r },
+	{ 0x3f4000, 0x3f4fff, shared_ram_3_r },
+	{ 0x3f5000, 0x3f7fff, shared_ram_4_r },
 	{ 0xff8000, 0xff9fff, shared_ram_1_r },
 	{ 0xffa000, 0xffbfff, shared_ram_2_r },
 	{ 0xffc000, 0xffcfff, shared_ram_3_r },
@@ -233,7 +230,7 @@ static struct MemoryWriteAddress main_writemem[] =
 	{ 0x3f0000, 0x3f1fff, vindictr_playfieldram_w, &atarigen_playfieldram, &atarigen_playfieldram_size },
 	{ 0x3f2000, 0x3f3fff, shared_ram_2_w, &atarigen_spriteram, &atarigen_spriteram_size },
 	{ 0x3f4000, 0x3f4fff, shared_ram_3_w, &atarigen_alpharam, &atarigen_alpharam_size },
-	{ 0x3f5000, 0x3f7fff, shared_ram_4_w },
+	{ 0x3f5000, 0x3f7fff, shared_ram_4_w, &shared_ram_4 },
 	{ 0xff8000, 0xff9fff, vindictr_playfieldram_w },
 	{ 0xffa000, 0xffbfff, shared_ram_2_w },
 	{ 0xffc000, 0xffcfff, shared_ram_3_w },
@@ -249,7 +246,7 @@ static struct MemoryWriteAddress main_writemem[] =
  *
  *************************************/
 
-INPUT_PORTS_START( vindictr_ports )
+INPUT_PORTS_START( vindictr )
 	PORT_START		/* 26000 */
 	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 )
@@ -463,7 +460,7 @@ static void vindictr_init(void)
  *
  *************************************/
 
-struct GameDriver vindictr_driver =
+struct GameDriver driver_vindictr =
 {
 	__FILE__,
 	0,
@@ -476,13 +473,13 @@ struct GameDriver vindictr_driver =
 	&machine_driver,
 	vindictr_init,
 
-	vindictr_rom,
+	rom_vindictr,
 	rom_decode,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	vindictr_ports,
+	input_ports_vindictr,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,

@@ -92,10 +92,7 @@ VII. Derivative Works
    an official distribution from the MAME team. Simply calling it MAME followed
    or preceded by a punctuation (e.g. MAME+) will not be enough. The name must
    be clearly distinct, e.g. REMAME. The version number must also match the one
-   of the official MAME you derived your version from. You are not allowed to
-   change the version number or add substeps.
-   In any case, if the official MAME project coordinator asks you to stop
-   distributing a derivative work, you must comply.
+   of the official MAME you derived your version from.
 
 
 How to Contact Us
@@ -135,7 +132,7 @@ support. Basically, if you can't get the emulator to work, you are on your own.
 First of all, read the docs carefully. If you still can't find an answer to
 your question, try checking the beginner's sections that many emulation pages
 have, or ask on the appropriate Usenet newsgroups (e.g. comp.emulators.misc) or
-on the official MAME message board, http://www.macmame.org/wwwboard/mame/.
+on the official MAME message board, http://mame.retrogames.com/msgboard.htm.
 
 For help in compiling MAME, check this page:
 http://mameworld.retrogames.com

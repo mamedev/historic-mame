@@ -82,19 +82,19 @@ void vicdual_vh_convert_color_prom(unsigned char *palette, unsigned short *color
 	palette_bank = 0;
 
 	{
-		extern struct GameDriver heiankyo_driver;
-		extern struct GameDriver invinco_driver;
-		extern struct GameDriver digger_driver;
-		extern struct GameDriver tranqgun_driver;
+		extern struct GameDriver driver_heiankyo;
+		extern struct GameDriver driver_invinco;
+		extern struct GameDriver driver_digger;
+		extern struct GameDriver driver_tranqgun;
 
 		/* Heiankyo Alien doesn't write to port 0x40, it expects it to default to 3 */
-		if (Machine->gamedrv == &heiankyo_driver)
+		if (Machine->gamedrv == &driver_heiankyo)
 			palette_bank = 3;
 
 		/* and many others expect it to default to 1 */
-		if (Machine->gamedrv == &invinco_driver ||
-				Machine->gamedrv == &digger_driver ||
-				Machine->gamedrv == &tranqgun_driver)
+		if (Machine->gamedrv == &driver_invinco ||
+				Machine->gamedrv == &driver_digger ||
+				Machine->gamedrv == &driver_tranqgun)
 			palette_bank = 1;
 	}
 }

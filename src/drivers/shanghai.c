@@ -614,7 +614,7 @@ static struct IOWritePort writeport[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( shanghai )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
@@ -768,7 +768,7 @@ ROM_END
 
 
 
-struct GameDriver shanghai_driver =
+struct GameDriver driver_shanghai =
 {
 	__FILE__,
 	0,
@@ -777,19 +777,19 @@ struct GameDriver shanghai_driver =
 	"1988",
 	"Sun Electronics (licensed from Activision)",
 	"Nicola Salmoria",
-	GAME_NOT_WORKING,
+	0,
 	&machine_driver,
 	0,
 
-	shanghai_rom,
+	rom_shanghai,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_shanghai,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
 
 	0, 0
 };

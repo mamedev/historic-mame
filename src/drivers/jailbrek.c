@@ -74,7 +74,7 @@ static struct MemoryWriteAddress writemem[] =
     { -1 }  /* end of table */
 };
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( jailbrek )
 	PORT_START	/* DSW0  - $3303 */
 	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 4C_1C ) )
@@ -293,7 +293,7 @@ ROM_START( jailbrek )
     ROM_LOAD( "jailb5e.bin",  0x10000, 0x4000, 0x717485cb )
     ROM_LOAD( "jailb3f.bin",  0x14000, 0x4000, 0xe933086f )
 
-	ROM_REGION(0x0240)	/* color PROMs */
+	ROM_REGIONX( 0x0240, REGION_PROMS )
 	ROM_LOAD( "jailbbl.cl2",  0x0000, 0x0020, 0xf1909605 ) /* red & green */
 	ROM_LOAD( "jailbbl.cl1",  0x0020, 0x0020, 0xf70bb122 ) /* blue */
 	ROM_LOAD( "jailbbl.bp2",  0x0040, 0x0100, 0xd4fe5c97 ) /* char lookup */
@@ -351,7 +351,7 @@ static void jailbrek_hisave(void)
 
 
 
-struct GameDriver jailbrek_driver =
+struct GameDriver driver_jailbrek =
 {
 	__FILE__,
 	0,
@@ -363,14 +363,14 @@ struct GameDriver jailbrek_driver =
 	0,
 	&machine_driver,
 	0,
-	jailbrek_rom,
+	rom_jailbrek,
 	0, jailbrek_decode,
 	0,
 	0,      /* sound_prom */
 
-	input_ports,
+	input_ports_jailbrek,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	jailbrek_hiload, jailbrek_hisave

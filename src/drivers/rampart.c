@@ -92,6 +92,10 @@ static int slapstic_bank_r(int offset)
 	return result;
 }
 
+static void slapstic_bank_w(int offset,int data)
+{
+}
+
 
 static int opbase_override(int pc)
 {
@@ -234,13 +238,13 @@ static void latch_w(int offset, int data)
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x000000, 0x0fffff, MRA_ROM },
-	{ 0x140000, 0x147fff, slapstic_bank_r, &slapstic_base },
-	{ 0x200000, 0x21fffe, MRA_BANK1, &atarigen_playfieldram },
-	{ 0x3c0000, 0x3c07ff, MRA_BANK2, &paletteram },
-	{ 0x3e0000, 0x3e3fff, MRA_BANK3, &atarigen_spriteram },
+	{ 0x140000, 0x147fff, slapstic_bank_r },
+	{ 0x200000, 0x21fffe, MRA_BANK1 },
+	{ 0x3c0000, 0x3c07ff, MRA_BANK2 },
+	{ 0x3e0000, 0x3e3fff, MRA_BANK3 },
 	{ 0x460000, 0x460001, adpcm_r },
 	{ 0x480000, 0x480001, ym2413_r },
-	{ 0x500000, 0x500fff, atarigen_eeprom_r, &atarigen_eeprom, &atarigen_eeprom_size },
+	{ 0x500000, 0x500fff, atarigen_eeprom_r },
 	{ 0x640000, 0x640001, input_port_0_r },
 	{ 0x640002, 0x640003, input_port_1_r },
 	{ 0x6c0000, 0x6c0001, input_port_2_r },
@@ -256,14 +260,15 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x000000, 0x0fffff, MWA_ROM },
-	{ 0x200000, 0x21fffe, rampart_playfieldram_w },
+	{ 0x140000, 0x147fff, slapstic_bank_w, &slapstic_base },	/* here only to initialize the pointer */
+	{ 0x200000, 0x21fffe, rampart_playfieldram_w, &atarigen_playfieldram },
 	{ 0x220000, 0x3bffff, MWA_NOP },	/* the code blasts right through this when initializing */
-	{ 0x3c0000, 0x3c07ff, atarigen_expanded_666_paletteram_w },
+	{ 0x3c0000, 0x3c07ff, atarigen_expanded_666_paletteram_w, &paletteram },
 	{ 0x3c0800, 0x3dffff, MWA_NOP },	/* the code blasts right through this when initializing */
-	{ 0x3e0000, 0x3e3fff, MWA_BANK3 },
+	{ 0x3e0000, 0x3e3fff, MWA_BANK3, &atarigen_spriteram },
 	{ 0x460000, 0x460001, adpcm_w },
 	{ 0x480000, 0x480003, ym2413_w },
-	{ 0x500000, 0x500fff, atarigen_eeprom_w },
+	{ 0x500000, 0x500fff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
 	{ 0x5a0000, 0x5affff, atarigen_eeprom_enable_w },
 	{ 0x640000, 0x640001, latch_w },
 	{ 0x720000, 0x72ffff, watchdog_reset_w },
@@ -279,7 +284,7 @@ static struct MemoryWriteAddress writemem[] =
  *
  *************************************/
 
-INPUT_PORTS_START( rampart_ports )
+INPUT_PORTS_START( rampart )
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )
@@ -331,7 +336,7 @@ INPUT_PORTS_START( rampart_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( ramprt2p_ports )
+INPUT_PORTS_START( ramprt2p )
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON2 | IPF_PLAYER3 )
@@ -599,7 +604,7 @@ static void rampart_init(void)
  *
  *************************************/
 
-struct GameDriver rampart_driver =
+struct GameDriver driver_rampart =
 {
 	__FILE__,
 	0,
@@ -612,13 +617,13 @@ struct GameDriver rampart_driver =
 	&machine_driver,
 	rampart_init,
 
-	rampart_rom,
+	rom_rampart,
 	rom_decode,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	rampart_ports,
+	input_ports_rampart,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
@@ -626,10 +631,10 @@ struct GameDriver rampart_driver =
 };
 
 
-struct GameDriver ramprt2p_driver =
+struct GameDriver driver_ramprt2p =
 {
 	__FILE__,
-	&rampart_driver,
+	&driver_rampart,
 	"ramprt2p",
 	"Rampart (2-player Joystick)",
 	"1990",
@@ -639,13 +644,13 @@ struct GameDriver ramprt2p_driver =
 	&machine_driver,
 	rampart_init,
 
-	ramprt2p_rom,
+	rom_ramprt2p,
 	rom_decode,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	ramprt2p_ports,
+	input_ports_ramprt2p,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,

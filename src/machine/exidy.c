@@ -11,7 +11,7 @@
 
 /* These are defined in vidhrdw/exidy.c */
 extern unsigned char *exidy_sprite_enable;
-extern unsigned char *exidy_collision;
+extern int exidy_collision;
 extern int exidy_collision_counter;
 
 /* These are defined in sndhrdw/targ.c */
@@ -164,10 +164,10 @@ int exidy_input_port_2_r(int offset)
 	value = readinputport(2);
 
 	/* Combine with collision bits */
-	value = value | ((*exidy_collision) & (exidy_collision_mask));
+	value = value | ((exidy_collision) & (exidy_collision_mask));
 
 	/* Reset collision bits */
-	*exidy_collision &= 0xEB;
+	exidy_collision &= 0xEB;
 
 	return value;
 }
@@ -224,7 +224,7 @@ void pepper2_driver_init(void) {
 	RAM[0xF52F]=0xEA;
 	#endif
 
-	exidy_collision_mask = 0x00;
+	exidy_collision_mask = 0x14;
 
 	palette = venture_palette;
 	colortable = pepper2_colortable;
@@ -284,7 +284,7 @@ int venture_interrupt(void)
 	static int first_time = 1;
 	static int interrupt_counter = 0;
 
-	*exidy_collision = (*exidy_collision | 0x80) & exidy_collision_mask;
+	exidy_collision = (exidy_collision | 0x80) & exidy_collision_mask;
 
 	if (first_time)
 	{
@@ -296,7 +296,7 @@ int venture_interrupt(void)
 
 	if (interrupt_counter == 0)
 	{
-		*exidy_collision &= 0x7F;
+		exidy_collision &= 0x7F;
 		return interrupt();
 	}
 
@@ -313,7 +313,7 @@ int exidy_interrupt(void)
 {
 	static int first_time = 1;
 
-	*exidy_collision = (*exidy_collision | 0x80) & exidy_collision_mask;
+	exidy_collision = (exidy_collision | 0x80) & exidy_collision_mask;
 
 	if (first_time)
 	{

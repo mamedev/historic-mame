@@ -18,12 +18,12 @@ extern UINT8 exidy440_topsecret;
 /* globals */
 UINT8 *exidy440_scanline;
 UINT8 *exidy440_imageram;
-UINT8 *exidy440_latched_x;
 UINT8 exidy440_firq_vblank;
 UINT8 exidy440_firq_beam;
 UINT8 topsecex_yscroll;
 
 /* local allocated storage */
+static UINT8 exidy440_latched_x;
 static UINT8 *local_videoram;
 static UINT8 *local_paletteram;
 static UINT8 *scanline_dirty;
@@ -213,7 +213,7 @@ int exidy440_horizontal_pos_r(int offset)
 
 	/* according to the schems, this value is only latched on an FIRQ
 	 * caused by collision or beam */
-	return *exidy440_latched_x;
+	return exidy440_latched_x;
 }
 
 
@@ -329,7 +329,7 @@ void beam_firq_callback(int param)
 	param = (param + 1) / 2;
 
 	/* latch the x value; this convolution comes from the read routine */
-	*exidy440_latched_x = (param + 3) ^ 2;
+	exidy440_latched_x = (param + 3) ^ 2;
 }
 
 
@@ -346,7 +346,7 @@ void collide_firq_callback(int param)
 	param = (param + 1) / 2;
 
 	/* latch the x value; this convolution comes from the read routine */
-	*exidy440_latched_x = (param + 3) ^ 2;
+	exidy440_latched_x = (param + 3) ^ 2;
 }
 
 

@@ -429,7 +429,7 @@ static struct MemoryWriteAddress zigzag_writemem[] =
 
 
 
-INPUT_PORTS_START( galaxian_input_ports )
+INPUT_PORTS_START( galaxian )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -470,7 +470,7 @@ INPUT_PORTS_START( galaxian_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( superg_input_ports )
+INPUT_PORTS_START( superg )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -511,7 +511,7 @@ INPUT_PORTS_START( superg_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( pisces_input_ports )
+INPUT_PORTS_START( pisces )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN1 )
@@ -560,7 +560,7 @@ INPUT_PORTS_START( pisces_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( warofbug_input_ports )
+INPUT_PORTS_START( warofbug )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -599,7 +599,7 @@ INPUT_PORTS_START( warofbug_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( redufo_input_ports )
+INPUT_PORTS_START( redufo )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -640,7 +640,7 @@ INPUT_PORTS_START( redufo_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( pacmanbl_input_ports )
+INPUT_PORTS_START( pacmanbl )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -681,7 +681,7 @@ INPUT_PORTS_START( pacmanbl_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( devilfsg_input_ports )
+INPUT_PORTS_START( devilfsg )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -722,7 +722,7 @@ INPUT_PORTS_START( devilfsg_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( zigzag_input_ports )
+INPUT_PORTS_START( zigzag )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -761,7 +761,7 @@ INPUT_PORTS_START( zigzag_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( mooncrgx_input_ports )
+INPUT_PORTS_START( mooncrgx )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -797,7 +797,7 @@ INPUT_PORTS_START( mooncrgx_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )   /* probably unused */
 INPUT_PORTS_END
 
-INPUT_PORTS_START( scramblb_input_ports )
+INPUT_PORTS_START( scramblb )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_COCKTAIL )
@@ -845,7 +845,7 @@ INPUT_PORTS_START( scramblb_input_ports )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( jumpbug_input_ports )
+INPUT_PORTS_START( jumpbug )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_COCKTAIL )
@@ -895,7 +895,7 @@ INPUT_PORTS_START( jumpbug_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( levers_input_ports )
+INPUT_PORTS_START( levers )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
@@ -943,7 +943,7 @@ INPUT_PORTS_START( levers_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( azurian_input_ports )
+INPUT_PORTS_START( azurian )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
@@ -984,7 +984,7 @@ INPUT_PORTS_START( azurian_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( orbitron_input_ports )
+INPUT_PORTS_START( orbitron )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -1025,7 +1025,7 @@ INPUT_PORTS_START( orbitron_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( checkmaj_input_ports )
+INPUT_PORTS_START( checkmaj )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -1459,14 +1459,6 @@ static struct MachineDriver checkmaj_machine_driver =
 };
 
 
-static const char *mooncrst_sample_names[] =
-{
-	"*galaxian",
-	"shot.wav",
-	"death.wav",
-	0	/* end of array */
-};
-
 /***************************************************************************
 
   Game driver(s)
@@ -1485,7 +1477,7 @@ ROM_START( galaxian )
 	ROM_LOAD( "1h",           0x0000, 0x0800, 0x39fb43a4 )
 	ROM_LOAD( "1k",           0x0800, 0x0800, 0x7e3f56a2 )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
@@ -1501,7 +1493,7 @@ ROM_START( galmidw )
 	ROM_LOAD( "galmidw.1j",   0x0000, 0x0800, 0x84decf98 )
 	ROM_LOAD( "galmidw.1k",   0x0800, 0x0800, 0xc31ada9e )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
@@ -1517,7 +1509,7 @@ ROM_START( superg )
 	ROM_LOAD( "galmidw.1j",   0x0000, 0x0800, 0x84decf98 )
 	ROM_LOAD( "galmidw.1k",   0x0800, 0x0800, 0xc31ada9e )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
@@ -1533,7 +1525,7 @@ ROM_START( galaxb )
 	ROM_LOAD( "cp7e",         0x0000, 0x0800, 0xd0ba22c9 )   /* logo was removed */
 	ROM_LOAD( "cp6e",         0x0800, 0x0800, 0x977e37cf )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
@@ -1549,7 +1541,7 @@ ROM_START( galapx )
 	ROM_LOAD( "galx.1h",      0x0000, 0x0800, 0xe8810654 )
 	ROM_LOAD( "galx.1k",      0x0800, 0x0800, 0xcbe84a76 )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
@@ -1565,7 +1557,7 @@ ROM_START( galap1 )
 	ROM_LOAD( "galmidw.1j",   0x0000, 0x0800, 0x84decf98 )
 	ROM_LOAD( "galmidw.1k",   0x0800, 0x0800, 0xc31ada9e )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
@@ -1581,7 +1573,7 @@ ROM_START( galap4 )
 	ROM_LOAD( "galx_4c1.rom", 0x0000, 0x0800, 0xd5e88ab4 )
 	ROM_LOAD( "galx_4c2.rom", 0x0800, 0x0800, 0xa57b83e4 )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
@@ -1597,7 +1589,7 @@ ROM_START( galturbo )
 	ROM_LOAD( "galturbo.1h",  0x0000, 0x0800, 0xa713fd1a )
 	ROM_LOAD( "galturbo.1k",  0x0800, 0x0800, 0x28511790 )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
@@ -1614,7 +1606,7 @@ ROM_START( pisces )
 	ROM_LOAD( "pisces.1j",    0x0000, 0x1000, 0x2dba9e0e )
 	ROM_LOAD( "pisces.1k",    0x1000, 0x1000, 0xcdc5aa26 )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "6331-1j.86",   0x0000, 0x0020, 0x24652bc4 ) /* very close to Galaxian */
 ROM_END
 
@@ -1635,7 +1627,7 @@ ROM_START( uniwars )
 	ROM_LOAD( "egg9",         0x1000, 0x0800, 0xfc8b58fd )
 	ROM_LOAD( "k01_2.bin",    0x1800, 0x0800, 0xdcc2b33b )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "uniwars.clr",  0x0000, 0x0020, 0x25c79518 )
 ROM_END
 
@@ -1656,7 +1648,7 @@ ROM_START( gteikoku )
 	ROM_LOAD( "k01_1.bin",    0x1000, 0x0800, 0xc9d4537e )
 	ROM_LOAD( "k01_2.bin",    0x1800, 0x0800, 0xdcc2b33b )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
@@ -1677,7 +1669,7 @@ ROM_START( spacbatt )
 	ROM_LOAD( "k01_1.bin",    0x1000, 0x0800, 0xc9d4537e )
 	ROM_LOAD( "k01_2.bin",    0x1800, 0x0800, 0xdcc2b33b )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
@@ -1693,7 +1685,7 @@ ROM_START( warofbug )
 	ROM_LOAD( "warofbug.1k",  0x0000, 0x0800, 0x8100fa85 )
 	ROM_LOAD( "warofbug.1j",  0x0800, 0x0800, 0xd1220ae9 )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "warofbug.clr", 0x0000, 0x0020, 0x8688e64b )
 ROM_END
 
@@ -1710,7 +1702,7 @@ ROM_START( redufo )
 	ROM_LOAD( "ruhja",        0x0000, 0x0800, 0x8a422b0d )
 	ROM_LOAD( "rukla",        0x0800, 0x0800, 0x1eb84cb1 )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "galaxian.clr", 0x0000, 0x0020, 0xc3ac9467 )
 ROM_END
 
@@ -1730,7 +1722,7 @@ ROM_START( pacmanbl )
 	ROM_LOAD( "blpac10b",     0x1000, 0x0800, 0x44a45b72 )
 	ROM_LOAD( "blpac9b",      0x1800, 0x0800, 0xfa84659f )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "6331-1j.86",   0x0000, 0x0020, 0x24652bc4 ) /* same as pisces */
 ROM_END
 
@@ -1751,7 +1743,7 @@ ROM_START( devilfsg )
 	ROM_LOAD( "dfish6.1k",    0x1800, 0x0800, 0xd7a6c4c4 )
 	ROM_CONTINUE(             0x0800, 0x0800 )
 
-	ROM_REGION(0x0020)  /* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x4e3caeab )
 ROM_END
 
@@ -1768,7 +1760,7 @@ ROM_START( zigzag )
 	ROM_LOAD( "zz_5.bin",     0x0800, 0x0800, 0xf3cdfec5 )
 	ROM_CONTINUE(             0x1800, 0x0800 )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "zzbp_e9.bin",  0x0000, 0x0020, 0xaa486dd0 )
 ROM_END
 
@@ -1785,7 +1777,7 @@ ROM_START( zigzag2 )
 	ROM_LOAD( "zz_5.bin",     0x0800, 0x0800, 0xf3cdfec5 )
 	ROM_CONTINUE(             0x1800, 0x0800 )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "zzbp_e9.bin",  0x0000, 0x0020, 0xaa486dd0 )
 ROM_END
 
@@ -1806,7 +1798,7 @@ ROM_START( mooncrgx )
 	ROM_LOAD( "9.chr",        0x1000, 0x0800, 0x70df525c )
 	ROM_LOAD( "11.chr",       0x1800, 0x0800, 0xe0edccbd )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
@@ -1825,7 +1817,7 @@ ROM_START( scramblb )
 	ROM_LOAD( "5f.k",         0x0000, 0x0800, 0x4708845b )
 	ROM_LOAD( "5h.k",         0x0800, 0x0800, 0x11fd2887 )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "82s123.6e",    0x0000, 0x0020, 0x4e3caeab )
 ROM_END
 
@@ -1847,7 +1839,7 @@ ROM_START( jumpbug )
 	ROM_LOAD( "jbj",          0x2000, 0x0800, 0x06e8d7df )
 	ROM_LOAD( "jbk",          0x2800, 0x0800, 0xb8dbddf3 )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
@@ -1869,7 +1861,7 @@ ROM_START( jumpbugb )
 	ROM_LOAD( "jbj",          0x2000, 0x0800, 0x06e8d7df )
 	ROM_LOAD( "jbk",          0x2800, 0x0800, 0xb8dbddf3 )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
@@ -1890,7 +1882,7 @@ ROM_START( levers )
 							/*0x2000- 0x27ff empty */
 	ROM_LOAD( "g95947.m1", 	  0x2800, 0x0800, 0x72ff67e2 )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "g960lev.clr",  0x0000, 0x0020, 0x01febbbe )
 ROM_END
 
@@ -1904,7 +1896,7 @@ ROM_START( azurian )
 	ROM_LOAD( "gfx.1",        0x0000, 0x0800, 0xf5afb803 )
 	ROM_LOAD( "gfx.2",        0x0800, 0x0800, 0xae96e5d1 )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
@@ -1932,7 +1924,7 @@ ROM_START( orbitron )
 	ROM_LOAD( "orbitron.6",   0x0000, 0x0800, 0x2c91b83f )
 	ROM_LOAD( "orbitron.7",   0x0800, 0x0800, 0x46f4cca4 )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "l06_prom.bin", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
 
@@ -1946,7 +1938,7 @@ ROM_START( checkmaj )
 	ROM_LOAD( "cm_6.bin",     0x0000, 0x0800, 0x476a7cc3 )
 	ROM_LOAD( "cm_5.bin",     0x0800, 0x0800, 0xb3df2b5f )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "checkman.clr", 0x0000, 0x0020, 0x57a45057 )
 
 	ROM_REGION(0x10000)	/* 64k for sound code */
@@ -2363,6 +2355,86 @@ static void levers_hisave(void)
 	}
 }
 
+/****  Azurian Attack high score save routine - RJF (Nov 1, 1999)  ****/
+static int azurian_hiload(void)
+{
+    unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+    /* wait for memory to be set */
+    if (memcmp(&RAM[0x40b3],"\x00\x50\x00",3) == 0)
+
+    {
+        void *f;
+
+        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+        {
+            osd_fread(f,&RAM[0x40b3], 3);
+       		osd_fclose(f);
+
+
+        }
+        return 1;
+    }
+    else return 0;  /* we can't load the hi scores yet */
+}
+
+static void azurian_hisave(void)
+{
+    void *f;
+    unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+    if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+    {
+           osd_fwrite(f,&RAM[0x40b3], 3);
+	   osd_fclose(f);
+    }
+}
+
+/****  Orbitron high score save routine - RJF (Nov 3, 1999)  ****/
+static int orbitron_hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	static int firsttime;
+	/* check if the hi score table has already been initialized */
+	/* the high score table is intialized to all 0, so first of all */
+	/* we dirty it, then we wait for it to be cleared again */
+	if (firsttime == 0)
+	{
+                memset(&RAM[0x404a], 0xff, 3);    /* high score */
+		firsttime = 1;
+	}
+
+
+	/* wait for the screen to initialize */
+        if (memcmp(&RAM[0x404a], "\x00\x00\x00", 3) == 0)
+	{
+		void *f;
+
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+                        osd_fread(f,&RAM[0x404a], 3);
+			osd_fclose(f);
+		}
+		firsttime= 0;
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+static void orbitron_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+                osd_fwrite(f,&RAM[0x404a], 3);
+		osd_fclose(f);
+	}
+}
+
+
 
 static void pisces_driver_init(void)
 {
@@ -2376,7 +2448,7 @@ static void checkmaj_driver_init(void)
 }
 
 
-struct GameDriver galaxian_driver =
+struct GameDriver driver_galaxian =
 {
 	__FILE__,
 	0,
@@ -2389,23 +2461,23 @@ struct GameDriver galaxian_driver =
 	&galaxian_machine_driver,
 	0,
 
-	galaxian_rom,
+	rom_galaxian,
 	0, 0,
-	mooncrst_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	galaxian_input_ports,
+	input_ports_galaxian,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	galaxian_hiload, galaxian_hisave
 };
 
-struct GameDriver galmidw_driver =
+struct GameDriver driver_galmidw =
 {
 	__FILE__,
-	&galaxian_driver,
+	&driver_galaxian,
 	"galmidw",
 	"Galaxian (Midway)",
 	"1979",
@@ -2415,23 +2487,23 @@ struct GameDriver galmidw_driver =
 	&galaxian_machine_driver,
 	0,
 
-	galmidw_rom,
+	rom_galmidw,
 	0, 0,
-	mooncrst_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	galaxian_input_ports,
+	input_ports_galaxian,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	galaxian_hiload, galaxian_hisave
 };
 
-struct GameDriver superg_driver =
+struct GameDriver driver_superg =
 {
 	__FILE__,
-	&galaxian_driver,
+	&driver_galaxian,
 	"superg",
 	"Super Galaxians",
 	"1979",
@@ -2441,23 +2513,23 @@ struct GameDriver superg_driver =
 	&galaxian_machine_driver,
 	0,
 
-	superg_rom,
+	rom_superg,
 	0, 0,
-	mooncrst_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	superg_input_ports,
+	input_ports_superg,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	galaxian_hiload, galaxian_hisave
 };
 
-struct GameDriver galaxb_driver =
+struct GameDriver driver_galaxb =
 {
 	__FILE__,
-	&galaxian_driver,
+	&driver_galaxian,
 	"galaxb",
 	"Galaxian (bootleg)",
 	"1979",
@@ -2467,23 +2539,23 @@ struct GameDriver galaxb_driver =
 	&galaxian_machine_driver,
 	0,
 
-	galaxb_rom,
+	rom_galaxb,
 	0, 0,
-	mooncrst_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	superg_input_ports,
+	input_ports_superg,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	galaxian_hiload, galaxian_hisave
 };
 
-struct GameDriver galapx_driver =
+struct GameDriver driver_galapx =
 {
 	__FILE__,
-	&galaxian_driver,
+	&driver_galaxian,
 	"galapx",
 	"Galaxian Part X",
 	"1979",
@@ -2493,23 +2565,23 @@ struct GameDriver galapx_driver =
 	&galapx_machine_driver,
 	0,
 
-	galapx_rom,
+	rom_galapx,
 	0, 0,
-	mooncrst_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	superg_input_ports,
+	input_ports_superg,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	galaxian_hiload, galaxian_hisave
 };
 
-struct GameDriver galap1_driver =
+struct GameDriver driver_galap1 =
 {
 	__FILE__,
-	&galaxian_driver,
+	&driver_galaxian,
 	"galap1",
 	"Space Invaders Galactica",
 	"1979",
@@ -2519,23 +2591,23 @@ struct GameDriver galap1_driver =
 	&galaxian_machine_driver,
 	0,
 
-	galap1_rom,
+	rom_galap1,
 	0, 0,
-	mooncrst_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	superg_input_ports,
+	input_ports_superg,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	galaxian_hiload, galaxian_hisave
 };
 
-struct GameDriver galap4_driver =
+struct GameDriver driver_galap4 =
 {
 	__FILE__,
-	&galaxian_driver,
+	&driver_galaxian,
 	"galap4",
 	"Galaxian Part 4",
 	"1979",
@@ -2545,23 +2617,23 @@ struct GameDriver galap4_driver =
 	&galaxian_machine_driver,
 	0,
 
-	galap4_rom,
+	rom_galap4,
 	0, 0,
-	mooncrst_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	superg_input_ports,
+	input_ports_superg,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	galaxian_hiload, galaxian_hisave
 };
 
-struct GameDriver galturbo_driver =
+struct GameDriver driver_galturbo =
 {
 	__FILE__,
-	&galaxian_driver,
+	&driver_galaxian,
 	"galturbo",
 	"Galaxian Turbo",
 	"1979",
@@ -2571,20 +2643,20 @@ struct GameDriver galturbo_driver =
 	&galaxian_machine_driver,
 	0,
 
-	galturbo_rom,
+	rom_galturbo,
 	0, 0,
-	mooncrst_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	superg_input_ports,
+	input_ports_superg,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	galaxian_hiload, galaxian_hisave
 };
 
-struct GameDriver pisces_driver =
+struct GameDriver driver_pisces =
 {
 	__FILE__,
 	0,
@@ -2597,20 +2669,20 @@ struct GameDriver pisces_driver =
 	&pisces_machine_driver,
 	pisces_driver_init,
 
-	pisces_rom,
+	rom_pisces,
 	0, 0,
-	mooncrst_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	pisces_input_ports,
+	input_ports_pisces,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	pisces_hiload, pisces_hisave
 };
 
-struct GameDriver uniwars_driver =
+struct GameDriver driver_uniwars =
 {
 	__FILE__,
 	0,
@@ -2623,23 +2695,23 @@ struct GameDriver uniwars_driver =
 	&pisces_machine_driver,
 	pisces_driver_init,
 
-	uniwars_rom,
+	rom_uniwars,
 	0, 0,
-	mooncrst_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	superg_input_ports,
+	input_ports_superg,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	galaxian_hiload, galaxian_hisave
 };
 
-struct GameDriver gteikoku_driver =
+struct GameDriver driver_gteikoku =
 {
 	__FILE__,
-	&uniwars_driver,
+	&driver_uniwars,
 	"gteikoku",
 	"Gingateikoku No Gyakushu",
 	"1980",
@@ -2649,23 +2721,23 @@ struct GameDriver gteikoku_driver =
 	&pisces_machine_driver,
 	pisces_driver_init,
 
-	gteikoku_rom,
+	rom_gteikoku,
 	0, 0,
-	mooncrst_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	superg_input_ports,
+	input_ports_superg,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	galaxian_hiload, galaxian_hisave
 };
 
-struct GameDriver spacbatt_driver =
+struct GameDriver driver_spacbatt =
 {
 	__FILE__,
-	&uniwars_driver,
+	&driver_uniwars,
 	"spacbatt",
 	"Space Battle",
 	"1980",
@@ -2675,20 +2747,20 @@ struct GameDriver spacbatt_driver =
 	&pisces_machine_driver,
 	pisces_driver_init,
 
-	spacbatt_rom,
+	rom_spacbatt,
 	0, 0,
-	mooncrst_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	superg_input_ports,
+	input_ports_superg,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	galaxian_hiload, galaxian_hisave
 };
 
-struct GameDriver warofbug_driver =
+struct GameDriver driver_warofbug =
 {
 	__FILE__,
 	0,
@@ -2701,20 +2773,20 @@ struct GameDriver warofbug_driver =
 	&warofbug_machine_driver,
 	0,
 
-	warofbug_rom,
+	rom_warofbug,
 	0, 0,
-	mooncrst_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	warofbug_input_ports,
+	input_ports_warofbug,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	warofbug_hiload, warofbug_hisave
 };
 
-struct GameDriver redufo_driver =
+struct GameDriver driver_redufo =
 {
 	__FILE__,
 	0,
@@ -2727,24 +2799,24 @@ struct GameDriver redufo_driver =
 	&warofbug_machine_driver,
 	0,
 
-	redufo_rom,
+	rom_redufo,
 	0, 0,
-	mooncrst_sample_names,
+	0,
 	0,      /* sound_prom */
 
-	redufo_input_ports,
+	input_ports_redufo,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	galaxian_hiload, galaxian_hisave
 };
 
-extern struct GameDriver pacman_driver;
-struct GameDriver pacmanbl_driver =
+extern struct GameDriver driver_pacman;
+struct GameDriver driver_pacmanbl =
 {
 	__FILE__,
-	&pacman_driver,
+	&driver_pacman,
 	"pacmanbl",
 	"Pac-Man (bootleg on Pisces hardware)",
 	"1981",
@@ -2754,24 +2826,24 @@ struct GameDriver pacmanbl_driver =
 	&pacmanbl_machine_driver,
 	0,
 
-	pacmanbl_rom,
+	rom_pacmanbl,
 	0, 0,
-	mooncrst_sample_names,
+	0,
 	0,      /* sound_prom */
 
-	pacmanbl_input_ports,
+	input_ports_pacmanbl,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	pacmanbl_hiload, pacmanbl_hisave
 };
 
-extern struct GameDriver devilfsh_driver;
-struct GameDriver devilfsg_driver =
+extern struct GameDriver driver_devilfsh;
+struct GameDriver driver_devilfsg =
 {
 	__FILE__,
-	&devilfsh_driver,
+	&driver_devilfsh,
 	"devilfsg",
 	"Devil Fish (Galaxian hardware, bootleg?)",
 	"1984",
@@ -2781,20 +2853,20 @@ struct GameDriver devilfsg_driver =
 	&devilfsg_machine_driver,
 	0,
 
-	devilfsg_rom,
+	rom_devilfsg,
 	0, 0,
-	mooncrst_sample_names,
+	0,
 	0,      /* sound_prom */
 
-	devilfsg_input_ports,
+	input_ports_devilfsg,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
         0, 0
 };
 
-struct GameDriver zigzag_driver =
+struct GameDriver driver_zigzag =
 {
 	__FILE__,
 	0,
@@ -2807,23 +2879,23 @@ struct GameDriver zigzag_driver =
 	&zigzag_machine_driver,
 	0,
 
-	zigzag_rom,
+	rom_zigzag,
 	0, 0,
-	mooncrst_sample_names,
+	0,
 	0,      /* sound_prom */
 
-	zigzag_input_ports,
+	input_ports_zigzag,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	zigzag_hiload, zigzag_hisave
 };
 
-struct GameDriver zigzag2_driver =
+struct GameDriver driver_zigzag2 =
 {
 	__FILE__,
-	&zigzag_driver,
+	&driver_zigzag,
 	"zigzag2",
 	"Zig Zag (Galaxian hardware, set 2)",
 	"1982",
@@ -2833,24 +2905,24 @@ struct GameDriver zigzag2_driver =
 	&zigzag_machine_driver,
 	0,
 
-	zigzag2_rom,
+	rom_zigzag2,
 	0, 0,
-	mooncrst_sample_names,
+	0,
 	0,      /* sound_prom */
 
-	zigzag_input_ports,
+	input_ports_zigzag,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	zigzag_hiload, zigzag_hisave
 };
 
-extern struct GameDriver mooncrst_driver;
-struct GameDriver mooncrgx_driver =
+extern struct GameDriver driver_mooncrst;
+struct GameDriver driver_mooncrgx =
 {
 	__FILE__,
-	&mooncrst_driver,
+	&driver_mooncrst,
 	"mooncrgx",
 	"Moon Cresta (bootleg on Galaxian hardware)",
 	"1980",
@@ -2860,24 +2932,24 @@ struct GameDriver mooncrgx_driver =
 	&mooncrgx_machine_driver,
 	0,
 
-	mooncrgx_rom,
+	rom_mooncrgx,
 	0, 0,
-	mooncrst_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	mooncrgx_input_ports,
+	input_ports_mooncrgx,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	mooncrgx_hiload, mooncrgx_hisave
 };
 
-extern struct GameDriver scramble_driver;
-struct GameDriver scramblb_driver =
+extern struct GameDriver driver_scramble;
+struct GameDriver driver_scramblb =
 {
 	__FILE__,
-	&scramble_driver,
+	&driver_scramble,
 	"scramblb",
 	"Scramble (bootleg on Galaxian hardware)",
 	"1981",
@@ -2887,20 +2959,20 @@ struct GameDriver scramblb_driver =
 	&scramblb_machine_driver,
 	0,
 
-	scramblb_rom,
+	rom_scramblb,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	scramblb_input_ports,
+	input_ports_scramblb,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	scramble_hiload, scramble_hisave
 };
 
-struct GameDriver jumpbug_driver =
+struct GameDriver driver_jumpbug =
 {
 	__FILE__,
 	0,
@@ -2913,23 +2985,23 @@ struct GameDriver jumpbug_driver =
 	&jumpbug_machine_driver,
 	0,
 
-	jumpbug_rom,
+	rom_jumpbug,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	jumpbug_input_ports,
+	input_ports_jumpbug,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	jumpbug_hiload, jumpbug_hisave
 };
 
-struct GameDriver jumpbugb_driver =
+struct GameDriver driver_jumpbugb =
 {
 	__FILE__,
-	&jumpbug_driver,
+	&driver_jumpbug,
 	"jumpbugb",
 	"Jump Bug (bootleg)",
 	"1981",
@@ -2939,20 +3011,20 @@ struct GameDriver jumpbugb_driver =
 	&jumpbug_machine_driver,
 	0,
 
-	jumpbugb_rom,
+	rom_jumpbugb,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	jumpbug_input_ports,
+	input_ports_jumpbug,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	jumpbug_hiload, jumpbug_hisave
 };
 
-struct GameDriver levers_driver =
+struct GameDriver driver_levers =
 {
 	__FILE__,
 	0,
@@ -2965,21 +3037,21 @@ struct GameDriver levers_driver =
 	&jumpbug_machine_driver,
 	0,
 
-	levers_rom,
+	rom_levers,
 	0,
 	0,
 	0,
 	0,
 
-	levers_input_ports,
+	input_ports_levers,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	levers_hiload, levers_hisave
 };
 
-struct GameDriver azurian_driver =
+struct GameDriver driver_azurian =
 {
 	__FILE__,
 	0,
@@ -2992,20 +3064,20 @@ struct GameDriver azurian_driver =
 	&azurian_machine_driver,
 	0,
 
-	azurian_rom,
+	rom_azurian,
 	0, 0,
-	mooncrst_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	azurian_input_ports,
+	input_ports_azurian,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
-	0, 0
+	azurian_hiload, azurian_hisave
 };
 
-struct GameDriver orbitron_driver =
+struct GameDriver driver_orbitron =
 {
 	__FILE__,
 	0,
@@ -3018,24 +3090,24 @@ struct GameDriver orbitron_driver =
 	&azurian_machine_driver,
 	0,
 
-	orbitron_rom,
+	rom_orbitron,
 	0, 0,
-	mooncrst_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	orbitron_input_ports,
+	input_ports_orbitron,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
-	0, 0
+	orbitron_hiload, orbitron_hisave
 };
 
-extern struct GameDriver checkman_driver;
-struct GameDriver checkmaj_driver =
+extern struct GameDriver driver_checkman;
+struct GameDriver driver_checkmaj =
 {
 	__FILE__,
-	&checkman_driver,
+	&driver_checkman,
 	"checkmaj",
 	"Checkman (Japan)",
 	"1982",
@@ -3045,14 +3117,14 @@ struct GameDriver checkmaj_driver =
 	&checkmaj_machine_driver,
 	checkmaj_driver_init,
 
-	checkmaj_rom,
+	rom_checkmaj,
 	0, 0,
-	mooncrst_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	checkmaj_input_ports,
+	input_ports_checkmaj,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	0, 0

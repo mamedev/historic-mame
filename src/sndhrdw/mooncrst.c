@@ -129,10 +129,21 @@ void mooncrst_shoot_w(int offset,int data)
 }
 
 
+
+static const char *mooncrst_sample_names[] =
+{
+	"*galaxian",
+	"shot.wav",
+	"death.wav",
+	0	/* end of array */
+};
+
 int mooncrst_sh_start(const struct MachineSound *msound)
 {
 	int i;
 	int lfovol[3] = {LFO_VOLUME,LFO_VOLUME,LFO_VOLUME};
+
+	Machine->samples = readsamples(mooncrst_sample_names,Machine->gamedrv->name);
 
 	channelnoise = mixer_allocate_channel(NOISE_VOLUME);
 	mixer_set_name(channelnoise,"Noise");

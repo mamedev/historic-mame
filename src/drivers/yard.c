@@ -61,7 +61,7 @@ static struct MemoryWriteAddress writemem[] =
 
 
 
-INPUT_PORTS_START( yard_input_ports )
+INPUT_PORTS_START( yard )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -163,7 +163,7 @@ INPUT_PORTS_END
 
 /* exactly the same as yard, only difference is the Allow Continue dip switch */
 /* Also, the Cabinet dip switch doesn't seem to work. */
-INPUT_PORTS_START( vsyard_input_ports )
+INPUT_PORTS_START( vsyard )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -375,7 +375,7 @@ ROM_START( yard )
 	ROM_LOAD( "yf-b-5j",      0x0e000, 0x2000, 0x713ef31f )
 	ROM_LOAD( "yf-b-5k",      0x10000, 0x2000, 0xf49651cc )
 
-	ROM_REGION(0x0520)	/* color/lookup proms */
+	ROM_REGIONX( 0x0520, REGION_PROMS )
 	ROM_LOAD( "yard.1c",      0x0000, 0x0100, 0x08fa5103 ) /* chars palette low 4 bits */
 	ROM_LOAD( "yard.1d",      0x0100, 0x0100, 0x7c04994c ) /* chars palette high 4 bits */
 	ROM_LOAD( "yard.1f",      0x0200, 0x0020, 0xb8554da5 ) /* sprites palette */
@@ -407,7 +407,7 @@ ROM_START( vsyard )
 	ROM_LOAD( "yf-b-5j",      0x0e000, 0x2000, 0x713ef31f )
 	ROM_LOAD( "yf-b-5k",      0x10000, 0x2000, 0xf49651cc )
 
-	ROM_REGION(0x0520)	/* color/lookup proms */
+	ROM_REGIONX( 0x0520, REGION_PROMS )
 	ROM_LOAD( "yard.1c",      0x0000, 0x0100, 0x08fa5103 ) /* chars palette low 4 bits */
 	ROM_LOAD( "yard.1d",      0x0100, 0x0100, 0x7c04994c ) /* chars palette high 4 bits */
 	ROM_LOAD( "yard.1f",      0x0200, 0x0020, 0xb8554da5 ) /* sprites palette */
@@ -439,7 +439,7 @@ ROM_START( vsyard2 )
 	ROM_LOAD( "yf-b-5j",      0x0e000, 0x2000, 0x713ef31f )
 	ROM_LOAD( "yf-b-5k",      0x10000, 0x2000, 0xf49651cc )
 
-	ROM_REGION(0x0520)	/* color/lookup proms */
+	ROM_REGIONX( 0x0520, REGION_PROMS )
 	ROM_LOAD( "yard.1c",      0x0000, 0x0100, 0x08fa5103 ) /* chars palette low 4 bits */
 	ROM_LOAD( "yard.1d",      0x0100, 0x0100, 0x7c04994c ) /* chars palette high 4 bits */
 	ROM_LOAD( "yard.1f",      0x0200, 0x0020, 0xb8554da5 ) /* sprites palette */
@@ -499,7 +499,7 @@ static void hisave(void)
 
 
 
-struct GameDriver yard_driver =
+struct GameDriver driver_yard =
 {
 	__FILE__,
 	0,
@@ -512,23 +512,23 @@ struct GameDriver yard_driver =
 	&machine_driver,
 	0,
 
-	yard_rom,
+	rom_yard,
 	0, 0,
 	0,
 	0,
 
-	yard_input_ports,
+	input_ports_yard,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };
 
-struct GameDriver vsyard_driver =
+struct GameDriver driver_vsyard =
 {
 	__FILE__,
-	&yard_driver,
+	&driver_yard,
 	"vsyard",
 	"10 Yard Fight (Vs. version 11/05/84)",
 	"1984",
@@ -538,23 +538,23 @@ struct GameDriver vsyard_driver =
 	&machine_driver,
 	0,
 
-	vsyard_rom,
+	rom_vsyard,
 	0, 0,
 	0,
 	0,
 
-	vsyard_input_ports,
+	input_ports_vsyard,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };
 
-struct GameDriver vsyard2_driver =
+struct GameDriver driver_vsyard2 =
 {
 	__FILE__,
-	&yard_driver,
+	&driver_yard,
 	"vsyard2",
 	"10 Yard Fight (Vs. version, set 2)",
 	"1984",
@@ -564,14 +564,14 @@ struct GameDriver vsyard2_driver =
 	&machine_driver,
 	0,
 
-	vsyard2_rom,
+	rom_vsyard2,
 	0, 0,
 	0,
 	0,
 
-	vsyard_input_ports,
+	input_ports_vsyard,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave

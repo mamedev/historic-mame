@@ -61,7 +61,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x088000, 0x0881ff, paletteram_word_r },
 //	{ 0x098000, 0x098001, MRA_RAM }, /* watchdog? */
 	{ 0x09ce00, 0x09d9ff, zerozone_videoram_r },
-	{ 0x0c0000, 0x0cffff, MRA_BANK1, &ram },
+	{ 0x0c0000, 0x0cffff, MRA_BANK1 },
 	{ 0x0f8000, 0x0f87ff, MRA_BANK2 },
 	{ -1 }  /* end of table */
 };
@@ -72,7 +72,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x084000, 0x084001, zerozone_sound_w },
 	{ 0x088000, 0x0881ff, paletteram_BBBBGGGGRRRRxxxx_word_w, &paletteram },
 	{ 0x09ce00, 0x09d9ff, zerozone_videoram_w, &zerozone_videoram, &videoram_size },
-	{ 0x0c0000, 0x0cffff, MWA_BANK1 }, /* RAM */
+	{ 0x0c0000, 0x0cffff, MWA_BANK1, &ram }, /* RAM */
 	{ 0x0f8000, 0x0f87ff, MWA_BANK2 },
 	{ -1 }  /* end of table */
 };
@@ -95,7 +95,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ -1 }  /* end of table */
 };
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( zerozone )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -309,7 +309,7 @@ ROM_END
 
 
 
-struct GameDriver zerozone_driver =
+struct GameDriver driver_zerozone =
 {
 	__FILE__,
 	0,
@@ -322,12 +322,12 @@ struct GameDriver zerozone_driver =
 	&machine_driver,
 	0,
 
-	zerozone_rom,
+	rom_zerozone,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_zerozone,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,

@@ -139,7 +139,7 @@ static struct IOWritePort writeport[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( appoooh )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
@@ -317,7 +317,7 @@ ROM_START( appoooh )
 	ROM_LOAD( "epr-5899.bin", 0x10000, 0x4000, 0x885ad636 )
 	ROM_LOAD( "epr-5900.bin", 0x14000, 0x4000, 0xa8ed13f3 )
 
-	ROM_REGION(0x0220)	/* color proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "pr5921.prm",   0x0000, 0x020, 0xf2437229 ) 	/* palette */
 	ROM_LOAD( "pr5922.prm",   0x0020, 0x100, 0x85c542bf ) 	/* charset #1 lookup table */
 	ROM_LOAD( "pr5923.prm",   0x0120, 0x100, 0x16acbd53 ) 	/* charset #2 lookup table */
@@ -366,7 +366,7 @@ static void hisave(void)
 	}
 }
 
-struct GameDriver appoooh_driver =
+struct GameDriver driver_appoooh =
 {
 	__FILE__,
 	0,
@@ -379,14 +379,14 @@ struct GameDriver appoooh_driver =
 	&machine_driver,
 	0,
 
-	appoooh_rom,
+	rom_appoooh,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_appoooh,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave

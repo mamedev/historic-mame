@@ -136,7 +136,7 @@ static struct MemoryWriteAddress sound_writemem[] =
     { -1 }  /* end of table */
 };
 
-INPUT_PORTS_START( bking2_input_ports )
+INPUT_PORTS_START( bking2 )
     PORT_START  /* IN0 */
     PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
     PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -416,8 +416,8 @@ ROM_START( bking2 )
 	ROM_LOAD( "15",           0x0000, 0x1000, 0xf045d0fe )
 	ROM_LOAD( "16",           0x1000, 0x1000, 0x92d50410 )
 
-	ROM_REGION(0x0200)          /* Color PROM */
-	ROM_LOAD( "82s141.2d",    0x0000, 0x0200, 0x61b7a9ff )
+	ROM_REGIONX( 0x0200, REGION_PROMS )
+	ROM_LOAD( "82s141.2d",    0x0000, 0x0200, 0x61b7a9ff )	/* palette */
 
 	ROM_REGION(0x0020)          /* Collision detection prom 32x1 (not currently used) */
 	ROM_LOAD( "mb7051.2c",    0x0000, 0x0020, 0x4cb5bd32 )  /* HIT0-1 go to A3-A4. Character image goes to A0-A2 */
@@ -425,7 +425,7 @@ ROM_END
 
 
 
-struct GameDriver bking2_driver =
+struct GameDriver driver_bking2 =
 {
 	__FILE__,
 	0,
@@ -438,14 +438,14 @@ struct GameDriver bking2_driver =
 	&machine_driver,
 	0,
 
-	bking2_rom,
+	rom_bking2,
 	0, 0,
 	0,
 	0,  /* sound_prom */
 
-	bking2_input_ports,
+	input_ports_bking2,
 
-	PROM_MEMORY_REGION(3), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	0, 0

@@ -337,11 +337,11 @@ static void update_stereo(int ch, void **buffer, int length)
 			for (i = 0; i < length; i++)
 			{
 				/*
-				*dest1++ = (limit(8*(*lmix++))>>8)&0xff;
-				*dest2++ = (limit(8*(*rmix++))>>8)&0xff;
-				*/
-				*dest1++ = ((8*(*lmix++))>>8)&0xff;		/* 991112.CAB */
+				*dest1++ = ((8*(*lmix++))>>8)&0xff;
 				*dest2++ = ((8*(*rmix++))>>8)&0xff;
+				*/
+				*dest1++ = (limit(8*(*lmix++))>>8)&0xff;		/* 991119.CAB */
+				*dest2++ = (limit(8*(*rmix++))>>8)&0xff;
 			}
 		}
 	}

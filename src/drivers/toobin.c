@@ -201,7 +201,7 @@ static struct MemoryWriteAddress main_writemem[] =
  *
  *************************************/
 
-INPUT_PORTS_START( toobin_ports )
+INPUT_PORTS_START( toobin )
 	PORT_START	/* ff8800 */
 	PORT_BITX(0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER2, "P2 R Paddle Forward", KEYCODE_L, IP_JOY_DEFAULT )
 	PORT_BITX(0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER2, "P2 L Paddle Forward", KEYCODE_J, IP_JOY_DEFAULT )
@@ -516,7 +516,7 @@ static void toobin_init(void)
  *
  *************************************/
 
-struct GameDriver toobin_driver =
+struct GameDriver driver_toobin =
 {
 	__FILE__,
 	0,
@@ -529,13 +529,13 @@ struct GameDriver toobin_driver =
 	&machine_driver,
 	toobin_init,
 
-	toobin_rom,
+	rom_toobin,
 	0,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	toobin_ports,
+	input_ports_toobin,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_ROTATE_270,
@@ -543,10 +543,10 @@ struct GameDriver toobin_driver =
 };
 
 
-struct GameDriver toobin2_driver =
+struct GameDriver driver_toobin2 =
 {
 	__FILE__,
-	&toobin_driver,
+	&driver_toobin,
 	"toobin2",
 	"Toobin' (version 2)",
 	"1988",
@@ -556,13 +556,13 @@ struct GameDriver toobin2_driver =
 	&machine_driver,
 	toobin_init,
 
-	toobin2_rom,
+	rom_toobin2,
 	0,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	toobin_ports,
+	input_ports_toobin,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_ROTATE_270,
@@ -570,10 +570,10 @@ struct GameDriver toobin2_driver =
 };
 
 
-struct GameDriver toobinp_driver =
+struct GameDriver driver_toobinp =
 {
 	__FILE__,
-	&toobin_driver,
+	&driver_toobin,
 	"toobinp",
 	"Toobin' (Prototype)",
 	"1988",
@@ -583,13 +583,13 @@ struct GameDriver toobinp_driver =
 	&machine_driver,
 	toobin_init,
 
-	toobinp_rom,
+	rom_toobinp,
 	0,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	toobin_ports,
+	input_ports_toobin,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_ROTATE_270,

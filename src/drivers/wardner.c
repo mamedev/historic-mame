@@ -338,7 +338,7 @@ static struct IOWritePort DSP_writeport[] =
 };
 
 
-INPUT_PORTS_START( wardner_input_ports )
+INPUT_PORTS_START( wardner )
 	PORT_START
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
 
@@ -420,7 +420,7 @@ INPUT_PORTS_START( wardner_input_ports )
 	PORT_DIPSETTING(	0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( pyros_input_ports )
+INPUT_PORTS_START( pyros )
 	PORT_START
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
 
@@ -502,7 +502,7 @@ INPUT_PORTS_START( pyros_input_ports )
 	PORT_DIPSETTING(	0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( wardnerj_input_ports )
+INPUT_PORTS_START( wardnerj )
 	PORT_START
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
 
@@ -863,7 +863,7 @@ static void hisave(void)
 
 
 
-struct GameDriver wardner_driver =
+struct GameDriver driver_wardner =
 {
 	__FILE__,
 	0,
@@ -876,12 +876,12 @@ struct GameDriver wardner_driver =
 	&machine_driver,
 	0,
 
-	wardner_rom,
+	rom_wardner,
 	0, 0,
 	0,
 	0,
 
-	wardner_input_ports,
+	input_ports_wardner,
 
 	0, 0, 0,
 	0,
@@ -889,10 +889,10 @@ struct GameDriver wardner_driver =
 	hiload, hisave
 };
 
-struct GameDriver pyros_driver =
+struct GameDriver driver_pyros =
 {
 	__FILE__,
-	&wardner_driver,
+	&driver_wardner,
 	"pyros",
 	"Pyros (US)",
 	"1987",
@@ -902,12 +902,12 @@ struct GameDriver pyros_driver =
 	&machine_driver,
 	0,
 
-	pyros_rom,
+	rom_pyros,
 	0, 0,
 	0,
 	0,
 
-	pyros_input_ports,
+	input_ports_pyros,
 
 	0, 0, 0,
 	0,
@@ -915,10 +915,10 @@ struct GameDriver pyros_driver =
 	hiload, hisave
 };
 
-struct GameDriver wardnerj_driver =
+struct GameDriver driver_wardnerj =
 {
 	__FILE__,
-	&wardner_driver,
+	&driver_wardner,
 	"wardnerj",
 	"Wardner no Mori (Japan)",
 	"1987",
@@ -928,12 +928,12 @@ struct GameDriver wardnerj_driver =
 	&machine_driver,
 	0,
 
-	wardnerj_rom,
+	rom_wardnerj,
 	0, 0,
 	0,
 	0,
 
-	wardnerj_input_ports,
+	input_ports_wardnerj,
 
 	0, 0, 0,
 	0,

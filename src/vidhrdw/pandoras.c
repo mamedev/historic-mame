@@ -1,6 +1,7 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+extern unsigned char *pandoras_sharedram;
 static struct tilemap *layer0;
 
 /***********************************************************************
@@ -159,6 +160,6 @@ void pandoras_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	tilemap_render( layer0 );
 
 	tilemap_draw( bitmap, layer0, 1 );
-	draw_sprites( bitmap, &spriteram[0x800] );
+	draw_sprites( bitmap, &pandoras_sharedram[0x800] );
 	tilemap_draw( bitmap, layer0, 0 );
 }

@@ -143,7 +143,7 @@ static struct MemoryWriteAddress m68705_writemem[] =
 
 
 
-INPUT_PORTS_START( mexico86_input_ports )
+INPUT_PORTS_START( mexico86 )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -234,7 +234,7 @@ INPUT_PORTS_START( mexico86_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( kikikai_input_ports )
+INPUT_PORTS_START( kikikai )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -265,51 +265,48 @@ INPUT_PORTS_START( kikikai_input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Cocktail ) )
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x04, IP_ACTIVE_LOW )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( On ) )
 	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
 	PORT_DIPSETTING(    0x20, DEF_STR( 1C_2C ) )
-	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 2C_1C ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_1C ) )
 	PORT_DIPSETTING(    0x80, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_3C ) )
 
-	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_START      /* DSW1 */
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x02, "Easy" )
+	PORT_DIPSETTING(    0x03, "Normal" )
+	PORT_DIPSETTING(    0x01, "Hard" )
+	PORT_DIPSETTING(    0x00, "Hardest" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x00, "50000 100000" )
+	PORT_DIPSETTING(    0x0c, "70000 150000" )
+	PORT_DIPSETTING(    0x08, "70000 200000" )
+	PORT_DIPSETTING(    0x04, "100000 300000" )
+	PORT_DIPNAME( 0x30, 0x30, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x00, "2" )
+	PORT_DIPSETTING(    0x30, "3" )
+	PORT_DIPSETTING(    0x20, "4" )
+	PORT_DIPSETTING(    0x10, "5" )
 	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x80, 0x80, "Number Match" )
 	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
@@ -439,7 +436,7 @@ ROM_START( kicknrun )
 	ROM_LOAD( "a87-02.bin", 0x30000, 0x08000, 0x64f1a85f )
 	ROM_RELOAD(             0x38000, 0x08000 )
 
-	ROM_REGION(0x0300)	/* color PROMs */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "a87-10.bin", 0x0000, 0x0100, 0xbe6eb1f0 )
 	ROM_LOAD( "a87-12.bin", 0x0100, 0x0100, 0x3e953444 )
 	ROM_LOAD( "a87-11.bin", 0x0200, 0x0100, 0x14f6c28d )
@@ -467,7 +464,7 @@ ROM_START( mexico86 )
 	ROM_LOAD( "7_a.bin",    0x30000, 0x08000, 0x245036b1 )
 	ROM_RELOAD(             0x38000, 0x08000 )
 
-	ROM_REGION(0x0300)	/* color PROMs */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "a87-10.bin", 0x0000, 0x0100, 0xbe6eb1f0 )
 	ROM_LOAD( "a87-12.bin", 0x0100, 0x0100, 0x3e953444 )
 	ROM_LOAD( "a87-11.bin", 0x0200, 0x0100, 0x14f6c28d )
@@ -491,7 +488,7 @@ ROM_START( kikikai )
 	ROM_LOAD( "a85-13.rom", 0x20000, 0x10000, 0x3eeaf878 )
 	ROM_LOAD( "a85-12.rom", 0x30000, 0x10000, 0x91e58067 )
 
-	ROM_REGION(0x0300)	/* color PROMs */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "a85-08.rom", 0x0000, 0x0100, 0xd15f61a8 )
 	ROM_LOAD( "a85-10.rom", 0x0100, 0x0100, 0x8fc3fa86 )
 	ROM_LOAD( "a85-09.rom", 0x0200, 0x0100, 0xb931c94d )
@@ -505,7 +502,87 @@ ROM_END
 
 
 
-struct GameDriver kicknrun_driver =
+/** Kick and Run & Mexico 86 high score save routine - RJF (Nov 10, 1999) **/
+static int kicknrun_hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	/* check if the hi score table has already been initialized */
+	if ((memcmp(&RAM[0xee18],"\x17\x00\x00",3) == 0) &&
+		(memcmp(&RAM[0xee1d],"\x04\x4b\x41",3) == 0))
+	{
+		void *f;
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0xee18], 5*9);		/* HS table */
+			/* each record has 9 bytes */
+			/* byte 1 = score     */
+			/* byte 5 = flag      */
+			/* byte 6 = win       */
+			/* bytes 7,8,9 = name */
+
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+static void kicknrun_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0xee18], 5*9);		/* HS table */
+		osd_fclose(f);
+	}
+}
+
+/****  Kiki Kaikai high score save routine - RJF (Nov 18, 1999)  ****/
+static int kikikai_hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	/* check if the hi score table has already been initialized */
+        if (memcmp(&RAM[0xe2fc],"\x00\x49\x00",3) == 0)
+	{
+		void *f;
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+                        osd_fread(f,&RAM[0xe2fc], 5*7);         /* HS table */
+                        /* each record has 7 bytes */
+                        /* bytes 1,2,3 = score     */
+                        /* byte 4      = scene     */
+                        /* bytes 5,6,7 = name      */
+
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+static void kikikai_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+                osd_fwrite(f,&RAM[0xe2fc], 5*7);                /* HS table */
+		osd_fclose(f);
+	}
+}
+
+
+
+struct GameDriver driver_kicknrun =
 {
 	__FILE__,
 	0,
@@ -518,23 +595,23 @@ struct GameDriver kicknrun_driver =
 	&mexico86_machine_driver,
 	0,
 
-	kicknrun_rom,
+	rom_kicknrun,
 	0, 0,
 	0,
 	0,	  /* sound_prom */
 
-	mexico86_input_ports,
+	input_ports_mexico86,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	kicknrun_hiload, kicknrun_hisave
 };
 
-struct GameDriver mexico86_driver =
+struct GameDriver driver_mexico86 =
 {
 	__FILE__,
-	&kicknrun_driver,
+	&driver_kicknrun,
 	"mexico86",
 	"Mexico 86",
 	"1986",
@@ -544,20 +621,20 @@ struct GameDriver mexico86_driver =
 	&mexico86_machine_driver,
 	0,
 
-	mexico86_rom,
+	rom_mexico86,
 	0, 0,
 	0,
 	0,	  /* sound_prom */
 
-	mexico86_input_ports,
+	input_ports_mexico86,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
-	0, 0
+	kicknrun_hiload, kicknrun_hisave
 };
 
-struct GameDriver kikikai_driver =
+struct GameDriver driver_kikikai =
 {
 	__FILE__,
 	0,
@@ -566,19 +643,19 @@ struct GameDriver kikikai_driver =
 	"1986",
 	"Taito Corporation",
 	"Ernesto Corvi\nNicola Salmoria",
-	GAME_NOT_WORKING,
+	0,
 	&kikikai_machine_driver,
 	0,
 
-	kikikai_rom,
+	rom_kikikai,
 	0, 0,
 	0,
 	0,	  /* sound_prom */
 
-	kikikai_input_ports,
+	input_ports_kikikai,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
+	0, 0, 0,
+	ORIENTATION_ROTATE_90 | GAME_NOT_WORKING,
 
-	0, 0
+	kikikai_hiload, kikikai_hisave
 };

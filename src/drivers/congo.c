@@ -137,7 +137,7 @@ static int congo_interrupt(void)
 }
 
 /* almost the same as Zaxxon; UP and DOWN are inverted, and the joystick is 4 way. */
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( congo )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY )
@@ -273,10 +273,27 @@ static struct SN76496interface sn76496_interface =
 	{ 100, 100 }
 };
 
+/* Samples for Congo Bongo, these are needed for now    */
+/* as I haven't gotten around to calculate a formula for the */
+/* simple oscillators producing the drums VL*/
+/* As for now, thanks to Tim L. for providing samples */
+
+static const char *congo_sample_names[] =
+{
+	"*congo",
+	"gorilla.wav",
+	"bass.wav",
+	"congaa.wav",
+	"congab.wav",
+	"rim.wav",
+	0
+};
+
 static struct Samplesinterface samples_interface =
 {
 	5,	/* 5 channels */
-	25	/* volume */
+	25,	/* volume */
+	congo_sample_names
 };
 
 
@@ -363,7 +380,7 @@ ROM_START( congo )
 	ROM_LOAD( "congo7.bin",   0x4000, 0x2000, 0x80927943 )
 	/* 6000-7fff empty space to match Zaxxon */
 
-	ROM_REGION(0x100)    /* color prom */
+	ROM_REGIONX( 0x0100, REGION_PROMS )
 	ROM_LOAD( "congo.u68",    0x0000, 0x100, 0xb788d8ae ) /* palette */
 
 	ROM_REGION(0x10000) /*64K for the sound cpu*/
@@ -395,29 +412,12 @@ ROM_START( tiptop )
 	ROM_LOAD( "congo7.bin",   0x4000, 0x2000, 0x80927943 )
 	/* 6000-7fff empty space to match Zaxxon */
 
-	ROM_REGION(0x100)    /* color prom */
+	ROM_REGIONX( 0x0100, REGION_PROMS )
 	ROM_LOAD( "congo.u68",    0x0000, 0x100, 0xb788d8ae ) /* palette */
 
 	ROM_REGION(0x10000) /*64K for the sound cpu*/
 	ROM_LOAD( "congo17.bin",  0x0000, 0x2000, 0x5024e673 )
 ROM_END
-
-
-/* Samples for Congo Bongo, these are needed for now    */
-/* as I haven't gotten around to calculate a formula for the */
-/* simple oscillators producing the drums VL*/
-/* As for now, thanks to Tim L. for providing samples */
-
-static const char *congo_samplenames[] =
-{
-	"*congo",
-	"gorilla.wav",
-	"bass.wav",
-	"congaa.wav",
-	"congab.wav",
-	"rim.wav",
-	0
-};
 
 
 
@@ -467,7 +467,7 @@ static void hisave(void)
 
 
 
-struct GameDriver congo_driver =
+struct GameDriver driver_congo =
 {
 	__FILE__,
 	0,
@@ -480,23 +480,23 @@ struct GameDriver congo_driver =
 	&machine_driver,
 	0,
 
-	congo_rom,
+	rom_congo,
 	0, 0,
-	congo_samplenames,
+	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_congo,
 
-	PROM_MEMORY_REGION(3), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
 
-struct GameDriver tiptop_driver =
+struct GameDriver driver_tiptop =
 {
 	__FILE__,
-	&congo_driver,
+	&driver_congo,
 	"tiptop",
 	"Tip Top",
 	"1983",
@@ -506,14 +506,14 @@ struct GameDriver tiptop_driver =
 	&machine_driver,
 	0,
 
-	tiptop_rom,
+	rom_tiptop,
 	0, 0,
-	congo_samplenames,
+	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_congo,
 
-	PROM_MEMORY_REGION(3), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave

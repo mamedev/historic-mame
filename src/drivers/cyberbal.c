@@ -680,12 +680,12 @@ static void handle_68k_sound_command(int command)
 static struct MemoryReadAddress main_readmem[] =
 {
 	{ 0x000000, 0x03ffff, MRA_ROM },
-	{ 0xfc0000, 0xfc03ff, atarigen_eeprom_r, &atarigen_eeprom, &atarigen_eeprom_size },
+	{ 0xfc0000, 0xfc03ff, atarigen_eeprom_r },
 	{ 0xfc8000, 0xfcffff, atarigen_sound_upper_r },
 	{ 0xfe0000, 0xfe0fff, special_port0_r },
 	{ 0xfe1000, 0xfe1fff, input_port_1_r },
-	{ 0xfe8000, 0xfe8fff, cyberbal_paletteram_2_r, &paletteram_2 },
-	{ 0xfec000, 0xfecfff, cyberbal_paletteram_1_r, &paletteram },
+	{ 0xfe8000, 0xfe8fff, cyberbal_paletteram_2_r },
+	{ 0xfec000, 0xfecfff, cyberbal_paletteram_1_r },
 	{ 0xff0000, 0xff1fff, MRA_BANK1 },
 	{ 0xff2000, 0xff3fff, MRA_BANK2 },
 	{ 0xff4000, 0xff5fff, MRA_BANK3 },
@@ -699,14 +699,14 @@ static struct MemoryReadAddress main_readmem[] =
 static struct MemoryWriteAddress main_writemem[] =
 {
 	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0xfc0000, 0xfc03ff, atarigen_eeprom_w },
+	{ 0xfc0000, 0xfc03ff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
 	{ 0xfd0000, 0xfd1fff, atarigen_eeprom_enable_w },
 	{ 0xfd2000, 0xfd3fff, atarigen_sound_reset_w },
 	{ 0xfd4000, 0xfd5fff, watchdog_reset_w },
 	{ 0xfd6000, 0xfd7fff, p2_reset_w },
 	{ 0xfd8000, 0xfd9fff, atarigen_sound_upper_w },
-	{ 0xfe8000, 0xfe8fff, cyberbal_paletteram_2_w },
-	{ 0xfec000, 0xfecfff, cyberbal_paletteram_1_w },
+	{ 0xfe8000, 0xfe8fff, cyberbal_paletteram_2_w, &paletteram_2 },
+	{ 0xfec000, 0xfecfff, cyberbal_paletteram_1_w, &paletteram },
 	{ 0xff0000, 0xff1fff, cyberbal_playfieldram_2_w },
 	{ 0xff2000, 0xff3fff, MWA_BANK2 },
 	{ 0xff4000, 0xff5fff, cyberbal_playfieldram_1_w },
@@ -750,7 +750,7 @@ static struct MemoryWriteAddress extra_writemem[] =
 	{ 0xfec000, 0xfecfff, cyberbal_paletteram_1_w },			/* player 2 palette RAM */
 	{ 0xff0000, 0xff1fff, cyberbal_playfieldram_2_w, &cyberbal_playfieldram_2 },
 	{ 0xff2000, 0xff3fff, MWA_BANK2 },
-	{ 0xff4000, 0xff5fff, cyberbal_playfieldram_1_w, &cyberbal_playfieldram_1 },
+	{ 0xff4000, 0xff5fff, cyberbal_playfieldram_1_w, &cyberbal_playfieldram_1, &atarigen_playfieldram_size },
 	{ 0xff6000, 0xff7fff, MWA_BANK4 },
 	{ 0xff8000, 0xff9fff, MWA_BANK5 },
 	{ 0xffa000, 0xffbfff, MWA_BANK6 },
@@ -843,12 +843,12 @@ static struct MemoryReadAddress cyberb2p_readmem[] =
 	{ 0xfc2000, 0xfc2003, input_port_1_r },
 	{ 0xfc4000, 0xfc4003, special_port2_r },
 	{ 0xfc6000, 0xfc6003, atarigen_sound_upper_r },
-	{ 0xfc8000, 0xfc8fff, atarigen_eeprom_r, &atarigen_eeprom, &atarigen_eeprom_size },
-	{ 0xfca000, 0xfcafff, MRA_BANK1, &paletteram },
+	{ 0xfc8000, 0xfc8fff, atarigen_eeprom_r },
+	{ 0xfca000, 0xfcafff, MRA_BANK1 },
 	{ 0xfe0000, 0xfe0003, sound_state_r },
-	{ 0xff0000, 0xff1fff, MRA_BANK2, &atarigen_playfieldram, &atarigen_playfieldram_size },
-	{ 0xff2000, 0xff2fff, MRA_BANK3, &atarigen_alpharam, &atarigen_alpharam_size },
-	{ 0xff3000, 0xff3fff, MRA_BANK4, &atarigen_spriteram, &atarigen_spriteram_size },
+	{ 0xff0000, 0xff1fff, MRA_BANK2 },
+	{ 0xff2000, 0xff2fff, MRA_BANK3 },
+	{ 0xff3000, 0xff3fff, MRA_BANK4 },
 	{ 0xff4000, 0xffffff, MRA_BANK5 },
 	{ -1 }  /* end of table */
 };
@@ -856,16 +856,16 @@ static struct MemoryReadAddress cyberb2p_readmem[] =
 static struct MemoryWriteAddress cyberb2p_writemem[] =
 {
 	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0xfc8000, 0xfc8fff, atarigen_eeprom_w },
-	{ 0xfca000, 0xfcafff, atarigen_666_paletteram_w },
+	{ 0xfc8000, 0xfc8fff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
+	{ 0xfca000, 0xfcafff, atarigen_666_paletteram_w, &paletteram },
 	{ 0xfd0000, 0xfd0003, atarigen_eeprom_enable_w },
 	{ 0xfd2000, 0xfd2003, atarigen_sound_reset_w },
 	{ 0xfd4000, 0xfd4003, watchdog_reset_w },
 	{ 0xfd6000, 0xfd6003, atarigen_video_int_ack_w },
 	{ 0xfd8000, 0xfd8003, atarigen_sound_upper_w },
-	{ 0xff0000, 0xff1fff, cyberbal_playfieldram_1_w, &cyberbal_playfieldram_1 },
-	{ 0xff2000, 0xff2fff, MWA_BANK3 },
-	{ 0xff3000, 0xff3fff, MWA_BANK4 },
+	{ 0xff0000, 0xff1fff, cyberbal_playfieldram_1_w, &cyberbal_playfieldram_1, &atarigen_playfieldram_size },
+	{ 0xff2000, 0xff2fff, MWA_BANK3, &atarigen_alpharam, &atarigen_alpharam_size },
+	{ 0xff3000, 0xff3fff, MWA_BANK4, &atarigen_spriteram, &atarigen_spriteram_size },
 	{ 0xff4000, 0xffffff, MWA_BANK5 },
 	{ -1 }  /* end of table */
 };
@@ -878,7 +878,7 @@ static struct MemoryWriteAddress cyberb2p_writemem[] =
  *
  *************************************/
 
-INPUT_PORTS_START( cyberbal_ports )
+INPUT_PORTS_START( cyberbal )
 	PORT_START      /* fe0000 */
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER4 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER4 )
@@ -930,7 +930,7 @@ INPUT_PORTS_START( cyberbal_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( cyberb2p_ports )
+INPUT_PORTS_START( cyberb2p )
 	PORT_START      /* fc0000 */
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER1 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER1 )
@@ -1385,6 +1385,8 @@ static void cyberbal_init(void)
 
 	/* speed up the 6502 */
 	atarigen_init_6502_speedup(1, 0x4191, 0x41A9);
+
+	atarigen_playfieldram = cyberbal_playfieldram_1;
 }
 
 
@@ -1403,6 +1405,8 @@ static void cyberbt_init(void)
 
 	/* speed up the 6502 */
 	atarigen_init_6502_speedup(1, 0x4191, 0x41A9);
+
+	atarigen_playfieldram = cyberbal_playfieldram_1;
 }
 
 
@@ -1418,6 +1422,8 @@ static void cyberb2p_init(void)
 
 	/* speed up the 6502 */
 	atarigen_init_6502_speedup(1, 0x4159, 0x4171);
+
+	atarigen_playfieldram = cyberbal_playfieldram_1;
 }
 
 
@@ -1428,7 +1434,7 @@ static void cyberb2p_init(void)
  *
  *************************************/
 
-struct GameDriver cyberbal_driver =
+struct GameDriver driver_cyberbal =
 {
 	__FILE__,
 	0,
@@ -1437,73 +1443,73 @@ struct GameDriver cyberbal_driver =
 	"1988",
 	"Atari Games",
 	"Aaron Giles (MAME driver)\nPatrick Lawrence (Hardware Info)",
-	GAME_REQUIRES_16BIT,
+	0,
 	&machine_driver,
 	cyberbal_init,
 
-	cyberbal_rom,
+	rom_cyberbal,
 	0,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	cyberbal_ports,
+	input_ports_cyberbal,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_REQUIRES_16BIT,
 	atarigen_hiload, atarigen_hisave
 };
 
 
-struct GameDriver cyberbt_driver =
+struct GameDriver driver_cyberbt =
 {
 	__FILE__,
-	&cyberbal_driver,
+	&driver_cyberbal,
 	"cyberbt",
 	"Tournament Cyberball 2072",
 	"1989",
 	"Atari Games",
 	"Aaron Giles (MAME driver)\nPatrick Lawrence (Hardware Info)",
-	GAME_REQUIRES_16BIT,
+	0,
 	&machine_driver,
 	cyberbt_init,
 
-	cyberbt_rom,
+	rom_cyberbt,
 	0,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	cyberbal_ports,
+	input_ports_cyberbal,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_REQUIRES_16BIT,
 	atarigen_hiload, atarigen_hisave
 };
 
 
-struct GameDriver cyberb2p_driver =
+struct GameDriver driver_cyberb2p =
 {
 	__FILE__,
-	&cyberbal_driver,
+	&driver_cyberbal,
 	"cyberb2p",
 	"Cyberball 2072 (2 player)",
 	"1989",
 	"Atari Games",
 	"Aaron Giles (MAME driver)\nPatrick Lawrence (Hardware Info)",
-	GAME_REQUIRES_16BIT,
+	0,
 	&cyberb2p_machine_driver,
 	cyberb2p_init,
 
-	cyberb2p_rom,
+	rom_cyberb2p,
 	0,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	cyberb2p_ports,
+	input_ports_cyberb2p,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_REQUIRES_16BIT,
 	atarigen_hiload, atarigen_hisave
 };

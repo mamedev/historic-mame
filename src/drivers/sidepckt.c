@@ -92,7 +92,7 @@ static struct MemoryWriteAddress sound_writemem[] =
     { -1 }  /* end of table */
 };
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( sidepckt )
     PORT_START /* 0x3000 */
     PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
     PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
@@ -439,7 +439,7 @@ static void hisave(void)
 
 
 
-struct GameDriver sidepckt_driver =
+struct GameDriver driver_sidepckt =
 {
 	__FILE__,
 	0,
@@ -448,45 +448,45 @@ struct GameDriver sidepckt_driver =
 	"1986",
 	"Data East Corporation",
 	"Ernesto Corvi\nMarc Vergoossen (hardware info)",
-	GAME_NOT_WORKING|GAME_WRONG_COLORS,
+	0,
 	&machine_driver,
 	0,
 
-	sidepckt_rom,
+	rom_sidepckt,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	input_ports,
+	input_ports_sidepckt,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_WRONG_COLORS | GAME_NOT_WORKING,
 
 	hiload, hisave
 };
 
-struct GameDriver sidepckb_driver =
+struct GameDriver driver_sidepckb =
 {
 	__FILE__,
-	&sidepckt_driver,
+	&driver_sidepckt,
 	"sidepckb",
 	"Side Pocket (bootleg)",
 	"1986",
 	"bootleg",
 	"Ernesto Corvi\nMarc Vergoossen (hardware info)",
-	GAME_WRONG_COLORS,
+	0,
 	&machine_driver,
 	0,
 
-	sidepckb_rom,
+	rom_sidepckb,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	input_ports,
+	input_ports_sidepckt,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_WRONG_COLORS,
 
 	hiload, hisave
 };

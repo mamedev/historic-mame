@@ -201,7 +201,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( xsleena )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
@@ -605,7 +605,7 @@ static void hisave(void)
 
 
 
-struct GameDriver xsleena_driver =
+struct GameDriver driver_xsleena =
 {
 	__FILE__,
 	0,
@@ -618,12 +618,12 @@ struct GameDriver xsleena_driver =
 	&machine_driver,
 	0,
 
-	xsleena_rom,
+	rom_xsleena,
 	xsleena_patch, 0,
 	0,
 	0,
 
-	input_ports,
+	input_ports_xsleena,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -631,10 +631,10 @@ struct GameDriver xsleena_driver =
 	hiload, hisave
 };
 
-struct GameDriver xsleenab_driver =
+struct GameDriver driver_xsleenab =
 {
 	__FILE__,
-	&xsleena_driver,
+	&driver_xsleena,
 	"xsleenab",
 	"Xain'd Sleena (bootleg)",
 	"1986",
@@ -644,12 +644,12 @@ struct GameDriver xsleenab_driver =
 	&machine_driver,
 	0,
 
-	xsleenab_rom,
+	rom_xsleenab,
 	0, 0,
 	0,
 	0,
 
-	input_ports,
+	input_ports_xsleena,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -657,10 +657,10 @@ struct GameDriver xsleenab_driver =
 	hiload, hisave
 };
 
-struct GameDriver solarwar_driver =
+struct GameDriver driver_solarwar =
 {
 	__FILE__,
-	&xsleena_driver,
+	&driver_xsleena,
 	"solarwar",
 	"Solar Warrior",
 	"1986",
@@ -670,12 +670,12 @@ struct GameDriver solarwar_driver =
 	&machine_driver,
 	0,
 
-	solarwar_rom,
+	rom_solarwar,
 	solarwar_patch, 0,
 	0,
 	0,
 
-	input_ports,
+	input_ports_xsleena,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

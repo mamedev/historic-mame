@@ -143,7 +143,7 @@ static struct MemoryWriteAddress sub_writemem[] =
     { -1 }  /* end of table */
 };
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( exprraid )
 	PORT_START /* IN 0 - 0x3800 */
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_VBLANK )
 
@@ -396,7 +396,7 @@ ROM_START( exprraid )
 	ROM_LOAD( "cz05",    0x44000, 0x8000, 0xc44570bf )	/* tiles */
 	ROM_LOAD( "cz06",    0x4c000, 0x8000, 0xb9bb448b )	/* tiles */
 
-	ROM_REGION(0x0400) /* color PROMs */
+	ROM_REGIONX( 0x0400, REGION_PROMS )
     ROM_LOAD( "cz17.prm", 0x0000, 0x0100, 0xda31dfbc ) /* red */
     ROM_LOAD( "cz16.prm", 0x0100, 0x0100, 0x51f25b4c ) /* green */
     ROM_LOAD( "cz15.prm", 0x0200, 0x0100, 0xa6168d7f ) /* blue */
@@ -427,7 +427,7 @@ ROM_START( wexpress )
 	ROM_LOAD( "cz05",    0x44000, 0x8000, 0xc44570bf )	/* tiles */
 	ROM_LOAD( "6",       0x4c000, 0x8000, 0xc3a56de5 )	/* tiles */
 
-	ROM_REGION(0x0400) /* color PROMs */
+	ROM_REGIONX( 0x0400, REGION_PROMS )
     ROM_LOAD( "cz17.prm", 0x0000, 0x0100, 0xda31dfbc ) /* red */
     ROM_LOAD( "cz16.prm", 0x0100, 0x0100, 0x51f25b4c ) /* green */
     ROM_LOAD( "cz15.prm", 0x0200, 0x0100, 0xa6168d7f ) /* blue */
@@ -458,7 +458,7 @@ ROM_START( wexpresb )
 	ROM_LOAD( "cz05",    0x44000, 0x8000, 0xc44570bf )	/* tiles */
 	ROM_LOAD( "6",       0x4c000, 0x8000, 0xc3a56de5 )	/* tiles */
 
-	ROM_REGION(0x0400) /* color PROMs */
+	ROM_REGIONX( 0x0400, REGION_PROMS )
     ROM_LOAD( "cz17.prm", 0x0000, 0x0100, 0xda31dfbc ) /* red */
     ROM_LOAD( "cz16.prm", 0x0100, 0x0100, 0x51f25b4c ) /* green */
     ROM_LOAD( "cz15.prm", 0x0200, 0x0100, 0xa6168d7f ) /* blue */
@@ -575,7 +575,7 @@ static void hisave(void)
 
 
 
-struct GameDriver exprraid_driver =
+struct GameDriver driver_exprraid =
 {
 	__FILE__,
 	0,
@@ -588,23 +588,23 @@ struct GameDriver exprraid_driver =
 	&machine_driver,
 	0,
 
-	exprraid_rom,
+	rom_exprraid,
 	exprraid_gfx_expand, exprraid_decode_rom,
 	0,
 	0,      /* sound_prom */
 
-	input_ports,
+	input_ports_exprraid,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };
 
-struct GameDriver wexpress_driver =
+struct GameDriver driver_wexpress =
 {
 	__FILE__,
-	&exprraid_driver,
+	&driver_exprraid,
 	"wexpress",
 	"Western Express (World?)",
 	"1986",
@@ -614,23 +614,23 @@ struct GameDriver wexpress_driver =
 	&machine_driver,
 	0,
 
-	wexpress_rom,
+	rom_wexpress,
 	exprraid_gfx_expand, wexpress_decode_rom,
 	0,
 	0,      /* sound_prom */
 
-	input_ports,
+	input_ports_exprraid,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };
 
-struct GameDriver wexpresb_driver =
+struct GameDriver driver_wexpresb =
 {
 	__FILE__,
-	&exprraid_driver,
+	&driver_exprraid,
 	"wexpresb",
 	"Western Express (bootleg)",
 	"1986",
@@ -640,14 +640,14 @@ struct GameDriver wexpresb_driver =
 	&machine_driver,
 	0,
 
-	wexpresb_rom,
+	rom_wexpresb,
 	exprraid_gfx_expand, 0,
 	0,
 	0,      /* sound_prom */
 
-	input_ports,
+	input_ports_exprraid,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave

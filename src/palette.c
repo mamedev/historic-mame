@@ -250,10 +250,7 @@ void palette_init(void)
 
 	/* now the driver can modify the default values if it wants to. */
 	if (Machine->drv->vh_init_palette)
-	{
-		(*Machine->drv->vh_init_palette)(game_palette,game_colortable,
-				Machine->memory_region[Machine->gamedrv->prom_memory_region]);
-	}
+		(*Machine->drv->vh_init_palette)(game_palette,game_colortable,memory_region(REGION_PROMS));
 
 
 	if (Machine->color_depth == 16 || (Machine->gamedrv->flags & GAME_REQUIRES_16BIT))
@@ -341,11 +338,18 @@ void palette_init(void)
 
 if (errorlog) fprintf(errorlog,"shrinking %d colors palette...\n",Machine->drv->total_colors);
 			/* shrink palette to fit */
-			used = 0;
+			/* many games use color 0 for transparency, so we leave it alone - */
+			/* it is never made to share a pen with another color. */
+			used = 1;
+			palette_map[0] = 0;
+			shrinked_palette[3*0 + 0] = game_palette[3*0 + 0];
+			shrinked_palette[3*0 + 1] = game_palette[3*0 + 1];
+			shrinked_palette[3*0 + 2] = game_palette[3*0 + 2];
 
-			for (i = 0;i < Machine->drv->total_colors;i++)
+			for (i = 1;i < Machine->drv->total_colors;i++)
 			{
-				for (j = 0;j < used;j++)
+				/* we reuse pen 0 if we ran out of pens - needed for Namco System 86 */
+				for (j = (used == STATIC_MAX_PENS ? 0 : 1);j < used;j++)
 				{
 					if (shrinked_palette[3*j + 0] == game_palette[3*i + 0] &&
 							shrinked_palette[3*j + 1] == game_palette[3*i + 1] &&

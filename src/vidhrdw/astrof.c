@@ -83,8 +83,12 @@ static void modify_palette(void)
 ***************************************************************************/
 int astrof_vh_start(void)
 {
-	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,Machine->drv->screen_height)) == 0)
+	if ((colorram = malloc(videoram_size)) == 0)
+	{
+		generic_bitmapped_vh_stop();
 		return 1;
+	}
+
 	return 0;
 }
 
@@ -96,30 +100,28 @@ int astrof_vh_start(void)
 ***************************************************************************/
 void astrof_vh_stop(void)
 {
-	osd_free_bitmap(tmpbitmap);
+	if (colorram)  free(colorram);
 }
 
 
 
-static void common_videoram_w(int offset,int data,int palette)
+static void common_videoram_w(int offset, int data, int color)
 {
 	/* DO NOT try to optimize this by comparing if the value actually changed.
-	   The game writes the same bytes with different colors. For example, the
-	   fuel meter doesn't work with that 'optimization' */
+	   The games write the same data with a different color. For example, the
+	   fuel meter in Astro Fighter doesn't work with that 'optimization' */
 
-	int i,x,y,dx,dy,fore,back,color;
+	int i,x,y,fore,back;
+	int dx = 1;
 
 	videoram[offset] = data;
+	colorram[offset] = color;
 
-	color = *astrof_color & 0x0e;
-
-	fore = Machine->pens[color | palette | 1];
-	back = Machine->pens[color | palette    ];
+	fore = Machine->pens[color | 1];
+	back = Machine->pens[color    ];
 
 	x = (offset >> 8) << 3;
 	y = 255 - (offset & 0xff);
-	dx = 1;
-	dy = 0;
 
 	if (flipscreen)
 	{
@@ -128,35 +130,11 @@ static void common_videoram_w(int offset,int data,int palette)
 		dx = -1;
 	}
 
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
-	{
-		int t;
-
-		t = x; x = y; y = t;
-		t = dx; dx = dy; dy = t;
-	}
-	if (Machine->orientation & ORIENTATION_FLIP_X)
-	{
-		x = x ^ 0xff;
-		dx = -dx;
-	}
-	if (Machine->orientation & ORIENTATION_FLIP_Y)
-	{
-		y = y ^ 0xff;
-		dy = -dy;
-	}
-
-	osd_mark_dirty(x,y,x+(7*dx),y+(7*dy),0);
-
 	for (i = 0; i < 8; i++)
 	{
-		if (data & 0x01)
-			Machine->scrbitmap->line[y][x] = tmpbitmap->line[y][x] = fore;
-		else
-			Machine->scrbitmap->line[y][x] = tmpbitmap->line[y][x] = back;
+		plot_pixel(Machine->scrbitmap, x, y, (data & 1) ? fore : back);
 
 		x += dx;
-		y += dy;
 		data >>= 1;
 	}
 }
@@ -164,22 +142,18 @@ static void common_videoram_w(int offset,int data,int palette)
 void astrof_videoram_w(int offset,int data)
 {
 	// Astro Fighter's palette is set in astrof_video_control2_w, D0 is unused
-	common_videoram_w(offset, data, 0);
+	common_videoram_w(offset, data, *astrof_color & 0x0e);
 }
 
 void tomahawk_videoram_w(int offset,int data)
 {
 	// Tomahawk's palette is set per byte
-	int palette = (*astrof_color & 0x01) << 4;
-
-	common_videoram_w(offset, data, palette);
+	common_videoram_w(offset, data, (*astrof_color & 0x0e) | ((*astrof_color & 0x01) << 4));
 }
 
 
 void astrof_video_control1_w(int offset,int data)
 {
-	int x,y;
-
 	// Video control register 1
 	//
 	// Bit 0     = Flip screen
@@ -195,21 +169,6 @@ void astrof_video_control1_w(int offset,int data)
 		{
 			flipscreen = data & 0x01;
 			force_refresh = 1;
-
-			// Flip bitmap
-			for (y = 0; y < 128; y++)
-			{
-				for (x = 0; x < 128; x++)
-				{
-					unsigned char t = tmpbitmap->line[y][x];
-					tmpbitmap->line[y][x] = tmpbitmap->line[255 - y][255 - x];
-					tmpbitmap->line[255 - y][255 - x] = t;
-
-					t = tmpbitmap->line[255 - y][x];
-					tmpbitmap->line[255 - y][x] = tmpbitmap->line[y][255 - x];
-					tmpbitmap->line[y][255 - x] = t;
-				}
-			}
 		}
 	}
 }
@@ -263,14 +222,9 @@ int tomahawk_protection_r(int offset)
 {
 	switch (*tomahawk_protection)
 	{
-	case 0xeb:
-		return 0xd7;
-
-	case 0x58:
-		return 0x1a;
-
-	case 0x43:
-		return 0xc2;
+	case 0xeb: 	return 0xd7;
+	case 0x58:	return 0x1a;
+	case 0x43:	return 0xc2;
 
 	default:
 		if (errorlog) fprintf(errorlog, "Unknown protection read %02X\n", protection_value);
@@ -293,14 +247,16 @@ void astrof_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		do_modify_palette = 0;
 	}
 
-	palette_recalc();
+	if (palette_recalc() || full_refresh || force_refresh)
+	{
+		int offs;
 
-	if (!full_refresh && !force_refresh)
-		return;
-
-	/* copy the character mapped graphics */
-	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		/* redraw bitmap */
+		for (offs = 0; offs < videoram_size; offs++)
+		{
+			common_videoram_w(offs, videoram[offs], colorram[offs]);
+		}
+	}
 
 	force_refresh = 0;
 }
-

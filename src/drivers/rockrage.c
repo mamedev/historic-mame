@@ -25,7 +25,7 @@ void rockrage_vreg_w(int offset, int data);
 static int rockrage_interrupt( void )
 {
 	if (K007342_is_INT_enabled())
-        return M6309_INT_IRQ;
+        return HD6309_INT_IRQ;
     else
 		return ignore_interrupt();
 }
@@ -123,7 +123,7 @@ static struct MemoryWriteAddress rockrage_writemem_sound[] =
 
 ***************************************************************************/
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( rockrage )
 	PORT_START	/* DSW #1 */
 	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 4C_1C ) )
@@ -347,7 +347,7 @@ ROM_START( rockrage )
 	ROM_REGION( 0x08000 ) /* VLM3050 data */
 	ROM_LOAD( "620k04.6e", 0x00000, 0x08000, 0x8be969f3 )
 
-	ROM_REGION( 0x0300 ) /* lookup tables */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "620k08.12g", 0x00000, 0x00100, 0xb499800c )
 	ROM_LOAD( "620k09.11g", 0x00100, 0x00100, 0x9f0e0608 )
 	ROM_LOAD( "620k07.13g", 0x00200, 0x00100, 0xb6135ee0 )
@@ -370,7 +370,7 @@ ROM_START( rockragj )
 	ROM_REGION( 0x08000 ) /* VLM3050 data */
 	ROM_LOAD( "620k04.6e", 0x00000, 0x08000, 0x8be969f3 )
 
-	ROM_REGION( 0x0300 ) /* lookup tables */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "620k08.12g", 0x00000, 0x00100, 0xb499800c )
 	ROM_LOAD( "620k09.11g", 0x00100, 0x00100, 0x9f0e0608 )
 	ROM_LOAD( "620k07.13g", 0x00200, 0x00100, 0xb6135ee0 )
@@ -382,7 +382,7 @@ ROM_END
 
 ***************************************************************************/
 
-struct GameDriver rockrage_driver =
+struct GameDriver driver_rockrage =
 {
 	__FILE__,
 	0,
@@ -391,43 +391,43 @@ struct GameDriver rockrage_driver =
 	"1986",
 	"Konami",
 	"Manuel Abadia",
-	GAME_IMPERFECT_COLORS,
+	0,
 	&machine_driver,
 	0,
 
-	rockrage_rom,
+	rom_rockrage,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_rockrage,
 
-	PROM_MEMORY_REGION(4), 0, 0,
-    ORIENTATION_DEFAULT,
+	0, 0, 0,
+    ORIENTATION_DEFAULT | GAME_IMPERFECT_COLORS,
 	0, 0
 };
 
-struct GameDriver rockragj_driver =
+struct GameDriver driver_rockragj =
 {
 	__FILE__,
-	&rockrage_driver,
+	&driver_rockrage,
 	"rockragj",
 	"Koi no Hotrock (Japan)",
 	"1986",
 	"Konami",
 	"Manuel Abadia",
-	GAME_IMPERFECT_COLORS,
+	0,
 	&machine_driver,
 	0,
 
-	rockragj_rom,
+	rom_rockragj,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_rockrage,
 
-	PROM_MEMORY_REGION(4), 0, 0,
-    ORIENTATION_DEFAULT,
+	0, 0, 0,
+    ORIENTATION_DEFAULT | GAME_IMPERFECT_COLORS,
 	0, 0
 };

@@ -509,7 +509,7 @@ struct MemoryWriteAddress stooges_sound2_writemem[] =
 
 
 
-INPUT_PORTS_START( reactor_input_ports )
+INPUT_PORTS_START( reactor )
 	PORT_START	/* DSW */
 	PORT_DIPNAME( 0x01, 0x01, "Sound with Logos" )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
@@ -556,7 +556,7 @@ INPUT_PORTS_START( reactor_input_ports )
 	PORT_BIT ( 0xc0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( mplanets_input_ports )
+INPUT_PORTS_START( mplanets )
 	PORT_START	/* DSW */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
@@ -605,7 +605,7 @@ INPUT_PORTS_START( mplanets_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON2 )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( qbert_input_ports )
+INPUT_PORTS_START( qbert )
 	PORT_START      /* DSW */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
@@ -661,7 +661,7 @@ INPUT_PORTS_START( qbert_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( qbertqub_input_ports )
+INPUT_PORTS_START( qbertqub )
 	PORT_START      /* DSW */
 	PORT_DIPNAME( 0x08, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
@@ -720,7 +720,7 @@ INPUT_PORTS_START( qbertqub_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( krull_input_ports )
+INPUT_PORTS_START( krull )
 	PORT_START      /* DSW0 */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
@@ -772,7 +772,7 @@ INPUT_PORTS_START( krull_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICKRIGHT_LEFT  | IPF_8WAY )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( mach3_input_ports )
+INPUT_PORTS_START( mach3 )
 	PORT_START      /* DSW0 */
 	/* TODO: values are different for 5 lives */
 	PORT_DIPNAME( 0x09, 0x08, DEF_STR( Coinage ) )
@@ -825,7 +825,7 @@ INPUT_PORTS_START( mach3_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( usvsthem_input_ports )
+INPUT_PORTS_START( usvsthem )
 	PORT_START      /* DSW0 */
 	/* TODO: values are different for 5 lives */
 	PORT_DIPNAME( 0x09, 0x00, DEF_STR( Coinage ) )
@@ -879,7 +879,7 @@ INPUT_PORTS_START( usvsthem_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( stooges_input_ports )
+INPUT_PORTS_START( stooges )
 	PORT_START	/* DSW */
 	PORT_DIPNAME (0x01, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING (   0x01, DEF_STR( Off ) )
@@ -944,7 +944,7 @@ INPUT_PORTS_START( stooges_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_PLAYER1 | IPF_8WAY )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( curvebal_input_ports )
+INPUT_PORTS_START( curvebal )
 	PORT_START      /* DSW0 */
 	PORT_DIPNAME( 0x08, 0x00, "2 Players Game" )
 	PORT_DIPSETTING(    0x08, "1 Credit" )
@@ -1092,11 +1092,98 @@ static struct DACinterface dac2_interface =
 	{ 25, 25 }
 };
 
+static const char *reactor_sample_names[] =
+{
+	"*reactor",
+	"fx_53.wav", /* "8 left" */
+	"fx_54.wav", /* "16 left" */
+	"fx_55.wav", /* "24 left" */
+	"fx_56.wav", /* "32 left" */
+	"fx_57.wav", /* "40 left" */
+	"fx_58.wav", /* "warning, core unstable" */
+	"fx_59.wav", /* "bonus" */
+	"fx_31.wav", /* "chamber activated" */
+	"fx_39a.wav", /* "2000" */
+	"fx_39b.wav", /* "5000" */
+	"fx_39c.wav", /* "10000" */
+	"fx_39d.wav", /* "15000" */
+	"fx_39e.wav", /* "20000" */
+	"fx_39f.wav", /* "25000" */
+	"fx_39g.wav", /* "30000" */
+	"fx_39h.wav", /* "35000" */
+	"fx_39i.wav", /* "40000" */
+	"fx_39j.wav", /* "45000" */
+	"fx_39k.wav", /* "50000" */
+	"fx_39l.wav", /* "55000" */
+     0	/* end of array */
+};
+
+static const char *qbert_sample_names[] =
+{
+	"*qbert",
+	"fx_17a.wav", /* random speech, voice clock 255 */
+	"fx_17b.wav", /* random speech, voice clock 255 */
+	"fx_17c.wav", /* random speech, voice clock 255 */
+	"fx_17d.wav", /* random speech, voice clock 255 */
+	"fx_17e.wav", /* random speech, voice clock 255 */
+	"fx_17f.wav", /* random speech, voice clock 255 */
+	"fx_17g.wav", /* random speech, voice clock 255 */
+	"fx_17h.wav", /* random speech, voice clock 255 */
+	"fx_18a.wav", /* random speech, voice clock 176 */
+	"fx_18b.wav", /* random speech, voice clock 176 */
+	"fx_18c.wav", /* random speech, voice clock 176 */
+	"fx_18d.wav", /* random speech, voice clock 176 */
+	"fx_18e.wav", /* random speech, voice clock 176 */
+	"fx_18f.wav", /* random speech, voice clock 176 */
+	"fx_18g.wav", /* random speech, voice clock 176 */
+	"fx_18h.wav", /* random speech, voice clock 176 */
+	"fx_19a.wav", /* random speech, voice clock 128 */
+	"fx_19b.wav", /* random speech, voice clock 128 */
+	"fx_19c.wav", /* random speech, voice clock 128 */
+	"fx_19d.wav", /* random speech, voice clock 128 */
+	"fx_19e.wav", /* random speech, voice clock 128 */
+	"fx_19f.wav", /* random speech, voice clock 128 */
+	"fx_19g.wav", /* random speech, voice clock 128 */
+	"fx_19h.wav", /* random speech, voice clock 128 */
+	"fx_20a.wav", /* random speech, voice clock 96 */
+	"fx_20b.wav", /* random speech, voice clock 96 */
+	"fx_20c.wav", /* random speech, voice clock 96 */
+	"fx_20d.wav", /* random speech, voice clock 96 */
+	"fx_20e.wav", /* random speech, voice clock 96 */
+	"fx_20f.wav", /* random speech, voice clock 96 */
+	"fx_20g.wav", /* random speech, voice clock 96 */
+	"fx_20h.wav", /* random speech, voice clock 96 */
+	"fx_21a.wav", /* random speech, voice clock 62 */
+	"fx_21b.wav", /* random speech, voice clock 62 */
+	"fx_21c.wav", /* random speech, voice clock 62 */
+	"fx_21d.wav", /* random speech, voice clock 62 */
+	"fx_21e.wav", /* random speech, voice clock 62 */
+	"fx_21f.wav", /* random speech, voice clock 62 */
+	"fx_21g.wav", /* random speech, voice clock 62 */
+	"fx_21h.wav", /* random speech, voice clock 62 */
+	"fx_22.wav", /* EH2 with decreasing voice clock */
+	"fx_23.wav", /* O1 with varying voice clock */
+	"fx_28.wav", /* "hello, I'm ready" */
+	"fx_36.wav", /* "byebye" */
+	"knocker.wav",
+	0	/* end of array */
+};
+
 static struct Samplesinterface samples_interface =
 {
 	1,	/* one channel */
 	100	/* volume */
 };
+
+static void reactor_init(void)
+{
+	samples_interface.samplenames = reactor_sample_names;
+}
+
+static void qbert_init(void)
+{
+	samples_interface.samplenames = qbert_sample_names;
+}
 
 static struct AY8910interface ay8910_interface =
 {
@@ -1169,7 +1256,7 @@ static struct MachineDriver GAMENAME##_machine_driver =             \
 			&dac1_interface											\
 		},															\
 		{															\
-			SOUND_SAMPLES,	/* only for Q*Bert */					\
+			SOUND_SAMPLES,	/* for Votrax simulation */				\
 			&samples_interface										\
 		}                                                   		\
 	}                                                           	\
@@ -1501,85 +1588,6 @@ ROM_END
 
 
 
-static const char *qbert_sample_names[] =
-{
-	"*qbert",
-	"fx_17a.wav", /* random speech, voice clock 255 */
-	"fx_17b.wav", /* random speech, voice clock 255 */
-	"fx_17c.wav", /* random speech, voice clock 255 */
-	"fx_17d.wav", /* random speech, voice clock 255 */
-	"fx_17e.wav", /* random speech, voice clock 255 */
-	"fx_17f.wav", /* random speech, voice clock 255 */
-	"fx_17g.wav", /* random speech, voice clock 255 */
-	"fx_17h.wav", /* random speech, voice clock 255 */
-	"fx_18a.wav", /* random speech, voice clock 176 */
-	"fx_18b.wav", /* random speech, voice clock 176 */
-	"fx_18c.wav", /* random speech, voice clock 176 */
-	"fx_18d.wav", /* random speech, voice clock 176 */
-	"fx_18e.wav", /* random speech, voice clock 176 */
-	"fx_18f.wav", /* random speech, voice clock 176 */
-	"fx_18g.wav", /* random speech, voice clock 176 */
-	"fx_18h.wav", /* random speech, voice clock 176 */
-	"fx_19a.wav", /* random speech, voice clock 128 */
-	"fx_19b.wav", /* random speech, voice clock 128 */
-	"fx_19c.wav", /* random speech, voice clock 128 */
-	"fx_19d.wav", /* random speech, voice clock 128 */
-	"fx_19e.wav", /* random speech, voice clock 128 */
-	"fx_19f.wav", /* random speech, voice clock 128 */
-	"fx_19g.wav", /* random speech, voice clock 128 */
-	"fx_19h.wav", /* random speech, voice clock 128 */
-	"fx_20a.wav", /* random speech, voice clock 96 */
-	"fx_20b.wav", /* random speech, voice clock 96 */
-	"fx_20c.wav", /* random speech, voice clock 96 */
-	"fx_20d.wav", /* random speech, voice clock 96 */
-	"fx_20e.wav", /* random speech, voice clock 96 */
-	"fx_20f.wav", /* random speech, voice clock 96 */
-	"fx_20g.wav", /* random speech, voice clock 96 */
-	"fx_20h.wav", /* random speech, voice clock 96 */
-	"fx_21a.wav", /* random speech, voice clock 62 */
-	"fx_21b.wav", /* random speech, voice clock 62 */
-	"fx_21c.wav", /* random speech, voice clock 62 */
-	"fx_21d.wav", /* random speech, voice clock 62 */
-	"fx_21e.wav", /* random speech, voice clock 62 */
-	"fx_21f.wav", /* random speech, voice clock 62 */
-	"fx_21g.wav", /* random speech, voice clock 62 */
-	"fx_21h.wav", /* random speech, voice clock 62 */
-	"fx_22.wav", /* EH2 with decreasing voice clock */
-	"fx_23.wav", /* O1 with varying voice clock */
-	"fx_28.wav", /* "hello, I'm ready" */
-	"fx_36.wav", /* "byebye" */
-	"knocker.wav",
-	0	/* end of array */
-};
-
-static const char *reactor_sample_names[] =
-{
-	"*reactor",
-	"fx_53.wav", /* "8 left" */
-	"fx_54.wav", /* "16 left" */
-	"fx_55.wav", /* "24 left" */
-	"fx_56.wav", /* "32 left" */
-	"fx_57.wav", /* "40 left" */
-	"fx_58.wav", /* "warning, core unstable" */
-	"fx_59.wav", /* "bonus" */
-	"fx_31.wav", /* "chamber activated" */
-	"fx_39a.wav", /* "2000" */
-	"fx_39b.wav", /* "5000" */
-	"fx_39c.wav", /* "10000" */
-	"fx_39d.wav", /* "15000" */
-	"fx_39e.wav", /* "20000" */
-	"fx_39f.wav", /* "25000" */
-	"fx_39g.wav", /* "30000" */
-	"fx_39h.wav", /* "35000" */
-	"fx_39i.wav", /* "40000" */
-	"fx_39j.wav", /* "45000" */
-	"fx_39k.wav", /* "50000" */
-	"fx_39l.wav", /* "55000" */
-     0	/* end of array */
-};
-
-
-
 /* Reactor is the only game which doesn't have non volatile RAM */
 static int reactor_hiload(void)
 {
@@ -1656,7 +1664,7 @@ void gottlieb_nvram_save(void)
 }
 
 
-struct GameDriver reactor_driver =
+struct GameDriver driver_reactor =
 {
 	__FILE__,
 	0,
@@ -1667,14 +1675,14 @@ struct GameDriver reactor_driver =
 	"Fabrice Frances",
 	0,
 	&reactor_machine_driver,
-	0,
+	reactor_init,
 
-	reactor_rom,
+	rom_reactor,
 	0, 0,
-	reactor_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	reactor_input_ports,
+	input_ports_reactor,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -1682,7 +1690,7 @@ struct GameDriver reactor_driver =
 	reactor_hiload, reactor_hisave     /* hi-score load and save */
 };
 
-struct GameDriver mplanets_driver =
+struct GameDriver driver_mplanets =
 {
 	__FILE__,
 	0,
@@ -1695,12 +1703,12 @@ struct GameDriver mplanets_driver =
 	&gottlieb_machine_driver,
 	0,
 
-	mplanets_rom,
+	rom_mplanets,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	mplanets_input_ports,
+	input_ports_mplanets,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
@@ -1708,7 +1716,7 @@ struct GameDriver mplanets_driver =
 	gottlieb_nvram_load, gottlieb_nvram_save
 };
 
-struct GameDriver qbert_driver =
+struct GameDriver driver_qbert =
 {
 	__FILE__,
 	0,
@@ -1719,14 +1727,14 @@ struct GameDriver qbert_driver =
 	"Fabrice Frances (MAME driver)\nMarco Cassili\nJohn Butler     (speech\nHowie Cohen     samples)\n\nDedicated to:\nWarren Davis\nJeff Lee\nDavid Thiel",
 	0,
 	&gottlieb_machine_driver,
-	0,
+	qbert_init,
 
-	qbert_rom,
+	rom_qbert,
 	0, 0,
-	qbert_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	qbert_input_ports,
+	input_ports_qbert,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
@@ -1734,10 +1742,10 @@ struct GameDriver qbert_driver =
 	gottlieb_nvram_load, gottlieb_nvram_save
 };
 
-struct GameDriver qbertjp_driver =
+struct GameDriver driver_qbertjp =
 {
 	__FILE__,
-	&qbert_driver,
+	&driver_qbert,
 	"qbertjp",
 	"Q*bert (Japan)",
 	"1982",
@@ -1745,14 +1753,14 @@ struct GameDriver qbertjp_driver =
 	"Fabrice Frances (MAME driver)\nMarco Cassili\nJohn Butler     (speech\nHowie Cohen     samples)\n\nDedicated to:\nWarren Davis\nJeff Lee\nDavid Thiel",
 	0,
 	&gottlieb_machine_driver,
-	0,
+	qbert_init,
 
-	qbertjp_rom,
+	rom_qbertjp,
 	0, 0,
-	qbert_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	qbert_input_ports,
+	input_ports_qbert,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
@@ -1760,7 +1768,7 @@ struct GameDriver qbertjp_driver =
 	gottlieb_nvram_load, gottlieb_nvram_save
 };
 
-struct GameDriver sqbert_driver =
+struct GameDriver driver_sqbert =
 {
 	__FILE__,
 	0,
@@ -1771,14 +1779,14 @@ struct GameDriver sqbert_driver =
 	"Fabrice Frances (MAME driver)\nMarco Cassili\nJohn Butler     (speech\nHowie Cohen     samples)\n\n Special thanks to:\nFred Sookiasian\n\nDedicated to:\nWarren Davis\nJeff Lee\nDavid Thiel",
 	0,
 	&gottlieb_machine_driver,
-	0,
+	qbert_init,
 
-	sqbert_rom,
+	rom_sqbert,
 	0, 0,
-	qbert_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	qbert_input_ports,
+	input_ports_qbert,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
@@ -1786,7 +1794,7 @@ struct GameDriver sqbert_driver =
 	gottlieb_nvram_load, gottlieb_nvram_save
 };
 
-struct GameDriver qbertqub_driver =
+struct GameDriver driver_qbertqub =
 {
 	__FILE__,
 	0,
@@ -1797,14 +1805,14 @@ struct GameDriver qbertqub_driver =
 	"Fabrice Frances & Rodimus Prime (MAME driver)\nMarco Cassili",
 	0,
 	&qbertqub_machine_driver,
-	0,
+	qbert_init,
 
-	qbertqub_rom,
+	rom_qbertqub,
 	0, 0,
-	qbert_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	qbertqub_input_ports,
+	input_ports_qbertqub,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
@@ -1812,7 +1820,7 @@ struct GameDriver qbertqub_driver =
 	gottlieb_nvram_load, gottlieb_nvram_save
 };
 
-struct GameDriver krull_driver =
+struct GameDriver driver_krull =
 {
 	__FILE__,
 	0,
@@ -1825,12 +1833,12 @@ struct GameDriver krull_driver =
 	&krull_machine_driver,
 	0,
 
-	krull_rom,
+	rom_krull,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	krull_input_ports,
+	input_ports_krull,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
@@ -1838,7 +1846,7 @@ struct GameDriver krull_driver =
 	gottlieb_nvram_load, gottlieb_nvram_save
 };
 
-struct GameDriver mach3_driver =
+struct GameDriver driver_mach3 =
 {
 	__FILE__,
 	0,
@@ -1848,24 +1856,24 @@ struct GameDriver mach3_driver =
 	"Mylstar",
 	"Fabrice Frances (MAME driver)\n\n"
 	"This is a LASER DISC game, so it doesn't work.",
-	GAME_NOT_WORKING,
+	0,
 	&mach3_machine_driver,
 	gottlieb_sound_init,	/* clear nmi_timer */
 
-	mach3_rom,
+	rom_mach3,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	mach3_input_ports,
+	input_ports_mach3,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
 
 	gottlieb_nvram_load, gottlieb_nvram_save
 };
 
-struct GameDriver usvsthem_driver =
+struct GameDriver driver_usvsthem =
 {
 	__FILE__,
 	0,
@@ -1875,24 +1883,24 @@ struct GameDriver usvsthem_driver =
 	"Mylstar",
 	"Fabrice Frances (MAME driver)\n\n"
 	"This is a LASER DISC game, so it doesn't work.",
-	GAME_NOT_WORKING,
+	0,
 	&usvsthem_machine_driver,
 	gottlieb_sound_init,	/* clear nmi_timer */
 
-	usvsthem_rom,
+	rom_usvsthem,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	usvsthem_input_ports,
+	input_ports_usvsthem,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
 
 	gottlieb_nvram_load, gottlieb_nvram_save
 };
 
-struct GameDriver stooges_driver =
+struct GameDriver driver_stooges =
 {
 	__FILE__,
 	0,
@@ -1905,12 +1913,12 @@ struct GameDriver stooges_driver =
 	&stooges_machine_driver,
 	gottlieb_sound_init,	/* clear nmi_timer */
 
-	stooges_rom,
+	rom_stooges,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	stooges_input_ports,
+	input_ports_stooges,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -1918,7 +1926,7 @@ struct GameDriver stooges_driver =
 	gottlieb_nvram_load, gottlieb_nvram_save
 };
 
-struct GameDriver curvebal_driver =
+struct GameDriver driver_curvebal =
 {
 	__FILE__,
 	0,
@@ -1931,12 +1939,12 @@ struct GameDriver curvebal_driver =
 	&gottlieb_machine_driver,
 	0,
 
-	curvebal_rom,
+	rom_curvebal,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	curvebal_input_ports,
+	input_ports_curvebal,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,

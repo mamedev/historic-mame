@@ -580,16 +580,16 @@ static void shuffle(UINT16 *buf,int len)
 
 
 /* helper function to join two 16-bit ROMs and form a 32-bit data stream */
-void konami_rom_deinterleave_2(int memory_region)
+void konami_rom_deinterleave_2(int mem_region)
 {
-	shuffle((UINT16 *)Machine->memory_region[memory_region],Machine->memory_region_length[memory_region]/2);
+	shuffle((UINT16 *)Machine->memory_region[mem_region],Machine->memory_region_length[mem_region]/2);
 }
 
 /* helper function to join four 16-bit ROMs and form a 64-bit data stream */
-void konami_rom_deinterleave_4(int memory_region)
+void konami_rom_deinterleave_4(int mem_region)
 {
-	konami_rom_deinterleave_2(memory_region);
-	konami_rom_deinterleave_2(memory_region);
+	konami_rom_deinterleave_2(mem_region);
+	konami_rom_deinterleave_2(mem_region);
 }
 
 
@@ -3223,8 +3223,8 @@ void K051316_zoom_draw(int chip, struct osd_bitmap *bitmap)
 	unsigned char *dest;
 /* TODO: remove this kludge */
 #ifndef TINY_COMPILE
-extern struct GameDriver rollerg_driver;
-int is_rollergames = Machine->gamedrv == &rollerg_driver || Machine->gamedrv->clone_of == &rollerg_driver;
+extern struct GameDriver driver_rollerg;
+int is_rollergames = Machine->gamedrv == &driver_rollerg || Machine->gamedrv->clone_of == &driver_rollerg;
 #else
 int is_rollergames = 0;
 #endif

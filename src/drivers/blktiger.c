@@ -140,7 +140,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( blktiger )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -493,7 +493,7 @@ static void hisave(void)
 
 
 
-struct GameDriver blktiger_driver =
+struct GameDriver driver_blktiger =
 {
 	__FILE__,
 	0,
@@ -506,12 +506,12 @@ struct GameDriver blktiger_driver =
 	&machine_driver,
 	0,
 
-	blktiger_rom,
+	rom_blktiger,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_blktiger,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -519,10 +519,10 @@ struct GameDriver blktiger_driver =
 	hiload, hisave
 };
 
-struct GameDriver bktigerb_driver =
+struct GameDriver driver_bktigerb =
 {
 	__FILE__,
-	&blktiger_driver,
+	&driver_blktiger,
 	"bktigerb",
 	"Black Tiger (bootleg)",
 	"1987",
@@ -532,12 +532,12 @@ struct GameDriver bktigerb_driver =
 	&machine_driver,
 	0,
 
-	bktigerb_rom,
+	rom_bktigerb,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_blktiger,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -545,10 +545,10 @@ struct GameDriver bktigerb_driver =
 	hiload, hisave
 };
 
-struct GameDriver blkdrgon_driver =
+struct GameDriver driver_blkdrgon =
 {
 	__FILE__,
-	&blktiger_driver,
+	&driver_blktiger,
 	"blkdrgon",
 	"Black Dragon",
 	"1987",
@@ -558,12 +558,12 @@ struct GameDriver blkdrgon_driver =
 	&machine_driver,
 	0,
 
-	blkdrgon_rom,
+	rom_blkdrgon,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_blktiger,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -571,10 +571,10 @@ struct GameDriver blkdrgon_driver =
 	hiload, hisave
 };
 
-struct GameDriver blkdrgnb_driver =
+struct GameDriver driver_blkdrgnb =
 {
 	__FILE__,
-	&blktiger_driver,
+	&driver_blktiger,
 	"blkdrgnb",
 	"Black Dragon (bootleg)",
 	"1987",
@@ -584,12 +584,12 @@ struct GameDriver blkdrgnb_driver =
 	&machine_driver,
 	0,
 
-	blkdrgnb_rom,
+	rom_blkdrgnb,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_blktiger,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

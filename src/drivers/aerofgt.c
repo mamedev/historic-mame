@@ -330,7 +330,7 @@ static struct IOWritePort aerofgt_sound_writeport[] =
 
 
 
-INPUT_PORTS_START( pspikes_input_ports )
+INPUT_PORTS_START( pspikes )
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
@@ -405,7 +405,7 @@ INPUT_PORTS_START( pspikes_input_ports )
 	PORT_DIPSETTING(      0x0000, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( turbofrc_input_ports )
+INPUT_PORTS_START( turbofrc )
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
@@ -493,7 +493,7 @@ INPUT_PORTS_START( turbofrc_input_ports )
 	PORT_BIT( 0x0080, IP_ACTIVE_LOW, IPT_START3 )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( aerofgtb_input_ports )
+INPUT_PORTS_START( aerofgtb )
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
@@ -576,7 +576,7 @@ INPUT_PORTS_START( aerofgtb_input_ports )
 	/* this port is checked at 1b080 */
 INPUT_PORTS_END
 
-INPUT_PORTS_START( aerofgt_input_ports )
+INPUT_PORTS_START( aerofgt )
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
@@ -1283,7 +1283,7 @@ ROM_END
 
 
 
-struct GameDriver pspikes_driver =
+struct GameDriver driver_pspikes =
 {
 	__FILE__,
 	0,
@@ -1296,19 +1296,19 @@ struct GameDriver pspikes_driver =
 	&pspikes_machine_driver,
 	0,
 
-	pspikes_rom,
+	rom_pspikes,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	pspikes_input_ports,
+	input_ports_pspikes,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	0, 0
 };
 
-struct GameDriver turbofrc_driver =
+struct GameDriver driver_turbofrc =
 {
 	__FILE__,
 	0,
@@ -1321,19 +1321,19 @@ struct GameDriver turbofrc_driver =
 	&turbofrc_machine_driver,
 	0,
 
-	turbofrc_rom,
+	rom_turbofrc,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	turbofrc_input_ports,
+	input_ports_turbofrc,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 	0, 0
 };
 
-struct GameDriver aerofgt_driver =
+struct GameDriver driver_aerofgt =
 {
 	__FILE__,
 	0,
@@ -1346,22 +1346,22 @@ struct GameDriver aerofgt_driver =
 	&aerofgt_machine_driver,
 	0,
 
-	aerofgt_rom,
+	rom_aerofgt,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	aerofgt_input_ports,
+	input_ports_aerofgt,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 	0, 0
 };
 
-struct GameDriver aerofgtb_driver =
+struct GameDriver driver_aerofgtb =
 {
 	__FILE__,
-	&aerofgt_driver,
+	&driver_aerofgt,
 	"aerofgtb",
 	"Aero Fighters (Turbo Force hardware set 1)",
 	"1992",
@@ -1371,22 +1371,22 @@ struct GameDriver aerofgtb_driver =
 	&aerofgtb_machine_driver,
 	0,
 
-	aerofgtb_rom,
+	rom_aerofgtb,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	aerofgtb_input_ports,
+	input_ports_aerofgtb,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 	0, 0
 };
 
-struct GameDriver aerofgtc_driver =
+struct GameDriver driver_aerofgtc =
 {
 	__FILE__,
-	&aerofgt_driver,
+	&driver_aerofgt,
 	"aerofgtc",
 	"Aero Fighters (Turbo Force hardware set 2)",
 	"1992",
@@ -1396,12 +1396,12 @@ struct GameDriver aerofgtc_driver =
 	&aerofgtb_machine_driver,
 	0,
 
-	aerofgtc_rom,
+	rom_aerofgtc,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	aerofgtb_input_ports,
+	input_ports_aerofgtb,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
@@ -1409,7 +1409,7 @@ struct GameDriver aerofgtc_driver =
 };
 
 /* note: this one has a 2608, not a 2610 */
-struct GameDriver unkvsys_driver =
+struct GameDriver driver_unkvsys =
 {
 	__FILE__,
 	0,
@@ -1422,12 +1422,12 @@ struct GameDriver unkvsys_driver =
 	&unkvsys_machine_driver,
 	0,
 
-	unkvsys_rom,
+	rom_unkvsys,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	aerofgt_input_ports,
+	input_ports_aerofgt,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_90,

@@ -306,7 +306,7 @@ static struct MemoryWriteAddress karnov_s_writemem[] =
 
 /******************************************************************************/
 
-INPUT_PORTS_START( karnov_input_ports )
+INPUT_PORTS_START( karnov )
 	PORT_START	/* Player 1 controls */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
@@ -393,7 +393,7 @@ to have any effect */
 	PORT_DIPSETTING(    0x00, "Fast" )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( chelnov_input_ports )
+INPUT_PORTS_START( chelnov )
 	PORT_START	/* Player controls */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
@@ -701,7 +701,7 @@ ROM_START( karnov )
 	ROM_LOAD( "dn18-",        0xa8000, 0x10000, 0x2ad53213 )
 	ROM_LOAD( "dn19-5",       0xb8000, 0x08000, 0x8fd4fa40 )
 
-	ROM_REGION_DISPOSE(0x0800)	/* color PROMs */
+	ROM_REGIONX( 0x0800, REGION_PROMS )
 	ROM_LOAD( "karnprom.21",  0x0000, 0x0400, 0xaab0bb93 )
 	ROM_LOAD( "karnprom.20",  0x0400, 0x0400, 0x02f78ffb )
 
@@ -733,7 +733,7 @@ ROM_START( karnovj )
 	ROM_LOAD( "dn18-",        0xa8000, 0x10000, 0x2ad53213 )
 	ROM_LOAD( "kar19",        0xb8000, 0x08000, 0x7bc174bb )
 
-	ROM_REGION_DISPOSE(0x0800)	/* color PROMs */
+	ROM_REGIONX( 0x0800, REGION_PROMS )
 	ROM_LOAD( "karnprom.21",  0x0000, 0x0400, 0xaab0bb93 )
 	ROM_LOAD( "karnprom.20",  0x0400, 0x0400, 0x02f78ffb )
 
@@ -765,7 +765,7 @@ ROM_START( wndrplnt )
 	ROM_LOAD( "ea18.bin",    0xa8000, 0x10000, 0x3fb2cec7 )
 	ROM_LOAD( "ea19.bin",    0xb8000, 0x10000, 0x87cf03b5 )
 
-	ROM_REGION_DISPOSE(0x0800)	/* color PROMs */
+	ROM_REGIONX( 0x0800, REGION_PROMS )
 	ROM_LOAD( "ea21.prm",      0x0000, 0x0400, 0xc8beab49 )
 	ROM_LOAD( "ea20.prm",      0x0400, 0x0400, 0x619f9d1e )
 
@@ -793,7 +793,7 @@ ROM_START( chelnov )
 	ROM_LOAD( "ee14-.f13",    0x88000, 0x10000, 0xd8f4bbde )
 	ROM_LOAD( "ee15-.f15",    0xa8000, 0x10000, 0x81e3e68b )
 
-	ROM_REGION_DISPOSE(0x0800)	/* color PROMs */
+	ROM_REGIONX( 0x0800, REGION_PROMS )
 	ROM_LOAD( "ee21.k8",      0x0000, 0x0400, 0xb1db6586 )	/* different from the other set; */
 														/* might be bad */
 	ROM_LOAD( "ee20.l6",      0x0400, 0x0400, 0x41816132 )
@@ -822,7 +822,7 @@ ROM_START( chelnovj )
 	ROM_LOAD( "ee14-.f13",    0x88000, 0x10000, 0xd8f4bbde )
 	ROM_LOAD( "ee15-.f15",    0xa8000, 0x10000, 0x81e3e68b )
 
-	ROM_REGION_DISPOSE(0x0800)	/* color PROMs */
+	ROM_REGIONX( 0x0800, REGION_PROMS )
 	ROM_LOAD( "a-k7.bin",     0x0000, 0x0400, 0x309c49d8 )	/* different from the other set; */
 														/* might be bad */
 	ROM_LOAD( "ee20.l6",      0x0400, 0x0400, 0x41816132 )
@@ -995,7 +995,7 @@ static void karnov_init(void)
 
 /******************************************************************************/
 
-struct GameDriver karnov_driver =
+struct GameDriver driver_karnov =
 {
 	__FILE__,
 	0,
@@ -1008,23 +1008,23 @@ struct GameDriver karnov_driver =
 	&karnov_machine_driver,
 	karnov_init,
 
-	karnov_rom,
+	rom_karnov,
 	0,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	karnov_input_ports,
+	input_ports_karnov,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	karnov_hiload, karnov_hisave
 };
 
-struct GameDriver karnovj_driver =
+struct GameDriver driver_karnovj =
 {
 	__FILE__,
-	&karnov_driver,
+	&driver_karnov,
 	"karnovj",
 	"Karnov (Japan)",
 	"1987",
@@ -1034,20 +1034,20 @@ struct GameDriver karnovj_driver =
 	&karnov_machine_driver,
 	karnov_init,
 
-	karnovj_rom,
+	rom_karnovj,
 	0,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	karnov_input_ports,
+	input_ports_karnov,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	karnov_hiload, karnov_hisave
 };
 
-struct GameDriver wndrplnt_driver =
+struct GameDriver driver_wndrplnt =
 {
 	__FILE__,
 	0,
@@ -1056,24 +1056,24 @@ struct GameDriver wndrplnt_driver =
 	"1987",
 	"Data East Corporation",
 	"Bryan McPhail",
-	GAME_NOT_WORKING,
+	0,
 	&wndrplnt_machine_driver,
 	karnov_init,
 
-	wndrplnt_rom,
+	rom_wndrplnt,
 	wndrplnt_patch,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	karnov_input_ports,
+	input_ports_karnov,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
+	0, 0, 0,
+	ORIENTATION_ROTATE_270 | GAME_NOT_WORKING,
 	0, 0
 };
 
-struct GameDriver chelnov_driver =
+struct GameDriver driver_chelnov =
 {
 	__FILE__,
 	0,
@@ -1086,23 +1086,23 @@ struct GameDriver chelnov_driver =
 	&karnov_machine_driver,
 	karnov_init,
 
-	chelnov_rom,
+	rom_chelnov,
 	chelnov_patch,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	chelnov_input_ports,
+	input_ports_chelnov,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	chelnov_hiload, chelnov_hisave
 };
 
-struct GameDriver chelnovj_driver =
+struct GameDriver driver_chelnovj =
 {
 	__FILE__,
-	&chelnov_driver,
+	&driver_chelnov,
 	"chelnovj",
 	"Chelnov - Atomic Runner (Japan)",
 	"1988",
@@ -1112,15 +1112,15 @@ struct GameDriver chelnovj_driver =
 	&karnov_machine_driver,
 	karnov_init,
 
-	chelnovj_rom,
+	rom_chelnovj,
 	chelnovj_patch,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	chelnov_input_ports,
+	input_ports_chelnov,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	chelnov_hiload, chelnov_hisave
 };

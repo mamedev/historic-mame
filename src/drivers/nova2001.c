@@ -79,7 +79,7 @@ static struct MemoryWriteAddress writemem[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( nova2001 )
     PORT_START
     PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
     PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
@@ -258,7 +258,7 @@ ROM_START( nova2001 )
 	ROM_LOAD( "nova2001.7",   0x4000, 0x2000, 0x9ebd8806 )
 	ROM_LOAD( "nova2001.8",   0x6000, 0x2000, 0xd1b18389 )
 
-	ROM_REGION(0x0020)	/* color PROMs */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "nova2001.clr", 0x0000, 0x0020, 0xa2fac5cd )
 ROM_END
 
@@ -303,7 +303,7 @@ static void hisave(void)
 
 
 
-struct GameDriver nova2001_driver =
+struct GameDriver driver_nova2001 =
 {
 	__FILE__,
 	0,
@@ -316,14 +316,14 @@ struct GameDriver nova2001_driver =
 	&machine_driver,
 	0,
 
-	nova2001_rom,
+	rom_nova2001,
 	0,0,
 	0,
 	0, /* sound prom */
 
-	input_ports,
+	input_ports_nova2001,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload,hisave

@@ -161,7 +161,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ -1 }  /* end of table */
 };
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( footchmp )
 	PORT_START /* DSW A */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -412,7 +412,7 @@ ROM_START( footchmp )
 	ROM_LOAD( "efc57.bin", 0x00000, 0x100000, 0x609938d5 )
 ROM_END
 
-struct GameDriver footchmp_driver =
+struct GameDriver driver_footchmp =
 {
 	__FILE__,
 	0,
@@ -425,12 +425,12 @@ struct GameDriver footchmp_driver =
 	&machine_driver,
 	0,
 
-	footchmp_rom,
+	rom_footchmp,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_footchmp,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,

@@ -109,7 +109,7 @@ static int astrof_interrupt(void)
 }
 
 
-INPUT_PORTS_START( astrof_input_ports )
+INPUT_PORTS_START( astrof )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -162,7 +162,7 @@ INPUT_PORTS_START( astrof_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( tomahawk_input_ports )
+INPUT_PORTS_START( tomahawk )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
@@ -274,7 +274,7 @@ ROM_START( astrof )
 	ROM_LOAD( "afii.2",       0xf000, 0x0800, 0x69f8a4fc )
 	ROM_LOAD( "afii.1",       0xf800, 0x0800, 0x322c09d2 )
 
-	ROM_REGION(0x0020)   /* 32 bytes for the color PROM */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "astrf.clr",    0x0000, 0x0020, 0x61329fd1 )
 ROM_END
 
@@ -293,7 +293,7 @@ ROM_START( astrof2 )
 	ROM_LOAD( "ke2",          0xf800, 0x0400, 0x2c4cab1a )
 	ROM_LOAD( "af583.00",     0xfc00, 0x0400, 0xf699dda3 )
 
-	ROM_REGION(0x0020)   /* 32 bytes for the color PROM */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "astrf.clr",    0x0000, 0x0020, 0x61329fd1 )
 ROM_END
 
@@ -312,7 +312,7 @@ ROM_START( astrof3 )
 	ROM_LOAD( "ke2",          0xf800, 0x0400, 0x2c4cab1a )
 	ROM_LOAD( "kei",          0xfc00, 0x0400, 0xfce4718d )
 
-	ROM_REGION(0x0020)   /* 32 bytes for the color PROM */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "astrf.clr",    0x0000, 0x0020, 0x61329fd1 )
 ROM_END
 
@@ -328,7 +328,7 @@ ROM_START( tomahawk )
 	ROM_LOAD( "l1-1",         0xf800, 0x0400, 0xf2096ba9 )
 	ROM_LOAD( "l0-1",         0xfc00, 0x0400, 0x42edbc28 )
 
-	ROM_REGION(0x0020)   /* 32 bytes for the color PROM */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "t777.clr",     0x0000, 0x0020, 0xd6a528fd )
 ROM_END
 
@@ -344,7 +344,7 @@ ROM_START( tomahaw5 )
 	ROM_LOAD( "thawk.l1",     0xf800, 0x0400, 0x1d9dab9c )
 	ROM_LOAD( "thawk.l0",     0xfc00, 0x0400, 0xd21a1eba )
 
-	ROM_REGION(0x0020)   /* 32 bytes for the color PROM */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "t777.clr",     0x0000, 0x0020, 0xd6a528fd )
 ROM_END
 
@@ -441,35 +441,10 @@ static void tomahawk_hisave(void)
 }
 
 
-/* Make sure that the #define's in sndhrdw/astrof.c matches these */
-static const char *astrof_sample_names[] =
-{
-	"*astrof",
-	"fire.wav",
-	"ekilled.wav",
-	"wave1.wav",
-	"wave2.wav",
-	"wave3.wav",
-	"wave4.wav",
-	"bossfire.wav",
-	"fuel.wav",
-	"death.wav",
-	"bosshit.wav",
-	"bosskill.wav",
-	0   /* end of array */
-};
-
-static const char *tomahawk_sample_names[] =
-{
-	"*tomahawk",
-	/* We don't have these yet */
-	0   /* end of array */
-};
-
 
 #define CREDITS "Lee Taylor\ndedicated to Lucy Anne Taylor\nZsolt Vasvari"
 
-struct GameDriver astrof_driver =
+struct GameDriver driver_astrof =
 {
 	__FILE__,
 	0,
@@ -482,23 +457,23 @@ struct GameDriver astrof_driver =
 	&astrof_machine_driver,
 	0,
 
-	astrof_rom,
+	rom_astrof,
 	0, 0,
-	astrof_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	astrof_input_ports,
+	input_ports_astrof,
 
-	PROM_MEMORY_REGION(1), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	astrof_hiload, astrof_hisave
 };
 
-struct GameDriver astrof2_driver =
+struct GameDriver driver_astrof2 =
 {
 	__FILE__,
-	&astrof_driver,
+	&driver_astrof,
 	"astrof2",
 	"Astro Fighter (set 2)",
 	"1980",
@@ -508,23 +483,23 @@ struct GameDriver astrof2_driver =
 	&astrof_machine_driver,
 	0,
 
-	astrof2_rom,
+	rom_astrof2,
 	0, 0,
-	astrof_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	astrof_input_ports,
+	input_ports_astrof,
 
-	PROM_MEMORY_REGION(1), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	astrof_hiload, astrof_hisave
 };
 
-struct GameDriver astrof3_driver =
+struct GameDriver driver_astrof3 =
 {
 	__FILE__,
-	&astrof_driver,
+	&driver_astrof,
 	"astrof3",
 	"Astro Fighter (set 3)",
 	"1980",
@@ -534,20 +509,20 @@ struct GameDriver astrof3_driver =
 	&astrof_machine_driver,
 	0,
 
-	astrof3_rom,
+	rom_astrof3,
 	0, 0,
-	astrof_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	astrof_input_ports,
+	input_ports_astrof,
 
-	PROM_MEMORY_REGION(1), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	astrof_hiload, astrof_hisave
 };
 
-struct GameDriver tomahawk_driver =
+struct GameDriver driver_tomahawk =
 {
 	__FILE__,
 	0,
@@ -560,24 +535,24 @@ struct GameDriver tomahawk_driver =
 	&tomahawk_machine_driver,
 	0,
 
-	tomahawk_rom,
+	rom_tomahawk,
 	0, 0,
-	tomahawk_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	tomahawk_input_ports,
+	input_ports_tomahawk,
 
-	PROM_MEMORY_REGION(1), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	tomahawk_hiload, tomahawk_hisave
 
 };
 
-struct GameDriver tomahaw5_driver =
+struct GameDriver driver_tomahaw5 =
 {
 	__FILE__,
-	&tomahawk_driver,  				// Only the color PROM is shared
+	&driver_tomahawk,  				// Only the color PROM is shared
 	"tomahaw5",
 	"Tomahawk 777 (Revision 5)",
 	"1980",
@@ -587,14 +562,14 @@ struct GameDriver tomahaw5_driver =
 	&tomahawk_machine_driver,
 	0,
 
-	tomahaw5_rom,
+	rom_tomahaw5,
 	0, 0,
-	tomahawk_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	tomahawk_input_ports,
+	input_ports_tomahawk,
 
-	PROM_MEMORY_REGION(1), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	tomahawk_hiload, tomahawk_hisave

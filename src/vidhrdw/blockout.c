@@ -101,11 +101,11 @@ static void updatepixels(int x,int y)
 
 	if (front>>8) color = front>>8;
 	else color = (back>>8) + 256;
-	tmpbitmap->line[y][x] = Machine->pens[color];
+	plot_pixel(tmpbitmap, x, y, Machine->pens[color]);
 
 	if (front&0xff) color = front&0xff;
 	else color = (back&0xff) + 256;
-	tmpbitmap->line[y][x+1] = Machine->pens[color];
+	plot_pixel(tmpbitmap, x+1, y, Machine->pens[color]);
 }
 
 
@@ -177,14 +177,14 @@ void blockout_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 				if (d)
 				{
-					if (d&0x80) bitmap->line[y][x] = color;
-					if (d&0x40) bitmap->line[y][x+1] = color;
-					if (d&0x20) bitmap->line[y][x+2] = color;
-					if (d&0x10) bitmap->line[y][x+3] = color;
-					if (d&0x08) bitmap->line[y][x+4] = color;
-					if (d&0x04) bitmap->line[y][x+5] = color;
-					if (d&0x02) bitmap->line[y][x+6] = color;
-					if (d&0x01) bitmap->line[y][x+7] = color;
+					if (d&0x80) plot_pixel(bitmap, x  , y, color);
+					if (d&0x40) plot_pixel(bitmap, x+1, y, color);
+					if (d&0x20) plot_pixel(bitmap, x+2, y, color);
+					if (d&0x10) plot_pixel(bitmap, x+3, y, color);
+					if (d&0x08) plot_pixel(bitmap, x+4, y, color);
+					if (d&0x04) plot_pixel(bitmap, x+5, y, color);
+					if (d&0x02) plot_pixel(bitmap, x+6, y, color);
+					if (d&0x01) plot_pixel(bitmap, x+7, y, color);
 				}
 			}
 		}

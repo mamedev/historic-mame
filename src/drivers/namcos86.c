@@ -47,13 +47,7 @@ void rthunder_tilebank_select_1(int offset,int data);
 
 #define MEM_CPU1		0
 #define MEM_DATA1		1
-
 #define MEM_CPU2		2
-
-#define MEM_GFX_TILES1	3
-#define MEM_GFX_TILES2	4
-#define MEM_GFX_SPRITES	5
-#define MEM_COLOR		6
 #define MEM_MCU			7
 #define MEM_SAMPLES		8
 
@@ -589,7 +583,7 @@ static struct IOWritePort mcu_writeport[] =
 
 /*******************************************************************/
 
-INPUT_PORTS_START( roishtar_input_ports )
+INPUT_PORTS_START( roishtar )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* button 3 player 2 */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -671,7 +665,7 @@ INPUT_PORTS_START( roishtar_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICKRIGHT_LEFT | IPF_8WAY )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( genpeitd_input_ports )
+INPUT_PORTS_START( genpeitd )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* button 3 player 2 */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -749,7 +743,7 @@ INPUT_PORTS_START( genpeitd_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( rthunder_input_ports )
+INPUT_PORTS_START( rthunder )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* button 3 player 2 */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -828,7 +822,7 @@ INPUT_PORTS_START( rthunder_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_PLAYER2 )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( rthundrb_input_ports )
+INPUT_PORTS_START( rthundrb )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* button 3 player 2 */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -907,7 +901,7 @@ INPUT_PORTS_START( rthundrb_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_PLAYER2 )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( wndrmomo_input_ports )
+INPUT_PORTS_START( wndrmomo )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* button 3 player 2 */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -1024,61 +1018,61 @@ SPRITELAYOUT(1024);
 
 static struct GfxDecodeInfo roishtar_gfxdecodeinfo[] =
 {
-	{ MEM_GFX_TILES1,  0x00000, &tilelayout_1024,   2048*0, 256 },
-	{ MEM_GFX_TILES2,  0x00000, &tilelayout_1024,   2048*0, 256 },
-	{ MEM_GFX_SPRITES, 0x00000, &spritelayout_256,  2048*1, 128 },
-	{ MEM_GFX_SPRITES, 0x08000, &spritelayout_256,  2048*1, 128 },
-	{ MEM_GFX_SPRITES, 0x10000, &spritelayout_256,  2048*1, 128 },
-	{ MEM_GFX_SPRITES, 0x18000, &spritelayout_256,  2048*1, 128 },
-	{ MEM_GFX_SPRITES, 0x20000, &spritelayout_256,  2048*1, 128 },
-	{ MEM_GFX_SPRITES, 0x28000, &spritelayout_256,  2048*1, 128 },
-	{ MEM_GFX_SPRITES, 0x30000, &spritelayout_256,  2048*1, 128 },
-	{ MEM_GFX_SPRITES, 0x38000, &spritelayout_256,  2048*1, 128 },
+	{ REGION_GFX1, 0x00000, &tilelayout_1024,   2048*0, 256 },
+	{ REGION_GFX2, 0x00000, &tilelayout_1024,   2048*0, 256 },
+	{ REGION_GFX3, 0x00000, &spritelayout_256,  2048*1, 128 },
+	{ REGION_GFX3, 0x08000, &spritelayout_256,  2048*1, 128 },
+	{ REGION_GFX3, 0x10000, &spritelayout_256,  2048*1, 128 },
+	{ REGION_GFX3, 0x18000, &spritelayout_256,  2048*1, 128 },
+	{ REGION_GFX3, 0x20000, &spritelayout_256,  2048*1, 128 },
+	{ REGION_GFX3, 0x28000, &spritelayout_256,  2048*1, 128 },
+	{ REGION_GFX3, 0x30000, &spritelayout_256,  2048*1, 128 },
+	{ REGION_GFX3, 0x38000, &spritelayout_256,  2048*1, 128 },
 	{ -1 }
 };
 
 static struct GfxDecodeInfo genpeitd_gfxdecodeinfo[] =
 {
-	{ MEM_GFX_TILES1,  0x00000, &tilelayout_4096,   2048*0, 256 },
-	{ MEM_GFX_TILES2,  0x00000, &tilelayout_2048,   2048*0, 256 },
-	{ MEM_GFX_SPRITES, 0x00000, &spritelayout_1024, 2048*1, 128 },
-	{ MEM_GFX_SPRITES, 0x20000, &spritelayout_1024, 2048*1, 128 },
-	{ MEM_GFX_SPRITES, 0x40000, &spritelayout_1024, 2048*1, 128 },
-	{ MEM_GFX_SPRITES, 0x60000, &spritelayout_1024, 2048*1, 128 },
-	{ MEM_GFX_SPRITES, 0x80000, &spritelayout_1024, 2048*1, 128 },
-	{ MEM_GFX_SPRITES, 0xa0000, &spritelayout_1024, 2048*1, 128 },
-	{ MEM_GFX_SPRITES, 0xc0000, &spritelayout_1024, 2048*1, 128 },
-	{ MEM_GFX_SPRITES, 0xe0000, &spritelayout_1024, 2048*1, 128 },
+	{ REGION_GFX1, 0x00000, &tilelayout_4096,   2048*0, 256 },
+	{ REGION_GFX2, 0x00000, &tilelayout_2048,   2048*0, 256 },
+	{ REGION_GFX3, 0x00000, &spritelayout_1024, 2048*1, 128 },
+	{ REGION_GFX3, 0x20000, &spritelayout_1024, 2048*1, 128 },
+	{ REGION_GFX3, 0x40000, &spritelayout_1024, 2048*1, 128 },
+	{ REGION_GFX3, 0x60000, &spritelayout_1024, 2048*1, 128 },
+	{ REGION_GFX3, 0x80000, &spritelayout_1024, 2048*1, 128 },
+	{ REGION_GFX3, 0xa0000, &spritelayout_1024, 2048*1, 128 },
+	{ REGION_GFX3, 0xc0000, &spritelayout_1024, 2048*1, 128 },
+	{ REGION_GFX3, 0xe0000, &spritelayout_1024, 2048*1, 128 },
 	{ -1 }
 };
 
 static struct GfxDecodeInfo rthunder_gfxdecodeinfo[] =
 {
-	{ MEM_GFX_TILES1,  0x00000, &tilelayout_4096,   2048*0, 256 },
-	{ MEM_GFX_TILES2,  0x00000, &tilelayout_2048,   2048*0, 256 },
-	{ MEM_GFX_SPRITES, 0x00000, &spritelayout_512,  2048*1, 128 },
-	{ MEM_GFX_SPRITES, 0x10000, &spritelayout_512,  2048*1, 128 },
-	{ MEM_GFX_SPRITES, 0x20000, &spritelayout_512,  2048*1, 128 },
-	{ MEM_GFX_SPRITES, 0x30000, &spritelayout_512,  2048*1, 128 },
-	{ MEM_GFX_SPRITES, 0x40000, &spritelayout_512,  2048*1, 128 },
-	{ MEM_GFX_SPRITES, 0x50000, &spritelayout_512,  2048*1, 128 },
-	{ MEM_GFX_SPRITES, 0x60000, &spritelayout_512,  2048*1, 128 },
-	{ MEM_GFX_SPRITES, 0x70000, &spritelayout_512,  2048*1, 128 },
+	{ REGION_GFX1, 0x00000, &tilelayout_4096,   2048*0, 256 },
+	{ REGION_GFX2, 0x00000, &tilelayout_2048,   2048*0, 256 },
+	{ REGION_GFX3, 0x00000, &spritelayout_512,  2048*1, 128 },
+	{ REGION_GFX3, 0x10000, &spritelayout_512,  2048*1, 128 },
+	{ REGION_GFX3, 0x20000, &spritelayout_512,  2048*1, 128 },
+	{ REGION_GFX3, 0x30000, &spritelayout_512,  2048*1, 128 },
+	{ REGION_GFX3, 0x40000, &spritelayout_512,  2048*1, 128 },
+	{ REGION_GFX3, 0x50000, &spritelayout_512,  2048*1, 128 },
+	{ REGION_GFX3, 0x60000, &spritelayout_512,  2048*1, 128 },
+	{ REGION_GFX3, 0x70000, &spritelayout_512,  2048*1, 128 },
 	{ -1 }
 };
 
 static struct GfxDecodeInfo wndrmomo_gfxdecodeinfo[] =
 {
-	{ MEM_GFX_TILES1,  0x00000, &tilelayout_2048,   2048*0, 256 },
-	{ MEM_GFX_TILES2,  0x00000, &tilelayout_2048,   2048*0, 256 },
-	{ MEM_GFX_SPRITES, 0x00000, &spritelayout_512,  2048*1, 128 },
-	{ MEM_GFX_SPRITES, 0x10000, &spritelayout_512,  2048*1, 128 },
-	{ MEM_GFX_SPRITES, 0x20000, &spritelayout_512,  2048*1, 128 },
-	{ MEM_GFX_SPRITES, 0x30000, &spritelayout_512,  2048*1, 128 },
-	{ MEM_GFX_SPRITES, 0x40000, &spritelayout_512,  2048*1, 128 },
-	{ MEM_GFX_SPRITES, 0x50000, &spritelayout_512,  2048*1, 128 },
-	{ MEM_GFX_SPRITES, 0x60000, &spritelayout_512,  2048*1, 128 },
-	{ MEM_GFX_SPRITES, 0x70000, &spritelayout_512,  2048*1, 128 },
+	{ REGION_GFX1, 0x00000, &tilelayout_2048,   2048*0, 256 },
+	{ REGION_GFX2, 0x00000, &tilelayout_2048,   2048*0, 256 },
+	{ REGION_GFX3, 0x00000, &spritelayout_512,  2048*1, 128 },
+	{ REGION_GFX3, 0x10000, &spritelayout_512,  2048*1, 128 },
+	{ REGION_GFX3, 0x20000, &spritelayout_512,  2048*1, 128 },
+	{ REGION_GFX3, 0x30000, &spritelayout_512,  2048*1, 128 },
+	{ REGION_GFX3, 0x40000, &spritelayout_512,  2048*1, 128 },
+	{ REGION_GFX3, 0x50000, &spritelayout_512,  2048*1, 128 },
+	{ REGION_GFX3, 0x60000, &spritelayout_512,  2048*1, 128 },
+	{ REGION_GFX3, 0x70000, &spritelayout_512,  2048*1, 128 },
 	{ -1 }
 };
 
@@ -1407,15 +1401,15 @@ ROM_START( roishtar )
 	ROM_LOAD( "ri1-3.12c", 0x8000, 0x8000, 0xa39829f7 )
 	/* 12d empty */
 
-	ROM_REGION_DISPOSE( 0x06000 ) /* tiles1 */
+	ROM_REGIONX( 0x06000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ri1-14.7r", 0x00000, 0x04000, 0xde8154b4 )	/* plane 1,2 */
 	ROM_LOAD( "ri1-15.7s", 0x04000, 0x02000, 0x4298822b )	/* plane 3 */
 
-	ROM_REGION_DISPOSE( 0x06000 ) /* tiles2 */
+	ROM_REGIONX( 0x06000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ri1-12.4r", 0x00000, 0x04000, 0x557e54d3 )	/* plane 1,2 */
 	ROM_LOAD( "ri1-13.4s", 0x04000, 0x02000, 0x9ebe8e32 )	/* plane 3 */
 
-	ROM_REGION_DISPOSE( 0x40000 ) /* sprites */
+	ROM_REGIONX( 0x40000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "ri1-5.12h",  0x00000, 0x8000, 0x46b59239 )
 	ROM_LOAD( "ri1-6.12k",  0x08000, 0x8000, 0x94d9ef48 )
 	ROM_LOAD( "ri1-7.12l",  0x10000, 0x8000, 0xda802b59 )
@@ -1425,7 +1419,7 @@ ROM_START( roishtar )
 	ROM_LOAD( "ri1-11.12t", 0x30000, 0x8000, 0xfb6bc533 )
 	/* 12u empty */
 
-	ROM_REGION( 0x1420 ) /* PROMs */
+	ROM_REGIONX( 0x1420, REGION_PROMS )
 	ROM_LOAD( "ri1-1.3r", 0x0000, 0x0200, 0x29cd0400 )	/* red & green components */
 	ROM_LOAD( "ri1-2.3s", 0x0200, 0x0200, 0x02fd278d )	/* blue component */
 	ROM_LOAD( "ri1-3.4v", 0x0400, 0x0800, 0xcbd7e53f )	/* tiles colortable */
@@ -1455,15 +1449,15 @@ ROM_START( genpeitd )
 	ROM_LOAD( "gt1-2.12c", 0xc000, 0x4000, 0x302f2cb6 )
 	/* 12d empty */
 
-	ROM_REGION_DISPOSE( 0x18000 ) /* tiles1 */
+	ROM_REGIONX( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "gt1-7.7r", 0x00000, 0x10000, 0xea77a211 )	/* plane 1,2 */
 	ROM_LOAD( "gt1-6.7s", 0x10000, 0x08000, 0x1b128a2e )	/* plane 3 */
 
-	ROM_REGION_DISPOSE( 0x0c000 ) /* tiles2 */
+	ROM_REGIONX( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "gt1-5.4r", 0x00000, 0x08000, 0x44d58b06 )	/* plane 1,2 */
 	ROM_LOAD( "gt1-4.4s", 0x08000, 0x04000, 0xdb8d45b0 )	/* plane 3 */
 
-	ROM_REGION_DISPOSE( 0x100000 ) /* sprites */
+	ROM_REGIONX( 0x100000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "gt1-11.12h",  0x00000, 0x20000, 0x3181a5fe )
 	ROM_LOAD( "gt1-12.12k",  0x20000, 0x20000, 0x76b729ab )
 	ROM_LOAD( "gt1-13.12l",  0x40000, 0x20000, 0xe332a36e )
@@ -1473,7 +1467,7 @@ ROM_START( genpeitd )
 	ROM_LOAD( "gt1-8.12t",   0xc0000, 0x10000, 0xad7bc770 )
 	ROM_LOAD( "gt1-9.12u",   0xe0000, 0x10000, 0xd95a5fd7 )
 
-	ROM_REGION( 0x1420 ) /* PROMs */
+	ROM_REGIONX( 0x1420, REGION_PROMS )
 	ROM_LOAD( "gt1-1.3r", 0x0000, 0x0200, 0x2f0ddddb )	/* red & green components */
 	ROM_LOAD( "gt1-2.3s", 0x0200, 0x0200, 0x87d27025 )	/* blue component */
 	ROM_LOAD( "gt1-3.4v", 0x0400, 0x0800, 0xc178de99 )	/* tiles colortable */
@@ -1506,15 +1500,15 @@ ROM_START( rthunder )
 	ROM_LOAD( "rt3-2b.12c", 0x08000, 0x8000, 0xa7ea46ee )
 	ROM_LOAD( "rt3-3.12d",  0x10000, 0x8000, 0xa13f601c )
 
-	ROM_REGION_DISPOSE( 0x18000 ) /* tiles1 */
+	ROM_REGIONX( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "rt1-7.7r",  0x00000, 0x10000, 0xa85efa39 )	/* plane 1,2 */
 	ROM_LOAD( "rt1-8.7s",  0x10000, 0x08000, 0xf7a95820 )	/* plane 3 */
 
-	ROM_REGION_DISPOSE( 0x0c000 ) /* tiles2 */
+	ROM_REGIONX( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "rt1-5.4r",  0x00000, 0x08000, 0xd0fc470b )	/* plane 1,2 */
 	ROM_LOAD( "rt1-6.4s",  0x08000, 0x04000, 0x6b57edb2 )	/* plane 3 */
 
-	ROM_REGION_DISPOSE( 0x80000 ) /* sprites */
+	ROM_REGIONX( 0x80000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "rt1-9.12h",  0x00000, 0x10000, 0x8e070561 )
 	ROM_LOAD( "rt1-10.12k", 0x10000, 0x10000, 0xcb8fb607 )
 	ROM_LOAD( "rt1-11.12l", 0x20000, 0x10000, 0x2bdf5ed9 )
@@ -1524,7 +1518,7 @@ ROM_START( rthunder )
 	ROM_LOAD( "rt1-15.12t", 0x60000, 0x10000, 0x1d8bf2ca )
 	ROM_LOAD( "rt1-16.12u", 0x70000, 0x10000, 0x1bbcf37b )
 
-	ROM_REGION( 0x1420 ) /* PROMs */
+	ROM_REGIONX( 0x1420, REGION_PROMS )
 	ROM_LOAD( "mb7124e.3r", 0x0000, 0x0200, 0x8ef3bb9d )	/* red & green components */
 	ROM_LOAD( "mb7116e.3s", 0x0200, 0x0200, 0x6510a8f2 )	/* blue component */
 	ROM_LOAD( "mb7138h.4v", 0x0400, 0x0800, 0x95c7d944 )	/* tiles colortable */
@@ -1557,15 +1551,15 @@ ROM_START( rthundrb )
 	ROM_LOAD( "r2",        0x08000, 0x8000, 0xf22a03d8 )
 	ROM_LOAD( "r3",        0x10000, 0x8000, 0xaaa82885 )
 
-	ROM_REGION_DISPOSE( 0x18000 ) /* tiles1 */
+	ROM_REGIONX( 0x18000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "rt1-7.7r",  0x00000, 0x10000, 0xa85efa39 )	/* plane 1,2 */
 	ROM_LOAD( "rt1-8.7s",  0x10000, 0x08000, 0xf7a95820 )	/* plane 3 */
 
-	ROM_REGION_DISPOSE( 0x0c000 ) /* tiles2 */
+	ROM_REGIONX( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "rt1-5.4r",  0x00000, 0x08000, 0xd0fc470b )	/* plane 1,2 */
 	ROM_LOAD( "rt1-6.4s",  0x08000, 0x04000, 0x6b57edb2 )	/* plane 3 */
 
-	ROM_REGION_DISPOSE( 0x80000 ) /* sprites */
+	ROM_REGIONX( 0x80000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "rt1-9.12h",  0x00000, 0x10000, 0x8e070561 )
 	ROM_LOAD( "rt1-10.12k", 0x10000, 0x10000, 0xcb8fb607 )
 	ROM_LOAD( "rt1-11.12l", 0x20000, 0x10000, 0x2bdf5ed9 )
@@ -1575,7 +1569,7 @@ ROM_START( rthundrb )
 	ROM_LOAD( "rt1-15.12t", 0x60000, 0x10000, 0x1d8bf2ca )
 	ROM_LOAD( "rt1-16.12u", 0x70000, 0x10000, 0x1bbcf37b )
 
-	ROM_REGION( 0x1420 ) /* PROMs */
+	ROM_REGIONX( 0x1420, REGION_PROMS )
 	ROM_LOAD( "mb7124e.3r", 0x0000, 0x0200, 0x8ef3bb9d )	/* red & green components */
 	ROM_LOAD( "mb7116e.3s", 0x0200, 0x0200, 0x6510a8f2 )	/* blue component */
 	ROM_LOAD( "mb7138h.4v", 0x0400, 0x0800, 0x95c7d944 )	/* tiles colortable */
@@ -1608,15 +1602,15 @@ ROM_START( wndrmomo )
 	ROM_LOAD( "wm1-2.12c", 0x8000, 0x8000, 0x3181efd0 )
 	/* 12d empty */
 
-	ROM_REGION_DISPOSE( 0x0c000 ) /* tiles1 */
+	ROM_REGIONX( 0x0c000, REGION_GFX1 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "wm1-6.7r", 0x00000, 0x08000, 0x42d0b513 )	/* plane 1,2 */
 	ROM_LOAD( "wm1-7.7s", 0x08000, 0x04000, 0x7d662527 )	/* plane 3 */
 
-	ROM_REGION_DISPOSE( 0x0c000 ) /* tiles2 */
+	ROM_REGIONX( 0x0c000, REGION_GFX2 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "wm1-4.4r", 0x00000, 0x08000, 0xbbe67836 )	/* plane 1,2 */
 	ROM_LOAD( "wm1-5.4s", 0x08000, 0x04000, 0xa81b481f )	/* plane 3 */
 
-	ROM_REGION_DISPOSE( 0x80000 ) /* sprites */
+	ROM_REGIONX( 0x80000, REGION_GFX3 | REGIONFLAG_DISPOSE )
 	ROM_LOAD( "wm1-8.12h",  0x00000, 0x10000, 0x14f52e72 )
 	ROM_LOAD( "wm1-9.12k",  0x10000, 0x10000, 0x16f8cdae )
 	ROM_LOAD( "wm1-10.12l", 0x20000, 0x10000, 0xbfbc1896 )
@@ -1626,7 +1620,7 @@ ROM_START( wndrmomo )
 	ROM_LOAD( "wm1-14.12t", 0x60000, 0x10000, 0x2ae21a53 )
 	ROM_LOAD( "wm1-15.12u", 0x70000, 0x10000, 0xb5c98be0 )
 
-	ROM_REGION( 0x1420 ) /* PROMs */
+	ROM_REGIONX( 0x1420, REGION_PROMS )
 	ROM_LOAD( "wm1-1.3r", 0x0000, 0x0200, 0x1af8ade8 )	/* red & green components */
 	ROM_LOAD( "wm1-2.3s", 0x0200, 0x0200, 0x8694e213 )	/* blue component */
 	ROM_LOAD( "wm1-3.4v", 0x0400, 0x0800, 0x2ffaf9a4 )	/* tiles colortable */
@@ -1653,8 +1647,8 @@ static void gfx_untangle(void)
 	unsigned char *buffer;
 
 	/* shuffle tile ROMs so regular gfx unpack routines can be used */
-	gfx = Machine->memory_region[MEM_GFX_TILES1];
-	size = Machine->memory_region_length[MEM_GFX_TILES1] * 2 / 3;
+	gfx = memory_region(REGION_GFX1);
+	size = memory_region_length(REGION_GFX1) * 2 / 3;
 	buffer = malloc( size );
 
 	if ( buffer )
@@ -1679,8 +1673,8 @@ static void gfx_untangle(void)
 		free( buffer );
 	}
 
-	gfx = Machine->memory_region[MEM_GFX_TILES2];
-	size = Machine->memory_region_length[MEM_GFX_TILES2] * 2 / 3;
+	gfx = memory_region(REGION_GFX2);
+	size = memory_region_length(REGION_GFX2) * 2 / 3;
 	buffer = malloc( size );
 
 	if ( buffer )
@@ -1760,7 +1754,7 @@ static void hisave(void)
 
 
 
-struct GameDriver roishtar_driver =
+struct GameDriver driver_roishtar =
 {
 	__FILE__,
 	0,
@@ -1773,18 +1767,18 @@ struct GameDriver roishtar_driver =
 	&roishtar_machine_driver,
 	0,
 
-	roishtar_rom,
+	rom_roishtar,
 	gfx_untangle, 0,
 	0,
 	0, /* sound prom */
-	roishtar_input_ports,
+	input_ports_roishtar,
 
-	PROM_MEMORY_REGION(MEM_COLOR), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	0, 0
 };
 
-struct GameDriver genpeitd_driver =
+struct GameDriver driver_genpeitd =
 {
 	__FILE__,
 	0,
@@ -1797,18 +1791,18 @@ struct GameDriver genpeitd_driver =
 	&genpeitd_machine_driver,
 	0,
 
-	genpeitd_rom,
+	rom_genpeitd,
 	gfx_untangle, 0,
 	0,
 	0, /* sound prom */
-	genpeitd_input_ports,
+	input_ports_genpeitd,
 
-	PROM_MEMORY_REGION(MEM_COLOR), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	0, 0
 };
 
-struct GameDriver rthunder_driver =
+struct GameDriver driver_rthunder =
 {
 	__FILE__,
 	0,
@@ -1825,21 +1819,21 @@ struct GameDriver rthunder_driver =
 	0,
 #endif
 
-	rthunder_rom,
+	rom_rthunder,
 	gfx_untangle, 0,
 	0,
 	0, /* sound prom */
-	rthunder_input_ports,
+	input_ports_rthunder,
 
-	PROM_MEMORY_REGION(MEM_COLOR), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	hiload, hisave
 };
 
-struct GameDriver rthundrb_driver =
+struct GameDriver driver_rthundrb =
 {
 	__FILE__,
-	&rthunder_driver,
+	&driver_rthunder,
 	"rthundrb",
 	"Rolling Thunder (old version)",
 	"1986",
@@ -1849,18 +1843,18 @@ struct GameDriver rthundrb_driver =
 	&rthunder_machine_driver,
 	0,
 
-	rthundrb_rom,
+	rom_rthundrb,
 	gfx_untangle, 0,
 	0,
 	0, /* sound prom */
-	rthundrb_input_ports,
+	input_ports_rthundrb,
 
-	PROM_MEMORY_REGION(MEM_COLOR), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	hiload, hisave
 };
 
-struct GameDriver wndrmomo_driver =
+struct GameDriver driver_wndrmomo =
 {
 	__FILE__,
 	0,
@@ -1873,13 +1867,13 @@ struct GameDriver wndrmomo_driver =
 	&wndrmomo_machine_driver,
 	0,
 
-	wndrmomo_rom,
+	rom_wndrmomo,
 	gfx_untangle, 0,
 	0,
 	0, /* sound prom */
-	wndrmomo_input_ports,
+	input_ports_wndrmomo,
 
-	PROM_MEMORY_REGION(MEM_COLOR), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	0, 0
 };

@@ -113,7 +113,7 @@ static struct MemoryWriteAddress writemem[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( yiear )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -346,7 +346,7 @@ ROM_START( yiear )
 	ROM_LOAD( "g06_3.bin",    0x0c000, 0x4000, 0xe6aa945b )
 	ROM_LOAD( "g05_4.bin",    0x10000, 0x4000, 0xcc187c22 )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "yiear.clr",    0x00000, 0x0020, 0xc283d71f )
 
 	ROM_REGION(0x2000)	/* 8k for the VLM5030 data */
@@ -366,7 +366,7 @@ ROM_START( yiear2 )
 	ROM_LOAD( "g06_3.bin",    0x0c000, 0x4000, 0xe6aa945b )
 	ROM_LOAD( "g05_4.bin",    0x10000, 0x4000, 0xcc187c22 )
 
-	ROM_REGION(0x0020)	/* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "yiear.clr",    0x00000, 0x0020, 0xc283d71f )
 
 	ROM_REGION(0x2000)	/* 8k for the VLM5030 data */
@@ -415,7 +415,7 @@ static void hisave(void)
 }
 
 
-struct GameDriver yiear_driver =
+struct GameDriver driver_yiear =
 {
 	__FILE__,
 	0,
@@ -428,23 +428,23 @@ struct GameDriver yiear_driver =
 	&machine_driver,
 	0,
 
-	yiear_rom,
+	rom_yiear,
 	0, 0,   /* ROM decode and opcode decode functions */
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_yiear,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };
 
-struct GameDriver yiear2_driver =
+struct GameDriver driver_yiear2 =
 {
 	__FILE__,
-	&yiear_driver,
+	&driver_yiear,
 	"yiear2",
 	"Yie Ar Kung-Fu (set 2)",
 	"1985",
@@ -454,14 +454,14 @@ struct GameDriver yiear2_driver =
 	&machine_driver,
 	0,
 
-	yiear2_rom,
+	rom_yiear2,
 	0, 0,   /* ROM decode and opcode decode functions */
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_yiear,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave

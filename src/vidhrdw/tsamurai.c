@@ -78,6 +78,17 @@ void tsamurai_fg_videoram_w( int offset, int data ){
 		tilemap_mark_tile_dirty( foreground, offset%32, offset/32 );
 	}
 }
+void tsamurai_fg_colorram_w( int offset, int data ){
+	if( colorram[offset]!=data ){
+		int i;
+		colorram[offset]=data;
+		if (offset & 1)
+		{
+			for (i = 0;i < 32;i++)
+				tilemap_mark_tile_dirty( foreground, offset/2, i );
+		}
+	}
+}
 
 /*
 ** tilemap manager callbacks
@@ -93,7 +104,7 @@ static void get_bg_tile_info( int col, int row ){
 static void get_fg_tile_info( int col, int row ){
 	int tile_number = videoram[row*32+col];
 	if( textbank&1 ) tile_number += 256;
-	SET_TILE_INFO(1,tile_number,1 )
+	SET_TILE_INFO(1,tile_number,colorram[(col*2)+1] & 0x1f )
 }
 
 /*

@@ -88,7 +88,7 @@ static struct IOWritePort writeport[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( bankp )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
@@ -245,7 +245,7 @@ ROM_START( bankp )
 	ROM_LOAD( "epr6168.bin",  0xc000, 0x2000, 0x05f3a867 )
 	ROM_LOAD( "epr6167.bin",  0xe000, 0x2000, 0x3fa337e1 )
 
-	ROM_REGION(0x0220)	/* color proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "pr6177.clr",   0x0000, 0x020, 0xeb70c5ae ) 	/* palette */
 	ROM_LOAD( "pr6178.clr",   0x0020, 0x100, 0x0acca001 ) 	/* charset #1 lookup table */
 	ROM_LOAD( "pr6179.clr",   0x0120, 0x100, 0xe53bafdb ) 	/* charset #2 lookup table */
@@ -306,7 +306,7 @@ static void hisave(void)
 
 
 
-struct GameDriver bankp_driver =
+struct GameDriver driver_bankp =
 {
 	__FILE__,
 	0,
@@ -319,14 +319,14 @@ struct GameDriver bankp_driver =
 	&machine_driver,
 	0,
 
-	bankp_rom,
+	rom_bankp,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_bankp,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave

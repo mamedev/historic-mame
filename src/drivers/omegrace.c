@@ -288,7 +288,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ 0x4000, 0x4bff, MRA_RAM },
 	{ 0x5c00, 0x5cff, MRA_RAM }, /* NVRAM */
-	{ 0x8000, 0x8fff, MRA_RAM, &vectorram, &vectorram_size },
+	{ 0x8000, 0x8fff, MRA_RAM },
 	{ 0x9000, 0x9fff, MRA_ROM }, /* vector rom */
 	{ -1 }	/* end of table */
 
@@ -300,7 +300,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0000, 0x3fff, MWA_ROM }, /* Omega Race tries to write there! */
 	{ 0x4000, 0x4bff, MWA_RAM },
 	{ 0x5c00, 0x5cff, MWA_RAM }, /* NVRAM */
-	{ 0x8000, 0x8fff, MWA_RAM }, /* vector ram */
+	{ 0x8000, 0x8fff, MWA_RAM, &vectorram, &vectorram_size }, /* vector ram */
 	{ 0x9000, 0x9fff, MWA_ROM }, /* vector rom */
 	{ -1 }	/* end of table */
 };
@@ -358,7 +358,7 @@ static struct IOWritePort sound_writeport[] =
 	{ -1 }  /* end of table */
 };
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( omegrace )
 	PORT_START /* SW0 */
 	PORT_DIPNAME( 0x03, 0x03, "1st Bonus Life" )
 	PORT_DIPSETTING (   0x00, "40k" )
@@ -549,7 +549,7 @@ static void hisave(void)
 	}
 }
 
-struct GameDriver omegrace_driver =
+struct GameDriver driver_omegrace =
 {
 	__FILE__,
 	0,
@@ -562,12 +562,12 @@ struct GameDriver omegrace_driver =
 	&machine_driver,
 	0,
 
-	omegrace_rom,
+	rom_omegrace,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_omegrace,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

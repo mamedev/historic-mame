@@ -267,7 +267,7 @@ static struct IOWritePort csk234_writeport[] =
 
 /* MB: 05 Jun 99  Input ports and Dip switches are all verified! */
 
-INPUT_PORTS_START( csk227_input_ports )
+INPUT_PORTS_START( csk227 )
 
 	PORT_START	/* DSW 1 */
 	PORT_DIPNAME( 0x01, 0x01, "Demo Music" )
@@ -428,7 +428,7 @@ INPUT_PORTS_START( csk227_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( csk234_input_ports )
+INPUT_PORTS_START( csk234 )
 
 	PORT_START	/* DSW 1 */
 	PORT_DIPNAME( 0x01, 0x01, "Demo Music" )
@@ -738,7 +738,7 @@ static void cska_decode(void)
 }
 
 
-struct GameDriver csk227it_driver =
+struct GameDriver driver_csk227it =
 {
 	__FILE__,
 	0,
@@ -751,12 +751,12 @@ struct GameDriver csk227it_driver =
 	&machine_driver,
 	0,
 
-	csk227it_rom,
+	rom_csk227it,
 	cska_decode, 0,
 	0,
 	0,
 
-	csk227_input_ports,
+	input_ports_csk227,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -764,10 +764,10 @@ struct GameDriver csk227it_driver =
 	0,0 /*hiload, hisave*/
 };
 
-struct GameDriver csk234it_driver =
+struct GameDriver driver_csk234it =
 {
 	__FILE__,
-	&csk227it_driver,
+	&driver_csk227it,
 	"csk234it",
 	"Champion Skill (Ability, Poker & Symbols)",
 	"????",
@@ -777,12 +777,12 @@ struct GameDriver csk234it_driver =
 	&csk234it_machine_driver,
 	0,
 
-	csk234it_rom,
+	rom_csk234it,
 	cska_decode, 0,
 	0,
 	0,
 
-	csk234_input_ports,
+	input_ports_csk234,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

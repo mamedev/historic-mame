@@ -11,6 +11,7 @@
 
 unsigned char *missile_videoram;
 int missile_flipscreen;
+static int screen_flipped;
 
 
 /***************************************************************************
@@ -49,29 +50,10 @@ int missile_video_r (int address)
 }
 
 /********************************************************************************************/
-/* This routine is called when the flipscreen bit changes. It redraws the entire bitmap. */
+/* This routine is called when the flipscreen bit changes. It forces a redraw of the entire bitmap. */
 void missile_flip_screen (void)
 {
-	int x, y;
-	int temp;
-
-	for (y = 0; y < 115; y ++)
-	{
-		for (x = 0; x < 256; x ++)
-		{
-			temp = Machine->scrbitmap->line[y][x];
-			Machine->scrbitmap->line[y][x] = Machine->scrbitmap->line[230-y][255-x];
-			Machine->scrbitmap->line[230-y][255-x] = temp;
-		}
-	}
-	/* flip the middle line */
-	for (x = 0; x < 128; x ++)
-	{
-		temp = Machine->scrbitmap->line[115][x];
-		Machine->scrbitmap->line[115][x] = Machine->scrbitmap->line[115][255-x];
-		Machine->scrbitmap->line[115][255-x] = temp;
-	}
-	osd_mark_dirty (0,0,255,230,0);
+	screen_flipped = 1;
 }
 
 /********************************************************************************************/
@@ -89,24 +71,9 @@ void missile_blit_w (int offset)
 	else
 		bottom = 0;
 
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
-	{
-		int tmp;
-
-		tmp = x;
-		x = y;
-		y = tmp;
-	}
-
-	if (Machine->orientation & ORIENTATION_FLIP_X)
-		x = Machine->scrbitmap->width - 1 - x;
-	if (Machine->orientation & ORIENTATION_FLIP_Y)
-		y = Machine->scrbitmap->height - 1 - y;
-
 	/* cocktail mode */
 	if (missile_flipscreen)
 	{
-		x = Machine->scrbitmap->width - 1 - x;
 		y = Machine->scrbitmap->height - 1 - y;
 	}
 
@@ -114,8 +81,7 @@ void missile_blit_w (int offset)
 
 	if (bottom) color &= 0x06;
 
-	Machine->scrbitmap->line[y][x] = Machine->pens[color];
-	osd_mark_dirty (x,y,x,y,0);
+	plot_pixel(Machine->scrbitmap, x, y, Machine->pens[color]);
 }
 
 /********************************************************************************************/
@@ -208,9 +174,11 @@ void missile_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int address;
 
-	if (palette_recalc() || full_refresh)
+	if (palette_recalc() || full_refresh || screen_flipped)
 	{
 		for (address = 0x1900; address <= 0xffff; address++)
 			missile_blit_w (address);
+
+		screen_flipped = 0;
 	}
 }

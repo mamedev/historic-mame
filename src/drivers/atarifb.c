@@ -266,7 +266,7 @@ static struct MemoryWriteAddress atarifb4_writemem[] =
 };
 
 
-INPUT_PORTS_START( atarifb_input_ports )
+INPUT_PORTS_START( atarifb )
 	PORT_START		/* IN0 */
 	PORT_BIT ( 0x0F, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT ( 0x10, IP_ACTIVE_LOW,  IPT_BUTTON1 )
@@ -309,7 +309,7 @@ INPUT_PORTS_START( atarifb_input_ports )
 
 INPUT_PORTS_END
 
-INPUT_PORTS_START( atarifb4_input_ports )
+INPUT_PORTS_START( atarifb4 )
 	PORT_START		/* IN0 */
 	PORT_BIT ( 0xff, IP_ACTIVE_LOW,  IPT_UNKNOWN )
 
@@ -372,7 +372,7 @@ INPUT_PORTS_START( atarifb4_input_ports )
 
 INPUT_PORTS_END
 
-INPUT_PORTS_START( abaseb_input_ports )
+INPUT_PORTS_START( abaseb )
 	PORT_START		/* IN0 */
 	PORT_BIT ( 0x0F, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT ( 0x10, IP_ACTIVE_LOW,  IPT_BUTTON1 )
@@ -700,7 +700,7 @@ ROM_END
 
 ***************************************************************************/
 
-struct GameDriver atarifb_driver =
+struct GameDriver driver_atarifb =
 {
 	__FILE__,
 	0,
@@ -713,22 +713,22 @@ struct GameDriver atarifb_driver =
 	&machine_driver,
 	0,
 
-	atarifb_rom,
+	rom_atarifb,
 	atarifb_init, 0,
 	0,
 	0,	/* sound_prom */
 
-	atarifb_input_ports,
+	input_ports_atarifb,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	0, 0
 };
 
-struct GameDriver atarifb1_driver =
+struct GameDriver driver_atarifb1 =
 {
 	__FILE__,
-	&atarifb_driver,
+	&driver_atarifb,
 	"atarifb1",
 	"Atari Football (revision 1)",
 	"1978",
@@ -738,22 +738,22 @@ struct GameDriver atarifb1_driver =
 	&machine_driver,
 	0,
 
-	atarifb1_rom,
+	rom_atarifb1,
 	atarifb_init, 0,
 	0,
 	0,	/* sound_prom */
 
-	atarifb_input_ports,
+	input_ports_atarifb,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	0, 0
 };
 
-struct GameDriver atarifb4_driver =
+struct GameDriver driver_atarifb4 =
 {
 	__FILE__,
-	&atarifb_driver,
+	&driver_atarifb,
 	"atarifb4",
 	"Atari Football (4 players)",
 	"1979",
@@ -763,19 +763,19 @@ struct GameDriver atarifb4_driver =
 	&atarifb4_machine_driver,
 	0,
 
-	atarifb4_rom,
+	rom_atarifb4,
 	atarifb4_init, 0,
 	0,
 	0,	/* sound_prom */
 
-	atarifb4_input_ports,
+	input_ports_atarifb4,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	0, 0
 };
 
-struct GameDriver abaseb_driver =
+struct GameDriver driver_abaseb =
 {
 	__FILE__,
 	0,
@@ -788,22 +788,22 @@ struct GameDriver abaseb_driver =
 	&machine_driver,
 	0,
 
-	abaseb_rom,
+	rom_abaseb,
 	abaseb_init, 0,
 	0,
 	0,	/* sound_prom */
 
-	abaseb_input_ports,
+	input_ports_abaseb,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	0, 0
 };
 
-struct GameDriver abaseb2_driver =
+struct GameDriver driver_abaseb2 =
 {
 	__FILE__,
-	&abaseb_driver,
+	&driver_abaseb,
 	"abaseb2",
 	"Atari Baseball (set 2)",
 	"1979",
@@ -813,19 +813,19 @@ struct GameDriver abaseb2_driver =
 	&machine_driver,
 	0,
 
-	abaseb2_rom,
+	rom_abaseb2,
 	abaseb_init, 0,
 	0,
 	0,	/* sound_prom */
 
-	abaseb_input_ports,
+	input_ports_abaseb,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	0, 0
 };
 
-struct GameDriver soccer_driver =
+struct GameDriver driver_soccer =
 {
 	__FILE__,
 	0,
@@ -838,12 +838,12 @@ struct GameDriver soccer_driver =
 	&machine_driver,
 	0,
 
-	soccer_rom,
+	rom_soccer,
 	atarifb4_init, 0,
 	0,
 	0,	/* sound_prom */
 
-	atarifb_input_ports,
+	input_ports_atarifb,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

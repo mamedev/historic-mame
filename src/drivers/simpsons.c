@@ -137,7 +137,7 @@ static struct MemoryWriteAddress z80_writemem[] =
 
 ***************************************************************************/
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( simpsons )
 	PORT_START /* IN0 - Player 1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
@@ -193,7 +193,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0xfe, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( simpsn2p_input_ports )
+INPUT_PORTS_START( simpsn2p )
 	PORT_START /* IN0 - Player 1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
@@ -441,7 +441,7 @@ static void gfx_untangle(void)
 	konami_rom_deinterleave_4(2);
 }
 
-struct GameDriver simpsons_driver =
+struct GameDriver driver_simpsons =
 {
 	__FILE__,
 	0,
@@ -454,22 +454,22 @@ struct GameDriver simpsons_driver =
 	&machine_driver,
 	0,
 
-	simpsons_rom,
+	rom_simpsons,
 	gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_simpsons,
 
 	0, 0, 0,
     ORIENTATION_DEFAULT,
 	simpsons_eeprom_load, simpsons_eeprom_save
 };
 
-struct GameDriver simpsn2p_driver =
+struct GameDriver driver_simpsn2p =
 {
 	__FILE__,
-	&simpsons_driver,
+	&driver_simpsons,
 	"simpsn2p",
 	"The Simpsons (2 Players)",
 	"1991",
@@ -479,22 +479,22 @@ struct GameDriver simpsn2p_driver =
 	&machine_driver,
 	0,
 
-	simpsn2p_rom,
+	rom_simpsn2p,
 	gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */
 
-	simpsn2p_input_ports,
+	input_ports_simpsn2p,
 
 	0, 0, 0,
     ORIENTATION_DEFAULT,
 	simpsons_eeprom_load, simpsons_eeprom_save
 };
 
-struct GameDriver simps2pj_driver =
+struct GameDriver driver_simps2pj =
 {
 	__FILE__,
-	&simpsons_driver,
+	&driver_simpsons,
 	"simps2pj",
 	"The Simpsons (2 Players Japan)",
 	"1991",
@@ -504,12 +504,12 @@ struct GameDriver simps2pj_driver =
 	&machine_driver,
 	0,
 
-	simps2pj_rom,
+	rom_simps2pj,
 	gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */
 
-	simpsn2p_input_ports,
+	input_ports_simpsn2p,
 
 	0, 0, 0,
     ORIENTATION_DEFAULT,

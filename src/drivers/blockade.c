@@ -204,7 +204,7 @@ static struct MemoryReadAddress readmem[] =
 {
     { 0x0000, 0x07ff, MRA_ROM },
     { 0x4000, 0x47ff, MRA_ROM },  /* same image */
-    { 0xe000, 0xe3ff, videoram_r, &videoram, &videoram_size },
+    { 0xe000, 0xe3ff, videoram_r },
     { 0xff00, 0xffff, MRA_RAM },
     { -1 }  /* end of table */
 };
@@ -240,7 +240,7 @@ static struct IOWritePort writeport[] =
 /* different harnesses which plugged in here, and */
 /* some pins were unused.                         */
 
-INPUT_PORTS_START( blockade_input_ports )
+INPUT_PORTS_START( blockade )
     PORT_START  /* IN0 */
     PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
     PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -282,7 +282,7 @@ INPUT_PORTS_START( blockade_input_ports )
 	PORT_BIT( 0x7f, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( comotion_input_ports )
+INPUT_PORTS_START( comotion )
     PORT_START  /* IN0 */
     PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
     PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -324,7 +324,7 @@ INPUT_PORTS_START( comotion_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( blasto_input_ports )
+INPUT_PORTS_START( blasto )
     PORT_START  /* IN0 */
     PORT_DIPNAME(    0x03, 0x03, DEF_STR( Coinage ) )
     PORT_DIPSETTING( 0x00, DEF_STR( 4C_1C ) )
@@ -369,7 +369,7 @@ INPUT_PORTS_START( blasto_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_VBLANK )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( hustle_input_ports )
+INPUT_PORTS_START( hustle )
     PORT_START  /* IN0 */
     PORT_DIPNAME(    0x03, 0x03, DEF_STR( Coinage ) )
     PORT_DIPSETTING( 0x00, DEF_STR( 4C_1C ) )
@@ -465,11 +465,21 @@ static void init_palette(unsigned char *game_palette, unsigned short *game_color
 
 
 
+static const char *blockade_sample_names[] =
+{
+    "*blockade",
+    "BOOM.wav",
+    0   /* end of array */
+};
+
 static struct Samplesinterface samples_interface =
 {
-    1,   /* 1 channel */
-	25	/* volume */
+    1,	/* 1 channel */
+	25,	/* volume */
+	blockade_sample_names
 };
+
+
 
 static struct MachineDriver blockade_machine_driver =
 {
@@ -691,12 +701,7 @@ ROM_START( hustle )
     ROM_LOAD( "3160021.u43", 0x0200, 0x0200, 0xb5083128 )
 ROM_END
 
-static const char *blockade_sample_name[] =
-{
-    "*blockade",
-    "BOOM.wav",
-    0   /* end of array */
-};
+
 
 static int hiload(void)
 {
@@ -735,111 +740,111 @@ static void hisave(void)
 }
 
 
-struct GameDriver blockade_driver =
+struct GameDriver driver_blockade =
 {
 	__FILE__,
 	0,
-    "blockade",
-    "Blockade",
+	"blockade",
+	"Blockade",
 	"1976",
 	"Gremlin",
-    "Frank Palazzolo",
+	"Frank Palazzolo",
 	0,
-    &blockade_machine_driver,
+	&blockade_machine_driver,
 	0,
 
-    blockade_rom,
-    blockade_init,
-    0,
-    blockade_sample_name,
-    0,  /* sound_prom */
+	rom_blockade,
+	blockade_init,
+	0,
+	0,
+	0,  /* sound_prom */
 
-    blockade_input_ports,
+	input_ports_blockade,
 
-    0, 0, 0,
+	0, 0, 0,
 
-    ORIENTATION_DEFAULT,
-    0, 0
+	ORIENTATION_DEFAULT,
+	0, 0
 };
 
-struct GameDriver comotion_driver =
+struct GameDriver driver_comotion =
 {
 	__FILE__,
 	0,
-    "comotion",
-    "Comotion",
+	"comotion",
+	"Comotion",
 	"1976",
 	"Gremlin",
-    "Frank Palazzolo",
+	"Frank Palazzolo",
 	0,
-    &comotion_machine_driver,
+	&comotion_machine_driver,
 	0,
 
-    comotion_rom,
-    comotion_init,
-    0,
-    blockade_sample_name,
-    0,  /* sound_prom */
+	rom_comotion,
+	comotion_init,
+	0,
+	0,
+	0,  /* sound_prom */
 
-    comotion_input_ports,
+	input_ports_comotion,
 
-    0, 0, 0,
+	0, 0, 0,
 
-    ORIENTATION_DEFAULT,
-    0, 0
+	ORIENTATION_DEFAULT,
+	0, 0
 };
 
-struct GameDriver blasto_driver =
+struct GameDriver driver_blasto =
 {
 	__FILE__,
 	0,
-    "blasto",
-    "Blasto",
+	"blasto",
+	"Blasto",
 	"1978",
 	"Gremlin",
-    "Frank Palazzolo\nJuergen Buchmueller",
+	"Frank Palazzolo\nJuergen Buchmueller",
 	0,
-    &blasto_machine_driver,
+	&blasto_machine_driver,
 	0,
 
-    blasto_rom,
-    comotion_init,
-    0,
-    blockade_sample_name,
-    0,  /* sound_prom */
+	rom_blasto,
+	comotion_init,
+	0,
+	0,
+	0,  /* sound_prom */
 
-    blasto_input_ports,
+	input_ports_blasto,
 
-    0, 0, 0,
+	0, 0, 0,
 
-    ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT,
 	hiload, hisave
 };
 
-struct GameDriver hustle_driver =
+struct GameDriver driver_hustle =
 {
 	__FILE__,
 	0,
-    "hustle",
-    "Hustle",
+	"hustle",
+	"Hustle",
 	"1977",
 	"Gremlin",
-    "Frank Palazzolo",
+	"Frank Palazzolo",
 	0,
-    &hustle_machine_driver,
+	&hustle_machine_driver,
 	0,
 
-    hustle_rom,
-    comotion_init,
-    0,
-    blockade_sample_name,
-    0,  /* sound_prom */
+	rom_hustle,
+	comotion_init,
+	0,
+	0,
+	0,  /* sound_prom */
 
-    hustle_input_ports,
+	input_ports_hustle,
 
-    0, 0, 0,
+	0, 0, 0,
 
-    ORIENTATION_DEFAULT,
-    0, 0
+	ORIENTATION_DEFAULT,
+	0, 0
 };
 

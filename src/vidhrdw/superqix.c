@@ -245,162 +245,48 @@ void superqix_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	if(sqix_current_bitmap==0)		/* Bitmap 1 */
 	{
-		/* optimised for default orientation */
-		if(Machine->orientation == (ORIENTATION_SWAP_XY|ORIENTATION_FLIP_X))
+		int x,y;
+
+		for (y = sqix_miny;y <= sqix_maxy;y++)
 		{
-			int x,y,sx;
-
-			for (y = sqix_miny;y <= sqix_maxy;y++)
+			for (x = sqix_minx;x <= sqix_maxx;x++)
 			{
-				sx = bitmap->width-1-(y+16);
-				for (x = sqix_minx;x <= sqix_maxx;x++)
+				int sx,sy,d;
+
+				if(superqix_bitmapram_dirty[y*128+x])
 				{
-					int d;
+					superqix_bitmapram_dirty[y*128+x]=0;
+					d = superqix_bitmapram[y*128+x];
 
-					if(superqix_bitmapram_dirty[y*128+x])
-					{
-						superqix_bitmapram_dirty[y*128+x]=0;
-						d = superqix_bitmapram[y*128+x];
+					sx = 2*x;
+					sy = y+16;
 
-						tmpbitmap2->line[2*x][sx] = pens[d >> 4];
-						tmpbitmap2->line[2*x+1][sx] = pens[d & 0x0f];
-					}
-				}
-			}
-		}
-		else
-		{
-			int x,y;
-
-			for (y = sqix_miny;y <= sqix_maxy;y++)
-			{
-				for (x = sqix_minx;x <= sqix_maxx;x++)
-				{
-					int sx,sy,d;
-
-					if(superqix_bitmapram_dirty[y*128+x])
-					{
-						superqix_bitmapram_dirty[y*128+x]=0;
-						d = superqix_bitmapram[y*128+x];
-
-						sx = 2*x;
-						sy = y+16;
-
-						if (Machine->orientation & ORIENTATION_SWAP_XY)
-						{
-							int temp;
-
-
-							temp = sx;
-							sx = sy;
-							sy = temp;
-						}
-						if (Machine->orientation & ORIENTATION_FLIP_X)
-							sx = bitmap->width - 1 - sx;
-						if (Machine->orientation & ORIENTATION_FLIP_Y)
-							sy = bitmap->height - 1 - sy;
-
-						tmpbitmap2->line[sy][sx] = pens[d >> 4];
-
-						sx = 2*x + 1;
-						sy = y+16;
-						if (Machine->orientation & ORIENTATION_SWAP_XY)
-						{
-							int temp;
-
-
-							temp = sx;
-							sx = sy;
-							sy = temp;
-						}
-						if (Machine->orientation & ORIENTATION_FLIP_X)
-							sx = bitmap->width - 1 - sx;
-						if (Machine->orientation & ORIENTATION_FLIP_Y)
-							sy = bitmap->height - 1 - sy;
-
-						tmpbitmap2->line[sy][sx] = pens[d & 0x0f];
-					}
+					plot_pixel(tmpbitmap2, sx    , sy, pens[d >> 4]);
+					plot_pixel(tmpbitmap2, sx + 1, sy, pens[d & 0x0f]);
 				}
 			}
 		}
 	}
 	else		/* Bitmap 2 */
 	{
-		/* optimised for default orientation */
-		if(Machine->orientation == (ORIENTATION_SWAP_XY|ORIENTATION_FLIP_X))
+		int x,y;
+
+		for (y = sqix_miny;y <= sqix_maxy;y++)
 		{
-			int x,y,sx;
-
-			for (y = sqix_miny;y <= sqix_maxy;y++)
+			for (x = sqix_minx;x <= sqix_maxx;x++)
 			{
-				sx = bitmap->width-1-(y+16);
-				for (x = sqix_minx;x <= sqix_maxx;x++)
+				int sx,sy,d;
+
+				if(superqix_bitmapram2_dirty[y*128+x])
 				{
-					int d;
+					superqix_bitmapram2_dirty[y*128+x]=0;
+					d = superqix_bitmapram2[y*128+x];
 
-					if(superqix_bitmapram2_dirty[y*128+x])
-					{
-						superqix_bitmapram2_dirty[y*128+x]=0;
-						d = superqix_bitmapram2[y*128+x];
+					sx = 2*x;
+					sy = y+16;
 
-						tmpbitmap2->line[2*x][sx] = pens[d >> 4];
-						tmpbitmap2->line[2*x+1][sx] = pens[d & 0x0f];
-					}
-				}
-			}
-		}
-		else
-		{
-			int x,y;
-
-			for (y = sqix_miny;y <= sqix_maxy;y++)
-			{
-				for (x = sqix_minx;x <= sqix_maxx;x++)
-				{
-					int sx,sy,d;
-
-					if(superqix_bitmapram2_dirty[y*128+x])
-					{
-						superqix_bitmapram2_dirty[y*128+x]=0;
-						d = superqix_bitmapram2[y*128+x];
-
-						sx = 2*x;
-						sy = y+16;
-
-						if (Machine->orientation & ORIENTATION_SWAP_XY)
-						{
-							int temp;
-
-
-							temp = sx;
-							sx = sy;
-							sy = temp;
-						}
-						if (Machine->orientation & ORIENTATION_FLIP_X)
-							sx = bitmap->width - 1 - sx;
-						if (Machine->orientation & ORIENTATION_FLIP_Y)
-							sy = bitmap->height - 1 - sy;
-
-						tmpbitmap2->line[sy][sx] = pens[d >> 4];
-
-						sx = 2*x + 1;
-						sy = y+16;
-						if (Machine->orientation & ORIENTATION_SWAP_XY)
-						{
-							int temp;
-
-
-							temp = sx;
-							sx = sy;
-							sy = temp;
-						}
-						if (Machine->orientation & ORIENTATION_FLIP_X)
-							sx = bitmap->width - 1 - sx;
-						if (Machine->orientation & ORIENTATION_FLIP_Y)
-							sy = bitmap->height - 1 - sy;
-
-						tmpbitmap2->line[sy][sx] = pens[d & 0x0f];
-					}
+					plot_pixel(tmpbitmap2, sx    , sy, pens[d >> 4]);
+					plot_pixel(tmpbitmap2, sx + 1, sy, pens[d & 0x0f]);
 				}
 			}
 		}

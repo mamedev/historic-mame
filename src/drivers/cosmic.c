@@ -75,12 +75,6 @@ static struct DACinterface dac_interface =
 	{ 100 }
 };
 
-static struct Samplesinterface samples_interface =
-{
-	9,       /* 9 channels */
-	25	/* volume */
-};
-
 /**************************************************/
 /* Space Panic specific routines                  */
 /**************************************************/
@@ -104,7 +98,7 @@ static struct MemoryWriteAddress panic_writemem[] =
 	{ -1 }	/* end of table */
 };
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( panic )
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
@@ -197,23 +191,6 @@ static struct GfxDecodeInfo panic_gfxdecodeinfo[] =
 };
 
 /* Schematics show 12 triggers for discrete sound circuits */
-
-static const char *panic_sample_names[] =
-{
-	"*panic",
-	"walk.wav",
-    "upordown.wav",
-    "trapped.wav",
-    "falling.wav",
-    "escaping.wav",
-	"ekilled.wav",
-    "death.wav",
-    "elaugh.wav",
-    "extral.wav",
-    "oxygen.wav",
-    "coin.wav",
-	0       /* end of array */
-};
 
 void panic_sound_output_w(int offset, int data)
 {
@@ -322,6 +299,30 @@ void panic_sound_output_w2(int offset, int data)
 	panic_sound_output_w(offset+15, data);
 }
 
+static const char *panic_sample_names[] =
+{
+	"*panic",
+	"walk.wav",
+    "upordown.wav",
+    "trapped.wav",
+    "falling.wav",
+    "escaping.wav",
+	"ekilled.wav",
+    "death.wav",
+    "elaugh.wav",
+    "extral.wav",
+    "oxygen.wav",
+    "coin.wav",
+	0       /* end of array */
+};
+
+static struct Samplesinterface panic_samples_interface =
+{
+	9,	/* 9 channels */
+	25,	/* volume */
+	panic_sample_names
+};
+
 static struct MachineDriver panic_machine_driver =
 {
 	/* basic machine hardware */
@@ -355,7 +356,7 @@ static struct MachineDriver panic_machine_driver =
     {
 		{
 			SOUND_SAMPLES,
-			&samples_interface
+			&panic_samples_interface
 		},
 		{
 			SOUND_DAC,
@@ -446,7 +447,7 @@ ROM_START( panic )
 	ROM_LOAD( "spcpanic.12",  0x1000, 0x0800, 0xe83423d0 )
 	ROM_LOAD( "spcpanic.11",  0x1800, 0x0800, 0xacea9df4 )
 
-	ROM_REGION(0x0820)	/* color PROMs */
+	ROM_REGIONX( 0x0820, REGION_PROMS )
 	ROM_LOAD( "82s123.sp",    0x0000, 0x0020, 0x35d43d2f )
 	ROM_LOAD( "spcpanic.8",   0x0020, 0x0800, 0x7da0b321 )
 ROM_END
@@ -467,7 +468,7 @@ ROM_START( panica )
 	ROM_LOAD( "spcpanic.12",  0x1000, 0x0800, 0xe83423d0 )
 	ROM_LOAD( "spcpanic.11",  0x1800, 0x0800, 0xacea9df4 )
 
-	ROM_REGION(0x0820)	/* color PROMs */
+	ROM_REGIONX( 0x0820, REGION_PROMS )
 	ROM_LOAD( "82s123.sp",    0x0000, 0x0020, 0x35d43d2f )
 	ROM_LOAD( "spcpanic.8",   0x0020, 0x0800, 0x7da0b321 )
 ROM_END
@@ -488,13 +489,13 @@ ROM_START( panicger )
 	ROM_LOAD( "spcpanic.12",  0x1000, 0x0800, 0xe83423d0 )
 	ROM_LOAD( "spcpanic.11",  0x1800, 0x0800, 0xacea9df4 )
 
-	ROM_REGION(0x0820)	/* color PROMs */
+	ROM_REGIONX( 0x0820, REGION_PROMS )
 	ROM_LOAD( "82s123.sp",    0x0000, 0x0020, 0x35d43d2f )
 	ROM_LOAD( "spcpanic.8",   0x0020, 0x0800, 0x7da0b321 )
 ROM_END
 
 
-struct GameDriver panic_driver =
+struct GameDriver driver_panic =
 {
 	__FILE__,
 	0,
@@ -507,23 +508,23 @@ struct GameDriver panic_driver =
 	&panic_machine_driver,
 	0,
 
-	panic_rom,
+	rom_panic,
 	0, 0,
-	panic_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_panic,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	panic_hiload, panic_hisave
 };
 
-struct GameDriver panica_driver =
+struct GameDriver driver_panica =
 {
 	__FILE__,
-	&panic_driver,
+	&driver_panic,
 	"panica",
 	"Space Panic (set 2)",
 	"1980",
@@ -533,23 +534,23 @@ struct GameDriver panica_driver =
 	&panic_machine_driver,
 	0,
 
-	panica_rom,
+	rom_panica,
 	0, 0,
-	panic_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_panic,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	panic_hiload, panic_hisave
 };
 
-struct GameDriver panicger_driver =
+struct GameDriver driver_panicger =
 {
 	__FILE__,
-	&panic_driver,
+	&driver_panic,
 	"panicger",
 	"Space Panic (German)",
 	"1980",
@@ -559,14 +560,14 @@ struct GameDriver panicger_driver =
 	&panic_machine_driver,
 	0,
 
-	panicger_rom,
+	rom_panicger,
 	0, 0,
-	panic_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_panic,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	panic_hiload, panic_hisave
@@ -622,7 +623,7 @@ static struct MemoryWriteAddress cosmicalien_writemem[] =
 	{ -1 }	/* end of table */
 };
 
-INPUT_PORTS_START( cosmicalien_input_ports )
+INPUT_PORTS_START( cosmicalien )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
@@ -794,12 +795,12 @@ ROM_START( cosmicalien )
 	ROM_LOAD( "r6",           0x0000, 0x0800, 0x431e866c )
 	ROM_LOAD( "r7",           0x0800, 0x0800, 0xaa6c6079 )
 
-	ROM_REGION(0x0420)	/* color PROMs */
+	ROM_REGIONX( 0x0420, REGION_PROMS )
 	ROM_LOAD( "bpr1",         0x0000, 0x0020, 0xdfb60f19 )
 	ROM_LOAD( "r9",           0x0020, 0x0400, 0xea4ee931 )
 ROM_END
 
-struct GameDriver cosmica_driver =
+struct GameDriver driver_cosmica =
 {
 	__FILE__,
 	0,
@@ -812,14 +813,14 @@ struct GameDriver cosmica_driver =
 	&cosmicalien_machine_driver,
 	0,
 
-	cosmicalien_rom,
+	rom_cosmicalien,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	cosmicalien_input_ports,
+	input_ports_cosmicalien,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	cosmicalienhiload, cosmicalienhisave 	/* hsc 12/02/98 */
@@ -872,27 +873,6 @@ static struct MemoryWriteAddress cosmicguerilla_writemem[] =
 	{ 0x3C00, 0x3fff, MWA_RAM },
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ -1 }	/* end of table */
-};
-
-static const char *cosmicguerilla_sample_names[] =
-{
-	"*cosmicg",
-	"cg_m0.wav",	/* 8 Different pitches of March Sound */
-	"cg_m1.wav",
-	"cg_m2.wav",
-	"cg_m3.wav",
-	"cg_m4.wav",
-	"cg_m5.wav",
-	"cg_m6.wav",
-	"cg_m7.wav",
-	"cg_att.wav",	/* Killer Attack */
-	"cg_chnc.wav",	/* Bonus Chance  */
-	"cg_gotb.wav",	/* Got Bonus - have not got correct sound for */
-	"cg_dest.wav",	/* Gun Destroy */
-	"cg_gun.wav",	/* Gun Shot */
-	"cg_gotm.wav",	/* Got Monster */
-	"cg_ext.wav",	/* Coin Extend */
-	0       /* end of array */
 };
 
 static struct IOReadPort cosmicguerilla_readport[] =
@@ -1085,7 +1065,7 @@ static void cosmicguerilla_decode(void)
 
 /* Offsets are in BYTES, so bits 0-7 are at offset 0 etc.   */
 
-INPUT_PORTS_START( cosmicguerilla_input_ports )
+INPUT_PORTS_START( cosmicguerilla )
 
 	PORT_START /* 4-7 */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START1 )
@@ -1182,6 +1162,34 @@ static void cosmicguerillahisave(void)
     }
 }
 
+static const char *cosmicguerilla_sample_names[] =
+{
+	"*cosmicg",
+	"cg_m0.wav",	/* 8 Different pitches of March Sound */
+	"cg_m1.wav",
+	"cg_m2.wav",
+	"cg_m3.wav",
+	"cg_m4.wav",
+	"cg_m5.wav",
+	"cg_m6.wav",
+	"cg_m7.wav",
+	"cg_att.wav",	/* Killer Attack */
+	"cg_chnc.wav",	/* Bonus Chance  */
+	"cg_gotb.wav",	/* Got Bonus - have not got correct sound for */
+	"cg_dest.wav",	/* Gun Destroy */
+	"cg_gun.wav",	/* Gun Shot */
+	"cg_gotm.wav",	/* Got Monster */
+	"cg_ext.wav",	/* Coin Extend */
+	0       /* end of array */
+};
+
+static struct Samplesinterface cosmicguerilla_samples_interface =
+{
+	9,	/* 9 channels */
+	25,	/* volume */
+	cosmicguerilla_sample_names
+};
+
 static struct MachineDriver cosmicguerilla_machine_driver =
 {
 	/* basic machine hardware */
@@ -1216,7 +1224,7 @@ static struct MachineDriver cosmicguerilla_machine_driver =
 	{
 		{
 			SOUND_SAMPLES,
-			&samples_interface
+			&cosmicguerilla_samples_interface
 		},
 		{
 			SOUND_DAC,
@@ -1236,11 +1244,11 @@ ROM_START( cosmicguerilla )
 	ROM_LOAD( "cosmicg7.bin",  0x1800, 0x0400, 0xf33ebae7 )
 	ROM_LOAD( "cosmicg8.bin",  0x1C00, 0x0400, 0x472e4990 )
 
-	ROM_REGION(0x0400)	/* Colour Prom */
+	ROM_REGIONX( 0x0400, REGION_PROMS )
 	ROM_LOAD( "cosmicg9.bin",  0x0000, 0x0400, 0x689c2c96 )
 ROM_END
 
-struct GameDriver cosmicg_driver =
+struct GameDriver driver_cosmicg =
 {
 	__FILE__,
 	0,
@@ -1253,14 +1261,14 @@ struct GameDriver cosmicg_driver =
     &cosmicguerilla_machine_driver,
     0,
 
-	cosmicguerilla_rom,
+	rom_cosmicguerilla,
 	cosmicguerilla_decode, 0,
-    cosmicguerilla_sample_names,
+    0,
 	0,      /* sound_prom */
 
-	cosmicguerilla_input_ports,
+	input_ports_cosmicguerilla,
 
-	PROM_MEMORY_REGION(1), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	cosmicguerillahiload, cosmicguerillahisave
@@ -1331,7 +1339,7 @@ static struct MemoryWriteAddress magspot2_writemem[] =
 	{ -1 }	/* end of table */
 };
 
-INPUT_PORTS_START( magspot2_input_ports )
+INPUT_PORTS_START( magspot2 )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY )
@@ -1470,13 +1478,13 @@ ROM_START( magspot2 )
 	ROM_LOAD( "my7",  0x0000, 0x0800, 0x1ab338d3 )
 	ROM_LOAD( "my8",  0x0800, 0x0800, 0x9e1d63a2 )
 
-	ROM_REGION(0x0420)	/* color proms */
+	ROM_REGIONX( 0x0420, REGION_PROMS )
 	ROM_LOAD( "m13",  0x0000, 0x0020, 0x36e2aa2a )
 	ROM_LOAD( "my9",  0x0020, 0x0400, 0x89f23ebd )
 ROM_END
 
 
-struct GameDriver magspot2_driver =
+struct GameDriver driver_magspot2 =
 {
 	__FILE__,
 	0,
@@ -1489,14 +1497,14 @@ struct GameDriver magspot2_driver =
 	&magspot2_machine_driver,
 	0,
 
-	magspot2_rom,
+	rom_magspot2,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	magspot2_input_ports,
+	input_ports_magspot2,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	0, 0
@@ -1575,7 +1583,7 @@ static struct MachineDriver devzone_machine_driver =
 	}
 };
 
-INPUT_PORTS_START( devzone_input_ports )
+INPUT_PORTS_START( devzone )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_2WAY )
@@ -1671,11 +1679,11 @@ ROM_START( devzone )
 	ROM_LOAD( "dv7.n1",  0x0000, 0x0800, 0xe7562fcf )
 	ROM_LOAD( "dv8.n2",  0x0800, 0x0800, 0xda1cbec1 )
 
-	ROM_REGION(0x0400)	/* color proms */
+	ROM_REGIONX( 0x0400, REGION_PROMS )
 	ROM_LOAD( "dz9.e2",  0x0000, 0x0400, 0x693855b6 )
 ROM_END
 
-struct GameDriver devzone_driver =
+struct GameDriver driver_devzone =
 {
 	__FILE__,
 	0,
@@ -1684,19 +1692,19 @@ struct GameDriver devzone_driver =
 	"1980",
 	"Universal",
 	"Zsolt Vasvari\nMike Coates",
-	GAME_WRONG_COLORS,
+	0,
 	&devzone_machine_driver,
 	0,
 
-	devzone_rom,
+	rom_devzone,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	devzone_input_ports,
+	input_ports_devzone,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
+	0, 0, 0,
+	ORIENTATION_ROTATE_270 | GAME_WRONG_COLORS,
 
 	0, 0
 };
@@ -1827,7 +1835,7 @@ ROM_START( nomanland )
 	ROM_LOAD( "nl11.ic7", 0x1000, 0x0400, 0xe717b241 )
 	ROM_LOAD( "nl10.ic4", 0x1400, 0x0400, 0x5b13f64e )
 
-	ROM_REGION(0x0420)	/* color proms */
+	ROM_REGIONX( 0x0420, REGION_PROMS )
 	ROM_LOAD( "nml.clr",  0x0000, 0x0020, 0x65e911f9 )
 	ROM_LOAD( "nl9.e2",   0x0020, 0x0400, 0x9e05f14e )
 ROM_END
@@ -1847,7 +1855,7 @@ ROM_START( nomanlandg )
 	ROM_LOAD( "nl11.ic7", 0x1000, 0x0400, 0xe717b241 )
 	ROM_LOAD( "nl10.ic4", 0x1400, 0x0400, 0x5b13f64e )
 
-	ROM_REGION(0x0420)	/* color proms */
+	ROM_REGIONX( 0x0420, REGION_PROMS )
 	ROM_LOAD( "nml.clr",  0x0000, 0x0020, 0x65e911f9 )
 	ROM_LOAD( "nl9.e2",   0x0020, 0x0400, 0x9e05f14e )
 ROM_END
@@ -1926,7 +1934,7 @@ static struct MachineDriver nomanland2_machine_driver =
 	}
 };
 
-INPUT_PORTS_START( nomanland_input_ports )
+INPUT_PORTS_START( nomanland )
 	PORT_START	/* Controls - Remapped for game */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
@@ -1997,7 +2005,7 @@ INPUT_PORTS_START( nomanland_input_ports )
 
 INPUT_PORTS_END
 
-INPUT_PORTS_START( nomanland2_input_ports )
+INPUT_PORTS_START( nomanland2 )
 	PORT_START	/* Controls - Remapped for game */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
@@ -2043,7 +2051,7 @@ INPUT_PORTS_START( nomanland2_input_ports )
 	PORT_BIT_IMPULSE( 0x01, IP_ACTIVE_HIGH, IPT_COIN1, 1 )
 INPUT_PORTS_END
 
-struct GameDriver nomnlnd_driver =
+struct GameDriver driver_nomnlnd =
 {
 	__FILE__,
 	0,
@@ -2052,45 +2060,45 @@ struct GameDriver nomnlnd_driver =
 	"1980?",
 	"Universal",
 	"Mike Coates",
-	GAME_WRONG_COLORS,
+	0,
 	&nomanland_machine_driver,
 	0,
 
-	nomanland_rom,
+	rom_nomanland,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	nomanland_input_ports,
+	input_ports_nomanland,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
+	0, 0, 0,
+	ORIENTATION_ROTATE_270 | GAME_WRONG_COLORS,
 
 	0, 0
 };
 
-struct GameDriver nomnlndg_driver =
+struct GameDriver driver_nomnlndg =
 {
 	__FILE__,
-	&nomnlnd_driver,
+	&driver_nomnlnd,
 	"nomnlndg",
 	"No Man's Land (Gottlieb)",
 	"1980?",
 	"Universal (Gottlieb license)",
 	"Mike Coates",
-	GAME_WRONG_COLORS,
+	0,
 	&nomanland2_machine_driver,
 	0,
 
-	nomanlandg_rom,
+	rom_nomanlandg,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	nomanland2_input_ports,
+	input_ports_nomanland2,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
+	0, 0, 0,
+	ORIENTATION_ROTATE_270 | GAME_WRONG_COLORS,
 
 	0, 0
 };

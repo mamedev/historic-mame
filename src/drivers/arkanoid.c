@@ -136,7 +136,7 @@ static struct MemoryWriteAddress mcu_writemem[] =
 };
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( arkanoid )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -187,7 +187,7 @@ INPUT_PORTS_END
 /* 'Block' uses the these ones as well.	The Tayto bootleg is different			 */
 /*  in coinage and # of lives.                    								 */
 
-INPUT_PORTS_START( japan_input_ports )
+INPUT_PORTS_START( arknoidj )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -374,7 +374,7 @@ ROM_START( arkanoid )
 	ROM_LOAD( "a75_04.rom",   0x08000, 0x8000, 0x71fae199 )
 	ROM_LOAD( "a75_05.rom",   0x10000, 0x8000, 0xc76374e2 )
 
-	ROM_REGION(0x0600)	/* color PROMs */
+	ROM_REGIONX( 0x0600, REGION_PROMS )
 	ROM_LOAD( "07.bpr",       0x0000, 0x0200, 0x0af8b289 )	/* red component */
 	ROM_LOAD( "08.bpr",       0x0200, 0x0200, 0xabb002fb )	/* green component */
 	ROM_LOAD( "09.bpr",       0x0400, 0x0200, 0xa7c6c277 )	/* blue component */
@@ -393,7 +393,7 @@ ROM_START( arknoidu )
 	ROM_LOAD( "a75_04.rom",   0x08000, 0x8000, 0x71fae199 )
 	ROM_LOAD( "a75_05.rom",   0x10000, 0x8000, 0xc76374e2 )
 
-	ROM_REGION(0x0600)	/* color PROMs */
+	ROM_REGIONX( 0x0600, REGION_PROMS )
 	ROM_LOAD( "07.bpr",       0x0000, 0x0200, 0x0af8b289 )	/* red component */
 	ROM_LOAD( "08.bpr",       0x0200, 0x0200, 0xabb002fb )	/* green component */
 	ROM_LOAD( "09.bpr",       0x0400, 0x0200, 0xa7c6c277 )	/* blue component */
@@ -412,7 +412,7 @@ ROM_START( arknoidj )
 	ROM_LOAD( "a75_04.rom",   0x08000, 0x8000, 0x71fae199 )
 	ROM_LOAD( "a75_05.rom",   0x10000, 0x8000, 0xc76374e2 )
 
-	ROM_REGION(0x0600)	/* color PROMs */
+	ROM_REGIONX( 0x0600, REGION_PROMS )
 	ROM_LOAD( "07.bpr",       0x0000, 0x0200, 0x0af8b289 )	/* red component */
 	ROM_LOAD( "08.bpr",       0x0200, 0x0200, 0xabb002fb )	/* green component */
 	ROM_LOAD( "09.bpr",       0x0400, 0x0200, 0xa7c6c277 )	/* blue component */
@@ -431,7 +431,7 @@ ROM_START( arkbl2 )
 	ROM_LOAD( "a75_04.rom",   0x08000, 0x8000, 0x71fae199 )
 	ROM_LOAD( "a75_05.rom",   0x10000, 0x8000, 0xc76374e2 )
 
-	ROM_REGION(0x0600)	/* color PROMs */
+	ROM_REGIONX( 0x0600, REGION_PROMS )
 	ROM_LOAD( "07.bpr",       0x0000, 0x0200, 0x0af8b289 )	/* red component */
 	ROM_LOAD( "08.bpr",       0x0200, 0x0200, 0xabb002fb )	/* green component */
 	ROM_LOAD( "09.bpr",       0x0400, 0x0200, 0xa7c6c277 )	/* blue component */
@@ -450,7 +450,7 @@ ROM_START( arkbl3 )
 	ROM_LOAD( "a75_04.rom",   0x08000, 0x8000, 0x71fae199 )
 	ROM_LOAD( "a75_05.rom",   0x10000, 0x8000, 0xc76374e2 )
 
-	ROM_REGION(0x0600)	/* color PROMs */
+	ROM_REGIONX( 0x0600, REGION_PROMS )
 	ROM_LOAD( "07.bpr",       0x0000, 0x0200, 0x0af8b289 )	/* red component */
 	ROM_LOAD( "08.bpr",       0x0200, 0x0200, 0xabb002fb )	/* green component */
 	ROM_LOAD( "09.bpr",       0x0400, 0x0200, 0xa7c6c277 )	/* blue component */
@@ -466,7 +466,7 @@ ROM_START( arkatayt )
 	ROM_LOAD( "a75_04.rom",   0x08000, 0x8000, 0x71fae199 )
 	ROM_LOAD( "a75_05.rom",   0x10000, 0x8000, 0xc76374e2 )
 
-	ROM_REGION(0x0600)	/* color PROMs */
+	ROM_REGIONX( 0x0600, REGION_PROMS )
 	ROM_LOAD( "07.bpr",       0x0000, 0x0200, 0x0af8b289 )	/* red component */
 	ROM_LOAD( "08.bpr",       0x0200, 0x0200, 0xabb002fb )	/* green component */
 	ROM_LOAD( "09.bpr",       0x0400, 0x0200, 0xa7c6c277 )	/* blue component */
@@ -482,7 +482,7 @@ ROM_START( arkblock )
 	ROM_LOAD( "a75_04.rom",   0x08000, 0x8000, 0x71fae199 )
 	ROM_LOAD( "a75_05.rom",   0x10000, 0x8000, 0xc76374e2 )
 
-	ROM_REGION(0x0600)	/* color PROMs */
+	ROM_REGIONX( 0x0600, REGION_PROMS )
 	ROM_LOAD( "07.bpr",       0x0000, 0x0200, 0x0af8b289 )	/* red component */
 	ROM_LOAD( "08.bpr",       0x0200, 0x0200, 0xabb002fb )	/* green component */
 	ROM_LOAD( "09.bpr",       0x0400, 0x0200, 0xa7c6c277 )	/* blue component */
@@ -498,7 +498,7 @@ ROM_START( arkbloc2 )
 	ROM_LOAD( "a75_04.rom",   0x08000, 0x8000, 0x71fae199 )
 	ROM_LOAD( "a75_05.rom",   0x10000, 0x8000, 0xc76374e2 )
 
-	ROM_REGION(0x0600)	/* color PROMs */
+	ROM_REGIONX( 0x0600, REGION_PROMS )
 	ROM_LOAD( "07.bpr",       0x0000, 0x0200, 0x0af8b289 )	/* red component */
 	ROM_LOAD( "08.bpr",       0x0200, 0x0200, 0xabb002fb )	/* green component */
 	ROM_LOAD( "09.bpr",       0x0400, 0x0200, 0xa7c6c277 )	/* blue component */
@@ -514,7 +514,7 @@ ROM_START( arkangc )
 	ROM_LOAD( "a75_04.rom",   0x08000, 0x8000, 0x71fae199 )
 	ROM_LOAD( "a75_05.rom",   0x10000, 0x8000, 0xc76374e2 )
 
-	ROM_REGION(0x0600)	/* color PROMs */
+	ROM_REGIONX( 0x0600, REGION_PROMS )
 	ROM_LOAD( "07.bpr",       0x0000, 0x0200, 0x0af8b289 )	/* red component */
 	ROM_LOAD( "08.bpr",       0x0200, 0x0200, 0xabb002fb )	/* green component */
 	ROM_LOAD( "09.bpr",       0x0400, 0x0200, 0xa7c6c277 )	/* blue component */
@@ -564,7 +564,7 @@ static void hisave(void)
 
 
 
-struct GameDriver arkanoid_driver =
+struct GameDriver driver_arkanoid =
 {
 	__FILE__,
 	0,
@@ -577,23 +577,23 @@ struct GameDriver arkanoid_driver =
 	&machine_driver,
 	0,
 
-	arkanoid_rom,
+	rom_arkanoid,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_arkanoid,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
 
-struct GameDriver arknoidu_driver =
+struct GameDriver driver_arknoidu =
 {
 	__FILE__,
-	&arkanoid_driver,
+	&driver_arkanoid,
 	"arknoidu",
 	"Arkanoid (US)",
 	"1986",
@@ -603,23 +603,23 @@ struct GameDriver arknoidu_driver =
 	&machine_driver,
 	0,
 
-	arknoidu_rom,
+	rom_arknoidu,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_arkanoid,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
 
-struct GameDriver arknoidj_driver =
+struct GameDriver driver_arknoidj =
 {
 	__FILE__,
-	&arkanoid_driver,
+	&driver_arkanoid,
 	"arknoidj",
 	"Arkanoid (Japan)",
 	"1986",
@@ -629,76 +629,76 @@ struct GameDriver arknoidj_driver =
 	&machine_driver,
 	0,
 
-	arknoidj_rom,
+	rom_arknoidj,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_arknoidj,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
 
-struct GameDriver arkbl2_driver =
+struct GameDriver driver_arkbl2 =
 {
 	__FILE__,
-	&arkanoid_driver,
+	&driver_arkanoid,
 	"arkbl2",
 	"Arkanoid (Japanese bootleg Set 2)",
 	"1986",
 	//"Taito Corporation",
 	"bootleg",
 	"Brad Oliver (MAME driver)\nNicola Salmoria (MAME driver)\nAaron Giles (68705 emulation)",
-	GAME_NOT_WORKING,
+	0,
 	&machine_driver,
 	0,
 
-	arkbl2_rom,
+	rom_arkbl2,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	japan_input_ports,
+	input_ports_arknoidj,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
+	0, 0, 0,
+	ORIENTATION_ROTATE_90 | GAME_NOT_WORKING,
 
 	hiload, hisave
 };
 
-struct GameDriver arkbl3_driver =
+struct GameDriver driver_arkbl3 =
 {
 	__FILE__,
-	&arkanoid_driver,
+	&driver_arkanoid,
 	"arkbl3",
 	"Arkanoid (Japanese bootleg Set 3)",
 	"1986",
 	"bootleg",
 	"Brad Oliver (MAME driver)\nNicola Salmoria (MAME driver)\nAaron Giles (68705 emulation)",
-	GAME_NOT_WORKING,
+	0,
 	&bootleg_machine_driver,
 	0,
 
-	arkbl3_rom,
+	rom_arkbl3,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	japan_input_ports,
+	input_ports_arknoidj,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
+	0, 0, 0,
+	ORIENTATION_ROTATE_90 | GAME_NOT_WORKING,
 
 	hiload, hisave
 };
 
-struct GameDriver arkatayt_driver =
+struct GameDriver driver_arkatayt =
 {
 	__FILE__,
-	&arkanoid_driver,
+	&driver_arkanoid,
 	"arkatayt",
 	"Arkanoid (Tayto bootleg, Japanese)",
 	"1986",
@@ -708,49 +708,49 @@ struct GameDriver arkatayt_driver =
 	&bootleg_machine_driver,
 	0,
 
-	arkatayt_rom,
+	rom_arkatayt,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	japan_input_ports,
+	input_ports_arknoidj,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
 
-struct GameDriver arkblock_driver =
+struct GameDriver driver_arkblock =
 {
 	__FILE__,
-	&arkanoid_driver,
+	&driver_arkanoid,
 	"arkblock",
 	"Block (bootleg, Japanese)",
 	"1986",
 	"bootleg",
 	"Brad Oliver (MAME driver)\nNicola Salmoria (MAME driver)",
-	GAME_NOT_WORKING,
+	0,
 	&bootleg_machine_driver,
 	0,
 
-	arkblock_rom,
+	rom_arkblock,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	japan_input_ports,
+	input_ports_arknoidj,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
+	0, 0, 0,
+	ORIENTATION_ROTATE_90 | GAME_NOT_WORKING,
 
 	hiload, hisave
 };
 
-struct GameDriver arkbloc2_driver =
+struct GameDriver driver_arkbloc2 =
 {
 	__FILE__,
-	&arkanoid_driver,
+	&driver_arkanoid,
 	"arkbloc2",
 	"Block (Game Corporation bootleg)",
 	"1986",
@@ -760,24 +760,24 @@ struct GameDriver arkbloc2_driver =
 	&bootleg_machine_driver,
 	0,
 
-	arkbloc2_rom,
+	rom_arkbloc2,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	japan_input_ports,
+	input_ports_arknoidj,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
 
 /** Arkanoid (Game Corporation) with round selector - RJF (April 23, 1999) **/
-struct GameDriver arkangc_driver =
+struct GameDriver driver_arkangc =
 {
 	__FILE__,
-	&arkanoid_driver,
+	&driver_arkanoid,
 	"arkangc",
 	"Arkanoid (Game Corporation bootleg)",
 	"1986",
@@ -787,14 +787,14 @@ struct GameDriver arkangc_driver =
 	&bootleg_machine_driver,
 	0,
 
-	arkangc_rom,
+	rom_arkangc,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	japan_input_ports,
+	input_ports_arknoidj,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave

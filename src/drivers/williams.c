@@ -517,7 +517,6 @@ extern struct pia6821_interface joust2_pia_1_intf;
 extern UINT8 *defender_bank_base;
 extern const UINT32 *defender_bank_list;
 extern UINT8 *williams_bank_base;
-extern UINT8 *blaster_bank2_base;
 
 /* initialization */
 void defender_init_machine(void);
@@ -654,7 +653,7 @@ static struct MemoryWriteAddress defender_writemem[] =
 
 static struct MemoryReadAddress williams_readmem[] =
 {
-	{ 0x0000, 0x97ff, MRA_BANK1, &williams_bank_base },
+	{ 0x0000, 0x97ff, MRA_BANK1 },
 	{ 0x9800, 0xbfff, MRA_RAM },
 	{ 0xc804, 0xc807, pia_0_r },
 	{ 0xc80c, 0xc80f, pia_1_r },
@@ -667,7 +666,7 @@ static struct MemoryReadAddress williams_readmem[] =
 
 static struct MemoryWriteAddress williams_writemem[] =
 {
-	{ 0x0000, 0x97ff, williams_videoram_w, &videoram, &videoram_size },
+	{ 0x0000, 0x97ff, williams_videoram_w, &williams_bank_base, &videoram_size },
 	{ 0x9800, 0xbfff, MWA_RAM },
 	{ 0xc000, 0xc00f, paletteram_BBGGGRRR_w, &paletteram },
 	{ 0xc804, 0xc807, pia_0_w },
@@ -690,8 +689,8 @@ static struct MemoryWriteAddress williams_writemem[] =
 
 static struct MemoryReadAddress blaster_readmem[] =
 {
-	{ 0x0000, 0x3fff, MRA_BANK1, &williams_bank_base },
-	{ 0x4000, 0x96ff, MRA_BANK2, &blaster_bank2_base },
+	{ 0x0000, 0x3fff, MRA_BANK1 },
+	{ 0x4000, 0x96ff, MRA_BANK2 },
 	{ 0x9700, 0xbfff, MRA_RAM },
 	{ 0xc804, 0xc807, pia_0_r },
 	{ 0xc80c, 0xc80f, pia_1_r },
@@ -704,7 +703,7 @@ static struct MemoryReadAddress blaster_readmem[] =
 
 static struct MemoryWriteAddress blaster_writemem[] =
 {
-	{ 0x0000, 0x96ff, williams_videoram_w, &videoram, &videoram_size },
+	{ 0x0000, 0x96ff, williams_videoram_w, &williams_bank_base, &videoram_size },
 	{ 0x9700, 0xbaff, MWA_RAM },
 	{ 0xbb00, 0xbbff, MWA_RAM, &blaster_color_zero_table },
 	{ 0xbc00, 0xbcff, MWA_RAM, &blaster_color_zero_flags },
@@ -829,7 +828,7 @@ static struct MemoryWriteAddress williams2_sound_writemem[] =
  *
  *************************************/
 
-INPUT_PORTS_START( defender_input_ports )
+INPUT_PORTS_START( defender )
 	PORT_START      /* IN0 */
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_BUTTON1, "Fire", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_BUTTON2, "Thrust", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
@@ -860,11 +859,11 @@ INPUT_PORTS_START( defender_input_ports )
 INPUT_PORTS_END
 
 
-#define defndjeu_input_ports defender_input_ports
-#define mayday_input_ports   defender_input_ports
+#define input_ports_defndjeu input_ports_defender
+#define input_ports_mayday   input_ports_defender
 
 
-INPUT_PORTS_START( colony7_input_ports )
+INPUT_PORTS_START( colony7 )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
@@ -891,7 +890,7 @@ INPUT_PORTS_START( colony7_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( stargate_input_ports )
+INPUT_PORTS_START( stargate )
 	PORT_START      /* IN0 */
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_BUTTON1, "Fire", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
 	PORT_BITX(0x02, IP_ACTIVE_HIGH, IPT_BUTTON2, "Thrust", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
@@ -923,7 +922,7 @@ INPUT_PORTS_START( stargate_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( joust_input_ports )
+INPUT_PORTS_START( joust )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER2 )
@@ -956,7 +955,7 @@ INPUT_PORTS_START( joust_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( robotron_input_ports )
+INPUT_PORTS_START( robotron )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_UP )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_DOWN )
@@ -983,7 +982,7 @@ INPUT_PORTS_START( robotron_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( bubbles_input_ports )
+INPUT_PORTS_START( bubbles )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN )
@@ -1006,7 +1005,7 @@ INPUT_PORTS_START( bubbles_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( splat_input_ports )
+INPUT_PORTS_START( splat )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_UP | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_DOWN | IPF_8WAY | IPF_PLAYER2 )
@@ -1048,7 +1047,7 @@ INPUT_PORTS_START( splat_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( sinistar_input_ports )
+INPUT_PORTS_START( sinistar )
 	PORT_START      /* IN0 */
 	/* pseudo analog joystick, see below */
 
@@ -1075,7 +1074,7 @@ INPUT_PORTS_START( sinistar_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( lottofun_input_ports )
+INPUT_PORTS_START( lottofun )
 	PORT_START		/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN )
@@ -1099,7 +1098,7 @@ INPUT_PORTS_START( lottofun_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( blaster_input_ports )
+INPUT_PORTS_START( blaster )
 	PORT_START      /* IN0 */
 	/* pseudo analog joystick, see below */
 
@@ -1129,7 +1128,7 @@ INPUT_PORTS_START( blaster_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( mysticm_input_ports )
+INPUT_PORTS_START( mysticm )
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT )
@@ -1155,7 +1154,7 @@ INPUT_PORTS_START( mysticm_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( tshoot_input_ports )
+INPUT_PORTS_START( tshoot )
 	PORT_START	/* IN0 (muxed with IN3)*/
 	PORT_ANALOG(0x3F, 0x20, IPT_AD_STICK_Y, 25, 10, 0, 0, 0x3F)
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -1185,7 +1184,7 @@ INPUT_PORTS_START( tshoot_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( inferno_input_ports )
+INPUT_PORTS_START( inferno )
 	PORT_START	/* IN0 (muxed with IN3) */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPF_PLAYER1 | IPT_JOYSTICKLEFT_UP )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPF_PLAYER1 | IPT_JOYSTICKLEFT_LEFT )
@@ -1225,7 +1224,7 @@ INPUT_PORTS_START( inferno_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( joust2_input_ports )
+INPUT_PORTS_START( joust2 )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_PLAYER1 )
@@ -2570,7 +2569,7 @@ ROM_END
  *************************************/
 
 #define EXTERNAL_DRIVER(name,machine,year,orientation,fullname,company) \
-	struct GameDriver name##_driver =			\
+	struct GameDriver driver_##name =			\
 	{											\
 		__FILE__,								\
 		NULL,									\
@@ -2585,12 +2584,12 @@ ROM_END
 		&machine##_machine_driver,				\
 		name##_init,							\
 												\
-		name##_rom,								\
+		rom_##name,								\
 		0, 0,									\
 		0,										\
 		0,	/* sound_prom */					\
 												\
-		name##_input_ports,						\
+		input_ports_##name,						\
 												\
 		0,0,0,									\
 		orientation,							\
@@ -2598,11 +2597,11 @@ ROM_END
 		cmos_load,cmos_save						\
 	};
 
-#define EXTERNAL_CLONE_DRIVER(name,machine,year,orientation,fullname,company,cloneof,initports,state) \
-	struct GameDriver name##_driver =			\
+#define EXTERNAL_CLONE_DRIVER(name,machine,year,orientation,fullname,company,cloneof,initports) \
+	struct GameDriver driver_##name =			\
 	{											\
 		__FILE__,								\
-		&cloneof##_driver,						\
+		&driver_##cloneof,						\
 		#name,									\
 		fullname,								\
 		#year,									\
@@ -2610,16 +2609,16 @@ ROM_END
 		"Marc Lafontaine\nSteven Hugg\n"		\
 		"Mirko Buffoni\nAaron Giles"			\
 		"Michael J. Soderstrom",				\
-		state,									\
+		0,										\
 		&machine##_machine_driver,				\
 		initports##_init,						\
 												\
-		name##_rom,								\
+		rom_##name,								\
 		0, 0,									\
 		0,										\
 		0,	/* sound_prom */					\
 												\
-		initports##_input_ports,				\
+		input_ports_##initports,				\
 												\
 		0,0,0,									\
 		orientation,							\
@@ -2630,20 +2629,20 @@ ROM_END
 #define WILLIAMS_DRIVER(name,machine,year,orientation,fullname) \
 	EXTERNAL_DRIVER(name,machine,year,orientation,fullname,"Williams")
 #define WILLIAMS_CLONE_DRIVER(name,machine,year,orientation,fullname,cloneof) \
-	EXTERNAL_CLONE_DRIVER(name,machine,year,orientation,fullname,"Williams",cloneof,cloneof,0)
+	EXTERNAL_CLONE_DRIVER(name,machine,year,orientation,fullname,"Williams",cloneof,cloneof)
 
 WILLIAMS_DRIVER      (defender, defender, 1980, ORIENTATION_DEFAULT,    "Defender (Red label)")
 WILLIAMS_CLONE_DRIVER(defendg,  defender, 1980, ORIENTATION_DEFAULT,    "Defender (Green label)", defender)
-EXTERNAL_CLONE_DRIVER(defndjeu, defender, 1980, ORIENTATION_DEFAULT,    "Defender ? (bootleg)", "Jeutel", defender, defndjeu, GAME_NOT_WORKING)
-EXTERNAL_CLONE_DRIVER(defcmnd,  defender, 1980, ORIENTATION_DEFAULT,    "Defense Command (set 1)", "bootleg", defender, defender, 0)
-EXTERNAL_CLONE_DRIVER(defcomnd, defender, 1980, ORIENTATION_DEFAULT,    "Defense Command (set 2)", "???", defender, defender, GAME_NOT_WORKING)
-EXTERNAL_CLONE_DRIVER(defence,  defender, 1981, ORIENTATION_DEFAULT,    "Defence Command", "Outer Limits", defender, defender, 0)
+EXTERNAL_CLONE_DRIVER(defndjeu, defender, 1980, ORIENTATION_DEFAULT | GAME_NOT_WORKING,    "Defender ? (bootleg)", "Jeutel", defender, defndjeu)
+EXTERNAL_CLONE_DRIVER(defcmnd,  defender, 1980, ORIENTATION_DEFAULT,    "Defense Command (set 1)", "bootleg", defender, defender)
+EXTERNAL_CLONE_DRIVER(defcomnd, defender, 1980, ORIENTATION_DEFAULT | GAME_NOT_WORKING,    "Defense Command (set 2)", "???", defender, defender)
+EXTERNAL_CLONE_DRIVER(defence,  defender, 1981, ORIENTATION_DEFAULT,    "Defence Command", "Outer Limits", defender, defender)
 
 EXTERNAL_DRIVER      (mayday,   defender, 1980, ORIENTATION_DEFAULT,    "Mayday (set 1)", "???")
-EXTERNAL_CLONE_DRIVER(maydaya,  defender, 1980, ORIENTATION_DEFAULT,    "Mayday (set 2)", "???", mayday, mayday, 0)
+EXTERNAL_CLONE_DRIVER(maydaya,  defender, 1980, ORIENTATION_DEFAULT,    "Mayday (set 2)", "???", mayday, mayday)
 
 EXTERNAL_DRIVER      (colony7,  defender, 1981, ORIENTATION_ROTATE_270, "Colony 7 (set 1)", "Taito")
-EXTERNAL_CLONE_DRIVER(colony7a, defender, 1981, ORIENTATION_ROTATE_270, "Colony 7 (set 2)", "Taito", colony7, colony7, 0)
+EXTERNAL_CLONE_DRIVER(colony7a, defender, 1981, ORIENTATION_ROTATE_270, "Colony 7 (set 2)", "Taito", colony7, colony7)
 
 WILLIAMS_DRIVER      (stargate, williams, 1981, ORIENTATION_DEFAULT,    "Stargate")
 

@@ -170,30 +170,30 @@ static void wms_decode(void)
 static struct MemoryReadAddress smashtv_readmem[] =
 {
 	{ TOBYTE(0x00000000), TOBYTE(0x001fffff), wms_vram_r }, /* VRAM */
-	{ TOBYTE(0x01000000), TOBYTE(0x010fffff), MRA_BANK2, 0, &wms_bank2_size }, /* RAM */
+	{ TOBYTE(0x01000000), TOBYTE(0x010fffff), MRA_BANK2 }, /* RAM */
 	{ TOBYTE(0x01400000), TOBYTE(0x0140ffff), wms_cmos_r }, /* CMOS RAM */
 /*	{ TOBYTE(0x0181f000), TOBYTE(0x0181ffff), paletteram_word_r }, */
 /*	{ TOBYTE(0x01810000), TOBYTE(0x0181ffff), paletteram_word_r }, */
 /*	{ TOBYTE(0x01800000), TOBYTE(0x0181ffff), paletteram_word_r }, */
-	{ TOBYTE(0x01800000), TOBYTE(0x019fffff), MRA_BANK4, 0, &wms_bank4_size }, /* RAM */
+	{ TOBYTE(0x01800000), TOBYTE(0x019fffff), MRA_BANK4 }, /* RAM */
 	{ TOBYTE(0x01a80000), TOBYTE(0x01a8001f), wms_dma_r },
 	{ TOBYTE(0x01c00000), TOBYTE(0x01c0005f), wms_input_r },
 	{ TOBYTE(0x01c00060), TOBYTE(0x01c0007f), wms_01c00060_r },
-	{ TOBYTE(0x02000000), TOBYTE(0x05ffffff), MRA_BANK8, 0, &wms_gfx_rom_size }, /* GFX ROMS */
+	{ TOBYTE(0x02000000), TOBYTE(0x05ffffff), MRA_BANK8 }, /* GFX ROMS */
 	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), TMS34010_io_register_r },
-	{ TOBYTE(0xff800000), TOBYTE(0xffffffff), MRA_BANK1, 0, &wms_code_rom_size },
+	{ TOBYTE(0xff800000), TOBYTE(0xffffffff), MRA_BANK1 },
 	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress smashtv_writemem[] =
 {
 	{ TOBYTE(0x00000000), TOBYTE(0x001fffff), wms_vram_w }, /* VRAM */
-	{ TOBYTE(0x01000000), TOBYTE(0x010fffff), MWA_BANK2 }, /* RAM */
+	{ TOBYTE(0x01000000), TOBYTE(0x010fffff), MWA_BANK2, 0, &wms_bank2_size }, /* RAM */
 	{ TOBYTE(0x01400000), TOBYTE(0x0140ffff), wms_cmos_w }, /* CMOS RAM */
 /*	{ TOBYTE(0x0181f000), TOBYTE(0x0181ffff), paletteram_xRRRRRGGGGGBBBBB_word_w, 0 }, */
 /*	{ TOBYTE(0x01810000), TOBYTE(0x0181ffff), paletteram_xRRRRRGGGGGBBBBB_word_w, 0 }, */
 /*	{ TOBYTE(0x01800000), TOBYTE(0x0181ffff), paletteram_xRRRRRGGGGGBBBBB_word_w, 0 }, */
-	{ TOBYTE(0x01800000), TOBYTE(0x019fffff), MWA_BANK4 }, /* RAM */
+	{ TOBYTE(0x01800000), TOBYTE(0x019fffff), MWA_BANK4, 0, &wms_bank4_size }, /* RAM */
 	{ TOBYTE(0x01a00000), TOBYTE(0x01a0009f), wms_dma_w },
 	{ TOBYTE(0x01a80000), TOBYTE(0x01a8009f), wms_dma_w },
 	{ TOBYTE(0x01c00060), TOBYTE(0x01c0007f), wms_01c00060_w },
@@ -202,39 +202,41 @@ static struct MemoryWriteAddress smashtv_writemem[] =
 /*	{ TOBYTE(0x01e00000), TOBYTE(0x01e0001f), mk_sound_w },		 */
 /*	{ TOBYTE(0x01e00000), TOBYTE(0x01e0001f), narc_sound_w },	 */
 	{ TOBYTE(0x01f00000), TOBYTE(0x01f0001f), wms_sysreg_w },
+	{ TOBYTE(0x02000000), TOBYTE(0x05ffffff), MWA_BANK8, 0, &wms_gfx_rom_size }, /* GFX ROMS */
 	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), TMS34010_io_register_w },
+	{ TOBYTE(0xff800000), TOBYTE(0xffffffff), MWA_BANK1, 0, &wms_code_rom_size },
 	{ -1 }  /* end of table */
 };
 
 static struct MemoryReadAddress mk2_readmem[] =
 {
 	{ TOBYTE(0x00000000), TOBYTE(0x003fffff), wms_vram_r }, /* VRAM */
-	{ TOBYTE(0x01000000), TOBYTE(0x013fffff), MRA_BANK2, 0, &wms_bank2_size }, /* Sratch RAM UJ4/5/6/7 */
+	{ TOBYTE(0x01000000), TOBYTE(0x013fffff), MRA_BANK2 }, /* Sratch RAM UJ4/5/6/7 */
 	{ TOBYTE(0x01400000), TOBYTE(0x0141ffff), wms_cmos_r },
 	{ TOBYTE(0x01600000), TOBYTE(0x016000ff), wms_input_r },
 //	{ TOBYTE(0x01800000), TOBYTE(0x0181ffff), paletteram_word_r },
-	{ TOBYTE(0x01800000), TOBYTE(0x019fffff), MRA_BANK4, 0, &wms_bank4_size }, /* RAM */
+	{ TOBYTE(0x01800000), TOBYTE(0x019fffff), MRA_BANK4 }, /* RAM */
 	{ TOBYTE(0x01a80000), TOBYTE(0x01a8001f), wms_dma_r },
-	{ TOBYTE(0x01b14000), TOBYTE(0x01b23fff), MRA_BANK3}, /* ???? */
+	{ TOBYTE(0x01b14000), TOBYTE(0x01b23fff), MRA_BANK3 }, /* ???? */
 //	{ TOBYTE(0x01d00000), TOBYTE(0x01d0005f), MRA_NOP }, /* ??? */
 	{ TOBYTE(0x01d00000), TOBYTE(0x01d0001f), MRA_NOP }, /* ??? */
 	/* checks 1d00000 for 0x8000 */
-	{ TOBYTE(0x02000000), TOBYTE(0x07ffffff), MRA_BANK8, 0, &wms_gfx_rom_size }, /* GFX ROMS */
-	{ TOBYTE(0x04000000), TOBYTE(0x05ffffff), MRA_BANK7}, /* banked GFX ROMS */
+	{ TOBYTE(0x02000000), TOBYTE(0x07ffffff), MRA_BANK8 }, /* GFX ROMS */
+	{ TOBYTE(0x04000000), TOBYTE(0x05ffffff), MRA_BANK7 }, /* banked GFX ROMS */
 	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), TMS34010_io_register_r },
-	{ TOBYTE(0xff800000), TOBYTE(0xffffffff), MRA_BANK1, 0, &wms_code_rom_size },
+	{ TOBYTE(0xff800000), TOBYTE(0xffffffff), MRA_BANK1 },
 	{ -1 }  /* end of table */
 };
 
 static struct MemoryWriteAddress mk2_writemem[] =
 {
 	{ TOBYTE(0x00000000), TOBYTE(0x003fffff), wms_vram_w }, /* VRAM */
-	{ TOBYTE(0x01000000), TOBYTE(0x013fffff), MWA_BANK2 }, /* Scratch RAM */
+	{ TOBYTE(0x01000000), TOBYTE(0x013fffff), MWA_BANK2, 0, &wms_bank2_size }, /* Scratch RAM */
 	{ TOBYTE(0x01400000), TOBYTE(0x0141ffff), wms_cmos_w }, /* ??? */
 //	{ TOBYTE(0x01480000), TOBYTE(0x0148001f), MWA_NOP },  /* w from ffa4d3a0 (mk2) */
 //	{ TOBYTE(0x014fffe0), TOBYTE(0x014fffff), MWA_NOP }, /* w from ff9daed0 (nbajam) */
 //	{ TOBYTE(0x01800000), TOBYTE(0x0181ffff), paletteram_xRRRRRGGGGGBBBBB_word_w, 0 },
-	{ TOBYTE(0x01800000), TOBYTE(0x019fffff), MWA_BANK4 }, /* RAM */
+	{ TOBYTE(0x01800000), TOBYTE(0x019fffff), MWA_BANK4, 0, &wms_bank4_size }, /* RAM */
 	{ TOBYTE(0x01a80000), TOBYTE(0x01a800ff), wms_dma2_w },
 	{ TOBYTE(0x01b00000), TOBYTE(0x01b0001f), wms_unk1_w }, /* sysreg (mk2) */
 	{ TOBYTE(0x01b14000), TOBYTE(0x01b23fff), MWA_BANK3}, /* ???? */
@@ -244,11 +246,13 @@ static struct MemoryWriteAddress mk2_writemem[] =
 	{ TOBYTE(0x01d81060), TOBYTE(0x01d8107f), MWA_NOP }, /* ???? */
 	/* 1d01070, 1d81070 == watchdog?? */
 	{ TOBYTE(0x01f00000), TOBYTE(0x01f0001f), wms_sysreg2_w },  /* only nbajam */
+	{ TOBYTE(0x02000000), TOBYTE(0x07ffffff), MWA_BANK8, 0, &wms_gfx_rom_size }, /* GFX ROMS */
 	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), TMS34010_io_register_w },
+	{ TOBYTE(0xff800000), TOBYTE(0xffffffff), MWA_BANK1, 0, &wms_code_rom_size },
 	{ -1 }  /* end of table */
 };
 
-INPUT_PORTS_START( narc_input_ports )
+INPUT_PORTS_START( narc )
 
 	PORT_START      /* IN0 - player 1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER1 | IPF_8WAY )
@@ -294,7 +298,7 @@ INPUT_PORTS_START( narc_input_ports )
 
 INPUT_PORTS_END
 
-INPUT_PORTS_START( trog_input_ports )
+INPUT_PORTS_START( trog )
 
 	PORT_START      /* IN0 - player 1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER1 | IPF_8WAY )
@@ -404,7 +408,7 @@ INPUT_PORTS_START( trog_input_ports )
 
 INPUT_PORTS_END
 
-INPUT_PORTS_START( smashtv_input_ports )
+INPUT_PORTS_START( smashtv )
 
 	PORT_START      /* IN0 - player 1 */
 	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP, "Move Up", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
@@ -462,7 +466,7 @@ INPUT_PORTS_START( smashtv_input_ports )
 
 INPUT_PORTS_END
 
-INPUT_PORTS_START( strkforc_input_ports )
+INPUT_PORTS_START( strkforc )
 
 	PORT_START      /* IN0 - player 1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER1 | IPF_8WAY )
@@ -556,7 +560,7 @@ INPUT_PORTS_START( strkforc_input_ports )
 
 INPUT_PORTS_END
 
-INPUT_PORTS_START( mk_input_ports )
+INPUT_PORTS_START( mk )
 
 	PORT_START      /* IN0 - player 1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER1 | IPF_8WAY )
@@ -664,7 +668,7 @@ INPUT_PORTS_START( mk_input_ports )
 
 INPUT_PORTS_END
 
-INPUT_PORTS_START( term2_input_ports )
+INPUT_PORTS_START( term2 )
 
 	PORT_START      /* IN0 - player 1 */
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER1 ) /* trigger */
@@ -769,7 +773,7 @@ INPUT_PORTS_START( term2_input_ports )
 
 INPUT_PORTS_END
 
-INPUT_PORTS_START( totcarn_input_ports )
+INPUT_PORTS_START( totcarn )
 
 	PORT_START      /* IN0 - player 1 */
 	PORT_BITX(0x01, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP, "Move Up", IP_KEY_DEFAULT, IP_JOY_DEFAULT )
@@ -826,7 +830,7 @@ INPUT_PORTS_START( totcarn_input_ports )
 
 INPUT_PORTS_END
 
-INPUT_PORTS_START( mk2_input_ports )
+INPUT_PORTS_START( mk2 )
 
 	PORT_START      /* IN0 - player 1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER1 | IPF_8WAY )
@@ -947,7 +951,7 @@ INPUT_PORTS_START( mk2_input_ports )
 
 INPUT_PORTS_END
 
-INPUT_PORTS_START( nbajam_input_ports )
+INPUT_PORTS_START( nbajam )
 
 	PORT_START      /* IN0 - player 1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER1 | IPF_8WAY )
@@ -2185,7 +2189,7 @@ ROM_END
 #define BASE_CREDITS  "Alex Pasadyn\nZsolt Vasvari\nKurt Mahan (hardware info)"
 
 #define BASE_DRIVER(game, machine, init, inputs, year, company, fullname, clone, flags) \
-	struct GameDriver game##_driver =				\
+	struct GameDriver driver_##game =				\
 	{												\
 		__FILE__,									\
 		clone,										\
@@ -2194,19 +2198,19 @@ ROM_END
 		#year,										\
 		company,									\
 		BASE_CREDITS,								\
-		GAME_REQUIRES_16BIT | (flags),				\
+		0,											\
 		&machine##_machine_driver,					\
 		init##_driver_init,							\
 													\
-		game##_rom,									\
+		rom_##game,									\
 		wms_decode, 0,								\
 		0,											\
 		0,	/* sound_prom */						\
 													\
-		inputs##_input_ports,						\
+		input_ports_##inputs,						\
 													\
 		0, 0, 0,   /* colors, palette, colortable */\
-		ORIENTATION_DEFAULT,						\
+		ORIENTATION_DEFAULT | GAME_REQUIRES_16BIT | flags,	\
 		hiload, hisave								\
 	};
 
@@ -2217,10 +2221,10 @@ ROM_END
 		BASE_DRIVER(game, machine, init, inputs, year, company, fullname, 0, GAME_NOT_WORKING)
 
 #define CLONE_DRIVER(game, machine, init, inputs, year, company, fullname, clone) \
-		BASE_DRIVER(game, machine, init, inputs, year, company, fullname, &clone##_driver, 0)
+		BASE_DRIVER(game, machine, init, inputs, year, company, fullname, &driver_##clone, 0)
 
 #define BROKEN_CLONE(game, machine, init, inputs, year, company, fullname, clone) \
-		BASE_DRIVER(game, machine, init, inputs, year, company, fullname, &clone##_driver, GAME_NOT_WORKING)
+		BASE_DRIVER(game, machine, init, inputs, year, company, fullname, &driver_##clone, GAME_NOT_WORKING)
 
 
 GAME_DRIVER  (narc,     narc,    narc,     narc,     1988, "Williams", "Narc (rev 7.00)")

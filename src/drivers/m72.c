@@ -740,7 +740,7 @@ static struct IOWritePort poundfor_sound_writeport[] =
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL ) \
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
 
-INPUT_PORTS_START( rtype_input_ports )
+INPUT_PORTS_START( rtype )
 	PORT_START
 	JOYSTICK_1
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON4 )
@@ -830,7 +830,7 @@ INPUT_PORTS_START( rtype_input_ports )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( rtypeu_input_ports )
+INPUT_PORTS_START( rtypeu )
 	PORT_START
 	JOYSTICK_1
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON4 )
@@ -921,7 +921,7 @@ INPUT_PORTS_START( rtypeu_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( bchopper_input_ports )
+INPUT_PORTS_START( bchopper )
 	PORT_START
 	JOYSTICK_1
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON4 )
@@ -1011,7 +1011,7 @@ INPUT_PORTS_START( bchopper_input_ports )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( nspirit_input_ports )
+INPUT_PORTS_START( nspirit )
 	PORT_START
 	JOYSTICK_1
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON4 )
@@ -1101,7 +1101,7 @@ INPUT_PORTS_START( nspirit_input_ports )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( imgfight_input_ports )
+INPUT_PORTS_START( imgfight )
 	PORT_START
 	JOYSTICK_1
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON4 )
@@ -1191,7 +1191,7 @@ INPUT_PORTS_START( imgfight_input_ports )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( loht_input_ports )
+INPUT_PORTS_START( loht )
 	PORT_START
 	JOYSTICK_1
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON4 )
@@ -1281,7 +1281,7 @@ INPUT_PORTS_START( loht_input_ports )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( xmultipl_input_ports )
+INPUT_PORTS_START( xmultipl )
 	PORT_START
 	JOYSTICK_1
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON4 )
@@ -1372,7 +1372,7 @@ INPUT_PORTS_START( xmultipl_input_ports )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( dbreed_input_ports )
+INPUT_PORTS_START( dbreed )
 	PORT_START
 	JOYSTICK_1
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON4 )
@@ -1462,7 +1462,7 @@ INPUT_PORTS_START( dbreed_input_ports )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( rtype2_input_ports )
+INPUT_PORTS_START( rtype2 )
 	PORT_START
 	JOYSTICK_1
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON4 )
@@ -1552,7 +1552,7 @@ PORT_DIPSETTING(    0x08, "Upright 2 Players" )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( hharry_input_ports )
+INPUT_PORTS_START( hharry )
 	PORT_START
 	JOYSTICK_1
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON4 )
@@ -1588,57 +1588,71 @@ INPUT_PORTS_START( hharry_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x02, "2" )
+	PORT_DIPSETTING(    0x03, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x08, "Easy" )
+	PORT_DIPSETTING(    0x0c, "Normal" )
+	PORT_DIPSETTING(    0x04, "Hard" )
+	PORT_DIPSETTING(    0x00, "Very Hard" )
+	PORT_DIPNAME( 0x10, 0x10, "Limit N. of Continue?" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x20, 0x20, "Allow Continue" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
 	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x01, 0x01, "Flip Screen" )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x06, 0x04, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( Upright ) )
+	PORT_DIPSETTING(    0x00, "Upright, separate controls" )
+	// PORT_DIPSETTING(    0x02, "Upright, separate controls" )
+	PORT_DIPSETTING(    0x06, DEF_STR( Cocktail ) )
+	PORT_DIPNAME( 0x08, 0x08, "Coin Mode" )
+	PORT_DIPSETTING(    0x08, "Mode 1" )
+	PORT_DIPSETTING(    0x00, "Mode 2" )
+	/* Coin Mode 1 */
+	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 6C_1C ) )
+	PORT_DIPSETTING(    0xb0, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0xd0, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x10, "2 to start, 1 to continue" )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x20, "4 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x30, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x90, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x50, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	/* Coin mode 2, not supported yet */
+	/* PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) ) */
 INPUT_PORTS_END
 
-INPUT_PORTS_START( gallop_input_ports )
+INPUT_PORTS_START( gallop )
 	PORT_START
 	JOYSTICK_1
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON4 )
@@ -1674,12 +1688,11 @@ INPUT_PORTS_START( gallop_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x02, "2" )
+	PORT_DIPSETTING(    0x03, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPSETTING(    0x00, "5" )
 	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -1689,42 +1702,58 @@ INPUT_PORTS_START( gallop_input_ports )
 	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x20, 0x20, "Allow Continue" )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Yes ) )
+	PORT_DIPNAME( 0x40, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 
 	PORT_START
-	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
+	PORT_DIPNAME( 0x01, 0x01, "Flip Screen" )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x04, 0x04, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x40, 0x40, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x40, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
-	PORT_DIPNAME( 0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(    0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x06, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x00, "Upright One Player" )
+	PORT_DIPSETTING(    0x02, "Upright Two Players" )
+	PORT_DIPSETTING(    0x06, DEF_STR( Cocktail ) )
+//	PORT_DIPSETTING(    0x04, DEF_STR( Upright ) )
+	PORT_DIPNAME( 0x08, 0x08, "Coin Mode" )
+	PORT_DIPSETTING(    0x08, "Mode 1" )
+	PORT_DIPSETTING(    0x00, "Mode 2" )
+	/* Coin Mode 1 */
+	PORT_DIPNAME( 0xf0, 0xf0, DEF_STR( Coinage ) )
+	PORT_DIPSETTING(    0xa0, DEF_STR( 6C_1C ) )
+	PORT_DIPSETTING(    0xb0, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 4C_1C ) )
+	PORT_DIPSETTING(    0xd0, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x10, "2 to start, 1 to continue" )
+	PORT_DIPSETTING(    0xe0, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x20, "4 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x30, DEF_STR( 3C_2C ) )
+	PORT_DIPSETTING(    0xf0, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 2C_3C ) )
+	PORT_DIPSETTING(    0x90, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x70, DEF_STR( 1C_4C ) )
+	PORT_DIPSETTING(    0x60, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x50, DEF_STR( 1C_6C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
+	/* Coin mode 2, not supported yet */
+	/* PORT_DIPNAME( 0x30, 0x30, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 5C_1C ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( 3C_1C ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x30, DEF_STR( 1C_1C ) )
+	PORT_DIPNAME( 0xc0, 0xc0, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x80, DEF_STR( 1C_3C ) )
+	PORT_DIPSETTING(    0x40, DEF_STR( 1C_5C ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 1C_6C ) ) */
 INPUT_PORTS_END
 
-INPUT_PORTS_START( poundfor_input_ports )
+INPUT_PORTS_START( poundfor )
 	PORT_START
 	JOYSTICK_1
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON4 )
@@ -2970,7 +2999,7 @@ ROM_END
 
 
 
-struct GameDriver rtype_driver =
+struct GameDriver driver_rtype =
 {
 	__FILE__,
 	0,
@@ -2983,12 +3012,12 @@ struct GameDriver rtype_driver =
 	&rtype_machine_driver,
 	0,
 
-	rtype_rom,
+	rom_rtype,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	rtype_input_ports,
+	input_ports_rtype,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -2996,10 +3025,10 @@ struct GameDriver rtype_driver =
 	0, 0
 };
 
-struct GameDriver rtypeu_driver =
+struct GameDriver driver_rtypeu =
 {
 	__FILE__,
-	&rtype_driver,
+	&driver_rtype,
 	"rtypeu",
 	"R-Type (US)",
 	"1987",
@@ -3009,12 +3038,12 @@ struct GameDriver rtypeu_driver =
 	&rtype_machine_driver,
 	0,
 
-	rtypeu_rom,
+	rom_rtypeu,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	rtypeu_input_ports,
+	input_ports_rtypeu,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -3022,10 +3051,10 @@ struct GameDriver rtypeu_driver =
 	0, 0
 };
 
-struct GameDriver rtypeb_driver =
+struct GameDriver driver_rtypeb =
 {
 	__FILE__,
-	&rtype_driver,
+	&driver_rtype,
 	"rtypeb",
 	"R-Type (bootleg)",
 	"1987",
@@ -3035,12 +3064,12 @@ struct GameDriver rtypeb_driver =
 	&rtype_machine_driver,
 	0,
 
-	rtypeb_rom,
+	rom_rtypeb,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	rtypeu_input_ports,
+	input_ports_rtypeu,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -3048,7 +3077,7 @@ struct GameDriver rtypeb_driver =
 	0, 0
 };
 
-struct GameDriver bchopper_driver =
+struct GameDriver driver_bchopper =
 {
 	__FILE__,
 	0,
@@ -3061,12 +3090,12 @@ struct GameDriver bchopper_driver =
 	&m72_machine_driver,
 	bchopper_init,
 
-	bchopper_rom,
+	rom_bchopper,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	bchopper_input_ports,
+	input_ports_bchopper,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -3074,10 +3103,10 @@ struct GameDriver bchopper_driver =
 	0, 0
 };
 
-struct GameDriver mrheli_driver =
+struct GameDriver driver_mrheli =
 {
 	__FILE__,
-	&bchopper_driver,
+	&driver_bchopper,
 	"mrheli",
 	"Mr. HELI no Dai-Bouken",
 	"1987",
@@ -3087,12 +3116,12 @@ struct GameDriver mrheli_driver =
 	&m72_machine_driver,
 	mrheli_init,
 
-	mrheli_rom,
+	rom_mrheli,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	bchopper_input_ports,
+	input_ports_bchopper,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -3100,7 +3129,7 @@ struct GameDriver mrheli_driver =
 	0, 0
 };
 
-struct GameDriver nspirit_driver =
+struct GameDriver driver_nspirit =
 {
 	__FILE__,
 	0,
@@ -3113,12 +3142,12 @@ struct GameDriver nspirit_driver =
 	&m72_machine_driver,
 	nspirit_init,
 
-	nspirit_rom,
+	rom_nspirit,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	nspirit_input_ports,
+	input_ports_nspirit,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -3126,10 +3155,10 @@ struct GameDriver nspirit_driver =
 	0, 0
 };
 
-struct GameDriver nspiritj_driver =
+struct GameDriver driver_nspiritj =
 {
 	__FILE__,
-	&nspirit_driver,
+	&driver_nspirit,
 	"nspiritj",
 	"Saigo no Nindou (Japan)",
 	"1988",
@@ -3139,12 +3168,12 @@ struct GameDriver nspiritj_driver =
 	&m72_machine_driver,
 	nspiritj_init,
 
-	nspiritj_rom,
+	rom_nspiritj,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	nspirit_input_ports,
+	input_ports_nspirit,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -3152,7 +3181,7 @@ struct GameDriver nspiritj_driver =
 	0, 0
 };
 
-struct GameDriver imgfight_driver =
+struct GameDriver driver_imgfight =
 {
 	__FILE__,
 	0,
@@ -3165,12 +3194,12 @@ struct GameDriver imgfight_driver =
 	&m72_machine_driver,
 	imgfight_init,
 
-	imgfight_rom,
+	rom_imgfight,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	imgfight_input_ports,
+	input_ports_imgfight,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
@@ -3178,7 +3207,7 @@ struct GameDriver imgfight_driver =
 	0, 0
 };
 
-struct GameDriver loht_driver =
+struct GameDriver driver_loht =
 {
 	__FILE__,
 	0,
@@ -3191,12 +3220,12 @@ struct GameDriver loht_driver =
 	&m72_machine_driver,
 	loht_init,
 
-	loht_rom,
+	rom_loht,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	loht_input_ports,
+	input_ports_loht,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -3204,7 +3233,7 @@ struct GameDriver loht_driver =
 	0, 0
 };
 
-struct GameDriver xmultipl_driver =
+struct GameDriver driver_xmultipl =
 {
 	__FILE__,
 	0,
@@ -3217,12 +3246,12 @@ struct GameDriver xmultipl_driver =
 	&xmultipl_machine_driver,
 	xmultipl_init,
 
-	xmultipl_rom,
+	rom_xmultipl,
 	0,0,
 	0,
 	0,	/* sound_prom */
 
-	xmultipl_input_ports,
+	input_ports_xmultipl,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -3230,7 +3259,7 @@ struct GameDriver xmultipl_driver =
 	0, 0
 };
 
-struct GameDriver dbreed_driver =
+struct GameDriver driver_dbreed =
 {
 	__FILE__,
 	0,
@@ -3243,12 +3272,12 @@ struct GameDriver dbreed_driver =
 	&dbreed_machine_driver,
 	dbreed_init,
 
-	dbreed_rom,
+	rom_dbreed,
 	0,0,
 	0,
 	0,	/* sound_prom */
 
-	dbreed_input_ports,
+	input_ports_dbreed,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -3256,7 +3285,7 @@ struct GameDriver dbreed_driver =
 	0, 0
 };
 
-struct GameDriver rtype2_driver =
+struct GameDriver driver_rtype2 =
 {
 	__FILE__,
 	0,
@@ -3269,12 +3298,12 @@ struct GameDriver rtype2_driver =
 	&rtype2_machine_driver,
 	0,
 
-	rtype2_rom,
+	rom_rtype2,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	rtype2_input_ports,
+	input_ports_rtype2,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -3282,10 +3311,10 @@ struct GameDriver rtype2_driver =
 	0, 0
 };
 
-struct GameDriver rtype2j_driver =
+struct GameDriver driver_rtype2j =
 {
 	__FILE__,
-	&rtype2_driver,
+	&driver_rtype2,
 	"rtype2j",
 	"R-Type II (Japan)",
 	"1989",
@@ -3295,12 +3324,12 @@ struct GameDriver rtype2j_driver =
 	&rtype2_machine_driver,
 	0,
 
-	rtype2j_rom,
+	rom_rtype2j,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	rtype2_input_ports,
+	input_ports_rtype2,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -3308,7 +3337,7 @@ struct GameDriver rtype2j_driver =
 	0, 0
 };
 
-struct GameDriver majtitle_driver =
+struct GameDriver driver_majtitle =
 {
 	__FILE__,
 	0,
@@ -3317,24 +3346,24 @@ struct GameDriver majtitle_driver =
 	"1990",
 	"Irem",
 	"Nicola Salmoria",
-	GAME_NOT_WORKING,
+	0,
 	&majtitle_machine_driver,
 	0,
 
-	majtitle_rom,
+	rom_majtitle,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	rtype2_input_ports,
+	input_ports_rtype2,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
 
 	0, 0
 };
 
-struct GameDriver hharry_driver =
+struct GameDriver driver_hharry =
 {
 	__FILE__,
 	0,
@@ -3347,12 +3376,12 @@ struct GameDriver hharry_driver =
 	&hharry_machine_driver,
 	0,
 
-	hharry_rom,
+	rom_hharry,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	hharry_input_ports,
+	input_ports_hharry,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -3360,10 +3389,10 @@ struct GameDriver hharry_driver =
 	0, 0
 };
 
-struct GameDriver hharryu_driver =
+struct GameDriver driver_hharryu =
 {
 	__FILE__,
-	&hharry_driver,
+	&driver_hharry,
 	"hharryu",
 	"Hammerin' Harry (US)",
 	"1990",
@@ -3373,12 +3402,12 @@ struct GameDriver hharryu_driver =
 	&hharryu_machine_driver,
 	0,
 
-	hharryu_rom,
+	rom_hharryu,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	hharry_input_ports,
+	input_ports_hharry,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -3386,10 +3415,10 @@ struct GameDriver hharryu_driver =
 	0, 0
 };
 
-struct GameDriver dkgensan_driver =
+struct GameDriver driver_dkgensan =
 {
 	__FILE__,
-	&hharry_driver,
+	&driver_hharry,
 	"dkgensan",
 	"Daiku no Gensan (Japan)",
 	"1990",
@@ -3399,12 +3428,12 @@ struct GameDriver dkgensan_driver =
 	&hharryu_machine_driver,
 	0,
 
-	dkgensan_rom,
+	rom_dkgensan,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	hharry_input_ports,
+	input_ports_hharry,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -3412,7 +3441,7 @@ struct GameDriver dkgensan_driver =
 	0, 0
 };
 
-struct GameDriver kengo_driver =
+struct GameDriver driver_kengo =
 {
 	__FILE__,
 	0,
@@ -3421,24 +3450,24 @@ struct GameDriver kengo_driver =
 	"1991",
 	"Irem",
 	"Nicola Salmoria",
-	GAME_NOT_WORKING,
+	0,
 	&hharry_machine_driver,
 	0,
 
-	kengo_rom,
+	rom_kengo,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	hharry_input_ports,
+	input_ports_hharry,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
 
 	0, 0
 };
 
-struct GameDriver gallop_driver =
+struct GameDriver driver_gallop =
 {
 	__FILE__,
 	0,
@@ -3447,24 +3476,24 @@ struct GameDriver gallop_driver =
 	"1991",
 	"Irem",
 	"Nicola Salmoria",
-	GAME_NO_SOUND,
+	0,
 	&m72_machine_driver,
 	gallop_init,
 
-	gallop_rom,
+	rom_gallop,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	gallop_input_ports,
+	input_ports_gallop,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_IMPERFECT_SOUND,
 
 	0, 0
 };
 
-struct GameDriver poundfor_driver =
+struct GameDriver driver_poundfor =
 {
 	__FILE__,
 	0,
@@ -3477,12 +3506,12 @@ struct GameDriver poundfor_driver =
 	&poundfor_machine_driver,
 	0,
 
-	poundfor_rom,
+	rom_poundfor,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	poundfor_input_ports,
+	input_ports_poundfor,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,

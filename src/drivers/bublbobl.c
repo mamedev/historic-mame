@@ -318,7 +318,7 @@ static struct MemoryWriteAddress tokio_sound_writemem[] =
 
 
 
-INPUT_PORTS_START( bublbobl_input_ports )
+INPUT_PORTS_START( bublbobl )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_TILT )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN3 )
@@ -391,7 +391,7 @@ INPUT_PORTS_START( bublbobl_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( boblbobl_input_ports )
+INPUT_PORTS_START( boblbobl )
 	PORT_START      /* DSW0 */
 	PORT_DIPNAME( 0x01, 0x00, "Language" )
 	PORT_DIPSETTING(    0x00, "English" )
@@ -457,7 +457,7 @@ INPUT_PORTS_START( boblbobl_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( sboblbob_input_ports )
+INPUT_PORTS_START( sboblbob )
 	PORT_START      /* DSW0 */
 	PORT_DIPNAME( 0x01, 0x00, "Game" )
 	PORT_DIPSETTING(    0x01, "Bobble Bobble" )
@@ -523,7 +523,7 @@ INPUT_PORTS_START( sboblbob_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( tokio_input_ports )
+INPUT_PORTS_START( tokio )
 	PORT_START      /* DSW0 */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
@@ -1159,7 +1159,7 @@ static void tokio_hisave(void)
 
 
 
-struct GameDriver bublbobl_driver =
+struct GameDriver driver_bublbobl =
 {
 	__FILE__,
 	0,
@@ -1172,12 +1172,12 @@ struct GameDriver bublbobl_driver =
 	&bublbobl_machine_driver,
 	0,
 
-	bublbobl_rom,
+	rom_bublbobl,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	bublbobl_input_ports,
+	input_ports_bublbobl,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -1185,10 +1185,10 @@ struct GameDriver bublbobl_driver =
 	bublbobl_hiload, bublbobl_hisave
 };
 
-struct GameDriver bublbobr_driver =
+struct GameDriver driver_bublbobr =
 {
 	__FILE__,
-	&bublbobl_driver,
+	&driver_bublbobl,
 	"bublbobr",
 	"Bubble Bobble (US)",
 	"1986",
@@ -1198,12 +1198,12 @@ struct GameDriver bublbobr_driver =
 	&bublbobl_machine_driver,
 	0,
 
-	bublbobr_rom,
+	rom_bublbobr,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	bublbobl_input_ports,
+	input_ports_bublbobl,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -1211,10 +1211,10 @@ struct GameDriver bublbobr_driver =
 	bublbobl_hiload, bublbobl_hisave
 };
 
-struct GameDriver boblbobl_driver =
+struct GameDriver driver_boblbobl =
 {
 	__FILE__,
-	&bublbobl_driver,
+	&driver_bublbobl,
 	"boblbobl",
 	"Bobble Bobble",
 	"1986",
@@ -1224,12 +1224,12 @@ struct GameDriver boblbobl_driver =
 	&boblbobl_machine_driver,
 	0,
 
-	boblbobl_rom,
+	rom_boblbobl,
 	boblbobl_patch, 0,	/* remove protection */
 	0,
 	0,	/* sound_prom */
 
-	boblbobl_input_ports,
+	input_ports_boblbobl,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -1237,10 +1237,10 @@ struct GameDriver boblbobl_driver =
 	bublbobl_hiload, bublbobl_hisave
 };
 
-struct GameDriver sboblbob_driver =
+struct GameDriver driver_sboblbob =
 {
 	__FILE__,
-	&bublbobl_driver,
+	&driver_bublbobl,
 	"sboblbob",
 	"Super Bobble Bobble",
 	"1986",
@@ -1250,12 +1250,12 @@ struct GameDriver sboblbob_driver =
 	&boblbobl_machine_driver,
 	0,
 
-	sboblbob_rom,
+	rom_sboblbob,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	sboblbob_input_ports,
+	input_ports_sboblbob,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -1265,7 +1265,7 @@ struct GameDriver sboblbob_driver =
 
 
 
-struct GameDriver tokio_driver =
+struct GameDriver driver_tokio =
 {
 	__FILE__,
 	0,
@@ -1274,27 +1274,27 @@ struct GameDriver tokio_driver =
 	"1986",
 	"Taito",
 	"Marcelo de G. Malheiros\nFredrik Sjostedt\nNicola Salmoria\nVictor Trucco\nChris Moore\nOliver White",
-	GAME_NOT_WORKING,
+	0,
 	&tokio_machine_driver,
 	0,
 
-	tokio_rom,
+	rom_tokio,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	tokio_input_ports,
+	input_ports_tokio,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ORIENTATION_ROTATE_90 | GAME_NOT_WORKING,
 
 	tokio_hiload, tokio_hisave
 };
 
-struct GameDriver tokiob_driver =
+struct GameDriver driver_tokiob =
 {
 	__FILE__,
-	&tokio_driver,
+	&driver_tokio,
 	"tokiob",
 	"Tokio / Scramble Formation (bootleg)",
 	"1986",
@@ -1304,12 +1304,12 @@ struct GameDriver tokiob_driver =
 	&tokio_machine_driver,
 	0,
 
-	tokiob_rom,
+	rom_tokiob,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	tokio_input_ports,
+	input_ports_tokio,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_90,

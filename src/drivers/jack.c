@@ -133,7 +133,7 @@ static struct IOWritePort sound_writeport[] =
 
 
 
-INPUT_PORTS_START( jack_input_ports )
+INPUT_PORTS_START( jack )
 	PORT_START      /* DSW1 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( 4C_3C ) )
@@ -211,7 +211,7 @@ INPUT_PORTS_START( jack_input_ports )
 	PORT_BIT( 0xfc, IP_ACTIVE_HIGH, IPT_UNKNOWN ) // Most likely unused
 INPUT_PORTS_END
 
-INPUT_PORTS_START( zzyzzyxx_input_ports )
+INPUT_PORTS_START( zzyzzyxx )
 	PORT_START      /* DSW1 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( 2C_1C ) )
@@ -283,7 +283,7 @@ INPUT_PORTS_START( zzyzzyxx_input_ports )
 	PORT_BIT( 0xfe, IP_ACTIVE_HIGH, IPT_UNKNOWN ) // Most likely unused
 INPUT_PORTS_END
 
-INPUT_PORTS_START( freeze_input_ports )
+INPUT_PORTS_START( freeze )
 	PORT_START      /* DSW1 */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Flip_Screen ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
@@ -749,7 +749,7 @@ static void zzyzzyxx_hisave(void)
 
 
 
-struct GameDriver jack_driver =
+struct GameDriver driver_jack =
 {
 	__FILE__,
 	0,
@@ -762,12 +762,12 @@ struct GameDriver jack_driver =
 	&machine_driver,
 	jack_driver_init,
 
-	jack_rom,
+	rom_jack,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	jack_input_ports,
+	input_ports_jack,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -775,10 +775,10 @@ struct GameDriver jack_driver =
 	jack_hiload, jack_hisave
 };
 
-struct GameDriver jack2_driver =
+struct GameDriver driver_jack2 =
 {
 	__FILE__,
-	&jack_driver,
+	&driver_jack,
 	"jack2",
 	"Jack the Giantkiller (set 2)",
 	"1982",
@@ -788,12 +788,12 @@ struct GameDriver jack2_driver =
 	&machine_driver,
 	jack_driver_init,
 
-	jack2_rom,
+	rom_jack2,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	jack_input_ports,
+	input_ports_jack,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -801,10 +801,10 @@ struct GameDriver jack2_driver =
 	jack_hiload, jack_hisave
 };
 
-struct GameDriver jack3_driver =
+struct GameDriver driver_jack3 =
 {
 	__FILE__,
-	&jack_driver,
+	&driver_jack,
 	"jack3",
 	"Jack the Giantkiller (set 3)",
 	"1982",
@@ -814,12 +814,12 @@ struct GameDriver jack3_driver =
 	&machine_driver,
 	jack_driver_init,
 
-	jack3_rom,
+	rom_jack3,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	jack_input_ports,
+	input_ports_jack,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -827,10 +827,10 @@ struct GameDriver jack3_driver =
 	jack_hiload, jack_hisave
 };
 
-struct GameDriver treahunt_driver =
+struct GameDriver driver_treahunt =
 {
 	__FILE__,
-	&jack_driver,
+	&driver_jack,
 	"treahunt",
 	"Treasure Hunt (Japan?)",
 	"1982",
@@ -840,12 +840,12 @@ struct GameDriver treahunt_driver =
 	&machine_driver,
 	jack_driver_init,
 
-	treahunt_rom,
+	rom_treahunt,
 	0, treahunt_decode,
 	0,
 	0,	/* sound_prom */
 
-	jack_input_ports,
+	input_ports_jack,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -853,7 +853,7 @@ struct GameDriver treahunt_driver =
 	jack_hiload, jack_hisave
 };
 
-struct GameDriver zzyzzyxx_driver =
+struct GameDriver driver_zzyzzyxx =
 {
 	__FILE__,
 	0,
@@ -866,12 +866,12 @@ struct GameDriver zzyzzyxx_driver =
 	&machine_driver,
 	zzyzzyxx_driver_init,
 
-	zzyzzyxx_rom,
+	rom_zzyzzyxx,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	zzyzzyxx_input_ports,
+	input_ports_zzyzzyxx,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -879,10 +879,10 @@ struct GameDriver zzyzzyxx_driver =
 	zzyzzyxx_hiload, zzyzzyxx_hisave
 };
 
-struct GameDriver zzyzzyx2_driver =
+struct GameDriver driver_zzyzzyx2 =
 {
 	__FILE__,
-	&zzyzzyxx_driver,
+	&driver_zzyzzyxx,
 	"zzyzzyx2",
 	"Zzyzzyxx (set 2)",
 	"1982",
@@ -892,12 +892,12 @@ struct GameDriver zzyzzyx2_driver =
 	&machine_driver,
 	zzyzzyxx_driver_init,
 
-	zzyzzyx2_rom,
+	rom_zzyzzyx2,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	zzyzzyxx_input_ports,
+	input_ports_zzyzzyxx,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -905,10 +905,10 @@ struct GameDriver zzyzzyx2_driver =
 	zzyzzyxx_hiload, zzyzzyxx_hisave
 };
 
-struct GameDriver brix_driver =
+struct GameDriver driver_brix =
 {
 	__FILE__,
-	&zzyzzyxx_driver,
+	&driver_zzyzzyxx,
 	"brix",
 	"Brix",
 	"1982",
@@ -918,12 +918,12 @@ struct GameDriver brix_driver =
 	&machine_driver,
 	zzyzzyxx_driver_init,
 
-	brix_rom,
+	rom_brix,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	zzyzzyxx_input_ports,
+	input_ports_zzyzzyxx,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -931,7 +931,7 @@ struct GameDriver brix_driver =
 	zzyzzyxx_hiload, zzyzzyxx_hisave
 };
 
-struct GameDriver freeze_driver =
+struct GameDriver driver_freeze =
 {
 	__FILE__,
 	0,
@@ -944,12 +944,12 @@ struct GameDriver freeze_driver =
 	&machine_driver,
 	jack_driver_init,
 
-	freeze_rom,
+	rom_freeze,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	freeze_input_ports,
+	input_ports_freeze,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -957,7 +957,7 @@ struct GameDriver freeze_driver =
 	0, 0
 };
 
-struct GameDriver sucasino_driver =
+struct GameDriver driver_sucasino =
 {
 	__FILE__,
 	0,
@@ -970,12 +970,12 @@ struct GameDriver sucasino_driver =
 	&machine_driver,
 	jack_driver_init,
 
-	sucasino_rom,
+	rom_sucasino,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	jack_input_ports,
+	input_ports_jack,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_90,

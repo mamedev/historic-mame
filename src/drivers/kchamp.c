@@ -261,7 +261,7 @@ static struct IOWritePort kc_sound_writeport[] =
 };
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( kchampvs )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT | IPF_4WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT | IPF_4WAY )
@@ -321,7 +321,7 @@ INPUT_PORTS_END
 * 1 Player Version  *
 ********************/
 
-INPUT_PORTS_START( kc_input_ports )
+INPUT_PORTS_START( kchamp )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_RIGHT | IPF_4WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT | IPF_4WAY )
@@ -625,7 +625,7 @@ ROM_START( kchampvs )
 	ROM_LOAD( "bs14",     0x1C000, 0x2000, 0x9ad6227c )
 	ROM_LOAD( "bs15",     0x1E000, 0x2000, 0x3b6d5de5 )
 
-	ROM_REGION(0x0300) /* color proms */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "br27", 0x0000, 0x0100, 0xf683c54a ) /* red */
 	ROM_LOAD( "br26", 0x0100, 0x0100, 0x3ddbb6c4 ) /* green */
 	ROM_LOAD( "br25", 0x0200, 0x0100, 0xba4a5651 ) /* blue */
@@ -663,7 +663,7 @@ ROM_START( karatevs )
 	ROM_LOAD( "br14",     0x1C000, 0x2000, 0xfc399229 )
 	ROM_LOAD( "bs15",     0x1E000, 0x2000, 0x3b6d5de5 )
 
-	ROM_REGION(0x0300) /* color proms */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "br27", 0x0000, 0x0100, 0xf683c54a ) /* red */
 	ROM_LOAD( "br26", 0x0100, 0x0100, 0x3ddbb6c4 ) /* green */
 	ROM_LOAD( "br25", 0x0200, 0x0100, 0xba4a5651 ) /* blue */
@@ -703,7 +703,7 @@ ROM_START( kchamp )
 	ROM_LOAD( "b000.bin", 0x18000, 0x2000, 0xa4fa98a1 )  /* plane0 */ /* tiles */
 	ROM_LOAD( "b001.bin", 0x1C000, 0x2000, 0xfea09f7c )  /* plane1 */ /* tiles */
 
-	ROM_REGION(0x0300) /* color proms */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "br27", 0x0000, 0x0100, 0xf683c54a ) /* red */
 	ROM_LOAD( "br26", 0x0100, 0x0100, 0x3ddbb6c4 ) /* green */
 	ROM_LOAD( "br25", 0x0200, 0x0100, 0xba4a5651 ) /* blue */
@@ -743,7 +743,7 @@ ROM_START( karatedo )
 	ROM_LOAD( "be00",     0x18000, 0x2000, 0xcec020f2 )  /* plane0 */ /* tiles */
 	ROM_LOAD( "be01",     0x1C000, 0x2000, 0xcd96271c )  /* plane1 */ /* tiles */
 
-	ROM_REGION(0x0300) /* color proms */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "br27", 0x0000, 0x0100, 0xf683c54a ) /* red */
 	ROM_LOAD( "br26", 0x0100, 0x0100, 0x3ddbb6c4 ) /* green */
 	ROM_LOAD( "br25", 0x0200, 0x0100, 0xba4a5651 ) /* blue */
@@ -879,7 +879,7 @@ static void kchamp_hisave(void)
 
 
 
-struct GameDriver kchamp_driver =
+struct GameDriver driver_kchamp =
 {
 	__FILE__,
 	0,
@@ -892,23 +892,23 @@ struct GameDriver kchamp_driver =
 	&kchamp_machine_driver,
 	0,
 
-	kchamp_rom,
+	rom_kchamp,
 	0, 0,
 	0,
 	0,
 
-	kc_input_ports,
+	input_ports_kchamp,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	kchamp_hiload, kchamp_hisave
 };
 
-struct GameDriver karatedo_driver =
+struct GameDriver driver_karatedo =
 {
 	__FILE__,
-	&kchamp_driver,
+	&driver_kchamp,
 	"karatedo",
 	"Karate Dou (Japan)",
 	"1984",
@@ -918,23 +918,23 @@ struct GameDriver karatedo_driver =
 	&kchamp_machine_driver,
 	0,
 
-	karatedo_rom,
+	rom_karatedo,
 	0, 0,
 	0,
 	0,
 
-	kc_input_ports,
+	input_ports_kchamp,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	kchamp_hiload, kchamp_hisave
 };
 
-struct GameDriver kchampvs_driver =
+struct GameDriver driver_kchampvs =
 {
 	__FILE__,
-	&kchamp_driver,
+	&driver_kchamp,
 	"kchampvs",
 	"Karate Champ (US VS version)",
 	"1984",
@@ -944,23 +944,23 @@ struct GameDriver kchampvs_driver =
 	&kchampvs_machine_driver,
 	0,
 
-	kchampvs_rom,
+	rom_kchampvs,
 	0, kchampvs_decode,
 	0,
 	0,
 
-	input_ports,
+	input_ports_kchampvs,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	kchampvs_hiload, kchampvs_hisave
 };
 
-struct GameDriver karatevs_driver =
+struct GameDriver driver_karatevs =
 {
 	__FILE__,
-	&kchamp_driver,
+	&driver_kchamp,
 	"karatevs",
 	"Taisen Karate Dou (Japan VS version)",
 	"1984",
@@ -970,14 +970,14 @@ struct GameDriver karatevs_driver =
 	&kchampvs_machine_driver,
 	0,
 
-	karatevs_rom,
+	rom_karatevs,
 	0, karatedo_decode,
 	0,
 	0,
 
-	input_ports,
+	input_ports_kchampvs,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	kchampvs_hiload, kchampvs_hisave

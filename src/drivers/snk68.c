@@ -74,6 +74,22 @@ static int rotary_lsb_r(int offset)
     	 + ((( ~(1 << (readinputport(5) * 12 / 256))  )    )&0x0f00);
 }
 
+
+static int invert_controls;
+
+static int protcontrols_r(int offset)
+{
+	return readinputport(offset / 2) ^ invert_controls;
+}
+
+static void protection_w(int offset,int data)
+{
+	/* top byte is used, meaning unknown */
+	/* bottom byte is protection in ikari 3 and streetsm */
+	if ((data & 0x00ff0000) == 0)
+		invert_controls = ((data & 0xff) == 0x07) ? 0xff : 0x00;
+}
+
 static void sound_w(int offset, int data)
 {
 	soundlatch_w(0,(data>>8)&0xff);
@@ -115,8 +131,7 @@ static struct MemoryReadAddress searchar_readmem[] =
 {
 	{ 0x000000, 0x03ffff, MRA_ROM },
 	{ 0x040000, 0x043fff, MRA_BANK1 },
-	{ 0x080000, 0x080001, input_port_0_r }, /* Player 1 */
-	{ 0x080002, 0x080003, input_port_1_r }, /* Player 2 */
+	{ 0x080000, 0x080003, protcontrols_r }, /* Player 1 & 2 */
 	{ 0x080004, 0x080005, input_port_2_r }, /* Coins */
 	{ 0x0c0000, 0x0c0001, rotary_1_r }, /* Player 1 rotary */
 	{ 0x0c8000, 0x0c8001, rotary_2_r }, /* Player 2 rotary */
@@ -138,7 +153,7 @@ static struct MemoryWriteAddress searchar_writemem[] =
 	{ 0x000000, 0x03ffff, MWA_ROM },
 	{ 0x040000, 0x043fff, MWA_BANK1, &pow_ram },
 	{ 0x080000, 0x080001, sound_w },
-	{ 0x080006, 0x080007, MWA_NOP }, /* Watchdog? */
+	{ 0x080006, 0x080007, protection_w }, /* top byte unknown, bottom is protection in ikari3 and streetsm */
 	{ 0x0c0000, 0x0c0001, pow_flipscreen_w },
 	{ 0x0f0000, 0x0f0001, MWA_NOP },
 	{ 0x100000, 0x107fff, MWA_BANK3, &spriteram },
@@ -190,7 +205,7 @@ static struct IOWritePort sound_writeport[] =
 /******************************************************************************/
 
 
-INPUT_PORTS_START( pow_input_ports )
+INPUT_PORTS_START( pow )
 	PORT_START	/* Player 1 controls */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
@@ -269,7 +284,7 @@ INPUT_PORTS_END
 
 
 /* Identical to pow, but the Language dip switch has no effect */
-INPUT_PORTS_START( powj_input_ports )
+INPUT_PORTS_START( powj )
 	PORT_START	/* Player 1 controls */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
@@ -347,7 +362,7 @@ INPUT_PORTS_START( powj_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( searchar_input_ports )
+INPUT_PORTS_START( searchar )
 	PORT_START	/* Player 1 controls */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
@@ -431,7 +446,7 @@ INPUT_PORTS_START( searchar_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( streetsm_input_ports )
+INPUT_PORTS_START( streetsm )
 	PORT_START	/* Player 1 controls */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
@@ -516,7 +531,7 @@ INPUT_PORTS_END
 
 
 /* Same as streetsm, but Coinage is different */
-INPUT_PORTS_START( streetsj_input_ports )
+INPUT_PORTS_START( streetsj )
 	PORT_START	/* Player 1 controls */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
@@ -600,7 +615,7 @@ INPUT_PORTS_START( streetsj_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( ikari3_input_ports )
+INPUT_PORTS_START( ikari3 )
 	PORT_START	/* Player 1 controls, maybe all are active_high? */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
@@ -760,11 +775,17 @@ static struct GfxDecodeInfo ikari3_gfxdecodeinfo[] =
 
 /******************************************************************************/
 
+static void irqhandler(int irq)
+{
+	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+}
+
 static struct YM3812interface ym3812_interface =
 {
-	1,			/* 1 chip (no more supported) */
-	4000000,	/* 4 MHz */
-	{ 255 }
+	1,			/* 1 chip */
+	4000000,	/* 4 MHz - accurate for POW, should be accurate for others */
+	{ 50 },
+	{ irqhandler },
 };
 
 static struct UPD7759_interface upd7759_interface =
@@ -796,7 +817,7 @@ static struct MachineDriver ikari3_machine_driver =
 			2,
 			sound_readmem,sound_writemem,
 			sound_readport,sound_writeport,
-			interrupt,3	/* ?? hand tuned */
+			ignore_interrupt,0
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,
@@ -847,7 +868,7 @@ static struct MachineDriver pow_machine_driver =
 			2,
 			sound_readmem,sound_writemem,
 			sound_readport,sound_writeport,
-			interrupt,3	/* ?? hand tuned */
+			ignore_interrupt,0
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,
@@ -898,7 +919,7 @@ static struct MachineDriver searchar_machine_driver =
 			2,
 			sound_readmem,sound_writemem,
 			sound_readport,sound_writeport,
-			interrupt,3	/* ?? hand tuned */
+			ignore_interrupt,0
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,
@@ -949,7 +970,7 @@ static struct MachineDriver streets2_machine_driver =
 			2,
 			sound_readmem,sound_writemem,
 			sound_readport,sound_writeport,
-			interrupt,3	/* ?? hand tuned */
+			ignore_interrupt,0
 		}
 	},
 	60, DEFAULT_60HZ_VBLANK_DURATION,
@@ -985,7 +1006,6 @@ static struct MachineDriver streets2_machine_driver =
 
 /******************************************************************************/
 
-
 ROM_START( pow )
 	ROM_REGION(0x40000)
 	ROM_LOAD_EVEN( "dg1",   0x000000, 0x20000, 0x8e71a8af )
@@ -1017,7 +1037,6 @@ ROM_START( pow )
 	ROM_REGION(0x10000)	/* UPD7759 samples */
 	ROM_LOAD( "dg7",        0x000000, 0x10000, 0xaba9a9d3 )
 ROM_END
-
 
 ROM_START( powj )
 	ROM_REGION(0x40000)
@@ -1051,7 +1070,6 @@ ROM_START( powj )
 	ROM_LOAD( "dg7",        0x000000, 0x10000, 0xaba9a9d3 )
 ROM_END
 
-
 ROM_START( searchar )
 	ROM_REGION(0x40000)
 	ROM_LOAD_EVEN( "bh.2",  0x000000, 0x20000, 0xc852e2e2 )
@@ -1079,7 +1097,6 @@ ROM_START( searchar )
 	ROM_LOAD_ODD ( "bh.4",  0x000000, 0x20000, 0xeabc5ddf )
 ROM_END
 
-
 ROM_START( streetsm )
 	ROM_REGION(0x40000)
 	ROM_LOAD_EVEN( "s2-1ver1.9c",  0x00000, 0x20000, 0xb59354c5 )
@@ -1102,7 +1119,6 @@ ROM_START( streetsm )
 	ROM_REGION(0x20000)	/* ADPCM samples */
 	ROM_LOAD( "s2-6.18d",    0x000000, 0x20000, 0x47db1605 )
 ROM_END
-
 
 ROM_START( streets2 )
 	ROM_REGION(0x40000)
@@ -1127,7 +1143,6 @@ ROM_START( streets2 )
 	ROM_LOAD( "s2-6.18d",    0x000000, 0x20000, 0x47db1605 )
 ROM_END
 
-
 ROM_START( streetsj )
 	ROM_REGION(0x40000)
 	ROM_LOAD_EVEN( "s2v1j_01.bin", 0x00000, 0x20000, 0xf031413c )
@@ -1150,7 +1165,6 @@ ROM_START( streetsj )
 	ROM_REGION(0x20000)	/* ADPCM samples */
 	ROM_LOAD( "s2-6.18d",    0x000000, 0x20000, 0x47db1605 )
 ROM_END
-
 
 ROM_START( ikari3 )
 	ROM_REGION(0x40000)
@@ -1259,7 +1273,7 @@ static void streetsj_patch(void)
 
 /******************************************************************************/
 
-struct GameDriver pow_driver =
+struct GameDriver driver_pow =
 {
 	__FILE__,
 	0,
@@ -1272,22 +1286,22 @@ struct GameDriver pow_driver =
 	&pow_machine_driver,
 	custom_memory,
 
-	pow_rom,
+	rom_pow,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	pow_input_ports,
+	input_ports_pow,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
 	0, 0
 };
 
-struct GameDriver powj_driver =
+struct GameDriver driver_powj =
 {
 	__FILE__,
-	&pow_driver,
+	&driver_pow,
 	"powj",
 	"Datsugoku - Prisoners of War (Japan)",
 	"1988",
@@ -1297,19 +1311,19 @@ struct GameDriver powj_driver =
 	&pow_machine_driver,
 	custom_memory,
 
-	powj_rom,
+	rom_powj,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	powj_input_ports,
+	input_ports_powj,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
 	0, 0
 };
 
-struct GameDriver searchar_driver =
+struct GameDriver driver_searchar =
 {
 	__FILE__,
 	0,
@@ -1322,19 +1336,19 @@ struct GameDriver searchar_driver =
 	&searchar_machine_driver,
 	searchar_memory,
 
-	searchar_rom,
+	rom_searchar,
 	0, 0,
 	0,
 	0,
 
-	searchar_input_ports,
+	input_ports_searchar,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_ROTATE_90,
 	0, 0
 };
 
-struct GameDriver streetsm_driver =
+struct GameDriver driver_streetsm =
 {
 	__FILE__,
 	0,
@@ -1347,22 +1361,22 @@ struct GameDriver streetsm_driver =
 	&searchar_machine_driver,
 	custom_memory,
 
-	streetsm_rom,
+	rom_streetsm,
 	streetsm_patch, 0,
 	0,
 	0,
 
-	streetsm_input_ports,
+	input_ports_streetsm,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
 	0, 0
 };
 
-struct GameDriver streets2_driver =
+struct GameDriver driver_streets2 =
 {
 	__FILE__,
-	&streetsm_driver,
+	&driver_streetsm,
 	"streets2",
 	"Street Smart (US version 2)",
 	"1989",
@@ -1372,22 +1386,22 @@ struct GameDriver streets2_driver =
 	&streets2_machine_driver,
 	custom_memory,
 
-	streets2_rom,
+	rom_streets2,
 	0, 0,
 	0,
 	0,
 
-	streetsm_input_ports,
+	input_ports_streetsm,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
 	0, 0
 };
 
-struct GameDriver streetsj_driver =
+struct GameDriver driver_streetsj =
 {
 	__FILE__,
-	&streetsm_driver,
+	&driver_streetsm,
 	"streetsj",
 	"Street Smart (Japan version 1)",
 	"1989",
@@ -1397,20 +1411,19 @@ struct GameDriver streetsj_driver =
 	&searchar_machine_driver,
 	custom_memory,
 
-	streetsj_rom,
+	rom_streetsj,
 	streetsj_patch, 0,
 	0,
 	0,
 
-	streetsj_input_ports,
+	input_ports_streetsj,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
 	0, 0
 };
 
-
-struct GameDriver ikari3_driver =
+struct GameDriver driver_ikari3 =
 {
 	__FILE__,
 	0,
@@ -1423,12 +1436,12 @@ struct GameDriver ikari3_driver =
 	&ikari3_machine_driver,
 	searchar_memory,
 
-	ikari3_rom,
+	rom_ikari3,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	ikari3_input_ports,
+	input_ports_ikari3,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,

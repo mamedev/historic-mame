@@ -124,7 +124,7 @@ static struct MemoryReadAddress rainbow_readmem[] =
 	{ 0xc04000, 0xc07fff, MRA_BANK2 },
 	{ 0xc08000, 0xc0bfff, rastan_videoram3_r },
 	{ 0xc0c000, 0xc0ffff, MRA_BANK3 },
-	{ 0xd00000, 0xd0ffff, MRA_BANK4, &rastan_spriteram },
+	{ 0xd00000, 0xd0ffff, MRA_BANK4 },
 	{ -1 }  /* end of table */
 };
 
@@ -140,14 +140,14 @@ static struct MemoryWriteAddress rainbow_writemem[] =
 	{ 0xc0c000, 0xc0ffff, MWA_BANK3 },
 	{ 0xc20000, 0xc20003, rastan_scrollY_w, &rastan_scrolly },  /* scroll Y  1st.w plane1  2nd.w plane2 */
 	{ 0xc40000, 0xc40003, rastan_scrollX_w, &rastan_scrollx },  /* scroll X  1st.w plane1  2nd.w plane2 */
-	{ 0xd00000, 0xd0ffff, MWA_BANK4 },
+	{ 0xd00000, 0xd0ffff, MWA_BANK4, &rastan_spriteram },
 	{ 0x3e0000, 0x3e0003, rainbow_sound_w },
 	{ 0x3a0000, 0x3a0003, MWA_NOP },
 	{ 0x3c0000, 0x3c0003, MWA_NOP },
 	{ -1 }  /* end of table */
 };
 
-INPUT_PORTS_START( rainbow_input_ports )
+INPUT_PORTS_START( rainbow )
 	PORT_START	/* DIP SWITCH A */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Cabinet ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
@@ -366,7 +366,7 @@ ROM_START( rainbowe )
 	ROM_CONTINUE(            		0x10000, 0xc000 )
 ROM_END
 
-struct GameDriver rainbow_driver =
+struct GameDriver driver_rainbow =
 {
 	__FILE__,
 	0,
@@ -379,40 +379,40 @@ struct GameDriver rainbow_driver =
 	&machine_driver,
 	0,
 
-	rainbow_rom,
+	rom_rainbow,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	rainbow_input_ports,
+	input_ports_rainbow,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
 	0, 0
 };
 
-struct GameDriver rainbowe_driver =
+struct GameDriver driver_rainbowe =
 {
 	__FILE__,
-	&rainbow_driver,
+	&driver_rainbow,
 	"rainbowe",
 	"Rainbow Islands (Extra)",
 	"1988",
 	"Taito Corporation",
 	"Richard Bush (Raine & Info)\nMike Coates (MAME driver)",
-	GAME_NOT_WORKING,
+	0,
 	&machine_driver,
 	0,
 
-	rainbowe_rom,
+	rom_rainbowe,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	rainbow_input_ports,
+	input_ports_rainbow,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
 	0, 0
 };
 
@@ -436,7 +436,7 @@ static struct MemoryReadAddress jumping_readmem[] =
 	{ 0xc04000, 0xc07fff, MRA_BANK2 },
 	{ 0xc08000, 0xc0bfff, rastan_videoram3_r },
 	{ 0xc0c000, 0xc0ffff, MRA_BANK3 },
-	{ 0x440000, 0x4407ff, MRA_BANK4, &rastan_spriteram },
+	{ 0x440000, 0x4407ff, MRA_BANK4 },
     { 0xd00800, 0xd00fff, MRA_BANK5 }, 				/* Needed for Attract Mode */
     { 0x420000, 0x420001, MRA_NOP},					/* Read, but result not used */
 	{ -1 }  /* end of table */
@@ -453,7 +453,7 @@ static struct MemoryWriteAddress jumping_writemem[] =
 	{ 0xc0c000, 0xc0ffff, MWA_BANK3 },
     { 0x430000, 0x430003, rastan_scrollY_w, &rastan_scrolly },  /* scroll Y  1st.w plane1  2nd.w plane2 */
    	{ 0xc40000, 0xc40003, rastan_scrollX_w, &rastan_scrollx },  /* scroll X  1st.w plane1  2nd.w plane2 */
-    { 0x440000, 0x4407ff, MWA_BANK4 },
+    { 0x440000, 0x4407ff, MWA_BANK4, &rastan_spriteram },
 //	{ 0x3e0000, 0x3e0003, rainbow_sound_w },
     { 0xd00800, 0xd00fff, MWA_BANK5 }, 				/* Needed for Attract Mode */
     { 0x3c0000, 0x3c0001, MWA_NOP },				/* Watchdog ? */
@@ -461,7 +461,7 @@ static struct MemoryWriteAddress jumping_writemem[] =
 	{ -1 }  /* end of table */
 };
 
-INPUT_PORTS_START( jumping_input_ports )
+INPUT_PORTS_START( jumping )
 
 	PORT_START	/* DIP SWITCH A */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
@@ -639,10 +639,10 @@ ROM_START( jumping )
 
 ROM_END
 
-struct GameDriver jumping_driver =
+struct GameDriver driver_jumping =
 {
 	__FILE__,
-	&rainbow_driver,
+	&driver_rainbow,
 	"jumping",
 	"Jumping",
 	"1989",
@@ -652,12 +652,12 @@ struct GameDriver jumping_driver =
 	&jumping_machine_driver,
 	0,
 
-	jumping_rom,
+	rom_jumping,
 	jumping_sprite_decode, 0,
 	0,
 	0,	/* sound_prom */
 
-	jumping_input_ports,
+	input_ports_jumping,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,

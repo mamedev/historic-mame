@@ -262,7 +262,7 @@ static struct IOWritePort rk_sound_writeport[] =
 	{ -1 }  /* end of table */
 };
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( kingofb )
     PORT_START /* DSW0 - 0xfc01 */
     PORT_DIPNAME( 0x03, 0x01, "Rest Up Points" )
     PORT_DIPSETTING(    0x02, "70000" )
@@ -353,7 +353,7 @@ INPUT_PORTS_START( input_ports )
 INPUT_PORTS_END
 
 /* Ring King */
-INPUT_PORTS_START( rk_input_ports )
+INPUT_PORTS_START( ringking )
     PORT_START /* DSW0 - 0xe000 */
     PORT_DIPNAME( 0x03, 0x03, "Replay" )
     PORT_DIPSETTING(    0x01, "70000" )
@@ -748,7 +748,7 @@ ROM_START( kingofb )
 	ROM_LOAD( "vd05_10.bin",  0x22000, 0x2000, 0xfce71e5a ) /* plane 1 */
 	ROM_LOAD( "vd08_12.bin",  0x24000, 0x2000, 0x3f68b991 ) /* plane 2 */
 
-	ROM_REGION(0x0300)	/* color PROMs */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "vb14_col.bin", 0x0000, 0x0100, 0xc58e5121 )	/* red component */
 	ROM_LOAD( "vb15_col.bin", 0x0100, 0x0100, 0x5ab06f25 )	/* green component */
 	ROM_LOAD( "vb16_col.bin", 0x0200, 0x0100, 0x1171743f )	/* blue component */
@@ -782,7 +782,7 @@ ROM_START( ringking )
 	ROM_LOAD( "cx09.17d",     0x26000, 0x4000, 0x37a082cf )	/* tiles */
 	ROM_LOAD( "cx10.17e",     0x2a000, 0x4000, 0xab9446c5 )
 
-	ROM_REGION(0x0200)	/* color PROMs */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "82s135.2a",    0x0000, 0x0100, 0x0e723a83 )	/* red and green component */
 	ROM_LOAD( "82s129.1a",    0x0100, 0x0100, 0xd345cbb3 )	/* blue component */
 
@@ -813,7 +813,7 @@ ROM_START( ringkin2 )
 	ROM_LOAD( "cx09.17d",     0x26000, 0x4000, 0x37a082cf )	/* tiles */
 	ROM_LOAD( "cx10.17e",     0x2a000, 0x4000, 0xab9446c5 )
 
-	ROM_REGION(0x0200)	/* color PROMs */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "82s135.2a",    0x0000, 0x0100, 0x0e723a83 )	/* red and green component */
 	ROM_LOAD( "82s129.1a",    0x0100, 0x0100, 0xd345cbb3 )	/* blue component */
 
@@ -853,7 +853,7 @@ ROM_START( ringkin3 )
 	ROM_LOAD( "10.5d",        0x22000, 0x2000, 0xaf5013e7 ) /* plane 1 */
 	ROM_LOAD( "12.8d",        0x24000, 0x2000, 0x00000000 ) /* plane 2 */
 
-	ROM_REGION(0x0300)	/* color PROMs */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	/* we load the ringking PROMs and then expand the first to look like the kingobox ones... */
 	ROM_LOAD( "82s135.2a",    0x0100, 0x0100, 0x0e723a83 )	/* red and green component */
 	ROM_LOAD( "82s129.1a",    0x0200, 0x0100, 0xd345cbb3 )	/* blue component */
@@ -1020,7 +1020,7 @@ static void ringkin2_hisave(void)
 
 
 
-struct GameDriver kingofb_driver =
+struct GameDriver driver_kingofb =
 {
 	__FILE__,
 	0,
@@ -1033,24 +1033,24 @@ struct GameDriver kingofb_driver =
 	&machine_driver,
 	0,
 
-	kingofb_rom,
+	rom_kingofb,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	input_ports,
+	input_ports_kingofb,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	kingofb_hiload, kingofb_hisave
 };
 
 /* Ring King */
-struct GameDriver ringking_driver =
+struct GameDriver driver_ringking =
 {
 	__FILE__,
-	&kingofb_driver,
+	&driver_kingofb,
 	"ringking",
 	"Ring King (set 1)",
 	"1985",
@@ -1060,49 +1060,49 @@ struct GameDriver ringking_driver =
 	&rk_machine_driver,
 	0,
 
-	ringking_rom,
+	rom_ringking,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	rk_input_ports,
+	input_ports_ringking,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	ringking_hiload, ringking_hisave
 };
 
-struct GameDriver ringkin2_driver =
+struct GameDriver driver_ringkin2 =
 {
 	__FILE__,
-	&kingofb_driver,
+	&driver_kingofb,
 	"ringkin2",
 	"Ring King (set 2)",
 	"1985",
 	"????",
 	"Ernesto Corvi\nPhil Stroffolino\nNicola Salmoria",
-	GAME_NOT_WORKING,
+	0,
 	&rk_machine_driver,
 	0,
 
-	ringkin2_rom,
+	rom_ringkin2,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	input_ports,
+	input_ports_kingofb,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
+	0, 0, 0,
+	ORIENTATION_ROTATE_90 | GAME_NOT_WORKING,
 
 	ringking_hiload, ringking_hisave
 };
 
-struct GameDriver ringkin3_driver =
+struct GameDriver driver_ringkin3 =
 {
 	__FILE__,
-	&kingofb_driver,
+	&driver_kingofb,
 	"ringkin3",
 	"Ring King (set 3)",
 	"1985",
@@ -1112,14 +1112,14 @@ struct GameDriver ringkin3_driver =
 	&machine_driver,
 	0,
 
-	ringkin3_rom,
+	rom_ringkin3,
 	ringkin3_expand_color_prom, 0,
 	0,
 	0,      /* sound_prom */
 
-	input_ports,
+	input_ports_kingofb,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	ringkin2_hiload, ringkin2_hisave

@@ -1399,7 +1399,7 @@ static struct IOWritePort writeport_cpu2[] =
 	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y, 70, 10, 0, 0, 255 )
 
 
-INPUT_PORTS_START( sentetst_input_ports )
+INPUT_PORTS_START( sentetst )
 	PORT_START	/* IN0 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ))
 	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ))
@@ -1453,7 +1453,7 @@ INPUT_PORTS_START( sentetst_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( cshift_input_ports )
+INPUT_PORTS_START( cshift )
 	PORT_START	/* IN0 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ))
 	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ))
@@ -1494,7 +1494,7 @@ INPUT_PORTS_START( cshift_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( gghost_input_ports )
+INPUT_PORTS_START( gghost )
 	PORT_START	/* IN0 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ))
 	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ))
@@ -1543,7 +1543,7 @@ INPUT_PORTS_START( gghost_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( hattrick_input_ports )
+INPUT_PORTS_START( hattrick )
 	PORT_START	/* IN0 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ))
 	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ))
@@ -1595,7 +1595,7 @@ INPUT_PORTS_START( hattrick_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( otwalls_input_ports )
+INPUT_PORTS_START( otwalls )
 	PORT_START	/* IN0 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ))
 	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ))
@@ -1636,7 +1636,7 @@ INPUT_PORTS_START( otwalls_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( snakepit_input_ports )
+INPUT_PORTS_START( snakepit )
 	PORT_START	/* IN0 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ))
 	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ))
@@ -1690,7 +1690,7 @@ INPUT_PORTS_START( snakepit_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( snakjack_input_ports )
+INPUT_PORTS_START( snakjack )
 	PORT_START	/* IN0 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ))
 	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ))
@@ -1737,7 +1737,7 @@ INPUT_PORTS_START( snakjack_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( stocker_input_ports )
+INPUT_PORTS_START( stocker )
 	PORT_START	/* IN0 */
 	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Coinage ))
 	PORT_DIPSETTING(    0x03, DEF_STR( 2C_1C ))
@@ -1789,7 +1789,7 @@ INPUT_PORTS_START( stocker_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( triviag1_input_ports )
+INPUT_PORTS_START( triviag1 )
 	PORT_START	/* IN0 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ))
 	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ))
@@ -1844,13 +1844,13 @@ INPUT_PORTS_START( triviag1_input_ports )
 INPUT_PORTS_END
 
 
-#define triviag2_input_ports triviag1_input_ports
-#define triviasp_input_ports triviag1_input_ports
-#define triviayp_input_ports triviag1_input_ports
-#define triviabb_input_ports triviag1_input_ports
+#define input_ports_triviag2 input_ports_triviag1
+#define input_ports_triviasp input_ports_triviag1
+#define input_ports_triviayp input_ports_triviag1
+#define input_ports_triviabb input_ports_triviag1
 
 
-INPUT_PORTS_START( gimeabrk_input_ports )
+INPUT_PORTS_START( gimeabrk )
 	PORT_START	/* IN0 */
 	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Coinage ))
 	PORT_DIPSETTING(    0x03, DEF_STR( 2C_1C ))
@@ -1919,7 +1919,7 @@ INPUT_PORTS_START( gimeabrk_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( minigolf_input_ports )
+INPUT_PORTS_START( minigolf )
 	PORT_START	/* IN0 */
 	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Coinage ))
 	PORT_DIPSETTING(    0x03, DEF_STR( 2C_1C ))
@@ -1973,7 +1973,7 @@ INPUT_PORTS_START( minigolf_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( minigol2_input_ports )
+INPUT_PORTS_START( minigol2 )
 	PORT_START	/* IN0 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ))
 	PORT_DIPSETTING(    0x03, DEF_STR( 3C_1C ))
@@ -2027,7 +2027,7 @@ INPUT_PORTS_START( minigol2_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( toggle_input_ports )
+INPUT_PORTS_START( toggle )
 	PORT_START	/* IN0 */
 	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coinage ))
 	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ))
@@ -2074,7 +2074,7 @@ INPUT_PORTS_START( toggle_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( nametune_input_ports )
+INPUT_PORTS_START( nametune )
 	PORT_START	/* IN0 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ))
 	PORT_DIPSETTING(    0x02, DEF_STR( 2C_1C ))
@@ -2129,7 +2129,7 @@ INPUT_PORTS_START( nametune_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( nstocker_input_ports )
+INPUT_PORTS_START( nstocker )
 	PORT_START	/* IN0 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ))
 	PORT_DIPSETTING(    0x03, DEF_STR( 3C_1C ))
@@ -2188,7 +2188,7 @@ INPUT_PORTS_START( nstocker_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( sfootbal_input_ports )
+INPUT_PORTS_START( sfootbal )
 	PORT_START	/* IN0 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ))
 	PORT_DIPSETTING(    0x03, DEF_STR( 3C_1C ))
@@ -2251,7 +2251,7 @@ INPUT_PORTS_START( sfootbal_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( spiker_input_ports )
+INPUT_PORTS_START( spiker )
 	PORT_START	/* IN0 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ))
 	PORT_DIPSETTING(    0x03, DEF_STR( 3C_1C ))
@@ -2306,7 +2306,7 @@ INPUT_PORTS_START( spiker_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( rescraid_input_ports )
+INPUT_PORTS_START( rescraid )
 	PORT_START	/* IN0 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ))
 	PORT_DIPSETTING(    0x03, DEF_STR( 3C_1C ))
@@ -3042,7 +3042,7 @@ ROM_END
  *************************************/
 
 #define BALSENTE_DRIVER(name,year,fullname) 	\
-	struct GameDriver name##_driver =			\
+	struct GameDriver driver_##name =			\
 	{											\
 		__FILE__,								\
 		NULL,									\
@@ -3055,12 +3055,12 @@ ROM_END
 		&machine_driver,						\
 		name##_init,							\
 												\
-		name##_rom,								\
+		rom_##name,								\
 		0, 0,									\
 		0,										\
 		0,	/* sound_prom */					\
 												\
-		name##_input_ports,						\
+		input_ports_##name,						\
 												\
 		0,0,0,									\
 		ORIENTATION_DEFAULT,					\
@@ -3069,10 +3069,10 @@ ROM_END
 	};
 
 #define BALSENTE_CLONE_DRIVER(name,year,fullname,cloneof) \
-	struct GameDriver name##_driver =			\
+	struct GameDriver driver_##name =			\
 	{											\
 		__FILE__,								\
-		&cloneof##_driver,						\
+		&driver_##cloneof,						\
 		#name,									\
 		fullname,								\
 		#year,									\
@@ -3082,12 +3082,12 @@ ROM_END
 		&machine_driver,						\
 		name##_init,							\
 												\
-		name##_rom,								\
+		rom_##name,								\
 		0, 0,									\
 		0,										\
 		0,	/* sound_prom */					\
 												\
-		name##_input_ports,						\
+		input_ports_##name,						\
 												\
 		0,0,0,									\
 		ORIENTATION_DEFAULT,					\

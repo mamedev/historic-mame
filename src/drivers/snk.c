@@ -379,16 +379,17 @@ static struct YM3526interface ym3526_interface =
 static struct MemoryReadAddress o_readmem_cpuA[] =
 {
 	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xcfff, cpuA_io_r, &io_ram },
-	{ 0xd000, 0xf7ff, MRA_RAM, &shared_auxram },
-	{ 0xf800, 0xffff, MRA_RAM, &shared_ram },
+	{ 0xc000, 0xcfff, cpuA_io_r },
+	{ 0xd000, 0xf7ff, MRA_RAM },
+	{ 0xf800, 0xffff, MRA_RAM },
 	{ -1 }
 };
 static struct MemoryWriteAddress o_writemem_cpuA[] =
 {
 	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xcfff, cpuA_io_w },
-	{ 0xd000, 0xffff, MWA_RAM },
+	{ 0xc000, 0xcfff, cpuA_io_w, &io_ram },
+	{ 0xd000, 0xf7ff, MWA_RAM, &shared_auxram },
+	{ 0xf800, 0xffff, MWA_RAM, &shared_ram },
 	{ -1 }
 };
 
@@ -455,8 +456,8 @@ static struct MemoryWriteAddress aso_writemem_sound[] =
 static struct MemoryReadAddress readmem_cpuA[] =
 {
 	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xcfff, cpuA_io_r, &io_ram },
-	{ 0xd000, 0xffff, MRA_RAM, &shared_ram },
+	{ 0xc000, 0xcfff, cpuA_io_r },
+	{ 0xd000, 0xffff, MRA_RAM },
 	{ -1 }
 };
 
@@ -464,16 +465,16 @@ static struct MemoryReadAddress readmem_cpuA[] =
 static struct MemoryReadAddress readmem2_cpuA[] =
 {
 	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xcfff, cpuA_io_r2, &io_ram },
-	{ 0xd000, 0xffff, MRA_RAM, &shared_ram },
+	{ 0xc000, 0xcfff, cpuA_io_r2 },
+	{ 0xd000, 0xffff, MRA_RAM },
 	{ -1 }
 };
 
 static struct MemoryWriteAddress writemem_cpuA[] =
 {
 	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xcfff, cpuA_io_w },
-	{ 0xd000, 0xffff, MWA_RAM },
+	{ 0xc000, 0xcfff, cpuA_io_w, &io_ram },
+	{ 0xd000, 0xffff, MWA_RAM, &shared_ram },
 	{ -1 }
 };
 
@@ -533,18 +534,19 @@ static struct MemoryWriteAddress writemem_sound[] =
 static struct MemoryReadAddress aso_readmem_cpuA[] =
 {
 	{ 0x0000, 0xbfff, MRA_ROM },
-	{ 0xc000, 0xcfff, cpuA_io_r, &io_ram },
+	{ 0xc000, 0xcfff, cpuA_io_r },
 	{ 0xd000, 0xd7ff, MRA_RAM },
-	{ 0xd800, 0xf7ff, MRA_RAM, &shared_auxram },
-	{ 0xf800, 0xffff, MRA_RAM, &shared_ram },
+	{ 0xd800, 0xf7ff, MRA_RAM },
+	{ 0xf800, 0xffff, MRA_RAM },
 	{ -1 }
 };
 
 static struct MemoryWriteAddress aso_writemem_cpuA[] =
 {
 	{ 0x0000, 0xbfff, MWA_ROM },
-	{ 0xc000, 0xcfff, cpuA_io_w },
-	{ 0xd000, 0xffff, MWA_RAM },
+	{ 0xc000, 0xcfff, cpuA_io_w, &io_ram },
+	{ 0xd800, 0xf7ff, MWA_RAM, &shared_auxram },
+	{ 0xf800, 0xffff, MWA_RAM, &shared_ram },
 	{ -1 }
 };
 
@@ -613,7 +615,7 @@ static struct MemoryWriteAddress aso_writemem_cpuB[] =
 	PORT_DIPSETTING(    0xc0, DEF_STR( 1C_6C ) )
 
 
-INPUT_PORTS_START( ikarius_input_ports )
+INPUT_PORTS_START( ikarius )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* sound related ??? */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN3 )
@@ -673,7 +675,7 @@ ROTARY
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( ikarijp_input_ports )
+INPUT_PORTS_START( ikarijp )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -734,7 +736,7 @@ ROTARY
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( victroad_input_ports )
+INPUT_PORTS_START( victroad )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN ) 	/* sound related ??? */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN3 )
@@ -795,7 +797,7 @@ ROTARY
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( gwar_input_ports )
+INPUT_PORTS_START( gwar )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN ) 	/* sound related ??? */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN3 )
@@ -858,7 +860,7 @@ INPUT_PORTS_END
 
 
 
-INPUT_PORTS_START( athena_input_ports )
+INPUT_PORTS_START( athena )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )  /* sound related */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN3 )
@@ -936,7 +938,7 @@ COINAGE
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( tnk3_input_ports )
+INPUT_PORTS_START( tnk3 )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -1034,7 +1036,7 @@ ROTARY
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( bermudat_input_ports )
+INPUT_PORTS_START( bermudat )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )  /* sound related???*/
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN3 ) /* Behaves like COIN 1 */
@@ -1094,7 +1096,7 @@ ROTARY
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( psychos_input_ports )
+INPUT_PORTS_START( psychos )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )  /* sound related???*/
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -1162,7 +1164,7 @@ COINAGE
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( aso_input_ports )
+INPUT_PORTS_START( aso )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -1250,7 +1252,7 @@ INPUT_PORTS_START( aso_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( chopper1_input_ports )
+INPUT_PORTS_START( chopper1 )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )  /* sound related */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -1327,7 +1329,7 @@ COINAGE
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( fitegolf_input_ports )
+INPUT_PORTS_START( fitegolf )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )  /* sound related */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN3 )
@@ -1414,7 +1416,7 @@ INPUT_PORTS_START( fitegolf_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( ftsoccer_input_ports )
+INPUT_PORTS_START( ftsoccer )
 		PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -1485,7 +1487,7 @@ INPUT_PORTS_START( ftsoccer_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( tdfever_input_ports )
+INPUT_PORTS_START( tdfever )
 		PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -2273,7 +2275,7 @@ ROM_START( tnk3 )
 	ROM_LOAD( "tnk3-p10.bin",  0x0000, 0x4000, 0x7bf0a517 )
 	ROM_LOAD( "tnk3-p11.bin",  0x4000, 0x4000, 0x0569ce27 )
 
-	ROM_REGION( 0xc00 ) /* color proms */
+	ROM_REGIONX( 0x0c00, REGION_PROMS )
 	ROM_LOAD( "7122.2",  0x000, 0x400, 0x34c06bc6 )
 	ROM_LOAD( "7122.1",  0x400, 0x400, 0x6d0ac66a )
 	ROM_LOAD( "7122.0",  0x800, 0x400, 0x4662b4c8 )
@@ -2307,7 +2309,7 @@ ROM_START( tnk3j )
 	ROM_LOAD( "tnk3-p10.bin",  0x0000, 0x4000, 0x7bf0a517 )
 	ROM_LOAD( "tnk3-p11.bin",  0x4000, 0x4000, 0x0569ce27 )
 
-	ROM_REGION( 0xc00 ) /* color proms */
+	ROM_REGIONX( 0x0c00, REGION_PROMS )
 	ROM_LOAD( "7122.2",  0x000, 0x400, 0x34c06bc6 )
 	ROM_LOAD( "7122.1",  0x400, 0x400, 0x6d0ac66a )
 	ROM_LOAD( "7122.0",  0x800, 0x400, 0x4662b4c8 )
@@ -2341,7 +2343,7 @@ ROM_START( aso )
 	ROM_LOAD( "aso.7",    0x0000, 0x8000, 0x49258162 )  /* YM3526 */
 	ROM_LOAD( "aso.9",    0x8000, 0x4000, 0xaef5a4f4 )
 
-	ROM_REGION(0xC00)	/* color PROM */
+	ROM_REGIONX( 0x0c00, REGION_PROMS )
 	ROM_LOAD( "up02_f12.rom",  0x00000, 0x00400, 0x5b0a0059 )
 	ROM_LOAD( "up02_f13.rom",  0x00400, 0x00400, 0x37e28dd8 )
 	ROM_LOAD( "up02_f14.rom",  0x00800, 0x00400, 0xc3fd1dd3 )
@@ -2374,7 +2376,7 @@ ROM_START( athena )
 	ROM_LOAD( "up02_g6.rom",  0x0000, 0x4000, 0x42dbe029 )
 	ROM_LOAD( "up02_k6.rom",  0x4000, 0x8000, 0x596f1c8a )
 
-	ROM_REGION( 0xC00 )	/* color proms */
+	ROM_REGIONX( 0x0c00, REGION_PROMS )
 	ROM_LOAD( "up02_c2.rom",  0x000, 0x400, 0x294279ae )
 	ROM_LOAD( "up02_b1.rom",  0x400, 0x400, 0xd25c9099 )
 	ROM_LOAD( "up02_c1.rom",  0x800, 0x400, 0xa4a4e7dc )
@@ -2406,7 +2408,7 @@ ROM_START( fitegolf )
 	ROM_LOAD( "gu3",    0x0000, 0x4000, 0x811b87d7 )
 	ROM_LOAD( "gu4",    0x4000, 0x8000, 0x2d998e2b )
 
-	ROM_REGION(0xC00)	/* color PROM */
+	ROM_REGIONX( 0x0c00, REGION_PROMS )
 	ROM_LOAD( "82s137.2c",  0x00000, 0x00400, 0x6e4c7836 )
 	ROM_LOAD( "82s137.1b",  0x00400, 0x00400, 0x29e7986f )
 	ROM_LOAD( "82s137.1c",  0x00800, 0x00400, 0x27ba9ff9 )
@@ -2442,7 +2444,7 @@ ROM_START( alphmiss ) /* BAD DUMP! */
 	ROM_LOAD( "p8.3f",    0x4000, 0x4000, 0x00000000 )
 	ROM_LOAD( "p9.2f",    0x8000, 0x4000, 0x00000000 )
 
-	ROM_REGION(0xC00)	/* color PROM */
+	ROM_REGIONX( 0x0c00, REGION_PROMS )
 	ROM_LOAD( "mb7122e.12f",  0x00000, 0x00400, 0x00000000 )
 	ROM_LOAD( "mb7122e.13f",  0x00400, 0x00400, 0x00000000 )
 	ROM_LOAD( "mb7122e.14f",  0x00800, 0x00400, 0x00000000 )
@@ -2473,7 +2475,7 @@ ROM_START( ikarius )
 	ROM_REGION(0x10000)	/* Sound CPU */
 	ROM_LOAD( "3.rom",  0x0000, 0x10000, 0x56a26699 )
 
-	ROM_REGION(0xC00)	/* color proms */
+	ROM_REGIONX( 0x0c00, REGION_PROMS )
 	ROM_LOAD( "7122er.prm",  0x000, 0x400, 0xb9bf2c2c )
 	ROM_LOAD( "7122eg.prm",  0x400, 0x400, 0x0703a770 )
 	ROM_LOAD( "7122eb.prm",  0x800, 0x400, 0x0a11cdde )
@@ -2514,7 +2516,7 @@ ROM_START( ikarijp ) /* unconfirmed */
 	ROM_LOAD( "ik5",  0x0000, 0x4000, 0x863448fa )
 	ROM_LOAD( "ik6",  0x4000, 0x8000, 0x9b16aa57 )
 
-	ROM_REGION(0xC00)	/* color proms */
+	ROM_REGIONX( 0x0c00, REGION_PROMS )
 	ROM_LOAD( "7122er.prm",  0x000, 0x400, 0xb9bf2c2c ) /* red */
 	ROM_LOAD( "7122eg.prm",  0x400, 0x400, 0x0703a770 ) /* green */
 	ROM_LOAD( "7122eb.prm",  0x800, 0x400, 0x0a11cdde ) /* blue */
@@ -2555,7 +2557,7 @@ ROM_START( ikarijpb )
 	ROM_LOAD( "ik5",    0x0000, 0x4000, 0x863448fa )
 	ROM_LOAD( "ik6",    0x4000, 0x8000, 0x9b16aa57 )
 
-	ROM_REGION(0xc00) /* color proms */
+	ROM_REGIONX( 0x0c00, REGION_PROMS )
 	ROM_LOAD( "7122er.prm", 0x000, 0x400, 0xb9bf2c2c )
 	ROM_LOAD( "7122eg.prm", 0x400, 0x400, 0x0703a770 )
 	ROM_LOAD( "7122eb.prm", 0x800, 0x400, 0x0a11cdde )
@@ -2595,7 +2597,7 @@ ROM_START( victroad )
 	ROM_REGION( 0x10000 )	/* sound code */
 	ROM_LOAD( "p3",  0x00000, 0x10000, 0xbac745f6 )
 
-	ROM_REGION( 0xC00 )	/* color proms */
+	ROM_REGIONX( 0x0c00, REGION_PROMS )
 	ROM_LOAD( "mb7122e.1k", 0x000, 0x400, 0x491ab831 )
 	ROM_LOAD( "mb7122e.2l", 0x400, 0x400, 0x8feca424 )
 	ROM_LOAD( "mb7122e.1l", 0x800, 0x400, 0x220076ca )
@@ -2637,7 +2639,7 @@ ROM_START( dogosoke ) /* Victory Road Japan */
 	ROM_REGION(0x10000)	/* sound code */
 	ROM_LOAD( "up03_k7.rom",  0x00000, 0x10000, 0x173fa571 )
 
-	ROM_REGION(0xC00)	/* color PROM */
+	ROM_REGIONX( 0x0c00, REGION_PROMS )
 	ROM_LOAD( "up03_k1.rom",  0x000, 0x400, 0x10a2ce2b )
 	ROM_LOAD( "up03_l2.rom",  0x400, 0x400, 0x99dc9792 )
 	ROM_LOAD( "up03_l1.rom",  0x800, 0x400, 0xe7213160 )
@@ -2681,7 +2683,7 @@ ROM_START( gwar )
 	ROM_REGION(0x10000)	/* 64k for sound code */
 	ROM_LOAD( "g03",  0x00000, 0x10000, 0xeb544ab9 )
 
-	ROM_REGION( 0xc00 ) /* color proms */
+	ROM_REGIONX( 0x0c00, REGION_PROMS )
 	ROM_LOAD( "guprom.3", 0x000, 0x400, 0x090236a3 ) /* red */ // up03_k1.rom
 	ROM_LOAD( "guprom.2", 0x400, 0x400, 0x9147de69 ) /* green */ // up03_l1.rom
 	ROM_LOAD( "guprom.1", 0x800, 0x400, 0x7f9c839e ) /* blue */ // up03_k2.rom
@@ -2727,7 +2729,7 @@ ROM_START( bermudat )
 	ROM_REGION(0x10000)	/* 64k for sound code */
 	ROM_LOAD( "bt_p3.rom",  0x00000, 0x10000, 0x53a82e50 )    /* YM3526 */
 
-	ROM_REGION( 0x1400 ) /* color proms */
+	ROM_REGIONX( 0x1400, REGION_PROMS )
 	ROM_LOAD( "btj_01r.prm", 0x0000, 0x0400, 0xf4b54d06 ) /* red */
 	ROM_LOAD( "btj_02g.prm", 0x0400, 0x0400, 0xbaac139e ) /* green */
 	ROM_LOAD( "btj_03b.prm", 0x0800, 0x0400, 0x2edf2e0b ) /* blue */
@@ -2776,7 +2778,7 @@ ROM_START( bermudaj )
 	ROM_REGION(0x10000)	/* 64k for sound code */
 	ROM_LOAD( "btj_p03.bin", 0x00000, 0x10000, 0xfea8a096 )    /* YM3526 */
 
-	ROM_REGION( 0x1400 ) /* color proms */
+	ROM_REGIONX( 0x1400, REGION_PROMS )
 	ROM_LOAD( "btj_01r.prm", 0x0000, 0x0400, 0xf4b54d06 ) /* red */
 	ROM_LOAD( "btj_02g.prm", 0x0400, 0x0400, 0xbaac139e ) /* green */
 	ROM_LOAD( "btj_03b.prm", 0x0800, 0x0400, 0x2edf2e0b ) /* blue */
@@ -2825,7 +2827,7 @@ ROM_START( psychos )
 	ROM_REGION(0x10000)	/* 64k for sound code */
 	ROM_LOAD( "p5",  0x0000, 0x10000,  0x64503283 )
 
-	ROM_REGION(0x1400)	/* color PROM */
+	ROM_REGIONX( 0x1400, REGION_PROMS )
 	ROM_LOAD( "up03_k1.rom",  0x00000, 0x00400, 0x27b8ca8c ) /* red */
 	ROM_LOAD( "up03_l1.rom",  0x00400, 0x00400, 0x40e78c9e ) /* green */
 	ROM_LOAD( "up03_k2.rom",  0x00800, 0x00400, 0xd845d5ac ) /* blue */
@@ -2864,7 +2866,7 @@ ROM_START( psychos )
 	ROM_LOAD( "p4",  0x30000, 0x10000, 0x437d775a )
 ROM_END
 
-ROM_START( psychos_alt ) /* USA set */
+ROM_START( psychosa ) /* USA set */
 	ROM_REGION(0x10000)	/* 64k for cpuA code */
 	ROM_LOAD( "up03_m4.rom",  0x0000, 0x10000,  0x05dfb409 )
 
@@ -2874,7 +2876,7 @@ ROM_START( psychos_alt ) /* USA set */
 	ROM_REGION(0x10000)	/* 64k for sound code */
 	ROM_LOAD( "up03_j6.rom",  0x00000, 0x10000, 0xbbd0a8e3 )
 
-	ROM_REGION(0x1400)	/* color PROM */
+	ROM_REGIONX( 0x1400, REGION_PROMS )
 	ROM_LOAD( "up03_k1.rom",  0x00000, 0x00400, 0x27b8ca8c ) /* red */
 	ROM_LOAD( "up03_l1.rom",  0x00400, 0x00400, 0x40e78c9e ) /* green */
 	ROM_LOAD( "up03_k2.rom",  0x00800, 0x00400, 0xd845d5ac ) /* blue */
@@ -2925,7 +2927,7 @@ ROM_START( chopper )
 	ROM_REGION(0x10000)	/* 64k for sound code */
 	ROM_LOAD( "kk_03.rom",  0x00000, 0x10000, 0xdbaafb87 )   /* YM3526 */
 
-	ROM_REGION(0xC00)	/* color PROM */
+	ROM_REGIONX( 0x0c00, REGION_PROMS )
 	ROM_LOAD( "up03_k1.rom",  0x0000, 0x0400, 0x7f07a45c ) /* red */
 	ROM_LOAD( "up03_l1.rom",  0x0400, 0x0400, 0x15359fc3 ) /* green */
 	ROM_LOAD( "up03_k2.rom",  0x0800, 0x0400, 0x79b50f7d ) /* blue */
@@ -2969,7 +2971,7 @@ ROM_START( legofair ) /* ChopperI (Japan) */
 	ROM_REGION(0x10000)	/* 64k for sound code */
 	ROM_LOAD( "kk_03.rom",  0x00000, 0x10000, 0xdbaafb87 )
 
-	ROM_REGION(0xC00)	/* color PROM */
+	ROM_REGIONX( 0x0c00, REGION_PROMS )
 	ROM_LOAD( "up03_k1.rom",  0x0000, 0x0400, 0x7f07a45c ) /* red */
 	ROM_LOAD( "up03_l1.rom",  0x0400, 0x0400, 0x15359fc3 ) /* green */
 	ROM_LOAD( "up03_k2.rom",  0x0800, 0x0400, 0x79b50f7d ) /* blue */
@@ -3015,7 +3017,7 @@ ROM_START( ftsoccer )
         ROM_REGION(0x10000)     /* 64k for sound code */
         ROM_LOAD( "ft-002.bin",  0x00000, 0x10000, 0x9ee54ea1 )
 
-        ROM_REGION( 0xc00 ) /* color proms */
+        ROM_REGIONX( 0x0c00, REGION_PROMS )
         ROM_LOAD( "prom2.bin", 0x000, 0x400, 0xbf4ac706 ) /* red */
         ROM_LOAD( "prom1.bin", 0x400, 0x400, 0x1bac8010 ) /* green */
         ROM_LOAD( "prom3.bin", 0x800, 0x400, 0xdbeddb14 ) /* blue */
@@ -3055,7 +3057,7 @@ ROM_START( tdfever ) /* USA set - unconfirmed! */
 	ROM_REGION(0x10000)	/* 64k for sound code */
 	ROM_LOAD( "td3-ver3.3j",  0x00000, 0x10000, 0x5d13e0b1 )
 
-	ROM_REGION(0xC00)	/* color PROM */
+	ROM_REGIONX( 0x0c00, REGION_PROMS )
 	ROM_LOAD( "up03_e8.rom",  0x000, 0x00400, 0x67bdf8a0 )
 	ROM_LOAD( "up03_d8.rom",  0x400, 0x00400, 0x9c4a9198 )
 	ROM_LOAD( "up03_e9.rom",  0x800, 0x00400, 0xc93c18e8 )
@@ -3097,7 +3099,7 @@ ROM_START( tdfeverj )
 	ROM_REGION(0x10000)	/* 64k for sound code */
 	ROM_LOAD( "up02_j3.rom",  0x00000, 0x10000, 0x4e4d71c7 )
 
-	ROM_REGION(0xC00)	/* color PROM */
+	ROM_REGIONX( 0x0c00, REGION_PROMS )
 	ROM_LOAD( "up03_e8.rom",  0x000, 0x00400, 0x67bdf8a0 )
 	ROM_LOAD( "up03_d8.rom",  0x400, 0x00400, 0x9c4a9198 )
 	ROM_LOAD( "up03_e9.rom",  0x800, 0x00400, 0xc93c18e8 )
@@ -3615,7 +3617,7 @@ static void psychos_decode( void )
 
 /***********************************************************************/
 
-struct GameDriver tnk3_driver =
+struct GameDriver driver_tnk3 =
 {
 	__FILE__,
 	0,
@@ -3624,50 +3626,50 @@ struct GameDriver tnk3_driver =
 	"1985",
 	"SNK",
 	CREDITS,
-	GAME_IMPERFECT_SOUND,
+	0,
 	&tnk3_machine_driver,
 	0,
 
-	tnk3_rom,
+	rom_tnk3,
 	tnk3_decode, 0,
 	0,
 	0, /* sound_prom */
 
-	tnk3_input_ports,
+	input_ports_tnk3,
 
-	PROM_MEMORY_REGION( MEM_COLOR ), 0, 0,
-	ORIENTATION_ROTATE_270,
+	0, 0, 0,
+	ORIENTATION_ROTATE_270 | GAME_IMPERFECT_SOUND,
 
 	tnk3_hiload, tnk3_hisave
 };
 
-struct GameDriver tnk3j_driver =
+struct GameDriver driver_tnk3j =
 {
 	__FILE__,
-	&tnk3_driver,
+	&driver_tnk3,
 	"tnk3j",
 	"Tank (Japan)",
 	"1985",
 	"SNK",
 	CREDITS,
-	GAME_IMPERFECT_SOUND,
+	0,
 	&tnk3_machine_driver,
 	0,
 
-	tnk3j_rom,
+	rom_tnk3j,
 	tnk3_decode, 0,
 	0,
 	0, /* sound_prom */
 
-	tnk3_input_ports,
+	input_ports_tnk3,
 
-	PROM_MEMORY_REGION( MEM_COLOR ), 0, 0,
-	ORIENTATION_ROTATE_270,
+	0, 0, 0,
+	ORIENTATION_ROTATE_270 | GAME_IMPERFECT_SOUND,
 
 	tnk3_hiload, tnk3_hisave
 };
 
-struct GameDriver aso_driver =
+struct GameDriver driver_aso =
 {
 	__FILE__,
 	0,
@@ -3676,24 +3678,24 @@ struct GameDriver aso_driver =
 	"1985",
 	"SNK",
 	CREDITS,
-	GAME_REQUIRES_16BIT | GAME_IMPERFECT_SOUND,
+	0,
 	&aso_machine_driver,
 	0,
 
-	aso_rom,
+	rom_aso,
 	aso_decode, 0,
 	0,
 	0, /* sound_prom */
 
-	aso_input_ports,
+	input_ports_aso,
 
-	PROM_MEMORY_REGION( MEM_COLOR ), 0, 0,
-	ORIENTATION_ROTATE_270,
+	0, 0, 0,
+	ORIENTATION_ROTATE_270 | GAME_REQUIRES_16BIT | GAME_IMPERFECT_SOUND,
 
-        aso_hiload, aso_hisave
+	aso_hiload, aso_hisave
 };
 
-struct GameDriver athena_driver =
+struct GameDriver driver_athena =
 {
 	__FILE__,
 	0,
@@ -3702,24 +3704,24 @@ struct GameDriver athena_driver =
 	"1986",
 	"SNK",
 	CREDITS,
-	GAME_REQUIRES_16BIT | GAME_IMPERFECT_SOUND,
+	0,
 	&athena_machine_driver,
 	0,
 
-	athena_rom,
+	rom_athena,
 	athena_decode, 0,
 	0,
 	0, /* sound_prom */
 
-	athena_input_ports,
+	input_ports_athena,
 
-	PROM_MEMORY_REGION(MEM_COLOR), 0, 0,
-	ORIENTATION_DEFAULT,
+	0, 0, 0,
+	ORIENTATION_DEFAULT | GAME_REQUIRES_16BIT | GAME_IMPERFECT_SOUND,
 
-        athena_hiload, athena_hisave
+	athena_hiload, athena_hisave
 };
 
-struct GameDriver fitegolf_driver =
+struct GameDriver driver_fitegolf =
 {
 	__FILE__,
 	0,
@@ -3728,24 +3730,24 @@ struct GameDriver fitegolf_driver =
 	"1988",
 	"SNK",
 	CREDITS,
-	GAME_NOT_WORKING | GAME_IMPERFECT_SOUND,
+	0,
 	&athena_machine_driver,
 	0,
 
-	fitegolf_rom,
+	rom_fitegolf,
 	0, 0,
 	0,
 	0, /* sound_prom */
 
-	fitegolf_input_ports,
+	input_ports_fitegolf,
 
-	PROM_MEMORY_REGION( MEM_COLOR ), 0, 0,
-	ORIENTATION_DEFAULT,
+	0, 0, 0,
+	ORIENTATION_DEFAULT | GAME_IMPERFECT_SOUND | GAME_NOT_WORKING,
 
-        fitegolf_hiload, fitegolf_hisave
+	fitegolf_hiload, fitegolf_hisave
 };
 
-struct GameDriver ikari_driver =
+struct GameDriver driver_ikari =
 {
 	__FILE__,
 	0,
@@ -3754,74 +3756,74 @@ struct GameDriver ikari_driver =
 	"1986",
 	"SNK",
 	CREDITS,
-	GAME_IMPERFECT_SOUND,
+	0,
 	&ikari_machine_driver,
 	0,
 
-	ikarius_rom,
+	rom_ikarius,
 	ikarius_decode, 0,
 	0,
 	0, /* sound_prom */
 
-	ikarius_input_ports,
+	input_ports_ikarius,
 
-	PROM_MEMORY_REGION( MEM_COLOR ), 0, 0,
-	ORIENTATION_ROTATE_270,
+	0, 0, 0,
+	ORIENTATION_ROTATE_270 | GAME_IMPERFECT_SOUND,
 
 	ikari_hiload,ikari_hisave
 };
 
-struct GameDriver ikarijp_driver =
+struct GameDriver driver_ikarijp =
 {
 	__FILE__,
-	&ikari_driver,
+	&driver_ikari,
 	"ikarijp",
 	"Ikari Warriors (Japan)",
 	"1986",
 	"SNK",
 	CREDITS,
-	GAME_IMPERFECT_SOUND,
+	0,
 	&ikari_machine_driver,
 	0,
 
-	ikarijp_rom,
+	rom_ikarijp,
 	ikarijp_decode, 0,
 	0,
 	0, /* sound_prom */
 
-	ikarijp_input_ports,
+	input_ports_ikarijp,
 
-	PROM_MEMORY_REGION( MEM_COLOR ), 0, 0,
-	ORIENTATION_ROTATE_270,
+	0, 0, 0,
+	ORIENTATION_ROTATE_270 | GAME_IMPERFECT_SOUND,
 
 	ikari_hiload,ikari_hisave
 };
 
-struct GameDriver ikarijpb_driver =
+struct GameDriver driver_ikarijpb =
 {
 	__FILE__,
-	&ikari_driver,
+	&driver_ikari,
 	"ikarijpb",
 	"Ikari Warriors (Japan bootleg)",
 	"1986",
 	"bootleg",
 	CREDITS,
-	GAME_IMPERFECT_SOUND,
+	0,
 	&ikari_machine_driver,
 	0,
-	ikarijpb_rom,
+	rom_ikarijpb,
 	ikarijpb_decode,0,
 	0,
 	0, /* sound prom */
 
-	ikarijp_input_ports,
+	input_ports_ikarijp,
 
-	PROM_MEMORY_REGION( MEM_COLOR ), 0, 0,
-	ORIENTATION_ROTATE_270,
+	0, 0, 0,
+	ORIENTATION_ROTATE_270 | GAME_IMPERFECT_SOUND,
 	ikari_hiload,ikari_hisave
 };
 
-struct GameDriver victroad_driver =
+struct GameDriver driver_victroad =
 {
 	__FILE__,
 	0,
@@ -3830,50 +3832,50 @@ struct GameDriver victroad_driver =
 	"1986",
 	"SNK",
 	CREDITS,
-	GAME_IMPERFECT_SOUND,
+	0,
 	&ikari_machine_driver,
 	0,
 
-	victroad_rom,
+	rom_victroad,
 	victroad_decode, 0,
 	0,
 	0, /* sound_prom */
 
-	victroad_input_ports,
+	input_ports_victroad,
 
-	PROM_MEMORY_REGION( MEM_COLOR ), 0, 0,
-	ORIENTATION_ROTATE_270,
+	0, 0, 0,
+	ORIENTATION_ROTATE_270 | GAME_IMPERFECT_SOUND,
 
 	victroad_hiload,victroad_hisave
 };
 
-struct GameDriver dogosoke_driver =
+struct GameDriver driver_dogosoke =
 {
 	__FILE__,
-	&victroad_driver,
+	&driver_victroad,
 	"dogosoke",
 	"Dogou Souken",
 	"1986",
 	"SNK",
 	CREDITS,
-	GAME_IMPERFECT_SOUND,
+	0,
 	&ikari_machine_driver,
 	0,
 
-	dogosoke_rom,
+	rom_dogosoke,
 	dogosoke_decode, 0,
 	0,
 	0, /* sound_prom */
 
-	victroad_input_ports,
+	input_ports_victroad,
 
-	PROM_MEMORY_REGION( MEM_COLOR ), 0, 0,
-	ORIENTATION_ROTATE_270,
+	0, 0, 0,
+	ORIENTATION_ROTATE_270 | GAME_IMPERFECT_SOUND,
 
 	victroad_hiload,victroad_hisave
 };
 
-struct GameDriver gwar_driver =
+struct GameDriver driver_gwar =
 {
 	__FILE__,
 	0,
@@ -3882,24 +3884,24 @@ struct GameDriver gwar_driver =
 	"1987",
 	"SNK",
 	CREDITS,
-	GAME_IMPERFECT_SOUND,
+	0,
 	&gwar_machine_driver,
 	0,
 
-	gwar_rom,
+	rom_gwar,
 	gwar_decode, 0,
 	0,
 	0, /* sound_prom */
 
-	gwar_input_ports,
+	input_ports_gwar,
 
-	PROM_MEMORY_REGION(MEM_COLOR), 0, 0,
-	ORIENTATION_ROTATE_270,
+	0, 0, 0,
+	ORIENTATION_ROTATE_270 | GAME_IMPERFECT_SOUND,
 
-        gwar_hiload, gwar_hisave
+	gwar_hiload, gwar_hisave
 };
 
-struct GameDriver bermudat_driver =
+struct GameDriver driver_bermudat =
 {
 	__FILE__,
 	0,
@@ -3908,50 +3910,50 @@ struct GameDriver bermudat_driver =
 	"1987",
 	"SNK",
 	CREDITS,
-	GAME_REQUIRES_16BIT,
+	0,
 	&bermudat_machine_driver,
 	0,
 
-	bermudat_rom,
+	rom_bermudat,
 	bermudat_decode, 0,
 	0,
 	0, /* sound_prom */
 
-	bermudat_input_ports,
+	input_ports_bermudat,
 
-	PROM_MEMORY_REGION( MEM_COLOR ), 0, 0,
-	ORIENTATION_ROTATE_270,
+	0, 0, 0,
+	ORIENTATION_ROTATE_270 | GAME_REQUIRES_16BIT,
 
-        bermudat_hiload, bermudat_hisave
+	bermudat_hiload, bermudat_hisave
 };
 
-struct GameDriver bermudaj_driver =
+struct GameDriver driver_bermudaj =
 {
 	__FILE__,
-	&bermudat_driver,
+	&driver_bermudat,
 	"bermudaj",
 	"Bermuda Triangle (Japan)",
 	"1987",
 	"SNK",
 	CREDITS,
-	GAME_REQUIRES_16BIT,
+	0,
 	&bermudat_machine_driver,
 	0,
 
-	bermudaj_rom,
+	rom_bermudaj,
 	bermudat_decode, 0,
 	0,
 	0, /* sound_prom */
 
-	bermudat_input_ports,
+	input_ports_bermudat,
 
-	PROM_MEMORY_REGION( MEM_COLOR ), 0, 0,
-	ORIENTATION_ROTATE_270,
+	0, 0, 0,
+	ORIENTATION_ROTATE_270 | GAME_REQUIRES_16BIT,
 
-        bermudat_hiload, bermudat_hisave
+	bermudat_hiload, bermudat_hisave
 };
 
-struct GameDriver psychos_driver =
+struct GameDriver driver_psychos =
 {
 	__FILE__,
 	0,
@@ -3960,44 +3962,44 @@ struct GameDriver psychos_driver =
 	"1987",
 	"SNK",
 	CREDITS,
-	GAME_REQUIRES_16BIT | GAME_IMPERFECT_SOUND,
+	0,
 	&psychos_machine_driver,
 	0,
-	psychos_rom,
+	rom_psychos,
 	psychos_decode, 0,
 	0,
 	0, /* sound_prom */
-	psychos_input_ports,
-	PROM_MEMORY_REGION( MEM_COLOR ), 0, 0,
-	ORIENTATION_DEFAULT,
+	input_ports_psychos,
+	0, 0, 0,
+	ORIENTATION_DEFAULT | GAME_REQUIRES_16BIT | GAME_IMPERFECT_SOUND,
 
-        psychos_hiload, psychos_hisave
+	psychos_hiload, psychos_hisave
 };
 
-struct GameDriver psychosa_driver =
+struct GameDriver driver_psychosa =
 {
 	__FILE__,
-	&psychos_driver,
+	&driver_psychos,
 	"psychosa",
 	"Psycho Soldier (Japan)",
 	"1987",
 	"SNK",
 	CREDITS,
-	GAME_REQUIRES_16BIT | GAME_IMPERFECT_SOUND,
+	0,
 	&psychos_machine_driver,
 	0,
-	psychos_alt_rom,
+	rom_psychosa,
 	psychos_decode, 0,
 	0,
 	0, /* sound_prom */
-	psychos_input_ports,
-	PROM_MEMORY_REGION( MEM_COLOR ), 0, 0,
-	ORIENTATION_DEFAULT,
+	input_ports_psychos,
+	0, 0, 0,
+	ORIENTATION_DEFAULT | GAME_REQUIRES_16BIT | GAME_IMPERFECT_SOUND,
 
-        psychos_hiload, psychos_hisave
+	psychos_hiload, psychos_hisave
 };
 
-struct GameDriver chopper_driver =
+struct GameDriver driver_chopper =
 {
 	__FILE__,
 	0,
@@ -4006,50 +4008,50 @@ struct GameDriver chopper_driver =
 	"1988",
 	"SNK",
 	CREDITS,
-	GAME_REQUIRES_16BIT | GAME_IMPERFECT_SOUND,
+	0,
 	&psychos_machine_driver,
 	0,
 
-	chopper_rom,
+	rom_chopper,
 	chopper_decode, 0,
 	0,
 	0, /* sound_prom */
 
-        chopper1_input_ports,
+	input_ports_chopper1,
 
-	PROM_MEMORY_REGION(MEM_COLOR), 0, 0,
-	ORIENTATION_ROTATE_270,
+	0, 0, 0,
+	ORIENTATION_ROTATE_270 | GAME_REQUIRES_16BIT | GAME_IMPERFECT_SOUND,
 
-        chopper_hiload, chopper_hisave
+	chopper_hiload, chopper_hisave
 };
 
-struct GameDriver legofair_driver =
+struct GameDriver driver_legofair =
 {
 	__FILE__,
-	&chopper_driver,
+	&driver_chopper,
 	"legofair",
 	"Koukuu Kihei Monogatari - The Legend of Air Cavalry",
 	"1988",
 	"SNK",
 	CREDITS,
-	GAME_REQUIRES_16BIT | GAME_IMPERFECT_SOUND,
+	0,
 	&psychos_machine_driver,
 	0,
 
-	legofair_rom,
+	rom_legofair,
 	chopper_decode, 0,
 	0,
 	0, /* sound_prom */
 
-	chopper1_input_ports,
+	input_ports_chopper1,
 
-	PROM_MEMORY_REGION(MEM_COLOR), 0, 0,
-	ORIENTATION_ROTATE_270,
+	0, 0, 0,
+	ORIENTATION_ROTATE_270 | GAME_REQUIRES_16BIT | GAME_IMPERFECT_SOUND,
 
-        chopper_hiload, chopper_hisave
+	chopper_hiload, chopper_hisave
 };
 
-struct GameDriver ftsoccer_driver =
+struct GameDriver driver_ftsoccer =
 {
 	__FILE__,
 	0,
@@ -4058,25 +4060,25 @@ struct GameDriver ftsoccer_driver =
 	"1988",
 	"SNK",
 	CREDITS,
-	GAME_REQUIRES_16BIT,
+	0,
 	&psychos_machine_driver,
 
 	0,
 
-	ftsoccer_rom,
+	rom_ftsoccer,
 	0, 0,
 	0,
 	0, /* sound_prom */
 
-	ftsoccer_input_ports,
+	input_ports_ftsoccer,
 
-	PROM_MEMORY_REGION( MEM_COLOR ), 0, 0,
-	ORIENTATION_DEFAULT,
+	0, 0, 0,
+	ORIENTATION_DEFAULT | GAME_REQUIRES_16BIT,
 
 	ftsoccer_hiload, ftsoccer_hisave
 };
 
-struct GameDriver tdfever_driver =
+struct GameDriver driver_tdfever =
 {
 	__FILE__,
 	0,
@@ -4085,45 +4087,45 @@ struct GameDriver tdfever_driver =
 	"1987",
 	"SNK",
 	CREDITS,
-	GAME_IMPERFECT_SOUND,
+	0,
 	&tdfever_machine_driver,
 	0,
 
-	tdfever_rom,
+	rom_tdfever,
 	tdfever_decode, 0,
 	0,
 	0, /* sound_prom */
 
-	tdfever_input_ports,
+	input_ports_tdfever,
 
-	PROM_MEMORY_REGION(MEM_COLOR), 0, 0,
-	ORIENTATION_ROTATE_270,
+	0, 0, 0,
+	ORIENTATION_ROTATE_270 | GAME_IMPERFECT_SOUND,
 
-        tdfever_hiload, tdfever_hisave
+	tdfever_hiload, tdfever_hisave
 };
 
-struct GameDriver tdfeverj_driver =
+struct GameDriver driver_tdfeverj =
 {
 	__FILE__,
-        &tdfever_driver,
+        &driver_tdfever,
 	"tdfeverj",
 	"TouchDown Fever (Japan)",
 	"1987",
 	"SNK",
 	CREDITS,
-	GAME_IMPERFECT_SOUND,
+	0,
 	&tdfever_machine_driver,
 	0,
 
-	tdfeverj_rom,
+	rom_tdfeverj,
 	tdfever_decode, 0,
 	0,
 	0, /* sound_prom */
 
-	tdfever_input_ports,
+	input_ports_tdfever,
 
-	PROM_MEMORY_REGION(MEM_COLOR), 0, 0,
-	ORIENTATION_ROTATE_270,
+	0, 0, 0,
+	ORIENTATION_ROTATE_270 | GAME_IMPERFECT_SOUND,
 
-        tdfever_hiload, tdfever_hisave
+	tdfever_hiload, tdfever_hisave
 };

@@ -4,7 +4,6 @@
 
 
 static tAuditRecord *gAudits = NULL;
-static tMissingSample *gMissingSamples = NULL;
 
 
 
@@ -231,6 +230,10 @@ int VerifyRomSet (int game, verify_printf_proc verify_printf)
 }
 
 
+#if 0
+
+static tMissingSample *gMissingSamples = NULL;
+
 /* Builds a list of every missing sample. Returns total number of missing
    samples, or -1 if no samples were found. Sets audit to point to the
    list of missing samples. */
@@ -327,3 +330,4 @@ int VerifySampleSet (int game, verify_printf_proc verify_printf)
 
 	return INCORRECT;
 }
+#endif

@@ -128,7 +128,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 
 
-INPUT_PORTS_START( ssi_input_ports )
+INPUT_PORTS_START( ssi )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
@@ -205,7 +205,7 @@ INPUT_PORTS_START( ssi_input_ports )
 	PORT_DIPSETTING(    0x40, DEF_STR( Yes ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( majest12_input_ports )
+INPUT_PORTS_START( majest12 )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
@@ -410,7 +410,7 @@ ROM_END
 
 
 
-struct GameDriver ssi_driver =
+struct GameDriver driver_ssi =
 {
 	__FILE__,
 	0,
@@ -423,22 +423,22 @@ struct GameDriver ssi_driver =
 	&machine_driver,
 	0,
 
-	ssi_rom,
+	rom_ssi,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	ssi_input_ports,
+	input_ports_ssi,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_ROTATE_270,
 	0, 0
 };
 
-struct GameDriver majest12_driver =
+struct GameDriver driver_majest12 =
 {
 	__FILE__,
-	&ssi_driver,
+	&driver_ssi,
 	"majest12",
 	"Majestic Twelve - The Space Invaders Part IV (Japan)",
 	"1990",
@@ -448,12 +448,12 @@ struct GameDriver majest12_driver =
 	&machine_driver,
 	0,
 
-	majest12_rom,
+	rom_majest12,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	majest12_input_ports,
+	input_ports_majest12,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_ROTATE_270,

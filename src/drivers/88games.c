@@ -174,7 +174,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 ***************************************************************************/
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( 88games )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -353,7 +353,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( k88games )
+ROM_START( 88games )
 	ROM_REGION( 0x21000 ) /* code + banked roms + space for banked ram */
     ROM_LOAD( "861m01.k18", 0x08000, 0x08000, 0x4a4e2959 )
 	ROM_LOAD( "861m02.k16", 0x10000, 0x10000, 0xe19f15f6 )
@@ -553,7 +553,7 @@ static void nvram_save(void)
 
 
 
-struct GameDriver k88games_driver =
+struct GameDriver driver_88games =
 {
 	__FILE__,
 	0,
@@ -566,12 +566,12 @@ struct GameDriver k88games_driver =
 	&machine_driver,
 	0,
 
-	k88games_rom,
+	rom_88games,
 	gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_88games,
 
 	0, 0, 0,
     ORIENTATION_DEFAULT,
@@ -580,10 +580,10 @@ struct GameDriver k88games_driver =
 };
 
 
-struct GameDriver konami88_driver =
+struct GameDriver driver_konami88 =
 {
 	__FILE__,
-	&k88games_driver,
+	&driver_88games,
 	"konami88",
 	"Konami '88",
 	"1988",
@@ -593,12 +593,12 @@ struct GameDriver konami88_driver =
 	&machine_driver,
 	0,
 
-	konami88_rom,
+	rom_konami88,
 	gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_88games,
 
 	0, 0, 0,
     ORIENTATION_DEFAULT,

@@ -23,14 +23,12 @@ TO-DO: - Fix the input ports/dip switches of Kaos?
 #include "vidhrdw/generic.h"
 
 int gameplan_vh_start(void);
-void gameplan_vh_stop(void);
 int gameplan_video_r(int offset);
 void gameplan_video_w(int offset, int data);
 int gameplan_sound_r(int offset);
 void gameplan_sound_w(int offset, int data);
 int gameplan_via5_r(int offset);
 void gameplan_via5_w(int offset, int data);
-void gameplan_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 void gameplan_select_port(int offset, int data);
 int gameplan_read_port(int offset);
 
@@ -180,7 +178,7 @@ int gameplan_interrupt(void)
 	return 1;
 }
 
-INPUT_PORTS_START( kaos_input_ports )
+INPUT_PORTS_START( kaos )
 	PORT_START      /* IN0 - from "TEST NO.7 - status locator - coin-door" */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* unused */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* unused */
@@ -289,7 +287,7 @@ INPUT_PORTS_START( kaos_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( killcom_input_ports )
+INPUT_PORTS_START( killcom )
 	PORT_START      /* IN0 - from "TEST NO.7 - status locator - coin-door" */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* unused */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* unused */
@@ -360,7 +358,7 @@ INPUT_PORTS_START( killcom_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( megatack_input_ports )
+INPUT_PORTS_START( megatack )
 	PORT_START      /* IN0 - from "TEST NO.7 - status locator - coin-door" */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* unused */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* unused */
@@ -442,7 +440,7 @@ INPUT_PORTS_START( megatack_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( challeng_input_ports )
+INPUT_PORTS_START( challeng )
 	PORT_START      /* IN0 - from "TEST NO.7 - status locator - coin-door" */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* unused */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* unused */
@@ -570,7 +568,7 @@ static struct MachineDriver machine_driver =
 		{
             CPU_M6502 | CPU_AUDIO_CPU,
 			3579000 / 4,		/* 3.579 / 4 MHz */
-			2,					/* memory_region */
+			1,					/* memory_region */
 			readmem_snd,writemem_snd,0,0,
 			gameplan_interrupt,1
 		},
@@ -588,8 +586,8 @@ static struct MachineDriver machine_driver =
 
 	VIDEO_TYPE_RASTER, 0,
 	gameplan_vh_start,
-	gameplan_vh_stop,
-	gameplan_vh_screenrefresh,
+	generic_bitmapped_vh_stop,
+	generic_bitmapped_vh_screenrefresh,
 
 	0, 0, 0, 0,
 	{
@@ -631,21 +629,17 @@ there are three 6522 VIAs, at 2000, 2800, and 3000
 ROM_START( kaos )
     ROM_REGION(0x10000)
     ROM_LOAD( "kaosab.g2",    0x9000, 0x0800, 0xb23d858f )
-    ROM_CONTINUE(		   0xd000, 0x0800			  )
+    ROM_CONTINUE(		   	  0xd000, 0x0800			 )
     ROM_LOAD( "kaosab.j2",    0x9800, 0x0800, 0x4861e5dc )
-    ROM_CONTINUE(		   0xd800, 0x0800			  )
+    ROM_CONTINUE(		   	  0xd800, 0x0800			 )
     ROM_LOAD( "kaosab.j1",    0xa000, 0x0800, 0xe055db3f )
-    ROM_CONTINUE(		   0xe000, 0x0800			  )
+    ROM_CONTINUE(		   	  0xe000, 0x0800			 )
     ROM_LOAD( "kaosab.g1",    0xa800, 0x0800, 0x35d7c467 )
-    ROM_CONTINUE(		   0xe800, 0x0800			  )
+    ROM_CONTINUE(		   	  0xe800, 0x0800			 )
     ROM_LOAD( "kaosab.f1",    0xb000, 0x0800, 0x995b9260 )
-    ROM_CONTINUE(		   0xf000, 0x0800			  )
+    ROM_CONTINUE(		   	  0xf000, 0x0800			 )
     ROM_LOAD( "kaosab.e1",    0xb800, 0x0800, 0x3da5202a )
-    ROM_CONTINUE(		   0xf800, 0x0800			  )
-
-	ROM_REGION_DISPOSE(0x1000)
-	/* empty memory region - not used by the game, but needed because the main */
-	/* core currently always frees region #1 after initialization. */
+    ROM_CONTINUE(		   	  0xf800, 0x0800			 )
 
     ROM_REGION(0x10000)
 	ROM_LOAD( "kaossnd.e1",   0xf800, 0x800, 0xab23d52a )
@@ -663,10 +657,6 @@ ROM_START( killcom )
     ROM_LOAD( "killcom.f1",   0xf000, 0x800, 0xef652762 )
     ROM_LOAD( "killcom.e1",   0xf800, 0x800, 0xbc19dcb7 )
 
-	ROM_REGION_DISPOSE(0x1000)
-	/* empty memory region - not used by the game, but needed because the main */
-	/* core currently always frees region #1 after initialization. */
-
     ROM_REGION(0x10000)
 	ROM_LOAD( "killsnd.e1",   0xf800, 0x800, 0x77d4890d )
 ROM_END
@@ -682,10 +672,6 @@ ROM_START( megatack )
     ROM_LOAD( "megattac.f1",  0xf000, 0x800, 0xc93a8ed4 )
     ROM_LOAD( "megattac.e1",  0xf800, 0x800, 0xd9996b9f )
 
-	ROM_REGION_DISPOSE(0x1000)
-	/* empty memory region - not used by the game, but needed because the main */
-	/* core currently always frees region #1 after initialization. */
-
     ROM_REGION(0x10000)
 	ROM_LOAD( "megatsnd.e1",  0xf800, 0x800, 0x0c186bdb )
 ROM_END
@@ -698,10 +684,6 @@ ROM_START( challeng )
     ROM_LOAD( "chall.3",      0xd000, 0x1000, 0x6ce03312 )
     ROM_LOAD( "chall.2",      0xe000, 0x1000, 0x948912ad )
     ROM_LOAD( "chall.1",      0xf000, 0x1000, 0x7c71a9dc )
-
-	ROM_REGION_DISPOSE(0x1000)
-	/* empty memory region - not used by the game, but needed because the main */
-	/* core currently always frees region #1 after initialization. */
 
     ROM_REGION(0x10000)
 	ROM_LOAD( "chall.snd",    0xf800, 0x800, 0x1b2bffd2 )
@@ -820,7 +802,7 @@ static int challeng_hiload(void)
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0xcc], "\x00\x01\x00", 3) == 0 &&
-	memcmp(&RAM[0xd8], "\x1f\x1f\x1f", 3) == 0 )
+		memcmp(&RAM[0xd8], "\x1f\x1f\x1f", 3) == 0 )
 	{
 		void *f;
 
@@ -848,7 +830,7 @@ static void challeng_hisave(void)
 }
 
 
-struct GameDriver kaos_driver =
+struct GameDriver driver_kaos =
 {
 	__FILE__,
 	0,
@@ -861,19 +843,19 @@ struct GameDriver kaos_driver =
 	&machine_driver,
 	0,
 
-	kaos_rom,
+	rom_kaos,
 	0, 0, 0, 0,					/* sound_prom */
 
-	kaos_input_ports,
+	input_ports_kaos,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_ROTATE_270,
 
 	kaos_hiload, kaos_hisave
 };
 
 
-struct GameDriver killcom_driver =
+struct GameDriver driver_killcom =
 {
 	__FILE__,
 	0,
@@ -886,10 +868,10 @@ struct GameDriver killcom_driver =
     &machine_driver,
 	0,
 
-	killcom_rom,
+	rom_killcom,
 	0, 0, 0, 0,					/* sound_prom */
 
-	killcom_input_ports,
+	input_ports_killcom,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -898,7 +880,7 @@ struct GameDriver killcom_driver =
 };
 
 
-struct GameDriver megatack_driver =
+struct GameDriver driver_megatack =
 {
 	__FILE__,
 	0,
@@ -911,10 +893,10 @@ struct GameDriver megatack_driver =
 	&machine_driver,
 	0,
 
-	megatack_rom,
+	rom_megatack,
 	0, 0, 0, 0,					/* sound_prom */
 
-	megatack_input_ports,
+	input_ports_megatack,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -922,7 +904,7 @@ struct GameDriver megatack_driver =
     megatack_hiload, megatack_hisave
 };
 
-struct GameDriver challeng_driver =
+struct GameDriver driver_challeng =
 {
 	__FILE__,
 	0,
@@ -935,10 +917,10 @@ struct GameDriver challeng_driver =
     &machine_driver,
 	0,
 
-    challeng_rom,
+    rom_challeng,
     0, 0, 0, 0,                 /* sound_prom */
 
-    challeng_input_ports,
+    input_ports_challeng,
 
     0, 0, 0,
     ORIENTATION_DEFAULT,

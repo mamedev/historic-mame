@@ -158,7 +158,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 /******************************************************************************/
 
-INPUT_PORTS_START( vaportra_input_ports )
+INPUT_PORTS_START( vaportra )
 	PORT_START	/* Player 1 controls */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
@@ -470,7 +470,7 @@ static void custom_memory(void)
 
 /******************************************************************************/
 
-struct GameDriver vaportra_driver =
+struct GameDriver driver_vaportra =
 {
 	__FILE__,
 	0,
@@ -483,22 +483,22 @@ struct GameDriver vaportra_driver =
 	&vaportra_machine_driver,
 	custom_memory,
 
-	vaportra_rom,
+	rom_vaportra,
 	vaportra_decrypt, 0,
 	0,
 	0,
 
-	vaportra_input_ports,
+	input_ports_vaportra,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 	0 , 0
 };
 
-struct GameDriver kuhga_driver =
+struct GameDriver driver_kuhga =
 {
 	__FILE__,
-	&vaportra_driver,
+	&driver_vaportra,
 	"kuhga",
 	"Kuhga - Operation Code 'Vapor Trail' (Japan revision 3)",
 	"1989",
@@ -508,12 +508,12 @@ struct GameDriver kuhga_driver =
 	&vaportra_machine_driver,
 	custom_memory,
 
-	kuhga_rom,
+	rom_kuhga,
 	vaportra_decrypt, 0,
 	0,
 	0,
 
-	vaportra_input_ports,
+	input_ports_vaportra,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,

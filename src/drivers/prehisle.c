@@ -4,9 +4,6 @@
 	Prehistoric Isle in 1930 (USA)			(c) 1989 SNK
 	Genshi-Tou 1930's (Japan)				(c) 1989 SNK
 
-
-	Ikari 3 should run on hardware close to this.
-
  	Emulation by Bryan McPhail, mish@tendril.force9.net
 
 ***************************************************************************/
@@ -102,7 +99,7 @@ static struct IOWritePort prehisle_sound_writeport[] =
 
 /******************************************************************************/
 
-INPUT_PORTS_START( prehisle_input_ports )
+INPUT_PORTS_START( prehisle )
 	PORT_START	/* Player 1 controls */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
@@ -229,18 +226,24 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 /******************************************************************************/
 
+static void irqhandler(int irq)
+{
+	cpu_set_irq_line(1,0,irq ? ASSERT_LINE : CLEAR_LINE);
+}
+
 static struct YM3812interface ym3812_interface =
 {
-	1,			/* 1 chip (no more supported) */
+	1,			/* 1 chip */
 	4000000,	/* 4 Mhz */
-	{ 20 }		/* (not supported) */
+	{ 50 },
+	{ irqhandler },
 };
 
 static struct UPD7759_interface upd7759_interface =
 {
 	1,		/* number of chips */
 	UPD7759_STANDARD_CLOCK,
-	{ 75 }, /* volume */
+	{ 50 }, /* volume */
 	{ 3 },		/* memory region */
 	UPD7759_STANDALONE_MODE,		/* chip mode */
 	{0}
@@ -265,7 +268,7 @@ static struct MachineDriver prehisle_machine_driver =
 			2,
 			prehisle_sound_readmem,prehisle_sound_writemem,
 			prehisle_sound_readport,prehisle_sound_writeport,
-			interrupt,1
+			ignore_interrupt,0
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,
@@ -422,7 +425,7 @@ static void jap_memory(void)
 
 /******************************************************************************/
 
-struct GameDriver prehisle_driver =
+struct GameDriver driver_prehisle =
 {
 	__FILE__,
 	0,
@@ -435,22 +438,22 @@ struct GameDriver prehisle_driver =
 	&prehisle_machine_driver,
 	world_memory,
 
-	prehisle_rom,
+	rom_prehisle,
 	0, 0,
 	0,
 	0,
 
-	prehisle_input_ports,
+	input_ports_prehisle,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
 	0, 0
 };
 
-struct GameDriver prehislu_driver =
+struct GameDriver driver_prehislu =
 {
 	__FILE__,
-	&prehisle_driver,
+	&driver_prehisle,
 	"prehislu",
 	"Prehistoric Isle in 1930 (US)",
 	"1989",
@@ -460,22 +463,22 @@ struct GameDriver prehislu_driver =
 	&prehisle_machine_driver,
 	usa_memory,
 
-	prehislu_rom,
+	rom_prehislu,
 	0, 0,
 	0,
 	0,
 
-	prehisle_input_ports,
+	input_ports_prehisle,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
 	0, 0
 };
 
-struct GameDriver prehislj_driver =
+struct GameDriver driver_prehislj =
 {
 	__FILE__,
-	&prehisle_driver,
+	&driver_prehisle,
 	"gensitou",
 	"Genshi-Tou 1930's",
 	"1989",
@@ -485,12 +488,12 @@ struct GameDriver prehislj_driver =
 	&prehisle_machine_driver,
 	jap_memory,
 
-	prehislj_rom,
+	rom_prehislj,
 	0, 0,
 	0,
 	0,
 
-	prehisle_input_ports,
+	input_ports_prehisle,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,

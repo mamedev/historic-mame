@@ -472,7 +472,7 @@ static struct MemoryWriteAddress trisport_writemem[] =
  *
  *************************************/
 
-INPUT_PORTS_START( zwackery_input_ports )
+INPUT_PORTS_START( zwackery )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -529,7 +529,7 @@ INPUT_PORTS_START( zwackery_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( xenophob_input_ports )
+INPUT_PORTS_START( xenophob )
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -588,7 +588,7 @@ INPUT_PORTS_START( xenophob_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( spyhunt2_input_ports )
+INPUT_PORTS_START( spyhunt2 )
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -656,7 +656,7 @@ INPUT_PORTS_START( spyhunt2_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( blasted_input_ports )
+INPUT_PORTS_START( blasted )
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -709,7 +709,7 @@ INPUT_PORTS_START( blasted_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( archrivl_input_ports )
+INPUT_PORTS_START( archrivl )
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -767,7 +767,7 @@ INPUT_PORTS_START( archrivl_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( pigskin_input_ports )
+INPUT_PORTS_START( pigskin )
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -831,7 +831,7 @@ INPUT_PORTS_START( pigskin_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( trisport_input_ports )
+INPUT_PORTS_START( trisport )
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -1553,7 +1553,7 @@ ROM_END
  *************************************/
 
 #define MCR68_DRIVER(name,driver,year,rotate,fullname) \
-	struct GameDriver name##_driver =				\
+	struct GameDriver driver_##name =				\
 	{												\
 		__FILE__,									\
 		0,											\
@@ -1566,12 +1566,12 @@ ROM_END
 		&driver##_machine_driver,					\
 		name##_init,								\
 													\
-		name##_rom,									\
+		rom_##name,									\
 		rom_decode, 0,								\
 		0,											\
 		0,	/* sound_prom */						\
 													\
-		name##_input_ports,							\
+		input_ports_##name,							\
 													\
 		0, 0,0,										\
 		rotate,										\

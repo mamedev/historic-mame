@@ -539,7 +539,7 @@ static struct MemoryWriteAddress dkong3_sound2_writemem[] =
 
 
 
-INPUT_PORTS_START( dkong_input_ports )
+INPUT_PORTS_START( dkong )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
@@ -598,7 +598,7 @@ INPUT_PORTS_START( dkong_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( dkong3_input_ports )
+INPUT_PORTS_START( dkong3 )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
@@ -743,10 +743,41 @@ static struct DACinterface dkong_dac_interface =
 	{ 55 }
 };
 
-static struct Samplesinterface samples_interface =
+static const char *dkong_sample_names[] =
+{
+	"*dkong",
+	"effect00.wav",
+	"effect01.wav",
+	"effect02.wav",
+	0	/* end of array */
+};
+
+static const char *dkongjr_sample_names[] =
+{
+	"*dkongjr",
+	"jump.wav",
+	"land.wav",
+	"roar.wav",
+	"climb.wav",   /* HC */
+	"death.wav",  /* HC */
+	"drop.wav",  /* HC */
+	"walk.wav", /* HC */
+	"snapjaw.wav",  /* HC */
+	0	/* end of array */
+};
+
+static struct Samplesinterface dkong_samples_interface =
 {
 	8,	/* 8 channels */
-	25	/* volume */
+	25,	/* volume */
+	dkong_sample_names
+};
+
+static struct Samplesinterface dkongjr_samples_interface =
+{
+	8,	/* 8 channels */
+	25,	/* volume */
+	dkongjr_sample_names
 };
 
 static struct MachineDriver dkong_machine_driver =
@@ -793,7 +824,7 @@ static struct MachineDriver dkong_machine_driver =
 		},
 		{
 			SOUND_SAMPLES,
-			&samples_interface
+			&dkong_samples_interface
 		}
 	}
 };
@@ -943,7 +974,7 @@ static struct MachineDriver dkongjr_machine_driver =
 		},
 		{
 			SOUND_SAMPLES,
-			&samples_interface
+			&dkongjr_samples_interface
 		}
 	}
 };
@@ -1046,7 +1077,7 @@ ROM_START( radarscp )
 	ROM_LOAD( "trs2v3bc",     0x2000, 0x0800, 0x6fdd63f1 )
 	ROM_LOAD( "trs2v3ac",     0x2800, 0x0800, 0xb7ad0ba7 )
 
-	ROM_REGION(0x0300)	/* color/lookup proms */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "rs2-x.xxx",    0x0000, 0x0100, 0x54609d61 ) /* palette low 4 bits (inverted) */
 	ROM_LOAD( "rs2-c.xxx",    0x0100, 0x0100, 0x79a7d831 ) /* palette high 4 bits (inverted) */
 	ROM_LOAD( "rs2-v.1hc",    0x0200, 0x0100, 0x1b828315 ) /* character color codes on a per-column basis */
@@ -1083,7 +1114,7 @@ ROM_START( dkong )
 	ROM_LOAD( "dk.7e",        0x2000, 0x0800, 0xfeaa59ee )
 	ROM_LOAD( "dk.7f",        0x2800, 0x0800, 0x20f2ef7e )
 
-	ROM_REGION(0x300)	/* color/lookup proms */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "dkong.2k",     0x0000, 0x0100, 0x1e82d375 ) /* palette low 4 bits (inverted) */
 	ROM_LOAD( "dkong.2j",     0x0100, 0x0100, 0x2ab01dc8 ) /* palette high 4 bits (inverted) */
 	ROM_LOAD( "dkong.5f",     0x0200, 0x0100, 0x44988665 ) /* character color codes on a per-column basis */
@@ -1108,7 +1139,7 @@ ROM_START( dkongjp )
 	ROM_LOAD( "dk.7e",        0x2000, 0x0800, 0xfeaa59ee )
 	ROM_LOAD( "dk.7f",        0x2800, 0x0800, 0x20f2ef7e )
 
-	ROM_REGION(0x0300)	/* color/lookup proms */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "dkong.2k",     0x0000, 0x0100, 0x1e82d375 ) /* palette low 4 bits (inverted) */
 	ROM_LOAD( "dkong.2j",     0x0100, 0x0100, 0x2ab01dc8 ) /* palette high 4 bits (inverted) */
 	ROM_LOAD( "dkong.5f",     0x0200, 0x0100, 0x44988665 ) /* character color codes on a per-column basis */
@@ -1139,7 +1170,7 @@ ROM_START( dkongjr )
 	ROM_LOAD( "dkj.7e",       0x3000, 0x0800, 0x24d1ff17 )
 	ROM_LOAD( "dkj.7f",       0x3800, 0x0800, 0x0f8c083f )
 
-	ROM_REGION(0x0300)	/* color PROMs */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "dkjrprom.2e",  0x0000, 0x0100, 0x463dc7ad )	/* palette low 4 bits (inverted) */
 	ROM_LOAD( "dkjrprom.2f",  0x0100, 0x0100, 0x47ba0042 )	/* palette high 4 bits (inverted) */
 	ROM_LOAD( "dkjrprom.2n",  0x0200, 0x0100, 0xdbf185bf )	/* character color codes on a per-column basis */
@@ -1169,7 +1200,7 @@ ROM_START( dkngjrjp )
 	ROM_LOAD( "dkj.7e",       0x3000, 0x0800, 0x24d1ff17 )
 	ROM_LOAD( "dkj.7f",       0x3800, 0x0800, 0x0f8c083f )
 
-	ROM_REGION(0x0300)	/* color PROMs */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "dkjrprom.2e",  0x0000, 0x0100, 0x463dc7ad )	/* palette low 4 bits (inverted) */
 	ROM_LOAD( "dkjrprom.2f",  0x0100, 0x0100, 0x47ba0042 )	/* palette high 4 bits (inverted) */
 	ROM_LOAD( "dkjrprom.2n",  0x0200, 0x0100, 0xdbf185bf )	/* character color codes on a per-column basis */
@@ -1199,7 +1230,7 @@ ROM_START( dkjrjp )
 	ROM_LOAD( "dkj.7e",       0x3000, 0x0800, 0x24d1ff17 )
 	ROM_LOAD( "dkj.7f",       0x3800, 0x0800, 0x0f8c083f )
 
-	ROM_REGION(0x0300)	/* color PROMs */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "dkjrprom.2e",  0x0000, 0x0100, 0x463dc7ad )	/* palette low 4 bits (inverted) */
 	ROM_LOAD( "dkjrprom.2f",  0x0100, 0x0100, 0x47ba0042 )	/* palette high 4 bits (inverted) */
 	ROM_LOAD( "dkjrprom.2n",  0x0200, 0x0100, 0xdbf185bf )	/* character color codes on a per-column basis */
@@ -1230,7 +1261,7 @@ ROM_START( dkjrbl )
 	ROM_LOAD( "dkj.7e",       0x3000, 0x0800, 0x24d1ff17 )
 	ROM_LOAD( "dkj.7f",       0x3800, 0x0800, 0x0f8c083f )
 
-	ROM_REGION(0x0300)	/* color PROMs */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "dkjrprom.2e",  0x0000, 0x0100, 0x463dc7ad )	/* palette low 4 bits (inverted) */
 	ROM_LOAD( "dkjrprom.2f",  0x0100, 0x0100, 0x47ba0042 )	/* palette high 4 bits (inverted) */
 	ROM_LOAD( "dkjrprom.2n",  0x0200, 0x0100, 0xdbf185bf )	/* character color codes on a per-column basis */
@@ -1254,7 +1285,7 @@ ROM_START( dkong3 )
 	ROM_LOAD( "dk3v.7e",      0x4000, 0x1000, 0x0c0af3fb )
 	ROM_LOAD( "dk3v.7f",      0x5000, 0x1000, 0x55c58662 )
 
-	ROM_REGION(0x0300)	/* color proms */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "dkc1-c.1d",    0x0000, 0x0200, 0xdf54befc ) /* palette red & green component */
 	ROM_LOAD( "dkc1-c.1c",    0x0100, 0x0200, 0x66a77f40 ) /* palette blue component */
 	ROM_LOAD( "dkc1-v.2n",    0x0200, 0x0100, 0x50e33434 )	/* character color codes on a per-column basis */
@@ -1281,7 +1312,7 @@ ROM_START( dkong3j )
 	ROM_LOAD( "dk3v.7e",      0x4000, 0x1000, 0x0c0af3fb )
 	ROM_LOAD( "dk3v.7f",      0x5000, 0x1000, 0x55c58662 )
 
-	ROM_REGION(0x0300)	/* color proms */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "dkc1-c.1d",    0x0000, 0x0200, 0xdf54befc ) /* palette red & green component */
 	ROM_LOAD( "dkc1-c.1c",    0x0100, 0x0200, 0x66a77f40 ) /* palette blue component */
 	ROM_LOAD( "dkc1-v.2n",    0x0200, 0x0100, 0x50e33434 )	/* character color codes on a per-column basis */
@@ -1308,7 +1339,7 @@ ROM_START( hunchbkd )
 	ROM_LOAD( "hb.7e",        0x2000, 0x0800, 0xf845e8ca )
 	ROM_LOAD( "hb.7f",        0x2800, 0x0800, 0x52d20fea )
 
-	ROM_REGION(0x0300)	/* color PROMs */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "hbprom.2e",    0x0000, 0x0100, 0x37aab98f )	/* palette low 4 bits (inverted) */
 	ROM_LOAD( "hbprom.2f",    0x0100, 0x0100, 0x845b8dcc )	/* palette high 4 bits (inverted) */
 	ROM_LOAD( "hbprom.2n",    0x0200, 0x0100, 0xdff9070a )	/* character color codes on a per-column basis */
@@ -1332,7 +1363,7 @@ ROM_START( herbiedk )
 	ROM_LOAD( "7e.clk",        0x2000, 0x0800, 0x2f7e65fa )
 	ROM_LOAD( "7f.clk",        0x2800, 0x0800, 0xad32d5ae )
 
-	ROM_REGION(0x0300) /* color PROMs */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "74s287.2k",     0x0000, 0x0100, 0x7dc0a381 ) /* palette high 4 bits (inverted) */
 	ROM_LOAD( "74s287.2j",     0x0100, 0x0100, 0x0a440c00 ) /* palette low 4 bits (inverted) */
 	ROM_LOAD( "74s287.vid",    0x0200, 0x0100, 0x5a3446cc ) /* character color codes on a per-column basis */
@@ -1361,7 +1392,7 @@ ROM_START( herocast )
 	ROM_LOAD( "yellow.7e",    0x2000, 0x0800, 0xf6272e96 )
 	ROM_LOAD( "violet.7f",    0x2800, 0x0800, 0xca020685 )
 
-	ROM_REGION(0x300)	/* color/lookup proms */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "82s126.2e",    0x0000, 0x0100, 0x463dc7ad )	/* palette low 4 bits (inverted) */
 	ROM_LOAD( "82s126.2f",    0x0100, 0x0100, 0x47ba0042 )	/* palette high 4 bits (inverted) */
 	ROM_LOAD( "82s126.2n",    0x0200, 0x0100, 0x37aece4b )	/* character color codes on a per-column basis */
@@ -1386,30 +1417,6 @@ static void herocast_decode(void)
 	}
 }
 
-
-
-static const char *sample_names[] =
-{
-	"*dkong",
-	"effect00.wav",
-	"effect01.wav",
-	"effect02.wav",
-	0	/* end of array */
-};
-
-static const char *dkongjr_sample_names[] =
-{
-	"*dkongjr",
-	"jump.wav",
-	"land.wav",
-	"roar.wav",
-	"climb.wav",   /* HC */
-	"death.wav",  /* HC */
-	"drop.wav",  /* HC */
-	"walk.wav", /* HC */
-	"snapjaw.wav",  /* HC */
-	0	/* end of array */
-};
 
 
 static int radarscp_hiload(void)
@@ -1604,7 +1611,7 @@ static int dkngjrjp_hiload(void)
 
 
 
-struct GameDriver radarscp_driver =
+struct GameDriver driver_radarscp =
 {
 	__FILE__,
 	0,
@@ -1617,20 +1624,20 @@ struct GameDriver radarscp_driver =
 	&dkong_machine_driver,
 	0,
 
-	radarscp_rom,
+	rom_radarscp,
 	radarscp_unprotect, 0,
 	0,
 	0,      /* sound_prom */
 
-	dkong_input_ports,
+	input_ports_dkong,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	radarscp_hiload,radarscp_hisave
 };
 
-struct GameDriver dkong_driver =
+struct GameDriver driver_dkong =
 {
 	__FILE__,
 	0,
@@ -1643,23 +1650,23 @@ struct GameDriver dkong_driver =
 	&dkong_machine_driver,
 	0,
 
-	dkong_rom,
+	rom_dkong,
 	0, 0,
-	sample_names,
+	0,
 	0,      /* sound_prom */
 
-	dkong_input_ports,
+	input_ports_dkong,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
 
-struct GameDriver dkongjp_driver =
+struct GameDriver driver_dkongjp =
 {
 	__FILE__,
-	&dkong_driver,
+	&driver_dkong,
 	"dkongjp",
 	"Donkey Kong (Japan)",
 	"1981",
@@ -1669,20 +1676,20 @@ struct GameDriver dkongjp_driver =
 	&dkong_machine_driver,
 	0,
 
-	dkongjp_rom,
+	rom_dkongjp,
 	0, 0,
-	sample_names,
+	0,
 	0,      /* sound_prom */
 
-	dkong_input_ports,
+	input_ports_dkong,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
 
-struct GameDriver dkongjr_driver =
+struct GameDriver driver_dkongjr =
 {
 	__FILE__,
 	0,
@@ -1695,23 +1702,23 @@ struct GameDriver dkongjr_driver =
 	&dkongjr_machine_driver,
 	0,
 
-	dkongjr_rom,
+	rom_dkongjr,
 	0, 0,
-	dkongjr_sample_names,
+	0,
 	0,      /* sound_prom */
 
-	dkong_input_ports,
+	input_ports_dkong,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
 
-struct GameDriver dkngjrjp_driver =
+struct GameDriver driver_dkngjrjp =
 {
 	__FILE__,
-	&dkongjr_driver,
+	&driver_dkongjr,
 	"dkngjrjp",
 	"Donkey Kong Jr. (Original Japanese)",
 	"1982",
@@ -1721,23 +1728,23 @@ struct GameDriver dkngjrjp_driver =
 	&dkongjr_machine_driver,
 	0,
 
-	dkngjrjp_rom,
+	rom_dkngjrjp,
 	0, 0,
-	dkongjr_sample_names,
+	0,
 	0,      /* sound_prom */
 
-	dkong_input_ports,
+	input_ports_dkong,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	dkngjrjp_hiload,hisave
 };
 
-struct GameDriver dkjrjp_driver =
+struct GameDriver driver_dkjrjp =
 {
 	__FILE__,
-	&dkongjr_driver,
+	&driver_dkongjr,
 	"dkjrjp",
 	"Donkey Kong Junior (Japan)",
 	"1982",
@@ -1747,23 +1754,23 @@ struct GameDriver dkjrjp_driver =
 	&dkongjr_machine_driver,
 	0,
 
-	dkjrjp_rom,
+	rom_dkjrjp,
 	0, 0,
-	dkongjr_sample_names,
+	0,
 	0,      /* sound_prom */
 
-	dkong_input_ports,
+	input_ports_dkong,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
 
-struct GameDriver dkjrbl_driver =
+struct GameDriver driver_dkjrbl =
 {
 	__FILE__,
-	&dkongjr_driver,
+	&driver_dkongjr,
 	"dkjrbl",
 	"Donkey Kong Junior (bootleg?)",
 	"1982",
@@ -1773,20 +1780,20 @@ struct GameDriver dkjrbl_driver =
 	&dkongjr_machine_driver,
 	0,
 
-	dkjrbl_rom,
+	rom_dkjrbl,
 	0, 0,
-	dkongjr_sample_names,
+	0,
 	0,      /* sound_prom */
 
-	dkong_input_ports,
+	input_ports_dkong,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
 
-struct GameDriver dkong3_driver =
+struct GameDriver driver_dkong3 =
 {
 	__FILE__,
 	0,
@@ -1799,23 +1806,23 @@ struct GameDriver dkong3_driver =
 	&dkong3_machine_driver,
 	0,
 
-	dkong3_rom,
+	rom_dkong3,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	dkong3_input_ports,
+	input_ports_dkong3,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	dkong3_hiload, dkong3_hisave
 };
 
-struct GameDriver dkong3j_driver =
+struct GameDriver driver_dkong3j =
 {
 	__FILE__,
-	&dkong3_driver,
+	&driver_dkong3,
 	"dkong3j",
 	"Donkey Kong 3 (Japan)",
 	"1983",
@@ -1825,20 +1832,20 @@ struct GameDriver dkong3j_driver =
 	&dkong3_machine_driver,
 	0,
 
-	dkong3j_rom,
+	rom_dkong3j,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	dkong3_input_ports,
+	input_ports_dkong3,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	dkong3_hiload, dkong3_hisave
 };
 
-struct GameDriver hunchbkd_driver =
+struct GameDriver driver_hunchbkd =
 {
 	__FILE__,
 	0,
@@ -1847,24 +1854,24 @@ struct GameDriver hunchbkd_driver =
 	"1983",
 	"Century",
 	"Mike Coates",
-	GAME_WRONG_COLORS,
+	0,
 	&hunchbkd_machine_driver,
 	0,
 
-	hunchbkd_rom,
+	rom_hunchbkd,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	dkong_input_ports,
+	input_ports_dkong,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
+	0, 0, 0,
+	ORIENTATION_ROTATE_90 | GAME_WRONG_COLORS,
 
 	0, 0
 };
 
-struct GameDriver herbiedk_driver =
+struct GameDriver driver_herbiedk =
 {
 	__FILE__,
 	0,
@@ -1873,24 +1880,24 @@ struct GameDriver herbiedk_driver =
 	"1984",
 	"CVS",//"Seatongrove UK Ltd",
 	"Mike Coates",
-	GAME_WRONG_COLORS,
+	0,
 	&herbiedk_machine_driver,
 	0,
 
-	herbiedk_rom,
+	rom_herbiedk,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	dkong_input_ports,
+	input_ports_dkong,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
+	0, 0, 0,
+	ORIENTATION_ROTATE_90 | GAME_WRONG_COLORS,
 
 	0, 0
 };
 
-struct GameDriver herocast_driver =
+struct GameDriver driver_herocast =
 {
 	__FILE__,
 	0,
@@ -1899,19 +1906,19 @@ struct GameDriver herocast_driver =
 	"1984",
 	"Seatongrove (Crown license)",
 	"Nicola Salmoria",
-	GAME_NOT_WORKING,
+	0,
 	&dkong_machine_driver,
 	0,
 
-	herocast_rom,
+	rom_herocast,
 	herocast_decode, 0,
 	0,
 	0,      /* sound_prom */
 
-	dkong_input_ports,
+	input_ports_dkong,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
+	0, 0, 0,
+	ORIENTATION_ROTATE_90 | GAME_NOT_WORKING,
 
 	0, 0
 };

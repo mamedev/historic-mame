@@ -110,7 +110,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 };
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( srumbler )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -599,7 +599,7 @@ static void hisave(void)
 }
 
 
-struct GameDriver srumbler_driver =
+struct GameDriver driver_srumbler =
 {
 	__FILE__,
 	0,
@@ -612,12 +612,12 @@ struct GameDriver srumbler_driver =
 	&machine_driver,
 	0,
 
-	srumbler_rom,
+	rom_srumbler,
 	0,
 	0,0,
 	0,      /* sound_prom */
 
-	input_ports,
+	input_ports_srumbler,
 
 	0, 0, 0,
 
@@ -625,10 +625,10 @@ struct GameDriver srumbler_driver =
 	hiload, hisave
 };
 
-struct GameDriver srumblr2_driver =
+struct GameDriver driver_srumblr2 =
 {
 	__FILE__,
-	&srumbler_driver,
+	&driver_srumbler,
 	"srumblr2",
 	"The Speed Rumbler (set 2)",
 	"1986",
@@ -638,12 +638,12 @@ struct GameDriver srumblr2_driver =
 	&machine_driver,
 	0,
 
-	srumblr2_rom,
+	rom_srumblr2,
 	0,
 	0,0,
 	0,      /* sound_prom */
 
-	input_ports,
+	input_ports_srumbler,
 
 	0, 0, 0,
 
@@ -651,10 +651,10 @@ struct GameDriver srumblr2_driver =
 	hiload, hisave
 };
 
-struct GameDriver rushcrsh_driver =
+struct GameDriver driver_rushcrsh =
 {
 	__FILE__,
-	&srumbler_driver,
+	&driver_srumbler,
 	"rushcrsh",
 	"Rush & Crash (Japan)",
 	"1986",
@@ -664,12 +664,12 @@ struct GameDriver rushcrsh_driver =
 	&machine_driver,
 	0,
 
-	rushcrsh_rom,
+	rom_rushcrsh,
 	0,
 	0,0,
 	0,      /* sound_prom */
 
-	input_ports,
+	input_ports_srumbler,
 
 	0, 0, 0,
 

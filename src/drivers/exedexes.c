@@ -123,7 +123,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( exedexes )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -344,7 +344,7 @@ ROM_START( exedexes )
 	ROM_LOAD( "j11_ee10.bin", 0x0e000, 0x4000, 0xbc83e265 ) /* Sprites planes 0-1 */
 	ROM_LOAD( "j12_ee11.bin", 0x12000, 0x4000, 0x0e0f300d ) /* Sprites planes 2-3 */
 
-	ROM_REGION(0x0800)	/* color PROMs */
+	ROM_REGIONX( 0x0800, REGION_PROMS )
 	ROM_LOAD( "02d_e-02.bin", 0x0000, 0x0100, 0x8d0d5935 )	/* red component */
 	ROM_LOAD( "03d_e-03.bin", 0x0100, 0x0100, 0xd3c17efc )	/* green component */
 	ROM_LOAD( "04d_e-04.bin", 0x0200, 0x0100, 0x58ba964c )	/* blue component */
@@ -376,7 +376,7 @@ ROM_START( savgbees )
 	ROM_LOAD( "j11_ee10.bin", 0x0e000, 0x4000, 0xbc83e265 ) /* Sprites planes 0-1 */
 	ROM_LOAD( "j12_ee11.bin", 0x12000, 0x4000, 0x0e0f300d ) /* Sprites planes 2-3 */
 
-	ROM_REGION(0x0800)	/* color PROMs */
+	ROM_REGIONX( 0x0800, REGION_PROMS )
 	ROM_LOAD( "02d_e-02.bin", 0x0000, 0x0100, 0x8d0d5935 )	/* red component */
 	ROM_LOAD( "03d_e-03.bin", 0x0100, 0x0100, 0xd3c17efc )	/* green component */
 	ROM_LOAD( "04d_e-04.bin", 0x0200, 0x0100, 0x58ba964c )	/* blue component */
@@ -437,7 +437,7 @@ static void hisave(void)
 
 
 
-struct GameDriver exedexes_driver =
+struct GameDriver driver_exedexes =
 {
 	__FILE__,
 	0,
@@ -450,23 +450,23 @@ struct GameDriver exedexes_driver =
 	&machine_driver,
 	0,
 
-	exedexes_rom,
+	rom_exedexes,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_exedexes,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	hiload, hisave
 };
 
-struct GameDriver savgbees_driver =
+struct GameDriver driver_savgbees =
 {
 	__FILE__,
-	&exedexes_driver,
+	&driver_exedexes,
 	"savgbees",
 	"Savage Bees",
 	"1985",
@@ -476,14 +476,14 @@ struct GameDriver savgbees_driver =
 	&machine_driver,
 	0,
 
-	savgbees_rom,
+	rom_savgbees,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_exedexes,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	hiload, hisave

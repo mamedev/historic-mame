@@ -209,7 +209,7 @@ static struct MemoryWriteAddress writemem_cpu2[] =
 	{ -1 }	/* end of table */
 };
 
-INPUT_PORTS_START( ddrible_input_ports )
+INPUT_PORTS_START( ddrible )
 	PORT_START	/* PLAYER 1 INPUTS */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
@@ -466,7 +466,7 @@ ROM_START( ddrible )
 	ROM_LOAD( "690a10.bin", 0x80000, 0x20000, 0x61efa222 )	/* characters (set 2) */
 	ROM_LOAD( "690a09.bin", 0xa0000, 0x20000, 0xab682186 )	/* characters (set 2) */
 
-	ROM_REGION(0x0100) /* PROMs */
+	ROM_REGIONX( 0x0100, REGION_PROMS )
 	ROM_LOAD( "690a11.i15", 0x0000, 0x0100, 0xf34617ad )	/* sprite lookup table */
 
 	ROM_REGION(0x10000) /* 64 for the CPU #1 */
@@ -527,7 +527,7 @@ static void ddribble_hisave(void)
 	}
 }
 
-struct GameDriver ddrible_driver =
+struct GameDriver driver_ddrible =
 {
 	__FILE__,
 	0,
@@ -540,14 +540,14 @@ struct GameDriver ddrible_driver =
 	&ddrible_machine_driver,
 	0,
 
-	ddrible_rom,
+	rom_ddrible,
 	0, 0,
 	0,
 	0,
 
-	ddrible_input_ports,
+	input_ports_ddrible,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	ddribble_hiload, ddribble_hisave

@@ -236,7 +236,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x180000, 0x181fff, MRA_BANK2 },			// Graphic planes
 	{ 0x190000, 0x191fff, MRA_BANK6 }, 			// Passthrough to tile roms
 	{ 0x1a0000, 0x1a1fff, backrom_r },
-	{ 0x1b0000, 0x1b1fff, MRA_BANK5, &xexex_palette_ram },
+	{ 0x1b0000, 0x1b1fff, MRA_BANK5 },
 	{ -1 }
 };
 
@@ -253,7 +253,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x0de000, 0x0de001, control2_w },
 	{ 0x100000, 0x17ffff, MWA_ROM },
 	{ 0x180000, 0x181fff, K053157_ram_w },
-	{ 0x1b0000, 0x1b1fff, xexex_palette_w },
+	{ 0x1b0000, 0x1b1fff, xexex_palette_w, &xexex_palette_ram },
 	{ -1 }
 };
 
@@ -283,7 +283,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 #endif
 
 
-INPUT_PORTS_START(xexex_input_ports)
+INPUT_PORTS_START( xexex )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -404,7 +404,7 @@ ROM_START( xexex )
 
 ROM_END
 
-struct GameDriver xexex_driver =
+struct GameDriver driver_xexex =
 {
 	__FILE__,
 	0,
@@ -417,10 +417,10 @@ struct GameDriver xexex_driver =
 	&machine_driver,
 	machine_init,
 
-	xexex_rom,
+	rom_xexex,
 	0,0,0,0,
 
-	xexex_input_ports,
+	input_ports_xexex,
 
 	0,0,0,
 	ORIENTATION_FLIP_Y,

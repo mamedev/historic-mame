@@ -190,7 +190,7 @@ int battlane_cpu2_interrupt(void)
 }
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( battlane )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -449,7 +449,7 @@ static void battlane_decode(void)
 
 
 
-struct GameDriver battlane_driver =
+struct GameDriver driver_battlane =
 {
 	__FILE__,
 	0,
@@ -458,71 +458,71 @@ struct GameDriver battlane_driver =
 	"1986",
 	"Technos (Taito license)",
 	"Paul Leaman\nKim Greenblatt",
-    GAME_WRONG_COLORS,
+	0,
 	&machine_driver,
 	0,
 
-	battlane_rom,
+	rom_battlane,
 	battlane_decode, 0,
 	0,
 	0,
 
-	input_ports,
+	input_ports_battlane,
 
 	0, 0, 0,
-    ORIENTATION_ROTATE_90,
+	ORIENTATION_ROTATE_90 | GAME_WRONG_COLORS,
 
 	0, 0
 };
 
-struct GameDriver battlan2_driver =
+struct GameDriver driver_battlan2 =
 {
 	__FILE__,
-	&battlane_driver,
+	&driver_battlane,
 	"battlan2",
 	"Battle Lane Vol. 5 (set 2)",
 	"1986",
 	"Technos (Taito license)",
 	"Paul Leaman\nKim Greenblatt",
-    GAME_WRONG_COLORS,
+	0,
 	&machine_driver,
 	0,
 
-	battlan2_rom,
+	rom_battlan2,
 	battlane_decode, 0,
 	0,
 	0,
 
-	input_ports,
+	input_ports_battlane,
 
 	0, 0, 0,
-    ORIENTATION_ROTATE_90,
+	ORIENTATION_ROTATE_90 | GAME_WRONG_COLORS,
 
 	0, 0
 };
 
-struct GameDriver battlan3_driver =
+struct GameDriver driver_battlan3 =
 {
 	__FILE__,
-	&battlane_driver,
+	&driver_battlane,
 	"battlan3",
 	"Battle Lane Vol. 5 (set 3)",
 	"1986",
 	"Technos (Taito license)",
 	"Paul Leaman\nKim Greenblatt",
-    GAME_WRONG_COLORS,
+	0,
 	&machine_driver,
 	0,
 
-	battlan3_rom,
+	rom_battlan3,
 	battlane_decode, 0,
 	0,
 	0,
 
-	input_ports,
+	input_ports_battlane,
 
 	0, 0, 0,
-    ORIENTATION_ROTATE_90,
+	ORIENTATION_ROTATE_90 | GAME_WRONG_COLORS,
 
 	0, 0
 };

@@ -332,7 +332,7 @@ static struct MemoryReadAddress sound_readmem[] =
 	{ -1 }	/* end of table */
 };
 
-INPUT_PORTS_START( meadows_input_ports )
+INPUT_PORTS_START( meadows )
 	PORT_START		/* IN0 buttons */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START1  )
@@ -653,7 +653,7 @@ static void deadeye_hisave(void)
 
 
 
-struct GameDriver deadeye_driver =
+struct GameDriver driver_deadeye =
 {
 	__FILE__,
 	0,
@@ -666,13 +666,13 @@ struct GameDriver deadeye_driver =
 	&deadeye_machine_driver,
 	0,
 
-	deadeye_rom,
+	rom_deadeye,
 	0,
 	0,
 	0,
 	0,		/* sound_prom */
 
-	meadows_input_ports,
+	input_ports_meadows,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -680,7 +680,7 @@ struct GameDriver deadeye_driver =
 	deadeye_hiload,deadeye_hisave
 };
 
-struct GameDriver gypsyjug_driver =
+struct GameDriver driver_gypsyjug =
 {
 	__FILE__,
 	0,
@@ -693,13 +693,13 @@ struct GameDriver gypsyjug_driver =
 	&gypsyjug_machine_driver,
 	0,
 
-	gypsyjug_rom,
+	rom_gypsyjug,
 	gypsyjug_rom_decode,
 	0,
 	0,
 	0,		/* sound_prom */
 
-	meadows_input_ports,
+	input_ports_meadows,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

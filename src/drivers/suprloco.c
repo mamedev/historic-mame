@@ -93,7 +93,7 @@ static struct IOWritePort writeport[] =
 };
 
 
-INPUT_PORTS_START( suprloco_input_ports )
+INPUT_PORTS_START( suprloco )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -277,7 +277,7 @@ ROM_START( suprloco )
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
 	ROM_LOAD( "ic64.bin",     0x0000, 0x2000, 0x0aa57207 )
 
-	ROM_REGION(0x0600)
+	ROM_REGIONX( 0x0600, REGION_PROMS )
 	ROM_LOAD( "ic100.bin",    0x0000, 0x0080, 0x7b0c8ce5 )  /* color PROM */
 	ROM_CONTINUE(             0x0100, 0x0080 )
 	ROM_CONTINUE(             0x0080, 0x0080 )
@@ -355,7 +355,7 @@ static void suprloco_hisave(void){
 			osd_fclose(f);
 }
 
-struct GameDriver suprloco_driver =
+struct GameDriver driver_suprloco =
 {
 	__FILE__,
 	0,
@@ -368,14 +368,14 @@ struct GameDriver suprloco_driver =
 	&suprloco_machine_driver,
 	0,
 
-	suprloco_rom,
+	rom_suprloco,
 	suprloco_unmangle, suprloco_decode,
 	0,
 	0,
 
-	suprloco_input_ports,
+	input_ports_suprloco,
 
-	PROM_MEMORY_REGION(4), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
-        suprloco_hiload, suprloco_hisave
+	suprloco_hiload, suprloco_hisave
 };

@@ -20,13 +20,8 @@
 void ramtek_videoram_w(int offset,int data);
 
 int  invaders_interrupt(void);
-int  ramtek_vh_start(void);
-void ramtek_vh_stop(void);
-void ramtek_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh);
 void ramtek_sh_update(void);
 void ramtek_mask_w(int offset, int data);
-
-extern unsigned char *ramtek_videoram;
 
 /*
  * since these functions aren't used anywhere else, i've made them
@@ -70,7 +65,7 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x1fff, MWA_ROM },
 	{ 0x4000, 0x43ff, MWA_RAM },
-    { 0x4400, 0x5fff, ramtek_videoram_w, &ramtek_videoram },
+    { 0x4400, 0x5fff, ramtek_videoram_w, &videoram },
     { 0x6000, 0x63ff, MWA_RAM },		/* ?? */
 	{ 0x8001, 0x8001, ramtek_mask_w},
 	{ 0x8000, 0x8000, sound_w },
@@ -80,18 +75,8 @@ static struct MemoryWriteAddress writemem[] =
 	{ -1 }  /* end of table */
 };
 
-static struct IOReadPort readport[] =
-{
-	{ -1 }  /* end of table */
-};
 
-static struct IOWritePort writeport[] =
-{
-	{ -1 }  /* end of table */
-};
-
-
-INPUT_PORTS_START( m79_input_ports )
+INPUT_PORTS_START( m79 )
 	PORT_START      /* 8000 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* dip switch */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -137,6 +122,7 @@ static unsigned char palette[] = /* V.V */ /* Smoothed pure colors, overlays are
 	0x20,0xff,0xff, /* CYAN */
 	0xff,0x20,0xff  /* PURPLE */
 };
+
 static void init_palette(unsigned char *game_palette, unsigned short *game_colortable,const unsigned char *color_prom)
 {
 	memcpy(game_palette,palette,sizeof(palette));
@@ -144,15 +130,16 @@ static void init_palette(unsigned char *game_palette, unsigned short *game_color
 
 static int M79_interrupt(void)
 {
-                return 0x00cf;  /* RST 08h */
+	return 0x00cf;  /* RST 08h */
 }
 
 static void m79_init(void)
 {
-  int i;
-  /* PROM data is active low */
-  for(i=0; i<0x2000; i++)
-   ROM[i] = ~ROM[i];
+	int i;
+
+	/* PROM data is active low */
+ 	for(i=0; i<0x2000; i++)
+		ROM[i] = ~ROM[i];
 }
 
 static struct MachineDriver machine_driver =
@@ -163,7 +150,7 @@ static struct MachineDriver machine_driver =
 			CPU_8080,
 			1996800,
 			0,
-			readmem,writemem,readport,writeport,
+			readmem,writemem,0,0,
 			M79_interrupt, 1
 		}
 	},
@@ -179,9 +166,9 @@ static struct MachineDriver machine_driver =
 
 	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
 	0,
-	ramtek_vh_start,
-	ramtek_vh_stop,
-	ramtek_vh_screenrefresh,
+	generic_bitmapped_vh_start,
+	generic_bitmapped_vh_stop,
+	generic_bitmapped_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0
@@ -255,10 +242,7 @@ static void hisave(void)
 }
 
 
-
-
-
-struct GameDriver m79amb_driver =
+struct GameDriver driver_m79amb =
 {
 	__FILE__,
 	0,
@@ -271,13 +255,13 @@ struct GameDriver m79amb_driver =
 	&machine_driver,
 	0,
 
-	m79_rom,
+	rom_m79,
 	m79_init,
 	0,
 	0,
 	0,      /* sound_prom */
 
-	m79_input_ports,
+	input_ports_m79,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

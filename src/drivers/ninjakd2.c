@@ -330,11 +330,10 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xc201, 0xc201, MRA_RAM },		// unknown but used
 	{ 0xc202, 0xc202, ninjakd2_bankselect_r },
 	{ 0xc203, 0xc203, MRA_RAM },
-	{ 0xc208, 0xc209, MRA_RAM, &ninjakd2_scrollx_ram },
-	{ 0xc20a, 0xc20b, MRA_RAM, &ninjakd2_scrolly_ram },
+	{ 0xc208, 0xc209, MRA_RAM },
+	{ 0xc20a, 0xc20b, MRA_RAM },
 	{ 0xc20c, 0xc20c, MRA_RAM },
-	{ 0xc800, 0xf9ff, MRA_RAM },
-	{ 0xfa00, 0xffff, MRA_RAM, &ninjakd2_spriteram, &ninjakd2_spriteram_size },
+	{ 0xc800, 0xffff, MRA_RAM },
 	{ -1 }	/* end of table */
 };
 
@@ -346,12 +345,14 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xc201, 0xc201, MWA_RAM },		// unknown but used
 	{ 0xc202, 0xc202, ninjakd2_bankselect_w },
 	{ 0xc203, 0xc203, ninjakd2_sprite_overdraw_w, &ninjakd2_spoverdraw_ram },
-	{ 0xc208, 0xc20b, MWA_RAM },
+	{ 0xc208, 0xc209, MWA_RAM, &ninjakd2_scrollx_ram },
+	{ 0xc20a, 0xc20b, MWA_RAM, &ninjakd2_scrolly_ram },
 	{ 0xc20c, 0xc20c, ninjakd2_background_enable_w, &ninjakd2_bgenable_ram },
 	{ 0xc800, 0xcdff, paletteram_RRRRGGGGBBBBxxxx_swap_w, &paletteram },
 	{ 0xd000, 0xd7ff, ninjakd2_fgvideoram_w, &ninjakd2_foreground_videoram, &ninjakd2_foregroundram_size },
 	{ 0xd800, 0xdfff, ninjakd2_bgvideoram_w, &ninjakd2_background_videoram, &ninjakd2_backgroundram_size },
-	{ 0xe000, 0xffff, MWA_RAM },
+	{ 0xe000, 0xf9ff, MWA_RAM },
+	{ 0xfa00, 0xffff, MWA_RAM, &ninjakd2_spriteram, &ninjakd2_spriteram_size },
 	{ -1 }	/* end of table */
 };
 
@@ -385,8 +386,9 @@ static struct IOWritePort snd_writeport[] =
 	{ -1 }	/* end of table */
 };
 
-INPUT_PORTS_START( input_ports )
 
+
+INPUT_PORTS_START( ninjakd2 )
     PORT_START
     PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT )
     PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT )
@@ -817,7 +819,7 @@ void ninjak2a_sound_decode(void)
 		RAM[A] = RAM[A+0x8000];
 }
 
-struct GameDriver ninjakd2_driver =
+struct GameDriver driver_ninjakd2 =
 {
 	__FILE__,
 	0,
@@ -826,27 +828,27 @@ struct GameDriver ninjakd2_driver =
 	"1987",
 	"UPL",
 	"Jarek Parchanski (MAME driver)\nRoberto Ventura (hardware info)",
-	GAME_NOT_WORKING,
+	0,
 	&ninjakd2_machine_driver,
 	0,
 
-	ninjakd2_rom,
+	rom_ninjakd2,
 	0,0,
 	0,
 	0, /* sound prom */
 
-	input_ports,
+	input_ports_ninjakd2,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
 
 	hiload,hisave
 };
 
-struct GameDriver ninjak2a_driver =
+struct GameDriver driver_ninjak2a =
 {
 	__FILE__,
-	&ninjakd2_driver,
+	&driver_ninjakd2,
 	"ninjak2a",
 	"Ninja Kid II (set 2)",
 	"1987",
@@ -856,12 +858,12 @@ struct GameDriver ninjak2a_driver =
 	&ninjak2a_machine_driver,
 	0,
 
-	ninjak2a_rom,
+	rom_ninjak2a,
 	0,ninjak2a_sound_decode,
 	0,
 	0, /* sound prom */
 
-	input_ports,
+	input_ports_ninjakd2,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -869,10 +871,10 @@ struct GameDriver ninjak2a_driver =
 	hiload,hisave
 };
 
-struct GameDriver ninjak2b_driver =
+struct GameDriver driver_ninjak2b =
 {
 	__FILE__,
-	&ninjakd2_driver,
+	&driver_ninjakd2,
 	"ninjak2b",
 	"Ninja Kid II (set 3)",
 	"1987",
@@ -882,12 +884,12 @@ struct GameDriver ninjak2b_driver =
 	&ninjak2a_machine_driver,
 	0,
 
-	ninjak2b_rom,
+	rom_ninjak2b,
 	0,ninjak2a_sound_decode,
 	0,
 	0, /* sound prom */
 
-	input_ports,
+	input_ports_ninjakd2,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -895,10 +897,10 @@ struct GameDriver ninjak2b_driver =
 	hiload,hisave
 };
 
-struct GameDriver rdaction_driver =
+struct GameDriver driver_rdaction =
 {
 	__FILE__,
-	&ninjakd2_driver,
+	&driver_ninjakd2,
 	"rdaction",
 	"Rad Action",
 	"1987",
@@ -908,12 +910,12 @@ struct GameDriver rdaction_driver =
 	&ninjak2a_machine_driver,
 	0,
 
-	rdaction_rom,
+	rom_rdaction,
 	0,ninjak2a_sound_decode,
 	0,
 	0, /* sound prom */
 
-	input_ports,
+	input_ports_ninjakd2,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

@@ -143,7 +143,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 /*****************************************************************************/
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( hcastle )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -369,7 +369,7 @@ ROM_START( hcastle )
 	ROM_REGION(0x80000)	/* 512k for the samples */
 	ROM_LOAD( "d93.e17",      0x00000, 0x80000, 0x01f9889c )
 
-	ROM_REGION(0x0500)	/* PROMs */
+	ROM_REGIONX( 0x0500, REGION_PROMS )
 	ROM_LOAD( "768c13.j21",   0x0000, 0x0100, 0xf5de80cb )	/* 007121 #1 sprite lookup table */
 	ROM_LOAD( "768c14.j22",   0x0100, 0x0100, 0xb32071b7 )	/* 007121 #1 char lookup table */
 	ROM_LOAD( "768c11.i4",    0x0200, 0x0100, 0xf5de80cb )	/* 007121 #2 sprite lookup table (same) */
@@ -394,7 +394,7 @@ ROM_START( hcastlea )
 	ROM_REGION(0x80000)	/* 512k for the samples */
 	ROM_LOAD( "d93.e17",      0x00000, 0x80000, 0x01f9889c )
 
-	ROM_REGION(0x0500)	/* PROMs */
+	ROM_REGIONX( 0x0500, REGION_PROMS )
 	ROM_LOAD( "768c13.j21",   0x0000, 0x0100, 0xf5de80cb )	/* 007121 #1 sprite lookup table */
 	ROM_LOAD( "768c14.j22",   0x0100, 0x0100, 0xb32071b7 )	/* 007121 #1 char lookup table */
 	ROM_LOAD( "768c11.i4",    0x0200, 0x0100, 0xf5de80cb )	/* 007121 #2 sprite lookup table (same) */
@@ -419,7 +419,7 @@ ROM_START( hcastlej )
 	ROM_REGION(0x80000)	/* 512k for the samples */
 	ROM_LOAD( "d93.e17",  0x00000, 0x80000, 0x01f9889c )
 
-	ROM_REGION(0x0500)	/* PROMs */
+	ROM_REGIONX( 0x0500, REGION_PROMS )
 	ROM_LOAD( "768c13.j21",   0x0000, 0x0100, 0xf5de80cb )	/* 007121 #1 sprite lookup table */
 	ROM_LOAD( "768c14.j22",   0x0100, 0x0100, 0xb32071b7 )	/* 007121 #1 char lookup table */
 	ROM_LOAD( "768c11.i4",    0x0200, 0x0100, 0xf5de80cb )	/* 007121 #2 sprite lookup table (same) */
@@ -429,7 +429,7 @@ ROM_END
 
 /***************************************************************************/
 
-struct GameDriver hcastle_driver =
+struct GameDriver driver_hcastle =
 {
 	__FILE__,
 	0,
@@ -438,71 +438,71 @@ struct GameDriver hcastle_driver =
 	"1988",
 	"Konami",
 	"Bryan McPhail",
-	GAME_IMPERFECT_SOUND,
+	0,
 	&machine_driver,
 	0,
 
-	hcastle_rom,
+	rom_hcastle,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_hcastle,
 
-	PROM_MEMORY_REGION(4), 0, 0,
-	ORIENTATION_DEFAULT,
+	0, 0, 0,
+	ORIENTATION_DEFAULT | GAME_IMPERFECT_SOUND,
 
 	0, 0
 };
 
-struct GameDriver hcastlea_driver =
+struct GameDriver driver_hcastlea =
 {
 	__FILE__,
-	&hcastle_driver,
+	&driver_hcastle,
 	"hcastlea",
 	"Haunted Castle (set 2)",
 	"1988",
 	"Konami",
 	"Bryan McPhail",
-	GAME_IMPERFECT_SOUND,
+	0,
 	&machine_driver,
 	0,
 
-	hcastlea_rom,
+	rom_hcastlea,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_hcastle,
 
-	PROM_MEMORY_REGION(4), 0, 0,
-	ORIENTATION_DEFAULT,
+	0, 0, 0,
+	ORIENTATION_DEFAULT | GAME_IMPERFECT_SOUND,
 
 	0, 0
 };
 
-struct GameDriver hcastlej_driver =
+struct GameDriver driver_hcastlej =
 {
 	__FILE__,
-	&hcastle_driver,
+	&driver_hcastle,
 	"hcastlej",
 	"Akuma-Jou Dracula (Japan)",
 	"1988",
 	"Konami",
 	"Bryan McPhail",
-	GAME_IMPERFECT_SOUND,
+	0,
 	&machine_driver,
 	0,
 
-	hcastlej_rom,
+	rom_hcastlej,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_hcastle,
 
-	PROM_MEMORY_REGION(4), 0, 0,
-	ORIENTATION_DEFAULT,
+	0, 0, 0,
+	ORIENTATION_DEFAULT | GAME_IMPERFECT_SOUND,
 
 	0, 0
 };

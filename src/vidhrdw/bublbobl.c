@@ -43,8 +43,8 @@ void bublbobl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	int gfx_num,gfx_attr,gfx_offs;
 
 
-	/* recalc the palette if necessary */
 	palette_recalc();
+	/* no need to check the return code since we redraw everything each frame */
 
 
 	/* Bubble Bobble doesn't have a real video RAM. All graphics (characters */

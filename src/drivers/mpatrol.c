@@ -108,7 +108,7 @@ static struct IOWritePort writeport[] =
 
 
 
-INPUT_PORTS_START( mpatrol_input_ports )
+INPUT_PORTS_START( mpatrol )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -209,7 +209,7 @@ INPUT_PORTS_START( mpatrol_input_ports )
 INPUT_PORTS_END
 
 /* Identical to mpatrol, the only difference is the number of lives */
-INPUT_PORTS_START( mpatrolw_input_ports )
+INPUT_PORTS_START( mpatrolw )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -427,7 +427,7 @@ ROM_START( mpatrol )
 	ROM_LOAD( "mp-e.3k",      0x5000, 0x1000, 0xc7aa1fb0 )
 	ROM_LOAD( "mp-e.3h",      0x6000, 0x1000, 0xa0919392 )
 
-	ROM_REGION(0x0240)     /* color proms */
+	ROM_REGIONX( 0x0240, REGION_PROMS )
 	ROM_LOAD( "2a",           0x0000, 0x0100, 0x0f193a50 ) /* character palette */
 	ROM_LOAD( "1m",           0x0100, 0x0020, 0x6a57eff2 ) /* background palette */
 	ROM_LOAD( "1c1j",         0x0120, 0x0020, 0x26979b13 ) /* sprite palette */
@@ -453,7 +453,7 @@ ROM_START( mpatrolw )
 	ROM_LOAD( "mp-e.3k",      0x5000, 0x1000, 0xc7aa1fb0 )
 	ROM_LOAD( "mp-e.3h",      0x6000, 0x1000, 0xa0919392 )
 
-	ROM_REGION(0x0240)     /* color proms */
+	ROM_REGIONX( 0x0240, REGION_PROMS )
 	ROM_LOAD( "2a",           0x0000, 0x0100, 0x0f193a50 ) /* character palette */
 	ROM_LOAD( "1m",           0x0100, 0x0020, 0x6a57eff2 ) /* background palette */
 	ROM_LOAD( "1c1j",         0x0120, 0x0020, 0x26979b13 ) /* sprite palette */
@@ -479,7 +479,7 @@ ROM_START( mranger )
 	ROM_LOAD( "mp-e.3k",      0x5000, 0x1000, 0xc7aa1fb0 )
 	ROM_LOAD( "mp-e.3h",      0x6000, 0x1000, 0xa0919392 )
 
-	ROM_REGION(0x0240)     /* color proms */
+	ROM_REGIONX( 0x0240, REGION_PROMS )
 	ROM_LOAD( "2a",           0x0000, 0x0100, 0x0f193a50 ) /* character palette */
 	ROM_LOAD( "1m",           0x0100, 0x0020, 0x6a57eff2 ) /* background palette */
 	ROM_LOAD( "1c1j",         0x0120, 0x0020, 0x26979b13 ) /* sprite palette */
@@ -539,7 +539,7 @@ static void hisave(void)
 
 
 
-struct GameDriver mpatrol_driver =
+struct GameDriver driver_mpatrol =
 {
 	__FILE__,
 	0,
@@ -552,23 +552,23 @@ struct GameDriver mpatrol_driver =
 	&machine_driver,
 	0,
 
-	mpatrol_rom,
+	rom_mpatrol,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	mpatrol_input_ports,
+	input_ports_mpatrol,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };
 
-struct GameDriver mpatrolw_driver =
+struct GameDriver driver_mpatrolw =
 {
 	__FILE__,
-	&mpatrol_driver,
+	&driver_mpatrol,
 	"mpatrolw",
 	"Moon Patrol (Williams)",
 	"1982",
@@ -578,23 +578,23 @@ struct GameDriver mpatrolw_driver =
 	&machine_driver,
 	0,
 
-	mpatrolw_rom,
+	rom_mpatrolw,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	mpatrolw_input_ports,
+	input_ports_mpatrolw,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };
 
-struct GameDriver mranger_driver =
+struct GameDriver driver_mranger =
 {
 	__FILE__,
-	&mpatrol_driver,
+	&driver_mpatrol,
 	"mranger",
 	"Moon Ranger",
 	"1982",
@@ -604,14 +604,14 @@ struct GameDriver mranger_driver =
 	&machine_driver,
 	0,
 
-	mranger_rom,
+	rom_mranger,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	mpatrol_input_ports,
+	input_ports_mpatrol,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave

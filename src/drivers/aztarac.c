@@ -47,7 +47,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x027008, 0x027009, aztarac_sound_r },
 	{ 0x02700c, 0x02700d, input_port_2_r },
 	{ 0x02700e, 0x02700f, watchdog_reset_r },
-	{ 0xff8000, 0xffafff, MRA_BANK1, &aztarac_vectorram},
+	{ 0xff8000, 0xffafff, MRA_BANK1 },
 	{ 0xffe000, 0xffffff, MRA_BANK2 },
 	{ -1 }	/* end of table */
 };
@@ -57,7 +57,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x000000, 0x00bfff, MWA_ROM },
 	{ 0x022000, 0x022fff, foodf_nvram_w },
 	{ 0x027008, 0x027009, aztarac_sound_w },
-	{ 0xff8000, 0xffafff, MWA_BANK1 },
+	{ 0xff8000, 0xffafff, MWA_BANK1, &aztarac_vectorram },
 	{ 0xffb000, 0xffb001, aztarac_ubr_w },
 	{ 0xffe000, 0xffffff, MWA_BANK2 },
 	{ -1 }	/* end of table */
@@ -94,7 +94,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 
 
-INPUT_PORTS_START( aztarac_input_ports )
+INPUT_PORTS_START( aztarac )
 	PORT_START /* IN0 */
 	PORT_ANALOG( 0x1f, 0xf, IPT_AD_STICK_X | IPF_CENTER, 100, 1, 0, 0, 0x1e )
 
@@ -201,7 +201,7 @@ ROM_START( aztarac )
 	ROM_LOAD( "j3_d.bin", 0x1000, 0x1000, 0x4016de77 )
 ROM_END
 
-struct GameDriver aztarac_driver =
+struct GameDriver driver_aztarac =
 {
 	__FILE__,
 	0,
@@ -213,11 +213,11 @@ struct GameDriver aztarac_driver =
 	0,
 	&machine_driver,
 	0,
-	aztarac_rom,
+	rom_aztarac,
 	0, 0,
 	0,
 	0,
-	aztarac_input_ports,
+	input_ports_aztarac,
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	foodf_nvram_load, foodf_nvram_save

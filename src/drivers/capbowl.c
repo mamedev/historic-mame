@@ -187,7 +187,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( capbowl )
 	PORT_START	/* IN0 */
 	PORT_ANALOG ( 0x0f, 0x00, IPT_TRACKBALL_Y | IPF_REVERSE | IPF_CENTER, 100, 10, 7, 0, 0 )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
@@ -394,7 +394,7 @@ static void hisave(void)
 
 
 
-struct GameDriver capbowl_driver =
+struct GameDriver driver_capbowl =
 {
 	__FILE__,
 	0,
@@ -403,76 +403,76 @@ struct GameDriver capbowl_driver =
 	"1988",
 	"Incredible Technologies",
 	"Zsolt Vasvari\nMirko Buffoni\nNicola Salmoria\nMichael Appolo",
-	GAME_REQUIRES_16BIT,
+	0,
 	&capbowl_machine_driver,
 	0,
 
-	capbowl_rom,
+	rom_capbowl,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_capbowl,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
+	ORIENTATION_ROTATE_270 | GAME_REQUIRES_16BIT,
 
 	hiload, hisave
 };
 
-struct GameDriver capbowl2_driver =
+struct GameDriver driver_capbowl2 =
 {
 	__FILE__,
-	&capbowl_driver,
+	&driver_capbowl,
 	"capbowl2",
 	"Capcom Bowling (set 2)",
 	"1988",
 	"Incredible Technologies",
 	"Zsolt Vasvari\nMirko Buffoni\nNicola Salmoria\nMichael Appolo",
-	GAME_REQUIRES_16BIT,
+	0,
 	&capbowl_machine_driver,
 	0,
 
-	capbowl2_rom,
+	rom_capbowl2,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_capbowl,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
+	ORIENTATION_ROTATE_270 | GAME_REQUIRES_16BIT,
 
 	hiload, hisave
 };
 
-struct GameDriver clbowl_driver =
+struct GameDriver driver_clbowl =
 {
 	__FILE__,
-	&capbowl_driver,
+	&driver_capbowl,
 	"clbowl",
 	"Coors Light Bowling",
 	"1989",
 	"Incredible Technologies",
 	"Zsolt Vasvari\nMirko Buffoni\nNicola Salmoria\nMichael Appolo",
-	GAME_REQUIRES_16BIT,
+	0,
 	&capbowl_machine_driver,
 	0,
 
-	clbowl_rom,
+	rom_clbowl,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_capbowl,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
+	ORIENTATION_ROTATE_270 | GAME_REQUIRES_16BIT,
 
 	hiload, hisave
 };
 
-struct GameDriver bowlrama_driver =
+struct GameDriver driver_bowlrama =
 {
 	__FILE__,
 	0,
@@ -481,19 +481,19 @@ struct GameDriver bowlrama_driver =
 	"1991",
 	"P & P Marketing",
 	"Michael Appolo\nZsolt Vasvari\nMirko Buffoni\nNicola Salmoria",
-	GAME_REQUIRES_16BIT,
+	0,
 	&bowlrama_machine_driver,
 	0,
 
-	bowlrama_rom,
+	rom_bowlrama,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_capbowl,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
+	ORIENTATION_ROTATE_270 | GAME_REQUIRES_16BIT,
 
 	hiload, hisave
 };

@@ -19,8 +19,8 @@ struct MemoryReadAddress
 {
 	int start,end;
 	int (*handler)(int offset);   /* see special values below */
-	unsigned char **base;         /* optional (see explanation above) */
-	int *size;                    /* optional (see explanation above) */
+//	unsigned char **base;         /* optional (see explanation above) */
+//	int *size;                    /* optional (see explanation above) */
 };
 
 #define MRA_NOP   0	              /* don't care, return 0 */

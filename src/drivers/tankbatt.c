@@ -172,7 +172,7 @@ int tankbatt_interrupt (void)
 	else return ignore_interrupt ();
 }
 
-INPUT_PORTS_START( tankbatt_input_ports )
+INPUT_PORTS_START( tankbatt )
 	PORT_START	/* IN0 */
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
 	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
@@ -250,10 +250,22 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 };
 
 
+
+static const char *tankbatt_sample_names[] =
+{
+	"*tankbatt",
+	"fire.wav",
+	"engine1.wav",
+	"engine2.wav",
+	"explode1.wav",
+    0	/* end of array */
+};
+
 static struct Samplesinterface samples_interface =
 {
 	3,	/* 3 channels */
-	25	/* volume */
+	25,	/* volume */
+	tankbatt_sample_names
 };
 
 
@@ -304,16 +316,6 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-static const char *tankbatt_sample_names[] =
-{
-	"*tankbatt",
-	"fire.wav",
-	"engine1.wav",
-	"engine2.wav",
-	"explode1.wav",
-    0	/* end of array */
-};
-
 ROM_START( tankbatt )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "tb1-1.bin",    0x6000, 0x0800, 0x278a0b8c )
@@ -325,7 +327,7 @@ ROM_START( tankbatt )
 	ROM_REGION_DISPOSE(0x800)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "tb1-5.bin",    0x0000, 0x0800, 0xaabd4fb1 )
 
-	ROM_REGION(0x100)	/* color prom */
+	ROM_REGIONX( 0x0100, REGION_PROMS )
 	ROM_LOAD( "tankbatt.clr", 0x0000, 0x0100, 0x1150d613 )
 ROM_END
 
@@ -368,7 +370,7 @@ static void hisave(void)
 }
 
 
-struct GameDriver tankbatt_driver =
+struct GameDriver driver_tankbatt =
 {
 	__FILE__,
 	0,
@@ -381,14 +383,14 @@ struct GameDriver tankbatt_driver =
 	&machine_driver,
 	0,
 
-	tankbatt_rom,
+	rom_tankbatt,
 	0, 0,
-	tankbatt_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	tankbatt_input_ports,
+	input_ports_tankbatt,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave

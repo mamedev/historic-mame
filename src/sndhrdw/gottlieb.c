@@ -12,9 +12,32 @@ void gottlieb_sh_w(int offset,int data)
 
 	if ((data&0x0f) != 0xf) /* interrupt trigered by four low bits (not all 1's) */
 	{
-		if (Machine->gamedrv->samplenames)
+		if (Machine->samples)
 		{
-			if (Machine->gamedrv->samplenames[0][1]=='q')  /* qbert */
+			if (!strcmp(Machine->gamedrv->name,"reactor"))	/* reactor */
+			{
+				switch (data ^ 0x3f)
+				{
+					case 53:
+					case 54:
+					case 55:
+					case 56:
+					case 57:
+					case 58:
+					case 59:
+						sample_start(0,(data^0x3f)-53,0);
+						break;
+					case 31:
+						sample_start(0,7,0);
+						score_sample=7;
+						break;
+					case 39:
+						score_sample++;
+						if (score_sample<20) sample_start(0,score_sample,0);
+						break;
+				}
+			}
+			else	/* qbert */
 			{
 				switch (data ^ 0x3f)
 				{
@@ -37,28 +60,6 @@ void gottlieb_sh_w(int offset,int data)
 						break;
 					case 36:
 						sample_start(0,43,0);
-						break;
-				}
-			} else if (Machine->gamedrv->samplenames[0][1]=='r') /* reactor */
-			{
-				switch (data ^ 0x3f)
-				{
-					case 53:
-					case 54:
-					case 55:
-					case 56:
-					case 57:
-					case 58:
-					case 59:
-						sample_start(0,(data^0x3f)-53,0);
-						break;
-					case 31:
-						sample_start(0,7,0);
-						score_sample=7;
-						break;
-					case 39:
-						score_sample++;
-						if (score_sample<20) sample_start(0,score_sample,0);
 						break;
 				}
 			}
@@ -85,8 +86,14 @@ void gottlieb_sh_w(int offset,int data)
 
 void gottlieb_knocker(void)
 {
-	if (Machine->gamedrv->samplenames && Machine->gamedrv->samplenames[0][1]=='q')  /* qbert */
-		sample_start(0,44,0);
+	if (Machine->samples)
+	{
+		if (!strcmp(Machine->gamedrv->name,"reactor"))	/* reactor */
+		{
+		}
+		else	/* qbert */
+			sample_start(0,44,0);
+	}
 }
 
 /* callback for the timer */

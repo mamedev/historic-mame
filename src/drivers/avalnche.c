@@ -48,7 +48,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ -1 }	/* end of table */
 };
 
-INPUT_PORTS_START( avalnche_input_ports )
+INPUT_PORTS_START( avalnche )
 	PORT_START /* IN0 */
 	PORT_BIT (0x03, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Spare */
 	PORT_DIPNAME( 0x0c, 0x04, DEF_STR( Coinage ) )
@@ -261,7 +261,7 @@ static void hisave(void)
 
 ***************************************************************************/
 
-struct GameDriver avalnche_driver =
+struct GameDriver driver_avalnche =
 {
 	__FILE__,
 	0,
@@ -274,12 +274,12 @@ struct GameDriver avalnche_driver =
 	&machine_driver,
 	0,
 
-	avalnche_rom,
+	rom_avalnche,
 	avalnche_rom_init, 0,
 	0,
 	0,	/* sound_prom */
 
-	avalnche_input_ports,
+	input_ports_avalnche,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

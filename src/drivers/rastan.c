@@ -164,7 +164,7 @@ static struct MemoryWriteAddress rastan_s_writemem[] =
 
 
 
-INPUT_PORTS_START( rastan_input_ports )
+INPUT_PORTS_START( rastan )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
@@ -242,7 +242,7 @@ INPUT_PORTS_START( rastan_input_ports )
 INPUT_PORTS_END
 
 /* same as rastan, coinage is different */
-INPUT_PORTS_START( rastsaga_input_ports )
+INPUT_PORTS_START( rastsaga )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
@@ -607,7 +607,7 @@ static void rastan_hisave(void)
 
 
 
-struct GameDriver rastan_driver =
+struct GameDriver driver_rastan =
 {
 	__FILE__,
 	0,
@@ -620,12 +620,12 @@ struct GameDriver rastan_driver =
 	&machine_driver,
 	0,
 
-	rastan_rom,
+	rom_rastan,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	rastan_input_ports,
+	input_ports_rastan,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
@@ -633,10 +633,10 @@ struct GameDriver rastan_driver =
 };
 
 /* IDENTICAL to rastan, only differennce is copyright notice and Coin B coinage */
-struct GameDriver rastanu_driver =
+struct GameDriver driver_rastanu =
 {
 	__FILE__,
-	&rastan_driver,
+	&driver_rastan,
 	"rastanu",
 	"Rastan (US set 1)",
 	"1987",
@@ -646,22 +646,22 @@ struct GameDriver rastanu_driver =
 	&machine_driver,
 	0,
 
-	rastanu_rom,
+	rom_rastanu,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	rastsaga_input_ports,
+	input_ports_rastsaga,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
 	rastan_hiload, rastan_hisave
 };
 
-struct GameDriver rastanu2_driver =
+struct GameDriver driver_rastanu2 =
 {
 	__FILE__,
-	&rastan_driver,
+	&driver_rastan,
 	"rastanu2",
 	"Rastan (US set 2)",
 	"1987",
@@ -671,22 +671,22 @@ struct GameDriver rastanu2_driver =
 	&machine_driver,
 	0,
 
-	rastanu2_rom,
+	rom_rastanu2,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	rastsaga_input_ports,
+	input_ports_rastsaga,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
 	rastan_hiload, rastan_hisave
 };
 
-struct GameDriver rastsaga_driver =
+struct GameDriver driver_rastsaga =
 {
 	__FILE__,
-	&rastan_driver,
+	&driver_rastan,
 	"rastsaga",
 	"Rastan Saga (Japan)",
 	"1987",
@@ -696,12 +696,12 @@ struct GameDriver rastsaga_driver =
 	&machine_driver,
 	0,
 
-	rastsaga_rom,
+	rom_rastsaga,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	rastsaga_input_ports,
+	input_ports_rastsaga,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
@@ -726,7 +726,7 @@ ROM_START( ymcym )
 	ROM_REGION(0x1000)
 ROM_END
 
-INPUT_PORTS_START( ymcym_input_ports )
+INPUT_PORTS_START( ymcym )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
@@ -839,7 +839,7 @@ static struct MachineDriver ymcym_machine =
 	}
 };
 
-struct GameDriver cymplay_driver =
+struct GameDriver driver_cymplay =
 {
 	__FILE__,
 	0,
@@ -852,12 +852,12 @@ struct GameDriver cymplay_driver =
 	&ymcym_machine,
 	0,
 
-	ymcym_rom,
+	rom_ymcym,
 	0, 0,
 	0,
 	0,
 
-	ymcym_input_ports,
+	input_ports_ymcym,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -1011,7 +1011,7 @@ static struct MachineDriver ymtest_machine =
 	}
 };
 
-struct GameDriver ymtest_driver =
+struct GameDriver driver_ymtest =
 {
 	__FILE__,
 	0,
@@ -1024,12 +1024,12 @@ struct GameDriver ymtest_driver =
 	&ymtest_machine,
 	0,
 
-	ymcym_rom,
+	rom_ymcym,
 	0, 0,
 	0,
 	0,
 
-	ymcym_input_ports,
+	input_ports_ymcym,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

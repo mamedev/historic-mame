@@ -217,7 +217,7 @@ static struct IOWritePort writeport[] =
 
 
 
-INPUT_PORTS_START( cclimber_input_ports )
+INPUT_PORTS_START( cclimber )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_UP     | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICKLEFT_DOWN   | IPF_8WAY )
@@ -274,7 +274,7 @@ INPUT_PORTS_END
 
 /* several differences with cclimber: note that IN2 bits are ACTIVE_LOW, while in */
 /* cclimber they are ACTIVE_HIGH. */
-INPUT_PORTS_START( ckong_input_ports )
+INPUT_PORTS_START( ckong )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x07, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON1 )
@@ -323,7 +323,7 @@ INPUT_PORTS_START( ckong_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( rpatrolb_input_ports )
+INPUT_PORTS_START( rpatrolb )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x3e, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -506,7 +506,7 @@ ROM_START( cclimber )
 	ROM_LOAD( "cc02",         0x4000, 0x0800, 0x14f3ecc9 )
 	ROM_LOAD( "cc01",         0x4800, 0x0800, 0x21c0f9fb )
 
-	ROM_REGION(0x60)      /* color proms */
+	ROM_REGIONX( 0x0060, REGION_PROMS )
 	ROM_LOAD( "cclimber.pr1", 0x0000, 0x0020, 0x751c3325 )
 	ROM_LOAD( "cclimber.pr2", 0x0020, 0x0020, 0xab1940fa )
 	ROM_LOAD( "cclimber.pr3", 0x0040, 0x0020, 0x71317756 )
@@ -610,7 +610,7 @@ ROM_START( cclimbrj )
 	ROM_LOAD( "cc02",         0x4000, 0x0800, 0x14f3ecc9 )
 	ROM_LOAD( "cc01",         0x4800, 0x0800, 0x21c0f9fb )
 
-	ROM_REGION(0x60)      /* color proms */
+	ROM_REGIONX( 0x0060, REGION_PROMS )
 	ROM_LOAD( "cclimber.pr1", 0x0000, 0x0020, 0x751c3325 )
 	ROM_LOAD( "cclimber.pr2", 0x0020, 0x0020, 0xab1940fa )
 	ROM_LOAD( "cclimber.pr3", 0x0040, 0x0020, 0x71317756 )
@@ -640,7 +640,7 @@ ROM_START( ccboot )
 	ROM_LOAD( "m02.bin",      0x4000, 0x0800, 0x7f4877de )
 	ROM_LOAD( "m01.bin",      0x4800, 0x0800, 0x49fab908 )
 
-	ROM_REGION(0x60)        /* color proms */
+	ROM_REGIONX( 0x0060, REGION_PROMS )
 	ROM_LOAD( "cclimber.pr1", 0x0000, 0x0020, 0x751c3325 )
 	ROM_LOAD( "cclimber.pr2", 0x0020, 0x0020, 0xab1940fa )
 	ROM_LOAD( "cclimber.pr3", 0x0040, 0x0020, 0x71317756 )
@@ -670,7 +670,7 @@ ROM_START( ccboot2 )
 	ROM_LOAD( "cc02",         0x4000, 0x0800, 0x14f3ecc9 )
 	ROM_LOAD( "cc01",         0x4800, 0x0800, 0x21c0f9fb )
 
-	ROM_REGION(0x60)        /* color proms */
+	ROM_REGIONX( 0x0060, REGION_PROMS )
 	ROM_LOAD( "cclimber.pr1", 0x0000, 0x0020, 0x751c3325 )
 	ROM_LOAD( "cclimber.pr2", 0x0020, 0x0020, 0xab1940fa )
 	ROM_LOAD( "cclimber.pr3", 0x0040, 0x0020, 0x71317756 )
@@ -770,7 +770,7 @@ ROM_START( ckong )
 	ROM_LOAD( "c11-02.bin",   0x4000, 0x0800, 0xd1352c31 )
 	ROM_LOAD( "a11-01.bin",   0x4800, 0x0800, 0xa7a2fdbd )
 
-	ROM_REGION(0x60)        /* color proms */
+	ROM_REGIONX( 0x0060, REGION_PROMS )
 	ROM_LOAD( "prom.v6",      0x0000, 0x0020, 0xb3fc1505 )
 	ROM_LOAD( "prom.u6",      0x0020, 0x0020, 0x26aada9e )
 	ROM_LOAD( "prom.t6",      0x0040, 0x0020, 0x676b3166 )
@@ -797,7 +797,7 @@ ROM_START( ckonga )
 	ROM_LOAD( "c11-02.bin",   0x4000, 0x0800, 0xd1352c31 )
 	ROM_LOAD( "a11-01.bin",   0x4800, 0x0800, 0xa7a2fdbd )
 
-	ROM_REGION(0x60)        /* color proms */
+	ROM_REGIONX( 0x0060, REGION_PROMS )
 	ROM_LOAD( "prom.v6",      0x0000, 0x0020, 0xb3fc1505 )
 	ROM_LOAD( "prom.u6",      0x0020, 0x0020, 0x26aada9e )
 	ROM_LOAD( "prom.t6",      0x0040, 0x0020, 0x676b3166 )
@@ -824,7 +824,7 @@ ROM_START( ckongjeu )
 	ROM_LOAD( "c11-02.bin",   0x4000, 0x0800, 0xd1352c31 )
 	ROM_LOAD( "a11-01.bin",   0x4800, 0x0800, 0xa7a2fdbd )
 
-	ROM_REGION(0x60)        /* color proms */
+	ROM_REGIONX( 0x0060, REGION_PROMS )
 	ROM_LOAD( "prom.v6",      0x0000, 0x0020, 0xb3fc1505 )
 	ROM_LOAD( "prom.u6",      0x0020, 0x0020, 0x26aada9e )
 	ROM_LOAD( "prom.t6",      0x0040, 0x0020, 0x676b3166 )
@@ -856,7 +856,7 @@ ROM_START( ckongo )
 	ROM_LOAD( "c11-02.bin",   0x4000, 0x0800, 0xd1352c31 )
 	ROM_LOAD( "a11-01.bin",   0x4800, 0x0800, 0xa7a2fdbd )
 
-	ROM_REGION(0x60)        /* color proms */
+	ROM_REGIONX( 0x0060, REGION_PROMS )
 	ROM_LOAD( "prom.v6",      0x0000, 0x0020, 0xb3fc1505 )
 	ROM_LOAD( "prom.u6",      0x0020, 0x0020, 0x26aada9e )
 	ROM_LOAD( "prom.t6",      0x0040, 0x0020, 0x676b3166 )
@@ -883,7 +883,7 @@ ROM_START( ckongalc )
 	ROM_LOAD( "ck2.bin",      0x4000, 0x0800, 0xf67c80f1 )
 	ROM_LOAD( "ck1.bin",      0x4800, 0x0800, 0x80eb517d )
 
-	ROM_REGION(0x60)        /* color proms */
+	ROM_REGIONX( 0x0060, REGION_PROMS )
 	ROM_LOAD( "cclimber.pr1", 0x0000, 0x0020, 0x751c3325 )
 	ROM_LOAD( "cclimber.pr2", 0x0020, 0x0020, 0xab1940fa )
 	ROM_LOAD( "ck6t.bin",     0x0040, 0x0020, 0xb4e827a5 )
@@ -910,7 +910,7 @@ ROM_START( monkeyd )
 	ROM_LOAD( "ck2.bin",      0x4000, 0x0800, 0xf67c80f1 )
 	ROM_LOAD( "ck1.bin",      0x4800, 0x0800, 0x80eb517d )
 
-	ROM_REGION(0x60)        /* color proms */
+	ROM_REGIONX( 0x0060, REGION_PROMS )
 	ROM_LOAD( "cclimber.pr1", 0x0000, 0x0020, 0x00000000 )
 	ROM_LOAD( "cclimber.pr2", 0x0020, 0x0020, 0x00000000 )
 	ROM_LOAD( "ck6t.bin",     0x0040, 0x0020, 0x00000000 )
@@ -942,7 +942,7 @@ ROM_START( rpatrolb )
 	ROM_LOAD( "rp11.6c",      0x4000, 0x0800, 0x065651a5 )
 	ROM_LOAD( "rp10.6a",      0x4800, 0x0800, 0x59747c31 )
 
-	ROM_REGION(0x0060)      /* color proms */
+	ROM_REGIONX( 0x0060, REGION_PROMS )
 	ROM_LOAD( "bprom1.9n",    0x0000, 0x0020, 0xf9a2383b )
 	ROM_LOAD( "bprom2.9p",    0x0020, 0x0020, 0x1743bd26 )
 	ROM_LOAD( "bprom3.9c",    0x0040, 0x0020, 0xee03bc96 )
@@ -973,7 +973,7 @@ ROM_START( silvland )
 	ROM_LOAD( "2.6c",         0x4000, 0x0800, 0xc8d32b8e )
 	ROM_LOAD( "1.6a",         0x4800, 0x0800, 0xee333daf )
 
-	ROM_REGION(0x0060)      /* color proms */
+	ROM_REGIONX( 0x0060, REGION_PROMS )
 	ROM_LOAD( "mb7051.1v",    0x0000, 0x0020, 0x1d2343b1 )
 	ROM_LOAD( "mb7051.1u",    0x0020, 0x0020, 0xc174753c )
 	ROM_LOAD( "mb7051.1t",    0x0040, 0x0020, 0x04a1be01 )
@@ -1111,7 +1111,7 @@ static void rpatrolb_hisave(void)
 
 
 
-struct GameDriver cclimber_driver =
+struct GameDriver driver_cclimber =
 {
 	__FILE__,
 	0,
@@ -1124,23 +1124,23 @@ struct GameDriver cclimber_driver =
 	&machine_driver,
 	0,
 
-	cclimber_rom,
+	rom_cclimber,
 	0, cclimber_decode,
 	0,
 	0,      /* sound_prom */
 
-	cclimber_input_ports,
+	input_ports_cclimber,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	cclimber_hiload, cclimber_hisave
 };
 
-struct GameDriver cclimbrj_driver =
+struct GameDriver driver_cclimbrj =
 {
 	__FILE__,
-	&cclimber_driver,
+	&driver_cclimber,
 	"cclimbrj",
 	"Crazy Climber (Japan)",
 	"1980",
@@ -1150,23 +1150,23 @@ struct GameDriver cclimbrj_driver =
 	&machine_driver,
 	0,
 
-	cclimbrj_rom,
+	rom_cclimbrj,
 	0, cclimbrj_decode,
 	0,
 	0,      /* sound_prom */
 
-	cclimber_input_ports,
+	input_ports_cclimber,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	cclimber_hiload, cclimber_hisave
 };
 
-struct GameDriver ccboot_driver =
+struct GameDriver driver_ccboot =
 {
 	__FILE__,
-	&cclimber_driver,
+	&driver_cclimber,
 	"ccboot",
 	"Crazy Climber (bootleg set 1)",
 	"1980",
@@ -1176,23 +1176,23 @@ struct GameDriver ccboot_driver =
 	&machine_driver,
 	0,
 
-	ccboot_rom,
+	rom_ccboot,
 	0, cclimbrj_decode,
 	0,
 	0,      /* sound_prom */
 
-	cclimber_input_ports,
+	input_ports_cclimber,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	cclimber_hiload, cclimber_hisave
 };
 
-struct GameDriver ccboot2_driver =
+struct GameDriver driver_ccboot2 =
 {
 	__FILE__,
-	&cclimber_driver,
+	&driver_cclimber,
 	"ccboot2",
 	"Crazy Climber (bootleg set 2)",
 	"1980",
@@ -1202,14 +1202,14 @@ struct GameDriver ccboot2_driver =
 	&machine_driver,
 	0,
 
-	ccboot2_rom,
+	rom_ccboot2,
 	0, cclimbrj_decode,
 	0,
 	0,      /* sound_prom */
 
-	cclimber_input_ports,
+	input_ports_cclimber,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	cclimber_hiload, cclimber_hisave
@@ -1217,7 +1217,7 @@ struct GameDriver ccboot2_driver =
 
 
 
-struct GameDriver ckong_driver =
+struct GameDriver driver_ckong =
 {
 	__FILE__,
 	0,
@@ -1230,23 +1230,23 @@ struct GameDriver ckong_driver =
 	&machine_driver,
 	0,
 
-	ckong_rom,
+	rom_ckong,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	ckong_input_ports,
+	input_ports_ckong,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	ckong_hiload, ckong_hisave
 };
 
-struct GameDriver ckonga_driver =
+struct GameDriver driver_ckonga =
 {
 	__FILE__,
-	&ckong_driver,
+	&driver_ckong,
 	"ckonga",
 	"Crazy Kong (set 2)",
 	"1981",
@@ -1256,23 +1256,23 @@ struct GameDriver ckonga_driver =
 	&machine_driver,
 	0,
 
-	ckonga_rom,
+	rom_ckonga,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	ckong_input_ports,
+	input_ports_ckong,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	ckong_hiload, ckong_hisave
 };
 
-struct GameDriver ckongjeu_driver =
+struct GameDriver driver_ckongjeu =
 {
 	__FILE__,
-	&ckong_driver,
+	&driver_ckong,
 	"ckongjeu",
 	"Crazy Kong (Jeutel bootleg)",
 	"1981",
@@ -1282,23 +1282,23 @@ struct GameDriver ckongjeu_driver =
 	&machine_driver,
 	0,
 
-	ckongjeu_rom,
+	rom_ckongjeu,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	ckong_input_ports,
+	input_ports_ckong,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	ckong_hiload, ckong_hisave
 };
 
-struct GameDriver ckongo_driver =
+struct GameDriver driver_ckongo =
 {
 	__FILE__,
-	&ckong_driver,
+	&driver_ckong,
 	"ckongo",
 	"Crazy Kong (Orca bootleg)",
 	"1981",
@@ -1308,23 +1308,23 @@ struct GameDriver ckongo_driver =
 	&machine_driver,
 	0,
 
-	ckongo_rom,
+	rom_ckongo,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	ckong_input_ports,
+	input_ports_ckong,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	ckong_hiload, ckong_hisave
 };
 
-struct GameDriver ckongalc_driver =
+struct GameDriver driver_ckongalc =
 {
 	__FILE__,
-	&ckong_driver,
+	&driver_ckong,
 	"ckongalc",
 	"Crazy Kong (Alca bootleg)",
 	"1981",
@@ -1334,23 +1334,23 @@ struct GameDriver ckongalc_driver =
 	&machine_driver,
 	0,
 
-	ckongalc_rom,
+	rom_ckongalc,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	ckong_input_ports,
+	input_ports_ckong,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	ckong_hiload, ckong_hisave
 };
 
-struct GameDriver monkeyd_driver =
+struct GameDriver driver_monkeyd =
 {
 	__FILE__,
-	&ckong_driver,
+	&driver_ckong,
 	"monkeyd",
 	"Monkey Donkey",
 	"1981",
@@ -1360,20 +1360,20 @@ struct GameDriver monkeyd_driver =
 	&machine_driver,
 	0,
 
-	monkeyd_rom,
+	rom_monkeyd,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	ckong_input_ports,
+	input_ports_ckong,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	ckong_hiload, ckong_hisave
 };
 
-struct GameDriver rpatrolb_driver =
+struct GameDriver driver_rpatrolb =
 {
 	__FILE__,
 	0,
@@ -1386,23 +1386,23 @@ struct GameDriver rpatrolb_driver =
 	&machine_driver,
 	0,
 
-	rpatrolb_rom,
+	rom_rpatrolb,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	rpatrolb_input_ports,
+	input_ports_rpatrolb,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	rpatrolb_hiload, rpatrolb_hisave
 };
 
-struct GameDriver silvland_driver =
+struct GameDriver driver_silvland =
 {
 	__FILE__,
-	&rpatrolb_driver,
+	&driver_rpatrolb,
     "silvland",
     "Silver Land",
 	"????",
@@ -1412,14 +1412,14 @@ struct GameDriver silvland_driver =
 	&machine_driver,
 	0,
 
-    silvland_rom,
+    rom_silvland,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	rpatrolb_input_ports,
+	input_ports_rpatrolb,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	rpatrolb_hiload, rpatrolb_hisave
@@ -1519,7 +1519,7 @@ static struct IOWritePort sound_writeport[] =
 
 
 
-INPUT_PORTS_START( swimmer_input_ports )
+INPUT_PORTS_START( swimmer )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
@@ -1585,7 +1585,7 @@ INPUT_PORTS_START( swimmer_input_ports )
 	PORT_BIT( 0xfc, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( guzzler_input_ports )
+INPUT_PORTS_START( guzzler )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
@@ -1727,7 +1727,7 @@ static struct MachineDriver swimmer_machine_driver =
 	/* video hardware */
 	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
 	swimmer_gfxdecodeinfo,
-	96,64*8+4*8,	/* TODO: use palette shrinking */
+	256+32+2,64*8+4*8,
 	swimmer_vh_convert_color_prom,
 
 	VIDEO_TYPE_RASTER|VIDEO_MODIFIES_PALETTE,
@@ -1770,7 +1770,7 @@ ROM_START( swimmer )
 	ROM_LOAD( "sw21",         0x5000, 0x0800, 0x7f4993c1 )
 	ROM_RELOAD(               0x5800, 0x0800 )	/* Guzzler has larger ROMs */
 
-	ROM_REGION(0x220)        /* color proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "8220.clr",     0x0000, 0x100, 0x72c487ed )
 	ROM_LOAD( "8212.clr",     0x0100, 0x100, 0x39037799 )
 	ROM_LOAD( "8221.clr",     0x0200, 0x020, 0x3b2deb3a )
@@ -1801,7 +1801,7 @@ ROM_START( swimmera )
 	ROM_LOAD( "sw21",         0x5000, 0x0800, 0x7f4993c1 )
 	ROM_RELOAD(               0x5800, 0x0800 )	/* Guzzler has larger ROMs */
 
-	ROM_REGION(0x220)        /* color proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "8220.clr",     0x0000, 0x100, 0x72c487ed )
 	ROM_LOAD( "8212.clr",     0x0100, 0x100, 0x39037799 )
 	ROM_LOAD( "8221.clr",     0x0200, 0x020, 0x3b2deb3a )
@@ -1826,7 +1826,7 @@ ROM_START( guzzler )
 	ROM_LOAD( "guzz-10.bin",  0x4000, 0x1000, 0xbd3f0bf7 )
 	ROM_LOAD( "guzz-09.bin",  0x5000, 0x1000, 0x18927579 )
 
-	ROM_REGION(0x220)       /* color proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "guzzler.003",  0x0000, 0x100, 0xf86930c1 )
 	ROM_LOAD( "guzzler.002",  0x0100, 0x100, 0xb566ea9e )
 	ROM_LOAD( "guzzler.001",  0x0200, 0x020, 0x69089495 )
@@ -1936,7 +1936,7 @@ static void guzzler_hisave(void)
 
 
 
-struct GameDriver swimmer_driver =
+struct GameDriver driver_swimmer =
 {
 	__FILE__,
 	0,
@@ -1949,23 +1949,23 @@ struct GameDriver swimmer_driver =
 	&swimmer_machine_driver,
 	0,
 
-	swimmer_rom,
+	rom_swimmer,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	swimmer_input_ports,
+	input_ports_swimmer,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	swimmer_hiload, swimmer_hisave
 };
 
-struct GameDriver swimmera_driver =
+struct GameDriver driver_swimmera =
 {
 	__FILE__,
-	&swimmer_driver,
+	&driver_swimmer,
 	"swimmera",
 	"Swimmer (set 2)",
 	"1982",
@@ -1975,20 +1975,20 @@ struct GameDriver swimmera_driver =
 	&swimmer_machine_driver,
 	0,
 
-	swimmera_rom,
+	rom_swimmera,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	swimmer_input_ports,
+	input_ports_swimmer,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	swimmer_hiload, swimmer_hisave
 };
 
-struct GameDriver guzzler_driver =
+struct GameDriver driver_guzzler =
 {
 	__FILE__,
 	0,
@@ -2001,14 +2001,14 @@ struct GameDriver guzzler_driver =
 	&swimmer_machine_driver,
 	0,
 
-	guzzler_rom,
+	rom_guzzler,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	guzzler_input_ports,
+	input_ports_guzzler,
 
-	PROM_MEMORY_REGION(2),0,0,
+	0,0,0,
 	ORIENTATION_ROTATE_90,
 
 	guzzler_hiload, guzzler_hisave

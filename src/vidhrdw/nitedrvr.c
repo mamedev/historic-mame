@@ -18,7 +18,7 @@ unsigned char *nitedrvr_hvc;
 
 void nitedrvr_hvc_w(int offset, int data)
 {
-	nitedrvr_hvc[offset & 0x3F] = data;
+	nitedrvr_hvc[offset & 0x3f] = data;
 
 //	if ((offset & 0x30) == 0x30)
 //		;		/* Watchdog called here */
@@ -35,7 +35,7 @@ static void nitedrvr_draw_block(struct osd_bitmap *bitmap, int bx, int by, int e
 		for (x=bx; x<ex; x++)
 		{
 			if ((y<256) && (x<256))
-				bitmap->line[y][x] = Machine->pens[1];
+				plot_pixel(bitmap, x, y, Machine->pens[1]);
 		}
 	}
 
@@ -53,9 +53,9 @@ void nitedrvr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	int offs,roadway;
 	char gear_buf[] =  {0x07,0x05,0x01,0x12,0x00,0x00}; /* "GEAR  " */
-	char track_buf[] = {0x0E,0x0F,0x16,0x09,0x03,0x05, /* "NOVICE" */
+	char track_buf[] = {0x0e,0x0f,0x16,0x09,0x03,0x05, /* "NOVICE" */
 						0x05,0x18,0x10,0x05,0x12,0x14, /* "EXPERT" */
-						0x00,0x00,0x00,0x10,0x12,0x0F};/* "   PRO" */
+						0x00,0x00,0x00,0x10,0x12,0x0f};/* "   PRO" */
 
 	/* for every character in the Video RAM, check if it has been modified */
 	/* since last time and update it accordingly. */
@@ -68,7 +68,7 @@ void nitedrvr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 			dirtybuffer[offs]=0;
 
-			charcode = videoram[offs] & 0x3F;
+			charcode = videoram[offs] & 0x3f;
 
 			sx = 8 * (offs % 32);
 			sy = 16 * (offs / 32);
@@ -89,8 +89,8 @@ void nitedrvr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 		bx = nitedrvr_hvc[roadway];
 		by = nitedrvr_hvc[roadway + 16];
-		ex = bx + ((nitedrvr_hvc[roadway + 32] & 0xF0) >> 4);
-		ey = by + (16 - (nitedrvr_hvc[roadway + 32] & 0x0F));
+		ex = bx + ((nitedrvr_hvc[roadway + 32] & 0xf0) >> 4);
+		ey = by + (16 - (nitedrvr_hvc[roadway + 32] & 0x0f));
 
 		nitedrvr_draw_block(bitmap,bx,by,ex,ey);
 	}

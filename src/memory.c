@@ -315,28 +315,11 @@ static int memory_allocate_ext (void)
 	/* loop over all CPUs */
 	for (cpu = 0; cpu < cpu_gettotalcpu (); cpu++)
 	{
-		const struct RomModule *romp = Machine->gamedrv->rom;
 		const struct MemoryReadAddress *mra;
 		const struct MemoryWriteAddress *mwa;
 
 		int region = Machine->drv->cpu[cpu].memory_region;
-		int curr = 0, size = 0;
-
-		/* skip through the ROM regions to the matching one */
-		while (romp->name || romp->offset || romp->length)
-		{
-			/* headers are all zeros except from the offset */
-			if (!romp->name && !romp->length && !romp->crc)
-			{
-				/* got a header; break if this is the match */
-				if (curr++ == region)
-				{
-					size = romp->offset & ~ROMFLAG_MASK;
-					break;
-				}
-			}
-			romp++;
-		}
+		int size = Machine->memory_region_length[region];
 
 		/* now it's time to loop */
 		while (1)
@@ -471,8 +454,8 @@ int initmemoryhandlers(void)
 		_mra = Machine->drv->cpu[cpu].memory_read;
 		while (_mra->start != -1)
 		{
-			if (_mra->base) *_mra->base = memory_find_base (cpu, _mra->start);
-			if (_mra->size) *_mra->size = _mra->end - _mra->start + 1;
+//			if (_mra->base) *_mra->base = memory_find_base (cpu, _mra->start);
+//			if (_mra->size) *_mra->size = _mra->end - _mra->start + 1;
 			_mra++;
 		}
 		_mwa = Machine->drv->cpu[cpu].memory_write;
@@ -925,12 +908,12 @@ int cpu_readmem16bew (int address)
 
 	/* 1st element link */
 	hw = cur_mrhard[address >> (ABITS2_16BEW + ABITS_MIN_16BEW)];
-	if (hw <= HT_BANKMAX) return cpu_bankbase[hw][BYTE_XOR_LE (address - memoryreadoffset[hw])];
+	if (hw <= HT_BANKMAX) return cpu_bankbase[hw][BYTE_XOR_BE (address - memoryreadoffset[hw])];
 	if (hw >= MH_HARDMAX)
 	{
 		/* 2nd element link */
 		hw = readhardware[((hw - MH_HARDMAX) << MH_SBITS) + ((address >> ABITS_MIN_16BEW) & MHMASK(ABITS2_16BEW))];
-		if (hw <= HT_BANKMAX) return cpu_bankbase[hw][BYTE_XOR_LE (address - memoryreadoffset[hw])];
+		if (hw <= HT_BANKMAX) return cpu_bankbase[hw][BYTE_XOR_BE (address - memoryreadoffset[hw])];
 	}
 
 	/* fallback to handler */
@@ -1328,7 +1311,7 @@ void cpu_writemem16bew (int address, int data)
 	hw = cur_mwhard[address >> (ABITS2_16BEW + ABITS_MIN_16BEW)];
 	if (hw <= HT_BANKMAX)
 	{
-		cpu_bankbase[hw][BYTE_XOR_LE (address - memorywriteoffset[hw])] = data;
+		cpu_bankbase[hw][BYTE_XOR_BE (address - memorywriteoffset[hw])] = data;
 		return;
 	}
 	if (hw >= MH_HARDMAX)
@@ -1337,7 +1320,7 @@ void cpu_writemem16bew (int address, int data)
 		hw = writehardware[((hw - MH_HARDMAX) << MH_SBITS) + ((address >> ABITS_MIN_16BEW) & MHMASK(ABITS2_16BEW))];
 		if (hw <= HT_BANKMAX)
 		{
-			cpu_bankbase[hw][BYTE_XOR_LE (address - memorywriteoffset[hw])] = data;
+			cpu_bankbase[hw][BYTE_XOR_BE (address - memorywriteoffset[hw])] = data;
 			return;
 		}
 	}

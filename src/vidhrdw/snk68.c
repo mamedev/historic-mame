@@ -121,7 +121,8 @@ void pow_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 
 	palette_transparent_color=2047;
 	palette_used_colors[2047] = PALETTE_COLOR_USED;
-	palette_recalc();
+	if (palette_recalc())
+		tilemap_mark_all_pixels_dirty(ALL_TILEMAPS);
 	fillbitmap(bitmap,palette_transparent_pen,&Machine->drv->visible_area);
 
 	tilemap_render(ALL_TILEMAPS);

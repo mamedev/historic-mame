@@ -182,9 +182,22 @@ void pleiads_sound_control_b_w (int offset,int data)
 	if (errorlog) fprintf(errorlog,"B:%X freq: %02x vol: %02x\n",data, data & 0x0f, (data & 0x30) >> 4);
 }
 
+
+static const char *phoenix_sample_names[] =
+{
+	"*phoenix",
+	"shot8.wav",
+	"death8.wav",
+	"phoenix1.wav",
+	"phoenix2.wav",
+	0	/* end of array */
+};
+
 int pleiads_sh_start(const struct MachineSound *msound)
 {
 	int vol[2];
+
+	Machine->samples = readsamples(phoenix_sample_names,Machine->gamedrv->name);
 
 	channel0 = mixer_allocate_channel(VOLUME_A);
 	channel1 = mixer_allocate_channel(SAMPLE_VOLUME);

@@ -9,7 +9,7 @@
 **
 ** Copyright (C) 1998 Tatsuyuki Satoh , MultiArcadeMachineEmurator development
 **
-** Version 0.36
+** Version 0.36b
 **
 */
 
@@ -33,6 +33,7 @@
 */
 
 /*
+
     no check:
 		YM2608 rhythm sound
 		OPN  SSG type envelope
@@ -41,10 +42,10 @@
 
 	no support:
 		status busy flag (already not busy)
+		YM2608 status mask (register :0x110)
 		YM2608 DELTA-T-ADPCM and RYTHM
 		YM2610 DELTA-T-ADPCM with PCM port
 		YM2610 PCM memory data access
-		YM2608 status mask (register :0x110)
 	preliminary :
 		key scale level rate (?)
 		attack rate time rate , curve (?)
@@ -129,20 +130,35 @@
 /* counter bits = 21 , octerve 7 */
 #define FREQ_RATE   (1<<(FREQ_BITS-21))
 #define TL_BITS    (FREQ_BITS+2)
-#define TL_RANGE(overbits) (1<<(TL_BITS+overbits-1))
+/* OPbit = 14(13+sign) : TL_BITS+1(sign) / output = 16bit */
+#define TL_SHIFT (TL_BITS+1-(14-16))
+
+#define MAME_ADJUST 1
 
 /* final output shift , limit minimum and maximum */
-#define OPN_OUTSB  (TL_BITS+2-FM_OUTPUT_BIT)		/* OPN output final shift */
-#define OPN_MAXOUT ((1<<(TL_BITS+2-1))-1)
-#define OPN_MINOUT (-(1<<(TL_BITS+2-1)))
+#if MAME_ADJUST
+#define OPN_OUTSB  (TL_SHIFT-1-FM_OUTPUT_BIT)		/* OPN output final shift */
+#define OPN_MAXOUT ((1<<(TL_SHIFT-1-1))-1)
+#define OPN_MINOUT (-(1<<(TL_SHIFT-1-1)))
+#else
+#define OPN_OUTSB  (TL_SHIFT-FM_OUTPUT_BIT)		/* OPN output final shift */
+#define OPN_MAXOUT ((1<<(TL_SHIFT-1))-1)
+#define OPN_MINOUT (-(1<<(TL_SHIFT-1)))
+#endif
 
-#define OPM_OUTSB   (TL_BITS+2-FM_OUTPUT_BIT) 		/* OPM output final shift */
-#define OPM_MAXOUT ((1<<(TL_BITS+2-1))-1)
-#define OPM_MINOUT (-(1<<(TL_BITS+2-1)))
+#if MAME_ADJUST
+#define OPM_OUTSB   (TL_SHIFT-1-FM_OUTPUT_BIT) 	/* OPM output final shift */
+#define OPM_MAXOUT ((1<<(TL_SHIFT-1-1))-1)
+#define OPM_MINOUT (-(1<<(TL_SHIFT-1-1)))
+#else
+#define OPM_OUTSB   (TL_SHIFT-FM_OUTPUT_BIT) 		/* OPM output final shift */
+#define OPM_MAXOUT ((1<<(TL_SHIFT-1))-1)
+#define OPM_MINOUT (-(1<<(TL_SHIFT-1)))
+#endif
 
-#define OPNB_OUTSB   (TL_BITS+3-FM_OUTPUT_BIT)		/* OPNB output final shift */
-#define OPNB_MAXOUT ((1<<(TL_BITS+3-1))-1)
-#define OPNB_MINOUT (-(1<<(TL_BITS+3-1)))
+#define OPNB_OUTSB   (TL_SHIFT-FM_OUTPUT_BIT)		/* OPNB output final shift */
+#define OPNB_MAXOUT ((1<<(TL_SHIFT-1))-1)
+#define OPNB_MINOUT (-(1<<(TL_SHIFT-1)))
 
 /* -------------------- quality selection --------------------- */
 
@@ -254,7 +270,7 @@ typedef struct fm_slot {
 	signed int evsr;		/* envelope step for RR                */
 	/* LFO */
 	unsigned char amon;
-	unsigned char ams;
+	unsigned int ams;
 }FM_SLOT;
 
 
@@ -270,8 +286,8 @@ typedef struct fm_chan {
 	int *connect3;				/* operator 3 connection pointer       */
 	int *connect4;				/* operator 4 connection pointer       */
 	/* LFO */
-	unsigned char pms;
-	unsigned char ams;
+	signed int pms;
+	unsigned int ams;
 	/* phase generator state */
 	unsigned int  fc;			/* fnum,blk        :calcrated          */
 	unsigned char fn_h;			/* freq latch      :                   */
@@ -402,6 +418,7 @@ typedef struct ym2151_f {
 	unsigned char amd;			/* LFO amd level     */
 	int *wavetype;				/* LFO waveform      */
 	int LFO_wave[LFO_ENT*4];	/* LFO wave tabel    */
+	int testreg;				/* test register (LFO reset) */
 #endif
 	unsigned int KC_TABLE[8*12*64+950];/* keycode,keyfunction -> count */
 	void (*PortWrite)(int offset,int data);/*  callback when write CT0/CT1 */
@@ -504,26 +521,26 @@ static char OPN_DTTABLE[4 * 32]={
 };
 
 /* multiple table */
-#define ML 2
+#define ML(n) (n*2)
 static const int MUL_TABLE[4*16]= {
 /* 1/2, 1, 2, 3, 4, 5, 6, 7, 8, 9,10,11,12,13,14,15 */
-   0.50*ML, 1.00*ML, 2.00*ML, 3.00*ML, 4.00*ML, 5.00*ML, 6.00*ML, 7.00*ML,
-   8.00*ML, 9.00*ML,10.00*ML,11.00*ML,12.00*ML,13.00*ML,14.00*ML,15.00*ML,
+   ML(0.50),ML( 1.00),ML( 2.00),ML( 3.00),ML( 4.00),ML( 5.00),ML( 6.00),ML( 7.00),
+   ML(8.00),ML( 9.00),ML(10.00),ML(11.00),ML(12.00),ML(13.00),ML(14.00),ML(15.00),
 /* DT2=1 *SQL(2)   */
-   0.71*ML, 1.41*ML, 2.82*ML, 4.24*ML, 5.65*ML, 7.07*ML, 8.46*ML, 9.89*ML,
-  11.30*ML,12.72*ML,14.10*ML,15.55*ML,16.96*ML,18.37*ML,19.78*ML,21.20*ML,
+   ML(0.71),ML( 1.41),ML( 2.82),ML( 4.24),ML( 5.65),ML( 7.07),ML( 8.46),ML( 9.89),
+   ML(11.30),ML(12.72),ML(14.10),ML(15.55),ML(16.96),ML(18.37),ML(19.78),ML(21.20),
 /* DT2=2 *SQL(2.5) */
-   0.78*ML, 1.57*ML, 3.14*ML, 4.71*ML, 6.28*ML, 7.85*ML, 9.42*ML,10.99*ML,
-  12.56*ML,14.13*ML,15.70*ML,17.27*ML,18.84*ML,20.41*ML,21.98*ML,23.55*ML,
+   ML( 0.78),ML( 1.57),ML( 3.14),ML( 4.71),ML( 6.28),ML( 7.85),ML( 9.42),ML(10.99),
+   ML(12.56),ML(14.13),ML(15.70),ML(17.27),ML(18.84),ML(20.41),ML(21.98),ML(23.55),
 /* DT2=3 *SQL(3)   */
-   0.87*ML, 1.73*ML, 3.46*ML, 5.19*ML, 6.92*ML, 8.65*ML,10.38*ML,12.11*ML,
-  13.84*ML,15.57*ML,17.30*ML,19.03*ML,20.76*ML,22.49*ML,24.22*ML,25.95*ML
+   ML( 0.87),ML( 1.73),ML( 3.46),ML( 5.19),ML( 6.92),ML( 8.65),ML(10.38),ML(12.11),
+   ML(13.84),ML(15.57),ML(17.30),ML(19.03),ML(20.76),ML(22.49),ML(24.22),ML(25.95)
 };
 #undef ML
 
 #ifdef LFO_SUPPORT
 
-#define PMS_RATE 0x1000
+#define PMS_RATE 0x400
 
 /* LFO table */
 static int *LFO_wave;
@@ -580,7 +597,7 @@ static int feedback4;		/* connect for operator 4 */
 #define LOG_LEVEL LOG_INF
 
 #ifndef __RAINE__
-static void Log(int level,char *format,...)
+static void CLIB_DECL Log(int level,char *format,...)
 {
 	va_list argptr;
 
@@ -899,13 +916,13 @@ INLINE void FM_CALC_CH( FM_CH *CH )
 	int env_out;
 	/* phase generator */
 #ifdef LFO_SUPPORT
-	int pms = lfo_pmd * CH->pms / LFO_RATE;
-	if(pms>0)
+	signed int pms = lfo_pmd * CH->pms / LFO_RATE;
+	if(pms)
 	{
-		CH->SLOT[SLOT1].Cnt += CH->SLOT[SLOT1].Incr + (CH->SLOT[SLOT1].Incr * pms / PMS_RATE);
-		CH->SLOT[SLOT2].Cnt += CH->SLOT[SLOT2].Incr + (CH->SLOT[SLOT2].Incr * pms / PMS_RATE);
-		CH->SLOT[SLOT3].Cnt += CH->SLOT[SLOT3].Incr + (CH->SLOT[SLOT3].Incr * pms / PMS_RATE);
-		CH->SLOT[SLOT4].Cnt += CH->SLOT[SLOT4].Incr + (CH->SLOT[SLOT4].Incr * pms / PMS_RATE);
+		CH->SLOT[SLOT1].Cnt += CH->SLOT[SLOT1].Incr + (signed int)(pms * CH->SLOT[SLOT1].Incr) / PMS_RATE;
+		CH->SLOT[SLOT2].Cnt += CH->SLOT[SLOT2].Incr + (signed int)(pms * CH->SLOT[SLOT2].Incr) / PMS_RATE;
+		CH->SLOT[SLOT3].Cnt += CH->SLOT[SLOT3].Incr + (signed int)(pms * CH->SLOT[SLOT3].Incr) / PMS_RATE;
+		CH->SLOT[SLOT4].Cnt += CH->SLOT[SLOT4].Incr + (signed int)(pms * CH->SLOT[SLOT4].Incr) / PMS_RATE;
 	}
 	else
 #endif
@@ -1265,7 +1282,7 @@ void OPNSetPris(FM_OPN *OPN , int pris , int TimerPris, int SSGpris)
 	/* frequency base */
 	OPN->ST.freqbase = (OPN->ST.rate) ? ((double)OPN->ST.clock / OPN->ST.rate) / pris : 0;
 	/* Timer base time */
-	OPN->ST.TimerBase = 1.0/((double)OPN->ST.clock / (double)TimerPris);
+	OPN->ST.TimerBase = (OPN->ST.rate) ? 1.0/((double)OPN->ST.clock / (double)TimerPris) : 0;
 	/* SSG part  priscaler set */
 	if( SSGpris ) SSGClk( OPN->ST.index, OPN->ST.clock * 2 / SSGpris );
 	/* make time tables */
@@ -1289,8 +1306,10 @@ void OPNSetPris(FM_OPN *OPN , int pris , int TimerPris, int SSGpris)
 		static const double freq_table[8] = { 3.98,5.56,6.02,6.37,6.88,9.63,48.1,72.2 };
 		for(i=0;i<8;i++)
 		{
-			OPN->LFO_FREQ[i] = (double)LFO_ENT*(1<<LFO_SHIFT) /
-				(OPN->ST.rate / freq_table[i] * (OPN->ST.freqbase*OPN->ST.rate/(8000000.0/144)));
+			OPN->LFO_FREQ[i] = (OPN->ST.rate) ? ( (double)LFO_ENT*(1<<LFO_SHIFT)
+					/ (OPN->ST.rate / freq_table[i]
+					* (OPN->ST.freqbase*OPN->ST.rate/(8000000.0/144))) ) : 0;
+
 		}
 	}
 #endif
@@ -1439,11 +1458,11 @@ static void OPNWriteReg(FM_OPN *OPN, int r, int v)
 			if( OPN->type & TYPE_LFOPAN)
 			{
 #ifdef LFO_SUPPORT
-				static const double pmd_table[8]={0,3.4,6.7,10,14,20,40,80};
-				static const int amd_table[4]={0/EG_STEP,1.4/EG_STEP,5.9/EG_STEP,11.8/EG_STEP };
 				/* b0-2 PMS */
 				/* 0,3.4,6.7,10,14,20,40,80(cent) */
-				CH->pms =0.06*pmd_table[v & 0x07]*PMS_RATE;
+				static const double pmd_table[8]={0,3.4,6.7,10,14,20,40,80};
+				static const int amd_table[4]={0/EG_STEP,1.4/EG_STEP,5.9/EG_STEP,11.8/EG_STEP };
+				CH->pms = (1.5/1200.0)*pmd_table[(v>>4) & 0x07] * PMS_RATE;
 				/* b4-5 AMS */
 				/* 0 , 1.4 , 5.9 , 11.8(dB) */
 				CH->ams = amd_table[(v>>4) & 0x03];
@@ -1915,7 +1934,6 @@ INLINE void OPNB_ADPCM_CALC_CHB( YM2610 *F2610, ADPCM_CH *ch )
 	ch->adpcml += ch->sample_step;
 #endif
 	/* output for work of output channels (outd[OPNxxxx])*/
-	//*(ch->pan) += ch->adpcml;
 	*(ch->pan) += ch->adpcml;
 }
 
@@ -3370,13 +3388,13 @@ INLINE void OPM_CALC_CH7( FM_CH *CH )
 	int env_out;
 	/* phase generator */
 #ifdef LFO_SUPPORT
-	int pms = lfo_pmd * CH->pms / LFO_RATE;
-	if(pms>0)
+	signed int pms = lfo_pmd * CH->pms / LFO_RATE;
+	if(pms)
 	{
-		CH->SLOT[SLOT1].Cnt += CH->SLOT[SLOT1].Incr + (CH->SLOT[SLOT1].Incr * pms / PMS_RATE);
-		CH->SLOT[SLOT2].Cnt += CH->SLOT[SLOT2].Incr + (CH->SLOT[SLOT2].Incr * pms / PMS_RATE);
-		CH->SLOT[SLOT3].Cnt += CH->SLOT[SLOT3].Incr + (CH->SLOT[SLOT3].Incr * pms / PMS_RATE);
-		CH->SLOT[SLOT4].Cnt += CH->SLOT[SLOT4].Incr + (CH->SLOT[SLOT4].Incr * pms / PMS_RATE);
+		CH->SLOT[SLOT1].Cnt += CH->SLOT[SLOT1].Incr + (signed int)(pms * CH->SLOT[SLOT1].Incr) / PMS_RATE;
+		CH->SLOT[SLOT2].Cnt += CH->SLOT[SLOT2].Incr + (signed int)(pms * CH->SLOT[SLOT2].Incr) / PMS_RATE;
+		CH->SLOT[SLOT3].Cnt += CH->SLOT[SLOT3].Incr + (signed int)(pms * CH->SLOT[SLOT3].Incr) / PMS_RATE;
+		CH->SLOT[SLOT4].Cnt += CH->SLOT[SLOT4].Incr + (signed int)(pms * CH->SLOT[SLOT4].Incr) / PMS_RATE;
 	}
 	else
 #endif
@@ -3470,16 +3488,17 @@ static void OPMInitTable( int num )
 		OPM->LFO_wave[          i]= LFO_RATE * i / LFO_ENT /127;
 		OPM->LFO_wave[LFO_ENT  +i]= ( i<LFO_ENT/2 ? 0 : LFO_RATE )/127;
 		OPM->LFO_wave[LFO_ENT*2+i]= LFO_RATE* (i<LFO_ENT/2 ? i : LFO_ENT-i) /(LFO_ENT/2) /127;
-		OPM->LFO_wave[LFO_ENT*3+i]= LFO_RATE * (rand() & 0x7fff) / 32768 /127;
+		OPM->LFO_wave[LFO_ENT*3+i]= LFO_RATE * (rand()&0xff) /256 /127;
 	}
 #endif
 	/* NOISE wave table */
 	for(i=0;i<SIN_ENT;i++)
 	{
-		int sign = rand()&1 ? 0 : TL_MAX;
-		int r=rand()&0x7fff;
-		pom = r ? 20*log10(32768.0/r):0;   /* decibel */
-		NOISE_TABLE[i] = &TL_TABLE[sign + (int)(pom / EG_STEP)]; /* TL_TABLE steps */
+		int sign = rand()&1 ? TL_MAX : 0;
+		int lev = rand()&0x1ff;
+		//pom = lev ? 20*log10(0x200/lev) : 0;   /* decibel */
+		//NOISE_TABLE[i] = &TL_TABLE[sign + (int)(pom / EG_STEP)]; /* TL_TABLE steps */
+		NOISE_TABLE[i] = &TL_TABLE[sign + lev * EG_ENT/0x200]; /* TL_TABLE steps */
 	}
 }
 
@@ -3499,8 +3518,16 @@ static void OPMWriteReg(int n, int r, int v)
 	switch( r & 0xe0 ){
 	case 0x00: /* 0x00-0x1f */
 		switch( r ){
+#ifdef LFO_SUPPORT
 		case 0x01:	/* test */
+			if( (OPM->testreg&(OPM->testreg^v))&0x02 ) /* fall eggge */
+			{	/* reset LFO counter */
+				OPM->LFOCnt = 0;
+				cur_chip = NULL;
+			}
+			OPM->testreg = v;
 			break;
+#endif
 		case 0x08:	/* key on / off */
 			c = v&7;
 			/* CSM mode */
@@ -3540,8 +3567,13 @@ static void OPMWriteReg(int n, int r, int v)
 		case 0x18:	/* lfreq   */
 			/* f = fm * 2^(LFRQ/16) / (4295*10^6) */
 			{
-				double rate = pow(2.0,(double)v/16.0) / 4295000000.0;
-				OPM->LFOIncr = (double)LFO_ENT*(1<<LFO_SHIFT) * rate * (OPM->ST.freqbase*64);
+				static double drate[16]={
+					1.0        ,1.044273782,1.090507733,1.138788635, //0-3
+					1.189207115,1.241857812,1.296839555,1.354255547, //4-7
+					1.414213562,1.476826146,1.542210825,1.610490332, //8-11
+					1.681792831,1.75625216 ,1.834008086,1.915206561};
+				double rate = pow(2.0,v/16)*drate[v&0x0f] / 4295000000.0;
+				OPM->LFOIncr = (double)LFO_ENT*(1<<LFO_SHIFT) * (OPM->ST.freqbase*64) * rate;
 				cur_chip = NULL;
 			}
 			break;
@@ -3553,7 +3585,7 @@ static void OPMWriteReg(int n, int r, int v)
 		case 0x1b:	/* CT , W  */
 			/* b7 = CT1 */
 			/* b6 = CT0 */
-			/* b0-3 = wave form(LFO) 0=nokogiri,1=houkei,2=sankaku,3=noise */
+			/* b0-2 = wave form(LFO) 0=nokogiri,1=houkei,2=sankaku,3=noise */
 			//if(OPM->ct != v)
 			{
 				OPM->ct = v>>6;
@@ -3601,7 +3633,8 @@ static void OPMWriteReg(int n, int r, int v)
 		case 3: /* 0x38-0x3f : PMS / AMS */
 			/* b0-1 AMS */
 			/* AMS * 23.90625db @ AMD=127 */
-			CH->ams = ((v & 0x03)+1) * (23.90625/EG_STEP);
+			//CH->ams = (v & 0x03) * (23.90625/EG_STEP);
+			CH->ams = (23.90625/EG_STEP) / (1<<(3-(v&3)));
 			CH->SLOT[SLOT1].ams = CH->ams * CH->SLOT[SLOT1].amon;
 			CH->SLOT[SLOT2].ams = CH->ams * CH->SLOT[SLOT2].amon;
 			CH->SLOT[SLOT3].ams = CH->ams * CH->SLOT[SLOT3].amon;
@@ -3609,9 +3642,10 @@ static void OPMWriteReg(int n, int r, int v)
 			/* b4-6 PMS */
 			/* 0,5,10,20,50,100,400,700 (cent) @ PMD=127 */
 			{
-				/* 100cent = 1seminote = 6% ?? */
+				/* 1 octabe = 1200cent = +100%/-50% */
+				/* 100cent  = 1seminote = 6% ?? */
 				static const int pmd_table[8] = {0,5,10,20,50,100,400,700};
-				CH->pms =0.06*pmd_table[(v>>4) & 0x07]*PMS_RATE;
+				CH->pms = (1.5/1200.0)*pmd_table[(v>>4) & 0x07] * PMS_RATE;
 			}
 			break;
 #endif
@@ -3752,6 +3786,8 @@ void OPMUpdateOne(int num, void **buffer, int length)
 	YM2151 *OPM = &(FMOPM[num]);
 	int i;
 	int dataR,dataL;
+	int amd,pmd;
+
 	/* set bufer */
 	bufL = (FMSAMPLE *)buffer[0];
 	bufR = (FMSAMPLE *)buffer[1];
@@ -3775,11 +3811,18 @@ void OPMUpdateOne(int num, void **buffer, int length)
 #ifdef LFO_SUPPORT
 		/* LFO */
 		LFOCnt  = OPM->LFOCnt;
-		LFOIncr = OPM->LFOIncr;
+		//LFOIncr = OPM->LFOIncr;
 		if( !LFOIncr ) lfo_amd = lfo_pmd = 0;
 		LFO_wave = OPM->wavetype;
 #endif
 	}
+	amd = OPM->amd;
+	pmd = OPM->pmd;
+	if(amd==0 && pmd==0)
+		LFOIncr = 0;
+	else
+		LFOIncr = OPM->LFOIncr;
+
 	OPM_CALC_FCOUNT( OPM , cch[0] );
 	OPM_CALC_FCOUNT( OPM , cch[1] );
 	OPM_CALC_FCOUNT( OPM , cch[2] );
@@ -3797,8 +3840,8 @@ void OPMUpdateOne(int num, void **buffer, int length)
 		if( LFOIncr )
 		{
 			int depth = LFO_wave[(LFOCnt+=LFOIncr)>>LFO_SHIFT];
-			lfo_amd = depth * OPM->amd;
-			lfo_pmd = (depth-(LFO_RATE/2/127)) * OPM->pmd;
+			lfo_amd = depth * amd;
+			lfo_pmd = (depth-(LFO_RATE/127/2)) * pmd;
 		}
 #endif
 		/* clear output acc. */

@@ -259,7 +259,7 @@ static struct MemoryWriteAddress centipdb_writemem[] =
 
 #define PORTS(GAMENAME, FOURTH_LANGUAGE)										\
 																				\
-INPUT_PORTS_START( GAMENAME##_input_ports )										\
+INPUT_PORTS_START( GAMENAME## )										\
 	PORT_START	/* IN0 */														\
 	/* The lower 4 bits and bit 7 are for trackball x input. */					\
 	/* They are handled by fake input port 6 and a custom routine. */			\
@@ -509,7 +509,7 @@ ROM_START( centipdb )
 ROM_END
 
 
-struct GameDriver centiped_driver =
+struct GameDriver driver_centiped =
 {
 	__FILE__,
 	0,
@@ -522,12 +522,12 @@ struct GameDriver centiped_driver =
 	&centiped_machine_driver,
 	0,
 
-	centiped_rom,
+	rom_centiped,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	centiped_input_ports,
+	input_ports_centiped,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
@@ -535,10 +535,10 @@ struct GameDriver centiped_driver =
 	atari_vg_earom_load, atari_vg_earom_save
 };
 
-struct GameDriver centipd2_driver =
+struct GameDriver driver_centipd2 =
 {
 	__FILE__,
-	&centiped_driver,
+	&driver_centiped,
 	"centipd2",
 	"Centipede (revision 2)",
 	"1980",
@@ -548,12 +548,12 @@ struct GameDriver centipd2_driver =
 	&centiped_machine_driver,
 	0,
 
-	centipd2_rom,
+	rom_centipd2,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	centiped_input_ports,
+	input_ports_centiped,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
@@ -561,10 +561,10 @@ struct GameDriver centipd2_driver =
 	atari_vg_earom_load, atari_vg_earom_save
 };
 
-struct GameDriver centipdb_driver =
+struct GameDriver driver_centipdb =
 {
 	__FILE__,
-	&centiped_driver,
+	&driver_centiped,
 	"centipdb",
 	"Centipede (bootleg)",
 	"1980",
@@ -574,12 +574,12 @@ struct GameDriver centipdb_driver =
 	&centipdb_machine_driver,
 	0,
 
-	centipdb_rom,
+	rom_centipdb,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	centipdb_input_ports,
+	input_ports_centipdb,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,

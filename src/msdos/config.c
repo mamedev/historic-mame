@@ -69,6 +69,10 @@ void decompose_rom_sample_path (char *rompath, char *samplepath);
 extern char *hidir, *cfgdir, *inpdir, *stadir, *memcarddir;
 extern char *artworkdir, *screenshotdir, *alternate_name;
 
+#ifdef MESS
+  extern char *crcdir;
+#endif
+
 /* from video.c, for centering tweaked modes */
 extern int center_x;
 extern int center_y;
@@ -416,7 +420,13 @@ void parse_cmdline (int argc, char **argv, int game_index)
 	options.cheat      = get_bool ("config", "cheat", NULL, 0);
 	options.mame_debug = get_bool ("config", "debug", NULL, 0);
 	cheatfile  = get_string ("config", "cheatfile", "cf", "CHEAT.DAT");    /* JCK 980917 */
-	history_filename  = get_string ("config", "historyfile", NULL, "HISTORY.DAT");    /* JCK 980917 */
+
+ 	#ifndef MESS
+ 	history_filename  = get_string ("config", "historyfile", NULL, "HISTORY.DAT");    /* JCK 980917 */
+ 	#else
+ 	history_filename  = get_string ("config", "historyfile", NULL, "SYSINFO.DAT");
+ 	#endif
+
 	mameinfo_filename  = get_string ("config", "mameinfofile", NULL, "MAMEINFO.DAT");    /* JCK 980917 */
 
 	/* get resolution */
@@ -429,6 +439,9 @@ void parse_cmdline (int argc, char **argv, int game_index)
 	memcarddir = get_string ("directory", "memcard", NULL, "MEMCARD");
 	stadir     = get_string ("directory", "sta",     NULL, "STA");
 	artworkdir = get_string ("directory", "artwork", NULL, "ARTWORK");
+ 	#ifdef MESS
+ 		crcdir = get_string ("directory", "crc", NULL, "CRC");
+ 	#endif
 
 	/* get tweaked modes info */
 	tw224x288_h			= get_int ("tweaked", "224x288_h",              NULL, 0x5f);

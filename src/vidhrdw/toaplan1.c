@@ -433,6 +433,7 @@ static void toaplan1_update_palette (void)
 	}
 
 	palette_recalc ();
+	/* no need to check the return code since we redraw everything each frame */
 }
 
 

@@ -185,7 +185,7 @@ void esb_slapstic_w (int offset, int data)
 /* Star Wars READ memory map */
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0x0000, 0x2fff, MRA_RAM, &vectorram, &vectorram_size },   /* vector_ram */
+	{ 0x0000, 0x2fff, MRA_RAM },   /* vector_ram */
 	{ 0x3000, 0x3fff, MRA_ROM },		/* vector_rom */
 	{ 0x4300, 0x431f, input_port_0_r }, /* Memory mapped input port 0 */
 	{ 0x4320, 0x433f, starwars_input_bank_1_r }, /* Memory mapped input port 1 */
@@ -222,12 +222,8 @@ static struct MemoryReadAddress readmem2[] =
 /* Star Wars WRITE memory map */
 static struct MemoryWriteAddress writemem[] =
 {
-	{ 0x0000, 0x2fff, MWA_RAM, &vectorram }, /* vector_ram */
+	{ 0x0000, 0x2fff, MWA_RAM, &vectorram, &vectorram_size }, /* vector_ram */
 	{ 0x3000, 0x3fff, MWA_ROM },		/* vector_rom */
-/*	{ 0x4800, 0x4fff, MWA_RAM }, */		/* cpu_ram */
-/*	{ 0x5000, 0x5fff, MWA_RAM }, */		/* (math_ram_w) math_ram */
-	{ 0x4800, 0x5fff, MWA_RAM },		/* CPU and Math RAM */
-	{ 0x6000, 0xffff, MWA_ROM },		/* main_rom */
 	{ 0x4400, 0x4400, starwars_main_wr_w },
 	{ 0x4500, 0x45ff, MWA_RAM },		/* nov_ram */
 	{ 0x4600, 0x461f, avgdvg_go },
@@ -239,6 +235,10 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x46c0, 0x46c2, starwars_control_w },	/* Selects which a-d control port (0-3) will be read */
 	{ 0x46e0, 0x46e0, starwars_soundrst },
 	{ 0x4700, 0x4707, swmathbx },
+/*	{ 0x4800, 0x4fff, MWA_RAM }, */		/* cpu_ram */
+/*	{ 0x5000, 0x5fff, MWA_RAM }, */		/* (math_ram_w) math_ram */
+	{ 0x4800, 0x5fff, MWA_RAM },		/* CPU and Math RAM */
+	{ 0x6000, 0xffff, MWA_ROM },		/* main_rom */
 	{ -1 }	/* end of table */
 };
 
@@ -246,23 +246,18 @@ static struct MemoryWriteAddress writemem[] =
 static struct MemoryWriteAddress writemem2[] =
 {
 	{ 0x0000, 0x07ff, starwars_sout_w },
-
 	{ 0x1000, 0x107f, MWA_RAM }, /* 6532 ram */
 	{ 0x1080, 0x109f, starwars_m6532_w },
-
 	{ 0x1800, 0x183f, quad_pokey_w },
-
 	{ 0x2000, 0x27ff, MWA_RAM }, /* program RAM */
 	{ 0x4000, 0xbfff, MWA_ROM }, /* sound rom */
 	{ 0xc000, 0xffff, MWA_ROM }, /* sound rom again, for intvecs */
-
 	{ -1 }  /* end of table */
 };
 
 static struct MemoryReadAddress esb_readmem[] =
 {
-//	{ 0x6000, 0x1dfff, MRA_ROM },		/* vector_rom */
-	{ 0x0000, 0x2fff, MRA_RAM, &vectorram, &vectorram_size },   /* vector_ram */
+	{ 0x0000, 0x2fff, MRA_RAM },   /* vector_ram */
 	{ 0x3000, 0x3fff, MRA_ROM },		/* vector_rom */
 	{ 0x4300, 0x431f, input_port_0_r }, /* Memory mapped input port 0 */
 	{ 0x4320, 0x433f, starwars_input_bank_1_r }, /* Memory mapped input port 1 */
@@ -275,21 +270,18 @@ static struct MemoryReadAddress esb_readmem[] =
 	{ 0x4700, 0x4700, reh },
 	{ 0x4701, 0x4701, rel },
 	{ 0x4703, 0x4703, prng },			/* pseudo random number generator */
-	{ 0x4800, 0x5fff, MRA_RAM },		/* CPU and Math RAM */
 /*	{ 0x4800, 0x4fff, MRA_RAM }, */		/* cpu_ram */
 /*	{ 0x5000, 0x5fff, MRA_RAM }, */		/* (math_ram_r) math_ram */
+	{ 0x4800, 0x5fff, MRA_RAM },		/* CPU and Math RAM */
 	{ 0x6000, 0x7fff, MRA_BANK1 },	    /* banked ROM */
-	{ 0x8000, 0x9fff, esb_slapstic_r, &slapstic_area },
+	{ 0x8000, 0x9fff, esb_slapstic_r },
 	{ 0xa000, 0xffff, MRA_BANK2 },		/* banked ROM */
-
-	/* Dummy entry to set up the slapstic */
-	{ 0x14000, 0x1bfff, MRA_NOP, &slapstic_base },
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress esb_writemem[] =
 {
-	{ 0x0000, 0x2fff, MWA_RAM, &vectorram }, /* vector_ram */
+	{ 0x0000, 0x2fff, MWA_RAM, &vectorram, &vectorram_size }, /* vector_ram */
 	{ 0x3000, 0x3fff, MWA_ROM },		/* vector_rom */
 	{ 0x4400, 0x4400, starwars_main_wr_w },
 	{ 0x4500, 0x45ff, MWA_RAM },		/* nov_ram */
@@ -305,12 +297,15 @@ static struct MemoryWriteAddress esb_writemem[] =
 /*	{ 0x4800, 0x4fff, MWA_RAM }, */		/* cpu_ram */
 /*	{ 0x5000, 0x5fff, MWA_RAM }, */		/* (math_ram_w) math_ram */
 	{ 0x4800, 0x5fff, MWA_RAM },		/* CPU and Math RAM */
-	{ 0x8000, 0x9fff, esb_slapstic_w },		/* slapstic write */
+	{ 0x8000, 0x9fff, esb_slapstic_w, &slapstic_area },		/* slapstic write */
 	{ 0x6000, 0xffff, MWA_ROM },		/* main_rom */
+
+	/* Dummy entry to set up the slapstic */
+	{ 0x14000, 0x1bfff, MWA_NOP, &slapstic_base },
 	{ -1 }	/* end of table */
 };
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( starwars )
 	PORT_START	/* IN0 */
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -387,7 +382,7 @@ INPUT_PORTS_START( input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( esb_input_ports )
+INPUT_PORTS_START( esb )
 	PORT_START	/* IN0 */
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -736,7 +731,7 @@ static void novram_save(void)
 }
 
 
-struct GameDriver starwars_driver =
+struct GameDriver driver_starwars =
 {
 	__FILE__,
 	0,
@@ -749,12 +744,12 @@ struct GameDriver starwars_driver =
 	&machine_driver,
 	0,
 
-	starwars_rom,
+	rom_starwars,
 	translate_proms, 0,  /* ROM decryption, Opcode decryption */
 	0,     /* Sample Array (optional) */
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_starwars,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -762,10 +757,10 @@ struct GameDriver starwars_driver =
 	novram_load, novram_save /* Highscore load, save */
 };
 
-struct GameDriver starwar1_driver =
+struct GameDriver driver_starwar1 =
 {
 	__FILE__,
-	&starwars_driver,
+	&driver_starwars,
 	"starwar1",
 	"Star Wars (rev 1)",
 	"1983",
@@ -775,12 +770,12 @@ struct GameDriver starwar1_driver =
 	&machine_driver,
 	0,
 
-	starwar1_rom,
+	rom_starwar1,
 	translate_proms, 0,  /* ROM decryption, Opcode decryption */
 	0,     /* Sample Array (optional) */
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_starwars,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -788,7 +783,7 @@ struct GameDriver starwar1_driver =
 	novram_load, novram_save /* Highscore load, save */
 };
 
-struct GameDriver esb_driver =
+struct GameDriver driver_esb =
 {
 	__FILE__,
 	0,
@@ -801,12 +796,12 @@ struct GameDriver esb_driver =
 	&esb_machine_driver,
 	0,
 
-	esb_rom,
+	rom_esb,
 	translate_proms, 0,  /* ROM decryption, Opcode decryption */
 	0,     /* Sample Array (optional) */
 	0,	/* sound_prom */
 
-	esb_input_ports,
+	input_ports_esb,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

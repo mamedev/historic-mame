@@ -103,7 +103,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( circusc )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -321,7 +321,7 @@ ROM_START( circusc )
 	ROM_LOAD( "e15_j10.bin",  0xc000, 0x2000, 0x0532347e )
 	ROM_LOAD( "e16_j11.bin",  0xe000, 0x2000, 0xe1725d24 )
 
-	ROM_REGION(0x220)      /* color proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "a02_j18.bin",  0x0000, 0x020, 0x10dd4eaa ) /* palette */
 	ROM_LOAD( "c10_j16.bin",  0x0020, 0x100, 0xc244f2aa ) /* character lookup table */
 	ROM_LOAD( "b07_j17.bin",  0x0120, 0x100, 0x13989357 ) /* sprite lookup table */
@@ -349,7 +349,7 @@ ROM_START( circusc2 )
 	ROM_LOAD( "e15_j10.bin",  0xc000, 0x2000, 0x0532347e )
 	ROM_LOAD( "e16_j11.bin",  0xe000, 0x2000, 0xe1725d24 )
 
-	ROM_REGION(0x220)      /* color proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "a02_j18.bin",  0x0000, 0x020, 0x10dd4eaa ) /* palette */
 	ROM_LOAD( "c10_j16.bin",  0x0020, 0x100, 0xc244f2aa ) /* character lookup table */
 	ROM_LOAD( "b07_j17.bin",  0x0120, 0x100, 0x13989357 ) /* sprite lookup table */
@@ -377,7 +377,7 @@ ROM_START( circuscc )
 	ROM_LOAD( "e15_j10.bin",  0xc000, 0x2000, 0x0532347e )
 	ROM_LOAD( "e16_j11.bin",  0xe000, 0x2000, 0xe1725d24 )
 
-	ROM_REGION(0x220)      /* color proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "a02_j18.bin",  0x0000, 0x020, 0x10dd4eaa ) /* palette */
 	ROM_LOAD( "c10_j16.bin",  0x0020, 0x100, 0xc244f2aa ) /* character lookup table */
 	ROM_LOAD( "b07_j17.bin",  0x0120, 0x100, 0x13989357 ) /* sprite lookup table */
@@ -405,7 +405,7 @@ ROM_START( circusce )
 	ROM_LOAD( "e15_j10.bin",  0xc000, 0x2000, 0x0532347e )
 	ROM_LOAD( "e16_j11.bin",  0xe000, 0x2000, 0xe1725d24 )
 
-	ROM_REGION(0x220)      /* color proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "a02_j18.bin",  0x0000, 0x020, 0x10dd4eaa ) /* palette */
 	ROM_LOAD( "c10_j16.bin",  0x0020, 0x100, 0xc244f2aa ) /* character lookup table */
 	ROM_LOAD( "b07_j17.bin",  0x0120, 0x100, 0x13989357 ) /* sprite lookup table */
@@ -480,7 +480,7 @@ static void hisave(void)
 
 
 
-struct GameDriver circusc_driver =
+struct GameDriver driver_circusc =
 {
 	__FILE__,
 	0,
@@ -493,23 +493,23 @@ struct GameDriver circusc_driver =
 	&machine_driver,
 	0,
 
-	circusc_rom,
+	rom_circusc,
 	0, circusc_decode,
 	0,
 	0,      /* sound_prom */
 
-	input_ports,
+	input_ports_circusc,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
 
-struct GameDriver circusc2_driver =
+struct GameDriver driver_circusc2 =
 {
 	__FILE__,
-	&circusc_driver,
+	&driver_circusc,
 	"circusc2",
 	"Circus Charlie (no level select)",
 	"1984",
@@ -519,23 +519,23 @@ struct GameDriver circusc2_driver =
 	&machine_driver,
 	0,
 
-	circusc2_rom,
+	rom_circusc2,
 	0, circusc_decode,
 	0,
 	0,      /* sound_prom */
 
-	input_ports,
+	input_ports_circusc,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
 
-struct GameDriver circuscc_driver =
+struct GameDriver driver_circuscc =
 {
 	__FILE__,
-	&circusc_driver,
+	&driver_circusc,
 	"circuscc",
 	"Circus Charlie (Centuri)",
 	"1984",
@@ -545,23 +545,23 @@ struct GameDriver circuscc_driver =
 	&machine_driver,
 	0,
 
-	circuscc_rom,
+	rom_circuscc,
 	0, circusc_decode,
 	0,
 	0,      /* sound_prom */
 
-	input_ports,
+	input_ports_circusc,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
 
-struct GameDriver circusce_driver =
+struct GameDriver driver_circusce =
 {
 	__FILE__,
-	&circusc_driver,
+	&driver_circusc,
 	"circusce",
 	"Circus Charlie (Centuri, earlier)",
 	"1984",
@@ -571,14 +571,14 @@ struct GameDriver circusce_driver =
 	&machine_driver,
 	0,
 
-	circusce_rom,
+	rom_circusce,
 	0, circusc_decode,
 	0,
 	0,      /* sound_prom */
 
-	input_ports,
+	input_ports_circusc,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave

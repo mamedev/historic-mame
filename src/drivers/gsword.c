@@ -386,7 +386,7 @@ static struct IOWritePort writeport_cpu2[] =
 	{ -1 }
 };
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( gsword )
 	PORT_START	/* IN0 (8741-2 port1?) */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
@@ -652,7 +652,7 @@ ROM_START( gsword )
 	ROM_LOAD( "gs7",          0x6000, 0x2000, 0xef5f28c6 )
 	ROM_LOAD( "gs8",          0x8000, 0x2000, 0x46824b30 )
 
-	ROM_REGION(0x0360)	/* color PROMs */
+	ROM_REGIONX( 0x0360, REGION_PROMS )
 	ROM_LOAD( "ac0-1.bpr",    0x0000, 0x0100, 0x5c4b2adc )	/* palette low bits */
 	ROM_LOAD( "ac0-2.bpr",    0x0100, 0x0100, 0x966bda66 )	/* palette high bits */
 	ROM_LOAD( "ac0-3.bpr",    0x0200, 0x0100, 0xdae13f77 )	/* sprite lookup table */
@@ -710,7 +710,7 @@ static void gsword_hisave(void)
 	}
 }
 
-struct GameDriver gsword_driver =
+struct GameDriver driver_gsword =
 {
 	__FILE__,
 	0,
@@ -719,19 +719,19 @@ struct GameDriver gsword_driver =
 	"1984",
 	"Taito Corporation",
 	"Steve Ellenoff\nJarek Parchanski\nTatsuyuki Satoh\nCharlie Miltenberger (hardware info)",
-	GAME_IMPERFECT_COLORS,
+	0,
 	&machine_driver,
 	gsword_reset,
 
-	gsword_rom,
+	rom_gsword,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_gsword,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	0, 0, 0,
+	ORIENTATION_DEFAULT | GAME_IMPERFECT_COLORS,
 
 	gsword_hiload, gsword_hisave
 };

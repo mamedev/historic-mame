@@ -367,7 +367,7 @@ static struct IOReadPort lazercmd_readport[] =
 };
 
 
-INPUT_PORTS_START(lazercmd_input_ports)
+INPUT_PORTS_START( lazercmd )
 	PORT_START					   /* IN0 player 1 controls */
 		PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_PLAYER1)
 		PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_PLAYER1)
@@ -412,7 +412,7 @@ INPUT_PORTS_START(lazercmd_input_ports)
 		PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED)
 INPUT_PORTS_END
 
-INPUT_PORTS_START(medlanes_input_ports)
+INPUT_PORTS_START( medlanes )
 	PORT_START					   /* IN0 player 1 controls */
 		PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1)
 		PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER1)
@@ -714,7 +714,7 @@ unsigned char *s = &Machine->memory_region[1][4 * 64 * 10 + i * VERT_FNT];
     }
 }
 
-struct GameDriver lazercmd_driver =
+struct GameDriver driver_lazercmd =
 {
 	__FILE__,
 	0,
@@ -728,13 +728,13 @@ struct GameDriver lazercmd_driver =
 	&lazercmd_machine_driver,
 	0,
 
-	lazercmd_rom,
+	rom_lazercmd,
 	lazercmd_rom_decode,
 	0,
 	0,
 	0,      /* sound_prom */
 
-	lazercmd_input_ports,
+	input_ports_lazercmd,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -742,7 +742,7 @@ struct GameDriver lazercmd_driver =
 	0, 0
 };
 
-struct GameDriver medlanes_driver =
+struct GameDriver driver_medlanes =
 {
 	__FILE__,
 	0,
@@ -756,13 +756,13 @@ struct GameDriver medlanes_driver =
 	&medlanes_machine_driver,
 	0,
 
-	medlanes_rom,
+	rom_medlanes,
 	medlanes_rom_decode,
 	0,
 	0,
 	0,      /* sound_prom */
 
-	medlanes_input_ports,
+	input_ports_medlanes,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

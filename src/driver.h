@@ -48,6 +48,9 @@ struct MachineCPU
 enum
 {
 	CPU_DUMMY,
+#if (HAS_GENSYNC)
+	CPU_GENSYNC,
+#endif
 #if (HAS_Z80)
 	CPU_Z80,
 #endif
@@ -132,6 +135,9 @@ enum
 #if (HAS_M6809)
 	CPU_M6809,
 #endif
+#if (HAS_KONAMI)
+	CPU_KONAMI,
+#endif
 #if (HAS_M68000)
 	CPU_M68000,
 #endif
@@ -164,9 +170,6 @@ enum
 #endif
 #if (HAS_PDP1)
 	CPU_PDP1,
-#endif
-#if (HAS_KONAMI)
-	CPU_KONAMI,
 #endif
 	CPU_COUNT
 };
@@ -292,6 +295,11 @@ struct MachineDriver
 
 
 
+struct obsolete
+{
+	int fake;
+};
+
 struct GameDriver
 {
 	const char *source_file;	/* set this to __FILE__ */
@@ -302,7 +310,7 @@ struct GameDriver
 	const char *year;
 	const char *manufacturer;
 	const char *obsolete1;
-	UINT32 flags;	/* see defines below */
+	struct obsolete *obsolete2;
 	const struct MachineDriver *drv;
 	void (*driver_init)(void);	/* optional function to be called during initialization */
 								/* This is called ONCE, unlike Machine->init_machine */
@@ -321,16 +329,15 @@ struct GameDriver
 	void (*rom_decode)(void);		/* used to decrypt the ROMs after loading them */
 	void (*opcode_decode)(void);	/* used to decrypt the CPU opcodes in the ROMs, */
 									/* if the encryption is different from the above. */
-	const char **samplenames;		/* optional array of names of samples to load. */
-									/* drivers can retrieve them in Machine->samples */
-	int obsolete2;
+	struct obsolete *obsolete3;
+	struct obsolete *obsolete4;
 
 	struct InputPort *input_ports;
 
-	int prom_memory_region;
-	int obsolete3;
-	int obsolete4;
-	int orientation;	/* orientation of the monitor; see defines below */
+	struct obsolete *obsolete5;
+	struct obsolete *obsolete6;
+	struct obsolete *obsolete7;
+	UINT32 flags;	/* orientation and other flags; see defines below */
 
 	int (*hiscore_load)(void);	/* will be called every vblank until it */
 						/* returns nonzero */
@@ -340,24 +347,12 @@ struct GameDriver
 
 
 /* values for the flags field */
-#define GAME_NOT_WORKING		0x0001
-#define GAME_WRONG_COLORS		0x0002	/* colors are totally wrong */
-#define GAME_IMPERFECT_COLORS	0x0004	/* colors are not 100% accurate, but close */
-#define GAME_NO_SOUND			0x0008	/* sound is missing */
-#define GAME_IMPERFECT_SOUND	0x0010	/* sound is known to be wrong */
-#define	GAME_REQUIRES_16BIT		0x0020	/* cannot fit in 256 colors */
 
-#ifdef MESS
- #define GAME_COMPUTER			0x8000	/* Driver is a computer (needs full keyboard) */
-#endif
-
-#define PROM_MEMORY_REGION(region) (region)
-
-
-#define	ORIENTATION_DEFAULT		0x00
-#define	ORIENTATION_FLIP_X		0x01	/* mirror everything in the X direction */
-#define	ORIENTATION_FLIP_Y		0x02	/* mirror everything in the Y direction */
-#define ORIENTATION_SWAP_XY		0x04	/* mirror along the top-left/bottom-right diagonal */
+#define ORIENTATION_MASK        0x0007
+#define	ORIENTATION_DEFAULT		0x0000
+#define	ORIENTATION_FLIP_X		0x0001	/* mirror everything in the X direction */
+#define	ORIENTATION_FLIP_Y		0x0002	/* mirror everything in the Y direction */
+#define ORIENTATION_SWAP_XY		0x0004	/* mirror along the top-left/bottom-right diagonal */
 #define	ORIENTATION_ROTATE_90	(ORIENTATION_SWAP_XY|ORIENTATION_FLIP_X)	/* rotate clockwise 90 degrees */
 #define	ORIENTATION_ROTATE_180	(ORIENTATION_FLIP_X|ORIENTATION_FLIP_Y)		/* rotate 180 degrees */
 #define	ORIENTATION_ROTATE_270	(ORIENTATION_SWAP_XY|ORIENTATION_FLIP_Y)	/* rotate counter-clockwise 90 degrees */
@@ -366,6 +361,16 @@ struct GameDriver
 /* ORIENTATION_ROTATE_270 ^ ORIENTATION_FLIP_X */
 /* Always remember that FLIP is performed *after* SWAP_XY. */
 
+#define GAME_NOT_WORKING		0x0008
+#define GAME_WRONG_COLORS		0x0010	/* colors are totally wrong */
+#define GAME_IMPERFECT_COLORS	0x0020	/* colors are not 100% accurate, but close */
+#define GAME_NO_SOUND			0x0040	/* sound is missing */
+#define GAME_IMPERFECT_SOUND	0x0080	/* sound is known to be wrong */
+#define	GAME_REQUIRES_16BIT		0x0100	/* cannot fit in 256 colors */
+
+#ifdef MESS
+ #define GAME_COMPUTER			0x8000	/* Driver is a computer (needs full keyboard) */
+#endif
 
 extern const struct GameDriver *drivers[];
 

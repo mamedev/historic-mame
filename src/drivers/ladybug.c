@@ -92,7 +92,7 @@ int ladybug_interrupt(void)
 	else return ignore_interrupt();
 }
 
-INPUT_PORTS_START( ladybug_input_ports )
+INPUT_PORTS_START( ladybug )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
@@ -183,7 +183,7 @@ INPUT_PORTS_START( ladybug_input_ports )
 	PORT_BIT_IMPULSE( 0x02, IP_ACTIVE_HIGH, IPT_COIN2, 1 )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( snapjack_input_ports )
+INPUT_PORTS_START( snapjack )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
@@ -276,7 +276,7 @@ INPUT_PORTS_START( snapjack_input_ports )
 	PORT_BIT_IMPULSE( 0x02, IP_ACTIVE_HIGH, IPT_COIN2, 1 )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( cavenger_input_ports )
+INPUT_PORTS_START( cavenger )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
@@ -479,7 +479,7 @@ ROM_START( ladybug )
 	ROM_LOAD( "lb8.cpu",      0x2000, 0x1000, 0x8b99910b )
 	ROM_LOAD( "lb7.cpu",      0x3000, 0x1000, 0x86a5b448 )
 
-	ROM_REGION(0x0060)	/* color proms */
+	ROM_REGIONX( 0x0060, REGION_PROMS )
 	ROM_LOAD( "10-2.vid",     0x0000, 0x0020, 0xdf091e52 ) /* palette */
 	ROM_LOAD( "10-1.vid",     0x0020, 0x0020, 0x40640d8f ) /* sprite color lookup table */
 	ROM_LOAD( "10-3.vid",     0x0040, 0x0020, 0x27fa3a50 ) /* ?? */
@@ -500,7 +500,7 @@ ROM_START( ladybugb )
 	ROM_LOAD( "lb8.cpu",      0x2000, 0x1000, 0x8b99910b )
 	ROM_LOAD( "lb7.cpu",      0x3000, 0x1000, 0x86a5b448 )
 
-	ROM_REGION(0x0060)	/* color proms */
+	ROM_REGIONX( 0x0060, REGION_PROMS )
 	ROM_LOAD( "10-2.vid",     0x0000, 0x0020, 0xdf091e52 ) /* palette */
 	ROM_LOAD( "10-1.vid",     0x0020, 0x0020, 0x40640d8f ) /* sprite color lookup table */
 	ROM_LOAD( "10-3.vid",     0x0040, 0x0020, 0x27fa3a50 ) /* ?? */
@@ -521,7 +521,7 @@ ROM_START( snapjack )
 	ROM_LOAD( "sj2h.bin",     0x2000, 0x1000, 0xb7f105b6 )
 	ROM_LOAD( "sj2g.bin",     0x3000, 0x1000, 0x1cdb03a8 )
 
-	ROM_REGION(0x0060)	/* color proms */
+	ROM_REGIONX( 0x0060, REGION_PROMS )
 	ROM_LOAD( "sj8t.bin",     0x0000, 0x0020, 0xcbbd9dd1 ) /* palette */
 	ROM_LOAD( "sj9k.bin",     0x0020, 0x0020, 0x5b16fbd2 ) /* sprite color lookup table */
 	ROM_LOAD( "sj9h.bin",     0x0040, 0x0020, 0x27fa3a50 ) /* ?? */
@@ -542,7 +542,7 @@ ROM_START( cavenger )
 	ROM_LOAD( "8",            0x2000, 0x1000, 0xb022bf2d )
 /*	ROM_LOAD( "7", 0x3000, 0x1000, 0x )	empty socket */
 
-	ROM_REGION(0x0060)	/* color proms */
+	ROM_REGIONX( 0x0060, REGION_PROMS )
 	ROM_LOAD( "t8.bpr",       0x0000, 0x0020, 0x42a24dd5 ) /* palette */
 	ROM_LOAD( "k9.bpr",       0x0020, 0x0020, 0xd736b8de ) /* sprite color lookup table */
 	ROM_LOAD( "h9.bpr",       0x0040, 0x0020, 0x27fa3a50 ) /* ?? */
@@ -673,7 +673,7 @@ static void snapjack_hisave(void)
 
 
 
-struct GameDriver ladybug_driver =
+struct GameDriver driver_ladybug =
 {
 	__FILE__,
 	0,
@@ -686,23 +686,23 @@ struct GameDriver ladybug_driver =
 	&machine_driver,
 	0,
 
-	ladybug_rom,
+	rom_ladybug,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	ladybug_input_ports,
+	input_ports_ladybug,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	ladybug_hiload, ladybug_hisave
 };
 
-struct GameDriver ladybugb_driver =
+struct GameDriver driver_ladybugb =
 {
 	__FILE__,
-	&ladybug_driver,
+	&driver_ladybug,
 	"ladybugb",
 	"Lady Bug (bootleg)",
 	"1982",
@@ -712,20 +712,20 @@ struct GameDriver ladybugb_driver =
 	&machine_driver,
 	0,
 
-	ladybugb_rom,
+	rom_ladybugb,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	ladybug_input_ports,
+	input_ports_ladybug,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	ladybug_hiload, ladybug_hisave
 };
 
-struct GameDriver snapjack_driver =
+struct GameDriver driver_snapjack =
 {
 	__FILE__,
 	0,
@@ -738,20 +738,20 @@ struct GameDriver snapjack_driver =
 	&machine_driver,
 	0,
 
-	snapjack_rom,
+	rom_snapjack,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	snapjack_input_ports,
+	input_ports_snapjack,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	snapjack_hiload, snapjack_hisave
 };
 
-struct GameDriver cavenger_driver =
+struct GameDriver driver_cavenger =
 {
 	__FILE__,
 	0,
@@ -764,14 +764,14 @@ struct GameDriver cavenger_driver =
 	&machine_driver,
 	0,
 
-	cavenger_rom,
+	rom_cavenger,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	cavenger_input_ports,
+	input_ports_cavenger,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	cavenger_hiload, cavenger_hisave

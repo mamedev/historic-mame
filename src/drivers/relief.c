@@ -178,13 +178,13 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x000000, 0x07ffff, MRA_ROM },
 	{ 0x140000, 0x140003, ym2413_r },
 	{ 0x140010, 0x140011, adpcm_r },
-	{ 0x180000, 0x180fff, atarigen_eeprom_upper_r, &atarigen_eeprom, &atarigen_eeprom_size },
+	{ 0x180000, 0x180fff, atarigen_eeprom_upper_r },
 	{ 0x260000, 0x260001, input_port_0_r },
 	{ 0x260002, 0x260003, input_port_1_r },
 	{ 0x260010, 0x260011, special_port2_r },
 	{ 0x260012, 0x260013, input_port_3_r },
-	{ 0x3effc0, 0x3effff, atarigen_video_control_r, &atarigen_video_control_data },
-	{ 0xfe0000, 0xfe0fff, MRA_BANK1, &paletteram },
+	{ 0x3effc0, 0x3effff, atarigen_video_control_r },
+	{ 0xfe0000, 0xfe0fff, MRA_BANK1 },
 	{ 0xfeffc0, 0xfeffff, atarigen_video_control_r },
 	{ 0xff0000, 0xff5fff, MRA_BANK3 },
 	{ 0xff6000, 0xff7fff, MRA_BANK4 },
@@ -201,11 +201,11 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x140010, 0x140011, adpcm_w },
 	{ 0x140020, 0x140021, audio_volume_w },
 	{ 0x140030, 0x140031, audio_control_w },
-	{ 0x180000, 0x180fff, atarigen_eeprom_w },
+	{ 0x180000, 0x180fff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
 	{ 0x1c0030, 0x1c0031, atarigen_eeprom_enable_w },
 	{ 0x2a0000, 0x2a0001, watchdog_reset_w },
-	{ 0x3effc0, 0x3effff, atarigen_video_control_w },
-	{ 0xfe0000, 0xfe0fff, atarigen_666_paletteram_w },
+	{ 0x3effc0, 0x3effff, atarigen_video_control_w, &atarigen_video_control_data },
+	{ 0xfe0000, 0xfe0fff, atarigen_666_paletteram_w, &paletteram },
 	{ 0xfeffc0, 0xfeffff, atarigen_video_control_w },
 	{ 0xff0000, 0xff1fff, relief_playfield2ram_w, &atarigen_playfield2ram, &atarigen_playfield2ram_size },
 	{ 0xff2000, 0xff3fff, relief_playfieldram_w, &atarigen_playfieldram, &atarigen_playfieldram_size },
@@ -224,7 +224,7 @@ static struct MemoryWriteAddress writemem[] =
  *
  *************************************/
 
-INPUT_PORTS_START( relief_ports )
+INPUT_PORTS_START( relief )
 	PORT_START	/* 260000 */
 	PORT_BIT(  0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT(  0x0100, IP_ACTIVE_LOW, IPT_BUTTON4 | IPF_PLAYER1 )
@@ -509,7 +509,7 @@ ROM_END
  *
  *************************************/
 
-struct GameDriver relief_driver =
+struct GameDriver driver_relief =
 {
 	__FILE__,
 	0,
@@ -522,13 +522,13 @@ struct GameDriver relief_driver =
 	&machine_driver,
 	relief_init,
 
-	relief_rom,
+	rom_relief,
 	rom_decode,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	relief_ports,
+	input_ports_relief,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
@@ -536,10 +536,10 @@ struct GameDriver relief_driver =
 };
 
 
-struct GameDriver relief2_driver =
+struct GameDriver driver_relief2 =
 {
 	__FILE__,
-	&relief_driver,
+	&driver_relief,
 	"relief2",
 	"Relief Pitcher (set 2)",
 	"1992",
@@ -549,13 +549,13 @@ struct GameDriver relief2_driver =
 	&machine_driver,
 	relief2_init,
 
-	relief2_rom,
+	rom_relief2,
 	rom_decode,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	relief_ports,
+	input_ports_relief,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,

@@ -212,7 +212,7 @@ static struct MemoryWriteAddress jackal_sound_writemem[] =
 
 
 
-INPUT_PORTS_START( jackal_input_ports )
+INPUT_PORTS_START( jackal )
 	PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 4C_1C ) )
@@ -685,7 +685,7 @@ ROM_END
 
 
 
-struct GameDriver jackal_driver =
+struct GameDriver driver_jackal =
 {
 	__FILE__,
 	0,
@@ -698,12 +698,12 @@ struct GameDriver jackal_driver =
 	&machine_driver,
 	0,
 
-	jackal_rom,
+	rom_jackal,
 	0, 0,
 	0,
 	0,
 
-	jackal_input_ports,
+	input_ports_jackal,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -711,10 +711,10 @@ struct GameDriver jackal_driver =
 	hiload, hisave
 };
 
-struct GameDriver topgunr_driver =
+struct GameDriver driver_topgunr =
 {
 	__FILE__,
-	&jackal_driver,
+	&driver_jackal,
 	"topgunr",
 	"Top Gunner (US)",
 	"1986",
@@ -724,12 +724,12 @@ struct GameDriver topgunr_driver =
 	&machine_driver,
 	0,
 
-	topgunr_rom,
+	rom_topgunr,
 	0, 0,
 	0,
 	0,
 
-	jackal_input_ports,
+	input_ports_jackal,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -737,10 +737,10 @@ struct GameDriver topgunr_driver =
 	hiload, hisave
 };
 
-struct GameDriver jackalj_driver =
+struct GameDriver driver_jackalj =
 {
 	__FILE__,
-	&jackal_driver,
+	&driver_jackal,
 	"jackalj",
 	"Tokushu Butai Jackal (Japan)",
 	"1986",
@@ -750,12 +750,12 @@ struct GameDriver jackalj_driver =
 	&machine_driver,
 	0,
 
-	jackalj_rom,
+	rom_jackalj,
 	0, 0,
 	0,
 	0,
 
-	jackal_input_ports,
+	input_ports_jackal,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -763,10 +763,10 @@ struct GameDriver jackalj_driver =
 	hiload, hisave
 };
 
-struct GameDriver topgunbl_driver =
+struct GameDriver driver_topgunbl =
 {
 	__FILE__,
-	&jackal_driver,
+	&driver_jackal,
 	"topgunbl",
 	"Top Gunner (bootleg)",
 	"1987",
@@ -776,12 +776,12 @@ struct GameDriver topgunbl_driver =
 	&topgunbl_machine_driver,
 	0,
 
-	topgunbl_rom,
+	rom_topgunbl,
 	0, 0,
 	0,
 	0,
 
-	jackal_input_ports,
+	input_ports_jackal,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_90,

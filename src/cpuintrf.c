@@ -14,6 +14,9 @@
 #include "state.h"
 #include "mamedbg.h"
 
+#if (HAS_GENSYNC)
+#include "cpu/gensync/gensync.h"
+#endif
 #if (HAS_Z80)
 #include "cpu/z80/z80.h"
 #endif
@@ -280,6 +283,40 @@ struct cpu_interface cpuintf[] =
 		0,16,CPU_IS_LE,1,1, 				/* CPU address shift, bits, endianess, align unit, max. instruction length */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
 	},
+#if (HAS_GENSYNC)
+	{
+		CPU_GENSYNC,
+		gensync_reset,
+		gensync_exit,
+		gensync_execute,
+		gensync_get_context,
+		gensync_set_context,
+		gensync_get_pc,
+		gensync_set_pc,
+		gensync_get_sp,
+		gensync_set_sp,
+		gensync_get_reg,
+		gensync_set_reg,
+		gensync_set_nmi_line,
+		gensync_set_irq_line,
+		gensync_set_irq_callback,
+		NULL,
+		NULL,
+		NULL,
+		gensync_info,
+		gensync_dasm,
+		0,0,
+		&gensync_ICount,
+		-1,
+		-1,
+		-1,
+		cpu_readmem20,
+		cpu_writemem20,
+		cpu_setOPbase20,
+		0,20,CPU_IS_LE,1,1,
+		ABITS1_20,ABITS2_20,ABITS_MIN_20
+	},
+#endif
 #if (HAS_Z80)
     {
 		CPU_Z80,							/* CPU number and family cores sharing resources */
@@ -1188,9 +1225,9 @@ struct cpu_interface cpuintf[] =
 		m6309_dasm, 						/* Disassemble one instruction */
 		2,0,								/* Number of IRQ lines, default IRQ vector */
 		&m6309_ICount,						/* Pointer to the instruction count */
-		M6309_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
-		M6309_INT_IRQ,
-		M6309_INT_NMI,
+		HD6309_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
+		HD6309_INT_IRQ,
+		HD6309_INT_NMI,
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
@@ -1225,6 +1262,40 @@ struct cpu_interface cpuintf[] =
 		M6809_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
 		M6809_INT_IRQ,
 		M6809_INT_NMI,
+		cpu_readmem16,						/* Memory read */
+		cpu_writemem16, 					/* Memory write */
+		cpu_setOPbase16,					/* Update CPU opcode base */
+		0,16,CPU_IS_BE,1,4, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
+		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
+    },
+#endif
+#if (HAS_KONAMI)
+    {
+		CPU_KONAMI,							/* CPU number and family cores sharing resources */
+        konami_reset,                       /* Reset CPU */
+		konami_exit, 						/* Shut down the CPU */
+        konami_execute,                     /* Execute a number of cycles */
+		konami_get_context,					/* Get the contents of the registers */
+		konami_set_context,					/* Set the contents of the registers */
+		konami_get_pc,						/* Return the current program counter */
+		konami_set_pc,						/* Set the current program counter */
+		konami_get_sp,						/* Return the current stack pointer */
+		konami_set_sp,						/* Set the current stack pointer */
+		konami_get_reg,						/* Get a specific register value */
+		konami_set_reg,						/* Set a specific register value */
+        konami_set_nmi_line,                /* Set state of the NMI line */
+		konami_set_irq_line, 				/* Set state of the IRQ line */
+		konami_set_irq_callback, 			/* Set IRQ enable/vector callback */
+		NULL,								/* Cause internal interrupt */
+		konami_state_save,					/* Save CPU state */
+		konami_state_load,					/* Load CPU state */
+        konami_info,                        /* Get formatted string for a specific register */
+		konami_dasm, 						/* Disassemble one instruction */
+		2,0,								/* Number of IRQ lines, default IRQ vector */
+		&konami_ICount,						/* Pointer to the instruction count */
+		KONAMI_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
+		KONAMI_INT_IRQ,
+		KONAMI_INT_NMI,
 		cpu_readmem16,						/* Memory read */
 		cpu_writemem16, 					/* Memory write */
 		cpu_setOPbase16,					/* Update CPU opcode base */
@@ -1604,40 +1675,6 @@ struct cpu_interface cpuintf[] =
 		cpu_setOPbase16,					/* Update CPU opcode base  */
 		0,18,CPU_IS_LE,1,3, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	 */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system	*/
-    },
-#endif
-#if (HAS_KONAMI)
-    {
-		CPU_KONAMI,							/* CPU number and family cores sharing resources */
-        konami_reset,                       /* Reset CPU */
-		konami_exit, 						/* Shut down the CPU */
-        konami_execute,                     /* Execute a number of cycles */
-		konami_get_context,					/* Get the contents of the registers */
-		konami_set_context,					/* Set the contents of the registers */
-		konami_get_pc,						/* Return the current program counter */
-		konami_set_pc,						/* Set the current program counter */
-		konami_get_sp,						/* Return the current stack pointer */
-		konami_set_sp,						/* Set the current stack pointer */
-		konami_get_reg,						/* Get a specific register value */
-		konami_set_reg,						/* Set a specific register value */
-        konami_set_nmi_line,                /* Set state of the NMI line */
-		konami_set_irq_line, 				/* Set state of the IRQ line */
-		konami_set_irq_callback, 			/* Set IRQ enable/vector callback */
-		NULL,								/* Cause internal interrupt */
-		konami_state_save,					/* Save CPU state */
-		konami_state_load,					/* Load CPU state */
-        konami_info,                        /* Get formatted string for a specific register */
-		konami_dasm, 						/* Disassemble one instruction */
-		2,0,								/* Number of IRQ lines, default IRQ vector */
-		&konami_ICount,						/* Pointer to the instruction count */
-		KONAMI_INT_NONE, 					/* Interrupt types: none, IRQ, NMI */
-		KONAMI_INT_IRQ,
-		KONAMI_INT_NMI,
-		cpu_readmem16,						/* Memory read */
-		cpu_writemem16, 					/* Memory write */
-		cpu_setOPbase16,					/* Update CPU opcode base */
-		0,16,CPU_IS_BE,1,4, 				/* CPU address shift, bits, endianess, align unit, max. instruction length	*/
-		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
 #endif
 };
@@ -2857,8 +2894,8 @@ static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
             case CPU_HD6309:
 				switch (num)
 				{
-				case M6309_INT_IRQ: 	irq_line = 0; LOG((errorlog,"M6309 IRQ\n")); break;
-				case M6309_INT_FIRQ:	irq_line = 1; LOG((errorlog,"M6309 FIRQ\n")); break;
+				case HD6309_INT_IRQ: 	irq_line = 0; LOG((errorlog,"M6309 IRQ\n")); break;
+				case HD6309_INT_FIRQ:	irq_line = 1; LOG((errorlog,"M6309 FIRQ\n")); break;
 				default:				irq_line = 0; LOG((errorlog,"M6309 unknown\n"));
 				}
                 break;

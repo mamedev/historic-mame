@@ -55,7 +55,7 @@ static struct MemoryWriteAddress writemem[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( pingpong )
 
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -290,7 +290,7 @@ ROM_START( pingpong )
 	ROM_LOAD( "pp_e01.rom",   0x0000, 0x2000, 0xd1d6f090 )
 	ROM_LOAD( "pp_e02.rom",   0x2000, 0x2000, 0x33c687e0 )
 
-	ROM_REGION(0x0220)	/* color proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "pingpong.3j",  0x0000, 0x0020, 0x3e04f06e ) /* palette (this might be bad) */
 	ROM_LOAD( "pingpong.11j", 0x0020, 0x0100, 0x09d96b08 ) /* sprites */
 	ROM_LOAD( "pingpong.5h",  0x0120, 0x0100, 0x8456046a ) /* characters */
@@ -298,7 +298,7 @@ ROM_END
 
 
 
-struct GameDriver pingpong_driver =
+struct GameDriver driver_pingpong =
 {
 	__FILE__,
 	0,
@@ -311,13 +311,13 @@ struct GameDriver pingpong_driver =
 	&machine_driver,
 	0,
 
-	pingpong_rom,
+	rom_pingpong,
 	0, 0,
 	0,
 	0,	/* sound_prom */
-	input_ports,
+	input_ports_pingpong,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave

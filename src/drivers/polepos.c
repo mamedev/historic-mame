@@ -372,7 +372,7 @@ static struct MemoryWriteAddress z8k_2_writemem[] =
     {-1}                                    /* end of table */
 };
 
-INPUT_PORTS_START(input_ports)
+INPUT_PORTS_START( polepos )
 	PORT_START  /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 ) /* Select Button */
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_TOGGLE ) /* Gear */
@@ -589,7 +589,7 @@ ROM_START( polepos )
 	ROM_LOAD_ODD ( "014-203.rom",   0x00000, 0x2000, 0xeedea6e7 )
 	ROM_LOAD_EVEN( "014-204.rom",   0x00000, 0x2000, 0xc52c98ed )
 
-	ROM_REGION(0x10000) 			/* #4 PROM data */
+	ROM_REGIONX( 0x10000, REGION_PROMS )
 	/* 136014-137, 136014-138, 136014-139 red/green/blue */
 	ROM_LOAD	 ( "014-137.bpr",   0x0000, 0x0100, 0xf07ff2ad )
 	ROM_LOAD	 ( "014-138.bpr",   0x0100, 0x0100, 0xadbde7d7 )
@@ -659,7 +659,7 @@ ROM_START( poleposa )
 	ROM_LOAD_ODD ( "014-203.rom",   0x00000, 0x2000, 0xeedea6e7 )
 	ROM_LOAD_EVEN( "014-204.rom",   0x00000, 0x2000, 0xc52c98ed )
 
-	ROM_REGION(0x10000) 			/* #4 PROM data */
+	ROM_REGIONX( 0x10000, REGION_PROMS )
 	/* 136014-137, 136014-138, 136014-139 red/green/blue */
 	ROM_LOAD	 ( "014-137.bpr",   0x0000, 0x0100, 0xf07ff2ad )
 	ROM_LOAD	 ( "014-138.bpr",   0x0100, 0x0100, 0xadbde7d7 )
@@ -729,7 +729,7 @@ ROM_START( poleps2b )
 	ROM_LOAD_ODD ( "tr5b.bin",      0x00000, 0x2000, 0x4e5f7b9c )
 	ROM_LOAD_EVEN( "tr6b.bin",      0x00000, 0x2000, 0x9d038ada )
 
-	ROM_REGION(0x10000) 			/* #4 PROM data */
+	ROM_REGIONX( 0x10000, REGION_PROMS )
 	/* 136014-137, 136014-138, 136014-139 red/green/blue */
 	ROM_LOAD	 ( "014-137.bpr",   0x0000, 0x0100, 0xf07ff2ad )    /* 7.bin no good dump? */
 	ROM_LOAD	 ( "8.bin",         0x0100, 0x0100, 0xadbde7d7 )
@@ -775,7 +775,7 @@ static void polepos_init(void)
 	cpu_set_reset_line(2,ASSERT_LINE);
 }
 
-struct GameDriver polepos_driver =
+struct GameDriver driver_polepos =
 {
 	__FILE__,
 	0,
@@ -788,26 +788,24 @@ struct GameDriver polepos_driver =
 	&machine_driver,
 	polepos_init,		/* driver init */
 
-	polepos_rom,
+	rom_polepos,
 	0,		/* rom decode */
 	0,
 	0,
 	0,      /* sound_prom */
 
-	input_ports,
+	input_ports_polepos,
 
-	PROM_MEMORY_REGION(4),	/* color_prom */
-    0,
-	0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	0,0
 };
 
-struct GameDriver poleposa_driver =
+struct GameDriver driver_poleposa =
 {
 	__FILE__,
-	&polepos_driver,
+	&driver_polepos,
 	"poleposa",
 	"Pole Position (set 2)",
 	"1982",
@@ -817,26 +815,24 @@ struct GameDriver poleposa_driver =
 	&machine_driver,
 	polepos_init,		/* driver init */
 
-	poleposa_rom,
+	rom_poleposa,
 	0,		/* rom decode */
 	0,
 	0,
 	0,      /* sound_prom */
 
-	input_ports,
+	input_ports_polepos,
 
-	PROM_MEMORY_REGION(4),	/* color_prom */
-    0,
-	0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	0,0
 };
 
-struct GameDriver poleps2b_driver =
+struct GameDriver driver_poleps2b =
 {
 	__FILE__,
-	&polepos_driver,
+	&driver_polepos,
 	"poleps2b",
 	"Pole Position II (bootleg)",
 	"1982",
@@ -846,17 +842,15 @@ struct GameDriver poleps2b_driver =
 	&machine_driver,
 	polepos_init,		/* driver init */
 
-	poleps2b_rom,
+	rom_poleps2b,
 	0,		/* rom decode */
 	0,
 	0,
 	0,      /* sound_prom */
 
-	input_ports,
+	input_ports_polepos,
 
-	PROM_MEMORY_REGION(4),	/* color_prom */
-	0,
-	0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	0,0

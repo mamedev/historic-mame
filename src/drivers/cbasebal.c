@@ -212,7 +212,7 @@ static struct IOWritePort cbasebal_writeport[] =
 };
 
 
-INPUT_PORTS_START( cbasebal_input_ports )
+INPUT_PORTS_START( cbasebal )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON3 )
@@ -375,7 +375,7 @@ ROM_END
 
 
 
-struct GameDriver cbasebal_driver =
+struct GameDriver driver_cbasebal =
 {
 	__FILE__,
 	0,
@@ -388,12 +388,12 @@ struct GameDriver cbasebal_driver =
 	&cbasebal_machine_driver,
 	0,
 
-	cbasebal_rom,
+	rom_cbasebal,
 	0, pang_decode,
 	0,
 	0,      /* sound_prom */
 
-	cbasebal_input_ports,
+	input_ports_cbasebal,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

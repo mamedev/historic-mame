@@ -61,7 +61,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ -1 }	/* end of table */
 };
 
-INPUT_PORTS_START( subs_input_ports )
+INPUT_PORTS_START( subs )
 	PORT_START /* OPTIONS */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Demo_Sounds ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
@@ -245,7 +245,7 @@ ROM_END
 
 ***************************************************************************/
 
-struct GameDriver subs_driver =
+struct GameDriver driver_subs =
 {
 	__FILE__,
 	0,
@@ -258,12 +258,12 @@ struct GameDriver subs_driver =
 	&machine_driver,
 	0,
 
-	subs_rom,
+	rom_subs,
 	subs_rom_init, 0,
 	0,
 	0,	/* sound_prom */
 
-	subs_input_ports,
+	input_ports_subs,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

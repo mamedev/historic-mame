@@ -158,32 +158,35 @@ void bloodbro_w_write(int offset,int data) {
 static struct MemoryReadAddress readmem_cpu[] = {
 	{ 0x00000, 0x7ffff, MRA_ROM },
 	{ 0x80000, 0x8afff, MRA_RAM },
-	{ 0x8b000, 0x8bfff, MRA_RAM, &spriteram },
+	{ 0x8b000, 0x8bfff, MRA_RAM },
 	{ 0x8c000, 0x8c3ff, bloodbro_background_r },
 	{ 0x8c400, 0x8cfff, MRA_RAM },
 	{ 0x8d000, 0x8d3ff, bloodbro_foreground_r },
 	{ 0x8d400, 0x8d7ff, MRA_RAM },
-	{ 0x8d800, 0x8dfff, MRA_RAM, &textlayoutram },
+	{ 0x8d800, 0x8dfff, MRA_RAM },
 	{ 0x8e000, 0x8e7ff, MRA_RAM },
 	{ 0x8e800, 0x8f7ff, paletteram_word_r },
 	{ 0x8f800, 0x8ffff, MRA_RAM },
 	{ 0xa0000, 0xa0012, bloodbro_r_read_a0000 },
-	{ 0xc0000, 0xc007f, MRA_BANK1, &bloodbro_scroll },
+	{ 0xc0000, 0xc007f, MRA_BANK1 },
 	{ 0xe0000, 0xe000f, bloodbro_r_read },
 	{ -1 }
 };
 
 static struct MemoryWriteAddress writemem_cpu[] = {
 	{ 0x00000, 0x7ffff, MWA_ROM },
-	{ 0x80000, 0x8bfff, MWA_RAM },
+	{ 0x80000, 0x8afff, MWA_RAM },
+	{ 0x8b000, 0x8bfff, MWA_RAM, &spriteram },
 	{ 0x8c000, 0x8c3ff, bloodbro_background_w, &videoram },   /* Background RAM */
 	{ 0x8c400, 0x8cfff, MWA_RAM },
 	{ 0x8d000, 0x8d3ff, bloodbro_foreground_w, &bloodbro_videoram2 }, /* Foreground RAM */
-	{ 0x8d400, 0x8e7ff, MWA_RAM },
+	{ 0x8d400, 0x8d7ff, MWA_RAM },
+	{ 0x8d800, 0x8dfff, MWA_RAM, &textlayoutram },
+	{ 0x8e000, 0x8e7ff, MWA_RAM },
 	{ 0x8e800, 0x8f7ff, paletteram_xxxxBBBBGGGGRRRR_word_w, &paletteram },
 	{ 0x8f800, 0x8ffff, MWA_RAM },
 	{ 0xa0000, 0xa000f, bloodbro_w_write },
-	{ 0xc0000, 0xc007f, MWA_BANK1 },
+	{ 0xc0000, 0xc007f, MWA_BANK1, &bloodbro_scroll },
 	{ 0xc0080, 0xc0081, MWA_NOP }, /* IRQ Ack VBL? */
 	{ 0xc00c0, 0xc00c1, MWA_NOP }, /* watchdog? */
 	//{ 0xc0100, 0xc0100, MWA_NOP }, /* ?? Written 1 time */
@@ -195,12 +198,12 @@ static struct MemoryWriteAddress writemem_cpu[] = {
 static struct MemoryReadAddress weststry_readmem_cpu[] = {
 	{ 0x000000, 0x07ffff, MRA_ROM },
 	{ 0x080000, 0x08afff, MRA_RAM },
-	{ 0x08b000, 0x08bfff, MRA_RAM, &spriteram },
+	{ 0x08b000, 0x08bfff, MRA_RAM },
 	{ 0x08c000, 0x08c3ff, bloodbro_background_r },
 	{ 0x08c400, 0x08cfff, MRA_RAM },
 	{ 0x08d000, 0x08d3ff, bloodbro_foreground_r },
 	{ 0x08d400, 0x08dfff, MRA_RAM },
-	{ 0x08d800, 0x08dfff, MRA_RAM, &textlayoutram },
+	{ 0x08d800, 0x08dfff, MRA_RAM },
 	{ 0x08e000, 0x08ffff, MRA_RAM },
 	{ 0x0c1000, 0x0c100f, bloodbro_r_read },
 	{ 0x0c1010, 0x0c17ff, MRA_BANK1 },
@@ -211,11 +214,14 @@ static struct MemoryReadAddress weststry_readmem_cpu[] = {
 
 static struct MemoryWriteAddress weststry_writemem_cpu[] = {
 	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x080000, 0x08bfff, MWA_RAM },
+	{ 0x080000, 0x08afff, MWA_RAM },
+	{ 0x08b000, 0x08bfff, MWA_RAM, &spriteram },
 	{ 0x08c000, 0x08c3ff, bloodbro_background_w, &videoram },   /* Background RAM */
 	{ 0x08c400, 0x08cfff, MWA_RAM },
 	{ 0x08d000, 0x08d3ff, bloodbro_foreground_w, &bloodbro_videoram2 }, /* Foreground RAM */
-	{ 0x08d400, 0x08ffff, MWA_RAM },
+	{ 0x08d400, 0x08d7ff, MWA_RAM },
+	{ 0x08d800, 0x08dfff, MWA_RAM, &textlayoutram },
+	{ 0x08e000, 0x08ffff, MWA_RAM },
 	{ 0x0c1010, 0x0c17ff, MWA_BANK1 },
 	{ 0x128000, 0x1287ff, paletteram_xxxxBBBBGGGGRRRR_word_w, &paletteram },
 	{ 0x120000, 0x128fff, MWA_BANK2 },
@@ -251,7 +257,7 @@ static struct MemoryWriteAddress writemem_sound[] = {
 
 /**** Blood Bros Input Ports *******************************************/
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( bloodbro )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY)
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY)
@@ -334,7 +340,7 @@ INPUT_PORTS_END
 
 /**** West Story Input Ports *******************************************/
 
-INPUT_PORTS_START( weststry_input_ports )
+INPUT_PORTS_START( weststry )
 	PORT_START	/* IN0 */
         PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY)
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY)
@@ -657,7 +663,7 @@ static void gfx_untangle( void ){
        }
 }
 
-struct GameDriver bloodbro_driver =
+struct GameDriver driver_bloodbro =
 {
 	__FILE__,
 	0,
@@ -670,12 +676,12 @@ struct GameDriver bloodbro_driver =
 	&bloodbro_machine_driver,
 	0,
 
-	bloodbro_rom,
+	rom_bloodbro,
 	0,0,
 	0,
 	0, /* sound_prom */
 
-	input_ports,
+	input_ports_bloodbro,
 
 	0,0,0,
 	ORIENTATION_DEFAULT,
@@ -683,10 +689,10 @@ struct GameDriver bloodbro_driver =
 	0,0
 };
 
-struct GameDriver weststry_driver =
+struct GameDriver driver_weststry =
 {
 	__FILE__,
-	&bloodbro_driver,
+	&driver_bloodbro,
 	"weststry",
 	"West Story",
 	"1990",
@@ -696,12 +702,12 @@ struct GameDriver weststry_driver =
 	&weststry_machine_driver,
 	0,
 
-	weststry_rom,
+	rom_weststry,
 	gfx_untangle,0,
 	0,
 	0, /* sound_prom */
 
-	weststry_input_ports,
+	input_ports_weststry,
 
 	0,0,0,
 	ORIENTATION_DEFAULT,

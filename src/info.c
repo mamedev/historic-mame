@@ -323,6 +323,7 @@ static void print_game_rom(FILE* out, const struct GameDriver* game) {
 	}
 }
 
+#if 0
 static void print_game_sample(FILE* out, const struct GameDriver* game) {
 	if (game->samplenames != 0 && game->samplenames[0] != 0) {
 		int k = 0;
@@ -348,6 +349,8 @@ static void print_game_sample(FILE* out, const struct GameDriver* game) {
 		}
 	}
 }
+#endif
+
 
 static void print_game_micro(FILE* out, const struct GameDriver* game)
 {
@@ -420,7 +423,7 @@ static void print_game_video(FILE* out, const struct GameDriver* game)
 		showxy = 1;
 	}
 
-	if (game->orientation & ORIENTATION_SWAP_XY)
+	if (game->flags & ORIENTATION_SWAP_XY)
 	{
 		dx = driver->visible_area.max_y - driver->visible_area.min_y + 1;
 		dy = driver->visible_area.max_x - driver->visible_area.min_x + 1;
@@ -567,7 +570,7 @@ static void print_game_info(FILE* out, const struct GameDriver* game) {
 
 	if (game->rom) /* MESS */
 	print_game_rom(out,game);
-	print_game_sample(out,game);
+//	print_game_sample(out,game);
 	print_game_micro(out,game);
 	print_game_video(out,game);
 	print_game_sound(out,game);

@@ -372,7 +372,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 /*	PORT_DIPSETTING(    0x00, "1/1" ) */
 
 
-INPUT_PORTS_START( starjack_input_ports )
+INPUT_PORTS_START( starjack )
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -424,7 +424,7 @@ INPUT_PORTS_START( starjack_input_ports )
 	PORT_DIPSETTING(    0x00, "Hardest" )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( starjacs_input_ports )
+INPUT_PORTS_START( starjacs )
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -475,7 +475,7 @@ INPUT_PORTS_START( starjacs_input_ports )
 	PORT_DIPSETTING(    0x00, "Hardest" )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( regulus_input_ports )
+INPUT_PORTS_START( regulus )
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -528,7 +528,7 @@ INPUT_PORTS_START( regulus_input_ports )
 	PORT_DIPSETTING(    0x00, "Yes" )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( upndown_input_ports )
+INPUT_PORTS_START( upndown )
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -580,7 +580,7 @@ INPUT_PORTS_START( upndown_input_ports )
 	PORT_DIPSETTING(    0x00, "Hardest" )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( mrviking_input_ports )
+INPUT_PORTS_START( mrviking )
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -632,7 +632,7 @@ INPUT_PORTS_START( mrviking_input_ports )
 	PORT_DIPSETTING(    0x00, "Hard" )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( swat_input_ports )
+INPUT_PORTS_START( swat )
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -685,7 +685,7 @@ INPUT_PORTS_START( swat_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( flicky_input_ports )
+INPUT_PORTS_START( flicky )
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -736,7 +736,7 @@ INPUT_PORTS_START( flicky_input_ports )
 	PORT_DIPSETTING(    0x00, "Hardest?" )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( bullfgtj_input_ports )
+INPUT_PORTS_START( bullfgtj )
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -788,7 +788,7 @@ INPUT_PORTS_START( bullfgtj_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( pitfall2_input_ports )
+INPUT_PORTS_START( pitfall2 )
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -841,7 +841,7 @@ INPUT_PORTS_START( pitfall2_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( pitfallu_input_ports )
+INPUT_PORTS_START( pitfallu )
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -893,7 +893,7 @@ INPUT_PORTS_START( pitfallu_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( seganinj_input_ports )
+INPUT_PORTS_START( seganinj )
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON3 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -946,7 +946,7 @@ INPUT_PORTS_START( seganinj_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( imsorry_input_ports )
+INPUT_PORTS_START( imsorry )
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -998,7 +998,7 @@ INPUT_PORTS_START( imsorry_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( teddybb_input_ports )
+INPUT_PORTS_START( teddybb )
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -1050,7 +1050,7 @@ INPUT_PORTS_START( teddybb_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( hvymetal_input_ports )
+INPUT_PORTS_START( hvymetal )
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -1102,7 +1102,7 @@ INPUT_PORTS_START( hvymetal_input_ports )
 	PORT_DIPSETTING(    0x00, "Yes" )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( myhero_input_ports )
+INPUT_PORTS_START( myhero )
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -1154,7 +1154,7 @@ INPUT_PORTS_START( myhero_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( chplft_input_ports )
+INPUT_PORTS_START( chplft )
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -1207,7 +1207,7 @@ INPUT_PORTS_START( chplft_input_ports )
 	DSW1_PORT
 INPUT_PORTS_END
 
-INPUT_PORTS_START( fdwarrio_input_ports )
+INPUT_PORTS_START( fdwarrio )
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -1260,7 +1260,7 @@ INPUT_PORTS_START( fdwarrio_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( brain_input_ports )
+INPUT_PORTS_START( brain )
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -1313,7 +1313,7 @@ INPUT_PORTS_START( brain_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( wboy_input_ports )
+INPUT_PORTS_START( wboy )
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -1367,7 +1367,7 @@ INPUT_PORTS_START( wboy_input_ports )
 INPUT_PORTS_END
 
 /* same as wboy, additional Energy Consumption switch */
-INPUT_PORTS_START( wbdeluxe_input_ports )
+INPUT_PORTS_START( wbdeluxe )
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Has to be 0 otherwise the game resets */
 												/* if you die after level 1. */
@@ -1421,7 +1421,7 @@ INPUT_PORTS_START( wbdeluxe_input_ports )
 	PORT_DIPSETTING(    0x80, "Fast" )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( wboyu_input_ports )
+INPUT_PORTS_START( wboyu )
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -1496,7 +1496,7 @@ INPUT_PORTS_START( wboyu_input_ports )
 	PORT_DIPSETTING(    0x00, "Endless Game" )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( blockgal_input_ports )
+INPUT_PORTS_START( blockgal )
 	PORT_START	/* IN1 */
 	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_REVERSE, 60, 15, 0, 0, 0)
 
@@ -1564,7 +1564,7 @@ INPUT_PORTS_START( blockgal_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( tokisens_input_ports )
+INPUT_PORTS_START( tokisens )
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -1617,7 +1617,7 @@ INPUT_PORTS_START( tokisens_input_ports )
 	DSW1_PORT
 INPUT_PORTS_END
 
-INPUT_PORTS_START( wbml_input_ports )
+INPUT_PORTS_START( wbml )
 	PORT_START	/* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -2558,7 +2558,7 @@ ROM_START( hvymetal )
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
 	ROM_LOAD( "epr6787.120",  0x0000, 0x8000, 0xb64ac7f0 )
 
-	ROM_REGION(0x0300)	/* color proms */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "pr7036.3",     0x0000, 0x0100, 0x146f16fb ) /* palette red component */
 	ROM_LOAD( "pr7035.2",     0x0100, 0x0100, 0x50b201ed ) /* palette green component */
 	ROM_LOAD( "pr7034.1",     0x0200, 0x0100, 0xdfb5f139 ) /* palette blue component */
@@ -2700,7 +2700,7 @@ ROM_START( shtngmst )
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
 	ROM_LOAD( "epr7043",      0x0000, 0x8000, 0x99a368ab )
 
-	ROM_REGION(0x0300)	/* color proms */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "epr7113",      0x0000, 0x0100, 0x5c0e1360 ) /* palette red component */
 	ROM_LOAD( "epr7112",      0x0100, 0x0100, 0x46fbd351 ) /* palette green component */
 	ROM_LOAD( "epr7111",      0x0200, 0x0100, 0x8123b6b9 ) /* palette blue component */
@@ -2726,7 +2726,7 @@ ROM_START( chplft )
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
 	ROM_LOAD( "7130.126",     0x0000, 0x8000, 0x346af118 )
 
-	ROM_REGION(0x0300)	/* color proms */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "pr7119.20",    0x0000, 0x0100, 0xb2a8260f ) /* palette red component */
 	ROM_LOAD( "pr7118.14",    0x0100, 0x0100, 0x693e20c7 ) /* palette green component */
 	ROM_LOAD( "pr7117.8",     0x0200, 0x0100, 0x4124307e ) /* palette blue component */
@@ -2752,7 +2752,7 @@ ROM_START( chplftb )
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
 	ROM_LOAD( "7130.126",     0x0000, 0x8000, 0x346af118 )
 
-	ROM_REGION(0x0300)	/* color proms */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "pr7119.20",    0x0000, 0x0100, 0xb2a8260f ) /* palette red component */
 	ROM_LOAD( "pr7118.14",    0x0100, 0x0100, 0x693e20c7 ) /* palette green component */
 	ROM_LOAD( "pr7117.8",     0x0200, 0x0100, 0x4124307e ) /* palette blue component */
@@ -2778,7 +2778,7 @@ ROM_START( chplftbl )
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
 	ROM_LOAD( "7130.126",     0x0000, 0x8000, 0x346af118 )
 
-	ROM_REGION(0x0300)	/* color proms */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "pr7119.20",    0x0000, 0x0100, 0xb2a8260f ) /* palette red component */
 	ROM_LOAD( "pr7118.14",    0x0100, 0x0100, 0x693e20c7 ) /* palette green component */
 	ROM_LOAD( "pr7117.8",     0x0200, 0x0100, 0x4124307e ) /* palette blue component */
@@ -2828,7 +2828,10 @@ ROM_START( brain )
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
 	ROM_LOAD( "brain.120",    0x0000, 0x8000, 0xc7e50278 )
 
-	/* color PROMs *might* be missing */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
+	ROM_LOAD( "prom.3",       0x0000, 0x0100, 0x00000000 ) /* palette red component */
+	ROM_LOAD( "prom.2",       0x0100, 0x0100, 0x00000000 ) /* palette green component */
+	ROM_LOAD( "prom.1",       0x0200, 0x0100, 0x00000000 ) /* palette blue component */
 ROM_END
 
 ROM_START( wboy )
@@ -3028,7 +3031,7 @@ ROM_START( gardia )
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
 	ROM_LOAD( "epr10243.120", 0x0000, 0x4000, 0x87220660 )
 
-	ROM_REGION(0x0300)	/* color proms */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "bprom.3",      0x0000, 0x0100, 0x8eee0f72 ) /* palette red component */
 	ROM_LOAD( "bprom.2",      0x0100, 0x0100, 0x3e7babd7 ) /* palette green component */
 	ROM_LOAD( "bprom.1",      0x0200, 0x0100, 0x371c44a6 ) /* palette blue component */
@@ -3054,7 +3057,7 @@ ROM_START( gardiab )
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
 	ROM_LOAD( "epr10243.120", 0x0000, 0x4000, 0x87220660 )
 
-	ROM_REGION(0x0300)	/* color proms */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "bprom.3",      0x0000, 0x0100, 0x8eee0f72 ) /* palette red component */
 	ROM_LOAD( "bprom.2",      0x0100, 0x0100, 0x3e7babd7 ) /* palette green component */
 	ROM_LOAD( "bprom.1",      0x0200, 0x0100, 0x371c44a6 ) /* palette blue component */
@@ -3127,7 +3130,7 @@ ROM_START( tokisens )
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
 	ROM_LOAD( "epr10967.126", 0x0000, 0x8000, 0x97966bf2 )
 
-	ROM_REGION(0x0300)	/* color proms */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "bprom.20",     0x0000, 0x0100, 0x8eee0f72 ) /* palette red component */
 	ROM_LOAD( "bprom.14",     0x0100, 0x0100, 0x3e7babd7 ) /* palette green component */
 	ROM_LOAD( "bprom.8",      0x0200, 0x0100, 0x371c44a6 ) /* palette blue component */
@@ -3156,7 +3159,7 @@ ROM_START( wbml )
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
 	ROM_LOAD( "epr11037.126", 0x0000, 0x8000, 0x7a4ee585 )
 
-	ROM_REGION(0x0300)	/* color proms */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "pr11026.20",   0x0000, 0x0100, 0x27057298 )
 	ROM_LOAD( "pr11025.14",   0x0100, 0x0100, 0x41e4d86b )
 	ROM_LOAD( "pr11024.8",    0x0200, 0x0100, 0x08d71954 )
@@ -3182,7 +3185,7 @@ ROM_START( wbmlj )
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
 	ROM_LOAD( "epr11037.126", 0x0000, 0x8000, 0x7a4ee585 )
 
-	ROM_REGION(0x0300)	/* color proms */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "pr11026.20",   0x0000, 0x0100, 0x27057298 )
 	ROM_LOAD( "pr11025.14",   0x0100, 0x0100, 0x41e4d86b )
 	ROM_LOAD( "pr11024.8",    0x0200, 0x0100, 0x08d71954 )
@@ -3208,7 +3211,7 @@ ROM_START( wbmlj2 )
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
 	ROM_LOAD( "epr11037.126", 0x0000, 0x8000, 0x7a4ee585 )
 
-	ROM_REGION(0x0300)	/* color proms */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "pr11026.20",   0x0000, 0x0100, 0x27057298 )
 	ROM_LOAD( "pr11025.14",   0x0100, 0x0100, 0x41e4d86b )
 	ROM_LOAD( "pr11024.8",    0x0200, 0x0100, 0x08d71954 )
@@ -3237,7 +3240,7 @@ ROM_START( wbmlju )
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
 	ROM_LOAD( "epr11037.126", 0x0000, 0x8000, 0x7a4ee585 )
 
-	ROM_REGION(0x0300)	/* color proms */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "pr11026.20",   0x0000, 0x0100, 0x27057298 )
 	ROM_LOAD( "pr11025.14",   0x0100, 0x0100, 0x41e4d86b )
 	ROM_LOAD( "pr11024.8",    0x0200, 0x0100, 0x08d71954 )
@@ -3263,7 +3266,7 @@ ROM_START( dakkochn )
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
 	ROM_LOAD( "epr11229.126", 0x0000, 0x8000, 0xc11648d0 )
 
-	ROM_REGION(0x0300)	/* color proms */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "pr11219.20",   0x0000, 0x0100, 0x45e252d9 ) /* palette red component */
 	ROM_LOAD( "pr11218.14",   0x0100, 0x0100, 0x3eda3a1b ) /* palette green component */
 	ROM_LOAD( "pr11217.8",    0x0200, 0x0100, 0x49dbde88 ) /* palette blue component */
@@ -3289,7 +3292,7 @@ ROM_START( ufosensi )
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
 	ROM_LOAD( "epr11667.126", 0x0000, 0x8000, 0x110baba9 )
 
-	ROM_REGION(0x0300)	/* color proms */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "pr11656.20",   0x0000, 0x0100, 0x640740eb ) /* palette red component */
 	ROM_LOAD( "pr11655.14",   0x0100, 0x0100, 0xa0c3fa77 ) /* palette green component */
 	ROM_LOAD( "pr11654.8",    0x0200, 0x0100, 0xba624305 ) /* palette blue component */
@@ -4125,7 +4128,7 @@ static void tokisens_hisave(void)
 
 #define BASE_CREDITS "Jarek Parchanski\nNicola Salmoria\nMirko Buffoni\nRoberto Ventura (hardware info)"
 
-struct GameDriver starjack_driver =
+struct GameDriver driver_starjack =
 {
 	__FILE__,
 	0,
@@ -4138,22 +4141,22 @@ struct GameDriver starjack_driver =
 	&system1_small_machine_driver,
 	0,
 
-	starjack_rom,
+	rom_starjack,
 	0, 0,
 	0,
 	0,
 
-	starjack_input_ports,
+	input_ports_starjack,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 	starjack_hiload, starjack_hisave
 };
 
-struct GameDriver starjacs_driver =
+struct GameDriver driver_starjacs =
 {
 	__FILE__,
-	&starjack_driver,
+	&driver_starjack,
 	"starjacs",
 	"Star Jacker (Stern)",
 	"1983",
@@ -4163,19 +4166,19 @@ struct GameDriver starjacs_driver =
 	&system1_small_machine_driver,
 	0,
 
-	starjacs_rom,
+	rom_starjacs,
 	0, 0,
 	0,
 	0,
 
-	starjacs_input_ports,
+	input_ports_starjacs,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 	starjacs_hiload, starjacs_hisave
 };
 
-struct GameDriver regulus_driver =
+struct GameDriver driver_regulus =
 {
 	__FILE__,
 	0,
@@ -4188,22 +4191,22 @@ struct GameDriver regulus_driver =
 	&system1_machine_driver,
 	0,
 
-	regulus_rom,
+	rom_regulus,
 	0, regulus_decode,
 	0,
 	0,
 
-	regulus_input_ports,
+	input_ports_regulus,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 	regulus_hiload, regulus_hisave
 };
 
-struct GameDriver regulusu_driver =
+struct GameDriver driver_regulusu =
 {
 	__FILE__,
-	&regulus_driver,
+	&driver_regulus,
 	"regulusu",
 	"Regulus (not encrypted)",
 	"1983",
@@ -4213,19 +4216,19 @@ struct GameDriver regulusu_driver =
 	&system1_machine_driver,
 	0,
 
-	regulusu_rom,
+	rom_regulusu,
 	0, 0,
 	0,
 	0,
 
-	regulus_input_ports,
+	input_ports_regulus,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 	regulus_hiload, regulus_hisave
 };
 
-struct GameDriver upndown_driver =
+struct GameDriver driver_upndown =
 {
 	__FILE__,
 	0,
@@ -4238,19 +4241,19 @@ struct GameDriver upndown_driver =
 	&system1_machine_driver,
 	0,
 
-	upndown_rom,
+	rom_upndown,
 	0, 0,
 	0,
 	0,
 
-	upndown_input_ports,
+	input_ports_upndown,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 	upndown_hiload, upndown_hisave
 };
 
-struct GameDriver mrviking_driver =
+struct GameDriver driver_mrviking =
 {
 	__FILE__,
 	0,
@@ -4263,19 +4266,19 @@ struct GameDriver mrviking_driver =
 	&system1_small_machine_driver,
 	0,
 
-	mrviking_rom,
+	rom_mrviking,
 	0, mrviking_decode,
 	0,
 	0,
 
-	mrviking_input_ports,
+	input_ports_mrviking,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 	mrviking_hiload, mrviking_hisave
 };
 
-struct GameDriver swat_driver =
+struct GameDriver driver_swat =
 {
 	__FILE__,
 	0,
@@ -4288,19 +4291,19 @@ struct GameDriver swat_driver =
 	&system1_machine_driver,
 	0,
 
-	swat_rom,
+	rom_swat,
 	0, swat_decode,
 	0,
 	0,
 
-	swat_input_ports,
+	input_ports_swat,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 	swat_hiload, swat_hisave
 };
 
-struct GameDriver flicky_driver =
+struct GameDriver driver_flicky =
 {
 	__FILE__,
 	0,
@@ -4313,22 +4316,22 @@ struct GameDriver flicky_driver =
 	&system1_machine_driver,
 	0,
 
-	flicky_rom,
+	rom_flicky,
 	0, flicky_decode,
 	0,
 	0,
 
-	flicky_input_ports,
+	input_ports_flicky,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	flicky_hiload, flicky_hisave
 };
 
-struct GameDriver flicky2_driver =
+struct GameDriver driver_flicky2 =
 {
 	__FILE__,
-	&flicky_driver,
+	&driver_flicky,
 	"flicky2",
 	"Flicky (set 2)",
 	"1984",
@@ -4338,19 +4341,19 @@ struct GameDriver flicky2_driver =
 	&system1_machine_driver,
 	0,
 
-	flicky2_rom,
+	rom_flicky2,
 	0, flicky_decode,
 	0,
 	0,
 
-	flicky_input_ports,
+	input_ports_flicky,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	flicky_hiload, flicky_hisave
 };
 
-struct GameDriver bullfgtj_driver =
+struct GameDriver driver_bullfgtj =
 {
 	__FILE__,
 	0,
@@ -4363,19 +4366,19 @@ struct GameDriver bullfgtj_driver =
 	&system1_machine_driver,
 	0,
 
-	bullfgtj_rom,
+	rom_bullfgtj,
 	0, bullfgtj_decode,
 	0,
 	0,
 
-	bullfgtj_input_ports,
+	input_ports_bullfgtj,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	bullfgtj_hiload, bullfgtj_hisave
 };
 
-struct GameDriver pitfall2_driver =
+struct GameDriver driver_pitfall2 =
 {
 	__FILE__,
 	0,
@@ -4388,22 +4391,22 @@ struct GameDriver pitfall2_driver =
 	&pitfall2_machine_driver,
 	0,
 
-	pitfall2_rom,
+	rom_pitfall2,
 	0, pitfall2_decode,
 	0,
 	0,
 
-	pitfall2_input_ports,
+	input_ports_pitfall2,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	pitfall2_hiload, pitfall2_hisave
 };
 
-struct GameDriver pitfallu_driver =
+struct GameDriver driver_pitfallu =
 {
 	__FILE__,
-	&pitfall2_driver,
+	&driver_pitfall2,
 	"pitfallu",
 	"Pitfall II (not encrypted)",
 	"1985",
@@ -4413,19 +4416,19 @@ struct GameDriver pitfallu_driver =
 	&pitfall2_machine_driver,
 	0,
 
-	pitfallu_rom,
+	rom_pitfallu,
 	0, 0,
 	0,
 	0,
 
-	pitfallu_input_ports,
+	input_ports_pitfallu,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	pitfall2_hiload, pitfall2_hisave
 };
 
-struct GameDriver seganinj_driver =
+struct GameDriver driver_seganinj =
 {
 	__FILE__,
 	0,
@@ -4438,22 +4441,22 @@ struct GameDriver seganinj_driver =
 	&system1_machine_driver,
 	0,
 
-	seganinj_rom,
+	rom_seganinj,
 	0, seganinj_decode,
 	0,
 	0,
 
-	seganinj_input_ports,
+	input_ports_seganinj,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	seganinj_hiload, seganinj_hisave
 };
 
-struct GameDriver seganinu_driver =
+struct GameDriver driver_seganinu =
 {
 	__FILE__,
-	&seganinj_driver,
+	&driver_seganinj,
 	"seganinu",
 	"Sega Ninja (not encrypted)",
 	"1985",
@@ -4463,22 +4466,22 @@ struct GameDriver seganinu_driver =
 	&system1_machine_driver,
 	0,
 
-	seganinu_rom,
+	rom_seganinu,
 	0, 0,
 	0,
 	0,
 
-	seganinj_input_ports,
+	input_ports_seganinj,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	seganinj_hiload, seganinj_hisave
 };
 
-struct GameDriver nprinces_driver =
+struct GameDriver driver_nprinces =
 {
 	__FILE__,
-	&seganinj_driver,
+	&driver_seganinj,
 	"nprinces",
 	"Ninja Princess",
 	"1985",
@@ -4488,22 +4491,22 @@ struct GameDriver nprinces_driver =
 	&system1_machine_driver,
 	0,
 
-	nprinces_rom,
+	rom_nprinces,
 	0, nprinces_decode,
 	0,
 	0,
 
-	seganinj_input_ports,
+	input_ports_seganinj,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	seganinj_hiload, seganinj_hisave
 };
 
-struct GameDriver nprincsu_driver =
+struct GameDriver driver_nprincsu =
 {
 	__FILE__,
-	&seganinj_driver,
+	&driver_seganinj,
 	"nprincsu",
 	"Ninja Princess (not encrypted)",
 	"1985",
@@ -4513,22 +4516,22 @@ struct GameDriver nprincsu_driver =
 	&system1_machine_driver,
 	0,
 
-	nprincsu_rom,
+	rom_nprincsu,
 	0, 0,
 	0,
 	0,
 
-	seganinj_input_ports,
+	input_ports_seganinj,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	seganinj_hiload, seganinj_hisave
 };
 
-struct GameDriver nprincsb_driver =
+struct GameDriver driver_nprincsb =
 {
 	__FILE__,
-	&seganinj_driver,
+	&driver_seganinj,
 	"nprincsb",
 	"Ninja Princess (bootleg?)",
 	"1985",
@@ -4538,19 +4541,19 @@ struct GameDriver nprincsb_driver =
 	&system1_machine_driver,
 	0,
 
-	nprincsb_rom,
+	rom_nprincsb,
 	0, flicky_decode,
 	0,
 	0,
 
-	seganinj_input_ports,
+	input_ports_seganinj,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	seganinj_hiload, seganinj_hisave
 };
 
-struct GameDriver imsorry_driver =
+struct GameDriver driver_imsorry =
 {
 	__FILE__,
 	0,
@@ -4563,22 +4566,22 @@ struct GameDriver imsorry_driver =
 	&system1_machine_driver,
 	0,
 
-	imsorry_rom,
+	rom_imsorry,
 	0, imsorry_decode,
 	0,
 	0,
 
-	imsorry_input_ports,
+	input_ports_imsorry,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	imsorry_hiload, imsorry_hisave
 };
 
-struct GameDriver imsorryj_driver =
+struct GameDriver driver_imsorryj =
 {
 	__FILE__,
-	&imsorry_driver,
+	&driver_imsorry,
 	"imsorryj",
 	"I'm Sorry (Japan)",
 	"1985",
@@ -4588,19 +4591,19 @@ struct GameDriver imsorryj_driver =
 	&system1_machine_driver,
 	0,
 
-	imsorryj_rom,
+	rom_imsorryj,
 	0, imsorry_decode,
 	0,
 	0,
 
-	imsorry_input_ports,
+	input_ports_imsorry,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	imsorry_hiload, imsorry_hisave
 };
 
-struct GameDriver teddybb_driver =
+struct GameDriver driver_teddybb =
 {
 	__FILE__,
 	0,
@@ -4613,19 +4616,19 @@ struct GameDriver teddybb_driver =
 	&system1_machine_driver,
 	0,
 
-	teddybb_rom,
+	rom_teddybb,
 	0, teddybb_decode,
 	0,
 	0,
 
-	teddybb_input_ports,
+	input_ports_teddybb,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	teddybb_hiload, teddybb_hisave
 };
 
-struct GameDriver hvymetal_driver =
+struct GameDriver driver_hvymetal =
 {
 	__FILE__,
 	0,
@@ -4638,19 +4641,19 @@ struct GameDriver hvymetal_driver =
 	&hvymetal_machine_driver,
 	0,
 
-	hvymetal_rom,
+	rom_hvymetal,
 	0, hvymetal_decode,
 	0,
 	0,
 
-	hvymetal_input_ports,
+	input_ports_hvymetal,
 
-	PROM_MEMORY_REGION(4),0,0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	hvymetal_hiload, hvymetal_hisave
 };
 
-struct GameDriver myhero_driver =
+struct GameDriver driver_myhero =
 {
 	__FILE__,
 	0,
@@ -4663,22 +4666,22 @@ struct GameDriver myhero_driver =
 	&system1_machine_driver,
 	0,
 
-	myhero_rom,
+	rom_myhero,
 	0, 0,
 	0,
 	0,
 
-	myhero_input_ports,
+	input_ports_myhero,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	myhero_hiload, myhero_hisave
 };
 
-struct GameDriver myheroj_driver =
+struct GameDriver driver_myheroj =
 {
 	__FILE__,
-	&myhero_driver,
+	&driver_myhero,
 	"myheroj",
 	"Seishun Scandal (Japan)",
 	"1985",
@@ -4688,22 +4691,22 @@ struct GameDriver myheroj_driver =
 	&system1_machine_driver,
 	0,
 
-	myheroj_rom,
+	rom_myheroj,
 	0, myheroj_decode,
 	0,
 	0,
 
-	myhero_input_ports,
+	input_ports_myhero,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	myhero_hiload, myhero_hisave
 };
 
-struct GameDriver myherok_driver =
+struct GameDriver driver_myherok =
 {
 	__FILE__,
-	&myhero_driver,
+	&driver_myhero,
 	"myherok",
 	"My Hero (Korea)",
 	"1985",
@@ -4713,12 +4716,12 @@ struct GameDriver myherok_driver =
 	&system1_machine_driver,
 	0,
 
-	myherok_rom,
+	rom_myherok,
 	myherok_unmangle, myheroj_decode,	/* additional data and address line scrambling */
 	0,
 	0,
 
-	myhero_input_ports,
+	input_ports_myhero,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -4726,7 +4729,7 @@ struct GameDriver myherok_driver =
 };
 
 /* not working due to 8751 protection */
-struct GameDriver shtngmst_driver =
+struct GameDriver driver_shtngmst =
 {
 	__FILE__,
 	0,
@@ -4735,24 +4738,24 @@ struct GameDriver shtngmst_driver =
 	"1985",
 	"Sega",
 	BASE_CREDITS,
-	GAME_NOT_WORKING,
+	0,
 	&chplft_machine_driver,
 	0,
 
-	shtngmst_rom,
+	rom_shtngmst,
 	0, 0,
 	0,
 	0,
 
-	chplft_input_ports,
+	input_ports_chplft,
 
-	PROM_MEMORY_REGION(4),0,0,
-	ORIENTATION_DEFAULT,
+	0, 0, 0,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
 	0, 0
 };
 
 /* not working due to 8751 protection */
-struct GameDriver chplft_driver =
+struct GameDriver driver_chplft =
 {
 	__FILE__,
 	0,
@@ -4761,26 +4764,26 @@ struct GameDriver chplft_driver =
 	"1985",
 	"Sega",
 	BASE_CREDITS,
-	GAME_NOT_WORKING,
+	0,
 	&chplft_machine_driver,
 	0,
 
-	chplft_rom,
+	rom_chplft,
 	0, 0,
 	0,
 	0,
 
-	chplft_input_ports,
+	input_ports_chplft,
 
-	PROM_MEMORY_REGION(4),0,0,
-	ORIENTATION_DEFAULT,
+	0, 0, 0,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
 	chplft_hiload, chplft_hisave
 };
 
-struct GameDriver chplftb_driver =
+struct GameDriver driver_chplftb =
 {
 	__FILE__,
-	&chplft_driver,
+	&driver_chplft,
 	"chplftb",
 	"Choplifter (alternate)",
 	"1985",
@@ -4790,22 +4793,22 @@ struct GameDriver chplftb_driver =
 	&chplft_machine_driver,
 	0,
 
-	chplftb_rom,
+	rom_chplftb,
 	0, 0,
 	0,
 	0,
 
-	chplft_input_ports,
+	input_ports_chplft,
 
-	PROM_MEMORY_REGION(4),0,0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	chplft_hiload, chplft_hisave
 };
 
-struct GameDriver chplftbl_driver =
+struct GameDriver driver_chplftbl =
 {
 	__FILE__,
-	&chplft_driver,
+	&driver_chplft,
 	"chplftbl",
 	"Choplifter (bootleg)",
 	"1985",
@@ -4815,19 +4818,19 @@ struct GameDriver chplftbl_driver =
 	&chplft_machine_driver,
 	0,
 
-	chplftbl_rom,
+	rom_chplftbl,
 	0, 0,
 	0,
 	0,
 
-	chplft_input_ports,
+	input_ports_chplft,
 
-	PROM_MEMORY_REGION(4),0,0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	chplft_hiload, chplft_hisave
 };
 
-struct GameDriver fdwarrio_driver =
+struct GameDriver driver_fdwarrio =
 {
 	__FILE__,
 	0,
@@ -4840,19 +4843,19 @@ struct GameDriver fdwarrio_driver =
 	&system1_machine_driver,
 	0,
 
-	fdwarrio_rom,
+	rom_fdwarrio,
 	0, fdwarrio_decode,
 	0,
 	0,
 
-	fdwarrio_input_ports,
+	input_ports_fdwarrio,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	fdwarrio_hiload, imsorry_hisave
 };
 
-struct GameDriver brain_driver =
+struct GameDriver driver_brain =
 {
 	__FILE__,
 	0,
@@ -4861,23 +4864,23 @@ struct GameDriver brain_driver =
 	"1986",
 	"Coreland / Sega",
 	BASE_CREDITS,
-	GAME_WRONG_COLORS,	/* colors PROMs *might* be missing */
+	0,
 	&brain_machine_driver,
 	0,
 
-	brain_rom,
+	rom_brain,
 	0, 0,
 	0,
 	0,
 
-	brain_input_ports,
+	input_ports_brain,
 
 	0,0,0,
 	ORIENTATION_DEFAULT,
 	brain_hiload, brain_hisave
 };
 
-struct GameDriver wboy_driver =
+struct GameDriver driver_wboy =
 {
 	__FILE__,
 	0,
@@ -4890,22 +4893,22 @@ struct GameDriver wboy_driver =
 	&system1_machine_driver,
 	0,
 
-	wboy_rom,
+	rom_wboy,
 	0, hvymetal_decode,
 	0,
 	0,
 
-	wboy_input_ports,
+	input_ports_wboy,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	wboy_hiload, wboy_hisave
 };
 
-struct GameDriver wboy2_driver =
+struct GameDriver driver_wboy2 =
 {
 	__FILE__,
-	&wboy_driver,
+	&driver_wboy,
 	"wboy2",
 	"Wonder Boy (set 2)",
 	"1986",
@@ -4915,47 +4918,47 @@ struct GameDriver wboy2_driver =
 	&system1_machine_driver,
 	0,
 
-	wboy2_rom,
+	rom_wboy2,
 	0, hvymetal_decode,
 	0,
 	0,
 
-	wboy_input_ports,
+	input_ports_wboy,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	wboy_hiload, wboy_hisave
 };
 
-struct GameDriver wboy3_driver =
+struct GameDriver driver_wboy3 =
 {
 	__FILE__,
-	&wboy_driver,
+	&driver_wboy,
 	"wboy3",
 	"Wonder Boy (set 3)",
 	"????",
 	"?????",
 	BASE_CREDITS,
-	GAME_NOT_WORKING,
+	0,
 	&system1_machine_driver,
 	0,
 
-	wboy3_rom,
+	rom_wboy3,
 	0, wboy3_decode,
 	0,
 	0,
 
-	wboy_input_ports,
+	input_ports_wboy,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
 	wboy_hiload, wboy_hisave
 };
 
-struct GameDriver wboy4_driver =
+struct GameDriver driver_wboy4 =
 {
 	__FILE__,
-	&wboy_driver,
+	&driver_wboy,
 	"wboy4",
 	"Wonder Boy (set 4)",
 	"1986",
@@ -4965,22 +4968,22 @@ struct GameDriver wboy4_driver =
 	&system1_machine_driver,
 	0,
 
-	wboy4_rom,
+	rom_wboy4,
 	0, wboy4_decode,
 	0,
 	0,
 
-	wboy_input_ports,
+	input_ports_wboy,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	wboy_hiload, wboy_hisave
 };
 
-struct GameDriver wboyu_driver =
+struct GameDriver driver_wboyu =
 {
 	__FILE__,
-	&wboy_driver,
+	&driver_wboy,
 	"wboyu",
 	"Wonder Boy (not encrypted)",
 	"1986",
@@ -4990,22 +4993,22 @@ struct GameDriver wboyu_driver =
 	&system1_machine_driver,
 	0,
 
-	wboyu_rom,
+	rom_wboyu,
 	0, 0,
 	0,
 	0,
 
-	wboyu_input_ports,
+	input_ports_wboyu,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	wboy_hiload, wboy_hisave
 };
 
-struct GameDriver wboy4u_driver =
+struct GameDriver driver_wboy4u =
 {
 	__FILE__,
-	&wboy_driver,
+	&driver_wboy,
 	"wboy4u",
 	"Wonder Boy (set 4 not encrypted)",
 	"1986",
@@ -5015,22 +5018,22 @@ struct GameDriver wboy4u_driver =
 	&system1_machine_driver,
 	0,
 
-	wboy4u_rom,
+	rom_wboy4u,
 	0, 0,
 	0,
 	0,
 
-	wboy_input_ports,
+	input_ports_wboy,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	wboy_hiload, wboy_hisave
 };
 
-struct GameDriver wbdeluxe_driver =
+struct GameDriver driver_wbdeluxe =
 {
 	__FILE__,
-	&wboy_driver,
+	&driver_wboy,
 	"wbdeluxe",
 	"Wonder Boy Deluxe",
 	"1986",
@@ -5040,19 +5043,19 @@ struct GameDriver wbdeluxe_driver =
 	&system1_machine_driver,
 	0,
 
-	wbdeluxe_rom,
+	rom_wbdeluxe,
 	0, 0,
 	0,
 	0,
 
-	wbdeluxe_input_ports,
+	input_ports_wbdeluxe,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	wbdeluxe_hiload, wbdeluxe_hisave
 };
 
-struct GameDriver gardia_driver =
+struct GameDriver driver_gardia =
 {
 	__FILE__,
 	0,
@@ -5061,48 +5064,48 @@ struct GameDriver gardia_driver =
 	"1986",
 	"Sega / Coreland",
 	BASE_CREDITS,
-	GAME_NOT_WORKING,
+	0,
 	&brain_machine_driver,
 	0,
 
-	gardia_rom,
+	rom_gardia,
 	0, gardia_decode,
 	0,
 	0,
 
-	wboy_input_ports,
+	input_ports_wboy,
 
-	PROM_MEMORY_REGION(4),0,0,
-	ORIENTATION_ROTATE_270,
+	0, 0, 0,
+	ORIENTATION_ROTATE_270 | GAME_NOT_WORKING,
 	0, 0
 };
 
-struct GameDriver gardiab_driver =
+struct GameDriver driver_gardiab =
 {
 	__FILE__,
-	&gardia_driver,
+	&driver_gardia,
 	"gardiab",
 	"Gardia (bootleg)",
 	"1986",
 	"bootleg",
 	BASE_CREDITS,
-	GAME_NOT_WORKING,
+	0,
 	&brain_machine_driver,
 	0,
 
-	gardiab_rom,
+	rom_gardiab,
 	0, gardia_decode,
 	0,
 	0,
 
-	wboy_input_ports,
+	input_ports_wboy,
 
-	PROM_MEMORY_REGION(4),0,0,
-	ORIENTATION_ROTATE_270,
+	0, 0, 0,
+	ORIENTATION_ROTATE_270 | GAME_NOT_WORKING,
 	0, 0
 };
 
-struct GameDriver blockgal_driver =
+struct GameDriver driver_blockgal =
 {
 	__FILE__,
 	0,
@@ -5111,48 +5114,48 @@ struct GameDriver blockgal_driver =
 	"1987",
 	"Sega / Vic Tokai",
 	BASE_CREDITS,
-	GAME_NOT_WORKING,
+	0,
 	&system1_machine_driver,
 	0,
 
-	blockgal_rom,
+	rom_blockgal,
 	0, 0,
 	0,
 	0,
 
-	blockgal_input_ports,
+	input_ports_blockgal,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ORIENTATION_ROTATE_90 | GAME_NOT_WORKING,
 	0, 0
 };
 
-struct GameDriver blckgalb_driver =
+struct GameDriver driver_blckgalb =
 {
 	__FILE__,
-	&blockgal_driver,
+	&driver_blockgal,
 	"blckgalb",
 	"Block Gal (bootleg)",
 	"1987",
 	"bootleg",
 	BASE_CREDITS,
-	GAME_NOT_WORKING,
+	0,
 	&system1_machine_driver,
 	0,
 
-	blckgalb_rom,
+	rom_blckgalb,
 	0, blckgalb_decode,
 	0,
 	0,
 
-	blockgal_input_ports,
+	input_ports_blockgal,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ORIENTATION_ROTATE_90 | GAME_NOT_WORKING,
 	0, 0
 };
 
-struct GameDriver tokisens_driver =
+struct GameDriver driver_tokisens =
 {
 	__FILE__,
 	0,
@@ -5165,19 +5168,19 @@ struct GameDriver tokisens_driver =
 	&wbml_machine_driver,
 	0,
 
-	tokisens_rom,
+	rom_tokisens,
 	0, 0,
 	0,
 	0,
 
-	tokisens_input_ports,
+	input_ports_tokisens,
 
-	PROM_MEMORY_REGION(4),0,0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 	tokisens_hiload,tokisens_hisave
 };
 
-struct GameDriver wbml_driver =
+struct GameDriver driver_wbml =
 {
 	__FILE__,
 	0,
@@ -5190,72 +5193,72 @@ struct GameDriver wbml_driver =
 	&wbml_machine_driver,
 	0,
 
-	wbml_rom,
+	rom_wbml,
 	0, wbml_decode,
 	0,
 	0,
 
-	wbml_input_ports,
+	input_ports_wbml,
 
-	PROM_MEMORY_REGION(4), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	wbml_hiload, wbml_hisave
 };
 
-struct GameDriver wbmlj_driver =
+struct GameDriver driver_wbmlj =
 {
 	__FILE__,
-	&wbml_driver,
+	&driver_wbml,
 	"wbmlj",
 	"Wonder Boy in Monster Land (Japan set 1)",
 	"1987",
 	"Sega / Westone",
 	BASE_CREDITS,
-	GAME_NOT_WORKING,
+	0,
 	&wbml_machine_driver,
 	0,
 
-	wbmlj_rom,
+	rom_wbmlj,
 	0, 0,
 	0,
 	0,
 
-	wbml_input_ports,
+	input_ports_wbml,
 
-	PROM_MEMORY_REGION(4), 0, 0,
-	ORIENTATION_DEFAULT,
+	0, 0, 0,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
 	wbml_hiload, wbml_hisave
 };
 
-struct GameDriver wbmlj2_driver =
+struct GameDriver driver_wbmlj2 =
 {
 	__FILE__,
-	&wbml_driver,
+	&driver_wbml,
 	"wbmlj2",
 	"Wonder Boy in Monster Land (Japan set 2)",
 	"1987",
 	"Sega / Westone",
 	BASE_CREDITS,
-	GAME_NOT_WORKING,
+	0,
 	&wbml_machine_driver,
 	0,
 
-	wbmlj2_rom,
+	rom_wbmlj2,
 	0, 0,
 	0,
 	0,
 
-	wbml_input_ports,
+	input_ports_wbml,
 
-	PROM_MEMORY_REGION(4), 0, 0,
-	ORIENTATION_DEFAULT,
+	0, 0, 0,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
 	wbml_hiload, wbml_hisave
 };
 
-struct GameDriver wbmlju_driver =
+struct GameDriver driver_wbmlju =
 {
 	__FILE__,
-	&wbml_driver,
+	&driver_wbml,
 	"wbmlju",
 	"Wonder Boy in Monster Land (Japan not encrypted)",
 	"1987",
@@ -5265,19 +5268,19 @@ struct GameDriver wbmlju_driver =
 	&wbml_machine_driver,
 	0,
 
-	wbmlju_rom,
+	rom_wbmlju,
 	0, wbml_decode,
 	0,
 	0,
 
-	wbml_input_ports,
+	input_ports_wbml,
 
-	PROM_MEMORY_REGION(4), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	wbml_hiload, wbml_hisave
 };
 
-struct GameDriver dakkochn_driver =
+struct GameDriver driver_dakkochn =
 {
 	__FILE__,
 	0,
@@ -5286,23 +5289,23 @@ struct GameDriver dakkochn_driver =
 	"1987",
 	"Sega",
 	BASE_CREDITS,
-	GAME_NOT_WORKING,
+	0,
 	&chplft_machine_driver,
 	0,
 
-	dakkochn_rom,
+	rom_dakkochn,
 	0, 0,
 	0,
 	0,
 
-	chplft_input_ports,
+	input_ports_chplft,
 
-	PROM_MEMORY_REGION(4),0,0,
-	ORIENTATION_DEFAULT,
+	0, 0, 0,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
 	0, 0
 };
 
-struct GameDriver ufosensi_driver =
+struct GameDriver driver_ufosensi =
 {
 	__FILE__,
 	0,
@@ -5311,18 +5314,18 @@ struct GameDriver ufosensi_driver =
 	"1988",
 	"Sega",
 	BASE_CREDITS,
-	GAME_NOT_WORKING,
+	0,
 	&chplft_machine_driver,
 	0,
 
-	ufosensi_rom,
+	rom_ufosensi,
 	0, 0,
 	0,
 	0,
 
-	chplft_input_ports,
+	input_ports_chplft,
 
-	PROM_MEMORY_REGION(4),0,0,
-	ORIENTATION_DEFAULT,
+	0, 0, 0,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
 	0, 0
 };

@@ -61,6 +61,7 @@
 
 #include "driver.h"
 #include "cpu/m6502/m6502.h"
+#include "vidhrdw/generic.h"
 
 
 int  leprechn_vh_start(void);
@@ -69,8 +70,6 @@ void leprechn_vh_stop(void);
 void leprechn_graphics_command_w(int offset,int data);
 int  leprechn_graphics_data_r(int offset);
 void leprechn_graphics_data_w(int offset,int data);
-
-void leprechn_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
 void leprechn_input_port_select_w(int offset,int data);
 int  leprechn_input_port_r(int offset);
@@ -140,7 +139,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ -1 }  /* end of table */
 };
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( leprechn )
 	// All of these ports are read indirectly through 2800/2801
 	PORT_START      /* Input Port 0 */
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_TILT ) // This is called "Slam" in the game
@@ -297,7 +296,7 @@ static struct MachineDriver leprechn_machine_driver =
 	0,
 	leprechn_vh_start,
 	leprechn_vh_stop,
-	leprechn_vh_screenrefresh,
+	generic_bitmapped_vh_screenrefresh,
 
 	/* sound hardware */
 	0,0,0,0,
@@ -395,7 +394,7 @@ static void hisave(void)
 
 
 
-struct GameDriver leprechn_driver =
+struct GameDriver driver_leprechn =
 {
 	__FILE__,
 	0,
@@ -408,12 +407,12 @@ struct GameDriver leprechn_driver =
 	&leprechn_machine_driver,
 	0,
 
-	leprechn_rom,
+	rom_leprechn,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	input_ports,
+	input_ports_leprechn,
 
 	0, 0, 0,
 
@@ -422,10 +421,10 @@ struct GameDriver leprechn_driver =
 	hiload, hisave
 };
 
-struct GameDriver potogold_driver =
+struct GameDriver driver_potogold =
 {
 	__FILE__,
-	&leprechn_driver,
+	&driver_leprechn,
 	"potogold",
 	"Pot of Gold",
 	"1982",
@@ -435,12 +434,12 @@ struct GameDriver potogold_driver =
 	&leprechn_machine_driver,
 	0,
 
-	potogold_rom,
+	rom_potogold,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	input_ports,
+	input_ports_leprechn,
 
 	0, 0, 0,
 

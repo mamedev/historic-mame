@@ -87,7 +87,7 @@ unsigned char *starfire_ram;
 static struct MemoryReadAddress starfire_readmem[] =
 {
 	{ 0x0000, 0x57ff, MRA_ROM },
-	{ 0x8000, 0x83ff, MRA_RAM, &starfire_ram },
+	{ 0x8000, 0x83ff, MRA_RAM },
 	{ 0x8400, 0x97ff, starfire_shadow_r },
 	{ 0x9800, 0x9fff, starfire_input_r },
 	{ 0xa000, 0xbfff, starfire_colorram_r },
@@ -97,7 +97,7 @@ static struct MemoryReadAddress starfire_readmem[] =
 
 static struct MemoryWriteAddress starfire_writemem[] =
 {
-	{ 0x8000, 0x83ff, MWA_RAM },
+	{ 0x8000, 0x83ff, MWA_RAM, &starfire_ram },
 	{ 0x8400, 0x8fff, starfire_shadow_w },
 	{ 0x9000, 0x9fff, starfire_output_w },
 	{ 0xa000, 0xbfff, starfire_colorram_w },
@@ -108,7 +108,7 @@ static struct MemoryWriteAddress starfire_writemem[] =
 static struct MemoryReadAddress fireone_readmem[] =
 {
 	{ 0x0000, 0x6fff, MRA_ROM },
-	{ 0x8000, 0x83ff, MRA_RAM, &starfire_ram },
+	{ 0x8000, 0x83ff, MRA_RAM },
 	{ 0x8400, 0x97ff, starfire_shadow_r },
 	{ 0x9800, 0x9fff, fireone_input_r },
 	{ 0xa000, 0xbfff, starfire_colorram_r },
@@ -118,7 +118,7 @@ static struct MemoryReadAddress fireone_readmem[] =
 
 static struct MemoryWriteAddress fireone_writemem[] =
 {
-	{ 0x8000, 0x83ff, MWA_RAM },
+	{ 0x8000, 0x83ff, MWA_RAM, &starfire_ram },
 	{ 0x8400, 0x8fff, starfire_shadow_w },
 	{ 0x9000, 0x9fff, fireone_output_w },
 	{ 0xa000, 0xbfff, starfire_colorram_w },
@@ -127,7 +127,7 @@ static struct MemoryWriteAddress fireone_writemem[] =
 };
 
 
-INPUT_PORTS_START( starfire_input_ports )
+INPUT_PORTS_START( starfire )
 	PORT_START      /* DSW0 */
 	PORT_DIPNAME( 0x03, 0x00, "Time" )
 	PORT_DIPSETTING(    0x00, "90 Sec" )
@@ -170,7 +170,7 @@ INPUT_PORTS_START( starfire_input_ports )
 	PORT_BITX( 0xFF, 0x00, IP_ACTIVE_HIGH | IPF_TOGGLE, "Throttle", KEYCODE_Z, IP_JOY_NONE )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( fireone_input_ports )
+INPUT_PORTS_START( fireone )
 	PORT_START      /* DSW0 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x03, "2 Coins/1 Player" )
@@ -323,7 +323,7 @@ ROM_START( fireone )
         ROM_LOAD( "fo-ic18.1c",     0x6800, 0x0800, 0x771ee5ba )
 ROM_END
 
-struct GameDriver starfire_driver =
+struct GameDriver driver_starfire =
 {
 	__FILE__,
 	0,
@@ -336,19 +336,19 @@ struct GameDriver starfire_driver =
 	&starfire_machine_driver,
 	0,
 
-	starfire_rom,
+	rom_starfire,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	starfire_input_ports,
+	input_ports_starfire,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	0,0
 };
 
-struct GameDriver fireone_driver =
+struct GameDriver driver_fireone =
 {
 	__FILE__,
 	0,
@@ -361,12 +361,12 @@ struct GameDriver fireone_driver =
 	&fireone_machine_driver,
 	0,
 
-	fireone_rom,
+	rom_fireone,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	fireone_input_ports,
+	input_ports_fireone,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

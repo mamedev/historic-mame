@@ -40,7 +40,6 @@ void trackfld_sound_w(int offset , int data);
 int hyprolyb_speech_r(int offset);
 void hyprolyb_ADPCM_data_w(int offset , int data);
 
-extern struct VLM5030interface konami_vlm5030_interface;
 extern struct SN76496interface konami_sn76496_interface;
 extern struct DACinterface konami_dac_interface;
 extern struct ADPCMinterface hyprolyb_adpcm_interface;
@@ -163,7 +162,7 @@ static struct MemoryWriteAddress hyprolyb_sound_writemem[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( trackfld )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -310,6 +309,16 @@ static const char *trackfld_sample_names[] =
 	0
 };
 
+struct VLM5030interface trackfld_vlm5030_interface =
+{
+    3580000,    /* master clock  */
+    255,        /* volume        */
+    4,         /* memory region  */
+    0,         /* memory size    */
+    0,         /* VCU            */
+	trackfld_sample_names
+};
+
 
 
 static struct MachineDriver machine_driver =
@@ -360,7 +369,7 @@ static struct MachineDriver machine_driver =
 		},
 		{
 			SOUND_VLM5030,
-			&konami_vlm5030_interface
+			&trackfld_vlm5030_interface
 		}
 	}
 };
@@ -445,7 +454,7 @@ ROM_START( trackfld )
 	ROM_LOAD( "c13_d08.bin",  0xa000, 0x2000, 0xd9faf183 )
 	ROM_LOAD( "c14_d09.bin",  0xc000, 0x2000, 0x5886c802 )
 
-	ROM_REGION(0x0220)    /* color/lookup proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "tfprom.1",     0x0000, 0x0020, 0xd55f30b5 ) /* palette */
 	ROM_LOAD( "tfprom.3",     0x0020, 0x0100, 0xd2ba4d32 ) /* sprite lookup table */
 	ROM_LOAD( "tfprom.2",     0x0120, 0x0100, 0x053e5861 ) /* char lookup table */
@@ -474,7 +483,7 @@ ROM_START( trackflc )
 	ROM_LOAD( "c13_d08.bin",  0xa000, 0x2000, 0xd9faf183 )
 	ROM_LOAD( "c14_d09.bin",  0xc000, 0x2000, 0x5886c802 )
 
-	ROM_REGION(0x0220)    /* color/lookup proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "tfprom.1",     0x0000, 0x0020, 0xd55f30b5 ) /* palette */
 	ROM_LOAD( "tfprom.3",     0x0020, 0x0100, 0xd2ba4d32 ) /* sprite lookup table */
 	ROM_LOAD( "tfprom.2",     0x0120, 0x0100, 0x053e5861 ) /* char lookup table */
@@ -503,7 +512,7 @@ ROM_START( hyprolym )
 	ROM_LOAD( "c13_d08.bin",  0xa000, 0x2000, 0xd9faf183 )
 	ROM_LOAD( "c14_d09.bin",  0xc000, 0x2000, 0x5886c802 )
 
-	ROM_REGION(0x0220)    /* color/lookup proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "tfprom.1",     0x0000, 0x0020, 0xd55f30b5 ) /* palette */
 	ROM_LOAD( "tfprom.3",     0x0020, 0x0100, 0xd2ba4d32 ) /* sprite lookup table */
 	ROM_LOAD( "tfprom.2",     0x0120, 0x0100, 0x053e5861 ) /* char lookup table */
@@ -532,7 +541,7 @@ ROM_START( hyprolyb )
 	ROM_LOAD( "c13_d08.bin",  0xa000, 0x2000, 0xd9faf183 )
 	ROM_LOAD( "c14_d09.bin",  0xc000, 0x2000, 0x5886c802 )
 
-	ROM_REGION(0x0220)    /* color/lookup proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "tfprom.1",     0x0000, 0x0020, 0xd55f30b5 ) /* palette */
 	ROM_LOAD( "tfprom.3",     0x0020, 0x0100, 0xd2ba4d32 ) /* sprite lookup table */
 	ROM_LOAD( "tfprom.2",     0x0120, 0x0100, 0x053e5861 ) /* char lookup table */
@@ -652,7 +661,7 @@ static void hisave(void)
 
 
 
-struct GameDriver trackfld_driver =
+struct GameDriver driver_trackfld =
 {
 	__FILE__,
 	0,
@@ -665,24 +674,24 @@ struct GameDriver trackfld_driver =
 	&machine_driver,
 	0,
 
-	trackfld_rom,
+	rom_trackfld,
 	0, trackfld_decode,
-	trackfld_sample_names,
+	0,
 
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_trackfld,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };
 
-struct GameDriver trackflc_driver =
+struct GameDriver driver_trackflc =
 {
 	__FILE__,
-	&trackfld_driver,
+	&driver_trackfld,
 	"trackflc",
 	"Track & Field (Centuri)",
 	"1983",
@@ -692,24 +701,24 @@ struct GameDriver trackflc_driver =
 	&machine_driver,
 	0,
 
-	trackflc_rom,
+	rom_trackflc,
 	0, trackfld_decode,
-	trackfld_sample_names,
+	0,
 
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_trackfld,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };
 
-struct GameDriver hyprolym_driver =
+struct GameDriver driver_hyprolym =
 {
 	__FILE__,
-	&trackfld_driver,
+	&driver_trackfld,
 	"hyprolym",
 	"Hyper Olympic",
 	"1983",
@@ -719,23 +728,23 @@ struct GameDriver hyprolym_driver =
 	&machine_driver,
 	0,
 
-	hyprolym_rom,
+	rom_hyprolym,
 	0, trackfld_decode,
-	trackfld_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_trackfld,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };
 
-struct GameDriver hyprolyb_driver =
+struct GameDriver driver_hyprolyb =
 {
 	__FILE__,
-	&trackfld_driver,
+	&driver_trackfld,
 	"hyprolyb",
 	"Hyper Olympic (bootleg)",
 	"1983",
@@ -745,14 +754,14 @@ struct GameDriver hyprolyb_driver =
 	&hyprolyb_machine_driver,
 	0,
 
-	hyprolyb_rom,
+	rom_hyprolyb,
 	0, trackfld_decode,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_trackfld,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave

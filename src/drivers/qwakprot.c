@@ -93,7 +93,7 @@ static struct MemoryWriteAddress writemem[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( qwakprot )
 	PORT_START	/* IN0 */
 	PORT_BIT ( 0x40, IP_ACTIVE_LOW, IPT_JOYSTICK_UP )
 	PORT_BIT ( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )			/* ??? */
@@ -316,7 +316,7 @@ static void hisave(void)
 
 ***************************************************************************/
 
-struct GameDriver qwakprot_driver =
+struct GameDriver driver_qwakprot =
 {
 	__FILE__,
 	0,
@@ -329,12 +329,12 @@ struct GameDriver qwakprot_driver =
 	&machine_driver,
 	0,
 
-	qwakprot_rom,
+	rom_qwakprot,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_qwakprot,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,

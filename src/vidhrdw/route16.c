@@ -12,6 +12,7 @@
 unsigned char *route16_sharedram;
 unsigned char *route16_videoram1;
 unsigned char *route16_videoram2;
+int route16_videoram_size;
 
 static struct osd_bitmap *tmpbitmap1;
 static struct osd_bitmap *tmpbitmap2;
@@ -142,12 +143,6 @@ int route16_vh_start(void)
 	video_remap_1 = 1;
 	video_remap_2 = 1;
 
-	/* Since we only modify the bitmap if the video ram contents changes,
-	   we need to initialize it to colors corresponding to the zeroed
-	   out video ram. */
-	fillbitmap(tmpbitmap1,Machine->pens[0],0);
-	fillbitmap(tmpbitmap2,Machine->pens[4],0);
-
 	return 0;
 }
 
@@ -194,7 +189,10 @@ void route16_out1_w(int offset,int data)
 	video_disable_2 = ((data & 0x02) << 6 ) && route16_hardware;
 	video_color_select_2 = ((data & 0x1f) << 2);
 
-	video_flip = (data & 0x20) >> 5;
+	if (video_flip != ((data & 0x20) >> 5))
+	{
+		video_flip = (data & 0x20) >> 5;
+	}
 
 	video_remap_2 = 1;
 	last_write = data;
@@ -244,8 +242,6 @@ int route16_videoram2_r(int offset)
 ***************************************************************************/
 void route16_videoram1_w(int offset,int data)
 {
-	if (route16_videoram1[offset] == data) return;
-
 	route16_videoram1[offset] = data;
 
 	common_videoram_w(offset, data, 0, tmpbitmap1);
@@ -256,8 +252,6 @@ void route16_videoram1_w(int offset,int data)
 ***************************************************************************/
 void route16_videoram2_w(int offset,int data)
 {
-	if (route16_videoram2[offset] == data) return;
-
 	route16_videoram2[offset] = data;
 
 	common_videoram_w(offset, data, 4, tmpbitmap2);
@@ -271,55 +265,33 @@ static void common_videoram_w(int offset,int data,
 {
 	int x, y, color1, color2, color3, color4;
 
-	x = (offset & 0xffc0) >> 6;
-	y = ((offset & 0x3f) << 2);
+	x = ((offset & 0x3f) << 2);
+	y = (offset & 0xffc0) >> 6;
 
-	if (Machine->orientation & ORIENTATION_FLIP_X )
+	if (video_flip)
 	{
-		x ^= 0xff ;
+		x = 255 - x;
+		y = 255 - y;
 	}
 
-	if (Machine->orientation & ORIENTATION_FLIP_Y )
-	{
-		y ^= 0xff ;
-		color1 = ((data & 0x80) >> 6) | ((data & 0x08) >> 3);
-		color2 = ((data & 0x40) >> 5) | ((data & 0x04) >> 2);
-		color3 = ((data & 0x20) >> 4) | ((data & 0x02) >> 1);
-		color4 = ((data & 0x10) >> 3) | ((data & 0x01)     );
-	}
-	else
-	{
-		color4 = ((data & 0x80) >> 6) | ((data & 0x08) >> 3);
-		color3 = ((data & 0x40) >> 5) | ((data & 0x04) >> 2);
-		color2 = ((data & 0x20) >> 4) | ((data & 0x02) >> 1);
-		color1 = ((data & 0x10) >> 3) | ((data & 0x01)     );
-	}
+	color4 = ((data & 0x80) >> 6) | ((data & 0x08) >> 3);
+	color3 = ((data & 0x40) >> 5) | ((data & 0x04) >> 2);
+	color2 = ((data & 0x20) >> 4) | ((data & 0x02) >> 1);
+	color1 = ((data & 0x10) >> 3) | ((data & 0x01)     );
 
-	if (Machine->orientation & ORIENTATION_SWAP_XY )
+	if (video_flip)
 	{
-		bitmap->line[y  ][x] = Machine->pens[color4 | coloroffset];
-		bitmap->line[y-1][x] = Machine->pens[color3 | coloroffset];
-		bitmap->line[y-2][x] = Machine->pens[color2 | coloroffset];
-		bitmap->line[y-3][x] = Machine->pens[color1 | coloroffset];
-
-		// flip?
-		if (video_flip)
-			osd_mark_dirty(255-x,255-y,255-x,258-y,0);
-		else
-			osd_mark_dirty(x,y-3,x,y,0);
+		plot_pixel(bitmap, x  , y, Machine->pens[color1 | coloroffset]);
+		plot_pixel(bitmap, x-1, y, Machine->pens[color2 | coloroffset]);
+		plot_pixel(bitmap, x-2, y, Machine->pens[color3 | coloroffset]);
+		plot_pixel(bitmap, x-3, y, Machine->pens[color4 | coloroffset]);
 	}
 	else
 	{
-		bitmap->line[x][y  ] = Machine->pens[color4 | coloroffset];
-		bitmap->line[x][y-1] = Machine->pens[color3 | coloroffset];
-		bitmap->line[x][y-2] = Machine->pens[color2 | coloroffset];
-		bitmap->line[x][y-3] = Machine->pens[color1 | coloroffset];
-
-		// flip?
-		if (video_flip)
-			osd_mark_dirty(255-y,255-x,255-y,258-x,0);
-		else
-			osd_mark_dirty(y-3,x,y,x,0);
+		plot_pixel(bitmap, x  , y, Machine->pens[color1 | coloroffset]);
+		plot_pixel(bitmap, x+1, y, Machine->pens[color2 | coloroffset]);
+		plot_pixel(bitmap, x+2, y, Machine->pens[color3 | coloroffset]);
+		plot_pixel(bitmap, x+3, y, Machine->pens[color4 | coloroffset]);
 	}
 }
 
@@ -332,44 +304,50 @@ static void common_videoram_w(int offset,int data,
 ***************************************************************************/
 void route16_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	palette_recalc();
-
 	if (video_remap_1)
 	{
-		osd_mark_dirty(0,0,256,256,0);
-
 		modify_pen(0, video_color_select_1 + 0);
 		modify_pen(1, video_color_select_1 + 1);
 		modify_pen(2, video_color_select_1 + 2);
 		modify_pen(3, video_color_select_1 + 3);
-
-		video_remap_1 = 0;
 	}
 
 	if (video_remap_2)
 	{
-		osd_mark_dirty(0,0,256,256,0);
-
 		modify_pen(4, video_color_select_2 + 0);
 		modify_pen(5, video_color_select_2 + 1);
 		modify_pen(6, video_color_select_2 + 2);
 		modify_pen(7, video_color_select_2 + 3);
-
-		video_remap_2 = 0;
 	}
+
+
+	if (palette_recalc() || video_remap_1 || video_remap_2)
+	{
+		int offs;
+
+		// redraw bitmaps
+		for (offs = 0; offs < route16_videoram_size; offs++)
+		{
+			route16_videoram1_w(offs, route16_videoram1[offs]);
+			route16_videoram2_w(offs, route16_videoram2[offs]);
+		}
+	}
+
+	video_remap_1 = 0;
+	video_remap_2 = 0;
 
 
 	if (!video_disable_2)
 	{
-		copybitmap(bitmap,tmpbitmap2,video_flip,video_flip,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		copybitmap(bitmap,tmpbitmap2,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 	}
 
 	if (!video_disable_1)
 	{
 		if (video_disable_2)
-			copybitmap(bitmap,tmpbitmap1,video_flip,video_flip,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+			copybitmap(bitmap,tmpbitmap1,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 		else
-			copybitmap(bitmap,tmpbitmap1,video_flip,video_flip,0,0,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+			copybitmap(bitmap,tmpbitmap1,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
 	}
 }
 
@@ -381,8 +359,10 @@ static void modify_pen(int pen, int colorindex)
 	int r,g,b,color;
 
 	color = route16_color_prom[colorindex];
+
 	r = ((color & 1) ? 0xff : 0x00);
 	g = ((color & 2) ? 0xff : 0x00);
 	b = ((color & 4) ? 0xff : 0x00);
+
 	palette_change_color(pen,r,g,b);
 }

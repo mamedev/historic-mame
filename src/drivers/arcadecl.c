@@ -122,9 +122,9 @@ static void latch_w(int offset, int data)
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x000000, 0x0fffff, MRA_ROM },
-	{ 0x200000, 0x21fffe, MRA_BANK1, &atarigen_playfieldram },
-	{ 0x3c0000, 0x3c07ff, MRA_BANK2, &paletteram },
-	{ 0x3e0000, 0x3effff, MRA_BANK3, &atarigen_spriteram },
+	{ 0x200000, 0x21fffe, MRA_BANK1 },
+	{ 0x3c0000, 0x3c07ff, MRA_BANK2 },
+	{ 0x3e0000, 0x3effff, MRA_BANK3 },
 	{ 0x640000, 0x640001, input_port_0_r },
 	{ 0x640002, 0x640003, input_port_1_r },
 	{ 0x640010, 0x640011, input_port_2_r },
@@ -133,7 +133,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x640022, 0x640023, input_port_5_r },
 	{ 0x640024, 0x640025, input_port_6_r },
 	{ 0x640026, 0x640027, input_port_7_r },
-	{ 0x641000, 0x641fff, atarigen_eeprom_r, &atarigen_eeprom, &atarigen_eeprom_size },
+	{ 0x641000, 0x641fff, atarigen_eeprom_r },
 	{ 0x642000, 0x642001, adpcm_r },
 
 	{ -1 }  /* end of table */
@@ -143,12 +143,12 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x000000, 0x0fffff, MWA_ROM },
-	{ 0x200000, 0x21fffe, arcadecl_playfieldram_w },
-	{ 0x3c0000, 0x3c07ff, atarigen_expanded_666_paletteram_w },
-	{ 0x3e0000, 0x3effff, MWA_BANK3 },
+	{ 0x200000, 0x21fffe, arcadecl_playfieldram_w, &atarigen_playfieldram },
+	{ 0x3c0000, 0x3c07ff, atarigen_expanded_666_paletteram_w, &paletteram },
+	{ 0x3e0000, 0x3effff, MWA_BANK3, &atarigen_spriteram },
 	{ 0x640040, 0x64004f, latch_w },
 	{ 0x640060, 0x64006f, atarigen_eeprom_enable_w },
-	{ 0x641000, 0x641fff, atarigen_eeprom_w },
+	{ 0x641000, 0x641fff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
 	{ 0x642000, 0x642001, adpcm_w },
 	{ 0x646000, 0x646fff, atarigen_scanline_int_ack_w },
 	{ 0x647000, 0x647fff, watchdog_reset_w },
@@ -163,7 +163,7 @@ static struct MemoryWriteAddress writemem[] =
  *
  *************************************/
 
-INPUT_PORTS_START( arcadecl_ports )
+INPUT_PORTS_START( arcadecl )
 	PORT_START	/* 640000 */
 	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_START1 )
@@ -217,7 +217,7 @@ INPUT_PORTS_START( arcadecl_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( sparkz_ports )
+INPUT_PORTS_START( sparkz )
 	PORT_START	/* 640000 */
 	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_START1 )
@@ -441,7 +441,7 @@ static void sparkz_init(void)
  *
  *************************************/
 
-struct GameDriver arcadecl_driver =
+struct GameDriver driver_arcadecl =
 {
 	__FILE__,
 	0,
@@ -450,25 +450,25 @@ struct GameDriver arcadecl_driver =
 	"1992",
 	"Atari Games",
 	"Aaron Giles (MAME driver)",
-	GAME_REQUIRES_16BIT,
+	0,
 	&machine_driver,
 	arcadecl_init,
 
-	arcadecl_rom,
+	rom_arcadecl,
 	arcadecl_rom_decode,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	arcadecl_ports,
+	input_ports_arcadecl,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_REQUIRES_16BIT,
 	atarigen_hiload, atarigen_hisave
 };
 
 
-struct GameDriver sparkz_driver =
+struct GameDriver driver_sparkz =
 {
 	__FILE__,
 	0,
@@ -477,19 +477,19 @@ struct GameDriver sparkz_driver =
 	"1992",
 	"Atari Games",
 	"Aaron Giles (MAME driver)",
-	GAME_REQUIRES_16BIT,
+	0,
 	&machine_driver,
 	sparkz_init,
 
-	sparkz_rom,
+	rom_sparkz,
 	sparkz_rom_decode,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	sparkz_ports,
+	input_ports_sparkz,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_REQUIRES_16BIT,
 	atarigen_hiload, atarigen_hisave
 };

@@ -99,8 +99,7 @@ static void plot_pixel_8080 (int x, int y, int col)
 		y = 223-y;
 	}
 
-	plot_pixel(tmpbitmap,x,y,col);
-	plot_pixel(Machine->scrbitmap,x,y,col);
+	plot_pixel2(Machine->scrbitmap,tmpbitmap,x,y,col);
 }
 
 void invaders_videoram_w (int offset,int data)

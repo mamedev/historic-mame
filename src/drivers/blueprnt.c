@@ -138,7 +138,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 
 
-INPUT_PORTS_START( blueprnt_input_ports )
+INPUT_PORTS_START( blueprnt )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START1 )
@@ -209,7 +209,7 @@ INPUT_PORTS_START( blueprnt_input_ports )
 	PORT_DIPSETTING(    0x80, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( saturn_input_ports )
+INPUT_PORTS_START( saturn )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START1 )
@@ -486,7 +486,7 @@ static void blueprnt_hisave(void)
 
 
 
-struct GameDriver blueprnt_driver =
+struct GameDriver driver_blueprnt =
 {
 	__FILE__,
 	0,
@@ -499,12 +499,12 @@ struct GameDriver blueprnt_driver =
 	&machine_driver,
 	0,
 
-	blueprnt_rom,
+	rom_blueprnt,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	blueprnt_input_ports,
+	input_ports_blueprnt,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
@@ -512,10 +512,10 @@ struct GameDriver blueprnt_driver =
 	blueprnt_hiload, blueprnt_hisave
 };
 
-struct GameDriver blueprnj_driver =
+struct GameDriver driver_blueprnj =
 {
 	__FILE__,
-	&blueprnt_driver,
+	&driver_blueprnt,
 	"blueprnj",
 	"Blue Print (Jaleco)",
 	"1982",
@@ -525,12 +525,12 @@ struct GameDriver blueprnj_driver =
 	&machine_driver,
 	0,
 
-	blueprnj_rom,
+	rom_blueprnj,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	blueprnt_input_ports,
+	input_ports_blueprnt,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
@@ -538,7 +538,7 @@ struct GameDriver blueprnj_driver =
 	blueprnt_hiload, blueprnt_hisave
 };
 
-struct GameDriver saturn_driver =
+struct GameDriver driver_saturn =
 {
 	__FILE__,
 	0,
@@ -551,12 +551,12 @@ struct GameDriver saturn_driver =
 	&machine_driver,
 	0,
 
-	saturn_rom,
+	rom_saturn,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	saturn_input_ports,
+	input_ports_saturn,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,

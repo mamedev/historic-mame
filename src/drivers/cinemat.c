@@ -151,12 +151,6 @@ static void cinemat_writeport (int offset, int data)
 
 
 
-static struct Samplesinterface cinemat_samples_interface =
-{
-	8,	/* 8 channels */
-	25	/* volume */
-};
-
 /* Note: the CPU speed is somewhat arbitrary as the cycle timings in
    the core are incomplete. */
 #define CINEMA_MACHINE(driver, minx, miny, maxx, maxy) \
@@ -193,7 +187,7 @@ static struct MachineDriver driver##_machine_driver = \
 	{ \
 		{ \
 			SOUND_SAMPLES, \
-			&cinemat_samples_interface \
+			&driver##_samples_interface \
 		} \
 	} \
 };
@@ -232,7 +226,7 @@ static struct MachineDriver driver##_machine_driver = \
 	{ \
 		{ \
 			SOUND_SAMPLES, \
-			&cinemat_samples_interface \
+			&driver##_samples_interface \
 		} \
 	} \
 };
@@ -315,7 +309,7 @@ void cinemat32k_rom_decode (void)
 
 ***************************************************************************/
 
-INPUT_PORTS_START ( spacewar_input_ports )
+INPUT_PORTS_START( spacewar )
 	PORT_START /* switches */
 	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 1 )
 	PORT_DIPNAME( SW2|SW1, SW2ON|SW1ON, "Game Time" )
@@ -378,6 +372,13 @@ static const char *spacewar_sample_names[] =
     0	/* end of array */
 };
 
+static struct Samplesinterface spacewar_samples_interface =
+{
+	8,	/* 8 channels */
+	25,	/* volume */
+	spacewar_sample_names
+};
+
 void spacewar_init_machine (void)
 {
 	ccpu_Config (0, CCPU_MEMSIZE_4K, CCPU_MONITOR_BILEV);
@@ -417,12 +418,12 @@ static struct MachineDriver spacewar_machine_driver =
 	{
 		{
 			SOUND_SAMPLES,
-			&cinemat_samples_interface
+			&spacewar_samples_interface
 		}
 	}
 };
 
-struct GameDriver spacewar_driver =
+struct GameDriver driver_spacewar =
 {
 	__FILE__,
 	0,
@@ -436,12 +437,12 @@ struct GameDriver spacewar_driver =
 	&spacewar_machine_driver,
 	0,
 
-	spacewar_rom,
+	rom_spacewar,
 	cinemat4k_rom_decode, 0,
-	spacewar_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	spacewar_input_ports,
+	input_ports_spacewar,
 
 	0, 0, 0,
 	ORIENTATION_FLIP_Y,
@@ -456,7 +457,7 @@ struct GameDriver spacewar_driver =
 
 ***************************************************************************/
 
-INPUT_PORTS_START ( barrier_input_ports )
+INPUT_PORTS_START( barrier )
 	PORT_START /* switches */
 	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 1 )
 	PORT_DIPNAME( SW1, SW1ON, "Innings/Game" )
@@ -507,6 +508,13 @@ static const char *barrier_sample_names[] =
     0	/* end of array */
 };
 
+static struct Samplesinterface barrier_samples_interface =
+{
+	8,	/* 8 channels */
+	25,	/* volume */
+	barrier_sample_names
+};
+
 
 void barrier_init_machine (void)
 {
@@ -523,7 +531,7 @@ void barrier_init (void)
 CINEMA_MACHINE (barrier, 0, 0, 1024, 768)
 
 
-struct GameDriver barrier_driver =
+struct GameDriver driver_barrier =
 {
 	__FILE__,
 	0,
@@ -537,12 +545,12 @@ struct GameDriver barrier_driver =
 	&barrier_machine_driver,
 	barrier_init,
 
-	barrier_rom,
+	rom_barrier,
 	cinemat4k_rom_decode, 0,
-	barrier_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	barrier_input_ports,
+	input_ports_barrier,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270 ^ ORIENTATION_FLIP_X,
@@ -559,7 +567,7 @@ struct GameDriver barrier_driver =
 ***************************************************************************/
 
 /* TODO: 4way or 8way stick? */
-INPUT_PORTS_START ( starhawk_input_ports )
+INPUT_PORTS_START( starhawk )
 	PORT_START /* switches */
 	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 2 )
 	PORT_DIPNAME( SW7, SW7OFF, DEF_STR( Unknown ) )
@@ -615,6 +623,13 @@ static const char *starhawk_sample_names[] =
     0	/* end of array */
 };
 
+static struct Samplesinterface starhawk_samples_interface =
+{
+	8,	/* 8 channels */
+	25,	/* volume */
+	starhawk_sample_names
+};
+
 
 void starhawk_init_machine (void)
 {
@@ -631,7 +646,7 @@ void starhawk_init (void)
 CINEMA_MACHINE (starhawk, 0, 0, 1024, 768)
 
 
-struct GameDriver starhawk_driver =
+struct GameDriver driver_starhawk =
 {
 	__FILE__,
 	0,
@@ -645,12 +660,12 @@ struct GameDriver starhawk_driver =
 	&starhawk_machine_driver,
 	starhawk_init,
 
-	starhawk_rom,
+	rom_starhawk,
 	cinemat4k_rom_decode, 0,
-	starhawk_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	starhawk_input_ports,
+	input_ports_starhawk,
 
 	0, 0, 0,
 	ORIENTATION_FLIP_Y,
@@ -666,7 +681,7 @@ struct GameDriver starhawk_driver =
 
 ***************************************************************************/
 
-INPUT_PORTS_START ( starcas_input_ports )
+INPUT_PORTS_START( starcas )
 	PORT_START /* switches */
 	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 1 )
 	PORT_BITX( SW7, SW7ON, IPT_DIPSWITCH_NAME | IPF_TOGGLE, "Test Pattern", KEYCODE_F2, IP_JOY_NONE )
@@ -743,6 +758,13 @@ static const char *starcas_sample_names[] =
     0	/* end of array */
 };
 
+static struct Samplesinterface starcas_samples_interface =
+{
+	8,	/* 8 channels */
+	25,	/* volume */
+	starcas_sample_names
+};
+
 void starcas_init_machine (void)
 {
 	ccpu_Config (1, CCPU_MEMSIZE_8K, CCPU_MONITOR_BILEV);
@@ -757,7 +779,7 @@ void starcas_init (void)
 
 CINEMA_MACHINE (starcas, 0, 0, 1024, 768)
 
-struct GameDriver starcas_driver =
+struct GameDriver driver_starcas =
 {
 	__FILE__,
 	0,
@@ -771,12 +793,12 @@ struct GameDriver starcas_driver =
 	&starcas_machine_driver,
 	starcas_init,
 
-	starcas_rom,
+	rom_starcas,
 	cinemat8k_rom_decode, 0,
-	starcas_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	starcas_input_ports,
+	input_ports_starcas,
 
 	0, 0, 0,
 	ORIENTATION_FLIP_Y,
@@ -784,10 +806,10 @@ struct GameDriver starcas_driver =
 	0,0
 };
 
-struct GameDriver starcas1_driver =
+struct GameDriver driver_starcas1 =
 {
 	__FILE__,
-	&starcas_driver,
+	&driver_starcas,
 	"starcas1",
 	"Star Castle (older)",
 	"1980",
@@ -798,12 +820,12 @@ struct GameDriver starcas1_driver =
 	&starcas_machine_driver,
 	starcas_init,
 
-	starcas1_rom,
+	rom_starcas1,
 	cinemat8k_rom_decode, 0,
-	starcas_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	starcas_input_ports,
+	input_ports_starcas,
 
 	0, 0, 0,
 	ORIENTATION_FLIP_Y,
@@ -817,7 +839,7 @@ struct GameDriver starcas1_driver =
 
 ***************************************************************************/
 
-INPUT_PORTS_START ( tgunner_input_ports )
+INPUT_PORTS_START( tgunner )
 	PORT_START /* switches */
 	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 1 )
 	PORT_DIPNAME( SW6|SW2|SW1, SW6OFF|SW2OFF|SW1OFF, "Shield Points" )
@@ -876,6 +898,13 @@ static const char *tgunner_sample_names[] =
     0	/* end of array */
 };
 
+static struct Samplesinterface tgunner_samples_interface =
+{
+	8,	/* 8 channels */
+	25,	/* volume */
+	tgunner_sample_names
+};
+
 
 void tgunner_init_machine (void)
 {
@@ -891,7 +920,7 @@ void tgunner_init (void)
 CINEMA_MACHINE (tgunner, 0, 0, 1024, 768)
 
 
-struct GameDriver tailg_driver =
+struct GameDriver driver_tailg =
 {
 	__FILE__,
 	0,
@@ -905,12 +934,12 @@ struct GameDriver tailg_driver =
 	&tgunner_machine_driver,
 	tgunner_init,
 
-	tgunner_rom,
+	rom_tgunner,
 	cinemat8k_rom_decode, 0,
-	tgunner_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	tgunner_input_ports,
+	input_ports_tgunner,
 
 	0, 0, 0,
 	ORIENTATION_FLIP_Y,
@@ -925,7 +954,7 @@ struct GameDriver tailg_driver =
 
 ***************************************************************************/
 
-INPUT_PORTS_START ( ripoff_input_ports )
+INPUT_PORTS_START( ripoff )
 	PORT_START /* switches */
 	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 1 )
 	PORT_BITX( SW7, SW7OFF, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
@@ -1004,6 +1033,13 @@ static const char *ripoff_sample_names[] =
     0	/* end of array */
 };
 
+static struct Samplesinterface ripoff_samples_interface =
+{
+	8,	/* 8 channels */
+	25,	/* volume */
+	ripoff_sample_names
+};
+
 void ripoff_init_machine (void)
 {
 	ccpu_Config (1, CCPU_MEMSIZE_8K, CCPU_MONITOR_BILEV);
@@ -1020,7 +1056,7 @@ void ripoff_init (void)
 CINEMA_MACHINE (ripoff, 0, 0, 1024, 768)
 
 
-struct GameDriver ripoff_driver =
+struct GameDriver driver_ripoff =
 {
 	__FILE__,
 	0,
@@ -1034,12 +1070,12 @@ struct GameDriver ripoff_driver =
 	&ripoff_machine_driver,
 	ripoff_init,
 
-	ripoff_rom,
+	rom_ripoff,
 	cinemat8k_rom_decode, 0,
-	ripoff_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	ripoff_input_ports,
+	input_ports_ripoff,
 
 	0, 0, 0,
 	ORIENTATION_FLIP_Y,
@@ -1110,7 +1146,7 @@ static int speedfrk_readports (int offset)
 	return 0;
 }
 
-INPUT_PORTS_START ( speedfrk_input_ports )
+INPUT_PORTS_START( speedfrk )
 	PORT_START /* switches */
 	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 1 )
 	PORT_DIPNAME( SW7, SW7OFF, DEF_STR( Unknown ) )
@@ -1175,6 +1211,13 @@ static const char *speedfrk_sample_names[] =
     0	/* end of array */
 };
 
+static struct Samplesinterface speedfrk_samples_interface =
+{
+	8,	/* 8 channels */
+	25,	/* volume */
+	speedfrk_sample_names
+};
+
 
 void speedfrk_init_machine (void)
 {
@@ -1191,7 +1234,7 @@ void speedfrk_init (void)
 CINEMA_MACHINEX (speedfrk, 0, 0, 1024, 768)
 
 
-struct GameDriver speedfrk_driver =
+struct GameDriver driver_speedfrk =
 {
 	__FILE__,
 	0,
@@ -1205,12 +1248,12 @@ struct GameDriver speedfrk_driver =
 	&speedfrk_machine_driver,
 	speedfrk_init,
 
-	speedfrk_rom,
+	rom_speedfrk,
 	cinemat8k_rom_decode, 0,
-	speedfrk_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	speedfrk_input_ports,
+	input_ports_speedfrk,
 
 	0, 0, 0,
 	ORIENTATION_FLIP_Y,
@@ -1226,7 +1269,7 @@ struct GameDriver speedfrk_driver =
 
 ***************************************************************************/
 
-INPUT_PORTS_START ( sundance_input_ports )
+INPUT_PORTS_START( sundance )
 	PORT_START /* switches */
 	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 1 )
 	PORT_BIT ( SW7|SW6|SW5, SW7OFF|SW6OFF|SW5OFF,  IPT_UNUSED )
@@ -1284,6 +1327,13 @@ static const char *sundance_sample_names[] =
     0	/* end of array */
 };
 
+static struct Samplesinterface sundance_samples_interface =
+{
+	8,	/* 8 channels */
+	25,	/* volume */
+	sundance_sample_names
+};
+
 
 void sundance_init_machine (void)
 {
@@ -1299,7 +1349,7 @@ void sundance_init (void)
 CINEMA_MACHINE (sundance, 0, 0, 1024, 768)
 
 
-struct GameDriver sundance_driver =
+struct GameDriver driver_sundance =
 {
 	__FILE__,
 	0,
@@ -1309,19 +1359,19 @@ struct GameDriver sundance_driver =
 	"Cinematronics",
 	"Aaron Giles (Mame Driver)\nZonn Moore (hardware info)\nJeff Mitchell (hardware info)\n"
 	"Neil Bradley (hardware info)\n"VECTOR_TEAM,
-	GAME_NOT_WORKING,
+	0,
 	&sundance_machine_driver,
 	sundance_init,
 
-	sundance_rom,
+	rom_sundance,
 	cinemat8k_rom_decode, 0,
-	sundance_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	sundance_input_ports,
+	input_ports_sundance,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270 ^ ORIENTATION_FLIP_X,
+	(ORIENTATION_ROTATE_270 ^ ORIENTATION_FLIP_X) | GAME_NOT_WORKING,
 
 	0,0
 };
@@ -1334,7 +1384,7 @@ struct GameDriver sundance_driver =
 
 ***************************************************************************/
 
-INPUT_PORTS_START ( warrior_input_ports )
+INPUT_PORTS_START( warrior )
 	PORT_START /* switches */
 	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 1 )
 	PORT_DIPNAME( SW7, SW7OFF, DEF_STR( Unknown ) )
@@ -1401,6 +1451,13 @@ static const char *warrior_sample_names[] =
     0	/* end of array */
 };
 
+static struct Samplesinterface warrior_samples_interface =
+{
+	8,	/* 8 channels */
+	25,	/* volume */
+	warrior_sample_names
+};
+
 
 void warrior_init_machine (void)
 {
@@ -1416,7 +1473,7 @@ void warrior_init (void)
 CINEMA_MACHINE (warrior, 0, 0, 1024, 780)
 
 
-struct GameDriver warrior_driver =
+struct GameDriver driver_warrior =
 {
 	__FILE__,
 	0,
@@ -1430,12 +1487,12 @@ struct GameDriver warrior_driver =
 	&warrior_machine_driver,
 	warrior_init,
 
-	warrior_rom,
+	rom_warrior,
 	cinemat8k_rom_decode, 0,
-	warrior_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	warrior_input_ports,
+	input_ports_warrior,
 
 	0, 0, 0,
 	ORIENTATION_FLIP_Y,
@@ -1451,7 +1508,7 @@ struct GameDriver warrior_driver =
 
 ***************************************************************************/
 
-INPUT_PORTS_START ( armora_input_ports )
+INPUT_PORTS_START( armora )
 	PORT_START /* switches */
 	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 1 )
 	PORT_BITX( SW7, SW7ON, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
@@ -1513,6 +1570,13 @@ static const char *armora_sample_names[] =
     0	/* end of array */
 };
 
+static struct Samplesinterface armora_samples_interface =
+{
+	8,	/* 8 channels */
+	25,	/* volume */
+	armora_sample_names
+};
+
 
 void armora_init_machine (void)
 {
@@ -1528,7 +1592,7 @@ void armora_init (void)
 CINEMA_MACHINE (armora, 0, 0, 1024, 772)
 
 
-struct GameDriver armora_driver =
+struct GameDriver driver_armora =
 {
 	__FILE__,
 	0,
@@ -1542,12 +1606,12 @@ struct GameDriver armora_driver =
 	&armora_machine_driver,
 	armora_init,
 
-	armora_rom,
+	rom_armora,
 	cinemat16k_rom_decode, 0,
-	armora_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	armora_input_ports,
+	input_ports_armora,
 
 	0, 0, 0,
 	ORIENTATION_FLIP_Y,
@@ -1562,7 +1626,7 @@ struct GameDriver armora_driver =
 
 ***************************************************************************/
 
-INPUT_PORTS_START ( solarq_input_ports )
+INPUT_PORTS_START( solarq )
 	PORT_START /* switches */
 	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 1 )
 	PORT_BITX( SW7, SW7ON, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
@@ -1641,6 +1705,13 @@ static const char *solarq_sample_names[] =
     0	/* end of array */
 };
 
+static struct Samplesinterface solarq_samples_interface =
+{
+	8,	/* 8 channels */
+	25,	/* volume */
+	solarq_sample_names
+};
+
 
 void solarq_init_machine (void)
 {
@@ -1657,7 +1728,7 @@ void solarq_init (void)
 
 CINEMA_MACHINE (solarq, 0, 0, 1024, 768)
 
-struct GameDriver solarq_driver =
+struct GameDriver driver_solarq =
 {
 	__FILE__,
 	0,
@@ -1671,12 +1742,12 @@ struct GameDriver solarq_driver =
 	&solarq_machine_driver,
 	solarq_init,
 
-	solarq_rom,
+	rom_solarq,
 	cinemat16k_rom_decode, 0,
-	solarq_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	solarq_input_ports,
+	input_ports_solarq,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_180,
@@ -1692,7 +1763,7 @@ struct GameDriver solarq_driver =
 
 ***************************************************************************/
 
-INPUT_PORTS_START ( demon_input_ports )
+INPUT_PORTS_START( demon )
 	PORT_START /* switches */
 	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 1 )
 	PORT_DIPNAME( SW7, SW7OFF, "Game Mode" )
@@ -1760,6 +1831,13 @@ static const char *demon_sample_names[] =
     0	/* end of array */
 };
 
+static struct Samplesinterface demon_samples_interface =
+{
+	8,	/* 8 channels */
+	25,	/* volume */
+	demon_sample_names
+};
+
 
 void demon_init_machine (void)
 {
@@ -1775,7 +1853,7 @@ void demon_init (void)
 CINEMA_MACHINE (demon, 0, 0, 1024, 800)
 
 
-struct GameDriver demon_driver =
+struct GameDriver driver_demon =
 {
 	__FILE__,
 	0,
@@ -1789,12 +1867,12 @@ struct GameDriver demon_driver =
 	&demon_machine_driver,
 	demon_init,
 
-	demon_rom,
+	rom_demon,
 	cinemat16k_rom_decode, 0,
-	demon_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	demon_input_ports,
+	input_ports_demon,
 
 	0, 0, 0,
 	ORIENTATION_FLIP_Y,
@@ -1810,7 +1888,7 @@ struct GameDriver demon_driver =
 
 ***************************************************************************/
 
-INPUT_PORTS_START ( wotw_input_ports )
+INPUT_PORTS_START( wotw )
 	PORT_START /* switches */
 	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 1 )
 	PORT_BITX( SW7, SW7OFF, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
@@ -1869,6 +1947,13 @@ static const char *wotw_sample_names[] =
     0	/* end of array */
 };
 
+static struct Samplesinterface wotw_samples_interface =
+{
+	8,	/* 8 channels */
+	25,	/* volume */
+	wotw_sample_names
+};
+
 
 void wotw_init_machine (void)
 {
@@ -1885,7 +1970,7 @@ void wotw_init (void)
 CINEMA_MACHINE (wotw, 0, 0, 1024, 768)
 
 
-struct GameDriver wotw_driver =
+struct GameDriver driver_wotw =
 {
 	__FILE__,
 	0,
@@ -1895,19 +1980,19 @@ struct GameDriver wotw_driver =
 	"Cinematronics",
 	"Aaron Giles (Mame Driver)\nZonn Moore (hardware info)\nJeff Mitchell (hardware info)\n"
 	"Neil Bradley (hardware info)\n"VECTOR_TEAM,
-	GAME_IMPERFECT_COLORS,
+	0,
 	&wotw_machine_driver,
 	wotw_init,
 
-	wotw_rom,
+	rom_wotw,
 	cinemat16k_rom_decode, 0,
-	wotw_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	wotw_input_ports,
+	input_ports_wotw,
 
 	0, 0, 0,
-	ORIENTATION_FLIP_Y,
+	ORIENTATION_FLIP_Y | GAME_IMPERFECT_COLORS,
 
 	0,0
 };
@@ -1940,7 +2025,7 @@ static int boxingb_readports (int offset)
 	return 0;
 }
 
-INPUT_PORTS_START ( boxingb_input_ports )
+INPUT_PORTS_START( boxingb )
 	PORT_START /* switches */
 	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1, 1 )
 	PORT_BITX( SW7, SW7OFF, IPT_DIPSWITCH_NAME | IPF_TOGGLE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
@@ -2004,6 +2089,13 @@ static const char *boxingb_sample_names[] =
     0	/* end of array */
 };
 
+static struct Samplesinterface boxingb_samples_interface =
+{
+	8,	/* 8 channels */
+	25,	/* volume */
+	boxingb_sample_names
+};
+
 
 void boxingb_init_machine (void)
 {
@@ -2020,7 +2112,7 @@ void boxingb_init (void)
 CINEMA_MACHINEX (boxingb, 0, 0, 1024, 768)
 
 
-struct GameDriver boxingb_driver =
+struct GameDriver driver_boxingb =
 {
 	__FILE__,
 	0,
@@ -2030,19 +2122,19 @@ struct GameDriver boxingb_driver =
 	"Cinematronics",
 	"Aaron Giles (Mame Driver)\nZonn Moore (hardware info)\nJeff Mitchell (hardware info)\n"
 	"Neil Bradley (hardware info)\n"VECTOR_TEAM,
-	GAME_IMPERFECT_COLORS,
+	0,
 	&boxingb_machine_driver,
 	boxingb_init,
 
-	boxingb_rom,
+	rom_boxingb,
 	cinemat32k_rom_decode, 0,
-	boxingb_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	boxingb_input_ports,
+	input_ports_boxingb,
 
 	0, 0, 0,
-	ORIENTATION_FLIP_Y,
+	ORIENTATION_FLIP_Y | GAME_IMPERFECT_COLORS,
 
 	0,0
 };

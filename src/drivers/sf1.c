@@ -327,7 +327,7 @@ static struct IOWritePort sound2_writeport[] =
 };
 
 
-INPUT_PORTS_START(sf1jp_input_ports)
+INPUT_PORTS_START( sf1jp )
 	PORT_START
 	PORT_DIPNAME( 0x0007, 0x0007, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(      0x0007, DEF_STR( 1C_1C ) )
@@ -476,7 +476,7 @@ INPUT_PORTS_START(sf1jp_input_ports)
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-INPUT_PORTS_START(sf1us_input_ports)
+INPUT_PORTS_START( sf1us )
 	PORT_START
 	PORT_DIPNAME( 0x0007, 0x0007, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(      0x0007, DEF_STR( 1C_1C ) )
@@ -606,7 +606,7 @@ INPUT_PORTS_START(sf1us_input_ports)
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_BUTTON5 | IPF_PLAYER2 )
 INPUT_PORTS_END
 
-INPUT_PORTS_START(sf1_input_ports)
+INPUT_PORTS_START( sf1 )
 	PORT_START
 	PORT_DIPNAME( 0x0007, 0x0007, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(      0x0007, DEF_STR( 1C_1C ) )
@@ -921,7 +921,7 @@ static struct MachineDriver machine_driver =
 	}
 };
 
-static struct MachineDriver machineus_driver =
+static struct MachineDriver us_machine_driver =
 {
 	{
 		{
@@ -979,7 +979,7 @@ static struct MachineDriver machineus_driver =
 	}
 };
 
-static struct MachineDriver machinejp_driver =
+static struct MachineDriver jp_machine_driver =
 {
 	{
 		{
@@ -1196,7 +1196,7 @@ ROM_END
 
 
 
-struct GameDriver sf1_driver =
+struct GameDriver driver_sf1 =
 {
 	__FILE__,
 	0,
@@ -1209,56 +1209,56 @@ struct GameDriver sf1_driver =
 	&machine_driver,
 	0,
 
-	sf1_rom,
+	rom_sf1,
 	0,0,0,0,
 
-	sf1_input_ports,
+	input_ports_sf1,
 
 	0,0,0,
 	ORIENTATION_DEFAULT,
 	0,0
 };
 
-struct GameDriver sf1us_driver =
+struct GameDriver driver_sf1us =
 {
 	__FILE__,
-	&sf1_driver,
+	&driver_sf1,
 	"sf1us",
 	"Street Fighter (US)",
 	"1987",
 	"Capcom",
 	"Olivier Galibert",
 	0,
-	&machineus_driver,
+	&us_machine_driver,
 	0,
 
-	sf1us_rom,
+	rom_sf1us,
 	0,0,0,0,
 
-	sf1us_input_ports,
+	input_ports_sf1us,
 
 	0,0,0,
 	ORIENTATION_DEFAULT,
 	0,0
 };
 
-struct GameDriver sf1jp_driver =
+struct GameDriver driver_sf1jp =
 {
 	__FILE__,
-	&sf1_driver,
+	&driver_sf1,
 	"sf1jp",
 	"Street Fighter (Japan)",
 	"1987",
 	"Capcom",
 	"Olivier Galibert",
 	0,
-	&machinejp_driver,
+	&jp_machine_driver,
 	0,
 
-	sf1jp_rom,
+	rom_sf1jp,
 	0,0,0,0,
 
-	sf1jp_input_ports,
+	input_ports_sf1jp,
 
 	0,0,0,
 	ORIENTATION_DEFAULT,

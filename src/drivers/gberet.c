@@ -187,7 +187,7 @@ static struct MemoryWriteAddress mrgoemon_writemem[] =
 
 
 
-INPUT_PORTS_START( gberet_input_ports )
+INPUT_PORTS_START( gberet )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
@@ -294,7 +294,7 @@ INPUT_PORTS_START( gberet_input_ports )
 INPUT_PORTS_END
 
 /* IN2 is different and IN1 and DSW0 are swapped */
-INPUT_PORTS_START( gberetb_input_ports )
+INPUT_PORTS_START( gberetb )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
@@ -400,7 +400,7 @@ INPUT_PORTS_START( gberetb_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( mrgoemon_input_ports )
+INPUT_PORTS_START( mrgoemon )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
@@ -715,7 +715,7 @@ ROM_START( gberet )
 	ROM_LOAD( "f04_l08.bin",  0x0c000, 0x4000, 0x883933a4 )
 	ROM_LOAD( "e03_l04.bin",  0x10000, 0x4000, 0xccecda4c )
 
-	ROM_REGION(0x0220)	/* color/lookup proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "577h09",       0x0000, 0x0020, 0xc15e7c80 ) /* palette */
 	ROM_LOAD( "577h10",       0x0020, 0x0100, 0xe9de1e53 ) /* sprites */
 	ROM_LOAD( "577h11",       0x0120, 0x0100, 0x2a1a992b ) /* characters */
@@ -734,7 +734,7 @@ ROM_START( rushatck )
 	ROM_LOAD( "f04_l08.bin",  0x0c000, 0x4000, 0x883933a4 )
 	ROM_LOAD( "e03_l04.bin",  0x10000, 0x4000, 0xccecda4c )
 
-	ROM_REGION(0x0220)	/* color/lookup proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "577h09",       0x0000, 0x0020, 0xc15e7c80 ) /* palette */
 	ROM_LOAD( "577h10",       0x0020, 0x0100, 0xe9de1e53 ) /* sprites */
 	ROM_LOAD( "577h11",       0x0120, 0x0100, 0x2a1a992b ) /* characters */
@@ -752,7 +752,7 @@ ROM_START( gberetb )
 	ROM_LOAD( "5-ic10.2d",    0x0c000, 0x4000, 0x6a7b3881 )
 	ROM_LOAD( "4-ic11.2e",    0x10000, 0x4000, 0x3fb186c9 )
 
-	ROM_REGION(0x0220)	/* color/lookup proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "577h09",       0x0000, 0x0020, 0xc15e7c80 ) /* palette */
 	ROM_LOAD( "577h10",       0x0020, 0x0100, 0xe9de1e53 ) /* sprites */
 	ROM_LOAD( "577h11",       0x0120, 0x0100, 0x2a1a992b ) /* characters */
@@ -769,7 +769,7 @@ ROM_START( mrgoemon )
 	ROM_LOAD( "621d03.4d",   0x04000, 0x8000, 0x66f2b973 )
 	ROM_LOAD( "621d04.5d",   0x0c000, 0x8000, 0x47df6301 )
 
-	ROM_REGION(0x0220)	/* color/lookup proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "621a06.5f",    0x0000, 0x0020, 0x7c90de5f ) /* palette */
 	ROM_LOAD( "621a07.6f",    0x0020, 0x0100, 0x3980acdc ) /* sprites */
 	ROM_LOAD( "621a08.7f",    0x0120, 0x0100, 0x2fb244dd ) /* characters */
@@ -820,7 +820,7 @@ static void hisave(void)
 
 
 
-struct GameDriver gberet_driver =
+struct GameDriver driver_gberet =
 {
 	__FILE__,
 	0,
@@ -833,23 +833,23 @@ struct GameDriver gberet_driver =
 	&machine_driver,
 	gberet_init,
 
-	gberet_rom,
+	rom_gberet,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	gberet_input_ports,
+	input_ports_gberet,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };
 
-struct GameDriver rushatck_driver =
+struct GameDriver driver_rushatck =
 {
 	__FILE__,
-	&gberet_driver,
+	&driver_gberet,
 	"rushatck",
 	"Rush'n Attack",
 	"1985",
@@ -859,23 +859,23 @@ struct GameDriver rushatck_driver =
 	&machine_driver,
 	gberet_init,
 
-	rushatck_rom,
+	rom_rushatck,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	gberet_input_ports,
+	input_ports_gberet,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };
 
-struct GameDriver gberetb_driver =
+struct GameDriver driver_gberetb =
 {
 	__FILE__,
-	&gberet_driver,
+	&driver_gberet,
 	"gberetb",
 	"Green Beret (bootleg)",
 	"1985",
@@ -885,20 +885,20 @@ struct GameDriver gberetb_driver =
 	&gberetb_machine_driver,
 	gberetb_init,
 
-	gberetb_rom,
+	rom_gberetb,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	gberetb_input_ports,
+	input_ports_gberetb,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	0,0
 };
 
-struct GameDriver mrgoemon_driver =
+struct GameDriver driver_mrgoemon =
 {
 	__FILE__,
 	0,
@@ -911,14 +911,14 @@ struct GameDriver mrgoemon_driver =
 	&mrgoemon_machine_driver,
 	gberet_init,
 
-	mrgoemon_rom,
+	rom_mrgoemon,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	mrgoemon_input_ports,
+	input_ports_mrgoemon,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	0, 0

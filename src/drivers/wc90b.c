@@ -223,7 +223,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ -1 }	/* end of table */
 };
 
-INPUT_PORTS_START( wc90b_input_ports )
+INPUT_PORTS_START( wc90b )
 	PORT_START	/* IN0 bit 0-5 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
@@ -485,11 +485,11 @@ void wc90b_decode (void)
 }
 
 
-extern struct GameDriver wc90_driver;
-struct GameDriver wc90b_driver =
+extern struct GameDriver driver_wc90;
+struct GameDriver driver_wc90b =
 {
 	__FILE__,
-	&wc90_driver,
+	&driver_wc90,
 	"wc90b",
 	"Euro League",
 	"1989",
@@ -499,12 +499,12 @@ struct GameDriver wc90b_driver =
 	&wc90b_machine_driver,
 	0,
 
-	wc90b_rom,
+	rom_wc90b,
 	wc90b_decode, 0,
 	0,
 	0,	/* sound_prom */
 
-	wc90b_input_ports,
+	input_ports_wc90b,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

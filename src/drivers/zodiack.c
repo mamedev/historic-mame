@@ -99,7 +99,7 @@ static struct IOWritePort sound_writeport[] =
 };
 
 
-INPUT_PORTS_START( zodiac_input_ports )
+INPUT_PORTS_START( zodiac )
 	PORT_START      /* DSW0 */  /* never read in this game */
 	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
 
@@ -149,7 +149,7 @@ INPUT_PORTS_START( zodiac_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( dogfight_input_ports )
+INPUT_PORTS_START( dogfight )
 	PORT_START      /* DSW0 */
 	PORT_DIPNAME( 0x07, 0x00, DEF_STR( Coin_B ) )
 	PORT_DIPSETTING(    0x05, DEF_STR( 2C_1C ) )
@@ -222,7 +222,7 @@ INPUT_PORTS_START( dogfight_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( moguchan_input_ports )
+INPUT_PORTS_START( moguchan )
 	PORT_START      /* DSW0 */
 	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
@@ -405,7 +405,7 @@ ROM_START( zodiack )
 	ROM_LOAD( "orca40c.8",    0x1000, 0x1000, 0x88269c94 )
 	ROM_LOAD( "orca40c.9",    0x2000, 0x1000, 0xa3bd40c9 )
 
-	ROM_REGION(0x0040)	/* color prom */
+	ROM_REGIONX( 0x0040, REGION_PROMS )
 	ROM_LOAD( "ovg40c.2a",    0x0000, 0x0020, 0x703821b8 )
 	ROM_LOAD( "ovg40c.2b",    0x0020, 0x0020, 0x21f77ec7 )  /* I don't know what this is */
 
@@ -425,7 +425,7 @@ ROM_START( dogfight )
 	ROM_LOAD( "df-7",         0x1000, 0x1000, 0xffe05fee )
 	ROM_LOAD( "df-8",         0x2000, 0x1000, 0x2cb51793 )
 
-	ROM_REGION(0x0040)	/* color prom */
+	ROM_REGIONX( 0x0040, REGION_PROMS )
 	ROM_LOAD( "1.bpr",        0x0000, 0x0020, 0x69a35aa5 )
 	ROM_LOAD( "2.bpr",        0x0020, 0x0020, 0x596ae457 )  /* I don't know what this is */
 
@@ -444,7 +444,7 @@ ROM_START( moguchan )
 	ROM_LOAD( "6.7p",         0x1000, 0x1000, 0xc8060ffe )
 	ROM_LOAD( "7.7m",         0x2000, 0x1000, 0xbfca00f4 )
 
-	ROM_REGION(0x0040)	/* color prom - missing */
+	ROM_REGIONX( 0x0040, REGION_PROMS )
 	ROM_LOAD( "moguchan.cl1", 0x0000, 0x0020, 0x00000000 )
 	ROM_LOAD( "moguchan.cl2", 0x0020, 0x0020, 0x00000000 )  /* I don't know what this is */
 
@@ -581,7 +581,7 @@ static void moguchan_hisave(void)
 
 
 
-struct GameDriver zodiack_driver =
+struct GameDriver driver_zodiack =
 {
 	__FILE__,
 	0,
@@ -590,25 +590,25 @@ struct GameDriver zodiack_driver =
 	"1983",
 	"Orca (Esco Trading Co, Inc)",
 	"Zsolt Vasvari",
-	GAME_IMPERFECT_COLORS,
+	0,
 	&machine_driver,
 	0,
 
-	zodiack_rom,
+	rom_zodiack,
 	0,
 	0,
 	0,
 	0,      /* sound_prom */
 
-	zodiac_input_ports,
+	input_ports_zodiac,
 
-	PROM_MEMORY_REGION(2), 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_270,
+	0, 0, 0,
+	ORIENTATION_ROTATE_270 | GAME_IMPERFECT_COLORS,
 
-        zodiack_hiload, zodiack_hisave
+	zodiack_hiload, zodiack_hisave
 };
 
-struct GameDriver dogfight_driver =
+struct GameDriver driver_dogfight =
 {
 	__FILE__,
 	0,
@@ -617,25 +617,25 @@ struct GameDriver dogfight_driver =
 	"1983",
 	"[Orca] Thunderbolt",
 	"Zsolt Vasvari",
-	GAME_IMPERFECT_COLORS,
+	0,
 	&machine_driver,
 	0,
 
-	dogfight_rom,
+	rom_dogfight,
 	0,
 	0,
 	0,
 	0,      /* sound_prom */
 
-	dogfight_input_ports,
+	input_ports_dogfight,
 
-	PROM_MEMORY_REGION(2), 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_270,
+	0, 0, 0,
+	ORIENTATION_ROTATE_270 | GAME_IMPERFECT_COLORS,
 
-        dogfight_hiload, dogfight_hisave
+	dogfight_hiload, dogfight_hisave
 };
 
-struct GameDriver moguchan_driver =
+struct GameDriver driver_moguchan =
 {
 	__FILE__,
 	0,
@@ -644,20 +644,20 @@ struct GameDriver moguchan_driver =
 	"1982",
 	"Orca (Eastern Commerce Inc. license) (bootleg?)",  /* this is in the ROM at $0b5c */
 	"Zsolt Vasvari",
-	GAME_WRONG_COLORS,
+	0,
 	&machine_driver,
 	0,
 
-	moguchan_rom,
+	rom_moguchan,
 	0,
 	0,
 	0,
 	0,      /* sound_prom */
 
-	moguchan_input_ports,
+	input_ports_moguchan,
 
-	PROM_MEMORY_REGION(2), 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_ROTATE_270,
+	0, 0, 0,
+	ORIENTATION_ROTATE_270 | GAME_WRONG_COLORS,
 
 	moguchan_hiload, moguchan_hisave
 };

@@ -82,7 +82,7 @@ static struct IOWritePort solomon_sound_writeport[] =
 
 
 
-INPUT_PORTS_START( solomon_input_ports )
+INPUT_PORTS_START( solomon )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
@@ -321,7 +321,7 @@ static void hisave(void)
 }
 
 
-struct GameDriver solomon_driver =
+struct GameDriver driver_solomon =
 {
 	__FILE__,
 	0,
@@ -334,12 +334,12 @@ struct GameDriver solomon_driver =
 	&solomon_machine_driver,
 	0,
 
-	solomon_rom,
+	rom_solomon,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	solomon_input_ports,
+	input_ports_solomon,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

@@ -50,6 +50,7 @@
 extern unsigned char *route16_sharedram;
 extern unsigned char *route16_videoram1;
 extern unsigned char *route16_videoram2;
+extern int route16_videoram_size;
 
 void route16_init_driver(void);
 void route16b_init_driver(void);
@@ -85,7 +86,7 @@ static struct MemoryWriteAddress cpu1_writemem[] =
 	{ 0x4000, 0x43ff, route16_sharedram_w, &route16_sharedram },
 	{ 0x4800, 0x4800, route16_out0_w },
 	{ 0x5000, 0x5000, route16_out1_w },
-	{ 0x8000, 0xbfff, route16_videoram1_w, &route16_videoram1 },
+	{ 0x8000, 0xbfff, route16_videoram1_w, &route16_videoram1, &route16_videoram_size },
 	{ 0xc000, 0xc000, MWA_RAM }, // Stratvox has an off by one error
                                  // when clearing the screen
 	{ -1 }  /* end of table */
@@ -118,7 +119,7 @@ static struct MemoryWriteAddress cpu2_writemem[] =
 };
 
 
-INPUT_PORTS_START( route16_input_ports )
+INPUT_PORTS_START( route16 )
 	PORT_START      /* DSW 1 */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
@@ -167,7 +168,7 @@ INPUT_PORTS_END
 
 
 
-INPUT_PORTS_START( stratvox_input_ports )
+INPUT_PORTS_START( stratvox )
 	PORT_START      /* IN0 */
 	PORT_DIPNAME( 0x01, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
@@ -233,10 +234,20 @@ static struct DACinterface dac_interface =
 };
 
 
+static const char *stratvox_sample_names[] =
+{
+	"*stratvox",
+	"explode.wav", // Sample played when player's ship is exploding
+	"bonus.wav",   // Sample played when reached 5000 pts and bonus ship
+                   // is awarded
+    0   /* end of array */
+};
+
 static struct Samplesinterface samples_interface =
 {
 	1,	/* 1 channel */
-	25	/* volume */
+	25,	/* volume */
+	stratvox_sample_names
 };
 
 
@@ -322,7 +333,7 @@ ROM_START( route16 )
 	ROM_LOAD( "route16.a4",   0x2000, 0x0800, 0xf67d853a )
 	ROM_LOAD( "route16.a5",   0x2800, 0x0800, 0xd85cf758 )
 
-	ROM_REGION(0x0200) /* color proms */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	/* The upper 128 bytes are 0's, used by the hardware to blank the display */
 	ROM_LOAD( "pr09",         0x0000, 0x0100, 0x08793ef7 ) /* top bitmap */
 	ROM_LOAD( "pr10",         0x0100, 0x0100, 0x08793ef7 ) /* bottom bitmap */
@@ -343,7 +354,7 @@ ROM_START( route16b )
 	ROM_LOAD( "rt16.4",       0x2000, 0x0800, 0x6dcaf8c4 )
 	ROM_LOAD( "rt16.5",       0x2800, 0x0800, 0x63d7b05b )
 
-	ROM_REGION(0x0200) /* color proms */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	/* The upper 128 bytes are 0's, used by the hardware to blank the display */
 	ROM_LOAD( "pr09",         0x0000, 0x0100, 0x08793ef7 ) /* top bitmap */
 	ROM_LOAD( "pr10",         0x0100, 0x0100, 0x08793ef7 ) /* bottom bitmap */
@@ -355,16 +366,6 @@ ROM_START( route16b )
 	ROM_LOAD( "rt16.9",       0x1800, 0x0800, 0x88d94a66 )
 ROM_END
 
-
-static const char *stratvox_sample_names[] =
-{
-	"*stratvox",
-	"explode.wav", // Sample played when player's ship is exploding
-	"bonus.wav",   // Sample played when reached 5000 pts and bonus ship
-                   // is awarded
-    0   /* end of array */
-};
-
 ROM_START( stratvox )
 	ROM_REGION(0x10000)     /* 64k for code */
 	ROM_LOAD( "ls01.bin",     0x0000, 0x0800, 0xbf4d582e )
@@ -374,7 +375,7 @@ ROM_START( stratvox )
 	ROM_LOAD( "ls05.bin",     0x2000, 0x0800, 0xccd25c4e )
 	ROM_LOAD( "ls06.bin",     0x2800, 0x0800, 0x07a907a7 )
 
-	ROM_REGION(0x0200) /* color proms */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	/* The upper 128 bytes are 0's, used by the hardware to blank the display */
 	ROM_LOAD( "pr09",         0x0000, 0x0100, 0x08793ef7 ) /* top bitmap */
 	ROM_LOAD( "pr10",         0x0100, 0x0100, 0x08793ef7 ) /* bottom bitmap */
@@ -393,7 +394,7 @@ ROM_START( stratvxb )
 	ROM_LOAD( "ls05.bin",     0x2000, 0x0800, 0xccd25c4e )
 	ROM_LOAD( "a5-1",         0x2800, 0x0800, 0x70c4ef8e )
 
-	ROM_REGION(0x0200) /* color proms */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	/* The upper 128 bytes are 0's, used by the hardware to blank the display */
 	ROM_LOAD( "pr09",         0x0000, 0x0100, 0x08793ef7 ) /* top bitmap */
 	ROM_LOAD( "pr10",         0x0100, 0x0100, 0x08793ef7 ) /* bottom bitmap */
@@ -412,7 +413,7 @@ ROM_START( speakres )
 	ROM_LOAD( "speakres.5",   0x2000, 0x0800, 0x61b12a67 )
 	ROM_LOAD( "speakres.6",   0x2800, 0x0800, 0x220e0ab2 )
 
-	ROM_REGION(0x0200) /* color proms */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	/* The upper 128 bytes are 0's, used by the hardware to blank the display */
 	ROM_LOAD( "pr09",         0x0000, 0x0100, 0x08793ef7 ) /* top bitmap */
 	ROM_LOAD( "pr10",         0x0100, 0x0100, 0x08793ef7 ) /* bottom bitmap */
@@ -552,7 +553,7 @@ static void speakres_hisave(void)
 
 
 
-struct GameDriver route16_driver =
+struct GameDriver driver_route16 =
 {
 	__FILE__,
 	0,
@@ -565,23 +566,23 @@ struct GameDriver route16_driver =
 	&route16_machine_driver,
 	route16_init_driver,
 
-	route16_rom,
+	rom_route16,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	route16_input_ports,
+	input_ports_route16,
 
-	PROM_MEMORY_REGION(1), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	route16_hiload, route16_hisave
 };
 
-struct GameDriver route16b_driver =
+struct GameDriver driver_route16b =
 {
 	__FILE__,
-	&route16_driver,
+	&driver_route16,
 	"route16b",
 	"Route 16 (bootleg)",
 	"1981",
@@ -591,20 +592,20 @@ struct GameDriver route16b_driver =
 	&route16_machine_driver,
 	route16b_init_driver,
 
-	route16b_rom,
+	rom_route16b,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	route16_input_ports,
+	input_ports_route16,
 
-	PROM_MEMORY_REGION(1), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	route16_hiload, route16_hisave
 };
 
-struct GameDriver stratvox_driver =
+struct GameDriver driver_stratvox =
 {
 	__FILE__,
 	0,
@@ -617,23 +618,23 @@ struct GameDriver stratvox_driver =
 	&stratvox_machine_driver,
 	stratvox_init_driver,
 
-	stratvox_rom,
+	rom_stratvox,
 	0, 0,
-	stratvox_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	stratvox_input_ports,
+	input_ports_stratvox,
 
-	PROM_MEMORY_REGION(1), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	stratvox_hiload, stratvox_hisave
 };
 
-struct GameDriver stratvxb_driver =
+struct GameDriver driver_stratvxb =
 {
 	__FILE__,
-	&stratvox_driver,
+	&driver_stratvox,
 	"stratvxb",
 	"Stratovox (bootleg)",
 	"1980",
@@ -643,23 +644,23 @@ struct GameDriver stratvxb_driver =
 	&stratvox_machine_driver,
 	stratvox_init_driver,
 
-	stratvxb_rom,
+	rom_stratvxb,
 	0, 0,
-	stratvox_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	stratvox_input_ports,
+	input_ports_stratvox,
 
-	PROM_MEMORY_REGION(1), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	stratvox_hiload, stratvox_hisave
 };
 
-struct GameDriver speakres_driver =
+struct GameDriver driver_speakres =
 {
 	__FILE__,
-	&stratvox_driver,
+	&driver_stratvox,
 	"speakres",
 	"Speak & Rescue",
 	"????",
@@ -669,14 +670,14 @@ struct GameDriver speakres_driver =
 	&stratvox_machine_driver,
 	stratvox_init_driver,
 
-	speakres_rom,
+	rom_speakres,
 	0, 0,
-	stratvox_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	stratvox_input_ports,
+	input_ports_stratvox,
 
-	PROM_MEMORY_REGION(1), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	speakres_hiload, speakres_hisave

@@ -185,7 +185,7 @@ static struct IOWritePort sound_writeport[] =
 
 
 
-INPUT_PORTS_START( galivan_input_ports )
+INPUT_PORTS_START( galivan )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
@@ -266,7 +266,7 @@ INPUT_PORTS_START( galivan_input_ports )
 INPUT_PORTS_END
 
 /* the last two dip switches are different in each version */
-INPUT_PORTS_START( dangar_input_ports )
+INPUT_PORTS_START( dangar )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
@@ -350,7 +350,7 @@ INPUT_PORTS_START( dangar_input_ports )
 INPUT_PORTS_END
 
 /* the last two dip switches are different in each version */
-INPUT_PORTS_START( dangar2_input_ports )
+INPUT_PORTS_START( dangar2 )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
@@ -431,7 +431,7 @@ INPUT_PORTS_START( dangar2_input_ports )
 INPUT_PORTS_END
 
 /* the last two dip switches are different in each version */
-INPUT_PORTS_START( dangarb_input_ports )
+INPUT_PORTS_START( dangarb )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
@@ -656,7 +656,7 @@ ROM_START( galivan )
 	ROM_LOAD( "gv6.19d",     0x00000, 0x04000, 0xda38168b )
 	ROM_LOAD( "gv5.17d",     0x04000, 0x04000, 0x22492d2a )
 
-	ROM_REGION(0x0500)		/* Region 3 - color proms */
+	ROM_REGIONX( 0x0500, REGION_PROMS )
 	ROM_LOAD( "mb7114e.9f",  0x0000, 0x0100, 0xde782b3e )	/* red */
 	ROM_LOAD( "mb7114e.10f", 0x0100, 0x0100, 0x0ae2a857 )	/* green */
 	ROM_LOAD( "mb7114e.11f", 0x0200, 0x0100, 0x7ba8b9d1 )	/* blue */
@@ -687,7 +687,7 @@ ROM_START( galivan2 )
 	ROM_LOAD( "gv6.19d",     0x00000, 0x04000, 0xda38168b )
 	ROM_LOAD( "gv5.17d",     0x04000, 0x04000, 0x22492d2a )
 
-	ROM_REGION(0x0500)		/* Region 3 - color proms */
+	ROM_REGIONX( 0x0500, REGION_PROMS )
 	ROM_LOAD( "mb7114e.9f",  0x0000, 0x0100, 0xde782b3e )	/* red */
 	ROM_LOAD( "mb7114e.10f", 0x0100, 0x0100, 0x0ae2a857 )	/* green */
 	ROM_LOAD( "mb7114e.11f", 0x0200, 0x0100, 0x7ba8b9d1 )	/* blue */
@@ -718,7 +718,7 @@ ROM_START( dangar )
 	ROM_LOAD( "dangar07.19d", 0x0000, 0x4000, 0x6dba32cf )
 	ROM_LOAD( "dangar06.17d", 0x4000, 0x4000, 0x6c899071 )
 
-	ROM_REGION(0x0500)		/* Region 3 - color proms */
+	ROM_REGIONX( 0x0500, REGION_PROMS )
 	ROM_LOAD( "82s129.9f",   0x0000, 0x0100, 0xb29f6a07 )	/* red */
 	ROM_LOAD( "82s129.10f",  0x0100, 0x0100, 0xc6de5ecb )	/* green */
 	ROM_LOAD( "82s129.11f",  0x0200, 0x0100, 0xa5bbd6dc )	/* blue */
@@ -749,7 +749,7 @@ ROM_START( dangar2 )
 	ROM_LOAD( "dangar07.19d", 0x0000, 0x4000, 0x6dba32cf )
 	ROM_LOAD( "dangar06.17d", 0x4000, 0x4000, 0x6c899071 )
 
-	ROM_REGION(0x0500)		/* Region 3 - color proms */
+	ROM_REGIONX( 0x0500, REGION_PROMS )
 	ROM_LOAD( "82s129.9f",   0x0000, 0x0100, 0xb29f6a07 )	/* red */
 	ROM_LOAD( "82s129.10f",  0x0100, 0x0100, 0xc6de5ecb )	/* green */
 	ROM_LOAD( "82s129.11f",  0x0200, 0x0100, 0xa5bbd6dc )	/* blue */
@@ -780,7 +780,7 @@ ROM_START( dangarb )
 	ROM_LOAD( "dangar07.19d", 0x0000, 0x4000, 0x6dba32cf )
 	ROM_LOAD( "dangar06.17d", 0x4000, 0x4000, 0x6c899071 )
 
-	ROM_REGION(0x0500)		/* Region 3 - color proms */
+	ROM_REGIONX( 0x0500, REGION_PROMS )
 	ROM_LOAD( "82s129.9f",   0x0000, 0x0100, 0xb29f6a07 )	/* red */
 	ROM_LOAD( "82s129.10f",  0x0100, 0x0100, 0xc6de5ecb )	/* green */
 	ROM_LOAD( "82s129.11f",  0x0200, 0x0100, 0xa5bbd6dc )	/* blue */
@@ -866,7 +866,7 @@ static void dangar_hisave(void)
 	}
 }
 
-struct GameDriver galivan_driver =
+struct GameDriver driver_galivan =
 {
 	__FILE__,
 	0,
@@ -879,23 +879,23 @@ struct GameDriver galivan_driver =
 	&galivan_machine_driver,
 	0,
 
-	galivan_rom,
+	rom_galivan,
 	0, 0,
 	0,
 	0,
 
-	galivan_input_ports,
+	input_ports_galivan,
 
-	PROM_MEMORY_REGION(3), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	galivan_hiload, galivan_hisave
 };
 
-struct GameDriver galivan2_driver =
+struct GameDriver driver_galivan2 =
 {
 	__FILE__,
-	&galivan_driver,
+	&driver_galivan,
 	"galivan2",
 	"Galivan - Cosmo Police (12/11/1985)",
 	"1985",
@@ -905,20 +905,20 @@ struct GameDriver galivan2_driver =
 	&galivan_machine_driver,
 	0,
 
-	galivan2_rom,
+	rom_galivan2,
 	0, 0,
 	0,
 	0,
 
-	galivan_input_ports,
+	input_ports_galivan,
 
-	PROM_MEMORY_REGION(3), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	galivan_hiload, galivan_hisave
 };
 
-struct GameDriver dangar_driver =
+struct GameDriver driver_dangar =
 {
 	__FILE__,
 	0,
@@ -931,23 +931,23 @@ struct GameDriver dangar_driver =
 	&galivan_machine_driver,
 	0,
 
-	dangar_rom,
+	rom_dangar,
 	0, 0,
 	0,
 	0,
 
-	dangar_input_ports,
+	input_ports_dangar,
 
-	PROM_MEMORY_REGION(3), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
         dangar_hiload, dangar_hisave
 };
 
-struct GameDriver dangar2_driver =
+struct GameDriver driver_dangar2 =
 {
 	__FILE__,
-	&dangar_driver,
+	&driver_dangar,
 	"dangar2",
 	"Dangar - Ufo Robo (9/26/1986)",
 	"1986",
@@ -957,23 +957,23 @@ struct GameDriver dangar2_driver =
 	&galivan_machine_driver,
 	0,
 
-	dangar2_rom,
+	rom_dangar2,
 	0, 0,
 	0,
 	0,
 
-	dangar2_input_ports,
+	input_ports_dangar2,
 
-	PROM_MEMORY_REGION(3), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
         dangar_hiload, dangar_hisave
 };
 
-struct GameDriver dangarb_driver =
+struct GameDriver driver_dangarb =
 {
 	__FILE__,
-	&dangar_driver,
+	&driver_dangar,
 	"dangarb",
 	"Dangar - Ufo Robo (bootleg)",
 	"1986",
@@ -983,14 +983,14 @@ struct GameDriver dangarb_driver =
 	&galivan_machine_driver,
 	0,
 
-	dangarb_rom,
+	rom_dangarb,
 	0, 0,
 	0,
 	0,
 
-	dangarb_input_ports,
+	input_ports_dangarb,
 
-	PROM_MEMORY_REGION(3), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
         dangar_hiload, dangar_hisave

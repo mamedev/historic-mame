@@ -88,7 +88,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( 1943 )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -312,7 +312,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( c1943 )
+ROM_START( 1943 )
 	ROM_REGION(0x30000)	/* 64k for code + 128k for the banked ROMs images */
 	ROM_LOAD( "1943.01",      0x00000, 0x08000, 0xc686cc5c )
 	ROM_LOAD( "1943.02",      0x10000, 0x10000, 0xd8880a41 )
@@ -339,7 +339,7 @@ ROM_START( c1943 )
 	ROM_LOAD( "1943.12",      0x88000, 0x8000, 0x5e7efdb7 )
 	ROM_LOAD( "1943.13",      0x90000, 0x8000, 0x1143829a )
 
-	ROM_REGION(0x0a00)	/* color PROMs */
+	ROM_REGIONX( 0x0a00, REGION_PROMS )
 	ROM_LOAD( "bmprom.01",    0x0000, 0x0100, 0x74421f18 )	/* red component */
 	ROM_LOAD( "bmprom.02",    0x0100, 0x0100, 0xac27541f )	/* green component */
 	ROM_LOAD( "bmprom.03",    0x0200, 0x0100, 0x251fb6ff )	/* blue component */
@@ -359,7 +359,7 @@ ROM_START( c1943 )
 	ROM_LOAD( "1943.23",      0x8000, 0x8000, 0xa52aecbd )	/* back background */
 ROM_END
 
-ROM_START( c1943j )
+ROM_START( 1943j )
 	ROM_REGION(0x30000)	/* 64k for code + 128k for the banked ROMs images */
 	ROM_LOAD( "1943jap.001",  0x00000, 0x08000, 0xf6935937 )
 	ROM_LOAD( "1943jap.002",  0x10000, 0x10000, 0xaf971575 )
@@ -386,7 +386,7 @@ ROM_START( c1943j )
 	ROM_LOAD( "1943.12",      0x88000, 0x8000, 0x5e7efdb7 )
 	ROM_LOAD( "1943.13",      0x90000, 0x8000, 0x1143829a )
 
-	ROM_REGION(0x0a00)	/* color PROMs */
+	ROM_REGIONX( 0x0a00, REGION_PROMS )
 	ROM_LOAD( "bmprom.01",    0x0000, 0x0100, 0x74421f18 )	/* red component */
 	ROM_LOAD( "bmprom.02",    0x0100, 0x0100, 0xac27541f )	/* green component */
 	ROM_LOAD( "bmprom.03",    0x0200, 0x0100, 0x251fb6ff )	/* blue component */
@@ -406,7 +406,7 @@ ROM_START( c1943j )
 	ROM_LOAD( "1943.23",      0x8000, 0x8000, 0xa52aecbd )	/* back background */
 ROM_END
 
-ROM_START( c1943kai )
+ROM_START( 1943kai )
 	ROM_REGION(0x30000)	/* 64k for code + 128k for the banked ROMs images */
 	ROM_LOAD( "1943kai.01",   0x00000, 0x08000, 0x7d2211db )
 	ROM_LOAD( "1943kai.02",   0x10000, 0x10000, 0x2ebbc8c5 )
@@ -433,7 +433,7 @@ ROM_START( c1943kai )
 	ROM_LOAD( "1943kai.12",   0x88000, 0x8000, 0x0f50c001 )
 	ROM_LOAD( "1943kai.13",   0x90000, 0x8000, 0xfd1acf8e )
 
-	ROM_REGION(0x0a00)	/* color PROMs */
+	ROM_REGIONX( 0x0a00, REGION_PROMS )
 	ROM_LOAD( "bmk01.bin",    0x0000, 0x0100, 0xe001ea33 )	/* red component */
 	ROM_LOAD( "bmk02.bin",    0x0100, 0x0100, 0xaf34d91a )	/* green component */
 	ROM_LOAD( "bmk03.bin",    0x0200, 0x0100, 0x43e9f6ef )	/* blue component */
@@ -582,7 +582,7 @@ static void c1943kai_hisave(void)
 
 
 
-struct GameDriver c1943_driver =
+struct GameDriver driver_1943 =
 {
 	__FILE__,
 	0,
@@ -595,23 +595,23 @@ struct GameDriver c1943_driver =
 	&machine_driver,
 	0,
 
-	c1943_rom,
+	rom_1943,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_1943,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	c1943_hiload, c1943_hisave
 };
 
-struct GameDriver c1943j_driver =
+struct GameDriver driver_1943j =
 {
 	__FILE__,
-	&c1943_driver,
+	&driver_1943,
 	"1943j",
 	"1943 - The Battle of Midway (Japan)",
 	"1987",
@@ -621,20 +621,20 @@ struct GameDriver c1943j_driver =
 	&machine_driver,
 	0,
 
-	c1943j_rom,
+	rom_1943j,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_1943,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	c1943_hiload, c1943_hisave
 };
 
-struct GameDriver c1943kai_driver =
+struct GameDriver driver_1943kai =
 {
 	__FILE__,
 	0,
@@ -647,14 +647,14 @@ struct GameDriver c1943kai_driver =
 	&machine_driver,
 	0,
 
-	c1943kai_rom,
+	rom_1943kai,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_1943,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	c1943kai_hiload, c1943kai_hisave

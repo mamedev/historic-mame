@@ -151,7 +151,7 @@ int run_game(int game)
 	Machine->sample_bits = options.samplebits;
 
 	/* get orientation right */
-	Machine->orientation = gamedrv->orientation;
+	Machine->orientation = gamedrv->flags & ORIENTATION_MASK;
 	Machine->ui_orientation = ORIENTATION_DEFAULT;
 	if (options.norotate)
 		Machine->orientation = ORIENTATION_DEFAULT;
@@ -259,6 +259,15 @@ int run_game(int game)
 ***************************************************************************/
 int init_machine(void)
 {
+	int i;
+
+	for (i = 0;i < MAX_MEMORY_REGIONS;i++)
+	{
+		Machine->memory_region[i] = 0;
+		Machine->memory_region_length[i] = 0;
+		Machine->memory_region_type[i] = 0;
+	}
+
 	if (gamedrv->input_ports)
 	{
 		int total;
@@ -351,9 +360,6 @@ int init_machine(void)
 	}
 	#endif
 
-	/* read audio samples if available */
-	Machine->samples = readsamples(gamedrv->samplenames,gamedrv->name);
-
 	/* Mish:  Multi-session safety - set spriteram size to zero before memory map is set up */
 	spriteram_size=spriteram_2_size=0;
 
@@ -383,9 +389,6 @@ void shutdown_machine(void)
 {
 	int i;
 
-	/* free audio samples */
-	freesamples(Machine->samples);
-	Machine->samples = 0;
 
 	/* ASG 971007 free memory element map */
 	shutdownmemoryhandler();
@@ -396,6 +399,7 @@ void shutdown_machine(void)
 		free(Machine->memory_region[i]);
 		Machine->memory_region[i] = 0;
 		Machine->memory_region_length[i] = 0;
+		Machine->memory_region_type[i] = 0;
 	}
 
 	/* free the memory allocated for input ports definition */
@@ -463,7 +467,7 @@ static int vh_open(void)
 			start &= ~(drv->gfxdecodeinfo[i].gfxlayout->charincrement-1);
 			len = drv->gfxdecodeinfo[i].gfxlayout->total *
 					drv->gfxdecodeinfo[i].gfxlayout->charincrement;
-			avail = Machine->memory_region_length[drv->gfxdecodeinfo[i].memory_region]
+			avail = memory_region_length(drv->gfxdecodeinfo[i].memory_region)
 					- (drv->gfxdecodeinfo[i].start & ~(drv->gfxdecodeinfo[i].gfxlayout->charincrement/8-1));
 			if ((start + len) / 8 > avail)
 			{
@@ -473,7 +477,7 @@ static int vh_open(void)
 				return 1;
 			}
 
-			if ((Machine->gfx[i] = decodegfx(Machine->memory_region[drv->gfxdecodeinfo[i].memory_region]
+			if ((Machine->gfx[i] = decodegfx(memory_region(drv->gfxdecodeinfo[i].memory_region)
 					+ drv->gfxdecodeinfo[i].start,
 					drv->gfxdecodeinfo[i].gfxlayout)) == 0)
 			{
@@ -592,20 +596,15 @@ int run_machine(void)
 		{
 			if (sound_start() == 0) /* start the audio hardware */
 			{
-				const struct RomModule *romp = gamedrv->rom;
 				int	region;
 
-				if (romp)
+				/* free memory regions allocated with ROM_REGION_DISPOSE (typically gfx roms) */
+				for (region = 0; region < MAX_MEMORY_REGIONS; region++)
 				{
-					/* free memory regions allocated with ROM_REGION_DISPOSE (typically gfx roms) */
-					for (region = 0; romp->name || romp->offset || romp->length; region++)
+					if (Machine->memory_region_type[region] & REGIONFLAG_DISPOSE)
 					{
-						if (romp->offset & ROMFLAG_DISPOSE)
-						{
-							free (Machine->memory_region[region]);
-							Machine->memory_region[region] = 0;
-						}
-						do { romp++; } while (romp->length);
+						free (Machine->memory_region[region]);
+						Machine->memory_region[region] = 0;
 					}
 				}
 

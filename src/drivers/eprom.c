@@ -291,7 +291,7 @@ static struct MemoryWriteAddress main_writemem[] =
 static struct MemoryReadAddress extra_readmem[] =
 {
 	{ 0x000000, 0x07ffff, MRA_ROM },
-	{ 0x16cc00, 0x16cc01, sync_r, &sync_data },
+	{ 0x16cc00, 0x16cc01, sync_r },
 	{ 0x160000, 0x16ffff, MRA_BANK1 },
 	{ 0x260000, 0x26000f, input_port_0_r },
 	{ 0x260010, 0x26001f, special_port1_r },
@@ -304,7 +304,7 @@ static struct MemoryReadAddress extra_readmem[] =
 static struct MemoryWriteAddress extra_writemem[] =
 {
 	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x16cc00, 0x16cc01, sync_w },
+	{ 0x16cc00, 0x16cc01, sync_w, &sync_data },
 	{ 0x160000, 0x16ffff, MWA_BANK1 },
 	{ 0x360000, 0x360001, atarigen_video_int_ack_w },
 	{ 0x360010, 0x360011, eprom_latch_w },
@@ -321,7 +321,7 @@ static struct MemoryWriteAddress extra_writemem[] =
  *
  *************************************/
 
-INPUT_PORTS_START( eprom_ports )
+INPUT_PORTS_START( eprom )
 	PORT_START		/* 26000 */
 	PORT_BIT( 0x00ff, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x0100, IP_ACTIVE_LOW, IPT_START1 )
@@ -590,7 +590,7 @@ static void eprom_init(void)
  *
  *************************************/
 
-struct GameDriver eprom_driver =
+struct GameDriver driver_eprom =
 {
 	__FILE__,
 	0,
@@ -603,13 +603,13 @@ struct GameDriver eprom_driver =
 	&machine_driver,
 	eprom_init,
 
-	eprom_rom,
+	rom_eprom,
 	rom_decode,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	eprom_ports,
+	input_ports_eprom,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
@@ -617,10 +617,10 @@ struct GameDriver eprom_driver =
 };
 
 
-struct GameDriver eprom2_driver =
+struct GameDriver driver_eprom2 =
 {
 	__FILE__,
-	&eprom_driver,
+	&driver_eprom,
 	"eprom2",
 	"Escape from the Planet of the Robot Monsters (set 2)",
 	"1989",
@@ -630,13 +630,13 @@ struct GameDriver eprom2_driver =
 	&machine_driver,
 	eprom_init,
 
-	eprom2_rom,
+	rom_eprom2,
 	rom_decode,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	eprom_ports,
+	input_ports_eprom,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,

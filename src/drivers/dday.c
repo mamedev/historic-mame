@@ -125,7 +125,7 @@ static struct MemoryWriteAddress writemem[] =
 
 
 
-INPUT_PORTS_START( dday_input_ports )
+INPUT_PORTS_START( dday )
 	PORT_START      /* IN 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -199,7 +199,7 @@ INPUT_PORTS_START( dday_input_ports )
 	PORT_ANALOG (0xff, 96, IPT_PADDLE, 20, 10, 0, 0, 191 )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( ddayc_input_ports )
+INPUT_PORTS_START( ddayc )
 	PORT_START      /* IN 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -381,7 +381,7 @@ ROM_START( dday )
 	ROM_LOAD( "k6_74o.bin",   0x2000, 0x0800, 0x66719aea )
 	ROM_LOAD( "k7_75o.bin",   0x2800, 0x0800, 0x5f8772e2 )
 
-	ROM_REGION(0x0300)      /* color PROMs */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "dday.m11",     0x0000, 0x0100, 0xaef6bbfc )  /* red component */
 	ROM_LOAD( "dday.m8",      0x0100, 0x0100, 0xad3314b9 )  /* green component */
 	ROM_LOAD( "dday.m3",      0x0200, 0x0100, 0xe877ab82 )  /* blue component */
@@ -410,7 +410,7 @@ ROM_START( ddayc )
 	ROM_LOAD( "k6_74.bin",    0x2000, 0x0800, 0xd21a3e22 )
 	ROM_LOAD( "k7_75.bin",    0x2800, 0x0800, 0xa5e5058c )
 
-	ROM_REGION(0x0300)      /* color PROMs */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "dday.m11",     0x0000, 0x0100, 0xaef6bbfc )  /* red component */
 	ROM_LOAD( "dday.m8",      0x0100, 0x0100, 0xad3314b9 )  /* green component */
 	ROM_LOAD( "dday.m3",      0x0200, 0x0100, 0xe877ab82 )  /* blue component */
@@ -475,7 +475,7 @@ static void hisave(void)
 }
 
 
-struct GameDriver dday_driver =
+struct GameDriver driver_dday =
 {
 	__FILE__,
 	0,
@@ -484,45 +484,45 @@ struct GameDriver dday_driver =
 	"1982",
 	"Olympia",
 	"Zsolt Vasvari\nHowie Cohen\nChris Moore\nBrad Oliver",
-	GAME_IMPERFECT_COLORS,
+	0,
 	&machine_driver,
 	0,
 
-	dday_rom,
+	rom_dday,
 	dday_decode, 0,
 	0,
 	0,      /* sound_prom */
 
-	dday_input_ports,
+	input_ports_dday,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	0, 0, 0,
+	ORIENTATION_DEFAULT | GAME_IMPERFECT_COLORS,
 
 	hiload, hisave
 };
 
-struct GameDriver ddayc_driver =
+struct GameDriver driver_ddayc =
 {
 	__FILE__,
-	&dday_driver,
+	&driver_dday,
 	"ddayc",
 	"D-Day (Centuri)",
 	"1982",
 	"Olympia (Centuri license)",
 	"Zsolt Vasvari\nHowie Cohen\nChris Moore\nBrad Oliver",
-	GAME_IMPERFECT_COLORS,
+	0,
 	&machine_driver,
 	0,
 
-	ddayc_rom,
+	rom_ddayc,
 	dday_decode, 0,
 	0,
 	0,      /* sound_prom */
 
-	ddayc_input_ports,
+	input_ports_ddayc,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	0, 0, 0,
+	ORIENTATION_DEFAULT | GAME_IMPERFECT_COLORS,
 
 	hiload, hisave
 };

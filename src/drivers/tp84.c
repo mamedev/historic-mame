@@ -239,7 +239,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( tp84 )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -448,7 +448,7 @@ ROM_START( tp84 )
 	ROM_LOAD( "tp84_14a.bin", 0x8000, 0x2000, 0x9a220b39 )
 	ROM_LOAD( "tp84_15a.bin", 0xa000, 0x2000, 0xfac98397 )
 
-	ROM_REGION(0x0500)	/* color/loookup proms */
+	ROM_REGIONX( 0x0500, REGION_PROMS )
 	ROM_LOAD( "tp84_2c.bin",  0x0000, 0x0100, 0xd737eaba ) /* palette red component */
 	ROM_LOAD( "tp84_2d.bin",  0x0100, 0x0100, 0x2f6a9a2a ) /* palette green component */
 	ROM_LOAD( "tp84_1e.bin",  0x0200, 0x0100, 0x2e21329b ) /* palette blue component */
@@ -477,7 +477,7 @@ ROM_START( tp84a )
 	ROM_LOAD( "tp84_14a.bin", 0x8000, 0x2000, 0x9a220b39 )
 	ROM_LOAD( "tp84_15a.bin", 0xa000, 0x2000, 0xfac98397 )
 
-	ROM_REGION(0x0500)	/* color/loookup proms */
+	ROM_REGIONX( 0x0500, REGION_PROMS )
 	ROM_LOAD( "tp84_2c.bin",  0x0000, 0x0100, 0xd737eaba ) /* palette red component */
 	ROM_LOAD( "tp84_2d.bin",  0x0100, 0x0100, 0x2f6a9a2a ) /* palette green component */
 	ROM_LOAD( "tp84_1e.bin",  0x0200, 0x0100, 0x2e21329b ) /* palette blue component */
@@ -531,7 +531,7 @@ static void hisave(void)
 
 
 
-struct GameDriver tp84_driver =
+struct GameDriver driver_tp84 =
 {
 	__FILE__,
 	0,
@@ -544,25 +544,23 @@ struct GameDriver tp84_driver =
 	&machine_driver,	/* MachineDriver */
 	0,
 
-	tp84_rom,			/* RomModule */
+	rom_tp84,			/* RomModule */
 	0, 0,				/* ROM decrypt routines */
 	0,					/* samplenames */
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_tp84,
 
-	PROM_MEMORY_REGION(2),	/* color prom */
-	0, 	          		/* palette */
-	0, 	          		/* color table */
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
 
-struct GameDriver tp84a_driver =
+struct GameDriver driver_tp84a =
 {
 	__FILE__,
-	&tp84_driver,
+	&driver_tp84,
 	"tp84a",
 	"Time Pilot '84 (set 2)",
 	"1984",
@@ -572,16 +570,14 @@ struct GameDriver tp84a_driver =
 	&machine_driver,	/* MachineDriver */
 	0,
 
-	tp84a_rom,			/* RomModule */
+	rom_tp84a,			/* RomModule */
 	0, 0,				/* ROM decrypt routines */
 	0,					/* samplenames */
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_tp84,
 
-	PROM_MEMORY_REGION(2),	/* color prom */
-	0, 	          		/* palette */
-	0, 	          		/* color table */
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave

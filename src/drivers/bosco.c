@@ -123,7 +123,7 @@ static struct MemoryReadAddress readmem_cpu1[] =
 	{ 0x6800, 0x6807, bosco_dsw_r },
 	{ 0x7000, 0x700f, bosco_customio_data_r_1 },
 	{ 0x7100, 0x7100, bosco_customio_r_1 },
-	{ 0x7800, 0x97ff, bosco_sharedram_r, &bosco_sharedram },
+	{ 0x7800, 0x97ff, bosco_sharedram_r },
 	{ -1 }	/* end of table */
 };
 
@@ -161,7 +161,7 @@ static struct MemoryWriteAddress writemem_cpu1[] =
 	{ 0x8800, 0x8bff, colorram_w, &colorram },
 	{ 0x8c00, 0x8fff, bosco_colorram2_w, &bosco_colorram2 },
 
-	{ 0x7800, 0x97ff, bosco_sharedram_w },
+	{ 0x7800, 0x97ff, bosco_sharedram_w, &bosco_sharedram },
 
 	{ 0x83d4, 0x83df, MWA_RAM, &spriteram, &spriteram_size },	/* these are here just to initialize */
 	{ 0x8bd4, 0x8bdf, MWA_RAM, &spriteram_2 },	                /* the pointers. */
@@ -212,7 +212,7 @@ static struct MemoryWriteAddress writemem_cpu3[] =
 };
 
 
-INPUT_PORTS_START( bosco_input_ports )
+INPUT_PORTS_START( bosco )
 	PORT_START      /* DSW0 */
 	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
@@ -297,7 +297,7 @@ INPUT_PORTS_START( bosco_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( bosconm_input_ports )
+INPUT_PORTS_START( bosconm )
 	PORT_START      /* DSW0 */
 	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Free_Play ) )
@@ -436,10 +436,20 @@ static struct namco_interface namco_interface =
 };
 
 
+static const char *bosco_sample_names[] =
+{
+	"*bosco",
+	"midbang.wav",
+	"bigbang.wav",
+	"shot.wav",
+	0	/* end of array */
+};
+
 static struct Samplesinterface samples_interface =
 {
 	3,	/* 3 channels */
-	100	/* volume */
+	80,	/* volume */
+	bosco_sample_names
 };
 
 
@@ -534,7 +544,7 @@ ROM_START( bosco )
 	ROM_LOAD( "5200.5e",      0x1000, 0x1000, 0xe869219c )
 	ROM_LOAD( "prom.2d",      0x2000, 0x0100, 0x9b69b543 )	/* dots */
 
-	ROM_REGION(0x0260)	/* PROMs */
+	ROM_REGIONX( 0x0260, REGION_PROMS )
 	ROM_LOAD( "bosco.6b",     0x0000, 0x0020, 0xd2b96fb0 )	/* palette */
 	ROM_LOAD( "bosco.4m",     0x0020, 0x0100, 0x4e15d59c )	/* lookup table */
 	ROM_LOAD( "prom.1d",      0x0120, 0x0100, 0xde2316c6 )	/* ?? */
@@ -570,7 +580,7 @@ ROM_START( boscomd )
 	ROM_LOAD( "5200.5e",      0x1000, 0x1000, 0xe869219c )
 	ROM_LOAD( "prom.2d",      0x2000, 0x0100, 0x9b69b543 )	/* dots */
 
-	ROM_REGION(0x0260)	/* PROMs */
+	ROM_REGIONX( 0x0260, REGION_PROMS )
 	ROM_LOAD( "bosco.6b",     0x0000, 0x0020, 0xd2b96fb0 )	/* palette */
 	ROM_LOAD( "bosco.4m",     0x0020, 0x0100, 0x4e15d59c )	/* lookup table */
 	ROM_LOAD( "prom.1d",      0x0120, 0x0100, 0xde2316c6 )	/* ?? */
@@ -606,7 +616,7 @@ ROM_START( boscomd2 )
 	ROM_LOAD( "5200.5e",      0x1000, 0x1000, 0xe869219c )
 	ROM_LOAD( "prom.2d",      0x2000, 0x0100, 0x9b69b543 )	/* dots */
 
-	ROM_REGION(0x0260)	/* PROMs */
+	ROM_REGIONX( 0x0260, REGION_PROMS )
 	ROM_LOAD( "bosco.6b",     0x0000, 0x0020, 0xd2b96fb0 )	/* palette */
 	ROM_LOAD( "bosco.4m",     0x0020, 0x0100, 0x4e15d59c )	/* lookup table */
 	ROM_LOAD( "prom.1d",      0x0120, 0x0100, 0xde2316c6 )	/* ?? */
@@ -630,16 +640,6 @@ ROM_START( boscomd2 )
 	ROM_LOAD( "prom.5c",      0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
-
-
-static const char *bosco_sample_names[] =
-{
-	"*bosco",
-	"midbang.wav",
-	"bigbang.wav",
-	"shot.wav",
-	0	/* end of array */
-};
 
 
 static int hiload(void)
@@ -699,7 +699,7 @@ static void hisave(void)
 
 
 
-struct GameDriver bosco_driver =
+struct GameDriver driver_bosco =
 {
 	__FILE__,
 	0,
@@ -712,23 +712,23 @@ struct GameDriver bosco_driver =
 	&machine_driver,
 	0,
 
-	bosco_rom,
+	rom_bosco,
 	0, 0,
-	bosco_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	bosconm_input_ports,
+	input_ports_bosconm,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };
 
-struct GameDriver boscomd_driver =
+struct GameDriver driver_boscomd =
 {
 	__FILE__,
-	&bosco_driver,
+	&driver_bosco,
 	"boscomd",
 	"Bosconian (Midway, set 1)",
 	"1981",
@@ -738,23 +738,23 @@ struct GameDriver boscomd_driver =
 	&machine_driver,
 	0,
 
-	boscomd_rom,
+	rom_boscomd,
 	0, 0,
-	bosco_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	bosco_input_ports,
+	input_ports_bosco,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };
 
-struct GameDriver boscomd2_driver =
+struct GameDriver driver_boscomd2 =
 {
 	__FILE__,
-	&bosco_driver,
+	&driver_bosco,
 	"boscomd2",
 	"Bosconian (Midway, set 2)",
 	"1981",
@@ -764,14 +764,14 @@ struct GameDriver boscomd2_driver =
 	&machine_driver,
 	0,
 
-	boscomd2_rom,
+	rom_boscomd2,
 	0, 0,
-	bosco_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	bosco_input_ports,
+	input_ports_bosco,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave

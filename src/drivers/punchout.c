@@ -458,7 +458,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 
 
-INPUT_PORTS_START( punchout_input_ports )
+INPUT_PORTS_START( punchout )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -529,7 +529,7 @@ INPUT_PORTS_START( punchout_input_ports )
 INPUT_PORTS_END
 
 /* same as punchout with additional duck button */
-INPUT_PORTS_START( spnchout_input_ports )
+INPUT_PORTS_START( spnchout )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -599,7 +599,7 @@ INPUT_PORTS_START( spnchout_input_ports )
 	PORT_START
 INPUT_PORTS_END
 
-INPUT_PORTS_START( armwrest_input_ports )
+INPUT_PORTS_START( armwrest )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -738,21 +738,6 @@ static struct GfxDecodeInfo armwrest_gfxdecodeinfo[] =
 
 
 
-/* filename for speech sample files */
-static const char *punchout_sample_names[] =
-{
-	"00.wav","01.wav","02.wav","03.wav","04.wav","05.wav","06.wav","07.wav",
-	"08.wav","09.wav","0a.wav","0b.wav","0c.wav","0d.wav","0e.wav","0f.wav",
-	"10.wav","11.wav","12.wav","13.wav","14.wav","15.wav","16.wav","17.wav",
-	"18.wav","19.wav","1a.wav","1b.wav","1c.wav","1d.wav","1e.wav","1f.wav",
-	"20.wav","21.wav","22.wav","23.wav","24.wav","25.wav","26.wav","27.wav",
-	"28.wav","29.wav","2a.wav","2b.wav",
-	0
-};
-
-/* filename for trackn field sample files */
-#define spunchout_sample_names punchout_sample_names
-
 static struct NESinterface nes_interface =
 {
 	1,
@@ -766,13 +751,26 @@ static struct DACinterface dac_interface =
 	{ 255, 255 }
 };
 
+/* filename for speech sample files */
+static const char *punchout_sample_names[] =
+{
+	"00.wav","01.wav","02.wav","03.wav","04.wav","05.wav","06.wav","07.wav",
+	"08.wav","09.wav","0a.wav","0b.wav","0c.wav","0d.wav","0e.wav","0f.wav",
+	"10.wav","11.wav","12.wav","13.wav","14.wav","15.wav","16.wav","17.wav",
+	"18.wav","19.wav","1a.wav","1b.wav","1c.wav","1d.wav","1e.wav","1f.wav",
+	"20.wav","21.wav","22.wav","23.wav","24.wav","25.wav","26.wav","27.wav",
+	"28.wav","29.wav","2a.wav","2b.wav",
+	0
+};
+
 static struct VLM5030interface vlm5030_interface =
 {
 	3580000,    /* master clock */
 	255,        /* volume       */
 	4,          /* memory region of speech rom */
 	0,          /* memory size of speech rom */
-	0           /* VCU pin level (default)     */
+	0,           /* VCU pin level (default)     */
+	punchout_sample_names
 };
 
 
@@ -985,7 +983,7 @@ ROM_START( punchout )
 	ROM_LOAD( "chp1-v.8n",    0x42000, 0x2000, 0xe6af390e )
 	/* 44000-47fff empty (space for 8l and 8k) */
 
-	ROM_REGION(0x0d00)	/* color PROMs */
+	ROM_REGIONX( 0x0d00, REGION_PROMS )
 	ROM_LOAD( "chp1-b.6e",    0x0000, 0x0200, 0xe9ca3ac6 )	/* red component */
 	ROM_LOAD( "chp1-b.7e",    0x0200, 0x0200, 0x47adf7a2 )	/* red component */
 	ROM_LOAD( "chp1-b.6f",    0x0400, 0x0200, 0x02be56ab )	/* green component */
@@ -1059,7 +1057,7 @@ ROM_START( spnchout )
 	ROM_CONTINUE(             0x43800, 0x0800 )
 	/* 44000-47fff empty (space for 8l and 8k) */
 
-	ROM_REGION(0x1000)	/* color PROMs */
+	ROM_REGIONX( 0x0d00, REGION_PROMS )
 	ROM_LOAD( "chs1-b.6e",    0x0000, 0x0200, 0x0ad4d727 )	/* red component */
 	ROM_LOAD( "chs1-b.7e",    0x0200, 0x0200, 0x9e170f64 )	/* red component */
 	ROM_LOAD( "chs1-b.6f",    0x0400, 0x0200, 0x86f5cfdb )	/* green component */
@@ -1108,7 +1106,7 @@ ROM_START( armwrest )
 	/* 4e000-4ffff empty (space for 16k ROM) */
 	/* 50000-53fff empty (space for 8l and 8k) */
 
-	ROM_REGION(0x0e00)	/* color PROMs */
+	ROM_REGIONX( 0x0e00, REGION_PROMS )
 	ROM_LOAD( "chpv-b.7b",    0x0000, 0x0200, 0xdf6fdeb3 )	/* red component */
 	ROM_LOAD( "chpv-b.4b",    0x0200, 0x0200, 0x9d51416e )	/* red component */
 	ROM_LOAD( "chpv-b.7c",    0x0400, 0x0200, 0xb1da5f42 )	/* green component */
@@ -1184,7 +1182,7 @@ static void hisave(void)
 
 
 
-struct GameDriver punchout_driver =
+struct GameDriver driver_punchout =
 {
 	__FILE__,
 	0,
@@ -1197,20 +1195,20 @@ struct GameDriver punchout_driver =
 	&punchout_machine_driver,
 	0,
 
-	punchout_rom,
+	rom_punchout,
 	punchout_decode, 0,
-	punchout_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	punchout_input_ports,
+	input_ports_punchout,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };
 
-struct GameDriver spnchout_driver =
+struct GameDriver driver_spnchout =
 {
 	__FILE__,
 	0,
@@ -1223,20 +1221,20 @@ struct GameDriver spnchout_driver =
 	&spnchout_machine_driver,
 	0,
 
-	spnchout_rom,
+	rom_spnchout,
 	punchout_decode, 0,
-	spunchout_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	spnchout_input_ports,
+	input_ports_spnchout,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };
 
-struct GameDriver armwrest_driver =
+struct GameDriver driver_armwrest =
 {
 	__FILE__,
 	0,
@@ -1249,14 +1247,14 @@ struct GameDriver armwrest_driver =
 	&armwrest_machine_driver,
 	0,
 
-	armwrest_rom,
+	rom_armwrest,
 	armwrest_decode, 0,
 	0,
 	0,	/* sound_prom */
 
-	armwrest_input_ports,
+	input_ports_armwrest,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave

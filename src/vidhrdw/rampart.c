@@ -84,7 +84,7 @@ int rampart_vh_start(void)
 	static struct atarigen_pf_desc pf_desc =
 	{
 		8, 8,				/* width/height of each tile */
-		64, 64				/* number of tiles in each direction */
+		XCHARS, YCHARS		/* number of tiles in each direction */
 	};
 
 	/* allocate color usage */
@@ -199,21 +199,18 @@ void rampart_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		for (y = 0; y < YDIM; y++)
 			if (atarigen_pf_dirty[y])
 			{
+				int xx = 0;
 				const UINT8 *src = &atarigen_playfieldram[512 * y];
-				UINT8 *dst = atarigen_pf_bitmap->line[y];
 
 				/* regenerate the line */
 				for (x = 0; x < XDIM/2; x++)
 				{
 					int bits = READ_WORD(src);
 					src += 2;
-					*dst++ = Machine->pens[bits >> 8];
-					*dst++ = Machine->pens[bits & 0xff];
+					plot_pixel(atarigen_pf_bitmap, xx++, y, Machine->pens[bits >> 8]);
+					plot_pixel(atarigen_pf_bitmap, xx++, y, Machine->pens[bits & 0xff]);
 				}
 				atarigen_pf_dirty[y] = 0;
-
-				/* make sure we update */
-				osd_mark_dirty(0, y, XDIM - 1, y, 0);
 			}
 	}
 

@@ -137,7 +137,7 @@ void combatsc_portA_w(int offset,int data)
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x04ff, MRA_RAM },
-	{ 0x0600, 0x06ff, MRA_RAM, &paletteram },	/* palette */
+	{ 0x0600, 0x06ff, MRA_RAM },	/* palette */
 	{ 0x0800, 0x1fff, MRA_RAM },
 	{ 0x2000, 0x3fff, combatsc_video_r },
 	{ 0x4000, 0x7fff, MRA_BANK1 },				/* banked ROM/RAM area */
@@ -149,7 +149,7 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x04ff, MWA_RAM },
 	{ 0x0500, 0x0500, combatsc_bankselect_w },
-	{ 0x0600, 0x06ff, paletteram_xBBBBBGGGGGRRRRR_w },
+	{ 0x0600, 0x06ff, paletteram_xBBBBBGGGGGRRRRR_w, &paletteram },
 	{ 0x0800, 0x1fff, MWA_RAM },
 	{ 0x2000, 0x3fff, combatsc_video_w },
 	{ 0x4000, 0x7fff, MWA_BANK1, &banked_area },/* banked ROM/RAM area */
@@ -220,10 +220,10 @@ static struct MemoryReadAddress combatsc_readmem[] =
 	{ 0x0405, 0x0405, input_port_5_r },			/* 1P trackball H */
 	{ 0x0406, 0x0406, input_port_6_r },			/* 2P trackball V */
 	{ 0x0407, 0x0407, input_port_7_r },			/* 2P trackball H */
-	{ 0x0600, 0x06ff, MRA_RAM, &paletteram },	/* palette */
+	{ 0x0600, 0x06ff, MRA_RAM },	/* palette */
 	{ 0x0800, 0x1fff, MRA_RAM },
 	{ 0x2000, 0x3fff, combatsc_video_r },
-	{ 0x4000, 0x7fff, MRA_BANK1, &banked_area },/* banked ROM area */
+	{ 0x4000, 0x7fff, MRA_BANK1 },/* banked ROM area */
 	{ 0x8000, 0xffff, MRA_ROM },				/* ROM */
 	{ -1 }
 };
@@ -240,10 +240,10 @@ static struct MemoryWriteAddress combatsc_writemem[] =
 	{ 0x0414, 0x0414, combatsc_sh_irqtrigger_w },
 	{ 0x0418, 0x0418, MWA_NOP },					/* ??? */
 	{ 0x041c, 0x041c, watchdog_reset_w },			/* watchdog reset? */
-	{ 0x0600, 0x06ff, paletteram_xBBBBBGGGGGRRRRR_w },
+	{ 0x0600, 0x06ff, paletteram_xBBBBBGGGGGRRRRR_w, &paletteram },
 	{ 0x0800, 0x1fff, MWA_RAM },					/* RAM */
 	{ 0x2000, 0x3fff, combatsc_video_w },
-	{ 0x4000, 0x7fff, MWA_BANK1 },					/* banked ROM area */
+	{ 0x4000, 0x7fff, MWA_BANK1, &banked_area },					/* banked ROM area */
 	{ 0x8000, 0xffff, MWA_ROM },					/* ROM */
 	{ -1 }
 };
@@ -284,7 +284,7 @@ static struct MemoryWriteAddress combatsc_writemem[] =
 	PORT_DIPSETTING(    0x90, DEF_STR( 1C_7C ) ) \
 	PORT_DIPSETTING(    0x00, "coin 2 invalidity" )
 
-INPUT_PORTS_START( cmbatscb_input_ports )
+INPUT_PORTS_START( cmbatscb )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -335,7 +335,7 @@ INPUT_PORTS_START( cmbatscb_input_ports )
 	PORT_DIPSETTING( 0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( combatsc_input_ports )
+INPUT_PORTS_START( combatsc )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -434,7 +434,7 @@ INPUT_PORTS_START( combatsc_input_ports )
 
 INPUT_PORTS_END
 
-INPUT_PORTS_START( combatsct_input_ports )
+INPUT_PORTS_START( combatsct )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -710,7 +710,7 @@ ROM_START( combatscb )
 	ROM_LOAD( "combat.018",	0xe0000, 0x10000, 0x575db729 )
 	ROM_LOAD( "combat.020",	0xf0000, 0x10000, 0x8d748a1a )
 
-	ROM_REGION( 0x400 ) /* color lookup table WRONG, the bootleg uses different PROMs */
+	ROM_REGIONX( 0x0400, REGION_PROMS )	/* TODO: WRONG, the bootleg uses different PROMs */
 	ROM_LOAD( "611g06.h14", 0x000, 0x100, 0xf916129a ) /* sprites lookup table */
 	ROM_LOAD( "611g10.h6",  0x100, 0x100, 0xf916129a ) /* sprites lookup table */
 	ROM_LOAD( "611g05.h15",	0x200, 0x100, 0x207a7b07 ) /* chars lookup table */
@@ -735,7 +735,7 @@ ROM_START( combatsc )
 	ROM_LOAD_EVEN( "611g12.rom",	0x80000, 0x40000, 0x9c6bf898 )
 	ROM_LOAD_ODD ( "611g11.rom",	0x80000, 0x40000, 0x69687538 )
 
-	ROM_REGION( 0x400 ) /* color lookup table */
+	ROM_REGIONX( 0x0400, REGION_PROMS )
 	ROM_LOAD( "611g06.h14", 0x000, 0x100, 0xf916129a ) /* sprites lookup table */
 	ROM_LOAD( "611g10.h6",  0x100, 0x100, 0xf916129a ) /* sprites lookup table */
 	ROM_LOAD( "611g05.h15",	0x200, 0x100, 0x207a7b07 ) /* chars lookup table */
@@ -760,7 +760,7 @@ ROM_START( combatsct )
 	ROM_LOAD_EVEN( "611g12.rom",	0x80000, 0x40000, 0x9c6bf898 )
 	ROM_LOAD_ODD ( "611g11.rom",	0x80000, 0x40000, 0x69687538 )
 
-	ROM_REGION( 0x400 ) /* color lookup table */
+	ROM_REGIONX( 0x0400, REGION_PROMS )
 	ROM_LOAD( "611g06.h14", 0x000, 0x100, 0xf916129a ) /* sprites lookup table */
 	ROM_LOAD( "611g10.h6",  0x100, 0x100, 0xf916129a ) /* sprites lookup table */
 	ROM_LOAD( "611g05.h15",	0x200, 0x100, 0x207a7b07 ) /* chars lookup table */
@@ -786,7 +786,7 @@ ROM_START( combatscj )
 	ROM_LOAD_EVEN( "611g12.rom",	0x80000, 0x40000, 0x9c6bf898 )
 	ROM_LOAD_ODD ( "611g11.rom",	0x80000, 0x40000, 0x69687538 )
 
-	ROM_REGION( 0x400 ) /* color lookup table */
+	ROM_REGIONX( 0x0400, REGION_PROMS )
 	ROM_LOAD( "611g06.h14", 0x000, 0x100, 0xf916129a ) /* sprites lookup table */
 	ROM_LOAD( "611g10.h6",  0x100, 0x100, 0xf916129a ) /* sprites lookup table */
 	ROM_LOAD( "611g05.h15",	0x200, 0x100, 0x207a7b07 ) /* chars lookup table */
@@ -811,7 +811,7 @@ ROM_START( bootcamp )
 	ROM_LOAD_EVEN( "611g12.rom",	0x80000, 0x40000, 0x9c6bf898 )
 	ROM_LOAD_ODD ( "611g11.rom",	0x80000, 0x40000, 0x69687538 )
 
-	ROM_REGION( 0x400 ) /* color lookup table */
+	ROM_REGIONX( 0x0400, REGION_PROMS )
 	ROM_LOAD( "611g06.h14", 0x000, 0x100, 0xf916129a ) /* sprites lookup table */
 	ROM_LOAD( "611g10.h6",  0x100, 0x100, 0xf916129a ) /* sprites lookup table */
 	ROM_LOAD( "611g05.h15",	0x200, 0x100, 0x207a7b07 ) /* chars lookup table */
@@ -865,7 +865,7 @@ static void combatsc_hisave( void )
 	}
 }
 
-struct GameDriver combasc_driver =
+struct GameDriver driver_combasc =
 {
 	__FILE__,
 	0,
@@ -874,118 +874,118 @@ struct GameDriver combasc_driver =
 	"1988",
 	"Konami",
 	"Manuel Abadia\nJose Tejada\nCesareo Gutierrez\nPhil Stroffolino",
-	GAME_NOT_WORKING,
+	0,
 	&combatsc_machine_driver,
 	0,
 
-	combatsc_rom,
+	rom_combatsc,
 	0, 0,
 	0,
 	0, /* sound_prom */
 
-	combatsc_input_ports,
+	input_ports_combatsc,
 
-	PROM_MEMORY_REGION(3), 0, 0, /* color lookup table */
-	ORIENTATION_DEFAULT,
+	0, 0, 0,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
 	combatsc_hiload, combatsc_hisave	/* hiload,hisave */
 };
 
-struct GameDriver combasct_driver =
+struct GameDriver driver_combasct =
 {
 	__FILE__,
-	&combasc_driver,
+	&driver_combasc,
 	"combasct",
 	"Combat School (trackball)",
 	"1987",
 	"Konami",
 	"Manuel Abadia\nJose Tejada\nCesareo Gutierrez\nPhil Stroffolino",
-	GAME_NOT_WORKING,
+	0,
 	&combatsc_machine_driver,
 	0,
 
-	combatsct_rom,
+	rom_combatsct,
 	0, 0,
 	0,
 	0, /* sound_prom */
 
-	combatsct_input_ports,
+	input_ports_combatsct,
 
-	PROM_MEMORY_REGION(3), 0, 0, /* color lookup table */
-	ORIENTATION_DEFAULT,
+	0, 0, 0,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
 	combatsc_hiload, combatsc_hisave	/* hiload,hisave */
 };
 
-struct GameDriver combascj_driver =
+struct GameDriver driver_combascj =
 {
 	__FILE__,
-	&combasc_driver,
+	&driver_combasc,
 	"combascj",
 	"Combat School (Japan trackball)",
 	"1987",
 	"Konami",
 	"Manuel Abadia\nJose Tejada\nCesareo Gutierrez\nPhil Stroffolino",
-	GAME_NOT_WORKING,
+	0,
 	&combatsc_machine_driver,
 	0,
 
-	combatscj_rom,
+	rom_combatscj,
 	0, 0,
 	0,
 	0, /* sound_prom */
 
-	combatsct_input_ports,
+	input_ports_combatsct,
 
-	PROM_MEMORY_REGION(3), 0, 0, /* color lookup table */
-	ORIENTATION_DEFAULT,
+	0, 0, 0,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
 	combatsc_hiload, combatsc_hisave	/* hiload,hisave */
 };
 
-struct GameDriver combascb_driver =
+struct GameDriver driver_combascb =
 {
 	__FILE__,
-	&combasc_driver,
+	&driver_combasc,
 	"combascb",
 	"Combat School (bootleg)",
 	"1988",
 	"bootleg",
 	"Manuel Abadia\nJose Tejada\nCesareo Gutierrez\nPhil Stroffolino",
-	GAME_IMPERFECT_COLORS,
+	0,
 	&cmbatscb_machine_driver,
 	0,
 
-	combatscb_rom,
+	rom_combatscb,
 	gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */
 
-	cmbatscb_input_ports,
+	input_ports_cmbatscb,
 
-	PROM_MEMORY_REGION(3), 0, 0, /* color lookup table */
-	ORIENTATION_DEFAULT,
+	0, 0, 0,
+	ORIENTATION_DEFAULT | GAME_IMPERFECT_COLORS,
 	combatsc_hiload, combatsc_hisave	/* hiload,hisave */
 };
 
-struct GameDriver bootcamp_driver =
+struct GameDriver driver_bootcamp =
 {
 	__FILE__,
-	&combasc_driver,
+	&driver_combasc,
 	"bootcamp",
 	"Boot Camp",
 	"1987",
 	"Konami",
 	"Manuel Abadia\nJose Tejada\nCesareo Gutierrez\nPhil Stroffolino",
-	GAME_NOT_WORKING,
+	0,
 	&combatsc_machine_driver,
 	0,
 
-	bootcamp_rom,
+	rom_bootcamp,
 	0, 0,
 	0,
 	0, /* sound_prom */
 
-	combatsct_input_ports,
+	input_ports_combatsct,
 
-	PROM_MEMORY_REGION(3), 0, 0, /* color lookup table */
-	ORIENTATION_DEFAULT,
+	0, 0, 0,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
 	combatsc_hiload, combatsc_hisave	/* hiload,hisave */
 };

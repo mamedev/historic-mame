@@ -388,7 +388,7 @@ static struct AY8910interface ay8910_interface = {
 	{ 0 }
 };
 
-INPUT_PORTS_START( mnchmobl_input_ports )
+INPUT_PORTS_START( mnchmobl )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -585,6 +585,37 @@ static struct MachineDriver machine_driver =
 	}
 };
 
+
+
+ROM_START( joyfulr )
+	ROM_REGION(0x10000) /* 64k for CPUA */
+	ROM_LOAD( "m1j.10e", 0x0000, 0x2000, 0x1fe86e25 )
+	ROM_LOAD( "m2j.10d", 0x2000, 0x2000, 0xb144b9a6 )
+
+	ROM_REGION(0x10000) /* 64k for sound CPU */
+	ROM_LOAD( "mu.2j",	 0x0000, 0x2000, 0x420adbd4 )
+
+	ROM_REGION_DISPOSE( 0x1000 ) /* 4x8 partial tiles */
+	ROM_LOAD( "b2.2b",	 0x0000, 0x1000, 0x0df28913 )
+	ROM_REGION( 0x1000 ) /* tilemap data */
+	ROM_LOAD( "b1.2c",	 0x0000, 0x1000, 0x8ce3a403 )
+
+	ROM_REGION_DISPOSE( 0x2000 ) /* characters */
+	ROM_LOAD( "s1.10a",	 0x0000, 0x1000, 0xc0bcc301 )
+	ROM_LOAD( "s2.10b",	 0x1000, 0x1000, 0x96aa11ca )
+
+	ROM_REGION_DISPOSE( 0x6000 ) /* sprites */
+	ROM_LOAD( "f1j.1g",	 0x0000, 0x2000, 0x93c3c17e )
+	ROM_LOAD( "f2j.3g",	 0x2000, 0x2000, 0xb3fb5bd2 )
+	ROM_LOAD( "f3j.5g",	 0x4000, 0x2000, 0x772a7527 )
+
+	ROM_REGION_DISPOSE( 0x2000 ) /* monochrome sprites */
+	ROM_LOAD( "h",		 0x0000, 0x2000, 0x332584de )
+
+	ROM_REGIONX( 0x0100, REGION_PROMS )
+	ROM_LOAD( "a2001.clr", 0x0000, 0x0100, 0x1b16b907 ) /* color prom */
+ROM_END
+
 ROM_START( mnchmobl )
 	ROM_REGION(0x10000) /* 64k for CPUA */
 	ROM_LOAD( "m1.10e",	 0x0000, 0x2000, 0xa4bebc6a )
@@ -610,7 +641,7 @@ ROM_START( mnchmobl )
 	ROM_REGION_DISPOSE( 0x2000 ) /* monochrome sprites */
 	ROM_LOAD( "h",		 0x0000, 0x2000, 0x332584de )
 
-	ROM_REGION( 0x0100 )
+	ROM_REGIONX( 0x0100, REGION_PROMS )
 	ROM_LOAD( "a2001.clr", 0x0000, 0x0100, 0x1b16b907 ) /* color prom */
 ROM_END
 
@@ -620,25 +651,48 @@ ROM_END
 
 ***************************************************************************/
 
-struct GameDriver mnchmobl_driver =
+struct GameDriver driver_joyfulr =
 {
 	__FILE__,
 	0,
-	"mnchmobl",
-	"Munch Mobile",
+	"joyfulr",
+	"Joyful Road (US)",
 	"1983",
-	"SNK (Centuri license)",
+	"SNK",
 	"Phil Stroffolino\nZsolt Vasvari\nMike Balfour",
-	GAME_WRONG_COLORS,
+	0,
 	&machine_driver,
 	0,
 
-	mnchmobl_rom,
+	rom_joyfulr,
 	0, 0, 0, 0,
 
-	mnchmobl_input_ports,
+	input_ports_mnchmobl,
 
-	PROM_MEMORY_REGION( 7 ), 0, 0,
-	ORIENTATION_ROTATE_270,
+	0, 0, 0,
+	ORIENTATION_ROTATE_270 | GAME_WRONG_COLORS,
+	0, 0
+};
+
+struct GameDriver driver_mnchmobl =
+{
+	__FILE__,
+	&driver_joyfulr,
+	"mnchmobl",
+	"Munch Mobile (Japan)",
+	"1983",
+	"SNK (Centuri license)",
+	"Phil Stroffolino\nZsolt Vasvari\nMike Balfour",
+	0,
+	&machine_driver,
+	0,
+
+	rom_mnchmobl,
+	0, 0, 0, 0,
+
+	input_ports_mnchmobl,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_270 | GAME_WRONG_COLORS,
 	0, 0
 };

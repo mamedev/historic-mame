@@ -151,7 +151,6 @@ extern unsigned char *exidy_sprite2_xpos;
 extern unsigned char *exidy_sprite2_ypos;
 extern unsigned char *exidy_color_latch;
 
-extern unsigned char *exidy_collision;
 extern int exidy_collision_counter;
 
 /* These are defined in machine/exidy.c */
@@ -192,7 +191,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x4800, 0x4fff, MRA_RAM },
 	{ 0x5100, 0x5100, input_port_0_r }, /* DSW */
 	{ 0x5101, 0x5101, input_port_1_r }, /* IN0 */
-	{ 0x5103, 0x5103, exidy_input_port_2_r, &exidy_collision }, /* IN1 */
+	{ 0x5103, 0x5103, exidy_input_port_2_r }, /* IN1 */
 	{ 0x5105, 0x5105, input_port_4_r }, /* IN3 - Targ, Spectar only */
 	{ 0x5200, 0x520F, pia_0_r },
 	{ 0x5213, 0x5213, input_port_3_r },     /* IN2 */
@@ -264,7 +263,7 @@ static struct MemoryReadAddress fax_readmem[] =
 	{ 0x4000, 0x43ff, MRA_RAM },
 	{ 0x5100, 0x5100, input_port_0_r }, /* DSW */
 	{ 0x5101, 0x5101, input_port_1_r }, /* IN0 */
-	{ 0x5103, 0x5103, exidy_input_port_2_r, &exidy_collision }, /* IN1 */
+	{ 0x5103, 0x5103, exidy_input_port_2_r }, /* IN1 */
 	{ 0x5200, 0x520F, pia_0_r },
 	{ 0x5213, 0x5213, input_port_3_r },     /* IN2 */
 	{ 0x6000, 0x6fff, MRA_RAM }, /* Fax, Pepper II only */
@@ -350,7 +349,7 @@ static struct IOReadPort dac_ioread[] =
 Input Ports
 ***************************************************************************/
 
-INPUT_PORTS_START( sidetrac_input_ports )
+INPUT_PORTS_START( sidetrac )
 	PORT_START              /* DSW0 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "2")
@@ -403,7 +402,7 @@ INPUT_PORTS_START( sidetrac_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( targ_input_ports )
+INPUT_PORTS_START( targ )
 	PORT_START              /* DSW0 */
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_COIN2 ) /* upright/cocktail switch? */
 	PORT_DIPNAME( 0x02, 0x00, "P Coinage" )
@@ -451,7 +450,7 @@ INPUT_PORTS_START( targ_input_ports )
 INPUT_PORTS_END
 
 /* identical to Targ, the only difference is the additional Language dip switch */
-INPUT_PORTS_START( spectar_input_ports )
+INPUT_PORTS_START( spectar )
 	PORT_START              /* DSW0 */
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_COIN2 ) /* upright/cocktail switch? */
 	PORT_DIPNAME( 0x02, 0x00, "P Coinage" )
@@ -503,7 +502,7 @@ INPUT_PORTS_START( spectar_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( mtrap_input_ports )
+INPUT_PORTS_START( mtrap )
 	PORT_START      /* DSW0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Bonus_Life ) )
@@ -569,7 +568,7 @@ INPUT_PORTS_START( mtrap_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( venture_input_ports )
+INPUT_PORTS_START( venture )
 	PORT_START      /* DSW0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Bonus_Life ) )
@@ -622,7 +621,7 @@ INPUT_PORTS_START( venture_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( pepper2_input_ports )
+INPUT_PORTS_START( pepper2 )
 	PORT_START              /* DSW */
 	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_DIPNAME( 0x06, 0x06, DEF_STR( Bonus_Life ) )
@@ -676,7 +675,7 @@ INPUT_PORTS_START( pepper2_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( fax_input_ports )
+INPUT_PORTS_START( fax )
 	PORT_START              /* DSW */
 	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_COIN2 )
 	PORT_DIPNAME( 0x06, 0x06, "Bonus Time" )
@@ -834,10 +833,11 @@ static const char *targ_sample_names[] =
 	0       /* end of array */
 };
 
-static struct Samplesinterface targ_samples_interface=
+static struct Samplesinterface targ_samples_interface =
 {
-	3,       /* 3 Channels */
-	25	/* volume */
+	3,	/* 3 Channels */
+	25,	/* volume */
+	targ_sample_names
 };
 
 static struct CustomSound_interface targ_custom_interface =
@@ -893,11 +893,11 @@ static struct MachineDriver targ_machine_driver =
 		{
 			SOUND_SAMPLES,
 			&targ_samples_interface
-	},
-	{
-	    SOUND_DAC,
-	    &targ_DAC_interface
-	}
+		},
+		{
+			SOUND_DAC,
+			&targ_DAC_interface
+		}
 	}
 };
 
@@ -1682,7 +1682,7 @@ static void sidetrac_hisave(void)
 Game Driver
 ***************************************************************************/
 
-struct GameDriver sidetrac_driver =
+struct GameDriver driver_sidetrac =
 {
 	__FILE__,
 	0,
@@ -1695,12 +1695,12 @@ struct GameDriver sidetrac_driver =
 	&targ_machine_driver,
 	sidetrac_driver_init,
 
-	sidetrac_rom,
+	rom_sidetrac,
 	0, 0,
-	targ_sample_names,
+	0,
 	0,
 
-	sidetrac_input_ports,
+	input_ports_sidetrac,
 
 	0, 0, 0,
 
@@ -1709,7 +1709,7 @@ struct GameDriver sidetrac_driver =
 	0,0
 };
 
-struct GameDriver targ_driver =
+struct GameDriver driver_targ =
 {
 	__FILE__,
 	0,
@@ -1722,12 +1722,12 @@ struct GameDriver targ_driver =
 	&targ_machine_driver,
 	targ_driver_init,
 
-	targ_rom,
+	rom_targ,
 	0, 0,
-	targ_sample_names,
+	0,
 	0,
 
-	targ_input_ports,
+	input_ports_targ,
 
 	0, 0, 0,
 
@@ -1736,7 +1736,7 @@ struct GameDriver targ_driver =
 	targ_hiload,targ_hisave
 };
 
-struct GameDriver spectar_driver =
+struct GameDriver driver_spectar =
 {
 	__FILE__,
 	0,
@@ -1749,12 +1749,12 @@ struct GameDriver spectar_driver =
 	&targ_machine_driver,
 	spectar_driver_init,
 
-	spectar_rom,
+	rom_spectar,
 	0, 0,
-	targ_sample_names,
+	0,
 	0,
 
-	spectar_input_ports,
+	input_ports_spectar,
 
 	0, 0, 0,
 
@@ -1763,10 +1763,10 @@ struct GameDriver spectar_driver =
 	targ_hiload,targ_hisave
 };
 
-struct GameDriver spectar1_driver =
+struct GameDriver driver_spectar1 =
 {
 	__FILE__,
-	&spectar_driver,
+	&driver_spectar,
 	"spectar1",
 	"Spectar (revision 1?)",
 	"1980",
@@ -1776,12 +1776,12 @@ struct GameDriver spectar1_driver =
 	&targ_machine_driver,
 	spectar_driver_init,
 
-	spectar1_rom,
+	rom_spectar1,
 	0, 0,
-	targ_sample_names,
+	0,
 	0,
 
-	spectar_input_ports,
+	input_ports_spectar,
 
 	0, 0, 0,
 
@@ -1790,7 +1790,7 @@ struct GameDriver spectar1_driver =
 	targ_hiload,targ_hisave
 };
 
-struct GameDriver mtrap_driver =
+struct GameDriver driver_mtrap =
 {
 	__FILE__,
 	0,
@@ -1803,12 +1803,12 @@ struct GameDriver mtrap_driver =
 	&mtrap_machine_driver,
 	mtrap_driver_init,
 
-	mtrap_rom,
+	rom_mtrap,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	mtrap_input_ports,
+	input_ports_mtrap,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -1816,10 +1816,10 @@ struct GameDriver mtrap_driver =
 	mtrap_hiload,mtrap_hisave
 };
 
-struct GameDriver mtrap3_driver =
+struct GameDriver driver_mtrap3 =
 {
 	__FILE__,
-	&mtrap_driver,
+	&driver_mtrap,
 	"mtrap3",
 	"Mouse Trap (version 3)",
 	"1981",
@@ -1829,12 +1829,12 @@ struct GameDriver mtrap3_driver =
 	&mtrap_machine_driver,
 	mtrap_driver_init,
 
-	mtrap3_rom,
+	rom_mtrap3,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	mtrap_input_ports,
+	input_ports_mtrap,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -1842,10 +1842,10 @@ struct GameDriver mtrap3_driver =
 	mtrap_hiload,mtrap_hisave
 };
 
-struct GameDriver mtrap4_driver =
+struct GameDriver driver_mtrap4 =
 {
 	__FILE__,
-        &mtrap_driver,
+        &driver_mtrap,
 	"mtrap4",
 	"Mouse Trap (version 4)",
 	"1981",
@@ -1855,12 +1855,12 @@ struct GameDriver mtrap4_driver =
 	&mtrap_machine_driver,
 	mtrap_driver_init,
 
-	mtrap4_rom,
+	rom_mtrap4,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	mtrap_input_ports,
+	input_ports_mtrap,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -1868,7 +1868,7 @@ struct GameDriver mtrap4_driver =
 	mtrap_hiload,mtrap_hisave
 };
 
-struct GameDriver venture_driver =
+struct GameDriver driver_venture =
 {
 	__FILE__,
 	0,
@@ -1881,12 +1881,12 @@ struct GameDriver venture_driver =
 	&venture_machine_driver,
 	venture_driver_init,
 
-	venture_rom,
+	rom_venture,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	venture_input_ports,
+	input_ports_venture,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -1894,10 +1894,10 @@ struct GameDriver venture_driver =
 	venture_hiload,venture_hisave
 };
 
-struct GameDriver venture2_driver =
+struct GameDriver driver_venture2 =
 {
 	__FILE__,
-	&venture_driver,
+	&driver_venture,
 	"venture2",
 	"Venture (version 5 set 2)",
 	"1981",
@@ -1907,12 +1907,12 @@ struct GameDriver venture2_driver =
 	&venture_machine_driver,
 	venture_driver_init,
 
-	venture2_rom,
+	rom_venture2,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	venture_input_ports,
+	input_ports_venture,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -1920,10 +1920,10 @@ struct GameDriver venture2_driver =
 	venture_hiload,venture_hisave
 };
 
-struct GameDriver venture4_driver =
+struct GameDriver driver_venture4 =
 {
 	__FILE__,
-	&venture_driver,
+	&driver_venture,
 	"venture4",
 	"Venture (version 4)",
 	"1981",
@@ -1933,12 +1933,12 @@ struct GameDriver venture4_driver =
 	&venture_machine_driver,
 	venture_driver_init,
 
-	venture4_rom,
+	rom_venture4,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	venture_input_ports,
+	input_ports_venture,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -1946,7 +1946,7 @@ struct GameDriver venture4_driver =
 	venture_hiload,venture_hisave
 };
 
-struct GameDriver pepper2_driver =
+struct GameDriver driver_pepper2 =
 {
 	__FILE__,
 	0,
@@ -1959,12 +1959,12 @@ struct GameDriver pepper2_driver =
 	&pepper2_machine_driver,
 	pepper2_driver_init,
 
-	pepper2_rom,
+	rom_pepper2,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	pepper2_input_ports,
+	input_ports_pepper2,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -1972,7 +1972,7 @@ struct GameDriver pepper2_driver =
 	pepper2_hiload,pepper2_hisave
 };
 
-struct GameDriver hardhat_driver =
+struct GameDriver driver_hardhat =
 {
 	__FILE__,
 	0,
@@ -1985,12 +1985,12 @@ struct GameDriver hardhat_driver =
 	&pepper2_machine_driver,
 	pepper2_driver_init,
 
-	hardhat_rom,
+	rom_hardhat,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	pepper2_input_ports,
+	input_ports_pepper2,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -1998,7 +1998,7 @@ struct GameDriver hardhat_driver =
 	pepper2_hiload,pepper2_hisave
 };
 
-struct GameDriver fax_driver =
+struct GameDriver driver_fax =
 {
 	__FILE__,
 	0,
@@ -2011,12 +2011,12 @@ struct GameDriver fax_driver =
 	&fax_machine_driver,
 	fax_driver_init,
 
-	fax_rom,
+	rom_fax,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	fax_input_ports,
+	input_ports_fax,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

@@ -102,7 +102,7 @@ extern unsigned char *pengo_soundregs;
 
 static struct MemoryReadAddress readmem_cpu1[] =
 {
-	{ 0x8000, 0x9fff, galaga_sharedram_r, &galaga_sharedram },
+	{ 0x8000, 0x9fff, galaga_sharedram_r },
 	{ 0x6800, 0x6807, galaga_dsw_r },
 	{ 0x7000, 0x700f, galaga_customio_data_r },
 	{ 0x7100, 0x7100, galaga_customio_r },
@@ -128,7 +128,7 @@ static struct MemoryReadAddress readmem_cpu3[] =
 
 static struct MemoryWriteAddress writemem_cpu1[] =
 {
-	{ 0x8000, 0x9fff, galaga_sharedram_w },
+	{ 0x8000, 0x9fff, galaga_sharedram_w, &galaga_sharedram },
 	{ 0x6830, 0x6830, MWA_NOP },
 	{ 0x7000, 0x700f, galaga_customio_data_w },
 	{ 0x7100, 0x7100, galaga_customio_w },
@@ -165,7 +165,7 @@ static struct MemoryWriteAddress writemem_cpu3[] =
 
 
 
-INPUT_PORTS_START( galaga_input_ports )
+INPUT_PORTS_START( galaga )
 	PORT_START      /* DSW0 */
 	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 4C_1C ) )
@@ -249,7 +249,7 @@ INPUT_PORTS_START( galaga_input_ports )
 INPUT_PORTS_END
 
 /* same as galaga, dip switches are slightly different */
-INPUT_PORTS_START( galaganm_input_ports )
+INPUT_PORTS_START( galaganm )
 	PORT_START      /* DSW0 */
 	PORT_DIPNAME( 0x07, 0x07, DEF_STR( Coinage ) )
 	PORT_DIPSETTING(    0x04, DEF_STR( 4C_1C ) )
@@ -377,10 +377,18 @@ static struct namco_interface namco_interface =
 	5			/* memory region */
 };
 
+static const char *galaga_sample_names[] =
+{
+	"*galaga",
+	"bang.wav",
+	0       /* end of array */
+};
+
 static struct Samplesinterface samples_interface =
 {
 	1,	/* one channel */
-	80	/* volume */
+	80,	/* volume */
+	galaga_sample_names
 };
 
 
@@ -460,7 +468,7 @@ ROM_START( galaga )
 	ROM_LOAD( "07e_g10.bin",  0x1000, 0x1000, 0xad447c80 )
 	ROM_LOAD( "07h_g09.bin",  0x2000, 0x1000, 0xdd6f1afc )
 
-	ROM_REGION(0x0320)	/* color PROMs */
+	ROM_REGIONX( 0x0320, REGION_PROMS )
 	ROM_LOAD( "5n.bin",       0x0000, 0x0020, 0x54603c6b )	/* palette */
 	ROM_LOAD( "2n.bin",       0x0020, 0x0100, 0xa547d33b )	/* char lookup table */
 	ROM_LOAD( "1c.bin",       0x0120, 0x0100, 0xb6f585fb )	/* sprite lookup table */
@@ -488,7 +496,7 @@ ROM_START( galagamw )
 	ROM_LOAD( "07e_g10.bin",  0x1000, 0x1000, 0xad447c80 )
 	ROM_LOAD( "07h_g09.bin",  0x2000, 0x1000, 0xdd6f1afc )
 
-	ROM_REGION(0x0320)	/* color PROMs */
+	ROM_REGIONX( 0x0320, REGION_PROMS )
 	ROM_LOAD( "5n.bin",       0x0000, 0x0020, 0x54603c6b )	/* palette */
 	ROM_LOAD( "2n.bin",       0x0020, 0x0100, 0xa547d33b )	/* char lookup table */
 	ROM_LOAD( "1c.bin",       0x0120, 0x0100, 0xb6f585fb )	/* sprite lookup table */
@@ -516,7 +524,7 @@ ROM_START( galagads )
 	ROM_LOAD( "07e_g10.bin",  0x1000, 0x1000, 0xad447c80 )
 	ROM_LOAD( "07h_g09.bin",  0x2000, 0x1000, 0xdd6f1afc )
 
-	ROM_REGION(0x0320)	/* color PROMs */
+	ROM_REGIONX( 0x0320, REGION_PROMS )
 	ROM_LOAD( "5n.bin",       0x0000, 0x0020, 0x54603c6b )	/* palette */
 	ROM_LOAD( "2n.bin",       0x0020, 0x0100, 0xa547d33b )	/* char lookup table */
 	ROM_LOAD( "1c.bin",       0x0120, 0x0100, 0xb6f585fb )	/* sprite lookup table */
@@ -544,7 +552,7 @@ ROM_START( gallag )
 	ROM_LOAD( "07e_g10.bin",  0x1000, 0x1000, 0xad447c80 )
 	ROM_LOAD( "07h_g09.bin",  0x2000, 0x1000, 0xdd6f1afc )
 
-	ROM_REGION(0x0320)	/* color PROMs */
+	ROM_REGIONX( 0x0320, REGION_PROMS )
 	ROM_LOAD( "5n.bin",       0x0000, 0x0020, 0x54603c6b )	/* palette */
 	ROM_LOAD( "2n.bin",       0x0020, 0x0100, 0xa547d33b )	/* char lookup table */
 	ROM_LOAD( "1c.bin",       0x0120, 0x0100, 0xb6f585fb )	/* sprite lookup table */
@@ -575,7 +583,7 @@ ROM_START( galagab2 )
 	ROM_LOAD( "07e_g10.bin",  0x1000, 0x1000, 0xad447c80 )
 	ROM_LOAD( "07h_g09.bin",  0x2000, 0x1000, 0xdd6f1afc )
 
-	ROM_REGION(0x0320)	/* color PROMs */
+	ROM_REGIONX( 0x0320, REGION_PROMS )
 	ROM_LOAD( "5n.bin",       0x0000, 0x0020, 0x54603c6b )	/* palette */
 	ROM_LOAD( "2n.bin",       0x0020, 0x0100, 0xa547d33b )	/* char lookup table */
 	ROM_LOAD( "1c.bin",       0x0120, 0x0100, 0xb6f585fb )	/* sprite lookup table */
@@ -606,7 +614,7 @@ ROM_START( galaga84 )
 	ROM_LOAD( "gal84u4d",     0x1000, 0x1000, 0x22e339d5 )
 	ROM_LOAD( "gal84u4e",     0x2000, 0x1000, 0x60dcf940 )
 
-	ROM_REGION(0x0320)	/* color PROMs */
+	ROM_REGIONX( 0x0320, REGION_PROMS )
 	ROM_LOAD( "5n.bin",       0x0000, 0x0020, 0x54603c6b )	/* palette */
 	ROM_LOAD( "2n.bin",       0x0020, 0x0100, 0xa547d33b )	/* char lookup table */
 	ROM_LOAD( "1c.bin",       0x0120, 0x0100, 0xb6f585fb )	/* sprite lookup table */
@@ -637,7 +645,7 @@ ROM_START( nebulbee )
 	ROM_LOAD( "07e_g10.bin",  0x1000, 0x1000, 0xad447c80 )
 	ROM_LOAD( "07h_g09.bin",  0x2000, 0x1000, 0xdd6f1afc )
 
-	ROM_REGION(0x0320)	/* color PROMs */
+	ROM_REGIONX( 0x0320, REGION_PROMS )
 	ROM_LOAD( "5n.bin",       0x0000, 0x0020, 0x54603c6b )	/* palette */
 	ROM_LOAD( "2n.bin",       0x0020, 0x0100, 0xa547d33b )	/* char lookup table */
 	ROM_LOAD( "1c.bin",       0x0120, 0x0100, 0xb6f585fb )	/* sprite lookup table */
@@ -652,15 +660,6 @@ ROM_START( nebulbee )
 	ROM_REGION(0x0100)	/* sound prom */
 	ROM_LOAD( "1d.bin",       0x0000, 0x0100, 0x86d92b24 )
 ROM_END
-
-
-
-static const char *galaga_sample_names[] =
-{
-	"*galaga",
-	"bang.wav",
-	0       /* end of array */
-};
 
 
 
@@ -709,7 +708,7 @@ static void hisave(void)
 }
 
 
-struct GameDriver galaga_driver =
+struct GameDriver driver_galaga =
 {
 	__FILE__,
 	0,
@@ -722,23 +721,23 @@ struct GameDriver galaga_driver =
 	&machine_driver,
 	0,
 
-	galaga_rom,
+	rom_galaga,
 	0, 0,
-	galaga_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	galaganm_input_ports,
+	input_ports_galaganm,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
 
-struct GameDriver galagamw_driver =
+struct GameDriver driver_galagamw =
 {
 	__FILE__,
-	&galaga_driver,
+	&driver_galaga,
 	"galagamw",
 	"Galaga (Midway)",
 	"1981",
@@ -748,23 +747,23 @@ struct GameDriver galagamw_driver =
 	&machine_driver,
 	0,
 
-	galagamw_rom,
+	rom_galagamw,
 	0, 0,
-	galaga_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	galaga_input_ports,
+	input_ports_galaga,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
 
-struct GameDriver galagads_driver =
+struct GameDriver driver_galagads =
 {
 	__FILE__,
-	&galaga_driver,
+	&driver_galaga,
 	"galagads",
 	"Galaga (fast shoot)",
 	"1981",
@@ -774,23 +773,23 @@ struct GameDriver galagads_driver =
 	&machine_driver,
 	0,
 
-	galagads_rom,
+	rom_galagads,
 	0, 0,
-	galaga_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	galaga_input_ports,
+	input_ports_galaga,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
 
-struct GameDriver gallag_driver =
+struct GameDriver driver_gallag =
 {
 	__FILE__,
-	&galaga_driver,
+	&driver_galaga,
 	"gallag",
 	"Gallag",
 	"1982",
@@ -800,23 +799,23 @@ struct GameDriver gallag_driver =
 	&machine_driver,
 	0,
 
-	gallag_rom,
+	rom_gallag,
 	0, 0,
-	galaga_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	galaganm_input_ports,
+	input_ports_galaganm,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
 
-struct GameDriver galagab2_driver =
+struct GameDriver driver_galagab2 =
 {
 	__FILE__,
-	&galaga_driver,
+	&driver_galaga,
 	"galagab2",
 	"Galaga (bootleg)",
 	"1981",
@@ -826,23 +825,23 @@ struct GameDriver galagab2_driver =
 	&machine_driver,
 	0,
 
-	galagab2_rom,
+	rom_galagab2,
 	0, 0,
-	galaga_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	galaganm_input_ports,
+	input_ports_galaganm,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
 
-struct GameDriver galaga84_driver =
+struct GameDriver driver_galaga84 =
 {
 	__FILE__,
-	&galaga_driver,
+	&driver_galaga,
 	"galaga84",
 	"Galaga '84",
 	"1984",
@@ -852,23 +851,23 @@ struct GameDriver galaga84_driver =
 	&machine_driver,
 	0,
 
-	galaga84_rom,
+	rom_galaga84,
 	0, 0,
-	galaga_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	galaganm_input_ports,
+	input_ports_galaganm,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
 
-struct GameDriver nebulbee_driver =
+struct GameDriver driver_nebulbee =
 {
 	__FILE__,
-	&galaga_driver,
+	&driver_galaga,
 	"nebulbee",
 	"Nebulous Bee",
 	"1984",
@@ -878,14 +877,14 @@ struct GameDriver nebulbee_driver =
 	&machine_driver,
 	0,
 
-	nebulbee_rom,
+	rom_nebulbee,
 	0, 0,
-	galaga_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	galaganm_input_ports,
+	input_ports_galaganm,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave

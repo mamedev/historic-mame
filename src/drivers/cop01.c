@@ -139,7 +139,7 @@ static struct IOWritePort sound_writeport[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( cop01 )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
@@ -422,7 +422,7 @@ ROM_START( cop01 )
 	ROM_LOAD( "cop08.6g",     0x16000, 0x2000, 0xa63ddda6 )
 	ROM_LOAD( "cop09.8g",     0x18000, 0x2000, 0x855a2ec3 )
 
-	ROM_REGION(0x0500)     /* color PROMs */
+	ROM_REGIONX( 0x0500, REGION_PROMS )
 	ROM_LOAD( "copproma.13d", 0x0000, 0x0100, 0x97f68a7a )	/* red */
 	ROM_LOAD( "coppromb.14d", 0x0100, 0x0100, 0x39a40b4c )	/* green */
 	ROM_LOAD( "coppromc.15d", 0x0200, 0x0100, 0x8181748b )	/* blue */
@@ -453,7 +453,7 @@ ROM_START( cop01a )
 	ROM_LOAD( "cop08.6g",     0x16000, 0x2000, 0xa63ddda6 )
 	ROM_LOAD( "cop09.8g",     0x18000, 0x2000, 0x855a2ec3 )
 
-	ROM_REGION(0x0500)     /* color PROMs */
+	ROM_REGIONX( 0x0500, REGION_PROMS )
 	ROM_LOAD( "copproma.13d", 0x0000, 0x0100, 0x97f68a7a )	/* red */
 	ROM_LOAD( "coppromb.14d", 0x0100, 0x0100, 0x39a40b4c )	/* green */
 	ROM_LOAD( "coppromc.15d", 0x0200, 0x0100, 0x8181748b )	/* blue */
@@ -467,7 +467,7 @@ ROM_END
 
 
 
-struct GameDriver cop01_driver =
+struct GameDriver driver_cop01 =
 {
 	__FILE__,
 	0,
@@ -476,45 +476,45 @@ struct GameDriver cop01_driver =
 	"1985",
 	"Nichibutsu",
 	"Carlos A. Lozano\n",
-	GAME_IMPERFECT_COLORS,
+	0,
 	&cop01_machine_driver,
 	0,
 
-	cop01_rom,
+	rom_cop01,
 	0, 0,
 	0,
 	0,
 
-	input_ports,
+	input_ports_cop01,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	0, 0, 0,
+	ORIENTATION_DEFAULT | GAME_IMPERFECT_COLORS,
 
-        cop01_hiload, cop01_hisave
+	cop01_hiload, cop01_hisave
 };
 
-struct GameDriver cop01a_driver =
+struct GameDriver driver_cop01a =
 {
 	__FILE__,
-	&cop01_driver,
+	&driver_cop01,
 	"cop01a",
 	"Cop 01 (set 2)",
 	"1985",
 	"Nichibutsu",
 	"Carlos A. Lozano\n",
-	GAME_IMPERFECT_COLORS,
+	0,
 	&cop01_machine_driver,
 	0,
 
-	cop01a_rom,
+	rom_cop01a,
 	0, 0,
 	0,
 	0,
 
-	input_ports,
+	input_ports_cop01,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	0, 0, 0,
+	ORIENTATION_DEFAULT | GAME_IMPERFECT_COLORS,
 
 	cop01a_hiload, cop01a_hisave
 };

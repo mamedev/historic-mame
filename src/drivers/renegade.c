@@ -420,7 +420,7 @@ static struct MemoryWriteAddress sound_writemem[] = {
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( renegade )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
@@ -855,7 +855,7 @@ static void hisave(void){
 }
 */
 
-struct GameDriver renegade_driver =
+struct GameDriver driver_renegade =
 {
 	__FILE__,
 	0,
@@ -868,12 +868,12 @@ struct GameDriver renegade_driver =
 	&renegade_machine_driver,
 	0,
 
-	renegade_rom,
+	rom_renegade,
 	renegade_init, 0,
 	0,
 	0,
 
-	input_ports,
+	input_ports_renegade,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -881,10 +881,10 @@ struct GameDriver renegade_driver =
 	0,0 /*hiload, hisave*/
 };
 
-struct GameDriver kuniokun_driver =
+struct GameDriver driver_kuniokun =
 {
 	__FILE__,
-	&renegade_driver,
+	&driver_renegade,
 	"kuniokun",
 	"Nekketsu Kouha Kunio-kun (Japan)",
 	"1986",
@@ -894,12 +894,12 @@ struct GameDriver kuniokun_driver =
 	&renegade_machine_driver,
 	kuniokun_init,
 
-	kuniokun_rom,
+	rom_kuniokun,
 	0, 0,
 	0,
 	0,
 
-	input_ports,
+	input_ports_renegade,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -907,10 +907,10 @@ struct GameDriver kuniokun_driver =
 	0,0 /*hiload, hisave*/
 };
 
-struct GameDriver kuniokub_driver =
+struct GameDriver driver_kuniokub =
 {
 	__FILE__,
-	&renegade_driver,
+	&driver_renegade,
 	"kuniokub",
 	"Nekketsu Kouha Kunio-kun (Japan bootleg)",
 	"1986",
@@ -920,12 +920,12 @@ struct GameDriver kuniokub_driver =
 	&renegade_machine_driver,
 	0,
 
-	kuniokub_rom,
+	rom_kuniokub,
 	0, 0,
 	0,
 	0,
 
-	input_ports,
+	input_ports_renegade,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

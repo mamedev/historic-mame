@@ -117,7 +117,7 @@ static struct IOWritePort wanted_writeport[] =
 };
 
 
-INPUT_PORTS_START( marineb_input_ports )
+INPUT_PORTS_START( marineb )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
@@ -167,7 +167,7 @@ INPUT_PORTS_START( marineb_input_ports )
 	PORT_BIT( 0xc0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( changes_input_ports )
+INPUT_PORTS_START( changes )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
@@ -214,7 +214,7 @@ INPUT_PORTS_START( changes_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( hoccer_input_ports )
+INPUT_PORTS_START( hoccer )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER2 )
@@ -262,7 +262,7 @@ INPUT_PORTS_START( hoccer_input_ports )
 	PORT_BIT( 0xc0, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( wanted_input_ports )
+INPUT_PORTS_START( wanted )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER2 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
@@ -554,7 +554,7 @@ ROM_START( marineb )
 	ROM_LOAD( "marineb.8",     0x4000, 0x2000, 0xdc8bc46c )
 	ROM_LOAD( "marineb.7",     0x6000, 0x2000, 0x9d2e19ab )
 
-	ROM_REGION(0x0200)	/* color proms */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "marineb.1b",    0x0000, 0x0100, 0xf32d9472 ) /* palette low 4 bits */
 	ROM_LOAD( "marineb.1c",    0x0100, 0x0100, 0x93c69d3e ) /* palette high 4 bits */
 ROM_END
@@ -572,7 +572,7 @@ ROM_START( changes )
 	ROM_RELOAD(				   0x2000, 0x2000 )
 	ROM_LOAD( "changes.6",     0x4000, 0x2000, 0x985c9db4 )
 
-	ROM_REGION(0x0200)	/* color proms */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "changes.1b",    0x0000, 0x0100, 0xf693c153 ) /* palette low 4 bits */
 	ROM_LOAD( "changes.1c",    0x0100, 0x0100, 0xf8331705 ) /* palette high 4 bits */
 ROM_END
@@ -590,7 +590,7 @@ ROM_START( looper )
 	ROM_RELOAD(				   0x2000, 0x2000 )
 	ROM_LOAD( "looper_6.bin",  0x4000, 0x2000, 0x1f3f70c2 )
 
-	ROM_REGION(0x0200)	/* color proms */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "changes.1b",    0x0000, 0x0100, 0xf693c153 ) /* palette low 4 bits */
 	ROM_LOAD( "changes.1c",    0x0100, 0x0100, 0xf8331705 ) /* palette high 4 bits */
 ROM_END
@@ -613,7 +613,7 @@ ROM_START( springer )
 	ROM_LOAD( "springer.9",    0x6000, 0x1000, 0xfa302775 )
 							/* 0x7000 -0x7fff empty for my convinience */
 
-	ROM_REGION(0x0200)	/* color proms */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "1b.vid",        0x0000, 0x0100, 0xa2f935aa ) /* palette low 4 bits */
 	ROM_LOAD( "1c.vid",        0x0100, 0x0100, 0xb95421f4 ) /* palette high 4 bits */
 ROM_END
@@ -630,7 +630,7 @@ ROM_START( hoccer )
 	ROM_RELOAD(				   0x2000, 0x2000 )
 	ROM_LOAD( "hr.c",          0x4000, 0x2000, 0x02808294 )
 
-	ROM_REGION(0x0200)  /* color proms */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "hr.1b",         0x0000, 0x0100, 0x896521d7 ) /* palette low 4 bits */
 	ROM_LOAD( "hr.1c",         0x0100, 0x0100, 0x2efdd70b ) /* palette high 4 bits */
 ROM_END
@@ -647,7 +647,7 @@ ROM_START( hoccer2 )
 	ROM_RELOAD(				   0x2000, 0x2000 )
 	ROM_LOAD( "hr.c",          0x4000, 0x2000, 0x02808294 )
 
-	ROM_REGION(0x0200)  /* color proms */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "hr.1b",         0x0000, 0x0100, 0x896521d7 ) /* palette low 4 bits */
 	ROM_LOAD( "hr.1c",         0x0100, 0x0100, 0x2efdd70b ) /* palette high 4 bits */
 ROM_END
@@ -664,7 +664,7 @@ ROM_START( wanted )
 	ROM_LOAD( "obj-a",		   0x4000, 0x2000, 0x90b60771 )
 	ROM_LOAD( "obj-b",		   0x6000, 0x2000, 0xe14ee689 )
 
-	ROM_REGION(0x0200)  /* color proms */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "wanted.k7",	   0x0000, 0x0100, 0x2ba90a00 )	/* palette low 4 bits */
 	ROM_LOAD( "wanted.k6",	   0x0100, 0x0100, 0xa93d87cc )	/* palette high 4 bits */
 ROM_END
@@ -684,7 +684,7 @@ ROM_START( hopprobo )
 	ROM_LOAD( "hopper08.6f",   0x4000, 0x2000, 0x06d37e64 )
 	ROM_LOAD( "hopper09.6k",   0x6000, 0x2000, 0x047921c7 )
 
-	ROM_REGION(0x0200)	/* color proms */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "7052hop.1b",    0x0000, 0x0100, 0x94450775 ) /* palette low 4 bits */
 	ROM_LOAD( "7052hop.1c",    0x0100, 0x0100, 0xa76bbd51 ) /* palette high 4 bits */
 ROM_END
@@ -986,7 +986,7 @@ static void hopprobo_hisave(void)
 }
 
 
-struct GameDriver marineb_driver =
+struct GameDriver driver_marineb =
 {
 	__FILE__,
 	0,
@@ -999,20 +999,20 @@ struct GameDriver marineb_driver =
 	&marineb_machine_driver,
 	0,
 
-	marineb_rom,
+	rom_marineb,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	marineb_input_ports,
+	input_ports_marineb,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	marineb_hiload, marineb_hisave
 };
 
-struct GameDriver changes_driver =
+struct GameDriver driver_changes =
 {
 	__FILE__,
 	0,
@@ -1025,23 +1025,23 @@ struct GameDriver changes_driver =
 	&changes_machine_driver,
 	0,
 
-	changes_rom,
+	rom_changes,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	changes_input_ports,
+	input_ports_changes,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	changes_hiload, changes_hisave
 };
 
-struct GameDriver looper_driver =
+struct GameDriver driver_looper =
 {
 	__FILE__,
-	&changes_driver,
+	&driver_changes,
 	"looper",
 	"Looper",
 	"1982",
@@ -1051,20 +1051,20 @@ struct GameDriver looper_driver =
 	&changes_machine_driver,
 	0,
 
-	looper_rom,
+	rom_looper,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	changes_input_ports,
+	input_ports_changes,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	changes_hiload, changes_hisave
 };
 
-struct GameDriver springer_driver =
+struct GameDriver driver_springer =
 {
 	__FILE__,
 	0,
@@ -1077,20 +1077,20 @@ struct GameDriver springer_driver =
 	&springer_machine_driver,
 	0,
 
-	springer_rom,
+	rom_springer,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	marineb_input_ports,  /* same as Marine Boy */
+	input_ports_marineb,  /* same as Marine Boy */
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	springer_hiload, springer_hisave
 };
 
-struct GameDriver hoccer_driver =
+struct GameDriver driver_hoccer =
 {
 	__FILE__,
 	0,
@@ -1103,23 +1103,23 @@ struct GameDriver hoccer_driver =
 	&hoccer_machine_driver,
 	0,
 
-	hoccer_rom,
+	rom_hoccer,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	hoccer_input_ports,
+	input_ports_hoccer,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
         hoccer_hiload, hoccer_hisave
 };
 
-struct GameDriver hoccer2_driver =
+struct GameDriver driver_hoccer2 =
 {
 	__FILE__,
-	&hoccer_driver,
+	&driver_hoccer,
 	"hoccer2",
 	"Hoccer (set 2)",	/* earlier */
 	"1983",
@@ -1129,20 +1129,20 @@ struct GameDriver hoccer2_driver =
 	&hoccer_machine_driver,
 	0,
 
-	hoccer2_rom,
+	rom_hoccer2,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	hoccer_input_ports,
+	input_ports_hoccer,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
         hoccer2_hiload, hoccer2_hisave
 };
 
-struct GameDriver wanted_driver =
+struct GameDriver driver_wanted =
 {
 	__FILE__,
 	0,
@@ -1155,20 +1155,20 @@ struct GameDriver wanted_driver =
 	&wanted_machine_driver,
 	0,
 
-	wanted_rom,
+	rom_wanted,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	wanted_input_ports,
+	input_ports_wanted,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	wanted_hiload, wanted_hisave
 };
 
-struct GameDriver hopprobo_driver =
+struct GameDriver driver_hopprobo =
 {
 	__FILE__,
 	0,
@@ -1181,14 +1181,14 @@ struct GameDriver hopprobo_driver =
 	&hopprobo_machine_driver,
 	0,
 
-	hopprobo_rom,
+	rom_hopprobo,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	marineb_input_ports,
+	input_ports_marineb,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hopprobo_hiload, hopprobo_hisave

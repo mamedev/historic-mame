@@ -209,7 +209,7 @@ static void eeprom_init(void)
 static int pang_port5_r(int offset)
 {
 	int bit;
-	extern struct GameDriver mgakuen2_driver;
+	extern struct GameDriver driver_mgakuen2;
 
 	bit = EEPROM_read_bit() << 7;
 
@@ -220,7 +220,7 @@ static int pang_port5_r(int offset)
 	/* otherwise music doesn't work. */
 	if (cpu_getiloops() & 1) bit |= 0x01;
 	else bit |= 0x08;
-if (Machine->gamedrv == &mgakuen2_driver)	/* hack... music doesn't work otherwise */
+if (Machine->gamedrv == &driver_mgakuen2)	/* hack... music doesn't work otherwise */
 	bit ^= 0x08;
 
 	return (input_port_1_r(0) & 0x76) | bit;
@@ -426,7 +426,7 @@ static struct IOWritePort writeport[] =
 
 
 
-INPUT_PORTS_START( mgakuen_input_ports )
+INPUT_PORTS_START( mgakuen )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -594,7 +594,7 @@ INPUT_PORTS_START( mgakuen_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( marukin_input_ports )
+INPUT_PORTS_START( marukin )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE )	/* same as the service mode farther down */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -714,7 +714,7 @@ INPUT_PORTS_START( marukin_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( pkladies_input_ports )
+INPUT_PORTS_START( pkladies )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE )	/* same as the service mode farther down */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -836,7 +836,7 @@ INPUT_PORTS_START( pkladies_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( pang_input_ports )
+INPUT_PORTS_START( pang )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -876,7 +876,7 @@ INPUT_PORTS_START( pang_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER2 )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( qtono1_input_ports )
+INPUT_PORTS_START( qtono1 )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SERVICE )	/* same as the service mode farther down */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -916,7 +916,7 @@ INPUT_PORTS_START( qtono1_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( block_input_ports )
+INPUT_PORTS_START( block )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -1581,7 +1581,7 @@ static void mgakuen_hisave(void)
 
 
 
-struct GameDriver mgakuen_driver =
+struct GameDriver driver_mgakuen =
 {
 	__FILE__,
 	0,
@@ -1594,19 +1594,19 @@ struct GameDriver mgakuen_driver =
 	&mgakuen_machine_driver,
 	mahjong_init,
 
-	mgakuen_rom,
+	rom_mgakuen,
 	0, 0,	/* not encrypted */
 	0,
 	0,      /* sound_prom */
 
-	mgakuen_input_ports,
+	input_ports_mgakuen,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	mgakuen_hiload, mgakuen_hisave    /* no EEPROM */
 };
 
-struct GameDriver mgakuen2_driver =
+struct GameDriver driver_mgakuen2 =
 {
 	__FILE__,
 	0,
@@ -1619,19 +1619,19 @@ struct GameDriver mgakuen2_driver =
 	&marukin_machine_driver,
 	mahjong_init,
 
-	mgakuen2_rom,
+	rom_mgakuen2,
 	0, mgakuen2_decode,
 	0,
 	0,      /* sound_prom */
 
-	marukin_input_ports,
+	input_ports_marukin,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	nvram_load, nvram_save
 };
 
-struct GameDriver pkladies_driver =
+struct GameDriver driver_pkladies =
 {
 	__FILE__,
 	0,
@@ -1644,19 +1644,19 @@ struct GameDriver pkladies_driver =
 	&marukin_machine_driver,
 	mahjong_init,
 
-	pkladies_rom,
+	rom_pkladies,
 	0, mgakuen2_decode,
 	0,
 	0,      /* sound_prom */
 
-	pkladies_input_ports,
+	input_ports_pkladies,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	nvram_load, nvram_save
 };
 
-struct GameDriver dokaben_driver =
+struct GameDriver driver_dokaben =
 {
 	__FILE__,
 	0,
@@ -1669,19 +1669,19 @@ struct GameDriver dokaben_driver =
 	&machine_driver,
 	standard_init,
 
-	dokaben_rom,
+	rom_dokaben,
 	0, mgakuen2_decode,
 	0,
 	0,      /* sound_prom */
 
-	pang_input_ports,
+	input_ports_pang,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	nvram_load, nvram_save
 };
 
-struct GameDriver pang_driver =
+struct GameDriver driver_pang =
 {
 	__FILE__,
 	0,
@@ -1694,22 +1694,22 @@ struct GameDriver pang_driver =
 	&machine_driver,
 	standard_init,
 
-	pang_rom,
+	rom_pang,
 	0, pang_decode,
 	0,
 	0,      /* sound_prom */
 
-	pang_input_ports,
+	input_ports_pang,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	nvram_load, nvram_save
 };
 
-struct GameDriver pangb_driver =
+struct GameDriver driver_pangb =
 {
 	__FILE__,
-	&pang_driver,
+	&driver_pang,
 	"pangb",
 	"Pang (bootleg)",
 	"1989",
@@ -1719,22 +1719,22 @@ struct GameDriver pangb_driver =
 	&machine_driver,
 	standard_init,
 
-	pangb_rom,
+	rom_pangb,
 	0, pangb_decode,
 	0,
 	0,      /* sound_prom */
 
-	pang_input_ports,
+	input_ports_pang,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	nvram_load, nvram_save
 };
 
-struct GameDriver bbros_driver =
+struct GameDriver driver_bbros =
 {
 	__FILE__,
-	&pang_driver,
+	&driver_pang,
 	"bbros",
 	"Buster Bros (US)",
 	"1989",
@@ -1744,22 +1744,22 @@ struct GameDriver bbros_driver =
 	&machine_driver,
 	standard_init,
 
-	bbros_rom,
+	rom_bbros,
 	0, pang_decode,
 	0,
 	0,      /* sound_prom */
 
-	pang_input_ports,
+	input_ports_pang,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	nvram_load, nvram_save
 };
 
-struct GameDriver pompingw_driver =
+struct GameDriver driver_pompingw =
 {
 	__FILE__,
-	&pang_driver,
+	&driver_pang,
 	"pompingw",
 	"Pomping World (Japan)",
 	"1989",
@@ -1769,19 +1769,19 @@ struct GameDriver pompingw_driver =
 	&machine_driver,
 	standard_init,
 
-	pompingw_rom,
+	rom_pompingw,
 	0, pang_decode,
 	0,
 	0,      /* sound_prom */
 
-	pang_input_ports,
+	input_ports_pang,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	nvram_load, nvram_save
 };
 
-struct GameDriver cworld_driver =
+struct GameDriver driver_cworld =
 {
 	__FILE__,
 	0,
@@ -1794,19 +1794,19 @@ struct GameDriver cworld_driver =
 	&machine_driver,
 	standard_init,
 
-	cworld_rom,
+	rom_cworld,
 	0, cworld_decode,
 	0,
 	0,      /* sound_prom */
 
-	qtono1_input_ports,
+	input_ports_qtono1,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	nvram_load, nvram_save
 };
 
-struct GameDriver hatena_driver =
+struct GameDriver driver_hatena =
 {
 	__FILE__,
 	0,
@@ -1819,19 +1819,19 @@ struct GameDriver hatena_driver =
 	&machine_driver,
 	standard_init,
 
-	hatena_rom,
+	rom_hatena,
 	0, hatena_decode,
 	0,
 	0,      /* sound_prom */
 
-	qtono1_input_ports,
+	input_ports_qtono1,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	nvram_load, nvram_save
 };
 
-struct GameDriver spang_driver =
+struct GameDriver driver_spang =
 {
 	__FILE__,
 	0,
@@ -1844,22 +1844,22 @@ struct GameDriver spang_driver =
 	&machine_driver,
 	standard_init,
 
-	spang_rom,
+	rom_spang,
 	0, spang_decode,
 	0,
 	0,      /* sound_prom */
 
-	pang_input_ports,
+	input_ports_pang,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	spang_nvram_load, spang_nvram_save
 };
 
-struct GameDriver sbbros_driver =
+struct GameDriver driver_sbbros =
 {
 	__FILE__,
-	&spang_driver,
+	&driver_spang,
 	"sbbros",
 	"Super Buster Bros (US)",
 	"1990",
@@ -1869,19 +1869,19 @@ struct GameDriver sbbros_driver =
 	&machine_driver,
 	standard_init,
 
-	sbbros_rom,
+	rom_sbbros,
 	0, sbbros_decode,
 	0,
 	0,      /* sound_prom */
 
-	pang_input_ports,
+	input_ports_pang,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	spang_nvram_load, spang_nvram_save
 };
 
-struct GameDriver marukin_driver =
+struct GameDriver driver_marukin =
 {
 	__FILE__,
 	0,
@@ -1894,19 +1894,19 @@ struct GameDriver marukin_driver =
 	&marukin_machine_driver,
 	mahjong_init,
 
-	marukin_rom,
+	rom_marukin,
 	0, marukin_decode,
 	0,
 	0,      /* sound_prom */
 
-	marukin_input_ports,
+	input_ports_marukin,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	nvram_load, nvram_save
 };
 
-struct GameDriver qtono1_driver =
+struct GameDriver driver_qtono1 =
 {
 	__FILE__,
 	0,
@@ -1919,19 +1919,19 @@ struct GameDriver qtono1_driver =
 	&machine_driver,
 	standard_init,
 
-	qtono1_rom,
+	rom_qtono1,
 	0, qtono1_decode,
 	0,
 	0,      /* sound_prom */
 
-	qtono1_input_ports,
+	input_ports_qtono1,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	nvram_load, nvram_save
 };
 
-struct GameDriver qsangoku_driver =
+struct GameDriver driver_qsangoku =
 {
 	__FILE__,
 	0,
@@ -1944,19 +1944,19 @@ struct GameDriver qsangoku_driver =
 	&machine_driver,
 	standard_init,
 
-	qsangoku_rom,
+	rom_qsangoku,
 	0, qsangoku_decode,
 	0,
 	0,      /* sound_prom */
 
-	qtono1_input_ports,
+	input_ports_qtono1,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	nvram_load, nvram_save
 };
 
-struct GameDriver block_driver =
+struct GameDriver driver_block =
 {
 	__FILE__,
 	0,
@@ -1969,22 +1969,22 @@ struct GameDriver block_driver =
 	&machine_driver,
 	dial_init,
 
-	block_rom,
+	rom_block,
 	0, block_decode,
 	0,
 	0,      /* sound_prom */
 
-	block_input_ports,
+	input_ports_block,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 	block_nvram_load, block_nvram_save
 };
 
-struct GameDriver blockj_driver =
+struct GameDriver driver_blockj =
 {
 	__FILE__,
-	&block_driver,
+	&driver_block,
 	"blockj",
 	"Block Block (Japan)",
 	"1991",
@@ -1994,22 +1994,22 @@ struct GameDriver blockj_driver =
 	&machine_driver,
 	dial_init,
 
-	blockj_rom,
+	rom_blockj,
 	0, block_decode,
 	0,
 	0,      /* sound_prom */
 
-	block_input_ports,
+	input_ports_block,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 	block_nvram_load, block_nvram_save
 };
 
-struct GameDriver blockbl_driver =
+struct GameDriver driver_blockbl =
 {
 	__FILE__,
-	&block_driver,
+	&driver_block,
 	"blockbl",
 	"Block Block (bootleg)",
 	"1991",
@@ -2019,12 +2019,12 @@ struct GameDriver blockbl_driver =
 	&machine_driver,
 	dial_init,
 
-	blockbl_rom,
+	rom_blockbl,
 	0, blockbl_decode,
 	0,
 	0,      /* sound_prom */
 
-	block_input_ports,
+	input_ports_block,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,

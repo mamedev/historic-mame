@@ -487,7 +487,7 @@ static struct MemoryWriteAddress spyhunt_writemem[] =
  *
  *************************************/
 
-INPUT_PORTS_START( tapper_input_ports )
+INPUT_PORTS_START( tapper )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -531,7 +531,7 @@ INPUT_PORTS_START( tapper_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( timber_input_ports )
+INPUT_PORTS_START( timber )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -574,7 +574,7 @@ INPUT_PORTS_START( timber_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( dotron_input_ports )
+INPUT_PORTS_START( dotron )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -618,7 +618,7 @@ INPUT_PORTS_START( dotron_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( destderb_input_ports )
+INPUT_PORTS_START( destderb )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -674,7 +674,7 @@ INPUT_PORTS_START( destderb_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( sarge_input_ports )
+INPUT_PORTS_START( sarge )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -730,7 +730,7 @@ INPUT_PORTS_START( sarge_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( rampage_input_ports )
+INPUT_PORTS_START( rampage )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -796,7 +796,7 @@ INPUT_PORTS_START( rampage_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( powerdrv_input_ports )
+INPUT_PORTS_START( powerdrv )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -851,7 +851,7 @@ INPUT_PORTS_START( powerdrv_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( maxrpm_input_ports )
+INPUT_PORTS_START( maxrpm )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -906,7 +906,7 @@ INPUT_PORTS_START( maxrpm_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( spyhunt_input_ports )
+INPUT_PORTS_START( spyhunt )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -953,7 +953,7 @@ INPUT_PORTS_START( spyhunt_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( turbotag_input_ports )
+INPUT_PORTS_START( turbotag )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -998,7 +998,7 @@ INPUT_PORTS_START( turbotag_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( crater_input_ports )
+INPUT_PORTS_START( crater )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -2094,7 +2094,7 @@ ROM_END
  *************************************/
 
 #define MCR3_DRIVER(name,machine,year,rotate,fullname) \
-	struct GameDriver name##_driver =				\
+	struct GameDriver driver_##name =				\
 	{												\
 		__FILE__,									\
 		0,											\
@@ -2108,12 +2108,12 @@ ROM_END
 		&machine##_machine_driver,					\
 		name##_init,								\
 													\
-		name##_rom,									\
+		rom_##name,									\
 		0, 0,										\
 		0,											\
 		0,	/* sound_prom */						\
 													\
-		name##_input_ports,							\
+		input_ports_##name,							\
 													\
 		0, 0,0,										\
 		rotate,										\
@@ -2122,10 +2122,10 @@ ROM_END
 	};
 
 #define MCR3_CLONE_DRIVER(name,machine,year,rotate,fullname,cloneof) \
-	struct GameDriver name##_driver =				\
+	struct GameDriver driver_##name =				\
 	{												\
 		__FILE__,									\
-		&cloneof##_driver,							\
+		&driver_##cloneof,							\
 		#name,										\
 		fullname,									\
 		#year,										\
@@ -2136,12 +2136,12 @@ ROM_END
 		&machine##_machine_driver,					\
 		cloneof##_init,								\
 													\
-		name##_rom,									\
+		rom_##name,									\
 		0, 0,										\
 		0,											\
 		0,	/* sound_prom */						\
 													\
-		cloneof##_input_ports,						\
+		input_ports_##cloneof,						\
 													\
 		0, 0,0,										\
 		rotate,										\

@@ -938,6 +938,7 @@ static void screenrefresh(struct osd_bitmap *bitmap,const struct rectangle *clip
 
 		/* Do compressed palette stuff */
 		neogeo_palette(clip);
+		/* no need to check the return code since we redraw everything each frame */
 
 		fillbitmap(bitmap,Machine->pens[4095],clip);
 	}
@@ -1261,4 +1262,5 @@ void neogeo_vh_raster_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
     /* Palette swap occured after last frame but before this one */
     if (palette_swap_pending) swap_palettes();
     palette_recalc();
+	/* no need to check the return code since we redraw everything each frame */
 }

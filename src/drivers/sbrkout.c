@@ -74,8 +74,6 @@ static void sbrkout_tones_4V(int foo)
 
 static struct MemoryReadAddress readmem[] =
 {
-	{ 0x0010, 0x0014, MRA_RAM, &sbrkout_horiz_ram }, /* Horizontal Ball Position */
-	{ 0x0018, 0x001d, MRA_RAM, &sbrkout_vert_ram }, /* Vertical Ball Position / ball picture */
 	{ 0x001f, 0x001f, input_port_6_r }, /* paddle value */
 	{ 0x0000, 0x00ff, MRA_RAM }, /* Zero Page RAM */
 	{ 0x0100, 0x01ff, MRA_RAM }, /* ??? */
@@ -96,6 +94,8 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0011, 0x0011, sbrkout_dac_w, &sbrkout_sound }, /* Noise Generation Bits */
+	{ 0x0010, 0x0014, MWA_RAM, &sbrkout_horiz_ram }, /* Horizontal Ball Position */
+	{ 0x0018, 0x001d, MWA_RAM, &sbrkout_vert_ram }, /* Vertical Ball Position / ball picture */
 	{ 0x0000, 0x00ff, MWA_RAM }, /* WRAM */
 	{ 0x0100, 0x01ff, MWA_RAM }, /* ??? */
 	{ 0x0400, 0x07ff, videoram_w, &videoram, &videoram_size }, /* DISPLAY */
@@ -111,7 +111,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ -1 }	/* end of table */
 };
 
-INPUT_PORTS_START( sbrkout_input_ports )
+INPUT_PORTS_START( sbrkout )
 	PORT_START		/* DSW - fake port, gets mapped to Super Breakout ports */
 	PORT_DIPNAME( 0x03, 0x00, "Language" )
 	PORT_DIPSETTING(	0x00, "English" )
@@ -329,7 +329,7 @@ static void hisave(void)
 
 
 
-struct GameDriver sbrkout_driver =
+struct GameDriver driver_sbrkout =
 {
 	__FILE__,
 	0,
@@ -342,12 +342,12 @@ struct GameDriver sbrkout_driver =
 	&machine_driver,
 	0,
 
-	sbrkout_rom,
+	rom_sbrkout,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	sbrkout_input_ports,
+	input_ports_sbrkout,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,

@@ -139,17 +139,17 @@ static int special_port0_r(int offset)
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x000000, 0x03ffff, MRA_ROM },
-	{ 0x100000, 0x100fff, atarigen_eeprom_r, &atarigen_eeprom, &atarigen_eeprom_size },
+	{ 0x100000, 0x100fff, atarigen_eeprom_r },
 	{ 0x103000, 0x103003, leta_r },
 	{ 0x105000, 0x105001, special_port0_r },
 	{ 0x105002, 0x105003, input_port_1_r },
 	{ 0x106000, 0x106001, adpcm_r },
 	{ 0x107000, 0x107007, MRA_NOP },
-	{ 0x3e0000, 0x3e087f, MRA_BANK1, &paletteram },
-	{ 0x3effc0, 0x3effff, atarigen_video_control_r, &atarigen_video_control_data },
-	{ 0x3f4000, 0x3f7fff, MRA_BANK2, &atarigen_playfieldram, &atarigen_playfieldram_size },
+	{ 0x3e0000, 0x3e087f, MRA_BANK1 },
+	{ 0x3effc0, 0x3effff, atarigen_video_control_r },
+	{ 0x3f4000, 0x3f7fff, MRA_BANK2 },
 	{ 0x3f8000, 0x3fcfff, MRA_BANK3 },
-	{ 0x3fd000, 0x3fd3ff, MRA_BANK4, &atarigen_spriteram },
+	{ 0x3fd000, 0x3fd3ff, MRA_BANK4 },
 	{ 0x3fd400, 0x3fffff, MRA_BANK5 },
 	{ -1 }  /* end of table */
 };
@@ -158,17 +158,17 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x000000, 0x03ffff, MWA_ROM },
-	{ 0x100000, 0x100fff, atarigen_eeprom_w },
+	{ 0x100000, 0x100fff, atarigen_eeprom_w, &atarigen_eeprom, &atarigen_eeprom_size },
 	{ 0x101000, 0x101fff, atarigen_eeprom_enable_w },
 	{ 0x102000, 0x102001, watchdog_reset_w },
 	{ 0x105000, 0x105001, latch_w },
 	{ 0x106000, 0x106001, adpcm_w },
 	{ 0x107000, 0x107007, MWA_NOP },
-	{ 0x3e0000, 0x3e087f, atarigen_666_paletteram_w },
-	{ 0x3effc0, 0x3effff, atarigen_video_control_w },
-	{ 0x3f4000, 0x3f7fff, shuuz_playfieldram_w },
+	{ 0x3e0000, 0x3e087f, atarigen_666_paletteram_w, &paletteram },
+	{ 0x3effc0, 0x3effff, atarigen_video_control_w, &atarigen_video_control_data },
+	{ 0x3f4000, 0x3f7fff, shuuz_playfieldram_w, &atarigen_playfieldram, &atarigen_playfieldram_size },
 	{ 0x3f8000, 0x3fcfff, MWA_BANK3 },
-	{ 0x3fd000, 0x3fd3ff, MWA_BANK4 },
+	{ 0x3fd000, 0x3fd3ff, MWA_BANK4, &atarigen_spriteram },
 	{ 0x3fd400, 0x3fffff, MWA_BANK5 },
 	{ -1 }  /* end of table */
 };
@@ -181,7 +181,7 @@ static struct MemoryWriteAddress writemem[] =
  *
  *************************************/
 
-INPUT_PORTS_START( shuuz_ports )
+INPUT_PORTS_START( shuuz )
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -206,7 +206,7 @@ INPUT_PORTS_START( shuuz_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( shuuz2_ports )
+INPUT_PORTS_START( shuuz2 )
 	PORT_START
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -437,7 +437,7 @@ static void shuuz_init(void)
  *
  *************************************/
 
-struct GameDriver shuuz_driver =
+struct GameDriver driver_shuuz =
 {
 	__FILE__,
 	0,
@@ -450,13 +450,13 @@ struct GameDriver shuuz_driver =
 	&machine_driver,
 	shuuz_init,
 
-	shuuz_rom,
+	rom_shuuz,
 	rom_decode,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	shuuz_ports,
+	input_ports_shuuz,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
@@ -464,10 +464,10 @@ struct GameDriver shuuz_driver =
 };
 
 
-struct GameDriver shuuz2_driver =
+struct GameDriver driver_shuuz2 =
 {
 	__FILE__,
-	&shuuz_driver,
+	&driver_shuuz,
 	"shuuz2",
 	"Shuuz (version 7.1)",
 	"1990",
@@ -477,13 +477,13 @@ struct GameDriver shuuz2_driver =
 	&machine_driver,
 	shuuz_init,
 
-	shuuz2_rom,
+	rom_shuuz2,
 	rom_decode,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	shuuz2_ports,
+	input_ports_shuuz2,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,

@@ -295,7 +295,7 @@ static struct IOWritePort i8039_writeport[] =
 
 
 
-INPUT_PORTS_START( depthch_input_ports )
+INPUT_PORTS_START( depthch )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON2 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -314,7 +314,7 @@ INPUT_PORTS_START( depthch_input_ports )
 	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1 | IPF_RESETCPU, 30 )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( safari_input_ports )
+INPUT_PORTS_START( safari )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
@@ -337,7 +337,7 @@ INPUT_PORTS_START( safari_input_ports )
 	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1 | IPF_RESETCPU, 30 )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( frogs_input_ports )
+INPUT_PORTS_START( frogs )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -362,7 +362,7 @@ INPUT_PORTS_START( frogs_input_ports )
 	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1 | IPF_RESETCPU, 30 )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( sspaceat_input_ports )
+INPUT_PORTS_START( sspaceat )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -401,7 +401,7 @@ INPUT_PORTS_START( sspaceat_input_ports )
 	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1 | IPF_RESETCPU, 30 )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( headon_input_ports )
+INPUT_PORTS_START( headon )
 	PORT_START	/* IN0 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
@@ -423,7 +423,7 @@ INPUT_PORTS_START( headon_input_ports )
 	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1 | IPF_RESETCPU, 30 )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( headon2_input_ports )
+INPUT_PORTS_START( headon2 )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -452,7 +452,7 @@ INPUT_PORTS_START( headon2_input_ports )
 	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1 | IPF_RESETCPU, 30 )
 INPUT_PORTS_END
 
-INPUT_PORTS_START ( invho2_input_ports )
+INPUT_PORTS_START( invho2 )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
@@ -503,7 +503,7 @@ INPUT_PORTS_START ( invho2_input_ports )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START ( samurai_input_ports )
+INPUT_PORTS_START( samurai )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* probably unused */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* probably unused */
@@ -553,7 +553,7 @@ INPUT_PORTS_START ( samurai_input_ports )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( invinco_input_ports )
+INPUT_PORTS_START( invinco )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -590,7 +590,7 @@ INPUT_PORTS_START( invinco_input_ports )
 	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1 | IPF_RESETCPU, 30 )
 INPUT_PORTS_END
 
-INPUT_PORTS_START ( invds_input_ports )
+INPUT_PORTS_START( invds )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
@@ -639,7 +639,7 @@ INPUT_PORTS_START ( invds_input_ports )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START ( tranqgun_input_ports )
+INPUT_PORTS_START( tranqgun )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
@@ -687,7 +687,7 @@ INPUT_PORTS_START ( tranqgun_input_ports )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START ( spacetrk_input_ports )
+INPUT_PORTS_START( spacetrk )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
@@ -735,7 +735,7 @@ INPUT_PORTS_START ( spacetrk_input_ports )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START ( sptrekct_input_ports )
+INPUT_PORTS_START( sptrekct )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
@@ -783,7 +783,7 @@ INPUT_PORTS_START ( sptrekct_input_ports )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START ( carnival_input_ports )
+INPUT_PORTS_START( carnival )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* probably unused */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* probably unused */
@@ -833,7 +833,7 @@ INPUT_PORTS_START ( carnival_input_ports )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START ( carnvckt_input_ports )
+INPUT_PORTS_START( carnvckt )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
@@ -883,7 +883,7 @@ INPUT_PORTS_START ( carnvckt_input_ports )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( digger_input_ports )
+INPUT_PORTS_START( digger )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -920,7 +920,7 @@ INPUT_PORTS_START( digger_input_ports )
 	PORT_BIT_IMPULSE( 0x80, IP_ACTIVE_LOW, IPT_COIN1 | IPF_RESETCPU, 30 )
 INPUT_PORTS_END
 
-INPUT_PORTS_START ( pulsar_input_ports )
+INPUT_PORTS_START( pulsar )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
@@ -968,7 +968,7 @@ INPUT_PORTS_START ( pulsar_input_ports )
 	PORT_BIT( 0xc0, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START ( heiankyo_input_ports )
+INPUT_PORTS_START( heiankyo )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
@@ -1040,9 +1040,9 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 static struct Samplesinterface samples_interface =
 {
 	12,	/* 12 channels */
-	50	/* volume */
+	50,	/* volume */
+	0	/* samplenames filled in later by the _init function */
 };
-
 
 
 #define MACHINEDRIVER(NAME, MEM, PORT)				\
@@ -1171,7 +1171,7 @@ ROM_START( depthch )
 	ROM_LOAD( "54a",          0x1000, 0x0400, 0x1b7f6a43 )
 	ROM_LOAD( "55a",          0x1400, 0x0400, 0x9fc2eb41 )
 
-	ROM_REGION(0x0040)	/* misc PROMs */
+	ROM_REGION(0x0040)	/* misc PROMs, but no color so don't use REGION_PROMS! */
 	ROM_LOAD( "316-0043.u87", 0x0000, 0x0020, 0xe60a7960 )	/* control PROM */
 	ROM_LOAD( "316-0042.u88", 0x0020, 0x0020, 0xa1506b9d )	/* sequence PROM */
 ROM_END
@@ -1189,7 +1189,7 @@ ROM_START( safari )
 	ROM_LOAD( "3160058.u40",  0x2000, 0x0400, 0x0d5058f1 )
 	ROM_LOAD( "3160057.u39",  0x2400, 0x0400, 0x298e8c41 )
 
-	ROM_REGION(0x0040)	/* misc PROMs */
+	ROM_REGION(0x0040)	/* misc PROMs, but no color so don't use REGION_PROMS! */
 	ROM_LOAD( "316-0043.u87", 0x0000, 0x0020, 0xe60a7960 )	/* control PROM */
 	ROM_LOAD( "316-0042.u88", 0x0020, 0x0020, 0xa1506b9d )	/* sequence PROM */
 
@@ -1218,7 +1218,7 @@ ROM_START( sspaceat )
 	ROM_LOAD( "161.u21",      0x1800, 0x0400, 0xeb5e0993 )
 	ROM_LOAD( "162.u20",      0x1c00, 0x0400, 0x5f84d550 )
 
-	ROM_REGION(0x0020) /* color PROM */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "316-0138.u44", 0x0000, 0x0020, 0x67104ea9 )
 ROM_END
 
@@ -1233,7 +1233,7 @@ ROM_START( sspacatc )
 	ROM_LOAD( "145.u21",      0x1800, 0x0400, 0x7e950614 )
 	ROM_LOAD( "146.u20",      0x1c00, 0x0400, 0x8ba94fbc )
 
-	ROM_REGION(0x0020) /* color PROMs */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "316-0138.u44", 0x0000, 0x0020, 0x67104ea9 )
 ROM_END
 
@@ -1247,7 +1247,7 @@ ROM_START( headon )
 	ROM_LOAD( "192a",         0x1400, 0x0400, 0xed4666f2 )
 	ROM_LOAD( "193a",         0x1800, 0x0400, 0x37a1df4c )
 
-	ROM_REGION(0x0020) /* color PROMs */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "316-0138.u44", 0x0000, 0x0020, 0x67104ea9 )
 ROM_END
 
@@ -1261,7 +1261,7 @@ ROM_START( headonb )
 	ROM_LOAD( "192a",         0x1400, 0x0400, 0xed4666f2 )
 	ROM_LOAD( "193a-1",       0x1800, 0x0400, 0xd3782c1d )
 
-	ROM_REGION(0x0020) /* color PROMs */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "316-0138.u44", 0x0000, 0x0020, 0x67104ea9 )
 ROM_END
 
@@ -1276,7 +1276,7 @@ ROM_START( headon2 )
 	ROM_LOAD( "u21.bin",      0x1800, 0x0400, 0x4c19dd40 )
 	ROM_LOAD( "u20.bin",      0x1c00, 0x0400, 0x25887ff2 )
 
-	ROM_REGION(0x0020) /* color PROMs */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "316-0138.u44", 0x0000, 0x0020, 0x67104ea9 )
 ROM_END
 
@@ -1299,7 +1299,7 @@ ROM_START( invho2 )
 	ROM_LOAD( "285b.u2",      0x3800, 0x0400, 0x8dc3ec34 )
 	ROM_LOAD( "286b.u1",      0x3c00, 0x0400, 0x4bab9ba2 )
 
-	ROM_REGION(0x0020) /* color PROMs */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "316-0287.u49", 0x0000, 0x0020, 0xd4374b01 )
 ROM_END
 
@@ -1320,7 +1320,7 @@ ROM_START( samurai )
 	ROM_LOAD( "epr301.u4",    0x3000, 0x0400, 0x23de1ff7 )
 	ROM_LOAD( "epr372.u3",    0x3400, 0x0400, 0x292cfd89 )
 
-	ROM_REGION(0x0020) /* color PROMs */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "pr55.clr",     0x0000, 0x0020, 0x975f5fb0 )
 
 	ROM_REGION(0x0040)	/* misc PROMs */
@@ -1340,7 +1340,7 @@ ROM_START( invinco )
 	ROM_LOAD( "317a.u20",     0x1c00, 0x0400, 0x75389463 )
 	ROM_LOAD( "318a.uxx",     0x2000, 0x0400, 0x0780721d )
 
-	ROM_REGION(0x0020) /* color PROMs */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "316-246.u44",  0x0000, 0x0020, 0xfe4406cb )
 ROM_END
 
@@ -1363,7 +1363,7 @@ ROM_START( invds )
 	ROM_LOAD( "381.u2",       0x3800, 0x0400, 0x798ba0c7 )
 	ROM_LOAD( "382.u1",       0x3c00, 0x0400, 0x8d195c24 )
 
-	ROM_REGION(0x0020) /* color PROMs */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "316-246",      0x0000, 0x0020, 0xfe4406cb )
 
 	ROM_REGION(0x0020)	/* misc PROM */
@@ -1389,7 +1389,7 @@ ROM_START( tranqgun )
 	ROM_LOAD( "u2.bin",       0x3800, 0x0400, 0xa9b10df5 )
 	ROM_LOAD( "u1.bin",       0x3c00, 0x0400, 0x431a7449 )
 
-	ROM_REGION(0x0020) /* color PROMs */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "u49.bin",      0x0000, 0x0020, 0x6481445b )
 
 	ROM_REGION(0x0040)	/* misc PROMs */
@@ -1416,7 +1416,7 @@ ROM_START( spacetrk )
 	ROM_LOAD( "u2.bin",       0x3800, 0x0400, 0xa968584b )
 	ROM_LOAD( "u1.bin",       0x3c00, 0x0400, 0xe6e300e8 )
 
-	ROM_REGION(0x0020) /* color PROMs */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "u49.bin",      0x0000, 0x0020, 0xaabae4cd )
 
 	ROM_REGION(0x0040)	/* misc PROMs */
@@ -1443,7 +1443,7 @@ ROM_START( sptrekct )
 	ROM_LOAD( "u2c.bin",      0x3800, 0x0400, 0x94da3cdc )
 	ROM_LOAD( "u1c.bin",      0x3c00, 0x0400, 0x2a228bf4 )
 
-	ROM_REGION(0x0020) /* color PROMs */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "u49.bin",      0x0000, 0x0020, 0xaabae4cd )
 
 	ROM_REGION(0x0040)	/* misc PROMs */
@@ -1470,7 +1470,7 @@ ROM_START( carnival )
 	ROM_LOAD( "665u2.cpu",    0x3800, 0x0400, 0x28e7b2b6 )
 	ROM_LOAD( "666u1.cpu",    0x3c00, 0x0400, 0x4eec7fae )
 
-	ROM_REGION(0x0020) /* color PROMs */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "316-633",      0x0000, 0x0020, 0xf0084d80 )
 
 	ROM_REGION(0x0800)	/* sound ROM */
@@ -1496,7 +1496,7 @@ ROM_START( carnvckt )
 	ROM_LOAD( "epr515",       0x3800, 0x0400, 0x10decaa9 )
 	ROM_LOAD( "epr516",       0x3c00, 0x0400, 0x7c32b352 )
 
-	ROM_REGION(0x0020) /* color PROMs */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "316-633",      0x0000, 0x0020, 0xf0084d80 )
 
 	ROM_REGION(0x0800)	/* sound ROM */
@@ -1514,7 +1514,7 @@ ROM_START( digger )
 	ROM_LOAD( "690.u21",      0x1800, 0x0400, 0xa86622a6 )
 	ROM_LOAD( "691.u20",      0x1c00, 0x0400, 0x8aca72d8 )
 
-	ROM_REGION(0x0020) /* color PROMs */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "316-507",      0x0000, 0x0020, 0xfdb22e8f )
 
 	ROM_REGION(0x0020)	/* misc PROM */
@@ -1540,7 +1540,7 @@ ROM_START( pulsar )
 	ROM_LOAD( "804.u2",       0x3800, 0x0400, 0x62847b01 )
 	ROM_LOAD( "805.u1",       0x3c00, 0x0400, 0xab418e86 )
 
-	ROM_REGION(0x0020) /* color PROMs */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "316-0789.u49", 0x0000, 0x0020, 0x7fc1861f )
 
 	ROM_REGION(0x0020)	/* misc PROM */
@@ -1565,7 +1565,7 @@ ROM_START( heiankyo )
 	ROM_LOAD( "ha2.u2",       0x3800, 0x0400, 0x056b3b8b )
 	ROM_LOAD( "ha1.u1",       0x3c00, 0x0400, 0xb8da2b5e )
 
-	ROM_REGION(0x0020) /* color PROMs */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "316-138.u49",  0x0000, 0x0020, 0x67104ea9 )
 
 	ROM_REGION(0x0040)	/* misc PROMs */
@@ -1632,12 +1632,19 @@ static void carnival_hisave(void)
 
 
 
+static void nosamples_driver_init(void)
+{
+	samples_interface.samplenames = 0;
+}
+
 static void depthch_driver_init(void)
 {
 	install_port_read_handler(0, 0x08, 0x08, depthch_input_port_1_r);
 
 	/* install sample trigger */
 	install_port_write_handler(0, 0x04, 0x04, depthch_sh_port1_w);
+
+	samples_interface.samplenames = depthch_sample_names;
 }
 
 static void samurai_driver_init(void)
@@ -1645,6 +1652,8 @@ static void samurai_driver_init(void)
 	/* install protection handlers */
 	install_mem_write_handler(0, 0x7f00, 0x7f00, samurai_protection_w);
 	install_port_read_handler(0, 0x01, 0x03, samurai_input_r);
+
+	samples_interface.samplenames = 0;
 }
 
 static void carnival_driver_init(void)
@@ -1652,24 +1661,32 @@ static void carnival_driver_init(void)
 	/* install sample triggers */
 	install_port_write_handler(0, 0x01, 0x01, carnival_sh_port1_w);
 	install_port_write_handler(0, 0x02, 0x02, carnival_sh_port2_w);
+
+	samples_interface.samplenames = carnival_sample_names;
 }
 
 static void invinco_driver_init(void)
 {
 	/* install sample trigger */
 	install_port_write_handler(0, 0x02, 0x02, invinco_sh_port2_w);
+
+	samples_interface.samplenames = invinco_sample_names;
 }
 
 static void invho2_driver_init(void)
 {
 	/* install sample trigger */
 	install_port_write_handler(0, 0x02, 0x02, invinco_sh_port2_w);
+
+	samples_interface.samplenames = invinco_sample_names;
 }
 
 static void invds_driver_init(void)
 {
 	/* install sample trigger */
 	install_port_write_handler(0, 0x01, 0x01, invinco_sh_port2_w);
+
+	samples_interface.samplenames = invinco_sample_names;
 }
 
 static void pulsar_driver_init(void)
@@ -1677,10 +1694,12 @@ static void pulsar_driver_init(void)
 	/* install sample triggers */
 	install_port_write_handler(0, 0x01, 0x01, pulsar_sh_port1_w);
 	install_port_write_handler(0, 0x02, 0x02, pulsar_sh_port2_w);
+
+	samples_interface.samplenames = pulsar_sample_names;
 }
 
 
-struct GameDriver depthch_driver =
+struct GameDriver driver_depthch =
 {
 	__FILE__,
 	0,
@@ -1693,12 +1712,12 @@ struct GameDriver depthch_driver =
 	&vicdual_2Aports_machine_driver,
 	depthch_driver_init,
 
-	depthch_rom,
+	rom_depthch,
 	vicdual_decode, 0,
-	depthch_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	depthch_input_ports,
+	input_ports_depthch,
 
 	0, 0, 0,	/* b&w game, no color PROM */
 	ORIENTATION_DEFAULT,
@@ -1706,7 +1725,7 @@ struct GameDriver depthch_driver =
 	0, 0
 };
 
-struct GameDriver safari_driver =
+struct GameDriver driver_safari =
 {
 	__FILE__,
 	0,
@@ -1715,24 +1734,24 @@ struct GameDriver safari_driver =
 	"1977",
 	"Gremlin",
 	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
-	GAME_NO_SOUND,
-	&safari_machine_driver,
 	0,
+	&safari_machine_driver,
+	nosamples_driver_init,
 
-	safari_rom,
+	rom_safari,
 	vicdual_decode, 0,
 	0,
 	0,	/* sound_prom */
 
-	safari_input_ports,
+	input_ports_safari,
 
 	0, 0, 0,	/* b&w game, no color PROM */
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_NO_SOUND,
 
 	0, 0
 };
 
-struct GameDriver frogs_driver =
+struct GameDriver driver_frogs =
 {
 	__FILE__,
 	0,
@@ -1741,24 +1760,24 @@ struct GameDriver frogs_driver =
 	"1978",
 	"Gremlin",
 	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
-	GAME_NO_SOUND,
-	&vicdual_2Aports_machine_driver,
 	0,
+	&vicdual_2Aports_machine_driver,
+	nosamples_driver_init,
 
-	frogs_rom,
+	rom_frogs,
 	vicdual_decode, 0,
 	0,
 	0,	/* sound_prom */
 
-	frogs_input_ports,
+	input_ports_frogs,
 
 	0, 0, 0,	/* b&w game, no color PROM */
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_NO_SOUND,
 
 	0, 0
 };
 
-struct GameDriver sspaceat_driver =
+struct GameDriver driver_sspaceat =
 {
 	__FILE__,
 	0,
@@ -1767,50 +1786,50 @@ struct GameDriver sspaceat_driver =
 	"1979",
 	"Sega",
 	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
-	GAME_NO_SOUND,
-	&vicdual_3ports_machine_driver,
 	0,
+	&vicdual_3ports_machine_driver,
+	nosamples_driver_init,
 
-	sspaceat_rom,
+	rom_sspaceat,
 	vicdual_decode, 0,
 	0,
 	0,	/* sound_prom */
 
-	sspaceat_input_ports,
+	input_ports_sspaceat,
 
-	PROM_MEMORY_REGION(1), 0, 0,
-	ORIENTATION_ROTATE_270,
+	0, 0, 0,
+	ORIENTATION_ROTATE_270 | GAME_NO_SOUND,
 
 	0, 0
 };
 
-struct GameDriver sspacatc_driver =
+struct GameDriver driver_sspacatc =
 {
 	__FILE__,
-	&sspaceat_driver,
+	&driver_sspaceat,
 	"sspacatc",
 	"Space Attack (Cocktail)",
 	"1979",
 	"Sega",
 	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
-	GAME_NO_SOUND,
-	&vicdual_3ports_machine_driver,
 	0,
+	&vicdual_3ports_machine_driver,
+	nosamples_driver_init,
 
-	sspacatc_rom,
+	rom_sspacatc,
 	vicdual_decode, 0,
 	0,
 	0,	/* sound_prom */
 
-	sspaceat_input_ports,
+	input_ports_sspaceat,
 
-	PROM_MEMORY_REGION(1), 0, 0,
-	ORIENTATION_ROTATE_270,
+	0, 0, 0,
+	ORIENTATION_ROTATE_270 | GAME_NO_SOUND,
 
 	0, 0
 };
 
-struct GameDriver headon_driver =
+struct GameDriver driver_headon =
 {
 	__FILE__,
 	0,
@@ -1819,50 +1838,50 @@ struct GameDriver headon_driver =
 	"1979",
 	"Gremlin",
 	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
-	GAME_NO_SOUND,
-	&vicdual_2Aports_machine_driver,
 	0,
+	&vicdual_2Aports_machine_driver,
+	nosamples_driver_init,
 
-	headon_rom,
+	rom_headon,
 	vicdual_decode, 0,
 	0,
 	0,	/* sound_prom */
 
-	headon_input_ports,
+	input_ports_headon,
 
-	PROM_MEMORY_REGION(1), 0, 0,
-	ORIENTATION_DEFAULT,
+	0, 0, 0,
+	ORIENTATION_DEFAULT | GAME_NO_SOUND,
 
 	0, 0
 };
 
-struct GameDriver headonb_driver =
+struct GameDriver driver_headonb =
 {
 	__FILE__,
-	&headon_driver,
+	&driver_headon,
 	"headonb",
 	"Head On (1 player)",
 	"1979",
 	"Gremlin",
 	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
-	GAME_NO_SOUND,
-	&vicdual_2Aports_machine_driver,
 	0,
+	&vicdual_2Aports_machine_driver,
+	nosamples_driver_init,
 
-	headonb_rom,
+	rom_headonb,
 	vicdual_decode, 0,
 	0,
 	0,	/* sound_prom */
 
-	headon_input_ports,
+	input_ports_headon,
 
-	PROM_MEMORY_REGION(1), 0, 0,
-	ORIENTATION_DEFAULT,
+	0, 0, 0,
+	ORIENTATION_DEFAULT | GAME_NO_SOUND,
 
 	0, 0
 };
 
-struct GameDriver headon2_driver =
+struct GameDriver driver_headon2 =
 {
 	__FILE__,
 	0,
@@ -1871,19 +1890,19 @@ struct GameDriver headon2_driver =
 	"1979",
 	"Sega",
 	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
-	GAME_NO_SOUND,
-	&vicdual_3ports_machine_driver,
 	0,
+	&vicdual_3ports_machine_driver,
+	nosamples_driver_init,
 
-	headon2_rom,
+	rom_headon2,
 	vicdual_decode, 0,
 	0,
 	0,	/* sound_prom */
 
-	headon2_input_ports,
+	input_ports_headon2,
 
-	PROM_MEMORY_REGION(1), 0, 0,
-	ORIENTATION_DEFAULT,
+	0, 0, 0,
+	ORIENTATION_DEFAULT | GAME_NO_SOUND,
 
 	0, 0
 };
@@ -1899,7 +1918,7 @@ static unsigned char ho2ds_color_prom[] =
 #endif
 //GAMEDRIVER( ho2ds,    "Head On 2 / Deep Scan", vicdual_4ports_machine_driver,  0, ORIENTATION_ROTATE_270, 0, 0 )
 
-struct GameDriver invho2_driver =
+struct GameDriver driver_invho2 =
 {
 	__FILE__,
 	0,
@@ -1912,20 +1931,20 @@ struct GameDriver invho2_driver =
 	&vicdual_4ports_machine_driver,
 	invho2_driver_init,
 
-	invho2_rom,
+	rom_invho2,
 	vicdual_decode, 0,
-	invinco_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	invho2_input_ports,
+	input_ports_invho2,
 
-	PROM_MEMORY_REGION(1), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	0, 0
 };
 
-struct GameDriver samurai_driver =
+struct GameDriver driver_samurai =
 {
 	__FILE__,
 	0,
@@ -1934,24 +1953,24 @@ struct GameDriver samurai_driver =
 	"1980",
 	"Sega",
 	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
-	GAME_NO_SOUND,
+	0,
 	&vicdual_4ports_machine_driver,
 	samurai_driver_init,
 
-	samurai_rom,
+	rom_samurai,
 	vicdual_decode, 0,
 	0,
 	0,	/* sound_prom */
 
-	samurai_input_ports,
+	input_ports_samurai,
 
-	PROM_MEMORY_REGION(1), 0, 0,
-	ORIENTATION_ROTATE_270,
+	0, 0, 0,
+	ORIENTATION_ROTATE_270 | GAME_NO_SOUND,
 
 	0, 0
 };
 
-struct GameDriver invinco_driver =
+struct GameDriver driver_invinco =
 {
 	__FILE__,
 	0,
@@ -1960,24 +1979,24 @@ struct GameDriver invinco_driver =
 	"1979",
 	"Sega",
 	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
-	GAME_IMPERFECT_COLORS,
+	0,
 	&vicdual_3ports_machine_driver,
 	invinco_driver_init,
 
-	invinco_rom,
+	rom_invinco,
 	vicdual_decode, 0,
-	invinco_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	invinco_input_ports,
+	input_ports_invinco,
 
-	PROM_MEMORY_REGION(1), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	0, 0
 };
 
-struct GameDriver invds_driver =
+struct GameDriver driver_invds =
 {
 	__FILE__,
 	0,
@@ -1990,20 +2009,20 @@ struct GameDriver invds_driver =
 	&vicdual_4ports_machine_driver,
 	invds_driver_init,
 
-	invds_rom,
+	rom_invds,
 	vicdual_decode, 0,
-	invinco_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	invds_input_ports,
+	input_ports_invds,
 
-	PROM_MEMORY_REGION(1), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	0, 0
 };
 
-struct GameDriver tranqgun_driver =
+struct GameDriver driver_tranqgun =
 {
 	__FILE__,
 	0,
@@ -2012,24 +2031,24 @@ struct GameDriver tranqgun_driver =
 	"1980",
 	"Sega",
 	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
-	GAME_NO_SOUND,
-	&vicdual_4ports_machine_driver,
 	0,
+	&vicdual_4ports_machine_driver,
+	nosamples_driver_init,
 
-	tranqgun_rom,
+	rom_tranqgun,
 	vicdual_decode, 0,
 	0,
 	0,	/* sound_prom */
 
-	tranqgun_input_ports,
+	input_ports_tranqgun,
 
-	PROM_MEMORY_REGION(1), 0, 0,
-	ORIENTATION_ROTATE_270,
+	0, 0, 0,
+	ORIENTATION_ROTATE_270 | GAME_NO_SOUND,
 
 	0, 0
 };
 
-struct GameDriver spacetrk_driver =
+struct GameDriver driver_spacetrk =
 {
 	__FILE__,
 	0,
@@ -2038,50 +2057,50 @@ struct GameDriver spacetrk_driver =
 	"1980",
 	"Sega",
 	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
-	GAME_NO_SOUND,
-	&vicdual_4ports_machine_driver,
 	0,
+	&vicdual_4ports_machine_driver,
+	nosamples_driver_init,
 
-	spacetrk_rom,
+	rom_spacetrk,
 	vicdual_decode, 0,
 	0,
 	0,	/* sound_prom */
 
-	spacetrk_input_ports,
+	input_ports_spacetrk,
 
-	PROM_MEMORY_REGION(1), 0, 0,
-	ORIENTATION_ROTATE_270,
+	0, 0, 0,
+	ORIENTATION_ROTATE_270 | GAME_NO_SOUND,
 
 	0, 0
 };
 
-struct GameDriver sptrekct_driver =
+struct GameDriver driver_sptrekct =
 {
 	__FILE__,
-	&spacetrk_driver,
+	&driver_spacetrk,
 	"sptrekct",
 	"Space Trek (Cocktail)",
 	"1980",
 	"Sega",
 	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
-	GAME_NO_SOUND,
-	&vicdual_4ports_machine_driver,
 	0,
+	&vicdual_4ports_machine_driver,
+	nosamples_driver_init,
 
-	sptrekct_rom,
+	rom_sptrekct,
 	vicdual_decode, 0,
 	0,
 	0,	/* sound_prom */
 
-	sptrekct_input_ports,
+	input_ports_sptrekct,
 
-	PROM_MEMORY_REGION(1), 0, 0,
-	ORIENTATION_ROTATE_270,
+	0, 0, 0,
+	ORIENTATION_ROTATE_270 | GAME_NO_SOUND,
 
 	0, 0
 };
 
-struct GameDriver carnival_driver =
+struct GameDriver driver_carnival =
 {
 	__FILE__,
 	0,
@@ -2094,23 +2113,23 @@ struct GameDriver carnival_driver =
 	&carnival_machine_driver,
 	carnival_driver_init,
 
-	carnival_rom,
+	rom_carnival,
 	vicdual_decode, 0,
-	carnival_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	carnival_input_ports,
+	input_ports_carnival,
 
-	PROM_MEMORY_REGION(1), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	carnival_hiload, carnival_hisave
 };
 
-struct GameDriver carnvckt_driver =
+struct GameDriver driver_carnvckt =
 {
 	__FILE__,
-	&carnival_driver,
+	&driver_carnival,
 	"carnvckt",
 	"Carnival (Cocktail)",
 	"1980",
@@ -2120,20 +2139,20 @@ struct GameDriver carnvckt_driver =
 	&carnival_machine_driver,
 	carnival_driver_init,
 
-	carnvckt_rom,
+	rom_carnvckt,
 	vicdual_decode, 0,
-	carnival_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	carnvckt_input_ports,
+	input_ports_carnvckt,
 
-	PROM_MEMORY_REGION(1), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	carnival_hiload, carnival_hisave
 };
 
-struct GameDriver digger_driver =
+struct GameDriver driver_digger =
 {
 	__FILE__,
 	0,
@@ -2142,24 +2161,24 @@ struct GameDriver digger_driver =
 	"1980",
 	"Sega",
 	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
-	GAME_NO_SOUND,
-	&vicdual_3ports_machine_driver,
 	0,
+	&vicdual_3ports_machine_driver,
+	nosamples_driver_init,
 
-	digger_rom,
+	rom_digger,
 	vicdual_decode, 0,
 	0,
 	0,	/* sound_prom */
 
-	digger_input_ports,
+	input_ports_digger,
 
-	PROM_MEMORY_REGION(1), 0, 0,
-	ORIENTATION_ROTATE_270,
+	0, 0, 0,
+	ORIENTATION_ROTATE_270 | GAME_NO_SOUND,
 
 	0, 0
 };
 
-struct GameDriver pulsar_driver =
+struct GameDriver driver_pulsar =
 {
 	__FILE__,
 	0,
@@ -2172,20 +2191,20 @@ struct GameDriver pulsar_driver =
 	&vicdual_4ports_machine_driver,
 	pulsar_driver_init,
 
-	pulsar_rom,
+	rom_pulsar,
 	vicdual_decode, 0,
-	pulsar_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	pulsar_input_ports,
+	input_ports_pulsar,
 
-	PROM_MEMORY_REGION(1), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	0, 0
 };
 
-struct GameDriver heiankyo_driver =
+struct GameDriver driver_heiankyo =
 {
 	__FILE__,
 	0,
@@ -2194,19 +2213,19 @@ struct GameDriver heiankyo_driver =
 	"1979",
 	"Denki Onkyo",
 	"Mike Coates\nRichard Davies\nNicola Salmoria\nZsolt Vasvari",
-	GAME_NO_SOUND,
-	&vicdual_4ports_machine_driver,
 	0,
+	&vicdual_4ports_machine_driver,
+	nosamples_driver_init,
 
-	heiankyo_rom,
+	rom_heiankyo,
 	vicdual_decode, 0,
 	0,
 	0,	/* sound_prom */
 
-	heiankyo_input_ports,
+	input_ports_heiankyo,
 
-	PROM_MEMORY_REGION(1), 0, 0,
-	ORIENTATION_ROTATE_270,
+	0, 0, 0,
+	ORIENTATION_ROTATE_270 | GAME_NO_SOUND,
 
 	0, 0
 };

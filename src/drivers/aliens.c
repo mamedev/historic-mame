@@ -146,7 +146,7 @@ static struct MemoryWriteAddress aliens_writemem_sound[] =
 
 ***************************************************************************/
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( aliens )
 	PORT_START	/* DSW #1 */
 	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 4C_1C ) )
@@ -465,7 +465,7 @@ static void gfx_untangle(void)
 
 
 
-struct GameDriver aliens_driver =
+struct GameDriver driver_aliens =
 {
 	__FILE__,
 	0,
@@ -478,22 +478,22 @@ struct GameDriver aliens_driver =
 	&machine_driver,
 	0,
 
-	aliens_rom,
+	rom_aliens,
 	gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_aliens,
 
 	0, 0, 0,
     ORIENTATION_DEFAULT,
 	0, 0
 };
 
-struct GameDriver aliens2_driver =
+struct GameDriver driver_aliens2 =
 {
 	__FILE__,
-	&aliens_driver,
+	&driver_aliens,
 	"aliens2",
 	"Aliens (set 2)",
 	"1990",
@@ -503,22 +503,22 @@ struct GameDriver aliens2_driver =
 	&machine_driver,
 	0,
 
-	aliens2_rom,
+	rom_aliens2,
 	gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_aliens,
 
 	0, 0, 0,
     ORIENTATION_DEFAULT,
 	0, 0
 };
 
-struct GameDriver aliensj_driver =
+struct GameDriver driver_aliensj =
 {
 	__FILE__,
-	&aliens_driver,
+	&driver_aliens,
 	"aliensj",
 	"Aliens (Japan)",
 	"1990",
@@ -528,12 +528,12 @@ struct GameDriver aliensj_driver =
 	&machine_driver,
 	0,
 
-	aliensj_rom,
+	rom_aliensj,
 	gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_aliens,
 
 	0, 0, 0,
     ORIENTATION_DEFAULT,

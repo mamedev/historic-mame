@@ -68,7 +68,8 @@ static void bogeyman_8910_control_w(int offset,int data)
 
 static struct MemoryReadAddress bogeyman_readmem[] =
 {
-	{ 0x0000, 0x1fff, MRA_RAM },
+	{ 0x0000, 0x17ff, MRA_RAM },
+	{ 0x1800, 0x1fff, MRA_RAM },
 	{ 0x2000, 0x21ff, bogeyman_videoram_r },
 	{ 0x2800, 0x2bff, MRA_RAM },
 	{ 0x3800, 0x3800, input_port_0_r },	/* Player 1 */
@@ -95,7 +96,7 @@ static struct MemoryWriteAddress bogeyman_writemem[] =
 
 /******************************************************************************/
 
-INPUT_PORTS_START( bogeyman_input_ports )
+INPUT_PORTS_START( bogeyman )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -117,48 +118,45 @@ INPUT_PORTS_START( bogeyman_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )
 
 	PORT_START	/* DSW1 */
-	PORT_DIPNAME(0x01, 0x01, DEF_STR( Lives ) )
-	PORT_DIPSETTING(   0x01, "3" )
-	PORT_DIPSETTING(   0x00, "5" )
-	PORT_DIPNAME(0x02, 0x02, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(   0x02, DEF_STR( Off ) )
-	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
-	PORT_DIPNAME(0x04, 0x04, DEF_STR( Demo_Sounds ) )
-	PORT_DIPSETTING(   0x04, DEF_STR( Off ) )
-	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
-	PORT_DIPNAME(0x08, 0x08, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(   0x08, DEF_STR( Off ) )
-	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
-	PORT_DIPNAME(0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(   0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
-	PORT_DIPNAME(0x20, 0x20, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(   0x20, DEF_STR( Off ) )
-	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x03, 0x03, DEF_STR( Coin_A ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x03, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x02, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x01, DEF_STR( 1C_3C ) )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Coin_B ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
+	PORT_DIPSETTING(    0x0c, DEF_STR( 1C_1C ) )
+	PORT_DIPSETTING(    0x08, DEF_STR( 1C_2C ) )
+	PORT_DIPSETTING(    0x04, DEF_STR( 1C_3C ) )
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Demo_Sounds ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( On ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
+	PORT_DIPNAME( 0x20, 0x00, DEF_STR( Cabinet ) )
+	PORT_DIPSETTING(    0x20, DEF_STR( Cocktail ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( Upright ) )
 	PORT_SERVICE( 0x40, IP_ACTIVE_LOW )
-	PORT_DIPNAME(0x80, 0x80, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(   0x80, DEF_STR( Off ) )
-	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
+	PORT_DIPNAME( 0x80, 0x80, "Allow Continue" )
+	PORT_DIPSETTING(    0x80, DEF_STR( Yes ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 
 	PORT_START	/* DSW2 */
-	PORT_DIPNAME(0x03, 0x03, DEF_STR( Coin_B ) )
-	PORT_DIPSETTING(   0x00, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(   0x03, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(   0x02, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(   0x01, DEF_STR( 1C_3C ) )
-	PORT_DIPNAME(0x0c, 0x0c, DEF_STR( Coin_A ) )
-	PORT_DIPSETTING(   0x00, DEF_STR( 2C_1C ) )
-	PORT_DIPSETTING(   0x0c, DEF_STR( 1C_1C ) )
-	PORT_DIPSETTING(   0x08, DEF_STR( 1C_2C ) )
-	PORT_DIPSETTING(   0x04, DEF_STR( 1C_3C ) )
-	PORT_DIPNAME(0x10, 0x10, DEF_STR( Unknown ) )
-	PORT_DIPSETTING(   0x10, DEF_STR( Off ) )
-	PORT_DIPSETTING(   0x00, DEF_STR( On ) )
-
+	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Lives ) )
+	PORT_DIPSETTING(    0x01, "3" )
+	PORT_DIPSETTING(    0x00, "5" )
+	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Bonus_Life ) )
+	PORT_DIPSETTING(    0x02, "50000" )
+	PORT_DIPSETTING(    0x00, "none" )
+	PORT_DIPNAME( 0x0c, 0x0c, DEF_STR( Difficulty ) )
+	PORT_DIPSETTING(    0x0c, "Easy" )			// Normal
+	PORT_DIPSETTING(    0x08, "Medium" )			//   |
+	PORT_DIPSETTING(    0x04, "Hard" )			//   |
+	PORT_DIPSETTING(    0x00, "Hardest" )			//  HARD
+	PORT_DIPNAME( 0x10, 0x10, DEF_STR( Unknown ) )
+	PORT_DIPSETTING(    0x10, DEF_STR( Off ) )
+	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN3 )
-
 INPUT_PORTS_END
 
 /******************************************************************************/
@@ -168,7 +166,7 @@ static struct GfxLayout charlayout1 =
 	8,8,	/* 8*8 chars */
 	512,
 	3,
-	{ 0x8000*8+4, 4, 0 },
+	{ 0x8000*8+4, 0, 4 },				// Modified by T.Nogi 1999/11/07
 	{ 0x2000*8+3, 0x2000*8+2, 0x2000*8+1, 0x2000*8+0, 3, 2, 1, 0, },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8	/* every char takes 16 consecutive bytes */
@@ -179,7 +177,7 @@ static struct GfxLayout charlayout2 =
 	8,8,	/* 8*8 chars */
 	512,
 	3,
-	{ 0x8000*8, 4+0x1000*8, 0+0x1000*8 },
+	{ 0x8000*8, 0+0x1000*8, 4+0x1000*8, 0 },	// Modified by T.Nogi 1999/11/07
 	{ 0x2000*8+3, 0x2000*8+2, 0x2000*8+1, 0x2000*8+0, 3, 2, 1, 0, },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
 	8*8	/* every char takes 16 consecutive bytes */
@@ -203,7 +201,7 @@ static struct GfxLayout tiles1b =
 	16,16,
 	0x80,
 	3,
-	{ 0x8000*8+0, 0x1000*8+0, 0x1000*8+4 },
+	{ 0x8000*8+0, 0+0x1000*8+0, 4+0x1000*8 },	// Modified by T.Nogi 1999/11/07
 	{ 1024*8*8+3, 1024*8*8+2, 1024*8*8+1, 1024*8*8+0, 3,2,1,0,
 		1024*8*8+3+64, 1024*8*8+2+64, 1024*8*8+1+64, 1024*8*8+0+64, 3+64,2+64,1+64,0+64 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
@@ -315,14 +313,14 @@ ROM_START( bogeyman )
 	ROM_CONTINUE(         0x24000, 0x01000 )
 	ROM_CONTINUE(         0x26000, 0x01000 )
 
-	ROM_REGION(0x0200)
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "82s129.5k",  0x0000, 0x0100, 0x4a7c5367 )	/* Colour prom 1 */
 	ROM_LOAD( "82s129.6k",  0x0100, 0x0100, 0xb6127713 )	/* Colour prom 2 */
 ROM_END
 
 /******************************************************************************/
 
-struct GameDriver bogeyman_driver =
+struct GameDriver driver_bogeyman =
 {
 	__FILE__,
 	0,
@@ -331,19 +329,19 @@ struct GameDriver bogeyman_driver =
 	"1985?",
 	"Technos Japan",
 	"Bryan McPhail",
-	GAME_IMPERFECT_COLORS,
+	0,
 	&bogeyman_machine_driver,
 	0,
 
-	bogeyman_rom,
+	rom_bogeyman,
 	0, 0,
 	0,
 	0,
 
-	bogeyman_input_ports,
+	input_ports_bogeyman,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_DEFAULT,
+	0, 0, 0,
+	ORIENTATION_DEFAULT | GAME_IMPERFECT_COLORS,
 
 	0, 0
 };

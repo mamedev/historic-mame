@@ -214,7 +214,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( firetrap )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_UP | IPF_4WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_DOWN | IPF_4WAY )
@@ -444,7 +444,7 @@ ROM_START( firetrap )
 	ROM_LOAD( "di14.bin",     0x52000, 0x8000, 0x6b65812e )
 	ROM_LOAD( "di15.bin",     0x5a000, 0x8000, 0x3e27f77d )
 
-	ROM_REGION(0x200)	/* color proms */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "firetrap.3b",  0x0000, 0x100, 0x8bb45337 ) /* palette red and green component */
 	ROM_LOAD( "firetrap.4b",  0x0100, 0x100, 0xd5abfc64 ) /* palette blue component */
 
@@ -477,7 +477,7 @@ ROM_START( firetpbl )
 	ROM_LOAD( "di14.bin",     0x52000, 0x8000, 0x6b65812e )
 	ROM_LOAD( "di15.bin",     0x5a000, 0x8000, 0x3e27f77d )
 
-	ROM_REGION(0x200)	/* color proms */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "firetrap.3b",  0x0000, 0x100, 0x8bb45337 ) /* palette red and green component */
 	ROM_LOAD( "firetrap.4b",  0x0100, 0x100, 0xd5abfc64 ) /* palette blue component */
 
@@ -523,7 +523,7 @@ static void hisave(void)
 
 
 
-struct GameDriver firetrap_driver =
+struct GameDriver driver_firetrap =
 {
 	__FILE__,
 	0,
@@ -532,27 +532,27 @@ struct GameDriver firetrap_driver =
 	"1986",
 	"Data East USA",
 	"Nicola Salmoria (MAME driver)\nTim Lindquist (color and hardware info)",
-	GAME_NOT_WORKING,
+	0,
 	&machine_driver,
 	0,
 
-	firetrap_rom,
+	rom_firetrap,
 	0, 0,
 	0,
 	0,
 
-	input_ports,
+	input_ports_firetrap,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
+	0, 0, 0,
+	ORIENTATION_ROTATE_90 | GAME_NOT_WORKING,
 
 	hiload, hisave
 };
 
-struct GameDriver firetpbl_driver =
+struct GameDriver driver_firetpbl =
 {
 	__FILE__,
-	&firetrap_driver,
+	&driver_firetrap,
 	"firetpbl",
 	"Fire Trap (Japan bootleg)",
 	"1986",
@@ -562,14 +562,14 @@ struct GameDriver firetpbl_driver =
 	&machine_driver,
 	0,
 
-	firetpbl_rom,
+	rom_firetpbl,
 	0, 0,
 	0,
 	0,
 
-	input_ports,
+	input_ports_firetrap,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave

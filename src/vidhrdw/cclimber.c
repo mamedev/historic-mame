@@ -23,6 +23,7 @@ static struct osd_bitmap *bsbitmap;
 static int flipscreen[2];
 static int palettebank;
 static int sidepanel_enabled;
+static int bgpen;
 
 
 /***************************************************************************
@@ -90,6 +91,8 @@ void cclimber_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
 		if (i % 4 == 0) COLOR(2,i) = 0;
 		else COLOR(2,i) = i + 64;
 	}
+
+	bgpen = 0;
 }
 
 
@@ -128,131 +131,90 @@ void cclimber_vh_convert_color_prom(unsigned char *palette, unsigned short *colo
                   \--- tri-state -- 1000 -- RED
 
 ***************************************************************************/
+
+#define BGPEN (256+32)
+#define SIDEPEN (256+32+1)
+
 void swimmer_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom)
 {
-	int i,j,used,realcnt;
-	unsigned char allocated[256];
+	int i;
 	#define TOTAL_COLORS(gfxn) (Machine->gfx[gfxn]->total_colors * Machine->gfx[gfxn]->color_granularity)
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + (offs)])
 
 
-	/* The game has 256+32 colors, plus the river background, but we are */
-	/* limited to a maximum of 256. */
-	/* Luckily, many of the colors are duplicated, so the total number of */
-	/* different colors is less than 256 (in fact, less than the 96 used  */
-	/* in Crazy Climber). We select the unique colors and put them in our */
-	/* palette. */
-	/* TODO: use the palette.c shrinking instead of doing our own. */
-
-	memset(palette,0,3 * Machine->drv->total_colors);
-
-	/* transparent black */
-	allocated[0] = 0;
-	palette[0] = 0;
-	palette[1] = 0;
-	palette[2] = 0;
-	/* non transparent black */
-	allocated[1] = 0;
-	palette[3] = 0;
-	palette[4] = 0;
-	palette[5] = 0;
-	/* side panel background color */
-	allocated[2] = 0;
-	palette[6] = 0x24;
-	palette[7] = 0x5d;
-	palette[8] = 0x4e;
-	used = 3;
-
-	realcnt = TOTAL_COLORS(0) / 2;
-	for (i = 0;i < realcnt;i++)
+	for (i = 0;i < 256;i++)
 	{
-		for (j = 0;j < used;j++)
-		{
-			if (allocated[j] == (color_prom[i] & 0x0f) + 16 * (color_prom[i+256] & 0x0f))
-				break;
-		}
-		if (j == used)
-		{
-			int bit0,bit1,bit2;
+		int bit0,bit1,bit2;
 
 
-			used++;
-
-			allocated[j] = (color_prom[i] & 0x0f) + 16 * (color_prom[i+256] & 0x0f);
-
-			/* red component */
-			bit0 = (color_prom[i] >> 0) & 0x01;
-			bit1 = (color_prom[i] >> 1) & 0x01;
-			bit2 = (color_prom[i] >> 2) & 0x01;
-			palette[3*j] = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
-			/* green component */
-			bit0 = (color_prom[i] >> 3) & 0x01;
-			bit1 = (color_prom[i+256] >> 0) & 0x01;
-			bit2 = (color_prom[i+256] >> 1) & 0x01;
-			palette[3*j + 1] = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
-			/* blue component */
-			bit0 = 0;
-			bit1 = (color_prom[i+256] >> 2) & 0x01;
-			bit2 = (color_prom[i+256] >> 3) & 0x01;
-			palette[3*j + 2] = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
-		}
-
-		if (i % 8 && j == 0) j = 1; /* avoid undesired transparency */
-
-		COLOR(0,i) = j;
+		/* red component */
+		bit0 = (color_prom[i] >> 0) & 0x01;
+		bit1 = (color_prom[i] >> 1) & 0x01;
+		bit2 = (color_prom[i] >> 2) & 0x01;
+		*(palette++) = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
+		/* green component */
+		bit0 = (color_prom[i] >> 3) & 0x01;
+		bit1 = (color_prom[i+256] >> 0) & 0x01;
+		bit2 = (color_prom[i+256] >> 1) & 0x01;
+		*(palette++) = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
+		/* blue component */
+		bit0 = 0;
+		bit1 = (color_prom[i+256] >> 2) & 0x01;
+		bit2 = (color_prom[i+256] >> 3) & 0x01;
+		*(palette++) = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
 
 		/* side panel */
 		if (i % 8)
 		{
-		    COLOR(0,i+realcnt) = j;
+			COLOR(0,i) = i;
+		    COLOR(0,i+256) = i;
 		}
 		else
 		{
 			/* background */
-			COLOR(0,i+realcnt) = 2;
+			COLOR(0,i) = BGPEN;
+			COLOR(0,i+256) = SIDEPEN;
 		}
 	}
 
 	color_prom += 2 * 256;
 
-	for (i = 0;i < TOTAL_COLORS(2);i++)
+	for (i = 0;i < 32;i++)
 	{
-		for (j = 0;j < used;j++)
-		{
-			if (allocated[j] == color_prom[i])
-				break;
-		}
-		if (j == used)
-		{
-			int bit0,bit1,bit2;
+		int bit0,bit1,bit2;
 
 
-			used++;
+		/* red component */
+		bit0 = (color_prom[i] >> 0) & 0x01;
+		bit1 = (color_prom[i] >> 1) & 0x01;
+		bit2 = (color_prom[i] >> 2) & 0x01;
+		*(palette++) = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
+		/* green component */
+		bit0 = (color_prom[i] >> 3) & 0x01;
+		bit1 = (color_prom[i] >> 4) & 0x01;
+		bit2 = (color_prom[i] >> 5) & 0x01;
+		*(palette++) = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
+		/* blue component */
+		bit0 = 0;
+		bit1 = (color_prom[i] >> 6) & 0x01;
+		bit2 = (color_prom[i] >> 7) & 0x01;
+		*(palette++) = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
 
-			allocated[j] = color_prom[i];
-
-			/* red component */
-			bit0 = (color_prom[i] >> 0) & 0x01;
-			bit1 = (color_prom[i] >> 1) & 0x01;
-			bit2 = (color_prom[i] >> 2) & 0x01;
-			palette[3*j] = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
-			/* green component */
-			bit0 = (color_prom[i] >> 3) & 0x01;
-			bit1 = (color_prom[i] >> 4) & 0x01;
-			bit2 = (color_prom[i] >> 5) & 0x01;
-			palette[3*j + 1] = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
-			/* blue component */
-			bit0 = 0;
-			bit1 = (color_prom[i] >> 6) & 0x01;
-			bit2 = (color_prom[i] >> 7) & 0x01;
-			palette[3*j + 2] = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
-		}
-
-		if (i % 8 == 0) j = 0;  /* enforce transparency */
-		else if (j == 0) j = 1; /* avoid undesired transparency */
-
-		COLOR(2,i) = j;
+		if (i % 8 == 0) COLOR(2,i) = BGPEN;  /* enforce transparency */
+		else COLOR(2,i) = i+256;
 	}
+
+	/* background */
+	*(palette++) = 0;
+	*(palette++) = 0;
+	*(palette++) = 0;
+	/* side panel background color */
+	*(palette++) = 0x24;
+	*(palette++) = 0x5d;
+	*(palette++) = 0x4e;
+
+	palette_transparent_color = BGPEN; /* background color */
+	bgpen = BGPEN;
 }
 
 
@@ -297,7 +259,7 @@ void swimmer_bgcolor_w(int offset,int data)
 	bit2 = (data >> 2) & 0x01;
 	b = 0x20 * bit0 + 0x40 * bit1 + 0x80 * bit2;
 
-	palette_change_color(0,r,g,b);
+	palette_change_color(BGPEN,r,g,b);
 }
 
 
@@ -440,19 +402,19 @@ static void drawbigsprite(struct osd_bitmap *bitmap)
 	copybitmap(bitmap,bsbitmap,
 			flipx,flipy,
 			sx,sy,
-			&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+			&Machine->drv->visible_area,TRANSPARENCY_COLOR,bgpen);
 	copybitmap(bitmap,bsbitmap,
 			flipx,flipy,
 			sx-256,sy,
-			&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+			&Machine->drv->visible_area,TRANSPARENCY_COLOR,bgpen);
 	copybitmap(bitmap,bsbitmap,
 			flipx,flipy,
 			sx-256,sy-256,
-			&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+			&Machine->drv->visible_area,TRANSPARENCY_COLOR,bgpen);
 	copybitmap(bitmap,bsbitmap,
 			flipx,flipy,
 			sx,sy-256,
-			&Machine->drv->visible_area,TRANSPARENCY_COLOR,0);
+			&Machine->drv->visible_area,TRANSPARENCY_COLOR,bgpen);
 }
 
 

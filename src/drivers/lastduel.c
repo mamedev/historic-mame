@@ -465,7 +465,7 @@ static struct MachineDriver madgear_machine_driver =
 
 /******************************************************************************/
 
-INPUT_PORTS_START( lastduel_input_ports )
+INPUT_PORTS_START( lastduel )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_COCKTAIL )
@@ -572,7 +572,7 @@ INPUT_PORTS_START( lastduel_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( madgear_input_ports )
+INPUT_PORTS_START( madgear )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNUSED )
@@ -981,7 +981,7 @@ static void madgear_hisave(void)
 
 /************************************************************************************/
 
-struct GameDriver lastduel_driver =
+struct GameDriver driver_lastduel =
 {
 	__FILE__,
 	0,
@@ -994,20 +994,20 @@ struct GameDriver lastduel_driver =
 	&lastduel_machine_driver,
 	0,
 
-	lastduel_rom,
+	rom_lastduel,
 	0,0,0,0,
 
-	lastduel_input_ports,
+	input_ports_lastduel,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 	hiload,hisave
 };
 
-struct GameDriver lstduela_driver =
+struct GameDriver driver_lstduela =
 {
 	__FILE__,
-	&lastduel_driver,
+	&driver_lastduel,
 	"lstduela",
 	"Last Duel (US set 2)",
 	"1988",
@@ -1017,20 +1017,20 @@ struct GameDriver lstduela_driver =
 	&lastduel_machine_driver,
 	0,
 
-	lstduela_rom,
+	rom_lstduela,
 	0,0,0,0,
 
-	lastduel_input_ports,
+	input_ports_lastduel,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 	hiload,hisave
 };
 
-struct GameDriver lstduelb_driver =
+struct GameDriver driver_lstduelb =
 {
 	__FILE__,
-	&lastduel_driver,
+	&driver_lastduel,
 	"lstduelb",
 	"Last Duel (bootleg)",
 	"1988",
@@ -1040,17 +1040,17 @@ struct GameDriver lstduelb_driver =
 	&lastduel_machine_driver,
 	0,
 
-	lstduelb_rom,
+	rom_lstduelb,
 	0,0,0,0,
 
-	lastduel_input_ports,
+	input_ports_lastduel,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 	hiload, hisave
 };
 
-struct GameDriver madgear_driver =
+struct GameDriver driver_madgear =
 {
 	__FILE__,
 	0,
@@ -1063,20 +1063,20 @@ struct GameDriver madgear_driver =
 	&madgear_machine_driver,
 	0,
 
-	madgear_rom,
+	rom_madgear,
 	0,0,0,0,
 
-	madgear_input_ports,
+	input_ports_madgear,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 	madgear_hiload, madgear_hisave
 };
 
-struct GameDriver ledstorm_driver =
+struct GameDriver driver_ledstorm =
 {
 	__FILE__,
-	&madgear_driver,
+	&driver_madgear,
 	"ledstorm",
 	"Led Storm (US)",
 	"1988",
@@ -1086,10 +1086,10 @@ struct GameDriver ledstorm_driver =
 	&madgear_machine_driver,
 	0,
 
-	ledstorm_rom,
+	rom_ledstorm,
 	0,0,0,0,
 
-	madgear_input_ports,
+	input_ports_madgear,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,

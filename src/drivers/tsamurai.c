@@ -23,6 +23,7 @@ extern void tsamurai_vh_screenrefresh( struct osd_bitmap *bitmap, int fullrefres
 extern void tsamurai_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
 extern void tsamurai_bg_videoram_w( int offset, int data );
 extern void tsamurai_fg_videoram_w( int offset, int data );
+extern void tsamurai_fg_colorram_w( int offset, int data );
 extern int tsamurai_vh_start( void );
 extern unsigned char *tsamurai_videoram;
 
@@ -54,13 +55,26 @@ static int samurai_interrupt( void ){
 	return nmi_enabled? nmi_interrupt():ignore_interrupt();
 }
 
-int unknown_d806_r( int offset ){
+int unknown_d803_r(int offset)
+{
+	return 0x6b;     // nogi
+}
+
+int unknown_d806_r( int offset )
+{
 	return 0x40;
 }
 
-int unknown_d900_r( int offset ){
+int unknown_d900_r( int offset )
+{
 	return 0x6a;
 }
+
+int unknown_d938_r(int offset)
+{
+	return 0xfb;    // nogi
+}
+
 
 static void sound_command1_w( int offset, int data ){
 	sound_command1 = data;
@@ -73,17 +87,19 @@ static void sound_command2_w( int offset, int data ){
 }
 
 static struct MemoryReadAddress readmem[] = {
-	{ 0x0000, 0xbfff, MRA_ROM, &tsamurai_videoram },
+	{ 0x0000, 0xbfff, MRA_ROM },
 	{ 0xc000, 0xcfff, MRA_RAM },
 
 	/* protection? */
+	{ 0xd803, 0xd803, unknown_d803_r },
 	{ 0xd806, 0xd806, unknown_d806_r },
 	{ 0xd900, 0xd900, unknown_d900_r },
+	{ 0xd938, 0xd938, unknown_d938_r },
 
-	{ 0xe000, 0xe3ff, MRA_RAM, &videoram },
+	{ 0xe000, 0xe3ff, MRA_RAM },
 	{ 0xe400, 0xe7ff, MRA_RAM },
-	{ 0xe800, 0xefff, MRA_RAM, &tsamurai_videoram },
-	{ 0xf000, 0xf3ff, MRA_RAM, &spriteram },
+	{ 0xe800, 0xefff, MRA_RAM },
+	{ 0xf000, 0xf3ff, MRA_RAM },
 
 	{ 0xf800, 0xf800, input_port_0_r },
 	{ 0xf801, 0xf801, input_port_1_r },
@@ -97,10 +113,11 @@ static struct MemoryWriteAddress writemem[] = {
 	{ 0x0000, 0xbfff, MWA_ROM },
 	{ 0xc000, 0xcfff, MWA_RAM },
 
-	{ 0xe000, 0xe3ff, tsamurai_fg_videoram_w },
-	{ 0xe400, 0xe7ff, MWA_RAM },
-	{ 0xe800, 0xefff, tsamurai_bg_videoram_w },
-	{ 0xf000, 0xf3ff, MWA_RAM },
+	{ 0xe000, 0xe3ff, tsamurai_fg_videoram_w, &videoram },
+	{ 0xe400, 0xe43f, tsamurai_fg_colorram_w, &colorram },    // nogi
+	{ 0xe440, 0xe7ff, MWA_RAM },
+	{ 0xe800, 0xefff, tsamurai_bg_videoram_w, &tsamurai_videoram },
+	{ 0xf000, 0xf3ff, MWA_RAM, &spriteram },
 
 	{ 0xf400, 0xf400, MWA_NOP },
 	{ 0xf401, 0xf401, sound_command1_w },
@@ -279,35 +296,66 @@ static struct MachineDriver machine_driver =
 	}
 };
 
+
+
 ROM_START( tsamurai )
 	ROM_REGION( 0x10000 ) /* Z80 code  - main CPU */
-	ROM_LOAD( "01.3r",	0x0000, 0x4000, 0xd09c8609 )
-	ROM_LOAD( "02.3t",	0x4000, 0x4000, 0xd0f2221c )
-	ROM_LOAD( "03.3v",	0x8000, 0x4000, 0xeee8b0c9 )
+	ROM_LOAD( "01.3r",      0x0000, 0x4000, 0xd09c8609 )
+	ROM_LOAD( "02.3t",      0x4000, 0x4000, 0xd0f2221c )
+	ROM_LOAD( "03.3v",      0x8000, 0x4000, 0xeee8b0c9 )
 
 	ROM_REGION( 0x10000 ) /* Z80 code - sample player#1 */
-	ROM_LOAD( "14.4e",	0x0000, 0x2000, 0x220e9c04 )
-	ROM_LOAD( "15.4c",	0x2000, 0x2000, 0x1e0d1e33 )
+	ROM_LOAD( "14.4e",      0x0000, 0x2000, 0x220e9c04 )
+	ROM_LOAD( "a35-15.4c",  0x2000, 0x2000, 0x1e0d1e33 )
 
 	ROM_REGION( 0x10000 ) /* Z80 code - sample player#2 */
-	ROM_LOAD( "13.4j",	0x0000, 0x2000, 0x73feb0e2 )
+	ROM_LOAD( "13.4j",      0x0000, 0x2000, 0x73feb0e2 )
 
 	ROM_REGION_DISPOSE( 0x15000 )
-	ROM_LOAD( "04.10a",	0x00000, 0x2000, 0xb97ce9b1 ) // tiles
-	ROM_LOAD( "05.10b",	0x02000, 0x2000, 0x55a17b08 )
-	ROM_LOAD( "06.10d",	0x04000, 0x2000, 0xf5ee6f8f )
+	ROM_LOAD( "a35-04.10a", 0x00000, 0x2000, 0xb97ce9b1 ) // tiles
+	ROM_LOAD( "a35-05.10b", 0x02000, 0x2000, 0x55a17b08 )
+	ROM_LOAD( "a35-06.10d", 0x04000, 0x2000, 0xf5ee6f8f )
+	ROM_LOAD( "a35-07.12h", 0x06000, 0x4000, 0x38fc349f ) // sprites
+	ROM_LOAD( "a35-08.12j", 0x0a000, 0x4000, 0xa07d6dc3 )
+	ROM_LOAD( "a35-09.12k", 0x0e000, 0x4000, 0xc0784a0e )
+	ROM_LOAD( "a35-10.11n", 0x12000, 0x1000, 0x0b5a0c45 ) // characters
+	ROM_LOAD( "a35-11.11q", 0x13000, 0x1000, 0x93346d75 )
+	ROM_LOAD( "a35-12.11r", 0x14000, 0x1000, 0xf4c69d8a )
 
-	ROM_LOAD( "07.12h",	0x06000, 0x4000, 0x38fc349f ) // sprites
-	ROM_LOAD( "08.12j",	0x0a000, 0x4000, 0xa07d6dc3 )
-	ROM_LOAD( "09.12k",	0x0e000, 0x4000, 0xc0784a0e )
-	ROM_LOAD( "10.11n",	0x12000, 0x1000, 0x0b5a0c45 ) // characters
-	ROM_LOAD( "11.11q",	0x13000, 0x1000, 0x93346d75 )
-	ROM_LOAD( "12.11r",	0x14000, 0x1000, 0xf4c69d8a )
+	ROM_REGIONX( 0x0300, REGION_PROMS )
+	ROM_LOAD( "a35-16.2j",  0x0000, 0x0100, 0x72d8b332 )
+	ROM_LOAD( "a35-17.2l",  0x0100, 0x0100, 0x9bf1829e )
+	ROM_LOAD( "a35-18.2m",  0x0200, 0x0100, 0x918e4732 )
+ROM_END
 
-	ROM_REGION( 0x300 )
-	ROM_LOAD( "tbp24s10.2j", 0x000, 0x100, 0x72d8b332 )
-	ROM_LOAD( "tbp24s10.2l", 0x100, 0x100, 0x9bf1829e )
-	ROM_LOAD( "tbp24s10.2m", 0x200, 0x100, 0x918e4732 )
+ROM_START( tsamura2 )
+	ROM_REGION( 0x10000 ) /* Z80 code  - main CPU */
+	ROM_LOAD( "a35-01.3r",  0x0000, 0x4000, 0x282d96ad )
+	ROM_LOAD( "a35-02.3t",  0x4000, 0x4000, 0xe3fa0cfa )
+	ROM_LOAD( "a35-03.3v",  0x8000, 0x4000, 0x2fff1e0a )
+
+	ROM_REGION( 0x10000 ) /* Z80 code - sample player#1 */
+	ROM_LOAD( "a35-14.4e",  0x0000, 0x2000, 0xf10aee3b )
+	ROM_LOAD( "a35-15.4c",  0x2000, 0x2000, 0x1e0d1e33 )
+
+	ROM_REGION( 0x10000 ) /* Z80 code - sample player#2 */
+	ROM_LOAD( "a35-13.4j",  0x0000, 0x2000, 0x3828f4d2 )
+
+	ROM_REGION_DISPOSE( 0x15000 )
+	ROM_LOAD( "a35-04.10a", 0x00000, 0x2000, 0xb97ce9b1 ) // tiles
+	ROM_LOAD( "a35-05.10b", 0x02000, 0x2000, 0x55a17b08 )
+	ROM_LOAD( "a35-06.10d", 0x04000, 0x2000, 0xf5ee6f8f )
+	ROM_LOAD( "a35-07.12h", 0x06000, 0x4000, 0x38fc349f ) // sprites
+	ROM_LOAD( "a35-08.12j", 0x0a000, 0x4000, 0xa07d6dc3 )
+	ROM_LOAD( "a35-09.12k", 0x0e000, 0x4000, 0xc0784a0e )
+	ROM_LOAD( "a35-10.11n", 0x12000, 0x1000, 0x0b5a0c45 ) // characters
+	ROM_LOAD( "a35-11.11q", 0x13000, 0x1000, 0x93346d75 )
+	ROM_LOAD( "a35-12.11r", 0x14000, 0x1000, 0xf4c69d8a )
+
+	ROM_REGIONX( 0x0300, REGION_PROMS )
+	ROM_LOAD( "a35-16.2j",  0x0000, 0x0100, 0x72d8b332 )
+	ROM_LOAD( "a35-17.2l",  0x0100, 0x0100, 0x9bf1829e )
+	ROM_LOAD( "a35-18.2m",  0x0200, 0x0100, 0x918e4732 )
 ROM_END
 
 ROM_START( nunchaku )
@@ -335,7 +383,7 @@ ROM_START( nunchaku )
 	ROM_LOAD( "nunchack.v2",	0x13000, 0x1000, 0x54c18d8e )
 	ROM_LOAD( "nunchack.v3",	0x14000, 0x1000, 0xf7ac203a )
 
-	ROM_REGION( 0x300 )
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "nunchack.016", 0x000, 0x100, 0xa7b077d4 )
 	ROM_LOAD( "nunchack.017", 0x100, 0x100, 0x1c04c087 )
 	ROM_LOAD( "nunchack.018", 0x200, 0x100, 0xf5ce3c45 )
@@ -348,10 +396,10 @@ ROM_START( yamagchi )
 	ROM_LOAD( "a38-03.3v",	0x8000, 0x4000, 0x6a4239cf )
 
 	ROM_REGION( 0x10000 ) /* Z80 code - sample player */
-	ROM_LOAD( "a38-13.4j",	0x0000, 0x2000, 0xa26445bb )
+	ROM_LOAD( "a38-14.4e",	0x0000, 0x2000, 0x5a758992 )
 
 	ROM_REGION( 0x10000 ) /* Z80 code - sample player */
-	ROM_LOAD( "a38-14.4e",	0x0000, 0x2000, 0x5a758992 )
+	ROM_LOAD( "a38-13.4j",	0x0000, 0x2000, 0xa26445bb )
 
 	ROM_REGION_DISPOSE( 0x15000 )
 	ROM_LOAD( "a38-04.10a",	0x00000, 0x2000, 0x6bc69d4d ) // tiles
@@ -364,14 +412,14 @@ ROM_START( yamagchi )
 	ROM_LOAD( "a38-11.11p",	0x13000, 0x1000, 0x27890169 )
 	ROM_LOAD( "a38-12.11r",	0x14000, 0x1000, 0xc98d5cf2 )
 
-	ROM_REGION( 0x300 )
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "mb7114e.2k", 0x000, 0x100, 0xe7648110 )
 	ROM_LOAD( "mb7114e.2l", 0x100, 0x100, 0x7b874ee6 )
 	ROM_LOAD( "mb7114e.2m", 0x200, 0x100, 0x938d0fce )
 ROM_END
 
 
-INPUT_PORTS_START( tsamurai_input_ports )
+INPUT_PORTS_START( tsamurai )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_4WAY )
@@ -453,7 +501,7 @@ INPUT_PORTS_START( tsamurai_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( nunchaku_input_ports )
+INPUT_PORTS_START( nunchaku )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
@@ -534,24 +582,24 @@ INPUT_PORTS_START( nunchaku_input_ports )
 	PORT_DIPSETTING(    0x80, "On" )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( yamagchi_input_ports )
+INPUT_PORTS_START( yamagchi )
 	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_4WAY )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_4WAY )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
 	PORT_START
-	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_4WAY | IPF_COCKTAIL )
-	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
-	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
@@ -616,11 +664,13 @@ INPUT_PORTS_START( yamagchi_input_ports )
 	PORT_DIPSETTING(    0x80, "On" )
 INPUT_PORTS_END
 
-struct GameDriver tsamurai_driver =  {
+
+
+struct GameDriver driver_tsamurai =  {
 	__FILE__,
 	0,
 	"tsamurai",
-	"Samurai (Taito)",
+	"Samurai Nihon-ichi (set 1)",
 	"1985",
 	"Taito",
 	CREDITS,
@@ -628,20 +678,45 @@ struct GameDriver tsamurai_driver =  {
 	&machine_driver,
 	0,
 
-	tsamurai_rom,
+	rom_tsamurai,
 	0,
 	0,
 	0,
 	0, /* sound_prom */
 
-	tsamurai_input_ports,
+	input_ports_tsamurai,
 
-	PROM_MEMORY_REGION(4), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 	0,0
 };
 
-struct GameDriver nunchaku_driver =  {
+struct GameDriver driver_tsamura2 =  {
+	__FILE__,
+	&driver_tsamurai,
+	"tsamura2",
+	"Samurai Nihon-ichi (set 2)",
+	"1985",
+	"Taito",
+	CREDITS,
+	0,
+	&machine_driver,
+	0,
+
+	rom_tsamura2,
+	0,
+	0,
+	0,
+	0, /* sound_prom */
+
+	input_ports_tsamurai,
+
+	0, 0, 0,
+	ORIENTATION_ROTATE_90,
+	0,0
+};
+
+struct GameDriver driver_nunchaku =  {
 	__FILE__,
 	0,
 	"nunchaku",
@@ -649,24 +724,24 @@ struct GameDriver nunchaku_driver =  {
 	"1985",
 	"Taito",
 	CREDITS,
-	GAME_WRONG_COLORS,
+	0,
 	&machine_driver,
 	0,
 
-	nunchaku_rom,
+	rom_nunchaku,
 	0,//nunchaku_gfx_untangle,
 	0,
 	0,
 	0, /* sound_prom */
 
-	nunchaku_input_ports,
+	input_ports_nunchaku,
 
-	PROM_MEMORY_REGION(4), 0, 0,
-	ORIENTATION_ROTATE_90,
+	0, 0, 0,
+	ORIENTATION_ROTATE_90 | GAME_WRONG_COLORS,
 	0,0
 };
 
-struct GameDriver yamagchi_driver =  {
+struct GameDriver driver_yamagchi =  {
 	__FILE__,
 	0,
 	"yamagchi",
@@ -674,20 +749,20 @@ struct GameDriver yamagchi_driver =  {
 	"1985",
 	"Taito",
 	CREDITS,
-	GAME_NOT_WORKING,
+	0,
 	&machine_driver,
 	0,
 
-	yamagchi_rom,
+	rom_yamagchi,
 	0,
 	0,
 	0,
 	0, /* sound_prom */
 
-	yamagchi_input_ports,
+	input_ports_yamagchi,
 
-	PROM_MEMORY_REGION(4), 0, 0,
-	ORIENTATION_ROTATE_90,
+	0, 0, 0,
+	ORIENTATION_ROTATE_90 | GAME_IMPERFECT_COLORS,
 	0,0
 };
 

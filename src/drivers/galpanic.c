@@ -89,7 +89,7 @@ static struct MemoryWriteAddress writemem[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( galpanic )
 	PORT_START
 	PORT_DIPNAME( 0x0001, 0x0001, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(      0x0001, DEF_STR( Off ) )
@@ -271,7 +271,7 @@ ROM_END
 
 
 
-struct GameDriver galpanic_driver =
+struct GameDriver driver_galpanic =
 {
 	__FILE__,
 	0,
@@ -280,18 +280,18 @@ struct GameDriver galpanic_driver =
 	"1990",
 	"Kaneko",
 	"Nicola Salmoria",
-	GAME_REQUIRES_16BIT,
+	0,
 	&machine_driver,
 	0,
 
-	galpanic_rom,
+	rom_galpanic,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_galpanic,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ORIENTATION_ROTATE_90 | GAME_REQUIRES_16BIT,
 	0, 0
 };

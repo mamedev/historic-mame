@@ -1693,15 +1693,15 @@ static const char *name_rdmem( unsigned base )
 //			if( mr->description )
 //				sprintf(dst, "%s+%04X", mr->description, lshift(offset) );
 //			else
-			if( mr->base && *mr->base == videoram )
-				sprintf(dst, "video+%04X", lshift(offset) );
-			else
-			if( mr->base && *mr->base == colorram )
-				sprintf(dst, "color+%04X", lshift(offset) );
-			else
-			if( mr->base && *mr->base == spriteram )
-				sprintf(dst, "sprite+%04X", lshift(offset) );
-			else
+//			if( mr->base && *mr->base == videoram )
+//				sprintf(dst, "video+%04X", lshift(offset) );
+//			else
+//			if( mr->base && *mr->base == colorram )
+//				sprintf(dst, "color+%04X", lshift(offset) );
+//			else
+//			if( mr->base && *mr->base == spriteram )
+//				sprintf(dst, "sprite+%04X", lshift(offset) );
+//			else
 			switch( (FPTR)mr->handler )
             {
 			case (FPTR)MRA_RAM:
@@ -3523,11 +3523,16 @@ static void cmd_brk_data_set( void )
 	int length;
 
 	DBG.brk_data = get_register_or_value( &cmd, &length );
+
+	DBG.brk_data = rshift(DBG.brk_data) & AMASK; /* EHC 11/14/99: Need to shift + mask otherwise we die */
+
 	if( length )
 	{
 		data = RDMEM(DBG.brk_data);
+
 		DBG.brk_data_oldval = data;
 		data = get_register_or_value( &cmd, &length );
+
 		if( length )
 		{
 			DBG.brk_data_newval = data;

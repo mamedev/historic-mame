@@ -59,7 +59,7 @@ static struct MemoryWriteAddress writemem[] =
 
 
 
-INPUT_PORTS_START( travrusa_input_ports )
+INPUT_PORTS_START( travrusa )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -147,7 +147,7 @@ INPUT_PORTS_START( travrusa_input_ports )
 INPUT_PORTS_END
 
 /* same as travrusa, no "Title" switch */
-INPUT_PORTS_START( motorace_input_ports )
+INPUT_PORTS_START( motorace )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -330,7 +330,7 @@ ROM_START( travrusa )
 	ROM_LOAD( "zippyrac.009", 0x08000, 0x2000, 0x13be6a14 )
 	ROM_LOAD( "zippyrac.010", 0x0a000, 0x2000, 0x6fcc9fdb )
 
-	ROM_REGION(0x0220)	/* color proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "mmi6349.ij",   0x0000, 0x0200, 0xc9724350 ) /* character palette - last $100 are unused */
 	ROM_LOAD( "tbp18s.2",     0x0100, 0x0020, 0xa1130007 ) /* sprite palette */
 	ROM_LOAD( "tbp24s10.3",   0x0120, 0x0100, 0x76062638 ) /* sprite lookup table */
@@ -355,7 +355,7 @@ ROM_START( motorace )
 	ROM_LOAD( "mr5.3m",       0x08000, 0x2000, 0xf75f2aad )
 	ROM_LOAD( "mr6.3k",       0x0a000, 0x2000, 0x518889a0 )
 
-	ROM_REGION(0x0220)	/* color proms */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "mmi6349.ij",   0x0000, 0x0200, 0xc9724350 ) /* character palette - last $100 are unused */
 	ROM_LOAD( "tbp18s.2",     0x0100, 0x0020, 0xa1130007 ) /* sprite palette */
 	ROM_LOAD( "tbp24s10.3",   0x0120, 0x0100, 0x76062638 ) /* sprite lookup table */
@@ -454,7 +454,7 @@ static void hisave(void)
 
 
 
-struct GameDriver travrusa_driver =
+struct GameDriver driver_travrusa =
 {
 	__FILE__,
 	0,
@@ -467,23 +467,23 @@ struct GameDriver travrusa_driver =
 	&machine_driver,
 	0,
 
-	travrusa_rom,
+	rom_travrusa,
 	0, 0,
 	0,
 	0,
 
-	travrusa_input_ports,
+	input_ports_travrusa,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	hiload, hisave
 };
 
-struct GameDriver motorace_driver =
+struct GameDriver driver_motorace =
 {
 	__FILE__,
-	&travrusa_driver,
+	&driver_travrusa,
 	"motorace",
 	"MotoRace USA",
 	"1983",
@@ -493,14 +493,14 @@ struct GameDriver motorace_driver =
 	&machine_driver,
 	0,
 
-	motorace_rom,
+	rom_motorace,
 	motorace_decode, 0,
 	0,
 	0,
 
-	motorace_input_ports,
+	input_ports_motorace,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	hiload, hisave

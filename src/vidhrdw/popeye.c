@@ -346,72 +346,37 @@ void popeye_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	{
 		if (dirtybuffer2[offs])
 		{
-			int sx,sy,y,colour,colour2;
+			int sx,sy,x,y,colour;
 
 			dirtybuffer2[offs] = 0;
 
 			sx = 8 * (offs % 64);
 			sy = 8 * (offs / 64) - 16;
 
-			if (sx >= Machine->drv->visible_area.min_x &&
-					sx+7 <= Machine->drv->visible_area.max_x &&
-					sy >= Machine->drv->visible_area.min_y &&
-					sy+7 <= Machine->drv->visible_area.max_y)
+			if (sx   >= Machine->drv->visible_area.min_x &&
+				sx+7 <= Machine->drv->visible_area.max_x &&
+				sy   >= Machine->drv->visible_area.min_y &&
+				sy+7 <= Machine->drv->visible_area.max_y)
 			{
-            	/* Screen Rotation */
+				/* this is slow, but the background doesn't change during game */
 
-				if (!(Machine->orientation & ORIENTATION_SWAP_XY))
-                {
-                	if (Machine->orientation & ORIENTATION_FLIP_X)
-                    	sx = 504 - sx;
+				colour = Machine->pens[(popeye_videoram[offs] & 0x0f) + 2*(*popeye_palette_bank & 0x08)];
+				for (y = 0; y < 4; y++)
+				{
+					for (x = 0; x < 8; x++)
+					{
+						plot_pixel(tmpbitmap2, sx+x, sy+y, colour);
+					}
+				}
 
-                 	if (Machine->orientation & ORIENTATION_FLIP_Y)
-                    {
-                    	sy = 472 - sy;
-
-						colour = Machine->pens[(popeye_videoram[offs] & 0x0f) + 2*(*popeye_palette_bank & 0x08)];
-						for (y = 4;y < 8;y++)
-							memset(&tmpbitmap2->line[sy+y][sx],colour,8);
-
-						colour = Machine->pens[(popeye_videoram[offs] >> 4) + 2*(*popeye_palette_bank & 0x08)];
-						for (y = 0;y < 4;y++)
-							memset(&tmpbitmap2->line[sy+y][sx],colour,8);
-                    }
-                    else
-                    {
-						colour = Machine->pens[(popeye_videoram[offs] & 0x0f) + 2*(*popeye_palette_bank & 0x08)];
-						for (y = 0;y < 4;y++)
-							memset(&tmpbitmap2->line[sy+y][sx],colour,8);
-
-						colour = Machine->pens[(popeye_videoram[offs] >> 4) + 2*(*popeye_palette_bank & 0x08)];
-						for (y = 4;y < 8;y++)
-							memset(&tmpbitmap2->line[sy+y][sx],colour,8);
-                    }
-                }
-                else
-                {
-                	if (Machine->orientation & ORIENTATION_FLIP_Y)
-                    	sx = 504 - sx;
-
-                 	if (Machine->orientation & ORIENTATION_FLIP_X)
-                    {
-						colour2 = Machine->pens[(popeye_videoram[offs] & 0x0f) + 2*(*popeye_palette_bank & 0x08)];
-                        colour = Machine->pens[(popeye_videoram[offs] >> 4) + 2*(*popeye_palette_bank & 0x08)];
-
-                    	sy = 472 - sy;
-                    }
-                    else
-                    {
-                        colour2 = Machine->pens[(popeye_videoram[offs] >> 4) + 2*(*popeye_palette_bank & 0x08)];
-						colour = Machine->pens[(popeye_videoram[offs] & 0x0f) + 2*(*popeye_palette_bank & 0x08)];
-                    }
-
-					for (y = 0;y < 8;y++)
-                    {
-						memset(&tmpbitmap2->line[sx+y][sy],colour,4);
-						memset(&tmpbitmap2->line[sx+y][sy+4],colour2,4);
-                    }
-                }
+				colour = Machine->pens[(popeye_videoram[offs] >> 4) + 2*(*popeye_palette_bank & 0x08)];
+				for (y = 4;y < 8;y++)
+				{
+					for (x = 0; x < 8; x++)
+					{
+						plot_pixel(tmpbitmap2, sx+x, sy+y, colour);
+					}
+				}
 			}
 		}
 	}

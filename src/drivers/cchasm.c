@@ -84,7 +84,7 @@ static struct IOWritePort sound_writeport[] =
 };
 
 
-INPUT_PORTS_START( cchasm_input_ports )
+INPUT_PORTS_START( cchasm )
 	PORT_START /* DSW */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x01, "3" )
@@ -263,7 +263,7 @@ ROM_START( cchasm1 )
 ROM_END
 
 
-struct GameDriver cchasm_driver =
+struct GameDriver driver_cchasm =
 {
 	__FILE__,
 	0,
@@ -275,20 +275,20 @@ struct GameDriver cchasm_driver =
 	0,
 	&machine_driver,
 	0,
-	cchasm_rom,
+	rom_cchasm,
 	0, 0,
 	0,
 	0,
-	cchasm_input_ports,
+	input_ports_cchasm,
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 	0, 0
 };
 
-struct GameDriver cchasm1_driver =
+struct GameDriver driver_cchasm1 =
 {
 	__FILE__,
-	&cchasm_driver,
+	&driver_cchasm,
 	"cchasm1",
 	"Cosmic Chasm (set 2)",
 	"1983",
@@ -297,11 +297,11 @@ struct GameDriver cchasm1_driver =
 	0,
 	&machine_driver,
 	0,
-	cchasm1_rom,
+	rom_cchasm1,
 	0, 0,
 	0,
 	0,
-	cchasm_input_ports,
+	input_ports_cchasm,
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 	0, 0

@@ -624,6 +624,9 @@
 |*|
 |*|	MSH 990310:	Use of the #ifdef WIN32 to fix the keyboard under Windows
 |*|
+|*|
+|*|	MLR 991114:	Support for gzipped cheat files
+|*|
 \*|*/
 
 /*\
@@ -638,6 +641,7 @@
 \*|*/
 
 #include "driver.h"
+#include <zlib.h>
 #include <stdarg.h>
 #include <ctype.h>  /* for toupper() and tolower() */
 
@@ -1061,7 +1065,7 @@ void ClearArea(int addskip, int ystart, int yend)
 /* Print a string at the position x y
  * if x = 0 then center the string in the screen
  * if ForEdit = 0 then adds a cursor at the end of the text */
-void xprintf(int ForEdit,int x,int y,char *fmt,...)
+static void CLIB_DECL xprintf(int ForEdit,int x,int y,char *fmt,...)
 {
   struct DisplayText dt[2];
   char s[80];
@@ -2114,12 +2118,12 @@ int RenameCheatFile(int merge, int DisplayFileName, char *filename)
 /* Function who loads the cheats for a game */
 int SaveCheat(int NoCheat)
 {
-	FILE *f;
+	gzFile *f;
       char fmt[32];
       int i;
 	int count = 0;
 
-	if ((f = fopen(database,"a")) != 0)
+	if ((f = gzopen(database,"a")) != 0)
 	{
 		for (i = 0; i < LoadedCheatTotal; i++)
 		{
@@ -2133,14 +2137,14 @@ int SaveCheat(int NoCheat)
 	                              (addmore ? ":%s" : ""));
 
 				#ifdef macintosh
-				fprintf(f, "\r");     /* force DOS-style line enders */
+				gzprintf(f, "\r");     /* force DOS-style line enders */
 				#endif
 
 				/* JCK 990717 BEGIN */
 				if (	(LoadedCheatTable[LoadedCheatTotal].Special>=60)	&&
 					(LoadedCheatTable[LoadedCheatTotal].Special<=75)	)
 				{
-					if (fprintf(f, fmt, Machine->gamedrv->name,
+					if (gzprintf(f, fmt, Machine->gamedrv->name,
 							LoadedCheatTable[i].CpuNo,
 							LoadedCheatTable[i].Address,
 							LoadedCheatTable[i].Maximum,
@@ -2153,7 +2157,7 @@ int SaveCheat(int NoCheat)
 				}
 				else
 				{
-					if (fprintf(f, fmt, Machine->gamedrv->name,
+					if (gzprintf(f, fmt, Machine->gamedrv->name,
 							LoadedCheatTable[i].CpuNo,
 							LoadedCheatTable[i].Address,
 							LoadedCheatTable[i].Data,
@@ -2168,7 +2172,7 @@ int SaveCheat(int NoCheat)
 
 			}
 		}
-		fclose (f);
+		gzclose (f);
 	}
       return(count);
 }
@@ -2176,7 +2180,7 @@ int SaveCheat(int NoCheat)
 /* Function who loads the cheats for a game from a single database */
 void LoadCheat(int merge, char *filename)
 {
-  FILE *f;
+  gzFile *f;
   char *ptr;
   char str[90];    /* To support the add. description */
 
@@ -2190,7 +2194,7 @@ void LoadCheat(int merge, char *filename)
 
   /* Load the cheats for that game */
   /* Ex.: pacman:0:4E14:06:000:1UP Unlimited lives:Coded on 1 byte */
-  if ((f = fopen(filename,"r")) != 0)
+  if ((f = gzopen(filename,"r")) != 0)
   {
 	yPos = (MachHeight - FontHeight) / 2 - FontHeight;
 /*	xprintf(0, 0, yPos, "Loading cheats from file"); */
@@ -2199,7 +2203,7 @@ void LoadCheat(int merge, char *filename)
 
 	for(;;)
 	{
-	      if (fgets(str,90,f) == NULL)
+	      if (gzgets(f,str,90) == NULL)
       		break;
 
 		#ifdef macintosh  /* JB 971004 */
@@ -2301,7 +2305,7 @@ void LoadCheat(int merge, char *filename)
 
 		LoadedCheatTotal++;
 	}
-	fclose(f);
+	gzclose(f);
 
 	ClearArea (1, yPos - FontHeight, yPos + FontHeight);
   }
@@ -2356,7 +2360,7 @@ void LoadDatabases(int InCheat)
 
 int LoadHelp(char *filename, struct TextLine *table)
 {
-  FILE *f;
+  gzFile *f;
   char str[32];
 
   int yPos;
@@ -2368,12 +2372,12 @@ int LoadHelp(char *filename, struct TextLine *table)
   yPos = (MachHeight - FontHeight) / 2;
   xprintf(0, 0, yPos, "Loading help...");
 
-  if ((f = fopen(filename,"r")) != 0)
+  if ((f = gzopen(filename,"r")) != 0)
   {
 	txt = table;
 	for(;;)
 	{
-	      if (fgets(str,32,f) == NULL)
+	      if (gzgets(f,str,32) == NULL)
       		break;
 
 		#ifdef macintosh  /* JB 971004 */
@@ -2398,7 +2402,7 @@ int LoadHelp(char *filename, struct TextLine *table)
 
 		txt++;
 	}
-	fclose(f);
+	gzclose(f);
   }
 
   ClearTextLine (1, yPos);

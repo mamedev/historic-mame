@@ -201,8 +201,8 @@ typedef struct {
 #define OSD_FILETYPE_MEMCARD 8
 #define OSD_FILETYPE_SCREENSHOT 9
 #ifdef MESS
-  #define OSD_FILETYPE_ROM_CART 10
-  #define OSD_FILETYPE_IMAGE 11
+  #define OSD_FILETYPE_IMAGE_R 10
+  #define OSD_FILETYPE_IMAGE_RW 11
 #endif
 
 /* gamename holds the driver name, filename is only used for ROMs and    */

@@ -16,7 +16,6 @@ read:
 3004      IN2
 3005      DSW0
 3006      DSW1
-see the input_ports definition below for details on the input bits
 
 write:
 3000      horizontal scroll
@@ -118,7 +117,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( sonson )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
@@ -317,7 +316,7 @@ ROM_START( sonson )
 	ROM_LOAD( "ss8.v12",      0x08000, 0x4000, 0x9f59014e )
 	ROM_LOAD( "ss9.v12",      0x0c000, 0x4000, 0xe240345a )
 
-	ROM_REGION(0x0240)	/* color PROMs */
+	ROM_REGIONX( 0x0240, REGION_PROMS )
 	ROM_LOAD( "ss12.bin",     0x0000, 0x0020, 0xc8eaf234 )	/* red/green component */
 	ROM_LOAD( "ss13.bin",     0x0020, 0x0020, 0x0e434add )	/* blue component */
 	ROM_LOAD( "ssb2.bin",     0x0040, 0x0100, 0x6ce8ac39 )	/* character lookup table */
@@ -376,7 +375,7 @@ static void hisave(void)
 
 
 
-struct GameDriver sonson_driver =
+struct GameDriver driver_sonson =
 {
 	__FILE__,
 	0,
@@ -389,14 +388,14 @@ struct GameDriver sonson_driver =
 	&machine_driver,
 	0,
 
-	sonson_rom,
+	rom_sonson,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_sonson,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave

@@ -116,7 +116,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ -1 }	/* end of table */
 };
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( shootout )
 	PORT_START	/* DSW1 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( 2C_1C ) )
@@ -305,7 +305,7 @@ ROM_START( shootout )
 
 	ROM_LOAD( "cu10.h17",       0x34000, 0x8000, 0x3854c877 ) /* background tiles */
 
-	ROM_REGION(0x0100) /* color prom */
+	ROM_REGIONX( 0x0100, REGION_PROMS )
 	ROM_LOAD( "gb08.k10",       0x0000, 0x0100, 0x509c65b6 )
 
 	ROM_REGION(0x10000) /* 64k for code */
@@ -365,7 +365,7 @@ static void shootout_decode (void)
         ROM[A] = (RAM[A] & 0x0f) | encrypttable[RAM[A] >> 4];
 }
 
-struct GameDriver shootout_driver =
+struct GameDriver driver_shootout =
 {
 	__FILE__,
 	0,
@@ -378,14 +378,14 @@ struct GameDriver shootout_driver =
 	&machine_driver,
 	0,
 
-	shootout_rom,
+	rom_shootout,
 	0, shootout_decode,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_shootout,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave

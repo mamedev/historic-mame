@@ -156,7 +156,7 @@ static struct MemoryWriteAddress writemem[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( mystston )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
@@ -360,7 +360,7 @@ ROM_START( mystston )
 	ROM_LOAD( "ms16",         0x14000, 0x2000, 0x2f470b0f )
 	ROM_LOAD( "ms17",         0x16000, 0x2000, 0x38966d1b )
 
-	ROM_REGION(0x0020)	/* color PROM */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "ic61",         0x0000, 0x0020, 0xe802d6cf )
 ROM_END
 
@@ -407,7 +407,7 @@ static void hisave(void)
 
 
 
-struct GameDriver mystston_driver =
+struct GameDriver driver_mystston =
 {
 	__FILE__,
 	0,
@@ -420,14 +420,14 @@ struct GameDriver mystston_driver =
 	&machine_driver,
 	0,
 
-	mystston_rom,
+	rom_mystston,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_mystston,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	hiload, hisave

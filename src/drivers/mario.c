@@ -225,7 +225,7 @@ static struct IOWritePort writeport_sound[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( mario )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
@@ -269,7 +269,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0xc0, "Hardest" )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( mariojp_input_ports )
+INPUT_PORTS_START( mariojp )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
@@ -359,10 +359,29 @@ static struct DACinterface dac_interface =
 	{ 100 }
 };
 
+static const char *mario_sample_names[] =
+{
+	"*mario",
+
+	/* 7f01 - 7f07 sounds */
+	"ice.wav",    /* 0x02 ice appears (formerly effect0.wav) */
+	"coin.wav",   /* 0x06 coin appears (formerly effect1.wav) */
+	"skid.wav",   /* 0x07 skid */
+
+	/* 7c00 */
+	"run.wav",        /* 03, 02, 01 - 0x1b */
+
+	/* 7c80 */
+	"luigirun.wav",   /* 03, 02, 01 - 0x1c */
+
+    0	/* end of array */
+};
+
 static struct Samplesinterface samples_interface =
 {
 	3,	/* 3 channels */
-	25	/* volume */
+	25,	/* volume */
+	mario_sample_names
 };
 
 static struct AY8910interface ay8910_interface =
@@ -498,26 +517,6 @@ static struct MachineDriver masao_machine_driver =
 
 ***************************************************************************/
 
-static const char *sample_names[] =
-{
-	"*mario",
-
-	/* 7f01 - 7f07 sounds */
-	"ice.wav",    /* 0x02 ice appears (formerly effect0.wav) */
-	"coin.wav",   /* 0x06 coin appears (formerly effect1.wav) */
-	"skid.wav",   /* 0x07 skid */
-
-	/* 7c00 */
-	"run.wav",        /* 03, 02, 01 - 0x1b */
-
-	/* 7c80 */
-	"luigirun.wav",   /* 03, 02, 01 - 0x1c */
-
-    0	/* end of array */
-};
-
-
-
 ROM_START( mario )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "mario.7f",     0x0000, 0x2000, 0xc0c6e014 )
@@ -535,7 +534,7 @@ ROM_START( mario )
 	ROM_LOAD( "mario.7t",     0x6000, 0x1000, 0x641f0008 )
 	ROM_LOAD( "mario.7u",     0x7000, 0x1000, 0x7baf5309 )
 
-	ROM_REGION(0x0200)	/* color prom */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "mario.4p",     0x0000, 0x0200, 0xafc9bd41 )
 
 	ROM_REGION(0x1000)	/* sound */
@@ -559,7 +558,7 @@ ROM_START( mariojp )
 	ROM_LOAD( "tma1v-a.7t",   0x6000, 0x1000, 0x5cbb92a5 )
 	ROM_LOAD( "tma1v-a.7u",   0x7000, 0x1000, 0x13afb9ed )
 
-	ROM_REGION(0x0200)	/* color prom */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "mario.4p",     0x0000, 0x0200, 0xafc9bd41 )
 
 	ROM_REGION(0x1000)	/* sound */
@@ -583,7 +582,7 @@ ROM_START( masao )
 	ROM_LOAD( "tma1v-a.7t",   0x6000, 0x1000, 0x5cbb92a5 )
 	ROM_LOAD( "tma1v-a.7u",   0x7000, 0x1000, 0x13afb9ed )
 
-	ROM_REGION(0x0200)	/* color prom */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "mario.4p",     0x0000, 0x0200, 0xafc9bd41 )
 
 	ROM_REGION(0x10000) /* 64k for sound */
@@ -637,7 +636,7 @@ static void hisave(void)
 
 
 
-struct GameDriver mario_driver =
+struct GameDriver driver_mario =
 {
 	__FILE__,
 	0,
@@ -650,23 +649,23 @@ struct GameDriver mario_driver =
 	&machine_driver,
 	0,
 
-	mario_rom,
+	rom_mario,
 	0, 0,
-	sample_names,
+	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_mario,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_180,
 
 	hiload, hisave
 };
 
-struct GameDriver mariojp_driver =
+struct GameDriver driver_mariojp =
 {
 	__FILE__,
-	&mario_driver,
+	&driver_mario,
 	"mariojp",
 	"Mario Bros. (Japan)",
 	"1983",
@@ -676,23 +675,23 @@ struct GameDriver mariojp_driver =
 	&machine_driver,
 	0,
 
-	mariojp_rom,
+	rom_mariojp,
 	0, 0,
-	sample_names,
+	0,
 	0,	/* sound_prom */
 
-	mariojp_input_ports,
+	input_ports_mariojp,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_180,
 
 	hiload, hisave
 };
 
-struct GameDriver masao_driver =
+struct GameDriver driver_masao =
 {
 	__FILE__,
-	&mario_driver,
+	&driver_mario,
 	"masao",
 	"Masao",
 	"1983",
@@ -702,14 +701,14 @@ struct GameDriver masao_driver =
 	&masao_machine_driver,
 	0,
 
-	masao_rom,
+	rom_masao,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_mario,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_180,
 
 	hiload, hisave

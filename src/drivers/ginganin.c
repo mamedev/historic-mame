@@ -240,7 +240,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 /*	Input Ports:	[0] Controls	[1] DSWs */
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( ginganin )
 
 	PORT_START	// IN0 - Controls - Read from 70000.w
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
@@ -539,7 +539,7 @@ unsigned char *RAM;
 }
 
 
-struct GameDriver ginganin_driver =
+struct GameDriver driver_ginganin =
 {
 	__FILE__,
 	0,
@@ -548,19 +548,19 @@ struct GameDriver ginganin_driver =
 	"1987",
 	"Jaleco",
 	"Luca Elia\n",
-	GAME_IMPERFECT_SOUND,
+	0,
 	&ginganin_machine_driver,
 	0,
 
-	ginganin_rom,
+	rom_ginganin,
 	ginganin_rom_decode, 0,
 	0,
 	0,
 
-	input_ports,
+	input_ports_ginganin,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_IMPERFECT_SOUND,
 
 	0,0
 };

@@ -31,7 +31,6 @@ int williams2_palette_w(int offset, int data);
 UINT8 *williams_bank_base;
 UINT8 *defender_bank_base;
 const UINT32 *defender_bank_list;
-UINT8 *blaster_bank2_base;
 UINT8 *mayday_protection;
 
 /* internal bank switching tracking */
@@ -806,7 +805,7 @@ void blaster_vram_select_w(int offset, int data)
 	if (vram_bank)
 	{
 		cpu_setbank(1, &RAM[blaster_bank_offset[blaster_bank]]);
-		cpu_setbank(2, blaster_bank2_base);
+		cpu_setbank(2, williams_bank_base + 0x4000);
 	}
 
 	/* bank 0 maps to videoram */

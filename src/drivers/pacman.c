@@ -136,7 +136,6 @@ extern void pacplus_decode(void);
 
 void theglob_init_machine(void);
 int theglob_decrypt_rom(int offset);
-extern unsigned char *theglob_mem_rom;
 
 
 static void alibaba_sound_w(int offset, int data)
@@ -251,7 +250,7 @@ static struct IOWritePort vanvan_writeport[] =
 
 static struct MemoryReadAddress theglob_readmem[] =
 {
-	{ 0x0000, 0x3fff, MRA_BANK1, &theglob_mem_rom },
+	{ 0x0000, 0x3fff, MRA_BANK1 },
 	{ 0x4000, 0x47ff, MRA_RAM },	/* video and color RAM */
 	{ 0x4c00, 0x4fff, MRA_RAM },	/* including sprite codes at 4ff0-4fff */
 	{ 0x5000, 0x503f, input_port_0_r },	/* IN0 */
@@ -268,7 +267,7 @@ static struct IOReadPort theglob_readport[] =
 };
 
 
-INPUT_PORTS_START( pacman_input_ports )
+INPUT_PORTS_START( pacman )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
@@ -329,7 +328,7 @@ INPUT_PORTS_END
 
 /* Ms. Pac-Man input ports are identical to Pac-Man, the only difference is */
 /* the missing Ghost Names dip switch. */
-INPUT_PORTS_START( mspacman_input_ports )
+INPUT_PORTS_START( mspacman )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
@@ -386,7 +385,7 @@ INPUT_PORTS_START( mspacman_input_ports )
 	PORT_DIPSETTING(    0x01, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( maketrax_input_ports )
+INPUT_PORTS_START( maketrax )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
@@ -432,7 +431,7 @@ INPUT_PORTS_START( maketrax_input_ports )
  	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( mbrush_input_ports )
+INPUT_PORTS_START( mbrush )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
@@ -478,7 +477,7 @@ INPUT_PORTS_START( mbrush_input_ports )
  	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( ponpoko_input_ports )
+INPUT_PORTS_START( ponpoko )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_8WAY )
@@ -555,7 +554,7 @@ INPUT_PORTS_START( ponpoko_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( eyes_input_ports )
+INPUT_PORTS_START( eyes )
 	PORT_START  /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
@@ -603,7 +602,7 @@ INPUT_PORTS_START( eyes_input_ports )
  	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( lizwiz_input_ports )
+INPUT_PORTS_START( lizwiz )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
@@ -651,7 +650,7 @@ INPUT_PORTS_START( lizwiz_input_ports )
  	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( theglob_input_ports )
+INPUT_PORTS_START( theglob )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
@@ -705,7 +704,7 @@ INPUT_PORTS_START( theglob_input_ports )
  	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( vanvan_input_ports )
+INPUT_PORTS_START( vanvan )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
@@ -753,7 +752,7 @@ INPUT_PORTS_START( vanvan_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( 1C_3C ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( alibaba_input_ports )
+INPUT_PORTS_START( alibaba )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_4WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_4WAY )
@@ -1028,7 +1027,7 @@ ROM_START( pacman )
 	ROM_LOAD( "pacman.5e",    0x0000, 0x1000, 0x0c944964 )
 	ROM_LOAD( "pacman.5f",    0x1000, 0x1000, 0x958fedf9 )
 
-	ROM_REGION(0x0120)	/* color PROMs */
+	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, 0x3eb3a8e4 )
 
@@ -1048,7 +1047,7 @@ ROM_START( npacmod )
 	ROM_LOAD( "pacman.5e",    0x0000, 0x1000, 0x0c944964 )
 	ROM_LOAD( "pacman.5f",    0x1000, 0x1000, 0x958fedf9 )
 
-	ROM_REGION(0x0120)	/* color PROMs */
+	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, 0x3eb3a8e4 )
 
@@ -1070,7 +1069,7 @@ ROM_START( pacmanjp )
 	ROM_LOAD( "chg2",         0x0800, 0x0800, 0x3591b89d )
 	ROM_LOAD( "pacman.5f",    0x1000, 0x1000, 0x958fedf9 )
 
-	ROM_REGION(0x0120)	/* color PROMs */
+	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, 0x3eb3a8e4 )
 
@@ -1090,7 +1089,7 @@ ROM_START( pacmanm )
 	ROM_LOAD( "pacman.5e",    0x0000, 0x1000, 0x0c944964 )
 	ROM_LOAD( "pacman.5f",    0x1000, 0x1000, 0x958fedf9 )
 
-	ROM_REGION(0x0120)	/* color PROMs */
+	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, 0x3eb3a8e4 )
 
@@ -1110,7 +1109,7 @@ ROM_START( pacmod )
 	ROM_LOAD( "pacmanh.5e",   0x0000, 0x1000, 0x299fb17a )
 	ROM_LOAD( "pacman.5f",    0x1000, 0x1000, 0x958fedf9 )
 
-	ROM_REGION(0x0120)	/* color PROMs */
+	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, 0x3eb3a8e4 )
 
@@ -1130,7 +1129,7 @@ ROM_START( hangly )
 	ROM_LOAD( "pacman.5e",    0x0000, 0x1000, 0x0c944964 )
 	ROM_LOAD( "pacman.5f",    0x1000, 0x1000, 0x958fedf9 )
 
-	ROM_REGION(0x0120)	/* color PROMs */
+	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, 0x3eb3a8e4 )
 
@@ -1152,7 +1151,7 @@ ROM_START( hangly2 )
 	ROM_LOAD( "pacmanh.5e",   0x0000, 0x1000, 0x299fb17a )
 	ROM_LOAD( "pacman.5f",    0x1000, 0x1000, 0x958fedf9 )
 
-	ROM_REGION(0x0120)	/* color PROMs */
+	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, 0x3eb3a8e4 )
 
@@ -1172,7 +1171,7 @@ ROM_START( puckman )
 	ROM_LOAD( "pacman.5e",    0x0000, 0x1000, 0x0c944964 )
 	ROM_LOAD( "pacman.5f",    0x1000, 0x1000, 0x958fedf9 )
 
-	ROM_REGION(0x0120)	/* color PROMs */
+	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, 0x3eb3a8e4 )
 
@@ -1198,7 +1197,7 @@ ROM_START( pacheart )
 	ROM_LOAD( "pacheart.ch3", 0x1000, 0x0800, 0xca8c184c )
 	ROM_LOAD( "pacheart.ch4", 0x1800, 0x0800, 0x1b1d9096 )
 
-	ROM_REGION(0x0120)      /* color PROMs */
+	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, 0x3eb3a8e4 )
 
@@ -1220,7 +1219,7 @@ ROM_START( piranha )
 	ROM_LOAD( "pr6.cpu",      0x1000, 0x0800, 0xf3e9c9d5 )
 	ROM_LOAD( "pr8.cpu",      0x1800, 0x0800, 0x133d720d )
 
-	ROM_REGION(0x0120)	/* color PROMs */
+	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, 0x3eb3a8e4 )
 
@@ -1240,7 +1239,7 @@ ROM_START( pacplus )
 	ROM_LOAD( "pacplus.5e",   0x0000, 0x1000, 0x022c35da )
 	ROM_LOAD( "pacplus.5f",   0x1000, 0x1000, 0x4de65cdd )
 
-	ROM_REGION(0x0120)	/* color PROMs */
+	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "pacplus.7f",   0x0000, 0x0020, 0x063dd53a )
 	ROM_LOAD( "pacplus.4a",   0x0020, 0x0100, 0xe271a166 )
 
@@ -1262,7 +1261,7 @@ ROM_START( mspacman )
 	ROM_LOAD( "5e",           0x0000, 0x1000, 0x5c281d01 )
 	ROM_LOAD( "5f",           0x1000, 0x1000, 0x615af909 )
 
-	ROM_REGION(0x0120)	/* color PROMs */
+	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, 0x3eb3a8e4 )
 
@@ -1284,7 +1283,7 @@ ROM_START( mspacatk )
 	ROM_LOAD( "5e",           0x0000, 0x1000, 0x5c281d01 )
 	ROM_LOAD( "5f",           0x1000, 0x1000, 0x615af909 )
 
-	ROM_REGION(0x0120)	/* color PROMs */
+	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, 0x3eb3a8e4 )
 
@@ -1307,7 +1306,7 @@ ROM_START( pacgal )
 	ROM_LOAD( "pacman.5ef",   0x1000, 0x0800, 0x65a3ee71 )
 	ROM_LOAD( "pacman.5hj",   0x1800, 0x0800, 0x50c7477d )
 
-	ROM_REGION(0x0120)	/* color PROMs */
+	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "82s129.4a",    0x0020, 0x0100, 0x63efb927 )
 
@@ -1327,7 +1326,7 @@ ROM_START( crush )
 	ROM_LOAD( "maketrax.5e",  0x0000, 0x1000, 0x91bad2da )
 	ROM_LOAD( "maketrax.5f",  0x1000, 0x1000, 0xaea79f55 )
 
-	ROM_REGION(0x0120)	/* color PROMs */
+	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "crush.4a",     0x0020, 0x0100, 0x2bc5d339 )
 
@@ -1353,7 +1352,7 @@ ROM_START( crush2 )
 	ROM_LOAD( "tpb",          0x1000, 0x0800, 0xd1899f05 )
 	ROM_LOAD( "tpd",          0x1800, 0x0800, 0xd35d1caf )
 
-	ROM_REGION(0x0120)	/* color PROMs */
+	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "crush.4a",     0x0020, 0x0100, 0x2bc5d339 )
 
@@ -1379,7 +1378,7 @@ ROM_START( crush3 )
 	ROM_LOAD( "unkmol.5f",    0x1000, 0x0800, 0x752e3780 )
 	ROM_LOAD( "unkmol.5j",    0x1800, 0x0800, 0x6e00d2ac )
 
-	ROM_REGION(0x0120)	/* color PROMs */
+	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "crush.4a",     0x0020, 0x0100, 0x2bc5d339 )
 
@@ -1399,7 +1398,7 @@ ROM_START( maketrax )
 	ROM_LOAD( "maketrax.5e",  0x0000, 0x1000, 0x91bad2da )
 	ROM_LOAD( "maketrax.5f",  0x1000, 0x1000, 0xaea79f55 )
 
-	ROM_REGION(0x0120)	/* color PROMs */
+	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "crush.4a",     0x0020, 0x0100, 0x2bc5d339 )
 
@@ -1421,7 +1420,7 @@ ROM_START( mbrush )
 	ROM_LOAD( "mbrush.5f",    0x1000, 0x0800, 0xd5bc5cb8 )  /* copyright sign was removed */
 	ROM_LOAD( "tpd",          0x1800, 0x0800, 0xd35d1caf )
 
-	ROM_REGION(0x0120)	/* color PROMs */
+	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "crush.4a",     0x0020, 0x0100, 0x2bc5d339 )
 
@@ -1445,7 +1444,7 @@ ROM_START( ponpoko )
 	ROM_LOAD( "ppoko9.bin",   0x0000, 0x1000, 0xb73e1a06 )
 	ROM_LOAD( "ppoko10.bin",  0x1000, 0x1000, 0x62069b5d )
 
-	ROM_REGION(0x0120)	/* color PROMs */
+	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, 0x3eb3a8e4 )
 
@@ -1469,7 +1468,7 @@ ROM_START( ponpokov )
 	ROM_LOAD( "ppoko9.bin",   0x0000, 0x1000, 0xb73e1a06 )
 	ROM_LOAD( "ppoko10.bin",  0x1000, 0x1000, 0x62069b5d )
 
-	ROM_REGION(0x0120)	/* color PROMs */
+	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "82s126.4a",    0x0020, 0x0100, 0x3eb3a8e4 )
 
@@ -1489,7 +1488,7 @@ ROM_START( eyes )
 	ROM_LOAD( "d5",           0x0000, 0x1000, 0xd6af0030 )
 	ROM_LOAD( "e5",           0x1000, 0x1000, 0xa42b5201 )
 
-	ROM_REGION(0x0120)	/* color PROMs */
+	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "82s129.4a",    0x0020, 0x0100, 0xd8d78829 )
 
@@ -1509,7 +1508,7 @@ ROM_START( eyes2 )
 	ROM_LOAD( "g38205.5d",    0x0000, 0x1000, 0x03b1b4c7 )  /* this one has a (c) sign */
 	ROM_LOAD( "e5",           0x1000, 0x1000, 0xa42b5201 )
 
-	ROM_REGION(0x0120)	/* color PROMs */
+	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "82s123.7f",    0x0000, 0x0020, 0x2fc650bd )
 	ROM_LOAD( "82s129.4a",    0x0020, 0x0100, 0xd8d78829 )
 
@@ -1529,7 +1528,7 @@ ROM_START( mrtnt )
 	ROM_LOAD( "tnt.5",        0x0000, 0x1000, 0x3038cc0e )
 	ROM_LOAD( "tnt.6",        0x1000, 0x1000, 0x97634d8b )
 
-	ROM_REGION(0x0120)	/* color PROMs */
+	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "mrtnt08.bin",  0x0000, 0x0020, 0x00000000 )	/* wrong! from Pac-Man */
 	ROM_LOAD( "mrtnt04.bin",  0x0020, 0x0100, 0x00000000 )	/* wrong! from Pac-Man */
 
@@ -1551,7 +1550,7 @@ ROM_START( lizwiz )
 	ROM_LOAD( "5e.cpu",       0x0000, 0x1000, 0x45059e73 )
 	ROM_LOAD( "5f.cpu",       0x1000, 0x1000, 0xd2469717 )
 
-	ROM_REGION(0x0120)	/* color PROMs */
+	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "7f.cpu",       0x0000, 0x0020, 0x7549a947 )
 	ROM_LOAD( "4a.cpu",       0x0020, 0x0100, 0x5fdca536 )
 
@@ -1568,7 +1567,7 @@ ROM_START( theglob )
 	ROM_LOAD( "glob.5e",      0x0000, 0x1000, 0x53688260 )
 	ROM_LOAD( "glob.5f",      0x1000, 0x1000, 0x051f59c7 )
 
-	ROM_REGION(0x0120)	/* color PROMs */
+	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "glob.7f",      0x0000, 0x0020, 0x1f617527 )
 	ROM_LOAD( "glob.4a",      0x0020, 0x0100, 0x28faa769 )
 
@@ -1585,7 +1584,7 @@ ROM_START( beastf )
 	ROM_LOAD( "beastf.5e",    0x0000, 0x1000, 0x5654dc34 )
 	ROM_LOAD( "beastf.5f",    0x1000, 0x1000, 0x1b30ca61 )
 
-	ROM_REGION(0x0120)	/* color PROMs */
+	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "glob.7f",      0x0000, 0x0020, 0x1f617527 )
 	ROM_LOAD( "glob.4a",      0x0020, 0x0100, 0x28faa769 )
 
@@ -1604,7 +1603,7 @@ ROM_START( jumpshot )
 	ROM_LOAD( "5e",           0x0000, 0x1000, 0xd9fa90f5 )
 	ROM_LOAD( "5f",           0x1000, 0x1000, 0x2ec711c1 )
 
-	ROM_REGION(0x0120)	/* color PROMs */
+	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "prom.7f",      0x0000, 0x0020, 0x872b42f3 )
 	ROM_LOAD( "prom.4a",      0x0020, 0x0100, 0x0399f39f )
 
@@ -1625,7 +1624,7 @@ ROM_START( vanvan )
 	ROM_LOAD( "van20.bin",    0x0000, 0x1000, 0x60efbe66 )
 	ROM_LOAD( "van21.bin",    0x1000, 0x1000, 0x5dd53723 )
 
-	ROM_REGION(0x0120)	/* color PROMs */
+	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "6331-1.6",     0x0000, 0x0020, 0xce1d9503 )
 	ROM_LOAD( "6301-1.37",    0x0020, 0x0100, 0x4b803d9f )
 ROM_END
@@ -1642,7 +1641,7 @@ ROM_START( vanvanb )
 	ROM_LOAD( "van20.bin",    0x0000, 0x1000, 0x60efbe66 )
 	ROM_LOAD( "van21.bin",    0x1000, 0x1000, 0x5dd53723 )
 
-	ROM_REGION(0x0120)	/* color PROMs */
+	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "6331-1.6",     0x0000, 0x0020, 0xce1d9503 )
 	ROM_LOAD( "6301-1.37",    0x0020, 0x0100, 0x4b803d9f )
 ROM_END
@@ -1662,7 +1661,7 @@ ROM_START( alibaba )
 	ROM_LOAD( "5f",           0x1000, 0x0800, 0xb5715c86 )
 	ROM_LOAD( "5k",           0x1800, 0x0800, 0x713086b3 )
 
-	ROM_REGION(0x0120)	/* color PROMs */
+	ROM_REGIONX( 0x0120, REGION_PROMS )
 	ROM_LOAD( "alibaba.7f",   0x0000, 0x0020, 0x00000000 )  /* missing */
 	ROM_LOAD( "alibaba.4a",   0x0020, 0x0100, 0x00000000 )
 
@@ -2281,7 +2280,7 @@ static void vanvan_hisave(void)
 #define BASE_CREDITS "Allard van der Bas (original code)\nNicola Salmoria (MAME driver)"
 
 
-struct GameDriver pacman_driver =
+struct GameDriver driver_pacman =
 {
 	__FILE__,
 	0,
@@ -2294,23 +2293,23 @@ struct GameDriver pacman_driver =
 	&machine_driver,
 	0,
 
-	pacman_rom,
+	rom_pacman,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	pacman_input_ports,
+	input_ports_pacman,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	pacman_hiload, pacman_hisave
 };
 
-struct GameDriver pacmanjp_driver =
+struct GameDriver driver_pacmanjp =
 {
 	__FILE__,
-	&pacman_driver,
+	&driver_pacman,
 	"pacmanjp",
 	"PuckMan (Japan set 2)",
 	"1980",
@@ -2320,23 +2319,23 @@ struct GameDriver pacmanjp_driver =
 	&machine_driver,
 	0,
 
-	pacmanjp_rom,
+	rom_pacmanjp,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	pacman_input_ports,
+	input_ports_pacman,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	pacman_hiload, pacman_hisave
 };
 
-struct GameDriver pacmanm_driver =
+struct GameDriver driver_pacmanm =
 {
 	__FILE__,
-	&pacman_driver,
+	&driver_pacman,
 	"pacmanm",
 	"Pac-Man (Midway)",
 	"1980",
@@ -2346,23 +2345,23 @@ struct GameDriver pacmanm_driver =
 	&machine_driver,
 	0,
 
-	pacmanm_rom,
+	rom_pacmanm,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	pacman_input_ports,
+	input_ports_pacman,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	pacman_hiload, pacman_hisave
 };
 
-struct GameDriver npacmod_driver =
+struct GameDriver driver_npacmod =
 {
 	__FILE__,
-	&pacman_driver,
+	&driver_pacman,
 	"npacmod",
 	"PuckMan (harder?)",
 	"1981",					/* Notice the (c) difference */
@@ -2372,23 +2371,23 @@ struct GameDriver npacmod_driver =
 	&machine_driver,
 	0,
 
-	npacmod_rom,
+	rom_npacmod,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	pacman_input_ports,
+	input_ports_pacman,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	pacman_hiload, pacman_hisave
 };
 
-struct GameDriver pacmod_driver =
+struct GameDriver driver_pacmod =
 {
 	__FILE__,
-	&pacman_driver,
+	&driver_pacman,
 	"pacmod",
 	"Pac-Man (Midway, harder)",
 	"1981",
@@ -2398,23 +2397,23 @@ struct GameDriver pacmod_driver =
 	&machine_driver,
 	0,
 
-	pacmod_rom,
+	rom_pacmod,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	pacman_input_ports,
+	input_ports_pacman,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	pacman_hiload, pacman_hisave
 };
 
-struct GameDriver hangly_driver =
+struct GameDriver driver_hangly =
 {
 	__FILE__,
-	&pacman_driver,
+	&driver_pacman,
 	"hangly",
 	"Hangly-Man (set 1)",
 	"1981",
@@ -2424,23 +2423,23 @@ struct GameDriver hangly_driver =
 	&machine_driver,
 	0,
 
-	hangly_rom,
+	rom_hangly,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	pacman_input_ports,
+	input_ports_pacman,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	pacman_hiload, pacman_hisave
 };
 
-struct GameDriver hangly2_driver =
+struct GameDriver driver_hangly2 =
 {
 	__FILE__,
-	&pacman_driver,
+	&driver_pacman,
 	"hangly2",
 	"Hangly-Man (set 2)",
 	"1981",
@@ -2450,23 +2449,23 @@ struct GameDriver hangly2_driver =
 	&machine_driver,
 	0,
 
-	hangly2_rom,
+	rom_hangly2,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	pacman_input_ports,
+	input_ports_pacman,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	pacman_hiload, pacman_hisave
 };
 
-struct GameDriver puckman_driver =
+struct GameDriver driver_puckman =
 {
 	__FILE__,
-	&pacman_driver,
+	&driver_pacman,
 	"puckman",
 	"New Puck-X",
 	"1980",
@@ -2476,23 +2475,23 @@ struct GameDriver puckman_driver =
 	&machine_driver,
 	0,
 
-	puckman_rom,
+	rom_puckman,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	pacman_input_ports,
+	input_ports_pacman,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	pacman_hiload, pacman_hisave
 };
 
-struct GameDriver pacheart_driver =
+struct GameDriver driver_pacheart =
 {
 	__FILE__,
-	&pacman_driver,
+	&driver_pacman,
 	"pacheart",
 	"Pac-Man (Hearts)",
 	"1981",
@@ -2502,23 +2501,23 @@ struct GameDriver pacheart_driver =
 	&machine_driver,
 	0,
 
-	pacheart_rom,
+	rom_pacheart,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	pacman_input_ports,
+	input_ports_pacman,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	pacman_hiload, pacman_hisave
 };
 
-struct GameDriver piranha_driver =
+struct GameDriver driver_piranha =
 {
 	__FILE__,
-	&pacman_driver,
+	&driver_pacman,
 	"piranha",
 	"Piranha",
 	"1981",
@@ -2528,20 +2527,20 @@ struct GameDriver piranha_driver =
 	&machine_driver,
 	0,
 
-	piranha_rom,
+	rom_piranha,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	mspacman_input_ports,
+	input_ports_mspacman,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	pacman_hiload, pacman_hisave
 };
 
-struct GameDriver pacplus_driver =
+struct GameDriver driver_pacplus =
 {
 	__FILE__,
 	0,
@@ -2554,20 +2553,20 @@ struct GameDriver pacplus_driver =
 	&machine_driver,
 	0,
 
-	pacplus_rom,
+	rom_pacplus,
 	pacplus_decode, 0,
 	0,
 	0,	/* sound_prom */
 
-	pacman_input_ports,
+	input_ports_pacman,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	pacman_hiload, pacman_hisave
 };
 
-struct GameDriver mspacman_driver =
+struct GameDriver driver_mspacman =
 {
 	__FILE__,
 	0,
@@ -2580,23 +2579,23 @@ struct GameDriver mspacman_driver =
 	&machine_driver,
 	0,
 
-	mspacman_rom,
+	rom_mspacman,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	mspacman_input_ports,
+	input_ports_mspacman,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	pacman_hiload, pacman_hisave
 };
 
-struct GameDriver mspacatk_driver =
+struct GameDriver driver_mspacatk =
 {
 	__FILE__,
-	&mspacman_driver,
+	&driver_mspacman,
 	"mspacatk",
 	"Ms. Pac-Man Plus",
 	"1981",
@@ -2606,23 +2605,23 @@ struct GameDriver mspacatk_driver =
 	&machine_driver,
 	0,
 
-	mspacatk_rom,
+	rom_mspacatk,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	mspacman_input_ports,
+	input_ports_mspacman,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	pacman_hiload, pacman_hisave
 };
 
-struct GameDriver pacgal_driver =
+struct GameDriver driver_pacgal =
 {
 	__FILE__,
-	&mspacman_driver,
+	&driver_mspacman,
 	"pacgal",
 	"Pac-Gal",
 	"1981",
@@ -2632,20 +2631,20 @@ struct GameDriver pacgal_driver =
 	&machine_driver,
 	0,
 
-	pacgal_rom,
+	rom_pacgal,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	mspacman_input_ports,
+	input_ports_mspacman,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	pacman_hiload, pacman_hisave
 };
 
-struct GameDriver crush_driver =
+struct GameDriver driver_crush =
 {
 	__FILE__,
 	0,
@@ -2658,23 +2657,23 @@ struct GameDriver crush_driver =
 	&machine_driver,
 	maketrax_driver_init,
 
-	crush_rom,
+	rom_crush,
 	0, maketrax_rom_decode,
 	0,
 	0,     /* sound_prom */
 
-	maketrax_input_ports,
+	input_ports_maketrax,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	maketrax_hiload, maketrax_hisave /* hiload hisave */
 };
 
-struct GameDriver crush2_driver =
+struct GameDriver driver_crush2 =
 {
 	__FILE__,
-	&crush_driver,
+	&driver_crush,
 	"crush2",
 	"Crush Roller (Kural Esco - bootleg?)",
 	"1981",
@@ -2684,23 +2683,23 @@ struct GameDriver crush2_driver =
 	&machine_driver,
 	0,
 
-	crush2_rom,
+	rom_crush2,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	maketrax_input_ports,
+	input_ports_maketrax,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	crush_hiload, crush_hisave
 };
 
-struct GameDriver crush3_driver =
+struct GameDriver driver_crush3 =
 {
 	__FILE__,
-	&crush_driver,
+	&driver_crush,
 	"crush3",
 	"Crush Roller (Kural - bootleg?)",
 	"1981",
@@ -2710,23 +2709,23 @@ struct GameDriver crush3_driver =
 	&machine_driver,
 	0,
 
-	crush3_rom,
+	rom_crush3,
 	eyes_decode, 0,
 	0,
 	0,	/* sound_prom */
 
-	maketrax_input_ports,
+	input_ports_maketrax,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	crush_hiload, crush_hisave
 };
 
-struct GameDriver maketrax_driver =
+struct GameDriver driver_maketrax =
 {
 	__FILE__,
-	&crush_driver,
+	&driver_crush,
 	"maketrax",
 	"Make Trax",
 	"1981",
@@ -2736,23 +2735,23 @@ struct GameDriver maketrax_driver =
 	&machine_driver,
 	maketrax_driver_init,
 
-	maketrax_rom,
+	rom_maketrax,
 	0, maketrax_rom_decode,
 	0,
 	0,     /* sound_prom */
 
-	maketrax_input_ports,
+	input_ports_maketrax,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	maketrax_hiload, maketrax_hisave /* hiload hisave */
 };
 
-struct GameDriver mbrush_driver =
+struct GameDriver driver_mbrush =
 {
 	__FILE__,
-	&crush_driver,
+	&driver_crush,
 	"mbrush",
 	"Magic Brush",
 	"1981",
@@ -2762,20 +2761,20 @@ struct GameDriver mbrush_driver =
 	&machine_driver,
 	0,
 
-	mbrush_rom,
+	rom_mbrush,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	mbrush_input_ports,
+	input_ports_mbrush,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	crush_hiload, crush_hisave
 };
 
-struct GameDriver ponpoko_driver =
+struct GameDriver driver_ponpoko =
 {
 	__FILE__,
 	0,
@@ -2788,23 +2787,23 @@ struct GameDriver ponpoko_driver =
 	&machine_driver,
 	0,
 
-	ponpoko_rom,
+	rom_ponpoko,
 	ponpoko_decode, 0,
 	0,
 	0,	/* sound_prom */
 
-	ponpoko_input_ports,
+	input_ports_ponpoko,
 
-	PROM_MEMORY_REGION(2), 0, 0,	/* probably correct */
+	0, 0, 0,	/* probably correct */
 	ORIENTATION_DEFAULT,
 
 	ponpoko_hiload, ponpoko_hisave
 };
 
-struct GameDriver ponpokov_driver =
+struct GameDriver driver_ponpokov =
 {
 	__FILE__,
-	&ponpoko_driver,
+	&driver_ponpoko,
 	"ponpokov",
 	"Ponpoko (Venture Line)",
 	"1982",
@@ -2814,20 +2813,20 @@ struct GameDriver ponpokov_driver =
 	&machine_driver,
 	0,
 
-	ponpokov_rom,
+	rom_ponpokov,
 	ponpoko_decode, 0,
 	0,
 	0,	/* sound_prom */
 
-	ponpoko_input_ports,
+	input_ports_ponpoko,
 
-	PROM_MEMORY_REGION(2), 0, 0,	/* probably correct */
+	0, 0, 0,	/* probably correct */
 	ORIENTATION_DEFAULT,
 
 	ponpoko_hiload, ponpoko_hisave
 };
 
-struct GameDriver eyes_driver =
+struct GameDriver driver_eyes =
 {
 	__FILE__,
 	0,
@@ -2840,23 +2839,23 @@ struct GameDriver eyes_driver =
 	&machine_driver,
 	0,
 
-	eyes_rom,
+	rom_eyes,
 	eyes_decode, 0,
 	0,
 	0,	/* sound_prom */
 
-	eyes_input_ports,
+	input_ports_eyes,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	eyes_hiload, eyes_hisave
 };
 
-struct GameDriver eyes2_driver =
+struct GameDriver driver_eyes2 =
 {
 	__FILE__,
-	&eyes_driver,
+	&driver_eyes,
 	"eyes2",
 	"Eyes (Techstar Inc.)",
 	"1982",
@@ -2866,20 +2865,20 @@ struct GameDriver eyes2_driver =
 	&machine_driver,
 	0,
 
-	eyes2_rom,
+	rom_eyes2,
 	eyes_decode, 0,
 	0,
 	0,	/* sound_prom */
 
-	eyes_input_ports,
+	input_ports_eyes,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	eyes_hiload, eyes_hisave
 };
 
-struct GameDriver mrtnt_driver =
+struct GameDriver driver_mrtnt =
 {
 	__FILE__,
 	0,
@@ -2892,20 +2891,20 @@ struct GameDriver mrtnt_driver =
 	&machine_driver,
 	0,
 
-	mrtnt_rom,
+	rom_mrtnt,
 	eyes_decode, 0,
 	0,
 	0,	/* sound_prom */
 
-	eyes_input_ports,
+	input_ports_eyes,
 
-	PROM_MEMORY_REGION(2), 0, 0,	/* wrong!! */
+	0, 0, 0,	/* wrong!! */
 	ORIENTATION_ROTATE_90,
 
 	mrtnt_hiload, mrtnt_hisave
 };
 
-struct GameDriver lizwiz_driver =
+struct GameDriver driver_lizwiz =
 {
 	__FILE__,
 	0,
@@ -2918,20 +2917,20 @@ struct GameDriver lizwiz_driver =
 	&machine_driver,
 	0,
 
-	lizwiz_rom,
+	rom_lizwiz,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	lizwiz_input_ports,
+	input_ports_lizwiz,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	lizwiz_hiload, lizwiz_hisave
 };
 
-struct GameDriver theglob_driver =
+struct GameDriver driver_theglob =
 {
 	__FILE__,
 	0,
@@ -2944,23 +2943,23 @@ struct GameDriver theglob_driver =
 	&theglob_machine_driver,
 	0,
 
-	theglob_rom,
+	rom_theglob,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	theglob_input_ports,
+	input_ports_theglob,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	theglob_hiload, theglob_hisave
 };
 
-struct GameDriver beastf_driver =
+struct GameDriver driver_beastf =
 {
 	__FILE__,
-	&theglob_driver,
+	&driver_theglob,
 	"beastf",
 	"Beastie Feastie",
 	"1984",
@@ -2970,21 +2969,21 @@ struct GameDriver beastf_driver =
 	&theglob_machine_driver,
 	0,
 
-	beastf_rom,
+	rom_beastf,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	theglob_input_ports,
+	input_ports_theglob,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	beastf_hiload, beastf_hisave
 };
 
 /* not working, encrypted */
-struct GameDriver jumpshot_driver =
+struct GameDriver driver_jumpshot =
 {
 	__FILE__,
 	0,
@@ -2993,24 +2992,24 @@ struct GameDriver jumpshot_driver =
 	"????",
 	"?????",
 	BASE_CREDITS,
-	GAME_NOT_WORKING,
+	0,
 	&machine_driver,
 	0,
 
-	jumpshot_rom,
+	rom_jumpshot,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	pacman_input_ports,
+	input_ports_pacman,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
+	0, 0, 0,
+	ORIENTATION_ROTATE_90 | GAME_NOT_WORKING,
 
 	0, 0
 };
 
-struct GameDriver vanvan_driver =
+struct GameDriver driver_vanvan =
 {
 	__FILE__,
 	0,
@@ -3023,23 +3022,23 @@ struct GameDriver vanvan_driver =
 	&vanvan_machine_driver,
 	0,
 
-	vanvan_rom,
+	rom_vanvan,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	vanvan_input_ports,
+	input_ports_vanvan,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	vanvan_hiload, vanvan_hisave
 };
 
-struct GameDriver vanvanb_driver =
+struct GameDriver driver_vanvanb =
 {
 	__FILE__,
-	&vanvan_driver,
+	&driver_vanvan,
 	"vanvanb",
 	"Van Van Car (bootleg)",
 	"1983",
@@ -3049,20 +3048,20 @@ struct GameDriver vanvanb_driver =
 	&vanvan_machine_driver,
 	0,
 
-	vanvanb_rom,
+	rom_vanvanb,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	vanvan_input_ports,
+	input_ports_vanvan,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	vanvan_hiload, vanvan_hisave
 };
 
-struct GameDriver alibaba_driver =
+struct GameDriver driver_alibaba =
 {
 	__FILE__,
 	0,
@@ -3071,19 +3070,19 @@ struct GameDriver alibaba_driver =
 	"1982",
 	"Sega",
 	"Zsolt Vasvari\nMarco Cassili\n"BASE_CREDITS,
-	GAME_WRONG_COLORS,
+	0,
 	&alibaba_machine_driver,
 	0,
 
-	alibaba_rom,
+	rom_alibaba,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	alibaba_input_ports,
+	input_ports_alibaba,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
+	0, 0, 0,
+	ORIENTATION_ROTATE_90 | GAME_WRONG_COLORS,
 
 	alibaba_hiload, pacman_hisave
 };

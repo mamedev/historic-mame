@@ -252,7 +252,7 @@ static struct MemoryWriteAddress dv_sound_writemem[] =
 
 /*****************************************************************************/
 
-INPUT_PORTS_START( mainevt_input_ports )
+INPUT_PORTS_START( mainevt )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -372,7 +372,7 @@ INPUT_PORTS_START( mainevt_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( ringohja_input_ports )
+INPUT_PORTS_START( ringohja )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -483,7 +483,7 @@ INPUT_PORTS_START( ringohja_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( dv_input_ports )
+INPUT_PORTS_START( dv )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -941,7 +941,7 @@ static void gfx_untangle(void)
 
 
 
-struct GameDriver mainevt_driver =
+struct GameDriver driver_mainevt =
 {
 	__FILE__,
 	0,
@@ -954,12 +954,12 @@ struct GameDriver mainevt_driver =
 	&machine_driver,
 	0,
 
-	mainevt_rom,
+	rom_mainevt,
 	gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */
 
-	mainevt_input_ports,
+	input_ports_mainevt,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -967,10 +967,10 @@ struct GameDriver mainevt_driver =
 	hiload, hisave
 };
 
-struct GameDriver mainevt2_driver =
+struct GameDriver driver_mainevt2 =
 {
 	__FILE__,
-	&mainevt_driver,
+	&driver_mainevt,
 	"mainevt2",
 	"The Main Event (version F)",
 	"1988",
@@ -980,12 +980,12 @@ struct GameDriver mainevt2_driver =
 	&machine_driver,
 	0,
 
-	mainevt2_rom,
+	rom_mainevt2,
 	gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */
 
-	mainevt_input_ports,
+	input_ports_mainevt,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -993,10 +993,10 @@ struct GameDriver mainevt2_driver =
 	hiload, hisave
 };
 
-struct GameDriver ringohja_driver =
+struct GameDriver driver_ringohja =
 {
 	__FILE__,
-	&mainevt_driver,
+	&driver_mainevt,
 	"ringohja",
 	"Ring no Ohja (Japan)",
 	"1988",
@@ -1006,12 +1006,12 @@ struct GameDriver ringohja_driver =
 	&machine_driver,
 	0,
 
-	ringohja_rom,
+	rom_ringohja,
 	gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */
 
-	ringohja_input_ports,
+	input_ports_ringohja,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -1019,7 +1019,7 @@ struct GameDriver ringohja_driver =
 	hiload, hisave
 };
 
-struct GameDriver devstors_driver =
+struct GameDriver driver_devstors =
 {
 	__FILE__,
 	0,
@@ -1028,71 +1028,71 @@ struct GameDriver devstors_driver =
 	"1988",
 	"Konami",
 	"Bryan McPhail",
-	GAME_NOT_WORKING,
+	0,
 	&dv_machine_driver,
 	0,
 
-	devstors_rom,
+	rom_devstors,
 	gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */
 
-	dv_input_ports,
+	input_ports_dv,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ORIENTATION_ROTATE_90 | GAME_NOT_WORKING,
 
 	0,0
 };
 
-struct GameDriver devstor2_driver =
+struct GameDriver driver_devstor2 =
 {
 	__FILE__,
-	&devstors_driver,
+	&driver_devstors,
  	"devstor2",
 	"Devastators (version X)",
 	"1988",
 	"Konami",
 	"Bryan McPhail",
-	GAME_NOT_WORKING,
+	0,
 	&dv_machine_driver,
 	0,
 
-	devstor2_rom,
+	rom_devstor2,
 	gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */
 
-	dv_input_ports,
+	input_ports_dv,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ORIENTATION_ROTATE_90 | GAME_NOT_WORKING,
 
 	0,0
 };
 
-struct GameDriver garuka_driver =
+struct GameDriver driver_garuka =
 {
 	__FILE__,
-	&devstors_driver,
+	&driver_devstors,
  	"garuka",
 	"Garuka (Japan)",
 	"1988",
 	"Konami",
 	"Bryan McPhail",
-	GAME_NOT_WORKING,
+	0,
 	&dv_machine_driver,
 	0,
 
-	garuka_rom,
+	rom_garuka,
 	gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */
 
-	dv_input_ports,
+	input_ports_dv,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_90,
+	ORIENTATION_ROTATE_90 | GAME_NOT_WORKING,
 
 	0,0
 };

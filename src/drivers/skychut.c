@@ -79,7 +79,7 @@ int skychut_interrupt(void)
 }
 
 
-INPUT_PORTS_START( skychut_input_ports )
+INPUT_PORTS_START( skychut )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2)
@@ -180,7 +180,7 @@ ROM_END
 
 
 
-struct GameDriver skychut_driver =
+struct GameDriver driver_skychut =
 {
 	__FILE__,
 	0,
@@ -189,19 +189,19 @@ struct GameDriver skychut_driver =
 	"1980",
 	"Irem",
 	"Lee Taylor",
-	GAME_WRONG_COLORS,
+	0,
 	&skychut_machine_driver,
 	0,
 
-	skychut_rom,
+	rom_skychut,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	skychut_input_ports,
+	input_ports_skychut,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_WRONG_COLORS,
 
 	0, 0
 };

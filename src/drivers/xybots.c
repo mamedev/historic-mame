@@ -136,7 +136,7 @@ static struct MemoryWriteAddress main_writemem[] =
  *
  *************************************/
 
-INPUT_PORTS_START( xybots_ports )
+INPUT_PORTS_START( xybots )
 	PORT_START	/* ffe100 */
 	PORT_BIT( 0x0001, IP_ACTIVE_LOW, IPT_START2 )
 	PORT_BIT( 0x0002, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_PLAYER2 )
@@ -326,7 +326,7 @@ static void xybots_init(void)
  *
  *************************************/
 
-struct GameDriver xybots_driver =
+struct GameDriver driver_xybots =
 {
 	__FILE__,
 	0,
@@ -339,13 +339,13 @@ struct GameDriver xybots_driver =
 	&machine_driver,
 	xybots_init,
 
-	xybots_rom,
+	rom_xybots,
 	0,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	xybots_ports,
+	input_ports_xybots,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,

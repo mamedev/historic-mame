@@ -205,7 +205,7 @@ static struct IOWritePort writeport[] =
 
 
 
-INPUT_PORTS_START( gundealr_input_ports )
+INPUT_PORTS_START( gundealr )
 	PORT_START	/* DSW0 */
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x01, DEF_STR( Off ) )
@@ -287,7 +287,7 @@ INPUT_PORTS_START( gundealr_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* probably unused */
 INPUT_PORTS_END
 
-INPUT_PORTS_START( yamyam_input_ports )
+INPUT_PORTS_START( yamyam )
 	PORT_START	/* DSW0 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
@@ -503,7 +503,7 @@ ROM_START( wiseguy )
 ROM_END
 
 
-struct GameDriver gundealr_driver =
+struct GameDriver driver_gundealr =
 {
 	__FILE__,
 	0,
@@ -516,12 +516,12 @@ struct GameDriver gundealr_driver =
 	&machine_driver,
 	gundealr_init,
 
-	gundealr_rom,
+	rom_gundealr,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	gundealr_input_ports,
+	input_ports_gundealr,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
@@ -529,10 +529,10 @@ struct GameDriver gundealr_driver =
 	0, 0
 };
 
-struct GameDriver gundeala_driver =
+struct GameDriver driver_gundeala =
 {
 	__FILE__,
-	&gundealr_driver,
+	&driver_gundealr,
 	"gundeala",
 	"Gun Dealer (set 2)",
 	"????",
@@ -542,12 +542,12 @@ struct GameDriver gundeala_driver =
 	&machine_driver,
 	gundealr_init,
 
-	gundeala_rom,
+	rom_gundeala,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	gundealr_input_ports,
+	input_ports_gundealr,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
@@ -555,7 +555,7 @@ struct GameDriver gundeala_driver =
 	0, 0
 };
 
-struct GameDriver yamyam_driver =
+struct GameDriver driver_yamyam =
 {
 	__FILE__,
 	0,
@@ -568,12 +568,12 @@ struct GameDriver yamyam_driver =
 	&machine_driver,
 	yamyam_init,
 
-	yamyam_rom,
+	rom_yamyam,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	yamyam_input_ports,
+	input_ports_yamyam,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -582,10 +582,10 @@ struct GameDriver yamyam_driver =
 };
 
 /* only gfx are different, code is the same */
-struct GameDriver wiseguy_driver =
+struct GameDriver driver_wiseguy =
 {
 	__FILE__,
-	&yamyam_driver,
+	&driver_yamyam,
 	"wiseguy",
 	"Wise Guy",
 	"1990",
@@ -595,12 +595,12 @@ struct GameDriver wiseguy_driver =
 	&machine_driver,
 	yamyam_init,
 
-	wiseguy_rom,
+	rom_wiseguy,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	yamyam_input_ports,
+	input_ports_yamyam,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

@@ -182,7 +182,7 @@ static struct MemoryWriteAddress mcu_writemem[] =
 
 
 
-INPUT_PORTS_START( friskyt_input_ports )
+INPUT_PORTS_START( friskyt )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
@@ -215,7 +215,7 @@ INPUT_PORTS_START( friskyt_input_ports )
 	PORT_BIT( 0xfc, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* probably unused */
 INPUT_PORTS_END
 
-INPUT_PORTS_START( radrad_input_ports )
+INPUT_PORTS_START( radrad )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
@@ -291,7 +291,7 @@ INPUT_PORTS_START( radrad_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( seicross_input_ports )
+INPUT_PORTS_START( seicross )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN  | IPF_8WAY )
@@ -501,7 +501,7 @@ ROM_START( friskyt )
 	ROM_LOAD( "ftom.09",      0x2000, 0x1000, 0x60642f25 )
 	ROM_LOAD( "ftom.10",      0x3000, 0x1000, 0x07b9dcfc )
 
-	ROM_REGION(0x0040)	/* color PROMs */
+	ROM_REGIONX( 0x0040, REGION_PROMS )
 	ROM_LOAD( "ft.9c",        0x0000, 0x0020, 0x0032167e )
 	ROM_LOAD( "ft.9b",        0x0020, 0x0020, 0x6b364e69 )
 
@@ -526,7 +526,7 @@ ROM_START( radrad )
 	ROM_LOAD( "9.j7",         0x2000, 0x1000, 0x229939a3 )
 	ROM_LOAD( "10.j7",        0x3000, 0x1000, 0x79237913 )
 
-	ROM_REGION(0x0040)	/* color PROMs */
+	ROM_REGIONX( 0x0040, REGION_PROMS )
 	ROM_LOAD( "clr.9c",       0x0000, 0x0020, 0xc9d88422 )
 	ROM_LOAD( "clr.9b",       0x0020, 0x0020, 0xee81af16 )
 
@@ -551,7 +551,7 @@ ROM_START( seicross )
 	ROM_LOAD( "sz9.7j",       0x2000, 0x1000, 0x4819f0cd )
 	ROM_LOAD( "sz10.7h",      0x3000, 0x1000, 0x4c268778 )
 
-	ROM_REGION(0x0040)	/* color PROMs */
+	ROM_REGIONX( 0x0040, REGION_PROMS )
 	ROM_LOAD( "sz73.10c",     0x0000, 0x0020, 0x4d218a3c )
 	ROM_LOAD( "sz74.10b",     0x0020, 0x0020, 0xc550531c )
 
@@ -576,7 +576,7 @@ ROM_START( sectrzon )
 	ROM_LOAD( "sz9.7j",       0x2000, 0x1000, 0x4819f0cd )
 	ROM_LOAD( "sz10.7h",      0x3000, 0x1000, 0x4c268778 )
 
-	ROM_REGION(0x0040)	/* color PROMs */
+	ROM_REGIONX( 0x0040, REGION_PROMS )
 	ROM_LOAD( "sz73.10c",     0x0000, 0x0020, 0x4d218a3c )
 	ROM_LOAD( "sz74.10b",     0x0020, 0x0020, 0xc550531c )
 
@@ -684,7 +684,7 @@ static void seicross_hisave(void)
 
 
 
-struct GameDriver friskyt_driver =
+struct GameDriver driver_friskyt =
 {
 	__FILE__,
 	0,
@@ -697,20 +697,20 @@ struct GameDriver friskyt_driver =
 	&machine_driver,
 	0,
 
-	friskyt_rom,
+	rom_friskyt,
 	0, friskyt_decode,
 	0,
 	0,	/* sound_prom */
 
-	friskyt_input_ports,
+	input_ports_friskyt,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	friskyt_nvram_load, friskyt_nvram_save
 };
 
-struct GameDriver radrad_driver =
+struct GameDriver driver_radrad =
 {
 	__FILE__,
 	0,
@@ -723,20 +723,20 @@ struct GameDriver radrad_driver =
 	&machine_driver,
 	no_nvram_init,
 
-	radrad_rom,
+	rom_radrad,
 	0, friskyt_decode,
 	0,
 	0,	/* sound_prom */
 
-	radrad_input_ports,
+	input_ports_radrad,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	0, 0
 };
 
-struct GameDriver seicross_driver =
+struct GameDriver driver_seicross =
 {
 	__FILE__,
 	0,
@@ -749,23 +749,23 @@ struct GameDriver seicross_driver =
 	&machine_driver,
 	no_nvram_init,
 
-	seicross_rom,
+	rom_seicross,
 	0, friskyt_decode,
 	0,
 	0,	/* sound_prom */
 
-	seicross_input_ports,
+	input_ports_seicross,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	seicross_hiload, seicross_hisave
 };
 
-struct GameDriver sectrzon_driver =
+struct GameDriver driver_sectrzon =
 {
 	__FILE__,
-	&seicross_driver,
+	&driver_seicross,
 	"sectrzon",
 	"Sector Zone",
 	"1984",
@@ -775,14 +775,14 @@ struct GameDriver sectrzon_driver =
 	&machine_driver,
 	no_nvram_init,
 
-	sectrzon_rom,
+	rom_sectrzon,
 	0, friskyt_decode,
 	0,
 	0,	/* sound_prom */
 
-	seicross_input_ports,
+	input_ports_seicross,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	seicross_hiload, seicross_hisave

@@ -137,7 +137,7 @@ static struct IOWritePort sound_writeport[] =
 };
 
 
-INPUT_PORTS_START( espial_input_ports )
+INPUT_PORTS_START( espial )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -293,7 +293,7 @@ ROM_START( espial )
 	ROM_LOAD( "espial.10",    0x3000, 0x1000, 0xde80fbc1 )
 	ROM_LOAD( "espial.9",     0x4000, 0x1000, 0x48c258a0 )
 
-	ROM_REGION(0x0200)	/* color proms */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "espial.1f",    0x0000, 0x0100, 0xd12de557 ) /* palette low 4 bits */
 	ROM_LOAD( "espial.1h",    0x0100, 0x0100, 0x4c84fe70 ) /* palette high 4 bits */
 
@@ -315,7 +315,7 @@ ROM_START( espiale )
 	ROM_LOAD( "espial.10",    0x3000, 0x1000, 0xde80fbc1 )
 	ROM_LOAD( "espial.9",     0x4000, 0x1000, 0x48c258a0 )
 
-	ROM_REGION(0x0200)	/* color proms */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "espial.1f",    0x0000, 0x0100, 0xd12de557 ) /* palette low 4 bits */
 	ROM_LOAD( "espial.1h",    0x0100, 0x0100, 0x4c84fe70 ) /* palette high 4 bits */
 
@@ -366,7 +366,7 @@ static void hisave(void)
 
 
 
-struct GameDriver espial_driver =
+struct GameDriver driver_espial =
 {
 	__FILE__,
 	0,
@@ -379,23 +379,23 @@ struct GameDriver espial_driver =
 	&machine_driver,
 	0,
 
-	espial_rom,
+	rom_espial,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	espial_input_ports,
+	input_ports_espial,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave
 };
 
-struct GameDriver espiale_driver =
+struct GameDriver driver_espiale =
 {
 	__FILE__,
-	&espial_driver,
+	&driver_espial,
 	"espiale",
 	"Espial (Europe)",
 	"1983",
@@ -405,14 +405,14 @@ struct GameDriver espiale_driver =
 	&machine_driver,
 	0,
 
-	espiale_rom,
+	rom_espiale,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	espial_input_ports,
+	input_ports_espial,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave

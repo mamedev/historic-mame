@@ -696,7 +696,7 @@ static struct MemoryWriteAddress writemem_mcu[] ={
 /*                                                           */
 /*************************************************************/
 
-INPUT_PORTS_START( namcos2_input_ports_default )
+INPUT_PORTS_START( default )
 	NAMCOS2_MCU_PORT_B_DEFAULT
 	NAMCOS2_MCU_PORT_C_DEFAULT
 	NAMCOS2_MCU_ANALOG_PORT_DEFAULT
@@ -705,7 +705,7 @@ INPUT_PORTS_START( namcos2_input_ports_default )
 	NAMCOS2_MCU_DIAL_DEFAULT
 INPUT_PORTS_END
 
-INPUT_PORTS_START( namcos2_input_ports_assault )
+INPUT_PORTS_START( assault )
 	PORT_START      /* 63B05Z0 - PORT B */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT | IPF_PLAYER2 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICKLEFT_LEFT )
@@ -744,7 +744,7 @@ INPUT_PORTS_START( namcos2_input_ports_assault )
 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( namcos2_input_ports_dirtfoxj )
+INPUT_PORTS_START( dirtfoxj )
 	NAMCOS2_MCU_PORT_B_DEFAULT
 	NAMCOS2_MCU_PORT_C_DEFAULT
 
@@ -774,31 +774,31 @@ INPUT_PORTS_END
 /*************************************************************/
 /* Namco System II - Port Declarations                       */
 /*************************************************************/
-#define NAMCOS2_assault_PORTS       namcos2_input_ports_assault
-#define NAMCOS2_assaultj_PORTS      namcos2_input_ports_assault
-#define NAMCOS2_assaultp_PORTS      namcos2_input_ports_assault
-#define NAMCOS2_burnforc_PORTS      namcos2_input_ports_default
-#define NAMCOS2_cosmogng_PORTS      namcos2_input_ports_default
-#define NAMCOS2_dsaber_PORTS        namcos2_input_ports_default
-#define NAMCOS2_dsaberj_PORTS       namcos2_input_ports_default
-#define NAMCOS2_dirtfoxj_PORTS      namcos2_input_ports_dirtfoxj
-#define NAMCOS2_finehour_PORTS      namcos2_input_ports_default
-#define NAMCOS2_finallap_PORTS      namcos2_input_ports_dirtfoxj
-#define NAMCOS2_finalapd_PORTS      namcos2_input_ports_dirtfoxj
-#define NAMCOS2_finalapc_PORTS      namcos2_input_ports_dirtfoxj
-#define NAMCOS2_finalap2_PORTS      namcos2_input_ports_dirtfoxj
-#define NAMCOS2_finalp2j_PORTS      namcos2_input_ports_dirtfoxj
-#define NAMCOS2_finalap3_PORTS      namcos2_input_ports_dirtfoxj
-#define NAMCOS2_fourtrax_PORTS      namcos2_input_ports_dirtfoxj
-#define NAMCOS2_marvland_PORTS      namcos2_input_ports_default
-#define NAMCOS2_metlhawk_PORTS      namcos2_input_ports_default
-#define NAMCOS2_mirninja_PORTS      namcos2_input_ports_default
-#define NAMCOS2_ordyne_PORTS        namcos2_input_ports_default
-#define NAMCOS2_phelios_PORTS       namcos2_input_ports_default
-#define NAMCOS2_rthun2_PORTS        namcos2_input_ports_default
-#define NAMCOS2_rthun2j_PORTS       namcos2_input_ports_default
-#define NAMCOS2_sgunner2_PORTS      namcos2_input_ports_default
-#define NAMCOS2_valkyrie_PORTS      namcos2_input_ports_default
+#define NAMCOS2_assault_PORTS       input_ports_assault
+#define NAMCOS2_assaultj_PORTS      input_ports_assault
+#define NAMCOS2_assaultp_PORTS      input_ports_assault
+#define NAMCOS2_burnforc_PORTS      input_ports_default
+#define NAMCOS2_cosmogng_PORTS      input_ports_default
+#define NAMCOS2_dsaber_PORTS        input_ports_default
+#define NAMCOS2_dsaberj_PORTS       input_ports_default
+#define NAMCOS2_dirtfoxj_PORTS      input_ports_dirtfoxj
+#define NAMCOS2_finehour_PORTS      input_ports_default
+#define NAMCOS2_finallap_PORTS      input_ports_dirtfoxj
+#define NAMCOS2_finalapd_PORTS      input_ports_dirtfoxj
+#define NAMCOS2_finalapc_PORTS      input_ports_dirtfoxj
+#define NAMCOS2_finalap2_PORTS      input_ports_dirtfoxj
+#define NAMCOS2_finalp2j_PORTS      input_ports_dirtfoxj
+#define NAMCOS2_finalap3_PORTS      input_ports_dirtfoxj
+#define NAMCOS2_fourtrax_PORTS      input_ports_dirtfoxj
+#define NAMCOS2_marvland_PORTS      input_ports_default
+#define NAMCOS2_metlhawk_PORTS      input_ports_default
+#define NAMCOS2_mirninja_PORTS      input_ports_default
+#define NAMCOS2_ordyne_PORTS        input_ports_default
+#define NAMCOS2_phelios_PORTS       input_ports_default
+#define NAMCOS2_rthun2_PORTS        input_ports_default
+#define NAMCOS2_rthun2j_PORTS       input_ports_default
+#define NAMCOS2_sgunner2_PORTS      input_ports_default
+#define NAMCOS2_valkyrie_PORTS      input_ports_default
 
 
 
@@ -2637,7 +2637,7 @@ void valkyrie_init(void)
 
 
 #define NAMCO_SYSTEM2_DRIVER(DRVNAME,DRVCLONE,ENTRYNAME,ENTRYDETAIL,ENTRYDATE,ENTRYCOMPANY,ENTRYROTATE) \
-	struct GameDriver DRVNAME##_driver =\
+	struct GameDriver driver_##DRVNAME =\
 	{\
 		__FILE__,\
 		DRVCLONE,\
@@ -2649,7 +2649,7 @@ void valkyrie_init(void)
 		0,\
 		&machine_driver,\
 		DRVNAME##_init,\
-		DRVNAME##_rom,\
+		rom_##DRVNAME,\
 		0, 0,\
 		0,\
 		0,\
@@ -2660,7 +2660,7 @@ void valkyrie_init(void)
 	};
 
 #define NAMCO_SYSTEM2_DRIVER_16(DRVNAME,DRVCLONE,ENTRYNAME,ENTRYDETAIL,ENTRYDATE,ENTRYCOMPANY,ENTRYROTATE) \
-	struct GameDriver DRVNAME##_driver =\
+	struct GameDriver driver_##DRVNAME =\
 	{\
 		__FILE__,\
 		DRVCLONE,\
@@ -2669,21 +2669,21 @@ void valkyrie_init(void)
 		ENTRYDATE,\
 		ENTRYCOMPANY,\
 		NAMCOS2_CREDITS,\
-		GAME_REQUIRES_16BIT,\
+		0,\
 		&machine_driver,\
 		DRVNAME##_init,\
-		DRVNAME##_rom,\
+		rom_##DRVNAME,\
 		0, 0,\
 		0,\
 		0,\
 		NAMCOS2_##DRVNAME##_PORTS,\
 		0, 0, 0,\
-		ENTRYROTATE,\
+		ENTRYROTATE | GAME_REQUIRES_16BIT,\
 		namcos2_hiload,namcos2_hisave\
 	};
 
 #define NAMCO_SYSTEM2_NWDRVR(DRVNAME,DRVCLONE,ENTRYNAME,ENTRYDETAIL,ENTRYDATE,ENTRYCOMPANY,ENTRYROTATE) \
-	struct GameDriver DRVNAME##_driver =\
+	struct GameDriver driver_##DRVNAME =\
 	{\
 		__FILE__,\
 		DRVCLONE,\
@@ -2692,16 +2692,16 @@ void valkyrie_init(void)
 		ENTRYDATE,\
 		ENTRYCOMPANY,\
 		NAMCOS2_CREDITS,\
-		GAME_REQUIRES_16BIT | GAME_NOT_WORKING,\
+		0,\
 		&machine_driver,\
 		DRVNAME##_init,\
-		DRVNAME##_rom,\
+		rom_##DRVNAME,\
 		0, 0,\
 		0,\
 		0,\
 		NAMCOS2_##DRVNAME##_PORTS,\
 		0, 0, 0,\
-		ENTRYROTATE,\
+		ENTRYROTATE | GAME_REQUIRES_16BIT | GAME_NOT_WORKING,\
 		namcos2_hiload,namcos2_hisave\
 	};
 
@@ -2712,12 +2712,12 @@ void valkyrie_init(void)
 /* and matel hawk have the B version and dragon saber has the C version     */
 
 NAMCO_SYSTEM2_NWDRVR   (finallap, 0               , "finallap","Final Lap (revision E)"        ,"1987","Namco",ORIENTATION_DEFAULT)
-NAMCO_SYSTEM2_NWDRVR   (finalapd, &finallap_driver, "finalapd","Final Lap (revision D)"        ,"1987","Namco",ORIENTATION_DEFAULT)
-NAMCO_SYSTEM2_NWDRVR   (finalapc, &finallap_driver, "finalapc","Final Lap (revision C)"        ,"1987","Namco",ORIENTATION_DEFAULT)
+NAMCO_SYSTEM2_NWDRVR   (finalapd, &driver_finallap, "finalapd","Final Lap (revision D)"        ,"1987","Namco",ORIENTATION_DEFAULT)
+NAMCO_SYSTEM2_NWDRVR   (finalapc, &driver_finallap, "finalapc","Final Lap (revision C)"        ,"1987","Namco",ORIENTATION_DEFAULT)
 /* I think this could fit 256 colors in theory */
 NAMCO_SYSTEM2_DRIVER_16(assault , 0               , "assault" ,"Assault"                       ,"1988","Namco",ORIENTATION_ROTATE_90)
-NAMCO_SYSTEM2_DRIVER_16(assaultj, &assault_driver , "assaultj","Assault (Japan)"               ,"1988","Namco",ORIENTATION_ROTATE_90)
-NAMCO_SYSTEM2_DRIVER_16(assaultp, &assault_driver , "assaultp","Assault Plus (Japan)"          ,"1988","Namco",ORIENTATION_ROTATE_90)
+NAMCO_SYSTEM2_DRIVER_16(assaultj, &driver_assault , "assaultj","Assault (Japan)"               ,"1988","Namco",ORIENTATION_ROTATE_90)
+NAMCO_SYSTEM2_DRIVER_16(assaultp, &driver_assault , "assaultp","Assault Plus (Japan)"          ,"1988","Namco",ORIENTATION_ROTATE_90)
 NAMCO_SYSTEM2_NWDRVR   (metlhawk, 0               , "metlhawk","Metal Hawk (Japan)"            ,"1988","Namco",ORIENTATION_ROTATE_90)
 /* I think this could fit 256 colors in theory */
 NAMCO_SYSTEM2_DRIVER_16(mirninja, 0               , "mirninja","Mirai Ninja (Japan)"           ,"1988","Namco",ORIENTATION_DEFAULT)
@@ -2731,12 +2731,12 @@ NAMCO_SYSTEM2_NWDRVR   (fourtrax, 0               , "fourtrax","Four Trax"      
 NAMCO_SYSTEM2_DRIVER   (marvland, 0               , "marvland","Marvel Land (Japan)"           ,"1989","Namco",ORIENTATION_DEFAULT)
 NAMCO_SYSTEM2_DRIVER   (valkyrie, 0               , "valkyrie","Walkure no Densetsu (Japan)"   ,"1989","Namco",ORIENTATION_ROTATE_90)
 NAMCO_SYSTEM2_DRIVER   (dsaber,   0               , "dsaber"  ,"Dragon Saber"                  ,"1990","Namco",ORIENTATION_ROTATE_90)
-NAMCO_SYSTEM2_DRIVER   (dsaberj,  &dsaber_driver  , "dsaberj" ,"Dragon Saber (Japan)"          ,"1990","Namco",ORIENTATION_ROTATE_90)
+NAMCO_SYSTEM2_DRIVER   (dsaberj,  &driver_dsaber  , "dsaberj" ,"Dragon Saber (Japan)"          ,"1990","Namco",ORIENTATION_ROTATE_90)
 /* I think this could fit 256 colors in theory */
 NAMCO_SYSTEM2_DRIVER_16(rthun2  , 0               , "rthun2"  ,"Rolling Thunder 2"             ,"1990","Namco",ORIENTATION_DEFAULT)
-NAMCO_SYSTEM2_DRIVER_16(rthun2j , &rthun2_driver  , "rthun2j" ,"Rolling Thunder 2 (Japan)"     ,"1990","Namco",ORIENTATION_DEFAULT)
+NAMCO_SYSTEM2_DRIVER_16(rthun2j , &driver_rthun2  , "rthun2j" ,"Rolling Thunder 2 (Japan)"     ,"1990","Namco",ORIENTATION_DEFAULT)
 NAMCO_SYSTEM2_NWDRVR   (finalap2, 0               , "finalap2","Final Lap 2"                   ,"1990","Namco",ORIENTATION_DEFAULT)
-NAMCO_SYSTEM2_NWDRVR   (finalp2j, &finalap2_driver, "finalp2j","Final Lap 2 (Japan)"           ,"1990","Namco",ORIENTATION_DEFAULT)
+NAMCO_SYSTEM2_NWDRVR   (finalp2j, &driver_finalap2, "finalp2j","Final Lap 2 (Japan)"           ,"1990","Namco",ORIENTATION_DEFAULT)
 NAMCO_SYSTEM2_NWDRVR   (sgunner2, 0               , "sgunner2","Steel Gunner 2 (Japan)"        ,"1991","Namco",ORIENTATION_DEFAULT)
 NAMCO_SYSTEM2_DRIVER   (cosmogng, 0               , "cosmogng","Cosmo Gang the Video (Japan)"  ,"1991","Namco",ORIENTATION_ROTATE_90)
 NAMCO_SYSTEM2_NWDRVR   (finalap3, 0               , "finalap3","Final Lap 3 (Japan)"           ,"1992","Namco",ORIENTATION_DEFAULT)

@@ -176,13 +176,7 @@ void turbo_fc00_w(int offset, int data);
 
 /* ******************************** */
 
-static struct Samplesinterface samples_interface =
-{
-	8,       /* eight channels */
-	25	/* volume */
-};
-
-const char *turbo_sample_names[]=
+static const char *turbo_sample_names[]=
 {
 	"*turbo",
 	"01.wav", /* Trig1 */
@@ -191,6 +185,13 @@ const char *turbo_sample_names[]=
 	"04.wav", /* Trig4 */
 	"10.wav", /* Ambulance */
 	0 /*array end*/
+};
+
+static struct Samplesinterface samples_interface =
+{
+	8,	/* eight channels */
+	25,	/* volume */
+	turbo_sample_names
 };
 
 static struct MemoryReadAddress turbo_readmem[] =
@@ -225,7 +226,7 @@ static struct MemoryWriteAddress turbo_writemem[] =
 	{ -1 }	/* end of table */
 };
 
-INPUT_PORTS_START( turbo_input_ports )
+INPUT_PORTS_START( turbo )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -395,7 +396,7 @@ ROM_START( turbo )
 	ROM_LOAD( "epr1244.rom", 0x0000, 0x0800, 0x17f67424 )
 	ROM_LOAD( "epr1245.rom", 0x0800, 0x0800, 0x2ba0b46b )
 
-	ROM_REGION(0x1000) /* PROMs */
+	ROM_REGIONX( 0x1000, REGION_PROMS )
 	ROM_LOAD( "pr1121.bin",  0x0000, 0x0200, 0x7692f497 )	/* Color PROM */
 	ROM_LOAD( "pr-1118.bin", 0x0200, 0x0100, 0x07324cfd )	/* 256x4 Character Color PROM */
 	ROM_LOAD( "pr1114.bin",  0x0300, 0x0020, 0x78aded46 )	/* Color 1 (road, etc.) */
@@ -448,7 +449,7 @@ ROM_START( turboa )
 	ROM_LOAD( "epr1244.rom", 0x0000, 0x0800, 0x17f67424 )
 	ROM_LOAD( "epr1245.rom", 0x0800, 0x0800, 0x2ba0b46b )
 
-	ROM_REGION(0x1000) /* PROMs */
+	ROM_REGIONX( 0x1000, REGION_PROMS )
 	ROM_LOAD( "pr1121.bin",  0x0000, 0x0200, 0x7692f497 )	/* Color PROM */
 	ROM_LOAD( "pr-1118.bin", 0x0200, 0x0100, 0x07324cfd )	/* 256x4 Character Color PROM */
 	ROM_LOAD( "pr1114.bin",  0x0300, 0x0020, 0x78aded46 )	/* Color 1 (road, etc.) */
@@ -501,7 +502,7 @@ ROM_START( turbob )
 	ROM_LOAD( "epr1244.rom", 0x0000, 0x0800, 0x17f67424 )
 	ROM_LOAD( "epr1245.rom", 0x0800, 0x0800, 0x2ba0b46b )
 
-	ROM_REGION(0x1000) /* PROMs */
+	ROM_REGIONX( 0x1000, REGION_PROMS )
 	ROM_LOAD( "pr1121.bin",  0x0000, 0x0200, 0x7692f497 )	/* Color PROM */
 	ROM_LOAD( "pr-1118.bin", 0x0200, 0x0100, 0x07324cfd )	/* 256x4 Character Color PROM */
 	ROM_LOAD( "pr1114.bin",  0x0300, 0x0020, 0x78aded46 )	/* Color 1 (road, etc.) */
@@ -649,7 +650,7 @@ static void turbo_decode(void)
 
 }
 
-struct GameDriver turbo_driver =
+struct GameDriver driver_turbo =
 {
 	__FILE__,
 	0,
@@ -658,71 +659,71 @@ struct GameDriver turbo_driver =
 	"1981",
 	"Sega",
 	"Alex Pasadyn\nHowie Cohen\nFrank Palazzolo",
-	GAME_NOT_WORKING,
+	0,
 	&turbo_machine_driver,
 	0,
 
-	turbo_rom,
+	rom_turbo,
 	0, 0,	/* rom decode and opcode decode functions */
-	turbo_sample_names,
+	0,
 	0,      /* sound_prom */
 
-	turbo_input_ports,
+	input_ports_turbo,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
+	0, 0, 0,
+	ORIENTATION_ROTATE_270 | GAME_NOT_WORKING,
 
 	0,0
 };
 
-struct GameDriver turboa_driver =
+struct GameDriver driver_turboa =
 {
 	__FILE__,
-	&turbo_driver,
+	&driver_turbo,
 	"turboa",
 	"Turbo (encrypted set 1)",
 	"1981",
 	"Sega",
 	"Alex Pasadyn\nHowie Cohen\nFrank Palazzolo",
-	GAME_NOT_WORKING,
+	0,
 	&turbo_machine_driver,
 	0,
 
-	turboa_rom,
+	rom_turboa,
 	turbo_decode, 0,	/* rom decode and opcode decode functions */
-	turbo_sample_names,
+	0,
 	0,      /* sound_prom */
 
-	turbo_input_ports,
+	input_ports_turbo,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
+	0, 0, 0,
+	ORIENTATION_ROTATE_270 | GAME_NOT_WORKING,
 
 	0,0
 };
 
-struct GameDriver turbob_driver =
+struct GameDriver driver_turbob =
 {
 	__FILE__,
-	&turbo_driver,
+	&driver_turbo,
 	"turbob",
 	"Turbo (encrypted set 2)",
 	"1981",
 	"Sega",
 	"Alex Pasadyn\nHowie Cohen\nFrank Palazzolo",
-	GAME_NOT_WORKING,
+	0,
 	&turbo_machine_driver,
 	0,
 
-	turbob_rom,
+	rom_turbob,
 	turbo_decode, 0,	/* rom decode and opcode decode functions */
-	turbo_sample_names,
+	0,
 	0,      /* sound_prom */
 
-	turbo_input_ports,
+	input_ports_turbo,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
+	0, 0, 0,
+	ORIENTATION_ROTATE_270 | GAME_NOT_WORKING,
 
 	0,0
 };

@@ -62,7 +62,7 @@ static struct MemoryWriteAddress writemem[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( hexa )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
@@ -192,7 +192,7 @@ ROM_START( hexa )
 	ROM_LOAD( "hexa.18",      0x08000, 0x8000, 0x6e3d95d2 )
 	ROM_LOAD( "hexa.19",      0x10000, 0x8000, 0xffe97a31 )
 
-	ROM_REGION(0x0300)		/* color proms */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "hexa.001",     0x0000, 0x0100, 0x88a055b4 )
 	ROM_LOAD( "hexa.003",     0x0100, 0x0100, 0x3e9d4932 )
 	ROM_LOAD( "hexa.002",     0x0200, 0x0100, 0xff15366c )
@@ -258,7 +258,7 @@ static void hexa_patch(void)
 }
 
 
-struct GameDriver hexa_driver =
+struct GameDriver driver_hexa =
 {
 	__FILE__,
 	0,
@@ -271,14 +271,14 @@ struct GameDriver hexa_driver =
 	&machine_driver,
 	0,
 
-	hexa_rom,
+	rom_hexa,
 	hexa_patch, 0,
 	0,
 	0,
 
-	input_ports,
+	input_ports_hexa,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hexa_hiload, hexa_hisave

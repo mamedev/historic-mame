@@ -224,30 +224,18 @@ static void Pixel(struct osd_bitmap *bitmap,int x,int y,int spr_number,int color
 {
 	int xr,yr,spr_y1,spr_y2;
 	int SprOnScreen;
-	int adjx = x, adjy = y;
 
 
 	if (x < Machine->drv->visible_area.min_x ||
-			x > Machine->drv->visible_area.max_x ||
-			y < Machine->drv->visible_area.min_y ||
-			y > Machine->drv->visible_area.max_y)
+		x > Machine->drv->visible_area.max_x ||
+		y < Machine->drv->visible_area.min_y ||
+		y > Machine->drv->visible_area.max_y)
 		return;
-
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
-	{
-		int temp = adjx;
-		adjx = adjy;
-		adjy = temp;
-	}
-	if (Machine->orientation & ORIENTATION_FLIP_X)
-		adjx = bitmap->width - adjx - 1;
-	if (Machine->orientation & ORIENTATION_FLIP_Y)
-		adjy = bitmap->height - adjy - 1;
 
 	if (SpritesCollisionTable[256*y+x] == 255)
 	{
 		SpritesCollisionTable[256*y+x] = spr_number;
-		bitmap->line[adjy][adjx] = color;
+		plot_pixel(bitmap, x, y, color);
 	}
 	else
 	{
@@ -259,12 +247,13 @@ static void Pixel(struct osd_bitmap *bitmap,int x,int y,int spr_number,int color
 			spr_y2 = GetSpriteBottomY(SprOnScreen);
 			if (spr_y1 >= spr_y2)
 			{
-				bitmap->line[adjy][adjx]=color;
+				plot_pixel(bitmap, x, y, color);
 				SpritesCollisionTable[256*y+x]=spr_number;
 			}
-		} else
+		}
+		else
 		{
-			bitmap->line[adjy][adjx]=color;
+			plot_pixel(bitmap, x, y, color);
 			SpritesCollisionTable[256*y+x]=spr_number;
 		}
 	}
@@ -311,7 +300,7 @@ void system1_sprites_collisionram_w(int offset,int data)
 
 
 
-extern struct GameDriver wbml_driver;
+extern struct GameDriver driver_wbml;
 
 static void RenderSprite(struct osd_bitmap *bitmap,int spr_number)
 {
@@ -333,7 +322,7 @@ static void RenderSprite(struct osd_bitmap *bitmap,int spr_number)
 	SprPalette	= Machine->colortable + 0x10 * spr_number;
 	SprX = SprReg[SPR_X_LO] + ((SprReg[SPR_X_HI] & 0x01) << 8);
 	SprX /= 2;	/* the hardware has sub-pixel placement, it seems */
-if (Machine->gamedrv == &wbml_driver) SprX += 7;
+if (Machine->gamedrv == &driver_wbml) SprX += 7;
 	SprY = SprReg[SPR_Y_TOP] + 1;
 
 	for (Row = 0;Row < Height;Row++)
@@ -869,6 +858,7 @@ void wbml_textrefresh(struct osd_bitmap *bitmap)
 void wbml_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
 	palette_recalc();
+	/* no need to check the return code since we redraw everything each frame */
 
 	wbml_backgroundrefresh(bitmap,0);
 	DrawSprites(bitmap);

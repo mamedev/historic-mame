@@ -66,7 +66,7 @@ static struct MemoryWriteAddress writemem_sound[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( citycon )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
@@ -368,7 +368,7 @@ static void hisave(void)
 
 
 
-struct GameDriver citycon_driver =
+struct GameDriver driver_citycon =
 {
 	__FILE__,
 	0,
@@ -381,13 +381,13 @@ struct GameDriver citycon_driver =
 	&machine_driver,
 	0,
 
-	citycon_rom,
+	rom_citycon,
 	0, 0,
 	0,
 
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_citycon,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -395,10 +395,10 @@ struct GameDriver citycon_driver =
 	hiload, hisave
 };
 
-struct GameDriver citycona_driver =
+struct GameDriver driver_citycona =
 {
 	__FILE__,
-	&citycon_driver,
+	&driver_citycon,
 	"citycona",
 	"City Connection (set 2)",
 	"1985",
@@ -408,13 +408,13 @@ struct GameDriver citycona_driver =
 	&machine_driver,
 	0,
 
-	citycona_rom,
+	rom_citycona,
 	0, 0,
 	0,
 
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_citycon,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -422,10 +422,10 @@ struct GameDriver citycona_driver =
 	hiload, hisave
 };
 
-struct GameDriver cruisin_driver =
+struct GameDriver driver_cruisin =
 {
 	__FILE__,
-	&citycon_driver,
+	&driver_citycon,
 	"cruisin",
 	"Cruisin",
 	"1985",
@@ -435,13 +435,13 @@ struct GameDriver cruisin_driver =
 	&machine_driver,
 	0,
 
-	cruisin_rom,
+	rom_cruisin,
 	0, 0,
 	0,
 
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_citycon,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

@@ -105,7 +105,7 @@ static struct MemoryWriteAddress voice_writemem[] =
 };
 
 
-INPUT_PORTS_START( redalert_input_ports )
+INPUT_PORTS_START( redalert )
 	PORT_START			   /* DIP Switches */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "3" )
@@ -379,7 +379,7 @@ ROM_END
 
 ***************************************************************************/
 
-struct GameDriver redalert_driver =
+struct GameDriver driver_redalert =
 {
 	__FILE__,
 	0,
@@ -388,19 +388,19 @@ struct GameDriver redalert_driver =
 	"1981",
 	"GDI + Irem",
 	"Mike Balfour\nDick Milliken (Information)",
-	GAME_WRONG_COLORS,
+	0,
 	&machine_driver,
 	0,
 
-	redalert_rom,
+	rom_redalert,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	redalert_input_ports,
+	input_ports_redalert,
 
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
+	ORIENTATION_ROTATE_270 | GAME_WRONG_COLORS,
 
 	0, 0
 };

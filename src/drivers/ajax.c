@@ -39,7 +39,7 @@ static struct MemoryReadAddress ajax_readmem[] =
 	{ 0x0000, 0x01c0, ajax_ls138_f10_r },			/* inputs + DIPSW */
 	{ 0x0800, 0x0807, K051937_r },					/* sprite control registers */
 	{ 0x0c00, 0x0fff, K051960_r },					/* sprite RAM 2128SL at J7 */
-	{ 0x1000, 0x1fff, MRA_RAM, &paletteram },		/* palette */
+	{ 0x1000, 0x1fff, MRA_RAM },		/* palette */
 	{ 0x2000, 0x3fff, ajax_sharedram_r },			/* shared RAM with the 6809 */
 	{ 0x4000, 0x5fff, MRA_RAM },					/* RAM 6264L at K10*/
 	{ 0x6000, 0x7fff, MRA_BANK2 },					/* banked ROM */
@@ -52,7 +52,7 @@ static struct MemoryWriteAddress ajax_writemem[] =
 	{ 0x0000, 0x01c0, ajax_ls138_f10_w },			/* bankswitch + sound command + FIRQ command */
 	{ 0x0800, 0x0807, K051937_w },					/* sprite control registers */
 	{ 0x0c00, 0x0fff, K051960_w },					/* sprite RAM 2128SL at J7 */
-	{ 0x1000, 0x1fff, paletteram_xBBBBBGGGGGRRRRR_swap_w },/* palette */
+	{ 0x1000, 0x1fff, paletteram_xBBBBBGGGGGRRRRR_swap_w, &paletteram },/* palette */
 	{ 0x2000, 0x3fff, ajax_sharedram_w },			/* shared RAM with the 6809 */
 	{ 0x4000, 0x5fff, MWA_RAM },					/* RAM 6264L at K10 */
 	{ 0x6000, 0x7fff, MWA_ROM },					/* banked ROM */
@@ -109,7 +109,7 @@ static struct MemoryWriteAddress ajax_writemem_sound[] =
 };
 
 
-INPUT_PORTS_START( ajax_input_ports )
+INPUT_PORTS_START( ajax )
 	PORT_START	/* DSW #1 */
 	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x0f, DEF_STR( 1C_1C ) )
@@ -297,7 +297,7 @@ static struct MachineDriver ajax_machine_driver =
 		},
 		{
 			CPU_M6809,	/* 6809E */
-			2000000,	/* ? */
+			3000000,	/* ? */
 			4,
 			ajax_readmem_2, ajax_writemem_2,0,0,
 			ignore_interrupt,1	/* FIRQs triggered by the 052001 */
@@ -422,7 +422,7 @@ static void gfx_untangle(void)
 
 
 
-struct GameDriver ajax_driver =
+struct GameDriver driver_ajax =
 {
 	__FILE__,
 	0,
@@ -435,23 +435,23 @@ struct GameDriver ajax_driver =
 	&ajax_machine_driver,
 	0,
 
-	ajax_rom,
+	rom_ajax,
 	gfx_untangle,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	ajax_input_ports,
+	input_ports_ajax,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 	0, 0	/* hiload,hisave */
 };
 
-struct GameDriver ajaxj_driver =
+struct GameDriver driver_ajaxj =
 {
 	__FILE__,
-	&ajax_driver,
+	&driver_ajax,
 	"ajaxj",
 	"Ajax (Japan)",
 	"1987",
@@ -461,13 +461,13 @@ struct GameDriver ajaxj_driver =
 	&ajax_machine_driver,
 	0,
 
-	ajaxj_rom,
+	rom_ajaxj,
 	gfx_untangle,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	ajax_input_ports,
+	input_ports_ajax,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_90,

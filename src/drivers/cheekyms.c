@@ -60,7 +60,7 @@ static int cheekyms_interrupt(void)
 }
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( cheekyms )
 	PORT_START      /* IN0 */
 	PORT_DIPNAME( 0x03, 0x01, DEF_STR( Lives ) )
 	PORT_DIPSETTING(    0x00, "2" )
@@ -206,7 +206,7 @@ ROM_START( cheekyms )
 	ROM_LOAD( "cm07.n5",       0x1000, 0x0800, 0x2738c88d )
 	ROM_LOAD( "cm08.n6",       0x1800, 0x0800, 0xb3fbd4ac )
 
-	ROM_REGION(0x0060)	/* PROMs */
+	ROM_REGIONX( 0x0060, REGION_PROMS )
 	ROM_LOAD( "cm.m8",         0x0000, 0x0020, 0x2386bc68 )	 /* Character colors \ Selected by Bit 6 of Port 0x80 */
 	ROM_LOAD( "cm.m9",         0x0020, 0x0020, 0xdb9c59a5 )	 /* Character colors /                                */
 	ROM_LOAD( "cm.p3",         0x0040, 0x0020, 0x6ac41516 )  /* Sprite colors */
@@ -214,7 +214,7 @@ ROM_END
 
 
 
-struct GameDriver cheekyms_driver =
+struct GameDriver driver_cheekyms =
 {
 	__FILE__,
 	0,
@@ -223,19 +223,19 @@ struct GameDriver cheekyms_driver =
 	"1980?",
 	"Universal",
 	"Lee Taylor\nChris Moore\nZsolt Vasvari",
-	GAME_WRONG_COLORS,
+	0,
 	&machine_driver,
 	0,
 
-	cheekyms_rom,
+	rom_cheekyms,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	input_ports,
+	input_ports_cheekyms,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_270,
+	0, 0, 0,
+	ORIENTATION_ROTATE_270 | GAME_WRONG_COLORS,
 
 	0, 0
 };

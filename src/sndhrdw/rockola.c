@@ -35,9 +35,19 @@ static unsigned char waveform[32] =
 
 
 
+static const char *vanguard_sample_names[] =
+{
+	"*vanguard",
+	"explsion.wav",
+	"fire.wav",
+	0
+};
+
 int rockola_sh_start(const struct MachineSound *msound)
 {
 	int vol[3];
+
+	Machine->samples = readsamples(vanguard_sample_names,Machine->gamedrv->name);
 
 	vol[0] = vol[1] = vol[2] = TONE_VOLUME;
 	tonechannels = mixer_allocate_channels(3,vol);
@@ -190,26 +200,26 @@ void vanguard_sound0_w(int offset,int data)
 	if (Machine->samples!=0 && Machine->samples->sample[0]!=0)
 	{
 		if (data & 0x20 && !(LastPort1 & 0x20))
-			mixer_play_sample(samplechannels+2,Machine->samples->sample[0]->data,
-			                  Machine->samples->sample[0]->length,
-			                  Machine->samples->sample[0]->smpfreq,
+			mixer_play_sample(samplechannels+2,Machine->samples->sample[1]->data,
+			                  Machine->samples->sample[1]->length,
+			                  Machine->samples->sample[1]->smpfreq,
 			                  0);
 		else if (!(data & 0x20) && LastPort1 & 0x20)
 			osd_stop_sample(samplechannels+2);
 
 		if (data & 0x40 && !(LastPort1 & 0x40))
-			mixer_play_sample(samplechannels+0,Machine->samples->sample[0]->data,
-			                  Machine->samples->sample[0]->length,
-			                  Machine->samples->sample[0]->smpfreq,
+			mixer_play_sample(samplechannels+0,Machine->samples->sample[1]->data,
+			                  Machine->samples->sample[1]->length,
+			                  Machine->samples->sample[1]->smpfreq,
 			                  0);
 		else if (!(data & 0x20) && LastPort1 & 0x20)
 			osd_stop_sample(samplechannels+0);
 
 		if (data & 0x80 && !(LastPort1 & 0x80))
 		{
-			mixer_play_sample(samplechannels+1,Machine->samples->sample[1]->data,
-			                  Machine->samples->sample[1]->length,
-			                  Machine->samples->sample[1]->smpfreq,
+			mixer_play_sample(samplechannels+1,Machine->samples->sample[0]->data,
+			                  Machine->samples->sample[0]->length,
+			                  Machine->samples->sample[0]->smpfreq,
 			                  0);
 		}
 	}

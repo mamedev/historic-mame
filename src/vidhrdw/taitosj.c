@@ -20,7 +20,7 @@ unsigned char *taitosj_scroll;
 unsigned char *taitosj_colscrolly;
 unsigned char *taitosj_gfxpointer;
 unsigned char *taitosj_colorbank,*taitosj_video_priority;
-unsigned char *taitosj_collision_reg;
+static unsigned char taitosj_collision_reg[4];
 static unsigned char *dirtybuffer2,*dirtybuffer3;
 static struct osd_bitmap *taitosj_tmpbitmap[3];
 static struct osd_bitmap *sprite_sprite_collbitmap1,*sprite_sprite_collbitmap2;

@@ -219,7 +219,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 };
 
 
-INPUT_PORTS_START( fastfred_input_ports )
+INPUT_PORTS_START( fastfred )
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -271,7 +271,7 @@ INPUT_PORTS_START( fastfred_input_ports )
 	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( flyboy_input_ports )
+INPUT_PORTS_START( flyboy )
 	PORT_START      /* IN1 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -316,7 +316,7 @@ INPUT_PORTS_START( flyboy_input_ports )
 	PORT_DIPSETTING(    0x80, DEF_STR( Cocktail ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( jumpcoas_input_ports )
+INPUT_PORTS_START( jumpcoas )
 	PORT_START      /* DSW 0 */
 	PORT_DIPNAME( 0x03, 0x00, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x03, DEF_STR( 6C_1C ) )
@@ -565,7 +565,7 @@ ROM_START( fastfred )
 	ROM_LOAD( "ffr.12",       0x7000, 0x1000, 0x94c06686 )
 	ROM_LOAD( "ffr.13",       0x8000, 0x1000, 0x3fcfaa8e )
 
-	ROM_REGION(0x300)       /* color proms */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "flyboy.red",   0x0000, 0x0100, 0xb801e294 )
 	ROM_LOAD( "flyboy.grn",   0x0100, 0x0100, 0x7da063d0 )
 	ROM_LOAD( "flyboy.blu",   0x0200, 0x0100, 0x85c05c18 )
@@ -597,7 +597,7 @@ ROM_START( flyboy )
 	ROM_LOAD( "rom12.rom",    0x7000, 0x1000, 0x84d03124 )
 	ROM_LOAD( "rom13.rom",    0x8000, 0x1000, 0xfcb33ff4 )
 
-	ROM_REGION(0x300)       /* color proms */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "flyboy.red",   0x0000, 0x0100, 0xb801e294 )
 	ROM_LOAD( "flyboy.grn",   0x0100, 0x0100, 0x7da063d0 )
 	ROM_LOAD( "flyboy.blu",   0x0200, 0x0100, 0x85c05c18 )
@@ -629,7 +629,7 @@ ROM_START( flyboyb )
 	ROM_LOAD( "rom12.rom",    0x7000, 0x1000, 0x84d03124 )
 	ROM_LOAD( "rom13.rom",    0x8000, 0x1000, 0xfcb33ff4 )
 
-	ROM_REGION(0x300)       /* color proms */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "flyboy.red",   0x0000, 0x0100, 0xb801e294 )
 	ROM_LOAD( "flyboy.grn",   0x0100, 0x0100, 0x7da063d0 )
 	ROM_LOAD( "flyboy.blu",   0x0200, 0x0100, 0x85c05c18 )
@@ -651,7 +651,7 @@ ROM_START( jumpcoas )
 	ROM_LOAD( "jumpcoas.006", 0x1000, 0x1000, 0x0d24aa1b )
 	ROM_LOAD( "jumpcoas.007", 0x2000, 0x1000, 0x14c21e67 )
 
-	ROM_REGION(0x300)       /* color proms */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "jumpcoas.red", 0x0000, 0x0100, 0x13714880 )
 	ROM_LOAD( "jumpcoas.gre", 0x0100, 0x0100, 0x05354848 )
 	ROM_LOAD( "jumpcoas.blu", 0x0200, 0x0100, 0xf4662db7 )
@@ -782,7 +782,7 @@ static void jumpcoas_hisave(void)
 }
 
 
-struct GameDriver flyboy_driver =
+struct GameDriver driver_flyboy =
 {
 	__FILE__,
 	0,
@@ -791,27 +791,27 @@ struct GameDriver flyboy_driver =
 	"1982",
 	"Kaneko",
 	"Zsolt Vasvari\nBrad Oliver (additional code)\nMarco Cassili (additional code)",
-	GAME_NOT_WORKING,	/* protection */
+	0,
 	&fastfred_machine_driver,
 	0,
 
-	flyboy_rom,
+	rom_flyboy,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	flyboy_input_ports,
+	input_ports_flyboy,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
+	0, 0, 0,
+	ORIENTATION_ROTATE_90 | GAME_NOT_WORKING,	/* protection */
 
 	flyboy_hiload, flyboy_hisave
 };
 
-struct GameDriver flyboyb_driver =
+struct GameDriver driver_flyboyb =
 {
 	__FILE__,
-	&flyboy_driver,
+	&driver_flyboy,
 	"flyboyb",
 	"Fly-Boy (bootleg)",
 	"1982",
@@ -821,23 +821,23 @@ struct GameDriver flyboyb_driver =
 	&fastfred_machine_driver,
 	0,
 
-	flyboyb_rom,
+	rom_flyboyb,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	flyboy_input_ports,
+	input_ports_flyboy,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	flyboy_hiload, flyboy_hisave
 };
 
-struct GameDriver fastfred_driver =
+struct GameDriver driver_fastfred =
 {
 	__FILE__,
-	&flyboy_driver,
+	&driver_flyboy,
 	"fastfred",
 	"Fast Freddie",
 	"1982",
@@ -847,20 +847,20 @@ struct GameDriver fastfred_driver =
 	&fastfred_machine_driver,
 	fastfred_driver_init,
 
-	fastfred_rom,
+	rom_fastfred,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	fastfred_input_ports,
+	input_ports_fastfred,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	fastfred_hiload, fastfred_hisave
 };
 
-struct GameDriver jumpcoas_driver =
+struct GameDriver driver_jumpcoas =
 {
 	__FILE__,
 	0,
@@ -873,14 +873,14 @@ struct GameDriver jumpcoas_driver =
 	&jumpcoas_machine_driver,
 	jumpcoas_driver_init,
 
-	jumpcoas_rom,
+	rom_jumpcoas,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	jumpcoas_input_ports,
+	input_ports_jumpcoas,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	jumpcoas_hiload, jumpcoas_hisave

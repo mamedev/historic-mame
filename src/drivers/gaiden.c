@@ -225,7 +225,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 
 
-INPUT_PORTS_START( gaiden_input_ports )
+INPUT_PORTS_START( gaiden )
 	PORT_START      /* PLAYER 1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER1 | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 | IPF_8WAY )
@@ -307,7 +307,7 @@ INPUT_PORTS_START( gaiden_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN2 )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( tknight_input_ports )
+INPUT_PORTS_START( tknight )
 	PORT_START      /* PLAYER 1 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_PLAYER1 | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_PLAYER1 | IPF_8WAY )
@@ -669,7 +669,7 @@ ROM_END
 
 
 
-struct GameDriver gaiden_driver =
+struct GameDriver driver_gaiden =
 {
 	__FILE__,
 	0,
@@ -682,22 +682,22 @@ struct GameDriver gaiden_driver =
 	&machine_driver,
 		0,
 
-	gaiden_rom,
+	rom_gaiden,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	gaiden_input_ports,
+	input_ports_gaiden,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
 	0, 0
 };
 
-struct GameDriver shadoww_driver =
+struct GameDriver driver_shadoww =
 {
 	__FILE__,
-	&gaiden_driver,
+	&driver_gaiden,
 	"shadoww",
 	"Shadow Warriors",
 	"1988",
@@ -707,19 +707,19 @@ struct GameDriver shadoww_driver =
 	&machine_driver,
 		0,
 
-	shadoww_rom,
+	rom_shadoww,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	gaiden_input_ports,
+	input_ports_gaiden,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
 	0, 0
 };
 
-struct GameDriver tknight_driver =
+struct GameDriver driver_tknight =
 {
 	__FILE__,
 	0,
@@ -732,22 +732,22 @@ struct GameDriver tknight_driver =
 	&machine_driver,
 		0,
 
-	tknight_rom,
+	rom_tknight,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	tknight_input_ports,
+	input_ports_tknight,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
 	0, 0
 };
 
-struct GameDriver wildfang_driver =
+struct GameDriver driver_wildfang =
 {
 	__FILE__,
-	&tknight_driver,
+	&driver_tknight,
 	"wildfang",
 	"Wild Fang",
 	"1989",
@@ -757,12 +757,12 @@ struct GameDriver wildfang_driver =
 	&machine_driver,
 	0,
 
-	wildfang_rom,
+	rom_wildfang,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	tknight_input_ports,
+	input_ports_tknight,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,

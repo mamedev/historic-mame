@@ -24,9 +24,6 @@ struct RomModule
 /* the macros below. */
 
 #define ROMFLAG_MASK          0xf0000000           /* 4 bits worth of flags in the high nibble */
-/* Masks for ROM regions */
-#define ROMFLAG_DISPOSE       0x80000000           /* Dispose of this region when done */
-#define ROMFLAG_IGNORE        0x40000000           /* BM: Ignored - drivers must load this region themselves */
 
 /* Masks for individual ROMs */
 #define ROMFLAG_ALTERNATE     0x80000000           /* Alternate bytes, either even or odd, or nibbles, low or high */
@@ -35,14 +32,37 @@ struct RomModule
 #define ROMFLAG_NIBBLE        0x10000000           /* Nibble-wide ROM image */
 
 /* start of table */
-#define ROM_START(name) static struct RomModule name##_rom[] = {
+#define ROM_START(name) static struct RomModule rom_##name[] = {
 /* start of memory region */
 #define ROM_REGION(length) { 0, length, 0, 0 },
+#define ROM_REGIONX(length,type) { 0, length, 0, type },
 /* start of disposable memory region */
-#define ROM_REGION_DISPOSE(length) { 0, (length) | ROMFLAG_DISPOSE, 0, 0 },
+#define ROM_REGION_DISPOSE(length) { 0, length, 0, REGIONFLAG_DISPOSE },
+
+enum {
+	REGION_CPU1 = 0xf1,
+	REGION_CPU2,
+	REGION_CPU3,
+	REGION_CPU4,
+	REGION_CPU5,
+	REGION_CPU6,
+	REGION_CPU7,
+	REGION_GFX1,
+	REGION_GFX2,
+	REGION_GFX3,
+	REGION_GFX4,
+	REGION_GFX5,
+	REGION_GFX6,
+	REGION_GFX7,
+	REGION_GFX8,
+	REGION_PROMS
+};
+#define REGIONFLAG_MASK			0xf0000000
+#define REGIONFLAG_DISPOSE		0x80000000           /* Dispose of this region when done */
+#define REGIONFLAG_SOUNDONLY	0x40000000           /* load only if sound emulation is turned on */
 
 /* Optional */
-#define ROM_REGION_OPTIONAL(length) { 0, (length) | ROMFLAG_IGNORE, 0, 0 },
+#define ROM_REGION_OPTIONAL(length) { 0, length, 0, REGIONFLAG_SOUNDONLY },
 
 #define BADCRC( crc ) (~(crc))
 
@@ -127,8 +147,11 @@ void coin_lockout_global_w (int offset, int data);  /* Locks out all coin inputs
 
 int readroms(void);
 void printromlist(const struct RomModule *romp,const char *name);
-struct GameSamples *readsamples(const char **samplenames,const char *name);
-void freesamples(struct GameSamples *samples);
+
+/* return a pointer to the specified memory region - num can be either an absolute */
+/* number, or one of the REGION_XXX identifiers defined above */
+unsigned char *memory_region(int num);
+int memory_region_length(int num);
 
 void save_screen_snapshot(void);
 

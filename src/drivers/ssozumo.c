@@ -111,7 +111,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 };
 
 
-INPUT_PORTS_START( ssozumo_input_ports )
+INPUT_PORTS_START( ssozumo )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
@@ -267,8 +267,7 @@ ROM_START( ssozumo )
 	ROM_LOAD( "ic41.ge0",	0x50000, 0x2000, 0x935578d0 )	// s3d
 	ROM_LOAD( "ic40.gf0",	0x52000, 0x2000, 0x5a3bf1ba )	// s3e
 
-	ROM_REGION(0x0080)
-	/* Color PROMs */
+	ROM_REGIONX( 0x0080, REGION_PROMS )
 	ROM_LOAD( "ic33.gz0",	0x00000, 0x0020, 0x523d29ad )	/* char palette red and green components */
 	ROM_LOAD( "ic30.gz2",	0x00020, 0x0020, 0x0de202e1 )	/* tile palette red and green components */
 	ROM_LOAD( "ic32.gz1",	0x00040, 0x0020, 0x6fbff4d2 )	/* char palette blue component */
@@ -335,7 +334,7 @@ static struct MachineDriver ssozumo_machine_driver =
 };
 
 
-struct GameDriver ssozumo_driver =
+struct GameDriver driver_ssozumo =
 {
 	__FILE__,
 	0,
@@ -348,14 +347,14 @@ struct GameDriver ssozumo_driver =
 	&ssozumo_machine_driver,
 	0,
 
-	ssozumo_rom,
+	rom_ssozumo,
 	0, 0,
 	0,
 	0,
 
-	ssozumo_input_ports,
+	input_ports_ssozumo,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 //	ssozumo_hiload, ssozumo_hisave

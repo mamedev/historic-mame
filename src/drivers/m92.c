@@ -302,7 +302,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 /******************************************************************************/
 
-INPUT_PORTS_START( bmaster_input_ports )
+INPUT_PORTS_START( bmaster )
 	PORT_PLAYER1_2BUTTON_JOYSTICK
 	PORT_PLAYER2_2BUTTON_JOYSTICK
 	PORT_UNUSED
@@ -360,7 +360,7 @@ INPUT_PORTS_START( bmaster_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( gunforce_input_ports )
+INPUT_PORTS_START( gunforce )
 	PORT_PLAYER1_2BUTTON_JOYSTICK
 	PORT_PLAYER2_2BUTTON_JOYSTICK
 	PORT_UNUSED
@@ -418,7 +418,7 @@ INPUT_PORTS_START( gunforce_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( lethalth_input_ports )
+INPUT_PORTS_START( lethalth )
 	PORT_PLAYER1_2BUTTON_JOYSTICK
 	PORT_PLAYER2_2BUTTON_JOYSTICK
 	PORT_UNUSED
@@ -476,7 +476,7 @@ INPUT_PORTS_START( lethalth_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( hook_input_ports )
+INPUT_PORTS_START( hook )
 	PORT_PLAYER1_2BUTTON_JOYSTICK
 	PORT_PLAYER2_2BUTTON_JOYSTICK
 	PORT_PLAYER3_2BUTTON_JOYSTICK
@@ -534,7 +534,7 @@ INPUT_PORTS_START( hook_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( skingame_input_ports )
+INPUT_PORTS_START( skingame )
 	PORT_PLAYER1_2BUTTON_JOYSTICK
 	PORT_PLAYER2_2BUTTON_JOYSTICK
 	PORT_UNUSED
@@ -593,7 +593,7 @@ INPUT_PORTS_START( skingame_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( gunhohki_input_ports )
+INPUT_PORTS_START( gunhohki )
 	PORT_PLAYER1_2BUTTON_JOYSTICK
 	PORT_PLAYER2_2BUTTON_JOYSTICK
 	PORT_UNUSED
@@ -651,7 +651,7 @@ INPUT_PORTS_START( gunhohki_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( uccops_input_ports )
+INPUT_PORTS_START( uccops )
 	PORT_PLAYER1_2BUTTON_JOYSTICK
 	PORT_PLAYER2_2BUTTON_JOYSTICK
 	PORT_PLAYER3_2BUTTON_JOYSTICK
@@ -709,7 +709,7 @@ INPUT_PORTS_START( uccops_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( rtypeleo_input_ports )
+INPUT_PORTS_START( rtypeleo )
 	PORT_PLAYER1_2BUTTON_JOYSTICK
 	PORT_PLAYER2_2BUTTON_JOYSTICK
 	PORT_UNUSED
@@ -767,7 +767,7 @@ INPUT_PORTS_START( rtypeleo_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( inthunt_input_ports )
+INPUT_PORTS_START( inthunt )
 	PORT_PLAYER1_2BUTTON_JOYSTICK
 	PORT_PLAYER2_2BUTTON_JOYSTICK
 	PORT_UNUSED
@@ -800,7 +800,7 @@ INPUT_PORTS_START( inthunt_input_ports )
 	PORT_UNUSED	/* Game manual only mentions 2 dips */
 INPUT_PORTS_END
 
-INPUT_PORTS_START( nbbatman_input_ports )
+INPUT_PORTS_START( nbbatman )
 	PORT_PLAYER1_2BUTTON_JOYSTICK
 	PORT_PLAYER2_2BUTTON_JOYSTICK
 	PORT_UNUSED
@@ -859,7 +859,7 @@ INPUT_PORTS_START( nbbatman_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( psoldier_input_ports )
+INPUT_PORTS_START( psoldier )
 	PORT_START
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
@@ -1960,7 +1960,7 @@ static void m92_sound_decrypt(void)
 /***************************************************************************/
 
 #define M92DRIVER(M92_NAME,M92_REALNAME,M92_YEAR,M92_MANU,M92_PORTS,M92_CLONE,M92_ROTATION) \
-struct GameDriver M92_NAME##_driver  = \
+struct GameDriver driver_##M92_NAME = \
 {                             		  \
 	__FILE__,                		   \
 	M92_CLONE,               			\
@@ -1969,22 +1969,22 @@ struct GameDriver M92_NAME##_driver  = \
 	M92_YEAR,                		   \
 	M92_MANU,                   		\
 	"Bryan McPhail",          			\
-	GAME_NO_SOUND, 			       		\
+	0, 						       		\
 	&machine_driver,                	\
 	memory_hooks,						\
-	M92_NAME##_rom,             		\
+	rom_##M92_NAME,             		\
 	m92_sound_decrypt, 0,     			\
 	0,                          		\
 	0, 	    	                		\
-	M92_PORTS,             				\
+	input_ports_##M92_PORTS,             				\
 	0, 0, 0,                    		\
-	M92_ROTATION,        				\
+	M92_ROTATION | GAME_NO_SOUND, 		\
 	0,0  								\
 };
 
 /* A version for games with no raster effects - faster, but slightly less accurate */
 #define M92DRIVERNR(M92_NAME,M92_REALNAME,M92_YEAR,M92_MANU,M92_PORTS,M92_CLONE,M92_ROTATION) \
-struct GameDriver M92_NAME##_driver  = \
+struct GameDriver driver_##M92_NAME = \
 {                             		  \
 	__FILE__,                		   \
 	M92_CLONE,               			\
@@ -1993,41 +1993,41 @@ struct GameDriver M92_NAME##_driver  = \
 	M92_YEAR,                		   \
 	M92_MANU,                   		\
 	"Bryan McPhail",          			\
-	GAME_NO_SOUND, 			       		\
+	0, 						       		\
 	&nonraster_machine_driver,          \
 	memory_hooks,						\
-	M92_NAME##_rom,             		\
+	rom_##M92_NAME,  	           		\
 	m92_sound_decrypt, 0,     			\
 	0,                          		\
 	0, 	    	                		\
-	M92_PORTS,             				\
+	input_ports_##M92_PORTS,             				\
 	0, 0, 0,                    		\
-	M92_ROTATION,        				\
+	M92_ROTATION | GAME_NO_SOUND, 		\
 	0,0  								\
 };
 
-M92DRIVERNR(bmaster ,"Blade Master (World)","1991","Irem",bmaster_input_ports,0,ORIENTATION_DEFAULT)
-M92DRIVERNR(gunforce,"Gunforce - Battle Fire Engulfed Terror Island (World)","1991","Irem",gunforce_input_ports,0,ORIENTATION_DEFAULT)
-M92DRIVERNR(gunforcu,"Gunforce - Battle Fire Engulfed Terror Island (US)","1991","Irem America",gunforce_input_ports,&gunforce_driver,ORIENTATION_DEFAULT)
-M92DRIVERNR(hook,    "Hook (World)","1992","Irem",hook_input_ports,0,ORIENTATION_DEFAULT)
-M92DRIVERNR(hooku,   "Hook (US)","1992","Irem America",hook_input_ports,&hook_driver,ORIENTATION_DEFAULT)
-M92DRIVERNR(mysticri,"Mystic Riders (World)","1992","Irem",gunhohki_input_ports,0,ORIENTATION_DEFAULT)
-M92DRIVERNR(gunhohki,"Gun Hohki (Japan)","1992","Irem",gunhohki_input_ports,&mysticri_driver,ORIENTATION_DEFAULT)
-M92DRIVER(uccops  ,"Undercover Cops (World)","1992","Irem",uccops_input_ports,0,ORIENTATION_DEFAULT)
-M92DRIVER(uccopsj ,"Undercover Cops (Japan)","1992","Irem",uccops_input_ports,&uccops_driver,ORIENTATION_DEFAULT)
-M92DRIVER(rtypeleo,"R-Type Leo (Japan)","1992","Irem",rtypeleo_input_ports,0,ORIENTATION_DEFAULT)
-M92DRIVER(majtitl2,"Major Title 2 (World)","1992","Irem",skingame_input_ports,0,ORIENTATION_DEFAULT)
-M92DRIVER(skingame,"The Irem Skins Game (US set 1)","1992","Irem America",skingame_input_ports,&majtitl2_driver,ORIENTATION_DEFAULT)
-M92DRIVER(skingam2,"The Irem Skins Game (US set 2)","1992","Irem America",skingame_input_ports,&majtitl2_driver,ORIENTATION_DEFAULT)
-M92DRIVERNR(inthunt ,"In The Hunt (World)","1993","Irem",inthunt_input_ports,0,ORIENTATION_DEFAULT)
-M92DRIVERNR(kaiteids,"Kaitei Daisensou (Japan)","1993","Irem",inthunt_input_ports,&inthunt_driver,ORIENTATION_DEFAULT)
+M92DRIVERNR(bmaster ,"Blade Master input_ports_(World)","1991","Irem",bmaster,0,ORIENTATION_DEFAULT)
+M92DRIVERNR(gunforce,"Gunforce - Battle Fire Engulfed Terror Island input_ports_(World)","1991","Irem",gunforce,0,ORIENTATION_DEFAULT)
+M92DRIVERNR(gunforcu,"Gunforce - Battle Fire Engulfed Terror Island (US)","1991","Irem input_ports_America",gunforce,&driver_gunforce,ORIENTATION_DEFAULT)
+M92DRIVERNR(hook,    "Hook input_ports_(World)","1992","Irem",hook,0,ORIENTATION_DEFAULT)
+M92DRIVERNR(hooku,   "Hook (US)","1992","Irem input_ports_America",hook,&driver_hook,ORIENTATION_DEFAULT)
+M92DRIVERNR(mysticri,"Mystic Riders input_ports_(World)","1992","Irem",gunhohki,0,ORIENTATION_DEFAULT)
+M92DRIVERNR(gunhohki,"Gun Hohki input_ports_(Japan)","1992","Irem",gunhohki,&driver_mysticri,ORIENTATION_DEFAULT)
+M92DRIVER(uccops  ,"Undercover Cops input_ports_(World)","1992","Irem",uccops,0,ORIENTATION_DEFAULT)
+M92DRIVER(uccopsj ,"Undercover Cops input_ports_(Japan)","1992","Irem",uccops,&driver_uccops,ORIENTATION_DEFAULT)
+M92DRIVER(rtypeleo,"R-Type Leo input_ports_(Japan)","1992","Irem",rtypeleo,0,ORIENTATION_DEFAULT)
+M92DRIVER(majtitl2,"Major Title 2 input_ports_(World)","1992","Irem",skingame,0,ORIENTATION_DEFAULT)
+M92DRIVER(skingame,"The Irem Skins Game (US set 1)","1992","Irem input_ports_America",skingame,&driver_majtitl2,ORIENTATION_DEFAULT)
+M92DRIVER(skingam2,"The Irem Skins Game (US set 2)","1992","Irem input_ports_America",skingame,&driver_majtitl2,ORIENTATION_DEFAULT)
+M92DRIVERNR(inthunt ,"In The Hunt input_ports_(World)","1993","Irem",inthunt,0,ORIENTATION_DEFAULT)
+M92DRIVERNR(kaiteids,"Kaitei Daisensou input_ports_(Japan)","1993","Irem",inthunt,&driver_inthunt,ORIENTATION_DEFAULT)
 
 /* Not working yet */
-M92DRIVER(nbbatman,"Ninja Baseball Batman (US)","1993","Irem America",nbbatman_input_ports,0,ORIENTATION_DEFAULT)
-M92DRIVER(leaguemn,"Yakyuu Kakutou League-Man (Japan)","1993","Irem",nbbatman_input_ports,&nbbatman_driver,ORIENTATION_DEFAULT)
+M92DRIVER(nbbatman,"Ninja Baseball Batman (US)","1993","Irem input_ports_America",nbbatman,0,ORIENTATION_DEFAULT)
+M92DRIVER(leaguemn,"Yakyuu Kakutou League-Man input_ports_(Japan)","1993","Irem",nbbatman,&driver_nbbatman,ORIENTATION_DEFAULT)
 
 /* Different machine driver for this one, it uses a different memory map */
-struct GameDriver lethalth_driver  =
+struct GameDriver driver_lethalth =
 {
 	__FILE__,
 	0,
@@ -2036,43 +2036,43 @@ struct GameDriver lethalth_driver  =
 	"1991",
 	"Irem",
 	"Bryan McPhail",
-	GAME_NO_SOUND,
+	0,
 	&lethalth_machine_driver,
 	memory_hooks,
-	lethalth_rom,
+	rom_lethalth,
 	m92_sound_decrypt, 0,
 	0,
 	0,
-	lethalth_input_ports,
+	input_ports_lethalth,
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
+	ORIENTATION_ROTATE_270 | GAME_NO_SOUND,
 	0,0
 };
 
-struct GameDriver thndblst_driver  =
+struct GameDriver driver_thndblst =
 {
 	__FILE__,
-	&lethalth_driver,
+	&driver_lethalth,
 	"thndblst",
 	"Thunder Blaster (Japan)",
 	"1991",
 	"Irem",
 	"Bryan McPhail",
-	GAME_NO_SOUND,
+	0,
 	&lethalth_machine_driver,
 	memory_hooks,
-	thndblst_rom,
+	rom_thndblst,
 	m92_sound_decrypt, 0,
 	0,
 	0,
-	lethalth_input_ports,
+	input_ports_lethalth,
 	0, 0, 0,
-	ORIENTATION_ROTATE_270,
+	ORIENTATION_ROTATE_270 | GAME_NO_SOUND,
 	0,0
 };
 
 /* Different machine driver for this one, it uses different graphics layout */
-struct GameDriver psoldier_driver  =
+struct GameDriver driver_psoldier =
 {
 	__FILE__,
 	0,
@@ -2081,16 +2081,16 @@ struct GameDriver psoldier_driver  =
 	"1993",
 	"Irem",
 	"Bryan McPhail",
-	GAME_NO_SOUND,
+	0,
 	&psoldier_machine_driver,
 	memory_hooks,
-	psoldier_rom,
+	rom_psoldier,
 	m92_sound_decrypt, 0,
 	0,
 	0,
-	psoldier_input_ports,
+	input_ports_psoldier,
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_NO_SOUND,
 	0,0
 };
 

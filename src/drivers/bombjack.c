@@ -94,18 +94,6 @@ int bombjack_soundlatch_r(int offset)
 	return res;
 }
 
-unsigned char *bombjack_sh_intflag;
-
-int bombjack_sh_intflag_r(int offset)
-{
-	/* to speed up the emulation, detect when the program is looping waiting */
-	/* for an interrupt, and force it in that case */
-	if (cpu_get_pc() == 0x0099 && (*bombjack_sh_intflag & 1) == 0)
-		cpu_spinuntil_int();
-
-	return *bombjack_sh_intflag;
-}
-
 
 
 static struct MemoryReadAddress readmem[] =
@@ -141,7 +129,6 @@ static struct MemoryWriteAddress writemem[] =
 
 static struct MemoryReadAddress bombjack_sound_readmem[] =
 {
-	{ 0x4390, 0x4390, bombjack_sh_intflag_r, &bombjack_sh_intflag },	/* kludge to speed up the emulation */
 	{ 0x0000, 0x1fff, MRA_ROM },
 	{ 0x4000, 0x43ff, MRA_RAM },
 	{ 0x6000, 0x6000, bombjack_soundlatch_r },
@@ -168,7 +155,7 @@ static struct IOWritePort bombjack_sound_writeport[] =
 };
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( bombjack )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
@@ -503,7 +490,7 @@ static void hisave(void)
 
 
 
-struct GameDriver bombjack_driver =
+struct GameDriver driver_bombjack =
 {
 	__FILE__,
 	0,
@@ -516,12 +503,12 @@ struct GameDriver bombjack_driver =
 	&machine_driver,
 	0,
 
-	bombjack_rom,
+	rom_bombjack,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_bombjack,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -530,10 +517,10 @@ struct GameDriver bombjack_driver =
 };
 
 /* this one has YOU ARE LUCY instead of LUCKY, so it's probably an older version */
-struct GameDriver bombjac2_driver =
+struct GameDriver driver_bombjac2 =
 {
 	__FILE__,
-	&bombjack_driver,
+	&driver_bombjack,
 	"bombjac2",
 	"Bomb Jack (set 2)",
 	"1984",
@@ -543,12 +530,12 @@ struct GameDriver bombjac2_driver =
 	&machine_driver,
 	0,
 
-	bombjac2_rom,
+	rom_bombjac2,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_bombjack,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_90,

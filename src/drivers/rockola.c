@@ -284,7 +284,7 @@ static int rockola_interrupt(void)
 
 
 /* Derived from Zarzon. Might not reflect the actual hardware. */
-INPUT_PORTS_START( sasuke_input_ports )
+INPUT_PORTS_START( sasuke )
     PORT_START  /* IN0 */
     PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY )
     PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
@@ -332,7 +332,7 @@ INPUT_PORTS_START( sasuke_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* connected to a counter - random number generator? */
 INPUT_PORTS_END
 
-INPUT_PORTS_START( satansat_input_ports )
+INPUT_PORTS_START( satansat )
     PORT_START  /* IN0 */
     PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT  | IPF_2WAY )
     PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
@@ -379,7 +379,7 @@ INPUT_PORTS_START( satansat_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )	/* connected to a counter - random number generator? */
 INPUT_PORTS_END
 
-INPUT_PORTS_START( vanguard_input_ports )
+INPUT_PORTS_START( vanguard )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON3 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON4 )
@@ -443,7 +443,7 @@ INPUT_PORTS_START( vanguard_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START1 )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( fantasy_input_ports )
+INPUT_PORTS_START( fantasy )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -507,7 +507,7 @@ INPUT_PORTS_START( fantasy_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START1 )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( pballoon_input_ports )
+INPUT_PORTS_START( pballoon )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -571,7 +571,7 @@ INPUT_PORTS_START( pballoon_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_START1 )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( nibbler_input_ports )
+INPUT_PORTS_START( nibbler )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* Slow down */
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )	/* debug command? */
@@ -914,7 +914,7 @@ ROM_START( sasuke )
 	ROM_LOAD( "mcs_c",        0x0000, 0x0800, 0xaff9743d )
 	ROM_LOAD( "mcs_d",        0x0800, 0x0800, 0x9c805120 )
 
-	ROM_REGION(0x0020)  /* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "sasuke.clr",   0x0000, 0x0020, 0xb70f34c1 )
 
 	/* no sound ROMs - the sound section is entirely analog */
@@ -939,7 +939,7 @@ ROM_START( satansat )
 	ROM_LOAD( "zarz135.73",   0x0000, 0x0800, 0xe837c62b )
 	ROM_LOAD( "zarz136.75",   0x0800, 0x0800, 0x83f61623 )
 
-	ROM_REGION(0x0020)  /* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "zarz138.03",   0x0000, 0x0020, 0x5dd6933a )
 
     ROM_REGION(0x1000)  /* sound data for Vanguard-style audio section */
@@ -966,7 +966,7 @@ ROM_START( zarzon )
 	ROM_LOAD( "zarz135.73",   0x0000, 0x0800, 0xe837c62b )
 	ROM_LOAD( "zarz136.75",   0x0800, 0x0800, 0x83f61623 )
 
-	ROM_REGION(0x0020)  /* color prom */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "zarz138.03",   0x0000, 0x0020, 0x5dd6933a )
 
     ROM_REGION(0x1000)  /* sound data for Vanguard-style audio section */
@@ -990,7 +990,7 @@ ROM_START( vanguard )
 	ROM_LOAD( "sk5_ic50.bin", 0x0000, 0x0800, 0xe7d4315b )
 	ROM_LOAD( "sk5_ic51.bin", 0x0800, 0x0800, 0x96e87858 )
 
-	ROM_REGION(0x0040)  /* color proms */
+	ROM_REGIONX( 0x0040, REGION_PROMS )
 	ROM_LOAD( "sk5_ic7.bin",  0x0000, 0x0020, 0xad782a73 ) /* foreground colors */
 	ROM_LOAD( "sk5_ic6.bin",  0x0020, 0x0020, 0x7dc9d450 ) /* background colors */
 
@@ -1020,7 +1020,7 @@ ROM_START( vangrdce )
 	ROM_LOAD( "sk5_ic50.bin", 0x0000, 0x0800, 0xe7d4315b )
 	ROM_LOAD( "sk5_ic51.bin", 0x0800, 0x0800, 0x96e87858 )
 
-	ROM_REGION(0x0040)  /* color proms */
+	ROM_REGIONX( 0x0040, REGION_PROMS )
 	ROM_LOAD( "sk5_ic7.bin",  0x0000, 0x0020, 0xad782a73 ) /* foreground colors */
 	ROM_LOAD( "sk5_ic6.bin",  0x0020, 0x0020, 0x7dc9d450 ) /* background colors */
 
@@ -1033,23 +1033,6 @@ ROM_START( vangrdce )
 	ROM_LOAD( "sk6_ic08.bin", 0x0800, 0x0800, 0x3b7e9d7c )
 	ROM_LOAD( "sk6_ic11.bin", 0x1000, 0x0800, 0xc36df041 )
 ROM_END
-
-
-static const char *vanguard_sample_names[] =
-{
-	"*vanguard",
-	"fire.wav",
-	"explsion.wav",
-	0
-};
-
-static const char *fantasy_sample_names[] =
-{
-	"*vanguard",
-	"explsion.wav",
-	0
-};
-
 
 ROM_START( fantasy )
 	ROM_REGION(0x10000)	/* 64k for code */
@@ -1068,7 +1051,7 @@ ROM_START( fantasy )
 	ROM_LOAD( "fs10ic50.bin",    0x0000, 0x1000, 0x86a801c3 )
 	ROM_LOAD( "fs11ic51.bin",    0x1000, 0x1000, 0x9dfff71c )
 
-	ROM_REGION(0x0040)  /* color proms */
+	ROM_REGIONX( 0x0040, REGION_PROMS )
 	ROM_LOAD( "fantasy.ic7",     0x0000, 0x0020, 0x361a5e99 ) /* foreground colors */
 	ROM_LOAD( "fantasy.ic6",     0x0020, 0x0020, 0x33d974f7 ) /* background colors */
 
@@ -1100,7 +1083,7 @@ ROM_START( fantasyj )
 	ROM_LOAD( "fs10ic50.bin",    0x0000, 0x1000, 0x86a801c3 )
 	ROM_LOAD( "fs11ic51.bin",    0x1000, 0x1000, 0x9dfff71c )
 
-	ROM_REGION(0x0040)  /* color proms */
+	ROM_REGIONX( 0x0040, REGION_PROMS )
 	ROM_LOAD( "fantasy.ic7",     0x0000, 0x0020, 0x361a5e99 ) /* foreground colors */
 	ROM_LOAD( "fantasy.ic6",     0x0020, 0x0020, 0x33d974f7 ) /* background colors */
 
@@ -1130,7 +1113,7 @@ ROM_START( pballoon )
 	ROM_LOAD( "sk8_ic50.bin", 0x0000, 0x1000, 0x560df07f )
 	ROM_LOAD( "sk8_ic51.bin", 0x1000, 0x1000, 0xd415de51 )
 
-	ROM_REGION(0x0040)  /* color proms */
+	ROM_REGIONX( 0x0040, REGION_PROMS )
 	ROM_LOAD( "sk8_ic7.bin",  0x0000, 0x0020, 0xef6c82a0 ) /* foreground colors */
 	ROM_LOAD( "sk8_ic6.bin",  0x0020, 0x0020, 0xeabc6a00 ) /* background colors */
 
@@ -1157,7 +1140,7 @@ ROM_START( nibbler )
 	ROM_LOAD( "g960-57.50",   0x0000, 0x1000, 0x01d4d0c2 )
 	ROM_LOAD( "g960-58.51",   0x1000, 0x1000, 0xfeff7faf )
 
-	ROM_REGION(0x0040)  /* color proms */
+	ROM_REGIONX( 0x0040, REGION_PROMS )
 	ROM_LOAD( "g70805.ic7",   0x0000, 0x0020, 0xa5709ff3 ) /* foreground colors */
 	ROM_LOAD( "g70804.ic6",   0x0020, 0x0020, 0xdacd592d ) /* background colors */
 
@@ -1184,7 +1167,7 @@ ROM_START( nibblera )
 	ROM_LOAD( "g960-57.50",   0x0000, 0x1000, 0x01d4d0c2 )
 	ROM_LOAD( "g960-58.51",   0x1000, 0x1000, 0xfeff7faf )
 
-	ROM_REGION(0x0040)  /* color proms */
+	ROM_REGIONX( 0x0040, REGION_PROMS )
 	ROM_LOAD( "g70805.ic7",   0x0000, 0x0020, 0xa5709ff3 ) /* foreground colors */
 	ROM_LOAD( "g70804.ic6",   0x0020, 0x0020, 0xdacd592d ) /* background colors */
 
@@ -1311,7 +1294,7 @@ static void nibbler_hisave(void)
 
 
 
-struct GameDriver sasuke_driver =
+struct GameDriver driver_sasuke =
 {
 	__FILE__,
 	0,
@@ -1320,24 +1303,24 @@ struct GameDriver sasuke_driver =
 	"1980",
 	"SNK",
 	"Dan Boris\nTheo Philips",
-	GAME_NO_SOUND,
+	0,
 	&sasuke_machine_driver,
 	0,
 
-	sasuke_rom,
+	rom_sasuke,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	sasuke_input_ports,
+	input_ports_sasuke,
 
-	PROM_MEMORY_REGION(2),0,0,
-	ORIENTATION_ROTATE_90,
+	0, 0, 0,
+	ORIENTATION_ROTATE_90 | GAME_NO_SOUND,
 
 	0, 0
 };
 
-struct GameDriver satansat_driver =
+struct GameDriver driver_satansat =
 {
 	__FILE__,
 	0,
@@ -1346,50 +1329,50 @@ struct GameDriver satansat_driver =
 	"1981",
 	"SNK",
 	"Dan Boris\nTheo Philips",
-	GAME_IMPERFECT_SOUND,
+	0,
 	&satansat_machine_driver,
 	0,
 
-	satansat_rom,
+	rom_satansat,
 	0, 0,
-	fantasy_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	satansat_input_ports,
+	input_ports_satansat,
 
-	PROM_MEMORY_REGION(2),0,0,
-	ORIENTATION_ROTATE_90,
+	0, 0, 0,
+	ORIENTATION_ROTATE_90 | GAME_IMPERFECT_SOUND,
 
 	0, 0
 };
 
-struct GameDriver zarzon_driver =
+struct GameDriver driver_zarzon =
 {
 	__FILE__,
-	&satansat_driver,
+	&driver_satansat,
 	"zarzon",
 	"Zarzon",
 	"1981",
 	"[SNK] (Taito America license)",
 	"Dan Boris\nTheo Philips",
-	GAME_IMPERFECT_SOUND,
+	0,
 	&satansat_machine_driver,
 	0,
 
-	zarzon_rom,
+	rom_zarzon,
 	0, 0,
-	fantasy_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	satansat_input_ports,
+	input_ports_satansat,
 
-	PROM_MEMORY_REGION(2),0,0,
-	ORIENTATION_ROTATE_90,
+	0, 0, 0,
+	ORIENTATION_ROTATE_90 | GAME_IMPERFECT_SOUND,
 
 	0, 0
 };
 
-struct GameDriver vanguard_driver =
+struct GameDriver driver_vanguard =
 {
 	__FILE__,
 	0,
@@ -1398,50 +1381,50 @@ struct GameDriver vanguard_driver =
 	"1981",
 	"SNK",
 	"Brian Levine (Vanguard emulator)\nBrad Oliver (MAME driver)\nMirko Buffoni (MAME driver)\nAndrew Scott",
-	GAME_IMPERFECT_SOUND,
+	0,
 	&vanguard_machine_driver,
 	0,
 
-	vanguard_rom,
+	rom_vanguard,
 	0, 0,
-	vanguard_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	vanguard_input_ports,
+	input_ports_vanguard,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
+	0, 0, 0,
+	ORIENTATION_ROTATE_90 | GAME_IMPERFECT_SOUND,
 
 	vanguard_hiload, vanguard_hisave
 };
 
-struct GameDriver vangrdce_driver =
+struct GameDriver driver_vangrdce =
 {
 	__FILE__,
-	&vanguard_driver,
+	&driver_vanguard,
 	"vangrdce",
 	"Vanguard (Centuri)",
 	"1981",
 	"SNK (Centuri license)",
 	"Brian Levine (Vanguard emulator)\nBrad Oliver (MAME driver)\nMirko Buffoni (MAME driver)\nAndrew Scott",
-	GAME_IMPERFECT_SOUND,
+	0,
 	&vanguard_machine_driver,
 	0,
 
-	vangrdce_rom,
+	rom_vangrdce,
 	0, 0,
-	vanguard_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	vanguard_input_ports,
+	input_ports_vanguard,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
+	0, 0, 0,
+	ORIENTATION_ROTATE_90 | GAME_IMPERFECT_SOUND,
 
 	vanguard_hiload, vanguard_hisave
 };
 
-struct GameDriver fantasy_driver =
+struct GameDriver driver_fantasy =
 {
 	__FILE__,
 	0,
@@ -1450,50 +1433,50 @@ struct GameDriver fantasy_driver =
 	"1981",
 	"[SNK] (Rock-ola license)",
 	"Nicola Salmoria\nBrian Levine\nMirko Buffoni",
-	GAME_IMPERFECT_SOUND,
+	0,
 	&fantasy_machine_driver,
 	0,
 
-	fantasy_rom,
+	rom_fantasy,
 	0, 0,
-	fantasy_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	fantasy_input_ports,
+	input_ports_fantasy,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
+	0, 0, 0,
+	ORIENTATION_ROTATE_90 | GAME_IMPERFECT_SOUND,
 
 	fantasy_hiload, fantasy_hisave
 };
 
-struct GameDriver fantasyj_driver =
+struct GameDriver driver_fantasyj =
 {
 	__FILE__,
-	&fantasy_driver,
+	&driver_fantasy,
 	"fantasyj",
 	"Fantasy (Japan)",
 	"1981",
 	"SNK",
 	"Nicola Salmoria\nBrian Levine\nMirko Buffoni",
-	GAME_IMPERFECT_SOUND,
+	0,
 	&fantasy_machine_driver,
 	0,
 
-	fantasyj_rom,
+	rom_fantasyj,
 	0, 0,
-	fantasy_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	fantasy_input_ports,
+	input_ports_fantasy,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
+	0, 0, 0,
+	ORIENTATION_ROTATE_90 | GAME_IMPERFECT_SOUND,
 
 	fantasy_hiload, fantasy_hisave
 };
 
-struct GameDriver pballoon_driver =
+struct GameDriver driver_pballoon =
 {
 	__FILE__,
 	0,
@@ -1502,24 +1485,24 @@ struct GameDriver pballoon_driver =
 	"1982",
 	"SNK",
 	"Nicola Salmoria\nBrian Levine\nMirko Buffoni",
-	GAME_IMPERFECT_SOUND,
+	0,
 	&pballoon_machine_driver,
 	0,
 
-	pballoon_rom,
+	rom_pballoon,
 	0, 0,
-	fantasy_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	pballoon_input_ports,
+	input_ports_pballoon,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
+	0, 0, 0,
+	ORIENTATION_ROTATE_90 | GAME_IMPERFECT_SOUND,
 
 	0, 0
 };
 
-struct GameDriver nibbler_driver =
+struct GameDriver driver_nibbler =
 {
 	__FILE__,
 	0,
@@ -1528,45 +1511,45 @@ struct GameDriver nibbler_driver =
 	"1982",
 	"Rock-ola",
 	"Nicola Salmoria\nBrian Levine\nMirko Buffoni\nMarco Cassili",
-	GAME_IMPERFECT_SOUND,
+	0,
 	&fantasy_machine_driver,
 	0,
 
-	nibbler_rom,
+	rom_nibbler,
 	0, 0,
-	fantasy_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	nibbler_input_ports,
+	input_ports_nibbler,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
+	0, 0, 0,
+	ORIENTATION_ROTATE_90 | GAME_IMPERFECT_SOUND,
 
 	nibbler_hiload, nibbler_hisave
 };
 
-struct GameDriver nibblera_driver =
+struct GameDriver driver_nibblera =
 {
 	__FILE__,
-	&nibbler_driver,
+	&driver_nibbler,
 	"nibblera",
 	"Nibbler (set 2)",
 	"1982",
 	"Rock-ola",
 	"Nicola Salmoria\nBrian Levine\nMirko Buffoni\nMarco Cassili",
-	GAME_IMPERFECT_SOUND,
+	0,
 	&fantasy_machine_driver,
 	0,
 
-	nibblera_rom,
+	rom_nibblera,
 	0, 0,
-	fantasy_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	nibbler_input_ports,
+	input_ports_nibbler,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
+	0, 0, 0,
+	ORIENTATION_ROTATE_90 | GAME_IMPERFECT_SOUND,
 
 	nibbler_hiload, nibbler_hisave
 };

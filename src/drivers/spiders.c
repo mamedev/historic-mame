@@ -233,7 +233,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 #endif
 
 
-INPUT_PORTS_START( spiders_input_ports )
+INPUT_PORTS_START( spiders )
     PORT_START      /* IN0 */
     PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
     PORT_BITX(0x02, 0x00, IP_ACTIVE_HIGH , "PS2 (Operator coin)", KEYCODE_4, IP_JOY_NONE )
@@ -433,7 +433,7 @@ ROM_END
 
 
 /* this is a newer version with just one bug fix */
-struct GameDriver spiders_driver =
+struct GameDriver driver_spiders =
 {
 	__FILE__,
 	0,
@@ -446,12 +446,12 @@ struct GameDriver spiders_driver =
 	&machine_driver,
 	0,
 
-	spiders_rom,
+	rom_spiders,
 	0, 0,
 	0,
 	0,
 
-	spiders_input_ports,
+	input_ports_spiders,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
@@ -459,10 +459,10 @@ struct GameDriver spiders_driver =
 	0,0
 };
 
-struct GameDriver spiders2_driver =
+struct GameDriver driver_spiders2 =
 {
 	__FILE__,
-	&spiders_driver,
+	&driver_spiders,
 	"spiders2",
 	"Spiders (set 2)",
 	"1981",
@@ -472,12 +472,12 @@ struct GameDriver spiders2_driver =
 	&machine_driver,
 	0,
 
-	spiders2_rom,
+	rom_spiders2,
 	0, 0,
 	0,
 	0,
 
-	spiders_input_ports,
+	input_ports_spiders,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,

@@ -157,7 +157,7 @@ static struct IOWritePort writeport[] =
 };
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( jrpacman )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
@@ -316,7 +316,7 @@ ROM_START( jrpacman )
 	ROM_LOAD( "jrp2c.bin",    0x0000, 0x2000, 0x0527ff9b )
 	ROM_LOAD( "jrp2e.bin",    0x2000, 0x2000, 0x73477193 )
 
-	ROM_REGION(0x0140)	/* color proms */
+	ROM_REGIONX( 0x0140, REGION_PROMS )
 	ROM_LOAD( "jrpacman.9e",  0x0000, 0x0020, 0x90012b3f ) /* palette low bits */
 	ROM_LOAD( "jrpacman.9f",  0x0020, 0x0020, 0x8300178e ) /* palette high bits */
 	ROM_LOAD( "jrpacman.9p",  0x0040, 0x0100, 0x9f6ea9d8 ) /* color lookup table */
@@ -452,7 +452,7 @@ static void hisave(void)
 
 
 
-struct GameDriver jrpacman_driver =
+struct GameDriver driver_jrpacman =
 {
 	__FILE__,
 	0,
@@ -465,14 +465,14 @@ struct GameDriver jrpacman_driver =
 	&machine_driver,
 	0,
 
-	jrpacman_rom,
+	rom_jrpacman,
 	jrpacman_decode, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_jrpacman,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave

@@ -52,6 +52,7 @@ void btime_vh_convert_color_prom(unsigned char *palette, unsigned short *colorta
 
 	/* Burger Time doesn't have a color PROM, but Hamburge has. */
 	/* This function is also used by Eggs. */
+	if (color_prom == 0) return;
 
 	for (i = 0;i < Machine->drv->total_colors;i++)
 	{

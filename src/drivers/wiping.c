@@ -144,7 +144,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 
 
-INPUT_PORTS_START( wiping_input_ports )
+INPUT_PORTS_START( wiping )
 	PORT_START	/* 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY )
@@ -210,7 +210,7 @@ INPUT_PORTS_START( wiping_input_ports )
 INPUT_PORTS_END
 
 /* identical apart from bonus life */
-INPUT_PORTS_START( rugrats_input_ports )
+INPUT_PORTS_START( rugrats )
 	PORT_START	/* 0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY )
@@ -384,7 +384,7 @@ ROM_START( wiping )
 	ROM_LOAD( "8",            0x0000, 0x1000, 0x601160f6 ) /* chars */
 	ROM_LOAD( "7",            0x1000, 0x2000, 0x2c2cc054 ) /* sprites */
 
-	ROM_REGION(0x0220)	/* color PROMs */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "wip-g13.bin",  0x0000, 0x0020, 0xb858b897 )	/* palette */
 	ROM_LOAD( "wip-f4.bin",   0x0020, 0x0100, 0x3f56c8d5 )	/* char lookup table */
 	ROM_LOAD( "wip-e11.bin",  0x0120, 0x0100, 0xe7400715 )	/* sprite lookup table */
@@ -411,7 +411,7 @@ ROM_START( rugrats )
 	ROM_LOAD( "rugr8d2",      0x0000, 0x1000, 0xa3dcaca5 ) /* chars */
 	ROM_LOAD( "rugr7c13",     0x1000, 0x2000, 0xfe1191dd ) /* sprites */
 
-	ROM_REGION(0x0220)	/* color PROMs */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "prom.13g",     0x0000, 0x0020, 0xf21238f0 )	/* palette */
 	ROM_LOAD( "prom.4f",      0x0020, 0x0100, 0xcfc90f3d )	/* char lookup table */
 	ROM_LOAD( "prom.11e",     0x0120, 0x0100, 0xcfc90f3d )	/* sprite lookup table */
@@ -493,7 +493,7 @@ static void wiping_hisave(void)
 	}
 }
 
-struct GameDriver wiping_driver =
+struct GameDriver driver_wiping =
 {
 	__FILE__,
 	0,
@@ -506,23 +506,23 @@ struct GameDriver wiping_driver =
 	&machine_driver,
 	0,
 
-	wiping_rom,
+	rom_wiping,
 	0, 0,
 	0,
 	0,
 
-	wiping_input_ports,
+	input_ports_wiping,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	wiping_hiload, wiping_hisave
 };
 
-struct GameDriver rugrats_driver =
+struct GameDriver driver_rugrats =
 {
 	__FILE__,
-	&wiping_driver,
+	&driver_wiping,
 	"rugrats",
 	"Rug Rats",
 	"1983",
@@ -532,14 +532,14 @@ struct GameDriver rugrats_driver =
 	&machine_driver,
 	0,
 
-	rugrats_rom,
+	rom_rugrats,
 	0, 0,
 	0,
 	0,
 
-	rugrats_input_ports,
+	input_ports_rugrats,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	wiping_hiload, wiping_hisave

@@ -178,7 +178,7 @@ int naughtyb_interrupt(void)
 	else return ignore_interrupt();
 }
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( naughtyb )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -362,7 +362,7 @@ ROM_START( naughtyb )
 	ROM_LOAD( "9.50",      0x3000, 0x0800, 0x8c8db764 )
 	ROM_LOAD( "10.49",     0x3800, 0x0800, 0xc97c97b9 )
 
-	ROM_REGION(0x0200)      /* color proms */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "6301-1.63", 0x0000, 0x0100, 0x98ad89a1 ) /* palette low bits */
 	ROM_LOAD( "6301-1.64", 0x0100, 0x0100, 0x909107d4 ) /* palette high bits */
 ROM_END
@@ -388,7 +388,7 @@ ROM_START( naughtya )
 	ROM_LOAD( "9.50",      0x3000, 0x0800, 0x8c8db764 )
 	ROM_LOAD( "10.49",     0x3800, 0x0800, 0xc97c97b9 )
 
-	ROM_REGION(0x0200)      /* color proms */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "6301-1.63", 0x0000, 0x0100, 0x98ad89a1 ) /* palette low bits */
 	ROM_LOAD( "6301-1.64", 0x0100, 0x0100, 0x909107d4 ) /* palette high bits */
 ROM_END
@@ -414,7 +414,7 @@ ROM_START( naughtyc )
 	ROM_LOAD( "nb9ic50",   0x3000, 0x0800, 0xd6949c27 )
 	ROM_LOAD( "10.49",     0x3800, 0x0800, 0xc97c97b9 )
 
-	ROM_REGION(0x0200)      /* color proms */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "6301-1.63", 0x0000, 0x0100, 0x98ad89a1 ) /* palette low bits */
 	ROM_LOAD( "6301-1.64", 0x0100, 0x0100, 0x909107d4 ) /* palette high bits */
 ROM_END
@@ -432,7 +432,7 @@ ROM_START( popflame )
 	ROM_LOAD( "ic29.pop",     0x2000, 0x1000, 0x7b54f60f )
 	ROM_LOAD( "ic38.pop",     0x3000, 0x1000, 0xdd2d9601 )
 
-	ROM_REGION(0x0200)      /* color proms */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "ic53",         0x0000, 0x0100, 0x6e66057f ) /* palette low bits */
 	ROM_LOAD( "ic54",         0x0100, 0x0100, 0x236bc771 ) /* palette high bits */
 ROM_END
@@ -450,7 +450,7 @@ ROM_START( popflama )
 	ROM_LOAD( "ic29.pop",     0x2000, 0x1000, 0x7b54f60f )
 	ROM_LOAD( "ic38.pop",     0x3000, 0x1000, 0xdd2d9601 )
 
-	ROM_REGION(0x0200)      /* color proms */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "ic53",         0x0000, 0x0100, 0x6e66057f ) /* palette low bits */
 	ROM_LOAD( "ic54",         0x0100, 0x0100, 0x236bc771 ) /* palette high bits */
 ROM_END
@@ -585,7 +585,7 @@ static void popflame_hisave (void)
 
 
 
-struct GameDriver naughtyb_driver =
+struct GameDriver driver_naughtyb =
 {
 	__FILE__,
 	0,
@@ -598,23 +598,23 @@ struct GameDriver naughtyb_driver =
 	&machine_driver,
 	0,
 
-	naughtyb_rom,
+	rom_naughtyb,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_naughtyb,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	naughtyb_hiload, naughtyb_hisave
 };
 
-struct GameDriver naughtya_driver =
+struct GameDriver driver_naughtya =
 {
 	__FILE__,
-	&naughtyb_driver,
+	&driver_naughtyb,
 	"naughtya",
 	"Naughty Boy (bootleg)",
 	"1982",
@@ -624,23 +624,23 @@ struct GameDriver naughtya_driver =
 	&machine_driver,
 	0,
 
-	naughtya_rom,
+	rom_naughtya,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_naughtyb,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	naughtyb_hiload, naughtyb_hisave
 };
 
-struct GameDriver naughtyc_driver =
+struct GameDriver driver_naughtyc =
 {
 	__FILE__,
-	&naughtyb_driver,
+	&driver_naughtyb,
 	"naughtyc",
 	"Naughty Boy (Cinematronics)",
 	"1982",
@@ -650,20 +650,20 @@ struct GameDriver naughtyc_driver =
 	&machine_driver,
 	0,
 
-	naughtyc_rom,
+	rom_naughtyc,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_naughtyb,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	naughtyb_hiload, naughtyb_hisave
 };
 
-struct GameDriver popflame_driver =
+struct GameDriver driver_popflame =
 {
 	__FILE__,
 	0,
@@ -676,23 +676,23 @@ struct GameDriver popflame_driver =
 	&popflame_machine_driver,
 	0,
 
-	popflame_rom,
+	rom_popflame,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_naughtyb,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	popflame_hiload, popflame_hisave
 };
 
-struct GameDriver popflama_driver =
+struct GameDriver driver_popflama =
 {
 	__FILE__,
-	&popflame_driver,
+	&driver_popflame,
 	"popflama",
 	"Pop Flamer (set 2)",
 	"1982",
@@ -702,14 +702,14 @@ struct GameDriver popflama_driver =
 	&popflame_machine_driver,
 	0,
 
-	popflama_rom,
+	rom_popflama,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_naughtyb,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	popflame_hiload, popflame_hisave

@@ -414,6 +414,10 @@ struct osd_bitmap *osd_new_bitmap(int width,int height,int depth)       /* ASG 9
 			return 0;
 		}
 
+		/* clear ALL bitmap, including safety area, to avoid garbage on right */
+		/* side of screen is width is not a multiple of 4 */
+		memset(bm,0,(height + 2 * safety) * rowlen);
+
 		if ((bitmap->line = malloc((height + 2 * safety) * sizeof(unsigned char *))) == 0)
 		{
 			free(bm);
@@ -422,7 +426,12 @@ struct osd_bitmap *osd_new_bitmap(int width,int height,int depth)       /* ASG 9
 		}
 
 		for (i = 0;i < height + 2 * safety;i++)
-			bitmap->line[i] = &bm[i * rowlen + safety];
+		{
+			if (depth == 16)
+				bitmap->line[i] = &bm[i * rowlen + 2*safety];
+			else
+				bitmap->line[i] = &bm[i * rowlen + safety];
+		}
 		bitmap->line += safety;
 
 		bitmap->_private = bm;
@@ -982,6 +991,9 @@ static void adjust_display(int xmin, int ymin, int xmax, int ymax, int depth)
 				xmin, ymin, xmax, ymax, skiplines, skipcolumns,gfx_display_lines,gfx_display_columns,xmultiply,ymultiply);
 
 	set_ui_visarea (skipcolumns, skiplines, skipcolumns+gfx_display_columns-1, skiplines+gfx_display_lines-1);
+
+	/* round to a multiple of 4 to avoid missing pixels on the right side */
+	gfx_display_columns  = (gfx_display_columns + 3) & ~3;
 }
 
 
@@ -2154,9 +2166,9 @@ void osd_update_video_and_audio(void)
 						frameskipadjust--;
 				}
 
-				while (frameskipadjust <= -3)
+				while (frameskipadjust <= -2)
 				{
-					frameskipadjust += 3;
+					frameskipadjust += 2;
 					if (frameskip < FRAMESKIP_LEVELS-1) frameskip++;
 				}
 			}

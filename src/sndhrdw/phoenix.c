@@ -212,8 +212,20 @@ void phoenix_sound_control_b_w(int offset,int data)
 
 
 
+static const char *phoenix_sample_names[] =
+{
+	"*phoenix",
+	"shot8.wav",
+	"death8.wav",
+	"phoenix1.wav",
+	"phoenix2.wav",
+	0	/* end of array */
+};
+
 int phoenix_sh_start(const struct MachineSound *msound)
 {
+	Machine->samples = readsamples(phoenix_sample_names,Machine->gamedrv->name);
+
 	channel0 = mixer_allocate_channel(MAX_VOLUME);
 	channel1 = mixer_allocate_channel(MAX_VOLUME);
 	channel2 = mixer_allocate_channel(NOISE_VOLUME);

@@ -109,8 +109,8 @@ static struct tms34010_config master_config =
 
 static struct MemoryReadAddress master_readmem[] =
 {
-	{ TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_master_videoram_r, &exterm_master_videoram },
-	{ TOBYTE(0x00c800e0), TOBYTE(0x00c800ef), exterm_master_speedup_r, &exterm_master_speedup },
+	{ TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_master_videoram_r },
+	{ TOBYTE(0x00c800e0), TOBYTE(0x00c800ef), exterm_master_speedup_r },
 	{ TOBYTE(0x00c00000), TOBYTE(0x00ffffff), MRA_BANK1 },
 	{ TOBYTE(0x01000000), TOBYTE(0x0100000f), MRA_NOP }, /* Off by one bug in RAM test, prevent log entry */
 	{ TOBYTE(0x01200000), TOBYTE(0x012fffff), exterm_host_data_r },
@@ -119,26 +119,32 @@ static struct MemoryReadAddress master_readmem[] =
 	{ TOBYTE(0x01480000), TOBYTE(0x0148000f), input_port_4_r },
 	{ TOBYTE(0x01800000), TOBYTE(0x01807fff), paletteram_word_r },
 	{ TOBYTE(0x01808000), TOBYTE(0x0180800f), MRA_NOP }, /* Off by one bug in RAM test, prevent log entry */
-	{ TOBYTE(0x02800000), TOBYTE(0x02807fff), MRA_BANK2, &eeprom, &eeprom_size },
+	{ TOBYTE(0x02800000), TOBYTE(0x02807fff), MRA_BANK2 },
 	{ TOBYTE(0x03000000), TOBYTE(0x03ffffff), exterm_coderom_r },
 	{ TOBYTE(0x3f000000), TOBYTE(0x3fffffff), exterm_coderom_r },
 	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), TMS34010_io_register_r },
-	{ TOBYTE(0xff000000), TOBYTE(0xffffffff), MRA_BANK3, &exterm_code_rom, &code_rom_size },
+	{ TOBYTE(0xff000000), TOBYTE(0xffffffff), MRA_BANK3 },
 	{ -1 }  /* end of table */
 };
 
+static void placeholder(int offset,int data)
+{}
+
 static struct MemoryWriteAddress master_writemem[] =
 {
+	{ TOBYTE(0x00000000), TOBYTE(0x000fffff), placeholder, &exterm_master_videoram },
 /*{ TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_master_videoram_16_w },	 OR		*/
 /*{ TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_master_videoram_8_w },				*/
 	{ TOBYTE(0x00c00000), TOBYTE(0x00ffffff), MWA_BANK1 },
+	{ TOBYTE(0x00c800e0), TOBYTE(0x00c800ef), placeholder, &exterm_master_speedup },
 	{ TOBYTE(0x01000000), TOBYTE(0x013fffff), exterm_host_data_w },
 	{ TOBYTE(0x01500000), TOBYTE(0x0150000f), exterm_output_port_0_w },
 	{ TOBYTE(0x01580000), TOBYTE(0x0158000f), gottlieb_sh_w },
 	{ TOBYTE(0x015c0000), TOBYTE(0x015c000f), watchdog_reset_w },
 	{ TOBYTE(0x01800000), TOBYTE(0x01807fff), exterm_paletteram_w, &paletteram },
-	{ TOBYTE(0x02800000), TOBYTE(0x02807fff), MWA_BANK2 }, /* EEPROM */
+	{ TOBYTE(0x02800000), TOBYTE(0x02807fff), MWA_BANK2, &eeprom, &eeprom_size }, /* EEPROM */
 	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), TMS34010_io_register_w },
+	{ TOBYTE(0xff000000), TOBYTE(0xffffffff), MWA_BANK3, &exterm_code_rom, &code_rom_size },
 	{ -1 }  /* end of table */
 };
 
@@ -154,7 +160,7 @@ static struct tms34010_config slave_config =
 
 static struct MemoryReadAddress slave_readmem[] =
 {
-	{ TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_slave_videoram_r, &exterm_slave_videoram },
+	{ TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_slave_videoram_r },
 	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), TMS34010_io_register_r },
 	{ TOBYTE(0xff800000), TOBYTE(0xffffffff), MRA_BANK4 },
 	{ -1 }  /* end of table */
@@ -162,6 +168,7 @@ static struct MemoryReadAddress slave_readmem[] =
 
 static struct MemoryWriteAddress slave_writemem[] =
 {
+	{ TOBYTE(0x00000000), TOBYTE(0x000fffff), placeholder, &exterm_slave_videoram },
 /*{ TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_slave_videoram_16_w },      OR		*/
 /*{ TOBYTE(0x00000000), TOBYTE(0x000fffff), exterm_slave_videoram_8_w },       OR		*/
 	{ TOBYTE(0xc0000000), TOBYTE(0xc00001ff), TMS34010_io_register_w },
@@ -209,7 +216,7 @@ static struct MemoryWriteAddress sound_ym2151_writemem[] =
 
 
 
-INPUT_PORTS_START( exterm_input_ports )
+INPUT_PORTS_START( exterm )
 
 	PORT_START      /* IN0 LO */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -441,7 +448,7 @@ void driver_init(void)
 }
 
 
-struct GameDriver exterm_driver =
+struct GameDriver driver_exterm =
 {
 	__FILE__,
 	0,
@@ -450,19 +457,19 @@ struct GameDriver exterm_driver =
 	"1989",
 	"Gottlieb / Premier Technology",
 	"Zsolt Vasvari\nAlex Pasadyn",
-	GAME_REQUIRES_16BIT,
+	0,
 	&machine_driver,
 	driver_init,
 
-	exterm_rom,
+	rom_exterm,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	exterm_input_ports,
+	input_ports_exterm,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_REQUIRES_16BIT,
 
 	hiload, hisave
 };

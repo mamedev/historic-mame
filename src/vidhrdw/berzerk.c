@@ -19,28 +19,25 @@ static int collision = 0;
 
 INLINE void copy_byte(int x, int y, int data, int col)
 {
-	char fore, back;
-	unsigned char *line1, *line2;
+	UINT16 fore, back;
 
 
 	if (y < 32)  return;
 
 	fore  = Machine->pens[(col >> 4) & 0x0f];
 	back  = Machine->pens[0];
-	line1 = &(Machine->scrbitmap->line[y][x]);
-	line2 = &(tmpbitmap->line[y][x]);
 
-	*line1 = *line2 = (data & 0x80) ? fore : back;  line1++;  line2++;
-	*line1 = *line2 = (data & 0x40) ? fore : back;  line1++;  line2++;
-	*line1 = *line2 = (data & 0x20) ? fore : back;  line1++;  line2++;
-	*line1 = *line2 = (data & 0x10) ? fore : back;  line1++;  line2++;
+	plot_pixel(Machine->scrbitmap, x  , y, (data & 0x80) ? fore : back);
+	plot_pixel(Machine->scrbitmap, x+1, y, (data & 0x40) ? fore : back);
+	plot_pixel(Machine->scrbitmap, x+2, y, (data & 0x20) ? fore : back);
+	plot_pixel(Machine->scrbitmap, x+3, y, (data & 0x10) ? fore : back);
 
 	fore  = Machine->pens[col & 0x0f];
 
-	*line1 = *line2 = (data & 0x08) ? fore : back;  line1++;  line2++;
-	*line1 = *line2 = (data & 0x04) ? fore : back;  line1++;  line2++;
-	*line1 = *line2 = (data & 0x02) ? fore : back;  line1++;  line2++;
-	*line1 = *line2 = (data & 0x01) ? fore : back;
+	plot_pixel(Machine->scrbitmap, x+4, y, (data & 0x08) ? fore : back);
+	plot_pixel(Machine->scrbitmap, x+5, y, (data & 0x04) ? fore : back);
+	plot_pixel(Machine->scrbitmap, x+6, y, (data & 0x02) ? fore : back);
+	plot_pixel(Machine->scrbitmap, x+7, y, (data & 0x01) ? fore : back);
 }
 
 
@@ -55,16 +52,6 @@ void berzerk_videoram_w(int offset,int data)
 
 	y = (offset >> 5);
 	x = (offset & 0x1f) << 3;
-
-	osd_mark_dirty(x,y,x+8,y,0);
-
-    /* optimize the most common case--all blank */
-	if (data == 0)
-	{
-		memset(&tmpbitmap->line[y][x],Machine->pens[0],8);
-		memset(&Machine->scrbitmap->line[y][x],Machine->pens[0],8);
-		return;
-	}
 
     copy_byte(x, y, data, colorram[coloroffset]);
 }
@@ -81,15 +68,13 @@ void berzerk_colorram_w(int offset,int data)
 	y = ((offset >> 3) & 0xfc);
 	x = (offset & 0x1f) << 3;
 
-	osd_mark_dirty(x,y,x+7,y+3,0);
-
 	for (i = 0; i < 4; i++, y++)
 	{
-		int dat = videoram[(y << 5) | (x >> 3)];
+		int byte = videoram[(y << 5) | (x >> 3)];
 
-		if (dat)
+		if (byte)
 		{
-			copy_byte(x, y, dat, data);
+			copy_byte(x, y, byte, data);
 		}
 	}
 }
@@ -181,3 +166,24 @@ int berzerk_collision_r(int offset)
 	return ret | berzerk_irq_end_of_screen;
 }
 
+
+/***************************************************************************
+
+  Draw the game screen in the given osd_bitmap.
+  To be used by bitmapped games not using sprites.
+
+***************************************************************************/
+void berzerk_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
+{
+	if (full_refresh)
+	{
+		/* redraw bitmap */
+
+		int offs;
+
+		for (offs = 0; offs < videoram_size; offs++)
+		{
+			berzerk_videoram_w(offs, videoram[offs]);
+		}
+	}
+}

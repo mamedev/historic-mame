@@ -112,7 +112,7 @@ void jedi_rom_banksel( int offset, int data);
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x07ff, MRA_RAM },
-    { 0x0800, 0x08ff, MRA_RAM, &jedi_nvRAM },
+    { 0x0800, 0x08ff, MRA_RAM },
     { 0x0C00, 0x0C00, input_port_0_r },
     { 0x0C01, 0x0C01, jedi_mainstat_r }, /* IN1 */
     { 0x1400, 0x1400, jedi_soundacklatch_r },
@@ -174,7 +174,7 @@ static struct MemoryWriteAddress writemem2[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( jedi )
     PORT_START  /* IN0 */
     PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_BUTTON3 )
     PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON2 )
@@ -385,7 +385,7 @@ static void novram_save(void)
 }
 
 
-struct GameDriver jedi_driver =
+struct GameDriver driver_jedi =
 {
 	__FILE__,
 	0,
@@ -398,12 +398,12 @@ struct GameDriver jedi_driver =
 	&machine_driver,
 	0,
 
-	jedi_rom,
+	rom_jedi,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_jedi,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

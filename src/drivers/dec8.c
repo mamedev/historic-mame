@@ -1048,7 +1048,7 @@ static struct MemoryWriteAddress csilver_s_writemem[] =
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_COCKTAIL ) \
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_COCKTAIL )
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( cobracom )
 	PORT_START /* Player 1 controls */
 	PLAYER1_JOYSTICK
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -1122,7 +1122,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x80, "On" )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( ghostb_input_ports )
+INPUT_PORTS_START( ghostb )
 	PORT_START	/* Player 1 controls */
 	PLAYER1_JOYSTICK
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -1198,7 +1198,7 @@ INPUT_PORTS_START( ghostb_input_ports )
 //	PORT_DIPSETTING(    0x00, "On" )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( srdarwin_input_ports )
+INPUT_PORTS_START( srdarwin )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY )
@@ -1263,7 +1263,7 @@ INPUT_PORTS_START( srdarwin_input_ports )
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 ) /* Fake */
 INPUT_PORTS_END
 
-INPUT_PORTS_START( gondo_input_ports )
+INPUT_PORTS_START( gondo )
 	PORT_START	/* Player 1 controls */
 	PLAYER1_JOYSTICK
 	/* Top 4 bits are rotary controller */
@@ -1342,7 +1342,7 @@ INPUT_PORTS_START( gondo_input_ports )
 	PORT_DIPSETTING(    0x80, "On" )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( oscar_input_ports )
+INPUT_PORTS_START( oscar )
 	PORT_START	/* Player 1 controls */
 	PLAYER1_JOYSTICK
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -1415,7 +1415,7 @@ INPUT_PORTS_START( oscar_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( No ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( lastmiss_input_ports )
+INPUT_PORTS_START( lastmiss )
 	PORT_START	/* Player 1 controls */
 	PLAYER1_JOYSTICK
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -1480,7 +1480,7 @@ INPUT_PORTS_START( lastmiss_input_ports )
 	PORT_DIPSETTING(    0x80, "On" )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( shackled_input_ports )
+INPUT_PORTS_START( shackled )
 	PORT_START	/* Player 1 controls */
 	PLAYER1_JOYSTICK
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -1545,7 +1545,7 @@ INPUT_PORTS_START( shackled_input_ports )
 	PORT_DIPSETTING(    0x80, "On" )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( csilver_input_ports )
+INPUT_PORTS_START( csilver )
 	PORT_START	/* Player 1 controls */
 	PLAYER1_JOYSTICK
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -1610,7 +1610,7 @@ INPUT_PORTS_START( csilver_input_ports )
 	PORT_DIPSETTING(    0x80, "On" )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( garyoret_input_ports )
+INPUT_PORTS_START( garyoret )
 	PORT_START	/* Player 1 controls */
 	PLAYER1_JOYSTICK
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_BUTTON1 )
@@ -2490,7 +2490,7 @@ ROM_START( ghostb )
 	ROM_REGION(0x10000)	/* 64K for sound CPU */
 	ROM_LOAD( "dz-06.rom", 0x8000, 0x8000, 0x798f56df )
 
-	ROM_REGION_DISPOSE(0x800)	/* Colour proms */
+	ROM_REGIONX( 0x0800, REGION_PROMS )
 	ROM_LOAD( "dz19a.10d", 0x0000, 0x0400, 0x47e1f83b )
 	ROM_LOAD( "dz20a.11d", 0x0400, 0x0400, 0xd8fe2d99 )
 ROM_END
@@ -2523,7 +2523,7 @@ ROM_START( ghostb3 )
 	ROM_REGION(0x10000)	/* 64K for sound CPU */
 	ROM_LOAD( "dz-06.rom", 0x8000, 0x8000, 0x798f56df )
 
-	ROM_REGION_DISPOSE(0x800)	/* Colour proms */
+	ROM_REGIONX( 0x0800, REGION_PROMS )
 	ROM_LOAD( "dz19a.10d", 0x0000, 0x0400, 0x47e1f83b )
 	ROM_LOAD( "dz20a.11d", 0x0400, 0x0400, 0xd8fe2d99 )
 ROM_END
@@ -2555,7 +2555,7 @@ ROM_START( meikyuh )
 	ROM_REGION(0x10000)	/* 64K for sound CPU */
 	ROM_LOAD( "dw-05.rom", 0x8000, 0x8000, 0xc28c4d82 )
 
-	ROM_REGION_DISPOSE(0x800)	/* Colour proms */
+	ROM_REGIONX( 0x0800, REGION_PROMS )
 	ROM_LOAD( "dz19a.10d", 0x0000, 0x0400, 0x00000000 ) /* Not the real ones! */
 	ROM_LOAD( "dz20a.11d", 0x0400, 0x0400, 0x00000000 ) /* These are from ghostbusters */
 ROM_END
@@ -3242,7 +3242,7 @@ static int csilver_hiload(void)
 
 /******************************************************************************/
 
-struct GameDriver cobracom_driver =
+struct GameDriver driver_cobracom =
 {
 	__FILE__,
 	0,
@@ -3255,12 +3255,12 @@ struct GameDriver cobracom_driver =
 	&cobra_machine_driver,
 	0,
 
-	cobracom_rom,
+	rom_cobracom,
 	0, 0,
 	0,
 	0,
 
-	input_ports,
+	input_ports_cobracom,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -3268,7 +3268,7 @@ struct GameDriver cobracom_driver =
 	cobracom_hiload, cobracom_hisave
 };
 
-struct GameDriver ghostb_driver =
+struct GameDriver driver_ghostb =
 {
 	__FILE__,
 	0,
@@ -3281,23 +3281,23 @@ struct GameDriver ghostb_driver =
 	&ghostb_machine_driver,
 	0,
 
-	ghostb_rom,
+	rom_ghostb,
 	0, ghostb_decode,
 	0,
 	0,
 
-	ghostb_input_ports,
+	input_ports_ghostb,
 
-	PROM_MEMORY_REGION(3), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	ghostb_hiload, ghostb_hisave
 };
 
-struct GameDriver ghostb3_driver =
+struct GameDriver driver_ghostb3 =
 {
 	__FILE__,
-	&ghostb_driver,
+	&driver_ghostb,
 	"ghostb3",
 	"The Real Ghostbusters (US 3 Players)",
 	"1987",
@@ -3307,23 +3307,23 @@ struct GameDriver ghostb3_driver =
 	&ghostb_machine_driver,
 	0,
 
-	ghostb3_rom,
+	rom_ghostb3,
 	0, ghostb_decode,
 	0,
 	0,
 
-	ghostb_input_ports,
+	input_ports_ghostb,
 
-	PROM_MEMORY_REGION(3), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	ghostb3_hiload, ghostb3_hisave
 };
 
-struct GameDriver meikyuh_driver =
+struct GameDriver driver_meikyuh =
 {
 	__FILE__,
-	&ghostb_driver,
+	&driver_ghostb,
 	"meikyuh",
 	"Meikyuu Hunter G (Japan)",
 	"1987",
@@ -3333,20 +3333,20 @@ struct GameDriver meikyuh_driver =
 	&ghostb_machine_driver,
 	0,
 
-	meikyuh_rom,
+	rom_meikyuh,
 	meikyuh_patch, 0,
 	0,
 	0,
 
-	ghostb_input_ports,
+	input_ports_ghostb,
 
-	PROM_MEMORY_REGION(3), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	meikyuh_hiload, meikyuh_hisave
 };
 
-struct GameDriver srdarwin_driver =
+struct GameDriver driver_srdarwin =
 {
 	__FILE__,
 	0,
@@ -3359,12 +3359,12 @@ struct GameDriver srdarwin_driver =
 	&srdarwin_machine_driver,
 	0,
 
-	srdarwin_rom,
+	rom_srdarwin,
 	0, deco222_decode,
 	0,
 	0,
 
-	srdarwin_input_ports,
+	input_ports_srdarwin,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
@@ -3372,7 +3372,7 @@ struct GameDriver srdarwin_driver =
 	srdarwin_hiload, srdarwin_hisave
 };
 
-struct GameDriver gondo_driver =
+struct GameDriver driver_gondo =
 {
 	__FILE__,
 	0,
@@ -3385,12 +3385,12 @@ struct GameDriver gondo_driver =
 	&gondo_machine_driver,
 	0,
 
-	gondo_rom,
+	rom_gondo,
 	0, 0,
 	0,
 	0,
 
-	gondo_input_ports,
+	input_ports_gondo,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
@@ -3398,10 +3398,10 @@ struct GameDriver gondo_driver =
 	gondo_hiload, gondo_hisave
 };
 
-struct GameDriver makyosen_driver =
+struct GameDriver driver_makyosen =
 {
 	__FILE__,
-	&gondo_driver,
+	&driver_gondo,
 	"makyosen",
 	"Makyou Senshi (Japan)",
 	"1987",
@@ -3411,12 +3411,12 @@ struct GameDriver makyosen_driver =
 	&gondo_machine_driver,
 	0,
 
-	makyosen_rom,
+	rom_makyosen,
 	0, 0,
 	0,
 	0,
 
-	gondo_input_ports,
+	input_ports_gondo,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
@@ -3424,7 +3424,7 @@ struct GameDriver makyosen_driver =
 	makyo_hiload, makyo_hisave
 };
 
-struct GameDriver oscar_driver =
+struct GameDriver driver_oscar =
 {
 	__FILE__,
 	0,
@@ -3437,12 +3437,12 @@ struct GameDriver oscar_driver =
 	&oscar_machine_driver,
 	0,
 
-	oscar_rom,
+	rom_oscar,
 	0, deco222_decode,
 	0,
 	0,
 
-	oscar_input_ports,
+	input_ports_oscar,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -3450,10 +3450,10 @@ struct GameDriver oscar_driver =
 	oscar_hiload, oscar_hisave
 };
 
-struct GameDriver oscarj_driver =
+struct GameDriver driver_oscarj =
 {
 	__FILE__,
-	&oscar_driver,
+	&driver_oscar,
 	"oscarj",
 	"Psycho-Nics Oscar (Japan)",
 	"1987",
@@ -3463,12 +3463,12 @@ struct GameDriver oscarj_driver =
 	&oscar_machine_driver,
 	0,
 
-	oscarj_rom,
+	rom_oscarj,
 	0, deco222_decode,
 	0,
 	0,
 
-	oscar_input_ports,
+	input_ports_oscar,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -3476,7 +3476,7 @@ struct GameDriver oscarj_driver =
 	oscar_hiload, oscar_hisave
 };
 
-struct GameDriver lastmiss_driver =
+struct GameDriver driver_lastmiss =
 {
 	__FILE__,
 	0,
@@ -3489,12 +3489,12 @@ struct GameDriver lastmiss_driver =
 	&lastmiss_machine_driver,
 	0,
 
-	lastmiss_rom,
+	rom_lastmiss,
 	0, 0,
 	0,
 	0,
 
-	lastmiss_input_ports,
+	input_ports_lastmiss,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
@@ -3502,10 +3502,10 @@ struct GameDriver lastmiss_driver =
 	lastmiss_hiload, lastmiss_hisave
 };
 
-struct GameDriver lastmss2_driver =
+struct GameDriver driver_lastmss2 =
 {
 	__FILE__,
-	&lastmiss_driver,
+	&driver_lastmiss,
 	"lastmss2",
 	"Last Mission (US revision 5)",
 	"1986",
@@ -3515,12 +3515,12 @@ struct GameDriver lastmss2_driver =
 	&lastmiss_machine_driver,
 	0,
 
-	lastmss2_rom,
+	rom_lastmss2,
 	0, 0,
 	0,
 	0,
 
-	lastmiss_input_ports,
+	input_ports_lastmiss,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
@@ -3528,7 +3528,7 @@ struct GameDriver lastmss2_driver =
 	lastmiss_hiload, lastmiss_hisave
 };
 
-struct GameDriver shackled_driver =
+struct GameDriver driver_shackled =
 {
 	__FILE__,
 	0,
@@ -3541,12 +3541,12 @@ struct GameDriver shackled_driver =
 	&shackled_machine_driver,
 	0,
 
-	shackled_rom,
+	rom_shackled,
 	0, 0,
 	0,
 	0,
 
-	shackled_input_ports,
+	input_ports_shackled,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -3554,10 +3554,10 @@ struct GameDriver shackled_driver =
 	shackled_hiload, shackled_hisave
 };
 
-struct GameDriver breywood_driver =
+struct GameDriver driver_breywood =
 {
 	__FILE__,
-	&shackled_driver,
+	&driver_shackled,
 	"breywood",
 	"Breywood (Japan)",
 	"1986",
@@ -3567,12 +3567,12 @@ struct GameDriver breywood_driver =
 	&shackled_machine_driver,
 	0,
 
-	breywood_rom,
+	rom_breywood,
 	0, 0,
 	0,
 	0,
 
-	shackled_input_ports,
+	input_ports_shackled,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -3580,7 +3580,7 @@ struct GameDriver breywood_driver =
 	breywood_hiload, shackled_hisave
 };
 
-struct GameDriver csilver_driver =
+struct GameDriver driver_csilver =
 {
 	__FILE__,
 	0,
@@ -3593,12 +3593,12 @@ struct GameDriver csilver_driver =
 	&csilver_machine_driver,
 	0,
 
-	csilver_rom,
+	rom_csilver,
 	0, 0,
 	0,
 	0,
 
-	csilver_input_ports,
+	input_ports_csilver,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -3606,7 +3606,7 @@ struct GameDriver csilver_driver =
 	csilver_hiload, csilver_hisave
 };
 
-struct GameDriver garyoret_driver =
+struct GameDriver driver_garyoret =
 {
 	__FILE__,
 	0,
@@ -3619,12 +3619,12 @@ struct GameDriver garyoret_driver =
 	&garyoret_machine_driver,
 	0,
 
-	garyoret_rom,
+	rom_garyoret,
 	0, 0,
 	0,
 	0,
 
-	garyoret_input_ports,
+	input_ports_garyoret,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

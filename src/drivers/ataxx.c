@@ -822,7 +822,7 @@ void ataxx_init_machine(void)
 
 ************************************************************************/
 
-INPUT_PORTS_START( input_ports_ataxx )
+INPUT_PORTS_START( ataxx )
 	PORT_START /* (0xf7) */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SLAVEHALT )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_VBLANK )
@@ -899,7 +899,7 @@ ROM_START( ataxx )
     /* Empty / not used */
 ROM_END
 
-struct GameDriver ataxx_driver =
+struct GameDriver driver_ataxx =
 {
 	__FILE__,
 	0,
@@ -908,10 +908,10 @@ struct GameDriver ataxx_driver =
 	"1990",
 	LELAND,
 	"Paul Leaman\nScott Kelley",
-	GAME_NOT_WORKING,
+	0,
     &ataxx_kludge_machine,
 	0,
-	ataxx_rom,
+	rom_ataxx,
 	0, 0,
 	0,
 	0,
@@ -919,7 +919,7 @@ struct GameDriver ataxx_driver =
 	input_ports_ataxx,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
     ataxx_hiload, ataxx_hisave
 };
 
@@ -950,19 +950,19 @@ ROM_START( ataxxa )
     /* Empty / not used */
 ROM_END
 
-struct GameDriver ataxxa_driver =
+struct GameDriver driver_ataxxa =
 {
 	__FILE__,
-    &ataxx_driver,
+    &driver_ataxx,
     "ataxxa",
     "Ataxx (Set 2)",
 	"1990",
 	LELAND,
 	"Paul Leaman\nScott Kelley",
-	GAME_NOT_WORKING,
+	0,
 	&ataxx_machine,
 	0,
-    ataxxa_rom,
+    rom_ataxxa,
 	0, 0,
 	0,
 	0,
@@ -970,7 +970,7 @@ struct GameDriver ataxxa_driver =
 	input_ports_ataxx,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
     ataxx_hiload, ataxx_hisave
 };
 
@@ -980,7 +980,7 @@ struct GameDriver ataxxa_driver =
 
 ***************************************************************************/
 
-INPUT_PORTS_START( input_ports_indyheat )
+INPUT_PORTS_START( indyheat )
 	PORT_START /* (0xf7) */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SLAVEHALT )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_VBLANK )
@@ -1056,7 +1056,7 @@ ROM_START( indyheat )
     ROM_LOAD( "u69_27c.010",   0x20000, 0x20000, 0xaa39fcb3)
 ROM_END
 
-struct GameDriver indyheat_driver =
+struct GameDriver driver_indyheat =
 {
 	__FILE__,
 	0,
@@ -1065,17 +1065,17 @@ struct GameDriver indyheat_driver =
     "1991",
 	LELAND,
     "Paul Leaman",
-	GAME_NOT_WORKING,
+	0,
     &ataxx_machine,
 	0,
-    indyheat_rom,
+    rom_indyheat,
 	0, 0,
 	0,
 	0,
 
     input_ports_indyheat,
     0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
     ataxx_hiload, ataxx_hisave
 };
 
@@ -1085,7 +1085,7 @@ struct GameDriver indyheat_driver =
 
 ***************************************************************************/
 
-INPUT_PORTS_START( input_ports_wsf )
+INPUT_PORTS_START( wsf )
 	PORT_START /* (0xf7) */
     PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_SLAVEHALT )
     PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_VBLANK )
@@ -1177,7 +1177,7 @@ ROM_START( wsf )
     ROM_LOAD( "30010-01.u69",   0x20000, 0x10000, 0xb4ed2d3b)
 ROM_END
 
-struct GameDriver wsf_driver =
+struct GameDriver driver_wsf =
 {
 	__FILE__,
 	0,
@@ -1186,10 +1186,10 @@ struct GameDriver wsf_driver =
 	"1990",
 	LELAND,
     "Paul Leaman",
-	GAME_NOT_WORKING,
+	0,
     &ataxx_machine,
 	0,
-    wsf_rom,
+    rom_wsf,
 	0, 0,
 	0,
 	0,
@@ -1197,6 +1197,6 @@ struct GameDriver wsf_driver =
     input_ports_wsf,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
     ataxx_hiload, ataxx_hisave
 };

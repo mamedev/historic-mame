@@ -74,7 +74,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x000000, 0x03ffff, MRA_ROM },
 	{ 0x100000, 0x10000b, blockout_input_r },
 	{ 0x180000, 0x1bffff, blockout_videoram_r },
-	{ 0x1d4000, 0x1dffff, MRA_BANK1, &ram_blockout },	/* work RAM */
+	{ 0x1d4000, 0x1dffff, MRA_BANK1 },	/* work RAM */
 	{ 0x1f4000, 0x1fffff, MRA_BANK2 },	/* work RAM */
 	{ 0x200000, 0x207fff, blockout_frontvideoram_r },
 	{ 0x208000, 0x21ffff, MRA_BANK3 },	/* ??? */
@@ -87,7 +87,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x000000, 0x03ffff, MWA_ROM },
 	{ 0x100014, 0x100017, blockout_sound_command_w },
 	{ 0x180000, 0x1bffff, blockout_videoram_w, &blockout_videoram },
-	{ 0x1d4000, 0x1dffff, MWA_BANK1 },	/* work RAM */
+	{ 0x1d4000, 0x1dffff, MWA_BANK1, &ram_blockout },	/* work RAM */
 	{ 0x1f4000, 0x1fffff, MWA_BANK2 },	/* work RAM */
 	{ 0x200000, 0x207fff, blockout_frontvideoram_w, &blockout_frontvideoram },
 	{ 0x208000, 0x21ffff, MWA_BANK3 },	/* ??? */
@@ -117,7 +117,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 };
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( blockout )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
@@ -348,7 +348,7 @@ static void hisave(void)
 
 
 
-struct GameDriver blockout_driver =
+struct GameDriver driver_blockout =
 {
 	__FILE__,
 	0,
@@ -361,22 +361,22 @@ struct GameDriver blockout_driver =
 	&machine_driver,
 	0,
 
-	blockout_rom,
+	rom_blockout,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_blockout,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	hiload, hisave /* hsc 12/1/98 */
 };
 
-struct GameDriver blckout2_driver =
+struct GameDriver driver_blckout2 =
 {
 	__FILE__,
-	&blockout_driver,
+	&driver_blockout,
 	"blckout2",
 	"Block Out (set 2)",
 	"1989",
@@ -386,12 +386,12 @@ struct GameDriver blckout2_driver =
 	&machine_driver,
 	0,
 
-	blckout2_rom,
+	rom_blckout2,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_blockout,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

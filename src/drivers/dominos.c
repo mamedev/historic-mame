@@ -64,7 +64,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ -1 }	/* end of table */
 };
 
-INPUT_PORTS_START( dominos_input_ports )
+INPUT_PORTS_START( dominos )
 		PORT_START		/* DSW - fake port, gets mapped to Dominos ports */
 		PORT_DIPNAME( 0x03, 0x01, "Points To Win" )
 		PORT_DIPSETTING(	0x03, "6" )
@@ -210,7 +210,7 @@ ROM_END
 
 ***************************************************************************/
 
-struct GameDriver dominos_driver =
+struct GameDriver driver_dominos =
 {
 	__FILE__,
 	0,
@@ -223,12 +223,12 @@ struct GameDriver dominos_driver =
 	&machine_driver,
 	0,
 
-	dominos_rom,
+	rom_dominos,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	dominos_input_ports,
+	input_ports_dominos,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

@@ -466,6 +466,7 @@ int frontend_help (int argc, char **argv)
 			return 0;
 			break;
 
+#if 0
 		case LIST_LISTSAMDIR: /* games list with samples directories */
 			printf("Name:     Samples dir:\n");
 			i = 0;
@@ -490,6 +491,7 @@ int frontend_help (int argc, char **argv)
 			}
 			return 0;
 			break;
+#endif
 
 		case LIST_LISTROMS: /* game roms list or */
 		case LIST_LISTSAMPLES: /* game samples list */
@@ -504,6 +506,7 @@ int frontend_help (int argc, char **argv)
 			gamedrv = drivers[j];
 			if (list == LIST_LISTROMS)
 				printromlist(gamedrv->rom,gamename);
+#if 0
 			else
 			{
 				if (gamedrv->samplenames != 0 && gamedrv->samplenames[0] != 0)
@@ -516,6 +519,7 @@ int frontend_help (int argc, char **argv)
 					}
 				}
 			}
+#endif
 			return 0;
 			break;
 
@@ -976,6 +980,7 @@ int frontend_help (int argc, char **argv)
 				if (res != CORRECT)
 					printf ("romset %s ", drivers[i]->name);
 			}
+#if 0
 			if (verify == 2)
 			{
 				/* ignore games that need no samples */
@@ -987,6 +992,7 @@ int frontend_help (int argc, char **argv)
 				if (res != CORRECT)
 					printf ("sampleset %s ", drivers[i]->name);
 			}
+#endif
 
 			if (res == NOTFOUND)
 			{

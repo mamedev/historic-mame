@@ -78,10 +78,10 @@ A000-FFFF 1 A A A A A A A A A A A A A A A  R  D D D D D D D D  Program ROM
 
 
 
-extern unsigned char *screen_addr;
-extern unsigned char *screen_inc;
-extern unsigned char *screen_inc_enable;
-extern unsigned char *sprite_bank;
+extern unsigned char *ccastles_screen_addr;
+extern unsigned char *ccastles_screen_inc;
+extern unsigned char *ccastles_screen_inc_enable;
+extern unsigned char *ccastles_sprite_bank;
 extern unsigned char *ccastles_scrollx;
 extern unsigned char *ccastles_scrolly;
 
@@ -100,6 +100,12 @@ void ccastles_flipscreen_w(int offset,int data);
 static void ccastles_led_w(int offset,int data)
 {
 	osd_led_w(offset,~data);
+}
+
+static void ccastles_coin_counter_w(int offset,int data)
+{
+	/* this is not working, haven't investigated why */
+	coin_counter_w(offset^1, ~data);
 }
 
 static void ccastles_bankswitch_w(int offset, int data)
@@ -132,7 +138,7 @@ static struct MemoryReadAddress readmem[] =
 
 static struct MemoryWriteAddress writemem[] =
 {
-	{ 0x0000, 0x0001, MWA_RAM, &screen_addr },
+	{ 0x0000, 0x0001, MWA_RAM, &ccastles_screen_addr },
 	{ 0x0002, 0x0002, ccastles_bitmode_w },
 	{ 0x0003, 0x0bff, MWA_RAM },
 	{ 0x0c00, 0x7fff, MWA_RAM, &videoram },
@@ -145,21 +151,21 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x9c80, 0x9c80, MWA_RAM, &ccastles_scrollx },
 	{ 0x9d00, 0x9d00, MWA_RAM, &ccastles_scrolly },
 	{ 0x9d80, 0x9d80, MWA_NOP },
-	{ 0x9e00, 0x9e00, MWA_NOP },
+	{ 0x9e00, 0x9e00, watchdog_reset_w },
 	{ 0x9e80, 0x9e81, ccastles_led_w },
-	{ 0x9e85, 0x9e86, MWA_NOP },
+	{ 0x9e85, 0x9e86, ccastles_coin_counter_w },
 	{ 0x9e87, 0x9e87, ccastles_bankswitch_w },
-	{ 0x9f00, 0x9f01, MWA_RAM, &screen_inc_enable },
-	{ 0x9f02, 0x9f03, MWA_RAM, &screen_inc },
+	{ 0x9f00, 0x9f01, MWA_RAM, &ccastles_screen_inc_enable },
+	{ 0x9f02, 0x9f03, MWA_RAM, &ccastles_screen_inc },
 	{ 0x9f04, 0x9f04, ccastles_flipscreen_w },
 	{ 0x9f05, 0x9f06, MWA_RAM },
-	{ 0x9f07, 0x9f07, MWA_RAM, &sprite_bank },
+	{ 0x9f07, 0x9f07, MWA_RAM, &ccastles_sprite_bank },
 	{ 0x9f80, 0x9fbf, ccastles_paletteram_w },
 	{ 0xa000, 0xffff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( ccastles )
 	PORT_START	/* IN0 */
 	PORT_BIT ( 0x01, IP_ACTIVE_LOW, IPT_COIN2 )
 	PORT_BIT ( 0x02, IP_ACTIVE_LOW, IPT_COIN1 )
@@ -277,9 +283,9 @@ static struct MachineDriver machine_driver =
 
 ROM_START( ccastles )
      ROM_REGION(0x14000)	/* 64k for code */
-     ROM_LOAD( "ccastles.303", 0xA000, 0x2000, 0x10e39fce )
-     ROM_LOAD( "ccastles.304", 0xC000, 0x2000, 0x74510f72 )
-     ROM_LOAD( "ccastles.305", 0xE000, 0x2000, 0x9418cf8a )
+     ROM_LOAD( "ccastles.303", 0x0a000, 0x2000, 0x10e39fce )
+     ROM_LOAD( "ccastles.304", 0x0c000, 0x2000, 0x74510f72 )
+     ROM_LOAD( "ccastles.305", 0x0e000, 0x2000, 0x9418cf8a )
      ROM_LOAD( "ccastles.102", 0x10000, 0x2000, 0xf6ccfbd4 )	/* Bank switched ROMs */
      ROM_LOAD( "ccastles.101", 0x12000, 0x2000, 0xe2e17236 )	/* containing level data. */
 
@@ -290,9 +296,9 @@ ROM_END
 
 ROM_START( ccastle2 )
      ROM_REGION(0x14000)	/* 64k for code */
-     ROM_LOAD( "ccastles.203", 0xA000, 0x2000, 0x348a96f0 )
-     ROM_LOAD( "ccastles.204", 0xC000, 0x2000, 0xd48d8c1f )
-     ROM_LOAD( "ccastles.205", 0xE000, 0x2000, 0x0e4883cc )
+     ROM_LOAD( "ccastles.203", 0x0a000, 0x2000, 0x348a96f0 )
+     ROM_LOAD( "ccastles.204", 0x0c000, 0x2000, 0xd48d8c1f )
+     ROM_LOAD( "ccastles.205", 0x0e000, 0x2000, 0x0e4883cc )
      ROM_LOAD( "ccastles.102", 0x10000, 0x2000, 0xf6ccfbd4 )	/* Bank switched ROMs */
      ROM_LOAD( "ccastles.101", 0x12000, 0x2000, 0xe2e17236 )	/* containing level data. */
 
@@ -336,7 +342,7 @@ static void hisave(void)
 
 
 
-struct GameDriver ccastles_driver =
+struct GameDriver driver_ccastles =
 {
 	__FILE__,
 	0,
@@ -349,12 +355,12 @@ struct GameDriver ccastles_driver =
 	&machine_driver,
 	0,
 
-	ccastles_rom,
+	rom_ccastles,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_ccastles,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -362,10 +368,10 @@ struct GameDriver ccastles_driver =
 	hiload, hisave
 };
 
-struct GameDriver ccastle2_driver =
+struct GameDriver driver_ccastle2 =
 {
 	__FILE__,
-	&ccastles_driver,
+	&driver_ccastles,
 	"ccastle2",
 	"Crystal Castles (set 2)",
 	"1983",
@@ -375,12 +381,12 @@ struct GameDriver ccastle2_driver =
 	&machine_driver,
 	0,
 
-	ccastle2_rom,
+	rom_ccastle2,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_ccastles,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

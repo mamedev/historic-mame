@@ -204,38 +204,18 @@ void arcadecl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		for (y = 0; y < YDIM; y++)
 			if (atarigen_pf_dirty[y])
 			{
+				int xx = 0;
 				const UINT8 *src = &atarigen_playfieldram[512 * y];
 
-				if (atarigen_pf_bitmap->depth == 8)
+				/* regenerate the line */
+				for (x = 0; x < XDIM/2; x++)
 				{
-					UINT8 *dst = atarigen_pf_bitmap->line[y];
-
-					/* regenerate the line */
-					for (x = 0; x < XDIM/2; x++)
-					{
-						int bits = READ_WORD(src);
-						src += 2;
-						*dst++ = Machine->pens[bits >> 8];
-						*dst++ = Machine->pens[bits & 0xff];
-					}
-				}
-				else
-				{
-					UINT16 *dst = (UINT16 *)atarigen_pf_bitmap->line[y];
-
-					/* regenerate the line */
-					for (x = 0; x < XDIM/2; x++)
-					{
-						int bits = READ_WORD(src);
-						src += 2;
-						*dst++ = Machine->pens[bits >> 8];
-						*dst++ = Machine->pens[bits & 0xff];
-					}
+					int bits = READ_WORD(src);
+					src += 2;
+					plot_pixel(atarigen_pf_bitmap, xx++, y, Machine->pens[bits >> 8]);
+					plot_pixel(atarigen_pf_bitmap, xx++, y, Machine->pens[bits & 0xff]);
 				}
 				atarigen_pf_dirty[y] = 0;
-
-				/* make sure we update */
-				osd_mark_dirty(0, y, XDIM - 1, y, 0);
 			}
 	}
 

@@ -71,7 +71,7 @@ static struct MemoryWriteAddress writemem[] =
 
 
 
-INPUT_PORTS_START( shaolins_input_ports )
+INPUT_PORTS_START( shaolins )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -286,7 +286,7 @@ ROM_START( kicker )
 	ROM_LOAD( "kikrh14.bin",  0x4000, 0x4000, 0xb94e645b )
 	ROM_LOAD( "kikrh13.bin",  0x8000, 0x4000, 0x61bbf797 )
 
-	ROM_REGION(0x0500)	/* color proms */
+	ROM_REGIONX( 0x0500, REGION_PROMS )
 	ROM_LOAD( "kicker.a12",   0x0000, 0x0100, 0xb09db4b4 ) /* palette red component */
 	ROM_LOAD( "kicker.a13",   0x0100, 0x0100, 0x270a2bf3 ) /* palette green component */
 	ROM_LOAD( "kicker.a14",   0x0200, 0x0100, 0x83e95ea8 ) /* palette blue component */
@@ -306,7 +306,7 @@ ROM_START( shaolins )
 	ROM_LOAD( "kikrh14.bin",  0x4000, 0x4000, 0xb94e645b )
 	ROM_LOAD( "kikrh13.bin",  0x8000, 0x4000, 0x61bbf797 )
 
-	ROM_REGION(0x0500)	/* color proms */
+	ROM_REGIONX( 0x0500, REGION_PROMS )
 	ROM_LOAD( "kicker.a12",   0x0000, 0x0100, 0xb09db4b4 ) /* palette red component */
 	ROM_LOAD( "kicker.a13",   0x0100, 0x0100, 0x270a2bf3 ) /* palette green component */
 	ROM_LOAD( "kicker.a14",   0x0200, 0x0100, 0x83e95ea8 ) /* palette blue component */
@@ -360,7 +360,7 @@ static void hisave(void)
 
 
 
-struct GameDriver kicker_driver =
+struct GameDriver driver_kicker =
 {
 	__FILE__,
 	0,
@@ -373,23 +373,23 @@ struct GameDriver kicker_driver =
 	&shaolins_machine_driver,
 	0,
 
-	kicker_rom,
+	rom_kicker,
 	0, 0,
 	0,
 	0,
 
-	shaolins_input_ports,
+	input_ports_shaolins,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
 
-struct GameDriver shaolins_driver =
+struct GameDriver driver_shaolins =
 {
 	__FILE__,
-	&kicker_driver,
+	&driver_kicker,
 	"shaolins",
 	"Shao-Lin's Road",
 	"1985",
@@ -399,14 +399,14 @@ struct GameDriver shaolins_driver =
 	&shaolins_machine_driver,
 	0,
 
-	shaolins_rom,
+	rom_shaolins,
 	0, 0,
 	0,
 	0,
 
-	shaolins_input_ports,
+	input_ports_shaolins,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave

@@ -17,8 +17,8 @@ unsigned char *exidy_sprite1_xpos;
 unsigned char *exidy_sprite1_ypos;
 unsigned char *exidy_sprite2_xpos;
 unsigned char *exidy_sprite2_ypos;
-unsigned char *exidy_collision;
 
+int exidy_collision;
 int exidy_collision_counter;
 
 static struct osd_bitmap *motion_object_1_vid;
@@ -140,7 +140,7 @@ void exidy_check_collision(struct osd_bitmap *bitmap)
     int collision;
 
     /* reset collision flags */
-    *exidy_collision &= 0xEB;
+    exidy_collision &= 0xEB;
 
     clip.min_x=0;
     clip.max_x=15;
@@ -176,21 +176,21 @@ void exidy_check_collision(struct osd_bitmap *bitmap)
     {
 	    for (sx=0;sx<16;sx++)
 	    {
-    		if (motion_object_1_vid->line[sy][sx]!=Machine->pens[0])
+    		if (read_pixel(motion_object_1_vid, sx, sy) != Machine->pens[0])
     		{
                 collision=0;
 
                 /* Check for background collision (M1CHAR) */
-    		    if (bitmap->line[org_y+sy][org_x+sx]!=Machine->pens[0])
+    		    if (read_pixel(bitmap, org_x+sx, org_y+sy) != Machine->pens[0])
                 {
-    			    *exidy_collision|=0x04;
+    			    exidy_collision|=0x04;
                     collision=1;
                 }
 
                 /* Check for Motion Object collision (M1M2) */
-                if (motion_object_2_vid->line[sy][sx]!=Machine->pens[0])
+                if (read_pixel(motion_object_2_vid, sx, sy) != Machine->pens[0])
                 {
-                    *exidy_collision|=0x10;
+                    exidy_collision|=0x10;
                     collision=1;
                 }
 

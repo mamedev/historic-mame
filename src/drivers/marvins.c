@@ -259,8 +259,8 @@ static struct MemoryReadAddress readmem_CPUA[] = {
 	{ 0x8400, 0x8400, input_port_3_r },		/* dipswitch#1 */
 	{ 0x8500, 0x8500, input_port_4_r },		/* dipswitch#2 */
 	{ 0x8700, 0x8700, CPUB_int_trigger },
-	{ 0xc000, 0xcfff, MRA_RAM, &spriteram },
-	{ 0xd000, 0xffff, MRA_RAM, &videoram },
+	{ 0xc000, 0xcfff, MRA_RAM },
+	{ 0xd000, 0xffff, MRA_RAM },
 	{ -1 }
 };
 
@@ -271,8 +271,8 @@ static struct MemoryWriteAddress writemem_CPUA[] = {
 	{ 0x8600, 0x8600, MWA_RAM },
 	{ 0x86f1, 0x86f1, MWA_RAM },
 	{ 0x8700, 0x8700, CPUA_int_enable },
-	{ 0xc000, 0xcfff, MWA_RAM },
-	{ 0xd000, 0xd7ff, marvins_background_ram_w },
+	{ 0xc000, 0xcfff, MWA_RAM, &spriteram },
+	{ 0xd000, 0xd7ff, marvins_background_ram_w, &videoram },
 	{ 0xd800, 0xdfff, MWA_RAM },
 	{ 0xe000, 0xe7ff, marvins_foreground_ram_w },
 	{ 0xe800, 0xefff, MWA_RAM },
@@ -510,7 +510,7 @@ ROM_START( marvins )
 	ROM_LOAD( "f2",    0x2000, 0x2000, 0x8fc2b081 )
 	ROM_LOAD( "f1",    0x4000, 0x2000, 0x0bd6b4e5 )
 
-	ROM_REGION(0xC00)	/* color PROMs */
+	ROM_REGIONX( 0x0c00, REGION_PROMS )
 	ROM_LOAD( "marvmaze.j1",  0x000, 0x400, 0x92f5b06d )
 	ROM_LOAD( "marvmaze.j2",  0x400, 0x400, 0xd2b25665 )
 	ROM_LOAD( "marvmaze.j3",  0x800, 0x400, 0xdf9e6005 )
@@ -544,7 +544,7 @@ ROM_START( madcrash )
 	ROM_LOAD( "p15",    0x2000, 0x2000, 0xa74149d4 )
 	ROM_LOAD( "p16",    0x4000, 0x2000, 0x6153611a )
 
-	ROM_REGION(0xC00)	/* color PROM */
+	ROM_REGIONX( 0x0c00, REGION_PROMS )
 	ROM_LOAD( "m3-prom.j3",  0x000, 0x400, 0xd19e8a91 )
 	ROM_LOAD( "m2-prom.j4",  0x400, 0x400, 0x9fc325af )
 	ROM_LOAD( "m1-prom.j5",  0x800, 0x400, 0x07678443 )
@@ -578,7 +578,7 @@ ROM_START( vangrd2 )
 	ROM_LOAD( "p11.3kl", 0x2000, 0x2000, 0x620cd4ec )
 	ROM_LOAD( "p10.4kl", 0x4000, 0x2000, 0x5bfc04c0 )
 
-	ROM_REGION(0xC00)	/* color PROM */
+	ROM_REGIONX( 0x0c00, REGION_PROMS )
 	ROM_LOAD( "mb7054.3j", 0x000, 0x400, 0x506f659a )
 	ROM_LOAD( "mb7054.4j", 0x400, 0x400, 0x222133ce )
 	ROM_LOAD( "mb7054.5j", 0x800, 0x400, 0x2e21a79b )
@@ -610,7 +610,7 @@ ROM_START( hal21 )
 	ROM_LOAD( "hal21p14.bin", 0x4000, 0x4000, 0xda0cb670 )
 	ROM_LOAD( "hal21p15.bin", 0x8000, 0x4000, 0x5c5ea945 )
 
-	ROM_REGION(0xc00)	/* color PROM */
+	ROM_REGIONX( 0x0c00, REGION_PROMS )
 	ROM_LOAD( "marvmaze.j1",  0x000, 0x400, 0 ) //fake
 	ROM_LOAD( "marvmaze.j2",  0x400, 0x400, 0 ) //fake
 	ROM_LOAD( "marvmaze.j3",  0x800, 0x400, 0 ) //fake
@@ -618,7 +618,7 @@ ROM_END
 
 /*******************************************************************************************/
 
-INPUT_PORTS_START( marvins_input_ports )
+INPUT_PORTS_START( marvins )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -699,7 +699,7 @@ INPUT_PORTS_START( marvins_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( vangrd2_input_ports )
+INPUT_PORTS_START( vangrd2 )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNKNOWN )
@@ -781,7 +781,7 @@ INPUT_PORTS_START( vangrd2_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( madcrash_input_ports )
+INPUT_PORTS_START( madcrash )
 	PORT_START
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -862,7 +862,7 @@ INPUT_PORTS_START( madcrash_input_ports )
 INPUT_PORTS_END
 
 /*
-INPUT_PORTS_START( hal21_input_ports )
+INPUT_PORTS_START( hal21 )
 	PORT_START	// DSW1
 	PORT_DIPNAME( 0x01, 0x01, DEF_STR( Unknown ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( Off ) )
@@ -915,7 +915,7 @@ INPUT_PORTS_START( hal21_input_ports )
 INPUT_PORTS_END
 */
 
-struct GameDriver marvins_driver =
+struct GameDriver driver_marvins =
 {
 	__FILE__,
 	0,
@@ -927,16 +927,16 @@ struct GameDriver marvins_driver =
 	0,
 	&marvins_machine_driver,
 	0,
-	marvins_rom,
+	rom_marvins,
 	marvins_init,0,0,0,
-	marvins_input_ports,
-	PROM_MEMORY_REGION(7), 0, 0,
+	input_ports_marvins,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 	0,0
 };
 
 
-struct GameDriver madcrash_driver =
+struct GameDriver driver_madcrash =
 {
 	__FILE__,
 	0,
@@ -948,15 +948,15 @@ struct GameDriver madcrash_driver =
 	0, /* incomplete sound */
 	&madcrash_machine_driver,
 	0,
-	madcrash_rom,
+	rom_madcrash,
 	madcrash_init,0,0,0,
-	madcrash_input_ports,
-	PROM_MEMORY_REGION(7), 0, 0,
+	input_ports_madcrash,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	0,0
 };
 
-struct GameDriver vangrd2_driver =
+struct GameDriver driver_vangrd2 =
 {
 	__FILE__,
 	0,
@@ -968,15 +968,15 @@ struct GameDriver vangrd2_driver =
 	0, /* incomplete sound */
 	&madcrash_machine_driver,
 	0,
-	vangrd2_rom,
+	rom_vangrd2,
 	vangrd2_init,0,0,0,
-	vangrd2_input_ports,
-	PROM_MEMORY_REGION(7), 0, 0,
+	input_ports_vangrd2,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 	0,0
 };
 
-struct GameDriver hal21_driver =
+struct GameDriver driver_hal21 =
 {
 	__FILE__,
 	0,
@@ -985,13 +985,13 @@ struct GameDriver hal21_driver =
 	"1985",
 	"SNK",
 	CREDITS,
-	GAME_NOT_WORKING,
+	0,
 	&marvins_machine_driver,
 	0,
-	hal21_rom,
+	rom_hal21,
 	0,0,0,0,
-	marvins_input_ports,
-	PROM_MEMORY_REGION(7), 0, 0,
-	ORIENTATION_ROTATE_270,
+	input_ports_marvins,
+	0, 0, 0,
+	ORIENTATION_ROTATE_270 | GAME_NOT_WORKING,
 	0,0
 };

@@ -85,6 +85,37 @@ static const char *GorfWordTable[] =
 
 #define num_samples (sizeof(GorfWordTable)/sizeof(char *))
 
+static const char *gorf_sample_names[] =
+{
+ "*gorf","a.wav","a.wav","again.wav","am.wav","am.wav","and.wav","anhilatn.wav",
+ "another.wav","another.wav","are.wav","are.wav",
+ "avenger.wav","bad.wav","bad.wav","be.wav",
+ "been.wav","but.wav","button.wav","cadet.wav",
+ "cannot.wav","captain.wav","chronicl.wav","coin.wav","coins.wav","colonel.wav",
+ "consciou.wav","defender.wav","destroy.wav","destroyd.wav",
+ "doom.wav","draws.wav","empire.wav","end.wav",
+ "enemy.wav","escape.wav","flagship.wav","for.wav","galactic.wav",
+ "general.wav","gorf.wav","gorphian.wav","gorphian.wav","gorphins.wav",
+ "hahahahu.wav","hahaher.wav","harder.wav","have.wav",
+ "hitting.wav","i.wav","i.wav","impossib.wav","in.wav","insert.wav",
+ "is.wav","live.wav","long.wav","meet.wav","move.wav",
+ "my.wav","my.wav",
+ "near.wav","next.wav","nice.wav","no.wav",
+ "now.wav","pause.wav","player.wav","prepare.wav","prisonrs.wav",
+ "promoted.wav","push.wav","robot.wav","robots.wav","robots.wav",
+ "seek.wav","ship.wav","shot.wav","some.wav","space.wav","spause.wav",
+ "survival.wav","take.wav","the.wav","the.wav","the.wav","time.wav",
+ "to.wav","to.wav","unbeatab.wav",
+ "warrior.wav","warriors.wav","will.wav",
+ "you.wav","you.wav","you.wav","you.wav","your.wav","your.wav","yourself.wav",
+ "s.wav","for.wav","for.wav","will.wav","Gorph.wav",
+// Missing Samples
+ "coin.wav", "attack.wav","bite.wav","conquer.wav","devour.wav","dust.wav",
+ "galaxy.wav","got.wav","power.wav","try.wav","supreme.wav","all.wav",
+ "hail.wav","emperor.wav",
+ 0
+} ;
+
 
 /* Total word to join the phonemes together - Global to make it easier to use */
 char totalword[256], *totalword_ptr;
@@ -93,6 +124,8 @@ int plural = 0;
 
 int gorf_sh_start(const struct MachineSound *msound)
 {
+	Machine->samples = readsamples(gorf_sample_names,Machine->gamedrv->name);
+
     GorfBaseFrequency = 11025;
     GorfBaseVolume = 230;
     GorfChannel = 0;

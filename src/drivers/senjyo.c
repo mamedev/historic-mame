@@ -221,7 +221,7 @@ static struct IOWritePort sound_writeport[] =
 
 
 
-INPUT_PORTS_START( senjyo_input_ports )
+INPUT_PORTS_START( senjyo )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
@@ -303,7 +303,7 @@ INPUT_PORTS_START( senjyo_input_ports )
 	PORT_DIPSETTING(    0x80, "Always come at you" )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( starforc_input_ports )
+INPUT_PORTS_START( starforc )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
@@ -757,7 +757,7 @@ static void starforc_hisave(void)
 
 
 
-struct GameDriver senjyo_driver =
+struct GameDriver driver_senjyo =
 {
 	__FILE__,
 	0,
@@ -770,12 +770,12 @@ struct GameDriver senjyo_driver =
 	&senjyo_machine_driver,
 	senjyo_init,
 
-	senjyo_rom,
+	rom_senjyo,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	senjyo_input_ports,
+	input_ports_senjyo,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -783,7 +783,7 @@ struct GameDriver senjyo_driver =
 	0, 0
 };
 
-struct GameDriver starforc_driver =
+struct GameDriver driver_starforc =
 {
 	__FILE__,
 	0,
@@ -796,12 +796,12 @@ struct GameDriver starforc_driver =
 	&starforc_machine_driver,
 	starforc_init,
 
-	starforc_rom,
+	rom_starforc,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	starforc_input_ports,
+	input_ports_starforc,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -809,10 +809,10 @@ struct GameDriver starforc_driver =
 	starforc_hiload, starforc_hisave
 };
 
-struct GameDriver starfore_driver =
+struct GameDriver driver_starfore =
 {
 	__FILE__,
-	&starforc_driver,
+	&driver_starforc,
 	"starfore",
 	"Star Force (encrypted)",
 	"1984",
@@ -822,12 +822,12 @@ struct GameDriver starfore_driver =
 	&starforc_machine_driver,
 	starfore_init,
 
-	starfore_rom,
+	rom_starfore,
 	0, suprloco_decode,
 	0,
 	0,      /* sound_prom */
 
-	starforc_input_ports,
+	input_ports_starforc,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -835,10 +835,10 @@ struct GameDriver starfore_driver =
 	starforc_hiload, starforc_hisave
 };
 
-struct GameDriver megaforc_driver =
+struct GameDriver driver_megaforc =
 {
 	__FILE__,
-	&starforc_driver,
+	&driver_starforc,
 	"megaforc",
 	"Mega Force",
 	"1985",
@@ -848,12 +848,12 @@ struct GameDriver megaforc_driver =
 	&starforc_machine_driver,
 	starforc_init,
 
-	megaforc_rom,
+	rom_megaforc,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	starforc_input_ports,
+	input_ports_starforc,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_90,

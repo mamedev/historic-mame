@@ -426,7 +426,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 };
 
 
-INPUT_PORTS_START( liquidk_input_ports )
+INPUT_PORTS_START( liquidk )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
@@ -505,7 +505,7 @@ INPUT_PORTS_START( liquidk_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( finalb )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
@@ -584,7 +584,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x80, DEF_STR( Yes ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( growl_input_ports )
+INPUT_PORTS_START( growl )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY | IPF_PLAYER1 )
@@ -691,7 +691,7 @@ INPUT_PORTS_START( growl_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( megab_input_ports )
+INPUT_PORTS_START( megab )
 	PORT_START /* DSW A */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN ) /* Unused? */
 	PORT_DIPNAME( 0x02, 0x02, DEF_STR( Flip_Screen ) )
@@ -1177,7 +1177,7 @@ static void liquidk_hisave(void)
 	}
 }
 
-struct GameDriver liquidk_driver =
+struct GameDriver driver_liquidk =
 {
 	__FILE__,
 	0,
@@ -1190,22 +1190,22 @@ struct GameDriver liquidk_driver =
 	&liquidk_machine_driver,
 	0,
 
-	liquidk_rom,
+	rom_liquidk,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	liquidk_input_ports,
+	input_ports_liquidk,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_ROTATE_180,
 	liquidk_hiload, liquidk_hisave
 };
 
-struct GameDriver liquidku_driver =
+struct GameDriver driver_liquidku =
 {
 	__FILE__,
-	&liquidk_driver,
+	&driver_liquidk,
 	"liquidku",
 	"Liquid Kids (US)",
 	"1990",
@@ -1215,22 +1215,22 @@ struct GameDriver liquidku_driver =
 	&liquidk_machine_driver,
 	0,
 
-	liquidku_rom,
+	rom_liquidku,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	liquidk_input_ports,
+	input_ports_liquidk,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_ROTATE_180,
 	liquidk_hiload, liquidk_hisave
 };
 
-struct GameDriver mizubaku_driver =
+struct GameDriver driver_mizubaku =
 {
 	__FILE__,
-	&liquidk_driver,
+	&driver_liquidk,
 	"mizubaku",
 	"Mizubaku Daibouken (Japan)",
 	"1990",
@@ -1240,12 +1240,12 @@ struct GameDriver mizubaku_driver =
 	&liquidk_machine_driver,
 	0,
 
-	mizubaku_rom,
+	rom_mizubaku,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	liquidk_input_ports,
+	input_ports_liquidk,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_ROTATE_180,
@@ -1277,7 +1277,7 @@ ROM_END
 
 
 
-struct GameDriver finalb_driver =
+struct GameDriver driver_finalb =
 {
 	__FILE__,
 	0,
@@ -1290,12 +1290,12 @@ struct GameDriver finalb_driver =
 	&finalb_machine_driver,
 	0,
 
-	finalb_rom,
+	rom_finalb,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_finalb,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
@@ -1401,7 +1401,7 @@ static void growl_hisave(void)
 	}
 }
 
-struct GameDriver growl_driver =
+struct GameDriver driver_growl =
 {
 	__FILE__,
 	0,
@@ -1414,22 +1414,22 @@ struct GameDriver growl_driver =
 	&growl_machine_driver,
 	0,
 
-	growl_rom,
+	rom_growl,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	growl_input_ports,
+	input_ports_growl,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
 	growl_hiload, growl_hisave
 };
 
-struct GameDriver growlu_driver =
+struct GameDriver driver_growlu =
 {
 	__FILE__,
-	&growl_driver,
+	&driver_growl,
 	"growlu",
 	"Growl (US)",
 	"1990",
@@ -1439,22 +1439,22 @@ struct GameDriver growlu_driver =
 	&growl_machine_driver,
 	0,
 
-	growlu_rom,
+	rom_growlu,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	growl_input_ports,
+	input_ports_growl,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
 	growl_hiload, growl_hisave
 };
 
-struct GameDriver runark_driver =
+struct GameDriver driver_runark =
 {
 	__FILE__,
-	&growl_driver,
+	&driver_growl,
 	"runark",
 	"Runark (Japan)",
 	"1990",
@@ -1464,12 +1464,12 @@ struct GameDriver runark_driver =
 	&growl_machine_driver,
 	0,
 
-	runark_rom,
+	rom_runark,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	growl_input_ports,
+	input_ports_growl,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
@@ -1501,7 +1501,7 @@ ROM_END
 
 
 
-struct GameDriver megab_driver =
+struct GameDriver driver_megab =
 {
 	__FILE__,
 	0,
@@ -1514,12 +1514,12 @@ struct GameDriver megab_driver =
 	&megab_machine_driver,
 	0,
 
-	megab_rom,
+	rom_megab,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	megab_input_ports,
+	input_ports_megab,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,

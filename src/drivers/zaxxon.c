@@ -229,7 +229,7 @@ static int zaxxon_interrupt(void)
 	else return interrupt();
 }
 
-INPUT_PORTS_START( zaxxon_input_ports )
+INPUT_PORTS_START( zaxxon )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
@@ -328,7 +328,7 @@ INPUT_PORTS_START( zaxxon_input_ports )
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( futspy_input_ports )
+INPUT_PORTS_START( futspy )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
@@ -427,7 +427,7 @@ INPUT_PORTS_START( futspy_input_ports )
 	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, DEF_STR( Service_Mode ), KEYCODE_F2, IP_JOY_NONE )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( razmataz_input_ports )
+INPUT_PORTS_START( razmataz )
 	PORT_START	/* IN0 */
 	PORT_ANALOG( 0xff, 0x00, IPT_DIAL | IPF_CENTER | IPF_PLAYER1, 30, 15, 0, 0, 0)
 
@@ -601,10 +601,29 @@ static struct GfxDecodeInfo futspy_gfxdecodeinfo[] =
 
 
 
+static const char *zaxxon_sample_names[] =
+{
+	"*zaxxon",
+	"03.wav",	/* Homing Missile */
+	"02.wav",	/* Base Missile */
+	"01.wav",	/* Laser (force field) */
+	"00.wav",	/* Battleship (end of level boss) */
+	"11.wav",	/* S-Exp (enemy explosion) */
+	"10.wav",	/* M-Exp (ship explosion) */
+	"08.wav", 	/* Cannon (ship fire) */
+	"23.wav",	/* Shot (enemy fire) */
+	"21.wav",	/* Alarm 2 (target lock) */
+	"20.wav",	/* Alarm 3 (low fuel) */
+	"05.wav",	/* initial background noise */
+	"04.wav",	/* looped asteroid noise */
+	0
+};
+
 static struct Samplesinterface zaxxon_samples_interface =
 {
 	12,	/* 12 channels */
-	25	/* volume */
+	25,	/* volume */
+	zaxxon_sample_names
 };
 
 
@@ -724,24 +743,6 @@ static struct MachineDriver razmataz_machine_driver =
 
 ***************************************************************************/
 
-static const char *zaxxon_sample_names[] =
-{
-	"*zaxxon",
-	"03.wav",	/* Homing Missile */
-	"02.wav",	/* Base Missile */
-	"01.wav",	/* Laser (force field) */
-	"00.wav",	/* Battleship (end of level boss) */
-	"11.wav",	/* S-Exp (enemy explosion) */
-	"10.wav",	/* M-Exp (ship explosion) */
-	"08.wav", 	/* Cannon (ship fire) */
-	"23.wav",	/* Shot (enemy fire) */
-	"21.wav",	/* Alarm 2 (target lock) */
-	"20.wav",	/* Alarm 3 (low fuel) */
-	"05.wav",	/* initial background noise */
-	"04.wav",	/* looped asteroid noise */
-	0
-};
-
 ROM_START( zaxxon )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "zaxxon.3",     0x0000, 0x2000, 0x6e2b4a30 )
@@ -765,7 +766,7 @@ ROM_START( zaxxon )
 	ROM_LOAD( "zaxxon.10",    0x4000, 0x2000, 0xa95e61fd )
 	ROM_LOAD( "zaxxon.9",     0x6000, 0x2000, 0x7e42691f )
 
-	ROM_REGION(0x0200)	/* color proms */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "zaxxon.u98",   0x0000, 0x0100, 0x6cc6695b ) /* palette */
 	ROM_LOAD( "zaxxon.u72",   0x0100, 0x0100, 0xdeaa21f7 ) /* char lookup table */
 ROM_END
@@ -793,7 +794,7 @@ ROM_START( zaxxon2 )
 	ROM_LOAD( "zaxxon.10",    0x4000, 0x2000, 0xa95e61fd )
 	ROM_LOAD( "zaxxon.9",     0x6000, 0x2000, 0x7e42691f )
 
-	ROM_REGION(0x0200)	/* color proms */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "zaxxon.u98",   0x0000, 0x0100, 0x6cc6695b ) /* palette */
 	ROM_LOAD( "j214a2.72",    0x0100, 0x0100, 0xa9e1fb43 ) /* char lookup table */
 ROM_END
@@ -821,7 +822,7 @@ ROM_START( zaxxonb )
 	ROM_LOAD( "zaxxon.10",    0x4000, 0x2000, 0xa95e61fd )
 	ROM_LOAD( "zaxxon.9",     0x6000, 0x2000, 0x7e42691f )
 
-	ROM_REGION(0x0200)	/* color proms */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "zaxxon.u98",   0x0000, 0x0100, 0x6cc6695b ) /* palette */
 	ROM_LOAD( "zaxxon.u72",   0x0100, 0x0100, 0xdeaa21f7 ) /* char lookup table */
 ROM_END
@@ -849,7 +850,7 @@ ROM_START( szaxxon )
 	ROM_LOAD( "suzaxxon.10",  0x4000, 0x2000, 0x68e84174 )
 	ROM_LOAD( "suzaxxon.9",   0x6000, 0x2000, 0xa509994b )
 
-	ROM_REGION(0x0200)	/* color proms */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "suzaxxon.u98", 0x0000, 0x0100, 0x15727a9f ) /* palette */
 	ROM_LOAD( "suzaxxon.u72", 0x0100, 0x0100, 0xdeaa21f7 ) /* char lookup table */
 ROM_END
@@ -877,7 +878,7 @@ ROM_START( futspy )
 	ROM_LOAD( "fs_vid.u93",   0x4000, 0x2000, 0xb82b4997 )
 	ROM_LOAD( "fs_vid.u92",   0x6000, 0x2000, 0xaf4015af )
 
-	ROM_REGION(0x0200)	/* color proms */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "futrprom.u98", 0x0000, 0x0100, 0x9ba2acaa ) /* palette */
 	ROM_LOAD( "futrprom.u72", 0x0100, 0x0100, 0xf9e26790 ) /* char lookup table */
 ROM_END
@@ -905,7 +906,7 @@ ROM_START( razmataz )
 	ROM_LOAD( "1931.u93",      0x4000, 0x2000, 0x55fe0f82 )
 	ROM_LOAD( "1930.u92",      0x6000, 0x2000, 0xf355f105 )
 
-	ROM_REGION(0x0200)	/* color proms */
+	ROM_REGIONX( 0x0200, REGION_PROMS )
 	ROM_LOAD( "clr.u98",       0x0000, 0x0100, 0x0fd671af )	/* palette */
 	ROM_LOAD( "clr.u72",       0x0100, 0x0100, 0x03233bc5 ) /* char lookup table */
 
@@ -1115,7 +1116,7 @@ static void razmataz_hisave(void)
 
 
 
-struct GameDriver zaxxon_driver =
+struct GameDriver driver_zaxxon =
 {
 	__FILE__,
 	0,
@@ -1128,23 +1129,23 @@ struct GameDriver zaxxon_driver =
 	&zaxxon_machine_driver,
 	0,
 
-	zaxxon_rom,
+	rom_zaxxon,
 	0, 0,
-	zaxxon_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	zaxxon_input_ports,
+	input_ports_zaxxon,
 
-	PROM_MEMORY_REGION(3), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
 
-struct GameDriver zaxxon2_driver =
+struct GameDriver driver_zaxxon2 =
 {
 	__FILE__,
-	&zaxxon_driver,
+	&driver_zaxxon,
 	"zaxxon2",
 	"Zaxxon (set 2)",
 	"1982",
@@ -1154,23 +1155,23 @@ struct GameDriver zaxxon2_driver =
 	&zaxxon_machine_driver,
 	0,
 
-	zaxxon2_rom,
+	rom_zaxxon2,
 	0, 0,
-	zaxxon_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	zaxxon_input_ports,
+	input_ports_zaxxon,
 
-	PROM_MEMORY_REGION(3), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
 
-struct GameDriver zaxxonb_driver =
+struct GameDriver driver_zaxxonb =
 {
 	__FILE__,
-	&zaxxon_driver,
+	&driver_zaxxon,
 	"zaxxonb",
 	"Jackson",
 	"1982",
@@ -1180,20 +1181,20 @@ struct GameDriver zaxxonb_driver =
 	&zaxxon_machine_driver,
 	0,
 
-	zaxxonb_rom,
+	rom_zaxxonb,
 	0, zaxxonb_decode,
-	zaxxon_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	zaxxon_input_ports,
+	input_ports_zaxxon,
 
-	PROM_MEMORY_REGION(3), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
 
-struct GameDriver szaxxon_driver =
+struct GameDriver driver_szaxxon =
 {
 	__FILE__,
 	0,
@@ -1206,20 +1207,20 @@ struct GameDriver szaxxon_driver =
 	&zaxxon_machine_driver,
 	0,
 
-	szaxxon_rom,
+	rom_szaxxon,
 	0, szaxxon_decode,
-	zaxxon_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	zaxxon_input_ports,
+	input_ports_zaxxon,
 
-	PROM_MEMORY_REGION(3), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave
 };
 
-struct GameDriver futspy_driver =
+struct GameDriver driver_futspy =
 {
 	__FILE__,
 	0,
@@ -1232,20 +1233,20 @@ struct GameDriver futspy_driver =
 	&futspy_machine_driver,
 	0,
 
-	futspy_rom,
+	rom_futspy,
 	0, futspy_decode,
 	0,
 	0,	/* sound_prom */
 
-	futspy_input_ports,
+	input_ports_futspy,
 
-	PROM_MEMORY_REGION(3), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	futspy_hiload, futspy_hisave
 };
 
-struct GameDriver razmataz_driver =
+struct GameDriver driver_razmataz =
 {
 	__FILE__,
 	0,
@@ -1258,14 +1259,14 @@ struct GameDriver razmataz_driver =
 	&razmataz_machine_driver,
 	0,
 
-	razmataz_rom,
+	rom_razmataz,
 	0, nprinces_decode,
 	0,
 	0,	/* sound_prom */
 
-	razmataz_input_ports,
+	input_ports_razmataz,
 
-	PROM_MEMORY_REGION(3), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	razmataz_hiload, razmataz_hisave

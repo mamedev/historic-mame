@@ -178,7 +178,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 /******************************************************************************/
 
-INPUT_PORTS_START( tumblep_input_ports )
+INPUT_PORTS_START( tumblep )
 	PORT_START	/* Player 1 controls */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
@@ -515,7 +515,7 @@ static void t_patch(void)
 
 /******************************************************************************/
 
-struct GameDriver tumblep_driver =
+struct GameDriver driver_tumblep =
 {
 	__FILE__,
 	0,
@@ -528,64 +528,64 @@ struct GameDriver tumblep_driver =
 	&tumblepop_machine_driver,
 	0,
 
-	tumblepop_rom,
+	rom_tumblepop,
 	t_patch, 0,
 	0,
 	0,	/* sound_prom */
 
-	tumblep_input_ports,
+	input_ports_tumblep,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
 	0, 0
 };
 
-struct GameDriver tumblepb_driver =
+struct GameDriver driver_tumblepb =
 {
 	__FILE__,
-	&tumblep_driver,
+	&driver_tumblep,
 	"tumblepb",
 	"Tumble Pop (bootleg set 1)",
 	"1991",
 	"bootleg",
 	"Bryan McPhail",
-	GAME_IMPERFECT_SOUND,
+	0,
 	&tumblepb_machine_driver,
 	0,
 
-	tumblepb_rom,
+	rom_tumblepb,
 	t_patch, 0,
 	0,
 	0,	/* sound_prom */
 
-	tumblep_input_ports,
+	input_ports_tumblep,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_IMPERFECT_SOUND,
 	0, 0
 };
 
-struct GameDriver tumblep2_driver =
+struct GameDriver driver_tumblep2 =
 {
 	__FILE__,
-	&tumblep_driver,
+	&driver_tumblep,
 	"tumblep2",
 	"Tumble Pop (bootleg set 2)",
 	"1991",
 	"bootleg",
 	"Bryan McPhail",
-	GAME_IMPERFECT_SOUND,
+	0,
 	&tumblepb_machine_driver,
 	0,
 
-	tumblepop2_rom,
+	rom_tumblepop2,
 	t_patch, 0,
 	0,
 	0,	/* sound_prom */
 
-	tumblep_input_ports,
+	input_ports_tumblep,
 
 	0, 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_IMPERFECT_SOUND,
 	0, 0
 };

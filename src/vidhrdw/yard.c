@@ -247,7 +247,8 @@ void yard_scroll_panel_w(int offset,int data)
 
 		col = (data >> i) & 0x11;
 		col = ((col >> 3) | col) & 3;
-		scroll_panel_bitmap->line[sy][sx + i] = Machine->gfx[2]->colortable[(sy & 0xfc) + col];
+
+		plot_pixel(scroll_panel_bitmap, sx + i, sy, Machine->gfx[2]->colortable[(sy & 0xfc) + col]);
 	}
 }
 

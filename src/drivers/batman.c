@@ -106,7 +106,7 @@ static struct MemoryReadAddress main_readmem[] =
 	{ 0x100000, 0x10ffff, MRA_BANK1 },
 	{ 0x120000, 0x120fff, atarigen_eeprom_r },
 	{ 0x3e0000, 0x3e0fff, paletteram_word_r },
-	{ 0x3effc0, 0x3effff, atarigen_video_control_r, &atarigen_video_control_data },
+	{ 0x3effc0, 0x3effff, atarigen_video_control_r },
 	{ 0x260000, 0x260001, input_port_0_r },
 	{ 0x260002, 0x260003, input_port_1_r },
 	{ 0x260010, 0x260011, special_port2_r },
@@ -129,7 +129,7 @@ static struct MemoryWriteAddress main_writemem[] =
 	{ 0x260060, 0x260061, atarigen_eeprom_enable_w },
 	{ 0x2a0000, 0x2a0001, watchdog_reset_w },
 	{ 0x3e0000, 0x3e0fff, atarigen_666_paletteram_w, &paletteram },
-	{ 0x3effc0, 0x3effff, atarigen_video_control_w },
+	{ 0x3effc0, 0x3effff, atarigen_video_control_w, &atarigen_video_control_data },
 	{ 0x3f0000, 0x3f1fff, batman_playfield2ram_w, &atarigen_playfield2ram, &atarigen_playfield2ram_size },
 	{ 0x3f2000, 0x3f3fff, batman_playfieldram_w, &atarigen_playfieldram, &atarigen_playfieldram_size },
 	{ 0x3f4000, 0x3f5fff, batman_colorram_w, &atarigen_playfieldram_color },
@@ -147,7 +147,7 @@ static struct MemoryWriteAddress main_writemem[] =
  *
  *************************************/
 
-INPUT_PORTS_START( batman_ports )
+INPUT_PORTS_START( batman )
 	PORT_START		/* 26000 */
 	PORT_BIT( 0x01ff, IP_ACTIVE_LOW, IPT_UNUSED )
 	PORT_BIT( 0x0200, IP_ACTIVE_LOW, IPT_START1 )
@@ -380,7 +380,7 @@ ROM_END
  *
  *************************************/
 
-struct GameDriver batman_driver =
+struct GameDriver driver_batman =
 {
 	__FILE__,
 	0,
@@ -393,13 +393,13 @@ struct GameDriver batman_driver =
 	&machine_driver,
 	batman_init,
 
-	batman_rom,
+	rom_batman,
 	rom_decode,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	batman_ports,
+	input_ports_batman,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,

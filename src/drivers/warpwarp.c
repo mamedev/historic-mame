@@ -112,7 +112,7 @@ static struct MemoryWriteAddress writemem[] =
 };
 
 
-INPUT_PORTS_START( warpwarp_input_ports )
+INPUT_PORTS_START( warpwarp )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
@@ -158,7 +158,7 @@ INPUT_PORTS_START( warpwarp_input_ports )
 INPUT_PORTS_END
 
 /* has High Score Initials dip switch instead of rack test */
-INPUT_PORTS_START( warpwarr_input_ports )
+INPUT_PORTS_START( warpwarr )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_BUTTON1 | IPF_COCKTAIL )
@@ -350,7 +350,7 @@ static void hisave(void)
 
 
 
-struct GameDriver warpwarp_driver =
+struct GameDriver driver_warpwarp =
 {
 	__FILE__,
 	0,
@@ -363,12 +363,12 @@ struct GameDriver warpwarp_driver =
 	&machine_driver,
 	0,
 
-	warpwarp_rom,
+	rom_warpwarp,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	warpwarp_input_ports,
+	input_ports_warpwarp,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -376,10 +376,10 @@ struct GameDriver warpwarp_driver =
 	hiload, hisave
 };
 
-struct GameDriver warpwarr_driver =
+struct GameDriver driver_warpwarr =
 {
 	__FILE__,
-	&warpwarp_driver,
+	&driver_warpwarp,
 	"warpwarr",
 	"Warp Warp (Rock-ola set 1)",
 	"1981",
@@ -389,12 +389,12 @@ struct GameDriver warpwarr_driver =
 	&machine_driver,
 	0,
 
-	warpwarr_rom,
+	rom_warpwarr,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	warpwarr_input_ports,
+	input_ports_warpwarr,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_90,
@@ -402,10 +402,10 @@ struct GameDriver warpwarr_driver =
 	hiload, hisave
 };
 
-struct GameDriver warpwar2_driver =
+struct GameDriver driver_warpwar2 =
 {
 	__FILE__,
-	&warpwarp_driver,
+	&driver_warpwarp,
 	"warpwar2",
 	"Warp Warp (Rock-ola set 2)",
 	"1981",
@@ -415,12 +415,12 @@ struct GameDriver warpwar2_driver =
 	&machine_driver,
 	0,
 
-	warpwar2_rom,
+	rom_warpwar2,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	warpwarr_input_ports,
+	input_ports_warpwarr,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_90,

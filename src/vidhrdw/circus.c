@@ -13,7 +13,7 @@
 #include "vidhrdw/generic.h"
 #include "artwork.h"
 
-static int Clown_X=0,Clown_Y=0,Clown_Z=0;
+static int clown_x=0,clown_y=0,clown_z=0;
 
 static struct artwork *overlay;
 
@@ -21,11 +21,11 @@ static struct artwork *overlay;
 /* The array is terminated with an entry with negative coordinates. */
 /* At least two entries are needed. */
 static const struct artwork_element circus_ol[]={
-	{{	0, 256,   0, 256}, 0xFF, 0xFF, 0xFF,   0xFF},	/* white */
-	{{  0, 256,  20,  36}, 0x20, 0x20, 0xFF,   0xFF},	/* blue */
-	{{  0, 256,  36,  48}, 0x20, 0xFF, 0x20,   0xFF},	/* green */
-	{{  0, 256,  48,  64}, 0xFF, 0xFF, 0x20,   0xFF},	/* yellow */
-	{{-1,-1,-1,-1},0,0,0,0}
+	{{	0, 256,   0, 256}, 0xff, 0xff, 0xff,   0xff},	/* white */
+	{{  0, 256,  20,  36}, 0x20, 0x20, 0xff,   0xff},	/* blue */
+	{{  0, 256,  36,  48}, 0x20, 0xff, 0x20,   0xff},	/* green */
+	{{  0, 256,  48,  64}, 0xff, 0xff, 0x20,   0xff},	/* yellow */
+	{{ -1,  -1,  -1,  -1},    0,    0,    0,      0}
 };
 
 
@@ -61,12 +61,12 @@ void circus_vh_stop(void)
 
 void circus_clown_x_w(int offset, int data)
 {
-	Clown_X = 240-data;
+	clown_x = 240-data;
 }
 
 void circus_clown_y_w(int offset, int data)
 {
-	Clown_Y = 240-data;
+	clown_y = 240-data;
 }
 
 /* This register controls the clown image currently displayed */
@@ -75,7 +75,7 @@ void circus_clown_y_w(int offset, int data)
 
 void circus_clown_z_w(int offset, int data)
 {
-	Clown_Z = (data & 0x0f);
+	clown_z = (data & 0x0f);
 
 	/* Bits 4-6 enable/disable trigger different events */
 	/* descriptions are based on Circus schematics      */
@@ -114,90 +114,54 @@ void circus_clown_z_w(int offset, int data)
 //	if(errorlog) fprintf(errorlog,"clown Z = %02x\n",data);
 }
 
-static void DrawLine(struct osd_bitmap *bitmap, int x1, int y1, int x2, int y2, int dotted)
+static void draw_line(struct osd_bitmap *bitmap, int x1, int y1, int x2, int y2, int dotted)
 {
 	/* Draws horizontal and Vertical lines only! */
     int col = Machine->pens[1];
 
-    int ex1,ex2,ey1,ey2;
     int count, skip;
 
-    /* Allow flips & rotates */
-
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
-	{
-		ex1 = y1;
-		ex2 = y2;
-		ey1 = x1;
-		ey2 = x2;
-	}
-    else
-    {
-		ex1 = x1;
-		ex2 = x2;
-		ey1 = y1;
-		ey2 = y2;
-	}
-
-	if (Machine->orientation & ORIENTATION_FLIP_X)
-    {
-		count = 255 - ey1;
-		ey1 = 255 - ey2;
-		ey2 = count;
-	}
-
-	if (Machine->orientation & ORIENTATION_FLIP_Y)
-	{
-		count = 255 - ex1;
-		ex1 = 255 - ex2;
-		ex2 = count;
-	}
-
 	/* Draw the Line */
-
-	osd_mark_dirty (ex1,ey1,ex1,ey2,0);
 
 	if (dotted > 0)
 		skip = 2;
 	else
 		skip = 1;
 
-	if (ex1==ex2)
+	if (x1 == x2)
 	{
-		for (count=ey2;count>=ey1;count -= skip)
+		for (count = y2; count >= y1; count -= skip)
 		{
-			bitmap->line[ex1][count] = col;
+			plot_pixel(bitmap, x1, count, col);
 		}
 	}
 	else
 	{
-		for (count=ex2;count>=ex1;count -= skip)
+		for (count = x2; count >= x1; count -= skip)
 		{
-			bitmap->line[count][ey1] = col;
+			plot_pixel(bitmap, count, y1, col);
 		}
 	}
 }
 
-static void RobotBox (struct osd_bitmap *bitmap, int top, int left)
+static void draw_robot_box (struct osd_bitmap *bitmap, int x, int y)
 {
-	int right,bottom;
-
 	/* Box */
 
-	right  = left + 24;
-	bottom = top + 26;
+	int ex = x + 24;
+	int ey = y + 26;
 
-	DrawLine(bitmap,top,left,top,right,0);				/* Top */
-	DrawLine(bitmap,bottom,left,bottom,right,0);		/* Bottom */
-	DrawLine(bitmap,top,left,bottom,left,0);			/* Left */
-	DrawLine(bitmap,top,right,bottom,right,0);			/* Right */
+	draw_line(bitmap,x,y,ex,y,0);		/* Top */
+	draw_line(bitmap,x,ey,ex,ey,0);		/* Bottom */
+	draw_line(bitmap,x,y,x,ey,0);		/* Left */
+	draw_line(bitmap,ex,y,ex,ey,0);		/* Right */
 
 	/* Score Grid */
 
-	bottom = top + 10;
-	DrawLine(bitmap,bottom,left+8,bottom,right,0);     /* Horizontal Divide Line */
-	DrawLine(bitmap,top,left+8,bottom,left+8,0);
-	DrawLine(bitmap,top,left+16,bottom,left+16,0);
+	ey = y + 10;
+	draw_line(bitmap,x+8,ey,ex,ey,0);	/* Horizontal Divide Line */
+	draw_line(bitmap,x+8,y,x+8,ey,0);
+	draw_line(bitmap,x+16,y,x+16,ey,0);
 }
 
 
@@ -214,7 +178,7 @@ void circus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	if (full_refresh)
 	{
-		memset (dirtybuffer, 1, videoram_size);
+		memset(dirtybuffer, 1, videoram_size);
 	}
 
 	/* for every character in the Video RAM,        */
@@ -242,35 +206,35 @@ void circus_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
     /* The sync generator hardware is used to   */
     /* draw the border and diving boards        */
 
-    DrawLine (bitmap,18,0,18,255,0);
-    DrawLine (bitmap,249,0,249,255,1);
-    DrawLine (bitmap,18,0,248,0,0);
-    DrawLine (bitmap,18,247,248,247,0);
+    draw_line (bitmap,0,18,255,18,0);
+    draw_line (bitmap,0,249,255,249,1);
+    draw_line (bitmap,0,18,0,248,0);
+    draw_line (bitmap,247,18,247,248,0);
 
-    DrawLine (bitmap,137,0,137,17,0);
-    DrawLine (bitmap,137,231,137,248,0);
-    DrawLine (bitmap,193,0,193,17,0);
-    DrawLine (bitmap,193,231,193,248,0);
+    draw_line (bitmap,0,137,17,137,0);
+    draw_line (bitmap,231,137,248,137,0);
+    draw_line (bitmap,0,193,17,193,0);
+    draw_line (bitmap,231,193,248,193,0);
 
     /* Draw the clown in white and afterwards compensate for the overlay */
 	drawgfx(bitmap,Machine->gfx[1],
-			Clown_Z,
+			clown_z,
 			1,
 			0,0,
-			Clown_Y,Clown_X,
+			clown_y,clown_x,
 			&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 
 	/* mark tiles underneath as dirty */
-	sx = Clown_Y >> 3;
-	sy = Clown_X >> 3;
+	sx = clown_y >> 3;
+	sy = clown_x >> 3;
 
 	{
 		int max_x = 2;
 		int max_y = 2;
 		int x2, y2;
 
-		if (Clown_Y & 0x0f) max_x ++;
-		if (Clown_X & 0x0f) max_y ++;
+		if (clown_y & 0x0f) max_x ++;
+		if (clown_x & 0x0f) max_y ++;
 
 		for (y2 = sy; y2 < sy + max_y; y2 ++)
 		{
@@ -293,7 +257,7 @@ void robotbowl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	if (full_refresh)
 	{
-		memset (dirtybuffer, 1, videoram_size);
+		memset(dirtybuffer, 1, videoram_size);
 	}
 
 	/* for every character in the Video RAM,  */
@@ -325,48 +289,48 @@ void robotbowl_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
     for(offs=15;offs<=63;offs+=24)
     {
-        RobotBox(bitmap, 31, offs);
-        RobotBox(bitmap, 63, offs);
-        RobotBox(bitmap, 95, offs);
+        draw_robot_box(bitmap, offs, 31);
+        draw_robot_box(bitmap, offs, 63);
+        draw_robot_box(bitmap, offs, 95);
 
-        RobotBox(bitmap, 31, offs+152);
-        RobotBox(bitmap, 63, offs+152);
-        RobotBox(bitmap, 95, offs+152);
+        draw_robot_box(bitmap, offs+152, 31);
+        draw_robot_box(bitmap, offs+152, 63);
+        draw_robot_box(bitmap, offs+152, 95);
     }
 
-    RobotBox(bitmap, 127, 39);                  /* 10th Frame */
-    DrawLine(bitmap, 137,39,137,47,0);          /* Extra digit box */
+    draw_robot_box(bitmap, 39, 127);                  /* 10th Frame */
+    draw_line(bitmap, 39,137,47,137,0);          /* Extra digit box */
 
-    RobotBox(bitmap, 127, 39+152);
-    DrawLine(bitmap, 137,39+152,137,47+152,0);
+    draw_robot_box(bitmap, 39+152, 127);
+    draw_line(bitmap, 39+152,137,47+152,137,0);
 
     /* Bowling Alley */
 
-    DrawLine(bitmap, 17,103,205,103,0);
-    DrawLine(bitmap, 17,111,203,111,1);
-    DrawLine(bitmap, 17,152,205,152,0);
-    DrawLine(bitmap, 17,144,203,144,1);
+    draw_line(bitmap, 103,17,103,205,0);
+    draw_line(bitmap, 111,17,111,203,1);
+    draw_line(bitmap, 152,17,152,205,0);
+    draw_line(bitmap, 144,17,144,203,1);
 
 	/* Draw the Ball */
 
 	drawgfx(bitmap,Machine->gfx[1],
-			Clown_Z,
+			clown_z,
 			1,
 			0,0,
-			Clown_Y+8,Clown_X+8, /* Y is horizontal position */
+			clown_y+8,clown_x+8, /* Y is horizontal position */
 			&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 
 	/* mark tiles underneath as dirty */
-	sx = Clown_Y >> 3;
-	sy = Clown_X >> 3;
+	sx = clown_y >> 3;
+	sy = clown_x >> 3;
 
 	{
 		int max_x = 2;
 		int max_y = 2;
 		int x2, y2;
 
-		if (Clown_Y & 0x0f) max_x ++;
-		if (Clown_X & 0x0f) max_y ++;
+		if (clown_y & 0x0f) max_x ++;
+		if (clown_x & 0x0f) max_y ++;
 
 		for (y2 = sy; y2 < sy + max_y; y2 ++)
 		{
@@ -387,7 +351,7 @@ void crash_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	if (full_refresh)
 	{
-		memset (dirtybuffer, 1, videoram_size);
+		memset(dirtybuffer, 1, videoram_size);
 	}
 
 	/* for every character in the Video RAM,	*/
@@ -414,23 +378,23 @@ void crash_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	/* Draw the Car */
     drawgfx(bitmap,Machine->gfx[1],
-			Clown_Z,
+			clown_z,
 			1,
 			0,0,
-			Clown_Y,Clown_X, /* Y is horizontal position */
+			clown_y,clown_x, /* Y is horizontal position */
 			&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 
 	/* mark tiles underneath as dirty */
-	sx = Clown_Y >> 3;
-	sy = Clown_X >> 3;
+	sx = clown_y >> 3;
+	sy = clown_x >> 3;
 
 	{
 		int max_x = 2;
 		int max_y = 2;
 		int x2, y2;
 
-		if (Clown_Y & 0x0f) max_x ++;
-		if (Clown_X & 0x0f) max_y ++;
+		if (clown_y & 0x0f) max_x ++;
+		if (clown_x & 0x0f) max_y ++;
 
 		for (y2 = sy; y2 < sy + max_y; y2 ++)
 		{

@@ -105,7 +105,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 ***************************************************************************/
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( blockhl )
 	PORT_START	/* PLAYER 1 INPUTS */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT  | IPF_8WAY | IPF_PLAYER1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER1 )
@@ -346,7 +346,7 @@ static void gfx_untangle(void)
 
 
 
-struct GameDriver quarth_driver =
+struct GameDriver driver_quarth =
 {
 	__FILE__,
 	0,
@@ -359,12 +359,12 @@ struct GameDriver quarth_driver =
 	&machine_driver,
 	0,
 
-	quarth_rom,
+	rom_quarth,
 	gfx_untangle, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_blockhl,
 
 	0, 0, 0,
     ORIENTATION_DEFAULT,

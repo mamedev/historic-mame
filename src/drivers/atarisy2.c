@@ -548,7 +548,7 @@ static struct MemoryWriteAddress main_writemem[] =
 static struct MemoryReadAddress sound_readmem[] =
 {
 	{ 0x0000, 0x0fff, MRA_RAM },
-	{ 0x1000, 0x17ff, MRA_RAM, &atarigen_eeprom, &atarigen_eeprom_size },	/* EEPROM */
+	{ 0x1000, 0x17ff, MRA_RAM },	/* EEPROM */
 	{ 0x1800, 0x180f, pokey1_r },
 	{ 0x1810, 0x1813, leta_r },
 	{ 0x1830, 0x183f, pokey2_r },
@@ -563,7 +563,7 @@ static struct MemoryReadAddress sound_readmem[] =
 static struct MemoryWriteAddress sound_writemem[] =
 {
 	{ 0x0000, 0x0fff, MWA_RAM },
-	{ 0x1000, 0x17ff, MWA_RAM },	/* EEPROM */
+	{ 0x1000, 0x17ff, MWA_RAM, &atarigen_eeprom, &atarigen_eeprom_size },	/* EEPROM */
 	{ 0x1800, 0x180f, pokey1_w },
 	{ 0x1830, 0x183f, pokey2_w },
 	{ 0x1850, 0x1850, YM2151_register_port_0_w },
@@ -588,7 +588,7 @@ static struct MemoryWriteAddress sound_writemem[] =
  *
  *************************************/
 
-INPUT_PORTS_START( paperboy_input_ports )
+INPUT_PORTS_START( paperboy )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -688,7 +688,7 @@ INPUT_PORTS_START( paperboy_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( a720_input_ports )
+INPUT_PORTS_START( 720 )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -787,7 +787,7 @@ INPUT_PORTS_START( a720_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( ssprint_input_ports )
+INPUT_PORTS_START( ssprint )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -886,7 +886,7 @@ INPUT_PORTS_START( ssprint_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( csprint_input_ports )
+INPUT_PORTS_START( csprint )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -985,7 +985,7 @@ INPUT_PORTS_START( csprint_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( apb_input_ports )
+INPUT_PORTS_START( apb )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_UNUSED )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_UNUSED )
@@ -1612,7 +1612,7 @@ ROM_START( paperboy )
 ROM_END
 
 
-ROM_START( a720 )
+ROM_START( 720 )
 	ROM_REGION(0x90000)     /* 9 * 64k T11 code */
 	ROM_LOAD_ODD ( "3126.rom",     0x08000, 0x04000, 0x43abd367 )
 	ROM_LOAD_EVEN( "3127.rom",     0x08000, 0x04000, 0x772e1e5b )
@@ -1675,7 +1675,7 @@ ROM_START( a720 )
 ROM_END
 
 
-ROM_START( a720b )
+ROM_START( 720b )
 	ROM_REGION(0x90000)     /* 9 * 64k T11 code */
 	ROM_LOAD_ODD ( "2126.7l",      0x08000, 0x04000, 0xd07e731c )
 	ROM_LOAD_EVEN( "2127.7n",      0x08000, 0x04000, 0x2d19116c )
@@ -1965,7 +1965,7 @@ ROM_END
  *
  *************************************/
 
-struct GameDriver paperboy_driver =
+struct GameDriver driver_paperboy =
 {
 	__FILE__,
 	0,
@@ -1978,13 +1978,13 @@ struct GameDriver paperboy_driver =
 	&machine_driver,
 	paperboy_init,
 
-	paperboy_rom,
+	rom_paperboy,
 	rom_decode,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	paperboy_input_ports,
+	input_ports_paperboy,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
@@ -1992,7 +1992,7 @@ struct GameDriver paperboy_driver =
 };
 
 
-struct GameDriver a720_driver =
+struct GameDriver driver_720 =
 {
 	__FILE__,
 	0,
@@ -2005,13 +2005,13 @@ struct GameDriver a720_driver =
 	&a720_machine_driver,
 	a720_init,
 
-	a720_rom,
+	rom_720,
 	rom_decode,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	a720_input_ports,
+	input_ports_720,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
@@ -2019,10 +2019,10 @@ struct GameDriver a720_driver =
 };
 
 
-struct GameDriver a720b_driver =
+struct GameDriver driver_720b =
 {
 	__FILE__,
-	&a720_driver,
+	&driver_720,
 	"720b",
 	"720 Degrees (set 2)",
 	"1986",
@@ -2032,13 +2032,13 @@ struct GameDriver a720b_driver =
 	&a720_machine_driver,
 	a720_init,
 
-	a720b_rom,
+	rom_720b,
 	rom_decode,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	a720_input_ports,
+	input_ports_720,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
@@ -2046,7 +2046,7 @@ struct GameDriver a720b_driver =
 };
 
 
-struct GameDriver ssprint_driver =
+struct GameDriver driver_ssprint =
 {
 	__FILE__,
 	0,
@@ -2059,13 +2059,13 @@ struct GameDriver ssprint_driver =
 	&sprint_machine_driver,
 	ssprint_init,
 
-	ssprint_rom,
+	rom_ssprint,
 	rom_decode,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	ssprint_input_ports,
+	input_ports_ssprint,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
@@ -2073,7 +2073,7 @@ struct GameDriver ssprint_driver =
 };
 
 
-struct GameDriver csprint_driver =
+struct GameDriver driver_csprint =
 {
 	__FILE__,
 	0,
@@ -2086,13 +2086,13 @@ struct GameDriver csprint_driver =
 	&sprint_machine_driver,
 	csprint_init,
 
-	csprint_rom,
+	rom_csprint,
 	rom_decode,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	csprint_input_ports,
+	input_ports_csprint,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
@@ -2100,7 +2100,7 @@ struct GameDriver csprint_driver =
 };
 
 
-struct GameDriver apb_driver =
+struct GameDriver driver_apb =
 {
 	__FILE__,
 	0,
@@ -2113,13 +2113,13 @@ struct GameDriver apb_driver =
 	&machine_driver,
 	apb_init,
 
-	apb_rom,
+	rom_apb,
 	rom_decode,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	apb_input_ports,
+	input_ports_apb,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_ROTATE_270,
@@ -2127,10 +2127,10 @@ struct GameDriver apb_driver =
 };
 
 
-struct GameDriver apb2_driver =
+struct GameDriver driver_apb2 =
 {
 	__FILE__,
-	&apb_driver,
+	&driver_apb,
 	"apb2",
 	"APB (set 2)",
 	"1987",
@@ -2140,13 +2140,13 @@ struct GameDriver apb2_driver =
 	&machine_driver,
 	apb_init,
 
-	apb2_rom,
+	rom_apb2,
 	rom_decode,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	apb_input_ports,
+	input_ports_apb,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_ROTATE_270,

@@ -13,7 +13,6 @@
 
 unsigned char *qix_palettebank;
 unsigned char *qix_videoaddress;
-static unsigned char *screen;
 
 /*#define DEBUG_LEDS*/
 
@@ -85,7 +84,7 @@ static void update_pen (int pen, int val)
 ***************************************************************************/
 int qix_vh_start(void)
 {
-	if ((screen = malloc(256*256)) == 0)
+	if ((videoram = malloc(256*256)) == 0)
 		return 1;
 
 #ifdef DEBUG_LEDS
@@ -104,8 +103,8 @@ int qix_vh_start(void)
 ***************************************************************************/
 void qix_vh_stop(void)
 {
-	free (screen);
-	screen = 0;
+	free (videoram);
+	videoram = 0;
 
 #ifdef DEBUG_LEDS
 	if (led_log) fclose (led_log);
@@ -128,34 +127,21 @@ that location is either returned or written. */
 int qix_videoram_r(int offset)
 {
 	offset += (qix_videoaddress[0] & 0x80) * 0x100;
-	return screen[offset];
+	return videoram[offset];
 }
 
 void qix_videoram_w(int offset,int data)
 {
-	int x, y, temp;
+	int x, y;
 
 	offset += (qix_videoaddress[0] & 0x80) * 0x100;
 
 	x = offset & 0xff;
 	y = offset >> 8;
 
-	/* rotate if necessary */
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
-	{
-		temp = x; x = y; y = temp;
-	}
-	if (Machine->orientation & ORIENTATION_FLIP_X)
-		x = ~x & 0xff;
-	if (Machine->orientation & ORIENTATION_FLIP_Y)
-		y = ~y & 0xff;
+	plot_pixel(Machine->scrbitmap, x, y, Machine->pens[data]);
 
-
-	Machine->scrbitmap->line[y][x] = Machine->pens[data];
-
-	osd_mark_dirty(x,y,x,y,0);
-
-	screen[offset] = data;
+	videoram[offset] = data;
 }
 
 
@@ -163,36 +149,23 @@ void qix_videoram_w(int offset,int data)
 int qix_addresslatch_r(int offset)
 {
 	offset = qix_videoaddress[0] * 0x100 + qix_videoaddress[1];
-	return screen[offset];
+	return videoram[offset];
 }
 
 
 
 void qix_addresslatch_w(int offset,int data)
 {
-	int x, y, temp;
+	int x, y;
 
 	offset = qix_videoaddress[0] * 0x100 + qix_videoaddress[1];
 
 	x = offset & 0xff;
 	y = offset >> 8;
 
-	/* rotate if necessary */
-	if (Machine->orientation & ORIENTATION_SWAP_XY)
-	{
-		temp = x; x = y; y = temp;
-	}
-	if (Machine->orientation & ORIENTATION_FLIP_X)
-		x = ~x & 0xff;
-	if (Machine->orientation & ORIENTATION_FLIP_Y)
-		y = ~y & 0xff;
+	plot_pixel(Machine->scrbitmap, x, y, Machine->pens[data]);
 
-
-	Machine->scrbitmap->line[y][x] = Machine->pens[data];
-
-	osd_mark_dirty(x,y,x,y,0);
-
-	screen[offset] = data;
+	videoram[offset] = data;
 }
 
 
@@ -251,22 +224,8 @@ void qix_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		{
 			int x = offs & 0xff;
 			int y = offs >> 8;
-			int temp;
 
-			/* rotate if necessary */
-			if (Machine->orientation & ORIENTATION_SWAP_XY)
-			{
-				temp = x; x = y; y = temp;
-			}
-			if (Machine->orientation & ORIENTATION_FLIP_X)
-				x = ~x & 0xff;
-			if (Machine->orientation & ORIENTATION_FLIP_Y)
-				y = ~y & 0xff;
-
-
-			bitmap->line[y][x] = Machine->pens[screen[offs]];
+			plot_pixel(bitmap, x, y, Machine->pens[videoram[offs]]);
 		}
-
-		osd_mark_dirty (0,0,255,255,0);
 	}
 }

@@ -984,7 +984,7 @@ static struct MemoryWriteAddress hotchase_sound_writemem[] =
 								WEC Le Mans 24
 ***************************************************************************/
 
-INPUT_PORTS_START( wecleman_input_ports )
+INPUT_PORTS_START( wecleman )
 
 	PORT_START      /* IN0 - Controls and Coins - $140011.b */
 	CONTROLS_AND_COINS(IP_ACTIVE_HIGH)
@@ -1083,7 +1083,7 @@ INPUT_PORTS_END
 								Hot Chase
 ***************************************************************************/
 
-INPUT_PORTS_START( hotchase_input_ports )
+INPUT_PORTS_START( hotchase )
 
 	PORT_START      /* IN0 - Controls and Coins - $140011.b */
 	CONTROLS_AND_COINS(IP_ACTIVE_LOW)
@@ -1595,7 +1595,7 @@ void wecleman_rom_decode(void)
 
 
 
-struct GameDriver wecleman_driver =
+struct GameDriver driver_wecleman =
 {
 	__FILE__,
 	0,
@@ -1604,19 +1604,19 @@ struct GameDriver wecleman_driver =
 	"1986",
 	"Konami",
 	"Luca Elia\n",
-	GAME_WRONG_COLORS,
+	0,
 	&wecleman_machine_driver,
 	0,
 
-	wecleman_rom,
+	rom_wecleman,
 	wecleman_rom_decode,0,
 	0,
 	0,
 
-	wecleman_input_ports,
+	input_ports_wecleman,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_WRONG_COLORS,
 
 	0,0
 };
@@ -1772,7 +1772,7 @@ int i;
 
 
 
-struct GameDriver hotchase_driver =
+struct GameDriver driver_hotchase =
 {
 	__FILE__,
 	0,
@@ -1785,12 +1785,12 @@ struct GameDriver hotchase_driver =
 	&hotchase_machine_driver,
 	0,
 
-	hotchase_rom,
+	rom_hotchase,
 	hotchase_rom_decode, 0,
 	0,
 	0,
 
-	hotchase_input_ports,
+	input_ports_hotchase,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

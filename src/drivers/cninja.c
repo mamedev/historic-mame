@@ -494,7 +494,7 @@ static struct MemoryWriteAddress stoneage_s_writemem[] =
 	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_VBLANK ) \
 	PORT_BIT( 0xf0, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( cninja )
 
 	PORTS_COINS
 
@@ -549,7 +549,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( cninjau_input_ports )
+INPUT_PORTS_START( cninjau )
 
 	PORTS_COINS
 
@@ -1143,6 +1143,72 @@ ROM_END
 
 /**********************************************************************************/
 
+static int cninja_hiload(void)
+{
+	void *f;
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&cninja_ram[0x03808],"\x2E\x44\x20",3) == 0)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&cninja_ram[0x3808],0x0a0);
+			/* Update high score at the top of the screen */
+			cninja_ram[0x37FA] = cninja_ram[0x380C];
+			cninja_ram[0x37FB] = cninja_ram[0x380D];
+			cninja_ram[0x37FC] = cninja_ram[0x380E];
+			cninja_ram[0x37FD] = cninja_ram[0x380F];
+			osd_fclose(f);
+		}
+		return 1;     /* high score loaded yet */
+	}
+	else return 0; /* Can't load high score yet */
+}
+
+static void cninja_hisave(void)
+{
+	void *f;
+	/* save the hi score table */
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&cninja_ram[0x3808],0x0A0);
+		osd_fclose(f);
+	}
+}
+
+static int cninja0_hiload(void)
+{
+	void *f;
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&cninja_ram[0x03804],"\x2E\x44\x20",3) == 0)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&cninja_ram[0x3804],0x0a0);
+			/* Update high score at the top of the screen */
+			cninja_ram[0x37F6] = cninja_ram[0x3808];
+			cninja_ram[0x37F7] = cninja_ram[0x3809];
+			cninja_ram[0x37F8] = cninja_ram[0x380A];
+			cninja_ram[0x37F9] = cninja_ram[0x380B];
+			osd_fclose(f);
+		}
+		return 1;     /* high score loaded yet */
+	}
+	else return 0; /* Can't load high score yet */
+}
+
+static void cninja0_hisave(void)
+{
+	void *f;
+	/* save the hi score table */
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&cninja_ram[0x3804],0x0A0);
+		osd_fclose(f);
+	}
+}
+
+/**********************************************************************************/
+
 static void cninja_patch(void)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
@@ -1192,7 +1258,7 @@ static void custom_memory2(void)
 
 /**********************************************************************************/
 
-struct GameDriver cninja_driver =
+struct GameDriver driver_cninja =
 {
 	__FILE__,
 	0,
@@ -1205,22 +1271,22 @@ struct GameDriver cninja_driver =
 	&cninja_machine_driver,
 	custom_memory,
 
-	cninja_rom,
+	rom_cninja,
 	cninja_patch, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_cninja,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
-	0, 0
+	cninja_hiload, cninja_hisave
 };
 
-struct GameDriver cninja0_driver =
+struct GameDriver driver_cninja0 =
 {
 	__FILE__,
-	&cninja_driver,
+	&driver_cninja,
 	"cninja0",
 	"Caveman Ninja (World revision 0)",
 	"1991",
@@ -1230,23 +1296,23 @@ struct GameDriver cninja0_driver =
 	&cninja_machine_driver,
 	custom_memory,
 
-	cninja0_rom,
+	rom_cninja0,
 	cninja_patch, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_cninja,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
-	0, 0
+	cninja0_hiload, cninja0_hisave
 };
 
 
-struct GameDriver cninjau_driver =
+struct GameDriver driver_cninjau =
 {
 	__FILE__,
-	&cninja_driver,
+	&driver_cninja,
 	"cninjau",
 	"Caveman Ninja (US)",
 	"1991",
@@ -1256,22 +1322,22 @@ struct GameDriver cninjau_driver =
 	&cninja_machine_driver,
 	custom_memory,
 
-	cninjau_rom,
+	rom_cninjau,
 	cninja_patch, 0,
 	0,
 	0,	/* sound_prom */
 
-	cninjau_input_ports,
+	input_ports_cninjau,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
-	0, 0
+	cninja_hiload, cninja_hisave
 };
 
-struct GameDriver joemac_driver =
+struct GameDriver driver_joemac =
 {
 	__FILE__,
-	&cninja_driver,
+	&driver_cninja,
 	"joemac",
 	"Joe & Mac (Japan)",
 	"1991",
@@ -1281,22 +1347,22 @@ struct GameDriver joemac_driver =
 	&cninja_machine_driver,
 	custom_memory,
 
-	joemac_rom,
+	rom_joemac,
 	cninja_patch, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_cninja,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
-	0, 0
+	cninja_hiload, cninja_hisave
 };
 
-struct GameDriver stoneage_driver =
+struct GameDriver driver_stoneage =
 {
 	__FILE__,
-	&cninja_driver,
+	&driver_cninja,
 	"stoneage",
 	"Stoneage",
 	"1991",
@@ -1306,19 +1372,19 @@ struct GameDriver stoneage_driver =
 	&stoneage_machine_driver,
 	custom_memory2,
 
-	stoneage_rom,
+	rom_stoneage,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_cninja,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
-	0, 0
+	cninja0_hiload, cninja0_hisave
 };
 
-struct GameDriver edrandy_driver =
+struct GameDriver driver_edrandy =
 {
 	__FILE__,
 	0,
@@ -1331,22 +1397,22 @@ struct GameDriver edrandy_driver =
 	&edrandy_machine_driver,
 	0,
 
-	edrandy_rom,
+	rom_edrandy,
 	0, 0,
 	0,
 	0,
 
-	input_ports,
+	input_ports_cninja,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	0 , 0
 };
 
-struct GameDriver edrandyj_driver =
+struct GameDriver driver_edrandyj =
 {
 	__FILE__,
-	&edrandy_driver,
+	&driver_edrandy,
 	"edrandyj",
 	"Edward Randy (Japan)",
 	"1990",
@@ -1356,12 +1422,12 @@ struct GameDriver edrandyj_driver =
 	&edrandy_machine_driver,
 	0,
 
-	edrandyj_rom,
+	rom_edrandyj,
 	0, 0,
 	0,
 	0,
 
-	input_ports,
+	input_ports_cninja,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

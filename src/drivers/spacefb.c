@@ -205,7 +205,7 @@ static struct IOWritePort writeport_sound[] =
 };
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( spacefb )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
@@ -258,7 +258,7 @@ INPUT_PORTS_END
 
 
 /* Same as Space Firebird, except for the difficulty switch */
-INPUT_PORTS_START( spacedem_input_ports )
+INPUT_PORTS_START( spacedem )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY )
@@ -417,7 +417,7 @@ ROM_START( spacefb )
 	ROM_LOAD( "6k.vid",       0x0800, 0x0800, 0xbf901a4e )
 	ROM_LOAD( "4i.vid",       0x1000, 0x0100, 0x528e8533 )
 
-	ROM_REGION(0x0020)	/* color proms */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "mb7051.3n",    0x0000, 0x0020, 0x465d07af )
 
 	ROM_REGION(0x1000)	/* sound */
@@ -440,7 +440,7 @@ ROM_START( spacefbg )
 	ROM_LOAD( "tst-v.6k",     0x0800, 0x0800, 0x1645ff26 )
 	ROM_LOAD( "4i.vid",       0x1000, 0x0100, 0x528e8533 )
 
-	ROM_REGION(0x0020)	/* color proms */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "mb7051.3n",    0x0000, 0x0020, 0x465d07af )
 
 	ROM_REGION(0x1000)	/* sound */
@@ -463,7 +463,7 @@ ROM_START( spcbird )
 	ROM_LOAD( "6k.vid",       0x0800, 0x0800, 0xbf901a4e )
 	ROM_LOAD( "4i.vid",       0x1000, 0x0100, 0x528e8533 )
 
-	ROM_REGION(0x0020)	/* color proms */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "spcbird.clr",  0x0000, 0x0020, 0x25c79518 )
 
 	ROM_REGION(0x1000)	/* sound */
@@ -486,7 +486,7 @@ ROM_START( spacedem )
 	ROM_LOAD( "sd6k.vid",     0x0800, 0x0800, 0x3fcbb20c )
 	ROM_LOAD( "4i.vid",       0x1000, 0x0100, 0x00000000 )  /* This ROM wasn't in the set. Using Space Firebird's */
 
-	ROM_REGION(0x0020)	/* color proms */
+	ROM_REGIONX( 0x0020, REGION_PROMS )
 	ROM_LOAD( "mb7051.3n",    0x0000, 0x0020, 0x00000000 )  /* This ROM wasn't in the set. Using Space Firebird's */
 
 	ROM_REGION(0x1000)	/* sound */
@@ -578,7 +578,7 @@ static void hisave(void)
 
 
 
-struct GameDriver spacefb_driver =
+struct GameDriver driver_spacefb =
 {
 	__FILE__,
 	0,
@@ -587,97 +587,97 @@ struct GameDriver spacefb_driver =
 	"1980",
 	"Nintendo",
 	"Chris Hardy\nAndy Clark\nPaul Johnson\nMarco Cassili\nDan Boris (sound)",
-	GAME_IMPERFECT_COLORS,
+	0,
 	&machine_driver,
 	0,
 
-	spacefb_rom,
+	rom_spacefb,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_spacefb,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
+	0, 0, 0,
+	ORIENTATION_ROTATE_90 | GAME_IMPERFECT_COLORS,
 
 	hiload, hisave
 };
 
-struct GameDriver spacefbg_driver =
+struct GameDriver driver_spacefbg =
 {
 	__FILE__,
-	&spacefb_driver,
+	&driver_spacefb,
 	"spacefbg",
 	"Space Firebird (Gremlin)",
 	"1980",
 	"Gremlin",
 	"Chris Hardy\nAndy Clark\nPaul Johnson\nMarco Cassili\nDan Boris (sound)",
-	GAME_IMPERFECT_COLORS,
+	0,
 	&machine_driver,
 	0,
 
-	spacefbg_rom,
+	rom_spacefbg,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_spacefb,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
+	0, 0, 0,
+	ORIENTATION_ROTATE_90 | GAME_IMPERFECT_COLORS,
 
 	0, 0
 };
 
-struct GameDriver spacebrd_driver =
+struct GameDriver driver_spacebrd =
 {
 	__FILE__,
-	&spacefb_driver,
+	&driver_spacefb,
 	"spacebrd",
 	"Space Bird (bootleg)",
 	"1980",
 	"bootleg",
 	"Chris Hardy\nAndy Clark\nPaul Johnson\nMarco Cassili\nDan Boris (sound)",
-	GAME_IMPERFECT_COLORS,
+	0,
 	&machine_driver,
 	0,
 
-	spcbird_rom,
+	rom_spcbird,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_spacefb,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
+	0, 0, 0,
+	ORIENTATION_ROTATE_90 | GAME_IMPERFECT_COLORS,
 
 	0, 0
 };
 
-struct GameDriver spacedem_driver =
+struct GameDriver driver_spacedem =
 {
 	__FILE__,
-	&spacefb_driver,
+	&driver_spacefb,
 	"spacedem",
 	"Space Demon",
 	"1980",
 	"Nintendo / Fortrek",
 	"Chris Hardy\nAndy Clark\nPaul Johnson\nMarco Cassili\nDan Boris (sound)",
-	GAME_IMPERFECT_COLORS,
+	0,
 	&machine_driver,
 	0,
 
-	spacedem_rom,
+	rom_spacedem,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	spacedem_input_ports,
+	input_ports_spacedem,
 
-	PROM_MEMORY_REGION(2), 0, 0,
-	ORIENTATION_ROTATE_90,
+	0, 0, 0,
+	ORIENTATION_ROTATE_90 | GAME_IMPERFECT_COLORS,
 
 	0, 0
 };

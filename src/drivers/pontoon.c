@@ -86,7 +86,7 @@ static struct IOWritePort writeport[] =
 };
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( pontoon )
 	PORT_START      /* IN0 */
 	PORT_SERVICE( 0x01, IP_ACTIVE_LOW )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW,  IPT_COIN3 )
@@ -260,7 +260,7 @@ ROM_START( pontoon )
 	ROM_LOAD( "ponttekh.005",   0x4000, 0x2000, 0x2b8e8ca7 )
 	ROM_LOAD( "ponttekh.006",   0x6000, 0x2000, 0x6bc23965 )
 
-	ROM_REGION(0x0300)           /* color proms */
+	ROM_REGIONX( 0x0300, REGION_PROMS )
 	ROM_LOAD( "pon24s10.003",   0x0000, 0x0100, 0x4623b7f3 )  /* red component */
 	ROM_LOAD( "pon24s10.002",   0x0100, 0x0100, 0x117e1b67 )  /* green component */
 	ROM_LOAD( "pon24s10.001",   0x0200, 0x0100, 0xc64ecee8 )  /* blue component */
@@ -304,7 +304,7 @@ static void hisave(void)
 
 
 
-struct GameDriver pontoon_driver =
+struct GameDriver driver_pontoon =
 {
 	__FILE__,
 	0,
@@ -317,15 +317,15 @@ struct GameDriver pontoon_driver =
 	&machine_driver,
 	0,
 
-	pontoon_rom,
+	rom_pontoon,
 	0,
 	0,
 	0,
 	0,      /* sound_prom */
 
-	input_ports,
+	input_ports_pontoon,
 
-	PROM_MEMORY_REGION(2), 0, 0,   /* colors, palette, colortable */
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	hiload, hisave

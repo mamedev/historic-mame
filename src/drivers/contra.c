@@ -145,7 +145,7 @@ static struct MemoryWriteAddress writemem_sound[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( contra )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -354,7 +354,7 @@ ROM_START( contra )
 	ROM_LOAD( "g-13.rom",     0xe0000, 0x10000, 0x2b513d12 )
 	// 0xf0000..0xfffff is unpopulated, but gfx_decode reads from here
 
-	ROM_REGION(0x0400)	/* PROMs */
+	ROM_REGIONX( 0x0400, REGION_PROMS )
 	ROM_LOAD( "633e08.10g",   0x0000, 0x0100, 0x9f0949fa )	/* 007121 #1 sprite lookup table */
 	ROM_LOAD( "633e09.12g",   0x0100, 0x0100, 0x14ca5e19 )	/* 007121 #1 char lookup table */
 	ROM_LOAD( "633f10.18g",   0x0200, 0x0100, 0x2b244d84 )	/* 007121 #2 sprite lookup table */
@@ -391,7 +391,7 @@ ROM_START( contrab )
 	ROM_LOAD( "g-13.rom",     0xe0000, 0x10000, 0x2b513d12 )
 	// 0xf0000..0xfffff is unpopulated, but gfx_decode reads from here
 
-	ROM_REGION(0x0400)	/* PROMs */
+	ROM_REGIONX( 0x0400, REGION_PROMS )
 	ROM_LOAD( "633e08.10g",   0x0000, 0x0100, 0x9f0949fa )	/* 007121 #1 sprite lookup table */
 	ROM_LOAD( "633e09.12g",   0x0100, 0x0100, 0x14ca5e19 )	/* 007121 #1 char lookup table */
 	ROM_LOAD( "633f10.18g",   0x0200, 0x0100, 0x2b244d84 )	/* 007121 #2 sprite lookup table */
@@ -428,7 +428,7 @@ ROM_START( contraj )
 	ROM_LOAD( "g-13.rom",     0xe0000, 0x10000, 0x2b513d12 )
 	// 0xf0000..0xfffff is unpopulated, but gfx_decode reads from here
 
-	ROM_REGION(0x0400)	/* PROMs */
+	ROM_REGIONX( 0x0400, REGION_PROMS )
 	ROM_LOAD( "633e08.10g",   0x0000, 0x0100, 0x9f0949fa )	/* 007121 #1 sprite lookup table */
 	ROM_LOAD( "633e09.12g",   0x0100, 0x0100, 0x14ca5e19 )	/* 007121 #1 char lookup table */
 	ROM_LOAD( "633f10.18g",   0x0200, 0x0100, 0x2b244d84 )	/* 007121 #2 sprite lookup table */
@@ -465,7 +465,7 @@ ROM_START( contrajb )
 	ROM_LOAD( "g-13.rom",     0xe0000, 0x10000, 0x2b513d12 )
 	// 0xf0000..0xfffff is unpopulated, but gfx_decode reads from here
 
-	ROM_REGION(0x0400)	/* PROMs */
+	ROM_REGIONX( 0x0400, REGION_PROMS )
 	ROM_LOAD( "633e08.10g",   0x0000, 0x0100, 0x9f0949fa )	/* 007121 #1 sprite lookup table */
 	ROM_LOAD( "633e09.12g",   0x0100, 0x0100, 0x14ca5e19 )	/* 007121 #1 char lookup table */
 	ROM_LOAD( "633f10.18g",   0x0200, 0x0100, 0x2b244d84 )	/* 007121 #2 sprite lookup table */
@@ -502,7 +502,7 @@ ROM_START( gryzor )
 	ROM_LOAD( "g-13.rom",     0xe0000, 0x10000, 0x2b513d12 )
 	// 0xf0000..0xfffff is unpopulated, but gfx_decode reads from here
 
-	ROM_REGION(0x0400)	/* PROMs */
+	ROM_REGIONX( 0x0400, REGION_PROMS )
 	ROM_LOAD( "633e08.10g",   0x0000, 0x0100, 0x9f0949fa )	/* 007121 #1 sprite lookup table */
 	ROM_LOAD( "633e09.12g",   0x0100, 0x0100, 0x14ca5e19 )	/* 007121 #1 char lookup table */
 	ROM_LOAD( "633f10.18g",   0x0200, 0x0100, 0x2b244d84 )	/* 007121 #2 sprite lookup table */
@@ -552,7 +552,7 @@ static void contra_hisave(void)
 	}
 }
 
-struct GameDriver contra_driver =
+struct GameDriver driver_contra =
 {
 	__FILE__,
 	0,
@@ -565,23 +565,23 @@ struct GameDriver contra_driver =
 	&machine_driver,
 	0,
 
-	contra_rom,
+	rom_contra,
 	0, 0,
 	0,
 	0,
 
-	input_ports,
+	input_ports_contra,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	contra_hiload, contra_hisave
 };
 
-struct GameDriver contrab_driver =
+struct GameDriver driver_contrab =
 {
 	__FILE__,
-	&contra_driver,
+	&driver_contra,
 	"contrab",
 	"Contra (US bootleg)",
 	"1987",
@@ -591,23 +591,23 @@ struct GameDriver contrab_driver =
 	&machine_driver,
 	0,
 
-	contrab_rom,
+	rom_contrab,
 	0, 0,
 	0,
 	0,
 
-	input_ports,
+	input_ports_contra,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	contra_hiload, contra_hisave
 };
 
-struct GameDriver contraj_driver =
+struct GameDriver driver_contraj =
 {
 	__FILE__,
-	&contra_driver,
+	&driver_contra,
 	"contraj",
 	"Contra (Japan)",
 	"1987",
@@ -617,23 +617,23 @@ struct GameDriver contraj_driver =
 	&machine_driver,
 	0,
 
-	contraj_rom,
+	rom_contraj,
 	0, 0,
 	0,
 	0,
 
-	input_ports,
+	input_ports_contra,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	contra_hiload, contra_hisave
 };
 
-struct GameDriver contrajb_driver =
+struct GameDriver driver_contrajb =
 {
 	__FILE__,
-	&contra_driver,
+	&driver_contra,
 	"contrajb",
 	"Contra (Japan bootleg)",
 	"1987",
@@ -643,23 +643,23 @@ struct GameDriver contrajb_driver =
 	&machine_driver,
 	0,
 
-	contrajb_rom,
+	rom_contrajb,
 	0, 0,
 	0,
 	0,
 
-	input_ports,
+	input_ports_contra,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	contra_hiload, contra_hisave
 };
 
-struct GameDriver gryzor_driver =
+struct GameDriver driver_gryzor =
 {
 	__FILE__,
-	&contra_driver,
+	&driver_contra,
 	"gryzor",
 	"Gryzor",
 	"1987",
@@ -669,14 +669,14 @@ struct GameDriver gryzor_driver =
 	&machine_driver,
 	0,
 
-	gryzor_rom,
+	rom_gryzor,
 	0, 0,
 	0,
 	0,
 
-	input_ports,
+	input_ports_contra,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	contra_hiload, contra_hisave

@@ -141,7 +141,7 @@ static struct MemoryWriteAddress stadhero_s_writemem[] =
 
 /******************************************************************************/
 
-INPUT_PORTS_START( stadhero_input_ports )
+INPUT_PORTS_START( stadhero )
 	PORT_START	/* Player 1 controls */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_8WAY )
@@ -393,7 +393,7 @@ ROM_END
 
 /******************************************************************************/
 
-struct GameDriver stadhero_driver =
+struct GameDriver driver_stadhero =
 {
 	__FILE__,
 	0,
@@ -406,12 +406,12 @@ struct GameDriver stadhero_driver =
 	&stadhero_machine_driver,
 	0,
 
-	stadhero_rom,
+	rom_stadhero,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	stadhero_input_ports,
+	input_ports_stadhero,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,

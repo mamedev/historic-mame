@@ -27,7 +27,12 @@ void missile_flip_screen (void);
 int missile_IN0_r(int offset)
 {
 	if (ctrld)	/* trackball */
-  	    return ((readinputport(5) << 4) & 0xf0) | (readinputport(4) & 0x0f);
+	{
+		if (!missile_flipscreen)
+	  	    return ((readinputport(5) << 4) & 0xf0) | (readinputport(4) & 0x0f);
+		else
+	  	    return ((readinputport(7) << 4) & 0xf0) | (readinputport(6) & 0x0f);
+	}
 	else	/* buttons */
 		return (readinputport(0));
 }

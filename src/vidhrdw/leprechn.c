@@ -29,9 +29,8 @@ void leprechn_graphics_data_w(int offset,int data)
 
     if (pending)
     {
-        tmpbitmap->line[pending_y][pending_x] = Machine->pens[pending_color];
+		plot_pixel2(tmpbitmap, Machine->scrbitmap, pending_x, pending_y, Machine->pens[pending_color]);
         rawbitmap[pending_y * screen_width + pending_x] = pending_color;
-        osd_mark_dirty(pending_x,pending_y,pending_x,pending_y,0);
 
         pending = 0;
     }
@@ -112,6 +111,7 @@ void leprechn_graphics_data_w(int offset,int data)
 
     // Clear Bitmap
     case 0x18:
+        fillbitmap(Machine->scrbitmap,Machine->pens[data],0);
         fillbitmap(tmpbitmap,Machine->pens[data],0);
         memset(rawbitmap, data, screen_width * Machine->drv->screen_height);
         osd_mark_dirty(0,0,screen_width-1,Machine->drv->screen_height-1,0);
@@ -143,8 +143,8 @@ int leprechn_vh_start(void)
         return 1;
     }
 
-    if ((tmpbitmap = osd_new_bitmap(screen_width,Machine->drv->screen_height,Machine->scrbitmap->depth)) == 0)
-    {
+	if (generic_bitmapped_vh_start())
+	{
         free(rawbitmap);
         return 1;
     }
@@ -162,18 +162,5 @@ int leprechn_vh_start(void)
 void leprechn_vh_stop(void)
 {
     free(rawbitmap);
-    osd_free_bitmap(tmpbitmap);
-}
-
-
-/***************************************************************************
-
-  Draw the game screen in the given osd_bitmap.
-  Do NOT call osd_update_display() from this function, it will be called by
-  the main emulation engine.
-
-***************************************************************************/
-void leprechn_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
-{
-    copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+    generic_bitmapped_vh_stop();
 }

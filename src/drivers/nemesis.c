@@ -669,7 +669,7 @@ static struct MemoryWriteAddress sal_sound_writemem[] =
 	PORT_DIPSETTING(    0x00, "Disabled" )
 
 
-INPUT_PORTS_START( nemesis_input_ports )
+INPUT_PORTS_START( nemesis )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -742,7 +742,7 @@ INPUT_PORTS_START( nemesis_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( nemesuk_input_ports )
+INPUT_PORTS_START( nemesuk )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -816,7 +816,7 @@ INPUT_PORTS_END
 
 
 /* This needs to be sorted */
-INPUT_PORTS_START( konamigt_input_ports )
+INPUT_PORTS_START( konamigt )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -891,7 +891,7 @@ INPUT_PORTS_END
 
 
 /* This needs to be sorted */
-INPUT_PORTS_START( rf2_input_ports )
+INPUT_PORTS_START( rf2 )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -965,7 +965,7 @@ INPUT_PORTS_START( rf2_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( gwarrior_input_ports )
+INPUT_PORTS_START( gwarrior )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -1038,7 +1038,7 @@ INPUT_PORTS_START( gwarrior_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( twinbee_input_ports )
+INPUT_PORTS_START( twinbee )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -1112,7 +1112,7 @@ INPUT_PORTS_START( twinbee_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( gradius_input_ports )
+INPUT_PORTS_START( gradius )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -1185,7 +1185,7 @@ INPUT_PORTS_START( gradius_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( salamand_input_ports )
+INPUT_PORTS_START( salamand )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -1277,7 +1277,7 @@ INPUT_PORTS_START( salamand_input_ports )
 INPUT_PORTS_END
 
 
-INPUT_PORTS_START( lifefrcj_input_ports )
+INPUT_PORTS_START( lifefrcj )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
@@ -2340,7 +2340,7 @@ static void salamand_hisave(void)
 
 /******************************************************************************/
 
-struct GameDriver nemesis_driver =
+struct GameDriver driver_nemesis =
 {
 	__FILE__,
 	0,
@@ -2353,12 +2353,12 @@ struct GameDriver nemesis_driver =
 	&nemesis_machine_driver,
 	0,
 
-	nemesis_rom,
+	rom_nemesis,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	nemesis_input_ports,
+	input_ports_nemesis,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -2366,10 +2366,10 @@ struct GameDriver nemesis_driver =
 	nemesis_hiload,nemesis_hisave
 };
 
-struct GameDriver nemesuk_driver =
+struct GameDriver driver_nemesuk =
 {
 	__FILE__,
-	&nemesis_driver,
+	&driver_nemesis,
 	"nemesuk",
 	"Nemesis (UK)",
 	"1985",
@@ -2379,12 +2379,12 @@ struct GameDriver nemesuk_driver =
 	&nemesis_machine_driver,
 	0,
 
-	nemesuk_rom,
+	rom_nemesuk,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	nemesuk_input_ports,
+	input_ports_nemesuk,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -2392,7 +2392,7 @@ struct GameDriver nemesuk_driver =
 	nemesis_hiload,nemesis_hisave
 };
 
-struct GameDriver konamigt_driver =
+struct GameDriver driver_konamigt =
 {
 	__FILE__,
 	0,
@@ -2405,12 +2405,12 @@ struct GameDriver konamigt_driver =
 	&konamigt_machine_driver,
 	0,
 
-	konamigt_rom,
+	rom_konamigt,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	konamigt_input_ports,
+	input_ports_konamigt,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -2418,10 +2418,10 @@ struct GameDriver konamigt_driver =
 	konamigt_hiload,konamigt_hisave
 };
 
-struct GameDriver rf2_driver =
+struct GameDriver driver_rf2 =
 {
 	__FILE__,
-	&konamigt_driver,
+	&driver_konamigt,
 	"rf2",
 	"Konami RF2 - Red Fighter",
 	"1985",
@@ -2431,12 +2431,12 @@ struct GameDriver rf2_driver =
 	&rf2_gx400_machine_driver,
 	0,
 
-	rf2_rom,
+	rom_rf2,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	rf2_input_ports,
+	input_ports_rf2,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -2444,7 +2444,7 @@ struct GameDriver rf2_driver =
 	rf2_hiload,rf2_hisave
 };
 
-struct GameDriver twinbee_driver =
+struct GameDriver driver_twinbee =
 {
 	__FILE__,
 	0,
@@ -2457,12 +2457,12 @@ struct GameDriver twinbee_driver =
 	&twinbee_gx400_machine_driver,
 	0,
 
-	twinbee_rom,
+	rom_twinbee,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	twinbee_input_ports,
+	input_ports_twinbee,
 
 	0, 0, 0,
 	ORIENTATION_SWAP_XY,
@@ -2470,10 +2470,10 @@ struct GameDriver twinbee_driver =
 	twinbee_hiload,twinbee_hisave
 };
 
-struct GameDriver gradius_driver =
+struct GameDriver driver_gradius =
 {
 	__FILE__,
-	&nemesis_driver,
+	&driver_nemesis,
 	"gradius",
 	"Gradius",
 	"1985",
@@ -2483,12 +2483,12 @@ struct GameDriver gradius_driver =
 	&gx400_machine_driver,
 	0,
 
-	gradius_rom,
+	rom_gradius,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	gradius_input_ports,
+	input_ports_gradius,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -2496,7 +2496,7 @@ struct GameDriver gradius_driver =
 	gradius_hiload,gradius_hisave
 };
 
-struct GameDriver gwarrior_driver =
+struct GameDriver driver_gwarrior =
 {
 	__FILE__,
 	0,
@@ -2509,12 +2509,12 @@ struct GameDriver gwarrior_driver =
 	&gx400_machine_driver,
 	0,
 
-	gwarrior_rom,
+	rom_gwarrior,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	gwarrior_input_ports,
+	input_ports_gwarrior,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -2522,7 +2522,7 @@ struct GameDriver gwarrior_driver =
 	gwarrior_hiload,gwarrior_hisave
 };
 
-struct GameDriver salamand_driver =
+struct GameDriver driver_salamand =
 {
 	__FILE__,
 	0,
@@ -2535,12 +2535,12 @@ struct GameDriver salamand_driver =
 	&salamand_machine_driver,
 	0,
 
-	salamand_rom,
+	rom_salamand,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	salamand_input_ports,
+	input_ports_salamand,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -2548,10 +2548,10 @@ struct GameDriver salamand_driver =
 	salamand_hiload,salamand_hisave
 };
 
-struct GameDriver lifefrce_driver =
+struct GameDriver driver_lifefrce =
 {
 	__FILE__,
-	&salamand_driver,
+	&driver_salamand,
 	"lifefrce",
 	"Lifeforce (US)",
 	"1986",
@@ -2561,12 +2561,12 @@ struct GameDriver lifefrce_driver =
 	&salamand_machine_driver,
 	0,
 
-	lifefrce_rom,
+	rom_lifefrce,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-	salamand_input_ports,
+	input_ports_salamand,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -2574,10 +2574,10 @@ struct GameDriver lifefrce_driver =
 	salamand_hiload,salamand_hisave
 };
 
-struct GameDriver lifefrcj_driver =
+struct GameDriver driver_lifefrcj =
 {
 	__FILE__,
-	&salamand_driver,
+	&driver_salamand,
 	"lifefrcj",
 	"Lifeforce (Japan)",
 	"1986",
@@ -2587,12 +2587,12 @@ struct GameDriver lifefrcj_driver =
 	&salamand_machine_driver,
 	0,
 
-	lifefrcj_rom,
+	rom_lifefrcj,
 	0, 0,
 	0,
 	0,      /* sound_prom */
 
-        lifefrcj_input_ports,
+        input_ports_lifefrcj,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

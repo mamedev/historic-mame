@@ -65,8 +65,6 @@
 
 void pacman_init_machine(void);
 
-unsigned char *theglob_mem_rom;
-
 static int counter=0;
 
 

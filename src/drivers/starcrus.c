@@ -80,7 +80,7 @@ static struct IOWritePort writeport[] =
     { -1 }  /* end of table */
 };
 
-INPUT_PORTS_START( starcrus_input_ports )
+INPUT_PORTS_START( starcrus )
 
 		PORT_START	/* player 1 */
 		PORT_BIT (0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_2WAY ) /* ccw */
@@ -248,7 +248,7 @@ ROM_END
 
 ***************************************************************************/
 
-struct GameDriver starcrus_driver =
+struct GameDriver driver_starcrus =
 {
 	__FILE__,
 	0,
@@ -257,19 +257,19 @@ struct GameDriver starcrus_driver =
 	"1977",
 	"Ramtek",
 	"Frank Palazzolo",
-	GAME_NOT_WORKING,
+	0,
 	&machine_driver,
 	0,
-	starcrus_rom,
+	rom_starcrus,
 	0,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	starcrus_input_ports,
+	input_ports_starcrus,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
 
 	0, 0
 };

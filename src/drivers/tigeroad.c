@@ -260,7 +260,7 @@ static struct IOWritePort sound_writeport[] =
 
 
 
-INPUT_PORTS_START( tigeroad_input_ports )
+INPUT_PORTS_START( tigeroad )
 	PORT_START  /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
@@ -342,7 +342,7 @@ INPUT_PORTS_START( tigeroad_input_ports )
 	PORT_DIPSETTING(    0x80, DEF_STR( Yes ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( f1dream_input_ports )
+INPUT_PORTS_START( f1dream )
 	PORT_START  /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_8WAY )
@@ -731,7 +731,7 @@ static void f1dream_hisave(void)
 
 
 
-struct GameDriver tigeroad_driver =
+struct GameDriver driver_tigeroad =
 {
 	__FILE__,
 	0,
@@ -744,10 +744,10 @@ struct GameDriver tigeroad_driver =
 	&machine_driver,
 	tigeroad_driver_init,
 
-	tigeroad_rom,
+	rom_tigeroad,
 	0,0,0,0,
 
-	tigeroad_input_ports,
+	input_ports_tigeroad,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
@@ -755,7 +755,7 @@ struct GameDriver tigeroad_driver =
 };
 
 /* F1 Dream has an Intel 8751 microcontroller for protection */
-struct GameDriver f1dream_driver =
+struct GameDriver driver_f1dream =
 {
 	__FILE__,
 	0,
@@ -768,20 +768,20 @@ struct GameDriver f1dream_driver =
 	&machine_driver,
 	f1dream_driver_init,
 
-	f1dream_rom,
+	rom_f1dream,
 	0,0,0,0,
 
-	f1dream_input_ports,
+	input_ports_f1dream,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
 	f1dream_hiload, f1dream_hisave
 };
 
-struct GameDriver f1dreamb_driver =
+struct GameDriver driver_f1dreamb =
 {
 	__FILE__,
-	&f1dream_driver,
+	&driver_f1dream,
 	"f1dreamb",
 	"F-1 Dream (bootleg)",
 	"1988",
@@ -791,10 +791,10 @@ struct GameDriver f1dreamb_driver =
 	&machine_driver,
 	tigeroad_driver_init,
 
-	f1dreamb_rom,
+	rom_f1dreamb,
 	0,0,0,0,
 
-	f1dream_input_ports,
+	input_ports_f1dream,
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,

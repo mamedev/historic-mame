@@ -86,7 +86,7 @@ static struct IOReadPort readport[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( goldstar )
 	PORT_START	/* PLAYER */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_UNKNOWN )
@@ -463,7 +463,7 @@ void nvram_save(void)
 
 
 
-struct GameDriver goldstar_driver =
+struct GameDriver driver_goldstar =
 {
 	__FILE__,
 	0,
@@ -476,12 +476,12 @@ struct GameDriver goldstar_driver =
 	&machine_driver,
 	0,
 
-	goldstar_rom,
+	rom_goldstar,
 	goldstar_decode, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_goldstar,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -490,10 +490,10 @@ struct GameDriver goldstar_driver =
 };
 
 
-struct GameDriver goldstbl_driver =
+struct GameDriver driver_goldstbl =
 {
 	__FILE__,
-	&goldstar_driver,
+	&driver_goldstar,
 	"goldstbl",
 	"Golden Star (Blue version)",
 	"????",
@@ -503,12 +503,12 @@ struct GameDriver goldstbl_driver =
 	&goldstbl_machine_driver,
 	0,
 
-	goldstbl_rom,
+	rom_goldstbl,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_goldstar,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

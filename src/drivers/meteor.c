@@ -136,7 +136,7 @@ static struct IOWritePort sound_writeport[] =
 };
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( meteor )
 	PORT_START      /* DSW */
 	PORT_DIPNAME( 0x03, 0x02, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x00, DEF_STR( 2C_1C ) )
@@ -309,7 +309,7 @@ ROM_START( meteor )
 ROM_END
 
 
-struct GameDriver meteor_driver =
+struct GameDriver driver_meteor =
 {
 	__FILE__,
 	0,
@@ -322,13 +322,13 @@ struct GameDriver meteor_driver =
 	&machine_driver,
 	0,
 
-	meteor_rom,
+	rom_meteor,
 	0,
 	0,
 	0,
 	0,
 
-	input_ports,
+	input_ports_meteor,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,

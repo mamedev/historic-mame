@@ -46,7 +46,7 @@ static struct MemoryWriteAddress writemem[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( higemaru )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
@@ -237,7 +237,7 @@ ROM_START( higemaru )
 	ROM_LOAD( "hg1",          0x02000, 0x2000, 0xef4c2f5d )	/* tiles */
 	ROM_LOAD( "hg2",          0x04000, 0x2000, 0x9133f804 )
 
-	ROM_REGION(0x0220)	/* color PROMs */
+	ROM_REGIONX( 0x0220, REGION_PROMS )
 	ROM_LOAD( "hgb3",         0x0000, 0x0020, 0x629cebd8 )	/* palette */
 	ROM_LOAD( "hgb5",         0x0020, 0x0100, 0xdbaa4443 )	/* char lookup table */
 	ROM_LOAD( "hgb1",         0x0120, 0x0100, 0x07c607ce )	/* sprite lookup table */
@@ -282,7 +282,7 @@ static void higemaru_hisave(void)
 }
 
 
-struct GameDriver higemaru_driver =
+struct GameDriver driver_higemaru =
 {
 	__FILE__,
 	0,
@@ -295,14 +295,14 @@ struct GameDriver higemaru_driver =
 	&machine_driver,
 	0,
 
-	higemaru_rom,
+	rom_higemaru,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_higemaru,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_DEFAULT,
 
 	higemaru_hiload, higemaru_hisave

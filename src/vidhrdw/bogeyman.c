@@ -143,15 +143,28 @@ void bogeyman_vh_screenrefresh(struct osd_bitmap *bitmap, int full_refresh)
 		mx=offs%32;
 		my=offs/32;
 		if (flipscreen) {mx=31-mx; my=31-my;}
-        tile=videoram[offs] | ((videoram[offs+0x400]&3)<<8);
+		tile=videoram[offs] | ((videoram[offs+0x400]&3)<<8);
 		bank=tile/0x200;
 		if (!tile) continue;
-        color=0;//(videoram[offs+0x400]&2)>>1;	// Modified by T.Nogi 1999/10/26
-       	drawgfx(bitmap,Machine->gfx[bank],
+#if 0
+		color=0;//(videoram[offs+0x400]&2)>>1;	// Modified by T.Nogi 1999/10/26
+#else
+		color = 0;
+		if (!bank)
+		{
+			if ((tile >= 0x002) && (tile < 0x036)) color = 1;
+			if ((tile >= 0x10b) && (tile < 0x15b)) color = 1;
+			if ((tile >= 0x178) && (tile < 0x1c7)) color = 1;
+			if ((tile >= 0x1e0) && (tile < 0x1f3)) color = 1;
+		} else {
+			if ((tile >= (0x010+0x200)) && (tile < (0x17f+0x200))) color = 1;
+		}
+#endif
+		drawgfx(bitmap,Machine->gfx[bank],
 				tile&0x1ff,
 				color,
 				flipscreen,flipscreen,
 				8*mx,8*my,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-    }
+	}
 }

@@ -154,7 +154,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 };
 
 
-INPUT_PORTS_START( ports )
+INPUT_PORTS_START( sauro )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_BUTTON1 )
 	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_BUTTON2 )
@@ -337,10 +337,10 @@ ROM_START( sauro )
 	ROM_LOAD( "sauro-10.bin",    0x30000, 0x8000, 0xc93380d1 )
 	ROM_LOAD( "sauro-11.bin",    0x38000, 0x8000, 0xf47982a8 )
 
-	ROM_REGION(0x3000)           /* 3k for color PROMs */
-	ROM_LOAD( "82s137-3.bin",    0x00000, 0x0400, 0xd52c4cd0 )  /* Red component */
-	ROM_LOAD( "82s137-2.bin",    0x00400, 0x0400, 0xc3e96d5d )  /* Green component */
-	ROM_LOAD( "82s137-1.bin",    0x00800, 0x0400, 0xbdfcf00c )  /* Blue component */
+	ROM_REGIONX( 0x0c00, REGION_PROMS )
+	ROM_LOAD( "82s137-3.bin",    0x0000, 0x0400, 0xd52c4cd0 )  /* Red component */
+	ROM_LOAD( "82s137-2.bin",    0x0400, 0x0400, 0xc3e96d5d )  /* Green component */
+	ROM_LOAD( "82s137-1.bin",    0x0800, 0x0400, 0xbdfcf00c )  /* Blue component */
 
 	ROM_REGION(0x10000)          /* 64k for sound CPU */
 	ROM_LOAD( "sauro-3.bin",     0x00000, 0x8000, 0x0d501e1b )
@@ -398,7 +398,7 @@ static void driver_init(void)
 }
 
 
-struct GameDriver sauro_driver =
+struct GameDriver driver_sauro =
 {
 	__FILE__,
 	0,
@@ -407,19 +407,19 @@ struct GameDriver sauro_driver =
 	"1987",
 	"Tecfri",
 	"Zsolt Vasvari",
-	GAME_IMPERFECT_COLORS,
+	0,
 	&machine_driver,
 	driver_init,
 
-	sauro_rom,
+	rom_sauro,
 	0,
 	0,
 	0,
 	0,      /* sound_prom */
 
-	ports,
+	input_ports_sauro,
 
-	PROM_MEMORY_REGION(2), 0, 0,   /* colors, palette, colortable */
-	ORIENTATION_DEFAULT,
+	0, 0, 0,
+	ORIENTATION_DEFAULT | GAME_IMPERFECT_COLORS,
 	hiload, hisave
 };

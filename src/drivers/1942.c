@@ -17,7 +17,6 @@ c001      IN1
 c002      IN2
 c003      DSW0
 c004      DSW1
-see the input_ports definition below for details on the input bits
 
 write:
 c800      command for the audio CPU
@@ -439,7 +438,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( 1942 )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -632,7 +631,7 @@ static struct MachineDriver machine_driver =
 
 ***************************************************************************/
 
-ROM_START( c1942 )
+ROM_START( 1942 )
 	ROM_REGION(0x1c000)	/* 64k for code + 3*16k for the banked ROMs images */
 	ROM_LOAD( "1-n3a.bin",    0x00000, 0x4000, 0x40201bab )
 	ROM_LOAD( "1-n4.bin",     0x04000, 0x4000, 0xa60ac644 )
@@ -653,7 +652,7 @@ ROM_START( c1942 )
 	ROM_LOAD( "2-n1.bin",     0x16000, 0x4000, 0x024418f8 )
 	ROM_LOAD( "2-n2.bin",     0x1a000, 0x4000, 0xe2c7e489 )
 
-	ROM_REGION(0x0600)	/* color PROMs */
+	ROM_REGIONX( 0x0600, REGION_PROMS )
 	ROM_LOAD( "08e_sb-5.bin", 0x0000, 0x0100, 0x93ab8153 )	/* red component */
 	ROM_LOAD( "09e_sb-6.bin", 0x0100, 0x0100, 0x8ab44f7d )	/* green component */
 	ROM_LOAD( "10e_sb-7.bin", 0x0200, 0x0100, 0xf4ade9a4 )	/* blue component */
@@ -665,7 +664,7 @@ ROM_START( c1942 )
 	ROM_LOAD( "1-c11.bin",    0x0000, 0x4000, 0xbd87f06b )
 ROM_END
 
-ROM_START( c1942a )
+ROM_START( 1942a )
 	ROM_REGION(0x1c000)	/* 64k for code + 3*16k for the banked ROMs images */
 	ROM_LOAD( "1-n3.bin",     0x00000, 0x4000, 0x612975f2 )
 	ROM_LOAD( "1-n4.bin",     0x04000, 0x4000, 0xa60ac644 )
@@ -686,7 +685,7 @@ ROM_START( c1942a )
 	ROM_LOAD( "2-n1.bin",     0x16000, 0x4000, 0x024418f8 )
 	ROM_LOAD( "2-n2.bin",     0x1a000, 0x4000, 0xe2c7e489 )
 
-	ROM_REGION(0x0600)	/* color PROMs */
+	ROM_REGIONX( 0x0600, REGION_PROMS )
 	ROM_LOAD( "08e_sb-5.bin", 0x0000, 0x0100, 0x93ab8153 )	/* red component */
 	ROM_LOAD( "09e_sb-6.bin", 0x0100, 0x0100, 0x8ab44f7d )	/* green component */
 	ROM_LOAD( "10e_sb-7.bin", 0x0200, 0x0100, 0xf4ade9a4 )	/* blue component */
@@ -698,7 +697,7 @@ ROM_START( c1942a )
 	ROM_LOAD( "1-c11.bin",    0x0000, 0x4000, 0xbd87f06b )
 ROM_END
 
-ROM_START( c1942b )
+ROM_START( 1942b )
 	ROM_REGION(0x1c000)	/* 64k for code + 3*16k for the banked ROMs images */
 	ROM_LOAD( "srb-03.n3",    0x00000, 0x4000, 0xd9dafcc3 )
 	ROM_LOAD( "srb-04.n4",    0x04000, 0x4000, 0xda0cf924 )
@@ -719,7 +718,7 @@ ROM_START( c1942b )
 	ROM_LOAD( "2-n1.bin",     0x16000, 0x4000, 0x024418f8 )
 	ROM_LOAD( "2-n2.bin",     0x1a000, 0x4000, 0xe2c7e489 )
 
-	ROM_REGION(0x0600)	/* color PROMs */
+	ROM_REGIONX( 0x0600, REGION_PROMS )
 	ROM_LOAD( "08e_sb-5.bin", 0x0000, 0x0100, 0x93ab8153 )	/* red component */
 	ROM_LOAD( "09e_sb-6.bin", 0x0100, 0x0100, 0x8ab44f7d )	/* green component */
 	ROM_LOAD( "10e_sb-7.bin", 0x0200, 0x0100, 0xf4ade9a4 )	/* blue component */
@@ -795,7 +794,7 @@ static void hisave(void)
 
 
 
-struct GameDriver c1942_driver =
+struct GameDriver driver_1942 =
 {
 	__FILE__,
 	0,
@@ -808,23 +807,23 @@ struct GameDriver c1942_driver =
 	&machine_driver,
 	0,
 
-	c1942_rom,
+	rom_1942,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_1942,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	hiload, hisave
 };
 
-struct GameDriver c1942a_driver =
+struct GameDriver driver_1942a =
 {
 	__FILE__,
-	&c1942_driver,
+	&driver_1942,
 	"1942a",
 	"1942 (set 2)",
 	"1984",
@@ -834,23 +833,23 @@ struct GameDriver c1942a_driver =
 	&machine_driver,
 	0,
 
-	c1942a_rom,
+	rom_1942a,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_1942,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	hiload, hisave
 };
 
-struct GameDriver c1942b_driver =
+struct GameDriver driver_1942b =
 {
 	__FILE__,
-	&c1942_driver,
+	&driver_1942,
 	"1942b",
 	"1942 (set 3)",
 	"1984",
@@ -860,14 +859,14 @@ struct GameDriver c1942b_driver =
 	&machine_driver,
 	0,
 
-	c1942b_rom,
+	rom_1942b,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_1942,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	hiload, hisave

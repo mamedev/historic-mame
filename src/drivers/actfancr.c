@@ -166,7 +166,7 @@ static struct MemoryWriteAddress dec0_s_writemem[] =
 
 /******************************************************************************/
 
-INPUT_PORTS_START( actfancr_input_ports )
+INPUT_PORTS_START( actfancr )
 	PORT_START	/* Player 1 controls */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
@@ -246,7 +246,7 @@ INPUT_PORTS_START( actfancr_input_ports )
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( triothep_input_ports )
+INPUT_PORTS_START( triothep )
 	PORT_START	/* Player 1 controls */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP    | IPF_8WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN  | IPF_8WAY )
@@ -669,7 +669,7 @@ static void jap_patch(void)
 
 /******************************************************************************/
 
-struct GameDriver actfancr_driver =
+struct GameDriver driver_actfancr =
 {
 	__FILE__,
 	0,
@@ -682,23 +682,23 @@ struct GameDriver actfancr_driver =
 	&actfan_machine_driver,
 	usa_patch,
 
-	actfan_rom,
+	rom_actfan,
 	0,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	actfancr_input_ports,
+	input_ports_actfancr,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	0, 0
 };
 
-struct GameDriver actfancj_driver =
+struct GameDriver driver_actfancj =
 {
 	__FILE__,
-	&actfancr_driver,
+	&driver_actfancr,
 	"actfancj",
 	"Act-Fancer Cybernetick Hyper Weapon (Japan)",
 	"1989",
@@ -708,20 +708,20 @@ struct GameDriver actfancj_driver =
 	&actfan_machine_driver,
 	jap_patch,
 
-	actfanj_rom,
+	rom_actfanj,
 	0,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	actfancr_input_ports,
+	input_ports_actfancr,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
 	0, 0
 };
 
-struct GameDriver triothep_driver =
+struct GameDriver driver_triothep =
 {
 	__FILE__,
 	0,
@@ -734,13 +734,13 @@ struct GameDriver triothep_driver =
 	&triothep_machine_driver,
 	0,
 
-	triothep_rom,
+	rom_triothep,
 	0,
 	0,
 	0,
 	0,	/* sound_prom */
 
-	triothep_input_ports,
+	input_ports_triothep,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

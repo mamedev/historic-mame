@@ -95,7 +95,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( sbasketb )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_COIN1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_COIN2 )
@@ -225,7 +225,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 
 
 /* filenames for sample files */
-static const char *sbasketball_sample_names[] =
+static const char *sbasketb_sample_names[] =
 {
 	"00.wav","01.wav","02.wav","03.wav","04.wav","05.wav","06.wav","07.wav",
 	"08.wav","09.wav","0a.wav","0b.wav","0c.wav","0d.wav","0e.wav","0f.wav",
@@ -236,6 +236,17 @@ static const char *sbasketball_sample_names[] =
 	"30.wav","31.wav","32.wav","33.wav",
 	0
 };
+
+struct VLM5030interface sbasketb_vlm5030_interface =
+{
+    3580000,    /* master clock  */
+    255,        /* volume        */
+    4,         /* memory region  */
+    0,         /* memory size    */
+    0,         /* VCU            */
+	sbasketb_sample_names
+};
+
 
 static struct MachineDriver machine_driver =
 {
@@ -285,7 +296,7 @@ static struct MachineDriver machine_driver =
 		},
 		{
 			SOUND_VLM5030,
-			&konami_vlm5030_interface
+			&sbasketb_vlm5030_interface
 		}
 	}
 };
@@ -310,7 +321,7 @@ ROM_START( sbasketb )
 	ROM_LOAD( "sbb_h08.bin",  0x8000, 0x4000, 0xc75901b6 )
 	ROM_LOAD( "sbb_h10.bin",  0xc000, 0x4000, 0x95bc5942 )
 
-	ROM_REGION(0x0500)    /* color proms */
+	ROM_REGIONX( 0x0500, REGION_PROMS )
 	ROM_LOAD( "405e17",       0x0000, 0x0100, 0xb4c36d57 ) /* palette red component */
 	ROM_LOAD( "405e16",       0x0100, 0x0100, 0x0b7b03b8 ) /* palette green component */
 	ROM_LOAD( "405e18",       0x0200, 0x0100, 0x9e533bad ) /* palette blue component */
@@ -362,7 +373,7 @@ static void hisave(void)
 
 
 
-struct GameDriver sbasketb_driver =
+struct GameDriver driver_sbasketb =
 {
 	__FILE__,
 	0,
@@ -375,14 +386,14 @@ struct GameDriver sbasketb_driver =
 	&machine_driver,
 	0,
 
-	sbasketb_rom,
+	rom_sbasketb,
 	0, 0,
-	sbasketball_sample_names,
+	0,
 	0,	/* sound_prom */
 
-	input_ports,
+	input_ports_sbasketb,
 
-	PROM_MEMORY_REGION(2), 0, 0,
+	0, 0, 0,
 	ORIENTATION_ROTATE_90,
 
 	hiload, hisave

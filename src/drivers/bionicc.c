@@ -145,7 +145,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0xff0000, 0xff3fff, bionicc_fgvideoram_r },
 	{ 0xff4000, 0xff7fff, bionicc_bgvideoram_r },
 	{ 0xff8000, 0xff87ff, paletteram_word_r },
-	{ 0xffc000, 0xfffff7, MRA_BANK8, &ram_bc },               /* working RAM */
+	{ 0xffc000, 0xfffff7, MRA_BANK8 },               /* working RAM */
 	{ 0xfffff8, 0xfffff9, hacked_soundcommand_r },      /* hack */
 	{ 0xfffffa, 0xffffff, hacked_controls_r },      /* hack */
 	{ -1 }
@@ -164,7 +164,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xff0000, 0xff3fff, bionicc_fgvideoram_w, &bionicc_fgvideoram },
 	{ 0xff4000, 0xff7fff, bionicc_bgvideoram_w, &bionicc_bgvideoram },
 	{ 0xff8000, 0xff87ff, bionicc_paletteram_w, &paletteram },
-	{ 0xffc000, 0xfffff7, MWA_BANK8 },	/* working RAM */
+	{ 0xffc000, 0xfffff7, MWA_BANK8, &ram_bc },	/* working RAM */
 	{ 0xfffff8, 0xfffff9, hacked_soundcommand_w },      /* hack */
 	{ 0xfffffa, 0xffffff, hacked_controls_w },	/* hack */
 	{ -1 }
@@ -191,7 +191,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( bionicc )
 	PORT_START
 	PORT_BIT( 0x0f, IP_ACTIVE_LOW, IPT_UNKNOWN )
 	PORT_BIT( 0x10, IP_ACTIVE_LOW, IPT_START2 )
@@ -588,7 +588,7 @@ static void hisave(void)
 
 
 
-struct GameDriver bionicc_driver =
+struct GameDriver driver_bionicc =
 {
 	__FILE__,
 	0,
@@ -601,22 +601,22 @@ struct GameDriver bionicc_driver =
 	&machine_driver,
 	0,
 
-	bionicc_rom,
+	rom_bionicc,
 	0,
 	0,0,
 	0,
 
-	input_ports,
-	NULL, 0, 0,
+	input_ports_bionicc,
+	0, 0, 0,
 
 	ORIENTATION_DEFAULT,
 	hiload,hisave
 };
 
-struct GameDriver bionicc2_driver =
+struct GameDriver driver_bionicc2 =
 {
 	__FILE__,
-	&bionicc_driver,
+	&driver_bionicc,
 	"bionicc2",
 	"Bionic Commando (US set 2)",
 	"1987",
@@ -626,22 +626,22 @@ struct GameDriver bionicc2_driver =
 	&machine_driver,
 	0,
 
-	bionicc2_rom,
+	rom_bionicc2,
 	0,
 	0,0,
 	0,
 
-	input_ports,
-	NULL, 0, 0,
+	input_ports_bionicc,
+	0, 0, 0,
 
 	ORIENTATION_DEFAULT,
 	hiload, hisave
 };
 
-struct GameDriver topsecrt_driver =
+struct GameDriver driver_topsecrt =
 {
 	__FILE__,
-	&bionicc_driver,
+	&driver_bionicc,
 	"topsecrt",
 	"Top Secret (Japan)",
 	"1987",
@@ -651,13 +651,13 @@ struct GameDriver topsecrt_driver =
 	&machine_driver,
 	0,
 
-	topsecrt_rom,
+	rom_topsecrt,
 	0,
 	0,0,
 	0,
 
-	input_ports,
-	NULL, 0, 0,
+	input_ports_bionicc,
+	0, 0, 0,
 
 	ORIENTATION_DEFAULT,
 	hiload, hisave

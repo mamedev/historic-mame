@@ -151,9 +151,6 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x8000, 0x83ff, retofinv_fg_videoram_r },
 	{ 0x8400, 0x87ff, retofinv_fg_colorram_r },
 	{ 0x8800, 0x9fff, retofinv_shared_ram_r },
-	{ 0x8f00, 0x8f7f, MRA_RAM, &retofinv_sprite_ram1 },
-	{ 0x9700, 0x977f, MRA_RAM, &retofinv_sprite_ram2 },
-	{ 0x9f00, 0x9f7f, MRA_RAM, &retofinv_sprite_ram3 },
 	{ 0xa000, 0xa3ff, retofinv_bg_videoram_r },
 	{ 0xa400, 0xa7ff, retofinv_bg_colorram_r },
 	{ 0xc800, 0xc800, MRA_NOP },
@@ -177,6 +174,9 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x8000, 0x83ff, retofinv_fg_videoram_w, &retofinv_fg_videoram, &retofinv_videoram_size },
 	{ 0x8400, 0x87ff, retofinv_fg_colorram_w, &retofinv_fg_colorram },
 	{ 0x8800, 0x9fff, retofinv_shared_ram_w },
+	{ 0x8f00, 0x8f7f, MWA_RAM, &retofinv_sprite_ram1 },	/* covered by the above, */
+	{ 0x9700, 0x977f, MWA_RAM, &retofinv_sprite_ram2 },	/* here only to */
+	{ 0x9f00, 0x9f7f, MWA_RAM, &retofinv_sprite_ram3 },	/* initialize the pointers */
 	{ 0xa000, 0xa3ff, retofinv_bg_videoram_w, &retofinv_bg_videoram },
 	{ 0xa400, 0xa7ff, retofinv_bg_colorram_w, &retofinv_bg_colorram },
 	{ 0xb800, 0xb800, retofinv_flip_screen_w },
@@ -240,7 +240,7 @@ static struct MemoryWriteAddress writemem_sound[] =
 };
 
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( retofinv )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_START2 )
@@ -489,7 +489,7 @@ ROM_START( retofinv )
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
 	ROM_LOAD( "ic17.rom", 0x0000, 0x2000, 0x9025abea )
 
-	ROM_REGION(0x0b00)	/* color PROMs */
+	ROM_REGIONX( 0x0b00, REGION_PROMS )
 	ROM_LOAD( "74s287.p6", 0x0000, 0x0100, 0x50030af0 )	/* palette blue bits   */
 	ROM_LOAD( "74s287.o6", 0x0100, 0x0100, 0xe8f34e11 )	/* palette green bits */
 	ROM_LOAD( "74s287.q5", 0x0200, 0x0100, 0xe9643b8b )	/* palette red bits  */
@@ -518,7 +518,7 @@ ROM_START( retofin1 )
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
 	ROM_LOAD( "ic17.rom", 0x0000, 0x2000, 0x9025abea )
 
-	ROM_REGION(0x0b00)	/* color PROMs */
+	ROM_REGIONX( 0x0b00, REGION_PROMS )
 	ROM_LOAD( "74s287.p6", 0x0000, 0x0100, 0x50030af0 )	/* palette blue bits   */
 	ROM_LOAD( "74s287.o6", 0x0100, 0x0100, 0xe8f34e11 )	/* palette green bits */
 	ROM_LOAD( "74s287.q5", 0x0200, 0x0100, 0xe9643b8b )	/* palette red bits  */
@@ -547,7 +547,7 @@ ROM_START( retofin2 )
 	ROM_REGION(0x10000)	/* 64k for sound cpu */
 	ROM_LOAD( "ic17.rom", 0x0000, 0x2000, 0x9025abea )
 
-	ROM_REGION(0x0b00)	/* color PROMs */
+	ROM_REGIONX( 0x0b00, REGION_PROMS )
 	ROM_LOAD( "74s287.p6", 0x0000, 0x0100, 0x50030af0 )	/* palette blue bits   */
 	ROM_LOAD( "74s287.o6", 0x0100, 0x0100, 0xe8f34e11 )	/* palette green bits */
 	ROM_LOAD( "74s287.q5", 0x0200, 0x0100, 0xe9643b8b )	/* palette red bits  */
@@ -591,7 +591,7 @@ static void hisave(void)
 }
 
 
-struct GameDriver retofinv_driver =
+struct GameDriver driver_retofinv =
 {
 	__FILE__,
 	0,
@@ -603,21 +603,21 @@ struct GameDriver retofinv_driver =
 	0,
 	&machine_driver,
 	0,
-	retofinv_rom,
+	rom_retofinv,
 	0, 0,
 	0,
 	0,	/* sound_prom */
-	input_ports,
-	PROM_MEMORY_REGION(4), 0, 0,
+	input_ports_retofinv,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	hiload, hisave
 };
 
-struct GameDriver retofin1_driver =
+struct GameDriver driver_retofin1 =
 {
 	__FILE__,
-	&retofinv_driver,
+	&driver_retofinv,
 	"retofin1",
 	"Return of the Invaders (bootleg set 1)",
 	"1985",
@@ -626,21 +626,21 @@ struct GameDriver retofin1_driver =
 	0,
 	&machine_driver,
 	0,
-	retofin1_rom,
+	rom_retofin1,
 	0, 0,
 	0,
 	0,	/* sound_prom */
-	input_ports,
-	PROM_MEMORY_REGION(4), 0, 0,
+	input_ports_retofinv,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	hiload, hisave
 };
 
-struct GameDriver retofin2_driver =
+struct GameDriver driver_retofin2 =
 {
 	__FILE__,
-	&retofinv_driver,
+	&driver_retofinv,
 	"retofin2",
 	"Return of the Invaders (bootleg set 2)",
 	"1985",
@@ -649,12 +649,12 @@ struct GameDriver retofin2_driver =
 	0,
 	&machine_driver,
 	0,
-	retofin2_rom,
+	rom_retofin2,
 	0, 0,
 	0,
 	0,	/* sound_prom */
-	input_ports,
-	PROM_MEMORY_REGION(4), 0, 0,
+	input_ports_retofinv,
+	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 
 	hiload, hisave

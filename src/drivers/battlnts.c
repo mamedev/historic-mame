@@ -22,7 +22,7 @@ void battlnts_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 static int battlnts_interrupt( void )
 {
 	if (K007342_is_INT_enabled())
-        return M6309_INT_IRQ;
+        return HD6309_INT_IRQ;
     else
         return ignore_interrupt();
 }
@@ -108,7 +108,7 @@ static struct MemoryWriteAddress battlnts_writemem_sound[] =
 
 ***************************************************************************/
 
-INPUT_PORTS_START( battlnts_input_ports )
+INPUT_PORTS_START( battlnts )
 	PORT_START	/* DSW #1 */
 	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 4C_1C ) )
@@ -205,7 +205,7 @@ INPUT_PORTS_START( battlnts_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( thehustj_input_ports )
+INPUT_PORTS_START( thehustj )
 	PORT_START	/* DSW #1 */
 	PORT_DIPNAME( 0x0f, 0x0f, DEF_STR( Coin_A ) )
 	PORT_DIPSETTING(    0x02, DEF_STR( 4C_1C ) )
@@ -458,7 +458,7 @@ ROM_END
 
 ***************************************************************************/
 
-struct GameDriver battlnts_driver =
+struct GameDriver driver_battlnts =
 {
 	__FILE__,
 	0,
@@ -471,22 +471,22 @@ struct GameDriver battlnts_driver =
 	&machine_driver,
 	0,
 
-	battlnts_rom,
+	rom_battlnts,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	battlnts_input_ports,
+	input_ports_battlnts,
 
 	0, 0, 0,
     ORIENTATION_ROTATE_90,
 	0, 0
 };
 
-struct GameDriver battlntj_driver =
+struct GameDriver driver_battlntj =
 {
 	__FILE__,
-	&battlnts_driver,
+	&driver_battlnts,
 	"battlntj",
 	"Battlantis (Japan)",
 	"1987",
@@ -496,19 +496,19 @@ struct GameDriver battlntj_driver =
 	&machine_driver,
 	0,
 
-	battlntj_rom,
+	rom_battlntj,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	battlnts_input_ports,
+	input_ports_battlnts,
 
 	0, 0, 0,
     ORIENTATION_ROTATE_90,
 	0, 0
 };
 
-struct GameDriver thehustl_driver =
+struct GameDriver driver_thehustl =
 {
 	__FILE__,
 	0,
@@ -521,22 +521,22 @@ struct GameDriver thehustl_driver =
 	&machine_driver,
 	0,
 
-	thehustl_rom,
+	rom_thehustl,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	thehustj_input_ports,
+	input_ports_thehustj,
 
 	0, 0, 0,
     ORIENTATION_ROTATE_90,
 	0, 0
 };
 
-struct GameDriver thehustj_driver =
+struct GameDriver driver_thehustj =
 {
 	__FILE__,
-	&thehustl_driver,
+	&driver_thehustl,
 	"thehustj",
 	"The Hustler (Japan version J)",
 	"1987",
@@ -546,12 +546,12 @@ struct GameDriver thehustj_driver =
 	&machine_driver,
 	0,
 
-	thehustj_rom,
+	rom_thehustj,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	thehustj_input_ports,
+	input_ports_thehustj,
 
 	0, 0, 0,
     ORIENTATION_ROTATE_90,

@@ -79,7 +79,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ -1 }	/* end of table */
 };
 
-INPUT_PORTS_START( nitedrvr_input_ports )
+INPUT_PORTS_START( nitedrvr )
 	PORT_START		/* fake port, gets mapped to Night Driver ports */
 		PORT_DIPNAME( 0x30, 0x10, "Cost" )
 		PORT_DIPSETTING(	0x00, "2 plays/coin" )
@@ -233,7 +233,7 @@ ROM_END
 
 ***************************************************************************/
 
-struct GameDriver nitedrvr_driver =
+struct GameDriver driver_nitedrvr =
 {
 	__FILE__,
 	0,
@@ -246,12 +246,12 @@ struct GameDriver nitedrvr_driver =
 	&machine_driver,
 	0,
 
-	nitedrvr_rom,
+	rom_nitedrvr,
 	0, 0,
 	0,
 	0,	/* sound_prom */
 
-	nitedrvr_input_ports,
+	input_ports_nitedrvr,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

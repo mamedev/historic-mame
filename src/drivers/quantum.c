@@ -92,7 +92,7 @@ struct MemoryWriteAddress quantum_write[] =
 
 
 
-INPUT_PORTS_START( quantum_input_ports )
+INPUT_PORTS_START( quantum )
 	PORT_START	/* IN0 */
 	/* YHALT here MUST BE ALWAYS 0  */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH,IPT_UNKNOWN )	/* vg YHALT */
@@ -250,7 +250,7 @@ ROM_END
 
 
 
-struct GameDriver quantum_driver =
+struct GameDriver driver_quantum =
 {
 	__FILE__,
 	0,
@@ -263,13 +263,13 @@ struct GameDriver quantum_driver =
 	&machine_driver,
 	0,
 
-	quantum_rom,
+	rom_quantum,
 	0, 0,
 
 	0,
 	0,
 
-	quantum_input_ports,
+	input_ports_quantum,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -277,10 +277,10 @@ struct GameDriver quantum_driver =
 	foodf_nvram_load, foodf_nvram_save
 };
 
-struct GameDriver quantum1_driver =
+struct GameDriver driver_quantum1 =
 {
 	__FILE__,
-	&quantum_driver,
+	&driver_quantum,
 	"quantum1",
 	"Quantum (rev 1)",
 	"1982",
@@ -290,13 +290,13 @@ struct GameDriver quantum1_driver =
 	&machine_driver,
 	0,
 
-	quantum1_rom,
+	rom_quantum1,
 	0, 0,
 
 	0,
 	0,
 
-	quantum_input_ports,
+	input_ports_quantum,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -304,10 +304,10 @@ struct GameDriver quantum1_driver =
 	foodf_nvram_load, foodf_nvram_save
 };
 
-struct GameDriver quantump_driver =
+struct GameDriver driver_quantump =
 {
 	__FILE__,
-	&quantum_driver,
+	&driver_quantum,
 	"quantump",
 	"Quantum (prototype)",
 	"1982",
@@ -317,13 +317,13 @@ struct GameDriver quantump_driver =
 	&machine_driver,
 	0,
 
-	quantump_rom,
+	rom_quantump,
 	0, 0,
 
 	0,
 	0,
 
-	quantum_input_ports,
+	input_ports_quantum,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

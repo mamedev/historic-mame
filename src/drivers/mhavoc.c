@@ -197,7 +197,7 @@ static struct MemoryReadAddress readmem[] =
 	{ 0x1200, 0x1200, mhavoc_port_0_r },	/* Alpha Input Port 0 */
 	{ 0x1800, 0x1FFF, MRA_RAM},				/* Shared Beta Ram */
 	{ 0x2000, 0x3fff, MRA_BANK2 },			/* Paged Program ROM (32K) */
-	{ 0x4000, 0x4fff, MRA_RAM, &vectorram, &vectorram_size }, /* Vector RAM	(4K) */
+	{ 0x4000, 0x4fff, MRA_RAM }, /* Vector RAM	(4K) */
 	{ 0x5000, 0x5fff, MRA_ROM },			/* Vector ROM (4K) */
 	{ 0x6000, 0x7fff, MRA_BANK3 },			/* Paged Vector ROM (32K) */
 	{ 0x8000, 0xffff, MRA_ROM },			/* Program ROM (32K) */
@@ -223,7 +223,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x17c0, 0x17c0, mhavoc_gamma_w },		/* Gamma Communication Write Port */
 	{ 0x1800, 0x1fff, MWA_RAM },			/* Shared Beta Ram */
 	{ 0x2000, 0x3fff, MWA_ROM },			/* Major Havoc writes here.*/
-	{ 0x4000, 0x4fff, MWA_RAM, &vectorram },/* Vector Generator RAM	*/
+	{ 0x4000, 0x4fff, MWA_RAM, &vectorram, &vectorram_size },/* Vector Generator RAM	*/
 	{ 0x6000, 0x7fff, MWA_ROM },
 	{ -1 }	/* end of table */
 };
@@ -256,7 +256,7 @@ static struct MemoryWriteAddress gamma_writemem[] =
 	{ -1 }	/* end of table */
 };
 
-INPUT_PORTS_START( input_ports )
+INPUT_PORTS_START( mhavoc )
 	PORT_START	/* IN0 - alpha (player_1 = 0) */
 	PORT_BIT ( 0x0f, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	/* PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_SERVICE, "Diag Step", KEYCODE_T, IP_JOY_NONE ) */
@@ -327,7 +327,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_SERVICE( 0x80, IP_ACTIVE_LOW )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( mhavocp_input_ports )
+INPUT_PORTS_START( mhavocp )
 	PORT_START	/* IN0 - alpha (player_1 = 0) */
 	PORT_BIT ( 0x0f, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 	/* PORT_BIT ( 0x10, IP_ACTIVE_LOW, IPT_SERVICE, "Diag Step", KEYCODE_T, IP_JOY_NONE ) */
@@ -624,7 +624,7 @@ void hisave(void)
 	"Owen Rubin (technical info)\n" \
 	VECTOR_TEAM
 
-struct GameDriver mhavoc_driver =
+struct GameDriver driver_mhavoc =
 {
 	__FILE__,
 	0,
@@ -637,12 +637,12 @@ struct GameDriver mhavoc_driver =
 	&machine_driver,
 	0,
 
-	mhavoc_rom,
+	rom_mhavoc,
 	0, 0,
 	0,
 	0,
 
-	input_ports,
+	input_ports_mhavoc,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -650,10 +650,10 @@ struct GameDriver mhavoc_driver =
 	hiload,hisave
 };
 
-struct GameDriver mhavoc2_driver =
+struct GameDriver driver_mhavoc2 =
 {
 	__FILE__,
-	&mhavoc_driver,
+	&driver_mhavoc,
 	"mhavoc2",
 	"Major Havoc (rev 2)",
 	"1983",
@@ -663,12 +663,12 @@ struct GameDriver mhavoc2_driver =
 	&machine_driver,
 	0,
 
-	mhavoc2_rom,
+	rom_mhavoc2,
 	0, 0,
 	0,
 	0,
 
-	input_ports,
+	input_ports_mhavoc,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -676,10 +676,10 @@ struct GameDriver mhavoc2_driver =
 	hiload,hisave
 };
 
-struct GameDriver mhavocrv_driver =
+struct GameDriver driver_mhavocrv =
 {
 	__FILE__,
-	&mhavoc_driver,
+	&driver_mhavoc,
 	"mhavocrv",
 	"Major Havoc (Return to Vax)",
 	"1983",
@@ -689,12 +689,12 @@ struct GameDriver mhavocrv_driver =
 	&machine_driver,
 	0,
 
-	mhavocrv_rom,
+	rom_mhavocrv,
 	0, 0,
 	0,
 	0,
 
-	input_ports,
+	input_ports_mhavoc,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -702,10 +702,10 @@ struct GameDriver mhavocrv_driver =
 	hiload,hisave
 };
 
-struct GameDriver mhavocp_driver =
+struct GameDriver driver_mhavocp =
 {
 	__FILE__,
-	&mhavoc_driver,
+	&driver_mhavoc,
 	"mhavocp",
 	"Major Havoc (prototype)",
 	"1983",
@@ -715,12 +715,12 @@ struct GameDriver mhavocp_driver =
 	&machine_driver,
 	0,
 
-	mhavocp_rom,
+	rom_mhavocp,
 	0, 0,
 	0,
 	0,
 
-	mhavocp_input_ports,
+	input_ports_mhavocp,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

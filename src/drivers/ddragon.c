@@ -136,7 +136,7 @@ static int dd_adpcm_status_r( int offset )
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x1fff, MRA_RAM },
-	{ 0x2000, 0x2fff, dd_spriteram_r, &dd_spriteram },
+	{ 0x2000, 0x2fff, dd_spriteram_r },
 	{ 0x3000, 0x37ff, MRA_RAM },
 	{ 0x3800, 0x3800, input_port_0_r },
 	{ 0x3801, 0x3801, input_port_1_r },
@@ -156,7 +156,7 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0x1200, 0x13ff, paletteram_xxxxBBBBGGGGRRRR_split2_w, &paletteram_2 },
 	{ 0x1400, 0x17ff, MWA_RAM },
 	{ 0x1800, 0x1fff, MWA_RAM, &videoram },
-	{ 0x2000, 0x2fff, dd_spriteram_w },
+	{ 0x2000, 0x2fff, dd_spriteram_w, &dd_spriteram },
 	{ 0x3000, 0x37ff, dd_background_w, &dd_videoram },
 	{ 0x3800, 0x3807, MWA_RAM },
 	{ 0x3808, 0x3808, dd_bankswitch_w },
@@ -319,7 +319,7 @@ static struct MemoryWriteAddress dd2_sound_writemem[] =
 	PORT_DIPSETTING(    0x80, DEF_STR( Off )) \
 	PORT_DIPSETTING(    0x00, DEF_STR( On ) )
 
-INPUT_PORTS_START( dd1_input_ports )
+INPUT_PORTS_START( dd1 )
 	COMMON_INPUT_PORTS
 
     PORT_START      /* DSW1 */
@@ -346,7 +346,7 @@ INPUT_PORTS_START( dd1_input_ports )
     COMMON_PORT4
 INPUT_PORTS_END
 
-INPUT_PORTS_START( dd2_input_ports )
+INPUT_PORTS_START( dd2 )
 	COMMON_INPUT_PORTS
 
   PORT_START      /* DSW1 */
@@ -818,7 +818,7 @@ static void ddragon2_hisave(void)
 
 
 
-struct GameDriver ddragon_driver =
+struct GameDriver driver_ddragon =
 {
 	__FILE__,
 	0,
@@ -827,27 +827,27 @@ struct GameDriver ddragon_driver =
 	"1987",
 	"bootleg?",
 	"Carlos A. Lozano\nRob Rosenbrock\nChris Moore\nPhil Stroffolino\nErnesto Corvi",
-	GAME_NOT_WORKING,
+	0,
 	&ddragon_machine_driver,
 	0,
 
-	ddragon_rom,
+	rom_ddragon,
 	0, 0,
 	0,
 	0,
 
-	dd1_input_ports,
+	input_ports_dd1,
 
 	0, 0, 0,
-	ORIENTATION_DEFAULT,
+	ORIENTATION_DEFAULT | GAME_NOT_WORKING,
 
 	ddragonb_hiload, ddragonb_hisave
 };
 
-struct GameDriver ddragonb_driver =
+struct GameDriver driver_ddragonb =
 {
 	__FILE__,
-	&ddragon_driver,
+	&driver_ddragon,
 	"ddragonb",
 	"Double Dragon (bootleg)",
 	"1987",
@@ -857,12 +857,12 @@ struct GameDriver ddragonb_driver =
 	&ddragonb_machine_driver,
 	0,
 
-	ddragonb_rom,
+	rom_ddragonb,
 	0, 0,
 	0,
 	0,
 
-	dd1_input_ports,
+	input_ports_dd1,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,
@@ -870,7 +870,7 @@ struct GameDriver ddragonb_driver =
 	ddragonb_hiload, ddragonb_hisave
 };
 
-struct GameDriver ddragon2_driver =
+struct GameDriver driver_ddragon2 =
 {
 	__FILE__,
 	0,
@@ -883,12 +883,12 @@ struct GameDriver ddragon2_driver =
 	&ddragon2_machine_driver,
 	0,
 
-	ddragon2_rom,
+	rom_ddragon2,
 	0, 0,
 	0,
 	0,
 
-	dd2_input_ports,
+	input_ports_dd2,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

@@ -334,7 +334,7 @@ void galaga_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 			set = ((galaga_starcontrol[4] << 1) | galaga_starcontrol[3]) & 3;
 			if ((stars[offs].set == starset[set][0]) ||
-					(stars[offs].set == starset[set][1]))
+				(stars[offs].set == starset[set][1]))
 			{
 				x = ((stars[offs].x + stars_scroll) % 512) / 2 + 16;
 				y = (stars[offs].y + (stars_scroll + stars[offs].x) / 512) % 256;
@@ -342,22 +342,8 @@ void galaga_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 				if (y >= Machine->drv->visible_area.min_y &&
 					y <= Machine->drv->visible_area.max_y)
 				{
-					if (Machine->orientation & ORIENTATION_SWAP_XY)
-					{
-						int temp;
-
-
-						temp = x;
-						x = y;
-						y = temp;
-					}
-					if (Machine->orientation & ORIENTATION_FLIP_X)
-						x = bitmap->width - 1 - x;
-					if (Machine->orientation & ORIENTATION_FLIP_Y)
-						y = bitmap->height - 1 - y;
-
-					if (bitmap->line[y][x] == bpen)
-						bitmap->line[y][x] = stars[offs].col;
+					if (read_pixel(bitmap, x, y) == bpen)
+						plot_pixel(bitmap, x, y, stars[offs].col);
 				}
 			}
 		}
