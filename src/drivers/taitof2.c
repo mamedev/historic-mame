@@ -110,6 +110,7 @@ void cchip1_init_machine(void);
 int cchip1_r (int offset);
 void cchip1_w (int offset, int data);
 
+static unsigned char *taitof2_ram; /* used for high score save */
 
 static void bankswitch_w (int offset, int data)
 {
@@ -248,7 +249,7 @@ static struct MemoryReadAddress liquidk_readmem[] =
 static struct MemoryWriteAddress liquidk_writemem[] =
 {
 	{ 0x000000, 0x07ffff, MWA_ROM },
-	{ 0x100000, 0x10ffff, MWA_BANK1 },
+	{ 0x100000, 0x10ffff, MWA_BANK1, &taitof2_ram },
 	{ 0x200000, 0x201fff, paletteram_RRRRGGGGBBBBxxxx_word_w, &paletteram, &f2_paletteram_size },
 	{ 0x300000, 0x300001, MWA_NOP }, /* irq ack? liquidk */
 	{ 0x320000, 0x320003, taitof2_sound_w },
@@ -286,7 +287,7 @@ static struct MemoryReadAddress growl_readmem[] =
 static struct MemoryWriteAddress growl_writemem[] =
 {
 	{ 0x000000, 0x0fffff, MWA_ROM },
-	{ 0x100000, 0x10ffff, MWA_BANK1 },
+	{ 0x100000, 0x10ffff, MWA_BANK1, &taitof2_ram },
 	{ 0x200000, 0x201fff, paletteram_RRRRGGGGBBBBxxxx_word_w, &paletteram, &f2_paletteram_size },
 	{ 0x340000, 0x340001, MWA_NOP }, /* irq ack? growl */
 	{ 0x400000, 0x400003, ssi_sound_w },
@@ -878,7 +879,34 @@ ROM_START( liquidk_rom )
 	ROM_LOAD( "lk_snd.bin",  0x00000, 0x80000, 0x474d45a4 )
 ROM_END
 
+static int liquidk_hiload(void)
+{
+	void *f;
 
+	/* check if the hi score table has already been initialized */
+
+	if (memcmp(&taitof2_ram[0xb102], "\x4b\x05\x4e\x41", 4) == 0)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&taitof2_ram[0xb0fe],40);
+			osd_fclose(f);
+		}
+		return 1;
+	}
+	else return 0;
+}
+
+static void liquidk_hisave(void)
+{
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&taitof2_ram[0xb0fe],40);
+		osd_fclose(f);
+	}
+}
 
 struct GameDriver liquidk_driver =
 {
@@ -902,7 +930,7 @@ struct GameDriver liquidk_driver =
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_ROTATE_180,
-	0, 0
+	liquidk_hiload, liquidk_hisave
 };
 
 ROM_START( finalb_rom )
@@ -979,7 +1007,34 @@ ROM_START( growl_rom )
 ROM_END
 
 
+static int growl_hiload(void)
+{
+	void *f;
 
+	/* check if the hi score table has already been initialized */
+
+	if (memcmp(&taitof2_ram[0xe344], "\x2e\x54\x00\x53", 4) == 0)
+	{
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&taitof2_ram[0xe33a],266);
+			osd_fclose(f);
+		}
+		return 1;
+	}
+	else return 0;
+}
+
+static void growl_hisave(void)
+{
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&taitof2_ram[0xe33a],266);
+		osd_fclose(f);
+	}
+}
 struct GameDriver growl_driver =
 {
 	__FILE__,
@@ -1002,7 +1057,7 @@ struct GameDriver growl_driver =
 
 	0, 0, 0,   /* colors, palette, colortable */
 	ORIENTATION_DEFAULT,
-	0, 0
+	growl_hiload, growl_hisave
 };
 
 ROM_START( megab_rom )

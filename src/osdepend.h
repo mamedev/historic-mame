@@ -6,7 +6,7 @@
 #include <sys/time.h>
 #endif
 
-#ifdef linux_alpha
+#ifdef __LP64__
 #define FPTR long   /* 64bit: sizeof(void *) is sizeof(long)  */
 #else
 #define FPTR int

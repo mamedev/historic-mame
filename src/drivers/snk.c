@@ -484,8 +484,7 @@ ROM_START( ikarius_rom )
 	ROM_LOAD( "1.rom",  0x00000, 0x10000, 0x52a8b2dd )
 
 	ROM_REGION_DISPOSE(0x6c000)
-
-	ROM_LOAD( "7.rom",  0x00000, 0x4000, 0xa7eb4917 ) /* characters */
+	ROM_LOAD( "ik7",    0x00000, 0x4000, 0x9e88f536 )	/* characters */
 
 	ROM_LOAD( "17.rom", 0x04000, 0x8000, 0xe0dba976 ) /* tiles */
 	ROM_LOAD( "18.rom", 0x0c000, 0x8000, 0x24947d5f )
@@ -524,7 +523,7 @@ ROM_START( ikarijp_rom )
 	ROM_LOAD( "up03_k4.rom",  0x04000, 0x8000, 0x26948850 )
 
 	ROM_REGION_DISPOSE( 0x6c000 )
-	ROM_LOAD( "7.rom",  0x00000, 0x4000, 0xa7eb4917 ) /* characters */
+	ROM_LOAD( "ik7",    0x00000, 0x4000, 0x9e88f536 )	/* characters */
 
 	ROM_LOAD( "17.rom", 0x04000, 0x8000, 0xe0dba976 ) /* tiles */
 	ROM_LOAD( "18.rom", 0x0c000, 0x8000, 0x24947d5f )
@@ -565,7 +564,6 @@ ROM_START( ikarijpb_rom )
 	ROM_LOAD( "up03_k4.rom",  0x04000, 0x8000, 0x26948850 )
 
 	ROM_REGION_DISPOSE(0x6c000)
-
 	ROM_LOAD( "ik7",    0x00000, 0x4000, 0x9e88f536 )	/* characters */
 
 	ROM_LOAD( "17.rom", 0x04000, 0x8000, 0xe0dba976 ) /* tiles */

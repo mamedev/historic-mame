@@ -160,11 +160,15 @@ INLINE void nop( void )
 /* $13 SYNC inherent ----- */
 INLINE void sync( void )
 {
-	/* SYNC should stop processing instructions until an interrupt occurs.
-	   A decent fake is probably to force an immediate IRQ. */
-	m6809_ICount = 0;
+	/* SYNC stops processing instructions until an interrupt request happens. */
+	/* This doesn't require the corresponding interrupt to be enabled: if it */
+	/* is disabled, execution continues with the next instruction. */
 	pending_interrupts |= M6809_SYNC;	/* NS 980101 */
 	CHECK_IRQ_LINES(cc);
+	/* if M6809_SYNC has not been cleared by CHECK_IRQ_LINES(), stop execution */
+	/* until the interrupt lines change. */
+    if (pending_interrupts & M6809_SYNC)
+		m6809_ICount = 0;
 }
 
 /* $14 ILLEGAL */
@@ -616,6 +620,7 @@ INLINE void cwai( void )
 {
 	UINT8 t;
 	IMMBYTE(t); cc&=t;
+	CHECK_IRQ_LINES(cc); /* HJB 990116 */
     /* CWAI should stack the entire machine state on the hardware stack,
 		then wait for an interrupt. We just wait for an interrupt. */
 	if ((pending_interrupts & M6809_INT_IRQ) != 0 && (cc & 0x10) == 0)
@@ -624,7 +629,6 @@ INLINE void cwai( void )
 		return;
 	m6809_ICount = 0;
 	pending_interrupts |= M6809_CWAI;	/* NS 980101 */
-	CHECK_IRQ_LINES(cc); /* HJB 990116 */
 }
 
 /* $3D MUL inherent --*-@ */

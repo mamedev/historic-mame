@@ -271,7 +271,6 @@ int galaxian_vh_start(void)
 	int generator;
 	int x,y;
 
-	*pisces_gfx_bank = 0;
 	gfx_extend = 0;
 	stars_on = 0;
 	flipscreen[0] = 0;
@@ -908,4 +907,9 @@ int mariner_vh_interrupt(void)
 	return nmi_interrupt();
 }
 
+int devilfsh_vh_interrupt(void)
+{
+	stars_scroll++;
 
+	return interrupt();
+}

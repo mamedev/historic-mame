@@ -23,6 +23,7 @@
 #include "cpu/i86/i86intrf.h"
 #include "cpu/tms9900/tms9900.h"
 #include "cpu/z8000/z8000.h"
+#include "cpu/tms32010/tms32010.h"
 #include "timer.h"
 
 
@@ -55,7 +56,7 @@ struct cpuinfo
 	void *timedint_timer;                      /* reference to this CPU's timer */
 	double timedint_period;                    /* timing period of the timed interrupt */
 	int save_context;                          /* need to context switch this CPU? yes or no */
-#ifdef linux_alpha
+#ifdef __LP64__
 	unsigned char context[CPUINFO_SIZE] __attribute__ ((__aligned__ (8)));
 #else
 	unsigned char context[CPUINFO_SIZE];	   /* this CPU's context */
@@ -102,12 +103,14 @@ static int usres; /* removed from cpu_run and made global */
 static int vblank;
 static int current_frame;
 
-static void cpu_generate_interrupt (int _cpu, int (*func)(void), int num);
+static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num);
 static void cpu_vblankintcallback (int param);
 static void cpu_timedintcallback (int param);
 #if NEW_INTERRUPT_SYSTEM
+static void cpu_internal_interrupt(int cpunum, int type);
 static void cpu_manualnmicallback(int param);
 static void cpu_manualirqcallback(int param);
+static void cpu_internalintcallback(int param);
 #endif
 static void cpu_manualintcallback (int param);
 static void cpu_clearintcallback (int param);
@@ -169,6 +172,7 @@ static Z80_DaisyChain *Z80_daisychain[MAX_CPU];
 #define SET_NMI_LINE(index,state)       ((*cpu[index].intf->set_nmi_line)(state))
 #define SET_IRQ_LINE(index,line,state)	((*cpu[index].intf->set_irq_line)(line,state))
 #define SET_IRQ_CALLBACK(index,callback) ((*cpu[index].intf->set_irq_callback)(callback))
+#define INTERNAL_INTERRUPT(index,type)	if( cpu[index].intf->internal_interrupt ) ((*cpu[index].intf->internal_interrupt)(type))
 #else
 #define CAUSE_INTERRUPT(index,type)     ((*cpu[index].intf->cause_interrupt)(type))
 #define CLEAR_PENDING_INTERRUPTS(index) ((*cpu[index].intf->clear_pending_interrupts)())
@@ -196,6 +200,7 @@ struct cpu_interface cpuintf[] =
 		Dummy_set_nmi_line, 				/* Set state of the NMI line */
 		Dummy_set_irq_line, 				/* Set state of the IRQ line */
 		Dummy_set_irq_callback, 			/* Set IRQ enable/vector callback */
+		0,									/* Cause internal interrupt */
 		1,									/* Number of IRQ lines */
 #else
 		Dummy_Cause_Interrupt,				/* Generate an interrupt */
@@ -220,7 +225,8 @@ struct cpu_interface cpuintf[] =
 		Z80_set_nmi_line,					/* Set state of the NMI line */
 		Z80_set_irq_line,					/* Set state of the IRQ line */
 		Z80_set_irq_callback,				/* Set IRQ enable/vector callback */
-		1,									/* Number of IRQ lines */
+		0,									/* Cause internal interrupt */
+        1,                                  /* Number of IRQ lines */
 #else
 		Z80_Cause_Interrupt,				/* Generate an interrupt */
 		Z80_Clear_Pending_Interrupts,		/* Clear pending interrupts */
@@ -244,7 +250,8 @@ struct cpu_interface cpuintf[] =
 		I8085_set_nmi_line, 				/* Set state of the NMI line */
 		I8085_set_irq_line, 				/* Set state of the IRQ line */
 		I8085_set_irq_callback, 			/* Set IRQ enable/vector callback */
-		4,									/* Number of IRQ lines */
+		0,									/* Cause internal interrupt */
+        4,                                  /* Number of IRQ lines */
 #else
         I8085_Cause_Interrupt,              /* Generate an interrupt */
 		I8085_Clear_Pending_Interrupts,     /* Clear pending interrupts */
@@ -268,7 +275,8 @@ struct cpu_interface cpuintf[] =
 		m6502_set_nmi_line, 				/* Set state of the NMI line */
 		m6502_set_irq_line, 				/* Set state of the IRQ line */
 		m6502_set_irq_callback, 			/* Set IRQ enable/vector callback */
-		1,									/* Number of IRQ lines */
+		0,									/* Cause internal interrupt */
+        1,                                  /* Number of IRQ lines */
 #else
 		m6502_Cause_Interrupt,				/* Generate an interrupt */
 		m6502_Clear_Pending_Interrupts, 	/* Clear pending interrupts */
@@ -292,7 +300,8 @@ struct cpu_interface cpuintf[] =
 		i86_set_nmi_line,					/* Set state of the NMI line */
 		i86_set_irq_line,					/* Set state of the IRQ line */
 		i86_set_irq_callback,				/* Set IRQ enable/vector callback */
-		1,									/* Number of IRQ lines */
+		0,									/* Cause internal interrupt */
+        1,                                  /* Number of IRQ lines */
 #else
 		i86_Cause_Interrupt,				/* Generate an interrupt */
 		i86_Clear_Pending_Interrupts,		/* Clear pending interrupts */
@@ -316,7 +325,8 @@ struct cpu_interface cpuintf[] =
 		I8039_set_nmi_line, 				/* Set state of the NMI line */
 		I8039_set_irq_line, 				/* Set state of the IRQ line */
 		I8039_set_irq_callback, 			/* Set IRQ enable/vector callback */
-		1,									/* Number of IRQ lines */
+		0,									/* Cause internal interrupt */
+        1,                                  /* Number of IRQ lines */
 #else
 		I8039_Cause_Interrupt,				/* Generate an interrupt */
 		I8039_Clear_Pending_Interrupts, 	/* Clear pending interrupts */
@@ -340,7 +350,8 @@ struct cpu_interface cpuintf[] =
 		m6808_set_nmi_line, 				/* Set state of the NMI line */
 		m6808_set_irq_line, 				/* Set state of the IRQ line */
 		m6808_set_irq_callback, 			/* Set IRQ enable/vector callback */
-		1,									/* Number of IRQ lines */
+		0,									/* Cause internal interrupt */
+        1,                                  /* Number of IRQ lines */
 #else
 		m6808_Cause_Interrupt,				/* Generate an interrupt */
 		m6808_Clear_Pending_Interrupts, 	/* Clear pending interrupts */
@@ -364,7 +375,8 @@ struct cpu_interface cpuintf[] =
 		m6805_set_nmi_line, 				/* Set state of the NMI line */
 		m6805_set_irq_line, 				/* Set state of the IRQ line */
 		m6805_set_irq_callback, 			/* Set IRQ enable/vector callback */
-		1,									/* Number of IRQ lines */
+		0,									/* Cause internal interrupt */
+        1,                                  /* Number of IRQ lines */
 #else
 		m6805_Cause_Interrupt,				/* Generate an interrupt */
 		m6805_Clear_Pending_Interrupts, 	/* Clear pending interrupts */
@@ -388,7 +400,8 @@ struct cpu_interface cpuintf[] =
 		m6809_set_nmi_line, 				/* Set state of the NMI line */
 		m6809_set_irq_line, 				/* Set state of the IRQ line */
 		m6809_set_irq_callback, 			/* Set IRQ enable/vector callback */
-		2,									/* Number of IRQ lines */
+		0,									/* Cause internal interrupt */
+        2,                                  /* Number of IRQ lines */
 #else
 		m6809_Cause_Interrupt,				/* Generate an interrupt */
 		m6809_Clear_Pending_Interrupts, 	/* Clear pending interrupts */
@@ -412,7 +425,8 @@ struct cpu_interface cpuintf[] =
 		MC68000_set_nmi_line,				/* Set state of the NMI line */
 		MC68000_set_irq_line,				/* Set state of the IRQ line */
 		MC68000_set_irq_callback,			/* Set IRQ enable/vector callback */
-		8,									/* Number of IRQ lines */
+		0,									/* Cause internal interrupt */
+        8,                                  /* Number of IRQ lines */
 #else
 		MC68000_Cause_Interrupt,			/* Generate an interrupt */
 		MC68000_Clear_Pending_Interrupts,	/* Clear pending interrupts */
@@ -436,7 +450,8 @@ struct cpu_interface cpuintf[] =
 		t11_set_nmi_line,					/* Set state of the NMI line */
 		t11_set_irq_line,					/* Set state of the IRQ line */
 		t11_set_irq_callback,				/* Set IRQ enable/vector callback */
-		4,									/* Number of IRQ lines */
+		0,									/* Cause internal interrupt */
+        4,                                  /* Number of IRQ lines */
 #else
 		t11_Cause_Interrupt,				/* Generate an interrupt */
 		t11_Clear_Pending_Interrupts,		/* Clear pending interrupts */
@@ -460,7 +475,8 @@ struct cpu_interface cpuintf[] =
 		S2650_set_nmi_line, 				/* Set state of the NMI line */
 		S2650_set_irq_line, 				/* Set state of the IRQ line */
 		S2650_set_irq_callback, 			/* Set IRQ enable/vector callback */
-		2,									/* Number of IRQ lines */
+		0,									/* Cause internal interrupt */
+        2,                                  /* Number of IRQ lines */
 #else
         S2650_Cause_Interrupt,              /* Generate an interrupt */
 		S2650_Clear_Pending_Interrupts, 	/* Clear pending interrupts */
@@ -484,13 +500,14 @@ struct cpu_interface cpuintf[] =
 		TMS34010_set_nmi_line,				/* Set state of the NMI line */
 		TMS34010_set_irq_line,				/* Set state of the IRQ line */
 		TMS34010_set_irq_callback,			/* Set IRQ enable/vector callback */
-		1,									/* Number of IRQ lines */
+		TMS34010_internal_interrupt,		/* Cause internal interrupt */
+        2,                                  /* Number of IRQ lines */
 #else
         TMS34010_Cause_Interrupt,           /* Generate an interrupt */
 		TMS34010_Clear_Pending_Interrupts,  /* Clear pending interrupts */
 #endif
         &TMS34010_ICount,                   /* Pointer to the instruction count */
-		TMS34010_INT_NONE,-1,-1,            /* Interrupt types: none, IRQ, NMI */
+		TMS34010_INT_NONE,TMS34010_INT1,-1, /* Interrupt types: none, IRQ, NMI */
 		cpu_readmem29,						/* Memory read */
 		cpu_writemem29, 					/* Memory write */
 		cpu_setOPbase29,					/* Update CPU opcode base */
@@ -508,7 +525,8 @@ struct cpu_interface cpuintf[] =
 		TMS9900_set_nmi_line,				/* Set state of the NMI line */
 		TMS9900_set_irq_line,				/* Set state of the IRQ line */
 		TMS9900_set_irq_callback,			/* Set IRQ enable/vector callback */
-		1,									/* Number of IRQ lines */
+		0,									/* Cause internal interrupt */
+        1,                                  /* Number of IRQ lines */
 #else
 		TMS9900_Cause_Interrupt,			/* Generate an interrupt */
 		TMS9900_Clear_Pending_Interrupts,	/* Clear pending interrupts */
@@ -533,7 +551,8 @@ struct cpu_interface cpuintf[] =
 		Z8000_set_nmi_line, 				/* Set state of the NMI line */
 		Z8000_set_irq_line, 				/* Set state of the IRQ line */
 		Z8000_set_irq_callback, 			/* Set IRQ enable/vector callback */
-		2,									/* Number of IRQ lines */
+		0,									/* Cause internal interrupt */
+        2,                                  /* Number of IRQ lines */
 #else
 		Z8000_Cause_Interrupt,				/* Generate an interrupt */
 		Z8000_Clear_Pending_Interrupts, 	/* Clear pending interrupts */
@@ -543,6 +562,31 @@ struct cpu_interface cpuintf[] =
 		cpu_readmem16,                      /* Memory read */
 		cpu_writemem16,                     /* Memory write */
 		cpu_setOPbase16,                    /* Update CPU opcode base */
+		16, 								/* CPU address bits */
+		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
+    },
+	/* #define CPU_TMS320C10 15 */
+	{
+		TMS320C10_Reset,					/* Reset CPU */
+		TMS320C10_Execute,					/* Execute a number of cycles */
+		(void (*)(void *))TMS320C10_SetRegs,/* Set the contents of the registers */
+		(void (*)(void *))TMS320C10_GetRegs,/* Get the contents of the registers */
+		TMS320C10_GetPC,					/* Return the current PC */
+#if NEW_INTERRUPT_SYSTEM
+		TMS320C10_set_nmi_line, 			/* Set state of the NMI line */
+		TMS320C10_set_irq_line, 			/* Set state of the IRQ line */
+		TMS320C10_set_irq_callback, 		/* Set IRQ enable/vector callback */
+		0,									/* Cause internal interrupt */
+		2,									/* Number of IRQ lines */
+#else
+		TMS320C10_Cause_Interrupts, 		/* Generate an interrupt */
+		TMS320C10_Clear_Pending_Interrupts, /* Clear pending interrupts */
+#endif
+		&TMS320C10_ICount,					/* Pointer to the instruction count */
+		TMS320C10_INT_NONE,-1,-1,			/* Interrupt types: none, IRQ, NMI */
+		cpu_readmem16,						/* Memory read */
+		cpu_writemem16, 					/* Memory write */
+		cpu_setOPbase16,					/* Update CPU opcode base */
 		16, 								/* CPU address bits */
 		ABITS1_16,ABITS2_16,ABITS_MIN_16	/* Address bits, for the memory system */
     },
@@ -838,6 +882,7 @@ int cpu_getpreviouspc(void)  /* -RAY- */
 		case CPU_M6502:
 		case CPU_M6809:
 		case CPU_M68000:	/* ASG 980413 */
+		case CPU_TMS320C10:
 			return previouspc;
 			break;
 
@@ -1033,10 +1078,12 @@ int cpu_getcurrentcycles(void)
  ***************************************************************************/
 int cpu_gethorzbeampos(void)
 {
-	int scanlinecycles = cpu_getscanlinecycles();
-	int horzposcycles = cpu_getcurrentcycles() % scanlinecycles;
-
-	return (Machine->drv->screen_width * horzposcycles) / scanlinecycles;
+    double elapsed_time = timer_timeelapsed (refresh_timer);
+    int scanline = (int)(elapsed_time * scanline_period_inv);
+    double time_since_scanline = elapsed_time -
+                         (double)scanline * scanline_period;
+    return (int)(time_since_scanline * scanline_period_inv *
+                         (double)Machine->drv->screen_width);
 }
 
 
@@ -1122,6 +1169,17 @@ static int cpu_3_irq_callback(int irqline)
 
 /***************************************************************************
 
+  This function is used to generate internal interrupts (TMS34010)
+
+***************************************************************************/
+void cpu_generate_internal_interrupt(int cpunum, int type)
+{
+	timer_set (TIME_NOW, (cpunum & 7) | (type << 3), cpu_internalintcallback);
+}
+
+
+/***************************************************************************
+
   Use this functions to set the vector for a irq line of a CPU
 
 ***************************************************************************/
@@ -1132,10 +1190,9 @@ void cpu_irq_line_vector_w(int cpunum, int irqline, int vector)
 	if (irqline < cpu[cpunum].intf->num_irqs) {
 		LOG((errorlog,"cpu_irq_line_vector_w(%d,%d,$%04x)\n",cpunum,irqline,vector));
 		irq_line_vector[cpunum * MAX_IRQ_LINES + irqline] = vector;
-	} else {
-		if (errorlog)
-			fprintf(errorlog, "cpu_irq_line_vector_w CPU#%d irqline %d > max irq lines\n", cpunum, irqline);
+		return;
 	}
+	LOG((errorlog, "cpu_irq_line_vector_w CPU#%d irqline %d > max irq lines\n", cpunum, irqline));
 }
 
 /***************************************************************************
@@ -1408,10 +1465,17 @@ int cpu_getcurrentframe(void)
 
 static void cpu_manualnmicallback(int param)
 {
-    int cpunum, state;
+	int cpunum, state, oldactive;
 	cpunum = param & 7;
 	state = param >> 3;
-	LOG((errorlog,"cpu_manunalnmicallback %d,%d\n",cpunum,state));
+
+    /* swap to the CPU's context */
+	oldactive = activecpu;
+    activecpu = cpunum;
+    memorycontextswap (activecpu);
+    if (cpu[activecpu].save_context) SETREGS (activecpu, cpu[activecpu].context);
+
+    LOG((errorlog,"cpu_manunalnmicallback %d,%d\n",cpunum,state));
 
     switch (state) {
         case PULSE_LINE:
@@ -1428,15 +1492,31 @@ static void cpu_manualnmicallback(int param)
         default:
 			if( errorlog ) fprintf( errorlog, "cpu_manualnmicallback cpu #%d unknown state %d\n", cpunum, state);
     }
+    /* update the CPU's context */
+	if (cpu[activecpu].save_context) GETREGS (activecpu, cpu[activecpu].context);
+	activecpu = oldactive;
+	if (activecpu >= 0) memorycontextswap (activecpu);
+
+	/* generate a trigger to unsuspend any CPUs waiting on the interrupt */
+	if (state != CLEAR_LINE)
+        timer_trigger (TRIGGER_INT + cpunum);
 }
 
 static void cpu_manualirqcallback(int param)
 {
-    int cpunum, irqline, state;
-	irqline = param & 7;
+	int cpunum, irqline, state, oldactive;
+
+    irqline = param & 7;
 	cpunum = (param >> 3) & 7;
 	state = param >> 6;
-	LOG((errorlog,"cpu_manunalirqcallback %d,%d,%d\n",cpunum,irqline,state));
+
+    /* swap to the CPU's context */
+	oldactive = activecpu;
+    activecpu = cpunum;
+    memorycontextswap (activecpu);
+    if (cpu[activecpu].save_context) SETREGS (activecpu, cpu[activecpu].context);
+
+    LOG((errorlog,"cpu_manunalirqcallback %d,%d,%d\n",cpunum,irqline,state));
 
 	irq_line_state[cpunum * MAX_IRQ_LINES + irqline] = state;
     switch (state) {
@@ -1454,6 +1534,45 @@ static void cpu_manualirqcallback(int param)
         default:
 			if( errorlog ) fprintf( errorlog, "cpu_manualirqcallback cpu #%d, line %d, unknown state %d\n", cpunum, irqline, state);
     }
+
+    /* update the CPU's context */
+	if (cpu[activecpu].save_context) GETREGS (activecpu, cpu[activecpu].context);
+	activecpu = oldactive;
+	if (activecpu >= 0) memorycontextswap (activecpu);
+
+	/* generate a trigger to unsuspend any CPUs waiting on the interrupt */
+	if (state != CLEAR_LINE)
+        timer_trigger (TRIGGER_INT + cpunum);
+}
+
+static void cpu_internal_interrupt (int cpunum, int type)
+{
+    int oldactive = activecpu;
+
+    /* swap to the CPU's context */
+    activecpu = cpunum;
+    memorycontextswap (activecpu);
+	if (cpu[activecpu].save_context) SETREGS (activecpu, cpu[activecpu].context);
+
+	INTERNAL_INTERRUPT (cpunum, type);
+
+    /* update the CPU's context */
+	if (cpu[activecpu].save_context) GETREGS (activecpu, cpu[activecpu].context);
+    activecpu = oldactive;
+    if (activecpu >= 0) memorycontextswap (activecpu);
+
+    /* generate a trigger to unsuspend any CPUs waiting on the interrupt */
+    timer_trigger (TRIGGER_INT + cpunum);
+}
+
+static void cpu_internalintcallback (int param)
+{
+	int type = param >> 3;
+    int cpunum = param & 7;
+
+	LOG((errorlog,"CPU#%d internal interrupt type $%04x\n", cpunum, type));
+    /* generate the interrupt */
+	cpu_internal_interrupt(cpunum, type);
 }
 
 #endif
@@ -1463,7 +1582,7 @@ static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
 	int oldactive = activecpu;
 
 	/* swap to the CPU's context */
-	activecpu = cpunum;
+    activecpu = cpunum;
 	memorycontextswap (activecpu);
 	if (cpu[activecpu].save_context) SETREGS (activecpu, cpu[activecpu].context);
 
@@ -1514,7 +1633,7 @@ static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
 						break;
 					default:
 						LOG((errorlog,"I8085 unknown\n"));
-						irq_line_vector[cpunum * MAX_IRQ_LINES + 0] = num;
+						cpu_irq_line_vector_w(cpunum, 0, num);
 						cpu_manualirqcallback (0 | (cpunum << 3) | (HOLD_LINE << 6) );
 				}
 				break;
@@ -1648,9 +1767,22 @@ static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
                 break;
 
             case CPU_TMS34010:
-				LOG((errorlog,"TMS34010 IRQ\n"));
-				cpu_irq_line_vector_w(cpunum, 0, num);
-				cpu_manualirqcallback (0 | (cpunum << 3) | (HOLD_LINE << 6) );
+				switch (num) {
+					case TMS34010_INT1:
+						LOG((errorlog,"TMS34010 INT1\n"));
+						cpu_irq_line_vector_w( cpunum, 0, num );
+						cpu_manualirqcallback( 0 | (cpunum << 3) | (HOLD_LINE << 6) );
+                        break;
+					case TMS34010_INT2:
+						LOG((errorlog,"TMS34010 INT2\n"));
+						cpu_irq_line_vector_w( cpunum, 1, num );
+						cpu_manualirqcallback( 1 | (cpunum << 3) | (HOLD_LINE << 6) );
+                        break;
+                    default:
+						LOG((errorlog,"TMS34010 unknown\n"));
+						cpu_irq_line_vector_w( cpunum, 0, num );
+						cpu_manualirqcallback( 0 | (cpunum << 3) | (HOLD_LINE << 6) );
+				}
                 break;
 
             case CPU_TMS9900:
@@ -1678,6 +1810,25 @@ static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
 				}
                 break;
 
+            case CPU_TMS320C10:
+				switch (num) {
+					case TMS320C10_ACTIVE_INT:
+						LOG((errorlog,"TMS32010 INT\n"));
+						cpu_irq_line_vector_w( cpunum, 0, num );
+						cpu_manualirqcallback( 0 | (cpunum << 3) | (HOLD_LINE << 6) );
+                        break;
+					case TMS320C10_ACTIVE_BIO:
+						LOG((errorlog,"TMS32010 BIO\n"));
+						cpu_irq_line_vector_w( cpunum, 1, num );
+						cpu_manualirqcallback( 1 | (cpunum << 3) | (HOLD_LINE << 6) );
+                        break;
+                    default:
+						LOG((errorlog,"TMS32010 unknown\n"));
+						cpu_irq_line_vector_w( cpunum, 0, num );
+						cpu_manualirqcallback( 0 | (cpunum << 3) | (HOLD_LINE << 6) );
+				}
+                break;
+
             default:
 				/* else it should be an IRQ type; assume line 0 and store vector */
 				LOG((errorlog,"unknown IRQ\n"));
@@ -1699,7 +1850,6 @@ static void cpu_generate_interrupt (int cpunum, int (*func)(void), int num)
 	if (num != INT_TYPE_NONE (cpunum))
 		timer_trigger (TRIGGER_INT + cpunum);
 }
-
 
 static void cpu_clear_interrupts (int cpunum)
 {
@@ -1748,7 +1898,6 @@ static void cpu_reset_cpu (int cpunum)
 	activecpu = oldactive;
 	if (activecpu >= 0) memorycontextswap (activecpu);
 }
-
 
 /***************************************************************************
 
@@ -1800,6 +1949,7 @@ static void cpu_resetcallback (int param)
 	/* reset the CPU */
 	cpu_reset_cpu (param);
 }
+
 
 
 /***************************************************************************

@@ -261,6 +261,7 @@ int stream_init(const char *name,int sample_rate,int sample_bits,
 		stream_sample_length[channel] = 0;
 	stream_param[channel] = param;
 	stream_callback[channel] = callback;
+	set_RC_filter(channel,0,0,0,0);
 
 	return channel;
 }
@@ -300,6 +301,7 @@ int stream_init_multi(int channels,const char **name,int sample_rate,int sample_
 
 	stream_param[channel] = param;
 	stream_callback_multi[channel] = callback;
+	set_RC_filter(channel,0,0,0,0);
 
 	return channel;
 }

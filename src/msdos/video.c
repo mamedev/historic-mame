@@ -2411,9 +2411,9 @@ void osd_update_video_and_audio(void)
 				target2 = prev_frames[frameskip_counter] +
 						FRAMESKIP_LEVELS * UCLOCKS_PER_SEC/Machine->drv->frames_per_second;
 
-				if (target > target2) target = target2;
+				if (target - target2 > 0) target = target2;
 
-				if (curr < target)
+				if (curr - target < 0)
 				{
 					/* wait only if the audio update hasn't synced us already */
 					if (already_synced == 0)
@@ -2421,7 +2421,7 @@ void osd_update_video_and_audio(void)
 						do
 						{
 							curr = uclock();
-						} while (curr < target);
+						} while (curr - target < 0);
 					}
 				}
 

@@ -68,17 +68,19 @@ int mhshift[MAX_CPU][3], mhmask[MAX_CPU][3];
 static const struct IOReadPort *readport[MAX_CPU];
 static const struct IOWritePort *writeport[MAX_CPU];
 static int portmask[MAX_CPU];
-static const struct IOReadPort *cur_readport;
-static const struct IOWritePort *cur_writeport;
-static int cur_portmask;
+/* HJB 990210: removed 'static' for access by assembly CPU core memory handlers */
+const struct IOReadPort *cur_readport;
+const struct IOWritePort *cur_writeport;
+int cur_portmask;
 
 /* current hardware element map */
 static MHELE *cur_mr_element[MAX_CPU];
 static MHELE *cur_mw_element[MAX_CPU];
 
 /* sub memory/port hardware element map */
-static MHELE readhardware[MH_ELEMAX << MH_SBITS];  /* mem/port read  */
-static MHELE writehardware[MH_ELEMAX << MH_SBITS]; /* mem/port write */
+/* HJB 990210: removed 'static' for access by assembly CPU core memory handlers */
+MHELE readhardware[MH_ELEMAX << MH_SBITS];	/* mem/port read  */
+MHELE writehardware[MH_ELEMAX << MH_SBITS]; /* mem/port write */
 
 /* memory hardware element map */
 /* value:                      */
@@ -103,10 +105,11 @@ static MHELE writehardware[MH_ELEMAX << MH_SBITS]; /* mem/port write */
 #define HT_BANKMAX (HT_BANK1 + MAX_BANKS - 1)
 
 /* memory hardware handler */
-static int (*memoryreadhandler[MH_HARDMAX])(int address);
-static int memoryreadoffset[MH_HARDMAX];
-static void (*memorywritehandler[MH_HARDMAX])(int address,int data);
-static int memorywriteoffset[MH_HARDMAX];
+/* HJB 990210: removed 'static' for access by assembly CPU core memory handlers */
+int (*memoryreadhandler[MH_HARDMAX])(int address);
+int memoryreadoffset[MH_HARDMAX];
+void (*memorywritehandler[MH_HARDMAX])(int address,int data);
+int memorywriteoffset[MH_HARDMAX];
 
 /* bank ram base address */
 unsigned char *cpu_bankbase[HT_BANKMAX+1];
@@ -131,7 +134,7 @@ MHELE *cur_mwhard;
 
 ***************************************************************************/
 
-#ifdef ACORN
+#ifdef ALIGN_SHORTS
 /*
  * Previously READ_WORD and WRITE_WORDS were implemented as macros.
  * However they assumed that unaligned loads are legal, which is not
@@ -672,7 +675,8 @@ int initmemoryhandlers(void)
 				(((unsigned int) mra->start) >> abitsmin) ,
 				(((unsigned int) mra->end) >> abitsmin) ,
 				hardware , readhardware , &rdelement_max );
-			mra--;
+
+            mra--;
 		}
 
 		/* memory write handler build */
@@ -763,9 +767,10 @@ int initmemoryhandlers(void)
 				(int) (((unsigned int) mwa->start) >> abitsmin) ,
 				(int) (((unsigned int) mwa->end) >> abitsmin) ,
 				hardware , (MHELE *)writehardware , &wrelement_max );
-			mwa--;
+
+            mwa--;
 		}
-	}
+    }
 
 	if (errorlog){
 		fprintf(errorlog,"used read  elements %d/%d , functions %d/%d\n"
@@ -979,7 +984,7 @@ int cpu_readmem24_dword (int address)
 			return (((cpu_readmem24_word(address)) << 16) + ((cpu_readmem24_word(address + 2))&0xffff));
         if (hw <= HT_BANKMAX)
 		{
-		  	#ifdef ACORN /* GSL 980224 misaligned dword load case */
+		  	#ifdef ALIGN_INTS /* GSL 980224 misaligned dword load case */
 			if (address & 3)
 			{
 				unsigned char *addressbase = (unsigned char *)&cpu_bankbase[hw][address - memoryreadoffset[hw]];
@@ -1009,7 +1014,7 @@ int cpu_readmem24_dword (int address)
 			hw = hw2;
 			if (hw < HT_BANKMAX)
 			{
-			  	#ifdef ACORN
+			  	#ifdef ALIGN_INTS
 				if (address & 3)
 				{
 					unsigned char *addressbase = (unsigned char *)&cpu_bankbase[hw][address - memoryreadoffset[hw]];
@@ -1103,7 +1108,7 @@ int cpu_readmem29_dword (int address)  /* AJP 980803 */
 		hw = cur_mrhard[(unsigned int) address >> (ABITS2_29 + ABITS_MIN_29)];
 		if (hw <= HT_BANKMAX)
 		{
-		  	#ifdef ACORN /* GSL 980224 misaligned dword load case */
+		  	#ifdef ALIGN_INTS /* GSL 980224 misaligned dword load case */
 			if (address & 3)
 			{
 				unsigned char *addressbase = (unsigned char *)&cpu_bankbase[hw][address - memoryreadoffset[hw]];
@@ -1128,7 +1133,7 @@ int cpu_readmem29_dword (int address)  /* AJP 980803 */
 			hw = readhardware[((hw - MH_HARDMAX) << MH_SBITS) + (((unsigned int) address >> ABITS_MIN_29) & MHMASK(ABITS2_29))];
 			if (hw <= HT_BANKMAX)
 			{
-			  	#ifdef ACORN
+			  	#ifdef ALIGN_INTS
 				if (address & 3)
 				{
 					unsigned char *addressbase = (unsigned char *)&cpu_bankbase[hw][address - memoryreadoffset[hw]];
@@ -1359,7 +1364,7 @@ void cpu_writemem24_dword (int address, int data)
 		}
         if (hw <= HT_BANKMAX)
 		{
-		  	#ifdef ACORN /* GSL 980224 misaligned dword store case */
+		  	#ifdef ALIGN_INTS /* GSL 980224 misaligned dword store case */
 			if (address & 3)
 			{
 				unsigned char *addressbase = (unsigned char *)&cpu_bankbase[hw][address - memorywriteoffset[hw]];
@@ -1399,7 +1404,7 @@ void cpu_writemem24_dword (int address, int data)
             hw = hw2;
 			if (hw <= HT_BANKMAX)
 			{
-			  	#ifdef ACORN
+			  	#ifdef ALIGN_INTS
 				if (address & 3)
 				{
 					unsigned char *addressbase = (unsigned char *)&cpu_bankbase[hw][address - memorywriteoffset[hw]];
@@ -1534,7 +1539,7 @@ void cpu_writemem29_dword (int address, int data)  /* AJP 980803 */
 		hw = cur_mwhard[(unsigned int) address >> (ABITS2_29 + ABITS_MIN_29)];
 		if (hw <= HT_BANKMAX)
 		{
-		  	#ifdef ACORN /* GSL 980224 misaligned dword store case */
+		  	#ifdef ALIGN_INTS /* GSL 980224 misaligned dword store case */
 			if (address & 3)
 			{
 				unsigned char *addressbase = (unsigned char *)&cpu_bankbase[hw][address - memorywriteoffset[hw]];
@@ -1565,7 +1570,7 @@ void cpu_writemem29_dword (int address, int data)  /* AJP 980803 */
 			hw = writehardware[((hw - MH_HARDMAX) << MH_SBITS) + (((unsigned int) address >> ABITS_MIN_29) & MHMASK(ABITS2_29))];
 			if (hw <= HT_BANKMAX)
 			{
-			  	#ifdef ACORN  /* this may be wrong */
+			  	#ifdef ALIGN_INTS  /* this may be wrong */
 				if (address & 3)
 				{
 					unsigned char *addressbase = (unsigned char *)&cpu_bankbase[hw][address - memorywriteoffset[hw]];
@@ -2012,7 +2017,7 @@ void install_mem_read_handler(int cpu, int start, int end, int (*handler)(int))
 	if (errorlog) fprintf(errorlog, "             cpu: %d\n", cpu);
 	if (errorlog) fprintf(errorlog, "           start: 0x%08x\n", start);
 	if (errorlog) fprintf(errorlog, "             end: 0x%08x\n", end);
-#ifdef linux_alpha
+#ifdef __LP64__
 	if (errorlog) fprintf(errorlog, " handler address: 0x%016lx\n", (unsigned long) handler);
 #else
 	if (errorlog) fprintf(errorlog, " handler address: 0x%08x\n", (unsigned int) handler);
@@ -2113,7 +2118,7 @@ void install_mem_write_handler(int cpu, int start, int end, void (*handler)(int,
 	if (errorlog) fprintf(errorlog, "             cpu: %d\n", cpu);
 	if (errorlog) fprintf(errorlog, "           start: 0x%08x\n", start);
 	if (errorlog) fprintf(errorlog, "             end: 0x%08x\n", end);
-#ifdef linux_alpha
+#ifdef __LP64__
 	if (errorlog) fprintf(errorlog, " handler address: 0x%016lx\n", (unsigned long) handler);
 #else
 	if (errorlog) fprintf(errorlog, " handler address: 0x%08x\n", (unsigned int) handler);

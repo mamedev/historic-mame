@@ -604,7 +604,7 @@ static int cavenger_hiload(void)
 
 
 	/* check if the hi score table has already been initialized */
-	if ((memcmp(&RAM[0x6025],"\x01\x00\x00",3) == 0) &&
+	if ((memcmp(&RAM[0x6025],"\x00\x00\x00",3) == 0) &&
 	    (memcmp(&RAM[0x6063],"\x0A\x15\x28",3) == 0))
 	{
 		void *f;
@@ -612,7 +612,7 @@ static int cavenger_hiload(void)
 
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-			osd_fread(f,&RAM[0x6025],0x41);
+			osd_fread(f,&RAM[0x6025],65);
 			osd_fclose(f);
 		}
 
@@ -631,7 +631,7 @@ static void cavenger_hisave(void)
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		osd_fwrite(f,&RAM[0x6025],0x41);
+		osd_fwrite(f,&RAM[0x6025],65);
 		osd_fclose(f);
 	}
 

@@ -276,6 +276,14 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
     { -1 } /* end of array */
 };
 
+
+
+/* handler called by the 3812 emulator when the internal timers cause an IRQ */
+static void irqhandler(void)
+{
+	cpu_cause_interrupt(1,0xff);
+}
+
 static struct YM2203interface ym2203_interface =
 {
     1,      /* 1 chip */
@@ -291,7 +299,8 @@ static struct YM3526interface ym3526_interface =
 {
     1,                      /* 1 chip (no more supported) */
 	3600000,	/* 3.600000 MHz ? (partially supported) */
-    { 255 }         /* (not supported) */
+    { 255 },         /* (not supported) */
+	irqhandler
 };
 
 static int exprraid_interrupt(void)
@@ -325,7 +334,8 @@ static struct MachineDriver machine_driver =
 			4000000,        /* 4 Mhz ??? */
 			4,
 			sub_readmem,sub_writemem,0,0,
-			interrupt, 8 /* wild guess, sounds good? */
+			ignore_interrupt,0	/* NMIs are caused by the main CPU */
+								/* IRQs are caused by the YM3526 */
 		}
 	},
 	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */

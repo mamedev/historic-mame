@@ -435,7 +435,7 @@ void palette_change_color(int color,unsigned char red,unsigned char green,unsign
 	{
 		if (Machine->drv->video_attributes & VIDEO_SUPPORTS_16BIT)
 		{
-if (errorlog) fprintf(errorlog,"palette_change_color(transparent_color) not supported yet in 16-bit mode\n");
+			palette_transparent_pen = shrinked_pens[rgbpenindex(red,green,blue)];
 		}
 		else
 			osd_modify_pen(palette_transparent_pen,red,green,blue);

@@ -35,7 +35,7 @@ unsigned int coinlockedout[COIN_COUNTERS];
 
 #define TA
 
-#ifdef ACORN /* GSL 980108 read/write nonaligned dword routine for ARM processor etc */
+#ifdef ALIGN_INTS /* GSL 980108 read/write nonaligned dword routine for ARM processor etc */
 
 INLINE int read_dword(int *address)
 {

@@ -29,6 +29,14 @@
 
 extern FILE *errorlog;
 
+#define VERBOSE 0
+
+#if VERBOSE
+#define LOG(x)	if( errorlog ) { fprintf x; fclose(errorlog); errorlog = fopen("error.log", "a"); }
+#else
+#define LOG(x)
+#endif
+
 /* 6808 registers */
 static UINT8 cc,areg,breg;
 static UINT16 xreg,sreg,pcreg;
@@ -159,7 +167,7 @@ static UINT8 flags8d[256]= /* decrement */
 #define SEH cc|=0x20
 #define CLH cc&=0xdf
 #define SEI cc|=0x10
-#define CLI cc&=~0x10
+#define CLI cc&=~0x10; CHECK_IRQ_LINE(cc)
 
 /* macros for convenience */
 #define DIRBYTE(b) {DIRECT;b=M_RDMEM(eaddr);}
@@ -182,7 +190,7 @@ static unsigned char cycles1[] =
   /*0*/		0, 2, 0, 0, 0, 0, 2, 2, 4, 4, 2, 2, 2, 2, 2, 2,
   /*1*/		2, 2, 0, 0, 0, 0, 2, 2, 0, 2, 0, 2, 0, 0, 0, 0,
   /*2*/		4, 0, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
-  /*3*/		4, 4, 4, 4, 4, 4, 4, 4, 0, 5, 0,19, 0, 0, 9,12,
+  /*3*/		4, 4, 4, 4, 4, 4, 4, 4, 0, 5, 0,10, 0, 0, 9,12,
   /*4*/		2, 0, 0, 2, 2, 0, 2, 2, 2, 2, 2, 0, 2, 2, 0, 2,
   /*5*/		2, 0, 0, 2, 2, 0, 2, 2, 2, 2, 2, 0, 2, 2, 0, 2,
   /*6*/		7, 0, 0, 7, 7, 0, 7, 7, 7, 7, 7, 0, 7, 7, 4, 7,
@@ -282,6 +290,7 @@ void m6808_SetRegs(m6808_Regs *Regs)
     irq_state = Regs->irq_state;
 	irq_callback = Regs->irq_callback;
 #endif
+	CHECK_IRQ_LINE(cc); /* HJB 980124 */
 }
 
 
@@ -318,60 +327,54 @@ unsigned m6808_GetPC(void)
 /* Generate interrupts */
 static void Interrupt(void)
 {
-#if NEW_INTERRUPT_SYSTEM
-	if (pending_interrupts & M6808_PENDING) {
-		int type = (*irq_callback)(0);
-		pending_interrupts |= type;
-		if (pending_interrupts & M6808_WAI)
-		{
-			if (pending_interrupts & M6808_INT_NMI)
-				pending_interrupts &= ~M6808_WAI;
-			else if ( (cc & 0x10) == 0 )
-					pending_interrupts &= ~M6808_WAI;
-		}
-    }
-#endif
 	if (pending_interrupts & M6808_INT_NMI) {
-		/* NMI */
-		PUSHWORD(pcreg);
+        /* NMI */
+		LOG((errorlog, "M6808#%d take NMI\n", cpu_getactivecpu()));
+        PUSHWORD(pcreg);
 		PUSHWORD(xreg);
-		PUSHBYTE(breg);
 		PUSHBYTE(areg);
+		PUSHBYTE(breg);
 		PUSHBYTE(cc);
 		SEI;
 		pcreg=M_RDMEM_WORD(0xfffc);
 		change_pc(pcreg);
-		m6808_ICount -= 19;
+		m6808_ICount -= 15;
 
         pending_interrupts &= ~M6808_INT_NMI;
 	} else {
 		if  ( ( cc & 0x10 ) == 0 ) {
 			if (pending_interrupts & M6808_INT_IRQ) {
 				/* standard IRQ */
-				PUSHWORD(pcreg)
+				LOG((errorlog, "M6808#%d take IRQ\n", cpu_getactivecpu()));
+                PUSHWORD(pcreg)
 				PUSHWORD(xreg)
-				PUSHBYTE(breg)
 				PUSHBYTE(areg)
+				PUSHBYTE(breg)
 				PUSHBYTE(cc)
 				SEI;
 				pcreg=M_RDMEM_WORD(0xfff8);
 				change_pc(pcreg);
-				m6808_ICount -= 19;
+				m6808_ICount -= 15;
 
+#if NEW_INTERRUPT_SYSTEM
+				(void)(*irq_callback)(0);
+#else
                 pending_interrupts &= ~M6808_INT_IRQ;
+#endif
 			}
 			else
 			if (pending_interrupts & M6808_INT_OCI) {
 				/* standard IRQ */
-				PUSHWORD(pcreg)
+				LOG((errorlog, "M6808#%d take OCI\n", cpu_getactivecpu()));
+                PUSHWORD(pcreg)
 				PUSHWORD(xreg)
-				PUSHBYTE(breg)
 				PUSHBYTE(areg)
+				PUSHBYTE(breg)
 				PUSHBYTE(cc)
 				SEI;
 				pcreg=M_RDMEM_WORD(0xfff4);
 				change_pc(pcreg);
-				m6808_ICount -= 19;
+				m6808_ICount -= 15;
 
                 pending_interrupts &= ~M6808_INT_OCI;
 			}
@@ -414,22 +417,34 @@ void m6808_reset(void)
 
 #if NEW_INTERRUPT_SYSTEM
 
-
 void m6808_set_nmi_line(int state)
 {
 	if (nmi_state == state) return;
-	nmi_state = state;
+	LOG((errorlog, "M6808#%d set_nmi_line %d ", cpu_getactivecpu(), state));
+    nmi_state = state;
 	if (state != CLEAR_LINE)
-		pending_interrupts |= M6808_INT_NMI;
+		pending_interrupts = (pending_interrupts & ~M6808_WAI) | M6808_INT_NMI;
 }
 
 void m6808_set_irq_line(int irqline, int state)
 {
 	irq_state = state;
-	if (state == CLEAR_LINE)
-		pending_interrupts &= ~M6808_PENDING;
-	else
-		pending_interrupts |= M6808_PENDING;
+	LOG((errorlog, "M6808#%d set_irq_line %d,%d ", cpu_getactivecpu(), irqline, state));
+    if (state == CLEAR_LINE) {
+		if( (cc & 0x10) != 0 ) {
+			LOG((errorlog, "INT_IRQ cleared\n"));
+            pending_interrupts &= ~M6808_INT_IRQ;
+		} else {
+			LOG((errorlog, "no change\n"));
+        }
+	} else {
+		if( (cc & 0x10) == 0 ) {
+            pending_interrupts = (pending_interrupts & ~M6808_WAI) | M6808_INT_IRQ;
+			LOG((errorlog, "INT_IRQ set\n"));
+        } else {
+			LOG((errorlog, "no change\n"));
+        }
+	}
 }
 
 void m6808_set_irq_callback(int (*callback)(int irqline))
@@ -478,6 +493,13 @@ int m6808_execute(int cycles)
 	{
 		if (pending_interrupts != 0)
 			Interrupt();
+
+#if ASGARD680X_DEBUG
+{
+extern void Asgard63701MiniTrace(unsigned long sx, unsigned long pcab, unsigned long flags, int icount);
+	Asgard63701MiniTrace ((sreg<<16)+xreg, (pcreg<<16)+(areg<<8)+breg, (pending_interrupts<<16)+cc, m6808_ICount);
+}
+#endif
 
 #if 0
 		asg_6808Trace(OP_ROM, pcreg);

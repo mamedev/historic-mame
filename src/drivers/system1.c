@@ -4622,7 +4622,7 @@ struct GameDriver wbdeluxe_driver =
 	0,      				/* Sample names */
 	0,
 
-	wboy_input_ports,
+	wbdeluxe_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

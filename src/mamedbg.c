@@ -88,23 +88,21 @@ int debug_key_pressed;	/* JB 980505 */
 /* globals */
 static int              BreakPoint[5] = { -1, -1, -1, -1, -1 };
 static int              TempBreakPoint = -1;	/* MB 980103 */
-static int				CPUBreakPoint = -1;		/* MB 980121 */
-static unsigned int              CurrentPC = -1;
-static unsigned int              CursorPC = -1;		/* MB 980103 */
-static unsigned int				NextPC = -1;
-static unsigned int				PreviousSP = 0;
-static unsigned int              StartAddress = -1;
-static unsigned int              EndAddress = -1;	/* MB 980103 */
+static int              CPUBreakPoint = -1;             /* MB 980121 */
+static unsigned int     CurrentPC = -1;
+static unsigned int     CursorPC = -1;         /* MB 980103 */
+static unsigned int     NextPC = -1;
+static unsigned int     PreviousSP = 0;
+static unsigned int     StartAddress = -1;
+static unsigned int     EndAddress = -1;       /* MB 980103 */
 static int              activecpu, cputype, PreviousCPUType;
 static int              DisplayASCII[2] = { FALSE, FALSE };	/* MB 980103 */
-static int				InDebug=FALSE;
-static int				Update;
-static int				gCurrentTraceCPU = -1;	/* JB 980214 */
-static int				DebugFast = 0; /* CM 980506 */
-static int				CPUWatchpoint[5] = { -1, -1, -1, -1, -1 };	/* EHC 980506 */
-static int				CPUWatchdata[5] = { -1, -1, -1, -1, -1 };	/* EHC 980506 */
-
-
+static int              InDebug=FALSE;
+static int              Update;
+static int              gCurrentTraceCPU = -1;  /* JB 980214 */
+static int              DebugFast = 0; /* CM 980506 */
+static int              CPUWatchpoint[5] = { -1, -1, -1, -1, -1 };      /* EHC 980506 */
+static int              CPUWatchdata[5] = { -1, -1, -1, -1, -1 };       /* EHC 980506 */
 
 /* Draw the screen outline */
 static void DrawDebugScreen8 (int TextCol, int LineCol)
@@ -252,20 +250,73 @@ static void DrawDebugScreen32 (int TextCol, int LineCol)	/* AJP 980803 */
 	ScreenPutString("ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ", LineCol, 0, 24);
 }
 
+static void DrawDebugScreen16word (int TextCol, int LineCol)
+{
+	int		y;
+
+	ScreenClear();
+	ScreenPutString("ษออ           อออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออป", LineCol, 0, 0);
+	ScreenPutString("Registers", TextCol, 4, 0);
+	ScreenPutString("บ", LineCol, 0, 1);
+        ScreenPutString("บ", LineCol, 79, 1);
+        ScreenPutString("ฬออ       อออออออออหออ     ออออหออ          อออออออออออออออออออออออออออออออออออน", LineCol, 0, 2);
+	ScreenPutString("Flags", TextCol, 4, 2);
+        ScreenPutString("CPU", TextCol, 23, 2);
+        ScreenPutString("Memory 1", TextCol, 35, 2);
+	ScreenPutString("บ", LineCol, 0, 3);
+	ScreenPutString("บ", LineCol, 19, 3);
+        ScreenPutString("บ", LineCol, 31, 3);
+	ScreenPutString("บ", LineCol, 79, 3);
+        ScreenPutString("ฬออ      ออออออออออสอออออออออออน", LineCol, 0, 4);
+	ScreenPutString("Code", TextCol, 4, 4);
+	ScreenPutString("บ", LineCol, 79, 4);
+	for (y = 5; y < 11; y++)
+	{
+		ScreenPutString("บ", LineCol, 0, y);
+                ScreenPutString("บ", LineCol, 31, y);
+		ScreenPutString("บ", LineCol, 79, y);
+	}
+	ScreenPutString("บ", LineCol, 0, 11);
+        ScreenPutString("ฬออ          อออออออออออออออออออออออออออออออออออน", LineCol, 31, 11);
+        ScreenPutString("Memory 2", TextCol, 35, 11);
+	for (y = 12; y < 20; y++)
+	{
+		ScreenPutString("บ", LineCol, 0, y);
+                ScreenPutString("บ", LineCol, 31, y);
+		ScreenPutString("บ", LineCol, 79, y);
+	}
+        ScreenPutString("ฬออ         อออออออออออออออออออสอออออออออออออออออออออออออออออออออออออออออออออออน", LineCol, 0, 20);
+	ScreenPutString("Command", TextCol, 4, 20);
+	for (y = 21; y < 24; y++)
+	{
+		ScreenPutString("บ", LineCol, 0, y);
+		ScreenPutString("บ", LineCol, 79, y);
+	}
+	ScreenPutString("ศออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออผ", LineCol, 0, 24);
+}
+
 /* Draw the Memory dump windows */
 static void DrawMemWindow (int Base, int Col, int Offset, int _DisplayASCII)	/* JB 971210 */
 {
 	int     X;
 	int     Y;
-	int		which = ((Offset==12)?0x100:0);		/* I hate to do this */
+        int     Xpos;
+        int     which = ((Offset==12)?0x100:0);           /* I hate to do this */
 	char    FMT[32];
 	char    S[32];
 	unsigned char	value, oldValue;
+        int     spacing  = DebugInfo[cputype].MemWindowDataSpace;
+        int     Addshift = ((spacing+1)/3)-1;    /* Mamory address shifting used for non-byte CPU's */
+                                                 /* 0 for 8bit, 1 for 16bit, 2 for 32bit */
 
-	for (Y = 0; Y < 8; Y++)
+        Base <<=Addshift;               /* Fix Mem Base depending on CPU mem unit size */
+        Base &= DebugInfo[cputype].AddMask;
+
+        for (Y = 0; Y < 8; Y++)
 	{
-		sprintf(FMT, "%s", DebugInfo[cputype].AddPrint);
-		sprintf(S, FMT, Base);
+                Xpos = 0;
+                sprintf(FMT, "%s", DebugInfo[cputype].AddPrint);
+                sprintf(S, FMT, (Base >> Addshift));
 		ScreenPutString(S, Col, DebugInfo[cputype].MemWindowAddX,
 				Y + Offset);
 		for (X = 0; X < DebugInfo[cputype].MemWindowNumBytes; X++)
@@ -279,12 +330,15 @@ static void DrawMemWindow (int Base, int Col, int Offset, int _DisplayASCII)	/* 
 			}
 			else
 			  sprintf (S, "%02X", value);
+
+                        if ((spacing-((spacing+Xpos)%spacing)) == 1) Xpos++;
 			ScreenPutString(S, ((value == oldValue)?Col:CHANGES_COLOUR), DebugInfo[cputype].MemWindowDataX +
-					(X * 3), Y + Offset);
+                                Xpos, Y + Offset);
 			MemWindowBackup[Y * DebugInfo[cputype].MemWindowNumBytes + X + which] = value;
 			/* AJP 980803 */
 			if (Base > (unsigned int) DebugInfo[cputype].AddMask || Base < 0)
 				Base = 0x000000;
+                        Xpos+=2;
 		}
 	}
 }
@@ -464,10 +518,14 @@ static int TraceToFile(char *param)
 static int DumpToFile(char *param)
 {
 	FILE *f;
-	int	i,nCorrectParams = 0, rv = 0, first;
+        int  i,nCorrectParams = 0, rv = 0, first;
 	char s1[128], s2[20], s3[20], asc[20];
 	char *pr = param;
-	int b;
+        int  b=0;
+        int  tmp;
+        int  spacing  = DebugInfo[cputype].MemWindowDataSpace;
+        int  Addshift = ((spacing+1)/3)-1;    /* Mamory address shifting used for non-byte CPU's */
+                                              /* 0 for 8bit, 1 for 16bit, 2 for 32bit */
 
 	while ((pr[0] == ' ') && (pr[0] != '\0')) pr++;
 	i = strlen(pr);
@@ -489,9 +547,9 @@ static int DumpToFile(char *param)
 		asc[0] = '\0';
 		while (StartAd <= EndAd)
 		{
-			if (first || (StartAd % 16 == 0))
+                        if (first || (StartAd % (16/((spacing-1)/2)) == 0))
 			{
-				int start = StartAd & (DebugInfo[cputype].AddMask ^ 0xf);
+                                int start = StartAd & (DebugInfo[cputype].AddMask ^ (0xf >> Addshift));
 				sprintf(s1, DebugInfo[cputype].AddPrint, start);
 				s1[7] = 0;
 				fprintf(f, "%s", s1);
@@ -501,20 +559,22 @@ static int DumpToFile(char *param)
 					first = 0;
 				}
 			}
-
-			b = cpuintf[cputype].memory_read(StartAd & DebugInfo[cputype].AddMask);
-			fprintf(f, " %02x",	b);
-			if ((b >= 0x20) && (b <= 0x7e))
-			{
-				sprintf(asc, "%s%c", asc, b);
-			}
-			else
-			{
-				sprintf(asc, "%s.", asc);
-			}
+                        for (tmp = 0; (tmp < spacing/2); tmp++) {
+                                b = cpuintf[cputype].memory_read(((StartAd<<Addshift)|tmp) & DebugInfo[cputype].AddMask);
+                                if (tmp == 0) fprintf(f, " ");
+                                fprintf(f, "%02x",     b);
+                                if ((b >= 0x20) && (b <= 0x7e))
+                                {
+                                        sprintf(asc, "%s%c", asc, (b & 0xff));
+                                }
+                                else
+                                {
+                                        sprintf(asc, "%s.", asc);
+                                }
+                        }
 
 			StartAd++;
-			if (StartAd % 16 == 0)
+                        if (StartAd % (16/((spacing-1)/2)) == 0)
 			{
 				fprintf(f, "  %s\n", asc);
 				asc[0] = '\0';
@@ -940,8 +1000,11 @@ static int GetNumber (int X, int Y, int Col)
 /* Search for a string of numbers in memory; target is a -1 terminated array */
 int FindString (int Add, int *Target)
 {
-	int Start_Address;
-	int Offset;
+        int  Start_Address;
+        int  Offset;
+        int  spacing  = DebugInfo[cputype].MemWindowDataSpace;
+        int  Addshift = ((spacing+1)/3)-1;    /* Mamory address shifting used for non-byte CPU's */
+                                              /* 0 for 8bit, 1 for 16bit, 2 for 32bit */
 
 	ScreenPutString ("Searching...       ", INSTRUCTION_COLOUR, 2, 23);
 	for (Start_Address = Add + 1; Start_Address != Add;
@@ -964,7 +1027,7 @@ int FindString (int Add, int *Target)
 		if (Target[Offset] == -1)
 		{
 			ScreenPutString ("Found the string   ", INSTRUCTION_COLOUR, 2, 23);
-			return Start_Address;
+                        return (Start_Address >> Addshift);
 		}
 	}
 
@@ -983,6 +1046,7 @@ static int ScreenEdit (int XMin, int XMax, int YMin, int YMax, int Col, int Base
 	char	Num[2];
 	int		X = XMin;
 	int		Y = YMin;
+        int             Xoffs=0;
 	int		row_bytes;		/* JB 971210 */
 	int		Add = BaseAdd;	/* JB 971210 */
 	int		Base = BaseAdd;	/* JB 971210 */
@@ -991,6 +1055,9 @@ static int ScreenEdit (int XMin, int XMax, int YMin, int YMax, int Col, int Base
 	int		Loop;
 	char	info[80];
 	byte	b;
+        int     spacing  = DebugInfo[cputype].MemWindowDataSpace;
+        int     Addshift = ((spacing+1)/3)-1;    /* Mamory address shifting used for non-byte CPU's */
+                                                 /* 0 for 8bit, 1 for 16bit, 2 for 32bit */
 
 	DrawMemWindow (Base, Col, YMin, *_DisplayASCII);
 
@@ -1023,48 +1090,54 @@ static int ScreenEdit (int XMin, int XMax, int YMin, int YMax, int Col, int Base
 				Add -= row_bytes;		/* JB 971210 */
 				break;
 			case OSD_KEY_PGUP:			/* Page Up */
-				Add -= row_bytes * 8;	/* JB 971210 */
-				Base -= row_bytes * 8;	/* JB 971210 */
-				Scroll = TRUE;
+                                Add-=Base;
+                                Base -= (row_bytes/(spacing/2)) * 8;
+                                Add+=Base;
+                                Scroll = TRUE;
 				break;
 			case OSD_KEY_LEFT:			/* Left */
 				if (*_DisplayASCII)	/* MB 980103 */
-				   X-=3;
+                                   X -= spacing;
 				else
 				{
 				   if (High)
 				   {
-					   X -= 2;
-					   Add--;
+                                           Xoffs = ((X-XMin)+spacing)%spacing;
+                                           if (Xoffs == 0) X--;
+                                           Add--;
+                                           X--;
 				   }
 				   else
-					   X -= 1;
+                                           X--;
 				   High = !High;
 				}
 				break;
 			case OSD_KEY_RIGHT:			/* Right */
 				if (*_DisplayASCII)	/* MB 980103 */
-				   X+=3;
+                                   X += spacing;
 				else
 				{
 				   if (High)
-					   X += 1;
+                                           X++;
 				   else
-				   {
-					   X += 2;
-					   Add++;
+                                   {
+                                           Xoffs = ((X-XMin)+spacing)%spacing;
+                                           if ((spacing-Xoffs) == 2) X++;
+                                           Add++;
+                                           X++;
 				   }
 				   High = !High;
 				}
 				break;
 			case OSD_KEY_DOWN:			/* Down */
 				Y++;
-				Add += row_bytes;	/* JB 971210 */
+                                Add += row_bytes;               /* JB 971210 */
 				break;
 			case OSD_KEY_PGDN:			/* Page Down */
-				Add += row_bytes * 8;	/* JB 971210 */
-				Base += row_bytes * 8;	/* JB 971210 */
-				Scroll = TRUE;
+                                Add-=Base;
+                                Base += (row_bytes/(spacing/2)) * 8;
+                                Add+=Base;
+                                Scroll = TRUE;
 				break;
 			case OSD_KEY_H:
 				*_DisplayASCII = !(*_DisplayASCII);	/* MB 980103 */
@@ -1121,7 +1194,9 @@ static int ScreenEdit (int XMin, int XMax, int YMin, int YMax, int Col, int Base
 			case OSD_KEY_F:
 				if (!(*_DisplayASCII))	/* MB 980103 */
 				{
-					b = cpuintf[cputype].memory_read(Add & DebugInfo[cputype].AddMask);
+                                        int memadd = (Base<<Addshift)+(Add-Base);
+
+                                        b = cpuintf[cputype].memory_read(memadd & DebugInfo[cputype].AddMask);
 
 					strcpy(Num, osd_key_name(Key));
 					ScreenPutString (Num, Col, X, Y);
@@ -1131,15 +1206,17 @@ static int ScreenEdit (int XMin, int XMax, int YMin, int YMax, int Col, int Base
 
 					if (High)
 					{
-						cpuintf[cputype].memory_write(Add &
+                                                cpuintf[cputype].memory_write(memadd &
 							DebugInfo[cputype].AddMask, (b & 0x0f) | (Num[0] << 4));
 						X++;
 					}
 					else
 					{
-						cpuintf[cputype].memory_write(Add &
+                                                cpuintf[cputype].memory_write(memadd &
 							DebugInfo[cputype].AddMask, (b & 0xf0) | Num[0]);
-						X += 2;
+                                                Xoffs = ((X-XMin)+spacing)%spacing;
+                                                if ((spacing-Xoffs) == 2) X++;
+                                                X++;
 						Add++;
 					}
 					High = !High;
@@ -1154,7 +1231,7 @@ static int ScreenEdit (int XMin, int XMax, int YMin, int YMax, int Col, int Base
 		{
 			X = XMax;
 			Y--;
-			if (*_DisplayASCII) X--;
+                        if (*_DisplayASCII) X-=(spacing-2);
 		}
 		else if (X > XMax)
 		{
@@ -1164,13 +1241,17 @@ static int ScreenEdit (int XMin, int XMax, int YMin, int YMax, int Col, int Base
 		if (Y > YMax)
 		{
 			Y = YMax;
-			Base += row_bytes;	/* JB 971210 */
+                        Add=(Add-row_bytes)-Base;
+                        Base += (row_bytes/(spacing/2));
+                        Add+=Base;
 			Scroll = TRUE;
 		}
 		else if (Y < YMin)
 		{
 			Y = YMin;
-			Base -= row_bytes;	/* JB 971210 */
+                        Add=(Add+row_bytes)-Base;
+                        Base -= (row_bytes/(spacing/2));
+                        Add+=Base;
 			Scroll = TRUE;
 		}
 		if ((Base < 0) || Base > (unsigned int) (DebugInfo[cputype].AddMask -
@@ -1875,8 +1956,13 @@ void MAME_Debug (void)
 						osd_set_display(Machine->scrbitmap->width,
 										Machine->scrbitmap->height,
 										Machine->drv->video_attributes);
-						updatescreen();
-						while (!osd_read_key_immediate()) continue; 	 /* do nothing */
+
+						do
+						{
+							(*Machine->drv->vh_update)(Machine->scrbitmap,1);
+							osd_update_video_and_audio();
+						} while (!osd_key_pressed_memory(OSD_KEY_ANY));
+
 						set_gfx_mode (GFX_TEXT,80,25,0,0);
 						DebugInfo[cputype].DrawDebugScreen(HEADING_COLOUR, LINE_COLOUR);
 						Update = TRUE;

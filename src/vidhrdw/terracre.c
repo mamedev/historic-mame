@@ -197,34 +197,6 @@ void terracre_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 
 
-	/* draw characters which don't have priority over sprites - this is most certainly */
-	/* wrong, but I haven't found a real priority control to make the ball appear. */
-	/* above the title. */
-	for (offs = videoram_size - 2;offs >= 0;offs -= 2)
-	{
-		int code;
-
-
-		code = READ_WORD(&videoram[offs]) & 0xff;
-
-		if (code >= 0x50)
-		{
-			int sx,sy;
-
-
-			sx = (offs/2) / 32;
-			sy = (offs/2) % 32;
-
-			drawgfx(bitmap,Machine->gfx[0],
-					code,
-					0,
-					0,0,
-					8*sx,8*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
-		}
-	}
-
-
 	for (x = 0;x <spriteram_size;x += 8)
 	{
 		int code = READ_WORD(&spriteram[x+2]) & 0xff;
@@ -249,30 +221,19 @@ void terracre_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 	}
 
 
-	/* draw characters which have priority over sprites - this is most certainly */
-	/* wrong, but I haven't found a real priority control to make the ball appear. */
-	/* above the title. */
 	for (offs = videoram_size - 2;offs >= 0;offs -= 2)
 	{
-		int code;
+		int sx,sy;
 
 
-		code = READ_WORD(&videoram[offs]) & 0xff;
+		sx = (offs/2) / 32;
+		sy = (offs/2) % 32;
 
-		if (code < 0x50)
-		{
-			int sx,sy;
-
-
-			sx = (offs/2) / 32;
-			sy = (offs/2) % 32;
-
-			drawgfx(bitmap,Machine->gfx[0],
-					code,
-					0,
-					0,0,
-					8*sx,8*sy,
-					&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
-		}
+		drawgfx(bitmap,Machine->gfx[0],
+				READ_WORD(&videoram[offs]) & 0xff,
+				0,
+				0,0,
+				8*sx,8*sy,
+				&Machine->drv->visible_area,TRANSPARENCY_PEN,15);
 	}
 }

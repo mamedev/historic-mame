@@ -541,8 +541,8 @@ int ADPCM_playing (int num)
  *	Command bytes are sent:
  *
  *		1xxx xxxx = start of 2-byte command sequence, xxxxxxx is the sample number to trigger
- *		abcd ???? = second half of command; one of the abcd bits is set to indicate which voice
- *		            the ???? bits may be a volume or an extension of the xxxxxxx bits above
+ *		abcd vvvv = second half of command; one of the abcd bits is set to indicate which voice
+ *		            the v bits seem to be volumed
  *
  *		0abc d000 = stop playing; one or more of the abcd bits is set to indicate which voice(s)
  *
@@ -551,6 +551,12 @@ int ADPCM_playing (int num)
  *		???? abcd = one bit per voice, set to 0 if nothing is playing, or 1 if it is active
  *
  */
+
+/* Mish,  1/1/99: Added support for multiple chips with different playback regions
+   Mish, 19/1/99: Implemented bottom 4 bits as volume, 0 = full volume
+                  See Midnight Resistance drum track, sly spy bullets, etc
+                  This is still relatively untested..
+*/
 
 
 static struct OKIM6295interface *okim6295_interface;
@@ -573,7 +579,7 @@ int OKIM6295_sh_start (struct OKIM6295interface *intf)
 	/* create an interface for the generic system here */
 	generic_interface.num = 4 * intf->num;
 	generic_interface.frequency = intf->frequency;
-	generic_interface.region = intf->region;
+	generic_interface.region = intf->region[0];
 	generic_interface.init = 0;
 	for (i = 0; i < intf->num; i++)
 		generic_interface.volume[i*4+0] =
@@ -619,7 +625,7 @@ void OKIM6295_sh_update (void)
  *    Read the status port of an OKIM6295-compatible chip
  */
 
-int OKIM6295_status_r (int num)
+static int OKIM6295_status_r (int num)
 {
 	int i, result, buffer_end;
 
@@ -656,7 +662,7 @@ int OKIM6295_status_r (int num)
  *    Write to the data port of an OKIM6295-compatible chip
  */
 
-void OKIM6295_data_w (int num, int data)
+static void OKIM6295_data_w (int num, int data)
 {
 	/* range check the numbers */
 	if (num >= okim6295_interface->num)
@@ -668,11 +674,11 @@ void OKIM6295_data_w (int num, int data)
 	/* if a command is pending, process the second half */
 	if (okim6295_command[num] != -1)
 	{
-		int temp = data >> 4, i, start, stop, buffer_end;
+		int temp = data >> 4, i, start, stop, buffer_end,volume;
 		unsigned char *base;
 
 		/* determine the start/stop positions */
-		base = &Machine->memory_region[okim6295_interface->region][okim6295_command[num] * 8];
+		base = &Machine->memory_region[okim6295_interface->region[num]][okim6295_command[num] * 8];
 		start = (base[0] << 16) + (base[1] << 8) + base[2];
 		stop = (base[3] << 16) + (base[4] << 8) + base[5];
 
@@ -691,18 +697,27 @@ void OKIM6295_data_w (int num, int data)
 
 				/* set up the voice to play this sample */
 				voice->playing = 1;
-				voice->base = &Machine->memory_region[okim6295_interface->region][start];
+				voice->base = &Machine->memory_region[okim6295_interface->region[num]][start];
 				voice->sample = 0;
 				voice->count = 2 * (stop - start + 1);
 
 				/* also reset the ADPCM parameters */
 				voice->signal = -2;
 				voice->step = 0;
+
+#if 0
+				volume=(data&0xf)+1;
+				voice->volume=okim6295_interface->volume[num]/volume;
+#endif
 			}
 			temp >>= 1;
 		}
 
-		/* reset the command (there may be additional information in the low 4 bits (volume?) */
+#if 0
+if (errorlog) fprintf(errorlog,"oki(2 byte) %02x %02x (Voice %01x - %01x)\n",okim6295_command[num],data,data>>4,data&0xf);
+#endif
+
+		/* reset the command */
 		okim6295_command[num] = -1;
 	}
 
@@ -736,6 +751,26 @@ void OKIM6295_data_w (int num, int data)
 			temp >>= 1;
 		}
 	}
+}
+
+int OKIM6295_status_0_r (int num)
+{
+	return OKIM6295_status_r(0);
+}
+
+int OKIM6295_status_1_r (int num)
+{
+	return OKIM6295_status_r(1);
+}
+
+void OKIM6295_data_0_w (int num, int data)
+{
+	OKIM6295_data_w(0,data);
+}
+
+void OKIM6295_data_1_w (int num, int data)
+{
+	OKIM6295_data_w(1,data);
 }
 
 
@@ -904,3 +939,4 @@ void MSM5205_data_w (int num, int data)
 		voice->count = count + 1;
 	}
 }
+

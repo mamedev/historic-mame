@@ -115,7 +115,7 @@ void memcpy0( unsigned char *dest, const unsigned char *source,
 	const unsigned char *finish = source+numbytes;
 	const unsigned char *finishw = finish-(numbytes&0x3);
 
-#ifdef ACORN
+#ifdef ALIGN_INTS
 	while( source<finishw ){
 		if( *mask )
 			*dest = ( *dest++ & *mask ) | ( *source++ & ~*mask++ );

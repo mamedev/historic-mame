@@ -62,7 +62,7 @@
 
 /* New Disassembler */
 
-static char mybuffer[64];
+static char mybuffer[128];
 char *codebuf = mybuffer;
 
 #define cpu_readmem24(addr) 		(codebuf[addr])
@@ -265,12 +265,17 @@ char *GenerateLabel(int ID,int Type)
 		TimingCycles=0;				/* No timing info for this command */
 		Opcount++;					/* for screen display */
 
- 		memset(codebuf,0,64);		/* Get code example */
+		memset(codebuf,0,sizeof(codebuf));	/* Get code example */
         codebuf[0] = ID & 0xff;
         codebuf[1] = ID >> 8;
+		disasm[0] = '\0';
+#if 0
         m68000_disassemble(dis,0);
-
+		printf("%04x %s\n",ID, dis);
 		sprintf(codebuf, "OP_%4.4x:\t\t\t\t; %s", ID, dis);
+#else
+		sprintf(codebuf, "OP_%4.4x", ID);
+#endif
         LabID  = ID;
         LabNum = 0;
     }
@@ -436,27 +441,30 @@ void Completed(void)
 
 	#ifndef MAME_DEBUG
 
-    	/* Use assembler timing routines */
+	/* Use assembler timing routines */
 
-   	    if (TimingCycles > 0)
-	    {
-   		    if (TimingCycles > 127)
-	   		    fprintf(fp, "\t\t sub   dword [%s],%d\n",ICOUNT,TimingCycles);
-	        else
-		        fprintf(fp, "\t\t sub   dword [%s],byte %d\n",ICOUNT,TimingCycles);
-        }
-        else
-        {
-    	    fprintf(fp, "\t\t or    dword [%s],0\n",ICOUNT);
-        }
+	if (TimingCycles > 0)
+	{
+		if (TimingCycles > 127)
+			fprintf(fp, "\t\t sub   dword [%s],%d\n",ICOUNT,TimingCycles);
+		else
+			fprintf(fp, "\t\t sub   dword [%s],byte %d\n",ICOUNT,TimingCycles);
+	}
+	else
+	{
+		fprintf(fp, "\t\t or    dword [%s],0\n",ICOUNT);
+	}
 
-    #else
+	fprintf(fp, "\t\t js    near MainExit\n\n");
 
-    	/* Just check the count */
+	#else
 
-    	fprintf(fp, "\t\t or    dword [%s],0\n",ICOUNT);
+	/* Just check the count */
 
-    #endif
+	fprintf(fp, "\t\t or    dword [%s],0\n",ICOUNT);
+	fprintf(fp, "\t\t jle   near MainExit\n\n");
+
+	#endif
 
 	fprintf(fp, "\t\t js    near MainExit\n\n");
 
@@ -2144,7 +2152,7 @@ void dump_imm( int type, int leng, int mode, int sreg )
 					char *Label = GenerateLabel(0,1);
 
 			        fprintf(fp, "\t\t test  byte [%s],20h \t\t\t; Supervisor Mode ?\n",REG_SRH);
-			        fprintf(fp, "\t\t jne   short %s\n\n",Label);
+			        fprintf(fp, "\t\t jne   near %s\n\n",Label);
 
                     /* User Mode - Exception */
 
@@ -4436,7 +4444,7 @@ void reset(void)
 
 		fprintf(fp, "%s:\n", Label );
 		fprintf(fp, "\t\t test  byte [%s],20h \t\t\t; Supervisor Mode ?\n",REG_SRH);
-		fprintf(fp, "\t\t jnz   short OP_%4.4x_NOP\n",BaseCode);
+		fprintf(fp, "\t\t jnz   near OP_%4.4x_NOP\n",BaseCode);
 		Exception(8,BaseCode);
 
 		fprintf(fp, "OP_%4.4x_NOP:\n",BaseCode);
@@ -4478,7 +4486,7 @@ void stop(void)
 		Label = GenerateLabel(0,1);
 
 		fprintf(fp, "\t\t test  byte [%s],20h \t\t\t; Supervisor Mode ?\n",REG_SRH);
-		fprintf(fp, "\t\t jne   short %s\n\n",Label);
+		fprintf(fp, "\t\t jne   near %s\n\n",Label);
 
         /* User Mode - Exception */
 
@@ -4561,7 +4569,7 @@ void trapv(void)
         Timing(BaseCode);
 
         fprintf(fp, "\t\t test  edx,0800h\n");
-        fprintf(fp, "\t\t jz    OP_%4.4x_Clear\n",BaseCode);
+        fprintf(fp, "\t\t jz    near OP_%4.4x_Clear\n",BaseCode);
 		Exception(7,BaseCode);
 
 		fprintf(fp, "OP_%4.4x_Clear:\n",BaseCode);
@@ -5759,7 +5767,7 @@ void divides(void)
 					{
 					EffectiveAddressRead(Dest,'W',EBX,EAX,"A-CDSDB",FALSE); /* source */
 					fprintf(fp, "\t\t or    ax,ax\n");
-					fprintf(fp, "\t\t je    %s\t\t;do div by zero trap\n", TrapLabel);
+					fprintf(fp, "\t\t je    near %s\t\t;do div by zero trap\n", TrapLabel);
 					fprintf(fp, "\t\t cwde\n");
 					fprintf(fp, "\t\t mov   ebx,eax\n");
 					}
@@ -5767,7 +5775,7 @@ void divides(void)
 					{
 					EffectiveAddressRead(Dest,'W',EBX,EBX,"A-CDSDB",FALSE); /* source */
 					fprintf(fp, "\t\t or    bx,bx\n");
-					fprintf(fp, "\t\t je    %s\t\t;do div by zero trap\n", TrapLabel);
+					fprintf(fp, "\t\t je    near %s\t\t;do div by zero trap\n", TrapLabel);
 					}
 
 				EffectiveAddressRead(0,'L',ECX,EAX,"ABCDSDB",FALSE); /* dest */

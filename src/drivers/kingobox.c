@@ -894,18 +894,28 @@ ROM_END
 
 static int kingofb_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	unsigned char *RAM1 = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM2 = Machine->memory_region[Machine->drv->cpu[1].memory_region];
 
 
-	if  (memcmp(&RAM[0x8048],"\x00\x15\x00",3) == 0 &&
-			memcmp(&RAM[0x80D1],"\x10\x11\x12",3) == 0 )
+	if  (memcmp(&RAM2[0x8048],"\x00\x15\x00",3) == 0 &&
+    	 memcmp(&RAM2[0x80D1],"\x10\x11\x12",3) == 0 &&
+		 memcmp(&RAM1[0xc22b],"\x03\x00\x05\x00\x00\x00",6) == 0)
 	{
 		void *f;
 
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-			osd_fread(f,&RAM[0x8048],140);
+			osd_fread(f,&RAM2[0x8048],140);
 			osd_fclose(f);
+
+			RAM1[0xc22a]=(RAM2[0x8063] >> 4 );
+			RAM1[0xc22b]=(RAM2[0x8063] & 0x0f );
+			RAM1[0xc22c]=(RAM2[0x8064] >> 4 );
+			RAM1[0xc22d]=(RAM2[0x8064] & 0x0f );
+
+
+
 		}
 
 		return 1;
@@ -916,12 +926,11 @@ static int kingofb_hiload(void)
 static void kingofb_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
-
-
+	unsigned char *RAM1 = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM2 = Machine->memory_region[Machine->drv->cpu[1].memory_region];
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		osd_fwrite(f,&RAM[0x8048],140);
+		osd_fwrite(f,&RAM2[0x8048],140);
 		osd_fclose(f);
 	}
 }
@@ -929,18 +938,30 @@ static void kingofb_hisave(void)
 
 static int ringking_hiload(void)
 {
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	unsigned char *RAM1 = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM2 = Machine->memory_region[Machine->drv->cpu[1].memory_region];
 
 
-	if  (memcmp(&RAM[0x8049],"\x00\x15\x00",3) == 0 &&
-			memcmp(&RAM[0x80D2],"\x10\x11\x12",3) == 0 )
+	if  (memcmp(&RAM2[0x8049],"\x00\x15\x00",3) == 0 &&
+		 memcmp(&RAM2[0x80D2],"\x10\x11\x12",3) == 0 &&
+		 memcmp(&RAM1[0xc23c],"\x03\x00\x05\x00\x00\x00",6) == 0 )
 	{
 		void *f;
 
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
-			osd_fread(f,&RAM[0x8049],140);
+
+			osd_fread(f,&RAM2[0x8049],140);
 			osd_fclose(f);
+
+
+			RAM1[0xc23b]=(RAM2[0x8064] >> 4 );
+			RAM1[0xc23c]=(RAM2[0x8064] & 0x0f );
+			RAM1[0xc23d]=(RAM2[0x8065] >> 4 );
+			RAM1[0xc23e]=(RAM2[0x8065] & 0x0f );
+
+
+
 		}
 
 		return 1;
@@ -951,15 +972,65 @@ static int ringking_hiload(void)
 static void ringking_hisave(void)
 {
 	void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+		unsigned char *RAM1 = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+		unsigned char *RAM2 = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+
 
 
 	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
 	{
-		osd_fwrite(f,&RAM[0x8049],140);
+
+		osd_fwrite(f,&RAM2[0x8049],140);
 		osd_fclose(f);
 	}
 }
+
+
+static int ringkin2_hiload(void)
+{
+	unsigned char *RAM1 = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM2 = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+
+
+	if  (memcmp(&RAM2[0x8048],"\x00\x15\x00",3) == 0 &&
+    	 memcmp(&RAM2[0x80D1],"\x10\x11\x12",3) == 0 &&
+		 memcmp(&RAM1[0xc235],"\x03\x00\x05\x00\x00\x00",6) == 0)
+	{
+		void *f;
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+
+
+			osd_fread(f,&RAM2[0x8048],140);
+			osd_fclose(f);
+
+			RAM1[0xc234]=(RAM2[0x8063] >> 4 );
+			RAM1[0xc235]=(RAM2[0x8063] & 0x0f );
+			RAM1[0xc236]=(RAM2[0x8064] >> 4 );
+			RAM1[0xc237]=(RAM2[0x8064] & 0x0f );
+
+		}
+
+		return 1;
+	}
+	else return 0;   /* we can't load the hi scores yet */
+}
+
+static void ringkin2_hisave(void)
+{
+	void *f;
+	unsigned char *RAM1 = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	unsigned char *RAM2 = Machine->memory_region[Machine->drv->cpu[1].memory_region];
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+
+		osd_fwrite(f,&RAM2[0x8048],140);
+		osd_fclose(f);
+	}
+}
+
+
 
 
 
@@ -1065,5 +1136,5 @@ struct GameDriver ringkin2_driver =
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,
 
-	kingofb_hiload, kingofb_hisave
+	ringkin2_hiload, ringkin2_hisave
 };

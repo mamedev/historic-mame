@@ -1425,7 +1425,7 @@ static struct MachineDriver mcu_machine_driver =
 		},
 		{
 			CPU_M68705,
-			3000000,	/* xtal is 3MHz, is it demultiplied internally? */
+			3000000/2,	/* xtal is 3MHz, I think it's divided by 2 internally */
 			4,
 			m68705_readmem,m68705_writemem,0,0,
 			ignore_interrupt,0	/* IRQs are caused by the main CPU */
@@ -1706,7 +1706,7 @@ ROM_START( frontlin_rom )
 	ROM_LOAD( "fl70.u70",     0x0000, 0x1000, 0x15f4ed8c )
 	ROM_LOAD( "fl71.u71",     0x1000, 0x1000, 0xc3eb38e7 )
 
-	ROM_REGION(0x0800)	/* 8k for the microcontroller */
+	ROM_REGION(0x0800)	/* 2k for the microcontroller */
 	ROM_LOAD( "aa1.13",       0x0080, 0x0780, 0xa5273366 )
 ROM_END
 
@@ -1740,7 +1740,7 @@ ROM_START( elevator_rom )
 	ROM_LOAD( "ea-ic70.bin",  0x0000, 0x1000, 0x6d5f57cb )
 	ROM_LOAD( "ea-ic71.bin",  0x1000, 0x1000, 0xf0a769a1 )
 
-	ROM_REGION(0x0800)	/* 8k for the microcontroller */
+	ROM_REGION(0x0800)	/* 2k for the microcontroller */
 	ROM_LOAD( "ba3.11",       0x0080, 0x0780, 0x47b8d449 )
 ROM_END
 
@@ -1807,7 +1807,7 @@ ROM_START( tinstar_rom )
 	ROM_LOAD( "ts.71",        0x1000, 0x1000, 0x03c91332 )
 	ROM_LOAD( "ts.72",        0x2000, 0x1000, 0xbeeed8f3 )
 
-	ROM_REGION(0x0800)	/* 8k for the microcontroller */
+	ROM_REGION(0x0800)	/* 2k for the microcontroller */
 	ROM_LOAD( "a10-12",       0x0080, 0x0780, 0x53c1617c )
 ROM_END
 

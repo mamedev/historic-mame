@@ -74,7 +74,7 @@ int  MC68000_Execute(int cycles)
 
 		M68KRUN();
     }
-	while (MC68000_ICount >= 0);
+	while (MC68000_ICount > 0);
 
 #else
 

@@ -433,6 +433,20 @@ static void Interrupt(void)	/* NS 970909 */
 		m6809_ICount -= 19;
         pending_interrupts &= ~M6809_INT_NMI;
     } else
+	if ((pending_interrupts & M6809_INT_FIRQ) != 0 && (cc & 0x40) == 0) {
+		/* fast IRQ */
+		PUSHWORD(pcreg);
+		cc&=0x7f;	/* ASG 971016 */
+		PUSHBYTE(cc);
+		cc|=0x50;
+		pcreg=M_RDMEM_WORD(0xfff6);change_pc(pcreg);	/* TS 971002 */
+		m6809_ICount -= 10;
+#if NEW_INTERRUPT_SYSTEM
+		(void)(*irq_callback)(1);
+#else
+		pending_interrupts &= ~M6809_INT_FIRQ;
+#endif
+	} else
 	if ((pending_interrupts & M6809_INT_IRQ) != 0 && (cc & 0x10) == 0) {
 		/* standard IRQ */
 		cc|=0x80;	/* ASG 971016 */
@@ -452,21 +466,7 @@ static void Interrupt(void)	/* NS 970909 */
 #else
         pending_interrupts &= ~M6809_INT_IRQ;
 #endif
-    } else
-	if ((pending_interrupts & M6809_INT_FIRQ) != 0 && (cc & 0x40) == 0) {
-		/* fast IRQ */
-		PUSHWORD(pcreg);
-		cc&=0x7f;	/* ASG 971016 */
-		PUSHBYTE(cc);
-		cc|=0x50;
-		pcreg=M_RDMEM_WORD(0xfff6);change_pc(pcreg);	/* TS 971002 */
-		m6809_ICount -= 10;
-#if NEW_INTERRUPT_SYSTEM
-		(void)(*irq_callback)(1);
-#else
-		pending_interrupts &= ~M6809_INT_FIRQ;
-#endif
-	}
+    }
 }
 
 

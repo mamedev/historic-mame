@@ -15,6 +15,7 @@ static int skydiver_width = 0;
 void skydiver_width_w(int offset, int data)
 {
 	skydiver_width = offset;
+	if (errorlog) fprintf (errorlog, "width: %02x\n", data);
 }
 
 void skydiver_sk_lamps_w(int offset, int data)
@@ -73,34 +74,20 @@ void skydiver_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		if (dirtybuffer[offs])
 		{
 			int charcode;
-			int drawchar;
 			int color;
 			int sx,sy;
 
 			dirtybuffer[offs]=0;
 
 			charcode = videoram[offs] & 0x3F;
-			color    = (videoram[offs] & 0x40) >> 6;
-//			drawchar = (videoram[offs] & 0x80) >> 7;
+			color    = (videoram[offs] & 0xc0) >> 6;
 
 			sx = 8 * (offs % 32);
 			sy = 8 * (offs / 32);
-//			if (drawchar)
-			{
-				drawgfx(tmpbitmap,Machine->gfx[0],
-					charcode, color,
-					0,0,sx,sy,
-					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-			}
-			/* We need to draw a "blank" if drawing is suppressed.
-			   Char #0 will work for our purposes. */
-//			else
-//			{
-//				drawgfx(tmpbitmap,Machine->gfx[0],
-//					0, 0,
-//					0,0,sx,sy,
-//					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-//			}
+			drawgfx(tmpbitmap,Machine->gfx[0],
+				charcode, color,
+				0,0,sx,sy,
+				&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 		}
 	}
 
@@ -116,7 +103,7 @@ void skydiver_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 			char *text = "SKYDIVER";
 
 			drawgfx(bitmap,Machine->gfx[0],
-				text[light], skydiver_lamps[light] + 2,
+				text[light], skydiver_lamps[light] + 4,
 				0,0,light*8,28*8,
 				&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 		}
@@ -131,7 +118,7 @@ void skydiver_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		int xflip, yflip;
 		int color;
 
-		sx = 28*8 - spriteram[pic];
+		sx = 29*8 - spriteram[pic];
 		sy = 30*8 - spriteram[pic*2 + 8];
 		charcode = spriteram[pic*2 + 9];
 		xflip = (charcode & 0x10) >> 4;
@@ -139,7 +126,7 @@ void skydiver_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 		charcode = (charcode & 0x07) | ((charcode & 0x60) >> 2);
 		color = pic & 0x01;
 
-		drawgfx(bitmap,Machine->gfx[1+skydiver_width],
+		drawgfx(bitmap,Machine->gfx[1+(charcode >= 0x10)],
 			charcode, color,
 			xflip,yflip,sx,sy,
 			&Machine->drv->visible_area,TRANSPARENCY_PEN,0);

@@ -21,9 +21,9 @@
 #define m68000_read_memory_16(address) cpu_readmem24_word(address)
 #define m68000_read_memory_32(address) cpu_readmem24_dword(address)
 
+//#define Dasm68000(buff, pc) m68000_disassemble(buff, pc)
+
 #endif /* M68000_BUILDING_MAME */
-
-
 
 /* ======================================================================== */
 /* ============================== END OF FILE ============================= */

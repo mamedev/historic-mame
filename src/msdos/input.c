@@ -190,8 +190,11 @@ int osd_key_pressed(int keycode)
 
 	keycode = pseudo_to_key_code(keycode);
 
+	if (keycode > OSD_MAX_KEY) return 0;
+
 	if (keycode == OSD_KEY_RCONTROL) keycode = KEY_RCONTROL;
 	if (keycode == OSD_KEY_ALTGR) keycode = KEY_ALTGR;
+
 	return key[keycode];
 }
 
@@ -223,15 +226,22 @@ int osd_key_pressed_memory(int keycode)
 /* report kay as pulsing while it is pressed */
 int osd_key_pressed_memory_repeat(int keycode,int speed)
 {
-	static int counter;
+	static int counter,keydelay;
 	int res = 0;
 
 	keycode = pseudo_to_key_code(keycode);
 
 	if (osd_key_pressed(keycode))
 	{
-		if (memory[keycode] == 0 || ++counter > speed * Machine->drv->frames_per_second / 60)
+		if (memory[keycode] == 0)
 		{
+			keydelay = 3;
+			counter = 0;
+			res = 1;
+		}
+		else if (++counter > keydelay * speed * Machine->drv->frames_per_second / 60)
+		{
+			keydelay = 1;
 			counter = 0;
 			res = 1;
 		}

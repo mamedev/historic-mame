@@ -289,9 +289,9 @@ static struct GfxLayout wide_motion_layout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x0000, &charlayout,    0x00, 0x04 }, /* offset into colors, # of colors */
-	{ 1, 0x0400, &motion_layout, 0x00, 0x04 }, /* offset into colors, # of colors */
-	{ 1, 0x0400, &wide_motion_layout, 0x00, 0x04 }, /* offset into colors, # of colors */
+	{ 1, 0x0000, &charlayout,    0x00, 0x06 }, /* offset into colors, # of colors */
+	{ 1, 0x0400, &motion_layout, 0x00, 0x06 }, /* offset into colors, # of colors */
+	{ 1, 0x0400, &wide_motion_layout, 0x00, 0x06 }, /* offset into colors, # of colors */
 	{ -1 } /* end of array */
 };
 
@@ -315,6 +315,8 @@ static unsigned short colortable[] =
 {
 	0x02, 0x01,
 	0x02, 0x00,
+	0x01, 0x02,
+	0x00, 0x02,
 	0x00, 0x00, /* used only to draw the SKYDIVER LEDs */
 	0x00, 0x01, /* used only to draw the SKYDIVER LEDs */
 };

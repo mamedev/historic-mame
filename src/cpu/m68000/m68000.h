@@ -8,7 +8,7 @@
  *                                  MUSASHI
  *                                Version 1.1
  *
- * A portable Motorola M68000 processor emulation engine.
+ * A portable Motorola M680x0 processor emulation engine.
  * Copyright 1999 Karl Stenerud.  All rights reserved.
  *
  * This code may be freely used for non-commercial purpooses as long as this
@@ -67,13 +67,19 @@
  * This happens in a real 68000 if VPA or AVEC is asserted during an interrupt
  * acknowledge cycle instead of DTACK.
  */
-#define MC68000_INT_ACK_AUTOVECTOR    -1
+#define M68000_INT_ACK_AUTOVECTOR    -1
+/* this is the name that cpuintrf.c expected last time :-/ */
+#define MC68000_INT_ACK_AUTOVECTOR M68000_INT_ACK_AUTOVECTOR
 /* Causes the spurious interrupt vector (0x18) to be taken
  * This happens in a real 68000 if BERR is asserted during the interrupt
  * acknowledge cycle (i.e. no devices responded to the acknowledge).
  */
-#define MC68000_INT_ACK_SPURIOUS      -2
+#define M68000_INT_ACK_SPURIOUS      -2
 
+
+/* CPU types for use in m68000_set_cpu_type() */
+#define M68000_CPU_000 1
+#define M68000_CPU_010 2
 
 
 /* ======================================================================== */
@@ -84,49 +90,50 @@
 
 typedef struct                 /* CPU Context */
 {
-   unsigned int  dr[8];        /* data registers */
-   unsigned int  ar[8];        /* address registers */
-   unsigned int  pc;           /* program counter */
-   unsigned int  usp;          /* user stack pointer save */
-   unsigned int  isp;          /* system stack pointer save */
-   unsigned int  sr;           /* status register */
-   unsigned int  stopped;      /* stopped state: only interrupt can restart */
-   unsigned int  halted;       /* halted state: only reset can restart */
-   unsigned int  ints_pending; /* mask: which interrupt levels are pending */
-   int vbr;                    /* Vector Base Register.  Will be used in 68010 */
-   int sfc;                    /* Source Function Code.  Will be used in 68010 */
-   int dfc;                    /* Destination Function Code.  Will be used in 68010 */
+   unsigned int  cpu_type;     /* CPU Type being emulated */
+   unsigned int  dr[8];        /* Data Registers */
+   unsigned int  ar[8];        /* Address Registers */
+   unsigned int  pc;           /* Program Counter */
+   unsigned int  usp;          /* User Stack Pointer */
+   unsigned int  isp;          /* Interrupt Stack Pointer */
+   unsigned int  vbr;          /* Vector Base Register.  Used in 68010+ */
+   unsigned int  sfc;          /* Source Function Code.  Used in 68010+ */
+   unsigned int  dfc;          /* Destination Function Code.  Used in 68010+ */
+   unsigned int  sr;           /* Status Register */
+   unsigned int  stopped;      /* Stopped state: only interrupt can restart */
+   unsigned int  halted;       /* Halted state: only reset can restart */
+   unsigned int  ints_pending; /* Interrupt levels pending */
 } m68000_cpu_context;
 
 #else
 
 typedef struct
 {
-    int   d[8];             /* 0x0004 8 Data registers */
-	int   a[8];             /* 0x0024 8 Address registers */
+	int   d[8]; 			/* 0x0004 8 Data registers */
+	int   a[8]; 			/* 0x0024 8 Address registers */
 
-    int   usp;              /* 0x0044 Stack registers (They will overlap over reg_a7) */
-    int   isp;              /* 0x0048 */
+	int   usp;				/* 0x0044 Stack registers (They will overlap over reg_a7) */
+	int   isp;				/* 0x0048 */
 
-    int   sr_high;     		/* 0x004C System registers */
-    int   ccr;              /* 0x0050 CCR in Intel Format */
-    int   x_carry;			/* 0x0054 Extended Carry */
+	int   sr_high;			/* 0x004C System registers */
+	int   ccr;				/* 0x0050 CCR in Intel Format */
+	int   x_carry;			/* 0x0054 Extended Carry */
 
-    int   pc;            	/* 0x0058 Program Counter */
+	int   pc;				/* 0x0058 Program Counter */
 
-    int   IRQ_level;        /* 0x005C IRQ level you want the MC68K process (0=None)  */
+	int   IRQ_level;		/* 0x005C IRQ level you want the MC68K process (0=None)  */
 
-    /* Backward compatible with C emulator - Only set in Debug compile */
+	/* Backward compatible with C emulator - Only set in Debug compile */
 
-    int   sr;
+	int   sr;
 
 #if NEW_INTERRUPT_SYSTEM
 	int (*irq_callback)(int irqline);
 #endif /* NEW_INTERRUPT_SYSTEM */
 
-    int vbr;                /* Vector Base Register.  Will be used in 68010 */
-    int sfc;                /* Source Function Code.  Will be used in 68010 */
-    int dfc;                /* Destination Function Code.  Will be used in 68010 */
+	int vbr;				/* Vector Base Register.  Will be used in 68010 */
+	int sfc;				/* Source Function Code.  Will be used in 68010 */
+	int dfc;				/* Destination Function Code.  Will be used in 68010 */
 
 } m68000_cpu_context;
 
@@ -164,6 +171,11 @@ void m68000_write_memory_16(int address, int value);
 void m68000_write_memory_32(int address, int value);
 
 
+
+/* ======================================================================== */
+/* ==== FUNCTIONS CALLED BY THE CPU THAT CAN BE DISABLED IN M68KCONF.H ==== */
+/* ======================================================================== */
+
 /* Simulates acknowledgement of an interrupt.
  * int_level is the interrupt level being acknowledged.
  * The host program should return a vector from 0x02-0xff (0 and 1 are
@@ -172,6 +184,11 @@ void m68000_write_memory_32(int address, int value);
  */
 int m68000_interrupt_acknowledge(int int_level);
 
+/* Called when A 68010+ cpu is being emulated and it encounters a BKPT
+ * instruction.  The 68010 will always have data = 0.
+ */
+void m68000_breakpoint_acknowledge(int data);
+
 /* These functions can be disabled in m68kconf.h */
 
 /* Called if the cpu encounters a reset instruction. */
@@ -179,6 +196,9 @@ void m68000_output_reset(void);
 
 /* Inform the host we are changing the PC by a large value */
 void m68000_setting_pc(unsigned int address);
+
+/* Inform the host that the CPU function code is changing */
+void m68000_changing_fc(int function_code);
 
 /* Allow a hook into the instruction cycle of the cpu */
 void m68000_debug_hook(void);
@@ -191,6 +211,11 @@ void m68000_peek_pc_hook(void);
 /* ======================================================================== */
 /* ====================== FUNCTIONS TO ACCESS THE CPU ===================== */
 /* ======================================================================== */
+
+/* Use this function to set the CPU type ypu want to emulate.
+ * Currently supported types are: M68000_CPU_000 and M68000_CPU_010.
+ */
+void m68000_set_cpu_type(int cpu_type);
 
 /* Reset the CPU as if you asserted RESET */
 /* You *MUST* call this at least once to initialize the emulation */
@@ -254,7 +279,6 @@ int m68000_is_valid_instruction(int instruction);
 
 /* Import the configuration for this build */
 #include "m68kconf.h"
-
 
 
 /* ======================================================================== */

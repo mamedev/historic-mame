@@ -34,10 +34,14 @@ typedef struct
 #define M6808_INT_NMI	2			/* NMI interrupt          */
 #define M6808_INT_OCI	4			/* Output Compare interrupt (timer) */
 #define M6808_WAI		8			/* set when WAI is waiting for an interrupt */
-#if NEW_INTERRUPT_SYSTEM
-#define M6808_PENDING	0x80000000
-#endif
 
+#if NEW_INTERRUPT_SYSTEM
+#define CHECK_IRQ_LINE(cc)	\
+	if (irq_state != CLEAR_LINE && (cc & 0x10) == 0) \
+		pending_interrupts = (pending_interrupts & ~M6808_WAI) | M6808_INT_IRQ
+#else
+#define CHECK_IRQ_LINE(cc)
+#endif
 
 /* PUBLIC FUNCTIONS */
 extern void m6808_SetRegs(m6808_Regs *Regs);

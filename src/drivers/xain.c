@@ -198,7 +198,9 @@ static int xainA_interrupt(void)
      if (waitIRQA)
      { waitIRQA = 0;
        return (M6809_INT_IRQ);}
-     return (M6809_INT_FIRQ | M6809_INT_NMI);
+    cpu_set_irq_line(0, 1, HOLD_LINE); /* hold the FIRQ line */
+    cpu_set_nmi_line(0, PULSE_LINE); /* pulse the NMI line */
+    return M6809_INT_NONE;
 }
 
 static int xainB_interrupt(void)

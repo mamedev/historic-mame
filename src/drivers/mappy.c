@@ -986,19 +986,32 @@ static void digdug2_hisave(void)
 
 
 /* load the high score table */
-static int motos_hiload(void)  /* preliminary, does not copy top high score */
+static int motos_hiload(void)
 {
+
+
 	void *f;
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
 	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x2412],"\x4d\x4f\x52",3) == 0)
+	if (memcmp(&RAM[0x2400],"\x20\x20\x20",3) == 0 &&
+		memcmp(&RAM[0x2499],"\x4f\x20\x20",3) == 0 &&
+		memcmp(&RAM[0x1830],"\x00\x00\x01",3) == 0 )
+
 	{
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
 			osd_fread(f,&RAM[0x2400],0xA0);
 			osd_fclose(f);
+			/* also copy over the high score */
+
+			RAM[0x1831] = ((RAM[0x2404]& 0x0f) << 4) | (RAM[0x2405]& 0x0f);
+			RAM[0x1832] = ((RAM[0x2406]& 0x0f) << 4) | (RAM[0x2407]& 0x0f);
+			RAM[0x1833] = ((RAM[0x2408]& 0x0f) << 4) | (RAM[0x2409]& 0x0f);
+			RAM[0x1834] = ((RAM[0x240a]& 0x0f) << 4) | (RAM[0x240b]& 0x0f);
+
+
 		}
 
 		return 1;

@@ -107,6 +107,12 @@ void sharedram_w(int offset,int data)
 	sharedram[offset] = data;
 }
 
+/* This kludge makes the player move correctly in Frisky Tom */
+void ft_kludge(int offset,int data)
+{
+	sharedram_w(0x2fd+offset,data);
+}
+
 
 
 static struct MemoryReadAddress readmem[] =
@@ -164,9 +170,12 @@ static struct MemoryWriteAddress mcu_writemem[] =
 {
 	{ 0x0000, 0x007f, MWA_RAM },
 	{ 0x1000, 0x10ff, MWA_RAM, &nvram, &nvram_size },
+	{ 0x1100, 0x1101, ft_kludge },
 	{ 0x2000, 0x2000, DAC_data_w },
-	{ 0x8000, 0xf7ff, MWA_ROM },
-	{ 0xf800, 0xffff, sharedram_w, &sharedram },
+//	{ 0x8000, 0xf7ff, MWA_ROM },
+	{ 0x8000, 0xe7ff, MWA_ROM },
+	{ 0xe800, 0xefff, sharedram_w },	/* AJP 990129 seems to need a mirror here */
+	{ 0xf800, 0xffff, sharedram_w },
 	{ -1 }	/* end of table */
 };
 
@@ -439,7 +448,7 @@ static struct MachineDriver machine_driver =
 			ignore_interrupt,0
 		}
 	},
-	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
 	20,	/* 20 CPU slices per frame - an high value to ensure proper */
 			/* synchronization of the CPUs */
 	friskyt_init_machine,
@@ -687,7 +696,7 @@ struct GameDriver friskyt_driver =
 	"1981",
 	"Nichibutsu",
 	"Mirko Buffoni\nNicola Salmoria",
-	GAME_NOT_WORKING,
+	0,
 	&machine_driver,
 	0,
 

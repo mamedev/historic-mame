@@ -16,7 +16,7 @@ int snk_soundcommand=0;
 unsigned char *snk_hrdwmem;
 unsigned char *snk_sharedram;
 
-extern unsigned char *bg_dirtybuffer;
+extern unsigned char *snk_bg_dirtybuffer;
 
 int snk_read_port1(void)
 {
@@ -113,7 +113,7 @@ void snk_sharedram_w(int offset, int data)
 {
 	if (offset >= bg_video_offs && offset < bg_video_offs+0x800)
 	{
-		bg_dirtybuffer[(offset - bg_video_offs) >> 1] = 1;
+		snk_bg_dirtybuffer[(offset - bg_video_offs) >> 1] = 1;
 	}
 	snk_sharedram[offset] = data;
 }

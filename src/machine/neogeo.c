@@ -9,7 +9,6 @@ static int sram_locked;
 static int sram_protection_hack;
 
 int neogeo_game_fix;
-extern int neogeo_red_bits,neogeo_green_bits,neogeo_blue_bits; /* From vidhrdw */
 
 extern void install_mem_read_handler(int cpu, int start, int end, int (*handler)(int));
 static void neogeo_custom_memory(void);
@@ -111,22 +110,46 @@ void neogeo_onetime_init_machine(void)
 
 	RAM = Machine->memory_region[4];
 
-	/* Remove memory check for now */
-    WRITE_WORD(&RAM[0x11b00],0x4e71);
-    WRITE_WORD(&RAM[0x11b02],0x4e71);
-    WRITE_WORD(&RAM[0x11b16],0x4ef9);
-    WRITE_WORD(&RAM[0x11b18],0x00c1);
-    WRITE_WORD(&RAM[0x11b1a],0x1b6a);
+	if (READ_WORD(&RAM[0x11b00]) == 0x4eba)
+	{
+		/* old bios */
+		/* Remove memory check for now */
+		WRITE_WORD(&RAM[0x11b00],0x4e71);
+		WRITE_WORD(&RAM[0x11b02],0x4e71);
+		WRITE_WORD(&RAM[0x11b16],0x4ef9);
+		WRITE_WORD(&RAM[0x11b18],0x00c1);
+		WRITE_WORD(&RAM[0x11b1a],0x1b6a);
 
-	/* Patch bios rom, for Calendar errors */
-    WRITE_WORD(&RAM[0x11c14],0x4e71);
-    WRITE_WORD(&RAM[0x11c16],0x4e71);
-    WRITE_WORD(&RAM[0x11c1c],0x4e71);
-    WRITE_WORD(&RAM[0x11c1e],0x4e71);
+		/* Patch bios rom, for Calendar errors */
+		WRITE_WORD(&RAM[0x11c14],0x4e71);
+		WRITE_WORD(&RAM[0x11c16],0x4e71);
+		WRITE_WORD(&RAM[0x11c1c],0x4e71);
+		WRITE_WORD(&RAM[0x11c1e],0x4e71);
 
-    /* Rom internal checksum fails for now.. */
-    WRITE_WORD(&RAM[0x11c62],0x4e71);
-    WRITE_WORD(&RAM[0x11c64],0x4e71);
+		/* Rom internal checksum fails for now.. */
+		WRITE_WORD(&RAM[0x11c62],0x4e71);
+		WRITE_WORD(&RAM[0x11c64],0x4e71);
+	}
+	else
+	{
+		/* new bios */
+		/* Remove memory check for now */
+		WRITE_WORD(&RAM[0x10c2a],0x4e71);
+		WRITE_WORD(&RAM[0x10c2c],0x4e71);
+		WRITE_WORD(&RAM[0x10c40],0x4ef9);
+		WRITE_WORD(&RAM[0x10c42],0x00c1);
+		WRITE_WORD(&RAM[0x10c44],0x0c94);
+
+		/* Patch bios rom, for Calendar errors */
+		WRITE_WORD(&RAM[0x10d3e],0x4e71);
+		WRITE_WORD(&RAM[0x10d40],0x4e71);
+		WRITE_WORD(&RAM[0x10d46],0x4e71);
+		WRITE_WORD(&RAM[0x10d48],0x4e71);
+
+		/* Rom internal checksum fails for now.. */
+		WRITE_WORD(&RAM[0x10d8c],0x4e71);
+		WRITE_WORD(&RAM[0x10d8e],0x4e71);
+	}
 
 	/* Install custom memory handlers */
 	neogeo_custom_memory();
@@ -148,7 +171,7 @@ static int bios_cycle_skip_r(int offset)
 
 NEO_CYCLE_R(puzzledp,0x12f2,1,								READ_WORD(&neogeo_ram[0x0000]))
 NEO_CYCLE_R(samsho4, 0xaffc,0,								READ_WORD(&neogeo_ram[0x830c]))
-NEO_CYCLE_R(karnov_r,0x5b56,0,								READ_WORD(&neogeo_ram[0x3466]))
+NEO_CYCLE_R(karnovr, 0x5b56,0,								READ_WORD(&neogeo_ram[0x3466]))
 NEO_CYCLE_R(wjammers,0x1362e,READ_WORD(&neogeo_ram[0x5a])&0x7fff,READ_WORD(&neogeo_ram[0x005a]))
 NEO_CYCLE_R(strhoops,0x029a,0,								READ_WORD(&neogeo_ram[0x1200]))
 //NEO_CYCLE_R(magdrop3,0xa378,READ_WORD(&neogeo_ram[0x60])&0x7fff,READ_WORD(&neogeo_ram[0x0060]))
@@ -163,22 +186,22 @@ NEO_CYCLE_R(superspy,0x07ca,0xffff,							READ_WORD(&neogeo_ram[0x108c]))
 NEO_CYCLE_R(ttbb,    0x0a58,0xffff,							READ_WORD(&neogeo_ram[0x000e]))
 NEO_CYCLE_R(alpham2,0x076e,0xffff,							READ_WORD(&neogeo_ram[0xe2fe]))
 NEO_CYCLE_R(eightman,0x12fa,0xffff,							READ_WORD(&neogeo_ram[0x046e]))
-NEO_CYCLE_R(ararmy,  0x08e8,0,								READ_WORD(&neogeo_ram[0x4010]))
+NEO_CYCLE_R(roboarmy,0x08e8,0,								READ_WORD(&neogeo_ram[0x4010]))
 NEO_CYCLE_R(fatfury1,0x133c,0,								READ_WORD(&neogeo_ram[0x4282]))
 NEO_CYCLE_R(burningf,0x0736,0xffff,							READ_WORD(&neogeo_ram[0x000e]))
 NEO_CYCLE_R(bstars,  0x133c,0,								READ_WORD(&neogeo_ram[0x000a]))
-NEO_CYCLE_R(kingofm, 0x1284,0,								READ_WORD(&neogeo_ram[0x0020]))
+NEO_CYCLE_R(kotm,    0x1284,0,								READ_WORD(&neogeo_ram[0x0020]))
 NEO_CYCLE_R(gpilots, 0x0474,0,								READ_WORD(&neogeo_ram[0xa682]))
 NEO_CYCLE_R(lresort, 0x256a,0,								READ_WORD(&neogeo_ram[0x4102]))
 NEO_CYCLE_R(fbfrenzy,0x07dc,0,								READ_WORD(&neogeo_ram[0x0020]))
 NEO_CYCLE_R(socbrawl,0xa8dc,0xffff,							READ_WORD(&neogeo_ram[0xb20c]))
 NEO_CYCLE_R(mutnat,  0x1456,0,								READ_WORD(&neogeo_ram[0x1042]))
-NEO_CYCLE_R(artfight,0x6798,0,								READ_WORD(&neogeo_ram[0x8100]))
+NEO_CYCLE_R(aof,     0x6798,0,								READ_WORD(&neogeo_ram[0x8100]))
 //NEO_CYCLE_R(countb,  0x16a2,0,								READ_WORD(&neogeo_ram[0x8002]))
 NEO_CYCLE_R(ncombat, 0xcb3e,0,								READ_WORD(&neogeo_ram[0x0206]))
 NEO_CYCLE_R(sengoku, 0x12f4,0,								READ_WORD(&neogeo_ram[0x0088]))
 //NEO_CYCLE_R(ncommand,0x11b44,0,								READ_WORD(&neogeo_ram[0x8206]))
-NEO_CYCLE_R(wheroes, 0xf62d4,0xffff,						READ_WORD(&neogeo_ram[0x8206]))
+NEO_CYCLE_R(wh1,     0xf62d4,0xffff,						READ_WORD(&neogeo_ram[0x8206]))
 NEO_CYCLE_R(androdun,0x26d6,0xffff,							READ_WORD(&neogeo_ram[0x0080]))
 NEO_CYCLE_R(bjourney,0xe8aa,READ_WORD(&neogeo_ram[0x206])+1,READ_WORD(&neogeo_ram[0x0206]))
 NEO_CYCLE_R(maglord, 0xb16a,READ_WORD(&neogeo_ram[0x206])+1,READ_WORD(&neogeo_ram[0x0206]))
@@ -193,8 +216,8 @@ NEO_CYCLE_R(goalx3,  0x5298,READ_WORD(&neogeo_ram[0x6])+1,	READ_WORD(&neogeo_ram
 NEO_CYCLE_R(turfmast,0xd5a8,0xffff,							READ_WORD(&neogeo_ram[0x2e54]))
 NEO_CYCLE_R(kabukikl,0x10b0,0,								READ_WORD(&neogeo_ram[0x428a]))
 NEO_CYCLE_R(panicbom,0x3ee6,0xffff,							READ_WORD(&neogeo_ram[0x009c]))
-NEO_CYCLE_R(worlher2,0x2063fc,READ_WORD(&neogeo_ram[0x8206])+1,READ_WORD(&neogeo_ram[0x8206]))
-NEO_CYCLE_R(worlhe2j,0x109f4,READ_WORD(&neogeo_ram[0x8206])+1,READ_WORD(&neogeo_ram[0x8206]))
+NEO_CYCLE_R(wh2,     0x2063fc,READ_WORD(&neogeo_ram[0x8206])+1,READ_WORD(&neogeo_ram[0x8206]))
+NEO_CYCLE_R(wh2j,    0x109f4,READ_WORD(&neogeo_ram[0x8206])+1,READ_WORD(&neogeo_ram[0x8206]))
 NEO_CYCLE_R(aodk,    0xea62,READ_WORD(&neogeo_ram[0x8206])+1,READ_WORD(&neogeo_ram[0x8206]))
 NEO_CYCLE_R(whp,     0xeace,READ_WORD(&neogeo_ram[0x8206])+1,READ_WORD(&neogeo_ram[0x8206]))
 NEO_CYCLE_R(overtop, 0x1736,READ_WORD(&neogeo_ram[0x8202])+1,READ_WORD(&neogeo_ram[0x8202]))
@@ -217,13 +240,13 @@ static int mahretsu_cycle_r(int offset)
 	if (pc==0x1580 || pc==0xf3ba ) {cpu_spinuntil_int(); return 0;}
 	return READ_WORD(&neogeo_ram[0x13b2]);
 }
-NEO_CYCLE_R(nam_1975,0x0a1c,0xffff,							READ_WORD(&neogeo_ram[0x12e0]))
+NEO_CYCLE_R(nam1975, 0x0a1c,0xffff,							READ_WORD(&neogeo_ram[0x12e0]))
 NEO_CYCLE_R(tpgolf,  0x105c,0,								READ_WORD(&neogeo_ram[0x00a4]))
 NEO_CYCLE_R(legendos,0x1864,0xffff,							READ_WORD(&neogeo_ram[0x0002]))
 //NEO_CYCLE_R(viewpoin,0x0c16,0,								READ_WORD(&neogeo_ram[0x1216]))
 NEO_CYCLE_R(fatfury2,0x10ea,0,								READ_WORD(&neogeo_ram[0x418c]))
 NEO_CYCLE_R(bstars2, 0x7e30,0xffff,							READ_WORD(&neogeo_ram[0x001c]))
-NEO_CYCLE_R(sidkicks,0x20b0,0xffff,							READ_WORD(&neogeo_ram[0x8c84]))
+NEO_CYCLE_R(ssideki, 0x20b0,0xffff,							READ_WORD(&neogeo_ram[0x8c84]))
 NEO_CYCLE_R(kotm2,   0x045a,0,								READ_WORD(&neogeo_ram[0x1000]))
 static int samsho_cycle_r(int offset)
 {
@@ -248,7 +271,7 @@ NEO_CYCLE_R(rbffspec,0x8704,0,								READ_WORD(&neogeo_ram[0x418c]))
 NEO_CYCLE_R(kizuna,  0x0840,0,								READ_WORD(&neogeo_ram[0x8808]))
 NEO_CYCLE_R(kof97,   0x9c54,0xffff,							READ_WORD(&neogeo_ram[0xa784]))
 //NEO_CYCLE_R(mslug2,  0x1656,0xffff,						READ_WORD(&neogeo_ram[0x008c]))
-NEO_CYCLE_R(realbou2,0xc5d0,0,								READ_WORD(&neogeo_ram[0x418c]))
+NEO_CYCLE_R(rbff2,   0xc5d0,0,								READ_WORD(&neogeo_ram[0x418c]))
 NEO_CYCLE_R(ragnagrd,0xc6c0,0,								READ_WORD(&neogeo_ram[0x0042]))
 NEO_CYCLE_R(lastblad,0x1868,0xffff,							READ_WORD(&neogeo_ram[0x9d4e]))
 NEO_CYCLE_R(gururin, 0x0604,0xffff,							READ_WORD(&neogeo_ram[0x1002]))
@@ -279,7 +302,7 @@ static int cycle_v3_sr(int offset)
 /*
  *	Also sound revision no 3.0, but different types.
  */
-static int sidkicks_cycle_sr(int offset)
+static int ssideki_cycle_sr(int offset)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
 
@@ -290,7 +313,7 @@ static int sidkicks_cycle_sr(int offset)
 	return RAM[0xfef3];
 }
 
-static int artfight_cycle_sr(int offset)
+static int aof_cycle_sr(int offset)
 {
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[1].memory_region];
 
@@ -384,23 +407,23 @@ static void neogeo_custom_memory(void)
 	if (!strcmp(Machine->gamedrv->name,"ttbb"))     install_mem_read_handler(0, 0x10000e, 0x10000f, ttbb_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"alpham2"))  install_mem_read_handler(0, 0x10e2fe, 0x10e2ff, alpham2_cycle_r);	// Very little increase.
 	if (!strcmp(Machine->gamedrv->name,"eightman")) install_mem_read_handler(0, 0x10046e, 0x10046f, eightman_cycle_r);
-	if (!strcmp(Machine->gamedrv->name,"ararmy"))   install_mem_read_handler(0, 0x104010, 0x104011, ararmy_cycle_r);
+	if (!strcmp(Machine->gamedrv->name,"roboarmy")) install_mem_read_handler(0, 0x104010, 0x104011, roboarmy_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"fatfury1")) install_mem_read_handler(0, 0x104282, 0x104283, fatfury1_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"burningf")) install_mem_read_handler(0, 0x10000e, 0x10000f, burningf_cycle_r);
-	if (!strcmp(Machine->gamedrv->name,"kingofm"))  install_mem_read_handler(0, 0x100020, 0x100021, kingofm_cycle_r);
+	if (!strcmp(Machine->gamedrv->name,"kotm"))     install_mem_read_handler(0, 0x100020, 0x100021, kotm_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"gpilots"))  install_mem_read_handler(0, 0x10a682, 0x10a683, gpilots_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"lresort"))  install_mem_read_handler(0, 0x104102, 0x104103, lresort_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"fbfrenzy")) install_mem_read_handler(0, 0x100020, 0x100021, fbfrenzy_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"socbrawl")) install_mem_read_handler(0, 0x10b20c, 0x10b20d, socbrawl_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"mutnat"))   install_mem_read_handler(0, 0x101042, 0x101043, mutnat_cycle_r);
-	if (!strcmp(Machine->gamedrv->name,"artfight")) install_mem_read_handler(0, 0x108100, 0x108101, artfight_cycle_r);
+	if (!strcmp(Machine->gamedrv->name,"aof"))      install_mem_read_handler(0, 0x108100, 0x108101, aof_cycle_r);
 //	if (!strcmp(Machine->gamedrv->name,"countb"))   install_mem_read_handler(0, 0x108002, 0x108003, countb_cycle_r);   // doesn't seem to speed it up.
 	if (!strcmp(Machine->gamedrv->name,"ncombat"))  install_mem_read_handler(0, 0x100206, 0x100207, ncombat_cycle_r);
 //**	if (!strcmp(Machine->gamedrv->name,"crsword"))  install_mem_read_handler(0, 0x10, 0x10, crsword_cycle_r);			// Can't find this one :-(
 	if (!strcmp(Machine->gamedrv->name,"trally"))   install_mem_read_handler(0, 0x100206, 0x100207, trally_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"sengoku"))  install_mem_read_handler(0, 0x100088, 0x100089, sengoku_cycle_r);
 //	if (!strcmp(Machine->gamedrv->name,"ncommand")) install_mem_read_handler(0, 0x108206, 0x108207, ncommand_cycle_r);	// Slower
-	if (!strcmp(Machine->gamedrv->name,"wheroes"))  install_mem_read_handler(0, 0x108206, 0x108207, wheroes_cycle_r);
+	if (!strcmp(Machine->gamedrv->name,"wh1"))      install_mem_read_handler(0, 0x108206, 0x108207, wh1_cycle_r);
 //**	if (!strcmp(Machine->gamedrv->name,"sengoku2")) install_mem_read_handler(0, 0x10, 0x10, sengoku2_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"androdun")) install_mem_read_handler(0, 0x100080, 0x100081, androdun_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"bjourney")) install_mem_read_handler(0, 0x100206, 0x100207, bjourney_cycle_r);
@@ -413,7 +436,7 @@ static void neogeo_custom_memory(void)
 	if (!strcmp(Machine->gamedrv->name,"neodrift")) install_mem_read_handler(0, 0x100424, 0x100425, neodrift_cycle_r);
 //**	if (!strcmp(Machine->gamedrv->name,"neomrdo"))  install_mem_read_handler(0, 0x10, 0x10, neomrdo_cycle_r);		// Can't find this one :-(
 	if (!strcmp(Machine->gamedrv->name,"spinmast")) install_mem_read_handler(0, 0x100050, 0x100051, spinmast_cycle_r);
-	if (!strcmp(Machine->gamedrv->name,"karnov_r")) install_mem_read_handler(0, 0x103466, 0x103467, karnov_r_cycle_r);
+	if (!strcmp(Machine->gamedrv->name,"karnovr"))  install_mem_read_handler(0, 0x103466, 0x103467, karnovr_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"wjammers")) install_mem_read_handler(0, 0x10005a, 0x10005b, wjammers_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"strhoops")) install_mem_read_handler(0, 0x101200, 0x101201, strhoops_cycle_r);
 //	if (!strcmp(Machine->gamedrv->name,"magdrop3")) install_mem_read_handler(0, 0x100060, 0x100061, magdrop3_cycle_r);	// The game starts glitching.
@@ -427,8 +450,8 @@ static void neogeo_custom_memory(void)
 
 	if (!strcmp(Machine->gamedrv->name,"panicbom")) install_mem_read_handler(0, 0x10009c, 0x10009d, panicbom_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"neobombe")) install_mem_read_handler(0, 0x10448c, 0x10448d, neobombe_cycle_r);
-	if (!strcmp(Machine->gamedrv->name,"worlher2")) install_mem_read_handler(0, 0x108206, 0x108207, worlher2_cycle_r);
-	if (!strcmp(Machine->gamedrv->name,"worlhe2j")) install_mem_read_handler(0, 0x108206, 0x108207, worlhe2j_cycle_r);
+	if (!strcmp(Machine->gamedrv->name,"wh2"))      install_mem_read_handler(0, 0x108206, 0x108207, wh2_cycle_r);
+	if (!strcmp(Machine->gamedrv->name,"wh2j"))     install_mem_read_handler(0, 0x108206, 0x108207, wh2j_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"aodk"))     install_mem_read_handler(0, 0x108206, 0x108207, aodk_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"whp"))      install_mem_read_handler(0, 0x108206, 0x108207, whp_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"overtop"))  install_mem_read_handler(0, 0x108202, 0x108203, overtop_cycle_r);
@@ -442,13 +465,13 @@ static void neogeo_custom_memory(void)
 	if (!strcmp(Machine->gamedrv->name,"galaxyfg")) install_mem_read_handler(0, 0x101858, 0x101859, galaxyfg_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"wakuwak7")) install_mem_read_handler(0, 0x100bd4, 0x100bd5, wakuwak7_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"mahretsu")) install_mem_read_handler(0, 0x1013b2, 0x1013b3, mahretsu_cycle_r);
-	if (!strcmp(Machine->gamedrv->name,"nam_1975")) install_mem_read_handler(0, 0x1012e0, 0x1012e1, nam_1975_cycle_r);
+	if (!strcmp(Machine->gamedrv->name,"nam1975"))  install_mem_read_handler(0, 0x1012e0, 0x1012e1, nam1975_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"tpgolf"))   install_mem_read_handler(0, 0x1000a4, 0x1000a5, tpgolf_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"legendos")) install_mem_read_handler(0, 0x100002, 0x100003, legendos_cycle_r);
 //	if (!strcmp(Machine->gamedrv->name,"viewpoin")) install_mem_read_handler(0, 0x101216, 0x101217, viewpoin_cycle_r);	// Doesn't work
 	if (!strcmp(Machine->gamedrv->name,"fatfury2")) install_mem_read_handler(0, 0x10418c, 0x10418d, fatfury2_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"bstars2"))  install_mem_read_handler(0, 0x10001c, 0x10001c, bstars2_cycle_r);
-	if (!strcmp(Machine->gamedrv->name,"sidkicks")) install_mem_read_handler(0, 0x108c84, 0x108c85, sidkicks_cycle_r);
+	if (!strcmp(Machine->gamedrv->name,"ssideki"))  install_mem_read_handler(0, 0x108c84, 0x108c85, ssideki_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"kotm2"))    install_mem_read_handler(0, 0x101000, 0x101001, kotm2_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"samsho"))   install_mem_read_handler(0, 0x100a76, 0x100a77, samsho_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"fatfursp")) install_mem_read_handler(0, 0x10418c, 0x10418d, fatfursp_cycle_r);
@@ -470,7 +493,7 @@ static void neogeo_custom_memory(void)
 	if (!strcmp(Machine->gamedrv->name,"kizuna"))   install_mem_read_handler(0, 0x108808, 0x108809, kizuna_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"kof97"))    install_mem_read_handler(0, 0x10a784, 0x10a785, kof97_cycle_r);
 //	if (!strcmp(Machine->gamedrv->name,"mslug2"))   install_mem_read_handler(0, 0x10008c, 0x10008d, mslug2_cycle_r);	// Breaks the game
-	if (!strcmp(Machine->gamedrv->name,"realbou2")) install_mem_read_handler(0, 0x10418c, 0x10418d, realbou2_cycle_r);
+	if (!strcmp(Machine->gamedrv->name,"rbff2"))    install_mem_read_handler(0, 0x10418c, 0x10418d, rbff2_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"ragnagrd")) install_mem_read_handler(0, 0x100042, 0x100043, ragnagrd_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"lastblad")) install_mem_read_handler(0, 0x109d4e, 0x109d4f, lastblad_cycle_r);
 	if (!strcmp(Machine->gamedrv->name,"gururin"))  install_mem_read_handler(0, 0x101002, 0x101003, gururin_cycle_r);
@@ -484,8 +507,8 @@ static void neogeo_custom_memory(void)
 	if (!strcmp(Machine->gamedrv->name,"puzzledp")) install_mem_read_handler(1, 0xfeb1, 0xfeb1, cycle_v3_sr);
 	if (!strcmp(Machine->gamedrv->name,"ssideki2")) install_mem_read_handler(1, 0xfeb1, 0xfeb1, cycle_v3_sr);
 
-	if (!strcmp(Machine->gamedrv->name,"sidkicks")) install_mem_read_handler(1, 0xfef3, 0xfef3, sidkicks_cycle_sr);
-	if (!strcmp(Machine->gamedrv->name,"artfight")) install_mem_read_handler(1, 0xfef3, 0xfef3, artfight_cycle_sr);
+	if (!strcmp(Machine->gamedrv->name,"ssideki"))  install_mem_read_handler(1, 0xfef3, 0xfef3, ssideki_cycle_sr);
+	if (!strcmp(Machine->gamedrv->name,"aof"))      install_mem_read_handler(1, 0xfef3, 0xfef3, aof_cycle_sr);
 
 	if (!strcmp(Machine->gamedrv->name,"pbobble")) install_mem_read_handler(1, 0xfeef, 0xfeef, cycle_v2_sr);
 	if (!strcmp(Machine->gamedrv->name,"goalx3")) install_mem_read_handler(1, 0xfeef, 0xfeef, cycle_v2_sr);
@@ -496,14 +519,14 @@ static void neogeo_custom_memory(void)
 	if (!strcmp(Machine->gamedrv->name,"vwpoint")) install_mem_read_handler(1, 0xfe46, 0xfe46, vwpoint_cycle_sr);
 
 //	if (!strcmp(Machine->gamedrv->name,"joyjoy")) install_mem_read_handler(1, 0xfe46, 0xfe46, cycle_v15_sr);
-//	if (!strcmp(Machine->gamedrv->name,"nam_1975")) install_mem_read_handler(1, 0xfe46, 0xfe46, cycle_v15_sr);
+//	if (!strcmp(Machine->gamedrv->name,"nam1975")) install_mem_read_handler(1, 0xfe46, 0xfe46, cycle_v15_sr);
 //	if (!strcmp(Machine->gamedrv->name,"gpilots")) install_mem_read_handler(1, 0xfe46, 0xfe46, cycle_v15_sr);
 
 	/* kludges */
 	neogeo_game_fix=-1;
 	if (!strcmp(Machine->gamedrv->name,"blazstar")) neogeo_game_fix=0;
 	if (!strcmp(Machine->gamedrv->name,"gowcaizr")) neogeo_game_fix=1;
-	if (!strcmp(Machine->gamedrv->name,"realbou2")) neogeo_game_fix=2;
+	if (!strcmp(Machine->gamedrv->name,"rbff2"))   neogeo_game_fix=2;
 	if (!strcmp(Machine->gamedrv->name,"samsho3")) neogeo_game_fix=3;
 	if (!strcmp(Machine->gamedrv->name,"overtop")) neogeo_game_fix=4;
 	if (!strcmp(Machine->gamedrv->name,"kof97")) neogeo_game_fix=5;
@@ -527,45 +550,33 @@ static void neogeo_custom_memory(void)
 			 !strcmp(Machine->gamedrv->name,"kof98") ||
 			 !strcmp(Machine->gamedrv->name,"kizuna") ||
 			 !strcmp(Machine->gamedrv->name,"lastblad") ||
-			 !strcmp(Machine->gamedrv->name,"realbou2") ||
+			 !strcmp(Machine->gamedrv->name,"rbff2") ||
 			 !strcmp(Machine->gamedrv->name,"mslug2"))
 		sram_protection_hack = 0x100;
 
 	if (!strcmp(Machine->gamedrv->name,"pulstar"))
 		sram_protection_hack = 0x35a;
 
-	if (!strcmp(Machine->gamedrv->name,"sidkicks"))
+	if (!strcmp(Machine->gamedrv->name,"ssideki"))
 	{
 		/* patch out protection check */
 		/* the protection routines are at 0x25dcc and involve reading and writing */
 		/* addresses in the 0x2xxxxx range */
 		unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-	    WRITE_WORD(&RAM[0x2240],0x4e71);
+		WRITE_WORD(&RAM[0x2240],0x4e71);
 	}
 
-
-	/* Improve games which don't work in 8 bit colour very well */
-	neogeo_red_bits = 5;
-	neogeo_green_bits = 5;
-	neogeo_blue_bits = 5;
-	if (!strcmp(Machine->gamedrv->name,"blazstar"))
-		{ neogeo_blue_bits = 3; neogeo_red_bits = neogeo_green_bits = 4; }
-	if (!strcmp(Machine->gamedrv->name,"karnov_r"))
-		{ neogeo_blue_bits = 3; neogeo_red_bits = neogeo_green_bits = 4; }
-	if (!strcmp(Machine->gamedrv->name,"kizuna"))
-		{ neogeo_blue_bits = 3; neogeo_red_bits = neogeo_green_bits = 4; }
-	if (!strcmp(Machine->gamedrv->name,"kof95"))
-		{ neogeo_blue_bits = neogeo_red_bits = 3; neogeo_green_bits = 4; }
-	if (!strcmp(Machine->gamedrv->name,"whp"))
-		{ neogeo_blue_bits = neogeo_red_bits = 3; neogeo_green_bits = 4; }
-	if (!strcmp(Machine->gamedrv->name,"kof96"))
-		{ neogeo_blue_bits = neogeo_red_bits = 3; neogeo_green_bits = 4; }
-	if (!strcmp(Machine->gamedrv->name,"kof97"))
-		{ neogeo_blue_bits = neogeo_red_bits = neogeo_green_bits = 3; }
-	if (!strcmp(Machine->gamedrv->name,"ragnagrd"))
-		{ neogeo_blue_bits = neogeo_red_bits = neogeo_green_bits = 3; }
-	if (!strcmp(Machine->gamedrv->name,"kof98"))
-		{ neogeo_blue_bits = neogeo_red_bits = neogeo_green_bits = 3; }
+	/* Hacks the program rom of Fatal Fury 2, needed either in arcade or console mode */
+	/* otherwise at level 2 you cannot hit the opponent and other problems */
+	if (!strcmp(Machine->gamedrv->name,"fatfury2"))
+	{
+		/* again, the protection involves reading and writing addresses in the */
+		/* 0x2xxxxx range. There are several checks all around the code. */
+		unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+		WRITE_WORD(&RAM[0x8508],0x00ff);
+		WRITE_WORD(&RAM[0xe946],0x00ff);
+		WRITE_WORD(&RAM[0xf850],0x00ff);
+	}
 }
 
 

@@ -8,15 +8,15 @@ LD = gcc
 ASM = nasmw
 ASMFLAGS = -f coff
 VPATH=src src/cpu/z80 src/cpu/m6502 src/cpu/i86 src/cpu/m6809 src/cpu/m6808 \
-      src/cpu/m68000 src/cpu/tms34010 src/cpu/tms9900 src/cpu/z8000
+      src/cpu/m68000 src/cpu/tms34010 src/cpu/tms9900 src/cpu/z8000 src/cpu/tms32010
 
 # uncomment next line to include the debugger
 # DEBUG = 1
 
 # uncomment next line to do a smaller compile including only one driver
 # TINY_COMPILE = 1
-TINY_NAME = lotlot_driver
-TINY_OBJS = obj/drivers/ldrun.o obj/vidhrdw/ldrun.o obj/sndhrdw/irem.o
+TINY_NAME = unkvsys_driver
+TINY_OBJS = obj/drivers/aerofgt.o obj/vidhrdw/aerofgt.o
 
 # uncomment one of the two next lines to not compile the NeoGeo games or to
 # compile only the NeoGeo games
@@ -26,17 +26,14 @@ TINY_OBJS = obj/drivers/ldrun.o obj/vidhrdw/ldrun.o obj/sndhrdw/irem.o
 # uncomment next line to include the symbols for symify
 # SYMBOLS = 1
 
-# uncomment next line to use Assembler 6808 engine
-# X86_ASM_6808 = 1
-
 # uncomment next line to use Assembler 68k engine
 # X86_ASM_68K = 1
 
-ifdef X86_ASM_6808
-M6808OBJS = obj/cpu/m6808/m6808.oa obj/cpu/m6808/6808dasm.o
-else
-M6808OBJS = obj/cpu/m6808/m6808.o obj/cpu/m6808/6808dasm.o
-endif
+# uncomment next line to use Assembler Z80 engine
+# X86_ASM_Z80 = 1
+
+# uncomment next line to use Assembler 6808 engine
+# X86_ASM_6808 = 1
 
 ifdef X86_ASM_68K
 M68KOBJS = obj/cpu/m68000/asmintf.o obj/cpu/m68000/68kem.oa
@@ -44,6 +41,20 @@ M68KDEF  = -DA68KEM
 else
 M68KOBJS = obj/cpu/m68000/m68000.o obj/cpu/m68000/m68kmame.o
 M68KDEF  =
+endif
+
+ifdef X86_ASM_Z80
+Z80OBJS = obj/cpu/z80/z80.oa
+Z80DEF = -nasm -verbose 0
+else
+Z80OBJS = obj/cpu/z80/z80.o
+Z80DEF =
+endif
+
+ifdef X86_ASM_6808
+M6808OBJS = obj/cpu/m6808/m6808.oa obj/cpu/m6808/6808dasm.o
+else
+M6808OBJS = obj/cpu/m6808/m6808.o obj/cpu/m6808/6808dasm.o
 endif
 
 ifdef DEBUG
@@ -58,8 +69,8 @@ CDEFS = $(DEFS) $(M68KDEF) $(DEBUGDEF)
 ifdef SYMBOLS
 CFLAGS = -Isrc -Isrc/msdos -O -mpentium -Wall -Werror -g
 else
-CFLAGS = -Isrc -Isrc/msdos -fomit-frame-pointer -O3 -mpentium -Werror -Wall \
-	-W -Wno-sign-compare -Wno-unused \
+CFLAGS = -Isrc -Isrc/msdos -fomit-frame-pointer -O3 -mpentium \
+	-Werror -Wall -W -Wno-sign-compare -Wno-unused \
 	-Wpointer-arith -Wbad-function-cast -Wcast-align -Waggregate-return \
 	-pedantic \
 	-Wshadow \
@@ -85,6 +96,7 @@ COREOBJS = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
          obj/cpuintrf.o obj/memory.o obj/timer.o obj/palette.o \
          obj/inptport.o obj/cheat.o obj/unzip.o obj/inflate.o \
          obj/audit.o obj/info.o obj/crc32.o obj/png.o obj/artwork.o \
+         obj/tilemap.o \
          obj/sndhrdw/adpcm.o \
          obj/sndhrdw/ay8910.o obj/sndhrdw/psgintf.o \
          obj/sndhrdw/2151intf.o obj/sndhrdw/fm.o \
@@ -101,10 +113,11 @@ COREOBJS = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
          obj/machine/z80fmly.o obj/machine/6821pia.o \
          obj/vidhrdw/generic.o obj/sndhrdw/generic.o \
          obj/vidhrdw/vector.o obj/vidhrdw/avgdvg.o obj/machine/mathbox.o \
-         $(M6808OBJS) \
-         $(M68KOBJS) \
          obj/machine/ticket.o \
-         obj/cpu/z80/z80.o obj/cpu/m6502/m6502.o \
+         $(M68KOBJS) \
+         $(Z80OBJS) \
+         $(M6808OBJS) \
+         obj/cpu/m6502/m6502.o \
          obj/cpu/i86/i86.o obj/cpu/i8039/i8039.o obj/cpu/i8085/i8085.o \
          obj/cpu/m6809/m6809.o obj/cpu/m6805/m6805.o \
          obj/cpu/s2650/s2650.o obj/cpu/t11/t11.o \
@@ -117,6 +130,7 @@ COREOBJS = obj/mame.o obj/common.o obj/usrintrf.o obj/driver.o \
          obj/cpu/m6809/6809dasm.o obj/cpu/m6805/6805dasm.o \
          obj/cpu/s2650/2650dasm.o obj/cpu/t11/t11dasm.o obj/cpu/tms34010/34010dsm.o \
          obj/cpu/tms9900/9900dasm.o obj/cpu/z8000/8000dasm.o \
+         obj/cpu/tms32010/tms32010.o obj/cpu/tms32010/32010dsm.o \
 
 DRVLIBS = obj/pacman.a obj/galaxian.a obj/scramble.a obj/cclimber.a \
          obj/phoenix.a obj/namco.a obj/univers.a obj/nintendo.a \
@@ -163,8 +177,8 @@ all: mame.exe romcmp.exe
 mame.exe:  $(COREOBJS) $(MSDOSOBJS) $(OBJS) $(LIBS)
 	$(LD) $(LDFLAGS) $(COREOBJS) $(MSDOSOBJS) $(OBJS) $(LIBS) -o $@
 
-romcmp.exe: romcmp.o
-	$(LD) $(LDFLAGS) $< -o $@
+romcmp.exe: obj/romcmp.o obj/inflate.o obj/unzip.o
+	$(LD) $(LDFLAGS) $^ -o $@
 
 compress: mame.exe
 	upx mame.exe
@@ -172,13 +186,17 @@ compress: mame.exe
 obj/%.o: src/%.c mame.h driver.h
 	 $(CC) $(CDEFS) $(CFLAGS) $(TINYFLAGS) -c $< -o $@
 
+obj/cpu/m68000/68kem.asm:  src/cpu/m68000/make68k.c
+	 $(CC) $(CDEFS) $(CFLAGS) -DDOS -o obj/cpu/m68000/make68k.exe $<
+	 obj/cpu/m68000/make68k $@
+
+obj/cpu/z80/z80.asm:  src/cpu/z80/makez80.c
+	$(CC) $(CDEFS) $(CFLAGS) -DDOS -o obj/cpu/z80/makez80.exe $<
+	obj/cpu/z80/makez80 $(Z80DEF) $(CDEFS) $(CFLAGS) $@
+
 obj/cpu/m6808/m6808.asm:  src/cpu/m6808/make6808.c
 	 $(CC) -o obj/cpu/m6808/make6808.exe src/cpu/m6808/make6808.c
 	 obj/cpu/m6808/make6808 obj/cpu/m6808/m6808.asm -s -m -h
-
-obj/cpu/m68000/68kem.asm:  src/cpu/m68000/make68k.c
-	 $(CC) $(CDEFS) $(CFLAGS) -DDOS -o obj/cpu/m68000/make68k.exe src/cpu/m68000/make68k.c
-	 obj/cpu/m68000/make68k obj/cpu/m68000/68kem.asm
 
 obj/%.oa:  obj/%.asm
 	 $(ASM) -o $@ $(ASMFLAGS) $(ASMDEFS) $<
@@ -190,7 +208,6 @@ obj/pacman.a: \
          obj/machine/pacman.o obj/drivers/pacman.o \
          obj/machine/pacplus.o \
          obj/machine/theglob.o \
-         obj/drivers/maketrax.o \
          obj/machine/jrpacman.o obj/drivers/jrpacman.o obj/vidhrdw/jrpacman.o \
          obj/vidhrdw/pengo.o obj/drivers/pengo.o \
 
@@ -267,6 +284,7 @@ obj/mcr.a: \
 obj/irem.a: \
          obj/sndhrdw/irem.o \
          obj/vidhrdw/mpatrol.o obj/drivers/mpatrol.o \
+         obj/vidhrdw/troangel.o obj/drivers/troangel.o \
          obj/vidhrdw/yard.o obj/drivers/yard.o \
          obj/vidhrdw/kungfum.o obj/drivers/kungfum.o \
          obj/vidhrdw/travrusa.o obj/drivers/travrusa.o \
@@ -288,13 +306,12 @@ obj/taito2.a: \
          obj/vidhrdw/bking2.o obj/drivers/bking2.o \
          obj/vidhrdw/gsword.o obj/drivers/gsword.o \
          obj/vidhrdw/gladiatr.o obj/drivers/gladiatr.o \
-         obj/vidhrdw/tokio.o obj/drivers/tokio.o \
          obj/machine/bublbobl.o obj/vidhrdw/bublbobl.o obj/drivers/bublbobl.o \
          obj/vidhrdw/rastan.o obj/sndhrdw/rastan.o obj/drivers/rastan.o \
          obj/machine/rainbow.o obj/drivers/rainbow.o \
          obj/machine/arkanoid.o obj/vidhrdw/arkanoid.o obj/drivers/arkanoid.o \
          obj/vidhrdw/superqix.o obj/drivers/superqix.o \
-         obj/vidhrdw/twincobr.o obj/drivers/twincobr.o \
+         obj/machine/twincobr.o obj/vidhrdw/twincobr.o obj/drivers/twincobr.o \
          obj/machine/tnzs.o obj/vidhrdw/tnzs.o obj/drivers/tnzs.o \
          obj/drivers/arkanoi2.o \
          obj/machine/slapfght.o obj/vidhrdw/slapfght.o obj/drivers/slapfght.o \
@@ -322,6 +339,7 @@ obj/capcom.a: \
          obj/vidhrdw/blktiger.o obj/drivers/blktiger.o \
          obj/vidhrdw/tigeroad.o obj/drivers/tigeroad.o \
          obj/vidhrdw/lastduel.o obj/drivers/lastduel.o \
+         obj/vidhrdw/sf1.o obj/drivers/sf1.o \
          obj/machine/cps1.o obj/vidhrdw/cps1.o obj/drivers/cps1.o \
 
 obj/capbowl.a: \
@@ -577,6 +595,7 @@ obj/other.a: \
          obj/vidhrdw/pow.o obj/drivers/pow.o \
          obj/vidhrdw/galpanic.o obj/drivers/galpanic.o \
          obj/vidhrdw/aerofgt.o obj/drivers/aerofgt.o \
+         obj/vidhrdw/ambush.o obj/drivers/ambush.o \
 
 # dependencies
 obj/cpu/z80/z80.o:  z80.c z80.h z80daa.h
@@ -587,6 +606,7 @@ obj/cpu/m6808/m6808.o:  m6808.c m6808.h
 obj/cpu/tms34010/tms34010.o: tms34010.c tms34010.h 34010ops.c 34010tbl.c
 obj/cpu/tms9900/tms9900.o: tms9900.h
 obj/cpu/z8000/z8000.o: z8000.c z8000.h z8000cpu.h z8000dab.h z8000ops.c z8000tbl.c
+obj/cpu/tms32010/tms32010.o: tms32010.c tms32010.h
 
 
 makedir:
@@ -606,6 +626,7 @@ makedir:
 	md obj\cpu\tms34010
 	md obj\cpu\tms9900
 	md obj\cpu\z8000
+	md obj\cpu\tms32010
 	md obj\drivers
 	md obj\machine
 	md obj\vidhrdw
@@ -616,6 +637,9 @@ clean:
 	del obj\*.o
 	del obj\*.a
 	del obj\cpu\z80\*.o
+	del obj\cpu\z80\*.oa
+	del obj\cpu\z80\*.asm
+	del obj\cpu\z80\*.exe
 	del obj\cpu\m6502\*.o
 	del obj\cpu\i86\*.o
 	del obj\cpu\i8039\*.o
@@ -634,6 +658,7 @@ clean:
 	del obj\cpu\tms34010\*.o
 	del obj\cpu\tms9900\*.o
 	del obj\cpu\z8000\*.o
+	del obj\cpu\tms32010\*.o
 	del obj\drivers\*.o
 	del obj\machine\*.o
 	del obj\vidhrdw\*.o
@@ -644,6 +669,9 @@ clean:
 cleandebug:
 	del obj\*.o
 	del obj\cpu\z80\*.o
+	del obj\cpu\z80\*.oa
+	del obj\cpu\z80\*.asm
+	del obj\cpu\z80\*.exe
 	del obj\cpu\m6502\*.o
 	del obj\cpu\i86\*.o
 	del obj\cpu\i8039\*.o
@@ -662,4 +690,5 @@ cleandebug:
 	del obj\cpu\tms34010\*.o
 	del obj\cpu\tms9900\*.o
 	del obj\cpu\z8000\*.o
+	del obj\cpu\tms32010\*.o
 	del mame.exe

@@ -1,8 +1,13 @@
 #include "driver.h"
 
 /* History:
+ * 2/5/99 Extra Life sound constant found $1C after fixing main driver.
+ * 1/29/99 Additional Sound programming by Jim Hernandez.
+ * Supports new 44.1Khz samples set made by me.
+ * -Stuff to do -
+ * Find hex bit for credit.sam and warp.sam sound calls.
  *
- * 980205 now using the new sample_*() functions. BW
+ * 2/05/98 now using the new sample_*() functions. BW
  *
  */
 
@@ -10,11 +15,14 @@
 	Tac/Scan sound constants
 
 	There are some sounds that are unknown:
-	$09
+	$09 Tunnel Warp Sound?
 	$0a
-	$0e
-	$1c
-	$30 - $3f
+	$0b Formation Change
+        $0c
+        $0e
+        $0f
+        $1c 1up (Extra Life)
+        $30 - $3f  Hex numbers for ship position flight sounds
 	$41
 
 	Some sound samples are missing:
@@ -113,7 +121,7 @@ d0      crafts joining
 
 /* Some Tac/Scan sound constants */
 #define	shipStop 0x10
-#define	shipLaser 0x18
+#define shipLaser 0x18
 #define	shipExplosion 0x20
 #define	shipDocking 0x28
 #define	shipRoar 0x40
@@ -128,12 +136,28 @@ d0      crafts joining
 #define	enemyExplosion0 0x6c
 #define	enemyExplosion1 0x6d
 #define	enemyExplosion2 0x6e
+#define tunnelw   0x09
+#define flight1   0x36
+#define flight2   0x3b
+#define flight3   0x3d
+#define flight4   0x3e
+#define flight5   0x3f
+#define warp      0x35
+#define formation 0x0b
+#define nothing1  0x1a
+#define nothing2  0x1b
+#define extralife 0x1c
+
 
 #define	kVoiceShipRoar 5
 #define	kVoiceShip 1
 #define	kVoiceTunnel 2
 #define	kVoiceStinger 3
 #define	kVoiceEnemy 4
+#define kVoiceExtra 8
+#define kVoiceForm 7
+#define kVoiceWarp 6
+#define kVoiceExtralife 9
 
 static int roarPlaying;	/* Is the ship roar noise playing? */
 
@@ -143,7 +167,7 @@ static int roarPlaying;	/* Is the ship roar noise playing? */
  * and updating the sounds in the order they were queued.
  */
 
-#define MAX_SPEECH	10	/* Number of speech samples which can be queued */
+#define MAX_SPEECH      16      /* Number of speech samples which can be queued */
 #define NOT_PLAYING	-1	/* Queue position empty */
 
 static int queue[MAX_SPEECH];
@@ -275,12 +299,12 @@ void tacscan_sh_w (int offset,int data)
 		case stingerThrust:
 			voice = kVoiceStinger;
 			sound = 7;
-			loop = 1;
+                        loop = 0; //leave off sound gets stuck on
 			break;
 		case stingerLaser:
 			voice = kVoiceStinger;
 			sound = 8;
-			loop = 1;
+                        loop = 0;
 			break;
 		case stingerExplosion:
 			voice = kVoiceStinger;
@@ -302,11 +326,40 @@ void tacscan_sh_w (int offset,int data)
 			voice = kVoiceTunnel;
 			sound = 11;
 			break;
-		default:
+                case tunnelw: voice = kVoiceShip;
+                              sound = 12;
+                              break;
+                case flight1: voice = kVoiceExtra;
+                              sound = 13;
+                              break;
+                case flight2: voice = kVoiceExtra;
+                              sound = 14;
+                              break;
+                case flight3: voice = kVoiceExtra;
+                              sound = 15;
+                              break;
+                case flight4: voice = kVoiceExtra;
+                              sound = 16;
+                              break;
+                case flight5: voice = kVoiceExtra;
+                              sound = 17;
+                              break;
+		case formation:
+                              voice = kVoiceForm;
+              	              sound = 18;
+			      break;
+	       	case warp:    voice = kVoiceExtra;
+                              sound = 19;
+                              break;
+                case extralife: voice = kVoiceExtralife;
+                                sound = 20;
+                                break;
+                default:
+
 			/* don't play anything */
 			sound = -1;
 			break;
-	}
+                      }
 	if (sound != -1)
    	{
 		sample_stop (voice);

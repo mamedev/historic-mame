@@ -101,7 +101,7 @@ static struct MemoryReadAddress sound_readmem[] =
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0x8801, 0x8801, YM2151_status_port_0_r },
-	{ 0x9800, 0x9800, OKIM6295_status_r },
+	{ 0x9800, 0x9800, OKIM6295_status_0_r },
 	{ 0xa000, 0xa000, soundlatch_r },
 	{ -1 }  /* end of table */
 };
@@ -112,7 +112,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0x8800, 0x8800, YM2151_register_port_0_w },
 	{ 0x8801, 0x8801, YM2151_data_port_0_w },
-	{ 0x9800, 0x9800, OKIM6295_data_w },
+	{ 0x9800, 0x9800, OKIM6295_data_0_w },
 	{ -1 }  /* end of table */
 };
 
@@ -212,7 +212,7 @@ static struct OKIM6295interface okim6295_interface =
 {
 	1,              /* 1 chip */
 	8000,           /* 8000Hz frequency */
-	3,              /* memory region 3 */
+	{ 3 },              /* memory region 3 */
 	{ 50 }
 };
 

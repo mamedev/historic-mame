@@ -515,6 +515,51 @@ ROM_START( srumblr2_rom )
 	ROM_LOAD( "63s141.8j",    0x00200, 0x00100, 0x1a89a7ff )
 ROM_END
 
+static int hiload(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	/* check if the hi score table has already been initialized */
+	if (memcmp(&RAM[0x00aa],"\x00\x03\x50\x00",4) == 0)
+	{
+		void *f;
+
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			/* High score table */
+			osd_fread(f,&RAM[0x1c94],112);
+
+			/* High score */
+			RAM[0x00aa] = RAM[0x1cda];
+			RAM[0x00ab] = RAM[0x1cdb];
+			RAM[0x00ac] = RAM[0x1cdc];
+			RAM[0x00ad] = RAM[0x1cdd];
+
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;	/* we can't load the hi scores yet */
+}
+
+
+static void hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x1c94],112);
+		osd_fclose(f);
+	}
+}
+
+
 struct GameDriver srumbler_driver =
 {
 	__FILE__,
@@ -535,10 +580,10 @@ struct GameDriver srumbler_driver =
 
 	input_ports,
 
-	NULL, 0, 0,
+	0, 0, 0,
 
 	ORIENTATION_ROTATE_270,
-	NULL, NULL
+	hiload, hisave
 };
 
 struct GameDriver srumblr2_driver =
@@ -561,8 +606,8 @@ struct GameDriver srumblr2_driver =
 
 	input_ports,
 
-	NULL, 0, 0,
+	0, 0, 0,
 
 	ORIENTATION_ROTATE_270,
-	NULL, NULL
+	hiload, hisave
 };

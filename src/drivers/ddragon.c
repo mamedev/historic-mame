@@ -249,7 +249,7 @@ static struct MemoryReadAddress dd2_sound_readmem[] =
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
 	{ 0x8801, 0x8801, YM2151_status_port_0_r },
-	{ 0x9800, 0x9800, OKIM6295_status_r },
+	{ 0x9800, 0x9800, OKIM6295_status_0_r },
 	{ 0xA000, 0xA000, soundlatch_r },
 	{ -1 }	/* end of table */
 };
@@ -260,7 +260,7 @@ static struct MemoryWriteAddress dd2_sound_writemem[] =
 	{ 0x8000, 0x87ff, MWA_RAM },
 	{ 0x8800, 0x8800, YM2151_register_port_0_w },
 	{ 0x8801, 0x8801, YM2151_data_port_0_w },
-	{ 0x9800, 0x9800, OKIM6295_data_w },
+	{ 0x9800, 0x9800, OKIM6295_data_0_w },
 	{ -1 }	/* end of table */
 };
 
@@ -454,13 +454,15 @@ static struct OKIM6295interface okim6295_interface =
 {
 	1,              /* 1 chip */
 	8000,           /* frequency (Hz) */
-	4,              /* memory region */
+	{ 4 },              /* memory region */
 	{ 15 }
 };
 
 static int dd_interrupt(void)
 {
-	return ( M6809_INT_FIRQ | M6809_INT_NMI );
+    cpu_set_irq_line(0, 1, HOLD_LINE); /* hold the FIRQ line */
+    cpu_set_nmi_line(0, PULSE_LINE); /* pulse the NMI line */
+    return M6809_INT_NONE;
 }
 
 

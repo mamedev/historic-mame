@@ -134,7 +134,7 @@ int pia_read (int which, int offset)
 	switch (pia_offsets[offset & 7])
 	{
 		/******************* port A output/DDR read *******************/
-		case 0:
+		case PIA_DDRA:
 
 			/* read output register */
 			if (OUTPUT_SELECTED (p->ctl_a))
@@ -171,7 +171,7 @@ int pia_read (int which, int offset)
 			break;
 
 		/******************* port B output/DDR read *******************/
-		case 1:
+		case PIA_DDRB:
 
 			/* read output register */
 			if (OUTPUT_SELECTED (p->ctl_b))
@@ -192,7 +192,7 @@ int pia_read (int which, int offset)
 			break;
 
 		/******************* port A control read *******************/
-		case 2:
+		case PIA_CTLA:
 
 			/* Update CA1 & CA2 if callback exists, these in turn may update IRQ's */
 			if (p->in_ca1_func) pia_set_input_ca1(which, p->in_ca1_func (0));
@@ -207,7 +207,7 @@ int pia_read (int which, int offset)
 			break;
 
 		/******************* port B control read *******************/
-		case 3:
+		case PIA_CTLB:
 
 			/* Update CB1 & CB2 if callback exists, these in turn may update IRQ's */
 			if (p->in_cb1_func) pia_set_input_cb1(which, p->in_cb1_func (0));
@@ -235,34 +235,43 @@ void pia_write (int which, int offset, int data)
 	switch (pia_offsets[offset & 7])
 	{
 		/******************* port A output/DDR write *******************/
-		case 0:
+		case PIA_DDRA:
 
 			/* write output register */
 			if (OUTPUT_SELECTED (p->ctl_a))
 			{
 				/* update the output value */
-				p->out_a = data & p->ddr_a;
+				p->out_a = data;/* & p->ddr_a; */	/* NS990130 - don't mask now, DDR could change later */
 
 				/* send it to the output function */
-				if (p->out_a_func) p->out_a_func (0, p->out_a);
+				if (p->out_a_func && p->ddr_a) p->out_a_func (0, p->out_a & p->ddr_a);	/* NS990130 */
 			}
 
 			/* write DDR register */
 			else
-				p->ddr_a = data;
+			{
+				if (p->ddr_a != data)
+				{
+					/* NS990130 - if DDR changed, call the callback again */
+					p->ddr_a = data;
+
+					/* send it to the output function */
+					if (p->out_a_func && p->ddr_a) p->out_a_func (0, p->out_a & p->ddr_a);
+				}
+			}
 			break;
 
 		/******************* port B output/DDR write *******************/
-		case 1:
+		case PIA_DDRB:
 
 			/* write output register */
 			if (OUTPUT_SELECTED (p->ctl_b))
 			{
 				/* update the output value */
-				p->out_b = data & p->ddr_b;
+				p->out_b = data;/* & p->ddr_b */	/* NS990130 - don't mask now, DDR could change later */
 
 				/* send it to the output function */
-				if (p->out_b_func) p->out_b_func (0, p->out_b);
+				if (p->out_b_func && p->ddr_b) p->out_b_func (0, p->out_b & p->ddr_b);	/* NS990130 */
 
 				/* CB2 is configured as output and in write strobe mode */
 				if (C2_OUTPUT (p->ctl_b) && C2_STROBE_MODE (p->ctl_b))
@@ -283,11 +292,20 @@ void pia_write (int which, int offset, int data)
 
 			/* write DDR register */
 			else
-				p->ddr_b = data;
+			{
+				if (p->ddr_b != data)
+				{
+					/* NS990130 - if DDR changed, call the callback again */
+					p->ddr_b = data;
+
+					/* send it to the output function */
+					if (p->out_b_func && p->ddr_b) p->out_b_func (0, p->out_b & p->ddr_b);
+				}
+			}
 			break;
 
 		/******************* port A control write *******************/
-		case 2:
+		case PIA_CTLA:
 
 			/* CA2 is configured as output and in set/reset mode */
 			/* 10/22/98 - MAB/FMP - any C2_OUTPUT should affect CA2 */
@@ -310,7 +328,7 @@ void pia_write (int which, int offset, int data)
 			break;
 
 		/******************* port B control write *******************/
-		case 3:
+		case PIA_CTLB:
 
 			/* CB2 is configured as output and in set/reset mode */
 			/* 10/22/98 - MAB/FMP - any C2_OUTPUT should affect CB2 */

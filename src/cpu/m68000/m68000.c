@@ -2,11 +2,10 @@
 /* ========================= LICENSING & COPYRIGHT ======================== */
 /* ======================================================================== */
 
-#if 0
 static const char* copyright_notice =
 "MUSASHI\n"
 "Version 1.1\n"
-"A portable Motorola M68000 processor emulation engine.\n"
+"A portable Motorola M680x0 processor emulation engine.\n"
 "Copyright 1999 Karl Stenerud.  All rights reserved.\n"
 "\n"
 "This code may be freely used for non-commercial purpooses as long as this\n"
@@ -19,7 +18,7 @@ static const char* copyright_notice =
 "The latest version of this code can be obtained at:\n"
 "http://milliways.scas.bcit.bc.ca/~karl/musashi\n"
 ;
-#endif
+
 
 /* ======================================================================== */
 /* ================================= NOTES ================================ */
@@ -36,8 +35,6 @@ should I implement address error for odd branch, jsr, etc?
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <mem.h>
-#include <limits.h>
 #include "m68000.h"
 
 /* ======================================================================== */
@@ -77,11 +74,11 @@ should I implement address error for odd branch, jsr, etc?
 #undef uint16
 #undef uint
 
-#define int8   char
-#define uint8  unsigned char
-#define int16  short
-#define uint16 unsigned short
-#define int32  long
+#define int8   INT8
+#define uint8  UINT8
+#define int16  INT16
+#define uint16 UINT16
+#define int32  INT32
 
 /* int and unsigned int must be at least 32 bits wide */
 #define uint   unsigned int
@@ -144,7 +141,7 @@ INLINE int make_int_32(int value)
 
 
 /* ======================================================================== */
-/* ============================ GENERAL DEFINES =========================== */
+/* ========================= CONFIGURATION DEFINES ======================== */
 /* ======================================================================== */
 
 /* Act on values in m68kconf.h */
@@ -156,6 +153,10 @@ INLINE int make_int_32(int value)
 #define m68000_setting_pc(A) g_cpu_pc = (A)
 #endif /* !M68000_SETTING_PC */
 
+#if !M68000_CHANGING_FC
+#define m68000_changing_fc(A)
+#endif /* !M68000_CHANGING_FC */
+
 #if !M68000_DEBUG_HOOK
 #define m68000_debug_hook()
 #endif /* M68000_DEBUG_HOOK */
@@ -164,6 +165,19 @@ INLINE int make_int_32(int value)
 #define m68000_peek_pc_hook()
 #endif /* M68000_DEBUG_HOOK */
 
+#if !M68000_INT_ACK
+#define m68000_interrupt_acknowledge(A) -1
+#endif /* M68000_INT_ACK */
+
+#if !M68000_BKPT_ACK
+#define m68000_breakpoint_acknowledge(A)
+#endif /* M68000_BKPT_ACK */
+
+
+
+/* ======================================================================== */
+/* ============================ GENERAL DEFINES =========================== */
+/* ======================================================================== */
 
 /* Exception Vectors handled by emulation */
 #define EXCEPTION_ILLEGAL_INSTRUCTION      4
@@ -174,29 +188,59 @@ INLINE int make_int_32(int value)
 #define EXCEPTION_TRACE                    9
 #define EXCEPTION_1010                    10
 #define EXCEPTION_1111                    11
+#define EXCEPTION_FORMAT_ERROR            14
 #define EXCEPTION_UNINITIALIZED_INTERRUPT 15
 #define EXCEPTION_SPURIOUS_INTERRUPT      24
 #define EXCEPTION_INTERRUPT_AUTOVECTOR    24
 #define EXCEPTION_TRAP_BASE               32
 
 
+#define FUNCTION_CODE_USER_DATA          1
+#define FUNCTION_CODE_USER_PROGRAM       2
+#define FUNCTION_CODE_SUPERVISOR_DATA    5
+#define FUNCTION_CODE_SUPERVISOR_PROGRAM 6
+#define FUNCTION_CODE_CPU_SPACE          7
+
+/* CPU types for deciding what to emulate */
+#define CPU_000 M68000_CPU_000
+#define CPU_010 M68000_CPU_010
+
+#define CPU_ALL      CPU_000 | CPU_010
+#define CPU_010_PLUS CPU_010
+
 /* Bit Isolation Functions */
-#define BIT_0(A)  ((A) & 0x0001)
-#define BIT_1(A)  ((A) & 0x0002)
-#define BIT_2(A)  ((A) & 0x0004)
-#define BIT_3(A)  ((A) & 0x0008)
-#define BIT_4(A)  ((A) & 0x0010)
-#define BIT_5(A)  ((A) & 0x0020)
-#define BIT_6(A)  ((A) & 0x0040)
-#define BIT_7(A)  ((A) & 0x0080)
-#define BIT_8(A)  ((A) & 0x0100)
-#define BIT_9(A)  ((A) & 0x0200)
-#define BIT_A(A)  ((A) & 0x0400)
-#define BIT_B(A)  ((A) & 0x0800)
-#define BIT_C(A)  ((A) & 0x1000)
-#define BIT_D(A)  ((A) & 0x2000)
-#define BIT_E(A)  ((A) & 0x4000)
-#define BIT_F(A)  ((A) & 0x8000)
+#define BIT_0(A)  ((A) & 0x00000001)
+#define BIT_1(A)  ((A) & 0x00000002)
+#define BIT_2(A)  ((A) & 0x00000004)
+#define BIT_3(A)  ((A) & 0x00000008)
+#define BIT_4(A)  ((A) & 0x00000010)
+#define BIT_5(A)  ((A) & 0x00000020)
+#define BIT_6(A)  ((A) & 0x00000040)
+#define BIT_7(A)  ((A) & 0x00000080)
+#define BIT_8(A)  ((A) & 0x00000100)
+#define BIT_9(A)  ((A) & 0x00000200)
+#define BIT_A(A)  ((A) & 0x00000400)
+#define BIT_B(A)  ((A) & 0x00000800)
+#define BIT_C(A)  ((A) & 0x00001000)
+#define BIT_D(A)  ((A) & 0x00002000)
+#define BIT_E(A)  ((A) & 0x00004000)
+#define BIT_F(A)  ((A) & 0x00008000)
+#define BIT_10(A) ((A) & 0x00010000)
+#define BIT_11(A) ((A) & 0x00020000)
+#define BIT_12(A) ((A) & 0x00040000)
+#define BIT_13(A) ((A) & 0x00080000)
+#define BIT_14(A) ((A) & 0x00100000)
+#define BIT_15(A) ((A) & 0x00200000)
+#define BIT_16(A) ((A) & 0x00400000)
+#define BIT_17(A) ((A) & 0x00800000)
+#define BIT_18(A) ((A) & 0x01000000)
+#define BIT_19(A) ((A) & 0x02000000)
+#define BIT_1A(A) ((A) & 0x04000000)
+#define BIT_1B(A) ((A) & 0x08000000)
+#define BIT_1C(A) ((A) & 0x10000000)
+#define BIT_1D(A) ((A) & 0x20000000)
+#define BIT_1E(A) ((A) & 0x40000000)
+#define BIT_1F(A) ((A) & 0x80000000)
 
 #define GET_MSB_8(A)  ((A) & 0x80)
 #define GET_MSB_9(A)  ((A) & 0x100)
@@ -330,10 +374,33 @@ typedef struct
    uint match;                /* what to match after masking */
 } opcode_struct;
 
+
+#if M68000_CHANGING_FC
+
+/* Read data from anywhere */
+INLINE uint  read_memory_8  (uint address);
+INLINE uint  read_memory_16 (uint address);
+INLINE uint  read_memory_32 (uint address);
+
+/* Write to memory */
+INLINE void  write_memory_8 (uint address, uint value);
+INLINE void  write_memory_16(uint address, uint value);
+INLINE void  write_memory_32(uint address, uint value);
+
+#else
+
 /* Read data from anywhere */
 uint         read_memory_8  (uint address);
 uint         read_memory_16 (uint address);
 uint         read_memory_32 (uint address);
+
+/* Write to memory */
+void         write_memory_8 (uint address, uint value);
+void         write_memory_16(uint address, uint value);
+void         write_memory_32(uint address, uint value);
+
+#endif /* M68000_CHANGING_FC */
+
 
 /* Read data immediately after the program counter */
 INLINE uint  read_imm_8(void);
@@ -343,10 +410,15 @@ INLINE uint  read_imm_32(void);
 /* Reads the next word after the program counter */
 INLINE uint  read_instruction(void);
 
-/* Write to memory */
-void         write_memory_8 (uint address, uint value);
-void         write_memory_16(uint address, uint value);
-void         write_memory_32(uint address, uint value);
+/* Read data with specific function code */
+INLINE uint  read_memory_8_fc  (uint address, uint fc);
+INLINE uint  read_memory_16_fc (uint address, uint fc);
+INLINE uint  read_memory_32_fc (uint address, uint fc);
+
+/* Write data with specific function code */
+INLINE void  write_memory_8_fc (uint address, uint fc, uint value);
+INLINE void  write_memory_16_fc(uint address, uint fc, uint value);
+INLINE void  write_memory_32_fc(uint address, uint fc, uint value);
 
 /* Push/Pull data to/from the stack */
 void         push_16(uint data);
@@ -370,8 +442,6 @@ uint         get_ccr(void);                   /* get the condition code register
 INLINE void  set_ccr(uint value);             /* set the condition code register */
 INLINE void  set_pc(uint address);            /* set the program counter */
 
-void         m68000_illegal(void);            /* used by m68000_is_valid_instruction() */
-
 /* Functions to build the opcode handler jump table */
 static void  build_opcode_table(void);
 static int   compare_nof_true_bits(const void *aptr, const void *bptr);
@@ -391,24 +461,28 @@ int          m68000_clks_left = 0;                       /* Number of clocks rem
 #define g_cpu_isp g_cpu_sp[1]
 
 /* Internal CPU registers */
-static uint  g_cpu_dr[8];       /* data registers */
-static uint  g_cpu_ar[8];       /* address registers */
-static uint  g_cpu_pc;          /* program counter */
-static uint  g_cpu_sp[2];       /* user and interrupt stack pointers */
-static uint  g_cpu_ir;          /* instruction register */
-static uint  g_cpu_t_flag;      /* trace */
-static uint  g_cpu_s_flag;      /* supervisor */
-static uint  g_cpu_x_flag;      /* extend */
-static uint  g_cpu_n_flag;      /* negative */
-static uint  g_cpu_z_flag;      /* zero */
-static uint  g_cpu_v_flag;      /* overflow */
-static uint  g_cpu_c_flag;      /* carry */
-static uint  g_cpu_int_mask;    /* i0-i2 */
-static uint  g_cpu_ints_pending;/* pending interrupts */
-static uint  g_cpu_stopped;     /* stopped state */
-#if M68000_ALLOW_HALT
-static uint  g_cpu_halted;      /* halted state */
-#endif /* M68000_ALLOW_HALT */
+static uint  g_cpu_type = CPU_000;
+static uint  g_cpu_dr[8];       /* Data Registers */
+static uint  g_cpu_ar[8];       /* Address Registers */
+static uint  g_cpu_pc;          /* Program Counter */
+static uint  g_cpu_sp[2];       /* User and Interrupt Stack Pointers */
+static uint  g_cpu_vbr;         /* Vector Base Register (68010+) */
+static uint  g_cpu_sfc;         /* Source Function Code Register (m68010+) */
+static uint  g_cpu_dfc;         /* Destination Function Code Register (m68010+) */
+static uint  g_cpu_ir;          /* Instruction Register */
+static uint  g_cpu_t_flag;      /* Trace */
+static uint  g_cpu_s_flag;      /* Supervisor */
+static uint  g_cpu_x_flag;      /* Extend */
+static uint  g_cpu_n_flag;      /* Negative */
+static uint  g_cpu_z_flag;      /* Zero */
+static uint  g_cpu_v_flag;      /* Overflow */
+static uint  g_cpu_c_flag;      /* Carry */
+static uint  g_cpu_int_mask;    /* I0-I2 */
+static uint  g_cpu_ints_pending;/* Pending Interrupts */
+static uint  g_cpu_stopped;     /* Stopped state */
+#if M68000_HALT
+static uint  g_cpu_halted;      /* Halted state */
+#endif /* M68000_HALT */
 
 /* Pointers to speed up address register indirect with index calculation */
 static uint* g_cpu_dar[2] = {g_cpu_dr, g_cpu_ar};
@@ -550,37 +624,115 @@ uint8 g_exception_cycle_table[256] =
 /* =========================== UTILITY FUNCTIONS ========================== */
 /* ======================================================================== */
 
+#if M68000_CHANGING_FC
+
+/* Pass these function calls to the ones defined in the header. */
+/* Ensure a 24-bit address is requested. */
+INLINE uint read_memory_8(uint address)
+{
+   m68000_changing_fc(g_cpu_s_flag ? FUNCTION_CODE_SUPERVISOR_DATA : FUNCTION_CODE_USER_DATA);
+   return m68000_read_memory_8((address)&0xffffff);
+}
+INLINE uint read_memory_16(uint address)
+{
+   m68000_changing_fc(g_cpu_s_flag ? FUNCTION_CODE_SUPERVISOR_DATA : FUNCTION_CODE_USER_DATA);
+   return m68000_read_memory_16((address)&0xffffff);
+}
+INLINE uint read_memory_32(uint address)
+{
+   m68000_changing_fc(g_cpu_s_flag ? FUNCTION_CODE_SUPERVISOR_DATA : FUNCTION_CODE_USER_DATA);
+   return m68000_read_memory_32((address)&0xffffff);
+}
+
+INLINE uint write_memory_8(uint address, uint value)
+{
+   m68000_changing_fc(g_cpu_s_flag ? FUNCTION_CODE_SUPERVISOR_DATA : FUNCTION_CODE_USER_DATA);
+   return m68000_write_memory_8((address)&0xffffff, value);
+}
+INLINE uint write_memory_16(uint address, uint value)
+{
+   m68000_changing_fc(g_cpu_s_flag ? FUNCTION_CODE_SUPERVISOR_DATA : FUNCTION_CODE_USER_DATA);
+   return m68000_write_memory_16((address)&0xffffff, value);
+}
+INLINE uint write_memory_32(uint address, uint value)
+{
+   m68000_changing_fc(g_cpu_s_flag ? FUNCTION_CODE_SUPERVISOR_DATA : FUNCTION_CODE_USER_DATA);
+   return m68000_write_memory_32((address)&0xffffff, value);
+}
+
+#else
+
 /* Pass these function calls to the ones defined in the header. */
 /* Ensure a 24-bit address is requested. */
 #define read_memory_8(address) m68000_read_memory_8((address)&0xffffff)
 #define read_memory_16(address) m68000_read_memory_16((address)&0xffffff)
 #define read_memory_32(address) m68000_read_memory_32((address)&0xffffff)
 
+#define write_memory_8(address, value) m68000_write_memory_8((address)&0xffffff, value)
+#define write_memory_16(address, value) m68000_write_memory_16((address)&0xffffff, value)
+#define write_memory_32(address, value) m68000_write_memory_32((address)&0xffffff, value)
+
+#endif /* M68000_CHANGING_FC */
+
+
 INLINE uint read_imm_8(void)
 {
+   m68000_changing_fc(g_cpu_s_flag ? FUNCTION_CODE_SUPERVISOR_DATA : FUNCTION_CODE_USER_DATA);
    g_cpu_pc += 2;
    return m68000_read_immediate_8((g_cpu_pc-1)&0xffffff);
 }
 INLINE uint read_imm_16(void)
 {
+   m68000_changing_fc(g_cpu_s_flag ? FUNCTION_CODE_SUPERVISOR_DATA : FUNCTION_CODE_USER_DATA);
    g_cpu_pc += 2;
    return m68000_read_immediate_16((g_cpu_pc-2)&0xffffff);
 }
 INLINE uint read_imm_32(void)
 {
+   m68000_changing_fc(g_cpu_s_flag ? FUNCTION_CODE_SUPERVISOR_DATA : FUNCTION_CODE_USER_DATA);
    g_cpu_pc += 4;
    return m68000_read_immediate_32((g_cpu_pc-4)&0xffffff);
 }
 
 INLINE uint read_instruction(void)
 {
+   m68000_changing_fc(g_cpu_s_flag ? FUNCTION_CODE_SUPERVISOR_PROGRAM : FUNCTION_CODE_USER_PROGRAM);
    g_cpu_pc += 2;
    return m68000_read_instruction((g_cpu_pc-2)&0xffffff);
 }
 
-#define write_memory_8(address, value) m68000_write_memory_8((address)&0xffffff, value)
-#define write_memory_16(address, value) m68000_write_memory_16((address)&0xffffff, value)
-#define write_memory_32(address, value) m68000_write_memory_32((address)&0xffffff, value)
+/* Read/Write data with specific function code */
+INLINE uint read_memory_8_fc(uint address, uint fc)
+{
+   m68000_changing_fc(fc&7);
+   return m68000_read_memory_8((address)&0xffffff);
+}
+INLINE uint read_memory_16_fc(uint address, uint fc)
+{
+   m68000_changing_fc(fc&7);
+   return m68000_read_memory_16((address)&0xffffff);
+}
+INLINE uint read_memory_32_fc(uint address, uint fc)
+{
+   m68000_changing_fc(fc&7);
+   return m68000_read_memory_32((address)&0xffffff);
+}
+
+INLINE void write_memory_8_fc(uint address, uint fc, uint value)
+{
+   m68000_changing_fc(fc&7);
+   m68000_write_memory_8((address)&0xffffff, value);
+}
+INLINE void write_memory_16_fc(uint address, uint fc, uint value)
+{
+   m68000_changing_fc(fc&7);
+   m68000_write_memory_16((address)&0xffffff, value);
+}
+INLINE void write_memory_32_fc(uint address, uint fc, uint value)
+{
+   m68000_changing_fc(fc&7);
+   m68000_write_memory_32((address)&0xffffff, value);
+}
 
 /* Push/pull data to/from the stack */
 #define push_16(data) write_memory_16(g_cpu_ar[7]-=2, data)
@@ -589,7 +741,10 @@ INLINE uint read_instruction(void)
 #define pull_32() read_memory_32((g_cpu_ar[7]+=4) - 4)
 
 
-/* Use up clock cycles */
+/* Use up clock cycles.
+ * NOTE: clock cycles used in here are 99.9% correct for a 68000, not for the
+ * higher processors.
+ */
 #define USE_CLKS(A) m68000_clks_left -= (A)
 
 /* Status Register / Condition Code Register
@@ -708,11 +863,11 @@ INLINE void service_interrupt(void)
       case 0xf8: case 0xf9: case 0xfa: case 0xfb: case 0xfc: case 0xfd: case 0xfe: case 0xff:
          /* The external peripheral has provided the interrupt vector to take */
          break;
-      case MC68000_INT_ACK_AUTOVECTOR:
+      case M68000_INT_ACK_AUTOVECTOR:
          /* Use the autovectors.  This is the most commonly used implementation */
          vector = EXCEPTION_INTERRUPT_AUTOVECTOR+int_level;
          break;
-      case MC68000_INT_ACK_SPURIOUS:
+      case M68000_INT_ACK_SPURIOUS:
          /* Called if no devices respond to the interrupt acknowledge */
          vector = EXCEPTION_SPURIOUS_INTERRUPT;
          break;
@@ -748,10 +903,12 @@ INLINE void exception(uint vector)
    /* Enter supervisor mode */
    set_s_flag(1);
    /* Push a stack frame */
+   if(g_cpu_type & CPU_010_PLUS)
+      push_16(vector<<2); /* This is format 0 */
    push_32(g_cpu_pc);
    push_16(old_sr);
    /* Generate a new program counter from the vector */
-   set_pc(read_memory_32(vector<<2));
+   set_pc(read_memory_32((vector<<2)+g_cpu_vbr));
 }
 
 /* I set the PC this way to let host programs be nicer.
@@ -794,7 +951,7 @@ int m68000_peek_ar(int reg_num)
 
 unsigned int m68000_peek_pc()
 {
-   return g_cpu_pc & 0xffffffff;
+   return g_cpu_pc & 0xffffff;
 }
 
 int m68000_peek_sr()
@@ -941,14 +1098,17 @@ void m68000_poke_isp(int value)
       g_cpu_isp = MASK_OUT_ABOVE_32(value);
 }
 
-
 /* Execute some instructions */
 int m68000_execute(int num_clks)
 {
-#if M68000_ALLOW_HALT
+#if M68000_TRACE
+   uint trace;
+#endif /* M68000_TRACE */
+
+#if M68000_HALT
    if(!g_cpu_halted)
    {
-#endif /* M68000_ALLOW_HALT */
+#endif /* M68000_HALT */
    /* Make sure we're not stopped */
    if(!g_cpu_stopped)
    {
@@ -958,6 +1118,10 @@ int m68000_execute(int num_clks)
       /* Main loop.  Keep going until we run out of clock cycles */
       do
       {
+#if M68000_TRACE
+         trace = g_cpu_t_flag;
+#endif /* M68000_TRACE */
+
          /* Call the debug hook, if any */
          m68000_debug_hook();
          /* Call the peek PC hook, if any */
@@ -965,14 +1129,20 @@ int m68000_execute(int num_clks)
          /* Read an instruction and call its handler */
          g_cpu_ir = read_instruction();
          g_instruction_jump_table[g_cpu_ir]();
+
+#if M68000_TRACE
+         if(trace)
+            exception(EXCEPTION_TRACE);
+#endif /* M68000_TRACE */
+
       } while(m68000_clks_left > 0);
 
       /* return how many clocks we used */
       return num_clks - m68000_clks_left;
    }
-#if M68000_ALLOW_HALT
+#if M68000_HALT
    }
-#endif /* M68000_ALLOW_HALT */
+#endif /* M68000_HALT */
 
    /* We get here if the CPU is stopped */
    m68000_clks_left = 0;
@@ -993,9 +1163,9 @@ void m68000_pulse_irq(int int_level)
 /* Reset the M68000 */
 void m68000_pulse_reset(void)
 {
-#if M68000_ALLOW_HALT
+#if M68000_HALT
    g_cpu_halted = 0;
-#endif /* M68000_ALLOW_HALT */
+#endif /* M68000_HALT */
    g_cpu_stopped = 0;
    g_cpu_ints_pending = 0;
    g_cpu_t_flag = 0;
@@ -1006,6 +1176,9 @@ void m68000_pulse_reset(void)
    g_cpu_dr[4] = g_cpu_dr[5] = g_cpu_dr[6] = g_cpu_dr[7] =
    g_cpu_ar[0] = g_cpu_ar[1] = g_cpu_ar[2] = g_cpu_ar[3] =
    g_cpu_ar[4] = g_cpu_ar[5] = g_cpu_ar[6] = g_cpu_ar[7] = 0;
+   g_cpu_vbr = 0;
+   g_cpu_sfc = 0;
+   g_cpu_dfc = 0;
    set_s_flag(1);
    set_int_mask(7);
    g_cpu_ar[7] = g_cpu_isp = read_memory_32(0);
@@ -1026,9 +1199,9 @@ void m68000_pulse_reset(void)
 /* Halt the CPU */
 void m68000_pulse_halt(void)
 {
-#if M68000_ALLOW_HALT
+#if M68000_HALT
    g_cpu_halted = 1;
-#endif /* M68000_ALLOW_HALT */
+#endif /* M68000_HALT */
 }
 
 
@@ -1041,12 +1214,15 @@ void m68000_get_context(m68000_cpu_context* cpu)
    cpu->pc = g_cpu_pc;
    cpu->usp = g_cpu_usp;
    cpu->isp = g_cpu_isp;
+   cpu->sfc = g_cpu_sfc;
+   cpu->dfc = g_cpu_dfc;
+   cpu->vbr = g_cpu_vbr;
    cpu->sr = get_sr();
    cpu->ints_pending = g_cpu_ints_pending;
    cpu->stopped = g_cpu_stopped;
-#if M68000_ALLOW_HALT
+#if M68000_HALT
    cpu->halted = g_cpu_halted;
-#endif /* M68000_ALLOW_HALT */
+#endif /* M68000_HALT */
 }
 
 void m68000_set_context(m68000_cpu_context* cpu)
@@ -1057,18 +1233,11 @@ void m68000_set_context(m68000_cpu_context* cpu)
    g_cpu_isp = cpu->isp;
    g_cpu_ints_pending = cpu->ints_pending;
    g_cpu_stopped = cpu->stopped;
-#if M68000_ALLOW_HALT
+#if M68000_HALT
    g_cpu_halted = cpu->halted;
-#endif /* M68000_ALLOW_HALT */
+#endif /* M68000_HALT */
    set_pc(cpu->pc);
    set_sr(cpu->sr);
-}
-
-
-/* Check if the instruction is a valid one */
-int m68000_is_valid_instruction(int instruction)
-{
-   return g_instruction_jump_table[instruction & 0xffff] != m68000_illegal;
 }
 
 
@@ -1121,19 +1290,19 @@ int m68000_is_valid_instruction(int instruction)
  * pcix: program counter with index
  */
 
-void m68000_1010(void)
+static void m68000_1010(void)
 {
    exception(EXCEPTION_1010);
 }
 
 
-void m68000_1111(void)
+static void m68000_1111(void)
 {
    exception(EXCEPTION_1111);
 }
 
 
-void m68000_abcd_rr(void)
+static void m68000_abcd_rr(void)
 {
    uint* d_dst = &DX;
    uint src = DY;
@@ -1154,7 +1323,7 @@ void m68000_abcd_rr(void)
 }
 
 
-void m68000_abcd_mm_ax7(void)
+static void m68000_abcd_mm_ax7(void)
 {
    uint src = read_memory_8(--AY);
    uint ea  = g_cpu_ar[7]-=2;
@@ -1175,7 +1344,7 @@ void m68000_abcd_mm_ax7(void)
 }
 
 
-void m68000_abcd_mm_ay7(void)
+static void m68000_abcd_mm_ay7(void)
 {
    uint src = read_memory_8(g_cpu_ar[7]-=2);
    uint ea  = --AX;
@@ -1196,7 +1365,7 @@ void m68000_abcd_mm_ay7(void)
 }
 
 
-void m68000_abcd_mm_axy7(void)
+static void m68000_abcd_mm_axy7(void)
 {
    uint src = read_memory_8(g_cpu_ar[7]-=2);
    uint ea  = g_cpu_ar[7]-=2;
@@ -1217,7 +1386,7 @@ void m68000_abcd_mm_axy7(void)
 }
 
 
-void m68000_abcd_mm(void)
+static void m68000_abcd_mm(void)
 {
    uint src = read_memory_8(--AY);
    uint ea  = --AX;
@@ -1238,7 +1407,7 @@ void m68000_abcd_mm(void)
 }
 
 
-void m68000_add_er_d_8(void)
+static void m68000_add_er_d_8(void)
 {
    uint* d_dst = &DX;
    uint src = DY;
@@ -1255,7 +1424,7 @@ void m68000_add_er_d_8(void)
 }
 
 
-void m68000_add_er_ai_8(void)
+static void m68000_add_er_ai_8(void)
 {
    uint* d_dst = &DX;
    uint src = read_memory_8(EA_AI);
@@ -1272,7 +1441,7 @@ void m68000_add_er_ai_8(void)
 }
 
 
-void m68000_add_er_pi_8(void)
+static void m68000_add_er_pi_8(void)
 {
    uint* d_dst = &DX;
    uint src = read_memory_8(EA_PI_8);
@@ -1289,7 +1458,7 @@ void m68000_add_er_pi_8(void)
 }
 
 
-void m68000_add_er_pi7_8(void)
+static void m68000_add_er_pi7_8(void)
 {
    uint* d_dst = &DX;
    uint src = read_memory_8(EA_PI7_8);
@@ -1306,7 +1475,7 @@ void m68000_add_er_pi7_8(void)
 }
 
 
-void m68000_add_er_pd_8(void)
+static void m68000_add_er_pd_8(void)
 {
    uint* d_dst = &DX;
    uint src = read_memory_8(EA_PD_8);
@@ -1323,7 +1492,7 @@ void m68000_add_er_pd_8(void)
 }
 
 
-void m68000_add_er_pd7_8(void)
+static void m68000_add_er_pd7_8(void)
 {
    uint* d_dst = &DX;
    uint src = read_memory_8(EA_PD7_8);
@@ -1340,7 +1509,7 @@ void m68000_add_er_pd7_8(void)
 }
 
 
-void m68000_add_er_di_8(void)
+static void m68000_add_er_di_8(void)
 {
    uint* d_dst = &DX;
    uint src = read_memory_8(EA_DI);
@@ -1357,7 +1526,7 @@ void m68000_add_er_di_8(void)
 }
 
 
-void m68000_add_er_ix_8(void)
+static void m68000_add_er_ix_8(void)
 {
    uint* d_dst = &DX;
    uint extension = read_imm_16();
@@ -1377,7 +1546,7 @@ void m68000_add_er_ix_8(void)
 }
 
 
-void m68000_add_er_aw_8(void)
+static void m68000_add_er_aw_8(void)
 {
    uint* d_dst = &DX;
    uint src = read_memory_8(EA_AW);
@@ -1394,7 +1563,7 @@ void m68000_add_er_aw_8(void)
 }
 
 
-void m68000_add_er_al_8(void)
+static void m68000_add_er_al_8(void)
 {
    uint* d_dst = &DX;
    uint src = read_memory_8(EA_AL);
@@ -1411,7 +1580,7 @@ void m68000_add_er_al_8(void)
 }
 
 
-void m68000_add_er_pcdi_8(void)
+static void m68000_add_er_pcdi_8(void)
 {
    uint* d_dst = &DX;
    uint old_pc = (g_cpu_pc+=2) - 2;
@@ -1430,7 +1599,7 @@ void m68000_add_er_pcdi_8(void)
 }
 
 
-void m68000_add_er_pcix_8(void)
+static void m68000_add_er_pcix_8(void)
 {
    uint* d_dst = &DX;
    uint old_pc = (g_cpu_pc+=2) - 2;
@@ -1451,7 +1620,7 @@ void m68000_add_er_pcix_8(void)
 }
 
 
-void m68000_add_er_i_8(void)
+static void m68000_add_er_i_8(void)
 {
    uint* d_dst = &DX;
    uint src = read_imm_8();
@@ -1468,7 +1637,7 @@ void m68000_add_er_i_8(void)
 }
 
 
-void m68000_add_er_d_16(void)
+static void m68000_add_er_d_16(void)
 {
    uint* d_dst = &DX;
    uint src = DY;
@@ -1485,7 +1654,7 @@ void m68000_add_er_d_16(void)
 }
 
 
-void m68000_add_er_a_16(void)
+static void m68000_add_er_a_16(void)
 {
    uint* d_dst = &DX;
    uint src = AY;
@@ -1502,7 +1671,7 @@ void m68000_add_er_a_16(void)
 }
 
 
-void m68000_add_er_ai_16(void)
+static void m68000_add_er_ai_16(void)
 {
    uint* d_dst = &DX;
    uint src = read_memory_16(EA_AI);
@@ -1519,7 +1688,7 @@ void m68000_add_er_ai_16(void)
 }
 
 
-void m68000_add_er_pi_16(void)
+static void m68000_add_er_pi_16(void)
 {
    uint* d_dst = &DX;
    uint src = read_memory_16(EA_PI_16);
@@ -1536,7 +1705,7 @@ void m68000_add_er_pi_16(void)
 }
 
 
-void m68000_add_er_pd_16(void)
+static void m68000_add_er_pd_16(void)
 {
    uint* d_dst = &DX;
    uint src = read_memory_16(EA_PD_16);
@@ -1553,7 +1722,7 @@ void m68000_add_er_pd_16(void)
 }
 
 
-void m68000_add_er_di_16(void)
+static void m68000_add_er_di_16(void)
 {
    uint* d_dst = &DX;
    uint src = read_memory_16(EA_DI);
@@ -1570,7 +1739,7 @@ void m68000_add_er_di_16(void)
 }
 
 
-void m68000_add_er_ix_16(void)
+static void m68000_add_er_ix_16(void)
 {
    uint* d_dst = &DX;
    uint extension = read_imm_16();
@@ -1590,7 +1759,7 @@ void m68000_add_er_ix_16(void)
 }
 
 
-void m68000_add_er_aw_16(void)
+static void m68000_add_er_aw_16(void)
 {
    uint* d_dst = &DX;
    uint src = read_memory_16(EA_AW);
@@ -1607,7 +1776,7 @@ void m68000_add_er_aw_16(void)
 }
 
 
-void m68000_add_er_al_16(void)
+static void m68000_add_er_al_16(void)
 {
    uint* d_dst = &DX;
    uint src = read_memory_16(EA_AL);
@@ -1624,7 +1793,7 @@ void m68000_add_er_al_16(void)
 }
 
 
-void m68000_add_er_pcdi_16(void)
+static void m68000_add_er_pcdi_16(void)
 {
    uint* d_dst = &DX;
    uint old_pc = (g_cpu_pc+=2) - 2;
@@ -1643,7 +1812,7 @@ void m68000_add_er_pcdi_16(void)
 }
 
 
-void m68000_add_er_pcix_16(void)
+static void m68000_add_er_pcix_16(void)
 {
    uint* d_dst = &DX;
    uint old_pc = (g_cpu_pc+=2) - 2;
@@ -1664,7 +1833,7 @@ void m68000_add_er_pcix_16(void)
 }
 
 
-void m68000_add_er_i_16(void)
+static void m68000_add_er_i_16(void)
 {
    uint* d_dst = &DX;
    uint src = read_imm_16();
@@ -1681,7 +1850,7 @@ void m68000_add_er_i_16(void)
 }
 
 
-void m68000_add_er_d_32(void)
+static void m68000_add_er_d_32(void)
 {
    uint* d_dst = &DX;
    uint src = DY;
@@ -1696,7 +1865,7 @@ void m68000_add_er_d_32(void)
 }
 
 
-void m68000_add_er_a_32(void)
+static void m68000_add_er_a_32(void)
 {
    uint* d_dst = &DX;
    uint src = AY;
@@ -1711,7 +1880,7 @@ void m68000_add_er_a_32(void)
 }
 
 
-void m68000_add_er_ai_32(void)
+static void m68000_add_er_ai_32(void)
 {
    uint* d_dst = &DX;
    uint src = read_memory_32(EA_AI);
@@ -1726,7 +1895,7 @@ void m68000_add_er_ai_32(void)
 }
 
 
-void m68000_add_er_pi_32(void)
+static void m68000_add_er_pi_32(void)
 {
    uint* d_dst = &DX;
    uint src = read_memory_32(EA_PI_32);
@@ -1741,7 +1910,7 @@ void m68000_add_er_pi_32(void)
 }
 
 
-void m68000_add_er_pd_32(void)
+static void m68000_add_er_pd_32(void)
 {
    uint* d_dst = &DX;
    uint src = read_memory_32(EA_PD_32);
@@ -1756,7 +1925,7 @@ void m68000_add_er_pd_32(void)
 }
 
 
-void m68000_add_er_di_32(void)
+static void m68000_add_er_di_32(void)
 {
    uint* d_dst = &DX;
    uint src = read_memory_32(EA_DI);
@@ -1771,7 +1940,7 @@ void m68000_add_er_di_32(void)
 }
 
 
-void m68000_add_er_ix_32(void)
+static void m68000_add_er_ix_32(void)
 {
    uint* d_dst = &DX;
    uint extension = read_imm_16();
@@ -1789,7 +1958,7 @@ void m68000_add_er_ix_32(void)
 }
 
 
-void m68000_add_er_aw_32(void)
+static void m68000_add_er_aw_32(void)
 {
    uint* d_dst = &DX;
    uint src = read_memory_32(EA_AW);
@@ -1804,7 +1973,7 @@ void m68000_add_er_aw_32(void)
 }
 
 
-void m68000_add_er_al_32(void)
+static void m68000_add_er_al_32(void)
 {
    uint* d_dst = &DX;
    uint src = read_memory_32(EA_AL);
@@ -1819,7 +1988,7 @@ void m68000_add_er_al_32(void)
 }
 
 
-void m68000_add_er_pcdi_32(void)
+static void m68000_add_er_pcdi_32(void)
 {
    uint* d_dst = &DX;
    uint old_pc = (g_cpu_pc+=2) - 2;
@@ -1836,7 +2005,7 @@ void m68000_add_er_pcdi_32(void)
 }
 
 
-void m68000_add_er_pcix_32(void)
+static void m68000_add_er_pcix_32(void)
 {
    uint* d_dst = &DX;
    uint old_pc = (g_cpu_pc+=2) - 2;
@@ -1855,7 +2024,7 @@ void m68000_add_er_pcix_32(void)
 }
 
 
-void m68000_add_er_i_32(void)
+static void m68000_add_er_i_32(void)
 {
    uint* d_dst = &DX;
    uint src = read_imm_32();
@@ -1870,7 +2039,7 @@ void m68000_add_er_i_32(void)
 }
 
 
-void m68000_add_re_ai_8(void)
+static void m68000_add_re_ai_8(void)
 {
    uint ea = EA_AI;
    uint src = DX;
@@ -1887,7 +2056,7 @@ void m68000_add_re_ai_8(void)
 }
 
 
-void m68000_add_re_pi_8(void)
+static void m68000_add_re_pi_8(void)
 {
    uint ea = EA_PI_8;
    uint src = DX;
@@ -1904,7 +2073,7 @@ void m68000_add_re_pi_8(void)
 }
 
 
-void m68000_add_re_pi7_8(void)
+static void m68000_add_re_pi7_8(void)
 {
    uint ea = EA_PI7_8;
    uint src = DX;
@@ -1921,7 +2090,7 @@ void m68000_add_re_pi7_8(void)
 }
 
 
-void m68000_add_re_pd_8(void)
+static void m68000_add_re_pd_8(void)
 {
    uint ea = EA_PD_8;
    uint src = DX;
@@ -1938,7 +2107,7 @@ void m68000_add_re_pd_8(void)
 }
 
 
-void m68000_add_re_pd7_8(void)
+static void m68000_add_re_pd7_8(void)
 {
    uint ea = EA_PD7_8;
    uint src = DX;
@@ -1955,7 +2124,7 @@ void m68000_add_re_pd7_8(void)
 }
 
 
-void m68000_add_re_di_8(void)
+static void m68000_add_re_di_8(void)
 {
    uint ea = EA_DI;
    uint src = DX;
@@ -1972,7 +2141,7 @@ void m68000_add_re_di_8(void)
 }
 
 
-void m68000_add_re_ix_8(void)
+static void m68000_add_re_ix_8(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -1991,7 +2160,7 @@ void m68000_add_re_ix_8(void)
 }
 
 
-void m68000_add_re_aw_8(void)
+static void m68000_add_re_aw_8(void)
 {
    uint ea = EA_AW;
    uint src = DX;
@@ -2008,7 +2177,7 @@ void m68000_add_re_aw_8(void)
 }
 
 
-void m68000_add_re_al_8(void)
+static void m68000_add_re_al_8(void)
 {
    uint ea = EA_AL;
    uint src = DX;
@@ -2025,7 +2194,7 @@ void m68000_add_re_al_8(void)
 }
 
 
-void m68000_add_re_ai_16(void)
+static void m68000_add_re_ai_16(void)
 {
    uint ea = EA_AI;
    uint src = DX;
@@ -2042,7 +2211,7 @@ void m68000_add_re_ai_16(void)
 }
 
 
-void m68000_add_re_pi_16(void)
+static void m68000_add_re_pi_16(void)
 {
    uint ea = EA_PI_16;
    uint src = DX;
@@ -2059,7 +2228,7 @@ void m68000_add_re_pi_16(void)
 }
 
 
-void m68000_add_re_pd_16(void)
+static void m68000_add_re_pd_16(void)
 {
    uint ea = EA_PD_16;
    uint src = DX;
@@ -2076,7 +2245,7 @@ void m68000_add_re_pd_16(void)
 }
 
 
-void m68000_add_re_di_16(void)
+static void m68000_add_re_di_16(void)
 {
    uint ea = EA_DI;
    uint src = DX;
@@ -2093,7 +2262,7 @@ void m68000_add_re_di_16(void)
 }
 
 
-void m68000_add_re_ix_16(void)
+static void m68000_add_re_ix_16(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -2112,7 +2281,7 @@ void m68000_add_re_ix_16(void)
 }
 
 
-void m68000_add_re_aw_16(void)
+static void m68000_add_re_aw_16(void)
 {
    uint ea = EA_AW;
    uint src = DX;
@@ -2129,7 +2298,7 @@ void m68000_add_re_aw_16(void)
 }
 
 
-void m68000_add_re_al_16(void)
+static void m68000_add_re_al_16(void)
 {
    uint ea = EA_AL;
    uint src = DX;
@@ -2146,7 +2315,7 @@ void m68000_add_re_al_16(void)
 }
 
 
-void m68000_add_re_ai_32(void)
+static void m68000_add_re_ai_32(void)
 {
    uint ea = EA_AI;
    uint src = DX;
@@ -2163,7 +2332,7 @@ void m68000_add_re_ai_32(void)
 }
 
 
-void m68000_add_re_pi_32(void)
+static void m68000_add_re_pi_32(void)
 {
    uint ea = EA_PI_32;
    uint src = DX;
@@ -2180,7 +2349,7 @@ void m68000_add_re_pi_32(void)
 }
 
 
-void m68000_add_re_pd_32(void)
+static void m68000_add_re_pd_32(void)
 {
    uint ea = EA_PD_32;
    uint src = DX;
@@ -2197,7 +2366,7 @@ void m68000_add_re_pd_32(void)
 }
 
 
-void m68000_add_re_di_32(void)
+static void m68000_add_re_di_32(void)
 {
    uint ea = EA_DI;
    uint src = DX;
@@ -2214,7 +2383,7 @@ void m68000_add_re_di_32(void)
 }
 
 
-void m68000_add_re_ix_32(void)
+static void m68000_add_re_ix_32(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -2233,7 +2402,7 @@ void m68000_add_re_ix_32(void)
 }
 
 
-void m68000_add_re_aw_32(void)
+static void m68000_add_re_aw_32(void)
 {
    uint ea = EA_AW;
    uint src = DX;
@@ -2250,7 +2419,7 @@ void m68000_add_re_aw_32(void)
 }
 
 
-void m68000_add_re_al_32(void)
+static void m68000_add_re_al_32(void)
 {
    uint ea = EA_AL;
    uint src = DX;
@@ -2267,7 +2436,7 @@ void m68000_add_re_al_32(void)
 }
 
 
-void m68000_adda_d_16(void)
+static void m68000_adda_d_16(void)
 {
    uint* a_dst = &AX;
    *a_dst = MASK_OUT_ABOVE_32(*a_dst + make_int_16(MASK_OUT_ABOVE_16(DY)));
@@ -2275,7 +2444,7 @@ void m68000_adda_d_16(void)
 }
 
 
-void m68000_adda_a_16(void)
+static void m68000_adda_a_16(void)
 {
    uint* a_dst = &AX;
    *a_dst = MASK_OUT_ABOVE_32(*a_dst + make_int_16(MASK_OUT_ABOVE_16(AY)));
@@ -2283,7 +2452,7 @@ void m68000_adda_a_16(void)
 }
 
 
-void m68000_adda_ai_16(void)
+static void m68000_adda_ai_16(void)
 {
    uint* a_dst = &AX;
    *a_dst = MASK_OUT_ABOVE_32(*a_dst + make_int_16(read_memory_16(EA_AI)));
@@ -2291,7 +2460,7 @@ void m68000_adda_ai_16(void)
 }
 
 
-void m68000_adda_pi_16(void)
+static void m68000_adda_pi_16(void)
 {
    uint* a_dst = &AX;
    *a_dst = MASK_OUT_ABOVE_32(*a_dst + make_int_16(read_memory_16(EA_PI_16)));
@@ -2299,7 +2468,7 @@ void m68000_adda_pi_16(void)
 }
 
 
-void m68000_adda_pd_16(void)
+static void m68000_adda_pd_16(void)
 {
    uint* a_dst = &AX;
    *a_dst = MASK_OUT_ABOVE_32(*a_dst + make_int_16(read_memory_16(EA_PD_16)));
@@ -2307,7 +2476,7 @@ void m68000_adda_pd_16(void)
 }
 
 
-void m68000_adda_di_16(void)
+static void m68000_adda_di_16(void)
 {
    uint* a_dst = &AX;
    *a_dst = MASK_OUT_ABOVE_32(*a_dst + make_int_16(read_memory_16(EA_DI)));
@@ -2315,7 +2484,7 @@ void m68000_adda_di_16(void)
 }
 
 
-void m68000_adda_ix_16(void)
+static void m68000_adda_ix_16(void)
 {
    uint* a_dst = &AX;
    uint extension = read_imm_16();
@@ -2326,7 +2495,7 @@ void m68000_adda_ix_16(void)
 }
 
 
-void m68000_adda_aw_16(void)
+static void m68000_adda_aw_16(void)
 {
    uint* a_dst = &AX;
    *a_dst = MASK_OUT_ABOVE_32(*a_dst + make_int_16(read_memory_16(EA_AW)));
@@ -2334,7 +2503,7 @@ void m68000_adda_aw_16(void)
 }
 
 
-void m68000_adda_al_16(void)
+static void m68000_adda_al_16(void)
 {
    uint* a_dst = &AX;
    *a_dst = MASK_OUT_ABOVE_32(*a_dst + make_int_16(read_memory_16(EA_AL)));
@@ -2342,7 +2511,7 @@ void m68000_adda_al_16(void)
 }
 
 
-void m68000_adda_pcdi_16(void)
+static void m68000_adda_pcdi_16(void)
 {
    uint* a_dst = &AX;
    uint old_pc = (g_cpu_pc+=2) - 2;
@@ -2352,7 +2521,7 @@ void m68000_adda_pcdi_16(void)
 }
 
 
-void m68000_adda_pcix_16(void)
+static void m68000_adda_pcix_16(void)
 {
    uint* a_dst = &AX;
    uint old_pc = (g_cpu_pc+=2) - 2;
@@ -2364,7 +2533,7 @@ void m68000_adda_pcix_16(void)
 }
 
 
-void m68000_adda_i_16(void)
+static void m68000_adda_i_16(void)
 {
    uint* a_dst = &AX;
    *a_dst = MASK_OUT_ABOVE_32(*a_dst + make_int_16(read_imm_16()));
@@ -2372,7 +2541,7 @@ void m68000_adda_i_16(void)
 }
 
 
-void m68000_adda_d_32(void)
+static void m68000_adda_d_32(void)
 {
    uint* a_dst = &AX;
    *a_dst = MASK_OUT_ABOVE_32(*a_dst + DY);
@@ -2380,7 +2549,7 @@ void m68000_adda_d_32(void)
 }
 
 
-void m68000_adda_a_32(void)
+static void m68000_adda_a_32(void)
 {
    uint* a_dst = &AX;
    *a_dst = MASK_OUT_ABOVE_32(*a_dst + AY);
@@ -2388,7 +2557,7 @@ void m68000_adda_a_32(void)
 }
 
 
-void m68000_adda_ai_32(void)
+static void m68000_adda_ai_32(void)
 {
    uint* a_dst = &AX;
    *a_dst = MASK_OUT_ABOVE_32(*a_dst + read_memory_32(EA_AI));
@@ -2396,7 +2565,7 @@ void m68000_adda_ai_32(void)
 }
 
 
-void m68000_adda_pi_32(void)
+static void m68000_adda_pi_32(void)
 {
    uint* a_dst = &AX;
    *a_dst = MASK_OUT_ABOVE_32(*a_dst + read_memory_32(EA_PI_32));
@@ -2404,7 +2573,7 @@ void m68000_adda_pi_32(void)
 }
 
 
-void m68000_adda_pd_32(void)
+static void m68000_adda_pd_32(void)
 {
    uint* a_dst = &AX;
    *a_dst = MASK_OUT_ABOVE_32(*a_dst + read_memory_32(EA_PD_32));
@@ -2412,7 +2581,7 @@ void m68000_adda_pd_32(void)
 }
 
 
-void m68000_adda_di_32(void)
+static void m68000_adda_di_32(void)
 {
    uint* a_dst = &AX;
    *a_dst = MASK_OUT_ABOVE_32(*a_dst + read_memory_32(EA_DI));
@@ -2420,7 +2589,7 @@ void m68000_adda_di_32(void)
 }
 
 
-void m68000_adda_ix_32(void)
+static void m68000_adda_ix_32(void)
 {
    uint* a_dst = &AX;
    uint extension = read_imm_16();
@@ -2431,7 +2600,7 @@ void m68000_adda_ix_32(void)
 }
 
 
-void m68000_adda_aw_32(void)
+static void m68000_adda_aw_32(void)
 {
    uint* a_dst = &AX;
    *a_dst = MASK_OUT_ABOVE_32(*a_dst + read_memory_32(EA_AW));
@@ -2439,7 +2608,7 @@ void m68000_adda_aw_32(void)
 }
 
 
-void m68000_adda_al_32(void)
+static void m68000_adda_al_32(void)
 {
    uint* a_dst = &AX;
    *a_dst = MASK_OUT_ABOVE_32(*a_dst + read_memory_32(EA_AL));
@@ -2447,7 +2616,7 @@ void m68000_adda_al_32(void)
 }
 
 
-void m68000_adda_pcdi_32(void)
+static void m68000_adda_pcdi_32(void)
 {
    uint* a_dst = &AX;
    uint old_pc = (g_cpu_pc+=2) - 2;
@@ -2457,7 +2626,7 @@ void m68000_adda_pcdi_32(void)
 }
 
 
-void m68000_adda_pcix_32(void)
+static void m68000_adda_pcix_32(void)
 {
    uint* a_dst = &AX;
    uint old_pc = (g_cpu_pc+=2) - 2;
@@ -2469,7 +2638,7 @@ void m68000_adda_pcix_32(void)
 }
 
 
-void m68000_adda_i_32(void)
+static void m68000_adda_i_32(void)
 {
    uint* a_dst = &AX;
    *a_dst = MASK_OUT_ABOVE_32(*a_dst + read_imm_32());
@@ -2477,7 +2646,7 @@ void m68000_adda_i_32(void)
 }
 
 
-void m68000_addi_d_8(void)
+static void m68000_addi_d_8(void)
 {
    uint* d_dst = &DY;
    uint src = read_imm_8();
@@ -2494,7 +2663,7 @@ void m68000_addi_d_8(void)
 }
 
 
-void m68000_addi_ai_8(void)
+static void m68000_addi_ai_8(void)
 {
    uint src = read_imm_8();
    uint ea = EA_AI;
@@ -2511,7 +2680,7 @@ void m68000_addi_ai_8(void)
 }
 
 
-void m68000_addi_pi_8(void)
+static void m68000_addi_pi_8(void)
 {
    uint src = read_imm_8();
    uint ea = EA_PI_8;
@@ -2528,7 +2697,7 @@ void m68000_addi_pi_8(void)
 }
 
 
-void m68000_addi_pi7_8(void)
+static void m68000_addi_pi7_8(void)
 {
    uint src = read_imm_8();
    uint ea = EA_PI7_8;
@@ -2545,7 +2714,7 @@ void m68000_addi_pi7_8(void)
 }
 
 
-void m68000_addi_pd_8(void)
+static void m68000_addi_pd_8(void)
 {
    uint src = read_imm_8();
    uint ea = EA_PD_8;
@@ -2562,7 +2731,7 @@ void m68000_addi_pd_8(void)
 }
 
 
-void m68000_addi_pd7_8(void)
+static void m68000_addi_pd7_8(void)
 {
    uint src = read_imm_8();
    uint ea = EA_PD7_8;
@@ -2579,7 +2748,7 @@ void m68000_addi_pd7_8(void)
 }
 
 
-void m68000_addi_di_8(void)
+static void m68000_addi_di_8(void)
 {
    uint src = read_imm_8();
    uint ea = EA_DI;
@@ -2596,7 +2765,7 @@ void m68000_addi_di_8(void)
 }
 
 
-void m68000_addi_ix_8(void)
+static void m68000_addi_ix_8(void)
 {
    uint src = read_imm_8();
    uint extension = read_imm_16();
@@ -2615,7 +2784,7 @@ void m68000_addi_ix_8(void)
 }
 
 
-void m68000_addi_aw_8(void)
+static void m68000_addi_aw_8(void)
 {
    uint src = read_imm_8();
    uint ea = EA_AW;
@@ -2632,7 +2801,7 @@ void m68000_addi_aw_8(void)
 }
 
 
-void m68000_addi_al_8(void)
+static void m68000_addi_al_8(void)
 {
    uint src = read_imm_8();
    uint ea = EA_AL;
@@ -2649,7 +2818,7 @@ void m68000_addi_al_8(void)
 }
 
 
-void m68000_addi_d_16(void)
+static void m68000_addi_d_16(void)
 {
    uint* d_dst = &DY;
    uint src = read_imm_16();
@@ -2666,7 +2835,7 @@ void m68000_addi_d_16(void)
 }
 
 
-void m68000_addi_ai_16(void)
+static void m68000_addi_ai_16(void)
 {
    uint src = read_imm_16();
    uint ea = EA_AI;
@@ -2683,7 +2852,7 @@ void m68000_addi_ai_16(void)
 }
 
 
-void m68000_addi_pi_16(void)
+static void m68000_addi_pi_16(void)
 {
    uint src = read_imm_16();
    uint ea = EA_PI_16;
@@ -2700,7 +2869,7 @@ void m68000_addi_pi_16(void)
 }
 
 
-void m68000_addi_pd_16(void)
+static void m68000_addi_pd_16(void)
 {
    uint src = read_imm_16();
    uint ea = EA_PD_16;
@@ -2717,7 +2886,7 @@ void m68000_addi_pd_16(void)
 }
 
 
-void m68000_addi_di_16(void)
+static void m68000_addi_di_16(void)
 {
    uint src = read_imm_16();
    uint ea = EA_DI;
@@ -2734,7 +2903,7 @@ void m68000_addi_di_16(void)
 }
 
 
-void m68000_addi_ix_16(void)
+static void m68000_addi_ix_16(void)
 {
    uint src = read_imm_16();
    uint extension = read_imm_16();
@@ -2753,7 +2922,7 @@ void m68000_addi_ix_16(void)
 }
 
 
-void m68000_addi_aw_16(void)
+static void m68000_addi_aw_16(void)
 {
    uint src = read_imm_16();
    uint ea = EA_AW;
@@ -2770,7 +2939,7 @@ void m68000_addi_aw_16(void)
 }
 
 
-void m68000_addi_al_16(void)
+static void m68000_addi_al_16(void)
 {
    uint src = read_imm_16();
    uint ea = EA_AL;
@@ -2787,7 +2956,7 @@ void m68000_addi_al_16(void)
 }
 
 
-void m68000_addi_d_32(void)
+static void m68000_addi_d_32(void)
 {
    uint* d_dst = &DY;
    uint src = read_imm_32();
@@ -2802,7 +2971,7 @@ void m68000_addi_d_32(void)
 }
 
 
-void m68000_addi_ai_32(void)
+static void m68000_addi_ai_32(void)
 {
    uint src = read_imm_32();
    uint ea = EA_AI;
@@ -2819,7 +2988,7 @@ void m68000_addi_ai_32(void)
 }
 
 
-void m68000_addi_pi_32(void)
+static void m68000_addi_pi_32(void)
 {
    uint src = read_imm_32();
    uint ea = EA_PI_32;
@@ -2836,7 +3005,7 @@ void m68000_addi_pi_32(void)
 }
 
 
-void m68000_addi_pd_32(void)
+static void m68000_addi_pd_32(void)
 {
    uint src = read_imm_32();
    uint ea = EA_PD_32;
@@ -2853,7 +3022,7 @@ void m68000_addi_pd_32(void)
 }
 
 
-void m68000_addi_di_32(void)
+static void m68000_addi_di_32(void)
 {
    uint src = read_imm_32();
    uint ea = EA_DI;
@@ -2870,7 +3039,7 @@ void m68000_addi_di_32(void)
 }
 
 
-void m68000_addi_ix_32(void)
+static void m68000_addi_ix_32(void)
 {
    uint src = read_imm_32();
    uint extension = read_imm_16();
@@ -2889,7 +3058,7 @@ void m68000_addi_ix_32(void)
 }
 
 
-void m68000_addi_aw_32(void)
+static void m68000_addi_aw_32(void)
 {
    uint src = read_imm_32();
    uint ea = EA_AW;
@@ -2906,7 +3075,7 @@ void m68000_addi_aw_32(void)
 }
 
 
-void m68000_addi_al_32(void)
+static void m68000_addi_al_32(void)
 {
    uint src = read_imm_32();
    uint ea = EA_AL;
@@ -2923,7 +3092,7 @@ void m68000_addi_al_32(void)
 }
 
 
-void m68000_addq_d_8(void)
+static void m68000_addq_d_8(void)
 {
    uint* d_dst = &DY;
    uint src = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
@@ -2940,7 +3109,7 @@ void m68000_addq_d_8(void)
 }
 
 
-void m68000_addq_ai_8(void)
+static void m68000_addq_ai_8(void)
 {
    uint src = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
    uint ea = EA_AI;
@@ -2957,7 +3126,7 @@ void m68000_addq_ai_8(void)
 }
 
 
-void m68000_addq_pi_8(void)
+static void m68000_addq_pi_8(void)
 {
    uint src = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
    uint ea = EA_PI_8;
@@ -2974,7 +3143,7 @@ void m68000_addq_pi_8(void)
 }
 
 
-void m68000_addq_pi7_8(void)
+static void m68000_addq_pi7_8(void)
 {
    uint src = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
    uint ea = EA_PI7_8;
@@ -2991,7 +3160,7 @@ void m68000_addq_pi7_8(void)
 }
 
 
-void m68000_addq_pd_8(void)
+static void m68000_addq_pd_8(void)
 {
    uint src = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
    uint ea = EA_PD_8;
@@ -3008,7 +3177,7 @@ void m68000_addq_pd_8(void)
 }
 
 
-void m68000_addq_pd7_8(void)
+static void m68000_addq_pd7_8(void)
 {
    uint src = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
    uint ea = EA_PD7_8;
@@ -3025,7 +3194,7 @@ void m68000_addq_pd7_8(void)
 }
 
 
-void m68000_addq_di_8(void)
+static void m68000_addq_di_8(void)
 {
    uint src = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
    uint ea = EA_DI;
@@ -3042,7 +3211,7 @@ void m68000_addq_di_8(void)
 }
 
 
-void m68000_addq_ix_8(void)
+static void m68000_addq_ix_8(void)
 {
    uint src = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
    uint extension = read_imm_16();
@@ -3061,7 +3230,7 @@ void m68000_addq_ix_8(void)
 }
 
 
-void m68000_addq_aw_8(void)
+static void m68000_addq_aw_8(void)
 {
    uint src = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
    uint ea = EA_AW;
@@ -3078,7 +3247,7 @@ void m68000_addq_aw_8(void)
 }
 
 
-void m68000_addq_al_8(void)
+static void m68000_addq_al_8(void)
 {
    uint src = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
    uint ea = EA_AL;
@@ -3095,7 +3264,7 @@ void m68000_addq_al_8(void)
 }
 
 
-void m68000_addq_d_16(void)
+static void m68000_addq_d_16(void)
 {
    uint* d_dst = &DY;
    uint src = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
@@ -3112,7 +3281,7 @@ void m68000_addq_d_16(void)
 }
 
 
-void m68000_addq_a_16(void)
+static void m68000_addq_a_16(void)
 {
    uint* a_dst = &AY;
    *a_dst = MASK_OUT_ABOVE_32(*a_dst + g_3bit_qdata_table[(g_cpu_ir>>9)&7]);
@@ -3120,7 +3289,7 @@ void m68000_addq_a_16(void)
 }
 
 
-void m68000_addq_ai_16(void)
+static void m68000_addq_ai_16(void)
 {
    uint src = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
    uint ea = EA_AI;
@@ -3137,7 +3306,7 @@ void m68000_addq_ai_16(void)
 }
 
 
-void m68000_addq_pi_16(void)
+static void m68000_addq_pi_16(void)
 {
    uint src = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
    uint ea = EA_PI_16;
@@ -3154,7 +3323,7 @@ void m68000_addq_pi_16(void)
 }
 
 
-void m68000_addq_pd_16(void)
+static void m68000_addq_pd_16(void)
 {
    uint src = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
    uint ea = EA_PD_16;
@@ -3171,7 +3340,7 @@ void m68000_addq_pd_16(void)
 }
 
 
-void m68000_addq_di_16(void)
+static void m68000_addq_di_16(void)
 {
    uint src = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
    uint ea = EA_DI;
@@ -3188,7 +3357,7 @@ void m68000_addq_di_16(void)
 }
 
 
-void m68000_addq_ix_16(void)
+static void m68000_addq_ix_16(void)
 {
    uint src = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
    uint extension = read_imm_16();
@@ -3207,7 +3376,7 @@ void m68000_addq_ix_16(void)
 }
 
 
-void m68000_addq_aw_16(void)
+static void m68000_addq_aw_16(void)
 {
    uint src = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
    uint ea = EA_AW;
@@ -3224,7 +3393,7 @@ void m68000_addq_aw_16(void)
 }
 
 
-void m68000_addq_al_16(void)
+static void m68000_addq_al_16(void)
 {
    uint src = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
    uint ea = EA_AL;
@@ -3241,7 +3410,7 @@ void m68000_addq_al_16(void)
 }
 
 
-void m68000_addq_d_32(void)
+static void m68000_addq_d_32(void)
 {
    uint* d_dst = &DY;
    uint src = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
@@ -3256,7 +3425,7 @@ void m68000_addq_d_32(void)
 }
 
 
-void m68000_addq_a_32(void)
+static void m68000_addq_a_32(void)
 {
    uint* a_dst = &AY;
    *a_dst = MASK_OUT_ABOVE_32(*a_dst + g_3bit_qdata_table[(g_cpu_ir>>9)&7]);
@@ -3264,7 +3433,7 @@ void m68000_addq_a_32(void)
 }
 
 
-void m68000_addq_ai_32(void)
+static void m68000_addq_ai_32(void)
 {
    uint src = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
    uint ea = EA_AI;
@@ -3281,7 +3450,7 @@ void m68000_addq_ai_32(void)
 }
 
 
-void m68000_addq_pi_32(void)
+static void m68000_addq_pi_32(void)
 {
    uint src = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
    uint ea = EA_PI_32;
@@ -3298,7 +3467,7 @@ void m68000_addq_pi_32(void)
 }
 
 
-void m68000_addq_pd_32(void)
+static void m68000_addq_pd_32(void)
 {
    uint src = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
    uint ea = EA_PD_32;
@@ -3315,7 +3484,7 @@ void m68000_addq_pd_32(void)
 }
 
 
-void m68000_addq_di_32(void)
+static void m68000_addq_di_32(void)
 {
    uint src = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
    uint ea = EA_DI;
@@ -3332,7 +3501,7 @@ void m68000_addq_di_32(void)
 }
 
 
-void m68000_addq_ix_32(void)
+static void m68000_addq_ix_32(void)
 {
    uint src = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
    uint extension = read_imm_16();
@@ -3351,7 +3520,7 @@ void m68000_addq_ix_32(void)
 }
 
 
-void m68000_addq_aw_32(void)
+static void m68000_addq_aw_32(void)
 {
    uint src = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
    uint ea = EA_AW;
@@ -3368,7 +3537,7 @@ void m68000_addq_aw_32(void)
 }
 
 
-void m68000_addq_al_32(void)
+static void m68000_addq_al_32(void)
 {
    uint src = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
    uint ea = EA_AL;
@@ -3385,7 +3554,7 @@ void m68000_addq_al_32(void)
 }
 
 
-void m68000_addx_rr_8(void)
+static void m68000_addx_rr_8(void)
 {
    uint* d_dst = &DX;
    uint src = DY;
@@ -3402,7 +3571,7 @@ void m68000_addx_rr_8(void)
 }
 
 
-void m68000_addx_rr_16(void)
+static void m68000_addx_rr_16(void)
 {
    uint* d_dst = &DX;
    uint src = DY;
@@ -3419,7 +3588,7 @@ void m68000_addx_rr_16(void)
 }
 
 
-void m68000_addx_rr_32(void)
+static void m68000_addx_rr_32(void)
 {
    uint* d_dst = &DX;
    uint src = DY;
@@ -3434,7 +3603,7 @@ void m68000_addx_rr_32(void)
 }
 
 
-void m68000_addx_mm_8_ax7(void)
+static void m68000_addx_mm_8_ax7(void)
 {
    uint src = read_memory_8(--AY);
    uint ea  = g_cpu_ar[7]-=2;
@@ -3451,7 +3620,7 @@ void m68000_addx_mm_8_ax7(void)
 }
 
 
-void m68000_addx_mm_8_ay7(void)
+static void m68000_addx_mm_8_ay7(void)
 {
    uint src = read_memory_8(g_cpu_ar[7]-=2);
    uint ea  = --AX;
@@ -3468,7 +3637,7 @@ void m68000_addx_mm_8_ay7(void)
 }
 
 
-void m68000_addx_mm_8_axy7(void)
+static void m68000_addx_mm_8_axy7(void)
 {
    uint src = read_memory_8(g_cpu_ar[7]-=2);
    uint ea  = g_cpu_ar[7]-=2;
@@ -3485,7 +3654,7 @@ void m68000_addx_mm_8_axy7(void)
 }
 
 
-void m68000_addx_mm_8(void)
+static void m68000_addx_mm_8(void)
 {
    uint src = read_memory_8(--AY);
    uint ea  = --AX;
@@ -3502,7 +3671,7 @@ void m68000_addx_mm_8(void)
 }
 
 
-void m68000_addx_mm_16(void)
+static void m68000_addx_mm_16(void)
 {
    uint src = read_memory_16(AY-=2);
    uint ea  = (AX-=2);
@@ -3519,7 +3688,7 @@ void m68000_addx_mm_16(void)
 }
 
 
-void m68000_addx_mm_32(void)
+static void m68000_addx_mm_32(void)
 {
    uint src = read_memory_32(AY-=4);
    uint ea  = (AX-=4);
@@ -3536,7 +3705,7 @@ void m68000_addx_mm_32(void)
 }
 
 
-void m68000_and_er_d_8(void)
+static void m68000_and_er_d_8(void)
 {
    uint res = MASK_OUT_ABOVE_8(DX &= (DY | 0xffffff00));
 
@@ -3547,7 +3716,7 @@ void m68000_and_er_d_8(void)
 }
 
 
-void m68000_and_er_ai_8(void)
+static void m68000_and_er_ai_8(void)
 {
    uint res = MASK_OUT_ABOVE_8(DX &= (read_memory_8(EA_AI) | 0xffffff00));
 
@@ -3558,7 +3727,7 @@ void m68000_and_er_ai_8(void)
 }
 
 
-void m68000_and_er_pi_8(void)
+static void m68000_and_er_pi_8(void)
 {
    uint res = MASK_OUT_ABOVE_8(DX &= (read_memory_8(EA_PI_8) | 0xffffff00));
 
@@ -3569,7 +3738,7 @@ void m68000_and_er_pi_8(void)
 }
 
 
-void m68000_and_er_pi7_8(void)
+static void m68000_and_er_pi7_8(void)
 {
    uint res = MASK_OUT_ABOVE_8(DX &= (read_memory_8(EA_PI7_8) | 0xffffff00));
 
@@ -3580,7 +3749,7 @@ void m68000_and_er_pi7_8(void)
 }
 
 
-void m68000_and_er_pd_8(void)
+static void m68000_and_er_pd_8(void)
 {
    uint res = MASK_OUT_ABOVE_8(DX &= (read_memory_8(EA_PD_8) | 0xffffff00));
 
@@ -3591,7 +3760,7 @@ void m68000_and_er_pd_8(void)
 }
 
 
-void m68000_and_er_pd7_8(void)
+static void m68000_and_er_pd7_8(void)
 {
    uint res = MASK_OUT_ABOVE_8(DX &= (read_memory_8(EA_PD7_8) | 0xffffff00));
 
@@ -3602,7 +3771,7 @@ void m68000_and_er_pd7_8(void)
 }
 
 
-void m68000_and_er_di_8(void)
+static void m68000_and_er_di_8(void)
 {
    uint res = MASK_OUT_ABOVE_8(DX &= (read_memory_8(EA_DI) | 0xffffff00));
 
@@ -3613,7 +3782,7 @@ void m68000_and_er_di_8(void)
 }
 
 
-void m68000_and_er_ix_8(void)
+static void m68000_and_er_ix_8(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -3627,7 +3796,7 @@ void m68000_and_er_ix_8(void)
 }
 
 
-void m68000_and_er_aw_8(void)
+static void m68000_and_er_aw_8(void)
 {
    uint res = MASK_OUT_ABOVE_8(DX &= (read_memory_8(EA_AW) | 0xffffff00));
 
@@ -3638,7 +3807,7 @@ void m68000_and_er_aw_8(void)
 }
 
 
-void m68000_and_er_al_8(void)
+static void m68000_and_er_al_8(void)
 {
    uint res = MASK_OUT_ABOVE_8(DX &= (read_memory_8(EA_AL) | 0xffffff00));
 
@@ -3649,7 +3818,7 @@ void m68000_and_er_al_8(void)
 }
 
 
-void m68000_and_er_pcdi_8(void)
+static void m68000_and_er_pcdi_8(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint ea = old_pc + make_int_16(read_memory_16(old_pc));
@@ -3662,7 +3831,7 @@ void m68000_and_er_pcdi_8(void)
 }
 
 
-void m68000_and_er_pcix_8(void)
+static void m68000_and_er_pcix_8(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint extension = read_memory_16(old_pc);
@@ -3677,7 +3846,7 @@ void m68000_and_er_pcix_8(void)
 }
 
 
-void m68000_and_er_i_8(void)
+static void m68000_and_er_i_8(void)
 {
    uint res = MASK_OUT_ABOVE_8(DX &= (read_imm_8() | 0xffffff00));
 
@@ -3688,7 +3857,7 @@ void m68000_and_er_i_8(void)
 }
 
 
-void m68000_and_er_d_16(void)
+static void m68000_and_er_d_16(void)
 {
    uint res = MASK_OUT_ABOVE_16(DX &= (DY | 0xffff0000));
 
@@ -3699,7 +3868,7 @@ void m68000_and_er_d_16(void)
 }
 
 
-void m68000_and_er_ai_16(void)
+static void m68000_and_er_ai_16(void)
 {
    uint res = MASK_OUT_ABOVE_16(DX &= (read_memory_16(EA_AI) | 0xffff0000));
 
@@ -3710,7 +3879,7 @@ void m68000_and_er_ai_16(void)
 }
 
 
-void m68000_and_er_pi_16(void)
+static void m68000_and_er_pi_16(void)
 {
    uint res = MASK_OUT_ABOVE_16(DX &= (read_memory_16(EA_PI_16) | 0xffff0000));
 
@@ -3721,7 +3890,7 @@ void m68000_and_er_pi_16(void)
 }
 
 
-void m68000_and_er_pd_16(void)
+static void m68000_and_er_pd_16(void)
 {
    uint res = MASK_OUT_ABOVE_16(DX &= (read_memory_16(EA_PD_16) | 0xffff0000));
 
@@ -3732,7 +3901,7 @@ void m68000_and_er_pd_16(void)
 }
 
 
-void m68000_and_er_di_16(void)
+static void m68000_and_er_di_16(void)
 {
    uint res = MASK_OUT_ABOVE_16(DX &= (read_memory_16(EA_DI) | 0xffff0000));
 
@@ -3743,7 +3912,7 @@ void m68000_and_er_di_16(void)
 }
 
 
-void m68000_and_er_ix_16(void)
+static void m68000_and_er_ix_16(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -3757,7 +3926,7 @@ void m68000_and_er_ix_16(void)
 }
 
 
-void m68000_and_er_aw_16(void)
+static void m68000_and_er_aw_16(void)
 {
    uint res = MASK_OUT_ABOVE_16(DX &= (read_memory_16(EA_AW) | 0xffff0000));
 
@@ -3768,7 +3937,7 @@ void m68000_and_er_aw_16(void)
 }
 
 
-void m68000_and_er_al_16(void)
+static void m68000_and_er_al_16(void)
 {
    uint res = MASK_OUT_ABOVE_16(DX &= (read_memory_16(EA_AL) | 0xffff0000));
 
@@ -3779,7 +3948,7 @@ void m68000_and_er_al_16(void)
 }
 
 
-void m68000_and_er_pcdi_16(void)
+static void m68000_and_er_pcdi_16(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint ea = old_pc + make_int_16(read_memory_16(old_pc));
@@ -3792,7 +3961,7 @@ void m68000_and_er_pcdi_16(void)
 }
 
 
-void m68000_and_er_pcix_16(void)
+static void m68000_and_er_pcix_16(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint extension = read_memory_16(old_pc);
@@ -3807,7 +3976,7 @@ void m68000_and_er_pcix_16(void)
 }
 
 
-void m68000_and_er_i_16(void)
+static void m68000_and_er_i_16(void)
 {
    uint res = MASK_OUT_ABOVE_16(DX &= (read_imm_16() | 0xffff0000));
 
@@ -3818,7 +3987,7 @@ void m68000_and_er_i_16(void)
 }
 
 
-void m68000_and_er_d_32(void)
+static void m68000_and_er_d_32(void)
 {
    uint res = DX &= DY;
 
@@ -3829,7 +3998,7 @@ void m68000_and_er_d_32(void)
 }
 
 
-void m68000_and_er_ai_32(void)
+static void m68000_and_er_ai_32(void)
 {
    uint res = DX &= read_memory_32(EA_AI);
 
@@ -3840,7 +4009,7 @@ void m68000_and_er_ai_32(void)
 }
 
 
-void m68000_and_er_pi_32(void)
+static void m68000_and_er_pi_32(void)
 {
    uint res = DX &= read_memory_32(EA_PI_32);
 
@@ -3851,7 +4020,7 @@ void m68000_and_er_pi_32(void)
 }
 
 
-void m68000_and_er_pd_32(void)
+static void m68000_and_er_pd_32(void)
 {
    uint res = DX &= read_memory_32(EA_PD_32);
 
@@ -3862,7 +4031,7 @@ void m68000_and_er_pd_32(void)
 }
 
 
-void m68000_and_er_di_32(void)
+static void m68000_and_er_di_32(void)
 {
    uint res = DX &= read_memory_32(EA_DI);
 
@@ -3873,7 +4042,7 @@ void m68000_and_er_di_32(void)
 }
 
 
-void m68000_and_er_ix_32(void)
+static void m68000_and_er_ix_32(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -3887,7 +4056,7 @@ void m68000_and_er_ix_32(void)
 }
 
 
-void m68000_and_er_aw_32(void)
+static void m68000_and_er_aw_32(void)
 {
    uint res = DX &= read_memory_32(EA_AW);
 
@@ -3898,7 +4067,7 @@ void m68000_and_er_aw_32(void)
 }
 
 
-void m68000_and_er_al_32(void)
+static void m68000_and_er_al_32(void)
 {
    uint res = DX &= read_memory_32(EA_AL);
 
@@ -3909,7 +4078,7 @@ void m68000_and_er_al_32(void)
 }
 
 
-void m68000_and_er_pcdi_32(void)
+static void m68000_and_er_pcdi_32(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint ea = old_pc + make_int_16(read_memory_16(old_pc));
@@ -3922,7 +4091,7 @@ void m68000_and_er_pcdi_32(void)
 }
 
 
-void m68000_and_er_pcix_32(void)
+static void m68000_and_er_pcix_32(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint extension = read_memory_16(old_pc);
@@ -3937,7 +4106,7 @@ void m68000_and_er_pcix_32(void)
 }
 
 
-void m68000_and_er_i_32(void)
+static void m68000_and_er_i_32(void)
 {
    uint res = DX &= read_imm_32();
 
@@ -3948,7 +4117,7 @@ void m68000_and_er_i_32(void)
 }
 
 
-void m68000_and_re_ai_8(void)
+static void m68000_and_re_ai_8(void)
 {
    uint ea = EA_AI;
    uint res = MASK_OUT_ABOVE_8(DX & read_memory_8(ea));
@@ -3962,7 +4131,7 @@ void m68000_and_re_ai_8(void)
 }
 
 
-void m68000_and_re_pi_8(void)
+static void m68000_and_re_pi_8(void)
 {
    uint ea = EA_PI_8;
    uint res = MASK_OUT_ABOVE_8(DX & read_memory_8(ea));
@@ -3976,7 +4145,7 @@ void m68000_and_re_pi_8(void)
 }
 
 
-void m68000_and_re_pi7_8(void)
+static void m68000_and_re_pi7_8(void)
 {
    uint ea = EA_PI7_8;
    uint res = MASK_OUT_ABOVE_8(DX & read_memory_8(ea));
@@ -3990,7 +4159,7 @@ void m68000_and_re_pi7_8(void)
 }
 
 
-void m68000_and_re_pd_8(void)
+static void m68000_and_re_pd_8(void)
 {
    uint ea = EA_PD_8;
    uint res = MASK_OUT_ABOVE_8(DX & read_memory_8(ea));
@@ -4004,7 +4173,7 @@ void m68000_and_re_pd_8(void)
 }
 
 
-void m68000_and_re_pd7_8(void)
+static void m68000_and_re_pd7_8(void)
 {
    uint ea = EA_PD7_8;
    uint res = MASK_OUT_ABOVE_8(DX & read_memory_8(ea));
@@ -4018,7 +4187,7 @@ void m68000_and_re_pd7_8(void)
 }
 
 
-void m68000_and_re_di_8(void)
+static void m68000_and_re_di_8(void)
 {
    uint ea = EA_DI;
    uint res = MASK_OUT_ABOVE_8(DX & read_memory_8(ea));
@@ -4032,7 +4201,7 @@ void m68000_and_re_di_8(void)
 }
 
 
-void m68000_and_re_ix_8(void)
+static void m68000_and_re_ix_8(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -4048,7 +4217,7 @@ void m68000_and_re_ix_8(void)
 }
 
 
-void m68000_and_re_aw_8(void)
+static void m68000_and_re_aw_8(void)
 {
    uint ea = EA_AW;
    uint res = MASK_OUT_ABOVE_8(DX & read_memory_8(ea));
@@ -4062,7 +4231,7 @@ void m68000_and_re_aw_8(void)
 }
 
 
-void m68000_and_re_al_8(void)
+static void m68000_and_re_al_8(void)
 {
    uint ea = EA_AL;
    uint res = MASK_OUT_ABOVE_8(DX & read_memory_8(ea));
@@ -4076,7 +4245,7 @@ void m68000_and_re_al_8(void)
 }
 
 
-void m68000_and_re_ai_16(void)
+static void m68000_and_re_ai_16(void)
 {
    uint ea = EA_AI;
    uint res = MASK_OUT_ABOVE_16(DX & read_memory_16(ea));
@@ -4090,7 +4259,7 @@ void m68000_and_re_ai_16(void)
 }
 
 
-void m68000_and_re_pi_16(void)
+static void m68000_and_re_pi_16(void)
 {
    uint ea = EA_PI_16;
    uint res = MASK_OUT_ABOVE_16(DX & read_memory_16(ea));
@@ -4104,7 +4273,7 @@ void m68000_and_re_pi_16(void)
 }
 
 
-void m68000_and_re_pd_16(void)
+static void m68000_and_re_pd_16(void)
 {
    uint ea = EA_PD_16;
    uint res = MASK_OUT_ABOVE_16(DX & read_memory_16(ea));
@@ -4118,7 +4287,7 @@ void m68000_and_re_pd_16(void)
 }
 
 
-void m68000_and_re_di_16(void)
+static void m68000_and_re_di_16(void)
 {
    uint ea = EA_DI;
    uint res = MASK_OUT_ABOVE_16(DX & read_memory_16(ea));
@@ -4132,7 +4301,7 @@ void m68000_and_re_di_16(void)
 }
 
 
-void m68000_and_re_ix_16(void)
+static void m68000_and_re_ix_16(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -4148,7 +4317,7 @@ void m68000_and_re_ix_16(void)
 }
 
 
-void m68000_and_re_aw_16(void)
+static void m68000_and_re_aw_16(void)
 {
    uint ea = EA_AW;
    uint res = MASK_OUT_ABOVE_16(DX & read_memory_16(ea));
@@ -4162,7 +4331,7 @@ void m68000_and_re_aw_16(void)
 }
 
 
-void m68000_and_re_al_16(void)
+static void m68000_and_re_al_16(void)
 {
    uint ea = EA_AL;
    uint res = MASK_OUT_ABOVE_16(DX & read_memory_16(ea));
@@ -4176,7 +4345,7 @@ void m68000_and_re_al_16(void)
 }
 
 
-void m68000_and_re_ai_32(void)
+static void m68000_and_re_ai_32(void)
 {
    uint ea = EA_AI;
    uint res = DX & read_memory_32(ea);
@@ -4190,7 +4359,7 @@ void m68000_and_re_ai_32(void)
 }
 
 
-void m68000_and_re_pi_32(void)
+static void m68000_and_re_pi_32(void)
 {
    uint ea = EA_PI_32;
    uint res = DX & read_memory_32(ea);
@@ -4204,7 +4373,7 @@ void m68000_and_re_pi_32(void)
 }
 
 
-void m68000_and_re_pd_32(void)
+static void m68000_and_re_pd_32(void)
 {
    uint ea = EA_PD_32;
    uint res = DX & read_memory_32(ea);
@@ -4218,7 +4387,7 @@ void m68000_and_re_pd_32(void)
 }
 
 
-void m68000_and_re_di_32(void)
+static void m68000_and_re_di_32(void)
 {
    uint ea = EA_DI;
    uint res = DX & read_memory_32(ea);
@@ -4232,7 +4401,7 @@ void m68000_and_re_di_32(void)
 }
 
 
-void m68000_and_re_ix_32(void)
+static void m68000_and_re_ix_32(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -4248,7 +4417,7 @@ void m68000_and_re_ix_32(void)
 }
 
 
-void m68000_and_re_aw_32(void)
+static void m68000_and_re_aw_32(void)
 {
    uint ea = EA_AW;
    uint res = DX & read_memory_32(ea);
@@ -4262,7 +4431,7 @@ void m68000_and_re_aw_32(void)
 }
 
 
-void m68000_and_re_al_32(void)
+static void m68000_and_re_al_32(void)
 {
    uint ea = EA_AL;
    uint res = DX & read_memory_32(ea);
@@ -4276,7 +4445,7 @@ void m68000_and_re_al_32(void)
 }
 
 
-void m68000_andi_d_8(void)
+static void m68000_andi_d_8(void)
 {
    uint res = MASK_OUT_ABOVE_8(DY &= (read_imm_8() | 0xffffff00));
 
@@ -4287,7 +4456,7 @@ void m68000_andi_d_8(void)
 }
 
 
-void m68000_andi_ai_8(void)
+static void m68000_andi_ai_8(void)
 {
    uint tmp = read_imm_8();
    uint ea = EA_AI;
@@ -4302,7 +4471,7 @@ void m68000_andi_ai_8(void)
 }
 
 
-void m68000_andi_pi_8(void)
+static void m68000_andi_pi_8(void)
 {
    uint tmp = read_imm_8();
    uint ea = EA_PI_8;
@@ -4317,7 +4486,7 @@ void m68000_andi_pi_8(void)
 }
 
 
-void m68000_andi_pi7_8(void)
+static void m68000_andi_pi7_8(void)
 {
    uint tmp = read_imm_8();
    uint ea = EA_PI7_8;
@@ -4332,7 +4501,7 @@ void m68000_andi_pi7_8(void)
 }
 
 
-void m68000_andi_pd_8(void)
+static void m68000_andi_pd_8(void)
 {
    uint tmp = read_imm_8();
    uint ea = EA_PD_8;
@@ -4347,7 +4516,7 @@ void m68000_andi_pd_8(void)
 }
 
 
-void m68000_andi_pd7_8(void)
+static void m68000_andi_pd7_8(void)
 {
    uint tmp = read_imm_8();
    uint ea = EA_PD7_8;
@@ -4362,7 +4531,7 @@ void m68000_andi_pd7_8(void)
 }
 
 
-void m68000_andi_di_8(void)
+static void m68000_andi_di_8(void)
 {
    uint tmp = read_imm_8();
    uint ea = EA_DI;
@@ -4377,7 +4546,7 @@ void m68000_andi_di_8(void)
 }
 
 
-void m68000_andi_ix_8(void)
+static void m68000_andi_ix_8(void)
 {
    uint tmp = read_imm_8();
    uint extension = read_imm_16();
@@ -4394,7 +4563,7 @@ void m68000_andi_ix_8(void)
 }
 
 
-void m68000_andi_aw_8(void)
+static void m68000_andi_aw_8(void)
 {
    uint tmp = read_imm_8();
    uint ea = EA_AW;
@@ -4409,7 +4578,7 @@ void m68000_andi_aw_8(void)
 }
 
 
-void m68000_andi_al_8(void)
+static void m68000_andi_al_8(void)
 {
    uint tmp = read_imm_8();
    uint ea = EA_AL;
@@ -4424,7 +4593,7 @@ void m68000_andi_al_8(void)
 }
 
 
-void m68000_andi_d_16(void)
+static void m68000_andi_d_16(void)
 {
    uint res = MASK_OUT_ABOVE_16(DY &= (read_imm_16() | 0xffff0000));
 
@@ -4435,7 +4604,7 @@ void m68000_andi_d_16(void)
 }
 
 
-void m68000_andi_ai_16(void)
+static void m68000_andi_ai_16(void)
 {
    uint tmp = read_imm_16();
    uint ea = EA_AI;
@@ -4450,7 +4619,7 @@ void m68000_andi_ai_16(void)
 }
 
 
-void m68000_andi_pi_16(void)
+static void m68000_andi_pi_16(void)
 {
    uint tmp = read_imm_16();
    uint ea = EA_PI_16;
@@ -4465,7 +4634,7 @@ void m68000_andi_pi_16(void)
 }
 
 
-void m68000_andi_pd_16(void)
+static void m68000_andi_pd_16(void)
 {
    uint tmp = read_imm_16();
    uint ea = EA_PD_16;
@@ -4480,7 +4649,7 @@ void m68000_andi_pd_16(void)
 }
 
 
-void m68000_andi_di_16(void)
+static void m68000_andi_di_16(void)
 {
    uint tmp = read_imm_16();
    uint ea = EA_DI;
@@ -4495,7 +4664,7 @@ void m68000_andi_di_16(void)
 }
 
 
-void m68000_andi_ix_16(void)
+static void m68000_andi_ix_16(void)
 {
    uint tmp = read_imm_16();
    uint extension = read_imm_16();
@@ -4512,7 +4681,7 @@ void m68000_andi_ix_16(void)
 }
 
 
-void m68000_andi_aw_16(void)
+static void m68000_andi_aw_16(void)
 {
    uint tmp = read_imm_16();
    uint ea = EA_AW;
@@ -4527,7 +4696,7 @@ void m68000_andi_aw_16(void)
 }
 
 
-void m68000_andi_al_16(void)
+static void m68000_andi_al_16(void)
 {
    uint tmp = read_imm_16();
    uint ea = EA_AL;
@@ -4542,7 +4711,7 @@ void m68000_andi_al_16(void)
 }
 
 
-void m68000_andi_d_32(void)
+static void m68000_andi_d_32(void)
 {
    uint res = DY &= (read_imm_32());
 
@@ -4553,7 +4722,7 @@ void m68000_andi_d_32(void)
 }
 
 
-void m68000_andi_ai_32(void)
+static void m68000_andi_ai_32(void)
 {
    uint tmp = read_imm_32();
    uint ea = EA_AI;
@@ -4568,7 +4737,7 @@ void m68000_andi_ai_32(void)
 }
 
 
-void m68000_andi_pi_32(void)
+static void m68000_andi_pi_32(void)
 {
    uint tmp = read_imm_32();
    uint ea = EA_PI_32;
@@ -4583,7 +4752,7 @@ void m68000_andi_pi_32(void)
 }
 
 
-void m68000_andi_pd_32(void)
+static void m68000_andi_pd_32(void)
 {
    uint tmp = read_imm_32();
    uint ea = EA_PD_32;
@@ -4598,7 +4767,7 @@ void m68000_andi_pd_32(void)
 }
 
 
-void m68000_andi_di_32(void)
+static void m68000_andi_di_32(void)
 {
    uint tmp = read_imm_32();
    uint ea = EA_DI;
@@ -4613,7 +4782,7 @@ void m68000_andi_di_32(void)
 }
 
 
-void m68000_andi_ix_32(void)
+static void m68000_andi_ix_32(void)
 {
    uint tmp = read_imm_32();
    uint extension = read_imm_16();
@@ -4630,7 +4799,7 @@ void m68000_andi_ix_32(void)
 }
 
 
-void m68000_andi_aw_32(void)
+static void m68000_andi_aw_32(void)
 {
    uint tmp = read_imm_32();
    uint ea = EA_AW;
@@ -4645,7 +4814,7 @@ void m68000_andi_aw_32(void)
 }
 
 
-void m68000_andi_al_32(void)
+static void m68000_andi_al_32(void)
 {
    uint tmp = read_imm_32();
    uint ea = EA_AL;
@@ -4660,14 +4829,14 @@ void m68000_andi_al_32(void)
 }
 
 
-void m68000_andi_to_ccr(void)
+static void m68000_andi_to_ccr(void)
 {
    set_ccr(get_ccr() & read_imm_8());
    USE_CLKS(20);
 }
 
 
-void m68000_andi_to_sr(void)
+static void m68000_andi_to_sr(void)
 {
    uint and_val = read_imm_16();
 
@@ -4681,7 +4850,7 @@ void m68000_andi_to_sr(void)
 }
 
 
-void m68000_asr_s_8(void)
+static void m68000_asr_s_8(void)
 {
    uint* d_dst = &DY;
    uint shift = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
@@ -4701,7 +4870,7 @@ void m68000_asr_s_8(void)
 }
 
 
-void m68000_asr_s_16(void)
+static void m68000_asr_s_16(void)
 {
    uint* d_dst = &DY;
    uint shift = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
@@ -4721,7 +4890,7 @@ void m68000_asr_s_16(void)
 }
 
 
-void m68000_asr_s_32(void)
+static void m68000_asr_s_32(void)
 {
    uint* d_dst = &DY;
    uint shift = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
@@ -4741,7 +4910,7 @@ void m68000_asr_s_32(void)
 }
 
 
-void m68000_asr_r_8(void)
+static void m68000_asr_r_8(void)
 {
    uint* d_dst = &DY;
    uint shift = DX & 0x3f;
@@ -4790,7 +4959,7 @@ void m68000_asr_r_8(void)
 }
 
 
-void m68000_asr_r_16(void)
+static void m68000_asr_r_16(void)
 {
    uint* d_dst = &DY;
    uint shift = DX & 0x3f;
@@ -4839,7 +5008,7 @@ void m68000_asr_r_16(void)
 }
 
 
-void m68000_asr_r_32(void)
+static void m68000_asr_r_32(void)
 {
    uint* d_dst = &DY;
    uint shift = DX & 0x3f;
@@ -4888,7 +5057,7 @@ void m68000_asr_r_32(void)
 }
 
 
-void m68000_asr_ea_ai(void)
+static void m68000_asr_ea_ai(void)
 {
    uint ea = EA_AI;
    uint src = read_memory_16(ea);
@@ -4907,7 +5076,7 @@ void m68000_asr_ea_ai(void)
 }
 
 
-void m68000_asr_ea_pi(void)
+static void m68000_asr_ea_pi(void)
 {
    uint ea = EA_PI_16;
    uint src = read_memory_16(ea);
@@ -4926,7 +5095,7 @@ void m68000_asr_ea_pi(void)
 }
 
 
-void m68000_asr_ea_pd(void)
+static void m68000_asr_ea_pd(void)
 {
    uint ea = EA_PD_16;
    uint src = read_memory_16(ea);
@@ -4945,7 +5114,7 @@ void m68000_asr_ea_pd(void)
 }
 
 
-void m68000_asr_ea_di(void)
+static void m68000_asr_ea_di(void)
 {
    uint ea = EA_DI;
    uint src = read_memory_16(ea);
@@ -4964,7 +5133,7 @@ void m68000_asr_ea_di(void)
 }
 
 
-void m68000_asr_ea_ix(void)
+static void m68000_asr_ea_ix(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -4985,7 +5154,7 @@ void m68000_asr_ea_ix(void)
 }
 
 
-void m68000_asr_ea_aw(void)
+static void m68000_asr_ea_aw(void)
 {
    uint ea = EA_AW;
    uint src = read_memory_16(ea);
@@ -5004,7 +5173,7 @@ void m68000_asr_ea_aw(void)
 }
 
 
-void m68000_asr_ea_al(void)
+static void m68000_asr_ea_al(void)
 {
    uint ea = EA_AL;
    uint src = read_memory_16(ea);
@@ -5023,7 +5192,7 @@ void m68000_asr_ea_al(void)
 }
 
 
-void m68000_asl_s_8(void)
+static void m68000_asl_s_8(void)
 {
    uint* d_dst = &DY;
    uint shift = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
@@ -5042,7 +5211,7 @@ void m68000_asl_s_8(void)
 }
 
 
-void m68000_asl_s_16(void)
+static void m68000_asl_s_16(void)
 {
    uint* d_dst = &DY;
    uint shift = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
@@ -5061,7 +5230,7 @@ void m68000_asl_s_16(void)
 }
 
 
-void m68000_asl_s_32(void)
+static void m68000_asl_s_32(void)
 {
    uint* d_dst = &DY;
    uint shift = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
@@ -5080,7 +5249,7 @@ void m68000_asl_s_32(void)
 }
 
 
-void m68000_asl_r_8(void)
+static void m68000_asl_r_8(void)
 {
    uint* d_dst = &DY;
    uint shift = DX & 0x3f;
@@ -5116,7 +5285,7 @@ void m68000_asl_r_8(void)
 }
 
 
-void m68000_asl_r_16(void)
+static void m68000_asl_r_16(void)
 {
    uint* d_dst = &DY;
    uint shift = DX & 0x3f;
@@ -5152,7 +5321,7 @@ void m68000_asl_r_16(void)
 }
 
 
-void m68000_asl_r_32(void)
+static void m68000_asl_r_32(void)
 {
    uint* d_dst = &DY;
    uint shift = DX & 0x3f;
@@ -5188,7 +5357,7 @@ void m68000_asl_r_32(void)
 }
 
 
-void m68000_asl_ea_ai(void)
+static void m68000_asl_ea_ai(void)
 {
    uint ea = EA_AI;
    uint src = read_memory_16(ea);
@@ -5205,7 +5374,7 @@ void m68000_asl_ea_ai(void)
 }
 
 
-void m68000_asl_ea_pi(void)
+static void m68000_asl_ea_pi(void)
 {
    uint ea = EA_PI_16;
    uint src = read_memory_16(ea);
@@ -5222,7 +5391,7 @@ void m68000_asl_ea_pi(void)
 }
 
 
-void m68000_asl_ea_pd(void)
+static void m68000_asl_ea_pd(void)
 {
    uint ea = EA_PD_16;
    uint src = read_memory_16(ea);
@@ -5239,7 +5408,7 @@ void m68000_asl_ea_pd(void)
 }
 
 
-void m68000_asl_ea_di(void)
+static void m68000_asl_ea_di(void)
 {
    uint ea = EA_DI;
    uint src = read_memory_16(ea);
@@ -5256,7 +5425,7 @@ void m68000_asl_ea_di(void)
 }
 
 
-void m68000_asl_ea_ix(void)
+static void m68000_asl_ea_ix(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -5275,7 +5444,7 @@ void m68000_asl_ea_ix(void)
 }
 
 
-void m68000_asl_ea_aw(void)
+static void m68000_asl_ea_aw(void)
 {
    uint ea = EA_AW;
    uint src = read_memory_16(ea);
@@ -5292,7 +5461,7 @@ void m68000_asl_ea_aw(void)
 }
 
 
-void m68000_asl_ea_al(void)
+static void m68000_asl_ea_al(void)
 {
    uint ea = EA_AL;
    uint src = read_memory_16(ea);
@@ -5309,7 +5478,7 @@ void m68000_asl_ea_al(void)
 }
 
 
-void m68000_bhi_8(void)
+static void m68000_bhi_8(void)
 {
    if(CONDITION_HI)
    {
@@ -5321,7 +5490,7 @@ void m68000_bhi_8(void)
 }
 
 
-void m68000_bhi_16(void)
+static void m68000_bhi_16(void)
 {
    if(CONDITION_HI)
    {
@@ -5334,7 +5503,7 @@ void m68000_bhi_16(void)
 }
 
 
-void m68000_bls_8(void)
+static void m68000_bls_8(void)
 {
    if(CONDITION_LS)
    {
@@ -5346,7 +5515,7 @@ void m68000_bls_8(void)
 }
 
 
-void m68000_bls_16(void)
+static void m68000_bls_16(void)
 {
    if(CONDITION_LS)
    {
@@ -5359,7 +5528,7 @@ void m68000_bls_16(void)
 }
 
 
-void m68000_bcc_8(void)
+static void m68000_bcc_8(void)
 {
    if(CONDITION_CC)
    {
@@ -5371,7 +5540,7 @@ void m68000_bcc_8(void)
 }
 
 
-void m68000_bcc_16(void)
+static void m68000_bcc_16(void)
 {
    if(CONDITION_CC)
    {
@@ -5384,7 +5553,7 @@ void m68000_bcc_16(void)
 }
 
 
-void m68000_bcs_8(void)
+static void m68000_bcs_8(void)
 {
    if(CONDITION_CS)
    {
@@ -5396,7 +5565,7 @@ void m68000_bcs_8(void)
 }
 
 
-void m68000_bcs_16(void)
+static void m68000_bcs_16(void)
 {
    if(CONDITION_CS)
    {
@@ -5409,7 +5578,7 @@ void m68000_bcs_16(void)
 }
 
 
-void m68000_bne_8(void)
+static void m68000_bne_8(void)
 {
    if(CONDITION_NE)
    {
@@ -5421,7 +5590,7 @@ void m68000_bne_8(void)
 }
 
 
-void m68000_bne_16(void)
+static void m68000_bne_16(void)
 {
    if(CONDITION_NE)
    {
@@ -5434,7 +5603,7 @@ void m68000_bne_16(void)
 }
 
 
-void m68000_beq_8(void)
+static void m68000_beq_8(void)
 {
    if(CONDITION_EQ)
    {
@@ -5446,7 +5615,7 @@ void m68000_beq_8(void)
 }
 
 
-void m68000_beq_16(void)
+static void m68000_beq_16(void)
 {
    if(CONDITION_EQ)
    {
@@ -5459,7 +5628,7 @@ void m68000_beq_16(void)
 }
 
 
-void m68000_bvc_8(void)
+static void m68000_bvc_8(void)
 {
    if(CONDITION_VC)
    {
@@ -5471,7 +5640,7 @@ void m68000_bvc_8(void)
 }
 
 
-void m68000_bvc_16(void)
+static void m68000_bvc_16(void)
 {
    if(CONDITION_VC)
    {
@@ -5484,7 +5653,7 @@ void m68000_bvc_16(void)
 }
 
 
-void m68000_bvs_8(void)
+static void m68000_bvs_8(void)
 {
    if(CONDITION_VS)
    {
@@ -5496,7 +5665,7 @@ void m68000_bvs_8(void)
 }
 
 
-void m68000_bvs_16(void)
+static void m68000_bvs_16(void)
 {
    if(CONDITION_VS)
    {
@@ -5509,7 +5678,7 @@ void m68000_bvs_16(void)
 }
 
 
-void m68000_bpl_8(void)
+static void m68000_bpl_8(void)
 {
    if(CONDITION_PL)
    {
@@ -5521,7 +5690,7 @@ void m68000_bpl_8(void)
 }
 
 
-void m68000_bpl_16(void)
+static void m68000_bpl_16(void)
 {
    if(CONDITION_PL)
    {
@@ -5534,7 +5703,7 @@ void m68000_bpl_16(void)
 }
 
 
-void m68000_bmi_8(void)
+static void m68000_bmi_8(void)
 {
    if(CONDITION_MI)
    {
@@ -5546,7 +5715,7 @@ void m68000_bmi_8(void)
 }
 
 
-void m68000_bmi_16(void)
+static void m68000_bmi_16(void)
 {
    if(CONDITION_MI)
    {
@@ -5559,7 +5728,7 @@ void m68000_bmi_16(void)
 }
 
 
-void m68000_bge_8(void)
+static void m68000_bge_8(void)
 {
    if(CONDITION_GE)
    {
@@ -5571,7 +5740,7 @@ void m68000_bge_8(void)
 }
 
 
-void m68000_bge_16(void)
+static void m68000_bge_16(void)
 {
    if(CONDITION_GE)
    {
@@ -5584,7 +5753,7 @@ void m68000_bge_16(void)
 }
 
 
-void m68000_blt_8(void)
+static void m68000_blt_8(void)
 {
    if(CONDITION_LT)
    {
@@ -5596,7 +5765,7 @@ void m68000_blt_8(void)
 }
 
 
-void m68000_blt_16(void)
+static void m68000_blt_16(void)
 {
    if(CONDITION_LT)
    {
@@ -5609,7 +5778,7 @@ void m68000_blt_16(void)
 }
 
 
-void m68000_bgt_8(void)
+static void m68000_bgt_8(void)
 {
    if(CONDITION_GT)
    {
@@ -5621,7 +5790,7 @@ void m68000_bgt_8(void)
 }
 
 
-void m68000_bgt_16(void)
+static void m68000_bgt_16(void)
 {
    if(CONDITION_GT)
    {
@@ -5634,7 +5803,7 @@ void m68000_bgt_16(void)
 }
 
 
-void m68000_ble_8(void)
+static void m68000_ble_8(void)
 {
    if(CONDITION_LE)
    {
@@ -5646,7 +5815,7 @@ void m68000_ble_8(void)
 }
 
 
-void m68000_ble_16(void)
+static void m68000_ble_16(void)
 {
    if(CONDITION_LE)
    {
@@ -5659,7 +5828,7 @@ void m68000_ble_16(void)
 }
 
 
-void m68000_bchg_r_d(void)
+static void m68000_bchg_r_d(void)
 {
    uint* d_dst = &DY;
    uint mask = 1 << (DX & 0x1f);
@@ -5670,7 +5839,7 @@ void m68000_bchg_r_d(void)
 }
 
 
-void m68000_bchg_r_ai(void)
+static void m68000_bchg_r_ai(void)
 {
    uint ea = EA_AI;
    uint src = read_memory_8(ea);
@@ -5682,7 +5851,7 @@ void m68000_bchg_r_ai(void)
 }
 
 
-void m68000_bchg_r_pi(void)
+static void m68000_bchg_r_pi(void)
 {
    uint ea = EA_PI_8;
    uint src = read_memory_8(ea);
@@ -5694,7 +5863,7 @@ void m68000_bchg_r_pi(void)
 }
 
 
-void m68000_bchg_r_pi7(void)
+static void m68000_bchg_r_pi7(void)
 {
    uint ea = EA_PI7_8;
    uint src = read_memory_8(ea);
@@ -5706,7 +5875,7 @@ void m68000_bchg_r_pi7(void)
 }
 
 
-void m68000_bchg_r_pd(void)
+static void m68000_bchg_r_pd(void)
 {
    uint ea = EA_PD_8;
    uint src = read_memory_8(ea);
@@ -5718,7 +5887,7 @@ void m68000_bchg_r_pd(void)
 }
 
 
-void m68000_bchg_r_pd7(void)
+static void m68000_bchg_r_pd7(void)
 {
    uint ea = EA_PD7_8;
    uint src = read_memory_8(ea);
@@ -5730,7 +5899,7 @@ void m68000_bchg_r_pd7(void)
 }
 
 
-void m68000_bchg_r_di(void)
+static void m68000_bchg_r_di(void)
 {
    uint ea = EA_DI;
    uint src = read_memory_8(ea);
@@ -5742,7 +5911,7 @@ void m68000_bchg_r_di(void)
 }
 
 
-void m68000_bchg_r_ix(void)
+static void m68000_bchg_r_ix(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -5756,7 +5925,7 @@ void m68000_bchg_r_ix(void)
 }
 
 
-void m68000_bchg_r_aw(void)
+static void m68000_bchg_r_aw(void)
 {
    uint ea = EA_AW;
    uint src = read_memory_8(ea);
@@ -5768,7 +5937,7 @@ void m68000_bchg_r_aw(void)
 }
 
 
-void m68000_bchg_r_al(void)
+static void m68000_bchg_r_al(void)
 {
    uint ea = EA_AL;
    uint src = read_memory_8(ea);
@@ -5780,7 +5949,7 @@ void m68000_bchg_r_al(void)
 }
 
 
-void m68000_bchg_s_d(void)
+static void m68000_bchg_s_d(void)
 {
    uint* d_dst = &DY;
    uint mask = 1 << (read_imm_8() & 0x1f);
@@ -5791,7 +5960,7 @@ void m68000_bchg_s_d(void)
 }
 
 
-void m68000_bchg_s_ai(void)
+static void m68000_bchg_s_ai(void)
 {
    uint mask = 1 << (read_imm_8() & 7);
    uint ea = EA_AI;
@@ -5803,7 +5972,7 @@ void m68000_bchg_s_ai(void)
 }
 
 
-void m68000_bchg_s_pi(void)
+static void m68000_bchg_s_pi(void)
 {
    uint mask = 1 << (read_imm_8() & 7);
    uint ea = EA_PI_8;
@@ -5815,7 +5984,7 @@ void m68000_bchg_s_pi(void)
 }
 
 
-void m68000_bchg_s_pi7(void)
+static void m68000_bchg_s_pi7(void)
 {
    uint mask = 1 << (read_imm_8() & 7);
    uint ea = EA_PI7_8;
@@ -5827,7 +5996,7 @@ void m68000_bchg_s_pi7(void)
 }
 
 
-void m68000_bchg_s_pd(void)
+static void m68000_bchg_s_pd(void)
 {
    uint mask = 1 << (read_imm_8() & 7);
    uint ea = EA_PD_8;
@@ -5839,7 +6008,7 @@ void m68000_bchg_s_pd(void)
 }
 
 
-void m68000_bchg_s_pd7(void)
+static void m68000_bchg_s_pd7(void)
 {
    uint mask = 1 << (read_imm_8() & 7);
    uint ea = EA_PD7_8;
@@ -5851,7 +6020,7 @@ void m68000_bchg_s_pd7(void)
 }
 
 
-void m68000_bchg_s_di(void)
+static void m68000_bchg_s_di(void)
 {
    uint mask = 1 << (read_imm_8() & 7);
    uint ea = EA_DI;
@@ -5863,7 +6032,7 @@ void m68000_bchg_s_di(void)
 }
 
 
-void m68000_bchg_s_ix(void)
+static void m68000_bchg_s_ix(void)
 {
    uint mask = 1 << (read_imm_8() & 7);
    uint extension = read_imm_16();
@@ -5877,7 +6046,7 @@ void m68000_bchg_s_ix(void)
 }
 
 
-void m68000_bchg_s_aw(void)
+static void m68000_bchg_s_aw(void)
 {
    uint mask = 1 << (read_imm_8() & 7);
    uint ea = EA_AW;
@@ -5889,7 +6058,7 @@ void m68000_bchg_s_aw(void)
 }
 
 
-void m68000_bchg_s_al(void)
+static void m68000_bchg_s_al(void)
 {
    uint mask = 1 << (read_imm_8() & 7);
    uint ea = EA_AL;
@@ -5901,7 +6070,7 @@ void m68000_bchg_s_al(void)
 }
 
 
-void m68000_bclr_r_d(void)
+static void m68000_bclr_r_d(void)
 {
    uint* d_dst = &DY;
    uint mask = 1 << (DX & 0x1f);
@@ -5912,7 +6081,7 @@ void m68000_bclr_r_d(void)
 }
 
 
-void m68000_bclr_r_ai(void)
+static void m68000_bclr_r_ai(void)
 {
    uint ea = EA_AI;
    uint src = read_memory_8(ea);
@@ -5924,7 +6093,7 @@ void m68000_bclr_r_ai(void)
 }
 
 
-void m68000_bclr_r_pi(void)
+static void m68000_bclr_r_pi(void)
 {
    uint ea = EA_PI_8;
    uint src = read_memory_8(ea);
@@ -5936,7 +6105,7 @@ void m68000_bclr_r_pi(void)
 }
 
 
-void m68000_bclr_r_pi7(void)
+static void m68000_bclr_r_pi7(void)
 {
    uint ea = EA_PI7_8;
    uint src = read_memory_8(ea);
@@ -5948,7 +6117,7 @@ void m68000_bclr_r_pi7(void)
 }
 
 
-void m68000_bclr_r_pd(void)
+static void m68000_bclr_r_pd(void)
 {
    uint ea = EA_PD_8;
    uint src = read_memory_8(ea);
@@ -5960,7 +6129,7 @@ void m68000_bclr_r_pd(void)
 }
 
 
-void m68000_bclr_r_pd7(void)
+static void m68000_bclr_r_pd7(void)
 {
    uint ea = EA_PD7_8;
    uint src = read_memory_8(ea);
@@ -5972,7 +6141,7 @@ void m68000_bclr_r_pd7(void)
 }
 
 
-void m68000_bclr_r_di(void)
+static void m68000_bclr_r_di(void)
 {
    uint ea = EA_DI;
    uint src = read_memory_8(ea);
@@ -5984,7 +6153,7 @@ void m68000_bclr_r_di(void)
 }
 
 
-void m68000_bclr_r_ix(void)
+static void m68000_bclr_r_ix(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -5998,7 +6167,7 @@ void m68000_bclr_r_ix(void)
 }
 
 
-void m68000_bclr_r_aw(void)
+static void m68000_bclr_r_aw(void)
 {
    uint ea = EA_AW;
    uint src = read_memory_8(ea);
@@ -6010,7 +6179,7 @@ void m68000_bclr_r_aw(void)
 }
 
 
-void m68000_bclr_r_al(void)
+static void m68000_bclr_r_al(void)
 {
    uint ea = EA_AL;
    uint src = read_memory_8(ea);
@@ -6022,7 +6191,7 @@ void m68000_bclr_r_al(void)
 }
 
 
-void m68000_bclr_s_d(void)
+static void m68000_bclr_s_d(void)
 {
    uint* d_dst = &DY;
    uint mask = 1 << (read_imm_8() & 0x1f);
@@ -6033,7 +6202,7 @@ void m68000_bclr_s_d(void)
 }
 
 
-void m68000_bclr_s_ai(void)
+static void m68000_bclr_s_ai(void)
 {
    uint mask = 1 << (read_imm_8() & 7);
    uint ea = EA_AI;
@@ -6045,7 +6214,7 @@ void m68000_bclr_s_ai(void)
 }
 
 
-void m68000_bclr_s_pi(void)
+static void m68000_bclr_s_pi(void)
 {
    uint mask = 1 << (read_imm_8() & 7);
    uint ea = EA_PI_8;
@@ -6057,7 +6226,7 @@ void m68000_bclr_s_pi(void)
 }
 
 
-void m68000_bclr_s_pi7(void)
+static void m68000_bclr_s_pi7(void)
 {
    uint mask = 1 << (read_imm_8() & 7);
    uint ea = EA_PI7_8;
@@ -6069,7 +6238,7 @@ void m68000_bclr_s_pi7(void)
 }
 
 
-void m68000_bclr_s_pd(void)
+static void m68000_bclr_s_pd(void)
 {
    uint mask = 1 << (read_imm_8() & 7);
    uint ea = EA_PD_8;
@@ -6081,7 +6250,7 @@ void m68000_bclr_s_pd(void)
 }
 
 
-void m68000_bclr_s_pd7(void)
+static void m68000_bclr_s_pd7(void)
 {
    uint mask = 1 << (read_imm_8() & 7);
    uint ea = EA_PD7_8;
@@ -6093,7 +6262,7 @@ void m68000_bclr_s_pd7(void)
 }
 
 
-void m68000_bclr_s_di(void)
+static void m68000_bclr_s_di(void)
 {
    uint mask = 1 << (read_imm_8() & 7);
    uint ea = EA_DI;
@@ -6105,7 +6274,7 @@ void m68000_bclr_s_di(void)
 }
 
 
-void m68000_bclr_s_ix(void)
+static void m68000_bclr_s_ix(void)
 {
    uint mask = 1 << (read_imm_8() & 7);
    uint extension = read_imm_16();
@@ -6119,7 +6288,7 @@ void m68000_bclr_s_ix(void)
 }
 
 
-void m68000_bclr_s_aw(void)
+static void m68000_bclr_s_aw(void)
 {
    uint mask = 1 << (read_imm_8() & 7);
    uint ea = EA_AW;
@@ -6131,7 +6300,7 @@ void m68000_bclr_s_aw(void)
 }
 
 
-void m68000_bclr_s_al(void)
+static void m68000_bclr_s_al(void)
 {
    uint mask = 1 << (read_imm_8() & 7);
    uint ea = EA_AL;
@@ -6143,21 +6312,32 @@ void m68000_bclr_s_al(void)
 }
 
 
-void m68000_bra_8(void)
+static void m68010_bkpt(void)
+{
+   if(g_cpu_type & (CPU_010_PLUS))
+   {
+      m68000_breakpoint_acknowledge(0);
+      USE_CLKS(11);
+   }
+   exception(EXCEPTION_ILLEGAL_INSTRUCTION);
+}
+
+
+static void m68000_bra_8(void)
 {
    branch_byte(MASK_OUT_ABOVE_8(g_cpu_ir));
    USE_CLKS(10);
 }
 
 
-void m68000_bra_16(void)
+static void m68000_bra_16(void)
 {
    branch_word(read_memory_16(g_cpu_pc));
    USE_CLKS(10);
 }
 
 
-void m68000_bset_r_d(void)
+static void m68000_bset_r_d(void)
 {
    uint* d_dst = &DY;
    uint mask = 1 << (DX & 0x1f);
@@ -6168,7 +6348,7 @@ void m68000_bset_r_d(void)
 }
 
 
-void m68000_bset_r_ai(void)
+static void m68000_bset_r_ai(void)
 {
    uint ea = EA_AI;
    uint src = read_memory_8(ea);
@@ -6180,7 +6360,7 @@ void m68000_bset_r_ai(void)
 }
 
 
-void m68000_bset_r_pi(void)
+static void m68000_bset_r_pi(void)
 {
    uint ea = EA_PI_8;
    uint src = read_memory_8(ea);
@@ -6192,7 +6372,7 @@ void m68000_bset_r_pi(void)
 }
 
 
-void m68000_bset_r_pi7(void)
+static void m68000_bset_r_pi7(void)
 {
    uint ea = EA_PI7_8;
    uint src = read_memory_8(ea);
@@ -6204,7 +6384,7 @@ void m68000_bset_r_pi7(void)
 }
 
 
-void m68000_bset_r_pd(void)
+static void m68000_bset_r_pd(void)
 {
    uint ea = EA_PD_8;
    uint src = read_memory_8(ea);
@@ -6216,7 +6396,7 @@ void m68000_bset_r_pd(void)
 }
 
 
-void m68000_bset_r_pd7(void)
+static void m68000_bset_r_pd7(void)
 {
    uint ea = EA_PD7_8;
    uint src = read_memory_8(ea);
@@ -6228,7 +6408,7 @@ void m68000_bset_r_pd7(void)
 }
 
 
-void m68000_bset_r_di(void)
+static void m68000_bset_r_di(void)
 {
    uint ea = EA_DI;
    uint src = read_memory_8(ea);
@@ -6240,7 +6420,7 @@ void m68000_bset_r_di(void)
 }
 
 
-void m68000_bset_r_ix(void)
+static void m68000_bset_r_ix(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -6254,7 +6434,7 @@ void m68000_bset_r_ix(void)
 }
 
 
-void m68000_bset_r_aw(void)
+static void m68000_bset_r_aw(void)
 {
    uint ea = EA_AW;
    uint src = read_memory_8(ea);
@@ -6266,7 +6446,7 @@ void m68000_bset_r_aw(void)
 }
 
 
-void m68000_bset_r_al(void)
+static void m68000_bset_r_al(void)
 {
    uint ea = EA_AL;
    uint src = read_memory_8(ea);
@@ -6278,7 +6458,7 @@ void m68000_bset_r_al(void)
 }
 
 
-void m68000_bset_s_d(void)
+static void m68000_bset_s_d(void)
 {
    uint* d_dst = &DY;
    uint mask = 1 << (read_imm_8() & 0x1f);
@@ -6289,7 +6469,7 @@ void m68000_bset_s_d(void)
 }
 
 
-void m68000_bset_s_ai(void)
+static void m68000_bset_s_ai(void)
 {
    uint mask = 1 << (read_imm_8() & 7);
    uint ea = EA_AI;
@@ -6301,7 +6481,7 @@ void m68000_bset_s_ai(void)
 }
 
 
-void m68000_bset_s_pi(void)
+static void m68000_bset_s_pi(void)
 {
    uint mask = 1 << (read_imm_8() & 7);
    uint ea = EA_PI_8;
@@ -6313,7 +6493,7 @@ void m68000_bset_s_pi(void)
 }
 
 
-void m68000_bset_s_pi7(void)
+static void m68000_bset_s_pi7(void)
 {
    uint mask = 1 << (read_imm_8() & 7);
    uint ea = EA_PI7_8;
@@ -6325,7 +6505,7 @@ void m68000_bset_s_pi7(void)
 }
 
 
-void m68000_bset_s_pd(void)
+static void m68000_bset_s_pd(void)
 {
    uint mask = 1 << (read_imm_8() & 7);
    uint ea = EA_PD_8;
@@ -6337,7 +6517,7 @@ void m68000_bset_s_pd(void)
 }
 
 
-void m68000_bset_s_pd7(void)
+static void m68000_bset_s_pd7(void)
 {
    uint mask = 1 << (read_imm_8() & 7);
    uint ea = EA_PD7_8;
@@ -6349,7 +6529,7 @@ void m68000_bset_s_pd7(void)
 }
 
 
-void m68000_bset_s_di(void)
+static void m68000_bset_s_di(void)
 {
    uint mask = 1 << (read_imm_8() & 7);
    uint ea = EA_DI;
@@ -6361,7 +6541,7 @@ void m68000_bset_s_di(void)
 }
 
 
-void m68000_bset_s_ix(void)
+static void m68000_bset_s_ix(void)
 {
    uint mask = 1 << (read_imm_8() & 7);
    uint extension = read_imm_16();
@@ -6375,7 +6555,7 @@ void m68000_bset_s_ix(void)
 }
 
 
-void m68000_bset_s_aw(void)
+static void m68000_bset_s_aw(void)
 {
    uint mask = 1 << (read_imm_8() & 7);
    uint ea = EA_AW;
@@ -6387,7 +6567,7 @@ void m68000_bset_s_aw(void)
 }
 
 
-void m68000_bset_s_al(void)
+static void m68000_bset_s_al(void)
 {
    uint mask = 1 << (read_imm_8() & 7);
    uint ea = EA_AL;
@@ -6399,7 +6579,7 @@ void m68000_bset_s_al(void)
 }
 
 
-void m68000_bsr_8(void)
+static void m68000_bsr_8(void)
 {
    push_32(g_cpu_pc);
    branch_byte(MASK_OUT_ABOVE_8(g_cpu_ir));
@@ -6407,7 +6587,7 @@ void m68000_bsr_8(void)
 }
 
 
-void m68000_bsr_16(void)
+static void m68000_bsr_16(void)
 {
    push_32(g_cpu_pc+2);
    branch_word(read_memory_16(g_cpu_pc));
@@ -6415,56 +6595,56 @@ void m68000_bsr_16(void)
 }
 
 
-void m68000_btst_r_d(void)
+static void m68000_btst_r_d(void)
 {
    g_cpu_z_flag = !(DY & (1 << (DX & 0x1f)));
    USE_CLKS(6);
 }
 
 
-void m68000_btst_r_ai(void)
+static void m68000_btst_r_ai(void)
 {
    g_cpu_z_flag = !(read_memory_8(EA_AI) & (1 << (DX & 7)));
    USE_CLKS(4+4);
 }
 
 
-void m68000_btst_r_pi(void)
+static void m68000_btst_r_pi(void)
 {
    g_cpu_z_flag = !(read_memory_8(EA_PI_8) & (1 << (DX & 7)));
    USE_CLKS(4+4);
 }
 
 
-void m68000_btst_r_pi7(void)
+static void m68000_btst_r_pi7(void)
 {
    g_cpu_z_flag = !(read_memory_8(EA_PI7_8) & (1 << (DX & 7)));
    USE_CLKS(4+4);
 }
 
 
-void m68000_btst_r_pd(void)
+static void m68000_btst_r_pd(void)
 {
    g_cpu_z_flag = !(read_memory_8(EA_PD_8) & (1 << (DX & 7)));
    USE_CLKS(4+6);
 }
 
 
-void m68000_btst_r_pd7(void)
+static void m68000_btst_r_pd7(void)
 {
    g_cpu_z_flag = !(read_memory_8(EA_PD7_8) & (1 << (DX & 7)));
    USE_CLKS(4+6);
 }
 
 
-void m68000_btst_r_di(void)
+static void m68000_btst_r_di(void)
 {
    g_cpu_z_flag = !(read_memory_8(EA_DI) & (1 << (DX & 7)));
    USE_CLKS(4+8);
 }
 
 
-void m68000_btst_r_ix(void)
+static void m68000_btst_r_ix(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -6474,21 +6654,21 @@ void m68000_btst_r_ix(void)
 }
 
 
-void m68000_btst_r_aw(void)
+static void m68000_btst_r_aw(void)
 {
    g_cpu_z_flag = !(read_memory_8(EA_AW) & (1 << (DX & 7)));
    USE_CLKS(4+8);
 }
 
 
-void m68000_btst_r_al(void)
+static void m68000_btst_r_al(void)
 {
    g_cpu_z_flag = !(read_memory_8(EA_AL) & (1 << (DX & 7)));
    USE_CLKS(4+12);
 }
 
 
-void m68000_btst_r_pcdi(void)
+static void m68000_btst_r_pcdi(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint ea = old_pc + make_int_16(read_memory_16(old_pc));
@@ -6497,7 +6677,7 @@ void m68000_btst_r_pcdi(void)
 }
 
 
-void m68000_btst_r_pcix(void)
+static void m68000_btst_r_pcix(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint extension = read_memory_16(old_pc);
@@ -6508,21 +6688,21 @@ void m68000_btst_r_pcix(void)
 }
 
 
-void m68000_btst_r_i(void)
+static void m68000_btst_r_i(void)
 {
    g_cpu_z_flag = !(read_imm_8() & (1 << (DX & 7)));
    USE_CLKS(4+4);
 }
 
 
-void m68000_btst_s_d(void)
+static void m68000_btst_s_d(void)
 {
    g_cpu_z_flag = !(DY & (1 << (read_imm_8() & 0x1f)));
    USE_CLKS(10);
 }
 
 
-void m68000_btst_s_ai(void)
+static void m68000_btst_s_ai(void)
 {
    uint bit = read_imm_8() & 7;
    g_cpu_z_flag = !(read_memory_8(EA_AI) & (1 << bit));
@@ -6530,7 +6710,7 @@ void m68000_btst_s_ai(void)
 }
 
 
-void m68000_btst_s_pi(void)
+static void m68000_btst_s_pi(void)
 {
    uint bit = read_imm_8() & 7;
    g_cpu_z_flag = !(read_memory_8(EA_PI_8) & (1 << bit));
@@ -6538,7 +6718,7 @@ void m68000_btst_s_pi(void)
 }
 
 
-void m68000_btst_s_pi7(void)
+static void m68000_btst_s_pi7(void)
 {
    uint bit = read_imm_8() & 7;
    g_cpu_z_flag = !(read_memory_8(EA_PI7_8) & (1 << bit));
@@ -6546,7 +6726,7 @@ void m68000_btst_s_pi7(void)
 }
 
 
-void m68000_btst_s_pd(void)
+static void m68000_btst_s_pd(void)
 {
    uint bit = read_imm_8() & 7;
    g_cpu_z_flag = !(read_memory_8(EA_PD_8) & (1 << bit));
@@ -6554,7 +6734,7 @@ void m68000_btst_s_pd(void)
 }
 
 
-void m68000_btst_s_pd7(void)
+static void m68000_btst_s_pd7(void)
 {
    uint bit = read_imm_8() & 7;
    g_cpu_z_flag = !(read_memory_8(EA_PD7_8) & (1 << bit));
@@ -6562,7 +6742,7 @@ void m68000_btst_s_pd7(void)
 }
 
 
-void m68000_btst_s_di(void)
+static void m68000_btst_s_di(void)
 {
    uint bit = read_imm_8() & 7;
    g_cpu_z_flag = !(read_memory_8(EA_DI) & (1 << bit));
@@ -6570,7 +6750,7 @@ void m68000_btst_s_di(void)
 }
 
 
-void m68000_btst_s_ix(void)
+static void m68000_btst_s_ix(void)
 {
    uint bit = read_imm_8() & 7;
    uint extension = read_imm_16();
@@ -6581,7 +6761,7 @@ void m68000_btst_s_ix(void)
 }
 
 
-void m68000_btst_s_aw(void)
+static void m68000_btst_s_aw(void)
 {
    uint bit = read_imm_8() & 7;
    g_cpu_z_flag = !(read_memory_8(EA_AW) & (1 << bit));
@@ -6589,7 +6769,7 @@ void m68000_btst_s_aw(void)
 }
 
 
-void m68000_btst_s_al(void)
+static void m68000_btst_s_al(void)
 {
    uint bit = read_imm_8() & 7;
    g_cpu_z_flag = !(read_memory_8(EA_AL) & (1 << bit));
@@ -6597,7 +6777,7 @@ void m68000_btst_s_al(void)
 }
 
 
-void m68000_btst_s_pcdi(void)
+static void m68000_btst_s_pcdi(void)
 {
    uint bit = read_imm_8() & 7;
    uint old_pc = (g_cpu_pc+=2) - 2;
@@ -6607,7 +6787,7 @@ void m68000_btst_s_pcdi(void)
 }
 
 
-void m68000_btst_s_pcix(void)
+static void m68000_btst_s_pcix(void)
 {
    uint bit = read_imm_8() & 7;
    uint old_pc = (g_cpu_pc+=2) - 2;
@@ -6619,7 +6799,7 @@ void m68000_btst_s_pcix(void)
 }
 
 
-void m68000_chk_d(void)
+static void m68000_chk_d(void)
 {
    int src = make_int_16(MASK_OUT_ABOVE_16(DX));
    int bound = make_int_16(MASK_OUT_ABOVE_16(DY));
@@ -6634,7 +6814,7 @@ void m68000_chk_d(void)
 }
 
 
-void m68000_chk_ai(void)
+static void m68000_chk_ai(void)
 {
    int src = make_int_16(MASK_OUT_ABOVE_16(DX));
    int bound = make_int_16(read_memory_16(EA_AI));
@@ -6649,7 +6829,7 @@ void m68000_chk_ai(void)
 }
 
 
-void m68000_chk_pi(void)
+static void m68000_chk_pi(void)
 {
    int src = make_int_16(MASK_OUT_ABOVE_16(DX));
    int bound = make_int_16(read_memory_16(EA_PI_16));
@@ -6664,7 +6844,7 @@ void m68000_chk_pi(void)
 }
 
 
-void m68000_chk_pd(void)
+static void m68000_chk_pd(void)
 {
    int src = make_int_16(MASK_OUT_ABOVE_16(DX));
    int bound = make_int_16(read_memory_16(EA_PD_16));
@@ -6679,7 +6859,7 @@ void m68000_chk_pd(void)
 }
 
 
-void m68000_chk_di(void)
+static void m68000_chk_di(void)
 {
    int src = make_int_16(MASK_OUT_ABOVE_16(DX));
    int bound = make_int_16(read_memory_16(EA_DI));
@@ -6694,7 +6874,7 @@ void m68000_chk_di(void)
 }
 
 
-void m68000_chk_ix(void)
+static void m68000_chk_ix(void)
 {
    int src = make_int_16(MASK_OUT_ABOVE_16(DX));
    uint extension = read_imm_16();
@@ -6712,7 +6892,7 @@ void m68000_chk_ix(void)
 }
 
 
-void m68000_chk_aw(void)
+static void m68000_chk_aw(void)
 {
    int src = make_int_16(MASK_OUT_ABOVE_16(DX));
    int bound = make_int_16(read_memory_16(EA_AW));
@@ -6727,7 +6907,7 @@ void m68000_chk_aw(void)
 }
 
 
-void m68000_chk_al(void)
+static void m68000_chk_al(void)
 {
    int src = make_int_16(MASK_OUT_ABOVE_16(DX));
    int bound = make_int_16(read_memory_16(EA_AL));
@@ -6742,7 +6922,7 @@ void m68000_chk_al(void)
 }
 
 
-void m68000_chk_pcdi(void)
+static void m68000_chk_pcdi(void)
 {
    int src = make_int_16(MASK_OUT_ABOVE_16(DX));
    uint old_pc = (g_cpu_pc+=2) - 2;
@@ -6759,7 +6939,7 @@ void m68000_chk_pcdi(void)
 }
 
 
-void m68000_chk_pcix(void)
+static void m68000_chk_pcix(void)
 {
    int src = make_int_16(MASK_OUT_ABOVE_16(DX));
    uint old_pc = (g_cpu_pc+=2) - 2;
@@ -6778,7 +6958,7 @@ void m68000_chk_pcix(void)
 }
 
 
-void m68000_chk_i(void)
+static void m68000_chk_i(void)
 {
    int src = make_int_16(MASK_OUT_ABOVE_16(DX));
    int bound = make_int_16(read_imm_16());
@@ -6793,7 +6973,7 @@ void m68000_chk_i(void)
 }
 
 
-void m68000_clr_d_8(void)
+static void m68000_clr_d_8(void)
 {
    DY &= 0xffffff00;
 
@@ -6803,7 +6983,7 @@ void m68000_clr_d_8(void)
 }
 
 
-void m68000_clr_ai_8(void)
+static void m68000_clr_ai_8(void)
 {
    write_memory_8(EA_AI, 0);
 
@@ -6813,7 +6993,7 @@ void m68000_clr_ai_8(void)
 }
 
 
-void m68000_clr_pi_8(void)
+static void m68000_clr_pi_8(void)
 {
    write_memory_8(EA_PI_8, 0);
 
@@ -6823,7 +7003,7 @@ void m68000_clr_pi_8(void)
 }
 
 
-void m68000_clr_pi7_8(void)
+static void m68000_clr_pi7_8(void)
 {
    write_memory_8(EA_PI7_8, 0);
 
@@ -6833,7 +7013,7 @@ void m68000_clr_pi7_8(void)
 }
 
 
-void m68000_clr_pd_8(void)
+static void m68000_clr_pd_8(void)
 {
    write_memory_8(EA_PD_8, 0);
 
@@ -6843,7 +7023,7 @@ void m68000_clr_pd_8(void)
 }
 
 
-void m68000_clr_pd7_8(void)
+static void m68000_clr_pd7_8(void)
 {
    write_memory_8(EA_PD7_8, 0);
 
@@ -6853,7 +7033,7 @@ void m68000_clr_pd7_8(void)
 }
 
 
-void m68000_clr_di_8(void)
+static void m68000_clr_di_8(void)
 {
    write_memory_8(EA_DI, 0);
 
@@ -6863,7 +7043,7 @@ void m68000_clr_di_8(void)
 }
 
 
-void m68000_clr_ix_8(void)
+static void m68000_clr_ix_8(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -6876,7 +7056,7 @@ void m68000_clr_ix_8(void)
 }
 
 
-void m68000_clr_aw_8(void)
+static void m68000_clr_aw_8(void)
 {
    write_memory_8(EA_AW, 0);
 
@@ -6886,7 +7066,7 @@ void m68000_clr_aw_8(void)
 }
 
 
-void m68000_clr_al_8(void)
+static void m68000_clr_al_8(void)
 {
    write_memory_8(EA_AL, 0);
 
@@ -6896,7 +7076,7 @@ void m68000_clr_al_8(void)
 }
 
 
-void m68000_clr_d_16(void)
+static void m68000_clr_d_16(void)
 {
    DY &= 0xffff0000;
 
@@ -6906,7 +7086,7 @@ void m68000_clr_d_16(void)
 }
 
 
-void m68000_clr_ai_16(void)
+static void m68000_clr_ai_16(void)
 {
    write_memory_16(EA_AI, 0);
 
@@ -6916,7 +7096,7 @@ void m68000_clr_ai_16(void)
 }
 
 
-void m68000_clr_pi_16(void)
+static void m68000_clr_pi_16(void)
 {
    write_memory_16(EA_PI_16, 0);
 
@@ -6926,7 +7106,7 @@ void m68000_clr_pi_16(void)
 }
 
 
-void m68000_clr_pd_16(void)
+static void m68000_clr_pd_16(void)
 {
    write_memory_16(EA_PD_16, 0);
 
@@ -6936,7 +7116,7 @@ void m68000_clr_pd_16(void)
 }
 
 
-void m68000_clr_di_16(void)
+static void m68000_clr_di_16(void)
 {
    write_memory_16(EA_DI, 0);
 
@@ -6946,7 +7126,7 @@ void m68000_clr_di_16(void)
 }
 
 
-void m68000_clr_ix_16(void)
+static void m68000_clr_ix_16(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -6959,7 +7139,7 @@ void m68000_clr_ix_16(void)
 }
 
 
-void m68000_clr_aw_16(void)
+static void m68000_clr_aw_16(void)
 {
    write_memory_16(EA_AW, 0);
 
@@ -6969,7 +7149,7 @@ void m68000_clr_aw_16(void)
 }
 
 
-void m68000_clr_al_16(void)
+static void m68000_clr_al_16(void)
 {
    write_memory_16(EA_AL, 0);
 
@@ -6979,7 +7159,7 @@ void m68000_clr_al_16(void)
 }
 
 
-void m68000_clr_d_32(void)
+static void m68000_clr_d_32(void)
 {
    DY = 0;
 
@@ -6989,7 +7169,7 @@ void m68000_clr_d_32(void)
 }
 
 
-void m68000_clr_ai_32(void)
+static void m68000_clr_ai_32(void)
 {
    write_memory_32(EA_AI, 0);
 
@@ -6999,7 +7179,7 @@ void m68000_clr_ai_32(void)
 }
 
 
-void m68000_clr_pi_32(void)
+static void m68000_clr_pi_32(void)
 {
    write_memory_32(EA_PI_32, 0);
 
@@ -7009,7 +7189,7 @@ void m68000_clr_pi_32(void)
 }
 
 
-void m68000_clr_pd_32(void)
+static void m68000_clr_pd_32(void)
 {
    write_memory_32(EA_PD_32, 0);
 
@@ -7019,7 +7199,7 @@ void m68000_clr_pd_32(void)
 }
 
 
-void m68000_clr_di_32(void)
+static void m68000_clr_di_32(void)
 {
    write_memory_32(EA_DI, 0);
 
@@ -7029,7 +7209,7 @@ void m68000_clr_di_32(void)
 }
 
 
-void m68000_clr_ix_32(void)
+static void m68000_clr_ix_32(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -7042,7 +7222,7 @@ void m68000_clr_ix_32(void)
 }
 
 
-void m68000_clr_aw_32(void)
+static void m68000_clr_aw_32(void)
 {
    write_memory_32(EA_AW, 0);
 
@@ -7052,7 +7232,7 @@ void m68000_clr_aw_32(void)
 }
 
 
-void m68000_clr_al_32(void)
+static void m68000_clr_al_32(void)
 {
    write_memory_32(EA_AL, 0);
 
@@ -7062,7 +7242,7 @@ void m68000_clr_al_32(void)
 }
 
 
-void m68000_cmp_d_8(void)
+static void m68000_cmp_d_8(void)
 {
    uint src = DY;
    uint dst = DX;
@@ -7076,7 +7256,7 @@ void m68000_cmp_d_8(void)
 }
 
 
-void m68000_cmp_ai_8(void)
+static void m68000_cmp_ai_8(void)
 {
    uint src = read_memory_8(EA_AI);
    uint dst = DX;
@@ -7090,7 +7270,7 @@ void m68000_cmp_ai_8(void)
 }
 
 
-void m68000_cmp_pi_8(void)
+static void m68000_cmp_pi_8(void)
 {
    uint src = read_memory_8(EA_PI_8);
    uint dst = DX;
@@ -7104,7 +7284,7 @@ void m68000_cmp_pi_8(void)
 }
 
 
-void m68000_cmp_pi7_8(void)
+static void m68000_cmp_pi7_8(void)
 {
    uint src = read_memory_8(EA_PI7_8);
    uint dst = DX;
@@ -7118,7 +7298,7 @@ void m68000_cmp_pi7_8(void)
 }
 
 
-void m68000_cmp_pd_8(void)
+static void m68000_cmp_pd_8(void)
 {
    uint src = read_memory_8(EA_PD_8);
    uint dst = DX;
@@ -7132,7 +7312,7 @@ void m68000_cmp_pd_8(void)
 }
 
 
-void m68000_cmp_pd7_8(void)
+static void m68000_cmp_pd7_8(void)
 {
    uint src = read_memory_8(EA_PD7_8);
    uint dst = DX;
@@ -7146,7 +7326,7 @@ void m68000_cmp_pd7_8(void)
 }
 
 
-void m68000_cmp_di_8(void)
+static void m68000_cmp_di_8(void)
 {
    uint src = read_memory_8(EA_DI);
    uint dst = DX;
@@ -7160,7 +7340,7 @@ void m68000_cmp_di_8(void)
 }
 
 
-void m68000_cmp_ix_8(void)
+static void m68000_cmp_ix_8(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -7177,7 +7357,7 @@ void m68000_cmp_ix_8(void)
 }
 
 
-void m68000_cmp_aw_8(void)
+static void m68000_cmp_aw_8(void)
 {
    uint src = read_memory_8(EA_AW);
    uint dst = DX;
@@ -7191,7 +7371,7 @@ void m68000_cmp_aw_8(void)
 }
 
 
-void m68000_cmp_al_8(void)
+static void m68000_cmp_al_8(void)
 {
    uint src = read_memory_8(EA_AL);
    uint dst = DX;
@@ -7205,7 +7385,7 @@ void m68000_cmp_al_8(void)
 }
 
 
-void m68000_cmp_pcdi_8(void)
+static void m68000_cmp_pcdi_8(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint ea = old_pc + make_int_16(read_memory_16(old_pc));
@@ -7221,7 +7401,7 @@ void m68000_cmp_pcdi_8(void)
 }
 
 
-void m68000_cmp_pcix_8(void)
+static void m68000_cmp_pcix_8(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint extension = read_memory_16(old_pc);
@@ -7239,7 +7419,7 @@ void m68000_cmp_pcix_8(void)
 }
 
 
-void m68000_cmp_i_8(void)
+static void m68000_cmp_i_8(void)
 {
    uint src = read_imm_8();
    uint dst = DX;
@@ -7253,7 +7433,7 @@ void m68000_cmp_i_8(void)
 }
 
 
-void m68000_cmp_d_16(void)
+static void m68000_cmp_d_16(void)
 {
    uint src = DY;
    uint dst = DX;
@@ -7267,7 +7447,7 @@ void m68000_cmp_d_16(void)
 }
 
 
-void m68000_cmp_a_16(void)
+static void m68000_cmp_a_16(void)
 {
    uint src = AY;
    uint dst = DX;
@@ -7281,7 +7461,7 @@ void m68000_cmp_a_16(void)
 }
 
 
-void m68000_cmp_ai_16(void)
+static void m68000_cmp_ai_16(void)
 {
    uint src = read_memory_16(EA_AI);
    uint dst = DX;
@@ -7295,7 +7475,7 @@ void m68000_cmp_ai_16(void)
 }
 
 
-void m68000_cmp_pi_16(void)
+static void m68000_cmp_pi_16(void)
 {
    uint src = read_memory_16(EA_PI_16);
    uint dst = DX;
@@ -7309,7 +7489,7 @@ void m68000_cmp_pi_16(void)
 }
 
 
-void m68000_cmp_pd_16(void)
+static void m68000_cmp_pd_16(void)
 {
    uint src = read_memory_16(EA_PD_16);
    uint dst = DX;
@@ -7323,7 +7503,7 @@ void m68000_cmp_pd_16(void)
 }
 
 
-void m68000_cmp_di_16(void)
+static void m68000_cmp_di_16(void)
 {
    uint src = read_memory_16(EA_DI);
    uint dst = DX;
@@ -7337,7 +7517,7 @@ void m68000_cmp_di_16(void)
 }
 
 
-void m68000_cmp_ix_16(void)
+static void m68000_cmp_ix_16(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -7354,7 +7534,7 @@ void m68000_cmp_ix_16(void)
 }
 
 
-void m68000_cmp_aw_16(void)
+static void m68000_cmp_aw_16(void)
 {
    uint src = read_memory_16(EA_AW);
    uint dst = DX;
@@ -7368,7 +7548,7 @@ void m68000_cmp_aw_16(void)
 }
 
 
-void m68000_cmp_al_16(void)
+static void m68000_cmp_al_16(void)
 {
    uint src = read_memory_16(EA_AL);
    uint dst = DX;
@@ -7382,7 +7562,7 @@ void m68000_cmp_al_16(void)
 }
 
 
-void m68000_cmp_pcdi_16(void)
+static void m68000_cmp_pcdi_16(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint ea = old_pc + make_int_16(read_memory_16(old_pc));
@@ -7398,7 +7578,7 @@ void m68000_cmp_pcdi_16(void)
 }
 
 
-void m68000_cmp_pcix_16(void)
+static void m68000_cmp_pcix_16(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint extension = read_memory_16(old_pc);
@@ -7416,7 +7596,7 @@ void m68000_cmp_pcix_16(void)
 }
 
 
-void m68000_cmp_i_16(void)
+static void m68000_cmp_i_16(void)
 {
    uint src = read_imm_16();
    uint dst = DX;
@@ -7430,7 +7610,7 @@ void m68000_cmp_i_16(void)
 }
 
 
-void m68000_cmp_d_32(void)
+static void m68000_cmp_d_32(void)
 {
    uint src = DY;
    uint dst = DX;
@@ -7444,7 +7624,7 @@ void m68000_cmp_d_32(void)
 }
 
 
-void m68000_cmp_a_32(void)
+static void m68000_cmp_a_32(void)
 {
    uint src = AY;
    uint dst = DX;
@@ -7458,7 +7638,7 @@ void m68000_cmp_a_32(void)
 }
 
 
-void m68000_cmp_ai_32(void)
+static void m68000_cmp_ai_32(void)
 {
    uint src = read_memory_32(EA_AI);
    uint dst = DX;
@@ -7472,7 +7652,7 @@ void m68000_cmp_ai_32(void)
 }
 
 
-void m68000_cmp_pi_32(void)
+static void m68000_cmp_pi_32(void)
 {
    uint src = read_memory_32(EA_PI_32);
    uint dst = DX;
@@ -7486,7 +7666,7 @@ void m68000_cmp_pi_32(void)
 }
 
 
-void m68000_cmp_pd_32(void)
+static void m68000_cmp_pd_32(void)
 {
    uint src = read_memory_32(EA_PD_32);
    uint dst = DX;
@@ -7500,7 +7680,7 @@ void m68000_cmp_pd_32(void)
 }
 
 
-void m68000_cmp_di_32(void)
+static void m68000_cmp_di_32(void)
 {
    uint src = read_memory_32(EA_DI);
    uint dst = DX;
@@ -7514,7 +7694,7 @@ void m68000_cmp_di_32(void)
 }
 
 
-void m68000_cmp_ix_32(void)
+static void m68000_cmp_ix_32(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -7531,7 +7711,7 @@ void m68000_cmp_ix_32(void)
 }
 
 
-void m68000_cmp_aw_32(void)
+static void m68000_cmp_aw_32(void)
 {
    uint src = read_memory_32(EA_AW);
    uint dst = DX;
@@ -7545,7 +7725,7 @@ void m68000_cmp_aw_32(void)
 }
 
 
-void m68000_cmp_al_32(void)
+static void m68000_cmp_al_32(void)
 {
    uint src = read_memory_32(EA_AL);
    uint dst = DX;
@@ -7559,7 +7739,7 @@ void m68000_cmp_al_32(void)
 }
 
 
-void m68000_cmp_pcdi_32(void)
+static void m68000_cmp_pcdi_32(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint ea = old_pc + make_int_16(read_memory_16(old_pc));
@@ -7575,7 +7755,7 @@ void m68000_cmp_pcdi_32(void)
 }
 
 
-void m68000_cmp_pcix_32(void)
+static void m68000_cmp_pcix_32(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint extension = read_memory_16(old_pc);
@@ -7593,7 +7773,7 @@ void m68000_cmp_pcix_32(void)
 }
 
 
-void m68000_cmp_i_32(void)
+static void m68000_cmp_i_32(void)
 {
    uint src = read_imm_32();
    uint dst = DX;
@@ -7607,7 +7787,7 @@ void m68000_cmp_i_32(void)
 }
 
 
-void m68000_cmpa_d_16(void)
+static void m68000_cmpa_d_16(void)
 {
    uint src = make_int_16(DY & 0xffff);
    uint dst = AX;
@@ -7621,7 +7801,7 @@ void m68000_cmpa_d_16(void)
 }
 
 
-void m68000_cmpa_a_16(void)
+static void m68000_cmpa_a_16(void)
 {
    uint src = make_int_16(AY&0xffff);
    uint dst = AX;
@@ -7635,7 +7815,7 @@ void m68000_cmpa_a_16(void)
 }
 
 
-void m68000_cmpa_ai_16(void)
+static void m68000_cmpa_ai_16(void)
 {
    uint src = make_int_16(read_memory_16(EA_AI));
    uint dst = AX;
@@ -7649,7 +7829,7 @@ void m68000_cmpa_ai_16(void)
 }
 
 
-void m68000_cmpa_pi_16(void)
+static void m68000_cmpa_pi_16(void)
 {
    uint src = make_int_16(read_memory_16(EA_PI_16));
    uint dst = AX;
@@ -7663,7 +7843,7 @@ void m68000_cmpa_pi_16(void)
 }
 
 
-void m68000_cmpa_pd_16(void)
+static void m68000_cmpa_pd_16(void)
 {
    uint src = make_int_16(read_memory_16(EA_PD_16));
    uint dst = AX;
@@ -7677,7 +7857,7 @@ void m68000_cmpa_pd_16(void)
 }
 
 
-void m68000_cmpa_di_16(void)
+static void m68000_cmpa_di_16(void)
 {
    uint src = make_int_16(read_memory_16(EA_DI));
    uint dst = AX;
@@ -7691,7 +7871,7 @@ void m68000_cmpa_di_16(void)
 }
 
 
-void m68000_cmpa_ix_16(void)
+static void m68000_cmpa_ix_16(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -7708,7 +7888,7 @@ void m68000_cmpa_ix_16(void)
 }
 
 
-void m68000_cmpa_aw_16(void)
+static void m68000_cmpa_aw_16(void)
 {
    uint src = make_int_16(read_memory_16(EA_AW));
    uint dst = AX;
@@ -7722,7 +7902,7 @@ void m68000_cmpa_aw_16(void)
 }
 
 
-void m68000_cmpa_al_16(void)
+static void m68000_cmpa_al_16(void)
 {
    uint src = make_int_16(read_memory_16(EA_AL));
    uint dst = AX;
@@ -7736,7 +7916,7 @@ void m68000_cmpa_al_16(void)
 }
 
 
-void m68000_cmpa_pcdi_16(void)
+static void m68000_cmpa_pcdi_16(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint ea = old_pc + make_int_16(read_memory_16(old_pc));
@@ -7752,7 +7932,7 @@ void m68000_cmpa_pcdi_16(void)
 }
 
 
-void m68000_cmpa_pcix_16(void)
+static void m68000_cmpa_pcix_16(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint extension = read_memory_16(old_pc);
@@ -7770,7 +7950,7 @@ void m68000_cmpa_pcix_16(void)
 }
 
 
-void m68000_cmpa_i_16(void)
+static void m68000_cmpa_i_16(void)
 {
    uint src = make_int_16(read_imm_16());
    uint dst = AX;
@@ -7784,7 +7964,7 @@ void m68000_cmpa_i_16(void)
 }
 
 
-void m68000_cmpa_d_32(void)
+static void m68000_cmpa_d_32(void)
 {
    uint src = DY;
    uint dst = AX;
@@ -7798,7 +7978,7 @@ void m68000_cmpa_d_32(void)
 }
 
 
-void m68000_cmpa_a_32(void)
+static void m68000_cmpa_a_32(void)
 {
    uint src = AY;
    uint dst = AX;
@@ -7812,7 +7992,7 @@ void m68000_cmpa_a_32(void)
 }
 
 
-void m68000_cmpa_ai_32(void)
+static void m68000_cmpa_ai_32(void)
 {
    uint src = read_memory_32(EA_AI);
    uint dst = AX;
@@ -7826,7 +8006,7 @@ void m68000_cmpa_ai_32(void)
 }
 
 
-void m68000_cmpa_pi_32(void)
+static void m68000_cmpa_pi_32(void)
 {
    uint src = read_memory_32(EA_PI_32);
    uint dst = AX;
@@ -7840,7 +8020,7 @@ void m68000_cmpa_pi_32(void)
 }
 
 
-void m68000_cmpa_pd_32(void)
+static void m68000_cmpa_pd_32(void)
 {
    uint src = read_memory_32(EA_PD_32);
    uint dst = AX;
@@ -7854,7 +8034,7 @@ void m68000_cmpa_pd_32(void)
 }
 
 
-void m68000_cmpa_di_32(void)
+static void m68000_cmpa_di_32(void)
 {
    uint src = read_memory_32(EA_DI);
    uint dst = AX;
@@ -7868,7 +8048,7 @@ void m68000_cmpa_di_32(void)
 }
 
 
-void m68000_cmpa_ix_32(void)
+static void m68000_cmpa_ix_32(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -7885,7 +8065,7 @@ void m68000_cmpa_ix_32(void)
 }
 
 
-void m68000_cmpa_aw_32(void)
+static void m68000_cmpa_aw_32(void)
 {
    uint src = read_memory_32(EA_AW);
    uint dst = AX;
@@ -7899,7 +8079,7 @@ void m68000_cmpa_aw_32(void)
 }
 
 
-void m68000_cmpa_al_32(void)
+static void m68000_cmpa_al_32(void)
 {
    uint src = read_memory_32(EA_AL);
    uint dst = AX;
@@ -7913,7 +8093,7 @@ void m68000_cmpa_al_32(void)
 }
 
 
-void m68000_cmpa_pcdi_32(void)
+static void m68000_cmpa_pcdi_32(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint ea = old_pc + make_int_16(read_memory_16(old_pc));
@@ -7929,7 +8109,7 @@ void m68000_cmpa_pcdi_32(void)
 }
 
 
-void m68000_cmpa_pcix_32(void)
+static void m68000_cmpa_pcix_32(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint extension = read_memory_16(old_pc);
@@ -7947,7 +8127,7 @@ void m68000_cmpa_pcix_32(void)
 }
 
 
-void m68000_cmpa_i_32(void)
+static void m68000_cmpa_i_32(void)
 {
    uint src = read_imm_32();
    uint dst = AX;
@@ -7961,7 +8141,7 @@ void m68000_cmpa_i_32(void)
 }
 
 
-void m68000_cmpi_d_8(void)
+static void m68000_cmpi_d_8(void)
 {
    uint src = read_imm_8();
    uint dst = DY;
@@ -7975,7 +8155,7 @@ void m68000_cmpi_d_8(void)
 }
 
 
-void m68000_cmpi_ai_8(void)
+static void m68000_cmpi_ai_8(void)
 {
    uint src = read_imm_8();
    uint dst = read_memory_8(EA_AI);
@@ -7989,7 +8169,7 @@ void m68000_cmpi_ai_8(void)
 }
 
 
-void m68000_cmpi_pi_8(void)
+static void m68000_cmpi_pi_8(void)
 {
    uint src = read_imm_8();
    uint dst = read_memory_8(EA_PI_8);
@@ -8003,7 +8183,7 @@ void m68000_cmpi_pi_8(void)
 }
 
 
-void m68000_cmpi_pi7_8(void)
+static void m68000_cmpi_pi7_8(void)
 {
    uint src = read_imm_8();
    uint dst = read_memory_8(EA_PI7_8);
@@ -8017,7 +8197,7 @@ void m68000_cmpi_pi7_8(void)
 }
 
 
-void m68000_cmpi_pd_8(void)
+static void m68000_cmpi_pd_8(void)
 {
    uint src = read_imm_8();
    uint dst = read_memory_8(EA_PD_8);
@@ -8031,7 +8211,7 @@ void m68000_cmpi_pd_8(void)
 }
 
 
-void m68000_cmpi_pd7_8(void)
+static void m68000_cmpi_pd7_8(void)
 {
    uint src = read_imm_8();
    uint dst = read_memory_8(EA_PD7_8);
@@ -8045,7 +8225,7 @@ void m68000_cmpi_pd7_8(void)
 }
 
 
-void m68000_cmpi_di_8(void)
+static void m68000_cmpi_di_8(void)
 {
    uint src = read_imm_8();
    uint dst = read_memory_8(EA_DI);
@@ -8059,7 +8239,7 @@ void m68000_cmpi_di_8(void)
 }
 
 
-void m68000_cmpi_ix_8(void)
+static void m68000_cmpi_ix_8(void)
 {
    uint src = read_imm_8();
    uint extension = read_imm_16();
@@ -8076,7 +8256,7 @@ void m68000_cmpi_ix_8(void)
 }
 
 
-void m68000_cmpi_aw_8(void)
+static void m68000_cmpi_aw_8(void)
 {
    uint src = read_imm_8();
    uint dst = read_memory_8(EA_AW);
@@ -8090,7 +8270,7 @@ void m68000_cmpi_aw_8(void)
 }
 
 
-void m68000_cmpi_al_8(void)
+static void m68000_cmpi_al_8(void)
 {
    uint src = read_imm_8();
    uint dst = read_memory_8(EA_AL);
@@ -8104,7 +8284,7 @@ void m68000_cmpi_al_8(void)
 }
 
 
-void m68000_cmpi_d_16(void)
+static void m68000_cmpi_d_16(void)
 {
    uint src = read_imm_16();
    uint dst = DY;
@@ -8118,7 +8298,7 @@ void m68000_cmpi_d_16(void)
 }
 
 
-void m68000_cmpi_ai_16(void)
+static void m68000_cmpi_ai_16(void)
 {
    uint src = read_imm_16();
    uint dst = read_memory_16(EA_AI);
@@ -8132,7 +8312,7 @@ void m68000_cmpi_ai_16(void)
 }
 
 
-void m68000_cmpi_pi_16(void)
+static void m68000_cmpi_pi_16(void)
 {
    uint src = read_imm_16();
    uint dst = read_memory_16(EA_PI_16);
@@ -8146,7 +8326,7 @@ void m68000_cmpi_pi_16(void)
 }
 
 
-void m68000_cmpi_pd_16(void)
+static void m68000_cmpi_pd_16(void)
 {
    uint src = read_imm_16();
    uint dst = read_memory_16(EA_PD_16);
@@ -8160,7 +8340,7 @@ void m68000_cmpi_pd_16(void)
 }
 
 
-void m68000_cmpi_di_16(void)
+static void m68000_cmpi_di_16(void)
 {
    uint src = read_imm_16();
    uint dst = read_memory_16(EA_DI);
@@ -8174,7 +8354,7 @@ void m68000_cmpi_di_16(void)
 }
 
 
-void m68000_cmpi_ix_16(void)
+static void m68000_cmpi_ix_16(void)
 {
    uint src = read_imm_16();
    uint extension = read_imm_16();
@@ -8191,7 +8371,7 @@ void m68000_cmpi_ix_16(void)
 }
 
 
-void m68000_cmpi_aw_16(void)
+static void m68000_cmpi_aw_16(void)
 {
    uint src = read_imm_16();
    uint dst = read_memory_16(EA_AW);
@@ -8205,7 +8385,7 @@ void m68000_cmpi_aw_16(void)
 }
 
 
-void m68000_cmpi_al_16(void)
+static void m68000_cmpi_al_16(void)
 {
    uint src = read_imm_16();
    uint dst = read_memory_16(EA_AL);
@@ -8219,7 +8399,7 @@ void m68000_cmpi_al_16(void)
 }
 
 
-void m68000_cmpi_d_32(void)
+static void m68000_cmpi_d_32(void)
 {
    uint src = read_imm_32();
    uint dst = DY;
@@ -8233,7 +8413,7 @@ void m68000_cmpi_d_32(void)
 }
 
 
-void m68000_cmpi_ai_32(void)
+static void m68000_cmpi_ai_32(void)
 {
    uint src = read_imm_32();
    uint dst = read_memory_32(EA_AI);
@@ -8247,7 +8427,7 @@ void m68000_cmpi_ai_32(void)
 }
 
 
-void m68000_cmpi_pi_32(void)
+static void m68000_cmpi_pi_32(void)
 {
    uint src = read_imm_32();
    uint dst = read_memory_32(EA_PI_32);
@@ -8261,7 +8441,7 @@ void m68000_cmpi_pi_32(void)
 }
 
 
-void m68000_cmpi_pd_32(void)
+static void m68000_cmpi_pd_32(void)
 {
    uint src = read_imm_32();
    uint dst = read_memory_32(EA_PD_32);
@@ -8275,7 +8455,7 @@ void m68000_cmpi_pd_32(void)
 }
 
 
-void m68000_cmpi_di_32(void)
+static void m68000_cmpi_di_32(void)
 {
    uint src = read_imm_32();
    uint dst = read_memory_32(EA_DI);
@@ -8289,7 +8469,7 @@ void m68000_cmpi_di_32(void)
 }
 
 
-void m68000_cmpi_ix_32(void)
+static void m68000_cmpi_ix_32(void)
 {
    uint src = read_imm_32();
    uint extension = read_imm_16();
@@ -8306,7 +8486,7 @@ void m68000_cmpi_ix_32(void)
 }
 
 
-void m68000_cmpi_aw_32(void)
+static void m68000_cmpi_aw_32(void)
 {
    uint src = read_imm_32();
    uint dst = read_memory_32(EA_AW);
@@ -8320,7 +8500,7 @@ void m68000_cmpi_aw_32(void)
 }
 
 
-void m68000_cmpi_al_32(void)
+static void m68000_cmpi_al_32(void)
 {
    uint src = read_imm_32();
    uint dst = read_memory_32(EA_AL);
@@ -8334,7 +8514,7 @@ void m68000_cmpi_al_32(void)
 }
 
 
-void m68000_cmpm_8_ax7(void)
+static void m68000_cmpm_8_ax7(void)
 {
    uint src = read_memory_8(AY++);
    uint dst = read_memory_8((g_cpu_ar[7]+=2)-2);
@@ -8348,7 +8528,7 @@ void m68000_cmpm_8_ax7(void)
 }
 
 
-void m68000_cmpm_8_ay7(void)
+static void m68000_cmpm_8_ay7(void)
 {
    uint src = read_memory_8((g_cpu_ar[7]+=2)-2);
    uint dst = read_memory_8(AX++);
@@ -8362,7 +8542,7 @@ void m68000_cmpm_8_ay7(void)
 }
 
 
-void m68000_cmpm_8_axy7(void)
+static void m68000_cmpm_8_axy7(void)
 {
    uint src = read_memory_8((g_cpu_ar[7]+=2)-2);
    uint dst = read_memory_8((g_cpu_ar[7]+=2)-2);
@@ -8376,7 +8556,7 @@ void m68000_cmpm_8_axy7(void)
 }
 
 
-void m68000_cmpm_8(void)
+static void m68000_cmpm_8(void)
 {
    uint src = read_memory_8(AY++);
    uint dst = read_memory_8(AX++);
@@ -8390,7 +8570,7 @@ void m68000_cmpm_8(void)
 }
 
 
-void m68000_cmpm_16(void)
+static void m68000_cmpm_16(void)
 {
    uint src = read_memory_16((AY+=2)-2);
    uint dst = read_memory_16((AX+=2)-2);
@@ -8404,7 +8584,7 @@ void m68000_cmpm_16(void)
 }
 
 
-void m68000_cmpm_32(void)
+static void m68000_cmpm_32(void)
 {
    uint src = read_memory_32((AY+=4)-4);
    uint dst = read_memory_32((AX+=4)-4);
@@ -8418,14 +8598,14 @@ void m68000_cmpm_32(void)
 }
 
 
-void m68000_dbt(void)
+static void m68000_dbt(void)
 {
    g_cpu_pc += 2;
    USE_CLKS(12);
 }
 
 
-void m68000_dbf(void)
+static void m68000_dbf(void)
 {
    uint* d_reg = &DY;
    uint res = MASK_OUT_ABOVE_16(*d_reg-1);
@@ -8441,7 +8621,7 @@ void m68000_dbf(void)
 }
 
 
-void m68000_dbhi(void)
+static void m68000_dbhi(void)
 {
    if(CONDITION_NOT_HI)
    {
@@ -8463,7 +8643,7 @@ void m68000_dbhi(void)
 }
 
 
-void m68000_dbls(void)
+static void m68000_dbls(void)
 {
    if(CONDITION_NOT_LS)
    {
@@ -8485,7 +8665,7 @@ void m68000_dbls(void)
 }
 
 
-void m68000_dbcc(void)
+static void m68000_dbcc(void)
 {
    if(CONDITION_NOT_CC)
    {
@@ -8507,7 +8687,7 @@ void m68000_dbcc(void)
 }
 
 
-void m68000_dbcs(void)
+static void m68000_dbcs(void)
 {
    if(CONDITION_NOT_CS)
    {
@@ -8529,7 +8709,7 @@ void m68000_dbcs(void)
 }
 
 
-void m68000_dbne(void)
+static void m68000_dbne(void)
 {
    if(CONDITION_NOT_NE)
    {
@@ -8551,7 +8731,7 @@ void m68000_dbne(void)
 }
 
 
-void m68000_dbeq(void)
+static void m68000_dbeq(void)
 {
    if(CONDITION_NOT_EQ)
    {
@@ -8573,7 +8753,7 @@ void m68000_dbeq(void)
 }
 
 
-void m68000_dbvc(void)
+static void m68000_dbvc(void)
 {
    if(CONDITION_NOT_VC)
    {
@@ -8595,7 +8775,7 @@ void m68000_dbvc(void)
 }
 
 
-void m68000_dbvs(void)
+static void m68000_dbvs(void)
 {
    if(CONDITION_NOT_VS)
    {
@@ -8617,7 +8797,7 @@ void m68000_dbvs(void)
 }
 
 
-void m68000_dbpl(void)
+static void m68000_dbpl(void)
 {
    if(CONDITION_NOT_PL)
    {
@@ -8639,7 +8819,7 @@ void m68000_dbpl(void)
 }
 
 
-void m68000_dbmi(void)
+static void m68000_dbmi(void)
 {
    if(CONDITION_NOT_MI)
    {
@@ -8661,7 +8841,7 @@ void m68000_dbmi(void)
 }
 
 
-void m68000_dbge(void)
+static void m68000_dbge(void)
 {
    if(CONDITION_NOT_GE)
    {
@@ -8683,7 +8863,7 @@ void m68000_dbge(void)
 }
 
 
-void m68000_dblt(void)
+static void m68000_dblt(void)
 {
    if(CONDITION_NOT_LT)
    {
@@ -8705,7 +8885,7 @@ void m68000_dblt(void)
 }
 
 
-void m68000_dbgt(void)
+static void m68000_dbgt(void)
 {
    if(CONDITION_NOT_GT)
    {
@@ -8727,7 +8907,7 @@ void m68000_dbgt(void)
 }
 
 
-void m68000_dble(void)
+static void m68000_dble(void)
 {
    if(CONDITION_NOT_LE)
    {
@@ -8749,7 +8929,7 @@ void m68000_dble(void)
 }
 
 
-void m68000_divs_d(void)
+static void m68000_divs_d(void)
 {
    uint* d_dst = &DX;
    int src = make_int_16(MASK_OUT_ABOVE_16(DY));
@@ -8778,7 +8958,7 @@ void m68000_divs_d(void)
 }
 
 
-void m68000_divs_ai(void)
+static void m68000_divs_ai(void)
 {
    uint* d_dst = &DX;
    int src = make_int_16(read_memory_16(EA_AI));
@@ -8807,7 +8987,7 @@ void m68000_divs_ai(void)
 }
 
 
-void m68000_divs_pi(void)
+static void m68000_divs_pi(void)
 {
    uint* d_dst = &DX;
    int src = make_int_16(read_memory_16(EA_PI_16));
@@ -8836,7 +9016,7 @@ void m68000_divs_pi(void)
 }
 
 
-void m68000_divs_pd(void)
+static void m68000_divs_pd(void)
 {
    uint* d_dst = &DX;
    int src = make_int_16(read_memory_16(EA_PD_16));
@@ -8865,7 +9045,7 @@ void m68000_divs_pd(void)
 }
 
 
-void m68000_divs_di(void)
+static void m68000_divs_di(void)
 {
    uint* d_dst = &DX;
    int src = make_int_16(read_memory_16(EA_DI));
@@ -8894,7 +9074,7 @@ void m68000_divs_di(void)
 }
 
 
-void m68000_divs_ix(void)
+static void m68000_divs_ix(void)
 {
    uint* d_dst = &DX;
    uint extension = read_imm_16();
@@ -8926,7 +9106,7 @@ void m68000_divs_ix(void)
 }
 
 
-void m68000_divs_aw(void)
+static void m68000_divs_aw(void)
 {
    uint* d_dst = &DX;
    int src = make_int_16(read_memory_16(EA_AW));
@@ -8955,7 +9135,7 @@ void m68000_divs_aw(void)
 }
 
 
-void m68000_divs_al(void)
+static void m68000_divs_al(void)
 {
    uint* d_dst = &DX;
    int src = make_int_16(read_memory_16(EA_AL));
@@ -8984,7 +9164,7 @@ void m68000_divs_al(void)
 }
 
 
-void m68000_divs_pcdi(void)
+static void m68000_divs_pcdi(void)
 {
    uint* d_dst = &DX;
    uint old_pc = (g_cpu_pc+=2) - 2;
@@ -9015,7 +9195,7 @@ void m68000_divs_pcdi(void)
 }
 
 
-void m68000_divs_pcix(void)
+static void m68000_divs_pcix(void)
 {
    uint* d_dst = &DX;
    uint old_pc = (g_cpu_pc+=2) - 2;
@@ -9048,7 +9228,7 @@ void m68000_divs_pcix(void)
 }
 
 
-void m68000_divs_i(void)
+static void m68000_divs_i(void)
 {
    uint* d_dst = &DX;
    int src = make_int_16(read_imm_16());
@@ -9077,7 +9257,7 @@ void m68000_divs_i(void)
 }
 
 
-void m68000_divu_d(void)
+static void m68000_divu_d(void)
 {
    uint* d_dst = &DX;
    uint src = MASK_OUT_ABOVE_16(DY);
@@ -9106,7 +9286,7 @@ void m68000_divu_d(void)
 }
 
 
-void m68000_divu_ai(void)
+static void m68000_divu_ai(void)
 {
    uint* d_dst = &DX;
    uint src = read_memory_16(EA_AI);
@@ -9135,7 +9315,7 @@ void m68000_divu_ai(void)
 }
 
 
-void m68000_divu_pi(void)
+static void m68000_divu_pi(void)
 {
    uint* d_dst = &DX;
    uint src = read_memory_16(EA_PI_16);
@@ -9164,7 +9344,7 @@ void m68000_divu_pi(void)
 }
 
 
-void m68000_divu_pd(void)
+static void m68000_divu_pd(void)
 {
    uint* d_dst = &DX;
    uint src = read_memory_16(EA_PD_16);
@@ -9193,7 +9373,7 @@ void m68000_divu_pd(void)
 }
 
 
-void m68000_divu_di(void)
+static void m68000_divu_di(void)
 {
    uint* d_dst = &DX;
    uint src = read_memory_16(EA_DI);
@@ -9222,7 +9402,7 @@ void m68000_divu_di(void)
 }
 
 
-void m68000_divu_ix(void)
+static void m68000_divu_ix(void)
 {
    uint* d_dst = &DX;
    uint extension = read_imm_16();
@@ -9254,7 +9434,7 @@ void m68000_divu_ix(void)
 }
 
 
-void m68000_divu_aw(void)
+static void m68000_divu_aw(void)
 {
    uint* d_dst = &DX;
    uint src = read_memory_16(EA_AW);
@@ -9283,7 +9463,7 @@ void m68000_divu_aw(void)
 }
 
 
-void m68000_divu_al(void)
+static void m68000_divu_al(void)
 {
    uint* d_dst = &DX;
    uint src = read_memory_16(EA_AL);
@@ -9312,7 +9492,7 @@ void m68000_divu_al(void)
 }
 
 
-void m68000_divu_pcdi(void)
+static void m68000_divu_pcdi(void)
 {
    uint* d_dst = &DX;
    uint old_pc = (g_cpu_pc+=2) - 2;
@@ -9343,7 +9523,7 @@ void m68000_divu_pcdi(void)
 }
 
 
-void m68000_divu_pcix(void)
+static void m68000_divu_pcix(void)
 {
    uint* d_dst = &DX;
    uint old_pc = (g_cpu_pc+=2) - 2;
@@ -9376,7 +9556,7 @@ void m68000_divu_pcix(void)
 }
 
 
-void m68000_divu_i(void)
+static void m68000_divu_i(void)
 {
    uint* d_dst = &DX;
    uint src = read_imm_16();
@@ -9405,7 +9585,7 @@ void m68000_divu_i(void)
 }
 
 
-void m68000_eor_d_8(void)
+static void m68000_eor_d_8(void)
 {
    uint res = MASK_OUT_ABOVE_8(DY ^= MASK_OUT_ABOVE_8(DX));
 
@@ -9416,7 +9596,7 @@ void m68000_eor_d_8(void)
 }
 
 
-void m68000_eor_ai_8(void)
+static void m68000_eor_ai_8(void)
 {
    uint ea = EA_AI;
    uint res = MASK_OUT_ABOVE_8(DX ^ read_memory_8(ea));
@@ -9430,7 +9610,7 @@ void m68000_eor_ai_8(void)
 }
 
 
-void m68000_eor_pi_8(void)
+static void m68000_eor_pi_8(void)
 {
    uint ea = EA_PI_8;
    uint res = MASK_OUT_ABOVE_8(DX ^ read_memory_8(ea));
@@ -9444,7 +9624,7 @@ void m68000_eor_pi_8(void)
 }
 
 
-void m68000_eor_pi7_8(void)
+static void m68000_eor_pi7_8(void)
 {
    uint ea = EA_PI7_8;
    uint res = MASK_OUT_ABOVE_8(DX ^ read_memory_8(ea));
@@ -9458,7 +9638,7 @@ void m68000_eor_pi7_8(void)
 }
 
 
-void m68000_eor_pd_8(void)
+static void m68000_eor_pd_8(void)
 {
    uint ea = EA_PD_8;
    uint res = MASK_OUT_ABOVE_8(DX ^ read_memory_8(ea));
@@ -9472,7 +9652,7 @@ void m68000_eor_pd_8(void)
 }
 
 
-void m68000_eor_pd7_8(void)
+static void m68000_eor_pd7_8(void)
 {
    uint ea = EA_PD7_8;
    uint res = MASK_OUT_ABOVE_8(DX ^ read_memory_8(ea));
@@ -9486,7 +9666,7 @@ void m68000_eor_pd7_8(void)
 }
 
 
-void m68000_eor_di_8(void)
+static void m68000_eor_di_8(void)
 {
    uint ea = EA_DI;
    uint res = MASK_OUT_ABOVE_8(DX ^ read_memory_8(ea));
@@ -9500,7 +9680,7 @@ void m68000_eor_di_8(void)
 }
 
 
-void m68000_eor_ix_8(void)
+static void m68000_eor_ix_8(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -9516,7 +9696,7 @@ void m68000_eor_ix_8(void)
 }
 
 
-void m68000_eor_aw_8(void)
+static void m68000_eor_aw_8(void)
 {
    uint ea = EA_AW;
    uint res = MASK_OUT_ABOVE_8(DX ^ read_memory_8(ea));
@@ -9530,7 +9710,7 @@ void m68000_eor_aw_8(void)
 }
 
 
-void m68000_eor_al_8(void)
+static void m68000_eor_al_8(void)
 {
    uint ea = EA_AL;
    uint res = MASK_OUT_ABOVE_8(DX ^ read_memory_8(ea));
@@ -9544,7 +9724,7 @@ void m68000_eor_al_8(void)
 }
 
 
-void m68000_eor_d_16(void)
+static void m68000_eor_d_16(void)
 {
    uint res = MASK_OUT_ABOVE_16(DY ^= MASK_OUT_ABOVE_16(DX));
 
@@ -9555,7 +9735,7 @@ void m68000_eor_d_16(void)
 }
 
 
-void m68000_eor_ai_16(void)
+static void m68000_eor_ai_16(void)
 {
    uint ea = EA_AI;
    uint res = MASK_OUT_ABOVE_16(DX ^ read_memory_16(ea));
@@ -9569,7 +9749,7 @@ void m68000_eor_ai_16(void)
 }
 
 
-void m68000_eor_pi_16(void)
+static void m68000_eor_pi_16(void)
 {
    uint ea = EA_PI_16;
    uint res = MASK_OUT_ABOVE_16(DX ^ read_memory_16(ea));
@@ -9583,7 +9763,7 @@ void m68000_eor_pi_16(void)
 }
 
 
-void m68000_eor_pd_16(void)
+static void m68000_eor_pd_16(void)
 {
    uint ea = EA_PD_16;
    uint res = MASK_OUT_ABOVE_16(DX ^ read_memory_16(ea));
@@ -9597,7 +9777,7 @@ void m68000_eor_pd_16(void)
 }
 
 
-void m68000_eor_di_16(void)
+static void m68000_eor_di_16(void)
 {
    uint ea = EA_DI;
    uint res = MASK_OUT_ABOVE_16(DX ^ read_memory_16(ea));
@@ -9611,7 +9791,7 @@ void m68000_eor_di_16(void)
 }
 
 
-void m68000_eor_ix_16(void)
+static void m68000_eor_ix_16(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -9627,7 +9807,7 @@ void m68000_eor_ix_16(void)
 }
 
 
-void m68000_eor_aw_16(void)
+static void m68000_eor_aw_16(void)
 {
    uint ea = EA_AW;
    uint res = MASK_OUT_ABOVE_16(DX ^ read_memory_16(ea));
@@ -9641,7 +9821,7 @@ void m68000_eor_aw_16(void)
 }
 
 
-void m68000_eor_al_16(void)
+static void m68000_eor_al_16(void)
 {
    uint ea = EA_AL;
    uint res = MASK_OUT_ABOVE_16(DX ^ read_memory_16(ea));
@@ -9655,7 +9835,7 @@ void m68000_eor_al_16(void)
 }
 
 
-void m68000_eor_d_32(void)
+static void m68000_eor_d_32(void)
 {
    uint res = DY ^= DX;
 
@@ -9666,7 +9846,7 @@ void m68000_eor_d_32(void)
 }
 
 
-void m68000_eor_ai_32(void)
+static void m68000_eor_ai_32(void)
 {
    uint ea = EA_AI;
    uint res = DX ^ read_memory_32(ea);
@@ -9680,7 +9860,7 @@ void m68000_eor_ai_32(void)
 }
 
 
-void m68000_eor_pi_32(void)
+static void m68000_eor_pi_32(void)
 {
    uint ea = EA_PI_32;
    uint res = DX ^ read_memory_32(ea);
@@ -9694,7 +9874,7 @@ void m68000_eor_pi_32(void)
 }
 
 
-void m68000_eor_pd_32(void)
+static void m68000_eor_pd_32(void)
 {
    uint ea = EA_PD_32;
    uint res = DX ^ read_memory_32(ea);
@@ -9708,7 +9888,7 @@ void m68000_eor_pd_32(void)
 }
 
 
-void m68000_eor_di_32(void)
+static void m68000_eor_di_32(void)
 {
    uint ea = EA_DI;
    uint res = DX ^ read_memory_32(ea);
@@ -9722,7 +9902,7 @@ void m68000_eor_di_32(void)
 }
 
 
-void m68000_eor_ix_32(void)
+static void m68000_eor_ix_32(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -9738,7 +9918,7 @@ void m68000_eor_ix_32(void)
 }
 
 
-void m68000_eor_aw_32(void)
+static void m68000_eor_aw_32(void)
 {
    uint ea = EA_AW;
    uint res = DX ^ read_memory_32(ea);
@@ -9752,7 +9932,7 @@ void m68000_eor_aw_32(void)
 }
 
 
-void m68000_eor_al_32(void)
+static void m68000_eor_al_32(void)
 {
    uint ea = EA_AL;
    uint res = DX ^ read_memory_32(ea);
@@ -9766,7 +9946,7 @@ void m68000_eor_al_32(void)
 }
 
 
-void m68000_eori_d_8(void)
+static void m68000_eori_d_8(void)
 {
    uint res = MASK_OUT_ABOVE_8(DY ^= read_imm_8());
 
@@ -9777,7 +9957,7 @@ void m68000_eori_d_8(void)
 }
 
 
-void m68000_eori_ai_8(void)
+static void m68000_eori_ai_8(void)
 {
    uint tmp = read_imm_8();
    uint ea = EA_AI;
@@ -9792,7 +9972,7 @@ void m68000_eori_ai_8(void)
 }
 
 
-void m68000_eori_pi_8(void)
+static void m68000_eori_pi_8(void)
 {
    uint tmp = read_imm_8();
    uint ea = EA_PI_8;
@@ -9807,7 +9987,7 @@ void m68000_eori_pi_8(void)
 }
 
 
-void m68000_eori_pi7_8(void)
+static void m68000_eori_pi7_8(void)
 {
    uint tmp = read_imm_8();
    uint ea = EA_PI7_8;
@@ -9822,7 +10002,7 @@ void m68000_eori_pi7_8(void)
 }
 
 
-void m68000_eori_pd_8(void)
+static void m68000_eori_pd_8(void)
 {
    uint tmp = read_imm_8();
    uint ea = EA_PD_8;
@@ -9837,7 +10017,7 @@ void m68000_eori_pd_8(void)
 }
 
 
-void m68000_eori_pd7_8(void)
+static void m68000_eori_pd7_8(void)
 {
    uint tmp = read_imm_8();
    uint ea = EA_PD7_8;
@@ -9852,7 +10032,7 @@ void m68000_eori_pd7_8(void)
 }
 
 
-void m68000_eori_di_8(void)
+static void m68000_eori_di_8(void)
 {
    uint tmp = read_imm_8();
    uint ea = EA_DI;
@@ -9867,7 +10047,7 @@ void m68000_eori_di_8(void)
 }
 
 
-void m68000_eori_ix_8(void)
+static void m68000_eori_ix_8(void)
 {
    uint tmp = read_imm_8();
    uint extension = read_imm_16();
@@ -9884,7 +10064,7 @@ void m68000_eori_ix_8(void)
 }
 
 
-void m68000_eori_aw_8(void)
+static void m68000_eori_aw_8(void)
 {
    uint tmp = read_imm_8();
    uint ea = EA_AW;
@@ -9899,7 +10079,7 @@ void m68000_eori_aw_8(void)
 }
 
 
-void m68000_eori_al_8(void)
+static void m68000_eori_al_8(void)
 {
    uint tmp = read_imm_8();
    uint ea = EA_AL;
@@ -9914,7 +10094,7 @@ void m68000_eori_al_8(void)
 }
 
 
-void m68000_eori_d_16(void)
+static void m68000_eori_d_16(void)
 {
    uint res = MASK_OUT_ABOVE_16(DY ^= read_imm_16());
 
@@ -9925,7 +10105,7 @@ void m68000_eori_d_16(void)
 }
 
 
-void m68000_eori_ai_16(void)
+static void m68000_eori_ai_16(void)
 {
    uint tmp = read_imm_16();
    uint ea = EA_AI;
@@ -9940,7 +10120,7 @@ void m68000_eori_ai_16(void)
 }
 
 
-void m68000_eori_pi_16(void)
+static void m68000_eori_pi_16(void)
 {
    uint tmp = read_imm_16();
    uint ea = EA_PI_16;
@@ -9955,7 +10135,7 @@ void m68000_eori_pi_16(void)
 }
 
 
-void m68000_eori_pd_16(void)
+static void m68000_eori_pd_16(void)
 {
    uint tmp = read_imm_16();
    uint ea = EA_PD_16;
@@ -9970,7 +10150,7 @@ void m68000_eori_pd_16(void)
 }
 
 
-void m68000_eori_di_16(void)
+static void m68000_eori_di_16(void)
 {
    uint tmp = read_imm_16();
    uint ea = EA_DI;
@@ -9985,7 +10165,7 @@ void m68000_eori_di_16(void)
 }
 
 
-void m68000_eori_ix_16(void)
+static void m68000_eori_ix_16(void)
 {
    uint tmp = read_imm_16();
    uint extension = read_imm_16();
@@ -10002,7 +10182,7 @@ void m68000_eori_ix_16(void)
 }
 
 
-void m68000_eori_aw_16(void)
+static void m68000_eori_aw_16(void)
 {
    uint tmp = read_imm_16();
    uint ea = EA_AW;
@@ -10017,7 +10197,7 @@ void m68000_eori_aw_16(void)
 }
 
 
-void m68000_eori_al_16(void)
+static void m68000_eori_al_16(void)
 {
    uint tmp = read_imm_16();
    uint ea = EA_AL;
@@ -10032,7 +10212,7 @@ void m68000_eori_al_16(void)
 }
 
 
-void m68000_eori_d_32(void)
+static void m68000_eori_d_32(void)
 {
    uint res = DY ^= read_imm_32();
 
@@ -10043,7 +10223,7 @@ void m68000_eori_d_32(void)
 }
 
 
-void m68000_eori_ai_32(void)
+static void m68000_eori_ai_32(void)
 {
    uint tmp = read_imm_32();
    uint ea = EA_AI;
@@ -10058,7 +10238,7 @@ void m68000_eori_ai_32(void)
 }
 
 
-void m68000_eori_pi_32(void)
+static void m68000_eori_pi_32(void)
 {
    uint tmp = read_imm_32();
    uint ea = EA_PI_32;
@@ -10073,7 +10253,7 @@ void m68000_eori_pi_32(void)
 }
 
 
-void m68000_eori_pd_32(void)
+static void m68000_eori_pd_32(void)
 {
    uint tmp = read_imm_32();
    uint ea = EA_PD_32;
@@ -10088,7 +10268,7 @@ void m68000_eori_pd_32(void)
 }
 
 
-void m68000_eori_di_32(void)
+static void m68000_eori_di_32(void)
 {
    uint tmp = read_imm_32();
    uint ea = EA_DI;
@@ -10103,7 +10283,7 @@ void m68000_eori_di_32(void)
 }
 
 
-void m68000_eori_ix_32(void)
+static void m68000_eori_ix_32(void)
 {
    uint tmp = read_imm_32();
    uint extension = read_imm_16();
@@ -10120,7 +10300,7 @@ void m68000_eori_ix_32(void)
 }
 
 
-void m68000_eori_aw_32(void)
+static void m68000_eori_aw_32(void)
 {
    uint tmp = read_imm_32();
    uint ea = EA_AW;
@@ -10135,7 +10315,7 @@ void m68000_eori_aw_32(void)
 }
 
 
-void m68000_eori_al_32(void)
+static void m68000_eori_al_32(void)
 {
    uint tmp = read_imm_32();
    uint ea = EA_AL;
@@ -10150,14 +10330,14 @@ void m68000_eori_al_32(void)
 }
 
 
-void m68000_eori_to_ccr(void)
+static void m68000_eori_to_ccr(void)
 {
    set_ccr(get_ccr() ^ read_imm_8());
    USE_CLKS(20);
 }
 
 
-void m68000_eori_to_sr(void)
+static void m68000_eori_to_sr(void)
 {
    uint eor_val = read_imm_16();
 
@@ -10171,7 +10351,7 @@ void m68000_eori_to_sr(void)
 }
 
 
-void m68000_exg_dd(void)
+static void m68000_exg_dd(void)
 {
    uint* reg_a = &DX;
    uint* reg_b = &DY;
@@ -10184,7 +10364,7 @@ void m68000_exg_dd(void)
 }
 
 
-void m68000_exg_aa(void)
+static void m68000_exg_aa(void)
 {
    uint* reg_a = &AX;
    uint* reg_b = &AY;
@@ -10197,7 +10377,7 @@ void m68000_exg_aa(void)
 }
 
 
-void m68000_exg_da(void)
+static void m68000_exg_da(void)
 {
    uint* reg_a = &DX;
    uint* reg_b = &AY;
@@ -10210,7 +10390,7 @@ void m68000_exg_da(void)
 }
 
 
-void m68000_ext_16(void)
+static void m68000_ext_16(void)
 {
    uint* d_dst = &DY;
 
@@ -10223,7 +10403,7 @@ void m68000_ext_16(void)
 }
 
 
-void m68000_ext_32(void)
+static void m68000_ext_32(void)
 {
    uint* d_dst = &DY;
 
@@ -10236,85 +10416,85 @@ void m68000_ext_32(void)
 }
 
 
-void m68000_jmp_ai(void)
+static void m68000_jmp_ai(void)
 {
    branch_long(EA_AI);
-   USE_CLKS(4+8);
+   USE_CLKS(0+8);
 }
 
 
-void m68000_jmp_di(void)
+static void m68000_jmp_di(void)
 {
    branch_long(EA_DI);
-   USE_CLKS(4+10);
+   USE_CLKS(0+10);
 }
 
 
-void m68000_jmp_ix(void)
+static void m68000_jmp_ix(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
    uint ea = AY + make_int_8(extension & 0xff) + (BIT_B(extension) ? index : make_int_16(index & 0xffff));
    branch_long(ea);
-   USE_CLKS(4+14);
+   USE_CLKS(0+14);
 }
 
 
-void m68000_jmp_aw(void)
+static void m68000_jmp_aw(void)
 {
    branch_long(EA_AW);
-   USE_CLKS(4+10);
+   USE_CLKS(0+10);
 }
 
 
-void m68000_jmp_al(void)
+static void m68000_jmp_al(void)
 {
    branch_long(EA_AL);
-   USE_CLKS(4+12);
+   USE_CLKS(0+12);
 }
 
 
-void m68000_jmp_pcdi(void)
+static void m68000_jmp_pcdi(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint ea = old_pc + make_int_16(read_memory_16(old_pc));
    branch_long(ea);
-   USE_CLKS(4+10);
+   USE_CLKS(0+10);
 }
 
 
-void m68000_jmp_pcix(void)
+static void m68000_jmp_pcix(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint extension = read_memory_16(old_pc);
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
    uint ea = old_pc + make_int_8(extension & 0xff) + (BIT_B(extension) ? index : make_int_16(index & 0xffff));
    branch_long(ea);
-   USE_CLKS(4+14);
+   USE_CLKS(0+14);
 }
 
 
-void m68000_jsr_ai(void)
+static void m68000_jsr_ai(void)
 {
    uint ea = EA_AI;
 
    push_32(g_cpu_pc);
    branch_long(ea);
-   USE_CLKS(12+16);
+   USE_CLKS(0+16);
 }
 
 
-void m68000_jsr_di(void)
+static void m68000_jsr_di(void)
 {
    uint ea = EA_DI;
 
    push_32(g_cpu_pc);
    branch_long(ea);
-   USE_CLKS(12+18);
+   USE_CLKS(0+18);
 }
 
 
-void m68000_jsr_ix(void)
+static void m68000_jsr_ix(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -10322,42 +10502,42 @@ void m68000_jsr_ix(void)
 
    push_32(g_cpu_pc);
    branch_long(ea);
-   USE_CLKS(12+22);
+   USE_CLKS(0+22);
 }
 
 
-void m68000_jsr_aw(void)
+static void m68000_jsr_aw(void)
 {
    uint ea = EA_AW;
 
    push_32(g_cpu_pc);
    branch_long(ea);
-   USE_CLKS(12+18);
+   USE_CLKS(0+18);
 }
 
 
-void m68000_jsr_al(void)
+static void m68000_jsr_al(void)
 {
    uint ea = EA_AL;
 
    push_32(g_cpu_pc);
    branch_long(ea);
-   USE_CLKS(12+20);
+   USE_CLKS(0+20);
 }
 
 
-void m68000_jsr_pcdi(void)
+static void m68000_jsr_pcdi(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint ea = old_pc + make_int_16(read_memory_16(old_pc));
 
    push_32(g_cpu_pc);
    branch_long(ea);
-   USE_CLKS(12+18);
+   USE_CLKS(0+18);
 }
 
 
-void m68000_jsr_pcix(void)
+static void m68000_jsr_pcix(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint extension = read_memory_16(old_pc);
@@ -10366,25 +10546,25 @@ void m68000_jsr_pcix(void)
 
    push_32(g_cpu_pc);
    branch_long(ea);
-   USE_CLKS(12+22);
+   USE_CLKS(0+22);
 }
 
 
-void m68000_lea_ai(void)
+static void m68000_lea_ai(void)
 {
    AX = EA_AI;
    USE_CLKS(0+4);
 }
 
 
-void m68000_lea_di(void)
+static void m68000_lea_di(void)
 {
    AX = EA_DI;
    USE_CLKS(0+8);
 }
 
 
-void m68000_lea_ix(void)
+static void m68000_lea_ix(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -10394,21 +10574,21 @@ void m68000_lea_ix(void)
 }
 
 
-void m68000_lea_aw(void)
+static void m68000_lea_aw(void)
 {
    AX = EA_AW;
    USE_CLKS(0+8);
 }
 
 
-void m68000_lea_al(void)
+static void m68000_lea_al(void)
 {
    AX = EA_AL;
    USE_CLKS(0+12);
 }
 
 
-void m68000_lea_pcdi(void)
+static void m68000_lea_pcdi(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint ea = old_pc + make_int_16(read_memory_16(old_pc));
@@ -10417,7 +10597,7 @@ void m68000_lea_pcdi(void)
 }
 
 
-void m68000_lea_pcix(void)
+static void m68000_lea_pcix(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint extension = read_memory_16(old_pc);
@@ -10428,7 +10608,7 @@ void m68000_lea_pcix(void)
 }
 
 
-void m68000_link_a7(void)
+static void m68000_link_a7(void)
 {
    g_cpu_ar[7] -= 4;
    write_memory_32(g_cpu_ar[7], g_cpu_ar[7]);
@@ -10437,7 +10617,7 @@ void m68000_link_a7(void)
 }
 
 
-void m68000_link(void)
+static void m68000_link(void)
 {
    uint* a_dst = &AY;
 
@@ -10448,7 +10628,7 @@ void m68000_link(void)
 }
 
 
-void m68000_lsr_s_8(void)
+static void m68000_lsr_s_8(void)
 {
    uint* d_dst = &DY;
    uint shift = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
@@ -10465,7 +10645,7 @@ void m68000_lsr_s_8(void)
 }
 
 
-void m68000_lsr_s_16(void)
+static void m68000_lsr_s_16(void)
 {
    uint* d_dst = &DY;
    uint shift = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
@@ -10482,7 +10662,7 @@ void m68000_lsr_s_16(void)
 }
 
 
-void m68000_lsr_s_32(void)
+static void m68000_lsr_s_32(void)
 {
    uint* d_dst = &DY;
    uint shift = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
@@ -10499,7 +10679,7 @@ void m68000_lsr_s_32(void)
 }
 
 
-void m68000_lsr_r_8(void)
+static void m68000_lsr_r_8(void)
 {
    uint* d_dst = &DY;
    uint shift = DX & 0x3f;
@@ -10534,7 +10714,7 @@ void m68000_lsr_r_8(void)
 }
 
 
-void m68000_lsr_r_16(void)
+static void m68000_lsr_r_16(void)
 {
    uint* d_dst = &DY;
    uint shift = DX & 0x3f;
@@ -10569,7 +10749,7 @@ void m68000_lsr_r_16(void)
 }
 
 
-void m68000_lsr_r_32(void)
+static void m68000_lsr_r_32(void)
 {
    uint* d_dst = &DY;
    uint shift = DX & 0x3f;
@@ -10604,7 +10784,7 @@ void m68000_lsr_r_32(void)
 }
 
 
-void m68000_lsr_ea_ai(void)
+static void m68000_lsr_ea_ai(void)
 {
    uint ea = EA_AI;
    uint src = read_memory_16(ea);
@@ -10620,7 +10800,7 @@ void m68000_lsr_ea_ai(void)
 }
 
 
-void m68000_lsr_ea_pi(void)
+static void m68000_lsr_ea_pi(void)
 {
    uint ea = EA_PI_16;
    uint src = read_memory_16(ea);
@@ -10636,7 +10816,7 @@ void m68000_lsr_ea_pi(void)
 }
 
 
-void m68000_lsr_ea_pd(void)
+static void m68000_lsr_ea_pd(void)
 {
    uint ea = EA_PD_16;
    uint src = read_memory_16(ea);
@@ -10652,7 +10832,7 @@ void m68000_lsr_ea_pd(void)
 }
 
 
-void m68000_lsr_ea_di(void)
+static void m68000_lsr_ea_di(void)
 {
    uint ea = EA_DI;
    uint src = read_memory_16(ea);
@@ -10668,7 +10848,7 @@ void m68000_lsr_ea_di(void)
 }
 
 
-void m68000_lsr_ea_ix(void)
+static void m68000_lsr_ea_ix(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -10686,7 +10866,7 @@ void m68000_lsr_ea_ix(void)
 }
 
 
-void m68000_lsr_ea_aw(void)
+static void m68000_lsr_ea_aw(void)
 {
    uint ea = EA_AW;
    uint src = read_memory_16(ea);
@@ -10702,7 +10882,7 @@ void m68000_lsr_ea_aw(void)
 }
 
 
-void m68000_lsr_ea_al(void)
+static void m68000_lsr_ea_al(void)
 {
    uint ea = EA_AL;
    uint src = read_memory_16(ea);
@@ -10718,7 +10898,7 @@ void m68000_lsr_ea_al(void)
 }
 
 
-void m68000_lsl_s_8(void)
+static void m68000_lsl_s_8(void)
 {
    uint* d_dst = &DY;
    uint shift = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
@@ -10735,7 +10915,7 @@ void m68000_lsl_s_8(void)
 }
 
 
-void m68000_lsl_s_16(void)
+static void m68000_lsl_s_16(void)
 {
    uint* d_dst = &DY;
    uint shift = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
@@ -10752,7 +10932,7 @@ void m68000_lsl_s_16(void)
 }
 
 
-void m68000_lsl_s_32(void)
+static void m68000_lsl_s_32(void)
 {
    uint* d_dst = &DY;
    uint shift = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
@@ -10769,7 +10949,7 @@ void m68000_lsl_s_32(void)
 }
 
 
-void m68000_lsl_r_8(void)
+static void m68000_lsl_r_8(void)
 {
    uint* d_dst = &DY;
    uint shift = DX & 0x3f;
@@ -10804,7 +10984,7 @@ void m68000_lsl_r_8(void)
 }
 
 
-void m68000_lsl_r_16(void)
+static void m68000_lsl_r_16(void)
 {
    uint* d_dst = &DY;
    uint shift = DX & 0x3f;
@@ -10839,7 +11019,7 @@ void m68000_lsl_r_16(void)
 }
 
 
-void m68000_lsl_r_32(void)
+static void m68000_lsl_r_32(void)
 {
    uint* d_dst = &DY;
    uint shift = DX & 0x3f;
@@ -10874,7 +11054,7 @@ void m68000_lsl_r_32(void)
 }
 
 
-void m68000_lsl_ea_ai(void)
+static void m68000_lsl_ea_ai(void)
 {
    uint ea = EA_AI;
    uint src = read_memory_16(ea);
@@ -10890,7 +11070,7 @@ void m68000_lsl_ea_ai(void)
 }
 
 
-void m68000_lsl_ea_pi(void)
+static void m68000_lsl_ea_pi(void)
 {
    uint ea = EA_PI_16;
    uint src = read_memory_16(ea);
@@ -10906,7 +11086,7 @@ void m68000_lsl_ea_pi(void)
 }
 
 
-void m68000_lsl_ea_pd(void)
+static void m68000_lsl_ea_pd(void)
 {
    uint ea = EA_PD_16;
    uint src = read_memory_16(ea);
@@ -10922,7 +11102,7 @@ void m68000_lsl_ea_pd(void)
 }
 
 
-void m68000_lsl_ea_di(void)
+static void m68000_lsl_ea_di(void)
 {
    uint ea = EA_DI;
    uint src = read_memory_16(ea);
@@ -10938,7 +11118,7 @@ void m68000_lsl_ea_di(void)
 }
 
 
-void m68000_lsl_ea_ix(void)
+static void m68000_lsl_ea_ix(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -10956,7 +11136,7 @@ void m68000_lsl_ea_ix(void)
 }
 
 
-void m68000_lsl_ea_aw(void)
+static void m68000_lsl_ea_aw(void)
 {
    uint ea = EA_AW;
    uint src = read_memory_16(ea);
@@ -10972,7 +11152,7 @@ void m68000_lsl_ea_aw(void)
 }
 
 
-void m68000_lsl_ea_al(void)
+static void m68000_lsl_ea_al(void)
 {
    uint ea = EA_AL;
    uint src = read_memory_16(ea);
@@ -10988,7 +11168,7 @@ void m68000_lsl_ea_al(void)
 }
 
 
-void m68000_move_dd_d_8(void)
+static void m68000_move_dd_d_8(void)
 {
    uint res = MASK_OUT_ABOVE_8(DY);
    uint* d_dst = &DX;
@@ -11002,7 +11182,7 @@ void m68000_move_dd_d_8(void)
 }
 
 
-void m68000_move_dd_ai_8(void)
+static void m68000_move_dd_ai_8(void)
 {
    uint res = read_memory_8(EA_AI);
    uint* d_dst = &DX;
@@ -11016,7 +11196,7 @@ void m68000_move_dd_ai_8(void)
 }
 
 
-void m68000_move_dd_pi_8(void)
+static void m68000_move_dd_pi_8(void)
 {
    uint res = read_memory_8(EA_PI_8);
    uint* d_dst = &DX;
@@ -11030,7 +11210,7 @@ void m68000_move_dd_pi_8(void)
 }
 
 
-void m68000_move_dd_pi7_8(void)
+static void m68000_move_dd_pi7_8(void)
 {
    uint res = read_memory_8(EA_PI7_8);
    uint* d_dst = &DX;
@@ -11044,7 +11224,7 @@ void m68000_move_dd_pi7_8(void)
 }
 
 
-void m68000_move_dd_pd_8(void)
+static void m68000_move_dd_pd_8(void)
 {
    uint res = read_memory_8(EA_PD_8);
    uint* d_dst = &DX;
@@ -11058,7 +11238,7 @@ void m68000_move_dd_pd_8(void)
 }
 
 
-void m68000_move_dd_pd7_8(void)
+static void m68000_move_dd_pd7_8(void)
 {
    uint res = read_memory_8(EA_PD7_8);
    uint* d_dst = &DX;
@@ -11072,7 +11252,7 @@ void m68000_move_dd_pd7_8(void)
 }
 
 
-void m68000_move_dd_di_8(void)
+static void m68000_move_dd_di_8(void)
 {
    uint res = read_memory_8(EA_DI);
    uint* d_dst = &DX;
@@ -11086,7 +11266,7 @@ void m68000_move_dd_di_8(void)
 }
 
 
-void m68000_move_dd_ix_8(void)
+static void m68000_move_dd_ix_8(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -11103,7 +11283,7 @@ void m68000_move_dd_ix_8(void)
 }
 
 
-void m68000_move_dd_aw_8(void)
+static void m68000_move_dd_aw_8(void)
 {
    uint res = read_memory_8(EA_AW);
    uint* d_dst = &DX;
@@ -11117,7 +11297,7 @@ void m68000_move_dd_aw_8(void)
 }
 
 
-void m68000_move_dd_al_8(void)
+static void m68000_move_dd_al_8(void)
 {
    uint res = read_memory_8(EA_AL);
    uint* d_dst = &DX;
@@ -11131,7 +11311,7 @@ void m68000_move_dd_al_8(void)
 }
 
 
-void m68000_move_dd_pcdi_8(void)
+static void m68000_move_dd_pcdi_8(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint ea = old_pc + make_int_16(read_memory_16(old_pc));
@@ -11147,7 +11327,7 @@ void m68000_move_dd_pcdi_8(void)
 }
 
 
-void m68000_move_dd_pcix_8(void)
+static void m68000_move_dd_pcix_8(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint extension = read_memory_16(old_pc);
@@ -11165,7 +11345,7 @@ void m68000_move_dd_pcix_8(void)
 }
 
 
-void m68000_move_dd_i_8(void)
+static void m68000_move_dd_i_8(void)
 {
    uint res = read_imm_8();
    uint* d_dst = &DX;
@@ -11179,7 +11359,7 @@ void m68000_move_dd_i_8(void)
 }
 
 
-void m68000_move_ai_d_8(void)
+static void m68000_move_ai_d_8(void)
 {
    uint res = MASK_OUT_ABOVE_8(DY);
    uint ea_dst = AX;
@@ -11193,7 +11373,7 @@ void m68000_move_ai_d_8(void)
 }
 
 
-void m68000_move_ai_ai_8(void)
+static void m68000_move_ai_ai_8(void)
 {
    uint res = read_memory_8(EA_AI);
    uint ea_dst = AX;
@@ -11207,7 +11387,7 @@ void m68000_move_ai_ai_8(void)
 }
 
 
-void m68000_move_ai_pi_8(void)
+static void m68000_move_ai_pi_8(void)
 {
    uint res = read_memory_8(EA_PI_8);
    uint ea_dst = AX;
@@ -11221,7 +11401,7 @@ void m68000_move_ai_pi_8(void)
 }
 
 
-void m68000_move_ai_pi7_8(void)
+static void m68000_move_ai_pi7_8(void)
 {
    uint res = read_memory_8(EA_PI7_8);
    uint ea_dst = AX;
@@ -11235,7 +11415,7 @@ void m68000_move_ai_pi7_8(void)
 }
 
 
-void m68000_move_ai_pd_8(void)
+static void m68000_move_ai_pd_8(void)
 {
    uint res = read_memory_8(EA_PD_8);
    uint ea_dst = AX;
@@ -11249,7 +11429,7 @@ void m68000_move_ai_pd_8(void)
 }
 
 
-void m68000_move_ai_pd7_8(void)
+static void m68000_move_ai_pd7_8(void)
 {
    uint res = read_memory_8(EA_PD7_8);
    uint ea_dst = AX;
@@ -11263,7 +11443,7 @@ void m68000_move_ai_pd7_8(void)
 }
 
 
-void m68000_move_ai_di_8(void)
+static void m68000_move_ai_di_8(void)
 {
    uint res = read_memory_8(EA_DI);
    uint ea_dst = AX;
@@ -11277,7 +11457,7 @@ void m68000_move_ai_di_8(void)
 }
 
 
-void m68000_move_ai_ix_8(void)
+static void m68000_move_ai_ix_8(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -11294,7 +11474,7 @@ void m68000_move_ai_ix_8(void)
 }
 
 
-void m68000_move_ai_aw_8(void)
+static void m68000_move_ai_aw_8(void)
 {
    uint res = read_memory_8(EA_AW);
    uint ea_dst = AX;
@@ -11308,7 +11488,7 @@ void m68000_move_ai_aw_8(void)
 }
 
 
-void m68000_move_ai_al_8(void)
+static void m68000_move_ai_al_8(void)
 {
    uint res = read_memory_8(EA_AL);
    uint ea_dst = AX;
@@ -11322,7 +11502,7 @@ void m68000_move_ai_al_8(void)
 }
 
 
-void m68000_move_ai_pcdi_8(void)
+static void m68000_move_ai_pcdi_8(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint ea = old_pc + make_int_16(read_memory_16(old_pc));
@@ -11338,7 +11518,7 @@ void m68000_move_ai_pcdi_8(void)
 }
 
 
-void m68000_move_ai_pcix_8(void)
+static void m68000_move_ai_pcix_8(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint extension = read_memory_16(old_pc);
@@ -11356,7 +11536,7 @@ void m68000_move_ai_pcix_8(void)
 }
 
 
-void m68000_move_ai_i_8(void)
+static void m68000_move_ai_i_8(void)
 {
    uint res = read_imm_8();
    uint ea_dst = AX;
@@ -11370,7 +11550,7 @@ void m68000_move_ai_i_8(void)
 }
 
 
-void m68000_move_pi7_d_8(void)
+static void m68000_move_pi7_d_8(void)
 {
    uint res = MASK_OUT_ABOVE_8(DY);
    uint ea_dst = (g_cpu_ar[7]+=2)-2;
@@ -11384,7 +11564,7 @@ void m68000_move_pi7_d_8(void)
 }
 
 
-void m68000_move_pi_d_8(void)
+static void m68000_move_pi_d_8(void)
 {
    uint res = MASK_OUT_ABOVE_8(DY);
    uint ea_dst = AX++;
@@ -11398,7 +11578,7 @@ void m68000_move_pi_d_8(void)
 }
 
 
-void m68000_move_pi7_ai_8(void)
+static void m68000_move_pi7_ai_8(void)
 {
    uint res = read_memory_8(EA_AI);
    uint ea_dst = (g_cpu_ar[7]+=2)-2;
@@ -11412,7 +11592,7 @@ void m68000_move_pi7_ai_8(void)
 }
 
 
-void m68000_move_pi7_pi_8(void)
+static void m68000_move_pi7_pi_8(void)
 {
    uint res = read_memory_8(EA_PI_8);
    uint ea_dst = (g_cpu_ar[7]+=2)-2;
@@ -11426,7 +11606,7 @@ void m68000_move_pi7_pi_8(void)
 }
 
 
-void m68000_move_pi7_pi7_8(void)
+static void m68000_move_pi7_pi7_8(void)
 {
    uint res = read_memory_8(EA_PI7_8);
    uint ea_dst = (g_cpu_ar[7]+=2)-2;
@@ -11440,7 +11620,7 @@ void m68000_move_pi7_pi7_8(void)
 }
 
 
-void m68000_move_pi7_pd_8(void)
+static void m68000_move_pi7_pd_8(void)
 {
    uint res = read_memory_8(EA_PD_8);
    uint ea_dst = (g_cpu_ar[7]+=2)-2;
@@ -11454,7 +11634,7 @@ void m68000_move_pi7_pd_8(void)
 }
 
 
-void m68000_move_pi7_pd7_8(void)
+static void m68000_move_pi7_pd7_8(void)
 {
    uint res = read_memory_8(EA_PD7_8);
    uint ea_dst = (g_cpu_ar[7]+=2)-2;
@@ -11468,7 +11648,7 @@ void m68000_move_pi7_pd7_8(void)
 }
 
 
-void m68000_move_pi7_di_8(void)
+static void m68000_move_pi7_di_8(void)
 {
    uint res = read_memory_8(EA_DI);
    uint ea_dst = (g_cpu_ar[7]+=2)-2;
@@ -11482,7 +11662,7 @@ void m68000_move_pi7_di_8(void)
 }
 
 
-void m68000_move_pi7_ix_8(void)
+static void m68000_move_pi7_ix_8(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -11499,7 +11679,7 @@ void m68000_move_pi7_ix_8(void)
 }
 
 
-void m68000_move_pi7_aw_8(void)
+static void m68000_move_pi7_aw_8(void)
 {
    uint res = read_memory_8(EA_AW);
    uint ea_dst = (g_cpu_ar[7]+=2)-2;
@@ -11513,7 +11693,7 @@ void m68000_move_pi7_aw_8(void)
 }
 
 
-void m68000_move_pi7_al_8(void)
+static void m68000_move_pi7_al_8(void)
 {
    uint res = read_memory_8(EA_AL);
    uint ea_dst = (g_cpu_ar[7]+=2)-2;
@@ -11527,7 +11707,7 @@ void m68000_move_pi7_al_8(void)
 }
 
 
-void m68000_move_pi7_pcdi_8(void)
+static void m68000_move_pi7_pcdi_8(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint ea = old_pc + make_int_16(read_memory_16(old_pc));
@@ -11543,7 +11723,7 @@ void m68000_move_pi7_pcdi_8(void)
 }
 
 
-void m68000_move_pi7_pcix_8(void)
+static void m68000_move_pi7_pcix_8(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint extension = read_memory_16(old_pc);
@@ -11561,7 +11741,7 @@ void m68000_move_pi7_pcix_8(void)
 }
 
 
-void m68000_move_pi7_i_8(void)
+static void m68000_move_pi7_i_8(void)
 {
    uint res = read_imm_8();
    uint ea_dst = (g_cpu_ar[7]+=2)-2;
@@ -11575,7 +11755,7 @@ void m68000_move_pi7_i_8(void)
 }
 
 
-void m68000_move_pi_ai_8(void)
+static void m68000_move_pi_ai_8(void)
 {
    uint res = read_memory_8(EA_AI);
    uint ea_dst = AX++;
@@ -11589,7 +11769,7 @@ void m68000_move_pi_ai_8(void)
 }
 
 
-void m68000_move_pi_pi_8(void)
+static void m68000_move_pi_pi_8(void)
 {
    uint res = read_memory_8(EA_PI_8);
    uint ea_dst = AX++;
@@ -11603,7 +11783,7 @@ void m68000_move_pi_pi_8(void)
 }
 
 
-void m68000_move_pi_pi7_8(void)
+static void m68000_move_pi_pi7_8(void)
 {
    uint res = read_memory_8(EA_PI7_8);
    uint ea_dst = AX++;
@@ -11617,7 +11797,7 @@ void m68000_move_pi_pi7_8(void)
 }
 
 
-void m68000_move_pi_pd_8(void)
+static void m68000_move_pi_pd_8(void)
 {
    uint res = read_memory_8(EA_PD_8);
    uint ea_dst = AX++;
@@ -11631,7 +11811,7 @@ void m68000_move_pi_pd_8(void)
 }
 
 
-void m68000_move_pi_pd7_8(void)
+static void m68000_move_pi_pd7_8(void)
 {
    uint res = read_memory_8(EA_PD7_8);
    uint ea_dst = AX++;
@@ -11645,7 +11825,7 @@ void m68000_move_pi_pd7_8(void)
 }
 
 
-void m68000_move_pi_di_8(void)
+static void m68000_move_pi_di_8(void)
 {
    uint res = read_memory_8(EA_DI);
    uint ea_dst = AX++;
@@ -11659,7 +11839,7 @@ void m68000_move_pi_di_8(void)
 }
 
 
-void m68000_move_pi_ix_8(void)
+static void m68000_move_pi_ix_8(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -11676,7 +11856,7 @@ void m68000_move_pi_ix_8(void)
 }
 
 
-void m68000_move_pi_aw_8(void)
+static void m68000_move_pi_aw_8(void)
 {
    uint res = read_memory_8(EA_AW);
    uint ea_dst = AX++;
@@ -11690,7 +11870,7 @@ void m68000_move_pi_aw_8(void)
 }
 
 
-void m68000_move_pi_al_8(void)
+static void m68000_move_pi_al_8(void)
 {
    uint res = read_memory_8(EA_AL);
    uint ea_dst = AX++;
@@ -11704,7 +11884,7 @@ void m68000_move_pi_al_8(void)
 }
 
 
-void m68000_move_pi_pcdi_8(void)
+static void m68000_move_pi_pcdi_8(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint ea = old_pc + make_int_16(read_memory_16(old_pc));
@@ -11720,7 +11900,7 @@ void m68000_move_pi_pcdi_8(void)
 }
 
 
-void m68000_move_pi_pcix_8(void)
+static void m68000_move_pi_pcix_8(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint extension = read_memory_16(old_pc);
@@ -11738,7 +11918,7 @@ void m68000_move_pi_pcix_8(void)
 }
 
 
-void m68000_move_pi_i_8(void)
+static void m68000_move_pi_i_8(void)
 {
    uint res = read_imm_8();
    uint ea_dst = AX++;
@@ -11752,7 +11932,7 @@ void m68000_move_pi_i_8(void)
 }
 
 
-void m68000_move_pd7_d_8(void)
+static void m68000_move_pd7_d_8(void)
 {
    uint res = MASK_OUT_ABOVE_8(DY);
    uint ea_dst = g_cpu_ar[7]-=2;
@@ -11766,7 +11946,7 @@ void m68000_move_pd7_d_8(void)
 }
 
 
-void m68000_move_pd_d_8(void)
+static void m68000_move_pd_d_8(void)
 {
    uint res = MASK_OUT_ABOVE_8(DY);
    uint ea_dst = --AX;
@@ -11780,7 +11960,7 @@ void m68000_move_pd_d_8(void)
 }
 
 
-void m68000_move_pd7_ai_8(void)
+static void m68000_move_pd7_ai_8(void)
 {
    uint res = read_memory_8(EA_AI);
    uint ea_dst = g_cpu_ar[7]-=2;
@@ -11794,7 +11974,7 @@ void m68000_move_pd7_ai_8(void)
 }
 
 
-void m68000_move_pd7_pi_8(void)
+static void m68000_move_pd7_pi_8(void)
 {
    uint res = read_memory_8(EA_PI_8);
    uint ea_dst = g_cpu_ar[7]-=2;
@@ -11808,7 +11988,7 @@ void m68000_move_pd7_pi_8(void)
 }
 
 
-void m68000_move_pd7_pi7_8(void)
+static void m68000_move_pd7_pi7_8(void)
 {
    uint res = read_memory_8(EA_PI7_8);
    uint ea_dst = g_cpu_ar[7]-=2;
@@ -11822,7 +12002,7 @@ void m68000_move_pd7_pi7_8(void)
 }
 
 
-void m68000_move_pd7_pd_8(void)
+static void m68000_move_pd7_pd_8(void)
 {
    uint res = read_memory_8(EA_PD_8);
    uint ea_dst = g_cpu_ar[7]-=2;
@@ -11836,7 +12016,7 @@ void m68000_move_pd7_pd_8(void)
 }
 
 
-void m68000_move_pd7_pd7_8(void)
+static void m68000_move_pd7_pd7_8(void)
 {
    uint res = read_memory_8(EA_PD7_8);
    uint ea_dst = g_cpu_ar[7]-=2;
@@ -11850,7 +12030,7 @@ void m68000_move_pd7_pd7_8(void)
 }
 
 
-void m68000_move_pd7_di_8(void)
+static void m68000_move_pd7_di_8(void)
 {
    uint res = read_memory_8(EA_DI);
    uint ea_dst = g_cpu_ar[7]-=2;
@@ -11864,7 +12044,7 @@ void m68000_move_pd7_di_8(void)
 }
 
 
-void m68000_move_pd7_ix_8(void)
+static void m68000_move_pd7_ix_8(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -11881,7 +12061,7 @@ void m68000_move_pd7_ix_8(void)
 }
 
 
-void m68000_move_pd7_aw_8(void)
+static void m68000_move_pd7_aw_8(void)
 {
    uint res = read_memory_8(EA_AW);
    uint ea_dst = g_cpu_ar[7]-=2;
@@ -11895,7 +12075,7 @@ void m68000_move_pd7_aw_8(void)
 }
 
 
-void m68000_move_pd7_al_8(void)
+static void m68000_move_pd7_al_8(void)
 {
    uint res = read_memory_8(EA_AL);
    uint ea_dst = g_cpu_ar[7]-=2;
@@ -11909,7 +12089,7 @@ void m68000_move_pd7_al_8(void)
 }
 
 
-void m68000_move_pd7_pcdi_8(void)
+static void m68000_move_pd7_pcdi_8(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint ea = old_pc + make_int_16(read_memory_16(old_pc));
@@ -11925,7 +12105,7 @@ void m68000_move_pd7_pcdi_8(void)
 }
 
 
-void m68000_move_pd7_pcix_8(void)
+static void m68000_move_pd7_pcix_8(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint extension = read_memory_16(old_pc);
@@ -11943,7 +12123,7 @@ void m68000_move_pd7_pcix_8(void)
 }
 
 
-void m68000_move_pd7_i_8(void)
+static void m68000_move_pd7_i_8(void)
 {
    uint res = read_imm_8();
    uint ea_dst = g_cpu_ar[7]-=2;
@@ -11957,7 +12137,7 @@ void m68000_move_pd7_i_8(void)
 }
 
 
-void m68000_move_pd_ai_8(void)
+static void m68000_move_pd_ai_8(void)
 {
    uint res = read_memory_8(EA_AI);
    uint ea_dst = --AX;
@@ -11971,7 +12151,7 @@ void m68000_move_pd_ai_8(void)
 }
 
 
-void m68000_move_pd_pi_8(void)
+static void m68000_move_pd_pi_8(void)
 {
    uint res = read_memory_8(EA_PI_8);
    uint ea_dst = --AX;
@@ -11985,7 +12165,7 @@ void m68000_move_pd_pi_8(void)
 }
 
 
-void m68000_move_pd_pi7_8(void)
+static void m68000_move_pd_pi7_8(void)
 {
    uint res = read_memory_8(EA_PI7_8);
    uint ea_dst = --AX;
@@ -11999,7 +12179,7 @@ void m68000_move_pd_pi7_8(void)
 }
 
 
-void m68000_move_pd_pd_8(void)
+static void m68000_move_pd_pd_8(void)
 {
    uint res = read_memory_8(EA_PD_8);
    uint ea_dst = --AX;
@@ -12013,7 +12193,7 @@ void m68000_move_pd_pd_8(void)
 }
 
 
-void m68000_move_pd_pd7_8(void)
+static void m68000_move_pd_pd7_8(void)
 {
    uint res = read_memory_8(EA_PD7_8);
    uint ea_dst = --AX;
@@ -12027,7 +12207,7 @@ void m68000_move_pd_pd7_8(void)
 }
 
 
-void m68000_move_pd_di_8(void)
+static void m68000_move_pd_di_8(void)
 {
    uint res = read_memory_8(EA_DI);
    uint ea_dst = --AX;
@@ -12041,7 +12221,7 @@ void m68000_move_pd_di_8(void)
 }
 
 
-void m68000_move_pd_ix_8(void)
+static void m68000_move_pd_ix_8(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -12058,7 +12238,7 @@ void m68000_move_pd_ix_8(void)
 }
 
 
-void m68000_move_pd_aw_8(void)
+static void m68000_move_pd_aw_8(void)
 {
    uint res = read_memory_8(EA_AW);
    uint ea_dst = --AX;
@@ -12072,7 +12252,7 @@ void m68000_move_pd_aw_8(void)
 }
 
 
-void m68000_move_pd_al_8(void)
+static void m68000_move_pd_al_8(void)
 {
    uint res = read_memory_8(EA_AL);
    uint ea_dst = --AX;
@@ -12086,7 +12266,7 @@ void m68000_move_pd_al_8(void)
 }
 
 
-void m68000_move_pd_pcdi_8(void)
+static void m68000_move_pd_pcdi_8(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint ea = old_pc + make_int_16(read_memory_16(old_pc));
@@ -12102,7 +12282,7 @@ void m68000_move_pd_pcdi_8(void)
 }
 
 
-void m68000_move_pd_pcix_8(void)
+static void m68000_move_pd_pcix_8(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint extension = read_memory_16(old_pc);
@@ -12120,7 +12300,7 @@ void m68000_move_pd_pcix_8(void)
 }
 
 
-void m68000_move_pd_i_8(void)
+static void m68000_move_pd_i_8(void)
 {
    uint res = read_imm_8();
    uint ea_dst = --AX;
@@ -12134,7 +12314,7 @@ void m68000_move_pd_i_8(void)
 }
 
 
-void m68000_move_di_d_8(void)
+static void m68000_move_di_d_8(void)
 {
    uint res = MASK_OUT_ABOVE_8(DY);
    uint ea_dst = AX + make_int_16(read_imm_16());
@@ -12148,7 +12328,7 @@ void m68000_move_di_d_8(void)
 }
 
 
-void m68000_move_di_ai_8(void)
+static void m68000_move_di_ai_8(void)
 {
    uint res = read_memory_8(EA_AI);
    uint ea_dst = AX + make_int_16(read_imm_16());
@@ -12162,7 +12342,7 @@ void m68000_move_di_ai_8(void)
 }
 
 
-void m68000_move_di_pi_8(void)
+static void m68000_move_di_pi_8(void)
 {
    uint res = read_memory_8(EA_PI_8);
    uint ea_dst = AX + make_int_16(read_imm_16());
@@ -12176,7 +12356,7 @@ void m68000_move_di_pi_8(void)
 }
 
 
-void m68000_move_di_pi7_8(void)
+static void m68000_move_di_pi7_8(void)
 {
    uint res = read_memory_8(EA_PI7_8);
    uint ea_dst = AX + make_int_16(read_imm_16());
@@ -12190,7 +12370,7 @@ void m68000_move_di_pi7_8(void)
 }
 
 
-void m68000_move_di_pd_8(void)
+static void m68000_move_di_pd_8(void)
 {
    uint res = read_memory_8(EA_PD_8);
    uint ea_dst = AX + make_int_16(read_imm_16());
@@ -12204,7 +12384,7 @@ void m68000_move_di_pd_8(void)
 }
 
 
-void m68000_move_di_pd7_8(void)
+static void m68000_move_di_pd7_8(void)
 {
    uint res = read_memory_8(EA_PD7_8);
    uint ea_dst = AX + make_int_16(read_imm_16());
@@ -12218,7 +12398,7 @@ void m68000_move_di_pd7_8(void)
 }
 
 
-void m68000_move_di_di_8(void)
+static void m68000_move_di_di_8(void)
 {
    uint res = read_memory_8(EA_DI);
    uint ea_dst = AX + make_int_16(read_imm_16());
@@ -12232,7 +12412,7 @@ void m68000_move_di_di_8(void)
 }
 
 
-void m68000_move_di_ix_8(void)
+static void m68000_move_di_ix_8(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -12249,7 +12429,7 @@ void m68000_move_di_ix_8(void)
 }
 
 
-void m68000_move_di_aw_8(void)
+static void m68000_move_di_aw_8(void)
 {
    uint res = read_memory_8(EA_AW);
    uint ea_dst = AX + make_int_16(read_imm_16());
@@ -12263,7 +12443,7 @@ void m68000_move_di_aw_8(void)
 }
 
 
-void m68000_move_di_al_8(void)
+static void m68000_move_di_al_8(void)
 {
    uint res = read_memory_8(EA_AL);
    uint ea_dst = AX + make_int_16(read_imm_16());
@@ -12277,7 +12457,7 @@ void m68000_move_di_al_8(void)
 }
 
 
-void m68000_move_di_pcdi_8(void)
+static void m68000_move_di_pcdi_8(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint ea = old_pc + make_int_16(read_memory_16(old_pc));
@@ -12293,7 +12473,7 @@ void m68000_move_di_pcdi_8(void)
 }
 
 
-void m68000_move_di_pcix_8(void)
+static void m68000_move_di_pcix_8(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint extension = read_memory_16(old_pc);
@@ -12311,7 +12491,7 @@ void m68000_move_di_pcix_8(void)
 }
 
 
-void m68000_move_di_i_8(void)
+static void m68000_move_di_i_8(void)
 {
    uint res = read_imm_8();
    uint ea_dst = AX + make_int_16(read_imm_16());
@@ -12325,7 +12505,7 @@ void m68000_move_di_i_8(void)
 }
 
 
-void m68000_move_ix_d_8(void)
+static void m68000_move_ix_d_8(void)
 {
    uint res = MASK_OUT_ABOVE_8(DY);
    uint extension_dst = read_imm_16();
@@ -12341,7 +12521,7 @@ void m68000_move_ix_d_8(void)
 }
 
 
-void m68000_move_ix_ai_8(void)
+static void m68000_move_ix_ai_8(void)
 {
    uint res = read_memory_8(EA_AI);
    uint extension_dst = read_imm_16();
@@ -12357,7 +12537,7 @@ void m68000_move_ix_ai_8(void)
 }
 
 
-void m68000_move_ix_pi_8(void)
+static void m68000_move_ix_pi_8(void)
 {
    uint res = read_memory_8(EA_PI_8);
    uint extension_dst = read_imm_16();
@@ -12373,7 +12553,7 @@ void m68000_move_ix_pi_8(void)
 }
 
 
-void m68000_move_ix_pi7_8(void)
+static void m68000_move_ix_pi7_8(void)
 {
    uint res = read_memory_8(EA_PI7_8);
    uint extension_dst = read_imm_16();
@@ -12389,7 +12569,7 @@ void m68000_move_ix_pi7_8(void)
 }
 
 
-void m68000_move_ix_pd_8(void)
+static void m68000_move_ix_pd_8(void)
 {
    uint res = read_memory_8(EA_PD_8);
    uint extension_dst = read_imm_16();
@@ -12405,7 +12585,7 @@ void m68000_move_ix_pd_8(void)
 }
 
 
-void m68000_move_ix_pd7_8(void)
+static void m68000_move_ix_pd7_8(void)
 {
    uint res = read_memory_8(EA_PD7_8);
    uint extension_dst = read_imm_16();
@@ -12421,7 +12601,7 @@ void m68000_move_ix_pd7_8(void)
 }
 
 
-void m68000_move_ix_di_8(void)
+static void m68000_move_ix_di_8(void)
 {
    uint res = read_memory_8(EA_DI);
    uint extension_dst = read_imm_16();
@@ -12437,7 +12617,7 @@ void m68000_move_ix_di_8(void)
 }
 
 
-void m68000_move_ix_ix_8(void)
+static void m68000_move_ix_ix_8(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -12456,7 +12636,7 @@ void m68000_move_ix_ix_8(void)
 }
 
 
-void m68000_move_ix_aw_8(void)
+static void m68000_move_ix_aw_8(void)
 {
    uint res = read_memory_8(EA_AW);
    uint extension_dst = read_imm_16();
@@ -12472,7 +12652,7 @@ void m68000_move_ix_aw_8(void)
 }
 
 
-void m68000_move_ix_al_8(void)
+static void m68000_move_ix_al_8(void)
 {
    uint res = read_memory_8(EA_AL);
    uint extension_dst = read_imm_16();
@@ -12488,7 +12668,7 @@ void m68000_move_ix_al_8(void)
 }
 
 
-void m68000_move_ix_pcdi_8(void)
+static void m68000_move_ix_pcdi_8(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint ea = old_pc + make_int_16(read_memory_16(old_pc));
@@ -12506,7 +12686,7 @@ void m68000_move_ix_pcdi_8(void)
 }
 
 
-void m68000_move_ix_pcix_8(void)
+static void m68000_move_ix_pcix_8(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint extension = read_memory_16(old_pc);
@@ -12526,7 +12706,7 @@ void m68000_move_ix_pcix_8(void)
 }
 
 
-void m68000_move_ix_i_8(void)
+static void m68000_move_ix_i_8(void)
 {
    uint res = read_imm_8();
    uint extension_dst = read_imm_16();
@@ -12542,7 +12722,7 @@ void m68000_move_ix_i_8(void)
 }
 
 
-void m68000_move_aw_d_8(void)
+static void m68000_move_aw_d_8(void)
 {
    uint res = MASK_OUT_ABOVE_8(DY);
    uint ea_dst = make_int_16(read_imm_16());
@@ -12556,7 +12736,7 @@ void m68000_move_aw_d_8(void)
 }
 
 
-void m68000_move_aw_ai_8(void)
+static void m68000_move_aw_ai_8(void)
 {
    uint res = read_memory_8(EA_AI);
    uint ea_dst = make_int_16(read_imm_16());
@@ -12570,7 +12750,7 @@ void m68000_move_aw_ai_8(void)
 }
 
 
-void m68000_move_aw_pi_8(void)
+static void m68000_move_aw_pi_8(void)
 {
    uint res = read_memory_8(EA_PI_8);
    uint ea_dst = make_int_16(read_imm_16());
@@ -12584,7 +12764,7 @@ void m68000_move_aw_pi_8(void)
 }
 
 
-void m68000_move_aw_pi7_8(void)
+static void m68000_move_aw_pi7_8(void)
 {
    uint res = read_memory_8(EA_PI7_8);
    uint ea_dst = make_int_16(read_imm_16());
@@ -12598,7 +12778,7 @@ void m68000_move_aw_pi7_8(void)
 }
 
 
-void m68000_move_aw_pd_8(void)
+static void m68000_move_aw_pd_8(void)
 {
    uint res = read_memory_8(EA_PD_8);
    uint ea_dst = make_int_16(read_imm_16());
@@ -12612,7 +12792,7 @@ void m68000_move_aw_pd_8(void)
 }
 
 
-void m68000_move_aw_pd7_8(void)
+static void m68000_move_aw_pd7_8(void)
 {
    uint res = read_memory_8(EA_PD7_8);
    uint ea_dst = make_int_16(read_imm_16());
@@ -12626,7 +12806,7 @@ void m68000_move_aw_pd7_8(void)
 }
 
 
-void m68000_move_aw_di_8(void)
+static void m68000_move_aw_di_8(void)
 {
    uint res = read_memory_8(EA_DI);
    uint ea_dst = make_int_16(read_imm_16());
@@ -12640,7 +12820,7 @@ void m68000_move_aw_di_8(void)
 }
 
 
-void m68000_move_aw_ix_8(void)
+static void m68000_move_aw_ix_8(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -12657,7 +12837,7 @@ void m68000_move_aw_ix_8(void)
 }
 
 
-void m68000_move_aw_aw_8(void)
+static void m68000_move_aw_aw_8(void)
 {
    uint res = read_memory_8(EA_AW);
    uint ea_dst = make_int_16(read_imm_16());
@@ -12671,7 +12851,7 @@ void m68000_move_aw_aw_8(void)
 }
 
 
-void m68000_move_aw_al_8(void)
+static void m68000_move_aw_al_8(void)
 {
    uint res = read_memory_8(EA_AL);
    uint ea_dst = make_int_16(read_imm_16());
@@ -12685,7 +12865,7 @@ void m68000_move_aw_al_8(void)
 }
 
 
-void m68000_move_aw_pcdi_8(void)
+static void m68000_move_aw_pcdi_8(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint ea = old_pc + make_int_16(read_memory_16(old_pc));
@@ -12701,7 +12881,7 @@ void m68000_move_aw_pcdi_8(void)
 }
 
 
-void m68000_move_aw_pcix_8(void)
+static void m68000_move_aw_pcix_8(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint extension = read_memory_16(old_pc);
@@ -12719,7 +12899,7 @@ void m68000_move_aw_pcix_8(void)
 }
 
 
-void m68000_move_aw_i_8(void)
+static void m68000_move_aw_i_8(void)
 {
    uint res = read_imm_8();
    uint ea_dst = make_int_16(read_imm_16());
@@ -12733,7 +12913,7 @@ void m68000_move_aw_i_8(void)
 }
 
 
-void m68000_move_al_d_8(void)
+static void m68000_move_al_d_8(void)
 {
    uint res = MASK_OUT_ABOVE_8(DY);
    uint ea_dst = read_imm_32();
@@ -12747,7 +12927,7 @@ void m68000_move_al_d_8(void)
 }
 
 
-void m68000_move_al_ai_8(void)
+static void m68000_move_al_ai_8(void)
 {
    uint res = read_memory_8(EA_AI);
    uint ea_dst = read_imm_32();
@@ -12761,7 +12941,7 @@ void m68000_move_al_ai_8(void)
 }
 
 
-void m68000_move_al_pi_8(void)
+static void m68000_move_al_pi_8(void)
 {
    uint res = read_memory_8(EA_PI_8);
    uint ea_dst = read_imm_32();
@@ -12775,7 +12955,7 @@ void m68000_move_al_pi_8(void)
 }
 
 
-void m68000_move_al_pi7_8(void)
+static void m68000_move_al_pi7_8(void)
 {
    uint res = read_memory_8(EA_PI7_8);
    uint ea_dst = read_imm_32();
@@ -12789,7 +12969,7 @@ void m68000_move_al_pi7_8(void)
 }
 
 
-void m68000_move_al_pd_8(void)
+static void m68000_move_al_pd_8(void)
 {
    uint res = read_memory_8(EA_PD_8);
    uint ea_dst = read_imm_32();
@@ -12803,7 +12983,7 @@ void m68000_move_al_pd_8(void)
 }
 
 
-void m68000_move_al_pd7_8(void)
+static void m68000_move_al_pd7_8(void)
 {
    uint res = read_memory_8(EA_PD7_8);
    uint ea_dst = read_imm_32();
@@ -12817,7 +12997,7 @@ void m68000_move_al_pd7_8(void)
 }
 
 
-void m68000_move_al_di_8(void)
+static void m68000_move_al_di_8(void)
 {
    uint res = read_memory_8(EA_DI);
    uint ea_dst = read_imm_32();
@@ -12831,7 +13011,7 @@ void m68000_move_al_di_8(void)
 }
 
 
-void m68000_move_al_ix_8(void)
+static void m68000_move_al_ix_8(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -12848,7 +13028,7 @@ void m68000_move_al_ix_8(void)
 }
 
 
-void m68000_move_al_aw_8(void)
+static void m68000_move_al_aw_8(void)
 {
    uint res = read_memory_8(EA_AW);
    uint ea_dst = read_imm_32();
@@ -12862,7 +13042,7 @@ void m68000_move_al_aw_8(void)
 }
 
 
-void m68000_move_al_al_8(void)
+static void m68000_move_al_al_8(void)
 {
    uint res = read_memory_8(EA_AL);
    uint ea_dst = read_imm_32();
@@ -12876,7 +13056,7 @@ void m68000_move_al_al_8(void)
 }
 
 
-void m68000_move_al_pcdi_8(void)
+static void m68000_move_al_pcdi_8(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint ea = old_pc + make_int_16(read_memory_16(old_pc));
@@ -12892,7 +13072,7 @@ void m68000_move_al_pcdi_8(void)
 }
 
 
-void m68000_move_al_pcix_8(void)
+static void m68000_move_al_pcix_8(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint extension = read_memory_16(old_pc);
@@ -12910,7 +13090,7 @@ void m68000_move_al_pcix_8(void)
 }
 
 
-void m68000_move_al_i_8(void)
+static void m68000_move_al_i_8(void)
 {
    uint res = read_imm_8();
    uint ea_dst = read_imm_32();
@@ -12924,7 +13104,7 @@ void m68000_move_al_i_8(void)
 }
 
 
-void m68000_move_dd_d_16(void)
+static void m68000_move_dd_d_16(void)
 {
    uint res = MASK_OUT_ABOVE_16(DY);
    uint* d_dst = &DX;
@@ -12938,7 +13118,7 @@ void m68000_move_dd_d_16(void)
 }
 
 
-void m68000_move_dd_a_16(void)
+static void m68000_move_dd_a_16(void)
 {
    uint res = MASK_OUT_ABOVE_16(AY);
    uint* d_dst = &DX;
@@ -12952,7 +13132,7 @@ void m68000_move_dd_a_16(void)
 }
 
 
-void m68000_move_dd_ai_16(void)
+static void m68000_move_dd_ai_16(void)
 {
    uint res = read_memory_16(EA_AI);
    uint* d_dst = &DX;
@@ -12966,7 +13146,7 @@ void m68000_move_dd_ai_16(void)
 }
 
 
-void m68000_move_dd_pi_16(void)
+static void m68000_move_dd_pi_16(void)
 {
    uint res = read_memory_16(EA_PI_16);
    uint* d_dst = &DX;
@@ -12980,7 +13160,7 @@ void m68000_move_dd_pi_16(void)
 }
 
 
-void m68000_move_dd_pd_16(void)
+static void m68000_move_dd_pd_16(void)
 {
    uint res = read_memory_16(EA_PD_16);
    uint* d_dst = &DX;
@@ -12994,7 +13174,7 @@ void m68000_move_dd_pd_16(void)
 }
 
 
-void m68000_move_dd_di_16(void)
+static void m68000_move_dd_di_16(void)
 {
    uint res = read_memory_16(EA_DI);
    uint* d_dst = &DX;
@@ -13008,7 +13188,7 @@ void m68000_move_dd_di_16(void)
 }
 
 
-void m68000_move_dd_ix_16(void)
+static void m68000_move_dd_ix_16(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -13025,7 +13205,7 @@ void m68000_move_dd_ix_16(void)
 }
 
 
-void m68000_move_dd_aw_16(void)
+static void m68000_move_dd_aw_16(void)
 {
    uint res = read_memory_16(EA_AW);
    uint* d_dst = &DX;
@@ -13039,7 +13219,7 @@ void m68000_move_dd_aw_16(void)
 }
 
 
-void m68000_move_dd_al_16(void)
+static void m68000_move_dd_al_16(void)
 {
    uint res = read_memory_16(EA_AL);
    uint* d_dst = &DX;
@@ -13053,7 +13233,7 @@ void m68000_move_dd_al_16(void)
 }
 
 
-void m68000_move_dd_pcdi_16(void)
+static void m68000_move_dd_pcdi_16(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint ea = old_pc + make_int_16(read_memory_16(old_pc));
@@ -13069,7 +13249,7 @@ void m68000_move_dd_pcdi_16(void)
 }
 
 
-void m68000_move_dd_pcix_16(void)
+static void m68000_move_dd_pcix_16(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint extension = read_memory_16(old_pc);
@@ -13087,7 +13267,7 @@ void m68000_move_dd_pcix_16(void)
 }
 
 
-void m68000_move_dd_i_16(void)
+static void m68000_move_dd_i_16(void)
 {
    uint res = read_imm_16();
    uint* d_dst = &DX;
@@ -13101,7 +13281,7 @@ void m68000_move_dd_i_16(void)
 }
 
 
-void m68000_move_ai_d_16(void)
+static void m68000_move_ai_d_16(void)
 {
    uint res = MASK_OUT_ABOVE_16(DY);
    uint ea_dst = AX;
@@ -13115,7 +13295,7 @@ void m68000_move_ai_d_16(void)
 }
 
 
-void m68000_move_ai_a_16(void)
+static void m68000_move_ai_a_16(void)
 {
    uint res = MASK_OUT_ABOVE_16(AY);
    uint ea_dst = AX;
@@ -13129,7 +13309,7 @@ void m68000_move_ai_a_16(void)
 }
 
 
-void m68000_move_ai_ai_16(void)
+static void m68000_move_ai_ai_16(void)
 {
    uint res = read_memory_16(EA_AI);
    uint ea_dst = AX;
@@ -13143,7 +13323,7 @@ void m68000_move_ai_ai_16(void)
 }
 
 
-void m68000_move_ai_pi_16(void)
+static void m68000_move_ai_pi_16(void)
 {
    uint res = read_memory_16(EA_PI_16);
    uint ea_dst = AX;
@@ -13157,7 +13337,7 @@ void m68000_move_ai_pi_16(void)
 }
 
 
-void m68000_move_ai_pd_16(void)
+static void m68000_move_ai_pd_16(void)
 {
    uint res = read_memory_16(EA_PD_16);
    uint ea_dst = AX;
@@ -13171,7 +13351,7 @@ void m68000_move_ai_pd_16(void)
 }
 
 
-void m68000_move_ai_di_16(void)
+static void m68000_move_ai_di_16(void)
 {
    uint res = read_memory_16(EA_DI);
    uint ea_dst = AX;
@@ -13185,7 +13365,7 @@ void m68000_move_ai_di_16(void)
 }
 
 
-void m68000_move_ai_ix_16(void)
+static void m68000_move_ai_ix_16(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -13202,7 +13382,7 @@ void m68000_move_ai_ix_16(void)
 }
 
 
-void m68000_move_ai_aw_16(void)
+static void m68000_move_ai_aw_16(void)
 {
    uint res = read_memory_16(EA_AW);
    uint ea_dst = AX;
@@ -13216,7 +13396,7 @@ void m68000_move_ai_aw_16(void)
 }
 
 
-void m68000_move_ai_al_16(void)
+static void m68000_move_ai_al_16(void)
 {
    uint res = read_memory_16(EA_AL);
    uint ea_dst = AX;
@@ -13230,7 +13410,7 @@ void m68000_move_ai_al_16(void)
 }
 
 
-void m68000_move_ai_pcdi_16(void)
+static void m68000_move_ai_pcdi_16(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint ea = old_pc + make_int_16(read_memory_16(old_pc));
@@ -13246,7 +13426,7 @@ void m68000_move_ai_pcdi_16(void)
 }
 
 
-void m68000_move_ai_pcix_16(void)
+static void m68000_move_ai_pcix_16(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint extension = read_memory_16(old_pc);
@@ -13264,7 +13444,7 @@ void m68000_move_ai_pcix_16(void)
 }
 
 
-void m68000_move_ai_i_16(void)
+static void m68000_move_ai_i_16(void)
 {
    uint res = read_imm_16();
    uint ea_dst = AX;
@@ -13278,7 +13458,7 @@ void m68000_move_ai_i_16(void)
 }
 
 
-void m68000_move_pi_d_16(void)
+static void m68000_move_pi_d_16(void)
 {
    uint res = MASK_OUT_ABOVE_16(DY);
    uint ea_dst = (AX+=2) - 2;
@@ -13292,7 +13472,7 @@ void m68000_move_pi_d_16(void)
 }
 
 
-void m68000_move_pi_a_16(void)
+static void m68000_move_pi_a_16(void)
 {
    uint res = MASK_OUT_ABOVE_16(AY);
    uint ea_dst = (AX+=2) - 2;
@@ -13306,7 +13486,7 @@ void m68000_move_pi_a_16(void)
 }
 
 
-void m68000_move_pi_ai_16(void)
+static void m68000_move_pi_ai_16(void)
 {
    uint res = read_memory_16(EA_AI);
    uint ea_dst = (AX+=2) - 2;
@@ -13320,7 +13500,7 @@ void m68000_move_pi_ai_16(void)
 }
 
 
-void m68000_move_pi_pi_16(void)
+static void m68000_move_pi_pi_16(void)
 {
    uint res = read_memory_16(EA_PI_16);
    uint ea_dst = (AX+=2) - 2;
@@ -13334,7 +13514,7 @@ void m68000_move_pi_pi_16(void)
 }
 
 
-void m68000_move_pi_pd_16(void)
+static void m68000_move_pi_pd_16(void)
 {
    uint res = read_memory_16(EA_PD_16);
    uint ea_dst = (AX+=2) - 2;
@@ -13348,7 +13528,7 @@ void m68000_move_pi_pd_16(void)
 }
 
 
-void m68000_move_pi_di_16(void)
+static void m68000_move_pi_di_16(void)
 {
    uint res = read_memory_16(EA_DI);
    uint ea_dst = (AX+=2) - 2;
@@ -13362,7 +13542,7 @@ void m68000_move_pi_di_16(void)
 }
 
 
-void m68000_move_pi_ix_16(void)
+static void m68000_move_pi_ix_16(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -13379,7 +13559,7 @@ void m68000_move_pi_ix_16(void)
 }
 
 
-void m68000_move_pi_aw_16(void)
+static void m68000_move_pi_aw_16(void)
 {
    uint res = read_memory_16(EA_AW);
    uint ea_dst = (AX+=2) - 2;
@@ -13393,7 +13573,7 @@ void m68000_move_pi_aw_16(void)
 }
 
 
-void m68000_move_pi_al_16(void)
+static void m68000_move_pi_al_16(void)
 {
    uint res = read_memory_16(EA_AL);
    uint ea_dst = (AX+=2) - 2;
@@ -13407,7 +13587,7 @@ void m68000_move_pi_al_16(void)
 }
 
 
-void m68000_move_pi_pcdi_16(void)
+static void m68000_move_pi_pcdi_16(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint ea = old_pc + make_int_16(read_memory_16(old_pc));
@@ -13423,7 +13603,7 @@ void m68000_move_pi_pcdi_16(void)
 }
 
 
-void m68000_move_pi_pcix_16(void)
+static void m68000_move_pi_pcix_16(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint extension = read_memory_16(old_pc);
@@ -13441,7 +13621,7 @@ void m68000_move_pi_pcix_16(void)
 }
 
 
-void m68000_move_pi_i_16(void)
+static void m68000_move_pi_i_16(void)
 {
    uint res = read_imm_16();
    uint ea_dst = (AX+=2) - 2;
@@ -13455,7 +13635,7 @@ void m68000_move_pi_i_16(void)
 }
 
 
-void m68000_move_pd_d_16(void)
+static void m68000_move_pd_d_16(void)
 {
    uint res = MASK_OUT_ABOVE_16(DY);
    uint ea_dst = AX-=2;
@@ -13469,7 +13649,7 @@ void m68000_move_pd_d_16(void)
 }
 
 
-void m68000_move_pd_a_16(void)
+static void m68000_move_pd_a_16(void)
 {
    uint res = MASK_OUT_ABOVE_16(AY);
    uint ea_dst = AX-=2;
@@ -13483,7 +13663,7 @@ void m68000_move_pd_a_16(void)
 }
 
 
-void m68000_move_pd_ai_16(void)
+static void m68000_move_pd_ai_16(void)
 {
    uint res = read_memory_16(EA_AI);
    uint ea_dst = AX-=2;
@@ -13497,7 +13677,7 @@ void m68000_move_pd_ai_16(void)
 }
 
 
-void m68000_move_pd_pi_16(void)
+static void m68000_move_pd_pi_16(void)
 {
    uint res = read_memory_16(EA_PI_16);
    uint ea_dst = AX-=2;
@@ -13511,7 +13691,7 @@ void m68000_move_pd_pi_16(void)
 }
 
 
-void m68000_move_pd_pd_16(void)
+static void m68000_move_pd_pd_16(void)
 {
    uint res = read_memory_16(EA_PD_16);
    uint ea_dst = AX-=2;
@@ -13525,7 +13705,7 @@ void m68000_move_pd_pd_16(void)
 }
 
 
-void m68000_move_pd_di_16(void)
+static void m68000_move_pd_di_16(void)
 {
    uint res = read_memory_16(EA_DI);
    uint ea_dst = AX-=2;
@@ -13539,7 +13719,7 @@ void m68000_move_pd_di_16(void)
 }
 
 
-void m68000_move_pd_ix_16(void)
+static void m68000_move_pd_ix_16(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -13556,7 +13736,7 @@ void m68000_move_pd_ix_16(void)
 }
 
 
-void m68000_move_pd_aw_16(void)
+static void m68000_move_pd_aw_16(void)
 {
    uint res = read_memory_16(EA_AW);
    uint ea_dst = AX-=2;
@@ -13570,7 +13750,7 @@ void m68000_move_pd_aw_16(void)
 }
 
 
-void m68000_move_pd_al_16(void)
+static void m68000_move_pd_al_16(void)
 {
    uint res = read_memory_16(EA_AL);
    uint ea_dst = AX-=2;
@@ -13584,7 +13764,7 @@ void m68000_move_pd_al_16(void)
 }
 
 
-void m68000_move_pd_pcdi_16(void)
+static void m68000_move_pd_pcdi_16(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint ea = old_pc + make_int_16(read_memory_16(old_pc));
@@ -13600,7 +13780,7 @@ void m68000_move_pd_pcdi_16(void)
 }
 
 
-void m68000_move_pd_pcix_16(void)
+static void m68000_move_pd_pcix_16(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint extension = read_memory_16(old_pc);
@@ -13618,7 +13798,7 @@ void m68000_move_pd_pcix_16(void)
 }
 
 
-void m68000_move_pd_i_16(void)
+static void m68000_move_pd_i_16(void)
 {
    uint res = read_imm_16();
    uint ea_dst = AX-=2;
@@ -13632,7 +13812,7 @@ void m68000_move_pd_i_16(void)
 }
 
 
-void m68000_move_di_d_16(void)
+static void m68000_move_di_d_16(void)
 {
    uint res = MASK_OUT_ABOVE_16(DY);
    uint ea_dst = AX + make_int_16(read_imm_16());
@@ -13646,7 +13826,7 @@ void m68000_move_di_d_16(void)
 }
 
 
-void m68000_move_di_a_16(void)
+static void m68000_move_di_a_16(void)
 {
    uint res = MASK_OUT_ABOVE_16(AY);
    uint ea_dst = AX + make_int_16(read_imm_16());
@@ -13660,7 +13840,7 @@ void m68000_move_di_a_16(void)
 }
 
 
-void m68000_move_di_ai_16(void)
+static void m68000_move_di_ai_16(void)
 {
    uint res = read_memory_16(EA_AI);
    uint ea_dst = AX + make_int_16(read_imm_16());
@@ -13674,7 +13854,7 @@ void m68000_move_di_ai_16(void)
 }
 
 
-void m68000_move_di_pi_16(void)
+static void m68000_move_di_pi_16(void)
 {
    uint res = read_memory_16(EA_PI_16);
    uint ea_dst = AX + make_int_16(read_imm_16());
@@ -13688,7 +13868,7 @@ void m68000_move_di_pi_16(void)
 }
 
 
-void m68000_move_di_pd_16(void)
+static void m68000_move_di_pd_16(void)
 {
    uint res = read_memory_16(EA_PD_16);
    uint ea_dst = AX + make_int_16(read_imm_16());
@@ -13702,7 +13882,7 @@ void m68000_move_di_pd_16(void)
 }
 
 
-void m68000_move_di_di_16(void)
+static void m68000_move_di_di_16(void)
 {
    uint res = read_memory_16(EA_DI);
    uint ea_dst = AX + make_int_16(read_imm_16());
@@ -13716,7 +13896,7 @@ void m68000_move_di_di_16(void)
 }
 
 
-void m68000_move_di_ix_16(void)
+static void m68000_move_di_ix_16(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -13733,7 +13913,7 @@ void m68000_move_di_ix_16(void)
 }
 
 
-void m68000_move_di_aw_16(void)
+static void m68000_move_di_aw_16(void)
 {
    uint res = read_memory_16(EA_AW);
    uint ea_dst = AX + make_int_16(read_imm_16());
@@ -13747,7 +13927,7 @@ void m68000_move_di_aw_16(void)
 }
 
 
-void m68000_move_di_al_16(void)
+static void m68000_move_di_al_16(void)
 {
    uint res = read_memory_16(EA_AL);
    uint ea_dst = AX + make_int_16(read_imm_16());
@@ -13761,7 +13941,7 @@ void m68000_move_di_al_16(void)
 }
 
 
-void m68000_move_di_pcdi_16(void)
+static void m68000_move_di_pcdi_16(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint ea = old_pc + make_int_16(read_memory_16(old_pc));
@@ -13777,7 +13957,7 @@ void m68000_move_di_pcdi_16(void)
 }
 
 
-void m68000_move_di_pcix_16(void)
+static void m68000_move_di_pcix_16(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint extension = read_memory_16(old_pc);
@@ -13795,7 +13975,7 @@ void m68000_move_di_pcix_16(void)
 }
 
 
-void m68000_move_di_i_16(void)
+static void m68000_move_di_i_16(void)
 {
    uint res = read_imm_16();
    uint ea_dst = AX + make_int_16(read_imm_16());
@@ -13809,7 +13989,7 @@ void m68000_move_di_i_16(void)
 }
 
 
-void m68000_move_ix_d_16(void)
+static void m68000_move_ix_d_16(void)
 {
    uint res = MASK_OUT_ABOVE_16(DY);
    uint extension_dst = read_imm_16();
@@ -13825,7 +14005,7 @@ void m68000_move_ix_d_16(void)
 }
 
 
-void m68000_move_ix_a_16(void)
+static void m68000_move_ix_a_16(void)
 {
    uint res = MASK_OUT_ABOVE_16(AY);
    uint extension_dst = read_imm_16();
@@ -13841,7 +14021,7 @@ void m68000_move_ix_a_16(void)
 }
 
 
-void m68000_move_ix_ai_16(void)
+static void m68000_move_ix_ai_16(void)
 {
    uint res = read_memory_16(EA_AI);
    uint extension_dst = read_imm_16();
@@ -13857,7 +14037,7 @@ void m68000_move_ix_ai_16(void)
 }
 
 
-void m68000_move_ix_pi_16(void)
+static void m68000_move_ix_pi_16(void)
 {
    uint res = read_memory_16(EA_PI_16);
    uint extension_dst = read_imm_16();
@@ -13873,7 +14053,7 @@ void m68000_move_ix_pi_16(void)
 }
 
 
-void m68000_move_ix_pd_16(void)
+static void m68000_move_ix_pd_16(void)
 {
    uint res = read_memory_16(EA_PD_16);
    uint extension_dst = read_imm_16();
@@ -13889,7 +14069,7 @@ void m68000_move_ix_pd_16(void)
 }
 
 
-void m68000_move_ix_di_16(void)
+static void m68000_move_ix_di_16(void)
 {
    uint res = read_memory_16(EA_DI);
    uint extension_dst = read_imm_16();
@@ -13905,7 +14085,7 @@ void m68000_move_ix_di_16(void)
 }
 
 
-void m68000_move_ix_ix_16(void)
+static void m68000_move_ix_ix_16(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -13924,7 +14104,7 @@ void m68000_move_ix_ix_16(void)
 }
 
 
-void m68000_move_ix_aw_16(void)
+static void m68000_move_ix_aw_16(void)
 {
    uint res = read_memory_16(EA_AW);
    uint extension_dst = read_imm_16();
@@ -13940,7 +14120,7 @@ void m68000_move_ix_aw_16(void)
 }
 
 
-void m68000_move_ix_al_16(void)
+static void m68000_move_ix_al_16(void)
 {
    uint res = read_memory_16(EA_AL);
    uint extension_dst = read_imm_16();
@@ -13956,7 +14136,7 @@ void m68000_move_ix_al_16(void)
 }
 
 
-void m68000_move_ix_pcdi_16(void)
+static void m68000_move_ix_pcdi_16(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint ea = old_pc + make_int_16(read_memory_16(old_pc));
@@ -13974,7 +14154,7 @@ void m68000_move_ix_pcdi_16(void)
 }
 
 
-void m68000_move_ix_pcix_16(void)
+static void m68000_move_ix_pcix_16(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint extension = read_memory_16(old_pc);
@@ -13994,7 +14174,7 @@ void m68000_move_ix_pcix_16(void)
 }
 
 
-void m68000_move_ix_i_16(void)
+static void m68000_move_ix_i_16(void)
 {
    uint res = read_imm_16();
    uint extension_dst = read_imm_16();
@@ -14010,7 +14190,7 @@ void m68000_move_ix_i_16(void)
 }
 
 
-void m68000_move_aw_d_16(void)
+static void m68000_move_aw_d_16(void)
 {
    uint res = MASK_OUT_ABOVE_16(DY);
    uint ea_dst = make_int_16(read_imm_16());
@@ -14024,7 +14204,7 @@ void m68000_move_aw_d_16(void)
 }
 
 
-void m68000_move_aw_a_16(void)
+static void m68000_move_aw_a_16(void)
 {
    uint res = MASK_OUT_ABOVE_16(AY);
    uint ea_dst = make_int_16(read_imm_16());
@@ -14038,7 +14218,7 @@ void m68000_move_aw_a_16(void)
 }
 
 
-void m68000_move_aw_ai_16(void)
+static void m68000_move_aw_ai_16(void)
 {
    uint res = read_memory_16(EA_AI);
    uint ea_dst = make_int_16(read_imm_16());
@@ -14052,7 +14232,7 @@ void m68000_move_aw_ai_16(void)
 }
 
 
-void m68000_move_aw_pi_16(void)
+static void m68000_move_aw_pi_16(void)
 {
    uint res = read_memory_16(EA_PI_16);
    uint ea_dst = make_int_16(read_imm_16());
@@ -14066,7 +14246,7 @@ void m68000_move_aw_pi_16(void)
 }
 
 
-void m68000_move_aw_pd_16(void)
+static void m68000_move_aw_pd_16(void)
 {
    uint res = read_memory_16(EA_PD_16);
    uint ea_dst = make_int_16(read_imm_16());
@@ -14080,7 +14260,7 @@ void m68000_move_aw_pd_16(void)
 }
 
 
-void m68000_move_aw_di_16(void)
+static void m68000_move_aw_di_16(void)
 {
    uint res = read_memory_16(EA_DI);
    uint ea_dst = make_int_16(read_imm_16());
@@ -14094,7 +14274,7 @@ void m68000_move_aw_di_16(void)
 }
 
 
-void m68000_move_aw_ix_16(void)
+static void m68000_move_aw_ix_16(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -14111,7 +14291,7 @@ void m68000_move_aw_ix_16(void)
 }
 
 
-void m68000_move_aw_aw_16(void)
+static void m68000_move_aw_aw_16(void)
 {
    uint res = read_memory_16(EA_AW);
    uint ea_dst = make_int_16(read_imm_16());
@@ -14125,7 +14305,7 @@ void m68000_move_aw_aw_16(void)
 }
 
 
-void m68000_move_aw_al_16(void)
+static void m68000_move_aw_al_16(void)
 {
    uint res = read_memory_16(EA_AL);
    uint ea_dst = make_int_16(read_imm_16());
@@ -14139,7 +14319,7 @@ void m68000_move_aw_al_16(void)
 }
 
 
-void m68000_move_aw_pcdi_16(void)
+static void m68000_move_aw_pcdi_16(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint ea = old_pc + make_int_16(read_memory_16(old_pc));
@@ -14155,7 +14335,7 @@ void m68000_move_aw_pcdi_16(void)
 }
 
 
-void m68000_move_aw_pcix_16(void)
+static void m68000_move_aw_pcix_16(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint extension = read_memory_16(old_pc);
@@ -14173,7 +14353,7 @@ void m68000_move_aw_pcix_16(void)
 }
 
 
-void m68000_move_aw_i_16(void)
+static void m68000_move_aw_i_16(void)
 {
    uint res = read_imm_16();
    uint ea_dst = make_int_16(read_imm_16());
@@ -14187,7 +14367,7 @@ void m68000_move_aw_i_16(void)
 }
 
 
-void m68000_move_al_d_16(void)
+static void m68000_move_al_d_16(void)
 {
    uint res = MASK_OUT_ABOVE_16(DY);
    uint ea_dst = read_imm_32();
@@ -14201,7 +14381,7 @@ void m68000_move_al_d_16(void)
 }
 
 
-void m68000_move_al_a_16(void)
+static void m68000_move_al_a_16(void)
 {
    uint res = MASK_OUT_ABOVE_16(AY);
    uint ea_dst = read_imm_32();
@@ -14215,7 +14395,7 @@ void m68000_move_al_a_16(void)
 }
 
 
-void m68000_move_al_ai_16(void)
+static void m68000_move_al_ai_16(void)
 {
    uint res = read_memory_16(EA_AI);
    uint ea_dst = read_imm_32();
@@ -14229,7 +14409,7 @@ void m68000_move_al_ai_16(void)
 }
 
 
-void m68000_move_al_pi_16(void)
+static void m68000_move_al_pi_16(void)
 {
    uint res = read_memory_16(EA_PI_16);
    uint ea_dst = read_imm_32();
@@ -14243,7 +14423,7 @@ void m68000_move_al_pi_16(void)
 }
 
 
-void m68000_move_al_pd_16(void)
+static void m68000_move_al_pd_16(void)
 {
    uint res = read_memory_16(EA_PD_16);
    uint ea_dst = read_imm_32();
@@ -14257,7 +14437,7 @@ void m68000_move_al_pd_16(void)
 }
 
 
-void m68000_move_al_di_16(void)
+static void m68000_move_al_di_16(void)
 {
    uint res = read_memory_16(EA_DI);
    uint ea_dst = read_imm_32();
@@ -14271,7 +14451,7 @@ void m68000_move_al_di_16(void)
 }
 
 
-void m68000_move_al_ix_16(void)
+static void m68000_move_al_ix_16(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -14288,7 +14468,7 @@ void m68000_move_al_ix_16(void)
 }
 
 
-void m68000_move_al_aw_16(void)
+static void m68000_move_al_aw_16(void)
 {
    uint res = read_memory_16(EA_AW);
    uint ea_dst = read_imm_32();
@@ -14302,7 +14482,7 @@ void m68000_move_al_aw_16(void)
 }
 
 
-void m68000_move_al_al_16(void)
+static void m68000_move_al_al_16(void)
 {
    uint res = read_memory_16(EA_AL);
    uint ea_dst = read_imm_32();
@@ -14316,7 +14496,7 @@ void m68000_move_al_al_16(void)
 }
 
 
-void m68000_move_al_pcdi_16(void)
+static void m68000_move_al_pcdi_16(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint ea = old_pc + make_int_16(read_memory_16(old_pc));
@@ -14332,7 +14512,7 @@ void m68000_move_al_pcdi_16(void)
 }
 
 
-void m68000_move_al_pcix_16(void)
+static void m68000_move_al_pcix_16(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint extension = read_memory_16(old_pc);
@@ -14350,7 +14530,7 @@ void m68000_move_al_pcix_16(void)
 }
 
 
-void m68000_move_al_i_16(void)
+static void m68000_move_al_i_16(void)
 {
    uint res = read_imm_16();
    uint ea_dst = read_imm_32();
@@ -14364,7 +14544,7 @@ void m68000_move_al_i_16(void)
 }
 
 
-void m68000_move_dd_d_32(void)
+static void m68000_move_dd_d_32(void)
 {
    uint res = MASK_OUT_ABOVE_32(DY);
    uint* d_dst = &DX;
@@ -14378,7 +14558,7 @@ void m68000_move_dd_d_32(void)
 }
 
 
-void m68000_move_dd_a_32(void)
+static void m68000_move_dd_a_32(void)
 {
    uint res = MASK_OUT_ABOVE_32(AY);
    uint* d_dst = &DX;
@@ -14392,7 +14572,7 @@ void m68000_move_dd_a_32(void)
 }
 
 
-void m68000_move_dd_ai_32(void)
+static void m68000_move_dd_ai_32(void)
 {
    uint res = read_memory_32(EA_AI);
    uint* d_dst = &DX;
@@ -14406,7 +14586,7 @@ void m68000_move_dd_ai_32(void)
 }
 
 
-void m68000_move_dd_pi_32(void)
+static void m68000_move_dd_pi_32(void)
 {
    uint res = read_memory_32(EA_PI_32);
    uint* d_dst = &DX;
@@ -14420,7 +14600,7 @@ void m68000_move_dd_pi_32(void)
 }
 
 
-void m68000_move_dd_pd_32(void)
+static void m68000_move_dd_pd_32(void)
 {
    uint res = read_memory_32(EA_PD_32);
    uint* d_dst = &DX;
@@ -14434,7 +14614,7 @@ void m68000_move_dd_pd_32(void)
 }
 
 
-void m68000_move_dd_di_32(void)
+static void m68000_move_dd_di_32(void)
 {
    uint res = read_memory_32(EA_DI);
    uint* d_dst = &DX;
@@ -14448,7 +14628,7 @@ void m68000_move_dd_di_32(void)
 }
 
 
-void m68000_move_dd_ix_32(void)
+static void m68000_move_dd_ix_32(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -14465,7 +14645,7 @@ void m68000_move_dd_ix_32(void)
 }
 
 
-void m68000_move_dd_aw_32(void)
+static void m68000_move_dd_aw_32(void)
 {
    uint res = read_memory_32(EA_AW);
    uint* d_dst = &DX;
@@ -14479,7 +14659,7 @@ void m68000_move_dd_aw_32(void)
 }
 
 
-void m68000_move_dd_al_32(void)
+static void m68000_move_dd_al_32(void)
 {
    uint res = read_memory_32(EA_AL);
    uint* d_dst = &DX;
@@ -14493,7 +14673,7 @@ void m68000_move_dd_al_32(void)
 }
 
 
-void m68000_move_dd_pcdi_32(void)
+static void m68000_move_dd_pcdi_32(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint ea = old_pc + make_int_16(read_memory_16(old_pc));
@@ -14509,7 +14689,7 @@ void m68000_move_dd_pcdi_32(void)
 }
 
 
-void m68000_move_dd_pcix_32(void)
+static void m68000_move_dd_pcix_32(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint extension = read_memory_16(old_pc);
@@ -14527,7 +14707,7 @@ void m68000_move_dd_pcix_32(void)
 }
 
 
-void m68000_move_dd_i_32(void)
+static void m68000_move_dd_i_32(void)
 {
    uint res = read_imm_32();
    uint* d_dst = &DX;
@@ -14541,7 +14721,7 @@ void m68000_move_dd_i_32(void)
 }
 
 
-void m68000_move_ai_d_32(void)
+static void m68000_move_ai_d_32(void)
 {
    uint res = MASK_OUT_ABOVE_32(DY);
    uint ea_dst = AX;
@@ -14555,7 +14735,7 @@ void m68000_move_ai_d_32(void)
 }
 
 
-void m68000_move_ai_a_32(void)
+static void m68000_move_ai_a_32(void)
 {
    uint res = MASK_OUT_ABOVE_32(AY);
    uint ea_dst = AX;
@@ -14569,7 +14749,7 @@ void m68000_move_ai_a_32(void)
 }
 
 
-void m68000_move_ai_ai_32(void)
+static void m68000_move_ai_ai_32(void)
 {
    uint res = read_memory_32(EA_AI);
    uint ea_dst = AX;
@@ -14583,7 +14763,7 @@ void m68000_move_ai_ai_32(void)
 }
 
 
-void m68000_move_ai_pi_32(void)
+static void m68000_move_ai_pi_32(void)
 {
    uint res = read_memory_32(EA_PI_32);
    uint ea_dst = AX;
@@ -14597,7 +14777,7 @@ void m68000_move_ai_pi_32(void)
 }
 
 
-void m68000_move_ai_pd_32(void)
+static void m68000_move_ai_pd_32(void)
 {
    uint res = read_memory_32(EA_PD_32);
    uint ea_dst = AX;
@@ -14611,7 +14791,7 @@ void m68000_move_ai_pd_32(void)
 }
 
 
-void m68000_move_ai_di_32(void)
+static void m68000_move_ai_di_32(void)
 {
    uint res = read_memory_32(EA_DI);
    uint ea_dst = AX;
@@ -14625,7 +14805,7 @@ void m68000_move_ai_di_32(void)
 }
 
 
-void m68000_move_ai_ix_32(void)
+static void m68000_move_ai_ix_32(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -14642,7 +14822,7 @@ void m68000_move_ai_ix_32(void)
 }
 
 
-void m68000_move_ai_aw_32(void)
+static void m68000_move_ai_aw_32(void)
 {
    uint res = read_memory_32(EA_AW);
    uint ea_dst = AX;
@@ -14656,7 +14836,7 @@ void m68000_move_ai_aw_32(void)
 }
 
 
-void m68000_move_ai_al_32(void)
+static void m68000_move_ai_al_32(void)
 {
    uint res = read_memory_32(EA_AL);
    uint ea_dst = AX;
@@ -14670,7 +14850,7 @@ void m68000_move_ai_al_32(void)
 }
 
 
-void m68000_move_ai_pcdi_32(void)
+static void m68000_move_ai_pcdi_32(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint ea = old_pc + make_int_16(read_memory_16(old_pc));
@@ -14686,7 +14866,7 @@ void m68000_move_ai_pcdi_32(void)
 }
 
 
-void m68000_move_ai_pcix_32(void)
+static void m68000_move_ai_pcix_32(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint extension = read_memory_16(old_pc);
@@ -14704,7 +14884,7 @@ void m68000_move_ai_pcix_32(void)
 }
 
 
-void m68000_move_ai_i_32(void)
+static void m68000_move_ai_i_32(void)
 {
    uint res = read_imm_32();
    uint ea_dst = AX;
@@ -14718,7 +14898,7 @@ void m68000_move_ai_i_32(void)
 }
 
 
-void m68000_move_pi_d_32(void)
+static void m68000_move_pi_d_32(void)
 {
    uint res = MASK_OUT_ABOVE_32(DY);
    uint ea_dst = (AX+=4)-4;
@@ -14732,7 +14912,7 @@ void m68000_move_pi_d_32(void)
 }
 
 
-void m68000_move_pi_a_32(void)
+static void m68000_move_pi_a_32(void)
 {
    uint res = MASK_OUT_ABOVE_32(AY);
    uint ea_dst = (AX+=4)-4;
@@ -14746,7 +14926,7 @@ void m68000_move_pi_a_32(void)
 }
 
 
-void m68000_move_pi_ai_32(void)
+static void m68000_move_pi_ai_32(void)
 {
    uint res = read_memory_32(EA_AI);
    uint ea_dst = (AX+=4)-4;
@@ -14760,7 +14940,7 @@ void m68000_move_pi_ai_32(void)
 }
 
 
-void m68000_move_pi_pi_32(void)
+static void m68000_move_pi_pi_32(void)
 {
    uint res = read_memory_32(EA_PI_32);
    uint ea_dst = (AX+=4)-4;
@@ -14774,7 +14954,7 @@ void m68000_move_pi_pi_32(void)
 }
 
 
-void m68000_move_pi_pd_32(void)
+static void m68000_move_pi_pd_32(void)
 {
    uint res = read_memory_32(EA_PD_32);
    uint ea_dst = (AX+=4)-4;
@@ -14788,7 +14968,7 @@ void m68000_move_pi_pd_32(void)
 }
 
 
-void m68000_move_pi_di_32(void)
+static void m68000_move_pi_di_32(void)
 {
    uint res = read_memory_32(EA_DI);
    uint ea_dst = (AX+=4)-4;
@@ -14802,7 +14982,7 @@ void m68000_move_pi_di_32(void)
 }
 
 
-void m68000_move_pi_ix_32(void)
+static void m68000_move_pi_ix_32(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -14819,7 +14999,7 @@ void m68000_move_pi_ix_32(void)
 }
 
 
-void m68000_move_pi_aw_32(void)
+static void m68000_move_pi_aw_32(void)
 {
    uint res = read_memory_32(EA_AW);
    uint ea_dst = (AX+=4)-4;
@@ -14833,7 +15013,7 @@ void m68000_move_pi_aw_32(void)
 }
 
 
-void m68000_move_pi_al_32(void)
+static void m68000_move_pi_al_32(void)
 {
    uint res = read_memory_32(EA_AL);
    uint ea_dst = (AX+=4)-4;
@@ -14847,7 +15027,7 @@ void m68000_move_pi_al_32(void)
 }
 
 
-void m68000_move_pi_pcdi_32(void)
+static void m68000_move_pi_pcdi_32(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint ea = old_pc + make_int_16(read_memory_16(old_pc));
@@ -14863,7 +15043,7 @@ void m68000_move_pi_pcdi_32(void)
 }
 
 
-void m68000_move_pi_pcix_32(void)
+static void m68000_move_pi_pcix_32(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint extension = read_memory_16(old_pc);
@@ -14881,7 +15061,7 @@ void m68000_move_pi_pcix_32(void)
 }
 
 
-void m68000_move_pi_i_32(void)
+static void m68000_move_pi_i_32(void)
 {
    uint res = read_imm_32();
    uint ea_dst = (AX+=4)-4;
@@ -14895,7 +15075,7 @@ void m68000_move_pi_i_32(void)
 }
 
 
-void m68000_move_pd_d_32(void)
+static void m68000_move_pd_d_32(void)
 {
    uint res = MASK_OUT_ABOVE_32(DY);
    uint ea_dst = AX-=4;
@@ -14909,7 +15089,7 @@ void m68000_move_pd_d_32(void)
 }
 
 
-void m68000_move_pd_a_32(void)
+static void m68000_move_pd_a_32(void)
 {
    uint res = MASK_OUT_ABOVE_32(AY);
    uint ea_dst = AX-=4;
@@ -14923,7 +15103,7 @@ void m68000_move_pd_a_32(void)
 }
 
 
-void m68000_move_pd_ai_32(void)
+static void m68000_move_pd_ai_32(void)
 {
    uint res = read_memory_32(EA_AI);
    uint ea_dst = AX-=4;
@@ -14937,7 +15117,7 @@ void m68000_move_pd_ai_32(void)
 }
 
 
-void m68000_move_pd_pi_32(void)
+static void m68000_move_pd_pi_32(void)
 {
    uint res = read_memory_32(EA_PI_32);
    uint ea_dst = AX-=4;
@@ -14951,7 +15131,7 @@ void m68000_move_pd_pi_32(void)
 }
 
 
-void m68000_move_pd_pd_32(void)
+static void m68000_move_pd_pd_32(void)
 {
    uint res = read_memory_32(EA_PD_32);
    uint ea_dst = AX-=4;
@@ -14965,7 +15145,7 @@ void m68000_move_pd_pd_32(void)
 }
 
 
-void m68000_move_pd_di_32(void)
+static void m68000_move_pd_di_32(void)
 {
    uint res = read_memory_32(EA_DI);
    uint ea_dst = AX-=4;
@@ -14979,7 +15159,7 @@ void m68000_move_pd_di_32(void)
 }
 
 
-void m68000_move_pd_ix_32(void)
+static void m68000_move_pd_ix_32(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -14996,7 +15176,7 @@ void m68000_move_pd_ix_32(void)
 }
 
 
-void m68000_move_pd_aw_32(void)
+static void m68000_move_pd_aw_32(void)
 {
    uint res = read_memory_32(EA_AW);
    uint ea_dst = AX-=4;
@@ -15010,7 +15190,7 @@ void m68000_move_pd_aw_32(void)
 }
 
 
-void m68000_move_pd_al_32(void)
+static void m68000_move_pd_al_32(void)
 {
    uint res = read_memory_32(EA_AL);
    uint ea_dst = AX-=4;
@@ -15024,7 +15204,7 @@ void m68000_move_pd_al_32(void)
 }
 
 
-void m68000_move_pd_pcdi_32(void)
+static void m68000_move_pd_pcdi_32(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint ea = old_pc + make_int_16(read_memory_16(old_pc));
@@ -15040,7 +15220,7 @@ void m68000_move_pd_pcdi_32(void)
 }
 
 
-void m68000_move_pd_pcix_32(void)
+static void m68000_move_pd_pcix_32(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint extension = read_memory_16(old_pc);
@@ -15058,7 +15238,7 @@ void m68000_move_pd_pcix_32(void)
 }
 
 
-void m68000_move_pd_i_32(void)
+static void m68000_move_pd_i_32(void)
 {
    uint res = read_imm_32();
    uint ea_dst = AX-=4;
@@ -15072,7 +15252,7 @@ void m68000_move_pd_i_32(void)
 }
 
 
-void m68000_move_di_d_32(void)
+static void m68000_move_di_d_32(void)
 {
    uint res = MASK_OUT_ABOVE_32(DY);
    uint ea_dst = AX + make_int_16(read_imm_16());
@@ -15086,7 +15266,7 @@ void m68000_move_di_d_32(void)
 }
 
 
-void m68000_move_di_a_32(void)
+static void m68000_move_di_a_32(void)
 {
    uint res = MASK_OUT_ABOVE_32(AY);
    uint ea_dst = AX + make_int_16(read_imm_16());
@@ -15100,7 +15280,7 @@ void m68000_move_di_a_32(void)
 }
 
 
-void m68000_move_di_ai_32(void)
+static void m68000_move_di_ai_32(void)
 {
    uint res = read_memory_32(EA_AI);
    uint ea_dst = AX + make_int_16(read_imm_16());
@@ -15114,7 +15294,7 @@ void m68000_move_di_ai_32(void)
 }
 
 
-void m68000_move_di_pi_32(void)
+static void m68000_move_di_pi_32(void)
 {
    uint res = read_memory_32(EA_PI_32);
    uint ea_dst = AX + make_int_16(read_imm_16());
@@ -15128,7 +15308,7 @@ void m68000_move_di_pi_32(void)
 }
 
 
-void m68000_move_di_pd_32(void)
+static void m68000_move_di_pd_32(void)
 {
    uint res = read_memory_32(EA_PD_32);
    uint ea_dst = AX + make_int_16(read_imm_16());
@@ -15142,7 +15322,7 @@ void m68000_move_di_pd_32(void)
 }
 
 
-void m68000_move_di_di_32(void)
+static void m68000_move_di_di_32(void)
 {
    uint res = read_memory_32(EA_DI);
    uint ea_dst = AX + make_int_16(read_imm_16());
@@ -15156,7 +15336,7 @@ void m68000_move_di_di_32(void)
 }
 
 
-void m68000_move_di_ix_32(void)
+static void m68000_move_di_ix_32(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -15173,7 +15353,7 @@ void m68000_move_di_ix_32(void)
 }
 
 
-void m68000_move_di_aw_32(void)
+static void m68000_move_di_aw_32(void)
 {
    uint res = read_memory_32(EA_AW);
    uint ea_dst = AX + make_int_16(read_imm_16());
@@ -15187,7 +15367,7 @@ void m68000_move_di_aw_32(void)
 }
 
 
-void m68000_move_di_al_32(void)
+static void m68000_move_di_al_32(void)
 {
    uint res = read_memory_32(EA_AL);
    uint ea_dst = AX + make_int_16(read_imm_16());
@@ -15201,7 +15381,7 @@ void m68000_move_di_al_32(void)
 }
 
 
-void m68000_move_di_pcdi_32(void)
+static void m68000_move_di_pcdi_32(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint ea = old_pc + make_int_16(read_memory_16(old_pc));
@@ -15217,7 +15397,7 @@ void m68000_move_di_pcdi_32(void)
 }
 
 
-void m68000_move_di_pcix_32(void)
+static void m68000_move_di_pcix_32(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint extension = read_memory_16(old_pc);
@@ -15235,7 +15415,7 @@ void m68000_move_di_pcix_32(void)
 }
 
 
-void m68000_move_di_i_32(void)
+static void m68000_move_di_i_32(void)
 {
    uint res = read_imm_32();
    uint ea_dst = AX + make_int_16(read_imm_16());
@@ -15249,7 +15429,7 @@ void m68000_move_di_i_32(void)
 }
 
 
-void m68000_move_ix_d_32(void)
+static void m68000_move_ix_d_32(void)
 {
    uint res = MASK_OUT_ABOVE_32(DY);
    uint extension_dst = read_imm_16();
@@ -15265,7 +15445,7 @@ void m68000_move_ix_d_32(void)
 }
 
 
-void m68000_move_ix_a_32(void)
+static void m68000_move_ix_a_32(void)
 {
    uint res = MASK_OUT_ABOVE_32(AY);
    uint extension_dst = read_imm_16();
@@ -15281,7 +15461,7 @@ void m68000_move_ix_a_32(void)
 }
 
 
-void m68000_move_ix_ai_32(void)
+static void m68000_move_ix_ai_32(void)
 {
    uint res = read_memory_32(EA_AI);
    uint extension_dst = read_imm_16();
@@ -15297,7 +15477,7 @@ void m68000_move_ix_ai_32(void)
 }
 
 
-void m68000_move_ix_pi_32(void)
+static void m68000_move_ix_pi_32(void)
 {
    uint res = read_memory_32(EA_PI_32);
    uint extension_dst = read_imm_16();
@@ -15313,7 +15493,7 @@ void m68000_move_ix_pi_32(void)
 }
 
 
-void m68000_move_ix_pd_32(void)
+static void m68000_move_ix_pd_32(void)
 {
    uint res = read_memory_32(EA_PD_32);
    uint extension_dst = read_imm_16();
@@ -15329,7 +15509,7 @@ void m68000_move_ix_pd_32(void)
 }
 
 
-void m68000_move_ix_di_32(void)
+static void m68000_move_ix_di_32(void)
 {
    uint res = read_memory_32(EA_DI);
    uint extension_dst = read_imm_16();
@@ -15345,7 +15525,7 @@ void m68000_move_ix_di_32(void)
 }
 
 
-void m68000_move_ix_ix_32(void)
+static void m68000_move_ix_ix_32(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -15364,7 +15544,7 @@ void m68000_move_ix_ix_32(void)
 }
 
 
-void m68000_move_ix_aw_32(void)
+static void m68000_move_ix_aw_32(void)
 {
    uint res = read_memory_32(EA_AW);
    uint extension_dst = read_imm_16();
@@ -15380,7 +15560,7 @@ void m68000_move_ix_aw_32(void)
 }
 
 
-void m68000_move_ix_al_32(void)
+static void m68000_move_ix_al_32(void)
 {
    uint res = read_memory_32(EA_AL);
    uint extension_dst = read_imm_16();
@@ -15396,7 +15576,7 @@ void m68000_move_ix_al_32(void)
 }
 
 
-void m68000_move_ix_pcdi_32(void)
+static void m68000_move_ix_pcdi_32(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint ea = old_pc + make_int_16(read_memory_16(old_pc));
@@ -15414,7 +15594,7 @@ void m68000_move_ix_pcdi_32(void)
 }
 
 
-void m68000_move_ix_pcix_32(void)
+static void m68000_move_ix_pcix_32(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint extension = read_memory_16(old_pc);
@@ -15434,7 +15614,7 @@ void m68000_move_ix_pcix_32(void)
 }
 
 
-void m68000_move_ix_i_32(void)
+static void m68000_move_ix_i_32(void)
 {
    uint res = read_imm_32();
    uint extension_dst = read_imm_16();
@@ -15450,7 +15630,7 @@ void m68000_move_ix_i_32(void)
 }
 
 
-void m68000_move_aw_d_32(void)
+static void m68000_move_aw_d_32(void)
 {
    uint res = MASK_OUT_ABOVE_32(DY);
    uint ea_dst = make_int_16(read_imm_16());
@@ -15464,7 +15644,7 @@ void m68000_move_aw_d_32(void)
 }
 
 
-void m68000_move_aw_a_32(void)
+static void m68000_move_aw_a_32(void)
 {
    uint res = MASK_OUT_ABOVE_32(AY);
    uint ea_dst = make_int_16(read_imm_16());
@@ -15478,7 +15658,7 @@ void m68000_move_aw_a_32(void)
 }
 
 
-void m68000_move_aw_ai_32(void)
+static void m68000_move_aw_ai_32(void)
 {
    uint res = read_memory_32(EA_AI);
    uint ea_dst = make_int_16(read_imm_16());
@@ -15492,7 +15672,7 @@ void m68000_move_aw_ai_32(void)
 }
 
 
-void m68000_move_aw_pi_32(void)
+static void m68000_move_aw_pi_32(void)
 {
    uint res = read_memory_32(EA_PI_32);
    uint ea_dst = make_int_16(read_imm_16());
@@ -15506,7 +15686,7 @@ void m68000_move_aw_pi_32(void)
 }
 
 
-void m68000_move_aw_pd_32(void)
+static void m68000_move_aw_pd_32(void)
 {
    uint res = read_memory_32(EA_PD_32);
    uint ea_dst = make_int_16(read_imm_16());
@@ -15520,7 +15700,7 @@ void m68000_move_aw_pd_32(void)
 }
 
 
-void m68000_move_aw_di_32(void)
+static void m68000_move_aw_di_32(void)
 {
    uint res = read_memory_32(EA_DI);
    uint ea_dst = make_int_16(read_imm_16());
@@ -15534,7 +15714,7 @@ void m68000_move_aw_di_32(void)
 }
 
 
-void m68000_move_aw_ix_32(void)
+static void m68000_move_aw_ix_32(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -15551,7 +15731,7 @@ void m68000_move_aw_ix_32(void)
 }
 
 
-void m68000_move_aw_aw_32(void)
+static void m68000_move_aw_aw_32(void)
 {
    uint res = read_memory_32(EA_AW);
    uint ea_dst = make_int_16(read_imm_16());
@@ -15565,7 +15745,7 @@ void m68000_move_aw_aw_32(void)
 }
 
 
-void m68000_move_aw_al_32(void)
+static void m68000_move_aw_al_32(void)
 {
    uint res = read_memory_32(EA_AL);
    uint ea_dst = make_int_16(read_imm_16());
@@ -15579,7 +15759,7 @@ void m68000_move_aw_al_32(void)
 }
 
 
-void m68000_move_aw_pcdi_32(void)
+static void m68000_move_aw_pcdi_32(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint ea = old_pc + make_int_16(read_memory_16(old_pc));
@@ -15595,7 +15775,7 @@ void m68000_move_aw_pcdi_32(void)
 }
 
 
-void m68000_move_aw_pcix_32(void)
+static void m68000_move_aw_pcix_32(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint extension = read_memory_16(old_pc);
@@ -15613,7 +15793,7 @@ void m68000_move_aw_pcix_32(void)
 }
 
 
-void m68000_move_aw_i_32(void)
+static void m68000_move_aw_i_32(void)
 {
    uint res = read_imm_32();
    uint ea_dst = make_int_16(read_imm_16());
@@ -15627,7 +15807,7 @@ void m68000_move_aw_i_32(void)
 }
 
 
-void m68000_move_al_d_32(void)
+static void m68000_move_al_d_32(void)
 {
    uint res = MASK_OUT_ABOVE_32(DY);
    uint ea_dst = read_imm_32();
@@ -15641,7 +15821,7 @@ void m68000_move_al_d_32(void)
 }
 
 
-void m68000_move_al_a_32(void)
+static void m68000_move_al_a_32(void)
 {
    uint res = MASK_OUT_ABOVE_32(AY);
    uint ea_dst = read_imm_32();
@@ -15655,7 +15835,7 @@ void m68000_move_al_a_32(void)
 }
 
 
-void m68000_move_al_ai_32(void)
+static void m68000_move_al_ai_32(void)
 {
    uint res = read_memory_32(EA_AI);
    uint ea_dst = read_imm_32();
@@ -15669,7 +15849,7 @@ void m68000_move_al_ai_32(void)
 }
 
 
-void m68000_move_al_pi_32(void)
+static void m68000_move_al_pi_32(void)
 {
    uint res = read_memory_32(EA_PI_32);
    uint ea_dst = read_imm_32();
@@ -15683,7 +15863,7 @@ void m68000_move_al_pi_32(void)
 }
 
 
-void m68000_move_al_pd_32(void)
+static void m68000_move_al_pd_32(void)
 {
    uint res = read_memory_32(EA_PD_32);
    uint ea_dst = read_imm_32();
@@ -15697,7 +15877,7 @@ void m68000_move_al_pd_32(void)
 }
 
 
-void m68000_move_al_di_32(void)
+static void m68000_move_al_di_32(void)
 {
    uint res = read_memory_32(EA_DI);
    uint ea_dst = read_imm_32();
@@ -15711,7 +15891,7 @@ void m68000_move_al_di_32(void)
 }
 
 
-void m68000_move_al_ix_32(void)
+static void m68000_move_al_ix_32(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -15728,7 +15908,7 @@ void m68000_move_al_ix_32(void)
 }
 
 
-void m68000_move_al_aw_32(void)
+static void m68000_move_al_aw_32(void)
 {
    uint res = read_memory_32(EA_AW);
    uint ea_dst = read_imm_32();
@@ -15742,7 +15922,7 @@ void m68000_move_al_aw_32(void)
 }
 
 
-void m68000_move_al_al_32(void)
+static void m68000_move_al_al_32(void)
 {
    uint res = read_memory_32(EA_AL);
    uint ea_dst = read_imm_32();
@@ -15756,7 +15936,7 @@ void m68000_move_al_al_32(void)
 }
 
 
-void m68000_move_al_pcdi_32(void)
+static void m68000_move_al_pcdi_32(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint ea = old_pc + make_int_16(read_memory_16(old_pc));
@@ -15772,7 +15952,7 @@ void m68000_move_al_pcdi_32(void)
 }
 
 
-void m68000_move_al_pcix_32(void)
+static void m68000_move_al_pcix_32(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint extension = read_memory_16(old_pc);
@@ -15790,7 +15970,7 @@ void m68000_move_al_pcix_32(void)
 }
 
 
-void m68000_move_al_i_32(void)
+static void m68000_move_al_i_32(void)
 {
    uint res = read_imm_32();
    uint ea_dst = read_imm_32();
@@ -15804,49 +15984,49 @@ void m68000_move_al_i_32(void)
 }
 
 
-void m68000_movea_d_16(void)
+static void m68000_movea_d_16(void)
 {
    AX = make_int_16(MASK_OUT_ABOVE_16(DY));
    USE_CLKS(4);
 }
 
 
-void m68000_movea_a_16(void)
+static void m68000_movea_a_16(void)
 {
    AX = make_int_16(MASK_OUT_ABOVE_16(AY));
    USE_CLKS(4);
 }
 
 
-void m68000_movea_ai_16(void)
+static void m68000_movea_ai_16(void)
 {
    AX = make_int_16(read_memory_16(EA_AI));
    USE_CLKS(4+4);
 }
 
 
-void m68000_movea_pi_16(void)
+static void m68000_movea_pi_16(void)
 {
    AX = make_int_16(read_memory_16(EA_PI_16));
    USE_CLKS(4+4);
 }
 
 
-void m68000_movea_pd_16(void)
+static void m68000_movea_pd_16(void)
 {
    AX = make_int_16(read_memory_16(EA_PD_16));
    USE_CLKS(4+6);
 }
 
 
-void m68000_movea_di_16(void)
+static void m68000_movea_di_16(void)
 {
    AX = make_int_16(read_memory_16(EA_DI));
    USE_CLKS(4+8);
 }
 
 
-void m68000_movea_ix_16(void)
+static void m68000_movea_ix_16(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -15856,21 +16036,21 @@ void m68000_movea_ix_16(void)
 }
 
 
-void m68000_movea_aw_16(void)
+static void m68000_movea_aw_16(void)
 {
    AX = make_int_16(read_memory_16(EA_AW));
    USE_CLKS(4+8);
 }
 
 
-void m68000_movea_al_16(void)
+static void m68000_movea_al_16(void)
 {
    AX = make_int_16(read_memory_16(EA_AL));
    USE_CLKS(4+12);
 }
 
 
-void m68000_movea_pcdi_16(void)
+static void m68000_movea_pcdi_16(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint ea = old_pc + make_int_16(read_memory_16(old_pc));
@@ -15879,7 +16059,7 @@ void m68000_movea_pcdi_16(void)
 }
 
 
-void m68000_movea_pcix_16(void)
+static void m68000_movea_pcix_16(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint extension = read_memory_16(old_pc);
@@ -15890,56 +16070,56 @@ void m68000_movea_pcix_16(void)
 }
 
 
-void m68000_movea_i_16(void)
+static void m68000_movea_i_16(void)
 {
    AX = make_int_16(read_imm_16());
    USE_CLKS(4+4);
 }
 
 
-void m68000_movea_d_32(void)
+static void m68000_movea_d_32(void)
 {
    AX = MASK_OUT_ABOVE_32(DY);
    USE_CLKS(4);
 }
 
 
-void m68000_movea_a_32(void)
+static void m68000_movea_a_32(void)
 {
    AX = MASK_OUT_ABOVE_32(AY);
    USE_CLKS(4);
 }
 
 
-void m68000_movea_ai_32(void)
+static void m68000_movea_ai_32(void)
 {
    AX = read_memory_32(EA_AI);
    USE_CLKS(4+8);
 }
 
 
-void m68000_movea_pi_32(void)
+static void m68000_movea_pi_32(void)
 {
    AX = read_memory_32(EA_PI_32);
    USE_CLKS(4+8);
 }
 
 
-void m68000_movea_pd_32(void)
+static void m68000_movea_pd_32(void)
 {
    AX = read_memory_32(EA_PD_32);
    USE_CLKS(4+10);
 }
 
 
-void m68000_movea_di_32(void)
+static void m68000_movea_di_32(void)
 {
    AX = read_memory_32(EA_DI);
    USE_CLKS(4+12);
 }
 
 
-void m68000_movea_ix_32(void)
+static void m68000_movea_ix_32(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -15949,21 +16129,21 @@ void m68000_movea_ix_32(void)
 }
 
 
-void m68000_movea_aw_32(void)
+static void m68000_movea_aw_32(void)
 {
    AX = read_memory_32(EA_AW);
    USE_CLKS(4+12);
 }
 
 
-void m68000_movea_al_32(void)
+static void m68000_movea_al_32(void)
 {
    AX = read_memory_32(EA_AL);
    USE_CLKS(4+16);
 }
 
 
-void m68000_movea_pcdi_32(void)
+static void m68000_movea_pcdi_32(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint ea = old_pc + make_int_16(read_memory_16(old_pc));
@@ -15972,7 +16152,7 @@ void m68000_movea_pcdi_32(void)
 }
 
 
-void m68000_movea_pcix_32(void)
+static void m68000_movea_pcix_32(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint extension = read_memory_16(old_pc);
@@ -15983,49 +16163,148 @@ void m68000_movea_pcix_32(void)
 }
 
 
-void m68000_movea_i_32(void)
+static void m68000_movea_i_32(void)
 {
    AX = read_imm_32();
    USE_CLKS(4+8);
 }
 
 
-void m68000_move_to_ccr_d(void)
+static void m68010_move_fr_ccr_d(void)
+{
+   if(g_cpu_type & (CPU_010_PLUS))
+   {
+      DY = MASK_OUT_BELOW_8(DY) | get_ccr();
+      USE_CLKS(4);
+      return;
+   }
+   exception(EXCEPTION_ILLEGAL_INSTRUCTION);
+}
+
+
+static void m68010_move_fr_ccr_ai(void)
+{
+   if(g_cpu_type & (CPU_010_PLUS))
+   {
+      write_memory_8(EA_AI, get_ccr());
+      USE_CLKS(8+4);
+      return;
+   }
+   exception(EXCEPTION_ILLEGAL_INSTRUCTION);
+}
+
+
+static void m68010_move_fr_ccr_pi(void)
+{
+   if(g_cpu_type & (CPU_010_PLUS))
+   {
+      write_memory_8(EA_PI_16, get_ccr());
+      USE_CLKS(8+4);
+      return;
+   }
+   exception(EXCEPTION_ILLEGAL_INSTRUCTION);
+}
+
+
+static void m68010_move_fr_ccr_pd(void)
+{
+   if(g_cpu_type & (CPU_010_PLUS))
+   {
+      write_memory_8(EA_PD_16, get_ccr());
+      USE_CLKS(8+6);
+      return;
+   }
+   exception(EXCEPTION_ILLEGAL_INSTRUCTION);
+}
+
+
+static void m68010_move_fr_ccr_di(void)
+{
+   if(g_cpu_type & (CPU_010_PLUS))
+   {
+      write_memory_8(EA_DI, get_ccr());
+      USE_CLKS(8+8);
+      return;
+   }
+   exception(EXCEPTION_ILLEGAL_INSTRUCTION);
+}
+
+
+static void m68010_move_fr_ccr_ix(void)
+{
+   if(g_cpu_type & (CPU_010_PLUS))
+   {
+      uint extension = read_imm_16();
+      uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
+      uint ea = AY + make_int_8(extension & 0xff) + (BIT_B(extension) ? index : make_int_16(index & 0xffff));
+      write_memory_8(ea, get_ccr());
+      USE_CLKS(8+10);
+      return;
+   }
+   exception(EXCEPTION_ILLEGAL_INSTRUCTION);
+}
+
+
+static void m68010_move_fr_ccr_aw(void)
+{
+   if(g_cpu_type & (CPU_010_PLUS))
+   {
+      write_memory_8(EA_AW, get_ccr());
+      USE_CLKS(8+8);
+      return;
+   }
+   exception(EXCEPTION_ILLEGAL_INSTRUCTION);
+}
+
+
+static void m68010_move_fr_ccr_al(void)
+{
+   if(g_cpu_type & (CPU_010_PLUS))
+   {
+      write_memory_8(EA_AL, get_ccr());
+      USE_CLKS(8+12);
+      return;
+   }
+   exception(EXCEPTION_ILLEGAL_INSTRUCTION);
+}
+
+
+static void m68000_move_to_ccr_d(void)
 {
    set_ccr(DY);
    USE_CLKS(12);
 }
 
 
-void m68000_move_to_ccr_ai(void)
+static void m68000_move_to_ccr_ai(void)
 {
    set_ccr(read_memory_16(EA_AI));
    USE_CLKS(12+4);
 }
 
 
-void m68000_move_to_ccr_pi(void)
+static void m68000_move_to_ccr_pi(void)
 {
    set_ccr(read_memory_16(EA_PI_16));
    USE_CLKS(12+4);
 }
 
 
-void m68000_move_to_ccr_pd(void)
+static void m68000_move_to_ccr_pd(void)
 {
    set_ccr(read_memory_16(EA_PD_16));
    USE_CLKS(12+6);
 }
 
 
-void m68000_move_to_ccr_di(void)
+static void m68000_move_to_ccr_di(void)
 {
    set_ccr(read_memory_16(EA_DI));
    USE_CLKS(12+8);
 }
 
 
-void m68000_move_to_ccr_ix(void)
+static void m68000_move_to_ccr_ix(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -16035,21 +16314,21 @@ void m68000_move_to_ccr_ix(void)
 }
 
 
-void m68000_move_to_ccr_aw(void)
+static void m68000_move_to_ccr_aw(void)
 {
    set_ccr(read_memory_16(EA_AW));
    USE_CLKS(12+8);
 }
 
 
-void m68000_move_to_ccr_al(void)
+static void m68000_move_to_ccr_al(void)
 {
    set_ccr(read_memory_16(EA_AL));
    USE_CLKS(12+12);
 }
 
 
-void m68000_move_to_ccr_pcdi(void)
+static void m68000_move_to_ccr_pcdi(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint ea = old_pc + make_int_16(read_memory_16(old_pc));
@@ -16058,7 +16337,7 @@ void m68000_move_to_ccr_pcdi(void)
 }
 
 
-void m68000_move_to_ccr_pcix(void)
+static void m68000_move_to_ccr_pcix(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint extension = read_memory_16(old_pc);
@@ -16069,14 +16348,14 @@ void m68000_move_to_ccr_pcix(void)
 }
 
 
-void m68000_move_to_ccr_i(void)
+static void m68000_move_to_ccr_i(void)
 {
    set_ccr(read_imm_16());
    USE_CLKS(12+4);
 }
 
 
-void m68000_move_fr_sr_d(void)
+static void m68000_move_fr_sr_d(void)
 {
    if(g_cpu_s_flag)
    {
@@ -16088,7 +16367,7 @@ void m68000_move_fr_sr_d(void)
 }
 
 
-void m68000_move_fr_sr_ai(void)
+static void m68000_move_fr_sr_ai(void)
 {
    uint ea = EA_AI;
 
@@ -16102,7 +16381,7 @@ void m68000_move_fr_sr_ai(void)
 }
 
 
-void m68000_move_fr_sr_pi(void)
+static void m68000_move_fr_sr_pi(void)
 {
    uint ea = EA_PI_16;
 
@@ -16116,7 +16395,7 @@ void m68000_move_fr_sr_pi(void)
 }
 
 
-void m68000_move_fr_sr_pd(void)
+static void m68000_move_fr_sr_pd(void)
 {
    uint ea = EA_PD_16;
 
@@ -16130,7 +16409,7 @@ void m68000_move_fr_sr_pd(void)
 }
 
 
-void m68000_move_fr_sr_di(void)
+static void m68000_move_fr_sr_di(void)
 {
    uint ea = EA_DI;
 
@@ -16144,7 +16423,7 @@ void m68000_move_fr_sr_di(void)
 }
 
 
-void m68000_move_fr_sr_ix(void)
+static void m68000_move_fr_sr_ix(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -16160,7 +16439,7 @@ void m68000_move_fr_sr_ix(void)
 }
 
 
-void m68000_move_fr_sr_aw(void)
+static void m68000_move_fr_sr_aw(void)
 {
    uint ea = EA_AW;
 
@@ -16174,7 +16453,7 @@ void m68000_move_fr_sr_aw(void)
 }
 
 
-void m68000_move_fr_sr_al(void)
+static void m68000_move_fr_sr_al(void)
 {
    uint ea = EA_AL;
 
@@ -16188,7 +16467,7 @@ void m68000_move_fr_sr_al(void)
 }
 
 
-void m68000_move_to_sr_d(void)
+static void m68000_move_to_sr_d(void)
 {
    if(g_cpu_s_flag)
    {
@@ -16200,7 +16479,7 @@ void m68000_move_to_sr_d(void)
 }
 
 
-void m68000_move_to_sr_ai(void)
+static void m68000_move_to_sr_ai(void)
 {
    uint new_sr = read_memory_16(EA_AI);
 
@@ -16214,7 +16493,7 @@ void m68000_move_to_sr_ai(void)
 }
 
 
-void m68000_move_to_sr_pi(void)
+static void m68000_move_to_sr_pi(void)
 {
    uint new_sr = read_memory_16(EA_PI_16);
 
@@ -16228,7 +16507,7 @@ void m68000_move_to_sr_pi(void)
 }
 
 
-void m68000_move_to_sr_pd(void)
+static void m68000_move_to_sr_pd(void)
 {
    uint new_sr = read_memory_16(EA_PD_16);
 
@@ -16242,7 +16521,7 @@ void m68000_move_to_sr_pd(void)
 }
 
 
-void m68000_move_to_sr_di(void)
+static void m68000_move_to_sr_di(void)
 {
    uint new_sr = read_memory_16(EA_DI);
 
@@ -16256,7 +16535,7 @@ void m68000_move_to_sr_di(void)
 }
 
 
-void m68000_move_to_sr_ix(void)
+static void m68000_move_to_sr_ix(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -16273,7 +16552,7 @@ void m68000_move_to_sr_ix(void)
 }
 
 
-void m68000_move_to_sr_aw(void)
+static void m68000_move_to_sr_aw(void)
 {
    uint new_sr = read_memory_16(EA_AW);
 
@@ -16287,7 +16566,7 @@ void m68000_move_to_sr_aw(void)
 }
 
 
-void m68000_move_to_sr_al(void)
+static void m68000_move_to_sr_al(void)
 {
    uint new_sr = read_memory_16(EA_AL);
 
@@ -16301,7 +16580,7 @@ void m68000_move_to_sr_al(void)
 }
 
 
-void m68000_move_to_sr_pcdi(void)
+static void m68000_move_to_sr_pcdi(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint ea = old_pc + make_int_16(read_memory_16(old_pc));
@@ -16317,7 +16596,7 @@ void m68000_move_to_sr_pcdi(void)
 }
 
 
-void m68000_move_to_sr_pcix(void)
+static void m68000_move_to_sr_pcix(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint extension = read_memory_16(old_pc);
@@ -16335,7 +16614,7 @@ void m68000_move_to_sr_pcix(void)
 }
 
 
-void m68000_move_to_sr_i(void)
+static void m68000_move_to_sr_i(void)
 {
    uint new_sr = read_imm_16();
 
@@ -16349,7 +16628,7 @@ void m68000_move_to_sr_i(void)
 }
 
 
-void m68000_move_fr_usp(void)
+static void m68000_move_fr_usp(void)
 {
    if(g_cpu_s_flag)
    {
@@ -16361,7 +16640,7 @@ void m68000_move_fr_usp(void)
 }
 
 
-void m68000_move_to_usp(void)
+static void m68000_move_to_usp(void)
 {
    if(g_cpu_s_flag)
    {
@@ -16373,7 +16652,75 @@ void m68000_move_to_usp(void)
 }
 
 
-void m68000_movem_pd_16(void)
+static void m68010_movec_cr(void)
+{
+   if(g_cpu_type & (CPU_010_PLUS))
+   {
+      if(g_cpu_s_flag)
+      {
+         uint next_word = read_imm_16();
+         USE_CLKS(12);
+         switch(next_word & 0xfff)
+         {
+            case 0x000: /* SFC */
+               g_cpu_dar[next_word>>15][(next_word>>12)&7] = g_cpu_sfc;
+               return;
+            case 0x001: /* DFC */
+               g_cpu_dar[next_word>>15][(next_word>>12)&7] = g_cpu_dfc;
+               return;
+            case 0x800: /* USP */
+               g_cpu_dar[next_word>>15][(next_word>>12)&7] = g_cpu_usp;
+               return;
+            case 0x801: /* VBR */
+               g_cpu_dar[next_word>>15][(next_word>>12)&7] = g_cpu_vbr;
+               return;
+            default:
+               exception(EXCEPTION_ILLEGAL_INSTRUCTION);
+               return;
+         }
+      }
+      exception(EXCEPTION_PRIVILEGE_VIOLATION);
+      return;
+   }
+   exception(EXCEPTION_ILLEGAL_INSTRUCTION);
+}
+
+
+static void m68010_movec_rc(void)
+{
+   if(g_cpu_type & (CPU_010_PLUS))
+   {
+      if(g_cpu_s_flag)
+      {
+         uint next_word = read_imm_16();
+         USE_CLKS(10);
+         switch(next_word & 0xfff)
+         {
+            case 0x000: /* SFC */
+               g_cpu_sfc = g_cpu_dar[next_word>>15][(next_word>>12)&7] & 7;
+               return;
+            case 0x001: /* DFC */
+               g_cpu_dfc = g_cpu_dar[next_word>>15][(next_word>>12)&7] & 7;
+               return;
+            case 0x800: /* USP */
+               g_cpu_usp = g_cpu_dar[next_word>>15][(next_word>>12)&7];
+               return;
+            case 0x801: /* VBR */
+               g_cpu_vbr = g_cpu_dar[next_word>>15][(next_word>>12)&7];
+               return;
+            default:
+               exception(EXCEPTION_ILLEGAL_INSTRUCTION);
+               return;
+         }
+      }
+      exception(EXCEPTION_PRIVILEGE_VIOLATION);
+      return;
+   }
+   exception(EXCEPTION_ILLEGAL_INSTRUCTION);
+}
+
+
+static void m68000_movem_pd_16(void)
 {
    uint i = 0;
    uint register_list = read_imm_16();
@@ -16391,7 +16738,7 @@ void m68000_movem_pd_16(void)
 }
 
 
-void m68000_movem_pd_32(void)
+static void m68000_movem_pd_32(void)
 {
    uint i = 0;
    uint register_list = read_imm_16();
@@ -16409,7 +16756,7 @@ void m68000_movem_pd_32(void)
 }
 
 
-void m68000_movem_pi_16(void)
+static void m68000_movem_pi_16(void)
 {
    uint i = 0;
    uint register_list = read_imm_16();
@@ -16428,7 +16775,7 @@ void m68000_movem_pi_16(void)
 }
 
 
-void m68000_movem_pi_32(void)
+static void m68000_movem_pi_32(void)
 {
    uint i = 0;
    uint register_list = read_imm_16();
@@ -16447,7 +16794,7 @@ void m68000_movem_pi_32(void)
 }
 
 
-void m68000_movem_re_ai_16(void)
+static void m68000_movem_re_ai_16(void)
 {
    uint i = 0;
    uint register_list = read_imm_16();
@@ -16465,7 +16812,7 @@ void m68000_movem_re_ai_16(void)
 }
 
 
-void m68000_movem_re_pd_16(void)
+static void m68000_movem_re_pd_16(void)
 {
    uint i = 0;
    uint register_list = read_imm_16();
@@ -16483,7 +16830,7 @@ void m68000_movem_re_pd_16(void)
 }
 
 
-void m68000_movem_re_di_16(void)
+static void m68000_movem_re_di_16(void)
 {
    uint i = 0;
    uint register_list = read_imm_16();
@@ -16501,7 +16848,7 @@ void m68000_movem_re_di_16(void)
 }
 
 
-void m68000_movem_re_ix_16(void)
+static void m68000_movem_re_ix_16(void)
 {
    uint i = 0;
    uint register_list = read_imm_16();
@@ -16521,7 +16868,7 @@ void m68000_movem_re_ix_16(void)
 }
 
 
-void m68000_movem_re_aw_16(void)
+static void m68000_movem_re_aw_16(void)
 {
    uint i = 0;
    uint register_list = read_imm_16();
@@ -16539,7 +16886,7 @@ void m68000_movem_re_aw_16(void)
 }
 
 
-void m68000_movem_re_al_16(void)
+static void m68000_movem_re_al_16(void)
 {
    uint i = 0;
    uint register_list = read_imm_16();
@@ -16557,7 +16904,7 @@ void m68000_movem_re_al_16(void)
 }
 
 
-void m68000_movem_re_ai_32(void)
+static void m68000_movem_re_ai_32(void)
 {
    uint i = 0;
    uint register_list = read_imm_16();
@@ -16575,7 +16922,7 @@ void m68000_movem_re_ai_32(void)
 }
 
 
-void m68000_movem_re_pd_32(void)
+static void m68000_movem_re_pd_32(void)
 {
    uint i = 0;
    uint register_list = read_imm_16();
@@ -16593,7 +16940,7 @@ void m68000_movem_re_pd_32(void)
 }
 
 
-void m68000_movem_re_di_32(void)
+static void m68000_movem_re_di_32(void)
 {
    uint i = 0;
    uint register_list = read_imm_16();
@@ -16611,7 +16958,7 @@ void m68000_movem_re_di_32(void)
 }
 
 
-void m68000_movem_re_ix_32(void)
+static void m68000_movem_re_ix_32(void)
 {
    uint i = 0;
    uint register_list = read_imm_16();
@@ -16631,7 +16978,7 @@ void m68000_movem_re_ix_32(void)
 }
 
 
-void m68000_movem_re_aw_32(void)
+static void m68000_movem_re_aw_32(void)
 {
    uint i = 0;
    uint register_list = read_imm_16();
@@ -16649,7 +16996,7 @@ void m68000_movem_re_aw_32(void)
 }
 
 
-void m68000_movem_re_al_32(void)
+static void m68000_movem_re_al_32(void)
 {
    uint i = 0;
    uint register_list = read_imm_16();
@@ -16667,7 +17014,7 @@ void m68000_movem_re_al_32(void)
 }
 
 
-void m68000_movem_er_ai_16(void)
+static void m68000_movem_er_ai_16(void)
 {
    uint i = 0;
    uint register_list = read_imm_16();
@@ -16685,7 +17032,7 @@ void m68000_movem_er_ai_16(void)
 }
 
 
-void m68000_movem_er_pi_16(void)
+static void m68000_movem_er_pi_16(void)
 {
    uint i = 0;
    uint register_list = read_imm_16();
@@ -16703,7 +17050,7 @@ void m68000_movem_er_pi_16(void)
 }
 
 
-void m68000_movem_er_di_16(void)
+static void m68000_movem_er_di_16(void)
 {
    uint i = 0;
    uint register_list = read_imm_16();
@@ -16721,7 +17068,7 @@ void m68000_movem_er_di_16(void)
 }
 
 
-void m68000_movem_er_ix_16(void)
+static void m68000_movem_er_ix_16(void)
 {
    uint i = 0;
    uint register_list = read_imm_16();
@@ -16741,7 +17088,7 @@ void m68000_movem_er_ix_16(void)
 }
 
 
-void m68000_movem_er_aw_16(void)
+static void m68000_movem_er_aw_16(void)
 {
    uint i = 0;
    uint register_list = read_imm_16();
@@ -16759,7 +17106,7 @@ void m68000_movem_er_aw_16(void)
 }
 
 
-void m68000_movem_er_al_16(void)
+static void m68000_movem_er_al_16(void)
 {
    uint i = 0;
    uint register_list = read_imm_16();
@@ -16777,7 +17124,7 @@ void m68000_movem_er_al_16(void)
 }
 
 
-void m68000_movem_er_pcdi_16(void)
+static void m68000_movem_er_pcdi_16(void)
 {
    uint i = 0;
    uint register_list = read_imm_16();
@@ -16796,7 +17143,7 @@ void m68000_movem_er_pcdi_16(void)
 }
 
 
-void m68000_movem_er_pcix_16(void)
+static void m68000_movem_er_pcix_16(void)
 {
    uint i = 0;
    uint register_list = read_imm_16();
@@ -16817,7 +17164,7 @@ void m68000_movem_er_pcix_16(void)
 }
 
 
-void m68000_movem_er_ai_32(void)
+static void m68000_movem_er_ai_32(void)
 {
    uint i = 0;
    uint register_list = read_imm_16();
@@ -16835,7 +17182,7 @@ void m68000_movem_er_ai_32(void)
 }
 
 
-void m68000_movem_er_pi_32(void)
+static void m68000_movem_er_pi_32(void)
 {
    uint i = 0;
    uint register_list = read_imm_16();
@@ -16853,7 +17200,7 @@ void m68000_movem_er_pi_32(void)
 }
 
 
-void m68000_movem_er_di_32(void)
+static void m68000_movem_er_di_32(void)
 {
    uint i = 0;
    uint register_list = read_imm_16();
@@ -16871,7 +17218,7 @@ void m68000_movem_er_di_32(void)
 }
 
 
-void m68000_movem_er_ix_32(void)
+static void m68000_movem_er_ix_32(void)
 {
    uint i = 0;
    uint register_list = read_imm_16();
@@ -16891,7 +17238,7 @@ void m68000_movem_er_ix_32(void)
 }
 
 
-void m68000_movem_er_aw_32(void)
+static void m68000_movem_er_aw_32(void)
 {
    uint i = 0;
    uint register_list = read_imm_16();
@@ -16909,7 +17256,7 @@ void m68000_movem_er_aw_32(void)
 }
 
 
-void m68000_movem_er_al_32(void)
+static void m68000_movem_er_al_32(void)
 {
    uint i = 0;
    uint register_list = read_imm_16();
@@ -16927,7 +17274,7 @@ void m68000_movem_er_al_32(void)
 }
 
 
-void m68000_movem_er_pcdi_32(void)
+static void m68000_movem_er_pcdi_32(void)
 {
    uint i = 0;
    uint register_list = read_imm_16();
@@ -16946,7 +17293,7 @@ void m68000_movem_er_pcdi_32(void)
 }
 
 
-void m68000_movem_er_pcix_32(void)
+static void m68000_movem_er_pcix_32(void)
 {
    uint i = 0;
    uint register_list = read_imm_16();
@@ -16967,7 +17314,7 @@ void m68000_movem_er_pcix_32(void)
 }
 
 
-void m68000_movep_re_16(void)
+static void m68000_movep_re_16(void)
 {
    uint ea = AY + make_int_16(MASK_OUT_ABOVE_16(read_imm_16()));
    uint src = DX;
@@ -16978,7 +17325,7 @@ void m68000_movep_re_16(void)
 }
 
 
-void m68000_movep_re_32(void)
+static void m68000_movep_re_32(void)
 {
    uint ea = AY + make_int_16(MASK_OUT_ABOVE_16(read_imm_16()));
    uint src = DX;
@@ -16991,7 +17338,7 @@ void m68000_movep_re_32(void)
 }
 
 
-void m68000_movep_er_16(void)
+static void m68000_movep_er_16(void)
 {
    uint ea = AY + make_int_16(MASK_OUT_ABOVE_16(read_imm_16()));
    uint* d_dst = &DX;
@@ -17001,17 +17348,563 @@ void m68000_movep_er_16(void)
 }
 
 
-void m68000_movep_er_32(void)
+static void m68000_movep_er_32(void)
 {
    uint ea = AY + make_int_16(MASK_OUT_ABOVE_16(read_imm_16()));
 
    DX = (read_memory_8(ea) << 24)   + (read_memory_8(ea+2) << 16)
-                           + (read_memory_8(ea+4) <<  8) +  read_memory_8(ea+6);
+      + (read_memory_8(ea+4) <<  8) +  read_memory_8(ea+6);
    USE_CLKS(24);
 }
 
 
-void m68000_moveq(void)
+static void m68010_moves_ai_8(void)
+{
+   if(g_cpu_type & (CPU_010_PLUS))
+   {
+      uint next_word = read_imm_16();
+      uint ea = EA_AI;
+      USE_CLKS(0+18);
+      if(BIT_B(next_word)) /* Register to memory */
+      {
+         write_memory_8_fc(ea, g_cpu_dfc, g_cpu_dar[next_word>>15][(next_word>>12)&7]);
+         return;
+      }
+      if(BIT_F(next_word)) /* Memory to address register */
+      {
+         g_cpu_ar[(next_word>>12)&7] = make_int_8(read_memory_8_fc(ea, g_cpu_sfc));
+         return;
+      }
+      /* Memory to data register */
+      g_cpu_dr[(next_word>>12)&7] = MASK_OUT_BELOW_8(g_cpu_dr[(next_word>>12)&7]) | read_memory_8_fc(ea, g_cpu_sfc);
+      return;
+   }
+   exception(EXCEPTION_ILLEGAL_INSTRUCTION);
+}
+
+
+static void m68010_moves_pi_8(void)
+{
+   if(g_cpu_type & (CPU_010_PLUS))
+   {
+      uint next_word = read_imm_16();
+      uint ea = EA_PI_8;
+      USE_CLKS(0+20);
+      if(BIT_B(next_word)) /* Register to memory */
+      {
+         write_memory_8_fc(ea, g_cpu_dfc, g_cpu_dar[next_word>>15][(next_word>>12)&7]);
+         return;
+      }
+      if(BIT_F(next_word)) /* Memory to address register */
+      {
+         g_cpu_ar[(next_word>>12)&7] = make_int_8(read_memory_8_fc(ea, g_cpu_sfc));
+         return;
+      }
+      /* Memory to data register */
+      g_cpu_dr[(next_word>>12)&7] = MASK_OUT_BELOW_8(g_cpu_dr[(next_word>>12)&7]) | read_memory_8_fc(ea, g_cpu_sfc);
+      return;
+   }
+   exception(EXCEPTION_ILLEGAL_INSTRUCTION);
+}
+
+
+static void m68010_moves_pi7_8(void)
+{
+   if(g_cpu_type & (CPU_010_PLUS))
+   {
+      uint next_word = read_imm_16();
+      uint ea = EA_PI7_8;
+      USE_CLKS(0+20);
+      if(BIT_B(next_word)) /* Register to memory */
+      {
+         write_memory_8_fc(ea, g_cpu_dfc, g_cpu_dar[next_word>>15][(next_word>>12)&7]);
+         return;
+      }
+      if(BIT_F(next_word)) /* Memory to address register */
+      {
+         g_cpu_ar[(next_word>>12)&7] = make_int_8(read_memory_8_fc(ea, g_cpu_sfc));
+         return;
+      }
+      /* Memory to data register */
+      g_cpu_dr[(next_word>>12)&7] = MASK_OUT_BELOW_8(g_cpu_dr[(next_word>>12)&7]) | read_memory_8_fc(ea, g_cpu_sfc);
+      return;
+   }
+   exception(EXCEPTION_ILLEGAL_INSTRUCTION);
+}
+
+
+static void m68010_moves_pd_8(void)
+{
+   if(g_cpu_type & (CPU_010_PLUS))
+   {
+      uint next_word = read_imm_16();
+      uint ea = EA_PD_8;
+      USE_CLKS(0+20);
+      if(BIT_B(next_word)) /* Register to memory */
+      {
+         write_memory_8_fc(ea, g_cpu_dfc, g_cpu_dar[next_word>>15][(next_word>>12)&7]);
+         return;
+      }
+      if(BIT_F(next_word)) /* Memory to address register */
+      {
+         g_cpu_ar[(next_word>>12)&7] = make_int_8(read_memory_8_fc(ea, g_cpu_sfc));
+         return;
+      }
+      /* Memory to data register */
+      g_cpu_dr[(next_word>>12)&7] = MASK_OUT_BELOW_8(g_cpu_dr[(next_word>>12)&7]) | read_memory_8_fc(ea, g_cpu_sfc);
+      return;
+   }
+   exception(EXCEPTION_ILLEGAL_INSTRUCTION);
+}
+
+
+static void m68010_moves_pd7_8(void)
+{
+   if(g_cpu_type & (CPU_010_PLUS))
+   {
+      uint next_word = read_imm_16();
+      uint ea = EA_PD7_8;
+      USE_CLKS(0+20);
+      if(BIT_B(next_word)) /* Register to memory */
+      {
+         write_memory_8_fc(ea, g_cpu_dfc, g_cpu_dar[next_word>>15][(next_word>>12)&7]);
+         return;
+      }
+      if(BIT_F(next_word)) /* Memory to address register */
+      {
+         g_cpu_ar[(next_word>>12)&7] = make_int_8(read_memory_8_fc(ea, g_cpu_sfc));
+         return;
+      }
+      /* Memory to data register */
+      g_cpu_dr[(next_word>>12)&7] = MASK_OUT_BELOW_8(g_cpu_dr[(next_word>>12)&7]) | read_memory_8_fc(ea, g_cpu_sfc);
+      return;
+   }
+   exception(EXCEPTION_ILLEGAL_INSTRUCTION);
+}
+
+
+static void m68010_moves_di_8(void)
+{
+   if(g_cpu_type & (CPU_010_PLUS))
+   {
+      uint next_word = read_imm_16();
+      uint ea = EA_DI;
+      USE_CLKS(0+20);
+      if(BIT_B(next_word)) /* Register to memory */
+      {
+         write_memory_8_fc(ea, g_cpu_dfc, g_cpu_dar[next_word>>15][(next_word>>12)&7]);
+         return;
+      }
+      if(BIT_F(next_word)) /* Memory to address register */
+      {
+         g_cpu_ar[(next_word>>12)&7] = make_int_8(read_memory_8_fc(ea, g_cpu_sfc));
+         return;
+      }
+      /* Memory to data register */
+      g_cpu_dr[(next_word>>12)&7] = MASK_OUT_BELOW_8(g_cpu_dr[(next_word>>12)&7]) | read_memory_8_fc(ea, g_cpu_sfc);
+      return;
+   }
+   exception(EXCEPTION_ILLEGAL_INSTRUCTION);
+}
+
+
+static void m68010_moves_ix_8(void)
+{
+   if(g_cpu_type & (CPU_010_PLUS))
+   {
+      uint next_word = read_imm_16();
+      uint extension = read_imm_16();
+      uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
+      uint ea = AY + make_int_8(extension & 0xff) + (BIT_B(extension) ? index : make_int_16(index & 0xffff));
+      USE_CLKS(0+24);
+      if(BIT_B(next_word)) /* Register to memory */
+      {
+         write_memory_8_fc(ea, g_cpu_dfc, g_cpu_dar[next_word>>15][(next_word>>12)&7]);
+         return;
+      }
+      if(BIT_F(next_word)) /* Memory to address register */
+      {
+         g_cpu_ar[(next_word>>12)&7] = make_int_8(read_memory_8_fc(ea, g_cpu_sfc));
+         return;
+      }
+      /* Memory to data register */
+      g_cpu_dr[(next_word>>12)&7] = MASK_OUT_BELOW_8(g_cpu_dr[(next_word>>12)&7]) | read_memory_8_fc(ea, g_cpu_sfc);
+      return;
+   }
+   exception(EXCEPTION_ILLEGAL_INSTRUCTION);
+}
+
+
+static void m68010_moves_aw_8(void)
+{
+   if(g_cpu_type & (CPU_010_PLUS))
+   {
+      uint next_word = read_imm_16();
+      uint ea = EA_AW;
+      USE_CLKS(0+20);
+      if(BIT_B(next_word)) /* Register to memory */
+      {
+         write_memory_8_fc(ea, g_cpu_dfc, g_cpu_dar[next_word>>15][(next_word>>12)&7]);
+         return;
+      }
+      if(BIT_F(next_word)) /* Memory to address register */
+      {
+         g_cpu_ar[(next_word>>12)&7] = make_int_8(read_memory_8_fc(ea, g_cpu_sfc));
+         return;
+      }
+      /* Memory to data register */
+      g_cpu_dr[(next_word>>12)&7] = MASK_OUT_BELOW_8(g_cpu_dr[(next_word>>12)&7]) | read_memory_8_fc(ea, g_cpu_sfc);
+      return;
+   }
+   exception(EXCEPTION_ILLEGAL_INSTRUCTION);
+}
+
+
+static void m68010_moves_al_8(void)
+{
+   if(g_cpu_type & (CPU_010_PLUS))
+   {
+      uint next_word = read_imm_16();
+      uint ea = EA_AL;
+      USE_CLKS(0+24);
+      if(BIT_B(next_word)) /* Register to memory */
+      {
+         write_memory_8_fc(ea, g_cpu_dfc, g_cpu_dar[next_word>>15][(next_word>>12)&7]);
+         return;
+      }
+      if(BIT_F(next_word)) /* Memory to address register */
+      {
+         g_cpu_ar[(next_word>>12)&7] = make_int_8(read_memory_8_fc(ea, g_cpu_sfc));
+         return;
+      }
+      /* Memory to data register */
+      g_cpu_dr[(next_word>>12)&7] = MASK_OUT_BELOW_8(g_cpu_dr[(next_word>>12)&7]) | read_memory_8_fc(ea, g_cpu_sfc);
+      return;
+   }
+   exception(EXCEPTION_ILLEGAL_INSTRUCTION);
+}
+
+
+static void m68010_moves_ai_16(void)
+{
+   if(g_cpu_type & (CPU_010_PLUS))
+   {
+      uint next_word = read_imm_16();
+      uint ea = EA_AI;
+      USE_CLKS(0+18);
+      if(BIT_B(next_word)) /* Register to memory */
+      {
+         write_memory_16_fc(ea, g_cpu_dfc, g_cpu_dar[next_word>>15][(next_word>>12)&7]);
+         return;
+      }
+      if(BIT_F(next_word)) /* Memory to address register */
+      {
+         g_cpu_ar[(next_word>>12)&7] = make_int_16(read_memory_16_fc(ea, g_cpu_sfc));
+         return;
+      }
+      /* Memory to data register */
+      g_cpu_dr[(next_word>>12)&7] = MASK_OUT_BELOW_16(g_cpu_dr[(next_word>>12)&7]) | read_memory_16_fc(ea, g_cpu_sfc);
+      return;
+   }
+   exception(EXCEPTION_ILLEGAL_INSTRUCTION);
+}
+
+
+static void m68010_moves_pi_16(void)
+{
+   if(g_cpu_type & (CPU_010_PLUS))
+   {
+      uint next_word = read_imm_16();
+      uint ea = EA_PI_16;
+      USE_CLKS(0+20);
+      if(BIT_B(next_word)) /* Register to memory */
+      {
+         write_memory_16_fc(ea, g_cpu_dfc, g_cpu_dar[next_word>>15][(next_word>>12)&7]);
+         return;
+      }
+      if(BIT_F(next_word)) /* Memory to address register */
+      {
+         g_cpu_ar[(next_word>>12)&7] = make_int_16(read_memory_16_fc(ea, g_cpu_sfc));
+         return;
+      }
+      /* Memory to data register */
+      g_cpu_dr[(next_word>>12)&7] = MASK_OUT_BELOW_16(g_cpu_dr[(next_word>>12)&7]) | read_memory_16_fc(ea, g_cpu_sfc);
+      return;
+   }
+   exception(EXCEPTION_ILLEGAL_INSTRUCTION);
+}
+
+
+static void m68010_moves_pd_16(void)
+{
+   if(g_cpu_type & (CPU_010_PLUS))
+   {
+      uint next_word = read_imm_16();
+      uint ea = EA_PD_16;
+      USE_CLKS(0+20);
+      if(BIT_B(next_word)) /* Register to memory */
+      {
+         write_memory_16_fc(ea, g_cpu_dfc, g_cpu_dar[next_word>>15][(next_word>>12)&7]);
+         return;
+      }
+      if(BIT_F(next_word)) /* Memory to address register */
+      {
+         g_cpu_ar[(next_word>>12)&7] = make_int_16(read_memory_16_fc(ea, g_cpu_sfc));
+         return;
+      }
+      /* Memory to data register */
+      g_cpu_dr[(next_word>>12)&7] = MASK_OUT_BELOW_16(g_cpu_dr[(next_word>>12)&7]) | read_memory_16_fc(ea, g_cpu_sfc);
+      return;
+   }
+   exception(EXCEPTION_ILLEGAL_INSTRUCTION);
+}
+
+
+static void m68010_moves_di_16(void)
+{
+   if(g_cpu_type & (CPU_010_PLUS))
+   {
+      uint next_word = read_imm_16();
+      uint ea = EA_DI;
+      USE_CLKS(0+20);
+      if(BIT_B(next_word)) /* Register to memory */
+      {
+         write_memory_16_fc(ea, g_cpu_dfc, g_cpu_dar[next_word>>15][(next_word>>12)&7]);
+         return;
+      }
+      if(BIT_F(next_word)) /* Memory to address register */
+      {
+         g_cpu_ar[(next_word>>12)&7] = make_int_16(read_memory_16_fc(ea, g_cpu_sfc));
+         return;
+      }
+      /* Memory to data register */
+      g_cpu_dr[(next_word>>12)&7] = MASK_OUT_BELOW_16(g_cpu_dr[(next_word>>12)&7]) | read_memory_16_fc(ea, g_cpu_sfc);
+      return;
+   }
+   exception(EXCEPTION_ILLEGAL_INSTRUCTION);
+}
+
+
+static void m68010_moves_ix_16(void)
+{
+   if(g_cpu_type & (CPU_010_PLUS))
+   {
+      uint next_word = read_imm_16();
+      uint extension = read_imm_16();
+      uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
+      uint ea = AY + make_int_8(extension & 0xff) + (BIT_B(extension) ? index : make_int_16(index & 0xffff));
+      USE_CLKS(0+24);
+      if(BIT_B(next_word)) /* Register to memory */
+      {
+         write_memory_16_fc(ea, g_cpu_dfc, g_cpu_dar[next_word>>15][(next_word>>12)&7]);
+         return;
+      }
+      if(BIT_F(next_word)) /* Memory to address register */
+      {
+         g_cpu_ar[(next_word>>12)&7] = make_int_16(read_memory_16_fc(ea, g_cpu_sfc));
+         return;
+      }
+      /* Memory to data register */
+      g_cpu_dr[(next_word>>12)&7] = MASK_OUT_BELOW_16(g_cpu_dr[(next_word>>12)&7]) | read_memory_16_fc(ea, g_cpu_sfc);
+      return;
+   }
+   exception(EXCEPTION_ILLEGAL_INSTRUCTION);
+}
+
+
+static void m68010_moves_aw_16(void)
+{
+   if(g_cpu_type & (CPU_010_PLUS))
+   {
+      uint next_word = read_imm_16();
+      uint ea = EA_AW;
+      USE_CLKS(0+20);
+      if(BIT_B(next_word)) /* Register to memory */
+      {
+         write_memory_16_fc(ea, g_cpu_dfc, g_cpu_dar[next_word>>15][(next_word>>12)&7]);
+         return;
+      }
+      if(BIT_F(next_word)) /* Memory to address register */
+      {
+         g_cpu_ar[(next_word>>12)&7] = make_int_16(read_memory_16_fc(ea, g_cpu_sfc));
+         return;
+      }
+      /* Memory to data register */
+      g_cpu_dr[(next_word>>12)&7] = MASK_OUT_BELOW_16(g_cpu_dr[(next_word>>12)&7]) | read_memory_16_fc(ea, g_cpu_sfc);
+      return;
+   }
+   exception(EXCEPTION_ILLEGAL_INSTRUCTION);
+}
+
+
+static void m68010_moves_al_16(void)
+{
+   if(g_cpu_type & (CPU_010_PLUS))
+   {
+      uint next_word = read_imm_16();
+      uint ea = EA_AL;
+      USE_CLKS(0+24);
+      if(BIT_B(next_word)) /* Register to memory */
+      {
+         write_memory_16_fc(ea, g_cpu_dfc, g_cpu_dar[next_word>>15][(next_word>>12)&7]);
+         return;
+      }
+      if(BIT_F(next_word)) /* Memory to address register */
+      {
+         g_cpu_ar[(next_word>>12)&7] = make_int_16(read_memory_16_fc(ea, g_cpu_sfc));
+         return;
+      }
+      /* Memory to data register */
+      g_cpu_dr[(next_word>>12)&7] = MASK_OUT_BELOW_16(g_cpu_dr[(next_word>>12)&7]) | read_memory_16_fc(ea, g_cpu_sfc);
+      return;
+   }
+   exception(EXCEPTION_ILLEGAL_INSTRUCTION);
+}
+
+
+static void m68010_moves_ai_32(void)
+{
+   if(g_cpu_type & (CPU_010_PLUS))
+   {
+      uint next_word = read_imm_16();
+      uint ea = EA_AI;
+      USE_CLKS(0+8);
+      if(BIT_B(next_word)) /* Register to memory */
+      {
+         write_memory_32_fc(ea, g_cpu_dfc, g_cpu_dar[next_word>>15][(next_word>>12)&7]);
+         return;
+      }
+      /* Memory to register */
+      g_cpu_dar[next_word>>15][(next_word>>12)&7] = read_memory_32_fc(ea, g_cpu_sfc);
+      return;
+   }
+   exception(EXCEPTION_ILLEGAL_INSTRUCTION);
+}
+
+
+static void m68010_moves_pi_32(void)
+{
+   if(g_cpu_type & (CPU_010_PLUS))
+   {
+      uint next_word = read_imm_16();
+      uint ea = EA_PI_32;
+      USE_CLKS(0+8);
+      if(BIT_B(next_word)) /* Register to memory */
+      {
+         write_memory_32_fc(ea, g_cpu_dfc, g_cpu_dar[next_word>>15][(next_word>>12)&7]);
+         return;
+      }
+      /* Memory to register */
+      g_cpu_dar[next_word>>15][(next_word>>12)&7] = read_memory_32_fc(ea, g_cpu_sfc);
+      return;
+   }
+   exception(EXCEPTION_ILLEGAL_INSTRUCTION);
+}
+
+
+static void m68010_moves_pd_32(void)
+{
+   if(g_cpu_type & (CPU_010_PLUS))
+   {
+      uint next_word = read_imm_16();
+      uint ea = EA_PD_32;
+      USE_CLKS(0+10);
+      if(BIT_B(next_word)) /* Register to memory */
+      {
+         write_memory_32_fc(ea, g_cpu_dfc, g_cpu_dar[next_word>>15][(next_word>>12)&7]);
+         return;
+      }
+      /* Memory to register */
+      g_cpu_dar[next_word>>15][(next_word>>12)&7] = read_memory_32_fc(ea, g_cpu_sfc);
+      return;
+   }
+   exception(EXCEPTION_ILLEGAL_INSTRUCTION);
+}
+
+
+static void m68010_moves_di_32(void)
+{
+   if(g_cpu_type & (CPU_010_PLUS))
+   {
+      uint next_word = read_imm_16();
+      uint ea = EA_DI;
+      USE_CLKS(0+12);
+      if(BIT_B(next_word)) /* Register to memory */
+      {
+         write_memory_32_fc(ea, g_cpu_dfc, g_cpu_dar[next_word>>15][(next_word>>12)&7]);
+         return;
+      }
+      /* Memory to register */
+      g_cpu_dar[next_word>>15][(next_word>>12)&7] = read_memory_32_fc(ea, g_cpu_sfc);
+      return;
+   }
+   exception(EXCEPTION_ILLEGAL_INSTRUCTION);
+}
+
+
+static void m68010_moves_ix_32(void)
+{
+   if(g_cpu_type & (CPU_010_PLUS))
+   {
+      uint next_word = read_imm_16();
+      uint extension = read_imm_16();
+      uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
+      uint ea = AY + make_int_8(extension & 0xff) + (BIT_B(extension) ? index : make_int_16(index & 0xffff));
+      USE_CLKS(0+14);
+      if(BIT_B(next_word)) /* Register to memory */
+      {
+         write_memory_32_fc(ea, g_cpu_dfc, g_cpu_dar[next_word>>15][(next_word>>12)&7]);
+         return;
+      }
+      /* Memory to register */
+      g_cpu_dar[next_word>>15][(next_word>>12)&7] = read_memory_32_fc(ea, g_cpu_sfc);
+      return;
+   }
+   exception(EXCEPTION_ILLEGAL_INSTRUCTION);
+}
+
+
+static void m68010_moves_aw_32(void)
+{
+   if(g_cpu_type & (CPU_010_PLUS))
+   {
+      uint next_word = read_imm_16();
+      uint ea = EA_AW;
+      USE_CLKS(0+12);
+      if(BIT_B(next_word)) /* Register to memory */
+      {
+         write_memory_32_fc(ea, g_cpu_dfc, g_cpu_dar[next_word>>15][(next_word>>12)&7]);
+         return;
+      }
+      /* Memory to register */
+      g_cpu_dar[next_word>>15][(next_word>>12)&7] = read_memory_32_fc(ea, g_cpu_sfc);
+      return;
+   }
+   exception(EXCEPTION_ILLEGAL_INSTRUCTION);
+}
+
+
+static void m68010_moves_al_32(void)
+{
+   if(g_cpu_type & (CPU_010_PLUS))
+   {
+      uint next_word = read_imm_16();
+      uint ea = EA_AL;
+      USE_CLKS(0+16);
+      if(BIT_B(next_word)) /* Register to memory */
+      {
+         write_memory_32_fc(ea, g_cpu_dfc, g_cpu_dar[next_word>>15][(next_word>>12)&7]);
+         return;
+      }
+      /* Memory to register */
+      g_cpu_dar[next_word>>15][(next_word>>12)&7] = read_memory_32_fc(ea, g_cpu_sfc);
+      return;
+   }
+   exception(EXCEPTION_ILLEGAL_INSTRUCTION);
+}
+
+
+static void m68000_moveq(void)
 {
    uint res = DX = make_int_8(MASK_OUT_ABOVE_8(g_cpu_ir));
 
@@ -17022,7 +17915,7 @@ void m68000_moveq(void)
 }
 
 
-void m68000_muls_d(void)
+static void m68000_muls_d(void)
 {
    uint* d_dst = &DX;
    uint res = make_int_16(MASK_OUT_ABOVE_16(DY)) * make_int_16(MASK_OUT_ABOVE_16(*d_dst));
@@ -17036,7 +17929,7 @@ void m68000_muls_d(void)
 }
 
 
-void m68000_muls_ai(void)
+static void m68000_muls_ai(void)
 {
    uint* d_dst = &DX;
    uint res = make_int_16(read_memory_16(EA_AI)) * make_int_16(MASK_OUT_ABOVE_16(*d_dst));
@@ -17050,7 +17943,7 @@ void m68000_muls_ai(void)
 }
 
 
-void m68000_muls_pi(void)
+static void m68000_muls_pi(void)
 {
    uint* d_dst = &DX;
    uint res = make_int_16(read_memory_16(EA_PI_16)) * make_int_16(MASK_OUT_ABOVE_16(*d_dst));
@@ -17064,7 +17957,7 @@ void m68000_muls_pi(void)
 }
 
 
-void m68000_muls_pd(void)
+static void m68000_muls_pd(void)
 {
    uint* d_dst = &DX;
    uint res = make_int_16(read_memory_16(EA_PD_16)) * make_int_16(MASK_OUT_ABOVE_16(*d_dst));
@@ -17078,7 +17971,7 @@ void m68000_muls_pd(void)
 }
 
 
-void m68000_muls_di(void)
+static void m68000_muls_di(void)
 {
    uint* d_dst = &DX;
    uint res = make_int_16(read_memory_16(EA_DI)) * make_int_16(MASK_OUT_ABOVE_16(*d_dst));
@@ -17092,7 +17985,7 @@ void m68000_muls_di(void)
 }
 
 
-void m68000_muls_ix(void)
+static void m68000_muls_ix(void)
 {
    uint* d_dst = &DX;
    uint extension = read_imm_16();
@@ -17109,7 +18002,7 @@ void m68000_muls_ix(void)
 }
 
 
-void m68000_muls_aw(void)
+static void m68000_muls_aw(void)
 {
    uint* d_dst = &DX;
    uint res = make_int_16(read_memory_16(EA_AW)) * make_int_16(MASK_OUT_ABOVE_16(*d_dst));
@@ -17123,7 +18016,7 @@ void m68000_muls_aw(void)
 }
 
 
-void m68000_muls_al(void)
+static void m68000_muls_al(void)
 {
    uint* d_dst = &DX;
    uint res = make_int_16(read_memory_16(EA_AL)) * make_int_16(MASK_OUT_ABOVE_16(*d_dst));
@@ -17137,7 +18030,7 @@ void m68000_muls_al(void)
 }
 
 
-void m68000_muls_pcdi(void)
+static void m68000_muls_pcdi(void)
 {
    uint* d_dst = &DX;
    uint old_pc = (g_cpu_pc+=2) - 2;
@@ -17153,7 +18046,7 @@ void m68000_muls_pcdi(void)
 }
 
 
-void m68000_muls_pcix(void)
+static void m68000_muls_pcix(void)
 {
    uint* d_dst = &DX;
    uint old_pc = (g_cpu_pc+=2) - 2;
@@ -17171,7 +18064,7 @@ void m68000_muls_pcix(void)
 }
 
 
-void m68000_muls_i(void)
+static void m68000_muls_i(void)
 {
    uint* d_dst = &DX;
    uint res = make_int_16(read_imm_16()) * make_int_16(MASK_OUT_ABOVE_16(*d_dst));
@@ -17185,7 +18078,7 @@ void m68000_muls_i(void)
 }
 
 
-void m68000_mulu_d(void)
+static void m68000_mulu_d(void)
 {
    uint* d_dst = &DX;
    uint res = MASK_OUT_ABOVE_16(DY) * MASK_OUT_ABOVE_16(*d_dst);
@@ -17198,7 +18091,7 @@ void m68000_mulu_d(void)
 }
 
 
-void m68000_mulu_ai(void)
+static void m68000_mulu_ai(void)
 {
    uint* d_dst = &DX;
    uint res = read_memory_16(EA_AI) * MASK_OUT_ABOVE_16(*d_dst);
@@ -17211,7 +18104,7 @@ void m68000_mulu_ai(void)
 }
 
 
-void m68000_mulu_pi(void)
+static void m68000_mulu_pi(void)
 {
    uint* d_dst = &DX;
    uint res = read_memory_16(EA_PI_16) * MASK_OUT_ABOVE_16(*d_dst);
@@ -17224,7 +18117,7 @@ void m68000_mulu_pi(void)
 }
 
 
-void m68000_mulu_pd(void)
+static void m68000_mulu_pd(void)
 {
    uint* d_dst = &DX;
    uint res = read_memory_16(EA_PD_16) * MASK_OUT_ABOVE_16(*d_dst);
@@ -17237,7 +18130,7 @@ void m68000_mulu_pd(void)
 }
 
 
-void m68000_mulu_di(void)
+static void m68000_mulu_di(void)
 {
    uint* d_dst = &DX;
    uint res = read_memory_16(EA_DI) * MASK_OUT_ABOVE_16(*d_dst);
@@ -17250,7 +18143,7 @@ void m68000_mulu_di(void)
 }
 
 
-void m68000_mulu_ix(void)
+static void m68000_mulu_ix(void)
 {
    uint* d_dst = &DX;
    uint extension = read_imm_16();
@@ -17266,7 +18159,7 @@ void m68000_mulu_ix(void)
 }
 
 
-void m68000_mulu_aw(void)
+static void m68000_mulu_aw(void)
 {
    uint* d_dst = &DX;
    uint res = read_memory_16(EA_AW) * MASK_OUT_ABOVE_16(*d_dst);
@@ -17279,7 +18172,7 @@ void m68000_mulu_aw(void)
 }
 
 
-void m68000_mulu_al(void)
+static void m68000_mulu_al(void)
 {
    uint* d_dst = &DX;
    uint res = read_memory_16(EA_AL) * MASK_OUT_ABOVE_16(*d_dst);
@@ -17292,7 +18185,7 @@ void m68000_mulu_al(void)
 }
 
 
-void m68000_mulu_pcdi(void)
+static void m68000_mulu_pcdi(void)
 {
    uint* d_dst = &DX;
    uint old_pc = (g_cpu_pc+=2) - 2;
@@ -17307,7 +18200,7 @@ void m68000_mulu_pcdi(void)
 }
 
 
-void m68000_mulu_pcix(void)
+static void m68000_mulu_pcix(void)
 {
    uint* d_dst = &DX;
    uint old_pc = (g_cpu_pc+=2) - 2;
@@ -17324,7 +18217,7 @@ void m68000_mulu_pcix(void)
 }
 
 
-void m68000_mulu_i(void)
+static void m68000_mulu_i(void)
 {
    uint* d_dst = &DX;
    uint res = read_imm_16() * MASK_OUT_ABOVE_16(*d_dst);
@@ -17337,7 +18230,7 @@ void m68000_mulu_i(void)
 }
 
 
-void m68000_nbcd_d(void)
+static void m68000_nbcd_d(void)
 {
    uint* d_dst = &DY;
    uint dst = *d_dst;
@@ -17360,7 +18253,7 @@ void m68000_nbcd_d(void)
 }
 
 
-void m68000_nbcd_ai(void)
+static void m68000_nbcd_ai(void)
 {
    uint ea = EA_AI;
    uint dst = read_memory_8(ea);
@@ -17383,7 +18276,7 @@ void m68000_nbcd_ai(void)
 }
 
 
-void m68000_nbcd_pi(void)
+static void m68000_nbcd_pi(void)
 {
    uint ea = EA_PI_8;
    uint dst = read_memory_8(ea);
@@ -17406,7 +18299,7 @@ void m68000_nbcd_pi(void)
 }
 
 
-void m68000_nbcd_pi7(void)
+static void m68000_nbcd_pi7(void)
 {
    uint ea = EA_PI7_8;
    uint dst = read_memory_8(ea);
@@ -17429,7 +18322,7 @@ void m68000_nbcd_pi7(void)
 }
 
 
-void m68000_nbcd_pd(void)
+static void m68000_nbcd_pd(void)
 {
    uint ea = EA_PD_8;
    uint dst = read_memory_8(ea);
@@ -17452,7 +18345,7 @@ void m68000_nbcd_pd(void)
 }
 
 
-void m68000_nbcd_pd7(void)
+static void m68000_nbcd_pd7(void)
 {
    uint ea = EA_PD7_8;
    uint dst = read_memory_8(ea);
@@ -17475,7 +18368,7 @@ void m68000_nbcd_pd7(void)
 }
 
 
-void m68000_nbcd_di(void)
+static void m68000_nbcd_di(void)
 {
    uint ea = EA_DI;
    uint dst = read_memory_8(ea);
@@ -17498,7 +18391,7 @@ void m68000_nbcd_di(void)
 }
 
 
-void m68000_nbcd_ix(void)
+static void m68000_nbcd_ix(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -17523,7 +18416,7 @@ void m68000_nbcd_ix(void)
 }
 
 
-void m68000_nbcd_aw(void)
+static void m68000_nbcd_aw(void)
 {
    uint ea = EA_AW;
    uint dst = read_memory_8(ea);
@@ -17546,7 +18439,7 @@ void m68000_nbcd_aw(void)
 }
 
 
-void m68000_nbcd_al(void)
+static void m68000_nbcd_al(void)
 {
    uint ea = EA_AL;
    uint dst = read_memory_8(ea);
@@ -17569,7 +18462,7 @@ void m68000_nbcd_al(void)
 }
 
 
-void m68000_neg_d_8(void)
+static void m68000_neg_d_8(void)
 {
    uint *d_dst = &DY;
    uint dst = *d_dst;
@@ -17585,7 +18478,7 @@ void m68000_neg_d_8(void)
 }
 
 
-void m68000_neg_ai_8(void)
+static void m68000_neg_ai_8(void)
 {
    uint ea = EA_AI;
    uint dst = read_memory_8(ea);
@@ -17601,7 +18494,7 @@ void m68000_neg_ai_8(void)
 }
 
 
-void m68000_neg_pi_8(void)
+static void m68000_neg_pi_8(void)
 {
    uint ea = EA_PI_8;
    uint dst = read_memory_8(ea);
@@ -17617,7 +18510,7 @@ void m68000_neg_pi_8(void)
 }
 
 
-void m68000_neg_pi7_8(void)
+static void m68000_neg_pi7_8(void)
 {
    uint ea = EA_PI7_8;
    uint dst = read_memory_8(ea);
@@ -17633,7 +18526,7 @@ void m68000_neg_pi7_8(void)
 }
 
 
-void m68000_neg_pd_8(void)
+static void m68000_neg_pd_8(void)
 {
    uint ea = EA_PD_8;
    uint dst = read_memory_8(ea);
@@ -17649,7 +18542,7 @@ void m68000_neg_pd_8(void)
 }
 
 
-void m68000_neg_pd7_8(void)
+static void m68000_neg_pd7_8(void)
 {
    uint ea = EA_PD7_8;
    uint dst = read_memory_8(ea);
@@ -17665,7 +18558,7 @@ void m68000_neg_pd7_8(void)
 }
 
 
-void m68000_neg_di_8(void)
+static void m68000_neg_di_8(void)
 {
    uint ea = EA_DI;
    uint dst = read_memory_8(ea);
@@ -17681,7 +18574,7 @@ void m68000_neg_di_8(void)
 }
 
 
-void m68000_neg_ix_8(void)
+static void m68000_neg_ix_8(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -17699,7 +18592,7 @@ void m68000_neg_ix_8(void)
 }
 
 
-void m68000_neg_aw_8(void)
+static void m68000_neg_aw_8(void)
 {
    uint ea = EA_AW;
    uint dst = read_memory_8(ea);
@@ -17715,7 +18608,7 @@ void m68000_neg_aw_8(void)
 }
 
 
-void m68000_neg_al_8(void)
+static void m68000_neg_al_8(void)
 {
    uint ea = EA_AL;
    uint dst = read_memory_8(ea);
@@ -17731,7 +18624,7 @@ void m68000_neg_al_8(void)
 }
 
 
-void m68000_neg_d_16(void)
+static void m68000_neg_d_16(void)
 {
    uint *d_dst = &DY;
    uint dst = *d_dst;
@@ -17747,7 +18640,7 @@ void m68000_neg_d_16(void)
 }
 
 
-void m68000_neg_ai_16(void)
+static void m68000_neg_ai_16(void)
 {
    uint ea = EA_AI;
    uint dst = read_memory_16(ea);
@@ -17763,7 +18656,7 @@ void m68000_neg_ai_16(void)
 }
 
 
-void m68000_neg_pi_16(void)
+static void m68000_neg_pi_16(void)
 {
    uint ea = EA_PI_16;
    uint dst = read_memory_16(ea);
@@ -17779,7 +18672,7 @@ void m68000_neg_pi_16(void)
 }
 
 
-void m68000_neg_pd_16(void)
+static void m68000_neg_pd_16(void)
 {
    uint ea = EA_PD_16;
    uint dst = read_memory_16(ea);
@@ -17795,7 +18688,7 @@ void m68000_neg_pd_16(void)
 }
 
 
-void m68000_neg_di_16(void)
+static void m68000_neg_di_16(void)
 {
    uint ea = EA_DI;
    uint dst = read_memory_16(ea);
@@ -17811,7 +18704,7 @@ void m68000_neg_di_16(void)
 }
 
 
-void m68000_neg_ix_16(void)
+static void m68000_neg_ix_16(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -17829,7 +18722,7 @@ void m68000_neg_ix_16(void)
 }
 
 
-void m68000_neg_aw_16(void)
+static void m68000_neg_aw_16(void)
 {
    uint ea = EA_AW;
    uint dst = read_memory_16(ea);
@@ -17845,7 +18738,7 @@ void m68000_neg_aw_16(void)
 }
 
 
-void m68000_neg_al_16(void)
+static void m68000_neg_al_16(void)
 {
    uint ea = EA_AL;
    uint dst = read_memory_16(ea);
@@ -17861,7 +18754,7 @@ void m68000_neg_al_16(void)
 }
 
 
-void m68000_neg_d_32(void)
+static void m68000_neg_d_32(void)
 {
    uint *d_dst = &DY;
    uint dst = *d_dst;
@@ -17875,7 +18768,7 @@ void m68000_neg_d_32(void)
 }
 
 
-void m68000_neg_ai_32(void)
+static void m68000_neg_ai_32(void)
 {
    uint ea = EA_AI;
    uint dst = read_memory_32(ea);
@@ -17891,7 +18784,7 @@ void m68000_neg_ai_32(void)
 }
 
 
-void m68000_neg_pi_32(void)
+static void m68000_neg_pi_32(void)
 {
    uint ea = EA_PI_32;
    uint dst = read_memory_32(ea);
@@ -17907,7 +18800,7 @@ void m68000_neg_pi_32(void)
 }
 
 
-void m68000_neg_pd_32(void)
+static void m68000_neg_pd_32(void)
 {
    uint ea = EA_PD_32;
    uint dst = read_memory_32(ea);
@@ -17923,7 +18816,7 @@ void m68000_neg_pd_32(void)
 }
 
 
-void m68000_neg_di_32(void)
+static void m68000_neg_di_32(void)
 {
    uint ea = EA_DI;
    uint dst = read_memory_32(ea);
@@ -17939,7 +18832,7 @@ void m68000_neg_di_32(void)
 }
 
 
-void m68000_neg_ix_32(void)
+static void m68000_neg_ix_32(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -17957,7 +18850,7 @@ void m68000_neg_ix_32(void)
 }
 
 
-void m68000_neg_aw_32(void)
+static void m68000_neg_aw_32(void)
 {
    uint ea = EA_AW;
    uint dst = read_memory_32(ea);
@@ -17973,7 +18866,7 @@ void m68000_neg_aw_32(void)
 }
 
 
-void m68000_neg_al_32(void)
+static void m68000_neg_al_32(void)
 {
    uint ea = EA_AL;
    uint dst = read_memory_32(ea);
@@ -17989,7 +18882,7 @@ void m68000_neg_al_32(void)
 }
 
 
-void m68000_negx_d_8(void)
+static void m68000_negx_d_8(void)
 {
    uint *d_dst = &DY;
    uint dst = *d_dst;
@@ -18005,7 +18898,7 @@ void m68000_negx_d_8(void)
 }
 
 
-void m68000_negx_ai_8(void)
+static void m68000_negx_ai_8(void)
 {
    uint ea = EA_AI;
    uint dst = read_memory_8(ea);
@@ -18021,7 +18914,7 @@ void m68000_negx_ai_8(void)
 }
 
 
-void m68000_negx_pi_8(void)
+static void m68000_negx_pi_8(void)
 {
    uint ea = EA_PI_8;
    uint dst = read_memory_8(ea);
@@ -18037,7 +18930,7 @@ void m68000_negx_pi_8(void)
 }
 
 
-void m68000_negx_pi7_8(void)
+static void m68000_negx_pi7_8(void)
 {
    uint ea = EA_PI7_8;
    uint dst = read_memory_8(ea);
@@ -18053,7 +18946,7 @@ void m68000_negx_pi7_8(void)
 }
 
 
-void m68000_negx_pd_8(void)
+static void m68000_negx_pd_8(void)
 {
    uint ea = EA_PD_8;
    uint dst = read_memory_8(ea);
@@ -18069,7 +18962,7 @@ void m68000_negx_pd_8(void)
 }
 
 
-void m68000_negx_pd7_8(void)
+static void m68000_negx_pd7_8(void)
 {
    uint ea = EA_PD7_8;
    uint dst = read_memory_8(ea);
@@ -18085,7 +18978,7 @@ void m68000_negx_pd7_8(void)
 }
 
 
-void m68000_negx_di_8(void)
+static void m68000_negx_di_8(void)
 {
    uint ea = EA_DI;
    uint dst = read_memory_8(ea);
@@ -18101,7 +18994,7 @@ void m68000_negx_di_8(void)
 }
 
 
-void m68000_negx_ix_8(void)
+static void m68000_negx_ix_8(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -18119,7 +19012,7 @@ void m68000_negx_ix_8(void)
 }
 
 
-void m68000_negx_aw_8(void)
+static void m68000_negx_aw_8(void)
 {
    uint ea = EA_AW;
    uint dst = read_memory_8(ea);
@@ -18135,7 +19028,7 @@ void m68000_negx_aw_8(void)
 }
 
 
-void m68000_negx_al_8(void)
+static void m68000_negx_al_8(void)
 {
    uint ea = EA_AL;
    uint dst = read_memory_8(ea);
@@ -18151,7 +19044,7 @@ void m68000_negx_al_8(void)
 }
 
 
-void m68000_negx_d_16(void)
+static void m68000_negx_d_16(void)
 {
    uint *d_dst = &DY;
    uint dst = *d_dst;
@@ -18167,7 +19060,7 @@ void m68000_negx_d_16(void)
 }
 
 
-void m68000_negx_ai_16(void)
+static void m68000_negx_ai_16(void)
 {
    uint ea = EA_AI;
    uint dst = read_memory_16(ea);
@@ -18183,7 +19076,7 @@ void m68000_negx_ai_16(void)
 }
 
 
-void m68000_negx_pi_16(void)
+static void m68000_negx_pi_16(void)
 {
    uint ea = EA_PI_16;
    uint dst = read_memory_16(ea);
@@ -18199,7 +19092,7 @@ void m68000_negx_pi_16(void)
 }
 
 
-void m68000_negx_pd_16(void)
+static void m68000_negx_pd_16(void)
 {
    uint ea = EA_PD_16;
    uint dst = read_memory_16(ea);
@@ -18215,7 +19108,7 @@ void m68000_negx_pd_16(void)
 }
 
 
-void m68000_negx_di_16(void)
+static void m68000_negx_di_16(void)
 {
    uint ea = EA_DI;
    uint dst = read_memory_16(ea);
@@ -18231,7 +19124,7 @@ void m68000_negx_di_16(void)
 }
 
 
-void m68000_negx_ix_16(void)
+static void m68000_negx_ix_16(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -18249,7 +19142,7 @@ void m68000_negx_ix_16(void)
 }
 
 
-void m68000_negx_aw_16(void)
+static void m68000_negx_aw_16(void)
 {
    uint ea = EA_AW;
    uint dst = read_memory_16(ea);
@@ -18265,7 +19158,7 @@ void m68000_negx_aw_16(void)
 }
 
 
-void m68000_negx_al_16(void)
+static void m68000_negx_al_16(void)
 {
    uint ea = EA_AL;
    uint dst = read_memory_16(ea);
@@ -18281,7 +19174,7 @@ void m68000_negx_al_16(void)
 }
 
 
-void m68000_negx_d_32(void)
+static void m68000_negx_d_32(void)
 {
    uint *d_dst = &DY;
    uint dst = *d_dst;
@@ -18295,7 +19188,7 @@ void m68000_negx_d_32(void)
 }
 
 
-void m68000_negx_ai_32(void)
+static void m68000_negx_ai_32(void)
 {
    uint ea = EA_AI;
    uint dst = read_memory_32(ea);
@@ -18311,7 +19204,7 @@ void m68000_negx_ai_32(void)
 }
 
 
-void m68000_negx_pi_32(void)
+static void m68000_negx_pi_32(void)
 {
    uint ea = EA_PI_32;
    uint dst = read_memory_32(ea);
@@ -18327,7 +19220,7 @@ void m68000_negx_pi_32(void)
 }
 
 
-void m68000_negx_pd_32(void)
+static void m68000_negx_pd_32(void)
 {
    uint ea = EA_PD_32;
    uint dst = read_memory_32(ea);
@@ -18343,7 +19236,7 @@ void m68000_negx_pd_32(void)
 }
 
 
-void m68000_negx_di_32(void)
+static void m68000_negx_di_32(void)
 {
    uint ea = EA_DI;
    uint dst = read_memory_32(ea);
@@ -18359,7 +19252,7 @@ void m68000_negx_di_32(void)
 }
 
 
-void m68000_negx_ix_32(void)
+static void m68000_negx_ix_32(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -18377,7 +19270,7 @@ void m68000_negx_ix_32(void)
 }
 
 
-void m68000_negx_aw_32(void)
+static void m68000_negx_aw_32(void)
 {
    uint ea = EA_AW;
    uint dst = read_memory_32(ea);
@@ -18393,7 +19286,7 @@ void m68000_negx_aw_32(void)
 }
 
 
-void m68000_negx_al_32(void)
+static void m68000_negx_al_32(void)
 {
    uint ea = EA_AL;
    uint dst = read_memory_32(ea);
@@ -18409,13 +19302,13 @@ void m68000_negx_al_32(void)
 }
 
 
-void m68000_nop(void)
+static void m68000_nop(void)
 {
    USE_CLKS(4);
 }
 
 
-void m68000_not_d_8(void)
+static void m68000_not_d_8(void)
 {
    uint* d_dst = &DY;
    uint res = MASK_OUT_ABOVE_8(~*d_dst);
@@ -18429,7 +19322,7 @@ void m68000_not_d_8(void)
 }
 
 
-void m68000_not_ai_8(void)
+static void m68000_not_ai_8(void)
 {
    uint ea = EA_AI;
    uint res = MASK_OUT_ABOVE_8(~read_memory_8(ea));
@@ -18443,7 +19336,7 @@ void m68000_not_ai_8(void)
 }
 
 
-void m68000_not_pi_8(void)
+static void m68000_not_pi_8(void)
 {
    uint ea = EA_PI_8;
    uint res = MASK_OUT_ABOVE_8(~read_memory_8(ea));
@@ -18457,7 +19350,7 @@ void m68000_not_pi_8(void)
 }
 
 
-void m68000_not_pi7_8(void)
+static void m68000_not_pi7_8(void)
 {
    uint ea = EA_PI7_8;
    uint res = MASK_OUT_ABOVE_8(~read_memory_8(ea));
@@ -18471,7 +19364,7 @@ void m68000_not_pi7_8(void)
 }
 
 
-void m68000_not_pd_8(void)
+static void m68000_not_pd_8(void)
 {
    uint ea = EA_PD_8;
    uint res = MASK_OUT_ABOVE_8(~read_memory_8(ea));
@@ -18485,7 +19378,7 @@ void m68000_not_pd_8(void)
 }
 
 
-void m68000_not_pd7_8(void)
+static void m68000_not_pd7_8(void)
 {
    uint ea = EA_PD7_8;
    uint res = MASK_OUT_ABOVE_8(~read_memory_8(ea));
@@ -18499,7 +19392,7 @@ void m68000_not_pd7_8(void)
 }
 
 
-void m68000_not_di_8(void)
+static void m68000_not_di_8(void)
 {
    uint ea = EA_DI;
    uint res = MASK_OUT_ABOVE_8(~read_memory_8(ea));
@@ -18513,7 +19406,7 @@ void m68000_not_di_8(void)
 }
 
 
-void m68000_not_ix_8(void)
+static void m68000_not_ix_8(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -18529,7 +19422,7 @@ void m68000_not_ix_8(void)
 }
 
 
-void m68000_not_aw_8(void)
+static void m68000_not_aw_8(void)
 {
    uint ea = EA_AW;
    uint res = MASK_OUT_ABOVE_8(~read_memory_8(ea));
@@ -18543,7 +19436,7 @@ void m68000_not_aw_8(void)
 }
 
 
-void m68000_not_al_8(void)
+static void m68000_not_al_8(void)
 {
    uint ea = EA_AL;
    uint res = MASK_OUT_ABOVE_8(~read_memory_8(ea));
@@ -18557,7 +19450,7 @@ void m68000_not_al_8(void)
 }
 
 
-void m68000_not_d_16(void)
+static void m68000_not_d_16(void)
 {
    uint* d_dst = &DY;
    uint res = MASK_OUT_ABOVE_16(~*d_dst);
@@ -18571,7 +19464,7 @@ void m68000_not_d_16(void)
 }
 
 
-void m68000_not_ai_16(void)
+static void m68000_not_ai_16(void)
 {
    uint ea = EA_AI;
    uint res = MASK_OUT_ABOVE_16(~read_memory_16(ea));
@@ -18585,7 +19478,7 @@ void m68000_not_ai_16(void)
 }
 
 
-void m68000_not_pi_16(void)
+static void m68000_not_pi_16(void)
 {
    uint ea = EA_PI_16;
    uint res = MASK_OUT_ABOVE_16(~read_memory_16(ea));
@@ -18599,7 +19492,7 @@ void m68000_not_pi_16(void)
 }
 
 
-void m68000_not_pd_16(void)
+static void m68000_not_pd_16(void)
 {
    uint ea = EA_PD_16;
    uint res = MASK_OUT_ABOVE_16(~read_memory_16(ea));
@@ -18613,7 +19506,7 @@ void m68000_not_pd_16(void)
 }
 
 
-void m68000_not_di_16(void)
+static void m68000_not_di_16(void)
 {
    uint ea = EA_DI;
    uint res = MASK_OUT_ABOVE_16(~read_memory_16(ea));
@@ -18627,7 +19520,7 @@ void m68000_not_di_16(void)
 }
 
 
-void m68000_not_ix_16(void)
+static void m68000_not_ix_16(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -18643,7 +19536,7 @@ void m68000_not_ix_16(void)
 }
 
 
-void m68000_not_aw_16(void)
+static void m68000_not_aw_16(void)
 {
    uint ea = EA_AW;
    uint res = MASK_OUT_ABOVE_16(~read_memory_16(ea));
@@ -18657,7 +19550,7 @@ void m68000_not_aw_16(void)
 }
 
 
-void m68000_not_al_16(void)
+static void m68000_not_al_16(void)
 {
    uint ea = EA_AL;
    uint res = MASK_OUT_ABOVE_16(~read_memory_16(ea));
@@ -18671,7 +19564,7 @@ void m68000_not_al_16(void)
 }
 
 
-void m68000_not_d_32(void)
+static void m68000_not_d_32(void)
 {
    uint* d_dst = &DY;
    uint res = *d_dst = MASK_OUT_ABOVE_32(~*d_dst);
@@ -18683,7 +19576,7 @@ void m68000_not_d_32(void)
 }
 
 
-void m68000_not_ai_32(void)
+static void m68000_not_ai_32(void)
 {
    uint ea = EA_AI;
    uint res = MASK_OUT_ABOVE_32(~read_memory_32(ea));
@@ -18697,7 +19590,7 @@ void m68000_not_ai_32(void)
 }
 
 
-void m68000_not_pi_32(void)
+static void m68000_not_pi_32(void)
 {
    uint ea = EA_PI_32;
    uint res = MASK_OUT_ABOVE_32(~read_memory_32(ea));
@@ -18711,7 +19604,7 @@ void m68000_not_pi_32(void)
 }
 
 
-void m68000_not_pd_32(void)
+static void m68000_not_pd_32(void)
 {
    uint ea = EA_PD_32;
    uint res = MASK_OUT_ABOVE_32(~read_memory_32(ea));
@@ -18725,7 +19618,7 @@ void m68000_not_pd_32(void)
 }
 
 
-void m68000_not_di_32(void)
+static void m68000_not_di_32(void)
 {
    uint ea = EA_DI;
    uint res = MASK_OUT_ABOVE_32(~read_memory_32(ea));
@@ -18739,7 +19632,7 @@ void m68000_not_di_32(void)
 }
 
 
-void m68000_not_ix_32(void)
+static void m68000_not_ix_32(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -18755,7 +19648,7 @@ void m68000_not_ix_32(void)
 }
 
 
-void m68000_not_aw_32(void)
+static void m68000_not_aw_32(void)
 {
    uint ea = EA_AW;
    uint res = MASK_OUT_ABOVE_32(~read_memory_32(ea));
@@ -18769,7 +19662,7 @@ void m68000_not_aw_32(void)
 }
 
 
-void m68000_not_al_32(void)
+static void m68000_not_al_32(void)
 {
    uint ea = EA_AL;
    uint res = MASK_OUT_ABOVE_32(~read_memory_32(ea));
@@ -18783,7 +19676,7 @@ void m68000_not_al_32(void)
 }
 
 
-void m68000_or_er_d_8(void)
+static void m68000_or_er_d_8(void)
 {
    uint res = MASK_OUT_ABOVE_8((DX |= MASK_OUT_ABOVE_8(DY)));
 
@@ -18794,7 +19687,7 @@ void m68000_or_er_d_8(void)
 }
 
 
-void m68000_or_er_ai_8(void)
+static void m68000_or_er_ai_8(void)
 {
    uint res = MASK_OUT_ABOVE_8((DX |= read_memory_8(EA_AI)));
 
@@ -18805,7 +19698,7 @@ void m68000_or_er_ai_8(void)
 }
 
 
-void m68000_or_er_pi_8(void)
+static void m68000_or_er_pi_8(void)
 {
    uint res = MASK_OUT_ABOVE_8((DX |= read_memory_8(EA_PI_8)));
 
@@ -18816,7 +19709,7 @@ void m68000_or_er_pi_8(void)
 }
 
 
-void m68000_or_er_pi7_8(void)
+static void m68000_or_er_pi7_8(void)
 {
    uint res = MASK_OUT_ABOVE_8((DX |= read_memory_8(EA_PI7_8)));
 
@@ -18827,7 +19720,7 @@ void m68000_or_er_pi7_8(void)
 }
 
 
-void m68000_or_er_pd_8(void)
+static void m68000_or_er_pd_8(void)
 {
    uint res = MASK_OUT_ABOVE_8((DX |= read_memory_8(EA_PD_8)));
 
@@ -18838,7 +19731,7 @@ void m68000_or_er_pd_8(void)
 }
 
 
-void m68000_or_er_pd7_8(void)
+static void m68000_or_er_pd7_8(void)
 {
    uint res = MASK_OUT_ABOVE_8((DX |= read_memory_8(EA_PD7_8)));
 
@@ -18849,7 +19742,7 @@ void m68000_or_er_pd7_8(void)
 }
 
 
-void m68000_or_er_di_8(void)
+static void m68000_or_er_di_8(void)
 {
    uint res = MASK_OUT_ABOVE_8((DX |= read_memory_8(EA_DI)));
 
@@ -18860,7 +19753,7 @@ void m68000_or_er_di_8(void)
 }
 
 
-void m68000_or_er_ix_8(void)
+static void m68000_or_er_ix_8(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -18874,7 +19767,7 @@ void m68000_or_er_ix_8(void)
 }
 
 
-void m68000_or_er_aw_8(void)
+static void m68000_or_er_aw_8(void)
 {
    uint res = MASK_OUT_ABOVE_8((DX |= read_memory_8(EA_AW)));
 
@@ -18885,7 +19778,7 @@ void m68000_or_er_aw_8(void)
 }
 
 
-void m68000_or_er_al_8(void)
+static void m68000_or_er_al_8(void)
 {
    uint res = MASK_OUT_ABOVE_8((DX |= read_memory_8(EA_AL)));
 
@@ -18896,7 +19789,7 @@ void m68000_or_er_al_8(void)
 }
 
 
-void m68000_or_er_pcdi_8(void)
+static void m68000_or_er_pcdi_8(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint ea = old_pc + make_int_16(read_memory_16(old_pc));
@@ -18909,7 +19802,7 @@ void m68000_or_er_pcdi_8(void)
 }
 
 
-void m68000_or_er_pcix_8(void)
+static void m68000_or_er_pcix_8(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint extension = read_memory_16(old_pc);
@@ -18924,7 +19817,7 @@ void m68000_or_er_pcix_8(void)
 }
 
 
-void m68000_or_er_i_8(void)
+static void m68000_or_er_i_8(void)
 {
    uint res = MASK_OUT_ABOVE_8((DX |= read_imm_8()));
 
@@ -18935,7 +19828,7 @@ void m68000_or_er_i_8(void)
 }
 
 
-void m68000_or_er_d_16(void)
+static void m68000_or_er_d_16(void)
 {
    uint res = MASK_OUT_ABOVE_16((DX |= MASK_OUT_ABOVE_16(DY)));
 
@@ -18946,7 +19839,7 @@ void m68000_or_er_d_16(void)
 }
 
 
-void m68000_or_er_ai_16(void)
+static void m68000_or_er_ai_16(void)
 {
    uint res = MASK_OUT_ABOVE_16((DX |= read_memory_16(EA_AI)));
 
@@ -18957,7 +19850,7 @@ void m68000_or_er_ai_16(void)
 }
 
 
-void m68000_or_er_pi_16(void)
+static void m68000_or_er_pi_16(void)
 {
    uint res = MASK_OUT_ABOVE_16((DX |= read_memory_16(EA_PI_16)));
 
@@ -18968,7 +19861,7 @@ void m68000_or_er_pi_16(void)
 }
 
 
-void m68000_or_er_pd_16(void)
+static void m68000_or_er_pd_16(void)
 {
    uint res = MASK_OUT_ABOVE_16((DX |= read_memory_16(EA_PD_16)));
 
@@ -18979,7 +19872,7 @@ void m68000_or_er_pd_16(void)
 }
 
 
-void m68000_or_er_di_16(void)
+static void m68000_or_er_di_16(void)
 {
    uint res = MASK_OUT_ABOVE_16((DX |= read_memory_16(EA_DI)));
 
@@ -18990,7 +19883,7 @@ void m68000_or_er_di_16(void)
 }
 
 
-void m68000_or_er_ix_16(void)
+static void m68000_or_er_ix_16(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -19004,7 +19897,7 @@ void m68000_or_er_ix_16(void)
 }
 
 
-void m68000_or_er_aw_16(void)
+static void m68000_or_er_aw_16(void)
 {
    uint res = MASK_OUT_ABOVE_16((DX |= read_memory_16(EA_AW)));
 
@@ -19015,7 +19908,7 @@ void m68000_or_er_aw_16(void)
 }
 
 
-void m68000_or_er_al_16(void)
+static void m68000_or_er_al_16(void)
 {
    uint res = MASK_OUT_ABOVE_16((DX |= read_memory_16(EA_AL)));
 
@@ -19026,7 +19919,7 @@ void m68000_or_er_al_16(void)
 }
 
 
-void m68000_or_er_pcdi_16(void)
+static void m68000_or_er_pcdi_16(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint ea = old_pc + make_int_16(read_memory_16(old_pc));
@@ -19039,7 +19932,7 @@ void m68000_or_er_pcdi_16(void)
 }
 
 
-void m68000_or_er_pcix_16(void)
+static void m68000_or_er_pcix_16(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint extension = read_memory_16(old_pc);
@@ -19054,7 +19947,7 @@ void m68000_or_er_pcix_16(void)
 }
 
 
-void m68000_or_er_i_16(void)
+static void m68000_or_er_i_16(void)
 {
    uint res = MASK_OUT_ABOVE_16((DX |= read_imm_16()));
 
@@ -19065,7 +19958,7 @@ void m68000_or_er_i_16(void)
 }
 
 
-void m68000_or_er_d_32(void)
+static void m68000_or_er_d_32(void)
 {
    uint res = MASK_OUT_ABOVE_32((DX |= DY));
 
@@ -19076,7 +19969,7 @@ void m68000_or_er_d_32(void)
 }
 
 
-void m68000_or_er_ai_32(void)
+static void m68000_or_er_ai_32(void)
 {
    uint res = MASK_OUT_ABOVE_32((DX |= read_memory_32(EA_AI)));
 
@@ -19087,7 +19980,7 @@ void m68000_or_er_ai_32(void)
 }
 
 
-void m68000_or_er_pi_32(void)
+static void m68000_or_er_pi_32(void)
 {
    uint res = MASK_OUT_ABOVE_32((DX |= read_memory_32(EA_PI_32)));
 
@@ -19098,7 +19991,7 @@ void m68000_or_er_pi_32(void)
 }
 
 
-void m68000_or_er_pd_32(void)
+static void m68000_or_er_pd_32(void)
 {
    uint res = MASK_OUT_ABOVE_32((DX |= read_memory_32(EA_PD_32)));
 
@@ -19109,7 +20002,7 @@ void m68000_or_er_pd_32(void)
 }
 
 
-void m68000_or_er_di_32(void)
+static void m68000_or_er_di_32(void)
 {
    uint res = MASK_OUT_ABOVE_32((DX |= read_memory_32(EA_DI)));
 
@@ -19120,7 +20013,7 @@ void m68000_or_er_di_32(void)
 }
 
 
-void m68000_or_er_ix_32(void)
+static void m68000_or_er_ix_32(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -19134,7 +20027,7 @@ void m68000_or_er_ix_32(void)
 }
 
 
-void m68000_or_er_aw_32(void)
+static void m68000_or_er_aw_32(void)
 {
    uint res = MASK_OUT_ABOVE_32((DX |= read_memory_32(EA_AW)));
 
@@ -19145,7 +20038,7 @@ void m68000_or_er_aw_32(void)
 }
 
 
-void m68000_or_er_al_32(void)
+static void m68000_or_er_al_32(void)
 {
    uint res = MASK_OUT_ABOVE_32((DX |= read_memory_32(EA_AL)));
 
@@ -19156,7 +20049,7 @@ void m68000_or_er_al_32(void)
 }
 
 
-void m68000_or_er_pcdi_32(void)
+static void m68000_or_er_pcdi_32(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint ea = old_pc + make_int_16(read_memory_16(old_pc));
@@ -19169,7 +20062,7 @@ void m68000_or_er_pcdi_32(void)
 }
 
 
-void m68000_or_er_pcix_32(void)
+static void m68000_or_er_pcix_32(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint extension = read_memory_16(old_pc);
@@ -19184,7 +20077,7 @@ void m68000_or_er_pcix_32(void)
 }
 
 
-void m68000_or_er_i_32(void)
+static void m68000_or_er_i_32(void)
 {
    uint res = MASK_OUT_ABOVE_32((DX |= read_imm_32()));
 
@@ -19195,7 +20088,7 @@ void m68000_or_er_i_32(void)
 }
 
 
-void m68000_or_re_ai_8(void)
+static void m68000_or_re_ai_8(void)
 {
    uint ea = EA_AI;
    uint res = MASK_OUT_ABOVE_8(DX | read_memory_8(ea));
@@ -19209,7 +20102,7 @@ void m68000_or_re_ai_8(void)
 }
 
 
-void m68000_or_re_pi_8(void)
+static void m68000_or_re_pi_8(void)
 {
    uint ea = EA_PI_8;
    uint res = MASK_OUT_ABOVE_8(DX | read_memory_8(ea));
@@ -19223,7 +20116,7 @@ void m68000_or_re_pi_8(void)
 }
 
 
-void m68000_or_re_pi7_8(void)
+static void m68000_or_re_pi7_8(void)
 {
    uint ea = EA_PI7_8;
    uint res = MASK_OUT_ABOVE_8(DX | read_memory_8(ea));
@@ -19237,7 +20130,7 @@ void m68000_or_re_pi7_8(void)
 }
 
 
-void m68000_or_re_pd_8(void)
+static void m68000_or_re_pd_8(void)
 {
    uint ea = EA_PD_8;
    uint res = MASK_OUT_ABOVE_8(DX | read_memory_8(ea));
@@ -19251,7 +20144,7 @@ void m68000_or_re_pd_8(void)
 }
 
 
-void m68000_or_re_pd7_8(void)
+static void m68000_or_re_pd7_8(void)
 {
    uint ea = EA_PD7_8;
    uint res = MASK_OUT_ABOVE_8(DX | read_memory_8(ea));
@@ -19265,7 +20158,7 @@ void m68000_or_re_pd7_8(void)
 }
 
 
-void m68000_or_re_di_8(void)
+static void m68000_or_re_di_8(void)
 {
    uint ea = EA_DI;
    uint res = MASK_OUT_ABOVE_8(DX | read_memory_8(ea));
@@ -19279,7 +20172,7 @@ void m68000_or_re_di_8(void)
 }
 
 
-void m68000_or_re_ix_8(void)
+static void m68000_or_re_ix_8(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -19295,7 +20188,7 @@ void m68000_or_re_ix_8(void)
 }
 
 
-void m68000_or_re_aw_8(void)
+static void m68000_or_re_aw_8(void)
 {
    uint ea = EA_AW;
    uint res = MASK_OUT_ABOVE_8(DX | read_memory_8(ea));
@@ -19309,7 +20202,7 @@ void m68000_or_re_aw_8(void)
 }
 
 
-void m68000_or_re_al_8(void)
+static void m68000_or_re_al_8(void)
 {
    uint ea = EA_AL;
    uint res = MASK_OUT_ABOVE_8(DX | read_memory_8(ea));
@@ -19323,7 +20216,7 @@ void m68000_or_re_al_8(void)
 }
 
 
-void m68000_or_re_ai_16(void)
+static void m68000_or_re_ai_16(void)
 {
    uint ea = EA_AI;
    uint res = MASK_OUT_ABOVE_16(DX | read_memory_16(ea));
@@ -19337,7 +20230,7 @@ void m68000_or_re_ai_16(void)
 }
 
 
-void m68000_or_re_pi_16(void)
+static void m68000_or_re_pi_16(void)
 {
    uint ea = EA_PI_16;
    uint res = MASK_OUT_ABOVE_16(DX | read_memory_16(ea));
@@ -19351,7 +20244,7 @@ void m68000_or_re_pi_16(void)
 }
 
 
-void m68000_or_re_pd_16(void)
+static void m68000_or_re_pd_16(void)
 {
    uint ea = EA_PD_16;
    uint res = MASK_OUT_ABOVE_16(DX | read_memory_16(ea));
@@ -19365,7 +20258,7 @@ void m68000_or_re_pd_16(void)
 }
 
 
-void m68000_or_re_di_16(void)
+static void m68000_or_re_di_16(void)
 {
    uint ea = EA_DI;
    uint res = MASK_OUT_ABOVE_16(DX | read_memory_16(ea));
@@ -19379,7 +20272,7 @@ void m68000_or_re_di_16(void)
 }
 
 
-void m68000_or_re_ix_16(void)
+static void m68000_or_re_ix_16(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -19395,7 +20288,7 @@ void m68000_or_re_ix_16(void)
 }
 
 
-void m68000_or_re_aw_16(void)
+static void m68000_or_re_aw_16(void)
 {
    uint ea = EA_AW;
    uint res = MASK_OUT_ABOVE_16(DX | read_memory_16(ea));
@@ -19409,7 +20302,7 @@ void m68000_or_re_aw_16(void)
 }
 
 
-void m68000_or_re_al_16(void)
+static void m68000_or_re_al_16(void)
 {
    uint ea = EA_AL;
    uint res = MASK_OUT_ABOVE_16(DX | read_memory_16(ea));
@@ -19423,7 +20316,7 @@ void m68000_or_re_al_16(void)
 }
 
 
-void m68000_or_re_ai_32(void)
+static void m68000_or_re_ai_32(void)
 {
    uint ea = EA_AI;
    uint res = MASK_OUT_ABOVE_32(DX | read_memory_32(ea));
@@ -19437,7 +20330,7 @@ void m68000_or_re_ai_32(void)
 }
 
 
-void m68000_or_re_pi_32(void)
+static void m68000_or_re_pi_32(void)
 {
    uint ea = EA_PI_32;
    uint res = MASK_OUT_ABOVE_32(DX | read_memory_32(ea));
@@ -19451,7 +20344,7 @@ void m68000_or_re_pi_32(void)
 }
 
 
-void m68000_or_re_pd_32(void)
+static void m68000_or_re_pd_32(void)
 {
    uint ea = EA_PD_32;
    uint res = MASK_OUT_ABOVE_32(DX | read_memory_32(ea));
@@ -19465,7 +20358,7 @@ void m68000_or_re_pd_32(void)
 }
 
 
-void m68000_or_re_di_32(void)
+static void m68000_or_re_di_32(void)
 {
    uint ea = EA_DI;
    uint res = MASK_OUT_ABOVE_32(DX | read_memory_32(ea));
@@ -19479,7 +20372,7 @@ void m68000_or_re_di_32(void)
 }
 
 
-void m68000_or_re_ix_32(void)
+static void m68000_or_re_ix_32(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -19495,7 +20388,7 @@ void m68000_or_re_ix_32(void)
 }
 
 
-void m68000_or_re_aw_32(void)
+static void m68000_or_re_aw_32(void)
 {
    uint ea = EA_AW;
    uint res = MASK_OUT_ABOVE_32(DX | read_memory_32(ea));
@@ -19509,7 +20402,7 @@ void m68000_or_re_aw_32(void)
 }
 
 
-void m68000_or_re_al_32(void)
+static void m68000_or_re_al_32(void)
 {
    uint ea = EA_AL;
    uint res = MASK_OUT_ABOVE_32(DX | read_memory_32(ea));
@@ -19523,7 +20416,7 @@ void m68000_or_re_al_32(void)
 }
 
 
-void m68000_ori_d_8(void)
+static void m68000_ori_d_8(void)
 {
    uint res = MASK_OUT_ABOVE_8((DY |= read_imm_8()));
 
@@ -19534,7 +20427,7 @@ void m68000_ori_d_8(void)
 }
 
 
-void m68000_ori_ai_8(void)
+static void m68000_ori_ai_8(void)
 {
    uint tmp = read_imm_8();
    uint ea = EA_AI;
@@ -19549,7 +20442,7 @@ void m68000_ori_ai_8(void)
 }
 
 
-void m68000_ori_pi_8(void)
+static void m68000_ori_pi_8(void)
 {
    uint tmp = read_imm_8();
    uint ea = EA_PI_8;
@@ -19564,7 +20457,7 @@ void m68000_ori_pi_8(void)
 }
 
 
-void m68000_ori_pi7_8(void)
+static void m68000_ori_pi7_8(void)
 {
    uint tmp = read_imm_8();
    uint ea = EA_PI7_8;
@@ -19579,7 +20472,7 @@ void m68000_ori_pi7_8(void)
 }
 
 
-void m68000_ori_pd_8(void)
+static void m68000_ori_pd_8(void)
 {
    uint tmp = read_imm_8();
    uint ea = EA_PD_8;
@@ -19594,7 +20487,7 @@ void m68000_ori_pd_8(void)
 }
 
 
-void m68000_ori_pd7_8(void)
+static void m68000_ori_pd7_8(void)
 {
    uint tmp = read_imm_8();
    uint ea = EA_PD7_8;
@@ -19609,7 +20502,7 @@ void m68000_ori_pd7_8(void)
 }
 
 
-void m68000_ori_di_8(void)
+static void m68000_ori_di_8(void)
 {
    uint tmp = read_imm_8();
    uint ea = EA_DI;
@@ -19624,7 +20517,7 @@ void m68000_ori_di_8(void)
 }
 
 
-void m68000_ori_ix_8(void)
+static void m68000_ori_ix_8(void)
 {
    uint tmp = read_imm_8();
    uint extension = read_imm_16();
@@ -19641,7 +20534,7 @@ void m68000_ori_ix_8(void)
 }
 
 
-void m68000_ori_aw_8(void)
+static void m68000_ori_aw_8(void)
 {
    uint tmp = read_imm_8();
    uint ea = EA_AW;
@@ -19656,7 +20549,7 @@ void m68000_ori_aw_8(void)
 }
 
 
-void m68000_ori_al_8(void)
+static void m68000_ori_al_8(void)
 {
    uint tmp = read_imm_8();
    uint ea = EA_AL;
@@ -19671,7 +20564,7 @@ void m68000_ori_al_8(void)
 }
 
 
-void m68000_ori_d_16(void)
+static void m68000_ori_d_16(void)
 {
    uint res = MASK_OUT_ABOVE_16(DY |= read_imm_16());
 
@@ -19682,7 +20575,7 @@ void m68000_ori_d_16(void)
 }
 
 
-void m68000_ori_ai_16(void)
+static void m68000_ori_ai_16(void)
 {
    uint tmp = read_imm_16();
    uint ea = EA_AI;
@@ -19697,7 +20590,7 @@ void m68000_ori_ai_16(void)
 }
 
 
-void m68000_ori_pi_16(void)
+static void m68000_ori_pi_16(void)
 {
    uint tmp = read_imm_16();
    uint ea = EA_PI_16;
@@ -19712,7 +20605,7 @@ void m68000_ori_pi_16(void)
 }
 
 
-void m68000_ori_pd_16(void)
+static void m68000_ori_pd_16(void)
 {
    uint tmp = read_imm_16();
    uint ea = EA_PD_16;
@@ -19727,7 +20620,7 @@ void m68000_ori_pd_16(void)
 }
 
 
-void m68000_ori_di_16(void)
+static void m68000_ori_di_16(void)
 {
    uint tmp = read_imm_16();
    uint ea = EA_DI;
@@ -19742,7 +20635,7 @@ void m68000_ori_di_16(void)
 }
 
 
-void m68000_ori_ix_16(void)
+static void m68000_ori_ix_16(void)
 {
    uint tmp = read_imm_16();
    uint extension = read_imm_16();
@@ -19759,7 +20652,7 @@ void m68000_ori_ix_16(void)
 }
 
 
-void m68000_ori_aw_16(void)
+static void m68000_ori_aw_16(void)
 {
    uint tmp = read_imm_16();
    uint ea = EA_AW;
@@ -19774,7 +20667,7 @@ void m68000_ori_aw_16(void)
 }
 
 
-void m68000_ori_al_16(void)
+static void m68000_ori_al_16(void)
 {
    uint tmp = read_imm_16();
    uint ea = EA_AL;
@@ -19789,7 +20682,7 @@ void m68000_ori_al_16(void)
 }
 
 
-void m68000_ori_d_32(void)
+static void m68000_ori_d_32(void)
 {
    uint res = MASK_OUT_ABOVE_32(DY |= read_imm_32());
 
@@ -19800,7 +20693,7 @@ void m68000_ori_d_32(void)
 }
 
 
-void m68000_ori_ai_32(void)
+static void m68000_ori_ai_32(void)
 {
    uint tmp = read_imm_32();
    uint ea = EA_AI;
@@ -19815,7 +20708,7 @@ void m68000_ori_ai_32(void)
 }
 
 
-void m68000_ori_pi_32(void)
+static void m68000_ori_pi_32(void)
 {
    uint tmp = read_imm_32();
    uint ea = EA_PI_32;
@@ -19830,7 +20723,7 @@ void m68000_ori_pi_32(void)
 }
 
 
-void m68000_ori_pd_32(void)
+static void m68000_ori_pd_32(void)
 {
    uint tmp = read_imm_32();
    uint ea = EA_PD_32;
@@ -19845,7 +20738,7 @@ void m68000_ori_pd_32(void)
 }
 
 
-void m68000_ori_di_32(void)
+static void m68000_ori_di_32(void)
 {
    uint tmp = read_imm_32();
    uint ea = EA_DI;
@@ -19860,7 +20753,7 @@ void m68000_ori_di_32(void)
 }
 
 
-void m68000_ori_ix_32(void)
+static void m68000_ori_ix_32(void)
 {
    uint tmp = read_imm_32();
    uint extension = read_imm_16();
@@ -19877,7 +20770,7 @@ void m68000_ori_ix_32(void)
 }
 
 
-void m68000_ori_aw_32(void)
+static void m68000_ori_aw_32(void)
 {
    uint tmp = read_imm_32();
    uint ea = EA_AW;
@@ -19892,7 +20785,7 @@ void m68000_ori_aw_32(void)
 }
 
 
-void m68000_ori_al_32(void)
+static void m68000_ori_al_32(void)
 {
    uint tmp = read_imm_32();
    uint ea = EA_AL;
@@ -19907,14 +20800,14 @@ void m68000_ori_al_32(void)
 }
 
 
-void m68000_ori_to_ccr(void)
+static void m68000_ori_to_ccr(void)
 {
    set_ccr(get_ccr() | read_imm_8());
    USE_CLKS(20);
 }
 
 
-void m68000_ori_to_sr(void)
+static void m68000_ori_to_sr(void)
 {
    uint or_val = read_imm_16();
 
@@ -19928,65 +20821,65 @@ void m68000_ori_to_sr(void)
 }
 
 
-void m68000_pea_ai(void)
+static void m68000_pea_ai(void)
 {
    push_32(EA_AI);
-   USE_CLKS(8+12);
+   USE_CLKS(0+12);
 }
 
 
-void m68000_pea_di(void)
+static void m68000_pea_di(void)
 {
    push_32(EA_DI);
-   USE_CLKS(8+16);
+   USE_CLKS(0+16);
 }
 
 
-void m68000_pea_ix(void)
+static void m68000_pea_ix(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
    uint ea = AY + make_int_8(extension & 0xff) + (BIT_B(extension) ? index : make_int_16(index & 0xffff));
    push_32(ea);
-   USE_CLKS(8+20);
+   USE_CLKS(0+20);
 }
 
 
-void m68000_pea_aw(void)
+static void m68000_pea_aw(void)
 {
    push_32(EA_AW);
-   USE_CLKS(8+16);
+   USE_CLKS(0+16);
 }
 
 
-void m68000_pea_al(void)
+static void m68000_pea_al(void)
 {
    push_32(EA_AL);
-   USE_CLKS(8+20);
+   USE_CLKS(0+20);
 }
 
 
-void m68000_pea_pcdi(void)
+static void m68000_pea_pcdi(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint ea = old_pc + make_int_16(read_memory_16(old_pc));
    push_32(ea);
-   USE_CLKS(8+16);
+   USE_CLKS(0+16);
 }
 
 
-void m68000_pea_pcix(void)
+static void m68000_pea_pcix(void)
 {
    uint old_pc = (g_cpu_pc+=2) - 2;
    uint extension = read_memory_16(old_pc);
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
    uint ea = old_pc + make_int_8(extension & 0xff) + (BIT_B(extension) ? index : make_int_16(index & 0xffff));
    push_32(ea);
-   USE_CLKS(8+20);
+   USE_CLKS(0+20);
 }
 
 
-void m68000_reset(void)
+static void m68000_reset(void)
 {
    if(g_cpu_s_flag)
    {
@@ -20000,7 +20893,7 @@ void m68000_reset(void)
 }
 
 
-void m68000_ror_s_8(void)
+static void m68000_ror_s_8(void)
 {
    uint* d_dst = &DY;
    uint orig_shift = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
@@ -20018,7 +20911,7 @@ void m68000_ror_s_8(void)
 }
 
 
-void m68000_ror_s_16(void)
+static void m68000_ror_s_16(void)
 {
    uint* d_dst = &DY;
    uint shift = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
@@ -20035,7 +20928,7 @@ void m68000_ror_s_16(void)
 }
 
 
-void m68000_ror_s_32(void)
+static void m68000_ror_s_32(void)
 {
    uint* d_dst = &DY;
    uint shift = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
@@ -20052,7 +20945,7 @@ void m68000_ror_s_32(void)
 }
 
 
-void m68000_ror_r_8(void)
+static void m68000_ror_r_8(void)
 {
    uint* d_dst = &DY;
    uint orig_shift = DX & 0x3f;
@@ -20078,7 +20971,7 @@ void m68000_ror_r_8(void)
 }
 
 
-void m68000_ror_r_16(void)
+static void m68000_ror_r_16(void)
 {
    uint* d_dst = &DY;
    uint orig_shift = DX & 0x3f;
@@ -20104,7 +20997,7 @@ void m68000_ror_r_16(void)
 }
 
 
-void m68000_ror_r_32(void)
+static void m68000_ror_r_32(void)
 {
    uint* d_dst = &DY;
    uint orig_shift = DX & 0x3f;
@@ -20130,7 +21023,7 @@ void m68000_ror_r_32(void)
 }
 
 
-void m68000_ror_ea_ai(void)
+static void m68000_ror_ea_ai(void)
 {
    uint ea = EA_AI;
    uint src = read_memory_16(ea);
@@ -20146,7 +21039,7 @@ void m68000_ror_ea_ai(void)
 }
 
 
-void m68000_ror_ea_pi(void)
+static void m68000_ror_ea_pi(void)
 {
    uint ea = EA_PI_16;
    uint src = read_memory_16(ea);
@@ -20162,7 +21055,7 @@ void m68000_ror_ea_pi(void)
 }
 
 
-void m68000_ror_ea_pd(void)
+static void m68000_ror_ea_pd(void)
 {
    uint ea = EA_PD_16;
    uint src = read_memory_16(ea);
@@ -20178,7 +21071,7 @@ void m68000_ror_ea_pd(void)
 }
 
 
-void m68000_ror_ea_di(void)
+static void m68000_ror_ea_di(void)
 {
    uint ea = EA_DI;
    uint src = read_memory_16(ea);
@@ -20194,7 +21087,7 @@ void m68000_ror_ea_di(void)
 }
 
 
-void m68000_ror_ea_ix(void)
+static void m68000_ror_ea_ix(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -20212,7 +21105,7 @@ void m68000_ror_ea_ix(void)
 }
 
 
-void m68000_ror_ea_aw(void)
+static void m68000_ror_ea_aw(void)
 {
    uint ea = EA_AW;
    uint src = read_memory_16(ea);
@@ -20228,7 +21121,7 @@ void m68000_ror_ea_aw(void)
 }
 
 
-void m68000_ror_ea_al(void)
+static void m68000_ror_ea_al(void)
 {
    uint ea = EA_AL;
    uint src = read_memory_16(ea);
@@ -20244,7 +21137,7 @@ void m68000_ror_ea_al(void)
 }
 
 
-void m68000_rol_s_8(void)
+static void m68000_rol_s_8(void)
 {
    uint* d_dst = &DY;
    uint orig_shift = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
@@ -20262,7 +21155,7 @@ void m68000_rol_s_8(void)
 }
 
 
-void m68000_rol_s_16(void)
+static void m68000_rol_s_16(void)
 {
    uint* d_dst = &DY;
    uint shift = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
@@ -20279,7 +21172,7 @@ void m68000_rol_s_16(void)
 }
 
 
-void m68000_rol_s_32(void)
+static void m68000_rol_s_32(void)
 {
    uint* d_dst = &DY;
    uint shift = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
@@ -20296,7 +21189,7 @@ void m68000_rol_s_32(void)
 }
 
 
-void m68000_rol_r_8(void)
+static void m68000_rol_r_8(void)
 {
    uint* d_dst = &DY;
    uint orig_shift = DX & 0x3f;
@@ -20330,7 +21223,7 @@ void m68000_rol_r_8(void)
 }
 
 
-void m68000_rol_r_16(void)
+static void m68000_rol_r_16(void)
 {
    uint* d_dst = &DY;
    uint orig_shift = DX & 0x3f;
@@ -20364,7 +21257,7 @@ void m68000_rol_r_16(void)
 }
 
 
-void m68000_rol_r_32(void)
+static void m68000_rol_r_32(void)
 {
    uint* d_dst = &DY;
    uint orig_shift = DX & 0x3f;
@@ -20391,7 +21284,7 @@ void m68000_rol_r_32(void)
 }
 
 
-void m68000_rol_ea_ai(void)
+static void m68000_rol_ea_ai(void)
 {
    uint ea = EA_AI;
    uint src = read_memory_16(ea);
@@ -20407,7 +21300,7 @@ void m68000_rol_ea_ai(void)
 }
 
 
-void m68000_rol_ea_pi(void)
+static void m68000_rol_ea_pi(void)
 {
    uint ea = EA_PI_16;
    uint src = read_memory_16(ea);
@@ -20423,7 +21316,7 @@ void m68000_rol_ea_pi(void)
 }
 
 
-void m68000_rol_ea_pd(void)
+static void m68000_rol_ea_pd(void)
 {
    uint ea = EA_PD_16;
    uint src = read_memory_16(ea);
@@ -20439,7 +21332,7 @@ void m68000_rol_ea_pd(void)
 }
 
 
-void m68000_rol_ea_di(void)
+static void m68000_rol_ea_di(void)
 {
    uint ea = EA_DI;
    uint src = read_memory_16(ea);
@@ -20455,7 +21348,7 @@ void m68000_rol_ea_di(void)
 }
 
 
-void m68000_rol_ea_ix(void)
+static void m68000_rol_ea_ix(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -20473,7 +21366,7 @@ void m68000_rol_ea_ix(void)
 }
 
 
-void m68000_rol_ea_aw(void)
+static void m68000_rol_ea_aw(void)
 {
    uint ea = EA_AW;
    uint src = read_memory_16(ea);
@@ -20489,7 +21382,7 @@ void m68000_rol_ea_aw(void)
 }
 
 
-void m68000_rol_ea_al(void)
+static void m68000_rol_ea_al(void)
 {
    uint ea = EA_AL;
    uint src = read_memory_16(ea);
@@ -20505,7 +21398,7 @@ void m68000_rol_ea_al(void)
 }
 
 
-void m68000_roxr_s_8(void)
+static void m68000_roxr_s_8(void)
 {
    uint* d_dst = &DY;
    uint shift = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
@@ -20523,7 +21416,7 @@ void m68000_roxr_s_8(void)
 }
 
 
-void m68000_roxr_s_16(void)
+static void m68000_roxr_s_16(void)
 {
    uint* d_dst = &DY;
    uint shift = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
@@ -20541,7 +21434,7 @@ void m68000_roxr_s_16(void)
 }
 
 
-void m68000_roxr_s_32(void)
+static void m68000_roxr_s_32(void)
 {
    uint* d_dst = &DY;
    uint shift = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
@@ -20562,7 +21455,7 @@ void m68000_roxr_s_32(void)
 }
 
 
-void m68000_roxr_r_8(void)
+static void m68000_roxr_r_8(void)
 {
    uint* d_dst = &DY;
    uint orig_shift = DX & 0x3f;
@@ -20589,7 +21482,7 @@ void m68000_roxr_r_8(void)
 }
 
 
-void m68000_roxr_r_16(void)
+static void m68000_roxr_r_16(void)
 {
    uint* d_dst = &DY;
    uint orig_shift = DX & 0x3f;
@@ -20616,7 +21509,7 @@ void m68000_roxr_r_16(void)
 }
 
 
-void m68000_roxr_r_32(void)
+static void m68000_roxr_r_32(void)
 {
    uint* d_dst = &DY;
    uint orig_shift = DX & 0x3f;
@@ -20640,7 +21533,7 @@ void m68000_roxr_r_32(void)
 }
 
 
-void m68000_roxr_ea_ai(void)
+static void m68000_roxr_ea_ai(void)
 {
    uint ea = EA_AI;
    uint src = read_memory_16(ea);
@@ -20657,7 +21550,7 @@ void m68000_roxr_ea_ai(void)
 }
 
 
-void m68000_roxr_ea_pi(void)
+static void m68000_roxr_ea_pi(void)
 {
    uint ea = EA_PI_16;
    uint src = read_memory_16(ea);
@@ -20674,7 +21567,7 @@ void m68000_roxr_ea_pi(void)
 }
 
 
-void m68000_roxr_ea_pd(void)
+static void m68000_roxr_ea_pd(void)
 {
    uint ea = EA_PD_16;
    uint src = read_memory_16(ea);
@@ -20691,7 +21584,7 @@ void m68000_roxr_ea_pd(void)
 }
 
 
-void m68000_roxr_ea_di(void)
+static void m68000_roxr_ea_di(void)
 {
    uint ea = EA_DI;
    uint src = read_memory_16(ea);
@@ -20708,7 +21601,7 @@ void m68000_roxr_ea_di(void)
 }
 
 
-void m68000_roxr_ea_ix(void)
+static void m68000_roxr_ea_ix(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -20727,7 +21620,7 @@ void m68000_roxr_ea_ix(void)
 }
 
 
-void m68000_roxr_ea_aw(void)
+static void m68000_roxr_ea_aw(void)
 {
    uint ea = EA_AW;
    uint src = read_memory_16(ea);
@@ -20744,7 +21637,7 @@ void m68000_roxr_ea_aw(void)
 }
 
 
-void m68000_roxr_ea_al(void)
+static void m68000_roxr_ea_al(void)
 {
    uint ea = EA_AL;
    uint src = read_memory_16(ea);
@@ -20761,7 +21654,7 @@ void m68000_roxr_ea_al(void)
 }
 
 
-void m68000_roxl_s_8(void)
+static void m68000_roxl_s_8(void)
 {
    uint* d_dst = &DY;
    uint shift = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
@@ -20779,7 +21672,7 @@ void m68000_roxl_s_8(void)
 }
 
 
-void m68000_roxl_s_16(void)
+static void m68000_roxl_s_16(void)
 {
    uint* d_dst = &DY;
    uint shift = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
@@ -20797,7 +21690,7 @@ void m68000_roxl_s_16(void)
 }
 
 
-void m68000_roxl_s_32(void)
+static void m68000_roxl_s_32(void)
 {
    uint* d_dst = &DY;
    uint shift = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
@@ -20818,7 +21711,7 @@ void m68000_roxl_s_32(void)
 }
 
 
-void m68000_roxl_r_8(void)
+static void m68000_roxl_r_8(void)
 {
    uint* d_dst = &DY;
    uint orig_shift = DX & 0x3f;
@@ -20845,7 +21738,7 @@ void m68000_roxl_r_8(void)
 }
 
 
-void m68000_roxl_r_16(void)
+static void m68000_roxl_r_16(void)
 {
    uint* d_dst = &DY;
    uint orig_shift = DX & 0x3f;
@@ -20872,7 +21765,7 @@ void m68000_roxl_r_16(void)
 }
 
 
-void m68000_roxl_r_32(void)
+static void m68000_roxl_r_32(void)
 {
    uint* d_dst = &DY;
    uint orig_shift = DX & 0x3f;
@@ -20896,7 +21789,7 @@ void m68000_roxl_r_32(void)
 }
 
 
-void m68000_roxl_ea_ai(void)
+static void m68000_roxl_ea_ai(void)
 {
    uint ea = EA_AI;
    uint src = read_memory_16(ea);
@@ -20913,7 +21806,7 @@ void m68000_roxl_ea_ai(void)
 }
 
 
-void m68000_roxl_ea_pi(void)
+static void m68000_roxl_ea_pi(void)
 {
    uint ea = EA_PI_16;
    uint src = read_memory_16(ea);
@@ -20930,7 +21823,7 @@ void m68000_roxl_ea_pi(void)
 }
 
 
-void m68000_roxl_ea_pd(void)
+static void m68000_roxl_ea_pd(void)
 {
    uint ea = EA_PD_16;
    uint src = read_memory_16(ea);
@@ -20947,7 +21840,7 @@ void m68000_roxl_ea_pd(void)
 }
 
 
-void m68000_roxl_ea_di(void)
+static void m68000_roxl_ea_di(void)
 {
    uint ea = EA_DI;
    uint src = read_memory_16(ea);
@@ -20964,7 +21857,7 @@ void m68000_roxl_ea_di(void)
 }
 
 
-void m68000_roxl_ea_ix(void)
+static void m68000_roxl_ea_ix(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -20983,7 +21876,7 @@ void m68000_roxl_ea_ix(void)
 }
 
 
-void m68000_roxl_ea_aw(void)
+static void m68000_roxl_ea_aw(void)
 {
    uint ea = EA_AW;
    uint src = read_memory_16(ea);
@@ -21000,7 +21893,7 @@ void m68000_roxl_ea_aw(void)
 }
 
 
-void m68000_roxl_ea_al(void)
+static void m68000_roxl_ea_al(void)
 {
    uint ea = EA_AL;
    uint src = read_memory_16(ea);
@@ -21017,15 +21910,41 @@ void m68000_roxl_ea_al(void)
 }
 
 
-void m68000_rte(void)
+static void m68010_rtd(void)
+{
+   if(g_cpu_type & (CPU_010_PLUS))
+   {
+      uint new_pc = pull_32();
+      g_cpu_ar[7] += make_int_16(read_imm_16());
+      branch_long(new_pc);
+      USE_CLKS(16);
+      return;
+   }
+   exception(EXCEPTION_ILLEGAL_INSTRUCTION);
+}
+
+
+static void m68000_rte(void)
 {
    uint new_sr;
+   uint new_pc;
+   uint format_word;
 
    if(g_cpu_s_flag)
    {
       new_sr = pull_16();
-      branch_long(pull_32());
+      new_pc = pull_32();
+      branch_long(new_pc);
       set_sr(new_sr);
+      if(!(g_cpu_type & (CPU_010_PLUS)))
+      {
+         USE_CLKS(20);
+         return;
+      }
+      format_word = (pull_16()>>12) & 0xf;
+      /* I'm ignoring code 8 (bus error and address error) */
+      if(format_word != 0)
+         exception(EXCEPTION_FORMAT_ERROR);
       USE_CLKS(20);
       return;
    }
@@ -21033,7 +21952,7 @@ void m68000_rte(void)
 }
 
 
-void m68000_rtr(void)
+static void m68000_rtr(void)
 {
    set_ccr(pull_16());
    branch_long(pull_32());
@@ -21041,14 +21960,14 @@ void m68000_rtr(void)
 }
 
 
-void m68000_rts(void)
+static void m68000_rts(void)
 {
    branch_long(pull_32());
    USE_CLKS(16);
 }
 
 
-void m68000_sbcd_rr(void)
+static void m68000_sbcd_rr(void)
 {
    uint* d_dst = &DX;
    uint src = DY;
@@ -21069,7 +21988,7 @@ void m68000_sbcd_rr(void)
 }
 
 
-void m68000_sbcd_mm_ax7(void)
+static void m68000_sbcd_mm_ax7(void)
 {
    uint src = read_memory_8(--(AY));
    uint ea  = g_cpu_ar[7]-=2;
@@ -21090,7 +22009,7 @@ void m68000_sbcd_mm_ax7(void)
 }
 
 
-void m68000_sbcd_mm_ay7(void)
+static void m68000_sbcd_mm_ay7(void)
 {
    uint src = read_memory_8(g_cpu_ar[7]-=2);
    uint ea  = --AX;
@@ -21111,7 +22030,7 @@ void m68000_sbcd_mm_ay7(void)
 }
 
 
-void m68000_sbcd_mm_axy7(void)
+static void m68000_sbcd_mm_axy7(void)
 {
    uint src = read_memory_8(g_cpu_ar[7]-=2);
    uint ea  = g_cpu_ar[7]-=2;
@@ -21132,7 +22051,7 @@ void m68000_sbcd_mm_axy7(void)
 }
 
 
-void m68000_sbcd_mm(void)
+static void m68000_sbcd_mm(void)
 {
    uint src = read_memory_8(--AY);
    uint ea  = --AX;
@@ -21153,56 +22072,56 @@ void m68000_sbcd_mm(void)
 }
 
 
-void m68000_st_d(void)
+static void m68000_st_d(void)
 {
    DY |= 0xff;
    USE_CLKS(6);
 }
 
 
-void m68000_st_ai(void)
+static void m68000_st_ai(void)
 {
    write_memory_8(EA_AI, 0xff);
    USE_CLKS(8+4);
 }
 
 
-void m68000_st_pi(void)
+static void m68000_st_pi(void)
 {
    write_memory_8(EA_PI_8, 0xff);
    USE_CLKS(8+4);
 }
 
 
-void m68000_st_pi7(void)
+static void m68000_st_pi7(void)
 {
    write_memory_8(EA_PI7_8, 0xff);
    USE_CLKS(8+4);
 }
 
 
-void m68000_st_pd(void)
+static void m68000_st_pd(void)
 {
    write_memory_8(EA_PD_8, 0xff);
    USE_CLKS(8+6);
 }
 
 
-void m68000_st_pd7(void)
+static void m68000_st_pd7(void)
 {
    write_memory_8(EA_PD7_8, 0xff);
    USE_CLKS(8+6);
 }
 
 
-void m68000_st_di(void)
+static void m68000_st_di(void)
 {
    write_memory_8(EA_DI, 0xff);
    USE_CLKS(8+8);
 }
 
 
-void m68000_st_ix(void)
+static void m68000_st_ix(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -21212,70 +22131,70 @@ void m68000_st_ix(void)
 }
 
 
-void m68000_st_aw(void)
+static void m68000_st_aw(void)
 {
    write_memory_8(EA_AW, 0xff);
    USE_CLKS(8+8);
 }
 
 
-void m68000_st_al(void)
+static void m68000_st_al(void)
 {
    write_memory_8(EA_AL, 0xff);
    USE_CLKS(8+12);
 }
 
 
-void m68000_sf_d(void)
+static void m68000_sf_d(void)
 {
    DY &= 0xffffff00;
    USE_CLKS(4);
 }
 
 
-void m68000_sf_ai(void)
+static void m68000_sf_ai(void)
 {
    write_memory_8(EA_AI, 0);
    USE_CLKS(8+4);
 }
 
 
-void m68000_sf_pi(void)
+static void m68000_sf_pi(void)
 {
    write_memory_8(EA_PI_8, 0);
    USE_CLKS(8+4);
 }
 
 
-void m68000_sf_pi7(void)
+static void m68000_sf_pi7(void)
 {
    write_memory_8(EA_PI7_8, 0);
    USE_CLKS(8+4);
 }
 
 
-void m68000_sf_pd(void)
+static void m68000_sf_pd(void)
 {
    write_memory_8(EA_PD_8, 0);
    USE_CLKS(8+6);
 }
 
 
-void m68000_sf_pd7(void)
+static void m68000_sf_pd7(void)
 {
    write_memory_8(EA_PD7_8, 0);
    USE_CLKS(8+6);
 }
 
 
-void m68000_sf_di(void)
+static void m68000_sf_di(void)
 {
    write_memory_8(EA_DI, 0);
    USE_CLKS(8+8);
 }
 
 
-void m68000_sf_ix(void)
+static void m68000_sf_ix(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -21285,21 +22204,21 @@ void m68000_sf_ix(void)
 }
 
 
-void m68000_sf_aw(void)
+static void m68000_sf_aw(void)
 {
    write_memory_8(EA_AW, 0);
    USE_CLKS(8+8);
 }
 
 
-void m68000_sf_al(void)
+static void m68000_sf_al(void)
 {
    write_memory_8(EA_AL, 0);
    USE_CLKS(8+12);
 }
 
 
-void m68000_shi_d(void)
+static void m68000_shi_d(void)
 {
    if(CONDITION_HI)
    {
@@ -21312,49 +22231,49 @@ void m68000_shi_d(void)
 }
 
 
-void m68000_shi_ai(void)
+static void m68000_shi_ai(void)
 {
    write_memory_8(EA_AI, CONDITION_HI ? 0xff : 0);
    USE_CLKS(8+4);
 }
 
 
-void m68000_shi_pi(void)
+static void m68000_shi_pi(void)
 {
    write_memory_8(EA_PI_8, CONDITION_HI ? 0xff : 0);
    USE_CLKS(8+4);
 }
 
 
-void m68000_shi_pi7(void)
+static void m68000_shi_pi7(void)
 {
    write_memory_8(EA_PI7_8, CONDITION_HI ? 0xff : 0);
    USE_CLKS(8+4);
 }
 
 
-void m68000_shi_pd(void)
+static void m68000_shi_pd(void)
 {
    write_memory_8(EA_PD_8, CONDITION_HI ? 0xff : 0);
    USE_CLKS(8+6);
 }
 
 
-void m68000_shi_pd7(void)
+static void m68000_shi_pd7(void)
 {
    write_memory_8(EA_PD7_8, CONDITION_HI ? 0xff : 0);
    USE_CLKS(8+6);
 }
 
 
-void m68000_shi_di(void)
+static void m68000_shi_di(void)
 {
    write_memory_8(EA_DI, CONDITION_HI ? 0xff : 0);
    USE_CLKS(8+8);
 }
 
 
-void m68000_shi_ix(void)
+static void m68000_shi_ix(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -21364,21 +22283,21 @@ void m68000_shi_ix(void)
 }
 
 
-void m68000_shi_aw(void)
+static void m68000_shi_aw(void)
 {
    write_memory_8(EA_AW, CONDITION_HI ? 0xff : 0);
    USE_CLKS(8+8);
 }
 
 
-void m68000_shi_al(void)
+static void m68000_shi_al(void)
 {
    write_memory_8(EA_AL, CONDITION_HI ? 0xff : 0);
    USE_CLKS(8+12);
 }
 
 
-void m68000_sls_d(void)
+static void m68000_sls_d(void)
 {
    if(CONDITION_LS)
    {
@@ -21391,49 +22310,49 @@ void m68000_sls_d(void)
 }
 
 
-void m68000_sls_ai(void)
+static void m68000_sls_ai(void)
 {
    write_memory_8(EA_AI, CONDITION_LS ? 0xff : 0);
    USE_CLKS(8+4);
 }
 
 
-void m68000_sls_pi(void)
+static void m68000_sls_pi(void)
 {
    write_memory_8(EA_PI_8, CONDITION_LS ? 0xff : 0);
    USE_CLKS(8+4);
 }
 
 
-void m68000_sls_pi7(void)
+static void m68000_sls_pi7(void)
 {
    write_memory_8(EA_PI7_8, CONDITION_LS ? 0xff : 0);
    USE_CLKS(8+4);
 }
 
 
-void m68000_sls_pd(void)
+static void m68000_sls_pd(void)
 {
    write_memory_8(EA_PD_8, CONDITION_LS ? 0xff : 0);
    USE_CLKS(8+6);
 }
 
 
-void m68000_sls_pd7(void)
+static void m68000_sls_pd7(void)
 {
    write_memory_8(EA_PD7_8, CONDITION_LS ? 0xff : 0);
    USE_CLKS(8+6);
 }
 
 
-void m68000_sls_di(void)
+static void m68000_sls_di(void)
 {
    write_memory_8(EA_DI, CONDITION_LS ? 0xff : 0);
    USE_CLKS(8+8);
 }
 
 
-void m68000_sls_ix(void)
+static void m68000_sls_ix(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -21443,21 +22362,21 @@ void m68000_sls_ix(void)
 }
 
 
-void m68000_sls_aw(void)
+static void m68000_sls_aw(void)
 {
    write_memory_8(EA_AW, CONDITION_LS ? 0xff : 0);
    USE_CLKS(8+8);
 }
 
 
-void m68000_sls_al(void)
+static void m68000_sls_al(void)
 {
    write_memory_8(EA_AL, CONDITION_LS ? 0xff : 0);
    USE_CLKS(8+12);
 }
 
 
-void m68000_scc_d(void)
+static void m68000_scc_d(void)
 {
    if(CONDITION_CC)
    {
@@ -21470,49 +22389,49 @@ void m68000_scc_d(void)
 }
 
 
-void m68000_scc_ai(void)
+static void m68000_scc_ai(void)
 {
    write_memory_8(EA_AI, CONDITION_CC ? 0xff : 0);
    USE_CLKS(8+4);
 }
 
 
-void m68000_scc_pi(void)
+static void m68000_scc_pi(void)
 {
    write_memory_8(EA_PI_8, CONDITION_CC ? 0xff : 0);
    USE_CLKS(8+4);
 }
 
 
-void m68000_scc_pi7(void)
+static void m68000_scc_pi7(void)
 {
    write_memory_8(EA_PI7_8, CONDITION_CC ? 0xff : 0);
    USE_CLKS(8+4);
 }
 
 
-void m68000_scc_pd(void)
+static void m68000_scc_pd(void)
 {
    write_memory_8(EA_PD_8, CONDITION_CC ? 0xff : 0);
    USE_CLKS(8+6);
 }
 
 
-void m68000_scc_pd7(void)
+static void m68000_scc_pd7(void)
 {
    write_memory_8(EA_PD7_8, CONDITION_CC ? 0xff : 0);
    USE_CLKS(8+6);
 }
 
 
-void m68000_scc_di(void)
+static void m68000_scc_di(void)
 {
    write_memory_8(EA_DI, CONDITION_CC ? 0xff : 0);
    USE_CLKS(8+8);
 }
 
 
-void m68000_scc_ix(void)
+static void m68000_scc_ix(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -21522,21 +22441,21 @@ void m68000_scc_ix(void)
 }
 
 
-void m68000_scc_aw(void)
+static void m68000_scc_aw(void)
 {
    write_memory_8(EA_AW, CONDITION_CC ? 0xff : 0);
    USE_CLKS(8+8);
 }
 
 
-void m68000_scc_al(void)
+static void m68000_scc_al(void)
 {
    write_memory_8(EA_AL, CONDITION_CC ? 0xff : 0);
    USE_CLKS(8+12);
 }
 
 
-void m68000_scs_d(void)
+static void m68000_scs_d(void)
 {
    if(CONDITION_CS)
    {
@@ -21549,49 +22468,49 @@ void m68000_scs_d(void)
 }
 
 
-void m68000_scs_ai(void)
+static void m68000_scs_ai(void)
 {
    write_memory_8(EA_AI, CONDITION_CS ? 0xff : 0);
    USE_CLKS(8+4);
 }
 
 
-void m68000_scs_pi(void)
+static void m68000_scs_pi(void)
 {
    write_memory_8(EA_PI_8, CONDITION_CS ? 0xff : 0);
    USE_CLKS(8+4);
 }
 
 
-void m68000_scs_pi7(void)
+static void m68000_scs_pi7(void)
 {
    write_memory_8(EA_PI7_8, CONDITION_CS ? 0xff : 0);
    USE_CLKS(8+4);
 }
 
 
-void m68000_scs_pd(void)
+static void m68000_scs_pd(void)
 {
    write_memory_8(EA_PD_8, CONDITION_CS ? 0xff : 0);
    USE_CLKS(8+6);
 }
 
 
-void m68000_scs_pd7(void)
+static void m68000_scs_pd7(void)
 {
    write_memory_8(EA_PD7_8, CONDITION_CS ? 0xff : 0);
    USE_CLKS(8+6);
 }
 
 
-void m68000_scs_di(void)
+static void m68000_scs_di(void)
 {
    write_memory_8(EA_DI, CONDITION_CS ? 0xff : 0);
    USE_CLKS(8+8);
 }
 
 
-void m68000_scs_ix(void)
+static void m68000_scs_ix(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -21601,21 +22520,21 @@ void m68000_scs_ix(void)
 }
 
 
-void m68000_scs_aw(void)
+static void m68000_scs_aw(void)
 {
    write_memory_8(EA_AW, CONDITION_CS ? 0xff : 0);
    USE_CLKS(8+8);
 }
 
 
-void m68000_scs_al(void)
+static void m68000_scs_al(void)
 {
    write_memory_8(EA_AL, CONDITION_CS ? 0xff : 0);
    USE_CLKS(8+12);
 }
 
 
-void m68000_sne_d(void)
+static void m68000_sne_d(void)
 {
    if(CONDITION_NE)
    {
@@ -21628,49 +22547,49 @@ void m68000_sne_d(void)
 }
 
 
-void m68000_sne_ai(void)
+static void m68000_sne_ai(void)
 {
    write_memory_8(EA_AI, CONDITION_NE ? 0xff : 0);
    USE_CLKS(8+4);
 }
 
 
-void m68000_sne_pi(void)
+static void m68000_sne_pi(void)
 {
    write_memory_8(EA_PI_8, CONDITION_NE ? 0xff : 0);
    USE_CLKS(8+4);
 }
 
 
-void m68000_sne_pi7(void)
+static void m68000_sne_pi7(void)
 {
    write_memory_8(EA_PI7_8, CONDITION_NE ? 0xff : 0);
    USE_CLKS(8+4);
 }
 
 
-void m68000_sne_pd(void)
+static void m68000_sne_pd(void)
 {
    write_memory_8(EA_PD_8, CONDITION_NE ? 0xff : 0);
    USE_CLKS(8+6);
 }
 
 
-void m68000_sne_pd7(void)
+static void m68000_sne_pd7(void)
 {
    write_memory_8(EA_PD7_8, CONDITION_NE ? 0xff : 0);
    USE_CLKS(8+6);
 }
 
 
-void m68000_sne_di(void)
+static void m68000_sne_di(void)
 {
    write_memory_8(EA_DI, CONDITION_NE ? 0xff : 0);
    USE_CLKS(8+8);
 }
 
 
-void m68000_sne_ix(void)
+static void m68000_sne_ix(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -21680,21 +22599,21 @@ void m68000_sne_ix(void)
 }
 
 
-void m68000_sne_aw(void)
+static void m68000_sne_aw(void)
 {
    write_memory_8(EA_AW, CONDITION_NE ? 0xff : 0);
    USE_CLKS(8+8);
 }
 
 
-void m68000_sne_al(void)
+static void m68000_sne_al(void)
 {
    write_memory_8(EA_AL, CONDITION_NE ? 0xff : 0);
    USE_CLKS(8+12);
 }
 
 
-void m68000_seq_d(void)
+static void m68000_seq_d(void)
 {
    if(CONDITION_EQ)
    {
@@ -21707,49 +22626,49 @@ void m68000_seq_d(void)
 }
 
 
-void m68000_seq_ai(void)
+static void m68000_seq_ai(void)
 {
    write_memory_8(EA_AI, CONDITION_EQ ? 0xff : 0);
    USE_CLKS(8+4);
 }
 
 
-void m68000_seq_pi(void)
+static void m68000_seq_pi(void)
 {
    write_memory_8(EA_PI_8, CONDITION_EQ ? 0xff : 0);
    USE_CLKS(8+4);
 }
 
 
-void m68000_seq_pi7(void)
+static void m68000_seq_pi7(void)
 {
    write_memory_8(EA_PI7_8, CONDITION_EQ ? 0xff : 0);
    USE_CLKS(8+4);
 }
 
 
-void m68000_seq_pd(void)
+static void m68000_seq_pd(void)
 {
    write_memory_8(EA_PD_8, CONDITION_EQ ? 0xff : 0);
    USE_CLKS(8+6);
 }
 
 
-void m68000_seq_pd7(void)
+static void m68000_seq_pd7(void)
 {
    write_memory_8(EA_PD7_8, CONDITION_EQ ? 0xff : 0);
    USE_CLKS(8+6);
 }
 
 
-void m68000_seq_di(void)
+static void m68000_seq_di(void)
 {
    write_memory_8(EA_DI, CONDITION_EQ ? 0xff : 0);
    USE_CLKS(8+8);
 }
 
 
-void m68000_seq_ix(void)
+static void m68000_seq_ix(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -21759,21 +22678,21 @@ void m68000_seq_ix(void)
 }
 
 
-void m68000_seq_aw(void)
+static void m68000_seq_aw(void)
 {
    write_memory_8(EA_AW, CONDITION_EQ ? 0xff : 0);
    USE_CLKS(8+8);
 }
 
 
-void m68000_seq_al(void)
+static void m68000_seq_al(void)
 {
    write_memory_8(EA_AL, CONDITION_EQ ? 0xff : 0);
    USE_CLKS(8+12);
 }
 
 
-void m68000_svc_d(void)
+static void m68000_svc_d(void)
 {
    if(CONDITION_VC)
    {
@@ -21786,49 +22705,49 @@ void m68000_svc_d(void)
 }
 
 
-void m68000_svc_ai(void)
+static void m68000_svc_ai(void)
 {
    write_memory_8(EA_AI, CONDITION_VC ? 0xff : 0);
    USE_CLKS(8+4);
 }
 
 
-void m68000_svc_pi(void)
+static void m68000_svc_pi(void)
 {
    write_memory_8(EA_PI_8, CONDITION_VC ? 0xff : 0);
    USE_CLKS(8+4);
 }
 
 
-void m68000_svc_pi7(void)
+static void m68000_svc_pi7(void)
 {
    write_memory_8(EA_PI7_8, CONDITION_VC ? 0xff : 0);
    USE_CLKS(8+4);
 }
 
 
-void m68000_svc_pd(void)
+static void m68000_svc_pd(void)
 {
    write_memory_8(EA_PD_8, CONDITION_VC ? 0xff : 0);
    USE_CLKS(8+6);
 }
 
 
-void m68000_svc_pd7(void)
+static void m68000_svc_pd7(void)
 {
    write_memory_8(EA_PD7_8, CONDITION_VC ? 0xff : 0);
    USE_CLKS(8+6);
 }
 
 
-void m68000_svc_di(void)
+static void m68000_svc_di(void)
 {
    write_memory_8(EA_DI, CONDITION_VC ? 0xff : 0);
    USE_CLKS(8+8);
 }
 
 
-void m68000_svc_ix(void)
+static void m68000_svc_ix(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -21838,21 +22757,21 @@ void m68000_svc_ix(void)
 }
 
 
-void m68000_svc_aw(void)
+static void m68000_svc_aw(void)
 {
    write_memory_8(EA_AW, CONDITION_VC ? 0xff : 0);
    USE_CLKS(8+8);
 }
 
 
-void m68000_svc_al(void)
+static void m68000_svc_al(void)
 {
    write_memory_8(EA_AL, CONDITION_VC ? 0xff : 0);
    USE_CLKS(8+12);
 }
 
 
-void m68000_svs_d(void)
+static void m68000_svs_d(void)
 {
    if(CONDITION_VS)
    {
@@ -21865,49 +22784,49 @@ void m68000_svs_d(void)
 }
 
 
-void m68000_svs_ai(void)
+static void m68000_svs_ai(void)
 {
    write_memory_8(EA_AI, CONDITION_VS ? 0xff : 0);
    USE_CLKS(8+4);
 }
 
 
-void m68000_svs_pi(void)
+static void m68000_svs_pi(void)
 {
    write_memory_8(EA_PI_8, CONDITION_VS ? 0xff : 0);
    USE_CLKS(8+4);
 }
 
 
-void m68000_svs_pi7(void)
+static void m68000_svs_pi7(void)
 {
    write_memory_8(EA_PI7_8, CONDITION_VS ? 0xff : 0);
    USE_CLKS(8+4);
 }
 
 
-void m68000_svs_pd(void)
+static void m68000_svs_pd(void)
 {
    write_memory_8(EA_PD_8, CONDITION_VS ? 0xff : 0);
    USE_CLKS(8+6);
 }
 
 
-void m68000_svs_pd7(void)
+static void m68000_svs_pd7(void)
 {
    write_memory_8(EA_PD7_8, CONDITION_VS ? 0xff : 0);
    USE_CLKS(8+6);
 }
 
 
-void m68000_svs_di(void)
+static void m68000_svs_di(void)
 {
    write_memory_8(EA_DI, CONDITION_VS ? 0xff : 0);
    USE_CLKS(8+8);
 }
 
 
-void m68000_svs_ix(void)
+static void m68000_svs_ix(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -21917,21 +22836,21 @@ void m68000_svs_ix(void)
 }
 
 
-void m68000_svs_aw(void)
+static void m68000_svs_aw(void)
 {
    write_memory_8(EA_AW, CONDITION_VS ? 0xff : 0);
    USE_CLKS(8+8);
 }
 
 
-void m68000_svs_al(void)
+static void m68000_svs_al(void)
 {
    write_memory_8(EA_AL, CONDITION_VS ? 0xff : 0);
    USE_CLKS(8+12);
 }
 
 
-void m68000_spl_d(void)
+static void m68000_spl_d(void)
 {
    if(CONDITION_PL)
    {
@@ -21944,49 +22863,49 @@ void m68000_spl_d(void)
 }
 
 
-void m68000_spl_ai(void)
+static void m68000_spl_ai(void)
 {
    write_memory_8(EA_AI, CONDITION_PL ? 0xff : 0);
    USE_CLKS(8+4);
 }
 
 
-void m68000_spl_pi(void)
+static void m68000_spl_pi(void)
 {
    write_memory_8(EA_PI_8, CONDITION_PL ? 0xff : 0);
    USE_CLKS(8+4);
 }
 
 
-void m68000_spl_pi7(void)
+static void m68000_spl_pi7(void)
 {
    write_memory_8(EA_PI7_8, CONDITION_PL ? 0xff : 0);
    USE_CLKS(8+4);
 }
 
 
-void m68000_spl_pd(void)
+static void m68000_spl_pd(void)
 {
    write_memory_8(EA_PD_8, CONDITION_PL ? 0xff : 0);
    USE_CLKS(8+6);
 }
 
 
-void m68000_spl_pd7(void)
+static void m68000_spl_pd7(void)
 {
    write_memory_8(EA_PD7_8, CONDITION_PL ? 0xff : 0);
    USE_CLKS(8+6);
 }
 
 
-void m68000_spl_di(void)
+static void m68000_spl_di(void)
 {
    write_memory_8(EA_DI, CONDITION_PL ? 0xff : 0);
    USE_CLKS(8+8);
 }
 
 
-void m68000_spl_ix(void)
+static void m68000_spl_ix(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -21996,21 +22915,21 @@ void m68000_spl_ix(void)
 }
 
 
-void m68000_spl_aw(void)
+static void m68000_spl_aw(void)
 {
    write_memory_8(EA_AW, CONDITION_PL ? 0xff : 0);
    USE_CLKS(8+8);
 }
 
 
-void m68000_spl_al(void)
+static void m68000_spl_al(void)
 {
    write_memory_8(EA_AL, CONDITION_PL ? 0xff : 0);
    USE_CLKS(8+12);
 }
 
 
-void m68000_smi_d(void)
+static void m68000_smi_d(void)
 {
    if(CONDITION_MI)
    {
@@ -22023,49 +22942,49 @@ void m68000_smi_d(void)
 }
 
 
-void m68000_smi_ai(void)
+static void m68000_smi_ai(void)
 {
    write_memory_8(EA_AI, CONDITION_MI ? 0xff : 0);
    USE_CLKS(8+4);
 }
 
 
-void m68000_smi_pi(void)
+static void m68000_smi_pi(void)
 {
    write_memory_8(EA_PI_8, CONDITION_MI ? 0xff : 0);
    USE_CLKS(8+4);
 }
 
 
-void m68000_smi_pi7(void)
+static void m68000_smi_pi7(void)
 {
    write_memory_8(EA_PI7_8, CONDITION_MI ? 0xff : 0);
    USE_CLKS(8+4);
 }
 
 
-void m68000_smi_pd(void)
+static void m68000_smi_pd(void)
 {
    write_memory_8(EA_PD_8, CONDITION_MI ? 0xff : 0);
    USE_CLKS(8+6);
 }
 
 
-void m68000_smi_pd7(void)
+static void m68000_smi_pd7(void)
 {
    write_memory_8(EA_PD7_8, CONDITION_MI ? 0xff : 0);
    USE_CLKS(8+6);
 }
 
 
-void m68000_smi_di(void)
+static void m68000_smi_di(void)
 {
    write_memory_8(EA_DI, CONDITION_MI ? 0xff : 0);
    USE_CLKS(8+8);
 }
 
 
-void m68000_smi_ix(void)
+static void m68000_smi_ix(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -22075,21 +22994,21 @@ void m68000_smi_ix(void)
 }
 
 
-void m68000_smi_aw(void)
+static void m68000_smi_aw(void)
 {
    write_memory_8(EA_AW, CONDITION_MI ? 0xff : 0);
    USE_CLKS(8+8);
 }
 
 
-void m68000_smi_al(void)
+static void m68000_smi_al(void)
 {
    write_memory_8(EA_AL, CONDITION_MI ? 0xff : 0);
    USE_CLKS(8+12);
 }
 
 
-void m68000_sge_d(void)
+static void m68000_sge_d(void)
 {
    if(CONDITION_GE)
    {
@@ -22102,49 +23021,49 @@ void m68000_sge_d(void)
 }
 
 
-void m68000_sge_ai(void)
+static void m68000_sge_ai(void)
 {
    write_memory_8(EA_AI, CONDITION_GE ? 0xff : 0);
    USE_CLKS(8+4);
 }
 
 
-void m68000_sge_pi(void)
+static void m68000_sge_pi(void)
 {
    write_memory_8(EA_PI_8, CONDITION_GE ? 0xff : 0);
    USE_CLKS(8+4);
 }
 
 
-void m68000_sge_pi7(void)
+static void m68000_sge_pi7(void)
 {
    write_memory_8(EA_PI7_8, CONDITION_GE ? 0xff : 0);
    USE_CLKS(8+4);
 }
 
 
-void m68000_sge_pd(void)
+static void m68000_sge_pd(void)
 {
    write_memory_8(EA_PD_8, CONDITION_GE ? 0xff : 0);
    USE_CLKS(8+6);
 }
 
 
-void m68000_sge_pd7(void)
+static void m68000_sge_pd7(void)
 {
    write_memory_8(EA_PD7_8, CONDITION_GE ? 0xff : 0);
    USE_CLKS(8+6);
 }
 
 
-void m68000_sge_di(void)
+static void m68000_sge_di(void)
 {
    write_memory_8(EA_DI, CONDITION_GE ? 0xff : 0);
    USE_CLKS(8+8);
 }
 
 
-void m68000_sge_ix(void)
+static void m68000_sge_ix(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -22154,21 +23073,21 @@ void m68000_sge_ix(void)
 }
 
 
-void m68000_sge_aw(void)
+static void m68000_sge_aw(void)
 {
    write_memory_8(EA_AW, CONDITION_GE ? 0xff : 0);
    USE_CLKS(8+8);
 }
 
 
-void m68000_sge_al(void)
+static void m68000_sge_al(void)
 {
    write_memory_8(EA_AL, CONDITION_GE ? 0xff : 0);
    USE_CLKS(8+12);
 }
 
 
-void m68000_slt_d(void)
+static void m68000_slt_d(void)
 {
    if(CONDITION_LT)
    {
@@ -22181,49 +23100,49 @@ void m68000_slt_d(void)
 }
 
 
-void m68000_slt_ai(void)
+static void m68000_slt_ai(void)
 {
    write_memory_8(EA_AI, CONDITION_LT ? 0xff : 0);
    USE_CLKS(8+4);
 }
 
 
-void m68000_slt_pi(void)
+static void m68000_slt_pi(void)
 {
    write_memory_8(EA_PI_8, CONDITION_LT ? 0xff : 0);
    USE_CLKS(8+4);
 }
 
 
-void m68000_slt_pi7(void)
+static void m68000_slt_pi7(void)
 {
    write_memory_8(EA_PI7_8, CONDITION_LT ? 0xff : 0);
    USE_CLKS(8+4);
 }
 
 
-void m68000_slt_pd(void)
+static void m68000_slt_pd(void)
 {
    write_memory_8(EA_PD_8, CONDITION_LT ? 0xff : 0);
    USE_CLKS(8+6);
 }
 
 
-void m68000_slt_pd7(void)
+static void m68000_slt_pd7(void)
 {
    write_memory_8(EA_PD7_8, CONDITION_LT ? 0xff : 0);
    USE_CLKS(8+6);
 }
 
 
-void m68000_slt_di(void)
+static void m68000_slt_di(void)
 {
    write_memory_8(EA_DI, CONDITION_LT ? 0xff : 0);
    USE_CLKS(8+8);
 }
 
 
-void m68000_slt_ix(void)
+static void m68000_slt_ix(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -22233,21 +23152,21 @@ void m68000_slt_ix(void)
 }
 
 
-void m68000_slt_aw(void)
+static void m68000_slt_aw(void)
 {
    write_memory_8(EA_AW, CONDITION_LT ? 0xff : 0);
    USE_CLKS(8+8);
 }
 
 
-void m68000_slt_al(void)
+static void m68000_slt_al(void)
 {
    write_memory_8(EA_AL, CONDITION_LT ? 0xff : 0);
    USE_CLKS(8+12);
 }
 
 
-void m68000_sgt_d(void)
+static void m68000_sgt_d(void)
 {
    if(CONDITION_GT)
    {
@@ -22260,49 +23179,49 @@ void m68000_sgt_d(void)
 }
 
 
-void m68000_sgt_ai(void)
+static void m68000_sgt_ai(void)
 {
    write_memory_8(EA_AI, CONDITION_GT ? 0xff : 0);
    USE_CLKS(8+4);
 }
 
 
-void m68000_sgt_pi(void)
+static void m68000_sgt_pi(void)
 {
    write_memory_8(EA_PI_8, CONDITION_GT ? 0xff : 0);
    USE_CLKS(8+4);
 }
 
 
-void m68000_sgt_pi7(void)
+static void m68000_sgt_pi7(void)
 {
    write_memory_8(EA_PI7_8, CONDITION_GT ? 0xff : 0);
    USE_CLKS(8+4);
 }
 
 
-void m68000_sgt_pd(void)
+static void m68000_sgt_pd(void)
 {
    write_memory_8(EA_PD_8, CONDITION_GT ? 0xff : 0);
    USE_CLKS(8+6);
 }
 
 
-void m68000_sgt_pd7(void)
+static void m68000_sgt_pd7(void)
 {
    write_memory_8(EA_PD7_8, CONDITION_GT ? 0xff : 0);
    USE_CLKS(8+6);
 }
 
 
-void m68000_sgt_di(void)
+static void m68000_sgt_di(void)
 {
    write_memory_8(EA_DI, CONDITION_GT ? 0xff : 0);
    USE_CLKS(8+8);
 }
 
 
-void m68000_sgt_ix(void)
+static void m68000_sgt_ix(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -22312,21 +23231,21 @@ void m68000_sgt_ix(void)
 }
 
 
-void m68000_sgt_aw(void)
+static void m68000_sgt_aw(void)
 {
    write_memory_8(EA_AW, CONDITION_GT ? 0xff : 0);
    USE_CLKS(8+8);
 }
 
 
-void m68000_sgt_al(void)
+static void m68000_sgt_al(void)
 {
    write_memory_8(EA_AL, CONDITION_GT ? 0xff : 0);
    USE_CLKS(8+12);
 }
 
 
-void m68000_sle_d(void)
+static void m68000_sle_d(void)
 {
    if(CONDITION_LE)
    {
@@ -22339,49 +23258,49 @@ void m68000_sle_d(void)
 }
 
 
-void m68000_sle_ai(void)
+static void m68000_sle_ai(void)
 {
    write_memory_8(EA_AI, CONDITION_LE ? 0xff : 0);
    USE_CLKS(8+4);
 }
 
 
-void m68000_sle_pi(void)
+static void m68000_sle_pi(void)
 {
    write_memory_8(EA_PI_8, CONDITION_LE ? 0xff : 0);
    USE_CLKS(8+4);
 }
 
 
-void m68000_sle_pi7(void)
+static void m68000_sle_pi7(void)
 {
    write_memory_8(EA_PI7_8, CONDITION_LE ? 0xff : 0);
    USE_CLKS(8+4);
 }
 
 
-void m68000_sle_pd(void)
+static void m68000_sle_pd(void)
 {
    write_memory_8(EA_PD_8, CONDITION_LE ? 0xff : 0);
    USE_CLKS(8+6);
 }
 
 
-void m68000_sle_pd7(void)
+static void m68000_sle_pd7(void)
 {
    write_memory_8(EA_PD7_8, CONDITION_LE ? 0xff : 0);
    USE_CLKS(8+6);
 }
 
 
-void m68000_sle_di(void)
+static void m68000_sle_di(void)
 {
    write_memory_8(EA_DI, CONDITION_LE ? 0xff : 0);
    USE_CLKS(8+8);
 }
 
 
-void m68000_sle_ix(void)
+static void m68000_sle_ix(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -22391,21 +23310,21 @@ void m68000_sle_ix(void)
 }
 
 
-void m68000_sle_aw(void)
+static void m68000_sle_aw(void)
 {
    write_memory_8(EA_AW, CONDITION_LE ? 0xff : 0);
    USE_CLKS(8+8);
 }
 
 
-void m68000_sle_al(void)
+static void m68000_sle_al(void)
 {
    write_memory_8(EA_AL, CONDITION_LE ? 0xff : 0);
    USE_CLKS(8+12);
 }
 
 
-void m68000_stop(void)
+static void m68000_stop(void)
 {
    uint new_sr = read_imm_16();
 
@@ -22420,7 +23339,7 @@ void m68000_stop(void)
 }
 
 
-void m68000_sub_er_d_8(void)
+static void m68000_sub_er_d_8(void)
 {
    uint* d_dst = &DX;
    uint src = DY;
@@ -22437,7 +23356,7 @@ void m68000_sub_er_d_8(void)
 }
 
 
-void m68000_sub_er_ai_8(void)
+static void m68000_sub_er_ai_8(void)
 {
    uint* d_dst = &DX;
    uint src = read_memory_8(EA_AI);
@@ -22454,7 +23373,7 @@ void m68000_sub_er_ai_8(void)
 }
 
 
-void m68000_sub_er_pi_8(void)
+static void m68000_sub_er_pi_8(void)
 {
    uint* d_dst = &DX;
    uint src = read_memory_8(EA_PI_8);
@@ -22471,7 +23390,7 @@ void m68000_sub_er_pi_8(void)
 }
 
 
-void m68000_sub_er_pi7_8(void)
+static void m68000_sub_er_pi7_8(void)
 {
    uint* d_dst = &DX;
    uint src = read_memory_8(EA_PI7_8);
@@ -22488,7 +23407,7 @@ void m68000_sub_er_pi7_8(void)
 }
 
 
-void m68000_sub_er_pd_8(void)
+static void m68000_sub_er_pd_8(void)
 {
    uint* d_dst = &DX;
    uint src = read_memory_8(EA_PD_8);
@@ -22505,7 +23424,7 @@ void m68000_sub_er_pd_8(void)
 }
 
 
-void m68000_sub_er_pd7_8(void)
+static void m68000_sub_er_pd7_8(void)
 {
    uint* d_dst = &DX;
    uint src = read_memory_8(EA_PD7_8);
@@ -22522,7 +23441,7 @@ void m68000_sub_er_pd7_8(void)
 }
 
 
-void m68000_sub_er_di_8(void)
+static void m68000_sub_er_di_8(void)
 {
    uint* d_dst = &DX;
    uint src = read_memory_8(EA_DI);
@@ -22539,7 +23458,7 @@ void m68000_sub_er_di_8(void)
 }
 
 
-void m68000_sub_er_ix_8(void)
+static void m68000_sub_er_ix_8(void)
 {
    uint* d_dst = &DX;
    uint extension = read_imm_16();
@@ -22559,7 +23478,7 @@ void m68000_sub_er_ix_8(void)
 }
 
 
-void m68000_sub_er_aw_8(void)
+static void m68000_sub_er_aw_8(void)
 {
    uint* d_dst = &DX;
    uint src = read_memory_8(EA_AW);
@@ -22576,7 +23495,7 @@ void m68000_sub_er_aw_8(void)
 }
 
 
-void m68000_sub_er_al_8(void)
+static void m68000_sub_er_al_8(void)
 {
    uint* d_dst = &DX;
    uint src = read_memory_8(EA_AL);
@@ -22593,7 +23512,7 @@ void m68000_sub_er_al_8(void)
 }
 
 
-void m68000_sub_er_pcdi_8(void)
+static void m68000_sub_er_pcdi_8(void)
 {
    uint* d_dst = &DX;
    uint old_pc = (g_cpu_pc+=2) - 2;
@@ -22612,7 +23531,7 @@ void m68000_sub_er_pcdi_8(void)
 }
 
 
-void m68000_sub_er_pcix_8(void)
+static void m68000_sub_er_pcix_8(void)
 {
    uint* d_dst = &DX;
    uint old_pc = (g_cpu_pc+=2) - 2;
@@ -22633,7 +23552,7 @@ void m68000_sub_er_pcix_8(void)
 }
 
 
-void m68000_sub_er_i_8(void)
+static void m68000_sub_er_i_8(void)
 {
    uint* d_dst = &DX;
    uint src = read_imm_8();
@@ -22650,7 +23569,7 @@ void m68000_sub_er_i_8(void)
 }
 
 
-void m68000_sub_er_d_16(void)
+static void m68000_sub_er_d_16(void)
 {
    uint* d_dst = &DX;
    uint src = DY;
@@ -22667,7 +23586,7 @@ void m68000_sub_er_d_16(void)
 }
 
 
-void m68000_sub_er_a_16(void)
+static void m68000_sub_er_a_16(void)
 {
    uint* d_dst = &DX;
    uint src = AY;
@@ -22684,7 +23603,7 @@ void m68000_sub_er_a_16(void)
 }
 
 
-void m68000_sub_er_ai_16(void)
+static void m68000_sub_er_ai_16(void)
 {
    uint* d_dst = &DX;
    uint src = read_memory_16(EA_AI);
@@ -22701,7 +23620,7 @@ void m68000_sub_er_ai_16(void)
 }
 
 
-void m68000_sub_er_pi_16(void)
+static void m68000_sub_er_pi_16(void)
 {
    uint* d_dst = &DX;
    uint src = read_memory_16(EA_PI_16);
@@ -22718,7 +23637,7 @@ void m68000_sub_er_pi_16(void)
 }
 
 
-void m68000_sub_er_pd_16(void)
+static void m68000_sub_er_pd_16(void)
 {
    uint* d_dst = &DX;
    uint src = read_memory_16(EA_PD_16);
@@ -22735,7 +23654,7 @@ void m68000_sub_er_pd_16(void)
 }
 
 
-void m68000_sub_er_di_16(void)
+static void m68000_sub_er_di_16(void)
 {
    uint* d_dst = &DX;
    uint src = read_memory_16(EA_DI);
@@ -22752,7 +23671,7 @@ void m68000_sub_er_di_16(void)
 }
 
 
-void m68000_sub_er_ix_16(void)
+static void m68000_sub_er_ix_16(void)
 {
    uint* d_dst = &DX;
    uint extension = read_imm_16();
@@ -22772,7 +23691,7 @@ void m68000_sub_er_ix_16(void)
 }
 
 
-void m68000_sub_er_aw_16(void)
+static void m68000_sub_er_aw_16(void)
 {
    uint* d_dst = &DX;
    uint src = read_memory_16(EA_AW);
@@ -22789,7 +23708,7 @@ void m68000_sub_er_aw_16(void)
 }
 
 
-void m68000_sub_er_al_16(void)
+static void m68000_sub_er_al_16(void)
 {
    uint* d_dst = &DX;
    uint src = read_memory_16(EA_AL);
@@ -22806,7 +23725,7 @@ void m68000_sub_er_al_16(void)
 }
 
 
-void m68000_sub_er_pcdi_16(void)
+static void m68000_sub_er_pcdi_16(void)
 {
    uint* d_dst = &DX;
    uint old_pc = (g_cpu_pc+=2) - 2;
@@ -22825,7 +23744,7 @@ void m68000_sub_er_pcdi_16(void)
 }
 
 
-void m68000_sub_er_pcix_16(void)
+static void m68000_sub_er_pcix_16(void)
 {
    uint* d_dst = &DX;
    uint old_pc = (g_cpu_pc+=2) - 2;
@@ -22846,7 +23765,7 @@ void m68000_sub_er_pcix_16(void)
 }
 
 
-void m68000_sub_er_i_16(void)
+static void m68000_sub_er_i_16(void)
 {
    uint* d_dst = &DX;
    uint src = read_imm_16();
@@ -22863,7 +23782,7 @@ void m68000_sub_er_i_16(void)
 }
 
 
-void m68000_sub_er_d_32(void)
+static void m68000_sub_er_d_32(void)
 {
    uint* d_dst = &DX;
    uint src = DY;
@@ -22878,7 +23797,7 @@ void m68000_sub_er_d_32(void)
 }
 
 
-void m68000_sub_er_a_32(void)
+static void m68000_sub_er_a_32(void)
 {
    uint* d_dst = &DX;
    uint src = AY;
@@ -22893,7 +23812,7 @@ void m68000_sub_er_a_32(void)
 }
 
 
-void m68000_sub_er_ai_32(void)
+static void m68000_sub_er_ai_32(void)
 {
    uint* d_dst = &DX;
    uint src = read_memory_32(EA_AI);
@@ -22908,7 +23827,7 @@ void m68000_sub_er_ai_32(void)
 }
 
 
-void m68000_sub_er_pi_32(void)
+static void m68000_sub_er_pi_32(void)
 {
    uint* d_dst = &DX;
    uint src = read_memory_32(EA_PI_32);
@@ -22923,7 +23842,7 @@ void m68000_sub_er_pi_32(void)
 }
 
 
-void m68000_sub_er_pd_32(void)
+static void m68000_sub_er_pd_32(void)
 {
    uint* d_dst = &DX;
    uint src = read_memory_32(EA_PD_32);
@@ -22938,7 +23857,7 @@ void m68000_sub_er_pd_32(void)
 }
 
 
-void m68000_sub_er_di_32(void)
+static void m68000_sub_er_di_32(void)
 {
    uint* d_dst = &DX;
    uint src = read_memory_32(EA_DI);
@@ -22953,7 +23872,7 @@ void m68000_sub_er_di_32(void)
 }
 
 
-void m68000_sub_er_ix_32(void)
+static void m68000_sub_er_ix_32(void)
 {
    uint* d_dst = &DX;
    uint extension = read_imm_16();
@@ -22971,7 +23890,7 @@ void m68000_sub_er_ix_32(void)
 }
 
 
-void m68000_sub_er_aw_32(void)
+static void m68000_sub_er_aw_32(void)
 {
    uint* d_dst = &DX;
    uint src = read_memory_32(EA_AW);
@@ -22986,7 +23905,7 @@ void m68000_sub_er_aw_32(void)
 }
 
 
-void m68000_sub_er_al_32(void)
+static void m68000_sub_er_al_32(void)
 {
    uint* d_dst = &DX;
    uint src = read_memory_32(EA_AL);
@@ -23001,7 +23920,7 @@ void m68000_sub_er_al_32(void)
 }
 
 
-void m68000_sub_er_pcdi_32(void)
+static void m68000_sub_er_pcdi_32(void)
 {
    uint* d_dst = &DX;
    uint old_pc = (g_cpu_pc+=2) - 2;
@@ -23018,7 +23937,7 @@ void m68000_sub_er_pcdi_32(void)
 }
 
 
-void m68000_sub_er_pcix_32(void)
+static void m68000_sub_er_pcix_32(void)
 {
    uint* d_dst = &DX;
    uint old_pc = (g_cpu_pc+=2) - 2;
@@ -23037,7 +23956,7 @@ void m68000_sub_er_pcix_32(void)
 }
 
 
-void m68000_sub_er_i_32(void)
+static void m68000_sub_er_i_32(void)
 {
    uint* d_dst = &DX;
    uint src = read_imm_32();
@@ -23052,7 +23971,7 @@ void m68000_sub_er_i_32(void)
 }
 
 
-void m68000_sub_re_ai_8(void)
+static void m68000_sub_re_ai_8(void)
 {
    uint ea = EA_AI;
    uint src = DX;
@@ -23069,7 +23988,7 @@ void m68000_sub_re_ai_8(void)
 }
 
 
-void m68000_sub_re_pi_8(void)
+static void m68000_sub_re_pi_8(void)
 {
    uint ea = EA_PI_8;
    uint src = DX;
@@ -23086,7 +24005,7 @@ void m68000_sub_re_pi_8(void)
 }
 
 
-void m68000_sub_re_pi7_8(void)
+static void m68000_sub_re_pi7_8(void)
 {
    uint ea = EA_PI7_8;
    uint src = DX;
@@ -23103,7 +24022,7 @@ void m68000_sub_re_pi7_8(void)
 }
 
 
-void m68000_sub_re_pd_8(void)
+static void m68000_sub_re_pd_8(void)
 {
    uint ea = EA_PD_8;
    uint src = DX;
@@ -23120,7 +24039,7 @@ void m68000_sub_re_pd_8(void)
 }
 
 
-void m68000_sub_re_pd7_8(void)
+static void m68000_sub_re_pd7_8(void)
 {
    uint ea = EA_PD7_8;
    uint src = DX;
@@ -23137,7 +24056,7 @@ void m68000_sub_re_pd7_8(void)
 }
 
 
-void m68000_sub_re_di_8(void)
+static void m68000_sub_re_di_8(void)
 {
    uint ea = EA_DI;
    uint src = DX;
@@ -23154,7 +24073,7 @@ void m68000_sub_re_di_8(void)
 }
 
 
-void m68000_sub_re_ix_8(void)
+static void m68000_sub_re_ix_8(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -23173,7 +24092,7 @@ void m68000_sub_re_ix_8(void)
 }
 
 
-void m68000_sub_re_aw_8(void)
+static void m68000_sub_re_aw_8(void)
 {
    uint ea = EA_AW;
    uint src = DX;
@@ -23190,7 +24109,7 @@ void m68000_sub_re_aw_8(void)
 }
 
 
-void m68000_sub_re_al_8(void)
+static void m68000_sub_re_al_8(void)
 {
    uint ea = EA_AL;
    uint src = DX;
@@ -23207,7 +24126,7 @@ void m68000_sub_re_al_8(void)
 }
 
 
-void m68000_sub_re_ai_16(void)
+static void m68000_sub_re_ai_16(void)
 {
    uint ea = EA_AI;
    uint src = DX;
@@ -23224,7 +24143,7 @@ void m68000_sub_re_ai_16(void)
 }
 
 
-void m68000_sub_re_pi_16(void)
+static void m68000_sub_re_pi_16(void)
 {
    uint ea = EA_PI_16;
    uint src = DX;
@@ -23241,7 +24160,7 @@ void m68000_sub_re_pi_16(void)
 }
 
 
-void m68000_sub_re_pd_16(void)
+static void m68000_sub_re_pd_16(void)
 {
    uint ea = EA_PD_16;
    uint src = DX;
@@ -23258,7 +24177,7 @@ void m68000_sub_re_pd_16(void)
 }
 
 
-void m68000_sub_re_di_16(void)
+static void m68000_sub_re_di_16(void)
 {
    uint ea = EA_DI;
    uint src = DX;
@@ -23275,7 +24194,7 @@ void m68000_sub_re_di_16(void)
 }
 
 
-void m68000_sub_re_ix_16(void)
+static void m68000_sub_re_ix_16(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -23294,7 +24213,7 @@ void m68000_sub_re_ix_16(void)
 }
 
 
-void m68000_sub_re_aw_16(void)
+static void m68000_sub_re_aw_16(void)
 {
    uint ea = EA_AW;
    uint src = DX;
@@ -23311,7 +24230,7 @@ void m68000_sub_re_aw_16(void)
 }
 
 
-void m68000_sub_re_al_16(void)
+static void m68000_sub_re_al_16(void)
 {
    uint ea = EA_AL;
    uint src = DX;
@@ -23328,7 +24247,7 @@ void m68000_sub_re_al_16(void)
 }
 
 
-void m68000_sub_re_ai_32(void)
+static void m68000_sub_re_ai_32(void)
 {
    uint ea = EA_AI;
    uint src = DX;
@@ -23345,7 +24264,7 @@ void m68000_sub_re_ai_32(void)
 }
 
 
-void m68000_sub_re_pi_32(void)
+static void m68000_sub_re_pi_32(void)
 {
    uint ea = EA_PI_32;
    uint src = DX;
@@ -23362,7 +24281,7 @@ void m68000_sub_re_pi_32(void)
 }
 
 
-void m68000_sub_re_pd_32(void)
+static void m68000_sub_re_pd_32(void)
 {
    uint ea = EA_PD_32;
    uint src = DX;
@@ -23379,7 +24298,7 @@ void m68000_sub_re_pd_32(void)
 }
 
 
-void m68000_sub_re_di_32(void)
+static void m68000_sub_re_di_32(void)
 {
    uint ea = EA_DI;
    uint src = DX;
@@ -23396,7 +24315,7 @@ void m68000_sub_re_di_32(void)
 }
 
 
-void m68000_sub_re_ix_32(void)
+static void m68000_sub_re_ix_32(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -23415,7 +24334,7 @@ void m68000_sub_re_ix_32(void)
 }
 
 
-void m68000_sub_re_aw_32(void)
+static void m68000_sub_re_aw_32(void)
 {
    uint ea = EA_AW;
    uint src = DX;
@@ -23432,7 +24351,7 @@ void m68000_sub_re_aw_32(void)
 }
 
 
-void m68000_sub_re_al_32(void)
+static void m68000_sub_re_al_32(void)
 {
    uint ea = EA_AL;
    uint src = DX;
@@ -23449,7 +24368,7 @@ void m68000_sub_re_al_32(void)
 }
 
 
-void m68000_suba_d_16(void)
+static void m68000_suba_d_16(void)
 {
    uint* a_dst = &AX;
    *a_dst = MASK_OUT_ABOVE_32(*a_dst - make_int_16(MASK_OUT_ABOVE_16(DY)));
@@ -23457,7 +24376,7 @@ void m68000_suba_d_16(void)
 }
 
 
-void m68000_suba_a_16(void)
+static void m68000_suba_a_16(void)
 {
    uint* a_dst = &AX;
    *a_dst = MASK_OUT_ABOVE_32(*a_dst - make_int_16(MASK_OUT_ABOVE_16(AY)));
@@ -23465,7 +24384,7 @@ void m68000_suba_a_16(void)
 }
 
 
-void m68000_suba_ai_16(void)
+static void m68000_suba_ai_16(void)
 {
    uint* a_dst = &AX;
    *a_dst = MASK_OUT_ABOVE_32(*a_dst - make_int_16(read_memory_16(EA_AI)));
@@ -23473,7 +24392,7 @@ void m68000_suba_ai_16(void)
 }
 
 
-void m68000_suba_pi_16(void)
+static void m68000_suba_pi_16(void)
 {
    uint* a_dst = &AX;
    *a_dst = MASK_OUT_ABOVE_32(*a_dst - make_int_16(read_memory_16(EA_PI_16)));
@@ -23481,7 +24400,7 @@ void m68000_suba_pi_16(void)
 }
 
 
-void m68000_suba_pd_16(void)
+static void m68000_suba_pd_16(void)
 {
    uint* a_dst = &AX;
    *a_dst = MASK_OUT_ABOVE_32(*a_dst - make_int_16(read_memory_16(EA_PD_16)));
@@ -23489,7 +24408,7 @@ void m68000_suba_pd_16(void)
 }
 
 
-void m68000_suba_di_16(void)
+static void m68000_suba_di_16(void)
 {
    uint* a_dst = &AX;
    *a_dst = MASK_OUT_ABOVE_32(*a_dst - make_int_16(read_memory_16(EA_DI)));
@@ -23497,7 +24416,7 @@ void m68000_suba_di_16(void)
 }
 
 
-void m68000_suba_ix_16(void)
+static void m68000_suba_ix_16(void)
 {
    uint* a_dst = &AX;
    uint extension = read_imm_16();
@@ -23508,7 +24427,7 @@ void m68000_suba_ix_16(void)
 }
 
 
-void m68000_suba_aw_16(void)
+static void m68000_suba_aw_16(void)
 {
    uint* a_dst = &AX;
    *a_dst = MASK_OUT_ABOVE_32(*a_dst - make_int_16(read_memory_16(EA_AW)));
@@ -23516,7 +24435,7 @@ void m68000_suba_aw_16(void)
 }
 
 
-void m68000_suba_al_16(void)
+static void m68000_suba_al_16(void)
 {
    uint* a_dst = &AX;
    *a_dst = MASK_OUT_ABOVE_32(*a_dst - make_int_16(read_memory_16(EA_AL)));
@@ -23524,7 +24443,7 @@ void m68000_suba_al_16(void)
 }
 
 
-void m68000_suba_pcdi_16(void)
+static void m68000_suba_pcdi_16(void)
 {
    uint* a_dst = &AX;
    uint old_pc = (g_cpu_pc+=2) - 2;
@@ -23534,7 +24453,7 @@ void m68000_suba_pcdi_16(void)
 }
 
 
-void m68000_suba_pcix_16(void)
+static void m68000_suba_pcix_16(void)
 {
    uint* a_dst = &AX;
    uint old_pc = (g_cpu_pc+=2) - 2;
@@ -23546,7 +24465,7 @@ void m68000_suba_pcix_16(void)
 }
 
 
-void m68000_suba_i_16(void)
+static void m68000_suba_i_16(void)
 {
    uint* a_dst = &AX;
    *a_dst = MASK_OUT_ABOVE_32(*a_dst - make_int_16(read_imm_16()));
@@ -23554,7 +24473,7 @@ void m68000_suba_i_16(void)
 }
 
 
-void m68000_suba_d_32(void)
+static void m68000_suba_d_32(void)
 {
    uint* a_dst = &AX;
    *a_dst = MASK_OUT_ABOVE_32(*a_dst - DY);
@@ -23562,7 +24481,7 @@ void m68000_suba_d_32(void)
 }
 
 
-void m68000_suba_a_32(void)
+static void m68000_suba_a_32(void)
 {
    uint* a_dst = &AX;
    *a_dst = MASK_OUT_ABOVE_32(*a_dst - AY);
@@ -23570,7 +24489,7 @@ void m68000_suba_a_32(void)
 }
 
 
-void m68000_suba_ai_32(void)
+static void m68000_suba_ai_32(void)
 {
    uint* a_dst = &AX;
    *a_dst = MASK_OUT_ABOVE_32(*a_dst - read_memory_32(EA_AI));
@@ -23578,7 +24497,7 @@ void m68000_suba_ai_32(void)
 }
 
 
-void m68000_suba_pi_32(void)
+static void m68000_suba_pi_32(void)
 {
    uint* a_dst = &AX;
    *a_dst = MASK_OUT_ABOVE_32(*a_dst - read_memory_32(EA_PI_32));
@@ -23586,7 +24505,7 @@ void m68000_suba_pi_32(void)
 }
 
 
-void m68000_suba_pd_32(void)
+static void m68000_suba_pd_32(void)
 {
    uint* a_dst = &AX;
    *a_dst = MASK_OUT_ABOVE_32(*a_dst - read_memory_32(EA_PD_32));
@@ -23594,7 +24513,7 @@ void m68000_suba_pd_32(void)
 }
 
 
-void m68000_suba_di_32(void)
+static void m68000_suba_di_32(void)
 {
    uint* a_dst = &AX;
    *a_dst = MASK_OUT_ABOVE_32(*a_dst - read_memory_32(EA_DI));
@@ -23602,7 +24521,7 @@ void m68000_suba_di_32(void)
 }
 
 
-void m68000_suba_ix_32(void)
+static void m68000_suba_ix_32(void)
 {
    uint* a_dst = &AX;
    uint extension = read_imm_16();
@@ -23613,7 +24532,7 @@ void m68000_suba_ix_32(void)
 }
 
 
-void m68000_suba_aw_32(void)
+static void m68000_suba_aw_32(void)
 {
    uint* a_dst = &AX;
    *a_dst = MASK_OUT_ABOVE_32(*a_dst - read_memory_32(EA_AW));
@@ -23621,7 +24540,7 @@ void m68000_suba_aw_32(void)
 }
 
 
-void m68000_suba_al_32(void)
+static void m68000_suba_al_32(void)
 {
    uint* a_dst = &AX;
    *a_dst = MASK_OUT_ABOVE_32(*a_dst - read_memory_32(EA_AL));
@@ -23629,7 +24548,7 @@ void m68000_suba_al_32(void)
 }
 
 
-void m68000_suba_pcdi_32(void)
+static void m68000_suba_pcdi_32(void)
 {
    uint* a_dst = &AX;
    uint old_pc = (g_cpu_pc+=2) - 2;
@@ -23639,7 +24558,7 @@ void m68000_suba_pcdi_32(void)
 }
 
 
-void m68000_suba_pcix_32(void)
+static void m68000_suba_pcix_32(void)
 {
    uint* a_dst = &AX;
    uint old_pc = (g_cpu_pc+=2) - 2;
@@ -23651,7 +24570,7 @@ void m68000_suba_pcix_32(void)
 }
 
 
-void m68000_suba_i_32(void)
+static void m68000_suba_i_32(void)
 {
    uint* a_dst = &AX;
    *a_dst = MASK_OUT_ABOVE_32(*a_dst - read_imm_32());
@@ -23659,7 +24578,7 @@ void m68000_suba_i_32(void)
 }
 
 
-void m68000_subi_d_8(void)
+static void m68000_subi_d_8(void)
 {
    uint* d_dst = &DY;
    uint src = read_imm_8();
@@ -23676,7 +24595,7 @@ void m68000_subi_d_8(void)
 }
 
 
-void m68000_subi_ai_8(void)
+static void m68000_subi_ai_8(void)
 {
    uint src = read_imm_8();
    uint ea = EA_AI;
@@ -23693,7 +24612,7 @@ void m68000_subi_ai_8(void)
 }
 
 
-void m68000_subi_pi_8(void)
+static void m68000_subi_pi_8(void)
 {
    uint src = read_imm_8();
    uint ea = EA_PI_8;
@@ -23710,7 +24629,7 @@ void m68000_subi_pi_8(void)
 }
 
 
-void m68000_subi_pi7_8(void)
+static void m68000_subi_pi7_8(void)
 {
    uint src = read_imm_8();
    uint ea = EA_PI7_8;
@@ -23727,7 +24646,7 @@ void m68000_subi_pi7_8(void)
 }
 
 
-void m68000_subi_pd_8(void)
+static void m68000_subi_pd_8(void)
 {
    uint src = read_imm_8();
    uint ea = EA_PD_8;
@@ -23744,7 +24663,7 @@ void m68000_subi_pd_8(void)
 }
 
 
-void m68000_subi_pd7_8(void)
+static void m68000_subi_pd7_8(void)
 {
    uint src = read_imm_8();
    uint ea = EA_PD7_8;
@@ -23761,7 +24680,7 @@ void m68000_subi_pd7_8(void)
 }
 
 
-void m68000_subi_di_8(void)
+static void m68000_subi_di_8(void)
 {
    uint src = read_imm_8();
    uint ea = EA_DI;
@@ -23778,7 +24697,7 @@ void m68000_subi_di_8(void)
 }
 
 
-void m68000_subi_ix_8(void)
+static void m68000_subi_ix_8(void)
 {
    uint src = read_imm_8();
    uint extension = read_imm_16();
@@ -23797,7 +24716,7 @@ void m68000_subi_ix_8(void)
 }
 
 
-void m68000_subi_aw_8(void)
+static void m68000_subi_aw_8(void)
 {
    uint src = read_imm_8();
    uint ea = EA_AW;
@@ -23814,7 +24733,7 @@ void m68000_subi_aw_8(void)
 }
 
 
-void m68000_subi_al_8(void)
+static void m68000_subi_al_8(void)
 {
    uint src = read_imm_8();
    uint ea = EA_AL;
@@ -23831,7 +24750,7 @@ void m68000_subi_al_8(void)
 }
 
 
-void m68000_subi_d_16(void)
+static void m68000_subi_d_16(void)
 {
    uint* d_dst = &DY;
    uint src = read_imm_16();
@@ -23848,7 +24767,7 @@ void m68000_subi_d_16(void)
 }
 
 
-void m68000_subi_ai_16(void)
+static void m68000_subi_ai_16(void)
 {
    uint src = read_imm_16();
    uint ea = EA_AI;
@@ -23864,7 +24783,7 @@ void m68000_subi_ai_16(void)
 }
 
 
-void m68000_subi_pi_16(void)
+static void m68000_subi_pi_16(void)
 {
    uint src = read_imm_16();
    uint ea = EA_PI_16;
@@ -23880,7 +24799,7 @@ void m68000_subi_pi_16(void)
 }
 
 
-void m68000_subi_pd_16(void)
+static void m68000_subi_pd_16(void)
 {
    uint src = read_imm_16();
    uint ea = EA_PD_16;
@@ -23896,7 +24815,7 @@ void m68000_subi_pd_16(void)
 }
 
 
-void m68000_subi_di_16(void)
+static void m68000_subi_di_16(void)
 {
    uint src = read_imm_16();
    uint ea = EA_DI;
@@ -23912,7 +24831,7 @@ void m68000_subi_di_16(void)
 }
 
 
-void m68000_subi_ix_16(void)
+static void m68000_subi_ix_16(void)
 {
    uint src = read_imm_16();
    uint extension = read_imm_16();
@@ -23930,7 +24849,7 @@ void m68000_subi_ix_16(void)
 }
 
 
-void m68000_subi_aw_16(void)
+static void m68000_subi_aw_16(void)
 {
    uint src = read_imm_16();
    uint ea = EA_AW;
@@ -23946,7 +24865,7 @@ void m68000_subi_aw_16(void)
 }
 
 
-void m68000_subi_al_16(void)
+static void m68000_subi_al_16(void)
 {
    uint src = read_imm_16();
    uint ea = EA_AL;
@@ -23962,7 +24881,7 @@ void m68000_subi_al_16(void)
 }
 
 
-void m68000_subi_d_32(void)
+static void m68000_subi_d_32(void)
 {
    uint* d_dst = &DY;
    uint src = read_imm_32();
@@ -23979,7 +24898,7 @@ void m68000_subi_d_32(void)
 }
 
 
-void m68000_subi_ai_32(void)
+static void m68000_subi_ai_32(void)
 {
    uint src = read_imm_32();
    uint ea = EA_AI;
@@ -23996,7 +24915,7 @@ void m68000_subi_ai_32(void)
 }
 
 
-void m68000_subi_pi_32(void)
+static void m68000_subi_pi_32(void)
 {
    uint src = read_imm_32();
    uint ea = EA_PI_32;
@@ -24013,7 +24932,7 @@ void m68000_subi_pi_32(void)
 }
 
 
-void m68000_subi_pd_32(void)
+static void m68000_subi_pd_32(void)
 {
    uint src = read_imm_32();
    uint ea = EA_PD_32;
@@ -24030,7 +24949,7 @@ void m68000_subi_pd_32(void)
 }
 
 
-void m68000_subi_di_32(void)
+static void m68000_subi_di_32(void)
 {
    uint src = read_imm_32();
    uint ea = EA_DI;
@@ -24047,7 +24966,7 @@ void m68000_subi_di_32(void)
 }
 
 
-void m68000_subi_ix_32(void)
+static void m68000_subi_ix_32(void)
 {
    uint src = read_imm_32();
    uint extension = read_imm_16();
@@ -24066,7 +24985,7 @@ void m68000_subi_ix_32(void)
 }
 
 
-void m68000_subi_aw_32(void)
+static void m68000_subi_aw_32(void)
 {
    uint src = read_imm_32();
    uint ea = EA_AW;
@@ -24083,7 +25002,7 @@ void m68000_subi_aw_32(void)
 }
 
 
-void m68000_subi_al_32(void)
+static void m68000_subi_al_32(void)
 {
    uint src = read_imm_32();
    uint ea = EA_AL;
@@ -24100,7 +25019,7 @@ void m68000_subi_al_32(void)
 }
 
 
-void m68000_subq_d_8(void)
+static void m68000_subq_d_8(void)
 {
    uint* d_dst = &DY;
    uint src = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
@@ -24117,7 +25036,7 @@ void m68000_subq_d_8(void)
 }
 
 
-void m68000_subq_ai_8(void)
+static void m68000_subq_ai_8(void)
 {
    uint src = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
    uint ea = EA_AI;
@@ -24134,7 +25053,7 @@ void m68000_subq_ai_8(void)
 }
 
 
-void m68000_subq_pi_8(void)
+static void m68000_subq_pi_8(void)
 {
    uint src = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
    uint ea = EA_PI_8;
@@ -24151,7 +25070,7 @@ void m68000_subq_pi_8(void)
 }
 
 
-void m68000_subq_pi7_8(void)
+static void m68000_subq_pi7_8(void)
 {
    uint src = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
    uint ea = EA_PI7_8;
@@ -24168,7 +25087,7 @@ void m68000_subq_pi7_8(void)
 }
 
 
-void m68000_subq_pd_8(void)
+static void m68000_subq_pd_8(void)
 {
    uint src = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
    uint ea = EA_PD_8;
@@ -24185,7 +25104,7 @@ void m68000_subq_pd_8(void)
 }
 
 
-void m68000_subq_pd7_8(void)
+static void m68000_subq_pd7_8(void)
 {
    uint src = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
    uint ea = EA_PD7_8;
@@ -24202,7 +25121,7 @@ void m68000_subq_pd7_8(void)
 }
 
 
-void m68000_subq_di_8(void)
+static void m68000_subq_di_8(void)
 {
    uint src = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
    uint ea = EA_DI;
@@ -24219,7 +25138,7 @@ void m68000_subq_di_8(void)
 }
 
 
-void m68000_subq_ix_8(void)
+static void m68000_subq_ix_8(void)
 {
    uint src = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
    uint extension = read_imm_16();
@@ -24238,7 +25157,7 @@ void m68000_subq_ix_8(void)
 }
 
 
-void m68000_subq_aw_8(void)
+static void m68000_subq_aw_8(void)
 {
    uint src = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
    uint ea = EA_AW;
@@ -24255,7 +25174,7 @@ void m68000_subq_aw_8(void)
 }
 
 
-void m68000_subq_al_8(void)
+static void m68000_subq_al_8(void)
 {
    uint src = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
    uint ea = EA_AL;
@@ -24272,7 +25191,7 @@ void m68000_subq_al_8(void)
 }
 
 
-void m68000_subq_d_16(void)
+static void m68000_subq_d_16(void)
 {
    uint* d_dst = &DY;
    uint src = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
@@ -24289,7 +25208,7 @@ void m68000_subq_d_16(void)
 }
 
 
-void m68000_subq_a_16(void)
+static void m68000_subq_a_16(void)
 {
    uint* a_dst = &AY;
    *a_dst = MASK_OUT_ABOVE_32(*a_dst - g_3bit_qdata_table[(g_cpu_ir>>9)&7]);
@@ -24297,7 +25216,7 @@ void m68000_subq_a_16(void)
 }
 
 
-void m68000_subq_ai_16(void)
+static void m68000_subq_ai_16(void)
 {
    uint src = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
    uint ea = EA_AI;
@@ -24314,7 +25233,7 @@ void m68000_subq_ai_16(void)
 }
 
 
-void m68000_subq_pi_16(void)
+static void m68000_subq_pi_16(void)
 {
    uint src = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
    uint ea = EA_PI_16;
@@ -24331,7 +25250,7 @@ void m68000_subq_pi_16(void)
 }
 
 
-void m68000_subq_pd_16(void)
+static void m68000_subq_pd_16(void)
 {
    uint src = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
    uint ea = EA_PD_16;
@@ -24348,7 +25267,7 @@ void m68000_subq_pd_16(void)
 }
 
 
-void m68000_subq_di_16(void)
+static void m68000_subq_di_16(void)
 {
    uint src = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
    uint ea = EA_DI;
@@ -24365,7 +25284,7 @@ void m68000_subq_di_16(void)
 }
 
 
-void m68000_subq_ix_16(void)
+static void m68000_subq_ix_16(void)
 {
    uint src = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
    uint extension = read_imm_16();
@@ -24384,7 +25303,7 @@ void m68000_subq_ix_16(void)
 }
 
 
-void m68000_subq_aw_16(void)
+static void m68000_subq_aw_16(void)
 {
    uint src = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
    uint ea = EA_AW;
@@ -24401,7 +25320,7 @@ void m68000_subq_aw_16(void)
 }
 
 
-void m68000_subq_al_16(void)
+static void m68000_subq_al_16(void)
 {
    uint src = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
    uint ea = EA_AL;
@@ -24418,7 +25337,7 @@ void m68000_subq_al_16(void)
 }
 
 
-void m68000_subq_d_32(void)
+static void m68000_subq_d_32(void)
 {
    uint* d_dst = &DY;
    uint src = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
@@ -24435,7 +25354,7 @@ void m68000_subq_d_32(void)
 }
 
 
-void m68000_subq_a_32(void)
+static void m68000_subq_a_32(void)
 {
    uint* a_dst = &AY;
    *a_dst = MASK_OUT_ABOVE_32(*a_dst - g_3bit_qdata_table[(g_cpu_ir>>9)&7]);
@@ -24443,7 +25362,7 @@ void m68000_subq_a_32(void)
 }
 
 
-void m68000_subq_ai_32(void)
+static void m68000_subq_ai_32(void)
 {
    uint src = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
    uint ea = EA_AI;
@@ -24460,7 +25379,7 @@ void m68000_subq_ai_32(void)
 }
 
 
-void m68000_subq_pi_32(void)
+static void m68000_subq_pi_32(void)
 {
    uint src = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
    uint ea = EA_PI_32;
@@ -24477,7 +25396,7 @@ void m68000_subq_pi_32(void)
 }
 
 
-void m68000_subq_pd_32(void)
+static void m68000_subq_pd_32(void)
 {
    uint src = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
    uint ea = EA_PD_32;
@@ -24494,7 +25413,7 @@ void m68000_subq_pd_32(void)
 }
 
 
-void m68000_subq_di_32(void)
+static void m68000_subq_di_32(void)
 {
    uint src = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
    uint ea = EA_DI;
@@ -24511,7 +25430,7 @@ void m68000_subq_di_32(void)
 }
 
 
-void m68000_subq_ix_32(void)
+static void m68000_subq_ix_32(void)
 {
    uint src = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
    uint extension = read_imm_16();
@@ -24530,7 +25449,7 @@ void m68000_subq_ix_32(void)
 }
 
 
-void m68000_subq_aw_32(void)
+static void m68000_subq_aw_32(void)
 {
    uint src = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
    uint ea = EA_AW;
@@ -24547,7 +25466,7 @@ void m68000_subq_aw_32(void)
 }
 
 
-void m68000_subq_al_32(void)
+static void m68000_subq_al_32(void)
 {
    uint src = g_3bit_qdata_table[(g_cpu_ir>>9)&7];
    uint ea = EA_AL;
@@ -24564,7 +25483,7 @@ void m68000_subq_al_32(void)
 }
 
 
-void m68000_subx_rr_8(void)
+static void m68000_subx_rr_8(void)
 {
    uint* d_dst = &DX;
    uint src = DY;
@@ -24581,7 +25500,7 @@ void m68000_subx_rr_8(void)
 }
 
 
-void m68000_subx_rr_16(void)
+static void m68000_subx_rr_16(void)
 {
    uint* d_dst = &DX;
    uint src = DY;
@@ -24598,7 +25517,7 @@ void m68000_subx_rr_16(void)
 }
 
 
-void m68000_subx_rr_32(void)
+static void m68000_subx_rr_32(void)
 {
    uint* d_dst = &DX;
    uint src = DY;
@@ -24615,7 +25534,7 @@ void m68000_subx_rr_32(void)
 }
 
 
-void m68000_subx_mm_8_ax7(void)
+static void m68000_subx_mm_8_ax7(void)
 {
    uint src = read_memory_8(--AY);
    uint ea  = g_cpu_ar[7]-=2;
@@ -24632,7 +25551,7 @@ void m68000_subx_mm_8_ax7(void)
 }
 
 
-void m68000_subx_mm_8_ay7(void)
+static void m68000_subx_mm_8_ay7(void)
 {
    uint src = read_memory_8(g_cpu_ar[7]-=2);
    uint ea  = --AX;
@@ -24649,7 +25568,7 @@ void m68000_subx_mm_8_ay7(void)
 }
 
 
-void m68000_subx_mm_8_axy7(void)
+static void m68000_subx_mm_8_axy7(void)
 {
    uint src = read_memory_8(g_cpu_ar[7]-=2);
    uint ea  = g_cpu_ar[7]-=2;
@@ -24666,7 +25585,7 @@ void m68000_subx_mm_8_axy7(void)
 }
 
 
-void m68000_subx_mm_8(void)
+static void m68000_subx_mm_8(void)
 {
    uint src = read_memory_8(--(AY));
    uint ea  = --(AX);
@@ -24683,7 +25602,7 @@ void m68000_subx_mm_8(void)
 }
 
 
-void m68000_subx_mm_16(void)
+static void m68000_subx_mm_16(void)
 {
    uint src = read_memory_16(AY-=2);
    uint ea  = (AX-=2);
@@ -24700,7 +25619,7 @@ void m68000_subx_mm_16(void)
 }
 
 
-void m68000_subx_mm_32(void)
+static void m68000_subx_mm_32(void)
 {
    uint src = read_memory_32(AY-=4);
    uint ea  = (AX-=4);
@@ -24717,7 +25636,7 @@ void m68000_subx_mm_32(void)
 }
 
 
-void m68000_swap(void)
+static void m68000_swap(void)
 {
    uint* d_dst = &DY;
 
@@ -24732,7 +25651,7 @@ void m68000_swap(void)
 }
 
 
-void m68000_tas_d(void)
+static void m68000_tas_d(void)
 {
    uint* d_dst = &DY;
 
@@ -24744,7 +25663,7 @@ void m68000_tas_d(void)
 }
 
 
-void m68000_tas_ai(void)
+static void m68000_tas_ai(void)
 {
    uint ea = EA_AI;
    uint dst = read_memory_8(ea);
@@ -24757,7 +25676,7 @@ void m68000_tas_ai(void)
 }
 
 
-void m68000_tas_pi(void)
+static void m68000_tas_pi(void)
 {
    uint ea = EA_PI_8;
    uint dst = read_memory_8(ea);
@@ -24770,7 +25689,7 @@ void m68000_tas_pi(void)
 }
 
 
-void m68000_tas_pi7(void)
+static void m68000_tas_pi7(void)
 {
    uint ea = EA_PI7_8;
    uint dst = read_memory_8(ea);
@@ -24783,7 +25702,7 @@ void m68000_tas_pi7(void)
 }
 
 
-void m68000_tas_pd(void)
+static void m68000_tas_pd(void)
 {
    uint ea = EA_PD_8;
    uint dst = read_memory_8(ea);
@@ -24796,7 +25715,7 @@ void m68000_tas_pd(void)
 }
 
 
-void m68000_tas_pd7(void)
+static void m68000_tas_pd7(void)
 {
    uint ea = EA_PD7_8;
    uint dst = read_memory_8(ea);
@@ -24809,7 +25728,7 @@ void m68000_tas_pd7(void)
 }
 
 
-void m68000_tas_di(void)
+static void m68000_tas_di(void)
 {
    uint ea = EA_DI;
    uint dst = read_memory_8(ea);
@@ -24822,7 +25741,7 @@ void m68000_tas_di(void)
 }
 
 
-void m68000_tas_ix(void)
+static void m68000_tas_ix(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -24837,7 +25756,7 @@ void m68000_tas_ix(void)
 }
 
 
-void m68000_tas_aw(void)
+static void m68000_tas_aw(void)
 {
    uint ea = EA_AW;
    uint dst = read_memory_8(ea);
@@ -24850,7 +25769,7 @@ void m68000_tas_aw(void)
 }
 
 
-void m68000_tas_al(void)
+static void m68000_tas_al(void)
 {
    uint ea = EA_AL;
    uint dst = read_memory_8(ea);
@@ -24863,13 +25782,13 @@ void m68000_tas_al(void)
 }
 
 
-void m68000_trap(void)
+static void m68000_trap(void)
 {
    exception(EXCEPTION_TRAP_BASE+(g_cpu_ir&0xf));
 }
 
 
-void m68000_trapv(void)
+static void m68000_trapv(void)
 {
    if(!g_cpu_v_flag)
    {
@@ -24880,7 +25799,7 @@ void m68000_trapv(void)
 }
 
 
-void m68000_tst_d_8(void)
+static void m68000_tst_d_8(void)
 {
    uint res = MASK_OUT_ABOVE_8(DY);
 
@@ -24891,7 +25810,7 @@ void m68000_tst_d_8(void)
 }
 
 
-void m68000_tst_ai_8(void)
+static void m68000_tst_ai_8(void)
 {
    uint ea = EA_AI;
    uint res = read_memory_8(ea);
@@ -24902,7 +25821,7 @@ void m68000_tst_ai_8(void)
 }
 
 
-void m68000_tst_pi_8(void)
+static void m68000_tst_pi_8(void)
 {
    uint ea = EA_PI_8;
    uint res = read_memory_8(ea);
@@ -24913,7 +25832,7 @@ void m68000_tst_pi_8(void)
 }
 
 
-void m68000_tst_pi7_8(void)
+static void m68000_tst_pi7_8(void)
 {
    uint ea = EA_PI7_8;
    uint res = read_memory_8(ea);
@@ -24924,7 +25843,7 @@ void m68000_tst_pi7_8(void)
 }
 
 
-void m68000_tst_pd_8(void)
+static void m68000_tst_pd_8(void)
 {
    uint ea = EA_PD_8;
    uint res = read_memory_8(ea);
@@ -24935,7 +25854,7 @@ void m68000_tst_pd_8(void)
 }
 
 
-void m68000_tst_pd7_8(void)
+static void m68000_tst_pd7_8(void)
 {
    uint ea = EA_PD7_8;
    uint res = read_memory_8(ea);
@@ -24946,7 +25865,7 @@ void m68000_tst_pd7_8(void)
 }
 
 
-void m68000_tst_di_8(void)
+static void m68000_tst_di_8(void)
 {
    uint ea = EA_DI;
    uint res = read_memory_8(ea);
@@ -24957,7 +25876,7 @@ void m68000_tst_di_8(void)
 }
 
 
-void m68000_tst_ix_8(void)
+static void m68000_tst_ix_8(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -24970,7 +25889,7 @@ void m68000_tst_ix_8(void)
 }
 
 
-void m68000_tst_aw_8(void)
+static void m68000_tst_aw_8(void)
 {
    uint ea = EA_AW;
    uint res = read_memory_8(ea);
@@ -24981,7 +25900,7 @@ void m68000_tst_aw_8(void)
 }
 
 
-void m68000_tst_al_8(void)
+static void m68000_tst_al_8(void)
 {
    uint ea = EA_AL;
    uint res = read_memory_8(ea);
@@ -24992,7 +25911,7 @@ void m68000_tst_al_8(void)
 }
 
 
-void m68000_tst_d_16(void)
+static void m68000_tst_d_16(void)
 {
    uint res = MASK_OUT_ABOVE_16(DY);
 
@@ -25003,7 +25922,7 @@ void m68000_tst_d_16(void)
 }
 
 
-void m68000_tst_ai_16(void)
+static void m68000_tst_ai_16(void)
 {
    uint res = read_memory_16(EA_AI);
 
@@ -25014,7 +25933,7 @@ void m68000_tst_ai_16(void)
 }
 
 
-void m68000_tst_pi_16(void)
+static void m68000_tst_pi_16(void)
 {
    uint res = read_memory_16(EA_PI_16);
 
@@ -25025,7 +25944,7 @@ void m68000_tst_pi_16(void)
 }
 
 
-void m68000_tst_pd_16(void)
+static void m68000_tst_pd_16(void)
 {
    uint res = read_memory_16(EA_PD_16);
 
@@ -25036,7 +25955,7 @@ void m68000_tst_pd_16(void)
 }
 
 
-void m68000_tst_di_16(void)
+static void m68000_tst_di_16(void)
 {
    uint res = read_memory_16(EA_DI);
 
@@ -25047,7 +25966,7 @@ void m68000_tst_di_16(void)
 }
 
 
-void m68000_tst_ix_16(void)
+static void m68000_tst_ix_16(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -25061,7 +25980,7 @@ void m68000_tst_ix_16(void)
 }
 
 
-void m68000_tst_aw_16(void)
+static void m68000_tst_aw_16(void)
 {
    uint res = read_memory_16(EA_AW);
 
@@ -25072,7 +25991,7 @@ void m68000_tst_aw_16(void)
 }
 
 
-void m68000_tst_al_16(void)
+static void m68000_tst_al_16(void)
 {
    uint res = read_memory_16(EA_AL);
 
@@ -25083,7 +26002,7 @@ void m68000_tst_al_16(void)
 }
 
 
-void m68000_tst_d_32(void)
+static void m68000_tst_d_32(void)
 {
    uint res = DY;
 
@@ -25094,7 +26013,7 @@ void m68000_tst_d_32(void)
 }
 
 
-void m68000_tst_ai_32(void)
+static void m68000_tst_ai_32(void)
 {
    uint res = read_memory_32(EA_AI);
 
@@ -25105,7 +26024,7 @@ void m68000_tst_ai_32(void)
 }
 
 
-void m68000_tst_pi_32(void)
+static void m68000_tst_pi_32(void)
 {
    uint res = read_memory_32(EA_PI_32);
 
@@ -25116,7 +26035,7 @@ void m68000_tst_pi_32(void)
 }
 
 
-void m68000_tst_pd_32(void)
+static void m68000_tst_pd_32(void)
 {
    uint res = read_memory_32(EA_PD_32);
 
@@ -25127,7 +26046,7 @@ void m68000_tst_pd_32(void)
 }
 
 
-void m68000_tst_di_32(void)
+static void m68000_tst_di_32(void)
 {
    uint res = read_memory_32(EA_DI);
 
@@ -25138,7 +26057,7 @@ void m68000_tst_di_32(void)
 }
 
 
-void m68000_tst_ix_32(void)
+static void m68000_tst_ix_32(void)
 {
    uint extension = read_imm_16();
    uint index = g_cpu_dar[BIT_F(extension)!=0][(extension>>12) & 7];
@@ -25152,7 +26071,7 @@ void m68000_tst_ix_32(void)
 }
 
 
-void m68000_tst_aw_32(void)
+static void m68000_tst_aw_32(void)
 {
    uint res = read_memory_32(EA_AW);
 
@@ -25163,7 +26082,7 @@ void m68000_tst_aw_32(void)
 }
 
 
-void m68000_tst_al_32(void)
+static void m68000_tst_al_32(void)
 {
    uint res = read_memory_32(EA_AL);
 
@@ -25174,14 +26093,14 @@ void m68000_tst_al_32(void)
 }
 
 
-void m68000_unlk_a7(void)
+static void m68000_unlk_a7(void)
 {
    g_cpu_ar[7] = read_memory_32(g_cpu_ar[7]);
    USE_CLKS(12);
 }
 
 
-void m68000_unlk(void)
+static void m68000_unlk(void)
 {
    uint* a_dst = &AY;
    g_cpu_ar[7] = *a_dst;
@@ -25190,7 +26109,7 @@ void m68000_unlk(void)
 }
 
 
-void m68000_illegal(void)
+static void m68000_illegal(void)
 {
    exception(EXCEPTION_ILLEGAL_INSTRUCTION);
 }
@@ -25539,6 +26458,7 @@ static opcode_struct g_opcode_handler_table[] =
    {m68000_bclr_s_ix        , 0xfff8, 0x08b0},
    {m68000_bclr_s_aw        , 0xffff, 0x08b8},
    {m68000_bclr_s_al        , 0xffff, 0x08b9},
+   {m68010_bkpt             , 0xfff8, 0x4848},
    {m68000_bra_16           , 0xffff, 0x6000},
    {m68000_bra_8            , 0xff00, 0x6000},
    {m68000_bset_r_d         , 0xf1f8, 0x01c0},
@@ -26210,6 +27130,14 @@ static opcode_struct g_opcode_handler_table[] =
    {m68000_movea_pcdi_32    , 0xf1ff, 0x207a},
    {m68000_movea_pcix_32    , 0xf1ff, 0x207b},
    {m68000_movea_i_32       , 0xf1ff, 0x207c},
+   {m68010_move_fr_ccr_d    , 0xfff8, 0x42c0},
+   {m68010_move_fr_ccr_ai   , 0xfff8, 0x42d0},
+   {m68010_move_fr_ccr_pi   , 0xfff8, 0x42d8},
+   {m68010_move_fr_ccr_pd   , 0xfff8, 0x42e0},
+   {m68010_move_fr_ccr_di   , 0xfff8, 0x42e8},
+   {m68010_move_fr_ccr_ix   , 0xfff8, 0x42f0},
+   {m68010_move_fr_ccr_aw   , 0xffff, 0x42f8},
+   {m68010_move_fr_ccr_al   , 0xffff, 0x42f9},
    {m68000_move_to_ccr_d    , 0xfff8, 0x44c0},
    {m68000_move_to_ccr_ai   , 0xfff8, 0x44d0},
    {m68000_move_to_ccr_pi   , 0xfff8, 0x44d8},
@@ -26240,8 +27168,10 @@ static opcode_struct g_opcode_handler_table[] =
    {m68000_move_to_sr_pcdi  , 0xffff, 0x46fa},
    {m68000_move_to_sr_pcix  , 0xffff, 0x46fb},
    {m68000_move_to_sr_i     , 0xffff, 0x46fc},
-   {m68000_move_to_usp      , 0xfff8, 0x4e60},
    {m68000_move_fr_usp      , 0xfff8, 0x4e68},
+   {m68000_move_to_usp      , 0xfff8, 0x4e60},
+   {m68010_movec_cr         , 0xffff, 0x4e7a},
+   {m68010_movec_rc         , 0xffff, 0x4e7b},
    {m68000_movem_pd_16      , 0xfff8, 0x48a0},
    {m68000_movem_pd_32      , 0xfff8, 0x48e0},
    {m68000_movem_pi_16      , 0xfff8, 0x4c98},
@@ -26278,6 +27208,29 @@ static opcode_struct g_opcode_handler_table[] =
    {m68000_movep_er_32      , 0xf1f8, 0x0148},
    {m68000_movep_re_16      , 0xf1f8, 0x0188},
    {m68000_movep_re_32      , 0xf1f8, 0x01c8},
+   {m68010_moves_ai_8       , 0xfff8, 0x0e10},
+   {m68010_moves_pi_8       , 0xfff8, 0x0e18},
+   {m68010_moves_pi7_8      , 0xffff, 0x0e1f},
+   {m68010_moves_pd_8       , 0xfff8, 0x0e20},
+   {m68010_moves_pd7_8      , 0xffff, 0x0e27},
+   {m68010_moves_di_8       , 0xfff8, 0x0e28},
+   {m68010_moves_ix_8       , 0xfff8, 0x0e30},
+   {m68010_moves_aw_8       , 0xffff, 0x0e38},
+   {m68010_moves_al_8       , 0xffff, 0x0e39},
+   {m68010_moves_ai_16      , 0xfff8, 0x0e50},
+   {m68010_moves_pi_16      , 0xfff8, 0x0e58},
+   {m68010_moves_pd_16      , 0xfff8, 0x0e60},
+   {m68010_moves_di_16      , 0xfff8, 0x0e68},
+   {m68010_moves_ix_16      , 0xfff8, 0x0e70},
+   {m68010_moves_aw_16      , 0xffff, 0x0e78},
+   {m68010_moves_al_16      , 0xffff, 0x0e79},
+   {m68010_moves_ai_32      , 0xfff8, 0x0e90},
+   {m68010_moves_pi_32      , 0xfff8, 0x0e98},
+   {m68010_moves_pd_32      , 0xfff8, 0x0ea0},
+   {m68010_moves_di_32      , 0xfff8, 0x0ea8},
+   {m68010_moves_ix_32      , 0xfff8, 0x0eb0},
+   {m68010_moves_aw_32      , 0xffff, 0x0eb8},
+   {m68010_moves_al_32      , 0xffff, 0x0eb9},
    {m68000_moveq            , 0xf100, 0x7000},
    {m68000_muls_d           , 0xf1f8, 0xc1c0},
    {m68000_muls_ai          , 0xf1f8, 0xc1d0},
@@ -26536,6 +27489,7 @@ static opcode_struct g_opcode_handler_table[] =
    {m68000_roxl_ea_ix       , 0xfff8, 0xe5f0},
    {m68000_roxl_ea_aw       , 0xffff, 0xe5f8},
    {m68000_roxl_ea_al       , 0xffff, 0xe5f9},
+   {m68010_rtd              , 0xffff, 0x4e74},
    {m68000_rte              , 0xffff, 0x4e73},
    {m68000_rtr              , 0xffff, 0x4e77},
    {m68000_rts              , 0xffff, 0x4e75},
@@ -26903,15 +27857,18 @@ static int compare_nof_true_bits(const void* aptr, const void* bptr)
 {
    uint a = ((opcode_struct*)aptr)->mask;
    uint b = ((opcode_struct*)bptr)->mask;
-   int count_a = ((a & 0x8000) ? 1 : 0) + ((a & 0x4000) ? 1 : 0) + ((a & 0x2000) ? 1 : 0) + ((a & 0x1000) ? 1 : 0) +
-                 ((a & 0x0800) ? 1 : 0) + ((a & 0x0400) ? 1 : 0) + ((a & 0x0200) ? 1 : 0) + ((a & 0x0100) ? 1 : 0) +
-                 ((a & 0x0080) ? 1 : 0) + ((a & 0x0040) ? 1 : 0) + ((a & 0x0020) ? 1 : 0) + ((a & 0x0010) ? 1 : 0) +
-                 ((a & 0x0008) ? 1 : 0) + ((a & 0x0004) ? 1 : 0) + ((a & 0x0002) ? 1 : 0) + ((a & 0x0001) ? 1 : 0);
-   int count_b = ((b & 0x8000) ? 1 : 0) + ((b & 0x4000) ? 1 : 0) + ((b & 0x2000) ? 1 : 0) + ((b & 0x1000) ? 1 : 0) +
-                 ((b & 0x0800) ? 1 : 0) + ((b & 0x0400) ? 1 : 0) + ((b & 0x0200) ? 1 : 0) + ((b & 0x0100) ? 1 : 0) +
-                 ((b & 0x0080) ? 1 : 0) + ((b & 0x0040) ? 1 : 0) + ((b & 0x0020) ? 1 : 0) + ((b & 0x0010) ? 1 : 0) +
-                 ((b & 0x0008) ? 1 : 0) + ((b & 0x0004) ? 1 : 0) + ((b & 0x0002) ? 1 : 0) + ((b & 0x0001) ? 1 : 0);
-   return count_b - count_a; /* reversed to get greatest to least sorting */
+
+   a = ((a & 0xAAAA) >> 1) + (a & 0x5555);
+   a = ((a & 0xCCCC) >> 2) + (a & 0x3333);
+   a = ((a & 0xF0F0) >> 4) + (a & 0x0F0F);
+   a = ((a & 0xFF00) >> 8) + (a & 0x00FF);
+
+   b = ((b & 0xAAAA) >> 1) + (b & 0x5555);
+   b = ((b & 0xCCCC) >> 2) + (b & 0x3333);
+   b = ((b & 0xF0F0) >> 4) + (b & 0x0F0F);
+   b = ((b & 0xFF00) >> 8) + (b & 0x00FF);
+
+   return b - a; /* reversed to get greatest to least sorting */
 }
 
 /* Build the opcode handler jump table */
@@ -26943,6 +27900,87 @@ static void build_opcode_table(void)
 }
 
 
+
+/* Check if the instruction is a valid one */
+int m68000_is_valid_instruction(int instruction)
+{
+   if(g_instruction_jump_table[instruction & 0xffff] == m68000_illegal)
+      return 0;
+   if(!(g_cpu_type & CPU_010_PLUS))
+   {
+      if(g_instruction_jump_table[instruction & 0xffff] == m68010_bkpt)
+         return 0;
+      if(g_instruction_jump_table[instruction & 0xffff] == m68010_move_fr_ccr_d)
+         return 0;
+      if(g_instruction_jump_table[instruction & 0xffff] == m68010_move_fr_ccr_ai)
+         return 0;
+      if(g_instruction_jump_table[instruction & 0xffff] == m68010_move_fr_ccr_pi)
+         return 0;
+      if(g_instruction_jump_table[instruction & 0xffff] == m68010_move_fr_ccr_pd)
+         return 0;
+      if(g_instruction_jump_table[instruction & 0xffff] == m68010_move_fr_ccr_di)
+         return 0;
+      if(g_instruction_jump_table[instruction & 0xffff] == m68010_move_fr_ccr_ix)
+         return 0;
+      if(g_instruction_jump_table[instruction & 0xffff] == m68010_move_fr_ccr_aw)
+         return 0;
+      if(g_instruction_jump_table[instruction & 0xffff] == m68010_move_fr_ccr_al)
+         return 0;
+      if(g_instruction_jump_table[instruction & 0xffff] == m68010_movec_cr)
+         return 0;
+      if(g_instruction_jump_table[instruction & 0xffff] == m68010_movec_rc)
+         return 0;
+      if(g_instruction_jump_table[instruction & 0xffff] == m68010_moves_ai_8)
+         return 0;
+      if(g_instruction_jump_table[instruction & 0xffff] == m68010_moves_pi_8)
+         return 0;
+      if(g_instruction_jump_table[instruction & 0xffff] == m68010_moves_pi7_8)
+         return 0;
+      if(g_instruction_jump_table[instruction & 0xffff] == m68010_moves_pd_8)
+         return 0;
+      if(g_instruction_jump_table[instruction & 0xffff] == m68010_moves_pd7_8)
+         return 0;
+      if(g_instruction_jump_table[instruction & 0xffff] == m68010_moves_di_8)
+         return 0;
+      if(g_instruction_jump_table[instruction & 0xffff] == m68010_moves_ix_8)
+         return 0;
+      if(g_instruction_jump_table[instruction & 0xffff] == m68010_moves_aw_8)
+         return 0;
+      if(g_instruction_jump_table[instruction & 0xffff] == m68010_moves_al_8)
+         return 0;
+      if(g_instruction_jump_table[instruction & 0xffff] == m68010_moves_ai_16)
+         return 0;
+      if(g_instruction_jump_table[instruction & 0xffff] == m68010_moves_pi_16)
+         return 0;
+      if(g_instruction_jump_table[instruction & 0xffff] == m68010_moves_pd_16)
+         return 0;
+      if(g_instruction_jump_table[instruction & 0xffff] == m68010_moves_di_16)
+         return 0;
+      if(g_instruction_jump_table[instruction & 0xffff] == m68010_moves_ix_16)
+         return 0;
+      if(g_instruction_jump_table[instruction & 0xffff] == m68010_moves_aw_16)
+         return 0;
+      if(g_instruction_jump_table[instruction & 0xffff] == m68010_moves_al_16)
+         return 0;
+      if(g_instruction_jump_table[instruction & 0xffff] == m68010_moves_ai_32)
+         return 0;
+      if(g_instruction_jump_table[instruction & 0xffff] == m68010_moves_pi_32)
+         return 0;
+      if(g_instruction_jump_table[instruction & 0xffff] == m68010_moves_pd_32)
+         return 0;
+      if(g_instruction_jump_table[instruction & 0xffff] == m68010_moves_di_32)
+         return 0;
+      if(g_instruction_jump_table[instruction & 0xffff] == m68010_moves_ix_32)
+         return 0;
+      if(g_instruction_jump_table[instruction & 0xffff] == m68010_moves_aw_32)
+         return 0;
+      if(g_instruction_jump_table[instruction & 0xffff] == m68010_moves_al_32)
+         return 0;
+      if(g_instruction_jump_table[instruction & 0xffff] == m68010_rtd)
+         return 0;
+   }
+   return 1;
+}
 
 /* ======================================================================== */
 /* ============================== END OF FILE ============================= */

@@ -1,13 +1,28 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "unzip.h"
+#ifdef macintosh	/* JB 981117 */
+#	include "mac_dos.h"
+#	include "stat.h"
+#else
 #include <dos.h>
 #include <sys/stat.h>
 #include <sys/errno.h>
+#endif
 
 #define MAX_FILES 100
-#define MAX_FILENAME_LEN 12	/* increase this if you are using a real OS... */
 
+#ifdef macintosh	/* JB 981117 */
+
+static int errno = 0;
+#define MAX_FILENAME_LEN 31
+
+#else
+#define MAX_FILENAME_LEN 12	/* increase this if you are using a real OS... */
+#endif
+
+FILE *errorlog = 0;
 
 /* compare modes when one file is twice as long as the other */
 /* A = All file */
@@ -57,7 +72,7 @@ struct fileinfo files[2][MAX_FILES];
 float matchscore[MAX_FILES][MAX_FILES][TOTAL_MODES];
 
 
-void checkintegrity(const struct fileinfo *file,int side)
+static void checkintegrity(const struct fileinfo *file,int side)
 {
 	int i;
 	int mask0,mask1;
@@ -66,31 +81,38 @@ void checkintegrity(const struct fileinfo *file,int side)
 
 	if (file->buf == 0) return;
 
-	mask0 = 0x00;
-	mask1 = 0xff;
 
-	for (i = 0;i < file->size;i++)
+
+	/* check for bad data lines */
+	mask0 = 0x0000;
+	mask1 = 0xffff;
+
+	for (i = 0;i < file->size;i+=2)
 	{
-		mask0 |= file->buf[i];
-		mask1 &= file->buf[i];
-		if (mask0 == 0xff && mask1 == 0x00) break;
+		mask0 |= ((file->buf[i] << 8) | file->buf[i+1]);
+		mask1 &= ((file->buf[i] << 8) | file->buf[i+1]);
+		if (mask0 == 0xffff && mask1 == 0x0000) break;
 	}
 
-	if (mask0 != 0xff || mask1 != 0x00)
+	if (mask0 != 0xffff || mask1 != 0x0000)
 	{
-		int allfixed;
+		int fixedmask;
+		int bits;
 
-		allfixed = 1;
-		printf("%-23s %-23s SOME FIXED BITS (",side ? "" : file->name,side ? file->name : "");
-		for (i = 0;i < 8;i++)
+
+		fixedmask = (~mask0 | mask1) & 0xffff;
+
+		if (((mask0 >> 8) & 0xff) == (mask0 & 0xff) && ((mask1 >> 8) & 0xff) == (mask1 & 0xff))
+			bits = 8;
+		else bits = 16;
+
+		printf("%-23s %-23s FIXED BITS (",side ? "" : file->name,side ? file->name : "");
+		for (i = 0;i < bits;i++)
 		{
-			if ((mask0 & 0x80) == 0) printf("0");
-			else if (mask1 & 0x80) printf("1");
-			else
-			{
-				printf("x");
-				allfixed = 0;
-			}
+			if (~mask0 & 0x8000) printf("0");
+			else if (mask1 & 0x8000) printf("1");
+			else printf("x");
+
 			mask0 <<= 1;
 			mask1 <<= 1;
 		}
@@ -98,8 +120,10 @@ void checkintegrity(const struct fileinfo *file,int side)
 
 		/* if the file contains a fixed value, we don't need to do the other */
 		/* validity checks */
-		if (allfixed) return;
+		if (fixedmask == 0xffff || fixedmask == 0x00ff || fixedmask == 0xff00)
+			return;
 	}
+
 
 	addrbit = 1;
 	mask0 = 0;
@@ -143,7 +167,7 @@ void checkintegrity(const struct fileinfo *file,int side)
 		for (i = 0;i < 24;i++)
 		{
 			if (file->size <= (1<<(23-i))) printf(" ");
-			else if ((mask0 & 0x800000) == 0) printf("1");
+			else if (~mask0 & 0x800000) printf("1");
 			else if (mask1 & 0x800000) printf("0");
 			else printf("x");
 			mask0 <<= 1;
@@ -196,7 +220,7 @@ void checkintegrity(const struct fileinfo *file,int side)
 }
 
 
-float filecompare(const struct fileinfo *file1,const struct fileinfo *file2,int mode)
+static float filecompare(const struct fileinfo *file1,const struct fileinfo *file2,int mode)
 {
 	int i;
 	int match = 0;
@@ -286,7 +310,7 @@ float filecompare(const struct fileinfo *file1,const struct fileinfo *file2,int 
 }
 
 
-void readfile(const char *path,struct fileinfo *file)
+static void readfile(const char *path,struct fileinfo *file)
 {
 	char fullname[256];
 	FILE *f = 0;
@@ -295,7 +319,11 @@ void readfile(const char *path,struct fileinfo *file)
 	if (path)
 	{
 		strcpy(fullname,path);
+#ifdef macintosh	/* JB 981117 */
+		strcat(fullname,":");
+#else
 		strcat(fullname,"/");
+#endif
 	}
 	else fullname[0] = 0;
 	strcat(fullname,file->name);
@@ -308,12 +336,18 @@ void readfile(const char *path,struct fileinfo *file)
 
 	if ((f = fopen(fullname,"rb")) == 0)
 	{
+#ifdef macintosh	/* JB 981117 */
+		errno = fnfErr;
+#endif
 		printf("%s: %s\n",fullname,strerror(errno));
 		return;
 	}
 
 	if (fread(file->buf,1,file->size,f) != file->size)
 	{
+#ifdef macintosh	/* JB 981117 */
+		errno = fnfErr;
+#endif
 		printf("%s: %s\n",fullname,strerror(errno));
 		fclose(f);
 		return;
@@ -325,14 +359,14 @@ void readfile(const char *path,struct fileinfo *file)
 }
 
 
-void freefile(struct fileinfo *file)
+static void freefile(struct fileinfo *file)
 {
 	free(file->buf);
 	file->buf = 0;
 }
 
 
-void printname(const struct fileinfo *file1,const struct fileinfo *file2,float score,int mode)
+static void printname(const struct fileinfo *file1,const struct fileinfo *file2,float score,int mode)
 {
 	printf("%-12s %s %-12s %s ",file1 ? file1->name : "",modenames[mode][0],file2 ? file2->name : "",modenames[mode][1]);
 	if (score == 0.0) printf("NO MATCH\n");
@@ -341,47 +375,123 @@ void printname(const struct fileinfo *file1,const struct fileinfo *file2,float s
 }
 
 
+static int load_files(int i, int *found, const char *path)
+{
+	struct stat st;
+
+
+	if (stat(path,&st) != 0)
+	{
+#ifdef macintosh
+		errno = fnfErr;
+#endif
+		printf("%s: %s\n",path,strerror(errno));
+		return 10;
+	}
+
+	if (S_ISDIR(st.st_mode))
+	{
+		char buf[256];
+		struct find_t f;
+
+		/* load all files in directory */
+		strcpy(buf,path);
+		strcat(buf,"/*.*");
+		if (_dos_findfirst(buf,_A_NORMAL | _A_RDONLY,&f) == 0)
+		{
+			do
+			{
+				int size;
+
+				size = f.size;
+				while (size && (size & 1) == 0) size >>= 1;
+				if (size & ~1)
+					printf("%-23s %-23s ignored (not a ROM)\n",i ? "" : f.name,i ? f.name : "");
+				else
+				{
+					strcpy(files[i][found[i]].name,f.name);
+					files[i][found[i]].size = f.size;
+					readfile(path,&files[i][found[i]]);
+					files[i][found[i]].listed = 0;
+					if (found[i] >= MAX_FILES)
+					{
+						printf("%s: max of %d files exceeded\n",path,MAX_FILES);
+						break;
+					}
+					found[i]++;
+				}
+			} while (_dos_findnext(&f) == 0);
+		}
+	}
+	else
+	{
+		ZIP *zip;
+		struct zipent* zipent;
+
+		/* wasn't a directory, so try to open it as a zip file */
+		if ((zip = openzip(path)) == 0)
+		{
+			printf("Error, cannot open zip file '%s' !\n", path);
+			return 1;
+		}
+
+		/* load all files in zip file */
+		while ((zipent = readzip(zip)) != 0)
+		{
+			int size;
+
+			size = zipent->uncompressed_size;
+			while (size && (size & 1) == 0) size >>= 1;
+			if (zipent->uncompressed_size == 0 || (size & ~1))
+				printf("%-23s %-23s ignored (not a ROM)\n",
+					i ? "" : zipent->name, i ? zipent->name : "");
+			else
+			{
+				struct fileinfo *file = &files[i][found[i]];
+				const char *delim = strrchr(zipent->name,'/');
+
+				if (delim)
+					strcpy (file->name,delim+1);
+				else
+					strcpy(file->name,zipent->name);
+				file->size = zipent->uncompressed_size;
+				if ((file->buf = malloc(file->size)) == 0)
+					printf("%s: out of memory!\n",file->name);
+				else
+				{
+					if (readuncompresszip(zip, zipent, (char *)file->buf) != 0)
+					{
+						free(file->buf);
+						file->buf = 0;
+					}
+				}
+
+				file->listed = 0;
+				if (found[i] >= MAX_FILES)
+				{
+					printf("%s: max of %d files exceeded\n",path,MAX_FILES);
+					break;
+				}
+				found[i]++;
+			}
+		}
+		closezip(zip);
+	}
+	return 0;
+}
+
+
 int main(int argc,char **argv)
 {
-	struct stat s1,s2;
-
+	int	err;
 
 	if (argc < 2)
 	{
-		printf("usage: romcmp dir1 [dir2]\n");
+		printf("usage: romcmp [dir1 | zip1] [dir2 | zip2]\n");
 		return 0;
 	}
 
-	if (stat(argv[1],&s1) != 0)
 	{
-		printf("%s: %s\n",argv[1],strerror(errno));
-		return 10;
-	}
-
-	if (!S_ISDIR(s1.st_mode))
-	{
-		printf("%s not a directory\n",argv[1]);
-		return 10;
-	}
-
-	if (argc >= 3)
-	{
-		if (stat(argv[2],&s2) != 0)
-		{
-			printf("%s: %s\n",argv[2],strerror(errno));
-			return 10;
-		}
-
-		if (!S_ISDIR(s2.st_mode))
-		{
-			printf("%s not a directory\n",argv[2]);
-			return 10;
-		}
-	}
-
-	{
-		char buf[100];
-		struct find_t f;
 		int found[2];
 		int i,j,mode;
 		int besti,bestj;
@@ -392,33 +502,9 @@ int main(int argc,char **argv)
 		{
 			if (argc > i+1)
 			{
-				strcpy(buf,argv[i+1]);
-				strcat(buf,"/*.*");
-				if (_dos_findfirst(buf,_A_NORMAL | _A_RDONLY,&f) == 0)
-				{
-					do
-					{
-						int size;
-
-						size = f.size;
-						while (size && (size & 1) == 0) size >>= 1;
-						if (size & ~1)
-							printf("%-23s %-23s ignored (not a ROM)\n",i ? "" : f.name,i ? f.name : "");
-						else
-						{
-							strcpy(files[i][found[i]].name,f.name);
-							files[i][found[i]].size = f.size;
-							readfile(argv[i+1],&files[i][found[i]]);
-							files[i][found[i]].listed = 0;
-							if (found[i] >= MAX_FILES)
-							{
-								printf("%s: max of %d files exceeded\n",argv[i+1],MAX_FILES);
-								break;
-							}
-							found[i]++;
-						}
-					} while (_dos_findnext(&f) == 0);
-				}
+				err = load_files (i, found, argv[i+1]);
+				if (err != 0)
+					return err;
 			}
 		}
 
@@ -503,7 +589,14 @@ int main(int argc,char **argv)
 					for (mode = 0;mode < TOTAL_MODES;mode++)
 					{
 						if (bestmode == MODE_A_A || mode == bestmode ||
-								((mode-1)&~1) != ((bestmode-1)&~1))
+								(bestmode >= MODE_1_A && bestmode <= MODE_O_A &&
+								((mode-MODE_1_A)&~1) != ((bestmode-MODE_1_A)&~1)) ||
+								(bestmode >= MODE_E1_A && bestmode <= MODE_O2_A &&
+								((mode-MODE_E1_A)&~3) != ((bestmode-MODE_E1_A)&~3)) ||
+								(bestmode >= MODE_A_1 && bestmode <= MODE_A_O &&
+								((mode-MODE_A_1)&~1) != ((bestmode-MODE_A_1)&~1)) ||
+								(bestmode >= MODE_A_E1 && bestmode <= MODE_A_O2 &&
+								((mode-MODE_A_E1)&~3) != ((bestmode-MODE_A_E1)&~3)))
 						{
 							for (i = 0;i < found[0];i++)
 							{

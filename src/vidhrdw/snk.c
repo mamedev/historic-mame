@@ -25,11 +25,11 @@ static int bg_scrollx,   bg_scrolly;
 static int spr16_scrollx, spr16_scrolly;
 static int spr32_scrollx, spr32_scrolly;
 
-unsigned char *bg_dirtybuffer;
-unsigned char *bg_videoram;
-unsigned char *fg_videoram;
-unsigned char *sprite16x16_ram;
-unsigned char *sprite32x32_ram;
+unsigned char *snk_bg_dirtybuffer;
+static unsigned char *bg_videoram;
+static unsigned char *fg_videoram;
+static unsigned char *sprite16x16_ram;
+static unsigned char *sprite32x32_ram;
 
 static struct osd_bitmap *bitmap_bg;		/* background bitmap */
 static struct osd_bitmap *bitmap_sp1;		/* sprites bitmap 32x32 */
@@ -121,38 +121,38 @@ void snk_vh_convert_color_prom(unsigned char *palette, unsigned short *colortabl
 
 int snk_vh_start(void)
 {
-	if ((bg_dirtybuffer = malloc (BG_VIDEORAM_SIZE / 2)) == 0)
+	if ((snk_bg_dirtybuffer = malloc (BG_VIDEORAM_SIZE / 2)) == 0)
 	{
-		free (bg_dirtybuffer);
+		free (snk_bg_dirtybuffer);
 		return 1;
 	}
 	if ((bitmap_bg = osd_new_bitmap (512, 512, Machine->scrbitmap->depth)) == 0)
 	{
-		free (bg_dirtybuffer);
+		free (snk_bg_dirtybuffer);
 		return 1;
 	}
 	if ((bitmap_sp1 = osd_new_bitmap (512, 512, Machine->scrbitmap->depth)) == 0)
 	{
 		osd_free_bitmap (bitmap_bg);
-		free (bg_dirtybuffer);
+		free (snk_bg_dirtybuffer);
 		return 1;
 	}
 	if ((bitmap_sp2 = osd_new_bitmap (512,512,Machine->scrbitmap->depth)) == 0)
 	{
-		free (bg_dirtybuffer);
+		free (snk_bg_dirtybuffer);
 		osd_free_bitmap (bitmap_bg);
 		osd_free_bitmap (bitmap_sp1);
 		return 1;
 	}
 	if ((bitmap_sp3 = osd_new_bitmap (512,512,Machine->scrbitmap->depth)) == 0)
 	{
-		free (bg_dirtybuffer);
+		free (snk_bg_dirtybuffer);
 		osd_free_bitmap (bitmap_bg);
 		osd_free_bitmap (bitmap_sp1);
 		osd_free_bitmap (bitmap_sp2);
 		return 1;
 	}
-	memset (bg_dirtybuffer, 1 , BG_VIDEORAM_SIZE / 2);
+	memset (snk_bg_dirtybuffer, 1 , BG_VIDEORAM_SIZE / 2);
 
 	memset(palette_used_colors,PALETTE_COLOR_USED,Machine->drv->total_colors);
 
@@ -171,7 +171,7 @@ int snk_vh_start(void)
 
 void snk_vh_stop(void)
 {
-	free (bg_dirtybuffer);
+	free (snk_bg_dirtybuffer);
 	osd_free_bitmap (bitmap_bg);
 	osd_free_bitmap (bitmap_sp1);
 	osd_free_bitmap (bitmap_sp2);
@@ -428,13 +428,13 @@ void snk_render_background(struct osd_bitmap *bitmap)
 		for (y = 0; y < 32; y++)
 		{
 			offs = y*64+x*2;
-			if (bg_dirtybuffer[offs >> 1])
+			if (snk_bg_dirtybuffer[offs >> 1])
 			{
 				sx 	= y << 4;
 				sy 	= x << 4;
 				tile 	= bg_videoram[offs]+((bg_videoram[offs+1] & 15) * 256);
 				palette = bg_videoram[offs+1] >> 4;
-				bg_dirtybuffer[offs >> 1] = 0;
+				snk_bg_dirtybuffer[offs >> 1] = 0;
 
 				drawgfx(bitmap,Machine->gfx[1],
 							tile,
@@ -471,7 +471,7 @@ void snk_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 
 	/* recompute */
 	if (palette_recalc ())
-		memset (bg_dirtybuffer, 1, BG_VIDEORAM_SIZE / 2);
+		memset (snk_bg_dirtybuffer, 1, BG_VIDEORAM_SIZE / 2);
 
 	snk_render_background(bitmap_bg);
 	snk_render_sprites(bitmap_sp1, 0, 25, SPRITES_16X16);

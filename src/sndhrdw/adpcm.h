@@ -48,7 +48,7 @@ struct OKIM6295interface
 {
 	int num;                  /* total number of chips */
 	int frequency;            /* playback frequency */
-	int region;               /* memory region where the sample ROM lives */
+	int region[MAX_OKIM6295]; /* memory region where the sample ROM lives */
 	int volume[MAX_OKIM6295]; /* master volume */
 };
 
@@ -56,8 +56,11 @@ int OKIM6295_sh_start (struct OKIM6295interface *intf);
 void OKIM6295_sh_stop (void);
 void OKIM6295_sh_update (void);
 
-int OKIM6295_status_r (int num);
-void OKIM6295_data_w (int num, int data);
+
+int OKIM6295_status_0_r (int offset);
+int OKIM6295_status_1_r (int offset);
+void OKIM6295_data_0_w (int offset,int data);
+void OKIM6295_data_1_w (int offset,int data);
 
 
 /* an interface for the MSM5205 and similar chips */
@@ -78,6 +81,5 @@ void MSM5205_sh_update (void);
 
 void MSM5205_reset_w (int num, int reset);
 void MSM5205_data_w (int num, int data);
-
 
 #endif

@@ -34,6 +34,7 @@ struct cpu_interface
 	void (*set_nmi_line)(int state);
 	void (*set_irq_line)(int _line, int state);
 	void (*set_irq_callback)(int(*callback)(int irqline));
+	void (*internal_interrupt)(int type);
 	int num_irqs;
 #else
     void (*cause_interrupt)(int type);
@@ -158,6 +159,7 @@ int ignore_interrupt(void);
 #if NEW_INTERRUPT_SYSTEM
 void cpu_set_nmi_line(int cpunum, int state);
 void cpu_set_irq_line(int cpunum, int irqline, int state);
+void cpu_generate_internal_interrupt(int cpunum, int type);
 void cpu_irq_line_vector_w(int cpunum, int irqline, int vector);
 /* use these in your write memory/port handles to set an IRQ vector */
 void cpu_0_irq_line_vector_w(int offset, int data);

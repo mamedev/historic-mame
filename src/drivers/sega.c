@@ -1,5 +1,8 @@
 /***************************************************************************
 
+2/5/98 - Added input ports support for Tac Scan. Bonus Ships now work.
+         Zektor now uses it's own input port section. - Jim Hernandez
+
 Sega Vector memory map (preliminary)
 
 Most of the info here comes from the wiretap archive at:
@@ -382,6 +385,11 @@ INPUT_PORTS_START( zektor_input_ports )
 
 	PORT_START	/* FAKE */
         /* This fake input port is used for DIP Switch 1 */
+        PORT_DIPNAME( 0x03, 0x01, "Bonus Ship", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x03, "10K Points" )
+        PORT_DIPSETTING(    0x01, "20K Points" )
+        PORT_DIPSETTING(    0x02, "30K Points" )
+        PORT_DIPSETTING(    0x00, "None" )
         PORT_DIPNAME( 0x0c, 0x00, "Difficulty", IP_KEY_NONE )
         PORT_DIPSETTING(    0x0c, "Very Hard" )
         PORT_DIPSETTING(    0x04, "Hard" )
@@ -536,6 +544,101 @@ INPUT_PORTS_START( startrek_input_ports )
         PORT_START      /* IN8 - dummy port for the dial */
 	PORT_ANALOG ( 0xff, 0x00, IPT_DIAL|IPF_CENTER, 100, 0, 0, 0 )
 INPUT_PORTS_END
+
+INPUT_PORTS_START( tacscan_input_ports )
+	PORT_START	/* IN0 - port 0xf8 */
+	/* The next bit is referred to as the Service switch in the self test - it just adds a credit */
+	PORT_BITX( 0x20, IP_ACTIVE_LOW, IPT_COIN3 | IPF_IMPULSE, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 3 )
+	PORT_BITX( 0x40, IP_ACTIVE_LOW, IPT_COIN2 | IPF_IMPULSE, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 3 )
+	PORT_BITX( 0x80, IP_ACTIVE_LOW, IPT_COIN1 | IPF_IMPULSE, IP_NAME_DEFAULT, IP_KEY_DEFAULT, IP_JOY_DEFAULT, 3 )
+
+	PORT_START	/* IN1 - port 0xf9 */
+	PORT_BIT ( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* IN2 - port 0xfa */
+	PORT_BIT ( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* IN3 - port 0xfb */
+	PORT_BIT ( 0xf0, IP_ACTIVE_LOW, IPT_UNUSED )
+
+	PORT_START	/* IN4 - port 0xfc - read in machine/sega.c */
+	PORT_BIT ( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT ( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT ( 0x04, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT ( 0x08, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT ( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
+
+	PORT_START	/* IN5 - FAKE */
+	/* This fake input port is used to get the status of the F2 key, */
+	/* and activate the test mode, which is triggered by a NMI */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_SERVICE, "Service Mode", OSD_KEY_F2, IP_JOY_NONE, 0 )
+
+	PORT_START	/* FAKE */
+        /* This fake input port is used for DIP Switch 1 */
+        PORT_DIPNAME( 0x03, 0x01, "Bonus Ship", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x03, "10K Points" )
+        PORT_DIPSETTING(    0x01, "20K Points" )
+        PORT_DIPSETTING(    0x02, "30K Points" )
+        PORT_DIPSETTING(    0x00, "None" )
+        PORT_DIPNAME( 0x0c, 0x00, "Difficulty", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x0c, "Very Hard" )
+        PORT_DIPSETTING(    0x04, "Hard" )
+        PORT_DIPSETTING(    0x08, "Moderate" )
+        PORT_DIPSETTING(    0x00, "Easy" )
+        PORT_DIPNAME( 0x30, 0x30, "Number of Ships", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x30, "8 Ships" )
+        PORT_DIPSETTING(    0x10, "6 Ships" )
+        PORT_DIPSETTING(    0x20, "4 Ships" )
+        PORT_DIPSETTING(    0x00, "2 Ships" )
+        PORT_DIPNAME( 0x40, 0x00, "Attract Sound", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x40, "Off" )
+        PORT_DIPSETTING(    0x00, "On" )
+        PORT_DIPNAME( 0x80, 0x80, "Orientation", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x80, "Upright" )
+        PORT_DIPSETTING(    0x00, "Cocktail" )
+
+	PORT_START	/* FAKE */
+        /* This fake input port is used for DIP Switch 2 */
+        PORT_DIPNAME( 0x0F, 0x0C, "Coins/Credits (R)", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x00, "4 / 1" )
+        PORT_DIPSETTING(    0x08, "3 / 1" )
+        PORT_DIPSETTING(    0x04, "2 / 1" )
+        PORT_DIPSETTING(    0x0C, "1 / 1" )
+        PORT_DIPSETTING(    0x02, "1 / 2" )
+        PORT_DIPSETTING(    0x0A, "1 / 3" )
+        PORT_DIPSETTING(    0x06, "1 / 4" )
+        PORT_DIPSETTING(    0x0E, "1 / 5" )
+        PORT_DIPSETTING(    0x01, "1 / 6" )
+        PORT_DIPSETTING(    0x09, "2/4/5 / 1/2/3" )
+        PORT_DIPSETTING(    0x05, "2/4 / 1/3" )
+        PORT_DIPSETTING(    0x0D, "1/2/3/4/5 / 1/2/3/4/6" )
+        PORT_DIPSETTING(    0x03, "1/2/3/4 / 1/2/3/5" )
+        PORT_DIPSETTING(    0x0B, "1/2 / 1/3" )
+        PORT_DIPSETTING(    0x07, "1/2/3/4/5 / 2/4/6/8/11" )
+        PORT_DIPSETTING(    0x0F, "1/2/3/4 / 2/4/6/9" )
+
+        PORT_DIPNAME( 0xF0, 0xC0, "Coins/Credits (L)", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x00, "4 / 1" )
+        PORT_DIPSETTING(    0x80, "3 / 1" )
+        PORT_DIPSETTING(    0x40, "2 / 1" )
+        PORT_DIPSETTING(    0xC0, "1 / 1" )
+        PORT_DIPSETTING(    0x20, "1 / 2" )
+        PORT_DIPSETTING(    0xA0, "1 / 3" )
+        PORT_DIPSETTING(    0x60, "1 / 4" )
+        PORT_DIPSETTING(    0xE0, "1 / 5" )
+        PORT_DIPSETTING(    0x10, "1 / 6" )
+        PORT_DIPSETTING(    0x90, "2/4/5 / 1/2/3" )
+        PORT_DIPSETTING(    0x50, "2/4 / 1/3" )
+        PORT_DIPSETTING(    0xD0, "1/2/3/4/5 / 1/2/3/4/6" )
+        PORT_DIPSETTING(    0x30, "1/2/3/4 / 1/2/3/5" )
+        PORT_DIPSETTING(    0xB0, "1/2 / 1/3" )
+        PORT_DIPSETTING(    0x70, "1/2/3/4/5 / 2/4/6/8/11" )
+        PORT_DIPSETTING(    0xF0, "1/2/3/4 / 2/4/6/9" )
+
+        PORT_START      /* IN8 - FAKE port for the dial */
+	PORT_ANALOG ( 0xff, 0x00, IPT_DIAL|IPF_CENTER, 100, 0, 0, 0 )
+INPUT_PORTS_END
+
 
 INPUT_PORTS_START( elim2_input_ports )
 	PORT_START	/* IN0 - port 0xf8 */
@@ -948,6 +1051,14 @@ ROM_START( startrek_rom )
 	ROM_LOAD( "1868",         0xa800, 0x0800, 0x8b4e2e07 )
 	ROM_LOAD( "1869",         0xb000, 0x0800, 0xe5663070 )
 	ROM_LOAD( "1870",         0xb800, 0x0800, 0x4340616d )
+
+// I'm not sure where these roms are supposed to go, but they are speech
+// related (from what I've read), so I just took a wild guess here,
+// until their location is determined and speech is emulated, plus, it
+// helps make sure everyone has them for the future... MRH
+	ROM_LOAD ("1670",         0xc000, 0x0800, 0xb779884b )
+	ROM_LOAD ("1871",         0xc800, 0x1000, 0x03713920 )
+	ROM_LOAD ("1872",         0xd800, 0x1000, 0xebb5c3a9 )
 ROM_END
 
 /***************************************************************************
@@ -1459,7 +1570,7 @@ static const char *tacscan_sample_names[] =
 	"01.sam",
 	"02.sam",
 	"03.sam",
-	"plaser.sam",
+        "plaser.sam",
 	"pexpl.sam",
 	"pship.sam",
 	"tunnelh.sam",
@@ -1468,12 +1579,22 @@ static const char *tacscan_sample_names[] =
 	"sexpl.sam",
 	"eshot.sam",
 	"eexpl.sam",
+        "tunnelw.sam",
+        "flight1.sam",
+        "flight2.sam",
+        "flight3.sam",
+        "flight4.sam",
+        "flight5.sam",
+        "formatn.sam",
+        "warp.sam",
+        "credit.sam",
+
     0	/* end of array */
 };
 
 static struct Samplesinterface tacscan_samples_interface =
 {
-	6	/* 6 channels */
+	12	/* 12 channels */
 };
 
 static struct MachineDriver tacscan_machine_driver =
@@ -1527,7 +1648,7 @@ struct GameDriver tacscan_driver =
 	"Tac/Scan",
 	"1982",
 	"Sega",
-	"Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\n"VECTOR_TEAM,
+        "Al Kossow (G80 Emu)\nBrad Oliver (MAME driver)\nJim Hernandez (Sound & 44.1Khz Sample Pack)\n"VECTOR_TEAM,
 	0,
 	&tacscan_machine_driver,
 	0,
@@ -1537,7 +1658,7 @@ struct GameDriver tacscan_driver =
 	tacscan_sample_names,
 	0,
 
-	zektor_input_ports,
+        tacscan_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,

@@ -4,7 +4,7 @@
 
 static void *timer;
 #define BASE_TIME 1/.894886
-#define BASE_FREQ 1789773
+#define BASE_FREQ (1789773 * 2)
 #define SH6840_FREQ 894886
 
 int exidy_sample_channels[6];

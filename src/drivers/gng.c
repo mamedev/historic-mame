@@ -172,11 +172,14 @@ void gng_bankswitch_w(int offset,int data);
 int gng_bankedrom_r(int offset);
 void gng_init_machine(void);
 
+extern unsigned char *gng_fgvideoram,*gng_fgcolorram;
 extern unsigned char *gng_bgvideoram,*gng_bgcolorram;
-extern int gng_bgvideoram_size;
-extern unsigned char *gng_scrollx,*gng_scrolly;
+void gng_fgvideoram_w(int offset,int data);
+void gng_fgcolorram_w(int offset,int data);
 void gng_bgvideoram_w(int offset,int data);
 void gng_bgcolorram_w(int offset,int data);
+void gng_bgscrollx_w(int offset,int data);
+void gng_bgscrolly_w(int offset,int data);
 void gng_flipscreen_w(int offset,int data);
 int gng_vh_start(void);
 void gng_vh_stop(void);
@@ -221,15 +224,15 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x1dff, MWA_RAM },
 	{ 0x1e00, 0x1fff, MWA_RAM, &spriteram, &spriteram_size },
-	{ 0x2000, 0x23ff, videoram_w, &videoram, &videoram_size },
-	{ 0x2400, 0x27ff, colorram_w, &colorram },
-	{ 0x2800, 0x2bff, gng_bgvideoram_w, &gng_bgvideoram, &gng_bgvideoram_size },
+	{ 0x2000, 0x23ff, gng_fgvideoram_w, &gng_fgvideoram },
+	{ 0x2400, 0x27ff, gng_fgcolorram_w, &gng_fgcolorram },
+	{ 0x2800, 0x2bff, gng_bgvideoram_w, &gng_bgvideoram },
 	{ 0x2c00, 0x2fff, gng_bgcolorram_w, &gng_bgcolorram },
 	{ 0x3800, 0x38ff, paletteram_RRRRGGGGBBBBxxxx_split2_w, &paletteram_2 },
 	{ 0x3900, 0x39ff, paletteram_RRRRGGGGBBBBxxxx_split1_w, &paletteram },
 	{ 0x3a00, 0x3a00, soundlatch_w },
-	{ 0x3b08, 0x3b09, MWA_RAM, &gng_scrollx },
-	{ 0x3b0a, 0x3b0b, MWA_RAM, &gng_scrolly },
+	{ 0x3b08, 0x3b09, gng_bgscrollx_w },
+	{ 0x3b0a, 0x3b0b, gng_bgscrolly_w },
 	{ 0x3c00, 0x3c00, MWA_NOP },   /* watchdog? */
 	{ 0x3d00, 0x3d00, gng_flipscreen_w },
 	{ 0x3e00, 0x3e00, gng_bankswitch_w },

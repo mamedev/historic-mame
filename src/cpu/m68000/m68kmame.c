@@ -1,42 +1,43 @@
-#include "cpuintrf.h"
-#include "osd_dbg.h"
 #include "m68000.h"
-#include <stdio.h>
-extern FILE *errorlog;
 
 /* The new interrupt system in MAME doesn't really apply to the 68000, so I've placed them in here */
 #if M68000_BUILDING_MAME
 
 #if NEW_INTERRUPT_SYSTEM
 
-int (*m68000_irq_callback)(int irqline);
+static int (*m68000_irq_callback)(int irqline);
+
+int m68000_interrupt_acknowledge(int int_level)
+{
+	return (*m68000_irq_callback)(int_level);
+}
 
 void MC68000_SetRegs(MC68000_Regs *regs)
 {
-	m68000_set_context(&regs->regs);
-	m68000_irq_callback = regs->irq_callback;
+   m68000_set_context(&regs->regs);
+   m68000_irq_callback = regs->irq_callback;
 }
 
 void MC68000_GetRegs(MC68000_Regs *regs)
 {
-	m68000_get_context(&regs->regs);
-	regs->irq_callback = m68000_irq_callback;
+   m68000_get_context(&regs->regs);
+   regs->irq_callback = m68000_irq_callback;
 }
 
 void MC68000_set_nmi_line(int state)
 {
-	/* does not apply */
+   /* does not apply */
 }
 
 void MC68000_set_irq_line(int irqline, int state)
 {
-	if (state != CLEAR_LINE)
-		m68000_pulse_irq(irqline);
+   if (state != CLEAR_LINE)
+	  m68000_pulse_irq(irqline);
 }
 
 void MC68000_set_irq_callback(int (*callback)(int irqline))
 {
-	m68000_irq_callback = callback;
+   m68000_irq_callback = callback;
 }
 
 #else

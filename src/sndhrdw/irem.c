@@ -19,7 +19,7 @@ void irem_sound_cmd_w(int offset,int data)
 }
 
 
-void irem_io_w(int offset,int data)
+static void irem_io_w(int offset,int data)
 {
 	switch (offset)
 	{
@@ -70,7 +70,7 @@ void irem_io_w(int offset,int data)
 }
 
 
-int irem_io_r(int offset)
+static int irem_io_r(int offset)
 {
 	switch (offset)
 	{
@@ -135,4 +135,24 @@ struct MSM5205interface irem_msm5205_interface =
 	4000,       /* 4000Hz playback */
 	irem_adpcm_int,	/* interrupt function */
 	{ 80, 80 }
+};
+
+
+
+struct MemoryReadAddress irem_sound_readmem[] =
+{
+	{ 0x0000, 0x001f, irem_io_r },
+	{ 0x0080, 0x00ff, MRA_RAM },
+	{ 0x8000, 0xffff, MRA_ROM },
+	{ -1 }	/* end of table */
+};
+
+struct MemoryWriteAddress irem_sound_writemem[] =
+{
+	{ 0x0000, 0x001f, irem_io_w },
+	{ 0x0080, 0x00ff, MWA_RAM },
+	{ 0x0801, 0x0802, MSM5205_data_w },
+	{ 0x9000, 0x9000, MWA_NOP },    /* IACK */
+	{ 0x8000, 0xffff, MWA_ROM },
+	{ -1 }	/* end of table */
 };

@@ -656,6 +656,26 @@ ROM_START( roundup_rom )
 	ROM_LOAD( "roundup.u31",  0x0800, 0x0800, 0x76cf4394 )
 ROM_END
 
+ROM_START( fitter_rom )
+	ROM_REGION(0x10000)     /* 64k for main CPU */
+	ROM_LOAD( "ic38.bin",     0x0000, 0x1000, 0x6bf6cca4 )
+	ROM_LOAD( "roundup.u39",  0x1000, 0x1000, 0x37bf554b )
+	ROM_LOAD( "ic40.bin",     0x2000, 0x1000, 0x572e2157 )
+	ROM_LOAD( "roundup.u41",  0x3000, 0x1000, 0x1c5ed660 )
+	ROM_LOAD( "ic33.bin",     0x4000, 0x1000, 0xab47c6c2 )
+
+	ROM_REGION_DISPOSE(0x1800)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "ic9.bin",      0x0000, 0x0800, 0xa6799a37 )
+	ROM_LOAD( "ic8.bin",      0x1000, 0x0800, 0xa8256dfe )
+
+	ROM_REGION(0x0020)      /* Color PROM */
+	ROM_LOAD( "roundup.clr",  0x0000, 0x0020, 0xa758b567 )
+
+	ROM_REGION(0x10000)     /* 64k for audio CPU */
+	ROM_LOAD( "ic30.bin",     0x0000, 0x0800, 0x4055b5ca )
+	ROM_LOAD( "ic31.bin",     0x0800, 0x0800, 0xc9d8c1cc )
+ROM_END
+
 ROM_START( intrepid_rom )
 	ROM_REGION(0x10000)     /* 64k for main CPU */
 	ROM_LOAD( "ic19.1",       0x0000, 0x1000, 0x7d927b23 )
@@ -913,6 +933,32 @@ struct GameDriver roundup_driver =
 	0,
 
 	roundup_rom,
+	0, 0,
+	0,
+	0,      /* sound_prom */
+
+	roundup_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	roundup_hiload, roundup_hisave
+};
+
+struct GameDriver fitter_driver =
+{
+	__FILE__,
+	&roundup_driver,
+	"fitter",
+	"Fitter",
+	"1981",
+	"Taito",
+	"Zsolt Vasvari",
+	GAME_IMPERFECT_COLORS,
+	&thepit_machine_driver,
+	0,
+
+	fitter_rom,
 	0, 0,
 	0,
 	0,      /* sound_prom */

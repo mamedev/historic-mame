@@ -54,11 +54,6 @@ void zerozone_sound_w (int offset, int data)
 	cpu_cause_interrupt (1, 0xff);
 }
 
-static int zerozone_adpcm_status_r (int offset)
-{
-	return (ADPCM_playing (0));
-}
-
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x000000, 0x01ffff, MRA_ROM },
@@ -82,12 +77,12 @@ static struct MemoryWriteAddress writemem[] =
 	{ -1 }  /* end of table */
 };
 
+
 static struct MemoryReadAddress sound_readmem[] =
 {
 	{ 0x0000, 0x7fff, MRA_ROM },
 	{ 0x8000, 0x87ff, MRA_RAM },
-//	{ 0x9800, 0x9800, OKIM6295_status_r },
-	{ 0x9800, 0x9800, zerozone_adpcm_status_r },
+	{ 0x9800, 0x9800, OKIM6295_status_0_r },
 	{ 0xa000, 0xa000, soundlatch_r },
 	{ -1 }  /* end of table */
 };
@@ -96,7 +91,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 {
 	{ 0x0000, 0x7fff, MWA_ROM },
 	{ 0x8000, 0x87ff, MWA_RAM },
-	{ 0x9800, 0x9800, OKIM6295_data_w },
+	{ 0x9800, 0x9800, OKIM6295_data_0_w },
 	{ -1 }  /* end of table */
 };
 
@@ -206,7 +201,7 @@ static struct OKIM6295interface okim6295_interface =
 {
 	1,              /* 1 chip */
 	8000,           /* 8000Hz ??? TODO: find out the real frequency */
-	3,              /* memory region 3 */
+	{ 3 },              /* memory region 3 */
 	{ 255 }
 };
 

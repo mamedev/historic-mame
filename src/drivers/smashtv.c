@@ -317,8 +317,8 @@ static struct MemoryReadAddress mk_sound_readmem[] =
 {
 	{ 0x0000, 0x1fff, MRA_RAM },
 	{ 0x2401, 0x2401, YM2151_status_port_0_r },
-	{ 0x2c00, 0x2c00, OKIM6295_status_r },
-	{ 0x3000, 0x3000, soundlatch_r},
+	{ 0x2c00, 0x2c00, OKIM6295_status_0_r },
+	{ 0x3000, 0x3000, soundlatch_r },
 	{ 0x4000, 0xbfff, MRA_BANK5},
 	{ 0xc000, 0xffff, MRA_BANK6},
 	{ -1 }
@@ -333,7 +333,7 @@ static struct MemoryWriteAddress mk_sound_writemem[] =
 	{ 0x2400, 0x2400, YM2151_register_port_0_w },
 	{ 0x2401, 0x2401, YM2151_data_port_0_w },
 	{ 0x2800, 0x2800, DAC_data_w },
-	{ 0x2c00, 0x2c00, OKIM6295_data_w },
+	{ 0x2c00, 0x2c00, OKIM6295_data_0_w },
 	{ 0x3400, 0x3400, mk_adpcm_bs_w }, /* PCM-BS */
 	{ 0x3c00, 0x3c00, mk_sound_talkback_w }, /* talkback port? */
 	{ 0x4000, 0xffff, MWA_ROM},
@@ -1188,7 +1188,7 @@ static struct OKIM6295interface okim6295_interface =
 {
 	1,          /* 1 chip */
 	8000,       /* 8000 Hz frequency */
-	4,          /* memory region 4 */
+	{ 4 },          /* memory region 4 */
 	{ 50 }
 };
 
@@ -1196,20 +1196,20 @@ void mk_adpcm_bs_w(int offset, int data)
 {
 	if (!(data&0x04))
 	{
-		okim6295_interface.region=4;
+		okim6295_interface.region[0]=4;
 	}
 	else
 	{
 		if (data&0x01)
 		{
-			okim6295_interface.region=5;
+			okim6295_interface.region[0]=5;
 		}
 		else
 		{
-			okim6295_interface.region=6;
+			okim6295_interface.region[0]=6;
 		}
 	}
-	if (errorlog) fprintf(errorlog, "adpcm-bs 0x%x --> 0x%x\n", data, okim6295_interface.region);
+	if (errorlog) fprintf(errorlog, "adpcm-bs 0x%x --> 0x%x\n", data, okim6295_interface.region[0]);
 }
 
 /* Y-unit games */

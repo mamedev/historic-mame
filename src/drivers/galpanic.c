@@ -1,5 +1,17 @@
 /***************************************************************************
 
+The current ROM set is strange because two ROMs overlap two others replacing
+the program.
+
+It's definitely a Kaneko boardset, but it could very well be they converted
+some other game to run Gal's Panic, because there's some ROMs piggybacked
+on top of each other and some ROMs on a daughterboard plugged into smaller
+sized ROM sockets. It's not a pirate version. The piggybacked ROMs even have
+Kaneko stickers. The silkscreen on the board says PAMERA-4.
+
+There is at least another version of the Gals Panic board. It's single board,
+so no daughterboard. There are only 4 IC's socketed, the rest is soldered to
+the board, and no piggybacked ROMs. Board number is MDK 321 V-0    EXPRO-02
 
 ***************************************************************************/
 
@@ -50,7 +62,7 @@ void galpanic_6295_bankswitch_w(int offset,int data)
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x000000, 0x3fffff, MRA_ROM },
-	{ 0x400000, 0x400001, OKIM6295_status_r },
+	{ 0x400000, 0x400001, OKIM6295_status_0_r },
 	{ 0x500000, 0x51ffff, galpanic_fgvideoram_r },
 	{ 0x520000, 0x53ffff, galpanic_bgvideoram_r },
 	{ 0x600000, 0x6007ff, galpanic_paletteram_r },
@@ -64,7 +76,7 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x000000, 0x3fffff, MWA_ROM },
-	{ 0x400000, 0x400001, OKIM6295_data_w },
+	{ 0x400000, 0x400001, OKIM6295_data_0_w },
 	{ 0x500000, 0x51ffff, galpanic_fgvideoram_w, &galpanic_fgvideoram, &galpanic_fgvideoram_size },
 	{ 0x520000, 0x53ffff, galpanic_bgvideoram_w, &galpanic_bgvideoram },	/* + work RAM */
 	{ 0x600000, 0x6007ff, galpanic_paletteram_w, &paletteram },	/* 1024 colors, but only 512 seem to be used */
@@ -112,12 +124,11 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x8000, IP_ACTIVE_LOW, IPT_UNKNOWN )
 
 	PORT_START
-	PORT_DIPNAME( 0x0001, 0x0001, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(      0x0001, "Off" )
-	PORT_DIPSETTING(      0x0000, "On" )
-	PORT_DIPNAME( 0x0002, 0x0002, "Unknown", IP_KEY_NONE )
-	PORT_DIPSETTING(      0x0002, "Off" )
-	PORT_DIPSETTING(      0x0000, "On" )
+	PORT_DIPNAME( 0x0003, 0x0003, "Difficulty?", IP_KEY_NONE )
+	PORT_DIPSETTING(      0x0002, "Easy?" )
+	PORT_DIPSETTING(      0x0003, "Normal?" )
+	PORT_DIPSETTING(      0x0001, "Hard?" )
+	PORT_DIPSETTING(      0x0000, "Hardest?" )
 	PORT_DIPNAME( 0x0004, 0x0004, "Unknown", IP_KEY_NONE )
 	PORT_DIPSETTING(      0x0004, "Off" )
 	PORT_DIPSETTING(      0x0000, "On" )
@@ -183,7 +194,7 @@ static struct OKIM6295interface okim6295_interface =
 {
 	1,              /* 1 chip */
 	12000,          /* 12000Hz frequency */
-	2,              /* memory region 2 */
+	{ 2 },              /* memory region 2 */
 	{ 100 }
 };
 
@@ -237,9 +248,13 @@ static struct MachineDriver machine_driver =
 
 ROM_START( galpanic_rom )
 	ROM_REGION(0x400000)	/* 68000 code */
+	ROM_LOAD_EVEN( "pm110.4m2",    0x000000, 0x080000, 0xae6b17a8 )
+	ROM_LOAD_ODD ( "pm109.4m1",    0x000000, 0x080000, 0xb85d792d )
+	/* The above two ROMs contain valid 68000 code, but the game doesn't */
+	/* work. I think there might be a protection (addressed at e00000). */
+	/* The two following ROMs replace the code with a working version. */
 	ROM_LOAD_EVEN( "pm112.6",      0x000000, 0x020000, 0x7b972b58 )
 	ROM_LOAD_ODD ( "pm111.5",      0x000000, 0x020000, 0x4eb7298d )
-	/* 400000-ffffff empty? */
 	ROM_LOAD_ODD ( "pm004e.8",     0x100000, 0x080000, 0xd3af52bc )
 	ROM_LOAD_EVEN( "pm005e.7",     0x100000, 0x080000, 0xd7ec650c )
 	ROM_LOAD_ODD ( "pm000e.15",    0x200000, 0x080000, 0x5d220f3f )
@@ -255,12 +270,6 @@ ROM_START( galpanic_rom )
 	ROM_LOAD( "pm008e.l",     0x00000, 0x80000, 0xd9379ba8 )
 	ROM_RELOAD(               0x40000, 0x80000 )
 	ROM_LOAD( "pm007e.u",     0xc0000, 0x80000, 0xc7ed7950 )
-
-	ROM_REGION(0x100000)
-	/* unused ROMs! These contain 68000 code, it looks like they should */
-	/* replace pm111 and pm112, maybe diagnostics code? */
-	ROM_LOAD_EVEN( "pm110.4m2",    0x00000, 0x80000, 0xae6b17a8 )
-	ROM_LOAD_ODD ( "pm109.4m1",    0x00000, 0x80000, 0xb85d792d )
 ROM_END
 
 

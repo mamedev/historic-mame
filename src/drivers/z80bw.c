@@ -11,6 +11,7 @@ Games which are referenced by this driver:
 ------------------------------------------
 Astro Invader (astinvad)
 Kamikaze (kamikaze)
+Space Intruder (spaceint)
 
 I/O ports:
 read:
@@ -30,10 +31,13 @@ write:
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
+int  astinvad_interrupt(void);
 
 extern unsigned char *astinvad_videoram;
 
+
 void astinvad_videoram_w(int offset,int data);   /* L.T */
+void spaceint_videoram_w (int offset,int data);
 
 int  astinvad_vh_start(void);
 void astinvad_vh_stop(void);
@@ -42,19 +46,16 @@ void astinvad_sh_port4_w(int offset,int data);
 void astinvad_sh_port5_w(int offset,int data);
 void astinvad_sh_update(void);
 
-/* HSC 12/04/98  see drivers/8080bw.c */
-void mix_hiscoreprint(int x, int y, int value, int width,int size, int adjust,int romarea, int offset, int type);
-
-
 
 static struct MemoryWriteAddress astinvad_writemem[] = /* L.T */ /* Whole function */
 {
 	{ 0x1c00, 0x23ff, MWA_RAM },
-    { 0x2400, 0x3fff, astinvad_videoram_w, &astinvad_videoram },
+        { 0x2400, 0x3fff, astinvad_videoram_w, &astinvad_videoram },
 	{ 0x4000, 0x4fff, MWA_RAM, },
 	{ 0x0000, 0x1bff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
+
 
 static struct MemoryReadAddress astinvad_readmem[] =
 {
@@ -63,6 +64,7 @@ static struct MemoryReadAddress astinvad_readmem[] =
 	{ 0x4000, 0x4fff, MRA_RAM },
 	{ -1 }  /* end of table */
 };
+
 
 /* LT 20-3-1998 */
 static struct IOReadPort astinvad_readport[] =
@@ -79,6 +81,7 @@ static struct IOWritePort astinvad_writeport[] =
         { 0x05, 0x05, astinvad_sh_port5_w },
 	{ -1 }  /* end of table */
 };
+
 
 INPUT_PORTS_START( astinvad_input_ports )
 	PORT_START      /* IN0 */
@@ -106,6 +109,10 @@ INPUT_PORTS_START( astinvad_input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Right */
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Right */
 INPUT_PORTS_END
+
+
+
+
 
 static unsigned char astinvad_palette[] = /* L.T */
 {
@@ -165,6 +172,8 @@ static struct MachineDriver astinvad_machine_driver = /* LT */
 	}
 };
 
+
+
 /***************************************************************************
 
   Game driver(s)
@@ -190,6 +199,7 @@ ROM_START( kamikaze_rom )
 	ROM_LOAD( "km04",         0x1800, 0x0800, 0x494e1f6d )
 ROM_END
 
+
 static const char *astinvad_sample_names[] =
 {
 	"*invaders",
@@ -205,52 +215,41 @@ static const char *astinvad_sample_names[] =
 	0       /* end of array */
 };
 
+
 /*****************************************************************************/
-/* Highscore save and load HSC 12/04/98										 */
+/* Highscore save and load HSC 11/04/98										 */
 
 
-static int hiload(void)
+static int astinvad_hiload(void)
 {
-	static int firsttime =0;
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
-
-	/* check if the hi score table has already been initialized */
-	/* the high score table is intialized to all 0, so first of all */
-	/* we dirty it, then we wait for it to be cleared again */
-	if (firsttime == 0)
-	{
-		memset(&RAM[0x1fc9],0xff,20);
-		RAM[0x301d] = 0xff;
-		firsttime = 1;
-	}
+/*		RAM[0x1fc9]=1;
+		RAM[0x1fca]=1;
+		RAM[0x1fcb]=1;
+*/
 
 
-	if (memcmp(&RAM[0x1fc9],"\x00\x00\x00",3) == 0 && memcmp(&RAM[0x1fd9],"\x00\x00\x00",3) == 0 &&
-		memcmp(&RAM[0x301d],"\x3e",1) == 0 )
+
+
+	if (memcmp(&RAM[0x1cff],"\x08\x20\x03",3) == 0 )
     {
         void *f;
+
         if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
         {
-			int hi;
-			osd_fread(f,&RAM[0x1fc9],20);
-			osd_fclose(f);
-
-			hi = (RAM[0x1fca] & 0x0f) +
-				 (RAM[0x1fca] >> 4) * 10 +
-				 (RAM[0x1fc9] & 0x0f) * 100 +
-				 (RAM[0x1fc9] >> 4) * 1000;
-
-		mix_hiscoreprint(11,2, hi,4,5,0,0x0c00, 0x36a, 4 ) ;
-
+            osd_fread(f,&RAM[0x1fc9],19);
+            osd_fclose(f);
         }
-		firsttime =  0;
-		return 1;
+
+        return 1;
     }
-    else return 0;  /* we can't load the hi scores yet */
+
+    else
+    return 0;  /* we can't load the hi scores yet */
 }
 
-static void hisave(void)
+static void astinvad_hisave(void)
 {
     void *f;
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
@@ -258,66 +257,13 @@ static void hisave(void)
 
     if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
     {
-		osd_fwrite(f,&RAM[0x1fc9],20);
+		osd_fwrite(f,&RAM[0x1fc9],19);
+        //osd_fwrite(f,&RAM[0x1c00],2047);
+		//{ 0x4000, 0x4fff, MWA_RAM, },
+		//osd_fwrite(f,&RAM[0x4000],4095);
         osd_fclose(f);
     }
 }
-
-
-static int kamikaze_hiload(void)
-{
-	static int firsttime =0;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	/* check if the hi score table has already been initialized */
-	/* the high score table is intialized to all 0, so first of all */
-	/* we dirty it, then we wait for it to be cleared again */
-	if (firsttime == 0)
-	{
-		memset(&RAM[0x1fc5],0xff,20);
-		RAM[0x301d] = 0xff;
-		firsttime = 1;
-	}
-
-
-	if (memcmp(&RAM[0x1fc5],"\x00\x00\x00",3) == 0 && memcmp(&RAM[0x1fd4],"\x00\x00\x00",3) == 0 &&
-		memcmp(&RAM[0x301d],"\x3e",1) == 0 )
-    {
-        void *f;
-        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
-        {
-			int hi;
-			osd_fread(f,&RAM[0x1fc5],20);
-			osd_fclose(f);
-
-			hi = (RAM[0x1fc5] & 0x0f) +
-				 (RAM[0x1fc5] >> 4) * 10 +
-				 (RAM[0x1fc6] & 0x0f) * 100 +
-				 (RAM[0x1fc6] >> 4) * 1000;
-
-		mix_hiscoreprint(11,2, hi,4,5,0,0x0800, 0x6fd, 4 ) ;
-
-        }
-		firsttime =  0;
-		return 1;
-    }
-    else return 0;  /* we can't load the hi scores yet */
-}
-
-static void kamikaze_hisave(void)
-{
-    void *f;
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-    if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
-    {
-		osd_fwrite(f,&RAM[0x1fc5],20);
-        osd_fclose(f);
-    }
-}
-
 
 /* LT 20-3-1998 */
 struct GameDriver astinvad_driver =
@@ -343,7 +289,7 @@ struct GameDriver astinvad_driver =
 	0, astinvad_palette, 0,
 	ORIENTATION_ROTATE_270,
 
-	hiload,hisave
+	astinvad_hiload,astinvad_hisave
 };
 
 /* LT 20 - 3 19978 */
@@ -370,6 +316,185 @@ struct GameDriver kamikaze_driver =
 	0, astinvad_palette, 0,
 	ORIENTATION_ROTATE_270,
 
-	kamikaze_hiload, kamikaze_hisave
+	0,0
 };
+
+/*------------------------------------------------------------------------------
+ Shoei Space Intruder
+ Added By Lee Taylor (lee@defender.demon.co.uk)
+ December 1998
+------------------------------------------------------------------------------*/
+
+
+static int spaceint_interrupt(void)
+{
+	if (readinputport(2) & 1)	/* Coin */
+		return nmi_interrupt();
+	else return interrupt();
+}
+
+
+/* LT 23-12-1998 */
+static struct MemoryWriteAddress spaceint_writemem[] = /* L.T */ /* Whole function */
+{
+	{ 0x2000, 0x23ff, MWA_RAM },
+        { 0x4100, 0x5fff, spaceint_videoram_w, &astinvad_videoram },
+	{ 0x4000, 0x40ff, MWA_RAM, },
+	{ 0x0000, 0x1bff, MWA_ROM },
+	{ -1 }  /* end of table */
+};
+
+
+/* LT 23-12-1998 */
+static struct MemoryReadAddress spaceint_readmem[] =
+{
+	{ 0x2000, 0x23ff, MRA_RAM },
+	{ 0x4100, 0x5fff, MRA_RAM },
+	{ 0x0000, 0x1bff, MRA_ROM },
+	{ -1 }  /* end of table */
+};
+
+
+/* LT 23-12-1998 */
+static struct IOReadPort spaceint_readport[] =
+{
+	{ 0x00, 0x00, input_port_0_r },
+	{ -1 }  /* end of table */
+};
+
+
+/* LT 23-12-1998 */
+static struct IOWritePort spaceint_writeport[] =
+{
+	{ -1 }  /* end of table */
+};
+
+
+INPUT_PORTS_START( spaceint_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2  )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY)
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY  )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_2WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_2WAY | IPF_COCKTAIL)
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL)
+	PORT_START      /* IN1 */
+	PORT_DIPNAME( 0x01, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x01, "4" )
+	PORT_DIPNAME( 0x02, 0x00, "Extra Live", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "10000" )
+	PORT_DIPSETTING(    0x02, "20000" )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_DIPNAME( 0x08, 0x00, "Coins", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "1 Coin  Per 2 Plays" )
+	PORT_DIPSETTING(    0x00, "1 Coin  Per Play" )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Left */
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Left */
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Right */
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN ) /* Right */
+	PORT_START	/* FAKE */
+	/* The coin slots are not memory mapped. Coin insertion causes a NMI. */
+	/* This fake input port is used by the interrupt */
+	/* handler to be notified of coin insertions. We use IPF_IMPULSE to */
+	/* trigger exactly one interrupt, without having to check when the */
+	/* user releases the key. */
+	/* The cabinet selector is not memory mapped, but just disables the */
+	/* screen flip logic */
+	PORT_BITX(0x01, IP_ACTIVE_HIGH, IPT_COIN1 | IPF_IMPULSE, "Coin", IP_KEY_DEFAULT, IP_JOY_DEFAULT, 1 )
+INPUT_PORTS_END
+
+
+static struct MachineDriver spaceint_machine_driver = /* 20-12-1998 LT */
+{
+	/* basic machine hardware */
+	{
+		{
+                        CPU_Z80,
+			2000000,        /* 2 Mhz? */
+			0,
+			spaceint_readmem,spaceint_writemem,spaceint_readport,spaceint_writeport,
+			spaceint_interrupt,1    /* two interrupts per frame */
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,       /* frames per second, vblank duration */
+	1,      /* single CPU, no need for interleaving */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 0*8, 32*8-1 },
+	0,      /* no gfxdecodeinfo - bitmapped display */
+	sizeof(astinvad_palette)/3, 0,
+	0,
+
+	VIDEO_TYPE_RASTER|VIDEO_SUPPORTS_DIRTY,
+	0,
+        astinvad_vh_start,
+        astinvad_vh_stop,
+        astinvad_vh_screenrefresh,
+
+	/* sound hardware */
+	0, 0, 0, 0,
+	{
+		{
+			SOUND_SAMPLES,
+			&samples_interface
+		}
+	}
+};
+
+
+ROM_START( spaceint_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "1", 0x0000, 0x0400, 0x184314d2 )
+	ROM_LOAD( "2", 0x0400, 0x0400, 0x55459aa1 )
+	ROM_LOAD( "3", 0x0800, 0x0400, 0x9d6819be )
+	ROM_LOAD( "4", 0x0c00, 0x0400, 0x432052d4 )
+	ROM_LOAD( "5", 0x1000, 0x0400, 0xc6cfa650 )
+	ROM_LOAD( "6", 0x1400, 0x0400, 0xc7ccf40f )
+	ROM_REGION(0x0100)     /* dummy space for graphics*/
+	ROM_REGION(0x0100)     /* color prom*/
+	ROM_LOAD( "clr", 0x0000, 0x0100, 0x13c1803f )
+ROM_END
+
+
+static int spaceint_hiload(void)
+{
+        return 1;
+}
+
+static void spaceint_hisave(void)
+{
+
+}
+
+
+/* LT 21-12-1998 */
+struct GameDriver spaceint_driver =
+{
+	__FILE__,
+	0,
+	"spaceint",
+	"Space Intruder",
+	"1980",
+	"Shoei",
+	"Lee Taylor\n",
+	GAME_WRONG_COLORS,
+	&spaceint_machine_driver,
+	0,
+
+	spaceint_rom,
+	0, 0,
+	astinvad_sample_names,
+	0,      /* sound_prom */
+
+	spaceint_input_ports,
+
+	0, astinvad_palette, 0,
+	ORIENTATION_DEFAULT,
+	spaceint_hiload,spaceint_hisave
+};
+
 

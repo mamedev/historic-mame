@@ -156,8 +156,8 @@ static struct GfxLayout fakelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-        { 0, 0,      &fakelayout,     0, 256 },
-        { -1 } /* end of array */
+	{ 0, 0,      &fakelayout,     0, 256 },
+	{ -1 } /* end of array */
 };
 
 static unsigned char color_prom[] = { VEC_PAL_COLOR };
@@ -167,7 +167,7 @@ static unsigned char color_prom[] = { VEC_PAL_COLOR };
 static struct POKEYinterface pokey_interface =
 {
 	2,	/* 2 chips */
-	1500000,	/* 1.5 MHz? */
+	600000,        /* .6 MHz? (hand tuned) */
 	50,
 	POKEY_DEFAULT_GAIN,
 	NO_CLIP,
@@ -192,7 +192,7 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_M68000,
-			8000000,		/* really should be 6MHz, but we use 8 because the 68k isn't properly timed */
+			6000000,		/* 6MHz */
 			0,
 			quantum_read,quantum_write,0,0,
 			quantum_interrupt,3	/* IRQ rate = 750kHz/4096 */

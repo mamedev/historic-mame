@@ -1,22 +1,48 @@
-/***************************************************************************
+/****************************************************************************
+Supported games:
+	Twin Cobra (World)
+	Twin Cobra (USA license)
+	Kyukyoku Tiger (Japan license)
+
+Difference between Twin Cobra and Kyukyoko Tiger:
+	T.C. supports two simultaneous players.
+	K.T. supports two players, but only one at a time.
+		 for this reason, it also supports Table Top cabinets.
+	T.C. stores 3 characters for high scores.
+	K.T. stores 6 characters for high scores.
+	T.C. heros are Red and Blue for player 1 and 2 respectively.
+	K.T. heros are grey for both players.
+	T.C. dead remains of ground tanks are circular.
+	K.T. dead remains of ground tanks always vary in shape.
+	T.C. does not use DSW1-1 and DSW2-8.
+	K.T. uses DSW1-1 for cabinet type, and DSW2-8 for allow game continue.
+	T.C. continues new hero and continued game at current position.
+	K.T. continues new hero and continued game at predefined positions.
+		 After dying, and your new hero appears, if you do not travel more
+		 than your helicopter length forward, you are penalised and moved
+		 back further when your next hero appears.
+	K.T. Due to this difference in continue sequence, Kyukyoko Tiger is MUCH
+		 harder, challenging, and nearly impossible to complete !
 
 68000:
 
 00000-2ffff ROM
-30000-33fff RAM part of this (starting from 30000) is shared with the
-                TI TMS320C10NL-14 protection microcontroller
+30000-33fff RAM shared with TMS320C10NL-14 protection microcontroller
 40000-40fff RAM sprite character display properties (co-ordinates, character, color - etc)
 50000-50dff Palette RAM
-60000-60003 RAM
 7a000-7abff RAM shared with Z80; 16-bit on this side, 8-bit on Z80 side
 
 read:
-78004       Player 1 Joystick and Buttons input port
-78006       Player 2 Joystick and Buttons input port
-78009       bit 7 vblank
+78000		Player 1 Joystick and Buttons input port  (Flying shark)
+78002		Player 2 Joystick and Buttons input port  (Flying shark)
+
+78004		Player 1 Joystick and Buttons input port  (Twin Cobra)
+78006		Player 2 Joystick and Buttons input port  (Twin Cobra)
+78009		bit 7 vblank
 7e000-7e005 read data from video RAM (see below)
 
 write:
+60000-60003 CRT 6845 controller. 0 = register offset , 2 = register data
 70000-70001 scroll   y   for character page (centre normally 0x01c9)
 70002-70003 scroll < x > for character page (centre normally 0x00e2)
 70004-70005 offset in character page to write character (7e000)
@@ -29,12 +55,28 @@ write:
 74002-74003 scroll < x > for background page (centre normally 0x002a)
 74004-74005 offset in character page to write character (7e004)
 
-76000-76003 enable video ???
-7800c       goes to the TI TMS320C10NL-14 protection microcontroller. Bit 0
-            might be interrupt enable, but might also be a signal to the chip
-            which then triggers the IRQ. The game writes 0c-0d in succession
-            to this register when it expects the protection chip to do its
-            work with the shared RAM at 30000.
+76000-76003 as above but for another layer maybe ??? (Not used here)
+7800a		see 7800c, except this activates INT line for Flying shark.
+7800c		Control register (Byte write access).
+			bits 7-4 always 0
+			bits 3-1 select the control signal to drive.
+			bit   0  is the value passed to the control signal.
+
+			Value (hex):
+			00-03	????
+			04		Clear IPL2 line to 68000 inactive hi (Interrupt priority 4)
+			05		Set   IPL2 line to 68000 active  low (Interrupt priority 4)
+			06		Dont flip display
+			07		Flip display
+			08		Switch to background layer ram bank 0
+			09		Switch to background layer ram bank 1
+			0A		Switch to foreground layer rom bank 0
+			0B		Switch to foreground layer rom bank 1
+			0C		Activate INTerrupt line to the TMS320C10 DSP.
+			0D		Inhibit  INTerrupt line to the TMS320C10 DSP.
+			0E		Turn screen off
+			0F		Turn screen on
+
 7e000-7e001 data to write in text video RAM (70000)
 7e002-7e003 data to write in bg video RAM (72004)
 7e004-7e005 data to write in fg video RAM (74004)
@@ -44,26 +86,48 @@ Z80:
 8000-87ff shared with 68000; 8-bit on this side, 16-bit on 68000 side
 
 in:
-00        YM3812 status
-10        Coin inputs and control/service inputs
-40        DSW1
-50        DSW2
+00		  YM3812 status
+10		  Coin inputs and control/service inputs
+40		  DSW1
+50		  DSW2
 
 out:
-00        YM3812 control
-01        YM3812 data
-20        ??
+00		  YM3812 control
+01		  YM3812 data
+20		  ????
 
-***************************************************************************/
+
+TMS320C10 DSP: Harvard type architecture. RAM and ROM on seperate data buses.
+0000-07ff ROM (words)
+0000-0090 Internal RAM (words).	Moved to 8000-8120 for MAME compatibility.
+								View this memory in the debugger at 4000h
+
+68K writes the following to $30000 to tell DSP to do the following:
+Twin  Kyukyoku
+Cobra Tiger
+00		00	 do nothing
+01		0C	 run self test, and report DSP ROM checksum		from 68K PC:23CA6
+02		07	 control all enemy shots						from 68K PC:23BFA
+04		0b	 start the enemy helicopters					from 68K PC:23C66
+05		08	 check for colision with enemy fire ???			from 68K PC:23C20
+06		09	 check for colision with enemy ???				from 68K PC:23C44
+07		01	 control enemy helicopter shots					from 68K PC:23AB2
+08		02	 control all ground enemy shots
+0A		04	 read hero position and send enemy to it ?		from 68K PC:23B58
+
+03		0A	\
+09		03	 \ These functions within the DSPs never seem to be called ????
+0B		05	 /
+0C		06	/
+*****************************************************************************/
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
-#include "cpu/m68000/m68000.h"
+#include "cpu/M68000/M68000.h"
 
-
-static unsigned char *twincobr_sharedram;
-
-static unsigned char *twincobr_60000_3;
+/**************** Video stuff ******************/
+int twincobr_60000_r(int offset);
+void twincobr_60000_w(int offset,int data);
 void twincobr_70004_w(int offset,int data);
 int twincobr_7e000_r(int offset);
 void twincobr_7e000_w(int offset,int data);
@@ -73,6 +137,7 @@ void twincobr_7e002_w(int offset,int data);
 void twincobr_74004_w(int offset,int data);
 int twincobr_7e004_r(int offset);
 void twincobr_7e004_w(int offset,int data);
+void twincobr_76004_w(int offset,int data);
 void twincobr_txscroll_w(int offset,int data);
 void twincobr_bgscroll_w(int offset,int data);
 void twincobr_fgscroll_w(int offset,int data);
@@ -80,15 +145,21 @@ int twincobr_vh_start(void);
 void twincobr_vh_stop(void);
 void twincobr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
+/**************** Machine stuff ******************/
+int twincobr_dsp_in(int offset);
+void twincobr_dsp_out(int fnction,int data);
+int twincobr_68k_dsp_r(int offset);
+void twincobr_68k_dsp_w(int offset,int data);
+int twincobr_7800c_r(int offset);
+void twincobr_7800c_w(int offset,int data);
+int twincobr_sharedram_r(int offset);
+void twincobr_sharedram_w(int offset,int data);
 
+extern unsigned char *twincobr_68k_dsp_ram;
+extern unsigned char *twincobr_7800c;
+extern unsigned char *twincobr_sharedram;
+extern int intenable;
 
-static int intenable;
-
-int twincobr_interrupt(void)
-{
-	if (intenable) return MC68000_IRQ_4;
-	else return MC68000_INT_NONE;
-}
 
 
 int twincobr_input_r(int offset)
@@ -96,119 +167,53 @@ int twincobr_input_r(int offset)
 	return readinputport(1 + offset / 2);
 }
 
-int twincobr_60000_3_r(int offset)
+int twincobr_interrupt(void)
 {
- unsigned short int temp6000x = 0;
- temp6000x = READ_WORD(&twincobr_60000_3[offset]);
- if (errorlog) fprintf(errorlog,"PC - read %04x to 6000%01x\n",temp6000x,offset);
- return temp6000x;
-}
-void twincobr_60000_3_w(int offset,int data)
-{
- WRITE_WORD(&twincobr_60000_3[offset],data);
- if (errorlog) fprintf(errorlog,"PC - write %04x to 6000%01x\n",data,offset);
-}
-
-
-
-void twincobr_7800c_w(int offset,int data)
-{
-//// if (errorlog) fprintf(errorlog,"PC %06x - write %04x to 7800c\n",cpu_getpc(),data);
-	intenable = data & 1;
-}
-
-int twincobr_sharedram_r(int offset)
-{
-	return twincobr_sharedram[offset / 2];
-}
-
-void twincobr_sharedram_w(int offset,int data)
-{
-	twincobr_sharedram[offset / 2] = data;
-}
-
-static unsigned char *ppp;
-static int plap(int offset)
-{
-//// if (errorlog) fprintf(errorlog,"plap %06x %04x\n",cpu_getpc(),offset);
-if (cpu_getpc() == 0x23a9e)
-{
-	WRITE_WORD(&ppp[0x0000],0x0000);
-}
-if (cpu_getpc() == 0x23aac)
-{
-	WRITE_WORD(&ppp[0x0000],0x0000);
-}
-if (cpu_getpc() == 0x23ad0)
-{
-	WRITE_WORD(&ppp[0x0000],0x0000);
-}
-if (cpu_getpc() == 0x23c1a)
-{
-	WRITE_WORD(&ppp[0x0000],0x0000);
-}
-if (cpu_getpc() == 0x23c3e)
-{
-	WRITE_WORD(&ppp[0x0000],0x0000);
-}
-if (cpu_getpc() == 0x23c62)
-{
-	WRITE_WORD(&ppp[0x0000],0x0000);
-}
-if (cpu_getpc() == 0x23c80)
-{
-	WRITE_WORD(&ppp[0x0000],0x0000);
-	WRITE_WORD(&ppp[0x000e],0x0000);	/* ??? */
-}
-if (cpu_getpc() == 0x23cb6)
-{
-	WRITE_WORD(&ppp[0x0000],0x0000);
-	WRITE_WORD(&ppp[0x000e],0x0076);
-}
-	return READ_WORD(&ppp[offset]);
-}
-static void plop(int offset,int data)
-{
-//// if (errorlog) fprintf(errorlog,"plop %06x %04x %02x\n",cpu_getpc(),offset,data);
-	COMBINE_WORD_MEM(&ppp[offset],data);
+	if (intenable) {
+		intenable = 0;
+		return MC68000_IRQ_4;
+	}
+	else return MC68000_INT_NONE;
 }
 
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x000000, 0x02ffff, MRA_ROM },
-	{ 0x030000, 0x03001f, plap },
-	{ 0x030020, 0x033fff, MRA_BANK1 },
-	{ 0x040000, 0x040fff, MRA_BANK2 },  /* sprite ram data */
-    { 0x050000, 0x050dff, paletteram_word_r },
-	{ 0x060000, 0x060003, twincobr_60000_3_r, &twincobr_60000_3 },
+	{ 0x030000, 0x033fff, twincobr_68k_dsp_r, &twincobr_68k_dsp_ram },	/* 68K and DSP shared RAM */
+	{ 0x040000, 0x040fff, MRA_BANK1 },				/* sprite ram data */
+	{ 0x050000, 0x050dff, paletteram_word_r },
+	{ 0x060000, 0x060003, twincobr_60000_r },
+/*	{ 0x078000, 0x078003, twincobr_input_r }, */	/* Flying Shark - fshark */
 	{ 0x078004, 0x078007, twincobr_input_r },
-	{ 0x078008, 0x07800b, input_port_0_r },	/* vblank??? */
-	{ 0x07a000, 0x07abff, twincobr_sharedram_r },     /* 16-bit on 68000 side, 8-bit on Z80 side */
-	{ 0x07e000, 0x07e001, twincobr_7e000_r },	/* data from text video RAM */
-	{ 0x07e002, 0x07e003, twincobr_7e002_r },	/* data from bg video RAM */
-	{ 0x07e004, 0x07e005, twincobr_7e004_r },	/* data from fg video RAM */
+	{ 0x078008, 0x07800b, input_port_0_r }, 		/* vblank??? */
+	{ 0x07800c, 0x07800f, twincobr_7800c_r, &twincobr_7800c },
+	{ 0x07a000, 0x07abff, twincobr_sharedram_r },	/* 16-bit on 68000 side, 8-bit on Z80 side */
+	{ 0x07e000, 0x07e001, twincobr_7e000_r },		/* data from text video RAM */
+	{ 0x07e002, 0x07e003, twincobr_7e002_r },		/* data from bg video RAM */
+	{ 0x07e004, 0x07e005, twincobr_7e004_r },		/* data from fg video RAM */
 	{ -1 }	/* end of table */
 };
 
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x000000, 0x02ffff, MWA_ROM },
-	{ 0x030000, 0x03001f, plop, &ppp },
-	{ 0x030020, 0x033fff, MWA_BANK1 },
-	{ 0x040000, 0x040fff, MWA_BANK2, &spriteram, &spriteram_size },  /* sprite ram data */
-    { 0x050000, 0x050dff, paletteram_xBBBBBGGGGGRRRRR_word_w, &paletteram },
-	{ 0x060000, 0x060003, twincobr_60000_3_w, &twincobr_60000_3 },
+	{ 0x030000, 0x033fff, twincobr_68k_dsp_w, &twincobr_68k_dsp_ram },	/* 68K and DSP shared RAM */
+	{ 0x040000, 0x040fff, MWA_BANK1, &spriteram, &spriteram_size },		/* sprite ram data */
+	{ 0x050000, 0x050dff, paletteram_xBBBBBGGGGGRRRRR_word_w, &paletteram },
+	{ 0x060000, 0x060003, twincobr_60000_w },		/* 6845 CRT controller */
 	{ 0x070000, 0x070003, twincobr_txscroll_w },	/* scroll */
-	{ 0x070004, 0x070005, twincobr_70004_w },	/* offset in text video RAM */
+	{ 0x070004, 0x070005, twincobr_70004_w },		/* offset in text video RAM */
 	{ 0x072000, 0x072003, twincobr_bgscroll_w },	/* scroll */
-	{ 0x072004, 0x072005, twincobr_72004_w },	/* offset in bg video RAM */
+	{ 0x072004, 0x072005, twincobr_72004_w },		/* offset in bg video RAM */
 	{ 0x074000, 0x074003, twincobr_fgscroll_w },	/* scroll */
-	{ 0x074004, 0x074005, twincobr_74004_w },	/* offset in fg video RAM */
-	{ 0x07800c, 0x07800f, twincobr_7800c_w },
+	{ 0x074004, 0x074005, twincobr_74004_w },		/* offset in fg video RAM */
+	{ 0x076000, 0x076004, twincobr_76004_w },       /* ???? */
+/*	{ 0x078008, 0x07800b, twincobr_7800c_w }, */	/* Flying Shark - fshark */
+	{ 0x07800c, 0x07800f, twincobr_7800c_w, &twincobr_7800c },
 	{ 0x07a000, 0x07abff, twincobr_sharedram_w },	/* 16-bit on 68000 side, 8-bit on Z80 side */
-	{ 0x07e000, 0x07e001, twincobr_7e000_w },	/* data for text video RAM */
-	{ 0x07e002, 0x07e003, twincobr_7e002_w },	/* data for bg video RAM */
-	{ 0x07e004, 0x07e005, twincobr_7e004_w },	/* data for fg video RAM */
+	{ 0x07e000, 0x07e001, twincobr_7e000_w },		/* data for text video RAM */
+	{ 0x07e002, 0x07e003, twincobr_7e002_w },		/* data for bg video RAM */
+	{ 0x07e004, 0x07e005, twincobr_7e004_w },		/* data for fg video RAM */
 	{ -1 }	/* end of table */
 };
 
@@ -242,6 +247,32 @@ static struct IOWritePort sound_writeport[] =
 	{ -1 }	/* end of table */
 };
 
+static struct MemoryReadAddress DSP_readmem[] =
+{
+	{ 0x0000, 0x0fff, MRA_ROM },
+	{ 0x8000, 0x811F, MRA_RAM },	/* The real DSP has this at address 0 */
+									/* View this at 4000h in the debugger */
+	{ -1 }	/* end of table */
+};
+
+static struct MemoryWriteAddress DSP_writemem[] =
+{
+	{ 0x0000, 0x0fff, MWA_ROM },
+	{ 0x8000, 0x811F, MWA_RAM },	/* The real DSP has this at address 0 */
+									/* View this at 4000h in the debugger */
+	{ -1 }	/* end of table */
+};
+
+static struct IOReadPort DSP_readport[] =
+{
+	{ 0x0000, 0x0001, twincobr_dsp_in },
+	{ -1 }	/* end of table */
+};
+static struct IOWritePort DSP_writeport[] =
+{
+	{ 0x0000,  0x0003, twincobr_dsp_out },
+	{ -1 }	/* end of table */
+};
 
 
 INPUT_PORTS_START( input_ports )
@@ -280,7 +311,7 @@ INPUT_PORTS_START( input_ports )
 	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
 
-	PORT_START      /* DSW1 */
+	PORT_START		/* DSW1 */
 	PORT_DIPNAME( 0x01, 0x00, "Unknown", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x00, "Off" )
 	PORT_DIPSETTING(    0x01, "On" )
@@ -304,15 +335,15 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x80, "1 Coin/4 Credits" )
 	PORT_DIPSETTING(    0xc0, "1 Coin/6 Credits" )
 
-	PORT_START      /* DSW2 */
+	PORT_START		/* DSW2 */
 	PORT_DIPNAME( 0x03, 0x00, "Difficulty", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x01, "Easy" )
 	PORT_DIPSETTING(    0x00, "Normal" )
 	PORT_DIPSETTING(    0x02, "Hard" )
 	PORT_DIPSETTING(    0x03, "Hardest" )
 	PORT_DIPNAME( 0x0c, 0x00, "Bonus Life", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x00, "50000 & every 150000" )
-	PORT_DIPSETTING(    0x04, "70000 & every 200000" )
+	PORT_DIPSETTING(    0x00, "50K, then every 150K" )
+	PORT_DIPSETTING(    0x04, "70K, then every 200K" )
 	PORT_DIPSETTING(    0x08, "50000" )
 	PORT_DIPSETTING(    0x0c, "100000" )
 	PORT_DIPNAME( 0x30, 0x00, "Lives", IP_KEY_NONE )
@@ -328,46 +359,129 @@ INPUT_PORTS_START( input_ports )
 	PORT_DIPSETTING(    0x80, "On" )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( ktiger_input_ports )
+	PORT_START
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_VBLANK )     /* ? could be wrong */
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_8WAY | IPF_PLAYER2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_PLAYER2 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_BUTTON2 | IPF_PLAYER2 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_TILT )
+	PORT_DIPNAME( 0x04, 0x00, "Cross Hatch Pattern", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x04, "On" )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_COIN3 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN )
+
+	PORT_START		/* DSW1 */
+	PORT_DIPNAME( 0x01, 0x01, "Cabinet Type", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "Up-right" )
+	PORT_DIPSETTING(    0x00, "Table Top" )
+	PORT_DIPNAME( 0x02, 0x00, "Flip Screen", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x02, "On" )
+	PORT_DIPNAME( 0x04, 0x00, "Cross Hatch Pattern", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x04, "On" )
+	PORT_DIPNAME( 0x08, 0x00, "Demo Sounds", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x08, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x30, 0x00, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x30, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x10, "1 Coin/2 Credits" )
+	PORT_DIPNAME( 0xc0, 0x00, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x00, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0xc0, "2 Coins/3 Credits" )
+	PORT_DIPSETTING(    0x40, "1 Coin/2 Credits" )
+
+	PORT_START		/* DSW2 */
+	PORT_DIPNAME( 0x03, 0x00, "Difficulty", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x01, "Easy" )
+	PORT_DIPSETTING(    0x00, "Normal" )
+	PORT_DIPSETTING(    0x02, "Hard" )
+	PORT_DIPSETTING(    0x03, "Hardest" )
+	PORT_DIPNAME( 0x0c, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "70K, then every 200K" )
+	PORT_DIPSETTING(    0x04, "50K, then every 150K" )
+	PORT_DIPSETTING(    0x08, "100000" )
+	PORT_DIPSETTING(    0x0c, "No Extend" )
+	PORT_DIPNAME( 0x30, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x30, "2" )
+	PORT_DIPSETTING(    0x00, "3" )
+	PORT_DIPSETTING(    0x20, "4" )
+	PORT_DIPSETTING(    0x10, "5" )
+	PORT_DIPNAME( 0x40, 0x00, "Show DIP SW Settings", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "No" )
+	PORT_DIPSETTING(    0x40, "Yes" )
+	PORT_DIPNAME( 0x80, 0x80, "Allow Continue", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "No" )
+	PORT_DIPSETTING(    0x80, "Yes" )
+INPUT_PORTS_END
 
 
 static struct GfxLayout charlayout =
 {
 	8,8,	/* 8*8 characters */
 	2048,	/* 2048 characters */
-	3,	/* 3 bits per pixel */
+	3,		/* 3 bits per pixel */
 	{ 0*2048*8*8, 1*2048*8*8, 2*2048*8*8 }, /* the bitplanes are separated */
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8	/* every char takes 8 consecutive bytes */
+	8*8		/* every char takes 8 consecutive bytes */
 };
 
 static struct GfxLayout fgtilelayout =
 {
 	8,8,	/* 8*8 tiles */
 	8192,	/* 8192 tiles */
-	4,	/* 4 bits per pixel */
+	4,		/* 4 bits per pixel */
 	{ 0*8192*8*8, 1*8192*8*8, 2*8192*8*8, 3*8192*8*8 }, /* the bitplanes are separated */
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8    /* every tile takes 8 consecutive bytes */
+	8*8		/* every tile takes 8 consecutive bytes */
 };
 
 static struct GfxLayout bgtilelayout =
 {
 	8,8,	/* 8*8 tiles */
 	4096,	/* 4096 tiles */
-	4,	/* 4 bits per pixel */
+	4,		/* 4 bits per pixel */
 	{ 0*4096*8*8, 1*4096*8*8, 2*4096*8*8, 3*4096*8*8 }, /* the bitplanes are separated */
 	{ 0, 1, 2, 3, 4, 5, 6, 7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8 },
-	8*8    /* every tile takes 8 consecutive bytes */
+	8*8		/* every tile takes 8 consecutive bytes */
 };
 
 static struct GfxLayout spritelayout =
 {
 	16,16,	/* 16*16 sprites */
 	2048,	/* 2048 sprites */
-	4,	/* 4 bits per pixel */
+	4,		/* 4 bits per pixel */
 	{ 0*2048*32*8, 1*2048*32*8, 2*2048*32*8, 3*2048*32*8 }, /* the bitplanes are separated */
 	{ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 },
 	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
@@ -377,10 +491,10 @@ static struct GfxLayout spritelayout =
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
 {
-	{ 1, 0x00000, &charlayout,   1536, 32 },	/* colors 1536-1791 */
-	{ 1, 0x0c000, &fgtilelayout, 1280, 16 },	/* colors 1280-1535 */
-	{ 1, 0x4c000, &bgtilelayout, 1024, 16 },	/* colors 1024-1079 */
-	{ 1, 0x6c000, &spritelayout,    0, 64 },	/* colors    0-1023 */
+	{ 1, 0x00000, &charlayout,   1536, 32 },		/* colors 1536-1791 */
+	{ 1, 0x0c000, &fgtilelayout, 1280, 16 },		/* colors 1280-1535 */
+	{ 1, 0x4c000, &bgtilelayout, 1024, 16 },		/* colors 1024-1279 */
+	{ 1, 0x6c000, &spritelayout,    0, 64 },		/* colors    0-1023 */
 	{ -1 } /* end of array */
 };
 
@@ -394,8 +508,8 @@ static void irqhandler(void)
 
 static struct YM3812interface ym3812_interface =
 {
-	1,			/* 1 chip (no more supported) */
-	3500000,	/* 3.5 MHz ? (partially supported) */
+	1,				/* 1 chip  */
+	3500000,		/* 3.5 MHz */
 	{ 255 },		/* (not supported) */
 	irqhandler,
 };
@@ -408,21 +522,28 @@ static struct MachineDriver machine_driver =
 	{
 		{
 			CPU_M68000,
-			7000000,       /* 7 MHz */
+			7000000,			/* 7 MHz */
 			0,
 			readmem,writemem,0,0,
 			twincobr_interrupt,1
 		},
 		{
 			CPU_Z80,
-			3500000,        /* 3.5 MHz  */
-			2,	/* memory region #2 */
+			3500000,			/* 3.5 MHz  */
+			2,					/* memory region #2 */
 			sound_readmem,sound_writemem,sound_readport,sound_writeport,
 			ignore_interrupt,0	/* IRQs are caused by the YM3812 */
-		}
+		},
+		{
+			CPU_TMS320C10,
+			3500000,			/* 3.5 MHz  */
+			3,					/* memory region #3 */
+			DSP_readmem,DSP_writemem,DSP_readport,DSP_writeport,
+			ignore_interrupt,0	/* IRQs are caused by 68000 */
+		},
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
-	100,	/* 100 CPU slices per frame */
+	56, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
+	100,    /* 100 CPU slices per frame */
 	0,
 
 	/* video hardware */
@@ -443,8 +564,8 @@ static struct MachineDriver machine_driver =
 		{
 			SOUND_YM3812,
 			&ym3812_interface
-		}
-	}
+		},
+	},
 };
 
 
@@ -457,7 +578,7 @@ static struct MachineDriver machine_driver =
 ***************************************************************************/
 
 ROM_START( twincobr_rom )
-	ROM_REGION(0x30000)	/* 3*64k for code */
+	ROM_REGION(0x30000)		/* 3*64k for code */
 	ROM_LOAD_EVEN( "tc16",         0x00000, 0x10000, 0x07f64d13 )
 	ROM_LOAD_ODD ( "tc14",         0x00000, 0x10000, 0x41be6978 )
 	ROM_LOAD_EVEN( "tc15",         0x20000, 0x08000, 0x3a646618 )
@@ -469,8 +590,8 @@ ROM_START( twincobr_rom )
 	ROM_LOAD( "tc04",         0x08000, 0x04000, 0xa599d845 )
 	ROM_LOAD( "tc01",         0x0c000, 0x10000, 0x15b3991d )	/* fg tiles */
 	ROM_LOAD( "tc02",         0x1c000, 0x10000, 0xd9e2e55d )
-	ROM_LOAD( "tc05",         0x2c000, 0x10000, 0x8cc79357 )
-	ROM_LOAD( "tc06",         0x3c000, 0x10000, 0x13daeac8 )
+	ROM_LOAD( "tc06",         0x2c000, 0x10000, 0x13daeac8 )
+	ROM_LOAD( "tc05",         0x3c000, 0x10000, 0x8cc79357 )
 	ROM_LOAD( "tc07",         0x4c000, 0x08000, 0xb5d48389 )	/* bg tiles */
 	ROM_LOAD( "tc08",         0x54000, 0x08000, 0x97f20fdc )
 	ROM_LOAD( "tc09",         0x5c000, 0x08000, 0x170c01db )
@@ -480,16 +601,16 @@ ROM_START( twincobr_rom )
 	ROM_LOAD( "tc18",         0x8c000, 0x10000, 0x806fb374 )
 	ROM_LOAD( "tc17",         0x9c000, 0x10000, 0x4264bff8 )
 
-	ROM_REGION(0x10000)     /* 32k for second CPU */
+	ROM_REGION(0x10000)		/* 32k for second CPU */
 	ROM_LOAD( "tc12",         0x00000, 0x08000, 0xe37b3c44 )	/* slightly different from the other two sets */
 
-	ROM_REGION(0x01000)     /* 4k for TI TMS320C10NL-14 Microcontroller */
-	ROM_LOAD_EVEN( "tc1b",         0x0000, 0x0800, 0x1757cc33 )
-	ROM_LOAD_ODD ( "tc2a",         0x0000, 0x0800, 0xd6d878c9 )
+	ROM_REGION(0x10000)		/* 4k for TI TMS320C10NL-14 Microcontroller */
+	ROM_LOAD_EVEN( "tc1b",    0x0000, 0x0800, 0x1757cc33 )
+	ROM_LOAD_ODD ( "tc2a",    0x0000, 0x0800, 0xd6d878c9 )
 ROM_END
 
 ROM_START( twincobu_rom )
-	ROM_REGION(0x30000)	/* 3*64k for code */
+	ROM_REGION(0x30000)		/* 3*64k for code */
 	ROM_LOAD_EVEN( "tc16",         0x00000, 0x10000, 0x07f64d13 )
 	ROM_LOAD_ODD ( "tc14",         0x00000, 0x10000, 0x41be6978 )
 	ROM_LOAD_EVEN( "tcbra26.bin",  0x20000, 0x08000, 0xbdd00ba4 )
@@ -501,8 +622,8 @@ ROM_START( twincobu_rom )
 	ROM_LOAD( "tc04",         0x08000, 0x04000, 0xa599d845 )
 	ROM_LOAD( "tc01",         0x0c000, 0x10000, 0x15b3991d )	/* fg tiles */
 	ROM_LOAD( "tc02",         0x1c000, 0x10000, 0xd9e2e55d )
-	ROM_LOAD( "tc05",         0x2c000, 0x10000, 0x8cc79357 )
-	ROM_LOAD( "tc06",         0x3c000, 0x10000, 0x13daeac8 )
+	ROM_LOAD( "tc06",         0x2c000, 0x10000, 0x13daeac8 )
+	ROM_LOAD( "tc05",         0x3c000, 0x10000, 0x8cc79357 )
 	ROM_LOAD( "tc07",         0x4c000, 0x08000, 0xb5d48389 )	/* bg tiles */
 	ROM_LOAD( "tc08",         0x54000, 0x08000, 0x97f20fdc )
 	ROM_LOAD( "tc09",         0x5c000, 0x08000, 0x170c01db )
@@ -512,20 +633,20 @@ ROM_START( twincobu_rom )
 	ROM_LOAD( "tc18",         0x8c000, 0x10000, 0x806fb374 )
 	ROM_LOAD( "tc17",         0x9c000, 0x10000, 0x4264bff8 )
 
-	ROM_REGION(0x10000)     /* 32k for second CPU */
+	ROM_REGION(0x10000)		/* 32k for second CPU */
 	ROM_LOAD( "b30-05",       0x00000, 0x08000, 0x1a8f1e10 )
 
-	ROM_REGION(0x01000)     /* 4k for TI TMS320C10NL-14 Microcontroller */
-	ROM_LOAD_EVEN( "tc1b",         0x0000, 0x0800, 0x1757cc33 )
-	ROM_LOAD_ODD ( "tc2a",         0x0000, 0x0800, 0xd6d878c9 )
+	ROM_REGION(0x10000)		/* 4k for TI TMS320C10NL-14 Microcontroller */
+	ROM_LOAD_EVEN( "dsp_22.bin",    0x0000, 0x0800, 0x79389a71 )
+	ROM_LOAD_ODD ( "dsp_21.bin",    0x0000, 0x0800, 0x2d135376 )
 ROM_END
 
 ROM_START( ktiger_rom )
-	ROM_REGION(0x30000)	/* 3*64k for code */
-	ROM_LOAD_EVEN( "tc16",         0x00000, 0x10000, 0x07f64d13 )
-	ROM_LOAD_ODD ( "tc14",         0x00000, 0x10000, 0x41be6978 )
-	ROM_LOAD_EVEN( "b30-02",       0x20000, 0x08000, 0x1d63e9c4 )
-	ROM_LOAD_ODD ( "b30-04",       0x20000, 0x08000, 0x03957a30 )
+	ROM_REGION(0x30000)		/* 3*64k for code */
+	ROM_LOAD_EVEN( "tc16",    0x00000, 0x10000, 0x07f64d13 )
+	ROM_LOAD_ODD ( "tc14",    0x00000, 0x10000, 0x41be6978 )
+	ROM_LOAD_EVEN( "b30-02",  0x20000, 0x08000, 0x1d63e9c4 )
+	ROM_LOAD_ODD ( "b30-04",  0x20000, 0x08000, 0x03957a30 )
 
 	ROM_REGION_DISPOSE(0xac000)	/* temporary space for graphics (disposed after conversion) */
 	ROM_LOAD( "tc11",         0x00000, 0x04000, 0x0a254133 )	/* chars */
@@ -533,8 +654,8 @@ ROM_START( ktiger_rom )
 	ROM_LOAD( "tc04",         0x08000, 0x04000, 0xa599d845 )
 	ROM_LOAD( "tc01",         0x0c000, 0x10000, 0x15b3991d )	/* fg tiles */
 	ROM_LOAD( "tc02",         0x1c000, 0x10000, 0xd9e2e55d )
-	ROM_LOAD( "tc05",         0x2c000, 0x10000, 0x8cc79357 )
-	ROM_LOAD( "tc06",         0x3c000, 0x10000, 0x13daeac8 )
+	ROM_LOAD( "tc06",         0x2c000, 0x10000, 0x13daeac8 )
+	ROM_LOAD( "tc05",         0x3c000, 0x10000, 0x8cc79357 )
 	ROM_LOAD( "tc07",         0x4c000, 0x08000, 0xb5d48389 )	/* bg tiles */
 	ROM_LOAD( "tc08",         0x54000, 0x08000, 0x97f20fdc )
 	ROM_LOAD( "tc09",         0x5c000, 0x08000, 0x170c01db )
@@ -544,46 +665,34 @@ ROM_START( ktiger_rom )
 	ROM_LOAD( "tc18",         0x8c000, 0x10000, 0x806fb374 )
 	ROM_LOAD( "tc17",         0x9c000, 0x10000, 0x4264bff8 )
 
-	ROM_REGION(0x10000)     /* 32k for second CPU */
+	ROM_REGION(0x10000)		/* 32k for second CPU */
 	ROM_LOAD( "b30-05",       0x00000, 0x08000, 0x1a8f1e10 )
 
-	ROM_REGION(0x01000)     /* 4k for TI TMS320C10NL-14 Microcontroller */
-	ROM_LOAD_EVEN( "tc1b",         0x0000, 0x0800, 0x1757cc33 )
-	ROM_LOAD_ODD ( "tc2a",         0x0000, 0x0800, 0xd6d878c9 )
-ROM_END
-
-ROM_START( fshark_rom )
-	ROM_REGION(0x20000)     /* 2*64k for code */
-	ROM_LOAD_EVEN( "b02_18-1.rom", 0x00000, 0x10000, 0x0 )
-	ROM_LOAD_ODD ( "b02_17-1.rom", 0x00000, 0x10000, 0x0 )
-
-	ROM_REGION_DISPOSE(0xac000)     /* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "b02_05-1.rom", 0x00000, 0x04000, 0x0 )        /* chars */
-	ROM_LOAD( "b02_06-1.rom", 0x04000, 0x04000, 0x0 )
-	ROM_LOAD( "b02_07-1.rom", 0x08000, 0x04000, 0x0 )
-	ROM_LOAD( "b02_01.256",   0x0c000, 0x08000, 0x0 )        /* fg tiles */
-	ROM_LOAD( "b02_02.256",   0x14000, 0x08000, 0x0 )
-	ROM_LOAD( "b02_03.256",   0x1c000, 0x08000, 0x0 )
-	ROM_LOAD( "b02_04.256",   0x24000, 0x08000, 0x0 )
-	ROM_LOAD( "b02_08.rom",   0x2c000, 0x08000, 0x0 )
-	ROM_LOAD( "b02_09.rom",   0x34000, 0x08000, 0x0 )
-	ROM_LOAD( "b02_10.rom",   0x3c000, 0x08000, 0x0 )
-	ROM_LOAD( "b02_11.rom",   0x44000, 0x08000, 0x0 )
-	ROM_LOAD( "b02_12.rom",   0x4c000, 0x08000, 0x0 )        /* bg tiles */
-	ROM_LOAD( "b02_13.rom",   0x54000, 0x08000, 0x0 )
-	ROM_LOAD( "b02_14.rom",   0x5c000, 0x08000, 0x0 )
-	ROM_LOAD( "b02_15.rom",   0x64000, 0x08000, 0x0 )
-	ROM_LOAD( "b02_01.512",   0x6c000, 0x10000, 0x0 )        /* sprites */
-	ROM_LOAD( "b02_02.512",   0x7c000, 0x10000, 0x0 )
-	ROM_LOAD( "b02_03.512",   0x8c000, 0x10000, 0x0 )
-	ROM_LOAD( "b02_04.512",   0x9c000, 0x10000, 0x0 )
-
-	ROM_REGION(0x10000)     /* 64k for second CPU */
-	ROM_LOAD( "b02_16.rom",   0x0000, 0x8000, 0x0 )
+	ROM_REGION(0x10000)		/* 4k for TI TMS320C10NL-14 Microcontroller */
+	ROM_LOAD_EVEN( "dsp-22",    0x0000, 0x0800, 0x00000000 )
+	ROM_LOAD_ODD ( "dsp-21",    0x0000, 0x0800, 0x00000000 )
 ROM_END
 
 
+static void twincobr_decode(void)
+{
+  /* TMS320C10 roms have their address lines A0 and A1 swapped. Decode it. */
+	int A;
+	unsigned char D1;
+	unsigned char D2;
+	unsigned char *DSP_ROMS;
 
+	DSP_ROMS = Machine->memory_region[Machine->drv->cpu[2].memory_region];
+
+	for (A = 2;A <= 0x0ffa;A+=8) {
+		D1 = DSP_ROMS[A];
+		D2 = DSP_ROMS[A+1];
+		DSP_ROMS[A] = DSP_ROMS[A+2];
+		DSP_ROMS[A+1] = DSP_ROMS[A+3];
+		DSP_ROMS[A+2] = D1;
+		DSP_ROMS[A+3] = D2;
+	}
+}
 
 struct GameDriver twincobr_driver =
 {
@@ -594,17 +703,14 @@ struct GameDriver twincobr_driver =
 	"1987",
 	"Taito",
 	"Quench\nNicola Salmoria",
-	GAME_NOT_WORKING,
+	0,
 	&machine_driver,
 	0,
-
 	twincobr_rom,
-	0, 0,
+	twincobr_decode, 0,
 	0,
-	0,	/* sound_prom */
-
+	0,
 	input_ports,
-
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 	0, 0
@@ -619,23 +725,19 @@ struct GameDriver twincobu_driver =
 	"1987",
 	"Taito of America (Romstar license)",
 	"Quench\nNicola Salmoria",
-	GAME_NOT_WORKING,
+	0,
 	&machine_driver,
 	0,
-
 	twincobu_rom,
 	0, 0,
 	0,
-	0,	/* sound_prom */
-
+	0,
 	input_ports,
-
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 	0, 0
 };
 
-/* This doesn't work yet */
 struct GameDriver ktiger_driver =
 {
 	__FILE__,
@@ -644,43 +746,15 @@ struct GameDriver ktiger_driver =
 	"Kyukyoku Tiger",
 	"1987",
 	"Taito",
-	"Quench\nNicola Salmoria",
-	GAME_NOT_WORKING,
+	"Quench\nNicola Salmoria\nCarl-Henrik Skarstedt (Hardware Advice)",
+	0,
 	&machine_driver,
 	0,
-
 	ktiger_rom,
 	0, 0,
 	0,
-	0,	/* sound_prom */
-
-	input_ports,
-
-	0, 0, 0,
-	ORIENTATION_ROTATE_270,
-	0, 0
-};
-
-struct GameDriver fshark_driver =
-{
-	__FILE__,
 	0,
-	"fshark",
-	"Flying Shark",
-	"????",
-	"?????",
-	"Quench\nNicola Salmoria",
-	0,
-	&machine_driver,
-	0,
-
-	fshark_rom,
-	0, 0,
-	0,
-	0,	/* sound_prom */
-
-	input_ports,
-
+	ktiger_input_ports,
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
 	0, 0

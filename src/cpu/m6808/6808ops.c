@@ -55,6 +55,7 @@ INLINE void asld (void)
 INLINE void tap (void)
 {
 	cc=areg;
+	CHECK_IRQ_LINE(cc); /* HJB 980124 */
 }
 
 /* $07 TPA inherent ----- */
@@ -368,10 +369,11 @@ INLINE void abx( void )
 INLINE void rti( void )
 {
 	PULLBYTE(cc);
-	PULLBYTE(areg);
 	PULLBYTE(breg);
+	PULLBYTE(areg);
 	PULLWORD(xreg);
 	PULLWORD(pcreg);change_pc(pcreg);
+	CHECK_IRQ_LINE(cc); /* HJB 980124 */
 }
 
 /* $3c PSHX inherent ----- */
@@ -403,8 +405,8 @@ INLINE void swi( void )
 {
 	PUSHWORD(pcreg);
 	PUSHWORD(xreg);
-	PUSHBYTE(breg);
 	PUSHBYTE(areg);
+	PUSHBYTE(breg);
 	PUSHBYTE(cc);
 	SEI;
 	pcreg = M_RDMEM_WORD(0xfffa);change_pc(pcreg);

@@ -26,7 +26,9 @@ extern struct GameDriver piranha_driver;
 extern struct GameDriver pacplus_driver;
 extern struct GameDriver mspacman_driver;
 extern struct GameDriver mspacatk_driver;
+extern struct GameDriver maketrax_driver;
 extern struct GameDriver crush_driver;
+extern struct GameDriver mbrush_driver;
 extern struct GameDriver eyes_driver;
 extern struct GameDriver mrtnt_driver;
 extern struct GameDriver ponpoko_driver;
@@ -34,7 +36,6 @@ extern struct GameDriver lizwiz_driver;
 extern struct GameDriver theglob_driver;
 extern struct GameDriver beastf_driver;
 extern struct GameDriver jumpshot_driver;
-extern struct GameDriver maketrax_driver;
 extern struct GameDriver pengo_driver;
 extern struct GameDriver pengo2_driver;
 extern struct GameDriver pengo2u_driver;
@@ -53,9 +54,11 @@ extern struct GameDriver galturbo_driver;
 extern struct GameDriver pisces_driver;
 extern struct GameDriver japirem_driver;
 extern struct GameDriver uniwars_driver;
+extern struct GameDriver spacbatt_driver;
 extern struct GameDriver warofbug_driver;
 extern struct GameDriver redufo_driver;
 extern struct GameDriver pacmanbl_driver;
+extern struct GameDriver devilfsh_driver;
 extern struct GameDriver zigzag_driver;
 extern struct GameDriver zigzag2_driver;
 extern struct GameDriver mooncrgx_driver;
@@ -104,6 +107,7 @@ extern struct GameDriver frogger_driver;
 extern struct GameDriver frogsega_driver;
 extern struct GameDriver frogger2_driver;
 extern struct GameDriver amidar_driver;
+extern struct GameDriver amidaro_driver;
 extern struct GameDriver amidarjp_driver;
 extern struct GameDriver amigo_driver;
 extern struct GameDriver turtles_driver;
@@ -187,8 +191,10 @@ extern struct GameDriver cosmicg_driver;
 extern struct GameDriver cosmica_driver;
 extern struct GameDriver panic_driver;
 extern struct GameDriver panica_driver;
-extern struct GameDriver cheekyms_driver;
 extern struct GameDriver panicger_driver;
+extern struct GameDriver magspot2_driver;
+extern struct GameDriver devzone_driver;
+extern struct GameDriver cheekyms_driver;
 extern struct GameDriver ladybug_driver;
 extern struct GameDriver ladybugb_driver;
 extern struct GameDriver snapjack_driver;
@@ -285,6 +291,7 @@ extern struct GameDriver sisv_driver;
 /* "Midway" Z80 b/w games */
 extern struct GameDriver astinvad_driver;
 extern struct GameDriver kamikaze_driver;
+extern struct GameDriver spaceint_driver;
 
 /* Meadows S2650 games */
 extern struct GameDriver lazercmd_driver;
@@ -332,8 +339,10 @@ extern struct GameDriver xenophob_driver;
 extern struct GameDriver mpatrol_driver;
 extern struct GameDriver mpatrolw_driver;
 extern struct GameDriver mranger_driver;
+extern struct GameDriver troangel_driver;
 extern struct GameDriver yard_driver;
 extern struct GameDriver vsyard_driver;
+extern struct GameDriver vsyard2_driver;
 extern struct GameDriver kungfum_driver;
 extern struct GameDriver kungfud_driver;
 extern struct GameDriver kungfub_driver;
@@ -370,14 +379,16 @@ extern struct GameDriver crbalon2_driver;
 
 /* Taito "Qix hardware" games */
 extern struct GameDriver qix_driver;
+extern struct GameDriver qixa_driver;
 extern struct GameDriver qix2_driver;
 extern struct GameDriver sdungeon_driver;
-extern struct GameDriver zookeep_driver;
-extern struct GameDriver zookeepa_driver;
 extern struct GameDriver elecyoyo_driver;
 extern struct GameDriver elecyoy2_driver;
 extern struct GameDriver kram_driver;
 extern struct GameDriver kram2_driver;
+extern struct GameDriver zookeep_driver;
+extern struct GameDriver zookeep2_driver;
+extern struct GameDriver zookeep3_driver;
 
 /* Taito SJ System games */
 extern struct GameDriver spaceskr_driver;
@@ -401,11 +412,11 @@ extern struct GameDriver gsword_driver;
 extern struct GameDriver gladiatr_driver;
 extern struct GameDriver ogonsiro_driver;
 extern struct GameDriver gcastle_driver;
-extern struct GameDriver tokio_driver;
-extern struct GameDriver tokiob_driver;
 extern struct GameDriver bublbobl_driver;
 extern struct GameDriver boblbobl_driver;
 extern struct GameDriver sboblbob_driver;
+extern struct GameDriver tokio_driver;
+extern struct GameDriver tokiob_driver;
 extern struct GameDriver rastan_driver;
 extern struct GameDriver rastsaga_driver;
 extern struct GameDriver rainbow_driver;
@@ -506,12 +517,16 @@ extern struct GameDriver blktiger_driver;
 extern struct GameDriver bktigerb_driver;
 extern struct GameDriver blkdrgon_driver;
 extern struct GameDriver blkdrgnb_driver;
+extern struct GameDriver sf1_driver;
+extern struct GameDriver sf1us_driver;
+extern struct GameDriver sf1jp_driver;
 extern struct GameDriver tigeroad_driver;
 extern struct GameDriver f1dream_driver;
 extern struct GameDriver f1dreamb_driver;
 extern struct GameDriver c1943kai_driver;
 extern struct GameDriver lastduel_driver;
 extern struct GameDriver lstduelb_driver;
+extern struct GameDriver forgottn_driver;
 extern struct GameDriver ghouls_driver;
 extern struct GameDriver ghoulsj_driver;
 extern struct GameDriver madgear_driver;
@@ -556,11 +571,23 @@ extern struct GameDriver knights_driver;
 extern struct GameDriver knightsj_driver;
 extern struct GameDriver sf2ce_driver;
 extern struct GameDriver sf2cej_driver;
+extern struct GameDriver sf2rb_driver;
 extern struct GameDriver varth_driver;
 extern struct GameDriver varthj_driver;
+extern struct GameDriver cworld2j_driver;
+extern struct GameDriver wof_driver;
+extern struct GameDriver wofj_driver;
 extern struct GameDriver sf2t_driver;
 extern struct GameDriver sf2tj_driver;
+extern struct GameDriver dino_driver;
+extern struct GameDriver punisher_driver;
+extern struct GameDriver punishrj_driver;
+extern struct GameDriver slammast_driver;
+extern struct GameDriver mbomber_driver;
+extern struct GameDriver mbomberj_driver;
 extern struct GameDriver pnickj_driver;
+extern struct GameDriver qad_driver;
+extern struct GameDriver qadj_driver;
 extern struct GameDriver megaman_driver;
 extern struct GameDriver rockmanj_driver;
 
@@ -736,11 +763,14 @@ extern struct GameDriver mazeh_driver;
 extern struct GameDriver srdarwin_driver;
 extern struct GameDriver cobracom_driver;
 extern struct GameDriver gondo_driver;
+extern struct GameDriver mekyosen_driver;
 extern struct GameDriver oscar_driver;
 extern struct GameDriver oscarj_driver;
 extern struct GameDriver lastmiss_driver;
 extern struct GameDriver lastmss2_driver;
 extern struct GameDriver shackled_driver;
+extern struct GameDriver breywood_driver;
+extern struct GameDriver csilver_driver;
 
 /* Data East 16-bit games */
 extern struct GameDriver karnov_driver;
@@ -867,6 +897,7 @@ extern struct GameDriver robotbwl_driver;
 extern struct GameDriver crash_driver;
 extern struct GameDriver ripcord_driver;
 extern struct GameDriver starfire_driver;
+extern struct GameDriver fireone_driver;
 
 /* Atari vector games */
 extern struct GameDriver asteroid_driver;
@@ -928,6 +959,7 @@ extern struct GameDriver atarifb4_driver;
 extern struct GameDriver abaseb_driver;
 extern struct GameDriver abaseb2_driver;
 extern struct GameDriver canyon_driver;
+extern struct GameDriver canbprot_driver;
 extern struct GameDriver skydiver_driver;
 
 /* Atari System 1 games */
@@ -1062,6 +1094,7 @@ extern struct GameDriver sucasino_driver;
 
 /* "The Pit hardware" games */
 extern struct GameDriver roundup_driver;
+extern struct GameDriver fitter_driver;
 extern struct GameDriver thepit_driver;
 extern struct GameDriver intrepid_driver;
 extern struct GameDriver portman_driver;
@@ -1154,7 +1187,9 @@ extern struct GameDriver sauro_driver;
 extern struct GameDriver pow_driver;
 extern struct GameDriver powj_driver;
 extern struct GameDriver galpanic_driver;
+extern struct GameDriver turbofrc_driver;
 extern struct GameDriver aerofgt_driver;
+extern struct GameDriver ambush_driver;
 
 #endif /* NEOMAME */
 
@@ -1169,23 +1204,23 @@ extern struct GameDriver superspy_driver;
 extern struct GameDriver ttbb_driver;
 extern struct GameDriver alpham2_driver;
 extern struct GameDriver eightman_driver;
-extern struct GameDriver ararmy_driver;
+extern struct GameDriver roboarmy_driver;
 extern struct GameDriver fatfury1_driver;
 extern struct GameDriver burningf_driver;
-extern struct GameDriver kingofm_driver;
+extern struct GameDriver kotm_driver;
 extern struct GameDriver gpilots_driver;
 extern struct GameDriver lresort_driver;
 extern struct GameDriver fbfrenzy_driver;
 extern struct GameDriver socbrawl_driver;
 extern struct GameDriver mutnat_driver;
-extern struct GameDriver artfight_driver;
+extern struct GameDriver aof_driver;
 extern struct GameDriver countb_driver;
 extern struct GameDriver ncombat_driver;
 extern struct GameDriver crsword_driver;
 extern struct GameDriver trally_driver;
 extern struct GameDriver sengoku_driver;
 extern struct GameDriver ncommand_driver;
-extern struct GameDriver wheroes_driver;
+extern struct GameDriver wh1_driver;
 extern struct GameDriver sengoku2_driver;
 extern struct GameDriver androdun_driver;
 extern struct GameDriver minasan_driver;
@@ -1205,8 +1240,9 @@ extern struct GameDriver sonicwi3_driver;
 extern struct GameDriver goalx3_driver;
 extern struct GameDriver neodrift_driver;
 extern struct GameDriver neomrdo_driver;
+extern struct GameDriver breakers_driver;
 extern struct GameDriver spinmast_driver;
-extern struct GameDriver karnov_r_driver;
+extern struct GameDriver karnovr_driver;
 extern struct GameDriver wjammers_driver;
 extern struct GameDriver strhoops_driver;
 extern struct GameDriver magdrop2_driver;
@@ -1216,14 +1252,15 @@ extern struct GameDriver turfmast_driver;
 extern struct GameDriver kabukikl_driver;
 extern struct GameDriver panicbom_driver;
 extern struct GameDriver neobombe_driver;
-extern struct GameDriver worlher2_driver;
-extern struct GameDriver worlhe2j_driver;
+extern struct GameDriver wh2_driver;
+extern struct GameDriver wh2j_driver;
 extern struct GameDriver aodk_driver;
 extern struct GameDriver whp_driver;
 extern struct GameDriver ninjamas_driver;
 extern struct GameDriver overtop_driver;
 extern struct GameDriver twinspri_driver;
 extern struct GameDriver stakwin_driver;
+extern struct GameDriver stakwin2_driver;
 extern struct GameDriver ragnagrd_driver;
 extern struct GameDriver shocktro_driver;
 extern struct GameDriver tws96_driver;
@@ -1235,14 +1272,15 @@ extern struct GameDriver wakuwak7_driver;
 extern struct GameDriver viewpoin_driver;
 extern struct GameDriver gururin_driver;
 extern struct GameDriver miexchng_driver;
+extern struct GameDriver marukodq_driver;
 extern struct GameDriver mahretsu_driver;
-extern struct GameDriver nam_1975_driver;
+extern struct GameDriver nam1975_driver;
 extern struct GameDriver cyberlip_driver;
 extern struct GameDriver tpgolf_driver;
 extern struct GameDriver legendos_driver;
 extern struct GameDriver fatfury2_driver;
 extern struct GameDriver bstars2_driver;
-extern struct GameDriver sidkicks_driver;
+extern struct GameDriver ssideki_driver;
 extern struct GameDriver kotm2_driver;
 extern struct GameDriver samsho_driver;
 extern struct GameDriver fatfursp_driver;
@@ -1252,7 +1290,7 @@ extern struct GameDriver savagere_driver;
 extern struct GameDriver kof94_driver;
 extern struct GameDriver aof2_driver;
 extern struct GameDriver ssideki2_driver;
-extern struct GameDriver sskick3_driver;
+extern struct GameDriver ssideki3_driver;
 extern struct GameDriver samsho2_driver;
 extern struct GameDriver samsho3_driver;
 extern struct GameDriver kof95_driver;
@@ -1266,7 +1304,7 @@ extern struct GameDriver ssideki4_driver;
 extern struct GameDriver kof97_driver;
 extern struct GameDriver lastblad_driver;
 extern struct GameDriver mslug2_driver;
-extern struct GameDriver realbou2_driver;
+extern struct GameDriver rbff2_driver;
 extern struct GameDriver kof98_driver;
 
 #endif /* NEOFREE */
@@ -1287,7 +1325,9 @@ const struct GameDriver *drivers[] =
 	&pacplus_driver,
 	&mspacman_driver,	/* (c) 1981 Midway (but it's a bootleg) */
 	&mspacatk_driver,	/* hack */
-	&crush_driver,		/* bootleg Make Trax */
+	&maketrax_driver,	/* (c) 1981 Williams */
+	&crush_driver,		/* 1981 bootleg */
+	&mbrush_driver,		/* 1981 bootleg */
 	&eyes_driver,		/* (c) 1982 Digitrex Techstar + "Rockola presents" */
 	&mrtnt_driver,		/* (c) 1983 Telko */
 	&ponpoko_driver,	/* (c) 1982 Sigma Ent. Inc. */
@@ -1295,7 +1335,6 @@ const struct GameDriver *drivers[] =
 	&theglob_driver,	/* (c) 1983 Epos Corporation */
 	&beastf_driver,		/* (c) 1984 Epos Corporation */
 	&jumpshot_driver,
-	&maketrax_driver,	/* (c) 1981 Williams */
 	&pengo_driver,		/* 834-0386 (c) 1982 Sega */
 	&pengo2_driver,		/* 834-0386 (c) 1982 Sega */
 	&pengo2u_driver,	/* 834-0386 (c) 1982 Sega */
@@ -1314,9 +1353,11 @@ const struct GameDriver *drivers[] =
 	&pisces_driver,		/* ? */
 	&japirem_driver,	/* (c) Irem */
 	&uniwars_driver,	/* (c) Karateco (bootleg?) */
+	&spacbatt_driver,	/* bootleg */
 	&warofbug_driver,	/* (c) 1981 Armenia */
 	&redufo_driver,		/* ? */
 	&pacmanbl_driver,	/* bootleg */
+	&devilfsh_driver,	/* (c) 1984 Vision / Artic */
 	&zigzag_driver,		/* (c) 1982 LAX */
 	&zigzag2_driver,	/* (c) 1982 LAX */
 	&mooncrgx_driver,	/* bootleg */
@@ -1365,6 +1406,7 @@ const struct GameDriver *drivers[] =
 	&frogsega_driver,	/* (c) 1981 Sega */
 	&frogger2_driver,	/* 800-3110 (c) 1981 Sega */
 	&amidar_driver,		/* GX337 (c) 1982 Konami + Stern license */
+	&amidaro_driver,	/* GX337 (c) 1982 Konami + Olympia license */
 	&amidarjp_driver,	/* GX337 (c) 1981 Konami */
 	&amigo_driver,		/* bootleg */
 	&turtles_driver,	/* (c) 1981 Stern */
@@ -1452,8 +1494,10 @@ const struct GameDriver *drivers[] =
 	&cosmica_driver,	/* (c) [1979] */
 	&panic_driver,		/* (c) 1980 */
 	&panica_driver,		/* (c) 1980 */
-	&cheekyms_driver,	/* (c) [1980?] */
 	&panicger_driver,	/* (c) 1980 */
+	&magspot2_driver,	/* (c) [1980?] */
+	&devzone_driver,	/* (c) [1980?] */
+	&cheekyms_driver,	/* (c) [1980?] */
 	&ladybug_driver,	/* (c) 1981 */
 	&ladybugb_driver,	/* bootleg */
 	&snapjack_driver,	/* (c) */
@@ -1555,6 +1599,7 @@ const struct GameDriver *drivers[] =
 	/* "Midway" Z80 b/w games */
 	&astinvad_driver,	/* (c) 1980 Stern */
 	&kamikaze_driver,	/* Leijac Corporation */
+	&spaceint_driver,	/* [1980] Shoei */
 
 	/* Meadows S2650 games */
 	&lazercmd_driver,	/* [1976?] */
@@ -1615,8 +1660,10 @@ Six Flags (?)
 	&mpatrol_driver,	/* (c) 1982 */
 	&mpatrolw_driver,	/* (c) 1982 + Williams license */
 	&mranger_driver,	/* bootleg */
+	&troangel_driver,	/* (c) 1983 */
 	&yard_driver,		/* (c) 1983 */
 	&vsyard_driver,		/* (c) 1983/1984 */
+	&vsyard2_driver,	/* (c) 1983/1984 */
 	&kungfum_driver,	/* (c) 1984 */
 	&kungfud_driver,	/* (c) 1984 + Data East license */
 	&kungfub_driver,	/* bootleg */
@@ -1652,15 +1699,17 @@ Six Flags (?)
 	&crbalon2_driver,	/* (c) 1980 Taito */
 
 	/* Taito "Qix hardware" games */
-	&qix_driver,		/* (c) 1981 */
-	&qix2_driver,		/* (c) 1981 */
+	&qix_driver,		/* (c) 1981 Taito America */
+	&qixa_driver,		/* (c) 1981 Taito America */
+	&qix2_driver,		/* (c) 1981 Taito America */
 	&sdungeon_driver,	/* (c) 1981 Taito America */
-	&zookeep_driver,	/* (c) 1982 Taito America */
-	&zookeepa_driver,	/* (c) 1982 Taito America */
-	&elecyoyo_driver,
-	&elecyoy2_driver,
+	&elecyoyo_driver,	/* (c) 1982 Taito America */
+	&elecyoy2_driver,	/* (c) 1982 Taito America */
 	&kram_driver,		/* (c) 1982 Taito America */
 	&kram2_driver,		/* (c) 1982 Taito America */
+	&zookeep_driver,	/* (c) 1982 Taito America */
+	&zookeep2_driver,	/* (c) 1982 Taito America */
+	&zookeep3_driver,	/* (c) 1982 Taito America */
 
 	/* Taito SJ System games */
 	&spaceskr_driver,	/* (c) 1981 */
@@ -1684,11 +1733,11 @@ Six Flags (?)
 	&gladiatr_driver,	/* (c) 1986 Taito America */
 	&ogonsiro_driver,	/* (c) 1986 */
 	&gcastle_driver,	/* (c) 1986 */
-	&tokio_driver,		/* (c) 1986 */
-	&tokiob_driver,		/* bootleg */
 	&bublbobl_driver,	/* (c) 1986 */
 	&boblbobl_driver,	/* bootleg */
 	&sboblbob_driver,	/* bootleg */
+	&tokio_driver,		/* (c) 1986 */
+	&tokiob_driver,		/* bootleg */
 	&rastan_driver,		/* (c) 1987 Taito Japan */
 	&rastsaga_driver,	/* (c) 1987 Taito */
 	&rainbow_driver,	/* (c) 1987 */
@@ -1793,14 +1842,16 @@ Six Flags (?)
 	&bktigerb_driver,	/* bootleg */
 	&blkdrgon_driver,	/* (c) 1987 (Japan) */
 	&blkdrgnb_driver,	/* bootleg, hacked to say Black Tiger */
-	/* Aug 1987: Street Fighter */
+	&sf1_driver,		/* (c) 1987 (World) */
+	&sf1us_driver,		/* (c) 1987 (US) */
+	&sf1jp_driver,		/* (c) 1987 (Japan) */
 	&tigeroad_driver,	/* (c) 1987 + Romstar (US) */
 	&f1dream_driver,	/* (c) 1988 + Romstar */
 	&f1dreamb_driver,	/* bootleg */
 	&c1943kai_driver,	/* (c) 1987 (Japan) */
 	&lastduel_driver,	/* (c) 1988 (US) */
 	&lstduelb_driver,	/* bootleg */
-	/* Jul 1988: Forgotten Worlds (CPS1) */
+//	&forgottn_driver,	/* (c) 1988 (CPS1) */
 	&ghouls_driver,		/* (c) 1988 (CPS1) */
 	&ghoulsj_driver,	/* (c) 1988 (CPS1) */
 	&madgear_driver,	/* (c) 1989 */	/* aka Led Storm */
@@ -1855,17 +1906,21 @@ Six Flags (?)
 	&knightsj_driver,	/* (c) 1991 (Japan) (CPS1) */
 	&sf2ce_driver,		/* (c) 1992 (World) (CPS1) */
 	&sf2cej_driver,		/* (c) 1992 (Japan) (CPS1) */
+//	&sf2rb_driver,		/* hack */
 	&varth_driver,		/* (c) 1992 (World) (CPS1) */
 	&varthj_driver,		/* (c) 1992 (Japan) (CPS1) */
-	/* Sep 1992: Capcom World 2 */
-	/* Nov 1992: Warriors of Fate / Tenchi o Kurau 2 (CPS1) */
+	&cworld2j_driver,	/* (c) 1992 (Japan) (CPS1) */
+	&wof_driver,		/* (c) 1992 (World) (CPS1 + QSound) */
+	&wofj_driver,		/* (c) 1992 (Japan) (CPS1 + QSound) */
 	&sf2t_driver,		/* (c) 1992 (US) (CPS1) */
 	&sf2tj_driver,		/* (c) 1992 (Japan) (CPS1) */
-	/* Apr 1993: Cadillacs & Dinosaurs (CPS1) */
-	/* May 1993: Punisher (CPS1) */
-	/* Jul 1993: Slam Masters (CPS1) */
+	&dino_driver,		/* (c) 1993 (World) (CPS1 + QSound) */
+	&punisher_driver,	/* (c) 1993 (World) (CPS1 + QSound) */
+	&punishrj_driver,	/* (c) 1993 (Japan) (CPS1 + QSound) */
+	&slammast_driver,	/* (c) 1993 (World) (CPS1 + QSound) */	/* aka Muscle Bomber */
 	/* Oct 1993: Super Street Fighter II (CPS2) */
-	/* Dec 1993: Muscle Bomber Duo (CPS1) */
+	&mbomber_driver,	/* (c) 1993 (World) (CPS1 + QSound) */
+	&mbomberj_driver,	/* (c) 1993 (Japan) (CPS1 + QSound) */
 	/* Jan 1994: Dungeons & Dragons - Tower of Doom (CPS2) */
 	/* Mar 1994: Super Street Fighter II Turbo (CPS2) */
 	/* May 1994: Alien vs Predator (CPS2) */
@@ -1874,7 +1929,8 @@ Six Flags (?)
 	/* another unlisted puzzle game: Gulum Pa! (CPS2) */
 	/* Jul 1994: Dark Stalkers (CPS2) */
 	/* Sep 1994: Ring of Destruction - Slam Masters 2 (CPS2) */
-	/* Sep 1994: Quiz and Dragons (CPS1?) */
+	&qad_driver,		/* (c) 1992 (US) (CPS1) */
+	&qadj_driver,		/* (c) 1994 (Japan) (CPS1) */
 	/* Oct 1994: Armored Warriors (CPS2) */
 	/* Dec 1994: X-Men - Children of the Atom */
 	/* Jan 1995: "tonosama2" */
@@ -1882,8 +1938,8 @@ Six Flags (?)
 	/* Apr 1995: Cyberbots (CPS2) */
 	/* Jun 1995: Street Fighter - The Movie (CPS2) */
 	/* Jun 1995: Street Fighter Alpha (CPS2) */
-	&megaman_driver,	/* (c) 1995 (Asia) (CPS1 + QSound) */
-	&rockmanj_driver,	/* (c) 1995 (Japan) (CPS1 + QSound) */
+	&megaman_driver,	/* (c) 1995 (Asia) (CPS1) */
+	&rockmanj_driver,	/* (c) 1995 (Japan) (CPS1) */
 	/* Nov 1995: Marvel Super Heroes */
 	/* Nov 1995: Battle Arena Toshinden 2 (3D, not CPS) */
 	/* Jan 1996: 19XX - The War Against Destiny (CPS2) */
@@ -2112,16 +2168,19 @@ DokiDoki Penguin Land *not confirmed
 
 	/* Data East 8-bit games */
 	&ghostb_driver,		/* (c) 1987 Data East USA */
-	&ghostb3_driver,		/* (c) 1987 Data East USA */
+	&ghostb3_driver,	/* (c) 1987 Data East USA */
 	&mazeh_driver,		/* (c) 1987 Data East Corporation */
 	&srdarwin_driver,	/* (c) 1987 Data East Corporation */
 	&cobracom_driver,	/* (c) 1988 Data East Corporation */
-//	&gondo_driver,
+	&gondo_driver,		/* (c) 1987 Data East USA */
+	&mekyosen_driver,	/* (c) 1987 Data East Corporation */
 	&oscar_driver,		/* (c) 1988 Data East USA */
 	&oscarj_driver,		/* (c) 1988 Data East Corporation */
-//	&lastmiss_driver,	/* (c) 1986 Data East USA */
-//	&lastmss2_driver,	/* (c) 1986 Data East USA */
-//	&shackled_driver,	/* (c) 1986 Data East USA */
+	&lastmiss_driver,	/* (c) 1986 Data East USA */
+	&lastmss2_driver,	/* (c) 1986 Data East USA */
+	&shackled_driver,	/* (c) 1986 Data East USA */
+	&breywood_driver,	/* (c) 1986 Data East Corporation */
+	&csilver_driver,	/* (c) 1987 Data East Corporation */
 
 	/* Data East 16-bit games */
 	&karnov_driver,		/* (c) 1987 Data East USA */
@@ -2249,13 +2308,14 @@ DokiDoki Penguin Land *not confirmed
 	&robotbwl_driver,	/* no copyright notice */
 	&crash_driver,		/* Exidy [1979?] */
 	&ripcord_driver,	/* Exidy [1977?] */
-	&starfire_driver,	/* Exidy */
+	&starfire_driver,	/* Exidy [1979?] */
+	&fireone_driver,	/* (c) 1979 Exidy */
 
 	/* Atari vector games */
 	&asteroid_driver,	/* (c) 1979 */
 	&asteroi1_driver,	/* no copyright notice */
 	&astdelux_driver,	/* (c) 1980 */
-//	&astdelu1_driver,
+	&astdelu1_driver,	/* (c) 1980 */
 	&bwidow_driver,		/* (c) 1982 */
 	&bzone_driver,		/* (c) 1980 */
 	&bzone2_driver,		/* (c) 1980 */
@@ -2311,6 +2371,7 @@ DokiDoki Penguin Land *not confirmed
 	&abaseb_driver,		/* no copyright notice [1979] */
 	&abaseb2_driver,	/* no copyright notice [1979] */
 	&canyon_driver,		/* no copyright notice [1977] */
+	&canbprot_driver,	/* no copyright notice [1977] */
 	&skydiver_driver,	/* no copyright notice [1977] */
 
 	/* Atari System 1 games */
@@ -2462,6 +2523,7 @@ Rad Action
 
 	/* "The Pit hardware" games */
 	&roundup_driver,	/* (c) 1981 Amenip/Centuri */
+	&fitter_driver,		/* (c) 1981 Taito */
 	&thepit_driver,		/* (c) 1982 Centuri */
 	&intrepid_driver,	/* (c) 1983 Nova Games Ltd. */
 	&portman_driver,	/* (c) 1982 Nova Games Ltd. */
@@ -2554,14 +2616,15 @@ Rad Action
 	&pow_driver,		/* (c) 1988 SNK */
 	&powj_driver,		/* (c) 1988 SNK */
 	&galpanic_driver,	/* (c) 1990 Kaneko */
+	&turbofrc_driver,	/* (c) 1991 Video System Co. */
 	&aerofgt_driver,	/* (c) 1992 Video System Co. */
+	&ambush_driver,		/* (c) 1983 Nippon Amuse Co-Ltd */
 
 #endif /* NEOMAME */
 
 #ifndef NEOFREE
 
 	/* Neogeo MGD2 rom dumps */
-	&joyjoy_driver,     /* 1990, SNK */
 	&ridhero_driver,    /* 1990, SNK */
 	&bstars_driver,     /* 1990, SNK */
 	&lbowling_driver,   /* 1990, SNK */
@@ -2569,23 +2632,21 @@ Rad Action
 	&ttbb_driver,       /* 1991, SNK */
 	&alpham2_driver,    /* 1991, SNK */
 	&eightman_driver,   /* 1991, SNK */
-	&ararmy_driver,     /* 1991, SNK */
 	&fatfury1_driver,   /* 1991, SNK */
 	&burningf_driver,   /* 1991, SNK */
-	&kingofm_driver,    /* 1991, SNK */
+	&kotm_driver,       /* 1991, SNK */
 	&gpilots_driver,    /* 1991, SNK */
 	&lresort_driver,    /* 1992, SNK */
 	&fbfrenzy_driver,   /* 1992, SNK */
-	&socbrawl_driver,   /* 1992, SNK */
 	&mutnat_driver,     /* 1992, SNK */
-	&artfight_driver,   /* 1992, SNK */
+	&aof_driver,        /* 1992, SNK */
 	&countb_driver,     /* 1993, SNK */
 	&ncombat_driver,    /* 1990, Alpha Denshi Co */
 	&crsword_driver,    /* 1991, Alpha Denshi Co */
 	&trally_driver,     /* 1991, Alpha Denshi Co */
 	&sengoku_driver,    /* 1991, Alpha Denshi Co */
 	&ncommand_driver,   /* 1992, Alpha Denshi Co */
-	&wheroes_driver,    /* 1992, Alpha Denshi Co */
+	&wh1_driver,        /* 1992, Alpha Denshi Co */
 	&sengoku2_driver,   /* 1993, Alpha Denshi Co */
 	&androdun_driver,   /* 1992, Visco */
 	&minasan_driver,    /* 1990, Monolith Corp. */
@@ -2607,8 +2668,9 @@ Rad Action
 	&goalx3_driver,     /* 1995, Visco */
 	&neodrift_driver,   /* 1996, Visco */
 	&neomrdo_driver,    /* 1996, Visco */
+	&breakers_driver,   /* 1996, Visco */
 	&spinmast_driver,   /* 1993, Data East Corporation */
-	&karnov_r_driver,   /* 1994, Data East Corporation */
+	&karnovr_driver,    /* 1994, Data East Corporation */
 	&wjammers_driver,   /* 1994, Data East Corporation */
 	&strhoops_driver,   /* 1994, Data East Corporation */
 	&magdrop2_driver,   /* 1996, Data East Corporation */
@@ -2618,14 +2680,15 @@ Rad Action
 	&kabukikl_driver,   /* 1995, Hudson */
 	&panicbom_driver,   /* 1995, Hudson */
 	&neobombe_driver,   /* 1997, Hudson */
-	&worlher2_driver,   /* 1993, ADK */
-	&worlhe2j_driver,   /* 1994, ADK */
+	&wh2_driver,        /* 1993, ADK */
+	&wh2j_driver,       /* 1994, ADK */
 	&aodk_driver,       /* 1994, ADK */
 	&whp_driver,        /* 1995, ADK/SNK */
 	&ninjamas_driver,   /* 1996, ADK/SNK */
 	&overtop_driver,    /* 1996, ADK */
 	&twinspri_driver,   /* 1997, ADK */
 	&stakwin_driver,    /* 1995, Saurus */
+	&stakwin2_driver,   /* 1996, Saurus */
 	&ragnagrd_driver,   /* 1996, Saurus */
 	&shocktro_driver,   /* 1997, Saurus */
 	&tws96_driver,      /* 1996, Tecmo */
@@ -2637,14 +2700,18 @@ Rad Action
 	&viewpoin_driver,   /* 1992, Sammy */
 	&gururin_driver,    /* 1994, Face */
 	&miexchng_driver,   /* 1997, Face */
+	&marukodq_driver,	/* 1995, Takara */
+	&nam1975_driver,    /* 1990, SNK */
+	&joyjoy_driver,     /* 1990, SNK */
 	&mahretsu_driver,   /* 1990, SNK */
-	&nam_1975_driver,   /* 1990, SNK */
 	&cyberlip_driver,   /* 1990, SNK */
 	&tpgolf_driver,     /* 1990, SNK */
 	&legendos_driver,   /* 1991, SNK */
+	&socbrawl_driver,   /* 1991, SNK */
+	&roboarmy_driver,   /* 1991, SNK */
 	&fatfury2_driver,   /* 1992, SNK */
 	&bstars2_driver,    /* 1992, SNK */
-	&sidkicks_driver,   /* 1992, SNK */
+	&ssideki_driver,    /* 1992, SNK */
 	&kotm2_driver,      /* 1992, SNK */
 	&samsho_driver,     /* 1992, SNK */
 	&fatfursp_driver,   /* 1993, SNK */
@@ -2655,7 +2722,7 @@ Rad Action
 	&aof2_driver,       /* 1994, SNK */
 	&ssideki2_driver,   /* 1994, SNK */
 	&samsho2_driver,    /* 1994, SNK */
-	&sskick3_driver,    /* 1995, SNK */
+	&ssideki3_driver,   /* 1995, SNK */
 	&samsho3_driver,    /* 1995, SNK */
 	&kof95_driver,      /* 1995, SNK */
 	&rbff1_driver,      /* 1995, SNK */
@@ -2668,7 +2735,7 @@ Rad Action
 	&kof97_driver,      /* 1997, SNK */
 	&lastblad_driver,   /* 1997, SNK */
 	&mslug2_driver,     /* 1998, SNK */
-	&realbou2_driver,   /* 1998, SNK */
+	&rbff2_driver,      /* 1998, SNK */
 	&kof98_driver,      /* 1998, SNK */
 
 #endif /* NEOFREE */

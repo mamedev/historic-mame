@@ -242,7 +242,7 @@ static struct MachineDriver machine_driver =
 		    jb_interrupt_nmi, 500 /* ? */
 		}
 	},
-	60, DEFAULT_REAL_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
+	60, DEFAULT_60HZ_VBLANK_DURATION,  /* frames per second, vblank duration */
 	1, /* 1 CPU slice per frame - interleaving is forced when a sound command is written */
 	jailbrek_machine_init,
 

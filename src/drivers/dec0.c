@@ -346,7 +346,7 @@ static struct MemoryReadAddress dec0_s_readmem[] =
 {
 	{ 0x0000, 0x05ff, MRA_RAM },
 	{ 0x3000, 0x3000, soundlatch_r },
-	{ 0x3800, 0x3800, OKIM6295_status_r },
+	{ 0x3800, 0x3800, OKIM6295_status_0_r },
 	{ 0x8000, 0xffff, MRA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -358,7 +358,7 @@ static struct MemoryWriteAddress dec0_s_writemem[] =
 	{ 0x0801, 0x0801, YM2203_write_port_0_w },
 	{ 0x1000, 0x1000, YM3812_control_port_0_w },
 	{ 0x1001, 0x1001, YM3812_write_port_0_w },
-	{ 0x3800, 0x3800, OKIM6295_data_w },
+	{ 0x3800, 0x3800, OKIM6295_data_0_w },
 	{ 0x8000, 0xffff, MWA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -790,7 +790,7 @@ static struct OKIM6295interface okim6295_interface =
 {
 	1,              /* 1 chip */
 	8000,           /* 8000Hz frequency */
-	3,              /* memory region 3 */
+	{ 3 },              /* memory region 3 */
 	{ 255 }
 };
 

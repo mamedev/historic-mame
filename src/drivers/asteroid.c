@@ -859,21 +859,19 @@ ROM_START( astdelux_rom )
 	ROM_LOAD( "036431.02",    0x6800, 0x0800, 0xd4004aae )
 	ROM_LOAD( "036432.02",    0x7000, 0x0800, 0x6d720c41 )
 	ROM_LOAD( "036433.03",    0x7800, 0x0800, 0x0dcc0be6 )
-	ROM_RELOAD(            0xf800, 0x0800 )	/* for reset/interrupt vectors */
+	ROM_RELOAD(               0xf800, 0x0800 )	/* for reset/interrupt vectors */
 	/* Vector ROM */
 	ROM_LOAD( "036800.02",    0x4800, 0x0800, 0xbb8cabe1 )
 	ROM_LOAD( "036799.01",    0x5000, 0x0800, 0x7d511572 )
 ROM_END
 
-/* 036433.02 with the checksum below is _broken_! */
-/* Anyone have a correct romset? */
 ROM_START( astdelu1_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "036430.01",    0x6000, 0x0800, 0x8f5dabc6 )
 	ROM_LOAD( "036431.01",    0x6800, 0x0800, 0x157a8516 )
 	ROM_LOAD( "036432.01",    0x7000, 0x0800, 0xfdea913c )
-	ROM_LOAD( "036433.02",    0x7800, 0x0800, 0x00000000 )
-	ROM_RELOAD(            0xf800, 0x0800 )	/* for reset/interrupt vectors */
+	ROM_LOAD( "036433.02",    0x7800, 0x0800, 0xd8db74e3 )
+	ROM_RELOAD(               0xf800, 0x0800 )	/* for reset/interrupt vectors */
 	/* Vector ROM */
 	ROM_LOAD( "036800.01",    0x4800, 0x0800, 0x3b597407 )
 	ROM_LOAD( "036799.01",    0x5000, 0x0800, 0x7d511572 )
@@ -916,7 +914,6 @@ struct GameDriver astdelux_driver =
 	atari_vg_earom_load, atari_vg_earom_save
 };
 
-/* the REV 1 romset floating around is broken */
 struct GameDriver astdelu1_driver =
 {
 	__FILE__,

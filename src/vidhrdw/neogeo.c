@@ -75,7 +75,6 @@ static int palette_swap_pending,fix_bank;
 extern unsigned char *neogeo_ram;
 extern unsigned int neogeo_frame_counter;
 extern int neogeo_game_fix;
-int neogeo_red_bits,neogeo_green_bits,neogeo_blue_bits;
 
 void NeoMVSDrawGfx(unsigned char **line,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
@@ -115,17 +114,9 @@ static void swap_palettes(void)
 		g = ((newword >> 3) & 0x1e) | ((newword >> 13) & 0x01) ;
 		b = ((newword << 1) & 0x1e) | ((newword >> 12) & 0x01) ;
 
-		r >>= 5 - neogeo_red_bits;
-		g >>= 5 - neogeo_green_bits;
-		b >>= 5 - neogeo_blue_bits;
-
-		r <<= 8 - neogeo_red_bits;
-		g <<= 8 - neogeo_green_bits;
-		b <<= 8 - neogeo_blue_bits;
-
-		r = r | (r >> neogeo_red_bits) | (r >> 2*neogeo_red_bits);
-		g = g | (g >> neogeo_green_bits) | (g >> 2*neogeo_green_bits);
-		b = b | (b >> neogeo_blue_bits) | (b >> 2*neogeo_blue_bits);
+		r = (r << 3) | (r >> 2);
+		g = (g << 3) | (g >> 2);
+		b = (b << 3) | (b >> 2);
 
 		palette_change_color(i / 2,r,g,b);
     }
@@ -169,17 +160,9 @@ void neogeo_paletteram_w(int offset,int data)
 	g = ((newword >> 3) & 0x1e) | ((newword >> 13) & 0x01) ;
 	b = ((newword << 1) & 0x1e) | ((newword >> 12) & 0x01) ;
 
-	r >>= 5 - neogeo_red_bits;
-	g >>= 5 - neogeo_green_bits;
-	b >>= 5 - neogeo_blue_bits;
-
-	r <<= 8 - neogeo_red_bits;
-	g <<= 8 - neogeo_green_bits;
-	b <<= 8 - neogeo_blue_bits;
-
-	r = r | (r >> neogeo_red_bits) | (r >> 2*neogeo_red_bits);
-	g = g | (g >> neogeo_green_bits) | (g >> 2*neogeo_green_bits);
-	b = b | (b >> neogeo_blue_bits) | (b >> 2*neogeo_blue_bits);
+	r = (r << 3) | (r >> 2);
+	g = (g << 3) | (g >> 2);
+	b = (b << 3) | (b >> 2);
 
 	palette_change_color(offset / 2,r,g,b);
 }
@@ -243,6 +226,11 @@ static const unsigned char *neogeo_palette(void)
     int tileno,tileatr,t1,t2,t3;
     char fullmode=0;
     int ddax=0,dday=0,rzx=15,yskip=0;
+
+	if (Machine->scrbitmap->depth == 16)
+	{
+		return palette_recalc();
+	}
 
 	memset(palette_used_colors,PALETTE_COLOR_UNUSED,4096);
 
@@ -467,7 +455,7 @@ void neo_game_fix(int offset, int data)
 
 /* DWORD read - copied from common.c */
 
-#ifdef ACORN /* GSL 980108 read/write nonaligned dword routine for ARM processor etc */
+#ifdef ALIGN_INTS /* GSL 980108 read/write nonaligned dword routine for ARM processor etc */
 
 INLINE int read_dword(int *address)
 {
@@ -769,6 +757,268 @@ void NeoMVSDrawGfx(unsigned char **line,const struct GfxElement *gfx, /* AJP */
 	}
 }
 
+void NeoMVSDrawGfx16(unsigned char **line,const struct GfxElement *gfx, /* AJP */
+		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
+        int zx,int zy,const struct rectangle *clip)
+{
+	int /*ox,*/oy,ex,ey,y,start,dy;
+	unsigned short *bm;
+	int col;
+    int l; /* Line skipping counter */
+
+    int mydword;
+
+	unsigned char *fspr=0;
+
+	unsigned char *PL1 = Machine->memory_region[2];
+    unsigned char *PL2 = Machine->memory_region[3];
+
+	char *l_y_skip;
+
+    /* Safety feature */
+    code=code%no_of_tiles;
+
+    /* Check for total transparency, no need to draw */
+    if ((gfx->pen_usage[code] & ~1) == 0)
+    	return;
+
+   	if(zy==16)
+		 l_y_skip=full_y_skip;
+	else
+		 l_y_skip=dda_y_skip;
+
+
+	if(code < no_of_tiles/2)
+	{
+		fspr=PL1;
+	}
+	else
+	{
+		fspr=PL2;
+		code-=no_of_tiles/2;
+	}
+
+	/* Mish/AJP - Most clipping is done in main loop */
+    oy=sy;
+  	ey = sy + zy -1; 	/* Clip for size of zoomed object */
+
+	if (sx <= -8) return;
+	if (sy < clip->min_y) sy = clip->min_y;
+    if (ey >= clip->max_y) ey = clip->max_y;
+
+	if (flipy)	/* Y flip */
+	{
+		dy = -8;
+		fspr+=(code+1)*128 - 8 - (sy-oy)*8;
+	}
+	else		/* normal */
+	{
+		dy = 8;
+		fspr+=code*128 + (sy-oy)*8;
+	}
+
+	{
+		const unsigned short *paldata;	/* ASG 980209 */
+		paldata = &gfx->colortable[gfx->color_granularity * color];
+		if (flipx)	/* X flip */
+		{
+			l=0;
+			if(zx==16)
+			{
+				for (y = sy;y <= ey;y++)
+				{
+                    bm  = ((unsigned short *)line[y])+sx;
+
+                    fspr+=l_y_skip[l]*dy;
+
+					mydword = read_dword((int *)(fspr+4));
+					col = (mydword>> 28)&0xf; if (col) bm[BL0] = paldata[col];
+					col = (mydword>> 20)&0xf; if (col) bm[BL1] = paldata[col];
+					col = (mydword>> 12)&0xf; if (col) bm[BL2] = paldata[col];
+					col = (mydword>>  4)&0xf; if (col) bm[BL3] = paldata[col];
+
+					col = (mydword>> 24)&0xf; if (col) bm[8 + BL0] = paldata[col];
+					col = (mydword>> 16)&0xf; if (col) bm[8 + BL1] = paldata[col];
+					col = (mydword>>  8)&0xf; if (col) bm[8 + BL2] = paldata[col];
+					col = (mydword>>  0)&0xf; if (col) bm[8 + BL3] = paldata[col];
+                    mydword = read_dword((int *)fspr);
+                    col = (mydword>> 28)&0xf; if (col) bm[4 + BL0] = paldata[col];
+                    col = (mydword>> 20)&0xf; if (col) bm[4 + BL1] = paldata[col];
+                    col = (mydword>> 12)&0xf; if (col) bm[4 + BL2] = paldata[col];
+                    col = (mydword>>  4)&0xf; if (col) bm[4 + BL3] = paldata[col];
+
+               		col = (mydword>> 24)&0xf; if (col) bm[12 + BL0] = paldata[col];
+					col = (mydword>> 16)&0xf; if (col) bm[12 + BL1] = paldata[col];
+               		col = (mydword>>  8)&0xf; if (col) bm[12 + BL2] = paldata[col];
+               		col = (mydword>>  0)&0xf; if (col) bm[12 + BL3] = paldata[col];
+					l++;
+				}
+			}
+			else
+			{
+				for (y = sy;y <= ey;y++)
+				{
+           			bm  = ((unsigned short *)line[y])+sx;
+                    fspr+=l_y_skip[l]*dy;
+
+                    mydword = read_dword((int *)(fspr+4));
+                    #ifdef LSB_FIRST
+					if (dda_x_skip[0]) {col = (mydword>>28)&0xf; if (col) *bm = paldata[col]; bm++;}
+					if (dda_x_skip[1]) {col = (mydword>>20)&0xf; if (col) *bm = paldata[col]; bm++;}
+					if (dda_x_skip[2]) {col = (mydword>>12)&0xf; if (col) *bm = paldata[col]; bm++;}
+					if (dda_x_skip[3]) {col = (mydword>> 4)&0xf; if (col) *bm = paldata[col]; bm++;}
+					#else
+					if (dda_x_skip[0]) {col = (mydword>> 4)&0xf; if (col) *bm = paldata[col]; bm++;}
+					if (dda_x_skip[1]) {col = (mydword>>12)&0xf; if (col) *bm = paldata[col]; bm++;}
+					if (dda_x_skip[2]) {col = (mydword>>20)&0xf; if (col) *bm = paldata[col]; bm++;}
+					if (dda_x_skip[3]) {col = (mydword>>28)&0xf; if (col) *bm = paldata[col]; bm++;}
+					#endif
+
+                    mydword = read_dword((int *)fspr);
+                    #ifdef LSB_FIRST
+					if (dda_x_skip[4]) {col = (mydword>> 28)&0xf; if (col) *bm = paldata[col]; bm++;}
+					if (dda_x_skip[5]) {col = (mydword>> 20)&0xf; if (col) *bm = paldata[col]; bm++;}
+					if (dda_x_skip[6]) {col = (mydword>> 12)&0xf; if (col) *bm = paldata[col]; bm++;}
+					if (dda_x_skip[7]) {col = (mydword>>  4)&0xf; if (col) *bm = paldata[col]; bm++;}
+					#else
+					if (dda_x_skip[4]) {col = (mydword>>  4)&0xf; if (col) *bm = paldata[col]; bm++;}
+					if (dda_x_skip[5]) {col = (mydword>> 12)&0xf; if (col) *bm = paldata[col]; bm++;}
+					if (dda_x_skip[6]) {col = (mydword>> 20)&0xf; if (col) *bm = paldata[col]; bm++;}
+					if (dda_x_skip[7]) {col = (mydword>> 28)&0xf; if (col) *bm = paldata[col]; bm++;}
+					#endif
+
+                    mydword = read_dword((int *)(fspr+4));
+                    #ifdef LSB_FIRST
+					if (dda_x_skip[8]) {col = (mydword>> 24)&0xf; if (col) *bm = paldata[col]; bm++;}
+					if (dda_x_skip[9]) {col = (mydword>> 16)&0xf; if (col) *bm = paldata[col]; bm++;}
+					if (dda_x_skip[10]) {col = (mydword>> 8)&0xf; if (col) *bm = paldata[col]; bm++;}
+					if (dda_x_skip[11]) {col = (mydword>> 0)&0xf; if (col) *bm = paldata[col]; bm++;}
+					#else
+					if (dda_x_skip[8]) {col = (mydword>>  0)&0xf; if (col) *bm = paldata[col]; bm++;}
+					if (dda_x_skip[9]) {col = (mydword>>  8)&0xf; if (col) *bm = paldata[col]; bm++;}
+					if (dda_x_skip[10]) {col = (mydword>>16)&0xf; if (col) *bm = paldata[col]; bm++;}
+					if (dda_x_skip[11]) {col = (mydword>>24)&0xf; if (col) *bm = paldata[col]; bm++;}
+					#endif
+
+                    mydword = read_dword((int *)fspr);
+                    #ifdef LSB_FIRST
+					if (dda_x_skip[12]) {col = (mydword>> 24)&0xf; if (col) *bm = paldata[col]; bm++;}
+					if (dda_x_skip[13]) {col = (mydword>> 16)&0xf; if (col) *bm = paldata[col]; bm++;}
+					if (dda_x_skip[14]) {col = (mydword>>  8)&0xf; if (col) *bm = paldata[col]; bm++;}
+					if (dda_x_skip[15]) {col = (mydword>>  0)&0xf; if (col) *bm = paldata[col]; bm++;}
+					#else
+					if (dda_x_skip[12]) {col = (mydword>>  0)&0xf; if (col) *bm = paldata[col]; bm++;}
+					if (dda_x_skip[13]) {col = (mydword>>  8)&0xf; if (col) *bm = paldata[col]; bm++;}
+					if (dda_x_skip[14]) {col = (mydword>> 16)&0xf; if (col) *bm = paldata[col]; bm++;}
+					if (dda_x_skip[15]) {col = (mydword>> 24)&0xf; if (col) *bm = paldata[col]; bm++;}
+					#endif
+
+					l++;
+				}
+			}
+		}
+		else		/* normal */
+		{
+      		l=0;
+			if(zx==16)
+			{
+				for (y = sy ;y <= ey;y++)
+				{
+        			bm  = ((unsigned short *)line[y]) + sx;
+					fspr+=l_y_skip[l]*dy;
+
+                    mydword = read_dword((int *)fspr);
+               		col = (mydword>> 0)&0xf; if (col) bm[BL0] = paldata[col];
+               		col = (mydword>> 8)&0xf; if (col) bm[BL1] = paldata[col];
+               		col = (mydword>>16)&0xf; if (col) bm[BL2] = paldata[col];
+               		col = (mydword>>24)&0xf; if (col) bm[BL3] = paldata[col];
+
+                    col = (mydword>> 4)&0xf; if (col) bm[8 + BL0] = paldata[col];
+               		col = (mydword>>12)&0xf; if (col) bm[8 + BL1] = paldata[col];
+               		col = (mydword>>20)&0xf; if (col) bm[8 + BL2] = paldata[col];
+               		col = (mydword>>28)&0xf; if (col) bm[8 + BL3] = paldata[col];
+
+                    mydword = read_dword((int *)(fspr+4));
+               		col = (mydword>> 0)&0xf; if (col) bm[4 + BL0] = paldata[col];
+               		col = (mydword>> 8)&0xf; if (col) bm[4 + BL1] = paldata[col];
+               		col = (mydword>>16)&0xf; if (col) bm[4 + BL2] = paldata[col];
+               		col = (mydword>>24)&0xf; if (col) bm[4 + BL3] = paldata[col];
+
+                    col = (mydword>> 4)&0xf; if (col) bm[12 + BL0] = paldata[col];
+               		col = (mydword>>12)&0xf; if (col) bm[12 + BL1] = paldata[col];
+               		col = (mydword>>20)&0xf; if (col) bm[12 + BL2] = paldata[col];
+               		col = (mydword>>28)&0xf; if (col) bm[12 + BL3] = paldata[col];
+					l++;
+				}
+			}
+			else
+			{
+				for (y = sy ;y <= ey;y++)
+				{
+        			bm  = ((unsigned short *)line[y]) + sx;
+                    fspr+=l_y_skip[l]*dy;
+
+                    mydword = read_dword((int *)fspr);
+                    #ifdef LSB_FIRST
+					if (dda_x_skip[0]) {col = (mydword>> 0)&0xf; if (col) *bm = paldata[col]; bm++;}
+					if (dda_x_skip[1]) {col = (mydword>> 8)&0xf; if (col) *bm = paldata[col]; bm++;}
+					if (dda_x_skip[2]) {col = (mydword>>16)&0xf; if (col) *bm = paldata[col]; bm++;}
+					if (dda_x_skip[3]) {col = (mydword>>24)&0xf; if (col) *bm = paldata[col]; bm++;}
+					#else
+					if (dda_x_skip[0]) {col = (mydword>>24)&0xf; if (col) *bm = paldata[col]; bm++;}
+					if (dda_x_skip[1]) {col = (mydword>>16)&0xf; if (col) *bm = paldata[col]; bm++;}
+					if (dda_x_skip[2]) {col = (mydword>> 8)&0xf; if (col) *bm = paldata[col]; bm++;}
+					if (dda_x_skip[3]) {col = (mydword>> 0)&0xf; if (col) *bm = paldata[col]; bm++;}
+					#endif
+
+                    mydword = read_dword((int *)(fspr+4));
+                    #ifdef LSB_FIRST
+					if (dda_x_skip[4]) {col = (mydword>> 0)&0xf; if (col) *bm = paldata[col]; bm++;}
+					if (dda_x_skip[5]) {col = (mydword>> 8)&0xf; if (col) *bm = paldata[col]; bm++;}
+					if (dda_x_skip[6]) {col = (mydword>>16)&0xf; if (col) *bm = paldata[col]; bm++;}
+					if (dda_x_skip[7]) {col = (mydword>>24)&0xf; if (col) *bm = paldata[col]; bm++;}
+					#else
+					if (dda_x_skip[4]) {col = (mydword>>24)&0xf; if (col) *bm = paldata[col]; bm++;}
+					if (dda_x_skip[5]) {col = (mydword>>16)&0xf; if (col) *bm = paldata[col]; bm++;}
+					if (dda_x_skip[6]) {col = (mydword>> 8)&0xf; if (col) *bm = paldata[col]; bm++;}
+					if (dda_x_skip[7]) {col = (mydword>> 0)&0xf; if (col) *bm = paldata[col]; bm++;}
+					#endif
+
+                    mydword = read_dword((int *)fspr);
+                    #ifdef LSB_FIRST
+					if (dda_x_skip[8])  {col = (mydword>> 4)&0xf; if (col) *bm = paldata[col]; bm++;}
+					if (dda_x_skip[9])  {col = (mydword>>12)&0xf; if (col) *bm = paldata[col]; bm++;}
+					if (dda_x_skip[10]) {col = (mydword>>20)&0xf; if (col) *bm = paldata[col]; bm++;}
+					if (dda_x_skip[11]) {col = (mydword>>28)&0xf; if (col) *bm = paldata[col]; bm++;}
+					#else
+					if (dda_x_skip[8])  {col = (mydword>>28)&0xf; if (col) *bm = paldata[col]; bm++;}
+					if (dda_x_skip[9])  {col = (mydword>>20)&0xf; if (col) *bm = paldata[col]; bm++;}
+					if (dda_x_skip[10]) {col = (mydword>>12)&0xf; if (col) *bm = paldata[col]; bm++;}
+					if (dda_x_skip[11]) {col = (mydword>> 4)&0xf; if (col) *bm = paldata[col]; bm++;}
+					#endif
+
+                    mydword = read_dword((int *)(fspr+4));
+                    #ifdef LSB_FIRST
+					if (dda_x_skip[12]) {col = (mydword>> 4)&0xf; if (col) *bm = paldata[col]; bm++;}
+					if (dda_x_skip[13]) {col = (mydword>>12)&0xf; if (col) *bm = paldata[col]; bm++;}
+					if (dda_x_skip[14]) {col = (mydword>>20)&0xf; if (col) *bm = paldata[col]; bm++;}
+					if (dda_x_skip[15]) {col = (mydword>>28)&0xf; if (col) *bm = paldata[col]; bm++;}
+					#else
+					if (dda_x_skip[12]) {col = (mydword>>28)&0xf; if (col) *bm = paldata[col]; bm++;}
+					if (dda_x_skip[13]) {col = (mydword>>20)&0xf; if (col) *bm = paldata[col]; bm++;}
+					if (dda_x_skip[14]) {col = (mydword>>12)&0xf; if (col) *bm = paldata[col]; bm++;}
+					if (dda_x_skip[15]) {col = (mydword>> 4)&0xf; if (col) *bm = paldata[col]; bm++;}
+					#endif
+
+					l++;
+				}
+			}
+		}
+	}
+}
+
+
+
 static void neo_drawgfx_char(struct osd_bitmap *dest,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int sx,int sy)
 {
@@ -892,6 +1142,7 @@ static void screenrefresh(struct osd_bitmap *bitmap,const struct rectangle *clip
 
     /* Do compressed palette stuff */
 	neogeo_palette();
+
 	fillbitmap(bitmap,palette_transparent_pen,clip);
 
 #ifdef NEO_DEBUG
@@ -1025,14 +1276,26 @@ if(neogeo_game_fix==7 && (t3==0 || t3==0x147f))         // Gururin Bodge fix
 
 			if ( (tileatr>>8) != 0) // crap below zoomed sprite in nam1975 fix??
 			if (sy<224)                // tidy this up later...
-            NeoMVSDrawGfx(line,
-				gfx,
-                tileno,
-				tileatr >> 8,
-				tileatr & 0x01,tileatr & 0x02,
-				sx,sy,rzx,yskip,
-				clip
-            );
+			{
+				if (Machine->scrbitmap->depth == 16)
+					NeoMVSDrawGfx16(line,
+						gfx,
+						tileno,
+						tileatr >> 8,
+						tileatr & 0x01,tileatr & 0x02,
+						sx,sy,rzx,yskip,
+						clip
+					);
+				else
+					NeoMVSDrawGfx(line,
+						gfx,
+						tileno,
+						tileatr >> 8,
+						tileatr & 0x01,tileatr & 0x02,
+						sx,sy,rzx,yskip,
+						clip
+					);
+			}
 
 			sy +=yskip;
 		}  /* for y */

@@ -302,6 +302,9 @@ unsigned m6805_GetPC(void)
 /* Generate interrupts */
 static void Interrupt(void)
 {
+	/* the 6805 latches interrupt requests internally, so we don't clear */
+	/* pending_interrupts until the interrupt is taken, no matter what the */
+	/* external IRQ pin does. */
 	if ((pending_interrupts & M6805_INT_IRQ) != 0 && (cc & IFLAG) == 0)
 	{
         /* standard IRQ */
@@ -313,16 +316,11 @@ static void Interrupt(void)
 #if NEW_INTERRUPT_SYSTEM
 		/* no vectors supported, just do the callback to clear irq_state if needed */
 		if (irq_callback) (*irq_callback)(0);
-#else
-        pending_interrupts &= ~M6805_INT_IRQ;
 #endif
+        pending_interrupts &= ~M6805_INT_IRQ;
 		pcreg=M_RDMEM_WORD(0x07fa);
 		m6805_ICount -= 11;
 	}
-
-#if NEW_INTERRUPT_SYSTEM
-	if (irq_state == CLEAR_LINE) pending_interrupts &= ~M6805_INT_IRQ;
-#endif
 }
 
 
@@ -366,6 +364,8 @@ void m6805_set_nmi_line(int state)
 
 void m6805_set_irq_line(int irqline, int state)
 {
+	if (irq_state == state) return;
+
 	irq_state = state;
 	if (irq_state != CLEAR_LINE) pending_interrupts |= M6805_INT_IRQ;
 }
@@ -572,7 +572,7 @@ int m6805_execute(int cycles)
 			case 0x97: tax(); break;
 			case 0x98: CLC; break;
 			case 0x99: SEC; break;
-#if NEW_INTERRUPT_SYSTEM
+#if IRQ_LEVEL_DETECT
 			case 0x9a: CLI; if (irq_state != CLEAR_LINE) pending_interrupts |= M6805_INT_IRQ; break;
 #else
 			case 0x9a: CLI; break;

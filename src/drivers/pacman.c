@@ -48,6 +48,71 @@ write:
 I/O ports:
 OUT on port $0 sets the interrupt vector
 
+
+
+Make Trax driver
+
+
+Make Trax protection description:
+
+Make Trax has a "Special" chip that it uses for copy protection.
+The following chart shows when reads and writes may occur:
+
+AAAAAAAA AAAAAAAA
+11111100 00000000  <- address bits
+54321098 76543210
+xxx1xxxx 01xxxxxx - read data bits 4 and 7
+xxx1xxxx 10xxxxxx - read data bits 6 and 7
+xxx1xxxx 11xxxxxx - read data bits 0 through 5
+
+xxx1xxxx 00xxx100 - write to Special
+xxx1xxxx 00xxx101 - write to Special
+xxx1xxxx 00xxx110 - write to Special
+xxx1xxxx 00xxx111 - write to Special
+
+In practical terms, it reads from Special when it reads from
+location $5040-$50FF.  Note that these locations overlap our
+inputs and Dip Switches.  Yuk.
+
+I don't bother trapping the writes right now, because I don't
+know how to interpret them.  However, comparing against Crush
+Roller gives most of the values necessary on the reads.
+
+Instead of always reading from $5040, $5080, and $50C0, the Make
+Trax programmers chose to read from a wide variety of locations,
+probably to make debugging easier.  To us, it means that for the most
+part we can just assign a specific value to return for each address and
+we'll be OK.  This falls apart for the following addresses:  $50C0, $508E,
+$5090, and $5080.  These addresses should return multiple values.  The other
+ugly thing happening is in the ROMs at $3AE5.  It keeps checking for
+different values of $50C0 and $5080, and weird things happen if it gets
+the wrong values.  The only way I've found around these is to patch the
+ROMs using the same patches Crush Roller uses.  The only thing to watch
+with this is that changing the ROMs will break the beginning checksum.
+That's why we use the rom opcode decode function to do our patches.
+
+Incidentally, there are extremely few differences between Crush Roller
+and Make Trax.  About 98% of the differences appear to be either unused
+bytes, the name of the game, or code related to the protection.  I've
+only spotted two or three actual differences in the games, and they all
+seem minor.
+
+If anybody cares, here's a list of disassembled addresses for every
+read and write to the Special chip (not all of the reads are
+specifically for checking the Special bits, some are for checking
+player inputs and Dip Switches):
+
+Writes: $0084, $012F, $0178, $023C, $0C4C, $1426, $1802, $1817,
+	$280C, $2C2E, $2E22, $3205, $3AB7, $3ACC, $3F3D, $3F40,
+	$3F4E, $3F5E
+Reads:  $01C8, $01D2, $0260, $030E, $040E, $0416, $046E, $0474,
+	$0560, $0568, $05B0, $05B8, $096D, $0972, $0981, $0C27,
+	$0C2C, $0F0A, $10B8, $10BE, $111F, $1127, $1156, $115E,
+	$11E3, $11E8, $18B7, $18BC, $18CA, $1973, $197A, $1BE7,
+	$1C06, $1C9F, $1CAA, $1D79, $213D, $2142, $2389, $238F,
+	$2AAE, $2BF4, $2E0A, $39D5, $39DA, $3AE2, $3AEA, $3EE0,
+	$3EE9, $3F07, $3F0D
+
 ***************************************************************************/
 
 #include "driver.h"
@@ -72,6 +137,8 @@ extern void pacplus_decode(void);
 void theglob_init_machine(void);
 int theglob_decrypt_rom(int offset);
 extern unsigned char *theglob_mem_rom;
+
+
 
 static struct MemoryReadAddress readmem[] =
 {
@@ -189,7 +256,7 @@ INPUT_PORTS_START( pacman_input_ports )
 	PORT_DIPSETTING(    0x00, "Alternate" )
 
 	PORT_START	/* DSW 2 */
- 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+ 	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START	/* FAKE */
 	/* This fake input port is used to get the status of the fire button */
@@ -250,7 +317,7 @@ INPUT_PORTS_START( mspacman_input_ports )
 	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNUSED )
 
 	PORT_START	/* DSW 2 */
- 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+ 	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
 
 	PORT_START	/* FAKE */
 	/* This fake input port is used to get the status of the fire button */
@@ -260,7 +327,7 @@ INPUT_PORTS_START( mspacman_input_ports )
 	PORT_DIPSETTING(    0x01, "On" )
 INPUT_PORTS_END
 
-INPUT_PORTS_START( crush_input_ports )
+INPUT_PORTS_START( maketrax_input_ports )
 	PORT_START	/* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
@@ -278,14 +345,10 @@ INPUT_PORTS_START( crush_input_ports )
 	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
 	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
-	PORT_DIPNAME( 0x10, 0x10, "Unknown 1", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x10, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+ 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )  /* Protection */
 	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
 	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown 2", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+ 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )  /* Protection */
 
 	PORT_START	/* DSW 1 */
  	PORT_DIPNAME( 0x03, 0x01, "Coinage", IP_KEY_NONE )
@@ -304,15 +367,56 @@ INPUT_PORTS_START( crush_input_ports )
 	PORT_DIPNAME( 0x20, 0x20, "Teleport holes", IP_KEY_NONE )
 	PORT_DIPSETTING(    0x20, "Off" )
 	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x40, 0x40, "Unknown 3", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x40, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
-	PORT_DIPNAME( 0x80, 0x80, "Unknown 4", IP_KEY_NONE )
-	PORT_DIPSETTING(    0x80, "Off" )
-	PORT_DIPSETTING(    0x00, "On" )
+ 	PORT_BIT( 0xc0, IP_ACTIVE_HIGH, IPT_UNUSED )  /* Protection */
 
 	PORT_START	/* DSW 2 */
- 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+ 	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
+INPUT_PORTS_END
+
+INPUT_PORTS_START( mbrush_input_ports )
+	PORT_START	/* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_DIPNAME( 0x10, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x10, "Cocktail" )
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_COIN1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_COIN2 )
+	PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_COIN3 )
+
+	PORT_START	/* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_LOW, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x02, IP_ACTIVE_LOW, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x04, IP_ACTIVE_LOW, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_LOW, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+ 	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNUSED )  /* Protection in Make Trax */
+	PORT_BIT( 0x20, IP_ACTIVE_LOW, IPT_START1 )
+	PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_START2 )
+ 	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNUSED )  /* Protection in Make Trax */
+
+	PORT_START	/* DSW 1 */
+ 	PORT_DIPNAME( 0x03, 0x01, "Coinage", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x03, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x01, "1 Coin/1 Credit" )
+	PORT_DIPSETTING(    0x02, "1 Coin/2 Credits" )
+	PORT_DIPSETTING(    0x00, "Free Play" )
+	PORT_DIPNAME( 0x0c, 0x08, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "1" )
+	PORT_DIPSETTING(    0x04, "2" )
+	PORT_DIPSETTING(    0x08, "3" )
+	PORT_DIPSETTING(    0x0c, "4" )
+	PORT_DIPNAME( 0x10, 0x10, "Unknown 1", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x10, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+	PORT_DIPNAME( 0x20, 0x20, "Unknown 2", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x20, "Off" )
+	PORT_DIPSETTING(    0x00, "On" )
+ 	PORT_BIT( 0xc0, IP_ACTIVE_HIGH, IPT_UNUSED )  /* Protection in Make Trax */
+
+	PORT_START	/* DSW 2 */
+ 	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( ponpoko_input_ports )
@@ -439,7 +543,7 @@ INPUT_PORTS_START( eyes_input_ports )
 	PORT_DIPSETTING(    0x00, "On" )
 
 	PORT_START	/* DSW 2 */
- 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+ 	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( lizwiz_input_ports )
@@ -489,7 +593,7 @@ INPUT_PORTS_START( lizwiz_input_ports )
 	PORT_DIPSETTING(    0x00, "On" )
 
 	PORT_START	/* DSW 2 */
- 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+ 	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
 INPUT_PORTS_START( theglob_input_ports )
@@ -543,7 +647,7 @@ INPUT_PORTS_START( theglob_input_ports )
 	PORT_DIPSETTING(    0x00, "On" )
 
 	PORT_START	/* DSW 2 */
- 	PORT_BIT( 0xff, IP_ACTIVE_LOW, IPT_UNUSED )
+ 	PORT_BIT( 0xff, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
 
@@ -915,6 +1019,26 @@ ROM_START( mspacatk_rom )
 	ROM_LOAD( "82s126.3m",    0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
+ROM_START( maketrax_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "maketrax.6e",  0x0000, 0x1000, 0x0150fb4a )
+	ROM_LOAD( "maketrax.6f",  0x1000, 0x1000, 0x77531691 )
+	ROM_LOAD( "maketrax.6h",  0x2000, 0x1000, 0xa2cdc51e )
+	ROM_LOAD( "maketrax.6j",  0x3000, 0x1000, 0x0b4b5e0a )
+
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "maketrax.5e",  0x0000, 0x1000, 0x91bad2da )
+	ROM_LOAD( "maketrax.5f",  0x1000, 0x1000, 0xaea79f55 )
+
+	ROM_REGION(0x0120)	/* color PROMs */
+	ROM_LOAD( "crush.7f",     0x0000, 0x0020, 0x2fc650bd )
+	ROM_LOAD( "crush.4a",     0x0020, 0x0100, 0x2bc5d339 )
+
+	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_LOAD( "crush.1m",     0x0000, 0x0100, 0xa9cc86bf )
+	ROM_LOAD( "crush.3m",     0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
+ROM_END
+
 ROM_START( crush_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "tp1",          0x0000, 0x0800, 0xf276592e )
@@ -930,6 +1054,28 @@ ROM_START( crush_rom )
 	ROM_LOAD( "tpa",          0x0000, 0x0800, 0xc7617198 )
 	ROM_LOAD( "tpc",          0x0800, 0x0800, 0xe129d76a )
 	ROM_LOAD( "tpb",          0x1000, 0x0800, 0xd1899f05 )
+	ROM_LOAD( "tpd",          0x1800, 0x0800, 0xd35d1caf )
+
+	ROM_REGION(0x0120)	/* color PROMs */
+	ROM_LOAD( "crush.7f",     0x0000, 0x0020, 0x2fc650bd )
+	ROM_LOAD( "crush.4a",     0x0020, 0x0100, 0x2bc5d339 )
+
+	ROM_REGION(0x0200)	/* sound PROMs */
+	ROM_LOAD( "crush.1m",     0x0000, 0x0100, 0xa9cc86bf )
+	ROM_LOAD( "crush.3m",     0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
+ROM_END
+
+ROM_START( mbrush_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "mbrush.6e",    0x0000, 0x1000, 0x750fbff7 )
+	ROM_LOAD( "mbrush.6f",    0x1000, 0x1000, 0x27eb4299 )
+	ROM_LOAD( "mbrush.6h",    0x2000, 0x1000, 0xd297108e )
+	ROM_LOAD( "mbrush.6j",    0x3000, 0x1000, 0x6fd719d0 )
+
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "tpa",          0x0000, 0x0800, 0xc7617198 )
+	ROM_LOAD( "mbrush.5h",    0x0800, 0x0800, 0xc15b6967 )
+	ROM_LOAD( "mbrush.5f",    0x1000, 0x0800, 0xd5bc5cb8 )  /* copyright sign was removed */
 	ROM_LOAD( "tpd",          0x1800, 0x0800, 0xd35d1caf )
 
 	ROM_REGION(0x0120)	/* color PROMs */
@@ -1080,6 +1226,81 @@ ROM_START( jumpshot_rom )
 	ROM_LOAD( "prom.3m",      0x0100, 0x0100, 0x77245b66 )	/* timing - not used */
 ROM_END
 
+
+
+
+static int maketrax_special_port2_r(int offset)
+{
+	int pc,data;
+
+	pc = cpu_getpreviouspc();
+
+	data = input_port_2_r(offset);
+
+	if ((pc == 0x1973) || (pc == 0x2389)) return data | 0x40;
+
+	switch (offset)
+	{
+		case 0x01:
+		case 0x04:
+			data |= 0x40; break;
+		case 0x05:
+			data |= 0xc0; break;
+		default:
+			data &= 0x3f; break;
+	}
+
+	return data;
+}
+
+static int maketrax_special_port3_r(int offset)
+{
+	int pc;
+
+	pc = cpu_getpreviouspc();
+
+	if ( pc == 0x040e) return 0x20;
+
+	if ((pc == 0x115e) || (pc == 0x3ae2)) return 0x00;
+
+	switch (offset)
+	{
+		case 0x00:
+			return 0x1f;
+		case 0x09:
+			return 0x30;
+		case 0x0c:
+			return 0x00;
+		default:
+			return 0x20;
+	}
+}
+
+static void maketrax_driver_init(void)
+{
+	/* set up protection handlers */
+	install_mem_read_handler(0, 0x5080, 0x50bf, maketrax_special_port2_r);
+	install_mem_read_handler(0, 0x50c0, 0x50ff, maketrax_special_port3_r);
+}
+
+static void maketrax_rom_decode(void)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	memcpy(ROM,RAM,0x10000);
+
+	ROM[0x0415] = 0xc9;
+	ROM[0x1978] = 0x18;
+	ROM[0x238e] = 0xc9;
+	ROM[0x3ae5] = 0xe6;
+	ROM[0x3ae7] = 0x00;
+	ROM[0x3ae8] = 0xc9;
+	ROM[0x3aed] = 0x86;
+	ROM[0x3aee] = 0xc0;
+	ROM[0x3aef] = 0xb0;
+
+}
 
 
 static void ponpoko_decode(void)
@@ -1240,6 +1461,53 @@ static void pacman_hisave(void)
 }
 
 
+
+static int maketrax_hiload(void)
+{
+	static int resetcount;
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	/* during a reset, leave time to the game to clear the screen */
+	if (++resetcount < 60) return 0;
+
+	/* wait for "HI SCORE" to be on screen */
+	if (memcmp(&RAM[0x43d0],"\x53\x40\x49\x48",4) == 0)
+	{
+		resetcount = 0;
+
+		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+		{
+			osd_fread(f,&RAM[0x4E40],30);
+
+			RAM[0x4c80] = RAM[0x4e43];
+			RAM[0x4c81] = RAM[0x4e44];
+			RAM[0x4c82] = RAM[0x4e45];
+
+			osd_fclose(f);
+		}
+
+		return 1;
+	}
+	else return 0;  /* we can't load the hi scores yet */
+}
+
+
+
+static void maketrax_hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite(f,&RAM[0x4E40],30);
+		osd_fclose(f);
+	}
+
+}
 
 static int crush_hiload(void)
 {
@@ -1776,7 +2044,32 @@ struct GameDriver mspacatk_driver =
 	pacman_hiload, pacman_hisave
 };
 
-extern struct GameDriver maketrax_driver;
+struct GameDriver maketrax_driver =
+{
+	__FILE__,
+	0,
+	"maketrax",
+	"Make Trax",
+	"1981",
+	"Williams",
+	BASE_CREDITS"\nGary Walton (color info)\nSimon Walls (color info)\nJohn Bowes(info)\nMike Balfour",
+	0,
+	&machine_driver,
+	maketrax_driver_init,
+
+	maketrax_rom,
+	0, maketrax_rom_decode,
+	0,
+	0,     /* sound_prom */
+
+	maketrax_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	maketrax_hiload, maketrax_hisave /* hiload hisave */
+};
+
 struct GameDriver crush_driver =
 {
 	__FILE__,
@@ -1795,7 +2088,33 @@ struct GameDriver crush_driver =
 	0,
 	0,	/* sound_prom */
 
-	crush_input_ports,
+	maketrax_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	crush_hiload, crush_hisave
+};
+
+struct GameDriver mbrush_driver =
+{
+	__FILE__,
+	&maketrax_driver,
+	"mbrush",
+	"Magic Brush",
+	"1981",
+	"bootleg",
+	BASE_CREDITS"\nGary Walton (color info)\nSimon Walls (color info)",
+	0,
+	&machine_driver,
+	0,
+
+	mbrush_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	mbrush_input_ports,
 
 	PROM_MEMORY_REGION(2), 0, 0,
 	ORIENTATION_ROTATE_90,

@@ -38,7 +38,7 @@ typedef signed int	INT32;
 
 #ifdef UNIX
 
-#ifdef linux_alpha
+#ifdef __LP64__
 typedef signed   long	INT64;
 typedef unsigned long	UINT64;
 #else

@@ -1,7 +1,7 @@
 #include "driver.h"
 
 
-char mameversion[] = "0.35 BETA 2 ("__DATE__")";
+char mameversion[] = "0.35 BETA 3 ("__DATE__")";
 
 static struct RunningMachine machine;
 struct RunningMachine *Machine = &machine;

@@ -14,7 +14,6 @@
 
 unsigned char *galaga_sharedram;
 static unsigned char interrupt_enable_1,interrupt_enable_2,interrupt_enable_3;
-unsigned char galaga_hiscoreloaded;
 
 static void *nmi_timer;
 
@@ -24,27 +23,11 @@ void galaga_vh_interrupt(void);
 
 void galaga_init_machine(void)
 {
-	galaga_hiscoreloaded = 0;
 	nmi_timer = 0;
 	galaga_halt_w (0, 0);
 }
 
 
-int galaga_hiscore_print_r(int offset)
-{
-	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
-
-
-	if ((cpu_getpc() == 0x031e || cpu_getpc() == 0xe1) && galaga_hiscoreloaded)
-	{
-		if (offset == 4)
-			RAM[0x83f2] = RAM[0x8a25];  /* Adjust the 6th digit */
-
-		return RAM[0x8a20+offset];    /* return HISCORE */
-	}
-	else
-		return RAM[0x2b9+offset];     /* bypass ROM test */
-}
 
 int galaga_sharedram_r(int offset)
 {

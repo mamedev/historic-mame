@@ -33,21 +33,12 @@ write:
 
 #include "driver.h"
 #include "vidhrdw/generic.h"
+#include "cpu/m68000/m68000.h"
 #include "cpu/z80/z80.h"
 
-
 extern unsigned char *gaiden_videoram;
-extern unsigned char *gaiden_spriteram;
 extern unsigned char *gaiden_videoram2;
 extern unsigned char *gaiden_videoram3;
-extern unsigned char *gaiden_txscrollx,*gaiden_txscrolly;
-extern unsigned char *gaiden_fgscrollx,*gaiden_fgscrolly;
-extern unsigned char *gaiden_bgscrollx,*gaiden_bgscrolly;
-
-extern int gaiden_videoram_size;
-extern int gaiden_videoram2_size;
-extern int gaiden_videoram3_size;
-extern int gaiden_spriteram_size;
 
 void gaiden_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
@@ -191,18 +182,18 @@ static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x000000, 0x03ffff, MWA_ROM },
 	{ 0x060000, 0x063fff, MWA_BANK1 },
-	{ 0x070000, 0x070fff, gaiden_videoram_w, &gaiden_videoram, &gaiden_videoram_size },
-	{ 0x072000, 0x073fff, gaiden_videoram2_w,  &gaiden_videoram2, &gaiden_videoram2_size },
-	{ 0x074000, 0x075fff, gaiden_videoram3_w,  &gaiden_videoram3, &gaiden_videoram3_size },
-	{ 0x076000, 0x077fff, gaiden_spriteram_w, &gaiden_spriteram, &gaiden_spriteram_size },
+	{ 0x070000, 0x070fff, gaiden_videoram_w, &gaiden_videoram },
+	{ 0x072000, 0x073fff, gaiden_videoram2_w,  &gaiden_videoram2 },
+	{ 0x074000, 0x075fff, gaiden_videoram3_w,  &gaiden_videoram3 },
+	{ 0x076000, 0x077fff, gaiden_spriteram_w, &spriteram },
 	{ 0x078000, 0x0787ff, paletteram_xxxxBBBBGGGGRRRR_word_w, &paletteram },
 	{ 0x078800, 0x079fff, MWA_NOP },   /* extra portion of palette RAM, not really used */
-	{ 0x07a104, 0x07a105, gaiden_txscrolly_w, &gaiden_txscrolly },
-	{ 0x07a10c, 0x07a10d, gaiden_txscrollx_w, &gaiden_txscrollx },
-	{ 0x07a204, 0x07a205, gaiden_fgscrolly_w, &gaiden_fgscrolly },
-	{ 0x07a20c, 0x07a20d, gaiden_fgscrollx_w, &gaiden_fgscrollx },
-	{ 0x07a304, 0x07a305, gaiden_bgscrolly_w, &gaiden_bgscrolly },
-	{ 0x07a30c, 0x07a30d, gaiden_bgscrollx_w, &gaiden_bgscrollx },
+	{ 0x07a104, 0x07a105, gaiden_txscrolly_w },
+	{ 0x07a10c, 0x07a10d, gaiden_txscrollx_w },
+	{ 0x07a204, 0x07a205, gaiden_fgscrolly_w },
+	{ 0x07a20c, 0x07a20d, gaiden_fgscrollx_w },
+	{ 0x07a304, 0x07a305, gaiden_bgscrolly_w },
+	{ 0x07a30c, 0x07a30d, gaiden_bgscrollx_w },
 	{ 0x07a802, 0x07a803, gaiden_sound_command_w },
 	{ 0x07a804, 0x07a805, tknight_protection_w },
 	{ -1 }  /* end of table */
@@ -212,7 +203,7 @@ static struct MemoryReadAddress sound_readmem[] =
 {
 	{ 0x0000, 0xdfff, MRA_ROM },
 	{ 0xf000, 0xf7ff, MRA_RAM },
-	{ 0xf800, 0xf800, OKIM6295_status_r },
+	{ 0xf800, 0xf800, OKIM6295_status_0_r },
 	{ 0xfc00, 0xfc00, MRA_NOP },	/* ?? */
 	{ 0xfc20, 0xfc20, soundlatch_r },
 	{ -1 }	/* end of table */
@@ -222,7 +213,7 @@ static struct MemoryWriteAddress sound_writemem[] =
 {
 	{ 0x0000, 0xdfff, MWA_ROM },
 	{ 0xf000, 0xf7ff, MWA_RAM },
-	{ 0xf800, 0xf800, OKIM6295_data_w },
+	{ 0xf800, 0xf800, OKIM6295_data_0_w },
 	{ 0xf810, 0xf810, YM2203_control_port_0_w },
 	{ 0xf811, 0xf811, YM2203_write_port_0_w },
 	{ 0xf820, 0xf820, YM2203_control_port_1_w },
@@ -402,19 +393,19 @@ INPUT_PORTS_END
 
 static struct GfxLayout tilelayout =
 {
-	8,8,	/* 8*8 tiles */
-	2048,	/* 2048 tiles */
+	8,8,	/* tile size */
+	0x800,	/* number of tiles */
 	4,	/* 4 bits per pixel */
 	{ 0, 1, 2, 3 },
-        { 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4 },
-        { 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 },
-	32*8	/* every tile takes 32 consecutive bytes */
+	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4 },
+	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32 },
+	32*8	/* offset to next tile */
 };
 
 static struct GfxLayout tile2layout =
 {
-	16,16,	/* 16*16 sprites */
-	4096,	/* 2048 tiles */
+	16,16,	/* tile size */
+	0x1000,	/* number of tiles */
 	4,	/* 4 bits per pixel */
 	{ 0, 1, 2, 3 },	/* the bitplanes are packed in one nibble */
 	{ 0*4, 1*4, 2*4, 3*4, 4*4, 5*4, 6*4, 7*4,
@@ -422,37 +413,21 @@ static struct GfxLayout tile2layout =
 	  32*8+4*4, 32*8+5*4, 32*8+6*4, 32*8+7*4,},
 	{ 0*32, 1*32, 2*32, 3*32, 4*32, 5*32, 6*32, 7*32,
 	  16*32, 17*32, 18*32, 19*32, 20*32, 21*32, 22*32, 23*32},
-	128*8	/* every sprite takes 128 bytes */
+	128*8	/* offset to next tile */
 };
 
 static struct GfxLayout spritelayout =
 {
-	32,32,	/* 32*32 sprites */
-	2048,	/* 2048 sprites */
+	8,8,	/* sprites size */
+	0x8000,	/* number of sprites */
 	4,	/* 4 bits per pixel */
 	{ 0, 1, 2, 3 },	/* the bitplanes are packed in one nibble */
-	{ 0*4, 1*4, 0*4+2048*256*8, 1*4+2048*256*8, 2*4, 3*4, 2*4+2048*256*8, 3*4+2048*256*8,
-	  32*4+0*4, 32*4+1*4, 32*4+0*4+2048*256*8, 32*4+1*4+2048*256*8, 32*4+2*4, 32*4+3*4, 32*4+2*4+2048*256*8, 32*4+3*4+2048*256*8,
-	  128*4+0*4, 128*4+1*4, 128*4+0*4+2048*256*8, 128*4+1*4+2048*256*8, 128*4+2*4, 128*4+3*4, 128*4+2*4+2048*256*8, 128*4+3*4+2048*256*8,
-	  160*4+0*4, 160*4+1*4, 160*4+0*4+2048*256*8, 160*4+1*4+2048*256*8, 160*4+2*4, 160*4+3*4, 160*4+2*4+2048*256*8, 160*4+3*4+2048*256*8 },
-	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
-	  16*16, 17*16, 18*16, 19*16, 20*16, 21*16, 22*16, 23*16,
-	  64*16, 65*16, 66*16, 67*16, 68*16, 69*16, 70*16, 71*16,
-	  80*16, 81*16, 82*16, 83*16, 84*16, 85*16, 86*16, 87*16 },
-	256*8	/* 256 bytes to next sprite */
-};
-
-static struct GfxLayout spritelayout16x16 =
-{
-	16,16,	/* 16*16 sprites */
-	8192,	/* 8192 sprites */
-	4,	/* 4 bits per pixel */
-	{ 0, 1, 2, 3 },	/* the bitplanes are packed in one nibble */
-	{ 0*4, 1*4, 0*4+2048*256*8, 1*4+2048*256*8, 2*4, 3*4, 2*4+2048*256*8, 3*4+2048*256*8,
-	  32*4+0*4, 32*4+1*4, 32*4+0*4+2048*256*8, 32*4+1*4+2048*256*8, 32*4+2*4, 32*4+3*4, 32*4+2*4+2048*256*8, 32*4+3*4+2048*256*8 },
-	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16,
-	  16*16, 17*16, 18*16, 19*16, 20*16, 21*16, 22*16, 23*16 },
-	64*8	/* 64 bytes to the next sprite */
+	{
+		0*4, 1*4, 0*4+2048*256*8, 1*4+2048*256*8,
+		2*4, 3*4, 2*4+2048*256*8, 3*4+2048*256*8
+	},
+	{ 0*16, 1*16, 2*16, 3*16, 4*16, 5*16, 6*16, 7*16 },
+	16*8	/* offset to next sprite */
 };
 
 static struct GfxDecodeInfo gfxdecodeinfo[] =
@@ -460,8 +435,7 @@ static struct GfxDecodeInfo gfxdecodeinfo[] =
 	{ 1, 0x000000, &tilelayout,        256, 16 },	/* tiles 8x8*/
 	{ 1, 0x010000, &tile2layout,       768, 16 },	/* tiles 16x16*/
 	{ 1, 0x090000, &tile2layout,       512, 16 },	/* tiles 16x16*/
-	{ 1, 0x110000, &spritelayout,        0, 16 },	/* sprites 32x32*/
-	{ 1, 0x110000, &spritelayout16x16,   0, 16 },	/* sprites 16x16*/
+	{ 1, 0x110000, &spritelayout,        0, 16 },	/* sprites 8x8 */
 	{ -1 } /* end of array */
 };
 
@@ -477,7 +451,7 @@ static struct YM2203interface ym2203_interface =
 {
 	2,			/* 2 chips */
 	4000000,	/* 4 MHz ? (hand tuned) */
-	{ YM2203_VOL(255,255), YM2203_VOL(255,255) },
+	{ YM2203_VOL(30,15), YM2203_VOL(30,15) },
 	{ 0 },
 	{ 0 },
 	{ 0 },
@@ -489,8 +463,8 @@ static struct OKIM6295interface okim6295_interface =
 {
 	1,              /* 1 chip */
 	8000,           /* 8000Hz frequency */
-	3,              /* memory region 3 */
-	{ 128 }
+	{ 3 },              /* memory region 3 */
+	{ 20 }
 };
 
 
@@ -671,7 +645,7 @@ struct GameDriver gaiden_driver =
 	"Alex Pasadyn",
 	0,
 	&machine_driver,
-	0,
+		0,
 
 	gaiden_rom,
 	0, 0,
@@ -696,7 +670,7 @@ struct GameDriver shadoww_driver =
 	"Alex Pasadyn",
 	0,
 	&machine_driver,
-	0,
+		0,
 
 	shadoww_rom,
 	0, 0,
@@ -721,7 +695,7 @@ struct GameDriver tknight_driver =
 	"Alex Pasadyn\nNicola Salmoria",
 	0,
 	&machine_driver,
-	0,
+		0,
 
 	tknight_rom,
 	0, 0,

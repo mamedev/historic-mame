@@ -135,7 +135,7 @@ static struct OKIM6295interface okim6295_interface =
 {
 	1,              /* 1 chip */
 	8000,           /* 8000Hz ??? TODO: find out the real frequency */
-	2,              /* memory region 2 */
+	{ 2 },              /* memory region 2 */
 	{ 255 }
 };
 
@@ -216,7 +216,7 @@ static struct IOWritePort writeport[] =
 	{ 0x02, 0x02, pang_bankswitch_w },      /* Code bank register */
 	{ 0x03, 0x03, YM2413_data_port_0_w  },  /* Sound ?? */
 	{ 0x04, 0x04, YM2413_register_port_0_w},/* Sound ?? */
-	{ 0x05, 0x05, OKIM6295_data_w },        /* ADPCM */
+	{ 0x05, 0x05, OKIM6295_data_0_w },        /* ADPCM */
 	{ 0x06, 0x06, MWA_NOP },                /* Watchdog ? */
 	{ 0x07, 0x07, pang_video_bank_w },      /* Video RAM bank register */
 	{ 0x08, 0x08, MWA_NOP },                /* ???? */

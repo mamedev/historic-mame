@@ -201,6 +201,7 @@ struct MachineCPU
 #define CPU_TMS34010 12
 #define CPU_TMS9900  13
 #define CPU_Z8000    14
+#define CPU_TMS320C10 15
 
 /* set this if the CPU is used as a slave for audio. It will not be emulated if */
 /* sound is disabled, therefore speeding up a lot the emulation. */

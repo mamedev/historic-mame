@@ -102,14 +102,14 @@ int klax_input_r (int offset)
 
 int klax_adpcm_r (int offset)
 {
-	return OKIM6295_status_r (offset) | 0xff00;
+	return OKIM6295_status_0_r (offset) | 0xff00;
 }
 
 
 void klax_adpcm_w (int offset, int data)
 {
 	if (!(data & 0x00ff0000))
-		OKIM6295_data_w (offset, data & 0xff);
+		OKIM6295_data_0_w (offset, data & 0xff);
 }
 
 
@@ -254,7 +254,7 @@ static struct OKIM6295interface okim6295_interface =
 {
 	1,			/* 1 chip */
 	7159160 / 1024,    /* ~7000 Hz */
-	2,       /* memory region 2 */
+	{ 2 },       /* memory region 2 */
 	{ 255 }
 };
 

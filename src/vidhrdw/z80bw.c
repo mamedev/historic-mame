@@ -153,8 +153,8 @@ void astinvad_videoram_w (int offset,int data)
 
                 astinvad_videoram[offset] = data;
 
-		y = offset / 32;
-		x = 8 * (offset % 32);
+		y = offset / 30;
+		x = 8 * (offset % 30);
 
                 for (i = 0; i < 8; i++)
 		{
@@ -169,6 +169,51 @@ void astinvad_videoram_w (int offset,int data)
 }
 
 
+static void plot_pixel_8080 (int x, int y, int col)
+{
+	if (Machine->orientation & ORIENTATION_SWAP_XY)
+	{
+		int temp;
+
+		temp = x;
+		x = y;
+		y = temp;
+	}
+	if (Machine->orientation & ORIENTATION_FLIP_X)
+		x = 255 - x;
+	if (Machine->orientation & ORIENTATION_FLIP_Y)
+		y = 255 - y;
+
+	tmpbitmap->line[y][x] = col;
+	Machine->scrbitmap->line[y][x] = col;
+	/* TODO: we should mark 8 bits dirty at a time */
+	osd_mark_dirty (x,y,x,y,0);
+}
+
+void spaceint_videoram_w (int offset,int data) /* LT 23-12-1998 */ /*--WIP--*/
+ {
+   unsigned char *RAM = Machine->memory_region[2];
+	if (astinvad_videoram[offset] != data)
+	{
+		int i,x,y;
+
+		astinvad_videoram[offset] = data;
+
+		y = (8*(offset / 256));
+		x = (offset % 256);
+
+		for (i = 0; i < 8; i++)
+		{
+			if (!(data & 0x01))
+				plot_pixel_8080 (x, y, Machine->pens[BLACK]);
+			else
+                                plot_pixel_8080 (x, y, Machine->pens[0x07]);
+
+			y ++;
+			data >>= 1;
+		}
+	}
+}
 
 /***************************************************************************
 

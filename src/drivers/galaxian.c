@@ -87,6 +87,7 @@ int mooncrst_vh_start(void);
 int pisces_vh_start(void);
 void galaxian_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 int galaxian_vh_interrupt(void);
+int devilfsh_vh_interrupt(void);
 
 void mooncrst_pitch_w(int offset,int data);
 void mooncrst_vol_w(int offset,int data);
@@ -523,6 +524,47 @@ INPUT_PORTS_START( pacmanbl_input_ports )
 	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
 INPUT_PORTS_END
 
+INPUT_PORTS_START( devilfsh_input_ports )
+	PORT_START      /* IN0 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_COIN2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY )
+	PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_JOYSTICK_UP | IPF_4WAY )
+
+	PORT_START      /* IN1 */
+	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1 )
+	PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2 )
+	PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_JOYSTICK_LEFT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_JOYSTICK_RIGHT | IPF_4WAY | IPF_COCKTAIL )
+	PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_BUTTON1 | IPF_COCKTAIL )
+	PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_JOYSTICK_DOWN | IPF_4WAY | IPF_COCKTAIL )
+	PORT_DIPNAME( 0x40, 0x40, "Coin A", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "2 Coins/1 Credit" )
+	PORT_DIPSETTING(    0x40, "1 Coin/1 Credit" )
+	PORT_DIPNAME( 0x80, 0x80, "Coin B", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x80, "1 Coin/3 Credits" )
+	PORT_DIPSETTING(    0x00, "1 Coin/5 Credits" )
+
+	PORT_START      /* DSW0 */
+	PORT_DIPNAME( 0x01, 0x00, "Bonus Life", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "10000" )
+	PORT_DIPSETTING(    0x01, "15000" )
+	PORT_DIPNAME( 0x02, 0x00, "Unknown", IP_KEY_NONE )   /* Probably unused */
+	PORT_DIPSETTING(    0x00, "Off" )
+	PORT_DIPSETTING(    0x02, "On" )
+	PORT_DIPNAME( 0x04, 0x00, "Lives", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "4" )
+	PORT_DIPSETTING(    0x04, "5" )
+	PORT_DIPNAME( 0x08, 0x00, "Cabinet", IP_KEY_NONE )
+	PORT_DIPSETTING(    0x00, "Upright" )
+	PORT_DIPSETTING(    0x08, "Cocktail" )
+	PORT_BIT( 0xf0, IP_ACTIVE_HIGH, IPT_UNUSED )
+INPUT_PORTS_END
+
 INPUT_PORTS_START( zigzag_input_ports )
 	PORT_START      /* IN0 */
 	PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_COIN1 )
@@ -880,6 +922,45 @@ static struct MachineDriver pacmanbl_machine_driver =
 	}
 };
 
+static struct MachineDriver devilfsh_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+			18432000/6,	/* 3.072 Mhz */
+			0,
+			readmem,pisces_writemem,0,0,
+			devilfsh_vh_interrupt,1
+		}
+	},
+	60, 2500,	/* frames per second, vblank duration */
+	1,	/* single CPU, no need for interleaving */
+	0,
+
+	/* video hardware */
+	32*8, 32*8, { 0*8, 32*8-1, 2*8, 30*8-1 },
+	pacmanbl_gfxdecodeinfo,
+	32+64+1,8*4+2*2+128*1,	/* 32 for the characters, 64 for the stars, 1 for background */
+	galaxian_vh_convert_color_prom,
+
+	VIDEO_TYPE_RASTER,
+	0,
+	pisces_vh_start,
+	generic_vh_stop,
+	galaxian_vh_screenrefresh,
+
+	/* sound hardware */
+	0,0,0,0,
+	{
+		{
+			SOUND_CUSTOM,
+			&custom_interface
+		}
+	}
+};
+
+
 static struct AY8910interface ay8910_interface =
 {
 	1,	/* 1 chip */
@@ -1120,6 +1201,27 @@ ROM_START( uniwars_rom )
 	ROM_LOAD( "uniwars.clr",  0x0000, 0x020, 0x25c79518 )
 ROM_END
 
+ROM_START( spacbatt_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD( "f07_1a.bin",   0x0000, 0x0800, 0xd975af10 )
+	ROM_LOAD( "h07_2a.bin",   0x0800, 0x0800, 0xb2ed14c3 )
+	ROM_LOAD( "sb.3",         0x1000, 0x0800, 0xc25ce4c1 )
+	ROM_LOAD( "sb.4",         0x1800, 0x0800, 0x8229835c )
+	ROM_LOAD( "sb.5",         0x2000, 0x0800, 0xf51ef930 )
+	ROM_LOAD( "e08p_6a.bin",  0x2800, 0x0800, 0xd915a389 )
+	ROM_LOAD( "m08p_7a.bin",  0x3000, 0x0800, 0xc9245346 )
+	ROM_LOAD( "sb.8",         0x3800, 0x0800, 0xe59ff1ae )
+
+	ROM_REGION_DISPOSE(0x2000)	/* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "h01_1.bin",    0x0000, 0x0800, 0x8313c959 )
+	ROM_LOAD( "h01_2.bin",    0x0800, 0x0800, 0xc26132af )
+	ROM_LOAD( "k01_1.bin",    0x1000, 0x0800, 0xc9d4537e )
+	ROM_LOAD( "k01_2.bin",    0x1800, 0x0800, 0xdcc2b33b )
+
+	ROM_REGION(0x20)	/* color prom */
+	ROM_LOAD( "l06_prom.bin", 0x0000, 0x020, 0x6a0c7d87 )	/* same as Moon Cresta */
+ROM_END
+
 ROM_START( warofbug_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "warofbug.u",   0x0000, 0x0800, 0xb8dfb7e3 )
@@ -1173,6 +1275,27 @@ ROM_START( pacmanbl_rom )
 	ROM_LOAD( "blpaccp",      0x0000, 0x0020, 0x24652bc4 ) /* same as pisces */
 ROM_END
 
+ROM_START( devilfsh_rom )
+	ROM_REGION(0x10000)     /* 64k for code */
+	ROM_LOAD( "dfish1.7f",    0x2000, 0x0800, 0x2ab19698 )
+	ROM_CONTINUE(             0x0000, 0x0800 )
+	ROM_LOAD( "dfish2.7h",    0x2800, 0x0800, 0x4e77f097 )
+	ROM_CONTINUE(             0x0800, 0x0800 )
+	ROM_LOAD( "dfish3.7k",    0x3000, 0x0800, 0x3f16a4c6 )
+	ROM_CONTINUE(             0x1000, 0x0800 )
+	ROM_LOAD( "dfish4.7m",    0x3800, 0x0800, 0x11fc7e59 )
+	ROM_CONTINUE(             0x1800, 0x0800 )
+
+	ROM_REGION_DISPOSE(0x2000)      /* temporary space for graphics (disposed after conversion) */
+	ROM_LOAD( "dfish5.1h",    0x0800, 0x0800, 0xace6e31f )
+	ROM_CONTINUE(             0x0000, 0x0800 )
+	ROM_LOAD( "dfish6.1k",    0x1800, 0x0800, 0xd7a6c4c4 )
+	ROM_CONTINUE(             0x1000, 0x0800 )
+
+	ROM_REGION(0x20)
+	/* missing! */
+ROM_END
+
 ROM_START( zigzag_rom )
 	ROM_REGION(0x10000)	/* 64k for code */
 	ROM_LOAD( "zz_d1.bin",    0x0000, 0x1000, 0x8cc08d81 )
@@ -1223,6 +1346,15 @@ ROM_START( mooncrgx_rom )
 	ROM_REGION(0x20)	/* color prom */
 	ROM_LOAD( "mooncrst.clr", 0x0000, 0x0020, 0x6a0c7d87 )
 ROM_END
+
+
+
+
+static unsigned char wrong_color_prom[32] =
+{
+	0x00,0x07,0x38,0xF6,0x00,0x16,0xC0,0x3F,0x00,0xD8,0x07,0x3F,0x00,0xC0,0xC4,0x07,
+	0x00,0xC0,0xA0,0x07,0x00,0x38,0xc0,0x07,0x00,0xF6,0x07,0xF0,0x00,0x76,0x07,0xC6
+};
 
 
 
@@ -1805,6 +1937,32 @@ struct GameDriver uniwars_driver =
 	galaxian_hiload, galaxian_hisave
 };
 
+struct GameDriver spacbatt_driver =
+{
+	__FILE__,
+	&japirem_driver,
+	"spacbatt",
+	"Space Battle",
+	"1980",
+	"bootleg",
+	"Nicola Salmoria\nGary Walton\nRobert Anschuetz\nAndrew Scott\nMarco Cassili",
+	0,
+	&pisces_machine_driver,
+	0,
+
+	spacbatt_rom,
+	0, 0,
+	mooncrst_sample_names,
+	0,	/* sound_prom */
+
+	galnamco_input_ports,
+
+	PROM_MEMORY_REGION(2), 0, 0,
+	ORIENTATION_ROTATE_90,
+
+	galaxian_hiload, galaxian_hisave
+};
+
 struct GameDriver warofbug_driver =
 {
 	__FILE__,
@@ -1882,6 +2040,32 @@ struct GameDriver pacmanbl_driver =
 	ORIENTATION_ROTATE_270,
 
 	pacmanbl_hiload, pacmanbl_hisave
+};
+
+struct GameDriver devilfsh_driver =
+{
+	__FILE__,
+	0,
+	"devilfsh",
+	"Devil Fish",
+	"1984",
+	"Vision / Artic",
+	"Chris Hardy",
+	GAME_WRONG_COLORS,
+	&devilfsh_machine_driver,
+	0,
+
+	devilfsh_rom,
+	0, 0,
+	mooncrst_sample_names,
+	0,      /* sound_prom */
+
+	devilfsh_input_ports,
+
+	wrong_color_prom, 0, 0,
+	ORIENTATION_ROTATE_270,
+
+	0, 0
 };
 
 struct GameDriver zigzag_driver =

@@ -694,17 +694,17 @@ static void displaymessagewindow(const char *text)
 extern int no_of_tiles;
 void NeoMVSDrawGfx(unsigned char **line,const struct GfxElement *gfx,
 		unsigned int code,unsigned int color,int flipx,int flipy,int sx,int sy,
-        int zx,int zy);
+        int zx,int zy,const struct rectangle *clip);
 extern struct GameDriver neogeo_bios;
 #endif
 #endif
 
 static void showcharset(void)
 {
-	int i,cpx,cpy;
+	int i;
 	struct DisplayText dt[2];
 	char buf[80];
-	int bank,color,line, maxline=0;
+	int bank,color,firstdrawn;
 	int trueorientation;
 	int changed;
 	int game_is_neogeo=0;
@@ -728,55 +728,65 @@ static void showcharset(void)
 
 	bank = 0;
 	color = 0;
-	line = 0;
+	firstdrawn = 0;
 
 	changed = 1;
 
 	do
 	{
-		int skip_rows = ((Machine->uiheight - Machine->uifont->height+1) / Machine->gfx[bank]->height) - 1;
+		int cpx,cpy,skip_chars;
+
+		cpx = Machine->uiwidth / Machine->gfx[bank]->width;
+		cpy = (Machine->uiheight - Machine->uifont->height) / Machine->gfx[bank]->height;
+		skip_chars = cpx * cpy;
 
 		if (changed)
 		{
-			osd_clearbitmap(Machine->scrbitmap);
+			int lastdrawn=0;
 
-			cpx = Machine->uiwidth / Machine->gfx[bank]->width;
-			cpy = Machine->uiheight / Machine->gfx[bank]->height;
+			osd_clearbitmap(Machine->scrbitmap);
 
 			if(bank!=2 || !game_is_neogeo)
 			{
-				maxline = (Machine->drv->gfxdecodeinfo[bank].gfxlayout->total + cpx - 1) / cpx;
-
-				for (i = 0; i+(line*cpx) < Machine->drv->gfxdecodeinfo[bank].gfxlayout->total && i<cpx*cpy; i++)
+				for (i = 0; i+firstdrawn < Machine->drv->gfxdecodeinfo[bank].gfxlayout->total && i<cpx*cpy; i++)
 				{
 					drawgfx(Machine->scrbitmap,Machine->gfx[bank],
-						i+(line*cpx),color,  /*sprite num, color*/
+						i+firstdrawn,color,  /*sprite num, color*/
 						0,0,
 						(i % cpx) * Machine->gfx[bank]->width + Machine->uixmin,
-						Machine->uifont->height+1 + (i / cpx) * Machine->gfx[bank]->height + Machine->uiymin,
+						Machine->uifont->height + (i / cpx) * Machine->gfx[bank]->height + Machine->uiymin,
 						0,TRANSPARENCY_NONE,0);
+
+					lastdrawn = i+firstdrawn;
 				}
 			}
 #ifndef NEOFREE
 #ifndef TINY_COMPILE
 			else	/* neogeo sprite tiles */
 			{
-				maxline = (no_of_tiles + cpx - 1) / cpx;
+				struct rectangle clip;
 
-				for (i = 0; i+(line*cpx) < no_of_tiles && i<cpx*cpy; i++)
+				clip.min_x = Machine->uixmin;
+				clip.max_x = Machine->uixmin + Machine->uiwidth - 1;
+				clip.min_y = Machine->uiymin;
+				clip.max_y = Machine->uiymin + Machine->uiheight - 1;
+
+				for (i = 0; i+firstdrawn < no_of_tiles && i<cpx*cpy; i++)
 				{
 					NeoMVSDrawGfx(Machine->scrbitmap->line,Machine->gfx[bank],
-						i+(line*cpx),color,  /*sprite num, color*/
+						i+firstdrawn,color,  /*sprite num, color*/
 						0,0,
 						(i % cpx) * Machine->gfx[bank]->width + Machine->uixmin,
 						Machine->uifont->height+1 + (i / cpx) * Machine->gfx[bank]->height + Machine->uiymin,
-						16,16);
+						16,16,&clip);
+
+					lastdrawn = i+firstdrawn;
 				}
 			}
 #endif
 #endif
 
-			sprintf(buf,"GFXSET %d COLOR %d LINE %d ",bank,color,line);
+			sprintf(buf,"GFXSET %d COLOR %d CODE %x-%x",bank,color,firstdrawn,lastdrawn);
 			dt[0].text = buf;
 			dt[0].color = DT_COLOR_RED;
 			dt[0].x = 0;
@@ -795,15 +805,20 @@ static void showcharset(void)
 
 		if (osd_key_pressed(OSD_KEY_LCONTROL) || osd_key_pressed(OSD_KEY_RCONTROL))
 		{
-			skip_rows = 1;
+			skip_chars = cpx;
 		}
+		if (osd_key_pressed(OSD_KEY_LSHIFT) || osd_key_pressed(OSD_KEY_RSHIFT))
+		{
+			skip_chars = 1;
+		}
+
 
 		if (osd_key_pressed_memory_repeat(OSD_KEY_UI_RIGHT,8))
 		{
 			if (bank+1 < MAX_GFX_ELEMENTS && Machine->gfx[bank + 1])
 			{
 				bank++;
-				line = 0;
+//				firstdrawn = 0;
 				changed = 1;
 			}
 		}
@@ -813,22 +828,24 @@ static void showcharset(void)
 			if (bank > 0)
 			{
 				bank--;
-				line = 0;
+//				firstdrawn = 0;
 				changed = 1;
 			}
 		}
 
 		if (osd_key_pressed_memory_repeat(OSD_KEY_PGDN,4))
 		{
-			line += skip_rows;
-			if (line >= maxline) line = maxline - 1;
-			changed = 1;
+			if (firstdrawn + skip_chars < Machine->drv->gfxdecodeinfo[bank].gfxlayout->total)
+			{
+				firstdrawn += skip_chars;
+				changed = 1;
+			}
 		}
 
 		if (osd_key_pressed_memory_repeat(OSD_KEY_PGUP,4))
 		{
-			line -= skip_rows;
-			if (line < 0) line = 0;
+			firstdrawn -= skip_chars;
+			if (firstdrawn < 0) firstdrawn = 0;
 			changed = 1;
 		}
 
@@ -1892,7 +1909,7 @@ static int mame_stats(int selected)
 
 		displaymessagewindow(buf);
 
-		if (osd_key_pressed_memory(OSD_KEY_ENTER))
+		if (osd_key_pressed_memory(OSD_KEY_UI_SELECT))
 			sel = -1;
 
 		if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT) || osd_key_pressed_memory (OSD_KEY_CANCEL))
@@ -1916,14 +1933,14 @@ int showcopyright(void)
 #ifndef macintosh /* LBO - This text is displayed in a dialog box. */
 	int done;
 	char buf[] =
-			"DO NOT DISTRIBUTE THE SOURCE CODE AND/OR THE EXECUTABLE "
-			"APPLICATION WITH ANY ROM IMAGES.\n"
-			"DOING AS SUCH WILL HARM ANY FURTHER DEVELOPMENT OF MAME AND COULD "
-			"RESULT IN LEGAL ACTION BEING TAKEN BY THE LAWFUL COPYRIGHT HOLDERS "
-			"OF ANY ROM IMAGES.\n"
+			"Do not distribute the source code and/or the executable "
+			"application with any rom images.\n"
+			"Doing as such will harm any further development of mame and could "
+			"result in legal action being taken by the lawful copyright holders "
+			"of any rom images.\n"
 			"\n"
 			"IF YOU DON'T AGREE WITH THE ABOVE, PRESS ESC.\n"
-			"If you agree, type OK";
+			"If you agree, type OK.";
 
 	displaymessagewindow(buf);
 
@@ -1979,7 +1996,7 @@ static int displaycredits(int selected)
 
 		displaymessagewindow(buf);
 
-		if (osd_key_pressed_memory(OSD_KEY_ENTER))
+		if (osd_key_pressed_memory(OSD_KEY_UI_SELECT))
 			sel = -1;
 
 		if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT) || osd_key_pressed_memory (OSD_KEY_CANCEL))
@@ -2002,6 +2019,8 @@ void showcredits(void)
 {
 	while (displaycredits(0) == 1)
 		osd_update_video_and_audio();
+
+	osd_clearbitmap(Machine->scrbitmap);
 	osd_update_video_and_audio();
 }
 
@@ -2099,7 +2118,7 @@ static int displaygameinfo(int selected)
 
 		displaymessagewindow(buf);
 
-		if (osd_key_pressed_memory(OSD_KEY_ENTER))
+		if (osd_key_pressed_memory(OSD_KEY_UI_SELECT))
 			sel = -1;
 
 		if (osd_key_pressed_memory(OSD_KEY_FAST_EXIT) || osd_key_pressed_memory (OSD_KEY_CANCEL))

@@ -198,7 +198,7 @@ void cpu_writemem29_dword(int address,int data);  /* AJP 980803 */
 
 /* ----- 16-bit memory access macros ----- */
 
-#ifdef ACORN
+#ifdef ALIGN_SHORTS
 /* Use these to avoid alignment problems on non-x86 hardware. */
 extern int READ_WORD(void *dst);
 extern int WRITE_WORD(void *dst, int d);

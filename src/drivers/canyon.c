@@ -28,7 +28,7 @@ ask.  - Mike Balfour (mab22@po.cwru.edu)
 /* vidhrdw/canyon.c */
 extern void canyon_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
 
-int canyon_options_r(int offset)
+static int canyon_options_r(int offset)
 {
 	switch (offset & 0x03)
 	{
@@ -45,7 +45,7 @@ int canyon_options_r(int offset)
 	return 0xFF;
 }
 
-int canyon_switches_r(int offset)
+static int canyon_switches_r(int offset)
 {
 	switch (offset & 0x07)
 	{
@@ -70,6 +70,11 @@ int canyon_switches_r(int offset)
 	return 0xFF;
 }
 
+void canyon_led_w(int offset, int data)
+{
+	osd_led_w((offset & 0x01), data & 0x01);
+}
+
 static struct MemoryReadAddress readmem[] =
 {
 	{ 0x0000, 0x01ff, MRA_RAM }, /* WRAM */
@@ -87,7 +92,7 @@ static struct MemoryReadAddress readmem[] =
 static struct MemoryWriteAddress writemem[] =
 {
 	{ 0x0000, 0x01ff, MWA_RAM }, /* WRAM */
-	{ 0x0400, 0x07ff, MWA_NOP },
+//	{ 0x0680, 0x06ff, canyon_led_w },
 	{ 0x0bd0, 0x0bdf, MWA_RAM, &spriteram, &spriteram_size },
 	{ 0x0800, 0x0bff, videoram_w, &videoram, &videoram_size }, /* DISPLAY */
 	{ 0x2000, 0x27ff, MWA_NOP }, /* PROM1 */
@@ -250,11 +255,73 @@ ROM_START( canyon_rom )
 ROM_END
 
 
+ROM_START( canbprot_rom )
+	ROM_REGION(0x10000)	/* 64k for code */
+	ROM_LOAD_NIB_LOW ( "cbp3000l.j1", 0x3000, 0x0800, 0x49cf29a0 )
+	ROM_LOAD_NIB_HIGH( "cbp3000m.p1", 0x3000, 0x0800, 0xb4385c23 )
+	ROM_LOAD_NIB_LOW ( "cbp3800l.h1", 0x3800, 0x0800, 0xc7ee4431 )
+	ROM_RELOAD_NIB_LOW (              0xf800, 0x0800 ) /* for 6502 vectors */
+	ROM_LOAD_NIB_HIGH( "cbp3800m.r1", 0x3800, 0x0800, 0x94246a9a )
+	ROM_RELOAD_NIB_HIGH (             0xf800, 0x0800 ) /* for 6502 vectors */
+
+	ROM_REGION(0x600)     /* 1.5k for graphics */
+	ROM_LOAD( "9492-01.N8", 0x0000, 0x0400, 0x7449f754 )
+	ROM_LOAD( "9505-01.N5", 0x0400, 0x0100, 0x60507c07 )
+	ROM_LOAD( "9506-01.M5", 0x0500, 0x0100, 0x0d63396a )
+ROM_END
+
+
 /***************************************************************************
 
   Hi Score Routines
 
 ***************************************************************************/
+
+static int hiload(void)
+{
+
+      unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+	static int firsttime;
+
+
+	/* check if the hi score table has already been initialized */
+	/* the high score table is intialized to all 0, so first of all */
+	/* we dirty it, then we wait for it to be cleared again */
+	if (firsttime == 0)
+	{
+		memset(&RAM[0x0037],0xff,4);
+		firsttime = 1;
+	}
+
+
+          if(memcmp(&RAM[0x0037],"\x00\x00\x00\x00",4) == 0)
+	{
+              void *f;
+              if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+              {
+                      osd_fread(f,&RAM[0x0037],4);
+                      osd_fclose(f);
+              }
+
+              return 1;
+    		  firsttime = 0;
+	}
+      else return 0;   /* we can't load the hi scores yet */
+ }
+
+
+static void hisave(void)
+{
+	void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+                osd_fwrite(f,&RAM[0x0037],2*2);
+		osd_fclose(f);
+	}
+}
 
 
 /***************************************************************************
@@ -285,6 +352,31 @@ struct GameDriver canyon_driver =
 
     0, palette, colortable,
 	ORIENTATION_DEFAULT,
-	0,0
+	hiload, hisave
+};
+
+struct GameDriver canbprot_driver =
+{
+	__FILE__,
+	&canyon_driver,
+    "canbprot",
+    "Canyon Bomber (prototype)",
+	"1977",
+	"Atari",
+    "Mike Balfour",
+	0,
+    &machine_driver,
+	0,
+
+    canbprot_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+    canyon_input_ports,
+
+    0, palette, colortable,
+	ORIENTATION_DEFAULT,
+	hiload, hisave
 };
 

@@ -131,6 +131,9 @@ void kungfum_flipscreen_w(int offset,int data)
 		flipscreen = data & 1;
 		memset(dirtybuffer,1,videoram_size);
 	}
+
+	coin_counter_w(0,data & 2);
+	coin_counter_w(1,data & 4);
 }
 
 

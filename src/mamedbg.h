@@ -47,7 +47,7 @@
 #include "cpu/t11/t11.h"    /* ASG 030598 */
 #include "cpu/tms9900/tms9900.h"
 #include "cpu/z8000/z8000.h"
-
+#include "cpu/tms32010/tms32010.h"
 
 int DasmZ80(char *dest,int PC);
 int Dasm6502 (char *buf, int pc);
@@ -79,6 +79,7 @@ void asg_34010Trace(unsigned char *RAM, int PC); /* AJP 080298 */
 void asg_I86Trace(unsigned char *RAM, int PC); /* AM 980925 */
 void asg_9900Trace(unsigned char *RAM, int PC);
 void asg_Z8000Trace(unsigned char *RAM, int PC);
+void asg_32010Trace(unsigned char *RAM, int PC);
 
 
 extern int traceon;
@@ -86,7 +87,7 @@ extern int traceon;
 extern int CurrentVolume;
 
 #define	MEM1DEFAULT             0x0000
-#define	MEM2DEFAULT             0x0200
+#define MEM2DEFAULT             0x8000
 #define	HEADING_COLOUR          LIGHTGREEN
 #define	LINE_COLOUR             LIGHTCYAN
 #define	REGISTER_COLOUR         WHITE
@@ -113,6 +114,7 @@ static unsigned char MemWindowBackup[0x100*2];	/* Enough to backup 2 windows */
 static void DrawDebugScreen8 (int TextCol, int LineCol);
 static void DrawDebugScreen16 (int TextCol, int LineCol);
 static void DrawDebugScreen32 (int TextCol, int LineCol);
+static void DrawDebugScreen16word (int TextCol, int LineCol);
 
 int DummyDasm(char *S, int PC){	return (1); }
 int DummyCC = 0;
@@ -133,6 +135,7 @@ int TempDasm34010 (char *buffer, int pc){ return (Dasm34010 (&OP_ROM[((unsigned 
 int TempDasmI86 (char *buffer, int pc) { return (DasmI86 (&OP_ROM[pc], buffer, pc));}	/* AM 980925 */
 int TempDasm9900 (char *buffer, int pc) { return (Dasm9900 (buffer, pc)); }
 int TempDasmZ8000 (char *buffer, int pc){ return (DasmZ8000 (buffer, pc));}
+int TempDasm32010 (char *buffer, int pc){ return (Dasm32010 (buffer, &ROM[(pc<<1)])); }
 
 /* JB 980214 */
 void TempZ80Trace (int PC) { asg_Z80Trace (ROM, PC); }
@@ -149,6 +152,7 @@ void Temp34010Trace (int PC) { asg_34010Trace (OP_ROM, PC); }  /* AJP 080298 */
 void TempI86Trace (int PC) { asg_I86Trace (ROM, PC); }  /* AM 980925 */
 void Temp9900Trace (int PC) { asg_9900Trace (ROM, PC); }
 void TempZ8000Trace (int PC) { asg_Z8000Trace (ROM, PC); }  /* HJB 981115 */
+void Temp32010Trace (int PC) { asg_32010Trace (ROM, (PC<<1)); }
 
 /* Commands functions */
 static int ModifyRegisters(char *param);
@@ -211,6 +215,7 @@ typedef struct
 	int		MemWindowDataX;
 	int		MemWindowDataXEnd;
 	int		MemWindowNumBytes;
+        int             MemWindowDataSpace; /* 1 + data character space - ie, 3 for byte, 5 for word, 9 for dword */
 	int		MaxInstLen;
 	int		AlignUnit;			/* CM 980428 */
 	int		*SPReg;
@@ -560,6 +565,21 @@ static tBackupReg BackupRegisters[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
+        /* #define CPU_TMS320C10  15 */
+	{
+		{
+                        { "PC", (int *)&((TMS320C10_Regs *)bckrgs)->PC, 2, 2, 1 },
+                        { "ACC", (int *)&((TMS320C10_Regs *)bckrgs)->ACC, 4, 10, 1 },
+                        { "P", (int *)&((TMS320C10_Regs *)bckrgs)->Preg, 4, 23, 1 },
+                        { "T", (int *)&((TMS320C10_Regs *)bckrgs)->Treg, 2, 34, 1 },
+                        { "AR0", (int *)&((TMS320C10_Regs *)bckrgs)->AR[0], 2, 41, 1 },
+                        { "AR1", (int *)&((TMS320C10_Regs *)bckrgs)->AR[1], 2, 50, 1 },
+                        { "STR", (int *)&((TMS320C10_Regs *)bckrgs)->STR, 2, 59, 1 },
+                        { "STAK3", (int *)&((TMS320C10_Regs *)bckrgs)->STACK[3], 2, 68, 1 },
+			{ "", (int *)-1, -1, -1, -1 }
+		},
+	},
+
 };
 
 
@@ -572,7 +592,7 @@ static tDebugCpuInfo DebugInfo[] =
 		DummyDasm, DummyTrace, 0, 8,
 		"........", (int *)&DummyCC, 8,
 		"%04X:", 0xffff,
-		25, 31, 77, 16,
+                25, 31, 77, 16, 3,
 		1, 1,					/* CM 980428 */
 		(int *)-1, -1,
 		{
@@ -586,7 +606,7 @@ static tDebugCpuInfo DebugInfo[] =
 		TempDasmZ80, TempZ80Trace, 15, 8,	/* JB 980103 */
 		"SZ.H.PNC", (int *)&((Z80_Regs *)rgs)->AF.B.l, 8,
 		"%04X:", 0xffff,
-		25, 31, 77, 16,
+                25, 31, 77, 16, 3,
 		4, 1,					/* CM 980428 */
 		(int *)&((Z80_Regs *)rgs)->SP.W.l, 2,
 		{
@@ -610,7 +630,7 @@ static tDebugCpuInfo DebugInfo[] =
 		TempDasm8085, Temp8085Trace, 15, 8,
 		"SZ.H.PNC", (int *)&((I8085_Regs *)rgs)->AF.B.l, 8,
 		"%04X:", 0xffff,
-		25, 31, 77, 16,
+                25, 31, 77, 16, 3,
 		4, 1,					/* CM 980428 */
                 (int *)&((I8085_Regs *)rgs)->SP.W.l, 2,
 		{
@@ -631,7 +651,7 @@ static tDebugCpuInfo DebugInfo[] =
 		Dasm6502, Temp6502Trace, 15, 8,
 		"NVRBDIZC", (int *)&((M6502_Regs *)rgs)->p, 8,
 		"%04X:", 0xffff,
-		25, 31, 77, 16,
+                25, 31, 77, 16, 3,
 		3, 1,
 		(int *)&((M6502_Regs *)rgs)->sp.B.l, 1,
 		{
@@ -650,7 +670,7 @@ static tDebugCpuInfo DebugInfo[] =
 		TempDasmI86, TempI86Trace,  20, 10,
 		"....ODITSZ.A.P.C", (int *)&((i86_Regs *)rgs)->flags, 16,
 		"%06X:     ", 0xffffff,
-		32, 40, 62, 8,
+                32, 40, 62, 8, 3,
 		5, 1,					/* CM 980428 */
 		(int *)&((i86_Regs *)rgs)->regs.w[4], 2,
 		{
@@ -677,7 +697,7 @@ static tDebugCpuInfo DebugInfo[] =
 		TempDasm8039, Temp8039Trace, 15, 8,
 		"........", (int *)&((I8039_Regs *)rgs)->PSW, 8,
 		"%04X:", 0xffff,
-		25, 31, 77, 16,
+                25, 31, 77, 16, 3,
 		1, 1,					/* CM 980428 */
 		(int *)&((I8039_Regs *)rgs)->SP, 1,
 		{
@@ -694,7 +714,7 @@ static tDebugCpuInfo DebugInfo[] =
 		TempDasm6808, Temp6808Trace, 15, 8,
 		"..HINZVC", (int *)&((m6808_Regs *)rgs)->cc, 8,
 		"%04X:", 0xffff,
-		25, 31, 77, 16,
+                25, 31, 77, 16, 3,
 		4, 1,					/* CM 980428 */
 		(int *)&((m6808_Regs *)rgs)->s, 2,
 		{
@@ -713,7 +733,7 @@ static tDebugCpuInfo DebugInfo[] =
 		TempDasm6805, Temp6805Trace, 15, 8,
 		"...HINZC",  (int *)&((m6805_Regs *)rgs)->cc, 8,
 		"%04X:", 0xffff,
-		25, 31, 77, 16,
+                25, 31, 77, 16, 3,
 		4, 1,					/* CM 980428 */
 		(int *)&((m6805_Regs *)rgs)->s, 2,
 		{
@@ -731,7 +751,7 @@ static tDebugCpuInfo DebugInfo[] =
 		TempDasm6809, Temp6809Trace, 15, 8,
 		"..H.NZVC", (int *)&((m6809_Regs *)rgs)->cc, 8,
 		"%04X:", 0xffff,
-		25, 31, 77, 16,
+                25, 31, 77, 16, 3,
 		5, 1,					/* CM 980428 */
 		(int *)&((m6809_Regs *)rgs)->s, 2,
 		{
@@ -753,7 +773,7 @@ static tDebugCpuInfo DebugInfo[] =
 		TempDasm68000, Temp68000Trace, 21, 10,
 		"T.S..III...XNZVC", (int *)&((MC68000_Regs *)rgs)->regs.sr, 16,
 		"%06.6X:     ", 0xffffff,
-		33, 41, 63, 8,
+                33, 41, 63, 8, 3,
 		10,						/* CM 980428; "MOVE.W $12345678,$87654321" is 10 bytes*/
 		2,						/* CM 980428; MC68000 instructions are evenly aligned */
 		(int *)&((MC68000_Regs *)rgs)->regs.isp, 4,
@@ -809,7 +829,7 @@ static tDebugCpuInfo DebugInfo[] =
 		TempDasmT11, TempT11Trace, 15, 8,	/* JB 980103 */
 		".IITNZVC", (int *)&((t11_Regs *)rgs)->psw.b.l, 8,
 		"%04X:", 0xffff,
-		25, 31, 77, 16,
+                25, 31, 77, 16, 3,
 		6, 2,					/* CM 980428 */
 		(int *)&((t11_Regs *)rgs)->reg[6].w.l, 2,
 		{
@@ -831,7 +851,7 @@ static tDebugCpuInfo DebugInfo[] =
 		TempDasm2650, Temp2650Trace, 15, 8, /* JB 980103 */
 		"MPHRWV?C", (int *)&((S2650_Regs *)rgs)->psl, 8,
 		"%04X:", 0x7fff,
-		25, 31, 77, 16,
+                25, 31, 77, 16, 3,
 		6, 2,					/* CM 980428 */
 		(int *)&((S2650_Regs *)rgs)->psu, 1,
 		{
@@ -857,7 +877,7 @@ static tDebugCpuInfo DebugInfo[] =
 		TempDasm34010, Temp34010Trace, 20, 11,
 		"NCZV..P...I.........EFFFFFEFFFFF", (int *)&((TMS34010_Regs *)rgs)->st, 32,
 		"%08.8X:     ", 0xffffffff,
-		32, 41, 52, 4,
+                32, 41, 52, 4, 3,
 		0x50,						/* max inst length */
 		0x10,						/* instructions are evenly aligned */
 		(int *)&((TMS34010_Regs *)rgs)->regs.a.Aregs[15], 4,
@@ -904,7 +924,7 @@ static tDebugCpuInfo DebugInfo[] =
 		TempDasm9900, Temp9900Trace, 22, 8, /* JB 980103 */
 		"LAECVPX.....IIII", (int *)&((TMS9900_Regs *)rgs)->STATUS, 16,
 		"%04X:", 0xffff,
-		33, 39, 61, 8,
+                33, 39, 61, 8, 3,
 		6, 2,					/* CM 980428 */
 		(int *)&((TMS9900_Regs *)rgs)->WP, 2,
 		{
@@ -938,7 +958,7 @@ static tDebugCpuInfo DebugInfo[] =
 		TempDasmZ8000, TempZ8000Trace, 23, 8,
 		"sne21...CZSVDH..", (int *)&((Z8000_Regs *)rgs)->fcw, 16,
 		"%04X:", 0xffff,
-		33, 39, 61, 8,
+                33, 39, 61, 8, 3,
 		6,			    /* max inst length */
 		1,			    /* instructions are evenly aligned */
 		(int *)&((Z8000_Regs *)rgs)->nsp, 2,
@@ -989,6 +1009,29 @@ static tDebugCpuInfo DebugInfo[] =
 			{ "", (int *)-1, -1, -1, -1 }
 		},
 	},
+        /* #define CPU_TMS320C10  15 */
+	{
+                "32010", 21,
+                DrawDebugScreen16word,
+                TempDasm32010, Temp32010Trace, 22, 8,
+                "OMI.arp1.....dp1", (int *)&((TMS320C10_Regs *)rgs)->STR, 16,
+                "%04X:", 0xffff,
+                33, 39, 77, 16, 5,
+                4, 1,
+                (int *)&((TMS320C10_Regs *)rgs)->STACK[3], 2,
+		{
+                        { "PC",  (int *)&((TMS320C10_Regs *)rgs)->PC, 2, 2, 1 },
+                        { "ACC", (int *)&((TMS320C10_Regs *)rgs)->ACC, 4, 10, 1 },
+                        { "P",   (int *)&((TMS320C10_Regs *)rgs)->Preg, 4, 23, 1 },
+                        { "T",   (int *)&((TMS320C10_Regs *)rgs)->Treg, 2, 34, 1 },
+                        { "AR0", (int *)&((TMS320C10_Regs *)rgs)->AR[0], 2, 41, 1 },
+                        { "AR1", (int *)&((TMS320C10_Regs *)rgs)->AR[1], 2, 50, 1 },
+                        { "STR", (int *)&((TMS320C10_Regs *)rgs)->STR, 2, 59, 1 },
+                        { "STAK3", (int *)&((TMS320C10_Regs *)rgs)->STACK[3], 2, 68, 1 },
+			{ "", (int *)-1, -1, -1, -1 }
+		},
+	},
+
 };
 
 

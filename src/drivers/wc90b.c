@@ -316,7 +316,7 @@ static struct GfxLayout tilelayout =
 	16,16,	/* 16*16 characters */
 	256,	/* 256 characters */
 	4,	/* 4 bits per pixel */
-	{ 0, 0x20000*8, 0x40000*8, 0x60000*8 },	/* the bitplanes are separated */
+	{ 0*0x20000*8, 1*0x20000*8, 2*0x20000*8, 3*0x20000*8 },	/* the bitplanes are separated */
 	{ 0, 1, 2, 3, 4, 5, 6, 7,
 		(0x1000*8)+0, (0x1000*8)+1, (0x1000*8)+2, (0x1000*8)+3, (0x1000*8)+4, (0x1000*8)+5, (0x1000*8)+6, (0x1000*8)+7 },
 	{ 0*8, 1*8, 2*8, 3*8, 4*8, 5*8, 6*8, 7*8,
@@ -447,15 +447,15 @@ ROM_START( wc90b_rom )
 	ROM_LOAD( "a03.bin",      0x10000, 0x10000, 0xf54ff17a )	/* banked at f000-f7ff */
 
 	ROM_REGION_DISPOSE(0x110000)	/* temporary space for graphics (disposed after conversion) */
-	ROM_LOAD( "a06.bin",      0x00000, 0x04000, 0x3b5387b7 )
-	ROM_LOAD( "a08.bin",      0x04000, 0x04000, 0xc622a5a3 )
-	ROM_LOAD( "a10.bin",      0x08000, 0x04000, 0x0923d9f6 )
-	ROM_LOAD( "a20.bin",      0x0C000, 0x04000, 0xb8dec83e )
+	ROM_LOAD( "a06.bin",      0x000000, 0x04000, 0x3b5387b7 )
+	ROM_LOAD( "a08.bin",      0x004000, 0x04000, 0xc622a5a3 )
+	ROM_LOAD( "a10.bin",      0x008000, 0x04000, 0x0923d9f6 )
+	ROM_LOAD( "a20.bin",      0x00C000, 0x04000, 0xb8dec83e )
 
-	ROM_LOAD( "a07.bin",      0x10000, 0x20000, 0x38c31817 )
-	ROM_LOAD( "a09.bin",      0x30000, 0x20000, 0x32e39e29 )
-	ROM_LOAD( "a11.bin",      0x50000, 0x20000, 0x5ccec796 )
-	ROM_LOAD( "a21.bin",      0x70000, 0x20000, 0x0c54a091 )
+	ROM_LOAD( "a07.bin",      0x010000, 0x20000, 0x38c31817 )
+	ROM_LOAD( "a09.bin",      0x030000, 0x20000, 0x32e39e29 )
+	ROM_LOAD( "a11.bin",      0x050000, 0x20000, 0x5ccec796 )
+	ROM_LOAD( "a21.bin",      0x070000, 0x20000, 0x0c54a091 )
 
 	ROM_LOAD( "146_a12.bin",  0x090000, 0x10000, 0xd5a60096 )
 	ROM_LOAD( "147_a13.bin",  0x0a0000, 0x10000, 0x36bbf467 )

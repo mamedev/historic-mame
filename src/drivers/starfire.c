@@ -62,60 +62,68 @@ C000 - DFFF: Video RAM
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-void starfire_vh_convert_color_prom(unsigned char *palette, unsigned short *colortable,const unsigned char *color_prom);
+/* In vidhrdw/starfire.c */
 void starfire_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh);
-
-extern void starfire_soundctrl_w(int offset, int data);
-extern int starfire_io1_r(int offset);
 extern int starfire_vh_start(void);
 extern void starfire_vh_stop(void);
-extern void starfire_vidctrl_w(int offset,int data);
-extern void starfire_vidctrl1_w(int offset,int data);
-extern int starfire_interrupt (void);
 extern void starfire_videoram_w(int offset,int data);
 extern int starfire_videoram_r(int offset);
 extern void starfire_colorram_w(int offset,int data);
 extern int starfire_colorram_r(int offset);
 
+/* In machine/starfire.c */
+extern int starfire_interrupt (void);
+extern void starfire_shadow_w(int address, int data);
+extern void starfire_output_w(int address, int data);
+extern void fireone_output_w(int address, int data);
+extern int starfire_shadow_r(int address);
+extern int starfire_input_r(int address);
+extern int fireone_input_r(int address);
+extern void starfire_soundctrl_w(int offset, int data);
 
-int starfire_throttle;
 
-int starfire_throttle_r (int offest) {
-    if (osd_key_pressed(OSD_KEY_Z)) starfire_throttle = 0xFF;
-    if (osd_key_pressed(OSD_KEY_X)) starfire_throttle = 0x00;
-    return starfire_throttle;
+unsigned char *starfire_ram;
 
-}
-
-
-static struct MemoryReadAddress readmem[] =
+static struct MemoryReadAddress starfire_readmem[] =
 {
         { 0x0000, 0x57FF, MRA_ROM },
-        { 0x5800, 0x8fff, MRA_RAM },
-        { 0x9400, 0x9400, input_port_0_r },
-        { 0x9800, 0x9800, input_port_0_r },
-        { 0x9401, 0x9401, starfire_io1_r },
-        { 0x9801, 0x9801, starfire_io1_r },
-        { 0x9806, 0x9806, input_port_2_r },
-        { 0x9807, 0x9807, input_port_3_r },
-        { 0x9805, 0x9805, starfire_throttle_r },
+        { 0x8000, 0x83ff, MRA_RAM, &starfire_ram },
+		{ 0x8400, 0x97ff, starfire_shadow_r },
+        { 0x9800, 0x9fff, starfire_input_r },
         { 0xA000, 0xBfff, starfire_colorram_r },
-        { 0xC000, 0xE000, starfire_videoram_r },
-
-        { 0xE000, 0xffff, MRA_RAM },
+        { 0xC000, 0xffff, starfire_videoram_r },
         { -1 }  /* end of table */
 };
 
-static struct MemoryWriteAddress writemem[] =
+static struct MemoryWriteAddress starfire_writemem[] =
 {
-        { 0x0000, 0x57ff, MWA_ROM },
-        { 0x5800, 0x8fff, MWA_RAM },
-        { 0x9400, 0x9400, starfire_vidctrl_w },
-        { 0x9401, 0x9401, starfire_vidctrl1_w },
-        { 0x9402, 0x9402, starfire_soundctrl_w },
+        { 0x8000, 0x83ff, MWA_RAM },
+		{ 0x8400, 0x8fff, starfire_shadow_w },
+		{ 0x9000, 0x9fff, starfire_output_w },
         { 0xA000, 0xBfff, starfire_colorram_w },
-        { 0xC000, 0xFFFF, starfire_videoram_w },
-	{ -1 }	/* end of table */
+        { 0xC000, 0xffff, starfire_videoram_w },
+		{ -1 }	/* end of table */
+};
+
+static struct MemoryReadAddress fireone_readmem[] =
+{
+        { 0x0000, 0x6FFF, MRA_ROM },
+        { 0x8000, 0x83ff, MRA_RAM, &starfire_ram },
+		{ 0x8400, 0x97ff, starfire_shadow_r },
+        { 0x9800, 0x9fff, fireone_input_r },
+        { 0xA000, 0xBfff, starfire_colorram_r },
+        { 0xC000, 0xffff, starfire_videoram_r },
+        { -1 }  /* end of table */
+};
+
+static struct MemoryWriteAddress fireone_writemem[] =
+{
+        { 0x8000, 0x83ff, MWA_RAM },
+		{ 0x8400, 0x8fff, starfire_shadow_w },
+		{ 0x9000, 0x9fff, fireone_output_w },
+        { 0xA000, 0xBfff, starfire_colorram_w },
+        { 0xC000, 0xffff, starfire_videoram_w },
+		{ -1 }	/* end of table */
 };
 
 
@@ -155,15 +163,65 @@ INPUT_PORTS_START( starfire_input_ports )
         PORT_BIT( 0x40, IP_ACTIVE_LOW, IPT_UNKNOWN)
         PORT_BIT( 0x80, IP_ACTIVE_LOW, IPT_UNKNOWN)
 
-    PORT_START  /* IN2 */
-    PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 100, 0, 0, 255 )
+    	PORT_START  /* IN2 */
+	    PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_X, 100, 0, 0, 255 )
 
-    PORT_START  /* IN3 */
-    PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y | IPF_REVERSE, 100, 0, 0, 255 )
+	    PORT_START  /* IN3 */
+    	PORT_ANALOG ( 0xff, 0x80, IPT_AD_STICK_Y | IPF_REVERSE, 100, 0, 0, 255 )
+
+		PORT_START /* Throttle (IN4) */
+		PORT_BITX( 0xFF, 0x00, IP_ACTIVE_HIGH | IPF_TOGGLE, "Throttle", OSD_KEY_Z, IP_JOY_NONE, 0)
 
 INPUT_PORTS_END
 
-static struct MachineDriver machine_driver =
+INPUT_PORTS_START( fireone_input_ports )
+
+        PORT_START      /* DSW0 */
+        PORT_DIPNAME( 0x03, 0x00, "Coins", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x00, "1/2" )
+        PORT_DIPSETTING(    0x01, "1/1" )
+        PORT_DIPSETTING(    0x02, "2/2" )
+        PORT_DIPSETTING(    0x03, "2/4" )
+        PORT_DIPNAME( 0x0c, 0x0c, "Time", IP_KEY_NONE )
+        PORT_DIPSETTING(    0x00, "75 Sec" )
+        PORT_DIPSETTING(    0x04, "90 Sec" )
+        PORT_DIPSETTING(    0x08, "105 Sec" )
+        PORT_DIPSETTING(    0x0c, "120 Sec" )
+        PORT_DIPNAME( 0x30, 0x00, "Bonus difficulty",IP_KEY_NONE)
+        PORT_DIPSETTING(    0x00, "Easy" )
+        PORT_DIPSETTING(    0x10, "Average" )
+        PORT_DIPSETTING(    0x20, "Tough" )
+        PORT_DIPSETTING(    0x30, "Very tough" )
+        PORT_DIPNAME( 0x40, 0x00, "Sound in attract mode",IP_KEY_NONE)
+        PORT_DIPSETTING(    0x00, "Yes" )
+        PORT_DIPSETTING(    0x40, "No" )
+        PORT_DIPNAME( 0x80, 0x00, "Test mode",IP_KEY_NONE)
+        PORT_DIPSETTING(    0x00, "Off" )
+        PORT_DIPSETTING(    0x80, "On" )
+
+        PORT_START      /* IN1 */
+        PORT_BIT( 0x01, IP_ACTIVE_HIGH, IPT_START1)
+        PORT_BIT( 0x02, IP_ACTIVE_HIGH, IPT_START2)
+        PORT_BIT( 0x04, IP_ACTIVE_HIGH, IPT_COIN1)
+        PORT_BIT( 0x08, IP_ACTIVE_HIGH, IPT_COIN2)
+        PORT_BIT( 0x10, IP_ACTIVE_HIGH, IPT_UNKNOWN)
+        PORT_BIT( 0x20, IP_ACTIVE_HIGH, IPT_UNKNOWN)
+        PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_UNKNOWN)
+        PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_UNKNOWN)
+
+    	PORT_START  /* IN2 */
+	PORT_ANALOG ( 0x3f, 0x20, IPT_AD_STICK_X, 100, 0, 0, 63 )
+        PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON2)
+        PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON1)
+
+	PORT_START  /* IN3 */
+    	PORT_ANALOG ( 0x3f, 0x20, IPT_AD_STICK_Y, 100, 0, 0, 63 )
+        PORT_BIT( 0x40, IP_ACTIVE_HIGH, IPT_BUTTON4)
+        PORT_BIT( 0x80, IP_ACTIVE_HIGH, IPT_BUTTON3)
+
+INPUT_PORTS_END
+
+static struct MachineDriver starfire_machine_driver =
 {
 	/* basic machine hardware */
 	{
@@ -171,7 +229,7 @@ static struct MachineDriver machine_driver =
 			CPU_Z80,
             2500000,    /* 2.5 Mhz */
 			0,
-			readmem,writemem,0,0,
+			starfire_readmem, starfire_writemem,0,0,
             starfire_interrupt,2
 		}
 	},
@@ -183,11 +241,44 @@ static struct MachineDriver machine_driver =
     256,256,
     { 0, 256-1, 0, 256-1 },
     0,
-    256,
-    0,
-    starfire_vh_convert_color_prom,
+    64, 64, 0,
 
-	VIDEO_TYPE_RASTER,
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
+	0,
+    starfire_vh_start,
+    starfire_vh_stop,
+    starfire_vh_screenrefresh,
+
+	/* sound hardware */
+    0,
+    0,
+    0,
+    0
+};
+
+static struct MachineDriver fireone_machine_driver =
+{
+	/* basic machine hardware */
+	{
+		{
+			CPU_Z80,
+            2500000,    /* 2.5 Mhz */
+			0,
+			fireone_readmem, fireone_writemem,0,0,
+            starfire_interrupt,2
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,	/* frames per second, vblank duration */
+	1,	/* single CPU, no need for interleaving */
+    0,
+
+	/* video hardware */
+    256,256,
+    { 0, 256-1, 0, 256-1 },
+    0,
+    64, 64, 0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE,
 	0,
     starfire_vh_start,
     starfire_vh_stop,
@@ -222,17 +313,35 @@ ROM_START( starfire_rom )
         ROM_LOAD( "sfire.1f",     0x5000, 0x0800, 0xaf31dc39 )
 ROM_END
 
+ROM_START( fireone_rom )
+        ROM_REGION(0x10000)     /* 64k for code */
+        ROM_LOAD( "FO-IC13.7B",     0x0000, 0x0800, 0xf927f086 )
+        ROM_LOAD( "FO-IC24.7C",     0x0800, 0x0800, 0x0d2d8723 )
+        ROM_LOAD( "FO-IC12.6B",     0x1000, 0x0800, 0xac7783d9 )
+        ROM_LOAD( "FO-IC23.6C",     0x1800, 0x0800, 0x15c74ee7 )
+        ROM_LOAD( "FO-IC11.5B",     0x2000, 0x0800, 0x721930a1 )
+        ROM_LOAD( "FO-IC22.5C",     0x2800, 0x0800, 0xf0c965b4 )
+        ROM_LOAD( "FO-IC10.4B",     0x3000, 0x0800, 0x27a7b2c0 )
+        ROM_LOAD( "FO-IC21.4C",     0x3800, 0x0800, 0xb142c857 )
+        ROM_LOAD( "FO-IC09.3B",     0x4000, 0x0800, 0x1c076b1b )
+        ROM_LOAD( "FO-IC20.3C",     0x4800, 0x0800, 0xb4ac6e71 )
+        ROM_LOAD( "FO-IC08.2B",     0x5000, 0x0800, 0x5839e2ff )
+        ROM_LOAD( "FO-IC19.2C",     0x5800, 0x0800, 0x9fd85e11 )
+        ROM_LOAD( "FO-IC07.1B",     0x6000, 0x0800, 0xb90baae1 )
+        ROM_LOAD( "FO-IC18.1C",     0x6800, 0x0800, 0x771ee5ba )
+ROM_END
+
 struct GameDriver starfire_driver =
 {
 	__FILE__,
 	0,
 	"starfire",
 	"Starfire",
-	"1978",
+	"1979",
 	"Exidy",
-	"Daniel Boris\n",
-	GAME_NOT_WORKING,
-	&machine_driver,
+	"Daniel Boris\nOlivier Galibert",
+	0,
+	&starfire_machine_driver,
 	0,
 
 	starfire_rom,
@@ -241,6 +350,31 @@ struct GameDriver starfire_driver =
 	0,	/* sound_prom */
 
 	starfire_input_ports,
+
+	0, 0, 0,
+	ORIENTATION_DEFAULT,
+	0,0
+};
+
+struct GameDriver fireone_driver =
+{
+	__FILE__,
+	0,
+	"fireone",
+	"Fire One",
+	"1979",
+	"Exidy",
+	"Daniel Boris\nOlivier Galibert",
+	0,
+	&fireone_machine_driver,
+	0,
+
+	fireone_rom,
+	0, 0,
+	0,
+	0,	/* sound_prom */
+
+	fireone_input_ports,
 
 	0, 0, 0,
 	ORIENTATION_DEFAULT,

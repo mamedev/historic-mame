@@ -725,11 +725,20 @@ static void jungler_hisave(void)
 
 static int commsega_hiload(void)
 {
+	static int firsttime = 0;
 	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
 
 
+	if (firsttime == 0)
+	{
+
+		memset(&RAM[0x9c6d],0xff,6);	/* high score */
+		firsttime = 1;
+	}
+
+
 	/* check if the hi score table has already been initialized */
-	if (memcmp(&RAM[0x9c60],"\x1d\x1c",2) == 0)
+	if (memcmp(&RAM[0x9c6d],"\x00\x00\x00\x00\x00\x00",6) == 0)
 	{
 		void *f;
 
@@ -738,6 +747,7 @@ static int commsega_hiload(void)
 		{
 			osd_fread(f,&RAM[0x9c6d],6);
 			osd_fclose(f);
+			firsttime =0;
 		}
 
 		return 1;

@@ -66,7 +66,7 @@ void yard_vh_convert_color_prom(unsigned char *palette, unsigned short *colortab
 	#define COLOR(gfxn,offs) (colortable[Machine->drv->gfxdecodeinfo[gfxn].color_codes_start + offs])
 
 
-	/* character palette and lookup table */
+	/* character palette */
 	for (i = 0;i < 256;i++)
 	{
 		int bit0,bit1,bit2;
@@ -224,6 +224,9 @@ void yard_flipscreen_w(int offset,int data)
 		flipscreen = data & 1;
 		memset(dirtybuffer,1,videoram_size);
 	}
+
+	coin_counter_w(0,data & 0x02);
+	coin_counter_w(1,data & 0x20);
 }
 
 

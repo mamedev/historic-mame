@@ -249,7 +249,7 @@ static int timer_r (int offset)
 	/* not real correct code */
 	int coinflip = read_4990_testbit();
 
-   //	 if (errorlog) fprintf(errorlog,"CPU %04x - Read timer\n",cpu_getpc());
+//	if (errorlog) fprintf(errorlog,"CPU %04x - Read timer\n",cpu_getpc());
 
 	res = readinputport(4) ^ (coinflip << 6) ^ (coinflip << 7);
 
@@ -269,6 +269,8 @@ static void neo_z80_w(int offset, int data)
 	soundlatch_w(0,(data>>8)&0xff);
 	pending_command = 1;
 	cpu_cause_interrupt(1,Z80_NMI_INT);
+	/* spin for a while to let the Z80 read the command (fixes hanging sound in pspikes2) */
+	cpu_spinuntil_time(TIME_IN_USEC(50));
 }
 
 
@@ -803,7 +805,7 @@ static struct MachineDriver neogeo_mgd2_machine_driver =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU | CPU_16BIT_PORT,
-			4000000,
+			6000000,
 			5,
 			sound_readmem,sound_writemem,neo_readio,neo_writeio,
 			ignore_interrupt,0
@@ -846,7 +848,7 @@ static struct MachineDriver neogeo_mvs_machine_driver =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU | CPU_16BIT_PORT,
-			4000000,
+			6000000,
 			5,
 			sound_readmem,sound_writemem,neo_readio,neo_writeio,
 			ignore_interrupt,0
@@ -876,6 +878,48 @@ static struct MachineDriver neogeo_mvs_machine_driver =
 	}
 };
 
+static struct MachineDriver neogeo_mvs_16bit_machine_driver =
+{
+	{
+		{
+			CPU_M68000,
+			12000000,
+			0,
+			neogeo_readmem,neogeo_writemem,0,0,
+			neogeo_interrupt,1
+		},
+		{
+			CPU_Z80 | CPU_AUDIO_CPU | CPU_16BIT_PORT,
+			6000000,
+			5,
+			sound_readmem,sound_writemem,neo_readio,neo_writeio,
+			ignore_interrupt,0
+		}
+	},
+	60, DEFAULT_60HZ_VBLANK_DURATION,
+	1,
+	neogeo_init_machine,
+	40*8, 32*8, { 1*8, 39*8-1, 0*8, 28*8-1 },
+	neogeo_mvs_gfxdecodeinfo,
+	4096,4096,
+	0,
+
+	VIDEO_TYPE_RASTER | VIDEO_MODIFIES_PALETTE | VIDEO_SUPPORTS_16BIT,
+	0,
+	neogeo_mvs_vh_start,
+	neogeo_vh_stop,
+	neogeo_vh_screenrefresh,
+
+	/* sound hardware */
+	SOUND_SUPPORTS_STEREO,0,0,0,
+	{
+		{
+			SOUND_YM2610,
+			&neogeo_ym2610_interface,
+		},
+	}
+};
+
 static struct MachineDriver neogeo_mvs_raster_machine_driver =
 {
 	{
@@ -888,7 +932,7 @@ static struct MachineDriver neogeo_mvs_raster_machine_driver =
 		},
 		{
 			CPU_Z80 | CPU_AUDIO_CPU | CPU_16BIT_PORT,
-			4000000,
+			6000000,
 			5,
 			sound_readmem,sound_writemem,neo_readio,neo_writeio,
 			ignore_interrupt,0
@@ -949,6 +993,11 @@ static struct MachineDriver neogeo_mvs_raster_machine_driver =
 #define NEO_SFIX_64K(name,sum) \
 	ROM_REGION_DISPOSE(0x40000) \
     ROM_LOAD( name,           0x000000, 0x10000, sum ) \
+    ROM_LOAD( "ng-sfix.rom",  0x020000, 0x20000, 0x354029fc )
+
+#define NEO_SFIX_32K(name,sum) \
+	ROM_REGION_DISPOSE(0x40000) \
+    ROM_LOAD( name,           0x000000, 0x08000, sum ) \
     ROM_LOAD( "ng-sfix.rom",  0x020000, 0x20000, 0x354029fc )
 
 
@@ -1048,38 +1097,6 @@ ROM_START( lresort_rom )
 	ROM_LOAD( "n046001a.1fc", 0x080000, 0x080000, 0x670ce3ec )
 	ROM_LOAD( "n046001b.1f8", 0x100000, 0x080000, 0x2e39462b )
 	ROM_LOAD( "n046001b.1fc", 0x180000, 0x080000, 0x7944754f )
-ROM_END
-
-ROM_START( ararmy_rom )
-	ROM_REGION(0x100000)
-    ROM_LOAD_ODD ( "n046001a.038", 0x000000, 0x040000, 0x99c7b4fc )
-	ROM_CONTINUE (                 0x000000 & ~1, 0x040000 | ROMFLAG_ALTERNATE )
-
-	NEO_SFIX_128K( "n046001a.378", 0xac0daa1b )
-
-	ROM_REGION(0x180000)
-    ROM_LOAD( "n046001a.538", 0x000000, 0x40000, 0xe3afaf17 ) /* Plane 0,1 */
-	ROM_CONTINUE(             0x0c0000, 0x40000 )
-    ROM_LOAD( "n046001a.53c", 0x040000, 0x40000, 0x17098f54 ) /* Plane 0,1 */
-	ROM_CONTINUE(             0x100000, 0x40000 )
-    ROM_LOAD( "n046001b.538", 0x080000, 0x40000, 0x13cbb7c5 ) /* Plane 0,1 */
-	ROM_CONTINUE(             0x140000, 0x40000 )
-
-	ROM_REGION(0x180000)
-    ROM_LOAD( "n046001a.638", 0x000000, 0x40000, 0x3a098b3b ) /* Plane 2,3 */
-	ROM_CONTINUE(             0x0c0000, 0x40000 )
-    ROM_LOAD( "n046001a.63c", 0x040000, 0x40000, 0x8e3b2b88 ) /* Plane 2,3 */
-	ROM_CONTINUE(             0x100000, 0x40000 )
-    ROM_LOAD( "n046001b.638", 0x080000, 0x40000, 0xb6f5fc62 ) /* Plane 2,3 */
-	ROM_CONTINUE(             0x140000, 0x40000 )
-
-	NEO_BIOS_SOUND_128K( "n046001a.4f8", 0x98edc671 )
-
-	ROM_REGION_OPTIONAL(0x200000) /* sound samples */
-	ROM_LOAD( "n046001a.1f8", 0x000000, 0x080000, 0xdaff9896 )
-	ROM_LOAD( "n046001a.1fc", 0x080000, 0x080000, 0x8781b1bc )
-	ROM_LOAD( "n046001b.1f8", 0x100000, 0x080000, 0xb69c1da5 )
-	ROM_LOAD( "n046001b.1fc", 0x180000, 0x080000, 0x2c929c17 )
 ROM_END
 
 ROM_START( fbfrenzy_rom )
@@ -1367,7 +1384,7 @@ ROM_START( crsword_rom )
 	ROM_LOAD( "n046001a.1fc", 0x080000, 0x080000, 0xa11ecaf4 )
 ROM_END
 
-ROM_START( kingofm_rom )
+ROM_START( kotm_rom )
 	ROM_REGION(0x100000)
     ROM_LOAD_ODD ( "n058001a.038", 0x000000, 0x040000, 0xd239c184 )
 	ROM_CONTINUE (                 0x000000 & ~1, 0x040000 | ROMFLAG_ALTERNATE )
@@ -1764,7 +1781,7 @@ ROM_START( countb_rom )
 	ROM_LOAD( "n106001d.1fc", 0x380000, 0x080000, 0xb1a0ccb0 )
 ROM_END
 
-ROM_START( artfight_rom )
+ROM_START( aof_rom )
 	ROM_REGION(0x100000)
     ROM_LOAD_ODD ( "n102001a.038", 0x000000, 0x040000, 0x95102254 )
 	ROM_CONTINUE (                 0x000000 & ~1, 0x040000 | ROMFLAG_ALTERNATE )
@@ -1822,7 +1839,7 @@ ROM_START( artfight_rom )
 	ROM_LOAD( "n102001d.1fc", 0x380000, 0x080000, 0xa823a19a )
 ROM_END
 
-ROM_START( wheroes_rom )
+ROM_START( wh1_rom )
 	ROM_REGION(0x100000)
 	ROM_LOAD_ODD ( "n138001a.038", 0x000000, 0x040000, 0xab39923d)
 	ROM_CONTINUE (                 0x000000 & ~1, 0x040000 | ROMFLAG_ALTERNATE )
@@ -1963,7 +1980,7 @@ ROM_START( minasan_rom )
     ROM_LOAD( "n054001b.63c", 0x0c0000, 0x40000, 0xcfa90d59 ) /* Plane 2,3 */
     ROM_CONTINUE(             0x1c0000, 0x40000 )
 
-    NEO_BIOS_SOUND_128K( "n054001a.478", 0xadd5a226 )
+    NEO_BIOS_SOUND_64K( "n054001a.478", 0x19ef88ea )
 
     ROM_REGION_OPTIONAL(0x100000) /* sound samples */
     ROM_LOAD( "n054001a.178", 0x000000, 0x080000, 0x79d65e8e )
@@ -2003,7 +2020,7 @@ ROM_START( bakatono_rom )
     ROM_LOAD( "n058001b.63c", 0x0c0000, 0x40000, 0x0d40c953 ) /* Plane 2,3 */
     ROM_CONTINUE(             0x1c0000, 0x40000 )
 
-    NEO_BIOS_SOUND_128K( "n058001a.4f8", 0xae221cc7 )
+    NEO_BIOS_SOUND_64K( "n058001a.4f8", 0xa5e05789 )
 
     ROM_REGION_OPTIONAL(0x200000) /* sound samples */
     ROM_LOAD( "n058001a.1f8", 0x000000, 0x080000, 0xd3edbde6 )
@@ -2014,7 +2031,7 @@ ROM_END
 
 /************************** MVS FORMAT ROMS ***********************************/
 
-ROM_START( nam_1975_rom )
+ROM_START( nam1975_rom )
 	ROM_REGION(0x100000)
     ROM_LOAD_WIDE_SWAP( "nam_p1.rom", 0x000000, 0x080000, 0xcc9fc951 )
 
@@ -2166,6 +2183,31 @@ ROM_START( socbrawl_rom )
 	ROM_REGION_OPTIONAL(0x200000) /* sound samples */
 	ROM_LOAD( "sbrl_v1.rom", 0x000000, 0x100000, 0xcc78497e )
 	ROM_LOAD( "sbrl_v2.rom", 0x100000, 0x100000, 0xdda043c6 )
+ROM_END
+
+ROM_START( roboarmy_rom )
+	ROM_REGION(0x100000)
+    ROM_LOAD_WIDE_SWAP( "rarmy_p1.rom", 0x000000, 0x080000, 0xcd11cbd4 )
+
+	NEO_SFIX_128K( "rarmy_s1.rom", 0xac0daa1b )
+
+	ROM_REGION(0x180000)
+    ROM_LOAD( "rarmy_c1.rom", 0x000000, 0x080000, 0xe17fa618 ) /* Plane 0,1 */
+    ROM_LOAD( "rarmy_c3.rom", 0x080000, 0x080000, 0xaa4d7695 ) /* Plane 0,1 */
+    ROM_LOAD( "rarmy_c5.rom", 0x100000, 0x080000, 0x40adfccd ) /* Plane 0,1 */
+
+	ROM_REGION(0x180000)
+    ROM_LOAD( "rarmy_c2.rom", 0x000000, 0x080000, 0xd5ebdb4d ) /* Plane 2,3 */
+    ROM_LOAD( "rarmy_c4.rom", 0x080000, 0x080000, 0x8d4ebbe3 ) /* Plane 2,3 */
+    ROM_LOAD( "rarmy_c6.rom", 0x100000, 0x080000, 0x462571de ) /* Plane 2,3 */
+
+	NEO_BIOS_SOUND_128K( "rarmy_m1.rom", 0x98edc671 )
+
+	ROM_REGION_OPTIONAL(0x200000) /* sound samples */
+	ROM_LOAD( "rarmy_v1.rom", 0x000000, 0x080000, 0xdaff9896 )
+	ROM_LOAD( "rarmy_v2.rom", 0x080000, 0x080000, 0x8781b1bc )
+	ROM_LOAD( "rarmy_v3.rom", 0x100000, 0x080000, 0xb69c1da5 )
+	ROM_LOAD( "rarmy_v4.rom", 0x180000, 0x080000, 0x2c929c17 )
 ROM_END
 
 ROM_START( maglord_rom )
@@ -2429,7 +2471,7 @@ ROM_START( pspikes2_rom )
 	ROM_LOAD( "spike_v3.rom", 0x200000, 0x100000, 0x81ff05aa )
 ROM_END
 
-ROM_START( sidkicks_rom )
+ROM_START( ssideki_rom )
 	ROM_REGION(0x100000)
     ROM_LOAD_WIDE_SWAP( "sidek_p1.rom", 0x000000, 0x080000, 0x9cd97256 )
 
@@ -2556,6 +2598,28 @@ ROM_START( stakwin_rom )
 
 	ROM_REGION_OPTIONAL(0x200000) /* sound samples */
 	ROM_LOAD( "stakw_v1.rom", 0x000000, 0x200000, 0xb7785023 )
+ROM_END
+
+ROM_START( stakwin2_rom )
+    ROM_REGION(0x200000)
+    ROM_LOAD_WIDE_SWAP( "sw2_p1.rom", 0x100000, 0x100000, 0xdaf101d2 )
+    ROM_CONTINUE(                     0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
+
+    NEO_SFIX_128K( "sw2_s1.rom", 0x2a8c4462 )
+
+    ROM_REGION(0x600000)
+    ROM_LOAD( "sw2_c1.rom", 0x0000000, 0x400000, 0x7d6c2af4 ) /* Plane 0,1 */
+    ROM_LOAD( "sw2_c3.rom", 0x0400000, 0x200000, 0x93dfd660 ) /* Plane 0,1 */
+
+    ROM_REGION(0x600000)
+    ROM_LOAD( "sw2_c2.rom", 0x0000000, 0x400000, 0x7e402d39 ) /* Plane 2,3 */
+    ROM_LOAD( "sw2_c4.rom", 0x0400000, 0x200000, 0x7efea43a ) /* Plane 2,3 */
+
+    NEO_BIOS_SOUND_128K( "sw2_m1.rom", 0xc8e5e0f9 )
+
+    ROM_REGION_OPTIONAL(0x800000) /* sound samples */
+    ROM_LOAD( "sw2_v1.rom", 0x000000, 0x400000, 0xb8f24181 )
+    ROM_LOAD( "sw2_v2.rom", 0x400000, 0x400000, 0xee39e260 )
 ROM_END
 
 ROM_START( turfmast_rom )
@@ -2839,11 +2903,11 @@ ROM_START( twinspri_rom )
 	NEO_BIOS_SOUND_128K( "sprit_m1.rom", 0x364d6f96 )
 
 	ROM_REGION_OPTIONAL(0x600000) /* sound samples */
-	ROM_LOAD( "sprit_v1.rom", 0x000000, 0x400000, 0x00000000 )	/* bad read: odd bytes all 0xff */
+	ROM_LOAD( "sprit_v1.rom", 0x000000, 0x400000, 0x00000000 )
 	ROM_LOAD( "sprit_v2.rom", 0x400000, 0x200000, 0x7ad26599 )
 ROM_END
 
-ROM_START( karnov_r_rom )
+ROM_START( karnovr_rom )
 	ROM_REGION(0x100000)
     ROM_LOAD_WIDE_SWAP( "karev_p1.rom", 0x000000, 0x100000, 0x8c86fd22 )
 
@@ -2911,7 +2975,7 @@ ROM_START( sonicwi3_rom )
 	NEO_BIOS_SOUND_128K( "sonw3_m1.rom", 0xb20e4291 )
 
     ROM_REGION_OPTIONAL(0x500000) /* sound samples */
-	ROM_LOAD( "sonw3_v1.rom", 0x000000, 0x400000, 0x00000000 )	/* bad! odd bytes all 0xff */
+	ROM_LOAD( "sonw3_v1.rom", 0x000000, 0x400000, 0x00000000 )
     ROM_LOAD( "sonw3_v2.rom", 0x000000, 0x100000, 0x32187ccd )
 ROM_END
 
@@ -2938,7 +3002,7 @@ ROM_START( goalx3_rom )
 	ROM_LOAD( "goal!_v1.rom", 0x000000, 0x200000, 0xef214212 )
 ROM_END
 
-ROM_START( worlher2_rom )
+ROM_START( wh2_rom )
     ROM_REGION(0x200000)
     ROM_LOAD_WIDE_SWAP( "hero2_p1.rom", 0x100000, 0x100000, 0x65a891d9 )
     ROM_CONTINUE(                       0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
@@ -3015,7 +3079,7 @@ ROM_START( galaxyfg_rom )
 	ROM_LOAD( "galfi_v3.rom", 0x400000, 0x100000, 0x70bca656 )
 ROM_END
 
-ROM_START( worlhe2j_rom )
+ROM_START( wh2j_rom )
 	ROM_REGION(0x200000)
 	ROM_LOAD_WIDE_SWAP( "wh2j_p1.rom", 0x100000, 0x100000, 0x385a2e86 )
 	ROM_CONTINUE(                      0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
@@ -3062,7 +3126,7 @@ ROM_START( magdrop3_rom )
 	NEO_BIOS_SOUND_128K( "drop3_m1.rom", 0x5beaf34e )
 
 	ROM_REGION_OPTIONAL(0x480000) /* sound samples */
-	ROM_LOAD( "drop3_v1.rom", 0x000000, 0x400000, 0x00000000 )	/* bad! odd bytes all 0xff */
+	ROM_LOAD( "drop3_v1.rom", 0x000000, 0x400000, 0x00000000 )
 	ROM_LOAD( "drop3_v2.rom", 0x400000, 0x080000, 0xd5e30df4 )
 ROM_END
 
@@ -3094,7 +3158,7 @@ ROM_START( samsho2_rom )
 	ROM_LOAD( "sams2_v4.rom", 0x600000, 0x100000, 0x24aab4bb )
 ROM_END
 
-ROM_START( sskick3_rom )
+ROM_START( ssideki3_rom )
 	ROM_REGION(0x200000)
     ROM_LOAD_WIDE_SWAP( "side3_p1.rom", 0x100000, 0x100000, 0x6bc27a3d )
 	ROM_CONTINUE(                       0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
@@ -3413,8 +3477,8 @@ ROM_START( wakuwak7_rom )
 	NEO_BIOS_SOUND_128K( "waku7_m1.rom", 0x0634bba6 )
 
 	ROM_REGION_OPTIONAL(0x800000) /* sound samples */
-	ROM_LOAD( "waku7_v1.rom", 0x000000, 0x400000, 0x00000000 )	/* bad read: odd bytes all 0xff */
-	ROM_LOAD( "waku7_v2.rom", 0x400000, 0x400000, 0x00000000 )	/* bad read: odd bytes all 0xff */
+	ROM_LOAD( "waku7_v1.rom", 0x000000, 0x400000, 0x00000000 )
+	ROM_LOAD( "waku7_v2.rom", 0x400000, 0x400000, 0x00000000 )
 ROM_END
 
 ROM_START( samsho3_rom )
@@ -3445,7 +3509,7 @@ ROM_START( samsho3_rom )
 	NEO_BIOS_SOUND_128K( "sams3_m1.rom", 0x8e6440eb )
 
 	ROM_REGION_OPTIONAL(0x600000) /* sound samples */
-	ROM_LOAD( "sams3_v1.rom", 0x000000, 0x400000, 0x00000000 )	/* bad read: odd bytes all 0xff */
+	ROM_LOAD( "sams3_v1.rom", 0x000000, 0x400000, 0x00000000 )
 	ROM_LOAD( "sams3_v2.rom", 0x400000, 0x200000, 0xac0f261a )
 ROM_END
 
@@ -3576,8 +3640,8 @@ ROM_START( pulstar_rom )
 	NEO_BIOS_SOUND_128K( "pstar_m1.rom", 0xff3df7c7 )
 
 	ROM_REGION_OPTIONAL(0x800000) /* sound samples */
-	ROM_LOAD( "pstar_v1.rom", 0x000000, 0x400000, 0x00000000 )	/* bad! odd bytes all 0xff */
-	ROM_LOAD( "pstar_v2.rom", 0x400000, 0x400000, 0x00000000 )	/* bad! odd bytes all 0xff */
+	ROM_LOAD( "pstar_v1.rom", 0x000000, 0x400000, 0x00000000 )
+	ROM_LOAD( "pstar_v2.rom", 0x400000, 0x400000, 0x00000000 )
 ROM_END
 
 ROM_START( rbff1_rom )
@@ -3608,9 +3672,9 @@ ROM_START( rbff1_rom )
 	NEO_BIOS_SOUND_128K( "rbff1_m1.rom", 0x653492a7 )
 
 	ROM_REGION_OPTIONAL(0xc00000) /* sound samples */
-	ROM_LOAD( "rbff1_v1.rom", 0x000000, 0x400000, 0x00000000 )	/* bad! odd bytes all 0xff */
-	ROM_LOAD( "rbff1_v2.rom", 0x400000, 0x400000, 0x00000000 )	/* bad! odd bytes all 0xff */
-	ROM_LOAD( "rbff1_v3.rom", 0x800000, 0x400000, 0x00000000 )	/* bad! odd bytes all 0xff */
+	ROM_LOAD( "rbff1_v1.rom", 0x000000, 0x400000, 0x00000000 )
+	ROM_LOAD( "rbff1_v2.rom", 0x400000, 0x400000, 0x00000000 )
+	ROM_LOAD( "rbff1_v3.rom", 0x800000, 0x400000, 0x00000000 )
 ROM_END
 
 ROM_START( whp_rom )
@@ -3698,8 +3762,8 @@ ROM_START( ragnagrd_rom )
 	NEO_BIOS_SOUND_128K( "rgard_m1.rom", 0x17028bcf )
 
 	ROM_REGION_OPTIONAL(0x800000) /* sound samples */
-	ROM_LOAD( "rgard_v1.rom", 0x000000, 0x400000, 0x00000000 )	/* bad read: odd bytes all 0xff */
-	ROM_LOAD( "rgard_v2.rom", 0x400000, 0x400000, 0x00000000 )	/* bad read: odd bytes all 0xff */
+	ROM_LOAD( "rgard_v1.rom", 0x000000, 0x400000, 0x00000000 )
+	ROM_LOAD( "rgard_v2.rom", 0x400000, 0x400000, 0x00000000 )
 ROM_END
 
 ROM_START( blazstar_rom )
@@ -3900,7 +3964,7 @@ ROM_START( shocktro_rom )
 	NEO_BIOS_SOUND_128K( "shock_m1.rom", 0x075b9518 )
 
 	ROM_REGION_OPTIONAL(0x600000) /* sound samples */
-	ROM_LOAD( "shock_v1.rom", 0x000000, 0x400000, 0x00000000 )	/* bad read: odd bytes all 0xff */
+	ROM_LOAD( "shock_v1.rom", 0x000000, 0x400000, 0x260c0bef )
 	ROM_LOAD( "shock_v2.rom", 0x400000, 0x200000, 0x4ad7d59e )
 ROM_END
 
@@ -3957,7 +4021,7 @@ ROM_START( kof98_rom )
 	ROM_LOAD( "kof98_v4.rom", 0xc00000, 0x400000, 0x7985ea30 )
 ROM_END
 
-ROM_START( realbou2_rom )
+ROM_START( rbff2_rom )
 	ROM_REGION(0x500000)
 	ROM_LOAD_WIDE_SWAP( "rb2_p1.rom", 0x000000, 0x100000, 0xb6969780 )
 	ROM_LOAD_WIDE_SWAP( "rb2_p2.rom", 0x100000, 0x400000, 0x960aa88d )
@@ -3974,13 +4038,13 @@ ROM_START( realbou2_rom )
 	ROM_LOAD( "rb2_c4.rom", 0x0800000, 0x800000, 0xc19a07eb ) /* Plane 2,3 */
 	ROM_LOAD( "rb2_c6.rom", 0x1000000, 0x800000, 0x4609e507 ) /* Plane 2,3 */
 
-	NEO_BIOS_SOUND_256K( "rb2_m1.rom", 0x00000000 )	/* most is missing */
+	NEO_BIOS_SOUND_256K( "rb2_m1.rom", 0xed482791 )
 
     ROM_REGION_OPTIONAL(0x1000000) /* sound samples */
-	ROM_LOAD( "rb2_v1.rom", 0x000000, 0x400000, 0x00000000 )	/* bad read: odd bytes all 0xff */
-	ROM_LOAD( "rb2_v2.rom", 0x400000, 0x400000, 0x00000000 )	/* bad read: odd bytes all 0xff */
-	ROM_LOAD( "rb2_v3.rom", 0x800000, 0x400000, 0x00000000 )	/* bad read: odd bytes all 0xff */
-	ROM_LOAD( "rb2_v4.rom", 0xc00000, 0x400000, 0x00000000 )	/* bad read: in 1st half, odd bytes all 0xff */
+	ROM_LOAD( "rb2_v1.rom", 0x000000, 0x400000, 0xf796265a )
+	ROM_LOAD( "rb2_v2.rom", 0x400000, 0x400000, 0x2cb3f3bb )
+	ROM_LOAD( "rb2_v3.rom", 0x800000, 0x400000, 0xdf77b7fa )
+	ROM_LOAD( "rb2_v4.rom", 0xc00000, 0x400000, 0x33a356ee )
 ROM_END
 
 ROM_START( gururin_rom )
@@ -4033,10 +4097,31 @@ ROM_START( miexchng_rom )
     ROM_LOAD( "miex-c2.rom", 0x0000000, 0x200000, 0x554bcd9b ) /* Plane 2,3 */
     ROM_LOAD( "miex-c4.rom", 0x0200000, 0x080000, 0x1694f171 ) /* Plane 2,3 */
 
-    NEO_BIOS_SOUND_64K( "miex-m1.rom", 0xf5316be1 )
+	NEO_BIOS_SOUND_128K( "miex-m1.rom", 0xde41301b )
+
+	ROM_REGION_OPTIONAL(0x400000) /* sound samples */
+	ROM_LOAD( "miex-v1.rom", 0x000000, 0x400000, 0x113fb898 )
+ROM_END
+
+ROM_START( marukodq_rom )
+    ROM_REGION(0x100000)
+    ROM_LOAD_WIDE_SWAP( "maru-p1.rom", 0x000000, 0x100000, 0xc33ed21e )
+
+	NEO_SFIX_32K( "maru-s1.rom", 0x3b52a219 )
+
+    ROM_REGION(0x500000)
+    ROM_LOAD( "maru-c1.rom", 0x0000000, 0x400000, 0x4bd5e70f ) /* Plane 0,1 */
+    ROM_LOAD( "maru-c3.rom", 0x0400000, 0x100000, 0x79aa2b48 ) /* Plane 0,1 */
+
+    ROM_REGION(0x500000)
+    ROM_LOAD( "maru-c2.rom", 0x0000000, 0x400000, 0x67dbe24d ) /* Plane 2,3 */
+    ROM_LOAD( "maru-c4.rom", 0x0400000, 0x100000, 0x55e1314d ) /* Plane 2,3 */
+
+    NEO_BIOS_SOUND_128K( "maru-m1.rom", 0x0e22902e )
 
     ROM_REGION_OPTIONAL(0x400000) /* sound samples */
-    ROM_LOAD( "miex-v1.rom", 0x000000, 0x400000, 0x00000000 )
+    ROM_LOAD( "maru-v1.rom", 0x000000, 0x200000, 0x5385eca8 )
+    ROM_LOAD( "maru-v2.rom", 0x200000, 0x200000, 0xf8c55404 )
 ROM_END
 
 ROM_START( lastblad_rom )
@@ -4064,6 +4149,29 @@ ROM_START( lastblad_rom )
     ROM_LOAD( "lb_v3.rom", 0x800000, 0x400000, 0xa506e1e2 )
     ROM_LOAD( "lb_v4.rom", 0xc00000, 0x200000, 0x13583c4b )
 ROM_END
+
+ROM_START( breakers_rom )
+    ROM_REGION(0x200000)
+    ROM_LOAD_WIDE_SWAP( "break_p1.rom", 0x100000, 0x100000, 0xed24a6e6 )
+    ROM_CONTINUE(             0x000000, 0x100000 | ROMFLAG_WIDE | ROMFLAG_SWAP )
+
+    NEO_SFIX_128K( "break_s1.rom", 0x076fb64c )
+
+    ROM_REGION(0x800000)
+    ROM_LOAD( "break_c1.rom", 0x000000, 0x400000, 0x68d4ae76 ) /* Plane 0,1 */
+    ROM_LOAD( "break_c3.rom", 0x400000, 0x400000, 0x645077f3 ) /* Plane 0,1 */
+
+    ROM_REGION(0x800000)
+    ROM_LOAD( "break_c2.rom", 0x000000, 0x400000, 0xfdee05cd ) /* Plane 2,3 */
+    ROM_LOAD( "break_c4.rom", 0x400000, 0x400000, 0x63aeb74c ) /* Plane 2,3 */
+
+    NEO_BIOS_SOUND_128K( "break_m1.rom", 0x3951a1c1 )
+
+    ROM_REGION_OPTIONAL(0x800000) /* sound samples */
+    ROM_LOAD( "break_v1.rom", 0x000000, 0x400000, 0x7f9ed279 )
+    ROM_LOAD( "break_v2.rom", 0x400000, 0x400000, 0x1d43e420 )
+ROM_END
+
 
 /******************************************************************************/
 
@@ -4190,16 +4298,15 @@ NEODRIVER(superspy,"Super Spy","1990","SNK","",&neogeo_mgd2_machine_driver)
 NEODRIVERX(ttbb,   "2020bb","2020 Super Baseball","1991","SNK / Pallas","",&neogeo_mgd2_machine_driver)
 NEODRIVER(alpham2, "Alpha Mission 2 / ASD Last Guardian 2","1991","SNK","",&neogeo_mgd2_machine_driver)
 NEODRIVER(eightman,"Eight Man","1991","SNK / Pallas","",&neogeo_mgd2_machine_driver)
-NEODRIVER(ararmy,  "Robo Army","1991","SNK","",&neogeo_mgd2_machine_driver)
 NEODRIVER(fatfury1,"Fatal Fury - King of Fighters / Garou Densetsu","1991","SNK","",&neogeo_mgd2_machine_driver)
 NEODRIVER(burningf,"Burning Fight","1991","SNK","",&neogeo_mgd2_machine_driver)
-NEODRIVER(kingofm, "King of the Monsters","1991","SNK","",&neogeo_mgd2_machine_driver)
+NEODRIVER(kotm,    "King of the Monsters","1991","SNK","",&neogeo_mgd2_machine_driver)
 NEODRIVER(gpilots, "Ghost Pilots","1991","SNK","",&neogeo_mgd2_machine_driver)
 NEODRIVER(sengoku, "Sengoku","1991","SNK","",&neogeo_mgd2_machine_driver)
 NEODRIVER(lresort, "Last Resort","1992","SNK","",&neogeo_mgd2_machine_driver)
 NEODRIVER(fbfrenzy,"Football Frenzy","1992","SNK","",&neogeo_mgd2_machine_driver)
 NEODRIVER(mutnat,  "Mutation Nation","1992","SNK","",&neogeo_mgd2_machine_driver)
-NEODRIVER(artfight,"Art of Fighting / Ryuu Ko No Ken","1992","SNK","",&neogeo_mgd2_machine_driver)
+NEODRIVER(aof,     "Art of Fighting / Ryuu Ko No Ken","1992","SNK","",&neogeo_mgd2_machine_driver)
 NEODRIVERX(countb, "3countb","3 Count Bout / Fire Suplex","1993","SNK","",&neogeo_mgd2_machine_driver)
 NEODRIVER(sengoku2,"Sengoku 2","1993","SNK","",&neogeo_mgd2_machine_driver)
 
@@ -4208,7 +4315,7 @@ NEODRIVER(ncombat, "Ninja Combat","1990","Alpha Denshi Co","",&neogeo_mgd2_machi
 NEODRIVER(crsword, "Crossed Swords","1991","Alpha Denshi Co","",&neogeo_mgd2_machine_driver)
 NEODRIVER(trally,  "Thrash Rally","1991","Alpha Denshi Co","",&neogeo_mgd2_machine_driver)
 NEODRIVER(ncommand,"Ninja Commando","1992","Alpha Denshi Co","",&neogeo_mgd2_machine_driver)
-NEODRIVER(wheroes, "World Heroes","1992","Alpha Denshi Co","",&neogeo_mgd2_machine_driver)
+NEODRIVER(wh1,     "World Heroes","1992","Alpha Denshi Co","",&neogeo_mgd2_machine_driver)
 
 /* Visco */
 NEODRIVER(androdun,"Andro Dunos","1992","Visco","",&neogeo_mgd2_machine_driver)
@@ -4233,7 +4340,7 @@ NEODRIVER(janshin, "Janshin Densetsu - Quest of Jongmaster","1994","Aicom","",&n
 NEODRIVER(pulstar, "Pulstar","1995","Aicom","",&neogeo_mvs_machine_driver)
 
 /* Yumekobo */
-NEODRIVER(blazstar,"Blazing Star","1998","Yumekobo","",&neogeo_mvs_machine_driver)
+NEODRIVER(blazstar,"Blazing Star","1998","Yumekobo","",&neogeo_mvs_16bit_machine_driver)
 
 /* Taito */
 NEODRIVER(pbobble, "Puzzle Bobble / Bust-A-Move","1994","Taito","",&neogeo_mvs_machine_driver)
@@ -4247,10 +4354,11 @@ NEODRIVER(sonicwi3,"Aero Fighters 3 / Sonic Wings 3","1995","Video System Co.","
 NEODRIVER(goalx3,  "Goal! Goal! Goal!","1995","Visco","",&neogeo_mvs_machine_driver)
 NEODRIVER(neodrift,"Neo Drift Out - New Technology","1996","Visco","Marko Pusljar (SI)",&neogeo_mvs_machine_driver)
 NEODRIVER(neomrdo, "Neo Mr Do!","1996","Visco","",&neogeo_mvs_machine_driver)
+NEODRIVER(breakers,"Breakers","1996","Visco","",&neogeo_mvs_16bit_machine_driver)
 
 /* Data East Corporation */
 NEODRIVER(spinmast,"Spinmaster / Miracle Adventure","1993","Data East Corporation","",&neogeo_mvs_machine_driver)
-NEODRIVER(karnov_r,"Karnov's Revenge / Fighter's History Dynamite","1994","Data East Corporation","",&neogeo_mvs_machine_driver)
+NEODRIVER(karnovr, "Karnov's Revenge / Fighter's History Dynamite","1994","Data East Corporation","",&neogeo_mvs_16bit_machine_driver)
 NEODRIVER(wjammers,"Wind Jammers / Flying Power Disc","1994","Data East Corporation","TJ Grant",&neogeo_mvs_machine_driver)
 NEODRIVER(strhoops,"Street Hoop / Street Slam / Dunk Dream","1994","Data East Corporation","",&neogeo_mvs_machine_driver)
 NEODRIVER(magdrop2,"Magical Drop 2 / Toretate Zoukangou 2","1996","Data East Corporation","Santeri Saarimaa",&neogeo_mvs_machine_driver)
@@ -4266,17 +4374,18 @@ NEODRIVER(kabukikl,"Kabuki Klash / Far East of Eden","1995","Hudson","Santeri Sa
 NEODRIVER(neobombe,"Neo Bomberman","1997","Hudson","",&neogeo_mvs_machine_driver)
 
 /* ADK */
-NEODRIVER(worlher2,"World Heroes 2","1993","ADK","",&neogeo_mvs_machine_driver)
-NEODRIVER(worlhe2j,"World Heroes 2 Jet","1994","ADK/SNK","Santeri Saarimaa",&neogeo_mvs_machine_driver)
+NEODRIVER(wh2,     "World Heroes 2","1993","ADK","",&neogeo_mvs_machine_driver)
+NEODRIVER(wh2j,    "World Heroes 2 Jet","1994","ADK/SNK","Santeri Saarimaa",&neogeo_mvs_machine_driver)
 NEODRIVER(aodk,    "Aggressors of Dark Kombat / Tougai Gan San","1994","ADK/SNK","Santeri Saarimaa\nRodimus Prime",&neogeo_mvs_machine_driver)
-NEODRIVER(whp,     "World Heroes Perfect","1995","ADK/SNK","",&neogeo_mvs_machine_driver)
+NEODRIVER(whp,     "World Heroes Perfect","1995","ADK/SNK","",&neogeo_mvs_16bit_machine_driver)
 NEODRIVER(ninjamas,"Ninja Master's","1996","ADK/SNK","",&neogeo_mvs_machine_driver)
 NEODRIVER(overtop, "Overtop","1996","ADK","Santeri Saarimaa",&neogeo_mvs_machine_driver)
 NEODRIVER(twinspri,"Twinkle Star Sprites","1996","ADK","Santeri Saarimaa",&neogeo_mvs_machine_driver)
 
 /* Saurus */
 NEODRIVER(stakwin, "Stakes Winner","1995","Saurus","Santeri Saarimaa",&neogeo_mvs_machine_driver)
-NEODRIVER(ragnagrd,"Operation Ragnagard / Shin Oh Ken","1996","Saurus","",&neogeo_mvs_machine_driver)
+NEODRIVER(stakwin2,"Stakes Winner 2","1996","Saurus","",&neogeo_mvs_machine_driver)
+NEODRIVER(ragnagrd,"Operation Ragnagard / Shin Oh Ken","1996","Saurus","",&neogeo_mvs_16bit_machine_driver)
 NEODRIVER(shocktro,"Shock Troopers","1997","Saurus","",&neogeo_mvs_machine_driver)
 
 /* Tecmo */
@@ -4300,17 +4409,21 @@ NEODRIVER(viewpoin,"Viewpoint","1992","Sammy","",&neogeo_mvs_machine_driver)
 NEODRIVER(gururin, "Gururin","1994","Face","Santeri Saarimaa",&neogeo_mvs_machine_driver)
 NEODRIVER(miexchng,"Money Puzzle Exchanger","1997","Face","Santeri Saarimaa",&neogeo_mvs_machine_driver)
 
+/* Takara */
+NEODRIVER(marukodq,"Maruko Deluxe Quiz","1995","Takara","",&neogeo_mvs_machine_driver)
+
 /* SNK */
-NEODRIVER(nam_1975,"NAM 1975","1990","SNK","",&neogeo_mvs_machine_driver)
+NEODRIVER(nam1975, "NAM 1975","1990","SNK","",&neogeo_mvs_machine_driver)
 NEODRIVER(joyjoy,  "Puzzled / Joy Joy Kid","1990","SNK","",&neogeo_mvs_machine_driver)
 NEODRIVER(mahretsu,"Mahjong Kyo Retsuden","1990","SNK","",&neogeo_mvs_machine_driver)
 NEODRIVER(cyberlip,"Cyber-Lip","1990","SNK","",&neogeo_mvs_machine_driver)
 NEODRIVER(tpgolf,  "Top Player's Golf","1990","SNK","",&neogeo_mvs_machine_driver)
 NEODRIVER(legendos,"Legend of Success Joe / Ashita No Joe Densetsu","1991","SNK","Santeri Saarimaa",&neogeo_mvs_machine_driver)
 NEODRIVER(socbrawl,"Soccer Brawl","1991","SNK","",&neogeo_mvs_machine_driver)
+NEODRIVER(roboarmy,"Robo Army","1991","SNK","",&neogeo_mvs_machine_driver)
 NEODRIVER(fatfury2,"Fatal Fury 2","1992","SNK","",&neogeo_mvs_machine_driver)
 NEODRIVER(bstars2, "Baseball Stars 2","1992","SNK","Santeri Saarimaa",&neogeo_mvs_machine_driver)
-NEODRIVER(sidkicks,"Super Sidekicks","1992","SNK","",&neogeo_mvs_machine_driver)
+NEODRIVER(ssideki, "Super Sidekicks","1992","SNK","",&neogeo_mvs_machine_driver)
 NEODRIVER(kotm2,   "King of the Monsters 2","1992","SNK","",&neogeo_mvs_machine_driver)
 NEODRIVER(samsho,  "Samurai Shodown / Samurai Spirits","1993","SNK","",&neogeo_mvs_machine_driver)
 NEODRIVER(fatfursp,"Fatal Fury Special","1993","SNK","Santeri Saarimaa",&neogeo_mvs_machine_driver)
@@ -4319,23 +4432,23 @@ NEODRIVER(kof94,   "The King of Fighters '94","1994","SNK","Santeri Saarimaa",&n
 NEODRIVER(aof2,    "Art of Fighting 2 / Ryuu Ko No Ken 2","1994","SNK","Santeri Saarimaa",&neogeo_mvs_machine_driver)
 NEODRIVER(ssideki2,"Super Sidekicks 2 - The World Championship","1994","SNK","Santeri Saarimaa",&neogeo_mvs_machine_driver)
 NEODRIVER(samsho2, "Samurai Shodown 2 / Samurai Spirits 2","1994","SNK","",&neogeo_mvs_machine_driver)
-NEODRIVER(sskick3, "Super Sidekicks 3 - The Next Glory","1995","SNK","",&neogeo_mvs_raster_machine_driver)
+NEODRIVER(ssideki3,"Super Sidekicks 3 - The Next Glory","1995","SNK","",&neogeo_mvs_raster_machine_driver)
 NEODRIVER(savagere,"Savage Reign","1995","SNK","Rodimus Prime",&neogeo_mvs_machine_driver)
 NEODRIVER(samsho3, "Samurai Shodown 3 / Samurai Spirits 3","1995","SNK","",&neogeo_mvs_machine_driver)
 NEODRIVER(fatfury3,"Fatal Fury 3","1995","SNK","",&neogeo_mvs_machine_driver)
-NEODRIVER(kof95,   "The King of Fighters '95","1995","SNK","",&neogeo_mvs_machine_driver)
+NEODRIVER(kof95,   "The King of Fighters '95","1995","SNK","",&neogeo_mvs_16bit_machine_driver)
 NEODRIVER(rbff1,   "Real Bout Fatal Fury","1995","SNK","",&neogeo_mvs_machine_driver)
 NEODRIVER(aof3,    "Art of Fighting 3 / Ryuu Ko No Ken 3","1996","SNK","",&neogeo_mvs_machine_driver)
-NEODRIVER(kof96,   "The King of Fighters '96","1996","SNK","",&neogeo_mvs_machine_driver)
+NEODRIVER(kof96,   "The King of Fighters '96","1996","SNK","",&neogeo_mvs_16bit_machine_driver)
 NEODRIVER(samsho4, "Samurai Shodown 4 / Samurai Spirits 4","1996","SNK","",&neogeo_mvs_machine_driver)
 NEODRIVER(rbffspec,"Real Bout Fatal Fury Special","1996","SNK","",&neogeo_mvs_machine_driver)
-NEODRIVER(kizuna,  "Kizuna Encounter Super Tag Battle","1996","SNK","",&neogeo_mvs_machine_driver)
+NEODRIVER(kizuna,  "Kizuna Encounter Super Tag Battle","1996","SNK","",&neogeo_mvs_16bit_machine_driver)
 NEODRIVER(ssideki4,"Super Sidekicks 4 - Ultimate 11","1996","SNK","Apollo69",&neogeo_mvs_raster_machine_driver)
-NEODRIVER(kof97,   "The King of Fighters '97","1997","SNK","",&neogeo_mvs_machine_driver)
+NEODRIVER(kof97,   "The King of Fighters '97","1997","SNK","",&neogeo_mvs_16bit_machine_driver)
 NEODRIVER(lastblad,"Last Blade / Gekka No Kenshi","1997","SNK","Santeri Saarimaa",&neogeo_mvs_machine_driver)
 NEODRIVER(mslug2,  "Metal Slug 2","1998","SNK","",&neogeo_mvs_machine_driver)
-NEODRIVER(realbou2,"Real Bout Fatal Fury 2 - The Newcomers","1998","SNK","",&neogeo_mvs_machine_driver)
-NEODRIVER(kof98,   "The King of Fighters '98","1998","SNK","",&neogeo_mvs_machine_driver)
+NEODRIVER(rbff2,   "Real Bout Fatal Fury 2 - The Newcomers","1998","SNK","",&neogeo_mvs_16bit_machine_driver)
+NEODRIVER(kof98,   "The King of Fighters '98","1998","SNK","",&neogeo_mvs_16bit_machine_driver)
 
 /* Note:  The information above is pretty accurate now, but they may still be
    some mistakes, check it if you have time :)

@@ -18,6 +18,14 @@
 extern int debug_key_pressed;
 #endif
 
+#define VERBOSE 0
+
+#if VERBOSE
+#define LOG(x)	if( errorlog ) fprintf x
+#else
+#define LOG(x)
+#endif
+
 /* For now, define the master processor to be CPU #0, the slave to be #1 */
 #define CPU_MASTER  0
 #define CPU_SLAVE   1
@@ -137,7 +145,7 @@ INLINE void SET_FW(void)
 		state.F1_read  = rfield_functions_z[FW(1)];	/* Zero extend */
 	}
 }
-	
+
 /* Intialize Status to 0x0010 */
 INLINE void RESET_ST(void)
 {
@@ -384,7 +392,7 @@ static UINT32 write_pixel_16(UINT32 address, UINT32 value)
 {
 	// TODO: plane masking
 
-	TMS34010_WRMEM_WORD(TOBYTE(address&0xfffffff0), value);		
+	TMS34010_WRMEM_WORD(TOBYTE(address&0xfffffff0), value);
 	return 1;
 }
 
@@ -401,7 +409,7 @@ static UINT32 write_pixel_t_16(UINT32 address, UINT32 value)
 	// Transparency checking
 	if (value)
 	{
-		TMS34010_WRMEM_WORD(TOBYTE(address&0xfffffff0), value);		
+		TMS34010_WRMEM_WORD(TOBYTE(address&0xfffffff0), value);
 	}
 
 	return 1;
@@ -440,7 +448,7 @@ static UINT32 write_pixel_r_t_16(UINT32 address, UINT32 value)
 	// Transparency checking
 	if (value)
 	{
-		TMS34010_WRMEM_WORD(a, value);		
+		TMS34010_WRMEM_WORD(a, value);
 	}
 
 	return 1;
@@ -459,7 +467,7 @@ static UINT32 read_pixel_8 (UINT32 address) { RP(0x08,0xff) }
 static UINT32 read_pixel_16(UINT32 address)
 {
 	// TODO: Plane masking
-	return TMS34010_RDMEM_WORD(TOBYTE(address&0xfffffff0));	
+	return TMS34010_RDMEM_WORD(TOBYTE(address&0xfffffff0));
 }
 
 
@@ -476,13 +484,13 @@ static UINT32 write_pixel_shiftreg (UINT32 address, UINT32 value)
 {
 	if (state.from_shiftreg)
 	{
-		state.from_shiftreg(address, &state.shiftreg[0]);		
+		state.from_shiftreg(address, &state.shiftreg[0]);
 	}
 	else
 	{
 		if (errorlog)
 		{
-			fprintf(errorlog, "From ShiftReg function not set. PC = %08X\n", PC);			
+			fprintf(errorlog, "From ShiftReg function not set. PC = %08X\n", PC);
 		}
 	}
 	return 1;
@@ -492,13 +500,13 @@ static UINT32 read_pixel_shiftreg (UINT32 address)
 {
 	if (state.to_shiftreg)
 	{
-		state.to_shiftreg(address, &state.shiftreg[0]);		
+		state.to_shiftreg(address, &state.shiftreg[0]);
 	}
 	else
 	{
 		if (errorlog)
 		{
-			fprintf(errorlog, "To ShiftReg function not set. PC = %08X\n", PC);			
+			fprintf(errorlog, "To ShiftReg function not set. PC = %08X\n", PC);
 		}
 	}
 	return state.shiftreg[0];
@@ -630,6 +638,7 @@ void TMS34010_SetRegs(TMS34010_Regs *Regs)
 {
 	state = *Regs;
 	change_pc29(PC)
+	CHECK_IRQ_LINES(IE_FLAG,"SetRegs");   /* HJB 990125 */
 }
 
 /****************************************************************************/
@@ -686,8 +695,8 @@ void TMS34010_Reset(void)
 
 	state.stackbase = stackbase[cpu_getactivecpu()] - stackoffs[cpu_getactivecpu()];
 
-	state.to_shiftreg   = to_shiftreg  [cpu_getactivecpu()];		
-	state.from_shiftreg = from_shiftreg[cpu_getactivecpu()];		
+	state.to_shiftreg   = to_shiftreg  [cpu_getactivecpu()];
+	state.from_shiftreg = from_shiftreg[cpu_getactivecpu()];
 }
 
 
@@ -695,24 +704,35 @@ void TMS34010_Reset(void)
 
 void TMS34010_set_nmi_line(int linestate)
 {
-	if (state.nmi_state == linestate) return;
-    state.nmi_state = linestate;
-	if (linestate != CLEAR_LINE)
-		IOREG(REG_INTPEND) |= TMS34010_NMI;
+	/* Does not apply: the NMI is an internal interrupt for the TMS34010 */
 }
 
 void TMS34010_set_irq_line(int irqline, int linestate)
 {
-	state.irq_state = linestate;
-	if (linestate == CLEAR_LINE)
-		IOREG(REG_INTPEND) &= ~TMS34010_PENDING;
-	else
-		IOREG(REG_INTPEND) |= TMS34010_PENDING;
+	LOG((errorlog, "TMS34010#%d set irq line %d state %d\n", cpu_getactivecpu(), irqline, linestate));
+    state.irq_state[irqline] = linestate;
+	if (linestate != CLEAR_LINE && IE_FLAG) {
+		/* if interrutps are enabled set the pending interrupt */
+		switch (irqline) {
+			case 0:
+				IOREG(REG_INTPEND) |= TMS34010_INT1;
+				break;
+			case 1:
+				IOREG(REG_INTPEND) |= TMS34010_INT2;
+				break;
+        }
+	}
 }
 
 void TMS34010_set_irq_callback(int (*callback)(int irqline))
 {
 	state.irq_callback = callback;
+}
+
+void TMS34010_internal_interrupt(int type)
+{
+	LOG((errorlog, "TMS34010#%d set internal interrupt $%04x\n", cpu_getactivecpu(), type));
+    IOREG(REG_INTPEND) |= type;
 }
 
 #else
@@ -735,67 +755,79 @@ void TMS34010_Clear_Pending_Interrupts(void)
 static void Interrupt(void)
 {
 	int take=0;
-
 #if NEW_INTERRUPT_SYSTEM
-    if (IOREG(REG_INTPEND) & TMS34010_PENDING) {
-		int type = (*state.irq_callback)(0);
-		IOREG(REG_INTPEND) |= type;
-    }
+	int irqline = -1;
 #endif
+
 
     if (IOREG(REG_INTPEND) & TMS34010_NMI)
 	{
-		IOREG(REG_INTPEND) &= ~TMS34010_NMI;
+		LOG((errorlog, "TMS34010#%d takes NMI\n", cpu_getactivecpu()));
+        IOREG(REG_INTPEND) &= ~TMS34010_NMI;
 
 		if (!(IOREG(REG_HSTCTLH) & 0x0200))  // NMI mode bit
 		{
 			PUSH(PC);
-			PUSH(GET_ST());					
+			PUSH(GET_ST());
 		}
 		RESET_ST();
 		PC = RLONG(0xfffffee0);
         change_pc29(PC);
-	}
+    }
 	else
 	{
 		if ((IOREG(REG_INTPEND) & TMS34010_HI) &&
 			(IOREG(REG_INTENB)  & TMS34010_HI))
 		{
-			take = 0xfffffec0;		
-		}
+			LOG((errorlog, "TMS34010#%d takes HI\n", cpu_getactivecpu()));
+            take = 0xfffffec0;
+        }
 		else
 		if ((IOREG(REG_INTPEND) & TMS34010_DI) &&
 			(IOREG(REG_INTENB)  & TMS34010_DI))
 		{
-			take = 0xfffffea0;
-		}
+			LOG((errorlog, "TMS34010#%d takes DI\n", cpu_getactivecpu()));
+            take = 0xfffffea0;
+        }
 		else
 		if ((IOREG(REG_INTPEND) & TMS34010_WV) &&
 			(IOREG(REG_INTENB)  & TMS34010_WV))
 		{
-			take = 0xfffffe80;		
-		}
+			LOG((errorlog, "TMS34010#%d takes WV\n", cpu_getactivecpu()));
+            take = 0xfffffe80;
+        }
 		else
 		if ((IOREG(REG_INTPEND) & TMS34010_INT1) &&
-			(IOREG(REG_INTENB)  & TMS34010_INT1))
+			(IOREG(REG_INTENB)	& TMS34010_INT1))
 		{
-			take = 0xffffffc0;		
-		}
+			LOG((errorlog, "TMS34010#%d takes INT1\n", cpu_getactivecpu()));
+            take = 0xffffffc0;
+#if NEW_INTERRUPT_SYSTEM
+			irqline = 0;
+#endif
+        }
 		else
 		if ((IOREG(REG_INTPEND) & TMS34010_INT2) &&
 			(IOREG(REG_INTENB)  & TMS34010_INT2))
 		{
-			take = 0xffffffa0;		
-		}
+			LOG((errorlog, "TMS34010#%d takes INT2\n", cpu_getactivecpu()));
+            take = 0xffffffa0;
+#if NEW_INTERRUPT_SYSTEM
+			irqline = 1;
+#endif
+        }
 
 		if (take)
 		{
-			PUSH(PC);
+            PUSH(PC);
 			PUSH(GET_ST());
 			RESET_ST();
 			PC = RLONG(take);
-			change_pc29(PC);
-		}
+            change_pc29(PC);
+#if NEW_INTERRUPT_SYSTEM
+			if (irqline >= 0) (void)(*state.irq_callback)(irqline);
+#endif
+        }
 	}
 }
 
@@ -810,7 +842,7 @@ int TMS34010_Execute(int cycles)
 	/* Get out if CPU is halted. Absolutely no interrupts must be taken!!! */
 	if (IOREG(REG_HSTCTLH) & 0x8000)
 	{
-		return cycles;		
+		return cycles;
 	}
 
 	TMS34010_ICount = cycles;
@@ -819,11 +851,11 @@ int TMS34010_Execute(int cycles)
 	{
 		/* Quickly reject the cases when there are no pending interrupts
 		   or they are disabled (as in an interrupt service routine) */
-		if (IOREG(REG_INTPEND))
+		if (IOREG(REG_INTPEND) & (IOREG(REG_INTENB) | TMS34010_NMI))
 		{
-			if ((IE_FLAG || (IOREG(REG_INTPEND) & TMS34010_NMI)))
+			if (IE_FLAG || (IOREG(REG_INTPEND) & TMS34010_NMI))
 			{
-				Interrupt();			
+				Interrupt();
 			}
 		}
 
@@ -899,7 +931,7 @@ static void set_pixel_function(void)
 	{
 		if (state.raster_op)
 		{
-			i1 = 3;			
+			i1 = 3;
 		}
 		else
 		{
@@ -910,12 +942,12 @@ static void set_pixel_function(void)
 	{
 		if (state.raster_op)
 		{
-			i1 = 1;			
+			i1 = 1;
 		}
 		else
 		{
 			i1 = 0;
-		}		
+		}
 	}
 
 	state.pixel_write = pixel_write_ops[i1][i2];
@@ -943,10 +975,10 @@ static void set_raster_op(void)
 void TMS34010_io_register_w(int reg, int data)
 {
 	int cpu;
-							
+
 	/* Set register */
 	reg >>= 1;
-	IOREG(reg) = data;		
+	IOREG(reg) = data;
 
 	switch (reg)
 	{
@@ -955,9 +987,9 @@ void TMS34010_io_register_w(int reg, int data)
 		cpu = cpu_getactivecpu();
 		if (TMS34010_timer[cpu])
 		{
-			timer_remove(TMS34010_timer[cpu]);		
+			timer_remove(TMS34010_timer[cpu]);
 		}
-		TMS34010_timer[cpu] = timer_set(cpu_getscanlinetime(data), cpu, TMS34010_io_intcallback);	
+		TMS34010_timer[cpu] = timer_set(cpu_getscanlinetime(data), cpu, TMS34010_io_intcallback);
 		break;
 
 	case REG_CONTROL:
@@ -1000,8 +1032,12 @@ void TMS34010_io_register_w(int reg, int data)
 		if (data & 0x0100)
 		{
 			/* NMI issued */
+#if NEW_INTERRUPT_SYSTEM
+            cpu_generate_internal_interrupt(cpu_getactivecpu(), TMS34010_NMI);
+#else
 			cpu_cause_interrupt(cpu_getactivecpu(), TMS34010_NMI);
-		}
+#endif
+        }
 		break;
 
 	case REG_CONVDP:
@@ -1044,16 +1080,16 @@ int TMS34010_io_register_r(int reg)
 
 void TMS34010_set_stack_base(int cpu, UINT8* stackbase_p, UINT32 stackoffs_p)
 {
-	stackbase[cpu] = stackbase_p;		
-	stackoffs[cpu] = stackoffs_p;			
+	stackbase[cpu] = stackbase_p;
+	stackoffs[cpu] = stackoffs_p;
 }
 
 void TMS34010_set_shiftreg_functions(int cpu,
 									 void (*to_shiftreg_p  )(UINT32, UINT16*),
 									 void (*from_shiftreg_p)(UINT32, UINT16*))
 {
-	to_shiftreg  [cpu] = to_shiftreg_p;		
-	from_shiftreg[cpu] = from_shiftreg_p;		
+	to_shiftreg  [cpu] = to_shiftreg_p;
+	from_shiftreg[cpu] = from_shiftreg_p;
 }
 
 int TMS34010_io_display_blanked(int cpu)
@@ -1072,10 +1108,14 @@ int TMS34010_get_DPYSTRT(int cpu)
 
 static void TMS34010_io_intcallback(int param)
 {
-	/* Reset timer for next frame */
+    /* Reset timer for next frame */
 	double interval = TIME_IN_HZ (Machine->drv->frames_per_second);
-	TMS34010_timer[param] = timer_set(interval, param, TMS34010_io_intcallback);	
+	TMS34010_timer[param] = timer_set(interval, param, TMS34010_io_intcallback);
+#if NEW_INTERRUPT_SYSTEM
+    cpu_generate_internal_interrupt(param, TMS34010_DI);
+#else
 	cpu_cause_interrupt(param, TMS34010_DI);
+#endif
 }
 
 
@@ -1115,7 +1155,7 @@ void TMS34010_State_Load(int cpunum, void *f)
 
 
 /* Host interface */
-static TMS34010_Regs* slavecontext;			
+static TMS34010_Regs* slavecontext;
 
 void TMS34010_HSTADRL_w (int offset, int data)
 {
@@ -1135,8 +1175,8 @@ void TMS34010_HSTDATA_w (int offset, int data)
 {
 	unsigned int addr;
 
-	memorycontextswap (CPU_SLAVE);				
-												
+	memorycontextswap (CPU_SLAVE);
+
 	addr = (SLAVE_IOREG(REG_HSTADRH) << 16) | SLAVE_IOREG(REG_HSTADRL);
 
     TMS34010_WRMEM_WORD(TOBYTE(addr), data);
@@ -1148,18 +1188,18 @@ void TMS34010_HSTDATA_w (int offset, int data)
 		SLAVE_IOREG(REG_HSTADRH) = addr >> 16;
 		SLAVE_IOREG(REG_HSTADRL) = (UINT16)addr;
 	}
-												
-	memorycontextswap (CPU_MASTER);				
-	change_pc29(PC);							
+
+	memorycontextswap (CPU_MASTER);
+	change_pc29(PC);
 }
 
 int  TMS34010_HSTDATA_r (int offset)
 {
 	unsigned int addr;
-	int data;									
-												
-	memorycontextswap (CPU_SLAVE);				
-												
+	int data;
+
+	memorycontextswap (CPU_SLAVE);
+
 	addr = (SLAVE_IOREG(REG_HSTADRH) << 16) | SLAVE_IOREG(REG_HSTADRL);
 
 	/* Preincrement? */
@@ -1169,12 +1209,12 @@ int  TMS34010_HSTDATA_r (int offset)
 		SLAVE_IOREG(REG_HSTADRH) = addr >> 16;
 		SLAVE_IOREG(REG_HSTADRL) = (UINT16)addr;
 	}
-	
+
     data = TMS34010_RDMEM_WORD(TOBYTE(addr));
-												
-	memorycontextswap (CPU_MASTER);				
-	change_pc29(PC);							
-	 											
+
+	memorycontextswap (CPU_MASTER);
+	change_pc29(PC);
+
 	return data;
 }
 
@@ -1186,9 +1226,13 @@ void TMS34010_HSTCTLH_w (int offset, int data)
 
 	cpu_halt(CPU_SLAVE, !(data & 0x8000));
 
-	if (data & 0x0100)
+    if (data & 0x0100)
 	{
 		/* Issue NMI */
+#if NEW_INTERRUPT_SYSTEM
+        cpu_generate_internal_interrupt(CPU_SLAVE, TMS34010_NMI);
+#else
 		cpu_cause_interrupt(CPU_SLAVE, TMS34010_NMI);
-	}
+#endif
+    }
 }

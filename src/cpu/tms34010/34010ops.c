@@ -713,7 +713,7 @@ static void pixt_ixyixy_b(void) { PIXT_IXYIXY(B); }
 	newy = y1+y2;											\
 	R##REG(R##DSTREG) = COMBINE_XY(newx,newy);				\
 	FINISH_PIX_OP;											\
-}															
+}
 static void drav_a(void) { DRAV(A); }
 static void drav_b(void) { DRAV(B); }
 
@@ -968,6 +968,7 @@ static void divu_b(void) { DIVU(B,0x10); }
 static void eint(void)
 {
 	IE_FLAG = 1;
+	CHECK_IRQ_LINES(IE_FLAG,"eint");
 }
 
 #define EXGF(F,R)			       		       			    	\
@@ -1607,7 +1608,7 @@ static void move1_nr_b (void) { MOVE_NR(1,B); }
 	*rd = RFIELD##F(*rs);										\
 	SET_NZ(*rd);												\
 	CLR_V;														\
-}																
+}
 static void move0_dn_r_a (void) { MOVE_DN_R(0,A); }
 static void move0_dn_r_b (void) { MOVE_DN_R(0,B); }
 static void move1_dn_r_a (void) { MOVE_DN_R(1,A); }
@@ -2130,6 +2131,7 @@ static void jump_b (void) { JUMP(B); }
 static void popst(void)
 {
 	SET_ST(POP());
+	CHECK_IRQ_LINES(IE_FLAG,"popst");
 }
 
 static void pushst(void)
@@ -2140,6 +2142,7 @@ static void pushst(void)
 #define PUTST(R)												\
 {																\
 	SET_ST(R##REG(R##DSTREG));									\
+	CHECK_IRQ_LINES(IE_FLAG,"putst");                           \
 }
 static void putst_a (void) { PUTST(A); }
 static void putst_b (void) { PUTST(B); }
@@ -2149,6 +2152,7 @@ static void reti(void)
 	SET_ST(POP());
 	PC = POP();
 	SET_FW();
+	CHECK_IRQ_LINES(IE_FLAG,"reti");
 }
 
 static void rets(void)

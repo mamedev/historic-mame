@@ -8,21 +8,22 @@
  * old and in the assembler core (at least names ;)
  */
 typedef struct {
-	unsigned int  d[8]; 		/* data registers */
-	unsigned int  a[8]; 		/* address registers */
-	unsigned int  pc;			/* program counter */
-	unsigned int  usp;			/* user stack pointer save */
-	unsigned int  isp;			/* system stack pointer save */
-	unsigned int  sr;			/* status register */
-	unsigned int  stopped;		/* stopped state: only interrupt can restart */
-	unsigned int  halted;		/* halted state: only reset can restart */
-	unsigned int  ints_pending; /* mask: which interrupt levels are pending */
+   unsigned int  cpu_type;     /* CPU Type being emulated */
+   unsigned int  dr[8];        /* Data Registers */
+   unsigned int  ar[8];        /* Address Registers */
+   unsigned int  pc;           /* Program Counter */
+   unsigned int  usp;          /* User Stack Pointer */
+   unsigned int  isp;          /* Interrupt Stack Pointer */
+   unsigned int  vbr;          /* Vector Base Register.  Used in 68010+ */
+   unsigned int  sfc;          /* Source Function Code.  Used in 68010+ */
+   unsigned int  dfc;          /* Destination Function Code.  Used in 68010+ */
+   unsigned int  sr;           /* Status Register */
+   unsigned int  stopped;      /* Stopped state: only interrupt can restart */
+   unsigned int  halted;       /* Halted state: only reset can restart */
+   unsigned int  ints_pending; /* Interrupt levels pending */
 #if NEW_INTERRUPT_SYSTEM
 	int (*irq_callback)(int irqline);
 #endif
-	int vbr;	/* no idea, needed for mamedbg.h to compile. */
-	int sfc;	/* these are not initialized nor copied */
-	int dfc;	/* to or from the real 68K core */
 }   regstruct;
 
 /* well, another hack to make the names equal */

@@ -103,7 +103,6 @@
 #include "vidhrdw/generic.h"
 #include "cpu/s2650/s2650.h"
 
-
 /*************************************************************/
 /*                                                           */
 /* Externals                                                 */
@@ -125,6 +124,7 @@ extern	unsigned char	meadows_0c00;
 extern	unsigned char	meadows_0c01;
 extern	unsigned char	meadows_0c02;
 extern	unsigned char	meadows_0c03;
+
 
 /*************************************************************/
 /*                                                           */
@@ -603,6 +603,56 @@ static unsigned char ball[16*2] = {
 		memcpy(&Machine->memory_region[1][0x0c00+i], ball, sizeof(ball));
 }
 
+static int deadeye_hiload(void)
+{
+    static int resetcount =0;
+	static int firsttime =0 ;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	if (++resetcount < 30) return 0;
+
+
+    /* check if the hi score table has already been initialized */
+    if (memcmp(&RAM[0x0e00],"\x00\x00\x00\x00\x00\x00",6) ==0)
+
+    {
+        void *f;
+
+        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+        {
+            osd_fread(f,&RAM[0x0e00],6);
+            osd_fclose(f);
+			firsttime = 0;
+    		resetcount =0;
+	}
+
+        return 1;
+    }
+    else return 0;  /* we can't load the hi scores yet */
+}
+
+static void deadeye_hisave(void)
+{
+    void *f;
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+
+
+	if (memcmp(&RAM[0x0e00],"\x00\x00\x00\x00\x00\x00",6) != 0 )
+	{
+    if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0 )
+	    {
+        osd_fwrite(f,&RAM[0x0e00],6);
+        osd_fclose(f);
+
+	    }
+	}
+}
+
+
+
+
+
 struct GameDriver deadeye_driver =
 {
 	__FILE__,
@@ -629,7 +679,7 @@ struct GameDriver deadeye_driver =
 	deadeye_colortable,
 	ORIENTATION_DEFAULT,
 
-	0,0
+	deadeye_hiload,deadeye_hisave
 };
 
 struct GameDriver gypsyjug_driver =
@@ -658,5 +708,5 @@ struct GameDriver gypsyjug_driver =
 	deadeye_colortable,
 	ORIENTATION_DEFAULT,
 
-    0,0
+    deadeye_hiload,deadeye_hisave
 };

@@ -1,14 +1,24 @@
+/***************************************************************************
+
+  vidhrdw.c
+
+  Functions to emulate the video hardware of the machine.
+
+***************************************************************************/
+
 #include "driver.h"
 #include "vidhrdw/generic.h"
-
+#include "vidhrdw/crtc6845.c"
 
 
 static unsigned char *twincobr_bgvideoram;
 static unsigned char *twincobr_fgvideoram;
 static int twincobr_bgvideoram_size,twincobr_fgvideoram_size;
-
 static unsigned char txscroll[4],bgscroll[4],fgscroll[4];
-
+int twincobr_fg_rom_bank = 0;
+int twincobr_bg_ram_bank = 0;
+int twincobr_display_on = 0;
+int twincobr_flip_screen = 0;     /* not implemented properly yet */
 static int charoffs;
 static int bgoffs;
 static int fgoffs;
@@ -18,8 +28,8 @@ int twincobr_vh_start(void)
 {
 	/* the video RAM is accessed via ports, it's not memory mapped */
 	videoram_size = 0x1000;
+	twincobr_bgvideoram_size = 0x4000;
 	twincobr_fgvideoram_size = 0x2000;
-	twincobr_bgvideoram_size = 0x2000;
 
 	if ((videoram = malloc(videoram_size)) == 0)
 		return 1;
@@ -40,14 +50,14 @@ int twincobr_vh_start(void)
 	}
 	memset(twincobr_bgvideoram,0,twincobr_bgvideoram_size);
 
-	if ((dirtybuffer = malloc(twincobr_bgvideoram_size / 2)) == 0)
+	if ((dirtybuffer = malloc(twincobr_bgvideoram_size)) == 0)
 	{
 		free(twincobr_bgvideoram);
 		free(twincobr_fgvideoram);
 		free(videoram);
 		return 1;
 	}
-	memset(dirtybuffer,1,twincobr_bgvideoram_size / 2);
+	memset(dirtybuffer,1,twincobr_bgvideoram_size);
 
 	if ((tmpbitmap = osd_create_bitmap(Machine->drv->screen_width,2*Machine->drv->screen_height)) == 0)
 	{
@@ -70,6 +80,19 @@ void twincobr_vh_stop(void)
 	free(videoram);
 }
 
+int twincobr_60000_r(int offset)
+{
+	int temp6000x;
+	temp6000x = crtc6845_register_r(offset);
+	if (errorlog) fprintf(errorlog,"PC - read %04x to 6000%01x\n",temp6000x,offset);
+	return temp6000x;
+}
+
+void twincobr_60000_w(int offset,int data)
+{
+	if (offset == 0) crtc6845_address_w(offset, data);
+	if (offset == 2) crtc6845_register_w(offset, data);
+}
 
 void twincobr_70004_w(int offset,int data)
 {
@@ -86,15 +109,15 @@ void twincobr_7e000_w(int offset,int data)
 
 void twincobr_72004_w(int offset,int data)
 {
-	bgoffs = (2 * data) % twincobr_bgvideoram_size;
+	bgoffs = (2 * data) % (twincobr_bgvideoram_size >> 1);
 }
 int twincobr_7e002_r(int offset)
 {
-	return READ_WORD(&twincobr_bgvideoram[bgoffs]);
+	return READ_WORD(&twincobr_bgvideoram[bgoffs+twincobr_bg_ram_bank]);
 }
 void twincobr_7e002_w(int offset,int data)
 {
-	WRITE_WORD(&twincobr_bgvideoram[bgoffs],data);
+	WRITE_WORD(&twincobr_bgvideoram[bgoffs+twincobr_bg_ram_bank],data);
 	dirtybuffer[bgoffs / 2] = 1;
 }
 
@@ -111,6 +134,10 @@ void twincobr_7e004_w(int offset,int data)
 	WRITE_WORD(&twincobr_fgvideoram[fgoffs],data);
 }
 
+void twincobr_76004_w(int offset,int data)
+{
+	if (errorlog) fprintf(errorlog,"PC - write %04x to %06x\n",data,offset + 0x76000);
+}
 
 
 void twincobr_txscroll_w(int offset,int data)
@@ -132,12 +159,11 @@ void twincobr_fgscroll_w(int offset,int data)
 
 void twincobr_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-	int offs;
+  int offs;
+  if (twincobr_display_on) {
+  memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * sizeof(unsigned char));
 
-
-memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * sizeof(unsigned char));
-
-{
+	{
 	int color,code,i;
 	int colmask[64];
 	int pal_base;
@@ -147,10 +173,10 @@ memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * siz
 
 	for (color = 0;color < 16;color++) colmask[color] = 0;
 
-	for (offs = twincobr_bgvideoram_size - 2;offs >= 0;offs -= 2)
+	for (offs = (twincobr_bgvideoram_size >> 1) - 2;offs >= 0;offs -= 2)
 	{
-		code = READ_WORD(&twincobr_bgvideoram[offs]) & 0x0fff;
-		color = (READ_WORD(&twincobr_bgvideoram[offs]) & 0xf000) >> 12;
+		code = READ_WORD(&twincobr_bgvideoram[offs+twincobr_bg_ram_bank]) & 0x0fff;
+		color = (READ_WORD(&twincobr_bgvideoram[offs+twincobr_bg_ram_bank]) & 0xf000) >> 12;
 		colmask[color] |= Machine->gfx[2]->pen_usage[code];
 	}
 
@@ -170,7 +196,7 @@ memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * siz
 
 	for (offs = twincobr_fgvideoram_size - 2;offs >= 0;offs -= 2)
 	{
-		code = READ_WORD(&twincobr_fgvideoram[offs]) & 0x0fff;	/* there must be a bank selector */
+		code = (READ_WORD(&twincobr_fgvideoram[offs]) & 0x0fff) | twincobr_fg_rom_bank;
 		color = (READ_WORD(&twincobr_fgvideoram[offs]) & 0xf000) >> 12;
 		colmask[color] |= Machine->gfx[1]->pen_usage[code];
 	}
@@ -216,7 +242,7 @@ memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * siz
 
 	for (offs = videoram_size - 2;offs >= 0;offs -= 2)
 	{
-		code = READ_WORD(&videoram[offs]) & 0x03ff;
+		code = READ_WORD(&videoram[offs]) & 0x07ff;
 		color = (READ_WORD(&videoram[offs]) & 0xf800) >> 11;
 		colmask[color] |= Machine->gfx[0]->pen_usage[code];
 	}
@@ -235,14 +261,14 @@ memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * siz
 
 	if (palette_recalc())
 	{
-		memset(dirtybuffer,1,twincobr_bgvideoram_size / 2);
+		memset(dirtybuffer,1,twincobr_bgvideoram_size >> 1);
 	}
-}
+    }
 
 
 
 	/* draw the background */
-	for (offs = twincobr_bgvideoram_size - 2;offs >= 0;offs -= 2)
+	for (offs = (twincobr_bgvideoram_size >> 1) - 2;offs >= 0;offs -= 2)
 	{
 		if (dirtybuffer[offs / 2])
 		{
@@ -254,15 +280,15 @@ memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * siz
 			sx = (offs/2) % 64;
 			sy = (offs/2) / 64;
 
-			code = READ_WORD(&twincobr_bgvideoram[offs]) & 0x0fff;
-			color = (READ_WORD(&twincobr_bgvideoram[offs]) & 0xf000) >> 12;
+			code = READ_WORD(&twincobr_bgvideoram[offs+twincobr_bg_ram_bank]) & 0x0fff;
+			color = (READ_WORD(&twincobr_bgvideoram[offs+twincobr_bg_ram_bank]) & 0xf000) >> 12;
 
 			drawgfx(tmpbitmap,Machine->gfx[2],
-					code,
-					color,
-					0,0,
-					8*sx,8*sy,
-					0,TRANSPARENCY_NONE,0);
+				code,
+				color,
+				twincobr_flip_screen,twincobr_flip_screen,
+				8*sx,8*sy,
+				0,TRANSPARENCY_NONE,0);
 		}
 	}
 
@@ -275,6 +301,30 @@ memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * siz
 		scrolly = - 0x1e - READ_WORD(&bgscroll[2]);
 
 		copyscrollbitmap(bitmap,tmpbitmap,1,&scrollx,1,&scrolly,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	}
+
+	/* draw the sprites in low priority (tanks under roofs) */
+	for (offs = 0;offs < spriteram_size;offs += 8)
+	{
+		int code,color,attribute,sx,sy,flipx,flipy;
+
+		attribute = READ_WORD(&spriteram[offs + 2]);
+		if ((attribute & 0x0c00) == 0x0400) {       /* low priority */
+		    code = READ_WORD(&spriteram[offs]) & 0x7ff;
+		    color = attribute & 0x3f;
+		    sx = READ_WORD(&spriteram[offs + 4]) >> 7;
+		    sy = READ_WORD(&spriteram[offs + 6]) >> 7;
+		    flipx = attribute & 0x100;
+		    if (flipx) sx -= 15;
+		    flipy = attribute & 0x200;
+
+		    drawgfx(bitmap,Machine->gfx[3],
+				code,
+				color,
+				flipx,flipy,
+				sx-32,sy-16,
+				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+		}
 	}
 
 
@@ -291,38 +341,40 @@ memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * siz
 		scrollx = 0x1c9 - READ_WORD(&fgscroll[0]);
 		scrolly = - 0x1e - READ_WORD(&fgscroll[2]);
 
-		code = READ_WORD(&twincobr_fgvideoram[offs]) & 0x0fff;	/* TODO: there must be a bank selector */
+		code = (READ_WORD(&twincobr_fgvideoram[offs]) & 0x0fff) | twincobr_fg_rom_bank;
 		color = (READ_WORD(&twincobr_fgvideoram[offs]) & 0xf000) >> 12;
 
 		drawgfx(bitmap,Machine->gfx[1],
 				code,
 				color,
-				0,0,
+				twincobr_flip_screen,twincobr_flip_screen,
 				((8*sx + scrollx + 8) & 0x1ff) - 8,((8*sy + scrolly + 8) & 0x1ff) - 8,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
 
 
-	/* draw the sprites */
+	/* draw the sprites in normal priority, underneath front layer */
 	for (offs = 0;offs < spriteram_size;offs += 8)
 	{
-		int code,color,sx,sy,flipx,flipy;
+		int code,color,attribute,sx,sy,flipx,flipy;
 
+		attribute = READ_WORD(&spriteram[offs + 2]);
+		if ((attribute & 0x0c00) == 0x0800) {    /* normal priority */
+		    code = READ_WORD(&spriteram[offs]) & 0x7ff;
+		    color = attribute & 0x3f;
+		    sx = READ_WORD(&spriteram[offs + 4]) >> 7;
+		    sy = READ_WORD(&spriteram[offs + 6]) >> 7;
+		    flipx = attribute & 0x100;
+		    if (flipx) sx -= 15;
+		    flipy = attribute & 0x200;
 
-		code = READ_WORD(&spriteram[offs]) & 0x7ff;
-		color = READ_WORD(&spriteram[offs + 2]) & 0x3f;
-		sx = READ_WORD(&spriteram[offs + 4]) >> 7;
-		sy = READ_WORD(&spriteram[offs + 6]) >> 7;
-		flipx = READ_WORD(&spriteram[offs + 2]) & 0x100;
-		if (flipx) sx -= 15;
-		flipy = READ_WORD(&spriteram[offs + 2]) & 0x200;
-
-		drawgfx(bitmap,Machine->gfx[3],
+		    drawgfx(bitmap,Machine->gfx[3],
 				code,
 				color,
 				flipx,flipy,
 				sx-32,sy-16,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+		}
 	}
 
 
@@ -345,8 +397,33 @@ memset(palette_used_colors,PALETTE_COLOR_UNUSED,Machine->drv->total_colors * siz
 		drawgfx(bitmap,Machine->gfx[0],
 				code,
 				color,
-				0,0,
+				twincobr_flip_screen,twincobr_flip_screen,
 				((8*sx + scrollx + 8) & 0x1ff) - 8,((8*sy + scrolly + 8) & 0xff) - 8,
 				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 	}
+
+	/* draw the sprites on the very top layer (title screen only) */
+	for (offs = 0;offs < spriteram_size;offs += 8)
+	{
+		int code,color,attribute,sx,sy,flipx,flipy;
+
+		attribute = READ_WORD(&spriteram[offs + 2]);
+		if ((attribute & 0x0c00) == 0x0c00) {   /* highest priority */
+		    code = READ_WORD(&spriteram[offs]) & 0x7ff;
+		    color = attribute & 0x3f;
+		    sx = READ_WORD(&spriteram[offs + 4]) >> 7;
+		    sy = READ_WORD(&spriteram[offs + 6]) >> 7;
+		    flipx = attribute & 0x100;
+		    if (flipx) sx -= 15;
+		    flipy = attribute & 0x200;
+
+		    drawgfx(bitmap,Machine->gfx[3],
+				code,
+				color,
+				flipx,flipy,
+				sx-32,sy-16,
+				&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
+		}
+	}
+  }
 }

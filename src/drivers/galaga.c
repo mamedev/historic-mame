@@ -97,7 +97,7 @@ void galaga_vh_convert_color_prom(unsigned char *palette, unsigned short *colort
 
 void pengo_sound_w(int offset,int data);
 extern unsigned char *pengo_soundregs;
-extern unsigned char galaga_hiscoreloaded;
+
 
 
 static struct MemoryReadAddress readmem_cpu1[] =
@@ -106,7 +106,6 @@ static struct MemoryReadAddress readmem_cpu1[] =
 	{ 0x6800, 0x6807, galaga_dsw_r },
 	{ 0x7000, 0x700f, galaga_customio_data_r },
 	{ 0x7100, 0x7100, galaga_customio_r },
-	{ 0x02b9, 0x02bd, galaga_hiscore_print_r },
 	{ 0x0000, 0x3fff, MRA_ROM },
 	{ -1 }  /* end of table */
 };
@@ -633,7 +632,8 @@ static int hiload(void)
 
 	/* check if the hi score table has already been initialized */
 	if (memcmp(&RAM[0x8a20],"\x00\x00\x00\x00\x02\x24",6) == 0 &&
-		memcmp(&RAM[0x8a4a],"\x18\x2a\x18",3) == 0 )
+		memcmp(&RAM[0x8a4a],"\x18\x2a\x18",3) == 0 &&
+		memcmp(&RAM[0x83ed],"\x00\x00\x00\x00\x02\x24",6) == 0 )
 	{
 		if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
 		{
@@ -646,7 +646,7 @@ static int hiload(void)
 			RAM[0x83F0]=RAM[0x8A23];
 			RAM[0x83F1]=RAM[0x8A24];
 			RAM[0x83F2]=RAM[0x8A25];
-			galaga_hiscoreloaded = 1;
+
 		}
 		return 1;
 	}

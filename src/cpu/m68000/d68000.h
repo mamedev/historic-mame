@@ -6,9 +6,9 @@
 /* ======================================================================== */
 /*
  *                                DEBABELIZER
- *                                Version 1.0
+ *                                Version 2.0
  *
- * A portable Motorola M68000 disassembler.
+ * A portable Motorola M680x0 disassembler.
  * Copyright 1999 Karl Stenerud.  All rights reserved.
  *
  * This code is freeware and may be freely used as long as this copyright
@@ -51,6 +51,15 @@ int m68000_read_memory_8  (int address);
  * the size of the instruction in bytes.
  */
 int m68000_disassemble(char* str_buff, int pc);
+
+
+
+/* ======================================================================== */
+/* ============================= CONFIGURATION ============================ */
+/* ======================================================================== */
+
+/* Import the configuration for this build */
+#include "d68kconf.h"
 
 
 

@@ -59,7 +59,7 @@ typedef struct
 	UINT32 stackoffs;
 #if NEW_INTERRUPT_SYSTEM
 	int nmi_state;
-	int irq_state;
+	int irq_state[5];
 	int (*irq_callback)(int irqline);
 #endif
 } TMS34010_Regs;
@@ -72,10 +72,6 @@ typedef struct
 #define TMS34010_INT1		0x0002	/* External Interrupt 1 */
 #define TMS34010_INT2		0x0004	/* External Interrupt 2 */
 
-#if NEW_INTERRUPT_SYSTEM
-#define TMS34010_PENDING	0x8000	/* Any interrupt pending */
-#endif
-
 /* PUBLIC FUNCTIONS */
 extern unsigned TMS34010_GetPC(void);
 extern void TMS34010_SetRegs(TMS34010_Regs *Regs);
@@ -86,6 +82,7 @@ extern int	TMS34010_Execute(int cycles);
 extern void TMS34010_set_nmi_line(int linestate);
 extern void TMS34010_set_irq_line(int irqline, int linestate);
 extern void TMS34010_set_irq_callback(int (*callback)(int irqline));
+extern void TMS34010_internal_interrupt(int type);
 #else
 extern void TMS34010_Cause_Interrupt(int type);
 extern void TMS34010_Clear_Pending_Interrupts(void);

@@ -1,6 +1,6 @@
 
               M.A.M.E.  -  Multiple Arcade Machine Emulator
-       Copyright (C) 1997, 1998  by Nicola Salmoria and the MAME team
+     Copyright (C) 1997, 1998, 1999  by Nicola Salmoria and the MAME team
 
 Please note that many people helped with this project, either directly or by
 releasing source code that was used to write the drivers. We are not trying to
@@ -84,19 +84,19 @@ VI. Reuse of Source Code
 How to Contact Us
 -----------------
 
+The official MAME home page is http://mame.retrogames.com/. You can always
+find the latest release there, including beta versions and information on
+things being worked on.
+
 Here are some of the people contributing to MAME. If you have comments,
 suggestions or bug reports about an existing driver, check the driver's Credits
 section to find who has worked on it, and send comments to that person. If you
-are not sure who to contact, write to Mirko or Nicola. If you have comments
-specific to a system other than DOS (e.g. Mac, Win32, Unix), they should be sent
-to the respective port maintainer. DON'T SEND THEM TO MIRKO OR NICOLA - they
-will be ignored.
-
-You can send source code to mame@lim.dsi.unimi.it. Do not use this address for
-non-source code bug reports.
+are not sure who to contact, write to Nicola. If you have comments specific to
+a system other than DOS (e.g. Mac, Win32, Unix), they should be sent to the
+respective port maintainer (check the documentation to know who he is). DON'T
+SEND THEM TO NICOLA - they will be ignored.
 
 Nicola Salmoria    MC6489@mclink.it
-Mirko Buffoni      mix@lim.dsi.unimi.it
 
 Mike Balfour       mab22@po.cwru.edu
 Aaron Giles        agiles@sirius.com
@@ -115,6 +115,7 @@ First of all, read the docs carefully. If you still can't find an answer to
 your question, try checking the beginner's sections that many emulation pages
 have, or ask on the appropriate Usenet newsgroups (e.g. comp.emulators.misc) or
 on the official MAME message board, http://www.macmame.org/wwwboard/mame/.
+
 For help in compiling MAME, check these pages:
 http://zan.emuunlim.com/mame/compile/compilemame.html
 http://zan.emuunlim.com/mame/compile/compilemamebeta.html
@@ -172,9 +173,6 @@ Video modes created using Tweak 1.6b by Robert Schmidt, who also wrote
 
 Big thanks to Gary Walton (garyw@excels-w.demon.co.uk) for too many things
    to mention them all.
-
-Many thanks to Nicholas Alwin (www.alpha1.net/~v-stick) for the V-Stick. If you
-   are seriously into arcade emulation, check it out.
 
 
 

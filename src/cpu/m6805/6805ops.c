@@ -762,8 +762,10 @@ INLINE void rti( void )
 	PULLBYTE(areg);
 	PULLBYTE(xreg);
 	PULLWORD(pcreg);
+#if IRQ_LEVEL_DETECT
 	if (irq_state != CLEAR_LINE && (cc & IFLAG) == 0)
 		pending_interrupts |= M6805_INT_IRQ;
+#endif
 }
 
 /* $81 RTS inherent ---- */

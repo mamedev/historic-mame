@@ -9,12 +9,12 @@
 #include "driver.h"
 #include "vidhrdw/generic.h"
 
-static int xld1=0;
-static int xld2=0;
-static int xld3=0;
-static int yld1=0;
-static int yld2=0;
-static int yld3=0;
+static UINT8 xld1=0;
+static UINT8 xld2=0;
+static UINT8 xld3=0;
+static UINT8 yld1=0;
+static UINT8 yld2=0;
+static UINT8 yld3=0;
 static int msk=0;
 static int safe=0;
 static int cont1=0;
@@ -26,24 +26,22 @@ static int hitclr=0;
 
 void bking2_xld1_w(int offset, int data)
 {
-    xld1 = data;
-    if (errorlog) fprintf(errorlog, "xld1 = %d\n", xld1);
+    xld1 = -data;
 }
 
 void bking2_yld1_w(int offset, int data)
 {
-    yld1 = data;
-    if (errorlog) fprintf(errorlog, "yld1 = %d\n", yld1);
+    yld1 = -data;
 }
 
 void bking2_xld2_w(int offset, int data)
 {
-    xld2 = data;
+    xld2 = -data;
 }
 
 void bking2_yld2_w(int offset, int data)
 {
-    yld2 = data;
+    yld2 = -data;
 }
 
 void bking2_xld3_w(int offset, int data)
@@ -89,16 +87,10 @@ void bking2_cont2_w(int offset, int data)
 
 void bking2_cont3_w(int offset, int data)
 {
-    /* D0 = CROW INV (inverts Crow picture and direction?) */
-    /* D1-D2 = COLOR 0 - COLOR 1 (switches 4 color palettes, global across all graphics) */
-    /* D3 = SOUND STOP */
-    cont3 = data;
-}
-
-void bking2_eport1_w(int offset, int data)
-{
-    /* Output to sound DAC? */
-    eport1 = data;
+	/* D0 = CROW INV (inverts Crow picture and direction?) */
+	/* D1-D2 = COLOR 0 - COLOR 1 (switches 4 color palettes, global across all graphics) */
+	/* D3 = SOUND STOP */
+	cont3 = data;
 }
 
 void bking2_eport2_w(int offset, int data)
@@ -113,6 +105,41 @@ void bking2_hitclr_w(int offset, int data)
 }
 
 
+/* Hack alert.  I don't know how to upper bits work, so I'm just returning
+   what the code expects, otherwise the collision detection is skipped */
+int bking2_pos_r(int offset)
+{
+	unsigned char *RAM = Machine->memory_region[Machine->drv->cpu[0].memory_region];
+
+	UINT16 pos, x, y;
+
+
+	if (hitclr & 0x04)
+	{
+		x = xld2;
+		y = yld2;
+	}
+	else
+	{
+		x = xld1;
+		y = yld1;
+	}
+
+	pos = ((y >> 3 << 5) | (x >> 3)) + 2;
+
+	switch (offset)
+	{
+	case 0x00:
+		return (pos & 0x0f) << 4;
+	case 0x08:
+		return (pos & 0xf0);
+	case 0x10:
+		return ((pos & 0x0300) >> 4) | (RAM[0x804c] & 0xc0);
+	default:
+		return 0;
+	}
+}
+
 /***************************************************************************
 
   Draw the game screen in the given osd_bitmap.
@@ -122,64 +149,56 @@ void bking2_hitclr_w(int offset, int data)
 ***************************************************************************/
 void bking2_vh_screenrefresh(struct osd_bitmap *bitmap,int full_refresh)
 {
-    int offs;
+	int offs;
 
-    /* for every character in the Video RAM, check if it has been modified */
-    /* since last time and update it accordingly. */
-    for (offs = (videoram_size/2) - 1;offs >= 0;offs--)
-    {
-        int offs2;
+	/* for every character in the Video RAM, check if it has been modified */
+	/* since last time and update it accordingly. */
+	for (offs = videoram_size - 2;offs >= 0;offs -= 2)
+	{
+		if (dirtybuffer[offs] || dirtybuffer[offs + 1])
+		{
+			int sx,sy;
+			int flipx,flipy;
 
-        offs2 = offs * 2;
+			dirtybuffer[offs] = dirtybuffer[offs + 1] = 0;
 
-        if (dirtybuffer[offs2])
-        {
-            int charcode;
-            int charbank;
-            int sx,sy;
-            int flipx,flipy;
+			sx = (offs/2) % 32;
+			sy = (offs/2) / 32;
+			flipx = videoram[offs + 1] & 0x04;
+			flipy = videoram[offs + 1] & 0x08;
 
-            dirtybuffer[offs2]=0;
+			drawgfx(tmpbitmap,Machine->gfx[0],
+					videoram[offs] + ((videoram[offs + 1] & 0x03) << 8),
+					0, /* color */
+					flipx,flipy,
+					8*sx,8*sy,
+					&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+		}
+	}
 
-            charcode = videoram[offs2];
-            charbank = videoram[offs2+1] & 0x03;
-            flipx = (videoram[offs2+1] & 0x04) >> 2;
-            flipy = (videoram[offs2+1] & 0x08) >> 3;
+	/* copy the character mapped graphics */
+	copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
 
-            sx = 8 * (offs % 32);
-            sy = 8 * (offs / 32);
-            drawgfx(tmpbitmap,Machine->gfx[charbank],
-                    charcode,
-                    0, /* color */
-                    flipx,flipy,sx,sy,
-                    &Machine->drv->visible_area,TRANSPARENCY_NONE,0);
-        }
-    }
+	/* draw the balls */
+	drawgfx(bitmap,Machine->gfx[2],
+			cont2 & 0x07,
+			0, /* color */
+			0,0,
+			xld1,yld1,
+			&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 
-    /* copy the character mapped graphics */
-    copybitmap(bitmap,tmpbitmap,0,0,0,0,&Machine->drv->visible_area,TRANSPARENCY_NONE,0);
+	drawgfx(bitmap,Machine->gfx[3],
+			(cont2 >> 3) & 0x07,
+			0, /* color */
+			0,0,
+			xld2,yld2,
+			&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 
-    /* draw sprites */
-    {
-        int ball1,ball2;
-        int flipx,flipy;
-
-        flipx=flipy=0;
-
-        ball1 = cont2 & 0x07;
-        ball2 = (cont2 & 0x38) >> 3;
-
-        drawgfx(bitmap,Machine->gfx[5],
-                ball1,
-                0, /* color */
-                flipx,flipy,xld1,yld1,
-                &Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-
-        drawgfx(bitmap,Machine->gfx[5],
-                ball2,
-                0, /* color */
-                flipx,flipy,xld2,yld2,
-                &Machine->drv->visible_area,TRANSPARENCY_PEN,0);
-
-    }
+	/* draw the crow */
+	drawgfx(bitmap,Machine->gfx[1],
+			(cont1 >> 4) & 0x0f,
+			0, /* color */
+			0,0,
+			xld3,yld3,
+			&Machine->drv->visible_area,TRANSPARENCY_PEN,0);
 }

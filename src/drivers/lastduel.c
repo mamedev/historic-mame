@@ -45,6 +45,7 @@ extern unsigned char *lastduel_scroll2;
 extern unsigned char *lastduel_scroll1;
 extern unsigned char *lastduel_sprites;
 
+unsigned char *madgear_ram;
 /******************************************************************************/
 
 static int madgear_inputs_r(int offset)
@@ -158,7 +159,7 @@ static struct MemoryWriteAddress madgear_writemem[] =
   { 0xfcc000, 0xfcc7ff, paletteram_RRRRGGGGBBBBIIII_word_w, &paletteram },
   { 0xfd4000, 0xfd7fff, lastduel_scroll1_w, &lastduel_scroll1 },
   { 0xfd8000, 0xfdffff, lastduel_scroll2_w, &lastduel_scroll2 },
-  { 0xff0000, 0xffffff, MWA_BANK1 },
+  { 0xff0000, 0xffffff, MWA_BANK1,&madgear_ram },
   { -1 }	/* end of table */
 };
 
@@ -759,6 +760,134 @@ ROM_END
 
 /******************************************************************************/
 
+/*added by hsc 1/18/98 */
+
+#ifdef LSB_FIRST
+#define ENDIAN_ALIGN(a)	(a)
+#else
+#define ENDIAN_ALIGN(a) (a^1)
+#endif
+
+static int hiload(void)
+{
+
+    void *f;
+    /* check if the hi score table has already been initialized */
+    if (READ_WORD(&lastduel_ram[0x1c706])==0x2 &&
+		READ_WORD(&lastduel_ram[0x1c708])==0 &&
+		READ_WORD(&lastduel_ram[0x1c752])==0x434f &&
+		READ_WORD(&lastduel_ram[0x1c754])==0x4d20)
+    {
+        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+        {
+    	  	int hi;
+			osd_fread_msbfirst(f,&lastduel_ram[0x1c706],80);
+			osd_fclose(f);
+
+			memcpy (&lastduel_ram[0x187e2],&lastduel_ram[0x1c706],4);
+
+
+			hi =(lastduel_ram[ENDIAN_ALIGN(0x187e4)] & 0x0f) +
+				(lastduel_ram[ENDIAN_ALIGN(0x187e4)] >> 4) * 10 +
+				(lastduel_ram[ENDIAN_ALIGN(0x187e5)] & 0x0f) * 100 +
+				(lastduel_ram[ENDIAN_ALIGN(0x187e5)] >> 4) * 1000 +
+				(lastduel_ram[ENDIAN_ALIGN(0x187e2)] & 0x0f) * 10000 +
+				(lastduel_ram[ENDIAN_ALIGN(0x187e2)] >> 4) * 100000 +
+				(lastduel_ram[ENDIAN_ALIGN(0x187e3)] & 0x0f) * 1000000 +
+				(lastduel_ram[ENDIAN_ALIGN(0x187e3)] >> 4) * 10000000;
+
+			if (hi >= 0){
+			lastduel_vram[ENDIAN_ALIGN(0x0a6c)]=lastduel_ram[ENDIAN_ALIGN(0x187e4)] >>4;
+			lastduel_vram[ENDIAN_ALIGN(0x0a6d)]=0x50;
+			}
+			if (hi >= 10){
+			lastduel_vram[ENDIAN_ALIGN(0x0aec)]=lastduel_ram[ENDIAN_ALIGN(0x187e4)]& 0x0f;
+			lastduel_vram[ENDIAN_ALIGN(0x0aed)]=0x50;
+			}
+			if (hi >= 100){
+			lastduel_vram[ENDIAN_ALIGN(0x096c)]=lastduel_ram[ENDIAN_ALIGN(0x187e5)] >>4;
+			lastduel_vram[ENDIAN_ALIGN(0x096d)]=0x50;
+			}
+			if (hi >= 1000){
+			lastduel_vram[ENDIAN_ALIGN(0x09ec)]=lastduel_ram[ENDIAN_ALIGN(0x187e5)]& 0x0f;
+			lastduel_vram[ENDIAN_ALIGN(0x09ed)]=0x50;
+			}
+			if (hi >= 10000){
+			lastduel_vram[ENDIAN_ALIGN(0x086c)]=lastduel_ram[ENDIAN_ALIGN(0x187e2)] >>4;
+			lastduel_vram[ENDIAN_ALIGN(0x086d)]=0x50;
+			}
+			if (hi >= 100000){
+			lastduel_vram[ENDIAN_ALIGN(0x08ec)]=lastduel_ram[ENDIAN_ALIGN(0x187e2)]& 0x0f;
+			lastduel_vram[ENDIAN_ALIGN(0x08ed)]=0x50;
+			}
+			if (hi >= 1000000){
+			lastduel_vram[ENDIAN_ALIGN(0x076c)]=lastduel_ram[ENDIAN_ALIGN(0x187e3)] >>4;
+			lastduel_vram[ENDIAN_ALIGN(0x076d)]=0x50;
+			}
+			if (hi >= 10000000){
+			lastduel_vram[ENDIAN_ALIGN(0x07ec)]=lastduel_ram[ENDIAN_ALIGN(0x187e3)]& 0x0f;
+			lastduel_vram[ENDIAN_ALIGN(0x07ed)]=0x50;
+			}
+
+
+
+		}
+		return 1;
+	}
+    else return 0;  /* we can't load the hi scores yet */
+}
+
+static void hisave(void)
+{
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		lastduel_ram[ENDIAN_ALIGN(0x187e1)]=0;
+		lastduel_ram[ENDIAN_ALIGN(0x187e6)]=0;
+		osd_fwrite_msbfirst(f,&lastduel_ram[0x1c706],80);
+
+		osd_fclose(f);
+	}
+}
+
+static int madgear_hiload(void)
+{
+
+    void *f;
+    /* check if the hi score table has already been initialized */
+    if (READ_WORD(&madgear_ram[0x88a4])==0x0010 &&
+		READ_WORD(&madgear_ram[0x88a6])==0x0000 &&
+		READ_WORD(&madgear_ram[0x88f0])==0x434f &&
+		READ_WORD(&madgear_ram[0x88f2])==0x4d03)
+    {
+        if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,0)) != 0)
+        {
+
+			osd_fread_msbfirst(f,&madgear_ram[0x88a4],80);
+
+			osd_fclose(f);
+
+		}
+		return 1;
+	}
+    else return 0;  /* we can't load the hi scores yet */
+}
+
+static void madgear_hisave(void)
+{
+	void *f;
+
+	if ((f = osd_fopen(Machine->gamedrv->name,0,OSD_FILETYPE_HIGHSCORE,1)) != 0)
+	{
+		osd_fwrite_msbfirst(f,&madgear_ram[0x88a4],80);
+		osd_fclose(f);
+	}
+}
+
+
+/************************************************************************************/
+
 struct GameDriver lastduel_driver =
 {
 	__FILE__,
@@ -779,7 +908,7 @@ struct GameDriver lastduel_driver =
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
-	0, 0
+	hiload,hisave
 };
 
 struct GameDriver lstduelb_driver =
@@ -802,7 +931,7 @@ struct GameDriver lstduelb_driver =
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
-	0, 0
+	hiload, hisave
 };
 
 struct GameDriver madgear_driver =
@@ -825,5 +954,5 @@ struct GameDriver madgear_driver =
 
 	0, 0, 0,
 	ORIENTATION_ROTATE_270,
-	0, 0
+	madgear_hiload, madgear_hisave
 };
