@@ -3,7 +3,7 @@
 /***                               Z80Dasm.h                              ***/
 /***                                                                      ***/
 /*** This file contains a routine to disassemble a buffer containing Z80  ***/
-/*** opcodes. It is included from Z80Debug.c and Z80Dasm.c                ***/
+/*** opcodes. It is included from Z80Debug.c and z80dasm.c                ***/
 /***                                                                      ***/
 /*** Copyright (C) Marcel de Kogel 1996,1997                              ***/
 /***     You are not allowed to distribute this software commercially     ***/
@@ -207,7 +207,7 @@ static int Abs (unsigned char a)
 /****************************************************************************/
 /* Disassemble first opcode in buffer and return number of bytes it takes   */
 /****************************************************************************/
-static int Z80_Dasm (unsigned char *buffer,char *dest)
+static int Z80_Dasm (unsigned char *buffer,char *dest,unsigned PC)
 {
  char *S;
  char *r;
@@ -270,7 +270,7 @@ static int Z80_Dasm (unsigned char *buffer,char *dest)
     strcat (dest,buf);
     break;
    case 'R':
-    sprintf (buf,"%c$%02x",Sign(buffer[i]),Abs(buffer[i]));
+    sprintf (buf,"$%04x",(PC+2+(signed char)buffer[i])&0xFFFF);
     i++;
     strcat (dest,buf);
     break;
@@ -286,21 +286,19 @@ static int Z80_Dasm (unsigned char *buffer,char *dest)
     break;
    case 'Y':
     sprintf (buf,"(%s%c$%02x)",r,Sign(Offset),Abs(Offset));
-    i++;
     strcat (dest,buf);
     break;
    case 'I':
     strcat (dest,r);
-    i++;
     break;
    case '!':
-    sprintf (dest,"db $ed,$%02x",buffer[1]);
+    sprintf (dest,"db     $ed,$%02x",buffer[1]);
     return 2;
    case '@':
-    sprintf (dest,"db $%02x",buffer[0]);
+    sprintf (dest,"db     $%02x",buffer[0]);
     return 1;
    case '#':
-    sprintf (dest,"db $%02x,$cb,$%02x",buffer[0],buffer[2]);
+    sprintf (dest,"db     $%02x,$cb,$%02x",buffer[0],buffer[2]);
     return 2;
    case ' ':
     k=strlen(dest);
@@ -331,7 +329,7 @@ int main (int argc,char *argv[])
  for (i=1;i<17 && i<argc;++i) buffer[i-1]=strtoul(argv[i],NULL,16);
  for (i=0;i<16;++i) printf ("%02X ",buffer[i]);
  printf ("\n");
- i=Z80_Dasm (buffer,dest);
+ i=Z80_Dasm (buffer,dest,0);
  printf ("%s  - %d bytes\n",dest,i);
  return 0;
 }

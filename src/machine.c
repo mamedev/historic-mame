@@ -333,6 +333,7 @@ int input_port_5_r(int offset)
 /* start with interrupts enabled, so the generic routine will work even if */
 /* the machine doesn't have an interrupt enable port */
 static int interrupt_enable = 1;
+static int interrupt_vector = 0xff;
 
 void interrupt_enable_w(int offset,int data)
 {
@@ -341,15 +342,21 @@ void interrupt_enable_w(int offset,int data)
 
 
 
-/* this generic interrupt function assumes that the emulated game uses */
-/* interrupt mode 1, which doesn't require an interrupt vector. If the */
-/* game you are emulating is different (like Pac Man), or it doesn't */
-/* have vertical blank interrupts (like Lady Bug) you'll have to provide */
-/* your own. */
+void interrupt_vector_w(int offset,int data)
+{
+	interrupt_vector = data;
+}
+
+
+
+/* If the game you are emulating doesn't have vertical blank interrupts */
+/* (like Lady Bug) you'll have to provide your own interrupt function (set */
+/* a flag there, and return the appropriate value from the appropriate input */
+/* port when the game polls it) */
 int interrupt(void)
 {
 	if (interrupt_enable == 0) return Z80_IGNORE_INT;
-	else return 0xff;
+	else return interrupt_vector;
 }
 
 
@@ -470,6 +477,13 @@ static void drawfps(void)
 
 
 
+/***************************************************************************
+
+  Interrupt handler. This function is called at regular intervals
+  (determined by IPeriod) by the CPU emulation.
+
+***************************************************************************/
+
 int Z80_IRQ = Z80_IGNORE_INT;	/* needed by the CPU emulation */
 
 int Z80_Interrupt(void)
@@ -530,7 +544,7 @@ int Z80_Interrupt(void)
 	{
 		framecount = 0;
 
-		(*drv->vh_screenrefresh)(Machine->scrbitmap);	/* update screen */
+		(*drv->vh_update)(Machine->scrbitmap);	/* update screen */
 
 		if (osd_key_pressed(OSD_KEY_F11)) showfps = 1;
 		if (showfps) drawfps();
@@ -554,16 +568,66 @@ int Z80_Interrupt(void)
 
 void Z80_Out(byte Port,byte Value)
 {
-	if (*drv->out) (*drv->out)(Port,Value);
-	if (*drv->sh_out) (*drv->sh_out)(Port,Value);
+	const struct IOWritePort *iowp;
+
+
+	iowp = drv->port_write;
+	if (iowp)
+	{
+		while (iowp->start != -1)
+		{
+			if (Port >= iowp->start && Port <= iowp->end)
+			{
+				switch ((int)iowp->handler)
+				{
+					case IOWP_NOP:
+						break;
+					default:
+						(*iowp->handler)(Port - iowp->start,Value);
+						break;
+				}
+
+				return;
+			}
+
+			iowp++;
+		}
+	}
+
+	if (errorlog) fprintf(errorlog,"%04x: warning - write %02x to unmapped I/O port %02x\n",Z80_GetPC(),Value,Port);
 }
 
 
 
 byte Z80_In(byte Port)
 {
-	if (*drv->sh_in) return (*drv->sh_in)(Port);
-	else return 0;
+	const struct IOReadPort *iorp;
+
+
+	iorp = drv->port_read;
+	if (iorp)
+	{
+		while (iorp->start != -1)
+		{
+			if (Port >= iorp->start && Port <= iorp->end)
+			{
+				switch ((int)iorp->handler)
+				{
+					case IORP_NOP:
+						return 0;
+						break;
+					default:
+						return (*iorp->handler)(Port - iorp->start);
+						break;
+				}
+			}
+
+			iorp++;
+		}
+	}
+
+	if (errorlog) fprintf(errorlog,"%04x: warning - read unmapped I/O port %02x\n",Z80_GetPC(),Port);
+	return 0;
 }
 
 

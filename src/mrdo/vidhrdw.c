@@ -46,7 +46,7 @@ static struct rectangle visiblearea =
 
   Convert the color PROMs into a more useable format.
 
-  Mr. Do! has a two 32 bytes palette PROM and a 32 bytes sprite color lookup
+  Mr. Do! has two 32 bytes palette PROM and a 32 bytes sprite color lookup
   table PROM.
   The palette PROMs are connected to the RGB output this way:
 

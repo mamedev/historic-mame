@@ -16,4 +16,4 @@ z80dasm:    Z80Dasm.o
 	$(LD) -s -o z80dasm Z80Dasm.o
 
 Z80Debug.o: Z80Debug.c Z80.h Z80IO.h Z80Dasm.h
-Z80.o:      Z80.c Z80.h Z80Codes.h Z80IO.h DAA.h
+Z80.o:      Z80.c Z80.h Z80Codes.h Z80IO.h Z80DAA.h

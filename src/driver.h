@@ -37,13 +37,47 @@ struct MemoryWriteAddress
 	unsigned char **base;
 };
 
-
 #define MWA_NOP 0	/* do nothing */
 #define MWA_RAM ((void(*)())-1)	/* plain RAM location (store the value) */
 #define MWA_ROM ((void(*)())-2)	/* plain ROM location (do nothing) */
 
 
+/***************************************************************************
 
+IN and OUT ports are handled like memory accesses, the hook template is the
+same so you can interchange them. Of course there is no 'base' pointer for
+IO ports.
+
+***************************************************************************/
+struct IOReadPort
+{
+	int start,end;
+	int (*handler)(int offset);	/* see special values below */
+};
+
+#define IORP_NOP 0	/* don't care, return 0 */
+
+
+struct IOWritePort
+{
+	int start,end;
+	void (*handler)(int offset,int data);	/* see special values below */
+};
+
+#define IOWP_NOP 0	/* do nothing */
+
+
+
+
+
+/***************************************************************************
+
+Don't confuse this with the I/O ports above. This is used to handle game
+inputs (joystick, coin slots, etc). Typically, you will read them using
+input_port_[n]_r(), which you will associate to the appropriate memory
+address or I/O port.
+
+***************************************************************************/
 struct InputPort
 {
 	int default_value;	/* default value for the input port */
@@ -84,12 +118,13 @@ struct MachineDriver
 	int frames_per_second;
 	const struct MemoryReadAddress *memory_read;
 	const struct MemoryWriteAddress *memory_write;
+	const struct IOReadPort *port_read;
+	const struct IOWritePort *port_write;
 	struct InputPort *input_ports;
 	const struct DSW *dswsettings;
 
 	int (*init_machine)(const char *gamename);
 	int (*interrupt)(void);
-	void (*out)(byte Port,byte Value);
 
 	/* video hardware */
 	int screen_width,screen_height;
@@ -113,15 +148,13 @@ struct MachineDriver
 	int (*vh_init)(const char *gamename);
 	int (*vh_start)(void);
 	void (*vh_stop)(void);
-	void (*vh_screenrefresh)(struct osd_bitmap *bitmap);
+	void (*vh_update)(struct osd_bitmap *bitmap);
 
 	/* sound hardware */
 	unsigned char *samples;
 	int (*sh_init)(const char *gamename);
 	int (*sh_start)(void);
 	void (*sh_stop)(void);
-	void (*sh_out)(byte Port,byte Value);
-	int (*sh_in)(byte Port);
 	void (*sh_update)(void);
 };
 

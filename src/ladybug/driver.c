@@ -237,12 +237,10 @@ const struct MachineDriver ladybug_driver =
 	/* basic machine hardware */
 	4000000,	/* 4 Mhz */
 	60,
-	readmem,
-	writemem,
+	readmem,writemem,0,0,
 	input_ports,dsw,
 	0,
 	ladybug_interrupt,
-	0,
 
 	/* video hardware */
 	256,256,
@@ -261,8 +259,6 @@ const struct MachineDriver ladybug_driver =
 	samples,
 	0,
 	ladybug_sh_start,
-	0,
-	0,
 	0,
 	ladybug_sh_update
 };

@@ -3,7 +3,6 @@
   common.c
 
   Generic functions used in different emulators.
-  There's not much for now, but it could grow in the future... ;-)
 
 ***************************************************************************/
 
@@ -477,64 +476,128 @@ void drawgfx(struct osd_bitmap *dest,const struct GfxElement *gfx,
 
 			case TRANSPARENCY_PEN:
 			case TRANSPARENCY_COLOR:
-				if (flipx)
 				{
-					if (flipy)	/* XY flip */
+					int *sd4,x1;
+					int trans4;
+
+
+					trans4 = transparent_color * 0x01010101;
+
+					if (flipx)
 					{
-						for (y = sy;y <= ey;y++)
+						if (flipy)	/* XY flip */
 						{
-							bm = dest->line[y] + sx;
-							sd = gfx->gfxdata->line[start + gfx->height-1 - (y-oy)] + gfx->width-1 - (sx-ox);
-							for (x = sx;x <= ex;x++)
+							for (y = sy;y <= ey;y++)
 							{
-								col = *(sd--);
-								if (col != transparent_color) *bm = col;
-								bm++;
+								bm = dest->line[y] + sx;
+								sd4 = (int *)(gfx->gfxdata->line[start + gfx->height-1 - (y-oy)] + gfx->width-1 - (sx-ox) - 3);
+								for (x = sx;x <= ex;x+=4)
+								{
+		/* WARNING: if the width of the area to copy is not a multiple of sizeof(int), this */
+		/* might access memory outside it. The copy will be execute dcorrectly, though. */
+									if (*sd4 == trans4)
+									{
+										bm += 4;
+									}
+									else
+									{
+										sd = ((unsigned char *)sd4) + 3;
+										for (x1 = 4;x1 > 0;x1--)
+										{
+											col = *(sd--);
+											if (col != transparent_color) *bm = col;
+											bm++;
+										}
+									}
+									sd4--;
+								}
+							}
+						}
+						else 	/* X flip */
+						{
+							for (y = sy;y <= ey;y++)
+							{
+								bm = dest->line[y] + sx;
+								sd4 = (int *)(gfx->gfxdata->line[start + (y-oy)] + gfx->width-1 - (sx-ox) - 3);
+								for (x = sx;x <= ex;x+=4)
+								{
+		/* WARNING: if the width of the area to copy is not a multiple of sizeof(int), this */
+		/* might access memory outside it. The copy will be execute dcorrectly, though. */
+									if (*sd4 == trans4)
+									{
+										bm += 4;
+									}
+									else
+									{
+										sd = ((unsigned char *)sd4) + 3;
+										for (x1 = 4;x1 > 0;x1--)
+										{
+											col = *(sd--);
+											if (col != transparent_color) *bm = col;
+											bm++;
+										}
+									}
+									sd4--;
+								}
 							}
 						}
 					}
-					else 	/* X flip */
+					else
 					{
-						for (y = sy;y <= ey;y++)
+						if (flipy)	/* Y flip */
 						{
-							bm = dest->line[y] + sx;
-							sd = gfx->gfxdata->line[start + (y-oy)] + gfx->width-1 - (sx-ox);
-							for (x = sx;x <= ex;x++)
+							for (y = sy;y <= ey;y++)
 							{
-								col = *(sd--);
-								if (col != transparent_color) *bm = col;
-								bm++;
+								bm = dest->line[y] + sx;
+								sd4 = (int *)(gfx->gfxdata->line[start + gfx->height-1 - (y-oy)] + (sx-ox));
+								for (x = sx;x <= ex;x+=4)
+								{
+		/* WARNING: if the width of the area to copy is not a multiple of sizeof(int), this */
+		/* might access memory outside it. The copy will be execute dcorrectly, though. */
+									if (*sd4 == trans4)
+									{
+										bm += 4;
+									}
+									else
+									{
+										sd = (unsigned char *)sd4;
+										for (x1 = 4;x1 > 0;x1--)
+										{
+											col = *(sd++);
+											if (col != transparent_color) *bm = col;
+											bm++;
+										}
+									}
+									sd4++;
+								}
 							}
 						}
-					}
-				}
-				else
-				{
-					if (flipy)	/* Y flip */
-					{
-						for (y = sy;y <= ey;y++)
+						else		/* normal */
 						{
-							bm = dest->line[y] + sx;
-							sd = gfx->gfxdata->line[start + gfx->height-1 - (y-oy)] + (sx-ox);
-							for (x = sx;x <= ex;x++)
+							for (y = sy;y <= ey;y++)
 							{
-								col = *(sd++);
-								if (col != transparent_color) *bm = col;
-								bm++;
-							}
-						}
-					}
-					else		/* normal */
-					{
-						for (y = sy;y <= ey;y++)
-						{
-							bm = dest->line[y] + sx;
-							sd = gfx->gfxdata->line[start + (y-oy)] + (sx-ox);
-							for (x = sx;x <= ex;x++)
-							{
-								col = *(sd++);
-								if (col != transparent_color) *bm = col;
-								bm++;
+								bm = dest->line[y] + sx;
+								sd4 = (int *)(gfx->gfxdata->line[start + (y-oy)] + (sx-ox));
+								for (x = sx;x <= ex;x+=4)
+								{
+		/* WARNING: if the width of the area to copy is not a multiple of sizeof(int), this */
+		/* might access memory outside it. The copy will be execute dcorrectly, though. */
+									if (*sd4 == trans4)
+									{
+										bm += 4;
+									}
+									else
+									{
+										sd = (unsigned char *)sd4;
+										for (x1 = 4;x1 > 0;x1--)
+										{
+											col = *(sd++);
+											if (col != transparent_color) *bm = col;
+											bm++;
+										}
+									}
+									sd4++;
+								}
 							}
 						}
 					}

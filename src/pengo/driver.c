@@ -276,12 +276,10 @@ const struct MachineDriver pengo_driver =
 	/* basic machine hardware */
 	3072000,	/* 3.072 Mhz */
 	60,
-	readmem,
-	writemem,
+	readmem,writemem,0,0,
 	input_ports,dsw,
 	0,
 	interrupt,
-	0,
 
 	/* video hardware */
 	224,288,
@@ -298,8 +296,6 @@ const struct MachineDriver pengo_driver =
 
 	/* sound hardware */
 	samples,
-	0,
-	0,
 	0,
 	0,
 	0,

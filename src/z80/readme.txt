@@ -1,6 +1,6 @@
                            ******* Z80Em *******
                         Portable Zilog Z80 Emulator
-                         Version 1.0 (31-1-1997)
+                         Version 1.1 (13-02-1997)
                                      
                 Copyright (C) Marcel de Kogel 1996,1997
                               
@@ -24,6 +24,11 @@ option should be used in multi-processor emulations
 
 For updates and examples on how to use this engine, check my homepage at
 http://www.komkon.org/~dekogel/
+
+History
+-------
+1.1   13-02-97   Fixed several bugs and compatibility problems
+1.0   31-01-97   Initial release
 
 Please send your comments and bug reports to
 m.dekogel@student.utwente.nl

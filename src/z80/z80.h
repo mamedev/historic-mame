@@ -9,6 +9,9 @@
 /***     Please, notify me, if you make any changes to this file          ***/
 /****************************************************************************/
 
+#ifndef _Z80_H
+#define _Z80_H
+
 /****************************************************************************/
 /*** Machine dependent definitions                                        ***/
 /****************************************************************************/
@@ -119,10 +122,6 @@ void Z80_Reset (void);             /* Reset registers to the initial values */
 int  Z80_Execute (void);           /* Execute IPeriod T-States              */
 word Z80 (void);                   /* Execute until Z80_Running==0          */
 void Z80_RegisterDump (void);      /* Prints a dump to stdout               */
-
-/****************************************************************************/
-/* The following functions should be written by the user                    */
-/****************************************************************************/
 void Z80_Patch (Z80_Regs *Regs);   /* Called when ED FE occurs. Can be used */
                                    /* to emulate disk access etc.           */
 int Z80_Interrupt(void);           /* This is called after IPeriod T-States */
@@ -138,3 +137,6 @@ void Z80_Retn (void);              /* Called when RETN occurs               */
 /* You can replace these with your own, inlined if necessary                */
 /****************************************************************************/
 #include "Z80IO.h"
+
+#endif /* _Z80_H */
+

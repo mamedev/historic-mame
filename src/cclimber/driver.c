@@ -101,6 +101,7 @@ b800h ;RD: Machine switches.
 I/O 8  ;AY-3-8910 Control Reg.
 I/O 9  ;AY-3-8910 Data Write Reg.
 I/O C  ;AY-3-8910 Data Read Reg.
+        Port A of the 8910 selects the digital sample to play
 
 ***************************************************************************/
 
@@ -123,13 +124,14 @@ int cclimber_vh_start(void);
 void cclimber_vh_stop(void);
 void cclimber_vh_screenrefresh(struct osd_bitmap *bitmap);
 
+int cclimber_sh_read_port_r(int offset);
+void cclimber_sh_control_port_w(int offset,int data);
+void cclimber_sh_write_port_w(int offset,int data);
 void cclimber_sample_trigger_w(int offset,int data);
 void cclimber_sample_rate_w(int offset,int data);
 void cclimber_sample_volume_w(int offset,int data);
 int cclimber_sh_start(void);
 void cclimber_sh_stop(void);
-void cclimber_sh_out(byte Port,byte Value);
-int cclimber_sh_in(byte Port);
 void cclimber_sh_update(void);
 
 
@@ -166,6 +168,19 @@ static struct MemoryWriteAddress writemem[] =
 	{ 0xa800, 0xa800, cclimber_sample_rate_w },
 	{ 0xa001, 0xa002, MWA_NOP },
 	{ 0x0000, 0x4fff, MWA_ROM },
+	{ -1 }	/* end of table */
+};
+
+static struct IOReadPort readport[] =
+{
+	{ 0x0c, 0x0c, cclimber_sh_read_port_r },
+	{ -1 }	/* end of table */
+};
+
+static struct IOWritePort writeport[] =
+{
+	{ 0x08, 0x08, cclimber_sh_control_port_w },
+	{ 0x09, 0x09, cclimber_sh_write_port_w },
 	{ -1 }	/* end of table */
 };
 
@@ -265,12 +280,10 @@ const struct MachineDriver cclimber_driver =
 	/* basic machine hardware */
 	3072000,	/* 3.072 Mhz */
 	60,
-	readmem,
-	writemem,
+	readmem,writemem,readport,writeport,
 	input_ports,dsw,
 	0,
 	nmi_interrupt,
-	0,
 
 	/* video hardware */
 	256,256,
@@ -290,7 +303,5 @@ const struct MachineDriver cclimber_driver =
 	0,
 	cclimber_sh_start,
 	cclimber_sh_stop,
-	cclimber_sh_out,
-	cclimber_sh_in,
 	cclimber_sh_update
 };

@@ -1,6 +1,6 @@
 /*** Z80Em: Portable Z80 emulator *******************************************/
 /***                                                                      ***/
-/***                              Z80Codes.c                              ***/
+/***                              Z80Codes.h                              ***/
 /***                                                                      ***/
 /*** This file contains various macros used by the emulation engine       ***/
 /***                                                                      ***/
@@ -9,8 +9,13 @@
 /***     Please, notify me, if you make any changes to this file          ***/
 /****************************************************************************/
 
-#define M_POP(Rg)       R.Rg.D=M_RDMEMFAST_WORD(R.SP.D); R.SP.W.l+=2
-#define M_PUSH(Rg)      R.SP.W.l-=2; M_WRMEMFAST_WORD(R.SP.D,R.Rg.D)
+#define M_POP(Rg)           \
+        R.Rg.D=M_RDSTACK(R.SP.D)+(M_RDSTACK((R.SP.D+1)&65535)<<8); \
+        R.SP.W.l+=2
+#define M_PUSH(Rg)          \
+        R.SP.W.l-=2;        \
+        M_WRSTACK(R.SP.D,R.Rg.D); \
+        M_WRSTACK((R.SP.D+1)&65535,R.Rg.D>>8)
 #define M_CALL              \
 {                           \
  int q;                     \
@@ -19,19 +24,46 @@
  R.PC.D=q;                  \
  Z80_ICount-=7;             \
 }
-#define M_JP            R.PC.D=M_RDMEM_OPCODE_WORD()
-#define M_JR            R.PC.W.l+=(offset)M_RDMEM_OPCODE(); Z80_ICount-=5
+#define M_JP                \
+        R.PC.D=M_RDOP_ARG(R.PC.D)+((M_RDOP_ARG((R.PC.D+1)&65535))<<8)
+#define M_JR                \
+        R.PC.W.l+=((offset)M_RDOP_ARG(R.PC.D))+1; Z80_ICount-=5
 #define M_RET           M_POP(PC); Z80_ICount-=6
 #define M_RST(Addr)     M_PUSH(PC); R.PC.D=Addr
 #define M_SET(Bit,Reg)  Reg|=1<<Bit
 #define M_RES(Bit,Reg)  Reg&=~(1<<Bit)
-#define M_BIT(Bit,Reg)  \
-        R.AF.B.l=(R.AF.B.l&C_FLAG)|H_FLAG|((Reg&(1<<Bit))?0:Z_FLAG)
+#define M_BIT(Bit,Reg)      \
+        R.AF.B.l=(R.AF.B.l&C_FLAG)|H_FLAG| \
+        ((Reg&(1<<Bit))? ((Bit==7)?S_FLAG:0):Z_FLAG)
 #define M_AND(Reg)      R.AF.B.h&=Reg; R.AF.B.l=ZSPTable[R.AF.B.h]|H_FLAG
 #define M_OR(Reg)       R.AF.B.h|=Reg; R.AF.B.l=ZSPTable[R.AF.B.h]
 #define M_XOR(Reg)      R.AF.B.h^=Reg; R.AF.B.l=ZSPTable[R.AF.B.h]
-#define M_IN(Reg)       \
+#define M_IN(Reg)           \
         Reg=Z80_In(R.BC.B.l); R.AF.B.l=(R.AF.B.l&C_FLAG)|ZSPTable[Reg]
+
+#define M_RLCA              \
+ R.AF.B.h=(R.AF.B.h<<1)|((R.AF.B.h&0x80)>>7); \
+ R.AF.B.l=(R.AF.B.l&0xEC)|(R.AF.B.h&C_FLAG)
+
+#define M_RRCA              \
+ R.AF.B.l=(R.AF.B.l&0xEC)|(R.AF.B.h&0x01); \
+ R.AF.B.h=(R.AF.B.h>>1)|(R.AF.B.h<<7)
+
+#define M_RLA               \
+{                           \
+ int i;                     \
+ i=R.AF.B.l&C_FLAG;         \
+ R.AF.B.l=(R.AF.B.l&0xEC)|((R.AF.B.h&0x80)>>7); \
+ R.AF.B.h=(R.AF.B.h<<1)|i;  \
+}
+
+#define M_RRA               \
+{                           \
+ int i;                     \
+ i=R.AF.B.l&C_FLAG;         \
+ R.AF.B.l=(R.AF.B.l&0xEC)|(R.AF.B.h&0x01); \
+ R.AF.B.h=(R.AF.B.h>>1)|(i<<7);            \
+}
 
 #define M_RLC(Reg)         \
 {                          \
@@ -96,7 +128,7 @@
           ((Reg==0x80)?V_FLAG:0)|((Reg&0x0F)?0:H_FLAG)
 
 #define M_DEC(Reg)                                      \
- R.AF.B.l=(R.AF.B.l&C_FLAG)|                            \
+ R.AF.B.l=(R.AF.B.l&C_FLAG)|N_FLAG|                     \
           ((Reg==0x80)?V_FLAG:0)|((Reg&0x0F)?0:H_FLAG); \
  R.AF.B.l|=ZSTable[--Reg]
 

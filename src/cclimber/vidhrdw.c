@@ -87,9 +87,7 @@ void cclimber_vh_convert_color_prom(unsigned char *palette, unsigned char *color
 
 	for (i = 0;i < 4 * 24;i++)
 	{
-		if ((i & 3) == 0) colortable[i] = 0;	/* so I can use TRANSPARENCY_PEN */
-										/* instead of TRANSPARENCY_COLOR when blitting */
-										/* the big sprite */
+		if ((i & 3) == 0) colortable[i] = 0;
 		else colortable[i] = i;
 	}
 }
@@ -283,7 +281,7 @@ void cclimber_vh_screenrefresh(struct osd_bitmap *bitmap)
 			0,0,
 			cclimber_bigspriteram[1] & 0x10,cclimber_bigspriteram[1] & 0x20,
 			136 - cclimber_bigspriteram[3],128 - cclimber_bigspriteram[2],
-			&visiblearea,TRANSPARENCY_PEN,0);
+			&visiblearea,TRANSPARENCY_COLOR,Machine->background_pen);
 }
 
 	/* draw sprites (must be done after the "big sprite" to obtain the correct priority) */

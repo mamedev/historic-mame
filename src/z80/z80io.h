@@ -45,9 +45,31 @@ void Z80_WRMEM(dword A,byte V);
 /* opcodes. In case of system with memory mapped I/O, this function can be  */
 /* used to greatly speed up emulation                                       */
 /****************************************************************************/
-/*#define Z80_RDOP(A)     Z80_RDMEM(A)*/
+/*#define Z80_RDOP(A)		Z80_RDMEM(A)*/
 extern byte RAM[];
 unsigned (*opcode_decode)(dword A);
-#define Z80_RDENCOP(A) (opcode_decode ? (*opcode_decode)(A) : RAM[A])
-#define Z80_RDOP(A) (RAM[A])
-#define Z80_WROP(A,V) (RAM[A]=V)
+#define Z80_RDOP(A) (opcode_decode ? (*opcode_decode)(A) : RAM[A])
+
+/****************************************************************************/
+/* Z80_RDOP_ARG() is identical to Z80_RDOP() except it is used for reading  */
+/* opcode arguments. This difference can be used to support systems that    */
+/* use different encoding mechanisms for opcodes and opcode arguments       */
+/****************************************************************************/
+/*#define Z80_RDOP_ARG(A)		Z80_RDOP(A)*/
+#define Z80_RDOP_ARG(A) (RAM[A])
+
+/****************************************************************************/
+/* Z80_RDSTACK() is identical to Z80_RDMEM() except it is used for reading  */
+/* stack variables. In case of system with memory mapped I/O, this function */
+/* can be used to slightly speed up emulation                               */
+/****************************************************************************/
+/*#define Z80_RDSTACK(A)		Z80_RDMEM(A)*/
+#define Z80_RDSTACK(A) (RAM[A])
+
+/****************************************************************************/
+/* Z80_WRSTACK() is identical to Z80_WRMEM() except it is used for writing  */
+/* stack variables. In case of system with memory mapped I/O, this function */
+/* can be used to slightly speed up emulation                               */
+/****************************************************************************/
+/*#define Z80_WRSTACK(A,V)	Z80_WRMEM(A,V)*/
+#define Z80_WRSTACK(A,V) (RAM[A]=V)

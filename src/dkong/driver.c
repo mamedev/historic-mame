@@ -277,17 +277,15 @@ const struct MachineDriver dkong_driver =
 	/* basic machine hardware */
 	3072000,	/* 3.072 Mhz */
 	60,
-	readmem,
-	writemem,
+	readmem,writemem,0,0,
 	input_ports,dsw,
 	0,
 	nmi_interrupt,
-	0,
 
 	/* video hardware */
 	256,256,
 	gfxdecodeinfo,
-	41,4*24,
+	sizeof(palette)/3,sizeof(colortable),
 	0,0,palette,colortable,
 	0,17,
 	7,4,
@@ -298,8 +296,6 @@ const struct MachineDriver dkong_driver =
 	dkong_vh_screenrefresh,
 
 	/* sound hardware */
-	0,
-	0,
 	0,
 	0,
 	0,

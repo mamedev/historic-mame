@@ -1,6 +1,6 @@
 /*** Z80Em: Portable Z80 emulator *******************************************/
 /***                                                                      ***/
-/***                               Z80Dasm.c                              ***/
+/***                               z80dasm.c                              ***/
 /***                                                                      ***/
 /*** This file contains a portable Z80 disassembler                       ***/
 /***                                                                      ***/
@@ -24,9 +24,9 @@ static void usage (void)
 {
  printf ("Usage: z80dasm [options] <filename>\n"
          "Available options are:\n"
-         " -begin  <address> - Specify begin offset in file to disassemble [0]\n"
-         " -end    <address> - Specify end offset in file to disassemble [none]\n"
-         " -offset <value>   - Specify address to load program [0]\n"
+         " -begin  - Specify begin offset in file to disassemble [0]\n"
+         " -end    - Specify end offset in file to disassemble [none]\n"
+         " -offset - Specify address to load program [0]\n"
          "All values should be entered in hexadecimal\n");
  exit (1);
 }
@@ -104,10 +104,10 @@ int main (int argc,char *argv[])
  pc=0;
  while (pc<len)
  {
-  i=Z80_Dasm (filebuf+pc,buf);
+  i=Z80_Dasm (filebuf+pc,buf,pc+offset);
   for (j=strlen(buf);j<19;++j) buf[j]=' ';
   buf[19]='\0';
-  printf ("    %s; %06X ",buf,pc+offset);
+  printf ("    %s    ; %06X ",buf,pc+offset);
   for (j=0;j<i;++j) printf("%02X ",filebuf[pc+j]);
   printf ("\n");
   pc+=i;

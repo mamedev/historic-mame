@@ -239,7 +239,7 @@ static unsigned char colortable[] =
 	BLACK,1,BLUE,CYAN,	/* monster 2 */
 	BLACK,GROUND,WALLS,GREEN,	/* 1st level paint */
 	BLACK,1,BLUE,YELLOW,	/* monster 1 / cat */
-	0,6,7,8,	/* evil cat (I think) */
+	5,5,5,5,
 	BLACK,WALLS,RED,YELLOW,	/* squashed cat, closed barn (sprite), mouse */
 	10,10,10,10,
 	BLACK,BROWN,CAR,RED,	/* driver's head */
@@ -252,7 +252,7 @@ static unsigned char colortable[] =
 	1,1,1,1,
 	3,3,3,3,
 	BLACK,RED,YELLOW,13,	/* bird */
-	5,5,5,5,
+	0,6,7,8,	/* evil cat (I think) */
 	6,6,6,6,
 	7,7,7,7,
 	15,15,15,15,
@@ -302,12 +302,10 @@ const struct MachineDriver crush_driver =
 	/* basic machine hardware */
 	3072000,	/* 3.072 Mhz. Is this correct for Crush Roller? */
 	60,
-	readmem,
-	writemem,
+	readmem,writemem,0,0,
 	input_ports,dsw,
 	0,
 	interrupt,
-	0,
 
 	/* video hardware */
 	224,288,
@@ -324,8 +322,6 @@ const struct MachineDriver crush_driver =
 
 	/* sound hardware */
 	samples,
-	0,
-	0,
 	0,
 	0,
 	0,

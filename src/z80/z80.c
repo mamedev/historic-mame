@@ -17,10 +17,10 @@
 
 #define M_RDMEM(A)      Z80_RDMEM(A)
 #define M_WRMEM(A,V)    Z80_WRMEM(A,V)
-#define M_RDMEMFAST(A)      Z80_RDOP(A)
-#define M_WRMEMFAST(A,V)    Z80_WROP(A,V)
 #define M_RDOP(A)       Z80_RDOP(A)
-#define M_RDENCOP(A)       Z80_RDENCOP(A)
+#define M_RDOP_ARG(A)   Z80_RDOP_ARG(A)
+#define M_RDSTACK(A)    Z80_RDSTACK(A)
+#define M_WRSTACK(A,V)  Z80_WRSTACK(A,V)
 
 static void Interrupt(int j);
 static void ei(void);
@@ -53,7 +53,7 @@ static unsigned pc_count=0;
 static byte PTable[512];
 static byte ZSTable[512];
 static byte ZSPTable[512];
-#include "DAA.h"
+#include "Z80DAA.h"
 
 typedef void (*opcode_fn) (void);
 
@@ -66,19 +66,11 @@ typedef void (*opcode_fn) (void);
 #define M_PE    (R.AF.B.l&V_FLAG)
 #define M_PO    (!M_PE)
 
-/* Get next opcode and increment program counter */
+/* Get next opcode argument and increment program counter */
 INLINE unsigned M_RDMEM_OPCODE (void)
 {
  unsigned retval;
- retval=M_RDOP(R.PC.D);
- R.PC.W.l++;
- return retval;
-}
-
-INLINE unsigned M_RDMEM_ENCRYPTED_OPCODE (void)
-{
- unsigned retval;
- retval=M_RDENCOP(R.PC.D);
+ retval=M_RDOP_ARG(R.PC.D);
  R.PC.W.l++;
  return retval;
 }
@@ -86,8 +78,8 @@ INLINE unsigned M_RDMEM_ENCRYPTED_OPCODE (void)
 INLINE unsigned M_RDMEM_WORD (dword A)
 {
  int i;
- i=M_RDMEM (A);
- i+=M_RDMEM (((A)+1)&0xFFFF)*256;
+ i=M_RDMEM(A);
+ i+=M_RDMEM(((A)+1)&0xFFFF)<<8;
  return i;
 }
 
@@ -97,25 +89,11 @@ INLINE void M_WRMEM_WORD (dword A,word V)
  M_WRMEM (((A)+1)&0xFFFF,V>>8);
 }
 
-INLINE unsigned M_RDMEMFAST_WORD (dword A)
-{
- int i;
- i=M_RDMEMFAST (A);
- i+=M_RDMEMFAST (((A)+1)&0xFFFF)*256;
- return i;
-}
-
-INLINE void M_WRMEMFAST_WORD (dword A,word V)
-{
- M_WRMEMFAST (A,V&255);
- M_WRMEMFAST (((A)+1)&0xFFFF,V>>8);
-}
-
 INLINE unsigned M_RDMEM_OPCODE_WORD (void)
 {
  int i;
  i=M_RDMEM_OPCODE();
- i+=M_RDMEM_OPCODE()*256;
+ i+=M_RDMEM_OPCODE()<<8;
  return i;
 }
 
@@ -1278,7 +1256,7 @@ static void ret_po(void) { if (M_PO) { M_RET; } else { M_SKIP_RET; } }
 static void ret_z(void) { if (M_Z) { M_RET; } else { M_SKIP_RET; } }
 
 static void reti(void) { Z80_Reti(); M_RET; }
-static void retn(void) { Z80_Retn(); M_RET; }
+static void retn(void) { R.IFF1=R.IFF2; Z80_Retn(); M_RET; }
 
 static void rl_xhl(void)
 {
@@ -1312,13 +1290,7 @@ static void rl_d(void) { M_RL(R.DE.B.h); }
 static void rl_e(void) { M_RL(R.DE.B.l); }
 static void rl_h(void) { M_RL(R.HL.B.h); }
 static void rl_l(void) { M_RL(R.HL.B.l); }
-static void rla(void)
-{
- int i;
- i=R.AF.B.l&C_FLAG;
- R.AF.B.l=(R.AF.B.l&0xEC)|((R.AF.B.h&0x80)>>7);
- R.AF.B.h=(R.AF.B.h<<1)|i;
-}
+static void rla(void)  { M_RLA; }
 
 static void rlc_xhl(void)
 {
@@ -1352,11 +1324,7 @@ static void rlc_d(void) { M_RLC(R.DE.B.h); }
 static void rlc_e(void) { M_RLC(R.DE.B.l); }
 static void rlc_h(void) { M_RLC(R.HL.B.h); }
 static void rlc_l(void) { M_RLC(R.HL.B.l); }
-static void rlca(void)
-{
- R.AF.B.h=(R.AF.B.h<<1)|((R.AF.B.h&0x80)>>7);
- R.AF.B.l=(R.AF.B.l&0xEC)|(R.AF.B.h&C_FLAG);
-}
+static void rlca(void)  { M_RLCA; }
 
 static void rld(void)
 {
@@ -1399,13 +1367,7 @@ static void rr_d(void) { M_RR(R.DE.B.h); }
 static void rr_e(void) { M_RR(R.DE.B.l); }
 static void rr_h(void) { M_RR(R.HL.B.h); }
 static void rr_l(void) { M_RR(R.HL.B.l); }
-static void rra(void)
-{
- int i;
- i=R.AF.B.l&C_FLAG;
- R.AF.B.l=(R.AF.B.l&0xEC)|(R.AF.B.h&0x01);
- R.AF.B.h=(R.AF.B.h>>1)|(i<<7);
-}
+static void rra(void)  { M_RRA; }
 
 static void rrc_xhl(void)
 {
@@ -1439,11 +1401,7 @@ static void rrc_d(void) { M_RRC(R.DE.B.h); }
 static void rrc_e(void) { M_RRC(R.DE.B.l); }
 static void rrc_h(void) { M_RRC(R.HL.B.h); }
 static void rrc_l(void) { M_RRC(R.HL.B.l); }
-static void rrca(void)
-{
- R.AF.B.l=(R.AF.B.l&0xEC)|(R.AF.B.h&0x01);
- R.AF.B.h=(R.AF.B.h>>1)|(R.AF.B.h<<7);
-}
+static void rrca(void)  { M_RRCA; }
 
 static void rrd(void)
 {
@@ -1957,7 +1915,7 @@ static unsigned cycles_main[256]=
   5,6,10,4,10,0,7,11
 };
 
-unsigned cycles_cb[256]=
+static unsigned cycles_cb[256]=
 {
   8,8,8,8,8,8,15,8,
   8,8,8,8,8,8,15,8,
@@ -2027,7 +1985,7 @@ static unsigned cycles_xx_cb[]=
   0,0,0,0,0,0,23,0,
   0,0,0,0,0,0,23,0
 };
-unsigned cycles_xx[256]=
+static unsigned cycles_xx[256]=
 {
   0,0,0,0,0,0,0,0,
   0,15,0,0,0,0,0,0,
@@ -2062,7 +2020,7 @@ unsigned cycles_xx[256]=
   0,0,0,0,0,0,0,0,
   0,10,0,0,0,0,0,0
 };
-unsigned cycles_ed[256]=
+static unsigned cycles_ed[256]=
 {
   0,0,0,0,0,0,0,0,
   0,0,0,0,0,0,0,0,
@@ -2176,7 +2134,7 @@ static opcode_fn opcode_fd_cb[256]=
 static void dd_cb(void)
 {
  unsigned opcode;
- opcode=M_RDMEM((R.PC.D+1)&0xFFFF);
+ opcode=M_RDOP_ARG((R.PC.D+1)&0xFFFF);
  Z80_ICount-=cycles_xx_cb[opcode];
  (*(opcode_dd_cb[opcode]))();
  ++R.PC.W.l;
@@ -2184,7 +2142,7 @@ static void dd_cb(void)
 static void fd_cb(void)
 {
  unsigned opcode;
- opcode=M_RDMEM((R.PC.D+1)&0xFFFF);
+ opcode=M_RDOP_ARG((R.PC.D+1)&0xFFFF);
  Z80_ICount-=cycles_xx_cb[opcode];
  (*(opcode_fd_cb[opcode]))();
  ++R.PC.W.l;
@@ -2338,7 +2296,8 @@ static void cb(void)
 {
  unsigned opcode;
  ++R.R;
- opcode=M_RDMEM_ENCRYPTED_OPCODE();
+ opcode=M_RDOP(R.PC.D);
+ R.PC.W.l++;
  Z80_ICount-=cycles_cb[opcode];
  (*(opcode_cb[opcode]))();
 }
@@ -2346,7 +2305,8 @@ static void dd(void)
 {
  unsigned opcode;
  ++R.R;
- opcode=M_RDMEM_ENCRYPTED_OPCODE();
+ opcode=M_RDOP(R.PC.D);
+ R.PC.W.l++;
  Z80_ICount-=cycles_xx[opcode];
  (*(opcode_dd[opcode]))();
 }
@@ -2354,7 +2314,8 @@ static void ed(void)
 {
  unsigned opcode;
  ++R.R;
- opcode=M_RDMEM_ENCRYPTED_OPCODE();
+ opcode=M_RDOP(R.PC.D);
+ R.PC.W.l++;
  Z80_ICount-=cycles_ed[opcode];
  (*(opcode_ed[opcode]))();
 }
@@ -2362,7 +2323,8 @@ static void fd (void)
 {
  unsigned opcode;
  ++R.R;
- opcode=M_RDMEM_ENCRYPTED_OPCODE();
+ opcode=M_RDOP(R.PC.D);
+ R.PC.W.l++;
  Z80_ICount-=cycles_xx[opcode];
  (*(opcode_fd[opcode]))();
 }
@@ -2407,12 +2369,13 @@ static void ei(void)
 {
  unsigned opcode;
  /* If interrupts were disabled, execute one more instruction and check the */
- /* IRQ line. If not, simply set interrupt flip/flop 2                      */
+ /* IRQ line. If not, simply set interrupt flip-flop 2                      */
  if (!R.IFF1)
  {
   R.IFF1=R.IFF2=1;
   ++R.R;
-  opcode=M_RDMEM_ENCRYPTED_OPCODE();
+  opcode=M_RDOP(R.PC.D);
+  R.PC.W.l++;
   Z80_ICount-=cycles_main[opcode];
   (*(opcode_main[opcode]))();
   Interrupt(Z80_IRQ);
@@ -2478,7 +2441,7 @@ static void Interrupt (int j)
  if (j==Z80_IGNORE_INT) return;
  if (j==Z80_NMI_INT || R.IFF1)
  {
-  /* Clear interrupt flip/flop 1 */
+  /* Clear interrupt flip-flop 1 */
   R.IFF1=0;
   /* Check if processor was halted */
   if (R.HALT)
@@ -2573,7 +2536,8 @@ int Z80_Execute (void)
   if (!Z80_Running) break;
 #endif
   ++R.R;
-  opcode=M_RDMEM_ENCRYPTED_OPCODE();
+  opcode=M_RDOP(R.PC.D);
+  R.PC.W.l++;
   Z80_ICount-=cycles_main[opcode];
   (*(opcode_main[opcode]))();
  }

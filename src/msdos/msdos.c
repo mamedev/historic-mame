@@ -194,7 +194,7 @@ void osd_free_bitmap(struct osd_bitmap *bitmap)
 
 
 
-Register scr224x288[] =
+Register scr224x288scanlines[] =
 {
 	{ 0x3c2, 0x00, 0xe3},{ 0x3d4, 0x00, 0x5f},{ 0x3d4, 0x01, 0x37},
 	{ 0x3d4, 0x02, 0x38},{ 0x3d4, 0x03, 0x82},{ 0x3d4, 0x04, 0x4a},
@@ -233,6 +233,19 @@ Register scr256x256scanlines[] =
 	{ 0x3c0, 0x13, 0x00}
 };
 
+Register scr320x204[] =
+{
+	{ 0x3c2, 0x00, 0xe3},{ 0x3d4, 0x00, 0x5f},{ 0x3d4, 0x01, 0x4f},
+	{ 0x3d4, 0x02, 0x50},{ 0x3d4, 0x03, 0x82},{ 0x3d4, 0x04, 0x54},
+	{ 0x3d4, 0x05, 0x80},{ 0x3d4, 0x06, 0xbf},{ 0x3d4, 0x07, 0x1f},
+	{ 0x3d4, 0x08, 0x00},{ 0x3d4, 0x09, 0x41},{ 0x3d4, 0x10, 0x9c},
+	{ 0x3d4, 0x11, 0x8e},{ 0x3d4, 0x12, 0x97},{ 0x3d4, 0x13, 0x28},
+	{ 0x3d4, 0x14, 0x40},{ 0x3d4, 0x15, 0x96},{ 0x3d4, 0x16, 0xb9},
+	{ 0x3d4, 0x17, 0xa3},{ 0x3c4, 0x01, 0x01},{ 0x3c4, 0x04, 0x0e},
+	{ 0x3ce, 0x05, 0x40},{ 0x3ce, 0x06, 0x05},{ 0x3c0, 0x10, 0x41},
+	{ 0x3c0, 0x13, 0x00}
+};
+
 
 /* Create a display screen, or window, large enough to accomodate a bitmap */
 /* of the given dimensions. I don't do any test here (224x288 will just do */
@@ -241,7 +254,8 @@ Register scr256x256scanlines[] =
 struct osd_bitmap *osd_create_display(int width,int height)
 {
 	if (!(width == 224 && height == 288) &&
-			!(width == 256 && height == 256))
+			!(width == 256 && height == 256) &&
+			!(width == 320 && height == 204))
 		use_vesa = 1;
 
 	if (use_vesa)
@@ -257,7 +271,7 @@ struct osd_bitmap *osd_create_display(int width,int height)
 			return 0;
 
 		if (width == 224 && height == 288)
-			outRegArray(scr224x288,sizeof(scr224x288)/sizeof(Register));
+			outRegArray(scr224x288scanlines,sizeof(scr224x288scanlines)/sizeof(Register));
 		else if (width == 256 && height == 256)
 		{
 			if (noscanlines)
@@ -265,6 +279,8 @@ struct osd_bitmap *osd_create_display(int width,int height)
 			else
 				outRegArray(scr256x256scanlines,sizeof(scr256x256)/sizeof(Register));
 		}
+		else if (width == 320 && height == 204)
+			outRegArray(scr320x204,sizeof(scr320x204)/sizeof(Register));
 	}
 
 	bitmap = osd_create_bitmap(width,height);

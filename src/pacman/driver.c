@@ -90,10 +90,8 @@ OUT on port $0 sets the interrupt vector
 #include "common.h"
 
 
-void pacman_interrupt_enable_w(int offset,int data);
 int pacman_init_machine(const char *gamename);
 int pacman_interrupt(void);
-void pacman_out(byte Port,byte Value);
 
 unsigned char *pengo_videoram;
 unsigned char *pengo_colorram;
@@ -145,7 +143,7 @@ static struct MemoryWriteAddress pacman_writemem[] =
 	{ 0x5060, 0x506f, MWA_RAM, &pengo_spritepos },
 	{ 0xc000, 0xc3ff, pengo_videoram_w },	/* mirror address for video ram, */
 	{ 0xc400, 0xc7ef, pengo_colorram_w },	/* used to display HIGH SCORE and CREDITS */
-	{ 0x5000, 0x5000, pacman_interrupt_enable_w },
+	{ 0x5000, 0x5000, interrupt_enable_w },
 	{ 0x50c0, 0x50c0, MWA_NOP },
 	{ 0x5001, 0x5001, pengo_sound_enable_w },
 	{ 0x5002, 0x5007, MWA_NOP },
@@ -162,12 +160,18 @@ static struct MemoryWriteAddress mspacman_writemem[] =
 	{ 0x5060, 0x506f, MWA_RAM, &pengo_spritepos },
 	{ 0xc000, 0xc3ff, pengo_videoram_w },	/* mirror address for video ram, */
 	{ 0xc400, 0xc7ef, pengo_colorram_w },	/* used to display HIGH SCORE and CREDITS */
-	{ 0x5000, 0x5000, pacman_interrupt_enable_w },
+	{ 0x5000, 0x5000, interrupt_enable_w },
 	{ 0x50c0, 0x50c0, MWA_NOP },
 	{ 0x5001, 0x5001, pengo_sound_enable_w },
 	{ 0x5002, 0x5007, MWA_NOP },
 	{ 0x0000, 0x3fff, MWA_ROM },
 	{ 0x8000, 0x9fff, MWA_ROM },
+	{ -1 }	/* end of table */
+};
+
+static struct IOWritePort writeport[] =
+{
+	{ 0, 0, interrupt_vector_w },
 	{ -1 }	/* end of table */
 };
 
@@ -301,12 +305,10 @@ const struct MachineDriver pacman_driver =
 	/* basic machine hardware */
 	3072000,	/* 3.072 Mhz. Is this correct for Pac Man? */
 	60,
-	pacman_readmem,
-	pacman_writemem,
+	pacman_readmem,pacman_writemem,0,writeport,
 	input_ports,pacdsw,
 	pacman_init_machine,
 	pacman_interrupt,
-	pacman_out,
 
 	/* video hardware */
 	224,288,
@@ -323,8 +325,6 @@ const struct MachineDriver pacman_driver =
 
 	/* sound hardware */
 	samples,
-	0,
-	0,
 	0,
 	0,
 	0,
@@ -338,12 +338,10 @@ const struct MachineDriver mspacman_driver =
 	/* basic machine hardware */
 	3072000,	/* 3.072 Mhz. Is this correct for Pac Man? */
 	60,
-	mspacman_readmem,
-	mspacman_writemem,
+	mspacman_readmem,mspacman_writemem,0,0,
 	input_ports,mspacdsw,
 	pacman_init_machine,
 	pacman_interrupt,
-	0,
 
 	/* video hardware */
 	224,288,
@@ -360,8 +358,6 @@ const struct MachineDriver mspacman_driver =
 
 	/* sound hardware */
 	samples,
-	0,
-	0,
 	0,
 	0,
 	0,

@@ -9,6 +9,8 @@ extern struct MachineDriver mrdo_driver;
 extern struct MachineDriver cclimber_driver;
 extern struct MachineDriver ckong_driver;
 extern struct MachineDriver dkong_driver;
+extern struct MachineDriver bagman_driver;
+extern struct MachineDriver wow_driver;
 
 
 static struct RomModule pacman_rom[] =
@@ -379,6 +381,44 @@ static struct RomModule dkong_rom[] =
 
 
 
+static struct RomModule bagman_rom[] =
+{
+	/* code */
+	{ "a4_9e.bin", 0x00000, 0x1000},
+	{ "a4_9f.bin", 0x01000, 0x1000},
+	{ "a4_9j.bin", 0x02000, 0x1000},
+	{ "a4_9k.bin", 0x03000, 0x1000},
+	{ "a4_9m.bin", 0x04000, 0x1000},
+	{ "a4_9n.bin", 0x05000, 0x1000},
+	/* gfx */
+	{ "a2_1e.bin", 0x10000, 0x1000},
+	{ "a2_1j.bin", 0x11000, 0x1000},
+	{ "a2_1c.bin", 0x12000, 0x1000},
+	{ "a2_1f.bin", 0x13000, 0x1000},
+	/* ??? */
+	{ "a1_9r.bin", 0x18000, 0x1000},
+	{ "a1_9t.bin", 0x19000, 0x1000},
+	{ 0 }	/* end of table */
+};
+
+
+
+static struct RomModule wow_rom[] =
+{
+	/* code */
+	{ "wow.x1", 0x00000, 0x1000},
+	{ "wow.x2", 0x01000, 0x1000},
+	{ "wow.x3", 0x02000, 0x1000},
+	{ "wow.x4", 0x03000, 0x1000},
+	{ "wow.x5", 0x08000, 0x1000},
+	{ "wow.x6", 0x09000, 0x1000},
+	{ "wow.x7", 0x0a000, 0x1000},
+	{ 0,        0x0c000, 0x1000},	/* here would go the foreign language ROM */
+	{ 0 }	/* end of table */
+};
+
+
+
 struct GameDriver drivers[] =
 {
 	{ "pacman",   pacman_rom,   0,               &pacman_driver },
@@ -398,5 +438,7 @@ struct GameDriver drivers[] =
 	{ "ccboot",   ccboot_rom,   ccboot_decode,   &cclimber_driver },
 	{ "ckong",    ckong_rom,    0,               &ckong_driver },
 	{ "dkong",    dkong_rom,    0,               &dkong_driver },
+	{ "bagman",   bagman_rom,   0,               &bagman_driver },
+	{ "wow",      wow_rom,      0,               &wow_driver },
 	{ 0	}	/* end of array */
 };

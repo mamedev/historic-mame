@@ -1,6 +1,6 @@
 /*** Z80Em: Portable Z80 emulator *******************************************/
 /***                                                                      ***/
-/***                                 DAA.h                                ***/
+/***                                Z80DAA.h                              ***/
 /***                                                                      ***/
 /*** This file contains the DAA emulation lookup table. It is included    ***/
 /*** from Z80.c                                                           ***/

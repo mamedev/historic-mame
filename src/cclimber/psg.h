@@ -13,6 +13,11 @@
 ** Modifications (C) 1996 Michael Cuddy, Fen's Ende Software.
 ** http://www.fensende.com/Users/mcuddy
 **
+** Modifications (C) 1997 Andy Milne (andy@canetics.com)
+** Fixed Everything except noise generator code. I left that as is.
+** Added a few comments too. Also, added in a wave table feature that
+** will enable low frequency reproduction
+**
 */
 #ifndef _H_PSG_PSG_
 #define _H_PSG_PSG_
@@ -36,9 +41,9 @@
 #define AY_PORTA	(14)
 #define AY_PORTB	(15)
 
-//typedef unsigned char byte;
+/*typedef unsigned char byte; */
 
-/* default clock frequency, frequency in MHz * 100 */
+/* default clock frequency, frequency in MHz * 100  - Deca-milli Hz??*/
 #ifndef AY8910_CLOCK
 #define AY8910_CLOCK (1832727040)	/* 1.832727040 MHZ */
 #endif /* !defined AY8910_CLOCK */
@@ -74,6 +79,27 @@ struct ay8910_f {
     int StateNoise, NoiseGen;
     int Counter0, Counter1, Counter2, Countenv, Countnoise;
     int Vol0, Vol1, Vol2, Volnoise, Envelope;
+
+
+    /*  Andy Milne Comment andy@canetics.com                */
+    /*  these are the current amplitude of the square wave  */
+    /*  generators, values are used to index the wave Table */
+    int l0,l1,l2;
+
+    /*  Andy Milne Comment andy@canetics.com                */
+    /*  Envelope Shaper State Machine                       */
+
+   int startval;
+   int gradient;
+   int hold;
+   int flip;
+   int mirror;
+   int repeat;
+   int EnvelopeCounter;
+   int EnvStateCounter;
+
+
+
 };
 
 /*

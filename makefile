@@ -14,6 +14,8 @@ OBJS   = obj/mame.o obj/common.o obj/machine.o obj/driver.o obj/osdepend.o \
          obj/cclimber/vidhrdw.o obj/cclimber/sndhrdw.o obj/cclimber/driver.o \
          obj/ckong/vidhrdw.o obj/ckong/driver.o \
          obj/dkong/vidhrdw.o obj/dkong/driver.o \
+         obj/bagman/machine.o obj/bagman/vidhrdw.o obj/bagman/driver.o \
+         obj/wow/vidhrdw.o obj/wow/driver.o \
          obj/Z80/Z80.o
 
 VPATH = src src/z80
@@ -32,7 +34,7 @@ obj/%.o: src/%.c common.h machine.h driver.h
 
 # dependencies
 obj/cclimber/sndhrdw.o:  src/cclimber/psg.c src/cclimber/psg.h
-obj/Z80/Z80.o:  Z80.c Z80.h Z80Codes.h Z80IO.h DAA.h
+obj/Z80/Z80.o:  Z80.c Z80.h Z80Codes.h Z80IO.h Z80DAA.h
 
 
 clean:
@@ -46,4 +48,6 @@ clean:
 	del obj\cclimber\*.o
 	del obj\ckong\*.o
 	del obj\dkong\*.o
+	del obj\bagman\*.o
+	del obj\wow\*.o
 	del mame.exe

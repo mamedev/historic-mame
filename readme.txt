@@ -20,6 +20,8 @@ Mr. Do!                    Yes            Yes             Yes
 Crazy Climber              Yes            Yes             Yes
 Crazy Kong                 Yes            No              Yes
 Donkey Kong                Yes            No              No
+Bagman                Yes (slowdowns)     No           Music only
+Wizard of Wor              No            Maybe            No
 
 
 
@@ -42,7 +44,7 @@ Video modes created using Tweak 1.6b by Robert Schmidt, who also wrote
    TwkUser.c. Thanks to Chuck Cochems for the help in making them more
    compatible.
 AY-3-8910 emulation by Ville Hallik (ville@physic.ut.ee) and Michael Cuddy
-  (mcuddy@FensEnde.com).
+  (mcuddy@FensEnde.com), modified by Andy Milne (andy@canetics.com).
 
 Very special thanks to Sergio Munoz for the precious information about the
    Pengo sound hardware and colors.
@@ -55,6 +57,7 @@ Thanks to Andy Milne (andy@canetics.com) for the information on the Crazy
    Climber sound roms.
 Crazy Kong emulation set up by Ville Laitinen (ville@sms.fi).
 Some information on Donkey Kong gathered from MageX by Edward Massey
+Some info on Bagman taken from Arcade Emulator by Robert Anschuetz
 
 
 
@@ -237,3 +240,33 @@ CTRL    Jump
 
 Known issues:
 - I can't find the color RAM!
+
+
+
+Bagman ("bagman")
+-----------------
+
+Arrows  Move around
+CTRL    Action
+
+Known issues:
+- Frequent slowdowns, I don't know what's causing them (the fps counter stays
+  at 60, so this is not caused by slow emulation).
+
+
+
+Wizard of Wor ("wow")
+---------------------
+
+Arrows  Move around
+CTRL    Fire
+F2      Test mode (keep it pressed)
+
+Known issues:
+- This game is completely different from anything else I have emulated before.
+  The video memory is bitmapped. There are no character generator ROMs,
+  graphics data is contained in the code ROMs and the program sends commands
+  to some custom circuitry on the board to do copies, fills, and so on.
+  Understanding how the thing works without the schematics is tricky. There
+  are no memory mapped ports, everything is done via IN and OUT instructions.
+  As of now, it is not playable because bullets don't work correctly.

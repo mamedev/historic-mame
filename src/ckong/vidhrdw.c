@@ -226,6 +226,6 @@ void ckong_vh_screenrefresh(struct osd_bitmap *bitmap)
 			0,0,
 			ckong_bigspriteram[1] & 0x20,!(ckong_bigspriteram[1] & 0x10),
 			ckong_bigspriteram[2],ckong_bigspriteram[3] - 8,
-			&visiblearea,TRANSPARENCY_PEN,0);
+			&visiblearea,TRANSPARENCY_COLOR,Machine->background_pen);
 }
 }

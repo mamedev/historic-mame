@@ -12,12 +12,8 @@
 
 
 #define UPDATES_PER_SECOND 60
-#define emulation_rate (200*UPDATES_PER_SECOND)
+#define emulation_rate (800*UPDATES_PER_SECOND)
 #define buffer_len (emulation_rate/UPDATES_PER_SECOND)
-
-#define SNDCTRL_PORT 0x08
-#define SNDWRITE_PORT 0x09
-#define SNDREAD_PORT 0x0c
 
 
 unsigned char samples[0x4000];	/* 16k for samples */
@@ -26,9 +22,39 @@ int porta;
 
 
 
+int lastreg;	/* AY-3-8910 register currently selected */
+
+int cclimber_sh_read_port_r(int offset)
+{
+	return AYReadReg(0,lastreg);
+}
+
+
+
+void cclimber_sh_control_port_w(int offset,int data)
+{
+	lastreg = data;
+}
+
+
+
+void cclimber_sh_write_port_w(int offset,int data)
+{
+	AYWriteReg(0,lastreg,data);
+}
+
+
+
 byte porthandler(AY8910 *chip, int port, int iswrite, byte val)
 {
-	if (iswrite) porta = val;
+	if (iswrite)	/* Crazy Climber and Crazy Kong */
+	{
+		if (port == 0x0e) porta = val;
+	}
+	else		/* Bagman */
+	{
+		chip->Regs[port] = readinputport(port - 0x0e);
+	}
 
 	return 0;
 }
@@ -54,6 +80,7 @@ int cclimber_sh_start(void)
 	if (AYInit(1,emulation_rate,buffer_len,0) == 0)
 	{
 		AYSetPortHandler(0,AY_PORTA,porthandler);
+		AYSetPortHandler(0,AY_PORTB,porthandler);
 
 		return 0;
 	}
@@ -101,43 +128,6 @@ void cclimber_sample_trigger_w(int offset,int data)
 		end += 2;
 
 	osd_play_sample(1,samples + start,end - start,sample_freq,sample_volume,0);
-}
-
-
-
-/***************************************************************************
-
-  Execute an OUT instruction.
-
-***************************************************************************/
-int lastreg;	/* AY-3-8910 register currently selected */
-
-void cclimber_sh_out(byte Port,byte Value)
-{
-	if (Port == SNDCTRL_PORT)
-		lastreg = Value;
-	else if (Port == SNDWRITE_PORT)
-		AYWriteReg(0,lastreg,Value);
-}
-
-
-
-/***************************************************************************
-
-  Read a data port IN.
-
-  The processor needs to be able to read data from the Sound Chip. When
-  turning voices on and off it must be able to read the status of other
-  voices so it can OR or AND the appropriate bits without affecting the
-  others. The CC software doesn't keep its own record of the status of
-  the sound chip voices. (Lionel T.)
-
-***************************************************************************/
-int cclimber_sh_in(byte Port)
-{
-	if (Port == SNDREAD_PORT)
-		return AYReadReg(0,lastreg);
-	else return 0;
 }
 
 
